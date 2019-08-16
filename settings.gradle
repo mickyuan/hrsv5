@@ -1,0 +1,3 @@
+rootProject.name = 'hrsv5'
+include 'hrds_A'
+
