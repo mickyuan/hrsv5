@@ -28,12 +28,21 @@ public class DataSourceActionTest extends WebBaseTestCase {
     public void addDataSource() {
         int source_id = 1000000001;
         String datasource_name = "ceshi";
+        String datasource_number = "cs01";
         String create_date = DateUtil.getSysDate();
         String create_time = DateUtil.getDateTime();
         int user_id = 1001;
         String source_remark = "测试";
         String[] dep_id = {"1000000001", "1000000002", "1000000003"};
-        String responseValue = new HttpClient().addData("source_id", source_id).addData("datasource_name", datasource_name).addData("create_date", create_date).addData("create_time", create_time).addData("user_id", user_id).addData("source_remark", source_remark).addData("dep_id", dep_id).post(getActionUrl("addDataSource")).getBodyString();
+        String responseValue = new HttpClient().addData("source_id", source_id).addData("datasource_number",datasource_number)
+                .addData("datasource_name", datasource_name)
+                .addData("create_date", create_date)
+                .addData("create_time", create_time)
+                .addData("user_id", user_id)
+                .addData("source_remark", source_remark)
+                .addData("dep_id", dep_id)
+                .post(getActionUrl("addDataSource"))
+                .getBodyString();
         ActionResult ar = JsonUtil.toObject(responseValue, ActionResult.class);
         assertThat(ar.isSuccess(), is(true));
 
