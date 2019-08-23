@@ -41,7 +41,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .addData("create_time", create_time)
                 .addData("user_id", user_id)
                 .addData("source_remark", source_remark)
-                //.addData("dep_id", dep_id)
+                .addData("dep_id", dep_id)
                 .post(getActionUrl("addDataSource"))
                 .getBodyString();
         ActionResult ar = JsonUtil.toObject(responseValue, ActionResult.class);
