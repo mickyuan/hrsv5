@@ -1,11 +1,10 @@
-package hrds.biz.B0101;
+package hrds.biz.datasource;
 
 import fd.ng.web.action.AbstractWebappBaseAction;
 import fd.ng.web.annotation.RequestBean;
 import fd.ng.web.util.Dbo;
 import hrds.entity.SourceRelationDep;
 import hrds.entity.DataSource;
-import hrds.entity.SysPara;
 import hrds.exception.BusinessException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -33,10 +32,10 @@ public class DataSourceAction extends AbstractWebappBaseAction {
             throw new BusinessException("添加数据失败！dataSource=" + dataSource);
         }
 
+        SourceRelationDep srd = new SourceRelationDep();
+        srd.setSource_id(dataSource.getSource_id());
         // 新增数据源与部门关系
         for (String depId : dep_id) {
-            SourceRelationDep srd = new SourceRelationDep();
-            srd.setSource_id(dataSource.getSource_id());
             srd.setDep_id(new BigDecimal(depId));
             if (srd.add(Dbo.db()) != 1) {
                 throw new BusinessException("添加数据失败！srd=" + srd);

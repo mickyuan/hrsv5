@@ -1,4 +1,4 @@
-package hrds.biz.B0101;
+package hrds.biz.datasource;
 
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
@@ -10,12 +10,9 @@ import fd.ng.web.action.ActionResult;
 import hrds.entity.DataSource;
 import hrds.entity.SourceRelationDep;
 import hrds.testbase.WebBaseTestCase;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.OptionalLong;
 
@@ -35,7 +32,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
         String create_time = DateUtil.getDateTime();
         int user_id = 1001;
         String source_remark = "测试";
-        String[] dep_id = {"1000000001","1000000002","1000000003"};
+        String[] dep_id = {"1000000001", "1000000002", "1000000003"};
         String responseValue = new HttpClient().addData("source_id", source_id).addData("datasource_name", datasource_name).addData("create_date", create_date).addData("create_time", create_time).addData("user_id", user_id).addData("source_remark", source_remark).addData("dep_id", dep_id).post(getActionUrl("addDataSource")).getBodyString();
         ActionResult ar = JsonUtil.toObject(responseValue, ActionResult.class);
         assertThat(ar.isSuccess(), is(true));
@@ -65,12 +62,12 @@ public class DataSourceActionTest extends WebBaseTestCase {
 
     @Test
     public void updateDataSource() {
-        String source_id="1000000001";
-        String[] dep_id={"1000000001","1000000002"};
-        String datasource_name="ceshi2";
-        String source_remark="测试2";
+        String source_id = "1000000001";
+        String[] dep_id = {"1000000001", "1000000002"};
+        String datasource_name = "ceshi2";
+        String source_remark = "测试2";
         String responseValue = new HttpClient()
-                .addData("datasource_name", datasource_name).addData("source_id", source_id).addData("dep_id",dep_id).addData("source_remark",source_remark)
+                .addData("datasource_name", datasource_name).addData("source_id", source_id).addData("dep_id", dep_id).addData("source_remark", source_remark)
                 .post(getActionUrl("updateDataSource"))
                 .getBodyString();
         ActionResult ar = JsonUtil.toObject(responseValue, ActionResult.class);
@@ -90,7 +87,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
             Result rs = SqlOperator.queryResult(db,
                     "select * from " + SourceRelationDep.TableName + " where source_id=?", source_id);
             for (int i = 0; i < rs.getRowCount(); i++) {
-                BigDecimal new_dep_id =  rs.getBigDecimal(i,"dep_id");
+                BigDecimal new_dep_id = rs.getBigDecimal(i, "dep_id");
                 assertThat(datasource_name, is(new_datasource_name));
                 assertThat(dep_id, is(new_dep_id));
             }
@@ -100,7 +97,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
     @Test
     public void deleteDataSource() {
         try (DatabaseWrapper db = new DatabaseWrapper()) {
-            String source_id="1000000001";
+            String source_id = "1000000001";
             // 验证DB里面预期被删除的数据是存在的
             OptionalLong result = SqlOperator.queryNumber(db,
                     "select count(1) from " + DataSource.TableName + " where source_id=?", source_id);
@@ -121,9 +118,9 @@ public class DataSourceActionTest extends WebBaseTestCase {
         }
     }
 
-    public void deleteSourceRelationDep(){
+    public void deleteSourceRelationDep() {
         try (DatabaseWrapper db = new DatabaseWrapper()) {
-            String source_id="1000000001";
+            String source_id = "1000000001";
             // 验证DB里面预期被删除的数据是存在的
             OptionalLong result = SqlOperator.queryNumber(db,
                     "select count(1) from " + SourceRelationDep.TableName + " where source_id=?", source_id);
