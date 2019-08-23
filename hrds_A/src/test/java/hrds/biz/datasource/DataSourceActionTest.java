@@ -34,20 +34,21 @@ public class DataSourceActionTest extends WebBaseTestCase {
         int user_id = 1001;
         String source_remark = "测试";
         String[] dep_id = {"1000000001", "1000000002", "1000000003"};
-        String responseValue = new HttpClient().addData("source_id", source_id).addData("datasource_number",datasource_number)
+        String responseValue = new HttpClient().addData("source_id", source_id)
+                .addData("datasource_number", datasource_number)
                 .addData("datasource_name", datasource_name)
                 .addData("create_date", create_date)
                 .addData("create_time", create_time)
                 .addData("user_id", user_id)
                 .addData("source_remark", source_remark)
-                .addData("dep_id", dep_id)
+                //.addData("dep_id", dep_id)
                 .post(getActionUrl("addDataSource"))
                 .getBodyString();
         ActionResult ar = JsonUtil.toObject(responseValue, ActionResult.class);
         assertThat(ar.isSuccess(), is(true));
 
         // 验证DB里面的数据是否正确
-        try (DatabaseWrapper db = new DatabaseWrapper.Builder().dbname("local").create()) {
+        try (DatabaseWrapper db = new DatabaseWrapper()) {
             Map<String, Object> result = SqlOperator.queryOneObject(db,
                     "select * from " + DSTableName + " where source_id=?", source_id);
             String new_datasource_name = (String) result.get("datasource_name");
