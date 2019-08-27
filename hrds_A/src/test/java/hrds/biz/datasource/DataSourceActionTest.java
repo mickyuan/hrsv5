@@ -48,8 +48,6 @@ public class DataSourceActionTest extends WebBaseTestCase {
                     params
             );
             assertThat("测试数据初始化", nums.length, is(Init_Rows));
-            //for (int i = 0; i < nums.length; i++)
-            //    assertThat("initData : " + i, nums[i], is(1));
             SqlOperator.commitTransaction(db);
         }
     }
