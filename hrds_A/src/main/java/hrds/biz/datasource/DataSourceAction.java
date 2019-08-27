@@ -1,7 +1,9 @@
 package hrds.biz.datasource;
 
 import fd.ng.web.action.AbstractWebappBaseAction;
+import fd.ng.web.annotation.Action;
 import fd.ng.web.annotation.RequestBean;
+import fd.ng.web.annotation.RequestParam;
 import fd.ng.web.util.Dbo;
 import hrds.entity.SourceRelationDep;
 import hrds.entity.DataSource;
@@ -22,11 +24,8 @@ public class DataSourceAction extends AbstractWebappBaseAction {
 
     /**
      * 新增数据源
-     *
-     * @param dataSource 数据源编号
-     * @param dep_id     部门编号
      */
-    public void addDataSource(@RequestBean DataSource dataSource, String[] dep_id) {
+    public void add(@RequestBean DataSource dataSource,String depIds) {
         // 新增数据源
         if (dataSource.add(Dbo.db()) != 1) {
             throw new BusinessException("添加数据失败！dataSource=" + dataSource);
@@ -34,9 +33,10 @@ public class DataSourceAction extends AbstractWebappBaseAction {
 
         SourceRelationDep srd = new SourceRelationDep();
         srd.setSource_id(dataSource.getSource_id());
-        // 新增数据源与部门关系
-        for (String depId : dep_id) {
-            srd.setDep_id(new BigDecimal(depId));
+        String[] split = depIds.split(",");
+        //新增数据源与部门关系
+        for (String dep_id : split) {
+            srd.setDep_id(new BigDecimal(dep_id));
             if (srd.add(Dbo.db()) != 1) {
                 throw new BusinessException("添加数据失败！srd=" + srd);
             }
@@ -48,13 +48,11 @@ public class DataSourceAction extends AbstractWebappBaseAction {
      * 更新数据源
      *
      * @param source_id       数据源编号
-     * @param dep_id          部门编号
-     * @param datasource_name 数据源名称
-     * @param source_remark   数据源描述
+     * @param depIds         部门编号
+     *
      */
-    public void updateDataSource(String source_id, String[] dep_id, String datasource_name, String source_remark) {
+    public void updateDataSource(String source_id, String depIds,String datasource_name,String source_remark) {
         DataSource dataSource = new DataSource();
-        dataSource.setSource_id(new BigDecimal(source_id));
         dataSource.setDatasource_name(datasource_name);
         dataSource.setSource_remark(source_remark);
         // 更新数据源信息
@@ -63,12 +61,13 @@ public class DataSourceAction extends AbstractWebappBaseAction {
         }
 
         // 更新数据源与部门关系表信息
+        // 先删除关系，再建立新关系
+        deleteSourceRelationDep(source_id);
         SourceRelationDep srd = new SourceRelationDep();
         srd.setSource_id(new BigDecimal(source_id));
-        for (String id : dep_id) {
-            // 先删除关系，再建立新关系
-            deleteSourceRelationDep(source_id);
-            srd.setDep_id(new BigDecimal(id));
+        String[] split = depIds.split(",");
+        for (String dep_id : split) {
+            srd.setDep_id(new BigDecimal(dep_id));
             if (srd.add(Dbo.db()) != 1) {
                 throw new BusinessException("添加数据失败！srd=" + srd);
             }
