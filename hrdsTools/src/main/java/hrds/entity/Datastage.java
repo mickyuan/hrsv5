@@ -1,90 +1,109 @@
 package hrds.entity;
-
+/**Auto Created by VBScript Do not modify!*/
 import fd.ng.db.entity.TableEntity;
+import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
 import hrds.exception.BusinessException;
-
 import java.math.BigDecimal;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Collections;
 
 /**
- * 实体类中所有属性都应定义为对象，不要使用int等主类型，方便对null值的操作
+ * 数据采集阶段表
  */
 @Table(tableName = "datastage")
-public class Datastage extends TableEntity {
-    private static final long serialVersionUID = 321566870187324L;
+public class Datastage extends TableEntity
+{
+	private static final long serialVersionUID = 321566870187324L;
 	private transient static final Set<String> __PrimaryKeys;
 	public static final String TableName = "datastage";
-
+	/**
+	* 检查给定的名字，是否为主键中的字段
+	* @param name String 检验是否为主键的名字
+	* @return
+	*/
+	public static boolean isPrimaryKey(String name) { return __PrimaryKeys.contains(name); } 
+	public static Set<String> getPrimaryKeyNames() { return __PrimaryKeys; } 
+	/** 数据采集阶段表 */
 	static {
 		Set<String> __tmpPKS = new HashSet<>();
+		__tmpPKS.add("jobkey");
 		__tmpPKS.add("tablename");
 		__tmpPKS.add("stage");
-		__tmpPKS.add("jobkey");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	/**
-	 * 检查给定的名字，是否为主键中的字段
-	 * @param name String 检验是否为主键的名字
-	 * @return
-	 */
-	public static boolean isPrimaryKey(String name) { return __PrimaryKeys.contains(name); }
-	public static Set<String> getPrimaryKeyNames() { return __PrimaryKeys; }
+	private Long jobkey; //数据库设置id
+	private String tablename; //表名字
+	private String stage; //采集阶段
+	private String state; //所处状态
+	private String previousstage; //上一阶段
+	private String nextstage; //下一阶段
+	private String remark; //备注
 
-	private String stage;
-	private String remark;
-	private String state;
-	private String tablename;
-	private String nextstage;
-	private BigDecimal jobkey;
-	private String previousstage;
-
-	public String getStage() { return stage; }
-	public void setStage(String stage) {
-		if(stage==null) throw new BusinessException("Entity : Datastage.stage must not null!");
-		this.stage = stage;
+	/** 取得：数据库设置id */
+	public Long getJobkey(){
+		return jobkey;
 	}
-
-	public String getRemark() { return remark; }
-	public void setRemark(String remark) {
-		if(remark==null) addNullValueField("remark");
-		this.remark = remark;
+	/** 设置：数据库设置id */
+	public void setJobkey(Long jobkey){
+		this.jobkey=jobkey;
 	}
-
-	public String getState() { return state; }
-	public void setState(String state) {
-		if(state==null) throw new BusinessException("Entity : Datastage.state must not null!");
-		this.state = state;
+	/** 设置：数据库设置id */
+	public void setJobkey(String jobkey){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(jobkey)){
+			this.jobkey=new Long(jobkey);
+		}
 	}
-
-	public String getTablename() { return tablename; }
-	public void setTablename(String tablename) {
-		if(tablename==null) throw new BusinessException("Entity : Datastage.tablename must not null!");
-		this.tablename = tablename;
+	/** 取得：表名字 */
+	public String getTablename(){
+		return tablename;
 	}
-
-	public String getNextstage() { return nextstage; }
-	public void setNextstage(String nextstage) {
-		if(nextstage==null) addNullValueField("nextstage");
-		this.nextstage = nextstage;
+	/** 设置：表名字 */
+	public void setTablename(String tablename){
+		this.tablename=tablename;
 	}
-
-	public BigDecimal getJobkey() { return jobkey; }
-	public void setJobkey(BigDecimal jobkey) {
-		if(jobkey==null) throw new BusinessException("Entity : Datastage.jobkey must not null!");
-		this.jobkey = jobkey;
+	/** 取得：采集阶段 */
+	public String getStage(){
+		return stage;
 	}
-
-	public String getPreviousstage() { return previousstage; }
-	public void setPreviousstage(String previousstage) {
-		if(previousstage==null) addNullValueField("previousstage");
-		this.previousstage = previousstage;
+	/** 设置：采集阶段 */
+	public void setStage(String stage){
+		this.stage=stage;
 	}
-
+	/** 取得：所处状态 */
+	public String getState(){
+		return state;
+	}
+	/** 设置：所处状态 */
+	public void setState(String state){
+		this.state=state;
+	}
+	/** 取得：上一阶段 */
+	public String getPreviousstage(){
+		return previousstage;
+	}
+	/** 设置：上一阶段 */
+	public void setPreviousstage(String previousstage){
+		this.previousstage=previousstage;
+	}
+	/** 取得：下一阶段 */
+	public String getNextstage(){
+		return nextstage;
+	}
+	/** 设置：下一阶段 */
+	public void setNextstage(String nextstage){
+		this.nextstage=nextstage;
+	}
+	/** 取得：备注 */
+	public String getRemark(){
+		return remark;
+	}
+	/** 设置：备注 */
+	public void setRemark(String remark){
+		this.remark=remark;
+	}
 }

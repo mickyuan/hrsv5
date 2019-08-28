@@ -1,0 +1,89 @@
+package hrds.entity;
+/**Auto Created by VBScript Do not modify!*/
+import fd.ng.db.entity.TableEntity;
+import fd.ng.core.utils.StringUtil;
+import fd.ng.db.entity.anno.Column;
+import fd.ng.db.entity.anno.Table;
+import hrds.exception.BusinessException;
+import java.math.BigDecimal;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Collections;
+
+/**
+ * 请求Agent类型
+ */
+@Table(tableName = "req_agenttype")
+public class Req_agenttype extends TableEntity
+{
+	private static final long serialVersionUID = 321566870187324L;
+	private transient static final Set<String> __PrimaryKeys;
+	public static final String TableName = "req_agenttype";
+	/**
+	* 检查给定的名字，是否为主键中的字段
+	* @param name String 检验是否为主键的名字
+	* @return
+	*/
+	public static boolean isPrimaryKey(String name) { return __PrimaryKeys.contains(name); } 
+	public static Set<String> getPrimaryKeyNames() { return __PrimaryKeys; } 
+	/** 请求Agent类型 */
+	static {
+		Set<String> __tmpPKS = new HashSet<>();
+		__tmpPKS.add("req_id");
+		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
+	}
+	private String req_name; //中文名称
+	private String req_no; //请求编号
+	private String req_remark; //备注
+	private Long req_id; //请求ID
+	private String comp_id; //组件编号
+
+	/** 取得：中文名称 */
+	public String getReq_name(){
+		return req_name;
+	}
+	/** 设置：中文名称 */
+	public void setReq_name(String req_name){
+		this.req_name=req_name;
+	}
+	/** 取得：请求编号 */
+	public String getReq_no(){
+		return req_no;
+	}
+	/** 设置：请求编号 */
+	public void setReq_no(String req_no){
+		this.req_no=req_no;
+	}
+	/** 取得：备注 */
+	public String getReq_remark(){
+		return req_remark;
+	}
+	/** 设置：备注 */
+	public void setReq_remark(String req_remark){
+		this.req_remark=req_remark;
+	}
+	/** 取得：请求ID */
+	public Long getReq_id(){
+		return req_id;
+	}
+	/** 设置：请求ID */
+	public void setReq_id(Long req_id){
+		this.req_id=req_id;
+	}
+	/** 设置：请求ID */
+	public void setReq_id(String req_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(req_id)){
+			this.req_id=new Long(req_id);
+		}
+	}
+	/** 取得：组件编号 */
+	public String getComp_id(){
+		return comp_id;
+	}
+	/** 设置：组件编号 */
+	public void setComp_id(String comp_id){
+		this.comp_id=comp_id;
+	}
+}
