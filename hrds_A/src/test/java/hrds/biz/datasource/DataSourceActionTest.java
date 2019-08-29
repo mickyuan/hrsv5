@@ -200,8 +200,8 @@ public class DataSourceActionTest extends WebBaseTestCase {
         String agent_status = "0";
         String create_date = DateUtil.getSysDate();
         String create_time = DateUtil.getDateTime(DateTimeFormatter.ofPattern("HHmmss"));
-        String source_id = "1000000001";
-        int user_id = 1001;
+        String source_id = "1000000005";
+        String user_id = "1001";
         String saveAgent = new HttpClient().addData("agent_id", agent_id)
                 .addData("agent_name", agent_name)
                 .addData("agent_type", agent_type)
