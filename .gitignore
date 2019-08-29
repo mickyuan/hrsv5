@@ -33,4 +33,5 @@ gradle-app.setting
 
 # 开发中搞进来的各种自己用的文件
 TODO
-
+# office 缓存文件
+~$*.*
