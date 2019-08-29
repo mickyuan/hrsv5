@@ -69,9 +69,7 @@ public class DataSource extends TableEntity {
 
 	public String getDatasource_name() { return datasource_name; }
 	public void setDatasource_name(String datasource_name) {
-		if (datasource_name==null) {
-			throw new BusinessException("Entity : DataSource.datasource_name must not null!");
-		}
+		if(datasource_name==null) throw new BusinessException("Entity : DataSource.datasource_name must not null!");
 		this.datasource_name = datasource_name;
 	}
 

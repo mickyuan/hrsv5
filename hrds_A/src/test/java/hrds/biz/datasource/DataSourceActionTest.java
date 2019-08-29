@@ -1,14 +1,22 @@
 package hrds.biz.datasource;
 
+import com.sun.istack.internal.NotNull;
+import com.sun.org.apache.xpath.internal.operations.Or;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
+import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
+import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
+import fd.ng.web.util.Dbo;
+import hrds.entity.AgentInfo;
 import hrds.entity.DataSource;
 import hrds.entity.SourceRelationDep;
 import hrds.testbase.WebBaseTestCase;
+import org.hamcrest.core.AllOf;
+import org.hamcrest.core.IsNull;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -21,6 +29,7 @@ import java.util.OptionalLong;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.CoreMatchers.*;
 
 public class DataSourceActionTest extends WebBaseTestCase {
     private static final String SRDTableName = SourceRelationDep.TableName;
@@ -53,15 +62,15 @@ public class DataSourceActionTest extends WebBaseTestCase {
     }
 
     @Test
-    public void add() {
-        String source_id = "1000000001";
+    public void save() {
+        String source_id = "1000000003";
         String datasource_name = "cs";
         String datasource_number = "cs01";
         String create_date = DateUtil.getSysDate();
         String create_time = DateUtil.getDateTime(DateTimeFormatter.ofPattern("HHmmss"));
         String user_id = "1001";
         String source_remark = "测试";
-        String depIds = "1000000011,1000000012,1000000013";
+        String dep_id = "1000000011,1000000012,1000000013";
         String bodyString = new HttpClient()
                 .addData("source_id", source_id)
                 .addData("source_remark", source_remark)
@@ -70,8 +79,9 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .addData("create_date", create_date)
                 .addData("create_time", create_time)
                 .addData("user_id", user_id)
-                .addData("depIds", depIds)
-                .post(getActionUrl("add")).getBodyString();
+                .addData("dep_id", dep_id)
+                .post(getActionUrl("saveDataSource")).getBodyString();
+        System.out.println(bodyString);
         ActionResult ar = JsonUtil.toObject(bodyString, ActionResult.class);
         assertThat(ar.isSuccess(), is(true));
         // 验证DB里面的数据是否正确
@@ -88,60 +98,57 @@ public class DataSourceActionTest extends WebBaseTestCase {
             assertThat(create_time, is(new_create_time));
             assertThat(new BigDecimal(user_id), is(new_user_id));
 
-            for (String dep_id : depIds.split(",")) {
-                Map<String, Object> SRDResult = SqlOperator.queryOneObject(db,
-                        "select * from " + SRDTableName + " where dep_id=?", new BigDecimal(dep_id));
-                BigDecimal new_source_id = (BigDecimal) SRDResult.get("source_id");
-                assertThat(new BigDecimal(source_id), is(new_source_id));
-            }
+            Map<String, Object> SRDResult = SqlOperator.queryOneObject(db,
+                    "select count(*) count from " + SRDTableName + " where source_id=?", new BigDecimal(source_id));
+            int count = (int) SRDResult.get("count");
+            assertThat(dep_id.length(), is(count));
         }
     }
 
     @Test
-    public void updateDataSource() {
-        String source_id = "1000000001";
-        String depIds = "1000000001,1000000002";
-        String datasource_name = "ceshi2";
+    public void update() {
+        String source_id = "1000000003";
+        String datasource_name = "cs2";
+        String datasource_number = "cs02";
+        String create_date = DateUtil.getSysDate();
+        String create_time = DateUtil.getDateTime(DateTimeFormatter.ofPattern("HHmmss"));
+        String user_id = "1001";
         String source_remark = "测试2";
-        String responseValue = new HttpClient()
+        String dep_id = "1000000011";
+        String bodyString = new HttpClient()
                 .addData("source_id", source_id)
-                .addData("depIds", depIds)
-                .addData("datasource_name", datasource_name)
                 .addData("source_remark", source_remark)
-                .post(getActionUrl("updateDataSource"))
-                .getBodyString();
-        ActionResult ar = JsonUtil.toObject(responseValue, ActionResult.class);
+                .addData("datasource_name", datasource_name)
+                .addData("datasource_number", datasource_number)
+                .addData("create_date", create_date)
+                .addData("create_time", create_time)
+                .addData("user_id", user_id)
+                .addData("dep_id", dep_id)
+                .post(getActionUrl("saveDataSource")).getBodyString();
+        System.out.println(bodyString);
+        ActionResult ar = JsonUtil.toObject(bodyString, ActionResult.class);
         assertThat(ar.isSuccess(), is(true));
-
         // 验证DB里面的数据是否正确
         try (DatabaseWrapper db = new DatabaseWrapper()) {
-            // 验证data_source表信息
             Map<String, Object> result = SqlOperator.queryOneObject(db,
                     "select * from " + DSTableName + " where source_id=?", new BigDecimal(source_id));
             String new_datasource_name = (String) result.get("datasource_name");
-            String new_source_remark = (String) result.get("source_remark");
             assertThat(datasource_name, is(new_datasource_name));
-            assertThat(source_remark, is(new_source_remark));
 
-            // 验证source_relation_dep表信息
-            for (String dep_id : depIds.split(",")) {
-                Map<String, Object> stringObjectMap = SqlOperator.queryOneObject(db,
-                        "select * from " + SRDTableName + " where dep_id=?", new BigDecimal(dep_id));
-                BigDecimal new_dep_id = (BigDecimal) stringObjectMap.get("dep_id");
-                BigDecimal new_source_id = (BigDecimal) stringObjectMap.get("source_id");
-                assertThat(new BigDecimal(dep_id), is(new_dep_id));
-                assertThat(new BigDecimal(source_id), is(new_source_id));
-            }
+            Map<String, Object> SRDResult = SqlOperator.queryOneObject(db,
+                    "select count(*) count from " + SRDTableName + " where source_id=?", new BigDecimal(source_id));
+            int count = (int) SRDResult.get("count");
+            assertThat(dep_id.length(), is(count));
         }
     }
 
     @Test
     public void deleteDataSource() {
         try (DatabaseWrapper db = new DatabaseWrapper()) {
-            String source_id = "1000000001";
+            String source_id = "1000000003";
             // 验证DB里面预期被删除的数据是存在的
             OptionalLong result = SqlOperator.queryNumber(db,
-                    "select count(1) from " + DataSource.TableName + " where source_id=?", source_id);
+                    "select count(1) from " + DataSource.TableName + " where source_id=?", new BigDecimal(source_id));
             assertThat(result.orElse(Long.MIN_VALUE), is(1L)); // 被删除前为1
 
             // 业务处理
@@ -154,7 +161,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 
             // 验证DB里面的数据是否正确
             result = SqlOperator.queryNumber(db,
-                    "select count(1) from " + DataSource.TableName + " where source_id=?", source_id);
+                    "select count(1) from " + DataSource.TableName + " where source_id=?", new BigDecimal(source_id));
             assertThat(result.orElse(Long.MIN_VALUE), is(0L)); // 被删除了所以为0
         }
     }
@@ -165,8 +172,9 @@ public class DataSourceActionTest extends WebBaseTestCase {
             String source_id = "1000000001";
             // 验证DB里面预期被删除的数据是存在的
             OptionalLong result = SqlOperator.queryNumber(db,
-                    "select count(1) from " + SourceRelationDep.TableName + " where source_id=?", source_id);
+                    "select count(1) from " + SourceRelationDep.TableName + " where source_id=?", new BigDecimal(source_id));
             assertThat(result.orElse(Long.MIN_VALUE), is(3L)); // 被删除前为3
+
             // 业务处理
             String responseValue = new HttpClient()
                     .addData("source_id", source_id)
@@ -177,8 +185,61 @@ public class DataSourceActionTest extends WebBaseTestCase {
 
             // 验证DB里面的数据是否正确
             result = SqlOperator.queryNumber(db,
-                    "select count(1) from " + SourceRelationDep.TableName + " where source_id=?", source_id);
+                    "select count(1) from " + SourceRelationDep.TableName + " where source_id=?", new BigDecimal(source_id));
             assertThat(result.orElse(Long.MIN_VALUE), is(0L)); // 被删除了所以为0
+        }
+    }
+
+    @Test
+    public void saveAgent() {
+        String agent_id = "1000000001";
+        String agent_name = "数据库agent";
+        String agent_type = "1";
+        String agent_ip = "10.71.4.51";
+        String agent_port = "3456";
+        String agent_status = "0";
+        String create_date = DateUtil.getSysDate();
+        String create_time = DateUtil.getDateTime(DateTimeFormatter.ofPattern("HHmmss"));
+        String source_id = "1000000001";
+        int user_id = 1001;
+        String saveAgent = new HttpClient().addData("agent_id", agent_id)
+                .addData("agent_name", agent_name)
+                .addData("agent_type", agent_type)
+                .addData("agent_ip", agent_ip)
+                .addData("agent_port", agent_port)
+                .addData("agent_status", agent_status)
+                .addData("create_date", create_date)
+                .addData("create_time", create_time)
+                .addData("source_id", source_id)
+                .addData("user_id	", user_id)
+                .post(getActionUrl("saveAgent")).getBodyString();
+        ActionResult actionResult = JsonUtil.toObject(saveAgent, ActionResult.class);
+        System.out.println(saveAgent);
+        assertThat(actionResult.isSuccess(), is(true));
+
+        // 验证DB里面的数据是否正确
+        try (DatabaseWrapper db = new DatabaseWrapper()) {
+            Map<String, Object> result = SqlOperator.queryOneObject(db,
+                    "select * from " + AgentInfo.TableName + " where agent_id=?", new BigDecimal(agent_id));
+            String new_agent_name = (String) result.get("agent_name");
+            String new_agent_type = (String) result.get("agent_type");
+            String new_agent_ip = (String) result.get("agent_ip");
+            String new_agent_port = (String) result.get("agent_port");
+            String new_agent_status = (String) result.get("agent_status");
+            String new_create_date = (String) result.get("create_date");
+            String new_create_time = (String) result.get("create_time");
+            BigDecimal new_source_id = (BigDecimal) result.get("source_id");
+            BigDecimal new_user_id = (BigDecimal) result.get("user_id");
+
+            assertThat(agent_name, is(new_agent_name));
+            assertThat(agent_type, is(new_agent_type));
+            assertThat(agent_ip, is(new_agent_ip));
+            assertThat(agent_port, is(new_agent_port));
+            assertThat(agent_status, is(new_agent_status));
+            assertThat(create_date, is(new_create_date));
+            assertThat(create_time, is(new_create_time));
+            assertThat(new BigDecimal(source_id), is(new_source_id));
+            assertThat(new BigDecimal(user_id), is(new_user_id));
         }
     }
 
