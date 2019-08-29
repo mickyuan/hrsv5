@@ -3,24 +3,69 @@ package hrds.codes;
 /**代码类型名：流数据申请状态  */
 public enum FlowApplyStatus {
 	/**未申请<WeiShenQing>  */
-	WeiShenQing("1","未申请","146"),
+	WeiShenQing("1","未申请","146","流数据申请状态"),
 	/**申请中<ShenQingZhong>  */
-	ShenQingZhong("2","申请中","146"),
+	ShenQingZhong("2","申请中","146","流数据申请状态"),
 	/**申请通过<ShenQingTongGuo>  */
-	ShenQingTongGuo("3","申请通过","146"),
+	ShenQingTongGuo("3","申请通过","146","流数据申请状态"),
 	/**申请不通过<ShenQingBuTongGuo>  */
-	ShenQingBuTongGuo("4","申请不通过","146");
+	ShenQingBuTongGuo("4","申请不通过","146","流数据申请状态");
 
 	private final String code;
 	private final String value;
 	private final String catCode;
+	private final String catValue;
 
-	FlowApplyStatus(String code,String value,String catCode){
+	FlowApplyStatus(String code,String value,String catCode,String catValue){
 		this.code = code;
 		this.value = value;
 		this.catCode = catCode;
+		this.catValue = catValue;
 	}
 	public String getCode(){return code;}
 	public String getValue(){return value;}
 	public String getCatCode(){return catCode;}
+	public String getCatValue(){return catValue;}
+
+	/**根据指定的代码值转换成中文名字
+	* @param code   本代码的代码值
+	* @return
+	*/
+	public static String getValue(String code) {
+		for (FlowApplyStatus typeCode : FlowApplyStatus.values()) {
+			if (typeCode.getCode().equals(code)) {
+				return typeCode.value;
+			}
+		}
+		return null;
+	}
+
+	/**根据指定的代码值转换成对象
+	* @param code   本代码的代码值
+	* @return
+	*/
+	public static FlowApplyStatus getCodeObj(String code) {
+		for (FlowApplyStatus typeCode : FlowApplyStatus.values()) {
+			if (typeCode.getCode().equals(code)) {
+				return typeCode;
+			}
+		}
+		return null;
+	}
+
+	/**
+	* 获取代码项的中文类名名称
+	* @return
+	*/
+	public static String getObjCatValue(){
+		return FlowApplyStatus.values()[0].getCatValue();
+	}
+
+	/**
+	* 获取代码项的分类代码
+	* @return
+	*/
+	public static String getObjCatCode(){
+		return FlowApplyStatus.values()[0].getCatCode();
+	}
 }

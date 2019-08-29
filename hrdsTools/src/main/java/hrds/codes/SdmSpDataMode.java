@@ -3,20 +3,65 @@ package hrds.codes;
 /**代码类型名：StreamingPro输入的数据模式  */
 public enum SdmSpDataMode {
 	/**批量表<PILIANGBIAO>  */
-	PILIANGBIAO("1","批量表","150"),
+	PILIANGBIAO("1","批量表","150","StreamingPro输入的数据模式"),
 	/**流表<LIUBIAO>  */
-	LIUBIAO("2","流表","150");
+	LIUBIAO("2","流表","150","StreamingPro输入的数据模式");
 
 	private final String code;
 	private final String value;
 	private final String catCode;
+	private final String catValue;
 
-	SdmSpDataMode(String code,String value,String catCode){
+	SdmSpDataMode(String code,String value,String catCode,String catValue){
 		this.code = code;
 		this.value = value;
 		this.catCode = catCode;
+		this.catValue = catValue;
 	}
 	public String getCode(){return code;}
 	public String getValue(){return value;}
 	public String getCatCode(){return catCode;}
+	public String getCatValue(){return catValue;}
+
+	/**根据指定的代码值转换成中文名字
+	* @param code   本代码的代码值
+	* @return
+	*/
+	public static String getValue(String code) {
+		for (SdmSpDataMode typeCode : SdmSpDataMode.values()) {
+			if (typeCode.getCode().equals(code)) {
+				return typeCode.value;
+			}
+		}
+		return null;
+	}
+
+	/**根据指定的代码值转换成对象
+	* @param code   本代码的代码值
+	* @return
+	*/
+	public static SdmSpDataMode getCodeObj(String code) {
+		for (SdmSpDataMode typeCode : SdmSpDataMode.values()) {
+			if (typeCode.getCode().equals(code)) {
+				return typeCode;
+			}
+		}
+		return null;
+	}
+
+	/**
+	* 获取代码项的中文类名名称
+	* @return
+	*/
+	public static String getObjCatValue(){
+		return SdmSpDataMode.values()[0].getCatValue();
+	}
+
+	/**
+	* 获取代码项的分类代码
+	* @return
+	*/
+	public static String getObjCatCode(){
+		return SdmSpDataMode.values()[0].getCatCode();
+	}
 }
