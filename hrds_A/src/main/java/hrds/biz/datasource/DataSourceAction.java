@@ -158,20 +158,22 @@ public class DataSourceAction extends AbstractWebappBaseAction {
      */
     public String deleteDataSource(String source_id) {
 
-        // 先查询该datasource下是否还有agent,有不能删除，没有，可以删除
-        Result result = Dbo.queryResult("SELECT * FROM agent_info WHERE source_id=? ", new BigDecimal(source_id));
         String status = "0";
-        if (!result.isEmpty()) {
-            // 此数据源下还有agent，不能删除
-            status = "1";
-            return status;
-        }
+        // 先查询该datasource下是否还有agent,有不能删除，没有，可以删除
+        try (DatabaseWrapper db = new DatabaseWrapper()){
+            Result result = SqlOperator.queryResult(db, "SELECT * FROM agent_info WHERE source_id=? ", new BigDecimal(source_id));
+            if (!result.isEmpty()) {
+                // 此数据源下还有agent，不能删除
+                status = "1";
+                return status;
+            }
 
-        // 删除data_source表信息
-        int num = Dbo.execute("delete from " + DataSource.TableName + " where source_id=?", new BigDecimal(source_id));
-        if (num != 1) {
-            // 删除数据异常
-            status = "2";
+            // 删除data_source表信息
+            int num = Dbo.execute("delete from " + DataSource.TableName + " where source_id=?", new BigDecimal(source_id));
+            if (num != 1) {
+                // 删除数据异常
+                status = "2";
+            }
         }
 
         // 删除source_relation_dep信息
