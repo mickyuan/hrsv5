@@ -36,10 +36,6 @@ import java.util.Random;
 public class DataSourceAction extends AbstractWebappBaseAction {
     private static final Logger logger = LogManager.getLogger();
 
-    public static void main(String[] args) {
-
-    }
-
     /**
      * 新增/编辑数据源
      */
