@@ -80,7 +80,7 @@ public class DataSourceAction extends AbstractWebappBaseAction {
      * 保存数据源与部门关系表信息
      *
      * @param source_id 数据源编号
-     * @param depIds    部门编号
+     * @param dep_id    部门编号
      * @return
      */
     public String saveSourceRelationDep(String source_id, String dep_id) {
