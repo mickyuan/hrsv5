@@ -2,4 +2,5 @@ rootProject.name = 'hrsv5'
 include 'hrds_A'
 include 'hrds_B'
 include 'hrdsTools'
+include 'hrds_Agent'
 
