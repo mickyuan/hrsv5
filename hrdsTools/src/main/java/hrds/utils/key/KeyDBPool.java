@@ -68,6 +68,7 @@ class KeyDBPool {
                 throw new BusinessException("DB data select exception: keytable select fail!");
             }
             keyFromDB = rs.getInt(0, "key_value");
+            SqlOperator.commitTransaction(db);
         }
         keyMax = keyFromDB;
         keyMin = keyFromDB - poolSize + 1;
