@@ -1,3 +1,0 @@
-dependencies {
-    compile group: 'net.viktorc', name: 'pp4j', version: '2.2'
-}
