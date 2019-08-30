@@ -53,7 +53,7 @@ public enum AutoDataOperator {
 				return typeCode.value;
 			}
 		}
-		return null;
+		throw new RuntimeException("根据"+code+"没有找到对应的代码项");
 	}
 
 	/**根据指定的代码值转换成对象
@@ -66,7 +66,7 @@ public enum AutoDataOperator {
 				return typeCode;
 			}
 		}
-		return null;
+		throw new RuntimeException("根据code没有找到对应的代码项");
 	}
 
 	/**
