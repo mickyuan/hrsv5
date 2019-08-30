@@ -1,19 +1,16 @@
 package hrds.exception;
 
 import fd.ng.core.exception.BusinessSystemException;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class AppSystemException extends BusinessSystemException {
-	private static final Logger logger = LogManager.getLogger();
-	public AppSystemException(Throwable cause) {
+	public AppSystemException(final String msg) { super(msg);
+	}
+	public AppSystemException(final Throwable cause) {
 		super(cause);
-		logger.error(String.format("%s | %s%s |", getMessage(), ERRCODE_LOGPREFIX, errorCode), cause);
 	}
 
-	public AppSystemException(String msg, Throwable cause) {
+	public AppSystemException(final String msg, Throwable cause) {
 		super(msg, cause);
-		logger.error(String.format("%s | %s%s |", getMessage(), ERRCODE_LOGPREFIX, errorCode), cause);
 	}
 
 	/**
@@ -24,6 +21,5 @@ public class AppSystemException extends BusinessSystemException {
 	 */
 	public AppSystemException(String canbeGettedMessage, String loggedMessage, Throwable cause) {
 		super(canbeGettedMessage, loggedMessage, cause);
-		logger.error(String.format("%s | %s%s | %s |", getMessage(), ERRCODE_LOGPREFIX, errorCode, loggedMessage), cause);
 	}
 }
