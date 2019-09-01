@@ -1,3 +1,5 @@
+import org.junit.Test;
+
 /**
  * @ClassName: AgentTest
  * @Description: Agent测试类
@@ -6,5 +8,8 @@
  * @Since: JDK 1.8
  **/
 public class AgentTest {
-
+    @Test
+    public void test(){
+        System.out.println("-------------");
+    }
 }
