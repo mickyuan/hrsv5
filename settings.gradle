@@ -3,4 +3,6 @@ include 'hrds_A'
 include 'hrds_B'
 include 'hrdsTools'
 include 'hrds_Agent'
+include 'hrds_Trigger'
+include 'hrds_Control'
 

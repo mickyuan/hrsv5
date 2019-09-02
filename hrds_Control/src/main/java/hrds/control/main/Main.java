@@ -2,7 +2,7 @@ package hrds.control.main;
 
 import java.time.LocalDate;
 
-import hrds.control.constans.JobStatus;
+import hrds.codes.Job_Status;
 
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.StringUtil;
@@ -72,7 +72,7 @@ public class Main {
 		 * 3、若以续跑的方式启动调度服务，续跑日期与当前批量日期不一致，则抛出异常。
 		 */
 		//TODO 使用自动生成的代码项，etlSys.getSys_run_status()要转换为枚举类，用AppException
-		if(!JobStatus.STOP.getCode().equals(etlSys.getSys_run_status())) {
+		if(!Job_Status.STOP.getCode().equals(etlSys.getSys_run_status())) {
 			throw new IllegalArgumentException("调度系统不在停止状态：" + strSystemCode);
 		}else if(isResumeRun){
 			LocalDate currBathDate = DateUtil.parseStr2DateWith8Char(etlSys.getCurr_bath_date());

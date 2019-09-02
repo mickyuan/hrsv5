@@ -5,9 +5,7 @@ import java.util.*;
 
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
-import hrds.control.beans.*;
-import hrds.control.constans.JobEffectiveFlag;
-import hrds.control.core.MetaInfoInterface;
+import hrds.codes.Job_Effective_Flag;
 import hrds.entity.Etl_job_def;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -31,16 +29,16 @@ public class TaskController implements Runnable, Serializable {
 	//任务触发毫秒数，每日触发一次
 	private final static Long TRIGGER_TIME = 24 * 60 * 60 * 1000L;
 
-	private final TaskInfo task;
-
-	public TaskController(TaskInfo task) {
-		this.task = task;
-	}
+//	private final TaskInfo task;
+//
+//	public TaskController(TaskInfo task) {
+//		this.task = task;
+//	}
 
 	@Override
 	public void run() {
 
-		String taskId = task.getTaskId();
+//		String taskId = task.getTaskId();
 //		logger.info("开始执行任务，任务编号为：{}", taskId);
 //		//创建任务状态文件
 //		String taskStatusFile = ProductFileUtil.getTaskStatusFilePath(taskId);
@@ -66,7 +64,7 @@ public class TaskController implements Runnable, Serializable {
 //			timer.schedule(timerTask, 0);//立即执行的作业
 //		}
 
-		logger.info("任务执行完成，任务编号为：{}", taskId);
+//		logger.info("任务执行完成，任务编号为：{}", taskId);
 	}
 
 	/**
@@ -111,58 +109,7 @@ public class TaskController implements Runnable, Serializable {
 
 			return SqlOperator.queryList(db, Etl_job_def.class,
 							"SELECT * FROM etl_job_def WHERE etl_sys_cd = ? AND job_eff_flag != ?",
-							taskId, JobEffectiveFlag.NO.getCode());
-		}
-	}
-
-	/**
-	 *
-	 * ClassName: AgentTimerTask <br/>
-	 * Function: Timer任务实现类. <br/>
-	 * Reason: 使用Timer来分配作业. <br/>
-	 * Date: 2019年8月1日 下午5:49:25 <br/>
-	 *
-	 * @author 13616
-	 * @version	1.0
-	 * @since JDK 1.7
-	 */
-	private class AgentTimerTask extends TimerTask implements MetaInfoInterface {
-
-		private final List<JobInfo> jobs;
-		private final JobParamBean jobParam;
-		private final DBConfigBean dbConfig;
-		private final String taskStatusFile;
-		//TODO 此处还应该构造执行时间对象，用来描述执行周期（不需要执行日期时间）
-		private AgentTimerTask(List<JobInfo> jobs, JobParamBean jobParam, DBConfigBean dbConfig, String taskStatusFile) {
-			this.jobs = jobs;
-			this.jobParam = jobParam;
-			this.dbConfig = dbConfig;
-			this.taskStatusFile = taskStatusFile;
-		}
-		@Override
-		public void run() {
-			//TODO 周期性任务，代码待补充
-//			Calendar calendar = Calendar.getInstance();
-//			int day = calendar.get(Calendar.DAY_OF_MONTH);
-//			if(day != 30) {	//每月30日执行一次
-//				return;
-//			}
-			//TODO 这里要考虑作业的并行、串行执行，对并行任务开启线程执行，对串行任务等待前置作业
-			//TODO 此处考虑线程池，可防止作业无法提交的问题，也可以用于获得所有作业执行完毕的标识
-			for(JobInfo job : jobs) {
-				JobThread jobThread = new JobThread(job, jobParam, dbConfig, taskStatusFile);
-				jobThread.start();
-			}
-		}
-
-		@Override
-		public List<MetaInfoBean> getMetaInfoGroup() {
-			throw new UnsupportedOperationException("还未支持的操作");
-		}
-
-		@Override
-		public MetaInfoBean getMetaInfo() {
-			throw new UnsupportedOperationException("还未支持的操作");
+							taskId, Job_Effective_Flag.NO.getCode());
 		}
 	}
 
@@ -179,24 +126,24 @@ public class TaskController implements Runnable, Serializable {
 	 */
 	private class JobThread extends Thread {
 
-		private final JobInfo jobInfo;
-		private final JobParamBean jobParam;
-		private final DBConfigBean dbConfig;
-		private final String taskStatusFile;
-
-		private JobThread(JobInfo job, JobParamBean jobParam, DBConfigBean dbConfig, String taskStatusFile) {
-
-			this.jobInfo = job;
-			this.jobParam = jobParam;
-			this.dbConfig = dbConfig;
-			this.taskStatusFile = taskStatusFile;
-		}
+//		private final JobInfo jobInfo;
+//		private final JobParamBean jobParam;
+//		private final DBConfigBean dbConfig;
+//		private final String taskStatusFile;
+//
+//		private JobThread(JobInfo job, JobParamBean jobParam, DBConfigBean dbConfig, String taskStatusFile) {
+//
+//			this.jobInfo = job;
+//			this.jobParam = jobParam;
+//			this.dbConfig = dbConfig;
+//			this.taskStatusFile = taskStatusFile;
+//		}
 
 		@Override
 		public void run() {
 
-			String jobId = jobInfo.getJobId();
-			logger.info("开始执行作业，作业编号为：{}", jobId);
+//			String jobId = jobInfo.getJobId();
+//			logger.info("开始执行作业，作业编号为：{}", jobId);
 //
 //			String taskId = task.getTaskId();
 //			JobStatusInfo jobStatus = new JobStatusInfo();
@@ -225,7 +172,7 @@ public class TaskController implements Runnable, Serializable {
 //			if(!ProductFileUtil.createStatusFile(statusFilePath, JSONObject.toJSONString(jobStatus))) {
 //				throw new IllegalStateException("无法创建作业状态文件：" + taskId + "，作业编号：" + jobId);
 //			}
-			logger.info("作业执行结束，作业编号为：{}", jobId);
+//			logger.info("作业执行结束，作业编号为：{}", jobId);
 		}
 	}
 }

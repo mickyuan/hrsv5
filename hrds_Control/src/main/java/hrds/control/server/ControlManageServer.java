@@ -3,7 +3,6 @@ package hrds.control.server;
 import java.time.LocalDate;
 import java.util.List;
 
-import hrds.control.beans.TaskInfo;
 import hrds.control.task.manager.TaskManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -74,8 +73,8 @@ public class ControlManageServer {
 		public void run() {
 
 			while( run ) {
-				List<TaskInfo> tasks = taskManager.getReadyTask();
-				taskManager.executeTask(tasks);
+//				List<TaskInfo> tasks = taskManager.getReadyTask();
+//				taskManager.executeTask(tasks);
 				try {
 					Thread.sleep(3000);
 				}
