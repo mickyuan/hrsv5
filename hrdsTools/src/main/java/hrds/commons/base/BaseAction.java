@@ -16,7 +16,7 @@ public class BaseAction extends AbstractWebappBaseAction {
 
     @Override
     protected ActionResult _doPreProcess(HttpServletRequest request) {
-        User user = getUser(request);
+        User user = ActionUtil.getUser();
         if (user == null) {
             return ActionResultHelper.bizError("no cookies");
         }
@@ -27,8 +27,22 @@ public class BaseAction extends AbstractWebappBaseAction {
         return null; // 验证通过
     }
 
-    protected User getUser(HttpServletRequest request) {
-
-        return ActionUtil.getUser(request);
+    /**
+     * 获取当前登录的用户ID信息
+     *
+     * @return
+     */
+    protected Long getUserId() {
+        User user = ActionUtil.getUser();
+        return user.getUserId();
+    }
+    /**
+     * 获取当前登录用户的用户名字信息
+     *
+     * @return
+     */
+    protected String getUserName() {
+        User user = ActionUtil.getUser();
+        return user.getUserName();
     }
 }
