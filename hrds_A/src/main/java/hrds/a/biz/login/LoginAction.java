@@ -54,14 +54,12 @@ public class LoginAction extends BaseAction {
 		 * 2 : 密码为空
 		 */
 		String user_id = request.getParameter("username");
-		System.out.println("==========>" + user_id);
 
 		//1 : 用户名为空
 		if( StringUtil.isBlank(user_id + "") ) {
 			throw new BusinessException(ExceptionEnum.USER_NOT_EMPTY.getMessage());
 		}
 		String pwd = request.getParameter("password");
-		System.out.println("==============" + pwd);
 		//2 : 密码为空
 		if( StringUtil.isBlank(pwd) ) {
 			throw new BusinessException(ExceptionEnum.USER_PWD_EMPTY.getMessage());
