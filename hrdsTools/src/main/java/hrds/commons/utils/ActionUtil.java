@@ -14,8 +14,8 @@ public class ActionUtil {
      *
      * @return
      */
-    public static hrds.commons.utils.User getUser() {
-        hrds.commons.utils.User user = new User();
+    public static User getUser() {
+        User user = new User();
         try {
             //这样便可以获取一个cookie数组
             User userCookie = RequestUtil.getCookieObject(_userCookieName, user.getClass());
