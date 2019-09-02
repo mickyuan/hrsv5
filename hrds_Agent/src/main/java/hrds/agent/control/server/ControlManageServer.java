@@ -60,7 +60,7 @@ public class ControlManageServer {
 		logger.info("调度服务停止成功");
 	}
 
-	//TODO 多线程
+	//TODO 考虑多线程
 	private class CMServerThread extends Thread {
 
 		private volatile boolean run = true;

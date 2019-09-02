@@ -8,6 +8,7 @@ import hrds.beans.ServerResponse;
 import hrds.beans.TaskInfo;
 import hrds.beans.TaskStatusInfo;
 import hrds.constans.IsFlag;
+import hrds.constans.JobEffectiveFlag;
 import hrds.constans.RunStatusConstant;
 import hrds.constans.RunTypeConstant;
 import hrds.entity.Etl_job_def;
@@ -25,6 +26,7 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -76,12 +78,12 @@ public class TaskManager {
 	 */
 	private TaskManager(LocalDate bathDate, String strSystemCode, boolean isResumeRun, boolean isAutoShift) {
 
+//		initWorkDir();
 		this.bathDate = bathDate;
 		this.strSystemCode = strSystemCode;
 		this.isResumeRun = isResumeRun;
 		this.isAutoShift = isAutoShift;
 
-//		initWorkDir();
 		try {
 			this.jvmPool = new JavaProcessPoolExecutor(new SimpleJavaProcessOptions(JVMArch.BIT_64, JVMType.CLIENT,
 					40, 256, 256, 3000),
@@ -103,6 +105,7 @@ public class TaskManager {
 	}
 
 	/**
+	 * TODO 如果不存在任务写文件的情况（目前是所有信息查询数据库），则不需要该方法
 	 * 生成任务的接口，创建任务及作业的工作环境
 	 * @author   13616
 	 * @date     2019/7/30 17:52
@@ -135,6 +138,7 @@ public class TaskManager {
 //	}
 
 	/**
+	 * TODO 如果不存在任务写文件的情况（目前是所有信息查询数据库），则不需要该方法
 	 * 创建任务的接口，用于生成任务的配置文件、工作目录、状态文件
 	 * @author   13616
 	 * @date     2019/7/31 11:57
@@ -173,6 +177,7 @@ public class TaskManager {
 	}
 
 	/**
+	 * TODO 如果不存在任务写文件的情况（目前是所有信息查询数据库），则不需要该方法
 	 * 创建作业的接口，生成作业描述文件以及作业状态文件。
 	 * @author   13616
 	 * @date     2019/7/30 17:48
@@ -211,7 +216,7 @@ public class TaskManager {
 	 * @return   java.util.List<com.beyondsoft.agent.beans.TaskInfo>
 	 */
 	public List<TaskInfo> getReadyTask() {
-
+		//TODO 如果要实现任务下线程的方式启动，则需要在jar（job）中实现一套接口，用于调度系统线程方式调起任务
 		//第一步，读取每个任务信息
 //		List<File> files = FileUtil.getAllFilesByFileSuffix(ProductFileUtil.TASKCONF_ROOT_PATH, ProductFileUtil.TASK_FILE_SUFFIX);
 		List<TaskInfo> tasks = new ArrayList<>();
@@ -231,15 +236,6 @@ public class TaskManager {
 //		}
 
 		return tasks;
-	}
-
-	private void getAllJob() {
-
-		try( DatabaseWrapper db = new DatabaseWrapper() ) {
-
-			List<Etl_job_def> etlJobDef = SqlOperator.queryList(db, Etl_job_def.class, "select * from etl_job_def where etl_sys_cd = ? and job_eff_flag != 'N'", null);
-		}
-
 	}
 
 	/**
