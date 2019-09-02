@@ -1,4 +1,6 @@
 package hrds.commons.codes;
+
+import hrds.commons.exception.AppSystemException;
 /**Created by automatic  */
 /**代码类型名：可视化数据汇总类型  */
 public enum AutoDataSumType {
@@ -43,7 +45,7 @@ public enum AutoDataSumType {
 				return typeCode.value;
 			}
 		}
-		throw new RuntimeException("根据"+code+"没有找到对应的代码项");
+		throw new AppSystemException("根据"+code+"没有找到对应的代码项");
 	}
 
 	/**根据指定的代码值转换成对象
@@ -56,7 +58,7 @@ public enum AutoDataSumType {
 				return typeCode;
 			}
 		}
-		throw new RuntimeException("根据"+code+"没有找到对应的代码项");
+		throw new AppSystemException("根据"+code+"没有找到对应的代码项");
 	}
 
 	/**

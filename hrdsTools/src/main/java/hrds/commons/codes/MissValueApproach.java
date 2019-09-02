@@ -1,4 +1,6 @@
 package hrds.commons.codes;
+
+import hrds.commons.exception.AppSystemException;
 /**Created by automatic  */
 /**代码类型名：缺失值处理方式  */
 public enum MissValueApproach {
@@ -41,7 +43,7 @@ public enum MissValueApproach {
 				return typeCode.value;
 			}
 		}
-		throw new RuntimeException("根据"+code+"没有找到对应的代码项");
+		throw new AppSystemException("根据"+code+"没有找到对应的代码项");
 	}
 
 	/**根据指定的代码值转换成对象
@@ -54,7 +56,7 @@ public enum MissValueApproach {
 				return typeCode;
 			}
 		}
-		throw new RuntimeException("根据"+code+"没有找到对应的代码项");
+		throw new AppSystemException("根据"+code+"没有找到对应的代码项");
 	}
 
 	/**

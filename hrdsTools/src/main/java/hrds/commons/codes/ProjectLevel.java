@@ -1,4 +1,6 @@
 package hrds.commons.codes;
+
+import hrds.commons.exception.AppSystemException;
 /**Created by automatic  */
 /**代码类型名：作业操作类型  */
 public enum ProjectLevel {
@@ -57,7 +59,7 @@ public enum ProjectLevel {
 				return typeCode.value;
 			}
 		}
-		throw new RuntimeException("根据"+code+"没有找到对应的代码项");
+		throw new AppSystemException("根据"+code+"没有找到对应的代码项");
 	}
 
 	/**根据指定的代码值转换成对象
@@ -70,7 +72,7 @@ public enum ProjectLevel {
 				return typeCode;
 			}
 		}
-		throw new RuntimeException("根据"+code+"没有找到对应的代码项");
+		throw new AppSystemException("根据"+code+"没有找到对应的代码项");
 	}
 
 	/**
