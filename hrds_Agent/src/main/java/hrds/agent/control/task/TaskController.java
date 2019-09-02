@@ -6,10 +6,14 @@ import java.io.Serializable;
 import java.util.*;
 
 import fd.ng.core.utils.DateUtil;
+import fd.ng.db.jdbc.DatabaseWrapper;
+import fd.ng.db.jdbc.SqlOperator;
 import hrds.agent.control.core.MetaInfoInterface;
 import hrds.beans.*;
+import hrds.constans.JobEffectiveFlag;
 import hrds.constans.RunStatusConstant;
 import hrds.constans.RunTypeConstant;
+import hrds.entity.Etl_job_def;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -71,29 +75,49 @@ public class TaskController implements Runnable, Serializable {
 	}
 
 	/**
-	 * 获取任务下需要马上执行的作业
-	 * @author   13616
-	 * @date     2019/8/1 11:28
-	 *
-	 * @param taskPath	任务所在的目录地址
-	 * @return   java.util.List<com.beyondsoft.agent.beans.JobInfo>	作业集合
+	 * 根据系统编号获取需要立即启动的作业信息，此处会判断作业触发方式、
+	 * 是否达成触发条件、资源是否足够启动作业、作业依赖等条件。
+	 * @author Tiger.Wang
+	 * @date 2019/8/31
+	 * @param taskId 作业编号，其实是调度系统编号（etl_sys_cd）
+	 * @return java.util.List<hrds.entity.Etl_job_def>
 	 */
-	private List<JobInfo> getReadyJob(String taskPath) {
+	private List<Etl_job_def> getReadyJob(String taskId) {
 
-//		List<File> files = FileUtil.getAllFilesByFileSuffix(taskPath, ProductFileUtil.JOB_FILE_SUFFIX);
-		List<JobInfo> jobs = new ArrayList<>();
-//		try {
-//			for(File file : files) {
-//				String jobStr = FileUtil.readFile2String(file);
-//				JobInfo job = JSONObject.parseObject(jobStr, JobInfo.class);
-//				jobs.add(job);
-//			}
-//		}
-//		catch(IOException e) {
-//			throw new IllegalStateException("读取作业信息失败：" + e.getMessage());
-//		}
+		List<Etl_job_def> readyJobs = new ArrayList<>();
 
-		return jobs;
+		List<Etl_job_def> allJobs = getAllJob(taskId);
+		for(Etl_job_def job : allJobs) {
+			//TODO 此处的F在[ETL调度类型]代码项中不存在？
+			if(job.getDisp_type().equals("F")) {
+				//TODO ETL_JOB改为ETL_JOB_CUR
+				//TODO 此处不甚理解，1、ETL_JOB（作业调度表）、ETL_JOB_DEF（作业定义表）有什么区别，
+				//TODO 为什么getFJob方法里会去查这两张表，对于要调度的作业来说难道不应该统一在一张表中吗？
+				//TODO 引出另外的一个问题，jobFrequencyMap声明为全局私有静态意义何在
+//				int ii = getFJob(job.getEtl_job(), taskId, "def");
+//				if( ii != 1 ) {
+//					jobFrequencyMap.put(job.getEtl_job(), job);
+//				}
+			}
+		}
+
+		return readyJobs;
+	}
+
+	/**
+	 * 根据系统编号获取作业信息，无效作业不会被查询出来
+	 * @author Tiger.Wang
+	 * @date 2019/8/31
+	 * @return java.util.List<hrds.entity.Etl_job_def>
+	 */
+	private List<Etl_job_def> getAllJob(String taskId) {
+
+		try(DatabaseWrapper db = new DatabaseWrapper()) {
+
+			return SqlOperator.queryList(db, Etl_job_def.class,
+							"SELECT * FROM etl_job_def WHERE etl_sys_cd = ? AND job_eff_flag != ?",
+							taskId, JobEffectiveFlag.NO.getCode());
+		}
 	}
 
 	/**

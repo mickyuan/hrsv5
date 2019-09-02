@@ -41,8 +41,8 @@ public class Main {
 		}
 
 		String strBathDate = args[0];	//跑批批次日期
-		LocalDate bathDate = DateUtil.parseStr2DateWith8Char(strBathDate);
-		if(null == bathDate){	//此处隐式的验证字符串日期是否格式正确
+		LocalDate bathDate = DateUtil.parseStr2DateWith8Char(strBathDate);//此处隐式的验证字符串日期是否格式正确
+		if(null == bathDate){
 			throw new IllegalArgumentException("非法[跑批日期]参数：" + strBathDate);
 		}
 
@@ -60,6 +60,7 @@ public class Main {
 
 		String strSystemCode = args[1]; //调度系统代码
 		Etl_sys etlSys;
+		//TODO get() 不会抛出想要的异常，改成orElseThrow()
 		try(DatabaseWrapper db = new DatabaseWrapper()) {
 			etlSys = SqlOperator.queryOneObject(db, Etl_sys.class,
 						"SELECT sys_run_status, curr_bath_date FROM etl_sys WHERE etl_sys_cd = ?",
@@ -70,11 +71,10 @@ public class Main {
 		 * 2、若调度服务启动时，调度系统已经在运行，则抛出异常；
 		 * 3、若以续跑的方式启动调度服务，续跑日期与当前批量日期不一致，则抛出异常。
 		 */
-		if(null == etlSys) {
-			throw new IllegalArgumentException("无法查询到调度系统：" + strSystemCode);
-		}else if(!JobStatus.STOP.getCode().equals(etlSys.getSys_run_status())) {
+		//TODO 使用自动生成的代码项，etlSys.getSys_run_status()要转换为枚举类，用AppException
+		if(!JobStatus.STOP.getCode().equals(etlSys.getSys_run_status())) {
 			throw new IllegalArgumentException("调度系统不在停止状态：" + strSystemCode);
-		}else if(true == isResumeRun){
+		}else if(isResumeRun){
 			LocalDate currBathDate = DateUtil.parseStr2DateWith8Char(etlSys.getCurr_bath_date());
 			if(!currBathDate.equals(bathDate)){
 				throw new IllegalArgumentException("续跑日期与当前批量日期不一致：" + strSystemCode);
@@ -87,6 +87,8 @@ public class Main {
 		//启动调度服务
 		ControlManageServer cm = new ControlManageServer(bathDate, strSystemCode, isResumeRun, isAutoShift);
 		cm.runCMServer();
+
+
 
 		logger.info("-------------- Agent服务启动完成 --------------");
 	}
