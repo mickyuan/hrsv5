@@ -1,9 +1,9 @@
 package hrds.agent.job.biz.utils;
 
+import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.constant.DataTypeConstant;
 import hrds.agent.job.biz.constant.JobConstant;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.parquet.column.ParquetProperties;
@@ -17,6 +17,7 @@ import org.apache.parquet.schema.MessageTypeParser;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 /**
  * ClassName: ParquetUtil <br/>
@@ -40,12 +41,12 @@ public class ParquetUtil {
     public static MessageType getSchema(String columns, String types) {
 
         String[] colArray = columns.toUpperCase().split(JobConstant.COLUMN_SEPARATOR);//列数组
-        String[] typeArray = StringUtils.splitByWholeSeparatorPreserveAllTokens(types.toLowerCase(), JobConstant.COLUMN_TYPE_SEPARATOR);//字段类型
+        List<String> typeArray = StringUtil.split(types.toLowerCase(), JobConstant.COLUMN_TYPE_SEPARATOR);//字段类型
         StringBuilder sb = new StringBuilder(170);
         sb.append("message Pair {\n");
 
         for(int i = 0; i < colArray.length; i++) {
-            String columns_type = typeArray[i];
+            String columns_type = typeArray.get(i);
             if(columns_type.contains(DataTypeConstant.BOOLEAN.getMessage())) {
                 sb.append("required ").append("BOOLEAN ").append(colArray[i]).append(" ;");
             } else if(columns_type.contains(DataTypeConstant.INT.getMessage())) {
@@ -69,12 +70,12 @@ public class ParquetUtil {
     public static MessageType getSchemaAsDBColl(String columns, String types) {
 
         String[] colArray = columns.toUpperCase().split(JobConstant.COLUMN_NAME_SEPARATOR);//列数组
-        String[] typeArray = StringUtils.splitByWholeSeparatorPreserveAllTokens(types.toLowerCase(), JobConstant.COLUMN_TYPE_SEPARATOR);//字段类型
+        List<String> typeArray = StringUtil.split(types.toLowerCase(), JobConstant.COLUMN_TYPE_SEPARATOR);//字段类型
         StringBuilder sb = new StringBuilder(170);
         sb.append("message Pair {\n");
 
         for(int i = 0; i < colArray.length; i++) {
-            String columns_type = typeArray[i];
+            String columns_type = typeArray.get(i);
             if(columns_type.contains(DataTypeConstant.BOOLEAN.getMessage())) {
                 sb.append("required ").append("BOOLEAN ").append(colArray[i]).append(" ;");
             } else if(columns_type.contains(DataTypeConstant.INT.getMessage())) {

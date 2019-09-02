@@ -65,7 +65,6 @@ public class ScriptExecutor {
      * @return   void
      */
     private void service(String shellName, String... args) throws InterruptedException, IllegalStateException {
-
         //获取脚本所在的目录
         String shellPath = ProductFileUtil.getProjectPath() + File.separatorChar
                 + StringUtils.join(new String[]{"src", "main", "resources"}, File.separatorChar)
@@ -84,7 +83,6 @@ public class ScriptExecutor {
      * @return   void
      */
     private void service(String shellName, String[] localFiles, String remoteDir) throws InterruptedException, IllegalStateException {
-
         //获取脚本所在的目录
         String shellPath = ProductFileUtil.getProjectPath() + File.separatorChar
                 + StringUtils.join(new String[]{"src", "main", "resources"}, File.separatorChar)

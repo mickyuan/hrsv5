@@ -2,6 +2,7 @@ package hrds.agent.job.biz.core.dbstage.writer;
 
 import com.univocity.parsers.csv.CsvWriter;
 import com.univocity.parsers.csv.CsvWriterSettings;
+import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.JobInfo;
 import hrds.agent.job.biz.bean.TaskInfo;
 import hrds.agent.job.biz.constant.FileFormatConstant;
@@ -121,7 +122,7 @@ public class DBCollCSVWriter extends AbstractFileWriter {
         LOGGER.info("线程" + Thread.currentThread().getId() + "写CSV文件开始");
         //表头
         StringBuilder columns = (StringBuilder) metaDataMap.get("columns");
-        String[] headers = StringUtils.splitByWholeSeparatorPreserveAllTokens(columns.toString(), JobConstant.COLUMN_NAME_SEPARATOR);
+        List<String> headers = StringUtil.split(columns.toString(), JobConstant.COLUMN_NAME_SEPARATOR);
 
         //写CSV表头
         File csvFile = new File(path);
@@ -140,7 +141,7 @@ public class DBCollCSVWriter extends AbstractFileWriter {
         //用于存放大字段类型列的值的byte数组
         byte[] byteArr = null;
         //列数据类型(长度,精度) 在列数据清洗字段拆分的时候需要
-        String[] columnsTypeAndPreci = StringUtils.splitByWholeSeparatorPreserveAllTokens(metaDataMap.get("columnsTypeAndPreci").toString(), JobConstant.COLUMN_TYPE_SEPARATOR);
+        List<String> columnsTypeAndPreci = StringUtil.split(metaDataMap.get("columnsTypeAndPreci").toString(), JobConstant.COLUMN_TYPE_SEPARATOR);
         int columnCount = (int) metaDataMap.get("columnCount");
 
         //用于写文件的list集合
@@ -219,10 +220,10 @@ public class DBCollCSVWriter extends AbstractFileWriter {
                     //对单行数据的每一列进行清洗，返回清洗后的结果，并追加到MD5后面
                     //先进行列清洗
                     Map<String, Map<String, Object>> columnCleanRule = (Map<String, Map<String, Object>>) metaDataMap.get("columnCleanRule");
-                    currColValue = ColumnCleanUtil.colDataClean(currColValue, metaData.getColumnName(j), null, columnsTypeAndPreci[j - 1], FileFormatConstant.CSV.getMessage(), columnCleanRule, null);
+                    currColValue = ColumnCleanUtil.colDataClean(currColValue, metaData.getColumnName(j), null, columnsTypeAndPreci.get(j - 1), FileFormatConstant.CSV.getMessage(), columnCleanRule, null);
                     //对列清洗后的结果再进行表清洗(除列合并)
                     tableCleanRule = (Map<String, Object>) metaDataMap.get("tableCleanRule");
-                    TableCleanUtil.tbDataClean(currColValue, metaData.getColumnName(j), null, columnsTypeAndPreci[j - 1], FileFormatConstant.CSV.getMessage(), tableCleanRule);
+                    TableCleanUtil.tbDataClean(currColValue, metaData.getColumnName(j), null, columnsTypeAndPreci.get(j - 1), FileFormatConstant.CSV.getMessage(), tableCleanRule);
                     MD5.append(currColValue);
                 }
 

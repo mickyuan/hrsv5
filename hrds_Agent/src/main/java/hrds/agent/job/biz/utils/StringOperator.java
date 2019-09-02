@@ -1,6 +1,6 @@
 package hrds.agent.job.biz.utils;
 
-import org.apache.commons.lang3.StringUtils;
+import fd.ng.core.utils.StringUtil;
 
 import java.util.StringTokenizer;
 
@@ -9,7 +9,7 @@ import java.util.StringTokenizer;
  * @author: WangZhengcheng
  * @create: 2019-08-28 14:34
  **/
-public class StringUtil {
+public class StringOperator {
 
     /**
     * @Description: 解码unicode编码的字符串
@@ -40,7 +40,7 @@ public class StringUtil {
     */ 
     public static String[] split(String str, String delim) {
         String[] strReturn = null;
-        if (StringUtils.isBlank(delim)) {
+        if (fd.ng.core.utils.StringUtil.isBlank(delim)) {
             strReturn = new String[]{str};
             return strReturn;
         }else {
@@ -98,6 +98,6 @@ public class StringUtil {
     * @Date: 2019/8/29
     */
     public static String getString(Object obj) {
-        return null != obj && !StringUtils.isEmpty(obj.toString()) ? obj.toString() : "";
+        return null != obj && !StringUtil.isEmpty(obj.toString()) ? obj.toString() : "";
     }
 }

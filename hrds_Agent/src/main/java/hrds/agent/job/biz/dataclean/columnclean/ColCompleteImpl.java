@@ -1,8 +1,11 @@
 package hrds.agent.job.biz.dataclean.columnclean;
 
+import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.constant.CompleteTypeConstant;
 import hrds.agent.job.biz.constant.JobConstant;
 import org.apache.commons.lang3.StringUtils;
+
+import java.util.List;
 
 /**
  * ClassName: ColCompleteImpl <br/>
@@ -19,10 +22,10 @@ public class ColCompleteImpl extends AbstractColumnClean {
     @Override
     public String complete(StringBuilder completeSB, String columnValue){
         if(completeSB != null){
-            String[] strings = StringUtils.splitByWholeSeparatorPreserveAllTokens(completeSB.toString(), JobConstant.CLEAN_SEPARATOR);
-            int completeLength = Integer.parseInt(strings[0]);
-            String completeType = strings[1];
-            String completeCharacter = strings[2];
+            List<String> strings = StringUtil.split(completeSB.toString(), JobConstant.CLEAN_SEPARATOR);
+            int completeLength = Integer.parseInt(strings.get(0));
+            String completeType = strings.get(1);
+            String completeCharacter = strings.get(2);
             if(CompleteTypeConstant.BEFORE.getCode() == Integer.parseInt(completeType) ) {
                 // 前补齐
                 columnValue = StringUtils.leftPad(columnValue, completeLength, completeCharacter);

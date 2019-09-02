@@ -1,8 +1,8 @@
 package hrds.agent.job.biz.utils;
 
+import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.ColumnSplitBean;
 import hrds.agent.job.biz.constant.JobConstant;
-import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -22,7 +22,8 @@ public class ColumnTool {
     * @Param: [allSplitRule : 所有列的拆分规则]
     * @return: void
     * @Author: WangZhengcheng 
-    * @Date: 2019/8/28 
+    * @Date: 2019/8/28
+    *
     */ 
     public static void updateColumnSplit(StringBuilder columns, StringBuilder columnsTypeAndPreci, StringBuilder columnsLength, Map<String, List<ColumnSplitBean>> allSplitRule){
         if (columns == null || columns.length() == 0) {
@@ -102,10 +103,10 @@ public class ColumnTool {
         }
         for(String key : tbMergeRule.keySet()) {
             //获取表名和类型
-            String[] split = StringUtil.split(key, JobConstant.CLEAN_SEPARATOR);
-            columns.append(JobConstant.COLUMN_NAME_SEPARATOR).append(split[0]);
-            columnsTypeAndPreci.append(JobConstant.COLUMN_TYPE_SEPARATOR).append(split[1]);
-            columnsLength.append(JobConstant.COLUMN_TYPE_SEPARATOR).append(getLength(split[1]));
+            List<String> split = StringUtil.split(key, JobConstant.CLEAN_SEPARATOR);
+            columns.append(JobConstant.COLUMN_NAME_SEPARATOR).append(split.get(0));
+            columnsTypeAndPreci.append(JobConstant.COLUMN_TYPE_SEPARATOR).append(split.get(1));
+            columnsLength.append(JobConstant.COLUMN_TYPE_SEPARATOR).append(getLength(split.get(1)));
         }
     }
 
@@ -118,11 +119,11 @@ public class ColumnTool {
      * @Date: 2019/8/30
      */
     public static int[] findColIndex(String[] column, String str) {
-        String[] split = StringUtils.splitByWholeSeparatorPreserveAllTokens(str, ",");
-        int[] index = new int[split.length];
-        for(int i = 0; i < split.length; i++) {
+        List<String> split = StringUtil.split(str, ",");
+        int[] index = new int[split.size()];
+        for(int i = 0; i < split.size(); i++) {
             for(int j = 0; j < column.length; j++) {
-                if( split[i].equalsIgnoreCase(column[j]) ) {
+                if( split.get(i).equalsIgnoreCase(column[j]) ) {
                     index[i] = j;
                 }
             }
@@ -140,10 +141,10 @@ public class ColumnTool {
     * @Date: 2019/8/29
     */
     private static int findColIndex(String columnsName, String colName, String separator){
-        String[] column = StringUtil.split(columnsName, separator);
+        List<String> column = StringUtil.split(columnsName, separator);
         int index = 0;
-        for(int j = 0; j < column.length; j++) {
-            if( column[j].equalsIgnoreCase(colName) ) {
+        for(int j = 0; j < column.size(); j++) {
+            if( column.get(j).equalsIgnoreCase(colName) ) {
                 index = j + 1;
                 break;
             }
@@ -190,8 +191,8 @@ public class ColumnTool {
             int end = columnType.indexOf(")");
             String substring = columnType.substring(start + 1, end);
             if( substring.indexOf(",") != -1 ) {
-                String[] sp = StringUtil.split(substring, ",");
-                return Integer.parseInt(sp[0]) + 2;
+                List<String> split = StringUtil.split(substring, ",");
+                return Integer.parseInt(split.get(0)) + 2;
             }
             return Integer.parseInt(substring);
         }
