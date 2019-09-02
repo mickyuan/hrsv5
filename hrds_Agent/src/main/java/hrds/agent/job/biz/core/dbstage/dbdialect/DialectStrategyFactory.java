@@ -1,6 +1,6 @@
 package hrds.agent.job.biz.core.dbstage.dbdialect.strategy;
 
-import com.beyondsoft.agent.constant.DBTypeConstant;
+import hrds.agent.job.biz.constant.DBTypeConstant;
 
 /**
  * ClassName: DialectStrategyFactory <br/>
