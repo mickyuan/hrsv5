@@ -1,0 +1,117 @@
+package hrds.commons.codes;
+/**Created by automatic  */
+/**代码类型名：用户类型  */
+public enum UserType {
+	/**系统管理员<XiTongGuanLiYuan>  */
+	XiTongGuanLiYuan("00","系统管理员","1","用户类型"),
+	/**采集管理<CaijiGuanLiYuan>  */
+	CaijiGuanLiYuan("01","采集管理","1","用户类型"),
+	/**数据采集<CaiJiYongHu>  */
+	CaiJiYongHu("02","数据采集","1","用户类型"),
+	/**数据查询<YeWuYongHu>  */
+	YeWuYongHu("03","数据查询","1","用户类型"),
+	/**作业调度<ZuoYeGuanLiYuan>  */
+	ZuoYeGuanLiYuan("04","作业调度","1","用户类型"),
+	/**作业操作员<ZuoYeCaoZuoYuan>  */
+	ZuoYeCaoZuoYuan("05","作业操作员","1","用户类型"),
+	/**数据可视化管理<ShuJuKSHGuanLiYuan>  */
+	ShuJuKSHGuanLiYuan("06","数据可视化管理","1","用户类型"),
+	/**可视化数据源<ShuJuKSHSJY>  */
+	ShuJuKSHSJY("07","可视化数据源","1","用户类型"),
+	/**数据可视化分析<ShuJuKSHBianJI>  */
+	ShuJuKSHBianJI("08","数据可视化分析","1","用户类型"),
+	/**数据可视化查看<ShuJuKSHChaKan>  */
+	ShuJuKSHChaKan("09","数据可视化查看","1","用户类型"),
+	/**监控管理<JianKongGuanLiYuan>  */
+	JianKongGuanLiYuan("10","监控管理","1","用户类型"),
+	/**服务接口管理<RESTJieKouGuanLiYuan>  */
+	RESTJieKouGuanLiYuan("11","服务接口管理","1","用户类型"),
+	/**服务接口用户<RESTYongHu>  */
+	RESTYongHu("12","服务接口用户","1","用户类型"),
+	/**分词器管理<FenCiQiGuanLiYuan>  */
+	FenCiQiGuanLiYuan("13","分词器管理","1","用户类型"),
+	/**数据集市<JiShiGuanLiYuan>  */
+	JiShiGuanLiYuan("14","数据集市","1","用户类型"),
+	/**数据加工<JiShiJiaGongGuanLiYuan>  */
+	JiShiJiaGongGuanLiYuan("15","数据加工","1","用户类型"),
+	/**机器学习工作台<JiQiXueXiGuanLiYuan>  */
+	JiQiXueXiGuanLiYuan("16","机器学习工作台","1","用户类型"),
+	/**机器学习业务<JiQiXueXiYongHu>  */
+	JiQiXueXiYongHu("17","机器学习业务","1","用户类型"),
+	/**流数据管理<LiuShuJuGuanLiYuan>  */
+	LiuShuJuGuanLiYuan("18","流数据管理","1","用户类型"),
+	/**流数据生产<LiuShuJuShengChanYongHu>  */
+	LiuShuJuShengChanYongHu("19","流数据生产","1","用户类型"),
+	/**数据库配置(永洪)<ShuJuKuPeiZhi>  */
+	ShuJuKuPeiZhi("20","数据库配置(永洪)","1","用户类型"),
+	/**报表创建(永洪)<BaoBiaoChuanJian>  */
+	BaoBiaoChuanJian("21","报表创建(永洪)","1","用户类型"),
+	/**报表查看(永洪)<BaoBiaoChaKan>  */
+	BaoBiaoChaKan("22","报表查看(永洪)","1","用户类型"),
+	/**流数据消费<LiuShuJuXiaoFeiYongHu>  */
+	LiuShuJuXiaoFeiYongHu("23","流数据消费","1","用户类型"),
+	/**数据管控<ShuJuGuanKongGuanLiYuan>  */
+	ShuJuGuanKongGuanLiYuan("24","数据管控","1","用户类型"),
+	/**自主分析管理<ZiZhuFenXiGuanLi>  */
+	ZiZhuFenXiGuanLi("25","自主分析管理","1","用户类型"),
+	/**自主分析操作<ZiZhuFenXiCaoZuo>  */
+	ZiZhuFenXiCaoZuo("26","自主分析操作","1","用户类型");
+
+	private final String code;
+	private final String value;
+	private final String catCode;
+	private final String catValue;
+
+	UserType(String code,String value,String catCode,String catValue){
+		this.code = code;
+		this.value = value;
+		this.catCode = catCode;
+		this.catValue = catValue;
+	}
+	public String getCode(){return code;}
+	public String getValue(){return value;}
+	public String getCatCode(){return catCode;}
+	public String getCatValue(){return catValue;}
+
+	/**根据指定的代码值转换成中文名字
+	* @param code   本代码的代码值
+	* @return
+	*/
+	public static String getValue(String code) {
+		for (UserType typeCode : UserType.values()) {
+			if (typeCode.getCode().equals(code)) {
+				return typeCode.value;
+			}
+		}
+		throw new RuntimeException("根据"+code+"没有找到对应的代码项");
+	}
+
+	/**根据指定的代码值转换成对象
+	* @param code   本代码的代码值
+	* @return
+	*/
+	public static UserType getCodeObj(String code) {
+		for (UserType typeCode : UserType.values()) {
+			if (typeCode.getCode().equals(code)) {
+				return typeCode;
+			}
+		}
+		throw new RuntimeException("根据"+code+"没有找到对应的代码项");
+	}
+
+	/**
+	* 获取代码项的中文类名名称
+	* @return
+	*/
+	public static String getObjCatValue(){
+		return UserType.values()[0].getCatValue();
+	}
+
+	/**
+	* 获取代码项的分类代码
+	* @return
+	*/
+	public static String getObjCatCode(){
+		return UserType.values()[0].getCatCode();
+	}
+}

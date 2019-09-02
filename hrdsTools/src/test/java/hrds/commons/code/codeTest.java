@@ -1,4 +1,4 @@
-package hrds.code;
+package hrds.commons.code;
 
 import hrds.commons.codes.ActivateFunctionType;
 import org.junit.Test;
