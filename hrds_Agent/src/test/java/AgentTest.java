@@ -6,5 +6,4 @@
  * @Since: JDK 1.8
  **/
 public class AgentTest {
-
 }
