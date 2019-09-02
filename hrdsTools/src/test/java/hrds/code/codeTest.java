@@ -1,6 +1,6 @@
 package hrds.code;
 
-import hrds.tools.codes.ActivateFunctionType;
+import hrds.commons.codes.ActivateFunctionType;
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
