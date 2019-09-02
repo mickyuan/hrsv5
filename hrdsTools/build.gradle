@@ -1,7 +1,7 @@
 
 description = 'This is a hrds-tools.jar package.'
 
-group 'hrds'
+group 'hrds.commons'
 version ''
 
 sourceCompatibility = 1.8
