@@ -1,4 +1,4 @@
-package hrds.biz.zsys;
+package hrds.a.biz.zsys;
 
 import fd.ng.core.conf.AppinfoConf;
 import fd.ng.core.utils.DateUtil;
@@ -8,16 +8,13 @@ import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.test.junit.TestCaseLog;
 import fd.ng.web.action.ActionResult;
-import fd.ng.web.util.Dbo;
 import hrds.testbase.WebBaseTestCase;
 
 import hrds.entity.SysPara;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.FixMethodOrder;
 import org.junit.Test;
-import org.junit.runners.MethodSorters;
 
 import java.util.ArrayList;
 import java.util.List;
