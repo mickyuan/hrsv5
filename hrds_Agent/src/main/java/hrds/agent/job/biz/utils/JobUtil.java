@@ -2,6 +2,7 @@ package hrds.agent.job.biz.utils;
 
 
 import hrds.agent.job.biz.bean.ColumnCleanResult;
+import hrds.commons.exception.AppSystemException;
 
 import java.util.HashSet;
 import java.util.List;
@@ -14,7 +15,7 @@ public class JobUtil {
     * */
     public static Set<String> getCollectColumnName(List<ColumnCleanResult> list){
         if (list == null || list.isEmpty() ) {
-            throw new RuntimeException("采集作业信息不能为空");
+            throw new AppSystemException("采集作业信息不能为空");
         }
         Set<String> columnNames = new HashSet<>();
         for(ColumnCleanResult column : list){

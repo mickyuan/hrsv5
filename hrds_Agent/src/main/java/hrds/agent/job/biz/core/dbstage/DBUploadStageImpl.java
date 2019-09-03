@@ -32,9 +32,14 @@ public class DBUploadStageImpl extends AbstractJobStage {
         this.remoteDir = remoteDir;
     }
 
+    /*
+    * 1、创建卸数阶段状态信息，更新作业ID,阶段名，阶段开始时间
+    * 2、调用方法，进行文件上传，文件数组和上传目录由构造器传入
+    * */
     @Override
     public StageStatusInfo handleStage() {
         LOGGER.info("------------------数据库直连采集上传阶段开始------------------");
+        //1、创建卸数阶段状态信息，更新作业ID,阶段名，阶段开始时间
         StageStatusInfo statusInfo = new StageStatusInfo();
         statusInfo.setStageNameCode(StageConstant.UPLOAD.getCode());
         statusInfo.setJobId(jobId);
@@ -42,6 +47,7 @@ public class DBUploadStageImpl extends AbstractJobStage {
         statusInfo.setStartTime(DateUtil.getLocalTimeByChar6());
         ScriptExecutor executor = new ScriptExecutor();
         try {
+            //2、调用方法，进行文件上传，文件数组和上传目录由构造器传入
             executor.executeUpload2Hdfs(localFiles, remoteDir);
         }catch (IllegalStateException | InterruptedException e){
             statusInfo.setStatusCode(RunStatusConstant.FAILED.getCode());

@@ -6,6 +6,7 @@ import fd.ng.db.conf.Dbtype;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.agent.job.biz.bean.DBConfigBean;
 import hrds.agent.job.biz.constant.DBTypeConstant;
+import hrds.commons.exception.AppSystemException;
 
 /**
  * ClassName: ConnetionTool <br/>
@@ -37,7 +38,7 @@ public class ConnetionTool {
         if(DBTypeConstant.MYSQL.getCode() == Integer.parseInt(dbType)){
             dbinfo.setDbtype(Dbtype.MYSQL);
         }else if (DBTypeConstant.ORACLE9IFOLLOW.getCode() == Integer.parseInt(dbType)){
-            throw new RuntimeException("系统不支持Oracle9i及以下");
+            throw new AppSystemException("系统不支持Oracle9i及以下");
         }else if(DBTypeConstant.ORACLE10GABOV.getCode() == Integer.parseInt(dbType)){
             dbinfo.setDbtype(Dbtype.ORACLE);
         }else if(DBTypeConstant.SQLSERVRER2000.getCode() == Integer.parseInt(dbType)){
@@ -61,7 +62,7 @@ public class ConnetionTool {
         }else if(DBTypeConstant.TERADATA.getCode() == Integer.parseInt(dbType)){
             dbinfo.setDbtype(Dbtype.TERADATA);
         }else{
-            throw new RuntimeException("系统不支持该数据库类型");
+            throw new AppSystemException("系统不支持该数据库类型");
         }
         dbinfo.setShow_conn_time(true);
         dbinfo.setShow_sql(true);
