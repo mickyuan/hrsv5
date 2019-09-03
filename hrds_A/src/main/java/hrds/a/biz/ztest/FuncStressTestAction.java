@@ -12,10 +12,10 @@ import fd.ng.web.util.Dbo;
 import fd.ng.web.util.FileUploadUtil;
 import fd.ng.web.util.RequestUtil;
 
-import hrds.exception.AppSystemException;
-import hrds.exception.BusinessException;
 import hrds.a.biz.zbase.WebappBaseAction;
 
+import hrds.commons.exception.AppSystemException;
+import hrds.commons.exception.BusinessException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

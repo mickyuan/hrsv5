@@ -8,8 +8,8 @@ import fd.ng.web.annotation.RequestBean;
 import fd.ng.web.annotation.RequestParam;
 import fd.ng.web.util.Dbo;
 import hrds.a.biz.zbase.WebappBaseAction;
-import hrds.entity.Sys_para;
-import hrds.exception.BusinessException;
+import hrds.commons.entity.Sys_para;
+import hrds.commons.exception.BusinessException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
