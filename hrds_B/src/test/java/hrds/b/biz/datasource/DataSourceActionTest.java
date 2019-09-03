@@ -1,6 +1,5 @@
 package hrds.b.biz.datasource;
 
-import com.sun.org.apache.bcel.internal.generic.NEW;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
@@ -13,7 +12,6 @@ import hrds.commons.entity.Agent_info;
 import hrds.commons.entity.Data_source;
 import hrds.commons.entity.Source_relation_dep;
 import hrds.commons.exception.BusinessException;
-import hrds.commons.utils.ActionUtil;
 import hrds.testbase.WebBaseTestCase;
 import org.junit.After;
 import org.junit.Before;
@@ -30,11 +28,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 public class DataSourceActionTest extends WebBaseTestCase {
     private static final int Init_Rows = 10; // 向表中初始化的数据条数。
-
-    @Test
-    public void test() {
-        System.out.println(AgentType.ShuJuKu.getCode());
-    }
 
     @Before
     public void before() {
