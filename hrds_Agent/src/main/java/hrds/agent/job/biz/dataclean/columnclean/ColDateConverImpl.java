@@ -1,11 +1,12 @@
 package hrds.agent.job.biz.dataclean.columnclean;
 
+import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.constant.JobConstant;
-import org.apache.commons.lang3.StringUtils;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 
 /**
  * ClassName: ColDateConverImpl <br/>
@@ -22,11 +23,11 @@ public class ColDateConverImpl extends AbstractColumnClean {
     @Override
     public String dateConver(StringBuilder dateSB, String columnValue) throws ParseException{
         if (dateSB != null) {
-            String[] strings = StringUtils.splitByWholeSeparatorPreserveAllTokens(dateSB.toString(), JobConstant.CLEAN_SEPARATOR);
+            List<String> strings = StringUtil.split(dateSB.toString(), JobConstant.CLEAN_SEPARATOR);
             //新格式
-            SimpleDateFormat newformat = new SimpleDateFormat(strings[0]);
+            SimpleDateFormat newformat = new SimpleDateFormat(strings.get(0));
             //原格式
-            SimpleDateFormat oldformat = new SimpleDateFormat(strings[1]);
+            SimpleDateFormat oldformat = new SimpleDateFormat(strings.get(1));
             Date parse = oldformat.parse(columnValue);
             //格式化成自定义
             columnValue = newformat.format(parse);

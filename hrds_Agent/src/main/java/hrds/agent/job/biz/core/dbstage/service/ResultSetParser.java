@@ -12,6 +12,7 @@ import hrds.agent.job.biz.core.dbstage.writer.DBCollParquetWriter;
 import hrds.agent.job.biz.core.dbstage.writer.FileWriterInterface;
 import hrds.agent.job.biz.utils.ColumnTool;
 import hrds.agent.job.biz.utils.ParquetUtil;
+import hrds.commons.exception.AppSystemException;
 import org.apache.parquet.example.data.GroupFactory;
 import org.apache.parquet.example.data.simple.SimpleGroupFactory;
 import org.apache.parquet.schema.MessageType;
@@ -48,10 +49,18 @@ public class ResultSetParser {
     * @Date: 2019/9/2 
     */
     /*
-    * 1、
+    * 1、获得本次采集的数据库META信息
+    * 2、对后续需要使用的META信息(列名，列类型，列长度)，使用分隔符进行组装
+    * 3、在jobInfo中拿到数据清洗规则(字段清洗，表清洗)，并调用工具类(ColCleanRuleParser，TbCleanRuleParser)中的方法进行解析
+    * 4、如果在表清洗中进行了列合并，调用工具类ColumnTool对组装好的META信息进行更新
+    * 5、如果在列清洗中进行了列拆分，调用工具类ColumnTool对组装好的META信息进行更新
+    * 6、落地文件需要追加开始时间和结束时间(9999-12-31)列，如果需要，还要追加MD5列
+    * 7、构造metaDataMap，根据落地数据文件类型，初始化FileWriterInterface实现类，由实现类去写文件
+    * 8、写文件结束，返回本线程生成数据文件的路径
     * */
     public String parseResultSet(ResultSet rs, JobInfo jobInfo, int pageNum, int pageRow) throws SQLException, IOException{
         //TODO 建议查询数据库的系统表来获得meta信息
+        //1、获得本次采集的数据库META信息
         ResultSetMetaData metaData = rs.getMetaData();
         //获得列的数量
         int columnCount = metaData.getColumnCount();
@@ -63,6 +72,7 @@ public class ResultSetParser {
         StringBuilder columnsLength = new StringBuilder();
         //用于存放所有列数据类型，初始长度为columnCount
         int[] colTypeArr = new int[columnCount];
+        //2、对后续需要使用的META信息，使用分隔符进行组装
         for (int i = 1; i <= columnCount; i++) {
             String columnName = metaData.getColumnName(i);
             int columnType = metaData.getColumnType(i);
@@ -77,6 +87,7 @@ public class ResultSetParser {
         columns.deleteCharAt(columns.length() - 1);//列名
         columnsTypeAndPreci.deleteCharAt(columnsTypeAndPreci.length() - 1);//列类型(长度,精度)
         columnsLength.deleteCharAt(columnsLength.length() - 1);//列长度
+        //3、在jobInfo中拿到数据清洗规则(字段清洗，表清洗)，并调用工具类(ColCleanRuleParser，TbCleanRuleParser)中的方法进行解析
         //获得采集每一列的清洗规则
         List<ColumnCleanResult> colCleanRuleList = jobInfo.getColumnList();
         //存放列清洗规则，key为列名，value为清洗方式map，map的key为清洗项目名(优先级、替换、补齐等)，value为具体的清洗信息
@@ -86,7 +97,6 @@ public class ResultSetParser {
             columnCleanRule.put(colCleanRuleList.get(i).getColumnName(),columnResult);
         }
 
-        //如果用户配置了列拆分，需要更新列信息
         //用于存放该张表所有的列拆分信息，key为字段原名，value为对该字段的拆分规则
         Map<String, List<ColumnSplitBean>> allSplit = new LinkedHashMap<>();
         for(int i = 0; i < colCleanRuleList.size(); i++){
@@ -105,17 +115,19 @@ public class ResultSetParser {
         //得到列合并规则
         Map<String, String> tbMergeRule = (Map<String, String>) tbCleanRule.get("merge");
 
+        //4、如果在表清洗中进行了列合并，调用工具类ColumnTool对组装好的META信息进行更新
         if(tbMergeRule != null && !tbMergeRule.isEmpty()){
             //调用方法更新列合并后的columns, columnsTypeAndPreci, columnsLength
             ColumnTool.updateColumnMerge(columns, columnsTypeAndPreci, columnsLength, tbMergeRule);
         }
 
+        //5、如果在列清洗中进行了列拆分，调用工具类ColumnTool对组装好的META信息进行更新
         if(!allSplit.isEmpty()){
             //调用方法更新列拆分后的columns, columnsTypeAndPreci, columnsLength
             ColumnTool.updateColumnSplit(columns, columnsTypeAndPreci, columnsLength, allSplit);
         }
 
-        //对落地文件要追加开始时间和结束时间
+        //6、落地文件需要追加开始时间和结束时间(9999-12-31)列，如果需要，还要追加MD5列
         columnsTypeAndPreci.append(JobConstant.COLUMN_TYPE_SEPARATOR).append("char(8)").append(JobConstant.COLUMN_TYPE_SEPARATOR).append("char(8)");
         columnsLength.append(JobConstant.COLUMN_TYPE_SEPARATOR).append("8").append(JobConstant.COLUMN_TYPE_SEPARATOR).append("8");
         columns.append(JobConstant.COLUMN_NAME_SEPARATOR).append(JobConstant.START_DATE_NAME).append(JobConstant.COLUMN_NAME_SEPARATOR).append(JobConstant.MAX_DATE_NAME);
@@ -129,6 +141,7 @@ public class ResultSetParser {
                 columns.append(JobConstant.COLUMN_NAME_SEPARATOR).append(JobConstant.MD5_NAME);
             }
         }
+        //7、构造metaDataMap，根据落地数据文件类型，初始化FileWriterInterface实现类，由实现类去写文件
         Map<String,Object> metaDataMap = new HashMap<>();
         //列数据类型(长度,精度)
         metaDataMap.put("columnsTypeAndPreci", columnsTypeAndPreci);
@@ -148,7 +161,7 @@ public class ResultSetParser {
         //获得数据文件格式
         String format = jobInfo.getFile_format();
         if (format == null || format.isEmpty()) {
-            throw new RuntimeException("HDFS文件类型不能为空");
+            throw new AppSystemException("HDFS文件类型不能为空");
         }
         //当前线程生成的数据文件的路径，用于返回
         String filePath = "";
@@ -167,6 +180,7 @@ public class ResultSetParser {
         }else if(FileFormatConstant.SEQUENCEFILE.getCode() == Integer.parseInt(format)){
             //写SEQUENCE文件
         }
+        //8、写文件结束，返回本线程生成数据文件的路径
         return filePath;
     }
 
@@ -178,9 +192,14 @@ public class ResultSetParser {
      * @param precision      {@link String} 列长度
      * @param scale          {@link String} 列数据精度
      */
+    /*
+    * 1、考虑到有些类型在数据库中在获取数据类型的时候就会带有(),同时还能获取到数据的长度和精度，因此我们要对所有数据库进行统一处理，去掉()中的内容，使用JDBC提供的方法读取的长度和精度进行拼接
+    * 2、对不包含长度和精度的数据类型进行处理，返回数据类型
+    * 3、对包含长度和精度的数据类型进行处理，返回数据类型(长度,精度)
+    * 4、对只包含长度的数据类型进行处理，返回数据类型(长度)
+    * */
     private String getColTypeAndPreci(int columnType, String columnTypeName, int precision, int scale) {
-        //考虑到有些类型在数据库中在获取数据类型的时候就会带有(),同时还能获取到数据的长度和精度
-        // 因此我们要对所有数据库进行统一处理，去掉()中的内容，使用JDBC提供的方法读取的长度和精度进行拼接
+        //1、考虑到有些类型在数据库中在获取数据类型的时候就会带有(),同时还能获取到数据的长度和精度，因此我们要对所有数据库进行统一处理，去掉()中的内容，使用JDBC提供的方法读取的长度和精度进行拼接
         if (precision != 0) {
             int index = columnTypeName.indexOf("(");
             if (index != -1) {
@@ -189,7 +208,7 @@ public class ResultSetParser {
         }
         String colTypeAndPreci;
         if (Types.INTEGER == columnType || Types.TINYINT == columnType || Types.SMALLINT == columnType || Types.BIGINT == columnType) {
-            //上述数据类型不包含长度和精度
+            //2、上述数据类型不包含长度和精度
             colTypeAndPreci = columnTypeName;
         } else if (Types.NUMERIC == columnType || Types.FLOAT == columnType || Types.DOUBLE == columnType || Types.DECIMAL == columnType) {
             //上述数据类型包含长度和精度，对长度和精度进行处理，返回(长度,精度)

@@ -14,6 +14,7 @@ import hrds.agent.job.biz.utils.DateUtil;
 import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.JobUtil;
 import hrds.agent.job.biz.utils.SQLUtil;
+import hrds.commons.exception.AppSystemException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,7 +78,7 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
         statusInfo.setStartDate(DateUtil.getLocalDateByChar8());
         statusInfo.setStartTime(DateUtil.getLocalTimeByChar6());
         if (jobInfo == null || dbInfo == null) {
-            throw new RuntimeException("数据库直连采集,数据库信息和作业信息不能为空");
+            throw new AppSystemException("数据库直连采集,数据库信息和作业信息不能为空");
         }
 
         //2、解析作业信息，得到表名和表数据量
