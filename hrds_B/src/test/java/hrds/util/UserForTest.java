@@ -3,7 +3,7 @@ package hrds.util;
 import fd.ng.db.entity.TableEntity;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
-import hrds.exception.BusinessException;
+import hrds.commons.exception.BusinessException;
 
 import java.util.Collections;
 import java.util.HashSet;

@@ -129,7 +129,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
         String create_time = DateUtil.getSysTime();
         Long user_id = 1001L;
         String source_remark = "测试";
-        String dep_id = "1000000011,1000000012,1000000013";
+        String dep_id = "-300,-299,-298";
         String bodyString = new HttpClient()
                 .addData("source_id", source_id)
                 .addData("source_remark", source_remark)

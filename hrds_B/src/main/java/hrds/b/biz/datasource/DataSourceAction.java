@@ -3,6 +3,7 @@ package hrds.b.biz.datasource;
 import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.annotation.RequestBean;
+import fd.ng.web.annotation.RequestParam;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.entity.Agent_info;
@@ -16,10 +17,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * DataSource class
+ * DataSource Class
  *
  * @author mine
- * @date 2019-08-22 16:29:19
+ * @date 2019-09-03 16:44:25
  */
 public class DataSourceAction extends BaseAction {
     private static final Logger logger = LogManager.getLogger();
@@ -33,7 +34,7 @@ public class DataSourceAction extends BaseAction {
      *
      * @param dataSource 数据源编号
      */
-    public void saveDataSource(@RequestBean Data_source dataSource) {
+    public void saveDataSource(@RequestBean Data_source dataSource, String dep_id) {
 
         // 新增数据源
         if (dataSource.getSource_id() == null) {
@@ -67,7 +68,7 @@ public class DataSourceAction extends BaseAction {
             }
         }
         // 保存数据源与部门关系信息
-        //saveSourceRelationDep(dataSource.getSource_id(), dep_id);
+        saveSourceRelationDep(dataSource.getSource_id(), dep_id);
     }
 
     /**
