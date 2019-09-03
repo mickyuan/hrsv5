@@ -80,24 +80,26 @@ public class LoginAction extends BaseAction {
 
 		/*
 		 * 1 : 查询当前用户的记录信息
-		 * 2 : 如果为获取到信息,则表示当前用户的信息不存在
-		 * 3 : 设置登陆用户的cookie
+		 * 2 : 如果为获取不到信息,则表示当前用户的信息不存在
+		 * 3 : 如果为获取到信息,则判断用户密码是否正确
+		 * 4 : 设置登陆用户的cookie
 		 */
 
 		//1 : 查询当前用户的记录信息
 		Map<String, Object> stringObjectMap = Dbo.queryOneObject("select * from " + Sys_user.TableName + " where user_id = ?", user_id);
-		Sys_user logInUser = (Sys_user)JSON.toJavaObject(JSONObject.parseObject(JSON.toJSONString(stringObjectMap)), Sys_user.class);
+		Sys_user logInUser = (Sys_user)JSONObject.parseObject(JSON.toJSONString(stringObjectMap), Sys_user.class);
 		//2 : 如果为获取到信息,则表示当前用户的信息不存在
 		if( StringUtil.isBlank(logInUser.getUser_id() + "") ) {
 			throw new BusinessException(ExceptionEnum.USER_NOE_EXISTS.getMessage());
 		}
 		else {
+			//3 : 如果为获取到信息,则判断用户密码是否正确
 			String user_password = logInUser.getUser_password();
 			if( !pwd.equals(user_password) ) {
 				throw new BusinessException(ExceptionEnum.PASSWORD_ERROR.getMessage());
 			}
 			else {
-				//3 : 设置登陆用户的cookie
+				//4 : 设置登陆用户的cookie
 				User user = putUserInfo(logInUser);
 				ActionUtil.setCookieUser(user);
 			}
@@ -116,8 +118,7 @@ public class LoginAction extends BaseAction {
 
 		Map<String, Object> department = Dbo.queryOneObject("select * from " + Department_info.TableName + " where dep_id = ?",
 						logInUser.getDep_id());
-		Department_info department_info = (Department_info)JSON
-						.toJavaObject(JSONObject.parseObject(JSON.toJSONString(department)), Department_info.class);
+		Department_info department_info = (Department_info)JSONObject.parseObject(JSON.toJSONString(department), Department_info.class);
 		//2 : 组成需要生成的Cookie
 		User user = new User();
 		user.setUserId(logInUser.getUser_id());

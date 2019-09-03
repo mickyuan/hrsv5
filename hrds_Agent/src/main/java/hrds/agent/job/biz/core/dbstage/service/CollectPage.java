@@ -50,11 +50,16 @@ public class CollectPage implements Callable<Map<String,Object>>{
         this.pageRow = pageRow;
     }
 
+    /*
+    * 1、执行查询，获取ResultSet
+    * 2、解析ResultSet，并写数据文件
+    * 3、数据落地文件后，线程执行完毕后的返回内容，用于写作业meta文件和验证本次采集任务的结果
+    * */
     @Override
     public Map<String,Object> call() throws SQLException, IOException{
-
+        //1、执行查询，获取ResultSet
         ResultSet pageData = this.getPageData(this.dbInfo, strategy, strSql, pageColumn, start, end);
-        //解析ResultSet，并写数据文件
+        //2、解析ResultSet，并写数据文件
         ResultSetParser parser = new ResultSetParser();
         //文件路径
         String filePath = "";
@@ -62,7 +67,7 @@ public class CollectPage implements Callable<Map<String,Object>>{
         int columnCount = 0;
         filePath = parser.parseResultSet(pageData, this.jobInfo, this.pageNum, this.pageRow);
         columnCount = pageData.getMetaData().getColumnCount();
-        //多线程采集阶段，线程执行完毕后的返回内容，用于写作业meta文件和验证本次采集任务的结果
+        //3、多线程采集阶段，线程执行完毕后的返回内容，用于写作业meta文件和验证本次采集任务的结果
         Map<String,Object> map = new HashMap();
         //采集生成的文件路径
         map.put("filePath", filePath);

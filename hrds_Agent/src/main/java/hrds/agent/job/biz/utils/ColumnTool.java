@@ -3,6 +3,7 @@ package hrds.agent.job.biz.utils;
 import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.ColumnSplitBean;
 import hrds.agent.job.biz.constant.JobConstant;
+import hrds.commons.exception.AppSystemException;
 
 import java.util.List;
 import java.util.Map;
@@ -27,13 +28,13 @@ public class ColumnTool {
     */ 
     public static void updateColumnSplit(StringBuilder columns, StringBuilder columnsTypeAndPreci, StringBuilder columnsLength, Map<String, List<ColumnSplitBean>> allSplitRule){
         if (columns == null || columns.length() == 0) {
-            throw new RuntimeException("进行列拆分清洗时，列名不能为空");
+            throw new AppSystemException("进行列拆分清洗时，列名不能为空");
         }
         if (columnsTypeAndPreci == null || columnsTypeAndPreci.length() == 0) {
-            throw new RuntimeException("进行列拆分清洗时，列类型不能为空");
+            throw new AppSystemException("进行列拆分清洗时，列类型不能为空");
         }
         if (columnsLength == null || columnsLength.length() == 0) {
-            throw new RuntimeException("进行列拆分清洗时，列长度不能为空");
+            throw new AppSystemException("进行列拆分清洗时，列长度不能为空");
         }
         String columnsName = columns.toString();
 
@@ -93,13 +94,13 @@ public class ColumnTool {
     */ 
     public static void updateColumnMerge(StringBuilder columns, StringBuilder columnsTypeAndPreci, StringBuilder columnsLength, Map<String, String> tbMergeRule){
         if (columns == null || columns.length() == 0) {
-            throw new RuntimeException("进行列拆分清洗时，列名不能为空");
+            throw new AppSystemException("进行列拆分清洗时，列名不能为空");
         }
         if (columnsTypeAndPreci == null || columnsTypeAndPreci.length() == 0) {
-            throw new RuntimeException("进行列拆分清洗时，列类型不能为空");
+            throw new AppSystemException("进行列拆分清洗时，列类型不能为空");
         }
         if (columnsLength == null || columnsLength.length() == 0) {
-            throw new RuntimeException("进行列拆分清洗时，列长度不能为空");
+            throw new AppSystemException("进行列拆分清洗时，列长度不能为空");
         }
         for(String key : tbMergeRule.keySet()) {
             //获取表名和类型

@@ -14,6 +14,7 @@ import hrds.agent.job.biz.utils.DateUtil;
 import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.JobUtil;
 import hrds.agent.job.biz.utils.SQLUtil;
+import hrds.commons.exception.AppSystemException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,30 +59,39 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
         this.jobInfo = jobInfo;
     }
 
+    /*
+    * 1、创建卸数阶段状态信息，更新作业ID,阶段名，阶段开始时间
+    * 2、解析作业信息，得到表名和表数据量
+    * 3、根据列名和表名获得采集SQL
+    * 4、使用工厂模式获得数据库方言策略
+    * 5、根据采集线程数，计算每个任务的采集数量
+    * 6、构建线程对象CollectPage，放入线程池执行
+    * 7、获得结果,用于校验多线程采集的结果和写Meta文件
+    * */
     @Override
     public StageStatusInfo handleStage() throws InterruptedException, ExecutionException, SQLException {
         LOGGER.info("------------------数据库直连采集卸数阶段开始------------------");
-        //创建阶段状态信息，更新作业ID,阶段名，阶段开始时间
+        //1、创建卸数阶段状态信息，更新作业ID,阶段名，阶段开始时间
         StageStatusInfo statusInfo = new StageStatusInfo();
         statusInfo.setJobId(this.jobInfo.getJobId());
         statusInfo.setStageNameCode(StageConstant.UNLOADDATA.getCode());
         statusInfo.setStartDate(DateUtil.getLocalDateByChar8());
         statusInfo.setStartTime(DateUtil.getLocalTimeByChar6());
         if (jobInfo == null || dbInfo == null) {
-            throw new RuntimeException("数据库直连采集,数据库信息和作业信息不能为空");
+            throw new AppSystemException("数据库直连采集,数据库信息和作业信息不能为空");
         }
 
-        //解析作业信息，得到表名和表数据量
+        //2、解析作业信息，得到表名和表数据量
         String tableName = jobInfo.getTable_name();
         String tableCount = jobInfo.getTable_count();
         List<ColumnCleanResult> columnList = jobInfo.getColumnList();
         Set<String> collectColumnNames = JobUtil.getCollectColumnName(columnList);
-        //根据列名和表名获得采集SQL
+        //3、根据列名和表名获得采集SQL
         // TODO 缺少支持自定义SQL
         String collectSQL = SQLUtil.getCollectSQL(tableName, collectColumnNames, dbInfo.getDatabase_type());
         //获得用户提供的用于分页的列
         String pageColumn = jobInfo.getPageColumn();
-        //使用工厂模式获得数据库方言策略
+        //4、使用工厂模式获得数据库方言策略
         DataBaseDialectStrategy strategy = DialectStrategyFactory.getInstance().createDialectStrategy(dbInfo.getDatabase_type());
         //fileResult中是生成的所有数据文件的路径，用于判断卸数阶段结果
         List<String> fileResult = new ArrayList<>();
@@ -89,7 +99,7 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
         List<ResultSet> RSResult = new ArrayList<>();
         //pageCountResult是本次采集作业每个线程采集到的数据量，用于写meta文件
         List<Long> pageCountResult = new ArrayList<>();
-        //16+1个线程采集。计算每个任务的采集数量,得到start,end,然后封装成CollectTask对象,目前写死，后期可以放在yml文件中,根据服务器实际情况，修改配置
+        //5、16+1个线程采集。计算每个任务的采集数量,得到start,end,然后封装成CollectTask对象,目前写死，后期可以放在yml文件中,根据服务器实际情况，修改配置
         //TODO 讨论如何配置线程，海云现在是根据页面预估数+后台配置每个线程数据量，算出来需要多少个线程。也可以改成页面配置线程数，后台分配每个线程的数据量
         int threadCount = 16;
         if (pageColumn == null || pageColumn.trim().isEmpty()) {
@@ -98,7 +108,7 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
             //用户提供了该张表用于分页的数据列
             int totalCount = Integer.parseInt(tableCount);
             int pageRow = (int)Math.ceil(totalCount / threadCount) + 1;
-            //创建固定大小的线程池，执行分页查询(线程池类型和线程数可以后续改造)
+            //6、创建固定大小的线程池，执行分页查询(线程池类型和线程数可以后续改造)
             ExecutorService executorService = Executors.newFixedThreadPool(threadCount + 1);
             List<Future<Map<String,Object>>> futures = new ArrayList<>();
             for (int i = 0; i < threadCount; i++) {
@@ -120,7 +130,7 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
             while (!executorService.awaitTermination(100, TimeUnit.MILLISECONDS)) {
                 System.out.println("线程池正在关闭");
             }
-            //获得结果,用于校验多线程采集的结果和写Meta文件
+            //7、获得结果,用于校验多线程采集的结果和写Meta文件
             for (Future<Map<String,Object>> future : futures) {
                 fileResult.add((String) future.get().get("filePath"));
                 RSResult.add((ResultSet) future.get().get("pageData"));

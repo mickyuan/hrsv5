@@ -3,6 +3,7 @@ package hrds.agent.job.biz.utils;
 import com.alibaba.fastjson.JSONObject;
 import hrds.agent.job.biz.bean.JobInfo;
 import hrds.agent.job.biz.bean.TaskInfo;
+import hrds.commons.exception.AppSystemException;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
@@ -161,7 +162,7 @@ public class FileUtil {
         String jobFilePath = jobInfo.getJobFilePath();
         File file = new File(jobFilePath);
         if (!file.getParentFile().exists()) {
-            throw new RuntimeException("作业配置文件路径不存在");
+            throw new AppSystemException("作业配置文件路径不存在");
         } else {
             String dataFilePath = file.getParent() + File.separator + "datafile";
             File dataFlie = new File(dataFilePath);
