@@ -1,4 +1,4 @@
-package hrds.biz.ztest;
+package hrds.a.biz.ztest;
 
 import fd.ng.db.entity.TableEntity;
 import fd.ng.db.entity.anno.Table;

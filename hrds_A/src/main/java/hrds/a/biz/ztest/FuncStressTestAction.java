@@ -1,4 +1,4 @@
-package hrds.biz.ztest;
+package hrds.a.biz.ztest;
 
 import fd.ng.core.utils.DateUtil;
 import fd.ng.db.conf.DbinfosConf;
@@ -14,7 +14,7 @@ import fd.ng.web.util.RequestUtil;
 
 import hrds.exception.AppSystemException;
 import hrds.exception.BusinessException;
-import hrds.biz.zbase.WebappBaseAction;
+import hrds.a.biz.zbase.WebappBaseAction;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

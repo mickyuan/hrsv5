@@ -1,4 +1,4 @@
-package hrds.biz.zbase;
+package hrds.a.biz.zbase;
 
 import fd.ng.web.action.AbstractWebappBaseAction;
 import fd.ng.web.action.ActionResult;

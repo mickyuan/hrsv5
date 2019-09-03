@@ -1,8 +1,6 @@
 package hrds.a.biz.datasource;
 
 import fd.ng.core.utils.StringUtil;
-import fd.ng.db.jdbc.DatabaseWrapper;
-import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.annotation.RequestBean;
@@ -29,7 +27,7 @@ public class DataSourceAction extends BaseAction {
 
     /**
      * 新增/编辑数据源
-     *
+     * <p>
      * 1.判断数据源编号是否为空，为空则为新增，不为空则为编辑
      * 2.新增前查询数据源编号是否已存在，存在则抛异常，不存在就新增
      * 3.保存数据源与部门关系信息
@@ -47,8 +45,8 @@ public class DataSourceAction extends BaseAction {
             Result result = Dbo.queryResult("select datasource_number from " + Data_source.TableName +
                     "  where datasource_number=?", dataSource.getDatasource_number());
             if (!result.isEmpty()) {
-                // 数据源编号重复（稍后在异常枚举类中增加新异常后替换）
-                throw new BusinessException(ExceptionEnum.OTHER_ERROR);
+                // 数据源编号重复
+                throw new BusinessException("数据源编号重复");
             } else {
                 if (dataSource.add(Dbo.db()) != 1) {
                     // 新增保存失败
@@ -61,6 +59,13 @@ public class DataSourceAction extends BaseAction {
                 // 编辑保存失败
                 throw new BusinessException(ExceptionEnum.DATA_UPDATE_ERROR);
             }
+
+            // 先删除数据源与部门关系信息
+            int num = Dbo.execute("delete from " + Source_relation_dep.TableName +
+                    " where source_id=?", dataSource.getSource_id());
+            if (num != 1) {
+                throw new BusinessException(ExceptionEnum.DATA_DELETE_ERROR);
+            }
         }
         // 保存数据源与部门关系信息
         saveSourceRelationDep(dataSource.getSource_id(), dep_id);
@@ -68,23 +73,15 @@ public class DataSourceAction extends BaseAction {
 
     /**
      * 保存数据源与部门关系表信息
-     *
-     * 1.先删除此数据源下的数据源与部门关系信息
-     * 2.重新建立数据源与部门关系信息
+     * <p>
+     * 1.建立数据源与部门关系信息
      *
      * @param source_id 数据源编号
      * @param dep_id    部门编号
      * @return
      */
     public void saveSourceRelationDep(Long source_id, String dep_id) {
-        // 更新数据源与部门关系表信息
-        // 先删除数据源与部门关系信息
-        int num = Dbo.execute("delete from " + Source_relation_dep.TableName +
-                " where source_id=?", source_id);
-        if (num != 1) {
-            throw new BusinessException(ExceptionEnum.DATA_DELETE_ERROR);
-        }
-        // 重新建立数据源与部门关系信息
+        // 建立数据源与部门关系信息
         Source_relation_dep srd = new Source_relation_dep();
         srd.setSource_id(source_id);
         String[] depIds = dep_id.split(",");
@@ -98,7 +95,7 @@ public class DataSourceAction extends BaseAction {
 
     /**
      * 编辑前根据数据源编号查询数据源及数据源与部门关系信息
-     *
+     * <p>
      * 1.判断数据源编号是否为空，不为空则抛异常
      * 2.查询该数据源下的数据源及数据源与部门关系信息
      * 3.判断该数据源下是否有数据，没有抛异常，有则返回查询结果
@@ -107,17 +104,11 @@ public class DataSourceAction extends BaseAction {
      * @return
      */
     public Result searchDataSource(Long source_id) {
-        if (StringUtil.isBlank(source_id.toString())) {
-            // 数据源编号不能为空
-            throw new BusinessException(ExceptionEnum.OTHER_ERROR.getCode(),
-                    ExceptionEnum.OTHER_ERROR.getMessage());
-        }
-
         // 查询该数据源下的数据源及数据源与部门关系信息
         Result result = Dbo.queryResult("select ds.*,srd.dep_id from data_source ds " +
                 "join source_relation_dep srd on ds.source_id=srd.source_id where ds.source_id = ?", source_id);
         if (result.isEmpty()) {
-            // 该数据源下数据为空
+            // 该数据源下数据为空(此为编辑情况下数据不能为空）
             throw new BusinessException(ExceptionEnum.DATA_NOT_EXIST);
         } else {
             // 不为空，返回查询结果
@@ -128,7 +119,7 @@ public class DataSourceAction extends BaseAction {
 
     /**
      * 删除数据源与部门关系表信息
-     *
+     * <p>
      * 1.删除数据源与部门关系表信息
      * 2.失败就抛异常，否则就正常删除
      *
@@ -136,13 +127,15 @@ public class DataSourceAction extends BaseAction {
      */
     public void deleteSourceRelationDep(Long source_id) {
         // 删除数据源与部门关系表信息
-        Dbo.queryNumber("delete from " + Source_relation_dep.TableName + " where source_id=?", source_id)
-                .orElseThrow(() -> new BusinessException(ExceptionEnum.DATA_DELETE_ERROR));
+        int num = Dbo.execute("delete from " + Source_relation_dep.TableName + " where source_id=?", source_id);
+        if (num != 1) {
+            throw new BusinessException(ExceptionEnum.DATA_DELETE_ERROR);
+        }
     }
 
     /**
      * 删除数据源信息
-     *
+     * <p>
      * 1.先查询该datasource下是否还有agent,有不能删除，没有，可以删除
      * 2.删除data_source表信息，删除失败就抛异常，否则正常删除
      *
@@ -153,13 +146,15 @@ public class DataSourceAction extends BaseAction {
         // 先查询该datasource下是否还有agent,有不能删除，没有，可以删除
         Result result = Dbo.queryResult("SELECT * FROM agent_info WHERE source_id=? ", source_id);
         if (!result.isEmpty()) {
-            // 此数据源下还有agent，不能删除(稍后定义新异常替换)
-            throw new BusinessException(ExceptionEnum.OTHER_ERROR);
+            // 此数据源下还有agent，不能删除
+            throw new BusinessException("此数据源下还有agent，不能删除");
         }
 
         // 删除data_source表信息
-        Dbo.queryNumber("delete from " + Data_source.TableName + " where source_id=?", source_id)
-                .orElseThrow(() -> new BusinessException(ExceptionEnum.DATA_DELETE_ERROR));
+        int num = Dbo.execute("delete from " + Data_source.TableName + " where source_id=?", source_id);
+        if (num != 1) {
+            throw new BusinessException(ExceptionEnum.DATA_DELETE_ERROR);
+        }
         // 删除source_relation_dep信息
         deleteSourceRelationDep(source_id);
 
@@ -167,7 +162,7 @@ public class DataSourceAction extends BaseAction {
 
     /**
      * 保存agent信息
-     *
+     * <p>
      * 1.判断端口是否被占用，被占用抛异常，否则正常保存
      * 2.判断agent编号是否为空，为空则新增，不为空则编辑
      *
@@ -175,37 +170,37 @@ public class DataSourceAction extends BaseAction {
      * @return
      */
     public void saveAgent(@RequestBean Agent_info agentInfo) {
-        boolean flag = monitorPort(agentInfo.getAgent_ip(), Integer.parseInt(agentInfo.getAgent_port()));
+        boolean flag = isPortOccupied(agentInfo.getAgent_ip(), Integer.parseInt(agentInfo.getAgent_port()));
         if (flag) {
-            // 端口不可使用（稍后在异常枚举类中增加新异常）
-            throw new BusinessException(ExceptionEnum.OTHER_ERROR);
+            // 端口不可使用
+            throw new BusinessException("端口被占用");
+        }
+        if (agentInfo.getAgent_id() == null) {
+            // 新增
+            agentInfo.setSource_id(PrimayKeyGener.getNextId());
+            agentInfo.setUser_id(ActionUtil.getUser().getUserId());
+            if (agentInfo.add(Dbo.db()) != 1) {
+                throw new BusinessException(ExceptionEnum.DATA_ADD_ERROR);
+            }
         } else {
-            if (StringUtil.isBlank(agentInfo.getAgent_id().toString())) {
-                // 新增
-                agentInfo.setSource_id(PrimayKeyGener.getNextId());
-                agentInfo.setUser_id(ActionUtil.getUser().getUserId());
-                if (agentInfo.add(Dbo.db()) != 1) {
-                    throw new BusinessException(ExceptionEnum.DATA_ADD_ERROR);
-                }
-            } else {
-                // 编辑
-                if (agentInfo.update(Dbo.db()) != 1) {
-                    throw new BusinessException(ExceptionEnum.DATA_UPDATE_ERROR);
-                }
+            // 编辑
+            if (agentInfo.update(Dbo.db()) != 1) {
+                throw new BusinessException(ExceptionEnum.DATA_UPDATE_ERROR);
             }
         }
+
     }
 
     /**
      * 监控agent端口是否被占用
-     *
+     * <p>
      * 1.通过http方式去测试端口连通情况，测通则被占用，不通则可以使用
      *
      * @param ip
      * @param port
      * @return
      */
-    public boolean monitorPort(String ip, int port) {
+    public boolean isPortOccupied(String ip, int port) {
 
         HttpClient httpClient = new HttpClient();
         String url = "http://".concat(ip).concat(":").concat(port + "");

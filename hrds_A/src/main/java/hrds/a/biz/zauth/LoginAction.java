@@ -1,9 +1,9 @@
-package hrds.biz.zauth;
+package hrds.a.biz.zauth;
 
 import fd.ng.web.action.ActionResult;
 import fd.ng.web.action.ActionResultHelper;
 import fd.ng.web.util.RequestUtil;
-import hrds.biz.zbase.WebappBaseAction;
+import hrds.a.biz.zbase.WebappBaseAction;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.HashMap;
