@@ -7,6 +7,7 @@ import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.utils.EnumUtil;
 import hrds.agent.job.biz.utils.ProductFileUtil;
+import hrds.commons.exception.AppSystemException;
 
 /**
  * ClassName: JobStageController <br/>
@@ -95,7 +96,7 @@ public class JobStageController {
     private JobStatusInfo setStageStatus(StageStatusInfo stageStatus, JobStatusInfo jobStatus){
         StageConstant stage = EnumUtil.getEnumByCode(StageConstant.class, stageStatus.getStageNameCode());
         if (stage == null) {
-            throw new RuntimeException("获取阶段信息失败");
+            throw new AppSystemException("获取阶段信息失败");
         }
         if(stage.equals(StageConstant.UNLOADDATA)){
             jobStatus.setUnloadDataStatus(stageStatus);

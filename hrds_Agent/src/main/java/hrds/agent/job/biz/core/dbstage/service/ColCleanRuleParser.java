@@ -7,6 +7,7 @@ import hrds.agent.job.biz.bean.ColumnCleanResult;
 import hrds.agent.job.biz.bean.ColumnSplitBean;
 import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.utils.StringOperator;
+import hrds.commons.exception.AppSystemException;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
@@ -36,7 +37,7 @@ public class ColCleanRuleParser {
      */
     public static Map<String, Object> parseColCleanRule(ColumnCleanResult rule)throws UnsupportedEncodingException {
         if (rule == null) {
-            throw new RuntimeException("列清洗规则不能为空");
+            throw new AppSystemException("列清洗规则不能为空");
         }
         //用于存放所有类型的列清洗规则，并最终返回
         Map<String, Object> result = new HashMap<>();
@@ -57,7 +58,7 @@ public class ColCleanRuleParser {
                 result.put("clean_order",orderMap);
             }
         }else{
-            throw new RuntimeException("清洗优先级不能为空");
+            throw new AppSystemException("清洗优先级不能为空");
         }
 
         //2、解析字符替换规则

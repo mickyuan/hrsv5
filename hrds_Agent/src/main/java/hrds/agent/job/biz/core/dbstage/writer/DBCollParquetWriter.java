@@ -9,6 +9,7 @@ import hrds.agent.job.biz.dataclean.columnclean.ColumnCleanUtil;
 import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.ParquetUtil;
 import hrds.agent.job.biz.utils.ProductFileUtil;
+import hrds.commons.exception.AppSystemException;
 import org.apache.avro.Schema;
 import org.apache.avro.file.CodecFactory;
 import org.apache.avro.file.DataFileWriter;
@@ -95,13 +96,13 @@ public class DBCollParquetWriter extends AbstractFileWriter {
     public String writeDataAsSpecifieFormat(Map<String, Object> metaDataMap, ResultSet rs, String tableName) throws IOException, SQLException {
         //1、校验方法入参合法性
         if (metaDataMap == null || metaDataMap.isEmpty()) {
-            throw new RuntimeException("写PARQUET文件阶段,元信息不能为空");
+            throw new AppSystemException("写PARQUET文件阶段,元信息不能为空");
         }
         if (rs == null) {
-            throw new RuntimeException("写PARQUET文件阶段,数据不能为空");
+            throw new AppSystemException("写PARQUET文件阶段,数据不能为空");
         }
         if (tableName == null) {
-            throw new RuntimeException("写PARQUET文件阶段,表名不能为空");
+            throw new AppSystemException("写PARQUET文件阶段,表名不能为空");
         }
 
         OutputStream outputStream = null;
@@ -111,7 +112,7 @@ public class DBCollParquetWriter extends AbstractFileWriter {
         boolean result = FileUtil.createDataFileDirByJob(this.jobInfo);
         String outputPath;
         if (!result) {
-            throw new RuntimeException("创建数据文件目录失败");
+            throw new AppSystemException("创建数据文件目录失败");
         }
         //3、创建数据文件的文件名 ：jobID + 处理线程号 + 时间戳,和作业配置文件位于同一路径下
         outputPath = ProductFileUtil.getDataFilePathByJobID(this.jobInfo) + File.separatorChar + jobInfo.getJobId() + Thread.currentThread().getId()
@@ -129,7 +130,7 @@ public class DBCollParquetWriter extends AbstractFileWriter {
                 if (!isExist) {
                     boolean LOBsResult = FileUtil.createDir(LOBsDir);
                     if (!LOBsResult) {
-                        throw new RuntimeException("创建LOBs目录失败");
+                        throw new AppSystemException("创建LOBs目录失败");
                     }
                 }
                 File file = new File(LOBsDir);
@@ -264,7 +265,7 @@ public class DBCollParquetWriter extends AbstractFileWriter {
                 if (taskInfo != null) {
                     startDate = taskInfo.getJobstartdate();
                 } else {
-                    throw new RuntimeException("未获取到包含该作业的任务");
+                    throw new AppSystemException("未获取到包含该作业的任务");
                 }
                 writeLine(group, MD5, startDate);
             }else{

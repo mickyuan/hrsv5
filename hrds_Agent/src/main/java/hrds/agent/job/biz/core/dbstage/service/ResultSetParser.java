@@ -12,6 +12,7 @@ import hrds.agent.job.biz.core.dbstage.writer.DBCollParquetWriter;
 import hrds.agent.job.biz.core.dbstage.writer.FileWriterInterface;
 import hrds.agent.job.biz.utils.ColumnTool;
 import hrds.agent.job.biz.utils.ParquetUtil;
+import hrds.commons.exception.AppSystemException;
 import org.apache.parquet.example.data.GroupFactory;
 import org.apache.parquet.example.data.simple.SimpleGroupFactory;
 import org.apache.parquet.schema.MessageType;
@@ -160,7 +161,7 @@ public class ResultSetParser {
         //获得数据文件格式
         String format = jobInfo.getFile_format();
         if (format == null || format.isEmpty()) {
-            throw new RuntimeException("HDFS文件类型不能为空");
+            throw new AppSystemException("HDFS文件类型不能为空");
         }
         //当前线程生成的数据文件的路径，用于返回
         String filePath = "";

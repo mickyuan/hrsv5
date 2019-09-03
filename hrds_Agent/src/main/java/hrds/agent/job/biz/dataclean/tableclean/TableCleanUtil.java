@@ -1,5 +1,6 @@
 package hrds.agent.job.biz.dataclean.tableclean;
 
+import hrds.commons.exception.AppSystemException;
 import org.apache.parquet.example.data.Group;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,16 +38,16 @@ public class TableCleanUtil {
     public static String tbDataClean(String columnValue, String columnName, Group group, String colType, String fileType, Map<String, Object> tableCleanRule){
         //1、校验入参合法性
         if (columnValue == null || columnName == null) {
-            throw new RuntimeException("表清洗需要字段名和字段值");
+            throw new AppSystemException("表清洗需要字段名和字段值");
         }
         if (colType == null) {
-            throw new RuntimeException("表清洗需要字段类型");
+            throw new AppSystemException("表清洗需要字段类型");
         }
         if (fileType == null) {
-            throw new RuntimeException("表清洗需要数据文件类型");
+            throw new AppSystemException("表清洗需要数据文件类型");
         }
         if (tableCleanRule == null) {
-            throw new RuntimeException("表清洗规则不能为空");
+            throw new AppSystemException("表清洗规则不能为空");
         }
         //2、根据列名拿到该表的清洗规则
         Map<Integer, String> clean_order = (Map<Integer, String>) tableCleanRule.get("clean_order");

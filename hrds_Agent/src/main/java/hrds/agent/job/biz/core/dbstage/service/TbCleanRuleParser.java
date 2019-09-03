@@ -7,6 +7,7 @@ import hrds.agent.job.biz.bean.TableCleanResult;
 import hrds.agent.job.biz.bean.TableTrimResult;
 import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.utils.StringOperator;
+import hrds.commons.exception.AppSystemException;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.HashMap;
@@ -38,7 +39,7 @@ public class TbCleanRuleParser {
     * */
     public static Map<String, Object> parseTbCleanRule(TableCleanResult tbCleanResult){
         if(tbCleanResult == null){
-            throw new RuntimeException("解析表清洗规则时，清洗规则对象不能为空");
+            throw new AppSystemException("解析表清洗规则时，清洗规则对象不能为空");
         }
 
         //用于存放所有类型的列清洗规则，并最终返回
@@ -60,7 +61,7 @@ public class TbCleanRuleParser {
             }
             result.put("cleanOrder", tbOrderMap);
         }else{
-            throw new RuntimeException("解析表清洗规则时，清洗优先级不能为空");
+            throw new AppSystemException("解析表清洗规则时，清洗优先级不能为空");
         }
 
         //解析表所有字段替换规则

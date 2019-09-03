@@ -12,6 +12,7 @@ import hrds.agent.job.biz.dataclean.columnclean.ColumnCleanUtil;
 import hrds.agent.job.biz.dataclean.tableclean.TableCleanUtil;
 import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.ProductFileUtil;
+import hrds.commons.exception.AppSystemException;
 import org.apache.avro.Schema;
 import org.apache.avro.file.CodecFactory;
 import org.apache.avro.file.DataFileWriter;
@@ -86,13 +87,13 @@ public class DBCollCSVWriter extends AbstractFileWriter {
     public String writeDataAsSpecifieFormat(Map<String, Object> metaDataMap, ResultSet rs, String tableName) throws IOException, SQLException {
         //1、校验方法入参合法性
         if (metaDataMap == null || metaDataMap.isEmpty()) {
-            throw new RuntimeException("写CSV文件阶段,元信息不能为空");
+            throw new AppSystemException("写CSV文件阶段,元信息不能为空");
         }
         if (rs == null) {
-            throw new RuntimeException("写CSV文件阶段,数据不能为空");
+            throw new AppSystemException("写CSV文件阶段,数据不能为空");
         }
         if (tableName == null) {
-            throw new RuntimeException("写CSV文件阶段,表名不能为空");
+            throw new AppSystemException("写CSV文件阶段,表名不能为空");
         }
 
         OutputStream outputStream = null;
@@ -104,7 +105,7 @@ public class DBCollCSVWriter extends AbstractFileWriter {
         //2、创建数据文件存放目录
         boolean result = FileUtil.createDataFileDirByJob(this.jobInfo);
         if (!result) {
-            throw new RuntimeException("创建数据文件目录失败");
+            throw new AppSystemException("创建数据文件目录失败");
         }
         //3、数据文件的文件名 ： jobID + 处理线程号 + 时间戳,在作业配置文件目录下的datafile目录中
         String path = ProductFileUtil.getDataFilePathByJobID(this.jobInfo) + File.separatorChar + jobInfo.getJobId() + Thread.currentThread().getId()
@@ -121,7 +122,7 @@ public class DBCollCSVWriter extends AbstractFileWriter {
                 if (!isExist) {
                     boolean LOBsResult = FileUtil.createDir(LOBsDir);
                     if (!LOBsResult) {
-                        throw new RuntimeException("创建LOBs目录失败");
+                        throw new AppSystemException("创建LOBs目录失败");
                     }
                 }
                 File file = new File(LOBsDir);
@@ -144,7 +145,7 @@ public class DBCollCSVWriter extends AbstractFileWriter {
         File csvFile = new File(path);
         boolean newFile = csvFile.createNewFile();
         if (!newFile) {
-            throw new RuntimeException("创建数据文件失败");
+            throw new AppSystemException("创建数据文件失败");
         }
         Writer fileWriter = new FileWriter(csvFile);
         CsvWriter writer = new CsvWriter(fileWriter, new CsvWriterSettings());
@@ -272,7 +273,7 @@ public class DBCollCSVWriter extends AbstractFileWriter {
                 if (taskInfo != null) {
                     fileList.add(taskInfo.getJobstartdate());
                 } else {
-                    throw new RuntimeException("未获取到包含该作业的任务");
+                    throw new AppSystemException("未获取到包含该作业的任务");
                 }
                 //设置任务结束时间
                 fileList.add(JobConstant.MAX_DATE);

@@ -1,6 +1,7 @@
 package hrds.agent.job.biz.core.dbstage.dbdialect.strategy;
 
 import hrds.agent.job.biz.constant.DBTypeConstant;
+import hrds.commons.exception.AppSystemException;
 
 /**
  * ClassName: DialectStrategyFactory <br/>
@@ -20,7 +21,7 @@ public class DialectStrategyFactory {
         if(!flag){
             flag = true;
         }else{
-            throw new RuntimeException("不能多次创建单例对象");
+            throw new AppSystemException("不能多次创建单例对象");
         }
     }
 
@@ -43,13 +44,13 @@ public class DialectStrategyFactory {
     */ 
     public static DataBaseDialectStrategy createDialectStrategy(String dbType){
         if(dbType == null || dbType.isEmpty()){
-            throw new RuntimeException("数据库类型不能为空");
+            throw new AppSystemException("数据库类型不能为空");
         }
         if (Integer.parseInt(dbType) == DBTypeConstant.MYSQL.getCode()) {
             return new MySQLDialectStrategy();
         }else if (Integer.parseInt(dbType) == DBTypeConstant.ORACLE9IFOLLOW.getCode()) {
             //TODO 目前fdcode只有oracle9iAbove
-            throw new RuntimeException("系统不支持Oracle9i及以下");
+            throw new AppSystemException("系统不支持Oracle9i及以下");
         }else if (Integer.parseInt(dbType) == DBTypeConstant.ORACLE10GABOV.getCode()) {
             return new OracleDialectStrategy();
         }else if (Integer.parseInt(dbType) == DBTypeConstant.SQLSERVRER2000.getCode()) {
@@ -73,7 +74,7 @@ public class DialectStrategyFactory {
         }else if (Integer.parseInt(dbType) == DBTypeConstant.TERADATA.getCode()) {
             //TODO 返回TeraData策略
         }else{
-            throw new RuntimeException("系统不支持的数据库类型");
+            throw new AppSystemException("系统不支持的数据库类型");
         }
         return null;
     }

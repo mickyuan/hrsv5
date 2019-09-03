@@ -2,6 +2,7 @@ package hrds.agent.job.biz.dataclean.columnclean;
 
 import hrds.agent.job.biz.bean.ColumnSplitBean;
 import hrds.agent.job.biz.constant.JobConstant;
+import hrds.commons.exception.AppSystemException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.parquet.example.data.Group;
 import org.slf4j.Logger;
@@ -39,16 +40,16 @@ public class ColumnCleanUtil {
     public static String colDataClean(String columnValue, String columnName, Group group, String colType, String fileType, Map<String, Map<String, Object>> colCleanRule, List<Object> lineData){
         //1、校验入参合法性
         if (columnValue == null || columnName == null) {
-            throw new RuntimeException("列清洗需要字段名和字段值");
+            throw new AppSystemException("列清洗需要字段名和字段值");
         }
         if (colType == null) {
-            throw new RuntimeException("列清洗需要字段类型");
+            throw new AppSystemException("列清洗需要字段类型");
         }
         if (fileType == null) {
-            throw new RuntimeException("列清洗需要数据文件类型");
+            throw new AppSystemException("列清洗需要数据文件类型");
         }
         if (colCleanRule == null) {
-            throw new RuntimeException("列清洗规则不能为空");
+            throw new AppSystemException("列清洗规则不能为空");
         }
         //2、根据列名拿到该列的清洗规则
         Map<String, Object> currColumnRule = colCleanRule.get(columnName);
