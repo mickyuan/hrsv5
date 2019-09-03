@@ -6,7 +6,7 @@ import com.alibaba.fastjson.JSONObject;
 import hrds.agent.job.biz.bean.ColumnCleanResult;
 import hrds.agent.job.biz.bean.ColumnSplitBean;
 import hrds.agent.job.biz.constant.JobConstant;
-import hrds.agent.job.biz.utils.StringUtil;
+import hrds.agent.job.biz.utils.StringOperator;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
@@ -25,6 +25,13 @@ public class ColCleanRuleParser {
     /**
      * 解析列清洗规则
      * @param rule {@link ColumnCleanResult}
+     * 1、解析清洗顺序
+     * 2、解析字符替换规则
+     * 3、解析字符补齐规则
+     * 4、解析日期转换规则
+     * 5、码值转换
+     * 6、首尾去空
+     * 7、解析字段拆分规则
      */
     public static Map<String, Object> parseColCleanRule(ColumnCleanResult rule)throws UnsupportedEncodingException {
         if (rule == null) {
@@ -39,7 +46,7 @@ public class ColCleanRuleParser {
         //用于存放码值转换规则
         Map<String, String> convertMap = new HashMap<>();
 
-        //解析清洗顺序
+        ///1、解析清洗顺序
         String cleanOrder = rule.getClean_order();
         if (cleanOrder != null && !cleanOrder.isEmpty()) {
             //JSON串的形式为{\"complement\":1,\"replacement\":2,\"formatting\":3,\"conversion\":4,\"consolidation\":5,\"split\":6,\"trim\":7}
@@ -52,7 +59,7 @@ public class ColCleanRuleParser {
             throw new RuntimeException("清洗优先级不能为空");
         }
 
-        //解析字符替换规则
+        //2、解析字符替换规则
         JSONArray replaceRule = JSON.parseArray(rule.getIs_column_repeat_result());
         if (replaceRule != null && !replaceRule.isEmpty()) {
             for (int j = 0; j < replaceRule.size(); j++) {
@@ -64,7 +71,7 @@ public class ColCleanRuleParser {
             result.put("replace",replaceMap);
         }
 
-        //解析字符补齐规则
+        //3、解析字符补齐规则
         StringBuilder completeSB = new StringBuilder();
         JSONObject completeObject = JSONObject.parseObject(rule.getIs_column_file_result());
         if (completeObject != null && !completeObject.isEmpty()) {
@@ -79,7 +86,7 @@ public class ColCleanRuleParser {
             result.put("complete",completeSB);
         }
 
-        //解析日期转换规则
+        //4、解析日期转换规则
         StringBuilder dateSB = new StringBuilder();
         JSONObject dateObject = JSONObject.parseObject(rule.getIs_column_time_result());
         if (dateObject != null && !dateObject.isEmpty()) {
@@ -90,7 +97,7 @@ public class ColCleanRuleParser {
             result.put("dateConver",dateSB);
         }
 
-        //码值转换
+        //5、码值转换
         JSONObject CVConverObject = JSONObject.parseObject(rule.getColumnCodeResult());
         if (CVConverObject != null && !CVConverObject.isEmpty()) {
             for(String key : CVConverObject.keySet()){
@@ -99,20 +106,20 @@ public class ColCleanRuleParser {
             result.put("CVConver",convertMap);
         }
 
-        //首尾去空
+        //6、首尾去空
         JSONObject trimObject = JSONObject.parseObject(rule.getTrimResult());
         if (trimObject != null && !trimObject.isEmpty()) {
             result.put("trim",true);
         }
 
-        //解析字段拆分规则
+        //7、解析字段拆分规则
         JSONArray splitArray = JSON.parseArray(rule.getColumnSplitResult());
         //用于存放拆分出来的列和值
         List<ColumnSplitBean> splitList = new ArrayList<>();
         if(splitArray != null && !splitArray.isEmpty()){
             for(int i = 0; i < splitArray.size(); i++){
                 ColumnSplitBean bean = JSONObject.parseObject(splitArray.get(i).toString(), ColumnSplitBean.class);
-                bean.setSplitSep(StringUtil.unicode2String(bean.getSplitSep()));
+                bean.setSplitSep(StringOperator.unicode2String(bean.getSplitSep()));
                 splitList.add(bean);
             }
             result.put("split",splitList);

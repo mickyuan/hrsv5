@@ -44,15 +44,22 @@ public class JobStageController {
     * @Param:  statusFilePath：作业状态文件目录
     * @return:  jobStatus：作业状态对象
     * @Author: WangZhengcheng 
-    * @Date: 2019/8/13 
-    */ 
+    * @Date: 2019/8/13
+    */
+    /*
+    * 1、从第一个阶段开始执行，并判断执行结果
+    * 2、若第一阶段执行成功，记录阶段执行状态，并继续向下面的阶段执行
+    * 3、若第一阶段执行失败，目前的处理逻辑是直接记录错误信息，然后返回jobStatusInfo
+    * 4、若除第一阶段外的其他阶段执行失败，记录错误信息，尚欠是否继续运行下一阶段的逻辑
+    * */
     public JobStatusInfo handleStageByOrder(String statusFilePath, JobStatusInfo jobStatus) throws Exception{
 
         JobStatusInfo jobInfo = jobStatus;
+        //1、从第一个阶段开始执行
         StageStatusInfo firstStageStatus = head.handleStage();
         //判断第一阶段的执行结果
         if(firstStageStatus.getStatusCode() == RunStatusConstant.SUCCEED.getCode()) {
-            //若第一阶段执行成功，记录阶段执行状态，并继续向下执行
+            //2、若第一阶段执行成功，记录阶段执行状态，并继续向下执行
             jobInfo = setStageStatus(firstStageStatus, jobInfo);
             //TODO 讨论，是否由该种方式来记录运行时状态
             ProductFileUtil.createStatusFile(statusFilePath, JSONObject.toJSONString(jobInfo));
@@ -62,7 +69,8 @@ public class JobStageController {
                 if(stageStatusInfo.getStatusCode() == RunStatusConstant.SUCCEED.getCode()){
                     jobInfo = setStageStatus(stageStatusInfo, jobInfo);
                 }else{
-                    //TODO 若除第一阶段外的其他阶段执行失败，记录错误信息，尚欠是否继续运行下一阶段的逻辑
+                    //TODO 下面的处理方式待商榷
+                    // 4、若除第一阶段外的其他阶段执行失败，记录错误信息，尚欠是否继续运行下一阶段的逻辑
                     jobInfo = setStageStatus(stageStatusInfo, jobInfo);
                     jobInfo.setExceptionInfo(EnumUtil.getEnumByCode(StageConstant.class, stageStatusInfo.getStageNameCode()).getDesc() + "阶段执行失败");
                 }
@@ -70,7 +78,8 @@ public class JobStageController {
                 ProductFileUtil.createStatusFile(statusFilePath, JSONObject.toJSONString(jobInfo));
             }
         }else{
-            //TODO 若第一阶段执行失败，目前的处理逻辑是直接记录错误信息，然后返回jobStatusInfo
+            //TODO 下面的处理方式待商榷
+            //3、若第一阶段执行失败，目前的处理逻辑是直接记录错误信息，然后返回jobStatusInfo
             jobInfo = setStageStatus(firstStageStatus, jobInfo);
             jobInfo.setExceptionInfo(EnumUtil.getEnumByCode(StageConstant.class, firstStageStatus.getStageNameCode()).getDesc() + "阶段执行失败");
         }

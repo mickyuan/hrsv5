@@ -37,6 +37,19 @@ import java.util.Map;
  * Since JDK 1.8
  **/
 public class ResultSetParser {
+    /** 
+    * @Description: 解析ResultSet
+    * @Param: [rs : 数据集]
+    * @Param: [jobInfo : 采集任务信息]
+    * @Param: [pageNum : 分页的页数]
+    * @Param: [pageRow : 每页的数据量，和分页页数一起，在写文件的时候，如果文件过大，要进行单个文件的拆分时使用]
+    * @return: java.lang.String
+    * @Author: WangZhengcheng 
+    * @Date: 2019/9/2 
+    */
+    /*
+    * 1、
+    * */
     public String parseResultSet(ResultSet rs, JobInfo jobInfo, int pageNum, int pageRow) throws SQLException, IOException{
         //TODO 建议查询数据库的系统表来获得meta信息
         ResultSetMetaData metaData = rs.getMetaData();
