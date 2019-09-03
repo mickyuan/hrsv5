@@ -22,6 +22,7 @@ public class JobStatusInfo implements Serializable {
 	private String startTime;
 	private String endDate;
 	private String endTime;
+	//TODO 卸数(开始，成功，失败)，上传，数据加载，增量，数据登记
 	private StageStatusInfo unloadDataStatus;
 	private StageStatusInfo uploadStatus;
 	private StageStatusInfo dataLodingStatus;

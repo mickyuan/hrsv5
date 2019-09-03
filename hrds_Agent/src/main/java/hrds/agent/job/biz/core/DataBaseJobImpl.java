@@ -32,6 +32,13 @@ public class DataBaseJobImpl implements JobInterface{
         this.jobStatus = jobStatus;
     }
 
+    /**
+     * 1.
+     * 2.
+     * 3.
+     *
+     * @return
+     */
     @Override
     public JobStatusInfo runJob() {
         JobStatusInfo jobStatusInfo = this.jobStatus;
