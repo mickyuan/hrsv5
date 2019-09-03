@@ -32,6 +32,7 @@ public class ColCleanRuleParser {
      * 5、码值转换
      * 6、首尾去空
      * 7、解析字段拆分规则
+     * 8、将上述所有组装成Map<String, Object> result并返回，key是清洗项名称，value是清洗规则
      */
     public static Map<String, Object> parseColCleanRule(ColumnCleanResult rule)throws UnsupportedEncodingException {
         if (rule == null) {

@@ -31,7 +31,13 @@ public class ColumnCleanUtil {
      * @param colCleanRule : 清洗规则
      * @return
      */
+    /*
+    * 1、校验入参合法性
+    * 2、根据列名拿到该列的清洗规则
+    * 3、按照清洗优先级，从大到小对该列数据进行数据清洗
+    * */
     public static String colDataClean(String columnValue, String columnName, Group group, String colType, String fileType, Map<String, Map<String, Object>> colCleanRule, List<Object> lineData){
+        //1、校验入参合法性
         if (columnValue == null || columnName == null) {
             throw new RuntimeException("列清洗需要字段名和字段值");
         }
@@ -44,11 +50,11 @@ public class ColumnCleanUtil {
         if (colCleanRule == null) {
             throw new RuntimeException("列清洗规则不能为空");
         }
-        //根据列名拿到该列的清洗规则
+        //2、根据列名拿到该列的清洗规则
         Map<String, Object> currColumnRule = colCleanRule.get(columnName);
         Map<Integer, String> clean_order = (Map<Integer, String>) currColumnRule.get("clean_order");
         ColumnCleanInterface rule = null;
-        //从后往前遍历，目的是按照优先级的从大到小，进行数据清洗
+        //3、从后往前遍历，目的是按照优先级的从大到小，进行数据清洗
         for(int i = clean_order.size(); i >= 1; i--){
             switch(clean_order.get(i)) {
                 //字符替换

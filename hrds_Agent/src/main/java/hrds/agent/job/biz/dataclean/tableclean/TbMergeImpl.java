@@ -1,10 +1,10 @@
 package hrds.agent.job.biz.dataclean.tableclean;
 
+import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.constant.FileFormatConstant;
 import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.utils.ColumnTool;
 import hrds.agent.job.biz.utils.ParquetUtil;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.parquet.example.data.Group;
 
 import java.util.List;
@@ -32,8 +32,8 @@ public class TbMergeImpl extends AbstractTableClean {
                 afterMergeColValue.append(columnsValue[alliIdex[i]]);
             }
             if(group != null){
-                String[] colNameAndTypeArr = StringUtils.splitByWholeSeparatorPreserveAllTokens(colNameAndType, JobConstant.CLEAN_SEPARATOR);
-                ParquetUtil.addData2Group(group, colNameAndTypeArr[0], colNameAndTypeArr[1], afterMergeColValue.toString());
+                List<String> colNameAndTypeArr = StringUtil.split(colNameAndType, JobConstant.CLEAN_SEPARATOR);
+                ParquetUtil.addData2Group(group, colNameAndTypeArr.get(0), colNameAndTypeArr.get(1), afterMergeColValue.toString());
                 afterMergeColValue.delete(0, afterMergeColValue.length());
             }
             if(lineData != null){

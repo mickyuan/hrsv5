@@ -78,8 +78,22 @@ public class DBCollParquetWriter extends AbstractFileWriter {
     * @Author: WangZhengcheng
     * @Date: 2019/8/13
     */
+    /*
+     * 1、校验方法入参合法性
+     * 2、创建数据文件存放目录
+     * 3、创建数据文件文件名，文件名为jobID + 处理线程号 + 时间戳.parquet,在作业配置文件目录下的datafile目录中
+     * 4、判断本次采集得到的RS是否有CLOB，BLOB，LONGVARCHAR的大字段类型，如果有，则创建LOBs目录用于存放avro文件，并初始化写avro相关类对象
+     * 5、开始写CSV文件，
+     *       (1)、创建文件
+     *       (2)、循环RS，获得每一行数据，针对每一行数据，循环每一列，根据每一列的类型，决定是写avro还是进行清洗
+     *       (3)、执行数据清洗，包括表清洗和列清洗
+     *       (4)、清洗后的结果追加到构建MD5的StringBuilder
+     *       (5)、将数据放入group，写一行数据，执行下一次RS循环
+     * 6、关闭资源，并返回文件路径
+     * */
     @Override
     public String writeDataAsSpecifieFormat(Map<String, Object> metaDataMap, ResultSet rs, String tableName) throws IOException, SQLException {
+        //1、校验方法入参合法性
         if (metaDataMap == null || metaDataMap.isEmpty()) {
             throw new RuntimeException("写PARQUET文件阶段,元信息不能为空");
         }
@@ -93,18 +107,19 @@ public class DBCollParquetWriter extends AbstractFileWriter {
         OutputStream outputStream = null;
         DataFileWriter<Object> avroWriter = null;
 
-        //创建数据文件存放目录
+        //2、创建数据文件存放目录
         boolean result = FileUtil.createDataFileDirByJob(this.jobInfo);
         String outputPath;
         if (!result) {
             throw new RuntimeException("创建数据文件目录失败");
         }
-        //数据文件的文件名 ：jobID + 处理线程号 + 时间戳,和作业配置文件位于同一路径下
+        //3、创建数据文件的文件名 ：jobID + 处理线程号 + 时间戳,和作业配置文件位于同一路径下
         outputPath = ProductFileUtil.getDataFilePathByJobID(this.jobInfo) + File.separatorChar + jobInfo.getJobId() + Thread.currentThread().getId()
                 + System.currentTimeMillis() + "." + FileFormatConstant.PARQUET.getMessage();
 
-        //列类型(java.sql.Types)
+        //列类型(格式为java.sql.Types)
         int[] colTypeArrs = (int[]) metaDataMap.get("colTypeArr");
+        //4、判断本次采集得到的RS是否有CLOB，BLOB，LONGVARCHAR的大字段类型，如果有，则创建LOBs目录用于存放avro文件，并初始化写avro相关类对象
         for(int i = 0; i < colTypeArrs.length; i++){
             if(colTypeArrs[i] == java.sql.Types.CLOB || colTypeArrs[i] == java.sql.Types.BLOB || colTypeArrs[i] == java.sql.Types.LONGVARCHAR){
                 //说明本次采集到的内容包含大字段类型，需要对其进行avro处理
@@ -127,6 +142,7 @@ public class DBCollParquetWriter extends AbstractFileWriter {
             }
         }
 
+        //5-1 创建文件
         LOGGER.info("线程" + Thread.currentThread().getId() + "写PARQUET文件开始");
         writer = ParquetUtil.getParquetWriter(this.schema, outputPath);
         //获取所有列的值用来生成MD5值
@@ -150,6 +166,7 @@ public class DBCollParquetWriter extends AbstractFileWriter {
         //获取startDate
         String startDate = "";
         Group group = factory.newGroup();
+        //5-2 循环RS，获得每一行数据，针对每一行数据，循环每一列，根据每一列的类型，决定是写avro还是进行清洗
         while (rs.next()) {
             long lineNum = lineCounter.incrementAndGet();
             //获取每行数据的所有字段值用来生成MD5，因此每循环一列，就需要清空一次
@@ -220,9 +237,10 @@ public class DBCollParquetWriter extends AbstractFileWriter {
                     } else {
                         currColValue = "";
                     }
-                    //对单行数据的每一列进行字段清洗，返回清洗后的结果，并追加到MD5后面
+                    //5-3 执行数据清洗，包括表清洗和列清洗
                     Map<String, Map<String, Object>> columnCleanRule = (Map<String, Map<String, Object>>) metaDataMap.get("columnCleanRule");
                     currColValue = ColumnCleanUtil.colDataClean(currColValue, metaData.getColumnName(i), group, columnsType[i - 1], FileFormatConstant.PARQUET.getMessage(), columnCleanRule, null);
+                    //5-4 清洗后的结果追加到构建MD5的StringBuilder
                     MD5.append(currColValue);
                 }
 
@@ -239,6 +257,7 @@ public class DBCollParquetWriter extends AbstractFileWriter {
                 datas[i - 1] = currColValue;
             }
             boolean is_MD5 = (IsFlag.YES.getCode() == Integer.parseInt(this.jobInfo.getIs_md5()));
+            //5-5 将数据放入group，写一行数据，执行下一次RS循环
             if (is_MD5) {
                 //如果用户选择生成MD5，则从任务对象中取到任务的开始时间
                 TaskInfo taskInfo = FileUtil.getTaskInfoByTaskID(this.jobInfo.getTaskId());
@@ -252,7 +271,7 @@ public class DBCollParquetWriter extends AbstractFileWriter {
                 writeLine(group);
             }
         }
-        //关闭资源
+        //6、关闭资源，并返回文件路径
         avroWriter.close();
         outputStream.close();
         stopStream();

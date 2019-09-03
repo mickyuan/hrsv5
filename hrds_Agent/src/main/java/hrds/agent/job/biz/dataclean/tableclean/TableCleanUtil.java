@@ -29,7 +29,13 @@ public class TableCleanUtil {
      * @param tableCleanRule : 清洗规则
      * @return
      */
+    /*
+     * 1、校验入参合法性
+     * 2、根据列名拿到该表的清洗规则
+     * 3、按照清洗优先级，从大到小对该表所有数据进行数据清洗
+     * */
     public static String tbDataClean(String columnValue, String columnName, Group group, String colType, String fileType, Map<String, Object> tableCleanRule){
+        //1、校验入参合法性
         if (columnValue == null || columnName == null) {
             throw new RuntimeException("表清洗需要字段名和字段值");
         }
@@ -42,10 +48,10 @@ public class TableCleanUtil {
         if (tableCleanRule == null) {
             throw new RuntimeException("表清洗规则不能为空");
         }
-        //根据列名拿到该列的清洗规则
+        //2、根据列名拿到该表的清洗规则
         Map<Integer, String> clean_order = (Map<Integer, String>) tableCleanRule.get("clean_order");
         TableCleanInterface rule = null;
-        //从后往前遍历，目的是按照优先级的从大到小，进行数据清洗
+        //3、从后往前遍历，目的是按照优先级的从大到小，进行数据清洗
         for(int i = clean_order.size(); i >= 1; i--){
             switch(clean_order.get(i)) {
                 //字符替换
