@@ -1,6 +1,5 @@
 package hrds.b.biz.datasource;
 
-import fd.ng.core.utils.StringUtil;
 import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.annotation.RequestBean;
@@ -34,10 +33,10 @@ public class DataSourceAction extends BaseAction {
      *
      * @param dataSource 数据源编号
      */
-    public void saveDataSource(@RequestBean Data_source dataSource, String dep_id) {
+    public void saveDataSource(@RequestBean Data_source dataSource) {
 
         // 新增数据源
-        if (StringUtil.isBlank(dataSource.getSource_id().toString())) {
+        if (dataSource.getSource_id() == null) {
             // 新增
             dataSource.setSource_id(PrimayKeyGener.getNextId());
             dataSource.setUser_id(ActionUtil.getUser().getUserId());
@@ -68,7 +67,7 @@ public class DataSourceAction extends BaseAction {
             }
         }
         // 保存数据源与部门关系信息
-        saveSourceRelationDep(dataSource.getSource_id(), dep_id);
+        //saveSourceRelationDep(dataSource.getSource_id(), dep_id);
     }
 
     /**
