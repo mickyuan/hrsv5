@@ -8,7 +8,7 @@ import java.util.Random;
  * <p> 标 题: 海云数服 </p>
  * <p> 描 述: 产生各表的主键 </p>
  * <p> 版 权: Copyright (c) 2011 </p>
- * <p> 公 司: xchao </p>
+ * <p> 公 司: 博彦科技 </p>
  * <p> 创建时间: 2011-7-20 下午04:41:33 </p>
  *
  * @author Administrator

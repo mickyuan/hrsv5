@@ -11,15 +11,24 @@ import org.apache.logging.log4j.Logger;
 
 import javax.servlet.http.HttpServletRequest;
 
-public class BaseAction extends AbstractWebappBaseAction {
+public abstract class BaseAction extends AbstractWebappBaseAction {
     private static final Logger logger = LogManager.getLogger(BaseAction.class.getName());
 
+    /**
+     * 所有action会经过这里，判断登录信息是否存在
+     * 1、获取user是否存在，不存在抛异常
+     * 2、userid是否存在，不存在抛异常
+     * @param request
+     * @return
+     */
     @Override
     protected ActionResult _doPreProcess(HttpServletRequest request) {
+        //1、获取user是否存在，不存在抛异常
         User user = getUser();
         if (user == null) {
             return ActionResultHelper.bizError("no cookies");
         }
+        //2、userid是否存在，不存在抛异常
         String userId = String.valueOf(user.getUserId());
         if (StringUtil.isEmpty(userId)) {
             return ActionResultHelper.bizError("no login");
@@ -37,7 +46,6 @@ public class BaseAction extends AbstractWebappBaseAction {
 
     /**
      * 获取当前登录的用户ID信息
-     *
      * @return
      */
     protected Long getUserId() {
