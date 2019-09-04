@@ -11,7 +11,7 @@ import org.apache.logging.log4j.Logger;
 
 import javax.servlet.http.HttpServletRequest;
 
-public class BaseAction extends AbstractWebappBaseAction {
+public abstract class BaseAction extends AbstractWebappBaseAction {
     private static final Logger logger = LogManager.getLogger(BaseAction.class.getName());
 
     /**
