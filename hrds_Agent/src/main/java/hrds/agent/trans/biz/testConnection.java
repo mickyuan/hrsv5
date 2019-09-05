@@ -28,7 +28,6 @@ public class testConnection extends AbstractWebappBaseAction {
     public boolean testConn() {
         // 1、通过request获取服务发过来的数据
         String json = RequestUtil.getJson();
-        System.out.println("========="+json);
         Map<String, String> map = JsonUtil.toObject(json, Map.class);
         //2、使用dbinfo将需要测试连接的内容填充
         DbinfosConf.Dbinfo dbinfo = new DbinfosConf.Dbinfo();
