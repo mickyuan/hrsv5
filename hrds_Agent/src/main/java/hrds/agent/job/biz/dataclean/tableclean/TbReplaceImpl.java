@@ -1,6 +1,6 @@
 package hrds.agent.job.biz.dataclean.tableclean;
 
-import org.apache.commons.lang3.StringUtils;
+import fd.ng.core.utils.StringUtil;
 
 import java.util.Map;
 
@@ -21,7 +21,7 @@ public class TbReplaceImpl extends AbstractTableClean {
         if (replaceMap != null && !(replaceMap.isEmpty())) {
             for(String OriField : replaceMap.keySet()) {
                 String newField = replaceMap.get(OriField);
-                columnValue = StringUtils.replace(columnValue, OriField, newField);
+                columnValue = StringUtil.replace(columnValue, OriField, newField);
             }
         }
         return columnValue;

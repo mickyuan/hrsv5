@@ -32,17 +32,24 @@ public class DataBaseJobImpl implements JobInterface{
         this.jobStatus = jobStatus;
     }
 
+    /*
+    * 1、设置作业ID，开始时间
+    * 2、构建每个阶段具体的实现类
+    * 3、构建责任链，串起每个阶段
+    * 4、按照顺序从第一个阶段开始执行作业
+    * 5、阶段执行完成后，写meta信息
+    * */
     @Override
     public JobStatusInfo runJob() {
         JobStatusInfo jobStatusInfo = this.jobStatus;
-        //设置作业ID
+        //1、设置作业ID
         jobStatusInfo.setJobId(this.jobInfo.getJobId());
         //设置作业开始时间
         String dateString = DateUtil.getLocalDateByChar8();
         String timeString = DateUtil.getLocalTimeByChar6();
         jobStatusInfo.setStartDate(dateString);
         jobStatusInfo.setStartTime(timeString);
-        //目前先按照完整顺序执行(卸数,上传,数据加载,计算增量,数据登记)，后期可改造为按照配置构建采集阶段
+        //2、构建每个阶段具体的实现类，目前先按照完整顺序执行(卸数,上传,数据加载,计算增量,数据登记)，后期可改造为按照配置构建采集阶段
         DBUnloadDataStageImpl unloadData = new DBUnloadDataStageImpl(this.dbInfo, this.jobInfo);
         //TODO 数据库直连采集，多文件上传，remoteDir参数待确定，暂时传null
         JobStageInterface upload = new DBUploadStageImpl(this.jobInfo.getJobId(), unloadData.getFileArr(), null);
@@ -55,9 +62,10 @@ public class DataBaseJobImpl implements JobInterface{
         //利用JobStageController构建本次数据库直连采集作业流程
         JobStageController controller = new JobStageController();
         //TODO 永远保证五个阶段，在每个阶段内部设置更合理的状态，比如直接加载时，unloadData和upload阶段的状态设置为跳过
+        //3、构建责任链，串起每个阶段
         controller.registerJobStage(unloadData, upload, dataLoading, calIncrement, dataRegistration);
 
-        //按照顺序从第一个阶段开始执行作业
+        //4、按照顺序从第一个阶段开始执行作业
         try {
             jobStatusInfo = controller.handleStageByOrder(this.statusFilePath, jobStatusInfo);
         } catch (Exception e) {
@@ -70,7 +78,7 @@ public class DataBaseJobImpl implements JobInterface{
             columns.add(column.getColumnName());
         }
 
-        //写meta信息
+        //5、阶段执行完成后，写meta信息
         mateInfo.setTableName(jobInfo.getTable_name());
         mateInfo.setColumnNames(columns);
         mateInfo.setColumnTypes(unloadData.getColumnTypes());

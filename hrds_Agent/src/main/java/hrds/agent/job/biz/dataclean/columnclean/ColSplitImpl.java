@@ -1,12 +1,12 @@
 package hrds.agent.job.biz.dataclean.columnclean;
 
+import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.ColumnSplitBean;
 import hrds.agent.job.biz.constant.FileFormatConstant;
 import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.utils.DataTypeCheck;
 import hrds.agent.job.biz.utils.ParquetUtil;
-import hrds.agent.job.biz.utils.StringUtil;
-import org.apache.commons.lang3.StringUtils;
+import hrds.agent.job.biz.utils.StringOperator;
 import org.apache.parquet.example.data.Group;
 
 import java.util.List;
@@ -55,7 +55,7 @@ public class ColSplitImpl extends AbstractColumnClean {
             for (int i = 0; i < ruleList.size(); i++) {
                 ColumnSplitBean columnSplitBean = ruleList.get(i);
                 String newColName = columnSplitBean.getColName();
-                if (StringUtils.isBlank(columnValue)) {
+                if (StringUtil.isBlank(columnValue)) {
                     if (fileType.equalsIgnoreCase(FileFormatConstant.CSV.getMessage())) {
                         oriAndNewField.append("");
                     } else if (fileType.equalsIgnoreCase(FileFormatConstant.PARQUET.getMessage())) {
@@ -75,13 +75,13 @@ public class ColSplitImpl extends AbstractColumnClean {
                         int end = Integer.parseInt(split[1]);
                         substr = columnValue.substring(start, end);
                     } else {
-                        int num = StringUtils.isEmpty(StringUtil.getString(columnSplitBean.getSeq())) ? 0 : Integer.parseInt(columnSplitBean.getSeq().toString());
-                        String[] splitInNull = StringUtils.splitByWholeSeparatorPreserveAllTokens(columnValue, columnSplitBean.getSplitSep());
-                        substr = splitInNull[num];
+                        int num = StringUtil.isEmpty(StringOperator.getString(columnSplitBean.getSeq())) ? 0 : Integer.parseInt(columnSplitBean.getSeq().toString());
+                        List<String> splitInNull = StringUtil.split(columnValue, columnSplitBean.getSplitSep());
+                        substr = splitInNull.get(num);
                     }
                     if (fileType.equalsIgnoreCase(FileFormatConstant.CSV.getMessage())) {
                         if (DataTypeCheck.checkType(columnSplitBean.getColType())) {
-                            oriAndNewField.append(StringUtils.replace(substr, ",", ""));
+                            oriAndNewField.append(StringUtil.replace(substr, ",", ""));
                         } else {
                             oriAndNewField.append(substr);
                         }

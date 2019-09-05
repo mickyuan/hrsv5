@@ -1,6 +1,6 @@
 package hrds.agent.job.biz.dataclean.columnclean;
 
-import org.apache.commons.lang3.StringUtils;
+import fd.ng.core.utils.StringUtil;
 
 import java.util.Map;
 
@@ -20,7 +20,7 @@ public class ColCVConverImpl extends AbstractColumnClean {
         if(ruleMap != null && !ruleMap.isEmpty()){
             for(String key : ruleMap.keySet()){
                 if(columnValue.equalsIgnoreCase(key)){
-                    columnValue = StringUtils.replace(columnValue, key, ruleMap.get(key));
+                    columnValue = StringUtil.replace(columnValue, key, ruleMap.get(key));
                 }
             }
         }
