@@ -17,7 +17,7 @@ import java.util.Map;
  * @author: xchao
  * @create: 2019-09-05 11:18
  */
-public class testConnection extends AbstractWebappBaseAction {
+public class TestConnection extends AbstractWebappBaseAction {
 
     /**
      * 1、通过request获取服务发过来的数据

@@ -82,6 +82,27 @@ public class AgentInfoAction extends BaseAction {
     }
 
     /**
+     * 编辑前查看Agent详情
+     *
+     * 1.编辑前查询该agent信息，为空抛异常，不为空返回查询结果
+     *
+     * @param agent_id agent编号
+     * @param agent_type agent类型
+     * @return
+     */
+    public Result searchAgent(Long agent_id, String agent_type) {
+        // 1.编辑前查询该agent信息
+        Result result = Dbo.queryResult(" SELECT * FROM agent_info WHERE agent_id = ? AND agent_type = ?",
+                agent_id, agent_type);
+        if (result.isEmpty()) {
+            // 该数据源下数据为空(此为编辑情况下数据不能为空）
+            throw new BusinessException(ExceptionEnum.DATA_NOT_EXIST);
+        }
+        // 不为空，返回查询结果
+        return result;
+    }
+
+    /**
      * 删除agent
      * <p>
      * 1.删除前查询此agent是否已部署，已部署不能删除

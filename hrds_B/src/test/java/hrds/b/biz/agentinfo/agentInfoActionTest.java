@@ -126,15 +126,24 @@ public class agentInfoActionTest extends WebBaseTestCase {
             assertThat(user_id, is(new_user_id));
         }
     }
+
     @Test
-    public void deleteAgent(){
-        Long agent_id=-300L;
-        String agent_type=AgentType.ShuJuKu.getCode();
+    public void searchAgent() {
+        Long agent_id = -299L;
+        String agent_type = AgentType.ShuJuKu.getCode();
+        String bodyString = new HttpClient().addData("agent_id", agent_id).addData("agent_type", agent_type)
+                .post(getActionUrl("searchAgent")).getBodyString();
+        ActionResult ar = JsonUtil.toObject(bodyString, ActionResult.class);
+        assertThat(ar.isSuccess(), is(true));
+    }
+
+    @Test
+    public void deleteAgent() {
+        Long agent_id = -298L;
+        String agent_type = AgentType.ShuJuKu.getCode();
         String bodyString = new HttpClient().addData("agent_id", agent_id).addData("agent_type", agent_type)
                 .post(getActionUrl("deleteAgent")).getBodyString();
         ActionResult ar = JsonUtil.toObject(bodyString, ActionResult.class);
-        assertThat(ar.getCode(),is(200));
-        assertThat(ar.isSuccess(),is(true));
-        assertThat(ar.getMessage(),is("OK"));
+        assertThat(ar.isSuccess(), is(true));
     }
 }
