@@ -1,18 +1,15 @@
 package hrds.b.biz.agentinfo;
 
-import com.alibaba.fastjson.JSONObject;
 import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.annotation.RequestBean;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.entity.Agent_info;
-import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.exception.ExceptionEnum;
 import hrds.commons.utils.ActionUtil;
 import hrds.commons.utils.key.PrimayKeyGener;
-import org.apache.logging.log4j.core.util.Assert;
 
 import java.util.Map;
 
@@ -93,7 +90,7 @@ public class AgentInfoAction extends BaseAction {
      * @param agent_type agent类型
      * @return
      */
-    public Result searchAgent(String agent_id, String agent_type) {
+    public Result searchAgent(Long agent_id, String agent_type) {
         // 1.编辑前查询该agent信息
         Result result = Dbo.queryResult(" SELECT * FROM agent_info WHERE agent_id = ? AND agent_type = ?",
                 agent_id, agent_type);

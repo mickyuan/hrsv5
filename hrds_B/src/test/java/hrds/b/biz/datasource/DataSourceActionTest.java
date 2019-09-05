@@ -135,7 +135,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 
     @Test
     public void searchDataSource() {
-        Long source_id = -300L;
+        Long source_id = -299L;
         String bodyString = new HttpClient().addData("source_id", source_id)
                 .post(getActionUrl("searchDataSource")).getBodyString();
         ActionResult ar = JsonUtil.toObject(bodyString, ActionResult.class);
@@ -145,7 +145,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
     @Test
     public void deleteDataSource() {
         try (DatabaseWrapper db = new DatabaseWrapper()) {
-            Long source_id = -300L;
+            Long source_id = -298L;
             // 验证DB里面预期被删除的数据是存在的
             OptionalLong result = SqlOperator.queryNumber(db,
                     "select count(1) from " + Data_source.TableName + " where source_id=?", source_id);
@@ -170,7 +170,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
     @Test
     public void deleteSourceRelationDep() {
         try (DatabaseWrapper db = new DatabaseWrapper()) {
-            Long source_id = -300L;
+            Long source_id = -297L;
             // 验证DB里面预期被删除的数据是存在的
             OptionalLong result = SqlOperator.queryNumber(db,
                     "select count(1) from " + Source_relation_dep.TableName + " where source_id=?", source_id);
