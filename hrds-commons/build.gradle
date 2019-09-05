@@ -27,7 +27,7 @@ sourceSets {
 }
 
 // make jar
-task makeHrdsToolsJar (type: Jar) {
+task makeHrdsCommonsJar (type: Jar) {
     archivesBaseName = "hrds-commons"
     from("$buildDir/classes/java/main")
     manifest(){
@@ -44,12 +44,12 @@ task makeHrdsToolsJar (type: Jar) {
 }
 
 // copy jar
-task copyHrdsToolsJar (type: Copy, dependsOn: ['makeHrdsToolsJar']) {
+task copyHrdsCommonsJar (type: Copy, dependsOn: ['makeHrdsCommonsJar']) {
     from('build/libs')
     into("$rootDir/libs/runtime/")
 }
 
 // jar plugin
 jar.dependsOn([
-        'copyHrdsToolsJar',
+        'copyHrdsCommonsJar',
 ])
