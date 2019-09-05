@@ -1,5 +1,5 @@
 
-description = 'This is a hrds-tools.jar package.'
+description = 'This is a hrds-commons.jar package.'
 
 group 'hrds'
 version ''
@@ -28,7 +28,7 @@ sourceSets {
 
 // make jar
 task makeHrdsToolsJar (type: Jar) {
-    archivesBaseName = "hrds-tools"
+    archivesBaseName = "hrds-commons"
     from("$buildDir/classes/java/main")
     manifest(){
         attributes(
