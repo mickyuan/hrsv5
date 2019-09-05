@@ -1,20 +1,15 @@
 package hrds.testbase;
 
 import fd.ng.core.utils.StringUtil;
-import fd.ng.netclient.http.HttpClient;
 import fd.ng.netserver.conf.HttpServerConf;
 import fd.ng.test.junit.FdBaseTestCase;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
 
 public class WebBaseTestCase extends FdBaseTestCase {
 	protected String getHost() {
 		return (StringUtil.isBlank(HttpServerConf.confBean.getHost())?"localhost": HttpServerConf.confBean.getHost());
 	}
 	protected String getPort() {
-		return String.valueOf(HttpServerConf.confBean.getHost());
+		return String.valueOf(HttpServerConf.confBean.getHttpPort());
 	}
 	protected String getHostPort() {
 		String ActionPattern = HttpServerConf.confBean.getActionPattern();
