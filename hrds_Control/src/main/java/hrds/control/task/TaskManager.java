@@ -1,23 +1,27 @@
 package hrds.control.task;
 
-import fd.ng.core.utils.StringUtil;
-import hrds.codes.*;
-import hrds.control.beans.EtlJobDefBean;
-import hrds.control.beans.EtlJobBean;
-import hrds.control.beans.WaitFileJobInfo;
-import hrds.control.task.helper.RedisHelper;
-import hrds.control.task.helper.TaskJobHelper;
-import hrds.control.task.helper.TaskSqlHelper;
-import hrds.control.utils.DateUtil;
-import hrds.entity.*;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
+
+import hrds.commons.codes.*;
+import hrds.commons.entity.Etl_dependency;
+import hrds.commons.entity.Etl_job;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import fd.ng.core.utils.StringUtil;
+import hrds.commons.entity.Etl_job_def;
+import hrds.commons.entity.Etl_job_resource_rela;
+import hrds.control.beans.EtlJobBean;
+import hrds.control.beans.EtlJobDefBean;
+import hrds.control.beans.WaitFileJobInfo;
+import hrds.control.task.helper.RedisHelper;
+import hrds.control.task.helper.TaskJobHelper;
+import hrds.control.task.helper.TaskSqlHelper;
+import hrds.control.utils.DateUtil;
 
 /**
  *

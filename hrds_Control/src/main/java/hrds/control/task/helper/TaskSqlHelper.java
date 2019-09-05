@@ -2,9 +2,9 @@ package hrds.control.task.helper;
 
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
-import hrds.codes.*;
+import hrds.commons.codes.*;
+import hrds.commons.entity.*;
 import hrds.control.beans.EtlJobDefBean;
-import hrds.entity.*;
 
 import java.util.List;
 import java.util.Optional;

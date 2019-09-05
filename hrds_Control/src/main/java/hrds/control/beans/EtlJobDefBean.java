@@ -1,7 +1,8 @@
 package hrds.control.beans;
 
-import hrds.entity.Etl_job_def;
-import hrds.entity.Etl_job_resource_rela;
+
+import hrds.commons.entity.Etl_job_def;
+import hrds.commons.entity.Etl_job_resource_rela;
 
 import java.util.List;
 

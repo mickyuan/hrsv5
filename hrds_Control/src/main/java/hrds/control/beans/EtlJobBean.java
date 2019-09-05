@@ -1,6 +1,6 @@
 package hrds.control.beans;
 
-import hrds.entity.Etl_job;
+import hrds.commons.entity.Etl_job;
 
 public class EtlJobBean extends Etl_job implements Comparable<EtlJobBean>  {
 

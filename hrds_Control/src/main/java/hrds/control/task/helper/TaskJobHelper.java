@@ -1,13 +1,13 @@
 package hrds.control.task.helper;
 
 import fd.ng.core.utils.StringUtil;
-import hrds.codes.Dispatch_Frequency;
+import hrds.commons.codes.Dispatch_Frequency;
+import hrds.commons.entity.Etl_job;
+import hrds.commons.entity.Etl_job_def;
+import hrds.commons.entity.Etl_para;
+import hrds.commons.exception.AppSystemException;
 import hrds.control.beans.EtlJobDefBean;
 import hrds.control.utils.DateUtil;
-import hrds.entity.Etl_job;
-import hrds.entity.Etl_job_def;
-import hrds.entity.Etl_para;
-import hrds.exception.AppSystemException;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -318,7 +318,6 @@ public class TaskJobHelper {
 
         Etl_job etlJob = new Etl_job();
         try {
-
             BeanUtils.copyProperties(etlJob, etlJobDef);
         } catch (IllegalAccessException | InvocationTargetException e) {
             throw new AppSystemException("将Etl_job_def转换为Etl_job发生异常：" + e.getMessage());
