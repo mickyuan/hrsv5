@@ -8,9 +8,8 @@ import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.test.junit.TestCaseLog;
 import fd.ng.web.action.ActionResult;
+import hrds.commons.entity.Sys_para;
 import hrds.testbase.WebBaseTestCase;
-
-import hrds.entity.SysPara;
 
 import org.junit.After;
 import org.junit.Before;
@@ -26,7 +25,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class SysParaActionTest extends WebBaseTestCase {
-	private static final String UATTableName = SysPara.TableName;
+	private static final String UATTableName = Sys_para.TableName;
 	private static final int Init_Rows = 10; // 向表中初始化的数据条数。
 	/**
 	 * 如果希望 login 仅仅执行一次：
