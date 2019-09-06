@@ -36,7 +36,7 @@ public class User_fav extends TableEntity
 	}
 	private Long fav_id; //收藏ID
 	private String file_id; //文件编号
-` `	private String fav_flag; //是否有效
+	private String fav_flag; //是否有效
 	private String original_name; //原始文件名称
 
 	/** 取得：收藏ID */
