@@ -126,7 +126,6 @@ public class AgentInfoAction extends BaseAction {
 			// 此数据源与agent下有任务，不能删除
 			throw new BusinessException("此数据源与agent下有任务，不能删除");
 		}
-
 		// 3.删除agent
 		int num = Dbo.execute("delete  from agent_info where agent_id=?", agent_id);
 		if (num != 1) {

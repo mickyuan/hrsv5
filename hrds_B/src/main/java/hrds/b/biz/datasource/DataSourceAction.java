@@ -216,7 +216,6 @@ public class DataSourceAction extends BaseAction {
 			// 3.使用base64编码
 			strTemp = new String(Base64.decode(temp.toString()).getBytes("UTF-8"), "UTF-8");
 		}
-
 		// 4.导入贴源层元数据
 		importDclData(strTemp, agent_ip, agent_port, user_id,
 				ActionUtil.getUser().getUserId());
