@@ -308,10 +308,11 @@ public class TaskJobHelper {
     }
 
     /**
+     * 将Etl_job_def复制成Etl_job
      *
      * @author Tiger.Wang
      * @date 2019/9/4
-     * @param etlJobDef
+     * @param etlJobDef 复制源
      * @return hrds.entity.Etl_job
      */
     public static Etl_job etlJobDefCopy2EltJob(Etl_job_def etlJobDef) {

@@ -14,6 +14,8 @@ public class EtlJobBean extends Etl_job implements Comparable<EtlJobBean>  {
 	private int DoneDependencyJobCount;
 	// 作业调度触发时间,仅在调度触发方式为"T"时有效
 	private long executeTime;
+	// 作业开始被调度的时间
+	private long jobStartTime;
 
 	public EtlJobBean() {
 		super();
@@ -57,6 +59,14 @@ public class EtlJobBean extends Etl_job implements Comparable<EtlJobBean>  {
 
 	public void setExecuteTime(long executeTime) {
 		this.executeTime = executeTime;
+	}
+
+	public long getJobStartTime() {
+		return jobStartTime;
+	}
+
+	public void setJobStartTime(long jobStartTime) {
+		this.jobStartTime = jobStartTime;
 	}
 
 	@Override
