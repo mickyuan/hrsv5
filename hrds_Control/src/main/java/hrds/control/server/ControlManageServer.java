@@ -72,13 +72,13 @@ public class ControlManageServer {
 		public void run() {
 
 			while( run ) {
-//				List<TaskInfo> tasks = taskManager.getReadyTask();
-//				taskManager.executeTask(tasks);
+                taskManager.loadReadyJob();
+                taskManager.handleReadyJob();
 				try {
-					Thread.sleep(3000);
+					Thread.sleep(500);
 				}
 				catch(InterruptedException e) {
-					logger.warn("系统出现异常：{}", e.getMessage());
+					logger.warn("系统出现异常：{}，但是继续执行", e.getMessage());
 				}
 			}
 		}

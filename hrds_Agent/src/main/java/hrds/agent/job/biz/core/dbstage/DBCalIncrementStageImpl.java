@@ -15,8 +15,8 @@ import hrds.agent.job.biz.core.AbstractJobStage;
  **/
 public class DBCalIncrementStageImpl extends AbstractJobStage {
 
-    @Override
-    public StageStatusInfo handleStage() {
-        throw new IllegalStateException("这是一个空实现");
-    }
+	@Override
+	public StageStatusInfo handleStage() {
+		throw new IllegalStateException("这是一个空实现");
+	}
 }

@@ -11,30 +11,30 @@ package hrds.agent.job.biz.constant;
  * Since JDK 1.8
  **/
 public enum FileFormatConstant implements EnumConstantInterface {
-    CSV(1, "csv"),PARQUET(2, "parquet"),AVRO(3, "avro"),
-    ORCFILE(4, "orcfile"),SEQUENCEFILE(5, "sequencefile"),
-    OTHER(6, "other");
+	CSV(1, "csv"), PARQUET(2, "parquet"), AVRO(3, "avro"),
+	ORCFILE(4, "orcfile"), SEQUENCEFILE(5, "sequencefile"),
+	OTHER(6, "other");
 
-    private final int code;
-    private final String message;
+	private final int code;
+	private final String message;
 
-    FileFormatConstant(int code, String message) {
-        this.code = code;
-        this.message = message;
-    }
+	FileFormatConstant(int code, String message) {
+		this.code = code;
+		this.message = message;
+	}
 
-    @Override
-    public int getCode() {
-        return code;
-    }
+	@Override
+	public int getCode() {
+		return code;
+	}
 
-    public String getMessage() {
-        return message;
-    }
+	public String getMessage() {
+		return message;
+	}
 
-    @Override
-    public String toString() {
-        return message;
-    }
+	@Override
+	public String toString() {
+		return message;
+	}
 
 }

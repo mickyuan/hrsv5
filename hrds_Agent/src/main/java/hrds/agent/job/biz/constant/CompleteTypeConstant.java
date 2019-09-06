@@ -5,32 +5,32 @@ package hrds.agent.job.biz.constant;
  * @author: WangZhengcheng
  * @create: 2019-08-30 14:23
  **/
-public enum CompleteTypeConstant implements EnumConstantInterface{
+public enum CompleteTypeConstant implements EnumConstantInterface {
 
-    BEFORE(1, "before"), AFTER(2, "after");
-    
-    private final int code;
-    private final String message;
+	BEFORE(1, "before"), AFTER(2, "after");
 
-    CompleteTypeConstant(int code, String message) {
-        this.code = code;
-        this.message = message;
-    }
+	private final int code;
+	private final String message;
 
-    @Override
-    public int getCode() {
-        return code;
-    }
+	CompleteTypeConstant(int code, String message) {
+		this.code = code;
+		this.message = message;
+	}
 
-    public String getMessage() {
-        return message;
-    }
+	@Override
+	public int getCode() {
+		return code;
+	}
 
-    @Override
-    public String toString() {
-        return "CompleteTypeConstant{" +
-                "code=" + code +
-                ", message='" + message + '\'' +
-                '}';
-    }
+	public String getMessage() {
+		return message;
+	}
+
+	@Override
+	public String toString() {
+		return "CompleteTypeConstant{" +
+				"code=" + code +
+				", message='" + message + '\'' +
+				'}';
+	}
 }

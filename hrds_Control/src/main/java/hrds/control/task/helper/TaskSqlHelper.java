@@ -389,6 +389,22 @@ public class TaskSqlHelper {
 	}
 
 	/**
+	 * 根据调度系统编号获取系统资源信息
+	 * @author Tiger.Wang
+	 * @date 2019/9/5
+	 * @param etlSysCd	调度系统编号
+	 * @return java.util.List<hrds.commons.entity.Etl_resource>	系统资源信息集合
+	 */
+	public static List<Etl_resource> getEtlSystemResources(String etlSysCd) {
+
+		try(DatabaseWrapper db = new DatabaseWrapper()) {
+
+			return SqlOperator.queryList(db, Etl_resource.class,
+					"SELECT * FROM etl_resource WHERE etl_sys_cd = ?", etlSysCd);
+		}
+	}
+
+	/**
 	 * 根据调度系统编号来更新[资源使用数]
 	 * @author Tiger.Wang
 	 * @date 2019/9/4
@@ -404,6 +420,42 @@ public class TaskSqlHelper {
 					"WHERE etl_sys_cd = ?", used, etlSysCd);
 
 			return num > 0;
+		}
+	}
+
+	/**
+	 * 根据调度系统编号、资源类型修改[已使用资源]为指定数
+	 * @author Tiger.Wang
+	 * @date 2019/9/5
+	 * @param etlSysCd	调度系统编号
+	 * @param resourceType	资源类型
+	 * @param used	已使用资源数
+	 * @return boolean	是否有数据被修改
+	 */
+	public static boolean updateEtlResourceUsedByResourceType(String etlSysCd, String resourceType, int used){
+
+		try(DatabaseWrapper db = new DatabaseWrapper()) {
+
+			int num = SqlOperator.execute(db, "UPDATE etl_resource SET resource_used = ? " +
+					"WHERE etl_sys_cd = ? AND resource_type = ?", used, resourceType, etlSysCd);
+
+			return num > 0;
+		}
+	}
+
+	/**
+	 * 根据调度系统编号获取调度作业干预信息
+	 * @author Tiger.Wang
+	 * @date 2019/9/6
+	 * @param etlSyscd  调度系统编号
+	 * @return java.util.List<hrds.commons.entity.Etl_job_hand>
+	 */
+	public static List<Etl_job_hand> getEtlJobHands(String etlSyscd) {
+
+		try(DatabaseWrapper db = new DatabaseWrapper()) {
+
+			return SqlOperator.queryList(db, Etl_job_hand.class, "SELECT * FROM etl_job_hand WHERE " +
+					"hand_status = ? AND etl_sys_cd = ?", Meddle_status.TRUE.getCode(), etlSyscd);
 		}
 	}
 }

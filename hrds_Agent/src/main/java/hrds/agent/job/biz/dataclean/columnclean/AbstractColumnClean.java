@@ -19,33 +19,33 @@ import java.util.Map;
  **/
 public abstract class AbstractColumnClean implements ColumnCleanInterface {
 
-    @Override
-    public String replace(Map<String, String> replaceMap , String columnValue){
-        throw new IllegalStateException("这是一个空实现");
-    }
+	@Override
+	public String replace(Map<String, String> replaceMap, String columnValue) {
+		throw new IllegalStateException("这是一个空实现");
+	}
 
-    @Override
-    public String complete(StringBuilder completeSB, String columnValue){
-        throw new IllegalStateException("这是一个空实现");
-    }
+	@Override
+	public String complete(StringBuilder completeSB, String columnValue) {
+		throw new IllegalStateException("这是一个空实现");
+	}
 
-    @Override
-    public String dateConver(StringBuilder dateSB, String columnValue) throws ParseException {
-        throw new IllegalStateException("这是一个空实现");
-    }
+	@Override
+	public String dateConver(StringBuilder dateSB, String columnValue) throws ParseException {
+		throw new IllegalStateException("这是一个空实现");
+	}
 
-    @Override
-    public String CVConver(Map<String, String> ruleMap, String columnValue){
-        throw new IllegalStateException("这是一个空实现");
-    }
+	@Override
+	public String CVConver(Map<String, String> ruleMap, String columnValue) {
+		throw new IllegalStateException("这是一个空实现");
+	}
 
-    @Override
-    public String trim(Boolean flag, String columnValue){
-        throw new IllegalStateException("这是一个空实现");
-    }
+	@Override
+	public String trim(Boolean flag, String columnValue) {
+		throw new IllegalStateException("这是一个空实现");
+	}
 
-    @Override
-    public String split(List<ColumnSplitBean> rule, String columnValue, String columnName, Group group, String colType, String fileType, List<Object> lineData){
-        throw new IllegalStateException("这是一个空实现");
-    }
+	@Override
+	public String split(List<ColumnSplitBean> rule, String columnValue, String columnName, Group group, String colType, String fileType, List<Object> lineData) {
+		throw new IllegalStateException("这是一个空实现");
+	}
 }

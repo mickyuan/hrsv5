@@ -16,14 +16,14 @@ import java.util.Map;
  **/
 public class ColReplaceImpl extends AbstractColumnClean {
 
-    @Override
-    public String replace(Map<String, String> replaceMap, String columnValue){
-        if (replaceMap != null && !(replaceMap.isEmpty())) {
-            for(String OriField : replaceMap.keySet()) {
-                String newField = replaceMap.get(OriField);
-                columnValue = StringUtil.replace(columnValue, OriField, newField);
-            }
-        }
-        return columnValue;
-    }
+	@Override
+	public String replace(Map<String, String> replaceMap, String columnValue) {
+		if (replaceMap != null && !(replaceMap.isEmpty())) {
+			for (String OriField : replaceMap.keySet()) {
+				String newField = replaceMap.get(OriField);
+				columnValue = StringUtil.replace(columnValue, OriField, newField);
+			}
+		}
+		return columnValue;
+	}
 }

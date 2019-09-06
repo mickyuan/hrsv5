@@ -1,8 +1,10 @@
 package hrds.commons.utils;
 
+import fd.ng.core.bean.EqualsBuilder;
+import fd.ng.core.bean.FeedBean;
 import fd.ng.core.utils.StringUtil;
 
-public class User {
+public class User extends FeedBean {
     private Long userId; //用户ID
     private String roleId; //角色ID
     private String userName; //用户名称
