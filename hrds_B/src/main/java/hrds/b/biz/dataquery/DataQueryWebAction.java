@@ -2,7 +2,6 @@ package hrds.b.biz.dataquery;
 
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.resultset.Result;
-import fd.ng.web.annotation.RequestBean;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.AgentType;
@@ -32,18 +31,17 @@ public class DataQueryWebAction extends BaseAction {
     /**
      * <p>方法名: getFileDataSource</p>
      * <p>方法说明: 根据部门id获取该部门的包含文件采集任务的数据源信息</p>
-     * <p>编写人员: BY-HLL <p>
-     * @param dep_id: 登录用户所在的部门id
+     * @param depId: 登录用户所在的部门id
      * @return 返回数据源的map
      */
-    public Map<String, Object> getFileDataSource(Long dep_id) {
+    public Map<String, Object> getFileDataSource(long depId) {
         Result dataSourceRs = Dbo.queryResult(" select ds.source_id,ds.datasource_name" +
                 " from "+ Source_relation_dep.TableName +" srd join "+ Data_source.TableName +" ds" +
                 " on srd.source_id = ds.source_id" +
                 " join "+ Agent_info.TableName +" ai on ds.source_id = ai.source_id" +
-                " where srd.dep_id = ? AND ai.agent_type = '"+AgentType.WenJianXiTong.getCode()+"'" +
+                " where srd.dep_id = ? AND ai.agent_type = '"+ AgentType.WenJianXiTong.getCode() +"'" +
                 " GROUP BY ds.source_id,ds.datasource_name",
-                dep_id
+                depId
         );
         Map<String, Object> result = new HashMap<>(2);
         result.put("fileDataSourceList", dataSourceRs.toList());
@@ -53,17 +51,18 @@ public class DataQueryWebAction extends BaseAction {
     /**
      * <p>方法名: getFileCollectionTask</p>
      * <p>方法说明: 根据数据源id获取数据源下所有文件采集任务</p>
+     * @author BY-HLL
      * @param sourceId:数据源id
      * @return 返回文件采集任务的map
      */
-    public Map<String, Object> getFileCollectionTask(String sourceId) {
+    public Map<String, Object> getFileCollectionTask(long sourceId) {
         Result fct = Dbo.queryResult(" select *" +
-                " from "+File_collect_set.TableName+" fc join "+Agent_info.TableName+" ai" +
+                " from "+File_collect_set.TableName+" fc join "+ Agent_info.TableName +" ai" +
                 " on fc.agent_id = ai.agent_id" +
-                " where ai.source_id = ?", sourceId +
-                " AND ai.agent_type = ?", AgentType.WenJianXiTong.toString()
+                " where ai.source_id = ? AND ai.agent_type = '"+ AgentType.WenJianXiTong.getCode() +"'",
+                sourceId
         );
-        Map<String, Object> result = new HashMap<>(2);
+        Map<String, Object> result = new HashMap<>();
         result.put("fileCollectionTaskList", fct.toList());
         return result;
     }
@@ -72,18 +71,19 @@ public class DataQueryWebAction extends BaseAction {
      * <p>方法名: downloadFileCheck</p>
      * <p>方法说明: 检查文件的下载权限</p>
      * @author BY-HLL
-     * @param sysUser:登录的用户对象
+     * @param userId:用户id
      * @param fileId:文件id
      * @return isAuth:(0:是 1:否)
      */
-    public String downloadFileCheck(@RequestBean Sys_user sysUser, String fileId) {
+    public String downloadFileCheck(long userId, String fileId) {
         //没有下载权限
-        String applyType = ApplyType.XiaZai.toString();
+        String applyType = ApplyType.XiaZai.getCode();
         String isAuth = "1";
         Result authResult = Dbo.queryResult("select *" +
-                " from "+Data_auth.TableName+" da join "+Source_file_attribute.TableName+" sfa" +
-                " ON sfa.file_id = da.file_id WHERE da.user_id = ?", sysUser.getUser_id().toString() +
-                " AND sfa.file_id = ?", fileId +" AND da.apply_type = ?", applyType
+                " from "+Data_auth.TableName+" da join "+ Source_file_attribute.TableName +" sfa" +
+                " ON sfa.file_id = da.file_id WHERE da.user_id = '"+ userId +"'"+
+                " AND sfa.file_id = ? AND da.apply_type = '"+ applyType +"'",
+                fileId
         );
         if ( !authResult.isEmpty() ) {
             //检查申请的是否为下载类型
@@ -145,8 +145,8 @@ public class DataQueryWebAction extends BaseAction {
      */
     public void modifySortCount(String fileId, String queryKeyword) {
         Result si = Dbo.queryResult("select *" +
-                " from "+Search_info.TableName+" where file_id = ?", fileId +
-                " and word_name = ?", queryKeyword
+                " from "+Search_info.TableName+" where file_id = ? and word_name = ?",
+                fileId, queryKeyword
         );
         Search_info searchInfo = new Search_info();
         if ( si.isEmpty() ) {
@@ -160,9 +160,8 @@ public class DataQueryWebAction extends BaseAction {
         } else {
             searchInfo.setFile_id(fileId);
             searchInfo.setWord_name(queryKeyword);
-            if(searchInfo.update(Dbo.db())!=1){
-                throw new BusinessException("更新文件计数失败！data="+searchInfo);
-            }
+            Dbo.execute("update search_info set si_count = si_count+1 where file_id = ? and word_name = ?",
+                    fileId, queryKeyword);
         }
     }
 
