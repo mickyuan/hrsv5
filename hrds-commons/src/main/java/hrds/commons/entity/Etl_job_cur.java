@@ -15,12 +15,12 @@ import java.util.Collections;
 /**
  * 作业调度表
  */
-@Table(tableName = "etl_job")
-public class Etl_job extends TableEntity
+@Table(tableName = "etl_job_cur")
+public class Etl_job_cur extends TableEntity
 {
 	private static final long serialVersionUID = 321566870187324L;
 	private transient static final Set<String> __PrimaryKeys;
-	public static final String TableName = "etl_job";
+	public static final String TableName = "etl_job_cur";
 	/**
 	* 检查给定的名字，是否为主键中的字段
 	* @param name String 检验是否为主键的名字
