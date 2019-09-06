@@ -31,23 +31,23 @@ public class DataQueryWebActionTest extends WebBaseTestCase{
             List<Object[]> dsList = new ArrayList<>();// data_source 数据
             List<Object[]> srdList = new ArrayList<>();// Source_relation_dep 数据
             List<Object[]> aiList = new ArrayList<>();// Agent_info 数据
-            for (long i = -500L; i < -500 + Init_Rows; i++) {
+            for (long i = -500L; i < -500L + Init_Rows; i++) {
                 //初始化 data_source 数据
-                Long source_id = i;
+                long source_id = i;
                 String source_remark = "init" + i;
                 String datasource_name = "init" + i;
                 String datasource_number = "init" + i;
                 String create_date = DateUtil.getSysDate();
                 String create_time = DateUtil.getSysTime();
-                Long user_id = 1001L;
-                Long dep_id = i + Init_Rows;
+                long user_id = 1001L;
+                long dep_id = i + Init_Rows;
                 Object[] dsData = new Object[]{source_id, source_remark, datasource_name, datasource_number, create_date, create_time, user_id};
                 dsList.add(dsData);
                 //初始化 Source_relation_dep 数据
                 Object[] srdData = new Object[]{dep_id, source_id};
                 srdList.add(srdData);
                 //初始化 Agent_info 数据
-                Long agent_id = i;
+                long agent_id = i;
                 String agent_name = "init" + i;
                 String agent_type = AgentType.WenJianXiTong.getCode();
                 String agent_ip = "127.0.0.1";
@@ -77,24 +77,26 @@ public class DataQueryWebActionTest extends WebBaseTestCase{
                     aiList
             );
             assertThat("Agent_info 数据初始化", aiDataNum.length, is(Init_Rows));
+            //提交所有数据库执行操作
+            SqlOperator.commitTransaction(db);
         }
     }
 
     @After
     public void after() {
         try (DatabaseWrapper db = new DatabaseWrapper()) {
-            for (Long i = -1000L; i < -1000 + Init_Rows; i++) {
+            for (long i = -500L; i < -500L + Init_Rows; i++) {
                 // 测试完成后删除 data_source 表测试数据
                 SqlOperator.execute(db, "delete from " + Data_source.TableName + "  where source_id=?", i);
                 SqlOperator.commitTransaction(db);
-                Long dsDataNum = SqlOperator.queryNumber(db,
+                long dsDataNum = SqlOperator.queryNumber(db,
                         "select count(1) from " + Data_source.TableName + "  where source_id=?", i)
                         .orElseThrow(() -> new RuntimeException("count fail!"));
                 assertThat("data_source 表此条数据删除后，记录数应该为0", dsDataNum, is(0L));
                 // 测试完成后删除 source_relation_dep 测试数据
                 SqlOperator.execute(db, "delete from " + Source_relation_dep.TableName + "  where source_id=?", i);
                 SqlOperator.commitTransaction(db);
-                Long srdDataNum = SqlOperator.queryNumber(db,
+                long srdDataNum = SqlOperator.queryNumber(db,
                         "select count(1) from " + Source_relation_dep.TableName + "  where " +
                                 "source_id=?", i)
                         .orElseThrow(() -> new RuntimeException("count fail!"));
@@ -102,11 +104,12 @@ public class DataQueryWebActionTest extends WebBaseTestCase{
                 // 测试完成后删除 agent_info 测试数据
                 SqlOperator.execute(db, "delete from " + Agent_info.TableName + "  where agent_id=?", i);
                 SqlOperator.commitTransaction(db);
-                Long aiDataNum = SqlOperator.queryNumber(db,
+                long aiDataNum = SqlOperator.queryNumber(db,
                         "select count(1) from " + Source_relation_dep.TableName + "  where " +
                                 "source_id=?", i)
                         .orElseThrow(() -> new RuntimeException("count fail!"));
                 assertThat("agent_info 表此条数据删除后，记录数应该为0", aiDataNum, is(0L));
+                //提交所有数据库执行操作
             }
         }
     }
