@@ -19,31 +19,31 @@ import java.util.Map;
  **/
 public interface FileWriterInterface {
 
-    /**
-    * @Description:  根据数据元信息和ResultSet，写指定格式的数据文件
-    * @Param:  metaDataMap
-    * @Param:  rs
-    * @return:  String
-    * @Author: WangZhengcheng
-    * @Date: 2019/8/13
-    */
-    String writeDataAsSpecifieFormat(Map<String, Object> metaDataMap, ResultSet rs, String tableName) throws IOException, SQLException;
+	/**
+	 * @Description: 根据数据元信息和ResultSet，写指定格式的数据文件
+	 * @Param: metaDataMap
+	 * @Param: rs
+	 * @return: String
+	 * @Author: WangZhengcheng
+	 * @Date: 2019/8/13
+	 */
+	String writeDataAsSpecifieFormat(Map<String, Object> metaDataMap, ResultSet rs, String tableName) throws IOException, SQLException;
 
-    /**
-    * @Description:  将LONGVARCHAR和CLOB类型转换为字节数组，用于写Avro
-    * @Param:  characterStream
-    * @return:  byte[]
-    * @Author: WangZhengcheng
-    * @Date: 2019/8/13
-    */
-    byte[] longvarcharToByte(Reader characterStream);
+	/**
+	 * @Description: 将LONGVARCHAR和CLOB类型转换为字节数组，用于写Avro
+	 * @Param: characterStream
+	 * @return: byte[]
+	 * @Author: WangZhengcheng
+	 * @Date: 2019/8/13
+	 */
+	byte[] longvarcharToByte(Reader characterStream);
 
-    /**
-    * @Description:  把Blob类型转换为byte字节数组,用于写Avro
-    * @Param:  Blob blob
-    * @return:  byte[]
-    * @Author: WangZhengcheng
-    * @Date: 2019/8/13
-    */
-    byte[] blobToBytes(Blob blob);
+	/**
+	 * @Description: 把Blob类型转换为byte字节数组, 用于写Avro
+	 * @Param: Blob blob
+	 * @return: byte[]
+	 * @Author: WangZhengcheng
+	 * @Date: 2019/8/13
+	 */
+	byte[] blobToBytes(Blob blob);
 }

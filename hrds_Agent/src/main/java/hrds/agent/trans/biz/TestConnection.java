@@ -19,31 +19,32 @@ import java.util.Map;
  */
 public class TestConnection extends AbstractWebappBaseAction {
 
-    /**
-     * 1、通过request获取服务发过来的数据
-     * 2、使用dbinfo将需要测试连接的内容填充
-     * 3、测试连接
-     * @return
-     */
-    public boolean testConn() {
-        // 1、通过request获取服务发过来的数据
-        String json = RequestUtil.getJson();
-        Map<String, String> map = JsonUtil.toObject(json, Map.class);
-        //2、使用dbinfo将需要测试连接的内容填充
-        DbinfosConf.Dbinfo dbinfo = new DbinfosConf.Dbinfo();
-        dbinfo.setName(DbinfosConf.DEFAULT_DBNAME);
-        dbinfo.setDriver(map.get("driver"));
-        dbinfo.setUrl(map.get("url"));
-        dbinfo.setUsername(map.get("username"));
-        dbinfo.setPassword(map.get("password"));
-        dbinfo.setWay(ConnWay.JDBC);
-        if (map.get("dbtype").equals(DatabaseType.Postgresql.getCatCode()))
-            dbinfo.setDbtype(Dbtype.POSTGRESQL);
-        dbinfo.setShow_conn_time(true);
-        dbinfo.setShow_sql(true);
-        //3、测试连接
-        try (DatabaseWrapper db = new DatabaseWrapper.Builder().dbconf(dbinfo).create()) {
-            return db.isConnected();
-        }
-    }
+	/**
+	 * 1、通过request获取服务发过来的数据
+	 * 2、使用dbinfo将需要测试连接的内容填充
+	 * 3、测试连接
+	 *
+	 * @return
+	 */
+	public boolean testConn() {
+		// 1、通过request获取服务发过来的数据
+		String json = RequestUtil.getJson();
+		Map<String, String> map = JsonUtil.toObject(json, Map.class);
+		//2、使用dbinfo将需要测试连接的内容填充
+		DbinfosConf.Dbinfo dbinfo = new DbinfosConf.Dbinfo();
+		dbinfo.setName(DbinfosConf.DEFAULT_DBNAME);
+		dbinfo.setDriver(map.get("driver"));
+		dbinfo.setUrl(map.get("url"));
+		dbinfo.setUsername(map.get("username"));
+		dbinfo.setPassword(map.get("password"));
+		dbinfo.setWay(ConnWay.JDBC);
+		if (map.get("dbtype").equals(DatabaseType.Postgresql.getCatCode()))
+			dbinfo.setDbtype(Dbtype.POSTGRESQL);
+		dbinfo.setShow_conn_time(true);
+		dbinfo.setShow_sql(true);
+		//3、测试连接
+		try (DatabaseWrapper db = new DatabaseWrapper.Builder().dbconf(dbinfo).create()) {
+			return db.isConnected();
+		}
+	}
 }

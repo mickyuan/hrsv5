@@ -12,9 +12,9 @@ import fd.ng.db.jdbc.nature.Oracle9iAbove;
  * Version 1.0
  * Since JDK 1.8
  **/
-public class OracleDialectStrategy implements DataBaseDialectStrategy{
-    @Override
-    public String createPageSql(String strSql, int start, int limit) {
-        return Oracle9iAbove.toPagedSql(strSql, start, limit).getSql();
-    }
+public class OracleDialectStrategy implements DataBaseDialectStrategy {
+	@Override
+	public String createPageSql(String strSql, int start, int limit) {
+		return Oracle9iAbove.toPagedSql(strSql, start, limit).getSql();
+	}
 }

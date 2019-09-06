@@ -15,7 +15,7 @@ import java.io.Serializable;
 public class JobStatusInfo implements Serializable {
 
 	private static final long serialVersionUID = 1L;
-	
+
 	private String jobId;
 	private int runStatus;
 	private String startDate;

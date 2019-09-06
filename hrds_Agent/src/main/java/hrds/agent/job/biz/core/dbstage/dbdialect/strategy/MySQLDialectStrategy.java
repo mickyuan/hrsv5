@@ -12,9 +12,9 @@ import fd.ng.db.jdbc.nature.MySQL;
  * Version 1.0
  * Since JDK 1.8
  **/
-public class MySQLDialectStrategy implements DataBaseDialectStrategy{
-    @Override
-    public String createPageSql(String strSql, int start, int limit) {
-        return MySQL.toPagedSql(strSql, start, limit).getSql();
-    }
+public class MySQLDialectStrategy implements DataBaseDialectStrategy {
+	@Override
+	public String createPageSql(String strSql, int start, int limit) {
+		return MySQL.toPagedSql(strSql, start, limit).getSql();
+	}
 }
