@@ -15,12 +15,12 @@ import hrds.agent.job.biz.bean.StageStatusInfo;
  **/
 public interface JobStageInterface {
 
-    //具体阶段处理逻辑,TODO:待每个阶段都实现之后，接口抛的异常要重新定义，不能直接抛顶层异常，修改此处，会影响到JobStageController.handleStageByOrder()和DataBaseJobImpl.runJob()
-    StageStatusInfo handleStage() throws Exception;
+	//具体阶段处理逻辑,TODO:待每个阶段都实现之后，接口抛的异常要重新定义，不能直接抛顶层异常，修改此处，会影响到JobStageController.handleStageByOrder()和DataBaseJobImpl.runJob()
+	StageStatusInfo handleStage() throws Exception;
 
-    //设置下一处理阶段
-    void setNextStage(JobStageInterface stage);
+	//设置下一处理阶段
+	void setNextStage(JobStageInterface stage);
 
-    //获得下一处理阶段
-    JobStageInterface getNextStage();
+	//获得下一处理阶段
+	JobStageInterface getNextStage();
 }

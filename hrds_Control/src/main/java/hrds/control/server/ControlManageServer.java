@@ -1,9 +1,8 @@
 package hrds.control.server;
 
 import java.time.LocalDate;
-import java.util.List;
 
-import hrds.control.task.manager.TaskManager;
+import hrds.control.task.TaskManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -27,14 +26,15 @@ public class ControlManageServer {
 	 * ControlManageServer类构造器
 	 * @author Tiger.Wang
 	 * @date 2019/8/30
+	 * @param sysRunning	系统是否在运行中
 	 * @param bathDate	跑批批次日期
 	 * @param strSystemCode	调度系统代码
 	 * @param isResumeRun	是否续跑
 	 * @param isAutoShift	是否自动日切
 	 */
-	public ControlManageServer(LocalDate bathDate, String strSystemCode, boolean isResumeRun, boolean isAutoShift) {
+	public ControlManageServer(boolean sysRunning, String strSystemCode, LocalDate bathDate, boolean isResumeRun, boolean isAutoShift) {
 
-		taskManager = TaskManager.newInstance(bathDate, strSystemCode, isResumeRun, isAutoShift);
+		taskManager = TaskManager.newInstance(sysRunning, strSystemCode, bathDate, isResumeRun, isAutoShift);
 	}
 
 	/**
@@ -59,7 +59,6 @@ public class ControlManageServer {
 		logger.info("调度服务停止成功");
 	}
 
-	//TODO 考虑多线程
 	private class CMServerThread extends Thread {
 
 		private volatile boolean run = true;
@@ -73,13 +72,13 @@ public class ControlManageServer {
 		public void run() {
 
 			while( run ) {
-//				List<TaskInfo> tasks = taskManager.getReadyTask();
-//				taskManager.executeTask(tasks);
+                taskManager.loadReadyJob();
+                taskManager.handleReadyJob();
 				try {
-					Thread.sleep(3000);
+					Thread.sleep(500);
 				}
 				catch(InterruptedException e) {
-					logger.warn("系统出现异常：{}", e.getMessage());
+					logger.warn("系统出现异常：{}，但是继续执行", e.getMessage());
 				}
 			}
 		}

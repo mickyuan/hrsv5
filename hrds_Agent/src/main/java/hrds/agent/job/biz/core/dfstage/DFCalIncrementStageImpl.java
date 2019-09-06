@@ -14,8 +14,8 @@ import hrds.agent.job.biz.core.AbstractJobStage;
  **/
 public class DFCalIncrementStageImpl extends AbstractJobStage {
 
-    @Override
-    public StageStatusInfo handleStage() {
-        return null;
-    }
+	@Override
+	public StageStatusInfo handleStage() {
+		return null;
+	}
 }

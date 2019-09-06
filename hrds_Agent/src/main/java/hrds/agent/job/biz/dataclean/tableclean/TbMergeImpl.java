@@ -22,29 +22,29 @@ import java.util.Map;
  **/
 public class TbMergeImpl extends AbstractTableClean {
 
-    //TODO ORC,SEQUENCE未实现
-    @Override
-    public String merge(Map<String, String> mergeRule, String[] columnsValue, String[] columnsName, Group group, List<Object> lineData, String fileType){
-        StringBuilder afterMergeColValue = new StringBuilder(4096);
-        for(String colNameAndType : mergeRule.keySet()){
-            int[] alliIdex = ColumnTool.findColIndex(columnsName, mergeRule.get(colNameAndType));
-            for(int i = 0; i < alliIdex.length; i++){
-                afterMergeColValue.append(columnsValue[alliIdex[i]]);
-            }
-            if(group != null){
-                List<String> colNameAndTypeArr = StringUtil.split(colNameAndType, JobConstant.CLEAN_SEPARATOR);
-                ParquetUtil.addData2Group(group, colNameAndTypeArr.get(0), colNameAndTypeArr.get(1), afterMergeColValue.toString());
-                afterMergeColValue.delete(0, afterMergeColValue.length());
-            }
-            if(lineData != null){
-                //未实现
-            }
-            if(fileType.equals(FileFormatConstant.CSV.getMessage())){
-                afterMergeColValue.append(JobConstant.COLUMN_NAME_SEPARATOR);
-            }else if(fileType.equals(FileFormatConstant.SEQUENCEFILE.getMessage())){
-                afterMergeColValue.append(JobConstant.COLUMN_NAME_SEPARATOR);
-            }
-        }
-        return afterMergeColValue.toString();
-    }
+	//TODO ORC,SEQUENCE未实现
+	@Override
+	public String merge(Map<String, String> mergeRule, String[] columnsValue, String[] columnsName, Group group, List<Object> lineData, String fileType) {
+		StringBuilder afterMergeColValue = new StringBuilder(4096);
+		for (String colNameAndType : mergeRule.keySet()) {
+			int[] alliIdex = ColumnTool.findColIndex(columnsName, mergeRule.get(colNameAndType));
+			for (int i = 0; i < alliIdex.length; i++) {
+				afterMergeColValue.append(columnsValue[alliIdex[i]]);
+			}
+			if (group != null) {
+				List<String> colNameAndTypeArr = StringUtil.split(colNameAndType, JobConstant.CLEAN_SEPARATOR);
+				ParquetUtil.addData2Group(group, colNameAndTypeArr.get(0), colNameAndTypeArr.get(1), afterMergeColValue.toString());
+				afterMergeColValue.delete(0, afterMergeColValue.length());
+			}
+			if (lineData != null) {
+				//未实现
+			}
+			if (fileType.equals(FileFormatConstant.CSV.getMessage())) {
+				afterMergeColValue.append(JobConstant.COLUMN_NAME_SEPARATOR);
+			} else if (fileType.equals(FileFormatConstant.SEQUENCEFILE.getMessage())) {
+				afterMergeColValue.append(JobConstant.COLUMN_NAME_SEPARATOR);
+			}
+		}
+		return afterMergeColValue.toString();
+	}
 }

@@ -6,19 +6,16 @@ public enum RunTypeConstant implements EnumConstantInterface {
 	private final int code;
 
 	RunTypeConstant(int code) {
-
 		this.code = code;
 	}
 
 	@Override
 	public int getCode() {
-
 		return code;
 	}
 
 	@Override
 	public String toString() {
-
 		return String.valueOf(code);
 	}
 }

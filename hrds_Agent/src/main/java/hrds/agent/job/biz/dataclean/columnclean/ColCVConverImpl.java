@@ -15,15 +15,15 @@ import java.util.Map;
  * Since JDK 1.8
  **/
 public class ColCVConverImpl extends AbstractColumnClean {
-    @Override
-    public String CVConver(Map<String, String> ruleMap, String columnValue){
-        if(ruleMap != null && !ruleMap.isEmpty()){
-            for(String key : ruleMap.keySet()){
-                if(columnValue.equalsIgnoreCase(key)){
-                    columnValue = StringUtil.replace(columnValue, key, ruleMap.get(key));
-                }
-            }
-        }
-        return columnValue;
-    }
+	@Override
+	public String CVConver(Map<String, String> ruleMap, String columnValue) {
+		if (ruleMap != null && !ruleMap.isEmpty()) {
+			for (String key : ruleMap.keySet()) {
+				if (columnValue.equalsIgnoreCase(key)) {
+					columnValue = StringUtil.replace(columnValue, key, ruleMap.get(key));
+				}
+			}
+		}
+		return columnValue;
+	}
 }

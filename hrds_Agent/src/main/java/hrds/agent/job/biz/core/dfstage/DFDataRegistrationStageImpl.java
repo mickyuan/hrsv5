@@ -13,8 +13,8 @@ import hrds.agent.job.biz.core.AbstractJobStage;
  * Since JDK 1.8
  **/
 public class DFDataRegistrationStageImpl extends AbstractJobStage {
-    @Override
-    public StageStatusInfo handleStage() {
-        return null;
-    }
+	@Override
+	public StageStatusInfo handleStage() {
+		return null;
+	}
 }

@@ -12,11 +12,11 @@ package hrds.agent.job.biz.dataclean.columnclean;
  **/
 public class ColTrimImpl extends AbstractColumnClean {
 
-    @Override
-    public String trim(Boolean flag, String columnValue){
-        if (flag) {
-            columnValue = columnValue.trim();
-        }
-        return columnValue;
-    }
+	@Override
+	public String trim(Boolean flag, String columnValue) {
+		if (flag) {
+			columnValue = columnValue.trim();
+		}
+		return columnValue;
+	}
 }
