@@ -8,7 +8,8 @@ public class ServerResponse {
 	private int respCode;
 	private String respDesc;
 
-	public void SyncResponse() {};
+	public void SyncResponse() {
+	}
 
 	public int getRespCode() {
 		return respCode;

@@ -2,8 +2,7 @@ package hrds.entity;
 
 import fd.ng.db.entity.TableEntity;
 import fd.ng.db.entity.anno.Table;
-import hrds.exception.BusinessException;
-
+import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.HashSet;

@@ -19,21 +19,21 @@ import java.util.List;
  **/
 public class ColCompleteImpl extends AbstractColumnClean {
 
-    @Override
-    public String complete(StringBuilder completeSB, String columnValue){
-        if(completeSB != null){
-            List<String> strings = StringUtil.split(completeSB.toString(), JobConstant.CLEAN_SEPARATOR);
-            int completeLength = Integer.parseInt(strings.get(0));
-            String completeType = strings.get(1);
-            String completeCharacter = strings.get(2);
-            if(CompleteTypeConstant.BEFORE.getCode() == Integer.parseInt(completeType) ) {
-                // 前补齐
-                columnValue = StringUtils.leftPad(columnValue, completeLength, completeCharacter);
-            } else if(CompleteTypeConstant.AFTER.getCode() == Integer.parseInt(completeType) ) {
-                // 后补齐
-                columnValue = StringUtils.rightPad(columnValue, completeLength, completeCharacter);
-            }
-        }
-        return columnValue;
-    }
+	@Override
+	public String complete(StringBuilder completeSB, String columnValue) {
+		if (completeSB != null) {
+			List<String> strings = StringUtil.split(completeSB.toString(), JobConstant.CLEAN_SEPARATOR);
+			int completeLength = Integer.parseInt(strings.get(0));
+			String completeType = strings.get(1);
+			String completeCharacter = strings.get(2);
+			if (CompleteTypeConstant.BEFORE.getCode() == Integer.parseInt(completeType)) {
+				// 前补齐
+				columnValue = StringUtils.leftPad(columnValue, completeLength, completeCharacter);
+			} else if (CompleteTypeConstant.AFTER.getCode() == Integer.parseInt(completeType)) {
+				// 后补齐
+				columnValue = StringUtils.rightPad(columnValue, completeLength, completeCharacter);
+			}
+		}
+		return columnValue;
+	}
 }

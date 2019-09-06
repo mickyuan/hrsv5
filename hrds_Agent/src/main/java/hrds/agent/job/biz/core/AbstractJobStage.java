@@ -10,19 +10,19 @@ package hrds.agent.job.biz.core;
  * Version 1.0
  * Since JDK 1.8
  **/
-public abstract class AbstractJobStage implements JobStageInterface{
+public abstract class AbstractJobStage implements JobStageInterface {
 
-    protected static final String TERMINATED_MSG = "脚本执行完成";
-    protected static final String FAILD_MSG = "脚本执行失败";
-    protected JobStageInterface nextStage;
+	protected static final String TERMINATED_MSG = "脚本执行完成";
+	protected static final String FAILD_MSG = "脚本执行失败";
+	protected JobStageInterface nextStage;
 
-    @Override
-    public void setNextStage(JobStageInterface stage) {
-        this.nextStage = stage;
-    }
+	@Override
+	public void setNextStage(JobStageInterface stage) {
+		this.nextStage = stage;
+	}
 
-    @Override
-    public JobStageInterface getNextStage() {
-        return nextStage;
-    }
+	@Override
+	public JobStageInterface getNextStage() {
+		return nextStage;
+	}
 }

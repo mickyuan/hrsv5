@@ -6,7 +6,7 @@ import java.io.Serializable;
 import java.util.List;
 
 public class JobInfo implements Serializable {
-	
+
 	private static final long serialVersionUID = 1L;
 	//任务编号
 	private String taskId;
@@ -28,34 +28,34 @@ public class JobInfo implements Serializable {
 	private String is_into_hbase;
 	//TODO 这个是海云用于记录字段顺序及字段类型
 	private JSONObject tablename;
-	
+
 	public String getTaskId() {
-	
+
 		return taskId;
 	}
-	
+
 	public void setTaskId(String taskId) {
-	
+
 		this.taskId = taskId;
 	}
 
 	public String getJobId() {
-	
+
 		return jobId;
 	}
 
 	public void setJobId(String jobId) {
-	
+
 		this.jobId = jobId;
 	}
-	
+
 	public String getJobFilePath() {
-	
+
 		return jobFilePath;
 	}
 
 	public void setJobFilePath(String jobFilePath) {
-	
+
 		this.jobFilePath = jobFilePath;
 	}
 

@@ -13,9 +13,9 @@ import fd.ng.db.jdbc.nature.PostgreSQL;
  * Version 1.0
  * Since JDK 1.8
  **/
-public class PgSQLDialectStrategy implements DataBaseDialectStrategy{
-    @Override
-    public String createPageSql(String strSql, int start, int limit) {
-        return PostgreSQL.toPagedSql(strSql, start, limit).getSql();
-    }
+public class PgSQLDialectStrategy implements DataBaseDialectStrategy {
+	@Override
+	public String createPageSql(String strSql, int start, int limit) {
+		return PostgreSQL.toPagedSql(strSql, start, limit).getSql();
+	}
 }

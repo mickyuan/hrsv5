@@ -1,6 +1,7 @@
 package hrds.exception;
 
 import fd.ng.test.junit.FdBaseTestCase;
+import hrds.commons.exception.BusinessException;
 import org.junit.Ignore;
 import org.junit.Test;
 
