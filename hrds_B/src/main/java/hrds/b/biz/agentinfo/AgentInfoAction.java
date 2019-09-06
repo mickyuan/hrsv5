@@ -61,15 +61,15 @@ public class AgentInfoAction extends BaseAction {
      * <p>
      * 1.通过http方式去测试端口连通情况，测通则被占用，不通则可以使用
      *
-     * @param ip
-     * @param port
+     * @param agent_ip agent地址
+     * @param agent_port agent端口
      * @return
      */
-    public boolean isPortOccupied(String ip, int port) {
+    public boolean isPortOccupied(String agent_ip, int agent_port) {
 
         // 1.通过http方式去测试端口连通情况，测通则被占用，不通则可以使用
         HttpClient httpClient = new HttpClient();
-        String url = "http://".concat(ip).concat(":").concat(port + "");
+        String url = "http://".concat(agent_ip).concat(":").concat(agent_port + "");
         HttpClient.ResponseValue post = httpClient.post(url);
 
         if (post.getCode() != 200) {
