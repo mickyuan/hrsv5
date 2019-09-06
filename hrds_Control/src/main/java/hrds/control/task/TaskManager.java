@@ -169,6 +169,11 @@ public class TaskManager {
 		loadExecuteJob(jobs, hasFrequancy);
 	}
 
+	/**
+	 * 用于处理内存表中登记的作业。注意，此方法会将内存表中符合执行条件的作业全部发送到redis中。
+	 * @author Tiger.Wang
+	 * @date 2019/9/6
+	 */
 	public void handleReadyJob() {
 
 		boolean isSysShift = false;	//系统干预日切标志
