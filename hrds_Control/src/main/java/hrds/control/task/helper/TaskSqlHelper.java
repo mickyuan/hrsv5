@@ -442,4 +442,20 @@ public class TaskSqlHelper {
 			return num > 0;
 		}
 	}
+
+	/**
+	 * 根据调度系统编号获取调度作业干预信息
+	 * @author Tiger.Wang
+	 * @date 2019/9/6
+	 * @param etlSyscd  调度系统编号
+	 * @return java.util.List<hrds.commons.entity.Etl_job_hand>
+	 */
+	public static List<Etl_job_hand> getEtlJobHands(String etlSyscd) {
+
+		try(DatabaseWrapper db = new DatabaseWrapper()) {
+
+			return SqlOperator.queryList(db, Etl_job_hand.class, "SELECT * FROM etl_job_hand WHERE " +
+					"hand_status = ? AND etl_sys_cd = ?", Meddle_status.TRUE.getCode(), etlSyscd);
+		}
+	}
 }
