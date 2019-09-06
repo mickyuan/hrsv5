@@ -15,20 +15,21 @@ import java.util.List;
  **/
 public interface MetaInfoInterface {
 
-    /**
-     * 获得meta信息，提供多于1个meta
-     * @author   13616
-     * @date     2019/8/7 14:29
-     *
-     * @return   java.util.List<com.beyondsoft.agent.beans.MetaInfoBean>
-     */
-    List<MetaInfoBean> getMetaInfoGroup();
+	/**
+	 * 获得meta信息，提供多于1个meta
+	 *
+	 * @return java.util.List<com.beyondsoft.agent.beans.MetaInfoBean>
+	 * @author 13616
+	 * @date 2019/8/7 14:29
+	 */
+	List<MetaInfoBean> getMetaInfoGroup();
 
-    /**
-     * 获得meta信息，提供1个meta
-     * @author   13616
-     * @date     2019/8/7 14:30
-     * @return   com.beyondsoft.agent.beans.MetaInfoBean
-     */
-    MetaInfoBean getMetaInfo();
+	/**
+	 * 获得meta信息，提供1个meta
+	 *
+	 * @return com.beyondsoft.agent.beans.MetaInfoBean
+	 * @author 13616
+	 * @date 2019/8/7 14:30
+	 */
+	MetaInfoBean getMetaInfo();
 }

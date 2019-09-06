@@ -14,13 +14,13 @@ import hrds.agent.job.biz.bean.JobStatusInfo;
  * Since JDK 1.8
  **/
 public interface JobInterface extends MetaInfoInterface {
-    /**
-     * 作业执行接口
-     * @author   13616
-     * @date     2019/8/7 11:59
-     *
-     * @return   com.beyondsoft.agent.beans.JobStatusInfo，用于表示作业状态
-     */
-    JobStatusInfo runJob();
+	/**
+	 * 作业执行接口
+	 *
+	 * @return com.beyondsoft.agent.beans.JobStatusInfo，用于表示作业状态
+	 * @author 13616
+	 * @date 2019/8/7 11:59
+	 */
+	JobStatusInfo runJob();
 }
 

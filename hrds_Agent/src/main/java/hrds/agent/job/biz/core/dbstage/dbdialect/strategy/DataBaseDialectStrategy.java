@@ -12,14 +12,14 @@ package hrds.agent.job.biz.core.dbstage.dbdialect.strategy;
  **/
 public interface DataBaseDialectStrategy {
 
-    /**
-    * @Description:根据对应的数据库分页类型，获取分页SQL
-    * @Param:strSql：取数SQL
-    * @Param:start：当前页开始条数
-    * @Param:limit：当前页结束条数
-    * @return:
-    * @Author: WangZhengcheng
-    * @Date: 2019/8/13
-    */
-    String createPageSql(String strSql, int start, int limit);
+	/**
+	 * @Description:根据对应的数据库分页类型，获取分页SQL
+	 * @Param:strSql：取数SQL
+	 * @Param:start：当前页开始条数
+	 * @Param:limit：当前页结束条数
+	 * @return:
+	 * @Author: WangZhengcheng
+	 * @Date: 2019/8/13
+	 */
+	String createPageSql(String strSql, int start, int limit);
 }

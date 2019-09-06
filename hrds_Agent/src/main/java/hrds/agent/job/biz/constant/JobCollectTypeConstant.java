@@ -1,7 +1,6 @@
 package hrds.agent.job.biz.constant;
 
 
-
 public final class JobCollectTypeConstant {
 
 	public static final String DB_COLLECTION = "1";

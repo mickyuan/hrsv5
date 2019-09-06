@@ -12,9 +12,9 @@ import fd.ng.db.jdbc.nature.DB2V2;
  * Version 1.0
  * Since JDK 1.8
  **/
-public class HiveDialectStrategy implements DataBaseDialectStrategy{
-    @Override
-    public String createPageSql(String strSql, int start, int limit) {
-        return DB2V2.toPagedSql(strSql, start, limit).getSql();
-    }
+public class HiveDialectStrategy implements DataBaseDialectStrategy {
+	@Override
+	public String createPageSql(String strSql, int start, int limit) {
+		return DB2V2.toPagedSql(strSql, start, limit).getSql();
+	}
 }

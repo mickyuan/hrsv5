@@ -12,11 +12,11 @@ package hrds.agent.job.biz.dataclean.tableclean;
  **/
 public class TbTrimImpl extends AbstractTableClean {
 
-    @Override
-    public String trim(Boolean flag, String columnValue){
-        if (flag) {
-            columnValue = columnValue.trim();
-        }
-        return columnValue;
-    }
+	@Override
+	public String trim(Boolean flag, String columnValue) {
+		if (flag) {
+			columnValue = columnValue.trim();
+		}
+		return columnValue;
+	}
 }
