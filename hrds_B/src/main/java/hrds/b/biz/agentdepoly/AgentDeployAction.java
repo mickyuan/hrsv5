@@ -3,11 +3,11 @@ package hrds.b.biz.agentdepoly;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.annotation.RequestBean;
 import fd.ng.web.util.Dbo;
-import fd.ng.web.util.RequestUtil;
 import hrds.commons.base.BaseAction;
 import hrds.commons.entity.Agent_down_info;
 import hrds.commons.entity.Agent_info;
-import hrds.commons.entity.Sys_user;
+import hrds.commons.exception.BusinessException;
+import hrds.commons.exception.ExceptionEnum;
 
 import java.util.List;
 import java.util.Map;
@@ -53,7 +53,6 @@ public class AgentDeployAction extends BaseAction {
 	 */
 	public Result getAgentInfo(Long source_id, String agent_type) {
 
-		Sys_user userCookie = RequestUtil.getCookieObject("cookie", Sys_user.class);
 		return Dbo.queryResult("SELECT * FROM agent_info WHERE source_id = ? AND agent_type = ? AND user_id = ?", source_id, agent_type,
 						getUserId());
 	}
@@ -67,7 +66,8 @@ public class AgentDeployAction extends BaseAction {
 	 */
 	public Result getAgentDownInfo(Long agent_id, String agent_type) {
 
-		return Dbo.queryResult("SELECT * FROM agent_down_info WHERE agent_id = ? AND user_id = ?;", agent_id, agent_type, getUserId());
+		return Dbo.queryResult("SELECT * FROM agent_down_info WHERE agent_id = ? AND agent_type = ? AND user_id = ?", agent_id, agent_type,
+						getUserId());
 	}
 
 	/**
@@ -77,19 +77,22 @@ public class AgentDeployAction extends BaseAction {
 	 * <p>参   数:  </p>
 	 * <p>return:  </p>
 	 */
-	public void deployAgent(@RequestBean Agent_info agent_info, @RequestBean Agent_down_info agent_down_info) {
+	public void deployAgent(@RequestBean Agent_down_info agent_down_info) {
+
 
 	}
 
+	/**
+	 * <p>方法描述: 保存此次部署Agent的信息</p>
+	 * <p>@author: Mr.Lee </p>
+	 * <p>创建时间: 2019-09-04</p>
+	 * <p>参   数:  </p>
+	 * <p>return:  </p>
+	 */
 	public void saveAgentDownInfo(Agent_down_info agent_down_info) {
 
 		if( agent_down_info.add(Dbo.db()) != 1 ) {
-//			throw new BusinessException(ExceptionEnum.AGENT_DOWN_ERROR);
+			throw new BusinessException(ExceptionEnum.AGENT_DOWN_ERROR.getMessage());
 		}
-	}
-
-	public static void main(String[] args) {
-
-		System.out.println(Class.class.getClass().getResource("/").getPath());
 	}
 }
