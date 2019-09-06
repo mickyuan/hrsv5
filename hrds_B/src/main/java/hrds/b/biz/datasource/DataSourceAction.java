@@ -90,7 +90,6 @@ public class DataSourceAction extends BaseAction {
 	 *
 	 * @param source_id 数据源编号
 	 * @param dep_id    部门编号
-	 * @return
 	 */
 	public void saveSourceRelationDep(Long source_id, String dep_id) {
 		// 建立数据源与部门关系信息
@@ -112,7 +111,7 @@ public class DataSourceAction extends BaseAction {
 	 * 1.判断该数据源下是否有数据，没有抛异常，有则返回查询结果
 	 *
 	 * @param source_id 数据源编号
-	 * @return
+	 * @return 返回查询结果集
 	 */
 	public Result searchDataSource(Long source_id) {
 		// 1.判断该数据源下是否有数据，没有抛异常，有则返回查询结果
