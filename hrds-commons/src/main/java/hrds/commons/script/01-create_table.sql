@@ -878,8 +878,8 @@ VALID_TIME                                        VARCHAR(40) default '0' NOT NU
 CONSTRAINT SYS_USER_PK PRIMARY KEY(USER_ID)   );
 
 --作业调度表
-DROP TABLE IF EXISTS ETL_JOB ;
-CREATE TABLE ETL_JOB(
+DROP TABLE IF EXISTS ETL_JOB_CUR ;
+CREATE TABLE ETL_JOB_CUR(
 ETL_SYS_CD                                        VARCHAR(100) NOT NULL, --工程代码
 ETL_JOB                                           VARCHAR(512) NOT NULL, --作业名
 SUB_SYS_CD                                        VARCHAR(100) NOT NULL, --子系统代码
@@ -913,7 +913,7 @@ COM_EXE_NUM                                       INTEGER default 0 NULL, --已�
 LAST_EXE_TIME                                     VARCHAR(20) NULL, --上次执行时间
 STAR_TIME                                         VARCHAR(20) NULL, --开始执行时间
 END_TIME                                          VARCHAR(20) NULL, --结束执行时间
-CONSTRAINT ETL_JOB_PK PRIMARY KEY(ETL_SYS_CD,ETL_JOB)   );
+CONSTRAINT ETL_JOB_CUR_PK PRIMARY KEY(ETL_SYS_CD,ETL_JOB)   );
 
 --部门信息表
 DROP TABLE IF EXISTS DEPARTMENT_INFO ;

@@ -36,8 +36,7 @@ public class User_fav extends TableEntity
 	}
 	private Long fav_id; //收藏ID
 	private String file_id; //文件编号
-	private Long user_id; //用户ID
-	private String fav_flag; //是否有效
+` `	private String fav_flag; //是否有效
 	private String original_name; //原始文件名称
 
 	/** 取得：收藏ID */
@@ -61,20 +60,6 @@ public class User_fav extends TableEntity
 	/** 设置：文件编号 */
 	public void setFile_id(String file_id){
 		this.file_id=file_id;
-	}
-	/** 取得：用户ID */
-	public Long getUser_id(){
-		return user_id;
-	}
-	/** 设置：用户ID */
-	public void setUser_id(Long user_id){
-		this.user_id=user_id;
-	}
-	/** 设置：用户ID */
-	public void setUser_id(String user_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(user_id)){
-			this.user_id=new Long(user_id);
-		}
 	}
 	/** 取得：是否有效 */
 	public String getFav_flag(){
