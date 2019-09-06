@@ -42,7 +42,7 @@ public class DataSourceAction extends BaseAction {
 	 * 5.保存或更新数据源与部门关系信息
 	 *
 	 * @param dataSource 数据源编号
-	 * @param dep_id    部门编号
+	 * @param dep_id     部门编号
 	 */
 	public void saveDataSource(@RequestBean Data_source dataSource, String dep_id) {
 
@@ -175,16 +175,16 @@ public class DataSourceAction extends BaseAction {
 
 	/**
 	 * 上传文件
-	 *
+	 * <p>
 	 * 1.通过页面传值循环遍历获取文件以及文件名
 	 * 2.创建一个缓冲区,循环将输入流读入到缓冲区
 	 * 3.使用base64对数据进行编码
 	 * 4.导入数据
 	 *
-	 * @param agent_ip agent地址
+	 * @param agent_ip   agent地址
 	 * @param agent_port agent端口
-	 * @param user_id 页面传递用户编号
-	 * @param files 所有文件
+	 * @param user_id    页面传递用户编号
+	 * @param files      所有文件
 	 * @throws IOException
 	 */
 	@UploadFile
@@ -225,7 +225,7 @@ public class DataSourceAction extends BaseAction {
 
 	/**
 	 * 导入贴源层元数据
-	 *
+	 * <p>
 	 * 1.解析文件获取文件所有信息
 	 * 2.遍历并解析拿到每张表的信息
 	 * 3.将对应表信息插入库（数据源信息还需要判断数据源名称是否重复，重复抛异常，否则正常入库）
