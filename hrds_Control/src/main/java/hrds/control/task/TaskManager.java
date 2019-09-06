@@ -8,6 +8,8 @@ import java.util.*;
 
 import hrds.commons.codes.*;
 import hrds.commons.entity.*;
+import hrds.commons.exception.AppSystemException;
+import hrds.control.task.helper.NotifyMessageHelper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -52,21 +54,22 @@ public class TaskManager {
 	//TODO 这个名字叫什么我不知道
 	private static final long zclong = 999999999999999999l;
 	private static final Calendar calendar = Calendar.getInstance();
-	private final static RedisHelper REDIS = RedisHelper.getInstance();
+	private static final RedisHelper REDIS = RedisHelper.getInstance();
+	private static final NotifyMessageHelper NOTIFY = NotifyMessageHelper.getInstance();
 
-	private boolean sysRunning;
-	private final LocalDate bathDate;
-	private final String etlSysCd;
-	private final boolean isResumeRun;
-	private final boolean isAutoShift;
+	private boolean sysRunning; //系统运行标识
+	private final LocalDate bathDate;   //当前批次日期
+	private final String etlSysCd;  //调度系统编号
+	private final boolean isResumeRun;  //系统续跑标识
+	private final boolean isAutoShift;  //自动日切标识
+	private final boolean isNeedSendSMS;    //作业发送警告信息标识
 
 	private final static String RUNNINGJOBFLAG = "RunningJob";
 	private final static String FINISHEDJOBFLAG = "FinishedJob";
 	private final String strRunningJob;	//存入redis中的键值（标识需要马上执行的作业）
 	private final String strFinishedJob;	//存入redis中的键值（标识已经停止的作业）
 
-	public final static String REDISCONTENTSEPARATOR = "@";	//redis字符内容分隔符
-
+	private final static String REDISCONTENTSEPARATOR = "@";	//redis字符内容分隔符
 
 	/**
 	 * 静态工厂，用于构造TaskManager实例
@@ -104,6 +107,8 @@ public class TaskManager {
 
 		strRunningJob = etlSysCd + RUNNINGJOBFLAG;
 		strFinishedJob = etlSysCd + FINISHEDJOBFLAG;
+		//TODO 此处读配置文件
+		isNeedSendSMS = true;
 
 		initEtlSystem();
 	}
@@ -115,9 +120,6 @@ public class TaskManager {
 	 * 			3、初始化系统资源，加载资源进内存表。
 	 * @author Tiger.Wang
 	 * @date 2019/9/5
-	 * @param
-	 * @return void
-	 * @throws
 	 */
 	private void initEtlSystem() {
 		//1、清理redis中的数据。
@@ -179,8 +181,27 @@ public class TaskManager {
 				checkCount = 0;
 			}
 			checkCount++;
+			//检查完成的作业并开启后续达成依赖的作业
+			checkFinishedJob();
+			// 每次Sleep结束后查看是否有达到调度时间的作业
+			checkTimeDependencyJob();
+			// 判断系统是否已经停止，可能不需要判断
+			Etl_sys etlSys = TaskSqlHelper.getEltSysBySysCode(etlSysCd).orElse(null);
+			if(null == etlSys) {
+				throw new AppSystemException("根据调度系统编号无法获取到信息：" + etlSysCd);
+			}else if(Job_Status.STOP.getCode().equals(etlSys.getSys_run_status())) {
+				sysRunning = false;
+				isSysShift = true;
+				//TODO 此处较原版改动：注释了以下内容
+				// thread.StopThread();
+				logger.warn("------------- 系统干预，{} 调度停止 -----------------", etlSysCd);
+				break;
+			}
+			// 干预信号
+			List<Etl_job_hand> handles = TaskSqlHelper.getEtlJobHands(etlSysCd);
+			if(handles.size() != 0) {
 
-
+			}
 		}
 	}
 
@@ -469,23 +490,19 @@ public class TaskManager {
 	 */
 	private void checkJobDependency(String strCurrBathDate) {
 
-		Iterator<String> dateIter = jobExecuteMap.keySet().iterator();
-		while( dateIter.hasNext() ) {
-			String strBathDate = dateIter.next();
+		for (String strBathDate : jobExecuteMap.keySet()) {
 			// 如果调度系统日切时，只检查当前调度日期作业的依赖作业
-			if( !strCurrBathDate.isEmpty() && !strCurrBathDate.equals(strBathDate) ) {
+			if (!strCurrBathDate.isEmpty() && !strCurrBathDate.equals(strBathDate)) {
 				continue;
 			}
 
 			LocalDate currBathDate = LocalDate.parse(strBathDate, DateUtil.DATETIME);
 			Map<String, EtlJobBean> jobMap = jobExecuteMap.get(strBathDate);
 
-			Iterator<String> jobIter = jobMap.keySet().iterator();
-			while( jobIter.hasNext() ) {
-				String strJobName = jobIter.next();
+			for (String strJobName : jobMap.keySet()) {
 				// 取得作业的定义
 				Etl_job_def jobDefine = jobDefineMap.get(strJobName);
-				if( null == jobDefine ) {
+				if (null == jobDefine) {
 					continue;
 				}
 				// 取得执行作业
@@ -502,54 +519,54 @@ public class TaskManager {
 				 * 二、若作业调度方式为定时T+1触发，则计算出执行日期时间，并设置依赖调度标识；
 				 * 三、若作业调度方式为定时T+0触发，则计算出执行日期时间，并设置依赖调度标识；
 				 */
-				if(Dispatch_Type.DEPENDENCE.getCode().equals(dispType)) {	//依赖触发
+				if (Dispatch_Type.DEPENDENCE.getCode().equals(dispType)) {    //依赖触发
 					// 取得依赖作业列表
 					List<String> dependencyJobList = jobDependencyMap.get(strJobName);
-					if( dependencyJobList == null ) {
+					if (dependencyJobList == null) {
 						// 依赖作业列表没有，可以直接调度
 						job.setDependencyFlag(true);
-					}else {
+					} else {
 						// 判断已经完成的依赖作业个数
 						int finishedDepJobCount = 0;
-						for(int i = 0; i < dependencyJobList.size(); ++i) {
-							if( checkJobFinished(strBathDate, dependencyJobList.get(i)) ) {
+						for (String s : dependencyJobList) {
+							if (checkJobFinished(strBathDate, s)) {
 								++finishedDepJobCount;
 							}
 						}
 						job.setDoneDependencyJobCount(finishedDepJobCount);
 						// 判断依赖的作业是否已经全部完成
-						if( finishedDepJobCount == dependencyJobList.size() ) {
+						if (finishedDepJobCount == dependencyJobList.size()) {
 							// 已经全部完成，可以准备调度此作业
 							job.setDependencyFlag(true);
-						}else {
+						} else {
 							job.setDependencyFlag(false);
 						}
 					}
 					job.setExecuteTime(0L);
-				} else if(Dispatch_Type.TIMING.getCode().equals(dispType)) {
+				} else if (Dispatch_Type.TIMING.getCode().equals(dispType)) {
 					// 定时T+1触发
 					String strDispTime = jobTimeDependencyMap.get(strJobName);
-					if( null == strDispTime ) {
+					if (null == strDispTime) {
 						job.setExecuteTime(currBathDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli());
-					}else {
+					} else {
 						//TODO 应该使用JDK8的新日期类来完成日期时间计算
 						Date executeDate = TaskJobHelper.getTtypeExecuteTime(strBathDate + " " + strDispTime);
 						job.setExecuteTime(executeDate.getTime());
 					}
 					job.setDependencyFlag(false);
 					logger.info("{}'s executeTime={}", strJobName, job.getExecuteTime());
-				} else if(Dispatch_Type.ZTIMING.getCode().equals(dispType)) {
+				} else if (Dispatch_Type.ZTIMING.getCode().equals(dispType)) {
 					//TODO 此处较原版改动：disp_type中不再有"F"类型，而是T+0时，频率类型为"频率"，
 					// 以此逻辑来判断，T+0加上日切才是每天都跑？
-					if(Dispatch_Frequency.PinLv.getCode().equals(jobDefine.getDisp_freq())) {
+					if (Dispatch_Frequency.PinLv.getCode().equals(jobDefine.getDisp_freq())) {
 						job.setExecuteTime(zclong);
 						job.setDependencyFlag(false);
-					}else {
+					} else {
 						// 定时准点触发
 						String strDispTime = jobTimeDependencyMap.get(strJobName);
-						if( null == strDispTime ) {
+						if (null == strDispTime) {
 							job.setExecuteTime(currBathDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli());
-						}else {
+						} else {
 							Date executeDate = TaskJobHelper.getZtypeExecuteTime(strBathDate + " " + strDispTime);
 							job.setExecuteTime(executeDate.getTime());
 						}
@@ -569,95 +586,81 @@ public class TaskManager {
 	 */
 	private void initWaitingJob(String strCurrBathDate) {
 
-		Iterator<String> dateIter = jobExecuteMap.keySet().iterator();
-		while(dateIter.hasNext()) {
-			String strBathDate = dateIter.next();
-			if(!strCurrBathDate.isEmpty() && !strCurrBathDate.equals(strBathDate)) {
+		for (String strBathDate : jobExecuteMap.keySet()) {
+			if (!strCurrBathDate.isEmpty() && !strCurrBathDate.equals(strBathDate)) {
 				continue;
 			}
 
 			Map<String, EtlJobBean> jobMap = jobExecuteMap.get(strBathDate);
-			Iterator<String> jobIter = jobMap.keySet().iterator();
-			while(jobIter.hasNext()) {
-				String strJobName = jobIter.next();
+			for (String strJobName : jobMap.keySet()) {
 				EtlJobBean exeJob = jobMap.get(strJobName);
 				String etlJob = exeJob.getEtl_job();
 				String currBathDate = exeJob.getCurr_bath_date();
 				Etl_job_def jobDefine = jobDefineMap.get(strJobName);
-				if(null == jobDefine) {
+				if (null == jobDefine) {
 					continue;
 				}
 				// 判断执行作业的作业状态
-				if(Job_Status.PENDING.getCode().equals(exeJob.getJob_disp_status())) {
+				if (Job_Status.PENDING.getCode().equals(exeJob.getJob_disp_status())) {
 					// 作业状态为Pending,检查前置作业是否已完成
 					// 判断前一批次作业是否已经完成
-					if(!exeJob.isPreDateFlag()) {
+					if (!exeJob.isPreDateFlag()) {
 						// 前一批次作业未完成，作业状态不能置为Waiting
 						continue;
 					}
 					String dispType = jobDefine.getDisp_type();
 					// 判断作业调度触发方式是否满足
-					if(Dispatch_Type.DEPENDENCE.getCode().equals(dispType)) {
+					if (Dispatch_Type.DEPENDENCE.getCode().equals(dispType)) {
 						// 依赖触发,判断依赖作业是否已经完成
-						if(!exeJob.isDependencyFlag()) {
+						if (!exeJob.isDependencyFlag()) {
 							// 依赖作业未完成，作业状态不能置为Waiting
 							continue;
 						}
-					}
-					else if(Dispatch_Type.TIMING.getCode().equals(dispType)) {
+					} else if (Dispatch_Type.TIMING.getCode().equals(dispType)) {
 						// 定时触发,判断作业调度时间是否已经达到
-						if(calendar.getTime().getTime() < exeJob.getExecuteTime()) {
+						if (calendar.getTime().getTime() < exeJob.getExecuteTime()) {
 							// 作业调度时间未到,作业状态不能置为Waiting
 							continue;
 						}
-					}
-					else if(Dispatch_Type.ZTIMING.getCode().equals(dispType)) {
+					} else if (Dispatch_Type.ZTIMING.getCode().equals(dispType)) {
 						// 定时触发,判断作业调度时间是否已经达到
-						if(Dispatch_Frequency.PinLv.getCode().equals(jobDefine.getDisp_freq())) {
+						if (Dispatch_Frequency.PinLv.getCode().equals(jobDefine.getDisp_freq())) {
 							//xchao--2017年8月15日 16:25:51 添加按秒、分钟、小时进行执行
 							//TODO 此处较原版改动：原版代码getFJob(exeJob.getEtl_job(), strSystemCode, "job")
 							// 不再根据作业标识、调度系统编号查询一次数据库，因为该作业是从内存中取出的，只需要为该作业设置
 							// 足够的值，即可对该作业进行检验。
-							if(!checkEtlJob(exeJob)) {
+							if (!checkEtlJob(exeJob)) {
 								continue;
 							}
-						}else if(calendar.getTime().getTime() < exeJob.getExecuteTime()) {
+						} else if (calendar.getTime().getTime() < exeJob.getExecuteTime()) {
 							// 作业调度时间未到,作业状态不能置为Waiting
 							continue;
 						}
-					}else {
+					} else {
 						// 其他触发方式，暂不支持
 						continue;
 					}
 
 					// 判断作业的作业有效标志
-					if(Job_Effective_Flag.VIRTUAL.getCode().equals(jobDefine.getJob_eff_flag())) {
+					if (Job_Effective_Flag.VIRTUAL.getCode().equals(jobDefine.getJob_eff_flag())) {
 						// 如果是虚作业的话，直接将作业状态置为Done
 						exeJob.setJob_disp_status(Job_Status.RUNNING.getCode());
+						handleVirtualJob(etlJob, currBathDate);
 
-						String localDateTime = fd.ng.core.utils.DateUtil.getDateTime(DateUtil.DATETIME);
-						TaskSqlHelper.updateVirtualJob(etlSysCd, etlJob, currBathDate, localDateTime, localDateTime);
-
-						// 将虚作业加入redis完成作业列表
-						String finishedJob = etlJob + REDISCONTENTSEPARATOR + currBathDate;
-						REDIS.rpush(strFinishedJob, finishedJob);
 						continue;
-					}
-					else {
+					} else {
 						// 将Pending状态置为Waiting
 						TaskSqlHelper.updateEtlJobDispStatus(Job_Status.WAITING.getCode(), etlSysCd, etlJob,
 								currBathDate);
 					}
-				}
-				else if(!Job_Status.WAITING.getCode().equals(exeJob.getJob_disp_status())) {
+				} else if (!Job_Status.WAITING.getCode().equals(exeJob.getJob_disp_status())) {
 					// Pending和Waiting状态外的作业暂不处理
 					continue;
 				}
 
-				if(Pro_Type.WF.getCode().equals(exeJob.getPro_type())) {
+				if (Pro_Type.WF.getCode().equals(exeJob.getPro_type())) {
 					addWaitFileJobToList(exeJob);
-				}
-				else {
+				} else {
 					jobWaitingList.add(exeJob);
 				}
 			}
@@ -672,12 +675,12 @@ public class TaskManager {
 	 */
 	private void addWaitFileJobToList(EtlJobBean exeJob) {
 
-		Map<String, Object> jobKeyMap = new HashMap<>();
 		Etl_job etlJob = TaskSqlHelper.getEtlJob(etlSysCd, exeJob.getEtl_job(), exeJob.getCurr_bath_date()).
 				orElse(null);
 
 		if(null == etlJob) {
-			logger.error("没有找到作业！EtlJob=[%s],BathDate=[%s]", exeJob.getEtl_job(), exeJob.getCurr_bath_date());
+			logger.error("没有找到作业！EtlJob=[{}],BathDate=[{}]", exeJob.getEtl_job(),
+					exeJob.getCurr_bath_date());
 			return;
 		}
 
@@ -717,11 +720,8 @@ public class TaskManager {
 		}
 		String endTime = job.getEnd_time();	//19位日期加时间字符串    yyyy-MM-dd HH:mm:ss
 		LocalDateTime endDateTime = DateUtil.parseStr2DateTime(endTime);
-		if(LocalDateTime.now().compareTo(endDateTime) > -1) {	//若当前系统日期大于或等于结束日期，则作业不再执行
-			return false;
-		}
-
-		return true;
+		//若当前系统日期大于或等于结束日期，则作业不再执行
+		return LocalDateTime.now().compareTo(endDateTime) < 0;
 	}
 
 	/**
@@ -778,9 +778,7 @@ public class TaskManager {
 			}
 			cal.set(Calendar.DAY_OF_MONTH, nDispOffset + 1);
 			int y = cal.get(Calendar.DAY_OF_MONTH);
-			if(x == y) {
-				return true;
-			}
+			return x == y;
 		}else if(frequancy.equals(Dispatch_Frequency.WEEKLY.getCode())) {
 			int x = cal.get(Calendar.DAY_OF_WEEK);
 			if(nDispOffset <= 0) {
@@ -788,9 +786,7 @@ public class TaskManager {
 			}
 			cal.set(Calendar.DAY_OF_WEEK, nDispOffset + 1);
 			int y = cal.get(Calendar.DAY_OF_WEEK);
-			if(x == y) {
-				return true;
-			}
+			return x == y;
 		}else if(frequancy.equals(Dispatch_Frequency.YEARLY.getCode())) {
 			int x = cal.get(Calendar.DAY_OF_YEAR);
 			if(nDispOffset < 0) {
@@ -798,10 +794,9 @@ public class TaskManager {
 			}
 			cal.set(Calendar.DAY_OF_YEAR, nDispOffset + 1);
 			int y = cal.get(Calendar.DAY_OF_YEAR);
-			if(x == y) {
-				return true;
-			}
-		}else if(frequancy.equals(Dispatch_Frequency.PinLv.getCode())) {	//xchao--2017年8月15日 16:25:51 添加按秒、分钟、小时进行执行
+			return x == y;
+		}else if(frequancy.equals(Dispatch_Frequency.PinLv.getCode())) {
+			//xchao--2017年8月15日 16:25:51 添加按秒、分钟、小时进行执行
 			if( com_exe_num < exe_num ) {
 				LocalDateTime startDateTime = DateUtil.parseStr2DateTime(star_time);
 				LocalDateTime endDateTime = DateUtil.parseStr2DateTime(end_time);
@@ -809,9 +804,7 @@ public class TaskManager {
 				long currMilli = currDateTime.atZone(zoneId).toInstant().toEpochMilli();
 				long startCurrMilli = startDateTime.atZone(zoneId).toInstant().toEpochMilli() - currMilli;
 				long endCurrMilli = endDateTime.atZone(zoneId).toInstant().toEpochMilli() - currMilli;
-				if( startCurrMilli <= 0 && endCurrMilli >= 0 ) {
-					return true;
-				}
+				return startCurrMilli <= 0 && endCurrMilli >= 0;
 			}
 		}
 
@@ -821,12 +814,9 @@ public class TaskManager {
 	/**
 	 * 判断作业是否已经完成
 	 *
-	 * @param currBathDate
-	 * 			调度日期
-	 * @param jobName
-	 * 			作业名
-	 * @return
-	 * 		是否已经完成
+	 * @param currBathDate  调度日期
+	 * @param jobName   作业名
+	 * @return  是否已经完成
 	 */
 	private boolean checkJobFinished(String currBathDate, String jobName) {
 
@@ -840,39 +830,37 @@ public class TaskManager {
 			return false;
 		}
 		// 判断作业状态是否为Done
-		if(Job_Status.DONE.getCode().equals(jobMap.get(jobName).getJob_disp_status())) {
-			return true;
-		}
-
-		return false;
+		return Job_Status.DONE.getCode().equals(jobMap.get(jobName).getJob_disp_status());
 	}
 //------------------------------分析并加载需要立即启动的作业信息用（loadReadyJob方法）end---------------------------------
 
 //-------------------------------分析并处理需要立即启动的作业（handleReadyJob方法）start----------------------------------
 	/**
-	 * 检查调度中作业的状态，防止通信异常时没有同步作业状态
+	 * 检查调度中作业的状态，防止通信异常时没有同步作业状态。注意，此处主要是根据[待调度作业表（内存表）]与作业表的
+	 * 作业调度状态来推送该作业到redis（登记作业信息）
+	 * @author Tiger.Wang
+	 * @date 2019/9/6
 	 */
 	private void checkReadyJob() {
 
-		Iterator<String> dateIter = jobExecuteMap.keySet().iterator();
-
-		while( dateIter.hasNext() ) {
-			String strBathDate = dateIter.next();
+		for(String strBathDate : jobExecuteMap.keySet()) {
 			Map<String, EtlJobBean> jobMap = jobExecuteMap.get(strBathDate);
 
-			Iterator<String> jobIter = jobMap.keySet().iterator();
-			while(jobIter.hasNext()) {
-				String strJobName = jobIter.next();
-				EtlJobBean job = jobMap.get(strJobName);	// 取得执行作业
-
-				if(Pro_Type.WF.getCode().equals(job.getPro_type())) {	// 如果是等待文件作业的话不监视
-					continue;
-				}
-				// 如果该执行作业状态是R的话，从DB中取得该作业信息
+			for(String strJobName : jobMap.keySet()) {
+				EtlJobBean job = jobMap.get(strJobName);    // 取得执行作业
+				//TODO 此处较原版改动：不再判断作业类型为：WF的，因为逻辑上来说只需要判断作业状态为running即可
+				/*
+				 * 此处检查作业状态为运行中的作业，主要行为如下：
+				 * 一、内存表的作业在作业表中无法查询出，则跳过检查；
+				 * 二、作业状态为结束、错误的作业，则认为该作业已经结束，并登记到redis中；
+				 * 三、除作业状态为结束、错误的作业，则当该作业开始执行时间是默认时间时（2000-12-31 23:59:59），
+				 *     若该作业超过10分钟还未运行，则再次登记到redis中。
+				 */
 				if(Job_Status.RUNNING.getCode().equals(job.getJob_disp_status())) {
+					// 如果该执行作业状态是R的话，从DB中取得该作业信息
 					Etl_job jobInfo = TaskSqlHelper.getEtlJob(etlSysCd, job.getEtl_job(),
 							job.getCurr_bath_date()).orElse(null);
-					if( null == jobInfo ) {
+					if (null == jobInfo) {
 						continue;
 					}
 					String etlJob = job.getEtl_job();
@@ -880,23 +868,22 @@ public class TaskManager {
 					// 检查作业状态，如果作业已经完成，将作业加入redisDB
 					String jobStatus = jobInfo.getJob_disp_status();
 					if(Job_Status.DONE.getCode().equals(jobStatus) || Job_Status.ERROR.getCode().equals(jobStatus)) {
-						logger.warn(etlJob + "检测到执行完成");
+						logger.warn(etlJob + " 检测到执行完成");
 						String finishedJob = etlJob + REDISCONTENTSEPARATOR + currBathDate;
 						REDIS.rpush(strFinishedJob, finishedJob);
 						continue;
 					}
-
 					// 检查作业开始时间（yyyy-MM-dd HH:mm:ss）
 					LocalDateTime currStTime = LocalDateTime.parse(jobInfo.getCurr_st_time(), DateUtil.DATETIME);
 					LocalDateTime localDateTime = LocalDateTime.parse(DEFAULT_DATETIME, DateUtil.DATETIME);
 					// 如果作业开始时间还是默认时间(2000-12-31 23:59:59)，代表作业还没有被开始处理
 					if(currStTime.equals(localDateTime)) {
-						// 判断作业调度开始时间是否超过10分钟，超过的话将会被重新调度
+						//TODO 此处是10分钟？
+						//判断作业调度开始时间是否超过10分钟，超过的话将会被重新调度
 						if(calendar.getTime().getTime() - job.getJobStartTime() > 120000) {
 							logger.warn(etlJob + "被再次执行");
 							String runningJob = etlJob + REDISCONTENTSEPARATOR + currBathDate;
 							REDIS.rpush(strRunningJob, runningJob);
-							continue;
 						}
 					}
 				}
@@ -905,19 +892,22 @@ public class TaskManager {
 	}
 
 	/**
-	 * 检查完成的作业并开启达成依赖条件的作业
+	 * 从redis中获取已经完成的作业，同步及更新这些作业的状态。注意，此处会从redis中获取数据，以及更新作业状态到作业表中。
+	 * @author Tiger.Wang
+	 * @date 2019/9/6
 	 */
 	private void checkFinishedJob() {
 
 		// 判断是否有新的作业完成
 		long finishedListSize = REDIS.llen(strFinishedJob);
 		for(int i = 0; i < finishedListSize; ++i) {
+
 			String finishJobString = REDIS.lpop(strFinishedJob);
-			String jobKey[] = finishJobString.split("@");
+			String[] jobKey = finishJobString.split("@");
 			if( jobKey.length != 2 ) {
 				continue;
 			}
-
+			//更新作业状态
 			UpdateFinishedJob(jobKey[0], jobKey[1]);
 		}
 	}
@@ -957,15 +947,13 @@ public class TaskManager {
 			if(Job_Status.DONE.getCode().equals(jobStatus)) {
 				// 如果作业的状态是正常完成
 				// 修改依赖于此完成作业的作业依赖标志位
-				Iterator<String> iter = jobDependencyMap.keySet().iterator();
-				while( iter.hasNext() ) {
+				for (String strJobName : jobDependencyMap.keySet()) {
 					// 取得依赖于此作业的作业信息
-					String strJobName = iter.next();
 					List<String> depJobList = jobDependencyMap.get(strJobName);
 					//String strDepJobName = jobDependencyMap.get(strJobName);
-					if(depJobList.contains(exeJobInfo.getEtl_job())) {
+					if (depJobList.contains(exeJobInfo.getEtl_job())) {
 						EtlJobBean nextJobInfo = jobExecuteMap.get(currBathDate).get(strJobName);
-						if( null == nextJobInfo ) {
+						if (null == nextJobInfo) {
 							continue;
 						}
 						// 修改依赖作业已经完成的个数
@@ -976,7 +964,7 @@ public class TaskManager {
 								nextJobInfo.getDoneDependencyJobCount());
 
 						// 判断是否所有依赖作业已经全部完成
-						if( nextJobInfo.getDoneDependencyJobCount() != depJobList.size() ) {
+						if (nextJobInfo.getDoneDependencyJobCount() != depJobList.size()) {
 							continue;
 						}
 						// 如果所有依赖作业已经全部完成，修改依赖作业标志位
@@ -984,36 +972,28 @@ public class TaskManager {
 
 						String nextEtlJobCurrBathDate = nextJobInfo.getCurr_bath_date();
 						// 判断前一天的作业是否也已经完成
-						if(nextJobInfo.isPreDateFlag()) {
+						if (nextJobInfo.isPreDateFlag()) {
 							EtlJobDefBean jobDefine = (EtlJobDefBean) jobDefineMap.get(nextEtlJob);
-							if( jobDefine == null ) {
+							if (jobDefine == null) {
 								continue;
 							}
 
 							// 如果作业是等待状态则修改状态
-							if(Job_Status.PENDING.getCode().equals(nextJobInfo.getJob_disp_status())) {
+							if (Job_Status.PENDING.getCode().equals(nextJobInfo.getJob_disp_status())) {
 								// 判断是否为虚作业
-								if(Job_Effective_Flag.VIRTUAL.equals(jobDefine.getJob_eff_flag())) {
-									// 如果是虚作业,直接完成
-									//nextJobInfo.setJob_disp_status(Job_Status.RUNNING.getCode());
-									String localDateTime = fd.ng.core.utils.DateUtil.getDateTime(DateUtil.DATETIME);
-									TaskSqlHelper.updateVirtualJob(etlSysCd, nextEtlJob, nextEtlJobCurrBathDate,
-											localDateTime, localDateTime);
-
-									// 将虚作业加入redis完成作业列表
-									String finishedJob = nextEtlJob + REDISCONTENTSEPARATOR + nextEtlJobCurrBathDate;
-									REDIS.rpush(strFinishedJob, finishedJob);
-								}
-								else {
+								if (Job_Effective_Flag.VIRTUAL.getCode().equals(jobDefine.getJob_eff_flag())) {
+									// 如果是虚作业，直接完成
+									nextJobInfo.setJob_disp_status(Job_Status.RUNNING.getCode());
+									handleVirtualJob(nextEtlJob, nextEtlJobCurrBathDate);
+								} else {
 									// 将这个作业的状态更新成Waiting,并将这个作业加入JobWaitingList
 									nextJobInfo.setJob_disp_status(Job_Status.WAITING.getCode());
 									TaskSqlHelper.updateEtlJobDispStatus(Job_Status.WAITING.getCode(), etlSysCd,
 											nextEtlJob, nextEtlJobCurrBathDate);
 
-									if(Pro_Type.WF.getCode().equals(nextJobInfo.getPro_type())) {
+									if (Pro_Type.WF.getCode().equals(nextJobInfo.getPro_type())) {
 										addWaitFileJobToList(nextJobInfo);
-									}
-									else {
+									} else {
 										jobWaitingList.add(nextJobInfo);
 									}
 								}
@@ -1041,14 +1021,8 @@ public class TaskManager {
 								// 判断是否为虚作业
 								if(Job_Effective_Flag.VIRTUAL.getCode().equals(jobDefine.getJob_eff_flag())) {
 									// 如果是虚作业,直接完成
-									// nextJobInfo.setJob_disp_status(Job_Status.RUNNING.getCode());
-									String localDateTime = fd.ng.core.utils.DateUtil.getDateTime(DateUtil.DATETIME);
-									TaskSqlHelper.updateVirtualJob(etlSysCd, nextEtlJob, nextEtlJobCurrBathDate,
-											localDateTime, localDateTime);
-
-									// 将虚作业加入redis完成作业列表
-									String finishedJob = nextEtlJob + REDISCONTENTSEPARATOR + nextEtlJobCurrBathDate;
-									REDIS.rpush(strFinishedJob, finishedJob);
+									nextJobInfo.setJob_disp_status(Job_Status.RUNNING.getCode());
+									handleVirtualJob(nextEtlJob, nextEtlJobCurrBathDate);
 								}
 								else {
 									// 将这个作业的状态更新成Waiting,并将这个作业加入JobWaitingList
@@ -1070,16 +1044,23 @@ public class TaskManager {
 			}
 			else {
 				// 如果作业不是正常完成，发送短消息
-//				if( 1 == needSendSMS ) {
-//					SendMsg(jobName, currBathDate);
-//				}
+				if(isNeedSendSMS) {
+					String message = currBathDate + " " + jobName + "调度失败!";
+					NOTIFY.SendMsg(message);
+				}
 			}
 		}
 	}
 
+	/**
+	 * 根据作业标识，为该作业增加资源。注意，此处会更新作业资源表信息。
+	 * @author Tiger.Wang
+	 * @date 2019/9/6
+	 * @param jobName   作业标识
+	 */
 	private void increaseResource(String jobName) {
 		//TODO 此处注意，虽然jobDefineMap的值是Etl_job_def，但是EtlJobDefBean继承于它，若jobDefineMap在put了EtlJobDefBean
-		// 则此处可以强转，并且属性不丢失（理论上，未测试）
+		// 则此处可以强转，并且属性不丢失
 		EtlJobDefBean jobDefine = (EtlJobDefBean) jobDefineMap.get(jobName);
 		if( null == jobDefine ) {
 			return;
@@ -1092,7 +1073,7 @@ public class TaskManager {
 			logger.info("{} need {} {}", jobName, resourceType, needCount);
 			Etl_resource etlResource = sysResourceMap.get(resourceType);
 			logger.info("Before increase, {} used {}", resourceType, etlResource.getResource_used());
-			//TODO 猜测，该方法意为为作业增加资源，该处相减，意味着资源增加
+			//TODO 猜测，该方法意为为作业增加资源，该处相减，意味着资源增加？
 			int resourceNum = etlResource.getResource_used() - needCount;
 			TaskSqlHelper.updateEtlResourceUsedByResourceType(etlSysCd, resourceType, resourceNum);
 
@@ -1100,5 +1081,105 @@ public class TaskManager {
 			logger.info("After increase, {} used {}", resourceType, etlResource.getResource_used());
 		}
 	}
+
+	/**
+	 * 检查定时触发的作业是否达到执行时间。注意，此方法会使用jobExecuteMap内存表，维护jobWaitingList内存表，也会修改
+	 * 作业信息表。此处会根据作业状态、作业开始执行时间，决定是否更新作业状态或者加入到作业等待表（jobWaitingList）。
+	 * @author Tiger.Wang
+	 * @date 2019/9/6
+	 * @return void
+	 */
+	private void checkTimeDependencyJob() {
+
+		for (String strBathDate : jobExecuteMap.keySet()) {
+			Map<String, EtlJobBean> jobMap = jobExecuteMap.get(strBathDate);
+			Iterator<String> jobIter = jobMap.keySet().iterator();
+			long time = calendar.getTime().getTime();
+			logger.info("CurrentTime=" + time);
+			while (jobIter.hasNext()) {
+
+				String strJobName = jobIter.next();
+				EtlJobBean exeJob = jobMap.get(strJobName);
+				/*
+				 * 此处主要行为如下：
+				 * 一、若作业状态为[挂起]，则会检查该作业的前置作业是否已经完成、调度时间是否已经到达，若检查通过则会更新该
+				 *     作业状态，并且认为该作业可以立即执行；
+				 * 二、若该作业可以立即执行，当作业类型为[等待文件]时，登记到waitFileJobList（内存表），
+				 *     否则登记到jobWaitingList（内存表）。
+				 */
+				if (Job_Status.PENDING.getCode().equals(exeJob.getJob_disp_status())) {
+					// 作业状态为Pending,检查前置作业是否已完成
+					// 判断前一批次作业是否已经完成
+					if (!exeJob.isPreDateFlag()) {
+						// 前一批次作业未完成，作业状态不能置为Waiting
+						continue;
+					}
+					//xchao--2017年8月15日 16:25:51 添加按秒、分钟、小时进行执行
+					if (exeJob.getExecuteTime() == zclong) {
+						//TODO 此处较原版改动：getFJob(exeJob.getStrEtlJob(), strSystemCode, "job")，不再使用
+						if (!checkEtlJob(exeJob)) {
+							continue;
+						}
+					}
+					// 判断作业触发时间是否为0l,不为0表示定时触发
+					else if (exeJob.getExecuteTime() != 0L) {
+						// 定时触发,判断作业调度时间是否已经达到
+						if (time < exeJob.getExecuteTime()) {
+							// 作业调度时间未到,作业状态不能置为Waiting
+							continue;
+						}
+					} else {
+						// 其他触发方式，不处理
+						continue;
+					}
+
+					// 将Pending状态置为Waiting
+					logger.info("{}'s executeTime={}, can run!", strJobName, exeJob.getExecuteTime());
+					exeJob.setJob_disp_status(Job_Status.WAITING.getCode());
+					TaskSqlHelper.updateEtlJobDispStatus(Job_Status.WAITING.getCode(), etlSysCd, exeJob.getEtl_job(),
+							exeJob.getCurr_bath_date());
+				}
+				/*xchao--不放一天调度多次的作业2017年8月15日 16:25:51 添加按秒、分钟、小时进行执行
+				 * 		如果是成功的作业，且执行时间为999999999999999999l表示为按频率执行
+				 * 		再次检查是否达到执行的要求
+				 * */
+				else if (exeJob.getExecuteTime() == zclong) {
+					//TODO 此处较原版改动：getFJob(exeJob.getStrEtlJob(), strSystemCode, "job")，不再使用
+					if (!checkEtlJob(exeJob)) {
+						continue;
+					}
+				} else {
+					// Pending状态外的作业不处理
+					continue;
+				}
+
+				if (Pro_Type.WF.getCode().equals(exeJob.getPro_type())) {
+					addWaitFileJobToList(exeJob);
+				} else {
+					jobWaitingList.add(exeJob);
+				}
+			}
+		}
+	}
 //--------------------------------分析并处理需要立即启动的作业（handleReadyJob方法）end-----------------------------------
+	/**
+	 * 处理虚作业问题，该方法会更新虚作业信息及推送数据到redis。
+	 * @note    1、更新作业表中，虚作业的状态及其它信息；
+	 *          2、将虚作业标识为完成作业，并推送给redis。
+	 * @author Tiger.Wang
+	 * @date 2019/9/6
+	 * @param etlJob    调度作业标识
+	 * @param currBathDate  跑批日期
+	 */
+	private void handleVirtualJob(String etlJob, String currBathDate) {
+
+		//1、更新作业表中，虚作业的状态及其它信息
+		String localDateTime = fd.ng.core.utils.DateUtil.getDateTime(DateUtil.DATETIME);
+		TaskSqlHelper.updateVirtualJob(etlSysCd, etlJob, currBathDate,
+				localDateTime, localDateTime);
+
+		//2、将虚作业标识为完成作业，并推送给redis
+		String finishedJob = etlJob + REDISCONTENTSEPARATOR + currBathDate;
+		REDIS.rpush(strFinishedJob, finishedJob);
+	}
 }
