@@ -2,6 +2,7 @@ package hrds.a.biz.login;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.sun.org.apache.bcel.internal.generic.ATHROW;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.web.action.ActionResult;
 import fd.ng.web.util.Dbo;
@@ -15,6 +16,7 @@ import hrds.commons.utils.User;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * <p>标    题: 海云数服 V5.0</p>
@@ -31,23 +33,10 @@ public class LoginAction extends BaseAction {
 	 * <p>方法描述: 用户登陆入口</p>
 	 * <p>@author: Mr.Lee </p>
 	 * <p>创建时间: 2019-09-02</p>
-	 * <p>参   数:  </p>
+	 * <p>参   数:  request : 页面的请求</p>
 	 * <p>return:  </p>
 	 */
 	public void login(HttpServletRequest request) {
-
-		_doPreProcess(request);
-	}
-
-	/**
-	 * <p>方法描述: 重写登陆时的用户验证情况</p>
-	 * <p>@author: Mr.Lee </p>
-	 * <p>创建时间: 2019-09-02</p>
-	 * <p>参   数:  </p>
-	 * <p>return:  </p>
-	 */
-	@Override
-	protected ActionResult _doPreProcess(HttpServletRequest request) {
 
 		/*
 		 * 1 : 用户名为空
@@ -56,7 +45,7 @@ public class LoginAction extends BaseAction {
 		String user_id = request.getParameter("username");
 
 		//1 : 用户名为空
-		if( StringUtil.isBlank(user_id + "") ) {
+		if( StringUtil.isBlank(user_id) ) {
 			throw new BusinessException(ExceptionEnum.USER_NOT_EMPTY.getMessage());
 		}
 		String pwd = request.getParameter("password");
@@ -66,6 +55,18 @@ public class LoginAction extends BaseAction {
 		}
 		checkLogin(Integer.parseInt(user_id), pwd);
 
+	}
+
+	/**
+	 * <p>方法描述: 重写登陆时的用户验证情况(这里不希望父类的方法做SESSION的管理认证,因为所有Action中的方法请求时,都会做session的认证,而登陆不需要)</p>
+	 * <p>@author: Mr.Lee </p>
+	 * <p>创建时间: 2019-09-02</p>
+	 * <p>参   数:  </p>
+	 * <p>return:  </p>
+	 */
+	@Override
+	protected ActionResult _doPreProcess(HttpServletRequest request) {
+
 		return null;
 	}
 
@@ -73,53 +74,61 @@ public class LoginAction extends BaseAction {
 	 * <p>方法描述: 检查当前用户的登陆是否正确</p>
 	 * <p>@author: Mr.Lee </p>
 	 * <p>创建时间: 2019-09-02</p>
-	 * <p>参   数:  </p>
 	 * <p>return:  </p>
+	 *
+	 * @param user_id 用户ID
+	 * @param pwd     用户密码
 	 */
-	public void checkLogin(int user_id, String pwd) {
+	private void checkLogin(int user_id, String pwd) {
 
 		/*
 		 * 1 : 查询当前用户的记录信息
-		 * 2 : 如果为获取不到信息,则表示当前用户的信息不存在
+		 * 2 : 如果封装的实体为null,抛出异常错误信息,说明当前用户不存在
 		 * 3 : 如果为获取到信息,则判断用户密码是否正确
 		 * 4 : 设置登陆用户的cookie
 		 */
 
 		//1 : 查询当前用户的记录信息
-		Map<String, Object> stringObjectMap = Dbo.queryOneObject("select * from " + Sys_user.TableName + " where user_id = ?", user_id);
-		Sys_user logInUser = (Sys_user)JSONObject.parseObject(JSON.toJSONString(stringObjectMap), Sys_user.class);
-		//2 : 如果为获取到信息,则表示当前用户的信息不存在
-		if( StringUtil.isBlank(logInUser.getUser_id() + "") ) {
-			throw new BusinessException(ExceptionEnum.USER_NOE_EXISTS.getMessage());
+		Optional<Sys_user> sys_user = Dbo.queryOneObject(Sys_user.class, "select * from " + Sys_user.TableName + " where user_id = ?", user_id);
+
+		//2 : 如果封装的实体为null,抛出异常错误信息,说明当前用户不存在
+		Sys_user logInUser = sys_user.orElseThrow(() -> new BusinessException(ExceptionEnum.USER_NOE_EXISTS));
+
+		//3 : 如果为获取到信息,则判断用户密码是否正确
+		String user_password = logInUser.getUser_password();
+		if( !pwd.equals(user_password) ) {
+			throw new BusinessException(ExceptionEnum.PASSWORD_ERROR);
 		}
 		else {
-			//3 : 如果为获取到信息,则判断用户密码是否正确
-			String user_password = logInUser.getUser_password();
-			if( !pwd.equals(user_password) ) {
-				throw new BusinessException(ExceptionEnum.PASSWORD_ERROR.getMessage());
-			}
-			else {
-				//4 : 设置登陆用户的cookie
-				User user = putUserInfo(logInUser);
-				ActionUtil.setCookieUser(user);
-			}
+			//4 : 设置登陆用户的cookie
+			User user = putUserInfo(logInUser);
+			ActionUtil.setCookieUser(user);
 		}
 	}
 
-	public User putUserInfo(Sys_user logInUser) {
-
-
-		/*
-		 * 1 : 根据登陆成功的用户信息获取部门信息
-		 * 2 : 组成需要生成的Cookie
-		 */
+	/**
+	 * <p>方法描述: 将此次登陆的用户信息,设置到Cookie中</p>
+	 * <p> 1 : 根据登陆成功的用户信息获取部门信息</p>
+	 * <p> 2 : 如果封装的实体为null,抛出异常错误信息,说明部门信息不存在</p>
+	 * <p> 3 : 组成需要生成的Cookie</p>
+	 * <p>@author: Mr.Lee </p>
+	 * <p>创建时间: 2019-09-09</p>
+	 * <p>return:  </p>
+	 *
+	 * @param logInUser : 用户信息
+	 */
+	private User putUserInfo(Sys_user logInUser) {
 
 		// 1 : 根据登陆成功的用户信息获取部门信息
 
-		Map<String, Object> department = Dbo.queryOneObject("select * from " + Department_info.TableName + " where dep_id = ?",
-						logInUser.getDep_id());
-		Department_info department_info = (Department_info)JSONObject.parseObject(JSON.toJSONString(department), Department_info.class);
-		//2 : 组成需要生成的Cookie
+		Optional<Department_info> department_info = Dbo
+						.queryOneObject(Department_info.class, "select * from " + Department_info.TableName + " where dep_id = ?",
+										logInUser.getDep_id());
+
+		//2 : 如果封装的实体为null,抛出异常错误信息,说明部门信息不存在
+		Department_info departmentInfo = department_info.orElseThrow(() -> new BusinessException("部门信息不存在"));
+
+		//3 : 组成需要生成的Cookie
 		User user = new User();
 		user.setUserId(logInUser.getUser_id());
 		user.setUserName(logInUser.getUser_name());
@@ -127,8 +136,8 @@ public class LoginAction extends BaseAction {
 		user.setUserTypeGroup(logInUser.getUsertype_group());
 		user.setUserType(logInUser.getUser_type());
 		user.setLoginDate(logInUser.getLogin_date());
-		user.setDepId(department_info.getDep_id());
-		user.setDepName(department_info.getDep_name());
+		user.setDepId(departmentInfo.getDep_id());
+		user.setDepName(departmentInfo.getDep_name());
 
 		return user;
 	}
