@@ -42,12 +42,11 @@ public class AgentListAction extends BaseAction {
 	 * @return: fd.ng.db.resultset.Result
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/9/3
+	 * 步骤：
+	 *      1、获取用户ID
+	 *      2、根据用户ID去数据库中查询数据源信息
+	 *      3、封装Map并返回
 	 */
-	/*
-	 *  1、获取用户ID
-	 *  2、根据用户ID去数据库中查询数据源信息
-	 *  3、封装Map并返回
-	 * */
 	public Map<String, Object> getAgentSetUp() {
 		//1、获取用户ID
 		Long userId = getUserId();
@@ -84,12 +83,11 @@ public class AgentListAction extends BaseAction {
 	 * @return: fd.ng.db.resultset.Result
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/9/3
+	 * 步骤：
+	 *      1、根据sourceId和agentType查询数据库获取相应信息
+	 *      2、组装Map并返回
 	 */
-	/*
-	 * 1、根据sourceId和agentType查询数据库获取相应信息
-	 * 2、组装Map并返回
-	 * */
-	public Map<String, Object> getAgentInfo(@RequestParam String sourceId, @RequestParam String agentType) {
+	public Map<String, Object> getAgentInfo(String sourceId, String agentType) {
 		//1、根据sourceId和agentType查询数据库获取相应信息
 		Result result = Dbo.queryResult("SELECT * FROM agent_info WHERE source_id = ? AND agent_type = ?", sourceId, agentType);
 		//2、组装Map并返回
@@ -111,17 +109,16 @@ public class AgentListAction extends BaseAction {
 	 * @return: fd.ng.db.resultset.Result
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/9/3
+	 * 步骤：
+	 *      1、获取用户ID
+	 *      2、判断在当前用户，当前数据源下，某一类型的agent是否存在
+	 *      3、如果存在，查询结果中应该有且只有一条数据
+	 *      4、判断该agent是那种类型，并且根据类型，到对应的数据库表中查询采集任务管理详细信息
+	 *      5、对详细信息中的采集频率进行格式化
+	 *      6、返回结果
 	 */
-	/*
-	 * 1、获取用户ID
-	 * 2、判断在当前用户，当前数据源下，某一类型的agent是否存在
-	 * 3、如果存在，查询结果中应该有且只有一条数据
-	 * 4、判断该agent是那种类型，并且根据类型，到对应的数据库表中查询采集任务管理详细信息
-	 * 5、对详细信息中的采集频率进行格式化
-	 * 6、返回结果
-	 * */
 	//TODO 采集频率格式化未完成
-	public Result getTaskInfo(@RequestParam String sourceId, @RequestParam String agentType, @RequestParam String agentId) {
+	public Result getTaskInfo(String sourceId, String agentType, String agentId) {
 		//1、获取用户ID
 		Long userId = getUserId();
 		//2、判断在当前用户，当前数据源下，某一类型的agent是否存在
@@ -198,29 +195,24 @@ public class AgentListAction extends BaseAction {
 	 * @return: java.lang.String
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/9/3
+	 * 步骤：
+	 *      1、获取当前用户id
+	 *      2、对显示日志条数做处理，该方法在加载页面时被调用，readNum可以不传，则默认显示100条，如果用户在页面上进行了选择并点击查看按钮，则最多给用户显示1000条日志
+	 *      3、根据agent_id和user_id获取agent信息
+	 *      4、在agent信息中获取日志目录
+	 *      5、调用方法读取日志
+	 *      6、返回日志
 	 */
-	/*
-	 * 1、获取当前用户id
-	 * 2、对显示日志条数做处理，该方法在加载页面时被调用，readNum可以不传，则默认显示100条，如果用户在页面上进行了选择并点击查看按钮，则最多给用户显示1000条日志
-	 * 3、根据agent_id和user_id获取agent信息
-	 * 4、在agent信息中获取日志目录
-	 * 5、调用方法读取日志
-	 * 6、返回日志
-	 * */
 	//TODO 调用方法获取日志,目前工具类(ReadLog, I18nMessage)不存在
-	public String getTaskLog(@RequestParam String agentId, @RequestParam String logType, Integer readNum) {
+	public String getTaskLog(String agentId, String logType, @RequestParam(nullable = true, valueIfNull = "100") Integer readNum) {
 		//1、获取当前用户id
 		Long userId = getUserId();
 		//2、对显示日志条数做处理，该方法在加载页面时被调用，readNum可以不传，则默认显示100条，如果用户在页面上进行了选择并点击查看按钮，则最多给用户显示1000条日志
 		int num = 0;
-		if (readNum == null) {
-			num = 100;
+		if ((readNum > 1000)) {
+			num = 1000;
 		} else {
-			if ((readNum > 1000)) {
-				num = 1000;
-			} else {
-				num = readNum;
-			}
+			num = readNum;
 		}
 		//3、根据agent_id和user_id获取agent信息
 		Result result = Dbo.queryResult("select * from agent_down_info where agent_id = ? and user_id = ?", agentId, userId);
@@ -263,33 +255,28 @@ public class AgentListAction extends BaseAction {
 	 * @Param: [readNum : 查看的行数]
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/9/3
+	 * 步骤：
+	 *      1、获取当前用户id
+	 *      2、对显示日志条数做处理，该方法在加载页面时被调用，readNum可以不传，则默认显示100条，如果用户在页面上进行了选择并点击查看按钮，如果用户输入的条目多于1000，则给用户显示3000条
+	 *      3、根据agent_id和user_id获取agent信息
+	 *      4、在agent信息中获取日志目录
+	 *      5、调用方法读取日志
+	 *      6、将日志信息由字符串转为byte[]
+	 *      7、创建日志文件
+	 *      8、得到本次http交互的request和response
+	 *      9、设置响应头信息
+	 *      10、使用response获得输出流，完成文件下载
 	 */
-	/*
-	 * 1、获取当前用户id
-	 * 2、对显示日志条数做处理，该方法在加载页面时被调用，readNum可以不传，则默认显示100条，如果用户在页面上进行了选择并点击查看按钮，如果用户输入的条目多于1000，则给用户显示3000条
-	 * 3、根据agent_id和user_id获取agent信息
-	 * 4、在agent信息中获取日志目录
-	 * 5、调用方法读取日志
-	 * 6、将日志信息由字符串转为byte[]
-	 * 7、创建日志文件
-	 * 8、得到本次http交互的request和response
-	 * 9、设置响应头信息
-	 * 10、使用response获得输出流，完成文件下载
-	 * */
 	//TODO 调用方法获取日志,目前工具类(ReadLog, I18nMessage)不存在
-	public void downloadTaskLog(@RequestParam String agentId, @RequestParam String logType, Integer readNum) throws IOException{
+	public void downloadTaskLog(String agentId, String logType, @RequestParam(nullable = true, valueIfNull = "100") Integer readNum) throws IOException{
 		//1、获取当前用户id
 		Long userId = getUserId();
 		//2、对显示日志条数做处理，该方法在加载页面时被调用，readNum可以不传，则默认显示100条，如果用户在页面上进行了选择并点击查看按钮，如果用户输入的条目多于1000，则给用户显示3000条
 		int num = 0;
-		if (readNum == null) {
-			num = 100;
+		if ((readNum > 1000)) {
+			num = 3000;
 		} else {
-			if ((readNum > 1000)) {
-				num = 3000;
-			} else {
-				num = readNum;
-			}
+			num = readNum;
 		}
 		//3、根据agent_id和user_id获取agent信息
 		Result result = Dbo.queryResult("select * from agent_down_info where agent_id = ? and user_id = ?", agentId, userId);
@@ -349,25 +336,24 @@ public class AgentListAction extends BaseAction {
 	 * @return: void
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/9/4
+	 * 步骤：
+	 *      1、判断Agent类型
+	 *      2、根据collectSetId在源文件属性表(source_file_attribute)中获得采集的原始表名(table_name)
+	 *      3、调用IOnWayCtrl.checkExistsTask()方法对将要删除的信息进行检查
+	 *      4、对不同类型的采集任务做不同的处理
+	 *          4-1、半结构化文件采集任务
+	 *              4-1-1、在对象采集设置表(object_collect)中删除该条数据
+	 *              4-1-2、在卸数作业参数表(collect_frequency)中删除该条数据
+	 *          4-2、FTP采集任务
+	 *              4-2-1、在FTP采集设置表(ftp_collect)中删除该条数据
+	 *              4-2-2、在卸数作业参数表(collect_frequency)中删除该条数据
+	 *          4-3、其他任务
+	 *              4-3-1、如果是数据库直连采集任务，要对其做特殊处理
+	 *              4-3-2、结构化文件、DB文件，做特殊处理
+	 *              4-3-3、对其他类型的任务进行统一处理
 	 */
-	/*
-	 *  1、判断Agent类型
-	 *  2、根据collectSetId在源文件属性表(source_file_attribute)中获得采集的原始表名(table_name)
-	 *  3、调用IOnWayCtrl.checkExistsTask()方法对将要删除的信息进行检查
-	 *  4、对不同类型的采集任务做不同的处理
-	 *       4-1、半结构化文件采集任务
-	 *           4-1-1、在对象采集设置表(object_collect)中删除该条数据
-	 *           4-1-2、在卸数作业参数表(collect_frequency)中删除该条数据
-	 *       4-2、FTP采集任务
-	 *           4-2-1、在FTP采集设置表(ftp_collect)中删除该条数据
-	 *           4-2-2、在卸数作业参数表(collect_frequency)中删除该条数据
-	 *       4-3、其他任务
-	 *           4-3-1、如果是数据库直连采集任务，要对其做特殊处理
-	 *           4-3-2、结构化文件、DB文件，做特殊处理
-	 *           4-3-3、对其他类型的任务进行统一处理
-	 * */
 	//TODO 工具类IOnWayCtrl不存在
-	public void deleteTask(@RequestParam String collectSetId, @RequestParam String agentType) {
+	public void deleteTask(String collectSetId, String agentType) {
 		//1、判断Agent类型
 		if (AgentType.DuiXiang == AgentType.getCodeObj(agentType)) {
 			//2、根据collectSetId在源文件属性表(source_file_attribute)中获得采集的原始表名(table_name)
@@ -513,11 +499,10 @@ public class AgentListAction extends BaseAction {
 	* @Param: [] 
 	* @return: java.lang.String 
 	* @Author: WangZhengcheng 
-	* @Date: 2019/9/6 
+	* @Date: 2019/9/6
+	 * 步骤：
+	 *      1、调用EtlJobUtil工具类，得到结果并返回
 	*/ 
-	/*
-	* 1、调用EtlJobUtil工具类，得到结果并返回
-	* */
 	public String buildJob(){
 		String proHtml = "";
 		//proHtml = EtlJobUtil.proHtml();
@@ -529,12 +514,11 @@ public class AgentListAction extends BaseAction {
 	* @Param: [taskId] 
 	* @return: java.lang.String 
 	* @Author: WangZhengcheng 
-	* @Date: 2019/9/6 
+	* @Date: 2019/9/6
+	 * 步骤：
+	 *      1、调用EtlJobUtil工具类，得到结果并返回
 	*/
-	/*
-	 * 1、调用EtlJobUtil工具类，得到结果并返回
-	 * */
-	public String selectProject(@RequestParam String taskId){
+	public String selectProject(String taskId){
 		String proHtml = "";
 		//proHtml = EtlJobUtil.taskHtml(taskId);
 		return proHtml;
@@ -549,6 +533,8 @@ public class AgentListAction extends BaseAction {
 	* @return: void
 	* @Author: WangZhengcheng
 	* @Date: 2019/9/6
+	 * 步骤：
+	 *      1、调用EtlJobUtil工具类，保存job
 	*/
 	public void saveProjectInfo(String proId, String taskId, String jobId, String jobType){
 		//EtlJobUtil.saveJob(jobId, DataSourceType.DCL.toString(), proId, taskId, jobType);
@@ -561,8 +547,10 @@ public class AgentListAction extends BaseAction {
 	 * @return: void
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/9/5
+	 * 步骤：
+	 *      1、调用方法向agent发送信息
 	 */
-	public void sendTask(@RequestParam String taskId, @RequestParam String agentType) {
+	public void sendTask(String taskId, String agentType) {
 		//半结构化文件采集
 		if (AgentType.DuiXiang == AgentType.getCodeObj(agentType)) {
 			//SendMsg.sendObjectCollect2Agent(taskId);
@@ -583,15 +571,14 @@ public class AgentListAction extends BaseAction {
 	 * @return: void
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/9/5
+	 * 步骤：
+	 *      1、根据sourceId和是否设置完毕的状态查询出设置完成的数据库采集任务和DB文件采集任务的任务ID(database_id)
+	 *      2、根据sourceId和是否设置完毕的状态查询出设置完成的非结构化采集任务的任务ID(fcs_id)
+	 *      3、根据sourceId和是否设置完毕的状态查询出设置完成的半结构化采集任务的任务ID(odc_id)
+	 *      4、根据sourceId和是否设置完毕的状态查询出设置完成的FTP采集任务的任务ID(ftp_id)
+	 *      5、调用方法按照类型发送单个任务
 	 */
-	/*
-	 * 1、根据sourceId和是否设置完毕的状态查询出设置完成的数据库采集任务和DB文件采集任务的任务ID(database_id)
-	 * 2、根据sourceId和是否设置完毕的状态查询出设置完成的非结构化采集任务的任务ID(fcs_id)
-	 * 3、根据sourceId和是否设置完毕的状态查询出设置完成的半结构化采集任务的任务ID(odc_id)
-	 * 4、根据sourceId和是否设置完毕的状态查询出设置完成的FTP采集任务的任务ID(ftp_id)
-	 * 5、调用方法按照类型发送单个任务
-	 * */
-	public void sendAllTask(@RequestParam String sourceId) {
+	public void sendAllTask(String sourceId) {
 		//1、根据sourceId和是否设置完毕的状态查询出设置完成的数据库采集任务和DB文件采集任务的任务ID(database_id)
 		Result dbAndDbFileResult = Dbo.queryResult("SELECT database_id " +
 				"FROM data_source ds " +
@@ -650,18 +637,17 @@ public class AgentListAction extends BaseAction {
 	 * @return: void
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/9/3
+	 * 步骤：
+	 *      1、在查询结果中获取执行频率
+	 *      2、分别对月、周、天进行处理
+	 *             2-1、如果freMonth的查询结果是ALL，则格式化为每月
+	 *             2-2、否则，调用Tools工具类对月频率做国际化处理
+	 *             2-3、如果freWeek的查询结果是ALL，则格式化为每周
+	 *             2-4、否则，调用Tools工具类对周频率做国际化处理
+	 *             2-5、如果freDay的查询结果是ALL，则格式化为每天
+	 *             2-6、否则，调用Tools工具类对日频率做国际化处理
+	 *             2-7、将数据放入查询结果中
 	 */
-	/*
-	 * 1、在查询结果中获取执行频率
-	 * 2、分别对月、周、天进行处理
-	 *   2-1、如果freMonth的查询结果是ALL，则格式化为每月
-	 *   2-2、否则，调用Tools工具类对月频率做国际化处理
-	 *   2-3、如果freWeek的查询结果是ALL，则格式化为每周
-	 *   2-4、否则，调用Tools工具类对周频率做国际化处理
-	 *   2-5、如果freDay的查询结果是ALL，则格式化为每天
-	 *   2-6、否则，调用Tools工具类对日频率做国际化处理
-	 *   2-7、将数据放入查询结果中
-	 * */
 	//TODO 暂未实现，I18nMessage，Tools工具类未迁移
 	private void fromatFrequency(Result agentInfo) {
 		//处理数据中的日期数据
