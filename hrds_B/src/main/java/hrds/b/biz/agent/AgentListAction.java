@@ -6,15 +6,22 @@ import fd.ng.core.utils.StringUtil;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.annotation.RequestParam;
 import fd.ng.web.util.Dbo;
+import fd.ng.web.util.RequestUtil;
+import fd.ng.web.util.ResponseUtil;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.AgentType;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.exception.BusinessException;
-import hrds.commons.utils.ActionUtil;
+import hrds.commons.exception.ExceptionEnum;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -43,7 +50,7 @@ public class AgentListAction extends BaseAction {
 	 * */
 	public Map<String, Object> getAgentSetUp() {
 		//1、获取用户ID
-		Long userId = ActionUtil.getUser().getUserId();
+		Long userId = getUserId();
 		//2、根据用户ID去数据库中查询数据源信息
 		Result result = Dbo.queryResult("SELECT datas.source_id,datas.datasource_name " +
 				"FROM agent_info age JOIN data_source datas ON age.source_id = datas.SOURCE_ID " +
@@ -116,16 +123,16 @@ public class AgentListAction extends BaseAction {
 	//TODO 采集频率格式化未完成
 	public Result getTaskInfo(@RequestParam String sourceId, @RequestParam String agentType, @RequestParam String agentId) {
 		//1、获取用户ID
-		Long userId = ActionUtil.getUser().getUserId();
+		Long userId = getUserId();
 		//2、判断在当前用户，当前数据源下，某一类型的agent是否存在
 		Result result = Dbo.queryResult("select ai.* from data_source ds left join agent_info ai on ds.SOURCE_ID = ai.SOURCE_ID " +
 				"where ds.source_id=? AND ai.user_id = ? " +
 				"AND ai.agent_type = ? AND agent_id = ?", sourceId, userId, agentType, agentId);
 		//3、如果存在，查询结果中应该有且只有一条数据
-		if (result != null) {
+		if (!result.isEmpty()) {
 			if (result.getRowCount() == 1) {
 				//4、判断该agent是那种类型，并且根据类型，到对应的数据库表中查询采集任务管理详细信息
-				StringBuffer sqlSB = new StringBuffer();
+				StringBuilder sqlSB = new StringBuilder();
 				//数据库直连采集Agent
 				if (AgentType.ShuJuKu == AgentType.getCodeObj(result.getString(0, "agent_type"))) {
 					sqlSB.append(" SELECT 'db' db_type,ds.DATABASE_ID ID,ds.task_name task_name,ds.AGENT_ID AGENT_ID, ")
@@ -179,7 +186,7 @@ public class AgentListAction extends BaseAction {
 				throw new BusinessException("Agent不唯一");
 			}
 		} else {
-			throw new BusinessException("Agent不存在");
+			throw new BusinessException(ExceptionEnum.DATA_NOT_EXIST);
 		}
 	}
 
@@ -203,7 +210,7 @@ public class AgentListAction extends BaseAction {
 	//TODO 调用方法获取日志,目前工具类(ReadLog, I18nMessage)不存在
 	public String getTaskLog(@RequestParam String agentId, @RequestParam String logType, Integer readNum) {
 		//1、获取当前用户id
-		Long userId = ActionUtil.getUser().getUserId();
+		Long userId = getUserId();
 		//2、对显示日志条数做处理，该方法在加载页面时被调用，readNum可以不传，则默认显示100条，如果用户在页面上进行了选择并点击查看按钮，则最多给用户显示1000条日志
 		int num = 0;
 		if (readNum == null) {
@@ -217,7 +224,7 @@ public class AgentListAction extends BaseAction {
 		}
 		//3、根据agent_id和user_id获取agent信息
 		Result result = Dbo.queryResult("select * from agent_down_info where agent_id = ? and user_id = ?", agentId, userId);
-		if (result != null) {
+		if (!result.isEmpty()) {
 			if (result.getRowCount() == 1) {
 				String agentLog = "";
 				String agentIP = result.getString(0, "agent_ip");
@@ -245,7 +252,7 @@ public class AgentListAction extends BaseAction {
 				throw new BusinessException("Agent不唯一");
 			}
 		} else {
-			throw new BusinessException("Agent未找到");
+			throw new BusinessException(ExceptionEnum.DATA_NOT_EXIST);
 		}
 	}
 
@@ -265,14 +272,14 @@ public class AgentListAction extends BaseAction {
 	 * 5、调用方法读取日志
 	 * 6、将日志信息由字符串转为byte[]
 	 * 7、创建日志文件
-	 * 8、TODO 得到本次http交互的response
+	 * 8、得到本次http交互的request和response
 	 * 9、设置响应头信息
 	 * 10、使用response获得输出流，完成文件下载
 	 * */
 	//TODO 调用方法获取日志,目前工具类(ReadLog, I18nMessage)不存在
-	public void downloadTaskLog(@RequestParam String agentId, @RequestParam String logType, Integer readNum) {
+	public void downloadTaskLog(@RequestParam String agentId, @RequestParam String logType, Integer readNum) throws IOException{
 		//1、获取当前用户id
-		Long userId = ActionUtil.getUser().getUserId();
+		Long userId = getUserId();
 		//2、对显示日志条数做处理，该方法在加载页面时被调用，readNum可以不传，则默认显示100条，如果用户在页面上进行了选择并点击查看按钮，如果用户输入的条目多于1000，则给用户显示3000条
 		int num = 0;
 		if (readNum == null) {
@@ -305,28 +312,28 @@ public class AgentListAction extends BaseAction {
 				}
 
 				//6、将日志信息由字符串转为byte[]
-				byte[] bye = agentLog.getBytes();
+				byte[] bytes = agentLog.getBytes();
 				//7、创建日志文件
 				File file = new File(logDir);
 
-				//8、TODO 得到本次http交互的response
+				//8、得到本次http交互的request和response
+				HttpServletResponse response = ResponseUtil.getResponse();
+				HttpServletRequest request = RequestUtil.getRequest();
 
 				//9、设置响应头信息
-                /*
                 response.reset();
                 if( request.getHeader("User-Agent").toLowerCase().indexOf("firefox") > 0 ) {
                     // 对firefox浏览器做特殊处理
                     response.setHeader("content-disposition", "attachment;filename=" + new String(logDir.getBytes("UTF-8"), "ISO8859-1"));
                 }
                 else {
-                    response.setHeader("content-disposition", "attachment;filename=" + URLEncoder.encode(file_name, "UTF-8"));
+                    response.setHeader("content-disposition", "attachment;filename=" + URLEncoder.encode(logDir, "UTF-8"));
                 }
                 response.setContentType("APPLICATION/OCTET-STREAM");
-                out = response.getOutputStream();
+				OutputStream out = response.getOutputStream();
                 //10、使用response获得输出流，完成文件下载
-                out.write(bye);
+                out.write(bytes);
                 out.flush();
-                */
 			} else {
 				throw new BusinessException("日志文件不存在或AgentIP错误");
 			}
@@ -365,7 +372,7 @@ public class AgentListAction extends BaseAction {
 		if (AgentType.DuiXiang == AgentType.getCodeObj(agentType)) {
 			//2、根据collectSetId在源文件属性表(source_file_attribute)中获得采集的原始表名(table_name)
 			Result result = Dbo.queryResult("select table_name from source_file_attribute where collect_set_id = ?", collectSetId);
-			if (result != null) {
+			if (!result.isEmpty()) {
 				List<String> list = new ArrayList<>();
 				for (int i = 0; i < result.getRowCount(); i++) {
 					list.add(result.getString(i, "table_name"));
@@ -376,24 +383,24 @@ public class AgentListAction extends BaseAction {
 				//4-1-1、在对象采集设置表(object_collect)中删除该条数据
 				int firNum = Dbo.execute("delete from object_collect where odc_id = ?", collectSetId);
 				if (firNum != 1) {
-					if (firNum == 0) throw new BusinessException(String.format("object_collect表中没有数据被删除!"));
-					else throw new BusinessException(String.format("object_collect表删除数据异常!"));
+					if (firNum == 0) throw new BusinessException("object_collect表中没有数据被删除!");
+					else throw new BusinessException("object_collect表删除数据异常!");
 				}
 
 				//4-1-2、在卸数作业参数表(collect_frequency)中删除该条数据
 				int secExecute = Dbo.execute("delete from collect_frequency where collect_set_id = ?", collectSetId);
 				if (secExecute != 1) {
-					if (secExecute == 0) throw new BusinessException(String.format("collect_frequency表中没有数据被删除!"));
-					else throw new BusinessException(String.format("collect_frequency表删除数据异常!"));
+					if (secExecute == 0) throw new BusinessException("collect_frequency表中没有数据被删除!");
+					else throw new BusinessException("collect_frequency表删除数据异常!");
 				}
 			} else {
-				throw new BusinessException("未找到数据");
+				throw new BusinessException(ExceptionEnum.DATA_NOT_EXIST);
 			}
 		}
 		//2-2、FTP采集任务
 		else if (AgentType.FTP == AgentType.getCodeObj(agentType)) {
 			Result result = Dbo.queryResult("select table_name from source_file_attribute where collect_set_id = ?", collectSetId);
-			if (result != null) {
+			if (!result.isEmpty()) {
 				List<String> list = new ArrayList<>();
 				for (int i = 0; i < result.getRowCount(); i++) {
 					list.add(result.getString(i, "table_name"));
@@ -404,24 +411,24 @@ public class AgentListAction extends BaseAction {
 				//4-2-1、在FTP采集设置表(ftp_collect)中删除该条数据
 				int firNum = Dbo.execute("delete from ftp_collect where odc_id = ?", collectSetId);
 				if (firNum != 1) {
-					if (firNum == 0) throw new BusinessException(String.format("ftp_collect表中没有数据被删除!"));
-					else throw new BusinessException(String.format("ftp_collect表删除数据异常!"));
+					if (firNum == 0) throw new BusinessException("ftp_collect表中没有数据被删除!");
+					else throw new BusinessException("ftp_collect表删除数据异常!");
 				}
 
 				//4-2-2、在卸数作业参数表(collect_frequency)中删除该条数据
 				int secExecute = Dbo.execute("delete from collect_frequency where collect_set_id = ?", collectSetId);
 				if (secExecute != 1) {
-					if (secExecute == 0) throw new BusinessException(String.format("collect_frequency表中没有数据被删除!"));
-					else throw new BusinessException(String.format("collect_frequency表删除数据异常!"));
+					if (secExecute == 0) throw new BusinessException("collect_frequency表中没有数据被删除!");
+					else throw new BusinessException("collect_frequency表删除数据异常!");
 				}
 			} else {
-				throw new BusinessException("未找到数据");
+				throw new BusinessException(ExceptionEnum.DATA_NOT_EXIST);
 			}
 		} else {
 			//4-3-1、如果是数据库直连采集任务，要对其做特殊处理
 			if (AgentType.ShuJuKu == AgentType.getCodeObj(agentType)) {
 				Result result = Dbo.queryResult("select hbase_name from source_file_attribute where collect_set_id = ?", collectSetId);
-				if (result != null) {
+				if (!result.isEmpty()) {
 					List<String> list = new ArrayList<>();
 					for (int i = 0; i < result.getRowCount(); i++) {
 						list.add(result.getString(i, "hbase_name"));
@@ -432,24 +439,24 @@ public class AgentListAction extends BaseAction {
 					//在数据库设置删除对应的记录
 					int firNum = Dbo.execute("delete from database_set where database_id =?", collectSetId);
 					if (firNum != 1) {
-						if (firNum == 0) throw new BusinessException(String.format("database_set表中没有数据被删除!"));
-						else throw new BusinessException(String.format("database_set表删除数据异常!"));
+						if (firNum == 0) throw new BusinessException("database_set表中没有数据被删除!");
+						else throw new BusinessException("database_set表删除数据异常!");
 					}
 
 					//在表对应字段表中找到对应的记录并删除
 					int secNum = Dbo.execute("delete  from table_column where EXISTS" +
 							"(select 1 from table_info ti where database_id = ? and table_column.table_id=ti.table_id)", collectSetId);
 					if(secNum == 0){
-						throw new BusinessException(String.format("table_column表中没有数据被删除!"));
+						throw new BusinessException("table_column表中没有数据被删除!");
 					}
 
 					//在数据库对应表删除对应的记录
 					int thiExecute = Dbo.execute("delete  from table_info where database_id = ?", collectSetId);
 					if(thiExecute == 0){
-						throw new BusinessException(String.format("table_info表中没有数据被删除!"));
+						throw new BusinessException("table_info表中没有数据被删除!");
 					}
 				} else {
-					throw new BusinessException("未找到数据");
+					throw new BusinessException(ExceptionEnum.DATA_NOT_EXIST);
 				}
 			}
 			//4-3-2、结构化文件、DB文件，做特殊处理
@@ -458,45 +465,45 @@ public class AgentListAction extends BaseAction {
 				int fouNum = Dbo.execute("delete  from file_collect_set where fcs_id =?", collectSetId);
 				if (fouNum != 1) {
 					if (fouNum == 0) throw new BusinessException(String.format("file_collect_set表中没有数据被删除!"));
-					else throw new BusinessException(String.format("file_collect_set表删除数据异常!"));
+					else throw new BusinessException("file_collect_set表删除数据异常!");
 				}
 				//在文件源设置表删除对应的记录
 				int fifNum = Dbo.execute("delete  from file_source where fcs_id =?", collectSetId);
 				if (fifNum != 1) {
-					if (fifNum == 0) throw new BusinessException(String.format("file_source表中没有数据被删除!"));
-					else throw new BusinessException(String.format("file_source表删除数据异常!"));
+					if (fifNum == 0) throw new BusinessException("file_source表中没有数据被删除!");
+					else throw new BusinessException("file_source表删除数据异常!");
 				}
 			}
 			//4-3-3、对其他类型的任务进行统一处理
 			//在卸数作业参数表删除对应的记录
 			int sixNum = Dbo.execute("delete  from collect_frequency where collect_set_id =?", collectSetId);
 			if (sixNum != 1) {
-				if (sixNum == 0) throw new BusinessException(String.format("collect_frequency表中没有数据被删除!"));
-				else throw new BusinessException(String.format("collect_frequency表删除数据异常!"));
+				if (sixNum == 0) throw new BusinessException("collect_frequency表中没有数据被删除!");
+				else throw new BusinessException("collect_frequency表删除数据异常!");
 			}
 			//在压缩作业参数表删除对应的记录
 			int sevNum = Dbo.execute("delete  from collect_reduce where collect_set_id =?", collectSetId);
 			if (sevNum != 1) {
-				if (sevNum == 0) throw new BusinessException(String.format("collect_reduce表中没有数据被删除!"));
-				else throw new BusinessException(String.format("collect_reduce表删除数据异常!"));
+				if (sevNum == 0) throw new BusinessException("collect_reduce表中没有数据被删除!");
+				else throw new BusinessException("collect_reduce表删除数据异常!");
 			}
 			//在传送作业参数表删除对应的记录
 			int eigNum = Dbo.execute("delete  from collect_transfer where collect_set_id =?", collectSetId);
 			if (eigNum != 1) {
-				if (eigNum == 0) throw new BusinessException(String.format("collect_transfer表中没有数据被删除!"));
-				else throw new BusinessException(String.format("collect_transfer表删除数据异常!"));
+				if (eigNum == 0) throw new BusinessException("collect_transfer表中没有数据被删除!");
+				else throw new BusinessException("collect_transfer表删除数据异常!");
 			}
 			//在清洗作业参数表删除对应的记录
 			int ninNum = Dbo.execute("delete  from collect_clean where collect_set_id =?", collectSetId);
 			if (ninNum != 1) {
-				if (ninNum == 0) throw new BusinessException(String.format("collect_clean表中没有数据被删除!"));
-				else throw new BusinessException(String.format("collect_clean表删除数据异常!"));
+				if (ninNum == 0) throw new BusinessException("collect_clean表中没有数据被删除!");
+				else throw new BusinessException("collect_clean表删除数据异常!");
 			}
 			//在hdfs存储作业参数表删除对应的记录
 			int tenNum = Dbo.execute("delete  from collect_hdfs where collect_set_id =?", collectSetId);
 			if (tenNum != 1) {
-				if (tenNum == 0) throw new BusinessException(String.format("collect_hdfs表中没有数据被删除!"));
-				else throw new BusinessException(String.format("collect_hdfs表删除数据异常!"));
+				if (tenNum == 0) throw new BusinessException("collect_hdfs表中没有数据被删除!");
+				else throw new BusinessException("collect_hdfs表删除数据异常!");
 			}
 		}
 	}
@@ -611,25 +618,25 @@ public class AgentListAction extends BaseAction {
 				"WHERE ds.source_id = ?", sourceId, IsFlag.Shi.getCode());
 
 		//5、调用方法按照类型发送任务
-		if (dbAndDbFileResult != null) {
+		if (!dbAndDbFileResult.isEmpty()) {
 			for (int i = 0; i < dbAndDbFileResult.getRowCount(); i++) {
 				//SendMsg.sendMsg2Agent(dbAndDbFileResult.getString(i, "database_id"));
 			}
 		}
 
-		if (halfStructResult != null) {
+		if (!halfStructResult.isEmpty()) {
 			for (int i = 0; i < halfStructResult.getRowCount(); i++) {
 				//SendMsg.sendMsg2Agent(halfStructResult.getString(i, "fcs_id"));
 			}
 		}
 
-		if (nonStructResult != null) {
+		if (!nonStructResult.isEmpty()) {
 			for (int i = 0; i < nonStructResult.getRowCount(); i++) {
 				//SendMsg.sendObjectCollect2Agent(nonStructResult.getString(i, "odc_id"));
 			}
 		}
 
-		if (ftpResult != null) {
+		if (!ftpResult.isEmpty()) {
 			for (int i = 0; i < ftpResult.getRowCount(); i++) {
 				//SendMsg.sendFTP2Agent(ftpResult.getString(i, "ftp_id"));
 			}
@@ -665,7 +672,7 @@ public class AgentListAction extends BaseAction {
 				String freMonth = agentInfo.getString(i, "fre_month");
 				String freWeek = agentInfo.getString(i, "fre_week");
 				String freDay = agentInfo.getString(i, "fre_day");
-				StringBuffer buffer = new StringBuffer();
+				StringBuilder buffer = new StringBuilder();
 
 				if (StringUtil.isNotBlank(freMonth)) {
 					if ("ALL".equals(freMonth)) {
@@ -675,7 +682,7 @@ public class AgentListAction extends BaseAction {
 						//2-2、否则，调用Tools工具类对月频率做国际化处理
 						JSONArray monthArr = new JSONArray();
 						//monthArr = Tools.getMonth(freMonth);
-						if (monthArr != null && monthArr.size() > 0) {
+						if (monthArr.size() > 0) {
 							for (int j = 0; j < monthArr.size(); j++) {
 								JSONObject obj = (JSONObject) monthArr.get(j);
 								buffer.append(obj.get("month"));
@@ -696,7 +703,7 @@ public class AgentListAction extends BaseAction {
 						//2-4、否则，调用Tools工具类对周频率做国际化处理
 						JSONArray weekArr = new JSONArray();
 						//weekArr = Tools.getWeek(freWeek);
-						if (weekArr != null && weekArr.size() > 0) {
+						if (weekArr.size() > 0) {
 							buffer.append("--");
 							for (int j = 0; j < weekArr.size(); j++) {
 								JSONObject obj = (JSONObject) weekArr.get(j);

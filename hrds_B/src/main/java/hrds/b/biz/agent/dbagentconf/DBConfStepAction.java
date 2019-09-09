@@ -13,6 +13,7 @@ import hrds.commons.codes.CleanType;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Database_set;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.exception.ExceptionEnum;
 import hrds.commons.utils.key.PrimayKeyGener;
 
 import java.lang.reflect.Field;
@@ -69,7 +70,7 @@ public class DBConfStepAction {
 				throw new BusinessException("Agent不唯一");
 			}
 		} else {
-			throw new BusinessException("Agent不存在");
+			throw new BusinessException(ExceptionEnum.DATA_NOT_EXIST);
 		}
 	}
 
@@ -100,7 +101,7 @@ public class DBConfStepAction {
 	public void saveDbConf(@RequestBean Database_set databaseSet) {
 		//1、获取实体中的database_id，判断在database_set表中是否存在
 		Result result = Dbo.queryResult("select * from database_set where database_id = ?", databaseSet.getDatabase_id());
-		if (result != null) {
+		if (!result.isEmpty()) {
 			//2、如果存在，则更新信息
 			if (databaseSet.update(Dbo.db()) != 1)
 				throw new BusinessException("新增数据失败！data=" + databaseSet);
@@ -140,7 +141,7 @@ public class DBConfStepAction {
 	public ActionResult testConnection(@RequestBean Database_set databaseSet) {
 		//1、根据agent_id获得agent_ip,agent_port
 		Result result = Dbo.queryResult("select * from agent_info where agent_id = ?", databaseSet.getAgent_id());
-		if (result != null) {
+		if (!result.isEmpty()) {
 			if (result.getRowCount() == 1) {
 				String agentIp = result.getString(0, "agent_ip");
 				String agentPort = result.getString(0, "agent_port");
@@ -162,13 +163,12 @@ public class DBConfStepAction {
 						.addJson(JsonUtil.toJson(map))
 						.post(url + action);
 				//3、将响应封装成ActionResult的对象
-				ActionResult actionResult = JsonUtil.toObject(resVal.getBodyString(), ActionResult.class);
-				return actionResult;
+				return JsonUtil.toObject(resVal.getBodyString(), ActionResult.class);
 			} else {
 				throw new BusinessException("Agent不唯一");
 			}
 		} else {
-			throw new BusinessException("未找到Agent");
+			throw new BusinessException(ExceptionEnum.DATA_NOT_EXIST);
 		}
 	}
 }
