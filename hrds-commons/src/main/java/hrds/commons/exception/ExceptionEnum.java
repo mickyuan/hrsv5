@@ -14,9 +14,7 @@ public enum ExceptionEnum implements ExceptionMessage {
 	USER_NOT_EMPTY(9995, "用户名不能为空"),
 	USER_PWD_EMPTY(9996, "密码不能为空"),
 	USER_NOE_EXISTS(9997, "用户名不存在"),
-	PASSWORD_ERROR(9998, "密码错误"),
-
-	OTHER_ERROR(9999, "{0}用户名失败｛1｝");
+	PASSWORD_ERROR(9998, "密码错误");
 
 	private final int code;
 	private final String message;
