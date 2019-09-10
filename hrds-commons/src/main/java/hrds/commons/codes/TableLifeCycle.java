@@ -66,4 +66,12 @@ public enum TableLifeCycle {
 	public static String getObjCatCode(){
 		return TableLifeCycle.values()[0].getCatCode();
 	}
+
+	/**
+	* 禁止使用类的tostring()方法
+	* @return
+	*/
+	public String toString() {
+		throw new AppSystemException("There's no need for you to !");
+	}
 }

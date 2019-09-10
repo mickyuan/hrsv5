@@ -70,4 +70,12 @@ public enum DataMapMode {
 	public static String getObjCatCode(){
 		return DataMapMode.values()[0].getCatCode();
 	}
+
+	/**
+	* 禁止使用类的tostring()方法
+	* @return
+	*/
+	public String toString() {
+		throw new AppSystemException("There's no need for you to !");
+	}
 }
