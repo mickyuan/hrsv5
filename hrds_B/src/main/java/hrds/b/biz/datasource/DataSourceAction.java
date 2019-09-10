@@ -50,7 +50,7 @@ public class DataSourceAction extends BaseAction {
 		if (dataSource.getSource_id() == null) {
 			// 新增
 			dataSource.setSource_id(PrimayKeyGener.getNextId());
-			dataSource.setUser_id(ActionUtil.getUser().getUserId());
+			dataSource.setUser_id(getUserId());
 			// 2.新增前查询数据源编号是否已存在
 			Result result = Dbo.queryResult("select datasource_number from " + Data_source.TableName +
 					"  where datasource_number=?", dataSource.getDatasource_number());
@@ -106,22 +106,31 @@ public class DataSourceAction extends BaseAction {
 	}
 
 	/**
-	 * 编辑前根据数据源编号查询数据源及数据源与部门关系信息
+	 * 新增/编辑前根据数据源编号查询数据源及数据源与部门关系信息
 	 * <p>
-	 * 1.判断该数据源下是否有数据，没有抛异常，有则返回查询结果
+	 * 1.判断是新增前查询还是编辑前查询
+	 * 2.如果是新增前查询返回部门信息
+	 * 3.如果是编辑前查询，判断该数据源下是否有数据，没有抛异常，有则返回查询结果
 	 *
 	 * @param source_id 数据源编号
 	 * @return 返回查询结果集
 	 */
 	public Result searchDataSource(Long source_id) {
-		// 1.判断该数据源下是否有数据，没有抛异常，有则返回查询结果
-		Result result = Dbo.queryResult("select ds.*,srd.dep_id from data_source ds " +
-				"join source_relation_dep srd on ds.source_id=srd.source_id where ds.source_id = ?", source_id);
-		if (result.isEmpty()) {
-			// 该数据源下数据为空(此为编辑情况下数据不能为空）
-			throw new BusinessException(ExceptionEnum.DATA_NOT_EXIST);
+		Result result = null;
+		// 1.判断是新增前查询还是编辑前查询
+		if (source_id == null) {
+			// 2.新增前查询，返回部门信息
+			result = Dbo.queryResult("select * from department_info");
+		} else {
+			// 3.编辑前查询，判断该数据源下是否有数据，没有抛异常，有则返回查询结果
+			result = Dbo.queryResult("select ds.*,srd.dep_id from data_source ds " +
+					"join source_relation_dep srd on ds.source_id=srd.source_id where ds.source_id = ?", source_id);
+			if (result.isEmpty()) {
+				// 该数据源下数据为空(此为编辑情况下数据不能为空）
+				throw new BusinessException(ExceptionEnum.DATA_NOT_EXIST);
+			}
 		}
-		// 不为空，返回查询结果
+		// 3.返回查询结果
 		return result;
 
 	}
@@ -218,7 +227,7 @@ public class DataSourceAction extends BaseAction {
 		}
 		// 4.导入贴源层元数据
 		importDclData(strTemp, agent_ip, agent_port, user_id,
-				ActionUtil.getUser().getUserId());
+				getUserId());
 	}
 
 	/**
