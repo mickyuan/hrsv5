@@ -63,9 +63,9 @@ public class DataSourceAction extends BaseAction {
 		}
 
 		if (StringUtil.isBlank(depIds)) {
-			throw new BusinessException("部门id不能为空格，depIds="+depIds);
+			throw new BusinessException("部门不能为空格，depIds="+depIds);
 		}
-		// 2.判断数据源编号是否为空
+		// 2.判断数据源id是否为空
 		if (dataSource.getSource_id() == null) {
 			// 新增
 			dataSource.setSource_id(PrimayKeyGener.getNextId());
@@ -127,8 +127,8 @@ public class DataSourceAction extends BaseAction {
 	}
 
 	/**
-	 * 编辑前根据数据源编号查询数据源及数据源与部门关系信息
-	 * FIXME 这个注释不正确。为什么叫“编辑前 ... 查询”，在哪里限定了是编辑前了？
+	 * 根据数据源编号查询数据源及数据源与部门关系信息
+	 *
 	 * <p>
 	 * 1.判断该数据源下是否有数据，没有抛异常，有则返回查询结果
 	 *
