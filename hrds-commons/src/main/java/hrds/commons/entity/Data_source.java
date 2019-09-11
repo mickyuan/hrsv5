@@ -37,10 +37,11 @@ public class Data_source extends TableEntity
 	private Long source_id; //数据源ID
 	private String datasource_name; //数据源名称
 	private String datasource_number; //数据源编号
-	private Long 建立用户id; //建立用户ID
 	private String source_remark; //数据源详细描述
 	private String create_date; //创建日期
 	private String create_time; //创建时间
+	private Long create_user_id; //用户ID
+	private String datasource_remark; //备注
 
 	/** 取得：数据源ID */
 	public Long getSource_id(){
@@ -72,20 +73,6 @@ public class Data_source extends TableEntity
 	public void setDatasource_number(String datasource_number){
 		this.datasource_number=datasource_number;
 	}
-	/** 取得：建立用户ID */
-	public Long get建立用户id(){
-		return 建立用户id;
-	}
-	/** 设置：建立用户ID */
-	public void set建立用户id(Long 建立用户id){
-		this.建立用户id=建立用户id;
-	}
-	/** 设置：建立用户ID */
-	public void set建立用户id(String 建立用户id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(建立用户id)){
-			this.建立用户id=new Long(建立用户id);
-		}
-	}
 	/** 取得：数据源详细描述 */
 	public String getSource_remark(){
 		return source_remark;
@@ -109,5 +96,27 @@ public class Data_source extends TableEntity
 	/** 设置：创建时间 */
 	public void setCreate_time(String create_time){
 		this.create_time=create_time;
+	}
+	/** 取得：用户ID */
+	public Long getCreate_user_id(){
+		return create_user_id;
+	}
+	/** 设置：用户ID */
+	public void setCreate_user_id(Long create_user_id){
+		this.create_user_id=create_user_id;
+	}
+	/** 设置：用户ID */
+	public void setCreate_user_id(String create_user_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(create_user_id)){
+			this.create_user_id=new Long(create_user_id);
+		}
+	}
+	/** 取得：备注 */
+	public String getDatasource_remark(){
+		return datasource_remark;
+	}
+	/** 设置：备注 */
+	public void setDatasource_remark(String datasource_remark){
+		this.datasource_remark=datasource_remark;
 	}
 }
