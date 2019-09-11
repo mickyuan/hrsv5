@@ -22,7 +22,7 @@ public class MySQLDialectStrategy implements DataBaseDialectStrategy {
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/9/11
 	 * 步骤：
-	 *      1、调用封装好的已有实现获得分页SQL
+	 * 1、调用封装好的已有实现获得分页SQL
 	 */
 	@Override
 	public String createPageSql(String strSql, int start, int limit) {

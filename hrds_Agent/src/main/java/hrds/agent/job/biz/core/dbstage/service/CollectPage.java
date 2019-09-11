@@ -51,15 +51,15 @@ public class CollectPage implements Callable<Map<String, Object>> {
 	}
 
 	/**
-	* @Description:  多线程采集执行方法
-	* @return: java.util.Map<java.lang.String,java.lang.Object>
-	* @Author: WangZhengcheng
-	* @Date: 2019/9/11
+	 * @Description: 多线程采集执行方法
+	 * @return: java.util.Map<java.lang.String               ,               java.lang.Object>
+	 * @Author: WangZhengcheng
+	 * @Date: 2019/9/11
 	 * 步骤：
-	 *      1、执行查询，获取ResultSet
-	 *      2、解析ResultSet，并写数据文件
-	 *      3、数据落地文件后，线程执行完毕后的返回内容，用于写作业meta文件和验证本次采集任务的结果
-	*/
+	 * 1、执行查询，获取ResultSet
+	 * 2、解析ResultSet，并写数据文件
+	 * 3、数据落地文件后，线程执行完毕后的返回内容，用于写作业meta文件和验证本次采集任务的结果
+	 */
 	@Override
 	public Map<String, Object> call() throws SQLException, IOException {
 		//1、执行查询，获取ResultSet
@@ -67,13 +67,11 @@ public class CollectPage implements Callable<Map<String, Object>> {
 		//2、解析ResultSet，并写数据文件
 		ResultSetParser parser = new ResultSetParser();
 		//文件路径
-		String filePath = "";
+		String filePath = parser.parseResultSet(pageData, this.jobInfo, this.pageNum, this.pageRow);
 		//用于统计当前线程采集到的数据量
-		int columnCount = 0;
-		filePath = parser.parseResultSet(pageData, this.jobInfo, this.pageNum, this.pageRow);
-		columnCount = pageData.getMetaData().getColumnCount();
+		int columnCount = pageData.getMetaData().getColumnCount();
 		//3、多线程采集阶段，线程执行完毕后的返回内容，用于写作业meta文件和验证本次采集任务的结果
-		Map<String, Object> map = new HashMap();
+		Map<String, Object> map = new HashMap<>();
 		//采集生成的文件路径
 		map.put("filePath", filePath);
 		//当前线程采集到的ResultSet
@@ -92,16 +90,27 @@ public class CollectPage implements Callable<Map<String, Object>> {
 	 * @Param: pageColumn：用户提供的数据库表用于分页的列, 取值范围 : int
 	 * @Param: start：当前分页开始条数, 取值范围 : int
 	 * @Param: end：当前分页结束条数, 取值范围 : int
-	 * @return:ResultSet
+	 * @return: ResultSet
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/8/13
+	 * 步骤：
+	 * 1、将DBConfigBean对象传入工具类ConnetionTool，得到DatabaseWrapper
+	 * 2、将采集SQL，当前页的start，end转换通过strategy转为分页SQL
+	 * 3、调用方法获得当前线程的分页数据
+	 * 4、关闭资源
+	 * 5、返回结果集
 	 */
 	private ResultSet getPageData(DBConfigBean dbInfo, DataBaseDialectStrategy strategy, String strSql, String pageColumn, int start, int end) {
 		//TODO pageColumn是前台用户提供的用于分页的列，但是目前使用的fdcode中自带的对数据库的分页操作，所以pageColumn暂时用不到
+		//1、将DBConfigBean对象传入工具类ConnetionTool，得到DatabaseWrapper
 		DatabaseWrapper dbWrapper = ConnetionTool.getDBWrapper(dbInfo);
+		//2、将采集SQL，当前页的start，end转换通过strategy转为分页SQL
 		String pageSql = strategy.createPageSql(strSql, start, end);
+		//3、调用方法获得当前线程的分页数据
 		ResultSet pageData = dbWrapper.queryGetResultSet(pageSql);
+		//4、关闭资源
 		dbWrapper.close();
+		//5、返回结果集
 		return pageData;
 	}
 }

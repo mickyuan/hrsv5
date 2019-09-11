@@ -31,7 +31,6 @@ public class JobFactory {
 	 * @param jobStatus      表示一个作业的状态, 取值范围：JobStatusInfo对象
 	 * @return com.beyondsoft.agent.core.job.JobInterface
 	 * @author 13616
-	 * @date 2019/8/7 11:55
 	 * 步骤：
 	 *      1、判断采集作业类型
 	 *      2、根据作业类型创建具体的JobInterface实例

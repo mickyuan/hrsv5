@@ -50,7 +50,7 @@ public class DialectStrategyFactory {
 	 *      1、判断数据库类型
 	 *      2、根据不同的类型，返回对应数据库的分页方言策略
 	 */
-	public static DataBaseDialectStrategy createDialectStrategy(String dbType) {
+	public DataBaseDialectStrategy createDialectStrategy(String dbType) {
 		if (StringUtil.isNotEmpty(dbType)) {
 			throw new AppSystemException("数据库类型不能为空");
 		}

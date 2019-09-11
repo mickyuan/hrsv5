@@ -24,17 +24,20 @@ import java.util.Map;
 public class ColCleanRuleParser {
 
 	/**
-	 * 解析列清洗规则
-	 *
-	 * @param rule {@link ColumnCleanResult}
-	 *             1、解析清洗顺序
-	 *             2、解析字符替换规则
-	 *             3、解析字符补齐规则
-	 *             4、解析日期转换规则
-	 *             5、码值转换
-	 *             6、首尾去空
-	 *             7、解析字段拆分规则
-	 *             8、将上述所有组装成Map<String, Object> result并返回，key是清洗项名称，value是清洗规则
+	 * @Description: 解析列清洗规则
+	 * @Param: [rule : 列清洗规则, 取值范围 : ColumnCleanResult类型对象]
+	 * @return: java.util.Map<java.lang.String   ,   java.lang.Object>
+	 * @Author: WangZhengcheng
+	 * @Date: 2019/9/11
+	 * 步骤：
+	 * 1、解析清洗顺序
+	 * 2、解析字符替换规则
+	 * 3、解析字符补齐规则
+	 * 4、解析日期转换规则
+	 * 5、码值转换
+	 * 6、首尾去空
+	 * 7、解析字段拆分规则
+	 * 8、将上述所有组装成Map<String, Object> result并返回，key是清洗项名称，value是清洗规则
 	 */
 	public static Map<String, Object> parseColCleanRule(ColumnCleanResult rule) throws UnsupportedEncodingException {
 		if (rule == null) {
@@ -104,7 +107,7 @@ public class ColCleanRuleParser {
 		JSONObject CVConverObject = JSONObject.parseObject(rule.getColumnCodeResult());
 		if (CVConverObject != null && !CVConverObject.isEmpty()) {
 			for (String key : CVConverObject.keySet()) {
-				CVConverObject.put(key, CVConverObject.getString(key));
+				convertMap.put(key, CVConverObject.getString(key));
 			}
 			result.put("CVConver", convertMap);
 		}

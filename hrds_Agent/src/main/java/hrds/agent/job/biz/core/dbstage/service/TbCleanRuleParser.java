@@ -25,18 +25,17 @@ public class TbCleanRuleParser {
 	/**
 	 * @Description: 解析表清洗规则
 	 * @Param: [tbCleanResult : 表清洗规则实体类]
-	 * @return: java.util.Map<java.lang.String               ,               java.lang.Object>
+	 * @return: java.util.Map<java.lang.String,java.lang.Object>
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/9/3
+	 * 步骤：
+	 *      1、解析表清洗优先级
+	 *      2、解析表所有字段替换规则
+	 *      3、解析表所有字段补齐规则
+	 *      4、解析表所有字段是否进行首尾去空
+	 *      5、解析列合并规则
+	 *      6、将上述所有组装成Map<String, Object>返回，key是清洗项名称，value是清洗规则
 	 */
-	/*
-	 * 1、解析表清洗优先级
-	 * 2、解析表所有字段替换规则
-	 * 3、解析表所有字段补齐规则
-	 * 4、解析表所有字段是否进行首尾去空
-	 * 5、解析列合并规则
-	 * 6、将上述所有组装成Map<String, Object>返回，key是清洗项名称，value是清洗规则
-	 * */
 	public static Map<String, Object> parseTbCleanRule(TableCleanResult tbCleanResult) {
 		if (tbCleanResult == null) {
 			throw new AppSystemException("解析表清洗规则时，清洗规则对象不能为空");
@@ -47,9 +46,9 @@ public class TbCleanRuleParser {
 		//用于存放表清洗优先级
 		Map<Integer, String> tbOrderMap = new HashMap<>();
 		//用于存放表清洗字符替换规则
-		Map<String, String> tbReplaceMap = new HashMap<String, String>();
+		Map<String, String> tbReplaceMap = new HashMap<>();
 		//用于存放表清洗列合并规则
-		Map<String, String> tbMergeMap = new LinkedHashMap<String, String>();
+		Map<String, String> tbMergeMap = new LinkedHashMap<>();
 
 		//解析表清洗优先级
 		String tbCleanOrder = tbCleanResult.getClean_order();

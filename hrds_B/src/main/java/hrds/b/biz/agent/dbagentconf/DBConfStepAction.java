@@ -27,7 +27,7 @@ import java.util.Optional;
 public class DBConfStepAction extends BaseAction{
 
 	/**
-	 * @Description: 数据库直连采集，根据agentId进行查询并在页面上回显数据源配置信息
+	 * @Description: 数据库直连采集，根据databaseId进行查询并在页面上回显数据源配置信息
 	 * @Param: [agentId : AgentID, 取值范围 : long]
 	 * @return: void
 	 * @Author: WangZhengcheng
@@ -52,10 +52,12 @@ public class DBConfStepAction extends BaseAction{
 			throw new BusinessException("该任务已经设置完成并发送成功，不允许编辑");
 		}
 		//3-1、在数据库设置表表中，关联采集作业分类表(collect_job_classify)，查询出当前database_id的所有信息
-		Result secResult = Dbo.queryResult("select * from database_set t1 left join collect_job_classify t2 on " +
+		Result secResult = Dbo.queryResult("select * from database_set t1 " +
+				"left join collect_job_classify t2 on " +
 				"t1.classify_id = t2.classify_id  where database_id = ?", databaseId);
 		//3-2、在collect_frequency(卸数作业参数表)表中，查询出id,文件存储路径，作业编号信息
-		Result thiResult = Dbo.queryResult("select file_path,cf_jobnum,cf_id from collect_frequency " +
+		Result thiResult = Dbo.queryResult("select file_path,cf_jobnum,cf_id " +
+				"from collect_frequency " +
 				"where collect_set_id = ?", databaseId);
 		//3-3、二者汇总成一个Result对象返回
 		secResult.setObject(0, "file_path", thiResult.getString(0, "file_path"));
@@ -130,7 +132,8 @@ public class DBConfStepAction extends BaseAction{
 	 */
 	public ActionResult testConnection(@RequestBean Database_set databaseSet) {
 		//1、根据agent_id获得agent_ip,agent_port
-		Result result = Dbo.queryResult("select agent_ip, agent_port from agent_info where agent_id = ?",
+		Result result = Dbo.queryResult("select agent_ip, agent_port from agent_info " +
+						"where agent_id = ?",
 				databaseSet.getAgent_id());
 		if(result.isEmpty()){
 			throw new BusinessException("未能找到Agent信息");

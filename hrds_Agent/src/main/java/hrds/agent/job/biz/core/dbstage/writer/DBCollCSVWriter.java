@@ -64,25 +64,25 @@ public class DBCollCSVWriter extends AbstractFileWriter {
 
 	/**
 	 * @Description: 写CSV，完成之后返回文件的文件名(包含路径)
-	 * @Param: metaDataMap:写文件需要用到的meta信息
-	 * @Param: rs：当前线程采集到的Result
-	 * @return:String
+	 * @Param: metaDataMap:写文件需要用到的meta信息，取值范围 : Map<String, Object>
+	 * @Param: rs：当前线程采集到的Result, 取值范围 : ResultSet
+	 * @Param: tableName : 表名, 用于大字段数据写avro, 取值范围 : String
+	 * @return: String
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/8/13
-	 */
-	/*
+	 * 步骤：
 	 * 1、校验方法入参合法性
 	 * 2、创建数据文件存放目录
 	 * 3、创建数据文件文件名，文件名为jobID + 处理线程号 + 时间戳.csv,在作业配置文件目录下的datafile目录中
 	 * 4、判断本次采集得到的RS是否有CLOB，BLOB，LONGVARCHAR的大字段类型，如果有，则创建LOBs目录用于存放avro文件，并初始化写avro相关类对象
 	 * 5、开始写CSV文件，
-	 *       (1)、创建文件，写表头
-	 *       (2)、循环RS，获得每一行数据，针对每一行数据，循环每一列，根据每一列的类型，决定是写avro还是进行清洗
-	 *       (3)、执行数据清洗，包括表清洗和列清洗
-	 *       (4)、清洗后的结果追加到构建MD5的StringBuilder，并且放入list(用于存放一行数据)
-	 *       (5)、写一行数据，并清空list，执行下一次RS循环
+	 *      (1)、创建文件，写表头
+	 *      (2)、循环RS，获得每一行数据，针对每一行数据，循环每一列，根据每一列的类型，决定是写avro还是进行清洗
+	 *      (3)、执行数据清洗，包括表清洗和列清洗
+	 *      (4)、清洗后的结果追加到构建MD5的StringBuilder，并且放入list(用于存放一行数据)
+	 *      (5)、写一行数据，并清空list，执行下一次RS循环
 	 * 6、关闭资源，并返回文件路径
-	 * */
+	 */
 	@Override
 	public String writeDataAsSpecifieFormat(Map<String, Object> metaDataMap, ResultSet rs, String tableName) throws IOException, SQLException {
 		//1、校验方法入参合法性

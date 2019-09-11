@@ -40,15 +40,14 @@ import java.util.Map;
 public class ResultSetParser {
 	/**
 	 * @Description: 解析ResultSet
-	 * @Param: [rs : 数据集]
-	 * @Param: [jobInfo : 采集任务信息]
-	 * @Param: [pageNum : 分页的页数]
-	 * @Param: [pageRow : 每页的数据量，和分页页数一起，在写文件的时候，如果文件过大，要进行单个文件的拆分时使用]
+	 * @Param: [rs : 数据集, 取值范围 : ]
+	 * @Param: [jobInfo : 采集任务信息, 取值范围 : ]
+	 * @Param: [pageNum : 分页的页数, 取值范围 : ]
+	 * @Param: [pageRow : 每页的数据量，和分页页数一起，在写文件的时候，如果文件过大，要进行单个文件的拆分时使用, 取值范围 : ]
 	 * @return: java.lang.String
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/9/2
-	 */
-	/*
+	 * 步骤：
 	 * 1、获得本次采集的数据库META信息
 	 * 2、对后续需要使用的META信息(列名，列类型，列长度)，使用分隔符进行组装
 	 * 3、在jobInfo中拿到数据清洗规则(字段清洗，表清洗)，并调用工具类(ColCleanRuleParser，TbCleanRuleParser)中的方法进行解析
@@ -57,7 +56,7 @@ public class ResultSetParser {
 	 * 6、落地文件需要追加开始时间和结束时间(9999-12-31)列，如果需要，还要追加MD5列
 	 * 7、构造metaDataMap，根据落地数据文件类型，初始化FileWriterInterface实现类，由实现类去写文件
 	 * 8、写文件结束，返回本线程生成数据文件的路径
-	 * */
+	 */
 	public String parseResultSet(ResultSet rs, JobInfo jobInfo, int pageNum, int pageRow) throws SQLException, IOException {
 		//TODO 建议查询数据库的系统表来获得meta信息
 		//1、获得本次采集的数据库META信息
@@ -185,19 +184,20 @@ public class ResultSetParser {
 	}
 
 	/**
-	 * 获取数据库列数据类型和长度精度
-	 *
-	 * @param columnType     {@link Integer} sql.Types的数据类型
-	 * @param columnTypeName {@link String} 列数据类型
-	 * @param precision      {@link String} 列长度
-	 * @param scale          {@link String} 列数据精度
-	 */
-	/*
+	 * @Description: 获取数据库列数据类型和长度精度
+	 * @Param: [columnType : 列类型, 取值范围 : java.sql.Types]
+	 * @Param: [columnTypeName : 列类型, 取值范围 : String]
+	 * @Param: [precision : 列长度, 取值范围 : int]
+	 * @Param: [scale : 小数点位数, 取值范围 : int]
+	 * @return: java.lang.String
+	 * @Author: WangZhengcheng
+	 * @Date: 2019/9/11
+	 * 步骤：
 	 * 1、考虑到有些类型在数据库中在获取数据类型的时候就会带有(),同时还能获取到数据的长度和精度，因此我们要对所有数据库进行统一处理，去掉()中的内容，使用JDBC提供的方法读取的长度和精度进行拼接
 	 * 2、对不包含长度和精度的数据类型进行处理，返回数据类型
 	 * 3、对包含长度和精度的数据类型进行处理，返回数据类型(长度,精度)
 	 * 4、对只包含长度的数据类型进行处理，返回数据类型(长度)
-	 * */
+	 */
 	private String getColTypeAndPreci(int columnType, String columnTypeName, int precision, int scale) {
 		//1、考虑到有些类型在数据库中在获取数据类型的时候就会带有(),同时还能获取到数据的长度和精度，因此我们要对所有数据库进行统一处理，去掉()中的内容，使用JDBC提供的方法读取的长度和精度进行拼接
 		if (precision != 0) {
@@ -232,14 +232,23 @@ public class ResultSetParser {
 	}
 
 	/**
-	 * 获取数据库表中每一列列的长度
-	 *
-	 * @param rsMetaData {@link ResultSetMetaData}
-	 * @param index      {@link int}
+	 * @Description: 获取数据库表中每一列列的长度
+	 * @Param: [rsMetaData : 数据集元信息, 取值范围 : ResultSetMetaData]
+	 * @Param: [index : 列索引, 取值范围 : int]
+	 * @return: int
+	 * @Author: WangZhengcheng
+	 * @Date: 2019/9/11
+	 * 步骤：
+	 * 1、通过列索引在数据集元信息中获取列长度
+	 * 2、通过列索引在数据集元信息中获取列数据类型
+	 * 3.如果列数据类型是DECIMAL/NUMERIC，则进行特殊处理
 	 */
 	private int getColumnLength(ResultSetMetaData rsMetaData, int index) throws SQLException {
+		//1、通过列索引在数据集元信息中获取列长度
 		int columnLength = rsMetaData.getPrecision(index);
+		//2、通过列索引在数据集元信息中获取列数据类型
 		String columnType = rsMetaData.getColumnTypeName(index).toUpperCase();
+		//3.如果列数据类型是DECIMAL/NUMERIC，则进行特殊处理
 		if (columnType.equals("DECIMAL") || columnType.equals("NUMERIC")) {
 			columnLength = columnLength + 2;
 		}

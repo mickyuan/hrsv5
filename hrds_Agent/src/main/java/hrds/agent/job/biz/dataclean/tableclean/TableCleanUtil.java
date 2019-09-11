@@ -22,19 +22,21 @@ public class TableCleanUtil {
 	private final static Logger LOGGER = LoggerFactory.getLogger(TableCleanUtil.class);
 
 	/**
-	 * @param columnValue    : 列值
-	 * @param columnName     : 列名
-	 * @param group          : 写Parquet文件使用
-	 * @param colType        : 列类型(长度,精度)
-	 * @param fileType       : 数据落地生成文件的格式
-	 * @param tableCleanRule : 清洗规则
-	 * @return
-	 */
-	/*
+	 * @Description: 表清洗入口方法
+	 * @Param: [columnValue : 列值, 取值范围 : String]
+	 * @Param: [columnName : 列名, 取值范围 : String]
+	 * @Param: [group : 用于写Parquet, 取值范围 : org.apache.parquet.example.data.Group对象]
+	 * @Param: [colType : 列类型, 取值范围 : String]
+	 * @Param: [fileType : 落地文件格式(CSV， PARQUET， ORC,SEQUENCE), 取值范围 : String]
+	 * @Param: [tableCleanRule : 表清洗规则, , 取值范围 : Map<String, Object>]
+	 * @return: java.lang.String
+	 * @Author: WangZhengcheng
+	 * @Date: 2019/9/11
+	 * 步骤：
 	 * 1、校验入参合法性
 	 * 2、根据列名拿到该表的清洗规则
 	 * 3、按照清洗优先级，从大到小对该表所有数据进行数据清洗
-	 * */
+	 */
 	public static String tbDataClean(String columnValue, String columnName, Group group, String colType, String fileType, Map<String, Object> tableCleanRule) {
 		//1、校验入参合法性
 		if (columnValue == null || columnName == null) {
