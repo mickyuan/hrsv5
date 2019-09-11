@@ -48,7 +48,7 @@ public class DataSourceAction extends BaseAction {
 	 * 6.保存或更新数据源与部门关系信息
 	 *
 	 * @param dataSource 数据源实体
-	 * @param depIds     1或多个部门拼接的部门ID
+	 * @param depIds     1或多个部门ID
 	 */
 	public void saveDataSource(@RequestBean Data_source dataSource, @RequestParam String depIds) {
 		// 1.datasource_name,datasource_number字段做合法性检查,create_date,create_time,
@@ -63,7 +63,7 @@ public class DataSourceAction extends BaseAction {
 		}
 
 		if (StringUtil.isBlank(depIds)) {
-			throw new BusinessException("部门不能为空格，depIds="+depIds);
+			throw new BusinessException("部门不能为空格，depIds=" + depIds);
 		}
 		// 2.判断数据源id是否为空
 		if (dataSource.getSource_id() == null) {
@@ -82,14 +82,14 @@ public class DataSourceAction extends BaseAction {
 			// 4.保存数据源信息
 			if (dataSource.add(Dbo.db()) != 1) {
 				// 新增保存失败
-				throw new BusinessException(ExceptionEnum.DATA_ADD_ERROR);
+				throw new BusinessException("新增保存数据源data_source表数据失败,datasource_number=" + dataSource.getDatasource_number());
 			}
 		} else {
 			// 编辑
 			// 4.更新数据源信息
 			if (dataSource.update(Dbo.db()) != 1) {
 				// 编辑保存失败
-				throw new BusinessException(ExceptionEnum.DATA_UPDATE_ERROR);
+				throw new BusinessException("编辑保存数据源data_source表数据失败,datasource_number=" + dataSource.getDatasource_number());
 			}
 			// 5.先删除数据源与部门关系信息
 			int num = Dbo.execute("delete from " + Source_relation_dep.TableName +
@@ -100,7 +100,6 @@ public class DataSourceAction extends BaseAction {
 		}
 		// 6.保存或更新数据源与部门关系信息
 		saveSourceRelationDep(dataSource.getSource_id(), depIds);
-
 	}
 
 	/**
@@ -109,7 +108,7 @@ public class DataSourceAction extends BaseAction {
 	 * 1.循环保存或更新数据源与部门关系信息
 	 *
 	 * @param source_id 数据源id
-	 * @param depIds    1或多个部门拼接的部门ID
+	 * @param depIds    1或多个部门ID
 	 */
 	private void saveSourceRelationDep(long source_id, String depIds) {
 		// 建立数据源与部门关系信息
@@ -121,7 +120,7 @@ public class DataSourceAction extends BaseAction {
 		for (String dep_id : split) {
 			srd.setDep_id(dep_id);
 			if (srd.add(Dbo.db()) != 1) {
-				throw new BusinessException(ExceptionEnum.DATA_ADD_ERROR);
+				throw new BusinessException("新增保存数据源与部门关系Source_relation_dep表信息失败，dep_id=" + dep_id + ",source_id=" + source_id);
 			}
 		}
 	}
