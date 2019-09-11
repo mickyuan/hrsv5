@@ -11,6 +11,6 @@ public class JobConstant {
 	public static final String COLUMN_SEPARATOR = ",";
 	public static final String COLUMN_TYPE_SEPARATOR = "|";
 	public static final String COLUMN_NAME_SEPARATOR = "\\001";
-	public static final String CLEAN_SEPARATOR = "^";
+	public static final String CLEAN_SEPARATOR = "`";
 }
 

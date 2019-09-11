@@ -5,7 +5,7 @@ import fd.ng.db.conf.DbinfosConf;
 import fd.ng.db.conf.Dbtype;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.agent.job.biz.bean.DBConfigBean;
-import hrds.agent.job.biz.constant.DBTypeConstant;
+import hrds.commons.codes.DatabaseType;
 import hrds.commons.exception.AppSystemException;
 
 /**
@@ -22,7 +22,7 @@ public class ConnetionTool {
 
 	/**
 	 * @Description: 根据数据库配置信息获取数据库连接
-	 * @Param: dbInfo：数据库连接配置信息
+	 * @Param: dbInfo：数据库连接配置信息，取值范围 : DBConfigBean类型对象
 	 * @return: DatabaseWrapper
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/8/13
@@ -34,32 +34,32 @@ public class ConnetionTool {
 		dbinfo.setUsername(dbInfo.getUser_name());
 		dbinfo.setPassword(dbInfo.getDatabase_pad());
 		dbinfo.setWay(ConnWay.JDBC);
-		String dbType = dbInfo.getDatabase_type();
-		if (DBTypeConstant.MYSQL.getCode() == Integer.parseInt(dbType)) {
+		DatabaseType typeConstant = DatabaseType.getCodeObj(dbInfo.getDatabase_type());
+		if (typeConstant == DatabaseType.MYSQL) {
 			dbinfo.setDbtype(Dbtype.MYSQL);
-		} else if (DBTypeConstant.ORACLE9IFOLLOW.getCode() == Integer.parseInt(dbType)) {
+		} else if (typeConstant == DatabaseType.Oracle9i) {
 			throw new AppSystemException("系统不支持Oracle9i及以下");
-		} else if (DBTypeConstant.ORACLE10GABOV.getCode() == Integer.parseInt(dbType)) {
+		} else if (typeConstant == DatabaseType.Oracle10g) {
 			dbinfo.setDbtype(Dbtype.ORACLE);
-		} else if (DBTypeConstant.SQLSERVRER2000.getCode() == Integer.parseInt(dbType)) {
+		} else if (typeConstant == DatabaseType.SqlServer2000) {
 			dbinfo.setDbtype(Dbtype.SQLSERVER);
-		} else if (DBTypeConstant.SQLSERVRER2005.getCode() == Integer.parseInt(dbType)) {
+		} else if (typeConstant == DatabaseType.SqlServer2005) {
 			dbinfo.setDbtype(Dbtype.SQLSERVER);
-		} else if (DBTypeConstant.DB2.getCode() == Integer.parseInt(dbType)) {
+		} else if (typeConstant == DatabaseType.DB2) {
 			//TODO 使用db2v1还是db2v2
-		} else if (DBTypeConstant.SYBASE.getCode() == Integer.parseInt(dbType)) {
+		} else if (typeConstant == DatabaseType.SybaseASE125) {
 			dbinfo.setDbtype(Dbtype.SYBASE);
-		} else if (DBTypeConstant.INFORMATIC.getCode() == Integer.parseInt(dbType)) {
+		} else if (typeConstant == DatabaseType.Informatic) {
 			//Informatic
-		} else if (DBTypeConstant.H2.getCode() == Integer.parseInt(dbType)) {
+		} else if (typeConstant == DatabaseType.H2) {
 			//H2
-		} else if (DBTypeConstant.APACHEDERBY.getCode() == Integer.parseInt(dbType)) {
+		} else if (typeConstant == DatabaseType.ApacheDerby) {
 			//ApacheDerBy
-		} else if (DBTypeConstant.POSTGRESQL.getCode() == Integer.parseInt(dbType)) {
+		} else if (typeConstant == DatabaseType.Postgresql) {
 			dbinfo.setDbtype(Dbtype.POSTGRESQL);
-		} else if (DBTypeConstant.GBASE.getCode() == Integer.parseInt(dbType)) {
+		} else if (typeConstant == DatabaseType.GBase) {
 			dbinfo.setDbtype(Dbtype.GBASE);
-		} else if (DBTypeConstant.TERADATA.getCode() == Integer.parseInt(dbType)) {
+		} else if (typeConstant == DatabaseType.TeraData) {
 			dbinfo.setDbtype(Dbtype.TERADATA);
 		} else {
 			throw new AppSystemException("系统不支持该数据库类型");

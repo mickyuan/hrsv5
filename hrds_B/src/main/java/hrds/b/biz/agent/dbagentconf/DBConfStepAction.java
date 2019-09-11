@@ -28,7 +28,7 @@ public class DBConfStepAction extends BaseAction{
 
 	/**
 	 * @Description: 数据库直连采集，根据agentId进行查询并在页面上回显数据源配置信息
-	 * @Param: [agentId : AgentID, 取值范围 : 不限]
+	 * @Param: [agentId : AgentID, 取值范围 : long]
 	 * @return: void
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/9/4
@@ -66,8 +66,8 @@ public class DBConfStepAction extends BaseAction{
 
 	/**
 	 * @Description: 根据数据库类型和端口获得数据库连接url等信息
-	 * @Param: [dbType : 数据库类型, 取值范围 : DatabaseType枚举类]
-	 * @Param: [port : , 端口号, 取值范围 : 不限]
+	 * @Param: [dbType : 数据库类型, 取值范围 : DatabaseType枚举类code值]
+	 * @Param: [port : , 端口号, 取值范围 : String]
 	 * @return: java.lang.String
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/9/4
@@ -79,7 +79,7 @@ public class DBConfStepAction extends BaseAction{
 
 	/**
 	 * @Description: 保存数据库采集Agent数据库配置信息
-	 * @Param: [databaseSet : 数据库设置对象, 取值范围 : 不限]
+	 * @Param: [databaseSet : 数据库设置对象, 取值范围 : Database_set类型对象]
 	 * @return: void
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/9/4
@@ -118,7 +118,7 @@ public class DBConfStepAction extends BaseAction{
 
 	/**
 	 * @Description: 测试连接
-	 * @Param: [databaseSet : 数据库设置对象, 取值范围 : 不限]
+	 * @Param: [databaseSet : 数据库设置对象, 取值范围 : Database_set类型对象]
 	 * @return: boolean
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/9/4

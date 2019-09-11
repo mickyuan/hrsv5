@@ -50,11 +50,16 @@ public class CollectPage implements Callable<Map<String, Object>> {
 		this.pageRow = pageRow;
 	}
 
-	/*
-	 * 1、执行查询，获取ResultSet
-	 * 2、解析ResultSet，并写数据文件
-	 * 3、数据落地文件后，线程执行完毕后的返回内容，用于写作业meta文件和验证本次采集任务的结果
-	 * */
+	/**
+	* @Description:  多线程采集执行方法
+	* @return: java.util.Map<java.lang.String,java.lang.Object>
+	* @Author: WangZhengcheng
+	* @Date: 2019/9/11
+	 * 步骤：
+	 *      1、执行查询，获取ResultSet
+	 *      2、解析ResultSet，并写数据文件
+	 *      3、数据落地文件后，线程执行完毕后的返回内容，用于写作业meta文件和验证本次采集任务的结果
+	*/
 	@Override
 	public Map<String, Object> call() throws SQLException, IOException {
 		//1、执行查询，获取ResultSet
@@ -78,18 +83,15 @@ public class CollectPage implements Callable<Map<String, Object>> {
 		return map;
 	}
 
-	/*
-	 * 根据分页SQL获取ResultSet
-	 * */
 
 	/**
 	 * @Description: 根据分页SQL获取ResultSet
-	 * @Param: dbInfo:数据库连接配置信息
-	 * @Param: strategy：数据库方言策略
-	 * @Param: strSql：数据库采集SQL
-	 * @Param: pageColumn：用户提供的数据库表用于分页的列
-	 * @Param: start：当前分页开始条数
-	 * @Param: end：当前分页结束条数
+	 * @Param: dbInfo:数据库连接配置信息, 取值范围 : DBConfigBean类型对象
+	 * @Param: strategy：数据库方言策略, 取值范围 : DataBaseDialectStrategy接口实例
+	 * @Param: strSql：数据库采集SQL, 取值范围 : String
+	 * @Param: pageColumn：用户提供的数据库表用于分页的列, 取值范围 : int
+	 * @Param: start：当前分页开始条数, 取值范围 : int
+	 * @Param: end：当前分页结束条数, 取值范围 : int
 	 * @return:ResultSet
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/8/13

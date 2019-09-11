@@ -57,7 +57,7 @@ public class AgentListAction extends BaseAction {
 
 	/**
 	 * @Description: 根据sourceId和agentType获取相应信息
-	 * @Param: [sourceId : 数据源ID, 取值范围 : 不限]
+	 * @Param: [sourceId : 数据源ID, 取值范围 : long]
 	 * @Param: [agentType : agent类型(数据库、数据文件、非结构化、非结构化。FTP), 取值范围 : 1-5(char)]
 	 * @return: fd.ng.db.resultset.Result
 	 * @Author: WangZhengcheng
@@ -73,8 +73,8 @@ public class AgentListAction extends BaseAction {
 
 	/**
 	 * @Description: 根据sourceId和agentId获取某agent下所有任务的信息
-	 * @Param: [sourceId : 数据源ID, 取值范围 : 不限]
-	 * @Param: [agentId : AgentID, 取值范围 : 不限]
+	 * @Param: [sourceId : 数据源ID, 取值范围 : long]
+	 * @Param: [agentId : AgentID, 取值范围 : long]
 	 * @return: fd.ng.db.resultset.Result
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/9/3
@@ -160,9 +160,9 @@ public class AgentListAction extends BaseAction {
 
 	/**
 	 * @Description: 查看任务日志
-	 * @Param: [agentId : agentID, 取值范围 : 不限]
-	 * @Param: [logType : 日志类型(完整日志、错误日志), 取值范围 : All, Wrong]
-	 * @Param: [readNum : 查看的行数, 取值范围 : 不限]
+	 * @Param: [agentId : agentID, 取值范围 : long]
+	 * @Param: [logType : 日志类型(完整日志、错误日志), 取值范围 : String(All, Wrong)]
+	 * @Param: [readNum : 查看的行数, 取值范围 : int]
 	 * @return: java.lang.String
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/9/3
@@ -173,7 +173,7 @@ public class AgentListAction extends BaseAction {
 	 */
 	//TODO 调用方法获取日志,目前工具类(ReadLog, I18nMessage)不存在
 	public String viewTaskLog(long agentId, String logType,
-	                          @RequestParam(nullable = true, valueIfNull = "100") Integer readNum) {
+	                          @RequestParam(nullable = true, valueIfNull = "100") int readNum) {
 		//1、对显示日志条数做处理，该方法在加载页面时被调用，readNum可以不传，则默认显示100条，
 		// 如果用户在页面上进行了选择并点击查看按钮，则最多给用户显示1000条日志
 		int num = 0;
@@ -188,9 +188,9 @@ public class AgentListAction extends BaseAction {
 
 	/**
 	 * @Description: 任务日志下载
-	 * @Param: [agentId : agentID, 取值范围 : 不限]
-	 * @Param: [logType : 日志类型(完整日志、错误日志), 取值范围 : All, Wrong]
-	 * @Param: [readNum : 查看的行数, 取值范围 : 不限]
+	 * @Param: [agentId : agentID, 取值范围 : long]
+	 * @Param: [logType : 日志类型(完整日志、错误日志), 取值范围 : String(All, Wrong)]
+	 * @Param: [readNum : 查看的行数, 取值范围 : int]
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/9/3
 	 * 步骤：
@@ -205,7 +205,7 @@ public class AgentListAction extends BaseAction {
 	 */
 	//TODO 调用方法获取日志,目前工具类(ReadLog, I18nMessage)不存在
 	public void downloadTaskLog(long agentId, String logType,
-	                            @RequestParam(nullable = true, valueIfNull = "100") Integer readNum) {
+	                            @RequestParam(nullable = true, valueIfNull = "100") int readNum) {
 		try {
 			//1、对显示日志条数做处理，该方法在加载页面时被调用，readNum可以不传，则默认显示100条，
 			// 如果用户在页面上进行了选择并点击查看按钮，如果用户输入的条目多于1000，则给用户显示3000条
@@ -249,7 +249,7 @@ public class AgentListAction extends BaseAction {
 
 	/**
 	 * @Description: 根据ID删除半结构化采集任务数据
-	 * @Param: [collectSetId : 源文件属性表ID, 取值范围 : 不限]
+	 * @Param: [collectSetId : 源文件属性表ID, 取值范围 : long]
 	 * @return: void
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/9/10
@@ -288,7 +288,7 @@ public class AgentListAction extends BaseAction {
 
 	/**
 	 * @Description: 根据ID删除FTP采集任务数据
-	 * @Param: [collectSetId : 源文件属性表ID, 取值范围 : 不限]
+	 * @Param: [collectSetId : 源文件属性表ID, 取值范围 : long]
 	 * @return: void
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/9/10
@@ -327,7 +327,7 @@ public class AgentListAction extends BaseAction {
 
 	/**
 	 * @Description: 根据ID和Agent类型删除数据库直连，非结构化文件，DB文件采集任务数据
-	 * @Param: [collectSetId : 源文件属性表ID, 取值范围 : 不限]
+	 * @Param: [collectSetId : 源文件属性表ID, 取值范围 : long]
 	 * @Param: [agentType : Agent类型(数据库、数据文件、非结构化、非结构化。FTP), 取值范围 : 1-5(char)]
 	 * @return: void
 	 * @Author: WangZhengcheng
@@ -447,7 +447,7 @@ public class AgentListAction extends BaseAction {
 
 	/**
 	 * @Description: 根据taskId获得工程信息
-	 * @Param: [taskId : 任务ID, 取值范围 : 不限]
+	 * @Param: [taskId : 任务ID, 取值范围 : String]
 	 * @return: java.lang.String
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/9/6
@@ -462,10 +462,10 @@ public class AgentListAction extends BaseAction {
 
 	/**
 	 * @Description: 在生成作业时保存工程信息
-	 * @Param: [proId : 工程ID, 取值范围 : 不限]
-	 * @Param: [taskId : 任务ID, 取值范围 : 不限]
-	 * @Param: [jobId : 作业ID, 取值范围 : 不限]
-	 * @Param: [jobType : 作业类型, 取值范围 : CollectType枚举]
+	 * @Param: [proId : 工程ID, 取值范围 : String]
+	 * @Param: [taskId : 任务ID, 取值范围 : String]
+	 * @Param: [jobId : 作业ID, 取值范围 : String]
+	 * @Param: [jobType : 作业类型, 取值范围 : String(CollectType枚举Code)]
 	 * @return: void
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/9/6
@@ -478,7 +478,7 @@ public class AgentListAction extends BaseAction {
 
 	/**
 	 * @Description: 根据任务ID发送半结构化文件采集任务
-	 * @Param: [taskId : 任务ID, 取值范围 : 不限]
+	 * @Param: [taskId : 任务ID, 取值范围 : String]
 	 * @return: void
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/9/10
@@ -489,7 +489,7 @@ public class AgentListAction extends BaseAction {
 
 	/**
 	 * @Description: 根据任务ID发送FTP采集任务
-	 * @Param: [taskId : 任务ID, 取值范围 : 不限]
+	 * @Param: [taskId : 任务ID, 取值范围 : String]
 	 * @return: void
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/9/10
@@ -500,7 +500,7 @@ public class AgentListAction extends BaseAction {
 
 	/**
 	 * @Description: 根据任务ID发送数据库直连、DB文件、非结构化文件采集任务
-	 * @Param: [taskId : 任务ID, 取值范围 : 不限]
+	 * @Param: [taskId : 任务ID, 取值范围 : String]
 	 * @return: void
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/9/10
@@ -511,7 +511,7 @@ public class AgentListAction extends BaseAction {
 
 	/**
 	 * @Description: 根据sourceId查询出设置完成的数据库采集任务和DB文件采集任务的任务ID
-	 * @Param: [sourceId : 数据源ID]
+	 * @Param: [sourceId : 数据源ID, 取值范围 : long]
 	 * @return: fd.ng.db.resultset.Result
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/9/10
@@ -526,7 +526,7 @@ public class AgentListAction extends BaseAction {
 
 	/**
 	 * @Description: 根据sourceId查询出设置完成的非结构化文件采集任务的任务ID
-	 * @Param: [sourceId : 数据源ID]
+	 * @Param: [sourceId : 数据源ID, 取值范围 : long]
 	 * @return: fd.ng.db.resultset.Result
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/9/10
@@ -541,7 +541,7 @@ public class AgentListAction extends BaseAction {
 
 	/**
 	 * @Description: 根据sourceId查询出设置完成的半结构化文件采集任务的任务ID
-	 * @Param: [sourceId : 数据源ID]
+	 * @Param: [sourceId : 数据源ID, 取值范围 : long]
 	 * @return: fd.ng.db.resultset.Result
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/9/10
@@ -556,7 +556,7 @@ public class AgentListAction extends BaseAction {
 
 	/**
 	 * @Description: 根据sourceId查询出设置完成的FTP采集任务的任务ID
-	 * @Param: [sourceId : 数据源ID]
+	 * @Param: [sourceId : 数据源ID, 取值范围 : long]
 	 * @return: fd.ng.db.resultset.Result
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/9/10
@@ -571,7 +571,7 @@ public class AgentListAction extends BaseAction {
 
 	/**
 	 * @Description: 格式化采集频率，将数据库中存储的ALL信息格式化为每月-每天
-	 * @Param: [agentInfo : agent详细信息, 取值范围 : 对象]
+	 * @Param: [agentInfo : agent详细信息, 取值范围 : Result类型对象]
 	 * @return: void
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/9/3
@@ -658,10 +658,10 @@ public class AgentListAction extends BaseAction {
 
 	/**
 	 * @Description: 根据参数获得任务日志信息
-	 * @Param: [agentId : AgentID, 取值范围 : 不限]
-	 * @Param: [userId : 用户ID, 取值范围 : 不限]
-	 * @Param: [logType : 日志类型(完整日志、错误日志), 取值范围 : All, Wrong]
-	 * @Param: [readNum : 查看的行数, 取值范围 : 不限]
+	 * @Param: [agentId : AgentID, 取值范围 : long]
+	 * @Param: [userId : 用户ID, 取值范围 : long]
+	 * @Param: [logType : 日志类型(完整日志、错误日志), 取值范围 : String(All, Wrong)]
+	 * @Param: [readNum : 查看的行数, 取值范围 : int]
 	 * @return: java.lang.String
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/9/10

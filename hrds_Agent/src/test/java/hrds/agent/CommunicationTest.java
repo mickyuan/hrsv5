@@ -21,7 +21,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
  * @author: xchao
  * @create: 2019-09-04 16:29
  */
-public class communicationTest {
+public class CommunicationTest {
     /**
      * 测试连接
      * 1、获取agent的连接
