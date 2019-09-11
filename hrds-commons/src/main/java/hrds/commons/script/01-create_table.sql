@@ -856,7 +856,7 @@ STORAGE_ID                                        BIGINT default 0 NOT NULL, --�
 FILE_FORMAT                                       CHAR(1) NOT NULL, --文件格式
 STORAGE_TYPE                                      CHAR(1) NOT NULL, --进数方式
 IS_ZIPPER                                         CHAR(1) NOT NULL, --是否拉链存储
-IS_EVERYDAY,                                      CHAR(1) NOT NULL, --是否每天存一份
+IS_EVERYDAY                                       CHAR(1) NOT NULL, --是否每天存一份
 STORAGE_TIME                                      DECIMAL(16) default 0 NOT NULL, --存储期限（以天为单位）
 TABLE_ID                                          BIGINT default 0 NULL, --表名ID
 CONSTRAINT TABLE_STORAGE_INFO_PK PRIMARY KEY(STORAGE_ID)   );

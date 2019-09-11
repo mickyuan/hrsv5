@@ -40,7 +40,7 @@ public class Table_storage_info extends TableEntity
 	private String storage_type; //进数方式
 	private Long storage_time; //存储期限（以天为单位）
 	private String is_zipper; //是否拉链存储
-	private String is_everyday,; //是否每天存一份
+	private String is_everyday; //是否每天存一份
 
 	/** 取得：储存编号 */
 	public Long getStorage_id(){
@@ -109,11 +109,11 @@ public class Table_storage_info extends TableEntity
 		this.is_zipper=is_zipper;
 	}
 	/** 取得：是否每天存一份 */
-	public String getIs_everyday,(){
-		return is_everyday,;
+	public String getIs_everyday(){
+		return is_everyday;
 	}
 	/** 设置：是否每天存一份 */
-	public void setIs_everyday,(String is_everyday,){
-		this.is_everyday,=is_everyday,;
+	public void setIs_everyday(String is_everyday){
+		this.is_everyday=is_everyday;
 	}
 }
