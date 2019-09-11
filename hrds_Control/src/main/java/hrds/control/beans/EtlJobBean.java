@@ -1,8 +1,8 @@
 package hrds.control.beans;
 
-import hrds.commons.entity.Etl_job;
+import hrds.commons.entity.Etl_job_cur;
 
-public class EtlJobBean extends Etl_job implements Comparable<EtlJobBean>  {
+public class EtlJobBean extends Etl_job_cur implements Comparable<EtlJobBean>  {
 
 	// 后一批次作业的调度日期
 	private String strNextDate;

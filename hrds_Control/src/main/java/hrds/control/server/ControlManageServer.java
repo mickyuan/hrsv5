@@ -35,6 +35,7 @@ public class ControlManageServer {
 	public ControlManageServer(boolean sysRunning, String strSystemCode, LocalDate bathDate, boolean isResumeRun, boolean isAutoShift) {
 
 		taskManager = TaskManager.newInstance(sysRunning, strSystemCode, bathDate, isResumeRun, isAutoShift);
+		taskManager.initEtlSystem();
 	}
 
 	/**
@@ -71,9 +72,11 @@ public class ControlManageServer {
 		@Override
 		public void run() {
 
+			//用于将作业定义表中的作业，通过一定的判断及检查，登记到内存表中
+			taskManager.loadReadyJob();
+
 			while( run ) {
-                taskManager.loadReadyJob();
-                taskManager.handleReadyJob();
+                taskManager.publishReadyJob();
 				try {
 					Thread.sleep(500);
 				}

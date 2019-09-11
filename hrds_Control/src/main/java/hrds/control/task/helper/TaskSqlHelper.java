@@ -73,24 +73,6 @@ public class TaskSqlHelper {
 	}
 
 	/**
-	 * 根据调度系统编号、调度作业名获取作业定义信息
-	 * @author Tiger.Wang
-	 * @date 2019/9/2
-	 * @param etlSysCd	调度系统编号
-	 * @param etlJob	调度作业名（调度作业标识）
-	 * @return java.util.List<hrds.control.beans.EtlJobBean>
-	 */
-	public static List<Etl_job_def> getDefJobByJobId(String etlSysCd, String etlJob) {
-
-		try(DatabaseWrapper db = new DatabaseWrapper()) {
-
-			return SqlOperator.queryList(db, Etl_job_def.class,
-							"SELECT * FROM etl_job_def WHERE etl_sys_cd = ? AND etl_job = ?",
-					etlSysCd, etlJob);
-		}
-	}
-
-	/**
 	 * 根据调度系统编号获取作业依赖信息
 	 * @author Tiger.Wang
 	 * @date 2019/9/3
@@ -146,6 +128,49 @@ public class TaskSqlHelper {
 	}
 
 	/**
+	 * 根据调度系统编号，修改准备运行的作业（调度状态为挂起、等待）的作业状态到指定作业状态。
+	 * 注意，此方法只修改在[挂起]和[等待]状态下的作业，并且限制[主服务器同步标识]为是。
+	 * @author Tiger.Wang
+	 * @date 2019/9/10
+	 * @param etlSysCd  调度系统编号
+	 * @param runStatus 作业状态
+	 * @return boolean  是否有数据被修改
+	 */
+	public static boolean updateReadyEtlJobStatus(String etlSysCd, String runStatus) {
+
+		try(DatabaseWrapper db = new DatabaseWrapper()) {
+
+			int num = SqlOperator.execute(db, "UPDATE etl_job SET job_disp_status = ?, main_serv_sync = ? " +
+					"WHERE (job_disp_status = ? or job_disp_status = ?) AND etl_sys_cd = ?",
+					runStatus, Main_Server_Sync.YES.getCode(), Job_Status.PENDING.getCode(),
+					Job_Status.WAITING.getCode(), etlSysCd);
+
+			return num > 0;
+		}
+	}
+
+	/**
+	 * 根据调度系统编号，修改准备运行的作业（调度状态为挂起、等待）的作业状态到指定作业状态。
+	 * 注意，此方法只修改在[挂起]和[等待]状态下的作业，不限制[主服务器同步标识]。
+	 * @author Tiger.Wang
+	 * @date 2019/9/10
+	 * @param etlSysCd  调度系统编号
+	 * @param dispStatus    作业状态
+	 * @return boolean  是否有数据被修改
+	 */
+	public static boolean updateReadyEtlJobsDispStatus(String etlSysCd, String dispStatus) {
+
+		try(DatabaseWrapper db = new DatabaseWrapper()) {
+
+			int num = SqlOperator.execute(db, "UPDATE etl_job SET job_disp_status = ? " +
+							"WHERE etl_sys_cd = ? AND (job_disp_status = ? OR job_disp_status = ?)",
+					dispStatus, etlSysCd, Job_Status.PENDING.getCode(), Job_Status.WAITING.getCode());
+
+			return num > 0;
+		}
+	}
+
+	/**
 	 * 根据调度系统编号修改调度系统运行状态及当前跑批日期。
 	 * @author Tiger.Wang
 	 * @date 2019/9/4
@@ -181,7 +206,7 @@ public class TaskSqlHelper {
 			// 因为该类型作业在整体流程逻辑上来说永远都不会删除
 			int num = SqlOperator.execute(db, "DELETE FROM etl_job WHERE etl_sys_cd = ? " +
 					"AND curr_bath_date = ? AND disp_type != ? AND disp_freq != ?",
-					etlSysCd, currBathDate, Dispatch_Type.ZTIMING.getCode(), Dispatch_Frequency.PinLv.getCode());
+					etlSysCd, currBathDate, Dispatch_Type.TPLUS0.getCode(), Dispatch_Frequency.PinLv.getCode());
 
 			return num > 0;
 		}
@@ -199,8 +224,7 @@ public class TaskSqlHelper {
 		try(DatabaseWrapper db = new DatabaseWrapper()) {
 			//TODO 此处较原版改动：不再判断frequnecy来决定是否删除作业类型为T+0且按频率调度的作业，
 			// 因为该类型作业在整体流程逻辑上来说永远都要删除
-			int num = SqlOperator.execute(db, "DELETE FROM etl_job WHERE etl_sys_cd = ? ",
-					etlSysCd);
+			int num = SqlOperator.execute(db, "DELETE FROM etl_job WHERE etl_sys_cd = ? ", etlSysCd);
 
 			return num > 0;
 		}
@@ -231,7 +255,7 @@ public class TaskSqlHelper {
 	 * @param job	Etl_job对象，对应etl_job表
 	 * @return boolean	是否有数据被新增
 	 */
-	public static boolean insertIntoJobTable(Etl_job job) {
+	public static boolean insertIntoJobTable(Etl_job_cur job) {
 
 		try(DatabaseWrapper db = new DatabaseWrapper()) {
 
@@ -271,7 +295,8 @@ public class TaskSqlHelper {
 	 * @param currBathDate	当前批量日期
 	 * @return boolean	是否有数据被修改
 	 */
-	public static boolean updateEtlJobDispStatus(String dispStatus, String etlSysCd, String etlJob, String currBathDate) {
+	public static boolean updateEtlJobDispStatus(String dispStatus, String etlSysCd, String etlJob,
+	                                             String currBathDate) {
 
 		try(DatabaseWrapper db = new DatabaseWrapper()) {
 
@@ -279,7 +304,28 @@ public class TaskSqlHelper {
 							"WHERE etl_sys_cd = ? AND etl_job = ? AND curr_bath_date = ?",
 					dispStatus, etlSysCd, etlJob, currBathDate);
 
-			return num > 0;
+			return num == 0;
+		}
+	}
+
+	/**
+	 * 根据调度系统编号、调度作业标识修改作业的作业状态为指定内容。注意，此处会将[主服务器同步标识]设置为[是]。
+	 * @author Tiger.Wang
+	 * @date 2019/9/10
+	 * @param dispStatus    作业状态
+	 * @param etlSysCd  调度系统编号
+	 * @param etlJob    调度作业标识
+	 * @return boolean  是否有数据被修改
+	 */
+	public static boolean updateEtlJobDispStatus(String dispStatus, String etlSysCd, String etlJob) {
+
+		try(DatabaseWrapper db = new DatabaseWrapper()) {
+
+			int num = SqlOperator.execute(db, "UPDATE etl_job SET job_disp_status = ?, main_serv_sync = ? " +
+							"WHERE etl_sys_cd = ? AND etl_job = ?",
+					dispStatus, Main_Server_Sync.YES.getCode(), etlSysCd, etlJob);
+
+			return num == 0;
 		}
 	}
 
@@ -360,13 +406,12 @@ public class TaskSqlHelper {
 	 * @param currBathDate	当前跑批日期
 	 * @return java.util.Optional<hrds.entity.Etl_job>
 	 */
-	public static List<Etl_job> getEtlJobs(String etlSysCd, String currBathDate) {
+	public static List<Etl_job_cur> getEtlJobs(String etlSysCd, String currBathDate) {
 
 		try(DatabaseWrapper db = new DatabaseWrapper()) {
 
-			return SqlOperator.queryList(db, Etl_job.class,
-					"SELECT * FROM etl_job WHERE etl_sys_cd = ? AND curr_bath_date <= ?",
-					etlSysCd, currBathDate);
+			return SqlOperator.queryList(db, Etl_job_cur.class,
+					"SELECT * FROM etl_job WHERE etl_sys_cd = ? AND curr_bath_date <= ?", etlSysCd, currBathDate);
 		}
 	}
 
@@ -379,12 +424,29 @@ public class TaskSqlHelper {
 	 * @param currBathDate	当前跑批日期
 	 * @return java.util.Optional<hrds.entity.Etl_job>
 	 */
-	public static Optional<Etl_job> getEtlJob(String etlSysCd, String etlJob, String currBathDate) {
+	public static Optional<Etl_job_cur> getEtlJob(String etlSysCd, String etlJob, String currBathDate) {
 
 		try(DatabaseWrapper db = new DatabaseWrapper()) {
 
-			return SqlOperator.queryOneObject(db, Etl_job.class, "SELECT * FROM etl_job WHERE etl_sys_cd = ? AND " +
-					"etl_job = ? AND curr_bath_date = ?", etlSysCd, etlJob, currBathDate);
+			return SqlOperator.queryOneObject(db, Etl_job_cur.class, "SELECT * FROM etl_job WHERE etl_sys_cd = ? " +
+					"AND etl_job = ? AND curr_bath_date = ?", etlSysCd, etlJob, currBathDate);
+		}
+	}
+
+	/**
+	 * 根据调度系统编号、调度作业标识获取调度作业信息
+	 * @author Tiger.Wang
+	 * @date 2019/9/9
+	 * @param etlSysCd  调度系统编号
+	 * @param etlJob    调度作业标识
+	 * @return java.util.Optional<hrds.commons.entity.Etl_job>
+	 */
+	public static Optional<Etl_job_cur> getEtlJob(String etlSysCd, String etlJob) {
+
+		try(DatabaseWrapper db = new DatabaseWrapper()) {
+
+			return SqlOperator.queryOneObject(db, Etl_job_cur.class, "SELECT * FROM etl_job " +
+					"WHERE etl_sys_cd = ? AND etl_job = ?", etlSysCd, etlJob);
 		}
 	}
 
@@ -456,6 +518,163 @@ public class TaskSqlHelper {
 
 			return SqlOperator.queryList(db, Etl_job_hand.class, "SELECT * FROM etl_job_hand WHERE " +
 					"hand_status = ? AND etl_sys_cd = ?", Meddle_status.TRUE.getCode(), etlSyscd);
+		}
+	}
+
+	/**
+	 * 修改调度作业干预表（etl_job_hand）。注意，此处会使用参数中的etl_job_hand、hand_status、main_serv_sync、end_time、
+	 * warning、etl_sys_cd、etl_job、etl_hand_type。
+	 * @author Tiger.Wang
+	 * @date 2019/9/9
+	 * @param etlJobHand    Etl_job_hand
+	 * @return boolean  是否有数据被修改
+	 */
+	public static boolean updateEtlJobHandle(Etl_job_hand etlJobHand) {
+
+		try(DatabaseWrapper db = new DatabaseWrapper()) {
+
+			int num = SqlOperator.execute(db, "UPDATE etl_job_hand SET hand_status = ?, main_serv_sync = ?, " +
+					"end_time = ?, warning = ? WHERE etl_sys_cd = ? AND etl_job = ? AND etl_hand_type = ?",
+					etlJobHand.getHand_status(), etlJobHand.getMain_serv_sync(), etlJobHand.getEnd_time(),
+					etlJobHand.getWarning(), etlJobHand.getEtl_sys_cd(), etlJobHand.getEtl_hand_type(),
+					etlJobHand.getEtl_job());
+
+			return num > 0;
+		}
+	}
+
+	/**
+	 * 在调度作业干预历史表中新增一条数据（etl_job_hand_his）。
+	 * @author Tiger.Wang
+	 * @date 2019/9/9
+	 * @param etlJobHandHis    Etl_job_hand对象
+	 * @return boolean  是否有数据被新增
+	 */
+	public static boolean insertIntoEtlJobHandleHistory(Etl_job_hand_his etlJobHandHis) {
+
+		try(DatabaseWrapper db = new DatabaseWrapper()) {
+
+			return etlJobHandHis.add(db) > 0;
+		}
+	}
+
+	/**
+	 * 根据调度系统编号、调度作业标识、干预类型删除调度干预表（etl_job_hand）信息。
+	 * @author Tiger.Wang
+	 * @date 2019/9/9
+	 * @param etlSysCd  调度系统编号
+	 * @param etlJob    调度作业标识
+	 * @param etlHandType   干预类型
+	 * @return boolean  是否有数据被删除
+	 */
+	public static boolean deleteEtlJobHand(String etlSysCd, String etlJob, String etlHandType) {
+
+		try(DatabaseWrapper db = new DatabaseWrapper()) {
+
+			int num = SqlOperator.execute(db, "DELETE FROM etl_job_hand WHERE etl_sys_cd = ? " +
+							" AND etl_job = ? AND etl_hand_type = ?",
+					etlSysCd, etlJob, etlHandType);
+
+			return num > 0;
+		}
+	}
+
+	/**
+	 * 根据调度系统编号，获取需要调度的作业（作业状态为挂起或者等待）
+	 * @author Tiger.Wang
+	 * @date 2019/9/9
+	 * @param etlSysCd  调度系统编号
+	 * @return java.util.List<hrds.commons.entity.Etl_job>
+	 */
+	public static List<Etl_job_cur> getReadyEtlJobs(String etlSysCd) {
+
+		try(DatabaseWrapper db = new DatabaseWrapper()) {
+
+			return SqlOperator.queryList(db, Etl_job_cur.class, "SELECT * FROM etl_job WHERE " +
+					"(job_disp_status = ? OR job_disp_status = ?) AND etl_sys_cd = ?",
+					Job_Status.PENDING.getCode(), Job_Status.WAITING.getCode(), etlSysCd);
+		}
+	}
+
+	/**
+	 * 根据调度系统编号，获取需要调度的作业（作业状态为运行中）
+	 * @author Tiger.Wang
+	 * @date 2019/9/10
+	 * @param etlSysCd  调度系统编号
+	 * @return java.util.List<hrds.commons.entity.Etl_job>
+	 */
+	public static List<Etl_job_cur> getRunningEtlJobs(String etlSysCd) {
+
+		try(DatabaseWrapper db = new DatabaseWrapper()) {
+
+			return SqlOperator.queryList(db, Etl_job_cur.class, "SELECT * FROM etl_job WHERE job_disp_status = ? " +
+							"AND etl_sys_cd = ?",
+					Job_Status.RUNNING.getCode(), etlSysCd);
+		}
+	}
+
+	/**
+	 * 根据调度系统编号，将该系统下的作业置为挂起状态。注意，此处会将作业状态设置为[挂起]，
+	 * 主服务器同步标志设置为[是]，且将作业优先级更新到当前作业优先级。
+	 * @author Tiger.Wang
+	 * @date 2019/9/9
+	 * @param etlSysCd  调度系统编号
+	 * @return boolean  是否有数据被修改
+	 */
+	public static boolean updateEtlJobToPending(String etlSysCd) {
+
+		try(DatabaseWrapper db = new DatabaseWrapper()) {
+
+			int num = SqlOperator.execute(db, "UPDATE etl_job SET job_disp_status = ?, main_serv_sync = ? " +
+					"job_priority_curr = job_priority WHERE etl_sys_cd = ? AND today_disp = ?",
+					Job_Status.PENDING.getCode(), Main_Server_Sync.YES.getCode(), etlSysCd,
+					Today_Dispatch_Flag.YES.getCode());
+
+			return num > 0;
+		}
+	}
+
+	/**
+	 * 根据调度系统编号，将作业状态在[停止]以及[错误]下的作业修改为指定状态。
+	 * @author Tiger.Wang
+	 * @date 2019/9/10
+	 * @param etlSysCd  调度系统编号
+	 * @param jobStatus 调度作业状态
+	 * @return boolean  是否有数据被修改
+	 */
+	public static boolean updateEtlJobToPendingInResume(String etlSysCd, String jobStatus) {
+
+		try(DatabaseWrapper db = new DatabaseWrapper()) {
+
+			int num = SqlOperator.execute(db, "UPDATE etl_job SET job_disp_status = ?, main_serv_sync = ? " +
+							"job_priority_curr = job_priority WHERE (job_disp_status = ? or job_disp_status = ?) " +
+							"AND etl_sys_cd = ?", jobStatus, Main_Server_Sync.YES.getCode(),
+					Job_Status.STOP.getCode(), Job_Status.ERROR.getCode(), etlSysCd);
+
+			return num == 1;
+		}
+	}
+
+	/**
+	 * 根据调度系统编号、调度作业编号、当前跑批日期修改指定的当前作业优先级。注意，此处仅会最多修改一条数据。
+	 * @author Tiger.Wang
+	 * @date 2019/9/10
+	 * @param jobPriorityCurr   当前作业优先级
+	 * @param etlSysCd  调度系统编号
+	 * @param etlJob    调度作业标识
+	 * @param currBathDate  当前跑批日期
+	 * @return boolean  是否有数据被修改
+	 */
+	public static boolean updateEtlJobCurrPriority(int jobPriorityCurr, String etlSysCd, String etlJob,
+	                                               String currBathDate) {
+
+		try(DatabaseWrapper db = new DatabaseWrapper()) {
+
+			int num = SqlOperator.execute(db, "UPDATE etl_job SET job_priority_curr = ? WHERE etl_sys_cd = ? " +
+							"AND etl_job = ? AND curr_bath_date = ?",
+					jobPriorityCurr, etlSysCd, etlJob, currBathDate);
+
+			return num == 1;
 		}
 	}
 }
