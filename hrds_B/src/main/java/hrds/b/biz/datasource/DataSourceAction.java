@@ -17,13 +17,13 @@ import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.exception.ExceptionEnum;
 import hrds.commons.utils.ActionUtil;
-import hrds.commons.utils.Base64;
 import hrds.commons.utils.key.PrimayKeyGener;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,54 +48,68 @@ public class DataSourceAction extends BaseAction {
 	 * 6.保存或更新数据源与部门关系信息
 	 *
 	 * @param dataSource 数据源实体
-	 * @param depIds     1或多个部门ID
+	 * @param depIds     部门ID(数据源与部门关系表source_relation_dep主键ID,前台传值可能会有1或多个值，
+	 *                   通过分隔符拼接成的字符串)
 	 */
 	public void saveDataSource(@RequestBean Data_source dataSource, @RequestParam String depIds) {
-		// 1.datasource_name,datasource_number字段做合法性检查,create_date,create_time,
-		// source_remark这几个字段时间日期手动设置获取系统当前时间，备注可以为空
+		// 1.字段做合法性检查
+		// 验证data_source_remark数据源名称合法性
 		if (StringUtil.isBlank(dataSource.getDatasource_name())) {
-			throw new BusinessException("数据源名称不能为空以及不能为空格，datasource_name=" + dataSource.getDatasource_name());
+			throw new BusinessException("数据源名称不能为空以及不能为空格，datasource_name=" + dataSource
+					.getDatasource_name());
 		}
 		// 数据源编号长度
 		int len = 4;
-		if (StringUtil.isBlank(dataSource.getDatasource_number()) || dataSource.getDatasource_number().length() > len) {
-			throw new BusinessException("数据源编号不能为空以及不能为空格或数据源编号长度不能超过四位，datasource_number=" + dataSource.getDatasource_number());
+		// 验证数据源编号datasource_number合法性
+		if (StringUtil.isBlank(dataSource.getDatasource_number())
+				|| dataSource.getDatasource_number().length() > len) {
+			throw new BusinessException("数据源编号不能为空以及不能为空格或数据源编号长度不能超过四位，" +
+					"datasource_number=" + dataSource.getDatasource_number());
 		}
-
+		// 验证部门depIds合法性
 		if (StringUtil.isBlank(depIds)) {
 			throw new BusinessException("部门不能为空格，depIds=" + depIds);
 		}
-		// 2.判断数据源id是否为空
+		// 2.判断数据源id(数据源data_source表主键ID)是否为空
 		if (dataSource.getSource_id() == null) {
-			// 新增
+			// 新增,初始化一些非页面传值
+			// 数据源主键ID
 			dataSource.setSource_id(PrimayKeyGener.getNextId());
-			dataSource.setUser_id(getUserId());
+			// 数据源创建用户ID
+			dataSource.setCreate_user_id(getUserId());
+			// 数据源创建日期
 			dataSource.setCreate_date(DateUtil.getSysDate());
+			// 数据源创建时间
 			dataSource.setCreate_time(DateUtil.getSysTime());
 			// 3.新增前查询数据源编号是否已存在
-			Result result = Dbo.queryResult("select datasource_number from " + Data_source.TableName +
-					"  where datasource_number=?", dataSource.getDatasource_number());
+			Result result = Dbo.queryResult("select datasource_number from " +
+							Data_source.TableName + "  where datasource_number=?",
+					dataSource.getDatasource_number());
 			if (!result.isEmpty()) {
 				// 数据源编号重复
-				throw new BusinessException("数据源编号重复,datasource_number=" + dataSource.getDatasource_number());
+				throw new BusinessException("数据源编号重复,datasource_number=" +
+						dataSource.getDatasource_number());
 			}
 			// 4.保存数据源信息
 			if (dataSource.add(Dbo.db()) != 1) {
 				// 新增保存失败
-				throw new BusinessException("新增保存数据源data_source表数据失败,datasource_number=" + dataSource.getDatasource_number());
+				throw new BusinessException("新增保存数据源data_source表数据失败,datasource_number=" +
+						dataSource.getDatasource_number());
 			}
 		} else {
 			// 编辑
 			// 4.更新数据源信息
 			if (dataSource.update(Dbo.db()) != 1) {
 				// 编辑保存失败
-				throw new BusinessException("编辑保存数据源data_source表数据失败,datasource_number=" + dataSource.getDatasource_number());
+				throw new BusinessException("编辑保存数据源data_source表数据失败,datasource_number=" +
+						dataSource.getDatasource_number());
 			}
 			// 5.先删除数据源与部门关系信息
 			int num = Dbo.execute("delete from " + Source_relation_dep.TableName +
 					" where source_id=?", dataSource.getSource_id());
 			if (num < 1) {
-				throw new BusinessException("编辑时会先删除原数据源与部门关系信息再建立新关系，删除旧关系时错误，source_id=" + dataSource.getSource_id());
+				throw new BusinessException("编辑时会先删除原数据源与部门关系信息，删除错旧关系时错误，" +
+						"source_id=" + dataSource.getSource_id());
 			}
 		}
 		// 6.保存或更新数据源与部门关系信息
@@ -107,20 +121,25 @@ public class DataSourceAction extends BaseAction {
 	 * <p>
 	 * 1.循环保存或更新数据源与部门关系信息
 	 *
-	 * @param source_id 数据源id
-	 * @param depIds    1或多个部门ID
+	 * @param source_id 含义：数据源与部门关系表外键ID
+	 *                  取值范围，不能为空以及不能为空格
+	 * @param depIds    含义：数据源与部门关系表source_relation_dep主键ID
+	 *                  取值范围：前台传值可能会有1或多个值，通过分隔符拼接成的字符串，不能为空已经不能为空格
 	 */
 	private void saveSourceRelationDep(long source_id, String depIds) {
 		// 建立数据源与部门关系信息
 		Source_relation_dep srd = new Source_relation_dep();
+		// 设置数据源与部门关系表外键ID
 		srd.setSource_id(source_id);
 		// 分隔部门id
 		String[] split = depIds.split(",");
 		// 循环保存数据源与部门关系表信息
 		for (String dep_id : split) {
+			// 设置数据源与部门关系表主键ID
 			srd.setDep_id(dep_id);
 			if (srd.add(Dbo.db()) != 1) {
-				throw new BusinessException("新增保存数据源与部门关系Source_relation_dep表信息失败，dep_id=" + dep_id + ",source_id=" + source_id);
+				throw new BusinessException("新增保存数据源与部门关系Source_relation_dep表信息失败，" +
+						"dep_id=" + dep_id + ",source_id=" + source_id);
 			}
 		}
 	}
@@ -137,7 +156,8 @@ public class DataSourceAction extends BaseAction {
 	public Result searchDataSource(Long source_id) {
 		// 1.判断该数据源下是否有数据，没有抛异常，有则返回查询结果
 		Result result = Dbo.queryResult("select ds.*,srd.dep_id from data_source ds " +
-				"join source_relation_dep srd on ds.source_id=srd.source_id where ds.source_id = ?", source_id);
+				" join source_relation_dep srd on ds.source_id=srd.source_id " +
+				"  where ds.source_id = ?", source_id);
 		if (result.isEmpty()) {
 			// 该数据源下数据为空(此为编辑情况下数据不能为空）
 			//FIXME 查询不到数据为什么要抛异常。只有具体使用这个数据的地方才应该根据是否有数据来抛出异常
@@ -157,8 +177,8 @@ public class DataSourceAction extends BaseAction {
 	 */
 	public void deleteSourceRelationDep(Long source_id) {
 		// 1.删除数据源与部门关系表信息，
-		int num = Dbo.execute("delete from " + Source_relation_dep.TableName + " where source_id=?",
-				source_id);
+		int num = Dbo.execute("delete from " + Source_relation_dep.TableName +
+				" where source_id=?", source_id);
 		if (num != 1) {
 			// 删除失败
 			throw new BusinessException(ExceptionEnum.DATA_DELETE_ERROR);
@@ -170,6 +190,7 @@ public class DataSourceAction extends BaseAction {
 	 * <p>
 	 * 1.先查询该datasource下是否还有agent,有不能删除，没有，可以删除
 	 * 2.删除data_source表信息，删除失败就抛异常，否则正常删除
+	 * 3.判断删除的数据是否不存在，不存在就抛异常
 	 * 3.删除source_relation_dep信息
 	 *
 	 * @param source_id 数据源编号
@@ -177,23 +198,23 @@ public class DataSourceAction extends BaseAction {
 	public void deleteDataSource(Long source_id) {
 
 		// 1.先查询该datasource下是否还有agent
-		//FIXME 为什么不用 queryNumber :
-		// if( Dbo.queryNumber("").orElse(-1)>0 ) throw new BusinessException("此数据源下还有agent，不能删除");
-		Result result = Dbo.queryResult("SELECT * FROM agent_info WHERE source_id=? ", source_id);
-		if (!result.isEmpty()) {
-			// 此数据源下还有agent，不能删除
-			throw new BusinessException("此数据源下还有agent，不能删除");
+		if (Dbo.queryNumber("SELECT * FROM agent_info  WHERE source_id=?", source_id)
+				.orElse(-1) > 0) {
+			throw new BusinessException("此数据源下还有agent，不能删除,source_id=" + source_id);
 		}
 
 		// 2.删除data_source表信息
-		int num = Dbo.execute("delete from " + Data_source.TableName + " where source_id=?", source_id);
+		int num = Dbo.execute("delete from " + Data_source.TableName +
+				" where source_id=?", source_id);
 		if (num != 1) {
-			//FIXME 应该判断 == 0 的情况
-			throw new BusinessException(ExceptionEnum.DATA_DELETE_ERROR);
+			// 3.判断库里是否没有这条数据
+			if (num == 0) {
+				throw new BusinessException("删除数据源信息表data_source失败，数据库里没有此条数据，source_id=" + source_id);
+			}
+			throw new BusinessException("删除数据源信息表data_source失败，source_id=" + source_id);
 		}
-		// 3.删除source_relation_dep信息
+		// 4.删除source_relation_dep信息
 		deleteSourceRelationDep(source_id);
-
 	}
 
 	/**
@@ -211,11 +232,8 @@ public class DataSourceAction extends BaseAction {
 	 * @throws IOException
 	 */
 	@UploadFile
-	public void uploadFile(String agent_ip, String agent_port, Long user_id,
-	                       String[] files) throws IOException {
-		//FIXME idea的建议要看，要想，想听！
-		// 在哪里用变量，就再哪里定义！！！！！！！！！！！！！！
-		StringBuffer temp = new StringBuffer();
+	public void uploadFile(@RequestParam String agent_ip, @RequestParam String agent_port,
+	                       @RequestParam Long user_id, String[] files) throws IOException {
 		String strTemp = null;
 		// 1.循环遍历获取文件以及文件名
 		try {
@@ -228,7 +246,8 @@ public class DataSourceAction extends BaseAction {
 					//FIXME 说明在什么情况下，会进入这里
 					continue;
 				}
-				//注意：不同的浏览器提交的文件名是不一样的，有些浏览器提交上来的文件名是带有路径的，如： c:\a\b\1.txt，而有些只是单纯的文件名，如：1.txt
+				/*注意：不同的浏览器提交的文件名是不一样的，有些浏览器提交上来的文件名是带有路径的，
+				如： c:\a\b\1.txt，而有些只是单纯的文件名，如：1.txt*/
 				//处理获取到的上传文件的文件名的路径部分，只保留文件名部分
 				fileName = fileName.substring(fileName.lastIndexOf(File.separator + File.separator) + 1);
 				InputStream in = new FileInputStream(uploadedFile);
@@ -237,13 +256,14 @@ public class DataSourceAction extends BaseAction {
 				//FIXME 缓冲区为什么这么小
 				byte[] buffer = new byte[1];
 				//循环将输入流读入到缓冲区当中，(len=in.read(buffer))>0就表示in里面还有数据
+				StringBuffer temp = new StringBuffer();
 				while ((in.read(buffer)) > 0) {
-					temp.append((new String(buffer, "UTF-8")));
+					temp.append((new String(buffer, CodecUtil.UTF8_CHARSET)));
 				}
 				//关闭输入流
 				in.close();
 				// 3.使用base64编码
-				strTemp = new String(Base64.decode(temp.toString()).getBytes("UTF-8"), "UTF-8");
+				strTemp = new String(Base64.getDecoder().decode(temp.toString()), CodecUtil.UTF8_CHARSET);
 				//FIXME 这程序测试过吗？上面的 temp 没有做 clear 也可以？
 			}
 			// 4.导入贴源层元数据
@@ -256,7 +276,7 @@ public class DataSourceAction extends BaseAction {
 	}
 
 	/**
-	 * 导入贴源层元数据
+	 * 导入数据源数据
 	 * FIXME 为什么是 “贴源层元数据”
 	 * <p>
 	 * 1.解析文件获取文件所有信息
@@ -268,9 +288,9 @@ public class DataSourceAction extends BaseAction {
 	 * @param agent_port      agent端口
 	 * @param agent_ip        agent地址
 	 * @param user_id         页面传递用户编号
-	 * @param user_collect_id 登录用户编号      FIXME 解释这个ID和 user_id 有什么区别，为什么需要
+	 * @param user_collect_id 登录用户id     FIXME 解释这个ID和 user_id 有什么区别，为什么需要
 	 */
-	public void importDclData(String strTemp, String agent_ip, String agent_port, Long
+	private void importDclData(String strTemp, String agent_ip, String agent_port, Long
 			user_id, Long user_collect_id) {
 		// 1.获取文件所有信息
 		//FIXME 徐超确认：fastJson在转换对象的时候，不需要使用诸如 TypeReference 一类的明确类型吗？
@@ -291,7 +311,7 @@ public class DataSourceAction extends BaseAction {
 					throw new BusinessException("数据源名称重复");
 				}
 				//数据源data_source
-				data_source.setUser_id(user_collect_id);
+				data_source.setCreate_user_id(user_collect_id);
 				// 3.入库
 				if (data_source.add(Dbo.db()) != 1) {
 					throw new BusinessException(ExceptionEnum.DATA_ADD_ERROR);
@@ -474,54 +494,6 @@ public class DataSourceAction extends BaseAction {
 					}
 				}
 			}
-			//卸数作业参数表collect_frequency
-			if ("collect_frequency".equals(entry.getKey())) {
-				//获取卸数作业参数表collect_frequency信息
-				List<Collect_frequency> collect_frequency = JsonUtil.toObject(entry.getValue().toString(),
-						List.class);
-				//3.循环入库collect_frequency
-				for (Collect_frequency frequency : collect_frequency) {
-					if (1 != frequency.add(Dbo.db())) {
-						throw new BusinessException(ExceptionEnum.DATA_ADD_ERROR);
-					}
-				}
-			}
-			//压缩作业参数表collect_reduce
-			if ("collect_reduce".equals(entry.getKey())) {
-				// 获取压缩作业参数表collect_reduce信息
-				List<Collect_reduce> collect_reduce = JsonUtil.toObject(entry.getValue().toString(),
-						List.class);
-				//3.循环入库collect_reduce
-				for (Collect_reduce collect : collect_reduce) {
-					if (1 != collect.add(Dbo.db())) {
-						throw new BusinessException(ExceptionEnum.DATA_ADD_ERROR);
-					}
-				}
-			}
-			//传递作业参数表collect_transfer
-			if ("collect_transfer".equals(entry.getKey())) {
-				// 获取传递作业参数表collect_transfer信息
-				List<Collect_transfer> collect_transfer = JsonUtil.toObject(entry.getValue().toString(),
-						List.class);
-				//3.循环入库collect_transfer
-				for (Collect_transfer transfer : collect_transfer) {
-					if (1 != transfer.add(Dbo.db())) {
-						throw new BusinessException(ExceptionEnum.DATA_ADD_ERROR);
-					}
-				}
-			}
-			//清洗作业参数表collect_clean
-			if ("collect_clean".equals(entry.getKey())) {
-				//获取清洗作业参数表collect_clean信息
-				List<Collect_clean> collect_clean = JsonUtil.toObject(entry.getValue().toString(),
-						List.class);
-				//3.循环入库collect_clean
-				for (Collect_clean clean : collect_clean) {
-					if (1 != clean.add(Dbo.db())) {
-						throw new BusinessException(ExceptionEnum.DATA_ADD_ERROR);
-					}
-				}
-			}
 			// 信号文件入库信息signal_file
 			if ("signal_file".equals(entry.getKey())) {
 				//获取信号文件入库信息signal_file信息
@@ -636,7 +608,7 @@ public class DataSourceAction extends BaseAction {
 		// 1.封装数据库数据入map
 		//FIXME 被封装进去的数据，不需要使用Result，而且，这个Map应该指定明确类型而不是用Object
 		// 写100字的邮件，说明什么是泛型
-		Map collection_object = new HashMap<String, Object>();
+		Map<String, Object> collection_object = new HashMap<String, Object>();
 		//数据源data_source
 		Result dsResult = Dbo.queryResult("select * from data_source where source_id = ?", source_id);
 		//FIXME 查询结果存在性检查不需要？
@@ -910,10 +882,9 @@ public class DataSourceAction extends BaseAction {
 		collection_object.put("column_split", column_splitResult);
 
 		// 2.使用base64编码
-		byte[] bye = Base64.encode(JsonUtil.toJson(collection_object)).getBytes(
-				CodecUtil.UTF8_CHARSET);
+		byte[] bytes = Base64.getEncoder().encode(JsonUtil.toJson(collection_object).getBytes(CodecUtil.UTF8_CHARSET));
 		// 判断文件是否存在
-		if (bye == null) {
+		if (bytes == null) {
 			throw new BusinessException("此文件不存在");
 		}
 		// 通过流的方式写入文件
@@ -922,14 +893,14 @@ public class DataSourceAction extends BaseAction {
 		response.reset();
 
 		// 设置响应编码格式
-		response.setCharacterEncoding("UTF-8");
+		response.setCharacterEncoding(CodecUtil.UTF8_STRING);
 
 		// 设置响应头，控制浏览器下载该文件
 		response.setContentType("APPLICATION/OCTET-STREAM");
 
 		// 创建输出流
 		OutputStream out = response.getOutputStream();
-		out.write(bye);
+		out.write(bytes);
 		out.flush();
 		out.close();
 	}

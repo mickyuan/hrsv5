@@ -43,7 +43,7 @@ DEPLOY                                            CHAR(1) NOT NULL, --是否部�
 AI_DESC                                           VARCHAR(200) NULL, --描述
 AGENT_TYPE                                        CHAR(1) NOT NULL, --agent类别
 AGENT_ID                                          BIGINT default 0 NULL, --Agent_id
-USER_ID                                           DECIMAL(10) NOT NULL, --用户id
+USER_ID                                           BIGINT default 0 NOT NULL, --用户ID
 REMARK                                            VARCHAR(512) NULL, --备注
 CONSTRAINT AGENT_DOWN_INFO_PK PRIMARY KEY(DOWN_ID)   );
 
@@ -870,7 +870,8 @@ DATASOURCE_NAME                                   VARCHAR(512) NOT NULL, --数�
 SOURCE_REMARK                                     VARCHAR(512) NULL, --数据源详细描述
 CREATE_DATE                                       CHAR(8) NOT NULL, --创建日期
 CREATE_TIME                                       CHAR(6) NOT NULL, --创建时间
-建立用户ID                                            BIGINT default 0 NOT NULL, --建立用户ID
+CREATE_USER_ID                                    BIGINT default 0 NOT NULL, --用户ID
+DATASOURCE_REMARK                                 VARCHAR(512) NULL, --备注
 CONSTRAINT DATA_SOURCE_PK PRIMARY KEY(SOURCE_ID)   );
 
 --数据源与部门关系

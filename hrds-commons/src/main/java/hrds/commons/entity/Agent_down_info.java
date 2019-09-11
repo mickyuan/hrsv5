@@ -44,10 +44,10 @@ public class Agent_down_info extends TableEntity
 	private String deploy; //是否部署
 	private String ai_desc; //描述
 	private String remark; //备注
-	private Long user_id; //用户id
 	private Long agent_id; //Agent_id
 	private String user_name; //用户名
 	private String passwd; //密码
+	private Long user_id; //用户ID
 
 	/** 取得：agent类别 */
 	public String getAgent_type(){
@@ -135,20 +135,6 @@ public class Agent_down_info extends TableEntity
 	public void setRemark(String remark){
 		this.remark=remark;
 	}
-	/** 取得：用户id */
-	public Long getUser_id(){
-		return user_id;
-	}
-	/** 设置：用户id */
-	public void setUser_id(Long user_id){
-		this.user_id=user_id;
-	}
-	/** 设置：用户id */
-	public void setUser_id(String user_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(user_id)){
-			this.user_id=new Long(user_id);
-		}
-	}
 	/** 取得：Agent_id */
 	public Long getAgent_id(){
 		return agent_id;
@@ -178,5 +164,19 @@ public class Agent_down_info extends TableEntity
 	/** 设置：密码 */
 	public void setPasswd(String passwd){
 		this.passwd=passwd;
+	}
+	/** 取得：用户ID */
+	public Long getUser_id(){
+		return user_id;
+	}
+	/** 设置：用户ID */
+	public void setUser_id(Long user_id){
+		this.user_id=user_id;
+	}
+	/** 设置：用户ID */
+	public void setUser_id(String user_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(user_id)){
+			this.user_id=new Long(user_id);
+		}
 	}
 }
