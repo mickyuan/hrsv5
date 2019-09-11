@@ -27,16 +27,22 @@ public class ColumnCleanUtil {
 	private final static Logger LOGGER = LoggerFactory.getLogger(ColumnCleanUtil.class);
 
 	/**
-	 * @param columnValue  : 列值
-	 * @param columnName   : 列名
-	 * @param colCleanRule : 清洗规则
-	 * @return
-	 */
-	/*
+	 * @Description: 列清洗入口方法
+	 * @Param: [columnValue : 列值, 取值范围 : String]
+	 * @Param: [columnName : 列名, 取值范围 : String]
+	 * @Param: [group : 用于写Parquet, 取值范围 : org.apache.parquet.example.data.Group对象]
+	 * @Param: [colType : 列类型, 取值范围 : String]
+	 * @Param: [fileType : 落地文件格式(CSV， PARQUET， ORC,SEQUENCE), 取值范围 : String]
+	 * @Param: [colCleanRule : 列清洗规则, 取值范围 : Map<String, Map<String, Object>>]
+	 * @Param: [lineData : 用于写ORC, 取值范围 : List]
+	 * @return: java.lang.String
+	 * @Author: WangZhengcheng
+	 * @Date: 2019/9/11
+	 * 步骤：
 	 * 1、校验入参合法性
 	 * 2、根据列名拿到该列的清洗规则
 	 * 3、按照清洗优先级，从大到小对该列数据进行数据清洗
-	 * */
+	 */
 	public static String colDataClean(String columnValue, String columnName, Group group, String colType, String fileType, Map<String, Map<String, Object>> colCleanRule, List<Object> lineData) {
 		//1、校验入参合法性
 		if (columnValue == null || columnName == null) {

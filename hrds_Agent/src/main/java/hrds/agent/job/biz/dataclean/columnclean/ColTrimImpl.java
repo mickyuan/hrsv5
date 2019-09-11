@@ -11,10 +11,22 @@ package hrds.agent.job.biz.dataclean.columnclean;
  * Since JDK 1.8
  **/
 public class ColTrimImpl extends AbstractColumnClean {
-
+	/**
+	 * @Description: 列清洗首尾去空实现
+	 * @Param: [flag : 是否进行首尾去空, 取值范围 : true(进行去空) false(不进行去空)]
+	 * @Param: [columnValue : 列值, 取值范围 : String]
+	 * @return: java.lang.String
+	 * @Author: WangZhengcheng
+	 * @Date: 2019/9/11
+	 * 步骤：
+	 * 1、判断是否进行首尾去空
+	 * 2、调用方法进行首尾去空
+	 */
 	@Override
 	public String trim(Boolean flag, String columnValue) {
+		//1、判断是否进行首尾去空
 		if (flag) {
+			//2、调用方法进行首尾去空
 			columnValue = columnValue.trim();
 		}
 		return columnValue;
