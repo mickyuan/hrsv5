@@ -1,4 +1,4 @@
---　系统的引用值个数:42
+--　系统的引用值个数:43
 --　本引用值的代码个数:2 -------i==1
 delete from code_info where ci_sp_class='52';
 INSERT INTO CODE_INFO  VALUES ('1', '52', '字符拆分方式', '偏移量', 'CharSplitType');
@@ -283,3 +283,17 @@ INSERT INTO CODE_INFO  VALUES ('2', '59', '存储层类型', 'Hbase', 'store_typ
 INSERT INTO CODE_INFO  VALUES ('3', '59', '存储层类型', 'solr', 'store_type');
 INSERT INTO CODE_INFO  VALUES ('4', '59', '存储层类型', 'ElasticSearch', 'store_type');
 INSERT INTO CODE_INFO  VALUES ('5', '59', '存储层类型', 'mongodb', 'store_type');
+--　本引用值的代码个数:12 -------i==43
+delete from code_info where ci_sp_class='60';
+INSERT INTO CODE_INFO  VALUES ('1001', '60', '文件类型', '全部文件', 'FileType');
+INSERT INTO CODE_INFO  VALUES ('1002', '60', '文件类型', '图片', 'FileType');
+INSERT INTO CODE_INFO  VALUES ('1003', '60', '文件类型', '文档', 'FileType');
+INSERT INTO CODE_INFO  VALUES ('1013', '60', '文件类型', 'PDF文件', 'FileType');
+INSERT INTO CODE_INFO  VALUES ('1023', '60', '文件类型', 'office文件', 'FileType');
+INSERT INTO CODE_INFO  VALUES ('1033', '60', '文件类型', '文本文件', 'FileType');
+INSERT INTO CODE_INFO  VALUES ('1043', '60', '文件类型', '压缩文件', 'FileType');
+INSERT INTO CODE_INFO  VALUES ('1053', '60', '文件类型', '日志文件', 'FileType');
+INSERT INTO CODE_INFO  VALUES ('1063', '60', '文件类型', '表数据文件', 'FileType');
+INSERT INTO CODE_INFO  VALUES ('1004', '60', '文件类型', '视频', 'FileType');
+INSERT INTO CODE_INFO  VALUES ('1005', '60', '文件类型', '音频', 'FileType');
+INSERT INTO CODE_INFO  VALUES ('1006', '60', '文件类型', '其它', 'FileType');
