@@ -1,6 +1,5 @@
 package hrds.b.biz.datasource;
 
-import fd.ng.core.conf.AppinfoConf;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
@@ -9,23 +8,23 @@ import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import hrds.commons.entity.Data_source;
 import hrds.commons.entity.Source_relation_dep;
-import hrds.commons.exception.BusinessException;
 import hrds.testbase.WebBaseTestCase;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.OptionalLong;
+import java.util.Random;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class DataSourceActionTest extends WebBaseTestCase {
 	private static final int Init_Rows = 10; // 向表中初始化的数据条数。
+
+	private static final long UserId = 5555;
 
 	@Before
 	public void before() {
@@ -34,20 +33,21 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			List<Object[]> params = new ArrayList<>();
 			List<Object[]> srdParams = new ArrayList<>();
 			// 初始化data_source表信息
-			for (Long i = -300L; i < -300 + Init_Rows; i++) {
-				Long source_id = i;
+			for (long i = -300L; i < -300 + Init_Rows; i++) {
+				long source_id = i;
 				String source_remark = "init" + i;
 				String datasource_name = "init" + i;
-				String datasource_number = "init" + i;
+				String datasource_number = "d" + i;
 				String create_date = DateUtil.getSysDate();
 				String create_time = DateUtil.getSysTime();
-				Long user_id = 1001L;
-				Object[] objects = new Object[]{source_id, source_remark, datasource_name, datasource_number, create_date, create_time, user_id};
+				Object[] objects = new Object[]{source_id, source_remark, datasource_name, datasource_number, create_date, create_time, UserId};
 				params.add(objects);
 				// source_relation_dep表信息
-				Long dep_id = i + Init_Rows;
-				Object[] srdObjects = {dep_id, source_id};
-				srdParams.add(srdObjects);
+				for (long j = 1; j <= 3; j++) {
+					long dep_id = j + Init_Rows + i;
+					Object[] srdObjects = {dep_id, source_id};
+					srdParams.add(srdObjects);
+				}
 			}
 			int[] num = SqlOperator.executeBatch(db,
 					"insert into " + Data_source.TableName + "( source_id, source_remark, datasource_name, " +
@@ -61,37 +61,35 @@ public class DataSourceActionTest extends WebBaseTestCase {
 					"insert into " + Source_relation_dep.TableName + "  values(?, ?)",
 					srdParams
 			);
-			assertThat("测试数据初始化", srdNum.length, is(Init_Rows));
+			assertThat("测试数据初始化", srdNum.length, is(30));
 
 			SqlOperator.commitTransaction(db);
 		}
-
 		// 用户登录
-		String responseValue = new HttpClient()
-				.buildSession()
-				.addData("username", "admin")
-				.addData("password", "admin")
-				.post(getUrlActionPattern() + "/" + AppinfoConf.AppBasePackage.replace(".", "/")
-						+ "/biz/zauth/loginAtSession")
-				.getBodyString();
-		ActionResult ar = JsonUtil.toObject(responseValue, ActionResult.class);
-		assertThat("用户登录", ar.isSuccess(), is(true));
+		//String responseValue = new HttpClient()
+		//		.buildSession()
+		//		.addData("username", UserId)
+		//		.addData("password", "111111")
+		//		.post("http://127.0.0.1:8099/A/action/hrds/a/biz/login/login")
+		//		.getBodyString();
+		//ActionResult ar = JsonUtil.toObject(responseValue, ActionResult.class);
+		//assertThat("用户登录", ar.getCode(), is(220));
 	}
 
 	@After
 	public void after() {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			for (Long i = -300L; i < -300 + Init_Rows; i++) {
+			for (long i = -300L; i < -300 + Init_Rows; i++) {
 				// 测试完成后删除data_source表测试数据
 				SqlOperator.execute(db, "delete from " + Data_source.TableName + "  where source_id=?", i);
-				Long num = SqlOperator.queryNumber(db,
+				long num = SqlOperator.queryNumber(db,
 						"select count(1) from " + Data_source.TableName + "  where source_id=?", i)
 						.orElseThrow(() -> new RuntimeException("count fail!"));
 				assertThat("此条数据删除后，记录数应该为0", num, is(0L));
 
 				// 测试完成后删除source_relation_dep表测试数据
 				SqlOperator.execute(db, "delete from " + Source_relation_dep.TableName + "  where source_id=?", i);
-				Long srdNum = SqlOperator.queryNumber(db,
+				long srdNum = SqlOperator.queryNumber(db,
 						"select count(1) from " + Source_relation_dep.TableName + "  where " +
 								"source_id=?", i)
 						.orElseThrow(() -> new RuntimeException("count fail!"));
@@ -101,51 +99,199 @@ public class DataSourceActionTest extends WebBaseTestCase {
 		}
 	}
 
+	/**
+	 * 新增数据源
+	 */
 	@Test
 	public void saveDataSource() {
-		Long source_id = -300L;
-		String datasource_name = "cs";
-		String datasource_number = "cs01";
-		String create_date = DateUtil.getSysDate();
-		String create_time = DateUtil.getSysTime();
-		Long user_id = 1001L;
+		String datasource_name = "cs" + new Random().nextInt(99);
+		String datasource_number = "cs" + new Random().nextInt(99);
 		String source_remark = "测试";
-		String dep_id = "-300,-299,-298";
+		String depIds = "-300,-299,-298";
+		String bodyString = new HttpClient()
+				.addData("source_remark", source_remark)
+				.addData("datasource_name", datasource_name)
+				.addData("datasource_number", datasource_number)
+				.addData("depIds", depIds)
+				.post(getActionUrl("saveDataSource")).getBodyString();
+		ActionResult ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		assertThat(ar.isSuccess(), is(true));
+	}
+
+	/**
+	 * 新增数据源，数据源编号重复
+	 */
+	@Test
+	public void saveDataSource2() {
+		String datasource_name = "cs" + new Random().nextInt(99);
+		String datasource_number = "d300";
+		String source_remark = "测试" + new Random().nextInt(99);
+		String depIds = "-300";
+		String bodyString = new HttpClient()
+				.addData("source_remark", source_remark)
+				.addData("datasource_name", datasource_name)
+				.addData("datasource_number", datasource_number)
+				.addData("depIds", depIds)
+				.post(getActionUrl("saveDataSource")).getBodyString();
+		ActionResult ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		assertThat(ar.isSuccess(), is(false));
+		assertThat((String) ar.getMessage(), is("数据源编号重复,datasource_number=d300"));
+	}
+
+	/**
+	 * 新增数据源，数据源名称不能为空
+	 */
+	@Test
+	public void saveDataSource3() {
+		String datasource_number = "ds" + new Random().nextInt(99);
+		String source_remark = "测试";
+		String depIds = "-300";
+		String bodyString = new HttpClient()
+				.addData("source_remark", source_remark)
+				.addData("datasource_name", "")
+				.addData("datasource_number", datasource_number)
+				.addData("depIds", depIds)
+				.post(getActionUrl("saveDataSource")).getBodyString();
+		ActionResult ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		assertThat(ar.isSuccess(), is(false));
+		assertThat((String) ar.getMessage(), is("数据源名称不能为空以及不能为空格，datasource_name="));
+	}
+
+	/**
+	 * 新增数据源，数据源编号不能为空
+	 */
+	@Test
+	public void saveDataSource4() {
+		String datasource_name = "cs" + new Random().nextInt(99);
+		String source_remark = "测试";
+		String depIds = "-300";
+		String bodyString = new HttpClient()
+				.addData("source_remark", source_remark)
+				.addData("datasource_name", datasource_name)
+				.addData("datasource_number", "")
+				.addData("depIds", depIds)
+				.post(getActionUrl("saveDataSource")).getBodyString();
+		ActionResult ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		assertThat(ar.isSuccess(), is(false));
+		assertThat((String) ar.getMessage(), is("数据源编号不能为空以及不能为空格或数据源编号长度不能超过四位，datasource_number="));
+	}
+
+	/**
+	 * 新增数据源，数据源编号长度不能超过四位
+	 */
+	@Test
+	public void saveDataSource5() {
+		String datasource_name = "cs" + new Random().nextInt(99);
+		String source_remark = "测试";
+		String depIds = "-300";
+		String bodyString = new HttpClient()
+				.addData("source_remark", source_remark)
+				.addData("datasource_name", datasource_name)
+				.addData("datasource_number", "ds100")
+				.addData("depIds", depIds)
+				.post(getActionUrl("saveDataSource")).getBodyString();
+		ActionResult ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		assertThat(ar.isSuccess(), is(false));
+		assertThat((String) ar.getMessage(), is("数据源编号不能为空以及不能为空格或数据源编号长度不能超过四位，datasource_number=ds100"));
+	}
+
+	/**
+	 * 新增数据源，数据源编号不能为空格
+	 */
+	@Test
+	public void saveDataSource6() {
+		String datasource_name = "cs" + new Random().nextInt(99);
+		String source_remark = "测试";
+		String depIds = "-300";
+		String bodyString = new HttpClient()
+				.addData("source_remark", source_remark)
+				.addData("datasource_name", datasource_name)
+				.addData("datasource_number", " ")
+				.addData("depIds", depIds)
+				.post(getActionUrl("saveDataSource")).getBodyString();
+		ActionResult ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		assertThat(ar.isSuccess(), is(false));
+		assertThat((String) ar.getMessage(), is("数据源编号不能为空以及不能为空格或数据源编号长度不能超过四位，datasource_number= "));
+	}
+	/**
+	 * 新增数据源，数据源名称不能为空格
+	 */
+	@Test
+	public void saveDataSource7() {
+		String datasource_number = "ds" + new Random().nextInt(99);
+		String source_remark = "测试";
+		String depIds = "-300";
+		String bodyString = new HttpClient()
+				.addData("source_remark", source_remark)
+				.addData("datasource_name", " ")
+				.addData("datasource_number", datasource_number)
+				.addData("depIds", depIds)
+				.post(getActionUrl("saveDataSource")).getBodyString();
+		ActionResult ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		assertThat(ar.isSuccess(), is(false));
+		assertThat((String) ar.getMessage(), is("数据源名称不能为空以及不能为空格，datasource_name= "));
+	}
+	/**
+	 * 保存数据源，部门id不能为空
+	 */
+	@Test
+	public void saveDataSource8() {
+		String datasource_name = "cs"+new Random().nextInt(99);
+		String datasource_number = "ds"+new Random().nextInt(99);
+		String source_remark = "测试";
+		String depIds = "";
+		String bodyString = new HttpClient()
+				.addData("source_remark", source_remark)
+				.addData("datasource_name", datasource_name)
+				.addData("datasource_number", datasource_number)
+				.addData("depIds", depIds)
+				.post(getActionUrl("saveDataSource")).getBodyString();
+		ActionResult ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		assertThat(ar.isSuccess(), is(false));
+	}
+	/**
+	 * 保存数据源，部门id不能为空格
+	 */
+	@Test
+	public void saveDataSource9() {
+		String datasource_name = "cs"+new Random().nextInt(99);
+		String datasource_number = "ds"+new Random().nextInt(99);
+		String source_remark = "测试3";
+		String depIds = " ";
+		String bodyString = new HttpClient()
+				.addData("source_remark", source_remark)
+				.addData("datasource_name", datasource_name)
+				.addData("datasource_number", datasource_number)
+				.addData("depIds", depIds)
+				.post(getActionUrl("saveDataSource")).getBodyString();
+		ActionResult ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		assertThat(ar.isSuccess(), is(false));
+		assertThat(ar.getMessage(),is("部门id不能为空格，depIds= "));
+	}
+	/**
+	 * 编辑数据源
+	 */
+	@Test
+	public void saveDataSource10() {
+		long source_id = -300L;
+		String datasource_name = "cs03";
+		String datasource_number = "cs03";
+		String source_remark = "测试"+new Random().nextInt(99);
+		String depIds = "-300,-299";
 		String bodyString = new HttpClient()
 				.addData("source_id", source_id)
 				.addData("source_remark", source_remark)
 				.addData("datasource_name", datasource_name)
 				.addData("datasource_number", datasource_number)
-				.addData("create_date", create_date)
-				.addData("create_time", create_time)
-				.addData("user_id", user_id)
-				.addData("dep_id", dep_id)
+				.addData("depIds", depIds)
 				.post(getActionUrl("saveDataSource")).getBodyString();
 		ActionResult ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(true));
-		// 验证DB里面的数据是否正确(接收的数据与入库数据做对比）
-		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			Map<String, Object> result = SqlOperator.queryOneObject(db,
-					"select * from " + Data_source.TableName + " where source_id=?", source_id);
-			String new_datasource_name = (String) result.get("datasource_name");
-			String new_create_date = (String) result.get("create_date");
-			String new_create_time = (String) result.get("create_time");
-			Long new_user_id = Long.valueOf(String.valueOf(result.get("user_id")));
-
-			assertThat(datasource_name, is(new_datasource_name));
-			assertThat(create_date, is(new_create_date));
-			assertThat(create_time, is(new_create_time));
-			assertThat(user_id, is(new_user_id));
-
-			SqlOperator.queryNumber(db,
-					"select count(*) count from " + Source_relation_dep.TableName + " where source_id=?",
-					source_id).orElseThrow(() -> new BusinessException("查询异常"));
-		}
 	}
 
 	@Test
 	public void searchDataSource() {
-		Long source_id = -299L;
+		long source_id = -299L;
 		String bodyString = new HttpClient().addData("source_id", source_id)
 				.post(getActionUrl("searchDataSource")).getBodyString();
 		ActionResult ar = JsonUtil.toObject(bodyString, ActionResult.class);
@@ -155,7 +301,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 	@Test
 	public void deleteDataSource() {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			Long source_id = -298L;
+			long source_id = -298L;
 			// 验证DB里面预期被删除的数据是存在的
 			OptionalLong result = SqlOperator.queryNumber(db,
 					"select count(1) from " + Data_source.TableName + " where source_id=?", source_id);
@@ -168,7 +314,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 					.getBodyString();
 			ActionResult ar = JsonUtil.toObject(responseValue, ActionResult.class);
 			assertThat(ar.isSuccess(), is(true));
-			assertThat(ar.getCode(), is(200));
+			assertThat(ar.isSuccess(), is(true));
 
 			// 验证DB里面的数据是否正确
 			result = SqlOperator.queryNumber(db,
@@ -180,7 +326,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 	@Test
 	public void deleteSourceRelationDep() {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			Long source_id = -297L;
+			long source_id = -297L;
 			// 验证DB里面预期被删除的数据是存在的
 			OptionalLong result = SqlOperator.queryNumber(db,
 					"select count(1) from " + Source_relation_dep.TableName + " where source_id=?", source_id);

@@ -24,20 +24,24 @@ public class JobFactory {
 	/**
 	 * 创建作业实例
 	 *
-	 * @param jobInfo        JobInfo对象，表示一个作业
-	 * @param dbConfig       DBConfigBean对象，表示数据库连接信息
-	 * @param jobParam       JobParamBean对象，表示作业参数
-	 * @param statusFilePath 作业状态文件地址，用于更新运行时状态
-	 * @param jobStatus      JobStatusInfo对象，表示一个作业的状态
+	 * @param jobInfo        表示一个作业, 取值范围：JobInfo对象
+	 * @param dbConfig       表示数据库连接信息, 取值范围：DBConfigBean对象
+	 * @param jobParam       表示作业参数, 取值范围：JobParamBean对象
+	 * @param statusFilePath 用于更新运行时状态, 取值范围：作业状态文件地址
+	 * @param jobStatus      表示一个作业的状态, 取值范围：JobStatusInfo对象
 	 * @return com.beyondsoft.agent.core.job.JobInterface
 	 * @author 13616
 	 * @date 2019/8/7 11:55
+	 * 步骤：
+	 *      1、判断采集作业类型
+	 *      2、根据作业类型创建具体的JobInterface实例
 	 */
 	public static JobInterface newInstance(JobInfo jobInfo, DBConfigBean dbConfig, JobParamBean jobParam, String statusFilePath, JobStatusInfo jobStatus) {
 
 		JobInterface job;
-		//判断采集类型
+		//1、判断采集作业类型
 		String collectType = jobParam.getCollect_type();
+		//TODO 下面的枚举要换成hrds-commons里面的代码项，并且判断枚举要用==
 		if (JobCollectTypeConstant.DATA_FILE_COLLECTION.equals(collectType)) {
 			job = new DataFileJobImpl(jobInfo, jobParam, statusFilePath, jobStatus);
 		} else if (JobCollectTypeConstant.DB_COLLECTION.equals(collectType)) {
