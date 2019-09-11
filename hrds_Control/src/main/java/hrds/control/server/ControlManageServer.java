@@ -71,17 +71,29 @@ public class ControlManageServer {
 
 		@Override
 		public void run() {
+			try {
+				//用于将作业定义表中的作业，通过一定的判断及检查，登记到内存表中
+				boolean hasFrequancy = taskManager.loadReadyJob();
 
-			//用于将作业定义表中的作业，通过一定的判断及检查，登记到内存表中
-			taskManager.loadReadyJob();
-
-			while( run ) {
-                taskManager.publishReadyJob();
-				try {
-					Thread.sleep(500);
+				while( run ) {
+					taskManager.publishReadyJob(hasFrequancy);
+					try {
+						Thread.sleep(500);
+					}
+					catch(InterruptedException e) {
+						logger.warn("系统出现异常：{}，但是继续执行", e.getMessage());
+					}
 				}
-				catch(InterruptedException e) {
-					logger.warn("系统出现异常：{}，但是继续执行", e.getMessage());
+			}catch(Exception ex) {
+				logger.error("Exception happened!" + ex);
+				logger.error(ex.getStackTrace());
+				ex.printStackTrace();
+				StackTraceElement[] stackElements = ex.getStackTrace();
+				if( stackElements != null ) {
+					for(int i = 0; i < stackElements.length; i++) {
+						logger.error(stackElements[i].getClassName() + stackElements[i].getFileName() + stackElements[i].getLineNumber()
+								+ stackElements[i].getMethodName());
+					}
 				}
 			}
 		}

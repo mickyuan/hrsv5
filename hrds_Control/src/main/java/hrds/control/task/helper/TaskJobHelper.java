@@ -16,6 +16,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -190,6 +191,7 @@ public class TaskJobHelper {
      * 		Date型日期
      */
     public static Date getDateByString(String strDate) {
+
         //TODO 此处要用jdk8的LocalDate来进行日期计算，此处没仔细看
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
         dateFormat.setLenient(false);
@@ -205,12 +207,28 @@ public class TaskJobHelper {
     }
 
     /**
+     * 根据当前的跑批日期，计算下一次跑批日期。
+     * @author Tiger.Wang
+     * @date 2019/9/11
+     * @param currBathDate  当前跑批日期
+     * @return java.lang.String 下一次跑批日期
+     */
+    public static LocalDate getNextBathDate(LocalDate currBathDate) {
+
+        //TODO 此处要用jdk8的LocalDate来进行日期计算，此处没仔细看
+        ZoneId zoneId = ZoneId.systemDefault();
+        ZonedDateTime zdt = currBathDate.atStartOfDay(zoneId);
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(Date.from(zdt.toInstant()));
+        cal.add(Calendar.DAY_OF_MONTH, 1);
+
+        return LocalDateTime.ofInstant(cal.getTime().toInstant(), zoneId).toLocalDate();
+    }
+
+    /**
      * 计算下次执行日期
-     *
-     * @param currBathDate
-     * 			当次执行日期
-     * @param freqType
-     * 			执行频率
+     * @param currBathDate 当次执行日期
+     * @param freqType 执行频率
      * @return
      * 		下次执行日期
      */
@@ -266,6 +284,7 @@ public class TaskJobHelper {
      * 		Date型日期
      */
     public static Date getTtypeExecuteTime(String strDateTime) {
+
         //TODO 此处要用jdk8的LocalDate来进行日期计算，此处没仔细看
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         dateFormat.setLenient(false);
@@ -292,6 +311,7 @@ public class TaskJobHelper {
      * 		Date型日期
      */
     public static Date getZtypeExecuteTime(String strDate) {
+
         //TODO 此处要用jdk8的LocalDate来进行日期计算，此处没仔细看
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         dateFormat.setLenient(false);

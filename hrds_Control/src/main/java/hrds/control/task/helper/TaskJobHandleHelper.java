@@ -30,36 +30,35 @@ public class TaskJobHandleHelper {
 	private static final Logger logger = LogManager.getLogger();
 
 	/**干预类型，作业直接触发JT（JOB_TRIGGER）标识*/
-	public static final String JT = "JT";
+	private static final String JT = "JT";
 	/**干预类型，系统重跑SO（SYS_ORIGINAL）标识*/
-	public static final String SO = "SO";
+	private static final String SO = "SO";
 	/**干预类型，系统暂停SP（SYS_PAUSE）标识*/
-	public static final String SP = "SP";
+	private static final String SP = "SP";
 	/**干预类型，系统续跑SR（SYS_RESUME）标识*/
-	public static final String SR = "SR";
+	private static final String SR = "SR";
 	/**干预类型，作业停止JS（JOB_STOP）标识*/
-	public static final String JS = "JS";
+	private static final String JS = "JS";
 	/**干预类型，作业重跑JR（JOB_RERUN）标识*/
-	public static final String JR = "JR";
+	private static final String JR = "JR";
 	/**干预类型，作业临时调整优先级JP（JOB_PRIORITY）标识*/
-	public static final String JP = "JP";
+	private static final String JP = "JP";
 	/**干预类型，作业跳过JJ（JOB_JUMP）标识*/
-	public static final String JJ = "JJ";
+	private static final String JJ = "JJ";
 	/**干预类型，系统停止SS（SYS_STOP）标识*/
-	public static final String SS = "SS";
+	private static final String SS = "SS";
 	/**干预类型，分组级暂停标识*/
-	public static final String GP = "GP";
+	private static final String GP = "GP";
 	/**干预类型，分组级重跑，从源头开始标识*/
-	public static final String GC = "GC";
+	private static final String GC = "GC";
 	/**干预类型，系统重跑标识*/
-	public static final String GR = "GR";
-	public static final String SB = "SB";
+	private static final String GR = "GR";
+	private static final String SB = "SB";
 	/**干预类型，系统日切SF（SYS_SHIFT）标识*/
-	public static final String SF = "SF";
+	private static final String SF = "SF";
 
 	private static final String DEFAULT_BATH_DATE = "0";    //默认跑批日期
 
-	private static final String PARASEPARATOR = ",";	//参数分隔符
 	private static final String PARAERROR = "干预类型不支持或参数错误"; //参数错误信息
 	private static final String NOEXITSERROR = "任务不存在"; //任务不存在错误信息
 	private static final String STATEERROR = "当前状态不允许执行此操作"; //状态异常错误信息
@@ -93,7 +92,13 @@ public class TaskJobHandleHelper {
 		return new TaskJobHandleHelper(taskManager);
 	}
 
-	public boolean doHandle(List<Etl_job_hand> handles) {
+	/**
+	 * 根据干预信息集合，对集合内的每一项进行识别及执行作业干预。
+	 * @author Tiger.Wang
+	 * @date 2019/9/11
+	 * @param handles   Etl_job_hand对象，表示干预信息集合
+	 */
+	public void doHandle(List<Etl_job_hand> handles) {
 
 		for(Etl_job_hand handle : handles) {
 
@@ -105,18 +110,16 @@ public class TaskJobHandleHelper {
 				case SS:handleSysStopAll(handle);break; //系统停止
 				case JS:handleJobStop(handle);break;    //作业停止
 				case JR:handleJobRerun(handle);break;   //作业重跑
-				case JP:;break; //TODO 该干预方式，etl_job_hand表中缺少必要数据
+				case JP:;break; //TODO 该干预方式，etl_job_hand表中缺少必要数据，跟干预参数有关，我要去确认一下
 				case JJ:handleJobskip(handle);break;    //作业跳过
 				case SB:;break; //TODO 原版代码，跟   SS 处理逻辑一模一样
 				case GP:;break;
 				case GC:;break;
 				case GR:;break;
-				case SF:;break;
+				case SF:handleSysShift(handle);break;   //系统日切
 				default:break;
 			}
 		}
-
-		return true;
 	}
 
 	/**
@@ -238,7 +241,8 @@ public class TaskJobHandleHelper {
 		//3、将调度作业表中的所有作业的作业状态标识为[停止]，TODO 此处较原版改动：不再使用reputMap(map)
 		TaskSqlHelper.updateReadyEtlJobStatus(handle.getEtl_sys_cd(), Job_Status.STOP.getCode());
 		//4、停止所有已经在运行中的作业
-		List<Etl_job_cur> etlJobs = TaskSqlHelper.getRunningEtlJobs(handle.getEtl_sys_cd());
+		List<Etl_job_cur> etlJobs = TaskSqlHelper.getEtlJobsByJobStatus(handle.getEtl_sys_cd(),
+				Job_Status.RUNNING.getCode());
 		if(etlJobs.size() != 0) {
 			stopRunningJobs(etlJobs);
 			try {
@@ -312,7 +316,8 @@ public class TaskJobHandleHelper {
 		//TODO 此处有问题dao.stopAllJob(reputMap(map));为什么需要reputMap(map)
 		TaskSqlHelper.updateReadyEtlJobsDispStatus(handle.getEtl_sys_cd(), Job_Status.STOP.getCode());
 		//2、停止全部Running作业
-		List<Etl_job_cur> etlJobs = TaskSqlHelper.getRunningEtlJobs(handle.getEtl_sys_cd());
+		List<Etl_job_cur> etlJobs = TaskSqlHelper.getEtlJobsByJobStatus(handle.getEtl_sys_cd(),
+				Job_Status.RUNNING.getCode());
 		if(0 != etlJobs.size()) {
 			stopRunningJobs(etlJobs);
 			try {
@@ -378,7 +383,7 @@ public class TaskJobHandleHelper {
 				do {
 					Thread.sleep(DEFAULT_MILLISECONDS);
 				}
-				while(!checkJobsIsStop(Arrays.asList(etlJob)));
+				while(!checkJobsIsStop(Collections.singletonList(etlJob)));
 			}
 			catch(InterruptedException e) {
 				e.printStackTrace();
@@ -524,8 +529,19 @@ public class TaskJobHandleHelper {
 //		updateDoneHandle(handle);
 	}
 
+	/**
+	 * 用于干预类型：系统日切SF（SYS_SHIFT）标识的处理。
+	 * @note    1、系统日切干预；
+	 *          2、更新调度作业干预表，干预完成。
+	 * @author Tiger.Wang
+	 * @date 2019/9/11
+	 * @param handle    Etl_job_hand，表示干预信息
+	 */
 	private void handleSysShift(Etl_job_hand handle) {
-
+		//系统日切干预
+		taskManager.handleSysDayShift();
+		//更新干预表
+		updateDoneHandle(handle);
 	}
 
 	/**
@@ -618,7 +634,7 @@ public class TaskJobHandleHelper {
 		if(StringUtil.isEmpty(paraStr)) {
 			return Optional.empty();
 		}
-		String[] paraArray = paraStr.split(PARASEPARATOR);
+		String[] paraArray = paraStr.split(TaskManager.PARASEPARATOR);
 		Etl_job_cur etlJob = new Etl_job_cur();
 		switch (handleType){
 			case JT:
@@ -690,7 +706,7 @@ public class TaskJobHandleHelper {
 	 * @date 2019/9/10
 	 * @param etlJobHand    Etl_job_hand对象
 	 */
-	public void updateRunningHandle(Etl_job_hand etlJobHand) {
+	private void updateRunningHandle(Etl_job_hand etlJobHand) {
 
 		etlJobHand.setHand_status(Meddle_status.RUNNING.getCode());
 		etlJobHand.setMain_serv_sync(Main_Server_Sync.YES.getCode());

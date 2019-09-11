@@ -199,7 +199,7 @@ public class TaskSqlHelper {
 	 * @param currBathDate	当前跑批日期
 	 * @return boolean	是否有数据被删除
 	 */
-	public static boolean deleteEtlSysByBathDate(String etlSysCd, String currBathDate) {
+	public static boolean deleteEtlJobByBathDate(String etlSysCd, String currBathDate) {
 
 		try(DatabaseWrapper db = new DatabaseWrapper()) {
 			//TODO 此处较原版改动：不再判断frequnecy来决定是否删除作业类型为T+0且按频率调度的作业，
@@ -219,7 +219,7 @@ public class TaskSqlHelper {
 	 * @param etlSysCd	作业编号
 	 * @return boolean	是否有数据被删除
 	 */
-	public static boolean deleteEtlSysBySysCode(String etlSysCd) {
+	public static boolean deleteEtlJobBySysCode(String etlSysCd) {
 
 		try(DatabaseWrapper db = new DatabaseWrapper()) {
 			//TODO 此处较原版改动：不再判断frequnecy来决定是否删除作业类型为T+0且按频率调度的作业，
@@ -227,6 +227,47 @@ public class TaskSqlHelper {
 			int num = SqlOperator.execute(db, "DELETE FROM etl_job WHERE etl_sys_cd = ? ", etlSysCd);
 
 			return num > 0;
+		}
+	}
+
+	/**
+	 * 根据调度系统编号、当前跑批日期、调度作业状态来删除etl_job表的信息。注意，该方法不会删除调度触发方式为[频率]的作业。
+	 * @author Tiger.Wang
+	 * @date 2019/9/11
+	 * @param etlSysCd  调度系统编号
+	 * @param currBathDate  当前跑批日期
+	 * @param jobStatus 调度作业状态
+	 * @return boolean  是否有数据被删除
+	 */
+	public static boolean deleteEtlJobWithoutFrequency(String etlSysCd, String currBathDate, String jobStatus) {
+
+		try(DatabaseWrapper db = new DatabaseWrapper()) {
+
+			int num = SqlOperator.execute(db, "DELETE FROM etl_job WHERE etl_sys_cd = ? " +
+					"AND curr_bath_date = ? AND job_disp_status = ? AND disp_type != ?",
+					etlSysCd, currBathDate, jobStatus, Dispatch_Frequency.PinLv.getCode());
+
+			return num == 1;
+		}
+	}
+
+	/**
+	 * 根据调度系统编号、当前跑批日期、调度作业状态来删除etl_job表的信息。
+	 * @author Tiger.Wang
+	 * @date 2019/9/11
+	 * @param etlSysCd  调度系统编号
+	 * @param currBathDate  当前跑批日期
+	 * @param jobStatus 调度作业状态
+	 * @return boolean  是否有数据被删除
+	 */
+	public static boolean deleteEtlJobByJobStatus(String etlSysCd, String currBathDate, String jobStatus) {
+
+		try(DatabaseWrapper db = new DatabaseWrapper()) {
+
+			int num = SqlOperator.execute(db, "DELETE FROM etl_job WHERE etl_sys_cd = ? AND curr_bath_date = ? " +
+							"AND job_disp_status = ?", etlSysCd, currBathDate, jobStatus);
+
+			return num == 1;
 		}
 	}
 
@@ -259,7 +300,7 @@ public class TaskSqlHelper {
 
 		try(DatabaseWrapper db = new DatabaseWrapper()) {
 
-			return job.add(db) > 0;
+			return job.add(db) == 1;
 		}
 	}
 
@@ -597,19 +638,20 @@ public class TaskSqlHelper {
 	}
 
 	/**
-	 * 根据调度系统编号，获取需要调度的作业（作业状态为运行中）
+	 * 根据调度系统编号，获取指定作业状态的作业。
 	 * @author Tiger.Wang
 	 * @date 2019/9/10
 	 * @param etlSysCd  调度系统编号
+	 * @param jobStatus 作业状态
 	 * @return java.util.List<hrds.commons.entity.Etl_job>
 	 */
-	public static List<Etl_job_cur> getRunningEtlJobs(String etlSysCd) {
+	public static List<Etl_job_cur> getEtlJobsByJobStatus(String etlSysCd, String jobStatus) {
 
 		try(DatabaseWrapper db = new DatabaseWrapper()) {
 
 			return SqlOperator.queryList(db, Etl_job_cur.class, "SELECT * FROM etl_job WHERE job_disp_status = ? " +
 							"AND etl_sys_cd = ?",
-					Job_Status.RUNNING.getCode(), etlSysCd);
+					jobStatus, etlSysCd);
 		}
 	}
 
@@ -675,6 +717,21 @@ public class TaskSqlHelper {
 					jobPriorityCurr, etlSysCd, etlJob, currBathDate);
 
 			return num == 1;
+		}
+	}
+
+	/**
+	 * 在etl_job_hand表中新增一条数据。注意，此方法会根据传入的对象所携带的参数来新增数据。
+	 * @author Tiger.Wang
+	 * @date 2019/9/11
+	 * @param jobHand   Etl_job_hand对象，表示一个作业干预信息
+	 * @return boolean  是否有数据被新增
+	 */
+	public static boolean insertIntoEtlJobHand(Etl_job_hand jobHand) {
+
+		try(DatabaseWrapper db = new DatabaseWrapper()) {
+
+			return jobHand.add(db) == 1;
 		}
 	}
 }

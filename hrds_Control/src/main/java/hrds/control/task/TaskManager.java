@@ -1,5 +1,6 @@
 package hrds.control.task;
 
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -9,7 +10,7 @@ import java.util.*;
 import hrds.commons.codes.*;
 import hrds.commons.entity.*;
 import hrds.commons.exception.AppSystemException;
-import hrds.control.task.helper.NotifyMessageHelper;
+import hrds.control.task.helper.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -17,9 +18,6 @@ import fd.ng.core.utils.StringUtil;
 import hrds.control.beans.EtlJobBean;
 import hrds.control.beans.EtlJobDefBean;
 import hrds.control.beans.WaitFileJobInfo;
-import hrds.control.task.helper.RedisHelper;
-import hrds.control.task.helper.TaskJobHelper;
-import hrds.control.task.helper.TaskSqlHelper;
 import hrds.control.utils.DateUtil;
 
 /**
@@ -60,14 +58,16 @@ public class TaskManager {
 	private static final Calendar calendar = Calendar.getInstance();
 	private static final RedisHelper REDIS = RedisHelper.getInstance();
 	private static final NotifyMessageHelper NOTIFY = NotifyMessageHelper.getInstance();
+	private final TaskJobHandleHelper handleHelper;
 
 	private boolean sysRunning; //系统运行标识
-	private final LocalDate bathDate;   //当前批次日期
+	private LocalDate bathDate;   //当前批次日期
 	private final String etlSysCd;  //调度系统编号
 	private final boolean isResumeRun;  //系统续跑标识
 	private final boolean isAutoShift;  //自动日切标识
 	private final boolean isNeedSendSMS;    //作业发送警告信息标识
-	private static boolean isSysPause = false;  // 系统是否暂停标识
+	private static boolean isSysPause = false;  //系统是否暂停标识
+	private static boolean isSysJobShift = false;   //系统日切干预标识
 
 	private final static String RUNNINGJOBFLAG = "RunningJob";
 	private final static String FINISHEDJOBFLAG = "FinishedJob";
@@ -76,6 +76,9 @@ public class TaskManager {
 
 	private final static String REDISCONTENTSEPARATOR = "@";	//redis字符内容分隔符
 	private final static String REDISHANDLE = "Handle"; //redis已干预标识
+	public static final String PARASEPARATOR = ",";	//参数分隔符
+
+	private volatile boolean isLock = false;  // 同步标志位
 
 	/**
 	 * 静态工厂，用于构造TaskManager实例
@@ -115,6 +118,8 @@ public class TaskManager {
 		strFinishedJob = etlSysCd + FINISHEDJOBFLAG;
 		//TODO 此处读配置文件
 		isNeedSendSMS = true;
+
+		handleHelper = TaskJobHandleHelper.newInstance(this);
 	}
 
 	/**
@@ -126,6 +131,7 @@ public class TaskManager {
 	 * @date 2019/9/5
 	 */
 	 public void initEtlSystem() {
+
 		//1、清理redis中的数据。
 		REDIS.deleteByKey(strRunningJob, strFinishedJob);
 		//2、启动监控WaitFile线程。
@@ -153,10 +159,12 @@ public class TaskManager {
 	 * 			3、分析并加载作业定义信息，将作业加载进作业定义表（Map）；<br>
 	 * 			4、分析并加载作业依赖信息，将作业加载进调度作业间关系依赖表（Map）；<br>
 	 * 			5、分析并加载作业信息，将作业加载进待调度作业表（Map）。<br>
+	 * @return 该批次作业中，是否有按照频率调度的作业
 	 * @author Tiger.Wang
 	 * @date 2019/8/31
 	 */
-	public void loadReadyJob() {
+	public boolean loadReadyJob() {
+
 		//1、清理内存表：作业定义表、作业间关系依赖表、待调度作业表。
 		jobDefineMap.clear();
 		jobTimeDependencyMap.clear();
@@ -169,17 +177,21 @@ public class TaskManager {
 		loadJobDependency();
 		//5、分析并加载作业信息，将作业加载进待调度作业表（内存表）
 		loadExecuteJob(jobs, hasFrequancy);
+
+		return hasFrequancy;
 	}
 
 	/**
 	 * 用于处理内存表中登记的作业。注意，此方法会将内存表中符合执行条件的作业全部发送到redis中。
 	 * @author Tiger.Wang
-	 * @date 2019/9/6
+	 * @date 2019/9/11
+	 * @param hasFrequancy  该批次作业中，是否有按照频率调度的作业
 	 */
-	public void publishReadyJob() {
+	public void publishReadyJob(boolean hasFrequancy) {
 
 		boolean isSysShift = false;	//系统干预日切标志
 		int checkCount = 0;	//用于检查执行中的作业，防止通信异常时没有同步作业状态
+		boolean handleErrorEtlJob = false;  //是否强制干预错误执行错误的作业
 
 		while(!isSysShift) {	//若未检测到系统干越日切，则会一直运行，除非运行过程中触发了结束条件
 			//定期去检查执行中的作业，防止通信异常时没有同步作业状态，时间间隔为[200*线程睡眠毫秒数]
@@ -207,11 +219,136 @@ public class TaskManager {
 				logger.warn("------------- 系统干预，{} 调度停止 -----------------", etlSysCd);
 				break;
 			}
-			//该调度系统的干预信号
+			//该调度系统的干预信号，执行干预请求
 			List<Etl_job_hand> handles = TaskSqlHelper.getEtlJobHands(etlSysCd);
 			if(handles.size() != 0) {
-
+				handleHelper.doHandle(handles);
+				//执行过干预后查看是否有系统日切干预
+				if(isSysJobShift) {
+					bathDate = TaskJobHelper.getNextBathDate(bathDate);
+					logger.info("{} {}，系统日切干预完成", etlSysCd, bathDate);
+					isSysJobShift = false;
+					break;
+				}
 			}
+			//检查资源阀值是否有变动，更新sysResourceMap
+			updateSysUsedResource();
+
+			while(isLock) {
+				System.out.println("Lock is true, Please wait.");
+				try {
+					Thread.sleep(1000);
+				}
+				catch(InterruptedException ignored) {}
+			}
+			//TODO 此处为什么设置为true后马上会置为false
+			if(!isLock) isLock = true;
+
+			if( jobWaitingList.size() > 1 ) {
+				//按照优先级排序
+				logger.info("{} 作业等待队列中有带执行的作业，将进行排序", etlSysCd);
+				Collections.sort(jobWaitingList);
+			}
+
+			List<EtlJobBean> removeList = new ArrayList<>();
+			for(EtlJobBean waitingJob : jobWaitingList) {
+				String etlJob = waitingJob.getEtl_job();
+				if(Job_Status.WAITING == Job_Status.getCodeObj(waitingJob.getJob_disp_status())) {
+					//被干预执行起来的作业
+					removeList.add(waitingJob);
+				}
+				//判断系统资源是否足够
+				if(checkJobResource(etlJob)) {
+					//资源足够，作业执行，扣除资源
+					decreaseResource(etlJob);
+					waitingJob.setJob_disp_status(Job_Status.RUNNING.getCode());
+					waitingJob.setJobStartTime(calendar.getTime().getTime());
+					//更新调度作业状态为运行中
+					TaskSqlHelper.updateEtlJobDispStatus(waitingJob.getJob_disp_status(), etlSysCd,
+							etlJob, waitingJob.getCurr_bath_date());
+					//将需要立即执行的作业登记到redis中
+					String runningJob = etlJob + REDISCONTENTSEPARATOR + waitingJob.getCurr_bath_date();
+					REDIS.rpush(strRunningJob, runningJob);
+
+					removeList.add(waitingJob);
+				}else {
+					//资源不足够，优先度+1，最多+5，然后继续等待
+					EtlJobDefBean etlJobDef = jobDefineMap.get(etlJob);
+					if(etlJobDef != null && etlJobDef.getJob_priority() + 5 > waitingJob.getJob_priority_curr()) {
+
+						waitingJob.setJob_priority_curr(waitingJob.getJob_priority_curr() + 1);
+
+						TaskSqlHelper.updateEtlJobCurrPriority(waitingJob.getJob_priority_curr(), etlSysCd,
+								waitingJob.getEtl_job(), waitingJob.getCurr_bath_date());
+					}
+				}
+			}
+
+			// 将已经执行的作业从等待执行列表中移除
+			for(int i = 0; i < removeList.size(); ++i) {
+				Etl_job_cur tempJob = removeList.get(i);
+				if( jobWaitingList.contains(tempJob) ) {
+					jobWaitingList.remove(tempJob);
+				}
+			}
+
+			isLock = false;
+			//判断等待执行列表的作业是否全部完成
+			if(jobWaitingList.size() == 0) {
+
+				/**
+				 * xchao 2019年7月20日 11:37:49
+				 * 如果没有等待的作业，判断作业是否有失败的作业，
+				 * 如果有，强制性将错误的作业执行一次
+				 * TODO 如果干预或历史干预中有，不在强制执行
+				 * *******************************************开始
+				 */
+				if(!handleErrorEtlJob) {
+
+					if(checkAllJobFinishedORError(bathDate)) {
+						logger.info("检查是不是需要干预===========================，需要干预");
+						insertErrorJob2Handle(bathDate);
+						handleErrorEtlJob = true;
+					}
+				}
+
+				//检查今天作业是否已全部完成
+				if(checkAllJobFinished(bathDate)) {
+
+					/*xchao--一天调度多次的作业2017年8月15日 16:25:51 添加按秒、分钟、小时进行执行
+					 * 	添加且jobFrequencyMap.size()==0才会退出
+					 * 判断是否要自动日切
+					 * */
+					removeExecuteJobs(bathDate);
+
+					if(!isAutoShift && !hasFrequancy) {
+						// 将系统的状态置为S
+						TaskSqlHelper.updateEtlSysRunStatus(etlSysCd, Job_Status.STOP.getCode());
+
+						logger.info("不需要做自动日切，退出！");
+						//TODO 此处较原版改动：注销了thread.StopThread();
+						//thread.StopThread();
+						return;
+					}else if(isAutoShift) {
+						handleErrorEtlJob = false;
+						/*xchao--一天调度多次的作业2017年8月15日 16:25:51 添加按秒、分钟、小时进行执行
+						 *	如果需要日且，日期的时候不在查询作业为F类型的
+						 * */
+						if(hasFrequancy) {
+							TaskSqlHelper.deleteEtlJobWithoutFrequency(etlSysCd,
+									bathDate.format(DateUtil.DATE_DEFAULT), Job_Status.DONE.getCode());
+						}else {
+							TaskSqlHelper.deleteEtlJobByJobStatus(etlSysCd,
+									bathDate.format(DateUtil.DATE_DEFAULT), Job_Status.DONE.getCode());
+						}
+
+						bathDate = TaskJobHelper.getNextBathDate(bathDate);
+						logger.info("所有要执行的任务都为done，批量结束 {}", bathDate);
+						break;
+					}
+				}
+			}
+			//TODO 此处较原版改动：不在此处sleep，在ControlManageServer类中sleep
 		}
 	}
 
@@ -283,6 +420,10 @@ public class TaskManager {
 			if(!jobDefineMap.containsKey(etlJobId)) {
 				continue;
 			}
+			//TODO 此处要做什么
+			if(etlJobId.equals("EDW_TRAN_PDATA_T09_OB_DIM_INFO_H_S28")) {
+				etlJobId = "EDW_TRAN_PDATA_T09_OB_DIM_INFO_H_S28";
+			}
 			//依赖作业标识，若不存在依赖作业，则认为该祖业不作为依赖作业
 			String preEtlJob = etlDependency.getPre_etl_job();
 			if(StringUtil.isEmpty(preEtlJob)) {
@@ -343,7 +484,7 @@ public class TaskManager {
 			// 修改ETL_SYS的[批量日期]为日切后的的批量日期
 			TaskSqlHelper.updateEtlSysBathDate(etlSysCd, strBathDate);
 			// 清理ETL_JOB，范围限定为：该系统、该批量日期、非作业类型为T+0且按频率调度的作业。
-			TaskSqlHelper.deleteEtlSysByBathDate(etlSysCd, strBathDate);
+			TaskSqlHelper.deleteEtlJobByBathDate(etlSysCd, strBathDate);
 			// 计算当前调度日期可以执行的作业
 			loadCanDoJobWithNoResume(jobs, hasFrequancy);
 			// 将作业的状态都置为Pending
@@ -366,7 +507,7 @@ public class TaskManager {
 				// 修改ETL_SYS该系统的 [状态] 为运行中，并且登记当前跑批日期
 				TaskSqlHelper.updateEtlSysRunStatusAndBathDate(etlSysCd, strBathDate, Job_Status.RUNNING.getCode());
 				// 清理ETL_JOB，因为在系统第一次运行，且不是续跑的情况下，需要清理掉已登记的作业。
-				TaskSqlHelper.deleteEtlSysBySysCode(etlSysCd);
+				TaskSqlHelper.deleteEtlJobBySysCode(etlSysCd);
 				// 计算当前调度日期可以执行的作业
 				loadCanDoJobWithNoResume(jobs, hasFrequancy);
 				// 将资源表都清空，参数：0的含义为清空该工程下的已使用资源
@@ -849,7 +990,7 @@ public class TaskManager {
 	}
 //------------------------------分析并加载需要立即启动的作业信息用（loadReadyJob方法）end---------------------------------
 
-//-------------------------------分析并处理需要立即启动的作业（handleReadyJob方法）start----------------------------------
+//-------------------------------分析并处理需要立即启动的作业（publishReadyJob方法）start----------------------------------
 	/**
 	 * 检查调度中作业的状态，防止通信异常时没有同步作业状态。注意，此处主要是根据[待调度作业表（内存表）]与作业表的
 	 * 作业调度状态来推送该作业到redis（登记作业信息）
@@ -1027,7 +1168,7 @@ public class TaskManager {
 						String nextEtlJob = nextJobInfo.getEtl_job();
 						String nextEtlJobCurrBathDate = nextJobInfo.getCurr_bath_date();
 						if(nextJobInfo.isDependencyFlag()) {
-							EtlJobDefBean jobDefine = (EtlJobDefBean) jobDefineMap.get(nextEtlJob);
+							EtlJobDefBean jobDefine = jobDefineMap.get(nextEtlJob);
 							if( jobDefine == null ) {
 								return;
 							}
@@ -1462,6 +1603,14 @@ public class TaskManager {
 	}
 
 	/**
+	 * 对外提供的干预接口，用于干预系统日切
+	 * @author Tiger.Wang
+	 * @date 2019/9/11
+	 * @return boolean
+	 */
+	public void handleSysDayShift() { isSysJobShift = true; }
+
+	/**
 	 * 对外接口，获取系统是否暂停状态
 	 * @author Tiger.Wang
 	 * @date 2019/9/9
@@ -1509,7 +1658,182 @@ public class TaskManager {
 			logger.info("After decrease, {} used {}", resourceType, etlResource.getResource_used());
 		}
 	}
-//--------------------------------分析并处理需要立即启动的作业（handleReadyJob方法）end-----------------------------------
+
+	/**
+	 * 比较作业定义表jobDefineMap（内存表）中的作业的使用资源与系统作业表sysResourceMap（内存表），检查是否满足使用资源；
+	 * @author Tiger.Wang
+	 * @date 2019/9/11
+	 * @param etlJob    调度作业标识
+	 * @return boolean  是否满足使用资源
+	 */
+	private boolean checkJobResource(String etlJob) {
+
+		EtlJobDefBean jobDefine = jobDefineMap.get(etlJob);
+		logger.info("检测资源：{}", etlJob);
+		if( null == jobDefine ) {
+			return true;
+		}
+		List<Etl_job_resource_rela> resources = jobDefine.getJobResources();
+		for(Etl_job_resource_rela resource : resources) {
+			String resourceType = resource.getResource_type();
+			int needCount = resource.getResource_req();
+			logger.info("{} need {} {}", etlJob, resourceType, needCount);
+
+			Etl_resource etlResource = sysResourceMap.get(resourceType);
+			logger.info("{} maxCount is {}", resourceType, etlResource.getResource_max());
+			logger.info("{} usedCount is {}", resourceType, etlResource.getResource_used());
+
+			if(etlResource.getResource_max() < etlResource.getResource_used() + needCount) {
+				logger.info("{}'s resource is not enougt", etlJob);
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * 根据跑批日期，检查该日期下的作业是否全部完成
+	 * @author Tiger.Wang
+	 * @date 2019/9/11
+	 * @param bathDate  跑批日期
+	 * @return boolean  作业是否全部完成
+	 */
+	private boolean checkAllJobFinished(LocalDate bathDate) {
+
+		// 取得所有该调度日期的作业
+		Map<String, EtlJobBean> jobMap = jobExecuteMap.get(bathDate.format(DateUtil.DATE_DEFAULT));
+		if(jobMap == null) {
+			return false;
+		}
+		// 判断该调度日期的作业是否状态全部为"D"
+		Iterator<String> jobIter = jobMap.keySet().iterator();
+		while(jobIter.hasNext()) {
+			EtlJobBean exeJobInfo = jobMap.get(jobIter.next());
+			/**
+			 * xchao--2017年8月15日 16:25:51 添加按秒、分钟、小时进行执行
+			 * 不把执行时间为9999999的设置为完成不完成
+			 */
+			if(exeJobInfo.getExecuteTime() == zclong) {
+				continue;
+			}
+			if(Job_Status.DONE != Job_Status.getCodeObj(exeJobInfo.getJob_disp_status())) {
+				return false;
+			}
+		}
+		// 全部为[完成]状态时，返回true
+		return true;
+	}
+
+	/**
+	 * xchao 2019年7月25日 11:19:59
+	 *   判断当天调度作业是否已经全部是完成和失败
+	 * @param bathDate 当前跑批日期   （yyyy-MM-dd）
+	 * @return
+	 */
+	private boolean checkAllJobFinishedORError(LocalDate bathDate) {
+
+		// 取得所有该调度日期的作业
+		Map<String, EtlJobBean> jobMap = jobExecuteMap.get(bathDate.format(DateUtil.DATE_DEFAULT));
+		if( jobMap == null ) {
+			return false;
+		}
+
+		// 判断该调度日期的作业是否状态全部为"D"
+		Iterator<String> jobIter = jobMap.keySet().iterator();
+		logger.info(jobMap.size() + "===============");
+		Set<String> status = new HashSet<String>();
+		while( jobIter.hasNext() ) {
+			EtlJobBean exeJobInfo = jobMap.get(jobIter.next());
+			status.add(exeJobInfo.getJob_disp_status());
+		}
+		logger.info(status.toString() + "===============");
+
+		return !status.contains("R") && status.contains("E");
+	}
+
+	/**
+	 * 该方法根据当前跑批日期参数查询出执行错误的作业，将这些作业以系统干预的方式重跑。
+	 * @note    1、查询出执行错误的作业；
+	 *          2、没执行错误的作业登记到系统干预表中。
+	 * @author Tiger.Wang
+	 * @date 2019/9/11
+	 * @param bathDate  当前跑批日期
+	 */
+	private void insertErrorJob2Handle(LocalDate bathDate) {
+
+		String localDateTime = fd.ng.core.utils.DateUtil.getDateTime(DateUtil.DATETIME);
+
+		Etl_job_hand etlJobHand = new Etl_job_hand();
+		List<Etl_job_cur> etlJobCurs = TaskSqlHelper.getEtlJobsByJobStatus(etlSysCd, Job_Status.ERROR.getCode());
+
+		for(Etl_job_cur etlJobCur : etlJobCurs) {
+			etlJobHand.setHand_status(Meddle_status.TRUE.getCode());
+			etlJobHand.setMain_serv_sync(Main_Server_Sync.YES.getCode());
+			etlJobHand.setEtl_hand_type(Meddle_type.JOB_RERUN.getCode());
+			etlJobHand.setSt_time(localDateTime);
+			etlJobHand.setEnd_time(localDateTime);
+			//TODO event_id ？
+			etlJobHand.setEvent_id(localDateTime);
+			etlJobHand.setEtl_job(etlJobCur.getEtl_job());
+			etlJobHand.setPro_para(etlSysCd + PARASEPARATOR + etlJobCur.getEtl_job() +
+					PARASEPARATOR + bathDate.format(DateUtil.DATE_DEFAULT));
+
+			TaskSqlHelper.insertIntoEtlJobHand(etlJobHand);
+			logger.info("========================================" + etlJobCur.getEtl_job());
+		}
+	}
+
+	/**
+	 * 该方法将jobDefineMap（内存表）已不存在、jobExecuteMap（内存表）中不为频率调度的作业从jobExecuteMap中移除。
+	 * @author Tiger.Wang
+	 * @date 2019/9/11
+	 * @param bathDate  当前跑批日期
+	 */
+	private void removeExecuteJobs(LocalDate bathDate) {
+
+		Map<String, EtlJobBean> jobMap = jobExecuteMap.get(bathDate.format(DateUtil.DATE_DEFAULT));
+
+		Iterator<String> jobIter = jobMap.keySet().iterator();
+		while( jobIter.hasNext() ) {
+			String strJobName = jobIter.next();
+			EtlJobDefBean jobDefine = jobDefineMap.get(strJobName);
+			if( null == jobDefine ) {
+				jobIter.remove();
+				continue;
+			}
+
+			if(Dispatch_Frequency.PinLv != Dispatch_Frequency.getCodeObj(jobDefine.getDisp_freq())) {
+				//使用iterator.remove();删除当前map中的值，防止ConcurrentModificationException异常
+				jobIter.remove();
+			}
+		}
+
+		if(jobMap.size() == 0){
+			jobExecuteMap.remove(bathDate.format(DateUtil.DATE_DEFAULT));
+		}
+	}
+
+	/**
+	 * 更新调度系统使用的资源。注意，该方法会更新sysResourceMap（内存表）的作业使用资源。
+	 * @author Tiger.Wang
+	 * @date 2019/9/11
+	 */
+	private void updateSysUsedResource() {
+
+		//取得系统所有资源信息
+		List<Etl_resource> resources = TaskSqlHelper.getEtlSystemResources(etlSysCd);
+		for(Etl_resource etlResource : resources) {
+			String resourceType = etlResource.getResource_type();
+			int resourceMax =etlResource.getResource_max();
+			Etl_resource etlResourceMap = sysResourceMap.get(resourceType);
+			if(null != etlResourceMap && etlResourceMap.getResource_max() != resourceMax) {
+				etlResourceMap.setResource_max(resourceMax);
+				logger.info("{}'s maxCount change to {}", resourceType, etlResourceMap.getResource_max());
+			}
+		}
+	}
+//--------------------------------分析并处理需要立即启动的作业（publishReadyJob方法）end-----------------------------------
 	/**
 	 * 处理虚作业问题，该方法会更新虚作业信息及推送数据到redis。
 	 * @note    1、更新作业表中，虚作业的状态及其它信息；
