@@ -2,7 +2,7 @@ package hrds.control.task.helper;
 
 import fd.ng.core.utils.StringUtil;
 import hrds.commons.codes.Dispatch_Frequency;
-import hrds.commons.entity.Etl_job;
+import hrds.commons.entity.Etl_job_cur;
 import hrds.commons.entity.Etl_job_def;
 import hrds.commons.entity.Etl_para;
 import hrds.commons.exception.AppSystemException;
@@ -138,12 +138,13 @@ public class TaskJobHelper {
                     }
                     else if( "!".equals(String.valueOf(x)) ) {
                         Date date = TaskJobHelper.getDateByString(job.getCurr_bath_date());
-                        Etl_para etlPara = TaskSqlHelper.getEtlParameterVal("", strs).orElse(null);
-                        if( null == etlPara ) {
+                        Optional<Etl_para> etlParaOptional = TaskSqlHelper.getEtlParameterVal("", strs);
+                        if(!etlParaOptional.isPresent()) {
                             logger.warn("找不到对应变量[{}]", strs);
                             return arr;
                         }
                         String strsc = strs.substring(1, strs.length());
+                        Etl_para etlPara = etlParaOptional.get();
                         String paraVal = etlPara.getPara_val();
                         /**添加参数可以包含日期的自定义格式******************开始*/
                         SimpleDateFormat sd = new SimpleDateFormat(paraVal);
@@ -315,9 +316,9 @@ public class TaskJobHelper {
      * @param etlJobDef 复制源
      * @return hrds.entity.Etl_job
      */
-    public static Etl_job etlJobDefCopy2EltJob(Etl_job_def etlJobDef) {
+    public static Etl_job_cur etlJobDefCopy2EltJob(Etl_job_def etlJobDef) {
 
-        Etl_job etlJob = new Etl_job();
+        Etl_job_cur etlJob = new Etl_job_cur();
         try {
             BeanUtils.copyProperties(etlJob, etlJobDef);
         } catch (IllegalAccessException | InvocationTargetException e) {

@@ -35,10 +35,16 @@ import hrds.control.utils.DateUtil;
 public class TaskManager {
 
 	private static final Logger logger = LogManager.getLogger();
-	//TODO 这个名字叫什么我不知道
+	//TODO 这个名字叫什么我不知道，假如不能使用标识，那么使用LocalDateTime对象
 	private static final String DEFAULT_DATETIME = "2000-12-31 23:59:59";
-	// 调度作业定义表，TODO 此处应该放EtlJobDefBean
-	private static final Map<String, Etl_job_def> jobDefineMap = new HashMap<>();
+	//TODO 目的是解决按照频率，一天调度多次的问题，应该除掉该标识，和DEFAULT_DATETIME做一样的处理
+	private static final long zclong = 999999999999999999l;
+	public static final int MAXPRIORITY = 99;    //作业的最大优先级
+	public static final int MINPRIORITY = 1;    //作业的最小优先级
+	public static final int DEFAULT_PRIORITY = 5;  //默认作业优先级
+
+	// 调度作业定义表
+	private static final Map<String, EtlJobDefBean> jobDefineMap = new HashMap<>();
 	// 调度作业的时间依赖表
 	private static final Map<String, String> jobTimeDependencyMap = new HashMap<>();
 	// 调度作业间关系依赖表
@@ -49,10 +55,8 @@ public class TaskManager {
 	private static final List<WaitFileJobInfo> waitFileJobList = new ArrayList<>();
 	// 需要等待调度作业
 	private static final List<EtlJobBean> jobWaitingList = new ArrayList<>();
-	// 系统资源表
+	// 系统资源表，例如：定义了资源A数量为20，意味着本工程下所有归属为A的作业，一共能同时启动20个进程
 	private static final Map<String, Etl_resource> sysResourceMap = new HashMap<>();
-	//TODO 这个名字叫什么我不知道
-	private static final long zclong = 999999999999999999l;
 	private static final Calendar calendar = Calendar.getInstance();
 	private static final RedisHelper REDIS = RedisHelper.getInstance();
 	private static final NotifyMessageHelper NOTIFY = NotifyMessageHelper.getInstance();
@@ -63,6 +67,7 @@ public class TaskManager {
 	private final boolean isResumeRun;  //系统续跑标识
 	private final boolean isAutoShift;  //自动日切标识
 	private final boolean isNeedSendSMS;    //作业发送警告信息标识
+	private static boolean isSysPause = false;  // 系统是否暂停标识
 
 	private final static String RUNNINGJOBFLAG = "RunningJob";
 	private final static String FINISHEDJOBFLAG = "FinishedJob";
@@ -70,6 +75,7 @@ public class TaskManager {
 	private final String strFinishedJob;	//存入redis中的键值（标识已经停止的作业）
 
 	private final static String REDISCONTENTSEPARATOR = "@";	//redis字符内容分隔符
+	private final static String REDISHANDLE = "Handle"; //redis已干预标识
 
 	/**
 	 * 静态工厂，用于构造TaskManager实例
@@ -88,7 +94,7 @@ public class TaskManager {
 	}
 
 	/**
-	 * TaskManager类构造器，构造器私有化，使用newInstance方法获得静态实例，不允许外部构造。
+	 * TaskManager类构造器，构造器私有化，使用newInstance方法获得静态实例，不允许外部构造。注意，此处会初始化系统资源。
 	 * @author Tiger.Wang
 	 * @date 2019/8/30
 	 * @param sysRunning	系统是否在运行中
@@ -109,8 +115,6 @@ public class TaskManager {
 		strFinishedJob = etlSysCd + FINISHEDJOBFLAG;
 		//TODO 此处读配置文件
 		isNeedSendSMS = true;
-
-		initEtlSystem();
 	}
 
 	/**
@@ -121,7 +125,7 @@ public class TaskManager {
 	 * @author Tiger.Wang
 	 * @date 2019/9/5
 	 */
-	private void initEtlSystem() {
+	 public void initEtlSystem() {
 		//1、清理redis中的数据。
 		REDIS.deleteByKey(strRunningJob, strFinishedJob);
 		//2、启动监控WaitFile线程。
@@ -144,22 +148,20 @@ public class TaskManager {
 
 	/**
 	 * 分析并加载需要立即启动的作业信息。注意，此方法会将虚作业发送到redis。<br>
-	 * @note	1、清理内存表：作业定义表、作业间关系依赖表、待调度作业表；<br>
-	 * 			2、获取所有作业定义表的作业信息；<br>
-	 * 			3、分析并加载作业定义信息，将作业加载进作业定义表（内存表）；<br>
-	 * 			4、分析并加载作业依赖信息，将作业加载进调度作业间关系依赖表（内存表）；<br>
-	 * 			5、分析并加载作业信息，将作业加载进待调度作业表（内存表）。<br>
+	 * @note	1、清理内存表（Map）：作业定义表（Map）、作业间关系依赖表（Map）、待调度作业表（Map）；<br>
+	 * 			2、获取所有作业定义表（db）的作业信息；<br>
+	 * 			3、分析并加载作业定义信息，将作业加载进作业定义表（Map）；<br>
+	 * 			4、分析并加载作业依赖信息，将作业加载进调度作业间关系依赖表（Map）；<br>
+	 * 			5、分析并加载作业信息，将作业加载进待调度作业表（Map）。<br>
 	 * @author Tiger.Wang
 	 * @date 2019/8/31
 	 */
 	public void loadReadyJob() {
-		//TODO 此处有问题，如果每3秒调用一次该方法（意味着查询一次数据库来获取作业信息），
-		// 那么如果每次clear，是否还需要这两个全局变量
 		//1、清理内存表：作业定义表、作业间关系依赖表、待调度作业表。
 		jobDefineMap.clear();
 		jobTimeDependencyMap.clear();
 		jobDependencyMap.clear();
-		//2、获取所有作业定义表的作业信息。
+		//2、获取所有作业定义表的作业信息。TODO 此处不应该每隔一定时间查询一次数据库来获取作业定义
 		List<EtlJobDefBean> jobs = TaskSqlHelper.getAllDefJob(etlSysCd);
 		//3、分析并加载作业定义信息，将作业加载进作业定义表（内存表）
 		boolean hasFrequancy = loadJobDefine(jobs);
@@ -174,12 +176,12 @@ public class TaskManager {
 	 * @author Tiger.Wang
 	 * @date 2019/9/6
 	 */
-	public void handleReadyJob() {
+	public void publishReadyJob() {
 
 		boolean isSysShift = false;	//系统干预日切标志
 		int checkCount = 0;	//用于检查执行中的作业，防止通信异常时没有同步作业状态
 
-		while(!isSysShift){	//若未检测到系统干越日切，则会一直运行，除非运行过程中触发了结束条件
+		while(!isSysShift) {	//若未检测到系统干越日切，则会一直运行，除非运行过程中触发了结束条件
 			//定期去检查执行中的作业，防止通信异常时没有同步作业状态，时间间隔为[200*线程睡眠毫秒数]
 			if( checkCount == 200 ) {
 				checkReadyJob();
@@ -191,10 +193,13 @@ public class TaskManager {
 			// 每次Sleep结束后查看是否有达到调度时间的作业
 			checkTimeDependencyJob();
 			// 判断系统是否已经停止，可能不需要判断
-			Etl_sys etlSys = TaskSqlHelper.getEltSysBySysCode(etlSysCd).orElse(null);
-			if(null == etlSys) {
+			Optional<Etl_sys> etlSysOptional = TaskSqlHelper.getEltSysBySysCode(etlSysCd);
+			if(!etlSysOptional.isPresent()) {
 				throw new AppSystemException("根据调度系统编号无法获取到信息：" + etlSysCd);
-			}else if(Job_Status.STOP.getCode().equals(etlSys.getSys_run_status())) {
+			}
+			Etl_sys etlSys = etlSysOptional.get();
+
+			if(Job_Status.STOP.getCode().equals(etlSys.getSys_run_status())) {
 				sysRunning = false;
 				isSysShift = true;
 				//TODO 此处较原版改动：注释了以下内容
@@ -202,7 +207,7 @@ public class TaskManager {
 				logger.warn("------------- 系统干预，{} 调度停止 -----------------", etlSysCd);
 				break;
 			}
-			// 干预信号
+			//该调度系统的干预信号
 			List<Etl_job_hand> handles = TaskSqlHelper.getEtlJobHands(etlSysCd);
 			if(handles.size() != 0) {
 
@@ -219,7 +224,7 @@ public class TaskManager {
 	 * 			2、为作业设置需要的资源；
 	 * @author Tiger.Wang
 	 * @date 2019/9/3
-	 * @param jobs	作业列表
+	 * @param jobs	某个工程内配置的所有作业集合
 	 * @return boolean	是否有按频率调度的ETL调度频率类型作业
 	 */
 	private boolean loadJobDefine(List<EtlJobDefBean> jobs) {
@@ -228,26 +233,23 @@ public class TaskManager {
 			//getEtl_job()方法获取任务名（任务标识）
 			String etlJobId = job.getEtl_job();
 			String etlDispType = job.getDisp_type();
-			//TODO 此处较原版改动：1、disp_type中不再有"F"类型，通过判断disp_type为T+0，disp_freq为"F"类型来完成；
-			// 2、原版的getFJob(job.getEtl_job(), taskId, "def")改为checkFrquencyJob(job)，且全局变量jobFrequencyMap去除
+			//TODO 按照频率触发的有三种调度类型：依赖触发、T+1、T+0
 			/*
 			 * 1、判断每个作业是否需要立即执行:
 			 * 		一、若作业为T+0调度方式，在以频率为频率类型的情况下，则认为按频率调度的ETL调度频率类型作业
 			 * 			的结论，在不是以频率为频率类型的情况下，则认为该作业有时间依赖，并记录；
 			 *		二、若作业为T+1调度方式，则认为该作业有时间依赖，并记录。
 			 */
-			if(Dispatch_Type.ZTIMING.getCode().equals(etlDispType)) {
-				//TODO 此处有疑问，难道T+1不会有按小时、分钟触发
-				//TODO 此处较原版改动：在Dispatch_Type为ZTIMING与TIMING时都设置jobTimeDependencyMap，但是在ZTIMING时，
-				// 调度频率类型为PinLv，则会检测是否有频率类型作业，此处取消了jobFrequencyMap全局变量
-				if(Dispatch_Frequency.PinLv.getCode().equals(job.getDisp_freq())) {
-					//TODO 此处较原版改动：原版是getFJob(tempJob.getStrEtlJob(), strSystemCode, "def")，
+			Dispatch_Type dispTypeObj = Dispatch_Type.getCodeObj(etlDispType);
+			if(Dispatch_Type.TPLUS0 == dispTypeObj) {
+				if(Dispatch_Frequency.PinLv == Dispatch_Frequency.getCodeObj(job.getDisp_freq())) {
+					//此处较原版改动：原版是getFJob(tempJob.getStrEtlJob(), strSystemCode, "def")，
 					// 在该方法中不再queryIsAllDoneDef，因为job变量本身就代表着job_def的作业信息，没必要再次查询
 					return checkEtlDefJob(job);
 				}
 				// 如果作业的调度触发方式为T+0定时触发时，将作业及触发时间记录
 				jobTimeDependencyMap.put(etlJobId, job.getDisp_time());
-			}else if(Dispatch_Type.TIMING.getCode().equals(etlDispType)) {
+			}else if(Dispatch_Type.TPLUS1 == dispTypeObj) {
 				// 如果作业的调度触发方式为T+1定时触发时，将作业及触发时间记录
 				jobTimeDependencyMap.put(etlJobId, job.getDisp_time());
 			}
@@ -273,6 +275,7 @@ public class TaskManager {
 	 * @date 2019/9/3
 	 */
 	private void loadJobDependency() {
+
 		List<Etl_dependency> etlDependencies = TaskSqlHelper.getJobDependencyBySysCode(etlSysCd);
 		for(Etl_dependency etlDependency : etlDependencies) {
 			String etlJobId = etlDependency.getEtl_job();
@@ -430,7 +433,7 @@ public class TaskManager {
 				if( hasFrequancy && (strDispFreq).equals(Dispatch_Frequency.PinLv.getCode()) ) {
 
 				}else {
-					Etl_job etlJob = TaskJobHelper.etlJobDefCopy2EltJob(job);
+					Etl_job_cur etlJob = TaskJobHelper.etlJobDefCopy2EltJob(job);
 					TaskSqlHelper.insertIntoJobTable(etlJob);
 				}
 				job.setToday_disp(Today_Dispatch_Flag.YES.getCode());
@@ -456,8 +459,8 @@ public class TaskManager {
 	 */
 	private void loadExecuteJobWithRunning(String strSystemCode, String strBathDate) {
 
-		List<Etl_job> currentJobs= TaskSqlHelper.getEtlJobs(strSystemCode, strBathDate);
-		for(Etl_job job : currentJobs) {
+		List<Etl_job_cur> currentJobs= TaskSqlHelper.getEtlJobs(strSystemCode, strBathDate);
+		for(Etl_job_cur job : currentJobs) {
 			EtlJobBean executeJob = new EtlJobBean();
 			executeJob.setEtl_job(job.getEtl_job());
 			executeJob.setJob_disp_status(job.getJob_disp_status());
@@ -548,7 +551,7 @@ public class TaskManager {
 						}
 					}
 					job.setExecuteTime(0L);
-				} else if (Dispatch_Type.TIMING.getCode().equals(dispType)) {
+				} else if (Dispatch_Type.TPLUS1.getCode().equals(dispType)) {
 					// 定时T+1触发
 					String strDispTime = jobTimeDependencyMap.get(strJobName);
 					if (null == strDispTime) {
@@ -560,7 +563,7 @@ public class TaskManager {
 					}
 					job.setDependencyFlag(false);
 					logger.info("{}'s executeTime={}", strJobName, job.getExecuteTime());
-				} else if (Dispatch_Type.ZTIMING.getCode().equals(dispType)) {
+				} else if (Dispatch_Type.TPLUS0.getCode().equals(dispType)) {
 					//TODO 此处较原版改动：disp_type中不再有"F"类型，而是T+0时，频率类型为"频率"，
 					// 以此逻辑来判断，T+0加上日切才是每天都跑？
 					if (Dispatch_Frequency.PinLv.getCode().equals(jobDefine.getDisp_freq())) {
@@ -621,13 +624,14 @@ public class TaskManager {
 							// 依赖作业未完成，作业状态不能置为Waiting
 							continue;
 						}
-					} else if (Dispatch_Type.TIMING.getCode().equals(dispType)) {
+					} else if (Dispatch_Type.TPLUS1.getCode().equals(dispType)) {
 						// 定时触发,判断作业调度时间是否已经达到
 						if (calendar.getTime().getTime() < exeJob.getExecuteTime()) {
 							// 作业调度时间未到,作业状态不能置为Waiting
 							continue;
 						}
-					} else if (Dispatch_Type.ZTIMING.getCode().equals(dispType)) {
+						//TODO 所有Dispatch_Type都有Dispatch_Frequency.PinLv
+					} else if (Dispatch_Type.TPLUS0.getCode().equals(dispType)) {
 						// 定时触发,判断作业调度时间是否已经达到
 						if (Dispatch_Frequency.PinLv.getCode().equals(jobDefine.getDisp_freq())) {
 							//xchao--2017年8月15日 16:25:51 添加按秒、分钟、小时进行执行
@@ -651,7 +655,6 @@ public class TaskManager {
 						// 如果是虚作业的话，直接将作业状态置为Done
 						exeJob.setJob_disp_status(Job_Status.RUNNING.getCode());
 						handleVirtualJob(etlJob, currBathDate);
-
 						continue;
 					} else {
 						// 将Pending状态置为Waiting
@@ -680,14 +683,16 @@ public class TaskManager {
 	 */
 	private void addWaitFileJobToList(EtlJobBean exeJob) {
 
-		Etl_job etlJob = TaskSqlHelper.getEtlJob(etlSysCd, exeJob.getEtl_job(), exeJob.getCurr_bath_date()).
-				orElse(null);
+		Optional<Etl_job_cur> etlJobOptional = TaskSqlHelper.getEtlJob(etlSysCd, exeJob.getEtl_job(),
+				exeJob.getCurr_bath_date());
 
-		if(null == etlJob) {
+		if(!etlJobOptional.isPresent()) {
 			logger.error("没有找到作业！EtlJob=[{}],BathDate=[{}]", exeJob.getEtl_job(),
 					exeJob.getCurr_bath_date());
 			return;
 		}
+
+		Etl_job_cur etlJob = etlJobOptional.get();
 
 		String strEtlJob = exeJob.getEtl_job();
 		String currBathDate = exeJob.getCurr_bath_date();
@@ -720,7 +725,7 @@ public class TaskManager {
 
 		int exeNum = job.getExe_num();
 		int exeedNum = job.getCom_exe_num();	//已经执行次数
-		if( exeedNum >= exeNum ) {	//已执行的次数>=总执行测试，作业不再执行
+		if( exeedNum >= exeNum ) {	//已执行的次数>=总执行次数，作业不再执行
 			return false;
 		}
 		String endTime = job.getEnd_time();	//19位日期加时间字符串    yyyy-MM-dd HH:mm:ss
@@ -738,10 +743,15 @@ public class TaskManager {
 	 */
 	private boolean checkEtlJob(EtlJobBean exeJob) {
 
+		Optional<Etl_job_cur> etlJobOptional =  TaskSqlHelper.getEtlJob(exeJob.getEtl_sys_cd(), exeJob.getEtl_job());
+		if(!etlJobOptional.isPresent()){
+			return false;
+		}
+		Etl_job_cur etlJob = etlJobOptional.get();
 		EtlJobDefBean job = new EtlJobDefBean();
-		job.setExe_num(exeJob.getExe_num());
-		job.setCom_exe_num(exeJob.getCom_exe_num());
-		job.setEnd_time(exeJob.getEnd_time());
+		job.setExe_num(etlJob.getExe_num());
+		job.setCom_exe_num(etlJob.getCom_exe_num());
+		job.setEnd_time(etlJob.getEnd_time());
 
 		return checkEtlDefJob(job);
 	}
@@ -863,14 +873,15 @@ public class TaskManager {
 				 */
 				if(Job_Status.RUNNING.getCode().equals(job.getJob_disp_status())) {
 					// 如果该执行作业状态是R的话，从DB中取得该作业信息
-					Etl_job jobInfo = TaskSqlHelper.getEtlJob(etlSysCd, job.getEtl_job(),
-							job.getCurr_bath_date()).orElse(null);
-					if (null == jobInfo) {
+					Optional<Etl_job_cur> jobInfoOptional = TaskSqlHelper.getEtlJob(etlSysCd, job.getEtl_job(),
+							job.getCurr_bath_date());
+					if (!jobInfoOptional.isPresent()) {
 						continue;
 					}
 					String etlJob = job.getEtl_job();
 					String currBathDate = job.getCurr_bath_date();
 					// 检查作业状态，如果作业已经完成，将作业加入redisDB
+					Etl_job_cur jobInfo = jobInfoOptional.get();
 					String jobStatus = jobInfo.getJob_disp_status();
 					if(Job_Status.DONE.getCode().equals(jobStatus) || Job_Status.ERROR.getCode().equals(jobStatus)) {
 						logger.warn(etlJob + " 检测到执行完成");
@@ -920,11 +931,11 @@ public class TaskManager {
 	private void UpdateFinishedJob(String jobName, String currBathDate) {
 
 		// 根据完成作业的作业名与调度日期，从DB中找到对应的作业
-		Etl_job jobInfo = TaskSqlHelper.getEtlJob(etlSysCd, jobName, currBathDate).orElse(null);
-		if( null == jobInfo ) {
+		Optional<Etl_job_cur> jobInfoOptional = TaskSqlHelper.getEtlJob(etlSysCd, jobName, currBathDate);
+		if(!jobInfoOptional.isPresent()) {
 			return;
 		}
-
+		Etl_job_cur jobInfo = jobInfoOptional.get();
 		if(jobExecuteMap.containsKey(currBathDate)) {
 			EtlJobBean exeJobInfo = jobExecuteMap.get(currBathDate).get(jobName);
 			if( null == exeJobInfo ) {
@@ -978,7 +989,7 @@ public class TaskManager {
 						String nextEtlJobCurrBathDate = nextJobInfo.getCurr_bath_date();
 						// 判断前一天的作业是否也已经完成
 						if (nextJobInfo.isPreDateFlag()) {
-							EtlJobDefBean jobDefine = (EtlJobDefBean) jobDefineMap.get(nextEtlJob);
+							EtlJobDefBean jobDefine = jobDefineMap.get(nextEtlJob);
 							if (jobDefine == null) {
 								continue;
 							}
@@ -1061,12 +1072,11 @@ public class TaskManager {
 	 * 根据作业标识，为该作业增加资源。注意，此处会更新作业资源表信息。
 	 * @author Tiger.Wang
 	 * @date 2019/9/6
-	 * @param jobName   作业标识
+	 * @param etlJob   作业标识
 	 */
-	private void increaseResource(String jobName) {
-		//TODO 此处注意，虽然jobDefineMap的值是Etl_job_def，但是EtlJobDefBean继承于它，若jobDefineMap在put了EtlJobDefBean
-		// 则此处可以强转，并且属性不丢失
-		EtlJobDefBean jobDefine = (EtlJobDefBean) jobDefineMap.get(jobName);
+	private void increaseResource(String etlJob) {
+
+		EtlJobDefBean jobDefine = jobDefineMap.get(etlJob);
 		if( null == jobDefine ) {
 			return;
 		}
@@ -1075,7 +1085,7 @@ public class TaskManager {
 		for(Etl_job_resource_rela resource : resources) {
 			String resourceType = resource.getResource_type();
 			int needCount = resource.getResource_req();
-			logger.info("{} need {} {}", jobName, resourceType, needCount);
+			logger.info("{} need {} {}", etlJob, resourceType, needCount);
 			Etl_resource etlResource = sysResourceMap.get(resourceType);
 			logger.info("Before increase, {} used {}", resourceType, etlResource.getResource_used());
 			//TODO 猜测，该方法意为为作业增加资源，该处相减，意味着资源增加？
@@ -1092,7 +1102,6 @@ public class TaskManager {
 	 * 作业信息表。此处会根据作业状态、作业开始执行时间，决定是否更新作业状态或者加入到作业等待表（jobWaitingList）。
 	 * @author Tiger.Wang
 	 * @date 2019/9/6
-	 * @return void
 	 */
 	private void checkTimeDependencyJob() {
 
@@ -1166,6 +1175,340 @@ public class TaskManager {
 			}
 		}
 	}
+
+	/**
+	 * 对外提供的干预接口，根据当前跑批日期、调度作业标识，直接调起指定的作业。
+	 * 注意，该方法会更新作业状态信息，并会将作业登记到redis中。该方法仅修改内存表（map）作业状态。
+	 * @note 1、根据当前跑批日期、调度作业标识在map中检测是否存在该作业；
+	 *       2、判断map中的作业状态（触发的作业必须在挂起、等待状态，否则干预不成功）。
+	 * @author Tiger.Wang
+	 * @date 2019/9/9
+	 * @param currbathDate   当前跑批日期
+	 * @param etlJob    调度作业标识
+	 */
+	public void handleJob2Run(String currbathDate, String etlJob) {
+
+		//1、根据当前跑批日期、调度作业标识在map中检测是否存在该作业。
+		Map<String, EtlJobBean> jobMap = jobExecuteMap.get(currbathDate);
+		if(null == jobMap) {
+			logger.warn("在进行直接调度干预时，根据{} {}无法找到作业信息", etlJob, currbathDate);
+			return;
+		}
+		EtlJobBean exeJobInfo = jobMap.get(etlJob);
+		if(null == exeJobInfo) {
+			logger.warn("在进行直接调度干预时，{} {}作业不存在调度列表中", etlJob, currbathDate);
+			return;
+		}
+		Etl_job_def jobDefine = jobDefineMap.get(etlJob);
+		if(null == jobDefine) {
+			logger.warn("在进行直接调度干预时，{} {}作业不存在定义列表中", etlJob, currbathDate);
+			return;
+		}
+
+		Job_Status jobStatus = Job_Status.getCodeObj(exeJobInfo.getJob_disp_status());
+		/*
+		 * 2、判断map中的作业状态（触发的作业必须在挂起、等待状态，否则干预不成功）。
+		 *    一、判断map中对应作业的作业状态，若作业状态不为挂起、等待，则不允许干预；
+		 *    二、若作业状态为挂起、等待，在作业为虚作业的情况下直接登记到redis中并且作业状态为已完成，
+		 *        否则将作业设置为运行中，再将该作业登记到redis中。
+		 */
+		if(Job_Status.PENDING == jobStatus || Job_Status.WAITING == jobStatus) {
+			etlJob = exeJobInfo.getEtl_job();
+			String currBathDate = exeJobInfo.getCurr_bath_date();
+			if(Job_Effective_Flag.VIRTUAL == Job_Effective_Flag.getCodeObj(jobDefine.getJob_eff_flag())) {
+				exeJobInfo.setJob_disp_status(Job_Status.RUNNING.getCode());
+				//如果是虚作业的话，直接将作业状态置为Done
+				handleVirtualJob(etlJob, currBathDate);
+			}else {
+				//将这个作业的状态更新成Waiting,并将这个作业加入JobWaitingList
+				exeJobInfo.setJob_disp_status(Job_Status.WAITING.getCode());
+				TaskSqlHelper.updateEtlJobDispStatus(Job_Status.WAITING.getCode(), etlSysCd, etlJob, currBathDate);
+
+				if(Pro_Type.WF.getCode().equals(exeJobInfo.getPro_type())) {
+					addWaitFileJobToList(exeJobInfo);
+				}else {
+					//扣除资源
+					decreaseResource(etlJob);
+					//更新作业的状态到Running
+					exeJobInfo.setJob_disp_status(Job_Status.RUNNING.getCode());
+					exeJobInfo.setJobStartTime(calendar.getTime().getTime());
+					TaskSqlHelper.updateEtlJobDispStatus(Job_Status.RUNNING.getCode(), etlSysCd, etlJob, currBathDate);
+					//加入要执行的列表
+					String runningJob = etlJob + REDISCONTENTSEPARATOR + currBathDate +
+							REDISCONTENTSEPARATOR + REDISHANDLE;
+					REDIS.rpush(strRunningJob, runningJob);
+				}
+			}
+		}
+	}
+
+	/**
+	 * 对外提供的干预接口，用于重新运行调度系统。注意，该方法会重置待调度作业表（map）中的作业状态，重置的作业内容包括：
+	 * 上一个依赖是否完成、作业状态、依赖作业是否完成、已完成的依赖作业总数，重置调度作业定义表（map）中的当前作业优先级。
+	 * 该方法仅修改内存表（map）作业状态。
+	 * @author Tiger.Wang
+	 * @date 2019/9/10
+	 */
+	public void handleSys2Rerun() {
+
+		for (String strBathDate : jobExecuteMap.keySet()) {
+			Map<String, EtlJobBean> jobMap = jobExecuteMap.get(strBathDate);
+			for (String strJobName : jobMap.keySet()) {
+				EtlJobBean exeJobInfo = jobMap.get(strJobName);
+				exeJobInfo.setPreDateFlag(false);
+				exeJobInfo.setJob_disp_status(Job_Status.PENDING.getCode());
+				exeJobInfo.setDependencyFlag(false);
+				exeJobInfo.setDoneDependencyJobCount(0);
+				EtlJobDefBean jobDefine = jobDefineMap.get(strJobName);
+				if (jobDefine != null) {
+					exeJobInfo.setJob_priority_curr(jobDefine.getJob_priority());
+				}
+			}
+		}
+
+		checkJobDependency("");
+		initWaitingJob("");
+	}
+
+	/**
+	 * 对外提供的干预接口，用于暂停调度系统。注意，此方法会修改jobExecuteMap中作业的状态，也会清理waitFileJobList。
+	 * 该方法仅修改内存表（map）作业状态，不直接操作运行中的作业。
+	 * @author Tiger.Wang
+	 * @date 2019/9/10
+	 */
+	public void handleSys2Pause() {
+
+		for (String strBathDate : jobExecuteMap.keySet()) {
+			Map<String, EtlJobBean> jobMap = jobExecuteMap.get(strBathDate);
+			for (String strJobName : jobMap.keySet()) {
+				EtlJobBean exeJobInfo = jobMap.get(strJobName);
+				Job_Status jobStatus = Job_Status.getCodeObj(exeJobInfo.getJob_disp_status());
+				if (Job_Status.PENDING == jobStatus || Job_Status.WAITING == jobStatus) {
+					exeJobInfo.setJob_disp_status(Job_Status.STOP.getCode());
+				}
+				if (Pro_Type.WF == Pro_Type.getCodeObj(exeJobInfo.getPro_type()) && Job_Status.RUNNING == jobStatus) {
+					exeJobInfo.setJob_disp_status(Job_Status.STOP.getCode());
+				}
+			}
+		}
+
+		waitFileJobList.clear();
+	}
+
+	/**
+	 * 对外提供的干预接口，用于续跑调度系统。注意，此处会修改jobExecuteMap中的作业信息，
+	 * 重新加载作业到等待表（waitFileJobList）。该方法仅修改内存表（map）作业状态。
+	 * @author Tiger.Wang
+	 * @date 2019/9/10
+	 */
+	public void handleSys2Resume() {
+
+		for (String strBathDate : jobExecuteMap.keySet()) {
+			Map<String, EtlJobBean> jobMap = jobExecuteMap.get(strBathDate);
+			for (String strJobName : jobMap.keySet()) {
+				EtlJobBean exeJobInfo = jobMap.get(strJobName);
+				Job_Status jobStatus = Job_Status.getCodeObj(exeJobInfo.getJob_disp_status());
+				if (Job_Status.STOP == jobStatus || Job_Status.ERROR == jobStatus) {
+					exeJobInfo.setJob_disp_status(Job_Status.PENDING.getCode());
+					EtlJobDefBean jobDefine = jobDefineMap.get(strJobName);
+					if (jobDefine != null) {
+						exeJobInfo.setJob_priority_curr(jobDefine.getJob_priority());
+					}
+				}
+			}
+		}
+
+		initWaitingJob("");
+	}
+
+	/**
+	 * 对外提供的干预接口，用于停止作业状态为[挂起]和[等待]的作业。
+	 * 注意，该方法仅修改内存表（map）作业状态，不直接操作运行中的作业。
+	 * @author Tiger.Wang
+	 * @date 2019/9/11
+	 * @param currbathDate  当前跑批日期
+	 * @param etlJob    调度作业标识
+	 */
+	public void handleJob2Stop(String currbathDate, String etlJob) {
+
+		Map<String, EtlJobBean> jobMap = jobExecuteMap.get(currbathDate);
+		if( null == jobMap ) {
+			return;
+		}
+
+		EtlJobBean exeJobInfo = jobMap.get(etlJob);
+		if( null == exeJobInfo ) {
+			return;
+		}
+		Job_Status jobStatus = Job_Status.getCodeObj(exeJobInfo.getJob_disp_status());
+		if(Job_Status.PENDING == jobStatus || Job_Status.WAITING == jobStatus) {
+			exeJobInfo.setJob_disp_status(Job_Status.STOP.getCode());
+			TaskSqlHelper.updateEtlJobDispStatus(Job_Status.STOP.getCode(), etlSysCd, etlJob, currbathDate);
+		}
+	}
+
+	/**
+	 * 对外提供的干预接口，用于进行作业重跑。注意，该方法会更新调度作业表，以及会维护jobWaitingList内存表。
+	 * @note    1、检查干预的作业是否在内存表（jobExecuteMap、jobDefineMap）中有登记；
+	 *          2、干预作业状态为停止、错误、完成的作业；
+	 *          3、设置干预的作业优先级为最大优先级；
+	 *          4、将作业加入等待调度作业内存表（jobWaitingList）。
+	 * @author Tiger.Wang
+	 * @date 2019/9/10
+	 * @param currbathDate  当前跑批日期
+	 * @param etlJob    调度作业标识
+	 */
+	public void handleJob2Rerun(String currbathDate, String etlJob) {
+
+		//1、检查干预的作业是否在内存表（jobExecuteMap、jobDefineMap）中有登记；
+		Map<String, EtlJobBean> jobMap = jobExecuteMap.get(currbathDate);
+		if(null == jobMap) {
+			logger.warn("在进行作业重跑干预时，根据{} {}无法找到作业信息", etlJob, currbathDate);
+			return;
+		}
+		EtlJobBean exeJobInfo = jobMap.get(etlJob);
+		if(null == exeJobInfo) {
+			logger.warn("在进行作业重跑干预时，{} {}作业不存在调度列表中", etlJob, currbathDate);
+			return;
+		}
+		Etl_job_def jobDefine = jobDefineMap.get(etlJob);
+		if(null == jobDefine) {
+			logger.warn("在进行作业重跑干预时，{} {}作业不存在定义列表中", etlJob, currbathDate);
+			return;
+		}
+		/*
+		 * 2、干预作业状态为停止、错误、完成的作业；
+		 *      一、若被干预的作业上一批次作业还未完成，则将该作业设置为挂起状态；
+		 *      二、若该作业不是立即执行，且未到执行时间，则将该作业设置为挂起状态；
+		 *      三、若该作业的依赖作业还未完成，则将该作业设置为挂起状态；
+		 *      四、若该作业是虚作业，则将该作业设置为完成状态；
+		 *      五、若该作业不是虚作业，则将该作业加入等待调度作业内存表（jobWaitingList）。
+		 */
+		Job_Status jobStatus = Job_Status.getCodeObj(exeJobInfo.getJob_disp_status());
+		if(Job_Status.STOP == jobStatus || Job_Status.ERROR == jobStatus || Job_Status.DONE == jobStatus) {
+			//3、设置干预的作业优先级为最大优先级；
+			exeJobInfo.setJob_priority_curr(MAXPRIORITY);
+			TaskSqlHelper.updateEtlJobCurrPriority(exeJobInfo.getJob_priority_curr(), etlSysCd, etlJob, currbathDate);
+
+			if(!exeJobInfo.isPreDateFlag()) {
+				exeJobInfo.setJob_disp_status(Job_Status.PENDING.getCode());
+				TaskSqlHelper.updateEtlJobDispStatus(exeJobInfo.getJob_disp_status(), etlSysCd, etlJob, currbathDate);
+				return;
+			}
+			//TODO 此处较原版改动：提取出了if(Job_Effective_Flag.VIRTUAL.getCode().equals(jobDefine.getJob_eff_flag()))
+			// 因为在下面两个判断中都涉及到判断虚作业，意味着判断虚作业的逻辑可以提取出来，但是要注意是否存在执行顺序问题。
+			if(0 != exeJobInfo.getExecuteTime() && calendar.getTime().getTime() < exeJobInfo.getExecuteTime()) {
+				exeJobInfo.setJob_disp_status(Job_Status.PENDING.getCode());
+				TaskSqlHelper.updateEtlJobDispStatus(exeJobInfo.getJob_disp_status(), etlSysCd, etlJob,
+						currbathDate);
+			}else if(!exeJobInfo.isDependencyFlag()) {
+				exeJobInfo.setJob_disp_status(Job_Status.PENDING.getCode());
+				TaskSqlHelper.updateEtlJobDispStatus(exeJobInfo.getJob_disp_status(), etlSysCd, etlJob,
+						currbathDate);
+			}
+			//4、将作业加入等待调度作业内存表（jobWaitingList）。
+			if(Job_Effective_Flag.VIRTUAL.getCode().equals(jobDefine.getJob_eff_flag())) {
+				exeJobInfo.setJob_disp_status(Job_Status.RUNNING.getCode());
+				handleVirtualJob(etlJob, currbathDate);
+			}else {
+				// 将这个作业的状态更新成Waiting,并将这个作业加入JobWaitingList
+				exeJobInfo.setJob_disp_status(Job_Status.WAITING.getCode());
+				TaskSqlHelper.updateEtlJobDispStatus(exeJobInfo.getJob_disp_status(), etlSysCd, etlJob,
+						currbathDate);
+				if(Pro_Type.WF.getCode().equals(exeJobInfo.getPro_type())) {
+					addWaitFileJobToList(exeJobInfo);
+				}else {
+					jobWaitingList.add(exeJobInfo);
+				}
+			}
+		}
+	}
+
+	/**
+	 * 对外提供的干预接口，用于辅助完成[作业跳过]干预。注意，该方法会扣除被干预作业的资源。
+	 * @note    1、检查干预的作业是否在内存表（jobExecuteMap、jobDefineMap）中有登记；
+	 *          2、扣除被干预作业的作业类型不是[等待文件]及[虚作业]的使用资源；
+	 *          3、被干预作业的作业状态设置为完成，推送完成消息到redis。
+	 * @author Tiger.Wang
+	 * @date 2019/9/11
+	 * @param currbathDate  当前跑批日期
+	 * @param etlJob    调度作业标识
+	 */
+	public void handleJob2Skip(String currbathDate, String etlJob) {
+
+		//1、检查干预的作业是否在内存表（jobExecuteMap、jobDefineMap）中有登记；
+		Map<String, EtlJobBean> jobMap = jobExecuteMap.get(currbathDate);
+		if(null == jobMap) {
+			return;
+		}
+		EtlJobBean exeJobInfo = jobMap.get(etlJob);
+		if(null == exeJobInfo) {
+			return;
+		}
+
+		EtlJobDefBean jobDefine = jobDefineMap.get(etlJob);
+		if(null == jobDefine) {
+			return;
+		}
+		//2、扣除被干预作业的作业类型不是[等待文件]及[虚作业]的使用资源；
+		exeJobInfo.setJob_disp_status(Job_Status.RUNNING.getCode());
+		if(Pro_Type.WF != Pro_Type.getCodeObj(exeJobInfo.getPro_type()) &&
+				Job_Effective_Flag.VIRTUAL != Job_Effective_Flag.getCodeObj(jobDefine.getJob_eff_flag())) {
+			// 如果不是WF作业或者不是虚作业时，扣除资源
+			decreaseResource(etlJob);
+		}
+		//3、被干预作业的作业状态设置为完成，推送完成消息到redis（借用虚作业处理逻辑）
+		handleVirtualJob(exeJobInfo.getEtl_job(), exeJobInfo.getCurr_bath_date());
+	}
+
+	/**
+	 * 对外接口，获取系统是否暂停状态
+	 * @author Tiger.Wang
+	 * @date 2019/9/9
+	 * @return boolean  暂停返回true，否则false
+	 */
+	public boolean isSysPause() { return isSysPause; }
+
+	/**
+	 * 对外接口，用于关闭（取消）系统暂停
+	 * @author Tiger.Wang
+	 * @date 2019/9/10
+	 */
+	public void closeSysPause() { isSysPause = false; }
+
+	/**
+	 * 对外接口，用于打开（开启）系统暂停
+	 * @author Tiger.Wang
+	 * @date 2019/9/10
+	 */
+	public void openSysPause() { isSysPause = true; }
+
+	/**
+	 * 根据作业标识，为该作业减少资源。注意，此处会更新作业资源表信息。
+	 * @param etlJob 作业信息
+	 */
+	private void decreaseResource(String etlJob) {
+
+		EtlJobDefBean jobDefine = jobDefineMap.get(etlJob);
+		if( null == jobDefine ) {
+			return;
+		}
+		List<Etl_job_resource_rela> resources = jobDefine.getJobResources();
+		for(Etl_job_resource_rela resource : resources) {
+			String resourceType = resource.getResource_type();
+			int needCount = resource.getResource_req();
+			logger.info("{} need {} {}", etlJob, resourceType, needCount);
+
+			Etl_resource etlResource = sysResourceMap.get(resourceType);
+			logger.info("Before decrease, {} used {}", resourceType, etlResource.getResource_used());
+
+			int resourceNum = etlResource.getResource_used() + needCount;
+			//更新作业资源表信息
+			TaskSqlHelper.updateEtlResourceUsedByResourceType(etlSysCd, resourceType, resourceNum);
+			etlResource.setResource_used(resourceNum);
+			logger.info("After decrease, {} used {}", resourceType, etlResource.getResource_used());
+		}
+	}
 //--------------------------------分析并处理需要立即启动的作业（handleReadyJob方法）end-----------------------------------
 	/**
 	 * 处理虚作业问题，该方法会更新虚作业信息及推送数据到redis。
@@ -1180,8 +1523,7 @@ public class TaskManager {
 
 		//1、更新作业表中，虚作业的状态及其它信息
 		String localDateTime = fd.ng.core.utils.DateUtil.getDateTime(DateUtil.DATETIME);
-		TaskSqlHelper.updateVirtualJob(etlSysCd, etlJob, currBathDate,
-				localDateTime, localDateTime);
+		TaskSqlHelper.updateVirtualJob(etlSysCd, etlJob, currBathDate, localDateTime, localDateTime);
 
 		//2、将虚作业标识为完成作业，并推送给redis
 		String finishedJob = etlJob + REDISCONTENTSEPARATOR + currBathDate;
