@@ -76,7 +76,7 @@ public class TaskManager {
 
 	private final static String REDISCONTENTSEPARATOR = "@";	//redis字符内容分隔符
 	private final static String REDISHANDLE = "Handle"; //redis已干预标识
-	public static final String PARASEPARATOR = ",";	//参数分隔符
+	public final static String PARASEPARATOR = ",";	//参数分隔符
 
 	private volatile boolean isLock = false;  // 同步标志位
 
@@ -183,18 +183,29 @@ public class TaskManager {
 
 	/**
 	 * 用于处理内存表中登记的作业。注意，此方法会将内存表中符合执行条件的作业全部发送到redis中。
+	 * 该方法会持续运行，直到有系统干预日切或自动日切，该方法才会中断运行，若进行自动日切，则该方法会在内部
+	 * 计算下一批次时间，并且使用该时间，你也可以选择使用TaskJobHelper类中的getNextBathDate计算出下一批次时间，
+	 * 然后再次构造该类，再使用loadReadyJob方法和publishReadyJob方法进行自动日切，使程序继续执行。
+	 * @note    1、定期去检查执行中的作业，防止通信异常时没有同步作业状态，时间间隔为[200*线程睡眠毫秒数];
+	 *          2、检测干预信号，执行干预请求；
+	 *          3、判断系统是否需要暂停；
+	 *          4、对等待执行的作业按优先级排序；
+	 *          5、判断每个待执行作业是否够资源启动，如果资源足够则登记到redis，否则提示作业优先度并继续等待；
+	 *          6、将已经执行的作业从等待执行列表中移除；
+	 *          7、检查当前跑批日期的作业是否已全部完成，根据日切标识决定该程序的生命是否要结束。
+	 * @return 是否进行自动日切
 	 * @author Tiger.Wang
 	 * @date 2019/9/11
 	 * @param hasFrequancy  该批次作业中，是否有按照频率调度的作业
 	 */
-	public void publishReadyJob(boolean hasFrequancy) {
+	public boolean publishReadyJob(boolean hasFrequancy) {
 
 		boolean isSysShift = false;	//系统干预日切标志
 		int checkCount = 0;	//用于检查执行中的作业，防止通信异常时没有同步作业状态
 		boolean handleErrorEtlJob = false;  //是否强制干预错误执行错误的作业
 
 		while(!isSysShift) {	//若未检测到系统干越日切，则会一直运行，除非运行过程中触发了结束条件
-			//定期去检查执行中的作业，防止通信异常时没有同步作业状态，时间间隔为[200*线程睡眠毫秒数]
+			//1、定期去检查执行中的作业，防止通信异常时没有同步作业状态，时间间隔为[200*线程睡眠毫秒数]
 			if( checkCount == 200 ) {
 				checkReadyJob();
 				checkCount = 0;
@@ -202,9 +213,9 @@ public class TaskManager {
 			checkCount++;
 			//检查完成的作业并开启后续达成依赖的作业
 			checkFinishedJob();
-			// 每次Sleep结束后查看是否有达到调度时间的作业
+			//每次Sleep结束后查看是否有达到调度时间的作业
 			checkTimeDependencyJob();
-			// 判断系统是否已经停止，可能不需要判断
+			//判断系统是否已经停止，可能不需要判断
 			Optional<Etl_sys> etlSysOptional = TaskSqlHelper.getEltSysBySysCode(etlSysCd);
 			if(!etlSysOptional.isPresent()) {
 				throw new AppSystemException("根据调度系统编号无法获取到信息：" + etlSysCd);
@@ -219,7 +230,7 @@ public class TaskManager {
 				logger.warn("------------- 系统干预，{} 调度停止 -----------------", etlSysCd);
 				break;
 			}
-			//该调度系统的干预信号，执行干预请求
+			//2、检测干预信号，执行干预请求
 			List<Etl_job_hand> handles = TaskSqlHelper.getEtlJobHands(etlSysCd);
 			if(handles.size() != 0) {
 				handleHelper.doHandle(handles);
@@ -233,7 +244,7 @@ public class TaskManager {
 			}
 			//检查资源阀值是否有变动，更新sysResourceMap
 			updateSysUsedResource();
-
+			//3、判断系统是否需要暂停
 			while(isLock) {
 				System.out.println("Lock is true, Please wait.");
 				try {
@@ -243,13 +254,13 @@ public class TaskManager {
 			}
 			//TODO 此处为什么设置为true后马上会置为false
 			if(!isLock) isLock = true;
-
-			if( jobWaitingList.size() > 1 ) {
+			//4、对等待执行的作业按优先级排序
+			if(jobWaitingList.size() > 1) {
 				//按照优先级排序
 				logger.info("{} 作业等待队列中有带执行的作业，将进行排序", etlSysCd);
 				Collections.sort(jobWaitingList);
 			}
-
+			//5、判断每个待执行作业是否够资源启动，如果资源足够则登记到redis，否则提示作业优先度并继续等待
 			List<EtlJobBean> removeList = new ArrayList<>();
 			for(EtlJobBean waitingJob : jobWaitingList) {
 				String etlJob = waitingJob.getEtl_job();
@@ -284,10 +295,9 @@ public class TaskManager {
 				}
 			}
 
-			// 将已经执行的作业从等待执行列表中移除
-			for(int i = 0; i < removeList.size(); ++i) {
-				Etl_job_cur tempJob = removeList.get(i);
-				if( jobWaitingList.contains(tempJob) ) {
+			//6、将已经执行的作业从等待执行列表中移除
+			for(Etl_job_cur tempJob : removeList) {
+				if (jobWaitingList.contains(tempJob)) {
 					jobWaitingList.remove(tempJob);
 				}
 			}
@@ -312,7 +322,7 @@ public class TaskManager {
 					}
 				}
 
-				//检查今天作业是否已全部完成
+				//7、检查当前跑批日期的作业是否已全部完成，根据日切标识决定该程序的生命是否要结束
 				if(checkAllJobFinished(bathDate)) {
 
 					/*xchao--一天调度多次的作业2017年8月15日 16:25:51 添加按秒、分钟、小时进行执行
@@ -328,7 +338,7 @@ public class TaskManager {
 						logger.info("不需要做自动日切，退出！");
 						//TODO 此处较原版改动：注销了thread.StopThread();
 						//thread.StopThread();
-						return;
+						return false;
 					}else if(isAutoShift) {
 						handleErrorEtlJob = false;
 						/*xchao--一天调度多次的作业2017年8月15日 16:25:51 添加按秒、分钟、小时进行执行
@@ -343,13 +353,17 @@ public class TaskManager {
 						}
 
 						bathDate = TaskJobHelper.getNextBathDate(bathDate);
-						logger.info("所有要执行的任务都为done，批量结束 {}", bathDate);
-						break;
+						logger.info("所有要执行的任务都为done，批量结束 {}，进行自动日切", bathDate);
+						//TODO 此处较原版改动：原版这里为break，意味着当前调度进行自动日切。此处改为return，意味着外层
+						// 需要判断该返回值，再进行初始化下一批次作业的操作
+						return true;
 					}
 				}
 			}
 			//TODO 此处较原版改动：不在此处sleep，在ControlManageServer类中sleep
 		}
+		logger.info("不需要做自动日切，退出！");
+		return false;
 	}
 
 //-----------------------------分析并加载需要立即启动的作业信息用（loadReadyJob方法）start--------------------------------
@@ -578,7 +592,7 @@ public class TaskManager {
 					TaskSqlHelper.insertIntoJobTable(etlJob);
 				}
 				job.setToday_disp(Today_Dispatch_Flag.YES.getCode());
-				// 计算调度作业的下一批次作业日期
+				//计算调度作业的下一批次作业日期
 				executeJob.setStrNextDate(TaskJobHelper.getNextExecuteDate(bathDate, strDispFreq));
 				executeJobMap.put(executeJob.getEtl_job(), executeJob);
 			}else {
@@ -591,7 +605,7 @@ public class TaskManager {
 	}
 
 	/**
-	 * 加载能马上运行的作业。注意，此处会维护jobExecuteMap全局变量，此方法仅在调度服务在“非运行”状态下使用。
+	 * 加载能马上运行的作业。注意，此处会维护jobExecuteMap全局变量，此方法仅在调度服务在“续跑”状态下使用。
 	 *
 	 * @author Tiger.Wang
 	 * @date 2019/9/4
@@ -992,8 +1006,8 @@ public class TaskManager {
 
 //-------------------------------分析并处理需要立即启动的作业（publishReadyJob方法）start----------------------------------
 	/**
-	 * 检查调度中作业的状态，防止通信异常时没有同步作业状态。注意，此处主要是根据[待调度作业表（内存表）]与作业表的
-	 * 作业调度状态来推送该作业到redis（登记作业信息）
+	 * 检查调度中作业的状态，防止通信异常时没有同步作业状态。注意，此处主要是根据[待调度作业表（内存表）]
+	 * 与作业表的作业调度状态来推送该作业到redis（登记作业信息）
 	 * @author Tiger.Wang
 	 * @date 2019/9/6
 	 */
@@ -1060,18 +1074,32 @@ public class TaskManager {
 		for(int i = 0; i < finishedListSize; ++i) {
 
 			String finishJobString = REDIS.lpop(strFinishedJob);
-			String[] jobKey = finishJobString.split("@");
+			String[] jobKey = finishJobString.split(REDISCONTENTSEPARATOR);
 			if( jobKey.length != 2 ) {
 				continue;
 			}
 			//更新作业状态
-			UpdateFinishedJob(jobKey[0], jobKey[1]);
+			updateFinishedJob(jobKey[0], jobKey[1]);
 		}
 	}
 
-	private void UpdateFinishedJob(String jobName, String currBathDate) {
+	/**
+	 * 根据调度作业标识、当前跑批日期，更新已经结束的作业信息。
+	 * 注意，此处会更新作业状态，也会将要执行的作业加入到jobWaitingList内存表中。
+	 * @note    1、检查该作业是否存在于数据库中以及内存表中；
+	 *          2、释放该作业的资源；
+	 *          3、更新内存表（jobExecuteMap）中作业的作业状态，将作业的状态设为现在的作业状态；
+	 *          4、若当前作业是完成状态，则修改依赖于此作业（更新内存表jobExecuteMap）的状态；
+	 *          5、若当前作业是完成状态，则根据该作业的下一批次执行时间设置此作业；
+	 *          66、如果作业不是正常完成，发送警告消息（短信息）。
+	 * @author Tiger.Wang
+	 * @date 2019/9/11
+	 * @param jobName   调度作业标识
+	 * @param currBathDate  当前跑批日期
+	 */
+	private void updateFinishedJob(String jobName, String currBathDate) {
 
-		// 根据完成作业的作业名与调度日期，从DB中找到对应的作业
+		//1、检查该作业是否存在于数据库中以及内存表中；
 		Optional<Etl_job_cur> jobInfoOptional = TaskSqlHelper.getEtlJob(etlSysCd, jobName, currBathDate);
 		if(!jobInfoOptional.isPresent()) {
 			return;
@@ -1082,68 +1110,66 @@ public class TaskManager {
 			if( null == exeJobInfo ) {
 				return;
 			}
-			// 如果该作业状态已经是D状态时，跳过
+			//如果该作业状态已经是完成状态时，跳过
 			if(Job_Status.DONE.getCode().equals(exeJobInfo.getJob_disp_status())) {
 				return;
 			}
 
 			Etl_job_def finishedJobDefine = jobDefineMap.get(jobName);
+			//2、释放该作业的资源
 			if(!Pro_Type.WF.getCode().equals(exeJobInfo.getPro_type()) &&
 					Job_Status.RUNNING.getCode().equals(exeJobInfo.getJob_disp_status()) &&
 					!Job_Effective_Flag.VIRTUAL.getCode().equals(finishedJobDefine.getJob_eff_flag())) {
 				// 释放资源
 				increaseResource(jobName);
 			}
-
-			// 将作业的状态设为现在的作业状态
+			//3、更新内存表（jobExecuteMap）中作业的作业状态，将作业的状态设为现在的作业状态
 			String jobStatus = jobInfo.getJob_disp_status();
 			logger.info(jobName + " " + currBathDate + " 作业完成！作业状态为" + jobStatus);
 			exeJobInfo.setJob_disp_status(jobStatus);
 
-			// 判断作业完成的状态
+			// 依赖作业已经完成个数、依赖作业标志、作业状态
 			if(Job_Status.DONE.getCode().equals(jobStatus)) {
-				// 如果作业的状态是正常完成
-				// 修改依赖于此完成作业的作业依赖标志位
+				//4、若当前作业是完成状态，则修改依赖于此作业（更新内存表jobExecuteMap）的状态；
 				for (String strJobName : jobDependencyMap.keySet()) {
-					// 取得依赖于此作业的作业信息
+					//取得依赖于此作业的作业信息
 					List<String> depJobList = jobDependencyMap.get(strJobName);
-					//String strDepJobName = jobDependencyMap.get(strJobName);
 					if (depJobList.contains(exeJobInfo.getEtl_job())) {
 						EtlJobBean nextJobInfo = jobExecuteMap.get(currBathDate).get(strJobName);
 						if (null == nextJobInfo) {
 							continue;
 						}
-						// 修改依赖作业已经完成的个数
+						//修改依赖作业已经完成的个数
 						nextJobInfo.setDoneDependencyJobCount(nextJobInfo.getDoneDependencyJobCount() + 1);
 
 						String nextEtlJob = nextJobInfo.getEtl_job();
 						logger.info(nextEtlJob + "总依赖数" + depJobList.size() + ",目前达成" +
 								nextJobInfo.getDoneDependencyJobCount());
 
-						// 判断是否所有依赖作业已经全部完成
+						//判断是否所有依赖作业已经全部完成
 						if (nextJobInfo.getDoneDependencyJobCount() != depJobList.size()) {
 							continue;
 						}
-						// 如果所有依赖作业已经全部完成，修改依赖作业标志位
+						//如果所有依赖作业已经全部完成，修改依赖作业标志位
 						nextJobInfo.setDependencyFlag(true);
 
 						String nextEtlJobCurrBathDate = nextJobInfo.getCurr_bath_date();
-						// 判断前一天的作业是否也已经完成
+						//判断前一天的作业是否也已经完成
 						if (nextJobInfo.isPreDateFlag()) {
 							EtlJobDefBean jobDefine = jobDefineMap.get(nextEtlJob);
 							if (jobDefine == null) {
 								continue;
 							}
 
-							// 如果作业是等待状态则修改状态
+							//如果作业是等待状态则修改状态
 							if (Job_Status.PENDING.getCode().equals(nextJobInfo.getJob_disp_status())) {
-								// 判断是否为虚作业
+								//判断是否为虚作业
 								if (Job_Effective_Flag.VIRTUAL.getCode().equals(jobDefine.getJob_eff_flag())) {
-									// 如果是虚作业，直接完成
+									//如果是虚作业，直接完成
 									nextJobInfo.setJob_disp_status(Job_Status.RUNNING.getCode());
 									handleVirtualJob(nextEtlJob, nextEtlJobCurrBathDate);
 								} else {
-									// 将这个作业的状态更新成Waiting,并将这个作业加入JobWaitingList
+									//将这个作业的状态更新成Waiting,并将这个作业加入JobWaitingList
 									nextJobInfo.setJob_disp_status(Job_Status.WAITING.getCode());
 									TaskSqlHelper.updateEtlJobDispStatus(Job_Status.WAITING.getCode(), etlSysCd,
 											nextEtlJob, nextEtlJobCurrBathDate);
@@ -1159,9 +1185,9 @@ public class TaskManager {
 					}
 				}
 
-				// 修改此完成作业的后一批作业， TODO 此处有很多段相同的逻辑，应该提取出来
+				//5、若当前作业是完成状态，则根据该作业的下一批次执行时间设置此作业 TODO 此处有很多段相同的逻辑，应该提取出来
 				String strNextDate = exeJobInfo.getStrNextDate();
-				if( jobExecuteMap.containsKey(strNextDate) ) {
+				if(jobExecuteMap.containsKey(strNextDate)) {
 					EtlJobBean nextJobInfo = jobExecuteMap.get(strNextDate).get(exeJobInfo.getEtl_job());
 					if( null != nextJobInfo ) {
 						nextJobInfo.setPreDateFlag(true);
@@ -1200,7 +1226,7 @@ public class TaskManager {
 				}
 			}
 			else {
-				// 如果作业不是正常完成，发送短消息
+				//6、如果作业不是正常完成，发送警告消息（短信息）
 				if(isNeedSendSMS) {
 					String message = currBathDate + " " + jobName + "调度失败!";
 					NOTIFY.SendMsg(message);
