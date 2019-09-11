@@ -1,14 +1,19 @@
 package hrds.b.biz.datasource;
 
+import fd.ng.core.utils.CodecUtil;
+import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
+import fd.ng.core.utils.StringUtil;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.annotation.RequestBean;
+import fd.ng.web.annotation.RequestParam;
 import fd.ng.web.annotation.UploadFile;
 import fd.ng.web.util.Dbo;
 import fd.ng.web.util.FileUploadUtil;
 import fd.ng.web.util.ResponseUtil;
 import hrds.commons.base.BaseAction;
 import hrds.commons.entity.*;
+import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.exception.ExceptionEnum;
 import hrds.commons.utils.ActionUtil;
@@ -35,52 +40,68 @@ public class DataSourceAction extends BaseAction {
 	/**
 	 * 新增/编辑数据源
 	 * <p>
-	 * 1.判断数据源编号是否为空，为空则为新增，不为空则为编辑
-	 * 2.新增前查询数据源编号是否已存在，存在则抛异常，不存在就新增
-	 * 3.保存或更新数据源信息
-	 * 4.如果是编辑先删除数据源与部门关系
-	 * 5.保存或更新数据源与部门关系信息
+	 * 1.字段合法性检查
+	 * 2.判断数据源编号是否为空，为空则为新增，不为空则为编辑
+	 * 3.新增前查询数据源编号是否已存在，存在则抛异常，不存在就新增
+	 * 4.保存或更新数据源信息
+	 * 5.如果是编辑先删除数据源与部门关系
+	 * 6.保存或更新数据源与部门关系信息
 	 *
-	 * @param dataSource 数据源编号
-	 * @param dep_id     部门编号
+	 * @param dataSource 数据源实体
+	 * @param depIds     1或多个部门拼接的部门ID
 	 */
-	public void saveDataSource(@RequestBean Data_source dataSource, String dep_id) {
+	public void saveDataSource(@RequestBean Data_source dataSource, @RequestParam String depIds) {
+		// 1.datasource_name,datasource_number字段做合法性检查,create_date,create_time,
+		// source_remark这几个字段时间日期手动设置获取系统当前时间，备注可以为空
+		if (StringUtil.isBlank(dataSource.getDatasource_name())) {
+			throw new BusinessException("数据源名称不能为空以及不能为空格，datasource_name=" + dataSource.getDatasource_name());
+		}
+		// 数据源编号长度
+		int len = 4;
+		if (StringUtil.isBlank(dataSource.getDatasource_number()) || dataSource.getDatasource_number().length() > len) {
+			throw new BusinessException("数据源编号不能为空以及不能为空格或数据源编号长度不能超过四位，datasource_number=" + dataSource.getDatasource_number());
+		}
 
-		// 1.判断数据源编号是否为空
+		if (StringUtil.isBlank(depIds)) {
+			throw new BusinessException("部门id不能为空格，depIds="+depIds);
+		}
+		// 2.判断数据源编号是否为空
 		if (dataSource.getSource_id() == null) {
 			// 新增
 			dataSource.setSource_id(PrimayKeyGener.getNextId());
-			dataSource.setUser_id(getUserId());
-			// 2.新增前查询数据源编号是否已存在
+			//dataSource.setUser_id(getUserId());
+			dataSource.setUser_id(1001L);
+			dataSource.setCreate_date(DateUtil.getSysDate());
+			dataSource.setCreate_time(DateUtil.getSysTime());
+			// 3.新增前查询数据源编号是否已存在
 			Result result = Dbo.queryResult("select datasource_number from " + Data_source.TableName +
 					"  where datasource_number=?", dataSource.getDatasource_number());
 			if (!result.isEmpty()) {
 				// 数据源编号重复
-				throw new BusinessException("数据源编号重复");
+				throw new BusinessException("数据源编号重复,datasource_number=" + dataSource.getDatasource_number());
 			}
-			// 3.保存数据源信息
+			// 4.保存数据源信息
 			if (dataSource.add(Dbo.db()) != 1) {
 				// 新增保存失败
 				throw new BusinessException(ExceptionEnum.DATA_ADD_ERROR);
 			}
-
 		} else {
 			// 编辑
-			// 3.更新数据源信息
+			// 4.更新数据源信息
 			if (dataSource.update(Dbo.db()) != 1) {
 				// 编辑保存失败
 				throw new BusinessException(ExceptionEnum.DATA_UPDATE_ERROR);
 			}
-
-			// 4.先删除数据源与部门关系信息
+			// 5.先删除数据源与部门关系信息
 			int num = Dbo.execute("delete from " + Source_relation_dep.TableName +
 					" where source_id=?", dataSource.getSource_id());
-			if (num != 1) {
-				throw new BusinessException(ExceptionEnum.DATA_DELETE_ERROR);
+			if (num < 1) {
+				throw new BusinessException("编辑时会先删除原数据源与部门关系信息再建立新关系，删除旧关系时错误，source_id=" + dataSource.getSource_id());
 			}
 		}
-		// 5.保存或更新数据源与部门关系信息
-		saveSourceRelationDep(dataSource.getSource_id(), dep_id);
+		// 6.保存或更新数据源与部门关系信息
+		saveSourceRelationDep(dataSource.getSource_id(), depIds);
+
 	}
 
 	/**
@@ -88,17 +109,18 @@ public class DataSourceAction extends BaseAction {
 	 * <p>
 	 * 1.循环保存或更新数据源与部门关系信息
 	 *
-	 * @param source_id 数据源编号
-	 * @param dep_id    部门编号
+	 * @param source_id 数据源id
+	 * @param depIds    1或多个部门拼接的部门ID
 	 */
-	public void saveSourceRelationDep(Long source_id, String dep_id) {
+	private void saveSourceRelationDep(long source_id, String depIds) {
 		// 建立数据源与部门关系信息
 		Source_relation_dep srd = new Source_relation_dep();
 		srd.setSource_id(source_id);
-		String[] depIds = dep_id.split(",");
-		// 1.循环保存或更新数据源与部门关系信息
-		for (String depId : depIds) {
-			srd.setDep_id(Long.parseLong(depId));
+		// 分隔部门id
+		String[] split = depIds.split(",");
+		// 循环保存数据源与部门关系表信息
+		for (String dep_id : split) {
+			srd.setDep_id(dep_id);
 			if (srd.add(Dbo.db()) != 1) {
 				throw new BusinessException(ExceptionEnum.DATA_ADD_ERROR);
 			}
@@ -106,31 +128,24 @@ public class DataSourceAction extends BaseAction {
 	}
 
 	/**
-	 * 新增/编辑前根据数据源编号查询数据源及数据源与部门关系信息
+	 * 编辑前根据数据源编号查询数据源及数据源与部门关系信息
+	 * FIXME 这个注释不正确。为什么叫“编辑前 ... 查询”，在哪里限定了是编辑前了？
 	 * <p>
-	 * 1.判断是新增前查询还是编辑前查询
-	 * 2.如果是新增前查询返回部门信息
-	 * 3.如果是编辑前查询，判断该数据源下是否有数据，没有抛异常，有则返回查询结果
+	 * 1.判断该数据源下是否有数据，没有抛异常，有则返回查询结果
 	 *
 	 * @param source_id 数据源编号
 	 * @return 返回查询结果集
 	 */
 	public Result searchDataSource(Long source_id) {
-		Result result = null;
-		// 1.判断是新增前查询还是编辑前查询
-		if (source_id == null) {
-			// 2.新增前查询，返回部门信息
-			result = Dbo.queryResult("select * from department_info");
-		} else {
-			// 3.编辑前查询，判断该数据源下是否有数据，没有抛异常，有则返回查询结果
-			result = Dbo.queryResult("select ds.*,srd.dep_id from data_source ds " +
-					"join source_relation_dep srd on ds.source_id=srd.source_id where ds.source_id = ?", source_id);
-			if (result.isEmpty()) {
-				// 该数据源下数据为空(此为编辑情况下数据不能为空）
-				throw new BusinessException(ExceptionEnum.DATA_NOT_EXIST);
-			}
+		// 1.判断该数据源下是否有数据，没有抛异常，有则返回查询结果
+		Result result = Dbo.queryResult("select ds.*,srd.dep_id from data_source ds " +
+				"join source_relation_dep srd on ds.source_id=srd.source_id where ds.source_id = ?", source_id);
+		if (result.isEmpty()) {
+			// 该数据源下数据为空(此为编辑情况下数据不能为空）
+			//FIXME 查询不到数据为什么要抛异常。只有具体使用这个数据的地方才应该根据是否有数据来抛出异常
+			throw new BusinessException(ExceptionEnum.DATA_NOT_EXIST);
 		}
-		// 3.返回查询结果
+		// 不为空，返回查询结果
 		return result;
 
 	}
@@ -164,6 +179,8 @@ public class DataSourceAction extends BaseAction {
 	public void deleteDataSource(Long source_id) {
 
 		// 1.先查询该datasource下是否还有agent
+		//FIXME 为什么不用 queryNumber :
+		// if( Dbo.queryNumber("").orElse(-1)>0 ) throw new BusinessException("此数据源下还有agent，不能删除");
 		Result result = Dbo.queryResult("SELECT * FROM agent_info WHERE source_id=? ", source_id);
 		if (!result.isEmpty()) {
 			// 此数据源下还有agent，不能删除
@@ -173,7 +190,7 @@ public class DataSourceAction extends BaseAction {
 		// 2.删除data_source表信息
 		int num = Dbo.execute("delete from " + Data_source.TableName + " where source_id=?", source_id);
 		if (num != 1) {
-			// 删除失败
+			//FIXME 应该判断 == 0 的情况
 			throw new BusinessException(ExceptionEnum.DATA_DELETE_ERROR);
 		}
 		// 3.删除source_relation_dep信息
@@ -198,56 +215,71 @@ public class DataSourceAction extends BaseAction {
 	@UploadFile
 	public void uploadFile(String agent_ip, String agent_port, Long user_id,
 	                       String[] files) throws IOException {
+		//FIXME idea的建议要看，要想，想听！
+		// 在哪里用变量，就再哪里定义！！！！！！！！！！！！！！
 		StringBuffer temp = new StringBuffer();
 		String strTemp = null;
 		// 1.循环遍历获取文件以及文件名
-		for (String file : files) {
-			//获取文件
-			File uploadedFile = FileUploadUtil.getUploadedFile(file);
-			// 获得文件名
-			String fileName = FileUploadUtil.getOriginalFileName(file);
-			if (fileName == null || fileName.trim().equals("")) {
-				continue;
-			}
-			//注意：不同的浏览器提交的文件名是不一样的，有些浏览器提交上来的文件名是带有路径的，如： c:\a\b\1.txt，而有些只是单纯的文件名，如：1.txt
-			//处理获取到的上传文件的文件名的路径部分，只保留文件名部分
-			fileName = fileName.substring(fileName.lastIndexOf(File.separator + File.separator) + 1);
-			InputStream in = new FileInputStream(uploadedFile);
+		try {
+			for (String file : files) {
+				//获取文件
+				File uploadedFile = FileUploadUtil.getUploadedFile(file);
+				// 获得文件名
+				String fileName = FileUploadUtil.getOriginalFileName(file);
+				if (fileName == null || fileName.trim().equals("")) {
+					//FIXME 说明在什么情况下，会进入这里
+					continue;
+				}
+				//注意：不同的浏览器提交的文件名是不一样的，有些浏览器提交上来的文件名是带有路径的，如： c:\a\b\1.txt，而有些只是单纯的文件名，如：1.txt
+				//处理获取到的上传文件的文件名的路径部分，只保留文件名部分
+				fileName = fileName.substring(fileName.lastIndexOf(File.separator + File.separator) + 1);
+				InputStream in = new FileInputStream(uploadedFile);
 
-			// 2.创建一个缓冲区
-			byte[] buffer = new byte[1];
-			//循环将输入流读入到缓冲区当中，(len=in.read(buffer))>0就表示in里面还有数据
-			while ((in.read(buffer)) > 0) {
-				temp.append((new String(buffer, "UTF-8")));
+				// 2.创建一个缓冲区
+				//FIXME 缓冲区为什么这么小
+				byte[] buffer = new byte[1];
+				//循环将输入流读入到缓冲区当中，(len=in.read(buffer))>0就表示in里面还有数据
+				while ((in.read(buffer)) > 0) {
+					temp.append((new String(buffer, "UTF-8")));
+				}
+				//关闭输入流
+				in.close();
+				// 3.使用base64编码
+				strTemp = new String(Base64.decode(temp.toString()).getBytes("UTF-8"), "UTF-8");
+				//FIXME 这程序测试过吗？上面的 temp 没有做 clear 也可以？
 			}
-			//关闭输入流
-			in.close();
-			// 3.使用base64编码
-			strTemp = new String(Base64.decode(temp.toString()).getBytes("UTF-8"), "UTF-8");
+			// 4.导入贴源层元数据
+			//FIXME 为什么只用循环最后一次形成的变量？
+			importDclData(strTemp, agent_ip, agent_port, user_id,
+					ActionUtil.getUser().getUserId());
+		} catch (Exception e) {
+			throw new AppSystemException(e);
 		}
-		// 4.导入贴源层元数据
-		importDclData(strTemp, agent_ip, agent_port, user_id,
-				getUserId());
 	}
 
 	/**
 	 * 导入贴源层元数据
+	 * FIXME 为什么是 “贴源层元数据”
 	 * <p>
 	 * 1.解析文件获取文件所有信息
 	 * 2.遍历并解析拿到每张表的信息
 	 * 3.将对应表信息插入库（数据源信息还需要判断数据源名称是否重复，重复抛异常，否则正常入库）
+	 * FIXME 为什么是从文件中得到了表的信息？这个文件是什么
 	 *
 	 * @param strTemp         文件信息
 	 * @param agent_port      agent端口
 	 * @param agent_ip        agent地址
 	 * @param user_id         页面传递用户编号
-	 * @param user_collect_id 登录用户编号
+	 * @param user_collect_id 登录用户编号      FIXME 解释这个ID和 user_id 有什么区别，为什么需要
 	 */
 	public void importDclData(String strTemp, String agent_ip, String agent_port, Long
 			user_id, Long user_collect_id) {
 		// 1.获取文件所有信息
+		//FIXME 徐超确认：fastJson在转换对象的时候，不需要使用诸如 TypeReference 一类的明确类型吗？
 		Map<String, Object> map = JsonUtil.toObject(strTemp, Map.class);
 		// 2.遍历并解析拿到每张表的信息
+		//FIXME 对这个MAP的数据进行详细说明。
+		//FIXME 导入的主键需要重新生成。
 		for (Map.Entry<String, Object> entry : map.entrySet()) {
 			// 数据源信息
 			if ("data_source".equals(entry.getKey())) {
@@ -257,6 +289,7 @@ public class DataSourceAction extends BaseAction {
 				Result result = Dbo.queryResult("select * from data_source where datasource_name = ?",
 						data_source.getDatasource_name());
 				if (!result.isEmpty()) {
+					//FIXME 不把重复的名称返回，用户怎么知道
 					throw new BusinessException("数据源名称重复");
 				}
 				//数据源data_source
@@ -268,6 +301,9 @@ public class DataSourceAction extends BaseAction {
 				//数据源和部门关系表source_relation_dep
 				Result diResult = Dbo.queryResult("select dep_id from department_info where dep_name" +
 						" = '第一部门'");
+				//FIXME 为什么写死了？
+				//FIXME 为什么不做查询结果存在性判断
+				//FIXME 需要对数据所属部门进行判断，并正确插入
 				String dep_id = diResult.getString(0, "dep_id");
 				Source_relation_dep source_relation_dep = new Source_relation_dep();
 				source_relation_dep.setDep_id(dep_id);
@@ -280,6 +316,7 @@ public class DataSourceAction extends BaseAction {
 			//Agent信息表agent_info
 			if ("agent_info".equals(entry.getKey())) {
 				// 获取agent信息表信息
+				//FIXME idea的提示要解决
 				List<Agent_info> agent_info = JsonUtil.toObject(entry.getValue().toString(),
 						List.class);
 				// 3.循环入库agent_info
@@ -588,6 +625,7 @@ public class DataSourceAction extends BaseAction {
 
 	/**
 	 * 下载文件
+	 * FIXME 这是给什么功能用的？为什么要写文件？
 	 * <p>
 	 * 1.从数据库取出相应数据封装到map中
 	 * 2.通过base64将map转string进行编码
@@ -598,9 +636,12 @@ public class DataSourceAction extends BaseAction {
 	 */
 	public void downloadFile(Long source_id) throws IOException {
 		// 1.封装数据库数据入map
+		//FIXME 被封装进去的数据，不需要使用Result，而且，这个Map应该指定明确类型而不是用Object
+		// 写100字的邮件，说明什么是泛型
 		Map collection_object = new HashMap<String, Object>();
 		//数据源data_source
 		Result dsResult = Dbo.queryResult("select * from data_source where source_id = ?", source_id);
+		//FIXME 查询结果存在性检查不需要？
 		collection_object.put("data_source", dsResult);
 		//Agent信息表agent_info
 		Result aiResult = Dbo.queryResult("select * from agent_info where source_id = ?",
@@ -872,7 +913,7 @@ public class DataSourceAction extends BaseAction {
 
 		// 2.使用base64编码
 		byte[] bye = Base64.encode(JsonUtil.toJson(collection_object)).getBytes(
-				"UTF-8");
+				CodecUtil.UTF8_CHARSET);
 		// 判断文件是否存在
 		if (bye == null) {
 			throw new BusinessException("此文件不存在");
