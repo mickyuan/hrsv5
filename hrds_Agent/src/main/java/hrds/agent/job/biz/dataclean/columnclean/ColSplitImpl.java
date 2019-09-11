@@ -27,15 +27,24 @@ public class ColSplitImpl extends AbstractColumnClean {
 
 	/**
 	 * @Description: 列拆分方法具体实现
-	 * @Param: [ruleList : 拆分规则List]
-	 * @Param: [columnValue : 列数据]
-	 * @Param: [columnName : 列名]
-	 * @Param: [group : 用于写PARQUET]
-	 * @Param: [colType : 列类型(长度,精度)]
-	 * @Param: [fileType : 落地文件格式(CSV， PARQUET， ORC,SEQUENCE)]
+	 * @Param: [ruleList : 拆分规则List, 取值范围 : ColumnSplitBean类对象]
+	 * @Param: [columnValue : 列数据, 取值范围 : String]
+	 * @Param: [columnName : 列名, 取值范围 : String]
+	 * @Param: [group : 用于写PARQUET, 取值范围 : org.apache.parquet.example.data.Group对象]
+	 * @Param: [colType : 列类型(长度,精度), 取值范围 : String]
+	 * @Param: [fileType : 落地文件格式(CSV， PARQUET， ORC,SEQUENCE), 取值范围 : String]
+	 * @Param: [lineData : 用于写ORC, 取值范围 : List]
 	 * @return: java.lang.String
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/8/29
+	 * 步骤：
+	 * 1、构造存放拆分完成之后的StringBuilder
+	 * 1、在拆分的同事保留原字段
+	 * 2、遍历拆分规则
+	 *      2-1、得到ColumnSplitBean类对象，如果原列的值为空，则追加空字符串
+	 *      2-2、如果原列的值不为空，获取拆分的类型
+	 *      2-3、若拆分的类型为1，则获取分割字符串的起始下标和结束下标，并进行字符串分割
+	 *      2-4、
 	 */
 	@Override
 	public String split(List<ColumnSplitBean> ruleList, String columnValue, String columnName, Group group, String colType, String fileType, List<Object> lineData) {
@@ -99,6 +108,7 @@ public class ColSplitImpl extends AbstractColumnClean {
 				}
 			}
 			if (fileType.equalsIgnoreCase(FileFormatConstant.CSV.getMessage()) || fileType.equalsIgnoreCase(FileFormatConstant.SEQUENCEFILE.getMessage())) {
+				//FIXME 这里的处理有问题
 				oriAndNewField = oriAndNewField.deleteCharAt(oriAndNewField.length() - 1);
 			}
 			return oriAndNewField.toString();

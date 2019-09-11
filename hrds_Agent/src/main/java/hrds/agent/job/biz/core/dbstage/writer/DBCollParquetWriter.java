@@ -73,25 +73,25 @@ public class DBCollParquetWriter extends AbstractFileWriter {
 
 	/**
 	 * @Description: 写parquest，完成之后返回文件的文件名(包含路径)
-	 * @Param: metaDataMap：写文件需要用到的meta信息
-	 * @Param: rs：当前线程采集到的Result
+	 * @Param: metaDataMap：写文件需要用到的meta信息，取值范围 : Map<String, Object>
+	 * @Param: rs：当前线程采集到的Result, 取值范围 : ResultSet
+	 * @Param: tableName : 表名, 用于大字段数据写avro, 取值范围 : String
 	 * @return: String
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/8/13
-	 */
-	/*
+	 * 步骤：
 	 * 1、校验方法入参合法性
 	 * 2、创建数据文件存放目录
 	 * 3、创建数据文件文件名，文件名为jobID + 处理线程号 + 时间戳.parquet,在作业配置文件目录下的datafile目录中
 	 * 4、判断本次采集得到的RS是否有CLOB，BLOB，LONGVARCHAR的大字段类型，如果有，则创建LOBs目录用于存放avro文件，并初始化写avro相关类对象
 	 * 5、开始写CSV文件，
-	 *       (1)、创建文件
-	 *       (2)、循环RS，获得每一行数据，针对每一行数据，循环每一列，根据每一列的类型，决定是写avro还是进行清洗
-	 *       (3)、执行数据清洗，包括表清洗和列清洗
-	 *       (4)、清洗后的结果追加到构建MD5的StringBuilder
-	 *       (5)、将数据放入group，写一行数据，执行下一次RS循环
+	 *      (1)、创建文件
+	 *      (2)、循环RS，获得每一行数据，针对每一行数据，循环每一列，根据每一列的类型，决定是写avro还是进行清洗
+	 *      (3)、执行数据清洗，包括表清洗和列清洗
+	 *      (4)、清洗后的结果追加到构建MD5的StringBuilder
+	 *      (5)、将数据放入group，写一行数据，执行下一次RS循环
 	 * 6、关闭资源，并返回文件路径
-	 * */
+	 */
 	@Override
 	public String writeDataAsSpecifieFormat(Map<String, Object> metaDataMap, ResultSet rs, String tableName) throws IOException, SQLException {
 		//1、校验方法入参合法性
@@ -281,20 +281,56 @@ public class DBCollParquetWriter extends AbstractFileWriter {
 		return outputPath;
 	}
 
+	/**
+	 * @Description: 用于写一行数据，且追加MD5和开始时间结束时间
+	 * @Param: [group : org.apache.parquet.example.data.Group]
+	 * @Param: [MD5 : 该列用于生成MD5值的字符串, 取值范围 : String]
+	 * @Param: [startDate : 当前线程采集数据开始时间]
+	 * @return: void
+	 * @Author: WangZhengcheng
+	 * @Date: 2019/9/11
+	 * 步骤：
+	 * 1、追加开始时间
+	 * 2、计算MD5，并追加
+	 * 3、追加结束时间
+	 * 4、写一行数据
+	 */
 	private void writeLine(Group group, StringBuilder MD5, String startDate) throws IOException {
+		//1、追加开始时间
 		group.append(JobConstant.START_DATE_NAME, startDate);
-		//计算MD5
+		//2、计算MD5，并追加
 		String MD5Val = DigestUtils.md5Hex(MD5.toString());
 		group.append(JobConstant.MD5_NAME, MD5Val);
+		//3、追加结束时间
 		group.append(JobConstant.MAX_DATE_NAME, JobConstant.MAX_DATE);
+		//4、写一行数据
 		writer.write(group);
 	}
 
+	/**
+	 * @Description: 用于写一行数据，而不追加MD5和开始时间结束时间
+	 * @Param: [group : org.apache.parquet.example.data.Group]
+	 * @return: void
+	 * @Author: WangZhengcheng
+	 * @Date: 2019/9/11
+	 * 步骤：
+	 * 1、调用方法写一行数据
+	 */
 	private void writeLine(Group group) throws IOException {
+		//1、调用方法写一行数据
 		writer.write(group);
 	}
 
+	/**
+	 * @Description: 关闭资源
+	 * @return: void
+	 * @Author: WangZhengcheng
+	 * @Date: 2019/9/11
+	 * 步骤：
+	 * 1、调用方法关闭资源
+	 */
 	private void stopStream() throws IOException {
+		//1、调用方法关闭资源
 		writer.close();
 	}
 }

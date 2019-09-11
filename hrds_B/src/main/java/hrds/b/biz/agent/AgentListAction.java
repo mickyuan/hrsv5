@@ -108,45 +108,53 @@ public class AgentListAction extends BaseAction {
 		//数据库直连采集Agent
 		if (AgentType.ShuJuKu == AgentType.getCodeObj(result.getString(0, "agent_type"))) {
 			sqlSB.append(" SELECT ds.DATABASE_ID ID,ds.task_name task_name,ds.AGENT_ID AGENT_ID, ")
-					.append(" cf.execute_time execute_time, cf.fre_week fre_week,cf.run_way run_way,cf.fre_month fre_month, ")
-					.append(" cf.fre_day fre_day,gi.source_id source_id,cf.collect_type ")
-					.append(" FROM database_set ds JOIN collect_frequency cf ON ds.database_id = cf.COLLECT_SET_ID ")
+					.append(" cf.execute_time execute_time, cf.fre_week fre_week, ")
+					.append(" cf.run_way run_way,cf.fre_month fre_month,cf.fre_day fre_day, ")
+					.append(" gi.source_id source_id,cf.collect_type ")
+					.append(" FROM database_set ds JOIN collect_frequency cf ")
+					.append(" ON ds.database_id = cf.COLLECT_SET_ID ")
 					.append(" LEFT JOIN agent_info gi ON ds.Agent_id = gi.Agent_id ")
 					.append(" where ds.Agent_id=? and ds.is_sendok = ? ");
 		}
 		//数据文件Agent
 		else if (AgentType.DBWenJian == AgentType.getCodeObj(result.getString(0, "agent_type"))) {
 			sqlSB.append(" SELECT ds.DATABASE_ID ID,ds.task_name task_name,ds.AGENT_ID AGENT_ID, ")
-					.append(" cf.execute_time execute_time, cf.fre_week fre_week,cf.run_way run_way,cf.fre_month fre_month, ")
-					.append(" cf.fre_day fre_day,gi.source_id source_id,cf.collect_type ")
-					.append(" FROM database_set ds JOIN collect_frequency cf ON ds.database_id = cf.COLLECT_SET_ID ")
+					.append(" cf.execute_time execute_time, cf.fre_week fre_week, ")
+					.append(" cf.run_way run_way,cf.fre_month fre_month,cf.fre_day fre_day, ")
+					.append("gi.source_id source_id,cf.collect_type")
+					.append(" FROM database_set ds JOIN collect_frequency cf ")
+					.append(" ON ds.database_id = cf.COLLECT_SET_ID ")
 					.append(" LEFT JOIN agent_info gi ON ds.Agent_id = gi.Agent_id ")
 					.append(" where ds.Agent_id=? and ds.is_sendok = ? ");
 		}
 		//半结构化采集Agent
 		else if (AgentType.DuiXiang == AgentType.getCodeObj(result.getString(0, "agent_type"))) {
 			sqlSB.append(" SELECT fs.odc_id id,fs.obj_collect_name task_name,fs.AGENT_ID AGENT_ID, ")
-					.append(" cf.execute_time execute_time,cf.fre_week fre_week,cf.run_way run_way,cf.fre_month fre_month, ")
-					.append(" cf.fre_day fre_day,gi.source_id,cf.collect_type  ")
+					.append(" cf.execute_time execute_time,cf.fre_week fre_week, ")
+					.append(" cf.run_way run_way,cf.fre_month fre_month,cf.fre_day fre_day,  ")
+					.append(" gi.source_id,cf.collect_type ")
 					.append(" FROM object_collect fs JOIN collect_frequency cf ")
-					.append(" ON fs.odc_id = cf.COLLECT_SET_ID LEFT JOIN agent_info gi ON gi.Agent_id = cf.Agent_id ")
+					.append(" ON fs.odc_id = cf.COLLECT_SET_ID LEFT JOIN agent_info gi ")
+					.append(" ON gi.Agent_id = cf.Agent_id ")
 					.append(" WHERE fs.Agent_id = ? AND fs.is_sendok = ? ");
 		}
 		//FtpAgent
 		else if (AgentType.FTP == AgentType.getCodeObj(result.getString(0, "agent_type"))) {
-			sqlSB.append(" SELECT fs.ftp_id id,fs.ftp_name task_name,fs.AGENT_ID AGENT_ID,cf.execute_time execute_time, ")
-					.append(" cf.fre_week fre_week,cf.run_way run_way,cf.fre_month fre_month, ")
-					.append(" cf.fre_day fre_day,gi.source_id,cf.collect_type ")
-					.append(" FROM ftp_collect fs JOIN collect_frequency cf ON fs.ftp_id = cf.COLLECT_SET_ID LEFT JOIN agent_info gi ")
+			sqlSB.append(" SELECT fs.ftp_id id,fs.ftp_name task_name,fs.AGENT_ID AGENT_ID, ")
+					.append(" cf.execute_time execute_time,cf.fre_week fre_week,cf.run_way run_way, ")
+					.append(" cf.fre_month fre_month,cf.fre_day fre_day,gi.source_id,cf.collect_type ")
+					.append(" FROM ftp_collect fs JOIN collect_frequency cf ")
+					.append(" ON fs.ftp_id = cf.COLLECT_SET_ID LEFT JOIN agent_info gi ")
 					.append(" ON gi.Agent_id = cf.Agent_id ")
 					.append(" WHERE fs.Agent_id = ? and fs.is_sendok = ? ");
 		}
 		//非结构化Agent
 		else {
 			sqlSB.append(" SELECT fs.fcs_id id,fs.fcs_name task_name,fs.AGENT_ID AGENT_ID, ")
-					.append(" cf.execute_time execute_time,cf.fre_week fre_week,cf.run_way run_way,cf.fre_month fre_month, ")
-					.append(" cf.fre_day fre_day,gi.source_id,cf.collect_type ")
-					.append(" FROM file_collect_set fs JOIN collect_frequency cf ON fs.fcs_id = cf.COLLECT_SET_ID ")
+					.append(" cf.execute_time execute_time,cf.fre_week fre_week,cf.run_way run_way, ")
+					.append(" cf.fre_month fre_month,cf.fre_day fre_day,gi.source_id,cf.collect_type ")
+					.append(" FROM file_collect_set fs JOIN collect_frequency cf ")
+					.append(" ON fs.fcs_id = cf.COLLECT_SET_ID ")
 					.append(" LEFT JOIN agent_info gi ON gi.Agent_id = cf.Agent_id ")
 					.append(" where fs.Agent_id=? and fs.is_sendok = ? ");
 		}
@@ -232,7 +240,8 @@ public class AgentListAction extends BaseAction {
 			if (request.getHeader("User-Agent").toLowerCase().indexOf("firefox") > 0) {
 				// 对firefox浏览器做特殊处理
 				response.setHeader("content-disposition", "attachment;filename=" +
-						new String(taskLog.get("filePath").getBytes(DataBaseCode.UTF_8.getValue()), DataBaseCode.ISO_8859_1.getValue()));
+						new String(taskLog.get("filePath").getBytes(DataBaseCode.UTF_8.getValue()),
+								DataBaseCode.ISO_8859_1.getValue()));
 			} else {
 				response.setHeader("content-disposition", "attachment;filename=" +
 						URLEncoder.encode(taskLog.get("filePath"), DataBaseCode.UTF_8.getValue()));
@@ -262,7 +271,8 @@ public class AgentListAction extends BaseAction {
 	public void deletehalfStructTask(long collectSetId) {
 		//1、根据collectSetId在源文件属性表(source_file_attribute)中获得采集的原始表名(table_name)，可能有多条
 		List<Map<String, Object>> maps = Dbo.queryList(
-				"select table_name from source_file_attribute where collect_set_id = ?", collectSetId);
+				"select table_name from source_file_attribute where collect_set_id = ?",
+				collectSetId);
 		if (maps.isEmpty()) {
 			throw new BusinessException("源文件属性表中未找到采集的原始表名");
 		}
@@ -279,7 +289,8 @@ public class AgentListAction extends BaseAction {
 			else throw new BusinessException("object_collect表删除数据异常!");
 		}
 		//4、在卸数作业参数表(collect_frequency)中删除该条数据，有且只有一条
-		int secExecute = Dbo.execute("delete from collect_frequency where collect_set_id = ?", collectSetId);
+		int secExecute = Dbo.execute("delete from collect_frequency where collect_set_id = ?",
+				collectSetId);
 		if (secExecute != 1) {
 			if (secExecute == 0) throw new BusinessException("collect_frequency表中没有数据被删除!");
 			else throw new BusinessException("collect_frequency表删除数据异常!");
@@ -301,7 +312,8 @@ public class AgentListAction extends BaseAction {
 	public void deleteFTPTask(long collectSetId) {
 		//1、根据collectSetId在源文件属性表(source_file_attribute)中获得采集的原始表名(table_name)，可能有多条
 		List<Map<String, Object>> maps = Dbo.queryList(
-				"select table_name from source_file_attribute where collect_set_id = ?", collectSetId);
+				"select table_name from source_file_attribute where collect_set_id = ?",
+				collectSetId);
 		if (maps.isEmpty()) {
 			throw new BusinessException("源文件属性表中未找到采集的原始表名");
 		}
@@ -318,7 +330,8 @@ public class AgentListAction extends BaseAction {
 			else throw new BusinessException("ftp_collect表删除数据异常!");
 		}
 		//4、在卸数作业参数表(collect_frequency)中删除该条数据，有且只有一条
-		int secExecute = Dbo.execute("delete from collect_frequency where collect_set_id = ?", collectSetId);
+		int secExecute = Dbo.execute("delete from collect_frequency where collect_set_id = ?",
+				collectSetId);
 		if (secExecute != 1) {
 			if (secExecute == 0) throw new BusinessException("collect_frequency表中没有数据被删除!");
 			else throw new BusinessException("collect_frequency表删除数据异常!");
@@ -353,7 +366,8 @@ public class AgentListAction extends BaseAction {
 		if (AgentType.ShuJuKu == AgentType.getCodeObj(agentType)) {
 			//2、如果是数据库直连采集任务
 			List<Map<String, Object>> maps = Dbo.queryList(
-					"select hbase_name from source_file_attribute where collect_set_id = ?", collectSetId);
+					"select hbase_name from source_file_attribute where collect_set_id = ?",
+					collectSetId);
 			if (maps.isEmpty()) {
 				throw new BusinessException("源文件属性表中未找到系统内对应表名");
 			}
@@ -371,14 +385,15 @@ public class AgentListAction extends BaseAction {
 
 			//2-2、在表对应字段表中找到对应的记录并删除，可能会有多条
 			int secNum = Dbo.execute("delete from table_column where EXISTS" +
-					"(select 1 from table_info ti where database_id = ? and table_column.table_id=ti.table_id)",
-					collectSetId);
+							"(select 1 from table_info ti where database_id = ? " +
+							"and table_column.table_id=ti.table_id)", collectSetId);
 			if (secNum == 0) {
 				throw new BusinessException("table_column表中没有数据被删除!");
 			}
 
 			//2-3、在数据库对应表删除对应的记录,可能会有多条
-			int thiExecute = Dbo.execute("delete from table_info where database_id = ?", collectSetId);
+			int thiExecute = Dbo.execute("delete from table_info where database_id = ?",
+					collectSetId);
 			if (thiExecute == 0) {
 				throw new BusinessException("table_info表中没有数据被删除!");
 			}
@@ -388,7 +403,7 @@ public class AgentListAction extends BaseAction {
 			//3-1、在文件系统设置表删除对应的记录，有且只有一条
 			int fouNum = Dbo.execute("delete  from file_collect_set where fcs_id =?", collectSetId);
 			if (fouNum != 1) {
-				if (fouNum == 0) throw new BusinessException(String.format("file_collect_set表中没有数据被删除!"));
+				if (fouNum == 0) throw new BusinessException("file_collect_set表中没有数据被删除!");
 				else throw new BusinessException("file_collect_set表删除数据异常!");
 			}
 			//3-2、在文件源设置表删除对应的记录，有且只有一条
@@ -400,31 +415,36 @@ public class AgentListAction extends BaseAction {
 		}
 		//4、对其他类型的任务进行统一处理
 		//4-1、在卸数作业参数表删除对应的记录,有且只有一条
-		int sixNum = Dbo.execute("delete  from collect_frequency where collect_set_id =?", collectSetId);
+		int sixNum = Dbo.execute("delete  from collect_frequency where collect_set_id =?",
+				collectSetId);
 		if (sixNum != 1) {
 			if (sixNum == 0) throw new BusinessException("collect_frequency表中没有数据被删除!");
 			else throw new BusinessException("collect_frequency表删除数据异常!");
 		}
 		//4-2、在压缩作业参数表删除对应的记录,有且只有一条
-		int sevNum = Dbo.execute("delete  from collect_reduce where collect_set_id =?", collectSetId);
+		int sevNum = Dbo.execute("delete  from collect_reduce where collect_set_id =?",
+				collectSetId);
 		if (sevNum != 1) {
 			if (sevNum == 0) throw new BusinessException("collect_reduce表中没有数据被删除!");
 			else throw new BusinessException("collect_reduce表删除数据异常!");
 		}
 		//4-3、在传送作业参数表删除对应的记录,有且只有一条
-		int eigNum = Dbo.execute("delete  from collect_transfer where collect_set_id =?", collectSetId);
+		int eigNum = Dbo.execute("delete  from collect_transfer where collect_set_id =?",
+				collectSetId);
 		if (eigNum != 1) {
 			if (eigNum == 0) throw new BusinessException("collect_transfer表中没有数据被删除!");
 			else throw new BusinessException("collect_transfer表删除数据异常!");
 		}
 		//4-4、在清洗作业参数表删除对应的记录,有且只有一条
-		int ninNum = Dbo.execute("delete  from collect_clean where collect_set_id =?", collectSetId);
+		int ninNum = Dbo.execute("delete  from collect_clean where collect_set_id =?",
+				collectSetId);
 		if (ninNum != 1) {
 			if (ninNum == 0) throw new BusinessException("collect_clean表中没有数据被删除!");
 			else throw new BusinessException("collect_clean表删除数据异常!");
 		}
 		//4-5、在hdfs存储作业参数表删除对应的记录,有且只有一条
-		int tenNum = Dbo.execute("delete  from collect_hdfs where collect_set_id =?", collectSetId);
+		int tenNum = Dbo.execute("delete  from collect_hdfs where collect_set_id =?",
+				collectSetId);
 		if (tenNum != 1) {
 			if (tenNum == 0) throw new BusinessException("collect_hdfs表中没有数据被删除!");
 			else throw new BusinessException("collect_hdfs表删除数据异常!");
@@ -647,7 +667,8 @@ public class AgentListAction extends BaseAction {
 						//buffer.append(I18nMessage.getMessage("agentSetUpManager.selectTask.meitian"));
 					} else {
 						//2-6、否则，调用Tools工具类对日频率做国际化处理
-						//buffer.append("--").append(freDay).append(I18nMessage.getMessage("agentSetUpManager.selectTask.tian"));
+						//buffer.append("--").append(freDay)
+						// .append(I18nMessage.getMessage("agentSetUpManager.selectTask.tian"));
 					}
 				}
 				//2-7、将数据放入查询结果中
@@ -675,7 +696,8 @@ public class AgentListAction extends BaseAction {
 	private Map<String, String> getTaskLog(long agentId, long userId, String logType, int readNum) {
 		//1、根据agent_id和user_id获取agent信息
 		Map<String, Object> result = Dbo.queryOneObject(
-				"select * from agent_down_info where agent_id = ? and user_id = ?", agentId, userId);
+				"select * from agent_down_info where agent_id = ? and user_id = ?", agentId,
+				userId);
 		String agentIP = (String) result.get("agent_ip");
 		//2、在agent信息中获取日志目录
 		String logDir = (String) result.get("log_dir");

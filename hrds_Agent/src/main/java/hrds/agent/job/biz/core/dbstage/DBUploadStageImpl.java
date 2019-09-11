@@ -32,10 +32,15 @@ public class DBUploadStageImpl extends AbstractJobStage {
 		this.remoteDir = remoteDir;
 	}
 
-	/*
+	/**
+	 * @Description: 数据库直连采集上传阶段处理方法
+	 * @return: hrds.agent.job.biz.bean.StageStatusInfo
+	 * @Author: WangZhengcheng
+	 * @Date: 2019/9/11
+	 * 步骤：
 	 * 1、创建卸数阶段状态信息，更新作业ID,阶段名，阶段开始时间
 	 * 2、调用方法，进行文件上传，文件数组和上传目录由构造器传入
-	 * */
+	 */
 	@Override
 	public StageStatusInfo handleStage() {
 		LOGGER.info("------------------数据库直连采集上传阶段开始------------------");

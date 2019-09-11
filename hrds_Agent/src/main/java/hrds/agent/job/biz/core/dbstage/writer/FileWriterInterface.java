@@ -21,8 +21,9 @@ public interface FileWriterInterface {
 
 	/**
 	 * @Description: 根据数据元信息和ResultSet，写指定格式的数据文件
-	 * @Param: metaDataMap
-	 * @Param: rs
+	 * @Param: metaDataMap : 包含有列元信息，清洗规则的map，取值范围 : Map<String, Object>
+	 * @Param: rs : 数据集, 取值范围 : ResultSet
+	 * @Param: tableName : 表名, 用于大字段数据写avro, 取值范围 : String
 	 * @return: String
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/8/13
@@ -31,7 +32,7 @@ public interface FileWriterInterface {
 
 	/**
 	 * @Description: 将LONGVARCHAR和CLOB类型转换为字节数组，用于写Avro
-	 * @Param: characterStream
+	 * @Param: characterStream : LONGVARCHAR、CLOB类型数据的流, 取值范围 : java.io.Reader
 	 * @return: byte[]
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/8/13
@@ -40,7 +41,7 @@ public interface FileWriterInterface {
 
 	/**
 	 * @Description: 把Blob类型转换为byte字节数组, 用于写Avro
-	 * @Param: Blob blob
+	 * @Param: Blob blob : blob类型字段, 取值范围 : java.sql.Blob
 	 * @return: byte[]
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/8/13

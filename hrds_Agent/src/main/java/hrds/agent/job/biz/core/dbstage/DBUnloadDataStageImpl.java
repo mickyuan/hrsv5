@@ -7,8 +7,8 @@ import hrds.agent.job.biz.bean.StageStatusInfo;
 import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
+import hrds.agent.job.biz.core.dbstage.dbdialect.DialectStrategyFactory;
 import hrds.agent.job.biz.core.dbstage.dbdialect.strategy.DataBaseDialectStrategy;
-import hrds.agent.job.biz.core.dbstage.dbdialect.strategy.DialectStrategyFactory;
 import hrds.agent.job.biz.core.dbstage.service.CollectPage;
 import hrds.agent.job.biz.utils.DateUtil;
 import hrds.agent.job.biz.utils.FileUtil;
@@ -59,7 +59,12 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 		this.jobInfo = jobInfo;
 	}
 
-	/*
+	/**
+	* @Description: 数据库直连采集卸数阶段方法
+	* @return: hrds.agent.job.biz.bean.StageStatusInfo
+	* @Author: WangZhengcheng
+	* @Date: 2019/9/11
+	 * 步骤：
 	 * 1、创建卸数阶段状态信息，更新作业ID,阶段名，阶段开始时间
 	 * 2、解析作业信息，得到表名和表数据量
 	 * 3、根据列名和表名获得采集SQL
@@ -67,7 +72,7 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 	 * 5、根据采集线程数，计算每个任务的采集数量
 	 * 6、构建线程对象CollectPage，放入线程池执行
 	 * 7、获得结果,用于校验多线程采集的结果和写Meta文件
-	 * */
+	*/
 	@Override
 	public StageStatusInfo handleStage() throws InterruptedException, ExecutionException, SQLException {
 		LOGGER.info("------------------数据库直连采集卸数阶段开始------------------");
@@ -92,8 +97,9 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 		//获得用户提供的用于分页的列
 		String pageColumn = jobInfo.getPageColumn();
 		//4、使用工厂模式获得数据库方言策略
-		DataBaseDialectStrategy strategy = DialectStrategyFactory.getInstance().createDialectStrategy(dbInfo.getDatabase_type());
-		//fileResult中是生成的所有数据文件的路径，用于判断卸数阶段结果
+		DialectStrategyFactory factory = DialectStrategyFactory.getInstance();
+		DataBaseDialectStrategy strategy = factory.createDialectStrategy(dbInfo.getDatabase_type());
+				//fileResult中是生成的所有数据文件的路径，用于判断卸数阶段结果
 		List<String> fileResult = new ArrayList<>();
 		//RSResult中是所有分页查询得到的ResultSet，用于写meta文件
 		List<ResultSet> RSResult = new ArrayList<>();
@@ -196,7 +202,6 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 
 	/**
 	 * @Description: 获取数据列类型，用于写meta文件
-	 * @Param:
 	 * @return: List<String>
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/8/13
@@ -207,7 +212,6 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 
 	/**
 	 * @Description: 获取本次数据库直连采集作业采集到的数据总条数，用于写meta文件
-	 * @Param:
 	 * @return: long
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/8/13
@@ -218,7 +222,6 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 
 	/**
 	 * @Description: 获取本次数据库直连采集作业采集卸数后生成的数据文件总大小，用于写meta文件
-	 * @Param:
 	 * @return: long 单位是字节
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/8/13
@@ -229,7 +232,6 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 
 	/**
 	 * @Description: 获取本次数据库直连采集作业采集卸数后生成的数据文件的路径，用于上传HDFS
-	 * @Param:
 	 * @return: String[]：多线程采集，每个线程写一个数据文件，多线程采集最终会有多个文件
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/8/13
@@ -244,9 +246,9 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 
 	/**
 	 * @Description: 根据列类型和列宽组装最终返回的列类型
-	 * @Param: columnTypeName：列类型
-	 * @Param: precision：列宽
-	 * @return:String 格式：列类型(宽度)
+	 * @Param: columnTypeName：列类型, 取值范围 : String
+	 * @Param: precision：列宽, 取值范围 : int
+	 * @return: String 格式：列类型(宽度)
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/8/13
 	 */
