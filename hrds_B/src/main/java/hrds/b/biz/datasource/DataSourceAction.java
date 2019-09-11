@@ -69,8 +69,7 @@ public class DataSourceAction extends BaseAction {
 		if (dataSource.getSource_id() == null) {
 			// 新增
 			dataSource.setSource_id(PrimayKeyGener.getNextId());
-			//dataSource.setUser_id(getUserId());
-			dataSource.setUser_id(1001L);
+			dataSource.setUser_id(getUserId());
 			dataSource.setCreate_date(DateUtil.getSysDate());
 			dataSource.setCreate_time(DateUtil.getSysTime());
 			// 3.新增前查询数据源编号是否已存在
