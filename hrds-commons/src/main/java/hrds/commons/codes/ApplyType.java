@@ -5,13 +5,13 @@ import hrds.commons.exception.AppSystemException;
 /**代码类型名：数据申请类型  */
 public enum ApplyType {
 	/**查看<ChaKan>  */
-	ChaKan("1","查看","18","数据申请类型"),
+	ChaKan("1","查看","57","数据申请类型"),
 	/**下载<XiaZai>  */
-	XiaZai("2","下载","18","数据申请类型"),
+	XiaZai("2","下载","57","数据申请类型"),
 	/**发布<FaBu>  */
-	FaBu("3","发布","18","数据申请类型"),
+	FaBu("3","发布","57","数据申请类型"),
 	/**重命名<ChongMingMing>  */
-	ChongMingMing("4","重命名","18","数据申请类型");
+	ChongMingMing("4","重命名","57","数据申请类型");
 
 	private final String code;
 	private final String value;

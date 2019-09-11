@@ -5,15 +5,15 @@ import hrds.commons.exception.AppSystemException;
 /**代码类型名：Agent类别  */
 public enum AgentType {
 	/**数据库Agent<ShuJuKu>  */
-	ShuJuKu("1","数据库Agent","5","Agent类别"),
+	ShuJuKu("1","数据库Agent","35","Agent类别"),
 	/**文件系统Agent<WenJianXiTong>  */
-	WenJianXiTong("2","文件系统Agent","5","Agent类别"),
+	WenJianXiTong("2","文件系统Agent","35","Agent类别"),
 	/**FtpAgent<FTP>  */
-	FTP("3","FtpAgent","5","Agent类别"),
+	FTP("3","FtpAgent","35","Agent类别"),
 	/**数据文件Agent<DBWenJian>  */
-	DBWenJian("4","数据文件Agent","5","Agent类别"),
+	DBWenJian("4","数据文件Agent","35","Agent类别"),
 	/**对象Agent<DuiXiang>  */
-	DuiXiang("5","对象Agent","5","Agent类别");
+	DuiXiang("5","对象Agent","35","Agent类别");
 
 	private final String code;
 	private final String value;

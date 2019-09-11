@@ -5,15 +5,15 @@ import hrds.commons.exception.AppSystemException;
 /**代码类型名：ETL干预状态  */
 public enum Meddle_status {
 	/**完成<DONE>  */
-	DONE("D","完成","115","ETL干预状态"),
+	DONE("D","完成","30","ETL干预状态"),
 	/**异常<ERROR>  */
-	ERROR("E","异常","115","ETL干预状态"),
+	ERROR("E","异常","30","ETL干预状态"),
 	/**失效<FALSE>  */
-	FALSE("F","失效","115","ETL干预状态"),
+	FALSE("F","失效","30","ETL干预状态"),
 	/**有效<TRUE>  */
-	TRUE("T","有效","115","ETL干预状态"),
+	TRUE("T","有效","30","ETL干预状态"),
 	/**干预中<RUNNING>  */
-	RUNNING("R","干预中","115","ETL干预状态");
+	RUNNING("R","干预中","30","ETL干预状态");
 
 	private final String code;
 	private final String value;

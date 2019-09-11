@@ -32,8 +32,8 @@ public class Etl_job_disp_his extends TableEntity
 	static {
 		Set<String> __tmpPKS = new HashSet<>();
 		__tmpPKS.add("curr_bath_date");
-		__tmpPKS.add("etl_sys_cd");
 		__tmpPKS.add("etl_job");
+		__tmpPKS.add("etl_sys_cd");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
 	private String etl_job_desc; //作业描述
@@ -60,7 +60,6 @@ public class Etl_job_disp_his extends TableEntity
 	private Integer job_priority_curr; //作业当前优先级
 	private Integer job_return_val; //作业返回值
 	private String curr_bath_date; //当前批量日期
-	private String etl_sys_cd; //工程代码
 	private String etl_job; //作业名
 	private String sub_sys_cd; //子系统代码
 	private Long exe_frequency; //每隔(分钟)执行	exe_frequency
@@ -69,6 +68,7 @@ public class Etl_job_disp_his extends TableEntity
 	private String last_exe_time; //上次执行时间
 	private String star_time; //开始执行时间
 	private String end_time; //结束执行时间
+	private String etl_sys_cd; //工程代码
 
 	/** 取得：作业描述 */
 	public String getEtl_job_desc(){
@@ -298,14 +298,6 @@ public class Etl_job_disp_his extends TableEntity
 	public void setCurr_bath_date(String curr_bath_date){
 		this.curr_bath_date=curr_bath_date;
 	}
-	/** 取得：工程代码 */
-	public String getEtl_sys_cd(){
-		return etl_sys_cd;
-	}
-	/** 设置：工程代码 */
-	public void setEtl_sys_cd(String etl_sys_cd){
-		this.etl_sys_cd=etl_sys_cd;
-	}
 	/** 取得：作业名 */
 	public String getEtl_job(){
 		return etl_job;
@@ -387,5 +379,13 @@ public class Etl_job_disp_his extends TableEntity
 	/** 设置：结束执行时间 */
 	public void setEnd_time(String end_time){
 		this.end_time=end_time;
+	}
+	/** 取得：工程代码 */
+	public String getEtl_sys_cd(){
+		return etl_sys_cd;
+	}
+	/** 设置：工程代码 */
+	public void setEtl_sys_cd(String etl_sys_cd){
+		this.etl_sys_cd=etl_sys_cd;
 	}
 }

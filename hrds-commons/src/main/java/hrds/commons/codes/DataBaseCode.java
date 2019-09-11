@@ -5,15 +5,15 @@ import hrds.commons.exception.AppSystemException;
 /**代码类型名：采集编码  */
 public enum DataBaseCode {
 	/**UTF-8<UTF_8>  */
-	UTF_8("1","UTF-8","35","采集编码"),
+	UTF_8("1","UTF-8","42","采集编码"),
 	/**GBK<GBK>  */
-	GBK("2","GBK","35","采集编码"),
+	GBK("2","GBK","42","采集编码"),
 	/**UTF-16<UTF_16>  */
-	UTF_16("3","UTF-16","35","采集编码"),
+	UTF_16("3","UTF-16","42","采集编码"),
 	/**GB2312<GB2312>  */
-	GB2312("4","GB2312","35","采集编码"),
+	GB2312("4","GB2312","42","采集编码"),
 	/**ISO-8859-1<ISO_8859_1>  */
-	ISO_8859_1("5","ISO-8859-1","35","采集编码");
+	ISO_8859_1("5","ISO-8859-1","42","采集编码");
 
 	private final String code;
 	private final String value;

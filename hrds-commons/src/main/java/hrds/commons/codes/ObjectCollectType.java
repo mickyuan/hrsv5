@@ -5,9 +5,9 @@ import hrds.commons.exception.AppSystemException;
 /**代码类型名：对象采集方式  */
 public enum ObjectCollectType {
 	/**行采集<HangCaiJi>  */
-	HangCaiJi("1","行采集","123","对象采集方式"),
+	HangCaiJi("1","行采集","47","对象采集方式"),
 	/**对象采集<DuiXiangCaiJi>  */
-	DuiXiangCaiJi("2","对象采集","123","对象采集方式");
+	DuiXiangCaiJi("2","对象采集","47","对象采集方式");
 
 	private final String code;
 	private final String value;

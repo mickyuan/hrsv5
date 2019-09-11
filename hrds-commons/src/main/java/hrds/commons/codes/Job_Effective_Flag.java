@@ -5,11 +5,11 @@ import hrds.commons.exception.AppSystemException;
 /**代码类型名：ETl作业有效标志  */
 public enum Job_Effective_Flag {
 	/**有效(Y)<YES>  */
-	YES("Y","有效(Y)","110","ETl作业有效标志"),
+	YES("Y","有效(Y)","24","ETl作业有效标志"),
 	/**无效(N)<NO>  */
-	NO("N","无效(N)","110","ETl作业有效标志"),
+	NO("N","无效(N)","24","ETl作业有效标志"),
 	/**空跑(V)<VIRTUAL>  */
-	VIRTUAL("V","空跑(V)","110","ETl作业有效标志");
+	VIRTUAL("V","空跑(V)","24","ETl作业有效标志");
 
 	private final String code;
 	private final String value;

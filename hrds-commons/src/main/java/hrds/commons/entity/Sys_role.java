@@ -34,17 +34,23 @@ public class Sys_role extends TableEntity
 		__tmpPKS.add("role_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	private String role_id; //角色ID
+	private Long role_id; //角色ID
 	private String role_name; //角色名称
 	private String role_remark; //备注
 
 	/** 取得：角色ID */
-	public String getRole_id(){
+	public Long getRole_id(){
 		return role_id;
 	}
 	/** 设置：角色ID */
-	public void setRole_id(String role_id){
+	public void setRole_id(Long role_id){
 		this.role_id=role_id;
+	}
+	/** 设置：角色ID */
+	public void setRole_id(String role_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(role_id)){
+			this.role_id=new Long(role_id);
+		}
 	}
 	/** 取得：角色名称 */
 	public String getRole_name(){

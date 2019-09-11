@@ -40,8 +40,8 @@ public class Object_collect_task extends TableEntity
 	private String remark; //备注
 	private String collect_data_type; //数据类型
 	private Long odc_id; //对象采集id
-	private Long agent_id; //Agent_id
 	private String database_code; //采集编码
+	private Long agent_id; //Agent_id
 
 	/** 取得：对象采集任务编号 */
 	public Long getOcs_id(){
@@ -103,6 +103,14 @@ public class Object_collect_task extends TableEntity
 			this.odc_id=new Long(odc_id);
 		}
 	}
+	/** 取得：采集编码 */
+	public String getDatabase_code(){
+		return database_code;
+	}
+	/** 设置：采集编码 */
+	public void setDatabase_code(String database_code){
+		this.database_code=database_code;
+	}
 	/** 取得：Agent_id */
 	public Long getAgent_id(){
 		return agent_id;
@@ -116,13 +124,5 @@ public class Object_collect_task extends TableEntity
 		if(!fd.ng.core.utils.StringUtil.isEmpty(agent_id)){
 			this.agent_id=new Long(agent_id);
 		}
-	}
-	/** 取得：采集编码 */
-	public String getDatabase_code(){
-		return database_code;
-	}
-	/** 设置：采集编码 */
-	public void setDatabase_code(String database_code){
-		this.database_code=database_code;
 	}
 }

@@ -5,9 +5,9 @@ import hrds.commons.exception.AppSystemException;
 /**代码类型名：ETL当天调度标志  */
 public enum Today_Dispatch_Flag {
 	/**是(Y)<YES>  */
-	YES("Y","是(Y)","112","ETL当天调度标志"),
+	YES("Y","是(Y)","26","ETL当天调度标志"),
 	/**否(N)<NO>  */
-	NO("N","否(N)","112","ETL当天调度标志");
+	NO("N","否(N)","26","ETL当天调度标志");
 
 	private final String code;
 	private final String value;

@@ -5,15 +5,15 @@ import hrds.commons.exception.AppSystemException;
 /**代码类型名：采集类型  */
 public enum CollectType {
 	/**数据库采集<ShuJuKuCaiJi>  */
-	ShuJuKuCaiJi("1","数据库采集","13","采集类型"),
+	ShuJuKuCaiJi("1","数据库采集","40","采集类型"),
 	/**文件采集<WenJianCaiJi>  */
-	WenJianCaiJi("2","文件采集","13","采集类型"),
+	WenJianCaiJi("2","文件采集","40","采集类型"),
 	/**数据文件采集<DBWenJianCaiJi>  */
-	DBWenJianCaiJi("3","数据文件采集","13","采集类型"),
+	DBWenJianCaiJi("3","数据文件采集","40","采集类型"),
 	/**对象文件采集<DuiXiangWenJianCaiJi>  */
-	DuiXiangWenJianCaiJi("4","对象文件采集","13","采集类型"),
+	DuiXiangWenJianCaiJi("4","对象文件采集","40","采集类型"),
 	/**Ftp采集<FtpCaiJi>  */
-	FtpCaiJi("5","Ftp采集","13","采集类型");
+	FtpCaiJi("5","Ftp采集","40","采集类型");
 
 	private final String code;
 	private final String value;

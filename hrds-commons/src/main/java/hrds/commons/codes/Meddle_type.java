@@ -5,31 +5,31 @@ import hrds.commons.exception.AppSystemException;
 /**代码类型名：ETL干预类型  */
 public enum Meddle_type {
 	/**分组级续跑<GRP_RESUME>  */
-	GRP_RESUME("GR","分组级续跑","114","ETL干预类型"),
+	GRP_RESUME("GR","分组级续跑","29","ETL干预类型"),
 	/**分组级暂停<GRP_PAUSE>  */
-	GRP_PAUSE("GP","分组级暂停","114","ETL干预类型"),
+	GRP_PAUSE("GP","分组级暂停","29","ETL干预类型"),
 	/**分组级重跑，从源头开始<GRP_ORIGINAL>  */
-	GRP_ORIGINAL("GO","分组级重跑，从源头开始","114","ETL干预类型"),
+	GRP_ORIGINAL("GO","分组级重跑，从源头开始","29","ETL干预类型"),
 	/**作业直接跑<JOB_TRIGGER>  */
-	JOB_TRIGGER("JT","作业直接跑","114","ETL干预类型"),
+	JOB_TRIGGER("JT","作业直接跑","29","ETL干预类型"),
 	/**作业停止<JOB_STOP>  */
-	JOB_STOP("JS","作业停止","114","ETL干预类型"),
+	JOB_STOP("JS","作业停止","29","ETL干预类型"),
 	/**作业重跑<JOB_RERUN>  */
-	JOB_RERUN("JR","作业重跑","114","ETL干预类型"),
+	JOB_RERUN("JR","作业重跑","29","ETL干预类型"),
 	/**作业临时调整优先级<JOB_PRIORITY>  */
-	JOB_PRIORITY("JP","作业临时调整优先级","114","ETL干预类型"),
+	JOB_PRIORITY("JP","作业临时调整优先级","29","ETL干预类型"),
 	/**作业跳过<JOB_JUMP>  */
-	JOB_JUMP("JJ","作业跳过","114","ETL干预类型"),
+	JOB_JUMP("JJ","作业跳过","29","ETL干预类型"),
 	/**系统日切<SYS_SHIFT>  */
-	SYS_SHIFT("SF","系统日切","114","ETL干预类型"),
+	SYS_SHIFT("SF","系统日切","29","ETL干预类型"),
 	/**系统停止<SYS_STOP>  */
-	SYS_STOP("SS","系统停止","114","ETL干预类型"),
+	SYS_STOP("SS","系统停止","29","ETL干预类型"),
 	/**系统级暂停<SYS_PAUSE>  */
-	SYS_PAUSE("SP","系统级暂停","114","ETL干预类型"),
+	SYS_PAUSE("SP","系统级暂停","29","ETL干预类型"),
 	/**系统级重跑，从源头开始<SYS_ORIGINAL>  */
-	SYS_ORIGINAL("SO","系统级重跑，从源头开始","114","ETL干预类型"),
+	SYS_ORIGINAL("SO","系统级重跑，从源头开始","29","ETL干预类型"),
 	/**系统级续跑<SYS_RESUME>  */
-	SYS_RESUME("SR","系统级续跑","114","ETL干预类型");
+	SYS_RESUME("SR","系统级续跑","29","ETL干预类型");
 
 	private final String code;
 	private final String value;

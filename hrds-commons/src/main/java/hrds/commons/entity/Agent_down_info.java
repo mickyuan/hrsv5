@@ -34,6 +34,7 @@ public class Agent_down_info extends TableEntity
 		__tmpPKS.add("down_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
+	private String agent_type; //agent类别
 	private Long down_id; //下载编号(primary)
 	private String agent_name; //Agent名称
 	private String agent_ip; //Agent IP
@@ -47,8 +48,15 @@ public class Agent_down_info extends TableEntity
 	private Long agent_id; //Agent_id
 	private String user_name; //用户名
 	private String passwd; //密码
-	private String agent_type; //agent类别
 
+	/** 取得：agent类别 */
+	public String getAgent_type(){
+		return agent_type;
+	}
+	/** 设置：agent类别 */
+	public void setAgent_type(String agent_type){
+		this.agent_type=agent_type;
+	}
 	/** 取得：下载编号(primary) */
 	public Long getDown_id(){
 		return down_id;
@@ -170,13 +178,5 @@ public class Agent_down_info extends TableEntity
 	/** 设置：密码 */
 	public void setPasswd(String passwd){
 		this.passwd=passwd;
-	}
-	/** 取得：agent类别 */
-	public String getAgent_type(){
-		return agent_type;
-	}
-	/** 设置：agent类别 */
-	public void setAgent_type(String agent_type){
-		this.agent_type=agent_type;
 	}
 }

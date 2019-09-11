@@ -5,11 +5,11 @@ import hrds.commons.exception.AppSystemException;
 /**代码类型名：用户优先级  */
 public enum UserPriority {
 	/**高<Gao>  */
-	Gao("1","高","14","用户优先级"),
+	Gao("1","高","21","用户优先级"),
 	/**中<Zhong>  */
-	Zhong("2","中","14","用户优先级"),
+	Zhong("2","中","21","用户优先级"),
 	/**低<Di>  */
-	Di("3","低","14","用户优先级");
+	Di("3","低","21","用户优先级");
 
 	private final String code;
 	private final String value;

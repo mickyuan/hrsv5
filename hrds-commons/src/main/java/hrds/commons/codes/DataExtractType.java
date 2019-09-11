@@ -5,9 +5,9 @@ import hrds.commons.exception.AppSystemException;
 /**代码类型名：数据抽取方式  */
 public enum DataExtractType {
 	/**仅数据抽取<JinShuJuChouQu>  */
-	JinShuJuChouQu("1","仅数据抽取","145","数据抽取方式"),
+	JinShuJuChouQu("1","仅数据抽取","53","数据抽取方式"),
 	/**数据抽取及入库<ShuJuChouQuJiRuKu>  */
-	ShuJuChouQuJiRuKu("2","数据抽取及入库","145","数据抽取方式");
+	ShuJuChouQuJiRuKu("2","数据抽取及入库","53","数据抽取方式");
 
 	private final String code;
 	private final String value;

@@ -5,13 +5,13 @@ import hrds.commons.exception.AppSystemException;
 /**代码类型名：时间类型  */
 public enum TimeType {
 	/**日<Day>  */
-	Day("1","日","126","时间类型"),
+	Day("1","日","50","时间类型"),
 	/**小时<Hour>  */
-	Hour("2","小时","126","时间类型"),
+	Hour("2","小时","50","时间类型"),
 	/**分钟<Minute>  */
-	Minute("3","分钟","126","时间类型"),
+	Minute("3","分钟","50","时间类型"),
 	/**秒<Second>  */
-	Second("4","秒","126","时间类型");
+	Second("4","秒","50","时间类型");
 
 	private final String code;
 	private final String value;

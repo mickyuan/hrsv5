@@ -5,19 +5,19 @@ import hrds.commons.exception.AppSystemException;
 /**代码类型名：清洗方式  */
 public enum CleanType {
 	/**字符补齐<ZiFuBuQi>  */
-	ZiFuBuQi("1","字符补齐","36","清洗方式"),
+	ZiFuBuQi("1","字符补齐","54","清洗方式"),
 	/**字符替换<ZiFuTiHuan>  */
-	ZiFuTiHuan("2","字符替换","36","清洗方式"),
+	ZiFuTiHuan("2","字符替换","54","清洗方式"),
 	/**时间转换<ShiJianZhuanHuan>  */
-	ShiJianZhuanHuan("3","时间转换","36","清洗方式"),
+	ShiJianZhuanHuan("3","时间转换","54","清洗方式"),
 	/**码值转换<MaZhiZhuanHuan>  */
-	MaZhiZhuanHuan("4","码值转换","36","清洗方式"),
+	MaZhiZhuanHuan("4","码值转换","54","清洗方式"),
 	/**字符合并<ZiFuHeBing>  */
-	ZiFuHeBing("5","字符合并","36","清洗方式"),
+	ZiFuHeBing("5","字符合并","54","清洗方式"),
 	/**字符拆分<ZiFuChaiFen>  */
-	ZiFuChaiFen("6","字符拆分","36","清洗方式"),
+	ZiFuChaiFen("6","字符拆分","54","清洗方式"),
 	/**字符trim<ZiFuTrim>  */
-	ZiFuTrim("7","字符trim","36","清洗方式");
+	ZiFuTrim("7","字符trim","54","清洗方式");
 
 	private final String code;
 	private final String value;

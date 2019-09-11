@@ -5,9 +5,9 @@ import hrds.commons.exception.AppSystemException;
 /**代码类型名：字符拆分方式  */
 public enum CharSplitType {
 	/**偏移量<PianYiLiang>  */
-	PianYiLiang("1","偏移量","142","字符拆分方式"),
+	PianYiLiang("1","偏移量","52","字符拆分方式"),
 	/**自定符号<ZhiDingFuHao>  */
-	ZhiDingFuHao("2","自定符号","142","字符拆分方式");
+	ZhiDingFuHao("2","自定符号","52","字符拆分方式");
 
 	private final String code;
 	private final String value;

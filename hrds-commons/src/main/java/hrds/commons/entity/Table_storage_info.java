@@ -35,16 +35,12 @@ public class Table_storage_info extends TableEntity
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
 	private Long storage_id; //储存编号
-	private String is_into_hbase; //是否入hbase
-	private String is_into_hive; //是否入hive
-	private String is_fullindex; //是否创建全文索引
 	private String file_format; //文件格式
 	private Long table_id; //表名ID
-	private String is_compression; //Hbase是使用压缩
-	private String is_mpp; //是否为MPP
-	private String table_type; //是内部表还是外部表
-	private String is_solr_hbase; //是否使用solrOnHbase
-	private String is_cbd; //是否使用carbondata
+	private String storage_type; //进数方式
+	private Long storage_time; //存储期限（以天为单位）
+	private String is_zipper; //是否拉链存储
+	private String is_everyday,; //是否每天存一份
 
 	/** 取得：储存编号 */
 	public Long getStorage_id(){
@@ -59,30 +55,6 @@ public class Table_storage_info extends TableEntity
 		if(!fd.ng.core.utils.StringUtil.isEmpty(storage_id)){
 			this.storage_id=new Long(storage_id);
 		}
-	}
-	/** 取得：是否入hbase */
-	public String getIs_into_hbase(){
-		return is_into_hbase;
-	}
-	/** 设置：是否入hbase */
-	public void setIs_into_hbase(String is_into_hbase){
-		this.is_into_hbase=is_into_hbase;
-	}
-	/** 取得：是否入hive */
-	public String getIs_into_hive(){
-		return is_into_hive;
-	}
-	/** 设置：是否入hive */
-	public void setIs_into_hive(String is_into_hive){
-		this.is_into_hive=is_into_hive;
-	}
-	/** 取得：是否创建全文索引 */
-	public String getIs_fullindex(){
-		return is_fullindex;
-	}
-	/** 设置：是否创建全文索引 */
-	public void setIs_fullindex(String is_fullindex){
-		this.is_fullindex=is_fullindex;
 	}
 	/** 取得：文件格式 */
 	public String getFile_format(){
@@ -106,44 +78,42 @@ public class Table_storage_info extends TableEntity
 			this.table_id=new Long(table_id);
 		}
 	}
-	/** 取得：Hbase是使用压缩 */
-	public String getIs_compression(){
-		return is_compression;
+	/** 取得：进数方式 */
+	public String getStorage_type(){
+		return storage_type;
 	}
-	/** 设置：Hbase是使用压缩 */
-	public void setIs_compression(String is_compression){
-		this.is_compression=is_compression;
+	/** 设置：进数方式 */
+	public void setStorage_type(String storage_type){
+		this.storage_type=storage_type;
 	}
-	/** 取得：是否为MPP */
-	public String getIs_mpp(){
-		return is_mpp;
+	/** 取得：存储期限（以天为单位） */
+	public Long getStorage_time(){
+		return storage_time;
 	}
-	/** 设置：是否为MPP */
-	public void setIs_mpp(String is_mpp){
-		this.is_mpp=is_mpp;
+	/** 设置：存储期限（以天为单位） */
+	public void setStorage_time(Long storage_time){
+		this.storage_time=storage_time;
 	}
-	/** 取得：是内部表还是外部表 */
-	public String getTable_type(){
-		return table_type;
+	/** 设置：存储期限（以天为单位） */
+	public void setStorage_time(String storage_time){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(storage_time)){
+			this.storage_time=new Long(storage_time);
+		}
 	}
-	/** 设置：是内部表还是外部表 */
-	public void setTable_type(String table_type){
-		this.table_type=table_type;
+	/** 取得：是否拉链存储 */
+	public String getIs_zipper(){
+		return is_zipper;
 	}
-	/** 取得：是否使用solrOnHbase */
-	public String getIs_solr_hbase(){
-		return is_solr_hbase;
+	/** 设置：是否拉链存储 */
+	public void setIs_zipper(String is_zipper){
+		this.is_zipper=is_zipper;
 	}
-	/** 设置：是否使用solrOnHbase */
-	public void setIs_solr_hbase(String is_solr_hbase){
-		this.is_solr_hbase=is_solr_hbase;
+	/** 取得：是否每天存一份 */
+	public String getIs_everyday,(){
+		return is_everyday,;
 	}
-	/** 取得：是否使用carbondata */
-	public String getIs_cbd(){
-		return is_cbd;
-	}
-	/** 设置：是否使用carbondata */
-	public void setIs_cbd(String is_cbd){
-		this.is_cbd=is_cbd;
+	/** 设置：是否每天存一份 */
+	public void setIs_everyday,(String is_everyday,){
+		this.is_everyday,=is_everyday,;
 	}
 }

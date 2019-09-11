@@ -5,9 +5,9 @@ import hrds.commons.exception.AppSystemException;
 /**代码类型名：ETL变类型  */
 public enum ParamType {
 	/**路径<LuJing>  */
-	LuJing("url","路径","116","ETL变类型"),
+	LuJing("url","路径","31","ETL变类型"),
 	/**参数<CanShu>  */
-	CanShu("param","参数","116","ETL变类型");
+	CanShu("param","参数","31","ETL变类型");
 
 	private final String code;
 	private final String value;

@@ -5,11 +5,11 @@ import hrds.commons.exception.AppSystemException;
 /**代码类型名：Agent状态  */
 public enum AgentStatus {
 	/**已连接<YiLianJie>  */
-	YiLianJie("1","已连接","4","Agent状态"),
+	YiLianJie("1","已连接","34","Agent状态"),
 	/**未连接<WeiLianJie>  */
-	WeiLianJie("2","未连接","4","Agent状态"),
+	WeiLianJie("2","未连接","34","Agent状态"),
 	/**正在运行<ZhengZaiYunXing>  */
-	ZhengZaiYunXing("3","正在运行","4","Agent状态");
+	ZhengZaiYunXing("3","正在运行","34","Agent状态");
 
 	private final String code;
 	private final String value;

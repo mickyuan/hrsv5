@@ -35,7 +35,6 @@ public class Data_auth extends TableEntity
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
 	private Long da_id; //数据权限设置ID
-	private Long user_id; //用户ID
 	private String apply_date; //申请日期
 	private String apply_time; //申请时间
 	private String apply_type; //申请类型
@@ -46,9 +45,10 @@ public class Data_auth extends TableEntity
 	private String audit_name; //审核人名称
 	private String file_id; //文件编号
 	private Long dep_id; //部门ID
+	private Long user_id; //用户ID
 	private Long agent_id; //Agent_id
-	private Long collect_set_id; //数据库设置id
 	private Long source_id; //数据源ID
+	private Long collect_set_id; //数据库设置id
 
 	/** 取得：数据权限设置ID */
 	public Long getDa_id(){
@@ -62,20 +62,6 @@ public class Data_auth extends TableEntity
 	public void setDa_id(String da_id){
 		if(!fd.ng.core.utils.StringUtil.isEmpty(da_id)){
 			this.da_id=new Long(da_id);
-		}
-	}
-	/** 取得：用户ID */
-	public Long getUser_id(){
-		return user_id;
-	}
-	/** 设置：用户ID */
-	public void setUser_id(Long user_id){
-		this.user_id=user_id;
-	}
-	/** 设置：用户ID */
-	public void setUser_id(String user_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(user_id)){
-			this.user_id=new Long(user_id);
 		}
 	}
 	/** 取得：申请日期 */
@@ -170,6 +156,20 @@ public class Data_auth extends TableEntity
 			this.dep_id=new Long(dep_id);
 		}
 	}
+	/** 取得：用户ID */
+	public Long getUser_id(){
+		return user_id;
+	}
+	/** 设置：用户ID */
+	public void setUser_id(Long user_id){
+		this.user_id=user_id;
+	}
+	/** 设置：用户ID */
+	public void setUser_id(String user_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(user_id)){
+			this.user_id=new Long(user_id);
+		}
+	}
 	/** 取得：Agent_id */
 	public Long getAgent_id(){
 		return agent_id;
@@ -184,20 +184,6 @@ public class Data_auth extends TableEntity
 			this.agent_id=new Long(agent_id);
 		}
 	}
-	/** 取得：数据库设置id */
-	public Long getCollect_set_id(){
-		return collect_set_id;
-	}
-	/** 设置：数据库设置id */
-	public void setCollect_set_id(Long collect_set_id){
-		this.collect_set_id=collect_set_id;
-	}
-	/** 设置：数据库设置id */
-	public void setCollect_set_id(String collect_set_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(collect_set_id)){
-			this.collect_set_id=new Long(collect_set_id);
-		}
-	}
 	/** 取得：数据源ID */
 	public Long getSource_id(){
 		return source_id;
@@ -210,6 +196,20 @@ public class Data_auth extends TableEntity
 	public void setSource_id(String source_id){
 		if(!fd.ng.core.utils.StringUtil.isEmpty(source_id)){
 			this.source_id=new Long(source_id);
+		}
+	}
+	/** 取得：数据库设置id */
+	public Long getCollect_set_id(){
+		return collect_set_id;
+	}
+	/** 设置：数据库设置id */
+	public void setCollect_set_id(Long collect_set_id){
+		this.collect_set_id=collect_set_id;
+	}
+	/** 设置：数据库设置id */
+	public void setCollect_set_id(String collect_set_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(collect_set_id)){
+			this.collect_set_id=new Long(collect_set_id);
 		}
 	}
 }

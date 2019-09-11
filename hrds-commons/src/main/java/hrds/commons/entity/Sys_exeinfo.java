@@ -39,14 +39,14 @@ public class Sys_exeinfo extends TableEntity
 	private String etl_date; //执行日期
 	private String execute_state; //运行状态
 	private String job_name; //作业名称名称
-	private Long database_id; //数据库设置id
-	private Long agent_id; //Agent_id
-	private Long source_id; //数据源ID
 	private String exe_parameter; //参数
 	private String err_info; //错误信息
 	private String st_date; //开始日期
 	private String ed_date; //结束日期
 	private String is_valid; //作业是否有效
+	private Long source_id; //数据源ID
+	private Long agent_id; //Agent_id
+	private Long database_id; //数据库设置id
 
 	/** 取得：执行id */
 	public Long getExe_id(){
@@ -94,48 +94,6 @@ public class Sys_exeinfo extends TableEntity
 	public void setJob_name(String job_name){
 		this.job_name=job_name;
 	}
-	/** 取得：数据库设置id */
-	public Long getDatabase_id(){
-		return database_id;
-	}
-	/** 设置：数据库设置id */
-	public void setDatabase_id(Long database_id){
-		this.database_id=database_id;
-	}
-	/** 设置：数据库设置id */
-	public void setDatabase_id(String database_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(database_id)){
-			this.database_id=new Long(database_id);
-		}
-	}
-	/** 取得：Agent_id */
-	public Long getAgent_id(){
-		return agent_id;
-	}
-	/** 设置：Agent_id */
-	public void setAgent_id(Long agent_id){
-		this.agent_id=agent_id;
-	}
-	/** 设置：Agent_id */
-	public void setAgent_id(String agent_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(agent_id)){
-			this.agent_id=new Long(agent_id);
-		}
-	}
-	/** 取得：数据源ID */
-	public Long getSource_id(){
-		return source_id;
-	}
-	/** 设置：数据源ID */
-	public void setSource_id(Long source_id){
-		this.source_id=source_id;
-	}
-	/** 设置：数据源ID */
-	public void setSource_id(String source_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(source_id)){
-			this.source_id=new Long(source_id);
-		}
-	}
 	/** 取得：参数 */
 	public String getExe_parameter(){
 		return exe_parameter;
@@ -175,5 +133,47 @@ public class Sys_exeinfo extends TableEntity
 	/** 设置：作业是否有效 */
 	public void setIs_valid(String is_valid){
 		this.is_valid=is_valid;
+	}
+	/** 取得：数据源ID */
+	public Long getSource_id(){
+		return source_id;
+	}
+	/** 设置：数据源ID */
+	public void setSource_id(Long source_id){
+		this.source_id=source_id;
+	}
+	/** 设置：数据源ID */
+	public void setSource_id(String source_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(source_id)){
+			this.source_id=new Long(source_id);
+		}
+	}
+	/** 取得：Agent_id */
+	public Long getAgent_id(){
+		return agent_id;
+	}
+	/** 设置：Agent_id */
+	public void setAgent_id(Long agent_id){
+		this.agent_id=agent_id;
+	}
+	/** 设置：Agent_id */
+	public void setAgent_id(String agent_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(agent_id)){
+			this.agent_id=new Long(agent_id);
+		}
+	}
+	/** 取得：数据库设置id */
+	public Long getDatabase_id(){
+		return database_id;
+	}
+	/** 设置：数据库设置id */
+	public void setDatabase_id(Long database_id){
+		this.database_id=database_id;
+	}
+	/** 设置：数据库设置id */
+	public void setDatabase_id(String database_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(database_id)){
+			this.database_id=new Long(database_id);
+		}
 	}
 }

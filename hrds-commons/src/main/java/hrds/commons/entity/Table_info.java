@@ -41,13 +41,13 @@ public class Table_info extends TableEntity
 	private String source_tableid; //源表ID
 	private String valid_s_date; //有效开始日期
 	private String valid_e_date; //有效结束日期
-	private String storage_type; //储存方式
 	private String sql; //自定义sql语句
 	private String remark; //备注
 	private String is_user_defined; //是否自定义sql采集
 	private Long database_id; //数据库设置id
 	private String ti_or; //清洗顺序
 	private String is_md5; //是否使用MD5
+	private String is_register; //是否仅登记
 
 	/** 取得：表名ID */
 	public Long getTable_id(){
@@ -111,14 +111,6 @@ public class Table_info extends TableEntity
 	public void setValid_e_date(String valid_e_date){
 		this.valid_e_date=valid_e_date;
 	}
-	/** 取得：储存方式 */
-	public String getStorage_type(){
-		return storage_type;
-	}
-	/** 设置：储存方式 */
-	public void setStorage_type(String storage_type){
-		this.storage_type=storage_type;
-	}
 	/** 取得：自定义sql语句 */
 	public String getSql(){
 		return sql;
@@ -172,5 +164,13 @@ public class Table_info extends TableEntity
 	/** 设置：是否使用MD5 */
 	public void setIs_md5(String is_md5){
 		this.is_md5=is_md5;
+	}
+	/** 取得：是否仅登记 */
+	public String getIs_register(){
+		return is_register;
+	}
+	/** 设置：是否仅登记 */
+	public void setIs_register(String is_register){
+		this.is_register=is_register;
 	}
 }

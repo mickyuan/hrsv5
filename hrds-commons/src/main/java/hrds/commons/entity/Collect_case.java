@@ -35,7 +35,6 @@ public class Collect_case extends TableEntity
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
 	private String job_rs_id; //作业执行结果ID
-	private Long agent_id; //Agent_id
 	private Long colect_record; //总共采集记录数
 	private Long collect_total; //总共采集(文件)表
 	private String collet_database_size; //总共采集数据大小
@@ -50,11 +49,12 @@ public class Collect_case extends TableEntity
 	private Long collect_set_id; //数据库设置id
 	private String table_name; //表名
 	private String collect_type; //采集类型
-	private Long source_id; //数据源ID
 	private String job_type; //任务类型
 	private String cc_remark; //备注
 	private String etl_date; //跑批日期
 	private Long again_num; //重跑次数
+	private Long agent_id; //Agent_id
+	private Long source_id; //数据源ID
 
 	/** 取得：作业执行结果ID */
 	public String getJob_rs_id(){
@@ -63,20 +63,6 @@ public class Collect_case extends TableEntity
 	/** 设置：作业执行结果ID */
 	public void setJob_rs_id(String job_rs_id){
 		this.job_rs_id=job_rs_id;
-	}
-	/** 取得：Agent_id */
-	public Long getAgent_id(){
-		return agent_id;
-	}
-	/** 设置：Agent_id */
-	public void setAgent_id(Long agent_id){
-		this.agent_id=agent_id;
-	}
-	/** 设置：Agent_id */
-	public void setAgent_id(String agent_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(agent_id)){
-			this.agent_id=new Long(agent_id);
-		}
 	}
 	/** 取得：总共采集记录数 */
 	public Long getColect_record(){
@@ -208,20 +194,6 @@ public class Collect_case extends TableEntity
 	public void setCollect_type(String collect_type){
 		this.collect_type=collect_type;
 	}
-	/** 取得：数据源ID */
-	public Long getSource_id(){
-		return source_id;
-	}
-	/** 设置：数据源ID */
-	public void setSource_id(Long source_id){
-		this.source_id=source_id;
-	}
-	/** 设置：数据源ID */
-	public void setSource_id(String source_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(source_id)){
-			this.source_id=new Long(source_id);
-		}
-	}
 	/** 取得：任务类型 */
 	public String getJob_type(){
 		return job_type;
@@ -258,6 +230,34 @@ public class Collect_case extends TableEntity
 	public void setAgain_num(String again_num){
 		if(!fd.ng.core.utils.StringUtil.isEmpty(again_num)){
 			this.again_num=new Long(again_num);
+		}
+	}
+	/** 取得：Agent_id */
+	public Long getAgent_id(){
+		return agent_id;
+	}
+	/** 设置：Agent_id */
+	public void setAgent_id(Long agent_id){
+		this.agent_id=agent_id;
+	}
+	/** 设置：Agent_id */
+	public void setAgent_id(String agent_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(agent_id)){
+			this.agent_id=new Long(agent_id);
+		}
+	}
+	/** 取得：数据源ID */
+	public Long getSource_id(){
+		return source_id;
+	}
+	/** 设置：数据源ID */
+	public void setSource_id(Long source_id){
+		this.source_id=source_id;
+	}
+	/** 设置：数据源ID */
+	public void setSource_id(String source_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(source_id)){
+			this.source_id=new Long(source_id);
 		}
 	}
 }

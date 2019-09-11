@@ -5,13 +5,13 @@ import hrds.commons.exception.AppSystemException;
 /**代码类型名：权限类型  */
 public enum AuthType {
 	/**允许<YunXu>  */
-	YunXu("1","允许","19","权限类型"),
+	YunXu("1","允许","58","权限类型"),
 	/**不允许<BuYunXu>  */
-	BuYunXu("2","不允许","19","权限类型"),
+	BuYunXu("2","不允许","58","权限类型"),
 	/**一次<YiCi>  */
-	YiCi("3","一次","19","权限类型"),
+	YiCi("3","一次","58","权限类型"),
 	/**申请<ShenQing>  */
-	ShenQing("0","申请","19","权限类型");
+	ShenQing("0","申请","58","权限类型");
 
 	private final String code;
 	private final String value;

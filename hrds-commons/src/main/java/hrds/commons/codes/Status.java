@@ -5,9 +5,9 @@ import hrds.commons.exception.AppSystemException;
 /**代码类型名：ETL状态  */
 public enum Status {
 	/**有效(T)<TRUE>  */
-	TRUE("T","有效(T)","113","ETL状态"),
+	TRUE("T","有效(T)","28","ETL状态"),
 	/**失效(F)<FALSE>  */
-	FALSE("F","失效(F)","113","ETL状态");
+	FALSE("F","失效(F)","28","ETL状态");
 
 	private final String code;
 	private final String value;

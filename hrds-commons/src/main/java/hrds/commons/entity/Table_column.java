@@ -43,13 +43,10 @@ public class Table_column extends TableEntity
 	private String is_get; //是否采集
 	private String column_type; //列字段类型
 	private Long table_id; //表名ID
-	private String is_solr; //是否solr索引
 	private String remark; //备注
 	private String is_alive; //是否保留原字段
 	private String is_new; //是否为变化生成
 	private String tc_or; //清洗顺序
-	private String is_pre; //是否carbondata聚合列
-	private String is_sortcolumns; //是否为carbondata的排序列
 
 	/** 取得：字段ID */
 	public Long getColumn_id(){
@@ -135,14 +132,6 @@ public class Table_column extends TableEntity
 			this.table_id=new Long(table_id);
 		}
 	}
-	/** 取得：是否solr索引 */
-	public String getIs_solr(){
-		return is_solr;
-	}
-	/** 设置：是否solr索引 */
-	public void setIs_solr(String is_solr){
-		this.is_solr=is_solr;
-	}
 	/** 取得：备注 */
 	public String getRemark(){
 		return remark;
@@ -174,21 +163,5 @@ public class Table_column extends TableEntity
 	/** 设置：清洗顺序 */
 	public void setTc_or(String tc_or){
 		this.tc_or=tc_or;
-	}
-	/** 取得：是否carbondata聚合列 */
-	public String getIs_pre(){
-		return is_pre;
-	}
-	/** 设置：是否carbondata聚合列 */
-	public void setIs_pre(String is_pre){
-		this.is_pre=is_pre;
-	}
-	/** 取得：是否为carbondata的排序列 */
-	public String getIs_sortcolumns(){
-		return is_sortcolumns;
-	}
-	/** 设置：是否为carbondata的排序列 */
-	public void setIs_sortcolumns(String is_sortcolumns){
-		this.is_sortcolumns=is_sortcolumns;
 	}
 }

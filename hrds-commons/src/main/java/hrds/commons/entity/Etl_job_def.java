@@ -32,7 +32,6 @@ public class Etl_job_def extends TableEntity
 	static {
 		Set<String> __tmpPKS = new HashSet<>();
 		__tmpPKS.add("etl_job");
-		__tmpPKS.add("etl_sys_cd");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
 	private String etl_job; //作业名
@@ -62,13 +61,13 @@ public class Etl_job_def extends TableEntity
 	private Integer job_return_val; //作业返回值
 	private String upd_time; //更新日期
 	private String sub_sys_cd; //子系统代码
-	private String etl_sys_cd; //工程代码
 	private Long exe_frequency; //每隔(分钟)执行
 	private Integer exe_num; //执行次数
 	private Integer com_exe_num; //已经执行次数
 	private String last_exe_time; //上次执行时间
 	private String star_time; //开始执行时间
 	private String end_time; //结束执行时间
+	private String etl_sys_cd; //工程代码
 
 	/** 取得：作业名 */
 	public String getEtl_job(){
@@ -322,14 +321,6 @@ public class Etl_job_def extends TableEntity
 	public void setSub_sys_cd(String sub_sys_cd){
 		this.sub_sys_cd=sub_sys_cd;
 	}
-	/** 取得：工程代码 */
-	public String getEtl_sys_cd(){
-		return etl_sys_cd;
-	}
-	/** 设置：工程代码 */
-	public void setEtl_sys_cd(String etl_sys_cd){
-		this.etl_sys_cd=etl_sys_cd;
-	}
 	/** 取得：每隔(分钟)执行 */
 	public Long getExe_frequency(){
 		return exe_frequency;
@@ -395,5 +386,13 @@ public class Etl_job_def extends TableEntity
 	/** 设置：结束执行时间 */
 	public void setEnd_time(String end_time){
 		this.end_time=end_time;
+	}
+	/** 取得：工程代码 */
+	public String getEtl_sys_cd(){
+		return etl_sys_cd;
+	}
+	/** 设置：工程代码 */
+	public void setEtl_sys_cd(String etl_sys_cd){
+		this.etl_sys_cd=etl_sys_cd;
 	}
 }

@@ -48,16 +48,16 @@ public class Sys_user extends TableEntity
 	private String update_date; //更新日期
 	private String update_time; //更新时间
 	private String user_remark; //备注
-	private Long dep_id; //部门ID
 	private Long maximum_job; //最大作业数
 	private String user_priority; //优先级
 	private String quota_space; //配额空间
 	private Long create_id; //建立用户ID
 	private String token; //token
 	private String valid_time; //token有效时间
-	private String role_id; //角色ID
 	private String usertype_group; //用户类型组
 	private String useris_admin; //是否为管理员
+	private Long role_id; //角色ID
+	private Long dep_id; //部门ID
 
 	/** 取得：用户ID */
 	public Long getUser_id(){
@@ -177,20 +177,6 @@ public class Sys_user extends TableEntity
 	public void setUser_remark(String user_remark){
 		this.user_remark=user_remark;
 	}
-	/** 取得：部门ID */
-	public Long getDep_id(){
-		return dep_id;
-	}
-	/** 设置：部门ID */
-	public void setDep_id(Long dep_id){
-		this.dep_id=dep_id;
-	}
-	/** 设置：部门ID */
-	public void setDep_id(String dep_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(dep_id)){
-			this.dep_id=new Long(dep_id);
-		}
-	}
 	/** 取得：最大作业数 */
 	public Long getMaximum_job(){
 		return maximum_job;
@@ -251,14 +237,6 @@ public class Sys_user extends TableEntity
 	public void setValid_time(String valid_time){
 		this.valid_time=valid_time;
 	}
-	/** 取得：角色ID */
-	public String getRole_id(){
-		return role_id;
-	}
-	/** 设置：角色ID */
-	public void setRole_id(String role_id){
-		this.role_id=role_id;
-	}
 	/** 取得：用户类型组 */
 	public String getUsertype_group(){
 		return usertype_group;
@@ -274,5 +252,33 @@ public class Sys_user extends TableEntity
 	/** 设置：是否为管理员 */
 	public void setUseris_admin(String useris_admin){
 		this.useris_admin=useris_admin;
+	}
+	/** 取得：角色ID */
+	public Long getRole_id(){
+		return role_id;
+	}
+	/** 设置：角色ID */
+	public void setRole_id(Long role_id){
+		this.role_id=role_id;
+	}
+	/** 设置：角色ID */
+	public void setRole_id(String role_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(role_id)){
+			this.role_id=new Long(role_id);
+		}
+	}
+	/** 取得：部门ID */
+	public Long getDep_id(){
+		return dep_id;
+	}
+	/** 设置：部门ID */
+	public void setDep_id(Long dep_id){
+		this.dep_id=dep_id;
+	}
+	/** 设置：部门ID */
+	public void setDep_id(String dep_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(dep_id)){
+			this.dep_id=new Long(dep_id);
+		}
 	}
 }

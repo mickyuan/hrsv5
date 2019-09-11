@@ -5,9 +5,9 @@ import hrds.commons.exception.AppSystemException;
 /**代码类型名：压缩范围  */
 public enum ReduceScope {
 	/**全库压缩<QuanKuYaSuo>  */
-	QuanKuYaSuo("1","全库压缩","9","压缩范围"),
+	QuanKuYaSuo("1","全库压缩","38","压缩范围"),
 	/**按表压缩<AnBiaoYaSuo>  */
-	AnBiaoYaSuo("2","按表压缩","9","压缩范围");
+	AnBiaoYaSuo("2","按表压缩","38","压缩范围");
 
 	private final String code;
 	private final String value;

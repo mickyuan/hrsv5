@@ -5,13 +5,13 @@ import hrds.commons.exception.AppSystemException;
 /**代码类型名：ETL主服务器同步  */
 public enum Main_Server_Sync {
 	/**锁定<LOCK>  */
-	LOCK("L","锁定","111","ETL主服务器同步"),
+	LOCK("L","锁定","27","ETL主服务器同步"),
 	/**不同步<NO>  */
-	NO("N","不同步","111","ETL主服务器同步"),
+	NO("N","不同步","27","ETL主服务器同步"),
 	/**同步<YES>  */
-	YES("Y","同步","111","ETL主服务器同步"),
+	YES("Y","同步","27","ETL主服务器同步"),
 	/**备份中<BACKUP>  */
-	BACKUP("B","备份中","111","ETL主服务器同步");
+	BACKUP("B","备份中","27","ETL主服务器同步");
 
 	private final String code;
 	private final String value;

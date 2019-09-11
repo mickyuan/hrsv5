@@ -5,9 +5,9 @@ import hrds.commons.exception.AppSystemException;
 /**代码类型名：补齐方式  */
 public enum FillingType {
 	/**前补齐<QianBuQi>  */
-	QianBuQi("1","前补齐","33","补齐方式"),
+	QianBuQi("1","前补齐","55","补齐方式"),
 	/**后补齐<HouBuQi>  */
-	HouBuQi("2","后补齐","33","补齐方式");
+	HouBuQi("2","后补齐","55","补齐方式");
 
 	private final String code;
 	private final String value;

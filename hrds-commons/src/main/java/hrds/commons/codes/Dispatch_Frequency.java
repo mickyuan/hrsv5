@@ -5,17 +5,17 @@ import hrds.commons.exception.AppSystemException;
 /**代码类型名：ETL调度频率  */
 public enum Dispatch_Frequency {
 	/**天(D)<DAILY>  */
-	DAILY("D","天(D)","107","ETL调度频率"),
+	DAILY("D","天(D)","22","ETL调度频率"),
 	/**月(M)<MONTHLY>  */
-	MONTHLY("M","月(M)","107","ETL调度频率"),
+	MONTHLY("M","月(M)","22","ETL调度频率"),
 	/**周(W)<WEEKLY>  */
-	WEEKLY("W","周(W)","107","ETL调度频率"),
+	WEEKLY("W","周(W)","22","ETL调度频率"),
 	/**旬(X)<TENDAYS>  */
-	TENDAYS("X","旬(X)","107","ETL调度频率"),
+	TENDAYS("X","旬(X)","22","ETL调度频率"),
 	/**年(Y)<YEARLY>  */
-	YEARLY("Y","年(Y)","107","ETL调度频率"),
+	YEARLY("Y","年(Y)","22","ETL调度频率"),
 	/**频率(F)<PinLv>  */
-	PinLv("F","频率(F)","107","ETL调度频率");
+	PinLv("F","频率(F)","22","ETL调度频率");
 
 	private final String code;
 	private final String value;

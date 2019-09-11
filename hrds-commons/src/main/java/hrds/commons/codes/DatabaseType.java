@@ -5,31 +5,31 @@ import hrds.commons.exception.AppSystemException;
 /**代码类型名：数据库类型  */
 public enum DatabaseType {
 	/**MYSQL<MYSQL>  */
-	MYSQL("01","MYSQL","6","数据库类型"),
+	MYSQL("01","MYSQL","36","数据库类型"),
 	/**Oracle9i及一下<Oracle9i>  */
-	Oracle9i("02","Oracle9i及一下","6","数据库类型"),
+	Oracle9i("02","Oracle9i及一下","36","数据库类型"),
 	/**Oracle10g及以上<Oracle10g>  */
-	Oracle10g("03","Oracle10g及以上","6","数据库类型"),
+	Oracle10g("03","Oracle10g及以上","36","数据库类型"),
 	/**SQLSERVER2000<SqlServer2000>  */
-	SqlServer2000("04","SQLSERVER2000","6","数据库类型"),
+	SqlServer2000("04","SQLSERVER2000","36","数据库类型"),
 	/**SQLSERVER2005<SqlServer2005>  */
-	SqlServer2005("05","SQLSERVER2005","6","数据库类型"),
+	SqlServer2005("05","SQLSERVER2005","36","数据库类型"),
 	/**DB2<DB2>  */
-	DB2("06","DB2","6","数据库类型"),
+	DB2("06","DB2","36","数据库类型"),
 	/**SybaseASE12.5及以上<SybaseASE125>  */
-	SybaseASE125("07","SybaseASE12.5及以上","6","数据库类型"),
+	SybaseASE125("07","SybaseASE12.5及以上","36","数据库类型"),
 	/**Informatic<Informatic>  */
-	Informatic("08","Informatic","6","数据库类型"),
+	Informatic("08","Informatic","36","数据库类型"),
 	/**H2<H2>  */
-	H2("09","H2","6","数据库类型"),
+	H2("09","H2","36","数据库类型"),
 	/**ApacheDerby<ApacheDerby>  */
-	ApacheDerby("10","ApacheDerby","6","数据库类型"),
+	ApacheDerby("10","ApacheDerby","36","数据库类型"),
 	/**Postgresql<Postgresql>  */
-	Postgresql("11","Postgresql","6","数据库类型"),
+	Postgresql("11","Postgresql","36","数据库类型"),
 	/**GBase<GBase>  */
-	GBase("12","GBase","6","数据库类型"),
+	GBase("12","GBase","36","数据库类型"),
 	/**TeraData<TeraData>  */
-	TeraData("13","TeraData","6","数据库类型");
+	TeraData("13","TeraData","36","数据库类型");
 
 	private final String code;
 	private final String value;

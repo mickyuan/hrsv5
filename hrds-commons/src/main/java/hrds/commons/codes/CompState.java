@@ -5,9 +5,9 @@ import hrds.commons.exception.AppSystemException;
 /**代码类型名：组件状态  */
 public enum CompState {
 	/**启用<QiYong>  */
-	QiYong("1","启用","11","组件状态"),
+	QiYong("1","启用","32","组件状态"),
 	/**禁用<JinYong>  */
-	JinYong("2","禁用","11","组件状态");
+	JinYong("2","禁用","32","组件状态");
 
 	private final String code;
 	private final String value;

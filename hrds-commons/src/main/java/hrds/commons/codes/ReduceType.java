@@ -5,13 +5,13 @@ import hrds.commons.exception.AppSystemException;
 /**代码类型名：压缩格式  */
 public enum ReduceType {
 	/**tar<TAR>  */
-	TAR("1","tar","120","压缩格式"),
+	TAR("1","tar","45","压缩格式"),
 	/**gz<GZ>  */
-	GZ("2","gz","120","压缩格式"),
+	GZ("2","gz","45","压缩格式"),
 	/**zip<ZIP>  */
-	ZIP("3","zip","120","压缩格式"),
+	ZIP("3","zip","45","压缩格式"),
 	/**none<NONE>  */
-	NONE("4","none","120","压缩格式");
+	NONE("4","none","45","压缩格式");
 
 	private final String code;
 	private final String value;

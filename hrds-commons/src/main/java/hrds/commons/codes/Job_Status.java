@@ -5,17 +5,17 @@ import hrds.commons.exception.AppSystemException;
 /**代码类型名：ETL作业状态  */
 public enum Job_Status {
 	/**完成<DONE>  */
-	DONE("D","完成","109","ETL作业状态"),
+	DONE("D","完成","25","ETL作业状态"),
 	/**错误<ERROR>  */
-	ERROR("E","错误","109","ETL作业状态"),
+	ERROR("E","错误","25","ETL作业状态"),
 	/**挂起<PENDING>  */
-	PENDING("P","挂起","109","ETL作业状态"),
+	PENDING("P","挂起","25","ETL作业状态"),
 	/**运行<RUNNING>  */
-	RUNNING("R","运行","109","ETL作业状态"),
+	RUNNING("R","运行","25","ETL作业状态"),
 	/**停止<STOP>  */
-	STOP("S","停止","109","ETL作业状态"),
+	STOP("S","停止","25","ETL作业状态"),
 	/**等待<WAITING>  */
-	WAITING("W","等待","109","ETL作业状态");
+	WAITING("W","等待","25","ETL作业状态");
 
 	private final String code;
 	private final String value;

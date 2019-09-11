@@ -2,14 +2,14 @@ package hrds.commons.codes;
 
 import hrds.commons.exception.AppSystemException;
 /**Created by automatic  */
-/**代码类型名：储存方式  */
+/**代码类型名：进数方式  */
 public enum StorageType {
 	/**增量<ZengLiang>  */
-	ZengLiang("1","增量","25","储存方式"),
+	ZengLiang("1","增量","41","进数方式"),
 	/**追加<ZhuiJia>  */
-	ZhuiJia("2","追加","25","储存方式"),
+	ZhuiJia("2","追加","41","进数方式"),
 	/**替换<TiHuan>  */
-	TiHuan("3","替换","25","储存方式");
+	TiHuan("3","替换","41","进数方式");
 
 	private final String code;
 	private final String value;

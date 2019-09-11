@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.Collections;
 
 /**
- * 数据库设置
+ * 源系统数据库设置
  */
 @Table(tableName = "database_set")
 public class Database_set extends TableEntity
@@ -28,7 +28,7 @@ public class Database_set extends TableEntity
 	*/
 	public static boolean isPrimaryKey(String name) { return __PrimaryKeys.contains(name); } 
 	public static Set<String> getPrimaryKeyNames() { return __PrimaryKeys; } 
-	/** 数据库设置 */
+	/** 源系统数据库设置 */
 	static {
 		Set<String> __tmpPKS = new HashSet<>();
 		__tmpPKS.add("database_id");
@@ -57,9 +57,6 @@ public class Database_set extends TableEntity
 	private String file_suffix; //采集文件名后缀
 	private String is_load; //是否直接加载数据
 	private String row_separator; //数据行分隔符
-	private String check_time; //检测时间
-	private String signal_file_suffix; //信号文件后缀
-	private String analysis_signalfile; //是否解析信号文件
 	private Long classify_id; //分类id
 	private String data_extract_type; //数据抽取方式
 	private String is_header; //是否有表头
@@ -261,30 +258,6 @@ public class Database_set extends TableEntity
 	/** 设置：数据行分隔符 */
 	public void setRow_separator(String row_separator){
 		this.row_separator=row_separator;
-	}
-	/** 取得：检测时间 */
-	public String getCheck_time(){
-		return check_time;
-	}
-	/** 设置：检测时间 */
-	public void setCheck_time(String check_time){
-		this.check_time=check_time;
-	}
-	/** 取得：信号文件后缀 */
-	public String getSignal_file_suffix(){
-		return signal_file_suffix;
-	}
-	/** 设置：信号文件后缀 */
-	public void setSignal_file_suffix(String signal_file_suffix){
-		this.signal_file_suffix=signal_file_suffix;
-	}
-	/** 取得：是否解析信号文件 */
-	public String getAnalysis_signalfile(){
-		return analysis_signalfile;
-	}
-	/** 设置：是否解析信号文件 */
-	public void setAnalysis_signalfile(String analysis_signalfile){
-		this.analysis_signalfile=analysis_signalfile;
 	}
 	/** 取得：分类id */
 	public Long getClassify_id(){

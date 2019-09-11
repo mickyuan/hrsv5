@@ -46,17 +46,17 @@ public class Source_file_detailed extends TableEntity
 	private String file_suffix; //文件后缀
 	private String table_name; //表名
 	private String sfd_id; //源文件属性清册ID
-	private String file_id; //文件编号
-	private Long collect_set_id; //数据库设置id
-	private Long source_id; //数据源ID
-	private Long agent_id; //Agent_id
-	private Long folder_id; //文件夹编号
 	private String source_path; //文件路径
 	private String meta_info; //META元信息
 	private String file_md5; //文件MD5值
 	private String file_avro_path; //所在avro文件地址
 	private Long file_avro_block; //所存avro文件block号
 	private String is_big_file; //是否为大文件
+	private String file_id; //文件编号
+	private Long agent_id; //Agent_id
+	private Long source_id; //数据源ID
+	private Long collect_set_id; //数据库设置id
+	private Long folder_id; //文件夹编号
 
 	/** 取得：原始文件名或表中文名称 */
 	public String getOriginal_name(){
@@ -160,70 +160,6 @@ public class Source_file_detailed extends TableEntity
 	public void setSfd_id(String sfd_id){
 		this.sfd_id=sfd_id;
 	}
-	/** 取得：文件编号 */
-	public String getFile_id(){
-		return file_id;
-	}
-	/** 设置：文件编号 */
-	public void setFile_id(String file_id){
-		this.file_id=file_id;
-	}
-	/** 取得：数据库设置id */
-	public Long getCollect_set_id(){
-		return collect_set_id;
-	}
-	/** 设置：数据库设置id */
-	public void setCollect_set_id(Long collect_set_id){
-		this.collect_set_id=collect_set_id;
-	}
-	/** 设置：数据库设置id */
-	public void setCollect_set_id(String collect_set_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(collect_set_id)){
-			this.collect_set_id=new Long(collect_set_id);
-		}
-	}
-	/** 取得：数据源ID */
-	public Long getSource_id(){
-		return source_id;
-	}
-	/** 设置：数据源ID */
-	public void setSource_id(Long source_id){
-		this.source_id=source_id;
-	}
-	/** 设置：数据源ID */
-	public void setSource_id(String source_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(source_id)){
-			this.source_id=new Long(source_id);
-		}
-	}
-	/** 取得：Agent_id */
-	public Long getAgent_id(){
-		return agent_id;
-	}
-	/** 设置：Agent_id */
-	public void setAgent_id(Long agent_id){
-		this.agent_id=agent_id;
-	}
-	/** 设置：Agent_id */
-	public void setAgent_id(String agent_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(agent_id)){
-			this.agent_id=new Long(agent_id);
-		}
-	}
-	/** 取得：文件夹编号 */
-	public Long getFolder_id(){
-		return folder_id;
-	}
-	/** 设置：文件夹编号 */
-	public void setFolder_id(Long folder_id){
-		this.folder_id=folder_id;
-	}
-	/** 设置：文件夹编号 */
-	public void setFolder_id(String folder_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(folder_id)){
-			this.folder_id=new Long(folder_id);
-		}
-	}
 	/** 取得：文件路径 */
 	public String getSource_path(){
 		return source_path;
@@ -277,5 +213,69 @@ public class Source_file_detailed extends TableEntity
 	/** 设置：是否为大文件 */
 	public void setIs_big_file(String is_big_file){
 		this.is_big_file=is_big_file;
+	}
+	/** 取得：文件编号 */
+	public String getFile_id(){
+		return file_id;
+	}
+	/** 设置：文件编号 */
+	public void setFile_id(String file_id){
+		this.file_id=file_id;
+	}
+	/** 取得：Agent_id */
+	public Long getAgent_id(){
+		return agent_id;
+	}
+	/** 设置：Agent_id */
+	public void setAgent_id(Long agent_id){
+		this.agent_id=agent_id;
+	}
+	/** 设置：Agent_id */
+	public void setAgent_id(String agent_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(agent_id)){
+			this.agent_id=new Long(agent_id);
+		}
+	}
+	/** 取得：数据源ID */
+	public Long getSource_id(){
+		return source_id;
+	}
+	/** 设置：数据源ID */
+	public void setSource_id(Long source_id){
+		this.source_id=source_id;
+	}
+	/** 设置：数据源ID */
+	public void setSource_id(String source_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(source_id)){
+			this.source_id=new Long(source_id);
+		}
+	}
+	/** 取得：数据库设置id */
+	public Long getCollect_set_id(){
+		return collect_set_id;
+	}
+	/** 设置：数据库设置id */
+	public void setCollect_set_id(Long collect_set_id){
+		this.collect_set_id=collect_set_id;
+	}
+	/** 设置：数据库设置id */
+	public void setCollect_set_id(String collect_set_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(collect_set_id)){
+			this.collect_set_id=new Long(collect_set_id);
+		}
+	}
+	/** 取得：文件夹编号 */
+	public Long getFolder_id(){
+		return folder_id;
+	}
+	/** 设置：文件夹编号 */
+	public void setFolder_id(Long folder_id){
+		this.folder_id=folder_id;
+	}
+	/** 设置：文件夹编号 */
+	public void setFolder_id(String folder_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(folder_id)){
+			this.folder_id=new Long(folder_id);
+		}
 	}
 }

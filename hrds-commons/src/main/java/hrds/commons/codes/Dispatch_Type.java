@@ -5,15 +5,15 @@ import hrds.commons.exception.AppSystemException;
 /**代码类型名：ETL调度类型  */
 public enum Dispatch_Type {
 	/**批前(B)<BEFORE>  */
-	BEFORE("B","批前(B)","108","ETL调度类型"),
+	BEFORE("B","批前(B)","23","ETL调度类型"),
 	/**依赖触发(D)<DEPENDENCE>  */
-	DEPENDENCE("D","依赖触发(D)","108","ETL调度类型"),
+	DEPENDENCE("D","依赖触发(D)","23","ETL调度类型"),
 	/**定时T+1触发(T)<TPLUS1>  */
-	TPLUS1("T","定时T+1触发(T)","108","ETL调度类型"),
+	TPLUS1("T","定时T+1触发(T)","23","ETL调度类型"),
 	/**定时T+0触发(Z)<TPLUS0>  */
-	TPLUS0("Z","定时T+0触发(Z)","108","ETL调度类型"),
+	TPLUS0("Z","定时T+0触发(Z)","23","ETL调度类型"),
 	/**批后(A)<AFTER>  */
-	AFTER("A","批后(A)","108","ETL调度类型");
+	AFTER("A","批后(A)","23","ETL调度类型");
 
 	private final String code;
 	private final String value;

@@ -5,11 +5,11 @@ import hrds.commons.exception.AppSystemException;
 /**代码类型名：启动方式  */
 public enum ExecuteWay {
 	/**按时启动<AnShiQiDong>  */
-	AnShiQiDong("1","按时启动","8","启动方式"),
+	AnShiQiDong("1","按时启动","37","启动方式"),
 	/**命令触发<MingLingChuFa>  */
-	MingLingChuFa("2","命令触发","8","启动方式"),
+	MingLingChuFa("2","命令触发","37","启动方式"),
 	/**信号文件触发<QianZhiTiaoJian>  */
-	QianZhiTiaoJian("3","信号文件触发","8","启动方式");
+	QianZhiTiaoJian("3","信号文件触发","37","启动方式");
 
 	private final String code;
 	private final String value;

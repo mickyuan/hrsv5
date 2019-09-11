@@ -5,9 +5,9 @@ import hrds.commons.exception.AppSystemException;
 /**代码类型名：是否标识  */
 public enum IsFlag {
 	/**是<Shi>  */
-	Shi("0","是","2","是否标识"),
+	Shi("1","是","18","是否标识"),
 	/**否<Fou>  */
-	Fou("1","否","2","是否标识");
+	Fou("0","否","18","是否标识");
 
 	private final String code;
 	private final String value;

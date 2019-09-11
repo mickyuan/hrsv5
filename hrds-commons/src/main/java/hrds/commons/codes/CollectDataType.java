@@ -5,9 +5,9 @@ import hrds.commons.exception.AppSystemException;
 /**代码类型名：数据类型  */
 public enum CollectDataType {
 	/**xml<XML>  */
-	XML("1","xml","122","数据类型"),
+	XML("1","xml","46","数据类型"),
 	/**json<JSON>  */
-	JSON("2","json","122","数据类型");
+	JSON("2","json","46","数据类型");
 
 	private final String code;
 	private final String value;

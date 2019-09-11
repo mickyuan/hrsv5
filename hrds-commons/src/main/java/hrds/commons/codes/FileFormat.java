@@ -5,11 +5,11 @@ import hrds.commons.exception.AppSystemException;
 /**代码类型名：DB文件格式  */
 public enum FileFormat {
 	/**定长<DingChang>  */
-	DingChang("0","定长","47","DB文件格式"),
+	DingChang("0","定长","44","DB文件格式"),
 	/**非定长<FeiDingChang>  */
-	FeiDingChang("1","非定长","47","DB文件格式"),
+	FeiDingChang("1","非定长","44","DB文件格式"),
 	/**CSV<CSV>  */
-	CSV("2","CSV","47","DB文件格式");
+	CSV("2","CSV","44","DB文件格式");
 
 	private final String code;
 	private final String value;

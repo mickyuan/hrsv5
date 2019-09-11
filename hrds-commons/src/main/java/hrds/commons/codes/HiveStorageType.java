@@ -5,15 +5,15 @@ import hrds.commons.exception.AppSystemException;
 /**代码类型名：hive文件存储类型  */
 public enum HiveStorageType {
 	/**TEXTFILE<TEXTFILE>  */
-	TEXTFILE("1","TEXTFILE","131","hive文件存储类型"),
+	TEXTFILE("1","TEXTFILE","51","hive文件存储类型"),
 	/**SEQUENCEFILE<SEQUENCEFILE>  */
-	SEQUENCEFILE("2","SEQUENCEFILE","131","hive文件存储类型"),
+	SEQUENCEFILE("2","SEQUENCEFILE","51","hive文件存储类型"),
 	/**PARQUET<PARQUET>  */
-	PARQUET("3","PARQUET","131","hive文件存储类型"),
+	PARQUET("3","PARQUET","51","hive文件存储类型"),
 	/**CSV<CSV>  */
-	CSV("4","CSV","131","hive文件存储类型"),
+	CSV("4","CSV","51","hive文件存储类型"),
 	/**ORC<ORC>  */
-	ORC("5","ORC","131","hive文件存储类型");
+	ORC("5","ORC","51","hive文件存储类型");
 
 	private final String code;
 	private final String value;

@@ -5,13 +5,13 @@ import hrds.commons.exception.AppSystemException;
 /**代码类型名：用户状态  */
 public enum UserState {
 	/**正常<ZhengChang>  */
-	ZhengChang("1","正常","3","用户状态"),
+	ZhengChang("1","正常","19","用户状态"),
 	/**禁用<JinYong>  */
-	JinYong("2","禁用","3","用户状态"),
+	JinYong("2","禁用","19","用户状态"),
 	/**删除<ShanChu>  */
-	ShanChu("3","删除","3","用户状态"),
+	ShanChu("3","删除","19","用户状态"),
 	/**正在使用<ZhengZaiShiYong>  */
-	ZhengZaiShiYong("4","正在使用","3","用户状态");
+	ZhengZaiShiYong("4","正在使用","19","用户状态");
 
 	private final String code;
 	private final String value;

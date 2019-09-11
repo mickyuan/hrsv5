@@ -5,25 +5,25 @@ import hrds.commons.exception.AppSystemException;
 /**代码类型名：ETL作业类型  */
 public enum Pro_Type {
 	/**SHELL<SHELL>  */
-	SHELL("SHELL","SHELL","117","ETL作业类型"),
+	SHELL("SHELL","SHELL","20","ETL作业类型"),
 	/**PERL<PERL>  */
-	PERL("PERL","PERL","117","ETL作业类型"),
+	PERL("PERL","PERL","20","ETL作业类型"),
 	/**BAT<BAT>  */
-	BAT("BAT","BAT","117","ETL作业类型"),
+	BAT("BAT","BAT","20","ETL作业类型"),
 	/**JAVA<JAVA>  */
-	JAVA("JAVA","JAVA","117","ETL作业类型"),
+	JAVA("JAVA","JAVA","20","ETL作业类型"),
 	/**PYTHON<PYTHON>  */
-	PYTHON("PYTHON","PYTHON","117","ETL作业类型"),
+	PYTHON("PYTHON","PYTHON","20","ETL作业类型"),
 	/**WF<WF>  */
-	WF("WF","WF","117","ETL作业类型"),
+	WF("WF","WF","20","ETL作业类型"),
 	/**DBTRAN<DBTRAN>  */
-	DBTRAN("DBTRAN","DBTRAN","117","ETL作业类型"),
+	DBTRAN("DBTRAN","DBTRAN","20","ETL作业类型"),
 	/**DBJOB<DBJOB>  */
-	DBJOB("DBJOB","DBJOB","117","ETL作业类型"),
+	DBJOB("DBJOB","DBJOB","20","ETL作业类型"),
 	/**Yarn<Yarn>  */
-	Yarn("Yarn","Yarn","117","ETL作业类型"),
+	Yarn("Yarn","Yarn","20","ETL作业类型"),
 	/**Thrift<Thrift>  */
-	Thrift("Thrift","Thrift","117","ETL作业类型");
+	Thrift("Thrift","Thrift","20","ETL作业类型");
 
 	private final String code;
 	private final String value;

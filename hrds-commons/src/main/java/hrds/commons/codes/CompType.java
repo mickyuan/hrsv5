@@ -5,9 +5,9 @@ import hrds.commons.exception.AppSystemException;
 /**代码类型名：组件类型  */
 public enum CompType {
 	/**系统内置组件<NeiZhiZuJian>  */
-	NeiZhiZuJian("1","系统内置组件","21","组件类型"),
+	NeiZhiZuJian("1","系统内置组件","33","组件类型"),
 	/**系统运行组件<YunXingZuJian>  */
-	YunXingZuJian("2","系统运行组件","21","组件类型");
+	YunXingZuJian("2","系统运行组件","33","组件类型");
 
 	private final String code;
 	private final String value;

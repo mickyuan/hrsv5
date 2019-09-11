@@ -32,8 +32,8 @@ public class Etl_job_hand_his extends TableEntity
 	static {
 		Set<String> __tmpPKS = new HashSet<>();
 		__tmpPKS.add("event_id");
-		__tmpPKS.add("etl_sys_cd");
 		__tmpPKS.add("etl_job");
+		__tmpPKS.add("etl_sys_cd");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
 	private String event_id; //干预发生时间
@@ -44,8 +44,8 @@ public class Etl_job_hand_his extends TableEntity
 	private String end_time; //结束时间
 	private String warning; //错误信息
 	private String main_serv_sync; //同步标志位
-	private String etl_sys_cd; //工程代码
 	private String etl_job; //作业名
+	private String etl_sys_cd; //工程代码
 
 	/** 取得：干预发生时间 */
 	public String getEvent_id(){
@@ -111,14 +111,6 @@ public class Etl_job_hand_his extends TableEntity
 	public void setMain_serv_sync(String main_serv_sync){
 		this.main_serv_sync=main_serv_sync;
 	}
-	/** 取得：工程代码 */
-	public String getEtl_sys_cd(){
-		return etl_sys_cd;
-	}
-	/** 设置：工程代码 */
-	public void setEtl_sys_cd(String etl_sys_cd){
-		this.etl_sys_cd=etl_sys_cd;
-	}
 	/** 取得：作业名 */
 	public String getEtl_job(){
 		return etl_job;
@@ -126,5 +118,13 @@ public class Etl_job_hand_his extends TableEntity
 	/** 设置：作业名 */
 	public void setEtl_job(String etl_job){
 		this.etl_job=etl_job;
+	}
+	/** 取得：工程代码 */
+	public String getEtl_sys_cd(){
+		return etl_sys_cd;
+	}
+	/** 设置：工程代码 */
+	public void setEtl_sys_cd(String etl_sys_cd){
+		this.etl_sys_cd=etl_sys_cd;
 	}
 }

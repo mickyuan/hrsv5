@@ -5,11 +5,11 @@ import hrds.commons.exception.AppSystemException;
 /**代码类型名：ftp目录规则  */
 public enum FtpRule {
 	/**流水号<LiuShuiHao>  */
-	LiuShuiHao("1","流水号","125","ftp目录规则"),
+	LiuShuiHao("1","流水号","49","ftp目录规则"),
 	/**固定目录<GuDingMuLu>  */
-	GuDingMuLu("2","固定目录","125","ftp目录规则"),
+	GuDingMuLu("2","固定目录","49","ftp目录规则"),
 	/**按时间<AnShiJian>  */
-	AnShiJian("3","按时间","125","ftp目录规则");
+	AnShiJian("3","按时间","49","ftp目录规则");
 
 	private final String code;
 	private final String value;
