@@ -53,7 +53,7 @@ public class DataSourceAction extends BaseAction {
 	 *                   含义：source_relation_dep表主键ID
 	 *                   取值范围：前台传值可能会有1或多个值， 通过分隔符拼接成的字符串
 	 */
-	public void saveDataSource(@RequestBean Data_source dataSource, @RequestParam String depIds) {
+	public void saveDataSource(@RequestBean Data_source dataSource, String depIds) {
 		// 1.字段做合法性检查
 		// 验证data_source_remark数据源名称合法性
 		if (StringUtil.isBlank(dataSource.getDatasource_name())) {
@@ -210,48 +210,62 @@ public class DataSourceAction extends BaseAction {
 	}
 
 	/**
-	 * 上传文件
+	 * 上传文件(数据源下载文件提供的文件中涉及到的所有表的数据导入数据库中对应的表中）
 	 * <p>
-	 * 1.通过页面传值循环遍历获取文件以及文件名
-	 * 2.创建一个缓冲区,循环将输入流读入到缓冲区
-	 * 3.使用base64对数据进行编码
-	 * 4.导入数据
+	 * 1.通过文件名称获取文件
+	 * 2.获取文件名
+	 * 3.处理获取到的上传文件的文件名的路径部分，只保留文件名部分
+	 * 4.获得该文件的缓冲输入流
+	 * 5.创建一个缓存区，一次读取1kb
+	 * 6.把bis里的东西读到bytes数组里去
+	 * 7.循环读取写入，将读取的字节转为字符串对象
+	 * 8.关闭输入流
+	 * 9.使用base64对数据进行编码
+	 * 10.导入数据源数据，将涉及到的所有表的数据导入数据库中对应的表中
 	 *
-	 * @param agent_ip   agent地址
-	 * @param agent_port agent端口
-	 * @param user_id    页面传递用户编号
-	 * @param file       上传文件名称
+	 * @param agent_ip   String
+	 *                   含义：agent地址
+	 *                   取值范围：不能为空，服务器ip地址
+	 * @param agent_port String
+	 *                   含义：agent端口
+	 *                   取值范围：1024-65535
+	 * @param user_id    long
+	 *                   含义：数据采集用户
+	 *                   取值范围：不为空以及空格，长度不超过10位
+	 * @param file       String
+	 *                   含义：上传文件名称（全路径）
+	 *                   取值范围：不能为空以及空格
 	 */
 	@UploadFile
-	public void uploadFile(@RequestParam String agent_ip, @RequestParam String agent_port,
-	                       @RequestParam Long user_id, String file) throws IOException {
+	public void uploadFile(String agent_ip, String agent_port, long user_id, String file) {
 		try {
-			//获取文件
+			// 1.通过文件名称获取文件
 			File uploadedFile = FileUploadUtil.getUploadedFile(file);
-			// 获得文件名
+			// 2.获取文件名
 			String fileName = FileUploadUtil.getOriginalFileName(file);
 				/*注意：不同的浏览器提交的文件名是不一样的，有些浏览器提交上来的文件名是带有路径的，
 				如： c:\a\b\1.txt，而有些只是单纯的文件名，如：1.txt*/
-			//处理获取到的上传文件的文件名的路径部分，只保留文件名部分
+			// 3.处理获取到的上传文件的文件名的路径部分，只保留文件名部分
 			fileName = fileName.substring(fileName.lastIndexOf(File.separator +
 					File.separator) + 1);
-			// 获得该文件的缓冲输入流
+			// 4.获得该文件的缓冲输入流
 			BufferedInputStream bis =
 					new BufferedInputStream(new FileInputStream(uploadedFile));
-			StringBuilder sb = new StringBuilder();
-			// 2.创建一个缓存区，一次读取1kb
+			// 5.创建一个缓存区，一次读取1kb
 			byte[] bytes = new byte[1024];
 			int len = 0;
-			//把bis里的东西读到bytes数组里去
+			StringBuilder sb = new StringBuilder();
+			// 6.把bis里的东西读到bytes数组里去
 			while ((len = bis.read(bytes)) != -1) {
+				// 7.循环读取写入，将读取的字节转为字符串对象
 				sb.append((new String(bytes, 0, len, CodecUtil.UTF8_CHARSET)));
 			}
-			//关闭输入流
+			// 8.关闭输入流
 			bis.close();
-			// 3.使用base64编码
+			// 9.使用base64编码
 			String strTemp = new String(Base64.getDecoder().decode(sb.toString()),
 					CodecUtil.UTF8_CHARSET);
-			// 4.导入数据源数据,一个文件一个文件处理
+			// 10.导入数据源数据，将涉及到的所有表的数据导入数据库中对应的表中
 			importDclData(strTemp, agent_ip, agent_port, user_id,
 					ActionUtil.getUser().getUserId());
 		} catch (Exception e) {
@@ -260,7 +274,7 @@ public class DataSourceAction extends BaseAction {
 	}
 
 	/**
-	 * 导入数据源数据
+	 * 导入数据源数据，将涉及到的所有表的数据导入数据库中对应的表中
 	 *
 	 * <p>
 	 * 1.解析文件获取文件所有信息

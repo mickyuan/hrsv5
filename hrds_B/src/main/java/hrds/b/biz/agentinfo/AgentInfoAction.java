@@ -1,14 +1,11 @@
 package hrds.b.biz.agentinfo;
 
-import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.annotation.RequestBean;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
-import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Agent_info;
 import hrds.commons.exception.BusinessException;
-import hrds.commons.exception.ExceptionEnum;
 import hrds.commons.utils.ActionUtil;
 import hrds.commons.utils.key.PrimayKeyGener;
 
@@ -72,11 +69,15 @@ public class AgentInfoAction extends BaseAction {
 	 * <p>
 	 * 1.通过http方式去测试端口连通情况，测通则被占用，不通则可以使用
 	 *
-	 * @param agent_ip   agent地址
-	 * @param agent_port agent端口
+	 * @param agent_ip   String
+	 *                   含义： agent地址
+	 *                   取值范围：不为空，服务器地址
+	 * @param agent_port int
+	 *                   含义：agent端口
+	 *                   取值范围：1024-65535
 	 * @return 返回端口是否被占用信号
 	 */
-	public boolean isPortOccupied(String agent_ip, int agent_port) {
+	private boolean isPortOccupied(String agent_ip, int agent_port) {
 
 		// 1.通过http方式去测试端口连通情况，测通则被占用，不通则可以使用
 		HttpClient httpClient = new HttpClient();
