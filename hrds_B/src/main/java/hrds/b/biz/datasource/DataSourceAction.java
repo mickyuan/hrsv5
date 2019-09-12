@@ -1,5 +1,6 @@
 package hrds.b.biz.datasource;
 
+import com.alibaba.fastjson.TypeReference;
 import fd.ng.core.utils.CodecUtil;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
@@ -23,6 +24,7 @@ import org.apache.logging.log4j.Logger;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
+import java.lang.reflect.Type;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
@@ -47,8 +49,11 @@ public class DataSourceAction extends BaseAction {
 	 * 5.如果是编辑先删除数据源与部门关系
 	 * 6.保存或更新数据源与部门关系信息
 	 *
-	 * @param dataSource 数据源实体
-	 * @param depIds     含义：数据源与部门关系表source_relation_dep主键ID
+	 * @param dataSource data_source表
+	 *                   含义：data_source表实体类
+	 *                   取值范围：与数据字段定义规则相同
+	 * @param depIds     String
+	 *                   含义：source_relation_dep表主键ID
 	 *                   取值范围：前台传值可能会有1或多个值， 通过分隔符拼接成的字符串
 	 */
 	public void saveDataSource(@RequestBean Data_source dataSource, @RequestParam String depIds) {
@@ -154,42 +159,18 @@ public class DataSourceAction extends BaseAction {
 	 * 根据数据源编号查询数据源及数据源与部门关系信息
 	 *
 	 * <p>
-	 * 1.判断该数据源下是否有数据，没有抛异常，有则返回查询结果
+	 * 1.关联查询data_source表与source_relation_dep表信息
 	 *
 	 * @param source_id long
 	 *                  含义：数据源ID
 	 *                  取值范围：不能为空或空格，长度不能超过10位
-	 * @return 返回查询结果集
+	 * @return 返回关联查询data_source表与source_relation_dep表信息结果
 	 */
-	public Result searchDataSource(Long source_id) {
-		// 1.判断该数据源下是否有数据，没有抛异常，有则返回查询结果
-		Result result = Dbo.queryResult("select ds.*,srd.dep_id from data_source ds " +
+	public List<Map<String, Object>> searchDataSource(Long source_id) {
+		// 1.关联查询data_source表与source_relation_dep表信息
+		return Dbo.queryList("select ds.*,srd.dep_id from data_source ds " +
 				" join source_relation_dep srd on ds.source_id=srd.source_id " +
 				"  where ds.source_id = ?", source_id);
-		if (result.isEmpty()) {
-			// 该数据源下数据为空(此为编辑情况下数据不能为空）
-			//FIXME 查询不到数据为什么要抛异常。只有具体使用这个数据的地方才应该根据是否有数据来抛出异常
-			throw new BusinessException(ExceptionEnum.DATA_NOT_EXIST);
-		}
-		// 不为空，返回查询结果
-		return result;
-	}
-
-	/**
-	 * 删除数据源与部门关系表信息
-	 * <p>
-	 * 1.删除数据源与部门关系表信息，失败就抛异常，否则就正常删除
-	 *
-	 * @param source_id 数据源编号
-	 */
-	public void deleteSourceRelationDep(Long source_id) {
-		// 1.删除数据源与部门关系表信息，
-		int num = Dbo.execute("delete from " + Source_relation_dep.TableName +
-				" where source_id=?", source_id);
-		if (num != 1) {
-			// 删除失败
-			throw new BusinessException(ExceptionEnum.DATA_DELETE_ERROR);
-		}
 	}
 
 	/**
@@ -198,11 +179,13 @@ public class DataSourceAction extends BaseAction {
 	 * 1.先查询该datasource下是否还有agent,有不能删除，没有，可以删除
 	 * 2.删除data_source表信息，删除失败就抛异常，否则正常删除
 	 * 3.判断删除的数据是否不存在，不存在就抛异常
-	 * 3.删除source_relation_dep信息
+	 * 4.删除source_relation_dep信息
 	 *
-	 * @param source_id 数据源编号
+	 * @param source_id long
+	 *                  含义：数据源ID,data_source表主键，agent_info表外键
+	 *                  取值范围：不可为空以及不可为空格，长度不能超过十位
 	 */
-	public void deleteDataSource(Long source_id) {
+	public void deleteDataSource(long source_id) {
 
 		// 1.先查询该datasource下是否还有agent
 		if (Dbo.queryNumber("SELECT * FROM agent_info  WHERE source_id=?", source_id)
@@ -221,7 +204,12 @@ public class DataSourceAction extends BaseAction {
 			throw new BusinessException("删除数据源信息表data_source失败，source_id=" + source_id);
 		}
 		// 4.删除source_relation_dep信息
-		deleteSourceRelationDep(source_id);
+		int srdNum = Dbo.execute("delete from " + Source_relation_dep.TableName +
+				" where source_id=?", source_id);
+		if (srdNum < 1) {
+			throw new BusinessException("编辑时会先删除原数据源与部门关系信息，删除错旧关系时错误，" +
+					"source_id=" + source_id);
+		}
 	}
 
 	/**
@@ -236,7 +224,6 @@ public class DataSourceAction extends BaseAction {
 	 * @param agent_port agent端口
 	 * @param user_id    页面传递用户编号
 	 * @param file       上传文件名称
-	 * @throws IOException
 	 */
 	@UploadFile
 	public void uploadFile(@RequestParam String agent_ip, @RequestParam String agent_port,
@@ -294,9 +281,11 @@ public class DataSourceAction extends BaseAction {
 			user_id, Long user_collect_id) {
 		// 1.获取文件所有信息
 		//FIXME 徐超确认：fastJson在转换对象的时候，不需要使用诸如 TypeReference 一类的明确类型吗？
-		Map<String, Object> map = JsonUtil.toObject(strTemp, Map.class);
+		Type type = new TypeReference<Map<String, Object>>() {
+		}.getType();
+		Map<String, Object> map = JsonUtil.toObject(strTemp, type);
 		// 2.遍历并解析拿到每张表的信息
-		//FIXME 对这个MAP的数据进行详细说明。
+		// map里存放的是所有数据源相关的表信息
 		//FIXME 导入的主键需要重新生成。
 		for (Map.Entry<String, Object> entry : map.entrySet()) {
 			// 数据源信息
@@ -594,8 +583,8 @@ public class DataSourceAction extends BaseAction {
 	}
 
 	/**
-	 * 下载文件
-	 * FIXME 这是给什么功能用的？为什么要写文件？
+	 * 下载文件（数据源下载功能使用，下载数据源给数据源导入提供上传文件）
+	 *
 	 * <p>
 	 * 1.从数据库取出相应数据封装到map中
 	 * 2.通过base64将map转string进行编码
@@ -607,7 +596,6 @@ public class DataSourceAction extends BaseAction {
 	public void downloadFile(Long source_id) throws IOException {
 		// 1.封装数据库数据入map
 		//FIXME 被封装进去的数据，不需要使用Result，而且，这个Map应该指定明确类型而不是用Object
-		// 写100字的邮件，说明什么是泛型
 		Map<String, Object> collection_object = new HashMap<String, Object>();
 		//数据源data_source
 		Result dsResult = Dbo.queryResult("select * from data_source where source_id = ?", source_id);
