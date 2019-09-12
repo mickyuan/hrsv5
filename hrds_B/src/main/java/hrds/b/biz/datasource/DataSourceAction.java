@@ -5,6 +5,7 @@ import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.resultset.Result;
+import fd.ng.web.annotation.RequestBean;
 import fd.ng.web.annotation.RequestParam;
 import fd.ng.web.annotation.UploadFile;
 import fd.ng.web.util.Dbo;
@@ -46,14 +47,11 @@ public class DataSourceAction extends BaseAction {
 	 * 5.如果是编辑先删除数据源与部门关系
 	 * 6.保存或更新数据源与部门关系信息
 	 *
-	 * @param dataSource data_source表
-	 *                   含义：data_source表实体类
-	 *                   取值范围：与数据库字段定义规则相同
-	 * @param depIds     String
-	 *                   含义：source_relation_dep表主键ID
+	 * @param dataSource 数据源实体
+	 * @param depIds     含义：数据源与部门关系表source_relation_dep主键ID
 	 *                   取值范围：前台传值可能会有1或多个值， 通过分隔符拼接成的字符串
 	 */
-	public void saveDataSource(Data_source dataSource, String depIds) {
+	public void saveDataSource(@RequestBean Data_source dataSource, @RequestParam String depIds) {
 		// 1.字段做合法性检查
 		// 验证data_source_remark数据源名称合法性
 		if (StringUtil.isBlank(dataSource.getDatasource_name())) {
@@ -70,7 +68,7 @@ public class DataSourceAction extends BaseAction {
 		}
 		// 验证部门depIds合法性
 		if (StringUtil.isBlank(depIds)) {
-			throw new BusinessException("部门ID不能为空格，depIds=" + depIds);
+			throw new BusinessException("部门不能为空格，depIds=" + depIds);
 		}
 		// 2.判断数据源id(数据源data_source表主键ID)是否为空
 		if (dataSource.getSource_id() == null) {
@@ -78,8 +76,7 @@ public class DataSourceAction extends BaseAction {
 			// 数据源主键ID
 			dataSource.setSource_id(PrimayKeyGener.getNextId());
 			// 数据源创建用户ID
-			//dataSource.setCreate_user_id(getUserId());
-			dataSource.setCreate_user_id(5555L);
+			dataSource.setCreate_user_id(getUserId());
 			// 数据源创建日期
 			dataSource.setCreate_date(DateUtil.getSysDate());
 			// 数据源创建时间
@@ -122,27 +119,30 @@ public class DataSourceAction extends BaseAction {
 	/**
 	 * 保存数据源与部门关系表信息
 	 * <p>
-	 * 1.循环保存或更新数据源与部门关系信息
+	 * 1.创建source_relation_dep对象,并设置数据源编号ID值
+	 * 2.分隔部门depIds获取到存放所有部门ID的数组
+	 * 3.循环遍历存放部门ID的数组，并向source_relation_dep对象设置部门ID值
+	 * 4.循环保存source_relation_dep表信息
 	 *
 	 * @param source_id long
 	 *                  含义：数据源与部门关系表外键ID
 	 *                  取值范围，不能为空以及不能为空格
 	 * @param depIds    String
 	 *                  含义：数据源与部门关系表source_relation_dep主键ID
-	 *                  取值范围：前台传值可能会有1或多个值，通过分隔符拼接成的字符串，不能为空已经不能为空格，
-	 *                  长度不能超过十位
+	 *                  取值范围：前台传值可能会有1或多个值，通过分隔符拼接成的字符串，不能为空已经不能为空格
 	 */
 	private void saveSourceRelationDep(long source_id, String depIds) {
-		// 建立数据源与部门关系信息
+		// 1.创建source_relation_dep对象,并初始化值
 		Source_relation_dep srd = new Source_relation_dep();
 		// 设置数据源与部门关系表外键ID
 		srd.setSource_id(source_id);
-		// 分隔部门id
+		// 2.分隔部门depIds获取到存放所有部门ID的数组
 		String[] split = depIds.split(",");
-		// 循环保存数据源与部门关系表信息
+		// 3.循环遍历存放部门ID的数组
 		for (String dep_id : split) {
 			// 设置数据源与部门关系表主键ID
 			srd.setDep_id(dep_id);
+			// 4.循环保存source_relation_dep表信息
 			if (srd.add(Dbo.db()) != 1) {
 				throw new BusinessException("新增保存数据源与部门关系Source_relation_dep表信息失败，" +
 						"dep_id=" + dep_id + ",source_id=" + source_id);
@@ -151,22 +151,45 @@ public class DataSourceAction extends BaseAction {
 	}
 
 	/**
-	 * 根据数据源ID查询数据源及数据源与部门关系信息
+	 * 根据数据源编号查询数据源及数据源与部门关系信息
 	 *
 	 * <p>
-	 * 1.关联查询数据源data_source表与数据源与部门关系source_relation_dep表，返回数据源与部门信息
+	 * 1.判断该数据源下是否有数据，没有抛异常，有则返回查询结果
 	 *
 	 * @param source_id long
-	 *                  含义：数据源ID，data_source表主键
+	 *                  含义：数据源ID
 	 *                  取值范围：不能为空或空格，长度不能超过10位
-	 * @return 返回关联查询数据源data_source表与数据源与部门关系source_relation_dep表信息结果
+	 * @return 返回查询结果集
 	 */
-	public List<Map<String, Object>> searchDataSource(long source_id) {
-		// 1.关联查询数据源data_source表与数据源与部门关系source_relation_dep表，返回数据源与部门信息
-		return Dbo.queryList("select ds.*,srd.dep_id from " +
-				"data_source ds " +
+	public Result searchDataSource(Long source_id) {
+		// 1.判断该数据源下是否有数据，没有抛异常，有则返回查询结果
+		Result result = Dbo.queryResult("select ds.*,srd.dep_id from data_source ds " +
 				" join source_relation_dep srd on ds.source_id=srd.source_id " +
 				"  where ds.source_id = ?", source_id);
+		if (result.isEmpty()) {
+			// 该数据源下数据为空(此为编辑情况下数据不能为空）
+			//FIXME 查询不到数据为什么要抛异常。只有具体使用这个数据的地方才应该根据是否有数据来抛出异常
+			throw new BusinessException(ExceptionEnum.DATA_NOT_EXIST);
+		}
+		// 不为空，返回查询结果
+		return result;
+	}
+
+	/**
+	 * 删除数据源与部门关系表信息
+	 * <p>
+	 * 1.删除数据源与部门关系表信息，失败就抛异常，否则就正常删除
+	 *
+	 * @param source_id 数据源编号
+	 */
+	public void deleteSourceRelationDep(Long source_id) {
+		// 1.删除数据源与部门关系表信息，
+		int num = Dbo.execute("delete from " + Source_relation_dep.TableName +
+				" where source_id=?", source_id);
+		if (num != 1) {
+			// 删除失败
+			throw new BusinessException(ExceptionEnum.DATA_DELETE_ERROR);
+		}
 	}
 
 	/**
@@ -177,11 +200,9 @@ public class DataSourceAction extends BaseAction {
 	 * 3.判断删除的数据是否不存在，不存在就抛异常
 	 * 3.删除source_relation_dep信息
 	 *
-	 * @param source_id long
-	 *                  含义：数据源ID,data_source表主键，agent_info表外键
-	 *                  取值范围：不可为空以及不可为空格，长度不能超过十位
+	 * @param source_id 数据源编号
 	 */
-	public void deleteDataSource(long source_id) {
+	public void deleteDataSource(Long source_id) {
 
 		// 1.先查询该datasource下是否还有agent
 		if (Dbo.queryNumber("SELECT * FROM agent_info  WHERE source_id=?", source_id)
@@ -200,12 +221,7 @@ public class DataSourceAction extends BaseAction {
 			throw new BusinessException("删除数据源信息表data_source失败，source_id=" + source_id);
 		}
 		// 4.删除source_relation_dep信息
-		int srdNum = Dbo.execute("delete from " + Source_relation_dep.TableName +
-				" where source_id=?", source_id);
-		if (srdNum < 1) {
-			throw new BusinessException("编辑时会先删除原数据源与部门关系信息，删除错旧关系时错误，" +
-					"source_id=" + source_id);
-		}
+		deleteSourceRelationDep(source_id);
 	}
 
 	/**
@@ -219,46 +235,41 @@ public class DataSourceAction extends BaseAction {
 	 * @param agent_ip   agent地址
 	 * @param agent_port agent端口
 	 * @param user_id    页面传递用户编号
-	 * @param files      所有文件
+	 * @param file       上传文件名称
 	 * @throws IOException
 	 */
 	@UploadFile
-	public void uploadFile(String agent_ip, String agent_port, Long user_id, String[] files) {
+	public void uploadFile(@RequestParam String agent_ip, @RequestParam String agent_port,
+	                       @RequestParam Long user_id, String file) throws IOException {
 		try {
-			// 这里定义此变量的原因是循环外还会用到该变量
-			String strTemp = null;
-			// 1.循环遍历获取文件以及文件名
-			for (String file : files) {
-				//获取文件
-				File uploadedFile = FileUploadUtil.getUploadedFile(file);
-				// 获得文件名
-				String fileName = FileUploadUtil.getOriginalFileName(file);
+			//获取文件
+			File uploadedFile = FileUploadUtil.getUploadedFile(file);
+			// 获得文件名
+			String fileName = FileUploadUtil.getOriginalFileName(file);
 				/*注意：不同的浏览器提交的文件名是不一样的，有些浏览器提交上来的文件名是带有路径的，
 				如： c:\a\b\1.txt，而有些只是单纯的文件名，如：1.txt*/
-				//处理获取到的上传文件的文件名的路径部分，只保留文件名部分
-				fileName = fileName.substring(fileName.lastIndexOf(File.separator +
-						File.separator) + 1);
-
-				// 获得该文件的缓冲输入流
-				BufferedInputStream bis =
-						new BufferedInputStream(new FileInputStream(uploadedFile));
-				StringBuilder sb = new StringBuilder();
-				// 2.创建一个缓存区，一次读取1kb
-				byte[] bytes = new byte[1024];
-				int len = 0;
-				//把bis里的东西读到bytes数组里去
-				while ((len = bis.read(bytes)) != -1) {
-					sb.append((new String(bytes, 0, len, CodecUtil.UTF8_CHARSET)));
-				}
-				//关闭输入流
-				bis.close();
-				// 3.使用base64编码
-				strTemp = new String(Base64.getDecoder().decode(sb.toString()),
-						CodecUtil.UTF8_CHARSET);
-				// 4.导入数据源数据,一个文件一个文件处理
-				importDclData(strTemp, agent_ip, agent_port, user_id,
-						ActionUtil.getUser().getUserId());
+			//处理获取到的上传文件的文件名的路径部分，只保留文件名部分
+			fileName = fileName.substring(fileName.lastIndexOf(File.separator +
+					File.separator) + 1);
+			// 获得该文件的缓冲输入流
+			BufferedInputStream bis =
+					new BufferedInputStream(new FileInputStream(uploadedFile));
+			StringBuilder sb = new StringBuilder();
+			// 2.创建一个缓存区，一次读取1kb
+			byte[] bytes = new byte[1024];
+			int len = 0;
+			//把bis里的东西读到bytes数组里去
+			while ((len = bis.read(bytes)) != -1) {
+				sb.append((new String(bytes, 0, len, CodecUtil.UTF8_CHARSET)));
 			}
+			//关闭输入流
+			bis.close();
+			// 3.使用base64编码
+			String strTemp = new String(Base64.getDecoder().decode(sb.toString()),
+					CodecUtil.UTF8_CHARSET);
+			// 4.导入数据源数据,一个文件一个文件处理
+			importDclData(strTemp, agent_ip, agent_port, user_id,
+					ActionUtil.getUser().getUserId());
 		} catch (Exception e) {
 			throw new AppSystemException(e);
 		}
@@ -266,7 +277,7 @@ public class DataSourceAction extends BaseAction {
 
 	/**
 	 * 导入数据源数据
-	 * FIXME 为什么是 “贴源层元数据”
+	 *
 	 * <p>
 	 * 1.解析文件获取文件所有信息
 	 * 2.遍历并解析拿到每张表的信息
