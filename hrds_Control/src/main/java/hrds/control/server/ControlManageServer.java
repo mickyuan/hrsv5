@@ -22,6 +22,8 @@ public class ControlManageServer {
 	private final CMServerThread cmThread = new CMServerThread();
 	private static TaskManager taskManager;
 
+	private static final int SLEEPMILLIS = 500; //每次运行时间间隔（毫秒数）
+
 	/**
 	 * ControlManageServer类构造器
 	 * @author Tiger.Wang
@@ -82,7 +84,7 @@ public class ControlManageServer {
 					}
 
 					try {
-						Thread.sleep(500);
+						Thread.sleep(SLEEPMILLIS);
 					}
 					catch(InterruptedException e) {
 						logger.warn("系统出现异常：{}，但是继续执行", e.getMessage());
