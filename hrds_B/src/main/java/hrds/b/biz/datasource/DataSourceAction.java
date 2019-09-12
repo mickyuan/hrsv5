@@ -25,10 +25,7 @@ import org.apache.logging.log4j.Logger;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.lang.reflect.Type;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 数据源增删改，导入、下载类
@@ -284,26 +281,25 @@ public class DataSourceAction extends BaseAction {
 		Type type = new TypeReference<Map<String, Object>>() {
 		}.getType();
 		Map<String, Object> map = JsonUtil.toObject(strTemp, type);
-		// 2.遍历并解析拿到每张表的信息
-		// map里存放的是所有数据源相关的表信息
-		//FIXME 导入的主键需要重新生成。
+		// 2.遍历并解析拿到每张表的信息，map里存放的是所有数据源相关的表信息
 		for (Map.Entry<String, Object> entry : map.entrySet()) {
 			// 数据源信息
 			if ("data_source".equals(entry.getKey())) {
 				// 获取数据源信息
-				Data_source data_source = JsonUtil.toObject(entry.getValue().toString(), Data_source.class);
+				Data_source data_source = JsonUtil.toObject(entry.getValue().toString(),
+						Data_source.class);
 				// 判断上传文件的数据源名称和已有的名称是否重复
-				Result result = Dbo.queryResult("select * from data_source where datasource_name = ?",
-						data_source.getDatasource_name());
-				if (!result.isEmpty()) {
-					//FIXME 不把重复的名称返回，用户怎么知道
-					throw new BusinessException("数据源名称重复");
+				if (Dbo.queryNumber("select * from data_source where datasource_name = ?",
+						data_source.getDatasource_name()).orElse(-1) > 0) {
+					throw new BusinessException("数据源名称重复,datasource_name=" +
+							data_source.getDatasource_name());
 				}
 				//数据源data_source
+				data_source.setSource_id(PrimayKeyGener.getNextId());
 				data_source.setCreate_user_id(user_collect_id);
 				// 3.入库
 				if (data_source.add(Dbo.db()) != 1) {
-					throw new BusinessException(ExceptionEnum.DATA_ADD_ERROR);
+					throw new BusinessException("保存data_source表信息失败");
 				}
 				//数据源和部门关系表source_relation_dep
 				Result diResult = Dbo.queryResult("select dep_id from department_info where dep_name" +
@@ -583,314 +579,275 @@ public class DataSourceAction extends BaseAction {
 	}
 
 	/**
-	 * 下载文件（数据源下载功能使用，下载数据源给数据源导入提供上传文件）
+	 * 下载文件（数据源下载功能使用，下载数据源给数据源导入提供上传文件）,暂时未完成，修改中
 	 *
 	 * <p>
-	 * 1.从数据库取出相应数据封装到map中
-	 * 2.通过base64将map转string进行编码
-	 * 3.通过流的方式写文件
+	 * 1.创建封装数据库查询数据的map集合
+	 * 2.将从数据库中查询到的所有表数据封装入map
+	 * 3.通过base64将map转string进行编码
+	 * 4.通过流的方式写文件
 	 *
-	 * @param source_id
+	 * @param source_id long
+	 *                  含义：data_source表主键
+	 *                  取值范围：不为空以及不为空格，长度不超过10
 	 * @throws IOException
 	 */
-	public void downloadFile(Long source_id) throws IOException {
-		// 1.封装数据库数据入map
-		//FIXME 被封装进去的数据，不需要使用Result，而且，这个Map应该指定明确类型而不是用Object
-		Map<String, Object> collection_object = new HashMap<String, Object>();
-		//数据源data_source
-		Result dsResult = Dbo.queryResult("select * from data_source where source_id = ?", source_id);
-		//FIXME 查询结果存在性检查不需要？
-		collection_object.put("data_source", dsResult);
-		//Agent信息表agent_info
-		Result aiResult = Dbo.queryResult("select * from agent_info where source_id = ?",
-				source_id);
-		collection_object.put("agent_info", aiResult);
-		//Agent下载信息Agent_down_info
-		Result agent_down_infoResult = new Result();
-		for (int i = 0; i < aiResult.getRowCount(); i++) {
-			Result adiResult = Dbo.queryResult("select * from agent_down_info where agent_id = ?",
-					aiResult.getLong(i, "agent_id"));
-			agent_down_infoResult.add(adiResult);
-		}
-		collection_object.put("agent_down_info", agent_down_infoResult);
-		//采集任务分类表collect_job_classify
-		Result classifyResult = new Result();
-		for (int i = 0; i < aiResult.getRowCount(); i++) {
-			Result result = Dbo.queryResult("select * from collect_job_classify where agent_id = ?",
-					aiResult.getLong(i, "agent_id"));
-			classifyResult.add(result);
-		}
-		collection_object.put("collect_job_classify", classifyResult);
-		//ftp采集设置ftp_collect
-		Result ftp_collectResult = new Result();
-		for (int i = 0; i < aiResult.getRowCount(); i++) {
-			Result result = Dbo.queryResult("select * from ftp_collect where agent_id = ?",
-					aiResult.getLong(i, "agent_id"));
-			ftp_collectResult.add(result);
-		}
-		collection_object.put("ftp_collect", ftp_collectResult);
-		//ftp已传输表ftp_transfered
-		Result ftp_transferedResult = new Result();
-		for (int i = 0; i < ftp_collectResult.getRowCount(); i++) {
-			Result result = Dbo.queryResult("select * from ftp_transfered where ftp_id = ?",
-					ftp_collectResult.getLong(i, "ftp_id"));
-			ftp_transferedResult.add(result);
-		}
-		collection_object.put("ftp_transfered", ftp_transferedResult);
-		//ftp目录表ftp_folder
-		Result ftp_folderResult = new Result();
-		for (int i = 0; i < ftp_collectResult.getRowCount(); i++) {
-			Result result = Dbo.queryResult("select * from ftp_folder where ftp_id = ?",
-					ftp_collectResult.getLong(i, "ftp_id"));
-			ftp_folderResult.add(result);
-		}
-		collection_object.put("ftp_folder", ftp_folderResult);
-		//对象采集设置object_collect
-		Result object_collectResult = new Result();
-		for (int i = 0; i < aiResult.getRowCount(); i++) {
-			Result result = Dbo.queryResult("select * from object_collect where agent_id = ?",
-					aiResult.getLong(i, "agent_id"));
-			object_collectResult.add(result);
-		}
-		collection_object.put("object_collect", object_collectResult);
-		//对象采集对应信息object_collect_task
-		Result object_collect_taskResult = new Result();
-		for (int i = 0; i < object_collectResult.getRowCount(); i++) {
-			Result result = Dbo.queryResult("select * from object_collect_task where odc_id = ?",
-					object_collectResult.getLong(i, "odc_id"));
-			object_collect_taskResult.add(result);
-		}
-		collection_object.put("object_collect_task", object_collect_taskResult);
-		//对象采集存储设置object_storage
-		Result object_storageResult = new Result();
-		for (int i = 0; i < object_collect_taskResult.getRowCount(); i++) {
-			Result result = Dbo.queryResult("select * from object_storage where ocs_id = ?",
-					object_collect_taskResult.getString(i, "ocs_id"));
-			object_storageResult.add(result);
-		}
-		collection_object.put("object_storage", object_storageResult);
-		//对象采集结构信息object_collect_struct
-		Result object_collect_structResult = new Result();
-		for (int i = 0; i < object_collect_taskResult.getRowCount(); i++) {
-			Result result = Dbo.queryResult("select * from object_collect_struct where ocs_id = ?",
-					object_collect_taskResult.getLong(i, "ocs_id"));
-			object_collect_structResult.add(result);
-		}
-		collection_object.put("object_collect_struct", object_collect_structResult);
-		//数据库设置database_set
-		Result database_setResult = new Result();
-		for (int i = 0; i < aiResult.getRowCount(); i++) {
-			Result result = Dbo.queryResult("select * from database_set where agent_id = ?",
-					aiResult.getLong(i, "agent_id"));
-			database_setResult.add(result);
-		}
-		collection_object.put("database_set", database_setResult);
-		//文件系统设置file_collect_set
-		Result file_collect_setResult = new Result();
-		for (int i = 0; i < aiResult.getRowCount(); i++) {
-			Result result = Dbo.queryResult("select * from file_collect_set where agent_id = ?",
-					aiResult.getLong(i, "agent_id"));
-			file_collect_setResult.add(result);
-		}
-		collection_object.put("file_collect_set", file_collect_setResult);
-		//文件源设置file_source
-		Result file_sourceResult = new Result();
-		for (int i = 0; i < file_collect_setResult.getRowCount(); i++) {
-			Result result = Dbo.queryResult("select * from file_source where fcs_id = ?",
-					file_collect_setResult.getLong(i, "fcs_id"));
-			file_sourceResult.add(result);
-		}
-		collection_object.put("file_source", file_sourceResult);
-		//卸数作业参数表collect_frequency
-		Result collect_frequencyResult = new Result();
-		for (int i = 0; i < database_setResult.getRowCount(); i++) {
-			Result result = Dbo.queryResult("select * from collect_frequency where collect_set_id = ?",
-					database_setResult.getLong(i, "database_id"));
-			collect_frequencyResult.add(result);
-		}
-		for (int i = 0; i < file_collect_setResult.getRowCount(); i++) {
-			Result result = Dbo.queryResult("select * from collect_frequency where collect_set_id = ?",
-					file_collect_setResult.getLong(i, "fcs_id"));
-			collect_frequencyResult.add(result);
-		}
-		for (int i = 0; i < object_collectResult.getRowCount(); i++) {
-			Result result = Dbo.queryResult("select * from collect_frequency where collect_set_id = ?",
-					object_collectResult.getLong(i, "odc_id"));
-			collect_frequencyResult.add(result);
-		}
-		for (int i = 0; i < ftp_collectResult.getRowCount(); i++) {
-			Result result = Dbo.queryResult("select * from collect_frequency where collect_set_id = ?",
-					ftp_collectResult.getLong(i, "ftp_id"));
-			collect_frequencyResult.add(result);
-		}
-		collection_object.put("collect_frequency", collect_frequencyResult);
+	public void downloadFile(long source_id) {
+		try {
+			// 1.创建封装数据库查询数据的map集合
+			Map<String, Object> collection_object = new HashMap<String, Object>();
+			// 2.将从数据库中查询到的所有表数据封装入map
+			// 获取data_source表信息
+			List<Data_source> dataSourceList = getData_sources(source_id);
+			// 将data_source表信息封装入map
+			collection_object.put("data_source", dataSourceList);
+			//Agent信息表agent_info
+			List<Agent_info> agentInfoList = Dbo.queryList(Agent_info.class, "select * from " +
+					"agent_info  where source_id = ?", source_id);
+			// 将Agent信息表agent_info封装入map
+			collection_object.put("agent_info", agentInfoList);
+			//获取Agent下载信息Agent_down_info表信息集合
+			List<Optional<Agent_down_info>> agentDownInfoList = getAgentDownInfoList(agentInfoList);
+			collection_object.put("agent_down_info", agentDownInfoList);
+			//采集任务分类表collect_job_classify
+			Result classifyResult = new Result();
+			for (int i = 0; i < agentInfoList.size(); i++) {
+				Result result = Dbo.queryResult("select * from collect_job_classify where agent_id = ?",
+						agentInfoList.get(i).getAgent_id());
+				classifyResult.add(result);
+			}
+			collection_object.put("collect_job_classify", classifyResult);
+			//ftp采集设置ftp_collect
+			Result ftp_collectResult = new Result();
+			for (int i = 0; i < agentInfoList.size(); i++) {
+				Result result = Dbo.queryResult("select * from ftp_collect where agent_id = ?",
+						agentInfoList.get(i).getAgent_id());
+				ftp_collectResult.add(result);
+			}
+			collection_object.put("ftp_collect", ftp_collectResult);
+			//ftp已传输表ftp_transfered
+			Result ftp_transferedResult = new Result();
+			for (int i = 0; i < ftp_collectResult.getRowCount(); i++) {
+				Result result = Dbo.queryResult("select * from ftp_transfered where ftp_id = ?",
+						ftp_collectResult.getLong(i, "ftp_id"));
+				ftp_transferedResult.add(result);
+			}
+			collection_object.put("ftp_transfered", ftp_transferedResult);
+			//ftp目录表ftp_folder
+			Result ftp_folderResult = new Result();
+			for (int i = 0; i < ftp_collectResult.getRowCount(); i++) {
+				Result result = Dbo.queryResult("select * from ftp_folder where ftp_id = ?",
+						ftp_collectResult.getLong(i, "ftp_id"));
+				ftp_folderResult.add(result);
+			}
+			collection_object.put("ftp_folder", ftp_folderResult);
+			//对象采集设置object_collect
+			Result object_collectResult = new Result();
+			for (int i = 0; i < agentInfoList.size(); i++) {
+				Result result = Dbo.queryResult("select * from object_collect where agent_id = ?",
+						agentInfoList.get(i).getAgent_id());
+				object_collectResult.add(result);
+			}
+			collection_object.put("object_collect", object_collectResult);
+			//对象采集对应信息object_collect_task
+			Result object_collect_taskResult = new Result();
+			for (int i = 0; i < object_collectResult.getRowCount(); i++) {
+				Result result = Dbo.queryResult("select * from object_collect_task where odc_id = ?",
+						object_collectResult.getLong(i, "odc_id"));
+				object_collect_taskResult.add(result);
+			}
+			collection_object.put("object_collect_task", object_collect_taskResult);
+			//对象采集存储设置object_storage
+			Result object_storageResult = new Result();
+			for (int i = 0; i < object_collect_taskResult.getRowCount(); i++) {
+				Result result = Dbo.queryResult("select * from object_storage where ocs_id = ?",
+						object_collect_taskResult.getString(i, "ocs_id"));
+				object_storageResult.add(result);
+			}
+			collection_object.put("object_storage", object_storageResult);
+			//对象采集结构信息object_collect_struct
+			Result object_collect_structResult = new Result();
+			for (int i = 0; i < object_collect_taskResult.getRowCount(); i++) {
+				Result result = Dbo.queryResult("select * from object_collect_struct where ocs_id = ?",
+						object_collect_taskResult.getLong(i, "ocs_id"));
+				object_collect_structResult.add(result);
+			}
+			collection_object.put("object_collect_struct", object_collect_structResult);
+			//数据库设置database_set
+			Result database_setResult = new Result();
+			for (int i = 0; i < agentInfoList.size(); i++) {
+				Result result = Dbo.queryResult("select * from database_set where agent_id = ?",
+						agentInfoList.get(i).getAgent_id());
+				database_setResult.add(result);
+			}
+			collection_object.put("database_set", database_setResult);
+			//文件系统设置file_collect_set
+			Result file_collect_setResult = new Result();
+			for (int i = 0; i < agentInfoList.size(); i++) {
+				Result result = Dbo.queryResult("select * from file_collect_set where agent_id = ?",
+						agentInfoList.get(i).getAgent_id());
+				file_collect_setResult.add(result);
+			}
+			collection_object.put("file_collect_set", file_collect_setResult);
+			//文件源设置file_source
+			Result file_sourceResult = new Result();
+			for (int i = 0; i < file_collect_setResult.getRowCount(); i++) {
+				Result result = Dbo.queryResult("select * from file_source where fcs_id = ?",
+						file_collect_setResult.getLong(i, "fcs_id"));
+				file_sourceResult.add(result);
+			}
+			collection_object.put("file_source", file_sourceResult);
 
-		//压缩作业参数表collect_reduce
-		Result collect_reduceResult = new Result();
-		for (int i = 0; i < database_setResult.getRowCount(); i++) {
-			Result result = Dbo.queryResult("select * from collect_reduce where collect_set_id = ?",
-					database_setResult.getLong(i, "database_id"));
-			collect_reduceResult.add(result);
-		}
-		for (int i = 0; i < file_collect_setResult.getRowCount(); i++) {
-			Result result = Dbo.queryResult("select * from collect_reduce where collect_set_id = ?",
-					file_collect_setResult.getLong(i, "fcs_id"));
-			collect_reduceResult.add(result);
-		}
-		for (int i = 0; i < object_collectResult.getRowCount(); i++) {
-			Result result = Dbo.queryResult("select * from collect_reduce where collect_set_id = ?",
-					object_collectResult.getLong(i, "odc_id"));
-			collect_reduceResult.add(result);
-		}
-		for (int i = 0; i < ftp_collectResult.getRowCount(); i++) {
-			Result result = Dbo.queryResult("select * from collect_reduce where collect_set_id = ?",
-					ftp_collectResult.getLong(i, "ftp_id"));
-			collect_reduceResult.add(result);
-		}
-		collection_object.put("collect_reduce", collect_reduceResult);
+			//信号文件入库信息signal_file
+			Result signal_fileResult = new Result();
+			for (int i = 0; i < database_setResult.getRowCount(); i++) {
+				Result result = Dbo.queryResult("select * from signal_file where database_id = ?",
+						database_setResult.getLong(i, "database_id"));
+				signal_fileResult.add(result);
+			}
+			collection_object.put("signal_file", signal_fileResult);
 
-		//传递作业参数表collect_transfer
-		Result collect_transferResult = new Result();
-		for (int i = 0; i < database_setResult.getRowCount(); i++) {
-			Result result = Dbo.queryResult("select * from collect_transfer where collect_set_id = ?",
-					database_setResult.getLong(i, "database_id"));
-			collect_transferResult.add(result);
-		}
-		for (int i = 0; i < file_collect_setResult.getRowCount(); i++) {
-			Result result = Dbo.queryResult("select * from collect_transfer where collect_set_id = ?",
-					file_collect_setResult.getLong(i, "fcs_id"));
-			collect_transferResult.add(result);
-		}
-		for (int i = 0; i < object_collectResult.getRowCount(); i++) {
-			Result result = Dbo.queryResult("select * from collect_transfer where collect_set_id = ?",
-					object_collectResult.getLong(i, "odc_id"));
-			collect_transferResult.add(result);
-		}
-		for (int i = 0; i < ftp_collectResult.getRowCount(); i++) {
-			Result result = Dbo.queryResult("select * from collect_transfer where collect_set_id = ?",
-					ftp_collectResult.getLong(i, "ftp_id"));
-			collect_transferResult.add(result);
-		}
-		collection_object.put("collect_transfer", collect_transferResult);
+			//数据库对应的表table_info
+			Result table_infoResult = new Result();
+			for (int i = 0; i < database_setResult.getRowCount(); i++) {
+				Result result = Dbo.queryResult("select * from table_info where database_id = ?",
+						database_setResult.getLong(i, "database_id"));
+				table_infoResult.add(result);
+			}
+			collection_object.put("table_info", table_infoResult);
 
-		//清洗作业参数表collect_clean
-		Result collect_cleanResult = new Result();
-		for (int i = 0; i < database_setResult.getRowCount(); i++) {
-			Result result = Dbo.queryResult("select * from collect_clean where collect_set_id = ?",
-					database_setResult.getLong(i, "database_id"));
-			collect_cleanResult.add(result);
-		}
-		for (int i = 0; i < file_collect_setResult.getRowCount(); i++) {
-			Result result = Dbo.queryResult("select * from collect_clean where collect_set_id = ?",
-					file_collect_setResult.getLong(i, "fcs_id"));
-			collect_cleanResult.add(result);
-		}
-		for (int i = 0; i < object_collectResult.getRowCount(); i++) {
-			Result result = Dbo.queryResult("select * from collect_clean where  collect_set_id = ?",
-					object_collectResult.getLong(i, "odc_id"));
-			collect_cleanResult.add(result);
-		}
-		for (int i = 0; i < ftp_collectResult.getRowCount(); i++) {
-			Result result = Dbo.queryResult("select * from collect_clean where collect_set_id = ?",
-					ftp_collectResult.getLong(i, "ftp_id"));
-			collect_cleanResult.add(result);
-		}
-		collection_object.put("collect_clean", collect_cleanResult);
+			//列合并信息表column_merge
+			Result column_mergeResult = new Result();
+			for (int i = 0; i < table_infoResult.getRowCount(); i++) {
+				Result result = Dbo.queryResult("select * from column_merge where table_id = ?",
+						table_infoResult.getLong(i, "table_id"));
+				column_mergeResult.add(result);
+			}
+			collection_object.put("column_merge", column_mergeResult);
 
-		//信号文件入库信息signal_file
-		Result signal_fileResult = new Result();
-		for (int i = 0; i < database_setResult.getRowCount(); i++) {
-			Result result = Dbo.queryResult("select * from signal_file where database_id = ?",
-					database_setResult.getLong(i, "database_id"));
-			signal_fileResult.add(result);
+			//表存储信息table_storage_info
+			Result table_storage_infoResult = new Result();
+			for (int i = 0; i < table_infoResult.getRowCount(); i++) {
+				Result result = Dbo.queryResult("select * from table_storage_info where table_id = ?",
+						table_infoResult.getLong(i, "table_id"));
+				table_storage_infoResult.add(result);
+			}
+			collection_object.put("table_storage_info", table_storage_infoResult);
+
+			//表清洗参数信息table_clean
+			Result table_cleanResult = new Result();
+			for (int i = 0; i < table_infoResult.getRowCount(); i++) {
+				Result result = Dbo.queryResult("select * from table_clean where table_id = ?",
+						table_infoResult.getLong(i, "table_id"));
+				table_cleanResult.add(result);
+			}
+			collection_object.put("table_clean", table_cleanResult);
+
+			//表对应的字段table_column
+			Result table_columnResult = new Result();
+			for (int i = 0; i < table_infoResult.getRowCount(); i++) {
+				Result result = Dbo.queryResult("select * from table_column where table_id = ?",
+						table_infoResult.getLong(i, "table_id"));
+				table_columnResult.add(result);
+			}
+			collection_object.put("table_column", table_columnResult);
+
+			//列清洗参数信息 column_clean
+			Result column_cleanResult = new Result();
+			for (int i = 0; i < table_columnResult.getRowCount(); i++) {
+				Result result = Dbo.queryResult("select * from column_clean where column_id = ?",
+						table_columnResult.getLong(i, "column_id"));
+				column_cleanResult.add(result);
+			}
+			collection_object.put("column_clean", column_cleanResult);
+
+			//列拆分信息表column_split
+			Result column_splitResult = new Result();
+			for (int i = 0; i < table_columnResult.getRowCount(); i++) {
+				Result result = Dbo.queryResult("select * from column_split where column_id = ?",
+						table_columnResult.getLong(i, "column_id"));
+				column_splitResult.add(result);
+			}
+			collection_object.put("column_split", column_splitResult);
+
+			// 2.使用base64编码
+			byte[] bytes = Base64.getEncoder().encode(JsonUtil.toJson(collection_object).getBytes(CodecUtil.UTF8_CHARSET));
+			// 判断文件是否存在
+			if (bytes == null) {
+				throw new BusinessException("此文件不存在");
+			}
+			// 通过流的方式写入文件
+			HttpServletResponse response = ResponseUtil.getResponse();
+			// 3.清空response
+			response.reset();
+
+			// 设置响应编码格式
+			response.setCharacterEncoding(CodecUtil.UTF8_STRING);
+
+			// 设置响应头，控制浏览器下载该文件
+			response.setContentType("APPLICATION/OCTET-STREAM");
+
+			// 创建输出流
+			OutputStream out = response.getOutputStream();
+			out.write(bytes);
+			out.flush();
+			out.close();
+		} catch (IOException e) {
+			throw new AppSystemException(e);
 		}
-		collection_object.put("signal_file", signal_fileResult);
+	}
 
-		//数据库对应的表table_info
-		Result table_infoResult = new Result();
-		for (int i = 0; i < database_setResult.getRowCount(); i++) {
-			Result result = Dbo.queryResult("select * from table_info where database_id = ?",
-					database_setResult.getLong(i, "database_id"));
-			table_infoResult.add(result);
+	/**
+	 * 根据agent_info表信息集合获取agent_down_info表信息集合
+	 * <p>
+	 * 1.创建存放agent_down_info表信息集合
+	 * 2.遍历agent_info表信息获取agent_id（agent_info表主键，agent_down_info表外键）
+	 * 3.通过agent_id查询agent_down_info表信息
+	 * 4.将agent_down_info表信息放入list
+	 * 5.agent_down_info表信息集合
+	 *
+	 * @param agentInfoList List<Agent_info>
+	 *                      含义：agent_info表信息集合
+	 *                      取值范围：不为空
+	 * @return 返回agent_down_info表信息集合
+	 */
+	private List<Optional<Agent_down_info>> getAgentDownInfoList(List<Agent_info> agentInfoList) {
+		// 1.创建存放agent_down_info表信息集合
+		List<Optional<Agent_down_info>> agentDownInfoList =
+				new ArrayList<Optional<Agent_down_info>>();
+		// 2.遍历agent_info表信息获取agent_id（agent_info表主键，agent_down_info表外键）
+		for (int i = 0; i < agentInfoList.size(); i++) {
+			// 3.通过agent_id查询agent_down_info表信息
+			Optional<Agent_down_info> agent_down_info = Dbo.queryOneObject(Agent_down_info.class,
+					"select * from  agent_down_info where  agent_id = ?",
+					agentInfoList.get(i).getAgent_id());
+			// 4.将agent_down_info表信息放入list
+			agentDownInfoList.add(agent_down_info);
 		}
-		collection_object.put("table_info", table_infoResult);
+		// 5.agent_down_info表信息集合
+		return agentDownInfoList;
+	}
 
-		//列合并信息表column_merge
-		Result column_mergeResult = new Result();
-		for (int i = 0; i < table_infoResult.getRowCount(); i++) {
-			Result result = Dbo.queryResult("select * from column_merge where table_id = ?",
-					table_infoResult.getLong(i, "table_id"));
-			column_mergeResult.add(result);
+	/**
+	 * 根据数据源ID获取数据源集合
+	 * <p>
+	 * 1.根据数据源ID查询数据源data_source集合
+	 * 2.判断获取到的集合是否有数据，没有抛异常，有返回数据
+	 *
+	 * @param source_id long
+	 *                  含义：data_source表主键
+	 *                  取值范围：不能为空以及空格，长度不超过10
+	 * @return 返回根据数据源ID查询数据源data_source集合结果信息
+	 */
+	private List<Data_source> getData_sources(long source_id) {
+		// 1.根据数据源ID查询数据源data_source集合
+		List<Data_source> dataSourceList = Dbo.queryList(Data_source.class, "select * from " +
+				"data_source where  source_id = ?", source_id);
+		// 2.判断获取到的集合是否有数据，没有抛异常，有返回数据
+		if (dataSourceList.size() == 0) {
+			throw new BusinessException("此数据源下没有数据，source_id = ?" + source_id);
 		}
-		collection_object.put("column_merge", column_mergeResult);
-
-		//表存储信息table_storage_info
-		Result table_storage_infoResult = new Result();
-		for (int i = 0; i < table_infoResult.getRowCount(); i++) {
-			Result result = Dbo.queryResult("select * from table_storage_info where table_id = ?",
-					table_infoResult.getLong(i, "table_id"));
-			table_storage_infoResult.add(result);
-		}
-		collection_object.put("table_storage_info", table_storage_infoResult);
-
-		//表清洗参数信息table_clean
-		Result table_cleanResult = new Result();
-		for (int i = 0; i < table_infoResult.getRowCount(); i++) {
-			Result result = Dbo.queryResult("select * from table_clean where table_id = ?",
-					table_infoResult.getLong(i, "table_id"));
-			table_cleanResult.add(result);
-		}
-		collection_object.put("table_clean", table_cleanResult);
-
-		//表对应的字段table_column
-		Result table_columnResult = new Result();
-		for (int i = 0; i < table_infoResult.getRowCount(); i++) {
-			Result result = Dbo.queryResult("select * from table_column where table_id = ?",
-					table_infoResult.getLong(i, "table_id"));
-			table_columnResult.add(result);
-		}
-		collection_object.put("table_column", table_columnResult);
-
-		//列清洗参数信息 column_clean
-		Result column_cleanResult = new Result();
-		for (int i = 0; i < table_columnResult.getRowCount(); i++) {
-			Result result = Dbo.queryResult("select * from column_clean where column_id = ?",
-					table_columnResult.getLong(i, "column_id"));
-			column_cleanResult.add(result);
-		}
-		collection_object.put("column_clean", column_cleanResult);
-
-		//列拆分信息表column_split
-		Result column_splitResult = new Result();
-		for (int i = 0; i < table_columnResult.getRowCount(); i++) {
-			Result result = Dbo.queryResult("select * from column_split where column_id = ?",
-					table_columnResult.getLong(i, "column_id"));
-			column_splitResult.add(result);
-		}
-		collection_object.put("column_split", column_splitResult);
-
-		// 2.使用base64编码
-		byte[] bytes = Base64.getEncoder().encode(JsonUtil.toJson(collection_object).getBytes(CodecUtil.UTF8_CHARSET));
-		// 判断文件是否存在
-		if (bytes == null) {
-			throw new BusinessException("此文件不存在");
-		}
-		// 通过流的方式写入文件
-		HttpServletResponse response = ResponseUtil.getResponse();
-		// 3.清空response
-		response.reset();
-
-		// 设置响应编码格式
-		response.setCharacterEncoding(CodecUtil.UTF8_STRING);
-
-		// 设置响应头，控制浏览器下载该文件
-		response.setContentType("APPLICATION/OCTET-STREAM");
-
-		// 创建输出流
-		OutputStream out = response.getOutputStream();
-		out.write(bytes);
-		out.flush();
-		out.close();
+		return dataSourceList;
 	}
 
 }
