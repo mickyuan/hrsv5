@@ -1,16 +1,15 @@
 package hrds.b.biz.agentinfo;
 
-import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.annotation.RequestBean;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.entity.Agent_info;
 import hrds.commons.exception.BusinessException;
-import hrds.commons.exception.ExceptionEnum;
 import hrds.commons.utils.ActionUtil;
 import hrds.commons.utils.key.PrimayKeyGener;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -27,14 +26,19 @@ public class AgentInfoAction extends BaseAction {
 	 * 2.判断agent编号是否为空，为空则新增，不为空则编辑
 	 * 3.保存或更新agent信息
 	 *
-	 * @param agentInfo agent实体对象
+	 * @param agentInfo agent_info表对象
+	 *                  含义：agent_info表实体对象
+	 *                  取值范围：与数据库agent_info表字段定义规则一致
 	 */
 	public void saveAgent(@RequestBean Agent_info agentInfo) {
 		// 1.判断端口是否被占用
-		boolean flag = isPortOccupied(agentInfo.getAgent_ip(), Integer.parseInt(agentInfo.getAgent_port()));
+		boolean flag = isPortOccupied(agentInfo.getAgent_ip(),
+				Integer.parseInt(agentInfo.getAgent_port()));
 		if (flag) {
 			// 端口被占用不可使用
-			throw new BusinessException("端口被占用");
+			throw new BusinessException("端口被占用，agent_port=" + agentInfo.getAgent_port() +
+					",agent_ip =" + agentInfo.getAgent_ip() +
+					",agent_name=" + agentInfo.getAgent_name());
 		}
 		// 2.判断agent编号是否为空
 		if (agentInfo.getAgent_id() == null) {
@@ -43,16 +47,21 @@ public class AgentInfoAction extends BaseAction {
 			agentInfo.setUser_id(ActionUtil.getUser().getUserId());
 			// 3.保存agent信息
 			if (agentInfo.add(Dbo.db()) != 1) {
-				throw new BusinessException(ExceptionEnum.DATA_ADD_ERROR);
+				throw new BusinessException("新增agent_info表信息失败," +
+						"agent_port=" + agentInfo.getAgent_port() +
+						",agent_ip =" + agentInfo.getAgent_ip() +
+						",agent_name=" + agentInfo.getAgent_name());
 			}
 		} else {
 			// 2.不为空，编辑
 			// 3.更新agent信息
 			if (agentInfo.update(Dbo.db()) != 1) {
-				throw new BusinessException(ExceptionEnum.DATA_UPDATE_ERROR);
+				throw new BusinessException("编辑保存agent_info表信息失败," +
+						"agent_port=" + agentInfo.getAgent_port() +
+						",agent_ip =" + agentInfo.getAgent_ip() +
+						",agent_name=" + agentInfo.getAgent_name());
 			}
 		}
-
 	}
 
 	/**
@@ -60,11 +69,15 @@ public class AgentInfoAction extends BaseAction {
 	 * <p>
 	 * 1.通过http方式去测试端口连通情况，测通则被占用，不通则可以使用
 	 *
-	 * @param agent_ip   agent地址
-	 * @param agent_port agent端口
+	 * @param agent_ip   String
+	 *                   含义： agent地址
+	 *                   取值范围：不为空，服务器地址
+	 * @param agent_port int
+	 *                   含义：agent端口
+	 *                   取值范围：1024-65535
 	 * @return 返回端口是否被占用信号
 	 */
-	public boolean isPortOccupied(String agent_ip, int agent_port) {
+	private boolean isPortOccupied(String agent_ip, int agent_port) {
 
 		// 1.通过http方式去测试端口连通情况，测通则被占用，不通则可以使用
 		HttpClient httpClient = new HttpClient();
@@ -81,24 +94,22 @@ public class AgentInfoAction extends BaseAction {
 	}
 
 	/**
-	 * 编辑前查看Agent详情
+	 * 查询Agent信息
 	 * <p>
-	 * 1.编辑前查询该agent信息，为空抛异常，不为空返回查询结果
+	 * 1.根据agent_id与agent_type查询该agent信息
 	 *
-	 * @param agent_id   agent编号
-	 * @param agent_type agent类型
-	 * @return 返回查询结果集
+	 * @param agent_id   long
+	 *                   含义：agent_info表主键
+	 *                   取值范围：不为空以及不为空格，长度不超过10
+	 * @param agent_type String
+	 *                   含义：agent类型
+	 *                   取值范围：1:数据库Agent,2:文件系统Agent,3:FtpAgent,4:数据文件Agent,5:对象Agent
+	 * @return 返回根据agent_id与agent_type查询该agent信息结果
 	 */
-	public Result searchAgent(Long agent_id, String agent_type) {
-		// 1.编辑前查询该agent信息
-		Result result = Dbo.queryResult(" SELECT * FROM agent_info WHERE agent_id = ? AND agent_type = ?",
+	public List<Map<String, Object>> searchAgent(long agent_id, String agent_type) {
+		// 1.根据agent_id与agent_type查询该agent信息
+		return Dbo.queryList(" SELECT * FROM agent_info WHERE agent_id = ? AND agent_type = ?",
 				agent_id, agent_type);
-		if (result.isEmpty()) {
-			// 该数据源下数据为空(此为编辑情况下数据不能为空）
-			throw new BusinessException(ExceptionEnum.DATA_NOT_EXIST);
-		}
-		// 不为空，返回查询结果
-		return result;
 	}
 
 	/**
@@ -108,28 +119,39 @@ public class AgentInfoAction extends BaseAction {
 	 * 2.判断此数据源与agent下是否有任务，有任务不能删除
 	 * 3.删除agent
 	 *
-	 * @param agent_id
-	 * @param agent_type
+	 * @param agent_id   long
+	 *                   含义：agent_info表主键
+	 *                   取值范围：不为空以及不为空格，长度不超过10
+	 * @param agent_type String
+	 *                   含义：agent类型
+	 *                   取值范围：1:数据库Agent,2:文件系统Agent,3:FtpAgent,4:数据文件Agent,5:对象Agent
 	 */
 	public void deleteAgent(Long agent_id, String agent_type) {
 
 		// 1.删除前查询此agent是否已部署
-		Map<String, Object> map = Dbo.queryOneObject("select * from agent_down_info where agent_id=?", agent_id);
-		if ("0".equals(map.get("deploy"))) {
+		if (Dbo.queryNumber("select * from agent_down_info where agent_id=?",
+				agent_id).orElse(-1) > 0) {
 			// 此agent已部署不能删除
 			throw new BusinessException("此agent已部署不能删除");
 		}
 		// 2.判断此数据源与agent下是否有任务
-		Result result = Dbo.queryResult(" SELECT task_name FROM agent_info t1 join database_set t2 on t1.agent_id=t2.agent_id WHERE" +
-				"  t1.agent_id=? and  t1.agent_type=?", agent_id, agent_type);
-		if (!result.isEmpty()) {
+		if (Dbo.queryNumber(" SELECT task_name FROM agent_info t1 join database_set t2 on " +
+						"t1.agent_id=t2.agent_id WHERE  t1.agent_id=? and  t1.agent_type=?",
+				agent_id, agent_type).orElse(-1) > 0) {
 			// 此数据源与agent下有任务，不能删除
 			throw new BusinessException("此数据源与agent下有任务，不能删除");
 		}
+
 		// 3.删除agent
 		int num = Dbo.execute("delete  from agent_info where agent_id=?", agent_id);
 		if (num != 1) {
-			throw new BusinessException(ExceptionEnum.DATA_DELETE_ERROR);
+			// 3.判断库里是否没有这条数据
+			if (num == 0) {
+				throw new BusinessException("删除agent_info表信息失败，数据库里没有此条数据，" +
+						"agent_id=" + agent_id + ",agent_type=" + agent_type);
+			}
+			throw new BusinessException("删除agent_info表信息失败，agent_id=" + agent_id
+					+ ",agent_type=" + agent_type);
 		}
 	}
 
