@@ -1,23 +1,23 @@
 package hrds.control.task;
 
-import java.text.SimpleDateFormat;
+import java.io.File;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
 
-import hrds.commons.codes.*;
-import hrds.commons.entity.*;
-import hrds.commons.exception.AppSystemException;
-import hrds.control.task.helper.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import fd.ng.core.utils.StringUtil;
+import hrds.commons.codes.*;
+import hrds.commons.entity.*;
+import hrds.commons.exception.AppSystemException;
 import hrds.control.beans.EtlJobBean;
 import hrds.control.beans.EtlJobDefBean;
 import hrds.control.beans.WaitFileJobInfo;
+import hrds.control.task.helper.*;
 import hrds.control.utils.DateUtil;
 
 /**
@@ -91,7 +91,8 @@ public class TaskManager {
 	 * @param isAutoShift	是否自动日切
 	 * @return hrds.agent.control.task.manager.TaskManager
 	 */
-	public static TaskManager newInstance(boolean sysRunning, String strSystemCode, LocalDate bathDate, boolean isResumeRun, boolean isAutoShift) {
+	public static TaskManager newInstance(boolean sysRunning, String strSystemCode, LocalDate bathDate,
+	                                      boolean isResumeRun, boolean isAutoShift) {
 
 		return new TaskManager(sysRunning, strSystemCode, bathDate, isResumeRun, isAutoShift);
 	}
@@ -106,7 +107,8 @@ public class TaskManager {
 	 * @param isResumeRun	是否续跑
 	 * @param isAutoShift	是否自动日切
 	 */
-	private TaskManager(boolean sysRunning, String etlSysCd, LocalDate bathDate, boolean isResumeRun, boolean isAutoShift) {
+	private TaskManager(boolean sysRunning, String etlSysCd, LocalDate bathDate,
+	                    boolean isResumeRun, boolean isAutoShift) {
 
 		this.sysRunning = sysRunning;
 		this.etlSysCd = etlSysCd;
@@ -169,7 +171,7 @@ public class TaskManager {
 		jobDefineMap.clear();
 		jobTimeDependencyMap.clear();
 		jobDependencyMap.clear();
-		//2、获取所有作业定义表的作业信息。TODO 此处不应该每隔一定时间查询一次数据库来获取作业定义
+		//2、获取所有作业定义表的作业信息。
 		List<EtlJobDefBean> jobs = TaskSqlHelper.getAllDefJob(etlSysCd);
 		//3、分析并加载作业定义信息，将作业加载进作业定义表（内存表）
 		boolean hasFrequancy = loadJobDefine(jobs);
@@ -659,7 +661,7 @@ public class TaskManager {
 				continue;
 			}
 
-			LocalDate currBathDate = LocalDate.parse(strBathDate, DateUtil.DATETIME);
+			LocalDate currBathDate = LocalDate.parse(strBathDate, DateUtil.DATE_DEFAULT);
 			Map<String, EtlJobBean> jobMap = jobExecuteMap.get(strBathDate);
 
 			for (String strJobName : jobMap.keySet()) {
@@ -1002,6 +1004,34 @@ public class TaskManager {
 		// 判断作业状态是否为Done
 		return Job_Status.DONE.getCode().equals(jobMap.get(jobName).getJob_disp_status());
 	}
+	//TODO 没写完
+//	public void waitFileJobFinished(WaitFileJobInfo waitJobInfo) {
+//
+//		Optional<Etl_job_cur> etlJobCurOptional =
+//				TaskSqlHelper.getEtlJob(etlSysCd, waitJobInfo.getStrJobName(), waitJobInfo.getStrBathDate());
+//
+//		if(!etlJobCurOptional.isPresent()) {
+//			logger.warn("没有找到作业！EtlJob=[?],BathDate=[?]",
+//					waitJobInfo.getStrJobName(), waitJobInfo.getStrBathDate());
+//			return;
+//		}
+//		Etl_job_cur etlJobCur = etlJobCurOptional.get();
+//		etlJobCur.setJob_disp_status(Job_Status.DONE.getCode());
+//		etlJobCur.setJob_return_val(0);
+//		etlJobCur.setCurr_end_time(
+//				String.valueOf(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()));
+//
+//		jobInfo.put("job_disp_status", "D");
+//		jobInfo.put("job_return_val", 0);
+//		jobInfo.put("curr_end_time", new Timestamp(System.currentTimeMillis()));
+//
+//		dao.insertAllDoneTask(jobInfo);
+//		dao.updateJobStatusDone(jobInfo);
+//
+//		UpdateFinishedJob(waitJobInfo.getStrJobName(), waitJobInfo.getStrBathDate());
+//
+//		logger.info(jobInfo.get("etl_job") + "作业正常结束");
+//	}
 //------------------------------分析并加载需要立即启动的作业信息用（loadReadyJob方法）end---------------------------------
 
 //-------------------------------分析并处理需要立即启动的作业（publishReadyJob方法）start----------------------------------
@@ -1091,7 +1121,7 @@ public class TaskManager {
 	 *          3、更新内存表（jobExecuteMap）中作业的作业状态，将作业的状态设为现在的作业状态；
 	 *          4、若当前作业是完成状态，则修改依赖于此作业（更新内存表jobExecuteMap）的状态；
 	 *          5、若当前作业是完成状态，则根据该作业的下一批次执行时间设置此作业；
-	 *          66、如果作业不是正常完成，发送警告消息（短信息）。
+	 *          6、如果作业不是正常完成，发送警告消息（短信息）。
 	 * @author Tiger.Wang
 	 * @date 2019/9/11
 	 * @param jobName   调度作业标识
@@ -1768,7 +1798,7 @@ public class TaskManager {
 		// 判断该调度日期的作业是否状态全部为"D"
 		Iterator<String> jobIter = jobMap.keySet().iterator();
 		logger.info(jobMap.size() + "===============");
-		Set<String> status = new HashSet<String>();
+		Set<String> status = new HashSet<>();
 		while( jobIter.hasNext() ) {
 			EtlJobBean exeJobInfo = jobMap.get(jobIter.next());
 			status.add(exeJobInfo.getJob_disp_status());
@@ -1879,4 +1909,60 @@ public class TaskManager {
 		String finishedJob = etlJob + REDISCONTENTSEPARATOR + currBathDate;
 		REDIS.rpush(strFinishedJob, finishedJob);
 	}
+	//TODO 没写完
+//	private class CheckWaitFileThread extends Thread {
+//
+//		private boolean isFinished = false;
+//
+//		public void run() {
+//			try {
+//				while (!isFinished){
+//					List<WaitFileJobInfo> jobList = waitFileJobList;
+//					List<WaitFileJobInfo> checkList = new ArrayList<>();
+//					checkList.addAll(jobList);
+//
+//					List<WaitFileJobInfo> finishedJobList = new ArrayList<>();
+//					Iterator<WaitFileJobInfo> iter = checkList.iterator();
+//					while (isLock == true){
+//						System.out.println("wait file lock is true.wait");
+//						try{
+//							Thread.sleep(1000);
+//						} catch (InterruptedException e) {
+//						}
+//					}
+//					isLock = true;
+//
+//					while (iter.hasNext()){
+//						WaitFileJobInfo jobInfo = iter.next();
+//						File file =new File(jobInfo.getWaitFilePath());
+//						if (file.exists()){
+//							main.WaitFileJobFinished(jobInfo);
+//							finishedJobList.add(jobInfo);
+//							logger.info(jobInfo.getStrJobName() + "文件已经等到。");
+//						}
+//					}
+//					isLock = false;
+//
+//					for(int i = 0; i < finishedJobList.size(); ++i){
+//						jobList.remove(finishedJobList.get(i));
+//					}
+//
+//					try {
+//						Thread.sleep(60000);
+//					} catch (InterruptedException e) {
+//					}
+//				}
+//			} catch (Exception ex) {
+//				logger.error("Exception happened!" + ex.getMessage());
+//			}
+//
+//			logger.info("Thread Stop!");
+//		}
+//
+//		public void StopThread(){
+//
+//			logger.info("Stop Thread!");
+//			isFinished = true;
+//		}
+//	}
 }
