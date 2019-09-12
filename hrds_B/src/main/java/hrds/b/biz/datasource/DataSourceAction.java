@@ -48,8 +48,8 @@ public class DataSourceAction extends BaseAction {
 	 * 6.保存或更新数据源与部门关系信息
 	 *
 	 * @param dataSource 数据源实体
-	 * @param depIds     部门ID(数据源与部门关系表source_relation_dep主键ID,前台传值可能会有1或多个值，
-	 *                   通过分隔符拼接成的字符串)
+	 * @param depIds     含义：数据源与部门关系表source_relation_dep主键ID
+	 *                   取值范围：前台传值可能会有1或多个值， 通过分隔符拼接成的字符串
 	 */
 	public void saveDataSource(@RequestBean Data_source dataSource, @RequestParam String depIds) {
 		// 1.字段做合法性检查
@@ -150,7 +150,8 @@ public class DataSourceAction extends BaseAction {
 	 * <p>
 	 * 1.判断该数据源下是否有数据，没有抛异常，有则返回查询结果
 	 *
-	 * @param source_id 数据源编号
+	 * @param source_id 含义：数据源编号
+	 *                  取值范围：不能为空或空格，长度不能超过10位
 	 * @return 返回查询结果集
 	 */
 	public Result searchDataSource(Long source_id) {
@@ -165,7 +166,6 @@ public class DataSourceAction extends BaseAction {
 		}
 		// 不为空，返回查询结果
 		return result;
-
 	}
 
 	/**

@@ -105,11 +105,25 @@ public class DataSourceActionTest extends WebBaseTestCase {
 	}
 
 	/**
-	 * 新增数据源
+	 * 新增/编辑数据源测试
+	 *参数：source_id:数据源ID,source_remark:数据源备注,datasource_number:数据源编号,
+	 * datasource_name:数据源名称,depIds:部门ID
+	 * 取值范围：除source_id外不能为空以及空格
+	 *
+	 * 1.测试数据源新增功能,数据都不为空
+	 * 2.测试数据源编辑功能
+	 * 3.测试数据源新增，数据源编号重复
+	 * 4.测试数据源新增，数据源名称不能为空
+	 * 5.测试数据源新增，数据源名称不能为空格
+	 * 6.测试数据源新增，数据源编号不能为空
+	 * 7.测试数据源新增，数据源编号不能为空格
+	 * 8.测试数据源新增，数据源编号长度不能超过四位
+	 * 9.测试保存数据源，部门id不能为空
+	 * 10.测试保存数据源，部门id不能为空格
 	 */
 	@Test
 	public void saveDataSource() {
-		// 1.测试数据源新增功能,
+		// 1.测试数据源新增功能,数据都不为空
 		String bodyString = new HttpClient()
 				.addData("source_remark", "测试")
 				.addData("datasource_name", "cs" + new Random().nextInt(99))
@@ -140,7 +154,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(false));
 		assertThat((String) ar.getMessage(), is("数据源编号重复,datasource_number=d300"));
-		// 4.新增数据源，数据源名称不能为空
+		// 4.测试数据源新增，数据源名称不能为空
 		bodyString = new HttpClient()
 				.addData("source_remark", "测试")
 				.addData("datasource_name", "")
