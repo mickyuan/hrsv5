@@ -48,7 +48,7 @@ public class DataSourceAction extends BaseAction {
 	 *
 	 * @param dataSource data_source表
 	 *                   含义：data_source表实体类
-	 *                   取值范围：与数据字段定义规则相同
+	 *                   取值范围：与数据库字段定义规则相同
 	 * @param depIds     String
 	 *                   含义：source_relation_dep表主键ID
 	 *                   取值范围：前台传值可能会有1或多个值， 通过分隔符拼接成的字符串
