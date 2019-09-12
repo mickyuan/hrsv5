@@ -282,7 +282,8 @@ public class DataSourceAction extends BaseAction {
 	 * 3.将对应表信息插入库（数据源信息还需要判断数据源名称是否重复，重复抛异常，否则正常入库）
 	 * FIXME 为什么是从文件中得到了表的信息？这个文件是什么
 	 *
-	 * @param strTemp         文件信息
+	 * @param strTemp         String
+	 *                        含义：涉及数据源文件下载相关的所有表进行base64编码后的信息
 	 * @param agent_port      agent端口
 	 * @param agent_ip        agent地址
 	 * @param user_id         页面传递用户编号
