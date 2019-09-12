@@ -536,7 +536,7 @@ public class TaskSqlHelper {
 	 * @return boolean	是否有数据被修改
 	 */
 	public static boolean updateEtlResourceUsedByResourceType(String etlSysCd, String resourceType, int used){
-
+		//TODO 单例
 		try(DatabaseWrapper db = new DatabaseWrapper()) {
 
 			int num = SqlOperator.execute(db, "UPDATE etl_resource SET resource_used = ? " +
