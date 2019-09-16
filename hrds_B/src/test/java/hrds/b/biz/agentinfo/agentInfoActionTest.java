@@ -1,6 +1,5 @@
 package hrds.b.biz.agentinfo;
 
-import fd.ng.core.conf.AppinfoConf;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
@@ -15,16 +14,16 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class agentInfoActionTest extends WebBaseTestCase {
 	private static final int Init_Rows = 10; // 向表中初始化的数据条数。
+	// 初始化登录用户ID
+	private static final long UserId = 5555;
 
 	@Before
 	public void before() {
@@ -33,19 +32,37 @@ public class agentInfoActionTest extends WebBaseTestCase {
 			List<Object[]> aiParams = new ArrayList<>();
 			// 初始化data_source表信息
 			for (Long i = 0L; i < Init_Rows; i++) {
-				Long agent_id = i - 300;
-				Long source_id = i - 300;
+				Long agent_id = i - 30;
+				Long source_id = i - 30;
 				String create_date = DateUtil.getSysDate();
 				String create_time = DateUtil.getSysTime();
-				Long user_id = 1001L;
+
 				String agent_name = "数据库agent";
-				String agent_type = AgentType.ShuJuKu.getCode();
+				String agent_type = null;
+				if (i < 2) {
+					agent_type = AgentType.ShuJuKu.getCode();
+				} else if (i >= 2 && i < 4) {
+					agent_type = AgentType.DBWenJian.getCode();
+				} else if (i >= 4 && i < 6) {
+					agent_type = AgentType.WenJianXiTong.getCode();
+				} else if (i >= 6 && i < 8) {
+					agent_type = AgentType.FTP.getCode();
+				} else {
+					agent_type = AgentType.DuiXiang.getCode();
+				}
 				String agent_ip = "10.71.4.51";
 				String agent_port = "34567";
-				String agent_status = AgentStatus.YiLianJie.getCode();
+				String agent_status = null;
+				if (i < 3) {
+					agent_status = AgentStatus.YiLianJie.getCode();
+				} else if (i >= 3 && i < 7) {
+					agent_status = AgentStatus.WeiLianJie.getCode();
+				} else {
+					agent_status = AgentStatus.ZhengZaiYunXing.getCode();
+				}
 				// agent_info表信息
 				Object[] aiObjects = {agent_id, agent_name, agent_type, agent_ip, agent_port, agent_status, create_date
-						, create_time, source_id, user_id};
+						, create_time, source_id, UserId};
 				aiParams.add(aiObjects);
 			}
 			// 初始化agent_info表信息
@@ -57,16 +74,15 @@ public class agentInfoActionTest extends WebBaseTestCase {
 
 			SqlOperator.commitTransaction(db);
 		}
-		// 用户登录
-		String responseValue = new HttpClient()
-				.buildSession()
-				.addData("username", "admin")
-				.addData("password", "admin")
-				.post(getUrlActionPattern() + "/" + AppinfoConf.AppBasePackage.replace(".", "/")
-						+ "/biz/zauth/loginAtSession")
-				.getBodyString();
-		ActionResult ar = JsonUtil.toObject(responseValue, ActionResult.class);
-		assertThat("用户登录", ar.isSuccess(), is(true));
+		// 5.模拟用户登录
+		//String responseValue = new HttpClient()
+		//		.buildSession()
+		//		.addData("username", UserId)
+		//		.addData("password", "111111")
+		//		.post("http://127.0.0.1:8099/A/action/hrds/a/biz/login/login")
+		//		.getBodyString();
+		//ActionResult ar = JsonUtil.toObject(responseValue, ActionResult.class);
+		//assertThat("用户登录", ar.getCode(), is(220));
 	}
 
 	@After
@@ -75,98 +91,216 @@ public class agentInfoActionTest extends WebBaseTestCase {
 			for (Long i = 0L; i < Init_Rows; i++) {
 				// 测试完成后删除agent_info表测试数据
 				SqlOperator.execute(db, "delete from " + Agent_info.TableName + "  where " +
-						"agent_id=?", i - 300);
+						"agent_id=?", i - 30);
 				SqlOperator.commitTransaction(db);
 				Long aiNum = SqlOperator.queryNumber(db, "select count(1) from " + Agent_info.TableName + " where agent_id=?", i)
 						.orElseThrow(() -> new RuntimeException("count fail!"));
 
 				assertThat("此条记录删除后，数据为0", aiNum, is(0L));
+
+				// 测试完成后删除agent_info表新增测试数据，因为新增时agent_id为自动生成
+				SqlOperator.execute(db, "delete from " + Agent_info.TableName + "  where " +
+						"source_id=?", i - 30);
+				SqlOperator.commitTransaction(db);
+
 			}
 		}
 	}
 
+	/**
+	 * 保存agent_info表数据
+	 * <p>
+	 * 参数1：agent_name String
+	 * 含义：agent名称
+	 * 取值范围：不为空以及不为空格
+	 * 参数2：agent_type String
+	 * 含义：agent类型
+	 * 取值范围：1:数据库Agent,2:文件系统Agent,3:FtpAgent,4:数据文件Agent,5:对象Agent
+	 * 参数3：agent_ip String
+	 * 含义：agent地址
+	 * 取值范围：服务器ip
+	 * 参数4:agent_port String
+	 * 含义：agent端口
+	 * 取值范围：1024-65535
+	 * 参数5：agent_status String
+	 * 含义：agent状态
+	 * 取值范围：1：已连接，2：未连接，3：正在运行
+	 * 参数6：source_id long
+	 * 含义：agent_info外键ID
+	 * 取值范围：不为空以及不为空格，长度不超过10
+	 * 参数7：agent_id long
+	 * 含义：agent_info主键ID
+	 * 取值范围：不为空及不为空格，长度不超过10
+	 *
+	 * <p>
+	 * 1.新增，数据都不为空且为有效数据
+	 * 2.编辑，数据都不为空且为有效数据
+	 */
 	@Test
 	public void saveAgent() {
-		Long agent_id = -300L;
-		String agent_name = "数据库agent";
-		String agent_type = AgentType.ShuJuKu.getCode();
-		String agent_ip = "10.71.4.51";
-		String agent_port = "3456";
-		String agent_status = AgentStatus.YiLianJie.getCode();
-		String create_date = DateUtil.getSysDate();
-		String create_time = DateUtil.getSysTime();
-		Long source_id = -300L;
-		Long user_id = 1001L;
-		String agentResult = new HttpClient().addData("agent_id", agent_id)
-				.addData("agent_name", agent_name)
-				.addData("agent_type", agent_type)
-				.addData("agent_ip", agent_ip)
-				.addData("agent_port", agent_port)
-				.addData("agent_status", agent_status)
-				.addData("create_date", create_date)
-				.addData("create_time", create_time)
-				.addData("source_id", source_id)
-				.addData("user_id	", user_id)
+		// 1.新增，数据都不为空且为有效数据
+		String bodyString = new HttpClient()
+				.addData("agent_name", "数据库agent")
+				.addData("agent_type", AgentType.ShuJuKu.getCode())
+				.addData("agent_ip", "10.71.4.51")
+				.addData("agent_port", "3456")
+				.addData("agent_status", AgentStatus.YiLianJie.getCode())
+				.addData("source_id", -30L)
 				.post(getActionUrl("saveAgent")).getBodyString();
-		ActionResult ar = JsonUtil.toObject(agentResult, ActionResult.class);
-		assertThat(ar.isSuccess(), is(true));
-		assertThat(ar.getCode(), is(200));
-
-		// 验证DB里面的数据是否正确
-		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			Map<String, Object> result = SqlOperator.queryOneObject(db,
-					"select * from " + Agent_info.TableName + " where agent_id=?", new BigDecimal(agent_id));
-			String new_agent_name = (String) result.get("agent_name");
-			String new_agent_type = (String) result.get("agent_type");
-			String new_agent_ip = (String) result.get("agent_ip");
-			String new_agent_port = (String) result.get("agent_port");
-			String new_agent_status = (String) result.get("agent_status");
-			String new_create_date = (String) result.get("create_date");
-			String new_create_time = (String) result.get("create_time");
-			Long new_source_id = Long.valueOf(String.valueOf(result.get("source_id")));
-			Long new_user_id = Long.valueOf(String.valueOf(result.get("user_id")));
-
-			assertThat(agent_name, is(new_agent_name));
-			assertThat(agent_type, is(new_agent_type));
-			assertThat(agent_ip, is(new_agent_ip));
-			assertThat(agent_port, is(new_agent_port));
-			assertThat(agent_status, is(new_agent_status));
-			assertThat(create_date, is(new_create_date));
-			assertThat(create_time, is(new_create_time));
-			assertThat(source_id, is(new_source_id));
-			assertThat(user_id, is(new_user_id));
-		}
-	}
-
-	@Test
-	public void isPortOccupied() {
-		String agent_ip = "10.71.4.51";
-		int agent_port = 34567;
-		String bodyString = new HttpClient().addData("agent_ip", agent_ip).addData("agent_port", agent_port)
-				.post(getActionUrl("isPortOccupied")).getBodyString();
 		ActionResult ar = JsonUtil.toObject(bodyString, ActionResult.class);
-		System.out.println(bodyString);
 		assertThat(ar.isSuccess(), is(true));
-		assertThat(ar.getData(), is(false));
+
+		// 2.编辑，数据都不为空且为有效数据
+		bodyString = new HttpClient()
+				.addData("agent_id", -30L)
+				.addData("agent_name", "DB文件agent")
+				.addData("agent_type", AgentType.DBWenJian.getCode())
+				.addData("agent_ip", "10.71.4.51")
+				.addData("agent_port", "3456")
+				.addData("agent_status", AgentStatus.YiLianJie.getCode())
+				.addData("source_id", -30L)
+				.post(getActionUrl("saveAgent")).getBodyString();
+		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		assertThat(ar.isSuccess(), is(true));
 	}
 
+	/**
+	 * 根据agent_id,agent_type查询agent_info信息
+	 * <p>
+	 * 参数：agent_id long
+	 * 含义：agent_info表主键
+	 * 取值范围：不为空且不为空格
+	 * 参数：agent_type String
+	 * 含义：agent类型
+	 * 取值范围：1:数据库Agent,2:文件系统Agent,3:FtpAgent,4:数据文件Agent,5:对象Agent
+	 * <p>
+	 * 1.查询agent_info表数据，agent_id,agent_type都不为空，正常删除
+	 * 2.查询agent_info表数据，agent_id为空,agent_type不为空
+	 * 3.查询agent_info表数据，agent_id不为空,agent_type为空
+	 * 4.查询agent_info表数据，agent_id为空格,agent_type不为空格
+	 * 5.查询agent_info表数据，agent_id不为空格,agent_type为空格
+	 * 6.查询agent_info表数据，agent_id不合法,agent_type合法
+	 * 7.查询agent_info表数据，agent_id合法,agent_type不合法
+	 */
 	@Test
 	public void searchAgent() {
-		Long agent_id = -299L;
-		String agent_type = AgentType.ShuJuKu.getCode();
-		String bodyString = new HttpClient().addData("agent_id", agent_id).addData("agent_type", agent_type)
+		// 1.查询agent_info表数据，agent_id,agent_type都不为空，正常删除
+		String bodyString = new HttpClient().addData("agent_id", -29L)
+				.addData("agent_type", AgentType.ShuJuKu.getCode())
 				.post(getActionUrl("searchAgent")).getBodyString();
 		ActionResult ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(true));
+
+		// 2.查询agent_info表数据，agent_id为空,agent_type不为空
+		bodyString = new HttpClient().addData("agent_id", "")
+				.addData("agent_type", AgentType.ShuJuKu.getCode())
+				.post(getActionUrl("searchAgent")).getBodyString();
+		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		assertThat(ar.isSuccess(), is(false));
+
+		// 3.查询agent_info表数据，agent_id不为空,agent_type为空
+		bodyString = new HttpClient().addData("agent_id", -29L)
+				.addData("agent_type", "")
+				.post(getActionUrl("searchAgent")).getBodyString();
+		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		assertThat(ar.isSuccess(), is(false));
+
+		// 4.查询agent_info表数据，agent_id为空格,agent_type不为空格
+		bodyString = new HttpClient().addData("agent_id", " ")
+				.addData("agent_type", AgentType.ShuJuKu.getCode())
+				.post(getActionUrl("searchAgent")).getBodyString();
+		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		assertThat(ar.isSuccess(), is(false));
+
+		// 5.查询agent_info表数据，agent_id不为空格,agent_type为空格
+		bodyString = new HttpClient().addData("agent_id", -28L)
+				.addData("agent_type", " ")
+				.post(getActionUrl("searchAgent")).getBodyString();
+		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		assertThat(ar.isSuccess(), is(false));
+
+		// 6.查询agent_info表数据，agent_id不合法,agent_type合法
+		bodyString = new HttpClient().addData("agent_id", "10000000003")
+				.addData("agent_type", AgentType.ShuJuKu.getCode())
+				.post(getActionUrl("searchAgent")).getBodyString();
+		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		assertThat(ar.isSuccess(), is(false));
+
+		// 7.查询agent_info表数据，agent_id合法,agent_type不合法
+		bodyString = new HttpClient().addData("agent_id", -29L)
+				.addData("agent_type", "6")
+				.post(getActionUrl("searchAgent")).getBodyString();
+		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		assertThat(ar.isSuccess(), is(false));
 	}
 
+	/**
+	 * 根据agent_id,agent_type删除agent_info信息
+	 * <p>
+	 * 参数：agent_id long
+	 * 含义：agent_info表主键
+	 * 取值范围：不为空且不为空格
+	 * 参数：agent_type String
+	 * 含义：agent类型
+	 * 取值范围：1:数据库Agent,2:文件系统Agent,3:FtpAgent,4:数据文件Agent,5:对象Agent
+	 * <p>
+	 * 1.删除agent_info表数据，agent_id,agent_type都不为空，正常删除
+	 * 2.删除agent_info表数据，agent_id为空,agent_type不为空
+	 * 3.删除agent_info表数据，agent_id不为空,agent_type为空
+	 * 4.删除agent_info表数据，agent_id为空格,agent_type不为空格
+	 * 5.删除agent_info表数据，agent_id不为空格,agent_type为空格
+	 * 6.删除agent_info表数据，agent_id不合法,agent_type合法
+	 * 7.删除agent_info表数据，agent_id合法,agent_type不合法
+	 */
 	@Test
 	public void deleteAgent() {
-		Long agent_id = -298L;
-		String agent_type = AgentType.ShuJuKu.getCode();
-		String bodyString = new HttpClient().addData("agent_id", agent_id).addData("agent_type", agent_type)
+		// 1.删除agent_info表数据，agent_id,agent_type都不为空，正常删除
+		String bodyString = new HttpClient().addData("agent_id", -28L)
+				.addData("agent_type", AgentType.ShuJuKu.getCode())
 				.post(getActionUrl("deleteAgent")).getBodyString();
 		ActionResult ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(true));
+
+		//2.删除agent_info表数据，agent_id为空,agent_type不为空
+		bodyString = new HttpClient().addData("agent_id", "")
+				.addData("agent_type", AgentType.ShuJuKu.getCode())
+				.post(getActionUrl("deleteAgent")).getBodyString();
+		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		assertThat(ar.isSuccess(), is(false));
+
+		// 3.删除agent_info表数据，agent_id不为空,agent_type为空
+		bodyString = new HttpClient().addData("agent_id", -28L)
+				.addData("agent_type", "")
+				.post(getActionUrl("deleteAgent")).getBodyString();
+		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		assertThat(ar.isSuccess(), is(false));
+
+		// 4.删除agent_info表数据，agent_id为空格,agent_type不为空格
+		bodyString = new HttpClient().addData("agent_id", " ")
+				.addData("agent_type", AgentType.ShuJuKu.getCode())
+				.post(getActionUrl("deleteAgent")).getBodyString();
+		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		assertThat(ar.isSuccess(), is(false));
+
+		// 5.删除agent_info表数据，agent_id不为空格,agent_type为空格
+		bodyString = new HttpClient().addData("agent_id", -28L)
+				.addData("agent_type", " ")
+				.post(getActionUrl("deleteAgent")).getBodyString();
+		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		assertThat(ar.isSuccess(), is(false));
+
+		// 6.删除agent_info表数据，agent_id不合法(长度超过10）,agent_type合法
+		bodyString = new HttpClient().addData("agent_id", "10000000004")
+				.addData("agent_type", AgentType.ShuJuKu.getCode())
+				.post(getActionUrl("deleteAgent")).getBodyString();
+		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		assertThat(ar.isSuccess(), is(false));
+
+		// 7.删除agent_info表数据，agent_id合法,agent_type不合法
+		bodyString = new HttpClient().addData("agent_id", -28L)
+				.addData("agent_type", "6")
+				.post(getActionUrl("deleteAgent")).getBodyString();
+		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		assertThat(ar.isSuccess(), is(false));
 	}
 }
