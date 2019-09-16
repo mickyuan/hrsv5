@@ -19,6 +19,14 @@ import java.util.List;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
+/**
+ * <p>类名: DataQueryWebAction</p>
+ * <p>类说明: Web服务查询数据界面后台处理测试类</p>
+ *
+ * @author BY-HLL
+ * @date 2019/9/3 0003 下午 03:26
+ * @since JDK1.8
+ */
 public class DataQueryWebActionTest extends WebBaseTestCase {
     private static final int Init_Rows = 10; // 向表中初始化的数据条数。
     private static final long USER_ID = 2001L; //使用用户
@@ -392,7 +400,23 @@ public class DataQueryWebActionTest extends WebBaseTestCase {
                 .addData("queryKeyword", "-1000")
                 .post(getActionUrl("downloadFile")).getBodyString();
         ar = JsonUtil.toObject(bodyString, ActionResult.class);
-        assertThat(ar.isSuccess(), is(true));
+        assertThat(ar.isSuccess(), is(false));
+        //3.文件id为空
+        bodyString = new HttpClient()
+                .addData("fileId", "")
+                .addData("fileName", "-1000")
+                .addData("queryKeyword", "-1000")
+                .post(getActionUrl("downloadFile")).getBodyString();
+        ar = JsonUtil.toObject(bodyString, ActionResult.class);
+        assertThat(ar.isSuccess(), is(false));
+        //4.文件id为空格
+        bodyString = new HttpClient()
+                .addData("fileId", " ")
+                .addData("fileName", "-1000")
+                .addData("queryKeyword", "-1000")
+                .post(getActionUrl("downloadFile")).getBodyString();
+        ar = JsonUtil.toObject(bodyString, ActionResult.class);
+        assertThat(ar.isSuccess(), is(false));
     }
 
     /**
@@ -410,14 +434,27 @@ public class DataQueryWebActionTest extends WebBaseTestCase {
                 .post(getActionUrl("modifySortCount")).getBodyString();
         ar = JsonUtil.toObject(bodyString, ActionResult.class);
         assertThat(ar.isSuccess(), is(true));
-        //1.文件id不存在
+        //2.文件id不存在
         bodyString = new HttpClient()
                 .addData("fileId", "-1000")
                 .addData("queryKeyword", "init-500")
                 .post(getActionUrl("modifySortCount")).getBodyString();
         ar = JsonUtil.toObject(bodyString, ActionResult.class);
         assertThat(ar.isSuccess(), is(true));
-
+        //3.文件id为空
+        bodyString = new HttpClient()
+                .addData("fileId", "")
+                .addData("queryKeyword", "init-500")
+                .post(getActionUrl("modifySortCount")).getBodyString();
+        ar = JsonUtil.toObject(bodyString, ActionResult.class);
+        assertThat(ar.isSuccess(), is(true));
+        //2.文件id为空格
+        bodyString = new HttpClient()
+                .addData("fileId", " ")
+                .addData("queryKeyword", "init-500")
+                .post(getActionUrl("modifySortCount")).getBodyString();
+        ar = JsonUtil.toObject(bodyString, ActionResult.class);
+        assertThat(ar.isSuccess(), is(true));
     }
 
     /**
@@ -433,16 +470,44 @@ public class DataQueryWebActionTest extends WebBaseTestCase {
     }
 
     /**
-     * <p>方法名: 根据</p>
-     * <p>方法说明: </p>
+     * <p>方法名: saveCollectFileInfo</p>
+     * <p>方法说明: 文件收藏或者取消收藏处理方法测试类</p>
+     * 1.收藏文件id存在,文件存在
+     * 2.收藏文件id存在,文件不存在
+     * 3.收藏文件id不存在,文件存在
      *
      */
     @Test
     public void saveCollectFileInfo() {
+        //1.收藏文件id存在,文件存在
         bodyString = new HttpClient()
-                .addData("fileId", "-500")
-                .addData("fileName", "init-500")
                 .addData("favId", -500L)
+                .addData("original_name", "init-500")
+                .addData("fileId", "-500")
+                .post(getActionUrl("saveCollectFileInfo")).getBodyString();
+        ar = JsonUtil.toObject(bodyString, ActionResult.class);
+        assertThat(ar.isSuccess(), is(true));
+        //2.收藏文件id存在,文件不存在
+        bodyString = new HttpClient()
+                .addData("favId", -500L)
+                .addData("original_name", "init-500")
+                .addData("fileId", "-1000")
+                .post(getActionUrl("saveCollectFileInfo")).getBodyString();
+        ar = JsonUtil.toObject(bodyString, ActionResult.class);
+        assertThat(ar.isSuccess(), is(true));
+        //3.收藏文件id不存在,文件存在
+        bodyString = new HttpClient()
+                .addData("favId", -1000L)
+                .addData("original_name", "init-500")
+                .addData("fileId", "-500")
+                .post(getActionUrl("saveCollectFileInfo")).getBodyString();
+        ar = JsonUtil.toObject(bodyString, ActionResult.class);
+        assertThat(ar.isSuccess(), is(true));
+        //4.收藏文件id不存在,文件不存在
+        bodyString = new HttpClient()
+                .addData("favId", -1000L)
+                .addData("original_name", "init-500")
+                .addData("fileId", "-1000")
                 .post(getActionUrl("saveCollectFileInfo")).getBodyString();
         ar = JsonUtil.toObject(bodyString, ActionResult.class);
         assertThat(ar.isSuccess(), is(true));

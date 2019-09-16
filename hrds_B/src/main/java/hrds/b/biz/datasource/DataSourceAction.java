@@ -50,7 +50,7 @@ public class DataSourceAction extends BaseAction {
 	 *                   取值范围：与数据字段定义规则相同
 	 * @param depIds     String
 	 *                   含义：source_relation_dep表主键ID
-	 *                   取值范围：前台传值可能会有1或多个值， 通过分隔符拼接成的字符串
+	 *                   取值范围：可能是一个部门ID字符串， 也可能是通过分隔符拼接成的部门ID的字符串
 	 */
 	public void saveDataSource(@RequestBean Data_source dataSource, String depIds) {
 		// 1.字段做合法性检查
@@ -126,11 +126,11 @@ public class DataSourceAction extends BaseAction {
 	 * 4.循环保存source_relation_dep表信息
 	 *
 	 * @param source_id long
-	 *                  含义：数据源与部门关系表外键ID
+	 *                  含义：source_relation_dep表外键ID
 	 *                  取值范围，不能为空以及不能为空格
 	 * @param depIds    String
-	 *                  含义：数据源与部门关系表source_relation_dep主键ID
-	 *                  取值范围：前台传值可能会有1或多个值，通过分隔符拼接成的字符串，不能为空已经不能为空格
+	 *                  含义：source_relation_dep表主键ID
+	 *                  取值范围：可能是一个部门ID字符串， 也可能是通过分隔符拼接成的部门ID的字符串
 	 */
 	private void saveSourceRelationDep(long source_id, String depIds) {
 		// 1.创建source_relation_dep对象,并初始化值
@@ -146,7 +146,7 @@ public class DataSourceAction extends BaseAction {
 			// 4.循环保存source_relation_dep表信息
 			if (srd.add(Dbo.db()) != 1) {
 				throw new BusinessException("新增保存数据源与部门关系Source_relation_dep表信息失败，" +
-						"dep_id=" + dep_id + ",source_id=" + source_id);
+						"dep_id=" + dep_id);
 			}
 		}
 	}
@@ -159,7 +159,7 @@ public class DataSourceAction extends BaseAction {
 	 *
 	 * @param source_id long
 	 *                  含义：data_source表主键，source_relation_dep表外键
-	 *                  取值范围：不能为空或空格，长度不能超过10位
+	 *                  取值范围：不能为空或空格
 	 * @return 返回关联查询data_source表与source_relation_dep表信息结果
 	 */
 	public List<Map<String, Object>> searchDataSource(Long source_id) {
@@ -178,8 +178,8 @@ public class DataSourceAction extends BaseAction {
 	 * 4.删除source_relation_dep信息
 	 *
 	 * @param source_id long
-	 *                  含义：数据源ID,data_source表主键，agent_info表外键
-	 *                  取值范围：不可为空以及不可为空格，长度不能超过十位
+	 *                  含义：data_source表主键，agent_info表外键
+	 *                  取值范围：不可为空以及不可为空格
 	 */
 	public void deleteDataSource(long source_id) {
 
@@ -195,7 +195,8 @@ public class DataSourceAction extends BaseAction {
 		if (num != 1) {
 			// 3.判断库里是否没有这条数据
 			if (num == 0) {
-				throw new BusinessException("删除数据源信息表data_source失败，数据库里没有此条数据，source_id=" + source_id);
+				throw new BusinessException("删除数据源信息表data_source失败，数据库里没有此条数据，" +
+						"source_id=" + source_id);
 			}
 			throw new BusinessException("删除数据源信息表data_source失败，source_id=" + source_id);
 		}

@@ -241,20 +241,21 @@ public class DataQueryWebAction extends BaseAction {
      * @param fileId   String
      *                 含义: 文件id
      *                 取值范围: String类型值
-     * @param fileName String
+     * @param originalName String
      *                 含义: 文件名称
      *                 取值范围: String类型值
      * @param favId    long
      *                 含义: 收藏文件的id
      *                 取值范围: long类型值
      */
-    public void saveCollectFileInfo(String fileId, String fileName, String favId) {
+    public void saveCollectFileInfo(String fileId, String originalName, String favId) {
         User_fav userFav = new User_fav();
-        userFav.setUser_id(getUserId());
         if (StringUtil.isBlank(favId)) {
             // 收藏文件
-            userFav.setOriginal_name(fileName);
             userFav.setFav_id(PrimayKeyGener.getNextId());
+            userFav.setOriginal_name(originalName);
+            userFav.setFile_id(fileId);
+            userFav.setUser_id(getUserId());
             userFav.setFav_flag(IsFlag.Shi.toString());
             if (userFav.update(Dbo.db()) != 1) {
                 throw new BusinessException("收藏失败！fileId=" + userFav.getFile_id());
