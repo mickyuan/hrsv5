@@ -4,7 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
-import hrds.commons.apiannotation.ApiBean;
+import fd.ng.core.docannotation.DocBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -35,17 +35,17 @@ public class Component_param extends TableEntity
 		__tmpPKS.add("param_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@ApiBean(name ="param_id",value="主键参数id",dataType = Long.class,required = true)
+	@DocBean(name ="param_id",value="主键参数id",dataType = Long.class,required = true)
 	private Long param_id; //主键参数id
-	@ApiBean(name ="param_name",value="参数名称",dataType = String.class,required = true)
+	@DocBean(name ="param_name",value="参数名称",dataType = String.class,required = true)
 	private String param_name; //参数名称
-	@ApiBean(name ="param_value",value="参数value",dataType = String.class,required = true)
+	@DocBean(name ="param_value",value="参数value",dataType = String.class,required = true)
 	private String param_value; //参数value
-	@ApiBean(name ="is_must",value="是否必要",dataType = String.class,required = true)
+	@DocBean(name ="is_must",value="是否必要",dataType = String.class,required = true)
 	private String is_must; //是否必要
-	@ApiBean(name ="param_remark",value="备注",dataType = String.class,required = true)
+	@DocBean(name ="param_remark",value="备注",dataType = String.class,required = true)
 	private String param_remark; //备注
-	@ApiBean(name ="comp_id",value="组件编号",dataType = String.class,required = false)
+	@DocBean(name ="comp_id",value="组件编号",dataType = String.class,required = false)
 	private String comp_id; //组件编号
 
 	/** 取得：主键参数id */

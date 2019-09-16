@@ -4,7 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
-import hrds.commons.apiannotation.ApiBean;
+import fd.ng.core.docannotation.DocBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -35,17 +35,17 @@ public class Component_menu extends TableEntity
 		__tmpPKS.add("menu_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@ApiBean(name ="menu_id",value="主键菜单id",dataType = Long.class,required = true)
+	@DocBean(name ="menu_id",value="主键菜单id",dataType = Long.class,required = true)
 	private Long menu_id; //主键菜单id
-	@ApiBean(name ="menu_path",value="菜单path",dataType = String.class,required = true)
+	@DocBean(name ="menu_path",value="菜单path",dataType = String.class,required = true)
 	private String menu_path; //菜单path
-	@ApiBean(name ="user_type",value="用户类型",dataType = String.class,required = true)
+	@DocBean(name ="user_type",value="用户类型",dataType = String.class,required = true)
 	private String user_type; //用户类型
-	@ApiBean(name ="menu_name",value="菜单名称",dataType = String.class,required = true)
+	@DocBean(name ="menu_name",value="菜单名称",dataType = String.class,required = true)
 	private String menu_name; //菜单名称
-	@ApiBean(name ="comp_id",value="组件编号",dataType = String.class,required = true)
+	@DocBean(name ="comp_id",value="组件编号",dataType = String.class,required = true)
 	private String comp_id; //组件编号
-	@ApiBean(name ="menu_remark",value="备注",dataType = String.class,required = false)
+	@DocBean(name ="menu_remark",value="备注",dataType = String.class,required = false)
 	private String menu_remark; //备注
 
 	/** 取得：主键菜单id */

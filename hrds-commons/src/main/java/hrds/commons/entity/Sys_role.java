@@ -4,7 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
-import hrds.commons.apiannotation.ApiBean;
+import fd.ng.core.docannotation.DocBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -35,11 +35,11 @@ public class Sys_role extends TableEntity
 		__tmpPKS.add("role_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@ApiBean(name ="role_remark",value="备注",dataType = String.class,required = false)
+	@DocBean(name ="role_remark",value="备注",dataType = String.class,required = false)
 	private String role_remark; //备注
-	@ApiBean(name ="role_id",value="角色ID",dataType = Long.class,required = true)
+	@DocBean(name ="role_id",value="角色ID",dataType = Long.class,required = true)
 	private Long role_id; //角色ID
-	@ApiBean(name ="role_name",value="角色名称",dataType = String.class,required = true)
+	@DocBean(name ="role_name",value="角色名称",dataType = String.class,required = true)
 	private String role_name; //角色名称
 
 	/** 取得：备注 */

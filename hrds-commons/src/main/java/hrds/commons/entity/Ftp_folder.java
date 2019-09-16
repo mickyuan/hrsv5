@@ -4,7 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
-import hrds.commons.apiannotation.ApiBean;
+import fd.ng.core.docannotation.DocBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -35,19 +35,19 @@ public class Ftp_folder extends TableEntity
 		__tmpPKS.add("ftp_folder_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@ApiBean(name ="ftp_folder_id",value="目录表id",dataType = Long.class,required = true)
+	@DocBean(name ="ftp_folder_id",value="目录表id",dataType = Long.class,required = true)
 	private Long ftp_folder_id; //目录表id
-	@ApiBean(name ="ftp_folder_name",value="ftp目录名称",dataType = String.class,required = true)
+	@DocBean(name ="ftp_folder_name",value="ftp目录名称",dataType = String.class,required = true)
 	private String ftp_folder_name; //ftp目录名称
-	@ApiBean(name ="is_processed",value="是否处理过",dataType = String.class,required = true)
+	@DocBean(name ="is_processed",value="是否处理过",dataType = String.class,required = true)
 	private String is_processed; //是否处理过
-	@ApiBean(name ="ftp_date",value="ftp日期",dataType = String.class,required = true)
+	@DocBean(name ="ftp_date",value="ftp日期",dataType = String.class,required = true)
 	private String ftp_date; //ftp日期
-	@ApiBean(name ="ftp_time",value="ftp时间",dataType = String.class,required = true)
+	@DocBean(name ="ftp_time",value="ftp时间",dataType = String.class,required = true)
 	private String ftp_time; //ftp时间
-	@ApiBean(name ="remark",value="备注",dataType = String.class,required = false)
+	@DocBean(name ="remark",value="备注",dataType = String.class,required = false)
 	private String remark; //备注
-	@ApiBean(name ="ftp_id",value="ftp采集id",dataType = Long.class,required = true)
+	@DocBean(name ="ftp_id",value="ftp采集id",dataType = Long.class,required = true)
 	private Long ftp_id; //ftp采集id
 
 	/** 取得：目录表id */

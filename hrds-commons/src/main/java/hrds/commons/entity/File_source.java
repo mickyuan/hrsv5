@@ -4,7 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
-import hrds.commons.apiannotation.ApiBean;
+import fd.ng.core.docannotation.DocBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -35,29 +35,29 @@ public class File_source extends TableEntity
 		__tmpPKS.add("file_source_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@ApiBean(name ="file_source_id",value="文件源ID",dataType = Long.class,required = true)
+	@DocBean(name ="file_source_id",value="文件源ID",dataType = Long.class,required = true)
 	private Long file_source_id; //文件源ID
-	@ApiBean(name ="file_source_path",value="文件源路径",dataType = String.class,required = true)
+	@DocBean(name ="file_source_path",value="文件源路径",dataType = String.class,required = true)
 	private String file_source_path; //文件源路径
-	@ApiBean(name ="is_pdf",value="PDF文件",dataType = String.class,required = true)
+	@DocBean(name ="is_pdf",value="PDF文件",dataType = String.class,required = true)
 	private String is_pdf; //PDF文件
-	@ApiBean(name ="is_office",value="office文件",dataType = String.class,required = true)
+	@DocBean(name ="is_office",value="office文件",dataType = String.class,required = true)
 	private String is_office; //office文件
-	@ApiBean(name ="is_text",value="文本文件",dataType = String.class,required = true)
+	@DocBean(name ="is_text",value="文本文件",dataType = String.class,required = true)
 	private String is_text; //文本文件
-	@ApiBean(name ="is_video",value="视频文件",dataType = String.class,required = true)
+	@DocBean(name ="is_video",value="视频文件",dataType = String.class,required = true)
 	private String is_video; //视频文件
-	@ApiBean(name ="is_audio",value="音频文件",dataType = String.class,required = true)
+	@DocBean(name ="is_audio",value="音频文件",dataType = String.class,required = true)
 	private String is_audio; //音频文件
-	@ApiBean(name ="is_image",value="图片文件",dataType = String.class,required = true)
+	@DocBean(name ="is_image",value="图片文件",dataType = String.class,required = true)
 	private String is_image; //图片文件
-	@ApiBean(name ="is_other",value="其他",dataType = String.class,required = true)
+	@DocBean(name ="is_other",value="其他",dataType = String.class,required = true)
 	private String is_other; //其他
-	@ApiBean(name ="file_remark",value="备注",dataType = String.class,required = false)
+	@DocBean(name ="file_remark",value="备注",dataType = String.class,required = false)
 	private String file_remark; //备注
-	@ApiBean(name ="fcs_id",value="文件系统采集ID",dataType = Long.class,required = true)
+	@DocBean(name ="fcs_id",value="文件系统采集ID",dataType = Long.class,required = true)
 	private Long fcs_id; //文件系统采集ID
-	@ApiBean(name ="agent_id",value="Agent_id",dataType = Long.class,required = true)
+	@DocBean(name ="agent_id",value="Agent_id",dataType = Long.class,required = true)
 	private Long agent_id; //Agent_id
 
 	/** 取得：文件源ID */

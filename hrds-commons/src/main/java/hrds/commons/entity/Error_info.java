@@ -4,7 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
-import hrds.commons.apiannotation.ApiBean;
+import fd.ng.core.docannotation.DocBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -35,11 +35,11 @@ public class Error_info extends TableEntity
 		__tmpPKS.add("error_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@ApiBean(name ="job_rs_id",value="作业执行结果ID",dataType = String.class,required = false)
+	@DocBean(name ="job_rs_id",value="作业执行结果ID",dataType = String.class,required = false)
 	private String job_rs_id; //作业执行结果ID
-	@ApiBean(name ="error_id",value="错误ID",dataType = Long.class,required = true)
+	@DocBean(name ="error_id",value="错误ID",dataType = Long.class,required = true)
 	private Long error_id; //错误ID
-	@ApiBean(name ="error_msg",value="error_msg",dataType = String.class,required = false)
+	@DocBean(name ="error_msg",value="error_msg",dataType = String.class,required = false)
 	private String error_msg; //error_msg
 
 	/** 取得：作业执行结果ID */

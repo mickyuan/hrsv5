@@ -4,7 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
-import hrds.commons.apiannotation.ApiBean;
+import fd.ng.core.docannotation.DocBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -35,15 +35,15 @@ public class Sys_para extends TableEntity
 		__tmpPKS.add("para_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@ApiBean(name ="para_id",value="参数ID",dataType = Long.class,required = true)
+	@DocBean(name ="para_id",value="参数ID",dataType = Long.class,required = true)
 	private Long para_id; //参数ID
-	@ApiBean(name ="para_name",value="para_name",dataType = String.class,required = false)
+	@DocBean(name ="para_name",value="para_name",dataType = String.class,required = false)
 	private String para_name; //para_name
-	@ApiBean(name ="para_value",value="para_value",dataType = String.class,required = false)
+	@DocBean(name ="para_value",value="para_value",dataType = String.class,required = false)
 	private String para_value; //para_value
-	@ApiBean(name ="para_type",value="para_type",dataType = String.class,required = false)
+	@DocBean(name ="para_type",value="para_type",dataType = String.class,required = false)
 	private String para_type; //para_type
-	@ApiBean(name ="remark",value="备注",dataType = String.class,required = false)
+	@DocBean(name ="remark",value="备注",dataType = String.class,required = false)
 	private String remark; //备注
 
 	/** 取得：参数ID */

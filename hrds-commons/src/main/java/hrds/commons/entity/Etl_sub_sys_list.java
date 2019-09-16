@@ -4,7 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
-import hrds.commons.apiannotation.ApiBean;
+import fd.ng.core.docannotation.DocBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -36,13 +36,13 @@ public class Etl_sub_sys_list extends TableEntity
 		__tmpPKS.add("etl_sys_cd");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@ApiBean(name ="sub_sys_cd",value="子系统代码",dataType = String.class,required = true)
+	@DocBean(name ="sub_sys_cd",value="子系统代码",dataType = String.class,required = true)
 	private String sub_sys_cd; //子系统代码
-	@ApiBean(name ="sub_sys_desc",value="子系统描述",dataType = String.class,required = false)
+	@DocBean(name ="sub_sys_desc",value="子系统描述",dataType = String.class,required = false)
 	private String sub_sys_desc; //子系统描述
-	@ApiBean(name ="comments",value="备注信息",dataType = String.class,required = false)
+	@DocBean(name ="comments",value="备注信息",dataType = String.class,required = false)
 	private String comments; //备注信息
-	@ApiBean(name ="etl_sys_cd",value="工程代码",dataType = String.class,required = true)
+	@DocBean(name ="etl_sys_cd",value="工程代码",dataType = String.class,required = true)
 	private String etl_sys_cd; //工程代码
 
 	/** 取得：子系统代码 */

@@ -33,12 +33,17 @@ public class DataQueryWebAction extends BaseAction {
      * <p>方法说明: 获取部门的包含文件采集任务的数据源信息</p>
      * 1.根据部门id获取该部门下所有包含文件采集任务的数据源信息的list
      *
-     * @param depId: 部门id
-     * @return 返回数据源的map
+     * @param depId Long
+     *              含义：部门id
+     *              取值范围: long类型值
+     * @return List<Map < String, Object>>
+     * 含义: 数据源查询结果的list集合
+     * 取值范围: 不为NULL
      */
     public List<Map<String, Object>> getFileDataSource(long depId) {
         //1.根据部门id获取该部门下所有包含文件采集任务的数据源信息的list
-        return Dbo.queryList(" select ds.source_id,ds.datasource_name" +
+        return Dbo.queryList(
+                " select ds.source_id,ds.datasource_name" +
                         " from " + Source_relation_dep.TableName + " srd" +
                         " join " + Data_source.TableName + " ds on srd.source_id = ds.source_id" +
                         " join " + Agent_info.TableName + " ai on ds.source_id = ai.source_id" +
@@ -54,13 +59,16 @@ public class DataQueryWebAction extends BaseAction {
      * <p>方法说明: 根据数据源id获取数据源下所有文件采集任务</p>
      * 1.根据数据源id获取该数据源下所有文件采集任务的list
      *
-     * @param sourceId:数据源id
-     * @return 返回文件采集任务的map
-     * @author BY-HLL
+     * @param sourceId 含义: 数据源id
+     *                 取值范围: long类型值
+     * @return List<Map < String, Object>>
+     * 含义: 返回文件采集任务的map
+     * 取值范围: 不为NULL
      */
     public List<Map<String, Object>> getFileCollectionTask(long sourceId) {
         //1.根据数据源id获取该数据源下所有文件采集任务的list
-        return Dbo.queryList(" select * from " + File_collect_set.TableName + " fc" +
+        return Dbo.queryList(
+                " select * from " + File_collect_set.TableName + " fc" +
                         " join " + Agent_info.TableName + " ai on fc.agent_id = ai.agent_id" +
                         " where ai.source_id = ?" +
                         " AND ai.agent_type = '" + AgentType.WenJianXiTong.getCode() + "'",
@@ -75,13 +83,16 @@ public class DataQueryWebAction extends BaseAction {
      * 2.检查申请的操作是否是下载
      * 2-1.类型是下载，检查是否具有下载权限
      *
-     * @param fileId:文件id
-     * @return 文件是否具有下载权限
-     * @author BY-HLL
+     * @param fileId 含义: 文件id
+     *               取值范围: long类型值
+     * @return boolean
+     * 含义: 文件是否具有下载权限
+     * 取值范围: true 或者 false
      */
     private boolean downloadFileCheck(String fileId) {
         //1.根据登录用户id和文件id获取文件检查后的结果集
-        Result authResult = Dbo.queryResult("select * from " + Data_auth.TableName + " da" +
+        Result authResult = Dbo.queryResult(
+                "select * from " + Data_auth.TableName + " da" +
                         " join " + Source_file_attribute.TableName + " sfa" +
                         " ON sfa.file_id = da.file_id WHERE da.user_id = '" + getUserId() + "'" +
                         " AND sfa.file_id = ?" +
@@ -89,10 +100,11 @@ public class DataQueryWebAction extends BaseAction {
                 fileId
         );
         if (authResult.isEmpty()) {
-            throw new BusinessException(String.format("查询文件权限出错!"));
+            throw new BusinessException("查询文件权限出错! fileId=" + fileId);
         } else {
             //2.检查申请的操作是否是下载
-            if (ApplyType.XiaZai.getCode().equals(authResult.getString(0, "apply_type"))) {
+            String authResultApplyType = authResult.getString(0, "apply_type");
+            if (ApplyType.XiaZai.getCode().equals(authResultApplyType)) {
                 String authType = authResult.getString(0, "auth_type");
                 //2-1.类型是下载，检查是否具有下载权限
                 if (AuthType.YunXu.getCode().equals(authType) || AuthType.YiCi.getCode().equals(authType)) {
@@ -112,25 +124,28 @@ public class DataQueryWebAction extends BaseAction {
      * 4.创建输出流，返回结果
      * 5.下载文件完成后修改文件下载计数信息
      *
-     * @param fileId:文件id
-     * @param fileName:     文件名
-     * @param queryKeyword: 文件关键字
-     * @return 文件byte
-     * @author BY-HLL
+     * @param fileId       含义:文件id
+     *                     取值范围: long类型值
+     * @param fileName     含义: 文件名
+     *                     取值范围: String类型值
+     * @param queryKeyword 含义:文件查询关键字
+     *                     取值范围: String类型的字符串
+     * @return response
+     * 含义: 读取到的文件byte
+     * 取值范围: HttpServletResponse
      */
     public HttpServletResponse downloadFile(String fileId, String fileName, String queryKeyword) {
         //1.根据文件id检查文件是否有下载权限
         if (!downloadFileCheck(fileId)) {
-            throw new BusinessException(String.format("文件没有下载权限! name=%s", fileName));
+            throw new BusinessException("文件没有下载权限! fileName=" + fileName);
         }
         HttpServletResponse response = null;
-        OutputStream out = null;
         try {
             //2.通过文件id获取文件的 byte
             /* byte[] bye = Hyren_explorer.fileBytesFromAvro(fileId);*/
-            byte[] bye = null;
+            byte[] bye = "abc".getBytes();
             if (bye == null) {
-                throw new BusinessException(String.format("文件已不存在! name=%s", fileName));
+                throw new BusinessException("文件已不存在! fileName=" + fileName);
             }
             //3.拼接返回结果的 response
             response.reset();
@@ -138,13 +153,14 @@ public class DataQueryWebAction extends BaseAction {
                     URLEncoder.encode(fileName, "UTF-8"));
             response.setContentType("APPLICATION/OCTET-STREAM");
             //4.创建输出流，返回结果
-            out = response.getOutputStream();
+
+            OutputStream out = response.getOutputStream();
             out.write(bye);
             out.flush();
             //5.下载文件完成后修改文件下载计数信息
             modifySortCount(fileId, queryKeyword);
         } catch (IOException e) {
-            throw new AppSystemException(String.format("文件下载失败! name=%s", fileName));
+            throw new AppSystemException("文件下载失败! fileName=" + fileName);
         }
         return response;
     }
@@ -155,14 +171,15 @@ public class DataQueryWebAction extends BaseAction {
      * 1.通过文件id获取文件计数信息
      * 2.获取不到文件计数信息则添加一条计数信息,获取到则修改文件计数信息
      *
-     * @param fileId:文件id
-     * @param queryKeyword:文件关键字
-     * @author BY-HLL
+     * @param fileId       含义:文件id
+     *                     取值范围: long类型值
+     * @param queryKeyword 含义:查询关键字
+     *                     取值范围: String类型值
      */
     public void modifySortCount(String fileId, String queryKeyword) {
         //1.通过文件id获取文件计数信息
-        Result si = Dbo.queryResult("select *" +
-                        " from " + Search_info.TableName + " where file_id = ? and word_name = ?",
+        Result si = Dbo.queryResult(
+                "select * from " + Search_info.TableName + " where file_id = ? and word_name = ?",
                 fileId, queryKeyword
         );
         Search_info searchInfo = new Search_info();
@@ -186,19 +203,20 @@ public class DataQueryWebAction extends BaseAction {
 
     /**
      * <p>方法名: getCollectFile</p>
-     * <p>方法说明: 根据登录用户获取用户收藏的文件列表</p>
-     * 1.获取当前用户已经收藏的文件列表
+     * <p>方法说明: 根据登录用户获取用户收藏的文件列表,返回结果显示最近9条收藏</p>
+     * 1.获取当前登录的用户已经收藏的文件列表
      * 2.添加文件后缀名到返回的结果中
      *
-     * @return 登录用户收藏文件列表的map
-     * @author BY-HLL
+     * @return Result
+     * 含义: 用户收藏文件的结果集
+     * 取值含义：登录用户收藏文件列表的
      */
     public Result getCollectFile() {
         //1.获取当前用户已经收藏的文件列表
         Result userFavRs = Dbo.queryResult("SELECT * FROM " + User_fav.TableName +
-                        " WHERE user_id = ? AND fav_flag = ?", IsFlag.Shi.getCode() +
-                        " ORDER BY fav_id DESC LIMIT 9"
-                , getUserId()
+                        " WHERE user_id = ? AND fav_flag = '" + IsFlag.Shi.getCode() + "'" +
+                        " ORDER BY fav_id DESC LIMIT 9",
+                getUserId()
         );
         if (!userFavRs.isEmpty()) {
             String fileSufix = null;
@@ -220,27 +238,32 @@ public class DataQueryWebAction extends BaseAction {
      * <p>方法名: saveCollectFileInfo</p>
      * <p>方法说明: 文件收藏或者取消收藏处理方法</p>
      *
-     * @param fileId:文件id
-     * @param fileName:文件名称
-     * @param favId:收藏ID
-     * @author BY-HLL
+     * @param fileId   String
+     *                 含义: 文件id
+     *                 取值范围: String类型值
+     * @param fileName String
+     *                 含义: 文件名称
+     *                 取值范围: String类型值
+     * @param favId    long
+     *                 含义: 收藏文件的id
+     *                 取值范围: long类型值
      */
     public void saveCollectFileInfo(String fileId, String fileName, String favId) {
-        User_fav fav = new User_fav();
-        fav.setUser_id(getUserId());
-        fav.setOriginal_name(fileName);
+        User_fav userFav = new User_fav();
+        userFav.setUser_id(getUserId());
         if (StringUtil.isBlank(favId)) {
             // 收藏文件
-            fav.setFav_id(PrimayKeyGener.getNextId());
-            fav.setFav_flag(IsFlag.Shi.toString());
-            if (fav.update(Dbo.db()) != 1) {
-                throw new BusinessException("收藏失败！fileId=" + fav.getFile_id());
+            userFav.setOriginal_name(fileName);
+            userFav.setFav_id(PrimayKeyGener.getNextId());
+            userFav.setFav_flag(IsFlag.Shi.toString());
+            if (userFav.update(Dbo.db()) != 1) {
+                throw new BusinessException("收藏失败！fileId=" + userFav.getFile_id());
             }
         } else {
             // 取消收藏
-            fav.setFav_id(favId);
-            if (fav.delete(Dbo.db()) != 1) {
-                throw new BusinessException("取消收藏失败！fileId=" + fav.getFile_id());
+            userFav.setFav_id(favId);
+            if (userFav.delete(Dbo.db()) != 1) {
+                throw new BusinessException("取消收藏失败！fileId=" + userFav.getFile_id());
             }
         }
     }
@@ -251,16 +274,19 @@ public class DataQueryWebAction extends BaseAction {
      * 1.根据登录用户的id获取用户文件采集统计的结果
      * 2.根据统计类型设置返回的map结果集
      *
-     * @return classificationSumMap: 返回的结果集map
+     * @return classificationSumMap
+     * 含义 返回的结果集map
+     * 取值范围: 不为NULL
      * @author BY-HLL
      */
     public Map<String, Integer> fileClassifySum() {
         //1.根据登录用户的id获取用户文件采集统计的结果
         List<Map<String, Object>> fcsList = Dbo.queryList("select count(1) sum_num,file_type" +
-                        " from source_file_attribute sfa join agent_info ai on" +
-                        " sfa.agent_id = ai.agent_id where sfa.collect_type = ? AND ai.user_id =?" +
-                        " GROUP BY file_type ORDER BY file_type"
-                , CollectType.WenJianCaiJi.getCode(), getUserId()
+                        " from source_file_attribute sfa join agent_info ai" +
+                        " on sfa.agent_id = ai.agent_id" +
+                        " where sfa.collect_type = '" + CollectType.WenJianCaiJi.getCode() + "'" +
+                        " AND ai.user_id = ? GROUP BY file_type ORDER BY file_type",
+                getUserId()
         );
         //2.根据统计类型设置返回的map结果集
         Map<String, Integer> classificationSumMap = new HashMap<>();

@@ -4,7 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
-import hrds.commons.apiannotation.ApiBean;
+import fd.ng.core.docannotation.DocBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -37,25 +37,25 @@ public class Etl_job_hand extends TableEntity
 		__tmpPKS.add("etl_sys_cd");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@ApiBean(name ="event_id",value="干预发生时间",dataType = String.class,required = true)
+	@DocBean(name ="event_id",value="干预发生时间",dataType = String.class,required = true)
 	private String event_id; //干预发生时间
-	@ApiBean(name ="etl_hand_type",value="干预类型",dataType = String.class,required = false)
+	@DocBean(name ="etl_hand_type",value="干预类型",dataType = String.class,required = false)
 	private String etl_hand_type; //干预类型
-	@ApiBean(name ="pro_para",value="干预参数",dataType = String.class,required = false)
+	@DocBean(name ="pro_para",value="干预参数",dataType = String.class,required = false)
 	private String pro_para; //干预参数
-	@ApiBean(name ="hand_status",value="干预状态",dataType = String.class,required = false)
+	@DocBean(name ="hand_status",value="干预状态",dataType = String.class,required = false)
 	private String hand_status; //干预状态
-	@ApiBean(name ="st_time",value="开始时间",dataType = String.class,required = false)
+	@DocBean(name ="st_time",value="开始时间",dataType = String.class,required = false)
 	private String st_time; //开始时间
-	@ApiBean(name ="end_time",value="结束时间",dataType = String.class,required = false)
+	@DocBean(name ="end_time",value="结束时间",dataType = String.class,required = false)
 	private String end_time; //结束时间
-	@ApiBean(name ="warning",value="错误信息",dataType = String.class,required = false)
+	@DocBean(name ="warning",value="错误信息",dataType = String.class,required = false)
 	private String warning; //错误信息
-	@ApiBean(name ="main_serv_sync",value="同步标志位",dataType = String.class,required = false)
+	@DocBean(name ="main_serv_sync",value="同步标志位",dataType = String.class,required = false)
 	private String main_serv_sync; //同步标志位
-	@ApiBean(name ="etl_job",value="作业名",dataType = String.class,required = true)
+	@DocBean(name ="etl_job",value="作业名",dataType = String.class,required = true)
 	private String etl_job; //作业名
-	@ApiBean(name ="etl_sys_cd",value="工程代码",dataType = String.class,required = true)
+	@DocBean(name ="etl_sys_cd",value="工程代码",dataType = String.class,required = true)
 	private String etl_sys_cd; //工程代码
 
 	/** 取得：干预发生时间 */

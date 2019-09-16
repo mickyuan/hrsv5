@@ -4,7 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
-import hrds.commons.apiannotation.ApiBean;
+import fd.ng.core.docannotation.DocBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -35,31 +35,31 @@ public class Sys_exeinfo extends TableEntity
 		__tmpPKS.add("exe_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@ApiBean(name ="exe_id",value="执行id",dataType = Long.class,required = true)
+	@DocBean(name ="exe_id",value="执行id",dataType = Long.class,required = true)
 	private Long exe_id; //执行id
-	@ApiBean(name ="job_tablename",value="作业表名",dataType = String.class,required = false)
+	@DocBean(name ="job_tablename",value="作业表名",dataType = String.class,required = false)
 	private String job_tablename; //作业表名
-	@ApiBean(name ="etl_date",value="执行日期",dataType = String.class,required = true)
+	@DocBean(name ="etl_date",value="执行日期",dataType = String.class,required = true)
 	private String etl_date; //执行日期
-	@ApiBean(name ="execute_state",value="运行状态",dataType = String.class,required = true)
+	@DocBean(name ="execute_state",value="运行状态",dataType = String.class,required = true)
 	private String execute_state; //运行状态
-	@ApiBean(name ="job_name",value="作业名称名称",dataType = String.class,required = true)
+	@DocBean(name ="job_name",value="作业名称名称",dataType = String.class,required = true)
 	private String job_name; //作业名称名称
-	@ApiBean(name ="exe_parameter",value="参数",dataType = String.class,required = true)
+	@DocBean(name ="exe_parameter",value="参数",dataType = String.class,required = true)
 	private String exe_parameter; //参数
-	@ApiBean(name ="err_info",value="错误信息",dataType = String.class,required = true)
+	@DocBean(name ="err_info",value="错误信息",dataType = String.class,required = true)
 	private String err_info; //错误信息
-	@ApiBean(name ="st_date",value="开始日期",dataType = String.class,required = true)
+	@DocBean(name ="st_date",value="开始日期",dataType = String.class,required = true)
 	private String st_date; //开始日期
-	@ApiBean(name ="ed_date",value="结束日期",dataType = String.class,required = true)
+	@DocBean(name ="ed_date",value="结束日期",dataType = String.class,required = true)
 	private String ed_date; //结束日期
-	@ApiBean(name ="is_valid",value="作业是否有效",dataType = String.class,required = true)
+	@DocBean(name ="is_valid",value="作业是否有效",dataType = String.class,required = true)
 	private String is_valid; //作业是否有效
-	@ApiBean(name ="source_id",value="数据源ID",dataType = Long.class,required = true)
+	@DocBean(name ="source_id",value="数据源ID",dataType = Long.class,required = true)
 	private Long source_id; //数据源ID
-	@ApiBean(name ="agent_id",value="Agent_id",dataType = Long.class,required = true)
+	@DocBean(name ="agent_id",value="Agent_id",dataType = Long.class,required = true)
 	private Long agent_id; //Agent_id
-	@ApiBean(name ="database_id",value="数据库设置id",dataType = Long.class,required = true)
+	@DocBean(name ="database_id",value="数据库设置id",dataType = Long.class,required = true)
 	private Long database_id; //数据库设置id
 
 	/** 取得：执行id */

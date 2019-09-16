@@ -4,7 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
-import hrds.commons.apiannotation.ApiBean;
+import fd.ng.core.docannotation.DocBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -35,31 +35,31 @@ public class Column_split extends TableEntity
 		__tmpPKS.add("col_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@ApiBean(name ="col_id",value="字段编号",dataType = Long.class,required = true)
+	@DocBean(name ="col_id",value="字段编号",dataType = Long.class,required = true)
 	private Long col_id; //字段编号
-	@ApiBean(name ="col_name",value="字段名称",dataType = String.class,required = true)
+	@DocBean(name ="col_name",value="字段名称",dataType = String.class,required = true)
 	private String col_name; //字段名称
-	@ApiBean(name ="col_offset",value="字段偏移量",dataType = String.class,required = false)
+	@DocBean(name ="col_offset",value="字段偏移量",dataType = String.class,required = false)
 	private String col_offset; //字段偏移量
-	@ApiBean(name ="col_zhname",value="中文名称",dataType = String.class,required = false)
+	@DocBean(name ="col_zhname",value="中文名称",dataType = String.class,required = false)
 	private String col_zhname; //中文名称
-	@ApiBean(name ="col_type",value="字段类型",dataType = String.class,required = true)
+	@DocBean(name ="col_type",value="字段类型",dataType = String.class,required = true)
 	private String col_type; //字段类型
-	@ApiBean(name ="remark",value="备注",dataType = String.class,required = false)
+	@DocBean(name ="remark",value="备注",dataType = String.class,required = false)
 	private String remark; //备注
-	@ApiBean(name ="c_id",value="清洗参数编号",dataType = Long.class,required = true)
+	@DocBean(name ="c_id",value="清洗参数编号",dataType = Long.class,required = true)
 	private Long c_id; //清洗参数编号
-	@ApiBean(name ="column_id",value="字段ID",dataType = Long.class,required = true)
+	@DocBean(name ="column_id",value="字段ID",dataType = Long.class,required = true)
 	private Long column_id; //字段ID
-	@ApiBean(name ="valid_s_date",value="有效开始日期",dataType = String.class,required = true)
+	@DocBean(name ="valid_s_date",value="有效开始日期",dataType = String.class,required = true)
 	private String valid_s_date; //有效开始日期
-	@ApiBean(name ="valid_e_date",value="有效结束日期",dataType = String.class,required = true)
+	@DocBean(name ="valid_e_date",value="有效结束日期",dataType = String.class,required = true)
 	private String valid_e_date; //有效结束日期
-	@ApiBean(name ="seq",value="拆分对应序号",dataType = Long.class,required = false)
+	@DocBean(name ="seq",value="拆分对应序号",dataType = Long.class,required = false)
 	private Long seq; //拆分对应序号
-	@ApiBean(name ="split_sep",value="拆分分隔符",dataType = String.class,required = false)
+	@DocBean(name ="split_sep",value="拆分分隔符",dataType = String.class,required = false)
 	private String split_sep; //拆分分隔符
-	@ApiBean(name ="split_type",value="拆分方式",dataType = String.class,required = true)
+	@DocBean(name ="split_type",value="拆分方式",dataType = String.class,required = true)
 	private String split_type; //拆分方式
 
 	/** 取得：字段编号 */

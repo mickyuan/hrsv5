@@ -4,7 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
-import hrds.commons.apiannotation.ApiBean;
+import fd.ng.core.docannotation.DocBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -35,61 +35,61 @@ public class Database_set extends TableEntity
 		__tmpPKS.add("database_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@ApiBean(name ="agent_id",value="Agent_id",dataType = Long.class,required = false)
+	@DocBean(name ="agent_id",value="Agent_id",dataType = Long.class,required = false)
 	private Long agent_id; //Agent_id
-	@ApiBean(name ="database_id",value="数据库设置id",dataType = Long.class,required = true)
+	@DocBean(name ="database_id",value="数据库设置id",dataType = Long.class,required = true)
 	private Long database_id; //数据库设置id
-	@ApiBean(name ="task_name",value="数据库采集任务名称",dataType = String.class,required = false)
+	@DocBean(name ="task_name",value="数据库采集任务名称",dataType = String.class,required = false)
 	private String task_name; //数据库采集任务名称
-	@ApiBean(name ="database_name",value="数据库名称",dataType = String.class,required = false)
+	@DocBean(name ="database_name",value="数据库名称",dataType = String.class,required = false)
 	private String database_name; //数据库名称
-	@ApiBean(name ="database_pad",value="数据库密码",dataType = String.class,required = false)
+	@DocBean(name ="database_pad",value="数据库密码",dataType = String.class,required = false)
 	private String database_pad; //数据库密码
-	@ApiBean(name ="database_drive",value="数据库驱动",dataType = String.class,required = false)
+	@DocBean(name ="database_drive",value="数据库驱动",dataType = String.class,required = false)
 	private String database_drive; //数据库驱动
-	@ApiBean(name ="database_type",value="数据库类型",dataType = String.class,required = true)
+	@DocBean(name ="database_type",value="数据库类型",dataType = String.class,required = true)
 	private String database_type; //数据库类型
-	@ApiBean(name ="user_name",value="用户名称",dataType = String.class,required = false)
+	@DocBean(name ="user_name",value="用户名称",dataType = String.class,required = false)
 	private String user_name; //用户名称
-	@ApiBean(name ="database_ip",value="数据库服务器IP",dataType = String.class,required = false)
+	@DocBean(name ="database_ip",value="数据库服务器IP",dataType = String.class,required = false)
 	private String database_ip; //数据库服务器IP
-	@ApiBean(name ="database_port",value="数据库端口",dataType = String.class,required = false)
+	@DocBean(name ="database_port",value="数据库端口",dataType = String.class,required = false)
 	private String database_port; //数据库端口
-	@ApiBean(name ="host_name",value="主机名",dataType = String.class,required = false)
+	@DocBean(name ="host_name",value="主机名",dataType = String.class,required = false)
 	private String host_name; //主机名
-	@ApiBean(name ="system_type",value="操作系统类型",dataType = String.class,required = false)
+	@DocBean(name ="system_type",value="操作系统类型",dataType = String.class,required = false)
 	private String system_type; //操作系统类型
-	@ApiBean(name ="is_sendok",value="是否设置完成并发送成功",dataType = String.class,required = true)
+	@DocBean(name ="is_sendok",value="是否设置完成并发送成功",dataType = String.class,required = true)
 	private String is_sendok; //是否设置完成并发送成功
-	@ApiBean(name ="database_number",value="数据库设置编号",dataType = String.class,required = true)
+	@DocBean(name ="database_number",value="数据库设置编号",dataType = String.class,required = true)
 	private String database_number; //数据库设置编号
-	@ApiBean(name ="db_agent",value="是否为平面DB数据采集",dataType = String.class,required = true)
+	@DocBean(name ="db_agent",value="是否为平面DB数据采集",dataType = String.class,required = true)
 	private String db_agent; //是否为平面DB数据采集
-	@ApiBean(name ="plane_url",value="DB文件源数据路径",dataType = String.class,required = false)
+	@DocBean(name ="plane_url",value="DB文件源数据路径",dataType = String.class,required = false)
 	private String plane_url; //DB文件源数据路径
-	@ApiBean(name ="database_separatorr",value="数据采用分隔符",dataType = String.class,required = false)
+	@DocBean(name ="database_separatorr",value="数据采用分隔符",dataType = String.class,required = false)
 	private String database_separatorr; //数据采用分隔符
-	@ApiBean(name ="database_code",value="数据使用编码格式",dataType = String.class,required = false)
+	@DocBean(name ="database_code",value="数据使用编码格式",dataType = String.class,required = false)
 	private String database_code; //数据使用编码格式
-	@ApiBean(name ="dbfile_format",value="DB文件格式",dataType = String.class,required = false)
+	@DocBean(name ="dbfile_format",value="DB文件格式",dataType = String.class,required = false)
 	private String dbfile_format; //DB文件格式
-	@ApiBean(name ="is_hidden",value="分隔符是否为ASCII隐藏字符",dataType = String.class,required = true)
+	@DocBean(name ="is_hidden",value="分隔符是否为ASCII隐藏字符",dataType = String.class,required = true)
 	private String is_hidden; //分隔符是否为ASCII隐藏字符
-	@ApiBean(name ="file_suffix",value="采集文件名后缀",dataType = String.class,required = false)
+	@DocBean(name ="file_suffix",value="采集文件名后缀",dataType = String.class,required = false)
 	private String file_suffix; //采集文件名后缀
-	@ApiBean(name ="is_load",value="是否直接加载数据",dataType = String.class,required = true)
+	@DocBean(name ="is_load",value="是否直接加载数据",dataType = String.class,required = true)
 	private String is_load; //是否直接加载数据
-	@ApiBean(name ="row_separator",value="数据行分隔符",dataType = String.class,required = false)
+	@DocBean(name ="row_separator",value="数据行分隔符",dataType = String.class,required = false)
 	private String row_separator; //数据行分隔符
-	@ApiBean(name ="classify_id",value="分类id",dataType = Long.class,required = true)
+	@DocBean(name ="classify_id",value="分类id",dataType = Long.class,required = true)
 	private Long classify_id; //分类id
-	@ApiBean(name ="data_extract_type",value="数据抽取方式",dataType = String.class,required = true)
+	@DocBean(name ="data_extract_type",value="数据抽取方式",dataType = String.class,required = true)
 	private String data_extract_type; //数据抽取方式
-	@ApiBean(name ="is_header",value="是否有表头",dataType = String.class,required = true)
+	@DocBean(name ="is_header",value="是否有表头",dataType = String.class,required = true)
 	private String is_header; //是否有表头
-	@ApiBean(name ="cp_or",value="清洗顺序",dataType = String.class,required = false)
+	@DocBean(name ="cp_or",value="清洗顺序",dataType = String.class,required = false)
 	private String cp_or; //清洗顺序
-	@ApiBean(name ="jdbc_url",value="数据库连接地址",dataType = String.class,required = false)
+	@DocBean(name ="jdbc_url",value="数据库连接地址",dataType = String.class,required = false)
 	private String jdbc_url; //数据库连接地址
 
 	/** 取得：Agent_id */

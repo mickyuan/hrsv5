@@ -4,7 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
-import hrds.commons.apiannotation.ApiBean;
+import fd.ng.core.docannotation.DocBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -35,21 +35,21 @@ public class Object_collect_task extends TableEntity
 		__tmpPKS.add("ocs_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@ApiBean(name ="ocs_id",value="对象采集任务编号",dataType = Long.class,required = true)
+	@DocBean(name ="ocs_id",value="对象采集任务编号",dataType = Long.class,required = true)
 	private Long ocs_id; //对象采集任务编号
-	@ApiBean(name ="en_name",value="英文名称",dataType = String.class,required = true)
+	@DocBean(name ="en_name",value="英文名称",dataType = String.class,required = true)
 	private String en_name; //英文名称
-	@ApiBean(name ="zh_name",value="中文名称",dataType = String.class,required = true)
+	@DocBean(name ="zh_name",value="中文名称",dataType = String.class,required = true)
 	private String zh_name; //中文名称
-	@ApiBean(name ="remark",value="备注",dataType = String.class,required = false)
+	@DocBean(name ="remark",value="备注",dataType = String.class,required = false)
 	private String remark; //备注
-	@ApiBean(name ="collect_data_type",value="数据类型",dataType = String.class,required = true)
+	@DocBean(name ="collect_data_type",value="数据类型",dataType = String.class,required = true)
 	private String collect_data_type; //数据类型
-	@ApiBean(name ="odc_id",value="对象采集id",dataType = Long.class,required = true)
+	@DocBean(name ="odc_id",value="对象采集id",dataType = Long.class,required = true)
 	private Long odc_id; //对象采集id
-	@ApiBean(name ="database_code",value="采集编码",dataType = String.class,required = true)
+	@DocBean(name ="database_code",value="采集编码",dataType = String.class,required = true)
 	private String database_code; //采集编码
-	@ApiBean(name ="agent_id",value="Agent_id",dataType = Long.class,required = true)
+	@DocBean(name ="agent_id",value="Agent_id",dataType = Long.class,required = true)
 	private Long agent_id; //Agent_id
 
 	/** 取得：对象采集任务编号 */

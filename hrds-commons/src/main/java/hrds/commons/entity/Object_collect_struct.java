@@ -4,7 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
-import hrds.commons.apiannotation.ApiBean;
+import fd.ng.core.docannotation.DocBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -35,17 +35,17 @@ public class Object_collect_struct extends TableEntity
 		__tmpPKS.add("struct_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@ApiBean(name ="struct_id",value="结构信息id",dataType = Long.class,required = true)
+	@DocBean(name ="struct_id",value="结构信息id",dataType = Long.class,required = true)
 	private Long struct_id; //结构信息id
-	@ApiBean(name ="coll_name",value="采集结构名称",dataType = String.class,required = true)
+	@DocBean(name ="coll_name",value="采集结构名称",dataType = String.class,required = true)
 	private String coll_name; //采集结构名称
-	@ApiBean(name ="remark",value="备注",dataType = String.class,required = false)
+	@DocBean(name ="remark",value="备注",dataType = String.class,required = false)
 	private String remark; //备注
-	@ApiBean(name ="ocs_id",value="对象采集任务编号",dataType = Long.class,required = true)
+	@DocBean(name ="ocs_id",value="对象采集任务编号",dataType = Long.class,required = true)
 	private Long ocs_id; //对象采集任务编号
-	@ApiBean(name ="struct_type",value="对象数据类型",dataType = String.class,required = true)
+	@DocBean(name ="struct_type",value="对象数据类型",dataType = String.class,required = true)
 	private String struct_type; //对象数据类型
-	@ApiBean(name ="data_desc",value="中文描述信息",dataType = String.class,required = false)
+	@DocBean(name ="data_desc",value="中文描述信息",dataType = String.class,required = false)
 	private String data_desc; //中文描述信息
 
 	/** 取得：结构信息id */

@@ -4,7 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
-import hrds.commons.apiannotation.ApiBean;
+import fd.ng.core.docannotation.DocBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -36,15 +36,15 @@ public class Etl_resource extends TableEntity
 		__tmpPKS.add("etl_sys_cd");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@ApiBean(name ="resource_type",value="资源使用类型",dataType = String.class,required = true)
+	@DocBean(name ="resource_type",value="资源使用类型",dataType = String.class,required = true)
 	private String resource_type; //资源使用类型
-	@ApiBean(name ="resource_max",value="资源阀值",dataType = Integer.class,required = false)
+	@DocBean(name ="resource_max",value="资源阀值",dataType = Integer.class,required = false)
 	private Integer resource_max; //资源阀值
-	@ApiBean(name ="resource_used",value="已使用数",dataType = Integer.class,required = false)
+	@DocBean(name ="resource_used",value="已使用数",dataType = Integer.class,required = false)
 	private Integer resource_used; //已使用数
-	@ApiBean(name ="main_serv_sync",value="主服务器同步标志",dataType = String.class,required = true)
+	@DocBean(name ="main_serv_sync",value="主服务器同步标志",dataType = String.class,required = true)
 	private String main_serv_sync; //主服务器同步标志
-	@ApiBean(name ="etl_sys_cd",value="工程代码",dataType = String.class,required = true)
+	@DocBean(name ="etl_sys_cd",value="工程代码",dataType = String.class,required = true)
 	private String etl_sys_cd; //工程代码
 
 	/** 取得：资源使用类型 */

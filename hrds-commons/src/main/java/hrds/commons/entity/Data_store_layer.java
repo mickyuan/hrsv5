@@ -4,7 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
-import hrds.commons.apiannotation.ApiBean;
+import fd.ng.core.docannotation.DocBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -35,13 +35,13 @@ public class Data_store_layer extends TableEntity
 		__tmpPKS.add("datasc_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@ApiBean(name ="datasc_id",value="存储配置主键信息",dataType = Long.class,required = true)
+	@DocBean(name ="datasc_id",value="存储配置主键信息",dataType = Long.class,required = true)
 	private Long datasc_id; //存储配置主键信息
-	@ApiBean(name ="storage_target",value="存储类型",dataType = String.class,required = true)
+	@DocBean(name ="storage_target",value="存储类型",dataType = String.class,required = true)
 	private String storage_target; //存储类型
-	@ApiBean(name ="storage_property",value="存储属性信息",dataType = String.class,required = true)
+	@DocBean(name ="storage_property",value="存储属性信息",dataType = String.class,required = true)
 	private String storage_property; //存储属性信息
-	@ApiBean(name ="dsl_remark",value="备注",dataType = String.class,required = false)
+	@DocBean(name ="dsl_remark",value="备注",dataType = String.class,required = false)
 	private String dsl_remark; //备注
 
 	/** 取得：存储配置主键信息 */

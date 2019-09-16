@@ -4,7 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
-import hrds.commons.apiannotation.ApiBean;
+import fd.ng.core.docannotation.DocBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -35,25 +35,25 @@ public class Agent_info extends TableEntity
 		__tmpPKS.add("agent_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@ApiBean(name ="source_id",value="数据源ID",dataType = Long.class,required = true)
+	@DocBean(name ="source_id",value="数据源ID",dataType = Long.class,required = true)
 	private Long source_id; //数据源ID
-	@ApiBean(name ="agent_id",value="Agent_id",dataType = Long.class,required = true)
+	@DocBean(name ="agent_id",value="Agent_id",dataType = Long.class,required = true)
 	private Long agent_id; //Agent_id
-	@ApiBean(name ="agent_name",value="Agent名称",dataType = String.class,required = true)
+	@DocBean(name ="agent_name",value="Agent名称",dataType = String.class,required = true)
 	private String agent_name; //Agent名称
-	@ApiBean(name ="agent_ip",value="Agent所在服务器IP",dataType = String.class,required = true)
+	@DocBean(name ="agent_ip",value="Agent所在服务器IP",dataType = String.class,required = true)
 	private String agent_ip; //Agent所在服务器IP
-	@ApiBean(name ="agent_port",value="agent服务器端口",dataType = String.class,required = false)
+	@DocBean(name ="agent_port",value="agent服务器端口",dataType = String.class,required = false)
 	private String agent_port; //agent服务器端口
-	@ApiBean(name ="agent_status",value="agent状态",dataType = String.class,required = true)
+	@DocBean(name ="agent_status",value="agent状态",dataType = String.class,required = true)
 	private String agent_status; //agent状态
-	@ApiBean(name ="agent_type",value="agent类别",dataType = String.class,required = true)
+	@DocBean(name ="agent_type",value="agent类别",dataType = String.class,required = true)
 	private String agent_type; //agent类别
-	@ApiBean(name ="create_date",value="创建日期",dataType = String.class,required = true)
+	@DocBean(name ="create_date",value="创建日期",dataType = String.class,required = true)
 	private String create_date; //创建日期
-	@ApiBean(name ="create_time",value="创建时间",dataType = String.class,required = true)
+	@DocBean(name ="create_time",value="创建时间",dataType = String.class,required = true)
 	private String create_time; //创建时间
-	@ApiBean(name ="user_id",value="用户ID",dataType = Long.class,required = false)
+	@DocBean(name ="user_id",value="用户ID",dataType = Long.class,required = false)
 	private Long user_id; //用户ID
 
 	/** 取得：数据源ID */

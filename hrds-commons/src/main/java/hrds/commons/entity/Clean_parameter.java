@@ -4,7 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
-import hrds.commons.apiannotation.ApiBean;
+import fd.ng.core.docannotation.DocBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -35,21 +35,21 @@ public class Clean_parameter extends TableEntity
 		__tmpPKS.add("c_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@ApiBean(name ="c_id",value="清洗参数编号",dataType = Long.class,required = true)
+	@DocBean(name ="c_id",value="清洗参数编号",dataType = Long.class,required = true)
 	private Long c_id; //清洗参数编号
-	@ApiBean(name ="clean_type",value="清洗方式",dataType = String.class,required = true)
+	@DocBean(name ="clean_type",value="清洗方式",dataType = String.class,required = true)
 	private String clean_type; //清洗方式
-	@ApiBean(name ="character_filling",value="补齐字符",dataType = String.class,required = false)
+	@DocBean(name ="character_filling",value="补齐字符",dataType = String.class,required = false)
 	private String character_filling; //补齐字符
-	@ApiBean(name ="filling_length",value="补齐长度",dataType = Long.class,required = false)
+	@DocBean(name ="filling_length",value="补齐长度",dataType = Long.class,required = false)
 	private Long filling_length; //补齐长度
-	@ApiBean(name ="field",value="原字段",dataType = String.class,required = false)
+	@DocBean(name ="field",value="原字段",dataType = String.class,required = false)
 	private String field; //原字段
-	@ApiBean(name ="replace_feild",value="替换字段",dataType = String.class,required = false)
+	@DocBean(name ="replace_feild",value="替换字段",dataType = String.class,required = false)
 	private String replace_feild; //替换字段
-	@ApiBean(name ="filling_type",value="补齐方式",dataType = String.class,required = false)
+	@DocBean(name ="filling_type",value="补齐方式",dataType = String.class,required = false)
 	private String filling_type; //补齐方式
-	@ApiBean(name ="database_id",value="数据库设置id",dataType = Long.class,required = true)
+	@DocBean(name ="database_id",value="数据库设置id",dataType = Long.class,required = true)
 	private Long database_id; //数据库设置id
 
 	/** 取得：清洗参数编号 */
