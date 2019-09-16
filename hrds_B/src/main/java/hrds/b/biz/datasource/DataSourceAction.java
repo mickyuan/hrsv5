@@ -7,7 +7,6 @@ import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.annotation.RequestBean;
-import fd.ng.web.annotation.RequestParam;
 import fd.ng.web.annotation.UploadFile;
 import fd.ng.web.util.Dbo;
 import fd.ng.web.util.FileUploadUtil;
@@ -211,6 +210,7 @@ public class DataSourceAction extends BaseAction {
 
 	/**
 	 * 上传文件(数据源下载文件提供的文件中涉及到的所有表的数据导入数据库中对应的表中）
+	 *
 	 * <p>
 	 * 1.通过文件名称获取文件
 	 * 2.获取文件名
@@ -243,8 +243,8 @@ public class DataSourceAction extends BaseAction {
 			File uploadedFile = FileUploadUtil.getUploadedFile(file);
 			// 2.获取文件名
 			String fileName = FileUploadUtil.getOriginalFileName(file);
-				/*注意：不同的浏览器提交的文件名是不一样的，有些浏览器提交上来的文件名是带有路径的，
-				如： c:\a\b\1.txt，而有些只是单纯的文件名，如：1.txt*/
+			/*注意：不同的浏览器提交的文件名是不一样的，有些浏览器提交上来的文件名是带有路径的，
+			如： c:\a\b\1.txt，而有些只是单纯的文件名，如：1.txt*/
 			// 3.处理获取到的上传文件的文件名的路径部分，只保留文件名部分
 			fileName = fileName.substring(fileName.lastIndexOf(File.separator +
 					File.separator) + 1);
@@ -280,19 +280,25 @@ public class DataSourceAction extends BaseAction {
 	 * 1.解析文件获取文件所有信息
 	 * 2.遍历并解析拿到每张表的信息
 	 * 3.将对应表信息插入库（数据源信息还需要判断数据源名称是否重复，重复抛异常，否则正常入库）
-	 * FIXME 为什么是从文件中得到了表的信息？这个文件是什么
 	 *
 	 * @param strTemp         String
 	 *                        含义：涉及数据源文件下载相关的所有表进行base64编码后的信息
-	 * @param agent_port      agent端口
-	 * @param agent_ip        agent地址
-	 * @param user_id         页面传递用户编号
-	 * @param user_collect_id 登录用户id     FIXME 解释这个ID和 user_id 有什么区别，为什么需要
+	 * @param agent_ip        String
+	 *                        含义：agent地址
+	 *                        取值范围：不能为空，服务器ip地址
+	 * @param agent_port      String
+	 *                        含义：agent端口
+	 *                        取值范围：1024-65535
+	 * @param user_id         long
+	 *                        含义：数据采集用户ID
+	 *                        取值范围：不为空以及空格，长度不超过10位
+	 * @param user_collect_id long
+	 *                        含义：创建用户id
+	 *                        取值范围：不为空以及不为空格，长度不超过10位
 	 */
-	private void importDclData(String strTemp, String agent_ip, String agent_port, Long
-			user_id, Long user_collect_id) {
+	private void importDclData(String strTemp, String agent_ip, String agent_port, long
+			user_id, long user_collect_id) {
 		// 1.获取文件所有信息
-		//FIXME 徐超确认：fastJson在转换对象的时候，不需要使用诸如 TypeReference 一类的明确类型吗？
 		Type type = new TypeReference<Map<String, Object>>() {
 		}.getType();
 		Map<String, Object> map = JsonUtil.toObject(strTemp, type);
@@ -598,7 +604,9 @@ public class DataSourceAction extends BaseAction {
 	 *
 	 * <p>
 	 * 1.创建封装数据库查询数据的map集合
-	 * 2.将从数据库中查询到的所有表数据封装入map
+	 * 2.获取data_source表信息集合，将data_source表信息封装入map
+	 * 3.获取agent_info表信息集合，将agent_info表信息封装入map
+	 * 4.获取Agent_down_info表信息集合，将agent_down_info表信息封装入map
 	 * 3.通过base64将map转string进行编码
 	 * 4.通过流的方式写文件
 	 *
@@ -610,36 +618,32 @@ public class DataSourceAction extends BaseAction {
 	public void downloadFile(long source_id) {
 		try {
 			// 1.创建封装数据库查询数据的map集合
-			Map<String, Object> collection_object = new HashMap<String, Object>();
-			// 2.将从数据库中查询到的所有表数据封装入map
-			// 获取data_source表信息
+			Map<String, Object> collection_map = new HashMap<String, Object>();
+			// 2.获取data_source表信息集合，将data_source表信息封装入map
 			List<Data_source> dataSourceList = getData_sources(source_id);
-			// 将data_source表信息封装入map
-			collection_object.put("data_source", dataSourceList);
-			//Agent信息表agent_info
+			collection_map.put("data_source", dataSourceList);
+
+			// 3.获取agent_info表信息集合，将agent_info表信息封装入map
 			List<Agent_info> agentInfoList = Dbo.queryList(Agent_info.class, "select * from " +
 					"agent_info  where source_id = ?", source_id);
-			// 将Agent信息表agent_info封装入map
-			collection_object.put("agent_info", agentInfoList);
-			//获取Agent下载信息Agent_down_info表信息集合
+			collection_map.put("agent_info", agentInfoList);
+
+			// 4.获取Agent_down_info表信息集合，将agent_down_info表信息封装入map
 			List<Optional<Agent_down_info>> agentDownInfoList = getAgentDownInfoList(agentInfoList);
-			collection_object.put("agent_down_info", agentDownInfoList);
-			//采集任务分类表collect_job_classify
-			Result classifyResult = new Result();
-			for (int i = 0; i < agentInfoList.size(); i++) {
-				Result result = Dbo.queryResult("select * from collect_job_classify where agent_id = ?",
-						agentInfoList.get(i).getAgent_id());
-				classifyResult.add(result);
-			}
-			collection_object.put("collect_job_classify", classifyResult);
-			//ftp采集设置ftp_collect
+			collection_map.put("agent_down_info", agentDownInfoList);
+
+			// 5.采集任务分类表collect_job_classify
+			List<List<Collect_job_classify>> cjcList = getCollectJobClassifyList(agentInfoList);
+			collection_map.put("collect_job_classify", cjcList);
+
+			//6.ftp采集设置ftp_collect
 			Result ftp_collectResult = new Result();
 			for (int i = 0; i < agentInfoList.size(); i++) {
 				Result result = Dbo.queryResult("select * from ftp_collect where agent_id = ?",
 						agentInfoList.get(i).getAgent_id());
 				ftp_collectResult.add(result);
 			}
-			collection_object.put("ftp_collect", ftp_collectResult);
+			collection_map.put("ftp_collect", ftp_collectResult);
 			//ftp已传输表ftp_transfered
 			Result ftp_transferedResult = new Result();
 			for (int i = 0; i < ftp_collectResult.getRowCount(); i++) {
@@ -647,7 +651,7 @@ public class DataSourceAction extends BaseAction {
 						ftp_collectResult.getLong(i, "ftp_id"));
 				ftp_transferedResult.add(result);
 			}
-			collection_object.put("ftp_transfered", ftp_transferedResult);
+			collection_map.put("ftp_transfered", ftp_transferedResult);
 			//ftp目录表ftp_folder
 			Result ftp_folderResult = new Result();
 			for (int i = 0; i < ftp_collectResult.getRowCount(); i++) {
@@ -655,7 +659,7 @@ public class DataSourceAction extends BaseAction {
 						ftp_collectResult.getLong(i, "ftp_id"));
 				ftp_folderResult.add(result);
 			}
-			collection_object.put("ftp_folder", ftp_folderResult);
+			collection_map.put("ftp_folder", ftp_folderResult);
 			//对象采集设置object_collect
 			Result object_collectResult = new Result();
 			for (int i = 0; i < agentInfoList.size(); i++) {
@@ -663,7 +667,7 @@ public class DataSourceAction extends BaseAction {
 						agentInfoList.get(i).getAgent_id());
 				object_collectResult.add(result);
 			}
-			collection_object.put("object_collect", object_collectResult);
+			collection_map.put("object_collect", object_collectResult);
 			//对象采集对应信息object_collect_task
 			Result object_collect_taskResult = new Result();
 			for (int i = 0; i < object_collectResult.getRowCount(); i++) {
@@ -671,7 +675,7 @@ public class DataSourceAction extends BaseAction {
 						object_collectResult.getLong(i, "odc_id"));
 				object_collect_taskResult.add(result);
 			}
-			collection_object.put("object_collect_task", object_collect_taskResult);
+			collection_map.put("object_collect_task", object_collect_taskResult);
 			//对象采集存储设置object_storage
 			Result object_storageResult = new Result();
 			for (int i = 0; i < object_collect_taskResult.getRowCount(); i++) {
@@ -679,7 +683,7 @@ public class DataSourceAction extends BaseAction {
 						object_collect_taskResult.getString(i, "ocs_id"));
 				object_storageResult.add(result);
 			}
-			collection_object.put("object_storage", object_storageResult);
+			collection_map.put("object_storage", object_storageResult);
 			//对象采集结构信息object_collect_struct
 			Result object_collect_structResult = new Result();
 			for (int i = 0; i < object_collect_taskResult.getRowCount(); i++) {
@@ -687,7 +691,7 @@ public class DataSourceAction extends BaseAction {
 						object_collect_taskResult.getLong(i, "ocs_id"));
 				object_collect_structResult.add(result);
 			}
-			collection_object.put("object_collect_struct", object_collect_structResult);
+			collection_map.put("object_collect_struct", object_collect_structResult);
 			//数据库设置database_set
 			Result database_setResult = new Result();
 			for (int i = 0; i < agentInfoList.size(); i++) {
@@ -695,7 +699,7 @@ public class DataSourceAction extends BaseAction {
 						agentInfoList.get(i).getAgent_id());
 				database_setResult.add(result);
 			}
-			collection_object.put("database_set", database_setResult);
+			collection_map.put("database_set", database_setResult);
 			//文件系统设置file_collect_set
 			Result file_collect_setResult = new Result();
 			for (int i = 0; i < agentInfoList.size(); i++) {
@@ -703,7 +707,7 @@ public class DataSourceAction extends BaseAction {
 						agentInfoList.get(i).getAgent_id());
 				file_collect_setResult.add(result);
 			}
-			collection_object.put("file_collect_set", file_collect_setResult);
+			collection_map.put("file_collect_set", file_collect_setResult);
 			//文件源设置file_source
 			Result file_sourceResult = new Result();
 			for (int i = 0; i < file_collect_setResult.getRowCount(); i++) {
@@ -711,7 +715,7 @@ public class DataSourceAction extends BaseAction {
 						file_collect_setResult.getLong(i, "fcs_id"));
 				file_sourceResult.add(result);
 			}
-			collection_object.put("file_source", file_sourceResult);
+			collection_map.put("file_source", file_sourceResult);
 
 			//信号文件入库信息signal_file
 			Result signal_fileResult = new Result();
@@ -720,7 +724,7 @@ public class DataSourceAction extends BaseAction {
 						database_setResult.getLong(i, "database_id"));
 				signal_fileResult.add(result);
 			}
-			collection_object.put("signal_file", signal_fileResult);
+			collection_map.put("signal_file", signal_fileResult);
 
 			//数据库对应的表table_info
 			Result table_infoResult = new Result();
@@ -729,7 +733,7 @@ public class DataSourceAction extends BaseAction {
 						database_setResult.getLong(i, "database_id"));
 				table_infoResult.add(result);
 			}
-			collection_object.put("table_info", table_infoResult);
+			collection_map.put("table_info", table_infoResult);
 
 			//列合并信息表column_merge
 			Result column_mergeResult = new Result();
@@ -738,7 +742,7 @@ public class DataSourceAction extends BaseAction {
 						table_infoResult.getLong(i, "table_id"));
 				column_mergeResult.add(result);
 			}
-			collection_object.put("column_merge", column_mergeResult);
+			collection_map.put("column_merge", column_mergeResult);
 
 			//表存储信息table_storage_info
 			Result table_storage_infoResult = new Result();
@@ -747,7 +751,7 @@ public class DataSourceAction extends BaseAction {
 						table_infoResult.getLong(i, "table_id"));
 				table_storage_infoResult.add(result);
 			}
-			collection_object.put("table_storage_info", table_storage_infoResult);
+			collection_map.put("table_storage_info", table_storage_infoResult);
 
 			//表清洗参数信息table_clean
 			Result table_cleanResult = new Result();
@@ -756,7 +760,7 @@ public class DataSourceAction extends BaseAction {
 						table_infoResult.getLong(i, "table_id"));
 				table_cleanResult.add(result);
 			}
-			collection_object.put("table_clean", table_cleanResult);
+			collection_map.put("table_clean", table_cleanResult);
 
 			//表对应的字段table_column
 			Result table_columnResult = new Result();
@@ -765,7 +769,7 @@ public class DataSourceAction extends BaseAction {
 						table_infoResult.getLong(i, "table_id"));
 				table_columnResult.add(result);
 			}
-			collection_object.put("table_column", table_columnResult);
+			collection_map.put("table_column", table_columnResult);
 
 			//列清洗参数信息 column_clean
 			Result column_cleanResult = new Result();
@@ -774,7 +778,7 @@ public class DataSourceAction extends BaseAction {
 						table_columnResult.getLong(i, "column_id"));
 				column_cleanResult.add(result);
 			}
-			collection_object.put("column_clean", column_cleanResult);
+			collection_map.put("column_clean", column_cleanResult);
 
 			//列拆分信息表column_split
 			Result column_splitResult = new Result();
@@ -783,10 +787,10 @@ public class DataSourceAction extends BaseAction {
 						table_columnResult.getLong(i, "column_id"));
 				column_splitResult.add(result);
 			}
-			collection_object.put("column_split", column_splitResult);
+			collection_map.put("column_split", column_splitResult);
 
 			// 2.使用base64编码
-			byte[] bytes = Base64.getEncoder().encode(JsonUtil.toJson(collection_object).getBytes(CodecUtil.UTF8_CHARSET));
+			byte[] bytes = Base64.getEncoder().encode(JsonUtil.toJson(collection_map).getBytes(CodecUtil.UTF8_CHARSET));
 			// 判断文件是否存在
 			if (bytes == null) {
 				throw new BusinessException("此文件不存在");
@@ -810,6 +814,34 @@ public class DataSourceAction extends BaseAction {
 		} catch (IOException e) {
 			throw new AppSystemException(e);
 		}
+	}
+
+	/**
+	 * 获取agent_down_info表信息
+	 * <p>
+	 * 1.创建封装agent_down_info信息的集合
+	 * 2.遍历agent_info信息，获取agent_id(agent_info主键，agent_down_info外键）
+	 * 3. 根据agent_id查询agent_down_info信息
+	 * 4. 返回agent_down_info集合信息
+	 *
+	 * @param agentInfoList list
+	 *                      含义：agent_info表信息集合
+	 *                      取值范围：不为空
+	 * @return 返回agent_down_info集合信息
+	 */
+	private List<List<Collect_job_classify>> getCollectJobClassifyList(List<Agent_info> agentInfoList) {
+		// 1.创建封装agent_down_info信息的集合
+		List<List<Collect_job_classify>> cjcList = new ArrayList<>();
+		// 2.遍历agent_info信息，获取agent_id(agent_info主键，agent_down_info外键）
+		for (int i = 0; i < agentInfoList.size(); i++) {
+			// 3. 根据agent_id查询agent_down_info信息
+			List<Collect_job_classify> jobClassifyList = Dbo.queryList(Collect_job_classify.class,
+					"select * from  collect_job_classify where  agent_id = ?",
+					agentInfoList.get(i).getAgent_id());
+			cjcList.add(jobClassifyList);
+		}
+		// 4. 返回agent_down_info集合信息
+		return cjcList;
 	}
 
 	/**
