@@ -24,11 +24,11 @@ public class RedisHelper {
 
     private RedisHelper() {
         // TODO 此处应该从配置文件读取
-        this.redisIp = "";
-        this.redisPort = 1;
+        this.redisIp = "127.0.0.1";
+        this.redisPort = 6379;
         this.timeout = 100000;
 
-        this.jedis = new Jedis(redisIp, redisPort, 100000);
+        this.jedis = new Jedis(redisIp, redisPort, timeout);
 
         logger.info("---------- redis构建成功 ----------");
     }

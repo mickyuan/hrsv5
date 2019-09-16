@@ -22,6 +22,8 @@ public class ControlManageServer {
 	private final CMServerThread cmThread = new CMServerThread();
 	private static TaskManager taskManager;
 
+	private static final int SLEEPMILLIS = 500; //每次运行时间间隔（毫秒数）
+
 	/**
 	 * ControlManageServer类构造器
 	 * @author Tiger.Wang
@@ -75,15 +77,20 @@ public class ControlManageServer {
 				//用于将作业定义表中的作业，通过一定的判断及检查，登记到内存表中
 				boolean hasFrequancy = taskManager.loadReadyJob();
 
-				while( run ) {
-					taskManager.publishReadyJob(hasFrequancy);
+				while(run) {
+					//若publishReadyJob方法进行自动日切，则再次加载初始作业
+					if(taskManager.publishReadyJob(hasFrequancy)){
+						hasFrequancy = taskManager.loadReadyJob();
+					}
+
 					try {
-						Thread.sleep(500);
+						Thread.sleep(SLEEPMILLIS);
 					}
 					catch(InterruptedException e) {
 						logger.warn("系统出现异常：{}，但是继续执行", e.getMessage());
 					}
 				}
+
 			}catch(Exception ex) {
 				logger.error("Exception happened!" + ex);
 				logger.error(ex.getStackTrace());

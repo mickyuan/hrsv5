@@ -5,6 +5,7 @@ import fd.ng.db.conf.DbinfosConf;
 import fd.ng.db.conf.Dbtype;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.web.action.AbstractWebappBaseAction;
+import fd.ng.web.annotation.RequestBean;
 import hrds.commons.codes.DatabaseType;
 import hrds.commons.entity.Database_set;
 
@@ -23,7 +24,7 @@ public class TestConnection extends AbstractWebappBaseAction {
 	 *
 	 * @return
 	 */
-	public boolean testConn(Database_set dbSet) {
+	public boolean testConn(@RequestBean Database_set dbSet) {
 		//2、使用dbinfo将需要测试连接的内容填充
 		DbinfosConf.Dbinfo dbinfo = new DbinfosConf.Dbinfo();
 		dbinfo.setName(DbinfosConf.DEFAULT_DBNAME);

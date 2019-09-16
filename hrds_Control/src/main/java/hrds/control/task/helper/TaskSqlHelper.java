@@ -103,7 +103,7 @@ public class TaskSqlHelper {
 
 			int num = SqlOperator.execute(db, "UPDATE etl_sys SET main_serv_sync = ?, curr_bath_date = ? " +
 						"WHERE etl_sys_cd = ?", Main_Server_Sync.YES.getCode(), currBathDate, etlSysCd);
-
+			SqlOperator.commitTransaction(db);
 			return num == 1;
 		}
 	}
@@ -122,7 +122,7 @@ public class TaskSqlHelper {
 
 			int num = SqlOperator.execute(db, "UPDATE etl_sys SET main_serv_sync = ?, sys_run_status = ? " +
 					"WHERE etl_sys_cd = ?", Main_Server_Sync.YES.getCode(), runStatus, etlSysCd);
-
+			SqlOperator.commitTransaction(db);
 			return num == 1;
 		}
 	}
@@ -144,7 +144,7 @@ public class TaskSqlHelper {
 					"WHERE (job_disp_status = ? or job_disp_status = ?) AND etl_sys_cd = ?",
 					runStatus, Main_Server_Sync.YES.getCode(), Job_Status.PENDING.getCode(),
 					Job_Status.WAITING.getCode(), etlSysCd);
-
+			SqlOperator.commitTransaction(db);
 			return num > 0;
 		}
 	}
@@ -165,7 +165,7 @@ public class TaskSqlHelper {
 			int num = SqlOperator.execute(db, "UPDATE etl_job SET job_disp_status = ? " +
 							"WHERE etl_sys_cd = ? AND (job_disp_status = ? OR job_disp_status = ?)",
 					dispStatus, etlSysCd, Job_Status.PENDING.getCode(), Job_Status.WAITING.getCode());
-
+			SqlOperator.commitTransaction(db);
 			return num > 0;
 		}
 	}
@@ -186,7 +186,7 @@ public class TaskSqlHelper {
 			int num = SqlOperator.execute(db, "UPDATE etl_sys SET main_serv_sync = ?, curr_bath_date = ?" +
 					", sys_run_status = ? WHERE etl_sys_cd = ?",
 					Main_Server_Sync.YES.getCode(), strBathDate, runStatus, etlSysCd);
-
+			SqlOperator.commitTransaction(db);
 			return num == 1;
 		}
 	}
@@ -207,7 +207,7 @@ public class TaskSqlHelper {
 			int num = SqlOperator.execute(db, "DELETE FROM etl_job WHERE etl_sys_cd = ? " +
 					"AND curr_bath_date = ? AND disp_type != ? AND disp_freq != ?",
 					etlSysCd, currBathDate, Dispatch_Type.TPLUS0.getCode(), Dispatch_Frequency.PinLv.getCode());
-
+			SqlOperator.commitTransaction(db);
 			return num > 0;
 		}
 	}
@@ -225,7 +225,7 @@ public class TaskSqlHelper {
 			//TODO 此处较原版改动：不再判断frequnecy来决定是否删除作业类型为T+0且按频率调度的作业，
 			// 因为该类型作业在整体流程逻辑上来说永远都要删除
 			int num = SqlOperator.execute(db, "DELETE FROM etl_job WHERE etl_sys_cd = ? ", etlSysCd);
-
+			SqlOperator.commitTransaction(db);
 			return num > 0;
 		}
 	}
@@ -246,7 +246,7 @@ public class TaskSqlHelper {
 			int num = SqlOperator.execute(db, "DELETE FROM etl_job WHERE etl_sys_cd = ? " +
 					"AND curr_bath_date = ? AND job_disp_status = ? AND disp_type != ?",
 					etlSysCd, currBathDate, jobStatus, Dispatch_Frequency.PinLv.getCode());
-
+			SqlOperator.commitTransaction(db);
 			return num == 1;
 		}
 	}
@@ -266,7 +266,7 @@ public class TaskSqlHelper {
 
 			int num = SqlOperator.execute(db, "DELETE FROM etl_job WHERE etl_sys_cd = ? AND curr_bath_date = ? " +
 							"AND job_disp_status = ?", etlSysCd, currBathDate, jobStatus);
-
+			SqlOperator.commitTransaction(db);
 			return num == 1;
 		}
 	}
@@ -321,7 +321,7 @@ public class TaskSqlHelper {
 			int num = SqlOperator.execute(db, "UPDATE etl_job SET job_disp_status = ?, main_serv_sync = ? " +
 					"WHERE etl_sys_cd = ? AND curr_bath_date = ?",
 					dispStatus, Main_Server_Sync.YES.getCode(), etlSysCd, currBathDate);
-
+			SqlOperator.commitTransaction(db);
 			return num > 0;
 		}
 	}
@@ -344,7 +344,7 @@ public class TaskSqlHelper {
 			int num = SqlOperator.execute(db, "UPDATE etl_job SET job_disp_status = ? " +
 							"WHERE etl_sys_cd = ? AND etl_job = ? AND curr_bath_date = ?",
 					dispStatus, etlSysCd, etlJob, currBathDate);
-
+			SqlOperator.commitTransaction(db);
 			return num == 0;
 		}
 	}
@@ -365,7 +365,7 @@ public class TaskSqlHelper {
 			int num = SqlOperator.execute(db, "UPDATE etl_job SET job_disp_status = ?, main_serv_sync = ? " +
 							"WHERE etl_sys_cd = ? AND etl_job = ?",
 					dispStatus, Main_Server_Sync.YES.getCode(), etlSysCd, etlJob);
-
+			SqlOperator.commitTransaction(db);
 			return num == 0;
 		}
 	}
@@ -386,7 +386,7 @@ public class TaskSqlHelper {
 			int num = SqlOperator.execute(db, "UPDATE etl_job SET curr_st_time = ?, main_serv_sync = ? " +
 							"WHERE etl_sys_cd = ? AND etl_job = ?",
 					currStTime, Main_Server_Sync.YES.getCode(), etlSysCd, etlJob);
-
+			SqlOperator.commitTransaction(db);
 			return num > 0;
 		}
 	}
@@ -411,7 +411,7 @@ public class TaskSqlHelper {
 							"curr_st_time = ?, curr_end_time = ? WHERE etl_sys_cd = ? AND etl_job = ? " +
 							"AND curr_bath_date = ?", Main_Server_Sync.YES.getCode(), Job_Status.DONE.getCode(),
 					currStTime, currEndTime, etlSysCd, eltJob, currBathDate);
-
+			SqlOperator.commitTransaction(db);
 			return num > 0;
 		}
 	}
@@ -434,7 +434,7 @@ public class TaskSqlHelper {
 							"etl_sys_cd = ? AND curr_bath_date = ? AND job_disp_status NOT IN (?, ?) AND today_disp = ?",
 					Job_Status.PENDING.getCode(), Main_Server_Sync.YES.getCode(), etlSysCd, currBathDate,
 					Job_Status.PENDING.getCode(), Job_Status.DONE.getCode(), Today_Dispatch_Flag.YES.getCode());
-
+			SqlOperator.commitTransaction(db);
 			return num > 0;
 		}
 	}
@@ -521,7 +521,7 @@ public class TaskSqlHelper {
 
 			int num = SqlOperator.execute(db, "UPDATE etl_resource SET resource_used = ? " +
 					"WHERE etl_sys_cd = ?", used, etlSysCd);
-
+			SqlOperator.commitTransaction(db);
 			return num > 0;
 		}
 	}
@@ -536,12 +536,12 @@ public class TaskSqlHelper {
 	 * @return boolean	是否有数据被修改
 	 */
 	public static boolean updateEtlResourceUsedByResourceType(String etlSysCd, String resourceType, int used){
-
+		//TODO 单例
 		try(DatabaseWrapper db = new DatabaseWrapper()) {
 
 			int num = SqlOperator.execute(db, "UPDATE etl_resource SET resource_used = ? " +
 					"WHERE etl_sys_cd = ? AND resource_type = ?", used, resourceType, etlSysCd);
-
+			SqlOperator.commitTransaction(db);
 			return num > 0;
 		}
 	}
@@ -579,7 +579,7 @@ public class TaskSqlHelper {
 					etlJobHand.getHand_status(), etlJobHand.getMain_serv_sync(), etlJobHand.getEnd_time(),
 					etlJobHand.getWarning(), etlJobHand.getEtl_sys_cd(), etlJobHand.getEtl_hand_type(),
 					etlJobHand.getEtl_job());
-
+			SqlOperator.commitTransaction(db);
 			return num > 0;
 		}
 	}
@@ -615,7 +615,7 @@ public class TaskSqlHelper {
 			int num = SqlOperator.execute(db, "DELETE FROM etl_job_hand WHERE etl_sys_cd = ? " +
 							" AND etl_job = ? AND etl_hand_type = ?",
 					etlSysCd, etlJob, etlHandType);
-
+			SqlOperator.commitTransaction(db);
 			return num > 0;
 		}
 	}
@@ -649,9 +649,8 @@ public class TaskSqlHelper {
 
 		try(DatabaseWrapper db = new DatabaseWrapper()) {
 
-			return SqlOperator.queryList(db, Etl_job_cur.class, "SELECT * FROM etl_job WHERE job_disp_status = ? " +
-							"AND etl_sys_cd = ?",
-					jobStatus, etlSysCd);
+			return SqlOperator.queryList(db, Etl_job_cur.class, "SELECT * FROM etl_job WHERE " +
+							"job_disp_status = ? AND etl_sys_cd = ?", jobStatus, etlSysCd);
 		}
 	}
 
@@ -671,7 +670,7 @@ public class TaskSqlHelper {
 					"job_priority_curr = job_priority WHERE etl_sys_cd = ? AND today_disp = ?",
 					Job_Status.PENDING.getCode(), Main_Server_Sync.YES.getCode(), etlSysCd,
 					Today_Dispatch_Flag.YES.getCode());
-
+			SqlOperator.commitTransaction(db);
 			return num > 0;
 		}
 	}
@@ -692,7 +691,7 @@ public class TaskSqlHelper {
 							"job_priority_curr = job_priority WHERE (job_disp_status = ? or job_disp_status = ?) " +
 							"AND etl_sys_cd = ?", jobStatus, Main_Server_Sync.YES.getCode(),
 					Job_Status.STOP.getCode(), Job_Status.ERROR.getCode(), etlSysCd);
-
+			SqlOperator.commitTransaction(db);
 			return num == 1;
 		}
 	}
@@ -715,7 +714,7 @@ public class TaskSqlHelper {
 			int num = SqlOperator.execute(db, "UPDATE etl_job SET job_priority_curr = ? WHERE etl_sys_cd = ? " +
 							"AND etl_job = ? AND curr_bath_date = ?",
 					jobPriorityCurr, etlSysCd, etlJob, currBathDate);
-
+			SqlOperator.commitTransaction(db);
 			return num == 1;
 		}
 	}
