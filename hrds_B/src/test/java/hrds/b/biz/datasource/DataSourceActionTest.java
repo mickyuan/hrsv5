@@ -53,7 +53,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			int[] num = SqlOperator.executeBatch(db,
 					"insert into " + Data_source.TableName + "( source_id, datasource_remark, " +
 							"datasource_name,datasource_number,create_date, create_time, " +
-							"user_id) values(?, ?,?,?,?,?,?)",
+							"create_user_id) values(?, ?,?,?,?,?,?)",
 					params
 			);
 			assertThat("测试数据初始化", num.length, is(Init_Rows));
