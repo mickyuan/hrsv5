@@ -312,6 +312,12 @@ public class DataSourceActionTest extends WebBaseTestCase {
 				.post(getActionUrl("searchDataSource")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(false));
+
+		// 4.查询数据源，source_id不合法
+		bodyString = new HttpClient().addData("source_id", "10000000005")
+				.post(getActionUrl("searchDataSource")).getBodyString();
+		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		assertThat(ar.isSuccess(), is(false));
 	}
 
 	/**
