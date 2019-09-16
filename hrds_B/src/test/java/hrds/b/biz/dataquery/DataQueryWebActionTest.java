@@ -22,6 +22,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class DataQueryWebActionTest extends WebBaseTestCase {
     private static final int Init_Rows = 10; // 向表中初始化的数据条数。
     private static final long USER_ID = 2001L; //使用用户
+    private static String bodyString;
+    private static ActionResult ar;
 
     @Before
     public void before() {
@@ -271,6 +273,10 @@ public class DataQueryWebActionTest extends WebBaseTestCase {
                 SqlOperator.execute(db, "delete from " + Search_info.TableName +
                         " where si_id=?", i);
                 SqlOperator.commitTransaction(db);
+                // 测试完成后删除 Search_info 表中生成的废数据
+                SqlOperator.execute(db, "delete from " + Search_info.TableName +
+                        " where file_id=?", "-1000");
+                SqlOperator.commitTransaction(db);
                 long siDataNum = SqlOperator.queryNumber(db,
                         "select count(1) from " + Search_info.TableName +
                                 " where si_id=?", i
@@ -296,86 +302,149 @@ public class DataQueryWebActionTest extends WebBaseTestCase {
      * <p>方法说明: 获取部门的包含文件采集任务的数据源信息的测试方法</p>
      * 1.部门id存在
      * 2.部门id不存在
-     * @author BY-HLL
+     * 3.部门id为空
+     * 4.部门id为空格
      */
     @Test
     public void getFileDataSource() {
-        String bodyString = null;
-        ActionResult ar = null;
         //1.部门id存在
-         bodyString = new HttpClient()
+        bodyString = new HttpClient()
                 .addData("depId", -500L)
                 .post(getActionUrl("getFileDataSource")).getBodyString();
-         ar = JsonUtil.toObject(bodyString, ActionResult.class);
+        ar = JsonUtil.toObject(bodyString, ActionResult.class);
         assertThat(ar.isSuccess(), is(true));
         //2.部门id不存在
-         bodyString = new HttpClient()
+        bodyString = new HttpClient()
                 .addData("depId", -1000L)
                 .post(getActionUrl("getFileDataSource")).getBodyString();
-         ar = JsonUtil.toObject(bodyString, ActionResult.class);
-         assertThat(ar.isSuccess(), is(true));
+        ar = JsonUtil.toObject(bodyString, ActionResult.class);
+        assertThat(ar.isSuccess(), is(true));
+        //2.部门id为空
+        bodyString = new HttpClient()
+                .addData("depId", "")
+                .post(getActionUrl("getFileDataSource")).getBodyString();
+        ar = JsonUtil.toObject(bodyString, ActionResult.class);
+        assertThat(ar.isSuccess(), is(true));
+        //2.部门id为空格
+        bodyString = new HttpClient()
+                .addData("depId", " ")
+                .post(getActionUrl("getFileDataSource")).getBodyString();
+        ar = JsonUtil.toObject(bodyString, ActionResult.class);
+        assertThat(ar.isSuccess(), is(true));
     }
 
+    /**
+     * <p>方法名: getFileCollectionTask</p>
+     * <p>方法说明: 根据数据源id获取数据源下所有文件采集任务测试方法</p>
+     * 1.数据源id存在
+     * 2.数据源id不存在
+     * 3.数据源id为空
+     * 4.数据源id为空格
+     */
     @Test
     public void getFileCollectionTask() {
-        long sourceId = -500L;
-        String bodyString = new HttpClient()
-                .addData("userId", USER_ID)
-                .addData("sourceId", sourceId)
+        //1.数据源id存在
+        bodyString = new HttpClient()
+                .addData("sourceId", -500L)
                 .post(getActionUrl("getFileCollectionTask")).getBodyString();
-        ActionResult ar = JsonUtil.toObject(bodyString, ActionResult.class);
+        ar = JsonUtil.toObject(bodyString, ActionResult.class);
+        assertThat(ar.isSuccess(), is(true));
+        //2.数据源id不存在
+        bodyString = new HttpClient()
+                .addData("sourceId", -1000L)
+                .post(getActionUrl("getFileCollectionTask")).getBodyString();
+        ar = JsonUtil.toObject(bodyString, ActionResult.class);
+        assertThat(ar.isSuccess(), is(true));
+        //2.数据源id为空
+        bodyString = new HttpClient()
+                .addData("sourceId", "")
+                .post(getActionUrl("getFileCollectionTask")).getBodyString();
+        ar = JsonUtil.toObject(bodyString, ActionResult.class);
+        assertThat(ar.isSuccess(), is(true));
+        //2.数据源id为空格
+        bodyString = new HttpClient()
+                .addData("sourceId", " ")
+                .post(getActionUrl("getFileCollectionTask")).getBodyString();
+        ar = JsonUtil.toObject(bodyString, ActionResult.class);
         assertThat(ar.isSuccess(), is(true));
     }
 
+    /**
+     * <p>方法名: downloadFile</p>
+     * <p>方法说明: 根据文件id下载文件的测试方法</p>
+     * 1.文件id存在
+     * 2.文件id不存在
+     */
     @Test
     public void downloadFile() {
-        String fileId = "-500";
-        String fileName = "-500";
-        String queryKeyword = "-500";
-        String bodyString = new HttpClient()
-                .addData("userId", USER_ID)
-                .addData("fileId", fileId)
-                .addData("fileName", fileName)
-                .addData("queryKeyword", queryKeyword)
+        //1.文件id存在
+        bodyString = new HttpClient()
+                .addData("fileId", "-500")
+                .addData("fileName", "-500")
+                .addData("queryKeyword", "-500")
                 .post(getActionUrl("downloadFile")).getBodyString();
-        ActionResult ar = JsonUtil.toObject(bodyString, ActionResult.class);
+        ar = JsonUtil.toObject(bodyString, ActionResult.class);
+        assertThat(ar.isSuccess(), is(true));
+        //2.文件id不存在
+        bodyString = new HttpClient()
+                .addData("fileId", "-1000")
+                .addData("fileName", "-1000")
+                .addData("queryKeyword", "-1000")
+                .post(getActionUrl("downloadFile")).getBodyString();
+        ar = JsonUtil.toObject(bodyString, ActionResult.class);
         assertThat(ar.isSuccess(), is(true));
     }
 
+    /**
+     * <p>方法名: modifySortCount</p>
+     * <p>方法说明: 修改文件计数的测试方法</p>
+     * 1.文件id存在
+     * 2.文件id不存在
+     */
     @Test
     public void modifySortCount() {
-        String fileId = "-500";
-        String queryKeyword = "init-500";
-        String bodyString = new HttpClient()
-                .addData("userId", USER_ID)
-                .addData("fileId", fileId)
-                .addData("queryKeyword", queryKeyword)
+        //1.文件id存在
+        bodyString = new HttpClient()
+                .addData("fileId", "-500")
+                .addData("queryKeyword", "init-500")
                 .post(getActionUrl("modifySortCount")).getBodyString();
-        ActionResult ar = JsonUtil.toObject(bodyString, ActionResult.class);
+        ar = JsonUtil.toObject(bodyString, ActionResult.class);
         assertThat(ar.isSuccess(), is(true));
+        //1.文件id不存在
+        bodyString = new HttpClient()
+                .addData("fileId", "-1000")
+                .addData("queryKeyword", "init-500")
+                .post(getActionUrl("modifySortCount")).getBodyString();
+        ar = JsonUtil.toObject(bodyString, ActionResult.class);
+        assertThat(ar.isSuccess(), is(true));
+
     }
 
+    /**
+     * <p>方法名: getCollectFile</p>
+     * <p>方法说明: 根据登录用户获取用户收藏的文件列表,返回结果显示最近9条收藏的测试方法</p>
+     */
     @Test
     public void getCollectFile() {
-        String bodyString = new HttpClient()
-                .addData("userId", USER_ID)
+        bodyString = new HttpClient()
                 .post(getActionUrl("getCollectFile")).getBodyString();
-        ActionResult ar = JsonUtil.toObject(bodyString, ActionResult.class);
+        ar = JsonUtil.toObject(bodyString, ActionResult.class);
         assertThat(ar.isSuccess(), is(true));
     }
 
+    /**
+     * <p>方法名: 根据</p>
+     * <p>方法说明: </p>
+     *
+     */
     @Test
     public void saveCollectFileInfo() {
-        String fileId = "-500";
-        String fileName = "-500";
-        long favId = -500L;
-        String bodyString = new HttpClient()
-                .addData("userId", USER_ID)
-                .addData("fileId", fileId)
-                .addData("fileName", fileName)
-                .addData("favId", favId)
+        bodyString = new HttpClient()
+                .addData("fileId", "-500")
+                .addData("fileName", "init-500")
+                .addData("favId", -500L)
                 .post(getActionUrl("saveCollectFileInfo")).getBodyString();
-        ActionResult ar = JsonUtil.toObject(bodyString, ActionResult.class);
+        ar = JsonUtil.toObject(bodyString, ActionResult.class);
         assertThat(ar.isSuccess(), is(true));
     }
 }
