@@ -13,7 +13,7 @@ public enum ExceptionEnum implements ExceptionMessage {
 	AGENT_DOWN_ERROR(1500, "Agent部署信息保存失败"),
 	USER_NOT_EMPTY(9995, "用户名不能为空"),
 	USER_PWD_EMPTY(9996, "密码不能为空"),
-	USER_NOE_EXISTS(9997, "用户名不存在"),
+	USER_NOT_EXISTS(9997, "用户不存在"),
 	PASSWORD_ERROR(9998, "密码错误");
 
 	private final int code;
