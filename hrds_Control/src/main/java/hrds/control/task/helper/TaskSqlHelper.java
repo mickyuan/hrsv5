@@ -42,10 +42,14 @@ public class TaskSqlHelper {
 
 		try(DatabaseWrapper db = TaskSqlHelper.getDbConnector()) {
 
-			return SqlOperator.queryOneObject(db, Etl_sys.class,
-							"SELECT * FROM etl_sys WHERE etl_sys_cd = ?", etlSysCd).orElseThrow(() -> {
+			Optional<Etl_sys> etlSys = SqlOperator.queryOneObject(db, Etl_sys.class,
+					"SELECT * FROM etl_sys WHERE etl_sys_cd = ?", etlSysCd);
+
+			if(!etlSys.isPresent()) {
 				throw new AppSystemException("根据调度系统编号无法获取到信息：" + etlSysCd);
-			});
+			}
+
+			return etlSys.get();
 		}
 	}
 
@@ -515,12 +519,16 @@ public class TaskSqlHelper {
 
 		try(DatabaseWrapper db = TaskSqlHelper.getDbConnector()) {
 
-			return SqlOperator.queryOneObject(db, Etl_job_cur.class,
+			Optional<Etl_job_cur> etlJobCur = SqlOperator.queryOneObject(db, Etl_job_cur.class,
 					"SELECT * FROM etl_job_cur WHERE etl_sys_cd = ? AND etl_job = ? AND curr_bath_date = ?",
-					etlSysCd, etlJob, currBathDate).orElseThrow(() -> {
+					etlSysCd, etlJob, currBathDate);
+
+			if(!etlJobCur.isPresent()) {
 				throw new AppSystemException("根据调度系统编号、调度作业标识、当前跑批日期获取调度作业信息失败"
 						+ etlSysCd);
-			});
+			}
+
+			return etlJobCur.get();
 		}
 	}
 
@@ -536,11 +544,15 @@ public class TaskSqlHelper {
 
 		try(DatabaseWrapper db = TaskSqlHelper.getDbConnector()) {
 
-			return SqlOperator.queryOneObject(db, Etl_job_cur.class, "SELECT * FROM etl_job_cur " +
-					"WHERE etl_sys_cd = ? AND etl_job = ?", etlSysCd, etlJob).orElseThrow(() -> {
+			Optional<Etl_job_cur> etlJobCur = SqlOperator.queryOneObject(db, Etl_job_cur.class,
+					"SELECT * FROM etl_job_cur WHERE etl_sys_cd = ? AND etl_job = ?", etlSysCd, etlJob);
+
+			if(!etlJobCur.isPresent()) {
 				throw new AppSystemException("根据调度系统编号、调度作业标识获取调度作业信息失败"
 						+ etlSysCd);
-			});
+			}
+
+			return etlJobCur.get();
 		}
 	}
 

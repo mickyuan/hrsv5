@@ -28,15 +28,14 @@ public class ControlManageServer {
 	 * ControlManageServer类构造器
 	 * @author Tiger.Wang
 	 * @date 2019/8/30
-	 * @param sysRunning	系统是否在运行中
 	 * @param bathDate	跑批批次日期
 	 * @param strSystemCode	调度系统代码
 	 * @param isResumeRun	是否续跑
 	 * @param isAutoShift	是否自动日切
 	 */
-	public ControlManageServer(boolean sysRunning, String strSystemCode, LocalDate bathDate, boolean isResumeRun, boolean isAutoShift) {
+	public ControlManageServer(String strSystemCode, LocalDate bathDate, boolean isResumeRun, boolean isAutoShift) {
 
-		taskManager = TaskManager.newInstance(sysRunning, strSystemCode, bathDate, isResumeRun, isAutoShift);
+		taskManager = TaskManager.newInstance(strSystemCode, bathDate, isResumeRun, isAutoShift);
 		taskManager.initEtlSystem();
 	}
 
@@ -97,9 +96,9 @@ public class ControlManageServer {
 				ex.printStackTrace();
 				StackTraceElement[] stackElements = ex.getStackTrace();
 				if( stackElements != null ) {
-					for(int i = 0; i < stackElements.length; i++) {
-						logger.error(stackElements[i].getClassName() + stackElements[i].getFileName() + stackElements[i].getLineNumber()
-								+ stackElements[i].getMethodName());
+					for (StackTraceElement stackElement : stackElements) {
+						logger.error(stackElement.getClassName() + stackElement.getFileName() + stackElement.getLineNumber()
+								+ stackElement.getMethodName());
 					}
 				}
 			}

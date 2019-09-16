@@ -32,7 +32,7 @@ public class TaskManagerTest {
 	@Before
 	public void before() {
 		//TODO 问题1，对于不同的构造参数，应该如何测试
-		taskManager = TaskManager.newInstance(false, syscode, LocalDate.now(),
+		taskManager = TaskManager.newInstance(syscode, LocalDate.now(),
 				false, false);
 		//TODO 使用实体新增数据不用手动提交？
 		try(DatabaseWrapper db = new DatabaseWrapper()) {
