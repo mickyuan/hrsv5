@@ -48,7 +48,7 @@ public class DBConfStepAction extends BaseAction{
 		//2、判断是否查询到数据，如果查询不到，抛异常给前端
 		Database_set dbSet = firResult.orElseThrow(() -> new BusinessException("未能找到该任务"));
 		//3、如果任务已经设置完成并发送成功，则不允许编辑
-		if(IsFlag.Shi == IsFlag.getCodeObj(dbSet.getIs_sendok())){
+		if(IsFlag.Shi == IsFlag.ofEnumByCode(dbSet.getIs_sendok())){
 			throw new BusinessException("该任务已经设置完成并发送成功，不允许编辑");
 		}
 		//3-1、在数据库设置表表中，关联采集作业分类表(collect_job_classify)，查询出当前database_id的所有信息

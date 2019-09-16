@@ -37,7 +37,7 @@ public class SQLUtil {
 	 */
 	public static String getCollectSQL(String tableName, Set<String> columnName, String dbType) {
 		//1、获得数据库类型的枚举
-		DatabaseType typeConstant = DatabaseType.getCodeObj(dbType);
+		DatabaseType typeConstant = DatabaseType.ofEnumByCode(dbType);
 		StringBuilder columnSB = new StringBuilder();
 		//2、判断数据库类型，在每一列后面加逗号
 		for (String s : columnName) {

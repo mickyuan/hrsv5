@@ -34,7 +34,7 @@ public class ConnetionTool {
 		dbinfo.setUsername(dbInfo.getUser_name());
 		dbinfo.setPassword(dbInfo.getDatabase_pad());
 		dbinfo.setWay(ConnWay.JDBC);
-		DatabaseType typeConstant = DatabaseType.getCodeObj(dbInfo.getDatabase_type());
+		DatabaseType typeConstant = DatabaseType.ofEnumByCode(dbInfo.getDatabase_type());
 		if (typeConstant == DatabaseType.MYSQL) {
 			dbinfo.setDbtype(Dbtype.MYSQL);
 		} else if (typeConstant == DatabaseType.Oracle9i) {

@@ -55,7 +55,7 @@ public class DialectStrategyFactory {
 			throw new AppSystemException("数据库类型不能为空");
 		}
 		//1、判断数据库类型
-		DatabaseType typeConstant = DatabaseType.getCodeObj(dbType);
+		DatabaseType typeConstant = DatabaseType.ofEnumByCode(dbType);
 		//2、根据不同的类型，返回对应数据库的分页方言策略
 		if (typeConstant == DatabaseType.MYSQL) {
 			return new MySQLDialectStrategy();

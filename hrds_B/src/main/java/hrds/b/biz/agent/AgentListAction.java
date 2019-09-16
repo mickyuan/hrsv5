@@ -88,7 +88,7 @@ public class AgentListAction extends BaseAction {
 	public Result getTaskInfo(long sourceId, long agentId) {
 		//1、获取用户ID
 		Long userId = getUserId();
-		//2、判断在当前用户，当前数据源下，某一类型的agent是否存在
+		//2、判断在当前用户，当前数据源下，agent是否存在
 		Result result = Dbo.queryResult("select ai.* from data_source ds " +
 				" left join agent_info ai on ds.SOURCE_ID = ai.SOURCE_ID " +
 				" where ds.source_id=? AND ai.user_id = ? " +
@@ -97,14 +97,11 @@ public class AgentListAction extends BaseAction {
 		if (result.isEmpty()) {
 			throw new BusinessException("未找到Agent");
 		}
-		if (result.getRowCount() != 1) {
-			throw new BusinessException("找到的Agent不唯一");
-		}
 
 		//4、判断该agent是那种类型，并且根据类型，到对应的数据库表中查询采集任务管理详细信息
 		StringBuilder sqlSB = new StringBuilder();
 		//数据库直连采集Agent
-		if (AgentType.ShuJuKu == AgentType.getCodeObj(result.getString(0, "agent_type"))) {
+		if (AgentType.ShuJuKu == AgentType.ofEnumByCode(result.getString(0, "agent_type"))) {
 			sqlSB.append(" SELECT ds.DATABASE_ID ID,ds.task_name task_name,ds.AGENT_ID AGENT_ID, ")
 					.append(" cf.execute_time execute_time, cf.fre_week fre_week, ")
 					.append(" cf.run_way run_way,cf.fre_month fre_month,cf.fre_day fre_day, ")
@@ -115,7 +112,7 @@ public class AgentListAction extends BaseAction {
 					.append(" where ds.Agent_id=? and ds.is_sendok = ? ");
 		}
 		//数据文件Agent
-		else if (AgentType.DBWenJian == AgentType.getCodeObj(result.getString(0, "agent_type"))) {
+		else if (AgentType.DBWenJian == AgentType.ofEnumByCode(result.getString(0, "agent_type"))) {
 			sqlSB.append(" SELECT ds.DATABASE_ID ID,ds.task_name task_name,ds.AGENT_ID AGENT_ID, ")
 					.append(" cf.execute_time execute_time, cf.fre_week fre_week, ")
 					.append(" cf.run_way run_way,cf.fre_month fre_month,cf.fre_day fre_day, ")
@@ -126,7 +123,7 @@ public class AgentListAction extends BaseAction {
 					.append(" where ds.Agent_id=? and ds.is_sendok = ? ");
 		}
 		//半结构化采集Agent
-		else if (AgentType.DuiXiang == AgentType.getCodeObj(result.getString(0, "agent_type"))) {
+		else if (AgentType.DuiXiang == AgentType.ofEnumByCode(result.getString(0, "agent_type"))) {
 			sqlSB.append(" SELECT fs.odc_id id,fs.obj_collect_name task_name,fs.AGENT_ID AGENT_ID, ")
 					.append(" cf.execute_time execute_time,cf.fre_week fre_week, ")
 					.append(" cf.run_way run_way,cf.fre_month fre_month,cf.fre_day fre_day,  ")
@@ -137,7 +134,7 @@ public class AgentListAction extends BaseAction {
 					.append(" WHERE fs.Agent_id = ? AND fs.is_sendok = ? ");
 		}
 		//FtpAgent
-		else if (AgentType.FTP == AgentType.getCodeObj(result.getString(0, "agent_type"))) {
+		else if (AgentType.FTP == AgentType.ofEnumByCode(result.getString(0, "agent_type"))) {
 			sqlSB.append(" SELECT fs.ftp_id id,fs.ftp_name task_name,fs.AGENT_ID AGENT_ID, ")
 					.append(" cf.execute_time execute_time,cf.fre_week fre_week,cf.run_way run_way, ")
 					.append(" cf.fre_month fre_month,cf.fre_day fre_day,gi.source_id,cf.collect_type ")
@@ -351,7 +348,7 @@ public class AgentListAction extends BaseAction {
 	 */
 	public void deleteOtherTask(long collectSetId, String agentType) {
 		//1、判断Agent类型
-		if (AgentType.ShuJuKu == AgentType.getCodeObj(agentType)) {
+		if (AgentType.ShuJuKu == AgentType.ofEnumByCode(agentType)) {
 			//2、如果是数据库直连采集任务
 			List<Map<String, Object>> maps = Dbo.queryList(
 					"select hbase_name from source_file_attribute where collect_set_id = ?",
