@@ -65,7 +65,7 @@ public class AgentInfoAction extends BaseAction {
 	}
 
 	/**
-	 * 监控agent端口是否被占用
+	 * 监控agent端口是否被占用（后期移动到hrds-commons下）
 	 * <p>
 	 * 1.通过http方式去测试端口连通情况，测通则被占用，不通则可以使用
 	 *
