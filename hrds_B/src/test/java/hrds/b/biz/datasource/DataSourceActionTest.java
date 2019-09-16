@@ -35,12 +35,12 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			// 初始化data_source表信息
 			for (long i = -300L; i < -300 + Init_Rows; i++) {
 				long source_id = i;
-				String source_remark = "init" + i;
+				String datasource_remark = "init" + i;
 				String datasource_name = "init" + i;
 				String datasource_number = "d" + i;
 				String create_date = DateUtil.getSysDate();
 				String create_time = DateUtil.getSysTime();
-				Object[] objects = new Object[]{source_id, source_remark, datasource_name,
+				Object[] objects = new Object[]{source_id, datasource_remark, datasource_name,
 						datasource_number, create_date, create_time, UserId};
 				params.add(objects);
 				// source_relation_dep表信息
@@ -51,7 +51,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 				}
 			}
 			int[] num = SqlOperator.executeBatch(db,
-					"insert into " + Data_source.TableName + "( source_id, source_remark, " +
+					"insert into " + Data_source.TableName + "( source_id, datasource_remark, " +
 							"datasource_name,datasource_number,create_date, create_time, " +
 							"user_id) values(?, ?,?,?,?,?,?)",
 					params
@@ -68,14 +68,14 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			SqlOperator.commitTransaction(db);
 		}
 		// 用户登录
-		//String responseValue = new HttpClient()
-		//		.buildSession()
-		//		.addData("username", UserId)
-		//		.addData("password", "111111")
-		//		.post("http://127.0.0.1:8099/A/action/hrds/a/biz/login/login")
-		//		.getBodyString();
-		//ActionResult ar = JsonUtil.toObject(responseValue, ActionResult.class);
-		//assertThat("用户登录", ar.getCode(), is(220));
+		String responseValue = new HttpClient()
+				.buildSession()
+				.addData("username", UserId)
+				.addData("password", "111111")
+				.post("http://127.0.0.1:8099/A/action/hrds/a/biz/login/login")
+				.getBodyString();
+		ActionResult ar = JsonUtil.toObject(responseValue, ActionResult.class);
+		assertThat("用户登录", ar.getCode(), is(220));
 	}
 
 	@After
@@ -106,10 +106,10 @@ public class DataSourceActionTest extends WebBaseTestCase {
 
 	/**
 	 * 新增/编辑数据源测试
-	 *参数：source_id:数据源ID,source_remark:数据源备注,datasource_number:数据源编号,
+	 * 参数：source_id:数据源ID,datasource_remark:数据源备注,datasource_number:数据源编号,
 	 * datasource_name:数据源名称,depIds:部门ID
 	 * 取值范围：除source_id外不能为空以及空格
-	 *
+	 * <p>
 	 * 1.测试数据源新增功能,数据都不为空
 	 * 2.测试数据源编辑功能
 	 * 3.测试数据源新增，数据源编号重复
@@ -125,7 +125,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 	public void saveDataSource() {
 		// 1.测试数据源新增功能,数据都不为空
 		String bodyString = new HttpClient()
-				.addData("source_remark", "测试")
+				.addData("datasource_remark", "测试")
 				.addData("datasource_name", "cs" + new Random().nextInt(99))
 				.addData("datasource_number", "ds" + new Random().nextInt(99))
 				.addData("depIds", "-300,-299,-298")
@@ -136,7 +136,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 		// 2.测试数据源编辑功能
 		bodyString = new HttpClient()
 				.addData("source_id", -300L)
-				.addData("source_remark", "测试")
+				.addData("datasource_remark", "测试")
 				.addData("datasource_name", "cs" + new Random().nextInt(99))
 				.addData("datasource_number", "ds" + new Random().nextInt(99))
 				.addData("depIds", "-300,-299")
@@ -146,7 +146,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 
 		// 3.测试数据源新增，数据源编号重复
 		bodyString = new HttpClient()
-				.addData("source_remark", "测试")
+				.addData("datasource_remark", "测试")
 				.addData("datasource_name", "cs" + new Random().nextInt(99))
 				.addData("datasource_number", "d300")
 				.addData("depIds", "-300")
@@ -156,7 +156,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 		assertThat((String) ar.getMessage(), is("数据源编号重复,datasource_number=d300"));
 		// 4.测试数据源新增，数据源名称不能为空
 		bodyString = new HttpClient()
-				.addData("source_remark", "测试")
+				.addData("datasource_remark", "测试")
 				.addData("datasource_name", "")
 				.addData("datasource_number", "ds" + new Random().nextInt(99))
 				.addData("depIds", "-300")
@@ -167,7 +167,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 
 		// 5.测试数据源新增，数据源名称不能为空格
 		bodyString = new HttpClient()
-				.addData("source_remark", "测试")
+				.addData("datasource_remark", "测试")
 				.addData("datasource_name", " ")
 				.addData("datasource_number", "ds" + new Random().nextInt(99))
 				.addData("depIds", "-300")
@@ -179,7 +179,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 
 		// 6.测试数据源新增，数据源编号不能为空
 		bodyString = new HttpClient()
-				.addData("source_remark", "测试")
+				.addData("datasource_remark", "测试")
 				.addData("datasource_name", "cs" + new Random().nextInt(99))
 				.addData("datasource_number", "")
 				.addData("depIds", "-300")
@@ -191,7 +191,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 
 		// 7.测试数据源新增，数据源编号不能为空格
 		bodyString = new HttpClient()
-				.addData("source_remark", "测试")
+				.addData("datasource_remark", "测试")
 				.addData("datasource_name", "cs" + new Random().nextInt(99))
 				.addData("datasource_number", " ")
 				.addData("depIds", "-300")
@@ -203,7 +203,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 
 		// 8.测试数据源新增，数据源编号长度不能超过四位
 		bodyString = new HttpClient()
-				.addData("source_remark", "测试")
+				.addData("datasource_remark", "测试")
 				.addData("datasource_name", "cs" + new Random().nextInt(99))
 				.addData("datasource_number", "ds100")
 				.addData("depIds", "-300")
@@ -215,7 +215,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 
 		// 9.保存数据源，部门id不能为空
 		bodyString = new HttpClient()
-				.addData("source_remark", "测试")
+				.addData("datasource_remark", "测试")
 				.addData("datasource_name", "cs" + new Random().nextInt(99))
 				.addData("datasource_number", "ds" + new Random().nextInt(99))
 				.addData("depIds", "")
@@ -225,7 +225,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 
 		// 10.测试保存数据源，部门id不能为空格
 		bodyString = new HttpClient()
-				.addData("source_remark", "测试")
+				.addData("datasource_remark", "测试")
 				.addData("datasource_name", "cs" + new Random().nextInt(99))
 				.addData("datasource_number", "ds" + new Random().nextInt(99))
 				.addData("depIds", " ")
