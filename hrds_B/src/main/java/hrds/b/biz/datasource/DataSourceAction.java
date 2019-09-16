@@ -158,7 +158,7 @@ public class DataSourceAction extends BaseAction {
 	 * 1.关联查询data_source表与source_relation_dep表信息
 	 *
 	 * @param source_id long
-	 *                  含义：数据源ID
+	 *                  含义：data_source表主键，source_relation_dep表外键
 	 *                  取值范围：不能为空或空格，长度不能超过10位
 	 * @return 返回关联查询data_source表与source_relation_dep表信息结果
 	 */
@@ -274,7 +274,7 @@ public class DataSourceAction extends BaseAction {
 	}
 
 	/**
-	 * 导入数据源数据，将涉及到的所有表的数据导入数据库中对应的表中
+	 * 导入数据源数据，将涉及到的所有表的数据导入数据库中对应的表中(修改中,未完成）
 	 *
 	 * <p>
 	 * 1.解析文件获取文件所有信息
@@ -613,7 +613,6 @@ public class DataSourceAction extends BaseAction {
 	 * @param source_id long
 	 *                  含义：data_source表主键
 	 *                  取值范围：不为空以及不为空格，长度不超过10
-	 * @throws IOException
 	 */
 	public void downloadFile(long source_id) {
 		try {
