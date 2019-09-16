@@ -35,6 +35,7 @@ public class ControlConfigure {
 
 		private static final String CONFNAME = "notify";
 
+		public static final Boolean isNeedSendSMS;
 		public static final String smsAccountName;
 		public static final String smsAccountPasswd;
 		public static final String cmHostIp;
@@ -49,6 +50,7 @@ public class ControlConfigure {
 				throw new AppSystemException("无法从control配置文件中加载属性" + CONFNAME);
 			}
 			YamlMap notify = control.getMap(CONFNAME);
+			isNeedSendSMS = notify.getBool("isNeedSendSMS");
 			smsAccountName = notify.getString("smsAccountName");
 			smsAccountPasswd = notify.getString("smsAccountPasswd");
 			cmHostIp = notify.getString("cmHostIp");

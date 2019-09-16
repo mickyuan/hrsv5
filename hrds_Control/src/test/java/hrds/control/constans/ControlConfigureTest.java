@@ -17,6 +17,9 @@ public class ControlConfigureTest {
 	@Test
 	public void testNotifyConfig() {
 
+		assertNotNull("测试是否读取到control配置文件notify节点的isNeedSendSMS属性",
+				ControlConfigure.NotifyConfig.isNeedSendSMS);
+
 		assertFalse("测试是否读取到control配置文件notify节点的smsAccountName属性",
 				StringUtil.isEmpty(ControlConfigure.NotifyConfig.smsAccountName));
 

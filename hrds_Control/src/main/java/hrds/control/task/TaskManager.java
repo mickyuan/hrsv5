@@ -8,6 +8,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
 
+import hrds.control.constans.ControlConfigure;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -118,8 +119,8 @@ public class TaskManager {
 
 		strRunningJob = etlSysCd + RUNNINGJOBFLAG;
 		strFinishedJob = etlSysCd + FINISHEDJOBFLAG;
-		//TODO 此处读配置文件
-		isNeedSendSMS = true;
+
+		isNeedSendSMS = ControlConfigure.NotifyConfig.isNeedSendSMS;
 
 		handleHelper = TaskJobHandleHelper.newInstance(this);
 	}

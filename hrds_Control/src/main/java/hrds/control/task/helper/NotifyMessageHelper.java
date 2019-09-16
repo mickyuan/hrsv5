@@ -1,5 +1,6 @@
 package hrds.control.task.helper;
 
+import hrds.control.constans.ControlConfigure;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -20,24 +21,24 @@ public class NotifyMessageHelper {
     private final String smsAccountName;
     private final String smsAccountPasswd;
     private final String cmHostIp;
-    private final String cmHostPort;
+    private final int cmHostPort;
     private final String wsHostIp;
-    private final String wsHostPort;
+    private final int wsHostPort;
     private final String bizType;
     private final String phoneNumber;
 
     private static final NotifyMessageHelper INSTANCE = new NotifyMessageHelper();
 
     private NotifyMessageHelper() {
-        //TODO 此处读配置文件
-        smsAccountName = "";
-        smsAccountPasswd = "";
-        cmHostIp = "";
-        cmHostPort = "";
-        wsHostIp = "";
-        wsHostPort = "";
-        bizType = "";
-        phoneNumber = "";
+
+        smsAccountName = ControlConfigure.NotifyConfig.smsAccountName;
+        smsAccountPasswd = ControlConfigure.NotifyConfig.smsAccountPasswd;
+        cmHostIp = ControlConfigure.NotifyConfig.cmHostIp;
+        cmHostPort = ControlConfigure.NotifyConfig.cmHostPort;
+        wsHostIp = ControlConfigure.NotifyConfig.wsHostIp;
+        wsHostPort = ControlConfigure.NotifyConfig.wsHostPort;
+        bizType = ControlConfigure.NotifyConfig.bizType;
+        phoneNumber = ControlConfigure.NotifyConfig.phoneNumber;
     }
 
     /**
