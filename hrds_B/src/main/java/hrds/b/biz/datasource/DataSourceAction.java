@@ -99,6 +99,11 @@ public class DataSourceAction extends BaseAction {
 			}
 		} else {
 			// 编辑
+			// 字段合法性检查
+			if (String.valueOf(dataSource.getSource_id()).length() > 10) {
+				throw new BusinessException("source_id长度不能超过10，source_id="
+						+ dataSource.getSource_id());
+			}
 			// 4.更新数据源信息
 			if (dataSource.update(Dbo.db()) != 1) {
 				// 编辑保存失败
@@ -162,7 +167,7 @@ public class DataSourceAction extends BaseAction {
 	 *                  取值范围：不能为空或空格
 	 * @return 返回关联查询data_source表与source_relation_dep表信息结果
 	 */
-	public List<Map<String, Object>> searchDataSource(Long source_id) {
+	public List<Map<String, Object>> searchDataSource(long source_id) {
 		// 1.关联查询data_source表与source_relation_dep表信息
 		return Dbo.queryList("select ds.*,srd.dep_id from data_source ds " +
 				" join source_relation_dep srd on ds.source_id=srd.source_id " +

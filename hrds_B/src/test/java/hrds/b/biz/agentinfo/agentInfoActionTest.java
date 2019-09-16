@@ -152,16 +152,41 @@ public class agentInfoActionTest extends WebBaseTestCase {
 
 		// 2.编辑，数据都不为空且为有效数据
 		bodyString = new HttpClient()
-				.addData("agent_id", -30L)
+				.addData("agent_id", -27L)
 				.addData("agent_name", "DB文件agent")
 				.addData("agent_type", AgentType.DBWenJian.getCode())
 				.addData("agent_ip", "10.71.4.51")
-				.addData("agent_port", "3456")
-				.addData("agent_status", AgentStatus.YiLianJie.getCode())
-				.addData("source_id", -30L)
+				.addData("agent_port", "3458")
+				.addData("source_id", -27L)
+				.addData("user_id",UserId)
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(true));
+
+		// 3.新增，agent_name为空
+		bodyString = new HttpClient()
+				.addData("agent_name", "")
+				.addData("agent_type", AgentType.DBWenJian.getCode())
+				.addData("agent_ip", "10.71.4.52")
+				.addData("agent_port", "3457")
+				.addData("source_id", -30L)
+				.addData("user_id",UserId)
+				.post(getActionUrl("saveAgent")).getBodyString();
+		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		assertThat(ar.getMessage(), is("agent_name不为空以及不为空格，agent_name="));
+
+		// 4.新增，agent_name为空格
+		bodyString = new HttpClient()
+				.addData("agent_name", " ")
+				.addData("agent_type", AgentType.DBWenJian.getCode())
+				.addData("agent_ip", "10.71.4.52")
+				.addData("agent_port", "3457")
+				.addData("source_id", -30L)
+				.addData("user_id",UserId)
+				.post(getActionUrl("saveAgent")).getBodyString();
+		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		assertThat(ar.isSuccess(), is(false));
+		assertThat(ar.getMessage(), is("agent_name不为空以及不为空格，agent_name= "));
 	}
 
 	/**
