@@ -4,6 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
+import hrds.commons.apiannotation.ApiBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -34,10 +35,21 @@ public class Sys_role extends TableEntity
 		__tmpPKS.add("role_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	private Long role_id; //角色ID
-	private String role_name; //角色名称
+	@ApiBean(name ="role_remark",value="备注",dataType = String.class,required = false)
 	private String role_remark; //备注
+	@ApiBean(name ="role_id",value="角色ID",dataType = Long.class,required = true)
+	private Long role_id; //角色ID
+	@ApiBean(name ="role_name",value="角色名称",dataType = String.class,required = true)
+	private String role_name; //角色名称
 
+	/** 取得：备注 */
+	public String getRole_remark(){
+		return role_remark;
+	}
+	/** 设置：备注 */
+	public void setRole_remark(String role_remark){
+		this.role_remark=role_remark;
+	}
 	/** 取得：角色ID */
 	public Long getRole_id(){
 		return role_id;
@@ -59,13 +71,5 @@ public class Sys_role extends TableEntity
 	/** 设置：角色名称 */
 	public void setRole_name(String role_name){
 		this.role_name=role_name;
-	}
-	/** 取得：备注 */
-	public String getRole_remark(){
-		return role_remark;
-	}
-	/** 设置：备注 */
-	public void setRole_remark(String role_remark){
-		this.role_remark=role_remark;
 	}
 }

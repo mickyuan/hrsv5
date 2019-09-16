@@ -4,6 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
+import hrds.commons.apiannotation.ApiBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -34,15 +35,25 @@ public class Etl_agent_downinfo extends TableEntity
 		__tmpPKS.add("down_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
+	@ApiBean(name ="down_id",value="下载编号(primary)",dataType = Long.class,required = true)
 	private Long down_id; //下载编号(primary)
+	@ApiBean(name ="agent_name",value="Agent名称",dataType = String.class,required = true)
 	private String agent_name; //Agent名称
+	@ApiBean(name ="agent_ip",value="Agent IP",dataType = String.class,required = true)
 	private String agent_ip; //Agent IP
+	@ApiBean(name ="save_dir",value="存放目录",dataType = String.class,required = true)
 	private String save_dir; //存放目录
+	@ApiBean(name ="ai_desc",value="描述",dataType = String.class,required = false)
 	private String ai_desc; //描述
+	@ApiBean(name ="remark",value="备注",dataType = String.class,required = false)
 	private String remark; //备注
+	@ApiBean(name ="user_id",value="用户id",dataType = Long.class,required = true)
 	private Long user_id; //用户id
+	@ApiBean(name ="user_name",value="用户名",dataType = String.class,required = false)
 	private String user_name; //用户名
+	@ApiBean(name ="passwd",value="密码",dataType = String.class,required = false)
 	private String passwd; //密码
+	@ApiBean(name ="agent_type",value="agent类别",dataType = String.class,required = true)
 	private String agent_type; //agent类别
 
 	/** 取得：下载编号(primary) */

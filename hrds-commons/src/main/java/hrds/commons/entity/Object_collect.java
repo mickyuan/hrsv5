@@ -4,6 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
+import hrds.commons.apiannotation.ApiBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -34,21 +35,37 @@ public class Object_collect extends TableEntity
 		__tmpPKS.add("odc_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
+	@ApiBean(name ="odc_id",value="对象采集id",dataType = Long.class,required = true)
 	private Long odc_id; //对象采集id
+	@ApiBean(name ="obj_number",value="对象采集设置编号",dataType = String.class,required = true)
 	private String obj_number; //对象采集设置编号
+	@ApiBean(name ="obj_collect_name",value="对象采集任务名称",dataType = String.class,required = true)
 	private String obj_collect_name; //对象采集任务名称
+	@ApiBean(name ="system_name",value="操作系统类型",dataType = String.class,required = true)
 	private String system_name; //操作系统类型
+	@ApiBean(name ="host_name",value="主机名称",dataType = String.class,required = true)
 	private String host_name; //主机名称
+	@ApiBean(name ="local_time",value="本地系统时间",dataType = String.class,required = true)
 	private String local_time; //本地系统时间
+	@ApiBean(name ="server_date",value="服务器日期",dataType = String.class,required = true)
 	private String server_date; //服务器日期
+	@ApiBean(name ="s_date",value="开始日期",dataType = String.class,required = true)
 	private String s_date; //开始日期
+	@ApiBean(name ="e_date",value="结束日期",dataType = String.class,required = true)
 	private String e_date; //结束日期
+	@ApiBean(name ="database_code",value="采集编码",dataType = String.class,required = true)
 	private String database_code; //采集编码
+	@ApiBean(name ="run_way",value="启动方式",dataType = String.class,required = true)
 	private String run_way; //启动方式
+	@ApiBean(name ="file_path",value="采集文件路径",dataType = String.class,required = true)
 	private String file_path; //采集文件路径
+	@ApiBean(name ="remark",value="备注",dataType = String.class,required = false)
 	private String remark; //备注
+	@ApiBean(name ="agent_id",value="Agent_id",dataType = Long.class,required = true)
 	private Long agent_id; //Agent_id
+	@ApiBean(name ="is_sendok",value="是否设置完成并发送成功",dataType = String.class,required = true)
 	private String is_sendok; //是否设置完成并发送成功
+	@ApiBean(name ="object_collect_type",value="对象采集方式",dataType = String.class,required = true)
 	private String object_collect_type; //对象采集方式
 
 	/** 取得：对象采集id */

@@ -4,6 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
+import hrds.commons.apiannotation.ApiBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -36,12 +37,19 @@ public class Datastage extends TableEntity
 		__tmpPKS.add("stage");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
+	@ApiBean(name ="jobkey",value="数据库设置id",dataType = Long.class,required = true)
 	private Long jobkey; //数据库设置id
+	@ApiBean(name ="tablename",value="表名字",dataType = String.class,required = true)
 	private String tablename; //表名字
+	@ApiBean(name ="stage",value="采集阶段",dataType = String.class,required = true)
 	private String stage; //采集阶段
+	@ApiBean(name ="state",value="所处状态",dataType = String.class,required = true)
 	private String state; //所处状态
+	@ApiBean(name ="previousstage",value="上一阶段",dataType = String.class,required = false)
 	private String previousstage; //上一阶段
+	@ApiBean(name ="nextstage",value="下一阶段",dataType = String.class,required = false)
 	private String nextstage; //下一阶段
+	@ApiBean(name ="remark",value="备注",dataType = String.class,required = false)
 	private String remark; //备注
 
 	/** 取得：数据库设置id */

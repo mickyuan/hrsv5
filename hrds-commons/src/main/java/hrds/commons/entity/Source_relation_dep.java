@@ -4,6 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
+import hrds.commons.apiannotation.ApiBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -34,7 +35,9 @@ public class Source_relation_dep extends TableEntity
 		__tmpPKS.add("source_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
+	@ApiBean(name ="source_id",value="数据源ID",dataType = Long.class,required = true)
 	private Long source_id; //数据源ID
+	@ApiBean(name ="dep_id",value="部门ID",dataType = Long.class,required = true)
 	private Long dep_id; //部门ID
 
 	/** 取得：数据源ID */

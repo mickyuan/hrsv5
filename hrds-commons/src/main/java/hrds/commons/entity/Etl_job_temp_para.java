@@ -4,6 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
+import hrds.commons.apiannotation.ApiBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -34,11 +35,17 @@ public class Etl_job_temp_para extends TableEntity
 		__tmpPKS.add("etl_temp_para_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
+	@ApiBean(name ="etl_temp_para_id",value="模版参数主键",dataType = Long.class,required = true)
 	private Long etl_temp_para_id; //模版参数主键
+	@ApiBean(name ="etl_para_type",value="参数类型",dataType = String.class,required = true)
 	private String etl_para_type; //参数类型
+	@ApiBean(name ="etl_job_pro_para",value="参数名称",dataType = String.class,required = true)
 	private String etl_job_pro_para; //参数名称
+	@ApiBean(name ="etl_job_para_size",value="参数",dataType = String.class,required = true)
 	private String etl_job_para_size; //参数
+	@ApiBean(name ="etl_pro_para_sort",value="参数排序",dataType = Long.class,required = true)
 	private Long etl_pro_para_sort; //参数排序
+	@ApiBean(name ="etl_temp_id",value="模版ID",dataType = Long.class,required = true)
 	private Long etl_temp_id; //模版ID
 
 	/** 取得：模版参数主键 */

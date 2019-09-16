@@ -4,6 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
+import hrds.commons.apiannotation.ApiBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -34,14 +35,23 @@ public class Column_merge extends TableEntity
 		__tmpPKS.add("col_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
+	@ApiBean(name ="col_id",value="字段编号",dataType = Long.class,required = true)
 	private Long col_id; //字段编号
+	@ApiBean(name ="col_name",value="合并后字段名称",dataType = String.class,required = true)
 	private String col_name; //合并后字段名称
+	@ApiBean(name ="old_name",value="要合并的字段",dataType = String.class,required = true)
 	private String old_name; //要合并的字段
+	@ApiBean(name ="col_zhname",value="中文名称",dataType = String.class,required = false)
 	private String col_zhname; //中文名称
+	@ApiBean(name ="col_type",value="字段类型",dataType = String.class,required = true)
 	private String col_type; //字段类型
+	@ApiBean(name ="remark",value="备注",dataType = String.class,required = false)
 	private String remark; //备注
+	@ApiBean(name ="table_id",value="表名ID",dataType = Long.class,required = true)
 	private Long table_id; //表名ID
+	@ApiBean(name ="valid_s_date",value="有效开始日期",dataType = String.class,required = true)
 	private String valid_s_date; //有效开始日期
+	@ApiBean(name ="valid_e_date",value="有效结束日期",dataType = String.class,required = true)
 	private String valid_e_date; //有效结束日期
 
 	/** 取得：字段编号 */

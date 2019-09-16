@@ -4,6 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
+import hrds.commons.apiannotation.ApiBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -34,17 +35,29 @@ public class Column_clean extends TableEntity
 		__tmpPKS.add("c_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
+	@ApiBean(name ="c_id",value="清洗参数编号",dataType = Long.class,required = true)
 	private Long c_id; //清洗参数编号
+	@ApiBean(name ="clean_type",value="清洗方式",dataType = String.class,required = true)
 	private String clean_type; //清洗方式
+	@ApiBean(name ="character_filling",value="补齐字符",dataType = String.class,required = false)
 	private String character_filling; //补齐字符
+	@ApiBean(name ="filling_length",value="补齐长度",dataType = Long.class,required = false)
 	private Long filling_length; //补齐长度
+	@ApiBean(name ="field",value="原字段",dataType = String.class,required = false)
 	private String field; //原字段
+	@ApiBean(name ="replace_feild",value="替换字段",dataType = String.class,required = false)
 	private String replace_feild; //替换字段
+	@ApiBean(name ="filling_type",value="补齐方式",dataType = String.class,required = false)
 	private String filling_type; //补齐方式
+	@ApiBean(name ="convert_format",value="转换格式",dataType = String.class,required = false)
 	private String convert_format; //转换格式
+	@ApiBean(name ="old_format",value="原始格式",dataType = String.class,required = false)
 	private String old_format; //原始格式
+	@ApiBean(name ="column_id",value="字段ID",dataType = Long.class,required = true)
 	private Long column_id; //字段ID
+	@ApiBean(name ="codename",value="码值名称",dataType = String.class,required = false)
 	private String codename; //码值名称
+	@ApiBean(name ="codesys",value="码值所属系统",dataType = String.class,required = false)
 	private String codesys; //码值所属系统
 
 	/** 取得：清洗参数编号 */

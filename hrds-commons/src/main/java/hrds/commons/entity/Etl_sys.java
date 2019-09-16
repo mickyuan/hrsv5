@@ -4,6 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
+import hrds.commons.apiannotation.ApiBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -34,21 +35,37 @@ public class Etl_sys extends TableEntity
 		__tmpPKS.add("etl_sys_cd");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
+	@ApiBean(name ="etl_sys_cd",value="工程代码",dataType = String.class,required = true)
 	private String etl_sys_cd; //工程代码
+	@ApiBean(name ="etl_sys_name",value="工程名称",dataType = String.class,required = true)
 	private String etl_sys_name; //工程名称
+	@ApiBean(name ="etl_serv_ip",value="etl服务器ip",dataType = String.class,required = false)
 	private String etl_serv_ip; //etl服务器ip
+	@ApiBean(name ="etl_serv_port",value="etl服务器端口",dataType = String.class,required = false)
 	private String etl_serv_port; //etl服务器端口
+	@ApiBean(name ="contact_person",value="联系人",dataType = String.class,required = false)
 	private String contact_person; //联系人
+	@ApiBean(name ="contact_phone",value="联系电话",dataType = String.class,required = false)
 	private String contact_phone; //联系电话
+	@ApiBean(name ="comments",value="备注信息",dataType = String.class,required = false)
 	private String comments; //备注信息
+	@ApiBean(name ="curr_bath_date",value="当前批量日期",dataType = String.class,required = false)
 	private String curr_bath_date; //当前批量日期
+	@ApiBean(name ="bath_shift_time",value="系统日切时间",dataType = String.class,required = false)
 	private String bath_shift_time; //系统日切时间
+	@ApiBean(name ="main_serv_sync",value="主服务器同步标志",dataType = String.class,required = false)
 	private String main_serv_sync; //主服务器同步标志
+	@ApiBean(name ="sys_run_status",value="系统状态",dataType = String.class,required = false)
 	private String sys_run_status; //系统状态
+	@ApiBean(name ="serv_file_path",value="部署服务器路径",dataType = String.class,required = false)
 	private String serv_file_path; //部署服务器路径
+	@ApiBean(name ="user_name",value="主机服务器用户名",dataType = String.class,required = false)
 	private String user_name; //主机服务器用户名
+	@ApiBean(name ="user_pwd",value="主机用户密码",dataType = String.class,required = false)
 	private String user_pwd; //主机用户密码
+	@ApiBean(name ="remarks",value="备注",dataType = String.class,required = false)
 	private String remarks; //备注
+	@ApiBean(name ="user_id",value="用户ID",dataType = Long.class,required = true)
 	private Long user_id; //用户ID
 
 	/** 取得：工程代码 */

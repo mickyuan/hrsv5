@@ -4,6 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
+import hrds.commons.apiannotation.ApiBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -34,13 +35,21 @@ public class Sys_dump extends TableEntity
 		__tmpPKS.add("dump_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
+	@ApiBean(name ="dump_id",value="备份id",dataType = Long.class,required = true)
 	private Long dump_id; //备份id
+	@ApiBean(name ="bak_date",value="备份日期",dataType = String.class,required = true)
 	private String bak_date; //备份日期
+	@ApiBean(name ="bak_time",value="备份时间",dataType = String.class,required = true)
 	private String bak_time; //备份时间
+	@ApiBean(name ="file_size",value="文件大小",dataType = String.class,required = true)
 	private String file_size; //文件大小
+	@ApiBean(name ="hdfs_path",value="文件存放hdfs路径",dataType = String.class,required = true)
 	private String hdfs_path; //文件存放hdfs路径
+	@ApiBean(name ="length",value="备份时长",dataType = String.class,required = true)
 	private String length; //备份时长
+	@ApiBean(name ="remark",value="备注",dataType = String.class,required = false)
 	private String remark; //备注
+	@ApiBean(name ="file_name",value="文件名称",dataType = String.class,required = true)
 	private String file_name; //文件名称
 
 	/** 取得：备份id */

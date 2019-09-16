@@ -4,6 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
+import hrds.commons.apiannotation.ApiBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -34,13 +35,21 @@ public class File_collect_set extends TableEntity
 		__tmpPKS.add("fcs_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
+	@ApiBean(name ="fcs_id",value="文件系统采集ID",dataType = Long.class,required = true)
 	private Long fcs_id; //文件系统采集ID
+	@ApiBean(name ="agent_id",value="Agent_id",dataType = Long.class,required = false)
 	private Long agent_id; //Agent_id
+	@ApiBean(name ="host_name",value="主机名称",dataType = String.class,required = false)
 	private String host_name; //主机名称
+	@ApiBean(name ="system_type",value="操作系统类型",dataType = String.class,required = false)
 	private String system_type; //操作系统类型
+	@ApiBean(name ="remark",value="备注",dataType = String.class,required = false)
 	private String remark; //备注
+	@ApiBean(name ="fcs_name",value="文件系统采集任务名称",dataType = String.class,required = true)
 	private String fcs_name; //文件系统采集任务名称
+	@ApiBean(name ="is_sendok",value="是否设置完成并发送成功",dataType = String.class,required = true)
 	private String is_sendok; //是否设置完成并发送成功
+	@ApiBean(name ="is_solr",value="是否入solr",dataType = String.class,required = true)
 	private String is_solr; //是否入solr
 
 	/** 取得：文件系统采集ID */

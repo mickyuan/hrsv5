@@ -4,6 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
+import hrds.commons.apiannotation.ApiBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -34,16 +35,27 @@ public class Signal_file extends TableEntity
 		__tmpPKS.add("signal_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
+	@ApiBean(name ="signal_id",value="信号id",dataType = Long.class,required = true)
 	private Long signal_id; //信号id
+	@ApiBean(name ="is_into_hbase",value="是否入hbase",dataType = String.class,required = true)
 	private String is_into_hbase; //是否入hbase
+	@ApiBean(name ="is_into_hive",value="是否入hive",dataType = String.class,required = true)
 	private String is_into_hive; //是否入hive
+	@ApiBean(name ="is_fullindex",value="是否创建全文索引",dataType = String.class,required = true)
 	private String is_fullindex; //是否创建全文索引
+	@ApiBean(name ="file_format",value="文件格式",dataType = String.class,required = true)
 	private String file_format; //文件格式
+	@ApiBean(name ="is_compression",value="Hbase是使用压缩",dataType = String.class,required = true)
 	private String is_compression; //Hbase是使用压缩
+	@ApiBean(name ="is_mpp",value="是否为MPP",dataType = String.class,required = true)
 	private String is_mpp; //是否为MPP
+	@ApiBean(name ="table_type",value="是内部表还是外部表",dataType = String.class,required = true)
 	private String table_type; //是内部表还是外部表
+	@ApiBean(name ="is_solr_hbase",value="是否使用solrOnHbase",dataType = String.class,required = true)
 	private String is_solr_hbase; //是否使用solrOnHbase
+	@ApiBean(name ="database_id",value="数据库设置id",dataType = Long.class,required = true)
 	private Long database_id; //数据库设置id
+	@ApiBean(name ="is_cbd",value="是否使用carbondata",dataType = String.class,required = true)
 	private String is_cbd; //是否使用carbondata
 
 	/** 取得：信号id */

@@ -4,6 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
+import hrds.commons.apiannotation.ApiBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -34,19 +35,33 @@ public class Table_info extends TableEntity
 		__tmpPKS.add("table_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
+	@ApiBean(name ="table_id",value="表名ID",dataType = Long.class,required = true)
 	private Long table_id; //表名ID
+	@ApiBean(name ="table_name",value="表名",dataType = String.class,required = true)
 	private String table_name; //表名
+	@ApiBean(name ="table_ch_name",value="中文名称",dataType = String.class,required = true)
 	private String table_ch_name; //中文名称
+	@ApiBean(name ="table_count",value="记录数",dataType = String.class,required = false)
 	private String table_count; //记录数
+	@ApiBean(name ="source_tableid",value="源表ID",dataType = String.class,required = false)
 	private String source_tableid; //源表ID
+	@ApiBean(name ="valid_s_date",value="有效开始日期",dataType = String.class,required = true)
 	private String valid_s_date; //有效开始日期
+	@ApiBean(name ="valid_e_date",value="有效结束日期",dataType = String.class,required = true)
 	private String valid_e_date; //有效结束日期
+	@ApiBean(name ="sql",value="自定义sql语句",dataType = String.class,required = false)
 	private String sql; //自定义sql语句
+	@ApiBean(name ="remark",value="备注",dataType = String.class,required = false)
 	private String remark; //备注
+	@ApiBean(name ="is_user_defined",value="是否自定义sql采集",dataType = String.class,required = true)
 	private String is_user_defined; //是否自定义sql采集
+	@ApiBean(name ="database_id",value="数据库设置id",dataType = Long.class,required = true)
 	private Long database_id; //数据库设置id
+	@ApiBean(name ="ti_or",value="清洗顺序",dataType = String.class,required = false)
 	private String ti_or; //清洗顺序
+	@ApiBean(name ="is_md5",value="是否使用MD5",dataType = String.class,required = true)
 	private String is_md5; //是否使用MD5
+	@ApiBean(name ="is_register",value="是否仅登记",dataType = String.class,required = true)
 	private String is_register; //是否仅登记
 
 	/** 取得：表名ID */

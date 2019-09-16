@@ -4,6 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
+import hrds.commons.apiannotation.ApiBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -34,27 +35,49 @@ public class Ftp_collect extends TableEntity
 		__tmpPKS.add("ftp_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
+	@ApiBean(name ="ftp_id",value="ftp采集id",dataType = Long.class,required = true)
 	private Long ftp_id; //ftp采集id
+	@ApiBean(name ="ftp_number",value="ftp任务编号",dataType = String.class,required = true)
 	private String ftp_number; //ftp任务编号
+	@ApiBean(name ="ftp_name",value="ftp采集任务名称",dataType = String.class,required = true)
 	private String ftp_name; //ftp采集任务名称
+	@ApiBean(name ="start_date",value="开始日期",dataType = String.class,required = true)
 	private String start_date; //开始日期
+	@ApiBean(name ="end_date",value="结束日期",dataType = String.class,required = true)
 	private String end_date; //结束日期
+	@ApiBean(name ="ftp_ip",value="ftp服务IP",dataType = String.class,required = true)
 	private String ftp_ip; //ftp服务IP
+	@ApiBean(name ="ftp_port",value="ftp服务器端口",dataType = String.class,required = true)
 	private String ftp_port; //ftp服务器端口
+	@ApiBean(name ="ftp_username",value="ftp用户名",dataType = String.class,required = true)
 	private String ftp_username; //ftp用户名
+	@ApiBean(name ="ftp_password",value="用户密码",dataType = String.class,required = true)
 	private String ftp_password; //用户密码
+	@ApiBean(name ="ftp_dir",value="ftp服务器目录",dataType = String.class,required = true)
 	private String ftp_dir; //ftp服务器目录
+	@ApiBean(name ="local_path",value="本地路径",dataType = String.class,required = true)
 	private String local_path; //本地路径
+	@ApiBean(name ="file_suffix",value="获取文件后缀",dataType = String.class,required = false)
 	private String file_suffix; //获取文件后缀
+	@ApiBean(name ="run_way",value="启动方式",dataType = String.class,required = true)
 	private String run_way; //启动方式
+	@ApiBean(name ="remark",value="备注",dataType = String.class,required = false)
 	private String remark; //备注
+	@ApiBean(name ="agent_id",value="Agent_id",dataType = Long.class,required = true)
 	private Long agent_id; //Agent_id
+	@ApiBean(name ="ftp_rule_path",value="下级目录规则",dataType = String.class,required = true)
 	private String ftp_rule_path; //下级目录规则
+	@ApiBean(name ="child_file_path",value="下级文件路径",dataType = String.class,required = false)
 	private String child_file_path; //下级文件路径
+	@ApiBean(name ="child_time",value="下级文件时间",dataType = String.class,required = false)
 	private String child_time; //下级文件时间
+	@ApiBean(name ="is_sendok",value="是否完成",dataType = String.class,required = true)
 	private String is_sendok; //是否完成
+	@ApiBean(name ="is_unzip",value="是否解压",dataType = String.class,required = true)
 	private String is_unzip; //是否解压
+	@ApiBean(name ="reduce_type",value="解压格式",dataType = String.class,required = false)
 	private String reduce_type; //解压格式
+	@ApiBean(name ="ftp_model",value="FTP推拉模式是为推模式",dataType = String.class,required = true)
 	private String ftp_model; //FTP推拉模式是为推模式
 
 	/** 取得：ftp采集id */

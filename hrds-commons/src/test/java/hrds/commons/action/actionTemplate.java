@@ -13,7 +13,6 @@ import hrds.commons.utils.User;
  * @author: xchao
  * @create: 2019-09-16 10:57
  */
-
 @DocClass(describe = "类注释模版",isApi = true,author = "xchao",time = "2019年9月16日 09:21:41")
 public class actionTemplate {
 	@DocMethod(description = "获取用户", version = "v5",isApi = true)

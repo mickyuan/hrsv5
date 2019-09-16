@@ -4,6 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
+import hrds.commons.apiannotation.ApiBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -35,38 +36,71 @@ public class Etl_job_cur extends TableEntity
 		__tmpPKS.add("etl_sys_cd");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
+	@ApiBean(name ="etl_job_desc",value="作业描述",dataType = String.class,required = false)
 	private String etl_job_desc; //作业描述
+	@ApiBean(name ="pro_type",value="作业程序类型",dataType = String.class,required = false)
 	private String pro_type; //作业程序类型
+	@ApiBean(name ="pro_dic",value="作业程序目录",dataType = String.class,required = false)
 	private String pro_dic; //作业程序目录
+	@ApiBean(name ="pro_name",value="作业程序名称",dataType = String.class,required = false)
 	private String pro_name; //作业程序名称
+	@ApiBean(name ="pro_para",value="作业程序参数",dataType = String.class,required = false)
 	private String pro_para; //作业程序参数
+	@ApiBean(name ="log_dic",value="日志目录",dataType = String.class,required = false)
 	private String log_dic; //日志目录
+	@ApiBean(name ="disp_freq",value="调度频率",dataType = String.class,required = false)
 	private String disp_freq; //调度频率
+	@ApiBean(name ="disp_offset",value="调度时间位移",dataType = Integer.class,required = false)
 	private Integer disp_offset; //调度时间位移
+	@ApiBean(name ="disp_type",value="调度触发方式",dataType = String.class,required = false)
 	private String disp_type; //调度触发方式
+	@ApiBean(name ="disp_time",value="调度触发时间",dataType = String.class,required = false)
 	private String disp_time; //调度触发时间
+	@ApiBean(name ="job_eff_flag",value="作业有效标志",dataType = String.class,required = false)
 	private String job_eff_flag; //作业有效标志
+	@ApiBean(name ="job_priority",value="作业优先级",dataType = Integer.class,required = false)
 	private Integer job_priority; //作业优先级
+	@ApiBean(name ="job_disp_status",value="作业调度状态",dataType = String.class,required = false)
 	private String job_disp_status; //作业调度状态
+	@ApiBean(name ="curr_st_time",value="开始时间",dataType = String.class,required = false)
 	private String curr_st_time; //开始时间
+	@ApiBean(name ="curr_end_time",value="结束时间",dataType = String.class,required = false)
 	private String curr_end_time; //结束时间
+	@ApiBean(name ="overlength_val",value="超长阀值",dataType = Integer.class,required = false)
 	private Integer overlength_val; //超长阀值
+	@ApiBean(name ="overtime_val",value="超时阀值",dataType = Integer.class,required = false)
 	private Integer overtime_val; //超时阀值
+	@ApiBean(name ="comments",value="备注信息",dataType = String.class,required = false)
 	private String comments; //备注信息
+	@ApiBean(name ="curr_bath_date",value="当前批量日期",dataType = String.class,required = false)
 	private String curr_bath_date; //当前批量日期
+	@ApiBean(name ="today_disp",value="当天是否调度",dataType = String.class,required = false)
 	private String today_disp; //当天是否调度
+	@ApiBean(name ="main_serv_sync",value="主服务器同步标志",dataType = String.class,required = false)
 	private String main_serv_sync; //主服务器同步标志
+	@ApiBean(name ="job_process_id",value="作业进程号",dataType = String.class,required = false)
 	private String job_process_id; //作业进程号
+	@ApiBean(name ="job_priority_curr",value="作业当前优先级",dataType = Integer.class,required = false)
 	private Integer job_priority_curr; //作业当前优先级
+	@ApiBean(name ="job_return_val",value="作业返回值",dataType = Integer.class,required = false)
 	private Integer job_return_val; //作业返回值
+	@ApiBean(name ="etl_job",value="作业名",dataType = String.class,required = true)
 	private String etl_job; //作业名
+	@ApiBean(name ="sub_sys_cd",value="子系统代码",dataType = String.class,required = true)
 	private String sub_sys_cd; //子系统代码
+	@ApiBean(name ="exe_frequency",value="每隔(分钟)执行",dataType = Long.class,required = false)
 	private Long exe_frequency; //每隔(分钟)执行
+	@ApiBean(name ="exe_num",value="执行次数",dataType = Integer.class,required = false)
 	private Integer exe_num; //执行次数
+	@ApiBean(name ="com_exe_num",value="已经执行次数",dataType = Integer.class,required = false)
 	private Integer com_exe_num; //已经执行次数
+	@ApiBean(name ="last_exe_time",value="上次执行时间",dataType = String.class,required = false)
 	private String last_exe_time; //上次执行时间
+	@ApiBean(name ="star_time",value="开始执行时间",dataType = String.class,required = false)
 	private String star_time; //开始执行时间
+	@ApiBean(name ="end_time",value="结束执行时间",dataType = String.class,required = false)
 	private String end_time; //结束执行时间
+	@ApiBean(name ="etl_sys_cd",value="工程代码",dataType = String.class,required = true)
 	private String etl_sys_cd; //工程代码
 
 	/** 取得：作业描述 */

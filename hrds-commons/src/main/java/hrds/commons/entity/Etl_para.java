@@ -4,6 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
+import hrds.commons.apiannotation.ApiBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -35,10 +36,15 @@ public class Etl_para extends TableEntity
 		__tmpPKS.add("etl_sys_cd");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
+	@ApiBean(name ="para_cd",value="变量代码",dataType = String.class,required = true)
 	private String para_cd; //变量代码
+	@ApiBean(name ="para_val",value="变量值",dataType = String.class,required = false)
 	private String para_val; //变量值
+	@ApiBean(name ="para_type",value="变量类型",dataType = String.class,required = false)
 	private String para_type; //变量类型
+	@ApiBean(name ="etl_sys_cd",value="工程代码",dataType = String.class,required = true)
 	private String etl_sys_cd; //工程代码
+	@ApiBean(name ="para_desc",value="作业描述",dataType = String.class,required = false)
 	private String para_desc; //作业描述
 
 	/** 取得：变量代码 */

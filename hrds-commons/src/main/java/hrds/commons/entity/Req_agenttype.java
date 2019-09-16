@@ -4,6 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
+import hrds.commons.apiannotation.ApiBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -34,10 +35,15 @@ public class Req_agenttype extends TableEntity
 		__tmpPKS.add("req_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
+	@ApiBean(name ="req_name",value="中文名称",dataType = String.class,required = true)
 	private String req_name; //中文名称
+	@ApiBean(name ="req_no",value="请求编号",dataType = String.class,required = false)
 	private String req_no; //请求编号
+	@ApiBean(name ="req_remark",value="备注",dataType = String.class,required = false)
 	private String req_remark; //备注
+	@ApiBean(name ="req_id",value="请求ID",dataType = Long.class,required = true)
 	private Long req_id; //请求ID
+	@ApiBean(name ="comp_id",value="组件编号",dataType = String.class,required = true)
 	private String comp_id; //组件编号
 
 	/** 取得：中文名称 */

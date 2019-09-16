@@ -4,6 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
+import hrds.commons.apiannotation.ApiBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -34,26 +35,47 @@ public class Collect_case extends TableEntity
 		__tmpPKS.add("job_rs_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
+	@ApiBean(name ="job_rs_id",value="作业执行结果ID",dataType = String.class,required = true)
 	private String job_rs_id; //作业执行结果ID
+	@ApiBean(name ="colect_record",value="总共采集记录数",dataType = Long.class,required = true)
 	private Long colect_record; //总共采集记录数
+	@ApiBean(name ="collect_total",value="总共采集(文件)表",dataType = Long.class,required = false)
 	private Long collect_total; //总共采集(文件)表
+	@ApiBean(name ="collet_database_size",value="总共采集数据大小",dataType = String.class,required = false)
 	private String collet_database_size; //总共采集数据大小
+	@ApiBean(name ="collect_s_time",value="开始采集时间",dataType = String.class,required = true)
 	private String collect_s_time; //开始采集时间
+	@ApiBean(name ="collect_s_date",value="开始采集日期",dataType = String.class,required = true)
 	private String collect_s_date; //开始采集日期
+	@ApiBean(name ="collect_e_date",value="采集结束日期",dataType = String.class,required = false)
 	private String collect_e_date; //采集结束日期
+	@ApiBean(name ="collect_e_time",value="采集结束时间",dataType = String.class,required = false)
 	private String collect_e_time; //采集结束时间
+	@ApiBean(name ="execute_state",value="运行状态",dataType = String.class,required = true)
 	private String execute_state; //运行状态
+	@ApiBean(name ="execute_length",value="运行总时长",dataType = String.class,required = false)
 	private String execute_length; //运行总时长
+	@ApiBean(name ="is_again",value="是否重跑",dataType = String.class,required = true)
 	private String is_again; //是否重跑
+	@ApiBean(name ="job_group",value="agent组ID",dataType = String.class,required = true)
 	private String job_group; //agent组ID
+	@ApiBean(name ="collect_set_id",value="数据库设置id",dataType = Long.class,required = true)
 	private Long collect_set_id; //数据库设置id
+	@ApiBean(name ="table_name",value="表名",dataType = String.class,required = false)
 	private String table_name; //表名
+	@ApiBean(name ="collect_type",value="采集类型",dataType = String.class,required = true)
 	private String collect_type; //采集类型
+	@ApiBean(name ="job_type",value="任务类型",dataType = String.class,required = false)
 	private String job_type; //任务类型
+	@ApiBean(name ="cc_remark",value="备注",dataType = String.class,required = false)
 	private String cc_remark; //备注
+	@ApiBean(name ="etl_date",value="跑批日期",dataType = String.class,required = false)
 	private String etl_date; //跑批日期
+	@ApiBean(name ="again_num",value="重跑次数",dataType = Long.class,required = false)
 	private Long again_num; //重跑次数
+	@ApiBean(name ="agent_id",value="Agent_id",dataType = Long.class,required = true)
 	private Long agent_id; //Agent_id
+	@ApiBean(name ="source_id",value="数据源ID",dataType = Long.class,required = true)
 	private Long source_id; //数据源ID
 
 	/** 取得：作业执行结果ID */

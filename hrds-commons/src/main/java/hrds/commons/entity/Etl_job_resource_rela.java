@@ -4,6 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
+import hrds.commons.apiannotation.ApiBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -35,9 +36,13 @@ public class Etl_job_resource_rela extends TableEntity
 		__tmpPKS.add("etl_sys_cd");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
+	@ApiBean(name ="resource_type",value="资源使用类型",dataType = String.class,required = false)
 	private String resource_type; //资源使用类型
+	@ApiBean(name ="resource_req",value="资源需求数",dataType = Integer.class,required = false)
 	private Integer resource_req; //资源需求数
+	@ApiBean(name ="etl_job",value="作业名",dataType = String.class,required = true)
 	private String etl_job; //作业名
+	@ApiBean(name ="etl_sys_cd",value="工程代码",dataType = String.class,required = true)
 	private String etl_sys_cd; //工程代码
 
 	/** 取得：资源使用类型 */

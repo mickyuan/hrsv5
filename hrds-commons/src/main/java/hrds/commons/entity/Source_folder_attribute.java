@@ -4,6 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
+import hrds.commons.apiannotation.ApiBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -34,17 +35,29 @@ public class Source_folder_attribute extends TableEntity
 		__tmpPKS.add("folder_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
+	@ApiBean(name ="folder_id",value="文件夹编号",dataType = Long.class,required = true)
 	private Long folder_id; //文件夹编号
+	@ApiBean(name ="folder_name",value="文件夹名",dataType = String.class,required = true)
 	private String folder_name; //文件夹名
+	@ApiBean(name ="folder_size",value="文件夹大小",dataType = BigDecimal.class,required = true)
 	private BigDecimal folder_size; //文件夹大小
+	@ApiBean(name ="original_create_time",value="文件夹生成时间",dataType = String.class,required = true)
 	private String original_create_time; //文件夹生成时间
+	@ApiBean(name ="storage_date",value="文件夹入库日期",dataType = String.class,required = true)
 	private String storage_date; //文件夹入库日期
+	@ApiBean(name ="folders_in_no",value="文件夹内文件夹数量",dataType = Long.class,required = true)
 	private Long folders_in_no; //文件夹内文件夹数量
+	@ApiBean(name ="location_in_hdfs",value="hdfs中存储位置",dataType = String.class,required = true)
 	private String location_in_hdfs; //hdfs中存储位置
+	@ApiBean(name ="original_create_date",value="文件夹生产日期",dataType = String.class,required = true)
 	private String original_create_date; //文件夹生产日期
+	@ApiBean(name ="storage_time",value="文件夹入库时间",dataType = String.class,required = true)
 	private String storage_time; //文件夹入库时间
+	@ApiBean(name ="super_id",value="文件夹编号",dataType = Long.class,required = false)
 	private Long super_id; //文件夹编号
+	@ApiBean(name ="agent_id",value="Agent_id",dataType = Long.class,required = true)
 	private Long agent_id; //Agent_id
+	@ApiBean(name ="source_id",value="数据源ID",dataType = Long.class,required = true)
 	private Long source_id; //数据源ID
 
 	/** 取得：文件夹编号 */

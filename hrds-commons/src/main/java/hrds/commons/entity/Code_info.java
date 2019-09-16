@@ -4,6 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
+import hrds.commons.apiannotation.ApiBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -35,10 +36,15 @@ public class Code_info extends TableEntity
 		__tmpPKS.add("ci_sp_class");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
+	@ApiBean(name ="ci_sp_code",value="代码值",dataType = String.class,required = true)
 	private String ci_sp_code; //代码值
+	@ApiBean(name ="ci_sp_class",value="所属类别号",dataType = String.class,required = true)
 	private String ci_sp_class; //所属类别号
+	@ApiBean(name ="ci_sp_classname",value="类别名称",dataType = String.class,required = true)
 	private String ci_sp_classname; //类别名称
+	@ApiBean(name ="ci_sp_name",value="代码名称",dataType = String.class,required = true)
 	private String ci_sp_name; //代码名称
+	@ApiBean(name ="ci_sp_remark",value="备注",dataType = String.class,required = false)
 	private String ci_sp_remark; //备注
 
 	/** 取得：代码值 */

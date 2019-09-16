@@ -4,6 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
+import hrds.commons.apiannotation.ApiBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -34,7 +35,9 @@ public class Keytable extends TableEntity
 		__tmpPKS.add("key_name");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
+	@ApiBean(name ="key_name",value="key_name",dataType = String.class,required = true)
 	private String key_name; //key_name
+	@ApiBean(name ="key_value",value="value",dataType = Integer.class,required = false)
 	private Integer key_value; //value
 
 	/** 取得：key_name */

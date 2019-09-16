@@ -4,6 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
+import hrds.commons.apiannotation.ApiBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -34,11 +35,17 @@ public class Ftp_transfered extends TableEntity
 		__tmpPKS.add("ftp_transfered_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
+	@ApiBean(name ="ftp_transfered_id",value="已传输表id",dataType = Long.class,required = true)
 	private Long ftp_transfered_id; //已传输表id
+	@ApiBean(name ="transfered_name",value="已传输文件名称",dataType = String.class,required = true)
 	private String transfered_name; //已传输文件名称
+	@ApiBean(name ="ftp_date",value="ftp日期",dataType = String.class,required = true)
 	private String ftp_date; //ftp日期
+	@ApiBean(name ="ftp_time",value="ftp时间",dataType = String.class,required = true)
 	private String ftp_time; //ftp时间
+	@ApiBean(name ="remark",value="备注",dataType = String.class,required = false)
 	private String remark; //备注
+	@ApiBean(name ="ftp_id",value="ftp采集id",dataType = Long.class,required = true)
 	private Long ftp_id; //ftp采集id
 
 	/** 取得：已传输表id */

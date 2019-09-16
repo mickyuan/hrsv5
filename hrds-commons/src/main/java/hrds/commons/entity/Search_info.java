@@ -4,6 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
+import hrds.commons.apiannotation.ApiBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -34,10 +35,15 @@ public class Search_info extends TableEntity
 		__tmpPKS.add("si_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
+	@ApiBean(name ="si_id",value="si_id",dataType = Long.class,required = true)
 	private Long si_id; //si_id
+	@ApiBean(name ="word_name",value="关键字",dataType = String.class,required = true)
 	private String word_name; //关键字
+	@ApiBean(name ="si_count",value="点击量",dataType = Long.class,required = true)
 	private Long si_count; //点击量
+	@ApiBean(name ="si_remark",value="备注",dataType = String.class,required = false)
 	private String si_remark; //备注
+	@ApiBean(name ="file_id",value="文件编号",dataType = String.class,required = true)
 	private String file_id; //文件编号
 
 	/** 取得：si_id */
