@@ -475,7 +475,6 @@ public class DataQueryWebActionTest extends WebBaseTestCase {
      * 1.收藏文件id存在,文件存在
      * 2.收藏文件id存在,文件不存在
      * 3.收藏文件id不存在,文件存在
-     *
      */
     @Test
     public void saveCollectFileInfo() {
@@ -509,6 +508,17 @@ public class DataQueryWebActionTest extends WebBaseTestCase {
                 .addData("original_name", "init-500")
                 .addData("fileId", "-1000")
                 .post(getActionUrl("saveCollectFileInfo")).getBodyString();
+        ar = JsonUtil.toObject(bodyString, ActionResult.class);
+        assertThat(ar.isSuccess(), is(true));
+    }
+
+    /**
+     * <p>方法名: fileClassifySum</p>
+     * <p>方法说明: 文件采集分类统计测试类</p>
+     */
+    public void fileClassifySum() {
+        bodyString = new HttpClient()
+                .post(getActionUrl("fileClassifySum")).getBodyString();
         ar = JsonUtil.toObject(bodyString, ActionResult.class);
         assertThat(ar.isSuccess(), is(true));
     }

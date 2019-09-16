@@ -271,7 +271,7 @@ public class DataQueryWebAction extends BaseAction {
 
     /**
      * <p>方法名: fileClassifySum</p>
-     * <p>方法说明: 文件采集分类总计</p>
+     * <p>方法说明: 文件采集分类统计</p>
      * 1.根据登录用户的id获取用户文件采集统计的结果
      * 2.根据统计类型设置返回的map结果集
      *
