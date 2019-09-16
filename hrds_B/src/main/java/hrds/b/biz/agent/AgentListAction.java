@@ -43,32 +43,30 @@ public class AgentListAction extends BaseAction {
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/9/3
 	 * 步骤：
-	 * 1、获取用户ID
-	 * 2、根据用户ID去数据库中查询数据源信息
+	 * 1、获取用户ID并根据用户ID去数据库中查询数据源信息
 	 */
-	public Result getAgentSetUpInfo() {
-		//1、获取用户ID
-		Long userId = getUserId();
-		//2、根据用户ID去数据库中查询数据源信息
+	public Result getAgentInfoList() {
+		//1、获取用户ID并根据用户ID去数据库中查询数据源信息
 		return Dbo.queryResult("SELECT datas.source_id,datas.datasource_name " +
 				"FROM agent_info age JOIN data_source datas ON age.source_id = datas.SOURCE_ID " +
-				"WHERE age.user_id = ? GROUP BY datas.source_id,datas.datasource_name", userId);
+				"WHERE age.user_id = ? GROUP BY datas.source_id,datas.datasource_name", getUserId());
 	}
 
 	/**
-	 * @Description: 根据sourceId和agentType获取相应信息
+	 * @Description: 根据sourceId、agentType、userId获取相应信息
 	 * @Param: [sourceId : 数据源ID, 取值范围 : long]
 	 * @Param: [agentType : agent类型(数据库、数据文件、非结构化、非结构化。FTP), 取值范围 : 1-5(char)]
 	 * @return: fd.ng.db.resultset.Result
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/9/3
 	 * 步骤：
-	 * 1、根据sourceId和agentType查询数据库获取相应信息
+	 * 1、根据sourceId、agentType、userId查询数据库获取相应信息
+	 * 注意：获取当前登录用户ID，这里查询必须结合用户ID，否则系统的权限控制就被跳过了
 	 */
 	public Result getAgentInfo(long sourceId, String agentType) {
 		//1、根据sourceId和agentType查询数据库获取相应信息
-		return Dbo.queryResult("SELECT * FROM agent_info WHERE source_id = ? AND agent_type = ?",
-				sourceId, agentType);
+		return Dbo.queryResult("SELECT * FROM agent_info WHERE source_id = ? AND agent_type = ? AND user_id = ?",
+				sourceId, agentType, getUserId());
 	}
 
 	/**
@@ -100,7 +98,7 @@ public class AgentListAction extends BaseAction {
 			throw new BusinessException("未找到Agent");
 		}
 		if (result.getRowCount() != 1) {
-			throw new BusinessException("找到的的Agent不唯一");
+			throw new BusinessException("找到的Agent不唯一");
 		}
 
 		//4、判断该agent是那种类型，并且根据类型，到对应的数据库表中查询采集任务管理详细信息
@@ -121,7 +119,7 @@ public class AgentListAction extends BaseAction {
 			sqlSB.append(" SELECT ds.DATABASE_ID ID,ds.task_name task_name,ds.AGENT_ID AGENT_ID, ")
 					.append(" cf.execute_time execute_time, cf.fre_week fre_week, ")
 					.append(" cf.run_way run_way,cf.fre_month fre_month,cf.fre_day fre_day, ")
-					.append("gi.source_id source_id,cf.collect_type")
+					.append(" gi.source_id source_id,cf.collect_type ")
 					.append(" FROM database_set ds JOIN collect_frequency cf ")
 					.append(" ON ds.database_id = cf.COLLECT_SET_ID ")
 					.append(" LEFT JOIN agent_info gi ON ds.Agent_id = gi.Agent_id ")
@@ -184,12 +182,7 @@ public class AgentListAction extends BaseAction {
 	                          @RequestParam(nullable = true, valueIfNull = "100") int readNum) {
 		//1、对显示日志条数做处理，该方法在加载页面时被调用，readNum可以不传，则默认显示100条，
 		// 如果用户在页面上进行了选择并点击查看按钮，则最多给用户显示1000条日志
-		int num = 0;
-		if ((readNum > 1000)) {
-			num = 1000;
-		} else {
-			num = readNum;
-		}
+		if (readNum > 1000) readNum = 1000;
 		//2、调用方法读取日志并返回
 		return getTaskLog(agentId, getUserId(), logType, readNum).get("log");
 	}
@@ -217,12 +210,7 @@ public class AgentListAction extends BaseAction {
 		try {
 			//1、对显示日志条数做处理，该方法在加载页面时被调用，readNum可以不传，则默认显示100条，
 			// 如果用户在页面上进行了选择并点击查看按钮，如果用户输入的条目多于1000，则给用户显示3000条
-			int num = 0;
-			if ((readNum > 1000)) {
-				num = 3000;
-			} else {
-				num = readNum;
-			}
+			if (readNum > 1000) readNum = 3000;
 			//2、调用方法读取日志，获得日志信息和日志文件路径
 			Map<String, String> taskLog = getTaskLog(agentId, getUserId(), logType, readNum);
 
@@ -537,11 +525,12 @@ public class AgentListAction extends BaseAction {
 	 * @Date: 2019/9/10
 	 */
 	public Result getDBAndDFTaskBySourceId(long sourceId) {
-		return Dbo.queryResult("SELECT database_id " +
+		return Dbo.queryResult("SELECT das.database_id " +
 				"FROM data_source ds " +
 				"JOIN agent_info ai ON ds.source_id = ai.source_id " +
 				"JOIN database_set das ON ai.agent_id = das.agent_id " +
-				"WHERE ds.source_id = ? AND das.is_sendok = ?", sourceId, IsFlag.Shi.getCode());
+				"WHERE ds.source_id = ? AND das.is_sendok = ? AND ds.user_id = ?"
+				, sourceId, IsFlag.Shi.getCode(), getUserId());
 	}
 
 	/**
@@ -552,11 +541,12 @@ public class AgentListAction extends BaseAction {
 	 * @Date: 2019/9/10
 	 */
 	public Result getNonStructTaskBySourceId(long sourceId) {
-		return Dbo.queryResult("SELECT fcs_id " +
+		return Dbo.queryResult("SELECT fcs.fcs_id " +
 				"FROM data_source ds " +
 				"JOIN agent_info ai ON ds.source_id = ai.source_id " +
 				"JOIN file_collect_set fcs ON ai.agent_id = fcs.agent_id " +
-				"WHERE ds.source_id = ? AND fcs.is_sendok = ?", sourceId, IsFlag.Shi.getCode());
+				"WHERE ds.source_id = ? AND fcs.is_sendok = ? AND ds.user_id = ?"
+				, sourceId, IsFlag.Shi.getCode() ,getUserId());
 	}
 
 	/**
@@ -567,26 +557,27 @@ public class AgentListAction extends BaseAction {
 	 * @Date: 2019/9/10
 	 */
 	public Result getHalfStructTaskBySourceId(long sourceId) {
-		return Dbo.queryResult("SELECT odc_id " +
+		return Dbo.queryResult("SELECT fcs.odc_id " +
 				"FROM data_source ds " +
 				"JOIN agent_info ai ON ds.source_id = ai.source_id " +
 				"JOIN object_collect fcs ON ai.agent_id = fcs.agent_id " +
-				"WHERE ds.source_id = ? AND fcs.is_sendok = ?", sourceId, IsFlag.Shi.getCode());
+				"WHERE ds.source_id = ? AND fcs.is_sendok = ? AND ds.user_id = ?"
+				, sourceId, IsFlag.Shi.getCode(), getUserId());
 	}
 
 	/**
-	 * @Description: 根据sourceId查询出设置完成的FTP采集任务的任务ID
+	 * @Description: 根据sourceId查询出FTP采集任务的任务ID
 	 * @Param: [sourceId : 数据源ID, 取值范围 : long]
 	 * @return: fd.ng.db.resultset.Result
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/9/10
 	 */
 	public Result getFTPTaskBySourceId(long sourceId) {
-		return Dbo.queryResult("SELECT ftp_id " +
+		return Dbo.queryResult("SELECT fcs.ftp_id " +
 				"FROM data_source ds " +
 				"JOIN agent_info ai ON ds.source_id = ai.source_id " +
 				"JOIN ftp_collect fcs ON ai.agent_id = fcs.agent_id " +
-				"WHERE ds.source_id = ?", sourceId, IsFlag.Shi.getCode());
+				"WHERE ds.source_id = ? AND ds.user_id = ?", sourceId, IsFlag.Shi.getCode(), getUserId());
 	}
 
 	/**

@@ -28,7 +28,7 @@ public class DBConfStepAction extends BaseAction{
 
 	/**
 	 * @Description: 数据库直连采集，根据databaseId进行查询并在页面上回显数据源配置信息
-	 * @Param: [agentId : AgentID, 取值范围 : long]
+	 * @Param: [databaseId : 数据库设置ID, 取值范围 : long]
 	 * @return: void
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/9/4
@@ -73,6 +73,8 @@ public class DBConfStepAction extends BaseAction{
 	 * @return: java.lang.String
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/9/4
+	 * 步骤：
+	 * 1、根据采集数据源类型和端口号，调用工具类获得数据库连接url等信息
 	 */
 	public String getJDBCDriver(String dbType, String port) {
 		//ConnUtil.getConn_url(dbType, port);
