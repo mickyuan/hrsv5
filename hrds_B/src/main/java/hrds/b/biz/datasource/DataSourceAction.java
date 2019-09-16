@@ -77,7 +77,8 @@ public class DataSourceAction extends BaseAction {
 			// 数据源主键ID
 			dataSource.setSource_id(PrimayKeyGener.getNextId());
 			// 数据源创建用户ID
-			dataSource.setCreate_user_id(getUserId());
+			//dataSource.setCreate_user_id(getUserId());
+			dataSource.setCreate_user_id(5555L);
 			// 数据源创建日期
 			dataSource.setCreate_date(DateUtil.getSysDate());
 			// 数据源创建时间
@@ -146,7 +147,7 @@ public class DataSourceAction extends BaseAction {
 			// 4.循环保存source_relation_dep表信息
 			if (srd.add(Dbo.db()) != 1) {
 				throw new BusinessException("新增保存数据源与部门关系Source_relation_dep表信息失败，" +
-						"dep_id=" + dep_id + ",source_id=" + source_id);
+						"dep_id=" + dep_id);
 			}
 		}
 	}
