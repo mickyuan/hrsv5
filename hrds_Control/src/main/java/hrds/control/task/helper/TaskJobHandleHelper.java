@@ -143,20 +143,21 @@ public class TaskJobHandleHelper {
 		String etlSysCd = handle.getEtl_sys_cd();
 		String etlJobStr = handle.getEtl_job();
 		String currBathDate = etlJobOptional.get().getCurr_bath_date();
-		etlJobOptional = TaskSqlHelper.getEtlJob(etlSysCd, etlJobStr, currBathDate);
-		if(!etlJobOptional.isPresent()) {
-			logger.warn("{} 任务不存在 {}，{}", etlJobStr, currBathDate, NOEXITSERROR);
+		Etl_job_cur etlJobCur;
+		try{
+			etlJobCur = TaskSqlHelper.getEtlJob(etlSysCd, etlJobStr, currBathDate);
+		}catch (AppSystemException e) {
 			handle.setWarning(NOEXITSERROR);
 			updateErrorHandle(handle);
-			return;
+			throw new AppSystemException("根据调度系统编号、调度作业标识、当前跑批日期获取调度作业信息失败" + etlSysCd);
 		}
-		Job_Status jobStatus = Job_Status.getCodeObj(etlJobOptional.get().getJob_disp_status());
 		/*
 		 * 3、对作业状态为挂起、等待的作业进行干预。
 		 *      一、若作业状态为挂起、等待中，则更新干预状态为运行中，则调用TaskManager的干预接口，进行干预；
 		 *      二、否则，更新调度作业干预表，该次干预出现异常。
 		 */
-		if(Job_Status.PENDING == jobStatus || Job_Status.WAITING == jobStatus) {
+		if(Job_Status.PENDING.getCode().equals(etlJobCur.getJob_disp_status()) ||
+				Job_Status.WAITING.getCode().equals(etlJobCur.getJob_disp_status())) {
 			//更新调度作业干预表（etl_job_hand）。
 			handle.setHand_status(Meddle_status.RUNNING.getCode());
 			handle.setMain_serv_sync(Main_Server_Sync.YES.getCode());
@@ -355,18 +356,16 @@ public class TaskJobHandleHelper {
 		String etlSysCd = handle.getEtl_sys_cd();
 		String etlJobStr = handle.getEtl_job();
 		String currBathDate = etlJobOptional.get().getCurr_bath_date();
-		etlJobOptional = TaskSqlHelper.getEtlJob(etlSysCd, etlJobStr, currBathDate);
-		if(!etlJobOptional.isPresent()) {
-			logger.warn("{} 任务不存在 {}，{}", etlJobStr, currBathDate, NOEXITSERROR);
+		Etl_job_cur etlJob;
+		try{
+			etlJob = TaskSqlHelper.getEtlJob(etlSysCd, etlJobStr, currBathDate);
+		}catch (AppSystemException e) {
 			handle.setWarning(NOEXITSERROR);
 			updateErrorHandle(handle);
-			return;
+			throw new AppSystemException("根据调度系统编号、调度作业标识、当前跑批日期获取调度作业信息失败" + etlSysCd);
 		}
-
-		Etl_job_cur etlJob = etlJobOptional.get();
 		//2、若干预的作业已经在运行中，则要结束该作业，并更新作业表的作业状态；
-		Job_Status jobStatus = Job_Status.getCodeObj(etlJob.getJob_disp_status());
-		if(Job_Status.RUNNING == jobStatus){
+		if(Job_Status.RUNNING.getCode().equals(etlJob.getJob_disp_status())){
 			//Running状态job停止，将干预的信息置为Running
 			updateRunningHandle(handle);
 			//TODO 此处较原版改动：stopJob(job)改为closeProcessById(etlJob.getJob_process_id(), etlJob.getPro_type())
@@ -391,7 +390,8 @@ public class TaskJobHandleHelper {
 			//停止后的作业状态设为stop
 			TaskSqlHelper.updateEtlJobDispStatus(Job_Status.STOP.getCode(),
 					etlJob.getEtl_sys_cd(), etlJob.getEtl_job());
-		}else if(Job_Status.PENDING == jobStatus || Job_Status.WAITING == jobStatus) {
+		}else if(Job_Status.PENDING.getCode().equals(etlJob.getJob_disp_status()) ||
+				Job_Status.WAITING.getCode().equals(etlJob.getJob_disp_status())) {
 			//3、若干预的作业还未运行（挂起和等待中），则更新内存表（map）的作业状态；
 			taskManager.handleJob2Stop(etlJob.getCurr_bath_date(), handle.getEtl_job());
 			updateDoneHandle(handle);
@@ -421,16 +421,18 @@ public class TaskJobHandleHelper {
 		String etlSysCd = handle.getEtl_sys_cd();
 		String etlJobStr = handle.getEtl_job();
 		String currBathDate = etlJobOptional.get().getCurr_bath_date();
-		etlJobOptional = TaskSqlHelper.getEtlJob(etlSysCd, etlJobStr, currBathDate);
-		if(!etlJobOptional.isPresent()) {
-			logger.warn("{} 任务不存在 {}，{}", etlJobStr, currBathDate, NOEXITSERROR);
+		Etl_job_cur etlJob;
+		try{
+			etlJob = TaskSqlHelper.getEtlJob(etlSysCd, etlJobStr, currBathDate);
+		}catch (AppSystemException e) {
 			handle.setWarning(NOEXITSERROR);
 			updateErrorHandle(handle);
-			return;
+			throw new AppSystemException("根据调度系统编号、调度作业标识、当前跑批日期获取调度作业信息失败" + etlSysCd);
 		}
 		//2、干预作业状态为停止、错误、完成的作业。
-		Job_Status jobStatus = Job_Status.getCodeObj(etlJobOptional.get().getJob_disp_status());
-		if(Job_Status.STOP == jobStatus || Job_Status.ERROR == jobStatus || Job_Status.DONE == jobStatus) {
+		if(Job_Status.STOP.getCode().equals(etlJob.getJob_disp_status()) ||
+				Job_Status.ERROR.getCode().equals(etlJob.getJob_disp_status()) ||
+				Job_Status.DONE.getCode().equals(etlJob.getJob_disp_status())) {
 			taskManager.handleJob2Rerun(currBathDate, etlJobStr);
 			updateDoneHandle(handle);
 		}else {
@@ -451,12 +453,13 @@ public class TaskJobHandleHelper {
 		String etlSysCd = handle.getEtl_sys_cd();
 		String etlJobStr = handle.getEtl_job();
 		String currBathDate = etlJobOptional.get().getCurr_bath_date();
-		etlJobOptional = TaskSqlHelper.getEtlJob(etlSysCd, etlJobStr, currBathDate);
-		if(!etlJobOptional.isPresent()) {
-			logger.warn("{} 任务不存在 {}，{}", etlJobStr, currBathDate, NOEXITSERROR);
+		Etl_job_cur etlJob;
+		try{
+			etlJob = TaskSqlHelper.getEtlJob(etlSysCd, etlJobStr, currBathDate);
+		}catch (AppSystemException e) {
 			handle.setWarning(NOEXITSERROR);
 			updateErrorHandle(handle);
-			return;
+			throw new AppSystemException("根据调度系统编号、调度作业标识、当前跑批日期获取调度作业信息失败" + etlSysCd);
 		}
 		//TODO etl_job_hand表中没有priority，该干预似乎不使用？
 		// 判断设置的优先度是否符合范围(1~99)
@@ -466,7 +469,7 @@ public class TaskJobHandleHelper {
 //			return;
 //		}
 
-		if(Job_Status.RUNNING == Job_Status.getCodeObj(etlJobOptional.get().getJob_disp_status())) {
+		if(Job_Status.RUNNING.getCode().equals(etlJob.getJob_disp_status())) {
 			handle.setWarning(STATEERROR);
 			updateErrorHandle(handle);
 		}else {
@@ -494,16 +497,17 @@ public class TaskJobHandleHelper {
 		String etlSysCd = handle.getEtl_sys_cd();
 		String etlJobStr = handle.getEtl_job();
 		String currBathDate = etlJobOptional.get().getCurr_bath_date();
-		etlJobOptional = TaskSqlHelper.getEtlJob(etlSysCd, etlJobStr, currBathDate);
-		if(!etlJobOptional.isPresent()) {
-			logger.warn("{} 任务不存在 {}，{}", etlJobStr, currBathDate, NOEXITSERROR);
+		Etl_job_cur etlJob;
+		try{
+			etlJob = TaskSqlHelper.getEtlJob(etlSysCd, etlJobStr, currBathDate);
+		}catch (AppSystemException e) {
 			handle.setWarning(NOEXITSERROR);
 			updateErrorHandle(handle);
-			return;
+			throw new AppSystemException("根据调度系统编号、调度作业标识、当前跑批日期获取调度作业信息失败" + etlSysCd);
 		}
 		//2、干预作业状态除[运行中]和[已完成]的作业。
-		Job_Status jobStatus = Job_Status.getCodeObj(etlJobOptional.get().getJob_disp_status());
-		if(Job_Status.RUNNING == jobStatus || Job_Status.DONE == jobStatus) {
+		if(Job_Status.RUNNING.getCode().equals(etlJob.getJob_disp_status()) ||
+				Job_Status.DONE.getCode().equals(etlJob.getJob_disp_status())) {
 			handle.setWarning(STATEERROR);
 			updateErrorHandle(handle);
 		}else {
@@ -555,13 +559,12 @@ public class TaskJobHandleHelper {
 
 		//TODO 此处有个问题，查询出来的作业是否都有当前跑批日期curr_bath_date，此处使用curr_bath_date查询
 		for(Etl_job_cur job : etlJobs) {
-			Optional<Etl_job_cur> freshJob =
-					TaskSqlHelper.getEtlJob(job.getEtl_sys_cd(), job.getEtl_job(), job.getCurr_bath_date());
-			if(!freshJob.isPresent()){
+			try{
+				job = TaskSqlHelper.getEtlJob(job.getEtl_sys_cd(), job.getEtl_job(), job.getCurr_bath_date());
+			}catch (AppSystemException e) {
 				throw new AppSystemException("在检查作业是否为停止状态时发生异常，该作业不存在：" + job.getEtl_job());
 			}
-			job = freshJob.get();
-			if(Job_Status.RUNNING == Job_Status.getCodeObj(job.getJob_disp_status())) {
+			if(Job_Status.RUNNING.getCode().equals(job.getJob_disp_status())) {
 				return false;
 			}
 		}
@@ -595,7 +598,7 @@ public class TaskJobHandleHelper {
 	 */
 	private boolean closeProcessById(String processId, String proType) {
 
-		if(Pro_Type.Yarn == Pro_Type.getCodeObj(proType)) {
+		if(Pro_Type.Yarn.getCode().equals(proType)) {
 			logger.info("Will close job, process id is {}", processId);
 			try {
 				//TODO 此处缺少YarnUtil.killApplicationByid(processId)，待补充

@@ -61,8 +61,7 @@ public class Main {
 		boolean isAutoShift = Boolean.parseBoolean(strAutoShift);  //是否自动日切，true/false值
 
 		String strSystemCode = args[1]; //调度系统代码
-		Etl_sys etlSys = TaskSqlHelper.getEltSysBySysCode(strSystemCode).orElseThrow(() ->
-						new AppSystemException("无法根据[调度系统编号]获取系统信息：" + strSystemCode));
+		Etl_sys etlSys = TaskSqlHelper.getEltSysBySysCode(strSystemCode);
 		/*
 		 * 一、若调度服务启动时，调度系统已经在运行，则抛出异常；
 		 * 二、若以续跑的方式启动调度服务，续跑日期与当前批量日期不一致，则抛出异常。

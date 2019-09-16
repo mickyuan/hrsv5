@@ -1,25 +1,25 @@
 package hrds.control.task.helper;
 
-import fd.ng.core.utils.StringUtil;
-import hrds.commons.codes.Dispatch_Frequency;
-import hrds.commons.entity.Etl_job_cur;
-import hrds.commons.entity.Etl_job_def;
-import hrds.commons.entity.Etl_para;
-import hrds.commons.exception.AppSystemException;
-import hrds.control.beans.EtlJobDefBean;
-import hrds.control.utils.DateUtil;
-import org.apache.commons.beanutils.BeanUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Optional;
+import java.util.Stack;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import fd.ng.core.utils.StringUtil;
+import hrds.commons.codes.Dispatch_Frequency;
+import hrds.commons.entity.Etl_para;
+import hrds.commons.exception.AppSystemException;
+import hrds.control.beans.EtlJobDefBean;
+import hrds.control.utils.DateUtil;
 
 /**
  * ClassName: TaskJobHelper
@@ -139,6 +139,7 @@ public class TaskJobHelper {
                     }
                     else if( "!".equals(String.valueOf(x)) ) {
                         Date date = TaskJobHelper.getDateByString(job.getCurr_bath_date());
+                        //TODO 这里etlSysCd为""，意味着这是默认系统参数？
                         Optional<Etl_para> etlParaOptional = TaskSqlHelper.getEtlParameterVal("", strs);
                         if(!etlParaOptional.isPresent()) {
                             logger.warn("找不到对应变量[{}]", strs);
@@ -326,25 +327,5 @@ public class TaskJobHelper {
             e.printStackTrace();
         }
         return retValue;
-    }
-
-    /**
-     * 将Etl_job_def复制成Etl_job
-     *
-     * @author Tiger.Wang
-     * @date 2019/9/4
-     * @param etlJobDef 复制源
-     * @return hrds.entity.Etl_job
-     */
-    public static Etl_job_cur etlJobDefCopy2EltJob(Etl_job_def etlJobDef) {
-
-        Etl_job_cur etlJob = new Etl_job_cur();
-        try {
-            BeanUtils.copyProperties(etlJob, etlJobDef);
-        } catch (IllegalAccessException | InvocationTargetException e) {
-            throw new AppSystemException("将Etl_job_def转换为Etl_job发生异常：" + e.getMessage());
-        }
-
-        return etlJob;
     }
 }
