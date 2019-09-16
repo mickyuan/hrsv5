@@ -71,6 +71,7 @@ public enum ObjectDataType {
 	* 禁止使用类的tostring()方法
 	* @return
 	*/
+	@Override
 	public String toString() {
 		throw new AppSystemException("There's no need for you to !");
 	}

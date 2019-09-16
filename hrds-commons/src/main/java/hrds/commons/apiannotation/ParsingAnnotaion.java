@@ -60,7 +60,7 @@ public class ParsingAnnotaion {
 						DocMethod api = actionMethod.getAnnotation(DocMethod.class);
 						String description = api.description();//接口描述
 						String s = api.httpMethod();//请求方式
-						int version = api.version();//版本号
+						String version = api.version();//版本号
 
 						List<Param> apiParamsList = new ArrayList<>();
 						//获取方法的参数
@@ -89,7 +89,7 @@ public class ParsingAnnotaion {
 
 	public static void params(List<Param> apiParamsList) {
 		for (Param apiParam : apiParamsList) {
-			String param = apiParam.param();
+			String param = apiParam.name();
 			String intro = apiParam.intro();
 			String range = apiParam.range();
 			boolean required = apiParam.required();
