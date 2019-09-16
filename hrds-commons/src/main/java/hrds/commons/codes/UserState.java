@@ -33,7 +33,7 @@ public enum UserState {
 	* @param code   本代码的代码值
 	* @return
 	*/
-	public static String getValue(String code) {
+	public static String ofValueByCode(String code) {
 		for (UserState typeCode : UserState.values()) {
 			if (typeCode.getCode().equals(code)) {
 				return typeCode.value;
@@ -46,7 +46,7 @@ public enum UserState {
 	* @param code   本代码的代码值
 	* @return
 	*/
-	public static UserState getCodeObj(String code) {
+	public static UserState ofEnumByCode(String code) {
 		for (UserState typeCode : UserState.values()) {
 			if (typeCode.getCode().equals(code)) {
 				return typeCode;
@@ -59,7 +59,7 @@ public enum UserState {
 	* 获取代码项的中文类名名称
 	* @return
 	*/
-	public static String getObjCatValue(){
+	public static String ofCatValue(){
 		return UserState.values()[0].getCatValue();
 	}
 
@@ -67,7 +67,7 @@ public enum UserState {
 	* 获取代码项的分类代码
 	* @return
 	*/
-	public static String getObjCatCode(){
+	public static String ofCatCode(){
 		return UserState.values()[0].getCatCode();
 	}
 

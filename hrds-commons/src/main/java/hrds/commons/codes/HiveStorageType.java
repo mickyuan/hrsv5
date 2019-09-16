@@ -35,7 +35,7 @@ public enum HiveStorageType {
 	* @param code   本代码的代码值
 	* @return
 	*/
-	public static String getValue(String code) {
+	public static String ofValueByCode(String code) {
 		for (HiveStorageType typeCode : HiveStorageType.values()) {
 			if (typeCode.getCode().equals(code)) {
 				return typeCode.value;
@@ -48,7 +48,7 @@ public enum HiveStorageType {
 	* @param code   本代码的代码值
 	* @return
 	*/
-	public static HiveStorageType getCodeObj(String code) {
+	public static HiveStorageType ofEnumByCode(String code) {
 		for (HiveStorageType typeCode : HiveStorageType.values()) {
 			if (typeCode.getCode().equals(code)) {
 				return typeCode;
@@ -61,7 +61,7 @@ public enum HiveStorageType {
 	* 获取代码项的中文类名名称
 	* @return
 	*/
-	public static String getObjCatValue(){
+	public static String ofCatValue(){
 		return HiveStorageType.values()[0].getCatValue();
 	}
 
@@ -69,7 +69,7 @@ public enum HiveStorageType {
 	* 获取代码项的分类代码
 	* @return
 	*/
-	public static String getObjCatCode(){
+	public static String ofCatCode(){
 		return HiveStorageType.values()[0].getCatCode();
 	}
 

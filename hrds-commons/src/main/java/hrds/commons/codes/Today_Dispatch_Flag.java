@@ -29,7 +29,7 @@ public enum Today_Dispatch_Flag {
 	* @param code   本代码的代码值
 	* @return
 	*/
-	public static String getValue(String code) {
+	public static String ofValueByCode(String code) {
 		for (Today_Dispatch_Flag typeCode : Today_Dispatch_Flag.values()) {
 			if (typeCode.getCode().equals(code)) {
 				return typeCode.value;
@@ -42,7 +42,7 @@ public enum Today_Dispatch_Flag {
 	* @param code   本代码的代码值
 	* @return
 	*/
-	public static Today_Dispatch_Flag getCodeObj(String code) {
+	public static Today_Dispatch_Flag ofEnumByCode(String code) {
 		for (Today_Dispatch_Flag typeCode : Today_Dispatch_Flag.values()) {
 			if (typeCode.getCode().equals(code)) {
 				return typeCode;
@@ -55,7 +55,7 @@ public enum Today_Dispatch_Flag {
 	* 获取代码项的中文类名名称
 	* @return
 	*/
-	public static String getObjCatValue(){
+	public static String ofCatValue(){
 		return Today_Dispatch_Flag.values()[0].getCatValue();
 	}
 
@@ -63,7 +63,7 @@ public enum Today_Dispatch_Flag {
 	* 获取代码项的分类代码
 	* @return
 	*/
-	public static String getObjCatCode(){
+	public static String ofCatCode(){
 		return Today_Dispatch_Flag.values()[0].getCatCode();
 	}
 

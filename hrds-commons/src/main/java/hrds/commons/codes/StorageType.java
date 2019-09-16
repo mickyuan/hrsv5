@@ -31,7 +31,7 @@ public enum StorageType {
 	* @param code   本代码的代码值
 	* @return
 	*/
-	public static String getValue(String code) {
+	public static String ofValueByCode(String code) {
 		for (StorageType typeCode : StorageType.values()) {
 			if (typeCode.getCode().equals(code)) {
 				return typeCode.value;
@@ -44,7 +44,7 @@ public enum StorageType {
 	* @param code   本代码的代码值
 	* @return
 	*/
-	public static StorageType getCodeObj(String code) {
+	public static StorageType ofEnumByCode(String code) {
 		for (StorageType typeCode : StorageType.values()) {
 			if (typeCode.getCode().equals(code)) {
 				return typeCode;
@@ -57,7 +57,7 @@ public enum StorageType {
 	* 获取代码项的中文类名名称
 	* @return
 	*/
-	public static String getObjCatValue(){
+	public static String ofCatValue(){
 		return StorageType.values()[0].getCatValue();
 	}
 
@@ -65,7 +65,7 @@ public enum StorageType {
 	* 获取代码项的分类代码
 	* @return
 	*/
-	public static String getObjCatCode(){
+	public static String ofCatCode(){
 		return StorageType.values()[0].getCatCode();
 	}
 

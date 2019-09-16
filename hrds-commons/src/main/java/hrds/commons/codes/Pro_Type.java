@@ -45,7 +45,7 @@ public enum Pro_Type {
 	* @param code   本代码的代码值
 	* @return
 	*/
-	public static String getValue(String code) {
+	public static String ofValueByCode(String code) {
 		for (Pro_Type typeCode : Pro_Type.values()) {
 			if (typeCode.getCode().equals(code)) {
 				return typeCode.value;
@@ -58,7 +58,7 @@ public enum Pro_Type {
 	* @param code   本代码的代码值
 	* @return
 	*/
-	public static Pro_Type getCodeObj(String code) {
+	public static Pro_Type ofEnumByCode(String code) {
 		for (Pro_Type typeCode : Pro_Type.values()) {
 			if (typeCode.getCode().equals(code)) {
 				return typeCode;
@@ -71,7 +71,7 @@ public enum Pro_Type {
 	* 获取代码项的中文类名名称
 	* @return
 	*/
-	public static String getObjCatValue(){
+	public static String ofCatValue(){
 		return Pro_Type.values()[0].getCatValue();
 	}
 
@@ -79,7 +79,7 @@ public enum Pro_Type {
 	* 获取代码项的分类代码
 	* @return
 	*/
-	public static String getObjCatCode(){
+	public static String ofCatCode(){
 		return Pro_Type.values()[0].getCatCode();
 	}
 

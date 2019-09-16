@@ -37,7 +37,7 @@ public enum Dispatch_Frequency {
 	* @param code   本代码的代码值
 	* @return
 	*/
-	public static String getValue(String code) {
+	public static String ofValueByCode(String code) {
 		for (Dispatch_Frequency typeCode : Dispatch_Frequency.values()) {
 			if (typeCode.getCode().equals(code)) {
 				return typeCode.value;
@@ -50,7 +50,7 @@ public enum Dispatch_Frequency {
 	* @param code   本代码的代码值
 	* @return
 	*/
-	public static Dispatch_Frequency getCodeObj(String code) {
+	public static Dispatch_Frequency ofEnumByCode(String code) {
 		for (Dispatch_Frequency typeCode : Dispatch_Frequency.values()) {
 			if (typeCode.getCode().equals(code)) {
 				return typeCode;
@@ -63,7 +63,7 @@ public enum Dispatch_Frequency {
 	* 获取代码项的中文类名名称
 	* @return
 	*/
-	public static String getObjCatValue(){
+	public static String ofCatValue(){
 		return Dispatch_Frequency.values()[0].getCatValue();
 	}
 
@@ -71,7 +71,7 @@ public enum Dispatch_Frequency {
 	* 获取代码项的分类代码
 	* @return
 	*/
-	public static String getObjCatCode(){
+	public static String ofCatCode(){
 		return Dispatch_Frequency.values()[0].getCatCode();
 	}
 

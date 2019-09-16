@@ -35,7 +35,7 @@ public enum store_type {
 	* @param code   本代码的代码值
 	* @return
 	*/
-	public static String getValue(String code) {
+	public static String ofValueByCode(String code) {
 		for (store_type typeCode : store_type.values()) {
 			if (typeCode.getCode().equals(code)) {
 				return typeCode.value;
@@ -48,7 +48,7 @@ public enum store_type {
 	* @param code   本代码的代码值
 	* @return
 	*/
-	public static store_type getCodeObj(String code) {
+	public static store_type ofEnumByCode(String code) {
 		for (store_type typeCode : store_type.values()) {
 			if (typeCode.getCode().equals(code)) {
 				return typeCode;
@@ -61,7 +61,7 @@ public enum store_type {
 	* 获取代码项的中文类名名称
 	* @return
 	*/
-	public static String getObjCatValue(){
+	public static String ofCatValue(){
 		return store_type.values()[0].getCatValue();
 	}
 
@@ -69,7 +69,7 @@ public enum store_type {
 	* 获取代码项的分类代码
 	* @return
 	*/
-	public static String getObjCatCode(){
+	public static String ofCatCode(){
 		return store_type.values()[0].getCatCode();
 	}
 

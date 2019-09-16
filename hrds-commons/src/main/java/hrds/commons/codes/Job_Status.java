@@ -37,7 +37,7 @@ public enum Job_Status {
 	* @param code   本代码的代码值
 	* @return
 	*/
-	public static String getValue(String code) {
+	public static String ofValueByCode(String code) {
 		for (Job_Status typeCode : Job_Status.values()) {
 			if (typeCode.getCode().equals(code)) {
 				return typeCode.value;
@@ -50,7 +50,7 @@ public enum Job_Status {
 	* @param code   本代码的代码值
 	* @return
 	*/
-	public static Job_Status getCodeObj(String code) {
+	public static Job_Status ofEnumByCode(String code) {
 		for (Job_Status typeCode : Job_Status.values()) {
 			if (typeCode.getCode().equals(code)) {
 				return typeCode;
@@ -63,7 +63,7 @@ public enum Job_Status {
 	* 获取代码项的中文类名名称
 	* @return
 	*/
-	public static String getObjCatValue(){
+	public static String ofCatValue(){
 		return Job_Status.values()[0].getCatValue();
 	}
 
@@ -71,7 +71,7 @@ public enum Job_Status {
 	* 获取代码项的分类代码
 	* @return
 	*/
-	public static String getObjCatCode(){
+	public static String ofCatCode(){
 		return Job_Status.values()[0].getCatCode();
 	}
 
