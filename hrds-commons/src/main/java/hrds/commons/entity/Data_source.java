@@ -4,7 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
-import hrds.commons.apiannotation.ApiBean;
+import fd.ng.core.docannotation.DocBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -35,21 +35,21 @@ public class Data_source extends TableEntity
 		__tmpPKS.add("source_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@ApiBean(name ="source_id",value="数据源ID",dataType = Long.class,required = true)
+	@DocBean(name ="source_id",value="数据源ID",dataType = Long.class,required = true)
 	private Long source_id; //数据源ID
-	@ApiBean(name ="datasource_name",value="数据源名称",dataType = String.class,required = true)
+	@DocBean(name ="datasource_name",value="数据源名称",dataType = String.class,required = true)
 	private String datasource_name; //数据源名称
-	@ApiBean(name ="datasource_number",value="数据源编号",dataType = String.class,required = false)
+	@DocBean(name ="datasource_number",value="数据源编号",dataType = String.class,required = false)
 	private String datasource_number; //数据源编号
-	@ApiBean(name ="source_remark",value="数据源详细描述",dataType = String.class,required = false)
+	@DocBean(name ="source_remark",value="数据源详细描述",dataType = String.class,required = false)
 	private String source_remark; //数据源详细描述
-	@ApiBean(name ="create_date",value="创建日期",dataType = String.class,required = true)
+	@DocBean(name ="create_date",value="创建日期",dataType = String.class,required = true)
 	private String create_date; //创建日期
-	@ApiBean(name ="create_time",value="创建时间",dataType = String.class,required = true)
+	@DocBean(name ="create_time",value="创建时间",dataType = String.class,required = true)
 	private String create_time; //创建时间
-	@ApiBean(name ="create_user_id",value="用户ID",dataType = Long.class,required = true)
+	@DocBean(name ="create_user_id",value="用户ID",dataType = Long.class,required = true)
 	private Long create_user_id; //用户ID
-	@ApiBean(name ="datasource_remark",value="备注",dataType = String.class,required = false)
+	@DocBean(name ="datasource_remark",value="备注",dataType = String.class,required = false)
 	private String datasource_remark; //备注
 
 	/** 取得：数据源ID */

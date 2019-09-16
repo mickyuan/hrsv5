@@ -4,7 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
-import hrds.commons.apiannotation.ApiBean;
+import fd.ng.core.docannotation.DocBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -35,15 +35,15 @@ public class User_fav extends TableEntity
 		__tmpPKS.add("fav_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@ApiBean(name ="fav_id",value="收藏ID",dataType = Long.class,required = true)
+	@DocBean(name ="fav_id",value="收藏ID",dataType = Long.class,required = true)
 	private Long fav_id; //收藏ID
-	@ApiBean(name ="fav_flag",value="是否有效",dataType = String.class,required = true)
+	@DocBean(name ="fav_flag",value="是否有效",dataType = String.class,required = true)
 	private String fav_flag; //是否有效
-	@ApiBean(name ="original_name",value="原始文件名称",dataType = String.class,required = true)
+	@DocBean(name ="original_name",value="原始文件名称",dataType = String.class,required = true)
 	private String original_name; //原始文件名称
-	@ApiBean(name ="file_id",value="文件编号",dataType = String.class,required = true)
+	@DocBean(name ="file_id",value="文件编号",dataType = String.class,required = true)
 	private String file_id; //文件编号
-	@ApiBean(name ="user_id",value="用户ID",dataType = Long.class,required = true)
+	@DocBean(name ="user_id",value="用户ID",dataType = Long.class,required = true)
 	private Long user_id; //用户ID
 
 	/** 取得：收藏ID */

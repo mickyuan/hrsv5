@@ -4,7 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
-import hrds.commons.apiannotation.ApiBean;
+import fd.ng.core.docannotation.DocBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -35,17 +35,17 @@ public class Collect_job_classify extends TableEntity
 		__tmpPKS.add("classify_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@ApiBean(name ="classify_id",value="分类id",dataType = Long.class,required = true)
+	@DocBean(name ="classify_id",value="分类id",dataType = Long.class,required = true)
 	private Long classify_id; //分类id
-	@ApiBean(name ="classify_num",value="分类编号",dataType = String.class,required = true)
+	@DocBean(name ="classify_num",value="分类编号",dataType = String.class,required = true)
 	private String classify_num; //分类编号
-	@ApiBean(name ="classify_name",value="分类名称",dataType = String.class,required = true)
+	@DocBean(name ="classify_name",value="分类名称",dataType = String.class,required = true)
 	private String classify_name; //分类名称
-	@ApiBean(name ="remark",value="备注",dataType = String.class,required = false)
+	@DocBean(name ="remark",value="备注",dataType = String.class,required = false)
 	private String remark; //备注
-	@ApiBean(name ="user_id",value="用户ID",dataType = Long.class,required = true)
+	@DocBean(name ="user_id",value="用户ID",dataType = Long.class,required = true)
 	private Long user_id; //用户ID
-	@ApiBean(name ="agent_id",value="Agent_id",dataType = Long.class,required = true)
+	@DocBean(name ="agent_id",value="Agent_id",dataType = Long.class,required = true)
 	private Long agent_id; //Agent_id
 
 	/** 取得：分类id */

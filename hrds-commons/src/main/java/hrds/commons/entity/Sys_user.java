@@ -4,7 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
-import hrds.commons.apiannotation.ApiBean;
+import fd.ng.core.docannotation.DocBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -35,53 +35,53 @@ public class Sys_user extends TableEntity
 		__tmpPKS.add("user_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@ApiBean(name ="user_id",value="用户ID",dataType = Long.class,required = true)
+	@DocBean(name ="user_id",value="用户ID",dataType = Long.class,required = true)
 	private Long user_id; //用户ID
-	@ApiBean(name ="user_name",value="用户名称",dataType = String.class,required = true)
+	@DocBean(name ="user_name",value="用户名称",dataType = String.class,required = true)
 	private String user_name; //用户名称
-	@ApiBean(name ="user_password",value="用户密码",dataType = String.class,required = true)
+	@DocBean(name ="user_password",value="用户密码",dataType = String.class,required = true)
 	private String user_password; //用户密码
-	@ApiBean(name ="user_email",value="邮箱",dataType = String.class,required = false)
+	@DocBean(name ="user_email",value="邮箱",dataType = String.class,required = false)
 	private String user_email; //邮箱
-	@ApiBean(name ="user_mobile",value="移动电话",dataType = String.class,required = false)
+	@DocBean(name ="user_mobile",value="移动电话",dataType = String.class,required = false)
 	private String user_mobile; //移动电话
-	@ApiBean(name ="user_type",value="用户类型",dataType = String.class,required = false)
+	@DocBean(name ="user_type",value="用户类型",dataType = String.class,required = false)
 	private String user_type; //用户类型
-	@ApiBean(name ="login_ip",value="登录IP",dataType = String.class,required = false)
+	@DocBean(name ="login_ip",value="登录IP",dataType = String.class,required = false)
 	private String login_ip; //登录IP
-	@ApiBean(name ="login_date",value="最后登录时间",dataType = String.class,required = false)
+	@DocBean(name ="login_date",value="最后登录时间",dataType = String.class,required = false)
 	private String login_date; //最后登录时间
-	@ApiBean(name ="user_state",value="用户状态",dataType = String.class,required = true)
+	@DocBean(name ="user_state",value="用户状态",dataType = String.class,required = true)
 	private String user_state; //用户状态
-	@ApiBean(name ="create_date",value="创建日期",dataType = String.class,required = true)
+	@DocBean(name ="create_date",value="创建日期",dataType = String.class,required = true)
 	private String create_date; //创建日期
-	@ApiBean(name ="create_time",value="创建时间",dataType = String.class,required = false)
+	@DocBean(name ="create_time",value="创建时间",dataType = String.class,required = false)
 	private String create_time; //创建时间
-	@ApiBean(name ="update_date",value="更新日期",dataType = String.class,required = false)
+	@DocBean(name ="update_date",value="更新日期",dataType = String.class,required = false)
 	private String update_date; //更新日期
-	@ApiBean(name ="update_time",value="更新时间",dataType = String.class,required = false)
+	@DocBean(name ="update_time",value="更新时间",dataType = String.class,required = false)
 	private String update_time; //更新时间
-	@ApiBean(name ="user_remark",value="备注",dataType = String.class,required = false)
+	@DocBean(name ="user_remark",value="备注",dataType = String.class,required = false)
 	private String user_remark; //备注
-	@ApiBean(name ="maximum_job",value="最大作业数",dataType = Long.class,required = false)
+	@DocBean(name ="maximum_job",value="最大作业数",dataType = Long.class,required = false)
 	private Long maximum_job; //最大作业数
-	@ApiBean(name ="user_priority",value="优先级",dataType = String.class,required = false)
+	@DocBean(name ="user_priority",value="优先级",dataType = String.class,required = false)
 	private String user_priority; //优先级
-	@ApiBean(name ="quota_space",value="配额空间",dataType = String.class,required = false)
+	@DocBean(name ="quota_space",value="配额空间",dataType = String.class,required = false)
 	private String quota_space; //配额空间
-	@ApiBean(name ="create_id",value="建立用户ID",dataType = Long.class,required = true)
+	@DocBean(name ="create_id",value="建立用户ID",dataType = Long.class,required = true)
 	private Long create_id; //建立用户ID
-	@ApiBean(name ="token",value="token",dataType = String.class,required = true)
+	@DocBean(name ="token",value="token",dataType = String.class,required = true)
 	private String token; //token
-	@ApiBean(name ="valid_time",value="token有效时间",dataType = String.class,required = true)
+	@DocBean(name ="valid_time",value="token有效时间",dataType = String.class,required = true)
 	private String valid_time; //token有效时间
-	@ApiBean(name ="usertype_group",value="用户类型组",dataType = String.class,required = false)
+	@DocBean(name ="usertype_group",value="用户类型组",dataType = String.class,required = false)
 	private String usertype_group; //用户类型组
-	@ApiBean(name ="useris_admin",value="是否为管理员",dataType = String.class,required = true)
+	@DocBean(name ="useris_admin",value="是否为管理员",dataType = String.class,required = true)
 	private String useris_admin; //是否为管理员
-	@ApiBean(name ="role_id",value="角色ID",dataType = Long.class,required = true)
+	@DocBean(name ="role_id",value="角色ID",dataType = Long.class,required = true)
 	private Long role_id; //角色ID
-	@ApiBean(name ="dep_id",value="部门ID",dataType = Long.class,required = true)
+	@DocBean(name ="dep_id",value="部门ID",dataType = Long.class,required = true)
 	private Long dep_id; //部门ID
 
 	/** 取得：用户ID */

@@ -4,7 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
-import hrds.commons.apiannotation.ApiBean;
+import fd.ng.core.docannotation.DocBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -35,21 +35,21 @@ public class Component_info extends TableEntity
 		__tmpPKS.add("comp_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@ApiBean(name ="comp_id",value="组件编号",dataType = String.class,required = true)
+	@DocBean(name ="comp_id",value="组件编号",dataType = String.class,required = true)
 	private String comp_id; //组件编号
-	@ApiBean(name ="comp_name",value="组件名称",dataType = String.class,required = true)
+	@DocBean(name ="comp_name",value="组件名称",dataType = String.class,required = true)
 	private String comp_name; //组件名称
-	@ApiBean(name ="comp_state",value="组件状态",dataType = String.class,required = true)
+	@DocBean(name ="comp_state",value="组件状态",dataType = String.class,required = true)
 	private String comp_state; //组件状态
-	@ApiBean(name ="comp_remark",value="备注",dataType = String.class,required = false)
+	@DocBean(name ="comp_remark",value="备注",dataType = String.class,required = false)
 	private String comp_remark; //备注
-	@ApiBean(name ="comp_version",value="组件版本",dataType = String.class,required = true)
+	@DocBean(name ="comp_version",value="组件版本",dataType = String.class,required = true)
 	private String comp_version; //组件版本
-	@ApiBean(name ="icon_info",value="图标",dataType = String.class,required = false)
+	@DocBean(name ="icon_info",value="图标",dataType = String.class,required = false)
 	private String icon_info; //图标
-	@ApiBean(name ="color_info",value="颜色",dataType = String.class,required = false)
+	@DocBean(name ="color_info",value="颜色",dataType = String.class,required = false)
 	private String color_info; //颜色
-	@ApiBean(name ="comp_type",value="组件类型",dataType = String.class,required = true)
+	@DocBean(name ="comp_type",value="组件类型",dataType = String.class,required = true)
 	private String comp_type; //组件类型
 
 	/** 取得：组件编号 */

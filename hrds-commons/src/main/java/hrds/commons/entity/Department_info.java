@@ -4,7 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
-import hrds.commons.apiannotation.ApiBean;
+import fd.ng.core.docannotation.DocBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -35,15 +35,15 @@ public class Department_info extends TableEntity
 		__tmpPKS.add("dep_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@ApiBean(name ="dep_id",value="部门ID",dataType = Long.class,required = true)
+	@DocBean(name ="dep_id",value="部门ID",dataType = Long.class,required = true)
 	private Long dep_id; //部门ID
-	@ApiBean(name ="dep_name",value="部门名称",dataType = String.class,required = true)
+	@DocBean(name ="dep_name",value="部门名称",dataType = String.class,required = true)
 	private String dep_name; //部门名称
-	@ApiBean(name ="create_date",value="创建日期",dataType = String.class,required = true)
+	@DocBean(name ="create_date",value="创建日期",dataType = String.class,required = true)
 	private String create_date; //创建日期
-	@ApiBean(name ="create_time",value="创建时间",dataType = String.class,required = true)
+	@DocBean(name ="create_time",value="创建时间",dataType = String.class,required = true)
 	private String create_time; //创建时间
-	@ApiBean(name ="dep_remark",value="备注",dataType = String.class,required = false)
+	@DocBean(name ="dep_remark",value="备注",dataType = String.class,required = false)
 	private String dep_remark; //备注
 
 	/** 取得：部门ID */

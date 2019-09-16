@@ -4,7 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
-import hrds.commons.apiannotation.ApiBean;
+import fd.ng.core.docannotation.DocBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -35,17 +35,17 @@ public class Sys_recover extends TableEntity
 		__tmpPKS.add("re_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@ApiBean(name ="re_id",value="恢复id",dataType = Long.class,required = true)
+	@DocBean(name ="re_id",value="恢复id",dataType = Long.class,required = true)
 	private Long re_id; //恢复id
-	@ApiBean(name ="re_date",value="恢复日期",dataType = String.class,required = true)
+	@DocBean(name ="re_date",value="恢复日期",dataType = String.class,required = true)
 	private String re_date; //恢复日期
-	@ApiBean(name ="re_time",value="恢复时间",dataType = String.class,required = true)
+	@DocBean(name ="re_time",value="恢复时间",dataType = String.class,required = true)
 	private String re_time; //恢复时间
-	@ApiBean(name ="length",value="恢复时长",dataType = String.class,required = true)
+	@DocBean(name ="length",value="恢复时长",dataType = String.class,required = true)
 	private String length; //恢复时长
-	@ApiBean(name ="remark",value="备注",dataType = String.class,required = false)
+	@DocBean(name ="remark",value="备注",dataType = String.class,required = false)
 	private String remark; //备注
-	@ApiBean(name ="dump_id",value="备份id",dataType = Long.class,required = true)
+	@DocBean(name ="dump_id",value="备份id",dataType = Long.class,required = true)
 	private Long dump_id; //备份id
 
 	/** 取得：恢复id */

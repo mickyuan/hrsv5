@@ -4,7 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
-import hrds.commons.apiannotation.ApiBean;
+import fd.ng.core.docannotation.DocBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -35,19 +35,19 @@ public class Table_storage_info extends TableEntity
 		__tmpPKS.add("storage_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@ApiBean(name ="storage_id",value="储存编号",dataType = Long.class,required = true)
+	@DocBean(name ="storage_id",value="储存编号",dataType = Long.class,required = true)
 	private Long storage_id; //储存编号
-	@ApiBean(name ="file_format",value="文件格式",dataType = String.class,required = true)
+	@DocBean(name ="file_format",value="文件格式",dataType = String.class,required = true)
 	private String file_format; //文件格式
-	@ApiBean(name ="table_id",value="表名ID",dataType = Long.class,required = false)
+	@DocBean(name ="table_id",value="表名ID",dataType = Long.class,required = false)
 	private Long table_id; //表名ID
-	@ApiBean(name ="storage_type",value="进数方式",dataType = String.class,required = true)
+	@DocBean(name ="storage_type",value="进数方式",dataType = String.class,required = true)
 	private String storage_type; //进数方式
-	@ApiBean(name ="storage_time",value="存储期限（以天为单位）",dataType = Long.class,required = true)
+	@DocBean(name ="storage_time",value="存储期限（以天为单位）",dataType = Long.class,required = true)
 	private Long storage_time; //存储期限（以天为单位）
-	@ApiBean(name ="is_zipper",value="是否拉链存储",dataType = String.class,required = true)
+	@DocBean(name ="is_zipper",value="是否拉链存储",dataType = String.class,required = true)
 	private String is_zipper; //是否拉链存储
-	@ApiBean(name ="is_everyday",value="是否每天存一份",dataType = String.class,required = true)
+	@DocBean(name ="is_everyday",value="是否每天存一份",dataType = String.class,required = true)
 	private String is_everyday; //是否每天存一份
 
 	/** 取得：储存编号 */

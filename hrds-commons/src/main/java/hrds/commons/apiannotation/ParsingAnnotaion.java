@@ -100,7 +100,7 @@ public class ParsingAnnotaion {
 			if (requestBean) {
 				Field[] declaredFields = aClass.getDeclaredFields();
 				for (Field field : declaredFields) {
-					ApiBean apiModel = field.getAnnotation(ApiBean.class);
+					DocBean apiModel = field.getAnnotation(DocBean.class);
 					List<String> beanList = StringUtil.split(apiModel.dataType().getName(), ".");
 					String datatype = beanList.get(beanList.size() - 1);
 					System.out.println("参数名" + name + ":" + apiModel.value() + ",参数描述:" + apiModel.name() + ",是否为空:" + apiModel.required() + ",类型:" + datatype);

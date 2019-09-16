@@ -4,7 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
-import hrds.commons.apiannotation.ApiBean;
+import fd.ng.core.docannotation.DocBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -35,55 +35,55 @@ public class Source_file_attribute extends TableEntity
 		__tmpPKS.add("file_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@ApiBean(name ="file_id",value="文件编号",dataType = String.class,required = true)
+	@DocBean(name ="file_id",value="文件编号",dataType = String.class,required = true)
 	private String file_id; //文件编号
-	@ApiBean(name ="original_name",value="原始文件名或表中文名称",dataType = String.class,required = true)
+	@DocBean(name ="original_name",value="原始文件名或表中文名称",dataType = String.class,required = true)
 	private String original_name; //原始文件名或表中文名称
-	@ApiBean(name ="original_update_date",value="原文件最后修改日期",dataType = String.class,required = true)
+	@DocBean(name ="original_update_date",value="原文件最后修改日期",dataType = String.class,required = true)
 	private String original_update_date; //原文件最后修改日期
-	@ApiBean(name ="hbase_name",value="系统内对应表名",dataType = String.class,required = true)
+	@DocBean(name ="hbase_name",value="系统内对应表名",dataType = String.class,required = true)
 	private String hbase_name; //系统内对应表名
-	@ApiBean(name ="storage_date",value="入库日期",dataType = String.class,required = true)
+	@DocBean(name ="storage_date",value="入库日期",dataType = String.class,required = true)
 	private String storage_date; //入库日期
-	@ApiBean(name ="file_size",value="文件大小",dataType = BigDecimal.class,required = true)
+	@DocBean(name ="file_size",value="文件大小",dataType = BigDecimal.class,required = true)
 	private BigDecimal file_size; //文件大小
-	@ApiBean(name ="file_type",value="文件类型",dataType = String.class,required = true)
+	@DocBean(name ="file_type",value="文件类型",dataType = String.class,required = true)
 	private String file_type; //文件类型
-	@ApiBean(name ="original_update_time",value="原文件最后修改时间",dataType = String.class,required = true)
+	@DocBean(name ="original_update_time",value="原文件最后修改时间",dataType = String.class,required = true)
 	private String original_update_time; //原文件最后修改时间
-	@ApiBean(name ="storage_time",value="入库时间",dataType = String.class,required = true)
+	@DocBean(name ="storage_time",value="入库时间",dataType = String.class,required = true)
 	private String storage_time; //入库时间
-	@ApiBean(name ="file_suffix",value="文件后缀",dataType = String.class,required = true)
+	@DocBean(name ="file_suffix",value="文件后缀",dataType = String.class,required = true)
 	private String file_suffix; //文件后缀
-	@ApiBean(name ="table_name",value="采集的原始表名",dataType = String.class,required = false)
+	@DocBean(name ="table_name",value="采集的原始表名",dataType = String.class,required = false)
 	private String table_name; //采集的原始表名
-	@ApiBean(name ="collect_type",value="采集类型",dataType = String.class,required = true)
+	@DocBean(name ="collect_type",value="采集类型",dataType = String.class,required = true)
 	private String collect_type; //采集类型
-	@ApiBean(name ="source_path",value="文件路径",dataType = String.class,required = false)
+	@DocBean(name ="source_path",value="文件路径",dataType = String.class,required = false)
 	private String source_path; //文件路径
-	@ApiBean(name ="meta_info",value="META元信息",dataType = String.class,required = false)
+	@DocBean(name ="meta_info",value="META元信息",dataType = String.class,required = false)
 	private String meta_info; //META元信息
-	@ApiBean(name ="seqencing",value="排序计数",dataType = Long.class,required = true)
+	@DocBean(name ="seqencing",value="排序计数",dataType = Long.class,required = true)
 	private Long seqencing; //排序计数
-	@ApiBean(name ="is_in_hbase",value="是否已进入HBASE",dataType = String.class,required = true)
+	@DocBean(name ="is_in_hbase",value="是否已进入HBASE",dataType = String.class,required = true)
 	private String is_in_hbase; //是否已进入HBASE
-	@ApiBean(name ="file_md5",value="文件MD5值",dataType = String.class,required = false)
+	@DocBean(name ="file_md5",value="文件MD5值",dataType = String.class,required = false)
 	private String file_md5; //文件MD5值
-	@ApiBean(name ="file_avro_path",value="所在avro文件地址",dataType = String.class,required = false)
+	@DocBean(name ="file_avro_path",value="所在avro文件地址",dataType = String.class,required = false)
 	private String file_avro_path; //所在avro文件地址
-	@ApiBean(name ="file_avro_block",value="所存avro文件block号",dataType = Long.class,required = false)
+	@DocBean(name ="file_avro_block",value="所存avro文件block号",dataType = Long.class,required = false)
 	private Long file_avro_block; //所存avro文件block号
-	@ApiBean(name ="is_big_file",value="是否为大文件",dataType = String.class,required = false)
+	@DocBean(name ="is_big_file",value="是否为大文件",dataType = String.class,required = false)
 	private String is_big_file; //是否为大文件
-	@ApiBean(name ="is_cache",value="是否本地缓存",dataType = String.class,required = false)
+	@DocBean(name ="is_cache",value="是否本地缓存",dataType = String.class,required = false)
 	private String is_cache; //是否本地缓存
-	@ApiBean(name ="agent_id",value="Agent_id",dataType = Long.class,required = true)
+	@DocBean(name ="agent_id",value="Agent_id",dataType = Long.class,required = true)
 	private Long agent_id; //Agent_id
-	@ApiBean(name ="source_id",value="数据源ID",dataType = Long.class,required = true)
+	@DocBean(name ="source_id",value="数据源ID",dataType = Long.class,required = true)
 	private Long source_id; //数据源ID
-	@ApiBean(name ="collect_set_id",value="数据库设置id",dataType = Long.class,required = true)
+	@DocBean(name ="collect_set_id",value="数据库设置id",dataType = Long.class,required = true)
 	private Long collect_set_id; //数据库设置id
-	@ApiBean(name ="folder_id",value="文件夹编号",dataType = Long.class,required = true)
+	@DocBean(name ="folder_id",value="文件夹编号",dataType = Long.class,required = true)
 	private Long folder_id; //文件夹编号
 
 	/** 取得：文件编号 */

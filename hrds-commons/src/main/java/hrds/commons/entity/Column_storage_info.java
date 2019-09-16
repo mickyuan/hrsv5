@@ -4,7 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
-import hrds.commons.apiannotation.ApiBean;
+import fd.ng.core.docannotation.DocBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -35,23 +35,23 @@ public class Column_storage_info extends TableEntity
 		__tmpPKS.add("cs_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@ApiBean(name ="datasc_id",value="存储配置主键信息",dataType = Long.class,required = true)
+	@DocBean(name ="datasc_id",value="存储配置主键信息",dataType = Long.class,required = true)
 	private Long datasc_id; //存储配置主键信息
-	@ApiBean(name ="cs_id",value="字段存储ID",dataType = Long.class,required = true)
+	@DocBean(name ="cs_id",value="字段存储ID",dataType = Long.class,required = true)
 	private Long cs_id; //字段存储ID
-	@ApiBean(name ="column_id",value="字段ID",dataType = Long.class,required = true)
+	@DocBean(name ="column_id",value="字段ID",dataType = Long.class,required = true)
 	private Long column_id; //字段ID
-	@ApiBean(name ="is_primary",value="是否为主键",dataType = String.class,required = true)
+	@DocBean(name ="is_primary",value="是否为主键",dataType = String.class,required = true)
 	private String is_primary; //是否为主键
-	@ApiBean(name ="is_pre",value="是否为cb预聚合列",dataType = String.class,required = true)
+	@DocBean(name ="is_pre",value="是否为cb预聚合列",dataType = String.class,required = true)
 	private String is_pre; //是否为cb预聚合列
-	@ApiBean(name ="is_sortcolumns",value="是否为cb的排序列",dataType = String.class,required = true)
+	@DocBean(name ="is_sortcolumns",value="是否为cb的排序列",dataType = String.class,required = true)
 	private String is_sortcolumns; //是否为cb的排序列
-	@ApiBean(name ="cs_remark",value="备注",dataType = String.class,required = false)
+	@DocBean(name ="cs_remark",value="备注",dataType = String.class,required = false)
 	private String cs_remark; //备注
-	@ApiBean(name ="is_solr",value="是否solr的索引列",dataType = String.class,required = true)
+	@DocBean(name ="is_solr",value="是否solr的索引列",dataType = String.class,required = true)
 	private String is_solr; //是否solr的索引列
-	@ApiBean(name ="is_partition",value="是否为hive的分区列",dataType = String.class,required = true)
+	@DocBean(name ="is_partition",value="是否为hive的分区列",dataType = String.class,required = true)
 	private String is_partition; //是否为hive的分区列
 
 	/** 取得：存储配置主键信息 */

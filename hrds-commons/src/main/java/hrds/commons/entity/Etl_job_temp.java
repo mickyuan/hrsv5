@@ -4,7 +4,7 @@ import fd.ng.db.entity.TableEntity;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.entity.anno.Column;
 import fd.ng.db.entity.anno.Table;
-import hrds.commons.apiannotation.ApiBean;
+import fd.ng.core.docannotation.DocBean;
 import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -35,13 +35,13 @@ public class Etl_job_temp extends TableEntity
 		__tmpPKS.add("etl_temp_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@ApiBean(name ="etl_temp_id",value="模版ID",dataType = Long.class,required = true)
+	@DocBean(name ="etl_temp_id",value="模版ID",dataType = Long.class,required = true)
 	private Long etl_temp_id; //模版ID
-	@ApiBean(name ="etl_temp_type",value="模版名称",dataType = String.class,required = true)
+	@DocBean(name ="etl_temp_type",value="模版名称",dataType = String.class,required = true)
 	private String etl_temp_type; //模版名称
-	@ApiBean(name ="pro_dic",value="模版shell路径",dataType = String.class,required = true)
+	@DocBean(name ="pro_dic",value="模版shell路径",dataType = String.class,required = true)
 	private String pro_dic; //模版shell路径
-	@ApiBean(name ="pro_name",value="模版shell名称",dataType = String.class,required = true)
+	@DocBean(name ="pro_name",value="模版shell名称",dataType = String.class,required = true)
 	private String pro_name; //模版shell名称
 
 	/** 取得：模版ID */
