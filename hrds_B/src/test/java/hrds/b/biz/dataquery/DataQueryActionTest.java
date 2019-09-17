@@ -27,7 +27,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
  * @date 2019/9/3 0003 下午 03:26
  * @since JDK1.8
  */
-public class DataQueryWebActionTest extends WebBaseTestCase {
+public class DataQueryActionTest extends WebBaseTestCase {
     private static final int Init_Rows = 10; // 向表中初始化的数据条数。
     private static final long USER_ID = 2001L; //使用用户
     private static String bodyString;
@@ -522,7 +522,7 @@ public class DataQueryWebActionTest extends WebBaseTestCase {
      * <p>方法名: fileClassifySum</p>
      * <p>方法说明: 文件采集分类统计测试类</p>
      */
-    public void fileClassifySum() {
+    public void getFileClassifySum() {
         bodyString = new HttpClient()
                 .post(getActionUrl("fileClassifySum")).getBodyString();
         ar = JsonUtil.toObject(bodyString, ActionResult.class);
