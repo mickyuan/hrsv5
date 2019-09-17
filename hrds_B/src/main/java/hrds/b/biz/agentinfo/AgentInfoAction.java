@@ -1,9 +1,11 @@
 package hrds.b.biz.agentinfo;
 
+import fd.ng.core.utils.StringUtil;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.annotation.RequestBean;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
+import hrds.commons.codes.AgentStatus;
 import hrds.commons.entity.Agent_info;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.ActionUtil;
@@ -34,6 +36,31 @@ public class AgentInfoAction extends BaseAction {
 		// 1.判断端口是否被占用
 		boolean flag = isPortOccupied(agentInfo.getAgent_ip(),
 				Integer.parseInt(agentInfo.getAgent_port()));
+		// 2.字段做合法性检查
+		if (StringUtil.isBlank(agentInfo.getAgent_type())) {
+			throw new BusinessException("agent_type不为空以及不为空格，agent_type="
+					+ agentInfo.getAgent_type());
+		}
+		if (StringUtil.isBlank(agentInfo.getAgent_name())) {
+			throw new BusinessException("agent_name不为空以及不为空格，agent_name="
+					+ agentInfo.getAgent_name());
+		}
+		if (StringUtil.isBlank(agentInfo.getAgent_ip())) {
+			throw new BusinessException("agent_ip不为空以及不为空格，agent_ip="
+					+ agentInfo.getAgent_ip());
+		}
+		if (StringUtil.isBlank(agentInfo.getAgent_port())) {
+			throw new BusinessException("agent_port不为空以及不为空格，agent_port="
+					+ agentInfo.getAgent_port());
+		}
+		if (StringUtil.isBlank(String.valueOf(agentInfo.getSource_id()))) {
+			throw new BusinessException("agent_port不为空以及不为空格，agent_port="
+					+ agentInfo.getAgent_port());
+		}
+		if (StringUtil.isBlank(String.valueOf(agentInfo.getUser_id()))) {
+			throw new BusinessException("user_id不为空以及不为空格，user_id="
+					+ agentInfo.getUser_id());
+		}
 		if (flag) {
 			// 端口被占用不可使用
 			throw new BusinessException("端口被占用，agent_port=" + agentInfo.getAgent_port() +
@@ -45,6 +72,7 @@ public class AgentInfoAction extends BaseAction {
 			// 2.为空，新增
 			agentInfo.setSource_id(PrimayKeyGener.getNextId());
 			agentInfo.setUser_id(ActionUtil.getUser().getUserId());
+			agentInfo.setAgent_status(AgentStatus.WeiLianJie.getCode());
 			// 3.保存agent信息
 			if (agentInfo.add(Dbo.db()) != 1) {
 				throw new BusinessException("新增agent_info表信息失败," +
@@ -127,6 +155,8 @@ public class AgentInfoAction extends BaseAction {
 	 *                   取值范围：1:数据库Agent,2:文件系统Agent,3:FtpAgent,4:数据文件Agent,5:对象Agent
 	 */
 	public void deleteAgent(Long agent_id, String agent_type) {
+
+		//FIXME 这个结果是 -1 ，不用处理了吗？
 
 		// 1.删除前查询此agent是否已部署
 		if (Dbo.queryNumber("select * from agent_down_info where agent_id=?",

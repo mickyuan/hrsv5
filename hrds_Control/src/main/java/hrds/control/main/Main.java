@@ -79,8 +79,7 @@ public class Main {
 						strBathDate, strSystemCode, isResumeRun, isAutoShift));
 
 		//2、启动调度服务。
-		ControlManageServer cm = new ControlManageServer(false, strSystemCode, bathDate, isResumeRun,
-				isAutoShift);
+		ControlManageServer cm = new ControlManageServer(strSystemCode, bathDate, isResumeRun, isAutoShift);
 		cm.runCMServer();
 
 		logger.info("-------------- Agent服务启动完成 --------------");

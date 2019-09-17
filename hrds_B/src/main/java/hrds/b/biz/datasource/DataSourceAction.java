@@ -1,10 +1,7 @@
 package hrds.b.biz.datasource;
 
 import com.alibaba.fastjson.TypeReference;
-import fd.ng.core.utils.CodecUtil;
-import fd.ng.core.utils.DateUtil;
-import fd.ng.core.utils.JsonUtil;
-import fd.ng.core.utils.StringUtil;
+import fd.ng.core.utils.*;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.annotation.RequestBean;
 import fd.ng.web.annotation.UploadFile;
@@ -24,6 +21,8 @@ import org.apache.logging.log4j.Logger;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.lang.reflect.Type;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -99,7 +98,14 @@ public class DataSourceAction extends BaseAction {
 			}
 		} else {
 			// 编辑
+			// 字段合法性检查
+			if (String.valueOf(dataSource.getSource_id()).length() > 10) {
+				throw new BusinessException("source_id长度不能超过10，source_id="
+						+ dataSource.getSource_id());
+			}
 			// 4.更新数据源信息
+			//FIXME 应该写 update SQL。因为现在这种方式，会导致诸如 create_date 等字段也被更新了。
+			// 新增和更新还是应该分开。因为传入的数据会不一样，进行的数据检查也不一样（比如这里应该用soureid做存在性检查
 			if (dataSource.update(Dbo.db()) != 1) {
 				// 编辑保存失败
 				throw new BusinessException("编辑保存数据源data_source表数据失败,datasource_number=" +
@@ -162,7 +168,7 @@ public class DataSourceAction extends BaseAction {
 	 *                  取值范围：不能为空或空格
 	 * @return 返回关联查询data_source表与source_relation_dep表信息结果
 	 */
-	public List<Map<String, Object>> searchDataSource(Long source_id) {
+	public List<Map<String, Object>> searchDataSource(long source_id) {
 		// 1.关联查询data_source表与source_relation_dep表信息
 		return Dbo.queryList("select ds.*,srd.dep_id from data_source ds " +
 				" join source_relation_dep srd on ds.source_id=srd.source_id " +
@@ -182,6 +188,8 @@ public class DataSourceAction extends BaseAction {
 	 *                  取值范围：不可为空以及不可为空格
 	 */
 	public void deleteDataSource(long source_id) {
+
+		//FIXME 这个方法不需要校验当前用户是否有权限删除这个sourceid吗？
 
 		// 1.先查询该datasource下是否还有agent
 		if (Dbo.queryNumber("SELECT * FROM agent_info  WHERE source_id=?", source_id)
@@ -247,6 +255,7 @@ public class DataSourceAction extends BaseAction {
 			/*注意：不同的浏览器提交的文件名是不一样的，有些浏览器提交上来的文件名是带有路径的，
 			如： c:\a\b\1.txt，而有些只是单纯的文件名，如：1.txt*/
 			// 3.处理获取到的上传文件的文件名的路径部分，只保留文件名部分
+			// FIXME File.separator与原始文件的分隔符不见得一致！ 应该分别找一次
 			fileName = fileName.substring(fileName.lastIndexOf(File.separator +
 					File.separator) + 1);
 			// 4.获得该文件的缓冲输入流
@@ -266,7 +275,11 @@ public class DataSourceAction extends BaseAction {
 			// 9.使用base64编码
 			String strTemp = new String(Base64.getDecoder().decode(sb.toString()),
 					CodecUtil.UTF8_CHARSET);
+			// FIXME 以上这几十行代码，用下面这一句不就行了吗？ 况且，上面的代码也没有处理异常情况下关闭IO!
+			// String strTemp1 = new String(Base64.getDecoder().decode(Files.readAllBytes(uploadedFile.toPath())));
+
 			// 10.导入数据源数据，将涉及到的所有表的数据导入数据库中对应的表中
+			// FIXME user_id与ActionUtil.getUser().getUserId()什么区别，为什么要两个不同的用户
 			importDclData(strTemp, agent_ip, agent_port, user_id,
 					ActionUtil.getUser().getUserId());
 		} catch (Exception e) {

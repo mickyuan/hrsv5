@@ -154,6 +154,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 	 * 9.测试保存数据源，部门id不能为空
 	 * 10.测试保存数据源，部门id不能为空格
 	 * 11.测试保存数据源，部门id长度不能超过10位（这里指的是分隔后每个部门id的长度）
+	 * 12.测试数据源编辑功能，source_id不合法（长度超过10）
 	 */
 	@Test
 	public void saveDataSource() {
@@ -187,6 +188,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 				.post(getActionUrl("saveDataSource")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(false));
+		// FIXME getMessage不需要造型成String， 用is去判断整个错误提示信息有待改进？
 		assertThat((String) ar.getMessage(), is("数据源编号重复,datasource_number=d300"));
 		// 4.测试数据源新增，数据源名称不能为空
 		bodyString = new HttpClient()
@@ -279,6 +281,18 @@ public class DataSourceActionTest extends WebBaseTestCase {
 		assertThat(ar.isSuccess(), is(false));
 		assertThat(ar.getMessage(), is("新增保存数据源与部门关系Source_relation_dep表信息失败," +
 				"dep_id=10000000001"));
+
+		// 12.测试数据源编辑功能，source_id不合法（长度超过10）
+		bodyString = new HttpClient()
+				.addData("source_id", 10000000006L)
+				.addData("datasource_remark", "测试")
+				.addData("datasource_name", "cs" + -30)
+				.addData("datasource_number", "s" + -29)
+				.addData("depIds", "-30,-26")
+				.post(getActionUrl("saveDataSource")).getBodyString();
+		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		assertThat(ar.isSuccess(), is(false));
+		assertThat(ar.getMessage(), is("source_id长度不能超过10，source_id=10000000006"));
 	}
 
 	/**
@@ -291,6 +305,8 @@ public class DataSourceActionTest extends WebBaseTestCase {
 	 * 1.查询数据源，source_id不为空也不为空格
 	 * 2.查询数据源，source_id为空
 	 * 3.查询数据源，source_id为空格
+	 * 4.查询数据源，source_id不合法（长度超过10）
+	 * 5.查询数据源，合法的source_id但是此数据源下没有数据
 	 */
 	@Test
 	public void searchDataSource() {
@@ -313,8 +329,14 @@ public class DataSourceActionTest extends WebBaseTestCase {
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(false));
 
-		// 4.查询数据源，source_id不合法
+		// 4.查询数据源，source_id不合法（长度超过10）
 		bodyString = new HttpClient().addData("source_id", "10000000005")
+				.post(getActionUrl("searchDataSource")).getBodyString();
+		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		assertThat(ar.isSuccess(), is(false));
+
+		// 5.查询数据源，合法的source_id但是此数据源下没有数据
+		bodyString = new HttpClient().addData("source_id", "10005")
 				.post(getActionUrl("searchDataSource")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(false));
@@ -331,7 +353,8 @@ public class DataSourceActionTest extends WebBaseTestCase {
 	 * 1.删除数据源信息，source_id不为空也不为空格，正常删除
 	 * 2.删除数据源信息，source_id为空
 	 * 3.删除数据源信息，source_id为空格
-	 * 4.删除数据源信息，不存在的ID
+	 * 4.删除数据源信息，不合法的source_id(长度超过了10)
+	 * 5.删除数据源信息，合法的source_id但是此数据源下没有数据
 	 */
 	@Test
 	public void deleteDataSource() {
@@ -361,9 +384,9 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			ar = JsonUtil.toObject(bodyString, ActionResult.class);
 			assertThat(ar.isSuccess(), is(false));
 
-			// 4.删除数据源信息，不存在的ID
+			// 4.删除数据源信息，不合法的source_id(长度超过了10)
 			bodyString = new HttpClient()
-					.addData("source_id", "10000000000")
+					.addData("source_id", "10000000006")
 					.post(getActionUrl("deleteDataSource"))
 					.getBodyString();
 			ar = JsonUtil.toObject(bodyString, ActionResult.class);
@@ -371,7 +394,19 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			assertThat(ar.isSuccess(), is(false));
 			assertThat(ar.getMessage(), is("删除数据源信息表data_source失败，数据库里没有此条数据，" +
 					"source_id=10000000000"));
+
+			// 5.删除数据源信息，合法的source_id但是此数据源下没有数据
+			bodyString = new HttpClient()
+					.addData("source_id", "100006")
+					.post(getActionUrl("deleteDataSource"))
+					.getBodyString();
+			ar = JsonUtil.toObject(bodyString, ActionResult.class);
+			System.out.println(bodyString);
+			assertThat(ar.isSuccess(), is(false));
+			assertThat(ar.getMessage(), is("删除数据源信息表data_source失败，数据库里没有此条数据，" +
+					"source_id=100006"));
 		}
 	}
 
 }
+

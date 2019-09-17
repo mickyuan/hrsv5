@@ -8,6 +8,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
 
+import hrds.control.constans.ControlConfigure;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -62,7 +63,6 @@ public class TaskManager {
 	private static final NotifyMessageHelper NOTIFY = NotifyMessageHelper.getInstance();
 	private final TaskJobHandleHelper handleHelper;
 
-	private boolean sysRunning; //系统运行标识
 	private LocalDate bathDate;   //当前批次日期
 	private final String etlSysCd;  //调度系统编号
 	private final boolean isResumeRun;  //系统续跑标识
@@ -70,6 +70,7 @@ public class TaskManager {
 	private final boolean isNeedSendSMS;    //作业发送警告信息标识
 	private static boolean isSysPause = false;  //系统是否暂停标识
 	private static boolean isSysJobShift = false;   //系统日切干预标识
+	private boolean sysRunning = false; //系统运行标识，每次启动时初始为false
 	private CheckWaitFileThread thread; //用于检测作业类型为WF的线程
 
 	private final static String RUNNINGJOBFLAG = "RunningJob";
@@ -88,33 +89,29 @@ public class TaskManager {
 	 * 静态工厂，用于构造TaskManager实例
 	 * @author Tiger.Wang
 	 * @date 2019/8/30
-	 * @param sysRunning	系统是否在运行中
 	 * @param bathDate	跑批批次日期
 	 * @param strSystemCode	调度系统代码
 	 * @param isResumeRun	是否续跑
 	 * @param isAutoShift	是否自动日切
 	 * @return hrds.agent.control.task.manager.TaskManager
 	 */
-	public static TaskManager newInstance(boolean sysRunning, String strSystemCode, LocalDate bathDate,
+	public static TaskManager newInstance(String strSystemCode, LocalDate bathDate,
 	                                      boolean isResumeRun, boolean isAutoShift) {
 
-		return new TaskManager(sysRunning, strSystemCode, bathDate, isResumeRun, isAutoShift);
+		return new TaskManager(strSystemCode, bathDate, isResumeRun, isAutoShift);
 	}
 
 	/**
 	 * TaskManager类构造器，构造器私有化，使用newInstance方法获得静态实例，不允许外部构造。注意，此处会初始化系统资源。
 	 * @author Tiger.Wang
 	 * @date 2019/8/30
-	 * @param sysRunning	系统是否在运行中
 	 * @param bathDate	跑批批次日期
 	 * @param etlSysCd	调度系统代码
 	 * @param isResumeRun	是否续跑
 	 * @param isAutoShift	是否自动日切
 	 */
-	private TaskManager(boolean sysRunning, String etlSysCd, LocalDate bathDate,
-	                    boolean isResumeRun, boolean isAutoShift) {
+	private TaskManager(String etlSysCd, LocalDate bathDate, boolean isResumeRun, boolean isAutoShift) {
 
-		this.sysRunning = sysRunning;
 		this.etlSysCd = etlSysCd;
 		this.bathDate = bathDate;
 		this.isResumeRun = isResumeRun;
@@ -122,8 +119,8 @@ public class TaskManager {
 
 		strRunningJob = etlSysCd + RUNNINGJOBFLAG;
 		strFinishedJob = etlSysCd + FINISHEDJOBFLAG;
-		//TODO 此处读配置文件
-		isNeedSendSMS = true;
+
+		isNeedSendSMS = ControlConfigure.NotifyConfig.isNeedSendSMS;
 
 		handleHelper = TaskJobHandleHelper.newInstance(this);
 	}

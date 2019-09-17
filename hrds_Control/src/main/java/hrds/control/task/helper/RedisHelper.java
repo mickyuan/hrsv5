@@ -3,6 +3,7 @@ package hrds.control.task.helper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import hrds.control.constans.ControlConfigure;
 import redis.clients.jedis.Jedis;
 
 /**
@@ -24,10 +25,10 @@ public class RedisHelper {
     private static final RedisHelper INSTANCE = new RedisHelper();
 
     private RedisHelper() {
-        // TODO 此处应该从配置文件读取
-        this.redisIp = "127.0.0.1";
-        this.redisPort = 6379;
-        this.timeout = 100000;
+
+        this.redisIp = ControlConfigure.RedisConfig.redisIp;
+        this.redisPort = ControlConfigure.RedisConfig.redisPort;
+        this.timeout = ControlConfigure.RedisConfig.timeout;
 
         this.jedis = new Jedis(redisIp, redisPort, timeout);
 
@@ -69,6 +70,7 @@ public class RedisHelper {
         while( true ) {
             try {
                 jedis.rpush(key, content);
+                break;
             }
             catch(Exception ex) {
                 logger.error("JedisError:" + ex.getMessage());
