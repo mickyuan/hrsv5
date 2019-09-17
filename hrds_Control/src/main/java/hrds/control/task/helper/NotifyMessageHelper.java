@@ -1,11 +1,9 @@
 package hrds.control.task.helper;
 
-import hrds.control.constans.ControlConfigure;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.ArrayList;
-import java.util.UUID;
+import hrds.control.constans.ControlConfigure;
 
 /**
  * ClassName: NotifyMessageHelper

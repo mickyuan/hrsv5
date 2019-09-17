@@ -1,13 +1,9 @@
 package hrds.control.task.helper;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.util.Calendar;
-import java.util.Date;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.Stack;
 
@@ -31,15 +27,17 @@ import hrds.control.utils.DateUtil;
 public class TaskJobHelper {
     private static final Logger logger = LogManager.getLogger();
 
+    private static final String PARASEPARATOR = "@";    //参数分隔符
+
     private TaskJobHelper() {};
 
     public static void transformProgramDir(EtlJobDefBean job) {
 
         String proDic = job.getPro_dic();
-        String[] nameArr = TaskJobHelper.getPara(job, proDic);
+        String[] nameArr = TaskJobHelper.getPara(job.getCurr_bath_date(), proDic);
         String name = "";
-        for(int i = 0; i < nameArr.length; i++) {
-            name = name + nameArr[i];
+        for(String s : nameArr) {
+            name = name + s;
         }
         job.setPro_dic(name);
     }
@@ -47,10 +45,10 @@ public class TaskJobHelper {
     public static void transformLogDir(EtlJobDefBean job) {
 
         String logDic = job.getLog_dic();
-        String[] nameArr = TaskJobHelper.getPara(job, logDic);
+        String[] nameArr = TaskJobHelper.getPara(job.getCurr_bath_date(), logDic);
         String name = "";
-        for(int i = 0; i < nameArr.length; i++) {
-            name = name + nameArr[i];
+        for(String s : nameArr) {
+            name = name + s;
         }
         job.setLog_dic(name);
     }
@@ -58,10 +56,10 @@ public class TaskJobHelper {
     public static void transformProName(EtlJobDefBean job) {
 
         String proName = job.getPro_name();
-        String[] nameArr = TaskJobHelper.getPara(job, proName);
+        String[] nameArr = TaskJobHelper.getPara(job.getCurr_bath_date(), proName);
         String name = "";
-        for(int i = 0; i < nameArr.length; i++) {
-            name = name + nameArr[i];
+        for(String s : nameArr) {
+            name = name + s;
         }
         job.setPro_name(name);
     }
@@ -69,33 +67,34 @@ public class TaskJobHelper {
     public static void transformProPara(EtlJobDefBean job) {
 
         String proPara = job.getPro_para();
-        String[] nameArr = TaskJobHelper.getPara(job, proPara);
+        String[] nameArr = TaskJobHelper.getPara(job.getCurr_bath_date(), proPara);
         String name = "";
         for(int i = 0; i < nameArr.length; i++) {
             if( 0 == i ) {
-                name = nameArr[i];
+                name = nameArr[0];
             }
             else {
-                name = name + "@" + nameArr[i];
+                name = name + PARASEPARATOR + nameArr[i];
             }
         }
+
         job.setPro_para(name);
     }
 
-    public static String[] getPara(EtlJobDefBean job, String dirPath) {
+    //TODO 看着头大
+    private static String[] getPara(String currBathDate, String para) {
 
-        String[] arr = null;
+        String[] arr;
         String resultst = "";
         String strs = "";
-        Stack<Character> stack = new Stack<Character>();
-        if(StringUtil.isEmpty(dirPath)){
-            arr = dirPath.split("@");
+        Stack<Character> stack = new Stack<>();
+        if(StringUtil.isNotEmpty(para)) {
+            arr = para.split(PARASEPARATOR);
         }
         else {
             arr = new String[] {};
         }
         String[] newArr = new String[arr.length];
-        Calendar cal = Calendar.getInstance();
 
         for(int i = 0; i < arr.length; i++) {
             char[] ca = arr[i].toCharArray();
@@ -115,30 +114,26 @@ public class TaskJobHelper {
 
                     char x = strs.charAt(0);
                     if( "#".equals(String.valueOf(x)) ) {
-                        Date date = TaskJobHelper.getDateByString(job.getCurr_bath_date());
-                        SimpleDateFormat sd = new SimpleDateFormat("yyyyMMdd");
+                        LocalDate date = LocalDate.parse(currBathDate, DateUtil.DATE);
                         String p = strs.toLowerCase();
                         //TODO 此处的SQL为：select para_cd from etl_para where para_cd=#{_parameter}，有何意义
 //                        String p = processMapper.queryPara(strs.toLowerCase());
                         if( "#txdate".equals(p) ) {
-                            arr[i] = arr[i].replace("#{txdate}", sd.format(date));
+                            arr[i] = arr[i].replace("#{txdate}", date.format(DateUtil.DATE_DEFAULT));
                         }
                         if( "#date".equals(p) ) {
-                            arr[i] = arr[i].replace("#{date}", sd.format(new Date()));
+                            arr[i] = arr[i].replace("#{date}", date.format(DateUtil.DATE_DEFAULT));
                         }
                         if( "#txdate_pre".equals(p) ) {
-                            cal.setTime(date);
-                            cal.add(Calendar.DAY_OF_MONTH, -1);
-                            arr[i] = arr[i].replace("#{txdate_pre}", sd.format(cal.getTime()));
+                            arr[i] = arr[i].replace("#{txdate_pre}",
+                                    date.plus(-1, ChronoUnit.DAYS).format(DateUtil.DATE_DEFAULT));
                         }
                         if( "#txdate_next".equals(p) ) {
-                            cal.setTime(date);
-                            cal.add(Calendar.DAY_OF_MONTH, 1);
-                            arr[i] = arr[i].replace("#{txdate_next}", sd.format(cal.getTime()));
+                            arr[i] = arr[i].replace("#{txdate_next}",
+                                    date.plus(1, ChronoUnit.DAYS).format(DateUtil.DATE_DEFAULT));
                         }
                     }
                     else if( "!".equals(String.valueOf(x)) ) {
-                        Date date = TaskJobHelper.getDateByString(job.getCurr_bath_date());
                         //TODO 这里etlSysCd为""，意味着这是默认系统参数？
                         Optional<Etl_para> etlParaOptional = TaskSqlHelper.getEtlParameterVal("", strs);
                         if(!etlParaOptional.isPresent()) {
@@ -149,22 +144,21 @@ public class TaskJobHelper {
                         Etl_para etlPara = etlParaOptional.get();
                         String paraVal = etlPara.getPara_val();
                         /**添加参数可以包含日期的自定义格式******************开始*/
-                        SimpleDateFormat sd = new SimpleDateFormat(paraVal);
+                        LocalDate date = LocalDate.parse(currBathDate, DateUtil.DATE);
+                        DateTimeFormatter pattern = DateTimeFormatter.ofPattern(paraVal);
                         if( "!txdate".startsWith(strs) ) {
-                            arr[i] = arr[i].replace("!{" + strsc + "}", sd.format(date));
+                            arr[i] = arr[i].replace("!{" + strsc + "}", date.format(pattern));
                         }
                         if( "!date".startsWith(strs) ) {
-                            arr[i] = arr[i].replace("!{" + strsc + "}", sd.format(new Date()));
+                            arr[i] = arr[i].replace("!{" + strsc + "}", date.format(pattern));
                         }
                         if( "!txdate_pre".startsWith(strs) ) {
-                            cal.setTime(date);
-                            cal.add(Calendar.DAY_OF_MONTH, -1);
-                            arr[i] = arr[i].replace("!{" + strsc + "}", sd.format(cal.getTime()));
+                            arr[i] = arr[i].replace("!{" + strsc + "}",
+                                    date.plus(-1, ChronoUnit.DAYS).format(pattern));
                         }
                         if( "!txdate_next".startsWith(strs) ) {
-                            cal.setTime(date);
-                            cal.add(Calendar.DAY_OF_MONTH, 1);
-                            arr[i] = arr[i].replace("!{" + strsc + "}", sd.format(cal.getTime()));
+                            arr[i] = arr[i].replace("!{" + strsc + "}",
+                                    date.plus(1, ChronoUnit.DAYS).format(pattern));
                         }
                         /**添加参数可以包含日期的自定义格式******************结束*/
                         else {
@@ -177,34 +171,9 @@ public class TaskJobHelper {
                 }
             }
             newArr[i] = arr[i];
-            ca = null;
         }
 
         return newArr;
-    }
-
-    /**
-     * 将String日期转成Date型日期
-     *
-     * @param strDate
-     * 			String型日期
-     * @return
-     * 		Date型日期
-     */
-    public static Date getDateByString(String strDate) {
-
-        //TODO 此处要用jdk8的LocalDate来进行日期计算，此处没仔细看
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-        dateFormat.setLenient(false);
-        Date retValue = null;
-        try {
-            retValue = dateFormat.parse(strDate);
-        }
-        catch(ParseException e) {
-            e.printStackTrace();
-        }
-
-        return retValue;
     }
 
     /**
@@ -216,22 +185,14 @@ public class TaskJobHelper {
      */
     public static LocalDate getNextBathDate(LocalDate currBathDate) {
 
-        //TODO 此处要用jdk8的LocalDate来进行日期计算，此处没仔细看
-        ZoneId zoneId = ZoneId.systemDefault();
-        ZonedDateTime zdt = currBathDate.atStartOfDay(zoneId);
-        Calendar cal = Calendar.getInstance();
-        cal.setTime(Date.from(zdt.toInstant()));
-        cal.add(Calendar.DAY_OF_MONTH, 1);
-
-        return LocalDateTime.ofInstant(cal.getTime().toInstant(), zoneId).toLocalDate();
+        return currBathDate.plus(1, ChronoUnit.DAYS);
     }
 
     /**
-     * 计算下次执行日期
+     * 计算下次执行日期。
      * @param currBathDate 当次执行日期
      * @param freqType 执行频率
-     * @return
-     * 		下次执行日期
+     * @return 下次执行日期（yyyy-MM-dd）
      */
     public static String getNextExecuteDate(LocalDate currBathDate, String freqType) {
 
@@ -239,93 +200,51 @@ public class TaskJobHelper {
     }
 
     /**
-     * 计算前次执行日期
-     *
-     * @param currBathDate
-     * 			当次执行日期
-     * @param freqType
-     * 			执行频率
-     * @return
-     * 		前次执行日期
+     * 计算上次执行日期。
+     * @param currBathDate 当次执行日期
+     * @param freqType 执行频率
+     * @return 上一次执行日期（yyyy-MM-dd）
      */
     public static String getPreExecuteDate(LocalDate currBathDate, String freqType) {
 
         return getExecuteDate(currBathDate, freqType, -1);
     }
 
+    /**
+     * 根据调度频率类型及偏移量，使用指定的日期计算出下一次执行日期。
+     * @author Tiger.Wang
+     * @date 2019/9/17
+     * @param currBathDate  当前跑批日期
+     * @param freqType  频率类型
+     * @param offset    偏移量
+     * @return java.lang.String 日期字符串（yyyy-MM-dd）
+     */
     private static String getExecuteDate(LocalDate currBathDate, String freqType, int offset) {
 
-        //TODO 此处要用jdk8的LocalDate来进行日期计算，此处没仔细看
-        ZoneId zoneId = ZoneId.systemDefault();
-        ZonedDateTime zdt = currBathDate.atStartOfDay(zoneId);
-        Calendar cal = Calendar.getInstance();
-        cal.setTime(Date.from(zdt.toInstant()));
-
         if(Dispatch_Frequency.DAILY.getCode().equals(freqType)) {   // 每日调度
-            cal.add(Calendar.DATE, offset);
+            currBathDate = currBathDate.plus(offset, ChronoUnit.DAYS);
         }else if(Dispatch_Frequency.MONTHLY.getCode().equals(freqType)) { // 每月调度
-            cal.add(Calendar.MONTH, offset);
-        }else if(Dispatch_Frequency.WEEKLY.equals(freqType)) {    // 每周调度
-            cal.add(Calendar.WEEK_OF_MONTH, offset);
-        }else if(Dispatch_Frequency.YEARLY.equals(freqType)) {    // 每年调度
-            cal.add(Calendar.YEAR, offset);
+            currBathDate = currBathDate.plus(offset, ChronoUnit.MONTHS);
+        }else if(Dispatch_Frequency.WEEKLY.getCode().equals(freqType)) {    // 每周调度
+            currBathDate = currBathDate.plus(offset, ChronoUnit.WEEKS);
+        }else if(Dispatch_Frequency.YEARLY.getCode().equals(freqType)) {    // 每年调度
+            currBathDate = currBathDate.plus(offset, ChronoUnit.YEARS);
         }else {
             throw new AppSystemException("不支持的频率类型：" + freqType);
         }
 
-        return DateUtil.getStringDate(cal.getTime());
+        return currBathDate.format(DateUtil.DATE);
     }
 
     /**
-     * 将String日期转成Date型日期
-     *
-     * @param strDateTime
-     * 			String型日期
-     * @return
-     * 		Date型日期
+     * 在作业调度类型为T+1时使用，通过指定日期时间，计算出下一次执行日期时间
+     * @author Tiger.Wang
+     * @date 2019/9/17
+     * @param strDateTime   当前日期时间（yyyy-MM-dd HH:mm:ss）
+     * @return java.time.LocalDateTime
      */
-    public static Date getTtypeExecuteTime(String strDateTime) {
+    public static LocalDateTime getExecuteTimeByTPlus1(String strDateTime) {
 
-        //TODO 此处要用jdk8的LocalDate来进行日期计算，此处没仔细看
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        dateFormat.setLenient(false);
-        Date retValue = null;
-        try {
-            retValue = dateFormat.parse(strDateTime);
-            Calendar cal = Calendar.getInstance();
-            cal.setTime(retValue);
-            cal.add(Calendar.DAY_OF_MONTH, 1);
-            retValue = cal.getTime();
-        }
-        catch(ParseException e) {
-            e.printStackTrace();
-        }
-        return retValue;
-    }
-
-    /**
-     * 将String时间转成Date型日期
-     *
-     * @param strDate
-     * 			作业调度时间
-     * @return
-     * 		Date型日期
-     */
-    public static Date getZtypeExecuteTime(String strDate) {
-
-        //TODO 此处要用jdk8的LocalDate来进行日期计算，此处没仔细看
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        dateFormat.setLenient(false);
-        Date retValue = null;
-        try {
-            retValue = dateFormat.parse(strDate);
-            Calendar cal = Calendar.getInstance();
-            cal.setTime(retValue);
-            retValue = cal.getTime();
-        }
-        catch(ParseException e) {
-            e.printStackTrace();
-        }
-        return retValue;
+        return LocalDateTime.parse(strDateTime, DateUtil.DATETIME).plus(1, ChronoUnit.DAYS);
     }
 }

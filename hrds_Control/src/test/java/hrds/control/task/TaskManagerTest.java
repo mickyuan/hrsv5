@@ -1,3 +1,5 @@
+package hrds.control.task;
+
 import java.time.LocalDate;
 
 import org.apache.logging.log4j.LogManager;
@@ -16,7 +18,7 @@ import hrds.commons.entity.Etl_resource;
 import hrds.control.task.TaskManager;
 
 /**
- * @ClassName: TaskManagerTest
+ * @ClassName: hrds.control.task.TaskManagerTest
  * @Description: 用于测试TaskManager类
  * @Author: Tiger.Wang
  * @Date: 2019/9/2 14:06
@@ -68,6 +70,8 @@ public class TaskManagerTest {
 			etlJobDef.setJob_priority_curr(1);
 			etlJobDef.setPro_type(Pro_Type.JAVA.getCode());
 			etlJobDef.add(db);
+
+			SqlOperator.commitTransaction(db);
 		}
 	}
 
