@@ -3,6 +3,7 @@ package hrds.agent.trans.biz.AgentServer;
 import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.web.action.AbstractWebappBaseAction;
+import fd.ng.web.annotation.RequestParam;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 
@@ -17,8 +18,9 @@ import java.util.List;
  * version: 5.0 <br>
  */
 public class AgentServerInfo extends AbstractWebappBaseAction {
-	public static ArrayList<String> noList;
+	public static final ArrayList<String> noList;
 
+	//需要过滤的系统目录
 	static {
 		noList = new ArrayList<>();
 		noList.add("/bin");
@@ -42,9 +44,14 @@ public class AgentServerInfo extends AbstractWebappBaseAction {
 	 * date: 2019/9/11 17:58 <br>
 	 * author: zxz <br>
 	 * version: 5.0 <br>
+	 * 步骤：
+	 * 1.获取当前日期、时间、系统名称、用户名称
+	 * 2.组成json返回到前端
 	 *
 	 * @param
 	 * @return com.alibaba.fastjson.JSONObject
+	 * 含义：包含Agent日期、时间、系统名称、用户名称的json
+	 * 取值范围：不可为空
 	 */
 	public JSONObject getServerInfo() {
 		JSONObject json = new JSONObject();
@@ -61,23 +68,25 @@ public class AgentServerInfo extends AbstractWebappBaseAction {
 	 * author: zxz <br>
 	 * version: 5.0 <br>
 	 * 步骤：
-	 * 1、获取前端参数、为空则给默认值
-	 * 2、根据操作系统类型获取文件及文件夹返回到前端
+	 * 1.获取前端参数、为空则给默认值
+	 * 2.根据操作系统类型获取文件及文件夹返回到前端
 	 *
-	 * @param pathVal 含义：页面选择的文件夹路径，为空则表示根目录
+	 * @param pathVal String
+	 *                含义：页面选择的文件夹路径，为空则表示根目录
 	 *                取值范围：可为空
-	 * @param isFile  含义：是否显示当前目录下的文件，默认不显示
+	 * @param isFile  String
+	 *                含义：是否显示当前目录下的文件，默认不显示
 	 *                取值范围：可为空
 	 * @return com.alibaba.fastjson.JSONObject
 	 * 含义：当前文件夹下所有的目录(当isFile为true时返回当前文件夹下所有的目录和文件)
-	 * 取值范围：可为空
+	 * 取值范围：可能为空
 	 */
-	public JSONObject getSystemFileInfo(String pathVal, Boolean isFile) {
+	public JSONObject getSystemFileInfo(@RequestParam(valueIfNull = "") String pathVal, String isFile) {
 		/**
 		 * 需要过滤的系统目录
 		 */
 		if (isFile != null) {
-			isFile = false;
+			isFile = "false";
 		}
 		String osName = SystemUtils.OS_NAME;
 		JSONObject receiveMsg = new JSONObject();
@@ -107,7 +116,7 @@ public class AgentServerInfo extends AbstractWebappBaseAction {
 					}
 				}
 			}
-			if (isFile) {//是否需要显示文件
+			if ("true".equals(isFile)) {//是否需要显示文件
 				for (int i = 0; i < array.length; i++) {
 					if (!array[i].isDirectory()) {
 						String name = array[i].getName();
