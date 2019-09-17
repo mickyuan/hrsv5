@@ -21,8 +21,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URLEncoder;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.OptionalLong;
 
 /**
  * @description: 数据库采集应用管理端数据源Agent列表后台服务类
@@ -50,6 +50,8 @@ public class AgentListAction extends BaseAction {
 				"FROM agent_info age JOIN data_source datas ON age.source_id = datas.SOURCE_ID " +
 				"WHERE age.user_id = ? GROUP BY datas.source_id,datas.datasource_name",
 				getUserId());
+		//数据可访问权限处理方式
+		//以上SQL中，通过当前用户ID进行关联查询，达到了数据权限的限制
 	}
 
 	/**
@@ -72,6 +74,8 @@ public class AgentListAction extends BaseAction {
 		//1、根据sourceId和agentType查询数据库获取相应信息
 		return Dbo.queryResult("SELECT * FROM agent_info WHERE source_id = ? AND agent_type = ? " +
 						"AND user_id = ?", sourceId, agentType, getUserId());
+		//数据可访问权限处理方式
+		//以上SQL中，通过当前用户ID进行关联查询，达到了数据权限的限制
 	}
 
 	/**
@@ -103,6 +107,9 @@ public class AgentListAction extends BaseAction {
 				" left join agent_info ai on ds.SOURCE_ID = ai.SOURCE_ID " +
 				" where ds.source_id=? AND ai.user_id = ? " +
 				" AND ai.agent_id = ?", sourceId, userId, agentId);
+		//数据可访问权限处理方式
+		//以上SQL中，通过当前用户ID进行关联查询，达到了数据权限的限制
+
 		//3、如果存在，查询结果中应该有且只有一条数据
 		if (result.isEmpty()) {
 			throw new BusinessException("未找到Agent");
@@ -182,6 +189,8 @@ public class AgentListAction extends BaseAction {
 		if (readNum > 1000) readNum = 1000;
 		//2、调用方法读取日志并返回
 		return getTaskLog(agentId, getUserId(), logType, readNum).get("log");
+		//数据可访问权限处理方式
+		//在getTaskLog()方法中做了处理
 	}
 
 	/**
@@ -239,6 +248,8 @@ public class AgentListAction extends BaseAction {
 			//6、使用response获得输出流，完成文件下载
 			out.write(bytes);
 			out.flush();
+			//数据可访问权限处理方式
+			//在getTaskLog()方法中做了处理
 		} catch (IOException e) {
 			throw new AppSystemException(e);
 		}
@@ -247,17 +258,17 @@ public class AgentListAction extends BaseAction {
 	/**
 	 * 根据ID删除半结构化采集任务数据
 	 *
-	 * 1、根据collectSetId在源文件属性表(source_file_attribute)中获得采集的原始表名(table_name)，可能有多条
-	 * 2、调用IOnWayCtrl.checkExistsTask()方法对将要删除的信息进行检查
-	 * 3、在对象采集设置表(object_collect)中删除该条数据
-	 *
+	 * 1、根据collectSetId和user_id判断是否有这样一条数据
+	 * 2、在对象采集设置表(object_collect)中删除该条数据
+	 * TODO IOnWayCtrl.checkExistsTask()暂时先不管
 	 * @Param: collectSetId long
 	 *         含义：源文件属性表ID,object_collect表ID
 	 *         取值范围：不为空
 	 * @return: 无
 	 *
 	 * */
-	public void deletehalfStructTask(long collectSetId) {
+	public void deleteHalfStructTask(long collectSetId) {
+		/*
 		//1、根据collectSetId在源文件属性表(source_file_attribute)中获得采集的原始表名(table_name)，可能有多条
 		List<Object> tableNames = Dbo.queryOneColumnList(
 				"select table_name from source_file_attribute where collect_set_id = ?",
@@ -267,7 +278,20 @@ public class AgentListAction extends BaseAction {
 		}
 		//2、调用IOnWayCtrl.checkExistsTask()方法对将要删除的信息进行检查
 		//IOnWayCtrl.checkExistsTask(tableNames, DataSourceType.DML.toString(), db);
-		//3、在对象采集设置表(object_collect)中删除该条数据，有且只有一条
+		*/
+
+		//1、根据collectSetId和user_id判断是否有这样一条数据
+		OptionalLong optionalLong = Dbo.queryNumber("select count(1) from data_source ds " +
+				" join agent_info ai on ai.source_id = ds.source_id " +
+				" join object_collect oc on ai.Agent_id = oc.Agent_id " +
+				" where ds.user_id = ? and oc.odc_id = ?", getUserId(), collectSetId);
+		if(optionalLong.getAsLong() == 1){
+			throw new BusinessException("要删除的半结构化文件采集任务不存在");
+		}
+		//数据可访问权限处理方式
+		//该方法首先使用user_id和collectSetId去数据库中查找要删除的数据是否存在
+
+		//2、在对象采集设置表(object_collect)中删除该条数据，有且只有一条
 		int firNum = Dbo.execute("delete from object_collect where odc_id = ?", collectSetId);
 		if (firNum != 1) {
 			if (firNum == 0) throw new BusinessException("object_collect表中没有数据被删除!");
@@ -278,10 +302,9 @@ public class AgentListAction extends BaseAction {
 	/**
 	 * 根据ID删除FTP采集任务数据
 	 *
-	 * 1、根据collectSetId在源文件属性表(source_file_attribute)中获得采集的原始表名(table_name)，可能有多条
-	 * 2、调用IOnWayCtrl.checkExistsTask()方法对将要删除的信息进行检查
-	 * 3、在FTP采集设置表(ftp_collect)中删除该条数据
-	 *
+	 * 1、根据collectSetId和user_id判断是否有这样一条数据
+	 * 2、在FTP采集设置表(ftp_collect)中删除该条数据
+	 * TODO IOnWayCtrl.checkExistsTask()暂时先不管
 	 * @Param: collectSetId long
 	 *         含义：源文件属性表ID,object_collect表ID
 	 *         取值范围：不为空
@@ -289,6 +312,7 @@ public class AgentListAction extends BaseAction {
 	 *
 	 * */
 	public void deleteFTPTask(long collectSetId) {
+		/*
 		//1、根据collectSetId在源文件属性表(source_file_attribute)中获得采集的原始表名(table_name)，可能有多条
 		List<Object> tableNames = Dbo.queryOneColumnList(
 				"select table_name from source_file_attribute where collect_set_id = ?",
@@ -298,7 +322,20 @@ public class AgentListAction extends BaseAction {
 		}
 		//2、调用IOnWayCtrl.checkExistsTask()方法对将要删除的信息进行检查
 		//IOnWayCtrl.checkExistsTask(tableNames, DataSourceType.DML.toString(), db);
-		//3、在FTP采集设置表(ftp_collect)中删除该条数据，有且只有一条
+		*/
+
+		//1、根据collectSetId和user_id判断是否有这样一条数据
+		OptionalLong optionalLong = Dbo.queryNumber("select count(1) from data_source ds " +
+				" join agent_info ai on ai.source_id = ds.source_id " +
+				" join ftp_collect fc on ai.Agent_id = fc.Agent_id " +
+				" where ds.user_id = ? and fc.ftp_id = ?", getUserId(), collectSetId);
+		if(optionalLong.getAsLong() == 1){
+			throw new BusinessException("要删除的FTP采集任务不存在");
+		}
+		//数据可访问权限处理方式
+		//该方法首先使用user_id和collectSetId去数据库中查找要删除的数据是否存在
+
+		//2、在FTP采集设置表(ftp_collect)中删除该条数据，有且只有一条
 		int firNum = Dbo.execute("delete from ftp_collect where odc_id = ?", collectSetId);
 		if (firNum != 1) {
 			if (firNum == 0) throw new BusinessException("ftp_collect表中没有数据被删除!");
@@ -307,22 +344,59 @@ public class AgentListAction extends BaseAction {
 	}
 
 	/**
-	 * 根据ID和Agent类型删除数据库直连，非结构化文件，DB文件采集任务数据
+	 * 根据collectSetId删除数据库直连采集任务
 	 *
-	 * 1、判断Agent类型
-	 * 2、如果是数据库直连采集任务
-	 *      2-1、在数据库设置删除对应的记录
-	 *      2-2、在表对应字段表中找到对应的记录并删除
-	 *      2-3、在数据库对应表删除对应的记录
-	 * 3、如果是结构化文件、DB文件
-	 *      3-1、在文件系统设置表删除对应的记录
-	 *      3-2、在文件源设置表删除对应的记录
-	 * 4、对其他类型的任务进行统一处理
-	 *      4-1、在压缩作业参数表删除对应的记录
-	 *      4-2、在传送作业参数表删除对应的记录
-	 *      4-3、在清洗作业参数表删除对应的记录
-	 *      4-4、在hdfs存储作业参数表删除对应的记录
+	 * 1、根据collectSetId和user_id判断是否有这样一条数据
+	 * 2、在数据库设置表中删除对应的记录
+	 * 3、在表对应字段表中找到对应的记录并删除
+	 * 4、在数据库对应表删除对应的记录
+	 * TODO IOnWayCtrl.checkExistsTask()暂时先不管
+	 * @Param: collectSetId long
+	 *         含义：源文件属性表ID,object_collect表ID
+	 *         取值范围：不为空
+	 * @return: 无
 	 *
+	 * */
+	public void deleteDBTask(long collectSetId){
+		//1、根据collectSetId和user_id判断是否有这样一条数据
+		OptionalLong optionalLong = Dbo.queryNumber("select count(1) from data_source ds " +
+				" join agent_info ai on ai.source_id = ds.source_id " +
+				" join database_set dbs on ai.Agent_id = dbs.Agent_id " +
+				" where ds.user_id = ? and dbs.database_id = ?", getUserId(), collectSetId);
+		if(optionalLong.getAsLong() == 1){
+			throw new BusinessException("要删除的数据库直连采集任务不存在");
+		}
+		//数据可访问权限处理方式
+		//该方法首先使用user_id和collectSetId去数据库中查找要删除的数据是否存在
+
+		//2、在数据库设置表中删除对应的记录，有且只有一条
+		int firNum = Dbo.execute("delete from database_set where database_id =?"
+				, collectSetId);
+		if (firNum != 1) {
+			if (firNum == 0) throw new BusinessException("database_set表中没有数据被删除!");
+			else throw new BusinessException("database_set表删除数据异常!");
+		}
+		//3、在表对应字段表中找到对应的记录并删除，可能会有多条
+		int secNum = Dbo.execute("delete from table_column where EXISTS" +
+				"(select 1 from table_info ti where database_id = ? " +
+				"and table_column.table_id=ti.table_id)", collectSetId);
+		if (secNum == 0) {
+			throw new BusinessException("table_column表中没有数据被删除!");
+		}
+		//4、在数据库对应表删除对应的记录,可能会有多条
+		int thiExecute = Dbo.execute("delete from table_info where database_id = ?",
+				collectSetId);
+		if (thiExecute == 0) {
+			throw new BusinessException("table_info表中没有数据被删除!");
+		}
+	}
+
+	/**
+	 * 根据collectSetId删除DB文件采集任务数据
+	 *
+	 * 1、根据collectSetId和user_id判断是否有这样一条数据
+	 * 2、在数据库设置表中删除对应的记录
+	 * TODO IOnWayCtrl.checkExistsTask()暂时先不管
 	 * @Param: collectSetId long
 	 *         含义：源文件属性表ID,object_collect表ID
 	 *         取值范围：不为空
@@ -332,84 +406,66 @@ public class AgentListAction extends BaseAction {
 	 * @return: 无
 	 *
 	 * */
-	public void deleteOtherTask(long collectSetId, String agentType) {
-		//1、判断Agent类型
-		if (AgentType.ShuJuKu == AgentType.ofEnumByCode(agentType)) {
-			//2、如果是数据库直连采集任务
-			List<Object> hbaseNames = Dbo.queryOneColumnList(
-					"select hbase_name from source_file_attribute where collect_set_id = ?",
-					collectSetId);
-			if (hbaseNames.isEmpty()) {
-				throw new BusinessException("源文件属性表中未找到系统内对应表名");
-			}
-			//IOnWayCtrl.checkExistsTask(hbaseNames, DataSourceType.DML.toString(), db);
-			//2-1、在数据库设置表删除对应的记录，有且只有一条
-			int firNum = Dbo.execute("delete from database_set where database_id =?"
-					, collectSetId);
-			if (firNum != 1) {
-				if (firNum == 0) throw new BusinessException("database_set表中没有数据被删除!");
-				else throw new BusinessException("database_set表删除数据异常!");
-			}
+	public void deleteDFTask(long collectSetId){
+		//1、根据collectSetId和user_id判断是否有这样一条数据
+		OptionalLong optionalLong = Dbo.queryNumber("select count(1) from data_source ds " +
+				" join agent_info ai on ai.source_id = ds.source_id " +
+				" join database_set dbs on ai.Agent_id = dbs.Agent_id " +
+				" where ds.user_id = ? and dbs.database_id = ?", getUserId(), collectSetId);
+		if(optionalLong.getAsLong() == 1){
+			throw new BusinessException("要删除的数据文件采集任务不存在");
+		}
+		//数据可访问权限处理方式
+		//该方法首先使用user_id和collectSetId去数据库中查找要删除的数据是否存在
+		//2、在数据库设置表删除对应的记录，有且只有一条
+		int firNum = Dbo.execute("delete from database_set where database_id =?"
+				, collectSetId);
+		if (firNum != 1) {
+			if (firNum == 0) throw new BusinessException("database_set表中没有数据被删除!");
+			else throw new BusinessException("database_set表删除数据异常!");
+		}
+	}
 
-			//2-2、在表对应字段表中找到对应的记录并删除，可能会有多条
-			int secNum = Dbo.execute("delete from table_column where EXISTS" +
-							"(select 1 from table_info ti where database_id = ? " +
-							"and table_column.table_id=ti.table_id)", collectSetId);
-			if (secNum == 0) {
-				throw new BusinessException("table_column表中没有数据被删除!");
-			}
+	/**
+	 * 根据collectSetId删除非结构化文件采集任务数据
+	 *
+	 * 1、根据collectSetId和user_id判断是否有这样一条数据
+	 * 2、在文件系统设置表删除对应的记录
+	 * 3、在文件源设置表删除对应的记录
+	 * TODO IOnWayCtrl.checkExistsTask()暂时先不管
+	 * @Param: collectSetId long
+	 *         含义：源文件属性表ID,object_collect表ID
+	 *         取值范围：不为空
+	 * @Param: agentType String
+	 *         含义：agent类型
+	 *         取值范围：AgentType代码项的code值(1-5)
+	 * @return: 无
+	 *
+	 * */
+	public void deleteNonStructTask(long collectSetId){
+		//1、根据collectSetId和user_id判断是否有这样一条数据
+		OptionalLong optionalLong = Dbo.queryNumber("select count(1) from data_source ds " +
+				" join agent_info ai on ai.source_id = ds.source_id " +
+				" join file_collect_set fcs on ai.Agent_id = fcs.Agent_id " +
+				" where ds.user_id = ? and fcs.fcs_id = ?", getUserId(), collectSetId);
+		if(optionalLong.getAsLong() == 1){
+			throw new BusinessException("要删除的非结构化文件采集任务不存在");
+		}
+		//数据可访问权限处理方式
+		//该方法首先使用user_id和collectSetId去数据库中查找要删除的数据是否存在
 
-			//2-3、在数据库对应表删除对应的记录,可能会有多条
-			int thiExecute = Dbo.execute("delete from table_info where database_id = ?",
-					collectSetId);
-			if (thiExecute == 0) {
-				throw new BusinessException("table_info表中没有数据被删除!");
-			}
+		//2、在文件系统设置表删除对应的记录，有且只有一条数据
+		int firNum = Dbo.execute("delete  from file_collect_set where fcs_id =?"
+				, collectSetId);
+		if (firNum != 1) {
+			if (firNum == 0) throw new BusinessException("file_collect_set表中没有数据被删除!");
+			else throw new BusinessException("file_collect_set表删除数据异常!");
 		}
-		//3、如果是结构化文件、DB文件
-		else {
-			//3-1、在文件系统设置表删除对应的记录，有且只有一条
-			int fouNum = Dbo.execute("delete  from file_collect_set where fcs_id =?"
-					, collectSetId);
-			if (fouNum != 1) {
-				if (fouNum == 0) throw new BusinessException("file_collect_set表中没有数据被删除!");
-				else throw new BusinessException("file_collect_set表删除数据异常!");
-			}
-			//3-2、在文件源设置表删除对应的记录，有且只有一条
-			int fifNum = Dbo.execute("delete  from file_source where fcs_id =?", collectSetId);
-			if (fifNum != 1) {
-				if (fifNum == 0) throw new BusinessException("file_source表中没有数据被删除!");
-				else throw new BusinessException("file_source表删除数据异常!");
-			}
-		}
-		//4、对其他类型的任务进行统一处理
-		//4-1、在压缩作业参数表删除对应的记录,有且只有一条
-		int sevNum = Dbo.execute("delete  from collect_reduce where collect_set_id =?",
-				collectSetId);
-		if (sevNum != 1) {
-			if (sevNum == 0) throw new BusinessException("collect_reduce表中没有数据被删除!");
-			else throw new BusinessException("collect_reduce表删除数据异常!");
-		}
-		//4-2、在传送作业参数表删除对应的记录,有且只有一条
-		int eigNum = Dbo.execute("delete  from collect_transfer where collect_set_id =?",
-				collectSetId);
-		if (eigNum != 1) {
-			if (eigNum == 0) throw new BusinessException("collect_transfer表中没有数据被删除!");
-			else throw new BusinessException("collect_transfer表删除数据异常!");
-		}
-		//4-3、在清洗作业参数表删除对应的记录,有且只有一条
-		int ninNum = Dbo.execute("delete  from collect_clean where collect_set_id =?",
-				collectSetId);
-		if (ninNum != 1) {
-			if (ninNum == 0) throw new BusinessException("collect_clean表中没有数据被删除!");
-			else throw new BusinessException("collect_clean表删除数据异常!");
-		}
-		//4-4、在hdfs存储作业参数表删除对应的记录,有且只有一条
-		int tenNum = Dbo.execute("delete  from collect_hdfs where collect_set_id =?",
-				collectSetId);
-		if (tenNum != 1) {
-			if (tenNum == 0) throw new BusinessException("collect_hdfs表中没有数据被删除!");
-			else throw new BusinessException("collect_hdfs表删除数据异常!");
+		//3、在文件源设置表删除对应的记录，有且只有一条数据
+		int secNum = Dbo.execute("delete  from file_source where fcs_id =?", collectSetId);
+		if (secNum != 1) {
+			if (secNum == 0) throw new BusinessException("file_source表中没有数据被删除!");
+			else throw new BusinessException("file_source表删除数据异常!");
 		}
 	}
 
