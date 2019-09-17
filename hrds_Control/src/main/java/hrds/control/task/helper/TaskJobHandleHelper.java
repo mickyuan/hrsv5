@@ -47,12 +47,12 @@ public class TaskJobHandleHelper {
 	private static final String JJ = "JJ";
 	/**干预类型，系统停止SS（SYS_STOP）标识*/
 	private static final String SS = "SS";
-	/**干预类型，分组级暂停标识*/
-	private static final String GP = "GP";
-	/**干预类型，分组级重跑，从源头开始标识*/
-	private static final String GC = "GC";
-	/**干预类型，系统重跑标识*/
-	private static final String GR = "GR";
+//	/**干预类型，分组级暂停标识*/
+//	private static final String GP = "GP";
+//	/**干预类型，分组级重跑，从源头开始标识*/
+//	private static final String GC = "GC";
+//	/**干预类型，系统重跑标识*/
+//	private static final String GR = "GR";
 	private static final String SB = "SB";
 	/**干预类型，系统日切SF（SYS_SHIFT）标识*/
 	private static final String SF = "SF";
@@ -63,6 +63,7 @@ public class TaskJobHandleHelper {
 	private static final String NOEXITSERROR = "任务不存在"; //任务不存在错误信息
 	private static final String STATEERROR = "当前状态不允许执行此操作"; //状态异常错误信息
 	private static final String JOBSTOPERROR = "任务停止失败"; //状态异常错误信息
+	private static final String PRIORITYERROR = "任务优先级设置超过范围"; //作业优先级异常
 
 	private static final String KILL9COMMANDLINE = "kill -9";
 	private static final int DEFAULT_MILLISECONDS = 5000;   //默认尝试作业停止毫秒数
@@ -107,15 +108,15 @@ public class TaskJobHandleHelper {
 				case SO:handleSysRerun(handle);break;   //系统重跑
 				case SP:handleSysPause(handle);break;   //系统暂停
 				case SR:handleSysResume(handle);break;  //系统续跑
+				case SB:                                //TODO 原版代码，跟   SS 处理逻辑一模一样
 				case SS:handleSysStopAll(handle);break; //系统停止
 				case JS:handleJobStop(handle);break;    //作业停止
 				case JR:handleJobRerun(handle);break;   //作业重跑
-				case JP:;break; //TODO 该干预方式，etl_job_hand表中缺少必要数据，跟干预参数有关，我要去确认一下
+				case JP:handleJobPriority(handle);break;//作业临时调整优先级
 				case JJ:handleJobskip(handle);break;    //作业跳过
-				case SB:;break; //TODO 原版代码，跟   SS 处理逻辑一模一样
-				case GP:;break;
-				case GC:;break;
-				case GR:;break;
+//				case GP:break;
+//				case GC:break;
+//				case GR:break;
 				case SF:handleSysShift(handle);break;   //系统日切
 				default:break;
 			}
@@ -249,7 +250,7 @@ public class TaskJobHandleHelper {
 			try {
 				do {
 					Thread.sleep(DEFAULT_MILLISECONDS);
-				} while (!checkJobsIsStop(etlJobs));
+				} while (checkJobsNotStop(etlJobs));
 			}
 			catch(InterruptedException e) {
 				e.printStackTrace();
@@ -324,7 +325,7 @@ public class TaskJobHandleHelper {
 			try {
 				do {
 					Thread.sleep(DEFAULT_MILLISECONDS);
-				} while (!checkJobsIsStop(etlJobs));
+				} while (checkJobsNotStop(etlJobs));
 			}
 			catch(InterruptedException e) {
 				e.printStackTrace();
@@ -382,7 +383,7 @@ public class TaskJobHandleHelper {
 				do {
 					Thread.sleep(DEFAULT_MILLISECONDS);
 				}
-				while(!checkJobsIsStop(Collections.singletonList(etlJob)));
+				while(checkJobsNotStop(Collections.singletonList(etlJob)));
 			}
 			catch(InterruptedException e) {
 				e.printStackTrace();
@@ -442,6 +443,15 @@ public class TaskJobHandleHelper {
 		}
 	}
 
+	/**
+	 * 用于干预类型为：作业临时调整优先级JP（JOB_PRIORITY）标识的处理。
+	 * @note    1、检查该次干预的参数是否正确、该作业是否已经登记；
+	 *          2、检查该次干预所指定的作业优先级是否在合法范围内；
+	 *          3、若被干预的作业不在运行中，则更新内存Map以及更新数据库中的作业状态。
+	 * @author Tiger.Wang
+	 * @date 2019/9/17
+	 * @param handle    Etl_job_hand对象，表示一次干预
+	 */
 	private void handleJobPriority(Etl_job_hand handle) {
 
 		//1、检查该次干预的参数是否正确、该作业是否已经登记；
@@ -461,19 +471,19 @@ public class TaskJobHandleHelper {
 			updateErrorHandle(handle);
 			throw new AppSystemException("根据调度系统编号、调度作业标识、当前跑批日期获取调度作业信息失败" + etlSysCd);
 		}
-		//TODO etl_job_hand表中没有priority，该干预似乎不使用？
-		// 判断设置的优先度是否符合范围(1~99)
-//		int priority = handle.getpInteger.parseInt((String)map.get("priority"));
-//		if( priority < 1 || priority > 99 ) {
-//			updateErrorHandle(map, "优先度不正确");
-//			return;
-//		}
-
+		//2、检查该次干预所指定的作业优先级是否在合法范围内；
+		int priority = etlJobOptional.get().getJob_priority();
+		if( priority < TaskManager.MINPRIORITY || priority > TaskManager.MAXPRIORITY ) {
+			handle.setWarning(PRIORITYERROR);
+			updateErrorHandle(handle);
+			return;
+		}
+		//3、若被干预的作业不在运行中，则更新内存Map以及更新数据库中的作业状态。
 		if(Job_Status.RUNNING.getCode().equals(etlJob.getJob_disp_status())) {
 			handle.setWarning(STATEERROR);
 			updateErrorHandle(handle);
 		}else {
-			//TODO 此处缺少main.HandleJobPriorityChange，因为上一个TODO要先解决
+			taskManager.handleJob2ChangePriority(currBathDate, etlJobStr, priority);
 			updateDoneHandle(handle);
 		}
 	}
@@ -516,23 +526,6 @@ public class TaskJobHandleHelper {
 		}
 	}
 
-	private void handleGroupPause(Etl_job_hand handle) {
-
-//		List<Map<String, Object>> gpMap = handleMapper.queryGroupJobs(map);
-//		for(Map<String, Object> gp : gpMap) {
-//			Map<String, Object> job = handleMapper.queryJob(gp);
-//			if( job.get("job_disp_status").equals("R") ) {
-//				stopJob(job);
-//			}
-//			else {
-//				job.put("job_disp_status", "P");
-//				dao.stopJobStatus(job);
-//			}
-//		}
-//
-//		updateDoneHandle(handle);
-	}
-
 	/**
 	 * 用于干预类型：系统日切SF（SYS_SHIFT）标识的处理。
 	 * @note    1、系统日切干预；
@@ -555,7 +548,7 @@ public class TaskJobHandleHelper {
 	 * @param etlJobs   调度作业列表
 	 * @return boolean  作业是否已经全部运行完成
 	 */
-	private boolean checkJobsIsStop(List<Etl_job_cur> etlJobs) {
+	private boolean checkJobsNotStop(List<Etl_job_cur> etlJobs) {
 
 		//TODO 此处有个问题，查询出来的作业是否都有当前跑批日期curr_bath_date，此处使用curr_bath_date查询
 		for(Etl_job_cur job : etlJobs) {
@@ -565,10 +558,11 @@ public class TaskJobHandleHelper {
 				throw new AppSystemException("在检查作业是否为停止状态时发生异常，该作业不存在：" + job.getEtl_job());
 			}
 			if(Job_Status.RUNNING.getCode().equals(job.getJob_disp_status())) {
-				return false;
+				return true;
 			}
 		}
-		return true;
+
+		return false;
 	}
 
 	/**

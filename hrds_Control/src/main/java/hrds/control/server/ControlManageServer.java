@@ -19,7 +19,7 @@ import org.apache.logging.log4j.Logger;
 public class ControlManageServer {
 
 	private static final Logger logger = LogManager.getLogger();
-	private final CMServerThread cmThread = new CMServerThread();
+	private static final CMServerThread cmThread = new CMServerThread();
 	private static TaskManager taskManager;
 
 	private static final int SLEEPMILLIS = 500; //每次运行时间间隔（毫秒数）
@@ -61,7 +61,7 @@ public class ControlManageServer {
 		logger.info("调度服务停止成功");
 	}
 
-	private class CMServerThread extends Thread {
+	private static class CMServerThread extends Thread {
 
 		private volatile boolean run = true;
 
@@ -80,6 +80,9 @@ public class ControlManageServer {
 					//若publishReadyJob方法进行自动日切，则再次加载初始作业
 					if(taskManager.publishReadyJob(hasFrequancy)){
 						hasFrequancy = taskManager.loadReadyJob();
+					}else {
+						logger.info("系统无日切信号，系统退出");
+						break;
 					}
 
 					try {

@@ -1,12 +1,9 @@
 package hrds.control.utils;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.time.LocalDate;
+import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.Date;
 
 /**
  * @ClassName: DateUtil
@@ -23,30 +20,6 @@ public class DateUtil {
 	public static final DateTimeFormatter TIME_DEFAULT = DateTimeFormatter.ofPattern("HHmmss");
 
 	/**
-	 * 8位字符的字符串转换为Date对象
-	 * @author Tiger.Wang
-	 * @date 2019/8/30
-	 * @param dateStr	8位字符的字符串
-	 * @return java.time.LocalDate	日期对象
-	 */
-	public static LocalDate parseStr2DateWith8Char(String dateStr) {
-
-		return LocalDate.parse(dateStr, DATE_DEFAULT);
-	}
-
-	/**
-	 * 6位字符的字符串转换为Time对象
-	 * @author Tiger.Wang
-	 * @date 2019/8/30
-	 * @param timeStr	6位字符的字符串
-	 * @return java.time.LocalTime	Time对象
-	 */
-	public static LocalTime parseStr2TimeWith6Char(String timeStr) {
-
-		return LocalTime.parse(timeStr, TIME_DEFAULT);
-	}
-
-	/**
 	 * 将19位的日期时间字符串转换为LocalDateTime对象
 	 * @author Tiger.Wang
 	 * @date 2019/9/2
@@ -58,30 +31,26 @@ public class DateUtil {
 		return LocalDateTime.parse(dateTimeStr, DATETIME);
 	}
 
-	public static String getStringDate(Date date) {
+	/**
+	 * 获取当前系统毫秒数。
+	 * @author Tiger.Wang
+	 * @date 2019/9/17
+	 * @return long 当前系统毫秒数
+	 */
+	public static long getNowDateTime2Milli() {
 
-		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-		return dateFormat.format(date);
+		return LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
 	}
 
-	public static Date getDateByString(String strDate) {
+	/**
+	 * timestamp转换为LocalDateTime对象
+	 * @author Tiger.Wang
+	 * @date 2019/9/17
+	 * @param timestamp 时间戳
+	 * @return java.time.LocalDateTime
+	 */
+	public static LocalDateTime timestamp2DateTime(long timestamp) {
 
-		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-		dateFormat.setLenient(false);
-		Date retValue = null;
-		try {
-			retValue = dateFormat.parse(strDate);
-		}
-		catch(ParseException e) {
-			e.printStackTrace();
-		}
-		return retValue;
-	}
-
-	public static void main(String[] args) {
-		String dateTime = "2019-09-03 12:10:01";
-		LocalDateTime dateTime1 = DateUtil.parseStr2DateTime(dateTime);
-		System.out.printf(LocalDateTime.now().compareTo(dateTime1) + "\n");
-		System.out.println(dateTime1.format(DATETIME).toString());
+		return LocalDateTime.ofInstant(Instant.ofEpochMilli(timestamp), ZoneId.systemDefault());
 	}
 }

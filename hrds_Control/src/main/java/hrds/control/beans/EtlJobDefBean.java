@@ -1,6 +1,5 @@
 package hrds.control.beans;
 
-
 import hrds.commons.entity.Etl_job_def;
 import hrds.commons.entity.Etl_job_resource_rela;
 
