@@ -19,7 +19,7 @@ import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-
+//FIXME 这是什么狗屁名字！！！！！
 public class agentInfoActionTest extends WebBaseTestCase {
 	private static final int Init_Rows = 10; // 向表中初始化的数据条数。
 	// 初始化登录用户ID

@@ -156,6 +156,8 @@ public class AgentInfoAction extends BaseAction {
 	 */
 	public void deleteAgent(Long agent_id, String agent_type) {
 
+		//FIXME 这个结果是 -1 ，不用处理了吗？
+
 		// 1.删除前查询此agent是否已部署
 		if (Dbo.queryNumber("select * from agent_down_info where agent_id=?",
 				agent_id).orElse(-1) > 0) {

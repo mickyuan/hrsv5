@@ -188,6 +188,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 				.post(getActionUrl("saveDataSource")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(false));
+		// FIXME getMessage不需要造型成String， 用is去判断整个错误提示信息有待改进？
 		assertThat((String) ar.getMessage(), is("数据源编号重复,datasource_number=d300"));
 		// 4.测试数据源新增，数据源名称不能为空
 		bodyString = new HttpClient()
