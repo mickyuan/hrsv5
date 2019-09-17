@@ -27,20 +27,21 @@ import java.util.Optional;
 public class DBConfStepAction extends BaseAction{
 
 	/**
-	 * @Description: 数据库直连采集，根据databaseId进行查询并在页面上回显数据源配置信息
-	 * @Param: [databaseId : 数据库设置ID, 取值范围 : long]
-	 * @return: void
-	 * @Author: WangZhengcheng
-	 * @Date: 2019/9/4
-	 * 步骤;
+	 * 数据库直连采集，根据databaseId进行查询并在页面上回显数据源配置信息
+	 *
 	 * 1、在数据库设置表(database_set)中，根据databaseId查看当前是否设置完成并发送成功,如果已经发送了，则不允许编辑
 	 * 2、判断是否查询到数据，如果查询不到，抛异常给前端
 	 * 3、如果任务已经设置完成并发送成功，则不允许编辑
-	 *      3-1、在数据库设置表表中，关联采集作业分类表(collect_job_classify)，查询出当前database_id的所有信息
-	 *      3-2、在collect_frequency(卸数作业参数表)表中，查询出id,文件存储路径，作业编号信息
-	 *      3-3、二者汇总成一个Result对象返回
-	 * 4、返回
-	 */
+	 * 4、在数据库设置表表中，关联采集作业分类表(collect_job_classify)，查询出当前database_id的所有信息并返回
+	 *
+	 * @Param: databaseId long
+	 *         含义：database_set表主键
+	 *         取值范围：不为空
+	 * @return: fd.ng.db.resultset.Result
+	 *          含义：数据源信息查询结果集
+	 *          取值范围：不会为null
+	 *
+	 * */
 	public Result getDBConfInfo(long databaseId) {
 		//1、在数据库设置表中，根据databaseId查看当前是否设置完成并发送成功,如果已经发送了，则不允许编辑
 		Optional<Database_set> firResult = Dbo.queryOneObject(Database_set.class,
@@ -51,47 +52,49 @@ public class DBConfStepAction extends BaseAction{
 		if(IsFlag.Shi == IsFlag.ofEnumByCode(dbSet.getIs_sendok())){
 			throw new BusinessException("该任务已经设置完成并发送成功，不允许编辑");
 		}
-		//3-1、在数据库设置表表中，关联采集作业分类表(collect_job_classify)，查询出当前database_id的所有信息
-		Result secResult = Dbo.queryResult("select * from database_set t1 " +
+		//4、在数据库设置表表中，关联采集作业分类表(collect_job_classify)，查询出当前database_id的所有信息并返回
+		return Dbo.queryResult("select * from database_set t1 " +
 				"left join collect_job_classify t2 on " +
 				"t1.classify_id = t2.classify_id  where database_id = ?", databaseId);
-		//3-2、在collect_frequency(卸数作业参数表)表中，查询出id,文件存储路径，作业编号信息
-		Result thiResult = Dbo.queryResult("select file_path,cf_jobnum,cf_id " +
-				"from collect_frequency " +
-				"where collect_set_id = ?", databaseId);
-		//3-3、二者汇总成一个Result对象返回
-		secResult.setObject(0, "file_path", thiResult.getString(0, "file_path"));
-		secResult.setObject(0, "cf_jobnum", thiResult.getString(0, "cf_jobnum"));
-		secResult.setObject(0, "cf_id", thiResult.getString(0, "cf_id"));
-		return secResult;
 	}
 
 	/**
-	 * @Description: 根据数据库类型和端口获得数据库连接url等信息
-	 * @Param: [dbType : 数据库类型, 取值范围 : DatabaseType枚举类code值]
-	 * @Param: [port : , 端口号, 取值范围 : String]
-	 * @return: java.lang.String
-	 * @Author: WangZhengcheng
-	 * @Date: 2019/9/4
-	 * 步骤：
-	 * 1、根据采集数据源类型和端口号，调用工具类获得数据库连接url等信息
-	 */
+	 * 根据数据库类型和端口获得数据库连接url等信息
+	 *
+	 * 1、在数据库设置表(database_set)中，根据databaseId查看当前是否设置完成并发送成功,如果已经发送了，则不允许编辑
+	 * 2、判断是否查询到数据，如果查询不到，抛异常给前端
+	 * 3、如果任务已经设置完成并发送成功，则不允许编辑
+	 * 4、在数据库设置表表中，关联采集作业分类表(collect_job_classify)，查询出当前database_id的所有信息并返回
+	 *
+	 * @Param: dbType String
+	 *         含义：数据库类型
+	 *         取值范围：DatabaseType代码项code值
+	 * @Param: port String
+	 *         含义：数据库连接端口号
+	 *         取值范围：不为空
+	 * @return: String
+	 *          含义：数据库连接url
+	 *          取值范围：不会为null
+	 *
+	 * */
 	public String getJDBCDriver(String dbType, String port) {
 		//ConnUtil.getConn_url(dbType, port);
 		return null;
 	}
 
 	/**
-	 * @Description: 保存数据库采集Agent数据库配置信息
-	 * @Param: [databaseSet : 数据库设置对象, 取值范围 : Database_set类型对象]
-	 * @return: void
-	 * @Author: WangZhengcheng
-	 * @Date: 2019/9/4
-	 * 步骤：
+	 * 保存数据库采集Agent数据库配置信息
+	 *
 	 * 1、获取实体中的database_id
 	 * 2、如果存在，则更新信息
 	 * 3、如果不存在，则新增信息
-	 */
+	 *
+	 * @Param: databaseSet Database_set
+	 *         含义：待保存的Database_set实体对象
+	 *         取值范围：不为空
+	 * @return: 无
+	 *
+	 * */
 	public void saveDbConf(@RequestBean Database_set databaseSet) {
 		//1、获取实体中的database_id
 		if(StringUtil.isNotBlank(String.valueOf(databaseSet.getDatabase_id()))){
@@ -121,17 +124,21 @@ public class DBConfStepAction extends BaseAction{
 	}
 
 	/**
-	 * @Description: 测试连接
-	 * @Param: [databaseSet : 数据库设置对象, 取值范围 : Database_set类型对象]
-	 * @return: boolean
-	 * @Author: WangZhengcheng
-	 * @Date: 2019/9/4
-	 * 步骤：
+	 * 测试连接
+	 *
 	 * 1、根据agent_id获得agent_ip,agent_port
 	 * 2、在配置文件中获取webContext和actionPattern
-	 * 2、调用工具类方法给agent发消息，并获取agent响应
-	 * 3、将响应封装成ActionResult的对象
-	 */
+	 * 3、调用工具类方法给agent发消息，并获取agent响应
+	 * 4、将响应封装成ActionResult的对象
+	 *
+	 * @Param: databaseSet Database_set
+	 *         含义：存有agent_id, driver, url, username, password, dbtype等信息的Database_set实体类对象
+	 *         取值范围：不为空
+	 * @return: ActionResult对象
+	 *          含义：封装了Agent响应信息
+	 *          取值范围：不为空
+	 *
+	 * */
 	public ActionResult testConnection(@RequestBean Database_set databaseSet) {
 		//1、根据agent_id获得agent_ip,agent_port
 		Result result = Dbo.queryResult("select agent_ip, agent_port from agent_info " +
@@ -143,13 +150,14 @@ public class DBConfStepAction extends BaseAction{
 		if(result.getRowCount() != 1){
 			throw new BusinessException("找到的Agent信息不唯一");
 		}
+		//2、在配置文件中获取webContext和actionPattern
 		HttpServerConfBean test = HttpServerConf.getHttpServer("testConnection");
 		String webContext = test.getWebContext();
 		String actionPattern = test.getActionPattern();
 		String agentIp = result.getString(0, "agent_ip");
 		String agentPort = result.getString(0, "agent_port");
 		String url = "http://" + agentIp + ":" + agentPort + webContext;
-		//2、调用工具类方法给agent发消息，并获取agent响应
+		//3、调用工具类方法给agent发消息，并获取agent响应
 		HttpClient.ResponseValue resVal = new HttpClient()
 				.addData("driver", databaseSet.getDatabase_drive())
 				.addData("url", databaseSet.getJdbc_url())
@@ -157,7 +165,7 @@ public class DBConfStepAction extends BaseAction{
 				.addData("password", databaseSet.getDatabase_pad())
 				.addData("dbtype", databaseSet.getDatabase_type())
 				.post(url + actionPattern);
-		//3、将响应封装成ActionResult的对象
+		//4、将响应封装成ActionResult的对象
 		return JsonUtil.toObject(resVal.getBodyString(), ActionResult.class);
 	}
 }
