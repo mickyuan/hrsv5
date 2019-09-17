@@ -34,24 +34,25 @@ public class ObjectCollectAction extends BaseAction {
 	 * author: zxz <br>
 	 * version: 5.0 <br>
 	 * 步骤：
-	 * 1、根据前端传过来的agent_id获取agent的ip和端口等基本信息
-	 * 2、调用远程Agent的后端代码获取采集服务器上的日期、时间、操作系统类型和主机名等基本信息
-	 * 3、对象采集id不为空则表示当前操作为编辑，获取对象采集设置表信息
-	 * 4、返回到前端
+	 * 1.根据前端传过来的agent_id获取agent的ip和端口等基本信息
+	 * 2.调用远程Agent的后端代码获取采集服务器上的日期、时间、操作系统类型和主机名等基本信息
+	 * 3.对象采集id不为空则表示当前操作为编辑，获取对象采集设置表信息
+	 * 4.返回到前端
 	 *
-	 * @param object_collect 含义：对象采集设置表对象，接收页面传过来的参数Agent_id和odc_id(对象采集id)
+	 * @param object_collect Object_collect
+	 *                       含义：对象采集设置表对象，接收页面传过来的参数Agent_id和odc_id(对象采集id)
 	 *                       取值范围：不可为空
 	 * @return com.alibaba.fastjson.JSONObject
 	 * 含义：页面需要的Agent所在服务器的基本信息、对象采集设置表信息
 	 * 取值范围：不会为空
 	 */
 	public JSONObject searchObjectCollect(@RequestBean Object_collect object_collect) {
-		//1、根据前端传过来的agent_id获取agent的ip和端口等基本信息
+		//1.根据前端传过来的agent_id获取agent的ip和端口等基本信息
 		Optional<Agent_info> agent_infoResult = Dbo.queryOneObject(Agent_info.class,
 				"SELECT * FROM agent_info WHERE agent_id = ? ", object_collect.getAgent_id());
 		Agent_info agent_info = agent_infoResult.orElseThrow(() -> new BusinessException("根据Agent_id" +
 				object_collect.getAgent_id() + "查询不到Agent_info表信息"));
-		//2、调用远程Agent的后端代码获取采集服务器上的日期、时间、操作系统类型和主机名等基本信息
+		//2.调用远程Agent的后端代码获取采集服务器上的日期、时间、操作系统类型和主机名等基本信息
 		HttpServerConfBean test = HttpServerConf.getHttpServer("agentServerInfo");
 		String webContext = test.getWebContext();
 		String actionPattern = test.getActionPattern();
@@ -63,7 +64,7 @@ public class ObjectCollectAction extends BaseAction {
 		JSONObject data = (JSONObject) ar.getData();
 		data.put("localdate", DateUtil.getSysDate());
 		data.put("localtime", DateUtil.getSysTime());
-		//3、对象采集id不为空则表示当前操作为编辑，获取对象采集设置表信息
+		//3.对象采集id不为空则表示当前操作为编辑，获取对象采集设置表信息
 		if (object_collect.getOdc_id() != null) {
 			Optional<Object_collect> query_object_collect_info = Dbo.queryOneObject(Object_collect.class,
 					"SELECT * FROM object_collect WHERE odc_id = ?", object_collect.getOdc_id());
@@ -83,22 +84,24 @@ public class ObjectCollectAction extends BaseAction {
 	 * author: zxz <br>
 	 * version: 5.0 <br>
 	 * 步骤：
-	 * 1、根据obj_collect_name查询半结构化任务名称是否重复
-	 * 2、保存或更新object_collect表
-	 * 3、返回到前端
+	 * 1.根据obj_collect_name查询半结构化任务名称是否重复
+	 * 2.保存或更新object_collect表
+	 * 3.返回到前端
 	 *
-	 * @param object_collect 含义：对象采集设置表对象
+	 * @param object_collect Object_collect
+	 *                       含义：对象采集设置表对象
 	 *                       取值范围：不可为空
-	 * @param is_add         含义：是否新增半结构化采集
+	 * @param is_add         String
+	 *                       含义：是否新增半结构化采集
 	 *                       取值范围：不可为空
 	 * @return long
 	 * 含义：对象采集设置表id
-	 * 取值范围：不可为空
+	 * 取值范围：不会为空
 	 */
 	public long saveObjectCollect(@RequestBean Object_collect object_collect, String is_add) {
 		//新增逻辑
 		if (IsFlag.Shi.getCode().equals(is_add)) {
-			//1、根据obj_collect_name查询半结构化任务名称是否重复
+			//1.根据obj_collect_name查询半结构化任务名称是否重复
 			OptionalLong optionalLong = Dbo.queryNumber("SELECT count(1) count FROM object_collect " +
 					"WHERE obj_collect_name = ?", object_collect.getObj_collect_name());
 			if (optionalLong.getAsLong() > 0) {
@@ -129,14 +132,15 @@ public class ObjectCollectAction extends BaseAction {
 	 * author: zxz <br>
 	 * version: 5.0 <br>
 	 * 步骤：
-	 * 1、根据对象采集id查询对象采集对应信息表
-	 * 2、将查询结果集返回到前端
+	 * 1.根据对象采集id查询对象采集对应信息表
+	 * 2.将查询结果集返回到前端
 	 *
-	 * @param odc_id 含义：对象采集id
+	 * @param odc_id long
+	 *               含义：对象采集id
 	 *               取值范围：不能为空
 	 * @return fd.ng.db.resultset.Result
 	 * 含义：对象采集对应信息的合集
-	 * 取值范围：可为空
+	 * 取值范围：可能为空
 	 */
 	public Result searchObjectCollectTask(long odc_id) {
 		Result result = Dbo.queryResult("SELECT * FROM object_collect_task WHERE odc_id = ?", odc_id);
@@ -149,10 +153,11 @@ public class ObjectCollectAction extends BaseAction {
 	 * author: zxz <br>
 	 * version: 5.0 <br>
 	 * 步骤：
-	 * 1、获取对象采集任务编号
-	 * 2、删除对象采集对应信息表
+	 * 1.获取对象采集任务编号
+	 * 2.删除对象采集对应信息表
 	 *
-	 * @param ocs_id 含义：对象采集任务编号
+	 * @param ocs_id long
+	 *               含义：对象采集任务编号
 	 *               取值范围：可为空
 	 * @return void
 	 */
@@ -167,11 +172,12 @@ public class ObjectCollectAction extends BaseAction {
 	 * author: zxz <br>
 	 * version: 5.0 <br>
 	 * 步骤：
-	 * 1、获取对象采集对应信息表list进行遍历
-	 * 2、根据对象采集对应信息表id判断是新增还是编辑
-	 * 3、新增或更新数据库
+	 * 1.获取对象采集对应信息表list进行遍历
+	 * 2.根据对象采集对应信息表id判断是新增还是编辑
+	 * 3.新增或更新数据库
 	 *
-	 * @param object_collect_tasks 含义：对象采集对应信息表集合
+	 * @param object_collect_tasks List<Object_collect_task>
+	 *                             含义：对象采集对应信息表集合
 	 *                             取值范围：不能为空
 	 * @return void
 	 */
@@ -197,15 +203,16 @@ public class ObjectCollectAction extends BaseAction {
 	 * author: zxz <br>
 	 * version: 5.0 <br>
 	 * 步骤：
-	 * 1、获取对象采集任务编号
-	 * 2、查询对应对象采集结构信息表
-	 * 3、返回前端
+	 * 1.获取对象采集任务编号
+	 * 2.查询对应对象采集结构信息表
+	 * 3.返回前端
 	 *
-	 * @param ocs_id 含义：对象采集任务编号
+	 * @param ocs_id long
+	 *               含义：对象采集任务编号
 	 *               取值范围：不可为空
 	 * @return fd.ng.db.resultset.Result
 	 * 含义：对象采集任务对应对象采集结构信息的集合(新增时为空)
-	 * 取值范围：可为空
+	 * 取值范围：可能为空
 	 */
 	public Result searchObject_collect_struct(long ocs_id) {
 		Result result = Dbo.queryResult("SELECT * FROM object_collect_struct WHERE ocs_id = ?", ocs_id);
@@ -218,10 +225,11 @@ public class ObjectCollectAction extends BaseAction {
 	 * author: zxz <br>
 	 * version: 5.0 <br>
 	 * 步骤：
-	 * 1、获取结构信息id
-	 * 2、删除对象采集结构信息表
+	 * 1.获取结构信息id
+	 * 2.删除对象采集结构信息表
 	 *
-	 * @param struct_id 含义：结构信息id
+	 * @param struct_id long
+	 *                  含义：结构信息id
 	 *                  取值范围：不可为空
 	 * @return void
 	 */
@@ -236,11 +244,12 @@ public class ObjectCollectAction extends BaseAction {
 	 * author: zxz <br>
 	 * version: 5.0 <br>
 	 * 步骤：
-	 * 1、获取对象采集结构信息list进行遍历
-	 * 2、根据对象采集结构信息id判断是新增还是编辑
-	 * 3、新增或更新数据库
+	 * 1.获取对象采集结构信息list进行遍历
+	 * 2.根据对象采集结构信息id判断是新增还是编辑
+	 * 3.新增或更新数据库
 	 *
-	 * @param object_collect_structs 含义：对象采集结构信息list
+	 * @param object_collect_structs List<Object_collect_struct>
+	 *                               含义：对象采集结构信息list
 	 *                               取值范围：不可为空
 	 * @return void
 	 */
@@ -266,15 +275,16 @@ public class ObjectCollectAction extends BaseAction {
 	 * author: zxz <br>
 	 * version: 5.0 <br>
 	 * 步骤：
-	 * 1、获取对象采集id
-	 * 2、查询对象采集任务及每个任务对象的存储设置
-	 * 3、返回到前端
+	 * 1.获取对象采集id
+	 * 2.查询对象采集任务及每个任务对象的存储设置
+	 * 3.返回到前端
 	 *
-	 * @param odc_id 含义：对象采集id
+	 * @param odc_id long
+	 *               含义：对象采集id
 	 *               取值范围：不可为空
 	 * @return fd.ng.db.resultset.Result
 	 * 含义：采集任务及每个任务的存储设置
-	 * 取值范围：不可为空
+	 * 取值范围：不会为空
 	 */
 	public Result searchObject_storage(long odc_id) {
 		Result result = Dbo.queryResult("SELECT * FROM object_collect_task t1 left join object_storage" +
@@ -288,14 +298,16 @@ public class ObjectCollectAction extends BaseAction {
 	 * author: zxz <br>
 	 * version: 5.0 <br>
 	 * 步骤：
-	 * 1、根据对象采集id查询对象采集任务编号
-	 * 2、根据对象采集任务编号删除对象采集存储设置表
-	 * 3、保存对象采集存储设置表
-	 * 4、跟新对象采集设置表的字段是否完成设置并发送成功为是
+	 * 1.根据对象采集id查询对象采集任务编号
+	 * 2.根据对象采集任务编号删除对象采集存储设置表
+	 * 3.保存对象采集存储设置表
+	 * 4.跟新对象采集设置表的字段是否完成设置并发送成功为是
 	 *
-	 * @param object_storages 含义：对象采集存储设置对象的集合
+	 * @param object_storages List<Object_storage>
+	 *                        含义：对象采集存储设置对象的集合
 	 *                        取值范围：不能为空
-	 * @param odc_id          含义：对象采集id
+	 * @param odc_id          long
+	 *                        含义：对象采集id
 	 *                        取值范围：不能为空
 	 * @return void
 	 */

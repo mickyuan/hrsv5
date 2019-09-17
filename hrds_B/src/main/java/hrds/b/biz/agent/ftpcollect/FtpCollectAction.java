@@ -1,13 +1,8 @@
 package hrds.b.biz.agent.ftpcollect;
 
-import com.alibaba.fastjson.JSONObject;
-import com.google.gson.JsonObject;
-import fd.ng.db.resultset.Result;
 import fd.ng.web.annotation.RequestBean;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
-import hrds.commons.codes.IsFlag;
-import hrds.commons.entity.File_collect_set;
 import hrds.commons.entity.Ftp_collect;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.key.PrimayKeyGener;
@@ -28,10 +23,11 @@ public class FtpCollectAction extends BaseAction {
 	 * author: zxz <br>
 	 * version: 5.0 <br>
 	 * 步骤：
-	 * 1、获取ftp采集表id
-	 * 2、ftp采集表id不为空，查询ftp采集表返回到前端
+	 * 1.获取ftp采集表id
+	 * 2.ftp采集表id不为空，查询ftp采集表返回到前端
 	 *
-	 * @param ftp_id 含义：ftp采集表id
+	 * @param ftp_id Long
+	 *               含义：ftp采集表id
 	 *               取值范围：可为空
 	 * @return hrds.commons.entity.Ftp_collect
 	 * 含义：ftp采集设置表的值，新增状态下为空
@@ -55,12 +51,13 @@ public class FtpCollectAction extends BaseAction {
 	 * author: zxz <br>
 	 * version: 5.0 <br>
 	 * 步骤：
-	 * 1、获取ftp采集表对象
-	 * 2、根据ftp_id判断是否为新增
-	 * 3、新增则保存ftp采集表对象，编辑则更新ftp采集表对象
+	 * 1.获取ftp采集表对象
+	 * 2.根据ftp_id判断是否为新增
+	 * 3.新增则保存ftp采集表对象，编辑则更新ftp采集表对象
 	 *
-	 * @param ftp_collect 含义：ftp采集表对象
-	 *                    取值范围：不可为空
+	 * @param ftp_collect Ftp_collect
+	 *                    含义：ftp采集表对象
+	 *                    取值范围：不会为空
 	 * @return void
 	 */
 	public void saveFtp_collect(@RequestBean Ftp_collect ftp_collect) {
