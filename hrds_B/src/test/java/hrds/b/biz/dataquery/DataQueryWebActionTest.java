@@ -37,6 +37,7 @@ public class DataQueryWebActionTest extends WebBaseTestCase {
     public void before() {
         // 初始化测试用例数据
         try (DatabaseWrapper db = new DatabaseWrapper()) {
+            //FIXME 下面这种写法，很难看。为什么不用实体？
             List<Object[]> dsList = new ArrayList<>();  // Data_source 数据
             List<Object[]> srdList = new ArrayList<>(); // Source_relation_dep 数据
             List<Object[]> aiList = new ArrayList<>();  // Agent_info 数据
@@ -326,13 +327,13 @@ public class DataQueryWebActionTest extends WebBaseTestCase {
                 .addData("depId", -1000L)
                 .post(getActionUrl("getFileDataSource")).getBodyString();
         ar = JsonUtil.toObject(bodyString, ActionResult.class);
-        assertThat(ar.isSuccess(), is(true));
+        assertThat(ar.isSuccess(), is(true)); //FIXME 部门id不存在，结果判断呢？
         //2.部门id为空
         bodyString = new HttpClient()
                 .addData("depId", "")
                 .post(getActionUrl("getFileDataSource")).getBodyString();
         ar = JsonUtil.toObject(bodyString, ActionResult.class);
-        assertThat(ar.isSuccess(), is(true));
+        assertThat(ar.isSuccess(), is(true)); //FIXME 结果判断呢？
         //2.部门id为空格
         bodyString = new HttpClient()
                 .addData("depId", " ")
@@ -363,6 +364,9 @@ public class DataQueryWebActionTest extends WebBaseTestCase {
                 .post(getActionUrl("getFileCollectionTask")).getBodyString();
         ar = JsonUtil.toObject(bodyString, ActionResult.class);
         assertThat(ar.isSuccess(), is(true));
+
+        //FIXME 下面这些测试方式，真的有必要吗？ 对错误数据的测试是要真的思考什么是错误数据，不要硬写呀。（杜华伟写的一模一样）
+
         //2.数据源id为空
         bodyString = new HttpClient()
                 .addData("sourceId", "")
@@ -393,6 +397,7 @@ public class DataQueryWebActionTest extends WebBaseTestCase {
                 .post(getActionUrl("downloadFile")).getBodyString();
         ar = JsonUtil.toObject(bodyString, ActionResult.class);
         assertThat(ar.isSuccess(), is(true));
+        //FIXME 对下载的文件，没有办法判断吗？ bodyString 里面是下载内容，上面这个断言怎么执行过去的？
         //2.文件id不存在
         bodyString = new HttpClient()
                 .addData("fileId", "-1000")
@@ -467,6 +472,7 @@ public class DataQueryWebActionTest extends WebBaseTestCase {
                 .post(getActionUrl("getCollectFile")).getBodyString();
         ar = JsonUtil.toObject(bodyString, ActionResult.class);
         assertThat(ar.isSuccess(), is(true));
+        //FIXME 对返回结果的断言呢？ 每个方法里面都没有对返回结果做判断
     }
 
     /**

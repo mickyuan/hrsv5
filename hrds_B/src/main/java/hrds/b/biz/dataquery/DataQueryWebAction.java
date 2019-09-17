@@ -27,7 +27,7 @@ import java.util.Map;
  * @since JDK1.8
  */
 public class DataQueryWebAction extends BaseAction {
-
+//FIXME DataQueryWebAction 名字里面为什么要有 Web 这个单词？
     /**
      * <p>方法名: getFileDataSource</p>
      * <p>方法说明: 获取部门的包含文件采集任务的数据源信息</p>
@@ -41,6 +41,8 @@ public class DataQueryWebAction extends BaseAction {
      * 取值范围: 不为NULL
      */
     public List<Map<String, Object>> getFileDataSource(long depId) {
+        //FIXME 不需要限定当前用户的数据权限吗？
+
         //1.根据部门id获取该部门下所有包含文件采集任务的数据源信息的list
         return Dbo.queryList(
                 " select ds.source_id,ds.datasource_name" +
@@ -48,7 +50,7 @@ public class DataQueryWebAction extends BaseAction {
                         " join " + Data_source.TableName + " ds on srd.source_id = ds.source_id" +
                         " join " + Agent_info.TableName + " ai on ds.source_id = ai.source_id" +
                         " where srd.dep_id = ?" +
-                        " AND ai.agent_type = '" + AgentType.WenJianXiTong.getCode() + "'" +
+                        " AND ai.agent_type = '" + AgentType.WenJianXiTong.getCode() + "'" + //FIXME 要用占位符！！！整个程序都要要改
                         " GROUP BY ds.source_id,ds.datasource_name",
                 depId
         );
@@ -84,7 +86,7 @@ public class DataQueryWebAction extends BaseAction {
      * 2-1.类型是下载，检查是否具有下载权限
      *
      * @param fileId 含义: 文件id
-     *               取值范围: long类型值
+     *               取值范围: long类型值   //FIXME 既然是long类型，为什么用String
      * @return boolean
      * 含义: 文件是否具有下载权限
      * 取值范围: true 或者 false
@@ -94,14 +96,14 @@ public class DataQueryWebAction extends BaseAction {
         Result authResult = Dbo.queryResult(
                 "select * from " + Data_auth.TableName + " da" +
                         " join " + Source_file_attribute.TableName + " sfa" +
-                        " ON sfa.file_id = da.file_id WHERE da.user_id = '" + getUserId() + "'" +
+                        " ON sfa.file_id = da.file_id WHERE da.user_id = '" + getUserId() + "'" +  //FIXME 这里限定了用户权限，其他方法为什么不限定？
                         " AND sfa.file_id = ?" +
                         " AND da.apply_type = '" + ApplyType.XiaZai.getCode() + "'",
                 fileId
         );
         if (authResult.isEmpty()) {
             throw new BusinessException("查询文件权限出错! fileId=" + fileId);
-        } else {
+        } else { //FIXME 不需要 else
             //2.检查申请的操作是否是下载
             String authResultApplyType = authResult.getString(0, "apply_type");
             if (ApplyType.XiaZai.getCode().equals(authResultApplyType)) {
@@ -125,15 +127,16 @@ public class DataQueryWebAction extends BaseAction {
      * 5.下载文件完成后修改文件下载计数信息
      *
      * @param fileId       含义:文件id
-     *                     取值范围: long类型值
+     *                     取值范围: long类型值  //FIXME 既然是long类型，为什么用String
      * @param fileName     含义: 文件名
      *                     取值范围: String类型值
      * @param queryKeyword 含义:文件查询关键字
-     *                     取值范围: String类型的字符串
+     *                     取值范围: String类型的字符串 //FIXME 这种注释没有意义。应该写：没有限制；或者说明范围是什么
      * @return response
      * 含义: 读取到的文件byte
      * 取值范围: HttpServletResponse
      */
+    //FIXME 不需要返回 HttpServletResponse
     public HttpServletResponse downloadFile(String fileId, String fileName, String queryKeyword) {
         //1.根据文件id检查文件是否有下载权限
         if (!downloadFileCheck(fileId)) {
@@ -143,7 +146,7 @@ public class DataQueryWebAction extends BaseAction {
         try {
             //2.通过文件id获取文件的 byte
             /* byte[] bye = Hyren_explorer.fileBytesFromAvro(fileId);*/
-            byte[] bye = "abc".getBytes();
+            byte[] bye = "abc".getBytes(); //FIXME 搞个abc如果是为了上面那个没完成的函数，那么应该自己去写一个空函数去自己用
             if (bye == null) {
                 throw new BusinessException("文件已不存在! fileName=" + fileName);
             }
@@ -154,7 +157,7 @@ public class DataQueryWebAction extends BaseAction {
             response.setContentType("APPLICATION/OCTET-STREAM");
             //4.创建输出流，返回结果
 
-            OutputStream out = response.getOutputStream();
+            OutputStream out = response.getOutputStream(); //FIXME 要有异常处理！否则流无法被关闭
             out.write(bye);
             out.flush();
             //5.下载文件完成后修改文件下载计数信息
@@ -197,7 +200,7 @@ public class DataQueryWebAction extends BaseAction {
             searchInfo.setWord_name(queryKeyword);
             Dbo.execute("update search_info set si_count = si_count+1 where" +
                             " file_id = ? and word_name = ?",
-                    fileId, queryKeyword);
+                    fileId, queryKeyword);  //FIXME update成功失败的判断哪去了
         }
     }
 
@@ -215,7 +218,7 @@ public class DataQueryWebAction extends BaseAction {
         //1.获取当前用户已经收藏的文件列表
         Result userFavRs = Dbo.queryResult("SELECT * FROM " + User_fav.TableName +
                         " WHERE user_id = ? AND fav_flag = '" + IsFlag.Shi.getCode() + "'" +
-                        " ORDER BY fav_id DESC LIMIT 9",
+                        " ORDER BY fav_id DESC LIMIT 9",  //FIXME 把9作为参数传入，且设置为默认值9
                 getUserId()
         );
         if (!userFavRs.isEmpty()) {
@@ -229,6 +232,8 @@ public class DataQueryWebAction extends BaseAction {
                 }
                 //2.添加文件后缀名到返回的结果中
                 userFavRs.setObject(i, "fileSufix", fileSufix);
+                //FIXME 为什么要添加后缀名到结果集中？
+                // 另外：如果不添加的话，可以返回 List<User_fav> 这样更易于下面的操作，直接写 foreach 进行迭代即可
             }
         }
         return userFavRs;
@@ -295,6 +300,7 @@ public class DataQueryWebAction extends BaseAction {
             Integer sumNum = 0;
             for (Map<String, Object> fcsMap : fcsList) {
                 sumNum = (Integer) fcsMap.get("sum_num");
+                //FIXME 下面这么多，用一句不就行了吗：classificationSumMap.put(FileType.ofValueByCode((String)fcsMap.get("file_type")), sumNum)
                 if (FileType.TuPian.getCode().equals(fcsMap.get("file_type"))) {
                     //文件类型为图片
                     classificationSumMap.put(FileType.TuPian.getValue(), sumNum);
