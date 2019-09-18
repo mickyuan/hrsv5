@@ -8,6 +8,7 @@ import fd.ng.netclient.http.HttpClient;
 import fd.ng.netserver.conf.HttpServerConf;
 import fd.ng.netserver.conf.HttpServerConfBean;
 import fd.ng.web.action.ActionResult;
+import fd.ng.web.annotation.Action;
 import fd.ng.web.annotation.RequestBean;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
@@ -24,6 +25,7 @@ import java.util.Optional;
  * @author: WangZhengcheng
  * @create: 2019-09-04 11:22
  **/
+@Action(UriExt = "DBConfStepAction")
 public class DBConfStepAction extends BaseAction{
 
 	/**
