@@ -69,9 +69,10 @@ public class AgentServerInfo extends AbstractWebappBaseAction {
 	 * author: zxz <br>
 	 * version: 5.0 <br>
 	 * 步骤：
-	 * 1.获取前端参数、为空则给默认值
-	 * 2.根据操作系统类型获取文件及文件夹返回到前端
-	 *
+	 * 1.获取前端参数，为空则给默认值
+	 * 2.根据操作系统类型获取文件及文件夹
+	 * 3.判断是否显示文件，将值放到list
+	 * 4.返回到前端
 	 * @param pathVal String
 	 *                含义：页面选择的文件夹路径，为空则表示根目录
 	 *                取值范围：可为空
@@ -82,44 +83,42 @@ public class AgentServerInfo extends AbstractWebappBaseAction {
 	 * 含义：当前文件夹下所有的目录(当isFile为true时返回当前文件夹下所有的目录和文件)
 	 * 取值范围：不会为空
 	 */
-	public JSONObject getSystemFileInfo(@RequestParam(valueIfNull = "") String pathVal, @RequestParam(valueIfNull = "")String isFile) {
+	public JSONObject getSystemFileInfo(@RequestParam(valueIfNull = "") String pathVal, @RequestParam(valueIfNull = "") String isFile) {
 		//是否需要显示文件为空则默认为false不显示
 		if (StringUtils.isBlank(isFile)) {
 			isFile = "false";
 		}
+		//获取操作系统的名称返回到前端
 		String osName = SystemUtils.OS_NAME;
 		JSONObject receiveMsg = new JSONObject();
 		receiveMsg.put("osName", osName);
+		File[] file_array = null;
+		//如果需要显示文件夹的路径为空，则默认取根目录下的文件和文件夹
 		if (StringUtils.isBlank(pathVal)) {
-			File[] dvs = File.listRoots();
-			List<String> list = new ArrayList<>();
-			for (int i = 0; i < dvs.length; i++) {
-				String name = dvs[i].getPath();
-				if (!noList.contains(name)) {//取消系统的一些目录
-					String path = dvs[i].getPath();
-					list.add(name + "^" + path);
-				}
-			}
-			receiveMsg.put("filelist", list);
+			file_array = File.listRoots();
 		} else {
-			File file = new File(pathVal);
-			File[] array = file.listFiles();
+			file_array = new File(pathVal).listFiles();
+		}
+		//取到文件和文件夹则进行遍历
+		if (file_array != null && file_array.length > 0) {
 			List<String> list = new ArrayList<>();
-			for (int i = 0; i < array.length; i++) {
-				if (array[i].isDirectory()) {
-					String name = array[i].getName();
-					String path_hy = array[i].getPath();
+			for (int i = 0; i < file_array.length; i++) {
+				//是文件夹直接放到list
+				if (file_array[i].isDirectory()) {
+					String name = file_array[i].getName();
+					String path_hy = file_array[i].getPath();
 					if (!noList.contains(path_hy)) {//取消系统的一些目录
-						String path = array[i].getPath();
+						String path = file_array[i].getPath();
 						list.add(name + "^" + path + "^folder");
 					}
 				}
 			}
-			if ("true".equals(isFile)) {//是否需要显示文件
-				for (int i = 0; i < array.length; i++) {
-					if (!array[i].isDirectory()) {
-						String name = array[i].getName();
-						String path = array[i].getPath();
+			//需要显示文件且是文件则放到list
+			if ("true".equals(isFile)) {
+				for (int i = 0; i < file_array.length; i++) {
+					if (!file_array[i].isDirectory()) {
+						String name = file_array[i].getName();
+						String path = file_array[i].getPath();
 						list.add(name + "^" + path + "^file");
 					}
 				}
