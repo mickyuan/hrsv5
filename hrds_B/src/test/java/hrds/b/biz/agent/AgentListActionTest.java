@@ -931,78 +931,184 @@ public class AgentListActionTest extends WebBaseTestCase {
 	 * */
 	@Test
 	public void getDBAndDFTaskBySourceId() {
-		String dbBodyString = new HttpClient()
+		//1、使用正确的userId,http请求访问被测试方法,得到响应，判断结果是否正确
+		String databaseSetString = new HttpClient()
 				.addData("sourceId", SOURCE_ID)
 				.addData("userId", TEST_USER_ID)
 				.post(getActionUrl("getDBAndDFTaskBySourceId")).getBodyString();
 
-		ActionResult dbResult = JsonUtil.toObject(dbBodyString, ActionResult.class);
-		assertThat(dbResult.isSuccess(), is(true));
-		List<Object> firResult = (List<Object>)dbResult.getData();
+		ActionResult databaseSetResult = JsonUtil.toObject(databaseSetString, ActionResult.class);
+		assertThat(databaseSetResult.isSuccess(), is(true));
+		List<Object> firResult = (List<Object>)databaseSetResult.getData();
 		assertThat("根据测试数据，查询得到的数据库采集任务和数据文件采集任务有" + firResult.size() + "项", firResult.size(), is(2));
+
+		//2、使用错误的userId,http请求访问被测试方法,得到响应，判断结果是否正确
+		long wrongUserId = 1003L;
+		String wrongUserIdString = new HttpClient()
+				.addData("sourceId", SOURCE_ID)
+				.addData("userId", wrongUserId)
+				.post(getActionUrl("getDBAndDFTaskBySourceId")).getBodyString();
+
+		ActionResult wrongUserIdResult = JsonUtil.toObject(wrongUserIdString, ActionResult.class);
+		assertThat(wrongUserIdResult.isSuccess(), is(true));
+		List<Object> wrongUserIdResultData = (List<Object>)wrongUserIdResult.getData();
+		assertThat("根据测试数据，查询得到的数据库采集任务和数据文件采集任务有" + wrongUserIdResultData.size() + "项", wrongUserIdResultData.size(), is(0));
+
+		//3、使用错误的sourceId，http请求访问被测试方法,得到响应，判断结果是否正确
+		long wrongSourceId = 2L;
+		String wrongSourceIdString = new HttpClient()
+				.addData("sourceId", wrongSourceId)
+				.addData("userId", TEST_USER_ID)
+				.post(getActionUrl("getDBAndDFTaskBySourceId")).getBodyString();
+
+		ActionResult wrongDatabaseSetResult = JsonUtil.toObject(wrongSourceIdString, ActionResult.class);
+		assertThat(wrongDatabaseSetResult.isSuccess(), is(true));
+		List<Object> wrongDatabaseSetData = (List<Object>)wrongDatabaseSetResult.getData();
+		assertThat("根据测试数据，查询得到的数据库采集任务和数据文件采集任务有" + wrongDatabaseSetData.size() + "项", wrongDatabaseSetData.size(), is(0));
 	}
 
 	/**
 	 * 测试根据sourceId查询出设置完成的非结构化文件采集任务的任务ID
 	 *
-	 * 1、
+	 * 1、使用正确的userId,http请求访问被测试方法,得到响应，判断结果是否正确
+	 * 2、使用错误的userId,http请求访问被测试方法,得到响应，判断结果是否正确
+	 * 3、使用错误的sourceId，http请求访问被测试方法,得到响应，判断结果是否正确
 	 * @Param: 无
 	 * @return: 无
 	 *
 	 * */
 	@Test
 	public void getNonStructTaskBySourceId() {
-		String dbBodyString = new HttpClient()
+		//1、使用正确的userId,http请求访问被测试方法,得到响应，判断结果是否正确
+		String nonStructString = new HttpClient()
 				.addData("sourceId", SOURCE_ID)
 				.addData("userId", TEST_USER_ID)
 				.post(getActionUrl("getNonStructTaskBySourceId")).getBodyString();
 
-		ActionResult dbResult = JsonUtil.toObject(dbBodyString, ActionResult.class);
-		assertThat(dbResult.isSuccess(), is(true));
-		List<Object> firResult = (List<Object>)dbResult.getData();
+		ActionResult nonStructResult = JsonUtil.toObject(nonStructString, ActionResult.class);
+		assertThat(nonStructResult.isSuccess(), is(true));
+		List<Object> firResult = (List<Object>)nonStructResult.getData();
 		assertThat("根据测试数据，查询得到的非结构化采集任务有" + firResult.size() + "项", firResult.size(), is(2));
+
+		//2、使用错误的userId,http请求访问被测试方法,得到响应，判断结果是否正确
+		long wrongUserId = 1003L;
+		String wrongUserIdString = new HttpClient()
+				.addData("sourceId", SOURCE_ID)
+				.addData("userId", wrongUserId)
+				.post(getActionUrl("getNonStructTaskBySourceId")).getBodyString();
+
+		ActionResult wrongUserIdResult = JsonUtil.toObject(wrongUserIdString, ActionResult.class);
+		assertThat(wrongUserIdResult.isSuccess(), is(true));
+		List<Object> wrongUserIdResultData = (List<Object>)wrongUserIdResult.getData();
+		assertThat("根据测试数据，查询得到的非结构化采集任务有" + wrongUserIdResultData.size() + "项", wrongUserIdResultData.size(), is(0));
+
+		//3、使用错误的sourceId，http请求访问被测试方法,得到响应，判断结果是否正确
+		long wrongSourceId = 2L;
+		String wrongSourceIdString = new HttpClient()
+				.addData("sourceId", wrongSourceId)
+				.addData("userId", TEST_USER_ID)
+				.post(getActionUrl("getNonStructTaskBySourceId")).getBodyString();
+
+		ActionResult wrongDatabaseSetResult = JsonUtil.toObject(wrongSourceIdString, ActionResult.class);
+		assertThat(wrongDatabaseSetResult.isSuccess(), is(true));
+		List<Object> wrongDatabaseSetData = (List<Object>)wrongDatabaseSetResult.getData();
+		assertThat("根据测试数据，查询得到的非结构化采集任务有" + wrongDatabaseSetData.size() + "项", wrongDatabaseSetData.size(), is(0));
 	}
 
 	/**
 	 * 测试根据sourceId查询出设置完成的半结构化文件采集任务的任务ID
 	 *
-	 * 1、
+	 * 1、使用正确的userId,http请求访问被测试方法,得到响应，判断结果是否正确
+	 * 2、使用错误的userId,http请求访问被测试方法,得到响应，判断结果是否正确
+	 * 3、使用错误的sourceId，http请求访问被测试方法,得到响应，判断结果是否正确
 	 * @Param: 无
 	 * @return: 无
 	 *
 	 * */
 	@Test
 	public void getHalfStructTaskBySourceId() {
-		String dbBodyString = new HttpClient()
+		//1、使用正确的userId,http请求访问被测试方法,得到响应，判断结果是否正确
+		String halfStructString = new HttpClient()
 				.addData("sourceId", SOURCE_ID)
 				.addData("userId", TEST_USER_ID)
 				.post(getActionUrl("getHalfStructTaskBySourceId")).getBodyString();
 
-		ActionResult dbResult = JsonUtil.toObject(dbBodyString, ActionResult.class);
-		assertThat(dbResult.isSuccess(), is(true));
-		List<Object> firResult = (List<Object>)dbResult.getData();
+		ActionResult halfStructResult = JsonUtil.toObject(halfStructString, ActionResult.class);
+		assertThat(halfStructResult.isSuccess(), is(true));
+		List<Object> firResult = (List<Object>)halfStructResult.getData();
 		assertThat("根据测试数据，查询得到的半结构化采集任务有" + firResult.size() + "项", firResult.size(), is(2));
+
+		//2、使用错误的userId,http请求访问被测试方法,得到响应，判断结果是否正确
+		long wrongUserId = 1003L;
+		String wrongUserIdString = new HttpClient()
+				.addData("sourceId", SOURCE_ID)
+				.addData("userId", wrongUserId)
+				.post(getActionUrl("getHalfStructTaskBySourceId")).getBodyString();
+
+		ActionResult wrongUserIdResult = JsonUtil.toObject(wrongUserIdString, ActionResult.class);
+		assertThat(wrongUserIdResult.isSuccess(), is(true));
+		List<Object> wrongUserIdResultData = (List<Object>)wrongUserIdResult.getData();
+		assertThat("根据测试数据，查询得到的半结构化采集任务有" + wrongUserIdResultData.size() + "项", wrongUserIdResultData.size(), is(0));
+
+		//3、使用错误的sourceId，http请求访问被测试方法,得到响应，判断结果是否正确
+		long wrongSourceId = 2L;
+		String wrongSourceIdString = new HttpClient()
+				.addData("sourceId", wrongSourceId)
+				.addData("userId", TEST_USER_ID)
+				.post(getActionUrl("getHalfStructTaskBySourceId")).getBodyString();
+
+		ActionResult wrongDatabaseSetResult = JsonUtil.toObject(wrongSourceIdString, ActionResult.class);
+		assertThat(wrongDatabaseSetResult.isSuccess(), is(true));
+		List<Object> wrongDatabaseSetData = (List<Object>)wrongDatabaseSetResult.getData();
+		assertThat("根据测试数据，查询得到的半结构化采集任务有" + wrongDatabaseSetData.size() + "项", wrongDatabaseSetData.size(), is(0));
 	}
 
 	/**
 	 * 测试根据sourceId查询出设置完成的FTP采集任务的任务ID
 	 *
-	 * 1、
+	 * 1、使用正确的userId,http请求访问被测试方法,得到响应，判断结果是否正确
+	 * 2、使用错误的userId,http请求访问被测试方法,得到响应，判断结果是否正确
+	 * 3、使用错误的sourceId，http请求访问被测试方法,得到响应，判断结果是否正确
 	 * @Param: 无
 	 * @return: 无
 	 *
 	 * */
 	@Test
 	public void getFTPTaskBySourceId() {
-		String dbBodyString = new HttpClient()
+		//1、使用正确的userId,http请求访问被测试方法,得到响应，判断结果是否正确
+		String ftpString = new HttpClient()
 				.addData("sourceId", SOURCE_ID)
 				.addData("userId", TEST_USER_ID)
 				.post(getActionUrl("getFTPTaskBySourceId")).getBodyString();
 
-		ActionResult dbResult = JsonUtil.toObject(dbBodyString, ActionResult.class);
-		assertThat(dbResult.isSuccess(), is(true));
-		List<Object> firResult = (List<Object>)dbResult.getData();
+		ActionResult ftpResult = JsonUtil.toObject(ftpString, ActionResult.class);
+		assertThat(ftpResult.isSuccess(), is(true));
+		List<Object> firResult = (List<Object>)ftpResult.getData();
 		assertThat("根据测试数据，查询得到的FTP采集任务有" + firResult.size() + "项", firResult.size(), is(2));
+
+		//2、使用错误的userId,http请求访问被测试方法,得到响应，判断结果是否正确
+		long wrongUserId = 1003L;
+		String wrongUserIdString = new HttpClient()
+				.addData("sourceId", SOURCE_ID)
+				.addData("userId", wrongUserId)
+				.post(getActionUrl("getFTPTaskBySourceId")).getBodyString();
+
+		ActionResult wrongUserIdResult = JsonUtil.toObject(wrongUserIdString, ActionResult.class);
+		assertThat(wrongUserIdResult.isSuccess(), is(true));
+		List<Object> wrongUserIdResultData = (List<Object>)wrongUserIdResult.getData();
+		assertThat("根据测试数据，查询得到的FTP采集任务有" + wrongUserIdResultData.size() + "项", wrongUserIdResultData.size(), is(0));
+
+		//3、使用错误的sourceId，http请求访问被测试方法,得到响应，判断结果是否正确
+		long wrongSourceId = 2L;
+		String wrongSourceIdString = new HttpClient()
+				.addData("sourceId", wrongSourceId)
+				.addData("userId", TEST_USER_ID)
+				.post(getActionUrl("getFTPTaskBySourceId")).getBodyString();
+
+		ActionResult wrongDatabaseSetResult = JsonUtil.toObject(wrongSourceIdString, ActionResult.class);
+		assertThat(wrongDatabaseSetResult.isSuccess(), is(true));
+		List<Object> wrongDatabaseSetData = (List<Object>)wrongDatabaseSetResult.getData();
+		assertThat("根据测试数据，查询得到的FTP采集任务有" + wrongDatabaseSetData.size() + "项", wrongDatabaseSetData.size(), is(0));
 	}
 
 }
