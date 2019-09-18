@@ -46,7 +46,8 @@ public class AgentListAction extends BaseAction {
 	 * */
 	public Result getAgentInfoList() {
 		//1、获取用户ID并根据用户ID去数据库中查询数据源信息
-		return Dbo.queryResult("select datas.source_id,datasource_name from data_source datas where datas.create_user_id = ?", getUserId());
+		return Dbo.queryResult("select datas.source_id,datasource_name from data_source datas " +
+				"where datas.create_user_id = ?", getUserId());
 		//数据可访问权限处理方式
 		//以上SQL中，通过当前用户ID进行关联查询，达到了数据权限的限制
 	}
@@ -584,7 +585,7 @@ public class AgentListAction extends BaseAction {
 	 *          取值范围：不会为null
 	 *
 	 * */
-	public void saveNonStructProjectInfo(String fileCollId, String projectCode, String subSysCode) {
+	public void saveNonStructProjectInfo(String fileCollId, String projectCode, String subSysCode){
 
 	}
 
@@ -607,7 +608,7 @@ public class AgentListAction extends BaseAction {
 	 *          取值范围：不会为null
 	 *
 	 * */
-	public void saveDBAndDFProjectInfo(String dataSourceId, String projectCode, String subSysCode) {
+	public void saveDBAndDFProjectInfo(String dataSourceId, String projectCode, String subSysCode){
 
 	}
 
@@ -748,7 +749,8 @@ public class AgentListAction extends BaseAction {
 				"FROM data_source ds " +
 				"JOIN agent_info ai ON ds.source_id = ai.source_id " +
 				"JOIN ftp_collect fcs ON ai.agent_id = fcs.agent_id " +
-				"WHERE ds.source_id = ? AND fcs.is_sendok = ? AND ds.create_user_id = ? ", sourceId, IsFlag.Shi.getCode(), getUserId());
+				"WHERE ds.source_id = ? AND fcs.is_sendok = ? AND ds.create_user_id = ? ",
+				sourceId, IsFlag.Shi.getCode(), getUserId());
 	}
 
 	/**
@@ -801,7 +803,8 @@ public class AgentListAction extends BaseAction {
 		}
 
 		//3、调用方法获取日志,目前工具类不存在
-		String taskLog = LogReader.readAgentLog(logDir, agentIP, SFTP_PORT, userName, passWord, readNum);
+		String taskLog = LogReader.readAgentLog(logDir, agentIP, SFTP_PORT, userName,
+				passWord, readNum);
 		if (StringUtil.isBlank(taskLog)) {
 			taskLog = "日志信息";
 		}
