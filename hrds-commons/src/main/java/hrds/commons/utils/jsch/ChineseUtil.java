@@ -1,5 +1,6 @@
 package hrds.commons.utils.jsch;
 
+import fd.ng.core.utils.NumberUtil;
 import fd.ng.core.utils.StringUtil;
 import hrds.commons.exception.BusinessException;
 import net.sourceforge.pinyin4j.PinyinHelper;
@@ -199,7 +200,7 @@ public class ChineseUtil {
 		String index = "";
 		String[] returnString = new String[2];
 		for(String string : arrays) {
-			if( StringUtil.isNumeric2(string) ) {
+			if( NumberUtil.isNumberic(string) ) {
 				count++;
 				index = str.indexOf(string) + "";
 				returnString[0] = string;
