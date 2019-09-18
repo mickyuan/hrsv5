@@ -1,7 +1,10 @@
 package hrds.b.biz.datasource;
 
 import com.alibaba.fastjson.TypeReference;
-import fd.ng.core.utils.*;
+import fd.ng.core.utils.CodecUtil;
+import fd.ng.core.utils.DateUtil;
+import fd.ng.core.utils.JsonUtil;
+import fd.ng.core.utils.StringUtil;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.annotation.RequestBean;
 import fd.ng.web.annotation.UploadFile;
@@ -19,10 +22,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.servlet.http.HttpServletResponse;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -37,98 +41,180 @@ public class DataSourceAction extends BaseAction {
 	/**
 	 * 新增/编辑数据源
 	 * <p>
-	 * 1.字段合法性检查
-	 * 2.判断数据源编号是否为空，为空则为新增，不为空则为编辑
-	 * 3.新增前查询数据源编号是否已存在，存在则抛异常，不存在就新增
-	 * 4.保存或更新数据源信息
-	 * 5.如果是编辑先删除数据源与部门关系
-	 * 6.保存或更新数据源与部门关系信息
+	 * 1.数据可访问权限处理方式，新增时会设置创建用户ID，会获取当前用户ID，所以不需要权限验证
+	 * 2.字段合法性检查
+	 * 2.1 验证data_source_remark数据源名称合法性
+	 * 2.2 验证数据源编号datasource_number合法性
+	 * 2.3 验证部门depIds合法性
+	 * 3.初始化一些非页面传值
+	 * 4.新增前查询数据源编号是否已存在
+	 * 4.1 判断查询结果是否为预期数据
+	 * 4.2 判断数据源编号是否重复
+	 * 5.新增数据源信息
+	 * 6.保存source_relation_dep表信息
 	 *
-	 * @param dataSource data_source表
+	 * @param dataSource data_source
 	 *                   含义：data_source表实体类
-	 *                   取值范围：与数据字段定义规则相同
+	 *                   取值范围：与数据库字段定义规则相同
 	 * @param depIds     String
 	 *                   含义：source_relation_dep表主键ID
 	 *                   取值范围：可能是一个部门ID字符串， 也可能是通过分隔符拼接成的部门ID的字符串
 	 */
 	public void saveDataSource(@RequestBean Data_source dataSource, String depIds) {
-		// 1.字段做合法性检查
-		// 验证data_source_remark数据源名称合法性
+		// 1.数据可访问权限处理方式，新增时会设置创建用户ID，会获取当前用户ID，所以不需要权限验证
+		// 2.字段做合法性检查
+		// 2.1 验证data_source_remark数据源名称合法性
 		if (StringUtil.isBlank(dataSource.getDatasource_name())) {
 			throw new BusinessException("数据源名称不能为空以及不能为空格，datasource_name=" + dataSource
 					.getDatasource_name());
 		}
 		// 数据源编号长度
 		int len = 4;
-		// 验证数据源编号datasource_number合法性
+		// 2.2 验证数据源编号datasource_number合法性
 		if (StringUtil.isBlank(dataSource.getDatasource_number())
 				|| dataSource.getDatasource_number().length() > len) {
 			throw new BusinessException("数据源编号不能为空以及不能为空格或数据源编号长度不能超过四位，" +
 					"datasource_number=" + dataSource.getDatasource_number());
 		}
-		// 验证部门depIds合法性
+		// 2.3 验证部门depIds合法性
 		if (StringUtil.isBlank(depIds)) {
 			throw new BusinessException("部门不能为空格，depIds=" + depIds);
 		}
-		// 2.判断数据源id(数据源data_source表主键ID)是否为空
-		if (dataSource.getSource_id() == null) {
-			// 新增,初始化一些非页面传值
-			// 数据源主键ID
-			dataSource.setSource_id(PrimayKeyGener.getNextId());
-			// 数据源创建用户ID
-			dataSource.setCreate_user_id(getUserId());
-			// 数据源创建日期
-			dataSource.setCreate_date(DateUtil.getSysDate());
-			// 数据源创建时间
-			dataSource.setCreate_time(DateUtil.getSysTime());
-			// 3.新增前查询数据源编号是否已存在
-			Result result = Dbo.queryResult("select datasource_number from " +
-							Data_source.TableName + "  where datasource_number=?",
-					dataSource.getDatasource_number());
-			if (!result.isEmpty()) {
-				// 数据源编号重复
-				throw new BusinessException("数据源编号重复,datasource_number=" +
-						dataSource.getDatasource_number());
-			}
-			// 4.保存数据源信息
-			if (dataSource.add(Dbo.db()) != 1) {
-				// 新增保存失败
-				throw new BusinessException("新增保存数据源data_source表数据失败,datasource_number=" +
-						dataSource.getDatasource_number());
-			}
-		} else {
-			// 编辑
-			// 字段合法性检查
-			if (String.valueOf(dataSource.getSource_id()).length() > 10) {
-				throw new BusinessException("source_id长度不能超过10，source_id="
-						+ dataSource.getSource_id());
-			}
-			// 4.更新数据源信息
-			//FIXME 应该写 update SQL。因为现在这种方式，会导致诸如 create_date 等字段也被更新了。
-			// 新增和更新还是应该分开。因为传入的数据会不一样，进行的数据检查也不一样（比如这里应该用soureid做存在性检查
-			if (dataSource.update(Dbo.db()) != 1) {
-				// 编辑保存失败
-				throw new BusinessException("编辑保存数据源data_source表数据失败,datasource_number=" +
-						dataSource.getDatasource_number());
-			}
-			// 5.先删除数据源与部门关系信息
-			int num = Dbo.execute("delete from " + Source_relation_dep.TableName +
-					" where source_id=?", dataSource.getSource_id());
-			if (num < 1) {
-				throw new BusinessException("编辑时会先删除原数据源与部门关系信息，删除错旧关系时错误，" +
-						"source_id=" + dataSource.getSource_id());
-			}
+		// 3.初始化一些非页面传值
+		// 数据源主键ID
+		dataSource.setSource_id(PrimayKeyGener.getNextId());
+		// 数据源创建用户ID
+		dataSource.setCreate_user_id(getUserId());
+		// 数据源创建日期
+		dataSource.setCreate_date(DateUtil.getSysDate());
+		// 数据源创建时间
+		dataSource.setCreate_time(DateUtil.getSysTime());
+		// 4.新增前查询数据源编号是否已存在
+		long count = Dbo.queryNumber("select count(1) from " + Data_source.TableName + "  where " +
+				"datasource_number=?", dataSource.getDatasource_number()).orElse(-1);
+		// 4.1 判断查询结果是否为预期数据
+		if (count == -1) {
+			throw new BusinessException("查询到的数据是非法数据，不是预期结果");
 		}
-		// 6.保存或更新数据源与部门关系信息
+		// 4.2 判断数据源编号是否重复
+		if (count > 0) {
+			throw new BusinessException("数据源编号重复,datasource_number=" +
+					dataSource.getDatasource_number());
+		}
+		// 5.保存数据源信息
+		if (dataSource.add(Dbo.db()) != 1) {
+			throw new BusinessException("新增保存数据源data_source表数据失败,datasource_number=" +
+					dataSource.getDatasource_number());
+		}
+		// 6.保存source_relation_dep表信息
 		saveSourceRelationDep(dataSource.getSource_id(), depIds);
+	}
+
+	/**
+	 * 更新数据源信息
+	 * <p>
+	 * 1.数据可访问权限处理方式，通过source_id与user_id关联检查
+	 * 2.字段合法性检查
+	 * 2.1验证source_id是否合法
+	 * 2.2 验证datasource_name是否合法
+	 * 2.3 datasource_number是否合法
+	 * 2.4 验证部门depIds是否合法
+	 * 3.更新前查询数据源编号是否已存在
+	 * 3.1 判断查询结果是否为预期数据
+	 * 3.2 判断数据源编号是否重复
+	 * 4.将data_source实体数据封装
+	 * 5.更新数据源信息
+	 * 6.先删除数据源与部门关系信息
+	 * 7.保存source_relation_dep表信息
+	 *
+	 * @param source_id         long
+	 *                          含义：data_source表主键，source_relation_dep表外键
+	 *                          取值范围：不为空，10位数字
+	 * @param datasource_remark String
+	 *                          含义：备注
+	 *                          取值范围：没有限制
+	 * @param datasource_name   String
+	 *                          含义：数据源名称
+	 *                          取值范围：不为空且不为空格
+	 * @param datasource_number String
+	 *                          含义：数据源编号
+	 *                          取值范围：不为空且不为空格，长度不超过四位
+	 * @param depIds            String
+	 *                          含义：source_relation_dep表主键ID
+	 *                          取值范围：可能是一个部门ID字符串， 也可能是通过分隔符拼接成的部门ID的字符串
+	 */
+	public void updateDataSource(long source_id, String datasource_remark, String datasource_name,
+	                             String datasource_number, String depIds) {
+		// 1.数据可访问权限处理方式，通过source_id与user_id关联检查
+		if (Dbo.queryNumber("select count(*) from " + Data_source.TableName +
+				"where source_id=? and  create_user_id=?").orElse(0) > 0) {
+			throw new BusinessException("数据权限校验失败，数据不可访问！");
+		}
+		// 2.字段合法性检查
+		//source_id长度
+		int dsLen = 10;
+		// 2.1验证source_id是否合法
+		if (String.valueOf(source_id).length() != dsLen) {
+			throw new BusinessException("source_id应为一个10位数字，新增时自动生成，source_id="
+					+ source_id);
+		}
+		// 2.2 验证datasource_name是否合法
+		if (StringUtil.isBlank(datasource_name)) {
+			throw new BusinessException("数据源名称不能为空以及不能为空格，datasource_name="
+					+ datasource_name);
+		}
+		// 数据源编号长度
+		int len = 4;
+		// 2.3 datasource_number是否合法
+		if (StringUtil.isBlank(datasource_number)
+				|| datasource_number.length() > len) {
+			throw new BusinessException("数据源编号不能为空以及不能为空格或数据源编号长度不能超过四位，" +
+					"datasource_number=" + datasource_number);
+		}
+		// 2.4 验证部门depIds是否合法
+		if (StringUtil.isBlank(depIds)) {
+			throw new BusinessException("部门不能为空格，depIds=" + depIds);
+		}
+		// 3.更新前查询数据源编号是否已存在
+		long count = Dbo.queryNumber("select count(1) from " + Data_source.TableName + "  where " +
+				"datasource_number=?", datasource_number).orElse(-1);
+		// 3.1 判断查询结果是否为预期数据
+		if (count == -1) {
+			throw new BusinessException("查询到的数据是非法数据，不是预期结果");
+		}
+		// 3.2 判断数据源编号是否重复
+		if (count > 0) {
+			throw new BusinessException("数据源编号重复,datasource_number=" +
+					datasource_number);
+		}
+		// 4.将data_source实体数据封装
+		Data_source dataSource = new Data_source();
+		dataSource.setSource_id(source_id);
+		dataSource.setDatasource_name(datasource_name);
+		dataSource.setDatasource_number(datasource_number);
+		dataSource.setDatasource_remark(datasource_remark);
+		// 5.更新数据源信息
+		if (dataSource.update(Dbo.db()) != 1) {
+			throw new BusinessException("更新保存data_source表数据失败,source_id=" +
+					source_id + ",datasource_name=" + datasource_name + ",");
+		}
+		// 6.先删除数据源与部门关系信息
+		int num = Dbo.execute("delete from " + Source_relation_dep.TableName +
+				" where source_id=?", dataSource.getSource_id());
+		if (num < 1) {
+			throw new BusinessException("编辑时会先删除原数据源与部门关系信息，删除错旧关系时错误，" +
+					"source_id=" + dataSource.getSource_id());
+		}
+		// 7.保存source_relation_dep表信息
+		saveSourceRelationDep(source_id, depIds);
 	}
 
 	/**
 	 * 保存数据源与部门关系表信息
 	 * <p>
 	 * 1.创建source_relation_dep对象,并设置数据源编号ID值
-	 * 2.分隔部门depIds获取到存放所有部门ID的数组
-	 * 3.循环遍历存放部门ID的数组，并向source_relation_dep对象设置部门ID值
+	 * 2.分隔部门depIds获取到封装所有部门ID的数组
+	 * 3.循环遍历封装部门ID的数组，并向source_relation_dep对象设置部门ID值
 	 * 4.循环保存source_relation_dep表信息
 	 *
 	 * @param source_id long
@@ -143,9 +229,9 @@ public class DataSourceAction extends BaseAction {
 		Source_relation_dep srd = new Source_relation_dep();
 		// 设置数据源与部门关系表外键ID
 		srd.setSource_id(source_id);
-		// 2.分隔部门depIds获取到存放所有部门ID的数组
+		// 2.分隔部门depIds获取到封装所有部门ID的数组
 		String[] split = depIds.split(",");
-		// 3.循环遍历存放部门ID的数组
+		// 3.循环遍历封装部门ID的数组
 		for (String dep_id : split) {
 			// 设置数据源与部门关系表主键ID
 			srd.setDep_id(dep_id);
@@ -192,7 +278,7 @@ public class DataSourceAction extends BaseAction {
 		//FIXME 这个方法不需要校验当前用户是否有权限删除这个sourceid吗？
 
 		// 1.先查询该datasource下是否还有agent
-		if (Dbo.queryNumber("SELECT * FROM agent_info  WHERE source_id=?", source_id)
+		if (Dbo.queryNumber("SELECT count(*) FROM agent_info  WHERE source_id=?", source_id)
 				.orElse(-1) > 0) {
 			throw new BusinessException("此数据源下还有agent，不能删除,source_id=" + source_id);
 		}
@@ -239,8 +325,8 @@ public class DataSourceAction extends BaseAction {
 	 *                   含义：agent端口
 	 *                   取值范围：1024-65535
 	 * @param user_id    long
-	 *                   含义：数据采集用户
-	 *                   取值范围：不为空以及空格，长度不超过10位
+	 *                   含义：数据采集用户ID,用户类型
+	 *                   取值范围：参考UserType代码项
 	 * @param file       String
 	 *                   含义：上传文件名称（全路径）
 	 *                   取值范围：不能为空以及空格
@@ -250,10 +336,10 @@ public class DataSourceAction extends BaseAction {
 		try {
 			// 1.通过文件名称获取文件
 			File uploadedFile = FileUploadUtil.getUploadedFile(file);
-			// 2.获取文件名
+			/*// 2.获取文件名
 			String fileName = FileUploadUtil.getOriginalFileName(file);
-			/*注意：不同的浏览器提交的文件名是不一样的，有些浏览器提交上来的文件名是带有路径的，
-			如： c:\a\b\1.txt，而有些只是单纯的文件名，如：1.txt*/
+			*//*注意：不同的浏览器提交的文件名是不一样的，有些浏览器提交上来的文件名是带有路径的，
+			如： c:\a\b\1.txt，而有些只是单纯的文件名，如：1.txt*//*
 			// 3.处理获取到的上传文件的文件名的路径部分，只保留文件名部分
 			// FIXME File.separator与原始文件的分隔符不见得一致！ 应该分别找一次
 			fileName = fileName.substring(fileName.lastIndexOf(File.separator +
@@ -270,13 +356,13 @@ public class DataSourceAction extends BaseAction {
 				// 7.循环读取写入，将读取的字节转为字符串对象
 				sb.append((new String(bytes, 0, len, CodecUtil.UTF8_CHARSET)));
 			}
+			// try catch
 			// 8.关闭输入流
 			bis.close();
 			// 9.使用base64编码
 			String strTemp = new String(Base64.getDecoder().decode(sb.toString()),
-					CodecUtil.UTF8_CHARSET);
-			// FIXME 以上这几十行代码，用下面这一句不就行了吗？ 况且，上面的代码也没有处理异常情况下关闭IO!
-			// String strTemp1 = new String(Base64.getDecoder().decode(Files.readAllBytes(uploadedFile.toPath())));
+					CodecUtil.UTF8_CHARSET);*/
+			String strTemp = new String(Base64.getDecoder().decode(Files.readAllBytes(uploadedFile.toPath())));
 
 			// 10.导入数据源数据，将涉及到的所有表的数据导入数据库中对应的表中
 			// FIXME user_id与ActionUtil.getUser().getUserId()什么区别，为什么要两个不同的用户
@@ -304,8 +390,8 @@ public class DataSourceAction extends BaseAction {
 	 *                        含义：agent端口
 	 *                        取值范围：1024-65535
 	 * @param user_id         long
-	 *                        含义：数据采集用户ID
-	 *                        取值范围：不为空以及空格，长度不超过10位
+	 *                        含义：数据采集用户ID,用户类型
+	 *                        取值范围：参考UserType代码项
 	 * @param user_collect_id long
 	 *                        含义：创建用户id
 	 *                        取值范围：不为空以及不为空格，长度不超过10位
@@ -316,7 +402,7 @@ public class DataSourceAction extends BaseAction {
 		Type type = new TypeReference<Map<String, Object>>() {
 		}.getType();
 		Map<String, Object> map = JsonUtil.toObject(strTemp, type);
-		// 2.遍历并解析拿到每张表的信息，map里存放的是所有数据源相关的表信息
+		// 2.遍历并解析拿到每张表的信息，map里封装的是所有数据源相关的表信息
 		for (Map.Entry<String, Object> entry : map.entrySet()) {
 			// 数据源信息
 			if ("data_source".equals(entry.getKey())) {
@@ -631,45 +717,27 @@ public class DataSourceAction extends BaseAction {
 	public void downloadFile(long source_id) {
 		try {
 			// 1.创建封装数据库查询数据的map集合
-			Map<String, Object> collection_map = new HashMap<String, Object>();
+			Map<String, Object> collection_map = new HashMap<>();
 			// 2.获取data_source表信息集合，将data_source表信息封装入map
-			List<Data_source> dataSourceList = getData_sources(source_id);
-			collection_map.put("data_source", dataSourceList);
-
+			addDataSourceToMap(source_id, collection_map);
 			// 3.获取agent_info表信息集合，将agent_info表信息封装入map
 			List<Agent_info> agentInfoList = Dbo.queryList(Agent_info.class, "select * from " +
 					"agent_info  where source_id = ?", source_id);
 			collection_map.put("agent_info", agentInfoList);
-
-			// 4.获取Agent_down_info表信息集合，将agent_down_info表信息封装入map
-			List<Optional<Agent_down_info>> agentDownInfoList = getAgentDownInfoList(agentInfoList);
-			collection_map.put("agent_down_info", agentDownInfoList);
-
-			// 5.采集任务分类表collect_job_classify
-			List<List<Collect_job_classify>> cjcList = getCollectJobClassifyList(agentInfoList);
-			collection_map.put("collect_job_classify", cjcList);
-
-			//6.ftp采集设置ftp_collect
-			Result ftp_collectResult = new Result();
-			for (int i = 0; i < agentInfoList.size(); i++) {
-				Result result = Dbo.queryResult("select * from ftp_collect where agent_id = ?",
-						agentInfoList.get(i).getAgent_id());
-				ftp_collectResult.add(result);
-			}
-			collection_map.put("ftp_collect", ftp_collectResult);
-			//ftp已传输表ftp_transfered
-			Result ftp_transferedResult = new Result();
-			for (int i = 0; i < ftp_collectResult.getRowCount(); i++) {
-				Result result = Dbo.queryResult("select * from ftp_transfered where ftp_id = ?",
-						ftp_collectResult.getLong(i, "ftp_id"));
-				ftp_transferedResult.add(result);
-			}
-			collection_map.put("ftp_transfered", ftp_transferedResult);
+			// 4.获取Agent_down_info表信息集合封装入map
+			addAgentDownInfoToMap(collection_map, agentInfoList);
+			// 5.采集任务分类表collect_job_classify，获取collect_job_classify表信息集合入map
+			addCollectJobClassifyToMap(collection_map, agentInfoList);
+			// 6.ftp采集设置ftp_collect,获取ftp_collect表信息集合
+			Result ftpCollectResult = getFtpCollectResult(collection_map, agentInfoList);
+			// 7.ftp已传输表ftp_transfered,获取ftp_transfered表信息集合入map
+			addFtpTransferedToMap(collection_map, ftpCollectResult);
 			//ftp目录表ftp_folder
 			Result ftp_folderResult = new Result();
-			for (int i = 0; i < ftp_collectResult.getRowCount(); i++) {
-				Result result = Dbo.queryResult("select * from ftp_folder where ftp_id = ?",
-						ftp_collectResult.getLong(i, "ftp_id"));
+			for (int i = 0; i < ftpCollectResult.getRowCount(); i++) {
+				Result result = Dbo.queryResult("select * from " +
+								"ftp_folder  where ftp_id = ?",
+						ftp_folderResult.getLong(i, "ftp_id"));
 				ftp_folderResult.add(result);
 			}
 			collection_map.put("ftp_folder", ftp_folderResult);
@@ -829,52 +897,10 @@ public class DataSourceAction extends BaseAction {
 		}
 	}
 
-	/**
-	 * 获取agent_down_info表信息
-	 * <p>
-	 * 1.创建封装agent_down_info信息的集合
-	 * 2.遍历agent_info信息，获取agent_id(agent_info主键，agent_down_info外键）
-	 * 3. 根据agent_id查询agent_down_info信息
-	 * 4. 返回agent_down_info集合信息
-	 *
-	 * @param agentInfoList list
-	 *                      含义：agent_info表信息集合
-	 *                      取值范围：不为空
-	 * @return 返回agent_down_info集合信息
-	 */
-	private List<List<Collect_job_classify>> getCollectJobClassifyList(List<Agent_info> agentInfoList) {
-		// 1.创建封装agent_down_info信息的集合
-		List<List<Collect_job_classify>> cjcList = new ArrayList<>();
-		// 2.遍历agent_info信息，获取agent_id(agent_info主键，agent_down_info外键）
-		for (int i = 0; i < agentInfoList.size(); i++) {
-			// 3. 根据agent_id查询agent_down_info信息
-			List<Collect_job_classify> jobClassifyList = Dbo.queryList(Collect_job_classify.class,
-					"select * from  collect_job_classify where  agent_id = ?",
-					agentInfoList.get(i).getAgent_id());
-			cjcList.add(jobClassifyList);
-		}
-		// 4. 返回agent_down_info集合信息
-		return cjcList;
-	}
-
-	/**
-	 * 根据agent_info表信息集合获取agent_down_info表信息集合
-	 * <p>
-	 * 1.创建存放agent_down_info表信息集合
-	 * 2.遍历agent_info表信息获取agent_id（agent_info表主键，agent_down_info表外键）
-	 * 3.通过agent_id查询agent_down_info表信息
-	 * 4.将agent_down_info表信息放入list
-	 * 5.agent_down_info表信息集合
-	 *
-	 * @param agentInfoList List<Agent_info>
-	 *                      含义：agent_info表信息集合
-	 *                      取值范围：不为空
-	 * @return 返回agent_down_info表信息集合
-	 */
-	private List<Optional<Agent_down_info>> getAgentDownInfoList(List<Agent_info> agentInfoList) {
-		// 1.创建存放agent_down_info表信息集合
+	private void addAgentDownInfoToMap(Map<String, Object> collection_map, List<Agent_info> agentInfoList) {
+		// 1.创建封装agent_down_info表信息集合
 		List<Optional<Agent_down_info>> agentDownInfoList =
-				new ArrayList<Optional<Agent_down_info>>();
+				new ArrayList<>();
 		// 2.遍历agent_info表信息获取agent_id（agent_info表主键，agent_down_info表外键）
 		for (int i = 0; i < agentInfoList.size(); i++) {
 			// 3.通过agent_id查询agent_down_info表信息
@@ -884,30 +910,123 @@ public class DataSourceAction extends BaseAction {
 			// 4.将agent_down_info表信息放入list
 			agentDownInfoList.add(agent_down_info);
 		}
-		// 5.agent_down_info表信息集合
-		return agentDownInfoList;
+		// 5.将agent_down_info表信息入map
+		collection_map.put("agent_down_info", agentDownInfoList);
 	}
 
 	/**
-	 * 根据数据源ID获取数据源集合
+	 * 封装Data_source表数据集合到map
 	 * <p>
 	 * 1.根据数据源ID查询数据源data_source集合
 	 * 2.判断获取到的集合是否有数据，没有抛异常，有返回数据
+	 * 3.将data_source数据入map
 	 *
-	 * @param source_id long
-	 *                  含义：data_source表主键
-	 *                  取值范围：不能为空以及空格，长度不超过10
-	 * @return 返回根据数据源ID查询数据源data_source集合结果信息
+	 * @param source_id      long
+	 *                       含义：data_source主键ID
+	 *                       取值范围：不为空以及空格，长度不超过10
+	 * @param collection_map Map
+	 *                       含义：封装数据源下载信息（这里封装的是ftp_transfered表数据集合）
+	 *                       取值范围：key唯一
 	 */
-	private List<Data_source> getData_sources(long source_id) {
+	private void addDataSourceToMap(long source_id, Map<String, Object> collection_map) {
 		// 1.根据数据源ID查询数据源data_source集合
 		List<Data_source> dataSourceList = Dbo.queryList(Data_source.class, "select * from " +
 				"data_source where  source_id = ?", source_id);
 		// 2.判断获取到的集合是否有数据，没有抛异常，有返回数据
-		if (dataSourceList.size() == 0) {
+		if (dataSourceList.isEmpty()) {
 			throw new BusinessException("此数据源下没有数据，source_id = ?" + source_id);
 		}
-		return dataSourceList;
+		// 3.将data_source数据入map
+		collection_map.put("data_source", dataSourceList);
+	}
+
+	/**
+	 * 封装ftp_transfered表数据集合到map
+	 *
+	 * <p>
+	 * 1.创建封装ftp_transfered信息的集合
+	 * 2.遍历Ftp_collect信息，获取ftp_id(ftp_transfered主键，ftp_collect外键）
+	 * 3. 根据ftp_id查询ftp_transfered信息
+	 * 4. 返回ftp_transfered集合信息
+	 *
+	 * @param collection_map   Map
+	 *                         含义：封装数据源下载信息（这里封装的是ftp_transfered表数据集合）
+	 *                         取值范围：key唯一
+	 * @param ftpCollectResult Result
+	 *                         含义：ftp_collect表数据集
+	 *                         取值范围：不为空
+	 */
+	private void addFtpTransferedToMap(Map<String, Object> collection_map,
+	                                   Result ftpCollectResult) {
+		// 1.创建封装ftp_transfered信息的集合
+		List<List<Ftp_transfered>> ftpTransferList = new ArrayList<>();
+		for (int i = 0; i < ftpCollectResult.getRowCount(); i++) {
+			List<Ftp_transfered> list = Dbo.queryList(Ftp_transfered.class, "select * from "
+							+ "ftp_transfered where ftp_id=?",
+					ftpCollectResult.getLong(i, "ftp_id"));
+			ftpTransferList.add(list);
+		}
+		//
+		collection_map.put("ftp_transfered", ftpTransferList);
+	}
+
+	/**
+	 * 获取ftp_collect表信息
+	 * <p>
+	 * 1.创建封装ftp_collect信息的集合
+	 * 2.遍历agent_info信息，获取agent_id(agent_info主键，ftp_collect外键）
+	 * 3. 根据agent_id查询ftp_collect信息
+	 * 4. 返回ftp_collect集合信息
+	 *
+	 * @param agentInfoList List
+	 *                      含义：agent_info表数据集合
+	 *                      取值范围：不为空
+	 * @return 返回ftp_collect集合信息
+	 */
+	private Result getFtpCollectResult(Map<String, Object> collection_map,
+	                                   List<Agent_info> agentInfoList) {
+		// 1.创建封装ftp_collect信息的集合
+		Result ftpCollectResult = new Result();
+		// 2.遍历agent_info信息，获取agent_id(agent_info主键，ftp_collect外键）
+		for (int i = 0; i < agentInfoList.size(); i++) {
+			// 3. 根据agent_id查询ftp_collect信息
+			Result result = Dbo.queryResult("select * from  ftp_collect  where agent_id = ?",
+					agentInfoList.get(i).getAgent_id());
+			ftpCollectResult.add(result);
+		}
+		// 4. 返回ftp_collect集合信息
+		return ftpCollectResult;
+	}
+
+	/**
+	 * 封装collect_job_classify表信息入map
+	 * <p>
+	 * 1.创建封装Collect_job_classify信息的集合
+	 * 2.遍历agent_info信息，获取agent_id(agent_info主键，Collect_job_classify外键）
+	 * 3. 根据agent_id查询Collect_job_classify信息
+	 * 4. 返回Collect_job_classify集合信息
+	 *
+	 * @param collection_map Map
+	 *                       含义：封装数据源下载信息（这里封装的是collect_job_classify表数据集合）
+	 *                       取值范围：key唯一
+	 * @param agentInfoList  list
+	 *                       含义：agent_info表信息集合
+	 *                       取值范围：不为空
+	 */
+	private void addCollectJobClassifyToMap(Map<String, Object> collection_map,
+	                                        List<Agent_info> agentInfoList) {
+		// 1.创建封装collect_job_classify信息的集合
+		List<List<Collect_job_classify>> cjcList = new ArrayList<>();
+		// 2.遍历agent_info信息，获取agent_id(agent_info主键，collect_job_classify外键）
+		for (int i = 0; i < agentInfoList.size(); i++) {
+			// 3. 根据agent_id查询Collect_job_classify信息
+			List<Collect_job_classify> jobClassifyList = Dbo.queryList(Collect_job_classify.class,
+					"select * from  collect_job_classify where  agent_id = ?",
+					agentInfoList.get(i).getAgent_id());
+			cjcList.add(jobClassifyList);
+		}
+		// 4. 将collect_job_classify集合信息入map
+		collection_map.put("collect_job_classify", cjcList);
 	}
 
 }

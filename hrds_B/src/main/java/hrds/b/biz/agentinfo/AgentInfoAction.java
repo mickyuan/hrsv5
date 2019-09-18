@@ -6,6 +6,7 @@ import fd.ng.web.annotation.RequestBean;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.AgentStatus;
+import hrds.commons.codes.AgentType;
 import hrds.commons.entity.Agent_info;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.ActionUtil;
@@ -38,34 +39,56 @@ public class AgentInfoAction extends BaseAction {
 				Integer.parseInt(agentInfo.getAgent_port()));
 		// 2.字段做合法性检查
 		if (StringUtil.isBlank(agentInfo.getAgent_type())) {
-			throw new BusinessException("agent_type不为空以及不为空格，agent_type="
+			throw new BusinessException("agent_type不为空且不为空格，agent_type="
+					+ agentInfo.getAgent_type());
+		}
+		if (agentInfo.getAgent_type() != AgentType.ShuJuKu.getCode() ||
+				agentInfo.getAgent_type() != AgentType.DBWenJian.getCode() ||
+				agentInfo.getAgent_type() != AgentType.FTP.getCode() ||
+				agentInfo.getAgent_type() != AgentType.DuiXiang.getCode() ||
+				agentInfo.getAgent_type() != AgentType.WenJianXiTong.getCode()) {
+			throw new BusinessException("agent_type不合法，不是规定类型，agent_type="
 					+ agentInfo.getAgent_type());
 		}
 		if (StringUtil.isBlank(agentInfo.getAgent_name())) {
-			throw new BusinessException("agent_name不为空以及不为空格，agent_name="
+			throw new BusinessException("agent_name不为空且不为空格，agent_name="
 					+ agentInfo.getAgent_name());
 		}
 		if (StringUtil.isBlank(agentInfo.getAgent_ip())) {
-			throw new BusinessException("agent_ip不为空以及不为空格，agent_ip="
+			throw new BusinessException("agent_ip不为空且不为空格，agent_ip="
 					+ agentInfo.getAgent_ip());
 		}
+		// 判断agent_ip是否是一个合法的ip
+		String[] split = agentInfo.getAgent_ip().split("\\.");
+		for (int i = 0; i < split.length; i++) {
+			int temp = Integer.parseInt(split[i]);
+			if (temp < 0 || temp > 255) {
+				throw new BusinessException("agent_ip不是一个合法的ip地址," +
+						"agent_ip=" + agentInfo.getAgent_ip());
+			}
+		}
 		if (StringUtil.isBlank(agentInfo.getAgent_port())) {
-			throw new BusinessException("agent_port不为空以及不为空格，agent_port="
+			throw new BusinessException("agent_port不为空且不为空格，agent_port="
 					+ agentInfo.getAgent_port());
 		}
-		if (StringUtil.isBlank(String.valueOf(agentInfo.getSource_id()))) {
-			throw new BusinessException("agent_port不为空以及不为空格，agent_port="
-					+ agentInfo.getAgent_port());
+		// 判断agent_port是否是一个有效的端口
+		if (Integer.parseInt(agentInfo.getAgent_port()) < 1024 &&
+				Integer.parseInt(agentInfo.getAgent_port()) > 65535) {
+			throw new BusinessException("agent_port端口不是有效的端口，不在取值范围内，" +
+					"agent_port=" + agentInfo.getAgent_port());
+		}
+		if (StringUtil.isBlank(String.valueOf(agentInfo.getSource_id())) ||
+				String.valueOf(agentInfo.getSource_id()).length() > 10) {
+			throw new BusinessException("source_id不为空且不为空格，长度也不能超过10，source_id="
+					+ agentInfo.getSource_id());
 		}
 		if (StringUtil.isBlank(String.valueOf(agentInfo.getUser_id()))) {
-			throw new BusinessException("user_id不为空以及不为空格，user_id="
-					+ agentInfo.getUser_id());
+			throw new BusinessException("user_id不为空且不为空格，user_id=" + agentInfo.getUser_id());
 		}
 		if (flag) {
 			// 端口被占用不可使用
-			throw new BusinessException("端口被占用，agent_port=" + agentInfo.getAgent_port() +
-					",agent_ip =" + agentInfo.getAgent_ip() +
-					",agent_name=" + agentInfo.getAgent_name());
+			throw new BusinessException("端口被占用，agent_port=" + agentInfo.getAgent_port() + "," +
+					"agent_ip =" + agentInfo.getAgent_ip());
 		}
 		// 2.判断agent编号是否为空
 		if (agentInfo.getAgent_id() == null) {
@@ -75,18 +98,16 @@ public class AgentInfoAction extends BaseAction {
 			agentInfo.setAgent_status(AgentStatus.WeiLianJie.getCode());
 			// 3.保存agent信息
 			if (agentInfo.add(Dbo.db()) != 1) {
-				throw new BusinessException("新增agent_info表信息失败," +
-						"agent_port=" + agentInfo.getAgent_port() +
-						",agent_ip =" + agentInfo.getAgent_ip() +
+				throw new BusinessException("新增agent_info表信息失败," + "agent_port=" +
+						agentInfo.getAgent_port() + ",agent_ip =" + agentInfo.getAgent_ip() +
 						",agent_name=" + agentInfo.getAgent_name());
 			}
 		} else {
 			// 2.不为空，编辑
 			// 3.更新agent信息
 			if (agentInfo.update(Dbo.db()) != 1) {
-				throw new BusinessException("编辑保存agent_info表信息失败," +
-						"agent_port=" + agentInfo.getAgent_port() +
-						",agent_ip =" + agentInfo.getAgent_ip() +
+				throw new BusinessException("编辑保存agent_info表信息失败," + "agent_port="
+						+ agentInfo.getAgent_port() + ",agent_ip =" + agentInfo.getAgent_ip() +
 						",agent_name=" + agentInfo.getAgent_name());
 			}
 		}
@@ -128,7 +149,7 @@ public class AgentInfoAction extends BaseAction {
 	 *
 	 * @param agent_id   long
 	 *                   含义：agent_info表主键
-	 *                   取值范围：不为空以及不为空格，长度不超过10
+	 *                   取值范围：不为空且不为空格，长度不超过10
 	 * @param agent_type String
 	 *                   含义：agent类型
 	 *                   取值范围：1:数据库Agent,2:文件系统Agent,3:FtpAgent,4:数据文件Agent,5:对象Agent
@@ -149,7 +170,7 @@ public class AgentInfoAction extends BaseAction {
 	 *
 	 * @param agent_id   long
 	 *                   含义：agent_info表主键
-	 *                   取值范围：不为空以及不为空格，长度不超过10
+	 *                   取值范围：不为空且不为空格，长度不超过10
 	 * @param agent_type String
 	 *                   含义：agent类型
 	 *                   取值范围：1:数据库Agent,2:文件系统Agent,3:FtpAgent,4:数据文件Agent,5:对象Agent
