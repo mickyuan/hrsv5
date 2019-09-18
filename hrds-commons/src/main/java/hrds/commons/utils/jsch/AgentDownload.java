@@ -1,4 +1,3 @@
-/*
 package hrds.commons.utils.jsch;
 
 import fd.ng.core.utils.StringUtil;
@@ -28,18 +27,14 @@ public class AgentDownload {
 
 	public static void main(String[] args) throws IOException {
 
-		*/
-/*//*
-/scpAgent(null, null, "123", "1", "123", "213", "sdf", "1");
+		/*//scpAgent(null, null, "123", "1", "123", "213", "sdf", "1");
 		//System.out.println(path);
 		String userDir = System.getProperty("user.dir");
-		System.out.println(userDir);*//*
-
+		System.out.println(userDir);*/
 //		scpAgent(null, null, "123", "1", "123", "123", "123", "123", "1", "123", "q23", "qwe", "", "");
 	}
 
-	*/
-/**
+	/**
 	 * 使用scp的方式直接部署启动agent
 	 *
 	 * @param request        {@link HttpServletRequest}
@@ -55,8 +50,7 @@ public class AgentDownload {
 	 * @param oldTargetDir   {@link String} 老的安装地址
 	 * @param oldLog4jLogDir {@link String} 老的日志地址
 	 * @return {@link String} 0代表成功，1代表失败
-	 *//*
-
+	 */
 	public static Map<String, String> scpAgent(HttpServletRequest request, HttpServletResponse response, String agent_name, String agent_type,
 					String agent_ip, String agent_port, String log4jLogDir, String targetdir, String isstart, String agentPatch, String userName,
 					String password, String hostPort, String oldTargetDir, String oldLog4jLogDir) {
@@ -96,11 +90,9 @@ public class AgentDownload {
 			bw.write(sb.toString());
 			bw.flush();
 			IOUtils.closeQuietly(bw);
-			*/
-/**
+			/**
 			 * 修改dbinfo.properties
-			 *//*
-
+			 */
 			String _dbinfo = hashCode + "_dbinfo.properties";
 			bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(pathFile + _dbinfo, false), "utf-8"));
 			String path = AgentDownload.class.getResource("/dbinfo.properties").getPath();
@@ -112,11 +104,9 @@ public class AgentDownload {
 			}
 			br.close();
 
-			*/
-/**
+			/**
 			 * 修改log4j.properties
-			 *//*
-
+			 */
 			String _log4j = hashCode + "_log4j.properties";
 			bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(pathFile + _log4j, false), "utf-8"));
 			StringBuffer log4j = new StringBuffer();
@@ -219,8 +209,7 @@ public class AgentDownload {
 
 	}
 
-	*/
-/**
+	/**
 	 * @param request    HttpServletRequest
 	 * @param response   HttpServletResponse
 	 * @param agent_name {@link String} agent名称
@@ -228,8 +217,7 @@ public class AgentDownload {
 	 * @param agent_ip   {@link String} agentIP
 	 * @param agent_port {@link String} agent端口
 	 * @throws Exception
-	 *//*
-
+	 */
 	public static void readZipFile(HttpServletRequest request, HttpServletResponse response, String agent_name, String agent_type, String agent_ip,
 					String agent_port) throws Exception {
 
@@ -237,8 +225,7 @@ public class AgentDownload {
 		readZipFile(request, response, agent_name, agent_type, agent_ip, agent_port, agentPatch);
 	}
 
-	*/
-/**
+	/**
 	 * @param request    HttpServletRequest
 	 * @param response   HttpServletResponse
 	 * @param agent_name {@link String} agent名称
@@ -247,8 +234,7 @@ public class AgentDownload {
 	 * @param agent_port {@link String} agent端口
 	 * @param agentPatch {@link String} agent指定的下载文件的目录
 	 * @throws Exception
-	 *//*
-
+	 */
 	private static void readZipFile(HttpServletRequest request, HttpServletResponse response, String agent_name, String agent_type, String agent_ip,
 					String agent_port, String agentPatch) throws Exception {
 
@@ -288,11 +274,9 @@ public class AgentDownload {
 			parameters.setSourceExternalStream(true);
 			zipFile.addStream(is, parameters);
 
-			*/
-/**
+			/**
 			 * 修改dbinfo.properties
-			 *//*
-
+			 */
 			String dbinfo = "config/dbinfo.properties";
 			String path = AgentDownload.class.getResource("/dbinfo.properties").getPath();
 			StringBuilder result = new StringBuilder();
@@ -345,11 +329,9 @@ public class AgentDownload {
 			parameters.setSourceExternalStream(true);
 			zipFile.addStream(is, parameters);
 
-			*/
-/**
+			/**
 			 *
-			 *//*
-
+			 */
 			File file = zipFile.getFile();
 			in = new FileInputStream(file);
 			// 清空response
@@ -385,4 +367,3 @@ public class AgentDownload {
 		}
 	}
 }
-*/
