@@ -18,6 +18,7 @@ import java.util.List;
  * version: 5.0 <br>
  */
 public class AgentServerInfo extends AbstractWebappBaseAction {
+	//系统目录的集合
 	public static final ArrayList<String> noList;
 
 	//需要过滤的系统目录
@@ -79,13 +80,11 @@ public class AgentServerInfo extends AbstractWebappBaseAction {
 	 *                取值范围：可为空
 	 * @return com.alibaba.fastjson.JSONObject
 	 * 含义：当前文件夹下所有的目录(当isFile为true时返回当前文件夹下所有的目录和文件)
-	 * 取值范围：可能为空
+	 * 取值范围：不会为空
 	 */
-	public JSONObject getSystemFileInfo(@RequestParam(valueIfNull = "") String pathVal, String isFile) {
-		/**
-		 * 需要过滤的系统目录
-		 */
-		if (isFile != null) {
+	public JSONObject getSystemFileInfo(@RequestParam(valueIfNull = "") String pathVal, @RequestParam(valueIfNull = "")String isFile) {
+		//是否需要显示文件为空则默认为false不显示
+		if (StringUtils.isBlank(isFile)) {
 			isFile = "false";
 		}
 		String osName = SystemUtils.OS_NAME;
