@@ -201,8 +201,8 @@ public class UnstructuredFileCollectAction extends BaseAction {
 	 * 4.更新文件系统设置表
 	 *
 	 * @param file_sources_array String
-	 *                     含义：源文件设置表的JSON数组的字符串，一条或多条
-	 *                     取值范围：不能为空
+	 *                           含义：源文件设置表的JSON数组的字符串，一条或多条
+	 *                           取值范围：不能为空
 	 * @return void
 	 */
 	public void saveFileSource(String file_sources_array) {

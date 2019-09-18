@@ -21,7 +21,7 @@ import java.util.Optional;
 import java.util.OptionalLong;
 
 /**
- * description: 对象采集接口类 <br>
+ * description: 对象采集接口类，处理对象采集的增删改查 <br>
  * date: 2019/9/16 15:02 <br>
  * author: zxz <br>
  * version: 5.0 <br>

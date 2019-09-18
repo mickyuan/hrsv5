@@ -166,7 +166,8 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 		System.out.println(ar.isSuccess());
 		assertThat(ar.isSuccess(), is(true));
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			OptionalLong optionalLong = SqlOperator.queryNumber(db, "select count(1) count from file_collect_set");
+			OptionalLong optionalLong = SqlOperator.queryNumber(db, "select count(1) count from " +
+					"file_collect_set where agent_id = ?",AGENT_ID);
 			assertThat("添加数据成功", optionalLong.getAsLong(), is(FILE_COLLECT_SET_ROWS + 1));
 		}
 	}
@@ -451,14 +452,22 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 			assertThat("校验更新file_collect_set表数据量正确", optionalLong3.getAsLong(), is(1L));
 		}
 	}
-
+	
+	/**
+	 * description: 测试用例清理数据 <br>
+	 * date: 2019/9/18 14:20 <br>
+	 * author: zxz <br>
+	 * version: 5.0 <br>
+	 *
+	 * @param  
+	 * @return void
+	 */ 
 	@AfterClass
 	public static void afterTest() {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			long agent_id = AGENT_ID;
-			SqlOperator.execute(db, "DELETE FROM agent_info WHERE agent_id = ?", agent_id);
-			SqlOperator.execute(db, "DELETE FROM file_collect_set WHERE agent_id = ?", agent_id);
-			SqlOperator.execute(db, "DELETE FROM file_source WHERE agent_id = ?", agent_id);
+			SqlOperator.execute(db, "DELETE FROM agent_info WHERE agent_id = ?", AGENT_ID);
+			SqlOperator.execute(db, "DELETE FROM file_collect_set WHERE agent_id = ?", AGENT_ID);
+			SqlOperator.execute(db, "DELETE FROM file_source WHERE agent_id = ?", AGENT_ID);
 			SqlOperator.commitTransaction(db);
 		}
 	}
