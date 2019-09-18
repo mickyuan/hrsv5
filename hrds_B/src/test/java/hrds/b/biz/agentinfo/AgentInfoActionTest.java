@@ -21,10 +21,16 @@ import java.util.List;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
+/**
+ * agent增删改测试类
+ *
+ * @author dhw
+ * @date 2019-09-18 10:49:51
+ */
 public class AgentInfoActionTest extends WebBaseTestCase {
 	private static final int Init_Rows = 10; // 向表中初始化的数据条数。
-
 	// 初始化登录用户ID
+	private static final long UserId = 5555;
 	@Before
 	public void before() {
 		// 初始化测试用例数据
@@ -62,7 +68,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				}
 				// agent_info表信息
 				Object[] aiObjects = {agent_id, agent_name, agent_type, agent_ip, agent_port, agent_status, create_date
-						, create_time, source_id, UserType.CaiJiYongHu.getCode()};
+						, create_time, source_id, UserId};
 				aiParams.add(aiObjects);
 			}
 			// 初始化agent_info表信息
@@ -77,7 +83,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 		// 5.模拟用户登录
 		//String responseValue = new HttpClient()
 		//		.buildSession()
-		//		.addData("username", UserType.CaiJiYongHu.getCode())
+		//		.addData("username", UserId)
 		//		.addData("password", "111111")
 		//		.post("http://127.0.0.1:8099/A/action/hrds/a/biz/login/login")
 		//		.getBodyString();
@@ -136,8 +142,8 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 	 * 含义：agent_info主键ID
 	 * 取值范围：不为空及不为空格，长度不超过10
 	 * 参数8：user_id String
-	 * 含义：用户类型
-	 * 取值范围：参考UserType代码项
+	 * 含义：数据采集用户
+	 * 取值范围：不为空
 	 *
 	 * <p>
 	 * 1.新增，数据都不为空且为有效数据
@@ -168,7 +174,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "10.71.4.51")
 				.addData("agent_port", "3456")
 				.addData("source_id", -30L)
-				.addData("user_id", UserType.CaiJiYongHu.getCode())
+				.addData("user_id", UserId)
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ActionResult ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(true));
@@ -181,7 +187,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "10.71.4.55")
 				.addData("agent_port", "34567")
 				.addData("source_id", -27L)
-				.addData("user_id", UserType.CaiJiYongHu.getCode())
+				.addData("user_id", UserId)
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(true));
@@ -193,7 +199,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "10.71.4.52")
 				.addData("agent_port", "3457")
 				.addData("source_id", -30L)
-				.addData("user_id", UserType.CaiJiYongHu.getCode())
+				.addData("user_id", UserId)
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.getMessage(), is("agent_name不为空以及不为空格，agent_name="));
@@ -205,7 +211,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "10.71.4.52")
 				.addData("agent_port", "3457")
 				.addData("source_id", -30L)
-				.addData("user_id", UserType.CaiJiYongHu.getCode())
+				.addData("user_id", UserId)
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(false));
@@ -218,7 +224,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "10.71.4.52")
 				.addData("agent_port", "3457")
 				.addData("source_id", -30L)
-				.addData("user_id", UserType.CaiJiYongHu.getCode())
+				.addData("user_id", UserId)
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.getMessage(), is("agent_type不为空以及不为空格，agent_type="));
@@ -230,7 +236,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "10.71.4.52")
 				.addData("agent_port", "3457")
 				.addData("source_id", -30L)
-				.addData("user_id", UserType.CaiJiYongHu.getCode())
+				.addData("user_id", UserId)
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(false));
@@ -242,7 +248,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "10.71.4.52")
 				.addData("agent_port", "3457")
 				.addData("source_id", -30L)
-				.addData("user_id", UserType.CaiJiYongHu.getCode())
+				.addData("user_id", UserId)
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(false));
@@ -255,7 +261,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "")
 				.addData("agent_port", "3457")
 				.addData("source_id", -30L)
-				.addData("user_id", UserType.CaiJiYongHu.getCode())
+				.addData("user_id", UserId)
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(false));
@@ -268,7 +274,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", " ")
 				.addData("agent_port", "3458")
 				.addData("source_id", -30L)
-				.addData("user_id", UserType.CaiJiYongHu.getCode())
+				.addData("user_id", UserId)
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(false));
@@ -281,7 +287,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "127.1.2.300")
 				.addData("agent_port", "3458")
 				.addData("source_id", -30L)
-				.addData("user_id", UserType.CaiJiYongHu.getCode())
+				.addData("user_id", UserId)
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(false));
@@ -295,7 +301,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "10.71.4.51")
 				.addData("agent_port", "")
 				.addData("source_id", -30L)
-				.addData("user_id", UserType.CaiJiYongHu.getCode())
+				.addData("user_id", UserId)
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(false));
@@ -308,7 +314,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "10.71.4.51")
 				.addData("agent_port", " ")
 				.addData("source_id", -30L)
-				.addData("user_id", UserType.CaiJiYongHu.getCode())
+				.addData("user_id", UserId)
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(false));
@@ -321,7 +327,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "10.71.4.51")
 				.addData("agent_port", "1000")
 				.addData("source_id", -30L)
-				.addData("user_id", UserType.CaiJiYongHu.getCode())
+				.addData("user_id", UserId)
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(false));
@@ -335,7 +341,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "10.71.4.51")
 				.addData("agent_port", "")
 				.addData("source_id", "")
-				.addData("user_id", UserType.CaiJiYongHu.getCode())
+				.addData("user_id", UserId)
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(false));
@@ -349,7 +355,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "10.71.4.51")
 				.addData("agent_port", " ")
 				.addData("source_id", " ")
-				.addData("user_id", UserType.CaiJiYongHu.getCode())
+				.addData("user_id", UserId)
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(false));
@@ -363,7 +369,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "10.71.4.51")
 				.addData("agent_port", "4567")
 				.addData("source_id", "10000000009")
-				.addData("user_id", UserType.CaiJiYongHu.getCode())
+				.addData("user_id", UserId)
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(false));

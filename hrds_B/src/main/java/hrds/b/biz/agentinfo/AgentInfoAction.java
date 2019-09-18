@@ -1,5 +1,6 @@
 package hrds.b.biz.agentinfo;
 
+import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.annotation.RequestBean;
@@ -9,7 +10,6 @@ import hrds.commons.codes.AgentStatus;
 import hrds.commons.codes.AgentType;
 import hrds.commons.entity.Agent_info;
 import hrds.commons.exception.BusinessException;
-import hrds.commons.utils.ActionUtil;
 import hrds.commons.utils.key.PrimayKeyGener;
 
 import java.util.List;
@@ -18,98 +18,197 @@ import java.util.Map;
 /**
  * agent增删改类
  *
- * @author mine
+ * @author dhw
  * @date 2019-09-04 17:30:27
  */
 public class AgentInfoAction extends BaseAction {
 	/**
 	 * 保存agent信息
 	 * <p>
-	 * 1.判断端口是否被占用，被占用抛异常，否则正常保存
-	 * 2.判断agent编号是否为空，为空则新增，不为空则编辑
-	 * 3.保存或更新agent信息
+	 * 1.数据可访问权限处理方式，新增时会设置创建用户ID，会获取当前用户ID，所以不需要权限验证
+	 * 2.字段合法性验证
+	 * 3.判断端口是否被占用，被占用抛异常，否则正常保存
+	 * 4.初始化AgentInfo的一些非页面传值
+	 * 5.验证数据源是否还存在
+	 * 6.前置条件检查，判断数据源下相同的IP地址中是否包含相同的端口
+	 * 7.保存agent信息
 	 *
 	 * @param agentInfo agent_info表对象
 	 *                  含义：agent_info表实体对象
 	 *                  取值范围：与数据库agent_info表字段定义规则一致
 	 */
 	public void saveAgent(@RequestBean Agent_info agentInfo) {
-		// 1.判断端口是否被占用
+		// 1.数据可访问权限处理方式，新增时会设置创建用户ID，会获取当前用户ID，所以不需要权限验证
+		// 2.字段合法性验证
+		fieldLegalityValidation(agentInfo);
+		// 3.判断端口是否被占用
 		boolean flag = isPortOccupied(agentInfo.getAgent_ip(),
 				Integer.parseInt(agentInfo.getAgent_port()));
-		// 2.字段做合法性检查
-		if (StringUtil.isBlank(agentInfo.getAgent_type())) {
-			throw new BusinessException("agent_type不为空且不为空格，agent_type="
-					+ agentInfo.getAgent_type());
+		if (flag) {
+			// 端口别占用，不可使用
+			throw new BusinessException("端口被占用，agent_port=" + agentInfo.getAgent_port() + "," +
+					"agent_ip =" + agentInfo.getAgent_ip());
 		}
-		if (agentInfo.getAgent_type() != AgentType.ShuJuKu.getCode() ||
-				agentInfo.getAgent_type() != AgentType.DBWenJian.getCode() ||
-				agentInfo.getAgent_type() != AgentType.FTP.getCode() ||
-				agentInfo.getAgent_type() != AgentType.DuiXiang.getCode() ||
-				agentInfo.getAgent_type() != AgentType.WenJianXiTong.getCode()) {
-			throw new BusinessException("agent_type不合法，不是规定类型，agent_type="
-					+ agentInfo.getAgent_type());
+		// 4.初始化AgentInfo的一些非页面传值
+		agentInfo.setSource_id(PrimayKeyGener.getNextId());
+		agentInfo.setAgent_status(AgentStatus.WeiLianJie.getCode());
+		agentInfo.setCreate_time(DateUtil.getSysTime());
+		agentInfo.setCreate_date(DateUtil.getSysDate());
+		// 5.验证数据源是否还存在
+		long count = Dbo.queryNumber("select * from data_source where source_id = ? and "
+				+ " create_user_id=?", agentInfo.getSource_id(), getUserId()).orElse(-1);
+		if (count == -1) {
+			throw new BusinessException("查询到的数据是非法数据，不是预期结果");
 		}
+		if (count == 0) {
+			throw new BusinessException("该agent对应的数据源已不存在不可新增，source_id="
+					+ agentInfo.getSource_id());
+		}
+		// 6.前置条件检查，判断数据源下相同的IP地址中是否包含相同的端口
+		long aiCount = Dbo.queryNumber("SELECT count(1) count FROM agent_info WHERE " +
+						"source_id = ? AND agent_type = ? AND agent_ip = ? AND" +
+						" agent_port = ?  and user_id", agentInfo.getSource_id(),
+				agentInfo.getAgent_type(), agentInfo.getAgent_ip(),
+				agentInfo.getAgent_port()).orElse(-1);
+		if (aiCount == -1) {
+			throw new BusinessException("查询到的数据是非法数据，不是预期结果");
+		}
+		if (aiCount == 0) {
+			throw new BusinessException("该agent对应的数据源下相同的IP地址中是否包含相同的端口，" +
+					"source_id=" + agentInfo.getSource_id());
+		}
+		// 7.保存agent信息
+		if (agentInfo.add(Dbo.db()) != 1) {
+			throw new BusinessException("新增agent_info表信息失败," + "agent_port=" +
+					agentInfo.getAgent_port() + ",agent_ip =" + agentInfo.getAgent_ip() +
+					",agent_name=" + agentInfo.getAgent_name());
+		}
+	}
+
+	/**
+	 * 字段合法性验证
+	 * <p>
+	 * 1.数据可访问权限处理方式，这是个私有方法，不会单独被调用，所以不需要权限验证
+	 * 2.验证agent_type是否为空或空格
+	 * 3. 验证agent_name是否为空或空格
+	 * 4. 验证agent_ip是否为空或空格
+	 * 5.判断agent_ip是否是一个为空或空格的ip
+	 * 6.验证agent_port是否为空或空格
+	 * 7.判断agent_port是否是一个有效的端口
+	 * 8.验证user_id是否为空或空格
+	 * 9.验证source_id是否为空或空格
+	 *
+	 * @param agentInfo agent_info表对象
+	 *                  含义：agent_info表实体对象
+	 *                  取值范围：与数据库agent_info表字段定义规则一致
+	 */
+	private void fieldLegalityValidation(Agent_info agentInfo) {
+		// 1.数据可访问权限处理方式，这是个私有方法，不会单独被调用，所以不需要权限验证
+		// 2.验证agent_type是否为空或空格
+		AgentType agentType = AgentType.ofEnumByCode(agentInfo.getAgent_type());
+		if (StringUtil.isBlank(agentInfo.getAgent_type()) || agentType != AgentType.ShuJuKu
+				|| agentType != AgentType.DBWenJian || agentType != AgentType.FTP
+				|| agentType != AgentType.DuiXiang || agentType != AgentType.WenJianXiTong) {
+			throw new BusinessException("agent_type不能为空且不能为空格或agent_type不是规定类型，" +
+					"agent_type=" + agentInfo.getAgent_type());
+		}
+		// 3.验证agent_name是否为空或空格
 		if (StringUtil.isBlank(agentInfo.getAgent_name())) {
 			throw new BusinessException("agent_name不为空且不为空格，agent_name="
 					+ agentInfo.getAgent_name());
 		}
+		// 4.验证agent_ip是否为空或空格
 		if (StringUtil.isBlank(agentInfo.getAgent_ip())) {
 			throw new BusinessException("agent_ip不为空且不为空格，agent_ip="
 					+ agentInfo.getAgent_ip());
 		}
-		// 判断agent_ip是否是一个合法的ip
+		// 5.判断agent_ip是否是一个为空或空格的ip
 		String[] split = agentInfo.getAgent_ip().split("\\.");
 		for (int i = 0; i < split.length; i++) {
 			int temp = Integer.parseInt(split[i]);
 			if (temp < 0 || temp > 255) {
-				throw new BusinessException("agent_ip不是一个合法的ip地址," +
+				throw new BusinessException("agent_ip不是一个为空或空格的ip地址," +
 						"agent_ip=" + agentInfo.getAgent_ip());
 			}
 		}
+		// 6.验证agent_port是否为空或空格
 		if (StringUtil.isBlank(agentInfo.getAgent_port())) {
 			throw new BusinessException("agent_port不为空且不为空格，agent_port="
 					+ agentInfo.getAgent_port());
 		}
-		// 判断agent_port是否是一个有效的端口
-		if (Integer.parseInt(agentInfo.getAgent_port()) < 1024 &&
-				Integer.parseInt(agentInfo.getAgent_port()) > 65535) {
+		// 端口范围最小值
+		int min = 1024;
+		// 端口范围最大值
+		int max = 65535;
+		// 7.判断agent_port是否是一个有效的端口
+		if (Integer.parseInt(agentInfo.getAgent_port()) < min &&
+				Integer.parseInt(agentInfo.getAgent_port()) > max) {
 			throw new BusinessException("agent_port端口不是有效的端口，不在取值范围内，" +
 					"agent_port=" + agentInfo.getAgent_port());
 		}
+		// 8.验证user_id是否为空或空格
+		if (StringUtil.isBlank(String.valueOf(agentInfo.getUser_id()))) {
+			throw new BusinessException("user_id不为空且不为空格，user_id=" + agentInfo.getUser_id());
+		}
+		// 9.验证source_id是否为空或空格
 		if (StringUtil.isBlank(String.valueOf(agentInfo.getSource_id())) ||
 				String.valueOf(agentInfo.getSource_id()).length() > 10) {
 			throw new BusinessException("source_id不为空且不为空格，长度也不能超过10，source_id="
 					+ agentInfo.getSource_id());
 		}
-		if (StringUtil.isBlank(String.valueOf(agentInfo.getUser_id()))) {
-			throw new BusinessException("user_id不为空且不为空格，user_id=" + agentInfo.getUser_id());
+	}
+
+	/**
+	 * 更新agent信息
+	 *
+	 * @param agent_id   long
+	 *                   含义：agent_info主键ID
+	 *                   取值范围：十位数字，新增时自动生成
+	 * @param agent_name String
+	 *                   含义：agent名称
+	 *                   取值范围：不为空以及空格
+	 * @param agent_type String
+	 *                   含义：agent类型
+	 *                   取值范围：
+	 * @param agent_ip   String
+	 *                   含义：agent所在服务器ip
+	 *                   取值范围：合法IP地址
+	 * @param agent_port String
+	 *                   含义：agent连接端口
+	 *                   取值范围：1024-65535
+	 * @param source_id  long
+	 *                   含义：agent_info表外键ID，data_source表主键ID
+	 *                   取值范围：十位数字，新增数据源时自动生成
+	 * @param user_id    long
+	 *                   含义：数据采集用户ID
+	 *                   取值范围：四位数字，新增用户时自动生成
+	 */
+	public void updateAgent(long agent_id, String agent_name, String agent_type, String agent_ip
+			, String agent_port, long source_id, long user_id) {
+		// 1.数据可访问权限处理方式，
+		// 2.创建agent_info实体对象，同时封装值
+		Agent_info agent_info = new Agent_info();
+		agent_info.setAgent_id(agent_id);
+		agent_info.setUser_id(user_id);
+		agent_info.setSource_id(source_id);
+		agent_info.setAgent_ip(agent_ip);
+		agent_info.setAgent_port(agent_port);
+		agent_info.setAgent_type(agent_type);
+		agent_info.setAgent_name(agent_name);
+		// 3.字段合法性验证
+		fieldLegalityValidation(agent_info);
+		//agent_id长度
+		int len = 10;
+		// 3.1验证agent_id是否合法
+		if (String.valueOf(agent_id).length() != len) {
+			throw new BusinessException("agent_id应为一个10位数字，新增时自动生成，agent_id="
+					+ agent_id);
 		}
-		if (flag) {
-			// 端口被占用不可使用
-			throw new BusinessException("端口被占用，agent_port=" + agentInfo.getAgent_port() + "," +
-					"agent_ip =" + agentInfo.getAgent_ip());
-		}
-		// 2.判断agent编号是否为空
-		if (agentInfo.getAgent_id() == null) {
-			// 2.为空，新增
-			agentInfo.setSource_id(PrimayKeyGener.getNextId());
-			agentInfo.setUser_id(ActionUtil.getUser().getUserId());
-			agentInfo.setAgent_status(AgentStatus.WeiLianJie.getCode());
-			// 3.保存agent信息
-			if (agentInfo.add(Dbo.db()) != 1) {
-				throw new BusinessException("新增agent_info表信息失败," + "agent_port=" +
-						agentInfo.getAgent_port() + ",agent_ip =" + agentInfo.getAgent_ip() +
-						",agent_name=" + agentInfo.getAgent_name());
-			}
-		} else {
-			// 2.不为空，编辑
-			// 3.更新agent信息
-			if (agentInfo.update(Dbo.db()) != 1) {
-				throw new BusinessException("编辑保存agent_info表信息失败," + "agent_port="
-						+ agentInfo.getAgent_port() + ",agent_ip =" + agentInfo.getAgent_ip() +
-						",agent_name=" + agentInfo.getAgent_name());
-			}
+		// 3.更新agent信息
+		if (agent_info.update(Dbo.db()) != 1) {
+			throw new BusinessException("更新agent_info表信息失败," + "agent_port="
+					+ agent_info.getAgent_port() + ",agent_ip =" + agent_info.getAgent_ip() +
+					",agent_name=" + agent_info.getAgent_name());
 		}
 	}
 

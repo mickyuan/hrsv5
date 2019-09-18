@@ -22,6 +22,12 @@ import java.util.Random;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
+/**
+ * 数据源增删改，导入、下载测试类
+ *
+ * @author dhw
+ * @date 2019-09-18 10:48:14
+ */
 public class DataSourceActionTest extends WebBaseTestCase {
 	private static final int Init_Rows = 10; // 向表中初始化的数据条数。
 	// 初始化登录用户ID
