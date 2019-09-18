@@ -1,5 +1,6 @@
 package hrds.b.biz.agent.unstructuredfilecollect;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.db.resultset.Result;
@@ -23,7 +24,7 @@ import java.util.Optional;
 import java.util.OptionalLong;
 
 /**
- * description: 非结构化文件采集接口类
+ * description: 非结构化文件采集接口类，处理非机构化采集的增改查
  * date: 2019/9/11 14:47
  * author: zxz
  * version: 5.0
@@ -171,7 +172,7 @@ public class UnstructuredFileCollectAction extends BaseAction {
 		//根据前端传过来的agent_id获取agent的ip和端口等基本信息
 		Optional<Agent_info> agent_infoResult = Dbo.queryOneObject(Agent_info.class,
 				"SELECT * FROM agent_info WHERE agent_id = ? ", agent_id);
-		Agent_info agent_info = agent_infoResult.orElseThrow(() -> new BusinessException("根据Agent_id" +
+		Agent_info agent_info = agent_infoResult.orElseThrow(() -> new BusinessException("根据Agent_id:" +
 				agent_id + "查询不到Agent_info表信息"));
 		//调用远程Agent的后端代码获取采集服务器上的日期、时间、操作系统类型和主机名等基本信息
 		HttpServerConfBean test = HttpServerConf.getHttpServer("systemFileInfo");
@@ -181,7 +182,6 @@ public class UnstructuredFileCollectAction extends BaseAction {
 		//调用工具类方法给agent发消息，并获取agent响应
 		HttpClient.ResponseValue resVal = new HttpClient()
 				.addData("pathVal", path)
-				.addData("isFile", "false")
 				.post(url + actionPattern);
 		ActionResult ar = JsonUtil.toObject(resVal.getBodyString(), ActionResult.class);
 		//返回到前端的信息
@@ -195,27 +195,31 @@ public class UnstructuredFileCollectAction extends BaseAction {
 	 * author: zxz
 	 * version: 5.0
 	 * 步骤：
-	 * 1.根据文件系统设置表id删除源文件设置表
-	 * 2.遍历源文件设置表的集合，将对象的数据插入到源文件设置表
-	 * 3.更新文件系统设置表
+	 * 1.获取json数组转成源文件设置表的集合
+	 * 2.根据文件系统设置表id删除源文件设置表
+	 * 3.遍历源文件设置表的集合，将对象的数据插入到源文件设置表
+	 * 4.更新文件系统设置表
 	 *
-	 * @param file_sources List<File_source>
-	 *                     含义：源文件设置表的集合，一条或多条
+	 * @param file_sources_array String
+	 *                     含义：源文件设置表的JSON数组的字符串，一条或多条
 	 *                     取值范围：不能为空
 	 * @return void
 	 */
-	public void saveFileSource(@RequestBean List<File_source> file_sources) {
+	public void saveFileSource(String file_sources_array) {
+		//1.获取json数组转成源文件设置表的集合
+		List<File_source> file_sources = new JSONArray().parseArray(file_sources_array, File_source.class);
 		//获取fcs_id
 		long fcs_id = file_sources.get(0).getFcs_id();
-		//根据fcs_id删除源文件设置表
+		//2.根据文件系统设置表id删除源文件设置表
 		Dbo.execute("DELETE FROM file_source WHERE fcs_id = ?", fcs_id);
+		//3.遍历源文件设置表的集合，将对象的数据插入到源文件设置表
 		for (File_source file_source : file_sources) {
 			//新增
 			file_source.setFile_source_id(PrimayKeyGener.getNextId());
 			if (file_source.add(Dbo.db()) != 1)
 				throw new BusinessException("新增数据失败！data=" + file_source);
 		}
-		//更新文件系统设置表
+		//4.更新文件系统设置表
 		Optional<File_collect_set> file_collect_setResult = Dbo.queryOneObject(File_collect_set.class,
 				"SELECT * FROM file_collect_set WHERE fcs_id = ? ", fcs_id);
 		File_collect_set file_collect_set = file_collect_setResult.orElseThrow(() -> new BusinessException("根据fcs_id" +
