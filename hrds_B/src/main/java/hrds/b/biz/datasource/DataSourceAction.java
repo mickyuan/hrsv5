@@ -110,7 +110,8 @@ public class DataSourceAction extends BaseAction {
 	                             String datasource_number, String depIds) {
 		// 1.数据可访问权限处理方式，通过source_id与user_id关联检查
 		if (Dbo.queryNumber("select count(*) from " + Data_source.TableName +
-				"where source_id=? and  create_user_id=?").orElse(0) > 0) {
+				"where source_id=? and  create_user_id=?", source_id, getUserId())
+				.orElse(0) > 0) {
 			throw new BusinessException("数据权限校验失败，数据不可访问！");
 		}
 		//source_id长度
