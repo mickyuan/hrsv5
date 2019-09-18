@@ -440,9 +440,6 @@ CREATE_TIME                                       CHAR(6) NULL, --创建时间
 UPDATE_DATE                                       CHAR(8) NULL, --更新日期
 UPDATE_TIME                                       CHAR(6) NULL, --更新时间
 USER_REMARK                                       VARCHAR(512) NULL, --备注
-MAXIMUM_JOB                                       DECIMAL(16) default 0 NULL, --最大作业数
-USER_PRIORITY                                     CHAR(1) NULL, --优先级
-QUOTA_SPACE                                       VARCHAR(200) NULL, --配额空间
 TOKEN                                             VARCHAR(40) default '0' NOT NULL, --token
 VALID_TIME                                        VARCHAR(40) default '0' NOT NULL, --token有效时间
 CONSTRAINT SYS_USER_PK PRIMARY KEY(USER_ID)   );
@@ -816,7 +813,7 @@ FTP_TIME                                          CHAR(6) NOT NULL, --ftp时间
 REMARK                                            VARCHAR(512) NULL, --备注
 CONSTRAINT FTP_FOLDER_PK PRIMARY KEY(FTP_FOLDER_ID)   );
 
---数据存层配置信息表
+--数据存储层配置信息表
 DROP TABLE IF EXISTS DATA_STORE_LAYER ;
 CREATE TABLE DATA_STORE_LAYER(
 DATASC_ID                                         BIGINT default 0 NOT NULL, --存储配置主键信息

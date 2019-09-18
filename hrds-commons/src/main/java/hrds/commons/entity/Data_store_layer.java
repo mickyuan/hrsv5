@@ -14,7 +14,7 @@ import java.util.HashMap;
 import java.util.Collections;
 
 /**
- * 数据存层配置信息表
+ * 数据存储层配置信息表
  */
 @Table(tableName = "data_store_layer")
 public class Data_store_layer extends TableEntity
@@ -29,7 +29,7 @@ public class Data_store_layer extends TableEntity
 	*/
 	public static boolean isPrimaryKey(String name) { return __PrimaryKeys.contains(name); } 
 	public static Set<String> getPrimaryKeyNames() { return __PrimaryKeys; } 
-	/** 数据存层配置信息表 */
+	/** 数据存储层配置信息表 */
 	static {
 		Set<String> __tmpPKS = new HashSet<>();
 		__tmpPKS.add("datasc_id");

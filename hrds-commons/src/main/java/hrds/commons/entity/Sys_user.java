@@ -63,12 +63,6 @@ public class Sys_user extends TableEntity
 	private String update_time; //更新时间
 	@DocBean(name ="user_remark",value="备注",dataType = String.class,required = false)
 	private String user_remark; //备注
-	@DocBean(name ="maximum_job",value="最大作业数",dataType = Long.class,required = false)
-	private Long maximum_job; //最大作业数
-	@DocBean(name ="user_priority",value="优先级",dataType = String.class,required = false)
-	private String user_priority; //优先级
-	@DocBean(name ="quota_space",value="配额空间",dataType = String.class,required = false)
-	private String quota_space; //配额空间
 	@DocBean(name ="create_id",value="建立用户ID",dataType = Long.class,required = true)
 	private Long create_id; //建立用户ID
 	@DocBean(name ="token",value="token",dataType = String.class,required = true)
@@ -201,36 +195,6 @@ public class Sys_user extends TableEntity
 	/** 设置：备注 */
 	public void setUser_remark(String user_remark){
 		this.user_remark=user_remark;
-	}
-	/** 取得：最大作业数 */
-	public Long getMaximum_job(){
-		return maximum_job;
-	}
-	/** 设置：最大作业数 */
-	public void setMaximum_job(Long maximum_job){
-		this.maximum_job=maximum_job;
-	}
-	/** 设置：最大作业数 */
-	public void setMaximum_job(String maximum_job){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(maximum_job)){
-			this.maximum_job=new Long(maximum_job);
-		}
-	}
-	/** 取得：优先级 */
-	public String getUser_priority(){
-		return user_priority;
-	}
-	/** 设置：优先级 */
-	public void setUser_priority(String user_priority){
-		this.user_priority=user_priority;
-	}
-	/** 取得：配额空间 */
-	public String getQuota_space(){
-		return quota_space;
-	}
-	/** 设置：配额空间 */
-	public void setQuota_space(String quota_space){
-		this.quota_space=quota_space;
 	}
 	/** 取得：建立用户ID */
 	public Long getCreate_id(){
