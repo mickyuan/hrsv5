@@ -34,7 +34,6 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			// 创建agent_info表对应实体对象
 			Agent_info agent_info = new Agent_info();
-			// 初始化data_source表信息
 			for (Long i = 0L; i < Init_Rows; i++) {
 				// 封装agent_info实体数据
 				agent_info.setAgent_id(i - 30 * 10000000);
