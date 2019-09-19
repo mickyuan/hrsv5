@@ -109,7 +109,7 @@ public class DataSourceAction extends BaseAction {
 		// 1.数据可访问权限处理方式，通过source_id与user_id关联检查
 		if (Dbo.queryNumber("select count(1) from " + Data_source.TableName +
 				"where source_id=? and  create_user_id=?", source_id, getUserId())
-				.orElse(0) > 0) {
+				.getAsLong() > 0) {
 			throw new BusinessException("数据权限校验失败，数据不可访问！");
 		}
 		//source_id长度
@@ -164,7 +164,7 @@ public class DataSourceAction extends BaseAction {
 	 */
 	private void fieldLegalityValidation(String datasource_name, String datasource_number,
 	                                     String[] depIds) {
-		// 1.数据可访问权限处理方式，这是个私有方法，不会单独被调用，所以不需要权限验证
+		// 1.数据可访问权限处理方式，通过create_user_id检查
 		// 2.循环遍历获取source_relation_dep主键ID，验证dep_id合法性
 		for (String dep_id : depIds) {
 			if (StringUtil.isBlank(dep_id)) {
@@ -186,7 +186,8 @@ public class DataSourceAction extends BaseAction {
 		}
 		// 5.更新前查询数据源编号是否已存在
 		if (Dbo.queryNumber("select count(1) from " + Data_source.TableName + "  where " +
-				"datasource_number=?", datasource_number).orElse(0) > 0) {
+						"datasource_number=? and create_user_id=?", datasource_number
+				, getUserId()).getAsLong() > 0) {
 			// 判断数据源编号是否重复
 			throw new BusinessException("数据源编号重复,datasource_number=" +
 					datasource_number);
@@ -248,7 +249,7 @@ public class DataSourceAction extends BaseAction {
 		// 2.关联查询data_source表与source_relation_dep表信息
 		return Dbo.queryList("select ds.*,srd.dep_id from data_source ds " +
 				" join source_relation_dep srd on ds.source_id=srd.source_id " +
-				"  where ds.source_id = ? and ds.create_user_id=?", source_id, getUserId());
+				"  where ds.source_id = ? and ds.create_user_id=?", source_id, 5555L);
 	}
 
 	/**
@@ -268,13 +269,15 @@ public class DataSourceAction extends BaseAction {
 
 		// 1.数据可访问权限处理方式，以下SQL关联source_id与user_id检查
 		// 2.先查询该datasource下是否还有agent
+		// 获取登录用户ID
+		Long userId = getUserId();
 		if (Dbo.queryNumber("SELECT count(1) FROM agent_info  WHERE source_id=?" +
-				" and create_user_id=?", source_id, getUserId()).orElse(0) > 0) {
+				" and user_id=?", source_id, userId).getAsLong() > 0) {
 			throw new BusinessException("此数据源下还有agent，不能删除,source_id=" + source_id);
 		}
 		// 3.删除data_source表信息
 		int num = Dbo.execute("delete from " + Data_source.TableName +
-				" where source_id=? and create_user_id=?", source_id, getUserId());
+				" where source_id=? and create_user_id=?", source_id, userId);
 		if (num != 1) {
 			// 4.判断库里是否没有这条数据
 			if (num == 0) {
@@ -285,7 +288,8 @@ public class DataSourceAction extends BaseAction {
 		}
 		// 5.删除source_relation_dep信息
 		int srdNum = Dbo.execute("delete from " + Source_relation_dep.TableName +
-				" where source_id=?  and create_user_id=?", source_id, getUserId());
+				" srd join " + Data_source.TableName + " ds  on srd.source_id=ds.source_id " +
+				" where source_id=? and create_user_id=", source_id, userId);
 		if (srdNum < 1) {
 			if (srdNum == 0) {
 				throw new BusinessException("删除source_relation_dep失败，数据库里没有此条数据，"
@@ -404,7 +408,7 @@ public class DataSourceAction extends BaseAction {
 						Data_source.class);
 				// 判断上传文件的数据源名称和已有的名称是否重复
 				if (Dbo.queryNumber("select count(1) from data_source where datasource_name = ?",
-						data_source.getDatasource_name()).orElse(0) > 0) {
+						data_source.getDatasource_name()).getAsLong() > 0) {
 					throw new BusinessException("数据源名称重复,datasource_name=" +
 							data_source.getDatasource_name());
 				}
