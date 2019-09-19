@@ -26,7 +26,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
  * @create: 2019-09-05 17:41
  **/
 //TODO 日志文件下载的测试用例暂无
-//TODO 访问修饰符为private的方法测试用例暂无
+//TODO 访问修饰符为private的方法测试用例暂无    -----------》 private 不需要测试用例
 //TODO 调用工具类生成作业/发送任务测试用例暂无
 public class AgentListActionTest extends WebBaseTestCase {
 
@@ -100,7 +100,7 @@ public class AgentListActionTest extends WebBaseTestCase {
 			long agentId = DB_AGENT_ID;
 			switch (i) {
 				case 1:
-					break;
+					break; //FIXME 为什么直接break了
 				case 2:
 					agentType = AgentType.DBWenJian.getCode();
 					agentId = DF_AGENT_ID;
@@ -447,13 +447,14 @@ public class AgentListActionTest extends WebBaseTestCase {
 		assertThat("根据测试数据，查询到的数据源信息应该有" + rightData.size() + "条", rightData.size(), is(1));
 
 		//2、使用错误的userId,http请求访问被测试方法,得到响应，判断结果是否正确
+		//FIXME 讨论：先清空表，还是判断这个数据存在再换一个（循环N次后抛异常）
 		long wrongUserId = 1000L;
 		String wrongString = new HttpClient()
 				.addData("userId", wrongUserId)
 				.post(getActionUrl("getAgentInfoList")).getBodyString();
 		ActionResult wrongResult = JsonUtil.toObject(wrongString, ActionResult.class);
 		assertThat(wrongResult.isSuccess(), is(true));
-		List<Object> wrongData = (List<Object>) wrongResult.getData();
+		List<Object> wrongData = (List<Object>) wrongResult.getData(); //FIXME 讨论： 改成 ActionResult<T> ~ T getData()？
 		assertThat("根据测试数据，查询到的数据源信息应该有" + wrongData.size() + "条", wrongData.size(), is(0));
 	}
 
@@ -505,7 +506,6 @@ public class AgentListActionTest extends WebBaseTestCase {
 				.addData("agentType", AgentType.DuiXiang.getCode())
 				.addData("userId", TEST_USER_ID)
 				.post(getActionUrl("getAgentInfo")).getBodyString();
-
 
 		//2、得到响应，判断结果是否正确
 		ActionResult dbAgent = JsonUtil.toObject(dbAgentResp, ActionResult.class);
@@ -559,6 +559,7 @@ public class AgentListActionTest extends WebBaseTestCase {
 				.post(getActionUrl("getTaskInfo")).getBodyString();
 		ActionResult ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(false));
+		//FIXME 应该是判断 getData 是否为空，而不是判断方法抛出的异常文字。这种文字经常会变，比如做国际化了怎么办
 		assertThat(ar.getMessage(), is("未找到Agent"));
 
 		//2、http请求访问被测试方法，agentId传入DB_AGENT_ID，判断结果是否正确
