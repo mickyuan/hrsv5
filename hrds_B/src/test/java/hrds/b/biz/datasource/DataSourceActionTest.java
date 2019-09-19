@@ -6,7 +6,6 @@ import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
-import fd.ng.web.util.Dbo;
 import hrds.commons.entity.Data_source;
 import hrds.commons.entity.Source_relation_dep;
 import hrds.testbase.WebBaseTestCase;
@@ -14,9 +13,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.OptionalLong;
 import java.util.Random;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -36,55 +32,47 @@ public class DataSourceActionTest extends WebBaseTestCase {
 	/**
 	 * 初始化测试用例数据
 	 * <p>
-	 * 1.构造data_source表数据
-	 * 2.构造source_relation_dep表数据
-	 * 3.初始化data_source表信息，批量插入
-	 * 4.初始化source_relation_dep表信息，批量插入
-	 * 5.模拟用户登录
+	 * 1.创建data_source表实体对象
+	 * 2.创建source_relation_dep表对象实体
+	 * 3.封装data_source表数据
+	 * 4.初始化data_source表信息，批量插入
+	 * 5.构造source_relation_dep表数据并封装数据
+	 * 6.初始化source_relation_dep表信息，批量插入
+	 * 7.提交事务
+	 * 8.模拟用户登录
 	 */
 	@Before
 	public void before() {
-		// 初始化测试用例数据
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			List<Object[]> params = new ArrayList<>();
-			List<Object[]> srdParams = new ArrayList<>();
+			// 1.创建data_source表实体对象
+			Data_source data_source = new Data_source();
+			// 2.创建source_relation_dep表对象实体
+			Source_relation_dep source_relation_dep = new Source_relation_dep();
 			for (long i = -30L; i < -30 + Init_Rows; i++) {
-				long source_id = i;
-				String datasource_remark = "init" + i;
-				String datasource_name = "init" + i;
-				String datasource_number = "d" + i;
-				String create_date = DateUtil.getSysDate();
-				String create_time = DateUtil.getSysTime();
-				// 1.构造data_source表数据
-				Object[] objects = new Object[]{source_id, datasource_remark, datasource_name,
-						datasource_number, create_date, create_time, UserId};
-				params.add(objects);
-				// 2.构造source_relation_dep表数据
+				// 3.封装data_source表数据
+				data_source.setDatasource_name("init" + i);
+				data_source.setSource_id(i * 10000000);
+				data_source.setCreate_user_id(UserId);
+				data_source.setCreate_date(DateUtil.getSysDate());
+				data_source.setCreate_time(DateUtil.getSysTime());
+				data_source.setDatasource_remark("init" + i);
+				data_source.setDatasource_number("d" + i);
+				// 4.初始化data_source表信息，批量插入
+				int num = data_source.add(db);
+				assertThat("测试数据初始化", num, is(1));
+				// 5.构造source_relation_dep表数据并封装数据
+				source_relation_dep.setSource_id(i * 10000000);
 				for (long j = 1; j <= 3; j++) {
-					long dep_id = j + Init_Rows + i;
-					Object[] srdObjects = {dep_id, source_id};
-					srdParams.add(srdObjects);
+					source_relation_dep.setDep_id(-j + i * 10000000);
+					// 6.初始化source_relation_dep表信息，批量插入
+					int srdNum = source_relation_dep.add(db);
+					assertThat("测试数据初始化", srdNum, is(1));
 				}
 			}
-			// 3.初始化data_source表信息，批量插入
-			int[] num = SqlOperator.executeBatch(db,
-					"insert into " + Data_source.TableName + "( source_id, datasource_remark, " +
-							"datasource_name,datasource_number,create_date, create_time, " +
-							"create_user_id) values(?, ?,?,?,?,?,?)",
-					params
-			);
-			assertThat("测试数据初始化", num.length, is(Init_Rows));
-
-			// 4.初始化source_relation_dep表信息，批量插入
-			int[] srdNum = SqlOperator.executeBatch(db,
-					"insert into " + Source_relation_dep.TableName + "  values(?, ?)",
-					srdParams
-			);
-			assertThat("测试数据初始化", srdNum.length, is(30));
-
+			// 7.提交事务
 			SqlOperator.commitTransaction(db);
 		}
-		// 5.模拟用户登录
+		// 8.模拟用户登录
 		//String responseValue = new HttpClient()
 		//		.buildSession()
 		//		.addData("username", UserId)
@@ -102,6 +90,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 	 * 2.判断data_source数据是否被删除
 	 * 3.测试完成后删除source_relation_dep表测试数据
 	 * 4.判断source_relation_dep数据是否被删除
+	 * 5.单独删除新增数据，因为新增数据主键是自动生成的，所以要通过其他方式删除
 	 */
 	@After
 	public void after() {
@@ -109,21 +98,21 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			for (long i = -30L; i < -30 + Init_Rows; i++) {
 				// 1.测试完成后删除data_source表测试数据
 				SqlOperator.execute(db, "delete from " + Data_source.TableName +
-						"  where source_id=?", i);
+						"  where source_id=?", i * 10000000);
 				// 2.判断data_source数据是否被删除
 				long num = SqlOperator.queryNumber(db,
 						"select count(1) from " + Data_source.TableName +
-								"  where source_id=?", i)
+								"  where source_id=?", i * 10000000)
 						.orElseThrow(() -> new RuntimeException("count fail!"));
 				assertThat("此条数据删除后，记录数应该为0", num, is(0L));
 
 				// 3.测试完成后删除source_relation_dep表测试数据
 				SqlOperator.execute(db, "delete from " + Source_relation_dep.TableName +
-						"  where source_id=?", i);
+						"  where source_id=?", i * 10000000);
 				// 4.判断source_relation_dep数据是否被删除
 				long srdNum = SqlOperator.queryNumber(db,
 						"select count(1) from " + Source_relation_dep.TableName + "  where " +
-								"source_id=?", i)
+								"source_id=?", i * 10000000)
 						.orElseThrow(() -> new RuntimeException("count fail!"));
 				assertThat("此条数据删除后，记录数应该为0", srdNum, is(0L));
 				// 5.单独删除新增数据，因为新增数据主键是自动生成的，所以要通过其他方式删除
@@ -147,10 +136,6 @@ public class DataSourceActionTest extends WebBaseTestCase {
 	/**
 	 * 新增/编辑数据源测试
 	 * <p>
-	 * 参数：source_id:数据源ID,datasource_remark:数据源备注,datasource_number:数据源编号,
-	 * datasource_name:数据源名称,depIds:部门ID
-	 * 取值范围：除source_id外不能为空以及空格,source_id不能为空格
-	 * <p>
 	 * 1.测试数据源新增功能,数据都不为空
 	 * 2.测试数据源编辑功能
 	 * 3.测试数据源新增，数据源编号datasource_number重复
@@ -163,6 +148,11 @@ public class DataSourceActionTest extends WebBaseTestCase {
 	 * 10.测试保存数据源，部门id不能为空格
 	 * 11.测试保存数据源，部门id长度不能超过10位（这里指的是分隔后每个部门id的长度）
 	 * 12.测试数据源编辑功能，source_id不合法（长度超过10）
+	 *
+	 * <p>
+	 * 参数：source_id:数据源ID,datasource_remark:数据源备注,datasource_number:数据源编号,
+	 * datasource_name:数据源名称,depIds:部门ID
+	 * 取值范围：除source_id外不能为空以及空格,source_id不能为空格
 	 */
 	@Test
 	public void saveDataSource() {

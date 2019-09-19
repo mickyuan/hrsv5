@@ -8,15 +8,11 @@ import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import hrds.commons.codes.AgentStatus;
 import hrds.commons.codes.AgentType;
-import hrds.commons.codes.UserType;
 import hrds.commons.entity.Agent_info;
 import hrds.testbase.WebBaseTestCase;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -31,52 +27,44 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 	private static final int Init_Rows = 10; // 向表中初始化的数据条数。
 	// 初始化登录用户ID
 	private static final long UserId = 5555;
+
 	@Before
 	public void before() {
 		// 初始化测试用例数据
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			List<Object[]> aiParams = new ArrayList<>();
+			// 创建agent_info表对应实体对象
+			Agent_info agent_info = new Agent_info();
 			// 初始化data_source表信息
 			for (Long i = 0L; i < Init_Rows; i++) {
-				Long agent_id = i - 30;
-				Long source_id = i - 30;
-				String create_date = DateUtil.getSysDate();
-				String create_time = DateUtil.getSysTime();
-
-				String agent_name = "数据库agent";
-				String agent_type = null;
+				// 封装agent_info实体数据
+				agent_info.setAgent_id(i - 30 * 10000000);
+				agent_info.setAgent_name("数据库agent");
+				agent_info.setSource_id(i - 30 * 10000000);
+				agent_info.setCreate_date(DateUtil.getSysDate());
+				agent_info.setCreate_time(DateUtil.getSysTime());
 				if (i < 2) {
-					agent_type = AgentType.ShuJuKu.getCode();
+					agent_info.setAgent_type(AgentType.ShuJuKu.getCode());
 				} else if (i >= 2 && i < 4) {
-					agent_type = AgentType.DBWenJian.getCode();
+					agent_info.setAgent_type(AgentType.DBWenJian.getCode());
 				} else if (i >= 4 && i < 6) {
-					agent_type = AgentType.WenJianXiTong.getCode();
+					agent_info.setAgent_type(AgentType.WenJianXiTong.getCode());
 				} else if (i >= 6 && i < 8) {
-					agent_type = AgentType.FTP.getCode();
+					agent_info.setAgent_type(AgentType.FTP.getCode());
 				} else {
-					agent_type = AgentType.DuiXiang.getCode();
+					agent_info.setAgent_type(AgentType.DuiXiang.getCode());
 				}
-				String agent_ip = "10.71.4.51";
-				String agent_port = "34567";
-				String agent_status = null;
+				agent_info.setAgent_ip("10.71.4.51");
+				agent_info.setAgent_port("34567");
 				if (i < 3) {
-					agent_status = AgentStatus.YiLianJie.getCode();
+					agent_info.setAgent_status(AgentStatus.YiLianJie.getCode());
 				} else if (i >= 3 && i < 7) {
-					agent_status = AgentStatus.WeiLianJie.getCode();
+					agent_info.setAgent_status(AgentStatus.WeiLianJie.getCode());
 				} else {
-					agent_status = AgentStatus.ZhengZaiYunXing.getCode();
+					agent_info.setAgent_status(AgentStatus.ZhengZaiYunXing.getCode());
 				}
-				// agent_info表信息
-				Object[] aiObjects = {agent_id, agent_name, agent_type, agent_ip, agent_port, agent_status, create_date
-						, create_time, source_id, UserId};
-				aiParams.add(aiObjects);
+				int num = agent_info.add(db);
+				assertThat("测试数据初始化", num, is(1));
 			}
-			// 初始化agent_info表信息
-			int[] aiNum = SqlOperator.executeBatch(db,
-					"insert into " + Agent_info.TableName + "  values(?, ?,?, ?,?, ?,?, ?,?, ?)",
-					aiParams
-			);
-			assertThat("测试数据初始化", aiNum.length, is(Init_Rows));
 
 			SqlOperator.commitTransaction(db);
 		}
@@ -97,7 +85,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 			for (Long i = 0L; i < Init_Rows; i++) {
 				// 测试完成后删除agent_info表测试数据
 				SqlOperator.execute(db, "delete from " + Agent_info.TableName + "  where " +
-						"agent_id=?", i - 30);
+						"agent_id=?", i - 30 * 10000000);
 				SqlOperator.commitTransaction(db);
 				Long aiNum = SqlOperator.queryNumber(db, "select count(1) from " + Agent_info.TableName + " where agent_id=?", i)
 						.orElseThrow(() -> new RuntimeException("count fail!"));
