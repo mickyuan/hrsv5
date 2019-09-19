@@ -32,7 +32,7 @@ import java.util.OptionalLong;
  **/
 public class AgentListAction extends BaseAction {
 
-	//FIXME 是不是应该从系统参数中取？
+	//FIXME 是不是应该从系统参数中取？改为从数据库中取
 	/**
 	 * 获取数据源Agent列表信息
 	 *

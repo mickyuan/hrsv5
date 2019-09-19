@@ -71,8 +71,8 @@ public class AgentListActionTest extends WebBaseTestCase {
 	 *      4、object_collect表：有2条数据,oc_id为2001,2002, agent_id为7004
 	 *      5、ftp_collect表：有2条数据,ftp_id为3001,3002, agent_id为7003
 	 *      6、file_collect_set表：有2条数据,fcs_id为4001,4002, agent_id为7005
-	 *      7、table_info表：有一条数据，table_id为100201L，database_id为1002
-	 *      8、table_column表：有10条数据，column_id为100200-100209，table_id为100201L
+	 *      7、table_info表：有一条数据，table_id为100201，database_id为1002
+	 *      8、table_column表：有10条数据，column_id为100200-100209，table_id为100201
 	 *      9、file_source表：有2条数据，file_source_id为400100,400101，fcs_id为4001
 	 *
 	 * @Param: 无
