@@ -71,7 +71,7 @@ public class LogReader {
 		} catch (JSchException ex) {
 			execCommandByJSch = ex.getMessage();
 			logger.debug("登录验证失败...");
-			ex.printStackTrace();
+			ex.printStackTrace();//FIXME 这是在干什么？
 		} catch (IOException ex) {
 			execCommandByJSch = ex.getMessage();
 			ex.printStackTrace();

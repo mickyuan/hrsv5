@@ -31,6 +31,7 @@ import java.util.OptionalLong;
  **/
 public class AgentListAction extends BaseAction {
 
+	//FIXME 是不是应该从系统参数中取？
 	private static final String SFTP_PORT = "22";
 
 	/**
@@ -143,7 +144,7 @@ public class AgentListAction extends BaseAction {
 					.append(" WHERE fs.Agent_id = ? and fs.is_sendok = ? ");
 		}
 		//非结构化Agent
-		else {
+		else { //FIXME 必须用明确的 == 做判断。最后的 else 应该抛异常。因为你无法知道数据库中的数据是不是合法！
 			sqlSB.append(" SELECT fs.fcs_id id,fs.fcs_name task_name,fs.AGENT_ID AGENT_ID,gi.source_id ")
 					.append(" FROM file_collect_set fs ")
 					.append(" LEFT JOIN agent_info gi ON gi.Agent_id = fs.Agent_id ")
@@ -232,13 +233,13 @@ public class AgentListAction extends BaseAction {
 				// 对firefox浏览器做特殊处理
 				response.setHeader("content-disposition", "attachment;filename=" +
 						new String(taskLog.get("filePath").getBytes(DataBaseCode.UTF_8.getValue()),
-								DataBaseCode.ISO_8859_1.getValue()));
+								DataBaseCode.ISO_8859_1.getValue())); //FIXME 为什么用 DataBaseCode？逻辑上不通
 			} else {
 				response.setHeader("content-disposition", "attachment;filename=" +
 						URLEncoder.encode(taskLog.get("filePath"), DataBaseCode.UTF_8.getValue()));
 			}
 			response.setContentType("APPLICATION/OCTET-STREAM");
-			OutputStream out = response.getOutputStream();
+			OutputStream out = response.getOutputStream(); //FIXME 异常了无法关闭流！！！！！！！！！
 			//6、使用response获得输出流，完成文件下载
 			out.write(bytes);
 			out.flush();
@@ -279,7 +280,7 @@ public class AgentListAction extends BaseAction {
 				" join agent_info ai on ai.source_id = ds.source_id " +
 				" join object_collect oc on ai.Agent_id = oc.Agent_id " +
 				" where ds.create_user_id = ? and oc.odc_id = ?", getUserId(), collectSetId);
-		if(optionalLong.getAsLong() != 1){
+		if(optionalLong.getAsLong() != 1){ //FIXME 用法不对！
 			throw new BusinessException("要删除的半结构化文件采集任务不存在");
 		}
 		//数据可访问权限处理方式
@@ -474,7 +475,7 @@ public class AgentListAction extends BaseAction {
 	 *          取值范围：不会为null
 	 *
 	 * */
-	public Result buildJob() {
+	public Result buildJob() {//FIXME 既然是查询数据，为什么用这种对不上号的的名字
 		//1、获取用户ID
 		//2、根据用户ID在工程登记表(etl_sys)中查询工程代码(etl_sys_cd)和工程名称(etl_sys_name)并返回
 		return Dbo.queryResult("select etl_sys_cd,etl_sys_name from etl_sys where user_id = ?"
@@ -496,7 +497,7 @@ public class AgentListAction extends BaseAction {
 	 *          取值范围：不会为null
 	 *
 	 * */
-	public Result selectProject(String taskId) {
+	public Result selectProject(String taskId) {//FIXME 权限检查呢
 		return Dbo.queryResult("select sub_sys_cd,sub_sys_desc from etl_sub_sys_list " +
 				"where etl_sys_cd = ? ", taskId);
 	}
@@ -781,7 +782,7 @@ public class AgentListAction extends BaseAction {
 	 * */
 	private Map<String, String> getTaskLog(long agentId, long userId, String logType, int readNum) {
 		//1、根据agent_id和user_id获取agent信息
-		Map<String, Object> result = Dbo.queryOneObject(
+		Map<String, Object> result = Dbo.queryOneObject(//FIXME 为什么不用实体？
 				"select * from agent_down_info where agent_id = ? and user_id = ?", agentId,
 				userId);
 		String agentIP = (String) result.get("agent_ip");
@@ -789,23 +790,23 @@ public class AgentListAction extends BaseAction {
 		String logDir = (String) result.get("log_dir");
 		String userName = (String) result.get("user_name");
 		String passWord = (String) result.get("passwd");
-		if (StringUtil.isNotBlank(logDir)) {
+		if (StringUtil.isNotBlank(logDir)) {//FIXME 写清楚使用isNotBlank的原因
 			throw new BusinessException("日志文件不存在" + logDir);
 		}
 
-		if (StringUtil.isNotBlank(agentIP)) {
+		if (StringUtil.isNotBlank(agentIP)) {//FIXME 写清楚使用isNotBlank的原因
 			throw new BusinessException("AgentIP错误" + agentIP);
 		}
 
 		//用户选择查看错误日志
-		if (logType.equals("Wrong")) {
+		if (logType.equals("Wrong")) {//FIXME 这里可以使用File.separator？如果认为只会在Posix的系统上，那么先检查WIN的分隔符并抛异常
 			logDir = logDir.substring(0, logDir.lastIndexOf(File.separator) + 1) + "error.log";
 		}
 
 		//3、调用方法获取日志,目前工具类不存在
 		String taskLog = LogReader.readAgentLog(logDir, agentIP, SFTP_PORT, userName,
 				passWord, readNum);
-		if (StringUtil.isBlank(taskLog)) {
+		if (StringUtil.isBlank(taskLog)) {//FIXME 详细说明，为什么要设置成这四个字
 			taskLog = "日志信息";
 		}
 		//4、将日志信息和日志文件的路径封装成map
