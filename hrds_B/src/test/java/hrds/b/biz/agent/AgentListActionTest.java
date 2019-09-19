@@ -26,7 +26,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
  * @create: 2019-09-05 17:41
  **/
 //TODO 日志文件下载的测试用例暂无
-//TODO 访问修饰符为private的方法测试用例暂无    -----------》 private 不需要测试用例
 //TODO 调用工具类生成作业/发送任务测试用例暂无
 public class AgentListActionTest extends WebBaseTestCase {
 
@@ -96,11 +95,13 @@ public class AgentListActionTest extends WebBaseTestCase {
 		//1-2、构建Agent信息表(agent_info)测试数据，包括5种类型的Agent
 		List<Agent_info> agents = new ArrayList<>();
 		for (int i = 1; i <= 5; i++) {
-			String agentType = AgentType.ShuJuKu.getCode();
-			long agentId = DB_AGENT_ID;
+			String agentType = null;
+			long agentId = 0L;
 			switch (i) {
 				case 1:
-					break; //FIXME 为什么直接break了
+					agentType = AgentType.ShuJuKu.getCode();
+					agentId = DB_AGENT_ID;
+					break; //FIXME 为什么直接break了，已修复
 				case 2:
 					agentType = AgentType.DBWenJian.getCode();
 					agentId = DF_AGENT_ID;
@@ -537,7 +538,7 @@ public class AgentListActionTest extends WebBaseTestCase {
 	/**
 	 * 测试根据sourceId和agentId获取某agent下所有任务的信息
 	 *
-	 * 1、http请求访问被测试方法，agentId传入一个errorAgentId，判断是否获取到异常信息
+	 * 1、http请求访问被测试方法，agentId传入一个errorAgentId，判断getData()拿到的是否是空字符串
 	 * 2、http请求访问被测试方法，agentId传入DB_AGENT_ID，判断结果是否正确
 	 * 3、http请求访问被测试方法，agentId传入DF_AGENT_ID，判断结果是否正确
 	 * 4、http请求访问被测试方法，agentId传入FTP_AGENT_ID，判断结果是否正确
@@ -550,7 +551,7 @@ public class AgentListActionTest extends WebBaseTestCase {
 	 * */
 	@Test
 	public void getTaskInfo() {
-		//1、http请求访问被测试方法，agentId传入一个errorAgentId，判断是否获取到异常信息
+		//1、http请求访问被测试方法，agentId传入一个errorAgentId，判断getData()拿到的是否是空字符串
 		long errorAgentId = 1000L;
 		String bodyString = new HttpClient()
 				.addData("sourceId", SOURCE_ID)
@@ -559,8 +560,8 @@ public class AgentListActionTest extends WebBaseTestCase {
 				.post(getActionUrl("getTaskInfo")).getBodyString();
 		ActionResult ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(false));
-		//FIXME 应该是判断 getData 是否为空，而不是判断方法抛出的异常文字。这种文字经常会变，比如做国际化了怎么办
-		assertThat(ar.getMessage(), is("未找到Agent"));
+		//FIXME 应该是判断 getData 是否为空，而不是判断方法抛出的异常文字。这种文字经常会变，比如做国际化了怎么办，已修复
+		assertThat(ar.getData(), is(""));
 
 		//2、http请求访问被测试方法，agentId传入DB_AGENT_ID，判断结果是否正确
 		String dbBodyString = new HttpClient()
@@ -629,8 +630,8 @@ public class AgentListActionTest extends WebBaseTestCase {
 	 * 1、删除前查询数据库，确认预期删除的数据存在
 	 * 2、http请求逻辑处理方法，删除数据,得到响应，判断删除是否成功
 	 *      2-1、构造正确的collectSetId和userId，断言删除是否成功
-	 *      2-2、构造正确的collectSetId和错误的userId，断言异常信息是否抛出
-	 *      2-3、构造错误的collectSetId和正确的userId，断言异常信息是否抛出
+	 *      2-2、构造正确的collectSetId和错误的userId，断言响应是否失败，获取到的数据是否是空字符串
+	 *      2-3、构造错误的collectSetId和正确的userId，断言响应是否失败，获取到的数据是否是空字符串
 	 * 3、删除后，确认数据是否被真正删除
 	 *
 	 * @Param: 无
@@ -653,7 +654,7 @@ public class AgentListActionTest extends WebBaseTestCase {
 			ActionResult rightResult = JsonUtil.toObject(rightString, ActionResult.class);
 			assertThat(rightResult.isSuccess(), is(true));
 
-			//2-2、构造正确的collectSetId和错误的userId，断言异常信息是否抛出
+			//2-2、构造正确的collectSetId和错误的userId，断言响应是否失败，获取到的数据是否是空字符串
 			long wrongUserId = 1000L;
 			String wrongUserIdString = new HttpClient()
 					.addData("collectSetId", 2001L)
@@ -661,9 +662,9 @@ public class AgentListActionTest extends WebBaseTestCase {
 					.post(getActionUrl("deleteHalfStructTask")).getBodyString();
 			ActionResult wrongUserIdResult = JsonUtil.toObject(wrongUserIdString, ActionResult.class);
 			assertThat(wrongUserIdResult.isSuccess(), is(false));
-			assertThat(wrongUserIdResult.getMessage(), is("要删除的半结构化文件采集任务不存在"));
+			assertThat(wrongUserIdResult.getData(), is(""));
 
-			//2-3、构造错误的collectSetId和正确的userId，断言异常信息是否抛出
+			//2-3、构造错误的collectSetId和正确的userId，断言响应是否失败，获取到的数据是否是空字符串
 			long wrongCollectSetId = 2003L;
 			String wrongCollectSetIdString = new HttpClient()
 					.addData("collectSetId", wrongCollectSetId)
@@ -671,7 +672,7 @@ public class AgentListActionTest extends WebBaseTestCase {
 					.post(getActionUrl("deleteHalfStructTask")).getBodyString();
 			ActionResult wrongCollectSetIdResult = JsonUtil.toObject(wrongCollectSetIdString, ActionResult.class);
 			assertThat(wrongCollectSetIdResult.isSuccess(), is(false));
-			assertThat(wrongCollectSetIdResult.getMessage(), is("要删除的半结构化文件采集任务不存在"));
+			assertThat(wrongCollectSetIdResult.getData(), is(""));
 
 			//3、删除后，确认数据是否被真正删除
 			OptionalLong after = SqlOperator.queryNumber(db, "select count(1) from object_collect where odc_id = ?", 2001L);
@@ -709,7 +710,7 @@ public class AgentListActionTest extends WebBaseTestCase {
 			ActionResult ar = JsonUtil.toObject(bodyString, ActionResult.class);
 			assertThat(ar.isSuccess(), is(true));
 
-			//2-2、构造正确的collectSetId和错误的userId，断言异常信息是否抛出
+			//2-2、构造正确的collectSetId和错误的userId，断言响应是否失败，获取到的数据是否是空字符串
 			long wrongUserId = 1000L;
 			String wrongUserIdString = new HttpClient()
 					.addData("collectSetId", 3001L)
@@ -717,9 +718,9 @@ public class AgentListActionTest extends WebBaseTestCase {
 					.post(getActionUrl("deleteFTPTask")).getBodyString();
 			ActionResult wrongUserIdResult = JsonUtil.toObject(wrongUserIdString, ActionResult.class);
 			assertThat(wrongUserIdResult.isSuccess(), is(false));
-			assertThat(wrongUserIdResult.getMessage(), is("要删除的FTP采集任务不存在"));
+			assertThat(wrongUserIdResult.getData(), is(""));
 
-			//2-3、构造错误的collectSetId和正确的userId，断言异常信息是否抛出
+			//2-3、构造错误的collectSetId和正确的userId，断言响应是否失败，获取到的数据是否是空字符串
 			long wrongCollectSetId = 2003L;
 			String wrongCollectSetIdString = new HttpClient()
 					.addData("collectSetId", wrongCollectSetId)
@@ -727,7 +728,7 @@ public class AgentListActionTest extends WebBaseTestCase {
 					.post(getActionUrl("deleteFTPTask")).getBodyString();
 			ActionResult wrongCollectSetIdResult = JsonUtil.toObject(wrongCollectSetIdString, ActionResult.class);
 			assertThat(wrongCollectSetIdResult.isSuccess(), is(false));
-			assertThat(wrongCollectSetIdResult.getMessage(), is("要删除的FTP采集任务不存在"));
+			assertThat(wrongCollectSetIdResult.getData(), is(""));
 
 			//3、删除后，确认数据是否被真正删除
 			OptionalLong after = SqlOperator.queryNumber(db, "select count(1) from ftp_collect where ftp_id = ?", 3001L);
@@ -741,8 +742,8 @@ public class AgentListActionTest extends WebBaseTestCase {
 	 * 1、删除前查询数据库，确认预期删除的数据存在
 	 * 2、http请求逻辑处理方法，删除数据,得到响应，判断删除是否成功
 	 *      2-1、构造正确的collectSetId和userId，断言删除是否成功
-	 *      2-2、构造正确的collectSetId和错误的userId，断言异常信息是否抛出
-	 *      2-3、构造错误的collectSetId和正确的userId，断言异常信息是否抛出
+	 *      2-2、构造正确的collectSetId和错误的userId，断言响应是否失败，获取到的数据是否是空字符串
+	 *      2-3、构造错误的collectSetId和正确的userId，断言响应是否失败，获取到的数据是否是空字符串
 	 * 3、删除后，确认数据是否被真正删除
 	 *
 	 * @Param: 无
@@ -770,7 +771,8 @@ public class AgentListActionTest extends WebBaseTestCase {
 					.post(getActionUrl("deleteDBTask")).getBodyString();
 			ActionResult ar = JsonUtil.toObject(rightString, ActionResult.class);
 			assertThat(ar.isSuccess(), is(true));
-			//2-2、构造正确的collectSetId和错误的userId，断言异常信息是否抛出
+
+			//2-2、构造正确的collectSetId和错误的userId，断言响应是否失败，获取到的数据是否是空字符串
 			long wrongUserId = 1000L;
 			String wrongUserIdString = new HttpClient()
 					.addData("collectSetId", 1002L)
@@ -778,9 +780,9 @@ public class AgentListActionTest extends WebBaseTestCase {
 					.post(getActionUrl("deleteDBTask")).getBodyString();
 			ActionResult wrongUserIdResult = JsonUtil.toObject(wrongUserIdString, ActionResult.class);
 			assertThat(wrongUserIdResult.isSuccess(), is(false));
-			assertThat(wrongUserIdResult.getMessage(), is("要删除的数据库直连采集任务不存在"));
+			assertThat(wrongUserIdResult.getData(), is(""));
 
-			//2-3、构造错误的collectSetId和正确的userId，断言异常信息是否抛出
+			//2-3、构造错误的collectSetId和正确的userId，断言响应是否失败，获取到的数据是否是空字符串
 			long wrongCollectSetId = 2003L;
 			String wrongCollectSetIdString = new HttpClient()
 					.addData("collectSetId", wrongCollectSetId)
@@ -788,7 +790,7 @@ public class AgentListActionTest extends WebBaseTestCase {
 					.post(getActionUrl("deleteDBTask")).getBodyString();
 			ActionResult wrongCollectSetIdResult = JsonUtil.toObject(wrongCollectSetIdString, ActionResult.class);
 			assertThat(wrongCollectSetIdResult.isSuccess(), is(false));
-			assertThat(wrongCollectSetIdResult.getMessage(), is("要删除的数据库直连采集任务不存在"));
+			assertThat(wrongCollectSetIdResult.getData(), is(""));
 
 			//3、删除后，确认数据是否被真正删除
 			OptionalLong firAfter = SqlOperator.queryNumber(db, "select count(1) from database_set where database_id = ?", 1002L);
@@ -808,8 +810,8 @@ public class AgentListActionTest extends WebBaseTestCase {
 	 * 1、删除前查询数据库，确认预期删除的数据存在
 	 * 2、http请求逻辑处理方法，删除数据,得到响应，判断删除是否成功
 	 *      2-1、构造正确的collectSetId和userId，断言删除是否成功
-	 *      2-2、构造正确的collectSetId和错误的userId，断言异常信息是否抛出
-	 *      2-3、构造错误的collectSetId和正确的userId，断言异常信息是否抛出
+	 *      2-2、构造正确的collectSetId和错误的userId，断言响应是否失败，获取到的数据是否是空字符串
+	 *      2-3、构造错误的collectSetId和正确的userId，断言响应是否失败，获取到的数据是否是空字符串
 	 * 3、删除后，确认数据是否被真正删除
 	 *
 	 * @Param: 无
@@ -832,7 +834,7 @@ public class AgentListActionTest extends WebBaseTestCase {
 			ActionResult ar = JsonUtil.toObject(rightString, ActionResult.class);
 			assertThat(ar.isSuccess(), is(true));
 
-			//2-2、构造正确的collectSetId和错误的userId，断言异常信息是否抛出
+			//2-2、构造正确的collectSetId和错误的userId，断言响应是否失败，获取到的数据是否是空字符串
 			long wrongUserId = 1000L;
 			String wrongUserIdString = new HttpClient()
 					.addData("collectSetId", 1001L)
@@ -840,9 +842,9 @@ public class AgentListActionTest extends WebBaseTestCase {
 					.post(getActionUrl("deleteDFTask")).getBodyString();
 			ActionResult wrongUserIdResult = JsonUtil.toObject(wrongUserIdString, ActionResult.class);
 			assertThat(wrongUserIdResult.isSuccess(), is(false));
-			assertThat(wrongUserIdResult.getMessage(), is("要删除的数据文件采集任务不存在"));
+			assertThat(wrongUserIdResult.getData(), is(""));
 
-			//2-3、构造错误的collectSetId和正确的userId，断言异常信息是否抛出
+			//2-3、构造错误的collectSetId和正确的userId，断言响应是否失败，获取到的数据是否是空字符串
 			long wrongCollectSetId = 2003L;
 			String wrongCollectSetIdString = new HttpClient()
 					.addData("collectSetId", wrongCollectSetId)
@@ -850,7 +852,7 @@ public class AgentListActionTest extends WebBaseTestCase {
 					.post(getActionUrl("deleteDFTask")).getBodyString();
 			ActionResult wrongCollectSetIdResult = JsonUtil.toObject(wrongCollectSetIdString, ActionResult.class);
 			assertThat(wrongCollectSetIdResult.isSuccess(), is(false));
-			assertThat(wrongCollectSetIdResult.getMessage(), is("要删除的数据文件采集任务不存在"));
+			assertThat(wrongCollectSetIdResult.getData(), is(""));
 
 			//3、删除后，确认数据是否被真正删除
 			OptionalLong firAfter = SqlOperator.queryNumber(db, "select count(1) from database_set where database_id = ?", 1001L);
@@ -864,8 +866,8 @@ public class AgentListActionTest extends WebBaseTestCase {
 	 * 1、删除前查询数据库，确认预期删除的数据存在
 	 * 2、http请求逻辑处理方法，删除数据,得到响应，判断删除是否成功
 	 *      2-1、构造正确的collectSetId和userId，断言删除是否成功
-	 *      2-2、构造正确的collectSetId和错误的userId，断言异常信息是否抛出
-	 *      2-3、构造错误的collectSetId和正确的userId，断言异常信息是否抛出
+	 *      2-2、构造正确的collectSetId和错误的userId，断言响应是否失败，获取到的数据是否是空字符串
+	 *      2-3、构造错误的collectSetId和正确的userId，断言响应是否失败，获取到的数据是否是空字符串
 	 * 3、删除后，确认数据是否被真正删除
 	 *
 	 * @Param: 无
@@ -891,7 +893,7 @@ public class AgentListActionTest extends WebBaseTestCase {
 			ActionResult ar = JsonUtil.toObject(rightString, ActionResult.class);
 			assertThat(ar.isSuccess(), is(true));
 
-			//2-2、构造正确的collectSetId和错误的userId，断言异常信息是否抛出
+			//2-2、构造正确的collectSetId和错误的userId，断言响应是否失败，获取到的数据是否是空字符串
 			long wrongUserId = 1000L;
 			String wrongUserIdString = new HttpClient()
 					.addData("collectSetId", 1001L)
@@ -899,9 +901,9 @@ public class AgentListActionTest extends WebBaseTestCase {
 					.post(getActionUrl("deleteNonStructTask")).getBodyString();
 			ActionResult wrongUserIdResult = JsonUtil.toObject(wrongUserIdString, ActionResult.class);
 			assertThat(wrongUserIdResult.isSuccess(), is(false));
-			assertThat(wrongUserIdResult.getMessage(), is("要删除的非结构化文件采集任务不存在"));
+			assertThat(wrongUserIdResult.getData(), is(""));
 
-			//2-3、构造错误的collectSetId和正确的userId，断言异常信息是否抛出
+			//2-3、构造错误的collectSetId和正确的userId，断言响应是否失败，获取到的数据是否是空字符串
 			long wrongCollectSetId = 2003L;
 			String wrongCollectSetIdString = new HttpClient()
 					.addData("collectSetId", wrongCollectSetId)
@@ -909,7 +911,7 @@ public class AgentListActionTest extends WebBaseTestCase {
 					.post(getActionUrl("deleteNonStructTask")).getBodyString();
 			ActionResult wrongCollectSetIdResult = JsonUtil.toObject(wrongCollectSetIdString, ActionResult.class);
 			assertThat(wrongCollectSetIdResult.isSuccess(), is(false));
-			assertThat(wrongCollectSetIdResult.getMessage(), is("要删除的非结构化文件采集任务不存在"));
+			assertThat(wrongCollectSetIdResult.getData(), is(""));
 
 			//3、删除后，确认数据是否被真正删除
 			OptionalLong firAfter = SqlOperator.queryNumber(db, "select count(1) from file_collect_set where fcs_id = ?", 4001L);

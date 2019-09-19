@@ -1,5 +1,6 @@
 package hrds.b.biz.agent;
 
+import fd.ng.core.utils.CodecUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.annotation.RequestParam;
@@ -9,10 +10,11 @@ import fd.ng.web.util.ResponseUtil;
 import hrds.b.biz.agent.tools.LogReader;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.AgentType;
-import hrds.commons.codes.DataBaseCode;
 import hrds.commons.codes.IsFlag;
+import hrds.commons.entity.Agent_down_info;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.utils.Constant;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -32,8 +34,6 @@ import java.util.OptionalLong;
 public class AgentListAction extends BaseAction {
 
 	//FIXME 是不是应该从系统参数中取？
-	private static final String SFTP_PORT = "22";
-
 	/**
 	 * 获取数据源Agent列表信息
 	 *
@@ -144,16 +144,18 @@ public class AgentListAction extends BaseAction {
 					.append(" WHERE fs.Agent_id = ? and fs.is_sendok = ? ");
 		}
 		//非结构化Agent
-		else { //FIXME 必须用明确的 == 做判断。最后的 else 应该抛异常。因为你无法知道数据库中的数据是不是合法！
+		else if(AgentType.WenJianXiTong == AgentType.ofEnumByCode(result.getString(0, "agent_type"))){
 			sqlSB.append(" SELECT fs.fcs_id id,fs.fcs_name task_name,fs.AGENT_ID AGENT_ID,gi.source_id ")
 					.append(" FROM file_collect_set fs ")
 					.append(" LEFT JOIN agent_info gi ON gi.Agent_id = fs.Agent_id ")
 					.append(" where fs.Agent_id=? and fs.is_sendok = ? ");
 		}
-		Result agentInfo = Dbo.queryResult(sqlSB.toString(), result.getLong(0, "agent_id"),
-				IsFlag.Shi.getCode());
+		else { //FIXME 必须用明确的 == 做判断。最后的 else 应该抛异常。因为你无法知道数据库中的数据是不是合法！已修复
+			throw new BusinessException("从数据库中取到的Agent类型不合法");
+		}
 		//5、返回结果
-		return agentInfo;
+		return Dbo.queryResult(sqlSB.toString(), result.getLong(0, "agent_id"),
+				IsFlag.Shi.getCode());
 	}
 
 	/**
@@ -213,6 +215,7 @@ public class AgentListAction extends BaseAction {
 	 * */
 	public void downloadTaskLog(long agentId, String logType,
 	                            @RequestParam(nullable = true, valueIfNull = "100") int readNum) {
+		OutputStream out = null;
 		try {
 			//1、对显示日志条数做处理，该方法在加载页面时被调用，readNum可以不传，则默认显示100条，
 			// 如果用户在页面上进行了选择并点击查看按钮，如果用户输入的条目多于1000，则给用户显示3000条
@@ -227,19 +230,21 @@ public class AgentListAction extends BaseAction {
 			HttpServletResponse response = ResponseUtil.getResponse();
 			HttpServletRequest request = RequestUtil.getRequest();
 
+			File downloadFile = new File(taskLog.get("filePath"));
+
 			//5、设置响应头信息
 			response.reset();
 			if (request.getHeader("User-Agent").toLowerCase().indexOf("firefox") > 0) {
 				// 对firefox浏览器做特殊处理
 				response.setHeader("content-disposition", "attachment;filename=" +
-						new String(taskLog.get("filePath").getBytes(DataBaseCode.UTF_8.getValue()),
-								DataBaseCode.ISO_8859_1.getValue())); //FIXME 为什么用 DataBaseCode？逻辑上不通
+						new String(downloadFile.getName().getBytes(), CodecUtil.GBK_STRING));
+				//FIXME 为什么用 DataBaseCode？逻辑上不通 已修复
 			} else {
 				response.setHeader("content-disposition", "attachment;filename=" +
-						URLEncoder.encode(taskLog.get("filePath"), DataBaseCode.UTF_8.getValue()));
+						URLEncoder.encode(downloadFile.getName(), CodecUtil.UTF8_STRING));
 			}
 			response.setContentType("APPLICATION/OCTET-STREAM");
-			OutputStream out = response.getOutputStream(); //FIXME 异常了无法关闭流！！！！！！！！！
+			out = response.getOutputStream(); //FIXME 异常了无法关闭流！！！！！！！！！ 已修复
 			//6、使用response获得输出流，完成文件下载
 			out.write(bytes);
 			out.flush();
@@ -247,6 +252,14 @@ public class AgentListAction extends BaseAction {
 			//在getTaskLog()方法中做了处理
 		} catch (IOException e) {
 			throw new AppSystemException(e);
+		} finally {
+			try {
+				if( out != null )
+					out.close();
+			}
+			catch(IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
@@ -280,7 +293,8 @@ public class AgentListAction extends BaseAction {
 				" join agent_info ai on ai.source_id = ds.source_id " +
 				" join object_collect oc on ai.Agent_id = oc.Agent_id " +
 				" where ds.create_user_id = ? and oc.odc_id = ?", getUserId(), collectSetId);
-		if(optionalLong.getAsLong() != 1){ //FIXME 用法不对！
+		long val = optionalLong.orElseThrow(() -> new BusinessException("查询得到的数据必须有且只有一条"));
+		if(val != 1){ //FIXME 用法不对！已尝试修复
 			throw new BusinessException("要删除的半结构化文件采集任务不存在");
 		}
 		//数据可访问权限处理方式
@@ -324,7 +338,8 @@ public class AgentListAction extends BaseAction {
 				" join agent_info ai on ai.source_id = ds.source_id " +
 				" join ftp_collect fc on ai.Agent_id = fc.Agent_id " +
 				" where ds.create_user_id = ? and fc.ftp_id = ?", getUserId(), collectSetId);
-		if(optionalLong.getAsLong() != 1){
+		long val = optionalLong.orElseThrow(() -> new BusinessException("查询得到的数据必须有且只有一条"));
+		if(val != 1){
 			throw new BusinessException("要删除的FTP采集任务不存在");
 		}
 		//数据可访问权限处理方式
@@ -358,7 +373,8 @@ public class AgentListAction extends BaseAction {
 				" join agent_info ai on ai.source_id = ds.source_id " +
 				" join database_set dbs on ai.Agent_id = dbs.Agent_id " +
 				" where ds.create_user_id = ? and dbs.database_id = ?", getUserId(), collectSetId);
-		if(optionalLong.getAsLong() != 1){
+		long val = optionalLong.orElseThrow(() -> new BusinessException("查询得到的数据必须有且只有一条"));
+		if(val != 1){
 			throw new BusinessException("要删除的数据库直连采集任务不存在");
 		}
 		//数据可访问权限处理方式
@@ -407,7 +423,8 @@ public class AgentListAction extends BaseAction {
 				" join agent_info ai on ai.source_id = ds.source_id " +
 				" join database_set dbs on ai.Agent_id = dbs.Agent_id " +
 				" where ds.create_user_id = ? and dbs.database_id = ?", getUserId(), collectSetId);
-		if(optionalLong.getAsLong() != 1){
+		long val = optionalLong.orElseThrow(() -> new BusinessException("查询得到的数据必须有且只有一条"));
+		if(val != 1){
 			throw new BusinessException("要删除的数据文件采集任务不存在");
 		}
 		//数据可访问权限处理方式
@@ -443,7 +460,8 @@ public class AgentListAction extends BaseAction {
 				" join agent_info ai on ai.source_id = ds.source_id " +
 				" join file_collect_set fcs on ai.Agent_id = fcs.Agent_id " +
 				" where ds.create_user_id = ? and fcs.fcs_id = ?", getUserId(), collectSetId);
-		if(optionalLong.getAsLong() != 1){
+		long val = optionalLong.orElseThrow(() -> new BusinessException("查询得到的数据必须有且只有一条"));
+		if(val != 1){
 			throw new BusinessException("要删除的非结构化文件采集任务不存在");
 		}
 		//数据可访问权限处理方式
@@ -466,8 +484,7 @@ public class AgentListAction extends BaseAction {
 	/**
 	 * 查询工程信息
 	 *
-	 * 1、获取用户ID
-	 * 2、根据用户ID在工程登记表(etl_sys)中查询工程代码(etl_sys_cd)和工程名称(etl_sys_name)并返回
+	 * 1、根据用户ID在工程登记表(etl_sys)中查询工程代码(etl_sys_cd)和工程名称(etl_sys_name)并返回
 	 *
 	 * @Param: 无
 	 * @return: fd.ng.db.resultset.Result
@@ -476,8 +493,7 @@ public class AgentListAction extends BaseAction {
 	 *
 	 * */
 	public Result buildJob() {//FIXME 既然是查询数据，为什么用这种对不上号的的名字
-		//1、获取用户ID
-		//2、根据用户ID在工程登记表(etl_sys)中查询工程代码(etl_sys_cd)和工程名称(etl_sys_name)并返回
+		//1、根据用户ID在工程登记表(etl_sys)中查询工程代码(etl_sys_cd)和工程名称(etl_sys_name)并返回
 		return Dbo.queryResult("select etl_sys_cd,etl_sys_name from etl_sys where user_id = ?"
 				, getUserId());
 		//数据可访问权限处理方式
@@ -729,6 +745,8 @@ public class AgentListAction extends BaseAction {
 				"JOIN object_collect fcs ON ai.agent_id = fcs.agent_id " +
 				"WHERE ds.source_id = ? AND fcs.is_sendok = ? AND ds.create_user_id = ?"
 				, sourceId, IsFlag.Shi.getCode(), getUserId());
+		//数据可访问权限处理方式
+		//以上SQL中，通过当前用户ID进行关联查询，达到了数据权限的限制
 	}
 
 	/**
@@ -752,6 +770,8 @@ public class AgentListAction extends BaseAction {
 				"JOIN ftp_collect fcs ON ai.agent_id = fcs.agent_id " +
 				"WHERE ds.source_id = ? AND fcs.is_sendok = ? AND ds.create_user_id = ? ",
 				sourceId, IsFlag.Shi.getCode(), getUserId());
+		//数据可访问权限处理方式
+		//以上SQL中，通过当前用户ID进行关联查询，达到了数据权限的限制
 	}
 
 	/**
@@ -782,21 +802,14 @@ public class AgentListAction extends BaseAction {
 	 * */
 	private Map<String, String> getTaskLog(long agentId, long userId, String logType, int readNum) {
 		//1、根据agent_id和user_id获取agent信息
-		Map<String, Object> result = Dbo.queryOneObject(//FIXME 为什么不用实体？
-				"select * from agent_down_info where agent_id = ? and user_id = ?", agentId,
-				userId);
-		String agentIP = (String) result.get("agent_ip");
+		Agent_down_info AgentDownInfo = Dbo.queryOneObject(//FIXME 为什么不用实体？已修复
+				Agent_down_info.class, "select * from agent_down_info where agent_id = ? and user_id = ?", agentId,
+				userId).orElseThrow(() -> new BusinessException("根据AgentID和userID未能找到Agent下载信息"));
 		//2、在agent信息中获取日志目录
-		String logDir = (String) result.get("log_dir");
-		String userName = (String) result.get("user_name");
-		String passWord = (String) result.get("passwd");
-		if (StringUtil.isNotBlank(logDir)) {//FIXME 写清楚使用isNotBlank的原因
-			throw new BusinessException("日志文件不存在" + logDir);
-		}
-
-		if (StringUtil.isNotBlank(agentIP)) {//FIXME 写清楚使用isNotBlank的原因
-			throw new BusinessException("AgentIP错误" + agentIP);
-		}
+		String agentIP = AgentDownInfo.getAgent_ip();
+		String logDir = AgentDownInfo.getLog_dir();
+		String userName = AgentDownInfo.getUser_name();
+		String passWord = AgentDownInfo.getPasswd();
 
 		//用户选择查看错误日志
 		if (logType.equals("Wrong")) {//FIXME 这里可以使用File.separator？如果认为只会在Posix的系统上，那么先检查WIN的分隔符并抛异常
@@ -804,9 +817,10 @@ public class AgentListAction extends BaseAction {
 		}
 
 		//3、调用方法获取日志,目前工具类不存在
-		String taskLog = LogReader.readAgentLog(logDir, agentIP, SFTP_PORT, userName,
+		String taskLog = LogReader.readAgentLog(logDir, agentIP, Constant.SFTP_PORT, userName,
 				passWord, readNum);
 		if (StringUtil.isBlank(taskLog)) {//FIXME 详细说明，为什么要设置成这四个字
+			//在以前的程序处理逻辑中，是使用I18国际化处理，目前I18还没有完成，先暂时设置为"日志信息"
 			taskLog = "日志信息";
 		}
 		//4、将日志信息和日志文件的路径封装成map
