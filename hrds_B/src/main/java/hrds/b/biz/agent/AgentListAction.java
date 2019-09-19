@@ -14,7 +14,6 @@ import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Agent_down_info;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
-import hrds.commons.utils.Constant;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -807,6 +806,7 @@ public class AgentListAction extends BaseAction {
 				userId).orElseThrow(() -> new BusinessException("根据AgentID和userID未能找到Agent下载信息"));
 		//2、在agent信息中获取日志目录
 		String agentIP = AgentDownInfo.getAgent_ip();
+		String agentPort = AgentDownInfo.getAgent_port();
 		String logDir = AgentDownInfo.getLog_dir();
 		String userName = AgentDownInfo.getUser_name();
 		String passWord = AgentDownInfo.getPasswd();
@@ -817,7 +817,7 @@ public class AgentListAction extends BaseAction {
 		}
 
 		//3、调用方法获取日志,目前工具类不存在
-		String taskLog = LogReader.readAgentLog(logDir, agentIP, Constant.SFTP_PORT, userName,
+		String taskLog = LogReader.readAgentLog(logDir, agentIP, agentPort, userName,
 				passWord, readNum);
 		if (StringUtil.isBlank(taskLog)) {//FIXME 详细说明，为什么要设置成这四个字
 			//在以前的程序处理逻辑中，是使用I18国际化处理，目前I18还没有完成，先暂时设置为"日志信息"
