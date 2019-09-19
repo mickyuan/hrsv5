@@ -274,10 +274,8 @@ public class AgentInfoAction extends BaseAction {
 	private boolean isPortOccupied(String agent_ip, int agent_port) {
 		// 1.数据可访问权限处理方式，这是一个私有方法，不会单独被调用，所以这里不需要做权限验证
 		// 2.通过http方式去测试端口连通情况，测通则被占用，不通则可以使用
-		HttpClient httpClient = new HttpClient();
 		String url = "http://".concat(agent_ip).concat(":").concat(agent_port + "");
-		HttpClient.ResponseValue post = httpClient.post(url);
-
+		HttpClient.ResponseValue post = new HttpClient().post(url);
 		if (post.getCode() != 200) {
 			// 未连通，端口可用
 			return false;
