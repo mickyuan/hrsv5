@@ -93,16 +93,13 @@ public class UnstructuredFileCollectAction extends BaseAction {
 	 * @param file_collect_set File_collect_set
 	 *                         含义：文件系统设置表对象
 	 *                         取值范围：不可为空
-	 * @param is_add           String
-	 *                         含义：是否新增非结构化采集
-	 *                         取值范围：不可为空
 	 * @return long
 	 * 含义：文件系统采集表主键、fcs_id
 	 * 取值范围：不会为空
 	 */
-	public long saveFileCollect(@RequestBean File_collect_set file_collect_set, String is_add) {
+	public long saveFileCollect(@RequestBean File_collect_set file_collect_set) {
 		//新增逻辑
-		if (IsFlag.Shi.getCode().equals(is_add)) {
+		if (file_collect_set.getFcs_id() == null) {
 			//1.根据fcs_name查询非结构化任务名称是否重复
 			OptionalLong optionalLong = Dbo.queryNumber("SELECT count(1) count FROM file_collect_set " +
 					"WHERE fcs_name = ?", file_collect_set.getFcs_name());

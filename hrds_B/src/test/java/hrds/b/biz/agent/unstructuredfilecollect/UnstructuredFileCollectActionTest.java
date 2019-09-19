@@ -160,7 +160,6 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 				.addData("system_type", "Windows10")
 				.addData("is_sendok", IsFlag.Fou.getCode())
 				.addData("is_solr", IsFlag.Shi.getCode())
-				.addData("is_add", IsFlag.Shi.getCode())
 				.post(getActionUrl("saveFileCollect")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		System.out.println(ar.isSuccess());
@@ -190,7 +189,6 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 				.addData("system_type", "Windows 10")
 				.addData("is_sendok", IsFlag.Fou.getCode())
 				.addData("is_solr", IsFlag.Shi.getCode())
-				.addData("is_add", IsFlag.Shi.getCode())
 				.post(getActionUrl("saveFileCollect")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(false));
@@ -216,7 +214,6 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 				.addData("system_type", "Windows 10")
 				.addData("is_sendok", IsFlag.Fou.getCode())
 				.addData("is_solr", IsFlag.Shi.getCode())
-				.addData("is_add", IsFlag.Fou.getCode())
 				.post(getActionUrl("saveFileCollect")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(true));
@@ -246,7 +243,6 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 				.addData("system_type", "Windows 10")
 				.addData("is_sendok", IsFlag.Fou.getCode())
 				.addData("is_solr", IsFlag.Shi.getCode())
-				.addData("is_add", IsFlag.Fou.getCode())
 				.post(getActionUrl("saveFileCollect")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(false));
