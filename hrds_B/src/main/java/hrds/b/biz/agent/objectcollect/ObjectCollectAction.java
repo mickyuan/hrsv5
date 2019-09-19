@@ -29,7 +29,8 @@ import java.util.OptionalLong;
 public class ObjectCollectAction extends BaseAction {
 
 	/**
-	 * description: 该方法在页面点击添加半结构化采集时调用，获取半结构化采集配置页面初始化的值，当为编辑时，则同时返回回显的值 <br>
+	 * description: 该方法在页面点击添加半结构化采集时调用，获取半结构化采集配置页面初始化的值，
+	 * 当为编辑时，则同时返回回显的值 <br>
 	 * date: 2019/9/16 15:18 <br>
 	 * author: zxz <br>
 	 * version: 5.0 <br>
@@ -68,8 +69,8 @@ public class ObjectCollectAction extends BaseAction {
 		if (object_collect.getOdc_id() != null) {
 			Optional<Object_collect> query_object_collect_info = Dbo.queryOneObject(Object_collect.class,
 					"SELECT * FROM object_collect WHERE odc_id = ?", object_collect.getOdc_id());
-			Object_collect object_collect_info = query_object_collect_info.orElseThrow(() -> new BusinessException("根据odc_id" +
-					object_collect.getOdc_id() + "查询不到object_collect表信息"));
+			Object_collect object_collect_info = query_object_collect_info.orElseThrow(() -> new BusinessException(
+					"根据odc_id" + object_collect.getOdc_id() + "查询不到object_collect表信息"));
 			data.put("object_collect_info", object_collect_info);
 			data.put("is_add", IsFlag.Fou.getCode());
 		} else {
@@ -114,8 +115,9 @@ public class ObjectCollectAction extends BaseAction {
 			}
 		} else {//编辑逻辑
 			//根据obj_collect_name查询半结构化任务名称是否与其他采集任务名称重复
-			OptionalLong optionalLong = Dbo.queryNumber("SELECT count(1) count FROM object_collect " +
-					"WHERE obj_collect_name = ? AND odc_id != ?", object_collect.getObj_collect_name(), object_collect.getOdc_id());
+			OptionalLong optionalLong = Dbo.queryNumber("SELECT count(1) count FROM object_collect" +
+					" WHERE obj_collect_name = ? AND odc_id != ?",
+					object_collect.getObj_collect_name(), object_collect.getOdc_id());
 			if (optionalLong.getAsLong() > 0) {
 				throw new BusinessException("半结构化采集任务名称重复");
 			} else {

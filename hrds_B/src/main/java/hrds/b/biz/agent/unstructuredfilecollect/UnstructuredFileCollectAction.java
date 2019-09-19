@@ -32,7 +32,8 @@ import java.util.OptionalLong;
 public class UnstructuredFileCollectAction extends BaseAction {
 
 	/**
-	 * description: 该方法在页面点击添加非结构化文件采集时调用，获取非结构化采集配置页面初始化的值，当为编辑时，则同时返回回显的值
+	 * description: 该方法在页面点击添加非结构化文件采集时调用，获取非结构化采集配置页面初始化的值,
+	 * 当为编辑时，则同时返回回显的值
 	 * date: 2019/9/11 16:29
 	 * author: zxz
 	 * version: 5.0
@@ -69,8 +70,8 @@ public class UnstructuredFileCollectAction extends BaseAction {
 		if (file_collect_set.getFcs_id() != null) {
 			Optional<File_collect_set> query_file_collect_set_info = Dbo.queryOneObject(File_collect_set.class,
 					"SELECT * FROM file_collect_set WHERE fcs_id = ?", file_collect_set.getFcs_id());
-			File_collect_set file_collect_set_info = query_file_collect_set_info.orElseThrow(() -> new BusinessException("根据fcs_id" +
-					file_collect_set.getFcs_id() + "查询不到file_collect_set表信息"));
+			File_collect_set file_collect_set_info = query_file_collect_set_info.orElseThrow(() -> new BusinessException(
+					"根据fcs_id" + file_collect_set.getFcs_id() + "查询不到file_collect_set表信息"));
 			data.put("file_collect_set_info", file_collect_set_info);
 			data.put("is_add", IsFlag.Fou.getCode());
 		} else {
@@ -115,8 +116,8 @@ public class UnstructuredFileCollectAction extends BaseAction {
 			}
 		} else {//编辑逻辑
 			//根据fcs_name查询非结构化任务名称是否与其他采集任务名称重复
-			OptionalLong optionalLong = Dbo.queryNumber("SELECT count(1) count FROM file_collect_set " +
-					"WHERE fcs_name = ? AND fcs_id != ?", file_collect_set.getFcs_name(), file_collect_set.getFcs_id());
+			OptionalLong optionalLong = Dbo.queryNumber("SELECT count(1) count FROM file_collect_set WHERE " +
+					"fcs_name = ? AND fcs_id != ?", file_collect_set.getFcs_name(), file_collect_set.getFcs_id());
 			if (optionalLong.getAsLong() > 0) {
 				throw new BusinessException("非结构化任务名称重复");
 			} else {
@@ -222,8 +223,8 @@ public class UnstructuredFileCollectAction extends BaseAction {
 		//4.更新文件系统设置表
 		Optional<File_collect_set> file_collect_setResult = Dbo.queryOneObject(File_collect_set.class,
 				"SELECT * FROM file_collect_set WHERE fcs_id = ? ", fcs_id);
-		File_collect_set file_collect_set = file_collect_setResult.orElseThrow(() -> new BusinessException("根据fcs_id" +
-				fcs_id + "查询不到file_collect_set表信息"));
+		File_collect_set file_collect_set = file_collect_setResult.orElseThrow(() ->
+				new BusinessException("根据fcs_id" + fcs_id + "查询不到file_collect_set表信息"));
 		file_collect_set.setIs_sendok(IsFlag.Shi.getCode());
 		if (file_collect_set.update(Dbo.db()) != 1)
 			throw new BusinessException("更新数据失败！data=" + file_collect_set);
