@@ -11,7 +11,7 @@ import hrds.b.biz.agent.tools.LogReader;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.AgentType;
 import hrds.commons.codes.IsFlag;
-import hrds.commons.entity.Agent_down_info;
+import hrds.commons.entity.*;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
 
@@ -23,7 +23,6 @@ import java.io.OutputStream;
 import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.OptionalLong;
 
 /**
  * @description: 数据库采集应用管理端数据源Agent列表后台服务类
@@ -32,7 +31,6 @@ import java.util.OptionalLong;
  **/
 public class AgentListAction extends BaseAction {
 
-	//FIXME 是不是应该从系统参数中取？改为从数据库中取
 	/**
 	 * 获取数据源Agent列表信息
 	 *
@@ -46,7 +44,7 @@ public class AgentListAction extends BaseAction {
 	 * */
 	public Result getAgentInfoList() {
 		//1、获取用户ID并根据用户ID去数据库中查询数据源信息
-		return Dbo.queryResult("select datas.source_id,datasource_name from data_source datas " +
+		return Dbo.queryResult("select datas.source_id,datasource_name from " + Data_source.TableName + " datas " +
 				"where datas.create_user_id = ?", getUserId());
 		//数据可访问权限处理方式
 		//以上SQL中，通过当前用户ID进行关联查询，达到了数据权限的限制
@@ -70,7 +68,7 @@ public class AgentListAction extends BaseAction {
 	 * */
 	public Result getAgentInfo(long sourceId, String agentType) {
 		//1、根据sourceId和agentType查询数据库获取相应信息
-		return Dbo.queryResult("SELECT * FROM agent_info WHERE source_id = ? AND agent_type = ? " +
+		return Dbo.queryResult("SELECT * FROM "+ Agent_info.TableName +" WHERE source_id = ? AND agent_type = ? " +
 						"AND user_id = ?", sourceId, agentType, getUserId());
 		//数据可访问权限处理方式
 		//以上SQL中，通过当前用户ID进行关联查询，达到了数据权限的限制
@@ -98,8 +96,8 @@ public class AgentListAction extends BaseAction {
 	//TODO 采集频率目前暂未拿到
 	public Result getTaskInfo(long sourceId, long agentId) {
 		//1、判断在当前用户，当前数据源下，agent是否存在
-		Result result = Dbo.queryResult("select ai.* from data_source ds " +
-				" left join agent_info ai on ds.SOURCE_ID = ai.SOURCE_ID " +
+		Result result = Dbo.queryResult("select ai.* from "+ Data_source.TableName +" ds " +
+				" left join "+ Agent_info.TableName +" ai on ds.SOURCE_ID = ai.SOURCE_ID " +
 				" where ds.source_id = ? AND ai.user_id = ? " +
 				" AND ai.agent_id = ?", sourceId, getUserId(), agentId);
 		//数据可访问权限处理方式
@@ -111,49 +109,49 @@ public class AgentListAction extends BaseAction {
 		}
 
 		//3、判断该agent是那种类型，并且根据类型，到对应的数据库表中查询采集任务管理详细信息
-		StringBuilder sqlSB = new StringBuilder();
+		String sqlStr = null;
 		//数据库直连采集Agent
 		if (AgentType.ShuJuKu == AgentType.ofEnumByCode(result.getString(0, "agent_type"))) {
-				sqlSB.append(" SELECT ds.DATABASE_ID ID,ds.task_name task_name,ds.AGENT_ID AGENT_ID, ")
-					.append(" gi.source_id source_id ")
-					.append(" FROM database_set ds ")
-					.append(" LEFT JOIN agent_info gi ON ds.Agent_id = gi.Agent_id ")
-					.append(" where ds.Agent_id=? and ds.is_sendok = ? ");
+			sqlStr = " SELECT ds.DATABASE_ID ID,ds.task_name task_name,ds.AGENT_ID AGENT_ID," +
+					" gi.source_id source_id" +
+					" FROM "+ Database_set.TableName +" ds " +
+					" LEFT JOIN "+ Agent_info.TableName +" gi ON ds.Agent_id = gi.Agent_id " +
+					" where ds.Agent_id=? and ds.is_sendok = ? ";
 		}
 		//数据文件Agent
 		else if (AgentType.DBWenJian == AgentType.ofEnumByCode(result.getString(0, "agent_type"))){
-			sqlSB.append(" SELECT ds.DATABASE_ID ID,ds.task_name task_name,ds.AGENT_ID AGENT_ID, ")
-					.append(" gi.source_id source_id")
-					.append(" FROM database_set ds ")
-					.append(" LEFT JOIN agent_info gi ON ds.Agent_id = gi.Agent_id ")
-					.append(" where ds.Agent_id=? and ds.is_sendok = ? ");
+			sqlStr = " SELECT ds.DATABASE_ID ID,ds.task_name task_name,ds.AGENT_ID AGENT_ID," +
+					" gi.source_id source_id" +
+					" FROM "+ Database_set.TableName +" ds " +
+					" LEFT JOIN "+ Agent_info.TableName +" gi ON ds.Agent_id = gi.Agent_id " +
+					" where ds.Agent_id=? and ds.is_sendok = ? ";
 		}
 		//半结构化采集Agent
 		else if (AgentType.DuiXiang == AgentType.ofEnumByCode(result.getString(0, "agent_type"))) {
-			sqlSB.append(" SELECT fs.odc_id id,fs.obj_collect_name task_name,fs.AGENT_ID AGENT_ID,gi.source_id ")
-					.append(" FROM object_collect fs ")
-					.append(" LEFT JOIN agent_info gi ON gi.Agent_id = fs.Agent_id ")
-					.append(" WHERE fs.Agent_id = ? AND fs.is_sendok = ? ");
+			sqlStr = " SELECT fs.odc_id id,fs.obj_collect_name task_name,fs.AGENT_ID AGENT_ID,gi.source_id" +
+					" FROM "+ Object_collect.TableName +" fs " +
+					" LEFT JOIN "+ Agent_info.TableName +" gi ON gi.Agent_id = fs.Agent_id " +
+					" WHERE fs.Agent_id = ? AND fs.is_sendok = ? ";
 		}
 		//FtpAgent
 		else if (AgentType.FTP == AgentType.ofEnumByCode(result.getString(0, "agent_type"))) {
-			sqlSB.append(" SELECT fs.ftp_id id,fs.ftp_name task_name,fs.AGENT_ID AGENT_ID,gi.source_id ")
-					.append(" FROM ftp_collect fs ")
-					.append(" LEFT JOIN agent_info gi ON gi.Agent_id = fs.Agent_id ")
-					.append(" WHERE fs.Agent_id = ? and fs.is_sendok = ? ");
+			sqlStr = " SELECT fs.ftp_id id,fs.ftp_name task_name,fs.AGENT_ID AGENT_ID,gi.source_id" +
+					" FROM "+ Ftp_collect.TableName +" fs " +
+					" LEFT JOIN "+ Agent_info.TableName +" gi ON gi.Agent_id = fs.Agent_id " +
+					" WHERE fs.Agent_id = ? and fs.is_sendok = ? ";
 		}
 		//非结构化Agent
 		else if(AgentType.WenJianXiTong == AgentType.ofEnumByCode(result.getString(0, "agent_type"))){
-			sqlSB.append(" SELECT fs.fcs_id id,fs.fcs_name task_name,fs.AGENT_ID AGENT_ID,gi.source_id ")
-					.append(" FROM file_collect_set fs ")
-					.append(" LEFT JOIN agent_info gi ON gi.Agent_id = fs.Agent_id ")
-					.append(" where fs.Agent_id=? and fs.is_sendok = ? ");
+			sqlStr = " SELECT fs.fcs_id id,fs.fcs_name task_name,fs.AGENT_ID AGENT_ID,gi.source_id" +
+					" FROM "+ File_collect_set.TableName +" fs " +
+					" LEFT JOIN "+ Agent_info.TableName +" gi ON gi.Agent_id = fs.Agent_id " +
+					" where fs.Agent_id=? and fs.is_sendok = ? ";
 		}
 		else { //FIXME 必须用明确的 == 做判断。最后的 else 应该抛异常。因为你无法知道数据库中的数据是不是合法！已修复
 			throw new BusinessException("从数据库中取到的Agent类型不合法");
 		}
 		//5、返回结果
-		return Dbo.queryResult(sqlSB.toString(), result.getLong(0, "agent_id"),
+		return Dbo.queryResult(sqlStr, result.getLong(0, "agent_id"),
 				IsFlag.Shi.getCode());
 	}
 
@@ -288,22 +286,22 @@ public class AgentListAction extends BaseAction {
 		*/
 
 		//1、根据collectSetId和user_id判断是否有这样一条数据
-		OptionalLong optionalLong = Dbo.queryNumber("select count(1) from data_source ds " +
-				" join agent_info ai on ai.source_id = ds.source_id " +
-				" join object_collect oc on ai.Agent_id = oc.Agent_id " +
-				" where ds.create_user_id = ? and oc.odc_id = ?", getUserId(), collectSetId);
-		long val = optionalLong.orElseThrow(() -> new BusinessException("查询得到的数据必须有且只有一条"));
-		if(val != 1){ //FIXME 用法不对！已尝试修复
+		long val = Dbo.queryNumber("select count(1) from " + Data_source.TableName + " ds " +
+				" join " + Agent_info.TableName + " ai on ai.source_id = ds.source_id " +
+				" join " + Object_collect.TableName + " oc on ai.Agent_id = oc.Agent_id " +
+				" where ds.create_user_id = ? and oc.odc_id = ?", getUserId(), collectSetId).orElseThrow(
+						() -> new BusinessException("查询得到的数据必须有且只有一条"));
+		if(val != 1){ //FIXME 用法不对！已修复
 			throw new BusinessException("要删除的半结构化文件采集任务不存在");
 		}
 		//数据可访问权限处理方式
 		//该方法首先使用user_id和collectSetId去数据库中查找要删除的数据是否存在
 
 		//2、在对象采集设置表(object_collect)中删除该条数据，有且只有一条
-		int firNum = Dbo.execute("delete from object_collect where odc_id = ?", collectSetId);
+		int firNum = Dbo.execute("delete from "+ Object_collect.TableName +" where odc_id = ?", collectSetId);
 		if (firNum != 1) {
-			if (firNum == 0) throw new BusinessException("object_collect表中没有数据被删除!");
-			else throw new BusinessException("object_collect表删除数据异常!");
+			if (firNum == 0) throw new BusinessException(Object_collect.TableName + "表中没有数据被删除!");
+			else throw new BusinessException(Object_collect.TableName + "表删除数据异常!");
 		}
 	}
 
@@ -333,11 +331,11 @@ public class AgentListAction extends BaseAction {
 		*/
 
 		//1、根据collectSetId和user_id判断是否有这样一条数据
-		OptionalLong optionalLong = Dbo.queryNumber("select count(1) from data_source ds " +
-				" join agent_info ai on ai.source_id = ds.source_id " +
-				" join ftp_collect fc on ai.Agent_id = fc.Agent_id " +
-				" where ds.create_user_id = ? and fc.ftp_id = ?", getUserId(), collectSetId);
-		long val = optionalLong.orElseThrow(() -> new BusinessException("查询得到的数据必须有且只有一条"));
+		long val = Dbo.queryNumber("select count(1) from " + Data_source.TableName + " ds " +
+				" join " + Agent_info.TableName + " ai on ai.source_id = ds.source_id " +
+				" join " + Ftp_collect.TableName + " fc on ai.Agent_id = fc.Agent_id " +
+				" where ds.create_user_id = ? and fc.ftp_id = ?", getUserId(), collectSetId).orElseThrow(
+						() -> new BusinessException("查询得到的数据必须有且只有一条"));
 		if(val != 1){
 			throw new BusinessException("要删除的FTP采集任务不存在");
 		}
@@ -345,10 +343,10 @@ public class AgentListAction extends BaseAction {
 		//该方法首先使用user_id和collectSetId去数据库中查找要删除的数据是否存在
 
 		//2、在FTP采集设置表(ftp_collect)中删除该条数据，有且只有一条
-		int firNum = Dbo.execute("delete from ftp_collect where ftp_id = ?", collectSetId);
+		int firNum = Dbo.execute("delete from "+ Ftp_collect.TableName +" where ftp_id = ?", collectSetId);
 		if (firNum != 1) {
-			if (firNum == 0) throw new BusinessException("ftp_collect表中没有数据被删除!");
-			else throw new BusinessException("ftp_collect表删除数据异常!");
+			if (firNum == 0) throw new BusinessException(Ftp_collect.TableName + "表中没有数据被删除!");
+			else throw new BusinessException(Ftp_collect.TableName + "表删除数据异常!");
 		}
 	}
 
@@ -368,11 +366,10 @@ public class AgentListAction extends BaseAction {
 	 * */
 	public void deleteDBTask(long collectSetId){
 		//1、根据collectSetId和user_id判断是否有这样一条数据
-		OptionalLong optionalLong = Dbo.queryNumber("select count(1) from data_source ds " +
-				" join agent_info ai on ai.source_id = ds.source_id " +
-				" join database_set dbs on ai.Agent_id = dbs.Agent_id " +
-				" where ds.create_user_id = ? and dbs.database_id = ?", getUserId(), collectSetId);
-		long val = optionalLong.orElseThrow(() -> new BusinessException("查询得到的数据必须有且只有一条"));
+		long val = Dbo.queryNumber("select count(1) from " + Data_source.TableName + " ds " +
+				" join " + Agent_info.TableName + " ai on ai.source_id = ds.source_id " +
+				" join " + Database_set.TableName + " dbs on ai.Agent_id = dbs.Agent_id " +
+				" where ds.create_user_id = ? and dbs.database_id = ?", getUserId(), collectSetId).orElseThrow(() -> new BusinessException("查询得到的数据必须有且只有一条"));
 		if(val != 1){
 			throw new BusinessException("要删除的数据库直连采集任务不存在");
 		}
@@ -383,21 +380,21 @@ public class AgentListAction extends BaseAction {
 		int firNum = Dbo.execute("delete from database_set where database_id =?"
 				, collectSetId);
 		if (firNum != 1) {
-			if (firNum == 0) throw new BusinessException("database_set表中没有数据被删除!");
-			else throw new BusinessException("database_set表删除数据异常!");
+			if (firNum == 0) throw new BusinessException(Database_set.TableName + "表中没有数据被删除!");
+			else throw new BusinessException(Database_set.TableName + "表删除数据异常!");
 		}
 		//3、在表对应字段表中找到对应的记录并删除，可能会有多条
-		int secNum = Dbo.execute("delete from table_column where EXISTS" +
-				"(select 1 from table_info ti where database_id = ? " +
-				"and table_column.table_id=ti.table_id)", collectSetId);
+		int secNum = Dbo.execute("delete from "+ Table_column.TableName +" tc where EXISTS" +
+				"(select 1 from "+ Table_info.TableName +" ti where database_id = ? " +
+				"and tc.table_id = ti.table_id)", collectSetId);
 		if (secNum == 0) {
-			throw new BusinessException("table_column表中没有数据被删除!");
+			throw new BusinessException(Table_column.TableName + "表中没有数据被删除!");
 		}
 		//4、在数据库对应表删除对应的记录,可能会有多条
-		int thiExecute = Dbo.execute("delete from table_info where database_id = ?",
+		int thiExecute = Dbo.execute("delete from "+ Table_info.TableName +" where database_id = ?",
 				collectSetId);
 		if (thiExecute == 0) {
-			throw new BusinessException("table_info表中没有数据被删除!");
+			throw new BusinessException(Table_info.TableName +"表中没有数据被删除!");
 		}
 	}
 
@@ -418,22 +415,21 @@ public class AgentListAction extends BaseAction {
 	 * */
 	public void deleteDFTask(long collectSetId){
 		//1、根据collectSetId和user_id判断是否有这样一条数据
-		OptionalLong optionalLong = Dbo.queryNumber("select count(1) from data_source ds " +
-				" join agent_info ai on ai.source_id = ds.source_id " +
-				" join database_set dbs on ai.Agent_id = dbs.Agent_id " +
-				" where ds.create_user_id = ? and dbs.database_id = ?", getUserId(), collectSetId);
-		long val = optionalLong.orElseThrow(() -> new BusinessException("查询得到的数据必须有且只有一条"));
+		long val = Dbo.queryNumber("select count(1) from " + Data_source.TableName + " ds " +
+				" join " + Agent_info.TableName + " ai on ai.source_id = ds.source_id " +
+				" join " + Database_set.TableName + " dbs on ai.Agent_id = dbs.Agent_id " +
+				" where ds.create_user_id = ? and dbs.database_id = ?", getUserId(), collectSetId).orElseThrow(() -> new BusinessException("查询得到的数据必须有且只有一条"));
 		if(val != 1){
 			throw new BusinessException("要删除的数据文件采集任务不存在");
 		}
 		//数据可访问权限处理方式
 		//该方法首先使用user_id和collectSetId去数据库中查找要删除的数据是否存在
 		//2、在数据库设置表删除对应的记录，有且只有一条
-		int firNum = Dbo.execute("delete from database_set where database_id =?"
+		int firNum = Dbo.execute("delete from "+ Database_set.TableName +" where database_id =?"
 				, collectSetId);
 		if (firNum != 1) {
-			if (firNum == 0) throw new BusinessException("database_set表中没有数据被删除!");
-			else throw new BusinessException("database_set表删除数据异常!");
+			if (firNum == 0) throw new BusinessException(Database_set.TableName + "表中没有数据被删除!");
+			else throw new BusinessException(Database_set.TableName + "表删除数据异常!");
 		}
 	}
 
@@ -455,11 +451,10 @@ public class AgentListAction extends BaseAction {
 	 * */
 	public void deleteNonStructTask(long collectSetId){
 		//1、根据collectSetId和user_id判断是否有这样一条数据
-		OptionalLong optionalLong = Dbo.queryNumber("select count(1) from data_source ds " +
-				" join agent_info ai on ai.source_id = ds.source_id " +
-				" join file_collect_set fcs on ai.Agent_id = fcs.Agent_id " +
-				" where ds.create_user_id = ? and fcs.fcs_id = ?", getUserId(), collectSetId);
-		long val = optionalLong.orElseThrow(() -> new BusinessException("查询得到的数据必须有且只有一条"));
+		long val = Dbo.queryNumber("select count(1) from " + Data_source.TableName + " ds " +
+				" join " + Agent_info.TableName + " ai on ai.source_id = ds.source_id " +
+				" join " + File_collect_set.TableName + " fcs on ai.Agent_id = fcs.Agent_id " +
+				" where ds.create_user_id = ? and fcs.fcs_id = ?", getUserId(), collectSetId).orElseThrow(() -> new BusinessException("查询得到的数据必须有且只有一条"));
 		if(val != 1){
 			throw new BusinessException("要删除的非结构化文件采集任务不存在");
 		}
@@ -467,16 +462,16 @@ public class AgentListAction extends BaseAction {
 		//该方法首先使用user_id和collectSetId去数据库中查找要删除的数据是否存在
 
 		//2、在文件系统设置表删除对应的记录，有且只有一条数据
-		int firNum = Dbo.execute("delete  from file_collect_set where fcs_id =?"
+		int firNum = Dbo.execute("delete  from "+ File_collect_set.TableName +" where fcs_id =?"
 				, collectSetId);
 		if (firNum != 1) {
-			if (firNum == 0) throw new BusinessException("file_collect_set表中没有数据被删除!");
-			else throw new BusinessException("file_collect_set表删除数据异常!");
+			if (firNum == 0) throw new BusinessException(File_collect_set.TableName + "表中没有数据被删除!");
+			else throw new BusinessException(File_collect_set.TableName + "表删除数据异常!");
 		}
 		//3、在文件源设置表删除对应的记录，可以有多条
-		int secNum = Dbo.execute("delete  from file_source where fcs_id =?", collectSetId);
+		int secNum = Dbo.execute("delete  from "+ File_source.TableName +" where fcs_id =?", collectSetId);
 		if (secNum == 0) {
-			throw new BusinessException("file_source表中没有数据被删除!");
+			throw new BusinessException(File_source.TableName + "表中没有数据被删除!");
 		}
 	}
 
@@ -493,7 +488,7 @@ public class AgentListAction extends BaseAction {
 	 * */
 	public Result getProjectInfo() {//FIXME 既然是查询数据，为什么用这种对不上号的的名字，已修复
 		//1、根据用户ID在工程登记表(etl_sys)中查询工程代码(etl_sys_cd)和工程名称(etl_sys_name)并返回
-		return Dbo.queryResult("select etl_sys_cd,etl_sys_name from etl_sys where user_id = ?"
+		return Dbo.queryResult("select etl_sys_cd,etl_sys_name from "+ Etl_sys.TableName +" where user_id = ?"
 				, getUserId());
 		//数据可访问权限处理方式
 		//该方法首先使用user_id去数据库中查询相应的数据
@@ -513,16 +508,17 @@ public class AgentListAction extends BaseAction {
 	 *
 	 * */
 	public Result getTaskInfoByTaskId(String taskId) {//FIXME 权限检查呢，已修复
-		return Dbo.queryResult(" select ess.sub_sys_cd,ess.sub_sys_desc from etl_sub_sys_list ess" +
-				"join etl_sys es on es.etl_sys_cd = ess.etl_sys_cd" +
+		return Dbo.queryResult(" select ess.sub_sys_cd,ess.sub_sys_desc from "+ Etl_sub_sys_list.TableName +" ess" +
+				"join "+ Etl_sys.TableName +" es on es.etl_sys_cd = ess.etl_sys_cd" +
 				"where es.user_id = ? and ess.etl_sys_cd = ? ", getUserId(), taskId);
+		//数据可访问权限处理方式
+		//该方法首先使用user_id去数据库中查询相应的数据
 	}
 
 
 	/**
 	 * 保存FTP采集工程信息
 	 *
-	 * 1、
 	 *
 	 * @Param: ftpId String
 	 *         含义 : ftp_collect表主键
@@ -538,7 +534,7 @@ public class AgentListAction extends BaseAction {
 	 *          取值范围：不会为null
 	 *
 	 * */
-	public void saveFTPProjectInfo(String ftpId, String projectCode, String subSysCode) {
+	public void saveFTPProjectInfo(String ftpId, String projectCode, String subSysCd) {
 		/*
 		StringBuilder sql = new StringBuilder();
 		sql.append(" select datasource_number,datasource_name, ")
@@ -546,6 +542,7 @@ public class AgentListAction extends BaseAction {
 				.append(" from data_source a join agent_info b on a.source_id = b.source_id ")
 				.append(" join ftp_collect c on b.agent_id = c.agent_id ")
 				.append(" where c.is_sendok = ? and c.ftp_id = ? and a.create_user_id = ?");
+
 		Map<String, Object> result = Dbo.queryOneObject(sql.toString(), IsFlag.Shi.getCode()
 				, ftpId, getUserId());
 		if(result.isEmpty()){
@@ -557,13 +554,18 @@ public class AgentListAction extends BaseAction {
 		String dsNumber = (String)result.get("datasource_number");
 		String ftpNumber = (String)result.get("ftp_number");
 		String ftpName = (String)result.get("ftp_name");
-*/
+
+		String subSysCode = dsNumber + "_" + ftpNumber;
+		String subSysDesc = dsName + "_" + ftpName;
+		String etlJob = subSysCode + "_" + "etljob";
+		String etlJobDesc = subSysDesc + "_" + "etljob";
+		String proParam = "etljob" + "@" + "B301@2008";
+		*/
 	}
 
 	/**
 	 * 保存半结构化(对象)采集工程信息
 	 *
-	 * 1、
 	 *
 	 * @Param: objCollId String
 	 *         含义 : object_collect表主键
@@ -586,7 +588,6 @@ public class AgentListAction extends BaseAction {
 	/**
 	 * 保存非结构化(文件系统)采集工程信息
 	 *
-	 * 1、
 	 *
 	 * @Param: fileCollId String
 	 *         含义 : file_collect_set表主键
@@ -609,7 +610,6 @@ public class AgentListAction extends BaseAction {
 	/**
 	 * 保存数据文件采集和数据库采集采集工程信息
 	 *
-	 * 1、
 	 *
 	 * @Param: dataSourceId String
 	 *         含义 : datasource_set表主键
@@ -630,51 +630,6 @@ public class AgentListAction extends BaseAction {
 	}
 
 	/**
-	 * 根据任务ID发送半结构化文件采集任务
-	 *
-	 * 1、
-	 *
-	 * @Param: taskId String
-	 *         含义 : 任务ID
-	 *         取值范围 : 不为空
-	 * @return: 无
-	 *
-	 * */
-	public void sendHalfStructTask(String taskId) {
-		//SendMsg.sendObjectCollect2Agent(taskId);
-	}
-
-	/**
-	 * 根据任务ID发送FTP采集任务
-	 *
-	 * 1、
-	 *
-	 * @Param: taskId String
-	 *         含义 : 任务ID
-	 *         取值范围 : 不为空
-	 * @return: 无
-	 *
-	 * */
-	public void sendFTPTask(String taskId) {
-		//SendMsg.sendFTP2Agent(taskId);
-	}
-
-	/**
-	 * 根据任务ID发送数据库直连、DB文件、非结构化文件采集任务
-	 *
-	 * 1、
-	 *
-	 * @Param: taskId String
-	 *         含义 : 任务ID
-	 *         取值范围 : 不为空
-	 * @return: 无
-	 *
-	 * */
-	public void sendOtherTask(String taskId) {
-		//SendMsg.sendMsg2Agent(taskId);
-	}
-
-	/**
 	 * 根据sourceId查询出设置完成的数据库采集任务和DB文件采集任务的任务ID
 	 *
 	 * 1、根据数据源ID和用户ID查询出设置完成的数据库采集任务和DB文件采集任务的任务ID并返回
@@ -690,9 +645,9 @@ public class AgentListAction extends BaseAction {
 	public Result getDBAndDFTaskBySourceId(long sourceId) {
 		//1、根据数据源ID和用户ID查询出设置完成的数据库采集任务和DB文件采集任务的任务ID并返回
 		return Dbo.queryResult("SELECT das.database_id " +
-				"FROM data_source ds " +
-				"JOIN agent_info ai ON ds.source_id = ai.source_id " +
-				"JOIN database_set das ON ai.agent_id = das.agent_id " +
+				"FROM "+ Data_source.TableName +" ds " +
+				"JOIN "+ Agent_info.TableName +" ai ON ds.source_id = ai.source_id " +
+				"JOIN "+ Database_set.TableName +" das ON ai.agent_id = das.agent_id " +
 				"WHERE ds.source_id = ? AND das.is_sendok = ? AND ds.create_user_id = ?"
 				, sourceId, IsFlag.Shi.getCode(), getUserId());
 		//数据可访问权限处理方式
@@ -715,9 +670,9 @@ public class AgentListAction extends BaseAction {
 	public Result getNonStructTaskBySourceId(long sourceId) {
 		//1、根据数据源ID和用户ID查询出设置完成的非结构化文件采集任务的任务ID并返回
 		return Dbo.queryResult("SELECT fcs.fcs_id " +
-				"FROM data_source ds " +
-				"JOIN agent_info ai ON ds.source_id = ai.source_id " +
-				"JOIN file_collect_set fcs ON ai.agent_id = fcs.agent_id " +
+				"FROM "+ Data_source.TableName +" ds " +
+				"JOIN "+ Agent_info.TableName +" ai ON ds.source_id = ai.source_id " +
+				"JOIN "+ File_collect_set.TableName +" fcs ON ai.agent_id = fcs.agent_id " +
 				"WHERE ds.source_id = ? AND fcs.is_sendok = ? AND ds.create_user_id = ?"
 				, sourceId, IsFlag.Shi.getCode(), getUserId());
 		//数据可访问权限处理方式
@@ -740,9 +695,9 @@ public class AgentListAction extends BaseAction {
 	public Result getHalfStructTaskBySourceId(long sourceId) {
 		//1、根据数据源ID和用户ID查询出设置完成的半结构化文件采集任务的任务ID并返回
 		return Dbo.queryResult("SELECT fcs.odc_id " +
-				"FROM data_source ds " +
-				"JOIN agent_info ai ON ds.source_id = ai.source_id " +
-				"JOIN object_collect fcs ON ai.agent_id = fcs.agent_id " +
+				"FROM "+ Data_source.TableName +" ds " +
+				"JOIN "+ Agent_info.TableName +" ai ON ds.source_id = ai.source_id " +
+				"JOIN "+ Object_collect.TableName +" fcs ON ai.agent_id = fcs.agent_id " +
 				"WHERE ds.source_id = ? AND fcs.is_sendok = ? AND ds.create_user_id = ?"
 				, sourceId, IsFlag.Shi.getCode(), getUserId());
 		//数据可访问权限处理方式
@@ -765,9 +720,9 @@ public class AgentListAction extends BaseAction {
 	public Result getFTPTaskBySourceId(long sourceId) {
 		//1、根据数据源ID和用户ID查询出FTP采集任务的任务ID并返回
 		return Dbo.queryResult("SELECT fcs.ftp_id " +
-				"FROM data_source ds " +
-				"JOIN agent_info ai ON ds.source_id = ai.source_id " +
-				"JOIN ftp_collect fcs ON ai.agent_id = fcs.agent_id " +
+				"FROM "+ Data_source.TableName +" ds " +
+				"JOIN "+ Agent_info.TableName +" ai ON ds.source_id = ai.source_id " +
+				"JOIN "+ Ftp_collect.TableName +" fcs ON ai.agent_id = fcs.agent_id " +
 				"WHERE ds.source_id = ? AND fcs.is_sendok = ? AND ds.create_user_id = ? ",
 				sourceId, IsFlag.Shi.getCode(), getUserId());
 		//数据可访问权限处理方式
@@ -803,7 +758,7 @@ public class AgentListAction extends BaseAction {
 	private Map<String, String> getTaskLog(long agentId, long userId, String logType, int readNum) {
 		//1、根据agent_id和user_id获取agent信息
 		Agent_down_info AgentDownInfo = Dbo.queryOneObject(//FIXME 为什么不用实体？已修复
-				Agent_down_info.class, "select * from agent_down_info where agent_id = ? and user_id = ?", agentId,
+				Agent_down_info.class, "select * from "+ Agent_down_info.TableName +" where agent_id = ? and user_id = ?", agentId,
 				userId).orElseThrow(() -> new BusinessException("根据AgentID和userID未能找到Agent下载信息"));
 		//2、在agent信息中获取日志目录
 		String agentIP = AgentDownInfo.getAgent_ip();
@@ -813,16 +768,15 @@ public class AgentListAction extends BaseAction {
 		String passWord = AgentDownInfo.getPasswd();
 
 		//用户选择查看错误日志
-		if (logType.equals("Wrong")) {//FIXME 这里可以使用File.separator？如果认为只会在Posix的系统上，那么先检查WIN的分隔符并抛异常
+		if (logType.equals("Wrong")) {//FIXME 这里可以使用File.separator？如果认为只会在Posix的系统上，那么先检查WIN的分隔符并抛异常,已修复
 			logDir = logDir.substring(0, logDir.lastIndexOf(File.separator) + 1) + "error.log";
 		}
 
 		//3、调用方法获取日志,目前工具类不存在
 		String taskLog = LogReader.readAgentLog(logDir, agentIP, agentPort, userName,
 				passWord, readNum);
-		if (StringUtil.isBlank(taskLog)) {//FIXME 详细说明，为什么要设置成这四个字
-			//在以前的程序处理逻辑中，是使用I18国际化处理，目前I18还没有完成，先暂时设置为"日志信息"
-			taskLog = "日志信息";
+		if (StringUtil.isBlank(taskLog)) {//FIXME 详细说明，为什么要设置成这四个字，已修复
+			taskLog = "未获取到日志";
 		}
 		//4、将日志信息和日志文件的路径封装成map
 		Map<String, String> map = new HashMap<>();
