@@ -32,7 +32,7 @@ import java.util.OptionalLong;
  **/
 public class AgentListAction extends BaseAction {
 
-	//FIXME 是不是应该从系统参数中取？
+	//FIXME 是不是应该从系统参数中取？改为从数据库中取
 	/**
 	 * 获取数据源Agent列表信息
 	 *
@@ -491,7 +491,7 @@ public class AgentListAction extends BaseAction {
 	 *          取值范围：不会为null
 	 *
 	 * */
-	public Result buildJob() {//FIXME 既然是查询数据，为什么用这种对不上号的的名字
+	public Result getProjectInfo() {//FIXME 既然是查询数据，为什么用这种对不上号的的名字，已修复
 		//1、根据用户ID在工程登记表(etl_sys)中查询工程代码(etl_sys_cd)和工程名称(etl_sys_name)并返回
 		return Dbo.queryResult("select etl_sys_cd,etl_sys_name from etl_sys where user_id = ?"
 				, getUserId());
@@ -512,9 +512,10 @@ public class AgentListAction extends BaseAction {
 	 *          取值范围：不会为null
 	 *
 	 * */
-	public Result selectProject(String taskId) {//FIXME 权限检查呢
-		return Dbo.queryResult("select sub_sys_cd,sub_sys_desc from etl_sub_sys_list " +
-				"where etl_sys_cd = ? ", taskId);
+	public Result getTaskInfoByTaskId(String taskId) {//FIXME 权限检查呢，已修复
+		return Dbo.queryResult(" select ess.sub_sys_cd,ess.sub_sys_desc from etl_sub_sys_list ess" +
+				"join etl_sys es on es.etl_sys_cd = ess.etl_sys_cd" +
+				"where es.user_id = ? and ess.etl_sys_cd = ? ", getUserId(), taskId);
 	}
 
 
