@@ -38,7 +38,9 @@ public class CollectPage implements Callable<Map<String, Object>> {
 	private int pageRow;
 	private JobInfo jobInfo;
 
-	public CollectPage(JobInfo jobInfo, DBConfigBean dbInfo, DataBaseDialectStrategy strategy, String strSql, String pageColumn, int start, int end, int pageNum, int pageRow) {
+	public CollectPage(JobInfo jobInfo, DBConfigBean dbInfo,
+	                   DataBaseDialectStrategy strategy, String strSql,
+	                   String pageColumn, int start, int end, int pageNum, int pageRow) {
 		this.jobInfo = jobInfo;
 		this.dbInfo = dbInfo;
 		this.strategy = strategy;
@@ -52,7 +54,7 @@ public class CollectPage implements Callable<Map<String, Object>> {
 
 	/**
 	 * @Description: 多线程采集执行方法
-	 * @return: java.util.Map<java.lang.String               ,               java.lang.Object>
+	 * @return: java.util.Map<java.lang.String, java.lang.Object>
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/9/11
 	 * 步骤：
@@ -100,7 +102,8 @@ public class CollectPage implements Callable<Map<String, Object>> {
 	 * 4、关闭资源
 	 * 5、返回结果集
 	 */
-	private ResultSet getPageData(DBConfigBean dbInfo, DataBaseDialectStrategy strategy, String strSql, String pageColumn, int start, int end) {
+	private ResultSet getPageData(DBConfigBean dbInfo, DataBaseDialectStrategy strategy, String strSql,
+	                              String pageColumn, int start, int end) {
 		//TODO pageColumn是前台用户提供的用于分页的列，但是目前使用的fdcode中自带的对数据库的分页操作，所以pageColumn暂时用不到
 		//1、将DBConfigBean对象传入工具类ConnetionTool，得到DatabaseWrapper
 		DatabaseWrapper dbWrapper = ConnetionTool.getDBWrapper(dbInfo);

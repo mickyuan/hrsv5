@@ -73,7 +73,8 @@ public class JobStageController {
 	 *      3、若第一阶段执行失败，目前的处理逻辑是直接记录错误信息，然后返回jobStatusInfo
 	 *      4、若除第一阶段外的其他阶段执行失败，记录错误信息，尚欠是否继续运行下一阶段的逻辑
 	 */
-	public JobStatusInfo handleStageByOrder(String statusFilePath, JobStatusInfo jobStatus) throws Exception {
+	public JobStatusInfo handleStageByOrder(String statusFilePath, JobStatusInfo jobStatus)
+			throws Exception {
 
 		JobStatusInfo jobInfo = jobStatus;
 		//1、从第一个阶段开始执行
@@ -93,7 +94,8 @@ public class JobStageController {
 					//TODO 下面的处理方式待商榷
 					// 4、若除第一阶段外的其他阶段执行失败，记录错误信息，尚欠是否继续运行下一阶段的逻辑
 					jobInfo = setStageStatus(stageStatusInfo, jobInfo);
-					jobInfo.setExceptionInfo(EnumUtil.getEnumByCode(StageConstant.class, stageStatusInfo.getStageNameCode()).getDesc() + "阶段执行失败");
+					jobInfo.setExceptionInfo(EnumUtil.getEnumByCode(StageConstant.class,
+							stageStatusInfo.getStageNameCode()).getDesc() + "阶段执行失败");
 				}
 				//记录每个阶段的状态
 				ProductFileUtil.createStatusFile(statusFilePath, JSONObject.toJSONString(jobInfo));
@@ -102,7 +104,8 @@ public class JobStageController {
 			//TODO 下面的处理方式待商榷
 			//3、若第一阶段执行失败，目前的处理逻辑是直接记录错误信息，然后返回jobStatusInfo
 			jobInfo = setStageStatus(firstStageStatus, jobInfo);
-			jobInfo.setExceptionInfo(EnumUtil.getEnumByCode(StageConstant.class, firstStageStatus.getStageNameCode()).getDesc() + "阶段执行失败");
+			jobInfo.setExceptionInfo(EnumUtil.getEnumByCode(StageConstant.class,
+					firstStageStatus.getStageNameCode()).getDesc() + "阶段执行失败");
 		}
 		jobInfo.setRunStatus(1000);
 		ProductFileUtil.createStatusFile(statusFilePath, JSONObject.toJSONString(jobInfo));
@@ -123,7 +126,8 @@ public class JobStageController {
 	*/
 	private JobStatusInfo setStageStatus(StageStatusInfo stageStatus, JobStatusInfo jobStatus) {
 		//1、通过stageStatus得到当前任务的阶段
-		StageConstant stage = EnumUtil.getEnumByCode(StageConstant.class, stageStatus.getStageNameCode());
+		StageConstant stage = EnumUtil.getEnumByCode(StageConstant.class,
+				stageStatus.getStageNameCode());
 		if (stage == null) {
 			throw new AppSystemException("获取阶段信息失败");
 		}

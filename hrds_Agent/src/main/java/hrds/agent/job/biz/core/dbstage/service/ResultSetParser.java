@@ -57,7 +57,8 @@ public class ResultSetParser {
 	 * 7、构造metaDataMap，根据落地数据文件类型，初始化FileWriterInterface实现类，由实现类去写文件
 	 * 8、写文件结束，返回本线程生成数据文件的路径
 	 */
-	public String parseResultSet(ResultSet rs, JobInfo jobInfo, int pageNum, int pageRow) throws SQLException, IOException {
+	public String parseResultSet(ResultSet rs, JobInfo jobInfo, int pageNum, int pageRow)
+			throws SQLException, IOException {
 		//TODO 建议查询数据库的系统表来获得meta信息
 		//1、获得本次采集的数据库META信息
 		ResultSetMetaData metaData = rs.getMetaData();
@@ -78,9 +79,11 @@ public class ResultSetParser {
 			colTypeArr[i - 1] = columnType;
 			//列名拼接使用'\001'分隔
 			columns.append(columnName).append(JobConstant.COLUMN_NAME_SEPARATOR);
-			String colTypeAndPreci = getColTypeAndPreci(metaData.getColumnType(i), metaData.getColumnTypeName(i), metaData.getPrecision(i), metaData.getScale(i));
+			String colTypeAndPreci = getColTypeAndPreci(metaData.getColumnType(i),
+					metaData.getColumnTypeName(i), metaData.getPrecision(i), metaData.getScale(i));
 			columnsTypeAndPreci.append(colTypeAndPreci).append(JobConstant.COLUMN_TYPE_SEPARATOR);
-			columnsLength.append(getColumnLength(metaData, i)).append(JobConstant.COLUMN_TYPE_SEPARATOR);
+			columnsLength.append(getColumnLength(metaData, i))
+					.append(JobConstant.COLUMN_TYPE_SEPARATOR);
 		}
 		//得到表元信息后，需要去掉最后一个分隔符
 		columns.deleteCharAt(columns.length() - 1);//列名
@@ -92,7 +95,8 @@ public class ResultSetParser {
 		//存放列清洗规则，key为列名，value为清洗方式map，map的key为清洗项目名(优先级、替换、补齐等)，value为具体的清洗信息
 		Map<String, Map<String, Object>> columnCleanRule = new HashMap<>();
 		for (int i = 0; i <= colCleanRuleList.size(); i++) {
-			Map<String, Object> columnResult = ColCleanRuleParser.parseColCleanRule(colCleanRuleList.get(i));
+			Map<String, Object> columnResult = ColCleanRuleParser
+					.parseColCleanRule(colCleanRuleList.get(i));
 			columnCleanRule.put(colCleanRuleList.get(i).getColumnName(), columnResult);
 		}
 
@@ -127,9 +131,13 @@ public class ResultSetParser {
 		}
 
 		//6、落地文件需要追加开始时间和结束时间(9999-12-31)列，如果需要，还要追加MD5列
-		columnsTypeAndPreci.append(JobConstant.COLUMN_TYPE_SEPARATOR).append("char(8)").append(JobConstant.COLUMN_TYPE_SEPARATOR).append("char(8)");
-		columnsLength.append(JobConstant.COLUMN_TYPE_SEPARATOR).append("8").append(JobConstant.COLUMN_TYPE_SEPARATOR).append("8");
-		columns.append(JobConstant.COLUMN_NAME_SEPARATOR).append(JobConstant.START_DATE_NAME).append(JobConstant.COLUMN_NAME_SEPARATOR).append(JobConstant.MAX_DATE_NAME);
+		columnsTypeAndPreci.append(JobConstant.COLUMN_TYPE_SEPARATOR).append("char(8)").
+				append(JobConstant.COLUMN_TYPE_SEPARATOR).append("char(8)");
+		columnsLength.append(JobConstant.COLUMN_TYPE_SEPARATOR).append("8").
+				append(JobConstant.COLUMN_TYPE_SEPARATOR).append("8");
+		columns.append(JobConstant.COLUMN_NAME_SEPARATOR).
+				append(JobConstant.START_DATE_NAME).append(JobConstant.COLUMN_NAME_SEPARATOR).
+				append(JobConstant.MAX_DATE_NAME);
 
 		//如果用户需要追加MD5，则需要再添加一列
 		String isMD5 = jobInfo.getIs_md5();
@@ -170,10 +178,13 @@ public class ResultSetParser {
 			filePath = csvWriter.writeDataAsSpecifieFormat(metaDataMap, rs, jobInfo.getTable_name());
 		} else if (FileFormatConstant.PARQUET.getCode() == Integer.parseInt(format)) {
 			//写PARQUET文件
-			MessageType schema = ParquetUtil.getSchemaAsDBColl(columns.toString(), columnsTypeAndPreci.toString());
+			MessageType schema = ParquetUtil.getSchemaAsDBColl(columns.toString(),
+					columnsTypeAndPreci.toString());
 			GroupFactory factory = new SimpleGroupFactory(schema);
-			FileWriterInterface parquetWriter = new DBCollParquetWriter(jobInfo, schema, factory, pageNum, pageRow);
-			filePath = parquetWriter.writeDataAsSpecifieFormat(metaDataMap, rs, jobInfo.getTable_name());
+			FileWriterInterface parquetWriter = new DBCollParquetWriter(jobInfo, schema,
+					factory, pageNum, pageRow);
+			filePath = parquetWriter.writeDataAsSpecifieFormat(metaDataMap, rs,
+					jobInfo.getTable_name());
 		} else if (FileFormatConstant.ORCFILE.getCode() == Integer.parseInt(format)) {
 			//写ORC文件
 		} else if (FileFormatConstant.SEQUENCEFILE.getCode() == Integer.parseInt(format)) {
@@ -207,10 +218,12 @@ public class ResultSetParser {
 			}
 		}
 		String colTypeAndPreci;
-		if (Types.INTEGER == columnType || Types.TINYINT == columnType || Types.SMALLINT == columnType || Types.BIGINT == columnType) {
+		if (Types.INTEGER == columnType || Types.TINYINT == columnType || Types.SMALLINT == columnType ||
+				Types.BIGINT == columnType) {
 			//2、上述数据类型不包含长度和精度
 			colTypeAndPreci = columnTypeName;
-		} else if (Types.NUMERIC == columnType || Types.FLOAT == columnType || Types.DOUBLE == columnType || Types.DECIMAL == columnType) {
+		} else if (Types.NUMERIC == columnType || Types.FLOAT == columnType ||
+				Types.DOUBLE == columnType || Types.DECIMAL == columnType) {
 			//上述数据类型包含长度和精度，对长度和精度进行处理，返回(长度,精度)
 			//1、当一个数的整数部分的长度 > p-s 时，Oracle就会报错
 			//2、当一个数的小数部分的长度 > s 时，Oracle就会舍入。

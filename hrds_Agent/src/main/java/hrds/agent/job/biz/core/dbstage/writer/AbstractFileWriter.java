@@ -32,7 +32,8 @@ public class AbstractFileWriter implements FileWriterInterface {
 	 * @Date: 2019/8/13
 	 */
 	@Override
-	public String writeDataAsSpecifieFormat(Map<String, Object> metaDataMap, ResultSet rs, String tableName) throws IOException, SQLException {
+	public String writeDataAsSpecifieFormat(Map<String, Object> metaDataMap, ResultSet rs, String tableName)
+			throws IOException, SQLException {
 		throw new IllegalStateException("这是一个空实现");
 	}
 

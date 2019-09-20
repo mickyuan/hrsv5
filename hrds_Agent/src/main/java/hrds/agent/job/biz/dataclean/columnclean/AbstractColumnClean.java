@@ -25,7 +25,8 @@ public abstract class AbstractColumnClean implements ColumnCleanInterface {
 	}
 
 	@Override
-	public String complete(StringBuilder completeSB, String columnValue) {
+	public String complete(StringBuilder completeSB, String columnValue)
+	{
 		throw new IllegalStateException("这是一个空实现");
 	}
 
@@ -45,7 +46,8 @@ public abstract class AbstractColumnClean implements ColumnCleanInterface {
 	}
 
 	@Override
-	public String split(List<ColumnSplitBean> rule, String columnValue, String columnName, Group group, String colType, String fileType, List<Object> lineData) {
+	public String split(List<ColumnSplitBean> rule, String columnValue, String columnName,
+	                    Group group, String colType, String fileType, List<Object> lineData) {
 		throw new IllegalStateException("这是一个空实现");
 	}
 }

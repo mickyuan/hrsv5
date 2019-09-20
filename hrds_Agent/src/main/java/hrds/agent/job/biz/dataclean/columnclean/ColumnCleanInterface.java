@@ -75,5 +75,6 @@ public interface ColumnCleanInterface {
 	* @Author: WangZhengcheng
 	* @Date: 2019/9/11
 	*/
-	String split(List<ColumnSplitBean> rule, String columnValue, String columnName, Group group, String colType, String fileType, List<Object> lineData);
+	String split(List<ColumnSplitBean> rule, String columnValue, String columnName,
+	             Group group, String colType, String fileType, List<Object> lineData);
 }

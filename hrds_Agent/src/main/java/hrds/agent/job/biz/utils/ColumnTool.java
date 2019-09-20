@@ -25,7 +25,9 @@ public class ColumnTool {
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/8/28
 	 */
-	public static void updateColumnSplit(StringBuilder columns, StringBuilder columnsTypeAndPreci, StringBuilder columnsLength, Map<String, List<ColumnSplitBean>> allSplitRule) {
+	public static void updateColumnSplit(StringBuilder columns, StringBuilder columnsTypeAndPreci,
+	                                     StringBuilder columnsLength,
+	                                     Map<String, List<ColumnSplitBean>> allSplitRule) {
 		if (columns == null || columns.length() == 0) {
 			throw new AppSystemException("进行列拆分清洗时，列名不能为空");
 		}
@@ -54,29 +56,36 @@ public class ColumnTool {
 				ColumnSplitBean splitBean = splitListByColName.get(i);
 				appendColName.append(splitBean.getColName()).append(JobConstant.COLUMN_NAME_SEPARATOR);
 				appendColType.append(splitBean.getColType()).append(JobConstant.COLUMN_TYPE_SEPARATOR);
-				appendColLen.append(getLength(splitBean.getColType())).append(JobConstant.COLUMN_TYPE_SEPARATOR);
+				appendColLen.append(getLength(splitBean.getColType()))
+						.append(JobConstant.COLUMN_TYPE_SEPARATOR);
 			}
 			//去掉最后一位分隔符
 			appendColName = appendColName.deleteCharAt(appendColName.length() - 1);
 			appendColType = appendColType.deleteCharAt(appendColType.length() - 1);
 			appendColLen = appendColLen.deleteCharAt(appendColLen.length() - 1);
 			//获取对应列类型的位置，插入拆分后的列类型
-			int typeIndex = searchIndex(columnsTypeAndPreci.toString(), findColIndex, JobConstant.COLUMN_TYPE_SEPARATOR);
+			int typeIndex = searchIndex(columnsTypeAndPreci.toString(), findColIndex,
+					JobConstant.COLUMN_TYPE_SEPARATOR);
 			//如果找到下标，说明不是最后一个，要插入新加的类型
 			if (typeIndex != -1) {
-				columnsTypeAndPreci.insert(typeIndex, JobConstant.COLUMN_TYPE_SEPARATOR + appendColType.toString());
+				columnsTypeAndPreci.insert(typeIndex, JobConstant.COLUMN_TYPE_SEPARATOR +
+						appendColType.toString());
 			} else {
 				//如果没有找到，说明是整个字符串的最后一个，直接进行追加
-				columnsTypeAndPreci.append(JobConstant.COLUMN_TYPE_SEPARATOR).append(appendColType.toString());
+				columnsTypeAndPreci.append(JobConstant.COLUMN_TYPE_SEPARATOR)
+						.append(appendColType.toString());
 			}
 			//获取对应列长度的位置插入拆分后的列长度
-			int lenIndex = searchIndex(columnsLength.toString(), findColIndex, JobConstant.COLUMN_TYPE_SEPARATOR);
+			int lenIndex = searchIndex(columnsLength.toString(), findColIndex,
+					JobConstant.COLUMN_TYPE_SEPARATOR);
 			if (lenIndex != -1) {
 				columnsLength.insert(lenIndex, JobConstant.COLUMN_TYPE_SEPARATOR + appendColLen.toString());
 			} else {
-				columnsLength.append(JobConstant.COLUMN_TYPE_SEPARATOR).append(appendColLen.toString());
+				columnsLength.append(JobConstant.COLUMN_TYPE_SEPARATOR)
+						.append(appendColLen.toString());
 			}
-			columnsName = StringUtil.replace(columnsName.toUpperCase(), colName.toUpperCase(), appendColName.toString().toUpperCase());
+			columnsName = StringUtil.replace(columnsName.toUpperCase(),
+					colName.toUpperCase(), appendColName.toString().toUpperCase());
 		}
 		columns.delete(0, columns.length()).append(columnsName);
 	}
@@ -91,7 +100,8 @@ public class ColumnTool {
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/8/30
 	 */
-	public static void updateColumnMerge(StringBuilder columns, StringBuilder columnsTypeAndPreci, StringBuilder columnsLength, Map<String, String> tbMergeRule) {
+	public static void updateColumnMerge(StringBuilder columns, StringBuilder columnsTypeAndPreci,
+	                                     StringBuilder columnsLength, Map<String, String> tbMergeRule) {
 		if (columns == null || columns.length() == 0) {
 			throw new AppSystemException("进行列拆分清洗时，列名不能为空");
 		}

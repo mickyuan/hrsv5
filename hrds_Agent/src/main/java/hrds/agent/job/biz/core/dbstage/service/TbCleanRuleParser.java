@@ -87,7 +87,8 @@ public class TbCleanRuleParser {
 			String compType = tbCompObj.getString("filling_type");
 			//获取补齐字符
 			String comChar = StringOperator.unicode2String(tbCompObj.getString("character_filling"));
-			tbCompRule.append(compLength).append(JobConstant.CLEAN_SEPARATOR).append(compType).append(JobConstant.CLEAN_SEPARATOR).append(comChar);
+			tbCompRule.append(compLength).append(JobConstant.CLEAN_SEPARATOR).append(compType).
+					append(JobConstant.CLEAN_SEPARATOR).append(comChar);
 			result.put("complete", tbCompRule);
 		}
 
@@ -103,7 +104,8 @@ public class TbCleanRuleParser {
 			for (int i = 0; i < mergeArr.size(); i++) {
 				JSONObject singleObj = JSONObject.parseObject(mergeArr.get(i).toString());
 				StringBuilder colNameAndType = new StringBuilder();
-				colNameAndType.append(singleObj.getString("col_name")).append(JobConstant.CLEAN_SEPARATOR).append(singleObj.getString("col_type"));
+				colNameAndType.append(singleObj.getString("col_name")).
+						append(JobConstant.CLEAN_SEPARATOR).append(singleObj.getString("col_type"));
 				tbMergeMap.put(colNameAndType.toString(), singleObj.getString("old_name"));
 			}
 			result.put("merge", tbMergeMap);

@@ -25,7 +25,7 @@ public class DataBaseJobImpl implements JobInterface {
 	private final String statusFilePath;
 	private final JobStatusInfo jobStatus;
 
-	public DataBaseJobImpl(JobInfo jobInfo, DBConfigBean dbInfo, String statusFilePath, JobStatusInfo jobStatus) {
+	DataBaseJobImpl(JobInfo jobInfo, DBConfigBean dbInfo, String statusFilePath, JobStatusInfo jobStatus) {
 		this.jobInfo = jobInfo;
 		this.dbInfo = dbInfo;
 		this.statusFilePath = statusFilePath;
@@ -57,7 +57,8 @@ public class DataBaseJobImpl implements JobInterface {
 		//2、构建每个阶段具体的实现类，目前先按照完整顺序执行(卸数,上传,数据加载,计算增量,数据登记)，后期可改造为按照配置构建采集阶段
 		DBUnloadDataStageImpl unloadData = new DBUnloadDataStageImpl(this.dbInfo, this.jobInfo);
 		//TODO 数据库直连采集，多文件上传，remoteDir参数待确定，暂时传null
-		JobStageInterface upload = new DBUploadStageImpl(this.jobInfo.getJobId(), unloadData.getFileArr(), null);
+		JobStageInterface upload = new DBUploadStageImpl(this.jobInfo.getJobId(),
+				unloadData.getFileArr(), null);
 		//空实现
 		JobStageInterface dataLoading = new DBDataLoadingStageImpl();
 		//空实现

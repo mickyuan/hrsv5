@@ -60,14 +60,17 @@ public class DataFileJobImpl implements JobInterface {
 		}
 		//TODO 此处肯定要改，所以先写死
 		String tableName = job.getTable_name();
-		String[] columnAndtypes = StringUtils.splitByWholeSeparatorPreserveAllTokens(job.getTablename().getString(tableName), "#");
+		String[] columnAndtypes = StringUtils.splitByWholeSeparatorPreserveAllTokens(
+				job.getTablename().getString(tableName), "#");
 		List<String> columnTypes = new ArrayList<>();
 		for (String colAndType : columnAndtypes) {
-			columnTypes.add(StringUtils.splitByWholeSeparatorPreserveAllTokens(colAndType, JobConstant.COLUMN_TYPE_SEPARATOR)[1]);
+			columnTypes.add(StringUtils.splitByWholeSeparatorPreserveAllTokens(colAndType,
+					JobConstant.COLUMN_TYPE_SEPARATOR)[1]);
 		}
 		String startDate = jobParam.getStart_date();
 		//目前先按照完整顺序执行，后期可改造为按照配置构建采集阶段
-		DFUnloadDataStageImpl unloadData = new DFUnloadDataStageImpl(jobId, inputFile, tableName, columns, columnTypes, startDate);
+		DFUnloadDataStageImpl unloadData = new DFUnloadDataStageImpl(jobId, inputFile,
+				tableName, columns, columnTypes, startDate);
 		//TODO hdfs的目录结构如何组织的
 		JobStageInterface upload = new DFUploadStageImpl(jobId, unloadData.getOutputFile(), "");
 		JobStageInterface dataLoading = new DFDataLoadingStageImpl();

@@ -24,7 +24,8 @@ public class TbMergeImpl extends AbstractTableClean {
 
 	//TODO ORC,SEQUENCE未实现
 	@Override
-	public String merge(Map<String, String> mergeRule, String[] columnsValue, String[] columnsName, Group group, List<Object> lineData, String fileType) {
+	public String merge(Map<String, String> mergeRule, String[] columnsValue, String[] columnsName,
+	                    Group group, List<Object> lineData, String fileType) {
 		StringBuilder afterMergeColValue = new StringBuilder(4096);
 		for (String colNameAndType : mergeRule.keySet()) {
 			int[] alliIdex = ColumnTool.findColIndex(columnsName, mergeRule.get(colNameAndType));
@@ -33,7 +34,8 @@ public class TbMergeImpl extends AbstractTableClean {
 			}
 			if (group != null) {
 				List<String> colNameAndTypeArr = StringUtil.split(colNameAndType, JobConstant.CLEAN_SEPARATOR);
-				ParquetUtil.addData2Group(group, colNameAndTypeArr.get(0), colNameAndTypeArr.get(1), afterMergeColValue.toString());
+				ParquetUtil.addData2Group(group, colNameAndTypeArr.get(0), colNameAndTypeArr.get(1),
+						afterMergeColValue.toString());
 				afterMergeColValue.delete(0, afterMergeColValue.length());
 			}
 			if (lineData != null) {

@@ -39,7 +39,8 @@ public class ColCleanRuleParser {
 	 * 7、解析字段拆分规则
 	 * 8、将上述所有组装成Map<String, Object> result并返回，key是清洗项名称，value是清洗规则
 	 */
-	public static Map<String, Object> parseColCleanRule(ColumnCleanResult rule) throws UnsupportedEncodingException {
+	public static Map<String, Object> parseColCleanRule(ColumnCleanResult rule)
+			throws UnsupportedEncodingException {
 		if (rule == null) {
 			throw new AppSystemException("列清洗规则不能为空");
 		}
@@ -86,9 +87,11 @@ public class ColCleanRuleParser {
 			//获取补齐类型
 			String completeType = completeObject.getString("filling_type");
 			//获得要填补的字符串
-			String completeCharacter = URLDecoder.decode(completeObject.getString("character_filling"), "UTF-8");
+			String completeCharacter = URLDecoder.decode(completeObject.
+					getString("character_filling"), "UTF-8");
 			//结果追加到StringBuilder中，并且用^分隔
-			completeSB.append(completeLength).append(JobConstant.CLEAN_SEPARATOR).append(completeType).append(JobConstant.CLEAN_SEPARATOR).append(completeCharacter);
+			completeSB.append(completeLength).append(JobConstant.CLEAN_SEPARATOR).
+					append(completeType).append(JobConstant.CLEAN_SEPARATOR).append(completeCharacter);
 			result.put("complete", completeSB);
 		}
 
@@ -124,7 +127,8 @@ public class ColCleanRuleParser {
 		List<ColumnSplitBean> splitList = new ArrayList<>();
 		if (splitArray != null && !splitArray.isEmpty()) {
 			for (int i = 0; i < splitArray.size(); i++) {
-				ColumnSplitBean bean = JSONObject.parseObject(splitArray.get(i).toString(), ColumnSplitBean.class);
+				ColumnSplitBean bean = JSONObject.parseObject(splitArray.get(i).toString(),
+						ColumnSplitBean.class);
 				bean.setSplitSep(StringOperator.unicode2String(bean.getSplitSep()));
 				splitList.add(bean);
 			}

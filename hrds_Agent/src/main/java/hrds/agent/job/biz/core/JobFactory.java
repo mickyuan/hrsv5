@@ -35,7 +35,8 @@ public class JobFactory {
 	 *      1、判断采集作业类型
 	 *      2、根据作业类型创建具体的JobInterface实例
 	 */
-	public static JobInterface newInstance(JobInfo jobInfo, DBConfigBean dbConfig, JobParamBean jobParam, String statusFilePath, JobStatusInfo jobStatus) {
+	public static JobInterface newInstance(JobInfo jobInfo, DBConfigBean dbConfig,
+	                                       JobParamBean jobParam, String statusFilePath, JobStatusInfo jobStatus) {
 
 		JobInterface job;
 		//1、判断采集作业类型

@@ -43,7 +43,10 @@ public class ColumnCleanUtil {
 	 * 2、根据列名拿到该列的清洗规则
 	 * 3、按照清洗优先级，从大到小对该列数据进行数据清洗
 	 */
-	public static String colDataClean(String columnValue, String columnName, Group group, String colType, String fileType, Map<String, Map<String, Object>> colCleanRule, List<Object> lineData) {
+	public static String colDataClean(String columnValue, String columnName, Group group,
+	                                  String colType, String fileType,
+	                                  Map<String, Map<String, Object>> colCleanRule,
+	                                  List<Object> lineData) {
 		//1、校验入参合法性
 		if (columnValue == null || columnName == null) {
 			throw new AppSystemException("列清洗需要字段名和字段值");
@@ -67,22 +70,26 @@ public class ColumnCleanUtil {
 				//字符替换
 				case "replacement":
 					rule = new ColReplaceImpl();
-					columnValue = rule.replace((Map<String, String>) currColumnRule.get("replace"), columnValue);
+					columnValue = rule.replace((Map<String, String>) currColumnRule.get("replace"),
+							columnValue);
 					break;
 				//字符补齐
 				case "complement":
 					rule = new ColCompleteImpl();
-					columnValue = rule.complete((StringBuilder) currColumnRule.get("complete"), columnValue);
+					columnValue = rule.complete((StringBuilder) currColumnRule.get("complete"),
+							columnValue);
 					break;
 				//码值转换
 				case "conversion":
 					rule = new ColCVConverImpl();
-					columnValue = rule.CVConver((Map<String, String>) currColumnRule.get("CVConver"), columnValue);
+					columnValue = rule.CVConver((Map<String, String>) currColumnRule.get("CVConver"),
+							columnValue);
 					break;
 				//列拆分
 				case "split":
 					rule = new ColSplitImpl();
-					columnValue = rule.split((List<ColumnSplitBean>) currColumnRule.get("split"), columnValue, columnName, group, colType, fileType, lineData);
+					columnValue = rule.split((List<ColumnSplitBean>) currColumnRule.get("split"),
+							columnValue, columnName, group, colType, fileType, lineData);
 					break;
 				//首尾去空
 				case "trim":
@@ -93,10 +100,12 @@ public class ColumnCleanUtil {
 				case "formatting":
 					rule = new ColDateConverImpl();
 					try {
-						columnValue = rule.dateConver((StringBuilder) currColumnRule.get("dateConver"), columnValue);
+						columnValue = rule.dateConver((StringBuilder) currColumnRule.get("dateConver"),
+								columnValue);
 					} catch (ParseException ex) {
 						StringBuilder dateConver = (StringBuilder) currColumnRule.get("dateConver");
-						String[] strings = StringUtils.splitByWholeSeparatorPreserveAllTokens(dateConver.toString(), JobConstant.CLEAN_SEPARATOR);
+						String[] strings = StringUtils.splitByWholeSeparatorPreserveAllTokens(
+								dateConver.toString(), JobConstant.CLEAN_SEPARATOR);
 						LOGGER.error("日期转换发生错误 : " + strings[1] + "类型不能转换为" + strings[0] + "类型");
 					}
 					break;

@@ -50,8 +50,10 @@ public class DBCollParquetWriter extends AbstractFileWriter {
 	private final static Logger LOGGER = LoggerFactory.getLogger(DBCollParquetWriter.class);
 
 	//avro schema
-	private static final String SCHEMA_JSON = "{\"type\": \"record\",\"name\": \"BigFilesTest\", " + "\"fields\": [" + "{\"name\":\"" + "currValue"
-			+ "\",\"type\":\"string\"}," + "{\"name\":\"" + "readerToByte" + "\", \"type\":\"bytes\"}" + "]}";
+	private static final String SCHEMA_JSON = "{\"type\": \"record\",\"name\": \"BigFilesTest\", "
+			+ "\"fields\": [" + "{\"name\":\"" + "currValue"
+			+ "\",\"type\":\"string\"}," + "{\"name\":\""
+			+ "readerToByte" + "\", \"type\":\"bytes\"}" + "]}";
 	private static final Schema SCHEMA = new Schema.Parser().parse(SCHEMA_JSON);
 	private static final GenericRecord record = new GenericData.Record(SCHEMA);
 
@@ -64,7 +66,8 @@ public class DBCollParquetWriter extends AbstractFileWriter {
 
 	private final JobInfo jobInfo;
 
-	public DBCollParquetWriter(JobInfo jobInfo, MessageType schema, GroupFactory factory, int pageNum, int pageRow) {
+	public DBCollParquetWriter(JobInfo jobInfo, MessageType schema, GroupFactory factory,
+	                           int pageNum, int pageRow) {
 		this.jobInfo = jobInfo;
 		this.schema = schema;
 		this.factory = factory;
@@ -93,7 +96,8 @@ public class DBCollParquetWriter extends AbstractFileWriter {
 	 * 6、关闭资源，并返回文件路径
 	 */
 	@Override
-	public String writeDataAsSpecifieFormat(Map<String, Object> metaDataMap, ResultSet rs, String tableName) throws IOException, SQLException {
+	public String writeDataAsSpecifieFormat(Map<String, Object> metaDataMap, ResultSet rs, String tableName)
+			throws IOException, SQLException {
 		//1、校验方法入参合法性
 		if (metaDataMap == null || metaDataMap.isEmpty()) {
 			throw new AppSystemException("写PARQUET文件阶段,元信息不能为空");
@@ -115,14 +119,16 @@ public class DBCollParquetWriter extends AbstractFileWriter {
 			throw new AppSystemException("创建数据文件目录失败");
 		}
 		//3、创建数据文件的文件名 ：jobID + 处理线程号 + 时间戳,和作业配置文件位于同一路径下
-		outputPath = ProductFileUtil.getDataFilePathByJobID(this.jobInfo) + File.separatorChar + jobInfo.getJobId() + Thread.currentThread().getId()
+		outputPath = ProductFileUtil.getDataFilePathByJobID(this.jobInfo) + File.separatorChar +
+				jobInfo.getJobId() + Thread.currentThread().getId()
 				+ System.currentTimeMillis() + "." + FileFormatConstant.PARQUET.getMessage();
 
 		//列类型(格式为java.sql.Types)
 		int[] colTypeArrs = (int[]) metaDataMap.get("colTypeArr");
 		//4、判断本次采集得到的RS是否有CLOB，BLOB，LONGVARCHAR的大字段类型，如果有，则创建LOBs目录用于存放avro文件，并初始化写avro相关类对象
 		for (int i = 0; i < colTypeArrs.length; i++) {
-			if (colTypeArrs[i] == java.sql.Types.CLOB || colTypeArrs[i] == java.sql.Types.BLOB || colTypeArrs[i] == java.sql.Types.LONGVARCHAR) {
+			if (colTypeArrs[i] == java.sql.Types.CLOB || colTypeArrs[i] == java.sql.Types.BLOB ||
+					colTypeArrs[i] == java.sql.Types.LONGVARCHAR) {
 				//说明本次采集到的内容包含大字段类型，需要对其进行avro处理
 				String LOBsDir = ProductFileUtil.getLOBsPathByJobID(this.jobInfo);
 				//判断LOBs目录是否存在，不存在创建
@@ -136,7 +142,8 @@ public class DBCollParquetWriter extends AbstractFileWriter {
 				File file = new File(LOBsDir);
 				String avroFilePath = file.getAbsolutePath() + File.separator + "avro_" + tableName;
 				outputStream = new FileOutputStream(avroFilePath);
-				avroWriter = new DataFileWriter<Object>(new GenericDatumWriter<Object>()).setSyncInterval(100);
+				avroWriter = new DataFileWriter<Object>(new GenericDatumWriter<Object>())
+						.setSyncInterval(100);
 				avroWriter.setCodec(CodecFactory.snappyCodec());
 				avroWriter.create(SCHEMA, outputStream);
 				break;
@@ -150,10 +157,12 @@ public class DBCollParquetWriter extends AbstractFileWriter {
 		StringBuilder MD5 = new StringBuilder(1024 * 1024);
 		//列名
 		StringBuilder columns = (StringBuilder) metaDataMap.get("columns");
-		String[] columnsName = StringUtils.splitByWholeSeparatorPreserveAllTokens(columns.toString(), JobConstant.COLUMN_NAME_SEPARATOR);
+		String[] columnsName = StringUtils.splitByWholeSeparatorPreserveAllTokens(columns.toString(),
+				JobConstant.COLUMN_NAME_SEPARATOR);
 		//TODO 列类型(包括长度和精度),目前不知道写parquet文件时用到的字段类型，是否需要包含长度和精度
 		StringBuilder columnsTypeAndPreci = (StringBuilder) metaDataMap.get("columnsTypeAndPreci");
-		String[] columnsType = StringUtils.splitByWholeSeparatorPreserveAllTokens(columnsTypeAndPreci.toString(), JobConstant.COLUMN_NAME_SEPARATOR);
+		String[] columnsType = StringUtils.splitByWholeSeparatorPreserveAllTokens(
+				columnsTypeAndPreci.toString(), JobConstant.COLUMN_NAME_SEPARATOR);
 		//用于存放每一列的值
 		String currColValue = "";
 		//列数量
@@ -180,7 +189,8 @@ public class DBCollParquetWriter extends AbstractFileWriter {
 						//对LONGVARCHAR类型进行处理
 						byteArr = longvarcharToByte(characterStream);
 						//以"LOBs_表名_列号_行号_原类型_avro对象序列"存放这个值
-						currColValue = "_LOBs_" + tableName + "_" + i + "_" + lineNum + "_LONGVARCHAR_" + avroWriter.sync();
+						currColValue = "_LOBs_" + tableName + "_" + i + "_" + lineNum +
+								"_LONGVARCHAR_" + avroWriter.sync();
 						String reader2String = new String(byteArr);
 						MD5.append(reader2String);
 					} else {
@@ -193,7 +203,8 @@ public class DBCollParquetWriter extends AbstractFileWriter {
 						//对Blob类型进行处理
 						byteArr = blobToBytes(blob);
 						//以"LOBs_表名_列号_行号_原类型_avro对象序列"存放这个值
-						currColValue = "_LOBs_" + tableName + "_" + i + "_" + lineNum + "_BLOB_" + avroWriter.sync();
+						currColValue = "_LOBs_" + tableName + "_" + i + "_" +
+								lineNum + "_BLOB_" + avroWriter.sync();
 						String reader2String = new String(byteArr);
 						MD5.append(reader2String);
 					} else {
@@ -206,7 +217,8 @@ public class DBCollParquetWriter extends AbstractFileWriter {
 					if (characterStream != null) {
 						byteArr = longvarcharToByte(characterStream);
 						//以"LOBs_表名_列号_行号_原类型_avro对象序列"存放这个值
-						currColValue = "_LOBs_" + tableName + "_" + i + "_" + lineNum + "_CLOB_" + avroWriter.sync();
+						currColValue = "_LOBs_" + tableName + "_" + i + "_" +
+								lineNum + "_CLOB_" + avroWriter.sync();
 						String reader2String = new String(byteArr);
 						MD5.append(reader2String);
 					} else {
@@ -216,7 +228,8 @@ public class DBCollParquetWriter extends AbstractFileWriter {
 				} else {
 					Object colValue = rs.getObject(i);
 					if (colValue != null) {
-						if (colType == java.sql.Types.DATE || colType == java.sql.Types.TIME || colType == java.sql.Types.TIMESTAMP) {
+						if (colType == java.sql.Types.DATE || colType == java.sql.Types.TIME ||
+								colType == java.sql.Types.TIMESTAMP) {
 							//遇到日期类型，提供可配置的映射转换能力，目前先转为Timestamp
 							Date date = rs.getTimestamp(i);
 							currColValue = date.toString();
@@ -239,8 +252,11 @@ public class DBCollParquetWriter extends AbstractFileWriter {
 						currColValue = "";
 					}
 					//5-3 执行数据清洗，包括表清洗和列清洗
-					Map<String, Map<String, Object>> columnCleanRule = (Map<String, Map<String, Object>>) metaDataMap.get("columnCleanRule");
-					currColValue = ColumnCleanUtil.colDataClean(currColValue, metaData.getColumnName(i), group, columnsType[i - 1], FileFormatConstant.PARQUET.getMessage(), columnCleanRule, null);
+					Map<String, Map<String, Object>> columnCleanRule = (Map<String, Map<String, Object>>)
+							metaDataMap.get("columnCleanRule");
+					currColValue = ColumnCleanUtil.colDataClean(currColValue, metaData.getColumnName(i),
+							group, columnsType[i - 1], FileFormatConstant.PARQUET.getMessage(),
+							columnCleanRule, null);
 					//5-4 清洗后的结果追加到构建MD5的StringBuilder
 					MD5.append(currColValue);
 				}
