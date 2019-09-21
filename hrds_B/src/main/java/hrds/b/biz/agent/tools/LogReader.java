@@ -70,12 +70,10 @@ public class LogReader {
 			execCommandByJSch = SFTPChannel.execCommandByJSch(jSchSession, readShell);
 		} catch (JSchException ex) {
 			execCommandByJSch = ex.getMessage();
-			logger.debug("登录验证失败...");
-			ex.printStackTrace();//FIXME 这是在干什么？
+			logger.error("登录验证失败...", ex);
 		} catch (IOException ex) {
 			execCommandByJSch = ex.getMessage();
-			ex.printStackTrace();
-			logger.debug("读取日志文件-----\" + logPath + \"-----失败...");
+			logger.error("读取日志文件-----\" + logPath + \"-----失败...", ex);
 		} finally {
 			if (jSchSession != null) {
 				jSchSession.disconnect();

@@ -36,7 +36,8 @@ public class TbCompleteImpl extends AbstractTableClean {
 	public String complete(StringBuilder completeSB, String columnValue) {
 		//1、判断completeSB是否为空，如果不为空，表示要进行字符补齐
 		if (completeSB != null) {
-			List<String> strings = StringUtil.split(completeSB.toString(), JobConstant.CLEAN_SEPARATOR);
+			List<String> strings = StringUtil.split(completeSB.toString(),
+					JobConstant.CLEAN_SEPARATOR);
 			//2、获取补齐的长度
 			int completeLength = Integer.parseInt(strings.get(0));
 			//3、获取补齐的类型(前补齐、后补齐)

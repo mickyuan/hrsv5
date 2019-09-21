@@ -75,7 +75,8 @@ public class FileUtil {
 	public static boolean checkDirWithAllAuth(String dirPath) {
 
 		File file = new File(dirPath);
-		if (!file.getParentFile().canRead() || !file.getParentFile().canWrite() || !file.getParentFile().canExecute()) {
+		if (!file.getParentFile().canRead() || !file.getParentFile().canWrite() ||
+				!file.getParentFile().canExecute()) {
 			return false;
 		}
 
@@ -99,7 +100,8 @@ public class FileUtil {
 			@Override
 			public boolean accept(File pathname) {
 				if (pathname.isDirectory()) {
-					List<File> deep_files = FileUtil.getAllFilesByFileSuffix(pathname.getAbsolutePath(), fileSuffix);
+					List<File> deep_files = FileUtil.getAllFilesByFileSuffix(pathname.getAbsolutePath(),
+							fileSuffix);
 					file_result.addAll(deep_files);
 				} else if (pathname.isFile() && pathname.getName().endsWith(fileSuffix)) {
 					return true;
@@ -140,7 +142,8 @@ public class FileUtil {
 		if (taskID == null) {
 			return null;
 		}
-		List<File> files = getAllFilesByFileSuffix(ProductFileUtil.TASKCONF_ROOT_PATH, ProductFileUtil.TASK_FILE_SUFFIX);
+		List<File> files = getAllFilesByFileSuffix(ProductFileUtil.TASKCONF_ROOT_PATH,
+				ProductFileUtil.TASK_FILE_SUFFIX);
 		for (File file : files) {
 			String taskStr = FileUtil.readFile2String(file);
 			TaskInfo task = JSONObject.parseObject(taskStr, TaskInfo.class);

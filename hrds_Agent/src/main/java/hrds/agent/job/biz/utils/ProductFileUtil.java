@@ -34,7 +34,8 @@ public class ProductFileUtil {
 	 */
 	public static String getJobFilePath(String taskId, String jobId) {
 
-		return (ProductFileUtil.TASK_ROOT_PATH + File.separatorChar + taskId + File.separatorChar + jobId + ProductFileUtil.JOB_FILE_SUFFIX);
+		return (ProductFileUtil.TASK_ROOT_PATH + File.separatorChar + taskId +
+				File.separatorChar + jobId + ProductFileUtil.JOB_FILE_SUFFIX);
 	}
 
 	/**
@@ -47,7 +48,8 @@ public class ProductFileUtil {
 	 */
 	public static String getMetaFilePath(String taskId, String jobId) {
 
-		return (ProductFileUtil.TASK_ROOT_PATH + File.separatorChar + taskId + File.separatorChar + jobId + ProductFileUtil.META_FILE_SUFFIX);
+		return (ProductFileUtil.TASK_ROOT_PATH + File.separatorChar +
+				taskId + File.separatorChar + jobId + ProductFileUtil.META_FILE_SUFFIX);
 	}
 
 	/**
@@ -74,7 +76,8 @@ public class ProductFileUtil {
 	 */
 	public static String getTaskSignalFilePath(String taskId) {
 
-		return (ProductFileUtil.TASK_ROOT_PATH + File.separatorChar + taskId + ProductFileUtil.SIGNAL_FILE_SUFFIX);
+		return ProductFileUtil.TASK_ROOT_PATH + File.separatorChar + taskId +
+				ProductFileUtil.SIGNAL_FILE_SUFFIX;
 	}
 
 	/**
@@ -87,7 +90,8 @@ public class ProductFileUtil {
 	 */
 	public static String getDataFilePathByJobID(JobInfo job) {
 
-		return (ProductFileUtil.TASK_ROOT_PATH + File.separatorChar + job.getTaskId() + File.separatorChar + job.getJobId() + File.separatorChar + "datafile");
+		return (ProductFileUtil.TASK_ROOT_PATH + File.separatorChar + job.getTaskId() +
+				File.separatorChar + job.getJobId() + File.separatorChar + "datafile");
 	}
 
 	/**
@@ -155,7 +159,8 @@ public class ProductFileUtil {
 	 */
 	public static String getTaskConfPath(String taskId) {
 
-		return (ProductFileUtil.TASKCONF_ROOT_PATH + File.separatorChar + taskId + ProductFileUtil.TASK_FILE_SUFFIX);
+		return (ProductFileUtil.TASKCONF_ROOT_PATH + File.separatorChar + taskId +
+				ProductFileUtil.TASK_FILE_SUFFIX);
 	}
 
 	/**
@@ -168,7 +173,8 @@ public class ProductFileUtil {
 	 */
 	public static String getTaskStatusFilePath(String taskId) {
 
-		return (ProductFileUtil.TASK_ROOT_PATH + File.separatorChar + taskId + ProductFileUtil.STATUS_FILE_SUFFIX);
+		return (ProductFileUtil.TASK_ROOT_PATH + File.separatorChar + taskId +
+				ProductFileUtil.STATUS_FILE_SUFFIX);
 	}
 
 	/**
@@ -182,7 +188,8 @@ public class ProductFileUtil {
 	 */
 	public static String getJobStatusFilePath(String taskId, String jobId) {
 
-		return (ProductFileUtil.TASK_ROOT_PATH + File.separatorChar + taskId + File.separatorChar + jobId + ProductFileUtil.STATUS_FILE_SUFFIX);
+		return (ProductFileUtil.TASK_ROOT_PATH + File.separatorChar + taskId + File.separatorChar +
+				jobId + ProductFileUtil.STATUS_FILE_SUFFIX);
 	}
 
 	/**

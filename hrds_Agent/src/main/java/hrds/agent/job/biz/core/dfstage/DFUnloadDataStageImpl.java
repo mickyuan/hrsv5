@@ -50,7 +50,8 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 	 * @author 13616
 	 * @date 2019/8/7 11:49
 	 */
-	public DFUnloadDataStageImpl(String jobId, String inputFile, String tableName, List<String> columns, List<String> columnTypes, String startDate) {
+	public DFUnloadDataStageImpl(String jobId, String inputFile, String tableName, List<String> columns,
+	                             List<String> columnTypes, String startDate) {
 		this.jobId = jobId;
 		this.inputFile = inputFile;
 		this.tableName = tableName;

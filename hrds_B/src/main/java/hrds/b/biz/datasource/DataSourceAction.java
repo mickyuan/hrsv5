@@ -50,17 +50,15 @@ public class DataSourceAction extends BaseAction {
 	 * @param dataSource data_source
 	 *                   含义：data_source表实体类
 	 *                   取值范围：与数据库字段定义规则相同
-	 * @param depIds     String
-	 *                   含义：source_relation_dep表主键ID
-	 *                   取值范围：可能是一个部门ID字符串， 也可能是通过分隔符拼接成的部门ID的字符串
+	 * @param depIds     String[]
+	 *                   含义：存储source_relation_dep表主键ID的数组
+	 *                   取值范围：不为空以及不为空格
 	 */
-	public void saveDataSource(@RequestBean Data_source dataSource, String depIds) {
+	public void saveDataSource(@RequestBean Data_source dataSource, String[] depIds) {
 		// 1.数据可访问权限处理方式，新增时会设置创建用户ID，会获取当前用户ID，所以不需要权限验证
-		String[] split = depIds.split(",");
 		// 2.字段做合法性检查
-		// 分隔depIds获得存储source_relation_dep主键dep_id的数组
 		fieldLegalityValidation(dataSource.getDatasource_name(), dataSource.getDatasource_number(),
-				split);
+				depIds);
 		// 3.对data_source初始化一些非页面传值
 		// 数据源主键ID
 		dataSource.setSource_id(PrimayKeyGener.getNextId());
@@ -76,7 +74,7 @@ public class DataSourceAction extends BaseAction {
 					dataSource.getDatasource_number());
 		}
 		// 5.保存source_relation_dep表信息
-		saveSourceRelationDep(dataSource.getSource_id(), split);
+		saveSourceRelationDep(dataSource.getSource_id(), depIds);
 	}
 
 	/**
@@ -107,11 +105,11 @@ public class DataSourceAction extends BaseAction {
 	 *                          取值范围：可能是一个部门ID字符串， 也可能是通过分隔符拼接成的部门ID的字符串
 	 */
 	public void updateDataSource(long source_id, String datasource_remark, String datasource_name,
-	                             String datasource_number, String depIds) {
+	                             String datasource_number, String[] depIds) {
 		// 1.数据可访问权限处理方式，通过source_id与user_id关联检查
-		if (Dbo.queryNumber("select count(*) from " + Data_source.TableName +
+		if (Dbo.queryNumber("select count(1) from " + Data_source.TableName +
 				"where source_id=? and  create_user_id=?", source_id, getUserId())
-				.orElse(0) > 0) {
+				.getAsLong() > 0) {
 			throw new BusinessException("数据权限校验失败，数据不可访问！");
 		}
 		//source_id长度
@@ -122,9 +120,7 @@ public class DataSourceAction extends BaseAction {
 					+ source_id);
 		}
 		// 3.字段合法性检查
-		// 分隔depIds获得存储source_relation_dep主键dep_id的数组
-		String[] split = depIds.split(",");
-		fieldLegalityValidation(datasource_name, datasource_number, split);
+		fieldLegalityValidation(datasource_name, datasource_number, depIds);
 		// 4.将data_source实体数据封装
 		Data_source dataSource = new Data_source();
 		dataSource.setSource_id(source_id);
@@ -144,7 +140,7 @@ public class DataSourceAction extends BaseAction {
 					"source_id=" + dataSource.getSource_id());
 		}
 		// 7.保存source_relation_dep表信息
-		saveSourceRelationDep(source_id, split);
+		saveSourceRelationDep(source_id, depIds);
 	}
 
 	/**
@@ -162,15 +158,15 @@ public class DataSourceAction extends BaseAction {
 	 * @param datasource_number String
 	 *                          含义：数据源编号
 	 *                          取值范围：不为空以及不为空格，长度不超过4
-	 * @param split             String[]
+	 * @param depIds            String[]
 	 *                          含义：存储source_relation_dep主键ID(dep_id)的数组
 	 *                          取值范围：不为空
 	 */
 	private void fieldLegalityValidation(String datasource_name, String datasource_number,
-	                                     String[] split) {
-		// 1.数据可访问权限处理方式，这是个私有方法，不会单独被调用，所以不需要权限验证
+	                                     String[] depIds) {
+		// 1.数据可访问权限处理方式，通过create_user_id检查
 		// 2.循环遍历获取source_relation_dep主键ID，验证dep_id合法性
-		for (String dep_id : split) {
+		for (String dep_id : depIds) {
 			if (StringUtil.isBlank(dep_id)) {
 				throw new BusinessException("部门不能为空以及空格，dep_id=" + dep_id);
 			}
@@ -189,14 +185,10 @@ public class DataSourceAction extends BaseAction {
 					"datasource_number=" + datasource_number);
 		}
 		// 5.更新前查询数据源编号是否已存在
-		long count = Dbo.queryNumber("select count(1) from " + Data_source.TableName + "  where " +
-				"datasource_number=?", datasource_number).orElse(-1);
-		// 判断查询结果是否为预期数据
-		if (count == -1) {
-			throw new BusinessException("查询到的数据是非法数据，不是预期结果");
-		}
-		// 判断数据源编号是否重复
-		if (count > 0) {
+		if (Dbo.queryNumber("select count(1) from " + Data_source.TableName + "  where " +
+						"datasource_number=? and create_user_id=?", datasource_number
+				, getUserId()).getAsLong() > 0) {
+			// 判断数据源编号是否重复
 			throw new BusinessException("数据源编号重复,datasource_number=" +
 					datasource_number);
 		}
@@ -257,7 +249,7 @@ public class DataSourceAction extends BaseAction {
 		// 2.关联查询data_source表与source_relation_dep表信息
 		return Dbo.queryList("select ds.*,srd.dep_id from data_source ds " +
 				" join source_relation_dep srd on ds.source_id=srd.source_id " +
-				"  where ds.source_id = ? and ds.create_user_id=?", source_id, getUserId());
+				"  where ds.source_id = ? and ds.create_user_id=?", source_id, 5555L);
 	}
 
 	/**
@@ -277,14 +269,15 @@ public class DataSourceAction extends BaseAction {
 
 		// 1.数据可访问权限处理方式，以下SQL关联source_id与user_id检查
 		// 2.先查询该datasource下是否还有agent
-		if (Dbo.queryNumber("SELECT count(*) FROM agent_info  WHERE source_id=?" +
-				" and create_user_id=?", source_id, getUserId()).orElse(-1) > 0) {
+		// 获取登录用户ID
+		Long userId = getUserId();
+		if (Dbo.queryNumber("SELECT count(1) FROM agent_info  WHERE source_id=?" +
+				" and user_id=?", source_id, userId).getAsLong() > 0) {
 			throw new BusinessException("此数据源下还有agent，不能删除,source_id=" + source_id);
 		}
-
 		// 3.删除data_source表信息
 		int num = Dbo.execute("delete from " + Data_source.TableName +
-				" where source_id=? and create_user_id=?", source_id, getUserId());
+				" where source_id=? and create_user_id=?", source_id, userId);
 		if (num != 1) {
 			// 4.判断库里是否没有这条数据
 			if (num == 0) {
@@ -295,7 +288,8 @@ public class DataSourceAction extends BaseAction {
 		}
 		// 5.删除source_relation_dep信息
 		int srdNum = Dbo.execute("delete from " + Source_relation_dep.TableName +
-				" where source_id=?  and create_user_id=?", source_id, getUserId());
+				" srd join " + Data_source.TableName + " ds  on srd.source_id=ds.source_id " +
+				" where source_id=? and create_user_id=", source_id, userId);
 		if (srdNum < 1) {
 			if (srdNum == 0) {
 				throw new BusinessException("删除source_relation_dep失败，数据库里没有此条数据，"
@@ -355,7 +349,7 @@ public class DataSourceAction extends BaseAction {
 			int len = 0;
 			StringBuilder sb = new StringBuilder();
 			// 6.把bis里的东西读到bytes数组里去
-			while ((len = bis.read(bytes)) != -1) {
+			while ((len = bis.read(bytes)) != 0) {
 				// 7.循环读取写入，将读取的字节转为字符串对象
 				sb.append((new String(bytes, 0, len, CodecUtil.UTF8_CHARSET)));
 			}
@@ -413,8 +407,8 @@ public class DataSourceAction extends BaseAction {
 				Data_source data_source = JsonUtil.toObject(entry.getValue().toString(),
 						Data_source.class);
 				// 判断上传文件的数据源名称和已有的名称是否重复
-				if (Dbo.queryNumber("select * from data_source where datasource_name = ?",
-						data_source.getDatasource_name()).orElse(-1) > 0) {
+				if (Dbo.queryNumber("select count(1) from data_source where datasource_name = ?",
+						data_source.getDatasource_name()).getAsLong() > 0) {
 					throw new BusinessException("数据源名称重复,datasource_name=" +
 							data_source.getDatasource_name());
 				}

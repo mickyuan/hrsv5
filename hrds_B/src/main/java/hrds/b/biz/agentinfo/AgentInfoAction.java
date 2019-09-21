@@ -86,27 +86,20 @@ public class AgentInfoAction extends BaseAction {
 	 *                   取值范围：1024-65535
 	 */
 	private void check(long source_id, String agent_type, String agent_ip, String agent_port) {
-		// 1.验证数据源是否还存在
-		long count = Dbo.queryNumber("select * from data_source where source_id = ? and "
-				+ " create_user_id=?", source_id, getUserId()).orElse(-1);
-		if (count == -1) {
-			throw new BusinessException("查询到的数据是非法数据，不是预期结果");
-		}
-		if (count == 0) {
+		// 1.验证数据源是否还存在,查到至少一条数据，查不到为0
+		if (Dbo.queryNumber("select count(1) from data_source where source_id = ? and "
+				+ " create_user_id=?", source_id, getUserId()).getAsLong() > 0) {
 			throw new BusinessException("该agent对应的数据源已不存在不可新增，source_id=" + source_id);
 		}
-		// 2.判断数据源下相同的IP地址中是否包含相同的端口
-		long aiCount = Dbo.queryNumber("SELECT count(1) count FROM agent_info WHERE " +
+		// 2.判断数据源下相同的IP地址中是否包含相同的端口,查到至少一条数据，查不到为0
+		if (Dbo.queryNumber("SELECT count(1) count FROM agent_info WHERE " +
 						"source_id = ? AND agent_type = ? AND agent_ip = ? AND" +
 						" agent_port = ?  and user_id", source_id, agent_type, agent_ip,
-				agent_port).orElse(-1);
-		if (aiCount == -1) {
-			throw new BusinessException("查询到的数据是非法数据，不是预期结果");
-		}
-		if (aiCount == 0) {
+				agent_port).getAsLong() > 0) {
 			throw new BusinessException("该agent对应的数据源下相同的IP地址中是否包含相同的端口，" +
 					"source_id=" + source_id);
 		}
+
 	}
 
 	/**
@@ -230,9 +223,9 @@ public class AgentInfoAction extends BaseAction {
 	public void updateAgent(long agent_id, String agent_name, String agent_type, String agent_ip
 			, String agent_port, long source_id, long user_id) {
 		// 1.数据可访问权限处理方式，通过关联agent_id与user_id检查
-		if (Dbo.queryNumber("select count(*) from " + Agent_info.TableName +
+		if (Dbo.queryNumber("select count(1) from " + Agent_info.TableName +
 				"  where agent_id=? and  create_user_id=?", agent_id, getUserId())
-				.orElse(0) > 0) {
+				.getAsLong() > 0) {
 			throw new BusinessException("数据权限校验失败，数据不可访问！");
 		}
 		//agent_id长度
@@ -266,7 +259,8 @@ public class AgentInfoAction extends BaseAction {
 	/**
 	 * 监控agent端口是否被占用（后期移动到hrds-commons下）
 	 * <p>
-	 * 1.通过http方式去测试端口连通情况，测通则被占用，不通则可以使用
+	 * 1.数据可访问权限处理方式，这是一个私有方法，不会单独被调用，所以这里不需要做权限验证
+	 * 2.通过http方式去测试端口连通情况，测通则被占用，不通则可以使用
 	 *
 	 * @param agent_ip   String
 	 *                   含义： agent地址
@@ -277,12 +271,10 @@ public class AgentInfoAction extends BaseAction {
 	 * @return 返回端口是否被占用信号
 	 */
 	private boolean isPortOccupied(String agent_ip, int agent_port) {
-
-		// 1.通过http方式去测试端口连通情况，测通则被占用，不通则可以使用
-		HttpClient httpClient = new HttpClient();
+		// 1.数据可访问权限处理方式，这是一个私有方法，不会单独被调用，所以这里不需要做权限验证
+		// 2.通过http方式去测试端口连通情况，测通则被占用，不通则可以使用
 		String url = "http://".concat(agent_ip).concat(":").concat(agent_port + "");
-		HttpClient.ResponseValue post = httpClient.post(url);
-
+		HttpClient.ResponseValue post = new HttpClient().post(url);
 		if (post.getCode() != 200) {
 			// 未连通，端口可用
 			return false;
@@ -295,7 +287,8 @@ public class AgentInfoAction extends BaseAction {
 	/**
 	 * 查询Agent信息
 	 * <p>
-	 * 1.根据agent_id与agent_type查询该agent信息
+	 * 1.数据可访问权限处理方式，通过agent_id,agent_type，user_id关联检查
+	 * 2.根据agent_id与agent_type查询该agent信息
 	 *
 	 * @param agent_id   long
 	 *                   含义：agent_info表主键
@@ -306,17 +299,20 @@ public class AgentInfoAction extends BaseAction {
 	 * @return 返回根据agent_id与agent_type查询该agent信息结果
 	 */
 	public List<Map<String, Object>> searchAgent(long agent_id, String agent_type) {
-		// 1.根据agent_id与agent_type查询该agent信息
-		return Dbo.queryList(" SELECT * FROM agent_info WHERE agent_id = ? AND agent_type = ?",
-				agent_id, agent_type);
+		// 1.数据可访问权限处理方式，通过agent_id,agent_type，user_id关联检查
+		// 2.根据agent_id与agent_type查询该agent信息
+		return Dbo.queryList(" SELECT * FROM agent_info WHERE agent_id = ? AND" +
+				" agent_type = ? and user_id=?", agent_id, agent_type, getUserId());
 	}
 
 	/**
 	 * 删除agent
 	 * <p>
-	 * 1.删除前查询此agent是否已部署，已部署不能删除
-	 * 2.判断此数据源与agent下是否有任务，有任务不能删除
-	 * 3.删除agent
+	 * 1.数据可访问权限处理方式，以下SQL关联user_id检查
+	 * 2.删除前查询此agent是否已部署，已部署不能删除
+	 * 3.判断此数据源与agent下是否有任务，有任务不能删除
+	 * 4.删除agent
+	 * 5.判断库里是否没有这条数据
 	 *
 	 * @param agent_id   long
 	 *                   含义：agent_info表主键
@@ -326,27 +322,25 @@ public class AgentInfoAction extends BaseAction {
 	 *                   取值范围：1:数据库Agent,2:文件系统Agent,3:FtpAgent,4:数据文件Agent,5:对象Agent
 	 */
 	public void deleteAgent(Long agent_id, String agent_type) {
-
-		//FIXME 这个结果是 -1 ，不用处理了吗？
-
-		// 1.删除前查询此agent是否已部署
-		if (Dbo.queryNumber("select * from agent_down_info where agent_id=?",
-				agent_id).orElse(-1) > 0) {
+		// 1.数据可访问权限处理方式，以下SQL关联user_id检查
+		// 2.删除前查询此agent是否已部署
+		if (Dbo.queryNumber("select count(1) from agent_down_info where agent_id=? and " +
+				"user_id=?", agent_id, getUserId()).getAsLong() > 0) {
 			// 此agent已部署不能删除
 			throw new BusinessException("此agent已部署不能删除");
 		}
-		// 2.判断此数据源与agent下是否有任务
-		if (Dbo.queryNumber(" SELECT task_name FROM agent_info t1 join database_set t2 on " +
-						"t1.agent_id=t2.agent_id WHERE  t1.agent_id=? and  t1.agent_type=?",
-				agent_id, agent_type).orElse(-1) > 0) {
+		// 3.判断此数据源与agent下是否有任务
+		if (Dbo.queryNumber(" SELECT count(1) FROM agent_info t1 join " +
+				" database_set t2 on t1.agent_id=t2.agent_id WHERE  t1.agent_id=?" +
+				" and  t1.agent_type=? and user_id", agent_id, agent_type).getAsLong() > 0) {
 			// 此数据源与agent下有任务，不能删除
 			throw new BusinessException("此数据源与agent下有任务，不能删除");
 		}
-
-		// 3.删除agent
-		int num = Dbo.execute("delete  from agent_info where agent_id=?", agent_id);
+		// 4.删除agent
+		int num = Dbo.execute("delete  from agent_info where agent_id=? and user_id=?",
+				agent_id, getUserId());
 		if (num != 1) {
-			// 3.判断库里是否没有这条数据
+			// 5.判断库里是否没有这条数据
 			if (num == 0) {
 				throw new BusinessException("删除agent_info表信息失败，数据库里没有此条数据，" +
 						"agent_id=" + agent_id + ",agent_type=" + agent_type);

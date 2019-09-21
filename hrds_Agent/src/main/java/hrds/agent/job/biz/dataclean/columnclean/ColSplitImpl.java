@@ -47,7 +47,8 @@ public class ColSplitImpl extends AbstractColumnClean {
 	 *      2-4、
 	 */
 	@Override
-	public String split(List<ColumnSplitBean> ruleList, String columnValue, String columnName, Group group, String colType, String fileType, List<Object> lineData) {
+	public String split(List<ColumnSplitBean> ruleList, String columnValue, String columnName,
+	                    Group group, String colType, String fileType, List<Object> lineData) {
 		if ((ruleList != null && !ruleList.isEmpty()) && group != null) {
 			StringBuilder oriAndNewField = new StringBuilder(4096);
 			//目前的操作是在拆分的同时保留原字段，下面代码的就是做这件事
@@ -85,7 +86,8 @@ public class ColSplitImpl extends AbstractColumnClean {
 						int end = Integer.parseInt(split[1]);
 						substr = columnValue.substring(start, end);
 					} else {
-						int num = StringUtil.isEmpty(StringOperator.getString(columnSplitBean.getSeq())) ? 0 : Integer.parseInt(columnSplitBean.getSeq().toString());
+						int num = StringUtil.isEmpty(StringOperator.getString(columnSplitBean.getSeq())) ?
+								0 : Integer.parseInt(columnSplitBean.getSeq().toString());
 						List<String> splitInNull = StringUtil.split(columnValue, columnSplitBean.getSplitSep());
 						substr = splitInNull.get(num);
 					}
@@ -96,18 +98,21 @@ public class ColSplitImpl extends AbstractColumnClean {
 							oriAndNewField.append(substr);
 						}
 					} else if (fileType.equalsIgnoreCase(FileFormatConstant.PARQUET.getMessage())) {
-						ParquetUtil.addData2Group(group, newColName.toUpperCase(), columnSplitBean.getColType(), substr);
+						ParquetUtil.addData2Group(group, newColName.toUpperCase(),
+								columnSplitBean.getColType(), substr);
 					} else if (fileType.equalsIgnoreCase(FileFormatConstant.ORCFILE.getMessage())) {
 						//未实现
 					} else {
 						//未实现
 					}
 				}
-				if (fileType.equalsIgnoreCase(FileFormatConstant.CSV.getMessage()) || fileType.equalsIgnoreCase(FileFormatConstant.SEQUENCEFILE.getMessage())) {
+				if (fileType.equalsIgnoreCase(FileFormatConstant.CSV.getMessage()) ||
+						fileType.equalsIgnoreCase(FileFormatConstant.SEQUENCEFILE.getMessage())) {
 					oriAndNewField.append(JobConstant.COLUMN_NAME_SEPARATOR);
 				}
 			}
-			if (fileType.equalsIgnoreCase(FileFormatConstant.CSV.getMessage()) || fileType.equalsIgnoreCase(FileFormatConstant.SEQUENCEFILE.getMessage())) {
+			if (fileType.equalsIgnoreCase(FileFormatConstant.CSV.getMessage()) ||
+					fileType.equalsIgnoreCase(FileFormatConstant.SEQUENCEFILE.getMessage())) {
 				//FIXME 这里的处理有问题
 				oriAndNewField = oriAndNewField.deleteCharAt(oriAndNewField.length() - 1);
 			}

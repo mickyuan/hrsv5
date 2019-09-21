@@ -52,5 +52,6 @@ public interface TableCleanInterface {
 	* @Author: WangZhengcheng
 	* @Date: 2019/9/11
 	*/
-	String merge(Map<String, String> mergeRule, String[] columnsValue, String[] columnsName, Group group, List<Object> lineData, String fileType);
+	String merge(Map<String, String> mergeRule, String[] columnsValue,
+	             String[] columnsName, Group group, List<Object> lineData, String fileType);
 }

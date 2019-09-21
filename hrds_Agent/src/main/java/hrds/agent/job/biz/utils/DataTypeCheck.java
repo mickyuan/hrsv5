@@ -21,7 +21,11 @@ public class DataTypeCheck {
 
 	public static boolean checkType(String str) {
 		str = str.toLowerCase();
-		return str.indexOf("int") > -1 || str.indexOf("integer") > -1 || str.indexOf("smallint") > -1 || str.indexOf("tinyint") > -1 || str.indexOf("bigint") > -1 || str.indexOf("real") > -1 || str.indexOf("float") > -1 || str.indexOf("decimal") > -1 || str.indexOf("number") > -1 || str.indexOf("numeric") > -1 || str.indexOf("date") > -1;
+		return str.indexOf("int") > -1 || str.indexOf("integer") > -1 ||
+				str.indexOf("smallint") > -1 || str.indexOf("tinyint") > -1 ||
+				str.indexOf("bigint") > -1 || str.indexOf("real") > -1 ||
+				str.indexOf("float") > -1 || str.indexOf("decimal") > -1 ||
+				str.indexOf("number") > -1 || str.indexOf("numeric") > -1 || str.indexOf("date") > -1;
 	}
 
 }

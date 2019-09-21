@@ -74,7 +74,8 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 	 * 7、获得结果,用于校验多线程采集的结果和写Meta文件
 	*/
 	@Override
-	public StageStatusInfo handleStage() throws InterruptedException, ExecutionException, SQLException {
+	public StageStatusInfo handleStage()
+			throws InterruptedException, ExecutionException, SQLException {
 		LOGGER.info("------------------数据库直连采集卸数阶段开始------------------");
 		//1、创建卸数阶段状态信息，更新作业ID,阶段名，阶段开始时间
 		StageStatusInfo statusInfo = new StageStatusInfo();
@@ -93,13 +94,15 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 		Set<String> collectColumnNames = JobUtil.getCollectColumnName(columnList);
 		//3、根据列名和表名获得采集SQL
 		// TODO 缺少支持自定义SQL
-		String collectSQL = SQLUtil.getCollectSQL(tableName, collectColumnNames, dbInfo.getDatabase_type());
+		String collectSQL = SQLUtil.getCollectSQL(tableName, collectColumnNames,
+				dbInfo.getDatabase_type());
 		//获得用户提供的用于分页的列
 		String pageColumn = jobInfo.getPageColumn();
 		//4、使用工厂模式获得数据库方言策略
 		DialectStrategyFactory factory = DialectStrategyFactory.getInstance();
-		DataBaseDialectStrategy strategy = factory.createDialectStrategy(dbInfo.getDatabase_type());
-				//fileResult中是生成的所有数据文件的路径，用于判断卸数阶段结果
+		DataBaseDialectStrategy strategy =
+				factory.createDialectStrategy(dbInfo.getDatabase_type());
+		//fileResult中是生成的所有数据文件的路径，用于判断卸数阶段结果
 		List<String> fileResult = new ArrayList<>();
 		//RSResult中是所有分页查询得到的ResultSet，用于写meta文件
 		List<ResultSet> RSResult = new ArrayList<>();
@@ -121,14 +124,16 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 				int start = (i * pageRow) + 1;
 				int end = (i + 1) * pageRow;
 				//传入i(分页页码)，pageRow(每页的数据量)，用于写avro时的行号
-				CollectPage page = new CollectPage(this.jobInfo, this.dbInfo, strategy, collectSQL, pageColumn, start, end, i, pageRow);
+				CollectPage page = new CollectPage(this.jobInfo, this.dbInfo, strategy, collectSQL,
+						pageColumn, start, end, i, pageRow);
 				Future<Map<String, Object>> future = executorService.submit(page);
 				futures.add(future);
 			}
 			int lastPageStart = (pageRow * threadCount) + 1;
 			//最后一个线程的最大条数设为Integer.MAX_VALUE
 			int lastPageEnd = Integer.MAX_VALUE;
-			CollectPage lastPage = new CollectPage(this.jobInfo, this.dbInfo, strategy, collectSQL, pageColumn, lastPageStart, lastPageEnd, threadCount + 1, pageRow);
+			CollectPage lastPage = new CollectPage(this.jobInfo, this.dbInfo, strategy, collectSQL,
+					pageColumn, lastPageStart, lastPageEnd, threadCount + 1, pageRow);
 			Future<Map<String, Object>> lastFuture = executorService.submit(lastPage);
 			futures.add(lastFuture);
 			//关闭线程池
@@ -147,7 +152,8 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 		//获得列类型
 		ResultSetMetaData metaData = RSResult.get(0).getMetaData();
 		for (int i = 1; i <= metaData.getColumnCount(); i++) {
-			String columnType = getColumnType(metaData.getColumnTypeName(i), metaData.getPrecision(i));
+			String columnType = getColumnType(metaData.getColumnTypeName(i),
+					metaData.getPrecision(i));
 			columnTypes.add(columnType);
 		}
 		//获得本次采集总数据量
