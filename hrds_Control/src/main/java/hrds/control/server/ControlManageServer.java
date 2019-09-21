@@ -34,6 +34,7 @@ public class ControlManageServer {
 	public ControlManageServer(String strSystemCode, LocalDate bathDate, boolean isResumeRun, boolean isAutoShift) {
 
 		taskManager = TaskManager.newInstance(strSystemCode, bathDate, isResumeRun, isAutoShift);
+		//FIXME 上面方法里面干了很多事情，都拿出来，在这里按顺序这个调用
 		taskManager.initEtlSystem();
 	}
 

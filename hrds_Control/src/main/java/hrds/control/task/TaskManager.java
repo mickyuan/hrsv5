@@ -44,6 +44,7 @@ public class TaskManager {
 	public static final int MINPRIORITY = 1;    //作业的最小优先级
 	public static final int DEFAULT_PRIORITY = 5;  //默认作业优先级
 
+	//FIXME 以下每个map的key和value都要详细说明
 	//调度作业定义表
 	private static final Map<String, EtlJobDefBean> jobDefineMap = new HashMap<>();
 	//调度作业的时间依赖表
@@ -63,7 +64,7 @@ public class TaskManager {
 	private final TaskJobHandleHelper handleHelper;
 
 	private LocalDate bathDate;   //当前批次日期
-	private final String etlSysCd;  //调度系统编号
+	private final String etlSysCd;  //调度系统编号 //FIXME 改名：etlSysCode 并且说明值是来自什么。这些变量都要说明
 	private final boolean isResumeRun;  //系统续跑标识
 	private final boolean isAutoShift;  //自动日切标识
 	private final boolean isNeedSendSMS;    //作业发送警告信息标识
@@ -97,7 +98,7 @@ public class TaskManager {
 	 */
 	public static TaskManager newInstance(String strSystemCode, LocalDate bathDate,
 	                                      boolean isResumeRun, boolean isAutoShift) {
-
+//FIXME 为什么要搞这么个方法，直接new不就完了吗
 		return new TaskManager(strSystemCode, bathDate, isResumeRun, isAutoShift);
 	}
 
@@ -122,6 +123,7 @@ public class TaskManager {
 
 		this.isNeedSendSMS = ControlConfigure.NotifyConfig.isNeedSendSMS;
 
+		//FIXME 为什么这么搞？把未完成的this传给别人再返回给自己，这是搞什么？这个方法里面干的事情，拿出去按逻辑顺序调用
 		this.handleHelper = TaskJobHandleHelper.newInstance(this);
 	}
 
@@ -146,6 +148,8 @@ public class TaskManager {
 			String resourceType = resource.getResource_type();
 			int maxCount = resource.getResource_max();
 			int usedCount = 0;
+			//FIXME 为什么要新搞一个，用已有的不行吗？
+			// 而且，为什么需要这个循环，用 getEtlSystemResources 直接返回 sysResourceMap 不就行了吗
 			Etl_resource newResource = new Etl_resource();
 			newResource.setResource_type(resourceType);
 			newResource.setResource_max(maxCount);
@@ -603,6 +607,10 @@ public class TaskManager {
 				job.setToday_disp(Today_Dispatch_Flag.YES.getCode());
 				//计算调度作业的下一批次作业日期
 				executeJob.setStrNextDate(TaskJobHelper.getNextExecuteDate(bathDate, strDispFreq));
+				//FIXME 这个表主键是两个，这里用其中一个做key，要说明为什么可行。
+				// 另外：
+				// getEtl_job 要把表里该字段名字改为 etl_job_id，且该表的字段前缀etl是否可以删除。
+				// 两个后缀是sys_cd的字段，改名字为sys_code
 				executeJobMap.put(executeJob.getEtl_job(), executeJob);
 			}else {
 				job.setToday_disp(Today_Dispatch_Flag.NO.getCode());
@@ -943,6 +951,7 @@ public class TaskManager {
 
 		//TODO 因为jdk8的withDayOfMonth等方法不支持nDispOffset为负数，
 		// 也没找到解决办法，暂无法换成jdk8新日期时间的使用方法
+		//FIXME 这是要达到什么目的？原版是怎么做的？
 		ZoneId zoneId = ZoneId.systemDefault();
 		ZonedDateTime zdt = currDate.atStartOfDay(zoneId);
 		Calendar cal = Calendar.getInstance();
@@ -953,6 +962,7 @@ public class TaskManager {
 		 * 二、若该作业为每月、每周、每年调度，则根据偏移量计算该作业是否需要马上调度；
 		 * 三、若该作业为频率调度，则根据该作业的开始执行时间计算该作业是否需要马上调度。
 		 */
+		//FIXME 下面每段if都要注释说明在干什么
 		if(frequancy.endsWith(Dispatch_Frequency.DAILY.getCode())) {
 			return true;
 		}else if(frequancy.equals(Dispatch_Frequency.MONTHLY.getCode())) {
@@ -1034,16 +1044,18 @@ public class TaskManager {
 				waitJobInfo.getStrBathDate());
 		etlJobCur.setJob_disp_status(Job_Status.DONE.getCode());
 		etlJobCur.setJob_return_val(0);
+		//FIXME curr_end_time为什么是毫秒？ 为什么不用fd里面的DataUtil？
 		etlJobCur.setCurr_end_time(String.valueOf(DateUtil.getNowDateTime2Milli()));
 		//2、将Etl_job_cur对象复制成Etl_job_disp_his对象；
 		Etl_job_disp_his etlJobDispHis = new Etl_job_disp_his();
 		try {
+			//FIXME 死循环里，不允许用这种耗时操作。用set进行逐个明确赋值！另外，为什么要赋值到his对象？
 			BeanUtils.copyProperties(etlJobDispHis, etlJobCur);
 		} catch (IllegalAccessException | InvocationTargetException e) {
 			throw new AppSystemException("将Etl_job_def转换为Etl_job发生异常：" + e.getMessage());
 		}
 		//3、使用Etl_job_disp_his对象更新etl_job_disp_his表；
-		TaskSqlHelper.insertIntoEtlJobDispHis(etlJobDispHis);
+		TaskSqlHelper.insertIntoEtlJobDispHis(etlJobDispHis); //FIXME 为什么不用etlJobCur。这两个对象明明一样
 		//4、使用Etl_job_cur对象更新etl_job_cur表；
 		TaskSqlHelper.updateEtlJobFinished(etlJobCur);
 		//5、根据调度作业标识、当前跑批日期，更新已经结束的作业信息。
@@ -2001,6 +2013,7 @@ public class TaskManager {
 					//TODO 为什么设置为true马上又设置为false
 					isLock = true;
 					List<WaitFileJobInfo> jobList = new ArrayList<>(waitFileJobList);
+					//FIXME 为什么不用waitFileJobList来初始化checkList？
 					List<WaitFileJobInfo> checkList = new ArrayList<>(jobList);
 					List<WaitFileJobInfo> finishedJobList = new ArrayList<>();
 					for (WaitFileJobInfo jobInfo : checkList) {
