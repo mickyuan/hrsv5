@@ -7,7 +7,7 @@ import java.time.format.DateTimeFormatter;
 
 /**
  * @ClassName: DateUtil
- * @Description:
+ * @Description: 日期时间处理工具类
  * @Author: Tiger.Wang
  * @Date: 2019/8/30 11:41
  **/

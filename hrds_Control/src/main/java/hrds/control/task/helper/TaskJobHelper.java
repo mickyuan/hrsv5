@@ -115,20 +115,19 @@ public class TaskJobHelper {
                     char x = strs.charAt(0);
                     if( "#".equals(String.valueOf(x)) ) {
                         LocalDate date = LocalDate.parse(currBathDate, DateUtil.DATE);
-                        String p = strs.toLowerCase();
-                        //TODO 此处的SQL为：select para_cd from etl_para where para_cd=#{_parameter}，有何意义
-//                        String p = processMapper.queryPara(strs.toLowerCase());
-                        if( "#txdate".equals(p) ) {
+
+                        String paraCd = TaskSqlHelper.getParaByPara(strs.toLowerCase()).getPara_cd();
+                        if( "#txdate".equals(paraCd) ) {
                             arr[i] = arr[i].replace("#{txdate}", date.format(DateUtil.DATE_DEFAULT));
                         }
-                        if( "#date".equals(p) ) {
+                        if( "#date".equals(paraCd) ) {
                             arr[i] = arr[i].replace("#{date}", date.format(DateUtil.DATE_DEFAULT));
                         }
-                        if( "#txdate_pre".equals(p) ) {
+                        if( "#txdate_pre".equals(paraCd) ) {
                             arr[i] = arr[i].replace("#{txdate_pre}",
                                     date.plus(-1, ChronoUnit.DAYS).format(DateUtil.DATE_DEFAULT));
                         }
-                        if( "#txdate_next".equals(p) ) {
+                        if( "#txdate_next".equals(paraCd) ) {
                             arr[i] = arr[i].replace("#{txdate_next}",
                                     date.plus(1, ChronoUnit.DAYS).format(DateUtil.DATE_DEFAULT));
                         }

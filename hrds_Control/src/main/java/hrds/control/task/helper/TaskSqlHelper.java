@@ -18,9 +18,9 @@ import hrds.control.beans.EtlJobDefBean;
  * Since: JDK 1.8
  **/
 public class TaskSqlHelper {
-	
-	private static final DatabaseWrapper db = new DatabaseWrapper();
 
+//	private static DatabaseWrapper db = new DatabaseWrapper();
+	
 	private TaskSqlHelper() {}
 
 	/**
@@ -29,7 +29,9 @@ public class TaskSqlHelper {
 	 * @date 2019/9/16
 	 * @return fd.ng.db.jdbc.DatabaseWrapper
 	 */
-	private static DatabaseWrapper getDbConnector() { return db; }
+	private static DatabaseWrapper getDbConnector() {
+		return new DatabaseWrapper();
+	}
 
 	/**
 	 * 根据调度系统编号获取调度系统信息。注意，该方法若无法查询到数据，则抛出AppSystemException异常。
@@ -70,7 +72,7 @@ public class TaskSqlHelper {
 					etlSysCd, etlJob);
 			//TODO 为作业配置资源后才认为该作业有效，否则报错
 			if(null == jobNeedResources || jobNeedResources.size() == 0) {
-				throw new AppSystemException("根据调度系统编号、调度作业名获取到该作业需要的资源" + etlJob);
+				throw new AppSystemException("根据调度系统编号、调度作业名获取不到该作业需要的资源 " + etlJob);
 			}
 
 			return jobNeedResources;
@@ -217,7 +219,7 @@ public class TaskSqlHelper {
 					Main_Server_Sync.YES.getCode(), strBathDate, runStatus, etlSysCd);
 
 			if(num != 1) {
-				throw new AppSystemException("根据调度系统编号修改调度系统运行状态及当前跑批日期失败" + etlSysCd);
+				throw new AppSystemException("根据调度系统编号修改调度系统运行状态及当前跑批日期失败 " + etlSysCd);
 			}
 
 			SqlOperator.commitTransaction(db);
@@ -225,7 +227,8 @@ public class TaskSqlHelper {
 	}
 
 	/**
-	 * 根据调度系统编号、当前批量日期删除作业信息。注意，该方法不会删除作业类型为T+0且按频率调度的作业。
+	 * 根据调度系统编号、当前批量日期删除作业信息。
+	 * 注意，该方法在系统运行中使用，不会删除作业类型为T+0且按频率调度的作业。
 	 * @author Tiger.Wang
 	 * @date 2019/9/3
 	 * @param etlSysCd	调度系统编号
@@ -234,8 +237,7 @@ public class TaskSqlHelper {
 	public static void deleteEtlJobByBathDate(String etlSysCd, String currBathDate) {
 
 		try(DatabaseWrapper db = TaskSqlHelper.getDbConnector()) {
-			//TODO 此处较原版改动：不再判断frequnecy来决定是否删除作业类型为T+0且按频率调度的作业，
-			// 因为该类型作业在整体流程逻辑上来说永远都不会删除
+
 			SqlOperator.execute(db, "DELETE FROM etl_job_cur WHERE etl_sys_cd = ? " +
 							"AND curr_bath_date = ? AND disp_type != ? AND disp_freq != ?",
 					etlSysCd, currBathDate, Dispatch_Type.TPLUS0.getCode(), Dispatch_Frequency.PinLv.getCode());
@@ -245,7 +247,7 @@ public class TaskSqlHelper {
 	}
 
 	/**
-	 * 根据调度系统编号删除作业信息。
+	 * 根据调度系统编号删除作业信息。注意，该方法在系统第一次运行的时候使用。
 	 * @author Tiger.Wang
 	 * @date 2019/9/4
 	 * @param etlSysCd	作业编号
@@ -253,8 +255,7 @@ public class TaskSqlHelper {
 	public static void deleteEtlJobBySysCode(String etlSysCd) {
 
 		try(DatabaseWrapper db = TaskSqlHelper.getDbConnector()) {
-			//TODO 此处较原版改动：不再判断frequnecy来决定是否删除作业类型为T+0且按频率调度的作业，
-			// 因为该类型作业在整体流程逻辑上来说永远都要删除
+
 			SqlOperator.execute(db, "DELETE FROM etl_job_cur WHERE etl_sys_cd = ? ", etlSysCd);
 
 			SqlOperator.commitTransaction(db);
@@ -524,7 +525,7 @@ public class TaskSqlHelper {
 					etlSysCd, etlJob, currBathDate);
 
 			if(!etlJobCur.isPresent()) {
-				throw new AppSystemException("根据调度系统编号、调度作业标识、当前跑批日期获取调度作业信息失败"
+				throw new AppSystemException("根据调度系统编号、调度作业标识、当前跑批日期获取调度作业信息失败 "
 						+ etlSysCd);
 			}
 
@@ -614,10 +615,10 @@ public class TaskSqlHelper {
 		try(DatabaseWrapper db = TaskSqlHelper.getDbConnector()) {
 
 			int num = SqlOperator.execute(db, "UPDATE etl_resource SET resource_used = ? " +
-					"WHERE etl_sys_cd = ? AND resource_type = ?", used, resourceType, etlSysCd);
+					"WHERE etl_sys_cd = ? AND resource_type = ?", used, etlSysCd, resourceType);
 
 			if(num < 1) {
-				throw new AppSystemException("据调度系统编号、资源类型修改[已使用资源]失败" + etlSysCd);
+				throw new AppSystemException("据调度系统编号、资源类型修改[已使用资源]失败 " + etlSysCd);
 			}
 
 			SqlOperator.commitTransaction(db);
@@ -874,6 +875,29 @@ public class TaskSqlHelper {
 			}
 
 			SqlOperator.commitTransaction(db);
+		}
+	}
+
+	/**
+	 * 根据参数标识查询参数信息。注意，该方法主要用于验证所使用的参数是否正确。
+	 * 在无法查询出时间时会抛出AppSystemException异常。
+	 * @author Tiger.Wang
+	 * @date 2019/9/18
+	 * @param para  所使用的参数
+	 * @return hrds.commons.entity.Etl_para
+	 */
+	public static Etl_para getParaByPara(String para) {
+
+		try(DatabaseWrapper db = TaskSqlHelper.getDbConnector()) {
+
+			Optional<Etl_para> etlPara = SqlOperator.queryOneObject(db, Etl_para.class,
+					"SELECT * FROM etl_para WHERE para_cd = ?", para);
+
+			if(!etlPara.isPresent()) {
+				throw new AppSystemException("所使用的参数标识不存在" + para);
+			}
+
+			return etlPara.get();
 		}
 	}
 }

@@ -1,6 +1,5 @@
 package hrds.control.task.helper;
 
-import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.StringUtil;
 import hrds.commons.codes.Job_Status;
 import hrds.commons.codes.Main_Server_Sync;
@@ -12,10 +11,13 @@ import hrds.commons.entity.Etl_job_hand_his;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.control.task.TaskManager;
+import hrds.control.utils.DateUtil;
+import hrds.control.utils.YarnUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.*;
 
 /**
@@ -162,7 +164,7 @@ public class TaskJobHandleHelper {
 			//更新调度作业干预表（etl_job_hand）。
 			handle.setHand_status(Meddle_status.RUNNING.getCode());
 			handle.setMain_serv_sync(Main_Server_Sync.YES.getCode());
-			handle.setEnd_time(DateUtil.getDateTime(hrds.control.utils.DateUtil.DATETIME));
+			handle.setEnd_time(LocalDateTime.now().format(DateUtil.DATETIME));
 			TaskSqlHelper.updateEtlJobHandle(handle);
 			//修改系统日切干预标识
 			taskManager.handleJob2Run(currBathDate, etlJobStr);
@@ -233,14 +235,9 @@ public class TaskJobHandleHelper {
 			updateErrorHandle(handle);
 			return;
 		}
-		Optional<Etl_job_cur> etlJobOptional = analyzeParameter(handle.getEtl_hand_type(), handle.getPro_para());
-		if(!etlJobOptional.isPresent()) {
-			logger.warn("{}任务分析参数异常，{}", handle.getEtl_job(), PARAERROR);
-			return;
-		}
 		//2、修改内存表（map）中的作业状态
 		taskManager.handleSys2Pause();
-		//3、将调度作业表中的所有作业的作业状态标识为[停止]，TODO 此处较原版改动：不再使用reputMap(map)
+		//3、将调度作业表中的所有作业的作业状态标识为[停止]，
 		TaskSqlHelper.updateReadyEtlJobStatus(handle.getEtl_sys_cd(), Job_Status.STOP.getCode());
 		//4、停止所有已经在运行中的作业
 		List<Etl_job_cur> etlJobs = TaskSqlHelper.getEtlJobsByJobStatus(handle.getEtl_sys_cd(),
@@ -315,7 +312,6 @@ public class TaskJobHandleHelper {
 	private void handleSysStopAll(Etl_job_hand handle) {
 
 		//1、将作业状态为PENDING/WAITING的作业置为STOP
-		//TODO 此处有问题dao.stopAllJob(reputMap(map));为什么需要reputMap(map)
 		TaskSqlHelper.updateReadyEtlJobsDispStatus(handle.getEtl_sys_cd(), Job_Status.STOP.getCode());
 		//2、停止全部Running作业
 		List<Etl_job_cur> etlJobs = TaskSqlHelper.getEtlJobsByJobStatus(handle.getEtl_sys_cd(),
@@ -369,8 +365,6 @@ public class TaskJobHandleHelper {
 		if(Job_Status.RUNNING.getCode().equals(etlJob.getJob_disp_status())){
 			//Running状态job停止，将干预的信息置为Running
 			updateRunningHandle(handle);
-			//TODO 此处较原版改动：stopJob(job)改为closeProcessById(etlJob.getJob_process_id(), etlJob.getPro_type())
-			// 因为这两个方法干的事情是一样的
 			//关闭作业进程（停止作业）
 			if(closeProcessById(etlJob.getJob_process_id(), etlJob.getPro_type())) {
 				updateDoneHandle(handle);
@@ -550,7 +544,6 @@ public class TaskJobHandleHelper {
 	 */
 	private boolean checkJobsNotStop(List<Etl_job_cur> etlJobs) {
 
-		//TODO 此处有个问题，查询出来的作业是否都有当前跑批日期curr_bath_date，此处使用curr_bath_date查询
 		for(Etl_job_cur job : etlJobs) {
 			try{
 				job = TaskSqlHelper.getEtlJob(job.getEtl_sys_cd(), job.getEtl_job(), job.getCurr_bath_date());
@@ -595,7 +588,7 @@ public class TaskJobHandleHelper {
 		if(Pro_Type.Yarn.getCode().equals(proType)) {
 			logger.info("Will close job, process id is {}", processId);
 			try {
-				//TODO 此处缺少YarnUtil.killApplicationByid(processId)，待补充
+				YarnUtil.killApplicationByid(processId);
 				return true;
 			}
 			catch(Exception e) {
@@ -722,7 +715,7 @@ public class TaskJobHandleHelper {
 	 */
 	private void updateHandle(Etl_job_hand etlJobHand) {
 
-		etlJobHand.setEnd_time(DateUtil.getDateTime(hrds.control.utils.DateUtil.DATETIME));
+		etlJobHand.setEnd_time(LocalDateTime.now().format(DateUtil.DATETIME));
 		//TODO 此处第三步既然要删除，为什么第一步要更新
 		//1、更新调度作业干预表（etl_job_hand）。
 		TaskSqlHelper.updateEtlJobHandle(etlJobHand);
