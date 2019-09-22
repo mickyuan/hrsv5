@@ -21,6 +21,7 @@ import hrds.control.beans.EtlJobDefBean;
  **/
 //FIXME
 // 每个方法都要检查参数是否合法！比如能不能空，不允许什么值，等等
+// 每个CUD的方法都没有处理异常，也没有对错误情况回滚事务
 public class TaskSqlHelper {
 
 	private static final ThreadLocal<DatabaseWrapper> _dbBox = new ThreadLocal<>();
@@ -527,7 +528,9 @@ public class TaskSqlHelper {
 	 * @return hrds.entity.Etl_job
 	 */
 	public static Etl_job_cur getEtlJob(String etlSysCd, String etlJob, String currBathDate) {
-//FIXME 这个方法会被多次调用吗？
+		//FIXME 这个方法会被反复高频调用，所以：
+		// 1）能改成不查库吗
+		// 2）不能的话，使用queryArray
 		try(DatabaseWrapper db = TaskSqlHelper.getDbConnector()) {
 
 			Optional<Etl_job_cur> etlJobCur = SqlOperator.queryOneObject(db, Etl_job_cur.class,

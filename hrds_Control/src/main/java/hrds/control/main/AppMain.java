@@ -70,8 +70,18 @@ public class AppMain {
 
 		//2、启动调度服务。
 		ControlManageServer cm = new ControlManageServer(strSystemCode, bathDate, isResumeRun, isAutoShift);
+		//FIXME 构造方法里面只能初始化成员变量，其它事情定义一个init方法，在这里调用。并且分步骤说明做了哪些初始化操作
+		// 讨论：启动一个HTTP SERVE，用于接收管理类通知（比如退出/暂停/DB连接等资源重置
 		cm.runCMServer();
+		//FIXME 是否有不同的任务线程被启动？如果有，在这里一个个启动。
+		// 另外，如果启动的线程会很多吗？如果超过16个，要用线程池做处理
+		// ------- 或者 -------
+		// 在runCMServer这个方法里面做以上的事情：
+		// 1）构造函数只做成员变量的轻量级赋值
+		// 2）runCMServer 把每个初始化方法逐个调用，最后启动任务线程。有多种任务线程，则逐个启动
+		// 3）启动管理用的HTTPSERVER
 
+		//FIXME 这句话能打印出来？
 		logger.info("-------------- Agent服务启动完成 --------------");
 	}
 }
