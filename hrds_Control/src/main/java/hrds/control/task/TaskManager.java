@@ -446,10 +446,10 @@ public class TaskManager {
 		for(Etl_dependency etlDependency : etlDependencies) {
 			String etlJobId = etlDependency.getEtl_job();
 			//1、判断每个依赖作业是否在作业定义表中，若该依赖作业不在调度范围内，则认为该作业不作为依赖作业
-			if(!jobDefineMap.containsKey(etlJobId)) {
+			if(!jobDefineMap.containsKey(etlJobId)) {//FIXME 这种情况是怎么发生的，要做日志提示吗？
 				continue;
 			}
-			//TODO 此处要做什么
+			//TODO 此处要做什么 FIXME!
 			if(etlJobId.equals("EDW_TRAN_PDATA_T09_OB_DIM_INFO_H_S28")) {
 				etlJobId = "EDW_TRAN_PDATA_T09_OB_DIM_INFO_H_S28";
 			}
@@ -464,6 +464,10 @@ public class TaskManager {
 			 * 	一、若作业依赖已经设置，在作业依赖列表中不存在该依赖作业的情况下，将该依赖作业加入作业依赖列表；
 			 * 	二、若作业依赖未设置，则为该作业设置依赖作业，此时会为该作业新建作业依赖列表。
 			 */
+			//FIXME 下面的代码有隐患。如果KEY存在，但是值为NUL，则会异常。而且代码太多了。
+			// 这个逻辑是不是：如果Key不存在或值是null，则新建LIST并存入MAP；否则用原来LIST
+			// 改成下面一句即可：
+			// jobDependencyMap.computeIfAbsent(etlJobId, k -> new ArrayList<>()).add(preEtlJob);
 			if(jobDependencyMap.containsKey(etlJobId)) {
 				List<String> dependenies = jobDependencyMap.get(etlJobId);
 				if(!dependenies.contains(preEtlJob)) {
@@ -488,6 +492,7 @@ public class TaskManager {
 	 */
 	private void loadExecuteJob(List<EtlJobDefBean> jobs, boolean hasFrequancy) {
 
+		//FIXME 为什么不把strBathDate作为成员变量，非要这里转换一次
 		String strBathDate = bathDate.format(DateUtil.DATE_DEFAULT);
 		/*
 		 * 一、若系统在运行中，主要行为如下：
