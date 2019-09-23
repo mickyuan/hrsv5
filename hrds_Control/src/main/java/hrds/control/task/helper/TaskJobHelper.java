@@ -7,6 +7,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.Stack;
 
+import fd.ng.core.utils.ArrayUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -82,8 +83,9 @@ public class TaskJobHelper {
     }
 
     //TODO 看着头大
+    //FIXME 要有方法的详细注释
     private static String[] getPara(String currBathDate, String para) {
-
+//FIXME 这个方法会被反复调用？能不能全局处理一次？
         String[] arr;
         String resultst = "";
         String strs = "";
@@ -92,7 +94,7 @@ public class TaskJobHelper {
             arr = para.split(PARASEPARATOR);
         }
         else {
-            arr = new String[] {};
+            arr = new String[] {};//FIXME 应该直接返回吧。而且，应该使用 ArrayUtil.EMPTY_STRING_ARRAY
         }
         String[] newArr = new String[arr.length];
 
@@ -113,34 +115,33 @@ public class TaskJobHelper {
                     } ;
 
                     char x = strs.charAt(0);
-                    if( "#".equals(String.valueOf(x)) ) {
+                    if( "#".equals(String.valueOf(x)) ) {//FIXME 为什么不用字符比较！
                         LocalDate date = LocalDate.parse(currBathDate, DateUtil.DATE);
-                        String p = strs.toLowerCase();
-                        //TODO 此处的SQL为：select para_cd from etl_para where para_cd=#{_parameter}，有何意义
-//                        String p = processMapper.queryPara(strs.toLowerCase());
-                        if( "#txdate".equals(p) ) {
+
+                        String paraCd = TaskSqlHelper.getParaByPara(strs.toLowerCase()).getPara_cd();
+                        if( "#txdate".equals(paraCd) ) {
                             arr[i] = arr[i].replace("#{txdate}", date.format(DateUtil.DATE_DEFAULT));
                         }
-                        if( "#date".equals(p) ) {
+                        if( "#date".equals(paraCd) ) {
                             arr[i] = arr[i].replace("#{date}", date.format(DateUtil.DATE_DEFAULT));
                         }
-                        if( "#txdate_pre".equals(p) ) {
+                        if( "#txdate_pre".equals(paraCd) ) {
                             arr[i] = arr[i].replace("#{txdate_pre}",
                                     date.plus(-1, ChronoUnit.DAYS).format(DateUtil.DATE_DEFAULT));
                         }
-                        if( "#txdate_next".equals(p) ) {
+                        if( "#txdate_next".equals(paraCd) ) {
                             arr[i] = arr[i].replace("#{txdate_next}",
                                     date.plus(1, ChronoUnit.DAYS).format(DateUtil.DATE_DEFAULT));
                         }
                     }
-                    else if( "!".equals(String.valueOf(x)) ) {
+                    else if( "!".equals(String.valueOf(x)) ) {//FIXME 为什么不用字符比较！
                         //TODO 这里etlSysCd为""，意味着这是默认系统参数？
                         Optional<Etl_para> etlParaOptional = TaskSqlHelper.getEtlParameterVal("", strs);
-                        if(!etlParaOptional.isPresent()) {
+                        if(!etlParaOptional.isPresent()) {//FIXME 为什么打印警告而不是退出
                             logger.warn("找不到对应变量[{}]", strs);
                             return arr;
                         }
-                        String strsc = strs.substring(1, strs.length());
+                        String strsc = strs.substring(1);
                         Etl_para etlPara = etlParaOptional.get();
                         String paraVal = etlPara.getPara_val();
                         /**添加参数可以包含日期的自定义格式******************开始*/

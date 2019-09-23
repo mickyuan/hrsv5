@@ -37,7 +37,8 @@ public class TableCleanUtil {
 	 * 2、根据列名拿到该表的清洗规则
 	 * 3、按照清洗优先级，从大到小对该表所有数据进行数据清洗
 	 */
-	public static String tbDataClean(String columnValue, String columnName, Group group, String colType, String fileType, Map<String, Object> tableCleanRule) {
+	public static String tbDataClean(String columnValue, String columnName, Group group,
+	                                 String colType, String fileType, Map<String, Object> tableCleanRule) {
 		//1、校验入参合法性
 		if (columnValue == null || columnName == null) {
 			throw new AppSystemException("表清洗需要字段名和字段值");
@@ -60,12 +61,14 @@ public class TableCleanUtil {
 				//字符替换
 				case "replacement":
 					rule = new TbReplaceImpl();
-					columnValue = rule.replace((Map<String, String>) tableCleanRule.get("replace"), columnValue);
+					columnValue = rule.replace((Map<String, String>) tableCleanRule.get("replace"),
+							columnValue);
 					break;
 				//字符补齐
 				case "complement":
 					rule = new TbCompleteImpl();
-					columnValue = rule.complete((StringBuilder) tableCleanRule.get("complete"), columnValue);
+					columnValue = rule.complete((StringBuilder) tableCleanRule.get("complete"),
+							columnValue);
 					break;
 				//首尾去空
 				case "trim":

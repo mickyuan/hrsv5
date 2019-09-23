@@ -40,9 +40,11 @@ public class ParquetUtil {
 	 * @date 2019/8/7 11:29
 	 */
 	public static MessageType getSchema(String columns, String types) {
-
-		String[] colArray = columns.toUpperCase().split(JobConstant.COLUMN_SEPARATOR);//列数组
-		List<String> typeArray = StringUtil.split(types.toLowerCase(), JobConstant.COLUMN_TYPE_SEPARATOR);//字段类型
+		//列数组
+		String[] colArray = columns.toUpperCase().split(JobConstant.COLUMN_SEPARATOR);
+		//字段类型
+		List<String> typeArray = StringUtil.split(types.toLowerCase(),
+				JobConstant.COLUMN_TYPE_SEPARATOR);
 		StringBuilder sb = new StringBuilder(170);
 		sb.append("message Pair {\n");
 
@@ -69,9 +71,11 @@ public class ParquetUtil {
 
 	/*用于数据库直连采集根据列名和列类型生成Schema,数据库直连采集列名是根据\001分隔的*/
 	public static MessageType getSchemaAsDBColl(String columns, String types) {
-
-		String[] colArray = columns.toUpperCase().split(JobConstant.COLUMN_NAME_SEPARATOR);//列数组
-		List<String> typeArray = StringUtil.split(types.toLowerCase(), JobConstant.COLUMN_TYPE_SEPARATOR);//字段类型
+		//列数组
+		String[] colArray = columns.toUpperCase().split(JobConstant.COLUMN_NAME_SEPARATOR);
+		//字段类型
+		List<String> typeArray = StringUtil.split(types.toLowerCase(),
+				JobConstant.COLUMN_TYPE_SEPARATOR);
 		StringBuilder sb = new StringBuilder(170);
 		sb.append("message Pair {\n");
 
@@ -133,7 +137,9 @@ public class ParquetUtil {
 	 * @throws IOException 无法对指定文件写入数据时抛出该异常
 	 * @return ParquetWriter<Group>
 	 */
-	public static ParquetWriter<Group> getParquetWriter(MessageType schema, String Path, Configuration conf, boolean isLocal) throws IOException {
+	public static ParquetWriter<Group> getParquetWriter(MessageType schema, String Path,
+	                                                    Configuration conf,
+	                                                    boolean isLocal) throws IOException {
 
 		org.apache.hadoop.fs.Path path = new Path(Path);
 		return getParquetWriter(schema, path, conf, isLocal);
@@ -148,7 +154,8 @@ public class ParquetUtil {
 	 * @return ParquetWriter<Group>
 	 * @throws IOException 无法对指定文件写入数据时抛出该异常
 	 */
-	public static ParquetWriter<Group> getParquetWriter(MessageType schema, String Path) throws IOException {
+	public static ParquetWriter<Group> getParquetWriter(MessageType schema, String Path)
+			throws IOException {
 
 		Configuration conf = new Configuration();
 		return getParquetWriter(schema, Path, conf, true);
@@ -165,7 +172,9 @@ public class ParquetUtil {
 	 * @throws IOException 无法对指定文件写入数据时抛出该异常
 	 * @return ParquetWriter<Group>
 	 */
-	public static ParquetWriter<Group> getParquetWriter(MessageType schema, Path path, Configuration conf, boolean isLocal) throws IOException {
+	public static ParquetWriter<Group> getParquetWriter(MessageType schema, Path path,
+	                                                    Configuration conf, boolean isLocal)
+			throws IOException {
 
 		if (isLocal) {
 			FileUtils.deleteQuietly(new File(path.toString()));
@@ -174,8 +183,10 @@ public class ParquetUtil {
 		GroupWriteSupport writeSupport = new GroupWriteSupport();
 		GroupWriteSupport.setSchema(schema, conf);
 		@SuppressWarnings("deprecation")
-		ParquetWriter<Group> writer = new ParquetWriter<Group>(path, ParquetFileWriter.Mode.OVERWRITE, writeSupport, CompressionCodecName.SNAPPY,
-				134217728, 1048576, 1048576, true, false, ParquetProperties.WriterVersion.PARQUET_1_0, conf);
+		ParquetWriter<Group> writer = new ParquetWriter<Group>(path, ParquetFileWriter.Mode.OVERWRITE,
+				writeSupport, CompressionCodecName.SNAPPY,
+				134217728, 1048576, 1048576, true,
+				false, ParquetProperties.WriterVersion.PARQUET_1_0, conf);
 		return writer;
 	}
 }

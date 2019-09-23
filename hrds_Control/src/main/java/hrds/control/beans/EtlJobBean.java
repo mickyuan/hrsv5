@@ -72,11 +72,12 @@ public class EtlJobBean extends Etl_job_cur implements Comparable<EtlJobBean>  {
 	@Override
 	public int compareTo(EtlJobBean o) {
 		if (null == o){
-			return 0;
+			return 0; //FIXME 当前对象不空，去和一个NULL做比较返回相等，为什么
 		}
-		if (super.getJob_priority_curr() > o.getJob_priority_curr()){
+		//FIXME 为什么对象比较用的是这一个字段？
+		if (super.getJob_priority_curr() > o.getJob_priority_curr()){//FIXME 不能用 > ！！！
 			return -1;
-		}else if (super.getJob_priority_curr() == o.getJob_priority_curr() ){
+		}else if (super.getJob_priority_curr() == o.getJob_priority_curr() ){//FIXME 不能用 == ！！！
 			return 0;
 		}else{
 			return 1;

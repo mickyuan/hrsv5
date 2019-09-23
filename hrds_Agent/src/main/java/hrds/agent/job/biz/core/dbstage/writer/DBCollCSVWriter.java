@@ -47,8 +47,11 @@ public class DBCollCSVWriter extends AbstractFileWriter {
 
 	private final static Logger LOGGER = LoggerFactory.getLogger(DBCollCSVWriter.class);
 	//avro
-	private static final String SCHEMA_JSON = "{\"type\": \"record\",\"name\": \"BigFilesTest\", " + "\"fields\": [" + "{\"name\":\"" + "currValue"
-			+ "\",\"type\":\"string\"}," + "{\"name\":\"" + "readerToByte" + "\", \"type\":\"bytes\"}" + "]}";
+	private static final String SCHEMA_JSON =
+			"{\"type\": \"record\",\"name\": \"BigFilesTest\", "
+			+ "\"fields\": [" + "{\"name\":\"" + "currValue"
+			+ "\",\"type\":\"string\"}," + "{\"name\":\""
+			+ "readerToByte" + "\", \"type\":\"bytes\"}" + "]}";
 	private static final Schema SCHEMA = new Schema.Parser().parse(SCHEMA_JSON);
 	private static final GenericRecord record = new GenericData.Record(SCHEMA);
 
@@ -84,7 +87,8 @@ public class DBCollCSVWriter extends AbstractFileWriter {
 	 * 6、关闭资源，并返回文件路径
 	 */
 	@Override
-	public String writeDataAsSpecifieFormat(Map<String, Object> metaDataMap, ResultSet rs, String tableName) throws IOException, SQLException {
+	public String writeDataAsSpecifieFormat(Map<String, Object> metaDataMap, ResultSet rs, String tableName)
+			throws IOException, SQLException {
 		//1、校验方法入参合法性
 		if (metaDataMap == null || metaDataMap.isEmpty()) {
 			throw new AppSystemException("写CSV文件阶段,元信息不能为空");
@@ -108,13 +112,15 @@ public class DBCollCSVWriter extends AbstractFileWriter {
 			throw new AppSystemException("创建数据文件目录失败");
 		}
 		//3、数据文件的文件名 ： jobID + 处理线程号 + 时间戳,在作业配置文件目录下的datafile目录中
-		String path = ProductFileUtil.getDataFilePathByJobID(this.jobInfo) + File.separatorChar + jobInfo.getJobId() + Thread.currentThread().getId()
+		String path = ProductFileUtil.getDataFilePathByJobID(this.jobInfo) + File.separatorChar +
+				jobInfo.getJobId() + Thread.currentThread().getId()
 				+ System.currentTimeMillis() + "." + FileFormatConstant.CSV.getMessage();
 
 		int[] colTypeArrs = (int[]) metaDataMap.get("colTypeArr");
 		//4、判断本次采集得到的RS是否有CLOB，BLOB，LONGVARCHAR的大字段类型，如果有，则创建LOBs目录用于存放avro文件，并初始化写avro相关类对象
 		for (int i = 0; i < colTypeArrs.length; i++) {
-			if (colTypeArrs[i] == java.sql.Types.CLOB || colTypeArrs[i] == java.sql.Types.BLOB || colTypeArrs[i] == java.sql.Types.LONGVARCHAR) {
+			if (colTypeArrs[i] == java.sql.Types.CLOB || colTypeArrs[i] == java.sql.Types.BLOB
+					|| colTypeArrs[i] == java.sql.Types.LONGVARCHAR) {
 				//说明本次采集到的内容包含大字段类型，需要对其进行avro处理
 				String LOBsDir = ProductFileUtil.getLOBsPathByJobID(this.jobInfo);
 				//判断LOBs目录是否存在，不存在创建
@@ -158,7 +164,8 @@ public class DBCollCSVWriter extends AbstractFileWriter {
 		//用于存放大字段类型列的值的byte数组
 		byte[] byteArr = null;
 		//列数据类型(长度,精度) 在列数据清洗字段拆分的时候需要
-		List<String> columnsTypeAndPreci = StringUtil.split(metaDataMap.get("columnsTypeAndPreci").toString(), JobConstant.COLUMN_TYPE_SEPARATOR);
+		List<String> columnsTypeAndPreci = StringUtil.split(
+				metaDataMap.get("columnsTypeAndPreci").toString(), JobConstant.COLUMN_TYPE_SEPARATOR);
 		int columnCount = (int) metaDataMap.get("columnCount");
 
 		//用于写文件的list集合
@@ -177,7 +184,8 @@ public class DBCollCSVWriter extends AbstractFileWriter {
 						//对LONGVARCHAR类型进行处理
 						byteArr = longvarcharToByte(characterStream);
 						//以"LOBs_表名_列号_行号_原类型_avro对象序列"存放这个值
-						currColValue = "_LOBs_" + tableName + "_" + j + "_" + lineNum + "_LONGVARCHAR_" + avroWriter.sync();
+						currColValue = "_LOBs_" + tableName + "_" + j + "_" + lineNum +
+								"_LONGVARCHAR_" + avroWriter.sync();
 						String reader2String = new String(byteArr);
 						MD5.append(reader2String);
 					} else {
@@ -190,7 +198,8 @@ public class DBCollCSVWriter extends AbstractFileWriter {
 						//对Blob类型进行处理
 						byteArr = blobToBytes(blob);
 						//以"LOBs_表名_列号_行号_原类型_avro对象序列"存放这个值
-						currColValue = "_LOBs_" + tableName + "_" + j + "_" + lineNum + "_BLOB_" + avroWriter.sync();
+						currColValue = "_LOBs_" + tableName + "_" + j + "_" +
+								lineNum + "_BLOB_" + avroWriter.sync();
 						String reader2String = new String(byteArr);
 						MD5.append(reader2String);
 					} else {
@@ -203,7 +212,8 @@ public class DBCollCSVWriter extends AbstractFileWriter {
 					if (characterStream != null) {
 						byteArr = longvarcharToByte(characterStream);
 						//以"LOBs_表名_列号_行号_原类型_avro对象序列"存放这个值
-						currColValue = "_LOBs_" + tableName + "_" + j + "_" + lineNum + "_CLOB_" + avroWriter.sync();
+						currColValue = "_LOBs_" + tableName + "_" + j +
+								"_" + lineNum + "_CLOB_" + avroWriter.sync();
 						String reader2String = new String(byteArr);
 						MD5.append(reader2String);
 					} else {
@@ -213,7 +223,8 @@ public class DBCollCSVWriter extends AbstractFileWriter {
 				} else {
 					Object colValue = rs.getObject(j);
 					if (colValue != null) {
-						if (colType == java.sql.Types.DATE || colType == java.sql.Types.TIME || colType == java.sql.Types.TIMESTAMP) {
+						if (colType == java.sql.Types.DATE || colType == java.sql.Types.TIME
+								|| colType == java.sql.Types.TIMESTAMP) {
 							//遇到日期类型，提供可配置的映射转换能力，目前先转为Timestamp
 							Date date = rs.getTimestamp(j);
 							currColValue = date.toString();
@@ -227,7 +238,8 @@ public class DBCollCSVWriter extends AbstractFileWriter {
 								currColValue = currColValue.replace('\n', ' ');
 							}
 							if (currColValue.contains("\r\n")) {
-								currColValue = StringUtils.replace(currColValue, "\r\n", " ");
+								currColValue = StringUtils.replace(currColValue,
+										"\r\n", " ");
 							}
 						} else {
 							currColValue = colValue.toString();
@@ -237,11 +249,16 @@ public class DBCollCSVWriter extends AbstractFileWriter {
 					}
 					//5-3 对单行数据的每一列进行清洗，返回清洗后的结果
 					//先进行列清洗
-					Map<String, Map<String, Object>> columnCleanRule = (Map<String, Map<String, Object>>) metaDataMap.get("columnCleanRule");
-					currColValue = ColumnCleanUtil.colDataClean(currColValue, metaData.getColumnName(j), null, columnsTypeAndPreci.get(j - 1), FileFormatConstant.CSV.getMessage(), columnCleanRule, null);
+					Map<String, Map<String, Object>> columnCleanRule = (Map<String, Map<String, Object>>)
+							metaDataMap.get("columnCleanRule");
+					currColValue = ColumnCleanUtil.colDataClean(currColValue,
+							metaData.getColumnName(j), null, columnsTypeAndPreci.get(j - 1),
+							FileFormatConstant.CSV.getMessage(), columnCleanRule, null);
 					//对列清洗后的结果再进行表清洗(除列合并)
 					tableCleanRule = (Map<String, Object>) metaDataMap.get("tableCleanRule");
-					TableCleanUtil.tbDataClean(currColValue, metaData.getColumnName(j), null, columnsTypeAndPreci.get(j - 1), FileFormatConstant.CSV.getMessage(), tableCleanRule);
+					TableCleanUtil.tbDataClean(currColValue, metaData.getColumnName(j),
+							null, columnsTypeAndPreci.get(j - 1),
+							FileFormatConstant.CSV.getMessage(), tableCleanRule);
 					//5-4 清洗后的结果，并追加到MD5后面
 					MD5.append(currColValue);
 				}

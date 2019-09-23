@@ -37,7 +37,8 @@ public class ScriptExecutor {
 	 * @author 13616
 	 * @date 2019/8/7 11:17
 	 */
-	public void executeUpload2Hdfs(String localFile, String remoteDir) throws InterruptedException, IllegalStateException {
+	public void executeUpload2Hdfs(String localFile, String remoteDir)
+			throws InterruptedException, IllegalStateException {
 
 		service(PUTHDFS_SCRIPTS, localFile, remoteDir);
 	}
@@ -51,7 +52,8 @@ public class ScriptExecutor {
 	 * @throws InterruptedException  当执行脚本的进程无法启动时抛出该异常
 	 * @throws IllegalStateException 当脚本执行错误时抛出该异常
 	 */
-	public void executeUpload2Hdfs(String[] localFiles, String remoteDir) throws InterruptedException, IllegalStateException {
+	public void executeUpload2Hdfs(String[] localFiles, String remoteDir)
+			throws InterruptedException, IllegalStateException {
 
 		service(PUTHDFS_SCRIPTS, localFiles, remoteDir);
 	}
@@ -67,7 +69,8 @@ public class ScriptExecutor {
 	 * @author 13616
 	 * @date 2019/8/7 11:25
 	 */
-	private void service(String shellName, String... args) throws InterruptedException, IllegalStateException {
+	private void service(String shellName, String... args)
+			throws InterruptedException, IllegalStateException {
 		//获取脚本所在的目录
 		String shellPath = ProductFileUtil.getProjectPath() + File.separatorChar
 				+ StringUtils.join(new String[]{"src", "main", "resources"}, File.separatorChar)
@@ -86,7 +89,8 @@ public class ScriptExecutor {
 	 * @throws InterruptedException  当执行脚本的进程无法启动时抛出该异常
 	 * @throws IllegalStateException 当脚本执行错误时抛出该异常
 	 */
-	private void service(String shellName, String[] localFiles, String remoteDir) throws InterruptedException, IllegalStateException {
+	private void service(String shellName, String[] localFiles, String remoteDir)
+			throws InterruptedException, IllegalStateException {
 		//获取脚本所在的目录
 		String shellPath = ProductFileUtil.getProjectPath() + File.separatorChar
 				+ StringUtils.join(new String[]{"src", "main", "resources"}, File.separatorChar)
@@ -104,7 +108,8 @@ public class ScriptExecutor {
 	 * @throws InterruptedException  当执行脚本的进程无法启动时抛出该异常
 	 * @throws IllegalStateException 当脚本执行错误时抛出该异常
 	 */
-	private void buildCommandAndExe(String script, String... args) throws InterruptedException, IllegalStateException {
+	private void buildCommandAndExe(String script, String... args)
+			throws InterruptedException, IllegalStateException {
 		String cmd = SHELL_COMMAND + " " + script + " " + StringUtils.join(args, " ");
 		callScript(script, cmd);
 	}
@@ -119,7 +124,8 @@ public class ScriptExecutor {
 	 * @throws InterruptedException  当执行脚本的进程无法启动时抛出该异常
 	 * @throws IllegalStateException 当脚本执行错误时抛出该异常
 	 */
-	private void buildCommandAndExe(String script, String[] localFiles, String remoteDir) throws InterruptedException, IllegalStateException {
+	private void buildCommandAndExe(String script, String[] localFiles, String remoteDir)
+			throws InterruptedException, IllegalStateException {
 		String cmd = SHELL_COMMAND + " " + script + " " + StringUtils.join(localFiles, " ") + " " + remoteDir;
 		callScript(script, cmd);
 	}
@@ -135,7 +141,8 @@ public class ScriptExecutor {
 	 * @author 13616
 	 * @date 2019/8/6 11:32
 	 */
-	private void callScript(String script, String cmd) throws InterruptedException, IllegalStateException {
+	private void callScript(String script, String cmd)
+			throws InterruptedException, IllegalStateException {
 
 		//启动独立线程等待process执行完成
 		CommandWaitForThread commandThread = new CommandWaitForThread(cmd);

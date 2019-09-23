@@ -1,9 +1,18 @@
 package hrds.control.task.helper;
 
+import com.esms.MessageData;
+import com.esms.PostMsg;
+import com.esms.common.entity.Account;
+import com.esms.common.entity.GsmsResponse;
+import com.esms.common.entity.MTPack;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import hrds.control.constans.ControlConfigure;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 /**
  * ClassName: NotifyMessageHelper
@@ -56,39 +65,40 @@ public class NotifyMessageHelper {
      * @date 2019/9/6
      * @param message   信息内容
      */
-    public void SendMsg(String message) {
+    public void sendMsg(String message) {
+
         //TODO 此处缺少实现，因为此处使用的postmsg-ump-2.1.jar在maven中找不到，不知道该jar应该放在什么地方
-//        Account ac = new Account(smsAccountName, smsAccountPasswd);// 设置帐号密码
-//        PostMsg pm = new PostMsg(); // 新建一个PostMsg对象
-//        pm.getCmHost().setHost(cmHostIp, cmHostPort);// 您设置的下行端口 400
-//        pm.getWsHost().setHost(wsHostIp, wsHostPort);
-//
-//        MTPack pack = new MTPack();
-//        pack.setBatchID(UUID.randomUUID());
-//        pack.setBatchName(smsAccountName + "-" + String.valueOf(System.currentTimeMillis())); //换成时间戳
-//        pack.setMsgType(MTPack.MsgType.SMS);
-//        pack.setSendType(MTPack.SendType.MASS);
-//        pack.setBizType(bizType);
-//        pack.setDistinctFlag(false);
-//
-//        ArrayList<MessageData> msgs = new ArrayList<MessageData>();
-//
-//        String[] phoneNumberArray = phoneNumber.split(",");
-//        String message = currBathDate + " " + jobName + "调度失败!";
-//        for(int i = 0; i < phoneNumberArray.length; ++i) {
-//            msgs.add(new MessageData(phoneNumberArray[i], message));
-//        }
-//        pack.setMsgs(msgs);
-//        GsmsResponse resp;
-//        try {
-//            resp = pm.post(ac, pack);
-//            System.out.println(resp);
-//            System.out.println("您的UUID为：" + resp.getUuid());
-//            System.out.println("系统返回值为：" + resp.getResult());// 返回系统返回值 枚举类型
-//            System.out.println(msgs);
-//        }
-//        catch(Exception e) {
-//            log.error("Exception:" + e.getMessage());
-//        }
+        // 这个jar包是不是自己写的？
+        Account ac = new Account(smsAccountName, smsAccountPasswd);// 设置帐号密码
+        PostMsg pm = new PostMsg(); // 新建一个PostMsg对象
+        pm.getCmHost().setHost(cmHostIp, cmHostPort);// 您设置的下行端口 400
+        pm.getWsHost().setHost(wsHostIp, wsHostPort);
+
+        MTPack pack = new MTPack();
+        pack.setBatchID(UUID.randomUUID());
+        pack.setBatchName(smsAccountName + "-" + System.currentTimeMillis()); //换成时间戳
+        pack.setMsgType(MTPack.MsgType.SMS);
+        pack.setSendType(MTPack.SendType.MASS);
+        pack.setBizType(Integer.parseInt(bizType));
+        pack.setDistinctFlag(false);
+
+        List<MessageData> msgs = new ArrayList<>();
+
+        String[] phoneNumberArray = phoneNumber.split(",");
+        for(String s : phoneNumberArray) {
+            msgs.add(new MessageData(s, message));
+        }
+        pack.setMsgs(msgs);
+        GsmsResponse resp;
+        try {
+            resp = pm.post(ac, pack);
+            logger.info(resp);
+            logger.info("您的UUID为：" + resp.getUuid());
+            logger.info("系统返回值为：" + resp.getResult());// 返回系统返回值 枚举类型
+            logger.info(msgs);
+        }
+        catch(Exception e) {
+            logger.error("Exception:" + e.getMessage());
+        }
     }
 }

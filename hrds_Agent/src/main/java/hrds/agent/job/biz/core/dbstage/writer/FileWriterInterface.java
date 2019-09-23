@@ -28,7 +28,8 @@ public interface FileWriterInterface {
 	 * @Author: WangZhengcheng
 	 * @Date: 2019/8/13
 	 */
-	String writeDataAsSpecifieFormat(Map<String, Object> metaDataMap, ResultSet rs, String tableName) throws IOException, SQLException;
+	String writeDataAsSpecifieFormat(Map<String, Object> metaDataMap, ResultSet rs, String tableName)
+			throws IOException, SQLException;
 
 	/**
 	 * @Description: 将LONGVARCHAR和CLOB类型转换为字节数组，用于写Avro

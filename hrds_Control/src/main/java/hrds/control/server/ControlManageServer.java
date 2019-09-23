@@ -22,8 +22,6 @@ public class ControlManageServer {
 	private static final CMServerThread cmThread = new CMServerThread();
 	private static TaskManager taskManager;
 
-	private static final int SLEEPMILLIS = 500; //每次运行时间间隔（毫秒数）
-
 	/**
 	 * ControlManageServer类构造器
 	 * @author Tiger.Wang
@@ -36,6 +34,7 @@ public class ControlManageServer {
 	public ControlManageServer(String strSystemCode, LocalDate bathDate, boolean isResumeRun, boolean isAutoShift) {
 
 		taskManager = TaskManager.newInstance(strSystemCode, bathDate, isResumeRun, isAutoShift);
+		//FIXME 上面方法里面干了很多事情，都拿出来，在这里按顺序这个调用
 		taskManager.initEtlSystem();
 	}
 
@@ -74,36 +73,29 @@ public class ControlManageServer {
 		public void run() {
 			try {
 				//用于将作业定义表中的作业，通过一定的判断及检查，登记到内存表中
+				//FIXME 这个应该放到下面的循环作为第一句。if里面的不需要了
 				boolean hasFrequancy = taskManager.loadReadyJob();
 
 				while(run) {
 					//若publishReadyJob方法进行自动日切，则再次加载初始作业
+					//FIXME 为什么要传入这个变量
+					// loadReadyJob里面构造了3个MAP，
+					// 同理，hasFrequancy也应该地位等同于MAP而作为成员变，
+					// 让publishReadyJob自己取。
 					if(taskManager.publishReadyJob(hasFrequancy)){
 						hasFrequancy = taskManager.loadReadyJob();
 					}else {
 						logger.info("系统无日切信号，系统退出");
 						break;
+						//FIXME 作业能配置成：每天某个时刻执行，但是不日切吗？或者等待信号文件到达就执行，执行完继续等待，且没有日切的概念
 					}
-
-					try {
-						Thread.sleep(SLEEPMILLIS);
-					}
-					catch(InterruptedException e) {
-						logger.warn("系统出现异常：{}，但是继续执行", e.getMessage());
-					}
+					//FIXME 整个逻辑建议为：
+					// 1） 方法1：执行本批次的作业（该方法包括：作业初始化和死循环的执行各个作业）
+					// 2） 方法2：日切处理
 				}
 
 			}catch(Exception ex) {
-				logger.error("Exception happened!" + ex);
-				logger.error(ex.getStackTrace());
-				ex.printStackTrace();
-				StackTraceElement[] stackElements = ex.getStackTrace();
-				if( stackElements != null ) {
-					for (StackTraceElement stackElement : stackElements) {
-						logger.error(stackElement.getClassName() + stackElement.getFileName() + stackElement.getLineNumber()
-								+ stackElement.getMethodName());
-					}
-				}
+				logger.error("Exception happened!", ex);
 			}
 		}
 	}

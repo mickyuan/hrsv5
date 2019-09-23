@@ -33,7 +33,8 @@ public abstract class AbstractTableClean implements TableCleanInterface {
 	}
 
 	@Override
-	public String merge(Map<String, String> mergeRule, String[] columnsValue, String[] columnsName, Group group, List<Object> lineData, String fileType) {
+	public String merge(Map<String, String> mergeRule, String[] columnsValue,
+	                    String[] columnsName, Group group, List<Object> lineData, String fileType) {
 		throw new IllegalStateException("这是一个空实现");
 	}
 }
