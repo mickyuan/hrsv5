@@ -89,20 +89,13 @@ public class ControlManageServer {
 						break;
 						//FIXME 作业能配置成：每天某个时刻执行，但是不日切吗？或者等待信号文件到达就执行，执行完继续等待，且没有日切的概念
 					}
-					//FIXME 这个循环不需要sleep吗？
+					//FIXME 整个逻辑建议为：
+					// 1） 方法1：执行本批次的作业（该方法包括：作业初始化和死循环的执行各个作业）
+					// 2） 方法2：日切处理
 				}
 
 			}catch(Exception ex) {
-				logger.error("Exception happened!" + ex);
-				logger.error(ex.getStackTrace());//FIXME 不是这么打堆栈。一句话的事情，搞这么多代码是干嘛
-				ex.printStackTrace();
-				StackTraceElement[] stackElements = ex.getStackTrace();
-				if( stackElements != null ) {
-					for (StackTraceElement stackElement : stackElements) {
-						logger.error(stackElement.getClassName() + stackElement.getFileName() + stackElement.getLineNumber()
-								+ stackElement.getMethodName());
-					}
-				}
+				logger.error("Exception happened!", ex);
 			}
 		}
 	}

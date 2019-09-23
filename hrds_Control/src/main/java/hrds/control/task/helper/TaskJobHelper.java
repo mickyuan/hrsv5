@@ -141,7 +141,7 @@ public class TaskJobHelper {
                             logger.warn("找不到对应变量[{}]", strs);
                             return arr;
                         }
-                        String strsc = strs.substring(1, strs.length());//FIXME 第2个参数越界了，而且没必要
+                        String strsc = strs.substring(1);
                         Etl_para etlPara = etlParaOptional.get();
                         String paraVal = etlPara.getPara_val();
                         /**添加参数可以包含日期的自定义格式******************开始*/

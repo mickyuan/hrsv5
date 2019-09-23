@@ -42,8 +42,8 @@ public class AppMain {
 		ArgsParser CMD_ARGS = new ArgsParser()
 				.addOption("etl.date", "日期",        "跑批日期，格式为：yyyyMMDD", true)
 				.addOption("sys.code", "调度系统代码", "调度系统代码", true)
-				.addOption("-AS",      "自动日切", false)
-				.addOption("-CR",      "续跑", false)
+				.addOption("-AS",   "t",   "自动日切", false)
+				.addOption("-CR",    "t",  "续跑", false)
 				.parse(args);
 
 		//跑批批次日期
@@ -73,6 +73,7 @@ public class AppMain {
 		//FIXME 构造方法里面只能初始化成员变量，其它事情定义一个init方法，在这里调用。并且分步骤说明做了哪些初始化操作
 		// 讨论：启动一个HTTP SERVE，用于接收管理类通知（比如退出/暂停/DB连接等资源重置
 		cm.runCMServer();
+		TaskSqlHelper.getDbConnector().close();
 		//FIXME 是否有不同的任务线程被启动？如果有，在这里一个个启动。
 		// 另外，如果启动的线程会很多吗？如果超过16个，要用线程池做处理
 		// ------- 或者 -------

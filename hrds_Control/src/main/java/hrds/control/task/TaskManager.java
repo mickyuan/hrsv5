@@ -408,19 +408,16 @@ public class TaskManager {
 				if(Dispatch_Frequency.PinLv.getCode().equals(job.getDisp_freq())) {
 					//此处较原版改动：原版是getFJob(tempJob.getStrEtlJob(), strSystemCode, "def")，
 					//在该方法中不再queryIsAllDoneDef，因为job变量本身就代表着job_def的作业信息，没必要再次查询
-					if(checkEtlDefJob(job) && !hasFrequancy) hasFrequancy = true;
+					if(!hasFrequancy && checkEtlDefJob(job)) hasFrequancy = true;
 				}
 				//如果作业的调度触发方式为T+0、T+1定时触发时，将记录作业触发时间
 				jobTimeDependencyMap.put(etlJobId, job.getDisp_time());
 			}else if(Dispatch_Type.DEPENDENCE.getCode().equals(etlDispType)) {
 				//如果作业的调度触发方式为依赖触发，且以频率调度，则要检查该作业是否到触发条件，TODO 此处好像没有这么简单
 				if(Dispatch_Frequency.PinLv.getCode().equals(job.getDisp_freq())) {
-					if(checkEtlDefJob(job) && !hasFrequancy) hasFrequancy = true;
+					if(!hasFrequancy && checkEtlDefJob(job)) hasFrequancy = true;
 				}
-				//FIXME 什么都没干呀？不需要给MAP赋值吗
 			}
-			//FIXME 这里要有 else 抛异常。
-			// 另外，上面为什么是频率才 checkEtlDefJob ？
 
 			//2、为作业设置需要的资源。
 			List<Etl_job_resource_rela> jobNeedResources = TaskSqlHelper.getJobNeedResources(etlSysCd, etlJobId);
@@ -467,17 +464,7 @@ public class TaskManager {
 			//FIXME 下面的代码有隐患。如果KEY存在，但是值为NUL，则会异常。而且代码太多了。
 			// 这个逻辑是不是：如果Key不存在或值是null，则新建LIST并存入MAP；否则用原来LIST
 			// 改成下面一句即可：
-			// jobDependencyMap.computeIfAbsent(etlJobId, k -> new ArrayList<>()).add(preEtlJob);
-			if(jobDependencyMap.containsKey(etlJobId)) {
-				List<String> dependenies = jobDependencyMap.get(etlJobId);
-				if(!dependenies.contains(preEtlJob)) {
-					dependenies.add(preEtlJob);
-				}
-			}else {
-				List<String> dependenies = new ArrayList<>();
-				dependenies.add(preEtlJob);
-				jobDependencyMap.put(etlJobId, dependenies);
-			}
+			jobDependencyMap.computeIfAbsent(etlJobId, k -> new ArrayList<>()).add(preEtlJob);
 		}
 	}
 
@@ -492,7 +479,7 @@ public class TaskManager {
 	 */
 	private void loadExecuteJob(List<EtlJobDefBean> jobs, boolean hasFrequancy) {
 
-		//FIXME 为什么不把strBathDate作为成员变量，非要这里转换一次
+		//FIXME strBathDate 设置到成员变量中
 		String strBathDate = bathDate.format(DateUtil.DATE_DEFAULT);
 		/*
 		 * 一、若系统在运行中，主要行为如下：
@@ -619,8 +606,7 @@ public class TaskManager {
 				job.setToday_disp(Today_Dispatch_Flag.YES.getCode());
 				//计算调度作业的下一批次作业日期
 				executeJob.setStrNextDate(TaskJobHelper.getNextExecuteDate(bathDate, strDispFreq));
-				//FIXME 这个表主键是两个，这里用其中一个做key，要说明为什么可行。
-				// 另外：
+				//FIXME
 				// getEtl_job 要把表里该字段名字改为 etl_job_id，且该表的字段前缀etl是否可以删除。
 				// 两个后缀是sys_cd的字段，改名字为sys_code
 				executeJobMap.put(executeJob.getEtl_job(), executeJob);
@@ -915,7 +901,7 @@ public class TaskManager {
 		if( exeedNum >= exeNum ) {	//已执行的次数>=总执行次数，作业不再执行
 			return false;
 		}
-		String endTime = job.getEnd_time();	//19位日期加时间字符串    yyyy-MM-dd HH:mm:ss FIXME 为什么是这样的格式？
+		String endTime = job.getEnd_time();	//19位日期加时间字符串    yyyy-MM-dd HH:mm:ss FIXME 数据库里的数据要修改成统一格式
 		LocalDateTime endDateTime = LocalDateTime.parse(endTime, DateUtil.DATETIME);
 		//若当前系统日期大于或等于结束日期，则作业不再执行
 		return LocalDateTime.now().compareTo(endDateTime) < 0;
@@ -930,7 +916,8 @@ public class TaskManager {
 	 */
 	private boolean checkEtlJob(EtlJobBean exeJob) {
 		//FIXME 这个方法在海量循环中被反复调用，也就是频繁查库，只能这样做吗？
-		// 如果一定要这样，getEtlJob里面就别用反射实体了，用queryArray 或者直接用 db.queryGetResultSet 最大限度的提高性能
+		// 如果一定要这样，getEtlJob里面就别用反射实体了，用 queryArray 或者直接用 db.queryGetResultSet 最大限度的提高性能
+		// 用一个SQL找出来所有不符合的数据，而不是在循环中一个个的找
 		Etl_job_cur etlJob = TaskSqlHelper.getEtlJob(exeJob.getEtl_sys_cd(), exeJob.getEtl_job());;
 		EtlJobDefBean job = new EtlJobDefBean();
 		job.setExe_num(etlJob.getExe_num());
