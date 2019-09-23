@@ -69,7 +69,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 	 * dep_id为-2000000001，-2000000002
 	 * 3.agent_info表：有5条数据,agent_id有五种，数据库agent,数据文件agent,非结构化agent,半结构化agent,
 	 * FTP agent,分别为-2000000001到-2000000005
-	 * 4.department_info表，有2条数据，dep_id为-2000000001，-2000000002
+	 * 4.department_info表，有2条数据，dep_id为-3000000001，-3000000002
 	 */
 	@BeforeClass
 	public static void before() {
