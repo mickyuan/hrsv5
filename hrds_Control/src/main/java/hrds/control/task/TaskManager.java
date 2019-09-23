@@ -44,9 +44,12 @@ public class TaskManager {
 	public static final int MINPRIORITY = 1;    //作业的最小优先级
 	public static final int DEFAULT_PRIORITY = 5;  //默认作业优先级
 
+	//FIXME 以下每个map的key和value都要详细说明
 	//调度作业定义表
 	private static final Map<String, EtlJobDefBean> jobDefineMap = new HashMap<>();
 	//调度作业的时间依赖表
+	//FIXME 这个"时间依赖"的意思是配置成某个时间点启动的作业吗？
+	// 如果这里的两个MAP对应的是按时启动和前置作业依赖启动，那么，是不是还应该有一个信号文件依赖的MA？
 	private static final Map<String, String> jobTimeDependencyMap = new HashMap<>();
 	//调度作业间关系依赖表
 	private static final Map<String, List<String>> jobDependencyMap = new HashMap<>();
@@ -63,7 +66,7 @@ public class TaskManager {
 	private final TaskJobHandleHelper handleHelper;
 
 	private LocalDate bathDate;   //当前批次日期
-	private final String etlSysCd;  //调度系统编号
+	private final String etlSysCd;  //调度系统编号 //FIXME 改名：etlSysCode 并且说明值是来自什么。这些变量都要说明
 	private final boolean isResumeRun;  //系统续跑标识
 	private final boolean isAutoShift;  //自动日切标识
 	private final boolean isNeedSendSMS;    //作业发送警告信息标识
@@ -97,7 +100,7 @@ public class TaskManager {
 	 */
 	public static TaskManager newInstance(String strSystemCode, LocalDate bathDate,
 	                                      boolean isResumeRun, boolean isAutoShift) {
-
+//FIXME 为什么要搞这么个方法，直接new不就完了吗
 		return new TaskManager(strSystemCode, bathDate, isResumeRun, isAutoShift);
 	}
 
@@ -122,6 +125,7 @@ public class TaskManager {
 
 		this.isNeedSendSMS = ControlConfigure.NotifyConfig.isNeedSendSMS;
 
+		//FIXME 为什么这么搞？把未完成的this传给别人再返回给自己，这是搞什么？这个方法里面干的事情，拿出去按逻辑顺序调用
 		this.handleHelper = TaskJobHandleHelper.newInstance(this);
 	}
 
@@ -146,6 +150,8 @@ public class TaskManager {
 			String resourceType = resource.getResource_type();
 			int maxCount = resource.getResource_max();
 			int usedCount = 0;
+			//FIXME 为什么要新搞一个，用已有的不行吗？
+			// 而且，为什么需要这个循环，用 getEtlSystemResources 直接返回 sysResourceMap 不就行了吗
 			Etl_resource newResource = new Etl_resource();
 			newResource.setResource_type(resourceType);
 			newResource.setResource_max(maxCount);
@@ -227,6 +233,7 @@ public class TaskManager {
 //				isSysShift = true;
 				if(null != thread && thread.isAlive()) { thread.stopThread(); }
 				logger.warn("------------- 系统干预，{} 调度停止 -----------------", etlSysCd);
+				//FIXME 这样干预后，再要启动的话，需要人工操作吗？
 				return false;
 			}
 			//2、检测干预信号，执行干预请求
@@ -245,7 +252,7 @@ public class TaskManager {
 			updateSysUsedResource();
 			//3、判断系统是否需要暂停
 			while(isLock) {
-				System.out.println("Lock is true, Please wait.");
+				System.out.println("Lock is true, Please wait.");//FIXME 用 logger
 				try {
 					Thread.sleep(LOCKMILLISECONDS);
 				}
@@ -359,7 +366,7 @@ public class TaskManager {
 				}
 			}
 			try {
-				Thread.sleep(SLEEPMILLIS);
+				Thread.sleep(SLEEPMILLIS);//FIXME 这里为什么再次sleep
 				logger.info("还有任务未执行完");
 			}
 			catch(InterruptedException e) {
@@ -373,6 +380,7 @@ public class TaskManager {
 	 * 根据作业列表，判断每个作业触发方式、是否达成触发条件、资源是否足够、作业依赖等条件；<br>
 	 * 此处会维护jobDefineMap全局变量，用于存放作业信息；<br>
 	 * 此处会维护jobTimeDependencyMap全局变量，用于存放触发类型为频率的作业，key为作业标识，value为触发时间。<br>
+	 *                                                  FIXME "为频率" ？
 	 * @note	1、判断每个作业是否需要立即执行；
 	 *          2、为作业设置需要的资源。
 	 * @author Tiger.Wang
@@ -409,7 +417,10 @@ public class TaskManager {
 				if(Dispatch_Frequency.PinLv.getCode().equals(job.getDisp_freq())) {
 					if(checkEtlDefJob(job) && !hasFrequancy) hasFrequancy = true;
 				}
+				//FIXME 什么都没干呀？不需要给MAP赋值吗
 			}
+			//FIXME 这里要有 else 抛异常。
+			// 另外，上面为什么是频率才 checkEtlDefJob ？
 
 			//2、为作业设置需要的资源。
 			List<Etl_job_resource_rela> jobNeedResources = TaskSqlHelper.getJobNeedResources(etlSysCd, etlJobId);
@@ -435,10 +446,10 @@ public class TaskManager {
 		for(Etl_dependency etlDependency : etlDependencies) {
 			String etlJobId = etlDependency.getEtl_job();
 			//1、判断每个依赖作业是否在作业定义表中，若该依赖作业不在调度范围内，则认为该作业不作为依赖作业
-			if(!jobDefineMap.containsKey(etlJobId)) {
+			if(!jobDefineMap.containsKey(etlJobId)) {//FIXME 这种情况是怎么发生的，要做日志提示吗？
 				continue;
 			}
-			//TODO 此处要做什么
+			//TODO 此处要做什么 FIXME!
 			if(etlJobId.equals("EDW_TRAN_PDATA_T09_OB_DIM_INFO_H_S28")) {
 				etlJobId = "EDW_TRAN_PDATA_T09_OB_DIM_INFO_H_S28";
 			}
@@ -453,6 +464,10 @@ public class TaskManager {
 			 * 	一、若作业依赖已经设置，在作业依赖列表中不存在该依赖作业的情况下，将该依赖作业加入作业依赖列表；
 			 * 	二、若作业依赖未设置，则为该作业设置依赖作业，此时会为该作业新建作业依赖列表。
 			 */
+			//FIXME 下面的代码有隐患。如果KEY存在，但是值为NUL，则会异常。而且代码太多了。
+			// 这个逻辑是不是：如果Key不存在或值是null，则新建LIST并存入MAP；否则用原来LIST
+			// 改成下面一句即可：
+			// jobDependencyMap.computeIfAbsent(etlJobId, k -> new ArrayList<>()).add(preEtlJob);
 			if(jobDependencyMap.containsKey(etlJobId)) {
 				List<String> dependenies = jobDependencyMap.get(etlJobId);
 				if(!dependenies.contains(preEtlJob)) {
@@ -477,6 +492,7 @@ public class TaskManager {
 	 */
 	private void loadExecuteJob(List<EtlJobDefBean> jobs, boolean hasFrequancy) {
 
+		//FIXME 为什么不把strBathDate作为成员变量，非要这里转换一次
 		String strBathDate = bathDate.format(DateUtil.DATE_DEFAULT);
 		/*
 		 * 一、若系统在运行中，主要行为如下：
@@ -603,6 +619,10 @@ public class TaskManager {
 				job.setToday_disp(Today_Dispatch_Flag.YES.getCode());
 				//计算调度作业的下一批次作业日期
 				executeJob.setStrNextDate(TaskJobHelper.getNextExecuteDate(bathDate, strDispFreq));
+				//FIXME 这个表主键是两个，这里用其中一个做key，要说明为什么可行。
+				// 另外：
+				// getEtl_job 要把表里该字段名字改为 etl_job_id，且该表的字段前缀etl是否可以删除。
+				// 两个后缀是sys_cd的字段，改名字为sys_code
 				executeJobMap.put(executeJob.getEtl_job(), executeJob);
 			}else {
 				job.setToday_disp(Today_Dispatch_Flag.NO.getCode());
@@ -895,7 +915,7 @@ public class TaskManager {
 		if( exeedNum >= exeNum ) {	//已执行的次数>=总执行次数，作业不再执行
 			return false;
 		}
-		String endTime = job.getEnd_time();	//19位日期加时间字符串    yyyy-MM-dd HH:mm:ss
+		String endTime = job.getEnd_time();	//19位日期加时间字符串    yyyy-MM-dd HH:mm:ss FIXME 为什么是这样的格式？
 		LocalDateTime endDateTime = LocalDateTime.parse(endTime, DateUtil.DATETIME);
 		//若当前系统日期大于或等于结束日期，则作业不再执行
 		return LocalDateTime.now().compareTo(endDateTime) < 0;
@@ -909,7 +929,8 @@ public class TaskManager {
 	 * @return boolean	若认定为需要马上执行则返回true，否则false
 	 */
 	private boolean checkEtlJob(EtlJobBean exeJob) {
-
+		//FIXME 这个方法在海量循环中被反复调用，也就是频繁查库，只能这样做吗？
+		// 如果一定要这样，getEtlJob里面就别用反射实体了，用queryArray 或者直接用 db.queryGetResultSet 最大限度的提高性能
 		Etl_job_cur etlJob = TaskSqlHelper.getEtlJob(exeJob.getEtl_sys_cd(), exeJob.getEtl_job());;
 		EtlJobDefBean job = new EtlJobDefBean();
 		job.setExe_num(etlJob.getExe_num());
@@ -943,6 +964,7 @@ public class TaskManager {
 
 		//TODO 因为jdk8的withDayOfMonth等方法不支持nDispOffset为负数，
 		// 也没找到解决办法，暂无法换成jdk8新日期时间的使用方法
+		//FIXME 这是要达到什么目的？原版是怎么做的？
 		ZoneId zoneId = ZoneId.systemDefault();
 		ZonedDateTime zdt = currDate.atStartOfDay(zoneId);
 		Calendar cal = Calendar.getInstance();
@@ -953,6 +975,7 @@ public class TaskManager {
 		 * 二、若该作业为每月、每周、每年调度，则根据偏移量计算该作业是否需要马上调度；
 		 * 三、若该作业为频率调度，则根据该作业的开始执行时间计算该作业是否需要马上调度。
 		 */
+		//FIXME 下面每段if都要注释说明在干什么
 		if(frequancy.endsWith(Dispatch_Frequency.DAILY.getCode())) {
 			return true;
 		}else if(frequancy.equals(Dispatch_Frequency.MONTHLY.getCode())) {
@@ -1034,16 +1057,18 @@ public class TaskManager {
 				waitJobInfo.getStrBathDate());
 		etlJobCur.setJob_disp_status(Job_Status.DONE.getCode());
 		etlJobCur.setJob_return_val(0);
+		//FIXME curr_end_time为什么是毫秒？ 为什么不用fd里面的DataUtil？
 		etlJobCur.setCurr_end_time(String.valueOf(DateUtil.getNowDateTime2Milli()));
 		//2、将Etl_job_cur对象复制成Etl_job_disp_his对象；
 		Etl_job_disp_his etlJobDispHis = new Etl_job_disp_his();
 		try {
+			//FIXME 死循环里，不允许用这种耗时操作。用set进行逐个明确赋值！另外，为什么要赋值到his对象？
 			BeanUtils.copyProperties(etlJobDispHis, etlJobCur);
 		} catch (IllegalAccessException | InvocationTargetException e) {
 			throw new AppSystemException("将Etl_job_def转换为Etl_job发生异常：" + e.getMessage());
 		}
 		//3、使用Etl_job_disp_his对象更新etl_job_disp_his表；
-		TaskSqlHelper.insertIntoEtlJobDispHis(etlJobDispHis);
+		TaskSqlHelper.insertIntoEtlJobDispHis(etlJobDispHis); //FIXME 为什么不用etlJobCur。这两个对象明明一样
 		//4、使用Etl_job_cur对象更新etl_job_cur表；
 		TaskSqlHelper.updateEtlJobFinished(etlJobCur);
 		//5、根据调度作业标识、当前跑批日期，更新已经结束的作业信息。
@@ -1129,6 +1154,8 @@ public class TaskManager {
 			}
 			//更新作业状态
 			updateFinishedJob(jobKey[0], jobKey[1]);
+			//FIXME 注释：0和1是什么数据。
+			// 考虑改成批量调用（传所有要更新的数组进去，在里面批量处理DB UPDATE
 		}
 	}
 
@@ -1183,7 +1210,7 @@ public class TaskManager {
 				List<String> depJobList = jobDependencyMap.get(strJobName);
 				if (depJobList.contains(exeJobInfo.getEtl_job())) {
 					EtlJobBean nextJobInfo = jobExecuteMap.get(currBathDate).get(strJobName);
-					if (null == nextJobInfo) {
+					if (null == nextJobInfo) {//FIXME 什么情况下是null
 						continue;
 					}
 					//修改依赖作业已经完成的个数
@@ -1278,6 +1305,7 @@ public class TaskManager {
 				String message = currBathDate + " " + jobName + "调度失败!";
 				NOTIFY.sendMsg(message);
 			}
+			//FIXME 这里为什么反倒没有记日志？
 		}
 	}
 
@@ -1317,12 +1345,17 @@ public class TaskManager {
 	 */
 	private void checkTimeDependencyJob() {
 
+		//FIXME 只需要 value 的话，直接用就行了：
+		// for(Map<String, EtlJobBean> jobMap : jobExecuteMap.values())
+		// 如果需要key：
+		// for(Map.Entry<String, Map<String, EtlJobBean>> entry : jobExecuteMap.entrySet())
+		// 总之不要通过 keySet 再去找了 key 再去找 value
 		for (String strBathDate : jobExecuteMap.keySet()) {
 			Map<String, EtlJobBean> jobMap = jobExecuteMap.get(strBathDate);
 			Iterator<String> jobIter = jobMap.keySet().iterator();
 			long time = DateUtil.getNowDateTime2Milli();
-			logger.info("CurrentTime={}", time);
-			while (jobIter.hasNext()) {
+			logger.info("CurrentTime={}", time);//FIXME 为什么记日志？如果一定要写，放到循环外面可以吗
+			while (jobIter.hasNext()) {//FIXME 这个MAP有通过KEY取值的要求吗？没有的话，换成LIS。如果有，遍历方式如上面
 
 				String strJobName = jobIter.next();
 				EtlJobBean exeJob = jobMap.get(strJobName);
@@ -1341,7 +1374,7 @@ public class TaskManager {
 						continue;
 					}
 					//xchao--2017年8月15日 16:25:51 添加按秒、分钟、小时进行执行
-					if (exeJob.getExecuteTime() == zclong) {
+					if (exeJob.getExecuteTime() == zclong) {//FIXME 这个变量还没改？
 						if (!checkEtlJob(exeJob)) {
 							continue;
 						}
@@ -1349,7 +1382,7 @@ public class TaskManager {
 					//判断作业触发时间是否为0l,不为0表示定时触发
 					else if (exeJob.getExecuteTime() != 0L) {
 						//定时触发,判断作业调度时间是否已经达到
-						if (time < exeJob.getExecuteTime()) {
+						if (time < exeJob.getExecuteTime()) {//FIXME 换成大于。
 							//作业调度时间未到,作业状态不能置为Waiting
 							continue;
 						}
@@ -1358,9 +1391,10 @@ public class TaskManager {
 						continue;
 					}
 
-					//将Pending状态置为Waiting
+					//将Pending状态置为Waiting //FIXME 为何要打印日志。要打也应该是DEBUG吧，而且要做日志级别判断
 					logger.info("{}'s executeTime={}, can run!", strJobName, exeJob.getExecuteTime());
 					exeJob.setJob_disp_status(Job_Status.WAITING.getCode());
+					//FIXME 是否有必要改成批量更新？原版就是这么搞吗
 					TaskSqlHelper.updateEtlJobDispStatus(Job_Status.WAITING.getCode(), etlSysCd, exeJob.getEtl_job(),
 							exeJob.getCurr_bath_date());
 				}
@@ -2001,6 +2035,7 @@ public class TaskManager {
 					//TODO 为什么设置为true马上又设置为false
 					isLock = true;
 					List<WaitFileJobInfo> jobList = new ArrayList<>(waitFileJobList);
+					//FIXME 为什么不用waitFileJobList来初始化checkList？
 					List<WaitFileJobInfo> checkList = new ArrayList<>(jobList);
 					List<WaitFileJobInfo> finishedJobList = new ArrayList<>();
 					for (WaitFileJobInfo jobInfo : checkList) {
