@@ -22,6 +22,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.GET;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -65,9 +66,7 @@ public class DataSourceAction extends BaseAction {
 		// 数据源主键ID
 		dataSource.setSource_id(PrimayKeyGener.getNextId());
 		// 数据源创建用户ID
-		Long userId = getUserId();
-		userId = 5555L;
-		dataSource.setCreate_user_id(userId);
+		dataSource.setCreate_user_id(getUserId());
 		// 数据源创建日期
 		dataSource.setCreate_date(DateUtil.getSysDate());
 		// 数据源创建时间
@@ -111,11 +110,9 @@ public class DataSourceAction extends BaseAction {
 	 */
 	public void updateDataSource(Long source_id, String source_remark, String datasource_name,
 	                             String datasource_number, Long[] depIds) {
-		Long userId = getUserId();
-		userId = 5555L;
 		// 1.数据可访问权限处理方式，通过source_id与user_id关联检查
 		if (Dbo.queryNumber("select count(1) from data_source where source_id=? and " +
-				" create_user_id=?", source_id, userId).orElse(Long.MIN_VALUE) == 0) {
+				" create_user_id=?", source_id, getUserId()).orElse(Long.MIN_VALUE) == 0) {
 			throw new BusinessException("数据权限校验失败，数据不可访问！");
 		}
 		//source_id长度
@@ -169,8 +166,6 @@ public class DataSourceAction extends BaseAction {
 	 */
 	private void fieldLegalityValidation(String datasource_name, String datasource_number,
 	                                     Long[] depIds) {
-		Long userId = getUserId();
-		userId = 5555L;
 		// 1.数据可访问权限处理方式，通过create_user_id检查
 		// 2.循环遍历获取source_relation_dep主键ID，验证dep_id合法性
 		for (Long dep_id : depIds) {
@@ -195,7 +190,7 @@ public class DataSourceAction extends BaseAction {
 		// 5.更新前查询数据源编号是否已存在
 		if (Dbo.queryNumber("select count(1) from " + Data_source.TableName + "  where " +
 						"datasource_number=? and create_user_id=?", datasource_number
-				, userId).orElse(Long.MIN_VALUE) > 0) {
+				, getUserId()).orElse(Long.MIN_VALUE) > 0) {
 			// 判断数据源编号是否重复
 			throw new BusinessException("数据源编号重复,datasource_number=" +
 					datasource_number);
@@ -254,12 +249,10 @@ public class DataSourceAction extends BaseAction {
 	 */
 	public List<Map<String, Object>> searchDataSource(long source_id) {
 		// 1.数据可访问权限处理方式，以下SQL关联source_id与user_id检查
-		Long userId = getUserId();
-		userId = 5555L;
 		// 2.关联查询data_source表与source_relation_dep表信息
 		return Dbo.queryList("select ds.*,srd.dep_id from data_source ds " +
 				" join source_relation_dep srd on ds.source_id=srd.source_id " +
-				"  where ds.source_id = ? and ds.create_user_id=?", source_id, userId);
+				"  where ds.source_id = ? and ds.create_user_id=?", source_id, getUserId());
 	}
 
 	/**
@@ -280,15 +273,13 @@ public class DataSourceAction extends BaseAction {
 		// 1.数据可访问权限处理方式，以下SQL关联source_id与user_id检查
 		// 2.先查询该datasource下是否还有agent
 		// 获取登录用户ID
-		Long userId = getUserId();
-		userId = 5555L;
 		if (Dbo.queryNumber("SELECT count(1) FROM agent_info  WHERE source_id=?" +
-				" and user_id=?", source_id, userId).orElse(Long.MIN_VALUE) > 0) {
+				" and user_id=?", source_id, getUserId()).orElse(Long.MIN_VALUE) > 0) {
 			throw new BusinessException("此数据源下还有agent，不能删除,source_id=" + source_id);
 		}
 		// 3.删除data_source表信息
 		int num = Dbo.execute("delete from data_source where source_id=? " +
-				" and create_user_id=?", source_id, userId);
+				" and create_user_id=?", source_id, getUserId());
 		if (num != 1) {
 			// 4.判断库里是否没有这条数据
 			if (num == 0) {
