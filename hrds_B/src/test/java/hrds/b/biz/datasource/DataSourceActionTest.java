@@ -33,21 +33,21 @@ import static org.hamcrest.MatcherAssert.assertThat;
  */
 public class DataSourceActionTest extends WebBaseTestCase {
 	// 测试登录用户ID
-	private static final long UserId = 5555;
+	private static final long UserId = 5555L;
 	// 测试数据源 source_id
-	private static final long Source_Id = -1000000000;
+	private static final long Source_Id = -1000000000L;
 	// 测试数据源 source_id,新建数据源，下面没有agent
 	private static final long Source_Id2 = -1000000001L;
 	// 测试数据库 agent_id
-	private static final long DB_Agent_Id = -2000000001;
+	private static final long DB_Agent_Id = -2000000001L;
 	// 测试数据文件 agent_id
-	private static final long DF_Agent_Id = -2000000002;
+	private static final long DF_Agent_Id = -2000000002L;
 	// 测试非结构化 agent_id
-	private static final long Uns_Agent_Id = -2000000003;
+	private static final long Uns_Agent_Id = -2000000003L;
 	// 测试半结构化 agent_id
-	private static final long Semi_Agent_Id = -2000000004;
+	private static final long Semi_Agent_Id = -2000000004L;
 	// 测试FTP agent_id
-	private static final long FTP_Agent_Id = -2000000005;
+	private static final long FTP_Agent_Id = -2000000005L;
 	// 测试部门ID dep_id,测试第一部门
 	private static final long Dep_Id1 = -3000000001L;
 	// 测试部门ID dep_id 测试第二部门
@@ -143,7 +143,6 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			Agent_info agent_info = new Agent_info();
 			for (int i = 0; i < 5; i++) {
 				// 封装agent_info数据
-				agent_info.setAgent_name("数据库agent");
 				agent_info.setSource_id(Source_Id);
 				agent_info.setCreate_date(DateUtil.getSysDate());
 				agent_info.setCreate_time(DateUtil.getSysTime());
@@ -155,22 +154,28 @@ public class DataSourceActionTest extends WebBaseTestCase {
 					// 数据库 agent
 					agent_info.setAgent_id(DB_Agent_Id);
 					agent_info.setAgent_type(AgentType.ShuJuKu.getCode());
+					agent_info.setAgent_name("sjkAgent");
 				} else if (i == 2) {
 					// 数据文件 Agent
 					agent_info.setAgent_id(DF_Agent_Id);
 					agent_info.setAgent_type(AgentType.DBWenJian.getCode());
+					agent_info.setAgent_name("DFAgent");
+
 				} else if (i == 3) {
 					// 非结构化 Agent
 					agent_info.setAgent_id(Uns_Agent_Id);
 					agent_info.setAgent_type(AgentType.WenJianXiTong.getCode());
+					agent_info.setAgent_name("UnsAgent");
 				} else if (i == 4) {
-					// FTP Agent
+					// 半结构化 Agent
 					agent_info.setAgent_id(Semi_Agent_Id);
 					agent_info.setAgent_type(AgentType.FTP.getCode());
+					agent_info.setAgent_name("SemiAgent");
 				} else {
-					// 半结构化 Agent
+					// FTP Agent
 					agent_info.setAgent_id(FTP_Agent_Id);
 					agent_info.setAgent_type(AgentType.DuiXiang.getCode());
+					agent_info.setAgent_name("FTPAgent");
 				}
 				// 初始化agent不同的连接状态
 				if (i < 2) {
@@ -213,6 +218,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 	 * 7.测试完成后删除department_info表测试数据
 	 * 8.判断department_info表数据是否被删除
 	 * 9.单独删除新增数据，因为新增数据主键是自动生成的，所以要通过其他方式删除
+	 * 10.提交事务
 	 */
 	@AfterClass
 	public static void after() {
@@ -299,6 +305,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 					"cs05");
 			SqlOperator.execute(db, "delete from data_source where datasource_number=?",
 					"cs06");
+			// 10.提交事务
 			SqlOperator.commitTransaction(db);
 		}
 

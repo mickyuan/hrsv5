@@ -10,9 +10,9 @@ import hrds.commons.codes.AgentStatus;
 import hrds.commons.codes.AgentType;
 import hrds.commons.entity.Agent_info;
 import hrds.testbase.WebBaseTestCase;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
+
+import java.util.OptionalLong;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -24,50 +24,92 @@ import static org.hamcrest.MatcherAssert.assertThat;
  * @date 2019-09-18 10:49:51
  */
 public class AgentInfoActionTest extends WebBaseTestCase {
-	private static final int Init_Rows = 10; // 向表中初始化的数据条数。
 	// 初始化登录用户ID
-	private static final long UserId = 5555;
+	private static final long UserId = 5555L;
+	// 测试数据源 source_id
+	private static final long Source_Id = -1000000000L;
+	// 测试数据库 agent_id
+	private static final long DB_Agent_Id = -2000000001L;
+	// 测试数据文件 agent_id
+	private static final long DF_Agent_Id = -2000000002L;
+	// 测试非结构化 agent_id
+	private static final long Uns_Agent_Id = -2000000003L;
+	// 测试半结构化 agent_id
+	private static final long Semi_Agent_Id = -2000000004L;
+	// 测试FTP agent_id
+	private static final long FTP_Agent_Id = -2000000005L;
 
-	@Before
+	/**
+	 * 初始化测试用例数据
+	 * <p>
+	 * 1.构造agent_info表测试数据
+	 * 2.提交事务
+	 * 3.模拟用户登录
+	 * <p>
+	 * 测试数据：
+	 * 1.agent_info表：有5条数据,agent_id有五种，数据库agent,数据文件agent,非结构化agent,半结构化agent,
+	 * FTP agent,分别为-2000000001到-2000000005
+	 */
+	@BeforeClass
 	public void before() {
-		// 初始化测试用例数据
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			// 创建agent_info表对应实体对象
+			// 1.构造agent_info表测试数据
 			Agent_info agent_info = new Agent_info();
-			for (Long i = 0L; i < Init_Rows; i++) {
-				// 封装agent_info实体数据
-				agent_info.setAgent_id(i - 30 * 10000000);
-				agent_info.setAgent_name("数据库agent");
-				agent_info.setSource_id(i - 30 * 10000000);
+			for (int i = 0; i < 5; i++) {
+				// 封装agent_info数据
+				agent_info.setSource_id(Source_Id);
 				agent_info.setCreate_date(DateUtil.getSysDate());
 				agent_info.setCreate_time(DateUtil.getSysTime());
-				if (i < 2) {
-					agent_info.setAgent_type(AgentType.ShuJuKu.getCode());
-				} else if (i >= 2 && i < 4) {
-					agent_info.setAgent_type(AgentType.DBWenJian.getCode());
-				} else if (i >= 4 && i < 6) {
-					agent_info.setAgent_type(AgentType.WenJianXiTong.getCode());
-				} else if (i >= 6 && i < 8) {
-					agent_info.setAgent_type(AgentType.FTP.getCode());
-				} else {
-					agent_info.setAgent_type(AgentType.DuiXiang.getCode());
-				}
 				agent_info.setAgent_ip("10.71.4.51");
+				agent_info.setUser_id(UserId);
 				agent_info.setAgent_port("34567");
-				if (i < 3) {
+				// 初始化不同类型的agent
+				if (i == 1) {
+					// 数据库 agent
+					agent_info.setAgent_id(DB_Agent_Id);
+					agent_info.setAgent_type(AgentType.ShuJuKu.getCode());
+					agent_info.setAgent_name("sjkAgent");
+				} else if (i == 2) {
+					// 数据文件 Agent
+					agent_info.setAgent_id(DF_Agent_Id);
+					agent_info.setAgent_type(AgentType.DBWenJian.getCode());
+					agent_info.setAgent_name("DFAgent");
+
+				} else if (i == 3) {
+					// 非结构化 Agent
+					agent_info.setAgent_id(Uns_Agent_Id);
+					agent_info.setAgent_type(AgentType.WenJianXiTong.getCode());
+					agent_info.setAgent_name("UnsAgent");
+				} else if (i == 4) {
+					// 半结构化 Agent
+					agent_info.setAgent_id(Semi_Agent_Id);
+					agent_info.setAgent_type(AgentType.FTP.getCode());
+					agent_info.setAgent_name("SemiAgent");
+				} else {
+					// FTP Agent
+					agent_info.setAgent_id(FTP_Agent_Id);
+					agent_info.setAgent_type(AgentType.DuiXiang.getCode());
+					agent_info.setAgent_name("FTPAgent");
+				}
+				// 初始化agent不同的连接状态
+				if (i < 2) {
+					// 已连接
 					agent_info.setAgent_status(AgentStatus.YiLianJie.getCode());
-				} else if (i >= 3 && i < 7) {
+				} else if (i >= 2 && i < 4) {
+					// 未连接
 					agent_info.setAgent_status(AgentStatus.WeiLianJie.getCode());
 				} else {
+					// 正在运行
 					agent_info.setAgent_status(AgentStatus.ZhengZaiYunXing.getCode());
 				}
-				int num = agent_info.add(db);
-				assertThat("测试数据初始化", num, is(1));
+				// 初始化agent_info数据
+				int aiNum = agent_info.add(db);
+				assertThat("测试agent_info数据初始化", aiNum, is(1));
 			}
-
+			// 2.提交事务
 			SqlOperator.commitTransaction(db);
 		}
-		// 5.模拟用户登录
+		// 3.模拟用户登录
 		//String responseValue = new HttpClient()
 		//		.buildSession()
 		//		.addData("username", UserId)
@@ -78,106 +120,77 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 		//assertThat("用户登录", ar.getCode(), is(220));
 	}
 
-	@After
+	/**
+	 * 测试完删除测试数据
+	 * <p>
+	 * 1.测试完成后删除agent_info表测试数据
+	 * 2.判断agent_info数据是否被删除
+	 * 3.单独删除新增数据，因为新增数据主键是自动生成的，所以要通过其他方式删除
+	 * 4.提交事务
+	 */
+	@AfterClass
 	public void after() {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			for (Long i = 0L; i < Init_Rows; i++) {
-				// 测试完成后删除agent_info表测试数据
-				SqlOperator.execute(db, "delete from " + Agent_info.TableName + "  where " +
-						"agent_id=?", i - 30 * 10000000);
-				SqlOperator.commitTransaction(db);
-				Long aiNum = SqlOperator.queryNumber(db, "select count(1) from " + Agent_info.TableName + " where agent_id=?", i)
-						.orElseThrow(() -> new RuntimeException("count fail!"));
-
-				assertThat("此条记录删除后，数据为0", aiNum, is(0L));
-
-				// 测试完成后删除agent_info表新增测试数据，因为新增时agent_id为自动生成
-				SqlOperator.execute(db, "delete from " + Agent_info.TableName + "  where " +
-						"source_id=?", -30);
-				SqlOperator.execute(db, "delete from " + Agent_info.TableName + "  where " +
-						"source_id=?", -27);
-				SqlOperator.execute(db, "delete from " + Agent_info.TableName + "  where " +
-						"source_id=?", -25);
-				SqlOperator.commitTransaction(db);
-
-			}
+			// 1.测试完成后删除agent_info表数据库agent测试数据
+			SqlOperator.execute(db, "delete from agent_info where agent_id=?", DB_Agent_Id);
+			SqlOperator.execute(db, "delete from agent_info where agent_id=?", DF_Agent_Id);
+			SqlOperator.execute(db, "delete from agent_info where agent_id=?", Uns_Agent_Id);
+			SqlOperator.execute(db, "delete from agent_info where agent_id=?", Semi_Agent_Id);
+			SqlOperator.execute(db, "delete from agent_info where agent_id=?", FTP_Agent_Id);
+			// 2.判断agent_info表数据是否被删除
+			long DBNum = SqlOperator.queryNumber(db, "select count(1) from  agent_info " +
+					" where  agent_id=?", DB_Agent_Id).orElseThrow(() -> new RuntimeException(
+					"count fail!"));
+			assertThat("此条记录删除后，数据为0", DBNum, is(0L));
+			long DFNum = SqlOperator.queryNumber(db, "select count(1) from agent_info" +
+					" where  agent_id=?", DF_Agent_Id).orElseThrow(() -> new RuntimeException(
+					"count fail!"));
+			assertThat("此条记录删除后，数据为0", DFNum, is(0L));
+			long UnsNum = SqlOperator.queryNumber(db, "select count(1) from agent_info " +
+					" where agent_id=?", Uns_Agent_Id).orElseThrow(() -> new RuntimeException(
+					"count fail!"));
+			assertThat("此条记录删除后，数据为0", UnsNum, is(0L));
+			long SemiNum = SqlOperator.queryNumber(db, "select count(1) from agent_info " +
+					" where agent_id=?", Semi_Agent_Id).orElseThrow(() -> new RuntimeException(
+					"count fail!"));
+			assertThat("此条记录删除后，数据为0", SemiNum, is(0L));
+			long FTPNum = SqlOperator.queryNumber(db, "select count(1) from agent_info " +
+					" where agent_id=?", FTP_Agent_Id).orElseThrow(() -> new RuntimeException(
+					"count fail!"));
+			assertThat("此条记录删除后，数据为0", FTPNum, is(0L));
+			// 3.单独删除新增数据，因为新增数据主键是自动生成的，所以要通过其他方式删除
+			SqlOperator.execute(db, "delete from agent_info where source_id=?", Source_Id);
+			// 4.提交事务
+			SqlOperator.commitTransaction(db);
 		}
 	}
 
 	/**
 	 * 保存agent_info表数据
-	 * <p>
-	 * 参数1：agent_name String
-	 * 含义：agent名称
-	 * 取值范围：不为空以及不为空格
-	 * 参数2：agent_type String
-	 * 含义：agent类型
-	 * 取值范围：1:数据库Agent,2:文件系统Agent,3:FtpAgent,4:数据文件Agent,5:对象Agent
-	 * 参数3：agent_ip String
-	 * 含义：agent地址
-	 * 取值范围：服务器ip
-	 * 参数4:agent_port String
-	 * 含义：agent端口
-	 * 取值范围：1024-65535
-	 * 参数5：agent_status String
-	 * 含义：agent状态
-	 * 取值范围：1：已连接，2：未连接，3：正在运行
-	 * 参数6：source_id long
-	 * 含义：agent_info外键ID
-	 * 取值范围：不为空以及不为空格，长度不超过10
-	 * 参数7：agent_id long
-	 * 含义：agent_info主键ID
-	 * 取值范围：不为空及不为空格，长度不超过10
-	 * 参数8：user_id String
-	 * 含义：数据采集用户
-	 * 取值范围：不为空
 	 *
 	 * <p>
-	 * 1.新增，数据都不为空且为有效数据
-	 * 2.编辑，数据都不为空且为有效数据
-	 * 3.新增，agent_name为空
-	 * 4.新增，agent_name为空格
-	 * 5.新增，agent_type为空
-	 * 6.新增，agent_type为空格
-	 * 7.新增，agent_type不合法（不在取值范围内）
-	 * 8.新增，agent_ip为空
-	 * 9.新增，agent_ip为空格
-	 * 10.新增，agent_ip不合法（不是有效的ip）
-	 * 11.新增，agent_port为空
-	 * 12.新增，agent_port为空格
-	 * 13.新增，agent_port不合法（不是有效的端口）
-	 * 14.新增，source_id为空
-	 * 15.新增，source_id为空格
-	 * 16.新增，source_id不合法（长度超过10）
-	 * 17.新增，user_id为空
-	 * 18.新增，user_id为空格
 	 */
 	@Test
 	public void saveAgent() {
-		// 1.新增，数据都不为空且为有效数据
+		// 1.正确的数组访问1，新增agent信息,数据都有效
 		String bodyString = new HttpClient()
 				.addData("agent_name", "数据库agent")
 				.addData("agent_type", AgentType.ShuJuKu.getCode())
-				.addData("agent_ip", "10.71.4.51")
+				.addData("agent_ip", "10.71.4.52")
 				.addData("agent_port", "3456")
-				.addData("source_id", -30L)
+				.addData("source_id", Source_Id)
 				.addData("user_id", UserId)
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ActionResult ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(true));
-
-		// 2.编辑，数据都不为空且为有效数据
-		bodyString = new HttpClient()
-				.addData("agent_id", -27L)
-				.addData("agent_name", "DB文件agent")
-				.addData("agent_type", AgentType.DBWenJian.getCode())
-				.addData("agent_ip", "10.71.4.55")
-				.addData("agent_port", "34567")
-				.addData("source_id", -27L)
-				.addData("user_id", UserId)
-				.post(getActionUrl("saveAgent")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
-		assertThat(ar.isSuccess(), is(true));
+		// 验证新增数据是否成功
+		try (DatabaseWrapper db = new DatabaseWrapper()) {
+			// 判断data_source表数据是否新增成功
+			OptionalLong number = SqlOperator.queryNumber(db, "select count(*) from " +
+							" agent_info where source_id=? and agent_type=? and agent_name=?",
+					Source_Id, AgentType.ShuJuKu.getCode(), "数据库agent");
+			assertThat("添加agent_info数据成功", number.getAsLong(), is(1L));
+		}
 
 		// 3.新增，agent_name为空
 		bodyString = new HttpClient()
@@ -185,11 +198,10 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_type", AgentType.DBWenJian.getCode())
 				.addData("agent_ip", "10.71.4.52")
 				.addData("agent_port", "3457")
-				.addData("source_id", -30L)
+				.addData("source_id", -1000000012L)
 				.addData("user_id", UserId)
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
-		assertThat(ar.getMessage(), is("agent_name不为空以及不为空格，agent_name="));
 
 		// 4.新增，agent_name为空格
 		bodyString = new HttpClient()
@@ -197,12 +209,11 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_type", AgentType.DBWenJian.getCode())
 				.addData("agent_ip", "10.71.4.52")
 				.addData("agent_port", "3457")
-				.addData("source_id", -30L)
+				.addData("source_id", -1000000013L)
 				.addData("user_id", UserId)
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(false));
-		assertThat(ar.getMessage(), is("agent_name不为空以及不为空格，agent_name= "));
 
 		// 5.新增，agent_type为空
 		bodyString = new HttpClient()
@@ -210,11 +221,10 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_type", "")
 				.addData("agent_ip", "10.71.4.52")
 				.addData("agent_port", "3457")
-				.addData("source_id", -30L)
+				.addData("source_id", -1000000014L)
 				.addData("user_id", UserId)
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
-		assertThat(ar.getMessage(), is("agent_type不为空以及不为空格，agent_type="));
 
 		// 6.新增，agent_type为空格
 		bodyString = new HttpClient()
@@ -222,24 +232,22 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_type", " ")
 				.addData("agent_ip", "10.71.4.52")
 				.addData("agent_port", "3457")
-				.addData("source_id", -30L)
+				.addData("source_id", -1000000015L)
 				.addData("user_id", UserId)
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(false));
-		assertThat(ar.getMessage(), is("agent_type不为空以及不为空格，agent_type= "));
 		// 7.新增，agent_type不合法（不在取值范围内）
 		bodyString = new HttpClient()
 				.addData("agent_name", "sjkAgent")
 				.addData("agent_type", "6")
 				.addData("agent_ip", "10.71.4.52")
 				.addData("agent_port", "3457")
-				.addData("source_id", -30L)
+				.addData("source_id", -1000000016L)
 				.addData("user_id", UserId)
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(false));
-		assertThat(ar.getMessage(), is("agent_type不合法，不是规定类型，agent_type=6"));
 
 		// 8.新增，agent_ip为空
 		bodyString = new HttpClient()
@@ -247,12 +255,11 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_type", AgentType.ShuJuKu.getCode())
 				.addData("agent_ip", "")
 				.addData("agent_port", "3457")
-				.addData("source_id", -30L)
+				.addData("source_id", -1000000017L)
 				.addData("user_id", UserId)
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(false));
-		assertThat(ar.getMessage(), is("agent_ip不为空以及不为空格，agent_ip="));
 
 		// 9.新增，agent_ip为空格
 		bodyString = new HttpClient()
@@ -260,12 +267,11 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_type", AgentType.ShuJuKu.getCode())
 				.addData("agent_ip", " ")
 				.addData("agent_port", "3458")
-				.addData("source_id", -30L)
+				.addData("source_id", -1000000018L)
 				.addData("user_id", UserId)
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(false));
-		assertThat(ar.getMessage(), is("agent_ip不为空以及不为空格，agent_ip= "));
 
 		// 10.新增，agent_ip不合法（不是有效的ip）
 		bodyString = new HttpClient()
@@ -273,13 +279,11 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_type", AgentType.ShuJuKu.getCode())
 				.addData("agent_ip", "127.1.2.300")
 				.addData("agent_port", "3458")
-				.addData("source_id", -30L)
+				.addData("source_id", -1000000019L)
 				.addData("user_id", UserId)
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(false));
-		assertThat(ar.getMessage(), is("agent_ip不是一个合法的ip地址," +
-				"agent_ip=127.1.2.300"));
 
 		// 11.新增，agent_port为空
 		bodyString = new HttpClient()
@@ -287,12 +291,11 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_type", AgentType.ShuJuKu.getCode())
 				.addData("agent_ip", "10.71.4.51")
 				.addData("agent_port", "")
-				.addData("source_id", -30L)
+				.addData("source_id", -1000000020L)
 				.addData("user_id", UserId)
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(false));
-		assertThat(ar.getMessage(), is("agent_ip不为空以及不为空格，agent_ip="));
 
 		// 12.新增，agent_port为空格
 		bodyString = new HttpClient()
@@ -300,12 +303,11 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_type", AgentType.ShuJuKu.getCode())
 				.addData("agent_ip", "10.71.4.51")
 				.addData("agent_port", " ")
-				.addData("source_id", -30L)
+				.addData("source_id", -1000000021L)
 				.addData("user_id", UserId)
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(false));
-		assertThat(ar.getMessage(), is("agent_ip不为空以及不为空格，agent_ip= "));
 
 		// 13.新增，agent_port不合法（不是有效的端口）
 		bodyString = new HttpClient()
@@ -313,13 +315,11 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_type", AgentType.ShuJuKu.getCode())
 				.addData("agent_ip", "10.71.4.51")
 				.addData("agent_port", "1000")
-				.addData("source_id", -30L)
+				.addData("source_id", -1000000022L)
 				.addData("user_id", UserId)
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(false));
-		assertThat(ar.getMessage(), is("agent_port端口不是有效的端口，不在取值范围内，" +
-				"agent_port=1000"));
 
 		// 14.新增，source_id为空
 		bodyString = new HttpClient()
@@ -332,8 +332,6 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(false));
-		assertThat(ar.getMessage(), is("source_id不为空且不为空格，长度也不能超过10，" +
-				"source_id="));
 
 		// 15.新增，source_id为空格
 		bodyString = new HttpClient()
@@ -346,8 +344,6 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(false));
-		assertThat(ar.getMessage(), is("source_id不为空且不为空格，长度也不能超过10，" +
-				"source_id= "));
 
 		// 16.新增，source_id不合法（长度超过10）
 		bodyString = new HttpClient()
@@ -360,8 +356,6 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(false));
-		assertThat(ar.getMessage(), is("source_id不为空且不为空格，长度也不能超过10，" +
-				"source_id=10000000009"));
 
 		// 17.新增，user_id为空
 		bodyString = new HttpClient()
@@ -369,12 +363,11 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_type", AgentType.ShuJuKu.getCode())
 				.addData("agent_ip", "10.71.4.51")
 				.addData("agent_port", "4568")
-				.addData("source_id", -25L)
+				.addData("source_id", -1000000023L)
 				.addData("user_id", "")
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(false));
-		assertThat(ar.getMessage(), is("user_id不为空以及不为空格，user_id="));
 
 		// 18.新增，user_id为空格
 		bodyString = new HttpClient()
@@ -382,23 +375,31 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_type", AgentType.ShuJuKu.getCode())
 				.addData("agent_ip", "10.71.4.51")
 				.addData("agent_port", "4568")
-				.addData("source_id", -25L)
+				.addData("source_id", -1000000024L)
 				.addData("user_id", " ")
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(false));
-		assertThat(ar.getMessage(), is("user_id不为空以及不为空格，user_id= "));
+	}
+
+	@Test
+	public void updateAgent() {
+		// 2.编辑，数据都不为空且为有效数据
+		String bodyString = new HttpClient()
+				.addData("agent_id", -100000001L)
+				.addData("agent_name", "DB文件agent")
+				.addData("agent_type", AgentType.DBWenJian.getCode())
+				.addData("agent_ip", "10.71.4.55")
+				.addData("agent_port", "34567")
+				.addData("source_id", -1000000001L)
+				.addData("user_id", UserId)
+				.post(getActionUrl("saveAgent")).getBodyString();
+		ActionResult ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		assertThat(ar.isSuccess(), is(true));
 	}
 
 	/**
 	 * 根据agent_id,agent_type查询agent_info信息
-	 * <p>
-	 * 参数：agent_id long
-	 * 含义：agent_info表主键
-	 * 取值范围：不为空且不为空格
-	 * 参数：agent_type String
-	 * 含义：agent类型
-	 * 取值范围：1:数据库Agent,2:文件系统Agent,3:FtpAgent,4:数据文件Agent,5:对象Agent
 	 * <p>
 	 * 1.查询agent_info表数据，agent_id,agent_type都不为空，正常删除
 	 * 2.查询agent_info表数据，agent_id是一个不存在的数据
@@ -407,7 +408,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 	@Test
 	public void searchAgent() {
 		// 1.查询agent_info表数据，agent_id,agent_type都不为空，正常删除
-		String bodyString = new HttpClient().addData("agent_id", -29L)
+		String bodyString = new HttpClient().addData("agent_id", -2900000000L)
 				.addData("agent_type", AgentType.ShuJuKu.getCode())
 				.post(getActionUrl("searchAgent")).getBodyString();
 		ActionResult ar = JsonUtil.toObject(bodyString, ActionResult.class);
@@ -421,7 +422,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 		assertThat(ar.isSuccess(), is(false));
 
 		// 3.查询agent_info表数据，agent_type是一个不存在的数据
-		bodyString = new HttpClient().addData("agent_id", -29L)
+		bodyString = new HttpClient().addData("agent_id", -2900000000L)
 				.addData("agent_type", "6")
 				.post(getActionUrl("searchAgent")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
@@ -445,7 +446,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 	@Test
 	public void deleteAgent() {
 		// 1.删除agent_info表数据，正常删除
-		String bodyString = new HttpClient().addData("agent_id", -28L)
+		String bodyString = new HttpClient().addData("agent_id", -2800000000L)
 				.addData("agent_type", AgentType.ShuJuKu.getCode())
 				.post(getActionUrl("deleteAgent")).getBodyString();
 		ActionResult ar = JsonUtil.toObject(bodyString, ActionResult.class);

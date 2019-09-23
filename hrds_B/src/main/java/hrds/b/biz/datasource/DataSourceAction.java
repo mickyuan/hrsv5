@@ -245,7 +245,9 @@ public class DataSourceAction extends BaseAction {
 	 * @param source_id long
 	 *                  含义：data_source表主键，source_relation_dep表外键
 	 *                  取值范围：不能为空或空格
-	 * @return 返回关联查询data_source表与source_relation_dep表信息结果
+	 * @return  java.util.List                                                           <
+	 *          含义：返回关联查询data_source表与source_relation_dep表信息结果
+	 *          取值范围：无限制
 	 */
 	public List<Map<String, Object>> searchDataSource(long source_id) {
 		// 1.数据可访问权限处理方式，以下SQL关联source_id与user_id检查

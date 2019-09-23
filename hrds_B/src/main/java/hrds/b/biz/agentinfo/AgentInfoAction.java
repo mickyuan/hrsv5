@@ -88,14 +88,14 @@ public class AgentInfoAction extends BaseAction {
 	private void check(long source_id, String agent_type, String agent_ip, String agent_port) {
 		// 1.验证数据源是否还存在,查到至少一条数据，查不到为0
 		if (Dbo.queryNumber("select count(1) from data_source where source_id = ? and "
-				+ " create_user_id=?", source_id, getUserId()).getAsLong() > 0) {
+				+ " create_user_id=?", source_id, getUserId()).orElse(Long.MIN_VALUE) > 0) {
 			throw new BusinessException("该agent对应的数据源已不存在不可新增，source_id=" + source_id);
 		}
 		// 2.判断数据源下相同的IP地址中是否包含相同的端口,查到至少一条数据，查不到为0
 		if (Dbo.queryNumber("SELECT count(1) count FROM agent_info WHERE " +
 						"source_id = ? AND agent_type = ? AND agent_ip = ? AND" +
 						" agent_port = ?  and user_id", source_id, agent_type, agent_ip,
-				agent_port).getAsLong() > 0) {
+				agent_port).orElse(Long.MIN_VALUE) > 0) {
 			throw new BusinessException("该agent对应的数据源下相同的IP地址中是否包含相同的端口，" +
 					"source_id=" + source_id);
 		}
@@ -225,7 +225,7 @@ public class AgentInfoAction extends BaseAction {
 		// 1.数据可访问权限处理方式，通过关联agent_id与user_id检查
 		if (Dbo.queryNumber("select count(1) from " + Agent_info.TableName +
 				"  where agent_id=? and  create_user_id=?", agent_id, getUserId())
-				.getAsLong() > 0) {
+				.orElse(Long.MIN_VALUE) > 0) {
 			throw new BusinessException("数据权限校验失败，数据不可访问！");
 		}
 		//agent_id长度
@@ -325,14 +325,14 @@ public class AgentInfoAction extends BaseAction {
 		// 1.数据可访问权限处理方式，以下SQL关联user_id检查
 		// 2.删除前查询此agent是否已部署
 		if (Dbo.queryNumber("select count(1) from agent_down_info where agent_id=? and " +
-				"user_id=?", agent_id, getUserId()).getAsLong() > 0) {
+				"user_id=?", agent_id, getUserId()).orElse(Long.MIN_VALUE) > 0) {
 			// 此agent已部署不能删除
 			throw new BusinessException("此agent已部署不能删除");
 		}
 		// 3.判断此数据源与agent下是否有任务
 		if (Dbo.queryNumber(" SELECT count(1) FROM agent_info t1 join " +
 				" database_set t2 on t1.agent_id=t2.agent_id WHERE  t1.agent_id=?" +
-				" and  t1.agent_type=? and user_id", agent_id, agent_type).getAsLong() > 0) {
+				" and  t1.agent_type=? and user_id", agent_id, agent_type).orElse(Long.MIN_VALUE) > 0) {
 			// 此数据源与agent下有任务，不能删除
 			throw new BusinessException("此数据源与agent下有任务，不能删除");
 		}
