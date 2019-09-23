@@ -372,7 +372,7 @@ JOB_PROCESS_ID                                    VARCHAR(100) NULL, --作业进
 JOB_PRIORITY_CURR                                 INTEGER default 0 NULL, --作业当前优先级
 JOB_RETURN_VAL                                    INTEGER default 0 NULL, --作业返回值
 UPD_TIME                                          VARCHAR(50) NULL, --更新日期
-EXE_FREQUENCY                                     DECIMAL(16) default 0 NULL, --每隔(分钟)执行
+EXE_FREQUENCY                                     INTEGER default 0 NOT NULL, --每隔(分钟)执行
 EXE_NUM                                           INTEGER default 0 NULL, --执行次数
 COM_EXE_NUM                                       INTEGER default 0 NULL, --已经执行次数
 LAST_EXE_TIME                                     VARCHAR(20) NULL, --上次执行时间
@@ -876,7 +876,7 @@ DROP TABLE IF EXISTS SOURCE_RELATION_DEP ;
 CREATE TABLE SOURCE_RELATION_DEP(
 SOURCE_ID                                         BIGINT default 0 NOT NULL, --数据源ID
 DEP_ID                                            BIGINT default 0 NOT NULL, --部门ID
-CONSTRAINT SOURCE_RELATION_DEP_PK PRIMARY KEY(SOURCE_ID)   );
+CONSTRAINT SOURCE_RELATION_DEP_PK PRIMARY KEY(SOURCE_ID,DEP_ID)   );
 
 --Agent信息表
 DROP TABLE IF EXISTS AGENT_INFO ;

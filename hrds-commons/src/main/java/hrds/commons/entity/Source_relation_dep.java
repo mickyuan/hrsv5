@@ -33,6 +33,7 @@ public class Source_relation_dep extends TableEntity
 	static {
 		Set<String> __tmpPKS = new HashSet<>();
 		__tmpPKS.add("source_id");
+		__tmpPKS.add("dep_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
 	@DocBean(name ="source_id",value="数据源ID",dataType = Long.class,required = true)

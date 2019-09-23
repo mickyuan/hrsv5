@@ -89,8 +89,8 @@ public class Etl_job_def extends TableEntity
 	private String upd_time; //更新日期
 	@DocBean(name ="sub_sys_cd",value="子系统代码",dataType = String.class,required = true)
 	private String sub_sys_cd; //子系统代码
-	@DocBean(name ="exe_frequency",value="每隔(分钟)执行",dataType = Long.class,required = false)
-	private Long exe_frequency; //每隔(分钟)执行
+	@DocBean(name ="exe_frequency",value="每隔(分钟)执行",dataType = Integer.class,required = true)
+	private Integer exe_frequency; //每隔(分钟)执行
 	@DocBean(name ="exe_num",value="执行次数",dataType = Integer.class,required = false)
 	private Integer exe_num; //执行次数
 	@DocBean(name ="com_exe_num",value="已经执行次数",dataType = Integer.class,required = false)
@@ -357,17 +357,17 @@ public class Etl_job_def extends TableEntity
 		this.sub_sys_cd=sub_sys_cd;
 	}
 	/** 取得：每隔(分钟)执行 */
-	public Long getExe_frequency(){
+	public Integer getExe_frequency(){
 		return exe_frequency;
 	}
 	/** 设置：每隔(分钟)执行 */
-	public void setExe_frequency(Long exe_frequency){
+	public void setExe_frequency(Integer exe_frequency){
 		this.exe_frequency=exe_frequency;
 	}
 	/** 设置：每隔(分钟)执行 */
 	public void setExe_frequency(String exe_frequency){
 		if(!fd.ng.core.utils.StringUtil.isEmpty(exe_frequency)){
-			this.exe_frequency=new Long(exe_frequency);
+			this.exe_frequency=new Integer(exe_frequency);
 		}
 	}
 	/** 取得：执行次数 */
