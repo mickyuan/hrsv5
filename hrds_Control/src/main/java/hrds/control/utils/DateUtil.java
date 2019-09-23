@@ -40,6 +40,7 @@ public class DateUtil {
 	public static long getNowDateTime2Milli() {
 
 		//FIXME 为何不用System.currentTimeMillis()。而且也不需要这个方法，直接用就行了
+		System.currentTimeMillis()
 		return LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
 	}
 

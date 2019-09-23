@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import fd.ng.db.entity.EntityOperator;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
 import hrds.commons.codes.*;
@@ -55,13 +56,16 @@ public class TaskSqlHelper {
 
 		try(DatabaseWrapper db = TaskSqlHelper.getDbConnector()) {
 
-			Optional<Etl_sys> etlSys = SqlOperator.queryOneObject(db, Etl_sys.class,
+			Optional<Etl_sys> etlSys = SqlOperator.queryOneObject(TaskSqlHelper.getDbConnector(), Etl_sys.class,
 					"SELECT * FROM etl_sys WHERE etl_sys_cd = ?", etlSysCd);
 
 			if(!etlSys.isPresent()) {
 				throw new AppSystemException("根据调度系统编号无法获取到信息：" + etlSysCd);
 			}
 
+			return SqlOperator.queryOneObject(TaskSqlHelper.getDbConnector(), Etl_sys.class,
+					"SELECT * FROM etl_sys WHERE etl_sys_cd = ?", etlSysCd)
+					.orElseThrow(() -> new AppSystemException("根据调度系统编号无法获取到信息：" + etlSysCd));
 			return etlSys.get();
 		}
 	}
