@@ -245,9 +245,9 @@ public class DataSourceAction extends BaseAction {
 	 * @param source_id long
 	 *                  含义：data_source表主键，source_relation_dep表外键
 	 *                  取值范围：不能为空或空格
-	 * @return  java.util.List                                                           <
-	 *          含义：返回关联查询data_source表与source_relation_dep表信息结果
-	 *          取值范围：无限制
+	 * @return java.util.List                                                           <
+	 * 含义：返回关联查询data_source表与source_relation_dep表信息结果
+	 * 取值范围：无限制
 	 */
 	public List<Map<String, Object>> searchDataSource(long source_id) {
 		// 1.数据可访问权限处理方式，以下SQL关联source_id与user_id检查
@@ -293,10 +293,7 @@ public class DataSourceAction extends BaseAction {
 		// 5.删除source_relation_dep信息
 		int srdNum = Dbo.execute("delete from source_relation_dep where source_id=?", source_id);
 		if (srdNum < 1) {
-			if (srdNum == 0) {
-				throw new BusinessException("删除source_relation_dep失败，数据库里没有此条数据，"
-						+ "source_id=" + source_id);
-			}
+			// 如果数据源存在，那么部门一定存在，所以这里不需要判断等于0的情况
 			throw new BusinessException("删除该数据源下source_relation_dep表数据错误，source_id="
 					+ source_id);
 		}

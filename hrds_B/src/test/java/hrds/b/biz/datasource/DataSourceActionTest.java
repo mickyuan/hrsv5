@@ -528,7 +528,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 	}
 
 	/**
-	 * 查询数据源信息
+	 * 查询数据源信息,该测试方法只会返回两种情况，能查到数据或者查不到数据
 	 * <p>
 	 * 1.正确的数据访问1，查询数据源信息,正常返回数据
 	 * 2.错误的数据访问1，查询数据源信息，查询不到数据
@@ -564,12 +564,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 	}
 
 	/**
-	 * 删除数据源信息
-	 * <p>
-	 * 参数：source_id long
-	 * 含义：data_source表主键，source_relation_dep表外键
-	 * 取值范围：不为空以及不为空格
-	 *
+	 * 删除数据源信息，该测试方法只有三种情况
 	 * <p>
 	 * 1.正确的数据访问1，删除数据源信息，数据为有效数据
 	 * 2.错误的数据访问1，删除数据源信息，数据源下有agent，不能删除
