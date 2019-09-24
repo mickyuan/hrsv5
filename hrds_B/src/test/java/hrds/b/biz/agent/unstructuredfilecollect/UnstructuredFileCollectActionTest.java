@@ -4,8 +4,11 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
+import fd.ng.core.utils.StringUtil;
+import fd.ng.core.utils.SystemUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
+import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.netserver.conf.HttpServerConf;
 import fd.ng.netserver.conf.HttpServerConfBean;
@@ -16,13 +19,13 @@ import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Agent_info;
 import hrds.commons.entity.File_collect_set;
 import hrds.commons.entity.File_source;
+import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.testbase.WebBaseTestCase;
+import org.apache.commons.lang3.SystemUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 
 import java.util.OptionalLong;
 
@@ -30,48 +33,54 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
- * description: UnstructuredFileCollectAction类测试用例 <br>
- * date: 2019/9/12 16:03 <br>
- * author: zxz <br>
- * version: 5.0 <br>
+ * UnstructuredFileCollectAction类测试用例
+ * date: 2019/9/12 16:03
+ * author: zxz
  */
 public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
-	private static final Logger logger = LogManager.getLogger();
 	private static String bodyString;
 	private static ActionResult ar;
-	private static final long FILE_COLLECT_SET_ROWS = 2L; // 向表中初始化的数据条数。
+	//向agent_info表初始化数据的条数
+	private static final long AGENT_INFO_ROWS = 2L;
+	// 向file_collect_set表中初始化的数据条数
+	private static final long FILE_COLLECT_SET_ROWS = 2L;
+	// 向file_source表中初始化的数据条数
 	private static final int FILE_SOURCE_ROWS = 10;
+	// agent_id
 	private static final long AGENT_ID = 10000001L;
-	private static final long FCS_ID = 10000002L;
+	// 文件采集设置表id
+	private static final long FCS_ID = 20000001L;
+	//数据源id
+	private static final long SOURCE_ID = 30000001L;
+	//用户id
+	private static final long USER_ID = 1001L;
 
 	/**
-	 * description: 测试类初始化参数 <br>
-	 * date: 2019/9/12 16:41 <br>
-	 * author: zxz <br>
-	 * version: 5.0 <br>
-	 *
-	 * @param
-	 * @return void
+	 * 为每个方法测试用例初始化参数//FIXME 初始化的数据，要有详细说明，参考王正诚的写法
+	 * <p>
+	 * 1.造agent_info表的数据，添加非结构化采集需要获取Agent所在机器的基本信息
+	 * 2.造file_collect_set表数据，初始化条数可调整，默认为2条，fcs_id为20000001和20000002
+	 * 3.造file_source表数据，初始化条数可调整，默认为10条，fcs_id为20000001
 	 */
-	@BeforeClass
-	public static void beforeTest() {
+	@Before
+	public void beforeTest() {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			//造agent_info表数据
-			HttpServerConfBean test = HttpServerConf.getHttpServer("agentServerInfo");
-			Agent_info agent_info = new Agent_info();
-			agent_info.setUser_id(1001L);
-			agent_info.setSource_id(20000001L);
-			agent_info.setAgent_id(AGENT_ID);
-			agent_info.setAgent_ip(test.getHost());
-			agent_info.setAgent_port(String.valueOf(test.getHttpPort()));
-			agent_info.setAgent_status(AgentStatus.YiLianJie.getCode());
-			agent_info.setAgent_type(AgentType.ShuJuKu.getCode());
-			agent_info.setAgent_name("数据库agent");
-			agent_info.setCreate_date(DateUtil.getSysDate());
-			agent_info.setCreate_time(DateUtil.getSysTime());
-			// agent_info表信息
-			assertThat("初始化数据成功", agent_info.add(db), is(1));
-			//造file_collect_set表数据
+			//1、造agent_info表的数据，初始化数据可调整，默认为2条，agent_id为10000001和10000002
+			for (int i = 0; i < AGENT_INFO_ROWS; i++) {
+				Agent_info agent_info = new Agent_info();
+				agent_info.setUser_id(USER_ID);
+				agent_info.setSource_id(SOURCE_ID);
+				agent_info.setAgent_id(AGENT_ID + i);
+				agent_info.setAgent_ip("127.0.0.1");
+				agent_info.setAgent_port(String.valueOf(56000 + i));
+				agent_info.setAgent_status(AgentStatus.YiLianJie.getCode());
+				agent_info.setAgent_type(AgentType.ShuJuKu.getCode());
+				agent_info.setAgent_name("非结构化采集Agent" + i);
+				agent_info.setCreate_date(DateUtil.getSysDate());
+				agent_info.setCreate_time(DateUtil.getSysTime());
+				assertThat("初始化数据成功", agent_info.add(db), is(1));
+			}
+			//2、造file_collect_set表数据，初始化条数可调整，默认为2条，fcs_id为20000001和20000002
 			for (int i = 0; i < FILE_COLLECT_SET_ROWS; i++) {
 				File_collect_set file_collect_set = new File_collect_set();
 				file_collect_set.setFcs_id(FCS_ID + i);
@@ -83,6 +92,7 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 				file_collect_set.setAgent_id(AGENT_ID);
 				assertThat("初始化数据成功", file_collect_set.add(db), is(1));
 			}
+			// 3、造file_source表数据，初始化条数可调整，默认为10条，fcs_id为20000001
 			for (int i = 0; i < FILE_SOURCE_ROWS; i++) {
 				File_source file_source = new File_source();
 				file_source.setFile_source_id(PrimayKeyGener.getNextId());
@@ -103,85 +113,92 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 	}
 
 	/**
-	 * description: 测试addFileCollect方法新增逻辑 <br>
-	 * date: 2019/9/12 16:41 <br>
-	 * author: zxz <br>
-	 * version: 5.0 <br>
-	 *
-	 * @param
-	 * @return void
+	 * 测试searchFileCollectTest方法
+	 * <p>
+	 * 1.当agent_id不为空，fcs_id为空时
+	 * 2.当agent_id和fcs_id都不为空时
+	 * 3.当agent_id不为空，且agent_id在表中不存在时
+	 * 4.当agent_id和fcs_id都不为空时，且fcs_id在表中不存在时
+	 * 5.当agent_id不为空，且agent服务没有启动时
 	 */
 	@Test
-	public void searchFileCollectTest1() {
-		// 1）提交数据给Action
+	public void searchFileCollectTest() {
+		//1.当agent_id不为空，fcs_id为空时
 		bodyString = new HttpClient()
 				.addData("agent_id", AGENT_ID)
 				.post(getActionUrl("searchFileCollect")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		//FIXME 对返回数据的判断呢
 		assertThat(ar.isSuccess(), is(true));
-	}
+		assertThat(StringUtil.isBlank(ar.getDataForMap().get("osName").toString()), is(false));
 
-	/**
-	 * description: 测试addFileCollect方法编辑逻辑 <br>
-	 * date: 2019/9/12 16:41 <br>
-	 * author: zxz <br>
-	 * version: 5.0 <br>
-	 *
-	 * @param
-	 * @return void
-	 */
-	@Test
-	public void searchFileCollectTest2() {
-		// 1）提交数据给Action
+		//2.当agent_id和fcs_id都不为空时
 		bodyString = new HttpClient()
 				.addData("agent_id", AGENT_ID)
 				.addData("fcs_id", FCS_ID)
 				.post(getActionUrl("searchFileCollect")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(true));
+		assertThat(StringUtil.isBlank(ar.getDataForMap().get("file_collect_set_info").toString()), is(false));
+
+		//3.当agent_id不为空，且agent_id在表中不存在时
+		bodyString = new HttpClient()
+				.addData("agent_id", AGENT_ID - 100)
+				.post(getActionUrl("searchFileCollect")).getBodyString();
+		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		//这里会抛异常，因为异常信息可能会改变，所以直接判断返回false
+		assertThat(ar.isSuccess(), is(false));
+
+		//4.当agent_id和fcs_id都不为空时，且fcs_id在表中不存在时
+		bodyString = new HttpClient()
+				.addData("agent_id", AGENT_ID)
+				.addData("fcs_id", FCS_ID - 100)
+				.post(getActionUrl("searchFileCollect")).getBodyString();
+		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		assertThat(ar.isSuccess(), is(false));
+
+		//5.当agent_id不为空，且agent服务没有启动时
+		bodyString = new HttpClient()
+				.addData("agent_id", AGENT_ID + 1)
+				.post(getActionUrl("searchFileCollect")).getBodyString();
+		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		assertThat(ar.isSuccess(), is(false));
 	}
 
 	/**
-	 * description: 测试保存文件采集新增逻辑 <br>
-	 * date: 2019/9/17 10:55 <br>
-	 * author: zxz <br>
-	 * version: 5.0 <br>
-	 *
-	 * @param
-	 * @return void
+	 * 测试addFileCollect保存文件采集新增逻辑
+	 * <p>
+	 * 1.添加一条有效数据
+	 * 2.添加一条任务名称相同的数据
+	 * 3.添加一条is_sendok值有问题的数据
+	 * 4.添加一条is_solr值有问题的数据
 	 */
 	@Test
-	public void saveFileCollectTest1() {
-		// 1）提交数据给Action
+	public void addFileCollectTest() {
+		//1.添加一条有效数据
 		bodyString = new HttpClient()
 				.addData("agent_id", AGENT_ID)
 				.addData("fcs_name", "zxzwjcj2")
-				.addData("host_name", "zhuxi")
+				.addData("host_name", "zhuxi11")
 				.addData("system_type", "Windows10")
 				.addData("is_sendok", IsFlag.Fou.getCode())
 				.addData("is_solr", IsFlag.Shi.getCode())
-				.post(getActionUrl("saveFileCollect")).getBodyString();
+				.post(getActionUrl("addFileCollect")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
-		System.out.println(ar.isSuccess());
 		assertThat(ar.isSuccess(), is(true));
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			OptionalLong optionalLong = SqlOperator.queryNumber(db, "select count(1) count from " +
-					"file_collect_set where agent_id = ?",AGENT_ID);
-			assertThat("添加数据成功", optionalLong.getAsLong(), is(FILE_COLLECT_SET_ROWS + 1));
+			long count = SqlOperator.queryNumber(db, "select count(1) count from " +
+					"file_collect_set where agent_id = ?", AGENT_ID).orElseThrow(()
+					-> new BusinessException("查询得到的数据必须有且只有一条"));
+			assertThat("添加数据成功", count, is(FILE_COLLECT_SET_ROWS + 1));
+			Result result = SqlOperator.queryResult(db, "select * from file_collect_set " +
+					"where fcs_name = ?", "zxzwjcj2");
+			assertThat("添加数据成功", result.getString(0, "system_type"), is("Windows10"));
+			assertThat("添加数据成功", result.getString(0, "host_name"), is("zhuxi11"));
+			assertThat("添加数据成功", result.getString(0, "is_sendok"), is(IsFlag.Fou.getCode()));
 		}
-	}
 
-	/**
-	 * description: 测试保存文件采集新增逻辑任务名称重复报错 <br>
-	 * date: 2019/9/17 10:55 <br>
-	 * author: zxz <br>
-	 * version: 5.0 <br>
-	 *
-	 * @param
-	 * @return void
-	 */
-	@Test
-	public void saveFileCollectTest2() {
+		//2.添加一条任务名称相同的数据
 		bodyString = new HttpClient()
 				.addData("agent_id", AGENT_ID)
 				.addData("fcs_name", "zxzwjcj0")
@@ -189,52 +206,70 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 				.addData("system_type", "Windows 10")
 				.addData("is_sendok", IsFlag.Fou.getCode())
 				.addData("is_solr", IsFlag.Shi.getCode())
-				.post(getActionUrl("saveFileCollect")).getBodyString();
+				.post(getActionUrl("addFileCollect")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(false));
-		assertThat((String) ar.getMessage(), is("非结构化任务名称重复"));
+
+		//3.添加一条is_sendok值有问题的数据
+//		bodyString = new HttpClient()
+//				.addData("agent_id", AGENT_ID)
+//				.addData("fcs_name", "zxzwjcj666")
+//				.addData("host_name", "zhuxi")
+//				.addData("system_type", "Windows 10")
+//				.addData("is_sendok", IsFlag.Shi.getCode())
+//				.addData("is_solr", IsFlag.Shi.getCode())
+//				.post(getActionUrl("addFileCollect")).getBodyString();
+//		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+//		assertThat(ar.isSuccess(), is(false));
+
+		//4.添加一条is_solr值有问题的数据
+//		bodyString = new HttpClient()
+//				.addData("agent_id", AGENT_ID)
+//				.addData("fcs_name", "zxzwjcj1")
+//				.addData("host_name", "zhuxi")
+//				.addData("system_type", "Windows 10")
+//				.addData("is_sendok", IsFlag.Fou.getCode())
+//				.addData("is_solr", "cccc")
+//				.post(getActionUrl("addFileCollect")).getBodyString();
+//		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+//		assertThat(ar.isSuccess(), is(false));
 	}
 
 	/**
-	 * description: 测试保存文件采集更新逻辑 <br>
-	 * date: 2019/9/17 10:55 <br>
-	 * author: zxz <br>
-	 * version: 5.0 <br>
-	 *
-	 * @param
-	 * @return void
+	 * 测试updateFileCollect保存文件采集新增逻辑
+	 * <p>
+	 * 1.更新一条有效数据
+	 * 2.更新一条任务名称和其他任务相同的数据
+	 * 3.更新一条is_sendok值有问题的数据
+	 * 4.更新一条is_solr值有问题的数据
 	 */
 	@Test
-	public void saveFileCollectTest3() {
+	public void updateFileCollectTest() {
+		//1.更新一条有效数据
 		bodyString = new HttpClient()
 				.addData("agent_id", AGENT_ID)
 				.addData("fcs_id", FCS_ID)
 				.addData("fcs_name", "zxzwjcj666")
-				.addData("host_name", "zhuxi")
-				.addData("system_type", "Windows 10")
+				.addData("host_name", "zhuxi11")
+				.addData("system_type", "Windows10")
 				.addData("is_sendok", IsFlag.Fou.getCode())
 				.addData("is_solr", IsFlag.Shi.getCode())
-				.post(getActionUrl("saveFileCollect")).getBodyString();
+				.post(getActionUrl("updateFileCollect")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(true));
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			OptionalLong optionalLong = SqlOperator.queryNumber(db, "select count(1) count from file_collect_set " +
+			long count = SqlOperator.queryNumber(db, "select count(1) count from " +
+					"file_collect_set where fcs_name = ?", "zxzwjcj666").orElseThrow(()
+					-> new BusinessException("查询得到的数据必须有且只有一条"));
+			assertThat("更新数据成功", count, is(1L));
+			Result result = SqlOperator.queryResult(db, "select * from file_collect_set " +
 					"where fcs_name = ?", "zxzwjcj666");
-			assertThat("更新数据成功", optionalLong.getAsLong(), is(1L));
+			assertThat("更新数据成功", result.getString(0, "system_type"), is("Windows10"));
+			assertThat("更新数据成功", result.getString(0, "host_name"), is("zhuxi11"));
+			assertThat("更新数据成功", result.getString(0, "is_sendok"), is(IsFlag.Fou.getCode()));
 		}
-	}
 
-	/**
-	 * description: 测试保存文件采集更新逻辑任务名称重复报错 <br>
-	 * date: 2019/9/17 10:55 <br>
-	 * author: zxz <br>
-	 * version: 5.0 <br>
-	 *
-	 * @param
-	 * @return void
-	 */
-	@Test
-	public void saveFileCollectTest4() {
+		//2.更新一条任务名称和其他任务相同的数据
 		bodyString = new HttpClient()
 				.addData("agent_id", AGENT_ID)
 				.addData("fcs_id", FCS_ID)
@@ -243,147 +278,136 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 				.addData("system_type", "Windows 10")
 				.addData("is_sendok", IsFlag.Fou.getCode())
 				.addData("is_solr", IsFlag.Shi.getCode())
-				.post(getActionUrl("saveFileCollect")).getBodyString();
+				.post(getActionUrl("updateFileCollect")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(false));
-		assertThat((String) ar.getMessage(), is("非结构化任务名称重复"));
+
+		//3.更新一条is_sendok值有问题的数据
+//		bodyString = new HttpClient()
+//				.addData("agent_id", AGENT_ID)
+//				.addData("fcs_id", FCS_ID)
+//				.addData("fcs_name", "zxzwjcj666")
+//				.addData("host_name", "zhuxi")
+//				.addData("system_type", "Windows 10")
+//				.addData("is_sendok", IsFlag.Shi.getCode())
+//				.addData("is_solr", IsFlag.Shi.getCode())
+//				.post(getActionUrl("updateFileCollect")).getBodyString();
+//		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+//		assertThat(ar.isSuccess(), is(false));
+
+		//4.更新一条is_solr值有问题的数据
+//		bodyString = new HttpClient()
+//				.addData("agent_id", AGENT_ID)
+//				.addData("fcs_id", FCS_ID)
+//				.addData("fcs_name", "zxzwjcj1")
+//				.addData("host_name", "zhuxi")
+//				.addData("system_type", "Windows 10")
+//				.addData("is_sendok", IsFlag.Fou.getCode())
+//				.addData("is_solr", "cccc")
+//				.post(getActionUrl("updateFileCollect")).getBodyString();
+//		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+//		assertThat(ar.isSuccess(), is(false));
 	}
 
 	/**
-	 * description:  测试根据文件系统设置表的id查询源文件设置表<br>
-	 * date: 2019/9/17 15:13 <br>
-	 * author: zxz <br>
-	 * version: 5.0 <br>
-	 *
-	 * @param
-	 * @return void
+	 * 测试searchFileSource根据文件系统设置表的id查询源文件设置表
+	 * 1.测试一个正确的FCS_ID查询数据
+	 * 2.测试使用一个错误的fcs_id查询数据
 	 */
 	@Test
-	public void searchFileSourceTest1() {
+	public void searchFileSourceTest() {
+		//1.测试一个正确的FCS_ID查询数据
 		bodyString = new HttpClient()
 				.addData("fcs_id", FCS_ID)
 				.post(getActionUrl("searchFileSource")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(true));
-		assertThat(((JSONArray) ar.getData()).size(), is(FILE_SOURCE_ROWS));
-	}
+		//验证数据
+		assertThat(ar.getDataForResult().getString(0, "is_office"), is(IsFlag.Shi.getCode()));
+		assertThat(ar.getDataForResult().getString(0, "is_text"), is(IsFlag.Shi.getCode()));
+		assertThat(ar.getDataForResult().getString(0, "file_source_path").contains("/aaa"), is(true));
 
-	/**
-	 * description: 测试根据文件系统设置表的id查询源文件设置表,查询出的数据为空 <br>
-	 * date: 2019/9/17 15:17 <br>
-	 * author: zxz <br>
-	 * version: 5.0 <br>
-	 *
-	 * @param
-	 * @return void
-	 */
-	@Test
-	public void searchFileSourceTest2() {
+		//2.测试使用一个错误的fcs_id查询数据
 		bodyString = new HttpClient()
 				.addData("fcs_id", 100000077L)
 				.post(getActionUrl("searchFileSource")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(true));
-		assertThat(((JSONArray) ar.getData()).size(), is(0));
+		assertThat(ar.getDataForResult().isEmpty(), is(true));
 	}
 
 	/**
-	 * description: 选择文件夹测试，agent_id正确，不指定文件夹测试 <br>
-	 * date: 2019/9/17 15:59 <br>
-	 * author: zxz <br>
-	 * version: 5.0 <br>
-	 *
-	 * @param
-	 * @return void
+	 * selectPathTest选择文件夹测试，agent_id正确，不指定文件夹测试
+	 * <p>
+	 * 1.一个正确的agent_id，没有路径
+	 * 2.一个错误的agent_id，没有路径
+	 * 3.一个正确的agent_id，正确的路径
+	 * 4.一个正确的agent_id，错误的路径
 	 */
 	@Test
-	public void selectPathTest1() {
+	public void selectPathTest() {
+		//1.一个正确的agent_id，没有路径
 		bodyString = new HttpClient()
 				.addData("agent_id", AGENT_ID)
-//				.addData("path","")
 				.post(getActionUrl("selectPath")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
-		logger.info(ar.getData().toString());
 		assertThat(ar.isSuccess(), is(true));
-	}
+		assertThat(ar.getDataForEntityList(String.class).isEmpty(), is(false));
 
-	/**
-	 * description: 选择文件夹测试，agent_id不正确测试 <br>
-	 * date: 2019/9/17 15:59 <br>
-	 * author: zxz <br>
-	 * version: 5.0 <br>
-	 *
-	 * @param
-	 * @return void
-	 */
-	@Test
-	public void selectPathTest2() {
+		//2.一个错误的agent_id，没有路径
 		bodyString = new HttpClient()
 				.addData("agent_id", 100000099L)
-//				.addData("path","")
 				.post(getActionUrl("selectPath")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(false));
-		assertThat((String) ar.getMessage(), is("根据Agent_id:100000099查询不到Agent_info表信息"));
-	}
 
-	/**
-	 * description: 选择文件夹测试，agent_id正确，指定文件夹测试 <br>
-	 * date: 2019/9/17 15:59 <br>
-	 * author: zxz <br>
-	 * version: 5.0 <br>
-	 *
-	 * @param
-	 * @return void
-	 */
-	@Test
-	public void selectPathTest3() {
-		bodyString = new HttpClient()
-				.addData("agent_id", AGENT_ID)
-				.addData("path", "D:/")
-				.post(getActionUrl("selectPath")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
-		logger.info(ar.getData().toString());
-		assertThat(ar.isSuccess(), is(true));
-	}
-
-	/**
-	 * description: 选择文件夹测试，agent_id正确，指定错误的文件夹测试 <br>
-	 * date: 2019/9/17 15:59 <br>
-	 * author: zxz <br>
-	 * version: 5.0 <br>
-	 *
-	 * @param
-	 * @return void
-	 */
-	@Test
-	public void selectPathTest4() {
+		//3.一个正确的agent_id，正确的路径
+		if (SystemUtil.OS_NAME.toLowerCase().contains("window")) {
+			bodyString = new HttpClient()
+					.addData("agent_id", AGENT_ID)
+					.addData("path", "D:/")
+					.post(getActionUrl("selectPath")).getBodyString();
+			ar = JsonUtil.toObject(bodyString, ActionResult.class);
+			assertThat(ar.isSuccess(), is(true));
+			assertThat(ar.getDataForEntityList(String.class).isEmpty(), is(false));
+		}
+		//一个正确的agent_id，正确的路径
+		if (SystemUtil.OS_NAME.toLowerCase().contains("linux")) {
+			bodyString = new HttpClient()
+					.addData("agent_id", AGENT_ID)
+					.addData("path", "/")
+					.post(getActionUrl("selectPath")).getBodyString();
+			ar = JsonUtil.toObject(bodyString, ActionResult.class);
+			assertThat(ar.isSuccess(), is(true));
+			assertThat(ar.getDataForEntityList(String.class).isEmpty(), is(false));
+		}
+		//4.一个正确的agent_id，错误的路径
 		bodyString = new HttpClient()
 				.addData("agent_id", AGENT_ID)
 				.addData("path", "D:/aaa/asda/sdwqeqwewq/sad")
 				.post(getActionUrl("selectPath")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
-		logger.info(ar.getData().toString());
 		assertThat(ar.isSuccess(), is(true));
+		assertThat(ar.getDataForEntityList(String.class).isEmpty(), is(true));
 	}
 
 	/**
-	 * description: 保存源文件路径测试，使用FCS_ID保存 <br>
-	 * date: 2019/9/18 10:19 <br>
-	 * author: zxz <br>
-	 * version: 5.0 <br>
-	 *
-	 * @param
-	 * @return void
+	 * saveFileSourceTest保存源文件路径测试，使用FCS_ID保存
+	 * <p>
+	 * 1.使用FCS_ID，更新逻辑的保存源文件设置表的测试
+	 * 2.不使用FCS_ID，添加逻辑的保存源文件设置表的测试
+	 * 3.FCS_ID为空的测试
+	 * 4.同一个非结构化采集请选择重复的文件路径
 	 */
 	@Test
-	public void saveFileSourceTest1() {
+	public void saveFileSourceTest() {
+		//1.使用FCS_ID，更新逻辑的保存源文件设置表的测试
 		JSONArray array = new JSONArray();
 		for (int i = 0; i < FILE_SOURCE_ROWS; i++) {
 			JSONObject object = new JSONObject();
 			object.put("agent_id", AGENT_ID);
 			object.put("fcs_id", FCS_ID);
-			object.put("file_source_path", "/aaa/bbb/" + i);
+			object.put("file_source_path", "/aaa/bbb/100/" + i);
 			object.put("is_audio", IsFlag.Shi.getCode());
 			object.put("is_image", IsFlag.Shi.getCode());
 			object.put("is_office", IsFlag.Shi.getCode());
@@ -399,27 +423,19 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(true));
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			OptionalLong optionalLong = SqlOperator.queryNumber(db, "select count(1) count from file_source " +
-					"where agent_id = ?", AGENT_ID);
-			assertThat("校验数据量正确", optionalLong.getAsLong(), is(10L));
-			OptionalLong optionalLong2 = SqlOperator.queryNumber(db, "select count(1) count from file_collect_set " +
-					"where fcs_id = ? and is_sendok = ?", FCS_ID, IsFlag.Shi.getCode());
-			assertThat("校验更新file_collect_set表数据量正确", optionalLong2.getAsLong(), is(1L));
+			long optionalLong = SqlOperator.queryNumber(db, "select count(1) count from file_source " +
+					"where agent_id = ?", AGENT_ID).orElseThrow(() ->
+					new BusinessException("查询得到的数据必须有且只有一条"));
+			assertThat("校验数据量正确", optionalLong, is(10L));
+			Result result = SqlOperator.queryResult(db, "select * from " +
+							File_collect_set.TableName + " where fcs_id = ? and is_sendok = ?"
+					, FCS_ID, IsFlag.Shi.getCode());
+			assertThat("校验更新file_collect_set表数据量正确", result.getString(0
+					, "is_sendok"), is(IsFlag.Shi.getCode()));
 		}
-	}
 
-	/**
-	 * description: 保存源文件路径测试，使用非FCS_ID保存 <br>
-	 * date: 2019/9/18 10:19 <br>
-	 * author: zxz <br>
-	 * version: 5.0 <br>
-	 *
-	 * @param
-	 * @return void
-	 */
-	@Test
-	public void saveFileSourceTest2() {
-		JSONArray array = new JSONArray();
+		//2.不使用FCS_ID，添加逻辑的保存源文件设置表的测试
+		array.clear();
 		for (int i = 0; i < FILE_SOURCE_ROWS; i++) {
 			JSONObject object = new JSONObject();
 			object.put("agent_id", AGENT_ID);
@@ -440,28 +456,68 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(true));
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			OptionalLong optionalLong = SqlOperator.queryNumber(db, "select count(1) count from file_source " +
-					"where agent_id = ?", AGENT_ID);
-			assertThat("校验数据量正确", optionalLong.getAsLong(), is(20L));
-			OptionalLong optionalLong3 = SqlOperator.queryNumber(db, "select count(1) count from file_collect_set " +
-					"where fcs_id = ? and is_sendok = ?", FCS_ID+1, IsFlag.Shi.getCode());
-			assertThat("校验更新file_collect_set表数据量正确", optionalLong3.getAsLong(), is(1L));
+			long optionalLong = SqlOperator.queryNumber(db, "select count(1) count from file_source " +
+					"where agent_id = ?", AGENT_ID).orElseThrow(() ->
+					new BusinessException("查询得到的数据必须有且只有一条"));
+			assertThat("校验数据量正确", optionalLong, is(20L));
+			Result result = SqlOperator.queryResult(db, "select * from " +
+							File_collect_set.TableName + " where fcs_id = ? and is_sendok = ?"
+					, FCS_ID, IsFlag.Shi.getCode());
+			assertThat("校验更新file_collect_set表数据量正确", result.getString(0
+					, "is_sendok"), is(IsFlag.Shi.getCode()));
 		}
+
+		//3.FCS_ID为空的测试
+		array.clear();
+		for (int i = 0; i < FILE_SOURCE_ROWS; i++) {
+			JSONObject object = new JSONObject();
+			object.put("agent_id", AGENT_ID);
+			object.put("file_source_path", "/aaa/bbb/" + i);
+			object.put("is_audio", IsFlag.Shi.getCode());
+			object.put("is_image", IsFlag.Shi.getCode());
+			object.put("is_office", IsFlag.Shi.getCode());
+			object.put("is_other", IsFlag.Shi.getCode());
+			object.put("is_pdf", IsFlag.Shi.getCode());
+			object.put("is_text", IsFlag.Shi.getCode());
+			object.put("is_video", IsFlag.Shi.getCode());
+			array.add(object);
+		}
+		bodyString = new HttpClient()
+				.addData("file_sources_array", array.toJSONString())
+				.post(getActionUrl("saveFileSource")).getBodyString();
+		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		assertThat(ar.isSuccess(), is(false));
+
+		//4.同一个非结构化采集请选择重复的文件路径
+		array.clear();
+		for (int i = 0; i < FILE_SOURCE_ROWS; i++) {
+			JSONObject object = new JSONObject();
+			object.put("agent_id", AGENT_ID);
+			object.put("fcs_id", FCS_ID + 1);
+			object.put("file_source_path", "/aaa/bbb/");
+			object.put("is_audio", IsFlag.Shi.getCode());
+			object.put("is_image", IsFlag.Shi.getCode());
+			object.put("is_office", IsFlag.Shi.getCode());
+			object.put("is_other", IsFlag.Shi.getCode());
+			object.put("is_pdf", IsFlag.Shi.getCode());
+			object.put("is_text", IsFlag.Shi.getCode());
+			object.put("is_video", IsFlag.Shi.getCode());
+			array.add(object);
+		}
+		bodyString = new HttpClient()
+				.addData("file_sources_array", array.toJSONString())
+				.post(getActionUrl("saveFileSource")).getBodyString();
+		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		assertThat(ar.isSuccess(), is(false));
 	}
-	
+
 	/**
-	 * description: 测试用例清理数据 <br>
-	 * date: 2019/9/18 14:20 <br>
-	 * author: zxz <br>
-	 * version: 5.0 <br>
-	 *
-	 * @param  
-	 * @return void
-	 */ 
-	@AfterClass
-	public static void afterTest() {
+	 * 测试用例清理数据
+	 */
+	@After
+	public void afterTest() {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			SqlOperator.execute(db, "DELETE FROM agent_info WHERE agent_id = ?", AGENT_ID);
+			SqlOperator.execute(db, "DELETE FROM agent_info WHERE source_id = ?", SOURCE_ID);
 			SqlOperator.execute(db, "DELETE FROM file_collect_set WHERE agent_id = ?", AGENT_ID);
 			SqlOperator.execute(db, "DELETE FROM file_source WHERE agent_id = ?", AGENT_ID);
 			SqlOperator.commitTransaction(db);

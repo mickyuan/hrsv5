@@ -16,7 +16,6 @@ import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.key.PrimayKeyGener;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -33,7 +32,6 @@ public class ObjectCollectAction extends BaseAction {
 	 * 1.根据前端传过来的agent_id获取agent的ip和端口
 	 * 2.根据Agent的ip和端口远程调用Agent的后端代码获取采集服务器上的日期、时间、操作系统类型和主机名等基本信息
 	 * 3.对象采集id不为空则获取对象采集设置表信息
-	 * 4.返回到前端
 	 *
 	 * @param object_collect Object_collect
 	 *                       含义：对象采集设置表对象，接收页面传过来的参数Agent_id和odc_id(对象采集id)
@@ -67,7 +65,7 @@ public class ObjectCollectAction extends BaseAction {
 		Map<String, Object> map = ar.getDataForMap();
 		map.put("localdate", DateUtil.getSysDate());
 		map.put("localtime", DateUtil.getSysTime());
-		//3.对象采集id不为空则表示当前操作为编辑，获取对象采集设置表信息
+		//3.对象采集id不为空则获取对象采集设置表信息
 		if (object_collect.getOdc_id() != null) {
 			Object_collect object_collect_info = Dbo.queryOneObject(Object_collect.class,
 					"SELECT * FROM " + Object_collect.TableName + " WHERE odc_id = ?"
@@ -81,9 +79,8 @@ public class ObjectCollectAction extends BaseAction {
 	/**
 	 * 保存半结构化文件采集页面信息到对象采集设置表对象，同时返回对象采集id
 	 * <p>
-	 * 1.非空及其它属性校验
-	 * 2.根据obj_collect_name查询半结构化任务名称是否重复
-	 * 3.保存object_collect表
+	 * 1.根据obj_collect_name查询半结构化任务名称是否重复
+	 * 2.保存object_collect表
 	 *
 	 * @param object_collect Object_collect
 	 *                       含义：对象采集设置表对象，对象中不能为空的字段必须有值
@@ -103,6 +100,7 @@ public class ObjectCollectAction extends BaseAction {
 			throw new BusinessException("半结构化采集任务名称重复");
 		} else {
 			object_collect.setOdc_id(PrimayKeyGener.getNextId());
+			//2.保存object_collect表
 			if (object_collect.add(Dbo.db()) != 1)
 				throw new BusinessException("新增数据失败！data=" + object_collect);
 			return object_collect.getOdc_id();
@@ -112,9 +110,8 @@ public class ObjectCollectAction extends BaseAction {
 	/**
 	 * 更新半结构化文件采集页面信息到对象采集设置表对象，同时返回对象采集id
 	 * <p>
-	 * 1.非空及其它属性校验
-	 * 2.根据obj_collect_name查询半结构化任务名称是否重复
-	 * 3.更新object_collect表
+	 * 1.根据obj_collect_name查询半结构化任务名称是否与其他采集任务名称重复
+	 * 2.更新object_collect表
 	 *
 	 * @param object_collect Object_collect
 	 *                       含义：对象采集设置表对象
@@ -129,7 +126,7 @@ public class ObjectCollectAction extends BaseAction {
 		if (object_collect.getOdc_id() == null) {
 			throw new BusinessException("主键odc_id不能为空");
 		}
-		//根据obj_collect_name查询半结构化任务名称是否与其他采集任务名称重复
+		//1.根据obj_collect_name查询半结构化任务名称是否与其他采集任务名称重复
 		long count = Dbo.queryNumber("SELECT count(1) count FROM " + Object_collect.TableName
 						+ " WHERE obj_collect_name = ? AND odc_id != ?",
 				object_collect.getObj_collect_name(), object_collect.getOdc_id())
@@ -137,6 +134,7 @@ public class ObjectCollectAction extends BaseAction {
 		if (count > 0) {
 			throw new BusinessException("半结构化采集任务名称重复");
 		} else {
+			//2.更新object_collect表
 			if (object_collect.update(Dbo.db()) != 1)
 				throw new BusinessException("更新数据失败！data=" + object_collect);
 			return object_collect.getOdc_id();
@@ -146,8 +144,7 @@ public class ObjectCollectAction extends BaseAction {
 	/**
 	 * 根据对象采集id查询对象采集对应信息的合集
 	 * <p>
-	 * 1.根据对象采集id查询对象采集对应信息表
-	 * 2.将查询结果集返回到前端
+	 * 1.根据对象采集id查询对象采集对应信息表返回到前端
 	 *
 	 * @param odc_id long
 	 *               含义：对象采集id
@@ -158,6 +155,7 @@ public class ObjectCollectAction extends BaseAction {
 	 */
 	public Result searchObjectCollectTask(long odc_id) {
 		//数据可访问权限处理方式：该表没有对应的用户访问权限限制
+		//1.根据对象采集id查询对象采集对应信息表返回到前端
 		return Dbo.queryResult("SELECT * FROM " + Object_collect_task.TableName
 				+ " WHERE odc_id = ?", odc_id);
 	}
@@ -165,10 +163,9 @@ public class ObjectCollectAction extends BaseAction {
 	/**
 	 * 对象采集任务编号删除对象采集对应信息表
 	 * <p>
-	 * 1.获取对象采集任务编号
-	 * 2.根据ocs_id查询对象存储设置表，有数据则不能删除
-	 * 3.根据ocs_id查询对象采集结构信息表，有数据则不能删除
-	 * 4.删除数据
+	 * 1.根据对象采集任务编号查询对象采集存储设置表是否有数据，有数据不能删除
+	 * 2.根据对象采集任务编号查询对象对应的对象采集结构信息表是否有数据，有数据不能删除
+	 * 3.根据对象采集任务编号删除对象采集对应信息表
 	 *
 	 * @param ocs_id long
 	 *               含义：对象采集任务编号
@@ -176,21 +173,21 @@ public class ObjectCollectAction extends BaseAction {
 	 */
 	public void deleteObjectCollectTask(long ocs_id) {
 		//数据可访问权限处理方式：该表没有对应的用户访问权限限制
-		//根据对象采集任务编号查询对象采集存储设置表是否有数据，有数据不能删除
+		//1.根据对象采集任务编号查询对象采集存储设置表是否有数据，有数据不能删除
 		if (Dbo.queryNumber(" SELECT count(1) count FROM " + Object_storage.TableName
 				+ " WHERE ocs_id = ?", ocs_id).orElseThrow(()
 				-> new BusinessException("查询得到的数据必须有且只有一条")) > 0) {
 			// 此对象对应的对象采集存储设置下有数据，不能删除
 			throw new BusinessException("此对象对应的对象采集存储设置下有数据，不能删除");
 		}
-		//根据对象采集任务编号查询对象采集结构信息表是否有数据,有数据不能删除
+		//2.根据对象采集任务编号查询对象对应的对象采集结构信息表是否有数据，有数据不能删除
 		if (Dbo.queryNumber(" SELECT count(1) count FROM " + Object_collect_struct.TableName
 				+ " WHERE ocs_id = ?", ocs_id).orElseThrow(()
 				-> new BusinessException("查询得到的数据必须有且只有一条")) > 0) {
 			// 此对象对应的对象采集结构信息表下有数据，不能删除
 			throw new BusinessException("此对象对应的对象采集结构信息表下有数据，不能删除");
 		}
-		//根据对象采集任务编号删除对象采集对应信息表
+		//3.根据对象采集任务编号删除对象采集对应信息表
 		int num = Dbo.execute("DELETE FROM " + Object_collect_task.TableName
 				+ " WHERE ocs_id = ?", ocs_id);
 		if (num != 1) {
@@ -209,7 +206,7 @@ public class ObjectCollectAction extends BaseAction {
 	 * 1.获取json数组转成对象采集对应信息表的集合
 	 * 2.获取对象采集对应信息表list进行遍历
 	 * 3.根据对象采集对应信息表id判断是新增还是编辑
-	 * 4.新增或更新数据库
+	 * 4.根据en_name查询对象采集对应信息表的英文名称是否重复
 	 *
 	 * @param object_collect_task_array String
 	 *                                  含义：对象采集对应信息表的JSONArray格式的字符串，其中object_collect_task
@@ -218,17 +215,18 @@ public class ObjectCollectAction extends BaseAction {
 	 */
 	public void saveObjectCollectTask(String object_collect_task_array) {
 		//数据可访问权限处理方式：该表没有对应的用户访问权限限制
-		//获取json数组转成对象采集对应信息表的集合
+		//1.获取json数组转成对象采集对应信息表的集合
 		List<Object_collect_task> object_collect_tasks = JSONArray
 				.parseArray(object_collect_task_array, Object_collect_task.class);
-		//遍历对象采集对应信息表list
+		//2.获取对象采集对应信息表list进行遍历
 		for (Object_collect_task object_collect_task : object_collect_tasks) {
 			//TODO 使用公共方法校验数据的正确性
 			//XXX 这里新增和编辑是放在一起的，因为这里面是保存一个列表的数据，可能为一条或者多条。
 			//XXX 这一条或者多条数据会有新增也会有编辑，所以对应在一个方法里面了
+			//3.根据对象采集对应信息表id判断是新增还是编辑
 			if (object_collect_task.getOcs_id() == null) {
 				//新增
-				//根据en_name查询对象采集对应信息表的英文名称是否重复
+				//4.根据en_name查询对象采集对应信息表的英文名称是否重复
 				long count = Dbo.queryNumber("SELECT count(1) count FROM " + Object_collect_task.TableName
 						+ " WHERE en_name = ?", object_collect_task.getEn_name()).orElseThrow(()
 						-> new BusinessException("查询得到的数据必须有且只有一条"));
@@ -241,7 +239,7 @@ public class ObjectCollectAction extends BaseAction {
 				}
 			} else {
 				//更新
-				//根据en_name和ocs_id查询对象采集对应信息表的英文名称是否重复
+				//4.根据en_name查询对象采集对应信息表的英文名称是否重复
 				long count = Dbo.queryNumber("SELECT count(1) count FROM "
 								+ Object_collect_task.TableName + " WHERE en_name = ? AND ocs_id != ?",
 						object_collect_task.getEn_name(), object_collect_task.getOcs_id())
@@ -259,9 +257,7 @@ public class ObjectCollectAction extends BaseAction {
 	/**
 	 * 根据ocs_idc查询对象采集任务对应对象采集结构信息
 	 * <p>
-	 * 1.获取对象采集任务编号
-	 * 2.查询对应对象采集结构信息表
-	 * 3.返回前端
+	 * 1.查询对应对象采集结构信息表，返回前端
 	 *
 	 * @param ocs_id long
 	 *               含义：对象采集任务编号
@@ -272,6 +268,7 @@ public class ObjectCollectAction extends BaseAction {
 	 */
 	public Result searchObject_collect_struct(long ocs_id) {
 		//数据可访问权限处理方式：该表没有对应的用户访问权限限制
+		//1.查询对应对象采集结构信息表，返回前端
 		return Dbo.queryResult("SELECT * FROM " + Object_collect_struct.TableName
 				+ " WHERE ocs_id = ?", ocs_id);
 	}
@@ -279,8 +276,8 @@ public class ObjectCollectAction extends BaseAction {
 	/**
 	 * 根据结构信息id删除对象采集结构信息表
 	 * <p>
-	 * 1.获取结构信息id
-	 * 2.删除对象采集结构信息表
+	 * 1.获取结构信息id，删除对象采集结构信息表
+	 * 2.判断库里是否没有这条数据
 	 *
 	 * @param struct_id long
 	 *                  含义：结构信息id
@@ -288,11 +285,11 @@ public class ObjectCollectAction extends BaseAction {
 	 */
 	public void deleteObject_collect_struct(long struct_id) {
 		//数据可访问权限处理方式：该表没有对应的用户访问权限限制
-		//根据结构信息id删除对象采集结构信息表
+		//1.获取结构信息id，删除对象采集结构信息表
 		int num = Dbo.execute("DELETE FROM " + Object_collect_struct.TableName
 				+ " WHERE struct_id = ?", struct_id);
 		if (num != 1) {
-			// 3.判断库里是否没有这条数据
+			// 2.判断库里是否没有这条数据
 			if (num == 0) {
 				throw new BusinessException("删除object_collect_struct表信息失败，数据库里没有此条数据，"
 						+ "struct_id = " + struct_id);
@@ -316,17 +313,19 @@ public class ObjectCollectAction extends BaseAction {
 	 */
 	public void saveObject_collect_struct(String object_collect_struct_array) {
 		//数据可访问权限处理方式：该表没有对应的用户访问权限限制
-		//获取json数组转成对象采集结构信息表的集合
+		//1.获取json数组转成对象采集结构信息表的集合
 		List<Object_collect_struct> object_collect_structs = JSONArray
 				.parseArray(object_collect_struct_array, Object_collect_struct.class);
-		//遍历对象采集结构信息表list
+		//2.获取对象采集结构信息list进行遍历
 		for (Object_collect_struct object_collect_struct : object_collect_structs) {
 			//TODO 应该使用一个公共的校验类进行校验
 			//XXX 这里新增和编辑是放在一起的，因为这里面是保存一个列表的数据，可能为一条或者多条。
 			//XXX 这一条或者多条数据会有新增也会有编辑，所以对应在一个方法里面了
+			//3.根据对象采集结构信息id判断是新增还是编辑
 			if (object_collect_struct.getStruct_id() == null) {
 				//新增
 				object_collect_struct.setStruct_id(PrimayKeyGener.getNextId());
+				//4.新增或更新数据库
 				if (object_collect_struct.add(Dbo.db()) != 1)
 					throw new BusinessException("新增数据失败！data=" + object_collect_struct);
 			} else {
@@ -340,8 +339,7 @@ public class ObjectCollectAction extends BaseAction {
 	/**
 	 * 根据对象采集id查询对象采集任务存储设置
 	 * <p>
-	 * 1.获取对象采集id
-	 * 2.查询对象采集任务及每个任务对象的存储设置
+	 * 1.根据对象采集id，查询对象采集任务及每个任务对象的存储设置
 	 *
 	 * @param odc_id long
 	 *               含义：对象采集id
@@ -352,6 +350,7 @@ public class ObjectCollectAction extends BaseAction {
 	 */
 	public Result searchObject_storage(long odc_id) {
 		//数据可访问权限处理方式：该表没有对应的用户访问权限限制
+		//1.根据对象采集id，查询对象采集任务及每个任务对象的存储设置
 		return Dbo.queryResult("SELECT * FROM " + Object_collect_task.TableName + " t1 left join "
 				+ Object_storage.TableName + " t2 on t1.ocs_id = t2.ocs_id WHERE odc_id = ?", odc_id);
 	}

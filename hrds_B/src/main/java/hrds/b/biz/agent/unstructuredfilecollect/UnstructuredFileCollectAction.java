@@ -1,7 +1,6 @@
 package hrds.b.biz.agent.unstructuredfilecollect;
 
 import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
@@ -16,11 +15,9 @@ import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Agent_info;
 import hrds.commons.entity.File_collect_set;
 import hrds.commons.entity.File_source;
-import hrds.commons.entity.Object_collect;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.key.PrimayKeyGener;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -84,7 +81,7 @@ public class UnstructuredFileCollectAction extends BaseAction {
 	}
 
 	/**
-	 * 保存或更新非结构化文件采集页面信息到文件系统设置表对象，同时返回文件系统采集表id
+	 * 保存非结构化文件采集页面信息到文件系统设置表对象，同时返回文件系统采集表id
 	 * <p>
 	 * 1.根据fcs_name查询非结构化任务名称是否重复
 	 * 2.保存File_collect_set表
@@ -118,7 +115,7 @@ public class UnstructuredFileCollectAction extends BaseAction {
 	/**
 	 * 更新非结构化文件采集页面信息到文件系统设置表对象
 	 * <p>
-	 * 1.根据fcs_name查询非结构化任务名称是否重复
+	 * 1.根据fcs_name查询非结构化任务名称是否与其他采集任务名称重复
 	 * 2.更新File_collect_set表
 	 *
 	 * @param file_collect_set File_collect_set
@@ -132,7 +129,7 @@ public class UnstructuredFileCollectAction extends BaseAction {
 		if (file_collect_set.getFcs_id() == null) {
 			throw new BusinessException("更新file_collect_set表时fcs_id不能为空");
 		}
-		//根据fcs_name查询非结构化任务名称是否与其他采集任务名称重复
+		//1.根据fcs_name查询非结构化任务名称是否与其他采集任务名称重复
 		long count = Dbo.queryNumber("SELECT count(1) count FROM " + File_collect_set.TableName
 						+ " WHERE " + "fcs_name = ? AND fcs_id != ?"
 				, file_collect_set.getFcs_name(), file_collect_set.getFcs_id())
@@ -140,6 +137,7 @@ public class UnstructuredFileCollectAction extends BaseAction {
 		if (count > 0) {
 			throw new BusinessException("非结构化任务名称重复");
 		} else {
+			//2.更新File_collect_set表
 			if (file_collect_set.update(Dbo.db()) != 1)
 				throw new BusinessException("更新数据失败！data=" + file_collect_set);
 		}
@@ -148,8 +146,7 @@ public class UnstructuredFileCollectAction extends BaseAction {
 	/**
 	 * 根据文件系统设置表id获取源文件设置表的合集
 	 * <p>
-	 * 1.根据文件系统采集id查询源文件设置表
-	 * 2.将查询结果集返回到前端
+	 * 1.根据文件系统采集id查询源文件设置表返回到前端
 	 *
 	 * @param fcs_id long
 	 *               含义：文件系统设置表的id
@@ -161,6 +158,7 @@ public class UnstructuredFileCollectAction extends BaseAction {
 	public Result searchFileSource(long fcs_id) {
 		//数据可访问权限处理方式：该表没有对应的用户访问权限限制
 		//FIXME 数据权限检查呢？本类所有方法都没有做检查！
+		//1.根据文件系统采集id查询源文件设置表返回到前端
 		return Dbo.queryResult("SELECT * FROM " + File_source.TableName + " WHERE fcs_id = ?", fcs_id);
 	}
 
@@ -184,13 +182,13 @@ public class UnstructuredFileCollectAction extends BaseAction {
 	//FIXME 使用 nullable
 	public List<String> selectPath(long agent_id, @RequestParam(valueIfNull = "") String path) {
 		//TODO 根据操作系统校验文件路径，应该使用一个公共的校验类进行校验
-		//根据前端传过来的agent_id获取agent的ip和端口等基本信息
 		//数据可访问权限处理方式，传入用户需要有Agent对应数据的访问权限
+		//1.根据前端传过来的agent_id获取agent的ip和端口等基本信息
 		Agent_info agent_info = Dbo.queryOneObject(Agent_info.class, "SELECT * FROM "
 						+ Agent_info.TableName + " WHERE agent_id = ?  AND user_id = ?",
 				agent_id, getUserId()).orElseThrow(() ->
 				new BusinessException("根据Agent_id:" + agent_id + "查询不到Agent_info表信息"));
-		//调用远程Agent的后端代码获取采集服务器上的日期、时间、操作系统类型和主机名等基本信息
+		//2.调用远程Agent后端代码获取Agent服务器上文件夹路径
 		HttpServerConfBean test = HttpServerConf.getHttpServer("systemFileInfo");
 		String webContext = test.getWebContext();
 		String actionPattern = test.getActionPattern();
@@ -203,7 +201,7 @@ public class UnstructuredFileCollectAction extends BaseAction {
 		if (!ar.isSuccess()) {
 			throw new BusinessException("连接远程Agent获取文件夹失败");
 		}
-		//返回到前端的信息
+		//3.返回到前端
 		return ar.getDataForEntityList(String.class);
 	}
 
@@ -211,8 +209,8 @@ public class UnstructuredFileCollectAction extends BaseAction {
 	 * 将页面选择的需要采集的源文件路径保存到数据库
 	 * <p>
 	 * 1.获取json数组转成源文件设置表的集合
-	 * 2.遍历源文件设置表的集合，将对象的数据插入或更新到源文件设置表
-	 * 3.根据文源文件设置表id判断是新增还是编辑
+	 * 2.根据文件系统设置表id删除源文件设置表
+	 * 3.遍历源文件设置表的集合，将对象的数据插入到源文件设置表
 	 * 4.更新文件系统设置表
 	 *
 	 * @param file_sources_array String
