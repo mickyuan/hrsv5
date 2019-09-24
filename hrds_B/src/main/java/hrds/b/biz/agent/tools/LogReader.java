@@ -30,6 +30,8 @@ public class LogReader {
 	 * 4、读取日志
 	 * 5、返回日志信息
 	 *
+	 * 该方法不与数据库交互，无需限制数据库访问权限
+	 *
 	 * @Param: logPath String
 	 *         含义: 日志文件路径
 	 *         取值范围：不为空
