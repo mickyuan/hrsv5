@@ -51,7 +51,8 @@ public class LogReader {
 	 *          取值范围 : 不为空，如果没有日志信息，返回值为空字符串
 	 *
 	 * */
-	public static String readAgentLog(String logPath, String ip, String port, String userName, String password, int readNum) {
+	public static String readAgentLog(String logPath, String ip, String port, String userName,
+	                                  String password, int readNum) {
 		String execCommandByJSch;
 		Session jSchSession = null;
 
