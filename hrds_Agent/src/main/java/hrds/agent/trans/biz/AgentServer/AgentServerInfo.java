@@ -17,12 +17,16 @@ import java.util.List;
  * author: zxz <br>
  * version: 5.0 <br>
  */
+//FIXME @徐超
+// Agent等程序，也要有自己的 BaseAction。因为也需要做权限控制，比如每次交互都有传递一个固定的令牌做验证
 public class AgentServerInfo extends AbstractWebappBaseAction {
 	//系统目录的集合
 	public static final ArrayList<String> noList;
 
 	//需要过滤的系统目录
 	static {
+		//FIXME 少了 dev, etc, home(除了自己外都不能访问), root, lib64, media, run
+		// 太多了，所以，应该改成：默认只允许访问自己的主目录和/tmp，其他允许访问的目录在配置文件中定义
 		noList = new ArrayList<>();
 		noList.add("/bin");
 		noList.add("/boot");
@@ -54,10 +58,12 @@ public class AgentServerInfo extends AbstractWebappBaseAction {
 	 * 含义：包含Agent日期、时间、系统名称、用户名称的json
 	 * 取值范围：不可为空
 	 */
+	//FIXME 不能用JSON
 	public JSONObject getServerInfo() {
 		JSONObject json = new JSONObject();
 		json.put("agentdate", DateUtil.getSysDate());
 		json.put("agenttime", DateUtil.getSysTime());
+		//FIXME 不要用第3方包
 		json.put("osName", SystemUtils.OS_NAME);
 		json.put("userName", SystemUtils.USER_NAME);
 		return json;
@@ -83,8 +89,10 @@ public class AgentServerInfo extends AbstractWebappBaseAction {
 	 * 含义：当前文件夹下所有的目录(当isFile为true时返回当前文件夹下所有的目录和文件)
 	 * 取值范围：不会为空
 	 */
+	//FIXME RequestParam 有 nullable
 	public JSONObject getSystemFileInfo(@RequestParam(valueIfNull = "") String pathVal, @RequestParam(valueIfNull = "") String isFile) {
 		//是否需要显示文件为空则默认为false不显示
+		//FIXME 为什么不用 boolean 类型？
 		if (StringUtils.isBlank(isFile)) {
 			isFile = "false";
 		}
