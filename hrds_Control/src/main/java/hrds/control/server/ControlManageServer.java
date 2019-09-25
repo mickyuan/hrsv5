@@ -1,10 +1,10 @@
 package hrds.control.server;
 
-import java.time.LocalDate;
-
-import hrds.control.task.TaskManager;
+import hrds.control.task.helper.TaskSqlHelper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import hrds.control.task.TaskManager;
 
 /**
  *
@@ -26,17 +26,22 @@ public class ControlManageServer {
 	 * ControlManageServer类构造器
 	 * @author Tiger.Wang
 	 * @date 2019/8/30
-	 * @param bathDate	跑批批次日期
+	 * @param bathDate	跑批批次日期  （yyyyMMdd）
 	 * @param strSystemCode	调度系统代码
 	 * @param isResumeRun	是否续跑
 	 * @param isAutoShift	是否自动日切
 	 */
-	public ControlManageServer(String strSystemCode, LocalDate bathDate, boolean isResumeRun, boolean isAutoShift) {
+	public ControlManageServer(String strSystemCode, String bathDate, boolean isResumeRun, boolean isAutoShift) {
 
-		taskManager = TaskManager.newInstance(strSystemCode, bathDate, isResumeRun, isAutoShift);
-		//FIXME 上面方法里面干了很多事情，都拿出来，在这里按顺序这个调用
-		taskManager.initEtlSystem();
+		taskManager = new TaskManager(strSystemCode, bathDate, isResumeRun, isAutoShift);
 	}
+
+	/**
+	 * 初始化CM服务
+	 * @author Tiger.Wang
+	 * @date 2019/9/24
+	 */
+	public void initCMServer() { taskManager.initEtlSystem(); }
 
 	/**
 	 * 线程方式启动服务
@@ -46,6 +51,7 @@ public class ControlManageServer {
 	public void runCMServer() {
 
 		cmThread.start();
+		taskManager.startCheckWaitFileThread();
 		logger.info("调度服务启动成功");
 	}
 
@@ -57,6 +63,7 @@ public class ControlManageServer {
 	public void stopCMServer() {
 
 		cmThread.stopThread();
+		taskManager.stopCheckWaitFileThread();
 		logger.info("调度服务停止成功");
 	}
 
@@ -69,31 +76,32 @@ public class ControlManageServer {
 			this.run = false;
 		}
 
+		/**
+		 * 执行作业调度服务。注意，该方法为线程的执行（run）方法。
+		 * @note 1、加载各种作业的资源到内存中（包括MAP等成员变量）；
+		 *       2、死循环方式处理当前批次的所有作业（目的是写入 redis）；
+		 *       3、日切处理（继续还是整个程序退出） 。
+		 * @author Tiger.Wang
+		 * @date 2019/9/25
+		 */
 		@Override
 		public void run() {
 			try {
-				//用于将作业定义表中的作业，通过一定的判断及检查，登记到内存表中
-				//FIXME 这个应该放到下面的循环作为第一句。if里面的不需要了
-				boolean hasFrequancy = taskManager.loadReadyJob();
-
 				while(run) {
-					//若publishReadyJob方法进行自动日切，则再次加载初始作业
-					//FIXME 为什么要传入这个变量
-					// loadReadyJob里面构造了3个MAP，
-					// 同理，hasFrequancy也应该地位等同于MAP而作为成员变，
-					// 让publishReadyJob自己取。
-					if(taskManager.publishReadyJob(hasFrequancy)){
-						hasFrequancy = taskManager.loadReadyJob();
+					//1、加载各种作业的资源到内存中（包括MAP等成员变量）；
+					taskManager.loadReadyJob();
+					//2、死循环方式处理当前批次的所有作业（目的是写入 redis）；
+					taskManager.publishReadyJob();
+					//3、日切处理（继续还是整个程序退出） 。
+					if(taskManager.getSysDateShiftFlag()){
+						taskManager.loadReadyJob();
 					}else {
+						TaskSqlHelper.closeDbConnector();   //关闭数据库连接
 						logger.info("系统无日切信号，系统退出");
 						break;
 						//FIXME 作业能配置成：每天某个时刻执行，但是不日切吗？或者等待信号文件到达就执行，执行完继续等待，且没有日切的概念
 					}
-					//FIXME 整个逻辑建议为：
-					// 1） 方法1：执行本批次的作业（该方法包括：作业初始化和死循环的执行各个作业）
-					// 2） 方法2：日切处理
 				}
-
 			}catch(Exception ex) {
 				logger.error("Exception happened!", ex);
 			}

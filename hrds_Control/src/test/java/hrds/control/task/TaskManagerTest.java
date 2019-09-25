@@ -1,24 +1,25 @@
 package hrds.control.task;
 
+import static org.junit.Assert.assertFalse;
+
 import java.time.LocalDate;
 
-import hrds.commons.codes.*;
-import hrds.commons.entity.Etl_job_resource_rela;
-import hrds.commons.entity.Etl_sys;
-import hrds.control.utils.DateUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.After;
-import org.junit.Before;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
+import fd.ng.core.utils.DateUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
+import fd.ng.test.junit.rules.anno.Parallel;
+import hrds.commons.codes.*;
 import hrds.commons.entity.Etl_job_def;
+import hrds.commons.entity.Etl_job_resource_rela;
 import hrds.commons.entity.Etl_resource;
-import hrds.control.task.TaskManager;
-
-import static org.junit.Assert.assertFalse;
+import hrds.commons.entity.Etl_sys;
+import hrds.control.task.helper.TaskSqlHelper;
 
 /**
  * @ClassName: hrds.control.task.TaskManagerTest
@@ -30,25 +31,24 @@ import static org.junit.Assert.assertFalse;
 public class TaskManagerTest {
 
 	private static final Logger logger = LogManager.getLogger();
-	private TaskManager taskManager;
+	private static TaskManager taskManager;
 
-	private static final String syscode = "110";
+	public static final String syscode = "110";
 
-	@Before
-	public void before() {
+	@BeforeClass
+	public static void before() {
 		//TODO 问题1，对于不同的构造参数，应该如何测试
-		taskManager = TaskManager.newInstance(syscode, LocalDate.now(), false, false);
-		//TODO 使用实体新增数据不用手动提交？
+		taskManager = new TaskManager(syscode, LocalDate.now().format(fd.ng.core.utils.DateUtil.DATE_DEFAULT),
+				false, false);
 		try(DatabaseWrapper db = new DatabaseWrapper()) {
-
 			Etl_sys etlSys = new Etl_sys();
 			etlSys.setEtl_sys_cd(syscode);
 			etlSys.setEtl_sys_name("测试1");
 			etlSys.setEtl_serv_ip("127.0.0.1");
 			etlSys.setEtl_serv_port("8088");
 			etlSys.setUser_id("1001");
-			etlSys.setCurr_bath_date(LocalDate.now().format(DateUtil.DATE));
-			etlSys.setBath_shift_time(LocalDate.now().plusDays(1).format(DateUtil.DATE));
+			etlSys.setCurr_bath_date(DateUtil.getDateTime(DateUtil.DATETIME_DEFAULT));
+			etlSys.setBath_shift_time(LocalDate.now().plusDays(1).format(DateUtil.DATE_DEFAULT));
 			etlSys.setSys_run_status(Job_Status.STOP.getCode());
 			etlSys.setUser_name("smk");
 			etlSys.setUser_pwd("q1w2e3");
@@ -118,8 +118,8 @@ public class TaskManagerTest {
 		}
 	}
 
-	@After
-	public void after() {
+	@AfterClass
+	public static void after() {
 		try(DatabaseWrapper db = new DatabaseWrapper()) {
 
 			int num = SqlOperator.execute(db, "DELETE FROM etl_resource WHERE etl_sys_cd = ? ", syscode);
@@ -131,11 +131,15 @@ public class TaskManagerTest {
 			num = SqlOperator.execute(db, "DELETE FROM etl_job_resource_rela WHERE etl_sys_cd = ? ", syscode);
 			logger.info("清理etl_job_resource_rela表{}条数据", num);
 
+			num = SqlOperator.execute(db, "DELETE FROM etl_job_cur WHERE etl_sys_cd = ? ", syscode);
+			logger.info("清理etl_job_cur表{}条数据", num);
+
 			num = SqlOperator.execute(db, "DELETE FROM etl_sys WHERE etl_sys_cd = ? ", syscode);
 			logger.info("清理etl_sys_rela表{}条数据", num);
 
 			SqlOperator.commitTransaction(db);
 		}
+		TaskSqlHelper.closeDbConnector();
 	}
 
 	@Test
@@ -152,14 +156,15 @@ public class TaskManagerTest {
 		taskManager.loadReadyJob();
 	}
 
+	@Parallel
 	@Test
 	public void publishReadyJob() {
 		//TODO 这个测试用例需要trigger来执行任务，并且有执行结果后，该程序才能继续往下走。
 		taskManager.initEtlSystem();
-		boolean hasFrequancy = taskManager.loadReadyJob();
-		boolean isAuthShif = taskManager.publishReadyJob(hasFrequancy);
+		taskManager.loadReadyJob();
+		taskManager.publishReadyJob();
 
-		assertFalse("测试当前作业已经结束时，系统是否自动日切", isAuthShif);
+		assertFalse("测试当前作业已经结束时，系统是否自动日切", taskManager.getSysDateShiftFlag());
 	}
 
 	@Test

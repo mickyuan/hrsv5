@@ -1,5 +1,14 @@
 package hrds.control.task.helper;
 
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.StringUtil;
 import hrds.commons.codes.Job_Status;
 import hrds.commons.codes.Main_Server_Sync;
@@ -11,14 +20,7 @@ import hrds.commons.entity.Etl_job_hand_his;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.control.task.TaskManager;
-import hrds.control.utils.DateUtil;
 import hrds.control.utils.YarnUtil;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.util.*;
 
 /**
  * ClassName: TaskJobHandleHelper
@@ -78,21 +80,9 @@ public class TaskJobHandleHelper {
 	 * @date 2019/9/9
 	 * @param taskManager   TaskManager类
 	 */
-	private TaskJobHandleHelper(TaskManager taskManager) {
+	public TaskJobHandleHelper(TaskManager taskManager) {
 
 		this.taskManager = taskManager;
-	}
-
-	/**
-	 * 获取TaskJobHandleHelper实例。
-	 * @author Tiger.Wang
-	 * @date 2019/9/9
-	 * @param taskManager   TaskManager类
-	 * @return hrds.control.task.helper.TaskJobHandleHelper
-	 */
-	public static TaskJobHandleHelper newInstance(TaskManager taskManager) {
-
-		return new TaskJobHandleHelper(taskManager);
 	}
 
 	/**
@@ -164,7 +154,7 @@ public class TaskJobHandleHelper {
 			//更新调度作业干预表（etl_job_hand）。
 			handle.setHand_status(Meddle_status.RUNNING.getCode());
 			handle.setMain_serv_sync(Main_Server_Sync.YES.getCode());
-			handle.setEnd_time(LocalDateTime.now().format(DateUtil.DATETIME));
+			handle.setEnd_time(DateUtil.getDateTime(DateUtil.DATETIME_DEFAULT));
 			TaskSqlHelper.updateEtlJobHandle(handle);
 			//修改系统日切干预标识
 			taskManager.handleJob2Run(currBathDate, etlJobStr);
@@ -715,7 +705,7 @@ public class TaskJobHandleHelper {
 	 */
 	private void updateHandle(Etl_job_hand etlJobHand) {
 
-		etlJobHand.setEnd_time(LocalDateTime.now().format(DateUtil.DATETIME));
+		etlJobHand.setEnd_time(DateUtil.getDateTime(DateUtil.DATETIME_DEFAULT));
 		//TODO 此处第三步既然要删除，为什么第一步要更新
 		//1、更新调度作业干预表（etl_job_hand）。
 		TaskSqlHelper.updateEtlJobHandle(etlJobHand);
