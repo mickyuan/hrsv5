@@ -36,37 +36,37 @@ public class Etl_sys extends TableEntity
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
 	@DocBean(name ="etl_sys_cd",value="工程代码",dataType = String.class,required = true)
-	private String etl_sys_cd; //工程代码
+	private String etl_sys_cd;
 	@DocBean(name ="etl_sys_name",value="工程名称",dataType = String.class,required = true)
-	private String etl_sys_name; //工程名称
+	private String etl_sys_name;
 	@DocBean(name ="etl_serv_ip",value="etl服务器ip",dataType = String.class,required = false)
-	private String etl_serv_ip; //etl服务器ip
+	private String etl_serv_ip;
 	@DocBean(name ="etl_serv_port",value="etl服务器端口",dataType = String.class,required = false)
-	private String etl_serv_port; //etl服务器端口
+	private String etl_serv_port;
 	@DocBean(name ="contact_person",value="联系人",dataType = String.class,required = false)
-	private String contact_person; //联系人
+	private String contact_person;
 	@DocBean(name ="contact_phone",value="联系电话",dataType = String.class,required = false)
-	private String contact_phone; //联系电话
+	private String contact_phone;
 	@DocBean(name ="comments",value="备注信息",dataType = String.class,required = false)
-	private String comments; //备注信息
+	private String comments;
 	@DocBean(name ="curr_bath_date",value="当前批量日期",dataType = String.class,required = false)
-	private String curr_bath_date; //当前批量日期
+	private String curr_bath_date;
 	@DocBean(name ="bath_shift_time",value="系统日切时间",dataType = String.class,required = false)
-	private String bath_shift_time; //系统日切时间
+	private String bath_shift_time;
 	@DocBean(name ="main_serv_sync",value="主服务器同步标志",dataType = String.class,required = false)
-	private String main_serv_sync; //主服务器同步标志
+	private String main_serv_sync;
 	@DocBean(name ="sys_run_status",value="系统状态",dataType = String.class,required = false)
-	private String sys_run_status; //系统状态
+	private String sys_run_status;
 	@DocBean(name ="serv_file_path",value="部署服务器路径",dataType = String.class,required = false)
-	private String serv_file_path; //部署服务器路径
+	private String serv_file_path;
 	@DocBean(name ="user_name",value="主机服务器用户名",dataType = String.class,required = false)
-	private String user_name; //主机服务器用户名
+	private String user_name;
 	@DocBean(name ="user_pwd",value="主机用户密码",dataType = String.class,required = false)
-	private String user_pwd; //主机用户密码
+	private String user_pwd;
 	@DocBean(name ="remarks",value="备注",dataType = String.class,required = false)
-	private String remarks; //备注
+	private String remarks;
 	@DocBean(name ="user_id",value="用户ID",dataType = Long.class,required = true)
-	private Long user_id; //用户ID
+	private Long user_id;
 
 	/** 取得：工程代码 */
 	public String getEtl_sys_cd(){

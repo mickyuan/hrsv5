@@ -36,23 +36,23 @@ public class Column_storage_info extends TableEntity
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
 	@DocBean(name ="datasc_id",value="存储配置主键信息",dataType = Long.class,required = true)
-	private Long datasc_id; //存储配置主键信息
+	private Long datasc_id;
 	@DocBean(name ="cs_id",value="字段存储ID",dataType = Long.class,required = true)
-	private Long cs_id; //字段存储ID
+	private Long cs_id;
 	@DocBean(name ="column_id",value="字段ID",dataType = Long.class,required = true)
-	private Long column_id; //字段ID
+	private Long column_id;
 	@DocBean(name ="is_primary",value="是否为主键",dataType = String.class,required = true)
-	private String is_primary; //是否为主键
+	private String is_primary;
 	@DocBean(name ="is_pre",value="是否为cb预聚合列",dataType = String.class,required = true)
-	private String is_pre; //是否为cb预聚合列
+	private String is_pre;
 	@DocBean(name ="is_sortcolumns",value="是否为cb的排序列",dataType = String.class,required = true)
-	private String is_sortcolumns; //是否为cb的排序列
+	private String is_sortcolumns;
 	@DocBean(name ="cs_remark",value="备注",dataType = String.class,required = false)
-	private String cs_remark; //备注
+	private String cs_remark;
 	@DocBean(name ="is_solr",value="是否solr的索引列",dataType = String.class,required = true)
-	private String is_solr; //是否solr的索引列
+	private String is_solr;
 	@DocBean(name ="is_partition",value="是否为hive的分区列",dataType = String.class,required = true)
-	private String is_partition; //是否为hive的分区列
+	private String is_partition;
 
 	/** 取得：存储配置主键信息 */
 	public Long getDatasc_id(){

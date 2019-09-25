@@ -36,33 +36,33 @@ public class Table_info extends TableEntity
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
 	@DocBean(name ="table_id",value="表名ID",dataType = Long.class,required = true)
-	private Long table_id; //表名ID
+	private Long table_id;
 	@DocBean(name ="table_name",value="表名",dataType = String.class,required = true)
-	private String table_name; //表名
+	private String table_name;
 	@DocBean(name ="table_ch_name",value="中文名称",dataType = String.class,required = true)
-	private String table_ch_name; //中文名称
+	private String table_ch_name;
 	@DocBean(name ="table_count",value="记录数",dataType = String.class,required = false)
-	private String table_count; //记录数
+	private String table_count;
 	@DocBean(name ="source_tableid",value="源表ID",dataType = String.class,required = false)
-	private String source_tableid; //源表ID
+	private String source_tableid;
 	@DocBean(name ="valid_s_date",value="有效开始日期",dataType = String.class,required = true)
-	private String valid_s_date; //有效开始日期
+	private String valid_s_date;
 	@DocBean(name ="valid_e_date",value="有效结束日期",dataType = String.class,required = true)
-	private String valid_e_date; //有效结束日期
+	private String valid_e_date;
 	@DocBean(name ="sql",value="自定义sql语句",dataType = String.class,required = false)
-	private String sql; //自定义sql语句
+	private String sql;
 	@DocBean(name ="remark",value="备注",dataType = String.class,required = false)
-	private String remark; //备注
+	private String remark;
 	@DocBean(name ="is_user_defined",value="是否自定义sql采集",dataType = String.class,required = true)
-	private String is_user_defined; //是否自定义sql采集
+	private String is_user_defined;
 	@DocBean(name ="database_id",value="数据库设置id",dataType = Long.class,required = true)
-	private Long database_id; //数据库设置id
+	private Long database_id;
 	@DocBean(name ="ti_or",value="清洗顺序",dataType = String.class,required = false)
-	private String ti_or; //清洗顺序
+	private String ti_or;
 	@DocBean(name ="is_md5",value="是否使用MD5",dataType = String.class,required = true)
-	private String is_md5; //是否使用MD5
+	private String is_md5;
 	@DocBean(name ="is_register",value="是否仅登记",dataType = String.class,required = true)
-	private String is_register; //是否仅登记
+	private String is_register;
 
 	/** 取得：表名ID */
 	public Long getTable_id(){

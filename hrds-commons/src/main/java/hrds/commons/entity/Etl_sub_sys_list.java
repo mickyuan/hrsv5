@@ -37,13 +37,13 @@ public class Etl_sub_sys_list extends TableEntity
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
 	@DocBean(name ="sub_sys_cd",value="子系统代码",dataType = String.class,required = true)
-	private String sub_sys_cd; //子系统代码
+	private String sub_sys_cd;
 	@DocBean(name ="sub_sys_desc",value="子系统描述",dataType = String.class,required = false)
-	private String sub_sys_desc; //子系统描述
+	private String sub_sys_desc;
 	@DocBean(name ="comments",value="备注信息",dataType = String.class,required = false)
-	private String comments; //备注信息
+	private String comments;
 	@DocBean(name ="etl_sys_cd",value="工程代码",dataType = String.class,required = true)
-	private String etl_sys_cd; //工程代码
+	private String etl_sys_cd;
 
 	/** 取得：子系统代码 */
 	public String getSub_sys_cd(){

@@ -36,31 +36,31 @@ public class Sys_exeinfo extends TableEntity
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
 	@DocBean(name ="exe_id",value="执行id",dataType = Long.class,required = true)
-	private Long exe_id; //执行id
+	private Long exe_id;
 	@DocBean(name ="job_tablename",value="作业表名",dataType = String.class,required = false)
-	private String job_tablename; //作业表名
+	private String job_tablename;
 	@DocBean(name ="etl_date",value="执行日期",dataType = String.class,required = true)
-	private String etl_date; //执行日期
+	private String etl_date;
 	@DocBean(name ="execute_state",value="运行状态",dataType = String.class,required = true)
-	private String execute_state; //运行状态
+	private String execute_state;
 	@DocBean(name ="job_name",value="作业名称名称",dataType = String.class,required = true)
-	private String job_name; //作业名称名称
+	private String job_name;
 	@DocBean(name ="exe_parameter",value="参数",dataType = String.class,required = true)
-	private String exe_parameter; //参数
+	private String exe_parameter;
 	@DocBean(name ="err_info",value="错误信息",dataType = String.class,required = true)
-	private String err_info; //错误信息
+	private String err_info;
 	@DocBean(name ="st_date",value="开始日期",dataType = String.class,required = true)
-	private String st_date; //开始日期
+	private String st_date;
 	@DocBean(name ="ed_date",value="结束日期",dataType = String.class,required = true)
-	private String ed_date; //结束日期
+	private String ed_date;
 	@DocBean(name ="is_valid",value="作业是否有效",dataType = String.class,required = true)
-	private String is_valid; //作业是否有效
+	private String is_valid;
 	@DocBean(name ="source_id",value="数据源ID",dataType = Long.class,required = true)
-	private Long source_id; //数据源ID
+	private Long source_id;
 	@DocBean(name ="agent_id",value="Agent_id",dataType = Long.class,required = true)
-	private Long agent_id; //Agent_id
+	private Long agent_id;
 	@DocBean(name ="database_id",value="数据库设置id",dataType = Long.class,required = true)
-	private Long database_id; //数据库设置id
+	private Long database_id;
 
 	/** 取得：执行id */
 	public Long getExe_id(){

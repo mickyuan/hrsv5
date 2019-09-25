@@ -35,59 +35,23 @@ public class File_collect_set extends TableEntity
 		__tmpPKS.add("fcs_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="fcs_id",value="文件系统采集ID",dataType = Long.class,required = true)
-	private Long fcs_id; //文件系统采集ID
-	@DocBean(name ="agent_id",value="Agent_id",dataType = Long.class,required = false)
-	private Long agent_id; //Agent_id
-	@DocBean(name ="host_name",value="主机名称",dataType = String.class,required = false)
-	private String host_name; //主机名称
 	@DocBean(name ="system_type",value="操作系统类型",dataType = String.class,required = false)
-	private String system_type; //操作系统类型
+	private String system_type;
 	@DocBean(name ="remark",value="备注",dataType = String.class,required = false)
-	private String remark; //备注
+	private String remark;
 	@DocBean(name ="fcs_name",value="文件系统采集任务名称",dataType = String.class,required = true)
-	private String fcs_name; //文件系统采集任务名称
+	private String fcs_name;
 	@DocBean(name ="is_sendok",value="是否设置完成并发送成功",dataType = String.class,required = true)
-	private String is_sendok; //是否设置完成并发送成功
+	private String is_sendok;
 	@DocBean(name ="is_solr",value="是否入solr",dataType = String.class,required = true)
-	private String is_solr; //是否入solr
+	private String is_solr;
+	@DocBean(name ="fcs_id",value="文件系统采集ID",dataType = Long.class,required = true)
+	private Long fcs_id;
+	@DocBean(name ="agent_id",value="Agent_id",dataType = Long.class,required = false)
+	private Long agent_id;
+	@DocBean(name ="host_name",value="主机名称",dataType = String.class,required = false)
+	private String host_name;
 
-	/** 取得：文件系统采集ID */
-	public Long getFcs_id(){
-		return fcs_id;
-	}
-	/** 设置：文件系统采集ID */
-	public void setFcs_id(Long fcs_id){
-		this.fcs_id=fcs_id;
-	}
-	/** 设置：文件系统采集ID */
-	public void setFcs_id(String fcs_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(fcs_id)){
-			this.fcs_id=new Long(fcs_id);
-		}
-	}
-	/** 取得：Agent_id */
-	public Long getAgent_id(){
-		return agent_id;
-	}
-	/** 设置：Agent_id */
-	public void setAgent_id(Long agent_id){
-		this.agent_id=agent_id;
-	}
-	/** 设置：Agent_id */
-	public void setAgent_id(String agent_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(agent_id)){
-			this.agent_id=new Long(agent_id);
-		}
-	}
-	/** 取得：主机名称 */
-	public String getHost_name(){
-		return host_name;
-	}
-	/** 设置：主机名称 */
-	public void setHost_name(String host_name){
-		this.host_name=host_name;
-	}
 	/** 取得：操作系统类型 */
 	public String getSystem_type(){
 		return system_type;
@@ -127,5 +91,41 @@ public class File_collect_set extends TableEntity
 	/** 设置：是否入solr */
 	public void setIs_solr(String is_solr){
 		this.is_solr=is_solr;
+	}
+	/** 取得：文件系统采集ID */
+	public Long getFcs_id(){
+		return fcs_id;
+	}
+	/** 设置：文件系统采集ID */
+	public void setFcs_id(Long fcs_id){
+		this.fcs_id=fcs_id;
+	}
+	/** 设置：文件系统采集ID */
+	public void setFcs_id(String fcs_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(fcs_id)){
+			this.fcs_id=new Long(fcs_id);
+		}
+	}
+	/** 取得：Agent_id */
+	public Long getAgent_id(){
+		return agent_id;
+	}
+	/** 设置：Agent_id */
+	public void setAgent_id(Long agent_id){
+		this.agent_id=agent_id;
+	}
+	/** 设置：Agent_id */
+	public void setAgent_id(String agent_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(agent_id)){
+			this.agent_id=new Long(agent_id);
+		}
+	}
+	/** 取得：主机名称 */
+	public String getHost_name(){
+		return host_name;
+	}
+	/** 设置：主机名称 */
+	public void setHost_name(String host_name){
+		this.host_name=host_name;
 	}
 }

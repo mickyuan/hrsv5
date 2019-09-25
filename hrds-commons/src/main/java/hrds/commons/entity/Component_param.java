@@ -36,17 +36,17 @@ public class Component_param extends TableEntity
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
 	@DocBean(name ="param_id",value="主键参数id",dataType = Long.class,required = true)
-	private Long param_id; //主键参数id
+	private Long param_id;
 	@DocBean(name ="param_name",value="参数名称",dataType = String.class,required = true)
-	private String param_name; //参数名称
+	private String param_name;
 	@DocBean(name ="param_value",value="参数value",dataType = String.class,required = true)
-	private String param_value; //参数value
+	private String param_value;
 	@DocBean(name ="is_must",value="是否必要",dataType = String.class,required = true)
-	private String is_must; //是否必要
+	private String is_must;
 	@DocBean(name ="param_remark",value="备注",dataType = String.class,required = true)
-	private String param_remark; //备注
+	private String param_remark;
 	@DocBean(name ="comp_id",value="组件编号",dataType = String.class,required = false)
-	private String comp_id; //组件编号
+	private String comp_id;
 
 	/** 取得：主键参数id */
 	public Long getParam_id(){

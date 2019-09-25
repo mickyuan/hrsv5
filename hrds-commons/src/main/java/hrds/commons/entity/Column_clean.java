@@ -36,29 +36,29 @@ public class Column_clean extends TableEntity
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
 	@DocBean(name ="c_id",value="清洗参数编号",dataType = Long.class,required = true)
-	private Long c_id; //清洗参数编号
+	private Long c_id;
 	@DocBean(name ="clean_type",value="清洗方式",dataType = String.class,required = true)
-	private String clean_type; //清洗方式
+	private String clean_type;
 	@DocBean(name ="character_filling",value="补齐字符",dataType = String.class,required = false)
-	private String character_filling; //补齐字符
+	private String character_filling;
 	@DocBean(name ="filling_length",value="补齐长度",dataType = Long.class,required = false)
-	private Long filling_length; //补齐长度
+	private Long filling_length;
 	@DocBean(name ="field",value="原字段",dataType = String.class,required = false)
-	private String field; //原字段
+	private String field;
 	@DocBean(name ="replace_feild",value="替换字段",dataType = String.class,required = false)
-	private String replace_feild; //替换字段
+	private String replace_feild;
 	@DocBean(name ="filling_type",value="补齐方式",dataType = String.class,required = false)
-	private String filling_type; //补齐方式
+	private String filling_type;
 	@DocBean(name ="convert_format",value="转换格式",dataType = String.class,required = false)
-	private String convert_format; //转换格式
+	private String convert_format;
 	@DocBean(name ="old_format",value="原始格式",dataType = String.class,required = false)
-	private String old_format; //原始格式
+	private String old_format;
 	@DocBean(name ="column_id",value="字段ID",dataType = Long.class,required = true)
-	private Long column_id; //字段ID
+	private Long column_id;
 	@DocBean(name ="codename",value="码值名称",dataType = String.class,required = false)
-	private String codename; //码值名称
+	private String codename;
 	@DocBean(name ="codesys",value="码值所属系统",dataType = String.class,required = false)
-	private String codesys; //码值所属系统
+	private String codesys;
 
 	/** 取得：清洗参数编号 */
 	public Long getC_id(){

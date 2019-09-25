@@ -36,25 +36,25 @@ public class Agent_info extends TableEntity
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
 	@DocBean(name ="source_id",value="数据源ID",dataType = Long.class,required = true)
-	private Long source_id; //数据源ID
+	private Long source_id;
 	@DocBean(name ="agent_id",value="Agent_id",dataType = Long.class,required = true)
-	private Long agent_id; //Agent_id
+	private Long agent_id;
 	@DocBean(name ="agent_name",value="Agent名称",dataType = String.class,required = true)
-	private String agent_name; //Agent名称
+	private String agent_name;
 	@DocBean(name ="agent_ip",value="Agent所在服务器IP",dataType = String.class,required = true)
-	private String agent_ip; //Agent所在服务器IP
+	private String agent_ip;
 	@DocBean(name ="agent_port",value="agent服务器端口",dataType = String.class,required = false)
-	private String agent_port; //agent服务器端口
+	private String agent_port;
 	@DocBean(name ="agent_status",value="agent状态",dataType = String.class,required = true)
-	private String agent_status; //agent状态
+	private String agent_status;
 	@DocBean(name ="agent_type",value="agent类别",dataType = String.class,required = true)
-	private String agent_type; //agent类别
+	private String agent_type;
 	@DocBean(name ="create_date",value="创建日期",dataType = String.class,required = true)
-	private String create_date; //创建日期
+	private String create_date;
 	@DocBean(name ="create_time",value="创建时间",dataType = String.class,required = true)
-	private String create_time; //创建时间
+	private String create_time;
 	@DocBean(name ="user_id",value="用户ID",dataType = Long.class,required = false)
-	private Long user_id; //用户ID
+	private Long user_id;
 
 	/** 取得：数据源ID */
 	public Long getSource_id(){

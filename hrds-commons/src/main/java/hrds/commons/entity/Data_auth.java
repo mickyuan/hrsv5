@@ -36,35 +36,35 @@ public class Data_auth extends TableEntity
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
 	@DocBean(name ="da_id",value="数据权限设置ID",dataType = Long.class,required = true)
-	private Long da_id; //数据权限设置ID
+	private Long da_id;
 	@DocBean(name ="apply_date",value="申请日期",dataType = String.class,required = true)
-	private String apply_date; //申请日期
+	private String apply_date;
 	@DocBean(name ="apply_time",value="申请时间",dataType = String.class,required = true)
-	private String apply_time; //申请时间
+	private String apply_time;
 	@DocBean(name ="apply_type",value="申请类型",dataType = String.class,required = true)
-	private String apply_type; //申请类型
+	private String apply_type;
 	@DocBean(name ="auth_type",value="权限类型",dataType = String.class,required = true)
-	private String auth_type; //权限类型
+	private String auth_type;
 	@DocBean(name ="audit_date",value="审核日期",dataType = String.class,required = false)
-	private String audit_date; //审核日期
+	private String audit_date;
 	@DocBean(name ="audit_time",value="审核时间",dataType = String.class,required = false)
-	private String audit_time; //审核时间
+	private String audit_time;
 	@DocBean(name ="audit_userid",value="审核人ID",dataType = Long.class,required = false)
-	private Long audit_userid; //审核人ID
+	private Long audit_userid;
 	@DocBean(name ="audit_name",value="审核人名称",dataType = String.class,required = false)
-	private String audit_name; //审核人名称
+	private String audit_name;
 	@DocBean(name ="file_id",value="文件编号",dataType = String.class,required = true)
-	private String file_id; //文件编号
+	private String file_id;
 	@DocBean(name ="dep_id",value="部门ID",dataType = Long.class,required = true)
-	private Long dep_id; //部门ID
+	private Long dep_id;
 	@DocBean(name ="user_id",value="用户ID",dataType = Long.class,required = true)
-	private Long user_id; //用户ID
+	private Long user_id;
 	@DocBean(name ="agent_id",value="Agent_id",dataType = Long.class,required = true)
-	private Long agent_id; //Agent_id
+	private Long agent_id;
 	@DocBean(name ="source_id",value="数据源ID",dataType = Long.class,required = true)
-	private Long source_id; //数据源ID
+	private Long source_id;
 	@DocBean(name ="collect_set_id",value="数据库设置id",dataType = Long.class,required = true)
-	private Long collect_set_id; //数据库设置id
+	private Long collect_set_id;
 
 	/** 取得：数据权限设置ID */
 	public Long getDa_id(){

@@ -36,17 +36,17 @@ public class Collect_job_classify extends TableEntity
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
 	@DocBean(name ="classify_id",value="分类id",dataType = Long.class,required = true)
-	private Long classify_id; //分类id
+	private Long classify_id;
 	@DocBean(name ="classify_num",value="分类编号",dataType = String.class,required = true)
-	private String classify_num; //分类编号
+	private String classify_num;
 	@DocBean(name ="classify_name",value="分类名称",dataType = String.class,required = true)
-	private String classify_name; //分类名称
+	private String classify_name;
 	@DocBean(name ="remark",value="备注",dataType = String.class,required = false)
-	private String remark; //备注
+	private String remark;
 	@DocBean(name ="user_id",value="用户ID",dataType = Long.class,required = true)
-	private Long user_id; //用户ID
+	private Long user_id;
 	@DocBean(name ="agent_id",value="Agent_id",dataType = Long.class,required = true)
-	private Long agent_id; //Agent_id
+	private Long agent_id;
 
 	/** 取得：分类id */
 	public Long getClassify_id(){

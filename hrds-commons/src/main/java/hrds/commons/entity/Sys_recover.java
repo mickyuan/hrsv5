@@ -36,17 +36,17 @@ public class Sys_recover extends TableEntity
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
 	@DocBean(name ="re_id",value="恢复id",dataType = Long.class,required = true)
-	private Long re_id; //恢复id
+	private Long re_id;
 	@DocBean(name ="re_date",value="恢复日期",dataType = String.class,required = true)
-	private String re_date; //恢复日期
+	private String re_date;
 	@DocBean(name ="re_time",value="恢复时间",dataType = String.class,required = true)
-	private String re_time; //恢复时间
+	private String re_time;
 	@DocBean(name ="length",value="恢复时长",dataType = String.class,required = true)
-	private String length; //恢复时长
+	private String length;
 	@DocBean(name ="remark",value="备注",dataType = String.class,required = false)
-	private String remark; //备注
+	private String remark;
 	@DocBean(name ="dump_id",value="备份id",dataType = Long.class,required = true)
-	private Long dump_id; //备份id
+	private Long dump_id;
 
 	/** 取得：恢复id */
 	public Long getRe_id(){

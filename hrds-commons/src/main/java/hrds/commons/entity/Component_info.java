@@ -36,21 +36,21 @@ public class Component_info extends TableEntity
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
 	@DocBean(name ="comp_id",value="组件编号",dataType = String.class,required = true)
-	private String comp_id; //组件编号
+	private String comp_id;
 	@DocBean(name ="comp_name",value="组件名称",dataType = String.class,required = true)
-	private String comp_name; //组件名称
+	private String comp_name;
 	@DocBean(name ="comp_state",value="组件状态",dataType = String.class,required = true)
-	private String comp_state; //组件状态
+	private String comp_state;
 	@DocBean(name ="comp_remark",value="备注",dataType = String.class,required = false)
-	private String comp_remark; //备注
+	private String comp_remark;
 	@DocBean(name ="comp_version",value="组件版本",dataType = String.class,required = true)
-	private String comp_version; //组件版本
+	private String comp_version;
 	@DocBean(name ="icon_info",value="图标",dataType = String.class,required = false)
-	private String icon_info; //图标
+	private String icon_info;
 	@DocBean(name ="color_info",value="颜色",dataType = String.class,required = false)
-	private String color_info; //颜色
+	private String color_info;
 	@DocBean(name ="comp_type",value="组件类型",dataType = String.class,required = true)
-	private String comp_type; //组件类型
+	private String comp_type;
 
 	/** 取得：组件编号 */
 	public String getComp_id(){

@@ -36,15 +36,15 @@ public class Sys_para extends TableEntity
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
 	@DocBean(name ="para_id",value="参数ID",dataType = Long.class,required = true)
-	private Long para_id; //参数ID
+	private Long para_id;
 	@DocBean(name ="para_name",value="para_name",dataType = String.class,required = false)
-	private String para_name; //para_name
+	private String para_name;
 	@DocBean(name ="para_value",value="para_value",dataType = String.class,required = false)
-	private String para_value; //para_value
+	private String para_value;
 	@DocBean(name ="para_type",value="para_type",dataType = String.class,required = false)
-	private String para_type; //para_type
+	private String para_type;
 	@DocBean(name ="remark",value="备注",dataType = String.class,required = false)
-	private String remark; //备注
+	private String remark;
 
 	/** 取得：参数ID */
 	public Long getPara_id(){

@@ -36,17 +36,17 @@ public class Etl_job_temp_para extends TableEntity
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
 	@DocBean(name ="etl_temp_para_id",value="模版参数主键",dataType = Long.class,required = true)
-	private Long etl_temp_para_id; //模版参数主键
+	private Long etl_temp_para_id;
 	@DocBean(name ="etl_para_type",value="参数类型",dataType = String.class,required = true)
-	private String etl_para_type; //参数类型
+	private String etl_para_type;
 	@DocBean(name ="etl_job_pro_para",value="参数名称",dataType = String.class,required = true)
-	private String etl_job_pro_para; //参数名称
+	private String etl_job_pro_para;
 	@DocBean(name ="etl_job_para_size",value="参数",dataType = String.class,required = true)
-	private String etl_job_para_size; //参数
+	private String etl_job_para_size;
 	@DocBean(name ="etl_pro_para_sort",value="参数排序",dataType = Long.class,required = true)
-	private Long etl_pro_para_sort; //参数排序
+	private Long etl_pro_para_sort;
 	@DocBean(name ="etl_temp_id",value="模版ID",dataType = Long.class,required = true)
-	private Long etl_temp_id; //模版ID
+	private Long etl_temp_id;
 
 	/** 取得：模版参数主键 */
 	public Long getEtl_temp_para_id(){

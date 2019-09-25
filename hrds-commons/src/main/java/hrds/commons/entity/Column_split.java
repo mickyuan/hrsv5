@@ -36,31 +36,31 @@ public class Column_split extends TableEntity
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
 	@DocBean(name ="col_id",value="字段编号",dataType = Long.class,required = true)
-	private Long col_id; //字段编号
+	private Long col_id;
 	@DocBean(name ="col_name",value="字段名称",dataType = String.class,required = true)
-	private String col_name; //字段名称
+	private String col_name;
 	@DocBean(name ="col_offset",value="字段偏移量",dataType = String.class,required = false)
-	private String col_offset; //字段偏移量
+	private String col_offset;
 	@DocBean(name ="col_zhname",value="中文名称",dataType = String.class,required = false)
-	private String col_zhname; //中文名称
+	private String col_zhname;
 	@DocBean(name ="col_type",value="字段类型",dataType = String.class,required = true)
-	private String col_type; //字段类型
+	private String col_type;
 	@DocBean(name ="remark",value="备注",dataType = String.class,required = false)
-	private String remark; //备注
+	private String remark;
 	@DocBean(name ="c_id",value="清洗参数编号",dataType = Long.class,required = true)
-	private Long c_id; //清洗参数编号
+	private Long c_id;
 	@DocBean(name ="column_id",value="字段ID",dataType = Long.class,required = true)
-	private Long column_id; //字段ID
+	private Long column_id;
 	@DocBean(name ="valid_s_date",value="有效开始日期",dataType = String.class,required = true)
-	private String valid_s_date; //有效开始日期
+	private String valid_s_date;
 	@DocBean(name ="valid_e_date",value="有效结束日期",dataType = String.class,required = true)
-	private String valid_e_date; //有效结束日期
+	private String valid_e_date;
 	@DocBean(name ="seq",value="拆分对应序号",dataType = Long.class,required = false)
-	private Long seq; //拆分对应序号
+	private Long seq;
 	@DocBean(name ="split_sep",value="拆分分隔符",dataType = String.class,required = false)
-	private String split_sep; //拆分分隔符
+	private String split_sep;
 	@DocBean(name ="split_type",value="拆分方式",dataType = String.class,required = true)
-	private String split_type; //拆分方式
+	private String split_type;
 
 	/** 取得：字段编号 */
 	public Long getCol_id(){

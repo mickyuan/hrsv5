@@ -36,19 +36,19 @@ public class Ftp_folder extends TableEntity
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
 	@DocBean(name ="ftp_folder_id",value="目录表id",dataType = Long.class,required = true)
-	private Long ftp_folder_id; //目录表id
+	private Long ftp_folder_id;
 	@DocBean(name ="ftp_folder_name",value="ftp目录名称",dataType = String.class,required = true)
-	private String ftp_folder_name; //ftp目录名称
+	private String ftp_folder_name;
 	@DocBean(name ="is_processed",value="是否处理过",dataType = String.class,required = true)
-	private String is_processed; //是否处理过
+	private String is_processed;
 	@DocBean(name ="ftp_date",value="ftp日期",dataType = String.class,required = true)
-	private String ftp_date; //ftp日期
+	private String ftp_date;
 	@DocBean(name ="ftp_time",value="ftp时间",dataType = String.class,required = true)
-	private String ftp_time; //ftp时间
+	private String ftp_time;
 	@DocBean(name ="remark",value="备注",dataType = String.class,required = false)
-	private String remark; //备注
+	private String remark;
 	@DocBean(name ="ftp_id",value="ftp采集id",dataType = Long.class,required = true)
-	private Long ftp_id; //ftp采集id
+	private Long ftp_id;
 
 	/** 取得：目录表id */
 	public Long getFtp_folder_id(){

@@ -36,15 +36,15 @@ public class User_fav extends TableEntity
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
 	@DocBean(name ="fav_id",value="收藏ID",dataType = Long.class,required = true)
-	private Long fav_id; //收藏ID
+	private Long fav_id;
 	@DocBean(name ="fav_flag",value="是否有效",dataType = String.class,required = true)
-	private String fav_flag; //是否有效
+	private String fav_flag;
 	@DocBean(name ="original_name",value="原始文件名称",dataType = String.class,required = true)
-	private String original_name; //原始文件名称
+	private String original_name;
 	@DocBean(name ="file_id",value="文件编号",dataType = String.class,required = true)
-	private String file_id; //文件编号
+	private String file_id;
 	@DocBean(name ="user_id",value="用户ID",dataType = Long.class,required = true)
-	private Long user_id; //用户ID
+	private Long user_id;
 
 	/** 取得：收藏ID */
 	public Long getFav_id(){

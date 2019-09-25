@@ -37,15 +37,15 @@ public class Etl_para extends TableEntity
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
 	@DocBean(name ="para_cd",value="变量代码",dataType = String.class,required = true)
-	private String para_cd; //变量代码
+	private String para_cd;
 	@DocBean(name ="para_val",value="变量值",dataType = String.class,required = false)
-	private String para_val; //变量值
+	private String para_val;
 	@DocBean(name ="para_type",value="变量类型",dataType = String.class,required = false)
-	private String para_type; //变量类型
+	private String para_type;
 	@DocBean(name ="etl_sys_cd",value="工程代码",dataType = String.class,required = true)
-	private String etl_sys_cd; //工程代码
+	private String etl_sys_cd;
 	@DocBean(name ="para_desc",value="作业描述",dataType = String.class,required = false)
-	private String para_desc; //作业描述
+	private String para_desc;
 
 	/** 取得：变量代码 */
 	public String getPara_cd(){

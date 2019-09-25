@@ -36,37 +36,37 @@ public class Object_collect extends TableEntity
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
 	@DocBean(name ="odc_id",value="对象采集id",dataType = Long.class,required = true)
-	private Long odc_id; //对象采集id
+	private Long odc_id;
 	@DocBean(name ="obj_number",value="对象采集设置编号",dataType = String.class,required = true)
-	private String obj_number; //对象采集设置编号
+	private String obj_number;
 	@DocBean(name ="obj_collect_name",value="对象采集任务名称",dataType = String.class,required = true)
-	private String obj_collect_name; //对象采集任务名称
+	private String obj_collect_name;
 	@DocBean(name ="system_name",value="操作系统类型",dataType = String.class,required = true)
-	private String system_name; //操作系统类型
+	private String system_name;
 	@DocBean(name ="host_name",value="主机名称",dataType = String.class,required = true)
-	private String host_name; //主机名称
+	private String host_name;
 	@DocBean(name ="local_time",value="本地系统时间",dataType = String.class,required = true)
-	private String local_time; //本地系统时间
+	private String local_time;
 	@DocBean(name ="server_date",value="服务器日期",dataType = String.class,required = true)
-	private String server_date; //服务器日期
+	private String server_date;
 	@DocBean(name ="s_date",value="开始日期",dataType = String.class,required = true)
-	private String s_date; //开始日期
+	private String s_date;
 	@DocBean(name ="e_date",value="结束日期",dataType = String.class,required = true)
-	private String e_date; //结束日期
+	private String e_date;
 	@DocBean(name ="database_code",value="采集编码",dataType = String.class,required = true)
-	private String database_code; //采集编码
+	private String database_code;
 	@DocBean(name ="run_way",value="启动方式",dataType = String.class,required = true)
-	private String run_way; //启动方式
+	private String run_way;
 	@DocBean(name ="file_path",value="采集文件路径",dataType = String.class,required = true)
-	private String file_path; //采集文件路径
+	private String file_path;
 	@DocBean(name ="remark",value="备注",dataType = String.class,required = false)
-	private String remark; //备注
+	private String remark;
 	@DocBean(name ="agent_id",value="Agent_id",dataType = Long.class,required = true)
-	private Long agent_id; //Agent_id
+	private Long agent_id;
 	@DocBean(name ="is_sendok",value="是否设置完成并发送成功",dataType = String.class,required = true)
-	private String is_sendok; //是否设置完成并发送成功
+	private String is_sendok;
 	@DocBean(name ="object_collect_type",value="对象采集方式",dataType = String.class,required = true)
-	private String object_collect_type; //对象采集方式
+	private String object_collect_type;
 
 	/** 取得：对象采集id */
 	public Long getOdc_id(){
