@@ -86,7 +86,7 @@ public class ObjectCollectAction extends BaseAction {
 	 *                       含义：对象采集设置表对象，对象中不能为空的字段必须有值
 	 *                       取值范围：不可为空
 	 * @return long
-	 * 含义：对象采集设置表id
+	 * 含义：对象采集设置表id，新建的id后台生成的所以要返回到前端
 	 * 取值范围：不会为空
 	 */
 	public long addObjectCollect(@RequestBean Object_collect object_collect) {
@@ -116,11 +116,8 @@ public class ObjectCollectAction extends BaseAction {
 	 * @param object_collect Object_collect
 	 *                       含义：对象采集设置表对象
 	 *                       取值范围：不可为空
-	 * @return long
-	 * 含义：对象采集设置表id
-	 * 取值范围：不会为空
 	 */
-	public long updateObjectCollect(@RequestBean Object_collect object_collect) {
+	public void updateObjectCollect(@RequestBean Object_collect object_collect) {
 		//数据可访问权限处理方式：该表没有对应的用户访问权限限制
 		//TODO 应该使用一个公共的校验类进行校验
 		if (object_collect.getOdc_id() == null) {
@@ -137,7 +134,6 @@ public class ObjectCollectAction extends BaseAction {
 			//2.更新object_collect表
 			if (object_collect.update(Dbo.db()) != 1)
 				throw new BusinessException("更新数据失败！data=" + object_collect);
-			return object_collect.getOdc_id();
 		}
 	}
 
@@ -304,7 +300,8 @@ public class ObjectCollectAction extends BaseAction {
 	 * 1.获取json数组转成对象采集结构信息表的集合
 	 * 2.获取对象采集结构信息list进行遍历
 	 * 3.根据对象采集结构信息id判断是新增还是编辑
-	 * 4.新增或更新数据库
+	 * 4.判断同一个对象采集任务下，对象采集结构信息表的coll_name有没有重复
+	 * 5.新增或更新数据库
 	 *
 	 * @param object_collect_struct_array String
 	 *                                    含义：对象采集对应结构信息表的JSONArray格式的字符串，其中
@@ -323,12 +320,28 @@ public class ObjectCollectAction extends BaseAction {
 			//XXX 这一条或者多条数据会有新增也会有编辑，所以对应在一个方法里面了
 			//3.根据对象采集结构信息id判断是新增还是编辑
 			if (object_collect_struct.getStruct_id() == null) {
+				//4.判断同一个对象采集任务下，对象采集结构信息表的coll_name有没有重复
+				long count = Dbo.queryNumber("SELECT count(1) count FROM "
+								+ Object_collect_struct.TableName + " WHERE coll_name = ? AND ocs_id = ?"
+						, object_collect_struct.getColl_name(), object_collect_struct.getOcs_id())
+						.orElseThrow(() -> new BusinessException("有且只有一个返回值"));
+				if (count > 0) {
+					throw new BusinessException("同一个对象采集任务下，对象采集结构信息表的coll_name不能重复");
+				}
 				//新增
 				object_collect_struct.setStruct_id(PrimayKeyGener.getNextId());
-				//4.新增或更新数据库
+				//5.新增或更新数据库
 				if (object_collect_struct.add(Dbo.db()) != 1)
 					throw new BusinessException("新增数据失败！data=" + object_collect_struct);
 			} else {
+				long count = Dbo.queryNumber("SELECT count(1) count FROM "
+								+ Object_collect_struct.TableName + " WHERE coll_name = ? AND ocs_id = ? " +
+								" AND struct_id != ?", object_collect_struct.getColl_name()
+						, object_collect_struct.getOcs_id(), object_collect_struct.getStruct_id())
+						.orElseThrow(() -> new BusinessException("有且只有一个返回值"));
+				if (count > 0) {
+					throw new BusinessException("同一个对象采集任务下，对象采集结构信息表的coll_name不能重复");
+				}
 				//更新
 				if (object_collect_struct.update(Dbo.db()) != 1)
 					throw new BusinessException("更新数据失败！data=" + object_collect_struct);
@@ -351,8 +364,12 @@ public class ObjectCollectAction extends BaseAction {
 	public Result searchObject_storage(long odc_id) {
 		//数据可访问权限处理方式：该表没有对应的用户访问权限限制
 		//1.根据对象采集id，查询对象采集任务及每个任务对象的存储设置
-		return Dbo.queryResult("SELECT * FROM " + Object_collect_task.TableName + " t1 left join "
+		Result result = Dbo.queryResult("SELECT * FROM " + Object_collect_task.TableName + " t1 left join "
 				+ Object_storage.TableName + " t2 on t1.ocs_id = t2.ocs_id WHERE odc_id = ?", odc_id);
+		if (result.isEmpty()) {
+			throw new BusinessException("odc_id =" + odc_id + "查询不到对象采集任务表的数据");
+		}
+		return result;
 	}
 
 	/**

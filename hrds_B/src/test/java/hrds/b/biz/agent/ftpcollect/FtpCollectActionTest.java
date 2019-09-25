@@ -356,10 +356,13 @@ public class FtpCollectActionTest extends WebBaseTestCase {
 
 	/**
 	 * 测试用例清理数据
+	 * <p>
+	 * 1.清理ftp_collect表中造的数据
 	 */
 	@After
 	public void afterTest() {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
+			//1.清理ftp_collect表中造的数据
 			SqlOperator.execute(db, "DELETE FROM " + Ftp_collect.TableName
 					+ " WHERE agent_id = ?", AGENT_ID);
 			SqlOperator.commitTransaction(db);

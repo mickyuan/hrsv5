@@ -187,12 +187,12 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(true));
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			long count = SqlOperator.queryNumber(db, "select count(1) count from " +
-					"file_collect_set where agent_id = ?", AGENT_ID).orElseThrow(()
+			long count = SqlOperator.queryNumber(db, "select count(1) count from "
+					+ File_collect_set.TableName + " where agent_id = ?", AGENT_ID).orElseThrow(()
 					-> new BusinessException("查询得到的数据必须有且只有一条"));
 			assertThat("添加数据成功", count, is(FILE_COLLECT_SET_ROWS + 1));
-			Result result = SqlOperator.queryResult(db, "select * from file_collect_set " +
-					"where fcs_name = ?", "zxzwjcj2");
+			Result result = SqlOperator.queryResult(db, "select * from "
+					+ File_collect_set.TableName + " where fcs_name = ?", "zxzwjcj2");
 			assertThat("添加数据成功", result.getString(0, "system_type"), is("Windows10"));
 			assertThat("添加数据成功", result.getString(0, "host_name"), is("zhuxi11"));
 			assertThat("添加数据成功", result.getString(0, "is_sendok"), is(IsFlag.Fou.getCode()));
@@ -258,12 +258,12 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(true));
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			long count = SqlOperator.queryNumber(db, "select count(1) count from " +
-					"file_collect_set where fcs_name = ?", "zxzwjcj666").orElseThrow(()
-					-> new BusinessException("查询得到的数据必须有且只有一条"));
+			long count = SqlOperator.queryNumber(db, "select count(1) count from "
+					+ File_collect_set.TableName + " where fcs_name = ?", "zxzwjcj666")
+					.orElseThrow(() -> new BusinessException("查询得到的数据必须有且只有一条"));
 			assertThat("更新数据成功", count, is(1L));
-			Result result = SqlOperator.queryResult(db, "select * from file_collect_set " +
-					"where fcs_name = ?", "zxzwjcj666");
+			Result result = SqlOperator.queryResult(db, "select * from "
+					+ File_collect_set.TableName + " where fcs_name = ?", "zxzwjcj666");
 			assertThat("更新数据成功", result.getString(0, "system_type"), is("Windows10"));
 			assertThat("更新数据成功", result.getString(0, "host_name"), is("zhuxi11"));
 			assertThat("更新数据成功", result.getString(0, "is_sendok"), is(IsFlag.Fou.getCode()));
@@ -424,8 +424,8 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(true));
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			long optionalLong = SqlOperator.queryNumber(db, "select count(1) count from file_source " +
-					"where agent_id = ?", AGENT_ID).orElseThrow(() ->
+			long optionalLong = SqlOperator.queryNumber(db, "select count(1) count from "
+					+ File_source.TableName + " where agent_id = ?", AGENT_ID).orElseThrow(() ->
 					new BusinessException("查询得到的数据必须有且只有一条"));
 			assertThat("校验数据量正确", optionalLong, is(10L));
 			Result result = SqlOperator.queryResult(db, "select * from " +
@@ -457,8 +457,8 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(true));
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			long optionalLong = SqlOperator.queryNumber(db, "select count(1) count from file_source " +
-					"where agent_id = ?", AGENT_ID).orElseThrow(() ->
+			long optionalLong = SqlOperator.queryNumber(db, "select count(1) count from "
+					+ File_source.TableName + " where agent_id = ?", AGENT_ID).orElseThrow(() ->
 					new BusinessException("查询得到的数据必须有且只有一条"));
 			assertThat("校验数据量正确", optionalLong, is(20L));
 			Result result = SqlOperator.queryResult(db, "select * from " +
@@ -514,13 +514,20 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 
 	/**
 	 * 测试用例清理数据
+	 * <p>
+	 * 1.清理agent_info表中造的数据
+	 * 2.清理file_collect_set表中造的数据
+	 * 3.清理file_source表中造的数据
 	 */
 	@After
 	public void afterTest() {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			SqlOperator.execute(db, "DELETE FROM agent_info WHERE source_id = ?", SOURCE_ID);
-			SqlOperator.execute(db, "DELETE FROM file_collect_set WHERE agent_id = ?", AGENT_ID);
-			SqlOperator.execute(db, "DELETE FROM file_source WHERE agent_id = ?", AGENT_ID);
+			//1.清理agent_info表中造的数据
+			SqlOperator.execute(db, "DELETE FROM " + Agent_info.TableName + " WHERE source_id = ?", SOURCE_ID);
+			//2.清理file_collect_set表中造的数据
+			SqlOperator.execute(db, "DELETE FROM " + File_collect_set.TableName + " WHERE agent_id = ?", AGENT_ID);
+			//3.清理file_source表中造的数据
+			SqlOperator.execute(db, "DELETE FROM " + File_source.TableName + " WHERE agent_id = ?", AGENT_ID);
 			SqlOperator.commitTransaction(db);
 		}
 	}
