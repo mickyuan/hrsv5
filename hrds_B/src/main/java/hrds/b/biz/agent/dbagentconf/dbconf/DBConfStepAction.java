@@ -48,7 +48,7 @@ public class DBConfStepAction extends BaseAction{
 	 *          取值范围：不会为null
 	 *
 	 * */
-	public Result getDBConfInfo(long databaseId, long userId) {
+	public Result getDBConfInfo(long databaseId) {
 		//1、在数据库设置表(database_set)中，根据databaseId判断是否查询到数据，如果查询不到，抛异常给前端
 		Database_set dbSet = Dbo.queryOneObject(Database_set.class,
 				"SELECT das.* " +
@@ -56,7 +56,7 @@ public class DBConfStepAction extends BaseAction{
 						" JOIN "+ Agent_info.TableName +" ai ON ds.source_id = ai.source_id " +
 						" JOIN "+ Database_set.TableName +" das ON ai.agent_id = das.agent_id " +
 						" WHERE das.database_id = ? AND ds.create_user_id = ? "
-				, databaseId, userId)
+				, databaseId, getUserId())
 				.orElseThrow(() -> new BusinessException("未能找到该任务"));
 		//数据可访问权限处理方式
 		//以上SQL中，通过当前用户ID进行关联查询，达到了数据权限的限制
@@ -109,10 +109,11 @@ public class DBConfStepAction extends BaseAction{
 	 *          取值范围：返回false，表示该分类被使用，不能编辑；返回true，表示该分类没有被使用，可以编辑
 	 *
 	 * */
-	public boolean checkClassifyId(long classifyId, long userId){
+	public boolean checkClassifyId(long classifyId){
 		//1、在collect_job_classify表中查询传入的classifyId是否存在
-		long count = Dbo.queryNumber(" SELECT count(1) FROM " + Collect_job_classify.TableName + " " +
-				"WHERE classify_id = ? AND user_id = ? ", classifyId, userId).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+		long count = Dbo.queryNumber(" SELECT count(1) FROM " + Collect_job_classify.TableName +
+				" WHERE classify_id = ? AND user_id = ? ", classifyId, getUserId()).orElseThrow(
+						() -> new BusinessException("查询结果必须有且只有一条"));
 		if(count != 1){
 			throw new BusinessException("采集作业分类信息不存在");
 		}
@@ -120,7 +121,7 @@ public class DBConfStepAction extends BaseAction{
 		long val = Dbo.queryNumber("SELECT count(1) FROM " + Data_source.TableName + " ds" +
 				" JOIN " + Agent_info.TableName + " ai ON ds.source_id = ai.source_id " +
 				" JOIN " + Database_set.TableName + " das ON ai.agent_id = das.agent_id " +
-				" WHERE das.classify_id = ? AND ds.create_user_id = ? ", classifyId, userId)
+				" WHERE das.classify_id = ? AND ds.create_user_id = ? ", classifyId, getUserId())
 				.orElseThrow(() -> new BusinessException("查询得到的数据必须有且只有一条"));
 		//数据可访问权限处理方式
 		//以上SQL中，通过当前用户ID进行关联查询，达到了数据权限的限制
@@ -143,13 +144,14 @@ public class DBConfStepAction extends BaseAction{
 	 *          取值范围：不会为空
 	 *
 	 * */
-	public List<Collect_job_classify> getClassifyInfo(long sourceId, long userId){
+	public List<Collect_job_classify> getClassifyInfo(long sourceId){
 		//1、在数据库中查询相应的信息并返回
-		return Dbo.queryList(Collect_job_classify.class, "SELECT cjc.* FROM "+ Data_source.TableName +" ds " +
+		return Dbo.queryList(Collect_job_classify.class,
+				"SELECT cjc.* FROM "+ Data_source.TableName +" ds " +
 				" JOIN "+ Agent_info.TableName +" ai ON ds.source_id = ai.source_id" +
 				" JOIN "+ Collect_job_classify.TableName +" cjc ON ai.agent_id = cjc.agent_id" +
 				" WHERE ds.source_id = ? AND cjc.user_id = ? order by cjc.classify_num "
-				, sourceId, userId);
+				, sourceId, getUserId());
 		//数据可访问权限处理方式
 		//以上SQL中，通过当前用户ID进行关联查询，达到了数据权限的限制
 	}
@@ -173,15 +175,15 @@ public class DBConfStepAction extends BaseAction{
 	 * @return: 无
 	 *
 	 * */
-	public void saveClassifyInfo(@RequestBean Collect_job_classify classify, long sourceId, long userId){
+	public void saveClassifyInfo(@RequestBean Collect_job_classify classify, long sourceId){
 		//1、对传入的数据进行判断，对不能为空的字段进行校验，如果不合法，提供明确的提示信息
 		verifyClassifyEntity(classify, true);
 		//2、在数据库或中对新增数据进行校验
-		long val = Dbo.queryNumber("SELECT count(1) FROM "+ Collect_job_classify.TableName +" cjc " +
+		long val = Dbo.queryNumber("SELECT count(1) FROM "+ Collect_job_classify.TableName+" cjc "+
 						" LEFT JOIN "+ Agent_info.TableName +" ai ON cjc.agent_id=ai.agent_id" +
 						" LEFT JOIN "+ Data_source.TableName +" ds ON ds.source_id=ai.source_id" +
 						" WHERE cjc.classify_num=? AND ds.source_id=? AND ds.create_user_id = ? ",
-				classify.getClassify_num(), sourceId, userId).orElseThrow(
+				classify.getClassify_num(), sourceId, getUserId()).orElseThrow(
 				() -> new BusinessException("查询得到的数据必须有且只有一条"));
 		//数据可访问权限处理方式
 		//以上SQL中，通过当前用户ID进行关联查询，达到了数据权限的限制
@@ -215,15 +217,15 @@ public class DBConfStepAction extends BaseAction{
 	 * @return: 无
 	 *
 	 * */
-	public void updateClassifyInfo(@RequestBean Collect_job_classify classify, long sourceId, long userId){
+	public void updateClassifyInfo(@RequestBean Collect_job_classify classify, long sourceId){
 		//1、对传入的数据进行判断，对不能为空的字段进行校验，如果不合法，提供明确的提示信息
 		verifyClassifyEntity(classify, false);
 		//2、在数据库或中对待更新数据进行校验，判断待更新的数据是否存在
-		long val = Dbo.queryNumber("SELECT count(1) FROM "+ Collect_job_classify.TableName +" cjc " +
+		long val = Dbo.queryNumber("SELECT count(1) FROM "+ Collect_job_classify.TableName+" cjc "+
 						" LEFT JOIN "+ Agent_info.TableName +" ai ON cjc.agent_id=ai.agent_id" +
 						" LEFT JOIN "+ Data_source.TableName +" ds ON ds.source_id=ai.source_id" +
 						" WHERE cjc.classify_id=? AND ds.source_id=? AND ds.create_user_id = ? ",
-				classify.getClassify_id(), sourceId, userId).orElseThrow(
+				classify.getClassify_id(), sourceId, getUserId()).orElseThrow(
 				() -> new BusinessException("查询得到的数据必须有且只有一条"));
 		//数据可访问权限处理方式
 		//以上SQL中，通过当前用户ID进行关联查询，达到了数据权限的限制
@@ -232,11 +234,11 @@ public class DBConfStepAction extends BaseAction{
 			throw new BusinessException("待更新的数据不存在");
 		}
 		//4、存在则校验更新后的分类编号是否重复
-		long count = Dbo.queryNumber("SELECT count(1) FROM "+ Collect_job_classify.TableName +" cjc " +
+		long count = Dbo.queryNumber("SELECT count(1) FROM "+Collect_job_classify.TableName+" cjc"+
 						" LEFT JOIN "+ Agent_info.TableName +" ai ON cjc.agent_id=ai.agent_id" +
 						" LEFT JOIN "+ Data_source.TableName +" ds ON ds.source_id=ai.source_id" +
 						" WHERE cjc.classify_num=? AND ds.source_id=? AND ds.create_user_id = ? ",
-				classify.getClassify_num(), sourceId, userId).orElseThrow(
+				classify.getClassify_num(), sourceId, getUserId()).orElseThrow(
 				() -> new BusinessException("查询得到的数据必须有且只有一条"));
 		if(count != 0){
 			throw new BusinessException("分类编号重复，请重新输入");
@@ -259,16 +261,16 @@ public class DBConfStepAction extends BaseAction{
 	 * @return: 无
 	 *
 	 * */
-	public void deleteClassifyInfo(long classifyId, long userId){
+	public void deleteClassifyInfo(long classifyId){
 		//1、在数据库或中对待更新数据进行校验，判断待删除的分类数据是否被使用
-		boolean flag = checkClassifyId(classifyId, userId);
+		boolean flag = checkClassifyId(classifyId);
 		//2、若正在被使用，则不能删除
 		if(!flag){
 			throw new BusinessException("待删除的采集任务分类已被使用，不能删除");
 		}
 		//3、若没有被使用，可以删除
-		int nums = Dbo.execute("delete from " + Collect_job_classify.TableName + " where classify_id = ?"
-				, classifyId);
+		int nums = Dbo.execute("delete from " + Collect_job_classify.TableName +
+						" where classify_id = ?", classifyId);
 		if(nums != 1) {
 			if (nums == 0)
 				throw new BusinessException("删除失败");
@@ -291,7 +293,7 @@ public class DBConfStepAction extends BaseAction{
 	 * @return: 无
 	 *
 	 * */
-	public long saveDbConf(@RequestBean Database_set databaseSet, long userId) {
+	public long saveDbConf(@RequestBean Database_set databaseSet) {
 		//1、调用方法对传入数据的合法性进行校验
 		verifyDatabaseSetEntity(databaseSet);
 		//2、获取实体中的database_id
@@ -302,7 +304,7 @@ public class DBConfStepAction extends BaseAction{
 					" JOIN "+ Agent_info.TableName +" ai ON ds.source_id = ai.source_id " +
 					" JOIN "+ Database_set.TableName +" das ON ai.agent_id = das.agent_id " +
 					" WHERE das.database_id = ? AND ds.create_user_id = ?",
-					databaseSet.getDatabase_id(), userId).orElseThrow(
+					databaseSet.getDatabase_id(), getUserId()).orElseThrow(
 					() -> new BusinessException("查询得到的数据必须有且只有一条"));
 			if(val != 1){
 				throw new BusinessException("待更新的数据不存在");
