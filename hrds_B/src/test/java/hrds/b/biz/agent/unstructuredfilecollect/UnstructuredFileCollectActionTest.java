@@ -313,6 +313,7 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 	 * 测试searchFileSource根据文件系统设置表的id查询源文件设置表
 	 * 1.测试一个正确的FCS_ID查询数据
 	 * 2.测试使用一个错误的fcs_id查询数据
+	 * 注：此方法没有写到四个及以上的测试用例是因为此方法只是一个查询方法，只有正确和错误两种情况
 	 */
 	@Test
 	public void searchFileSourceTest() {

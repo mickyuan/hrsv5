@@ -44,7 +44,6 @@ public class FtpCollectAction extends BaseAction {
 	 * @param ftp_collect Ftp_collect
 	 *                    含义：ftp采集表对象对象不可为空的变量必须有值
 	 *                    取值范围：不能为空
-	 * @return void
 	 */
 	public void addFtp_collect(@RequestBean Ftp_collect ftp_collect) {
 		//数据可访问权限处理方式：该表没有对应的用户访问权限限制
@@ -75,7 +74,6 @@ public class FtpCollectAction extends BaseAction {
 	 * @param ftp_collect Ftp_collect
 	 *                    含义：ftp采集表对象对象不可为空的变量必须有值
 	 *                    取值范围：不能为空
-	 * @return void
 	 */
 	public void updateFtp_collect(@RequestBean Ftp_collect ftp_collect) {
 		//数据可访问权限处理方式：该表没有对应的用户访问权限限制
