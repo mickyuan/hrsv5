@@ -150,7 +150,6 @@ public class AgentListActionTest extends WebBaseTestCase {
 			databaseSet.setIs_load(IsFlag.Shi.getCode());
 			databaseSet.setIs_hidden(IsFlag.Shi.getCode());
 			databaseSet.setIs_sendok(IsFlag.Shi.getCode());
-			databaseSet.setData_extract_type(DataExtractType.ShuJuChouQuJiRuKu.getCode());
 			databaseSet.setIs_header(IsFlag.Shi.getCode());
 			databaseSet.setClassify_id(classifyId);
 			databaseSet.setTask_name("wzcTaskName" + i);
