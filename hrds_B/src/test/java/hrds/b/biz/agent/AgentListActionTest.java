@@ -47,7 +47,7 @@ public class AgentListActionTest extends WebBaseTestCase {
 	private static final long TABLE_ID = 100201L;
 
 	/**
-	 * 为每个方法的单元测试初始化测试数据，该方法在测试用例中值执行一次
+	 * 为每个方法的单元测试初始化测试数据
 	 *
 	 * 1、构建数据源Agent列表信息测试数据
 	 *      1-1、构建数据源表(data_source)测试数据
@@ -1196,6 +1196,44 @@ public class AgentListActionTest extends WebBaseTestCase {
 	@After
 	public void after() {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
+			long beforeDataSources = SqlOperator.queryNumber(db, "select count(1) from " + Data_source.TableName + " WHERE create_user_id = ?", TEST_USER_ID)
+					.orElseThrow(() -> new RuntimeException("count fail!"));
+			assertThat("删除前的数据源数据有:" + beforeDataSources + "条", beforeDataSources, is(0L));
+
+			long beforeAgents = SqlOperator.queryNumber(db, "select count(1) from " + Agent_info.TableName + " WHERE user_id = ?", TEST_USER_ID)
+					.orElseThrow(() -> new RuntimeException("count fail!"));
+			assertThat("删除前的Agent数据有:" + beforeAgents + "条", beforeAgents, is(0L));
+
+			long beforeDataSourceSetsOne = SqlOperator.queryNumber(db, "select count(1) from " + Database_set.TableName + " WHERE agent_id = ?", DB_AGENT_ID)
+					.orElseThrow(() -> new RuntimeException("count fail!"));
+			long beforeDataSourceSetsTwo = SqlOperator.queryNumber(db, "select count(1) from " + Database_set.TableName + " WHERE agent_id = ?", DF_AGENT_ID)
+					.orElseThrow(() -> new RuntimeException("count fail!"));
+			assertThat("删除前的数据库设置表数据有:" + (beforeDataSourceSetsOne + beforeDataSourceSetsTwo) + "条", beforeDataSourceSetsOne + beforeDataSourceSetsTwo, is(0L));
+
+			long beforeObjCollectsOne = SqlOperator.queryNumber(db, "select count(1) from " + Object_collect.TableName + " WHERE agent_id = ?", HALF_STRUCT_AGENT_ID)
+					.orElseThrow(() -> new RuntimeException("count fail!"));
+			assertThat("删除的对象采集表数据有:" + beforeObjCollectsOne + "条", beforeObjCollectsOne, is(0L));
+
+			long beforeFtpCollectsOne = SqlOperator.queryNumber(db, "select count(1) from " + Ftp_collect.TableName + " WHERE agent_id = ?", FTP_AGENT_ID)
+					.orElseThrow(() -> new RuntimeException("count fail!"));
+			assertThat("删除前的FTP采集表数据有:" + beforeFtpCollectsOne + "条", beforeFtpCollectsOne, is(0L));
+
+			long beforeFileCollectsOne = SqlOperator.queryNumber(db, "select count(1) from " + File_collect_set.TableName + " WHERE agent_id = ?", NON_STRUCT_AGENT_ID)
+					.orElseThrow(() -> new RuntimeException("count fail!"));
+			assertThat("删除前的非结构化采集表数据有:" + beforeFileCollectsOne + "条", beforeFileCollectsOne, is(0L));
+
+			long beforeTableColumnCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " WHERE table_id = ?", TABLE_ID)
+					.orElseThrow(() -> new RuntimeException("count fail!"));
+			assertThat("删除前的数据库对应表数据有:" + beforeTableColumnCount + "条", beforeTableColumnCount, is(0L));
+
+			long beforeTableInfoCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " WHERE table_id = ?", TABLE_ID)
+					.orElseThrow(() -> new RuntimeException("count fail!"));
+			assertThat("删除前的表对应字段表数据有:" + beforeTableInfoCount + "条", beforeTableInfoCount, is(0L));
+
+			long beforeFileSourceCount = SqlOperator.queryNumber(db, "select count(1) from " + File_source.TableName + " WHERE agent_id = ?", NON_STRUCT_AGENT_ID)
+					.orElseThrow(() -> new RuntimeException("count fail!"));
+			assertThat("删除前的数据库对应表数据有:" + beforeFileSourceCount + "条", beforeFileSourceCount, is(0L));
+
 			//1、删除数据源Agent列表信息测试数据
 			//1-1、删除数据源表(data_source)测试数据
 			int deleteSourceNum = SqlOperator.execute(db, "delete from " + Data_source.TableName + " WHERE create_user_id = ?", TEST_USER_ID);
