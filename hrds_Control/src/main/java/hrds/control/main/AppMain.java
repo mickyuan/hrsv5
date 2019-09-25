@@ -34,17 +34,17 @@ public class AppMain {
 	public static void main(String[] args) {
 		//1、初始化命令行参数。
 		ArgsParser CMD_ARGS = new ArgsParser()
-				.addOption("etl.date", "日期",        "跑批日期，格式为：yyyyMMDD", true)
-				.addOption("sys.code", "调度系统代码", "调度系统代码", true)
-				.addOption("-AS",   "true",   "自动日切", true)
-				.addOption("-CR",    "false",  "续跑", true)
+				.defOptionPair("etl.date", true, "跑批日期，格式为：yyyyMMDD")
+				.defOptionPair("sys.code", true, "调度系统代码")
+				.defOptionPair("-AS", true, "是否自动日切")
+				.defOptionPair("-CR", true, "是否为续跑")
 				.parse(args);
 
 		//跑批批次日期
-		String bathDateStr = CMD_ARGS.option("etl.date").value;
-		boolean isResumeRun = Boolean.parseBoolean(CMD_ARGS.option("-CR").value);  //是否续跑
-		boolean isAutoShift = Boolean.parseBoolean(CMD_ARGS.option("-AS").value);  //是否自动日切
-		String strSystemCode = CMD_ARGS.option("sys.code").value; //调度系统代码
+		String bathDateStr = CMD_ARGS.opt("etl.date").value;
+		boolean isResumeRun = Boolean.parseBoolean(CMD_ARGS.opt("-CR").value);  //是否续跑
+		boolean isAutoShift = Boolean.parseBoolean(CMD_ARGS.opt("-AS").value);  //是否自动日切
+		String strSystemCode = CMD_ARGS.opt("sys.code").value; //调度系统代码
 		Etl_sys etlSys = TaskSqlHelper.getEltSysBySysCode(strSystemCode);
 
 		LocalDate bathDate = LocalDate.parse(bathDateStr, DateUtil.DATE_DEFAULT);//此处隐式的验证字符串日期是否格式正确
