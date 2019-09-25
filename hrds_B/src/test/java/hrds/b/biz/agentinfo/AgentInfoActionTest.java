@@ -209,7 +209,6 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 			database_set.setDatabase_id(database_id);
 			database_set.setAgent_id(DB_Agent_Id4);
 			database_set.setClassify_id(classify_id);
-			database_set.setData_extract_type(DataExtractType.ShuJuChouQuJiRuKu.getCode());
 			database_set.setDatabase_code(DataBaseCode.UTF_8.getCode());
 			database_set.setDatabase_drive("org.postgresql.Driver");
 			database_set.setDatabase_ip("10.71.4.51");

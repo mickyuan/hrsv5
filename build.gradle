@@ -37,13 +37,15 @@ subprojects {
     }
 
     dependencies {
+        if (!project.name.equals("hrds-commons")) {
+            compile project(':hrds-commons')
+        }
         // compile files('lib/ojdbc-14.jar') // 加载单个文件
         compile fileTree(dir: "$rootDir/libs/runtime", include: ['*.jar'])
 
         compile group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.11.2'
         compile group: 'org.apache.logging.log4j', name: 'log4j-slf4j-impl', version: '2.11.2'
         compile group: 'com.zaxxer', name: 'HikariCP', version: '3.3.1'
-
         compile group: 'javax.servlet', name: 'javax.servlet-api', version: '3.1.0'
         compile group: 'org.eclipse.jetty', name: 'jetty-server', version: '9.4.19.v20190610'
         compile group: 'org.eclipse.jetty', name: 'jetty-servlet', version: '9.4.19.v20190610'
@@ -58,27 +60,26 @@ subprojects {
         compile group: 'commons-codec', name: 'commons-codec', version: '1.10'
         compile group: 'commons-io', name: 'commons-io', version: '2.6'
         compile group: 'com.univocity', name: 'univocity-parsers', version: '2.8.2'
-        compile group: 'redis.clients', name: 'jedis', version: '2.9.0'
-        compile group: 'commons-beanutils', name: 'commons-beanutils', version: '1.9.3'
-        if (!project.name.equals("hrds-commons")) {
-            compile project(':hrds-commons')
-        }
-
+        compile group: 'org.apache.parquet', name: 'parquet-column', version: '1.10.0'
+        compile group: 'org.apache.parquet', name: 'parquet-hadoop', version: '1.10.0'
+        compile group: 'org.apache.orc', name: 'orc-mapreduce', version: '1.5.2'
+        compile group: 'org.apache.hive', name: 'hive-exec', version: '3.1.1'
+        compile group: 'org.apache.orc', name: 'orc-mapreduce', version: '1.5.2'
         compile group: 'org.apache.hadoop', name: 'hadoop-common', version: '3.2.0'
-        compile group: 'org.apache.hbase', name: 'hbase-common', version: '2.2.1'
-        compile group: 'org.apache.hadoop', name: 'hadoop-yarn-client', version: '3.2.0'
-        compile group: 'org.apache.commons', name: 'commons-exec', version: '1.3'
-        compile group: 'org.apache.spark', name: 'spark-core_2.12', version: '2.4.4'
-        compile group: 'org.apache.spark', name: 'spark-yarn_2.12', version: '2.4.4'
-
-
-        // https://mvnrepository.com/artifact/net.lingala.zip4j/zip4j
-        compile group: 'net.lingala.zip4j', name: 'zip4j', version: '1.3.2'
-        // https://mvnrepository.com/artifact/com.belerweb/pinyin4j
-        compile group: 'com.belerweb', name: 'pinyin4j', version: '2.5.1'
-        // https://mvnrepository.com/artifact/com.jcraft/jsch
-        compile group: 'com.jcraft', name: 'jsch', version: '0.1.54'
-
+        compile group: 'org.apache.hadoop', name: 'hadoop-hdfs', version: '3.2.0'
+        compile group: 'org.apache.hadoop', name: 'hadoop-mapreduce-client-core', version: '3.2.0'
+		compile group: 'org.apache.hadoop', name: 'hadoop-common', version: '3.2.0'
+		compile group: 'org.apache.hbase', name: 'hbase-common', version: '2.2.1'
+		compile group: 'org.apache.hadoop', name: 'hadoop-yarn-client', version: '3.2.0'
+		compile group: 'org.apache.commons', name: 'commons-exec', version: '1.3'
+		compile group: 'org.apache.spark', name: 'spark-core_2.12', version: '2.4.4'
+		compile group: 'org.apache.spark', name: 'spark-yarn_2.12', version: '2.4.4'
+        compile group: 'redis.clients', name: 'jedis', version: '2.9.0'
+		compile group: 'commons-beanutils', name: 'commons-beanutils', version: '1.9.3'
+		compile group: 'net.lingala.zip4j', name: 'zip4j', version: '1.3.2'
+		compile group: 'com.belerweb', name: 'pinyin4j', version: '2.5.0'
+		compile group: 'com.jcraft', name: 'jsch', version: '0.1.54'
+		
 
         testCompile fileTree(dir: "$rootDir/libs/testcase", include: ['*.jar'])
         testCompile group: 'junit', name: 'junit', version: '4.12'
@@ -96,7 +97,7 @@ subprojects {
         archivesBaseName = "${project.name}"
 
         String classpaths = 'resources/' // 存放资源文件的目录
-        configurations.runtime.each { classpaths = classpaths + " lib/" + it.name } //遍历项目的所有依赖的jar包赋值给变量someString
+        configurations.runtime.each {classpaths = classpaths + " lib/"+it.name} //遍历项目的所有依赖的jar包赋值给变量someString
 
         manifest {
             attributes(
@@ -117,11 +118,11 @@ subprojects {
         delete "$buildDir/libs/lib"
 //        followSymlinks = true
     }
-    task copyJar(type: Sync) {
+    task copyJar(type:Sync){
         from configurations.runtime
         into "$buildDir/libs/lib"
     }
-    task copyResource(type: Sync) {
+    task copyResource(type:Sync){
         // 因为resources没有打包到jar里面，所以这里自动复制到发布目录下
         sourceSets.main.resources.srcDirs.each {
             from it
