@@ -36,15 +36,15 @@ public class Search_info extends TableEntity
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
 	@DocBean(name ="si_id",value="si_id",dataType = Long.class,required = true)
-	private Long si_id; //si_id
+	private Long si_id;
 	@DocBean(name ="word_name",value="关键字",dataType = String.class,required = true)
-	private String word_name; //关键字
+	private String word_name;
 	@DocBean(name ="si_count",value="点击量",dataType = Long.class,required = true)
-	private Long si_count; //点击量
+	private Long si_count;
 	@DocBean(name ="si_remark",value="备注",dataType = String.class,required = false)
-	private String si_remark; //备注
+	private String si_remark;
 	@DocBean(name ="file_id",value="文件编号",dataType = String.class,required = true)
-	private String file_id; //文件编号
+	private String file_id;
 
 	/** 取得：si_id */
 	public Long getSi_id(){

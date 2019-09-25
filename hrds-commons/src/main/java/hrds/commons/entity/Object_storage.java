@@ -36,15 +36,15 @@ public class Object_storage extends TableEntity
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
 	@DocBean(name ="obj_stid",value="存储编号",dataType = Long.class,required = true)
-	private Long obj_stid; //存储编号
+	private Long obj_stid;
 	@DocBean(name ="is_hbase",value="是否进hbase",dataType = String.class,required = true)
-	private String is_hbase; //是否进hbase
+	private String is_hbase;
 	@DocBean(name ="is_hdfs",value="是否进hdfs",dataType = String.class,required = true)
-	private String is_hdfs; //是否进hdfs
+	private String is_hdfs;
 	@DocBean(name ="remark",value="备注",dataType = String.class,required = false)
-	private String remark; //备注
+	private String remark;
 	@DocBean(name ="ocs_id",value="对象采集任务编号",dataType = Long.class,required = false)
-	private Long ocs_id; //对象采集任务编号
+	private Long ocs_id;
 
 	/** 取得：存储编号 */
 	public Long getObj_stid(){

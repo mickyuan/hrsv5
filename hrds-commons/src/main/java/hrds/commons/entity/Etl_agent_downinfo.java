@@ -36,25 +36,25 @@ public class Etl_agent_downinfo extends TableEntity
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
 	@DocBean(name ="down_id",value="下载编号(primary)",dataType = Long.class,required = true)
-	private Long down_id; //下载编号(primary)
+	private Long down_id;
 	@DocBean(name ="agent_name",value="Agent名称",dataType = String.class,required = true)
-	private String agent_name; //Agent名称
+	private String agent_name;
 	@DocBean(name ="agent_ip",value="Agent IP",dataType = String.class,required = true)
-	private String agent_ip; //Agent IP
+	private String agent_ip;
 	@DocBean(name ="save_dir",value="存放目录",dataType = String.class,required = true)
-	private String save_dir; //存放目录
+	private String save_dir;
 	@DocBean(name ="ai_desc",value="描述",dataType = String.class,required = false)
-	private String ai_desc; //描述
+	private String ai_desc;
 	@DocBean(name ="remark",value="备注",dataType = String.class,required = false)
-	private String remark; //备注
+	private String remark;
 	@DocBean(name ="user_id",value="用户id",dataType = Long.class,required = true)
-	private Long user_id; //用户id
+	private Long user_id;
 	@DocBean(name ="user_name",value="用户名",dataType = String.class,required = false)
-	private String user_name; //用户名
+	private String user_name;
 	@DocBean(name ="passwd",value="密码",dataType = String.class,required = false)
-	private String passwd; //密码
+	private String passwd;
 	@DocBean(name ="agent_type",value="agent类别",dataType = String.class,required = true)
-	private String agent_type; //agent类别
+	private String agent_type;
 
 	/** 取得：下载编号(primary) */
 	public Long getDown_id(){

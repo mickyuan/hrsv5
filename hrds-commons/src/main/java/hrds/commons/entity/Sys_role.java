@@ -35,21 +35,13 @@ public class Sys_role extends TableEntity
 		__tmpPKS.add("role_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="role_remark",value="备注",dataType = String.class,required = false)
-	private String role_remark; //备注
 	@DocBean(name ="role_id",value="角色ID",dataType = Long.class,required = true)
-	private Long role_id; //角色ID
+	private Long role_id;
 	@DocBean(name ="role_name",value="角色名称",dataType = String.class,required = true)
-	private String role_name; //角色名称
+	private String role_name;
+	@DocBean(name ="role_remark",value="备注",dataType = String.class,required = false)
+	private String role_remark;
 
-	/** 取得：备注 */
-	public String getRole_remark(){
-		return role_remark;
-	}
-	/** 设置：备注 */
-	public void setRole_remark(String role_remark){
-		this.role_remark=role_remark;
-	}
 	/** 取得：角色ID */
 	public Long getRole_id(){
 		return role_id;
@@ -71,5 +63,13 @@ public class Sys_role extends TableEntity
 	/** 设置：角色名称 */
 	public void setRole_name(String role_name){
 		this.role_name=role_name;
+	}
+	/** 取得：备注 */
+	public String getRole_remark(){
+		return role_remark;
+	}
+	/** 设置：备注 */
+	public void setRole_remark(String role_remark){
+		this.role_remark=role_remark;
 	}
 }

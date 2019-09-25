@@ -36,21 +36,21 @@ public class Sys_dump extends TableEntity
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
 	@DocBean(name ="dump_id",value="备份id",dataType = Long.class,required = true)
-	private Long dump_id; //备份id
+	private Long dump_id;
 	@DocBean(name ="bak_date",value="备份日期",dataType = String.class,required = true)
-	private String bak_date; //备份日期
+	private String bak_date;
 	@DocBean(name ="bak_time",value="备份时间",dataType = String.class,required = true)
-	private String bak_time; //备份时间
+	private String bak_time;
 	@DocBean(name ="file_size",value="文件大小",dataType = String.class,required = true)
-	private String file_size; //文件大小
+	private String file_size;
 	@DocBean(name ="hdfs_path",value="文件存放hdfs路径",dataType = String.class,required = true)
-	private String hdfs_path; //文件存放hdfs路径
+	private String hdfs_path;
 	@DocBean(name ="length",value="备份时长",dataType = String.class,required = true)
-	private String length; //备份时长
+	private String length;
 	@DocBean(name ="remark",value="备注",dataType = String.class,required = false)
-	private String remark; //备注
+	private String remark;
 	@DocBean(name ="file_name",value="文件名称",dataType = String.class,required = true)
-	private String file_name; //文件名称
+	private String file_name;
 
 	/** 取得：备份id */
 	public Long getDump_id(){

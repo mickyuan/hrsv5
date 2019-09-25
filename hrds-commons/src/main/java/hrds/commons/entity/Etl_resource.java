@@ -32,21 +32,29 @@ public class Etl_resource extends TableEntity
 	/** 资源登记表 */
 	static {
 		Set<String> __tmpPKS = new HashSet<>();
-		__tmpPKS.add("resource_type");
 		__tmpPKS.add("etl_sys_cd");
+		__tmpPKS.add("resource_type");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="resource_type",value="资源使用类型",dataType = String.class,required = true)
-	private String resource_type; //资源使用类型
-	@DocBean(name ="resource_max",value="资源阀值",dataType = Integer.class,required = false)
-	private Integer resource_max; //资源阀值
-	@DocBean(name ="resource_used",value="已使用数",dataType = Integer.class,required = false)
-	private Integer resource_used; //已使用数
-	@DocBean(name ="main_serv_sync",value="主服务器同步标志",dataType = String.class,required = true)
-	private String main_serv_sync; //主服务器同步标志
 	@DocBean(name ="etl_sys_cd",value="工程代码",dataType = String.class,required = true)
-	private String etl_sys_cd; //工程代码
+	private String etl_sys_cd;
+	@DocBean(name ="resource_type",value="资源使用类型",dataType = String.class,required = true)
+	private String resource_type;
+	@DocBean(name ="resource_max",value="资源阀值",dataType = Integer.class,required = false)
+	private Integer resource_max;
+	@DocBean(name ="resource_used",value="已使用数",dataType = Integer.class,required = false)
+	private Integer resource_used;
+	@DocBean(name ="main_serv_sync",value="主服务器同步标志",dataType = String.class,required = true)
+	private String main_serv_sync;
 
+	/** 取得：工程代码 */
+	public String getEtl_sys_cd(){
+		return etl_sys_cd;
+	}
+	/** 设置：工程代码 */
+	public void setEtl_sys_cd(String etl_sys_cd){
+		this.etl_sys_cd=etl_sys_cd;
+	}
 	/** 取得：资源使用类型 */
 	public String getResource_type(){
 		return resource_type;
@@ -90,13 +98,5 @@ public class Etl_resource extends TableEntity
 	/** 设置：主服务器同步标志 */
 	public void setMain_serv_sync(String main_serv_sync){
 		this.main_serv_sync=main_serv_sync;
-	}
-	/** 取得：工程代码 */
-	public String getEtl_sys_cd(){
-		return etl_sys_cd;
-	}
-	/** 设置：工程代码 */
-	public void setEtl_sys_cd(String etl_sys_cd){
-		this.etl_sys_cd=etl_sys_cd;
 	}
 }

@@ -36,21 +36,21 @@ public class Data_source extends TableEntity
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
 	@DocBean(name ="source_id",value="数据源ID",dataType = Long.class,required = true)
-	private Long source_id; //数据源ID
+	private Long source_id;
 	@DocBean(name ="datasource_name",value="数据源名称",dataType = String.class,required = true)
-	private String datasource_name; //数据源名称
+	private String datasource_name;
 	@DocBean(name ="datasource_number",value="数据源编号",dataType = String.class,required = false)
-	private String datasource_number; //数据源编号
+	private String datasource_number;
 	@DocBean(name ="source_remark",value="数据源详细描述",dataType = String.class,required = false)
-	private String source_remark; //数据源详细描述
+	private String source_remark;
 	@DocBean(name ="create_date",value="创建日期",dataType = String.class,required = true)
-	private String create_date; //创建日期
+	private String create_date;
 	@DocBean(name ="create_time",value="创建时间",dataType = String.class,required = true)
-	private String create_time; //创建时间
+	private String create_time;
 	@DocBean(name ="create_user_id",value="用户ID",dataType = Long.class,required = true)
-	private Long create_user_id; //用户ID
+	private Long create_user_id;
 	@DocBean(name ="datasource_remark",value="备注",dataType = String.class,required = false)
-	private String datasource_remark; //备注
+	private String datasource_remark;
 
 	/** 取得：数据源ID */
 	public Long getSource_id(){

@@ -36,49 +36,49 @@ public class Ftp_collect extends TableEntity
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
 	@DocBean(name ="ftp_id",value="ftp采集id",dataType = Long.class,required = true)
-	private Long ftp_id; //ftp采集id
+	private Long ftp_id;
 	@DocBean(name ="ftp_number",value="ftp任务编号",dataType = String.class,required = true)
-	private String ftp_number; //ftp任务编号
+	private String ftp_number;
 	@DocBean(name ="ftp_name",value="ftp采集任务名称",dataType = String.class,required = true)
-	private String ftp_name; //ftp采集任务名称
+	private String ftp_name;
 	@DocBean(name ="start_date",value="开始日期",dataType = String.class,required = true)
-	private String start_date; //开始日期
+	private String start_date;
 	@DocBean(name ="end_date",value="结束日期",dataType = String.class,required = true)
-	private String end_date; //结束日期
+	private String end_date;
 	@DocBean(name ="ftp_ip",value="ftp服务IP",dataType = String.class,required = true)
-	private String ftp_ip; //ftp服务IP
+	private String ftp_ip;
 	@DocBean(name ="ftp_port",value="ftp服务器端口",dataType = String.class,required = true)
-	private String ftp_port; //ftp服务器端口
+	private String ftp_port;
 	@DocBean(name ="ftp_username",value="ftp用户名",dataType = String.class,required = true)
-	private String ftp_username; //ftp用户名
+	private String ftp_username;
 	@DocBean(name ="ftp_password",value="用户密码",dataType = String.class,required = true)
-	private String ftp_password; //用户密码
+	private String ftp_password;
 	@DocBean(name ="ftp_dir",value="ftp服务器目录",dataType = String.class,required = true)
-	private String ftp_dir; //ftp服务器目录
+	private String ftp_dir;
 	@DocBean(name ="local_path",value="本地路径",dataType = String.class,required = true)
-	private String local_path; //本地路径
+	private String local_path;
 	@DocBean(name ="file_suffix",value="获取文件后缀",dataType = String.class,required = false)
-	private String file_suffix; //获取文件后缀
+	private String file_suffix;
 	@DocBean(name ="run_way",value="启动方式",dataType = String.class,required = true)
-	private String run_way; //启动方式
+	private String run_way;
 	@DocBean(name ="remark",value="备注",dataType = String.class,required = false)
-	private String remark; //备注
+	private String remark;
 	@DocBean(name ="agent_id",value="Agent_id",dataType = Long.class,required = true)
-	private Long agent_id; //Agent_id
+	private Long agent_id;
 	@DocBean(name ="ftp_rule_path",value="下级目录规则",dataType = String.class,required = true)
-	private String ftp_rule_path; //下级目录规则
+	private String ftp_rule_path;
 	@DocBean(name ="child_file_path",value="下级文件路径",dataType = String.class,required = false)
-	private String child_file_path; //下级文件路径
+	private String child_file_path;
 	@DocBean(name ="child_time",value="下级文件时间",dataType = String.class,required = false)
-	private String child_time; //下级文件时间
+	private String child_time;
 	@DocBean(name ="is_sendok",value="是否完成",dataType = String.class,required = true)
-	private String is_sendok; //是否完成
+	private String is_sendok;
 	@DocBean(name ="is_unzip",value="是否解压",dataType = String.class,required = true)
-	private String is_unzip; //是否解压
+	private String is_unzip;
 	@DocBean(name ="reduce_type",value="解压格式",dataType = String.class,required = false)
-	private String reduce_type; //解压格式
+	private String reduce_type;
 	@DocBean(name ="ftp_model",value="FTP推拉模式是为推模式",dataType = String.class,required = true)
-	private String ftp_model; //FTP推拉模式是为推模式
+	private String ftp_model;
 
 	/** 取得：ftp采集id */
 	public Long getFtp_id(){

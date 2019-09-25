@@ -36,17 +36,17 @@ public class Component_menu extends TableEntity
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
 	@DocBean(name ="menu_id",value="主键菜单id",dataType = Long.class,required = true)
-	private Long menu_id; //主键菜单id
+	private Long menu_id;
 	@DocBean(name ="menu_path",value="菜单path",dataType = String.class,required = true)
-	private String menu_path; //菜单path
+	private String menu_path;
 	@DocBean(name ="user_type",value="用户类型",dataType = String.class,required = true)
-	private String user_type; //用户类型
+	private String user_type;
 	@DocBean(name ="menu_name",value="菜单名称",dataType = String.class,required = true)
-	private String menu_name; //菜单名称
+	private String menu_name;
 	@DocBean(name ="comp_id",value="组件编号",dataType = String.class,required = true)
-	private String comp_id; //组件编号
+	private String comp_id;
 	@DocBean(name ="menu_remark",value="备注",dataType = String.class,required = false)
-	private String menu_remark; //备注
+	private String menu_remark;
 
 	/** 取得：主键菜单id */
 	public Long getMenu_id(){

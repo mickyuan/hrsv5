@@ -39,17 +39,17 @@ public class Etl_dependency extends TableEntity
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
 	@DocBean(name ="pre_etl_job",value="上游作业名",dataType = String.class,required = true)
-	private String pre_etl_job; //上游作业名
+	private String pre_etl_job;
 	@DocBean(name ="status",value="状态",dataType = String.class,required = false)
-	private String status; //状态
+	private String status;
 	@DocBean(name ="main_serv_sync",value="主服务器同步标志",dataType = String.class,required = false)
-	private String main_serv_sync; //主服务器同步标志
+	private String main_serv_sync;
 	@DocBean(name ="etl_job",value="作业名",dataType = String.class,required = true)
-	private String etl_job; //作业名
+	private String etl_job;
 	@DocBean(name ="pre_etl_sys_cd",value="上游系统代码",dataType = String.class,required = true)
-	private String pre_etl_sys_cd; //上游系统代码
+	private String pre_etl_sys_cd;
 	@DocBean(name ="etl_sys_cd",value="工程代码",dataType = String.class,required = true)
-	private String etl_sys_cd; //工程代码
+	private String etl_sys_cd;
 
 	/** 取得：上游作业名 */
 	public String getPre_etl_job(){

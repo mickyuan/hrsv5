@@ -36,21 +36,21 @@ public class Object_collect_task extends TableEntity
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
 	@DocBean(name ="ocs_id",value="对象采集任务编号",dataType = Long.class,required = true)
-	private Long ocs_id; //对象采集任务编号
+	private Long ocs_id;
 	@DocBean(name ="en_name",value="英文名称",dataType = String.class,required = true)
-	private String en_name; //英文名称
+	private String en_name;
 	@DocBean(name ="zh_name",value="中文名称",dataType = String.class,required = true)
-	private String zh_name; //中文名称
+	private String zh_name;
 	@DocBean(name ="remark",value="备注",dataType = String.class,required = false)
-	private String remark; //备注
+	private String remark;
 	@DocBean(name ="collect_data_type",value="数据类型",dataType = String.class,required = true)
-	private String collect_data_type; //数据类型
+	private String collect_data_type;
 	@DocBean(name ="odc_id",value="对象采集id",dataType = Long.class,required = true)
-	private Long odc_id; //对象采集id
+	private Long odc_id;
 	@DocBean(name ="database_code",value="采集编码",dataType = String.class,required = true)
-	private String database_code; //采集编码
+	private String database_code;
 	@DocBean(name ="agent_id",value="Agent_id",dataType = Long.class,required = true)
-	private Long agent_id; //Agent_id
+	private Long agent_id;
 
 	/** 取得：对象采集任务编号 */
 	public Long getOcs_id(){

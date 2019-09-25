@@ -35,53 +35,23 @@ public class Table_clean extends TableEntity
 		__tmpPKS.add("c_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="replace_feild",value="替换字段",dataType = String.class,required = false)
-	private String replace_feild; //替换字段
-	@DocBean(name ="filling_type",value="补齐方式",dataType = String.class,required = false)
-	private String filling_type; //补齐方式
-	@DocBean(name ="table_id",value="表名ID",dataType = Long.class,required = true)
-	private Long table_id; //表名ID
 	@DocBean(name ="c_id",value="清洗参数编号",dataType = Long.class,required = true)
-	private Long c_id; //清洗参数编号
+	private Long c_id;
 	@DocBean(name ="clean_type",value="清洗方式",dataType = String.class,required = true)
-	private String clean_type; //清洗方式
+	private String clean_type;
 	@DocBean(name ="character_filling",value="补齐字符",dataType = String.class,required = false)
-	private String character_filling; //补齐字符
+	private String character_filling;
 	@DocBean(name ="filling_length",value="补齐长度",dataType = Long.class,required = false)
-	private Long filling_length; //补齐长度
+	private Long filling_length;
 	@DocBean(name ="field",value="原字段",dataType = String.class,required = false)
-	private String field; //原字段
+	private String field;
+	@DocBean(name ="replace_feild",value="替换字段",dataType = String.class,required = false)
+	private String replace_feild;
+	@DocBean(name ="filling_type",value="补齐方式",dataType = String.class,required = false)
+	private String filling_type;
+	@DocBean(name ="table_id",value="表名ID",dataType = Long.class,required = true)
+	private Long table_id;
 
-	/** 取得：替换字段 */
-	public String getReplace_feild(){
-		return replace_feild;
-	}
-	/** 设置：替换字段 */
-	public void setReplace_feild(String replace_feild){
-		this.replace_feild=replace_feild;
-	}
-	/** 取得：补齐方式 */
-	public String getFilling_type(){
-		return filling_type;
-	}
-	/** 设置：补齐方式 */
-	public void setFilling_type(String filling_type){
-		this.filling_type=filling_type;
-	}
-	/** 取得：表名ID */
-	public Long getTable_id(){
-		return table_id;
-	}
-	/** 设置：表名ID */
-	public void setTable_id(Long table_id){
-		this.table_id=table_id;
-	}
-	/** 设置：表名ID */
-	public void setTable_id(String table_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(table_id)){
-			this.table_id=new Long(table_id);
-		}
-	}
 	/** 取得：清洗参数编号 */
 	public Long getC_id(){
 		return c_id;
@@ -133,5 +103,35 @@ public class Table_clean extends TableEntity
 	/** 设置：原字段 */
 	public void setField(String field){
 		this.field=field;
+	}
+	/** 取得：替换字段 */
+	public String getReplace_feild(){
+		return replace_feild;
+	}
+	/** 设置：替换字段 */
+	public void setReplace_feild(String replace_feild){
+		this.replace_feild=replace_feild;
+	}
+	/** 取得：补齐方式 */
+	public String getFilling_type(){
+		return filling_type;
+	}
+	/** 设置：补齐方式 */
+	public void setFilling_type(String filling_type){
+		this.filling_type=filling_type;
+	}
+	/** 取得：表名ID */
+	public Long getTable_id(){
+		return table_id;
+	}
+	/** 设置：表名ID */
+	public void setTable_id(Long table_id){
+		this.table_id=table_id;
+	}
+	/** 设置：表名ID */
+	public void setTable_id(String table_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(table_id)){
+			this.table_id=new Long(table_id);
+		}
 	}
 }

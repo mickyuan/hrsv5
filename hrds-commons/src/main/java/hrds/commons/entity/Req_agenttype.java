@@ -36,15 +36,15 @@ public class Req_agenttype extends TableEntity
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
 	@DocBean(name ="req_name",value="中文名称",dataType = String.class,required = true)
-	private String req_name; //中文名称
+	private String req_name;
 	@DocBean(name ="req_no",value="请求编号",dataType = String.class,required = false)
-	private String req_no; //请求编号
+	private String req_no;
 	@DocBean(name ="req_remark",value="备注",dataType = String.class,required = false)
-	private String req_remark; //备注
+	private String req_remark;
 	@DocBean(name ="req_id",value="请求ID",dataType = Long.class,required = true)
-	private Long req_id; //请求ID
+	private Long req_id;
 	@DocBean(name ="comp_id",value="组件编号",dataType = String.class,required = true)
-	private String comp_id; //组件编号
+	private String comp_id;
 
 	/** 取得：中文名称 */
 	public String getReq_name(){

@@ -36,61 +36,59 @@ public class Database_set extends TableEntity
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
 	@DocBean(name ="agent_id",value="Agent_id",dataType = Long.class,required = false)
-	private Long agent_id; //Agent_id
+	private Long agent_id;
 	@DocBean(name ="database_id",value="数据库设置id",dataType = Long.class,required = true)
-	private Long database_id; //数据库设置id
+	private Long database_id;
 	@DocBean(name ="task_name",value="数据库采集任务名称",dataType = String.class,required = false)
-	private String task_name; //数据库采集任务名称
+	private String task_name;
 	@DocBean(name ="database_name",value="数据库名称",dataType = String.class,required = false)
-	private String database_name; //数据库名称
+	private String database_name;
 	@DocBean(name ="database_pad",value="数据库密码",dataType = String.class,required = false)
-	private String database_pad; //数据库密码
+	private String database_pad;
 	@DocBean(name ="database_drive",value="数据库驱动",dataType = String.class,required = false)
-	private String database_drive; //数据库驱动
+	private String database_drive;
 	@DocBean(name ="database_type",value="数据库类型",dataType = String.class,required = true)
-	private String database_type; //数据库类型
+	private String database_type;
 	@DocBean(name ="user_name",value="用户名称",dataType = String.class,required = false)
-	private String user_name; //用户名称
+	private String user_name;
 	@DocBean(name ="database_ip",value="数据库服务器IP",dataType = String.class,required = false)
-	private String database_ip; //数据库服务器IP
+	private String database_ip;
 	@DocBean(name ="database_port",value="数据库端口",dataType = String.class,required = false)
-	private String database_port; //数据库端口
+	private String database_port;
 	@DocBean(name ="host_name",value="主机名",dataType = String.class,required = false)
-	private String host_name; //主机名
+	private String host_name;
 	@DocBean(name ="system_type",value="操作系统类型",dataType = String.class,required = false)
-	private String system_type; //操作系统类型
+	private String system_type;
 	@DocBean(name ="is_sendok",value="是否设置完成并发送成功",dataType = String.class,required = true)
-	private String is_sendok; //是否设置完成并发送成功
+	private String is_sendok;
 	@DocBean(name ="database_number",value="数据库设置编号",dataType = String.class,required = true)
-	private String database_number; //数据库设置编号
+	private String database_number;
 	@DocBean(name ="db_agent",value="是否为平面DB数据采集",dataType = String.class,required = true)
-	private String db_agent; //是否为平面DB数据采集
+	private String db_agent;
 	@DocBean(name ="plane_url",value="DB文件源数据路径",dataType = String.class,required = false)
-	private String plane_url; //DB文件源数据路径
+	private String plane_url;
 	@DocBean(name ="database_separatorr",value="数据采用分隔符",dataType = String.class,required = false)
-	private String database_separatorr; //数据采用分隔符
+	private String database_separatorr;
 	@DocBean(name ="database_code",value="数据使用编码格式",dataType = String.class,required = false)
-	private String database_code; //数据使用编码格式
+	private String database_code;
 	@DocBean(name ="dbfile_format",value="DB文件格式",dataType = String.class,required = false)
-	private String dbfile_format; //DB文件格式
+	private String dbfile_format;
 	@DocBean(name ="is_hidden",value="分隔符是否为ASCII隐藏字符",dataType = String.class,required = true)
-	private String is_hidden; //分隔符是否为ASCII隐藏字符
+	private String is_hidden;
 	@DocBean(name ="file_suffix",value="采集文件名后缀",dataType = String.class,required = false)
-	private String file_suffix; //采集文件名后缀
+	private String file_suffix;
 	@DocBean(name ="is_load",value="是否直接加载数据",dataType = String.class,required = true)
-	private String is_load; //是否直接加载数据
+	private String is_load;
 	@DocBean(name ="row_separator",value="数据行分隔符",dataType = String.class,required = false)
-	private String row_separator; //数据行分隔符
+	private String row_separator;
 	@DocBean(name ="classify_id",value="分类id",dataType = Long.class,required = true)
-	private Long classify_id; //分类id
-	@DocBean(name ="data_extract_type",value="数据抽取方式",dataType = String.class,required = true)
-	private String data_extract_type; //数据抽取方式
+	private Long classify_id;
 	@DocBean(name ="is_header",value="是否有表头",dataType = String.class,required = true)
-	private String is_header; //是否有表头
+	private String is_header;
 	@DocBean(name ="cp_or",value="清洗顺序",dataType = String.class,required = false)
-	private String cp_or; //清洗顺序
+	private String cp_or;
 	@DocBean(name ="jdbc_url",value="数据库连接地址",dataType = String.class,required = false)
-	private String jdbc_url; //数据库连接地址
+	private String jdbc_url;
 
 	/** 取得：Agent_id */
 	public Long getAgent_id(){
@@ -301,14 +299,6 @@ public class Database_set extends TableEntity
 		if(!fd.ng.core.utils.StringUtil.isEmpty(classify_id)){
 			this.classify_id=new Long(classify_id);
 		}
-	}
-	/** 取得：数据抽取方式 */
-	public String getData_extract_type(){
-		return data_extract_type;
-	}
-	/** 设置：数据抽取方式 */
-	public void setData_extract_type(String data_extract_type){
-		this.data_extract_type=data_extract_type;
 	}
 	/** 取得：是否有表头 */
 	public String getIs_header(){

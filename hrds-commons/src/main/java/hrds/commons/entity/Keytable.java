@@ -36,9 +36,9 @@ public class Keytable extends TableEntity
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
 	@DocBean(name ="key_name",value="key_name",dataType = String.class,required = true)
-	private String key_name; //key_name
+	private String key_name;
 	@DocBean(name ="key_value",value="value",dataType = Integer.class,required = false)
-	private Integer key_value; //value
+	private Integer key_value;
 
 	/** 取得：key_name */
 	public String getKey_name(){

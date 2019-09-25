@@ -36,27 +36,27 @@ public class Signal_file extends TableEntity
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
 	@DocBean(name ="signal_id",value="信号id",dataType = Long.class,required = true)
-	private Long signal_id; //信号id
+	private Long signal_id;
 	@DocBean(name ="is_into_hbase",value="是否入hbase",dataType = String.class,required = true)
-	private String is_into_hbase; //是否入hbase
+	private String is_into_hbase;
 	@DocBean(name ="is_into_hive",value="是否入hive",dataType = String.class,required = true)
-	private String is_into_hive; //是否入hive
+	private String is_into_hive;
 	@DocBean(name ="is_fullindex",value="是否创建全文索引",dataType = String.class,required = true)
-	private String is_fullindex; //是否创建全文索引
+	private String is_fullindex;
 	@DocBean(name ="file_format",value="文件格式",dataType = String.class,required = true)
-	private String file_format; //文件格式
+	private String file_format;
 	@DocBean(name ="is_compression",value="Hbase是使用压缩",dataType = String.class,required = true)
-	private String is_compression; //Hbase是使用压缩
+	private String is_compression;
 	@DocBean(name ="is_mpp",value="是否为MPP",dataType = String.class,required = true)
-	private String is_mpp; //是否为MPP
+	private String is_mpp;
 	@DocBean(name ="table_type",value="是内部表还是外部表",dataType = String.class,required = true)
-	private String table_type; //是内部表还是外部表
+	private String table_type;
 	@DocBean(name ="is_solr_hbase",value="是否使用solrOnHbase",dataType = String.class,required = true)
-	private String is_solr_hbase; //是否使用solrOnHbase
+	private String is_solr_hbase;
 	@DocBean(name ="database_id",value="数据库设置id",dataType = Long.class,required = true)
-	private Long database_id; //数据库设置id
+	private Long database_id;
 	@DocBean(name ="is_cbd",value="是否使用carbondata",dataType = String.class,required = true)
-	private String is_cbd; //是否使用carbondata
+	private String is_cbd;
 
 	/** 取得：信号id */
 	public Long getSignal_id(){

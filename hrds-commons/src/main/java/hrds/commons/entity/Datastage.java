@@ -38,19 +38,19 @@ public class Datastage extends TableEntity
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
 	@DocBean(name ="jobkey",value="数据库设置id",dataType = Long.class,required = true)
-	private Long jobkey; //数据库设置id
+	private Long jobkey;
 	@DocBean(name ="tablename",value="表名字",dataType = String.class,required = true)
-	private String tablename; //表名字
+	private String tablename;
 	@DocBean(name ="stage",value="采集阶段",dataType = String.class,required = true)
-	private String stage; //采集阶段
+	private String stage;
 	@DocBean(name ="state",value="所处状态",dataType = String.class,required = true)
-	private String state; //所处状态
+	private String state;
 	@DocBean(name ="previousstage",value="上一阶段",dataType = String.class,required = false)
-	private String previousstage; //上一阶段
+	private String previousstage;
 	@DocBean(name ="nextstage",value="下一阶段",dataType = String.class,required = false)
-	private String nextstage; //下一阶段
+	private String nextstage;
 	@DocBean(name ="remark",value="备注",dataType = String.class,required = false)
-	private String remark; //备注
+	private String remark;
 
 	/** 取得：数据库设置id */
 	public Long getJobkey(){

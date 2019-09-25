@@ -36,51 +36,51 @@ public class Source_file_detailed extends TableEntity
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
 	@DocBean(name ="original_name",value="原始文件名或表中文名称",dataType = String.class,required = true)
-	private String original_name; //原始文件名或表中文名称
+	private String original_name;
 	@DocBean(name ="original_update_date",value="原文件最后修改日期",dataType = String.class,required = true)
-	private String original_update_date; //原文件最后修改日期
+	private String original_update_date;
 	@DocBean(name ="hbase_name",value="HBase对应表名",dataType = String.class,required = true)
-	private String hbase_name; //HBase对应表名
+	private String hbase_name;
 	@DocBean(name ="storage_date",value="入库日期",dataType = String.class,required = true)
-	private String storage_date; //入库日期
+	private String storage_date;
 	@DocBean(name ="file_size",value="文件大小",dataType = BigDecimal.class,required = true)
-	private BigDecimal file_size; //文件大小
+	private BigDecimal file_size;
 	@DocBean(name ="file_type",value="文件类型",dataType = String.class,required = true)
-	private String file_type; //文件类型
+	private String file_type;
 	@DocBean(name ="hdfs_storage_path",value="hdfs储路径",dataType = String.class,required = false)
-	private String hdfs_storage_path; //hdfs储路径
+	private String hdfs_storage_path;
 	@DocBean(name ="original_update_time",value="原文件最后修改时间",dataType = String.class,required = true)
-	private String original_update_time; //原文件最后修改时间
+	private String original_update_time;
 	@DocBean(name ="storage_time",value="入库时间",dataType = String.class,required = true)
-	private String storage_time; //入库时间
+	private String storage_time;
 	@DocBean(name ="file_suffix",value="文件后缀",dataType = String.class,required = true)
-	private String file_suffix; //文件后缀
+	private String file_suffix;
 	@DocBean(name ="table_name",value="表名",dataType = String.class,required = false)
-	private String table_name; //表名
+	private String table_name;
 	@DocBean(name ="sfd_id",value="源文件属性清册ID",dataType = String.class,required = true)
-	private String sfd_id; //源文件属性清册ID
+	private String sfd_id;
 	@DocBean(name ="source_path",value="文件路径",dataType = String.class,required = true)
-	private String source_path; //文件路径
+	private String source_path;
 	@DocBean(name ="meta_info",value="META元信息",dataType = String.class,required = false)
-	private String meta_info; //META元信息
+	private String meta_info;
 	@DocBean(name ="file_md5",value="文件MD5值",dataType = String.class,required = false)
-	private String file_md5; //文件MD5值
+	private String file_md5;
 	@DocBean(name ="file_avro_path",value="所在avro文件地址",dataType = String.class,required = false)
-	private String file_avro_path; //所在avro文件地址
+	private String file_avro_path;
 	@DocBean(name ="file_avro_block",value="所存avro文件block号",dataType = Long.class,required = false)
-	private Long file_avro_block; //所存avro文件block号
+	private Long file_avro_block;
 	@DocBean(name ="is_big_file",value="是否为大文件",dataType = String.class,required = false)
-	private String is_big_file; //是否为大文件
+	private String is_big_file;
 	@DocBean(name ="file_id",value="文件编号",dataType = String.class,required = true)
-	private String file_id; //文件编号
+	private String file_id;
 	@DocBean(name ="agent_id",value="Agent_id",dataType = Long.class,required = true)
-	private Long agent_id; //Agent_id
+	private Long agent_id;
 	@DocBean(name ="source_id",value="数据源ID",dataType = Long.class,required = true)
-	private Long source_id; //数据源ID
+	private Long source_id;
 	@DocBean(name ="collect_set_id",value="数据库设置id",dataType = Long.class,required = true)
-	private Long collect_set_id; //数据库设置id
+	private Long collect_set_id;
 	@DocBean(name ="folder_id",value="文件夹编号",dataType = Long.class,required = true)
-	private Long folder_id; //文件夹编号
+	private Long folder_id;
 
 	/** 取得：原始文件名或表中文名称 */
 	public String getOriginal_name(){

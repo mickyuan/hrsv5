@@ -36,19 +36,19 @@ public class Table_storage_info extends TableEntity
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
 	@DocBean(name ="storage_id",value="储存编号",dataType = Long.class,required = true)
-	private Long storage_id; //储存编号
+	private Long storage_id;
 	@DocBean(name ="file_format",value="文件格式",dataType = String.class,required = true)
-	private String file_format; //文件格式
+	private String file_format;
 	@DocBean(name ="table_id",value="表名ID",dataType = Long.class,required = false)
-	private Long table_id; //表名ID
+	private Long table_id;
 	@DocBean(name ="storage_type",value="进数方式",dataType = String.class,required = true)
-	private String storage_type; //进数方式
+	private String storage_type;
 	@DocBean(name ="storage_time",value="存储期限（以天为单位）",dataType = Long.class,required = true)
-	private Long storage_time; //存储期限（以天为单位）
+	private Long storage_time;
 	@DocBean(name ="is_zipper",value="是否拉链存储",dataType = String.class,required = true)
-	private String is_zipper; //是否拉链存储
+	private String is_zipper;
 	@DocBean(name ="is_everyday",value="是否每天存一份",dataType = String.class,required = true)
-	private String is_everyday; //是否每天存一份
+	private String is_everyday;
 
 	/** 取得：储存编号 */
 	public Long getStorage_id(){
