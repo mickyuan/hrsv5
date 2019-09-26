@@ -16,6 +16,7 @@ import hrds.commons.entity.Agent_info;
 import hrds.commons.entity.File_collect_set;
 import hrds.commons.entity.File_source;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.key.PrimayKeyGener;
 
 import java.util.List;
@@ -60,21 +61,29 @@ public class UnstructuredFileCollectAction extends BaseAction {
 		String webContext = test.getWebContext();
 		String actionPattern = test.getActionPattern();
 		String url = "http://" + agent_info.getAgent_ip() + ":" + agent_info.getAgent_port() + webContext;
+
 		//调用工具类方法给agent发消息，并获取agent响应
+		ActionResult ar;
 		HttpClient.ResponseValue resVal = new HttpClient().post(url + actionPattern);
-		ActionResult ar = JsonUtil.toObject(resVal.getBodyString(), ActionResult.class);
-		//FIXME 对成功失败的判断呢？
-		if (!ar.isSuccess()) {
-			throw new BusinessException("连接" + agent_info.getAgent_ip() + "上的Agent失败");
+		try {
+			ar = JsonUtil.toObject(resVal.getBodyString(), ActionResult.class);
+			if (!ar.isSuccess()) {
+				throw new BusinessException("连接" + agent_info.getAgent_ip() + "上的Agent失败");
+			}
+		} catch (Exception e) {
+
 		}
+
+
 		Map<String, Object> map = ar.getDataForMap();
 		//返回到前端的信息
 		//3.文件系统采集ID不为空则获取文件系统设置表信息
 		if (file_collect_set.getFcs_id() != null) {
 			File_collect_set file_collect_set_info = Dbo.queryOneObject(File_collect_set.class,
 					"SELECT * FROM " + File_collect_set.TableName + " WHERE fcs_id = ?",
-					file_collect_set.getFcs_id()).orElseThrow(() -> new BusinessException(
-					"根据fcs_id" + file_collect_set.getFcs_id() + "查询不到file_collect_set表信息"));
+					file_collect_set.getFcs_id())
+					.orElseThrow(() -> new BusinessException(
+							"根据fcs_id" + file_collect_set.getFcs_id() + "查询不到file_collect_set表信息"));
 			map.put("file_collect_set_info", file_collect_set_info);
 		}
 		return map;
@@ -255,12 +264,16 @@ public class UnstructuredFileCollectAction extends BaseAction {
 			}
 		}
 		//FIXME 下面这么多代码，仅仅是为了更新一个字段吗？ 如果是，就要用 update SQL 来做，完全没必要多查询一次数据库
+
 		//4.更新文件系统设置表
 		int num = Dbo.execute("UPDATE " + File_collect_set.TableName + " SET is_sendok = ?"
 				+ " WHERE fcs_id = ? ", IsFlag.Shi.getCode(), fcs_id);
 		if (num != 1) {
 			throw new BusinessException("更新表" + File_collect_set.TableName + "失败");
 		}
+
+		DboExecute.updatesOrThrow("更新表" + File_collect_set.TableName + "失败",
+				"UPDATE .....");
 	}
 
 }
