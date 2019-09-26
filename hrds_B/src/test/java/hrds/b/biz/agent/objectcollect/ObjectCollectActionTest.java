@@ -13,6 +13,7 @@ import fd.ng.web.action.ActionResult;
 import hrds.commons.codes.*;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.testbase.WebBaseTestCase;
 import org.junit.After;
 import org.junit.Before;
@@ -38,6 +39,8 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 	private static final long OBJECT_COLLECT_STRUCT_ROWS = 10L;
 	//Agent信息表id
 	private static final long AGENT_ID = 10000001L;
+	//用户id
+	private static final long USER_ID = 1001L;
 	//对象采集设置表id
 	private static final long ODC_ID = 20000001L;
 	//对象采集对应信息表任务
@@ -50,7 +53,7 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 	/**
 	 * 测试用例初始化参数
 	 * <p>
-	 * 1.造agent_info表数据，默认为1条，AGENT_ID为10000001
+	 * 1.造agent_down_info表数据，默认为1条，AGENT_ID为10000001
 	 * 2、造Object_collect表数据，默认为2条,ODC_ID为20000001---20000002
 	 * 3、造object_collect_task表数据，默认为10条,OCS_ID为30000001---30000010
 	 * 4、造object_storage表数据，默认为10条,OBJ_STID为40000001---40000010
@@ -59,18 +62,21 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 	@Before
 	public void beforeTest() {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			//1.造agent_info表数据，默认为1条，AGENT_ID为10000001
-			Agent_info agent_info = new Agent_info();
-			agent_info.setUser_id(1001L);
-			agent_info.setSource_id(20000001L);
+			//1.造agent_down_info表数据，默认为1条，AGENT_ID为10000001
+			Agent_down_info agent_info = new Agent_down_info();
+			agent_info.setDown_id(PrimayKeyGener.getNextId());
+			agent_info.setUser_id(USER_ID);
 			agent_info.setAgent_id(AGENT_ID);
 			agent_info.setAgent_ip("127.0.0.1");
 			agent_info.setAgent_port("56000");
-			agent_info.setAgent_status(AgentStatus.YiLianJie.getCode());
 			agent_info.setAgent_type(AgentType.ShuJuKu.getCode());
-			agent_info.setAgent_name("数据库agent");
-			agent_info.setCreate_date(DateUtil.getSysDate());
-			agent_info.setCreate_time(DateUtil.getSysTime());
+			agent_info.setAgent_name("非结构化采集Agent");
+			agent_info.setSave_dir("/aaa/ccc/");
+			agent_info.setLog_dir("/aaa/ccc/log");
+			agent_info.setDeploy(IsFlag.Shi.getCode());
+			agent_info.setAgent_context("/agent");
+			agent_info.setAgent_pattern("/receive/*");
+			agent_info.setRemark("测试用例清除数据专用列");
 			assertThat("初始化数据成功", agent_info.add(db), is(1));
 			//2、造Object_collect表数据，默认为2条,ODC_ID为20000001---20000002
 			for (int i = 0; i < OBJECT_COLLECT_ROWS; i++) {
@@ -400,7 +406,8 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(true));
 		assertThat(ar.getDataForResult().getRowCount(), is(Integer.parseInt(OBJECT_COLLECT_TASK_ROWS + "")));
-		assertThat(ar.getDataForResult().getString(0, "database_code"), is(DataBaseCode.UTF_8.getCode()));
+		assertThat(ar.getDataForResult().getString(0, "database_code")
+				, is(DataBaseCode.UTF_8.getCode()));
 
 		//2.使用错误的odc_id查询OBJECT_COLLECT_TASK表
 		bodyString = new HttpClient()
@@ -446,7 +453,8 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 			long optionalLong = SqlOperator.queryNumber(db, "select count(1) count from "
 					+ Object_collect_task.TableName + " where agent_id = ? ", AGENT_ID)
 					.orElseThrow(() -> new BusinessException("该查询有且仅有一条数据"));
-			assertThat("校验Object_collect_task表数据量正确", optionalLong, is(OBJECT_COLLECT_TASK_ROWS - 1));
+			assertThat("校验Object_collect_task表数据量正确", optionalLong
+					, is(OBJECT_COLLECT_TASK_ROWS - 1));
 		}
 
 
@@ -587,7 +595,8 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 		assertThat(ar.isSuccess(), is(true));
 		//验证数据
 		assertThat(ar.getDataForResult().getRowCount(), is(Integer.parseInt(OBJECT_COLLECT_STRUCT_ROWS + "")));
-		assertThat(ar.getDataForResult().getString(0, "struct_type"), is(ObjectDataType.ZiFuChuan.getCode()));
+		assertThat(ar.getDataForResult().getString(0, "struct_type")
+				, is(ObjectDataType.ZiFuChuan.getCode()));
 
 		//2.测试使用一个错误的ocs_id查询数据
 		bodyString = new HttpClient()
@@ -731,11 +740,10 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 					, "struct_type"), is(ObjectDataType.ShuZu.getCode()));
 		}
 
-		//4.保存对象采集对应结构信息表，en_name名称重复
+		//4.保存对象采集对应结构信息表，coll_name名称重复
 		array.clear();
 		for (int i = 20; i < OBJECT_COLLECT_STRUCT_ROWS + 20; i++) {
 			JSONObject object = new JSONObject();
-			object.put("struct_id", STRUCT_ID + i);
 			object.put("coll_name", "aaaTestzzuuiqyqiw");
 			object.put("remark", "测试用例使用");
 			object.put("ocs_id", OCS_ID);
@@ -892,29 +900,29 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(false));
 
-		//4.更新对象采集存储设置表，is_hdfs格式不正确
-		array.clear();
-		for (int i = 20; i < OBJECT_COLLECT_STRUCT_ROWS + 20; i++) {
-			JSONObject object = new JSONObject();
-			object.put("obj_stid", OBJ_STID + i);
-			object.put("is_hbase", IsFlag.Shi.getCode());
-			object.put("is_hdfs", "fou");
-			object.put("remark", "zxz测试用例清除表object_storage专用");
-			object.put("ocs_id", OCS_ID + i);
-			array.add(object);
-		}
-		bodyString = new HttpClient()
-				.addData("object_storage_array", array.toJSONString())
-				.addData("odc_id", ODC_ID)
-				.post(getActionUrl("saveObject_storage")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
-		assertThat(ar.isSuccess(), is(false));
+//		//4.更新对象采集存储设置表，is_hdfs格式不正确
+//		array.clear();
+//		for (int i = 20; i < OBJECT_COLLECT_STRUCT_ROWS + 20; i++) {
+//			JSONObject object = new JSONObject();
+//			object.put("obj_stid", OBJ_STID + i);
+//			object.put("is_hbase", IsFlag.Shi.getCode());
+//			object.put("is_hdfs", "fou");
+//			object.put("remark", "zxz测试用例清除表object_storage专用");
+//			object.put("ocs_id", OCS_ID + i);
+//			array.add(object);
+//		}
+//		bodyString = new HttpClient()
+//				.addData("object_storage_array", array.toJSONString())
+//				.addData("odc_id", ODC_ID)
+//				.post(getActionUrl("saveObject_storage")).getBodyString();
+//		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+//		assertThat(ar.isSuccess(), is(false));
 	}
 
 	/**
 	 * 测试用例清理数据
 	 * <p>
-	 * 1.删除测试用例造的agent_info表数据，默认为1条，AGENT_ID为10000001
+	 * 1.删除测试用例造的agent_down_info表数据，默认为1条，AGENT_ID为10000001
 	 * 2、删除测试用例造的Object_collect表数据，默认为2条,ODC_ID为20000001---20000002
 	 * 3、删除测试用例造的object_collect_task表数据，默认为10条,OCS_ID为30000001---30000010
 	 * 4、删除测试用例造的object_storage表数据，默认为10条,OBJ_STID为40000001---40000010
@@ -923,9 +931,9 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 	@After
 	public void afterTest() {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			//1.删除测试用例造的agent_info表数据，默认为1条，AGENT_ID为10000001
-			SqlOperator.execute(db, "DELETE FROM " + Agent_info.TableName + " WHERE agent_id = ?"
-					, AGENT_ID);
+			//1.删除测试用例造的agent_down_info表数据，默认为1条，AGENT_ID为10000001
+			SqlOperator.execute(db, "DELETE FROM " + Agent_down_info.TableName + " WHERE remark = ?"
+					, "测试用例清除数据专用列");
 			//2、删除测试用例造的Object_collect表数据，默认为2条,ODC_ID为20000001---20000002
 			SqlOperator.execute(db, "DELETE FROM " + Object_collect.TableName + " WHERE agent_id = ?"
 					, AGENT_ID);
