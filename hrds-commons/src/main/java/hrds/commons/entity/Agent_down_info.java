@@ -63,6 +63,10 @@ public class Agent_down_info extends TableEntity
 	private String agent_type;
 	@DocBean(name ="user_id",value="用户ID",dataType = Long.class,required = true)
 	private Long user_id;
+	@DocBean(name ="agent_context",value="agent的context",dataType = String.class,required = true)
+	private String agent_context;
+	@DocBean(name ="agent_pattern",value="agent的访问路径",dataType = String.class,required = true)
+	private String agent_pattern;
 
 	/** 取得：下载编号(primary) */
 	public Long getDown_id(){
@@ -193,5 +197,21 @@ public class Agent_down_info extends TableEntity
 		if(!fd.ng.core.utils.StringUtil.isEmpty(user_id)){
 			this.user_id=new Long(user_id);
 		}
+	}
+	/** 取得：agent的context */
+	public String getAgent_context(){
+		return agent_context;
+	}
+	/** 设置：agent的context */
+	public void setAgent_context(String agent_context){
+		this.agent_context=agent_context;
+	}
+	/** 取得：agent的访问路径 */
+	public String getAgent_pattern(){
+		return agent_pattern;
+	}
+	/** 设置：agent的访问路径 */
+	public void setAgent_pattern(String agent_pattern){
+		this.agent_pattern=agent_pattern;
 	}
 }

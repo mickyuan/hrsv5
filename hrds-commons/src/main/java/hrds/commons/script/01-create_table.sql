@@ -876,6 +876,8 @@ SAVE_DIR                                          VARCHAR(512) NOT NULL, --存�
 LOG_DIR                                           VARCHAR(512) NOT NULL, --日志目录
 DEPLOY                                            CHAR(1) NOT NULL, --是否部署
 AI_DESC                                           VARCHAR(200) NULL, --描述
+AGENT_CONTEXT                                     VARCHAR(200) NOT NULL, --agent的context
+AGENT_PATTERN                                     VARCHAR(200) NOT NULL, --agent的访问路径
 AGENT_TYPE                                        CHAR(1) NOT NULL, --agent类别
 AGENT_ID                                          BIGINT default 0 NULL, --Agent_id
 USER_ID                                           BIGINT default 0 NOT NULL, --用户ID
