@@ -9,10 +9,9 @@ import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import hrds.commons.codes.AgentStatus;
 import hrds.commons.codes.AgentType;
-import hrds.commons.entity.Agent_info;
-import hrds.commons.entity.Data_source;
-import hrds.commons.entity.Department_info;
-import hrds.commons.entity.Source_relation_dep;
+import hrds.commons.codes.IsFlag;
+import hrds.commons.codes.UserType;
+import hrds.commons.entity.*;
 import hrds.testbase.WebBaseTestCase;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -34,24 +33,26 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class DataSourceActionTest extends WebBaseTestCase {
 	// 测试登录用户ID
 	private static final long UserId = 5555L;
-	// 测试数据源 source_id
-	private static final long Source_Id = -1000000000L;
-	// 测试数据源 source_id,新建数据源，下面没有agent
-	private static final long Source_Id2 = -1000000001L;
+	// 初始化创建用户ID
+	private static final long CreateId = 1000L;
+	// 测试数据源 SourceId
+	private static final long SourceId = -1000000000L;
+	// 测试数据源 SourceId,新建数据源，下面没有agent
+	private static final long SourceId2 = -1000000001L;
 	// 测试数据库 agent_id
-	private static final long DB_Agent_Id = -2000000001L;
+	private static final long DBAgentId = -2000000001L;
 	// 测试数据文件 agent_id
-	private static final long DF_Agent_Id = -2000000002L;
+	private static final long DFAgentId = -2000000002L;
 	// 测试非结构化 agent_id
-	private static final long Uns_Agent_Id = -2000000003L;
+	private static final long UnsAgentId = -2000000003L;
 	// 测试半结构化 agent_id
-	private static final long Semi_Agent_Id = -2000000004L;
+	private static final long SemiAgentId = -2000000004L;
 	// 测试FTP agent_id
-	private static final long FTP_Agent_Id = -2000000005L;
+	private static final long FTPAgentId = -2000000005L;
 	// 测试部门ID dep_id,测试第一部门
-	private static final long Dep_Id1 = -3000000001L;
+	private static final long DepId1 = -3000000001L;
 	// 测试部门ID dep_id 测试第二部门
-	private static final long Dep_Id2 = -3000000002L;
+	private static final long DepId2 = -3000000002L;
 
 	/**
 	 * 初始化测试用例数据
@@ -64,8 +65,8 @@ public class DataSourceActionTest extends WebBaseTestCase {
 	 * 6.模拟用户登录
 	 * <p>
 	 * 测试数据：
-	 * 1.data_source表:有2条数据，source_id为-1000000000,-1000000001
-	 * 2.source_relation表：有4条数据,source_id为-1000000000，-1000000000,
+	 * 1.data_source表:有2条数据，SourceId为-1000000000,-1000000001
+	 * 2.source_relation表：有4条数据,SourceId为-1000000000，-1000000000,
 	 * dep_id为-2000000001，-2000000002
 	 * 3.agent_info表：有5条数据,agent_id有五种，数据库agent,数据文件agent,非结构化agent,半结构化agent,
 	 * FTP agent,分别为-2000000001到-2000000005
@@ -80,10 +81,10 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			// 封装data_source表数据
 			for (int i = 0; i < 2; i++) {
 				if (i == 0) {
-					data_source.setSource_id(Source_Id);
+					data_source.setSource_id(SourceId);
 					data_source.setDatasource_number("init");
 				} else {
-					data_source.setSource_id(Source_Id2);
+					data_source.setSource_id(SourceId2);
 					data_source.setDatasource_number("ini2");
 				}
 				data_source.setDatasource_name("init" + i);
@@ -101,10 +102,10 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			Department_info department_info = new Department_info();
 			for (int i = 0; i < 2; i++) {
 				if (i == 0) {
-					department_info.setDep_id(Dep_Id1);
+					department_info.setDep_id(DepId1);
 					department_info.setDep_name("测试第一部门");
 				} else {
-					department_info.setDep_id(Dep_Id2);
+					department_info.setDep_id(DepId2);
 					department_info.setDep_name("测试第二部门");
 				}
 				department_info.setCreate_date(DateUtil.getSysDate());
@@ -119,19 +120,19 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			Source_relation_dep source_relation_dep = new Source_relation_dep();
 			for (long i = 0; i < 4; i++) {
 				if (i < 2) {
-					source_relation_dep.setSource_id(Source_Id);
+					source_relation_dep.setSource_id(SourceId);
 					if (i == 0) {
-						source_relation_dep.setDep_id(Dep_Id1);
+						source_relation_dep.setDep_id(DepId1);
 					} else {
-						source_relation_dep.setDep_id(Dep_Id2);
+						source_relation_dep.setDep_id(DepId2);
 					}
 				} else {
 					// 封装source_relation_dep表数据
-					source_relation_dep.setSource_id(Source_Id2);
+					source_relation_dep.setSource_id(SourceId2);
 					if (i == 2) {
-						source_relation_dep.setDep_id(Dep_Id1);
+						source_relation_dep.setDep_id(DepId1);
 					} else {
-						source_relation_dep.setDep_id(Dep_Id2);
+						source_relation_dep.setDep_id(DepId2);
 					}
 				}
 				// 初始化source_relation_dep表信息
@@ -143,7 +144,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			Agent_info agent_info = new Agent_info();
 			for (int i = 0; i < 5; i++) {
 				// 封装agent_info数据
-				agent_info.setSource_id(Source_Id);
+				agent_info.setSource_id(SourceId);
 				agent_info.setCreate_date(DateUtil.getSysDate());
 				agent_info.setCreate_time(DateUtil.getSysTime());
 				agent_info.setAgent_ip("10.71.4.51");
@@ -152,28 +153,28 @@ public class DataSourceActionTest extends WebBaseTestCase {
 				// 初始化不同类型的agent
 				if (i == 1) {
 					// 数据库 agent
-					agent_info.setAgent_id(DB_Agent_Id);
+					agent_info.setAgent_id(DBAgentId);
 					agent_info.setAgent_type(AgentType.ShuJuKu.getCode());
 					agent_info.setAgent_name("sjkAgent");
 				} else if (i == 2) {
 					// 数据文件 Agent
-					agent_info.setAgent_id(DF_Agent_Id);
+					agent_info.setAgent_id(DFAgentId);
 					agent_info.setAgent_type(AgentType.DBWenJian.getCode());
 					agent_info.setAgent_name("DFAgent");
 
 				} else if (i == 3) {
 					// 非结构化 Agent
-					agent_info.setAgent_id(Uns_Agent_Id);
+					agent_info.setAgent_id(UnsAgentId);
 					agent_info.setAgent_type(AgentType.WenJianXiTong.getCode());
 					agent_info.setAgent_name("UnsAgent");
 				} else if (i == 4) {
 					// 半结构化 Agent
-					agent_info.setAgent_id(Semi_Agent_Id);
+					agent_info.setAgent_id(SemiAgentId);
 					agent_info.setAgent_type(AgentType.FTP.getCode());
 					agent_info.setAgent_name("SemiAgent");
 				} else {
 					// FTP Agent
-					agent_info.setAgent_id(FTP_Agent_Id);
+					agent_info.setAgent_id(FTPAgentId);
 					agent_info.setAgent_type(AgentType.DuiXiang.getCode());
 					agent_info.setAgent_name("FTPAgent");
 				}
@@ -192,6 +193,21 @@ public class DataSourceActionTest extends WebBaseTestCase {
 				int aiNum = agent_info.add(db);
 				assertThat("测试agent_info数据初始化", aiNum, is(1));
 			}
+			// 5.构造sys_user表测试数据
+			Sys_user sysUser = new Sys_user();
+			sysUser.setUser_id(UserId);
+			sysUser.setCreate_id(CreateId);
+			sysUser.setDep_id(DepId1);
+			sysUser.setCreate_date(DateUtil.getSysDate());
+			sysUser.setCreate_time(DateUtil.getSysTime());
+			sysUser.setRole_id("1001");
+			sysUser.setUser_name("dhw");
+			sysUser.setUser_password("111111");
+			sysUser.setUser_type(UserType.CaiJiYongHu.getCode());
+			sysUser.setUseris_admin("1");
+			sysUser.setUsertype_group("02,03,04,08");
+			sysUser.setUser_state(IsFlag.Shi.getCode());
+			sysUser.add(db);
 			// 4.提交事务
 			SqlOperator.commitTransaction(db);
 		}
@@ -225,70 +241,70 @@ public class DataSourceActionTest extends WebBaseTestCase {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			// 1.测试完成后删除data_source表测试数据
 			SqlOperator.execute(db, "delete from data_source where source_id=?",
-					Source_Id);
+					SourceId);
 			SqlOperator.execute(db, "delete from data_source where source_id=?",
-					Source_Id2);
+					SourceId2);
 			// 2.判断data_source数据是否被删除
 			long num = SqlOperator.queryNumber(db,
-					"select count(1) from data_source where source_id=?", Source_Id)
+					"select count(1) from data_source where source_id=?", SourceId)
 					.orElseThrow(() -> new RuntimeException("count fail!"));
 			assertThat("此条数据删除后，记录数应该为0", num, is(0L));
 			long num2 = SqlOperator.queryNumber(db,
-					"select count(1) from data_source where source_id=?", Source_Id2)
+					"select count(1) from data_source where source_id=?", SourceId2)
 					.orElseThrow(() -> new RuntimeException("count fail!"));
 			assertThat("此条数据删除后，记录数应该为0", num2, is(0L));
 
 			// 3.测试完成后删除source_relation_dep表测试数据
 			SqlOperator.execute(db,
-					"delete from source_relation_dep where dep_id=?", Dep_Id1);
+					"delete from source_relation_dep where dep_id=?", DepId1);
 			SqlOperator.execute(db,
-					"delete from source_relation_dep where dep_id=?", Dep_Id2);
+					"delete from source_relation_dep where dep_id=?", DepId2);
 			// 4.判断source_relation_dep数据是否被删除
 			long srdNum = SqlOperator.queryNumber(db, "select count(1) from " +
-					"source_relation_dep where dep_id=?", Dep_Id1)
+					"source_relation_dep where dep_id=?", DepId1)
 					.orElseThrow(() -> new RuntimeException("count fail!"));
 			assertThat("此条数据删除后，记录数应该为0", srdNum, is(0L));
 			long srdNum2 = SqlOperator.queryNumber(db, "select count(1) from " +
-					"source_relation_dep where dep_id=?", Dep_Id2)
+					"source_relation_dep where dep_id=?", DepId2)
 					.orElseThrow(() -> new RuntimeException("count fail!"));
 			assertThat("此条数据删除后，记录数应该为0", srdNum2, is(0L));
 
 			// 5.测试完成后删除agent_info表数据库agent测试数据
-			SqlOperator.execute(db, "delete from agent_info where agent_id=?", DB_Agent_Id);
-			SqlOperator.execute(db, "delete from agent_info where agent_id=?", DF_Agent_Id);
-			SqlOperator.execute(db, "delete from agent_info where agent_id=?", Uns_Agent_Id);
-			SqlOperator.execute(db, "delete from agent_info where agent_id=?", Semi_Agent_Id);
-			SqlOperator.execute(db, "delete from agent_info where agent_id=?", FTP_Agent_Id);
+			SqlOperator.execute(db, "delete from agent_info where agent_id=?", DBAgentId);
+			SqlOperator.execute(db, "delete from agent_info where agent_id=?", DFAgentId);
+			SqlOperator.execute(db, "delete from agent_info where agent_id=?", UnsAgentId);
+			SqlOperator.execute(db, "delete from agent_info where agent_id=?", SemiAgentId);
+			SqlOperator.execute(db, "delete from agent_info where agent_id=?", FTPAgentId);
 			// 6.判断agent_info表数据是否被删除
 			long DBNum = SqlOperator.queryNumber(db, "select count(1) from  agent_info " +
-					" where  agent_id=?", DB_Agent_Id).orElseThrow(() -> new RuntimeException(
+					" where  agent_id=?", DBAgentId).orElseThrow(() -> new RuntimeException(
 					"count fail!"));
 			assertThat("此条记录删除后，数据为0", DBNum, is(0L));
 			long DFNum = SqlOperator.queryNumber(db, "select count(1) from agent_info" +
-					" where  agent_id=?", DF_Agent_Id).orElseThrow(() -> new RuntimeException(
+					" where  agent_id=?", DFAgentId).orElseThrow(() -> new RuntimeException(
 					"count fail!"));
 			assertThat("此条记录删除后，数据为0", DFNum, is(0L));
 			long UnsNum = SqlOperator.queryNumber(db, "select count(1) from agent_info " +
-					" where agent_id=?", Uns_Agent_Id).orElseThrow(() -> new RuntimeException(
+					" where agent_id=?", UnsAgentId).orElseThrow(() -> new RuntimeException(
 					"count fail!"));
 			assertThat("此条记录删除后，数据为0", UnsNum, is(0L));
 			long SemiNum = SqlOperator.queryNumber(db, "select count(1) from agent_info " +
-					" where agent_id=?", Semi_Agent_Id).orElseThrow(() -> new RuntimeException(
+					" where agent_id=?", SemiAgentId).orElseThrow(() -> new RuntimeException(
 					"count fail!"));
 			assertThat("此条记录删除后，数据为0", SemiNum, is(0L));
 			long FTPNum = SqlOperator.queryNumber(db, "select count(1) from agent_info " +
-					" where agent_id=?", FTP_Agent_Id).orElseThrow(() -> new RuntimeException(
+					" where agent_id=?", FTPAgentId).orElseThrow(() -> new RuntimeException(
 					"count fail!"));
 			assertThat("此条记录删除后，数据为0", FTPNum, is(0L));
 			// 7.测试完成后删除department_info表测试数据
-			SqlOperator.execute(db, "delete from department_info where dep_id=?", Dep_Id1);
-			SqlOperator.execute(db, "delete from department_info where dep_id=?", Dep_Id2);
+			SqlOperator.execute(db, "delete from department_info where dep_id=?", DepId1);
+			SqlOperator.execute(db, "delete from department_info where dep_id=?", DepId2);
 			// 8.判断department_info表数据是否被删除
 			long diNum = SqlOperator.queryNumber(db, "select count(1) from department_info "
-					+ " where dep_id=?", Dep_Id1).orElseThrow(() -> new RuntimeException(
+					+ " where dep_id=?", DepId1).orElseThrow(() -> new RuntimeException(
 					"count fail!"));
 			long diNum2 = SqlOperator.queryNumber(db, "select count(1) from department_info "
-					+ " where dep_id=?", Dep_Id2).orElseThrow(() -> new RuntimeException(
+					+ " where dep_id=?", DepId2).orElseThrow(() -> new RuntimeException(
 					"count fail!"));
 			assertThat("此条记录删除后，数据为0", diNum, is(0L));
 			assertThat("此条记录删除后，数据为0", diNum2, is(0L));
@@ -340,13 +356,13 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			OptionalLong number = SqlOperator.queryNumber(db, "select count(*) from" +
 					" data_source where datasource_number=?", "cs01");
 			assertThat("添加data_source数据成功", number.getAsLong(), is(1L));
-			// 判断source_relation_dep表数据是否新增成功，初始化2条，新增1条，source_id不同
+			// 判断source_relation_dep表数据是否新增成功，初始化2条，新增1条，SourceId不同
 			OptionalLong srdNumber = SqlOperator.queryNumber(db, "select count(*) from" +
-					" source_relation_dep where dep_id=?", Dep_Id1);
+					" source_relation_dep where dep_id=?", DepId1);
 			assertThat("添加data_source数据成功", srdNumber.getAsLong(), is(3L));
-			//判断source_relation_dep表数据是否新增成功，初始化2条，新增1条，source_id不同
+			//判断source_relation_dep表数据是否新增成功，初始化2条，新增1条，SourceId不同
 			OptionalLong srdNumber2 = SqlOperator.queryNumber(db, "select count(*) from" +
-					" source_relation_dep where dep_id=?", Dep_Id2);
+					" source_relation_dep where dep_id=?", DepId2);
 			assertThat("添加data_source数据成功", srdNumber2.getAsLong(), is(3L));
 		}
 		// 2.错误的数据访问1，新增数据源信息,数据源名称不能为空
@@ -430,7 +446,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 	public void updateDataSource() {
 		// 1.正确的数据访问1，更新数据源信息，所有数据都有效
 		String bodyString = new HttpClient()
-				.addData("source_id", Source_Id)
+				.addData("source_id", SourceId)
 				.addData("source_remark", "测试update")
 				.addData("datasource_name", "updateName")
 				.addData("datasource_number", "up01")
@@ -442,21 +458,17 @@ public class DataSourceActionTest extends WebBaseTestCase {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			// 判断data_source表数据是否更新成功,这里指定类型返回会报错
 			Optional<Data_source> data_source = SqlOperator.queryOneObject(db, Data_source.class,
-					"select * from data_source where source_id=?", Source_Id);
-			assertThat("更新data_source数据成功", data_source.get().getSource_id(),
-					is(Source_Id));
-			assertThat("更新data_source数据成功", data_source.get().getDatasource_name(),
-					is("updateName"));
-			assertThat("更新data_source数据成功", data_source.get().getDatasource_number(),
-					is("up01"));
+					"select * from data_source where source_id=?", SourceId);
+			assertThat("更新data_source数据成功", data_source.get().getSource_id(), is(SourceId));
+			assertThat("更新data_source数据成功", data_source.get().getDatasource_name(), is("updateName"));
+			assertThat("更新data_source数据成功", data_source.get().getDatasource_number(), is("up01"));
 			assertThat("更新data_source数据成功", data_source.get().getSource_remark(),
 					is("测试update"));
 			// 判断source_relation_dep表数据是否更新成功
 			Optional<Source_relation_dep> source_relation_dep = SqlOperator.queryOneObject(db,
-					Source_relation_dep.class, "select * from source_relation_dep where " +
-							"source_id=?", Source_Id);
+					Source_relation_dep.class, "select * from source_relation_dep where source_id=?", SourceId);
 			assertThat("更新source_relation_dep数据成功", source_relation_dep.get().
-					getSource_id(), is(Source_Id));
+					getSource_id(), is(SourceId));
 			assertThat("更新source_relation_dep数据成功", source_relation_dep.get().getDep_id(),
 					is(-3000000001L));
 
@@ -536,7 +548,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 	@Test
 	public void searchDataSource() {
 		// 1.正确的数据访问1，查询数据源信息,正常返回数据
-		String bodyString = new HttpClient().addData("source_id", Source_Id)
+		String bodyString = new HttpClient().addData("SourceId", SourceId)
 				.post(getActionUrl("searchDataSource")).getBodyString();
 		ActionResult ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(true));
@@ -544,19 +556,19 @@ public class DataSourceActionTest extends WebBaseTestCase {
 		Result dataForResult = ar.getDataForResult();
 		// 循环验证查询结果的正确性
 		for (int i = 0; i < dataForResult.getRowCount(); i++) {
-			assertThat(Source_Id, is(dataForResult.getLong(i, "source_id")));
+			assertThat(SourceId, is(dataForResult.getLong(i, "source_id")));
 			assertThat(UserId, is(dataForResult.getLong(i, "create_user_id")));
 			assertThat("init0", is(dataForResult.getString(i, "datasource_name")));
 			assertThat("init", is(dataForResult.getString(i, "datasource_number")));
 			assertThat("数据源详细描述0", is(dataForResult.getString(i, "source_remark")));
 			if (i == 0) {
-				assertThat(Dep_Id1, is(dataForResult.getLong(i, "dep_id")));
+				assertThat(DepId1, is(dataForResult.getLong(i, "dep_id")));
 			} else {
-				assertThat(Dep_Id2, is(dataForResult.getLong(i, "dep_id")));
+				assertThat(DepId2, is(dataForResult.getLong(i, "dep_id")));
 			}
 		}
 		// 2.错误的数据访问1，查询数据源信息，此数据源下没有数据
-		bodyString = new HttpClient().addData("source_id", -1000000009L)
+		bodyString = new HttpClient().addData("SourceId", -1000000009L)
 				.post(getActionUrl("searchDataSource")).getBodyString();
 		ar = JsonUtil.toObject(bodyString, ActionResult.class);
 		assertThat(ar.isSuccess(), is(true));
@@ -576,24 +588,24 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			// 1.正确的数据访问1，删除数据源信息，数据为有效数据
 			// 删除前查询数据库，确认预期删除的数据存在
 			OptionalLong optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
-					" data_source where source_id = ?", Source_Id2);
+					" data_source where source_id = ?", SourceId2);
 			assertThat("删除操作前，data_source表中的确存在这样一条数据", optionalLong.
 					orElse(Long.MIN_VALUE), is(1L));
 			String bodyString = new HttpClient()
-					.addData("source_id", Source_Id2)
+					.addData("SourceId", SourceId2)
 					.post(getActionUrl("deleteDataSource"))
 					.getBodyString();
 			ActionResult ar = JsonUtil.toObject(bodyString, ActionResult.class);
 			assertThat(ar.isSuccess(), is(true));
 			// 删除后查询数据库，确认预期数据已删除
 			optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
-					" data_source where source_id = ?", Source_Id2);
+					" data_source where source_id = ?", SourceId2);
 			assertThat("删除操作前，data_source表中的确存在这样一条数据", optionalLong.
 					orElse(Long.MIN_VALUE), is(0L));
 
 			// 2.错误的数据访问1，删除数据源信息，数据源下有agent，不能删除
 			bodyString = new HttpClient()
-					.addData("source_id", Source_Id)
+					.addData("SourceId", SourceId)
 					.post(getActionUrl("deleteDataSource"))
 					.getBodyString();
 			ar = JsonUtil.toObject(bodyString, ActionResult.class);
@@ -601,7 +613,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 
 			// 3.错误的数据访问2，删除数据源信息，此数据源下没有数据
 			bodyString = new HttpClient()
-					.addData("source_id", -1000000009L)
+					.addData("SourceId", -1000000009L)
 					.post(getActionUrl("deleteDataSource"))
 					.getBodyString();
 			ar = JsonUtil.toObject(bodyString, ActionResult.class);

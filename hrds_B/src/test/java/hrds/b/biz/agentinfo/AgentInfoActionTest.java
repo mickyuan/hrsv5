@@ -7,10 +7,7 @@ import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import hrds.commons.codes.*;
-import hrds.commons.entity.Agent_down_info;
-import hrds.commons.entity.Agent_info;
-import hrds.commons.entity.Data_source;
-import hrds.commons.entity.Database_set;
+import hrds.commons.entity.*;
 import hrds.testbase.WebBaseTestCase;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -32,8 +29,14 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class AgentInfoActionTest extends WebBaseTestCase {
 	// 初始化登录用户ID
 	private static final long UserId = 5555L;
+	// 初始化创建用户ID
+	private static final long CreateId = 1000L;
 	// 初始化登录用户ID，更新agent时更新数据采集用户
 	private static final long UserId2 = 5556L;
+	// 测试部门ID dep_id,测试第一部门
+	private static final long DepId1 = -3000000010L;
+	// 测试部门ID dep_id 测试第二部门
+	private static final long DepId2 = -3000000011L;
 	// 测试数据源 source_id
 	private static final long Source_Id = -1000000000L;
 	// 测试数据源 source_id，agent存在，数据源被删了
@@ -71,8 +74,10 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 	 * 2.构造agent_info表测试数据
 	 * 3.构造agent_down_info表测试数据
 	 * 4.构造database_set表测试数据
-	 * 5.提交事务
-	 * 6.模拟用户登录
+	 * 5.构造sys_user表测试数据
+	 * 6.构造department_info部门表测试数据
+	 * 7.提交事务
+	 * 8.模拟用户登录
 	 * <p>
 	 * 测试数据：
 	 * 1.agent_info表：有7条数据,agent_id有五种，数据库agent,数据文件agent,非结构化agent,半结构化agent,
@@ -80,6 +85,8 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 	 * 2.data_source表，有2条数据，source_id为-1000000000，1000000001
 	 * 3.agent_down_info表，有1条数据，down_id为-3000000000,agent_id为-1000000000
 	 * 4.database_set表，有1条数据，database_id为-5000000000
+	 * 5.sys_user表，有1条数据，user_id为5555
+	 * 6.department_info表，有2条数据，dep_id为-3000000010，-3000000011
 	 */
 	@BeforeClass
 	public static void before() {
@@ -205,30 +212,62 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 			// 初始化agent_down_info表数据
 			agent_down_info.add(db);
 			// 4.构造database_set表测试数据
-			Database_set database_set = new Database_set();
-			database_set.setDatabase_id(database_id);
-			database_set.setAgent_id(DB_Agent_Id4);
-			database_set.setClassify_id(classify_id);
-			database_set.setDatabase_code(DataBaseCode.UTF_8.getCode());
-			database_set.setDatabase_drive("org.postgresql.Driver");
-			database_set.setDatabase_ip("10.71.4.51");
-			database_set.setDatabase_name("数据库采集测试");
-			database_set.setDatabase_number("-500000000");
-			database_set.setDatabase_pad("hrsdxg");
-			database_set.setDatabase_port("34567");
-			database_set.setDatabase_separatorr("\\u7c");
-			database_set.setDbfile_format(FileFormat.CSV.getCode());
-			database_set.setIs_sendok(IsFlag.Fou.getCode());
-			database_set.setDatabase_type(DatabaseType.Postgresql.getCode());
-			database_set.setTask_name("数据库测试");
-			database_set.setJdbc_url("jdbc:postgresql://10.71.4.52:31001/hrsdxgtest");
-			database_set.setDb_agent(IsFlag.Shi.getCode());
+			Database_set databaseSet = new Database_set();
+			databaseSet.setDatabase_id(database_id);
+			databaseSet.setAgent_id(DB_Agent_Id4);
+			databaseSet.setClassify_id(classify_id);
+			databaseSet.setDatabase_code(DataBaseCode.UTF_8.getCode());
+			databaseSet.setDatabase_drive("org.postgresql.Driver");
+			databaseSet.setDatabase_ip("10.71.4.51");
+			databaseSet.setDatabase_name("数据库采集测试");
+			databaseSet.setDatabase_number("-500000000");
+			databaseSet.setDatabase_pad("hrsdxg");
+			databaseSet.setDatabase_port("34567");
+			databaseSet.setDbfile_format(FileFormat.CSV.getCode());
+			databaseSet.setIs_sendok(IsFlag.Fou.getCode());
+			databaseSet.setDatabase_type(DatabaseType.Postgresql.getCode());
+			databaseSet.setTask_name("数据库测试");
+			databaseSet.setJdbc_url("jdbc:postgresql://10.71.4.52:31001/hrsdxgtest");
+			databaseSet.setDb_agent(IsFlag.Shi.getCode());
 			// 初始化数据库设置database_set表数据
-			database_set.add(db);
-			// 5.提交事务
+			databaseSet.add(db);
+			// 5.构造sys_user表测试数据
+			Sys_user sysUser = new Sys_user();
+			sysUser.setUser_id(UserId);
+			sysUser.setCreate_id(CreateId);
+			sysUser.setDep_id(DepId1);
+			sysUser.setCreate_date(DateUtil.getSysDate());
+			sysUser.setCreate_time(DateUtil.getSysTime());
+			sysUser.setRole_id("1001");
+			sysUser.setUser_name("dhw");
+			sysUser.setUser_password("111111");
+			sysUser.setUser_type(UserType.CaiJiYongHu.getCode());
+			sysUser.setUseris_admin("1");
+			sysUser.setUsertype_group("02,03,04,08");
+			sysUser.setUser_state(IsFlag.Shi.getCode());
+			sysUser.add(db);
+			// 6.构造department_info部门表测试数据
+			// 创建department_info表实体对象
+			Department_info department_info = new Department_info();
+			for (int i = 0; i < 2; i++) {
+				if (i == 0) {
+					department_info.setDep_id(DepId1);
+					department_info.setDep_name("测试第一部门");
+				} else {
+					department_info.setDep_id(DepId2);
+					department_info.setDep_name("测试第二部门");
+				}
+				department_info.setCreate_date(DateUtil.getSysDate());
+				department_info.setCreate_time(DateUtil.getSysTime());
+				department_info.setDep_remark("测试");
+				int diNum = department_info.add(db);
+				assertThat("测试数据department_info初始化", diNum, is(1));
+			}
+
+			// 7.提交事务
 			SqlOperator.commitTransaction(db);
 		}
-		// 6.模拟用户登录
+		// 8.模拟用户登录
 		//String responseValue = new HttpClient()
 		//		.buildSession()
 		//		.addData("username", UserId)
@@ -236,29 +275,36 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 		//		.post("http://127.0.0.1:8099/A/action/hrds/a/biz/login/login")
 		//		.getBodyString();
 		//ActionResult ar = JsonUtil.toObject(responseValue, ActionResult.class);
-		//assertThat("用户登录", ar.getCode(), is(220));
+		//assertThat("用户登录", ar.isSuccess(), is(true));
 	}
 
 	/**
 	 * 测试完删除测试数据
 	 * <p>
 	 * 1.测试完成后删除data_source表数据库agent测试数据
-	 * 2.测试完成后删除agent_info表测试数据
-	 * 2.判断agent_info数据是否被删除
-	 * 3.单独删除新增数据，因为新增数据主键是自动生成的，所以要通过其他方式删除
-	 * 4.提交事务
+	 * 2.判断data_source数据是否被删除
+	 * 3.测试完成后删除agent_info表测试数据
+	 * 4.判断agent_info数据是否被删除
+	 * 5.测试完删除database_set表测试数据
+	 * 6.判断database_set表数据是否被删除
+	 * 7.测试完删除sys_user表测试数据
+	 * 8.判断sys_user表数据是否被删除
+	 * 9.测试完删除department_info表测试数据
+	 * 10.判断department_info表数据是否被删除
+	 * 11.单独删除新增数据，因为新增数据主键是自动生成的，所以要通过其他方式删除
+	 * 12.提交事务
 	 */
 	@AfterClass
 	public static void after() {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			// 1.测试完成后删除data_source表数据库agent测试数据
 			SqlOperator.execute(db, "delete from data_source where source_id=?", Source_Id);
-			// 判断data_source数据是否被删除
+			// 2.判断data_source数据是否被删除
 			long num = SqlOperator.queryNumber(db,
 					"select count(1) from data_source where source_id=?", Source_Id)
 					.orElseThrow(() -> new RuntimeException("count fail!"));
 			assertThat("此条数据删除后，记录数应该为0", num, is(0L));
-			// 2.测试完成后删除agent_info表数据库agent测试数据
+			// 3.测试完成后删除agent_info表数据库agent测试数据
 			SqlOperator.execute(db, "delete from agent_info where agent_id=?", DB_Agent_Id);
 			SqlOperator.execute(db, "delete from agent_info where agent_id=?", DB_Agent_Id2);
 			SqlOperator.execute(db, "delete from agent_info where agent_id=?", DB_Agent_Id3);
@@ -268,7 +314,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 			SqlOperator.execute(db, "delete from agent_info where agent_id=?", Uns_Agent_Id);
 			SqlOperator.execute(db, "delete from agent_info where agent_id=?", Semi_Agent_Id);
 			SqlOperator.execute(db, "delete from agent_info where agent_id=?", FTP_Agent_Id);
-			// 判断agent_info表数据是否被删除
+			// 4.判断agent_info表数据是否被删除
 			long DBNum = SqlOperator.queryNumber(db, "select count(1) from  agent_info " +
 					" where  agent_id=?", DB_Agent_Id).orElseThrow(() -> new RuntimeException(
 					"count fail!"));
@@ -307,21 +353,40 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 			assertThat("此条记录删除后，数据为0", FTPNum, is(0L));
 			// 3.删除agent_down_info表测试数据
 			SqlOperator.execute(db, "delete from agent_down_info where down_id=?", down_id);
-			// 判断agent_down_info表数据是否被删除
+			// 4.判断agent_down_info表数据是否被删除
 			long adiNum = SqlOperator.queryNumber(db, "select count(1) from  agent_down_info " +
 					" where down_id=?", down_id).orElseThrow(() -> new RuntimeException(
 					"count fail!"));
 			assertThat("此条记录删除后，数据为0", adiNum, is(0L));
-			// 3.删除agent_down_info表测试数据
+			// 5.测试完删除database_set表测试数据
 			SqlOperator.execute(db, "delete from database_set where database_id=?", database_id);
-			// 判断agent_down_info表数据是否被删除
+			// 6.判断database_set表数据是否被删除
 			long dsNum = SqlOperator.queryNumber(db, "select count(1) from  database_set " +
 					" where database_id=?", database_id).orElseThrow(() -> new RuntimeException(
 					"count fail!"));
 			assertThat("此条记录删除后，数据为0", dsNum, is(0L));
-			// 3.单独删除新增数据，因为新增数据主键是自动生成的，所以要通过其他方式删除
+			// 7.测试完删除sys_user表测试数据
+			SqlOperator.execute(db, "delete from sys_user where user_id=?", UserId);
+			// 8.判断sys_user表数据是否被删除
+			long userNum = SqlOperator.queryNumber(db, "select count(1) from sys_user " +
+					" where user_id=?", UserId).orElseThrow(() -> new RuntimeException(
+					"count fail!"));
+			assertThat("此条记录删除后，数据为0", userNum, is(0L));
+			// 9.测试完成后删除department_info表测试数据
+			SqlOperator.execute(db, "delete from department_info where dep_id=?", DepId1);
+			SqlOperator.execute(db, "delete from department_info where dep_id=?", DepId2);
+			// 10.判断department_info表数据是否被删除
+			long diNum = SqlOperator.queryNumber(db, "select count(1) from department_info "
+					+ " where dep_id=?", DepId1).orElseThrow(() -> new RuntimeException(
+					"count fail!"));
+			long diNum2 = SqlOperator.queryNumber(db, "select count(1) from department_info "
+					+ " where dep_id=?", DepId2).orElseThrow(() -> new RuntimeException(
+					"count fail!"));
+			assertThat("此条记录删除后，数据为0", diNum, is(0L));
+			assertThat("此条记录删除后，数据为0", diNum2, is(0L));
+			// 11.单独删除新增数据，因为新增数据主键是自动生成的，所以要通过其他方式删除
 			SqlOperator.execute(db, "delete from agent_info where source_id=?", Source_Id);
-			// 4.提交事务
+			// 12.提交事务
 			SqlOperator.commitTransaction(db);
 		}
 	}
@@ -1051,8 +1116,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 			assertThat("查询数据成功", agent_info.getAgent_ip(), is("10.71.4.51"));
 			assertThat("查询数据成功", agent_info.getAgent_port(), is("34567"));
 			assertThat("查询数据成功", agent_info.getAgent_name(), is("sjkAgent"));
-			assertThat("查询数据成功", agent_info.getAgent_type(),
-					is(AgentType.ShuJuKu.getCode()));
+			assertThat("查询数据成功", agent_info.getAgent_type(), is(AgentType.ShuJuKu.getCode()));
 			assertThat("查询数据成功", agent_info.getSource_id(), is(Source_Id));
 			assertThat("查询数据成功", agent_info.getUser_id(), is(UserId));
 		}
