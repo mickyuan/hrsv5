@@ -5,15 +5,18 @@ import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
-import fd.ng.netserver.conf.HttpServerConf;
-import fd.ng.netserver.conf.HttpServerConfBean;
 import fd.ng.web.action.ActionResult;
 import fd.ng.web.annotation.RequestBean;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.IsFlag;
-import hrds.commons.entity.*;
+import hrds.commons.entity.Object_collect;
+import hrds.commons.entity.Object_collect_struct;
+import hrds.commons.entity.Object_collect_task;
+import hrds.commons.entity.Object_storage;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.utils.AgentActionUtil;
+import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.key.PrimayKeyGener;
 
 import java.util.List;
@@ -29,7 +32,7 @@ public class ObjectCollectAction extends BaseAction {
 	/**
 	 * 获取半结构化采集配置页面初始化的值，当odc_id不为空时，则同时返回object_collect表的值
 	 * <p>
-	 * 1.根据前端传过来的agent_id获取agent的ip和端口
+	 * 1.根据前端传过来的agent_id获取调用Agent服务的接口
 	 * 2.根据Agent的ip和端口远程调用Agent的后端代码获取采集服务器上的日期、时间、操作系统类型和主机名等基本信息
 	 * 3.对象采集id不为空则获取对象采集设置表信息
 	 *
@@ -41,25 +44,20 @@ public class ObjectCollectAction extends BaseAction {
 	 * 取值范围：不会为空
 	 */
 	public Map<String, Object> searchObjectCollect(@RequestBean Object_collect object_collect) {
-		//1.根据前端传过来的agent_id获取agent的ip和端口
+		if (object_collect.getAgent_id() == null) {
+			throw new BusinessException("agent_id不能为空");
+		}
 		//数据可访问权限处理方式：传入用户需要有Agent信息表对应数据的访问权限
-		Agent_info agent_info = Dbo.queryOneObject(Agent_info.class,
-				"SELECT * FROM " + Agent_info.TableName + " WHERE agent_id = ? "
-						+ " AND user_id = ?", object_collect.getAgent_id()
-				, getUserId()).orElseThrow(() -> new BusinessException(
-				"根据Agent_id" + object_collect.getAgent_id() + "查询不到Agent_info表信息"));
-		//2.根据Agent的ip和端口远程调用Agent的后端代码获取采集服务器上的日期、时间、操作系统类型和主机名等基本信息
-		//TODO 这里调用方法后面需要修改
-		HttpServerConfBean test = HttpServerConf.getHttpServer("agentServerInfo");
-		String webContext = test.getWebContext();
-		String actionPattern = test.getActionPattern();
-		String url = "http://" + agent_info.getAgent_ip() + ":" + agent_info.getAgent_port() + webContext;
+		//1.根据前端传过来的agent_id获取调用Agent服务的接口
+		String url = AgentActionUtil.getUrl(object_collect.getAgent_id(), getUserId()
+				, AgentActionUtil.GETSERVERINFO);
 		//调用工具类方法给agent发消息，并获取agent响应
-		HttpClient.ResponseValue resVal = new HttpClient().post(url + actionPattern);
-		ActionResult ar = JsonUtil.toObject(resVal.getBodyString(), ActionResult.class);
+		//2.根据Agent的ip和端口远程调用Agent的后端代码获取采集服务器上的日期、时间、操作系统类型和主机名等基本信息
+		HttpClient.ResponseValue resVal = new HttpClient().post(url);
+		ActionResult ar = JsonUtil.toObjectSafety(resVal.getBodyString(), ActionResult.class)
+				.orElseThrow(() -> new BusinessException("连接" + url + "服务异常"));
 		if (!ar.isSuccess()) {
-			throw new BusinessException("远程连接" + agent_info.getAgent_ip() + ":"
-					+ agent_info.getAgent_port() + "的Agent失败");
+			throw new BusinessException("远程连接" + url + "的Agent失败");
 		}
 		//返回到前端的信息
 		Map<String, Object> map = ar.getDataForMap();
@@ -101,8 +99,7 @@ public class ObjectCollectAction extends BaseAction {
 		} else {
 			object_collect.setOdc_id(PrimayKeyGener.getNextId());
 			//2.保存object_collect表
-			if (object_collect.add(Dbo.db()) != 1)
-				throw new BusinessException("新增数据失败！data=" + object_collect);
+			object_collect.add(Dbo.db());
 			return object_collect.getOdc_id();
 		}
 	}
@@ -132,8 +129,7 @@ public class ObjectCollectAction extends BaseAction {
 			throw new BusinessException("半结构化采集任务名称重复");
 		} else {
 			//2.更新object_collect表
-			if (object_collect.update(Dbo.db()) != 1)
-				throw new BusinessException("更新数据失败！data=" + object_collect);
+			object_collect.update(Dbo.db());
 		}
 	}
 
@@ -230,8 +226,7 @@ public class ObjectCollectAction extends BaseAction {
 					throw new BusinessException("对象采集对应信息表的英文名称重复");
 				} else {
 					object_collect_task.setOcs_id(PrimayKeyGener.getNextId());
-					if (object_collect_task.add(Dbo.db()) != 1)
-						throw new BusinessException("新增数据失败！data=" + object_collect_task);
+					object_collect_task.add(Dbo.db());
 				}
 			} else {
 				//更新
@@ -243,8 +238,7 @@ public class ObjectCollectAction extends BaseAction {
 				if (count > 0) {
 					throw new BusinessException("对象采集对应信息表的英文名称重复");
 				} else {
-					if (object_collect_task.update(Dbo.db()) != 1)
-						throw new BusinessException("更新数据失败！data=" + object_collect_task);
+					object_collect_task.update(Dbo.db());
 				}
 			}
 		}
@@ -331,8 +325,7 @@ public class ObjectCollectAction extends BaseAction {
 				//新增
 				object_collect_struct.setStruct_id(PrimayKeyGener.getNextId());
 				//5.新增或更新数据库
-				if (object_collect_struct.add(Dbo.db()) != 1)
-					throw new BusinessException("新增数据失败！data=" + object_collect_struct);
+				object_collect_struct.add(Dbo.db());
 			} else {
 				long count = Dbo.queryNumber("SELECT count(1) count FROM "
 								+ Object_collect_struct.TableName + " WHERE coll_name = ? AND ocs_id = ? " +
@@ -343,8 +336,7 @@ public class ObjectCollectAction extends BaseAction {
 					throw new BusinessException("同一个对象采集任务下，对象采集结构信息表的coll_name不能重复");
 				}
 				//更新
-				if (object_collect_struct.update(Dbo.db()) != 1)
-					throw new BusinessException("更新数据失败！data=" + object_collect_struct);
+				object_collect_struct.update(Dbo.db());
 			}
 		}
 	}
@@ -401,18 +393,14 @@ public class ObjectCollectAction extends BaseAction {
 				//新增
 				object_storage.setObj_stid(PrimayKeyGener.getNextId());
 				//3.保存对象采集存储设置表
-				if (object_storage.add(Dbo.db()) != 1)
-					throw new BusinessException("新增数据失败！data=" + object_storage);
+				object_storage.add(Dbo.db());
 			} else {
-				if (object_storage.update(Dbo.db()) != 1)
-					throw new BusinessException("更新数据失败！data=" + object_storage);
+				object_storage.update(Dbo.db());
 			}
 		}
 		//4.更新对象采集设置表的字段是否完成设置并发送成功为是
-		int num = Dbo.execute("UPDATE " + Object_collect.TableName + " SET is_sendok = ?"
-				+ " WHERE odc_id = ? ", IsFlag.Shi.getCode(), odc_id);
-		if (num != 1) {
-			throw new BusinessException("更新表" + Object_collect.TableName + "失败");
-		}
+		DboExecute.updatesOrThrow("更新表" + Object_collect.TableName + "失败"
+				, "UPDATE " + Object_collect.TableName + " SET is_sendok = ?"
+						+ " WHERE odc_id = ? ", IsFlag.Shi.getCode(), odc_id);
 	}
 }
