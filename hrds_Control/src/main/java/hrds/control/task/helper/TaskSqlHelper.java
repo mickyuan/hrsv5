@@ -3,6 +3,9 @@ package hrds.control.task.helper;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
 import hrds.commons.codes.*;
@@ -10,9 +13,6 @@ import hrds.commons.entity.*;
 import hrds.commons.exception.AppSystemException;
 import hrds.control.beans.EtlJobBean;
 import hrds.control.beans.EtlJobDefBean;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import scala.Int;
 
 /**
  * ClassName: TaskSqlHelper
@@ -625,7 +625,7 @@ public class TaskSqlHelper {
 	private static Etl_job_cur obj2EtlJobCur(Object[] row) {
 
 		if(row.length != 33 ) {
-			throw new AppSystemException("Object[]转换为Etl_job_cur对象失败，对象为空或元素个数不为32");
+			throw new AppSystemException("Object[]转换为Etl_job_cur对象失败，元素个数不为33");
 		}
 
 		Etl_job_cur etlJobCur = new Etl_job_cur();

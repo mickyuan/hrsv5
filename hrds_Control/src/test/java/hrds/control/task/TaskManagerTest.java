@@ -68,6 +68,7 @@ public class TaskManagerTest {
 				etlJobDef.setJob_priority(i);
 				etlJobDef.setJob_priority_curr(i);
 				etlJobDef.setPro_type(Pro_Type.JAVA.getCode());
+
 				etlJobDef.add(db);
 
 				Etl_job_resource_rela etlJobResourceRela = new Etl_job_resource_rela();
