@@ -17,8 +17,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
  **/
 public class ConnUtilTest {
 
-	private static final String WRONG_DATABASE_TYPE = "10086";
-
 	/**
 	 * 测试根据数据库类型获取数据库连接信息填写模板
 	 *
