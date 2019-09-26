@@ -22,6 +22,10 @@ public class DboExecute {
 		updatesOrThrow(1, errorMsg, sql, params);
 	}
 
+	public static void updatesOrThrowNoMsg(final String sql, Object... params) {
+		updatesOrThrow(1, "修改失败，修改了0条或多条数据", sql, params);
+	}
+
 	/**
 	 * 更新多条数据。
 	 * @param expectedUpdateNums 预期被更新的数量
@@ -42,6 +46,10 @@ public class DboExecute {
 		} else {
 			throw new BusinessException(errorMsg==null?"Illegal update!":errorMsg);
 		}
+	}
+	public static void updatesOrThrowNoMsg(final int expectedUpdateNums,
+	                                  final String sql, Object... params) {
+		updatesOrThrow(expectedUpdateNums, "修改失败，修改了0条或多条数据", sql, params);
 	}
 
 	/**
@@ -64,6 +72,9 @@ public class DboExecute {
 			throw new BusinessException(errorMsg==null?"Too many insert!":errorMsg);
 		}
 	}
+	public static void insertsOrThrowNoMsg(final String sql, Object... params) {
+		insertsOrThrow("数据新增失败，返回数据不等于1",sql,params);
+	}
 
 	/**
 	 * 删除一条数据。比如：基于主键的删除。
@@ -74,6 +85,10 @@ public class DboExecute {
 	public static void deletesOrThrow(final String errorMsg,
 	                                  final String sql, Object... params) {
 		deletesOrThrow(1, errorMsg, sql, params);
+	}
+
+	public static void deletesOrThrowNoMsg(final String sql, Object... params) {
+		deletesOrThrow(1, "删除失败，删除了0条或多条数据", sql, params);
 	}
 
 	/**
@@ -97,7 +112,11 @@ public class DboExecute {
 			throw new BusinessException(errorMsg==null?"Illegal delete!":errorMsg);
 		}
 	}
-	
+	public static void deletesOrThrowNoMsg(final int expectedDeleteNums,
+	                                  final String sql, Object... params) {
+		deletesOrThrow(expectedDeleteNums, "删除失败，删除了0条或多条数据", sql, params);
+	}
+
 	public static String formatSQL(final String sql, Object... params) {
 		// 这是临时写的，要改成自己的习惯
 		return "SQL=[" + sql + "], Params=" + Arrays.toString(params);
