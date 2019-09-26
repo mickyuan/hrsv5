@@ -7,10 +7,7 @@ import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
-import hrds.commons.codes.AgentStatus;
-import hrds.commons.codes.AgentType;
-import hrds.commons.codes.IsFlag;
-import hrds.commons.codes.UserType;
+import hrds.commons.codes.*;
 import hrds.commons.entity.*;
 import hrds.testbase.WebBaseTestCase;
 import org.junit.AfterClass;
@@ -208,6 +205,24 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			sysUser.setUsertype_group("02,03,04,08");
 			sysUser.setUser_state(IsFlag.Shi.getCode());
 			sysUser.add(db);
+			// 6.构造database_set表测试数据
+			Database_set databaseSet = new Database_set();
+			databaseSet.setDatabase_id(database_id);
+			databaseSet.setAgent_id(DB_Agent_Id4);
+			databaseSet.setClassify_id(classify_id);
+			databaseSet.setDatabase_code(DataBaseCode.UTF_8.getCode());
+			databaseSet.setDatabase_drive("org.postgresql.Driver");
+			databaseSet.setDatabase_ip("10.71.4.51");
+			databaseSet.setDatabase_name("数据库采集测试");
+			databaseSet.setDatabase_number("-500000000");
+			databaseSet.setDatabase_pad("hrsdxg");
+			databaseSet.setDatabase_port("34567");
+			databaseSet.setDbfile_format(FileFormat.CSV.getCode());
+			databaseSet.setIs_sendok(IsFlag.Fou.getCode());
+			databaseSet.setDatabase_type(DatabaseType.Postgresql.getCode());
+			databaseSet.setTask_name("数据库测试");
+			databaseSet.setJdbc_url("jdbc:postgresql://10.71.4.52:31001/hrsdxgtest");
+			databaseSet.setDb_agent(IsFlag.Shi.getCode());
 			// 4.提交事务
 			SqlOperator.commitTransaction(db);
 		}
