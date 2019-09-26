@@ -37,6 +37,9 @@ public class TaskJobHelper {
     public static String transformDirOrName(String currBathDate, String dirOrName) {
 
         String[] params = TaskJobHelper.transformPara(currBathDate, dirOrName);
+
+        if(params.length < 1) { return dirOrName; }
+
         StringBuilder newDirOrName = new StringBuilder();
 
         for(String param : params) {
@@ -56,13 +59,13 @@ public class TaskJobHelper {
      */
     public static String transformProgramPara(String currBathDate, String programPara) {
 
-        String[] nameArr = TaskJobHelper.transformPara(currBathDate, programPara);
+        String[] params = TaskJobHelper.transformPara(currBathDate, programPara);
 
-        if(nameArr.length < 1) { return programPara; }
+        if(params.length < 1) { return programPara; }
 
-        StringBuilder newProgramPara = new StringBuilder(nameArr[0]);
-        for(int i = 1; i < nameArr.length; i++) {
-            newProgramPara.append(PARASEPARATOR).append(nameArr[i]);
+        StringBuilder newProgramPara = new StringBuilder(params[0]);
+        for(int i = 1; i < params.length; i++) {
+            newProgramPara.append(PARASEPARATOR).append(params[i]);
         }
 
         return newProgramPara.toString();
@@ -158,11 +161,11 @@ public class TaskJobHelper {
                             arr[i] = arr[i].replace("!{" + strsc + "}",
                                     date.plus(1, ChronoUnit.DAYS).format(pattern));
                             break;
-                        //添加参数可以包含日期的自定义格式******************结束
                         default:
                             arr[i] = arr[i].replace("!{" + strsc + "}", paraVal);
                             break;
                     }
+                    //添加参数可以包含日期的自定义格式******************结束
                 }else {
                     throw new AppSystemException("无法识别的参数关键字前缀：" + prefix);
                 }
