@@ -1,23 +1,18 @@
 package hrds.commons.entity;
 /**Auto Created by VBScript Do not modify!*/
-import fd.ng.db.entity.TableEntity;
-import fd.ng.core.utils.StringUtil;
-import fd.ng.db.entity.anno.Column;
+import hrds.commons.entity.fdentity.ProjectTableEntity;
 import fd.ng.db.entity.anno.Table;
 import fd.ng.core.docannotation.DocBean;
-import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
 import java.util.HashSet;
-import java.util.Map;
-import java.util.HashMap;
 import java.util.Collections;
 
 /**
  * 信号文件入库信息
  */
 @Table(tableName = "signal_file")
-public class Signal_file extends TableEntity
+public class Signal_file extends ProjectTableEntity
 {
 	private static final long serialVersionUID = 321566870187324L;
 	private transient static final Set<String> __PrimaryKeys;
@@ -35,6 +30,8 @@ public class Signal_file extends TableEntity
 		__tmpPKS.add("signal_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
+	@DocBean(name ="is_cbd",value="是否使用carbondata",dataType = String.class,required = true)
+	private String is_cbd;
 	@DocBean(name ="signal_id",value="信号id",dataType = Long.class,required = true)
 	private Long signal_id;
 	@DocBean(name ="is_into_hbase",value="是否入hbase",dataType = String.class,required = true)
@@ -55,9 +52,15 @@ public class Signal_file extends TableEntity
 	private String is_solr_hbase;
 	@DocBean(name ="database_id",value="数据库设置id",dataType = Long.class,required = true)
 	private Long database_id;
-	@DocBean(name ="is_cbd",value="是否使用carbondata",dataType = String.class,required = true)
-	private String is_cbd;
 
+	/** 取得：是否使用carbondata */
+	public String getIs_cbd(){
+		return is_cbd;
+	}
+	/** 设置：是否使用carbondata */
+	public void setIs_cbd(String is_cbd){
+		this.is_cbd=is_cbd;
+	}
 	/** 取得：信号id */
 	public Long getSignal_id(){
 		return signal_id;
@@ -149,13 +152,5 @@ public class Signal_file extends TableEntity
 		if(!fd.ng.core.utils.StringUtil.isEmpty(database_id)){
 			this.database_id=new Long(database_id);
 		}
-	}
-	/** 取得：是否使用carbondata */
-	public String getIs_cbd(){
-		return is_cbd;
-	}
-	/** 设置：是否使用carbondata */
-	public void setIs_cbd(String is_cbd){
-		this.is_cbd=is_cbd;
 	}
 }

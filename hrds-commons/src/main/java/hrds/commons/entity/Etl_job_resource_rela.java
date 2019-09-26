@@ -1,23 +1,18 @@
 package hrds.commons.entity;
 /**Auto Created by VBScript Do not modify!*/
-import fd.ng.db.entity.TableEntity;
-import fd.ng.core.utils.StringUtil;
-import fd.ng.db.entity.anno.Column;
+import hrds.commons.entity.fdentity.ProjectTableEntity;
 import fd.ng.db.entity.anno.Table;
 import fd.ng.core.docannotation.DocBean;
-import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
 import java.util.HashSet;
-import java.util.Map;
-import java.util.HashMap;
 import java.util.Collections;
 
 /**
  * 作业资源关系表
  */
 @Table(tableName = "etl_job_resource_rela")
-public class Etl_job_resource_rela extends TableEntity
+public class Etl_job_resource_rela extends ProjectTableEntity
 {
 	private static final long serialVersionUID = 321566870187324L;
 	private transient static final Set<String> __PrimaryKeys;

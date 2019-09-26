@@ -1,23 +1,18 @@
 package hrds.commons.entity;
 /**Auto Created by VBScript Do not modify!*/
-import fd.ng.db.entity.TableEntity;
-import fd.ng.core.utils.StringUtil;
-import fd.ng.db.entity.anno.Column;
+import hrds.commons.entity.fdentity.ProjectTableEntity;
 import fd.ng.db.entity.anno.Table;
 import fd.ng.core.docannotation.DocBean;
-import hrds.commons.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Set;
 import java.util.HashSet;
-import java.util.Map;
-import java.util.HashMap;
 import java.util.Collections;
 
 /**
  * 资源登记表
  */
 @Table(tableName = "etl_resource")
-public class Etl_resource extends TableEntity
+public class Etl_resource extends ProjectTableEntity
 {
 	private static final long serialVersionUID = 321566870187324L;
 	private transient static final Set<String> __PrimaryKeys;
@@ -32,12 +27,10 @@ public class Etl_resource extends TableEntity
 	/** 资源登记表 */
 	static {
 		Set<String> __tmpPKS = new HashSet<>();
-		__tmpPKS.add("etl_sys_cd");
 		__tmpPKS.add("resource_type");
+		__tmpPKS.add("etl_sys_cd");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="etl_sys_cd",value="工程代码",dataType = String.class,required = true)
-	private String etl_sys_cd;
 	@DocBean(name ="resource_type",value="资源使用类型",dataType = String.class,required = true)
 	private String resource_type;
 	@DocBean(name ="resource_max",value="资源阀值",dataType = Integer.class,required = false)
@@ -46,15 +39,9 @@ public class Etl_resource extends TableEntity
 	private Integer resource_used;
 	@DocBean(name ="main_serv_sync",value="主服务器同步标志",dataType = String.class,required = true)
 	private String main_serv_sync;
+	@DocBean(name ="etl_sys_cd",value="工程代码",dataType = String.class,required = true)
+	private String etl_sys_cd;
 
-	/** 取得：工程代码 */
-	public String getEtl_sys_cd(){
-		return etl_sys_cd;
-	}
-	/** 设置：工程代码 */
-	public void setEtl_sys_cd(String etl_sys_cd){
-		this.etl_sys_cd=etl_sys_cd;
-	}
 	/** 取得：资源使用类型 */
 	public String getResource_type(){
 		return resource_type;
@@ -98,5 +85,13 @@ public class Etl_resource extends TableEntity
 	/** 设置：主服务器同步标志 */
 	public void setMain_serv_sync(String main_serv_sync){
 		this.main_serv_sync=main_serv_sync;
+	}
+	/** 取得：工程代码 */
+	public String getEtl_sys_cd(){
+		return etl_sys_cd;
+	}
+	/** 设置：工程代码 */
+	public void setEtl_sys_cd(String etl_sys_cd){
+		this.etl_sys_cd=etl_sys_cd;
 	}
 }

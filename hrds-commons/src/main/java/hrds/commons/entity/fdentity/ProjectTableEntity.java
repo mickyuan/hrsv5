@@ -1,4 +1,4 @@
-package hrds.commons.entity;
+package hrds.commons.entity.fdentity;
 
 import fd.ng.db.entity.TableEntity;
 import fd.ng.db.jdbc.DatabaseWrapper;
