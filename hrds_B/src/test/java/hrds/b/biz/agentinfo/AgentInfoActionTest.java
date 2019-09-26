@@ -1140,13 +1140,6 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 	/**
 	 * 根据agent_id,agent_type删除agent_info信息
 	 * <p>
-	 * 参数：agent_id long
-	 * 含义：agent_info表主键
-	 * 取值范围：不为空且不为空格
-	 * 参数：agent_type String
-	 * 含义：agent类型
-	 * 取值范围：1:数据库Agent,2:文件系统Agent,3:FtpAgent,4:数据文件Agent,5:对象Agent
-	 * <p>
 	 * 1.正确的数据访问1，删除agent_info表数据，正常删除,agent类型有5种，这里只测一种（其他除了类型都一样）
 	 * 2.错误的数据访问1，删除agent_info表数据，agent已部署不能删除
 	 * 3.错误的数据访问2,删除agent_info表数据，此数据源对应的agent下有任务，不能删除

@@ -50,6 +50,12 @@ public class DataSourceActionTest extends WebBaseTestCase {
 	private static final long DepId1 = -3000000001L;
 	// 测试部门ID dep_id 测试第二部门
 	private static final long DepId2 = -3000000002L;
+	// 测试agent_down_info agent_id
+	private static final long DownId = -3000000000L;
+	// 测试 分类ID，classify_id
+	private static final long ClassifyId = -4000000000L;
+	// 测试 数据库设置ID，DatabaseId
+	private static final long DatabaseId = -5000000000L;
 
 	/**
 	 * 初始化测试用例数据
@@ -207,9 +213,9 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			sysUser.add(db);
 			// 6.构造database_set表测试数据
 			Database_set databaseSet = new Database_set();
-			databaseSet.setDatabase_id(database_id);
-			databaseSet.setAgent_id(DB_Agent_Id4);
-			databaseSet.setClassify_id(classify_id);
+			databaseSet.setDatabase_id(DatabaseId);
+			databaseSet.setAgent_id(DBAgentId);
+			databaseSet.setClassify_id(ClassifyId);
 			databaseSet.setDatabase_code(DataBaseCode.UTF_8.getCode());
 			databaseSet.setDatabase_drive("org.postgresql.Driver");
 			databaseSet.setDatabase_ip("10.71.4.51");
@@ -223,6 +229,25 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			databaseSet.setTask_name("数据库测试");
 			databaseSet.setJdbc_url("jdbc:postgresql://10.71.4.52:31001/hrsdxgtest");
 			databaseSet.setDb_agent(IsFlag.Shi.getCode());
+			databaseSet.add(db);
+			// 7.构造agent_down_info表测试数据
+			Agent_down_info agent_down_info = new Agent_down_info();
+			agent_down_info.setDown_id(DownId);
+			agent_down_info.setAgent_id(DFAgentId);
+			agent_down_info.setAgent_name("DFAgent");
+			agent_down_info.setAgent_ip("10.71.4.51");
+			agent_down_info.setAgent_port("34567");
+			agent_down_info.setAgent_type(AgentType.DBWenJian.getCode());
+			agent_down_info.setDeploy(IsFlag.Fou.getCode());
+			agent_down_info.setLog_dir("/home/hyshf/sjkAgent_34567/log/");
+			agent_down_info.setPasswd("hyshf");
+			agent_down_info.setUser_id(UserId);
+			agent_down_info.setAi_desc("agent部署");
+			agent_down_info.setRemark("备注");
+			agent_down_info.setUser_name("hyshf");
+			agent_down_info.setSave_dir("/home/hyshf/sjkAgent_34567/");
+			// 初始化agent_down_info表数据
+			agent_down_info.add(db);
 			// 4.提交事务
 			SqlOperator.commitTransaction(db);
 		}
