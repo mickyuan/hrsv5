@@ -20,7 +20,7 @@ import hrds.commons.entity.Collect_job_classify;
 import hrds.commons.entity.Data_source;
 import hrds.commons.entity.Database_set;
 import hrds.commons.exception.BusinessException;
-import hrds.commons.exception.ExceptionEnum;
+import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.key.PrimayKeyGener;
 
 import java.util.List;
@@ -269,14 +269,8 @@ public class DBConfStepAction extends BaseAction{
 			throw new BusinessException("待删除的采集任务分类已被使用，不能删除");
 		}
 		//3、若没有被使用，可以删除
-		int nums = Dbo.execute("delete from " + Collect_job_classify.TableName +
-						" where classify_id = ?", classifyId);
-		if(nums != 1) {
-			if (nums == 0)
-				throw new BusinessException("删除失败");
-			else
-				throw new BusinessException(ExceptionEnum.DATA_DELETE_ERROR);
-		}
+		DboExecute.deletesOrThrowNoMsg("delete from " + Collect_job_classify.TableName +
+				" where classify_id = ?", classifyId);
 	}
 
 	/**
@@ -309,13 +303,12 @@ public class DBConfStepAction extends BaseAction{
 			if(val != 1){
 				throw new BusinessException("待更新的数据不存在");
 			}
-			if (databaseSet.update(Dbo.db()) != 1){
-				throw new BusinessException("更新数据失败！data=" + databaseSet);
-			}
+			databaseSet.update(Dbo.db());
 		}
 		else {
 			//4、如果不存在，则新增信息
-			//任务级别的清洗规则，在这里新增时定义一个默认顺序，后面的页面可能改动这个顺序,后面在取这个清洗顺序的时候，用枚举==的方式
+			//任务级别的清洗规则，在这里新增时定义一个默认顺序，后面的页面可能改动这个顺序,
+			// 后面在取这个清洗顺序的时候，用枚举==的方式
 			JSONObject cleanObj = new JSONObject(true);
 			cleanObj.put(CleanType.ZiFuBuQi.getCode(), 1);
 			cleanObj.put(CleanType.ZiFuTiHuan.getCode(), 2);
@@ -330,8 +323,8 @@ public class DBConfStepAction extends BaseAction{
 			databaseSet.setDb_agent(IsFlag.Fou.getCode());
 			databaseSet.setIs_sendok(IsFlag.Fou.getCode());
 			databaseSet.setCp_or(cleanObj.toJSONString());
-			if (databaseSet.add(Dbo.db()) != 1)
-				throw new BusinessException("新增数据失败！data=" + databaseSet);
+
+			databaseSet.add(Dbo.db());
 		}
 		//返回id的目的是为了在点击下一步跳转页面的时候能通过database_id拿到上一个页面的信息
 		return databaseSet.getDatabase_id();
@@ -384,7 +377,8 @@ public class DBConfStepAction extends BaseAction{
 	}
 
 	/**
-	 * 新增/更新操作校验Collect_job_classify中数据的合法性，对数据库中不能为空的字段，校验合法性，若不合法，提供明确的提示信息
+	 * 新增/更新操作校验Collect_job_classify中数据的合法性，对数据库中不能为空的字段，校验合法性，若不合法，
+	 * 提供明确的提示信息
 	 *
 	 * 1、对于新增操作，校验classify_id不能为空
 	 * 2、校验classify_num不能为空
@@ -431,7 +425,8 @@ public class DBConfStepAction extends BaseAction{
 	}
 
 	/**
-	 * 保存数据库配置页面时，校验Database_set中数据的合法性，对数据库中不能为空的字段，校验合法性，若不合法，提供明确的提示信息
+	 * 保存数据库配置页面时，校验Database_set中数据的合法性，对数据库中不能为空的字段，校验合法性，若不合法，
+	 * 提供明确的提示信息
 	 *
 	 * 1、校验database_type不能为空，并且取值范围必须在DatabaseType代码项中
 	 * 2、校验classify_id不能为空
