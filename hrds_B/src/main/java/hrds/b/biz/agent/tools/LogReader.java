@@ -72,10 +72,10 @@ public class LogReader {
 			//4、读取日志
 			execCommandByJSch = SFTPChannel.execCommandByJSch(jSchSession, readShell);
 		} catch (JSchException ex) {
-			execCommandByJSch = ex.getMessage();
+			execCommandByJSch = ex.getMessage();//FIXME 这里应该赋值为：读取Agent日志失败！
 			logger.error("登录验证失败...", ex);
 		} catch (IOException ex) {
-			execCommandByJSch = ex.getMessage();
+			execCommandByJSch = ex.getMessage();//FIXME 这里应该赋值为：读取Agent日志失败！
 			logger.error("读取日志文件-----\" + logPath + \"-----失败...", ex);
 		} finally {
 			if (jSchSession != null) {

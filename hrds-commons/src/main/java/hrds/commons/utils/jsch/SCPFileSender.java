@@ -74,7 +74,7 @@ public class SCPFileSender {
 				SFTPChannel.execCommandByJSch(shellSession, deldir);
 				logger.info("###########kill部署旧的进程，旧的目录地址===");
 			}
-			if( !StringUtil.isEmpty(oldlog4jlogdir) ) {
+			if( !StringUtil.isEmpty(oldlog4jlogdir) ) {new File("", "main");
 				String filePath = FileUtils.getFile(oldlog4jlogdir).getAbsolutePath();//文件的完整路径
 				String deldir = "rm -rf " + filePath;
 				SFTPChannel.execCommandByJSch(shellSession, deldir);

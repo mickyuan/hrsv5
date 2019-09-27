@@ -215,6 +215,7 @@ public class AgentListAction extends BaseAction {
 	public void downloadTaskLog(long agentId, String logType,
 	                            @RequestParam(nullable = true, valueIfNull = "100") int readNum) {
 		OutputStream out = null;
+		//FIXME 改成JDK8的方式：try(OutputStream out = response.getOutputStream())。不用有finally处理了
 		try {
 			//1、对显示日志条数做处理，该方法在加载页面时被调用，readNum可以不传，则默认显示100条，
 			// 如果用户在页面上进行了选择并点击查看按钮，如果用户输入的条目多于1000，则给用户显示3000条
@@ -341,6 +342,7 @@ public class AgentListAction extends BaseAction {
 		//该方法首先使用user_id和collectSetId去数据库中查找要删除的数据是否存在
 
 		//2、在FTP采集设置表(ftp_collect)中删除该条数据，有且只有一条
+		//FIXME                    不应该写这样的错误提示。因为这是返给前端让用户看到的，前端不应该知道数据库表名字
 		DboExecute.deletesOrThrow(Ftp_collect.TableName + "表删除数据异常!", "delete from "+
 				Ftp_collect.TableName +" where ftp_id = ?", collectSetId);
 	}
@@ -452,6 +454,7 @@ public class AgentListAction extends BaseAction {
 		//该方法首先使用user_id和collectSetId去数据库中查找要删除的数据是否存在
 
 		//2、在文件系统设置表删除对应的记录，有且只有一条数据
+		//FIXME 下面删除了两次是为什么？
 		DboExecute.deletesOrThrow(File_collect_set.TableName + "表删除数据异常!", "delete  from "+
 						File_collect_set.TableName +" where fcs_id = ? ", collectSetId);
 		//3、在文件源设置表删除对应的记录，可以有多条
