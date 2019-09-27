@@ -83,6 +83,7 @@ public class AgentInfoAction extends BaseAction {
 	private void check(long sourceId, String agentType, String agentIp, String agentPort) {
 		// 1.数据可访问权限处理方式，这是一个私有方法，不会单独被调用，所以不需要权限验证
 		// 1.验证数据源是否还存在,查到至少一条数据，查不到为0
+		//FIXME 这个逻辑不对！如果SQL没有查询到数据怎么办？ 要使用 orElseThrow ！ 所有方法都错了！
 		if (Dbo.queryNumber("select count(1) from data_source where source_id = ?",
 				sourceId).orElse(Long.MIN_VALUE) == 0) {
 			throw new BusinessException("该agent对应的数据源已不存在不可新增，source_id=" + sourceId);

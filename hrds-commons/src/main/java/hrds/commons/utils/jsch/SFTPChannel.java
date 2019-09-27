@@ -17,6 +17,7 @@ public class SFTPChannel {
 
 	private static final Logger logger = LogManager.getLogger();
 
+	//FIXME 不要使用Map做参数！使用多个明确的参数，或者提供一个构建参数BEAN：本类的一个public static class
 	public ChannelSftp getChannel(Map<String, String> sftpDetails, int timeout) throws JSchException {
 
 		String ftpHost = sftpDetails.get(SCPFileSender.HOST);
@@ -39,6 +40,8 @@ public class SFTPChannel {
 	 * @return
 	 * @throws JSchException
 	 */
+
+	//FIXME 不要使用Map做参数！使用多个明确的参数，或者提供一个构建参数BEAN：本类的一个public static class
 	public static Session getJSchSession(Map<String, String> sftpDetails, int timeout) throws JSchException {
 
 		String ftpHost = sftpDetails.get(SCPFileSender.HOST);
