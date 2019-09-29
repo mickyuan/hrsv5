@@ -1,5 +1,5 @@
 <template>
-<div class="syspara">
+<div>
     <!-- 列表数据 start-->
     <el-table :data="tableData.filter(data => !search || data.para_name.trim().toLowerCase().includes(search) || data.para_value.trim().toLowerCase().includes(search))" :default-sort="{prop: 'para_id', order: 'ascending'}" height="600px">
         <el-table-column prop="para_id" sortable label="参数ID"></el-table-column>
@@ -11,7 +11,6 @@
         </el-table-column>
         <el-table-column label="参数类型" prop="para_type">
             <template slot-scope="{row, $index}">
-                {{showEdit[$index]}}
                 <el-input class="edit-cell" v-if="showEdit[$index]" v-model="row.para_type" />
                 <span v-if="!showEdit[$index]">{{row.para_type}}</span>
             </template>
@@ -32,13 +31,13 @@
             <template slot-scope="{row, $index}">
                 <el-button size="mini" @click.native="handleUpdate($index, row)" v-if="showBtn[$index]">更新</el-button>
                 <el-button size="mini" @click.native="handleCancel($index, row)" v-if="showBtn[$index]">取消</el-button>
-                <el-button size="mini" @click.native="handleEdit($index, row)" v-if="!showBtn[$index]">编辑</el-button>
+                <el-button size="mini" type="primary" @click.native="handleEdit($index, row)" v-if="!showBtn[$index]">编辑</el-button>
                 <el-button size="mini" type="danger" @click="handleDelete($index, row)" v-if="!showBtn[$index]">删除</el-button>
             </template>
         </el-table-column>
         <el-table-column>
             <template slot="header" slot-scope="scope">
-                <el-button size="mini" type="primary" @click="dialogFormVisible = true">新增参数</el-button>
+                <el-button size="mini" type="success" @click="dialogFormVisible = true">新增参数</el-button>
             </template>
         </el-table-column>
         <el-table-column>
@@ -124,18 +123,16 @@ export default {
     },
     methods: {
         handleEdit(index, row) {
+
             //点击编辑
-            this.showEdit[index] = true;
-            this.showBtn[index] = true;
-            this.$set(this.showEdit, row, true);
-            this.$set(this.showBtn, row, true);
+            this.$set(this.showEdit, index, true);
+            this.$set(this.showBtn, index, true);
         },
         handleCancel(index, row) {
+
             //取消编辑
-            // console.log(333)
-            // this.getContentList();
-            this.showEdit[index] = false;
-            this.showBtn[index] = false;
+            this.$set(this.showEdit, index, false);
+            this.$set(this.showBtn, index, false);
         },
         //点击更新
         handleUpdate(index, row) {
@@ -147,6 +144,8 @@ export default {
                         });
                         // 重新渲染列表
                         this.tableData = response.data;
+                        this.$set(this.showEdit, index, false);
+                        this.$set(this.showBtn, index, false);
                     } else {
                         this.$message.error("更新失败！");
                     }

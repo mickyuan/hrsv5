@@ -1,31 +1,21 @@
 <template>
 <div class="login">
-    <el-form :model="ruleForm" status-icon :rules="rules" ref="ruleForm" class="demo-ruleForm">
-        <el-row>
-            <el-col :md="12">
-                <el-form-item label="登录名" prop="username" :label-width="formLabelWidth">
-                    <el-input v-model="ruleForm.username"></el-input>
-                </el-form-item>
-
-                <el-form-item label="密码" prop="password" :label-width="formLabelWidth">
-                    <el-input type="password" v-model="ruleForm.password" autocomplete="off" show-password></el-input>
-                </el-form-item>
-            </el-col>
-            <el-col>
-                <el-form-item>
-                    <el-button type="primary" @click="submitForm('ruleForm')">登录</el-button>
-                    <el-button @click="resetForm('ruleForm')">重置</el-button>
-                </el-form-item>
-            </el-col>
-        </el-row>
+    <el-form :model="ruleForm" status-icon :rules="rules" ref="ruleForm" class="demo-ruleForm" label-width="80px">
+        <el-form-item label="登录名" prop="username">
+            <el-input v-model="ruleForm.username"></el-input>
+        </el-form-item>
+        <el-form-item label="密码" prop="password">
+            <el-input type="password" v-model="ruleForm.password" autocomplete="off" show-password></el-input>
+        </el-form-item>
+        <el-form-item>
+            <el-button type="primary" @click="submitForm('ruleForm')">登录</el-button>
+            <el-button @click="resetForm('ruleForm')">重置</el-button>
+        </el-form-item>
     </el-form>
-
-    <!-- <router-link class="retrun" :to="{path:'/syspara'}">syspara</router-link> -->
 </div>
 </template>
 
 <script>
-
 import * as user from '@/api/user'
 export default {
     name: 'Login',
@@ -112,10 +102,9 @@ export default {
 
 .demo-ruleForm {
     position: relative;
-    width: 520px;
-    max-width: 100%;
-    padding: 160px 35px 0;
+    width: 25%;
+    padding: 18%;
     margin: 0 auto;
-    overflow: hidden;
+    /* overflow: hidden; */
 }
 </style>
