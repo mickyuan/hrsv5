@@ -8,9 +8,7 @@ import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 
 import fd.ng.core.utils.DateUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
@@ -38,23 +36,10 @@ public class TaskManagerTest {
 	private static TaskManager taskManager;
 	private static List<Etl_job_def> etlJobDefs = new ArrayList<>();
 
-	@BeforeClass
-	public static void before() {
+	@Before
+	public void before() {
 
 		try(DatabaseWrapper db = new DatabaseWrapper()) {
-
-			Etl_sys etlSys = new Etl_sys();
-			etlSys.setEtl_sys_cd(syscode);
-			etlSys.setEtl_sys_name("测试1");
-			etlSys.setEtl_serv_ip("127.0.0.1");
-			etlSys.setEtl_serv_port("8088");
-			etlSys.setUser_id("1001");
-			etlSys.setCurr_bath_date(DateUtil.getDateTime(DateUtil.DATETIME_DEFAULT));
-			etlSys.setBath_shift_time(LocalDate.now().plusDays(1).format(DateUtil.DATE_DEFAULT));
-			etlSys.setSys_run_status(Job_Status.STOP.getCode());
-			etlSys.setUser_name("smk");
-			etlSys.setUser_pwd("q1w2e3");
-			etlSys.add(db);
 
 			for(int i = 0 ; i < 5 ; i++) {
 				//作业定义表
@@ -126,8 +111,8 @@ public class TaskManagerTest {
 		taskManager = new TaskManager(syscode, currBathDate, false, false);
 	}
 
-	@AfterClass
-	public static void after() {
+	@After
+	public void after() {
 
 		try(DatabaseWrapper db = new DatabaseWrapper()) {
 
@@ -143,9 +128,6 @@ public class TaskManagerTest {
 			num = SqlOperator.execute(db, "DELETE FROM etl_job_cur WHERE etl_sys_cd = ? ", syscode);
 			logger.info("清理etl_job_cur表{}条数据", num);
 
-			num = SqlOperator.execute(db, "DELETE FROM etl_sys WHERE etl_sys_cd = ? ", syscode);
-			logger.info("清理etl_sys_rela表{}条数据", num);
-
 			num = SqlOperator.execute(db, "DELETE FROM etl_job_disp_his WHERE etl_sys_cd = ? ", syscode);
 			logger.info("清理etl_job_disp_his表{}条数据", num);
 
@@ -159,6 +141,37 @@ public class TaskManagerTest {
 
 			SqlOperator.commitTransaction(db);
 		}
+	}
+
+	@BeforeClass
+	public static void beforeSomething() {
+
+		try(DatabaseWrapper db = new DatabaseWrapper()) {
+			Etl_sys etlSys = new Etl_sys();
+			etlSys.setEtl_sys_cd(syscode);
+			etlSys.setEtl_sys_name("测试1");
+			etlSys.setEtl_serv_ip("127.0.0.1");
+			etlSys.setEtl_serv_port("8088");
+			etlSys.setUser_id("1001");
+			etlSys.setCurr_bath_date(DateUtil.getDateTime(DateUtil.DATETIME_DEFAULT));
+			etlSys.setBath_shift_time(LocalDate.now().plusDays(1).format(DateUtil.DATE_DEFAULT));
+			etlSys.setSys_run_status(Job_Status.STOP.getCode());
+			etlSys.setUser_name("smk");
+			etlSys.setUser_pwd("q1w2e3");
+			etlSys.add(db);
+			SqlOperator.commitTransaction(db);
+		}
+	}
+
+	@AfterClass
+	public static void finallySomething() {
+
+		try(DatabaseWrapper db = new DatabaseWrapper()) {
+			int num = SqlOperator.execute(db, "DELETE FROM etl_sys WHERE etl_sys_cd = ? ", syscode);
+			SqlOperator.commitTransaction(db);
+			logger.info("清理etl_sys_rela表{}条数据", num);
+		}
+
 		TaskSqlHelper.closeDbConnector();
 	}
 
@@ -301,8 +314,8 @@ public class TaskManagerTest {
 		try(DatabaseWrapper db = new DatabaseWrapper()) {
 
 			for (Etl_job_def etlJobDef : etlJobDefs) {
-				//99是虚作业，虚作业不会存在于调度表
-				if("99".equals(etlJobDef.getEtl_job())) continue;
+				//98是虚作业，虚作业不会存在于调度表
+				if("98".equals(etlJobDef.getEtl_job())) continue;
 
 				long nums = SqlOperator.queryNumber(db,
 						"SELECT count(*) FROM etl_job_disp_his WHERE etl_sys_cd = ? AND etl_job = ?",
@@ -476,6 +489,13 @@ public class TaskManagerTest {
 				etlJobHand.setHand_status(Meddle_status.TRUE.getCode());
 				etlJobHand.setMain_serv_sync(Main_Server_Sync.YES.getCode());
 				etlJobHand.add(db);
+				SqlOperator.commitTransaction(db);
+
+				Thread.sleep(10000);
+				//为了让测试通过，配合作业重跑使用
+				etlJobHand.setEtl_hand_type("JR");
+				etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+				etlJobHand.add(db);
 
 				SqlOperator.commitTransaction(db);
 			} catch (InterruptedException e) {
@@ -565,7 +585,7 @@ public class TaskManagerTest {
 
 				SqlOperator.commitTransaction(db);
 
-				Thread.sleep(300000);
+				Thread.sleep(10000);
 
 				etlJobHand.setEtl_job(handleErrorEtlJob);
 				etlJobHand.setPro_para(syscode + "," + handleErrorEtlJob + "," + currBathDate);
@@ -688,7 +708,7 @@ public class TaskManagerTest {
 
 	@Test
 	public void handleSysDayShift() {
-
+		//TODO 系统干预日切待确认
 		String handleEtlJob = "SysDayShift";
 
 		try(DatabaseWrapper db = new DatabaseWrapper()) {
