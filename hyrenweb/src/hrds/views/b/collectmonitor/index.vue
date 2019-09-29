@@ -1,5 +1,7 @@
 <template>
-    <div></div>
+<div>
+    
+</div>
 </template>
 
 <script>
@@ -10,9 +12,9 @@ export default {
 
         }
     },
-    created : {
+    created() {
         collect.getAgentNumAndSourceNum().then((res) => {
-            
+            console.log(res)
         })
     }
 }

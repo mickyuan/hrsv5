@@ -29,6 +29,10 @@
                         <i class="el-icon-document"></i>
                         <span slot="title">Agent部署</span>
                     </el-menu-item>
+                    <el-menu-item index="/collectmonitor">
+                        <i class="el-icon-document"></i>
+                        <span slot="title">采集监控首页</span>
+                    </el-menu-item>
                 </el-menu>
             </el-aside>
             <el-container>

@@ -14,7 +14,7 @@ export default new Router({
         {
             path: "/home",
             name: 'home',
-            component: () => import('@/components/menu'),
+            component: () => import('@/hrds/components/menu'),
             children: [
                 {
                     path: '/syspara',
@@ -26,7 +26,12 @@ export default new Router({
                     name: 'agentdeploy',
                     component: () => import('@/hrds/views/b/agentdeploy/agentdeploylist')
                 },
-
+                {
+                    path: '/collectmonitor',
+                    name: 'collectmonitor',
+                    title : '采集监控首页',
+                    component: () => import('@/hrds/views/b/collectmonitor')
+                }
             ]
         }
     ]
