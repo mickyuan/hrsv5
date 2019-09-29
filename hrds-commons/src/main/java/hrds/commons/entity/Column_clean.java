@@ -27,11 +27,11 @@ public class Column_clean extends ProjectTableEntity
 	/** 列清洗参数信息 */
 	static {
 		Set<String> __tmpPKS = new HashSet<>();
-		__tmpPKS.add("c_id");
+		__tmpPKS.add("col_clean_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="c_id",value="清洗参数编号",dataType = Long.class,required = true)
-	private Long c_id;
+	@DocBean(name ="col_clean_id",value="清洗参数编号",dataType = Long.class,required = true)
+	private Long col_clean_id;
 	@DocBean(name ="clean_type",value="清洗方式",dataType = String.class,required = true)
 	private String clean_type;
 	@DocBean(name ="character_filling",value="补齐字符",dataType = String.class,required = false)
@@ -56,17 +56,17 @@ public class Column_clean extends ProjectTableEntity
 	private String codesys;
 
 	/** 取得：清洗参数编号 */
-	public Long getC_id(){
-		return c_id;
+	public Long getCol_clean_id(){
+		return col_clean_id;
 	}
 	/** 设置：清洗参数编号 */
-	public void setC_id(Long c_id){
-		this.c_id=c_id;
+	public void setCol_clean_id(Long col_clean_id){
+		this.col_clean_id=col_clean_id;
 	}
 	/** 设置：清洗参数编号 */
-	public void setC_id(String c_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(c_id)){
-			this.c_id=new Long(c_id);
+	public void setCol_clean_id(String col_clean_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(col_clean_id)){
+			this.col_clean_id=new Long(col_clean_id);
 		}
 	}
 	/** 取得：清洗方式 */

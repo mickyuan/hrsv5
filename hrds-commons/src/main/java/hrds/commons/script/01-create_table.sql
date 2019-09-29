@@ -836,7 +836,7 @@ CONSTRAINT TABLE_INFO_PK PRIMARY KEY(TABLE_ID)   );
 --表清洗参数信息
 DROP TABLE IF EXISTS TABLE_CLEAN ;
 CREATE TABLE TABLE_CLEAN(
-C_ID                                              BIGINT default 0 NOT NULL, --清洗参数编号
+TABLE_CLEAN_ID                                    BIGINT default 0 NOT NULL, --清洗参数编号
 CLEAN_TYPE                                        CHAR(1) NOT NULL, --清洗方式
 FILLING_TYPE                                      CHAR(1) NULL, --补齐方式
 CHARACTER_FILLING                                 VARCHAR(512) NULL, --补齐字符
@@ -844,12 +844,12 @@ FILLING_LENGTH                                    DECIMAL(16) default 0 NULL, --
 FIELD                                             VARCHAR(512) NULL, --原字段
 REPLACE_FEILD                                     VARCHAR(512) NULL, --替换字段
 TABLE_ID                                          BIGINT default 0 NOT NULL, --表名ID
-CONSTRAINT TABLE_CLEAN_PK PRIMARY KEY(C_ID)   );
+CONSTRAINT TABLE_CLEAN_PK PRIMARY KEY(TABLE_CLEAN_ID)   );
 
 --列清洗参数信息
 DROP TABLE IF EXISTS COLUMN_CLEAN ;
 CREATE TABLE COLUMN_CLEAN(
-C_ID                                              BIGINT default 0 NOT NULL, --清洗参数编号
+COL_CLEAN_ID                                      BIGINT default 0 NOT NULL, --清洗参数编号
 CONVERT_FORMAT                                    VARCHAR(512) NULL, --转换格式
 OLD_FORMAT                                        VARCHAR(512) NULL, --原始格式
 CLEAN_TYPE                                        CHAR(1) NOT NULL, --清洗方式
@@ -861,7 +861,7 @@ CODESYS                                           VARCHAR(512) NULL, --码值所
 FIELD                                             VARCHAR(512) NULL, --原字段
 REPLACE_FEILD                                     VARCHAR(512) NULL, --替换字段
 COLUMN_ID                                         BIGINT default 0 NOT NULL, --字段ID
-CONSTRAINT COLUMN_CLEAN_PK PRIMARY KEY(C_ID)   );
+CONSTRAINT COLUMN_CLEAN_PK PRIMARY KEY(COL_CLEAN_ID)   );
 
 --Agent下载信息
 DROP TABLE IF EXISTS AGENT_DOWN_INFO ;
@@ -944,7 +944,7 @@ REMARK                                            VARCHAR(512) NULL, --备注
 COL_TYPE                                          VARCHAR(512) NOT NULL, --字段类型
 VALID_S_DATE                                      CHAR(8) NOT NULL, --有效开始日期
 VALID_E_DATE                                      CHAR(8) NOT NULL, --有效结束日期
-C_ID                                              BIGINT default 0 NOT NULL, --清洗参数编号
+COL_CLEAN_ID                                      BIGINT default 0 NOT NULL, --清洗参数编号
 COLUMN_ID                                         BIGINT default 0 NOT NULL, --字段ID
 CONSTRAINT COLUMN_SPLIT_PK PRIMARY KEY(COL_ID)   );
 

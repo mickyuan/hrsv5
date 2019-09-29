@@ -42,8 +42,8 @@ public class Column_split extends ProjectTableEntity
 	private String col_type;
 	@DocBean(name ="remark",value="备注",dataType = String.class,required = false)
 	private String remark;
-	@DocBean(name ="c_id",value="清洗参数编号",dataType = Long.class,required = true)
-	private Long c_id;
+	@DocBean(name ="col_clean_id",value="清洗参数编号",dataType = Long.class,required = true)
+	private Long col_clean_id;
 	@DocBean(name ="column_id",value="字段ID",dataType = Long.class,required = true)
 	private Long column_id;
 	@DocBean(name ="valid_s_date",value="有效开始日期",dataType = String.class,required = true)
@@ -112,17 +112,17 @@ public class Column_split extends ProjectTableEntity
 		this.remark=remark;
 	}
 	/** 取得：清洗参数编号 */
-	public Long getC_id(){
-		return c_id;
+	public Long getCol_clean_id(){
+		return col_clean_id;
 	}
 	/** 设置：清洗参数编号 */
-	public void setC_id(Long c_id){
-		this.c_id=c_id;
+	public void setCol_clean_id(Long col_clean_id){
+		this.col_clean_id=col_clean_id;
 	}
 	/** 设置：清洗参数编号 */
-	public void setC_id(String c_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(c_id)){
-			this.c_id=new Long(c_id);
+	public void setCol_clean_id(String col_clean_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(col_clean_id)){
+			this.col_clean_id=new Long(col_clean_id);
 		}
 	}
 	/** 取得：字段ID */
