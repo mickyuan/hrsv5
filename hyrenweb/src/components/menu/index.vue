@@ -2,17 +2,18 @@
 <div class="home">
     <el-container>
         <el-header>
-            <el-row type="flex">
-                <el-col :span="2">
+            
+            <el-row type="flex" :gutter="20">
+                <el-col :span="3">
                     <span><i class="el-icon-menu"></i>菜单列表</span>
-                </el-col>
+                </el-col> 
                 <!-- <el-col :span="3">
                 <div class="grid-content bg-purple"><span class="link ">
                         <router-link ><i class="el-icon-s-custom">修改密码(未做)</i></router-link>
                     </span></div>
             </el-col> -->
-                <el-col :span="3">
-                    <router-link to="/"><i class="el-icon-s-custom">退出登录</i></router-link>
+                <el-col :span="8" offset="18">
+                    <router-link to="/"><i class="el-icon-s-custom"><a>退出登录</a></i></router-link>
                 </el-col>
             </el-row>
         </el-header>
@@ -34,16 +35,16 @@
                 <el-main>
                     <router-view></router-view>
                 </el-main>
-                <el-footer><span>版权所有：海云数服 Version 5.0</span></el-footer>
+                <!-- <el-footer><span>版权所有：海云数服 Version 5.0</span></el-footer> -->
             </el-container>
         </el-container>
-        <!-- <el-header><span>版权所有：海云数服 Version 5.0</span></el-header> -->
+        <el-header><span>版权所有：海云数服 Version 5.0</span></el-header>
     </el-container>
 </div>
 </template>
 
 <script>
-import menu from '@/api/menu/menu';
+// import menu from '@/api/menu/menu';
 export default {
     data() {
         return {
@@ -55,6 +56,7 @@ export default {
         this.$router.push('syspara');
     }
 }
+
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
@@ -66,12 +68,13 @@ export default {
     text-align: center;
     line-height: 50px;
     color: #fff;
+    
 }
-
-
-.el-main {
-    background-color: #E9EEF3;
-    /* color: rgb(55, 71, 212); */
-    text-align: center;
+.el-menu{
+    height: 100%;
+    /* background-color: #3F51B5; */
+}
+.home .el-header i{
+    color: white;
 }
 </style>
