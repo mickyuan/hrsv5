@@ -30,8 +30,8 @@
         <el-table-column label="操作">
             <template slot-scope="{row, $index}">
                 <el-button size="mini" @click.native="handleUpdate($index, row)" v-if="showBtn[$index]">更新</el-button>
-                <el-button size="mini" @click.native="handleCancel($index, row)" v-if="showBtn[$index]">取消</el-button>
-                <el-button size="mini" type="primary" @click.native="handleEdit($index, row)" v-if="!showBtn[$index]">编辑</el-button>
+                <el-button size="mini" @click.native="handleCancel($index)" v-if="showBtn[$index]">取消</el-button>
+                <el-button size="mini" type="primary" @click.native="handleEdit($index)" v-if="!showBtn[$index]">编辑</el-button>
                 <el-button size="mini" type="danger" @click="handleDelete($index, row)" v-if="!showBtn[$index]">删除</el-button>
             </template>
         </el-table-column>
@@ -74,7 +74,7 @@
 </template>
 
 <script>
-import * as sysPara from "@/api/syspara/syspara";
+import * as sysPara from "@/hrds/api/a/syspara/syspara";
 
 export default {
     name: "Syspara",
@@ -122,13 +122,13 @@ export default {
         });
     },
     methods: {
-        handleEdit(index, row) {
+        handleEdit(index) {
 
             //点击编辑
             this.$set(this.showEdit, index, true);
             this.$set(this.showBtn, index, true);
         },
-        handleCancel(index, row) {
+        handleCancel(index) {
 
             //取消编辑
             this.$set(this.showEdit, index, false);

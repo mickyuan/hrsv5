@@ -16,7 +16,7 @@
 </template>
 
 <script>
-import * as user from '@/api/user'
+import * as user from '@/hrds/api/login/login'
 export default {
     name: 'Login',
     data() {
@@ -38,7 +38,6 @@ export default {
                 callback();
             }
         };
-
         return {
             ruleForm: {
                 username: '',
@@ -69,11 +68,9 @@ export default {
                         if (res.success) {
                             that.$router.push('home');
                         }
-
                     })
                     // user.login(that.ruleForm).then((res) => {
                     // })
-
                 } else {
                     // console.log('error submit!!');
                     return false;
@@ -91,13 +88,12 @@ export default {
 
 <style scoped>
 .login {
-    background: url("../../assets/bg13.jpg") no-repeat;
+    background: url("../../../assets/bg13.jpg") no-repeat;
     background-position: center;
     height: 100%;
     width: 100%;
     background-size: cover;
     position: fixed;
-
 }
 
 .demo-ruleForm {
