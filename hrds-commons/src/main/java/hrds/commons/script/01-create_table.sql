@@ -836,7 +836,7 @@ CONSTRAINT TABLE_INFO_PK PRIMARY KEY(TABLE_ID)   );
 --表清洗参数信息
 DROP TABLE IF EXISTS TABLE_CLEAN ;
 CREATE TABLE TABLE_CLEAN(
-C_ID                                              BIGINT default 0 NOT NULL, --清洗参数编号
+TABLE_CLEAN_ID                                    BIGINT default 0 NOT NULL, --清洗参数编号
 CLEAN_TYPE                                        CHAR(1) NOT NULL, --清洗方式
 FILLING_TYPE                                      CHAR(1) NULL, --补齐方式
 CHARACTER_FILLING                                 VARCHAR(512) NULL, --补齐字符
@@ -844,12 +844,12 @@ FILLING_LENGTH                                    DECIMAL(16) default 0 NULL, --
 FIELD                                             VARCHAR(512) NULL, --原字段
 REPLACE_FEILD                                     VARCHAR(512) NULL, --替换字段
 TABLE_ID                                          BIGINT default 0 NOT NULL, --表名ID
-CONSTRAINT TABLE_CLEAN_PK PRIMARY KEY(C_ID)   );
+CONSTRAINT TABLE_CLEAN_PK PRIMARY KEY(TABLE_CLEAN_ID)   );
 
 --列清洗参数信息
 DROP TABLE IF EXISTS COLUMN_CLEAN ;
 CREATE TABLE COLUMN_CLEAN(
-C_ID                                              BIGINT default 0 NOT NULL, --清洗参数编号
+COL_CLEAN_ID                                      BIGINT default 0 NOT NULL, --清洗参数编号
 CONVERT_FORMAT                                    VARCHAR(512) NULL, --转换格式
 OLD_FORMAT                                        VARCHAR(512) NULL, --原始格式
 CLEAN_TYPE                                        CHAR(1) NOT NULL, --清洗方式
@@ -861,7 +861,7 @@ CODESYS                                           VARCHAR(512) NULL, --码值所
 FIELD                                             VARCHAR(512) NULL, --原字段
 REPLACE_FEILD                                     VARCHAR(512) NULL, --替换字段
 COLUMN_ID                                         BIGINT default 0 NOT NULL, --字段ID
-CONSTRAINT COLUMN_CLEAN_PK PRIMARY KEY(C_ID)   );
+CONSTRAINT COLUMN_CLEAN_PK PRIMARY KEY(COL_CLEAN_ID)   );
 
 --Agent下载信息
 DROP TABLE IF EXISTS AGENT_DOWN_INFO ;
@@ -933,7 +933,7 @@ CONSTRAINT FILE_SOURCE_PK PRIMARY KEY(FILE_SOURCE_ID)   );
 --列拆分信息表
 DROP TABLE IF EXISTS COLUMN_SPLIT ;
 CREATE TABLE COLUMN_SPLIT(
-COL_ID                                            BIGINT default 0 NOT NULL, --字段编号
+COL_SPLIT_ID                                      BIGINT default 0 NOT NULL, --字段编号
 COL_NAME                                          VARCHAR(512) NOT NULL, --字段名称
 COL_OFFSET                                        VARCHAR(512) NULL, --字段偏移量
 SPLIT_SEP                                         VARCHAR(512) NULL, --拆分分隔符
@@ -944,14 +944,14 @@ REMARK                                            VARCHAR(512) NULL, --备注
 COL_TYPE                                          VARCHAR(512) NOT NULL, --字段类型
 VALID_S_DATE                                      CHAR(8) NOT NULL, --有效开始日期
 VALID_E_DATE                                      CHAR(8) NOT NULL, --有效结束日期
-C_ID                                              BIGINT default 0 NOT NULL, --清洗参数编号
+COL_CLEAN_ID                                      BIGINT default 0 NOT NULL, --清洗参数编号
 COLUMN_ID                                         BIGINT default 0 NOT NULL, --字段ID
-CONSTRAINT COLUMN_SPLIT_PK PRIMARY KEY(COL_ID)   );
+CONSTRAINT COLUMN_SPLIT_PK PRIMARY KEY(COL_SPLIT_ID)   );
 
 --列合并信息表
 DROP TABLE IF EXISTS COLUMN_MERGE ;
 CREATE TABLE COLUMN_MERGE(
-COL_ID                                            BIGINT default 0 NOT NULL, --字段编号
+COL_MERGE_ID                                      BIGINT default 0 NOT NULL, --字段编号
 COL_NAME                                          VARCHAR(512) NOT NULL, --合并后字段名称
 OLD_NAME                                          VARCHAR(512) NOT NULL, --要合并的字段
 COL_ZHNAME                                        VARCHAR(512) NULL, --中文名称
@@ -960,7 +960,7 @@ COL_TYPE                                          VARCHAR(512) NOT NULL, --字�
 VALID_S_DATE                                      CHAR(8) NOT NULL, --有效开始日期
 VALID_E_DATE                                      CHAR(8) NOT NULL, --有效结束日期
 TABLE_ID                                          BIGINT default 0 NOT NULL, --表名ID
-CONSTRAINT COLUMN_MERGE_PK PRIMARY KEY(COL_ID)   );
+CONSTRAINT COLUMN_MERGE_PK PRIMARY KEY(COL_MERGE_ID)   );
 
 --对象采集对应信息
 DROP TABLE IF EXISTS OBJECT_COLLECT_TASK ;

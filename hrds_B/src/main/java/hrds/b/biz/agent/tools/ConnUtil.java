@@ -16,8 +16,10 @@ import java.util.Map;
  * @BelongsProject: hrsv5
  * @BelongsPackage: hrds.b.biz.agent.tools
  **/
+
 public class ConnUtil {
 
+	//FIXME getLogger 经常传入错误是参数，所以，使用无参方法吧！
 	private static final Logger logger = LogManager.getLogger(LogReader.class);
 
 	/**
@@ -38,15 +40,17 @@ public class ConnUtil {
 	 *          取值范围 : 不为空，key为jdbcPrefix, jdbcIp, jdbcPort, jdbcBase
 	 *
 	 * */
+	//FIXME 方法名字不贴切
 	public static Map<String, String> getConnURL(String dbType) {
 		//1、构建返回使用Map集合
 		Map<String, String> connURL = new HashMap<>();
 		//2、判断数据库类型，根据数据库类型构建数据库连接信息填写模板并放入Map
+		//FIXME DatabaseType.ofEnumByCode(dbType) 应该拿到外面来。如果getConnURL被反复调用，就会多次查找转换枚举对象了
 		if(DatabaseType.MYSQL == DatabaseType.ofEnumByCode(dbType)){
-			connURL.put("jdbcPrefix", "jdbc:mysql://");
-			connURL.put("jdbcIp", ":");
-			connURL.put("jdbcPort", "/");
-			connURL.put("jdbcBase", "?characterEncoding=utf8&zeroDateTimeBehavior=convertToNull");
+			connURL.put("jdbcPrefix", "jdbc:mysql://"); //FIXME 这是URL，为什么起名为 Prefix
+			connURL.put("jdbcIp", ":");//FIXME 为什么是 :
+			connURL.put("jdbcPort", "/"); //FIXME 为什么是 /
+			connURL.put("jdbcBase", "?characterEncoding=utf8&zeroDateTimeBehavior=convertToNull"); //FIXME urlSufix更准确吧
 		}else if(DatabaseType.Oracle9i == DatabaseType.ofEnumByCode(dbType) ||
 				DatabaseType.Oracle10g == DatabaseType.ofEnumByCode(dbType)){
 			connURL.put("jdbcPrefix", "jdbc:oracle:thin:@");
@@ -104,6 +108,7 @@ public class ConnUtil {
 			throw new AppSystemException("目前不支持对该数据库类型进行采集，请联系管理员");
 		}
 		//3、返回Map集合
+		//FIXME 是不是返回BEAN更好？
 		return connURL;
 	}
 

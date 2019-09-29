@@ -16,6 +16,7 @@ import fd.ng.web.action.ActionResult;
 import hrds.commons.codes.AgentStatus;
 import hrds.commons.codes.AgentType;
 import hrds.commons.codes.IsFlag;
+import hrds.commons.entity.Agent_down_info;
 import hrds.commons.entity.Agent_info;
 import hrds.commons.entity.File_collect_set;
 import hrds.commons.entity.File_source;
@@ -40,7 +41,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 	private static String bodyString;
 	private static ActionResult ar;
-	//向agent_info表初始化数据的条数
+	//向agent_down_info表初始化数据的条数
 	private static final long AGENT_INFO_ROWS = 2L;
 	// 向file_collect_set表中初始化的数据条数
 	private static final long FILE_COLLECT_SET_ROWS = 2L;
@@ -50,15 +51,13 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 	private static final long AGENT_ID = 10000001L;
 	// 文件采集设置表id
 	private static final long FCS_ID = 20000001L;
-	//数据源id
-	private static final long SOURCE_ID = 30000001L;
 	//用户id
 	private static final long USER_ID = 1001L;
 
 	/**
 	 * 为每个方法测试用例初始化参数//FIXME 初始化的数据，要有详细说明，参考王正诚的写法
 	 * <p>
-	 * 1.造agent_info表的数据，添加非结构化采集需要获取Agent所在机器的基本信息
+	 * 1.造agent_down_info表的数据，添加非结构化采集需要获取Agent所在机器的基本信息
 	 * 2.造file_collect_set表数据，初始化条数可调整，默认为2条，fcs_id为20000001和20000002
 	 * 3.造file_source表数据，初始化条数可调整，默认为10条，fcs_id为20000001
 	 */
@@ -67,17 +66,20 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			//1、造agent_info表的数据，初始化数据可调整，默认为2条，agent_id为10000001和10000002
 			for (int i = 0; i < AGENT_INFO_ROWS; i++) {
-				Agent_info agent_info = new Agent_info();
+				Agent_down_info agent_info = new Agent_down_info();
+				agent_info.setDown_id(PrimayKeyGener.getNextId());
 				agent_info.setUser_id(USER_ID);
-				agent_info.setSource_id(SOURCE_ID);
 				agent_info.setAgent_id(AGENT_ID + i);
 				agent_info.setAgent_ip("127.0.0.1");
 				agent_info.setAgent_port(String.valueOf(56000 + i));
-				agent_info.setAgent_status(AgentStatus.YiLianJie.getCode());
 				agent_info.setAgent_type(AgentType.ShuJuKu.getCode());
 				agent_info.setAgent_name("非结构化采集Agent" + i);
-				agent_info.setCreate_date(DateUtil.getSysDate());
-				agent_info.setCreate_time(DateUtil.getSysTime());
+				agent_info.setSave_dir("/aaa/ccc/");
+				agent_info.setLog_dir("/aaa/ccc/log");
+				agent_info.setDeploy(IsFlag.Shi.getCode());
+				agent_info.setAgent_context("/agent");
+				agent_info.setAgent_pattern("/receive/*");
+				agent_info.setRemark("测试用例清除数据专用列");
 				assertThat("初始化数据成功", agent_info.add(db), is(1));
 			}
 			//2、造file_collect_set表数据，初始化条数可调整，默认为2条，fcs_id为20000001和20000002
@@ -193,9 +195,12 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 			assertThat("添加数据成功", count, is(FILE_COLLECT_SET_ROWS + 1));
 			Result result = SqlOperator.queryResult(db, "select * from "
 					+ File_collect_set.TableName + " where fcs_name = ?", "zxzwjcj2");
-			assertThat("添加数据成功", result.getString(0, "system_type"), is("Windows10"));
-			assertThat("添加数据成功", result.getString(0, "host_name"), is("zhuxi11"));
-			assertThat("添加数据成功", result.getString(0, "is_sendok"), is(IsFlag.Fou.getCode()));
+			assertThat("添加数据成功", result.getString(0, "system_type")
+					, is("Windows10"));
+			assertThat("添加数据成功", result.getString(0, "host_name")
+					, is("zhuxi11"));
+			assertThat("添加数据成功", result.getString(0, "is_sendok")
+					, is(IsFlag.Fou.getCode()));
 		}
 
 		//2.添加一条任务名称相同的数据
@@ -264,9 +269,12 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 			assertThat("更新数据成功", count, is(1L));
 			Result result = SqlOperator.queryResult(db, "select * from "
 					+ File_collect_set.TableName + " where fcs_name = ?", "zxzwjcj666");
-			assertThat("更新数据成功", result.getString(0, "system_type"), is("Windows10"));
-			assertThat("更新数据成功", result.getString(0, "host_name"), is("zhuxi11"));
-			assertThat("更新数据成功", result.getString(0, "is_sendok"), is(IsFlag.Fou.getCode()));
+			assertThat("更新数据成功", result.getString(0, "system_type")
+					, is("Windows10"));
+			assertThat("更新数据成功", result.getString(0, "host_name")
+					, is("zhuxi11"));
+			assertThat("更新数据成功", result.getString(0, "is_sendok")
+					, is(IsFlag.Fou.getCode()));
 		}
 
 		//2.更新一条任务名称和其他任务相同的数据
@@ -326,7 +334,8 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 		//验证数据
 		assertThat(ar.getDataForResult().getString(0, "is_office"), is(IsFlag.Shi.getCode()));
 		assertThat(ar.getDataForResult().getString(0, "is_text"), is(IsFlag.Shi.getCode()));
-		assertThat(ar.getDataForResult().getString(0, "file_source_path").contains("/aaa"), is(true));
+		assertThat(ar.getDataForResult().getString(0, "file_source_path").contains("/aaa")
+				, is(true));
 
 		//2.测试使用一个错误的fcs_id查询数据
 		bodyString = new HttpClient()
@@ -515,17 +524,19 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 	/**
 	 * 测试用例清理数据
 	 * <p>
-	 * 1.清理agent_info表中造的数据
+	 * 1.清理agent_down_info表中造的数据
 	 * 2.清理file_collect_set表中造的数据
 	 * 3.清理file_source表中造的数据
 	 */
 	@After
 	public void afterTest() {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			//1.清理agent_info表中造的数据
-			SqlOperator.execute(db, "DELETE FROM " + Agent_info.TableName + " WHERE source_id = ?", SOURCE_ID);
+			//1.清理agent_down_info表中造的数据
+			SqlOperator.execute(db, "DELETE FROM " + Agent_down_info.TableName + " WHERE remark = ?"
+					, "测试用例清除数据专用列");
 			//2.清理file_collect_set表中造的数据
-			SqlOperator.execute(db, "DELETE FROM " + File_collect_set.TableName + " WHERE agent_id = ?", AGENT_ID);
+			SqlOperator.execute(db, "DELETE FROM " + File_collect_set.TableName
+					+ " WHERE agent_id = ?", AGENT_ID);
 			//3.清理file_source表中造的数据
 			SqlOperator.execute(db, "DELETE FROM " + File_source.TableName + " WHERE agent_id = ?", AGENT_ID);
 			SqlOperator.commitTransaction(db);

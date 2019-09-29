@@ -4,18 +4,16 @@ import com.alibaba.fastjson.JSONArray;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
-import fd.ng.netserver.conf.HttpServerConf;
-import fd.ng.netserver.conf.HttpServerConfBean;
 import fd.ng.web.action.ActionResult;
 import fd.ng.web.annotation.RequestBean;
 import fd.ng.web.annotation.RequestParam;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.IsFlag;
-import hrds.commons.entity.Agent_info;
 import hrds.commons.entity.File_collect_set;
 import hrds.commons.entity.File_source;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.utils.AgentActionUtil;
 import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.key.PrimayKeyGener;
 
@@ -32,51 +30,35 @@ public class UnstructuredFileCollectAction extends BaseAction {
 	/**
 	 * 该方法在页面点击添加非结构化文件采集时调用，获取非结构化采集配置页面初始化的值,当为编辑时，则同时返回回显的值
 	 * <p>
-	 * 1.根据前端传过来的agent_id获取agent的ip和端口等基本信息
+	 * 1.根据前端传过来的agent_id获取agent的连接url
 	 * 2.调用远程Agent的后端代码获取采集服务器上的日期、时间、操作系统类型和主机名等基本信息
 	 * 3.文件系统采集ID不为空则获取文件系统设置表信息
 	 *
 	 * @param file_collect_set File_collect_set
 	 *                         含义：文件系统设置表对象，接收页面传过来的参数Agent_id和fcs_id(文件系统采集ID)
 	 *                         取值范围：Agent_id不可为空，fcs_id可为空
-	 * @return com.alibaba.fastjson.JSONObject
+	 * @return Map<String, Object>
 	 * 含义：页面需要的Agent所在服务器的基本信息、文件系统设置表信息
 	 * 取值范围：不会为空
 	 */
-	//FIXME 为什么返回这东西
 	public Map<String, Object> searchFileCollect(@RequestBean File_collect_set file_collect_set) {
 		//TODO file_collect_set里面各字段的值需要校验，应该使用一个公共的校验类进行校验
-		//1.根据前端传过来的agent_id获取agent的ip和端口等基本信息
-		//FIXME 以上两句，可以合并下成如下的一句。至少，省去了一个变量。毕竟，给变量起名字是个很痛苦的事情。
-		//数据可访问权限处理方式：传入用户需要有Agent信息表对应数据的访问权限
-		Agent_info agent_info = Dbo.queryOneObject(Agent_info.class,
-				"SELECT * FROM " + Agent_info.TableName + " WHERE agent_id = ? "
-						+ " AND user_id = ?", file_collect_set.getAgent_id()
-				, getUserId()).orElseThrow(() -> new BusinessException(
-				"根据Agent_id" + file_collect_set.getAgent_id() + "查询不到Agent_info表信息"));
-		//2.调用远程Agent的后端代码获取采集服务器上的日期、时间、操作系统类型和主机名等基本信息
-		//FIXME 为什么用配置文件而不是从DB中获取？难道每部署一个agent，就重启一次服务吗
-		//TODO 这里面获取Agent服务的路径的方式要重新改
-		HttpServerConfBean test = HttpServerConf.getHttpServer("agentServerInfo");
-		String webContext = test.getWebContext();
-		String actionPattern = test.getActionPattern();
-		String url = "http://" + agent_info.getAgent_ip() + ":" + agent_info.getAgent_port() + webContext;
-
-		//调用工具类方法给agent发消息，并获取agent响应
-		ActionResult ar;
-		HttpClient.ResponseValue resVal = new HttpClient().post(url + actionPattern);
-		try {
-			ar = JsonUtil.toObject(resVal.getBodyString(), ActionResult.class);
-			if (!ar.isSuccess()) {
-				throw new BusinessException("连接" + agent_info.getAgent_ip() + "上的Agent失败");
-			}
-		} catch (Exception e) {
-
+		if (file_collect_set.getAgent_id() == null) {
+			throw new BusinessException("agent_id不能为空");
 		}
-
-
+		//数据可访问权限处理方式：传入用户需要有Agent信息表对应数据的访问权限
+		//1.根据前端传过来的agent_id获取agent的连接url
+		String url = AgentActionUtil.getUrl(file_collect_set.getAgent_id(), getUserId()
+				, AgentActionUtil.GETSERVERINFO);
+		//2.调用远程Agent的后端代码获取采集服务器上的日期、时间、操作系统类型和主机名等基本信息
+		//调用工具类方法给agent发消息，并获取agent响应
+		HttpClient.ResponseValue resVal = new HttpClient().post(url);
+		ActionResult ar = JsonUtil.toObjectSafety(resVal.getBodyString(), ActionResult.class)
+				.orElseThrow(() -> new BusinessException("连接" + url + "服务异常"));
+		if (!ar.isSuccess()) {
+			throw new BusinessException("连接" + url + "失败");
+		}
 		Map<String, Object> map = ar.getDataForMap();
-		//返回到前端的信息
 		//3.文件系统采集ID不为空则获取文件系统设置表信息
 		if (file_collect_set.getFcs_id() != null) {
 			File_collect_set file_collect_set_info = Dbo.queryOneObject(File_collect_set.class,
@@ -86,6 +68,7 @@ public class UnstructuredFileCollectAction extends BaseAction {
 							"根据fcs_id" + file_collect_set.getFcs_id() + "查询不到file_collect_set表信息"));
 			map.put("file_collect_set_info", file_collect_set_info);
 		}
+		//返回到前端的信息
 		return map;
 	}
 
@@ -115,8 +98,7 @@ public class UnstructuredFileCollectAction extends BaseAction {
 		} else {
 			//2.保存File_collect_set表
 			file_collect_set.setFcs_id(PrimayKeyGener.getNextId());
-			if (file_collect_set.add(Dbo.db()) != 1)
-				throw new BusinessException("新增数据失败！data=" + file_collect_set);
+			file_collect_set.add(Dbo.db());
 			return file_collect_set.getFcs_id();
 		}
 	}
@@ -147,8 +129,7 @@ public class UnstructuredFileCollectAction extends BaseAction {
 			throw new BusinessException("非结构化任务名称重复");
 		} else {
 			//2.更新File_collect_set表
-			if (file_collect_set.update(Dbo.db()) != 1)
-				throw new BusinessException("更新数据失败！data=" + file_collect_set);
+			file_collect_set.update(Dbo.db());
 		}
 	}
 
@@ -174,7 +155,7 @@ public class UnstructuredFileCollectAction extends BaseAction {
 	/**
 	 * 选择文件夹Agent所在服务器的文件夹
 	 * <p>
-	 * 1.根据前端传过来的agent_id获取agent的ip和端口等基本信息
+	 * 1.根据前端传过来的agent_id获取需要访问的url
 	 * 2.调用远程Agent后端代码获取Agent服务器上文件夹路径
 	 * 3.返回到前端
 	 *
@@ -188,25 +169,19 @@ public class UnstructuredFileCollectAction extends BaseAction {
 	 * 含义：路径下文件夹的名称和服务器操作系统的名称的集合
 	 * 取值范围：可能为空
 	 */
-	//FIXME 使用 nullable
+	//XXX 这里不用nullable是不想下面传参数那里判断null
 	public List<String> selectPath(long agent_id, @RequestParam(valueIfNull = "") String path) {
 		//TODO 根据操作系统校验文件路径，应该使用一个公共的校验类进行校验
 		//数据可访问权限处理方式，传入用户需要有Agent对应数据的访问权限
-		//1.根据前端传过来的agent_id获取agent的ip和端口等基本信息
-		Agent_info agent_info = Dbo.queryOneObject(Agent_info.class, "SELECT * FROM "
-						+ Agent_info.TableName + " WHERE agent_id = ?  AND user_id = ?",
-				agent_id, getUserId()).orElseThrow(() ->
-				new BusinessException("根据Agent_id:" + agent_id + "查询不到Agent_info表信息"));
-		//2.调用远程Agent后端代码获取Agent服务器上文件夹路径
-		HttpServerConfBean test = HttpServerConf.getHttpServer("systemFileInfo");
-		String webContext = test.getWebContext();
-		String actionPattern = test.getActionPattern();
-		String url = "http://" + agent_info.getAgent_ip() + ":" + agent_info.getAgent_port() + webContext;
+		//1.根据前端传过来的agent_id获取需要访问的url
+		String url = AgentActionUtil.getUrl(agent_id, getUserId(), AgentActionUtil.GETSYSTEMFILEINFO);
 		//调用工具类方法给agent发消息，并获取agent响应
+		//2.调用远程Agent后端代码获取Agent服务器上文件夹路径
 		HttpClient.ResponseValue resVal = new HttpClient()
 				.addData("pathVal", path)
-				.post(url + actionPattern);
-		ActionResult ar = JsonUtil.toObject(resVal.getBodyString(), ActionResult.class);
+				.post(url);
+		ActionResult ar = JsonUtil.toObjectSafety(resVal.getBodyString(), ActionResult.class)
+				.orElseThrow(() -> new BusinessException("连接" + url + "服务异常"));
 		if (!ar.isSuccess()) {
 			throw new BusinessException("连接远程Agent获取文件夹失败");
 		}
@@ -259,21 +234,14 @@ public class UnstructuredFileCollectAction extends BaseAction {
 				throw new BusinessException("同一个非结构化采集请不要选择重复的文件路径");
 			} else {
 				file_source.setFile_source_id(PrimayKeyGener.getNextId());
-				if (file_source.add(Dbo.db()) != 1)
-					throw new BusinessException("新增数据失败！data=" + file_source);
+				file_source.add(Dbo.db());
 			}
 		}
 		//FIXME 下面这么多代码，仅仅是为了更新一个字段吗？ 如果是，就要用 update SQL 来做，完全没必要多查询一次数据库
-
 		//4.更新文件系统设置表
-		int num = Dbo.execute("UPDATE " + File_collect_set.TableName + " SET is_sendok = ?"
-				+ " WHERE fcs_id = ? ", IsFlag.Shi.getCode(), fcs_id);
-		if (num != 1) {
-			throw new BusinessException("更新表" + File_collect_set.TableName + "失败");
-		}
-
 		DboExecute.updatesOrThrow("更新表" + File_collect_set.TableName + "失败",
-				"UPDATE .....");
+				"UPDATE " + File_collect_set.TableName + " SET is_sendok = ?"
+						+ " WHERE fcs_id = ? ", IsFlag.Shi.getCode(), fcs_id);
 	}
 
 }

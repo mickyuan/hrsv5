@@ -23,6 +23,16 @@ public class DboExecute {
 	}
 
 	/**
+	 * 更新一条数据。比如：基于主键的更新。
+	 * 出错后的提示信息(默认提示“数据修改失败，修改了0条或多条数据")，抛异常出去。
+	 * @param sql
+	 * @param params
+	 */
+	public static void updatesOrThrowNoMsg(final String sql, Object... params) {
+		updatesOrThrow(1, "数据修改失败，修改了0条或多条数据", sql, params);
+	}
+
+	/**
 	 * 更新多条数据。
 	 * @param expectedUpdateNums 预期被更新的数量
 	 * @param errorMsg 出错后的提示信息，抛异常出去。
@@ -45,6 +55,18 @@ public class DboExecute {
 	}
 
 	/**
+	 * 更新多条数据。
+	 * 出错后的提示信息(默认提示“数据修改失败”)，抛异常出去。
+	 * @param expectedUpdateNums 预期被更新的数量
+	 * @param sql
+	 * @param params
+	 */
+	public static void updatesOrThrowNoMsg(final int expectedUpdateNums,
+	                                  final String sql, Object... params) {
+		updatesOrThrow(expectedUpdateNums, "数据修改失败", sql, params);
+	}
+
+	/**
 	 * 插入一条数据。
 	 * @param errorMsg 出错后的提示信息，抛异常出去。
 	 * @param sql
@@ -64,6 +86,15 @@ public class DboExecute {
 			throw new BusinessException(errorMsg==null?"Too many insert!":errorMsg);
 		}
 	}
+	/**
+	 * 插入一条数据。
+	 * 出错后的提示信息(默认提"数据新增失败，返回数据不等于1")，抛异常出去。
+	 * @param sql
+	 * @param params
+	 */
+	public static void insertsOrThrowNoMsg(final String sql, Object... params) {
+		insertsOrThrow("数据新增失败，返回数据不等于1",sql,params);
+	}
 
 	/**
 	 * 删除一条数据。比如：基于主键的删除。
@@ -74,6 +105,15 @@ public class DboExecute {
 	public static void deletesOrThrow(final String errorMsg,
 	                                  final String sql, Object... params) {
 		deletesOrThrow(1, errorMsg, sql, params);
+	}
+	/**
+	 * 删除一条数据。比如：基于主键的删除。
+	 * 出错后的提示信息(默认提示“数据删除失败，删除了0条或多条数据”)，抛异常出去。
+	 * @param sql
+	 * @param params
+	 */
+	public static void deletesOrThrowNoMsg(final String sql, Object... params) {
+		deletesOrThrow(1, "数据删除失败，删除了0条或多条数据", sql, params);
 	}
 
 	/**
@@ -97,7 +137,17 @@ public class DboExecute {
 			throw new BusinessException(errorMsg==null?"Illegal delete!":errorMsg);
 		}
 	}
-	
+	/**
+	 * 删除一条数据。比如：基于主键的删除。
+	 * 出错后的提示信息(默认提示“数据删除失败”)，抛异常出去。
+	 * @param sql
+	 * @param params
+	 */
+	public static void deletesOrThrowNoMsg(final int expectedDeleteNums,
+	                                  final String sql, Object... params) {
+		deletesOrThrow(expectedDeleteNums, "数据删除失败", sql, params);
+	}
+
 	public static String formatSQL(final String sql, Object... params) {
 		// 这是临时写的，要改成自己的习惯
 		return "SQL=[" + sql + "], Params=" + Arrays.toString(params);

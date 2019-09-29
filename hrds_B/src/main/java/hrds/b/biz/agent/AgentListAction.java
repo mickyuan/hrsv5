@@ -14,6 +14,7 @@ import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.*;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.utils.DboExecute;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -109,7 +110,7 @@ public class AgentListAction extends BaseAction {
 		}
 
 		//3、判断该agent是那种类型，并且根据类型，到对应的数据库表中查询采集任务管理详细信息
-		String sqlStr = null;
+		String sqlStr;
 		//数据库直连采集Agent
 		if (AgentType.ShuJuKu == AgentType.ofEnumByCode(result.getString(0, "agent_type"))) {
 			sqlStr = " SELECT ds.DATABASE_ID ID,ds.task_name task_name,ds.AGENT_ID AGENT_ID," +
@@ -148,7 +149,7 @@ public class AgentListAction extends BaseAction {
 					" LEFT JOIN "+ Agent_info.TableName +" gi ON gi.Agent_id = fs.Agent_id " +
 					" where fs.Agent_id=? and fs.is_sendok = ? ";
 		}
-		else { //FIXME 必须用明确的 == 做判断。最后的 else 应该抛异常。因为你无法知道数据库中的数据是不是合法！已修复
+		else {
 			throw new BusinessException("从数据库中取到的Agent类型不合法");
 		}
 		//5、返回结果
@@ -214,6 +215,7 @@ public class AgentListAction extends BaseAction {
 	public void downloadTaskLog(long agentId, String logType,
 	                            @RequestParam(nullable = true, valueIfNull = "100") int readNum) {
 		OutputStream out = null;
+		//FIXME 改成JDK8的方式：try(OutputStream out = response.getOutputStream())。不用有finally处理了
 		try {
 			//1、对显示日志条数做处理，该方法在加载页面时被调用，readNum可以不传，则默认显示100条，
 			// 如果用户在页面上进行了选择并点击查看按钮，如果用户输入的条目多于1000，则给用户显示3000条
@@ -236,13 +238,12 @@ public class AgentListAction extends BaseAction {
 				// 对firefox浏览器做特殊处理
 				response.setHeader("content-disposition", "attachment;filename=" +
 						new String(downloadFile.getName().getBytes(), CodecUtil.GBK_STRING));
-				//FIXME 为什么用 DataBaseCode？逻辑上不通 已修复
 			} else {
 				response.setHeader("content-disposition", "attachment;filename=" +
 						URLEncoder.encode(downloadFile.getName(), CodecUtil.UTF8_STRING));
 			}
 			response.setContentType("APPLICATION/OCTET-STREAM");
-			out = response.getOutputStream(); //FIXME 异常了无法关闭流！！！！！！！！！ 已修复
+			out = response.getOutputStream();
 			//6、使用response获得输出流，完成文件下载
 			out.write(bytes);
 			out.flush();
@@ -292,19 +293,15 @@ public class AgentListAction extends BaseAction {
 				" join " + Object_collect.TableName + " oc on ai.Agent_id = oc.Agent_id " +
 				" where ds.create_user_id = ? and oc.odc_id = ?", getUserId(),
 				collectSetId).orElseThrow(() -> new BusinessException("查询得到的数据必须有且只有一条"));
-		if(val != 1){ //FIXME 用法不对！已修复
+		if(val != 1){
 			throw new BusinessException("要删除的半结构化文件采集任务不存在");
 		}
 		//数据可访问权限处理方式
 		//该方法首先使用user_id和collectSetId去数据库中查找要删除的数据是否存在
 
 		//2、在对象采集设置表(object_collect)中删除该条数据，有且只有一条
-		int firNum = Dbo.execute("delete from "+ Object_collect.TableName +
-				" where odc_id = ?", collectSetId);
-		if (firNum != 1) {
-			if (firNum == 0) throw new BusinessException(Object_collect.TableName + "表中没有数据被删除!");
-			else throw new BusinessException(Object_collect.TableName + "表删除数据异常!");
-		}
+		DboExecute.deletesOrThrow(Object_collect.TableName + "表删除数据异常!", "delete from "+
+				Object_collect.TableName + " where odc_id = ?",collectSetId );
 	}
 
 	/**
@@ -345,12 +342,9 @@ public class AgentListAction extends BaseAction {
 		//该方法首先使用user_id和collectSetId去数据库中查找要删除的数据是否存在
 
 		//2、在FTP采集设置表(ftp_collect)中删除该条数据，有且只有一条
-		int firNum = Dbo.execute("delete from "+ Ftp_collect.TableName +" where ftp_id = ?"
-				, collectSetId);
-		if (firNum != 1) {
-			if (firNum == 0) throw new BusinessException(Ftp_collect.TableName + "表中没有数据被删除!");
-			else throw new BusinessException(Ftp_collect.TableName + "表删除数据异常!");
-		}
+		//FIXME                    不应该写这样的错误提示。因为这是返给前端让用户看到的，前端不应该知道数据库表名字
+		DboExecute.deletesOrThrow(Ftp_collect.TableName + "表删除数据异常!", "delete from "+
+				Ftp_collect.TableName +" where ftp_id = ?", collectSetId);
 	}
 
 	/**
@@ -381,12 +375,8 @@ public class AgentListAction extends BaseAction {
 		//该方法首先使用user_id和collectSetId去数据库中查找要删除的数据是否存在
 
 		//2、在数据库设置表中删除对应的记录，有且只有一条
-		int firNum = Dbo.execute("delete from database_set where database_id =?"
-				, collectSetId);
-		if (firNum != 1) {
-			if (firNum == 0) throw new BusinessException(Database_set.TableName + "表中没有数据被删除!");
-			else throw new BusinessException(Database_set.TableName + "表删除数据异常!");
-		}
+		DboExecute.deletesOrThrow(Database_set.TableName + "表删除数据异常!", "delete from "+
+				Database_set.TableName +" where database_id = ? ", collectSetId);
 		//3、在表对应字段表中找到对应的记录并删除，可能会有多条
 		int secNum = Dbo.execute("delete from "+ Table_column.TableName +" tc where EXISTS" +
 				"(select 1 from "+ Table_info.TableName +" ti where database_id = ? " +
@@ -430,12 +420,8 @@ public class AgentListAction extends BaseAction {
 		//数据可访问权限处理方式
 		//该方法首先使用user_id和collectSetId去数据库中查找要删除的数据是否存在
 		//2、在数据库设置表删除对应的记录，有且只有一条
-		int firNum = Dbo.execute("delete from "+ Database_set.TableName +" where database_id =?"
-				, collectSetId);
-		if (firNum != 1) {
-			if (firNum == 0) throw new BusinessException(Database_set.TableName + "表中没有数据被删除!");
-			else throw new BusinessException(Database_set.TableName + "表删除数据异常!");
-		}
+		DboExecute.deletesOrThrow(Database_set.TableName + "表删除数据异常!", "delete from "+
+				Database_set.TableName +" where database_id =?", collectSetId);
 	}
 
 	/**
@@ -468,12 +454,9 @@ public class AgentListAction extends BaseAction {
 		//该方法首先使用user_id和collectSetId去数据库中查找要删除的数据是否存在
 
 		//2、在文件系统设置表删除对应的记录，有且只有一条数据
-		int firNum = Dbo.execute("delete  from "+ File_collect_set.TableName +" where fcs_id = ? "
-				, collectSetId);
-		if (firNum != 1) {
-			if (firNum == 0) throw new BusinessException(File_collect_set.TableName+"表中没有数据被删除!");
-			else throw new BusinessException(File_collect_set.TableName + "表删除数据异常!");
-		}
+		//FIXME 下面删除了两次是为什么？
+		DboExecute.deletesOrThrow(File_collect_set.TableName + "表删除数据异常!", "delete  from "+
+						File_collect_set.TableName +" where fcs_id = ? ", collectSetId);
 		//3、在文件源设置表删除对应的记录，可以有多条
 		int secNum = Dbo.execute("delete  from "+ File_source.TableName +" where fcs_id = ?",
 				collectSetId);
@@ -493,7 +476,7 @@ public class AgentListAction extends BaseAction {
 	 *          取值范围：不会为null
 	 *
 	 * */
-	public Result getProjectInfo() {//FIXME 既然是查询数据，为什么用这种对不上号的的名字，已修复
+	public Result getProjectInfo() {
 		//1、根据用户ID在工程登记表(etl_sys)中查询工程代码(etl_sys_cd)和工程名称(etl_sys_name)并返回
 		return Dbo.queryResult("select etl_sys_cd,etl_sys_name from "+ Etl_sys.TableName +
 						" where user_id = ?", getUserId());
@@ -514,7 +497,7 @@ public class AgentListAction extends BaseAction {
 	 *          取值范围：不会为null
 	 *
 	 * */
-	public Result getTaskInfoByTaskId(String taskId) {//FIXME 权限检查呢，已修复
+	public Result getTaskInfoByTaskId(String taskId) {
 		return Dbo.queryResult(" select ess.sub_sys_cd,ess.sub_sys_desc from "+
 				Etl_sub_sys_list.TableName + " ess join "+ Etl_sys.TableName +
 				" es on es.etl_sys_cd = ess.etl_sys_cd" +
@@ -765,7 +748,7 @@ public class AgentListAction extends BaseAction {
 	 * */
 	private Map<String, String> getTaskLog(long agentId, long userId, String logType, int readNum){
 		//1、根据agent_id和user_id获取agent信息
-		Agent_down_info AgentDownInfo = Dbo.queryOneObject(//FIXME 为什么不用实体？已修复
+		Agent_down_info AgentDownInfo = Dbo.queryOneObject(
 				Agent_down_info.class, "select * from "+ Agent_down_info.TableName +
 						" where agent_id = ? and user_id = ?", agentId, userId).orElseThrow(
 								() -> new BusinessException("根据AgentID和userID未能找到Agent下载信息"));
@@ -777,14 +760,14 @@ public class AgentListAction extends BaseAction {
 		String passWord = AgentDownInfo.getPasswd();
 
 		//用户选择查看错误日志
-		if (logType.equals("Wrong")) {//FIXME 这里可以使用File.separator？如果认为只会在Posix的系统上，那么先检查WIN的分隔符并抛异常,已修复
+		if (logType.equals("Wrong")) {
 			logDir = logDir.substring(0, logDir.lastIndexOf(File.separator) + 1) + "error.log";
 		}
 
 		//3、调用方法获取日志,目前工具类不存在
 		String taskLog = LogReader.readAgentLog(logDir, agentIP, agentPort, userName,
 				passWord, readNum);
-		if (StringUtil.isBlank(taskLog)) {//FIXME 详细说明，为什么要设置成这四个字，已修复
+		if (StringUtil.isBlank(taskLog)) {
 			taskLog = "未获取到日志";
 		}
 		//4、将日志信息和日志文件的路径封装成map

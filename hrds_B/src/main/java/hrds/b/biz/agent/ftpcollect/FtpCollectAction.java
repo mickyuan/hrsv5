@@ -59,8 +59,7 @@ public class FtpCollectAction extends BaseAction {
 			ftp_collect.setFtp_id(PrimayKeyGener.getNextId());
 			ftp_collect.setIs_sendok(IsFlag.Shi.getCode());
 			//2.保存ftp采集表对象
-			if (ftp_collect.add(Dbo.db()) != 1)
-				throw new BusinessException("新增数据失败！data=" + ftp_collect);
+			ftp_collect.add(Dbo.db());
 		}
 	}
 
@@ -91,8 +90,7 @@ public class FtpCollectAction extends BaseAction {
 		} else {
 			ftp_collect.setIs_sendok(IsFlag.Shi.getCode());
 			//3.更新ftp采集表对象
-			if (ftp_collect.update(Dbo.db()) != 1)
-				throw new BusinessException("更新数据失败！data=" + ftp_collect);
+			ftp_collect.update(Dbo.db());
 		}
 	}
 }
