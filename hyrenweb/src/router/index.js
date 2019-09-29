@@ -9,7 +9,7 @@ export default new Router({
         {
             path: '/',
             name: 'login',
-            component: () => import('@/views/login/index')
+            component: () => import('@/hrds/views/login/index')
         },
         {
             path: "/home",
@@ -19,13 +19,14 @@ export default new Router({
                 {
                     path: '/syspara',
                     name: 'syspara',
-                    component: () => import('@/views/syspara/index')
+                    component: () => import('@/hrds/views/a/syspara/index')
                 },
                 {
                     path: '/agentdeploy',
                     name: 'agentdeploy',
-                    component: () => import('@/views/agentdeploy/agentdeploylist')
-                }
+                    component: () => import('@/hrds/views/b/agentdeploy/agentdeploylist')
+                },
+
             ]
         }
     ]

@@ -7,27 +7,27 @@
         <el-table-column sortable prop="datasource_name" label="数据源"></el-table-column>
         <el-table-column sortable label="数据库 Agent">
             <template slot-scope="scope">
-                <el-button size="mini" type="primary" @click="deployAgentList(agentTypeData.shujuku, scope.row.source_id,scope.row.datasource_name)">部署</el-button>
+                <el-button size="mini" type="primary" @click="deployAgentList(agentTypeData.shujuku, scope.row)">部署</el-button>
             </template>
         </el-table-column>
         <el-table-column sortable label="数据文件 Agent">
             <template slot-scope="scope">
-                <el-button size="mini" type="primary" @click="deployAgentList(agentTypeData.shujuwenjian, scope.row.source_id,scope.row.datasource_name)">部署</el-button>
+                <el-button size="mini" type="primary" @click="deployAgentList(agentTypeData.shujuwenjian, scope.row)">部署</el-button>
             </template>
         </el-table-column>
         <el-table-column sortable label="非结构化 Agent">
             <template slot-scope="scope">
-                <el-button size="mini" type="primary" @click="deployAgentList(agentTypeData.feijiegouhua, scope.row.source_id,scope.row.datasource_name)">部署</el-button>
+                <el-button size="mini" type="primary" @click="deployAgentList(agentTypeData.feijiegouhua, scope.row)">部署</el-button>
             </template>
         </el-table-column>
         <el-table-column sortable label="半结构化 Agent">
             <template slot-scope="scope">
-                <el-button size="mini" type="primary" @click="deployAgentList(agentTypeData.banjiegouhua, scope.row.source_id,scope.row.datasource_name)">部署</el-button>
+                <el-button size="mini" type="primary" @click="deployAgentList(agentTypeData.banjiegouhua, scope.row)">部署</el-button>
             </template>
         </el-table-column>
         <el-table-column sortable label="Ftp Agent">
             <template slot-scope="scope">
-                <el-button size="mini" type="primary" @click="deployAgentList(agentTypeData.ftp, scope.row.source_id,scope.row.datasource_name)">部署</el-button>
+                <el-button size="mini" type="primary" @click="deployAgentList(agentTypeData.ftp, scope.row)">部署</el-button>
             </template>
         </el-table-column>
         <el-table-column align="right">
@@ -127,7 +127,7 @@
 </template>
 
 <script>
-import * as agentDeploy from '@/api/agentdeploy/agentdeploylist'
+import * as agentDeploy from '@/hrds/api/b/agentdeploy/agentdeploylist'
 
 export default {
     data() {
@@ -155,63 +155,62 @@ export default {
     created() {
         agentDeploy.getCollectData().then((res) => {
             this.sourceData = res.data;
-        }).catch(error => {
-            this.$message({
-                message: "服务器连接异常",
-                type: "error"
-            });
         })
+        // .catch(error => {
+        //     this.$message({
+        //         message: "服务器连接异常",
+        //         type: "error"
+        //     });
+        // })
 
         agentDeploy.getAgentTypeData().then((res) => {
             this.agentTypeData = res.data;
-        }).catch(error => {
-            this.$message({
-                message: "服务器连接异常",
-                type: "error"
-            });
         })
+        // .catch(error => {
+        //     this.$message({
+        //         message: "服务器连接异常",
+        //         type: "error"
+        //     });
+        // })
     },
     methods: {
 
         /**
          * 当前数据源需要部署的Agent列表信息
          * @param agent_type Agent类型
-         * @param source_id 当前行的数据源ID
-         * @param datasource_name 数据源名称
+         * @row 当前行的数据
          */
-        deployAgentList(agent_type, source_id, datasource_name) {
-            this.requestData.agent_type = agent_type;
-            this.requestData.source_id = source_id;
-            this.datasource_name = '数据源名称 : ' + datasource_name;
-            agentDeploy.deployAgentList(this.requestData).then(res => {
-                    this.agentDataList = res.data;
-                    this.outerVisible = true;
-
-                })
-                .catch(error => {
-                    this.$message({
-                        message: "服务器连接异常",
-                        type: "error"
-                    });
-                })
+        deployAgentList(agent_type, row) {
+            this.datasource_name = '数据源名称 : ' + row.datasource_name;
+            row['agent_type'] = agent_type;
+            agentDeploy.deployAgentList(row).then(res => {
+                this.agentDataList = res.data;
+                this.outerVisible = true;
+            })
+            // .catch(error => {
+            //     this.$message({
+            //         message: "服务器连接异常",
+            //         type: "error"
+            //     });
+            // })
         },
         handleEdit(row) {
 
             agentDeploy.handleEdit(row).then(res => {
-                    this.dialogFormVisible = true;
-                    this.agentDeploy = res.data;
-                    if (typeof this.agentDeploy.down_id == 'undefined') {
-                        this.agentDeploy.agent_name = row.agent_name;
-                        this.agentDeploy.agent_ip = row.agent_ip;
-                        this.agentDeploy.agent_port = row.agent_port;
-                    }
-                })
-                .catch(error => {
-                    this.$message({
-                        message: "服务器连接异常",
-                        type: "error"
-                    });
-                })
+                this.dialogFormVisible = true;
+                this.agentDeploy = res.data;
+                if (typeof this.agentDeploy.down_id == 'undefined') {
+                    this.agentDeploy.agent_name = row.agent_name;
+                    this.agentDeploy.agent_ip = row.agent_ip;
+                    this.agentDeploy.agent_port = row.agent_port;
+                }
+            })
+            // .catch(error => {
+            //     this.$message({
+            //         message: "服务器连接异常",
+            //         type: "error"
+            //     });
+            // })
         }
     }
 }

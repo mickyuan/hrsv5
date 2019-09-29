@@ -25,8 +25,7 @@ export function getAgentTypeData() {
 /**
  * 当前数据源需要部署的Agent列表信息
  * @param data.agent_type Agent类型
- * @param data.source_id 当前行的数据源ID
- * @param data.datasource_name 数据源名称
+ * @param data 请求后台的数据
  */
 export function deployAgentList(data) {
     return request({
