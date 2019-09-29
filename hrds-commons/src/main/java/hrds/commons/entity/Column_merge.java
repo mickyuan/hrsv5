@@ -27,11 +27,11 @@ public class Column_merge extends ProjectTableEntity
 	/** 列合并信息表 */
 	static {
 		Set<String> __tmpPKS = new HashSet<>();
-		__tmpPKS.add("col_id");
+		__tmpPKS.add("col_merge_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="col_id",value="字段编号",dataType = Long.class,required = true)
-	private Long col_id;
+	@DocBean(name ="col_merge_id",value="字段编号",dataType = Long.class,required = true)
+	private Long col_merge_id;
 	@DocBean(name ="col_name",value="合并后字段名称",dataType = String.class,required = true)
 	private String col_name;
 	@DocBean(name ="old_name",value="要合并的字段",dataType = String.class,required = true)
@@ -50,17 +50,17 @@ public class Column_merge extends ProjectTableEntity
 	private String valid_e_date;
 
 	/** 取得：字段编号 */
-	public Long getCol_id(){
-		return col_id;
+	public Long getCol_merge_id(){
+		return col_merge_id;
 	}
 	/** 设置：字段编号 */
-	public void setCol_id(Long col_id){
-		this.col_id=col_id;
+	public void setCol_merge_id(Long col_merge_id){
+		this.col_merge_id=col_merge_id;
 	}
 	/** 设置：字段编号 */
-	public void setCol_id(String col_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(col_id)){
-			this.col_id=new Long(col_id);
+	public void setCol_merge_id(String col_merge_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(col_merge_id)){
+			this.col_merge_id=new Long(col_merge_id);
 		}
 	}
 	/** 取得：合并后字段名称 */

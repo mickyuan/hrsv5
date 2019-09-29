@@ -27,11 +27,11 @@ public class Column_split extends ProjectTableEntity
 	/** 列拆分信息表 */
 	static {
 		Set<String> __tmpPKS = new HashSet<>();
-		__tmpPKS.add("col_id");
+		__tmpPKS.add("col_split_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="col_id",value="字段编号",dataType = Long.class,required = true)
-	private Long col_id;
+	@DocBean(name ="col_split_id",value="字段编号",dataType = Long.class,required = true)
+	private Long col_split_id;
 	@DocBean(name ="col_name",value="字段名称",dataType = String.class,required = true)
 	private String col_name;
 	@DocBean(name ="col_offset",value="字段偏移量",dataType = String.class,required = false)
@@ -58,17 +58,17 @@ public class Column_split extends ProjectTableEntity
 	private String split_type;
 
 	/** 取得：字段编号 */
-	public Long getCol_id(){
-		return col_id;
+	public Long getCol_split_id(){
+		return col_split_id;
 	}
 	/** 设置：字段编号 */
-	public void setCol_id(Long col_id){
-		this.col_id=col_id;
+	public void setCol_split_id(Long col_split_id){
+		this.col_split_id=col_split_id;
 	}
 	/** 设置：字段编号 */
-	public void setCol_id(String col_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(col_id)){
-			this.col_id=new Long(col_id);
+	public void setCol_split_id(String col_split_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(col_split_id)){
+			this.col_split_id=new Long(col_split_id);
 		}
 	}
 	/** 取得：字段名称 */

@@ -933,7 +933,7 @@ CONSTRAINT FILE_SOURCE_PK PRIMARY KEY(FILE_SOURCE_ID)   );
 --列拆分信息表
 DROP TABLE IF EXISTS COLUMN_SPLIT ;
 CREATE TABLE COLUMN_SPLIT(
-COL_ID                                            BIGINT default 0 NOT NULL, --字段编号
+COL_SPLIT_ID                                      BIGINT default 0 NOT NULL, --字段编号
 COL_NAME                                          VARCHAR(512) NOT NULL, --字段名称
 COL_OFFSET                                        VARCHAR(512) NULL, --字段偏移量
 SPLIT_SEP                                         VARCHAR(512) NULL, --拆分分隔符
@@ -946,12 +946,12 @@ VALID_S_DATE                                      CHAR(8) NOT NULL, --有效开�
 VALID_E_DATE                                      CHAR(8) NOT NULL, --有效结束日期
 COL_CLEAN_ID                                      BIGINT default 0 NOT NULL, --清洗参数编号
 COLUMN_ID                                         BIGINT default 0 NOT NULL, --字段ID
-CONSTRAINT COLUMN_SPLIT_PK PRIMARY KEY(COL_ID)   );
+CONSTRAINT COLUMN_SPLIT_PK PRIMARY KEY(COL_SPLIT_ID)   );
 
 --列合并信息表
 DROP TABLE IF EXISTS COLUMN_MERGE ;
 CREATE TABLE COLUMN_MERGE(
-COL_ID                                            BIGINT default 0 NOT NULL, --字段编号
+COL_MERGE_ID                                      BIGINT default 0 NOT NULL, --字段编号
 COL_NAME                                          VARCHAR(512) NOT NULL, --合并后字段名称
 OLD_NAME                                          VARCHAR(512) NOT NULL, --要合并的字段
 COL_ZHNAME                                        VARCHAR(512) NULL, --中文名称
@@ -960,7 +960,7 @@ COL_TYPE                                          VARCHAR(512) NOT NULL, --字�
 VALID_S_DATE                                      CHAR(8) NOT NULL, --有效开始日期
 VALID_E_DATE                                      CHAR(8) NOT NULL, --有效结束日期
 TABLE_ID                                          BIGINT default 0 NOT NULL, --表名ID
-CONSTRAINT COLUMN_MERGE_PK PRIMARY KEY(COL_ID)   );
+CONSTRAINT COLUMN_MERGE_PK PRIMARY KEY(COL_MERGE_ID)   );
 
 --对象采集对应信息
 DROP TABLE IF EXISTS OBJECT_COLLECT_TASK ;
