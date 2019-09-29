@@ -94,7 +94,8 @@ public class TaskJobHandleHelper {
 	public void doHandle(List<Etl_job_hand> handles) {
 
 		for(Etl_job_hand handle : handles) {
-
+			logger.info("检测到作业干预，作业名为 {}，干预类型为 {}",
+					handle.getEtl_job(), handle.getEtl_hand_type());
 			switch (handle.getEtl_hand_type()) {
 				case JT:handleRunning(handle);break;    //作业触发
 				case SO:handleSysRerun(handle);break;   //系统重跑
@@ -243,7 +244,7 @@ public class TaskJobHandleHelper {
 				e.printStackTrace();
 			}
 		}
-		//5、暂停调度系统的运行
+		//5、开启调度系统的运行
 		taskManager.openSysPause();
 		//6、更新调度作业干预表，干预完成
 		updateDoneHandle(handle);
@@ -327,7 +328,7 @@ public class TaskJobHandleHelper {
 	 * 用于干预类型为：作业停止JS（JOB_STOP）标识的处理。
 	 * @note    1、检查该次干预的参数是否正确、该作业是否已经登记；
 	 *          2、若干预的作业已经在运行中，则要结束该作业，并更新作业表的作业状态；
-	 *          3、若干预的作业还未运行（挂起和等待中），则更新内存表（map）的作业状态；
+	 *          3、若干预的作业还未运行（挂起和等待中），则更新内存表（map）及数据库的作业状态；
 	 * @author Tiger.Wang
 	 * @date 2019/9/11
 	 * @param handle    Etl_job_hand，表示干预信息
@@ -352,17 +353,16 @@ public class TaskJobHandleHelper {
 			throw new AppSystemException("根据调度系统编号、调度作业标识、当前跑批日期获取调度作业信息失败" + etlSysCd);
 		}
 		//2、若干预的作业已经在运行中，则要结束该作业，并更新作业表的作业状态；
-		if(Job_Status.RUNNING.getCode().equals(etlJob.getJob_disp_status())){
+		if(Job_Status.RUNNING.getCode().equals(etlJob.getJob_disp_status())) {
 			//Running状态job停止，将干预的信息置为Running
 			updateRunningHandle(handle);
-			//关闭作业进程（停止作业）
+			//关闭作业进程（停止作业），TODO 作业（非yarn）若不与trigger在一台机器，是否无法停止
 			if(closeProcessById(etlJob.getJob_process_id(), etlJob.getPro_type())) {
 				updateDoneHandle(handle);
 			}else {
 				handle.setWarning(JOBSTOPERROR);
 				updateErrorHandle(handle);
 			}
-
 			try {
 				do {
 					Thread.sleep(DEFAULT_MILLISECONDS);
@@ -377,7 +377,7 @@ public class TaskJobHandleHelper {
 					etlJob.getEtl_sys_cd(), etlJob.getEtl_job());
 		}else if(Job_Status.PENDING.getCode().equals(etlJob.getJob_disp_status()) ||
 				Job_Status.WAITING.getCode().equals(etlJob.getJob_disp_status())) {
-			//3、若干预的作业还未运行（挂起和等待中），则更新内存表（map）的作业状态；
+			//3、若干预的作业还未运行（挂起和等待中），则更新内存表（map）及数据库的作业状态；
 			taskManager.handleJob2Stop(etlJob.getCurr_bath_date(), handle.getEtl_job());
 			updateDoneHandle(handle);
 		}else {
@@ -412,7 +412,7 @@ public class TaskJobHandleHelper {
 		}catch (AppSystemException e) {
 			handle.setWarning(NOEXITSERROR);
 			updateErrorHandle(handle);
-			throw new AppSystemException("根据调度系统编号、调度作业标识、当前跑批日期获取调度作业信息失败" + etlSysCd);
+			throw new AppSystemException("根据调度系统编号、调度作业标识、当前跑批日期获取调度作业信息失败 " + etlSysCd);
 		}
 		//2、干预作业状态为停止、错误、完成的作业。
 		if(Job_Status.STOP.getCode().equals(etlJob.getJob_disp_status()) ||
@@ -588,7 +588,8 @@ public class TaskJobHandleHelper {
 		}else {
 			if(StringUtil.isEmpty(processId)) return true;
 
-			String cmd = KILL9COMMANDLINE + " " + processId;
+//			String cmd = KILL9COMMANDLINE + " " + processId;
+			String cmd = "taskkill -PID " + processId + " -F";
 			try {
 				Runtime.getRuntime().exec(cmd); //执行命令
 			}
@@ -690,7 +691,7 @@ public class TaskJobHandleHelper {
 
 		etlJobHand.setHand_status(Meddle_status.RUNNING.getCode());
 		etlJobHand.setMain_serv_sync(Main_Server_Sync.YES.getCode());
-		updateHandle(etlJobHand);
+		TaskSqlHelper.updateEtlJobHandle(etlJobHand);
 	}
 
 	/**

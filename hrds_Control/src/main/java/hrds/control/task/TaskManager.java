@@ -264,7 +264,7 @@ public class TaskManager {
 			//4、对等待执行的作业按优先级排序
 			if(jobWaitingList.size() > 1) {
 				//按照优先级排序
-				logger.info("{} 作业等待队列中有带执行的作业，将进行排序", etlSysCd);
+				logger.info("调度系统[{}]的作业等待队列中有待执行的作业，将进行排序", etlSysCd);
 				Collections.sort(jobWaitingList);
 			}
 			//5、判断每个待执行作业是否够资源启动，如果资源足够则登记到redis，否则提示作业优先度并继续等待
@@ -359,7 +359,7 @@ public class TaskManager {
 						}
 
 						bathDateStr = TaskJobHelper.getNextBathDate(bathDateStr);
-						logger.info("所有要执行的任务都为done，批量结束 {}，进行自动日切", bathDateStr);
+						logger.info("所有要执行的任务都已结束，下一批量日期 {}", bathDateStr);
 						//TODO 此处较原版改动：原版这里为break，意味着当前调度进行自动日切。此处改为return，意味着外层
 						// 需要判断该返回值，再进行初始化下一批次作业的操作
 						sysDateShiftFlag = true;
@@ -581,6 +581,10 @@ public class TaskManager {
 				job.setLog_dic(TaskJobHelper.transformDirOrName(currBathDate, job.getLog_dic()));//替换作业日志目录
 				job.setPro_name(TaskJobHelper.transformDirOrName(currBathDate, job.getPro_name()));//替换作业程序名称
 				job.setPro_para(TaskJobHelper.transformProgramPara(currBathDate, job.getPro_para()));//替换作业程序参数
+				//TODO 此处较原版改动：原版该行代码在TaskSqlHelper.insertIntoJobTable(etlJob);之后，现移动至此，
+				// 因为之后的job变量设置属性无意义，该变量之后没有使用，也未更新内存Map，
+				// 也会导致updateEtlJobToPending方法的SQL无效。
+				job.setToday_disp(Today_Dispatch_Flag.YES.getCode());
 				//TODO 此处按照原版写，原版没有在这写逻辑
 				if(frequancyFlag && Dispatch_Frequency.PinLv.getCode().equals(strDispFreq)) {
 
@@ -593,7 +597,6 @@ public class TaskManager {
 					}
 					TaskSqlHelper.insertIntoJobTable(etlJob);
 				}
-				job.setToday_disp(Today_Dispatch_Flag.YES.getCode());
 				//计算调度作业的下一批次作业日期
 				executeJob.setStrNextDate(TaskJobHelper.getNextExecuteDate(bathDateStr, strDispFreq));
 				//FIXME
@@ -710,7 +713,7 @@ public class TaskManager {
 						job.setExecuteTime(zclong);
 						job.setDependencyFlag(false);
 					}else {
-						//定时T+1触发
+						//定时T+1触发，TODO 注意如果没有填disptime则今天执行，这个逻辑是否正确
 						String strDispTime = jobTimeDependencyMap.get(strJobName);
 						if (null == strDispTime) {
 							job.setExecuteTime(
@@ -1188,7 +1191,6 @@ public class TaskManager {
 	 */
 	private void updateFinishedJob(String jobName, String currBathDate) {
 		//1、检查该作业是否存在于数据库中以及内存map中；
-		Etl_job_cur jobInfo = TaskSqlHelper.getEtlJob(etlSysCd, jobName, currBathDate);
 		if(!jobExecuteMap.containsKey(currBathDate)) {
 			throw new AppSystemException("无法在数据库中找到作业" + jobName);
 		}
@@ -1211,10 +1213,10 @@ public class TaskManager {
 			increaseResource(jobName);
 		}
 		//3、更新内存Map（jobExecuteMap）中作业的作业状态，将作业的状态设为现在的作业状态
+		Etl_job_cur jobInfo = TaskSqlHelper.getEtlJob(etlSysCd, jobName, currBathDate);
 		String jobStatus = jobInfo.getJob_disp_status();
-		logger.info("{} {} 作业完成！作业状态为 {}", jobName, currBathDate, jobStatus);
 		exeJobInfo.setJob_disp_status(jobStatus);
-
+		logger.info("{} 作业完成，跑批日期为 {} 作业状态为 {}", jobName, currBathDate, jobStatus);
 		//依赖作业已经完成个数、依赖作业标志、作业状态
 		if(Job_Status.DONE.getCode().equals(jobStatus)) {
 //			List<EtlJobBean> etlJobs2Update = new ArrayList<>();
@@ -1279,7 +1281,6 @@ public class TaskManager {
 //			if(etlJobs2Update.size() > 0) {
 //				TaskSqlHelper.updateEtlJobDispStatus(Job_Status.WAITING.getCode(), etlSysCd, etlJobs2Update);
 //			}
-
 			//5、若当前作业是完成状态，则根据该作业的下一批次执行时间设置此作业
 			//TODO 此处不太理解：jobExecuteMap中始终不会存'NextDate'的数据，
 			// 因为不管是否日切，每次程序运行时都会重新设置该值，而jobExecuteMap不会以该值作为key
@@ -1373,8 +1374,7 @@ public class TaskManager {
 	 */
 	private void checkTimeDependencyJob() {
 
-		long time = System.currentTimeMillis();
-		logger.info("CurrentTime={}", time);
+		logger.info("当前时间为 {}", LocalDateTime.now().format(DateUtil.DATETIME_ZHCN));
 		for(Map<String, EtlJobBean> jobMap : jobExecuteMap.values()) {
 			for(EtlJobBean exeJob : jobMap.values()) {
 				/*
@@ -1400,7 +1400,7 @@ public class TaskManager {
 					//判断作业触发时间是否为0l,不为0表示定时触发
 					else if(exeJob.getExecuteTime() != 0L) {
 						//定时触发,判断作业调度时间是否已经达到
-						if (exeJob.getExecuteTime() > time) {
+						if (exeJob.getExecuteTime() > System.currentTimeMillis()) {
 							//作业调度时间未到,作业状态不能置为Waiting
 							continue;
 						}
@@ -1941,6 +1941,7 @@ public class TaskManager {
 		String localDateTime = DateUtil.getDateTime(DateUtil.DATETIME_DEFAULT);
 
 		Etl_job_hand etlJobHand = new Etl_job_hand();
+		etlJobHand.setEtl_sys_cd(etlSysCd);
 		etlJobHand.setHand_status(Meddle_status.TRUE.getCode());
 		etlJobHand.setMain_serv_sync(Main_Server_Sync.YES.getCode());
 		etlJobHand.setEtl_hand_type(Meddle_type.JOB_RERUN.getCode());

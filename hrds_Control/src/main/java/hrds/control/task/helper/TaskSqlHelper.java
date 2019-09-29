@@ -350,7 +350,7 @@ public class TaskSqlHelper {
 	}
 
 	/**
-	 * 在etl_job表中新增一条数据。
+	 * 在etl_job_cur表中新增一条数据。
 	 * @author Tiger.Wang
 	 * @date 2019/9/4
 	 * @param job	Etl_job对象，对应etl_job表
@@ -359,9 +359,7 @@ public class TaskSqlHelper {
 
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
 
-		if(job.add(db) != 1) {
-			throw new AppSystemException("在etl_job表中新增一条数据失败" + job.getEtl_job());
-		}
+		job.add(db);
 
 		SqlOperator.commitTransaction(db);
 	}
@@ -808,11 +806,11 @@ public class TaskSqlHelper {
 		int num = SqlOperator.execute(db, "UPDATE etl_job_hand SET hand_status = ?, main_serv_sync = ?, " +
 				"end_time = ?, warning = ? WHERE etl_sys_cd = ? AND etl_job = ? AND etl_hand_type = ?",
 				etlJobHand.getHand_status(), etlJobHand.getMain_serv_sync(), etlJobHand.getEnd_time(),
-				etlJobHand.getWarning(), etlJobHand.getEtl_sys_cd(), etlJobHand.getEtl_hand_type(),
-				etlJobHand.getEtl_job());
+				etlJobHand.getWarning(), etlJobHand.getEtl_sys_cd(),
+				etlJobHand.getEtl_job(), etlJobHand.getEtl_hand_type());
 
 		if(num < 1) {
-			throw new AppSystemException("修改调度作业干预表（etl_job_hand）失败" + etlJobHand.getEtl_job());
+			throw new AppSystemException("修改调度作业干预表（etl_job_hand）失败 " + etlJobHand.getEtl_job());
 		}
 
 		SqlOperator.commitTransaction(db);
@@ -828,9 +826,7 @@ public class TaskSqlHelper {
 
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
 
-		if(etlJobHandHis.add(db) != 1) {
-			throw new AppSystemException("新增干预历史（etl_job_hand_his）失败" + etlJobHandHis.getEtl_job());
-		}
+		etlJobHandHis.add(db);
 
 		SqlOperator.commitTransaction(db);
 	}
@@ -893,7 +889,7 @@ public class TaskSqlHelper {
 
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
 
-		int num = SqlOperator.execute(db, "UPDATE etl_job_cur SET job_disp_status = ?, main_serv_sync = ? " +
+		int num = SqlOperator.execute(db, "UPDATE etl_job_cur SET job_disp_status = ?, main_serv_sync = ?, " +
 				"job_priority_curr = job_priority WHERE etl_sys_cd = ? AND today_disp = ?",
 				Job_Status.PENDING.getCode(), Main_Server_Sync.YES.getCode(), etlSysCd,
 				Today_Dispatch_Flag.YES.getCode());
@@ -916,7 +912,7 @@ public class TaskSqlHelper {
 
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
 
-		SqlOperator.execute(db, "UPDATE etl_job_cur SET job_disp_status = ?, main_serv_sync = ? " +
+		SqlOperator.execute(db, "UPDATE etl_job_cur SET job_disp_status = ?, main_serv_sync = ?, " +
 						"job_priority_curr = job_priority WHERE (job_disp_status = ? OR job_disp_status = ?) " +
 						"AND etl_sys_cd = ?", jobStatus, Main_Server_Sync.YES.getCode(),
 				Job_Status.STOP.getCode(), Job_Status.ERROR.getCode(), etlSysCd);
@@ -962,9 +958,7 @@ public class TaskSqlHelper {
 
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
 
-		if(jobHand.add(db) != 1) {
-			throw new AppSystemException("在etl_job_hand表中新增一条数据失败" + jobHand.getEtl_job());
-		}
+		jobHand.add(db);
 
 		SqlOperator.commitTransaction(db);
 	}
@@ -980,9 +974,7 @@ public class TaskSqlHelper {
 
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
 
-		if(etlJobDispHis.add(db) != 1) {
-			throw new AppSystemException("在etl_job_disp_his表中新增一条数据失败" + etlJobDispHis.getEtl_job());
-		}
+		etlJobDispHis.add(db);
 
 		SqlOperator.commitTransaction(db);
 	}
