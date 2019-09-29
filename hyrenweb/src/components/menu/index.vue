@@ -4,7 +4,7 @@
         <el-header>
             
             <el-row type="flex" :gutter="20">
-                <el-col :span="3">
+                <el-col :span="2">
                     <span><i class="el-icon-menu"></i>菜单列表</span>
                 </el-col> 
                 <!-- <el-col :span="3">
@@ -12,7 +12,7 @@
                         <router-link ><i class="el-icon-s-custom">修改密码(未做)</i></router-link>
                     </span></div>
             </el-col> -->
-                <el-col :span="8" offset="18">
+                <el-col :span="3" :offset="18">
                     <router-link to="/"><i class="el-icon-s-custom"><a>退出登录</a></i></router-link>
                 </el-col>
             </el-row>
