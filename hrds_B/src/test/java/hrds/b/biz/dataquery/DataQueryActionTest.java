@@ -4,7 +4,6 @@ import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
-import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import hrds.commons.codes.AgentType;
@@ -18,7 +17,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -66,8 +64,12 @@ public class DataQueryActionTest extends WebBaseTestCase {
 	 * 6.初始化 Data_auth 数据
 	 * 7.初始化 Search_info 数据
 	 * 8.初始化 User_fav 数据
-	 * 9.提交所有数据库执行操作
+	 * 9.初始化 Sys_user 数据
+	 * 10.初始化 Department_info 数据
+	 * 11.提交所有数据库执行操作
+	 * 12.根据初始化的 Sys_user 用户模拟登陆
 	 * 测试数据:
+	 * <p>
 	 * 1.data_source表中有1条数据 source_id:5000000000 create_user_id:5000
 	 * 2.Source_relation_dep表中有1条数据 dep_id:5000000000 source_id:5000000000
 	 * 3.Agent_info表中有5条数据 agent_id:5000000001-5000000005 agent_type:1-5 source_id:5000000000
@@ -79,6 +81,8 @@ public class DataQueryActionTest extends WebBaseTestCase {
 	 * dep_id:5000000000 agent_id:5000000002 source_id:5000000000 collect_set_id:5000000000
 	 * 7.Search_info表中有1条数据 si_id:5000000000 file_id:999999999999999999999999
 	 * 8.User_fav表中有1条数据 fav_id:5000000000 file_id:999999999999999999999999 user_id:5000
+	 * 9.
+	 * 10.
 	 */
 	@BeforeClass
 	public static void before() {
@@ -239,8 +243,43 @@ public class DataQueryActionTest extends WebBaseTestCase {
 				throw new BusinessException("初始化 User_fav 表数据失败," +
 						"fav_id=" + userFav.getFav_id());
 			}
-			//9.提交所有数据库执行操作
+			//9.初始化 Sys_user 数据
+			Sys_user sysUser = new Sys_user();
+			sysUser.setUser_id(USER_ID);
+			sysUser.setCreate_id(1000L);
+			sysUser.setDep_id(DEP_ID);
+			sysUser.setRole_id(1001L);
+			sysUser.setUser_name("init-hll");
+			sysUser.setUser_password("111111");
+			sysUser.setUseris_admin("0");
+			sysUser.setUser_state("0");
+			sysUser.setCreate_date(DateUtil.getSysDate());
+			sysUser.setToken("0");
+			sysUser.setValid_time(DateUtil.getSysTime());
+			if ((sysUser.add(db) != 1)) {
+				throw new BusinessException("初始化 Sys_user 表数据失败," +
+						"user_id=" + sysUser.getUser_id());
+			}
+			//10.初始化 Department_info 数据
+			Department_info departmentInfo = new Department_info();
+			departmentInfo.setDep_id(DEP_ID);
+			departmentInfo.setDep_name("init-hll");
+			departmentInfo.setCreate_date(DateUtil.getSysDate());
+			departmentInfo.setCreate_time(DateUtil.getSysTime());
+			if ((departmentInfo.add(db) != 1)) {
+				throw new BusinessException("初始化 Department_info 表数据失败," +
+						"dep_id=" + departmentInfo.getDep_id());
+			}
+
+			//11.提交所有数据库执行操作
 			SqlOperator.commitTransaction(db);
+			//12.根据初始化的 Sys_user 用户模拟登陆
+			bodyString = new HttpClient()
+					.addData("username", USER_ID)
+					.addData("password", "111111")
+					.post("http://127.0.0.1:8099/A/action/hrds/a/biz/login/login").getBodyString();
+			ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
+			assertThat(ar.isSuccess(), is(true));
 		}
 	}
 
@@ -335,12 +374,30 @@ public class DataQueryActionTest extends WebBaseTestCase {
 			SqlOperator.commitTransaction(db);
 			// 测试完成后删除 User_fav 表中生成的废数据
 			SqlOperator.execute(db,
-					"delete from " + User_fav.TableName + " where file_id=?", FILE_ID);
+					"delete from " + User_fav.TableName + " where file_id=?", FILE_ID + 0);
 			SqlOperator.commitTransaction(db);
 			long ufDataNum = SqlOperator.queryNumber(db,
 					"select count(1) from " + User_fav.TableName + " where fav_id=?", FAV_ID
 			).orElseThrow(() -> new RuntimeException("count fail!"));
 			assertThat("User_fav 表此条数据删除后,记录数应该为0", ufDataNum, is(0L));
+			//9.删除 Sys_user 表测试数据
+			SqlOperator.execute(db,
+					"delete from " + Sys_user.TableName + " where user_id=?", USER_ID);
+			SqlOperator.commitTransaction(db);
+			long suNum = SqlOperator.queryNumber(db,
+					"select count(1) from " + Sys_user.TableName + " where user_id =?",
+					USER_ID
+			).orElseThrow(() -> new RuntimeException("count fail!"));
+			assertThat("sys_user 表此条数据删除后,记录数应该为0", suNum, is(0L));
+			//10.删除 Department_info 表测试数据
+			SqlOperator.execute(db,
+					"delete from " + Department_info.TableName + " where dep_id=?", DEP_ID);
+			SqlOperator.commitTransaction(db);
+			long depNum = SqlOperator.queryNumber(db,
+					"select count(1) from " + Department_info.TableName + " where dep_id =?",
+					DEP_ID
+			).orElseThrow(() -> new RuntimeException("count fail!"));
+			assertThat("department_info 表此条数据删除后,记录数应该为0", depNum, is(0L));
 		}
 	}
 
@@ -358,7 +415,7 @@ public class DataQueryActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("depId", DEP_ID)
 				.post(getActionUrl("getFileDataSource")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
 		assertThat(ar.isSuccess(), is(true));
 		for (int i = 0; i < ar.getDataForResult().getRowCount(); i++) {
 			assertThat(ar.getDataForResult().getString(i, "datasource_name"), is("init-hll"));
@@ -368,7 +425,7 @@ public class DataQueryActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("depId", -5000000000L)
 				.post(getActionUrl("getFileDataSource")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
 		assertThat(ar.isSuccess(), is(true));
 		assertThat(ar.getDataForResult().getRowCount(), is(0));
 	}
@@ -387,7 +444,7 @@ public class DataQueryActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("sourceId", SOURCE_ID)
 				.post(getActionUrl("getFileCollectionTask")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
 		assertThat(ar.isSuccess(), is(true));
 		for (int i = 0; i < ar.getDataForResult().getRowCount(); i++) {
 			assertThat(ar.getDataForResult().getString(i, "agent_id"), is("5000000002"));
@@ -403,7 +460,7 @@ public class DataQueryActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("sourceId", -5000000000L)
 				.post(getActionUrl("getFileCollectionTask")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
 		assertThat(ar.isSuccess(), is(true));
 		assertThat(ar.getDataForResult().getRowCount(), is(0));
 	}
@@ -432,7 +489,7 @@ public class DataQueryActionTest extends WebBaseTestCase {
 				.addData("fileName", "-init-hll")
 				.addData("queryKeyword", "-init-hll")
 				.post(getActionUrl("downloadFile")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
 		assertThat(ar.isSuccess(), is(false));
 	}
 
@@ -452,7 +509,7 @@ public class DataQueryActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("queryNum", "8")
 				.post(getActionUrl("getCollectFile")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
 		assertThat(ar.isSuccess(), is(true));
 		for (int i = 0; i < ar.getDataForResult().getRowCount(); i++) {
 			assertThat(ar.getDataForResult().getString(i, "fav_id"), is("5000000000"));
@@ -464,7 +521,7 @@ public class DataQueryActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("queryNum", "-1")
 				.post(getActionUrl("getCollectFile")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
 		assertThat(ar.isSuccess(), is(true));
 		for (int i = 0; i < ar.getDataForResult().getRowCount(); i++) {
 			assertThat(ar.getDataForResult().getString(i, "fav_id"), is("5000000000"));
@@ -476,7 +533,7 @@ public class DataQueryActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("queryNum", "1000")
 				.post(getActionUrl("getCollectFile")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
 		assertThat(ar.isSuccess(), is(true));
 		for (int i = 0; i < ar.getDataForResult().getRowCount(); i++) {
 			assertThat(ar.getDataForResult().getString(i, "fav_id"), is("5000000000"));
@@ -488,7 +545,7 @@ public class DataQueryActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("queryNum", "init-hll8")
 				.post(getActionUrl("getCollectFile")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
 		assertThat(ar.isSuccess(), is(false));
 	}
 
@@ -504,15 +561,15 @@ public class DataQueryActionTest extends WebBaseTestCase {
 	public void saveFavoriteFile() {
 		//1-1.待收藏的文件id存在
 		bodyString = new HttpClient()
-				.addData("fileId", FILE_ID)
+				.addData("fileId", FILE_ID + 0)
 				.post(getActionUrl("saveFavoriteFile")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
 		assertThat(ar.isSuccess(), is(true));
 		//2-1.待收藏的文件id不存在 fileId="-999999999999999999999999"
 		bodyString = new HttpClient()
 				.addData("fileId", "-" + FILE_ID)
 				.post(getActionUrl("saveFavoriteFile")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
 		assertThat(ar.isSuccess(), is(false));
 	}
 
@@ -530,13 +587,13 @@ public class DataQueryActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("favId", FAV_ID)
 				.post(getActionUrl("cancelFavoriteFile")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
 		assertThat(ar.isSuccess(), is(true));
 		//2-1.已经收藏的收藏id不存在
 		bodyString = new HttpClient()
 				.addData("favId", "-" + FAV_ID)
 				.post(getActionUrl("cancelFavoriteFile")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
 		assertThat(ar.isSuccess(), is(false));
 	}
 
@@ -553,7 +610,7 @@ public class DataQueryActionTest extends WebBaseTestCase {
 		//1-1.正确数据访问结果
 		bodyString = new HttpClient()
 				.post(getActionUrl("getFileClassifySum")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
 		assertThat(ar.isSuccess(), is(true));
 		//1-2.正确数据访问结果校验
 		assertThat(ar.getDataForMap().get(FileType.WenDang.getValue()), is(1));
@@ -576,7 +633,7 @@ public class DataQueryActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("queryDays", 5)
 				.post(getActionUrl("getSevenDayCollectFileSum")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
 		assertThat(ar.isSuccess(), is(true));
 		assertThat(ar.getDataForMap().get("20190901"), is(1));
 		assertThat(ar.getDataForMap().get("20190902"), is(1));
@@ -587,7 +644,7 @@ public class DataQueryActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("queryDays", -1)
 				.post(getActionUrl("getSevenDayCollectFileSum")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
 		assertThat(ar.isSuccess(), is(true));
 		assertThat(ar.getDataForMap().get("20190901"), is(1));
 		assertThat(ar.getDataForMap().get("20190902"), is(1));
@@ -598,7 +655,7 @@ public class DataQueryActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("queryDays", 31)
 				.post(getActionUrl("getSevenDayCollectFileSum")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
 		assertThat(ar.isSuccess(), is(true));
 		assertThat(ar.getDataForMap().get("20190901"), is(1));
 		assertThat(ar.getDataForMap().get("20190902"), is(1));
@@ -609,7 +666,7 @@ public class DataQueryActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("queryDays", "init-hll")
 				.post(getActionUrl("getSevenDayCollectFileSum")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
 		assertThat(ar.isSuccess(), is(false));
 	}
 
@@ -630,38 +687,79 @@ public class DataQueryActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("timesRecently", 5)
 				.post(getActionUrl("getLast3FileCollections")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
 		assertThat(ar.isSuccess(), is(true));
 		for (int i = 0; i < ar.getDataForResult().getRowCount(); i++) {
-			assertThat(ar.getDataForResult().getString(i,"collectName"), is("init-hll"));
-			assertThat(ar.getDataForResult().getInt(i,"collectSum"), is(1));
+			assertThat(ar.getDataForResult().getString(i, "collectName"), is("init-hll"));
+			assertThat(ar.getDataForResult().getInt(i, "collectSum"), is(1));
 
 		}
 		//1-2.int类型值的 timesRecently 小于1 的整数，取默认的查询次数3
 		bodyString = new HttpClient()
 				.addData("timesRecently", -1)
 				.post(getActionUrl("getLast3FileCollections")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
 		assertThat(ar.isSuccess(), is(true));
 		for (int i = 0; i < ar.getDataForResult().getRowCount(); i++) {
-			assertThat(ar.getDataForResult().getString(i,"collectName"), is("init-hll"));
-			assertThat(ar.getDataForResult().getInt(i,"collectSum"), is(1));
+			assertThat(ar.getDataForResult().getString(i, "collectName"), is("init-hll"));
+			assertThat(ar.getDataForResult().getInt(i, "collectSum"), is(1));
 		}
 		//1-3.int类型值的 timesRecently 大于30 的整数，取最大显示次数30
 		bodyString = new HttpClient()
 				.addData("timesRecently", 31)
 				.post(getActionUrl("getLast3FileCollections")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
 		assertThat(ar.isSuccess(), is(true));
 		for (int i = 0; i < ar.getDataForResult().getRowCount(); i++) {
-			assertThat(ar.getDataForResult().getString(i,"collectName"), is("init-hll"));
-			assertThat(ar.getDataForResult().getInt(i,"collectSum"), is(1));
+			assertThat(ar.getDataForResult().getString(i, "collectName"), is("init-hll"));
+			assertThat(ar.getDataForResult().getInt(i, "collectSum"), is(1));
 		}
 		//2-1.非int类型值的 timesRecently
 		bodyString = new HttpClient()
 				.addData("timesRecently", "init-hll")
 				.post(getActionUrl("getLast3FileCollections")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
 		assertThat(ar.isSuccess(), is(false));
+	}
+
+	/**
+	 * <p>方法名: conditionalQuery</p>
+	 * <p>方法说明: 根据指定条件查询</p>
+	 * 1.正确数据访问:
+	 * 1-1.无条件查询
+	 * 1-2.数据源id查询
+	 * 1-3.数据源id和任务id查询
+	 * 1-4.数据源id和开始时间查询
+	 * 1-5.数据源id和结束时间查询
+	 * 1-6.数据源id，任务id和开始时间查询
+	 * 1-7.数据源id，任务id和结束时间查询
+	 * 1-8.数据源id，任务id，开始时间和结束时间查询
+	 * 2.错误数据访问:
+	 * 2-1.
+	 */
+	@Test
+	public void conditionalQuery() {
+		//1-1.无条件查询
+		bodyString = new HttpClient()
+				.post(getActionUrl("conditionalQuery")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
+		assertThat(ar.isSuccess(), is(true));
+		for (int i = 0; i < ar.getDataForResult().getRowCount(); i++) {
+			assertThat(ar.getDataForResult().getString(i, "storage_date"), is("20190905"));
+			assertThat(ar.getDataForResult().getLong(i, "agent_id"), is(5000000002L));
+			assertThat(ar.getDataForResult().getString(i, "collect_type"), is("2"));
+			assertThat(ar.getDataForResult().getString(i, "file_type"), is("1003"));
+			assertThat(ar.getDataForResult().getString(i, "file_id"), is("9999999999999999999999994"));
+			assertThat(ar.getDataForResult().getString(i, "source_id"), is("5000000000"));
+		}
+		//1-2.根据数据源id查询
+		bodyString = new HttpClient()
+				.addData("sourceId", SOURCE_ID)
+				.post(getActionUrl("conditionalQuery")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
+		assertThat(ar.isSuccess(), is(true));
+		for (int i = 0; i < ar.getDataForResult().getRowCount(); i++) {
+			assertThat(ar.getDataForResult().getString(i, "a"), is("a"));
+		}
 	}
 }
