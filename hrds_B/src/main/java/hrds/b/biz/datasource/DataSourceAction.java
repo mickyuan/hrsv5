@@ -7,12 +7,11 @@ import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.annotation.RequestBean;
-import fd.ng.web.annotation.RequestParam;
-import fd.ng.web.annotation.UploadFile;
 import fd.ng.web.util.Dbo;
 import fd.ng.web.util.FileUploadUtil;
 import fd.ng.web.util.ResponseUtil;
 import hrds.commons.base.BaseAction;
+import hrds.commons.codes.UserType;
 import hrds.commons.entity.*;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
@@ -39,7 +38,7 @@ public class DataSourceAction extends BaseAction {
 	private static final Logger logger = LogManager.getLogger();
 
 	/**
-	 * 新增/编辑数据源
+	 * 新增数据源
 	 * <p>
 	 * 1.数据可访问权限处理方式，新增时会设置创建用户ID，会获取当前用户ID，所以不需要权限验证
 	 * 2.字段合法性检查
@@ -64,7 +63,7 @@ public class DataSourceAction extends BaseAction {
 		// 3.对data_source初始化一些非页面传值
 		// 数据源主键ID
 		dataSource.setSource_id(PrimayKeyGener.getNextId());
-		// 数据源创建用户ID
+		// 数据源创建用户
 		dataSource.setCreate_user_id(getUserId());
 		// 数据源创建日期
 		dataSource.setCreate_date(DateUtil.getSysDate());
@@ -84,7 +83,7 @@ public class DataSourceAction extends BaseAction {
 	 * 3.字段合法性检查
 	 * 4.将data_source实体数据封装
 	 * 5.更新数据源信息
-	 * 6.先删除数据源与部门关系信息
+	 * 6.先删除数据源与部门关系信息,删除几条数据不确定，一个数据源对应多个部门，所以不能用DboExecute
 	 * 7.保存source_relation_dep表信息
 	 *
 	 * @param sourceId         long
@@ -107,8 +106,8 @@ public class DataSourceAction extends BaseAction {
 	public void updateDataSource(Long sourceId, String sourceRemark, String datasourceName,
 	                             String datasourceNumber, Long[] depIds) {
 		// 1.数据可访问权限处理方式，通过sourceId与user_id关联检查
-		if (Dbo.queryNumber("select count(1) from data_source where sourceId=? and " +
-				" create_user_id=?", sourceId, getUserId()).orElse(Long.MIN_VALUE) == 0) {
+		if (Dbo.queryNumber("select count(1) from data_source where source_id=? and create_user_id=?",
+				sourceId, getUserId()).orElseThrow(() -> new BusinessException("sql查询错误！")) == 0) {
 			throw new BusinessException("数据权限校验失败，数据不可访问！");
 		}
 		//sourceId长度
@@ -126,8 +125,8 @@ public class DataSourceAction extends BaseAction {
 		dataSource.setSource_remark(sourceRemark);
 		// 5.更新数据源信息
 		dataSource.update(Dbo.db());
-		// 6.先删除数据源与部门关系信息
-		int num = Dbo.execute("delete from source_relation_dep where sourceId=?",
+		// 6.先删除数据源与部门关系信息,删除几条数据不确定，一个数据源对应多个部门，所以不能用DboExecute
+		int num = Dbo.execute("delete from source_relation_dep where source_id=?",
 				dataSource.getSource_id());
 		if (num < 1) {
 			throw new BusinessException("编辑时会先删除原数据源与部门关系信息，删除错旧关系时错误，" +
@@ -178,7 +177,8 @@ public class DataSourceAction extends BaseAction {
 		}
 		// 5.更新前查询数据源编号是否已存在
 		if (Dbo.queryNumber("select count(1) from " + Data_source.TableName + "  where datasource_number=? "
-				+ " and create_user_id=?", datasourceNumber, getUserId()).orElse(Long.MIN_VALUE) > 0) {
+				+ " and create_user_id=?", datasourceNumber, getUserId()).orElseThrow(() ->
+				new BusinessException("sql查询错误！")) > 0) {
 			// 判断数据源编号是否重复
 			throw new BusinessException("数据源编号重复,datasource_number=" + datasourceNumber);
 		}
@@ -220,25 +220,34 @@ public class DataSourceAction extends BaseAction {
 	}
 
 	/**
-	 * 根据数据源编号查询数据源及数据源与部门关系信息
+	 * 根据数据源编号查询数据源及数据源与部门关系信息以及部门信息
 	 *
 	 * <p>
 	 * 1.数据可访问权限处理方式，以下SQL关联sourceId与user_id检查
 	 * 2.关联查询data_source表与source_relation_dep表信息
+	 * 3.创建并封装数据源与部门关联信息以及部门信息集合
 	 *
 	 * @param sourceId long
 	 *                 含义：data_source表主键，source_relation_dep表外键
 	 *                 取值范围：不能为空或空格
 	 * @return java.util.List                                                           <
-	 * 含义：返回关联查询data_source表与source_relation_dep表信息结果
+	 * 含义：返回关联查询data_source表与source_relation_dep表信息结果以及部门信息
 	 * 取值范围：无限制
 	 */
-	public List<Map<String, Object>> searchDataSource(long sourceId) {
+	public Map<String, Object> searchDataSource(long sourceId) {
 		// 1.数据可访问权限处理方式，以下SQL关联sourceId与user_id检查
 		// 2.关联查询data_source表与source_relation_dep表信息
-		return Dbo.queryList("select ds.*,srd.dep_id from data_source ds " +
-				" join source_relation_dep srd on ds.sourceId=srd.sourceId " +
-				"  where ds.sourceId = ? and ds.create_user_id=?", sourceId, getUserId());
+		List<Map<String, Object>> dataResourceList = Dbo.queryList("select ds.*,srd.dep_id from " +
+				" data_source ds join source_relation_dep srd on ds.source_id=srd.source_id " +
+				" where ds.source_id = ? and ds.create_user_id=?", sourceId, getUserId());
+		// 查询部门信息不需要权限控制
+		List<Department_info> departmentInfoList = Dbo.queryList(Department_info.class,
+				"select * from department_info");
+		// 3.创建并封装数据源与部门关联信息以及部门信息集合
+		Map<String, Object> map = new HashMap<>();
+		map.put("dataResource", dataResourceList);
+		map.put("departmentInfo", departmentInfoList);
+		return map;
 	}
 
 	/**
@@ -258,15 +267,15 @@ public class DataSourceAction extends BaseAction {
 
 		// 1.数据可访问权限处理方式，以下SQL关联sourceId与user_id检查
 		// 2.先查询该datasource下是否还有agent
-		if (Dbo.queryNumber("SELECT count(1) FROM agent_info  WHERE sourceId=?" +
-				" and user_id=?", sourceId, getUserId()).orElse(Long.MIN_VALUE) > 0) {
+		if (Dbo.queryNumber("SELECT count(1) FROM agent_info  WHERE source_id=? and user_id=?", sourceId,
+				getUserId()).orElseThrow(() -> new BusinessException("sql查询错误！")) > 0) {
 			throw new BusinessException("此数据源下还有agent，不能删除,sourceId=" + sourceId);
 		}
 		// 3.删除data_source表信息
 		DboExecute.deletesOrThrow("删除数据源信息表data_source失败，sourceId=" + sourceId,
-				"delete from data_source where sourceId=? and create_user_id=?", sourceId, getUserId());
+				"delete from data_source where source_id=? and create_user_id=?", sourceId, getUserId());
 		// 4.删除source_relation_dep信息,因为一个数据源可能对应多个部门，所以这里无法使用DboExecute的删除方法
-		int srdNum = Dbo.execute("delete from source_relation_dep where sourceId=?", sourceId);
+		int srdNum = Dbo.execute("delete from source_relation_dep where source_id=?", sourceId);
 		if (srdNum < 1) {
 			// 如果数据源存在，那么部门一定存在，所以这里不需要判断等于0的情况
 			throw new BusinessException("删除该数据源下source_relation_dep表数据错误，sourceId="
@@ -275,7 +284,22 @@ public class DataSourceAction extends BaseAction {
 	}
 
 	/**
-	 * 上传文件，数据源下载文件提供的文件中涉及到的所有表的数据导入数据库中对应的表中（修改中，未完成测试）
+	 * 查询数据采集用户信息
+	 * <p>
+	 * 1.数据可访问权限处理方式，此方法不需要权限验证
+	 * 2.查询数据采集用户信息并返回查询结果
+	 */
+	public List<Sys_user> searchDataCollectUser() {
+		// 1.数据可访问权限处理方式，此方法不需要权限验证，没有用户访问限制
+		// 2.查询数据采集用户信息并返回查询结果
+		return Dbo.queryList(Sys_user.class, "select * from sys_user where user_type=? and" +
+						" dep_id=? union all select * from sys_user where usertype_group like ?",
+				UserType.CaiJiYongHu.getCode(), getUser().getDepId(),
+				"%" + UserType.CaiJiYongHu.getCode() + "%");
+	}
+
+	/**
+	 * 导入数据源，数据源下载文件提供的文件中涉及到的所有表的数据导入数据库中对应的表中（修改中，未完成测试）
 	 *
 	 * <p>
 	 * 1.通过文件名称获取文件
@@ -299,10 +323,9 @@ public class DataSourceAction extends BaseAction {
 	 *                      含义：数据采集用户ID
 	 *                      取值范围：不能为空以及空格，页面传值
 	 * @param file          String
-	 *                      含义：上传文件名称（全路径）
+	 *                      含义：上传文件名称（全路径），上传要导入的数据源
 	 *                      取值范围：不能为空以及空格
 	 */
-	@UploadFile
 	public void uploadFile(String agentIp, String agentPort, long userCollectId, String file) {
 		try {
 			// 1.通过文件名称获取文件
@@ -336,7 +359,7 @@ public class DataSourceAction extends BaseAction {
 			String strTemp = new String(Base64.getDecoder().decode(Files.readAllBytes(uploadedFile.toPath())));
 
 			// 10.导入数据源数据，将涉及到的所有表的数据导入数据库中对应的表中
-			importDclData(strTemp, agentIp, agentPort, userCollectId, getUserId());
+			importDataSource(strTemp, agentIp, agentPort, userCollectId, getUserId());
 		} catch (Exception e) {
 			throw new AppSystemException(e);
 		}
@@ -348,7 +371,7 @@ public class DataSourceAction extends BaseAction {
 	 * <p>
 	 * 1.获取文件对应所有表信息的map
 	 * 2.遍历并解析拿到每张表的信息，map里封装的是所有数据源相关的表信息
-	 * 3.获取数据源信息并插入数据库
+	 * 3.获取数据源data_source信息并插入数据库
 	 * 4.将department_info表数据插入数据库
 	 * 5.将source_relation_dep数据插入数据库
 	 * 6.将agent_info表数据插入数据库
@@ -388,63 +411,61 @@ public class DataSourceAction extends BaseAction {
 	 *                      含义：data_source表数据源创建用户ID，代表数据是由谁创建的
 	 *                      取值范围：不为空以及不为空格，长度不超过10位
 	 */
-	private void importDclData(String strTemp, String agentIp, String agentPort, long
+	private void importDataSource(String strTemp, String agentIp, String agentPort, long
 			userCollectId, long userId) {
 		Type type = new TypeReference<Map<String, Object>>() {
 		}.getType();
 		// 1.获取文件对应所有表信息的map
-		Map<String, Object> map = JsonUtil.toObject(strTemp, type);
+		Map<String, Object> collectMap = JsonUtil.toObject(strTemp, type);
 		// 2.遍历并解析拿到每张表的信息，map里封装的是所有数据源相关的表信息
-		for (Map.Entry<String, Object> entry : map.entrySet()) {
-			// 3.获取数据源信息并插入数据库
-			Data_source dataSource = getDataSource(userId, entry);
-			// 4.将department_info表数据插入数据库
-			List<Department_info> departmentInfoList = addDepartmentInfo(entry);
-			// 5.将source_relation_dep数据插入数据库
-			addSourceRelationDep(entry, dataSource, departmentInfoList);
-			// 6.将agent_info表数据插入数据库
-			addAgentInfo(agentIp, agentPort, userCollectId, entry);
-			// 7.将Agent_down_info表数据插入数据库
-			addAgentDownInfo(agentIp, agentPort, userCollectId, entry);
-			// 8.将collect_job_classify表数据插入数据库
-			addCollectJobClassify(userId, entry);
-			// 9.将ftp采集设置ftp_collect表数据插入数据库
-			addFtpCollect(entry);
-			// 10.将ftp已传输表ftp_transfered表数据插入数据库
-			addFtpTransfered(entry);
-			// 11.将ftp目录表ftp_folder表数据插入数据库
-			addFtpFolder(entry);
-			// 12.将对象采集设置object_collect表数据插入数据库
-			addObjectCollect(entry);
-			// 13.将对象采集对应信息object_collect_task表数据插入数据库
-			addObjectCollectTask(entry);
-			// 14.将对象采集存储设置object_storage表数据插入数据库
-			addObjectStorage(entry);
-			// 15.将对象采集结构信息object_collect_struct表数据插入数据库
-			addObjectCollectStruct(entry);
-			// 16.将数据库设置database_set表数据插入数据库
-			addDatabaseSet(entry);
-			// 17.将文件系统设置file_collect_set表数据插入数据库
-			addFileCollectSet(entry);
-			// 18.将文件源设置file_source表数据插入数据库
-			addFileSource(entry);
-			// 19.将信号文件入库信息signal_file表数据插入数据库
-			addSignalFile(entry);
-			// 20.将数据库对应的表table_info表数据插入数据库
-			addTableInfo(entry);
-			// 21.将列合并信息column_merge表数据插入数据库
-			addColumnMerge(entry);
-			// 22.将表存储信息table_storage_info表数据插入数据库
-			addTableStorageInfo(entry);
-			// 23.将表清洗参数信息table_clean表数据插入数据库
-			addTableClean(entry);
-			// 24.将表对应的字段table_column表数据插入数据库
-			addTableColumn(entry);
-			// 25.将列清洗参数信息column_clean表数据插入数据库
-			addColumnClean(entry);
-			// 26.将列拆分信息表column_split表数据插入数据库
-			addColumnSplit(entry);
-		}
+		// 3.获取数据源data_source信息并插入数据库
+		Data_source dataSource = getDataSource(userId, collectMap);
+		// 4.将department_info表数据插入数据库
+		List<Department_info> departmentInfoList = addDepartmentInfo(collectMap);
+		// 5.将source_relation_dep数据插入数据库
+		addSourceRelationDep(collectMap, dataSource, departmentInfoList);
+		// 6.将agent_info表数据插入数据库
+		addAgentInfo(agentIp, agentPort, userCollectId, collectMap);
+		// 7.将Agent_down_info表数据插入数据库
+		addAgentDownInfo(agentIp, agentPort, userCollectId, collectMap);
+		// 8.将collect_job_classify表数据插入数据库
+		addCollectJobClassify(userId, collectMap);
+		// 9.将ftp采集设置ftp_collect表数据插入数据库
+		addFtpCollect(collectMap);
+		// 10.将ftp已传输表ftp_transfered表数据插入数据库
+		addFtpTransfered(collectMap);
+		// 11.将ftp目录表ftp_folder表数据插入数据库
+		addFtpFolder(collectMap);
+		// 12.将对象采集设置object_collect表数据插入数据库
+		addObjectCollect(collectMap);
+		// 13.将对象采集对应信息object_collect_task表数据插入数据库
+		addObjectCollectTask(collectMap);
+		// 14.将对象采集存储设置object_storage表数据插入数据库
+		addObjectStorage(collectMap);
+		// 15.将对象采集结构信息object_collect_struct表数据插入数据库
+		addObjectCollectStruct(collectMap);
+		// 16.将数据库设置database_set表数据插入数据库
+		addDatabaseSet(collectMap);
+		// 17.将文件系统设置file_collect_set表数据插入数据库
+		addFileCollectSet(collectMap);
+		// 18.将文件源设置file_source表数据插入数据库
+		addFileSource(collectMap);
+		// 19.将信号文件入库信息signal_file表数据插入数据库
+		addSignalFile(collectMap);
+		// 20.将数据库对应的表table_info表数据插入数据库
+		addTableInfo(collectMap);
+		// 21.将列合并信息column_merge表数据插入数据库
+		addColumnMerge(collectMap);
+		// 22.将表存储信息table_storage_info表数据插入数据库
+		addTableStorageInfo(collectMap);
+		// 23.将表清洗参数信息table_clean表数据插入数据库
+		addTableClean(collectMap);
+		// 24.将表对应的字段table_column表数据插入数据库
+		addTableColumn(collectMap);
+		// 25.将列清洗参数信息column_clean表数据插入数据库
+		addColumnClean(collectMap);
+		// 26.将列拆分信息表column_split表数据插入数据库
+		addColumnSplit(collectMap);
 	}
 
 	/**
@@ -455,23 +476,26 @@ public class DataSourceAction extends BaseAction {
 	 * 3.获取表存储信息table_storage_info信息
 	 * 4.将table_storage_info表数据循环入数据库
 	 *
-	 * @param entry java.util.Map.Entry
-	 *              含义：所有表数据的map的实体
-	 *              取值范围：不为空
+	 * @param collectMap java.util.Map
+	 *                   含义：所有表数据的map的实体
+	 *                   取值范围：不为空
 	 */
-	private void addTableStorageInfo(Map.Entry<String, Object> entry) {
+	private void addTableStorageInfo(Map<String, Object> collectMap) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-		// map中key的值，也是下载数据源时对应表信息封装入map的key值
-		String tsi = "tableStorageInfo";
-		// 2.判断map中的key值是否为table_storage_info对应表数据
-		if (tsi.equals(entry.getKey())) {
-			Type tsiType = new TypeReference<List<Collect_job_classify>>() {
-			}.getType();
-			// 3.获取表存储信息table_storage_info信息
-			List<Table_storage_info> tsiList = JsonUtil.toObject(entry.getValue().toString(), tsiType);
-			// 4.将table_storage_info表数据循环入数据库
-			for (Table_storage_info tableStorageInfo : tsiList) {
-				tableStorageInfo.add(Dbo.db());
+		for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
+			// 2.判断map中的key值是否为table_storage_info对应表数据
+			// map中key的值，也是下载数据源时对应表信息封装入map的key值
+			String tsi = "tableStorageInfo";
+			if (tsi.equals(entry.getKey())) {
+				Type tsiType = new TypeReference<List<Table_storage_info>>() {
+				}.getType();
+				// 3.获取表存储信息table_storage_info信息
+				List<Table_storage_info> tsiList = JsonUtil.toObject(entry.getValue().toString(), tsiType);
+				// 4.将table_storage_info表数据循环入数据库
+				for (Table_storage_info tableStorageInfo : tsiList) {
+					tableStorageInfo.setStorage_id(PrimayKeyGener.getNextId());
+					tableStorageInfo.add(Dbo.db());
+				}
 			}
 		}
 	}
@@ -484,23 +508,26 @@ public class DataSourceAction extends BaseAction {
 	 * 3.获取列合并信息column_merge信息
 	 * 4.将column_merge表数据循环入数据库
 	 *
-	 * @param entry java.util.Map.Entry
-	 *              含义：所有表数据的map的实体
-	 *              取值范围：不为空
+	 * @param collectMap java.util.Map
+	 *                   含义：所有表数据的map的实体
+	 *                   取值范围：不为空
 	 */
-	private void addColumnMerge(Map.Entry<String, Object> entry) {
+	private void addColumnMerge(Map<String, Object> collectMap) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-		// map中key的值，也是下载数据源时对应表信息封装入map的key值
-		String cm = "columnMerge";
-		// 2.判断map中的key值是否为column_merge对应表数据
-		if (cm.equals(entry.getKey())) {
-			Type cmType = new TypeReference<List<Collect_job_classify>>() {
-			}.getType();
-			// 3.获取列合并信息column_merge信息
-			List<Column_merge> columnMergeList = JsonUtil.toObject(entry.getValue().toString(), cmType);
-			// 4.将column_merge表数据循环入数据库
-			for (Column_merge columnMerge : columnMergeList) {
-				columnMerge.add(Dbo.db());
+		for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
+			// 2.判断map中的key值是否为column_merge对应表数据
+			// map中key的值，也是下载数据源时对应表信息封装入map的key值
+			String cm = "columnMerge";
+			if (cm.equals(entry.getKey())) {
+				Type cmType = new TypeReference<List<Column_merge>>() {
+				}.getType();
+				// 3.获取列合并信息column_merge信息
+				List<Column_merge> columnMergeList = JsonUtil.toObject(entry.getValue().toString(), cmType);
+				// 4.将column_merge表数据循环入数据库
+				for (Column_merge columnMerge : columnMergeList) {
+					columnMerge.setCol_merge_id(PrimayKeyGener.getNextId());
+					columnMerge.add(Dbo.db());
+				}
 			}
 		}
 	}
@@ -513,23 +540,26 @@ public class DataSourceAction extends BaseAction {
 	 * 3.获取列拆分信息表column_split信息
 	 * 4.将column_split表数据循环入数据库
 	 *
-	 * @param entry java.util.Map.Entry
-	 *              含义：所有表数据的map的实体
-	 *              取值范围：不为空
+	 * @param collectMap java.util.Map
+	 *                   含义：所有表数据的map的实体
+	 *                   取值范围：不为空
 	 */
-	private void addColumnSplit(Map.Entry<String, Object> entry) {
+	private void addColumnSplit(Map<String, Object> collectMap) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-		// map中key的值，也是下载数据源时对应表信息封装入map的key值
-		String cs = "columnSplit";
-		// 2.判断map中的key值是否为column_split对应表数据
-		if (cs.equals(entry.getKey())) {
-			Type csType = new TypeReference<List<Collect_job_classify>>() {
-			}.getType();
-			// 3.获取列拆分信息表column_split信息
-			List<Column_split> columnSplitList = JsonUtil.toObject(entry.getValue().toString(), csType);
-			// 4.将column_split表数据循环入数据库
-			for (Column_split columnSplit : columnSplitList) {
-				columnSplit.add(Dbo.db());
+		for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
+			// 2.判断map中的key值是否为column_split对应表数据
+			// map中key的值，也是下载数据源时对应表信息封装入map的key值
+			String cs = "columnSplit";
+			if (cs.equals(entry.getKey())) {
+				Type csType = new TypeReference<List<Column_split>>() {
+				}.getType();
+				// 3.获取列拆分信息表column_split信息
+				List<Column_split> columnSplitList = JsonUtil.toObject(entry.getValue().toString(), csType);
+				// 4.将column_split表数据循环入数据库
+				for (Column_split columnSplit : columnSplitList) {
+					columnSplit.setCol_split_id(PrimayKeyGener.getNextId());
+					columnSplit.add(Dbo.db());
+				}
 			}
 		}
 	}
@@ -542,23 +572,26 @@ public class DataSourceAction extends BaseAction {
 	 * 3.获取列清洗参数信息column_clean信息
 	 * 4.将column_clean表数据循环入数据库
 	 *
-	 * @param entry java.util.Map.Entry
-	 *              含义：所有表数据的map的实体
-	 *              取值范围：不为空
+	 * @param collectMap java.util.Map
+	 *                   含义：所有表数据的map的实体
+	 *                   取值范围：不为空
 	 */
-	private void addColumnClean(Map.Entry<String, Object> entry) {
+	private void addColumnClean(Map<String, Object> collectMap) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-		// map中key的值，也是下载数据源时对应表信息封装入map的key值
-		String cc = "columnClean";
-		// 2.判断map中的key值是否为column_clean对应表数据
-		if (cc.equals(entry.getKey())) {
-			Type ccType = new TypeReference<List<Collect_job_classify>>() {
-			}.getType();
-			// 3.获取列清洗参数信息column_clean信息
-			List<Column_clean> columnCleanList = JsonUtil.toObject(entry.getValue().toString(), ccType);
-			// 4.将column_clean表数据循环入数据库
-			for (Column_clean columnClean : columnCleanList) {
-				columnClean.add(Dbo.db());
+		for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
+			// 2.判断map中的key值是否为column_clean对应表数据
+			// map中key的值，也是下载数据源时对应表信息封装入map的key值
+			String cc = "columnClean";
+			if (cc.equals(entry.getKey())) {
+				Type ccType = new TypeReference<List<Column_clean>>() {
+				}.getType();
+				// 3.获取列清洗参数信息column_clean信息
+				List<Column_clean> columnCleanList = JsonUtil.toObject(entry.getValue().toString(), ccType);
+				// 4.将column_clean表数据循环入数据库
+				for (Column_clean columnClean : columnCleanList) {
+					columnClean.setCol_clean_id(PrimayKeyGener.getNextId());
+					columnClean.add(Dbo.db());
+				}
 			}
 		}
 	}
@@ -571,23 +604,26 @@ public class DataSourceAction extends BaseAction {
 	 * 3.获取表对应的字段table_column信息
 	 * 4.将table_column表数据循环入数据库
 	 *
-	 * @param entry java.util.Map.Entry
-	 *              含义：所有表数据的map的实体
-	 *              取值范围：不为空
+	 * @param collectMap java.util.Map
+	 *                   含义：所有表数据的map的实体
+	 *                   取值范围：不为空
 	 */
-	private void addTableColumn(Map.Entry<String, Object> entry) {
+	private void addTableColumn(Map<String, Object> collectMap) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-		// map中key的值，也是下载数据源时对应表信息封装入map的key值
-		String tc = "tableColumn";
-		// 2.判断map中的key值是否为table_column对应表数据
-		if (tc.equals(entry.getKey())) {
-			Type tcnType = new TypeReference<List<Collect_job_classify>>() {
-			}.getType();
-			// 3.获取表对应的字段table_column信息
-			List<Table_column> tableColumnList = JsonUtil.toObject(entry.getValue().toString(), tcnType);
-			// 4.将table_column表数据循环入数据库
-			for (Table_column tableColumn : tableColumnList) {
-				tableColumn.add(Dbo.db());
+		for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
+			// 2.判断map中的key值是否为table_column对应表数据
+			// map中key的值，也是下载数据源时对应表信息封装入map的key值
+			String tc = "tableColumn";
+			if (tc.equals(entry.getKey())) {
+				Type tcnType = new TypeReference<List<Table_column>>() {
+				}.getType();
+				// 3.获取表对应的字段table_column信息
+				List<Table_column> tableColumnList = JsonUtil.toObject(entry.getValue().toString(), tcnType);
+				// 4.将table_column表数据循环入数据库
+				for (Table_column tableColumn : tableColumnList) {
+					tableColumn.setColumn_id(PrimayKeyGener.getNextId());
+					tableColumn.add(Dbo.db());
+				}
 			}
 		}
 	}
@@ -600,23 +636,26 @@ public class DataSourceAction extends BaseAction {
 	 * 3.获取表清洗参数信息table_clean信息
 	 * 4.将table_clean表数据循环入数据库
 	 *
-	 * @param entry java.util.Map.Entry
-	 *              含义：所有表数据的map的实体
-	 *              取值范围：不为空
+	 * @param collectMap java.util.Map
+	 *                   含义：所有表数据的map的实体
+	 *                   取值范围：不为空
 	 */
-	private void addTableClean(Map.Entry<String, Object> entry) {
+	private void addTableClean(Map<String, Object> collectMap) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-		// map中key的值，也是下载数据源时对应表信息封装入map的key值
-		String tc = "tableClean";
-		// 2.判断map中的key值是否为table_clean对应表数据
-		if (tc.equals(entry.getKey())) {
-			Type tcType = new TypeReference<List<Collect_job_classify>>() {
-			}.getType();
-			// 3.获取表清洗参数信息table_clean信息
-			List<Table_clean> tableCleanList = JsonUtil.toObject(entry.getValue().toString(), tcType);
-			// 4.将table_clean表数据循环入数据库
-			for (Table_clean tableClean : tableCleanList) {
-				tableClean.add(Dbo.db());
+		for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
+			// 2.判断map中的key值是否为table_clean对应表数据
+			// map中key的值，也是下载数据源时对应表信息封装入map的key值
+			String tc = "tableClean";
+			if (tc.equals(entry.getKey())) {
+				Type tcType = new TypeReference<List<Table_clean>>() {
+				}.getType();
+				// 3.获取表清洗参数信息table_clean信息
+				List<Table_clean> tableCleanList = JsonUtil.toObject(entry.getValue().toString(), tcType);
+				// 4.将table_clean表数据循环入数据库
+				for (Table_clean tableClean : tableCleanList) {
+					tableClean.setTable_clean_id(PrimayKeyGener.getNextId());
+					tableClean.add(Dbo.db());
+				}
 			}
 		}
 	}
@@ -629,23 +668,26 @@ public class DataSourceAction extends BaseAction {
 	 * 3.获取数据库对应的表table_info信息
 	 * 4.将table_info表数据循环入数据库
 	 *
-	 * @param entry java.util.Map.Entry
-	 *              含义：所有表数据的map的实体
-	 *              取值范围：不为空
+	 * @param collectMap java.util.Map
+	 *                   含义：所有表数据的map的实体
+	 *                   取值范围：不为空
 	 */
-	private void addTableInfo(Map.Entry<String, Object> entry) {
+	private void addTableInfo(Map<String, Object> collectMap) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-		// map中key的值，也是下载数据源时对应表信息封装入map的key值
-		String ti = "tableInfo";
-		// 2.判断map中的key值是否为table_info对应表数据
-		if (ti.equals(entry.getKey())) {
-			Type tiType = new TypeReference<List<Collect_job_classify>>() {
-			}.getType();
-			// 3.获取数据库对应的表table_info信息
-			List<Table_info> tableInfoList = JsonUtil.toObject(entry.getValue().toString(), tiType);
-			// 4.将table_info表数据循环入数据库
-			for (Table_info tableInfo : tableInfoList) {
-				tableInfo.add(Dbo.db());
+		for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
+			// 2.判断map中的key值是否为table_info对应表数据
+			// map中key的值，也是下载数据源时对应表信息封装入map的key值
+			String ti = "tableInfo";
+			if (ti.equals(entry.getKey())) {
+				Type tiType = new TypeReference<List<Table_info>>() {
+				}.getType();
+				// 3.获取数据库对应的表table_info信息
+				List<Table_info> tableInfoList = JsonUtil.toObject(entry.getValue().toString(), tiType);
+				// 4.将table_info表数据循环入数据库
+				for (Table_info tableInfo : tableInfoList) {
+					tableInfo.setTable_id(PrimayKeyGener.getNextId());
+					tableInfo.add(Dbo.db());
+				}
 			}
 		}
 	}
@@ -658,23 +700,26 @@ public class DataSourceAction extends BaseAction {
 	 * 3.获取信号文件入库信息signal_file信息
 	 * 4.将signal_file表数据循环入数据库
 	 *
-	 * @param entry java.util.Map.Entry
-	 *              含义：所有表数据的map的实体
-	 *              取值范围：不为空
+	 * @param collectMap java.util.Map
+	 *                   含义：所有表数据的map的实体
+	 *                   取值范围：不为空
 	 */
-	private void addSignalFile(Map.Entry<String, Object> entry) {
+	private void addSignalFile(Map<String, Object> collectMap) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-		// map中key的值，也是下载数据源时对应表信息封装入map的key值
-		String sf = "signalFile";
-		// 2.判断map中的key值是否为signal_file对应表数据
-		if (sf.equals(entry.getKey())) {
-			Type sfType = new TypeReference<List<Collect_job_classify>>() {
-			}.getType();
-			// 3.获取信号文件入库信息signal_file信息
-			List<Signal_file> signalFileList = JsonUtil.toObject(entry.getValue().toString(), sfType);
-			// 4.将signal_file表数据循环入数据库
-			for (Signal_file signalFile : signalFileList) {
-				signalFile.add(Dbo.db());
+		for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
+			// 2.判断map中的key值是否为signal_file对应表数据
+			// map中key的值，也是下载数据源时对应表信息封装入map的key值
+			String sf = "signalFile";
+			if (sf.equals(entry.getKey())) {
+				Type sfType = new TypeReference<List<Signal_file>>() {
+				}.getType();
+				// 3.获取信号文件入库信息signal_file信息
+				List<Signal_file> signalFileList = JsonUtil.toObject(entry.getValue().toString(), sfType);
+				// 4.将signal_file表数据循环入数据库
+				for (Signal_file signalFile : signalFileList) {
+					signalFile.setSignal_id(PrimayKeyGener.getNextId());
+					signalFile.add(Dbo.db());
+				}
 			}
 		}
 	}
@@ -687,23 +732,26 @@ public class DataSourceAction extends BaseAction {
 	 * 3.获取文件源设置file_source信息
 	 * 4.将file_source表数据循环入数据库
 	 *
-	 * @param entry java.util.Map.Entry
-	 *              含义：所有表数据的map的实体
-	 *              取值范围：不为空
+	 * @param collectMap java.util.Map
+	 *                   含义：所有表数据的map的实体
+	 *                   取值范围：不为空
 	 */
-	private void addFileSource(Map.Entry<String, Object> entry) {
+	private void addFileSource(Map<String, Object> collectMap) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-		// map中key的值，也是下载数据源时对应表信息封装入map的key值
-		String fs = "fileSource";
-		// 2.判断map中的key值是否为file_source对应表数据
-		if (fs.equals(entry.getKey())) {
-			Type fsType = new TypeReference<List<Collect_job_classify>>() {
-			}.getType();
-			// 3.获取文件源设置file_source信息
-			List<File_source> fileSourceList = JsonUtil.toObject(entry.getValue().toString(), fsType);
-			// 4.将file_source表数据循环入数据库
-			for (File_source fileSource : fileSourceList) {
-				fileSource.add(Dbo.db());
+		for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
+			// 2.判断map中的key值是否为file_source对应表数据
+			// map中key的值，也是下载数据源时对应表信息封装入map的key值
+			String fs = "fileSource";
+			if (fs.equals(entry.getKey())) {
+				Type fsType = new TypeReference<List<File_source>>() {
+				}.getType();
+				// 3.获取文件源设置file_source信息
+				List<File_source> fileSourceList = JsonUtil.toObject(entry.getValue().toString(), fsType);
+				// 4.将file_source表数据循环入数据库
+				for (File_source fileSource : fileSourceList) {
+					fileSource.setFile_source_id(PrimayKeyGener.getNextId());
+					fileSource.add(Dbo.db());
+				}
 			}
 		}
 	}
@@ -716,23 +764,26 @@ public class DataSourceAction extends BaseAction {
 	 * 3.获取文件系统设置file_collect_set信息
 	 * 4.将file_collect_set表数据循环入数据库
 	 *
-	 * @param entry java.util.Map.Entry
-	 *              含义：所有表数据的map的实体
-	 *              取值范围：不为空
+	 * @param collectMap java.util.Map
+	 *                   含义：所有表数据的map的实体
+	 *                   取值范围：不为空
 	 */
-	private void addFileCollectSet(Map.Entry<String, Object> entry) {
+	private void addFileCollectSet(Map<String, Object> collectMap) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-		// map中key的值，也是下载数据源时对应表信息封装入map的key值
-		String fcs = "fileCollectSet";
-		// 2.判断map中的key值是否为file_collect_set对应表数据
-		if (fcs.equals(entry.getKey())) {
-			Type fcsType = new TypeReference<List<Collect_job_classify>>() {
-			}.getType();
-			// 3.获取文件系统设置file_collect_set信息
-			List<File_collect_set> fcsList = JsonUtil.toObject(entry.getValue().toString(), fcsType);
-			// 4.将file_collect_set表数据循环入数据库
-			for (File_collect_set fileCollectSet : fcsList) {
-				fileCollectSet.add(Dbo.db());
+		for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
+			// 2.判断map中的key值是否为file_collect_set对应表数据
+			// map中key的值，也是下载数据源时对应表信息封装入map的key值
+			String fcs = "fileCollectSet";
+			if (fcs.equals(entry.getKey())) {
+				Type fcsType = new TypeReference<List<File_collect_set>>() {
+				}.getType();
+				// 3.获取文件系统设置file_collect_set信息
+				List<File_collect_set> fcsList = JsonUtil.toObject(entry.getValue().toString(), fcsType);
+				// 4.将file_collect_set表数据循环入数据库
+				for (File_collect_set fileCollectSet : fcsList) {
+					fileCollectSet.setFcs_id(PrimayKeyGener.getNextId());
+					fileCollectSet.add(Dbo.db());
+				}
 			}
 		}
 	}
@@ -745,23 +796,26 @@ public class DataSourceAction extends BaseAction {
 	 * 3.获取数据库设置database_set信息
 	 * 4.将database_set表数据循环入数据库
 	 *
-	 * @param entry java.util.Map.Entry
-	 *              含义：所有表数据的map的实体
-	 *              取值范围：不为空
+	 * @param collectMap java.util.Map
+	 *                   含义：所有表数据的map的实体
+	 *                   取值范围：不为空
 	 */
-	private void addDatabaseSet(Map.Entry<String, Object> entry) {
+	private void addDatabaseSet(Map<String, Object> collectMap) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-		// map中key的值，也是下载数据源时对应表信息封装入map的key值
-		String ds = "databaseSet";
-		// 2.判断map中的key值是否为database_set对应表数据
-		if (ds.equals(entry.getKey())) {
-			Type dsType = new TypeReference<List<Collect_job_classify>>() {
-			}.getType();
-			// 3.获取数据库设置database_set信息
-			List<Database_set> databaseSetList = JsonUtil.toObject(entry.getValue().toString(), dsType);
-			// 4.将database_set表数据循环入数据库
-			for (Database_set databaseSet : databaseSetList) {
-				databaseSet.add(Dbo.db());
+		for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
+			// 2.判断map中的key值是否为database_set对应表数据
+			// map中key的值，也是下载数据源时对应表信息封装入map的key值
+			String ds = "databaseSet";
+			if (ds.equals(entry.getKey())) {
+				Type dsType = new TypeReference<List<Database_set>>() {
+				}.getType();
+				// 3.获取数据库设置database_set信息
+				List<Database_set> databaseSetList = JsonUtil.toObject(entry.getValue().toString(), dsType);
+				// 4.将database_set表数据循环入数据库
+				for (Database_set databaseSet : databaseSetList) {
+					databaseSet.setDatabase_id(PrimayKeyGener.getNextId());
+					databaseSet.add(Dbo.db());
+				}
 			}
 		}
 	}
@@ -774,23 +828,26 @@ public class DataSourceAction extends BaseAction {
 	 * 3.获取对象采集结构信息object_collect_struct信息
 	 * 4.将object_collect_struct表数据循环入数据库
 	 *
-	 * @param entry java.util.Map.Entry
-	 *              含义：所有表数据的map的实体
-	 *              取值范围：不为空
+	 * @param collectMap java.util.Map
+	 *                   含义：所有表数据的map的实体
+	 *                   取值范围：不为空
 	 */
-	private void addObjectCollectStruct(Map.Entry<String, Object> entry) {
+	private void addObjectCollectStruct(Map<String, Object> collectMap) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-		// map中key的值，也是下载数据源时对应表信息封装入map的key值
-		String ocs = "objectCollectStruct";
-		// 2.判断map中的key值是否为object_collect_struct对应表数据
-		if (ocs.equals(entry.getKey())) {
-			Type ocsType = new TypeReference<List<Collect_job_classify>>() {
-			}.getType();
-			// 3.获取对象采集结构信息object_collect_struct信息
-			List<Object_collect_struct> ocsList = JsonUtil.toObject(entry.getValue().toString(), ocsType);
-			// 4.将object_collect_struct表数据循环入数据库
-			for (Object_collect_struct objectCollectStruct : ocsList) {
-				objectCollectStruct.add(Dbo.db());
+		for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
+			// 2.判断map中的key值是否为object_collect_struct对应表数据
+			// map中key的值，也是下载数据源时对应表信息封装入map的key值
+			String ocs = "objectCollectStruct";
+			if (ocs.equals(entry.getKey())) {
+				Type ocsType = new TypeReference<List<Object_collect_struct>>() {
+				}.getType();
+				// 3.获取对象采集结构信息object_collect_struct信息
+				List<Object_collect_struct> ocsList = JsonUtil.toObject(entry.getValue().toString(), ocsType);
+				// 4.将object_collect_struct表数据循环入数据库
+				for (Object_collect_struct objectCollectStruct : ocsList) {
+					objectCollectStruct.setStruct_id(PrimayKeyGener.getNextId());
+					objectCollectStruct.add(Dbo.db());
+				}
 			}
 		}
 	}
@@ -803,23 +860,26 @@ public class DataSourceAction extends BaseAction {
 	 * 3.获取tp采集设置object_storage信息
 	 * 4.将object_storage表数据循环入数据库
 	 *
-	 * @param entry java.util.Map.Entry
-	 *              含义：所有表数据的map的实体
-	 *              取值范围：不为空
+	 * @param collectMap java.util.Map
+	 *                   含义：所有表数据的map的实体
+	 *                   取值范围：不为空
 	 */
-	private void addObjectStorage(Map.Entry<String, Object> entry) {
+	private void addObjectStorage(Map<String, Object> collectMap) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-		// map中key的值，也是下载数据源时对应表信息封装入map的key值
-		String os = "objectStorage";
-		// 2.判断map中的key值是否为object_storage对应表数据
-		if (os.equals(entry.getKey())) {
-			Type osType = new TypeReference<List<Collect_job_classify>>() {
-			}.getType();
-			// 3.获取对象采集存储设置object_storage信息
-			List<Object_storage> objectStorageList = JsonUtil.toObject(entry.getValue().toString(), osType);
-			// 4.将object_storage表数据循环入数据库
-			for (Object_storage objectStorage : objectStorageList) {
-				objectStorage.add(Dbo.db());
+		for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
+			// 2.判断map中的key值是否为object_storage对应表数据
+			// map中key的值，也是下载数据源时对应表信息封装入map的key值
+			String os = "objectStorage";
+			if (os.equals(entry.getKey())) {
+				Type osType = new TypeReference<List<Object_storage>>() {
+				}.getType();
+				// 3.获取对象采集存储设置object_storage信息
+				List<Object_storage> objectStorageList = JsonUtil.toObject(entry.getValue().toString(), osType);
+				// 4.将object_storage表数据循环入数据库
+				for (Object_storage objectStorage : objectStorageList) {
+					objectStorage.setObj_stid(PrimayKeyGener.getNextId());
+					objectStorage.add(Dbo.db());
+				}
 			}
 		}
 	}
@@ -832,23 +892,26 @@ public class DataSourceAction extends BaseAction {
 	 * 3.获取对象采集对应信息object_collect_task信息
 	 * 4.将object_collect_task表数据循环入数据库
 	 *
-	 * @param entry java.util.Map.Entry
-	 *              含义：所有表数据的map的实体
-	 *              取值范围：不为空
+	 * @param collectMap java.util.Map
+	 *                   含义：所有表数据的map的实体
+	 *                   取值范围：不为空
 	 */
-	private void addObjectCollectTask(Map.Entry<String, Object> entry) {
+	private void addObjectCollectTask(Map<String, Object> collectMap) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-		// map中key的值，也是下载数据源时对应表信息封装入map的key值
-		String oct = "objectCollectTask";
-		// 2.判断map中的key值是否为object_collect_task对应表数据
-		if (oct.equals(entry.getKey())) {
-			Type octType = new TypeReference<List<Collect_job_classify>>() {
-			}.getType();
-			// 3.获取对象采集对应信息object_collect_task信息
-			List<Object_collect_task> octList = JsonUtil.toObject(entry.getValue().toString(), octType);
-			// 4.将object_collect_task表数据循环入数据库
-			for (Object_collect_task objectCollectTask : octList) {
-				objectCollectTask.add(Dbo.db());
+		for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
+			// 2.判断map中的key值是否为object_collect_task对应表数据
+			// map中key的值，也是下载数据源时对应表信息封装入map的key值
+			String oct = "objectCollectTask";
+			if (oct.equals(entry.getKey())) {
+				Type octType = new TypeReference<List<Object_collect_task>>() {
+				}.getType();
+				// 3.获取对象采集对应信息object_collect_task信息
+				List<Object_collect_task> octList = JsonUtil.toObject(entry.getValue().toString(), octType);
+				// 4.将object_collect_task表数据循环入数据库
+				for (Object_collect_task objectCollectTask : octList) {
+					objectCollectTask.setOcs_id(PrimayKeyGener.getNextId());
+					objectCollectTask.add(Dbo.db());
+				}
 			}
 		}
 	}
@@ -861,23 +924,26 @@ public class DataSourceAction extends BaseAction {
 	 * 3.获取对象采集设置object_collect信息
 	 * 4.将object_collect表数据循环入数据库
 	 *
-	 * @param entry java.util.Map.Entry
-	 *              含义：所有表数据的map的实体
-	 *              取值范围：不为空
+	 * @param collectMap java.util.Map
+	 *                   含义：所有表数据的map的实体
+	 *                   取值范围：不为空
 	 */
-	private void addObjectCollect(Map.Entry<String, Object> entry) {
+	private void addObjectCollect(Map<String, Object> collectMap) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-		// map中key的值，也是下载数据源时对应表信息封装入map的key值
-		String oc = "objectCollect";
-		// 2.判断map中的key值是否为object_collect对应表数据
-		if (oc.equals(entry.getKey())) {
-			Type ocType = new TypeReference<List<Collect_job_classify>>() {
-			}.getType();
-			// 3.获取对象采集设置object_collect信息
-			List<Object_collect> objectCollectList = JsonUtil.toObject(entry.getValue().toString(), ocType);
-			// 4 .将object_collect表数据循环入数据库
-			for (Object_collect objectCollect : objectCollectList) {
-				objectCollect.add(Dbo.db());
+		for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
+			// 2.判断map中的key值是否为object_collect对应表数据
+			// map中key的值，也是下载数据源时对应表信息封装入map的key值
+			String oc = "objectCollect";
+			if (oc.equals(entry.getKey())) {
+				Type ocType = new TypeReference<List<Object_collect>>() {
+				}.getType();
+				// 3.获取对象采集设置object_collect信息
+				List<Object_collect> objectCollectList = JsonUtil.toObject(entry.getValue().toString(), ocType);
+				// 4 .将object_collect表数据循环入数据库
+				for (Object_collect objectCollect : objectCollectList) {
+					objectCollect.setOdc_id(PrimayKeyGener.getNextId());
+					objectCollect.add(Dbo.db());
+				}
 			}
 		}
 	}
@@ -890,24 +956,26 @@ public class DataSourceAction extends BaseAction {
 	 * 3.获取ftp目录表ftp_folder信息
 	 * 4.将ftp_folder表数据循环入数据库
 	 *
-	 * @param entry java.util.Map.Entry
-	 *              含义：所有表数据的map的实体
-	 *              取值范围：不为空
+	 * @param collectMap java.util.Map
+	 *                   含义：所有表数据的map的实体
+	 *                   取值范围：不为空
 	 */
-	private void addFtpFolder(Map.Entry<String, Object> entry) {
+	private void addFtpFolder(Map<String, Object> collectMap) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-		// map中key的值，也是下载数据源时对应表信息封装入map的key值
-		String ff = "ftpFolder";
-		// 2.判断map中的key值是否为ftp_folder对应表数据
-		if (ff.equals(entry.getKey())) {
-			Type ffType = new TypeReference<List<Collect_job_classify>>() {
-			}.getType();
-			// 3.获取ftp目录表ftp_folder信息
-			List<Ftp_folder> ftpFolderList = JsonUtil.toObject(entry.getValue().toString(), ffType);
-			// 4.将ftp_folder表数据循环入数据库
-			for (Ftp_folder ftpFolder : ftpFolderList) {
-				ftpFolder.setFtp_folder_id(PrimayKeyGener.getNextId());
-				ftpFolder.add(Dbo.db());
+		for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
+			// 2.判断map中的key值是否为ftp_folder对应表数据
+			// map中key的值，也是下载数据源时对应表信息封装入map的key值
+			String ff = "ftpFolder";
+			if (ff.equals(entry.getKey())) {
+				Type ffType = new TypeReference<List<Ftp_folder>>() {
+				}.getType();
+				// 3.获取ftp目录表ftp_folder信息
+				List<Ftp_folder> ftpFolderList = JsonUtil.toObject(entry.getValue().toString(), ffType);
+				// 4.将ftp_folder表数据循环入数据库
+				for (Ftp_folder ftpFolder : ftpFolderList) {
+					ftpFolder.setFtp_folder_id(PrimayKeyGener.getNextId());
+					ftpFolder.add(Dbo.db());
+				}
 			}
 		}
 	}
@@ -920,24 +988,26 @@ public class DataSourceAction extends BaseAction {
 	 * 3.获取tp采集设置ftp_transfered信息
 	 * 4.将ftp_transfered表数据循环入数据库
 	 *
-	 * @param entry java.util.Map.Entry
-	 *              含义：所有表数据的map的实体
-	 *              取值范围：不为空
+	 * @param collectMap java.util.Map
+	 *                   含义：所有表数据的map的实体
+	 *                   取值范围：不为空
 	 */
-	private void addFtpTransfered(Map.Entry<String, Object> entry) {
+	private void addFtpTransfered(Map<String, Object> collectMap) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-		// map中key的值，也是下载数据源时对应表信息封装入map的key值
-		String ft = "ftpTransfered";
-		// 2.判断map中的key值是否为ftp_transfered对应表数据
-		if (ft.equals(entry.getKey())) {
-			Type ftType = new TypeReference<List<Collect_job_classify>>() {
-			}.getType();
-			// 3.获取ftp已传输表ftp_transfered信息
-			List<Ftp_transfered> transferList = JsonUtil.toObject(entry.getValue().toString(), ftType);
-			// 4.将ftp_transfered表数据循环入数据库
-			for (Ftp_transfered ftpTransfered : transferList) {
-				ftpTransfered.setFtp_id(PrimayKeyGener.getNextId());
-				ftpTransfered.add(Dbo.db());
+		for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
+			// 2.判断map中的key值是否为ftp_transfered对应表数据
+			// map中key的值，也是下载数据源时对应表信息封装入map的key值
+			String ft = "ftpTransfered";
+			if (ft.equals(entry.getKey())) {
+				Type ftType = new TypeReference<List<Ftp_transfered>>() {
+				}.getType();
+				// 3.获取ftp已传输表ftp_transfered信息
+				List<Ftp_transfered> transferList = JsonUtil.toObject(entry.getValue().toString(), ftType);
+				// 4.将ftp_transfered表数据循环入数据库
+				for (Ftp_transfered ftpTransfered : transferList) {
+					ftpTransfered.setFtp_id(PrimayKeyGener.getNextId());
+					ftpTransfered.add(Dbo.db());
+				}
 			}
 		}
 	}
@@ -950,24 +1020,26 @@ public class DataSourceAction extends BaseAction {
 	 * 3.获取tp采集设置ftp_collect信息
 	 * 4.将ftp_collect表数据循环入数据库
 	 *
-	 * @param entry java.util.Map.Entry
-	 *              含义：所有表数据的map的实体
-	 *              取值范围：不为空
+	 * @param collectMap java.util.Map
+	 *                   含义：所有表数据的map的实体
+	 *                   取值范围：不为空
 	 */
-	private void addFtpCollect(Map.Entry<String, Object> entry) {
+	private void addFtpCollect(Map<String, Object> collectMap) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-		// map中key的值，也是下载数据源时对应表信息封装入map的key值
-		String fc = "ftpCollect";
-		// 2.判断map中的key值是否为ftp_collect对应表数据
-		if (fc.equals(entry.getKey())) {
-			Type fcType = new TypeReference<List<Collect_job_classify>>() {
-			}.getType();
-			// 3.获取tp采集设置ftp_collect信息
-			List<Ftp_collect> ftpCollectList = JsonUtil.toObject(entry.getValue().toString(), fcType);
-			// 4.将ftp_collect表数据循环入数据库
-			for (Ftp_collect ftpCollect : ftpCollectList) {
-				ftpCollect.setFtp_id(PrimayKeyGener.getNextId());
-				ftpCollect.add(Dbo.db());
+		for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
+			// 2.判断map中的key值是否为ftp_collect对应表数据
+			// map中key的值，也是下载数据源时对应表信息封装入map的key值
+			String fc = "ftpCollect";
+			if (fc.equals(entry.getKey())) {
+				Type fcType = new TypeReference<List<Ftp_collect>>() {
+				}.getType();
+				// 3.获取tp采集设置ftp_collect信息
+				List<Ftp_collect> ftpCollectList = JsonUtil.toObject(entry.getValue().toString(), fcType);
+				// 4.将ftp_collect表数据循环入数据库
+				for (Ftp_collect ftpCollect : ftpCollectList) {
+					ftpCollect.setFtp_id(PrimayKeyGener.getNextId());
+					ftpCollect.add(Dbo.db());
+				}
 			}
 		}
 	}
@@ -983,25 +1055,27 @@ public class DataSourceAction extends BaseAction {
 	 * @param userCollectId long
 	 *                      含义：数据采集用户，代表此数据属于哪个用户
 	 *                      取值范围：不为空以及不为空格，长度不超过10位
-	 * @param entry         java.util.Map.Entry
+	 * @param collectMap    java.util.Map
 	 *                      含义：所有表数据的map的实体
 	 *                      取值范围：不为空
 	 */
-	private void addCollectJobClassify(long userCollectId, Map.Entry<String, Object> entry) {
+	private void addCollectJobClassify(long userCollectId, Map<String, Object> collectMap) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-		// map中key的值，也是下载数据源时对应表信息封装入map的key值
-		String cjc = "collectJobClassify";
-		// 2.判断map中的key值是否为collect_job_classify对应表数据
-		if (cjc.equals(entry.getKey())) {
-			Type cjcType = new TypeReference<List<Collect_job_classify>>() {
-			}.getType();
-			// 3.获取采集任务分类表collect_job_classify信息
-			List<Collect_job_classify> cjcList = JsonUtil.toObject(entry.getValue().toString(), cjcType);
-			// 4.将collect_job_classify表数据循环入数据库
-			for (Collect_job_classify collectJobClassify : cjcList) {
-				collectJobClassify.setClassify_id(PrimayKeyGener.getNextId());
-				collectJobClassify.setUser_id(userCollectId);
-				collectJobClassify.add(Dbo.db());
+		for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
+			// 2.判断map中的key值是否为collect_job_classify对应表数据
+			// map中key的值，也是下载数据源时对应表信息封装入map的key值
+			String cjc = "collectJobClassify";
+			if (cjc.equals(entry.getKey())) {
+				Type cjcType = new TypeReference<List<Collect_job_classify>>() {
+				}.getType();
+				// 3.获取采集任务分类表collect_job_classify信息
+				List<Collect_job_classify> cjcList = JsonUtil.toObject(entry.getValue().toString(), cjcType);
+				// 4.将collect_job_classify表数据循环入数据库
+				for (Collect_job_classify collectJobClassify : cjcList) {
+					collectJobClassify.setClassify_id(PrimayKeyGener.getNextId());
+					collectJobClassify.setUser_id(userCollectId);
+					collectJobClassify.add(Dbo.db());
+				}
 			}
 		}
 	}
@@ -1023,28 +1097,30 @@ public class DataSourceAction extends BaseAction {
 	 * @param userCollectId long
 	 *                      含义：数据采集用户，代表此数据属于哪个用户
 	 *                      取值范围：不为空以及不为空格，长度不超过10位
-	 * @param entry         java.util.Map.Entry
+	 * @param collectMap    java.util.Map
 	 *                      含义：所有表数据的map的实体
 	 *                      取值范围：不为空
 	 */
 	private void addAgentDownInfo(String agentIp, String agentPort, long userCollectId,
-	                              Map.Entry<String, Object> entry) {
+	                              Map<String, Object> collectMap) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-		// map中key的值，也是下载数据源时对应表信息封装入map的key值
-		String adi = "agentDownInfo";
-		// 2.判断map中的key值是否为agent_down_info对应表数据
-		if (adi.equals(entry.getKey())) {
-			Type adiType = new TypeReference<Map<String, Object>>() {
-			}.getType();
-			// 3.获取agent_down_info表数据
-			List<Agent_down_info> agentDownInfoList = JsonUtil.toObject(entry.getValue().toString(), adiType);
-			// 4.将agent_down_info表数据循环入数据库
-			for (Agent_down_info agentDownInfo : agentDownInfoList) {
-				agentDownInfo.setDown_id(PrimayKeyGener.getNextId());
-				agentDownInfo.setUser_id(userCollectId);
-				agentDownInfo.setAgent_ip(agentIp);
-				agentDownInfo.setAgent_port(agentPort);
-				agentDownInfo.add(Dbo.db());
+		for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
+			// 2.判断map中的key值是否为agent_down_info对应表数据
+			// map中key的值，也是下载数据源时对应表信息封装入map的key值
+			String adi = "agentDownInfo";
+			if (adi.equals(entry.getKey())) {
+				Type adiType = new TypeReference<List<Agent_down_info>>() {
+				}.getType();
+				// 3.获取agent_down_info表数据
+				List<Agent_down_info> agentDownInfoList = JsonUtil.toObject(entry.getValue().toString(), adiType);
+				// 4.将agent_down_info表数据循环入数据库
+				for (Agent_down_info agentDownInfo : agentDownInfoList) {
+					agentDownInfo.setDown_id(PrimayKeyGener.getNextId());
+					agentDownInfo.setUser_id(userCollectId);
+					agentDownInfo.setAgent_ip(agentIp);
+					agentDownInfo.setAgent_port(agentPort);
+					agentDownInfo.add(Dbo.db());
+				}
 			}
 		}
 	}
@@ -1058,26 +1134,28 @@ public class DataSourceAction extends BaseAction {
 	 * 4.获取部门表department_info表数据
 	 * 5.将department_info表数据循环插入数据库
 	 *
-	 * @param entry java.util.Map.Entry
-	 *              含义：所有表数据的map的实体
-	 *              取值范围：不为空
+	 * @param collectMap java.util.Map
+	 *                   含义：所有表数据的map的实体
+	 *                   取值范围：不为空
 	 */
-	private List<Department_info> addDepartmentInfo(Map.Entry<String, Object> entry) {
+	private List<Department_info> addDepartmentInfo(Map<String, Object> collectMap) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-		// map中key的值，也是下载数据源时对应表信息封装入map的key值
-		String di = "departmentInfo";
-		// 2.创建新的department_info表数据集合
 		List<Department_info> departmentInfoListNew = new ArrayList<>();
-		// 3.判断map中的key值是否为对应department_info表数据
-		if (di.equals(entry.getKey())) {
-			Type srdType = new TypeReference<List<Department_info>>() {
-			}.getType();
-			// 4.获取部门表department_info表数据
-			List<Department_info> departmentInfoList = JsonUtil.toObject(entry.getValue().toString(), srdType);
-			for (Department_info departmentInfo : departmentInfoList) {
-				departmentInfo.setDep_id(PrimayKeyGener.getNextId());
-				// 4.将department_info表数据循环插入数据库
-				departmentInfo.add(Dbo.db());
+		// 2.创建新的department_info表数据集合
+		for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
+			// 3.判断map中的key值是否为对应department_info表数据
+			// map中key的值，也是下载数据源时对应表信息封装入map的key值
+			String di = "departmentInfo";
+			if (di.equals(entry.getKey())) {
+				Type srdType = new TypeReference<List<Department_info>>() {
+				}.getType();
+				// 4.获取部门表department_info表数据
+				List<Department_info> departmentInfoList = JsonUtil.toObject(entry.getValue().toString(), srdType);
+				for (Department_info departmentInfo : departmentInfoList) {
+					departmentInfo.setDep_id(PrimayKeyGener.getNextId());
+					// 4.将department_info表数据循环插入数据库
+					departmentInfo.add(Dbo.db());
+				}
 			}
 		}
 		// 5.返回新的department_info表数据集合
@@ -1093,7 +1171,7 @@ public class DataSourceAction extends BaseAction {
 	 * 4.遍历department_info表数据，目的是获取最新的部门ID，dep_id
 	 * 5.将source_relation_dep表数据循环插入数据库
 	 *
-	 * @param entry              java.util.Map.Entry
+	 * @param collectMap         java.util.Map
 	 *                           含义：所有表数据的map的实体
 	 *                           取值范围：不为空
 	 * @param dataSource         entity
@@ -1103,24 +1181,26 @@ public class DataSourceAction extends BaseAction {
 	 *                           含义：存放department_info表数据的集合
 	 *                           取值范围：不为空
 	 */
-	private void addSourceRelationDep(Map.Entry<String, Object> entry, Data_source dataSource,
+	private void addSourceRelationDep(Map<String, Object> collectMap, Data_source dataSource,
 	                                  List<Department_info> departmentInfoList) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-		// map中key的值，也是下载数据源时对应表信息封装入map的key值
-		String srd = "sourceRelationDep";
-		// 2.判断map中的key值是否为对应source_relation_dep表数据
-		if (srd.equals(entry.getKey())) {
-			Type srdType = new TypeReference<List<Source_relation_dep>>() {
-			}.getType();
-			// 3.获取数据源和部门关系表source_relation_dep表数据
-			List<Source_relation_dep> srdList = JsonUtil.toObject(entry.getValue().toString(), srdType);
-			for (Source_relation_dep sourceRelationDep : srdList) {
-				sourceRelationDep.setSource_id(dataSource.getSource_id());
-				// 4.遍历department_info表数据，目的是获取最新的部门ID，dep_id
-				for (Department_info departmentInfo : departmentInfoList) {
-					sourceRelationDep.setDep_id(departmentInfo.getDep_id());
-					// 5.将source_relation_dep表数据循环插入数据库
-					sourceRelationDep.add(Dbo.db());
+		for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
+			// 2.判断map中的key值是否为对应source_relation_dep表数据
+			// map中key的值，也是下载数据源时对应表信息封装入map的key值
+			String srd = "sourceRelationDep";
+			if (srd.equals(entry.getKey())) {
+				Type srdType = new TypeReference<List<Source_relation_dep>>() {
+				}.getType();
+				// 3.获取数据源和部门关系表source_relation_dep表数据
+				List<Source_relation_dep> srdList = JsonUtil.toObject(entry.getValue().toString(), srdType);
+				for (Source_relation_dep sourceRelationDep : srdList) {
+					sourceRelationDep.setSource_id(dataSource.getSource_id());
+					// 4.遍历department_info表数据，目的是获取最新的部门ID，dep_id
+					for (Department_info departmentInfo : departmentInfoList) {
+						sourceRelationDep.setDep_id(departmentInfo.getDep_id());
+						// 5.将source_relation_dep表数据循环插入数据库
+						sourceRelationDep.add(Dbo.db());
+					}
 				}
 			}
 		}
@@ -1133,43 +1213,38 @@ public class DataSourceAction extends BaseAction {
 	 * 2.创建data_source表实体对象
 	 * 3.判断map中的key值是否为对应data_source表数据
 	 * 4.获取数据源data_source表信息
-	 * 5.判断上传文件的数据源名称和已有的名称是否重复
-	 * 6.将data_source表数据插入数据库
-	 * 7.返回data_source表数据对应实体对象
+	 * 5.将data_source表数据插入数据库
+	 * 6.返回data_source表数据对应实体对象
 	 *
-	 * @param userId long
-	 *               含义：创建用户ID，代表此数据源由哪个用户创建
-	 *               取值范围：不为空，创建用户时自动生成
-	 * @param entry  java.util.Map.Entry
-	 *               含义：所有表数据的map的实体
-	 *               取值范围：不为空
+	 * @param userId     long
+	 *                   含义：创建用户ID，代表此数据源由哪个用户创建
+	 *                   取值范围：不为空，创建用户时自动生成
+	 * @param collectMap java.util.Map
+	 *                   含义：所有表数据的map的实体
+	 *                   取值范围：不为空
 	 * @return entity
 	 * 含义：data_source表实体对象
 	 * 取值范围：不为空
 	 */
-	private Data_source getDataSource(long userId, Map.Entry<String, Object> entry) {
+	private Data_source getDataSource(long userId, Map<String, Object> collectMap) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
 		// 2.创建data_source表实体对象
 		Data_source dataSource = new Data_source();
-		// map中key的值，也是下载数据源时对应表信息封装入map的key值
-		String ds = "dataSource";
-		// 3.判断map中的key值是否为对应data_source表数据
-		if (ds.equals(entry.getKey())) {
-			// 4.获取数据源data_source表信息
-			dataSource = JsonUtil.toObject(entry.getValue().toString(), Data_source.class);
-			// 5.判断上传文件的数据源名称和已有的名称是否重复
-			if (Dbo.queryNumber("select count(1) from data_source where datasource_name=?",
-					dataSource.getDatasource_name()).orElse(Long.MIN_VALUE) > 0) {
-				throw new BusinessException("数据源名称重复,datasource_name=" +
-						dataSource.getDatasource_name());
+		for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
+			// 3.判断map中的key值是否为对应data_source表数据
+			// map中key的值，也是下载数据源时对应表信息封装入map的key值
+			String ds = "dataSource";
+			if (ds.equals(entry.getKey())) {
+				// 4.获取数据源data_source表信息
+				dataSource = JsonUtil.toObjectSafety(entry.getValue().toString(), Data_source.class).get();
+				// 5.将data_source表数据插入数据库
+				dataSource.setSource_id(PrimayKeyGener.getNextId());
+				dataSource.setCreate_user_id(userId);
+				dataSource.add(Dbo.db());
 			}
-			// 6.将data_source表数据插入数据库
-			dataSource.setSource_id(PrimayKeyGener.getNextId());
-			dataSource.setCreate_user_id(userId);
-			dataSource.add(Dbo.db());
 		}
-		// 7.返回data_source表数据对应实体对象
 		return dataSource;
+		// 7.返回data_source表数据对应实体对象
 	}
 
 	/**
@@ -1189,30 +1264,32 @@ public class DataSourceAction extends BaseAction {
 	 * @param userCollectId long
 	 *                      含义：数据采集用户，代表此数据属于哪个用户
 	 *                      取值范围：不为空以及不为空格，长度不超过10位
-	 * @param entry         java.util.Map.Entry
+	 * @param collectMap    java.util.Map
 	 *                      含义：所有表数据的map的实体
 	 *                      取值范围：不为空
 	 */
 	private void addAgentInfo(String agentIp, String agentPort, long userCollectId,
-	                          Map.Entry<String, Object> entry) {
+	                          Map<String, Object> collectMap) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-		// map中key的值，也是下载数据源时对应表信息封装入map的key值
-		String ai = "agentInfo";
-		// 2.判断map中的key值是否为对应agent_info表数据
-		if (ai.equals(entry.getKey())) {
-			// 获取agent信息表信息
-			Type aiType = new TypeReference<Map<String, Object>>() {
-			}.getType();
-			// 3.获取agent_info表数据
-			List<Agent_info> agentInfoList = JsonUtil.toObject(entry.getValue().toString(), aiType);
-			// 4.循环入库agent_info
-			for (Agent_info agentInfo : agentInfoList) {
-				agentInfo.setAgent_id(PrimayKeyGener.getNextId());
-				agentInfo.setUser_id(userCollectId);
-				agentInfo.setAgent_ip(agentIp);
-				agentInfo.setAgent_port(agentPort);
-				if (agentInfo.add(Dbo.db()) != 1) {
-					throw new BusinessException("添加agent_info表数据入库失败");
+		for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
+			// 2.判断map中的key值是否为对应agent_info表数据
+			// map中key的值，也是下载数据源时对应表信息封装入map的key值
+			String ai = "agentInfo";
+			if (ai.equals(entry.getKey())) {
+				// 获取agent信息表信息
+				Type aiType = new TypeReference<List<Agent_info>>() {
+				}.getType();
+				// 3.获取agent_info表数据
+				List<Agent_info> agentInfoList = JsonUtil.toObject(entry.getValue().toString(), aiType);
+				// 4.循环入库agent_info
+				for (Agent_info agentInfo : agentInfoList) {
+					agentInfo.setAgent_id(PrimayKeyGener.getNextId());
+					agentInfo.setUser_id(userCollectId);
+					agentInfo.setAgent_ip(agentIp);
+					agentInfo.setAgent_port(agentPort);
+					if (agentInfo.add(Dbo.db()) != 1) {
+						throw new BusinessException("添加agent_info表数据入库失败");
+					}
 				}
 			}
 		}
@@ -1247,7 +1324,7 @@ public class DataSourceAction extends BaseAction {
 	 * 22.表存储信息table_storage_info,获取table_storage_info表信息集合入map
 	 * 23.表清洗参数信息table_clean,获取table_clean表信息集合入map
 	 * 24.表对应的字段table_column,获取table_column表信息集合入map
-	 * 25.列清洗参数信息 column_clean,获取column_clean表信息集合入map
+	 * 25.列清洗参数信息column_clean,获取column_clean表信息集合入map
 	 * 26.列拆分信息表column_split,获取column_split表信息集合入map
 	 * 27.使用base64编码
 	 * 28.判断文件是否存在
@@ -1258,7 +1335,7 @@ public class DataSourceAction extends BaseAction {
 	 *                 含义：data_source表主键
 	 *                 取值范围：不为空以及不为空格，长度不超过10
 	 */
-	public void downloadFile(@RequestParam long sourceId) {
+	public void downloadFile(long sourceId) {
 		// 1.数据可访问权限处理方式，这里是下载数据源，所以不需要数据权限验证
 		HttpServletResponse response = ResponseUtil.getResponse();
 		try (OutputStream out = response.getOutputStream()) {
@@ -1384,7 +1461,7 @@ public class DataSourceAction extends BaseAction {
 	private List<Agent_info> getAgentInfoList(long sourceId, Map<String, Object> collectionMap) {
 		// 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
 		List<Agent_info> agentInfoList = Dbo.queryList(Agent_info.class, "select * from " +
-				"agent_info  where sourceId = ?", sourceId);
+				"agent_info  where source_id = ?", sourceId);
 		// 2.将agent_info表数据集合存入map
 		collectionMap.put("agentInfo", agentInfoList);
 		// 3.将agent_info表数据集合返回
@@ -1448,7 +1525,7 @@ public class DataSourceAction extends BaseAction {
 			columnSplitResult.add(result);
 		}
 		// 5.将column_split表集合信息存入map
-		collectionMap.put("columnSplit", columnSplitResult);
+		collectionMap.put("columnSplit", columnSplitResult.toList());
 	}
 
 	/**
@@ -1479,7 +1556,7 @@ public class DataSourceAction extends BaseAction {
 			columnCleanResult.add(result);
 		}
 		// 5.将column_clean表集合信息存入map
-		collectionMap.put("columnClean", columnCleanResult);
+		collectionMap.put("columnClean", columnCleanResult.toList());
 	}
 
 	/**
@@ -1511,7 +1588,7 @@ public class DataSourceAction extends BaseAction {
 			tableColumnResult.add(result);
 		}
 		// 5.将table_column表集合信息存入map
-		collectionMap.put("tableColumn", tableColumnResult);
+		collectionMap.put("tableColumn", tableColumnResult.toList());
 		// 6.将table_column表结果集返回
 		return tableColumnResult;
 	}
@@ -1544,7 +1621,7 @@ public class DataSourceAction extends BaseAction {
 			tableCleanResult.add(result);
 		}
 		// 5.将table_clean表集合信息存入map
-		collectionMap.put("tableClean", tableCleanResult);
+		collectionMap.put("tableClean", tableCleanResult.toList());
 	}
 
 	/**
@@ -1570,7 +1647,7 @@ public class DataSourceAction extends BaseAction {
 					tableInfoResult.getLong(i, "table_id"));
 			tableStorageInfoResult.add(result);
 		}
-		collectionMap.put("tableStorageInfo", tableStorageInfoResult);
+		collectionMap.put("tableStorageInfo", tableStorageInfoResult.toList());
 	}
 
 	/**
@@ -1596,7 +1673,7 @@ public class DataSourceAction extends BaseAction {
 					tableInfoResult.getLong(i, "table_id"));
 			columnMergeResult.add(result);
 		}
-		collectionMap.put("columnMerge", columnMergeResult);
+		collectionMap.put("columnMerge", columnMergeResult.toList());
 	}
 
 	/**
@@ -1622,11 +1699,11 @@ public class DataSourceAction extends BaseAction {
 		// 3.遍历database_set结果集获取database_set,通过database_set查询table_info表信息
 		for (int i = 0; i < databaseSetResult.getRowCount(); i++) {
 			Result result = Dbo.queryResult("select * from table_info where database_id = ?",
-					databaseSetResult.getLong(i, "database_set"));
+					databaseSetResult.getLong(i, "database_id"));
 			tableInfoResult.add(result);
 		}
 		// 4.将查询到的信息封装入集合
-		collectionMap.put("tableInfo", tableInfoResult);
+		collectionMap.put("tableInfo", tableInfoResult.toList());
 		// 5.将table_info表集合信息存入map
 		return tableInfoResult;
 	}
@@ -1659,7 +1736,7 @@ public class DataSourceAction extends BaseAction {
 			signalFileResult.add(result);
 		}
 		// 5.将signal_file表集合信息存入map
-		collectionMap.put("signalFile", signalFileResult);
+		collectionMap.put("signalFile", signalFileResult.toList());
 	}
 
 	/**
@@ -1690,7 +1767,7 @@ public class DataSourceAction extends BaseAction {
 			fileSourceResult.add(result);
 		}
 		// 5.将file_source表集合信息存入map
-		collectionMap.put("fileSource", fileSourceResult);
+		collectionMap.put("fileSource", fileSourceResult.toList());
 	}
 
 	/**
@@ -1722,7 +1799,7 @@ public class DataSourceAction extends BaseAction {
 			fileCollectSetResult.add(result);
 		}
 		// 5.将file_collect_set表集合信息存入map
-		collectionMap.put("fileCollectSet", fileCollectSetResult);
+		collectionMap.put("fileCollectSet", fileCollectSetResult.toList());
 		// 6.返回file_collect_set数据结果集
 		return fileCollectSetResult;
 	}
@@ -1756,7 +1833,7 @@ public class DataSourceAction extends BaseAction {
 			databaseSetResult.add(result);
 		}
 		//5.将database_set表集合信息存入map
-		collectionMap.put("databaseSet", databaseSetResult);
+		collectionMap.put("databaseSet", databaseSetResult.toList());
 		// 6.返回database_result表数据结果集
 		return databaseSetResult;
 	}
@@ -1783,13 +1860,13 @@ public class DataSourceAction extends BaseAction {
 		Result ftpFolderResult = new Result();
 		// 3.遍历ftp_collect结果集获取ftp_id(ftp采集任务编号),通过ftp_id查询ftp_folder表信息
 		for (int i = 0; i < ftpCollectResult.getRowCount(); i++) {
-			Result result = Dbo.queryResult("select * from ftp_folder  where ftp_id = ?",
-					ftpFolderResult.getLong(i, "ftp_id"));
+			Result result = Dbo.queryResult("select * from ftp_folder where ftp_id = ?",
+					ftpCollectResult.getLong(i, "ftp_id"));
 			// 4.将查询到的信息封装入集合
 			ftpFolderResult.add(result);
 		}
 		// 5.将ftp_folder表集合信息存入map
-		collectionMap.put("ftpFolder", ftpFolderResult);
+		collectionMap.put("ftpFolder", ftpFolderResult.toList());
 	}
 
 	/**
@@ -1821,7 +1898,7 @@ public class DataSourceAction extends BaseAction {
 			objectCollectStructResult.add(result);
 		}
 		// 5.将object_collect_struct表集合信息存入map
-		collectionMap.put("objectCollectStruct", objectCollectStructResult);
+		collectionMap.put("objectCollectStruct", objectCollectStructResult.toList());
 	}
 
 	/**
@@ -1847,12 +1924,12 @@ public class DataSourceAction extends BaseAction {
 		// 3.遍历object_collect_task结果集获取ocs_id（对象采集任务编号），通过ocs_id查询object_storage表信息
 		for (int i = 0; i < objectCollectTaskResult.getRowCount(); i++) {
 			Result result = Dbo.queryResult("select * from object_storage where ocs_id =?",
-					objectCollectTaskResult.getString(i, "ocs_id"));
+					objectCollectTaskResult.getLong(i, "ocs_id"));
 			// 4.将查询到的信息封装入集合
 			objectStorageResult.add(result);
 		}
 		// 5.将object_storage集合信息存入map
-		collectionMap.put("objectStorage", objectStorageResult);
+		collectionMap.put("objectStorage", objectStorageResult.toList());
 	}
 
 	/**
@@ -1864,28 +1941,28 @@ public class DataSourceAction extends BaseAction {
 	 * 4.将object_collect_task表结果集封装入map
 	 * 5.返回object_collect_task表结果集
 	 *
-	 * @param collectionMap        java.util.Map
-	 *                             含义：封装数据源下载信息（这里封装的是object_collect_task表数据集合）
-	 *                             取值范围：key唯一
-	 * @param object_collectResult fd.ng.db.resultset.Result
-	 *                             含义：object_collect表数据结果集
-	 *                             取值范围：不为空
+	 * @param collectionMap       java.util.Map
+	 *                            含义：封装数据源下载信息（这里封装的是object_collect_task表数据集合）
+	 *                            取值范围：key唯一
+	 * @param objectCollectResult fd.ng.db.resultset.Result
+	 *                            含义：object_collect表数据结果集
+	 *                            取值范围：不为空
 	 * @return fd.ng.db.resultset.Result
 	 * 含义：返回object_collect_task表数据集合信息
 	 * 取值范围：不为空
 	 */
-	private Result getObjectCollectTaskResult(Map<String, Object> collectionMap, Result object_collectResult) {
+	private Result getObjectCollectTaskResult(Map<String, Object> collectionMap, Result objectCollectResult) {
 		// 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
 		// 2.创建存放object_collect_task表数据的结果集对象
 		Result objectCollectTaskResult = new Result();
 		// 3.循环遍历object_collect表数据获取odc_id，根据odc_id查询object_collect_task表信息并封装
-		for (int i = 0; i < object_collectResult.getRowCount(); i++) {
+		for (int i = 0; i < objectCollectResult.getRowCount(); i++) {
 			Result result = Dbo.queryResult("select * from object_collect_task where " +
-					" odc_id=?", object_collectResult.getLong(i, "odc_id"));
+					" odc_id=?", objectCollectResult.getLong(i, "odc_id"));
 			objectCollectTaskResult.add(result);
 		}
 		// 4.将object_collect_task表结果集封装入map
-		collectionMap.put("objectCollectTask", objectCollectTaskResult);
+		collectionMap.put("objectCollectTask", objectCollectTaskResult.toList());
 		// 5.返回object_collect_task表结果集
 		return objectCollectTaskResult;
 	}
@@ -1922,7 +1999,7 @@ public class DataSourceAction extends BaseAction {
 			objectCollectResult.add(object_collect);
 		}
 		// 5.将object_collect结果集封装入map
-		collectionMap.put("objectCollect", objectCollectResult);
+		collectionMap.put("objectCollect", objectCollectResult.toList());
 		// 6.返回object_collect结果集
 		return objectCollectResult;
 	}
@@ -1956,7 +2033,9 @@ public class DataSourceAction extends BaseAction {
 					"select * from  agent_down_info where  agent_id = ?",
 					agentInfoList.get(i).getAgent_id());
 			// 5.将agent_down_info表信息放入list
-			agentDownInfoList.add(agent_down_info);
+			if (agent_down_info.isPresent()) {
+				agentDownInfoList.add(agent_down_info);
+			}
 		}
 		// 6.将agent_down_info表信息入map
 		collectionMap.put("agentDownInfo", agentDownInfoList);
@@ -1980,14 +2059,14 @@ public class DataSourceAction extends BaseAction {
 	private void addDataSourceToMap(long sourceId, Map<String, Object> collectionMap) {
 		// 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
 		// 2.根据数据源ID查询数据源data_source集合
-		List<Data_source> dataSourceList = Dbo.queryList(Data_source.class, "select * from " +
-				"data_source where  sourceId = ?", sourceId);
+		Optional<Data_source> dataSource = Dbo.queryOneObject(Data_source.class, "select * from " +
+				"data_source where source_id = ?", sourceId);
 		// 3.判断获取到的集合是否有数据，没有抛异常，有返回数据
-		if (dataSourceList.isEmpty()) {
+		if (!dataSource.isPresent()) {
 			throw new BusinessException("此数据源下没有数据，sourceId = ?" + sourceId);
 		}
 		// 4.将data_source数据入map
-		collectionMap.put("dataSource", dataSourceList);
+		collectionMap.put("dataSource", dataSource);
 	}
 
 	/**
@@ -2019,7 +2098,7 @@ public class DataSourceAction extends BaseAction {
 			ftpTransferedResult.add(result);
 		}
 		// 5.将ftp_transfered表数据结果集信息入map
-		collectionMap.put("ftpTransfered", ftpTransferedResult);
+		collectionMap.put("ftpTransfered", ftpTransferedResult.toList());
 	}
 
 	/**
@@ -2046,12 +2125,12 @@ public class DataSourceAction extends BaseAction {
 		// 3.遍历agent_info信息，获取agent_id(agent_info主键，ftp_collect外键）
 		for (int i = 0; i < agentInfoList.size(); i++) {
 			// 4. 根据agent_id查询ftp_collect信息
-			Result result = Dbo.queryResult("select * from  ftp_collect  where agent_id = ?",
+			Result result = Dbo.queryResult("select * from ftp_collect where agent_id = ?",
 					agentInfoList.get(i).getAgent_id());
 			ftpCollectResult.add(result);
 		}
 		// 5.将ftp_collect表信息入map
-		collectionMap.put("ftpCollect", ftpCollectResult);
+		collectionMap.put("ftpCollect", ftpCollectResult.toList());
 		// 6.返回ftp_collect表结果集信息
 		return ftpCollectResult;
 	}
@@ -2084,7 +2163,7 @@ public class DataSourceAction extends BaseAction {
 			collectJobClassifyResult.add(result);
 		}
 		// 5.将collect_job_classify表数据结果集入map
-		collectionMap.put("collectJobClassify", collectJobClassifyResult);
+		collectionMap.put("collectJobClassify", collectJobClassifyResult.toList());
 	}
 
 }
