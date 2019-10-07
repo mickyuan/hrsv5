@@ -348,6 +348,7 @@ public class DBConfStepAction extends BaseAction{
 	 * */
 	public ActionResult testConnection(@RequestBean Database_set databaseSet) {
 		//1、根据agent_id获得agent_ip,agent_port
+		//FIXME 使用queryOneObject方法
 		Result result = Dbo.queryResult("select agent_ip, agent_port from agent_info " +
 						"where agent_id = ?",
 				databaseSet.getAgent_id());
@@ -373,6 +374,7 @@ public class DBConfStepAction extends BaseAction{
 				.addData("dbtype", databaseSet.getDatabase_type())
 				.post(url + actionPattern);
 		//4、将响应封装成ActionResult的对象
+		//FIXME 这个方法只能在测试用例中使用
 		return JsonUtil.toObject(resVal.getBodyString(), ActionResult.class);
 	}
 

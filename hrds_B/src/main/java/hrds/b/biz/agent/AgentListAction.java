@@ -97,6 +97,7 @@ public class AgentListAction extends BaseAction {
 	//TODO 采集频率目前暂未拿到
 	public Result getTaskInfo(long sourceId, long agentId) {
 		//1、判断在当前用户，当前数据源下，agent是否存在
+		//FIXME 下面只用到了两个字段，那么这里就不应用用 ai.* 。而且，下面用的都是第0行数据，那么这个结果集是不是应该判断不等于就是异常？
 		Result result = Dbo.queryResult("select ai.* from "+ Data_source.TableName +" ds " +
 				" left join "+ Agent_info.TableName +" ai on ds.SOURCE_ID = ai.SOURCE_ID " +
 				" where ds.source_id = ? AND ai.user_id = ? " +

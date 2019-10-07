@@ -33,6 +33,7 @@ public class JobDetails {
 	public static void getDetails(List<Collect_case> collectJobList) {
 
 		//定义一个完成的状态
+		//FIXME 为什么要提前定义变量？而且，变量的命名和含义还不一致
 		String state = ExecuteState.YunXingWanCheng.getCode();
 
 		//成功数
@@ -42,8 +43,8 @@ public class JobDetails {
 		//失败数
 		int fail = 0;
 
-		Map<String, JSONObject> detailsMap = new LinkedHashMap<>();
-		String jobSuccess = "";
+		Map<String, JSONObject> detailsMap = new LinkedHashMap<>();//FIXME 这个变量干什么用
+		String jobSuccess = "";//FIXME 为什么要提前定义变量？
 
 		//1 : 找出有失败作业的信息,并将其优先显示在最前面
 		collectJobList.forEach(collect_case -> {

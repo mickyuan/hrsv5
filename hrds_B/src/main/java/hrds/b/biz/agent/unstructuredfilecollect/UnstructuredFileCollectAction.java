@@ -68,6 +68,7 @@ public class UnstructuredFileCollectAction extends BaseAction {
 							"根据fcs_id" + file_collect_set.getFcs_id() + "查询不到file_collect_set表信息"));
 			map.put("file_collect_set_info", file_collect_set_info);
 		}
+		//FIXME else不处理，会返回前端什么数据，要说明！
 		//返回到前端的信息
 		return map;
 	}
@@ -85,7 +86,6 @@ public class UnstructuredFileCollectAction extends BaseAction {
 	 * 含义：返回文件系统采集表主键，保证添加源文件设置表时可以取到主键
 	 * 取值范围：不会为空
 	 */
-	//FIXME 为什么要返回主键？
 	public long addFileCollect(@RequestBean File_collect_set file_collect_set) {
 		//数据可访问权限处理方式：该表没有对应的用户访问权限限制
 		//TODO file_collect_set里面各字段的值需要校验，应该使用一个公共的校验类进行校验
@@ -95,7 +95,7 @@ public class UnstructuredFileCollectAction extends BaseAction {
 				.orElseThrow(() -> new BusinessException("查询得到的数据必须有且只有一条"));
 		if (count > 0) {
 			throw new BusinessException("非结构化任务名称重复");
-		} else {
+		} else {//FIXME if里面抛异常了，也就是中断的主流程，那么，这个else就不需要了
 			//2.保存File_collect_set表
 			file_collect_set.setFcs_id(PrimayKeyGener.getNextId());
 			file_collect_set.add(Dbo.db());

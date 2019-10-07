@@ -71,7 +71,7 @@ public class CollTbConfStepAction extends BaseAction {
 	 *         含义：数据库设置ID,database_set表主键,table_info表外键
 	 *         取值范围：不为空
 	 * @Param: inputString long
-	 *         含义：用户界面输入的字符串
+	 *         含义：用户界面输入的字符串  //FIXME 废话
 	 *         取值范围:
 	 *
 	 * @return: List<Result>
@@ -93,7 +93,7 @@ public class CollTbConfStepAction extends BaseAction {
 		String fakeMethodName = "FAKEMETHODNAME";
 		String respMsg = SendMsgUtil.sendMsg(agentId, getUserId(), resultObj.toJSONString(), fakeMethodName);
 		//4、对获取到的数据进行处理，获得模糊查询到的表名
-		JSONObject respObj = JSON.parseObject(respMsg);
+		JSONObject respObj = JSON.parseObject(respMsg);//FIXME 为什么要用JSON？能不能改成BEAN对象
 		List<String> tableNames = (List<String>) respObj.get("tableName");
 		List<String> rightTables = new ArrayList<>();
 		if(!tableNames.isEmpty()){
@@ -106,6 +106,9 @@ public class CollTbConfStepAction extends BaseAction {
 				}
 			}
 		}
+		//FIXME 以上整个逻辑，用一句sql where in不就解决了吗？
+
+		//FIXME 以下整个循环，用一句sql where in不就解决了吗？
 		List<Result> returnList = new ArrayList<>();
 		//5、根据表名和colSetId获取界面需要显示的信息
 		if(!rightTables.isEmpty()){
@@ -177,6 +180,7 @@ public class CollTbConfStepAction extends BaseAction {
 		//5、对获取到的数据进行处理，获得模糊查询到的表名
 		JSONObject respObj = JSON.parseObject(respMsg);
 		List<String> tableNames = (List<String>) respObj.get("tableName");
+		//FIXME 以下整个循环，用一句sql where in不就解决了吗？
 		List<Result> returnList = new ArrayList<>();
 		if(!tableNames.isEmpty()){
 			//根据String的自然顺序(字母a-z)对表名进行升序排序

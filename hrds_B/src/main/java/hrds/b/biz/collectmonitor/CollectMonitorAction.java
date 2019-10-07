@@ -63,6 +63,7 @@ public class CollectMonitorAction extends BaseAction {
 	public Map<String, Object> getDataCollectInfo() {
 
 		//文件采集的代码项值
+		//FIXME 为什么要提前定义变量？
 		String fileCode = CollectType.WenJianCaiJi.getCode();
 
 		//1 : 获取已采集的文件数据量大小(DB文件和数据库采集),这里显示的bytes可能需要进行转换单位
@@ -71,6 +72,7 @@ public class CollectMonitorAction extends BaseAction {
 						.queryOneObject(" select sum((case when collect_type = ? then file_size else 0 end)) fileSize," +
 										"sum((case when collect_type <> ? then file_size else 0 end)) dbSize FROM " + Source_file_attribute.TableName
 										+ "join  agent_info ai on sfa.agent_id = ai.agent_id where user_id = ?", fileCode, fileCode, getUserId());
+		//FIXME collect_type不等于fileCode就是dbSize？
 
 		//2 : 获取当前用户的全部采集任务数(只要是整个流程完成的,不区分是否采集过文件)
 		Map<String, Object> taskNum = Dbo.queryOneObject(

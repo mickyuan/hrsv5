@@ -241,7 +241,7 @@ public class DataQueryAction extends BaseAction {
 		//1.根据文件id获取文件名
 		Optional<Source_file_attribute> sourceFileAttribute = Dbo.queryOneObject(Source_file_attribute.class,
 				"select original_name from " + Source_file_attribute.TableName + " where" +
-						" file_id = ?", fileId);
+						" file_id = ?", fileId);//FIXME 改成使用 orElseThrow
 		//2.根据文件id和文件名收藏该文件
 		if (!sourceFileAttribute.isPresent()) {
 			throw new BusinessException("文件不存在！fileId=" + fileId);
@@ -287,7 +287,7 @@ public class DataQueryAction extends BaseAction {
 	 * 2.根据统计类型设置返回的map结果集
 	 *
 	 * @return classificationSumMap
-	 * 含义 返回的结果集map
+	 * 含义 返回的结果集map //FIXME 写这种注释有意义吗
 	 * 取值范围: 不为NULL
 	 * @author BY-HLL
 	 */
@@ -295,19 +295,20 @@ public class DataQueryAction extends BaseAction {
 		//1.根据登录用户的id获取用户文件采集统计的结果
 		List<Map<String, Object>> fcsList = Dbo.queryList("select count(1) sum_num,file_type" +
 						" from " + Source_file_attribute.TableName + " sfa join" +
-						" " + Agent_info.TableName + "ai on sfa.agent_id = ai.agent_id" +
+						" " + Agent_info.TableName + "ai on sfa.agent_id = ai.agent_id" + //FIXME 这个别名不会报错吗？测试用例能跑过去？
 						" where sfa.collect_type = ? AND ai.user_id = ?" +
 						" GROUP BY file_type ORDER BY file_type",
 				CollectType.WenJianCaiJi.getCode(), getUserId()
 		);
 		//2.根据统计类型设置返回的map结果集
-		Map<String, Object> classificationSumMap = new HashMap<>(12);
-		if (!fcsList.isEmpty()) {
+		Map<String, Object> classificationSumMap = new HashMap<>(12);//FIXME 为什么是12
+		if (!fcsList.isEmpty()) {//FIXME 这是最应该用Result的场景，反倒不用了
 			for (Map<String, Object> fcsMap : fcsList) {
 				classificationSumMap.put(FileType.ofValueByCode((String) fcsMap.get("file_type")),
 						fcsMap.get("sum_num"));
 			}
 		}
+		//FIXME 为什么要构造这个MAP，它和fcsList有什么区别？下面每个方法都是这么干的，逐个说明原因
 		return classificationSumMap;
 	}
 
@@ -500,7 +501,7 @@ public class DataQueryAction extends BaseAction {
 			}
 			asmSql.addSql(" order by file_id");
 			searchResult = Dbo.queryResult(asmSql.sql(), asmSql.params());
-			if (!searchResult.isEmpty()) {
+			if (!searchResult.isEmpty()) {//FIXME 这种 "先判断不空再循环" 的编码方式无意义！！！ 直接写 for 循环即可
 				for (int i = 0; i < searchResult.getRowCount(); i++) {
 					searchResult.setObject(i, "file_size", FileUtil.fileSizeConversion(
 							searchResult.getLongDefaultZero(i, "file_size")));
@@ -514,7 +515,7 @@ public class DataQueryAction extends BaseAction {
 									" auth_type != ?", searchResult.getString(i, "file_id"), getUserId(),
 							AuthType.BuYunXu.getCode());
 					if (!daResult.isEmpty()) {
-						StringBuffer authType = new StringBuffer();
+						StringBuffer authType = new StringBuffer();//FIXME 已经说了很多次了，要看 idea 对你代码的提示！！！
 						StringBuffer applyType = new StringBuffer();
 						for (int j = 0; j < daResult.getRowCount(); j++) {
 							authType.append(daResult.getString(j, "auth_type")).append(',');
@@ -558,7 +559,7 @@ public class DataQueryAction extends BaseAction {
 							authType.delete(authType.length() - 1, authType.length());
 							applyType.delete(applyType.length() - 1, applyType.length());
 							daResult.setObject(j, "auth_type", authType.toString());
-							daResult.setObject(j, "apply_type", authType.toString());
+							daResult.setObject(j, "apply_type", authType.toString());//FIXME 为什么这两行用同一个变量赋值？
 							daResult.setObject(j, "file_id", sfaRsAll.getString(i, "file_id"));
 							daResult.setObject(j, "collect_type", sfaRsAll.getString(i, "collect_type"));
 							daResult.setObject(j, "hbase_name", sfaRsAll.getString(i, "hbase_name"));

@@ -61,6 +61,7 @@ public class ObjectCollectAction extends BaseAction {
 		}
 		//返回到前端的信息
 		Map<String, Object> map = ar.getDataForMap();
+		//FIXME 这两个时间和Agent部署主机的时间并不是一个，确定要这样用吗？
 		map.put("localdate", DateUtil.getSysDate());
 		map.put("localtime", DateUtil.getSysTime());
 		//3.对象采集id不为空则获取对象采集设置表信息
@@ -71,6 +72,7 @@ public class ObjectCollectAction extends BaseAction {
 					"根据odc_id" + object_collect.getOdc_id() + "查询不到object_collect表信息"));
 			map.put("object_collect_info", object_collect_info);
 		}
+		//FIXME else哪去了？
 		return map;
 	}
 

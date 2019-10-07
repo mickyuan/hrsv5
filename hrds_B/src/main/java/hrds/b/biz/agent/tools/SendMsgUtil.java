@@ -76,11 +76,12 @@ public class SendMsgUtil {
 		String url = AgentActionUtil.getUrl(agentId, userId, methodName);
 		logger.debug("准备建立连接，请求的URL为" + url);
 
+		//FIXME 为什么要用这个HTTPCLIENT包？
 		CloseableHttpClient httpClient = null;
 		HttpPost httpPost;
 		CloseableHttpResponse response = null;
 
-		String var15;
+		String var15;//FIXME 为什么要提前定义这么个变量
 		try {
 			//2、根据agentIp和agentPort构建http请求的url
 			httpClient = HttpClients.createDefault();

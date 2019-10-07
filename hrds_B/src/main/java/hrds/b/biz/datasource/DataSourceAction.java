@@ -292,6 +292,7 @@ public class DataSourceAction extends BaseAction {
 	public List<Sys_user> searchDataCollectUser() {
 		// 1.数据可访问权限处理方式，此方法不需要权限验证，没有用户访问限制
 		// 2.查询数据采集用户信息并返回查询结果
+		//FIXME 加上注释说明：为什么用 union all；为什么用 like
 		return Dbo.queryList(Sys_user.class, "select * from sys_user where user_type=? and" +
 						" dep_id=? union all select * from sys_user where usertype_group like ?",
 				UserType.CaiJiYongHu.getCode(), getUser().getDepId(),
