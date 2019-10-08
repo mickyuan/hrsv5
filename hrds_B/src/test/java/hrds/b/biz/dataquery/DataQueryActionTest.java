@@ -4,6 +4,7 @@ import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
+import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import hrds.commons.codes.AgentType;
@@ -96,19 +97,12 @@ public class DataQueryActionTest extends WebBaseTestCase {
 			dataSource.setCreate_date(DateUtil.getSysDate());
 			dataSource.setCreate_time(DateUtil.getSysTime());
 			dataSource.setCreate_user_id(USER_ID);
-			if (dataSource.add(db) != 1) {
-				throw new BusinessException("初始化 Data_source 表数据失败," +
-						"datasource_number=" + dataSource.getDatasource_number());
-			}
+			dataSource.add(db);
 			//2.初始化 Source_relation_dep 数据
 			Source_relation_dep sourceRelationDep = new Source_relation_dep();
 			sourceRelationDep.setDep_id(DEP_ID);
 			sourceRelationDep.setSource_id(SOURCE_ID);
-			if (sourceRelationDep.add(db) != 1) {
-				throw new BusinessException("初始 Source_relation_dep 表数据失败," +
-						"dep_id=" + sourceRelationDep.getDep_id() + "" +
-						"source_id=" + sourceRelationDep.getSource_id());
-			}
+			sourceRelationDep.add(db);
 			//3.初始化 Agent_info 数据
 			Agent_info agentInfo = new Agent_info();
 			for (int i = 1; i <= 5; i++) {
@@ -147,10 +141,7 @@ public class DataQueryActionTest extends WebBaseTestCase {
 				agentInfo.setCreate_time(DateUtil.getSysTime());
 				agentInfo.setSource_id(SOURCE_ID);
 				agentInfo.setUser_id(USER_ID);
-				if (agentInfo.add(db) != 1) {
-					throw new BusinessException("初始化 Agent_info 表数据失败," +
-							"agent_id=" + agentInfo.getAgent_id());
-				}
+				agentInfo.add(db);
 			}
 			//4.初始化 File_collect_set 数据
 			File_collect_set fileCollectSet = new File_collect_set();
@@ -163,10 +154,7 @@ public class DataQueryActionTest extends WebBaseTestCase {
 			fileCollectSet.setIs_sendok("1");
 			fileCollectSet.setIs_solr("1");
 			fileCollectSet.setRemark("init-hll");
-			if (fileCollectSet.add(db) != 1) {
-				throw new BusinessException("初始化 File_collect_set 表数据失败," +
-						"fcs_id=" + fileCollectSet.getFcs_id());
-			}
+			fileCollectSet.add(db);
 			//5.初始化 Source_file_attribute 数据
 			for (int i = 0; i < 5; i++) {
 				Source_file_attribute sourceFileAttribute = new Source_file_attribute();
@@ -195,10 +183,7 @@ public class DataQueryActionTest extends WebBaseTestCase {
 				sourceFileAttribute.setAgent_id(AGENT_ID + 2);
 				sourceFileAttribute.setSource_id(SOURCE_ID);
 				sourceFileAttribute.setCollect_set_id(FCS_ID);
-				if (sourceFileAttribute.add(db) != 1) {
-					throw new BusinessException("初始化 Source_file_attribute 表数据失败," +
-							"file_id=" + sourceFileAttribute.getFile_id());
-				}
+				sourceFileAttribute.add(db);
 			}
 			//6.初始化 Data_auth 数据
 			Data_auth dataAuth = new Data_auth();
@@ -211,16 +196,13 @@ public class DataQueryActionTest extends WebBaseTestCase {
 			dataAuth.setAudit_time(DateUtil.getSysTime());
 			dataAuth.setAudit_userid(USER_ID);
 			dataAuth.setAudit_name("init-hll");
-			dataAuth.setFile_id(FILE_ID);
+			dataAuth.setFile_id(FILE_ID + 4);
 			dataAuth.setUser_id(USER_ID);
 			dataAuth.setDep_id(DEP_ID);
 			dataAuth.setAgent_id(AGENT_ID + 2);
 			dataAuth.setSource_id(SOURCE_ID);
 			dataAuth.setCollect_set_id(FCS_ID);
-			if (dataAuth.add(db) != 1) {
-				throw new BusinessException("初始化 Data_auth 表数据失败," +
-						"da_id=" + dataAuth.getDa_id());
-			}
+			dataAuth.add(db);
 			//7.初始化 Search_info 数据
 			Search_info searchInfo = new Search_info();
 			searchInfo.setSi_id(SI_ID);
@@ -228,10 +210,7 @@ public class DataQueryActionTest extends WebBaseTestCase {
 			searchInfo.setWord_name("init-hll");
 			searchInfo.setSi_count(0L);
 			searchInfo.setSi_remark("init-hll");
-			if (searchInfo.add(db) != 1) {
-				throw new BusinessException("初始化 Search_info 表数据失败," +
-						"si_id=" + searchInfo.getSi_id());
-			}
+			searchInfo.add(db);
 			//8.初始化 User_fav 数据
 			User_fav userFav = new User_fav();
 			userFav.setFav_id(FAV_ID);
@@ -239,10 +218,7 @@ public class DataQueryActionTest extends WebBaseTestCase {
 			userFav.setFile_id(FILE_ID);
 			userFav.setUser_id(USER_ID);
 			userFav.setFav_flag("1");
-			if (userFav.add(db) != 1) {
-				throw new BusinessException("初始化 User_fav 表数据失败," +
-						"fav_id=" + userFav.getFav_id());
-			}
+			userFav.add(db);
 			//9.初始化 Sys_user 数据
 			Sys_user sysUser = new Sys_user();
 			sysUser.setUser_id(USER_ID);
@@ -256,21 +232,14 @@ public class DataQueryActionTest extends WebBaseTestCase {
 			sysUser.setCreate_date(DateUtil.getSysDate());
 			sysUser.setToken("0");
 			sysUser.setValid_time(DateUtil.getSysTime());
-			if ((sysUser.add(db) != 1)) {
-				throw new BusinessException("初始化 Sys_user 表数据失败," +
-						"user_id=" + sysUser.getUser_id());
-			}
+			sysUser.add(db);
 			//10.初始化 Department_info 数据
 			Department_info departmentInfo = new Department_info();
 			departmentInfo.setDep_id(DEP_ID);
 			departmentInfo.setDep_name("init-hll");
 			departmentInfo.setCreate_date(DateUtil.getSysDate());
 			departmentInfo.setCreate_time(DateUtil.getSysTime());
-			if ((departmentInfo.add(db) != 1)) {
-				throw new BusinessException("初始化 Department_info 表数据失败," +
-						"dep_id=" + departmentInfo.getDep_id());
-			}
-
+			departmentInfo.add(db);
 			//11.提交所有数据库执行操作
 			SqlOperator.commitTransaction(db);
 			//12.根据初始化的 Sys_user 用户模拟登陆
@@ -494,62 +463,6 @@ public class DataQueryActionTest extends WebBaseTestCase {
 	}
 
 	/**
-	 * <p>方法名: getCollectFile</p>
-	 * <p>方法说明: 根据登录用户获取用户收藏的文件列表,返回结果默认显示最近9条收藏的测试方法</p>
-	 * 1.正确数据访问:
-	 * 1-1.int类型值的 queryNum 1-99 之间的整数，取输入的整数
-	 * 1-2.int类型值的 queryNum 小于1 的整数，取默认的查询条数9
-	 * 1-3.int类型值的 queryNum 大于99 的整数，取最大显示条数99
-	 * 2.错误数据访问:
-	 * 2-1.非int类型值的 queryNum
-	 */
-	@Test
-	public void getCollectFile() {
-		//1-1.int类型值的 queryNum 1-99 之间的整数，取输入的整数
-		bodyString = new HttpClient()
-				.addData("queryNum", "8")
-				.post(getActionUrl("getCollectFile")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
-		assertThat(ar.isSuccess(), is(true));
-		for (int i = 0; i < ar.getDataForResult().getRowCount(); i++) {
-			assertThat(ar.getDataForResult().getString(i, "fav_id"), is("5000000000"));
-			assertThat(ar.getDataForResult().getString(i, "original_name"), is("init-hll"));
-			assertThat(ar.getDataForResult().getString(i, "file_id"), is("999999999999999999999999"));
-			assertThat(ar.getDataForResult().getString(i, "fav_flag"), is("1"));
-		}
-		//1-2.int类型值的 queryNum 小于1 的整数，取输入的整数
-		bodyString = new HttpClient()
-				.addData("queryNum", "-1")
-				.post(getActionUrl("getCollectFile")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
-		assertThat(ar.isSuccess(), is(true));
-		for (int i = 0; i < ar.getDataForResult().getRowCount(); i++) {
-			assertThat(ar.getDataForResult().getString(i, "fav_id"), is("5000000000"));
-			assertThat(ar.getDataForResult().getString(i, "original_name"), is("init-hll"));
-			assertThat(ar.getDataForResult().getString(i, "file_id"), is("999999999999999999999999"));
-			assertThat(ar.getDataForResult().getString(i, "fav_flag"), is("1"));
-		}
-		//1-3.int类型值的 queryNum 大于99 的整数，取最大显示条数99
-		bodyString = new HttpClient()
-				.addData("queryNum", "1000")
-				.post(getActionUrl("getCollectFile")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
-		assertThat(ar.isSuccess(), is(true));
-		for (int i = 0; i < ar.getDataForResult().getRowCount(); i++) {
-			assertThat(ar.getDataForResult().getString(i, "fav_id"), is("5000000000"));
-			assertThat(ar.getDataForResult().getString(i, "original_name"), is("init-hll"));
-			assertThat(ar.getDataForResult().getString(i, "file_id"), is("999999999999999999999999"));
-			assertThat(ar.getDataForResult().getString(i, "fav_flag"), is("1"));
-		}
-		//2-1.非int类型值的 queryNum
-		bodyString = new HttpClient()
-				.addData("queryNum", "init-hll8")
-				.post(getActionUrl("getCollectFile")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
-		assertThat(ar.isSuccess(), is(false));
-	}
-
-	/**
 	 * <p>方法名: saveFavoriteFile</p>
 	 * <p>方法说明: 保存文件收藏方法测试类</p>
 	 * 1.正确数据访问
@@ -613,7 +526,7 @@ public class DataQueryActionTest extends WebBaseTestCase {
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
 		assertThat(ar.isSuccess(), is(true));
 		//1-2.正确数据访问结果校验
-		assertThat(ar.getDataForMap().get(FileType.WenDang.getValue()), is(1));
+		assertThat(ar.getDataForMap().get(FileType.WenDang.getValue()), is(5));
 	}
 
 	/**
@@ -738,28 +651,17 @@ public class DataQueryActionTest extends WebBaseTestCase {
 	 * 2-1.
 	 */
 	@Test
-	public void conditionalQuery() {
+	public void getConditionalQuery() {
 		//1-1.无条件查询
 		bodyString = new HttpClient()
-				.post(getActionUrl("conditionalQuery")).getBodyString();
+				.post(getActionUrl("getConditionalQuery")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
 		assertThat(ar.isSuccess(), is(true));
-		for (int i = 0; i < ar.getDataForResult().getRowCount(); i++) {
-			assertThat(ar.getDataForResult().getString(i, "storage_date"), is("20190905"));
-			assertThat(ar.getDataForResult().getLong(i, "agent_id"), is(5000000002L));
-			assertThat(ar.getDataForResult().getString(i, "collect_type"), is("2"));
-			assertThat(ar.getDataForResult().getString(i, "file_type"), is("1003"));
-			assertThat(ar.getDataForResult().getString(i, "file_id"), is("9999999999999999999999994"));
-			assertThat(ar.getDataForResult().getString(i, "source_id"), is("5000000000"));
-		}
 		//1-2.根据数据源id查询
 		bodyString = new HttpClient()
 				.addData("sourceId", SOURCE_ID)
-				.post(getActionUrl("conditionalQuery")).getBodyString();
+				.post(getActionUrl("getConditionalQuery")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
 		assertThat(ar.isSuccess(), is(true));
-		for (int i = 0; i < ar.getDataForResult().getRowCount(); i++) {
-			assertThat(ar.getDataForResult().getString(i, "a"), is("a"));
-		}
 	}
 }

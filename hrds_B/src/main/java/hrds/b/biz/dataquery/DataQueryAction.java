@@ -201,32 +201,6 @@ public class DataQueryAction extends BaseAction {
 	}
 
 	/**
-	 * <p>方法名: getCollectFile</p>
-	 * <p>方法说明: 根据登录用户获取用户收藏的文件列表,返回结果显示最近9条收藏</p>
-	 * 1.如果查询条数小于1条则显示默认9条，查询条数大于99条则显示99条，否则取传入的查询条数
-	 * 2.返回当前登录的用户已经收藏的文件列表的List结果集
-	 *
-	 * @param queryNum 含义:查询条数
-	 *                 取值范围: int类型值 1-99 默认为9
-	 * @return List<Map < String, Object>>
-	 * 含义: 用户收藏文件的结果集List
-	 * 取值含义：登录用户收藏文件列表的结果集List
-	 */
-	public List<Map<String, Object>> getCollectFile(@RequestParam(valueIfNull = "9") int queryNum) {
-		//数据可访问权限处理方式: 根据 User_fav 表的 user_id做权限校验
-		//1.如果查询条数小于1条则显示默认9条，查询条数大于99条则显示99条，否则取传入的查询条数
-		queryNum = queryNum < 1 ? 9 : queryNum;
-		queryNum = queryNum > 99 ? 99 : queryNum;
-		//2.获取当前用户已经收藏的文件列表
-		//数据可访问权限处理方式: 根据 User_fav 的 user_id 做权限检查
-		return Dbo.queryList("SELECT * FROM " + User_fav.TableName +
-						" WHERE user_id = ? AND fav_flag = ?" +
-						" ORDER BY fav_id DESC LIMIT ?",
-				getUserId(), IsFlag.Shi.getCode(), queryNum
-		);
-	}
-
-	/**
 	 * <p>方法名: saveFavoriteFile</p>
 	 * <p>方法说明: 保存文件收藏方法</p>
 	 * 1.根据文件id获取文件名
@@ -241,7 +215,7 @@ public class DataQueryAction extends BaseAction {
 		//1.根据文件id获取文件名
 		Optional<Source_file_attribute> sourceFileAttribute = Dbo.queryOneObject(Source_file_attribute.class,
 				"select original_name from " + Source_file_attribute.TableName + " where" +
-						" file_id = ?", fileId);//FIXME 改成使用 orElseThrow
+						" file_id = ?", fileId);
 		//2.根据文件id和文件名收藏该文件
 		if (!sourceFileAttribute.isPresent()) {
 			throw new BusinessException("文件不存在！fileId=" + fileId);
@@ -287,7 +261,7 @@ public class DataQueryAction extends BaseAction {
 	 * 2.根据统计类型设置返回的map结果集
 	 *
 	 * @return classificationSumMap
-	 * 含义 返回的结果集map //FIXME 写这种注释有意义吗
+	 * 含义 返回的结果集map
 	 * 取值范围: 不为NULL
 	 * @author BY-HLL
 	 */
@@ -295,20 +269,19 @@ public class DataQueryAction extends BaseAction {
 		//1.根据登录用户的id获取用户文件采集统计的结果
 		List<Map<String, Object>> fcsList = Dbo.queryList("select count(1) sum_num,file_type" +
 						" from " + Source_file_attribute.TableName + " sfa join" +
-						" " + Agent_info.TableName + "ai on sfa.agent_id = ai.agent_id" + //FIXME 这个别名不会报错吗？测试用例能跑过去？
+						" " + Agent_info.TableName + " ai on sfa.agent_id = ai.agent_id" +
 						" where sfa.collect_type = ? AND ai.user_id = ?" +
 						" GROUP BY file_type ORDER BY file_type",
 				CollectType.WenJianCaiJi.getCode(), getUserId()
 		);
 		//2.根据统计类型设置返回的map结果集
-		Map<String, Object> classificationSumMap = new HashMap<>(12);//FIXME 为什么是12
-		if (!fcsList.isEmpty()) {//FIXME 这是最应该用Result的场景，反倒不用了
+		Map<String, Object> classificationSumMap = new HashMap<>(12);
+		if (!fcsList.isEmpty()) {
 			for (Map<String, Object> fcsMap : fcsList) {
 				classificationSumMap.put(FileType.ofValueByCode((String) fcsMap.get("file_type")),
 						fcsMap.get("sum_num"));
 			}
 		}
-		//FIXME 为什么要构造这个MAP，它和fcsList有什么区别？下面每个方法都是这么干的，逐个说明原因
 		return classificationSumMap;
 	}
 
@@ -381,7 +354,7 @@ public class DataQueryAction extends BaseAction {
 						" where collect_type = ? and ai.user_id = ?" +
 						" GROUP BY storage_date,storage_time,fcs.fcs_name" +
 						" ORDER BY max_date desc limit ?",
-				CollectType.WenJianCaiJi.getCode(), 5000L, timesRecently
+				CollectType.WenJianCaiJi.getCode(), getUserId(), timesRecently
 		);
 		//3.根据查询结果设置返回的map结果集
 		List<Map<String, Object>> last3FileCollectionsMapList = new ArrayList<>();
@@ -406,49 +379,80 @@ public class DataQueryAction extends BaseAction {
 	}
 
 	/**
-	 * <p>方法名: conditionalQuery</p>
-	 * <p>方法说明: 根据查询条件获取文件采集信息</p>
-	 * 1.查看待查询的数据源是否属于登录用户所在部门
-	 * 2.是当前登录用户所属部门的数据源
-	 * 2-1-1.根据选择的数据源查询
-	 * 2-1-2.根据选择的文件采集任务查询
-	 * 2-1-3.根据选择的开始日期查询
-	 * 2-1-4.根据选择的结束日期查询
-	 * 2-2.如果没选择任何查询条件或者所有参数为空,则查询最近的文件采集信息
-	 * 3.非本部门发布的数据
+	 * <p>方法名: getConditionalQuery</p>
+	 * <p>方法说明: 根据查询条件获取文件的信息后设置下载和认证信息</p>
+	 * <p>
+	 * 1.获取文件的申请和审核信息
+	 * 2.设置下载和认证信息
+	 * 3.设置文件各类申请详情汇总
+	 * 4.设置文件申请统计汇总
+	 * 5.设置文件属性信息
 	 *
 	 * @param sourceId  含义: 数据源id
 	 *                  取值范围: long类型值
 	 * @param fcsId     含义: 文件采集任务id
 	 *                  取值范围: long类型值
 	 * @param fileType  含义: 文件类型代码值
-	 *                  取值范围:
-	 *                  "1001","全部文件"
-	 *                  "1002","图片"
-	 *                  "1003","文档"
-	 *                  "1013","PDF文件"
-	 *                  "1023","office文件"
-	 *                  "1033","文本文件"
-	 *                  "1043","压缩文件"
-	 *                  "1053","日志文件"
-	 *                  "1063","表数据文件"
-	 *                  "1004","视频"
-	 *                  "1005","音频"
-	 *                  "1006","其它"
+	 *                  取值范围: "1001","全部文件" "1002","图片" "1003","文档" "1013","PDF文件" "1023","office文件" "1033","文本文件"
+	 *                  "1043","压缩文件" "1053","日志文件" "1063","表数据文件" "1004","视频" "1005","音频" "1006","其它"
 	 * @param startDate 含义: 查询开始日期
 	 *                  取值范围: 日期格式 yyyy-mm-dd
 	 * @param endDate   含义: 查询结束日期
 	 *                  取值范围: 日期格式 yyyy-mm-dd
 	 * @return conditionalQueryResult
-	 * 含义 返回的结果集map
+	 * 含义 返回的查询数据结果集map
 	 * 取值范围: 不为NULL
-	 * @author BY-HLL
 	 */
-	public Result conditionalQuery(@RequestParam(nullable = true) String sourceId,
-	                               @RequestParam(nullable = true) String fcsId,
-	                               @RequestParam(nullable = true) String fileType,
-	                               @RequestParam(nullable = true) String startDate,
-	                               @RequestParam(nullable = true) String endDate) {
+	public Map<String, Object> getConditionalQuery(@RequestParam(nullable = true) String sourceId,
+	                                               @RequestParam(nullable = true) String fcsId,
+	                                               @RequestParam(nullable = true) String fileType,
+	                                               @RequestParam(nullable = true) String startDate,
+	                                               @RequestParam(nullable = true) String endDate) {
+		//1.获取文件的申请和审核信息
+		Result fileRs = conditionalQuery(sourceId, fcsId, fileType, startDate, endDate);
+		Map<String, Object> conditionalQueryMap = new HashMap<>();
+		conditionalQueryMap.put("fileRs", fileRs);
+		//2.设置下载和认证信息
+		setDownloadAndAuth(conditionalQueryMap);
+		Map<String, Object> fadMap = getFileApplicationDetails();
+		//3.设置文件各类申请详情汇总
+		Result applyRequestRs = (Result) fadMap.get("applyRequestRs");
+		if (!applyRequestRs.isEmpty()) {
+			for (int i = 0; i < applyRequestRs.getRowCount(); i++) {
+				conditionalQueryMap.put(ApplyType.ofValueByCode(applyRequestRs.getString(i, "apply_type")),
+						applyRequestRs.getInt(i, "count"));
+			}
+		}
+		//4.设置文件申请统计汇总
+		Result countRs = (Result) fadMap.get("countRs");
+		if (!countRs.isEmpty()) {
+			conditionalQueryMap.put("sum", countRs.getRowCount());
+		}
+		//5.设置文件属性信息
+		setFileAttribute(conditionalQueryMap);
+		return conditionalQueryMap;
+	}
+
+	/**
+	 * <p>方法名: conditionalQuery</p>
+	 * <p>方法说明: 根据查询条件获取文件的信息</p>
+	 * 1.查看待查询的数据源是否属于登录用户所在部门
+	 * 2.是当前登录用户所属部门的数据源
+	 * 2-1.根据查询条件返回查询结果
+	 * 2-1-1.根据选择的数据源查询
+	 * 2-1-2.根据选择的文件采集任务查询
+	 * 2-1-3.根据选择的开始日期查询
+	 * 2-1-4.根据选择的结束日期查询
+	 * 2-2.如果没选择任何查询条件或者所有参数为空,则查询最近的文件采集信息
+	 * 3.非本部门发布的数据
+	 * 3-1.获取文件采集的数据列表
+	 * 3-2.获取数据的访问权限和审核信息
+	 */
+	private Result conditionalQuery(@RequestParam(nullable = true) String sourceId,
+	                                @RequestParam(nullable = true) String fcsId,
+	                                @RequestParam(nullable = true) String fileType,
+	                                @RequestParam(nullable = true) String startDate,
+	                                @RequestParam(nullable = true) String endDate) {
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		//1.查看待查询的数据源是否属于登录用户所在部门
 		Source_file_attribute sourceFileAttribute = new Source_file_attribute();
@@ -462,7 +466,7 @@ public class DataQueryAction extends BaseAction {
 		}
 		Result queryResult = Dbo.queryResult(asmSql.sql(), asmSql.params());
 		//2.是当前登录用户所属部门的数据源
-		Result searchResult = null;
+		Result searchResult = new Result();
 		if (!queryResult.isEmpty()) {
 			//2-1.根据查询条件返回查询结果
 			asmSql.clean();
@@ -501,28 +505,28 @@ public class DataQueryAction extends BaseAction {
 			}
 			asmSql.addSql(" order by file_id");
 			searchResult = Dbo.queryResult(asmSql.sql(), asmSql.params());
-			if (!searchResult.isEmpty()) {//FIXME 这种 "先判断不空再循环" 的编码方式无意义！！！ 直接写 for 循环即可
+			if (!searchResult.isEmpty()) {
 				for (int i = 0; i < searchResult.getRowCount(); i++) {
 					searchResult.setObject(i, "file_size", FileUtil.fileSizeConversion(
 							searchResult.getLongDefaultZero(i, "file_size")));
 					searchResult.setObject(i, "storage_date",
 							DateUtil.parseStr2DateWith8Char(searchResult.getString(i, "storage_date")));
 					searchResult.setObject(i, "storage_time",
-							DateUtil.parseStr2DateWith8Char(searchResult.getString(i, "storage_time")));
+							DateUtil.parseStr2TimeWith6Char(searchResult.getString(i, "storage_time")));
 					searchResult.setObject(i, "title", searchResult.getString(i, "original_name"));
 					searchResult.setObject(i, "original_name", searchResult.getString(i, "original_name"));
 					Result daResult = Dbo.queryResult("select * from data_auth WHERE file_id = ? and user_id = ? and " +
 									" auth_type != ?", searchResult.getString(i, "file_id"), getUserId(),
 							AuthType.BuYunXu.getCode());
 					if (!daResult.isEmpty()) {
-						StringBuffer authType = new StringBuffer();//FIXME 已经说了很多次了，要看 idea 对你代码的提示！！！
+						StringBuffer authType = new StringBuffer();
 						StringBuffer applyType = new StringBuffer();
 						for (int j = 0; j < daResult.getRowCount(); j++) {
 							authType.append(daResult.getString(j, "auth_type")).append(',');
 							applyType.append(daResult.getString(j, "apply_type")).append(',');
 						}
-						authType.delete(authType.length() - 1, authType.length());
-						applyType.delete(applyType.length() - 1, applyType.length());
+						authType = deleteTheLastCharacter(authType);
+						applyType = deleteTheLastCharacter(applyType);
 						searchResult.setObject(i, "auth_type", authType.toString());
 						searchResult.setObject(i, "apply_type", applyType.toString());
 					}
@@ -534,7 +538,7 @@ public class DataQueryAction extends BaseAction {
 			//3-1.获取文件采集的数据列表
 			asmSql.clean();
 			asmSql.addSql("select * from source_file_attribute where collect_type = ?")
-					.addParam(CollectType.WenJianCaiJi.toString());
+					.addParam(CollectType.WenJianCaiJi.getCode());
 			if (!StringUtil.isEmpty(fileType) && FileType.All != FileType.ofEnumByCode(fileType)) {
 				asmSql.addSql("AND file_type = ?").addParam(fileType);
 			}
@@ -559,7 +563,7 @@ public class DataQueryAction extends BaseAction {
 							authType.delete(authType.length() - 1, authType.length());
 							applyType.delete(applyType.length() - 1, applyType.length());
 							daResult.setObject(j, "auth_type", authType.toString());
-							daResult.setObject(j, "apply_type", authType.toString());//FIXME 为什么这两行用同一个变量赋值？
+							daResult.setObject(j, "apply_type", authType.toString());
 							daResult.setObject(j, "file_id", sfaRsAll.getString(i, "file_id"));
 							daResult.setObject(j, "collect_type", sfaRsAll.getString(i, "collect_type"));
 							daResult.setObject(j, "hbase_name", sfaRsAll.getString(i, "hbase_name"));
@@ -581,4 +585,116 @@ public class DataQueryAction extends BaseAction {
 		}
 		return searchResult;
 	}
+
+	/**
+	 * 设置下载和认证信息
+	 *
+	 * @param conditionalQueryMap 含义: 待返回Map
+	 *                            取值范围: 设置待返回数据的下载和认证信息
+	 */
+	private void setDownloadAndAuth(Map<String, Object> conditionalQueryMap) {
+		conditionalQueryMap.put("view", ApplyType.ChaKan.getCode());
+		conditionalQueryMap.put("view_zh", ApplyType.ChaKan.getValue());
+		conditionalQueryMap.put("download", ApplyType.XiaZai.getCode());
+		conditionalQueryMap.put("download_zh", ApplyType.XiaZai.getValue());
+		conditionalQueryMap.put("release", ApplyType.FaBu.getCode());
+		conditionalQueryMap.put("release_zh", ApplyType.FaBu.getValue());
+		List<String> authType = new ArrayList<String>();
+		authType.add(AuthType.YunXu.getCode());
+		authType.add(AuthType.YiCi.getCode());
+		conditionalQueryMap.put("auth", authType);
+		List<String> authTypeZh = new ArrayList<String>();
+		authTypeZh.add(AuthType.YunXu.getValue());
+		authTypeZh.add(AuthType.YiCi.getValue());
+		conditionalQueryMap.put("auth_zh", authTypeZh);
+	}
+
+	/**
+	 * <p>方法名: getFileApplicationDetails</p>
+	 * <p>方法说明: 获取文件申请详情</p>
+	 * 1.初始化待返回数据的Map
+	 * 2.各类型文件的申请汇总
+	 * 3.文件的申请汇总
+	 */
+	private Map<String, Object> getFileApplicationDetails() {
+		//1.初始化待返回数据的Map
+		Map<String, Object> fileApplicationDetails = new HashMap<>();
+		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
+		//2.各类型文件的申请汇总
+		asmSql.clean();
+		asmSql.addSql("SELECT apply_type,count(apply_type) count from data_auth da JOIN source_file_attribute sfa" +
+				" ON da.file_id = sfa.file_id where USER_ID = ? and auth_type = ?");
+		asmSql.addParam(getUserId());
+		asmSql.addParam(AuthType.ShenQing.getCode());
+		asmSql.addORParam("sfa.source_id", getAllSourceId());
+		asmSql.addSql(" GROUP BY apply_type");
+		Result applyRequestRs = Dbo.queryResult(asmSql.sql(), asmSql.params());
+		fileApplicationDetails.put("applyRequestRs", applyRequestRs);
+		//3.文件的申请汇总
+		asmSql.clean();
+		asmSql.addSql(" select  MAX(apply_date || apply_time) applytime,da.file_id,apply_type from data_auth da JOIN " +
+				"source_file_attribute sfa ON da.file_id = sfa.file_id where user_id=? ");
+		asmSql.addParam(getUserId());
+		asmSql.addORParam("sfa.source_id", getAllSourceId());
+		asmSql.addSql(" GROUP BY da.file_id,apply_type");
+		Result countRs = Dbo.queryResult(asmSql.sql(), asmSql.params());
+		fileApplicationDetails.put("countRs", countRs);
+		return fileApplicationDetails;
+	}
+
+	/**
+	 * <p>方法名: setFileAttribute</p>
+	 * <p>方法说明: 设置文件属性信息</p>
+	 */
+	private void setFileAttribute(Map<String, Object> conditionalQueryMap) {
+		conditionalQueryMap.put("all", FileType.All.getCode());
+		conditionalQueryMap.put("all_zh", FileType.All.getValue());
+		conditionalQueryMap.put("pic", FileType.TuPian.getCode());
+		conditionalQueryMap.put("pic_zh", FileType.TuPian.getValue());
+		conditionalQueryMap.put("wenDang", FileType.WenDang.getCode());
+		conditionalQueryMap.put("wenDang_zh", FileType.WenDang.getValue());
+		conditionalQueryMap.put("pdfFile", FileType.PDFFile.getCode());
+		conditionalQueryMap.put("pdfFile_zh", FileType.PDFFile.getValue());
+		conditionalQueryMap.put("officeFile", FileType.OfficeFile.getCode());
+		conditionalQueryMap.put("officeFile_zh", FileType.OfficeFile.getValue());
+		conditionalQueryMap.put("wenBenFile", FileType.WenBenFile.getCode());
+		conditionalQueryMap.put("wenBenFile_zh", FileType.WenBenFile.getValue());
+		conditionalQueryMap.put("yaSuoFile", FileType.YaSuoFile.getCode());
+		conditionalQueryMap.put("yaSuoFile_zh", FileType.YaSuoFile.getValue());
+		conditionalQueryMap.put("riZhiFile", FileType.RiZhiFile.getCode());
+		conditionalQueryMap.put("riZhiFile_zh", FileType.RiZhiFile.getValue());
+		conditionalQueryMap.put("tableShuJuFile", FileType.biaoShuJuFile.getCode());
+		conditionalQueryMap.put("tableShuJuFile_zh", FileType.biaoShuJuFile.getValue());
+		conditionalQueryMap.put("shiPin", FileType.ShiPin.getCode());
+		conditionalQueryMap.put("shiPin_zh", FileType.ShiPin.getValue());
+		conditionalQueryMap.put("yinPin", FileType.YinPin.getCode());
+		conditionalQueryMap.put("yinPin_zh", FileType.YinPin.getValue());
+		conditionalQueryMap.put("other", FileType.Other.getCode());
+		conditionalQueryMap.put("other_zh", FileType.Other.getValue());
+	}
+
+	/**
+	 * StringBuffer的字符串删除最后一个字符
+	 */
+	private static StringBuffer deleteTheLastCharacter(StringBuffer authType) {
+		return authType.delete(authType.length() - 1, authType.length());
+	}
+
+	/**
+	 * <p>方法名: getSourceId</p>
+	 * <p>方法说明: 获取所有数据源id</p>
+	 *
+	 * @return sourceId
+	 * 含义 返回的查询到所有数据源id的结果集数组
+	 * 取值范围: long类型的id
+	 */
+	private static Long[] getAllSourceId() {
+		Result query = Dbo.queryResult("select source_id from data_source");
+		Long[] sourceId = new Long[query.getRowCount()];
+		for (int i = 0; i < query.getRowCount(); ++i) {
+			sourceId[i] = query.getLong(i, "source_id");
+		}
+		return sourceId;
+	}
+
 }
