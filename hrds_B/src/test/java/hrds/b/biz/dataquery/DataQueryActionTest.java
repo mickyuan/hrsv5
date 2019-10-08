@@ -82,8 +82,8 @@ public class DataQueryActionTest extends WebBaseTestCase {
 	 * dep_id:5000000000 agent_id:5000000002 source_id:5000000000 collect_set_id:5000000000
 	 * 7.Search_info表中有1条数据 si_id:5000000000 file_id:999999999999999999999999
 	 * 8.User_fav表中有1条数据 fav_id:5000000000 file_id:999999999999999999999999 user_id:5000
-	 * 9.
-	 * 10.
+	 * 9.Sys_user表中有1条数据 user_id: 5000 dep_id: 5000000000 role_id: 1001
+	 * 10.Department_info表中有1条数据 dep_id: 5000000000
 	 */
 	@BeforeClass
 	public static void before() {
