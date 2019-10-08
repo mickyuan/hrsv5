@@ -428,7 +428,7 @@ public class DataSourceAction extends BaseAction {
 	public List<Sys_user> searchDataCollectUser() {
 		// 1.数据可访问权限处理方式，此方法不需要权限验证，没有用户访问限制
 		// 2.查询数据采集用户信息并返回查询结果
-		//我们需要的是当前用户类型是数据采集（前半句sql查询）以及数据类型组包含数据采集的用户信息（后半句sql查询结果），所以用union all,
+		//我们需要的是当前用户类型是数据采集（前半句sql查询结果）以及数据类型组包含数据采集的用户信息（后半句sql查询结果），所以用union all,
 		// 用户类型组中数据可能是多个用户类型组成的也可能是单个的，所以用like
 		return Dbo.queryList(Sys_user.class, "select * from sys_user where user_type=? and" +
 						" dep_id=? union all select * from sys_user where usertype_group like ?",
