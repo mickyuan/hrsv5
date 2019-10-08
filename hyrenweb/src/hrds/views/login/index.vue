@@ -17,6 +17,9 @@
 
 <script>
 import * as user from '@/hrds/api/login/login'
+import {
+    mapActions
+} from 'vuex'
 export default {
     name: 'Login',
     data() {
@@ -59,20 +62,16 @@ export default {
         };
     },
     methods: {
+        ...mapActions(['login']),
         submitForm(formName) {
             const that = this;
+            console.log(that)
             that.$refs[formName].validate((valid) => {
                 if (valid) {
-                    user.login(that.ruleForm).then((res) => {
-                        // console.log(res)
-                        if (res.success) {
-                            that.$router.push('home');
-                        }
+                    this.login(this.ruleForm).then((res) => {
+                        that.$router.push('home');
                     })
-                    // user.login(that.ruleForm).then((res) => {
-                    // })
                 } else {
-                    // console.log('error submit!!');
                     return false;
                 }
             });

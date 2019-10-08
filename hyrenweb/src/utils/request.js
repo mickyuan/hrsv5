@@ -3,32 +3,32 @@ import { MessageBox, Message } from 'element-ui'
 import store from '@/store'
 import { getToken } from '@/utils/auth'
 
+axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded;charset=UTF-8';
 // create an axios instance
 const service = axios.create({
   baseURL: process.env.VUE_APP_BASE_API, // url = base url + request url
-  // withCredentials: true, // send cookies when cross-domain requests
+  withCredentials: true, // send cookies when cross-domain requests
+  // Access-Control-Allow-Credentials : true,
   timeout: 5000 // request timeout
 })
 
 // request interceptor
+// 请求拦截器
 service.interceptors.request.use(
-
-  config => {
-    // do something before request is sent
-    if (store.getters.token) {
-      // let each request carry token
-      // ['uesr_cookie'] is a custom headers key
-      // please modify it according to the actual situation
-      config.headers['uesr_cookie'] = getToken()
+  config => {        
+    // 每次发送请求之前判断vuex中是否存在token        
+    // 如果存在，则统一在http请求的header都加上token，这样后台根据token判断你的登录情况
+    // 即使本地存在token，也有可能token是过期的，所以在响应拦截器中要对返回状态进行判断 
+    const token = store.state.token;
+    if(token) {
+      config.headers.Authorization = getToken();
     }
-    return config
-  },
-  error => {
-    // do something with request error
-    // console.log(error) // for debug
-    return Promise.reject(error)
-  }
-)
+    
+    return config;
+},    
+error => {        
+    return Promise.error(error);    
+})
 
 // response interceptor
 service.interceptors.response.use(
