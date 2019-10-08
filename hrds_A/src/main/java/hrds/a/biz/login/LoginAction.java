@@ -1,5 +1,6 @@
 package hrds.a.biz.login;
 
+import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.web.action.ActionResult;
 import fd.ng.web.util.Dbo;
@@ -12,7 +13,6 @@ import hrds.commons.utils.ActionUtil;
 import hrds.commons.utils.User;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.Optional;
 
 /**
  * <p>标    题: 海云数服 V5.0</p>
@@ -29,11 +29,12 @@ public class LoginAction extends BaseAction {
 	 * 用户登陆入口
 	 * 1 : 获取并检查,用户名是否为空
 	 * 2 : 获取并检查,密码是否做为空
-	 * 3 : 检查当前用户的登陆是否正确
+	 * 3 : 检查当前用户的登陆是否正确,并返回cookie数据信息
 	 *
 	 * @param request 含义 : 页面的请求Http对象 取值范围 : 从中获取需要的数据,也就是页面的name对应的属性
+	 * @return
 	 */
-	public void login(HttpServletRequest request) {
+	public String login(HttpServletRequest request) {
 
 		//1 : 获取并检查,用户名是否为空
 		String user_id = request.getParameter("username");
@@ -46,8 +47,8 @@ public class LoginAction extends BaseAction {
 			throw new BusinessException(ExceptionEnum.USER_PWD_EMPTY);
 		}
 
-		// 3 : 检查当前用户的登陆是否正确
-		checkLogin(Long.parseLong(user_id), pwd);
+		//3 : 检查当前用户的登陆是否正确,并返回cookie数据信息
+		return checkLogin(Long.parseLong(user_id), pwd);
 
 	}
 
@@ -75,32 +76,32 @@ public class LoginAction extends BaseAction {
 	 * 3 : 如果为获取到信息,则判断用户密码是否正确
 	 * 4 : 将此次登陆的用户信息,设置到Cookie中
 	 * 5 : 设置登陆用户的cookie
-	 *
-	 * @param user_id long
+	 *  @param user_id long
 	 *                含义 : 用户ID
 	 *                取值范围 : 不可为空的长整型, 用于用户登陆的身份认证
 	 * @param pwd     String
 	 *                含义 :  用户密码
-	 *                取值范围 : 不可为空的字符串, 用于用户登陆的密码认证
+	 * @return String
+	 *              含义 :  当前用户的信息
+	 *              取值返回 : 不能为空,为空表示用户无效
 	 */
-	private void checkLogin(long user_id, String pwd) {
+	private String checkLogin(long user_id, String pwd) {
 
 		//1 : 查询当前用户的记录信息
-		Optional<Sys_user> sys_user = Dbo.queryOneObject(Sys_user.class, "select * from " +
-						Sys_user.TableName + " where user_id = ?", user_id);
-		//2 : 如果当前包装的值为 null，那么抛出异常,说明当前用户不存在
-		Sys_user logInUser = sys_user.orElseThrow(() -> new BusinessException(ExceptionEnum.USER_NOT_EXISTS));
+		Sys_user logInUser = Dbo.queryOneObject(Sys_user.class, "select * from " +
+						Sys_user.TableName + " where user_id = ?", user_id)
+						.orElseThrow(() -> new BusinessException(ExceptionEnum.USER_NOT_EXISTS));
 
 		//3 : 如果为获取到信息,则判断用户密码是否正确
 		String user_password = logInUser.getUser_password();
 		if( !pwd.equals(user_password) ) {
-			throw new BusinessException(ExceptionEnum.PASSWORD_ERROR);
+			throw new BusinessException(ExceptionEnum.PASSWORD_ERROR.getMessage());
 		}
 //		4 ; 将此次登陆的用户信息,设置到Cookie中
 		User user = putUserInfo(logInUser);
 		//5 : 设置登陆用户的cookie
 		ActionUtil.setCookieUser(user);
-
+		return JsonUtil.toJson(user);
 	}
 
 	/**
@@ -118,12 +119,9 @@ public class LoginAction extends BaseAction {
 	private User putUserInfo(Sys_user logInUser) {
 
 		// 1 : 根据登陆成功的用户信息获取部门信息
-		Optional<Department_info> department_info = Dbo
-						.queryOneObject(Department_info.class, "select * from " + Department_info.TableName +
-										" where dep_id = ?", logInUser.getDep_id());
-
-		//2 : 如果当前包装的值为 null，那么抛出异常,说明部门信息不存在
-		Department_info departmentInfo = department_info.orElseThrow(() -> new BusinessException("部门信息不存在"));
+		Department_info departmentInfo = Dbo.queryOneObject(Department_info.class, "select * from " +
+						Department_info.TableName + " where dep_id = ?", logInUser.getDep_id())
+						.orElseThrow(() -> new BusinessException("部门信息不存在"));
 
 		//3 : 组成需要生成的Cookie
 		User user = new User();
@@ -138,4 +136,5 @@ public class LoginAction extends BaseAction {
 
 		return user;
 	}
+
 }
