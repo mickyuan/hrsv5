@@ -34,37 +34,37 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 	// 初始化登录用户ID，更新agent时更新数据采集用户
 	private static final long UserId2 = 5556L;
 	// 测试部门ID dep_id,测试第一部门
-	private static final long DepId1 = -3000000010L;
+	private static final long DepId1 = -200000001L;
 	// 测试部门ID dep_id 测试第二部门
-	private static final long DepId2 = -3000000011L;
+	private static final long DepId2 = -200000011L;
 	// 测试数据源 SourceId
-	private static final long SourceId = -1000000000L;
+	private static final long SourceId = -100000000L;
 	// 测试数据源 SourceId，agent存在，数据源被删了
-	private static final long SourceId2 = -1000000001L;
+	private static final long SourceId2 = -100000001L;
 	// 测试数据库 agent_id
-	private static final long DBAgentId = -2000000001L;
+	private static final long DBAgentId = -200000060L;
 	// 测试数据库 agent_id，agent存在，数据源被删了
-	private static final long DBAgentId2 = -2000000011L;
+	private static final long DBAgentId2 = -200000061L;
 	// 测试数据库 agent_id，更新agent时更新数据采集用户
-	private static final long DBAgentId3 = -2000000012L;
+	private static final long DBAgentId3 = -200000062L;
 	// 测试数据库 agent_id，数据源对应的agent下有任务，不能删除
-	private static final long DBAgentId4 = -2000000013L;
+	private static final long DBAgentId4 = -200000064L;
 	// 测试数据库 agent_id，用于测试正常删除的agent_id
-	private static final long DBAgentId5 = -2000000014L;
+	private static final long DBAgentId5 = -200000065L;
 	// 测试数据文件 agent_id
-	private static final long DFAgentId = -2000000002L;
+	private static final long DFAgentId = -200000066L;
 	// 测试非结构化 agent_id
-	private static final long UnsAgentId = -2000000003L;
+	private static final long UnsAgentId = -200000067L;
 	// 测试半结构化 agent_id
-	private static final long SemiAgentId = -2000000004L;
+	private static final long SemiAgentId = -200000068L;
 	// 测试FTP agent_id
-	private static final long FTPAgentId = -2000000005L;
+	private static final long FTPAgentId = -200000069L;
 	// 测试agent_down_info agent_id
-	private static final long DownId = -3000000000L;
+	private static final long DownId = -300000000L;
 	// 测试 分类ID，classify_id
-	private static final long ClassifyId = -4000000000L;
+	private static final long ClassifyId = -400000000L;
 	// 测试 数据库设置ID，DatabaseId
-	private static final long DatabaseId = -5000000000L;
+	private static final long DatabaseId = -500000000L;
 
 
 	/**
@@ -457,7 +457,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("agent_name", "DFAddAgent")
 				.addData("agent_type", AgentType.DBWenJian.getCode())
-				.addData("agent_ip", "10.71.4.52")
+				.addData("agent_ip", "10.71.4.53")
 				.addData("agent_port", "3457")
 				.addData("source_id", SourceId)
 				.addData("user_id", UserId)
@@ -476,7 +476,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("agent_name", "UnsAddAgent")
 				.addData("agent_type", AgentType.WenJianXiTong.getCode())
-				.addData("agent_ip", "10.71.4.52")
+				.addData("agent_ip", "10.71.4.53")
 				.addData("agent_port", "3458")
 				.addData("source_id", SourceId)
 				.addData("user_id", UserId)
@@ -495,7 +495,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("agent_name", "SemiAddAgent")
 				.addData("agent_type", AgentType.DuiXiang.getCode())
-				.addData("agent_ip", "10.71.4.52")
+				.addData("agent_ip", "10.71.4.53")
 				.addData("agent_port", "3459")
 				.addData("source_id", SourceId)
 				.addData("user_id", UserId)
@@ -514,7 +514,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("agent_name", "ftpAddAgent")
 				.addData("agent_type", AgentType.FTP.getCode())
-				.addData("agent_ip", "10.71.4.52")
+				.addData("agent_ip", "10.71.4.53")
 				.addData("agent_port", "3460")
 				.addData("source_id", SourceId)
 				.addData("user_id", UserId)

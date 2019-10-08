@@ -5,12 +5,17 @@ import fd.ng.core.utils.CodecUtil;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
+import fd.ng.db.jdbc.DefaultPageImpl;
+import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.annotation.RequestBean;
+import fd.ng.web.annotation.RequestParam;
 import fd.ng.web.util.Dbo;
 import fd.ng.web.util.FileUploadUtil;
 import fd.ng.web.util.ResponseUtil;
 import hrds.commons.base.BaseAction;
+import hrds.commons.codes.ApplyType;
+import hrds.commons.codes.AuthType;
 import hrds.commons.codes.UserType;
 import hrds.commons.entity.*;
 import hrds.commons.exception.AppSystemException;
@@ -36,6 +41,137 @@ import java.util.*;
  */
 public class DataSourceAction extends BaseAction {
 	private static final Logger logger = LogManager.getLogger();
+
+	/**
+	 * 查询数据源，部门、agent,申请审批,业务用户和采集用户,部门与数据源关系表信息，首页展示
+	 * <p>
+	 * 1.数据可访问权限处理方式，以下sql通过user_id关联进行权限检查
+	 * 2.查询部门信息
+	 * 3.查询数据源及Agent数
+	 * 4.数据权限管理，分页查询数据源及部门关系信息
+	 * 5.查询申请审批信息
+	 * 6.创建存放数据源，部门、agent,申请审批,业务用户和采集用户,部门与数据源关系表信息的集合并将数据进行封装
+	 * 7.设置权限类型
+	 * 8.返回放数据源，部门、agent,申请审批,业务用户和采集用户,部门与数据源关系表信息的集合
+	 *
+	 * @param currPage int
+	 *                 含义：分页查询，当前页
+	 *                 取值范围：大于0的正整数
+	 * @param pageSize int
+	 *                 含义：分页查询每页显示条数
+	 *                 取值范围：大于0的正整数
+	 */
+	public Map<String, Object> searchDataSourceInfo(@RequestParam(valueIfNull = "1") int currPage,
+	                                                @RequestParam(valueIfNull = "5") int pageSize) {
+		// 1.数据可访问权限处理方式，以下sql通过user_id关联进行权限检查
+		// 2.查询部门信息
+		List<Department_info> diList = Dbo.queryList(Department_info.class, "select * from department_info");
+		// 3.查询数据源及Agent数
+		List<Map<String, Object>> dsAiList = Dbo.queryList("select ds.source_id,ds.datasource_name," +
+				"count(ai.Agent_id) sumAgent from data_source ds left join agent_info ai on ds.source_id=" +
+				"ai.source_id where ds.create_user_id=? GROUP BY ds.source_id,ds.datasource_name", getUserId());
+		// 4.数据权限管理，分页查询数据源及部门关系信息
+		Result dataSourceRelationDep = searchSourceRelationDepForPage(currPage, pageSize);
+		// 5.查询申请审批信息
+		// 获取下面sql中所需source_id的数组
+		List<Long> sourceIdList = Dbo.queryOneColumnList("select source_id from data_source");
+		Long[] sourceId = new Long[sourceIdList.size()];
+		for (int i = 0; i < sourceIdList.size(); ++i) {
+			sourceId[i] = sourceIdList.get(i);
+		}
+		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
+		asmSql.addSql("select da.DA_ID,da.APPLY_DATE,da.APPLY_TIME,da.APPLY_TYPE,da.AUTH_TYPE,da.AUDIT_DATE," +
+				"da.AUDIT_TIME,da.AUDIT_USERID,da.AUDIT_NAME,da.FILE_ID,da.USER_ID,da.DEP_ID,sfa.*,su.user_name" +
+				" from data_auth da join sys_user su on da.user_id=su.user_id join source_file_attribute sfa" +
+				" on da.file_id= sfa.file_id  where su.create_id in (select user_id from sys_user where user_type=?" +
+				" or user_id = ?) ").addParam(UserType.XiTongGuanLiYuan.getCode()).addParam(getUserId())
+				.addORParam("sfa.source_id", sourceId).addSql(" ORDER BY  da_id desc");
+		List<Map<String, Object>> applicationAndApprovalList = Dbo.queryList(asmSql.sql(), asmSql.params());
+		// 6.创建存放数据源，部门、agent,申请审批,业务用户和采集用户,部门与数据源关系表信息的集合并将数据进行封装
+		Map<String, Object> dataSourceInfoMap = new HashMap<>();
+		dataSourceInfoMap.put("dataSourceRelationDep", dataSourceRelationDep.toList());
+		dataSourceInfoMap.put("applicationAndApproval", applicationAndApprovalList);
+		dataSourceInfoMap.put("departmentInfo", diList);
+		dataSourceInfoMap.put("dataSourceAndAgentCount", dsAiList);
+		// 7.设置权限类型
+		dataSourceInfoMap.put("yiCi", AuthType.YiCi.getCode());
+		dataSourceInfoMap.put("yunXu", AuthType.YunXu.getCode());
+		dataSourceInfoMap.put("buYunXu", AuthType.BuYunXu.getCode());
+		dataSourceInfoMap.put("yiCi_zh", AuthType.ofValueByCode(AuthType.YiCi.getCode()));
+		dataSourceInfoMap.put("yunXu_zh", AuthType.ofValueByCode(AuthType.YunXu.getCode()));
+		dataSourceInfoMap.put("buYunXu_zh", AuthType.ofValueByCode(AuthType.BuYunXu.getCode()));
+		dataSourceInfoMap.put("chaKan", ApplyType.ChaKan.getCode());
+		dataSourceInfoMap.put("caiJiYongHu", UserType.CaiJiYongHu.getCode());
+		dataSourceInfoMap.put("yeWu", UserType.YeWuYongHu.getCode());
+		// 8.返回放数据源，部门、agent,申请审批,业务用户和采集用户,部门与数据源关系表信息的集合
+		return dataSourceInfoMap;
+	}
+
+	/**
+	 * 数据权限管理，分页查询数据源及部门关系信息
+	 * <p>
+	 * 1.数据可访问权限处理方式，以下sql通过user_id关联进行权限检查
+	 * 2.分页查询数据源及部门关系
+	 * 3.判断数据源是否为空
+	 * 4.循环数据源
+	 * 5.创建存放数据源对应部门集合
+	 * 6.查询获取数据源对应部门结果集
+	 * 7.判断数据源对应的部门结果集是否为空
+	 * 8.循环部门获取部门名称
+	 * 9.将各个数据源对应的部门名称加入list
+	 * 10.封装部门名称到结果集
+	 * 11.返回结果集
+	 *
+	 * @param currPage int
+	 *                 含义：当前页
+	 *                 取值范围：大于0的正常数
+	 * @param pageSize int
+	 *                 含义：查询每页显示数
+	 *                 取值范围：大于0的正常数
+	 * @return fd.ng.db.resultset.Result
+	 * 含义：返回分页查询数据源及部门关系
+	 * 取值范围：无限制
+	 */
+	public Result searchSourceRelationDepForPage(@RequestParam(valueIfNull = "1") int currPage,
+	                                                @RequestParam(valueIfNull = "5") int pageSize) {
+
+		// 1.数据可访问权限处理方式，以下sql通过user_id关联进行权限检查
+		// 2.分页查询数据源及部门关系
+		Result dsResult = Dbo.queryPagedResult(new DefaultPageImpl(currPage, pageSize), " SELECT * from " +
+				"data_source where create_user_id=? order by create_date desc,create_time desc", getUserId());
+		// 3.判断数据源是否为空
+		if (!dsResult.isEmpty()) {
+			// 4.循环数据源
+			for (int i = 0; i < dsResult.getRowCount(); i++) {
+				// 5.创建存放数据源对应部门集合
+				List<String> depList = new ArrayList<>();
+				// 6.查询获取数据源对应部门结果集
+				Result depResult = Dbo.queryResult(" select di.* from department_info di left join " +
+								" source_relation_dep srd on di.dep_id = srd.dep_id where srd.source_id=?",
+						dsResult.getLong(i, "source_id"));
+				// 7.判断数据源对应的部门结果集是否为空
+				if (!depResult.isEmpty()) {
+					// 8.循环部门获取部门名称
+					for (int j = 0; j < depResult.getRowCount(); j++) {
+						// 9.将各个数据源对应的部门名称加入list
+						depList.add(depResult.getString(j, "dep_name"));
+					}
+					// 10.封装部门名称到结果集
+					StringBuilder sb = new StringBuilder();
+					for (int n = 0; n < depList.size(); n++) {
+						if (n != depList.size() - 1) {
+							sb.append(depList.get(n)).append(",");
+						} else {
+							sb.append(depList.get(n));
+						}
+					}
+					dsResult.setObject(i, "dep_name", sb.toString());
+				}
+			}
+		}
+		// 11.返回结果集
+		return dsResult;
+	}
 
 	/**
 	 * 新增数据源
@@ -303,16 +439,13 @@ public class DataSourceAction extends BaseAction {
 	 * 导入数据源，数据源下载文件提供的文件中涉及到的所有表的数据导入数据库中对应的表中（修改中，未完成测试）
 	 *
 	 * <p>
-	 * 1.通过文件名称获取文件
-	 * 2.获取文件名
-	 * 3.处理获取到的上传文件的文件名的路径部分，只保留文件名部分
-	 * 4.获得该文件的缓冲输入流
-	 * 5.创建一个缓存区，一次读取1kb
-	 * 6.把bis里的东西读到bytes数组里去
-	 * 7.循环读取写入，将读取的字节转为字符串对象
-	 * 8.关闭输入流
-	 * 9.使用base64对数据进行编码
-	 * 10.导入数据源数据，将涉及到的所有表的数据导入数据库中对应的表中
+	 * 1.数据可访问权限处理方式，此方法不需要权限验证，不涉及用户权限
+	 * 2.判断agent_ip是否是一个合法的ip
+	 * 3.判断agent_port是否是一个有效的端口
+	 * 4.验证userCollectId是否为null
+	 * 5.通过文件名称获取文件
+	 * 6.使用base64对数据进行编码
+	 * 7.导入数据源数据，将涉及到的所有表的数据导入数据库中对应的表中
 	 *
 	 * @param agentIp       String
 	 *                      含义：agent地址
@@ -327,39 +460,36 @@ public class DataSourceAction extends BaseAction {
 	 *                      含义：上传文件名称（全路径），上传要导入的数据源
 	 *                      取值范围：不能为空以及空格
 	 */
-	public void uploadFile(String agentIp, String agentPort, long userCollectId, String file) {
+	public void uploadFile(String agentIp, String agentPort, Long userCollectId, String file) {
 		try {
-			// 1.通过文件名称获取文件
-			File uploadedFile = FileUploadUtil.getUploadedFile(file);
-			/*// 2.获取文件名
-			String fileName = FileUploadUtil.getOriginalFileName(file);
-			*//*注意：不同的浏览器提交的文件名是不一样的，有些浏览器提交上来的文件名是带有路径的，
-			如： c:\a\b\1.txt，而有些只是单纯的文件名，如：1.txt*//*
-			// 3.处理获取到的上传文件的文件名的路径部分，只保留文件名部分
-			// FIXME File.separator与原始文件的分隔符不见得一致！ 应该分别找一次
-			fileName = fileName.substring(fileName.lastIndexOf(File.separator +
-					File.separator) + 1);
-			// 4.获得该文件的缓冲输入流
-			BufferedInputStream bis =
-					new BufferedInputStream(new FileInputStream(uploadedFile));
-			// 5.创建一个缓存区，一次读取1kb
-			byte[] bytes = new byte[1024];
-			int len = 0;
-			StringBuilder sb = new StringBuilder();
-			// 6.把bis里的东西读到bytes数组里去
-			while ((len = bis.read(bytes)) != 0) {
-				// 7.循环读取写入，将读取的字节转为字符串对象
-				sb.append((new String(bytes, 0, len, CodecUtil.UTF8_CHARSET)));
+			// 1.数据可访问权限处理方式，此方法不需要权限验证，不涉及用户权限
+			// 2.判断agent_ip是否是一个合法的ip
+			String[] split = agentIp.split("\\.");
+			for (int i = 0; i < split.length; i++) {
+				int temp = Integer.parseInt(split[i]);
+				if (temp < 0 || temp > 255) {
+					throw new BusinessException("agent_ip不是一个为空或空格的ip地址," +
+							"agent_ip=" + agentIp);
+				}
 			}
-			// try catch
-			// 8.关闭输入流
-			bis.close();
-			// 9.使用base64编码
-			String strTemp = new String(Base64.getDecoder().decode(sb.toString()),
-					CodecUtil.UTF8_CHARSET);*/
+			// 3.判断agent_port是否是一个有效的端口
+			// 端口范围最小值
+			int min = 1024;
+			// 端口范围最大值
+			int max = 65535;
+			if (Integer.parseInt(agentPort) < min || Integer.parseInt(agentPort) > max) {
+				throw new BusinessException("agent_port端口不是有效的端口，不在取值范围内，" +
+						"agent_port=" + agentPort);
+			}
+			// 4.验证userCollectId是否为null
+			if (userCollectId == null) {
+				throw new BusinessException("userCollectId不为空且不为空格");
+			}
+			// 5.通过文件名称获取文件
+			File uploadedFile = FileUploadUtil.getUploadedFile(file);
+			// 6.使用base64编码
 			String strTemp = new String(Base64.getDecoder().decode(Files.readAllBytes(uploadedFile.toPath())));
-
-			// 10.导入数据源数据，将涉及到的所有表的数据导入数据库中对应的表中
+			// 7.导入数据源数据，将涉及到的所有表的数据导入数据库中对应的表中
 			importDataSource(strTemp, agentIp, agentPort, userCollectId, getUserId());
 		} catch (Exception e) {
 			throw new AppSystemException(e);
@@ -1006,7 +1136,7 @@ public class DataSourceAction extends BaseAction {
 				List<Ftp_transfered> transferList = JsonUtil.toObject(entry.getValue().toString(), ftType);
 				// 4.将ftp_transfered表数据循环入数据库
 				for (Ftp_transfered ftpTransfered : transferList) {
-					ftpTransfered.setFtp_id(PrimayKeyGener.getNextId());
+					ftpTransfered.setFtp_transfered_id(PrimayKeyGener.getNextId());
 					ftpTransfered.add(Dbo.db());
 				}
 			}
