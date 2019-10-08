@@ -133,7 +133,7 @@ public class DataSourceAction extends BaseAction {
 	 * 取值范围：无限制
 	 */
 	public Result searchSourceRelationDepForPage(@RequestParam(valueIfNull = "1") int currPage,
-	                                                @RequestParam(valueIfNull = "5") int pageSize) {
+	                                             @RequestParam(valueIfNull = "5") int pageSize) {
 
 		// 1.数据可访问权限处理方式，以下sql通过user_id关联进行权限检查
 		// 2.分页查询数据源及部门关系
@@ -428,7 +428,8 @@ public class DataSourceAction extends BaseAction {
 	public List<Sys_user> searchDataCollectUser() {
 		// 1.数据可访问权限处理方式，此方法不需要权限验证，没有用户访问限制
 		// 2.查询数据采集用户信息并返回查询结果
-		//FIXME 加上注释说明：为什么用 union all；为什么用 like
+		//我们需要的是当前用户类型是数据采集（前半句sql查询）以及数据类型组包含数据采集的用户信息（后半句sql查询结果），所以用union all,
+		// 用户类型组中数据可能是多个用户类型组成的也可能是单个的，所以用like
 		return Dbo.queryList(Sys_user.class, "select * from sys_user where user_type=? and" +
 						" dep_id=? union all select * from sys_user where usertype_group like ?",
 				UserType.CaiJiYongHu.getCode(), getUser().getDepId(),
