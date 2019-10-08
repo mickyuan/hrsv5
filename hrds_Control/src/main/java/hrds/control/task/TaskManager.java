@@ -81,7 +81,7 @@ public class TaskManager {
 	private final static String REDISCONTENTSEPARATOR = "@";	//redis字符内容分隔符
 	private final static String REDISHANDLE = "Handle"; //redis已干预标识
 	public final static String PARASEPARATOR = ",";	//参数分隔符
-	private final static long LOCKMILLISECONDS= 1000;    //系统暂停时间间隔
+	private final static long LOCKMILLISECONDS = 1000;    //系统暂停时间间隔
 
 	private volatile boolean isLock = false;  //同步标志位
 	private static final int SLEEPMILLIS = 3000; //每次运行时间间隔（毫秒数）
@@ -394,7 +394,6 @@ public class TaskManager {
 			//getEtl_job()方法获取任务名（任务标识）
 			String etlJobId = job.getEtl_job();
 			String etlDispType = job.getDisp_type();
-
 			/*
 			 * 1、判断每个作业是否需要立即执行:
 			 * 		一、若作业为T+0、T+1调度方式，在以频率为频率类型的情况下，则要检查该作业是否到触发条件，
@@ -1170,7 +1169,9 @@ public class TaskManager {
 			//更新作业状态，jobKey[0]为作业标识，jobKey[1]为当前跑批日期
 			updateFinishedJob(jobKey[0], jobKey[1]);
 			//FIXME 考虑改成批量调用（传所有要更新的数组进去，在里面批量处理DB UPDATE
-			// 没必要这么改，因为该方法在正常情况下干这2件事：1、修改内存Map中的作业状态；2、加载该作业的依赖作业。
+			// 最好这么改，但可以不改：
+			// 1、任务执行完成时才会触发该方法，意味着即使有大量的作业要更新状态，它也是分散在不同时间中执行更新；
+			// 2、批量更新方法有问题，它不支持一条数据的更新。
 		}
 	}
 
@@ -1216,7 +1217,7 @@ public class TaskManager {
 		Etl_job_cur jobInfo = TaskSqlHelper.getEtlJob(etlSysCd, jobName, currBathDate);
 		String jobStatus = jobInfo.getJob_disp_status();
 		exeJobInfo.setJob_disp_status(jobStatus);
-		logger.info("{} 作业完成，跑批日期为 {} 作业状态为 {}", jobName, currBathDate, jobStatus);
+		logger.info("{} 作业结束，跑批日期为 {} 作业状态为 {}", jobName, currBathDate, jobStatus);
 		//依赖作业已经完成个数、依赖作业标志、作业状态
 		if(Job_Status.DONE.getCode().equals(jobStatus)) {
 //			List<EtlJobBean> etlJobs2Update = new ArrayList<>();
@@ -2065,7 +2066,6 @@ public class TaskManager {
 						}catch (InterruptedException ignored) {
 						}
 					}
-					//TODO 为什么设置为true马上又设置为false
 					isLock = true;
 					List<WaitFileJobInfo> jobList = new ArrayList<>(waitFileJobList);
 					List<WaitFileJobInfo> checkList = new ArrayList<>(jobList);

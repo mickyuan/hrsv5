@@ -70,17 +70,16 @@ public class EtlJobBean extends Etl_job_cur implements Comparable<EtlJobBean>  {
 	}
 
 	@Override
-	public int compareTo(EtlJobBean o) {
-		if (null == o){
-			return 0; //FIXME 当前对象不空，去和一个NULL做比较返回相等，为什么
+	public int compareTo(EtlJobBean otherEtlJob) {
+		if (null == otherEtlJob){
+			return 0;
+			//FIXME 当前对象不空，去和一个NULL做比较返回相等，为什么。
+			// 因为该方法用于对象数组的排序。
+			// 逻辑上讲，为null的对象不应该参与比较，但为了'万一'的情况出现了null，则不做任何动作。
 		}
 		//FIXME 为什么对象比较用的是这一个字段？
-		if (super.getJob_priority_curr() > o.getJob_priority_curr()){//FIXME 不能用 > ！！！
-			return -1;
-		}else if (super.getJob_priority_curr() == o.getJob_priority_curr() ){//FIXME 不能用 == ！！！
-			return 0;
-		}else{
-			return 1;
-		}
+		// 1、重写该方法用于对象数组的排序；2、对象间的比较总要有个依据，
+		// 而这个字段在业务角度表示为一个作业的优先级，所以使用这个字段。
+		return otherEtlJob.getJob_priority_curr().compareTo(super.getJob_priority_curr());
 	}
 }

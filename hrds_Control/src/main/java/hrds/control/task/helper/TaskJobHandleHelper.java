@@ -588,8 +588,8 @@ public class TaskJobHandleHelper {
 		}else {
 			if(StringUtil.isEmpty(processId)) return true;
 
-//			String cmd = KILL9COMMANDLINE + " " + processId;
-			String cmd = "taskkill -PID " + processId + " -F";
+			String cmd = KILL9COMMANDLINE + " " + processId;
+//			String cmd = "taskkill -PID " + processId + " -F";
 			try {
 				Runtime.getRuntime().exec(cmd); //执行命令
 			}

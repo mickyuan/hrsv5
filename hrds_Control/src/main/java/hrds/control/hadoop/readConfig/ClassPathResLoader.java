@@ -1,93 +1,99 @@
 package hrds.control.hadoop.readConfig;
 
+import hrds.commons.exception.AppSystemException;
+
 import java.io.File;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
 
-public class ClassPathResLoader {
+/**
+ * @ClassName: ClassPathResLoader
+ * @Description: 用于加载Hadoop相关组件客户端配置文件的类。
+ * @Author: Tiger.Wang
+ * @Date: 2019/8/30 11:41
+ **/
+class ClassPathResLoader {
 
-	private static Method addURL = initAddMethod();
-	private static URLClassLoader classloader = (URLClassLoader)ClassLoader.getSystemClassLoader();
+	private static final Method addURL = initAddMethod();
+	private static final URLClassLoader classloader =
+			(URLClassLoader)ClassLoader.getSystemClassLoader();
 
-	/** 
-	    * 初始化addUrl 方法.
-	    * @return 可访问addUrl方法的Method对象
-	    */
+	/**
+	 * 通过反射方式加载URLClassLoader类的addURL方法。
+	 * 1.反射方式加载URLClassLoader类的addURL方法。
+	 * @author Tiger.Wang
+	 * @date 2019/10/8
+	 * @return java.lang.reflect.Method <br>
+	 *          含义：表示URLClassLoader类的addURL方法。 <br>
+	 *          取值范围：不会为null。
+	 */
 	private static Method initAddMethod() {
 
+		//1.反射方式加载URLClassLoader类的addURL方法。
 		try {
-			Method add = URLClassLoader.class.getDeclaredMethod("addURL", new Class[] { URL.class });
+			Method add = URLClassLoader.class.getDeclaredMethod("addURL", URL.class);
 			add.setAccessible(true);
 			return add;
 		}
 		catch(Exception e) {
-			throw new RuntimeException(e);
+			throw new AppSystemException(e);
 		}
 	}
 
-	public static void loadClasspath(String filepath) {
+	/**
+	 * 根据传入的目录路径参数，加载该路径下所有的配置文件（包括多级目录下的配置文件）。
+	 * 1.加载配置文件。
+	 * @author Tiger.Wang
+	 * @date 2019/10/8
+	 * @param dirPath <br>
+	 *          含义：Hadoop相关的配置文件所在目录路径。 <br>
+	 *          取值范围：任意字符串。
+	 */
+	static void loadResourceDir(String dirPath) {
 
-		File file = new File(filepath);
-		loopFiles(file);
-	}
-
-	public static void loadResourceDir(String filepath) {
-
-		File file = new File(filepath);
+		//1.加载配置文件。
+		File file = new File(dirPath);
 		loopDirs(file);
 	}
 
-	/** */
-	/**    
-	* 循环遍历目录，找出所有的资源路径。
-	* @param file 当前遍历文件
-	*/
+	/**
+	 * 递归扫描目录，该方法只会在传入的参数为目录对象的情况下工作。
+	 * 1.递归扫描目录。
+	 * @author Tiger.Wang
+	 * @date 2019/10/8
+	 * @param file <br>
+	 *          含义：表示一个目录对象。 <br>
+	 *          取值范围：不能为null。
+	 */
 	private static void loopDirs(File file) {
 
-		// 资源文件只加载路径
-		if( file.isDirectory() ) {
+		//1.递归扫描目录。
+		if(file.isDirectory()) {
 			addURL(file);
 			File[] tmps = file.listFiles();
+			if(null == tmps) { return; }
+
 			for(File tmp : tmps) {
 				loopDirs(tmp);
 			}
 		}
 	}
 
-	/** 
-	 * 循环遍历目录，找出所有xml文件
-	 * @param file 当前遍历文件
-	 */
-	private static void loopFiles(File file) {
-
-		if( file.isDirectory() ) {
-			File[] tmps = file.listFiles();
-			for(File tmp : tmps) {
-				loopFiles(tmp);
-			}
-		}
-		else {
-			if( file.getAbsolutePath().endsWith(".xml") ) {//找出所有xml文件
-				addURL(file);
-			}
-		}
-	}
-
 	/**
-	 * 通过filepath加载文件到classpath。
-	 * @param file 文件路径
-	 * @return URL
-	 * @throws Exception 异常
+	 * 加载指定目录下的文件到classpath。
+	 * @author Tiger.Wang
+	 * @date 2019/10/8
+	 * @param file <br>
+	 *          含义：表示一个待加载配置文件的目录对象。 <br>
+	 *          取值范围：不能为null。
 	 */
 	private static void addURL(File file) {
 
 		try {
-			addURL.invoke(classloader, new Object[] { file.toURI().toURL() });
-		}
-		catch(Exception e) {
+			addURL.invoke(classloader, file.toURI().toURL());
+		}catch(Exception e) {
 			e.printStackTrace();
 		}
 	}
-
 }

@@ -62,8 +62,8 @@ public class ControlManageServer {
 	 */
 	public void stopCMServer() {
 
-		cmThread.stopThread();
 		taskManager.stopCheckWaitFileThread();
+		cmThread.stopThread();
 		logger.info("调度服务停止成功");
 	}
 
