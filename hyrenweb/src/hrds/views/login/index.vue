@@ -65,7 +65,6 @@ export default {
         ...mapActions(['login']),
         submitForm(formName) {
             const that = this;
-            console.log(that)
             that.$refs[formName].validate((valid) => {
                 if (valid) {
                     this.login(this.ruleForm).then((res) => {

@@ -13,7 +13,7 @@
                     </span></div>
             </el-col> -->
                 <el-col :span="3" :offset="18">
-                    <router-link to="/"><i class="el-icon-s-custom"><a>退出登录</a></i></router-link>
+                    <el-link :underline="false" @click="goback"><i class="el-icon-s-custom">退出登录</i></el-link>
                 </el-col>
             </el-row>
         </el-header>
@@ -48,7 +48,9 @@
 </template>
 
 <script>
-// import menu from '@/api/menu/menu';
+import {
+    mapActions
+} from 'vuex'
 export default {
     data() {
         return {
@@ -58,6 +60,13 @@ export default {
     mounted() {
         // 这里是菜单默认路径
         this.$router.push('syspara');
+    },
+    methods: {
+        ...mapActions(['resetToken']),
+        goback(){
+            this.resetToken();
+            this.$router.push('/');
+        }
     }
 }
 
