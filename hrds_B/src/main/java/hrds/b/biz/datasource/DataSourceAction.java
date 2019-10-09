@@ -60,6 +60,9 @@ public class DataSourceAction extends BaseAction {
 	 * @param pageSize int
 	 *                 含义：分页查询每页显示条数
 	 *                 取值范围：大于0的正整数
+	 * @return java.util.Map
+	 * 含义：存放数据源，部门、agent,申请审批,业务用户和采集用户,部门与数据源关系表信息的集合
+	 * 取值范围：无限制
 	 */
 	public Map<String, Object> searchDataSourceInfo(@RequestParam(valueIfNull = "1") int currPage,
 	                                                @RequestParam(valueIfNull = "5") int pageSize) {
@@ -212,7 +215,7 @@ public class DataSourceAction extends BaseAction {
 	 */
 	public List<Map<String, Object>> dataAudit(long daId, String authType) {
 		// 1.数据可访问权限处理方式，根据user_id进行权限控制
-		// authType代码项合法性验证，如果不存在该方法直接回抛异常
+		// authType代码项合法性验证，如果不存在该方法直接会抛异常
 		AuthType.ofEnumByCode(authType);
 		// 2.根据数据权限设置ID查询数据申请审批信息
 		Optional<Data_auth> dataAuth = Dbo.queryOneObject(Data_auth.class, "select * from data_auth " +
@@ -505,6 +508,10 @@ public class DataSourceAction extends BaseAction {
 	 * <p>
 	 * 1.数据可访问权限处理方式，此方法不需要权限验证
 	 * 2.查询数据采集用户信息并返回查询结果
+	 *
+	 * @return java.util.List
+	 * 含义：存放数据采集用户信息的集合
+	 * 取值范围：无限制
 	 */
 	public List<Sys_user> searchDataCollectUser() {
 		// 1.数据可访问权限处理方式，此方法不需要权限验证，没有用户访问限制

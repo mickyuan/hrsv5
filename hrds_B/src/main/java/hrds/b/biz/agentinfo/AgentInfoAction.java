@@ -131,7 +131,7 @@ public class AgentInfoAction extends BaseAction {
 	private void fieldLegalityValidation(String agentName, String agentType, String agentIp, String agentPort,
 	                                     Long sourceId, Long userId) {
 		// 1.数据可访问权限处理方式，这是个私有方法，不会单独被调用，所以不需要权限验证
-		// 2.验证agent_type是否为空或空格且是否合法
+		// 2.验证agent_type是否为空或空格且是否合法，不合法该方法会直接抛异常
 		AgentType.ofEnumByCode(agentType);
 		if (StringUtil.isBlank(agentType)) {
 			throw new BusinessException("agent_type不能为空且不能为空格，agent_type=" + agentType);
