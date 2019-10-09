@@ -46,7 +46,7 @@ public class AgentInfoAction extends BaseAction {
 		boolean flag = isPortOccupied(agentInfo.getAgent_ip(),
 				Integer.parseInt(agentInfo.getAgent_port()));
 		if (flag) {
-			// 端口别占用，不可使用
+			// 端口被占用，不可使用
 			throw new BusinessException("端口被占用，agent_port=" + agentInfo.getAgent_port() + "," +
 					"agent_ip =" + agentInfo.getAgent_ip());
 		}
@@ -214,20 +214,20 @@ public class AgentInfoAction extends BaseAction {
 		// 3.字段合法性验证
 		fieldLegalityValidation(agentName, agentType, agentIp, agentPort, sourceId, userId);
 		// 4.创建agent_info实体对象，同时封装值
-		Agent_info agent_info = new Agent_info();
-		agent_info.setAgent_id(agentId);
-		agent_info.setUser_id(userId);
-		agent_info.setSource_id(sourceId);
-		agent_info.setAgent_ip(agentIp);
-		agent_info.setAgent_port(agentPort);
-		agent_info.setAgent_type(agentType);
-		agent_info.setAgent_name(agentName);
+		Agent_info agentInfo = new Agent_info();
+		agentInfo.setAgent_id(agentId);
+		agentInfo.setUser_id(userId);
+		agentInfo.setSource_id(sourceId);
+		agentInfo.setAgent_ip(agentIp);
+		agentInfo.setAgent_port(agentPort);
+		agentInfo.setAgent_type(agentType);
+		agentInfo.setAgent_name(agentName);
 		// 5.检查数据源是否还存在以及判断数据源下相同的IP地址中是否包含相同的端口
 		check(sourceId, agentType, agentIp, agentPort);
 		// 6.更新agent信息
-		if (agent_info.update(Dbo.db()) != 1) {
-			throw new BusinessException("更新表信息失败," + "agent_port=" + agent_info.getAgent_port()
-					+ ",agent_ip =" + agent_info.getAgent_ip() + ",agent_name=" + agent_info.getAgent_name());
+		if (agentInfo.update(Dbo.db()) != 1) {
+			throw new BusinessException("更新表信息失败," + "agent_port=" + agentInfo.getAgent_port()
+					+ ",agent_ip =" + agentInfo.getAgent_ip() + ",agent_name=" + agentInfo.getAgent_name());
 		}
 	}
 
