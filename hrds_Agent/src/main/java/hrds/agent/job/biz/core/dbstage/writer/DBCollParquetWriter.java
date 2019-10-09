@@ -3,12 +3,12 @@ package hrds.agent.job.biz.core.dbstage.writer;
 import hrds.agent.job.biz.bean.JobInfo;
 import hrds.agent.job.biz.bean.TaskInfo;
 import hrds.agent.job.biz.constant.FileFormatConstant;
-import hrds.agent.job.biz.constant.IsFlag;
 import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.dataclean.columnclean.ColumnCleanUtil;
 import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.ParquetUtil;
 import hrds.agent.job.biz.utils.ProductFileUtil;
+import hrds.commons.codes.IsFlag;
 import hrds.commons.exception.AppSystemException;
 import org.apache.avro.Schema;
 import org.apache.avro.file.CodecFactory;
@@ -75,26 +75,42 @@ public class DBCollParquetWriter extends AbstractFileWriter {
 	}
 
 	/**
-	 * @Description: 写parquest，完成之后返回文件的文件名(包含路径)
-	 * @Param: metaDataMap：写文件需要用到的meta信息，取值范围 : Map<String, Object>
-	 * @Param: rs：当前线程采集到的Result, 取值范围 : ResultSet
-	 * @Param: tableName : 表名, 用于大字段数据写avro, 取值范围 : String
-	 * @return: String
-	 * @Author: WangZhengcheng
-	 * @Date: 2019/8/13
-	 * 步骤：
+	 * 根据数据元信息和ResultSet，写指定格式的数据文件
+	 *
 	 * 1、校验方法入参合法性
 	 * 2、创建数据文件存放目录
 	 * 3、创建数据文件文件名，文件名为jobID + 处理线程号 + 时间戳.parquet,在作业配置文件目录下的datafile目录中
 	 * 4、判断本次采集得到的RS是否有CLOB，BLOB，LONGVARCHAR的大字段类型，如果有，则创建LOBs目录用于存放avro文件，并初始化写avro相关类对象
-	 * 5、开始写CSV文件，
+	 * 5、开始写parquet文件，
 	 *      (1)、创建文件
 	 *      (2)、循环RS，获得每一行数据，针对每一行数据，循环每一列，根据每一列的类型，决定是写avro还是进行清洗
 	 *      (3)、执行数据清洗，包括表清洗和列清洗
 	 *      (4)、清洗后的结果追加到构建MD5的StringBuilder
 	 *      (5)、将数据放入group，写一行数据，执行下一次RS循环
 	 * 6、关闭资源，并返回文件路径
-	 */
+	 *
+	 * @Param: metaDataMap Map<String, Object>
+	 *         含义：包含有列元信息，清洗规则的map
+	 *         取值范围：不为空，共有7对Entry，key分别为
+	 *                      columnsTypeAndPreci：表示列数据类型(长度/精度)
+	 *                      columnsLength : 列长度，在生成信号文件的时候需要使用
+	 *                      columns : 列名
+	 *                      colTypeArr : 列数据类型(java.sql.Types),用于判断，对不同数据类型做不同处理
+	 *                      columnCount ：该表的列的数目
+	 *                      columnCleanRule ：该表每列的清洗规则
+	 *                      tableCleanRule ：整表清洗规则
+	 * @Param: rs ResultSet
+	 *         含义：当前线程执行分页SQL得到的结果集
+	 *         取值范围：不为空
+	 * @Param: tableName String
+	 *         含义：表名, 用于大字段数据写avro
+	 *         取值范围：不为空
+	 *
+	 * @return: String
+	 *          含义：生成的数据文件的路径
+	 *          取值范围：不会为null
+	 *
+	 * */
 	@Override
 	public String writeDataAsSpecifieFormat(Map<String, Object> metaDataMap, ResultSet rs, String tableName)
 			throws IOException, SQLException {
@@ -126,9 +142,9 @@ public class DBCollParquetWriter extends AbstractFileWriter {
 		//列类型(格式为java.sql.Types)
 		int[] colTypeArrs = (int[]) metaDataMap.get("colTypeArr");
 		//4、判断本次采集得到的RS是否有CLOB，BLOB，LONGVARCHAR的大字段类型，如果有，则创建LOBs目录用于存放avro文件，并初始化写avro相关类对象
-		for (int i = 0; i < colTypeArrs.length; i++) {
-			if (colTypeArrs[i] == java.sql.Types.CLOB || colTypeArrs[i] == java.sql.Types.BLOB ||
-					colTypeArrs[i] == java.sql.Types.LONGVARCHAR) {
+		for(int index : colTypeArrs){
+			if (colTypeArrs[index] == java.sql.Types.CLOB || colTypeArrs[index] == java.sql.Types.BLOB ||
+					colTypeArrs[index] == java.sql.Types.LONGVARCHAR) {
 				//说明本次采集到的内容包含大字段类型，需要对其进行avro处理
 				String LOBsDir = ProductFileUtil.getLOBsPathByJobID(this.jobInfo);
 				//判断LOBs目录是否存在，不存在创建
@@ -142,7 +158,7 @@ public class DBCollParquetWriter extends AbstractFileWriter {
 				File file = new File(LOBsDir);
 				String avroFilePath = file.getAbsolutePath() + File.separator + "avro_" + tableName;
 				outputStream = new FileOutputStream(avroFilePath);
-				avroWriter = new DataFileWriter<Object>(new GenericDatumWriter<Object>())
+				avroWriter = new DataFileWriter<>(new GenericDatumWriter<>())
 						.setSyncInterval(100);
 				avroWriter.setCodec(CodecFactory.snappyCodec());
 				avroWriter.create(SCHEMA, outputStream);
@@ -164,7 +180,7 @@ public class DBCollParquetWriter extends AbstractFileWriter {
 		String[] columnsType = StringUtils.splitByWholeSeparatorPreserveAllTokens(
 				columnsTypeAndPreci.toString(), JobConstant.COLUMN_NAME_SEPARATOR);
 		//用于存放每一列的值
-		String currColValue = "";
+		String currColValue;
 		//列数量
 		int columnCount = (int) metaDataMap.get("columnCount");
 		//单行数据每列的值
@@ -174,7 +190,7 @@ public class DBCollParquetWriter extends AbstractFileWriter {
 		byte[] byteArr = null;
 		ResultSetMetaData metaData = rs.getMetaData();
 		//获取startDate
-		String startDate = "";
+		String startDate;
 		Group group = factory.newGroup();
 		//5-2 循环RS，获得每一行数据，针对每一行数据，循环每一列，根据每一列的类型，决定是写avro还是进行清洗
 		while (rs.next()) {
@@ -185,7 +201,7 @@ public class DBCollParquetWriter extends AbstractFileWriter {
 				int colType = colTypeArrs[i - 1];
 				if (colType == java.sql.Types.LONGVARCHAR) {
 					Reader characterStream = rs.getCharacterStream(i);
-					if (characterStream != null) {
+					if (characterStream != null && avroWriter != null) {
 						//对LONGVARCHAR类型进行处理
 						byteArr = longvarcharToByte(characterStream);
 						//以"LOBs_表名_列号_行号_原类型_avro对象序列"存放这个值
@@ -199,7 +215,7 @@ public class DBCollParquetWriter extends AbstractFileWriter {
 					}
 				} else if (colType == java.sql.Types.BLOB) {
 					Blob blob = rs.getBlob(i);
-					if (blob != null) {
+					if (blob != null && avroWriter != null) {
 						//对Blob类型进行处理
 						byteArr = blobToBytes(blob);
 						//以"LOBs_表名_列号_行号_原类型_avro对象序列"存放这个值
@@ -214,7 +230,7 @@ public class DBCollParquetWriter extends AbstractFileWriter {
 				} else if (colType == java.sql.Types.CLOB) {
 					//对Clob类型进行处理
 					Reader characterStream = rs.getClob(i).getCharacterStream();
-					if (characterStream != null) {
+					if (characterStream != null && avroWriter != null) {
 						byteArr = longvarcharToByte(characterStream);
 						//以"LOBs_表名_列号_行号_原类型_avro对象序列"存放这个值
 						currColValue = "_LOBs_" + tableName + "_" + i + "_" +
@@ -273,7 +289,7 @@ public class DBCollParquetWriter extends AbstractFileWriter {
 				}
 				datas[i - 1] = currColValue;
 			}
-			boolean is_MD5 = (IsFlag.YES.getCode() == Integer.parseInt(this.jobInfo.getIs_md5()));
+			boolean is_MD5 = (IsFlag.Shi == IsFlag.ofEnumByCode(this.jobInfo.getIs_md5()));
 			//5-5 将数据放入group，写一行数据，执行下一次RS循环
 			if (is_MD5) {
 				//如果用户选择生成MD5，则从任务对象中取到任务的开始时间
@@ -289,8 +305,12 @@ public class DBCollParquetWriter extends AbstractFileWriter {
 			}
 		}
 		//6、关闭资源，并返回文件路径
-		avroWriter.close();
-		outputStream.close();
+		if(avroWriter != null){
+			avroWriter.close();
+		}
+		if(outputStream != null){
+			outputStream.close();
+		}
 		stopStream();
 
 		LOGGER.info("线程" + Thread.currentThread().getId() + "写PARQUET文件结束");
@@ -298,19 +318,26 @@ public class DBCollParquetWriter extends AbstractFileWriter {
 	}
 
 	/**
-	 * @Description: 用于写一行数据，且追加MD5和开始时间结束时间
-	 * @Param: [group : org.apache.parquet.example.data.Group]
-	 * @Param: [MD5 : 该列用于生成MD5值的字符串, 取值范围 : String]
-	 * @Param: [startDate : 当前线程采集数据开始时间]
-	 * @return: void
-	 * @Author: WangZhengcheng
-	 * @Date: 2019/9/11
-	 * 步骤：
+	 * 用于写一行数据，且追加MD5和开始时间结束时间
+	 *
 	 * 1、追加开始时间
 	 * 2、计算MD5，并追加
 	 * 3、追加结束时间
 	 * 4、写一行数据
-	 */
+	 *
+	 * @Param: group Group
+	 *         含义：包含了一行经过处理后的采集数据
+	 *         取值范围：不为空
+	 * @Param: MD5 StringBuilder
+	 *         含义：包含了每一列的值，用于生成该列的MD5
+	 *         取值范围：不为空
+	 * @Param: startDate String
+	 *         含义：本次采集任务的开始时间
+	 *         取值范围：不为空
+	 *
+	 * @return: 无
+	 *
+	 * */
 	private void writeLine(Group group, StringBuilder MD5, String startDate) throws IOException {
 		//1、追加开始时间
 		group.append(JobConstant.START_DATE_NAME, startDate);
@@ -324,27 +351,32 @@ public class DBCollParquetWriter extends AbstractFileWriter {
 	}
 
 	/**
-	 * @Description: 用于写一行数据，而不追加MD5和开始时间结束时间
-	 * @Param: [group : org.apache.parquet.example.data.Group]
-	 * @return: void
-	 * @Author: WangZhengcheng
-	 * @Date: 2019/9/11
-	 * 步骤：
+	 * 用于写一行数据，而不追加MD5和开始时间结束时间
+	 *
 	 * 1、调用方法写一行数据
-	 */
+	 *
+	 * @Param: group Group
+	 *         含义：包含了一行经过处理后的采集数据
+	 *         取值范围：不为空
+	 *
+	 * @return: 无
+	 *
+	 * */
 	private void writeLine(Group group) throws IOException {
 		//1、调用方法写一行数据
 		writer.write(group);
 	}
 
 	/**
-	 * @Description: 关闭资源
-	 * @return: void
-	 * @Author: WangZhengcheng
-	 * @Date: 2019/9/11
-	 * 步骤：
+	 * 关闭资源
+	 *
 	 * 1、调用方法关闭资源
-	 */
+	 *
+	 * @Param: 无
+	 *
+	 * @return: 无
+	 *
+	 * */
 	private void stopStream() throws IOException {
 		//1、调用方法关闭资源
 		writer.close();

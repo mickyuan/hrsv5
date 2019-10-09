@@ -18,18 +18,24 @@ public interface MetaInfoInterface {
 	/**
 	 * 获得meta信息，提供多于1个meta
 	 *
-	 * @return java.util.List<com.beyondsoft.agent.beans.MetaInfoBean>
-	 * @author 13616
-	 * @date 2019/8/7 14:29
-	 */
+	 * @Param: 无
+	 *
+	 * @return: List<MetaInfoBean>
+	 *          含义：存放Meta信息的Bean对象的List集合
+	 *          取值范围：不会为null
+	 *
+	 * */
 	List<MetaInfoBean> getMetaInfoGroup();
 
 	/**
 	 * 获得meta信息，提供1个meta
 	 *
-	 * @return com.beyondsoft.agent.beans.MetaInfoBean
-	 * @author 13616
-	 * @date 2019/8/7 14:30
-	 */
+	 * @Param: 无
+	 *
+	 * @return: MetaInfoBean
+	 *          含义：存放Meta信息的Bean对象
+	 *          取值范围：不会为null
+	 *
+	 * */
 	MetaInfoBean getMetaInfo();
 }

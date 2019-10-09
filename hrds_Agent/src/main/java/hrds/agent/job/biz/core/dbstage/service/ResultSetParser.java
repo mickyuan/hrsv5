@@ -5,7 +5,7 @@ import hrds.agent.job.biz.bean.ColumnSplitBean;
 import hrds.agent.job.biz.bean.JobInfo;
 import hrds.agent.job.biz.bean.TableCleanResult;
 import hrds.agent.job.biz.constant.FileFormatConstant;
-import hrds.agent.job.biz.constant.IsFlag;
+import hrds.commons.codes.IsFlag;
 import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.core.dbstage.writer.DBCollCSVWriter;
 import hrds.agent.job.biz.core.dbstage.writer.DBCollParquetWriter;
@@ -39,15 +39,8 @@ import java.util.Map;
  **/
 public class ResultSetParser {
 	/**
-	 * @Description: 解析ResultSet
-	 * @Param: [rs : 数据集, 取值范围 : ]
-	 * @Param: [jobInfo : 采集任务信息, 取值范围 : ]
-	 * @Param: [pageNum : 分页的页数, 取值范围 : ]
-	 * @Param: [pageRow : 每页的数据量，和分页页数一起，在写文件的时候，如果文件过大，要进行单个文件的拆分时使用, 取值范围 : ]
-	 * @return: java.lang.String
-	 * @Author: WangZhengcheng
-	 * @Date: 2019/9/2
-	 * 步骤：
+	 * 解析ResultSet
+	 *
 	 * 1、获得本次采集的数据库META信息
 	 * 2、对后续需要使用的META信息(列名，列类型，列长度)，使用分隔符进行组装
 	 * 3、在jobInfo中拿到数据清洗规则(字段清洗，表清洗)，并调用工具类(ColCleanRuleParser，TbCleanRuleParser)中的方法进行解析
@@ -56,7 +49,26 @@ public class ResultSetParser {
 	 * 6、落地文件需要追加开始时间和结束时间(9999-12-31)列，如果需要，还要追加MD5列
 	 * 7、构造metaDataMap，根据落地数据文件类型，初始化FileWriterInterface实现类，由实现类去写文件
 	 * 8、写文件结束，返回本线程生成数据文件的路径
-	 */
+	 *
+	 * @Param: rs ResultSet
+	 *         含义：当前线程执行分页SQL采集到的数据集
+	 *         取值范围：不为空
+	 * @Param: jobInfo JobInfo
+	 *         含义：保存有当前作业信息的实体类对象
+	 *         取值范围：不为空，JobInfo实体类对象
+	 * @Param: pageNum int
+	 *         含义：当前采集的页码，用于在写文件时计算行计数器，防止多个数据文件中的Avro行号冲突
+	 *         取值范围：不为空
+	 * @Param: pageRow int
+	 *         含义：当前码的数据量，用于在写文件时计算行计数器，防止多个数据文件中的Avro行号冲突
+	 *         取值范围：不为空
+	 * TODO pageNum和pageRow一起，在写文件的时候，用于判断文件是否过大，如果文件过大，可以对单个数据文件进行拆分
+	 *
+	 * @return: String
+	 *          含义：当前线程生成数据文件的路径
+	 *          取值范围：不会为null
+	 *
+	 * */
 	public String parseResultSet(ResultSet rs, JobInfo jobInfo, int pageNum, int pageRow)
 			throws SQLException, IOException {
 		//TODO 建议查询数据库的系统表来获得meta信息
@@ -87,7 +99,7 @@ public class ResultSetParser {
 		}
 		//得到表元信息后，需要去掉最后一个分隔符
 		columns.deleteCharAt(columns.length() - 1);//列名
-		columnsTypeAndPreci.deleteCharAt(columnsTypeAndPreci.length() - 1);//列类型(长度,精度)
+		columnsTypeAndPreci.deleteCharAt(columnsTypeAndPreci.length() - 1);//列类型(长度/精度)
 		columnsLength.deleteCharAt(columnsLength.length() - 1);//列长度
 		//3、在jobInfo中拿到数据清洗规则(字段清洗，表清洗)，并调用工具类(ColCleanRuleParser，TbCleanRuleParser)中的方法进行解析
 		//获得采集每一列的清洗规则
@@ -102,9 +114,10 @@ public class ResultSetParser {
 
 		//用于存放该张表所有的列拆分信息，key为字段原名，value为对该字段的拆分规则
 		Map<String, List<ColumnSplitBean>> allSplit = new LinkedHashMap<>();
-		for (int i = 0; i < colCleanRuleList.size(); i++) {
-			String columnName = colCleanRuleList.get(i).getColumnName();
-			Map<String, Object> rule = (Map<String, Object>) columnCleanRule.get(columnName);
+		//List<ColumnCleanResult>
+		for(ColumnCleanResult columnCleanResult : colCleanRuleList){
+			String columnName = columnCleanResult.getColumnName();
+			Map<String, Object> rule = columnCleanRule.get(columnName);
 			List<ColumnSplitBean> columnSplitBeanList = (List<ColumnSplitBean>) rule.get("split");
 			if (columnSplitBeanList != null && !columnSplitBeanList.isEmpty()) {
 				allSplit.put(columnName, columnSplitBeanList);
@@ -142,7 +155,7 @@ public class ResultSetParser {
 		//如果用户需要追加MD5，则需要再添加一列
 		String isMD5 = jobInfo.getIs_md5();
 		if (isMD5 != null && !isMD5.isEmpty()) {
-			if (IsFlag.YES.getCode() == Integer.parseInt(isMD5)) {
+			if (IsFlag.Shi == IsFlag.ofEnumByCode(isMD5)) {
 				columnsTypeAndPreci.append(JobConstant.COLUMN_TYPE_SEPARATOR).append("char(32)");
 				columnsLength.append(JobConstant.COLUMN_TYPE_SEPARATOR).append("32");
 				columns.append(JobConstant.COLUMN_NAME_SEPARATOR).append(JobConstant.MD5_NAME);
@@ -150,7 +163,7 @@ public class ResultSetParser {
 		}
 		//7、构造metaDataMap，根据落地数据文件类型，初始化FileWriterInterface实现类，由实现类去写文件
 		Map<String, Object> metaDataMap = new HashMap<>();
-		//列数据类型(长度,精度)
+		//列数据类型(长度/精度)
 		metaDataMap.put("columnsTypeAndPreci", columnsTypeAndPreci);
 		//列长度，在生成信号文件的时候需要使用，目前暂时不需要
 		metaDataMap.put("columnsLength", columnsLength);
@@ -195,22 +208,35 @@ public class ResultSetParser {
 	}
 
 	/**
-	 * @Description: 获取数据库列数据类型和长度精度
-	 * @Param: [columnType : 列类型, 取值范围 : java.sql.Types]
-	 * @Param: [columnTypeName : 列类型, 取值范围 : String]
-	 * @Param: [precision : 列长度, 取值范围 : int]
-	 * @Param: [scale : 小数点位数, 取值范围 : int]
-	 * @return: java.lang.String
-	 * @Author: WangZhengcheng
-	 * @Date: 2019/9/11
-	 * 步骤：
-	 * 1、考虑到有些类型在数据库中在获取数据类型的时候就会带有(),同时还能获取到数据的长度和精度，因此我们要对所有数据库进行统一处理，去掉()中的内容，使用JDBC提供的方法读取的长度和精度进行拼接
+	 * 获取列数据类型和长度/精度
+	 *
+	 * 1、考虑到有些类型在数据库中在获取数据类型的时候就会带有(),同时还能获取到数据的长度/精度，因此我们要对所有数据库进行统一处理，去掉()中的内容，使用JDBC提供的方法读取的长度和精度进行拼接
 	 * 2、对不包含长度和精度的数据类型进行处理，返回数据类型
 	 * 3、对包含长度和精度的数据类型进行处理，返回数据类型(长度,精度)
 	 * 4、对只包含长度的数据类型进行处理，返回数据类型(长度)
-	 */
+	 *
+	 * @Param: columnType int
+	 *         含义：数据库类型
+	 *         取值范围：不为null,java.sql.Types对象实例
+	 * @Param: columnTypeName String
+	 *         含义：字符串形式的数据库类型，通过调用ResultSetMetaData.getColumnTypeName()得到
+	 *         取值范围：不为null,
+	 * @Param: precision int
+	 *         含义：对于数字类型，precision表示的是数字的精度，对于字符类型，这里表示的是长度，调用ResultSetMetaData.getPrecision()得到
+	 *         取值范围：不限
+	 * @Param: scale int
+	 *         含义：列数据类型小数点右边的指定列的位数，调用ResultSetMetaData.getScale()得到
+	 *         取值范围：不限，对于不适用小数位数的数据类型，返回0
+	 *
+	 * @return: String
+	 *          含义：经过处理后的数据类型
+	 *          取值范围：对不包含长度和精度的数据类型进行处理，返回数据类型
+	 *                    对包含长度和精度的数据类型进行处理，返回数据类型(长度,精度)
+	 *                    对只包含长度的数据类型进行处理，返回数据类型(长度)
+	 *
+	 * */
 	private String getColTypeAndPreci(int columnType, String columnTypeName, int precision, int scale) {
-		//1、考虑到有些类型在数据库中在获取数据类型的时候就会带有(),同时还能获取到数据的长度和精度，因此我们要对所有数据库进行统一处理，去掉()中的内容，使用JDBC提供的方法读取的长度和精度进行拼接
+		//1、考虑到有些类型在数据库中在获取数据类型的时候就会带有(),同时还能获取到数据的长度和精度，因此我们要对所有数据库进行统一处理，去掉()中的内容，使用JDBC提供的方法读取的长度/精度进行拼接
 		if (precision != 0) {
 			int index = columnTypeName.indexOf("(");
 			if (index != -1) {
@@ -245,17 +271,24 @@ public class ResultSetParser {
 	}
 
 	/**
-	 * @Description: 获取数据库表中每一列列的长度
-	 * @Param: [rsMetaData : 数据集元信息, 取值范围 : ResultSetMetaData]
-	 * @Param: [index : 列索引, 取值范围 : int]
-	 * @return: int
-	 * @Author: WangZhengcheng
-	 * @Date: 2019/9/11
-	 * 步骤：
+	 * 获取数据库表中每一列的长度
+	 *
 	 * 1、通过列索引在数据集元信息中获取列长度
 	 * 2、通过列索引在数据集元信息中获取列数据类型
 	 * 3.如果列数据类型是DECIMAL/NUMERIC，则进行特殊处理
-	 */
+	 *
+	 * @Param: rsMetaData ResultSetMetaData
+	 *         含义：当前线程查询到的数据集的Meta信息
+	 *         取值范围：不为空
+	 * @Param: index int
+	 *         含义：要获取长度的列的下标
+	 *         取值范围：[0, ResultSetMetaData.getColumnCount() - 1]
+	 *
+	 * @return: int
+	 *          含义：获得到的列的长度
+	 *          取值范围：不会为null
+	 *
+	 * */
 	private int getColumnLength(ResultSetMetaData rsMetaData, int index) throws SQLException {
 		//1、通过列索引在数据集元信息中获取列长度
 		int columnLength = rsMetaData.getPrecision(index);

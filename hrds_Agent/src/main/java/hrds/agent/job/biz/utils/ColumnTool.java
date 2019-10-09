@@ -16,15 +16,26 @@ import java.util.Map;
 public class ColumnTool {
 
 	/**
-	 * @Description: 列拆分
-	 * @Param: [columns : 所有列列名,使用\001分隔]
-	 * @Param: [columnsTypeAndPreci : 所有列类型(长度，精度)，使用 | 分隔]
-	 * @Param: [columnsLength : 所有列长度，使用 | 分隔]
-	 * @Param: [allSplitRule : 所有列的拆分规则]
-	 * @return: void
-	 * @Author: WangZhengcheng
-	 * @Date: 2019/8/28
-	 */
+	 * 列拆分
+	 *
+	 * 1、
+	 *
+	 * @Param: columns StringBuilder
+	 *         含义：所有列列名,使用\001分隔
+	 *         取值范围：不为空
+	 * @Param: columnsTypeAndPreci StringBuilder
+	 *         含义：所有列类型(长度/精度)，使用 | 分隔
+	 *         取值范围：不为空
+	 * @Param: columnsLength StringBuilder
+	 *         含义：所有列长度，使用 | 分隔
+	 *         取值范围：不为空
+	 * @Param: allSplitRule Map<String, List<ColumnSplitBean>>
+	 *         含义：所有列的拆分规则
+	 *         取值范围：不为空,key为列名，value为ColumnSplitBean的List集合,也就是该列的拆分规则
+	 *
+	 * @return: 无
+	 *
+	 * */
 	public static void updateColumnSplit(StringBuilder columns, StringBuilder columnsTypeAndPreci,
 	                                     StringBuilder columnsLength,
 	                                     Map<String, List<ColumnSplitBean>> allSplitRule) {
@@ -52,8 +63,7 @@ public class ColumnTool {
 			//找到该列在原columns中的位置
 			int findColIndex = findColIndex(columnsName, colName, JobConstant.COLUMN_NAME_SEPARATOR);
 			//将该字段拆分后的内容追加到三个变量上
-			for (int i = 0; i < splitListByColName.size(); i++) {
-				ColumnSplitBean splitBean = splitListByColName.get(i);
+			for(ColumnSplitBean splitBean : splitListByColName){
 				appendColName.append(splitBean.getColName()).append(JobConstant.COLUMN_NAME_SEPARATOR);
 				appendColType.append(splitBean.getColType()).append(JobConstant.COLUMN_TYPE_SEPARATOR);
 				appendColLen.append(getLength(splitBean.getColType()))
@@ -91,25 +101,36 @@ public class ColumnTool {
 	}
 
 	/**
-	 * @Description: 列合并
-	 * @Param: [columns : 所有列列名,使用\001分隔]
-	 * @Param: [columnsTypeAndPreci : 所有列类型(长度，精度)，使用 | 分隔]
-	 * @Param: [columnsLength : 所有列长度，使用 | 分隔]
-	 * @Param: [tbMergeRule : 表清洗列的合并规则]
-	 * @return: void
-	 * @Author: WangZhengcheng
-	 * @Date: 2019/8/30
-	 */
+	 * 列合并
+	 *
+	 * 1、
+	 *
+	 * @Param: columns StringBuilder
+	 *         含义：所有列列名,使用\001分隔
+	 *         取值范围：不为空
+	 * @Param: columnsTypeAndPreci StringBuilder
+	 *         含义：所有列类型(长度/精度)，使用 | 分隔
+	 *         取值范围：不为空
+	 * @Param: columnsLength StringBuilder
+	 *         含义：所有列长度，使用 | 分隔
+	 *         取值范围：不为空
+	 * @Param: tbMergeRule Map<String, String>
+	 *         含义：所有列的合并规则
+	 *         取值范围：不为空,key为列名`列类型，value为合并前的列原名
+	 *
+	 * @return: 无
+	 *
+	 * */
 	public static void updateColumnMerge(StringBuilder columns, StringBuilder columnsTypeAndPreci,
 	                                     StringBuilder columnsLength, Map<String, String> tbMergeRule) {
 		if (columns == null || columns.length() == 0) {
-			throw new AppSystemException("进行列拆分清洗时，列名不能为空");
+			throw new AppSystemException("进行列合并清洗时，列名不能为空");
 		}
 		if (columnsTypeAndPreci == null || columnsTypeAndPreci.length() == 0) {
-			throw new AppSystemException("进行列拆分清洗时，列类型不能为空");
+			throw new AppSystemException("进行列合并清洗时，列类型不能为空");
 		}
 		if (columnsLength == null || columnsLength.length() == 0) {
-			throw new AppSystemException("进行列拆分清洗时，列长度不能为空");
+			throw new AppSystemException("进行列合并清洗时，列长度不能为空");
 		}
 		for (String key : tbMergeRule.keySet()) {
 			//获取表名和类型
@@ -121,13 +142,22 @@ public class ColumnTool {
 	}
 
 	/**
-	 * @Description: 找到将要被合并的列在所有表的所有列中的下标
-	 * @Param: [column : 该张表所有的列的列名]
-	 * @Param: [str : 将要被合并的列名，列与列之间用逗号分隔]
+	 * 找到将要被合并的列在表的所有列中的下标
+	 *
+	 * 1、
+	 *
+	 * @Param: column String[]
+	 *         含义：该张表所有的列的列名
+	 *         取值范围：不为空
+	 * @Param: str String
+	 *         含义：将要被合并的列名，列与列之间用逗号分隔
+	 *         取值范围：不为空
+	 *
 	 * @return: int[]
-	 * @Author: WangZhengcheng
-	 * @Date: 2019/8/30
-	 */
+	 *          含义：要被合并的列在表的所有列中的下标
+	 *          取值范围：不会为null
+	 *
+	 * */
 	public static int[] findColIndex(String[] column, String str) {
 		List<String> split = StringUtil.split(str, ",");
 		int[] index = new int[split.size()];
@@ -142,14 +172,25 @@ public class ColumnTool {
 	}
 
 	/**
-	 * @Description: 在原列名信息中，按照某分隔符，找到某列所在位置并返回
-	 * @Param: [columnsName : 原列名]
-	 * @Param: [colName : 要寻找的列名]
-	 * @Param: [separator : 分隔符]
+	 * 在原列名信息中，按照某分隔符，找到某列所在位置并返回
+	 *
+	 * 1、
+	 *
+	 * @Param: columnsName String
+	 *         含义：原列名
+	 *         取值范围：不为空
+	 * @Param: colName String
+	 *         含义：要寻找的列名
+	 *         取值范围：不为空
+	 * @Param: separator String
+	 *         含义：分隔符
+	 *         取值范围：不为空
+	 *
 	 * @return: int
-	 * @Author: WangZhengcheng
-	 * @Date: 2019/8/29
-	 */
+	 *          含义：查找到的列的位置
+	 *          取值范围：不会为null
+	 *
+	 * */
 	private static int findColIndex(String columnsName, String colName, String separator) {
 		List<String> column = StringUtil.split(columnsName, separator);
 		int index = 0;
@@ -163,15 +204,22 @@ public class ColumnTool {
 	}
 
 	/**
-	 * @Description: 获取每个字典的长度
-	 * @Param: [columnType : 列类型]
+	 * 获取每个数据类型的长度
+	 *
+	 * 1、
+	 *
+	 * @Param: columnType String
+	 *         含义：列类型
+	 *         取值范围：不为空
+	 *
 	 * @return: int
-	 * @Author: WangZhengcheng
-	 * @Date: 2019/8/28
-	 */
+	 *          含义：数据类型的长度
+	 *          取值范围：不会为null
+	 *
+	 * */
 	private static int getLength(String columnType) {
 		columnType = columnType.trim();
-		int length = 0;
+		int length;
 		if (columnType.equalsIgnoreCase("INTEGER")) {
 			length = 12;
 		} else if (columnType.equalsIgnoreCase("BIGINT")) {
@@ -200,7 +248,7 @@ public class ColumnTool {
 			int start = columnType.indexOf("(");
 			int end = columnType.indexOf(")");
 			String substring = columnType.substring(start + 1, end);
-			if (substring.indexOf(",") != -1) {
+			if (substring.contains(",")) {
 				List<String> split = StringUtil.split(substring, ",");
 				return Integer.parseInt(split.get(0)) + 2;
 			}
@@ -210,20 +258,31 @@ public class ColumnTool {
 	}
 
 	/**
-	 * @Description: 用于获取对应列类型的位置
-	 * @Param: [str : 列类型]
-	 * @Param: [index : 该列在原字符串中出现的位置]
-	 * @Param: [separator : 分隔符]
+	 * 用于获取对应列类型的位置
+	 *
+	 * 1、
+	 *
+	 * @Param: columnsTypeAndPreci String
+	 *         含义：列类型
+	 *         取值范围：不为空,格式为列类型(长度,精度)
+	 * @Param: index int
+	 *         含义：该列在原字符串中出现的位置
+	 *         取值范围：不为空
+	 * @Param: separator String
+	 *         含义：分隔符
+	 *         取值范围：不为空
+	 *
 	 * @return: int
-	 * @Author: WangZhengcheng
-	 * @Date: 2019/8/29
-	 */
-	private static int searchIndex(String str, int index, String separator) {
+	 *          含义：对应列类型的位置
+	 *          取值范围：不会为null
+	 *
+	 * */
+	private static int searchIndex(String columnsTypeAndPreci, int index, String separator) {
 		int temp = 0;//第一个出现的索引位置
 		int num = 0;
 		while (temp != -1) {
 			num++;
-			temp = str.indexOf(separator, temp + 1);//从这个索引往后开始第一个出现的位置
+			temp = columnsTypeAndPreci.indexOf(separator, temp + 1);//从这个索引往后开始第一个出现的位置
 			if (num == index) {
 				break;
 			}

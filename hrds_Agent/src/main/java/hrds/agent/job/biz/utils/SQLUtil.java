@@ -17,24 +17,33 @@ import java.util.Set;
  **/
 public class SQLUtil {
 	/**
-	 * @Description: 根据表名和列名获取采集SQL, 根据不同数据库的类型对SQL语句中的列名进行处理
-	 * @Param: tableName:表名, 取值范围 : String
-	 * @Param: columnName:要采集的列名, 取值范围 : Set<String>
-	 * @Param: dbType:数据库类型, 取值范围 : String
-	 * @return:String
-	 * @Author: WangZhengcheng
-	 * @Date: 2019/8/13
-	 * 步骤：
-	 *      1、获得数据库类型的枚举
-	 *      2、判断数据库类型，在每一列后面加逗号
-	 *          2-1、如果数据库类型是MySQL,则对每一列用飘号包裹
-	 *          2-2、对其他类型的数据库，除了加逗号之外不做特殊处理
-	 *      3、去掉最后一列的最后一个逗号
-	 *      4、组装完整的SQL语句
-	 *          4-1、如果数据库类型是MySQL,则对表名用飘号包裹
-	 *          4-2、如果数据库类型是Oracle，则进行特殊处理
-	 *          4-3、除上述两种数据库，其他数据库不做特殊处理
-	 */
+	 * 根据表名和列名获取采集SQL, 根据不同数据库的类型对SQL语句中的列名进行处理
+	 *
+	 * 1、获得数据库类型的枚举
+	 * 2、判断数据库类型，在每一列后面加逗号
+	 *      2-1、如果数据库类型是MySQL,则对每一列用飘号包裹
+	 *      2-2、对其他类型的数据库，除了加逗号之外不做特殊处理
+	 * 3、去掉最后一列的最后一个逗号
+	 * 4、组装完整的SQL语句
+	 *      4-1、如果数据库类型是MySQL,则对表名用飘号包裹
+	 *      4-2、如果数据库类型是Oracle，则进行特殊处理
+	 *      4-3、除上述两种数据库，其他数据库不做特殊处理
+	 *
+	 * @Param: tableName String
+	 *         含义：当前采集作业采集的数据库表名
+	 *         取值范围：不为空
+	 * @Param: columnName Set<String>
+	 *         含义：要采集的列名
+	 *         取值范围：不为空，并且Set集合中的元素不能重复，即一张表里不能有重名的字段
+	 * @Param: dbType String
+	 *         含义：数据库类型
+	 *         取值范围：不为空，DatabaseType代码项code值
+	 *
+	 * @return: String
+	 *          含义：经过处理后生成的采集SQL语句
+	 *          取值范围：不会为null
+	 *
+	 * */
 	public static String getCollectSQL(String tableName, Set<String> columnName, String dbType) {
 		//1、获得数据库类型的枚举
 		DatabaseType typeConstant = DatabaseType.ofEnumByCode(dbType);

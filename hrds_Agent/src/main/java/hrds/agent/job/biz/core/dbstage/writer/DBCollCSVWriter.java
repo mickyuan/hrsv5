@@ -6,12 +6,12 @@ import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.JobInfo;
 import hrds.agent.job.biz.bean.TaskInfo;
 import hrds.agent.job.biz.constant.FileFormatConstant;
-import hrds.agent.job.biz.constant.IsFlag;
 import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.dataclean.columnclean.ColumnCleanUtil;
 import hrds.agent.job.biz.dataclean.tableclean.TableCleanUtil;
 import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.ProductFileUtil;
+import hrds.commons.codes.IsFlag;
 import hrds.commons.exception.AppSystemException;
 import org.apache.avro.Schema;
 import org.apache.avro.file.CodecFactory;
@@ -66,14 +66,8 @@ public class DBCollCSVWriter extends AbstractFileWriter {
 	}
 
 	/**
-	 * @Description: 写CSV，完成之后返回文件的文件名(包含路径)
-	 * @Param: metaDataMap:写文件需要用到的meta信息，取值范围 : Map<String, Object>
-	 * @Param: rs：当前线程采集到的Result, 取值范围 : ResultSet
-	 * @Param: tableName : 表名, 用于大字段数据写avro, 取值范围 : String
-	 * @return: String
-	 * @Author: WangZhengcheng
-	 * @Date: 2019/8/13
-	 * 步骤：
+	 * 根据数据元信息和ResultSet，写指定格式的数据文件
+	 *
 	 * 1、校验方法入参合法性
 	 * 2、创建数据文件存放目录
 	 * 3、创建数据文件文件名，文件名为jobID + 处理线程号 + 时间戳.csv,在作业配置文件目录下的datafile目录中
@@ -85,7 +79,29 @@ public class DBCollCSVWriter extends AbstractFileWriter {
 	 *      (4)、清洗后的结果追加到构建MD5的StringBuilder，并且放入list(用于存放一行数据)
 	 *      (5)、写一行数据，并清空list，执行下一次RS循环
 	 * 6、关闭资源，并返回文件路径
-	 */
+	 *
+	 * @Param: metaDataMap Map<String, Object>
+	 *         含义：包含有列元信息，清洗规则的map
+	 *         取值范围：不为空，共有7对Entry，key分别为
+	 *                      columnsTypeAndPreci：表示列数据类型(长度/精度)
+	 *                      columnsLength : 列长度，在生成信号文件的时候需要使用
+	 *                      columns : 列名
+	 *                      colTypeArr : 列数据类型(java.sql.Types),用于判断，对不同数据类型做不同处理
+	 *                      columnCount ：该表的列的数目
+	 *                      columnCleanRule ：该表每列的清洗规则
+	 *                      tableCleanRule ：整表清洗规则
+	 * @Param: rs ResultSet
+	 *         含义：当前线程执行分页SQL得到的结果集
+	 *         取值范围：不为空
+	 * @Param: tableName String
+	 *         含义：表名, 用于大字段数据写avro
+	 *         取值范围：不为空
+	 *
+	 * @return: String
+	 *          含义：生成的数据文件的路径
+	 *          取值范围：不会为null
+	 *
+	 * */
 	@Override
 	public String writeDataAsSpecifieFormat(Map<String, Object> metaDataMap, ResultSet rs, String tableName)
 			throws IOException, SQLException {
@@ -118,9 +134,9 @@ public class DBCollCSVWriter extends AbstractFileWriter {
 
 		int[] colTypeArrs = (int[]) metaDataMap.get("colTypeArr");
 		//4、判断本次采集得到的RS是否有CLOB，BLOB，LONGVARCHAR的大字段类型，如果有，则创建LOBs目录用于存放avro文件，并初始化写avro相关类对象
-		for (int i = 0; i < colTypeArrs.length; i++) {
-			if (colTypeArrs[i] == java.sql.Types.CLOB || colTypeArrs[i] == java.sql.Types.BLOB
-					|| colTypeArrs[i] == java.sql.Types.LONGVARCHAR) {
+		for(int index : colTypeArrs){
+			if (colTypeArrs[index] == java.sql.Types.CLOB || colTypeArrs[index] == java.sql.Types.BLOB
+					|| colTypeArrs[index] == java.sql.Types.LONGVARCHAR) {
 				//说明本次采集到的内容包含大字段类型，需要对其进行avro处理
 				String LOBsDir = ProductFileUtil.getLOBsPathByJobID(this.jobInfo);
 				//判断LOBs目录是否存在，不存在创建
@@ -134,7 +150,7 @@ public class DBCollCSVWriter extends AbstractFileWriter {
 				File file = new File(LOBsDir);
 				String avroFilePath = file.getAbsolutePath() + File.separator + "avro_" + tableName;
 				outputStream = new FileOutputStream(avroFilePath);
-				avroWriter = new DataFileWriter<Object>(new GenericDatumWriter<Object>()).setSyncInterval(100);
+				avroWriter = new DataFileWriter<>(new GenericDatumWriter<>()).setSyncInterval(100);
 				avroWriter.setCodec(CodecFactory.snappyCodec());
 				avroWriter.create(SCHEMA, outputStream);
 				break;
@@ -180,7 +196,7 @@ public class DBCollCSVWriter extends AbstractFileWriter {
 				int colType = colTypeArrs[j - 1];
 				if (colType == java.sql.Types.LONGVARCHAR) {
 					Reader characterStream = rs.getCharacterStream(j);
-					if (characterStream != null) {
+					if (characterStream != null && avroWriter != null) {
 						//对LONGVARCHAR类型进行处理
 						byteArr = longvarcharToByte(characterStream);
 						//以"LOBs_表名_列号_行号_原类型_avro对象序列"存放这个值
@@ -194,7 +210,7 @@ public class DBCollCSVWriter extends AbstractFileWriter {
 					}
 				} else if (colType == java.sql.Types.BLOB) {
 					Blob blob = rs.getBlob(j);
-					if (blob != null) {
+					if (blob != null && avroWriter != null) {
 						//对Blob类型进行处理
 						byteArr = blobToBytes(blob);
 						//以"LOBs_表名_列号_行号_原类型_avro对象序列"存放这个值
@@ -209,7 +225,7 @@ public class DBCollCSVWriter extends AbstractFileWriter {
 				} else if (colType == java.sql.Types.CLOB) {
 					//对Clob类型进行处理
 					Reader characterStream = rs.getClob(j).getCharacterStream();
-					if (characterStream != null) {
+					if (characterStream != null && avroWriter != null) {
 						byteArr = longvarcharToByte(characterStream);
 						//以"LOBs_表名_列号_行号_原类型_avro对象序列"存放这个值
 						currColValue = "_LOBs_" + tableName + "_" + j +
@@ -256,7 +272,7 @@ public class DBCollCSVWriter extends AbstractFileWriter {
 							FileFormatConstant.CSV.getMessage(), columnCleanRule, null);
 					//对列清洗后的结果再进行表清洗(除列合并)
 					tableCleanRule = (Map<String, Object>) metaDataMap.get("tableCleanRule");
-					TableCleanUtil.tbDataClean(currColValue, metaData.getColumnName(j),
+					currColValue = TableCleanUtil.tbDataClean(currColValue, metaData.getColumnName(j),
 							null, columnsTypeAndPreci.get(j - 1),
 							FileFormatConstant.CSV.getMessage(), tableCleanRule);
 					//5-4 清洗后的结果，并追加到MD5后面
@@ -283,7 +299,7 @@ public class DBCollCSVWriter extends AbstractFileWriter {
 
 			}
 
-			boolean is_MD5 = (IsFlag.YES.getCode() == Integer.parseInt(this.jobInfo.getIs_md5()));
+			boolean is_MD5 = (IsFlag.Shi == IsFlag.ofEnumByCode(this.jobInfo.getIs_md5()));
 			if (is_MD5) {
 				//如果用户选择生成MD5，则从任务对象中取到任务的开始时间
 				TaskInfo taskInfo = FileUtil.getTaskInfoByTaskID(this.jobInfo.getTaskId());
@@ -303,8 +319,12 @@ public class DBCollCSVWriter extends AbstractFileWriter {
 			fileList.clear();
 		}
 		//6、关闭资源，并返回文件路径
-		avroWriter.close();
-		outputStream.close();
+		if(avroWriter != null){
+			avroWriter.close();
+		}
+		if(outputStream != null){
+			outputStream.close();
+		}
 		writer.close();
 		LOGGER.info("线程" + Thread.currentThread().getId() + "写CSV文件结束");
 		return path;

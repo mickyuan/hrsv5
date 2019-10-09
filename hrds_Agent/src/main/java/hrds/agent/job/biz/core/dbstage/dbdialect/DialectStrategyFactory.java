@@ -22,34 +22,40 @@ public class DialectStrategyFactory {
 
 	private static boolean flag;
 
+	//私有化构造器，在单例模式中，构造器只能被调用一次，再次调用直接抛异常
 	private DialectStrategyFactory() {
 		if (!flag) {
 			flag = true;
 		} else {
-			throw new AppSystemException("不能多次创建单例对象");
+			throw new AppSystemException("DialectStrategyFactory类的构造器只能调用一次");
 		}
 	}
 
-	/* 此处使用一个内部类来维护单例 */
+	//此处使用一个内部类来维护单例
 	private static class Inner {
 		private static DialectStrategyFactory instance = new DialectStrategyFactory();
 	}
 
-	/* 外部用这个方法获取实例 */
+	//外部用这个方法获取实例
 	public static DialectStrategyFactory getInstance() {
 		return Inner.instance;
 	}
 
 	/**
-	 * @Description: 根据数据库类型获取对应的数据库分页策略
-	 * @Param: dbType：数据库类型, 取值范围 : String (01-13)
+	 * 根据数据库类型获取对应的数据库分页策略
+	 *
+	 * 1、判断数据库类型
+	 * 2、根据不同的类型，返回对应数据库的分页方言策略
+	 *
+	 * @Param: dbType String
+	 *         含义：数据库类型
+	 *         取值范围：DatabaseType代码项code值
+	 *
 	 * @return: DataBaseDialectStrategy
-	 * @Author: WangZhengcheng
-	 * @Date: 2019/8/13
-	 * 步骤：
-	 *      1、判断数据库类型
-	 *      2、根据不同的类型，返回对应数据库的分页方言策略
-	 */
+	 *          含义：具体的某种数据库方言策略实例
+	 *          取值范围：不会为null
+	 *
+	 * */
 	public DataBaseDialectStrategy createDialectStrategy(String dbType) {
 		if (StringUtil.isNotEmpty(dbType)) {
 			throw new AppSystemException("数据库类型不能为空");

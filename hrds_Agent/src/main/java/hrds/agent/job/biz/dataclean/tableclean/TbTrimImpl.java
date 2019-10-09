@@ -12,16 +12,23 @@ package hrds.agent.job.biz.dataclean.tableclean;
  **/
 public class TbTrimImpl extends AbstractTableClean {
 	/**
-	 * @Description: 列清洗首尾去空实现
-	 * @Param: [flag : 是否进行首尾去空, 取值范围 : true(进行去空) false(不进行去空)]
-	 * @Param: [columnValue : 列值, 取值范围 : String]
-	 * @return: java.lang.String
-	 * @Author: WangZhengcheng
-	 * @Date: 2019/9/11
-	 * 步骤：
+	 * 表清洗首尾去空实现
+	 *
 	 * 1、判断是否进行首尾去空
 	 * 2、调用方法进行首尾去空
-	 */
+	 *
+	 * @Param: flag Boolean
+	 *         含义：是否进行首尾去空
+	 *         取值范围：true(进行去空) false(不进行去空)
+	 * @Param: columnValue String
+	 *         含义：待清洗字段值
+	 *         取值范围：不为空
+	 *
+	 * @return: String
+	 *          含义：清洗后的字段值
+	 *          取值范围：不会为null
+	 *
+	 * */
 	@Override
 	public String trim(Boolean flag, String columnValue) {
 		//1、判断是否进行首尾去空

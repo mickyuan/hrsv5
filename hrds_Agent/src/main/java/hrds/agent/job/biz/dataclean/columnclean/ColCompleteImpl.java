@@ -20,19 +20,26 @@ import java.util.List;
 public class ColCompleteImpl extends AbstractColumnClean {
 
 	/**
-	 * @Description: 列清洗字符补齐实现
-	 * @Param: [completeSB : 用于字符补齐, 格式为：补齐长度`补齐方式`要补齐的字符串, 取值范围 : StringBuilder]
-	 * @Param: [columnValue : 列值, 取值范围 : String]
-	 * @return: java.lang.String
-	 * @Author: WangZhengcheng
-	 * @Date: 2019/9/11
-	 * 步骤：
+	 * 列清洗字符补齐实现
+	 *
 	 * 1、判断completeSB是否为空，如果不为空，表示要进行字符补齐
 	 * 2、获取补齐的长度
 	 * 3、获取补齐的类型(前补齐、后补齐)
 	 * 4、获取补齐字符
 	 * 5、调用方法进行补齐操作
-	 */
+	 *
+	 * @Param: completeSB StringBuilder
+	 *         含义：用于字符补齐
+	 *         取值范围：不为空, 格式为：补齐长度`补齐方式`要补齐的字符串
+	 * @Param: columnValue String
+	 *         含义：待清洗字段值
+	 *         取值范围：不为空
+	 *
+	 * @return: String
+	 *          含义：清洗后的字段值
+	 *          取值范围：不会为null
+	 *
+	 * */
 	@Override
 	public String complete(StringBuilder completeSB, String columnValue) {
 		//1、判断completeSB是否为空，如果不为空，表示要进行字符补齐

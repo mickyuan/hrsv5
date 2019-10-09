@@ -15,12 +15,15 @@ import hrds.agent.job.biz.bean.JobStatusInfo;
  **/
 public interface JobInterface extends MetaInfoInterface {
 	/**
-	 * 作业执行接口
+	 * 作业阶段构造，执行作业方法，实现类覆盖该方法，在该方法中构造作业的各个阶段，并执行作业
 	 *
-	 * @return com.beyondsoft.agent.beans.JobStatusInfo，用于表示作业状态
-	 * @author 13616
-	 * @date 2019/8/7 11:59
-	 */
+	 * @Param: 无
+	 *
+	 * @return: JobStatusInfo
+	 *          含义：封装有作业状态信息的实体类对象
+	 *          取值范围：JobStatusInfo类对象，不会为null
+	 *
+	 * */
 	JobStatusInfo runJob();
 }
 

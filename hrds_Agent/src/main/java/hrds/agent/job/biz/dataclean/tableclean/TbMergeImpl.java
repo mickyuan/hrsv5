@@ -28,9 +28,9 @@ public class TbMergeImpl extends AbstractTableClean {
 	                    Group group, List<Object> lineData, String fileType) {
 		StringBuilder afterMergeColValue = new StringBuilder(4096);
 		for (String colNameAndType : mergeRule.keySet()) {
-			int[] alliIdex = ColumnTool.findColIndex(columnsName, mergeRule.get(colNameAndType));
-			for (int i = 0; i < alliIdex.length; i++) {
-				afterMergeColValue.append(columnsValue[alliIdex[i]]);
+			int[] allIndex = ColumnTool.findColIndex(columnsName, mergeRule.get(colNameAndType));
+			for(int index : allIndex){
+				afterMergeColValue.append(columnsValue[index]);
 			}
 			if (group != null) {
 				List<String> colNameAndTypeArr = StringUtil.split(colNameAndType, JobConstant.CLEAN_SEPARATOR);

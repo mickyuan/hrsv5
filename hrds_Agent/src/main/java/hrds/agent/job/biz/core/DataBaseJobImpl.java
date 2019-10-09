@@ -33,17 +33,21 @@ public class DataBaseJobImpl implements JobInterface {
 	}
 
 	/**
-	* @Description: 重写接口中的runJob()方法，实现数据库直连采集的逻辑
-	* @return: hrds.agent.job.biz.bean.JobStatusInfo
-	* @Author: WangZhengcheng
-	* @Date: 2019/9/11
-	 * 步骤：
-	 *      1、设置作业ID，开始时间
-	 *      2、构建每个阶段具体的实现类
-	 *      3、构建责任链，串起每个阶段
-	 *      4、按照顺序从第一个阶段开始执行作业
-	 *      5、阶段执行完成后，写meta信息
-	*/
+	 * 重写接口中的runJob()方法，实现数据库直连采集的逻辑
+	 *
+	 * 1、设置作业ID，开始时间
+	 * 2、构建每个阶段具体的实现类对象
+	 * 3、构建责任链，串起每个阶段
+	 * 4、按照顺序从第一个阶段开始执行作业
+	 * 5、阶段执行完成后，写meta信息
+	 *
+	 * @Param: 无
+	 *
+	 * @return: JobStatusInfo
+	 *          含义：封装有作业状态信息的实体类对象
+	 *          取值范围：JobStatusInfo类对象，不会为null
+	 *
+	 * */
 	@Override
 	public JobStatusInfo runJob() {
 		JobStatusInfo jobStatusInfo = this.jobStatus;

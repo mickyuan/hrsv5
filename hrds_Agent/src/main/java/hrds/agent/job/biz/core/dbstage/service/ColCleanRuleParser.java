@@ -24,12 +24,8 @@ import java.util.Map;
 public class ColCleanRuleParser {
 
 	/**
-	 * @Description: 解析列清洗规则
-	 * @Param: [rule : 列清洗规则, 取值范围 : ColumnCleanResult类型对象]
-	 * @return: java.util.Map<java.lang.String   ,   java.lang.Object>
-	 * @Author: WangZhengcheng
-	 * @Date: 2019/9/11
-	 * 步骤：
+	 * 解析列清洗规则
+	 *
 	 * 1、解析清洗顺序
 	 * 2、解析字符替换规则
 	 * 3、解析字符补齐规则
@@ -37,8 +33,17 @@ public class ColCleanRuleParser {
 	 * 5、码值转换
 	 * 6、首尾去空
 	 * 7、解析字段拆分规则
-	 * 8、将上述所有组装成Map<String, Object> result并返回，key是清洗项名称，value是清洗规则
-	 */
+	 * 8、将上述所有组装成Map<String, Object> 集合并返回，
+	 *
+	 * @Param: rule ColumnCleanResult
+	 *         含义：存有列清洗规则的实体类对象
+	 *         取值范围：不为空，ColumnCleanResult类型对象
+	 *
+	 * @return: Map<String, Object>
+	 *          含义：存放有解析后的列清洗规则的集合
+	 *          取值范围：不会为null，key是清洗项名称，value是清洗规则
+	 *
+	 * */
 	public static Map<String, Object> parseColCleanRule(ColumnCleanResult rule)
 			throws UnsupportedEncodingException {
 		if (rule == null) {

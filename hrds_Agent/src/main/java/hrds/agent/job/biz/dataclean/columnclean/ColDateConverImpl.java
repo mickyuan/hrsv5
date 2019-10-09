@@ -20,17 +20,24 @@ import java.util.List;
  **/
 public class ColDateConverImpl extends AbstractColumnClean {
 	/**
-	 * @Description: 列清洗日期格式化实现
-	 * @Param: [dateSB : 用于日期转换,格式为：新格式`老格式, 取值范围 : StringBuilder]
-	 * @Param: [columnValue : 列值, 取值范围 : String]
-	 * @return: java.lang.String
-	 * @Author: WangZhengcheng
-	 * @Date: 2019/9/11
-	 * 步骤：
+	 * 列清洗日期格式化实现
+	 *
 	 * 1、判断dateSB是否为空，如果不为空，表示要进行日期格式化
 	 * 2、按照分隔符分割dateSB，获得新格式和原格式
 	 * 3、进行格式化
-	 */
+	 *
+	 * @Param: dateSB StringBuilder
+	 *         含义：用于日期转换
+	 *         取值范围：不为空, 格式为：新格式`老格式
+	 * @Param: columnValue String
+	 *         含义：待清洗字段值
+	 *         取值范围：不为空
+	 *
+	 * @return: String
+	 *          含义：清洗后的字段值
+	 *          取值范围：不会为null
+	 *
+	 * */
 	@Override
 	public String dateConver(StringBuilder dateSB, String columnValue) throws ParseException {
 		//1、判断dateSB是否为空，如果不为空，表示要进行日期格式化

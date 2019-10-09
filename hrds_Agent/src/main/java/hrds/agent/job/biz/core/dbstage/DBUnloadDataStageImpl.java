@@ -60,11 +60,8 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 	}
 
 	/**
-	* @Description: 数据库直连采集卸数阶段方法
-	* @return: hrds.agent.job.biz.bean.StageStatusInfo
-	* @Author: WangZhengcheng
-	* @Date: 2019/9/11
-	 * 步骤：
+	 * 数据库直连采集数据卸数阶段处理逻辑，处理完成后，无论成功还是失败，将相关状态信息封装到StageStatusInfo对象中返回
+	 *
 	 * 1、创建卸数阶段状态信息，更新作业ID,阶段名，阶段开始时间
 	 * 2、解析作业信息，得到表名和表数据量
 	 * 3、根据列名和表名获得采集SQL
@@ -72,7 +69,14 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 	 * 5、根据采集线程数，计算每个任务的采集数量
 	 * 6、构建线程对象CollectPage，放入线程池执行
 	 * 7、获得结果,用于校验多线程采集的结果和写Meta文件
-	*/
+	 *
+	 * @Param: 无
+	 *
+	 * @return: StageStatusInfo
+	 *          含义：StageStatusInfo是保存每个阶段状态信息的实体类
+	 *          取值范围：不会为null
+	 *
+	 * */
 	@Override
 	public StageStatusInfo handleStage()
 			throws InterruptedException, ExecutionException, SQLException {
@@ -173,12 +177,12 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 
 		//判断本次卸数阶段是否成功
 		if (!(fileResult.isEmpty())) {
-			for (int i = 0; i < fileResult.size(); i++) {
-				if (!FileUtil.decideFileExist(fileResult.get(i))) {
+			for(String filePath : fileResult){
+				if(!FileUtil.decideFileExist(filePath)){
 					//如果某个数据文件在指定的目录下不存在，则卸数阶段失败
 					statusInfo.setStatusCode(RunStatusConstant.FAILED.getCode());
 					//设置错误信息
-					statusInfo.setMessage("名为 : " + fileResult.get(i) + "的数据文件不存在");
+					statusInfo.setMessage("路径为 : " + filePath + "的数据文件不存在");
 					//设置结束时间
 					statusInfo.setEndDate(DateUtil.getLocalDateByChar8());
 					statusInfo.setEndTime(DateUtil.getLocalTimeByChar6());
@@ -207,58 +211,90 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 	}
 
 	/**
-	 * @Description: 获取数据列类型，用于写meta文件
+	 * 获取数据列类型，用于写meta文件
+	 *
+	 * 1、直接返回成员变量columnTypes
+	 *
+	 * @Param: 无
+	 *
 	 * @return: List<String>
-	 * @Author: WangZhengcheng
-	 * @Date: 2019/8/13
-	 */
+	 *          含义：当前采集表所有列的列类型
+	 *          取值范围：不会为null
+	 *
+	 * */
 	public List<String> getColumnTypes() {
 		return this.columnTypes;
 	}
 
 	/**
-	 * @Description: 获取本次数据库直连采集作业采集到的数据总条数，用于写meta文件
+	 * 获取本次数据库直连采集作业采集到的数据总条数，用于写meta文件
+	 *
+	 * 1、直接返回成员变量rowCount
+	 *
+	 * @Param: 无
+	 *
 	 * @return: long
-	 * @Author: WangZhengcheng
-	 * @Date: 2019/8/13
-	 */
+	 *          含义：当前作业采集数据量(一张表一个作业，作业内部使用多线程对表数据进行采集)
+	 *          取值范围：不限
+	 *
+	 * */
 	public long getRowCount() {
 		return rowCount;
 	}
 
 	/**
-	 * @Description: 获取本次数据库直连采集作业采集卸数后生成的数据文件总大小，用于写meta文件
-	 * @return: long 单位是字节
-	 * @Author: WangZhengcheng
-	 * @Date: 2019/8/13
-	 */
+	 * 获取本次数据库直连采集作业采集卸数后生成的数据文件总大小，用于写meta文件
+	 *
+	 * 1、直接返回成员变量fileSize
+	 *
+	 * @Param: 无
+	 *
+	 * @return: long
+	 *          含义：多线程卸数落地数据文件的文件总大小
+	 *          取值范围：不限，单位是字节
+	 *
+	 * */
 	public long getFileSize() {
 		return fileSize;
 	}
 
 	/**
-	 * @Description: 获取本次数据库直连采集作业采集卸数后生成的数据文件的路径，用于上传HDFS
-	 * @return: String[]：多线程采集，每个线程写一个数据文件，多线程采集最终会有多个文件
-	 * @Author: WangZhengcheng
-	 * @Date: 2019/8/13
-	 */
+	 * 获取本次数据库直连采集作业采集卸数后生成的数据文件的路径，用于上传HDFS
+	 *
+	 * 1、直接返回成员变成fileArr
+	 *
+	 * @Param: 无
+	 *
+	 * @return: String[]
+	 *          含义：多线程采集，每个线程写一个数据文件，多线程采集最终会有多个文件，用数组存放多个文件的路径
+	 *          取值范围：不会为null
+	 *
+	 * */
 	public String[] getFileArr() {
 		return fileArr;
 	}
 
-	/*
-	 * 获取列类型
-	 * */
-
 	/**
-	 * @Description: 根据列类型和列宽组装最终返回的列类型
-	 * @Param: columnTypeName：列类型, 取值范围 : String
-	 * @Param: precision：列宽, 取值范围 : int
-	 * @return: String 格式：列类型(宽度)
-	 * @Author: WangZhengcheng
-	 * @Date: 2019/8/13
-	 */
+	 * 获得列类型，对于像varchar这种有列长度的类型，只保留类型，不保留长度/精度
+	 *
+	 * 1、如果长度为0，则不做任何处理
+	 * 2、如果长度不为0，则只保留数据类型，不保留长度
+	 *
+	 * @Param: columnTypeName String
+	 *         含义：列类型
+	 *         取值范围：不为空，格式：列类型(长度)/列类型
+	 * @Param: precision int
+	 *         含义：对于数字类型，precision表示的是数字的精度，对于字符类型，这里表示的是长度
+	 *         取值范围：不限
+	 *
+	 * @return: String
+	 *          含义：只保留类型，不保留长度/精度
+	 *          取值范围：不会为null
+	 *
+	 * */
 	private String getColumnType(String columnTypeName, int precision) {
+		//1、如果长度为0，则不做任何处理
+		//2、如果长度不为0，则只保留数据类型，不保留长度
 		if (precision != 0) {
 			int index = columnTypeName.indexOf("(");
 			if (index != -1) {
