@@ -17,7 +17,7 @@
     </el-row>
  <!-- 实现点击导入按钮进行页面数据导入-->
    <!-- 弹出表单 -->
-    <el-dialog title="上传文件" :visible.sync="dialogFormVisibleImport" width="40%">
+    <el-dialog title="上传文件" :visible.sync="dialogFormVisibleImport" width="42%">
       <el-form :model="form" >
         <el-form-item label="Agent IP地址 :" :label-width="formLabelWidth">
           <el-input v-model="form.name" autocomplete="off" style="width:284px"></el-input> <el-tooltip class="item" effect="dark" content="要上传的数据源下Agent的IP地址" placement="right"><i class="fa fa-question-circle" aria-hidden="true"></i></el-tooltip>
@@ -68,10 +68,10 @@
           <el-input v-model="form.name" autocomplete="off" placeholder="数据源编号" style="width:284px"></el-input>
         </el-form-item>
         <el-form-item label=" 数据源名称" :label-width="formLabelWidth">
-          <el-input v-model="form.name" autocomplete="off" placeholder="数据源名称" style="width:284px"></el-input>
+          <el-input v-model="form.region" autocomplete="off" placeholder="数据源名称" style="width:284px"></el-input>
         </el-form-item>
         <el-form-item label=" 所属部门" :label-width="formLabelWidth">
-          <el-select v-model="value" filterable placeholder="请选择" style="width:284px">
+          <el-select v-model="value" filterable placeholder="请选择"  multiple style="width:284px">
     <el-option
       v-for="item in options"
       :key="item.value"
@@ -81,18 +81,19 @@
   </el-select>
         </el-form-item>
        <el-form-item label=" 数据源详细描述" :label-width="formLabelWidth">
-          <el-input type="textarea" v-model="form.name" autocomplete="off"  placeholder="数据源详细描述" style="width:284px"></el-input>
+          <el-input type="textarea" v-model="form.date1" autocomplete="off"  placeholder="数据源详细描述" style="width:284px"></el-input>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button @click="dialogFormVisibleAdd = false" size="mini" type="danger">取 消</el-button>
-        <el-button type="primary" @click=" Add();" size="mini">保存</el-button>
+        <el-button type="primary" @click="add" size="mini">保存</el-button>
       </div>
     </el-dialog>
   </div>
 </template>
 
 <script>
+import * as Add from '@/hrds/api/b/loginNum1001/loginNum1001'
 export default {
   data() {
     return {
@@ -130,10 +131,15 @@ export default {
     };
   },
   methods:{
-      save(){
-        console.log("1");
-      }
-  }
+    add(){
+     Add.addDataResource().then((res)=>{
+       console.log(res.data)
+     })
+      
+    }
+   
+    }
+  
 };
 </script>
 
