@@ -22,6 +22,7 @@
             <h3>数据库 Agent</h3>
             <p>数据库 Agent 是用于采集结构化数据（RDBMS Etc）的Agent，只需要一个Agent就可以采集同一数据源中的不同源数据</p>
           </div>
+          
           <!-- 数据类型标题 -->
           <h4>
             当前所属数据源为：
@@ -43,10 +44,10 @@
               border
               :header-cell-style="{background:'#ede7f3',color:'black'}"
             >
-              <el-table-column prop="date" label="Agent名称" width="196" align="center"></el-table-column>
-              <el-table-column prop="name" label="Agent所在服务器IP" width="324" align="center"></el-table-column>
-              <el-table-column prop="address" label="Agent 连接端口" width="270" align="center"></el-table-column>
-              <el-table-column prop="date" label="数据采集用户" width="224" align="center"></el-table-column>
+              <el-table-column prop="date" label="Agent名称" width="191" align="center"></el-table-column>
+              <el-table-column prop="name" label="Agent所在服务器IP" width="319" align="center"></el-table-column>
+              <el-table-column prop="address" label="Agent 连接端口" width="265" align="center"></el-table-column>
+              <el-table-column prop="date" label="数据采集用户" width="219" align="center"></el-table-column>
               <el-table-column label="操作" align="center">
                 <el-button size="mini" type="primary" >查看</el-button>
                 <el-button size="mini" type="danger" >删除</el-button>
@@ -117,6 +118,9 @@ export default {
 </script>
 
 <style scoped>
+.index1001{
+  width: 100%;
+}
 .index1001 .el-header {
   background: #7cb1de;
 }
@@ -124,10 +128,11 @@ export default {
   background: #7cb1de;
 }
 .index1001 .el-main {
-  padding: 0 90px 0 59px;
+  padding: 0 74px 0 74px;
 }
 /* 图标字体设置 */
 .el-row {
+  width: 100%;
   height: 64px;
   line-height: 64px;
 }
@@ -162,7 +167,7 @@ export default {
 }
 /* 下划线样式 */
 .lines {
-  width: 1156px;
+  width: 100%;
   min-height: 1px;
   background: #dddddd;
   margin-bottom: 15px;
@@ -215,9 +220,9 @@ h4 strong {
 }
 /* 表格数据 */
 .tableList {
-  width: 100%;
+  width: 98%;
   min-height: 132px;
   border: 1px solid #cccccc;
-  padding: 0 14px;
+  padding: 0 1%;
 }
 </style>

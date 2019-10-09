@@ -53,7 +53,7 @@ export default {
 /* 下划线样式 */
 .lines{
      margin-top: 10px;
-    width: 1140px;
+    width: 100%;
     height: 1px;
     background: #dddddd;
     margin-bottom: 15px;

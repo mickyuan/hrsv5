@@ -1,6 +1,6 @@
 <template>
   <div class="dataManage">
-    <el-row>
+   
       <i class="block_icon fa text-warning fa-users blue"></i>
       <span>数据权限管理</span>
       <div class="lines"></div>
@@ -8,7 +8,6 @@
       <el-table
         :data="tableData"
         border
-        height="181"
         :header-cell-style="{background:'#ede7f3',color:'black'}"
         size="mini"
         stripe
@@ -20,13 +19,13 @@
         <el-table-column prop="address" label="所属部门" width="380" align="center"></el-table-column>
     <!-- 点击操作弹出框 -->
 
-        <el-table-column  label="操作" width="99" align="center">
+        <el-table-column  label="操作"  align="center">
             <template slot-scope="scope">
           <b @click="dialogVisible = true;handleEdit(scope.$index, scope.row)">  编辑</b>
            </template>
         </el-table-column>
       </el-table>
-    </el-row>
+    
     <el-row>
       <el-dialog title="更改部门" :visible.sync="dialogVisible" width="50%" class="elDialog">
         数据源
@@ -85,11 +84,17 @@ export default {
           address: "上海市普陀区金沙江路 1519 弄"
         },
         {
-          
-          date: "20",
-          name: "王小虎3",
-          address: "上海市普陀区金沙江路 1516 弄"
-        }
+        
+          date: "2016",
+          name: "王小虎2",
+          address: "上海市普陀区金沙江路 1519 弄"
+        },{
+        
+          date: "2016",
+          name: "王小虎2",
+          address: "上海市普陀区金沙江路 1519 弄"
+        },
+        
       ],
       options: [
         {
@@ -130,7 +135,7 @@ export default {
 }
 .lines {
   margin-top: 10px;
-  width: 1140px;
+  width: 100%;
   height: 1px;
   background: #dddddd;
   margin-bottom: 15px;
@@ -143,7 +148,7 @@ export default {
 /* 分页 */
 .pagination {
   margin-top: 20px;
-  width: 1140px;
+  width: 100%;
 }
 .el-pagination {
   float: right;
