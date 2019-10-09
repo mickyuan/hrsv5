@@ -16,10 +16,10 @@
 </template>
 
 <script>
-import Loheader from "@/hrds/components/loginNum1001/Loheader";
-import dataSheetmain from "@/hrds/components/loginNum1001/dataSheetmain";
-import dataManage from "@/hrds/components/loginNum1001/dataManage";
-import authorityManagement from "@/hrds/components/loginNum1001/authorityManagement";
+import Loheader from "./Loheader";
+import dataSheetmain from "./dataSheetmain";
+import dataManage from "./dataManage";
+import authorityManagement from "./authorityManagement";
 
 export default {
   name: "index1001",
@@ -42,7 +42,7 @@ export default {
 }
 .index1001 .el-main {
  padding-left:74px;
- padding-right:108px;
+ padding-right:74px;
 
 }
 </style>
