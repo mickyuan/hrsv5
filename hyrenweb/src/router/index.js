@@ -1,6 +1,5 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-
 Vue.use(Router)
 
 export default new Router({
@@ -33,6 +32,19 @@ export default new Router({
                     component: () => import('@/hrds/views/b/collectmonitor')
                 }
             ]
+        },
+        {
+            path: '/index1001',
+            name: ' index1001',
+            title : '1001登录首页',
+            component: () => import('@/hrds/views/b/loginNum1001/index1001')
+        },
+        {
+            path: '/addScoure',
+            name: 'addScoure',
+            title : '数据源跳转页面',
+            component: () => import('@/hrds/views/b/addScoure/AgentList')
         }
+
     ]
 })
