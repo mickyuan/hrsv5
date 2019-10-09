@@ -81,12 +81,13 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 	 * <p>
 	 * 测试数据：
 	 * 1.agent_info表：有7条数据,agent_id有五种，数据库agent,数据文件agent,非结构化agent,半结构化agent,
-	 * FTP agent,分别为-2000000001到-2000000005，-2000000011，-2000000012
-	 * 2.data_source表，有2条数据，SourceId为-1000000000，1000000001
-	 * 3.agent_down_info表，有1条数据，DownId为-3000000000,agent_id为-1000000000
-	 * 4.database_set表，有1条数据，DatabaseId为-5000000000
-	 * 5.sys_user表，有1条数据，user_id为5555
-	 * 6.department_info表，有2条数据，dep_id为-3000000010，-3000000011
+	 * FTP agent,分别为DBAgentId,DBAgentId2，DBAgentId3，DBAgentId4，DBAgentId5，DFAgentId,
+	 * UnsAgentId,SemiAgentId，FTPAgentId
+	 * 2.data_source表，有2条数据，SourceId为SourceId，SourceId2
+	 * 3.agent_down_info表，有1条数据，down_id为DownId,agent_id为DBAgentId
+	 * 4.database_set表，有1条数据，database_id为DatabaseId
+	 * 5.sys_user表，有1条数据，user_id为UserId
+	 * 6.department_info表，有2条数据，dep_id为DepId1，DepId2
 	 */
 	@BeforeClass
 	public static void before() {
