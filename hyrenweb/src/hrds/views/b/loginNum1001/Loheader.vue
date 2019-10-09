@@ -17,7 +17,7 @@
     </el-row>
  <!-- 实现点击导入按钮进行页面数据导入-->
    <!-- 弹出表单 -->
-    <el-dialog title="上传文件" :visible.sync="dialogFormVisibleImport" width="40%">
+    <el-dialog title="上传文件" :visible.sync="dialogFormVisibleImport" width="42%">
       <el-form :model="form" >
         <el-form-item label="Agent IP地址 :" :label-width="formLabelWidth">
           <el-input v-model="form.name" autocomplete="off" style="width:284px"></el-input> <el-tooltip class="item" effect="dark" content="要上传的数据源下Agent的IP地址" placement="right"><i class="fa fa-question-circle" aria-hidden="true"></i></el-tooltip>
