@@ -38,12 +38,12 @@ public class LoginAction extends BaseAction {
 
 		//1 : 获取并检查,用户名是否为空
 		String user_id = request.getParameter("username");
-		if( StringUtil.isBlank(user_id) ) {
+		if (StringUtil.isBlank(user_id)) {
 			throw new BusinessException(ExceptionEnum.USER_NOT_EMPTY);
 		}
 		//2 : 获取并检查,密码是否做为空
 		String pwd = request.getParameter("password");
-		if( StringUtil.isBlank(pwd) ) {
+		if (StringUtil.isBlank(pwd)) {
 			throw new BusinessException(ExceptionEnum.USER_PWD_EMPTY);
 		}
 
@@ -76,32 +76,32 @@ public class LoginAction extends BaseAction {
 	 * 3 : 如果为获取到信息,则判断用户密码是否正确
 	 * 4 : 将此次登陆的用户信息,设置到Cookie中
 	 * 5 : 设置登陆用户的cookie
-	 *  @param user_id long
+	 *
+	 * @param user_id long
 	 *                含义 : 用户ID
 	 *                取值范围 : 不可为空的长整型, 用于用户登陆的身份认证
 	 * @param pwd     String
 	 *                含义 :  用户密码
 	 * @return String
-	 *              含义 :  当前用户的信息
-	 *              取值返回 : 不能为空,为空表示用户无效
+	 * 含义 :  当前用户的信息
+	 * 取值返回 : 不能为空,为空表示用户无效
 	 */
 	private String checkLogin(long user_id, String pwd) {
 
 		//1 : 查询当前用户的记录信息
 		Sys_user logInUser = Dbo.queryOneObject(Sys_user.class, "select * from " +
-						Sys_user.TableName + " where user_id = ?", user_id)
-						.orElseThrow(() -> new BusinessException(ExceptionEnum.USER_NOT_EXISTS));
+				Sys_user.TableName + " where user_id = ?", user_id)
+				.orElseThrow(() -> new BusinessException(ExceptionEnum.USER_NOT_EXISTS));
 
 		//3 : 如果为获取到信息,则判断用户密码是否正确
 		String user_password = logInUser.getUser_password();
-		if( !pwd.equals(user_password) ) {
+		if (!pwd.equals(user_password)) {
 			throw new BusinessException(ExceptionEnum.PASSWORD_ERROR.getMessage());
 		}
 //		4 ; 将此次登陆的用户信息,设置到Cookie中
 		User user = putUserInfo(logInUser);
 		//5 : 设置登陆用户的cookie
-		ActionUtil.setCookieUser(user);
-		return JsonUtil.toJson(user);
+		return ActionUtil.setCookieUser(user);
 	}
 
 	/**
@@ -120,8 +120,8 @@ public class LoginAction extends BaseAction {
 
 		// 1 : 根据登陆成功的用户信息获取部门信息
 		Department_info departmentInfo = Dbo.queryOneObject(Department_info.class, "select * from " +
-						Department_info.TableName + " where dep_id = ?", logInUser.getDep_id())
-						.orElseThrow(() -> new BusinessException("部门信息不存在"));
+				Department_info.TableName + " where dep_id = ?", logInUser.getDep_id())
+				.orElseThrow(() -> new BusinessException("部门信息不存在"));
 
 		//3 : 组成需要生成的Cookie
 		User user = new User();

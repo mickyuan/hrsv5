@@ -21,10 +21,12 @@ public abstract class BaseAction extends AbstractWebappBaseAction {
      * @param request
      * @return
      */
+    private String _userCookieName = null;//TODO 只是个临时方案
     @Override
     protected ActionResult _doPreProcess(HttpServletRequest request) {
         //1、获取user是否存在，不存在抛异常
-        User user = getUser();
+        _userCookieName = request.getHeader(ActionUtil._userCookieName);
+	    User user = getUser();
         if (user == null) {
             return ActionResultHelper.bizError("no cookies");
         }
@@ -41,7 +43,7 @@ public abstract class BaseAction extends AbstractWebappBaseAction {
      * @return
      */
     protected User getUser() {
-        return ActionUtil.getUser();
+        return ActionUtil.getUser(_userCookieName);
     }
 
     /**
@@ -49,7 +51,7 @@ public abstract class BaseAction extends AbstractWebappBaseAction {
      * @return
      */
     protected Long getUserId() {
-        User user = ActionUtil.getUser();
+        User user = ActionUtil.getUser(_userCookieName);
         return user.getUserId();
     }
 
@@ -59,7 +61,7 @@ public abstract class BaseAction extends AbstractWebappBaseAction {
      * @return
      */
     protected String getUserName() {
-        User user = ActionUtil.getUser();
+        User user = ActionUtil.getUser(_userCookieName);
         return user.getUserName();
     }
 }
