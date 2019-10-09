@@ -87,17 +87,17 @@ subprojects {
     }
 
     // -------------  模块打包  -------------
-    def appMainClass = "${project.group}.${project.name}.main.AppMain"
+    def appMainClass = "${project.group}.main.AppMain"
     // 正式发布时，打开注释，目的：不将resources打包到jar文件内
-//    processResources {
-//        exclude { "**/*.*" }
-//    }
+    processResources {
+        exclude { "**/*.*" }
+    }
 
     jar {
         archivesBaseName = "${project.name}"
 
         String classpaths = 'resources/' // 存放资源文件的目录
-        configurations.runtime.each {classpaths = classpaths + " lib/"+it.name} //遍历项目的所有依赖的jar包赋值给变量someString
+        configurations.runtime.each {classpaths = classpaths + " ../lib/"+it.name} //遍历项目的所有依赖的jar包赋值给变量someString
 
         manifest {
             attributes(
