@@ -27,7 +27,7 @@
       </el-table>
     
     <el-row>
-      <el-dialog title="更改部门" :visible.sync="dialogVisible" width="50%" class="elDialog">
+      <el-dialog title="更改部门" :visible.sync="dialogVisible" width="53%" class="elDialog">
         数据源
         <el-input v-model="input" placeholder="请确认项目" style="width:200px" disabled class="elInput" ></el-input>所属部门
         <el-select v-model="value1" placeholder="请选择部门（可多选）" multiple style="width:200px">
