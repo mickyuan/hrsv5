@@ -487,6 +487,7 @@ public class DataSourceAction extends BaseAction {
 
 		// 1.数据可访问权限处理方式，以下SQL关联sourceId与user_id检查
 		// 2.先查询该datasource下是否还有agent
+		// FIXME: orElse用法有误，逻辑有问题，用orElseThrow  已解决
 		if (Dbo.queryNumber("SELECT count(1) FROM agent_info  WHERE source_id=? and user_id=?", sourceId,
 				getUserId()).orElseThrow(() -> new BusinessException("sql查询错误！")) > 0) {
 			throw new BusinessException("此数据源下还有agent，不能删除,sourceId=" + sourceId);
@@ -516,6 +517,7 @@ public class DataSourceAction extends BaseAction {
 	public List<Sys_user> searchDataCollectUser() {
 		// 1.数据可访问权限处理方式，此方法不需要权限验证，没有用户访问限制
 		// 2.查询数据采集用户信息并返回查询结果
+		// FIXME: 为什么用union all以及为什么用like,注释说明      已解决
 		//我们需要的是当前用户类型是数据采集（前半句sql查询结果）以及数据类型组包含数据采集的用户信息（后半句sql查询结果），所以用union all,
 		// 用户类型组中数据可能是多个用户类型组成的也可能是单个的，所以用like
 		return Dbo.queryList(Sys_user.class, "select * from sys_user where user_type=? and" +
