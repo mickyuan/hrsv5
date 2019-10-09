@@ -7,6 +7,7 @@ import fd.ng.web.annotation.RequestBean;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.AgentStatus;
+import hrds.commons.codes.AgentType;
 import hrds.commons.entity.Agent_info;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.DboExecute;
@@ -130,7 +131,8 @@ public class AgentInfoAction extends BaseAction {
 	private void fieldLegalityValidation(String agentName, String agentType, String agentIp, String agentPort,
 	                                     Long sourceId, Long userId) {
 		// 1.数据可访问权限处理方式，这是个私有方法，不会单独被调用，所以不需要权限验证
-		// 2.验证agent_type是否为空或空格
+		// 2.验证agent_type是否为空或空格且是否合法
+		AgentType.ofEnumByCode(agentType);
 		if (StringUtil.isBlank(agentType)) {
 			throw new BusinessException("agent_type不能为空且不能为空格，agent_type=" + agentType);
 		}

@@ -291,7 +291,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			sysUser.setCreate_date(DateUtil.getSysDate());
 			sysUser.setCreate_time(DateUtil.getSysTime());
 			sysUser.setRole_id("1001");
-			sysUser.setUser_name("dhw");
+			sysUser.setUser_name("csUser");
 			sysUser.setUser_password("111111");
 			sysUser.setUser_type(UserType.CaiJiYongHu.getCode());
 			sysUser.setUseris_admin("1");
@@ -574,7 +574,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			dataAuth.setApply_type(ApplyType.ChaKan.getCode());
 			dataAuth.setApply_date(DateUtil.getSysDate());
 			dataAuth.setApply_time(DateUtil.getSysTime());
-			dataAuth.setAuth_type(AuthType.YunXu.getCode());
+			dataAuth.setAuth_type(AuthType.ShenQing.getCode());
 			dataAuth.setFile_id(FileId);
 			dataAuth.setUser_id(UserId);
 			dataAuth.setDep_id(DepId1);
@@ -957,10 +957,10 @@ public class DataSourceActionTest extends WebBaseTestCase {
 		// 验证dataSourceRelationDep数据
 		List<String> dsrDepList = (List<String>) ar.get().getDataForMap().get("dataSourceRelationDep");
 		assertThat(dsrDepList.size(), is(2));
-		// 验证applicationAndApproval数据
-		List<Map<String, Object>> applicationAndApprovalList = (List<Map<String, Object>>) ar.get().getDataForMap()
-				.get("applicationAndApproval");
-		assertThat(applicationAndApprovalList.size(), is(1));
+		// 验证dataAudit数据
+		List<Map<String, Object>> dataAuditList = (List<Map<String, Object>>) ar.get().getDataForMap()
+				.get("dataAudit");
+		assertThat(dataAuditList.size(), is(1));
 		// 验证dataSourceAndAgentCount数据
 		List<Map<String, Object>> dsAiList = (List<Map<String, Object>>) ar.get().getDataForMap()
 				.get("dataSourceAndAgentCount");
@@ -1063,6 +1063,85 @@ public class DataSourceActionTest extends WebBaseTestCase {
 				.post(getActionUrl("searchSourceRelationDepForPage")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		assertThat(ar.get().isSuccess(), is(false));
+	}
+
+	/**
+	 * 数据申请审批并返回最新数据申请审批数据信息
+	 * <p>
+	 * 1.正确的数据访问1，数据申请审批，数据全有效
+	 * 2.错误的数据访问1，数据申请审批，daId不存在
+	 * 3.错误的数据访问2，数据申请审批，authType不存在
+	 */
+	@Test
+	public void dataAudit() {
+		// 1.正确的数据访问1，数据申请审批，数据全有效
+		String bodyString = new HttpClient()
+				.addData("daId", DaId)
+				.addData("authType", AuthType.YiCi.getCode())
+				.post(getActionUrl("dataAudit")).getBodyString();
+		Optional<ActionResult> ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
+		assertThat(ar.get().isSuccess(), is(true));
+		List<Data_auth> dataAuthList = ar.get().getDataForEntityList(Data_auth.class);
+		for (Data_auth dataAuth : dataAuthList) {
+			assertThat(dataAuth.getAuth_type(), is(AuthType.YiCi.getCode()));
+			assertThat(dataAuth.getDa_id(), is(DaId));
+			assertThat(dataAuth.getUser_id(), is(UserId));
+			assertThat(dataAuth.getAudit_name(), is("csUser"));
+		}
+		// 2.错误的数据访问1，数据申请审批，daId不存在
+		bodyString = new HttpClient()
+				.addData("daId", 111)
+				.addData("authType", AuthType.YiCi.getCode())
+				.post(getActionUrl("dataAudit")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
+		assertThat(ar.get().isSuccess(), is(false));
+		// 3.错误的数据访问2，数据申请审批，authType不存在
+		bodyString = new HttpClient()
+				.addData("daId", DaId)
+				.addData("authType", 6)
+				.post(getActionUrl("dataAudit")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
+		assertThat(ar.get().isSuccess(), is(false));
+	}
+
+	/**
+	 * 数据申请审批并返回最新数据申请审批数据信息
+	 * <p>
+	 * 1.正确的数据访问1，数据申请审批，数据全有效
+	 * 2.错误的数据访问1，数据申请审批，daId不存在
+	 * 3.错误的数据访问2，数据申请审批，authType不存在
+	 */
+	@Test
+	public void deleteAudit() {
+		try (DatabaseWrapper db = new DatabaseWrapper()) {
+			// 1.正确的数据访问1，数据申请审批，数据全有效
+			// 删除前查询数据库，确认预期删除的数据存在
+			OptionalLong optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
+					" data_auth where da_id = ?", DaId);
+			assertThat("删除操作前，data_source表中的确存在这样一条数据", optionalLong.
+					orElse(Long.MIN_VALUE), is(1L));
+			String bodyString = new HttpClient().addData("daId", DaId)
+					.post(getActionUrl("deleteAudit")).getBodyString();
+			Optional<ActionResult> ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
+			assertThat(ar.get().isSuccess(), is(true));
+			List<Data_auth> dataAuthList = ar.get().getDataForEntityList(Data_auth.class);
+			for (Data_auth dataAuth : dataAuthList) {
+				assertThat(dataAuth.getAuth_type(), is(AuthType.YiCi.getCode()));
+				assertThat(dataAuth.getDa_id(), is(DaId));
+				assertThat(dataAuth.getUser_id(), is(UserId));
+				assertThat(dataAuth.getAudit_name(), is("csUser"));
+			}
+			// 删除后查询数据库，确认预期删除的数据已删除
+			optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
+					" data_auth where da_id = ?", DaId);
+			assertThat("删除操作后，确认data_auth表这条数据已删除", optionalLong.
+					orElse(Long.MIN_VALUE), is(0L));
+			// 2.错误的数据访问1，数据申请审批，daId不存在
+			bodyString = new HttpClient().addData("daId", 111)
+					.post(getActionUrl("deleteAudit")).getBodyString();
+			ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
+			assertThat(ar.get().isSuccess(), is(false));
+		}
 	}
 
 	/**
@@ -1372,7 +1451,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			// 删除后查询数据库，确认预期数据已删除
 			optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
 					" data_source where source_id = ?", SourceId2);
-			assertThat("删除操作前，data_source表中的确存在这样一条数据", optionalLong.
+			assertThat("删除操作后，确认这条数据已删除", optionalLong.
 					orElse(Long.MIN_VALUE), is(0L));
 
 			// 2.错误的数据访问1，删除数据源信息，数据源下有agent，不能删除

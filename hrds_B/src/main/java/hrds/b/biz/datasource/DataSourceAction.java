@@ -72,25 +72,13 @@ public class DataSourceAction extends BaseAction {
 				"ai.source_id where ds.create_user_id=? GROUP BY ds.source_id,ds.datasource_name", getUserId());
 		// 4.数据权限管理，分页查询数据源及部门关系信息
 		Result dataSourceRelationDep = searchSourceRelationDepForPage(currPage, pageSize);
-		// 5.查询申请审批信息
+		// 5.查询数据申请审批信息
 		// 获取下面sql中所需source_id的数组
-		List<Long> sourceIdList = Dbo.queryOneColumnList("select source_id from data_source");
-		Long[] sourceId = new Long[sourceIdList.size()];
-		for (int i = 0; i < sourceIdList.size(); ++i) {
-			sourceId[i] = sourceIdList.get(i);
-		}
-		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
-		asmSql.addSql("select da.DA_ID,da.APPLY_DATE,da.APPLY_TIME,da.APPLY_TYPE,da.AUTH_TYPE,da.AUDIT_DATE," +
-				"da.AUDIT_TIME,da.AUDIT_USERID,da.AUDIT_NAME,da.FILE_ID,da.USER_ID,da.DEP_ID,sfa.*,su.user_name" +
-				" from data_auth da join sys_user su on da.user_id=su.user_id join source_file_attribute sfa" +
-				" on da.file_id= sfa.file_id  where su.create_id in (select user_id from sys_user where user_type=?" +
-				" or user_id = ?) ").addParam(UserType.XiTongGuanLiYuan.getCode()).addParam(getUserId())
-				.addORParam("sfa.source_id", sourceId).addSql(" ORDER BY  da_id desc");
-		List<Map<String, Object>> applicationAndApprovalList = Dbo.queryList(asmSql.sql(), asmSql.params());
+		List<Map<String, Object>> dataAuditList = getDataAuditList();
 		// 6.创建存放数据源，部门、agent,申请审批,业务用户和采集用户,部门与数据源关系表信息的集合并将数据进行封装
 		Map<String, Object> dataSourceInfoMap = new HashMap<>();
 		dataSourceInfoMap.put("dataSourceRelationDep", dataSourceRelationDep.toList());
-		dataSourceInfoMap.put("applicationAndApproval", applicationAndApprovalList);
+		dataSourceInfoMap.put("dataAudit", dataAuditList);
 		dataSourceInfoMap.put("departmentInfo", diList);
 		dataSourceInfoMap.put("dataSourceAndAgentCount", dsAiList);
 		// 7.设置权限类型
@@ -105,6 +93,36 @@ public class DataSourceAction extends BaseAction {
 		dataSourceInfoMap.put("yeWu", UserType.YeWuYongHu.getCode());
 		// 8.返回放数据源，部门、agent,申请审批,业务用户和采集用户,部门与数据源关系表信息的集合
 		return dataSourceInfoMap;
+	}
+
+	/**
+	 * 获取数据申请审批信息的集合
+	 * <p>
+	 * 1.数据可访问权限处理方式，这是一个私有方法不需要权限控制
+	 * 2.查询data_source表所有source_id封装入数组
+	 * 3.查询数据源申请审批信息集合并返回
+	 *
+	 * @return java.util.List
+	 * 含义：存放数据申请审批信息的集合
+	 * 取值范围：无限制
+	 */
+	private List<Map<String, Object>> getDataAuditList() {
+		// 1.数据可访问权限处理方式，这是一个私有方法不需要权限控制
+		// 2.查询data_source表所有source_id封装入数组
+		List<Long> sourceIdList = Dbo.queryOneColumnList("select source_id from data_source");
+		Long[] sourceId = new Long[sourceIdList.size()];
+		for (int i = 0; i < sourceIdList.size(); ++i) {
+			sourceId[i] = sourceIdList.get(i);
+		}
+		// 3.查询数据源申请审批信息集合并返回
+		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
+		asmSql.addSql("select da.DA_ID,da.APPLY_DATE,da.APPLY_TIME,da.APPLY_TYPE,da.AUTH_TYPE,da.AUDIT_DATE," +
+				"da.AUDIT_TIME,da.AUDIT_USERID,da.AUDIT_NAME,da.FILE_ID,da.USER_ID,da.DEP_ID,sfa.*,su.user_name" +
+				" from data_auth da join sys_user su on da.user_id=su.user_id join source_file_attribute sfa" +
+				" on da.file_id= sfa.file_id  where su.create_id in (select user_id from sys_user where user_type=?" +
+				" or user_id = ?) ").addParam(UserType.XiTongGuanLiYuan.getCode()).addParam(getUserId())
+				.addORParam("sfa.source_id", sourceId).addSql(" ORDER BY  da_id desc");
+		return Dbo.queryList(asmSql.sql(), asmSql.params());
 	}
 
 	/**
@@ -174,6 +192,69 @@ public class DataSourceAction extends BaseAction {
 	}
 
 	/**
+	 * 数据申请审批并返回最新数据申请审批数据信息
+	 * <p>
+	 * 1.数据可访问权限处理方式，根据user_id进行权限控制
+	 * 2.根据数据权限设置ID查询数据申请审批信息
+	 * 3.判断查询信息是否不存在
+	 * 4.根据数据权限设置ID以及权限类型进行审批
+	 * 5.查询审批后的最新数据申请审批信息并返回
+	 *
+	 * @param daId     long
+	 *                 含义：数据权限设置ID，表data_auth主键
+	 *                 取值范围：不为空的十位数字，新增时自动生成
+	 * @param authType String
+	 *                 含义：权限类型，0-申请<ShenQing>，1-允许<YunXu>，2-不允许<BuYunXu>，3-一次<YiCi>
+	 *                 取值范围：
+	 * @return java.util.List
+	 * 含义：存放数据申请审批信息的集合
+	 * 取值范围：无限制
+	 */
+	public List<Map<String, Object>> dataAudit(long daId, String authType) {
+		// 1.数据可访问权限处理方式，根据user_id进行权限控制
+		// authType代码项合法性验证，如果不存在该方法直接回抛异常
+		AuthType.ofEnumByCode(authType);
+		// 2.根据数据权限设置ID查询数据申请审批信息
+		Optional<Data_auth> dataAuth = Dbo.queryOneObject(Data_auth.class, "select * from data_auth " +
+				" where da_id=? and user_id=?", daId, getUserId());
+		// 3.判断查询信息是否不存在
+		if (!dataAuth.isPresent()) {
+			// 不存在值
+			throw new BusinessException("此申请已取消或不存在！");
+		}
+		// 4.根据数据权限设置ID以及权限类型进行审批
+		dataAuth.get().setAudit_date(DateUtil.getSysDate());
+		dataAuth.get().setAudit_time(DateUtil.getSysTime());
+		dataAuth.get().setAudit_userid(getUserId());
+		dataAuth.get().setAudit_name(getUserName());
+		dataAuth.get().setAuth_type(authType);
+		dataAuth.get().setDa_id(daId);
+		dataAuth.get().update(Dbo.db());
+		// 5.查询审批后的最新数据申请审批信息并返回
+		return getDataAuditList();
+
+	}
+
+	/**
+	 * 根据权限设置ID进行权限回收
+	 *
+	 * @param daId long
+	 *             含义：数据权限设置ID，表data_auth主键
+	 *             取值范围：不为空的十位数字，新增时自动生成
+	 * @return java.util.List
+	 * 含义：存放数据申请审批信息的集合
+	 * 取值范围：无限制
+	 */
+	public List<Map<String, Object>> deleteAudit(long daId) {
+		// 1.数据可访问权限处理方式，根据user_id进行权限控制
+		// 2.权限回收
+		DboExecute.deletesOrThrow("权限回收成功!", "delete from data_auth " +
+				" where da_id = ? and user_id=?", daId, getUserId());
+		// 3.查询审批后的最新数据申请审批信息并返回
+		return getDataAuditList();
+	}
+
+	/**
 	 * 新增数据源
 	 * <p>
 	 * 1.数据可访问权限处理方式，新增时会设置创建用户ID，会获取当前用户ID，所以不需要权限验证
@@ -186,7 +267,7 @@ public class DataSourceAction extends BaseAction {
 	 *                   含义：data_source表实体类
 	 *                   取值范围：datasource_name不为空以及不为空格，datasource_number不为空以及不为空格
 	 *                   *                   ，source_remark可为空，其余字段取系统值
-	 * @param depIds     long[]
+	 * @param depIds     Long[]
 	 *                   含义：存储source_relation_dep表主键ID的数组，定义为Long是为了
 	 *                   判断是否为null
 	 *                   取值范围：不为空以及不为空格
