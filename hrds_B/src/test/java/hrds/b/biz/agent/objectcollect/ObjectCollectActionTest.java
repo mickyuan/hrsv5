@@ -148,7 +148,8 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("agent_id", AGENT_ID)
 				.post(getActionUrl("searchObjectCollect")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
 		assertThat(StringUtil.isBlank(ar.getDataForMap().get("osName").toString()), is(false));
 
@@ -156,7 +157,8 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("agent_id", AGENT_ID + 111)
 				.post(getActionUrl("searchObjectCollect")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(false));
 
 		//3.agent_id不为空，odc_id也不为空查询信息，agent_id和odc_id为正确造数据的值
@@ -164,7 +166,8 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 				.addData("agent_id", AGENT_ID)
 				.addData("odc_id", ODC_ID)
 				.post(getActionUrl("searchObjectCollect")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
 		assertThat(ar.getDataForMap().get("localdate"), is(DateUtil.getSysDate()));
 		assertThat(StringUtil.isBlank(ar.getDataForMap().get("object_collect_info").toString()), is(false));
@@ -174,7 +177,8 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 				.addData("agent_id", AGENT_ID)
 				.addData("odc_id", ODC_ID + 111)
 				.post(getActionUrl("searchObjectCollect")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(false));
 	}
 
@@ -205,7 +209,8 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 				.addData("is_sendok", IsFlag.Fou.getCode())
 				.addData("agent_id", AGENT_ID)
 				.post(getActionUrl("addObjectCollect")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			long optionalLong = SqlOperator.queryNumber(db, "select count(1) count from "
@@ -238,7 +243,8 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 				.addData("is_sendok", IsFlag.Fou.getCode())
 				.addData("agent_id", AGENT_ID)
 				.post(getActionUrl("addObjectCollect")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(false));
 
 //		//3.添加一个半结构化采集，但是file_path格式不正确
@@ -258,7 +264,8 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 //				.addData("is_sendok", IsFlag.Fou.getCode())
 //				.addData("agent_id", AGENT_ID)
 //				.post(getActionUrl("addObjectCollect")).getBodyString();
-//		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+//		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+//				-> new BusinessException("连接失败！"));
 //		assertThat(ar.isSuccess(), is(false));
 //
 //		//4.添加一个半结构化采集，但是database_code格式不正确
@@ -278,7 +285,8 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 //				.addData("is_sendok", IsFlag.Fou.getCode())
 //				.addData("agent_id", AGENT_ID)
 //				.post(getActionUrl("addObjectCollect")).getBodyString();
-//		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+//		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+//				-> new BusinessException("连接失败！"));
 //		assertThat(ar.isSuccess(), is(false));
 	}
 
@@ -310,7 +318,8 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 				.addData("is_sendok", IsFlag.Fou.getCode())
 				.addData("agent_id", AGENT_ID)
 				.post(getActionUrl("updateObjectCollect")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			long optionalLong = SqlOperator.queryNumber(db, "select count(1) count from "
@@ -344,7 +353,8 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 				.addData("is_sendok", IsFlag.Fou.getCode())
 				.addData("agent_id", AGENT_ID)
 				.post(getActionUrl("updateObjectCollect")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(false));
 
 //		//3.更新一个半结构化采集，但是run_way格式不正确
@@ -365,7 +375,8 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 //				.addData("is_sendok", IsFlag.Fou.getCode())
 //				.addData("agent_id", AGENT_ID)
 //				.post(getActionUrl("updateObjectCollect")).getBodyString();
-//		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+//		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+//				-> new BusinessException("连接失败！"));
 //		assertThat(ar.isSuccess(), is(false));
 //
 //		//4.更新一个半结构化采集，但是obj_number格式不正确
@@ -386,7 +397,8 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 //				.addData("is_sendok", IsFlag.Fou.getCode())
 //				.addData("agent_id", AGENT_ID)
 //				.post(getActionUrl("updateObjectCollect")).getBodyString();
-//		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+//		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+//				-> new BusinessException("连接失败！"));
 //		assertThat(ar.isSuccess(), is(false));
 	}
 
@@ -403,7 +415,8 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("odc_id", ODC_ID)
 				.post(getActionUrl("searchObjectCollectTask")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
 		assertThat(ar.getDataForResult().getRowCount(), is(Integer.parseInt(OBJECT_COLLECT_TASK_ROWS + "")));
 		assertThat(ar.getDataForResult().getString(0, "database_code")
@@ -413,7 +426,8 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("odc_id", "27266381")
 				.post(getActionUrl("searchObjectCollectTask")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
 		assertThat(ar.getDataForResult().isEmpty(), is(true));
 	}
@@ -433,21 +447,24 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("ocs_id", OCS_ID + 6)
 				.post(getActionUrl("deleteObjectCollectTask")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(false));
 
 		//2.使用ocs_id为30000001删除object_collect_task表，ocs_id为30000007对应的对象采集结构信息表
 		bodyString = new HttpClient()
 				.addData("ocs_id", OCS_ID)
 				.post(getActionUrl("deleteObjectCollectTask")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(false));
 
 		//3.使用ocs_id为30000002删除object_collect_task表
 		bodyString = new HttpClient()
 				.addData("ocs_id", OCS_ID + 1)
 				.post(getActionUrl("deleteObjectCollectTask")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			long optionalLong = SqlOperator.queryNumber(db, "select count(1) count from "
@@ -462,7 +479,8 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("ocs_id", OCS_ID + 100)
 				.post(getActionUrl("deleteObjectCollectTask")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(false));
 	}
 
@@ -493,7 +511,8 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("object_collect_task_array", array.toJSONString())
 				.post(getActionUrl("saveObjectCollectTask")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			long optionalLong = SqlOperator.queryNumber(db, "select count(1) count from "
@@ -523,7 +542,8 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("object_collect_task_array", array.toJSONString())
 				.post(getActionUrl("saveObjectCollectTask")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			long optionalLong = SqlOperator.queryNumber(db, "select count(1) count from "
@@ -555,7 +575,8 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("object_collect_task_array", array.toJSONString())
 				.post(getActionUrl("saveObjectCollectTask")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(false));
 
 //		//4.保存对象采集对应信息表，en_name格式不正确
@@ -574,7 +595,8 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 //		bodyString = new HttpClient()
 //				.addData("object_collect_task_array", array.toJSONString())
 //				.post(getActionUrl("saveObjectCollectTask")).getBodyString();
-//		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+//		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+//				-> new BusinessException("连接失败！"));
 //		assertThat(ar.isSuccess(), is(false));
 	}
 
@@ -591,7 +613,8 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("ocs_id", OCS_ID)
 				.post(getActionUrl("searchObject_collect_struct")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
 		//验证数据
 		assertThat(ar.getDataForResult().getRowCount(), is(Integer.parseInt(OBJECT_COLLECT_STRUCT_ROWS + "")));
@@ -602,7 +625,8 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("ocs_id", 7826112L)
 				.post(getActionUrl("searchObject_collect_struct")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
 		assertThat(ar.getDataForResult().isEmpty(), is(true));
 	}
@@ -620,7 +644,8 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("struct_id", STRUCT_ID)
 				.post(getActionUrl("deleteObject_collect_struct")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
 		//验证数据
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
@@ -634,7 +659,8 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("struct_id", 7826112L)
 				.post(getActionUrl("deleteObject_collect_struct")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(false));
 	}
 
@@ -665,7 +691,8 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("object_collect_struct_array", array.toJSONString())
 				.post(getActionUrl("saveObject_collect_struct")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			long optionalLong = SqlOperator.queryNumber(db, "select count(1) count from "
@@ -693,7 +720,8 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("object_collect_struct_array", array.toJSONString())
 				.post(getActionUrl("saveObject_collect_struct")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			long optionalLong = SqlOperator.queryNumber(db, "select count(1) count from "
@@ -724,7 +752,8 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("object_collect_struct_array", array.toJSONString())
 				.post(getActionUrl("saveObject_collect_struct")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			long optionalLong = SqlOperator.queryNumber(db, "select count(1) count from "
@@ -754,7 +783,8 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("object_collect_struct_array", array.toJSONString())
 				.post(getActionUrl("saveObject_collect_struct")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(false));
 
 //		//5.保存对象采集对应结构信息表，en_name格式不正确
@@ -772,7 +802,8 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 //		bodyString = new HttpClient()
 //				.addData("object_collect_struct_array", array.toJSONString())
 //				.post(getActionUrl("saveObject_collect_struct")).getBodyString();
-//		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+//		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+//				-> new BusinessException("连接失败！"));
 //		assertThat(ar.isSuccess(), is(false));
 	}
 
@@ -789,7 +820,8 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("odc_id", ODC_ID)
 				.post(getActionUrl("searchObject_storage")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
 		//验证数据
 		assertThat(ar.getDataForResult().getRowCount(), is(Integer.parseInt(OBJECT_COLLECT_TASK_ROWS + "")));
@@ -800,7 +832,8 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("odc_id", 7826112L)
 				.post(getActionUrl("searchObject_storage")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(false));
 	}
 
@@ -829,7 +862,8 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 				.addData("object_storage_array", array.toJSONString())
 				.addData("odc_id", ODC_ID)
 				.post(getActionUrl("saveObject_storage")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			long optionalLong = SqlOperator.queryNumber(db, "select count(1) count from "
@@ -862,7 +896,8 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 				.addData("object_storage_array", array.toJSONString())
 				.addData("odc_id", ODC_ID)
 				.post(getActionUrl("saveObject_storage")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			long optionalLong = SqlOperator.queryNumber(db, "select count(1) count from "
@@ -897,7 +932,8 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 				.addData("object_storage_array", array.toJSONString())
 				.addData("odc_id", ODC_ID)
 				.post(getActionUrl("saveObject_storage")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(false));
 
 //		//4.更新对象采集存储设置表，is_hdfs格式不正确
@@ -915,7 +951,8 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 //				.addData("object_storage_array", array.toJSONString())
 //				.addData("odc_id", ODC_ID)
 //				.post(getActionUrl("saveObject_storage")).getBodyString();
-//		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+//		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+//				-> new BusinessException("连接失败！"));
 //		assertThat(ar.isSuccess(), is(false));
 	}
 
