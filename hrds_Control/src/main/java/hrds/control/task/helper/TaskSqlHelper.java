@@ -50,12 +50,9 @@ public class TaskSqlHelper {
 	 * @date 2019/9/23
 	 */
 	public static void closeDbConnector() {
-
-		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
-		if(db.isConnected()) {
-			db.close();
-			logger.info("-------------- 调度服务DB连接已经关闭 --------------");
-		}
+		TaskSqlHelper.getDbConnector().close();
+		_dbBox.remove();
+		logger.info("-------------- 调度服务DB连接已经清理 --------------");
 	}
 
 	/**
@@ -186,6 +183,8 @@ public class TaskSqlHelper {
 				"WHERE etl_sys_cd = ?", Main_Server_Sync.YES.getCode(), runStatus, etlSysCd);
 
 		if(num != 1) {
+			//FIXME 这里要执行回滚！
+			// 另外，所有抛出Runtime异常的情况，都会导致程序退出，那么，DB连接是如何关闭的？
 			throw new AppSystemException("根据调度系统编号修改调度系统跑批日期失败" + etlSysCd);
 		}
 
@@ -204,6 +203,7 @@ public class TaskSqlHelper {
 
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
 
+		//FIXME 这个更新不需要判断结果吗？ 下面的很多方法都没有判断结果
 		SqlOperator.execute(db, "UPDATE etl_job_cur SET job_disp_status = ?, main_serv_sync = ? " +
 						"WHERE (job_disp_status = ? or job_disp_status = ?) AND etl_sys_cd = ?",
 				runStatus, Main_Server_Sync.YES.getCode(), Job_Status.PENDING.getCode(),

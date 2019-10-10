@@ -37,7 +37,8 @@ public class TaskManager {
 
 	private static final Logger logger = LogManager.getLogger();
 	//TODO 这个名字叫什么我不知道，假如不能使用标识，那么使用LocalDateTime对象
-	private static final String DEFAULT_DATETIME = "20001231 235959";
+	private static final String JOB_DEFAULTSTART_DATETIME_STR = "20001231 235959";
+	private static final LocalDateTime JOB_DEFAULTSTART_DATETIME = LocalDateTime.parse(JOB_DEFAULTSTART_DATETIME_STR, DateUtil.DATETIME_DEFAULT);
 	//TODO 目的是解决按照频率，一天调度多次的问题，应该除掉该标识，和DEFAULT_DATETIME做一样的处理
 	private static final long zclong = 999999999999999999L;
 	public static final int MAXPRIORITY = 99;    //作业的最大优先级
@@ -550,7 +551,7 @@ public class TaskManager {
 		for(EtlJobDefBean job : jobs) {
 			String curr_st_time = job.getCurr_st_time();
 			if(StringUtil.isEmpty(curr_st_time)) {
-				job.setCurr_st_time(DEFAULT_DATETIME);
+				job.setCurr_st_time(JOB_DEFAULTSTART_DATETIME_STR);
 			}
 			EtlJobBean executeJob = new EtlJobBean();
 			executeJob.setEtl_job(job.getEtl_job());
@@ -1134,9 +1135,8 @@ public class TaskManager {
 					//检查作业开始时间（yyyyMMdd HHmmss）
 					LocalDateTime currStTime = LocalDateTime.parse(jobInfo.getCurr_st_time(),
 							DateUtil.DATETIME_DEFAULT);
-					LocalDateTime localDateTime = LocalDateTime.parse(DEFAULT_DATETIME, DateUtil.DATETIME_DEFAULT);
 					//如果作业开始时间还是默认时间(2000-12-31 23:59:59)，代表作业还没有被开始处理
-					if(currStTime.equals(localDateTime)) {
+					if(currStTime.equals(JOB_DEFAULTSTART_DATETIME)) {
 						//TODO 此处是10分钟？
 						//判断作业调度开始时间是否超过10分钟，超过的话将会被重新调度
 						if(System.currentTimeMillis() - job.getJobStartTime() > 120000) {
@@ -2017,7 +2017,7 @@ public class TaskManager {
 	 * @date 2019/9/23
 	 * @return boolean  系统是否有日切
 	 */
-	public boolean getSysDateShiftFlag() { return sysDateShiftFlag; }
+	public boolean needDailyShift() { return sysDateShiftFlag; }
 
 	/**
 	 * 处理虚作业问题，该方法会更新虚作业信息及推送数据到redis。

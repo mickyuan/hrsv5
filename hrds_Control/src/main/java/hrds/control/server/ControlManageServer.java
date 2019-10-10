@@ -93,7 +93,7 @@ public class ControlManageServer {
 					//2、死循环方式处理当前批次的所有作业（目的是写入 redis）；
 					taskManager.publishReadyJob();
 					//3、日切处理（继续还是整个程序退出） 。
-					if(!taskManager.getSysDateShiftFlag()){
+					if(!taskManager.needDailyShift()){
 						TaskSqlHelper.closeDbConnector();   //关闭数据库连接
 						logger.info("系统无日切信号，系统退出");
 						break;
