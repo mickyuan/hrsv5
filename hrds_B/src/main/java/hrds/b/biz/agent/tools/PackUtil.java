@@ -7,7 +7,6 @@ import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.ZipUtils;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -84,7 +83,7 @@ public class PackUtil {
 			src = "";
 		}
 		//1、获取要补齐的0的个数
-		int toAdd = length - src.getBytes(CodecUtil.UTF8_CHARSET).length;//FIXME 要用CodecUtil里面的UTF变量！
+		int toAdd = length - src.getBytes(CodecUtil.UTF8_STRING).length;//FIXME 要用CodecUtil里面的UTF变量！已修复
 		//2、构造补齐字符串
 		for(int i = 0; i < toAdd; ++i) {
 			sb.append(addChar);
@@ -109,16 +108,13 @@ public class PackUtil {
 	 * */
 	public static Map<String, String> unpackMsg(String data) {
 		Map<String, String> map = new HashMap<>();
-		String fileNameHead = data.substring(0, 26);
-		StringBuilder buf = new StringBuilder(fileNameHead);
-		//FIXME 要判断buf的长度，否则，越界了怎么办！
+		String fileNameHead = data.substring(0, 15);
+		//FIXME 要判断buf的长度，否则，越界了怎么办！已修复，直接对fileNameHead使用substring截取
 		// 另外，插入是为了下面的split，那么直接用substring截取不行了吗？
-		// 或者，再构造这个串的时候，加上分隔符号，是不是更好？
-		String fileName = buf.insert(25, '_').insert(15, '_').insert(11, '_').insert(7, "_").toString();
-		List<String> split = StringUtil.split(fileName, "_");
-		map.put("bit_head", split.get(0));
-		map.put("head_msg", split.get(1));
-		String iscompress = split.get(2);
+		// TODO 或者，再构造这个串的时候，加上分隔符号，是不是更好？
+		map.put("bit_head", fileNameHead.substring(0, 7));
+		map.put("head_msg", fileNameHead.substring(7, 11));
+		String iscompress = fileNameHead.substring(11, 15);
 		map.put("iscompress", iscompress);
 		String msg = data.substring(26);
 		if ("Compressed".equals(iscompress)) {

@@ -97,23 +97,25 @@ public class AgentListAction extends BaseAction {
 	//TODO 采集频率目前暂未拿到
 	public Result getTaskInfo(long sourceId, long agentId) {
 		//1、判断在当前用户，当前数据源下，agent是否存在
-		//FIXME 下面只用到了两个字段，那么这里就不应用用 ai.* 。而且，下面用的都是第0行数据，那么这个结果集是不是应该判断不等于就是异常？
-		Result result = Dbo.queryResult("select ai.* from "+ Data_source.TableName +" ds " +
-				" left join "+ Agent_info.TableName +" ai on ds.SOURCE_ID = ai.SOURCE_ID " +
-				" where ds.source_id = ? AND ai.user_id = ? " +
+		//FIXME 下面只用到了两个字段，那么这里就不应用用 ai.* 。而且，下面用的都是第0行数据，那么这个结果集是不是应该判断不等于就是异常？，已修复，使用queryOneObject
+		Map<String, Object> agentInfo = Dbo.queryOneObject("select ai.agent_type,ai.agent_id from " +
+				Data_source.TableName + " ds  left join " + Agent_info.TableName +
+				" ai on ds.SOURCE_ID = ai.SOURCE_ID  where ds.source_id = ? AND ai.user_id = ? " +
 				" AND ai.agent_id = ?", sourceId, getUserId(), agentId);
+
 		//数据可访问权限处理方式
 		//以上SQL中，通过当前用户ID进行关联查询，达到了数据权限的限制
 
 		//2、如果存在，查询结果中应该有且只有一条数据
-		if (result.isEmpty()) {
+		if (agentInfo.isEmpty()) {
 			throw new BusinessException("未找到Agent");
 		}
 
 		//3、判断该agent是那种类型，并且根据类型，到对应的数据库表中查询采集任务管理详细信息
 		String sqlStr;
+		AgentType agentType = AgentType.ofEnumByCode((String) agentInfo.get("agent_type"));
 		//数据库直连采集Agent
-		if (AgentType.ShuJuKu == AgentType.ofEnumByCode(result.getString(0, "agent_type"))) {
+		if (AgentType.ShuJuKu == agentType) {
 			sqlStr = " SELECT ds.DATABASE_ID ID,ds.task_name task_name,ds.AGENT_ID AGENT_ID," +
 					" gi.source_id source_id" +
 					" FROM "+ Database_set.TableName +" ds " +
@@ -121,7 +123,7 @@ public class AgentListAction extends BaseAction {
 					" where ds.Agent_id=? and ds.is_sendok = ? ";
 		}
 		//数据文件Agent
-		else if (AgentType.DBWenJian == AgentType.ofEnumByCode(result.getString(0, "agent_type"))){
+		else if (AgentType.DBWenJian == agentType){
 			sqlStr = " SELECT ds.DATABASE_ID ID,ds.task_name task_name,ds.AGENT_ID AGENT_ID," +
 					" gi.source_id source_id" +
 					" FROM "+ Database_set.TableName +" ds " +
@@ -129,22 +131,21 @@ public class AgentListAction extends BaseAction {
 					" where ds.Agent_id=? and ds.is_sendok = ? ";
 		}
 		//半结构化采集Agent
-		else if (AgentType.DuiXiang == AgentType.ofEnumByCode(result.getString(0, "agent_type"))){
+		else if (AgentType.DuiXiang == agentType){
 			sqlStr = " SELECT fs.odc_id id,fs.obj_collect_name task_name,fs.AGENT_ID AGENT_ID,gi.source_id" +
 					" FROM "+ Object_collect.TableName +" fs " +
 					" LEFT JOIN "+ Agent_info.TableName +" gi ON gi.Agent_id = fs.Agent_id " +
 					" WHERE fs.Agent_id = ? AND fs.is_sendok = ? ";
 		}
 		//FtpAgent
-		else if (AgentType.FTP == AgentType.ofEnumByCode(result.getString(0, "agent_type"))){
+		else if (AgentType.FTP == agentType){
 			sqlStr = " SELECT fs.ftp_id id,fs.ftp_name task_name,fs.AGENT_ID AGENT_ID,gi.source_id" +
 					" FROM "+ Ftp_collect.TableName +" fs " +
 					" LEFT JOIN "+ Agent_info.TableName +" gi ON gi.Agent_id = fs.Agent_id " +
 					" WHERE fs.Agent_id = ? and fs.is_sendok = ? ";
 		}
 		//非结构化Agent
-		else if(AgentType.WenJianXiTong == AgentType.ofEnumByCode(
-				result.getString(0, "agent_type"))){
+		else if(AgentType.WenJianXiTong == agentType){
 			sqlStr = " SELECT fs.fcs_id id,fs.fcs_name task_name,fs.AGENT_ID AGENT_ID,gi.source_id" +
 					" FROM "+ File_collect_set.TableName +" fs " +
 					" LEFT JOIN "+ Agent_info.TableName +" gi ON gi.Agent_id = fs.Agent_id " +
@@ -154,7 +155,7 @@ public class AgentListAction extends BaseAction {
 			throw new BusinessException("从数据库中取到的Agent类型不合法");
 		}
 		//5、返回结果
-		return Dbo.queryResult(sqlStr, result.getLong(0, "agent_id"),
+		return Dbo.queryResult(sqlStr, agentInfo.get("agent_id"),
 				IsFlag.Shi.getCode());
 	}
 
@@ -215,24 +216,23 @@ public class AgentListAction extends BaseAction {
 	 * */
 	public void downloadTaskLog(long agentId, String logType,
 	                            @RequestParam(nullable = true, valueIfNull = "100") int readNum) {
-		OutputStream out = null;
-		//FIXME 改成JDK8的方式：try(OutputStream out = response.getOutputStream())。不用有finally处理了
-		try {
-			//1、对显示日志条数做处理，该方法在加载页面时被调用，readNum可以不传，则默认显示100条，
-			// 如果用户在页面上进行了选择并点击查看按钮，如果用户输入的条目多于1000，则给用户显示3000条
-			if (readNum > 1000) readNum = 3000;
-			//2、调用方法读取日志，获得日志信息和日志文件路径
-			Map<String, String> taskLog = getTaskLog(agentId, getUserId(), logType, readNum);
+		//FIXME 改成JDK8的方式：try(OutputStream out = response.getOutputStream())。不用有finally处理了,已修复
+		//1、对显示日志条数做处理，该方法在加载页面时被调用，readNum可以不传，则默认显示100条，
+		// 如果用户在页面上进行了选择并点击查看按钮，如果用户输入的条目多于1000，则给用户显示3000条
+		if (readNum > 1000) readNum = 3000;
+		//2、调用方法读取日志，获得日志信息和日志文件路径
+		Map<String, String> taskLog = getTaskLog(agentId, getUserId(), logType, readNum);
 
-			//3、将日志信息由字符串转为byte[]
-			byte[] bytes = taskLog.get("log").getBytes();
+		//3、将日志信息由字符串转为byte[]
+		byte[] bytes = taskLog.get("log").getBytes();
 
-			//4、得到本次http交互的request和response
-			HttpServletResponse response = ResponseUtil.getResponse();
-			HttpServletRequest request = RequestUtil.getRequest();
+		//4、得到本次http交互的request和response
+		HttpServletResponse response = ResponseUtil.getResponse();
+		HttpServletRequest request = RequestUtil.getRequest();
 
-			File downloadFile = new File(taskLog.get("filePath"));
+		File downloadFile = new File(taskLog.get("filePath"));
 
+		try(OutputStream out = response.getOutputStream()) {
 			//5、设置响应头信息
 			response.reset();
 			if (request.getHeader("User-Agent").toLowerCase().indexOf("firefox") > 0) {
@@ -244,7 +244,6 @@ public class AgentListAction extends BaseAction {
 						URLEncoder.encode(downloadFile.getName(), CodecUtil.UTF8_STRING));
 			}
 			response.setContentType("APPLICATION/OCTET-STREAM");
-			out = response.getOutputStream();
 			//6、使用response获得输出流，完成文件下载
 			out.write(bytes);
 			out.flush();
@@ -252,14 +251,6 @@ public class AgentListAction extends BaseAction {
 			//在getTaskLog()方法中做了处理
 		} catch (IOException e) {
 			throw new AppSystemException(e);
-		} finally {
-			try {
-				if( out != null )
-					out.close();
-			}
-			catch(IOException e) {
-				e.printStackTrace();
-			}
 		}
 	}
 
@@ -301,7 +292,7 @@ public class AgentListAction extends BaseAction {
 		//该方法首先使用user_id和collectSetId去数据库中查找要删除的数据是否存在
 
 		//2、在对象采集设置表(object_collect)中删除该条数据，有且只有一条
-		DboExecute.deletesOrThrow(Object_collect.TableName + "表删除数据异常!", "delete from "+
+		DboExecute.deletesOrThrow("删除半结构化采集任务异常!", "delete from "+
 				Object_collect.TableName + " where odc_id = ?",collectSetId );
 	}
 
@@ -343,8 +334,8 @@ public class AgentListAction extends BaseAction {
 		//该方法首先使用user_id和collectSetId去数据库中查找要删除的数据是否存在
 
 		//2、在FTP采集设置表(ftp_collect)中删除该条数据，有且只有一条
-		//FIXME                    不应该写这样的错误提示。因为这是返给前端让用户看到的，前端不应该知道数据库表名字
-		DboExecute.deletesOrThrow(Ftp_collect.TableName + "表删除数据异常!", "delete from "+
+		//FIXME 不应该写这样的错误提示。因为这是返给前端让用户看到的，前端不应该知道数据库表名字，包括其他删除方法，已全部修复
+		DboExecute.deletesOrThrow("删除FTP采集任务数据异常!", "delete from "+
 				Ftp_collect.TableName +" where ftp_id = ?", collectSetId);
 	}
 
@@ -376,20 +367,20 @@ public class AgentListAction extends BaseAction {
 		//该方法首先使用user_id和collectSetId去数据库中查找要删除的数据是否存在
 
 		//2、在数据库设置表中删除对应的记录，有且只有一条
-		DboExecute.deletesOrThrow(Database_set.TableName + "表删除数据异常!", "delete from "+
+		DboExecute.deletesOrThrow("删除数据库直连采集任务异常!", "delete from "+
 				Database_set.TableName +" where database_id = ? ", collectSetId);
 		//3、在表对应字段表中找到对应的记录并删除，可能会有多条
 		int secNum = Dbo.execute("delete from "+ Table_column.TableName +" tc where EXISTS" +
 				"(select 1 from "+ Table_info.TableName +" ti where database_id = ? " +
 				"and tc.table_id = ti.table_id)", collectSetId);
 		if (secNum == 0) {
-			throw new BusinessException(Table_column.TableName + "表中没有数据被删除!");
+			throw new BusinessException("删除数据库直连采集任务异常!");
 		}
 		//4、在数据库对应表删除对应的记录,可能会有多条
 		int thiExecute = Dbo.execute("delete from "+ Table_info.TableName +
 						" where database_id = ?", collectSetId);
 		if (thiExecute == 0) {
-			throw new BusinessException(Table_info.TableName +"表中没有数据被删除!");
+			throw new BusinessException("删除数据库直连采集任务异常!");
 		}
 	}
 
@@ -421,7 +412,7 @@ public class AgentListAction extends BaseAction {
 		//数据可访问权限处理方式
 		//该方法首先使用user_id和collectSetId去数据库中查找要删除的数据是否存在
 		//2、在数据库设置表删除对应的记录，有且只有一条
-		DboExecute.deletesOrThrow(Database_set.TableName + "表删除数据异常!", "delete from "+
+		DboExecute.deletesOrThrow("删除数据文件采集任务异常!", "delete from "+
 				Database_set.TableName +" where database_id =?", collectSetId);
 	}
 
@@ -455,14 +446,14 @@ public class AgentListAction extends BaseAction {
 		//该方法首先使用user_id和collectSetId去数据库中查找要删除的数据是否存在
 
 		//2、在文件系统设置表删除对应的记录，有且只有一条数据
-		//FIXME 下面删除了两次是为什么？
-		DboExecute.deletesOrThrow(File_collect_set.TableName + "表删除数据异常!", "delete  from "+
+		//FIXME 下面删除了两次是为什么？已修复，原因：非结构化采集的画面配置信息是保存在这两张表中的，用fcs_id关联File_collect_set和File_source是一对多的关系
+		DboExecute.deletesOrThrow("删除非结构化采集任务数据异常!", "delete  from "+
 						File_collect_set.TableName +" where fcs_id = ? ", collectSetId);
 		//3、在文件源设置表删除对应的记录，可以有多条
 		int secNum = Dbo.execute("delete  from "+ File_source.TableName +" where fcs_id = ?",
 				collectSetId);
 		if (secNum == 0) {
-			throw new BusinessException(File_source.TableName + "表中没有数据被删除!");
+			throw new BusinessException("删除非结构化采集任务异常!");
 		}
 	}
 

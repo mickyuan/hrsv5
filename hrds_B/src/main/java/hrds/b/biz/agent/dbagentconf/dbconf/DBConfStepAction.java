@@ -10,6 +10,7 @@ import fd.ng.netserver.conf.HttpServerConfBean;
 import fd.ng.web.action.ActionResult;
 import fd.ng.web.annotation.RequestBean;
 import fd.ng.web.util.Dbo;
+import hrds.b.biz.agent.bean.URLTemplate;
 import hrds.b.biz.agent.tools.ConnUtil;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.CleanType;
@@ -87,8 +88,8 @@ public class DBConfStepAction extends BaseAction{
 	 *          取值范围：不会为null
 	 *
 	 * */
-	public Map<String, String> getJDBCDriver(String dbType) {
-		return ConnUtil.getConnURL(dbType);
+	public URLTemplate getJDBCDriver(String dbType) {
+		return ConnUtil.getConnURLTemplate(dbType);
 		//数据可访问权限处理方式
 		//不与数据库交互，无需限制访问权限
 	}
@@ -346,24 +347,17 @@ public class DBConfStepAction extends BaseAction{
 	 *          取值范围：不为空
 	 *
 	 * */
-	public ActionResult testConnection(@RequestBean Database_set databaseSet) {
+	public void testConnection(@RequestBean Database_set databaseSet) {
 		//1、根据agent_id获得agent_ip,agent_port
-		//FIXME 使用queryOneObject方法
-		Result result = Dbo.queryResult("select agent_ip, agent_port from agent_info " +
-						"where agent_id = ?",
-				databaseSet.getAgent_id());
-		if(result.isEmpty()){
-			throw new BusinessException("未能找到Agent信息");
-		}
-		if(result.getRowCount() != 1){
-			throw new BusinessException("找到的Agent信息不唯一");
-		}
+		//FIXME 使用queryOneObject方法, 已修复
+		Map<String, Object> agentInfo = Dbo.queryOneObject("select agent_ip, agent_port from agent_info " +
+						"where agent_id = ?", databaseSet.getAgent_id());
 		//2、在配置文件中获取webContext和actionPattern
 		HttpServerConfBean test = HttpServerConf.getHttpServer("testConnection");
 		String webContext = test.getWebContext();
 		String actionPattern = test.getActionPattern();
-		String agentIp = result.getString(0, "agent_ip");
-		String agentPort = result.getString(0, "agent_port");
+		String agentIp = (String) agentInfo.get("agent_ip");
+		String agentPort = (String) agentInfo.get("agent_port");
 		String url = "http://" + agentIp + ":" + agentPort + webContext;
 		//3、调用工具类方法给agent发消息，并获取agent响应
 		HttpClient.ResponseValue resVal = new HttpClient()
@@ -374,8 +368,12 @@ public class DBConfStepAction extends BaseAction{
 				.addData("dbtype", databaseSet.getDatabase_type())
 				.post(url + actionPattern);
 		//4、将响应封装成ActionResult的对象
-		//FIXME 这个方法只能在测试用例中使用
-		return JsonUtil.toObject(resVal.getBodyString(), ActionResult.class);
+		//FIXME JsonUtil.toObject()这个方法只能在测试用例中使用，已修复
+		ActionResult actionResult = JsonUtil.toObjectSafety(resVal.getBodyString(), ActionResult.class).
+				orElseThrow(() -> new BusinessException("应用管理端与" + url + "服务交互异常"));
+		if(!actionResult.isSuccess()){
+			throw new BusinessException("连接失败");
+		}
 	}
 
 	/**

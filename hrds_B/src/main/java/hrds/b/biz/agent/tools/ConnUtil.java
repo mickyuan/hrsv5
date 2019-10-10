@@ -1,13 +1,11 @@
 
 package hrds.b.biz.agent.tools;
 
+import hrds.b.biz.agent.bean.URLTemplate;
 import hrds.commons.codes.DatabaseType;
 import hrds.commons.exception.AppSystemException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @Description: 数据库直连采集获取数据库连接相关信息的工具类
@@ -19,8 +17,9 @@ import java.util.Map;
 
 public class ConnUtil {
 
-	//FIXME getLogger 经常传入错误是参数，所以，使用无参方法吧！
-	private static final Logger logger = LogManager.getLogger(LogReader.class);
+	//FIXME getLogger 经常传入错误是参数，所以，使用无参方法吧，已修复
+	private static final Logger logger = LogManager.getLogger();
+
 
 	/**
 	 * 根据数据库类型获取数据库连接信息填写模板
@@ -41,75 +40,74 @@ public class ConnUtil {
 	 *
 	 * */
 	//FIXME 方法名字不贴切
-	public static Map<String, String> getConnURL(String dbType) {
+	public static URLTemplate getConnURLTemplate(String dbType) {
 		//1、构建返回使用Map集合
-		Map<String, String> connURL = new HashMap<>();
+		URLTemplate template = new URLTemplate();
 		//2、判断数据库类型，根据数据库类型构建数据库连接信息填写模板并放入Map
-		//FIXME DatabaseType.ofEnumByCode(dbType) 应该拿到外面来。如果getConnURL被反复调用，就会多次查找转换枚举对象了
-		if(DatabaseType.MYSQL == DatabaseType.ofEnumByCode(dbType)){
-			connURL.put("jdbcPrefix", "jdbc:mysql://"); //FIXME 这是URL，为什么起名为 Prefix
-			connURL.put("jdbcIp", ":");//FIXME 为什么是 :
-			connURL.put("jdbcPort", "/"); //FIXME 为什么是 /
-			connURL.put("jdbcBase", "?characterEncoding=utf8&zeroDateTimeBehavior=convertToNull"); //FIXME urlSufix更准确吧
-		}else if(DatabaseType.Oracle9i == DatabaseType.ofEnumByCode(dbType) ||
-				DatabaseType.Oracle10g == DatabaseType.ofEnumByCode(dbType)){
-			connURL.put("jdbcPrefix", "jdbc:oracle:thin:@");
-			connURL.put("jdbcIp", ":");
-			connURL.put("jdbcPort", ":");
-			connURL.put("jdbcBase", "");
-		}else if(DatabaseType.DB2 == DatabaseType.ofEnumByCode(dbType)){
-			connURL.put("jdbcPrefix", "jdbc:db2://");
-			connURL.put("jdbcIp", ":");
-			connURL.put("jdbcPort", "/");
-			connURL.put("jdbcBase", "");
-		}else if(DatabaseType.SqlServer2000 == DatabaseType.ofEnumByCode(dbType) ||
-				DatabaseType.SqlServer2005 == DatabaseType.ofEnumByCode(dbType)){
-			connURL.put("jdbcPrefix", "jdbc:sqlserver://");
-			connURL.put("jdbcIp", ":");
-			connURL.put("jdbcPort", ";DatabaseName=");
-			connURL.put("jdbcBase", "");
-		}else if(DatabaseType.Postgresql == DatabaseType.ofEnumByCode(dbType)){
-			connURL.put("jdbcPrefix", "jdbc:postgresql://");
-			connURL.put("jdbcIp", ":");
-			connURL.put("jdbcPort", "/");
-			connURL.put("jdbcBase", "");
-		}else if(DatabaseType.SybaseASE125 == DatabaseType.ofEnumByCode(dbType)){
-			connURL.put("jdbcPrefix", "jdbc:sybase:Tds:");
-			connURL.put("jdbcIp", ":");
-			connURL.put("jdbcPort", "/");
-			connURL.put("jdbcBase", "");
-		}else if(DatabaseType.ApacheDerby == DatabaseType.ofEnumByCode(dbType)){
-			connURL.put("jdbcPrefix", "jdbc:derby://");
-			connURL.put("jdbcIp", ":");
-			connURL.put("jdbcPort", "/");
-			connURL.put("jdbcBase", ";create=true");
-		}else if(DatabaseType.GBase == DatabaseType.ofEnumByCode(dbType)){
-			connURL.put("jdbcPrefix", "jdbc:gbase://");
-			connURL.put("jdbcIp", ":");
-			connURL.put("jdbcPort", "/");
-			connURL.put("jdbcBase", "");
-		}else if(DatabaseType.TeraData == DatabaseType.ofEnumByCode(dbType)){
-			connURL.put("jdbcPrefix", "jdbc:teradata://");
-			connURL.put("jdbcIp", "/TMODE=TERA,CHARSET=ASCII,CLIENT_CHARSET=cp936,DATABASE=");
-			connURL.put("jdbcPort", "");
-			connURL.put("jdbcBase", ",lob_support=off");
-		}else if(DatabaseType.Informatic == DatabaseType.ofEnumByCode(dbType)){
-			connURL.put("jdbcPrefix", "jdbc:informix-sqli://");
-			connURL.put("jdbcIp", ":");
-			connURL.put("jdbcPort", "/");
-			connURL.put("jdbcBase", ":INFORMIXSERVER=myserver");
-		}else if(DatabaseType.H2 == DatabaseType.ofEnumByCode(dbType)){
-			connURL.put("jdbcPrefix", "jdbc:h2:tcp://");
-			connURL.put("jdbcIp", ":");
-			connURL.put("jdbcPort", "/");
-			connURL.put("jdbcBase", "");
+		//FIXME DatabaseType.ofEnumByCode(dbType) 应该拿到外面来。如果getConnURL被反复调用，就会多次查找转换枚举对象了，已修复
+		DatabaseType databaseType = DatabaseType.ofEnumByCode(dbType);
+		if(DatabaseType.MYSQL == databaseType){
+			template.setUrlPrefix("jdbc:mysql://");
+			template.setIpPlaceholder(":");
+			template.setPortPlaceholder("/");
+			template.setUrlSuffix("?characterEncoding=utf8&zeroDateTimeBehavior=convertToNull");
+		}else if(DatabaseType.Oracle9i == databaseType || DatabaseType.Oracle10g == databaseType){
+			template.setUrlPrefix("jdbc:oracle:thin:@");
+			template.setIpPlaceholder(":");
+			template.setPortPlaceholder(":");
+			template.setUrlSuffix("");
+		}else if(DatabaseType.DB2 == databaseType){
+			template.setUrlPrefix("jdbc:db2://");
+			template.setIpPlaceholder(":");
+			template.setPortPlaceholder("/");
+			template.setUrlSuffix("");
+		}else if(DatabaseType.SqlServer2000 == databaseType || DatabaseType.SqlServer2005 == databaseType){
+			template.setUrlPrefix("jdbc:sqlserver://");
+			template.setIpPlaceholder(":");
+			template.setPortPlaceholder(";DatabaseName=");
+			template.setUrlSuffix("");
+		}else if(DatabaseType.Postgresql == databaseType){
+			template.setUrlPrefix("jdbc:postgresql://");
+			template.setIpPlaceholder(":");
+			template.setPortPlaceholder("/");
+			template.setUrlSuffix("");
+		}else if(DatabaseType.SybaseASE125 == databaseType){
+			template.setUrlPrefix("jdbc:sybase:Tds:");
+			template.setIpPlaceholder(":");
+			template.setPortPlaceholder("/");
+			template.setUrlSuffix("");
+		}else if(DatabaseType.ApacheDerby == databaseType){
+			template.setUrlPrefix("jdbc:derby://");
+			template.setIpPlaceholder(":");
+			template.setPortPlaceholder("/");
+			template.setUrlSuffix(";create=true");
+		}else if(DatabaseType.GBase == databaseType){
+			template.setUrlPrefix("jdbc:gbase://");
+			template.setIpPlaceholder(":");
+			template.setPortPlaceholder("/");
+			template.setUrlSuffix("");
+		}else if(DatabaseType.TeraData == databaseType){
+			template.setUrlPrefix("jdbc:teradata://");
+			template.setIpPlaceholder("/TMODE=TERA,CHARSET=ASCII,CLIENT_CHARSET=cp936,DATABASE=");
+			template.setPortPlaceholder("");
+			template.setUrlSuffix(",lob_support=off");
+		}else if(DatabaseType.Informatic == databaseType){
+			template.setUrlPrefix("jdbc:informix-sqli://");
+			template.setIpPlaceholder(":");
+			template.setPortPlaceholder("/");
+			template.setUrlSuffix(":INFORMIXSERVER=myserver");
+		}else if(DatabaseType.H2 == databaseType){
+			template.setUrlPrefix("jdbc:h2:tcp://");
+			template.setIpPlaceholder(":");
+			template.setPortPlaceholder("/");
+			template.setUrlSuffix("");
 		}else{
 			logger.error("目前不支持对该数据库类型进行采集，请联系管理员");
 			throw new AppSystemException("目前不支持对该数据库类型进行采集，请联系管理员");
 		}
 		//3、返回Map集合
-		//FIXME 是不是返回BEAN更好？
-		return connURL;
+		//FIXME 是不是返回BEAN更好？已修复
+		return template;
 	}
 
 }
