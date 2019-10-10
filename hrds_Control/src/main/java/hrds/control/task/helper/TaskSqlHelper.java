@@ -52,7 +52,7 @@ public class TaskSqlHelper {
 
 	/**
 	 * 用于关闭db连接。<br>
-	 * 1.构造DatabaseWrapper实例。
+	 * 1.关闭DatabaseWrapper实例。
 	 * @author Tiger.Wang
 	 * @date 2019/9/23
 	 */
