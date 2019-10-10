@@ -580,7 +580,8 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			dataAuth.setDep_id(DepId1);
 			dataAuth.setAgent_id(DBAgentId);
 			dataAuth.setSource_id(SourceId);
-			dataAuth.setCollect_set_id(-5000000116L);
+			// 数据库设置ID或文件设置id
+			dataAuth.setCollect_set_id(DatabaseId);
 			dataAuth.add(db);
 			// 28.提交事务
 			SqlOperator.commitTransaction(db);
@@ -1066,6 +1067,48 @@ public class DataSourceActionTest extends WebBaseTestCase {
 	}
 
 	/**
+	 * 数据权限管理，更新数据源关系部门信息
+	 * <p>
+	 * 1.正确的数据访问1，更新数据源关系部门信息，数据全有效
+	 * 2.错误的数据访问1，更新数据源关系部门信息，source_id不存在
+	 * 3.错误的数据访问2，更新数据源关系部门信息，dep_id对应的部门不存在
+	 */
+	@Test
+	public void updateAuditSourceRelationDep() {
+		// 1.正确的数据访问1，更新数据源关系部门信息，数据全有效
+		String bodyString = new HttpClient()
+				.addData("sourceId", SourceId)
+				.addData("depIds", new String[]{"-3000000012"})
+				.post(getActionUrl("updateAuditSourceRelationDep")).getBodyString();
+		Optional<ActionResult> ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
+		assertThat(ar.get().isSuccess(), is(true));
+		// 验证source_relation_dep表数据是否更新成功
+		try (DatabaseWrapper db = new DatabaseWrapper()) {
+			Optional<Source_relation_dep> source_relation_dep = SqlOperator.queryOneObject(db,
+					Source_relation_dep.class, "select * from source_relation_dep where source_id=?", SourceId);
+			assertThat("更新source_relation_dep数据成功", source_relation_dep.get().
+					getSource_id(), is(SourceId));
+			assertThat("更新source_relation_dep数据成功", source_relation_dep.get().getDep_id(),
+					is(DepId2));
+
+		}
+		// 2.错误的数据访问1，更新数据源关系部门信息，source_id不存在
+		bodyString = new HttpClient()
+				.addData("sourceId", 111)
+				.addData("depIds", new String[]{"-3000000012"})
+				.post(getActionUrl("updateAuditSourceRelationDep")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
+		assertThat(ar.get().isSuccess(), is(false));
+		// 3.错误的数据访问2，更新数据源关系部门信息，dep_id对应的部门不存在
+		bodyString = new HttpClient()
+				.addData("sourceId", SourceId)
+				.addData("depIds", new String[]{"-111"})
+				.post(getActionUrl("updateAuditSourceRelationDep")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
+		assertThat(ar.get().isSuccess(), is(false));
+	}
+
+	/**
 	 * 数据申请审批并返回最新数据申请审批数据信息
 	 * <p>
 	 * 1.正确的数据访问1，数据申请审批，数据全有效
@@ -1155,6 +1198,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 	 * 6.错误的数据访问5，新增数据源信息,数据源编号长度不能超过四位
 	 * 7.错误的数据访问6，新增数据源信息,部门id不能为空,创建部门表department_info时通过主键自动生成
 	 * 8.错误的数据访问7，新增数据源信息,部门id不能为空格，创建部门表department_info时通过主键自动生成
+	 * 9.错误的数据访问8，新增数据源信息,部门id对应的部门不存在
 	 */
 	@Test
 	public void saveDataSource() {
@@ -1246,6 +1290,15 @@ public class DataSourceActionTest extends WebBaseTestCase {
 				.post(getActionUrl("saveDataSource")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		assertThat(ar.get().isSuccess(), is(false));
+		// 9.错误的数据访问8，新增数据源信息,部门id对应的部门不存在
+		bodyString = new HttpClient()
+				.addData("source_remark", "测试")
+				.addData("datasource_name", "dsName06")
+				.addData("datasource_number", "cs06")
+				.addData("depIds", new String[]{"-100"})
+				.post(getActionUrl("saveDataSource")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
+		assertThat(ar.get().isSuccess(), is(false));
 	}
 
 	/**
@@ -1259,6 +1312,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 	 * 6.错误的数据访问5，更新数据源信息，数据源编号长度不能超过四位
 	 * 7.错误的数据访问6，更新数据源信息，部门id不能为空,创建部门表department_info时通过主键自动生成
 	 * 8.错误的数据访问7，更新数据源信息，部门id不能为空格，创建部门表department_info时通过主键自动生成
+	 * 9.错误的数据访问8，更新数据源信息，部门id对应的部门不存在
 	 */
 	@Test
 	public void updateDataSource() {
@@ -1361,6 +1415,16 @@ public class DataSourceActionTest extends WebBaseTestCase {
 				.post(getActionUrl("updateDataSource")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		assertThat(ar.get().isSuccess(), is(false));
+		// 9.错误的数据访问8，更新数据源信息，部门id对应的部门不存在
+		bodyString = new HttpClient()
+				.addData("sourceId", SourceId)
+				.addData("sourceRemark", "测试")
+				.addData("datasourceName", "dsName06")
+				.addData("datasourceNumber", "up06")
+				.addData("depIds", new String[]{"-101"})
+				.post(getActionUrl("updateDataSource")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
+		assertThat(ar.get().isSuccess(), is(false));
 
 	}
 
@@ -1368,7 +1432,8 @@ public class DataSourceActionTest extends WebBaseTestCase {
 	 * 查询数据源信息,该测试方法只会返回两种情况，能查到数据或者查不到数据
 	 * <p>
 	 * 1.正确的数据访问1，查询数据源信息,正常返回数据
-	 * 2.错误的数据访问1，查询数据源信息，查询不到数据
+	 * 2.正确的数据访问2，查询数据源信息,正常返回数据，source_id为空
+	 * 3.错误的数据访问1，查询数据源信息，查询不到数据
 	 */
 	@Test
 	public void searchDataSource() {
@@ -1397,8 +1462,17 @@ public class DataSourceActionTest extends WebBaseTestCase {
 		List<Department_info> departmentInfoList = (List<Department_info>) ar.get().getDataForMap().get("departmentInfo");
 		// 部门表初始化了两条数据
 		assertThat(dataResource.isEmpty(), is(false));
+		// 2.正确的数据访问2，查询数据源信息,正常返回数据，source_id为空
+		bodyString = new HttpClient()
+				.post(getActionUrl("searchDataSource")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
+		assertThat(ar.get().isSuccess(), is(true));
+		// 验证部门表数据
+		departmentInfoList = (List<Department_info>) ar.get().getDataForMap().get("departmentInfo");
+		// 部门表初始化了两条数据,判断不为空，因为不确定原数据库是否初始化了数据，这里查询的是所有部门
+		assertThat(dataResource.isEmpty(), is(false));
 
-		// 2.错误的数据访问1，查询数据源信息，此数据源下没有数据
+		// 3.错误的数据访问1，查询数据源信息，此数据源下没有数据
 		bodyString = new HttpClient().addData("sourceId", -1000000009L)
 				.post(getActionUrl("searchDataSource")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
@@ -1584,7 +1658,6 @@ public class DataSourceActionTest extends WebBaseTestCase {
 					"column_id=?", ColumnId).orElseThrow(() -> new RuntimeException("count fail!"));
 			assertThat("导入column_split表一条数据", num, is(2L));
 		}
-
 		// 2.错误的数据访问1，导入数据源，agentIp不合法
 		bodyString = new HttpClient()
 				.addData("agentIp", "10.71.4.666")
