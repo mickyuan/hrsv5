@@ -129,7 +129,8 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("agent_id", AGENT_ID)
 				.post(getActionUrl("searchFileCollect")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		//FIXME 对返回数据的判断呢
 		assertThat(ar.isSuccess(), is(true));
 		assertThat(StringUtil.isBlank(ar.getDataForMap().get("osName").toString()), is(false));
@@ -139,7 +140,8 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 				.addData("agent_id", AGENT_ID)
 				.addData("fcs_id", FCS_ID)
 				.post(getActionUrl("searchFileCollect")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
 		assertThat(StringUtil.isBlank(ar.getDataForMap().get("file_collect_set_info").toString()), is(false));
 
@@ -147,7 +149,8 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("agent_id", AGENT_ID - 100)
 				.post(getActionUrl("searchFileCollect")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		//这里会抛异常，因为异常信息可能会改变，所以直接判断返回false
 		assertThat(ar.isSuccess(), is(false));
 
@@ -156,14 +159,16 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 				.addData("agent_id", AGENT_ID)
 				.addData("fcs_id", FCS_ID - 100)
 				.post(getActionUrl("searchFileCollect")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(false));
 
 		//5.当agent_id不为空，且agent服务没有启动时
 		bodyString = new HttpClient()
 				.addData("agent_id", AGENT_ID + 1)
 				.post(getActionUrl("searchFileCollect")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(false));
 	}
 
@@ -186,7 +191,8 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 				.addData("is_sendok", IsFlag.Fou.getCode())
 				.addData("is_solr", IsFlag.Shi.getCode())
 				.post(getActionUrl("addFileCollect")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			long count = SqlOperator.queryNumber(db, "select count(1) count from "
@@ -212,7 +218,8 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 				.addData("is_sendok", IsFlag.Fou.getCode())
 				.addData("is_solr", IsFlag.Shi.getCode())
 				.post(getActionUrl("addFileCollect")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(false));
 
 		//3.添加一条is_sendok值有问题的数据
@@ -224,7 +231,8 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 //				.addData("is_sendok", IsFlag.Shi.getCode())
 //				.addData("is_solr", IsFlag.Shi.getCode())
 //				.post(getActionUrl("addFileCollect")).getBodyString();
-//		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+//		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+//				-> new BusinessException("连接失败！"));
 //		assertThat(ar.isSuccess(), is(false));
 
 		//4.添加一条is_solr值有问题的数据
@@ -236,7 +244,8 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 //				.addData("is_sendok", IsFlag.Fou.getCode())
 //				.addData("is_solr", "cccc")
 //				.post(getActionUrl("addFileCollect")).getBodyString();
-//		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+//		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+//				-> new BusinessException("连接失败！"));
 //		assertThat(ar.isSuccess(), is(false));
 	}
 
@@ -260,7 +269,8 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 				.addData("is_sendok", IsFlag.Fou.getCode())
 				.addData("is_solr", IsFlag.Shi.getCode())
 				.post(getActionUrl("updateFileCollect")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			long count = SqlOperator.queryNumber(db, "select count(1) count from "
@@ -287,7 +297,8 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 				.addData("is_sendok", IsFlag.Fou.getCode())
 				.addData("is_solr", IsFlag.Shi.getCode())
 				.post(getActionUrl("updateFileCollect")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(false));
 
 		//3.更新一条is_sendok值有问题的数据
@@ -300,7 +311,8 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 //				.addData("is_sendok", IsFlag.Shi.getCode())
 //				.addData("is_solr", IsFlag.Shi.getCode())
 //				.post(getActionUrl("updateFileCollect")).getBodyString();
-//		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+//		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+//				-> new BusinessException("连接失败！"));
 //		assertThat(ar.isSuccess(), is(false));
 
 		//4.更新一条is_solr值有问题的数据
@@ -313,7 +325,8 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 //				.addData("is_sendok", IsFlag.Fou.getCode())
 //				.addData("is_solr", "cccc")
 //				.post(getActionUrl("updateFileCollect")).getBodyString();
-//		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+//		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+//				-> new BusinessException("连接失败！"));
 //		assertThat(ar.isSuccess(), is(false));
 	}
 
@@ -329,7 +342,8 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("fcs_id", FCS_ID)
 				.post(getActionUrl("searchFileSource")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
 		//验证数据
 		assertThat(ar.getDataForResult().getString(0, "is_office"), is(IsFlag.Shi.getCode()));
@@ -341,7 +355,8 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("fcs_id", 100000077L)
 				.post(getActionUrl("searchFileSource")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
 		assertThat(ar.getDataForResult().isEmpty(), is(true));
 	}
@@ -360,7 +375,8 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("agent_id", AGENT_ID)
 				.post(getActionUrl("selectPath")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
 		assertThat(ar.getDataForEntityList(String.class).isEmpty(), is(false));
 
@@ -368,7 +384,8 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("agent_id", 100000099L)
 				.post(getActionUrl("selectPath")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(false));
 
 		//3.一个正确的agent_id，正确的路径
@@ -377,7 +394,8 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 					.addData("agent_id", AGENT_ID)
 					.addData("path", "D:/")
 					.post(getActionUrl("selectPath")).getBodyString();
-			ar = JsonUtil.toObject(bodyString, ActionResult.class);
+			ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 			assertThat(ar.isSuccess(), is(true));
 			assertThat(ar.getDataForEntityList(String.class).isEmpty(), is(false));
 		}
@@ -387,7 +405,8 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 					.addData("agent_id", AGENT_ID)
 					.addData("path", "/")
 					.post(getActionUrl("selectPath")).getBodyString();
-			ar = JsonUtil.toObject(bodyString, ActionResult.class);
+			ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 			assertThat(ar.isSuccess(), is(true));
 			assertThat(ar.getDataForEntityList(String.class).isEmpty(), is(false));
 		}
@@ -396,7 +415,8 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 				.addData("agent_id", AGENT_ID)
 				.addData("path", "D:/aaa/asda/sdwqeqwewq/sad")
 				.post(getActionUrl("selectPath")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
 		assertThat(ar.getDataForEntityList(String.class).isEmpty(), is(true));
 	}
@@ -430,7 +450,8 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("file_sources_array", array.toJSONString())
 				.post(getActionUrl("saveFileSource")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			long optionalLong = SqlOperator.queryNumber(db, "select count(1) count from "
@@ -463,7 +484,8 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("file_sources_array", array.toJSONString())
 				.post(getActionUrl("saveFileSource")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			long optionalLong = SqlOperator.queryNumber(db, "select count(1) count from "
@@ -495,7 +517,8 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("file_sources_array", array.toJSONString())
 				.post(getActionUrl("saveFileSource")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(false));
 
 		//4.同一个非结构化采集请选择重复的文件路径
@@ -517,7 +540,8 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("file_sources_array", array.toJSONString())
 				.post(getActionUrl("saveFileSource")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(false));
 	}
 

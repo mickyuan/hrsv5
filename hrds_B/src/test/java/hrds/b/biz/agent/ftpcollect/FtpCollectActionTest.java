@@ -83,7 +83,8 @@ public class FtpCollectActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("ftp_id", FTP_ID)
 				.post(getActionUrl("searchFtp_collect")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
 		assertThat(ar.getDataForMap().get("ftp_dir"), is("/ccc/fff/0"));
 		assertThat(ar.getDataForMap().get("child_file_path"), is("/aaa/bbb/0"));
@@ -93,7 +94,8 @@ public class FtpCollectActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("ftp_id", FTP_ID + 100)
 				.post(getActionUrl("searchFtp_collect")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(false));
 	}
 
@@ -129,7 +131,8 @@ public class FtpCollectActionTest extends WebBaseTestCase {
 				.addData("reduce_type", ReduceType.ZIP.getCode())
 				.addData("agent_id", AGENT_ID)
 				.post(getActionUrl("addFtp_collect")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			long optionalLong = SqlOperator.queryNumber(db, "select count(1) count from " +
@@ -167,7 +170,8 @@ public class FtpCollectActionTest extends WebBaseTestCase {
 				.addData("reduce_type", ReduceType.ZIP.getCode())
 				.addData("agent_id", AGENT_ID)
 				.post(getActionUrl("addFtp_collect")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(false));
 
 		//3.添加一个ftp采集，但是ftp_dir格式不正确
@@ -193,7 +197,8 @@ public class FtpCollectActionTest extends WebBaseTestCase {
 //				.addData("reduce_type", ReduceType.ZIP.getCode())
 //				.addData("agent_id", AGENT_ID)
 //				.post(getActionUrl("addFtp_collect")).getBodyString();
-//		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+//		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+//				-> new BusinessException("连接失败！"));
 //		assertThat(ar.isSuccess(), is(false));
 
 		//4.添加一个ftp采集，但是ftp_ip格式不正确
@@ -219,7 +224,8 @@ public class FtpCollectActionTest extends WebBaseTestCase {
 //				.addData("reduce_type", ReduceType.ZIP.getCode())
 //				.addData("agent_id", AGENT_ID)
 //				.post(getActionUrl("addFtp_collect")).getBodyString();
-//		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+//		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+//				-> new BusinessException("连接失败！"));
 //		assertThat(ar.isSuccess(), is(false));
 	}
 
@@ -257,7 +263,8 @@ public class FtpCollectActionTest extends WebBaseTestCase {
 				.addData("reduce_type", ReduceType.ZIP.getCode())
 				.addData("agent_id", AGENT_ID)
 				.post(getActionUrl("updateFtp_collect")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			long optionalLong = SqlOperator.queryNumber(db, "select count(1) count from " +
@@ -296,7 +303,8 @@ public class FtpCollectActionTest extends WebBaseTestCase {
 				.addData("reduce_type", ReduceType.ZIP.getCode())
 				.addData("agent_id", AGENT_ID)
 				.post(getActionUrl("updateFtp_collect")).getBodyString();
-		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(false));
 
 //		//3.更新一个ftp采集，但是ftp_port格式不正确
@@ -323,7 +331,8 @@ public class FtpCollectActionTest extends WebBaseTestCase {
 //				.addData("reduce_type", ReduceType.ZIP.getCode())
 //				.addData("agent_id", AGENT_ID)
 //				.post(getActionUrl("updateFtp_collect")).getBodyString();
-//		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+//		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+//				-> new BusinessException("连接失败！"));
 //		assertThat(ar.isSuccess(), is(false));
 //
 //		//4.更新一个ftp采集，但是is_unzip格式不正确
@@ -350,7 +359,8 @@ public class FtpCollectActionTest extends WebBaseTestCase {
 //				.addData("reduce_type", ReduceType.ZIP.getCode())
 //				.addData("agent_id", AGENT_ID)
 //				.post(getActionUrl("updateFtp_collect")).getBodyString();
-//		ar = JsonUtil.toObject(bodyString, ActionResult.class);
+//		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+//				-> new BusinessException("连接失败！"));
 //		assertThat(ar.isSuccess(), is(false));
 	}
 
