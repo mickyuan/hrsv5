@@ -62,9 +62,12 @@ public class ObjectCollectAction extends BaseAction {
 		//返回到前端的信息
 		Map<String, Object> map = ar.getDataForMap();
 		//FIXME 这两个时间和Agent部署主机的时间并不是一个，确定要这样用吗？
+		//XXX 这里面是获取本地时间，原先的半结构化采集页面是有服务器时间和本地时间的
+		//XXX 服务器时间通过上面得到，本地时间通过下面得到
 		map.put("localdate", DateUtil.getSysDate());
 		map.put("localtime", DateUtil.getSysTime());
 		//3.对象采集id不为空则获取对象采集设置表信息
+		//XXX 这里的Odc_id不为空则返回回显数据，为空则不处理
 		if (object_collect.getOdc_id() != null) {
 			Object_collect object_collect_info = Dbo.queryOneObject(Object_collect.class,
 					"SELECT * FROM " + Object_collect.TableName + " WHERE odc_id = ?"
@@ -98,12 +101,11 @@ public class ObjectCollectAction extends BaseAction {
 				.orElseThrow(() -> new BusinessException("查询得到的数据必须有且只有一条"));
 		if (count > 0) {
 			throw new BusinessException("半结构化采集任务名称重复");
-		} else {
-			object_collect.setOdc_id(PrimayKeyGener.getNextId());
-			//2.保存object_collect表
-			object_collect.add(Dbo.db());
-			return object_collect.getOdc_id();
 		}
+		object_collect.setOdc_id(PrimayKeyGener.getNextId());
+		//2.保存object_collect表
+		object_collect.add(Dbo.db());
+		return object_collect.getOdc_id();
 	}
 
 	/**
@@ -129,10 +131,9 @@ public class ObjectCollectAction extends BaseAction {
 				.orElseThrow(() -> new BusinessException("查询得到的数据必须有且只有一条"));
 		if (count > 0) {
 			throw new BusinessException("半结构化采集任务名称重复");
-		} else {
-			//2.更新object_collect表
-			object_collect.update(Dbo.db());
 		}
+		//2.更新object_collect表
+		object_collect.update(Dbo.db());
 	}
 
 	/**
@@ -226,10 +227,9 @@ public class ObjectCollectAction extends BaseAction {
 						-> new BusinessException("查询得到的数据必须有且只有一条"));
 				if (count > 0) {
 					throw new BusinessException("对象采集对应信息表的英文名称重复");
-				} else {
-					object_collect_task.setOcs_id(PrimayKeyGener.getNextId());
-					object_collect_task.add(Dbo.db());
 				}
+				object_collect_task.setOcs_id(PrimayKeyGener.getNextId());
+				object_collect_task.add(Dbo.db());
 			} else {
 				//更新
 				//4.根据en_name查询对象采集对应信息表的英文名称是否重复
@@ -239,9 +239,8 @@ public class ObjectCollectAction extends BaseAction {
 						.orElseThrow(() -> new BusinessException("查询得到的数据必须有且只有一条"));
 				if (count > 0) {
 					throw new BusinessException("对象采集对应信息表的英文名称重复");
-				} else {
-					object_collect_task.update(Dbo.db());
 				}
+				object_collect_task.update(Dbo.db());
 			}
 		}
 	}

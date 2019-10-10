@@ -60,6 +60,7 @@ public class UnstructuredFileCollectAction extends BaseAction {
 		}
 		Map<String, Object> map = ar.getDataForMap();
 		//3.文件系统采集ID不为空则获取文件系统设置表信息
+		//XXX 这里的Fcs_id不为空则返回回显数据，为空则不处理
 		if (file_collect_set.getFcs_id() != null) {
 			File_collect_set file_collect_set_info = Dbo.queryOneObject(File_collect_set.class,
 					"SELECT * FROM " + File_collect_set.TableName + " WHERE fcs_id = ?",
@@ -68,7 +69,6 @@ public class UnstructuredFileCollectAction extends BaseAction {
 							"根据fcs_id" + file_collect_set.getFcs_id() + "查询不到file_collect_set表信息"));
 			map.put("file_collect_set_info", file_collect_set_info);
 		}
-		//FIXME else不处理，会返回前端什么数据，要说明！
 		//返回到前端的信息
 		return map;
 	}
@@ -95,12 +95,11 @@ public class UnstructuredFileCollectAction extends BaseAction {
 				.orElseThrow(() -> new BusinessException("查询得到的数据必须有且只有一条"));
 		if (count > 0) {
 			throw new BusinessException("非结构化任务名称重复");
-		} else {//FIXME if里面抛异常了，也就是中断的主流程，那么，这个else就不需要了
-			//2.保存File_collect_set表
-			file_collect_set.setFcs_id(PrimayKeyGener.getNextId());
-			file_collect_set.add(Dbo.db());
-			return file_collect_set.getFcs_id();
 		}
+		//2.保存File_collect_set表
+		file_collect_set.setFcs_id(PrimayKeyGener.getNextId());
+		file_collect_set.add(Dbo.db());
+		return file_collect_set.getFcs_id();
 	}
 
 	/**
@@ -127,10 +126,9 @@ public class UnstructuredFileCollectAction extends BaseAction {
 				.orElseThrow(() -> new BusinessException("查询得到的数据必须有且只有一条"));
 		if (count > 0) {
 			throw new BusinessException("非结构化任务名称重复");
-		} else {
-			//2.更新File_collect_set表
-			file_collect_set.update(Dbo.db());
 		}
+		//2.更新File_collect_set表
+		file_collect_set.update(Dbo.db());
 	}
 
 	/**
@@ -232,10 +230,9 @@ public class UnstructuredFileCollectAction extends BaseAction {
 					.orElseThrow(() -> new BusinessException("查询得到的数据必须有且只有一条"));
 			if (count > 0) {
 				throw new BusinessException("同一个非结构化采集请不要选择重复的文件路径");
-			} else {
-				file_source.setFile_source_id(PrimayKeyGener.getNextId());
-				file_source.add(Dbo.db());
 			}
+			file_source.setFile_source_id(PrimayKeyGener.getNextId());
+			file_source.add(Dbo.db());
 		}
 		//FIXME 下面这么多代码，仅仅是为了更新一个字段吗？ 如果是，就要用 update SQL 来做，完全没必要多查询一次数据库
 		//4.更新文件系统设置表
