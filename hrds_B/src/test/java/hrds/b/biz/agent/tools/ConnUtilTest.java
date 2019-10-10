@@ -1,9 +1,8 @@
 package hrds.b.biz.agent.tools;
 
+import hrds.b.biz.agent.bean.URLTemplate;
 import hrds.commons.codes.DatabaseType;
 import org.junit.Test;
-
-import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -46,108 +45,108 @@ public class ConnUtilTest {
 	@Test
 	public void getConnURL(){
 		//正确的使用场景1、构建mysql数据库访问场景，断言得到的数据是否正确
-		Map<String, String> mysqlConnURL = ConnUtil.getConnURL(DatabaseType.MYSQL.getCode());
-		assertThat(mysqlConnURL.isEmpty(), is(false));
-		assertThat(mysqlConnURL.get("jdbcPrefix"), is("jdbc:mysql://"));
-		assertThat(mysqlConnURL.get("jdbcIp"), is(":"));
-		assertThat(mysqlConnURL.get("jdbcPort"), is("/"));
-		assertThat(mysqlConnURL.get("jdbcBase"), is("?characterEncoding=utf8&zeroDateTimeBehavior=convertToNull"));
+		URLTemplate mysqlConnURLTemplate = ConnUtil.getConnURLTemplate(DatabaseType.MYSQL.getCode());
+		assertThat(mysqlConnURLTemplate == null, is(false));
+		assertThat(mysqlConnURLTemplate.getUrlPrefix(), is("jdbc:mysql://"));
+		assertThat(mysqlConnURLTemplate.getIpPlaceholder(), is(":"));
+		assertThat(mysqlConnURLTemplate.getPortPlaceholder(), is("/"));
+		assertThat(mysqlConnURLTemplate.getUrlSuffix(), is("?characterEncoding=utf8&zeroDateTimeBehavior=convertToNull"));
 
 		//正确的使用场景2、构建oracle9i数据库访问场景，断言得到的数据是否正确
-		Map<String, String> oracle9iConnURL = ConnUtil.getConnURL(DatabaseType.Oracle9i.getCode());
-		assertThat(oracle9iConnURL.isEmpty(), is(false));
-		assertThat(oracle9iConnURL.get("jdbcPrefix"), is("jdbc:oracle:thin:@"));
-		assertThat(oracle9iConnURL.get("jdbcIp"), is(":"));
-		assertThat(oracle9iConnURL.get("jdbcPort"), is(":"));
-		assertThat(oracle9iConnURL.get("jdbcBase"), is(""));
+		URLTemplate oracle9iConnURLTemplate = ConnUtil.getConnURLTemplate(DatabaseType.Oracle9i.getCode());
+		assertThat(oracle9iConnURLTemplate == null, is(false));
+		assertThat(oracle9iConnURLTemplate.getUrlPrefix(), is("jdbc:oracle:thin:@"));
+		assertThat(oracle9iConnURLTemplate.getIpPlaceholder(), is(":"));
+		assertThat(oracle9iConnURLTemplate.getPortPlaceholder(), is(":"));
+		assertThat(oracle9iConnURLTemplate.getUrlSuffix(), is(""));
 
 	    //正确的使用场景3、构建oracle10g数据库访问场景，断言得到的数据是否正确
-		Map<String, String> oracle10gConnURL = ConnUtil.getConnURL(DatabaseType.Oracle10g.getCode());
-		assertThat(oracle10gConnURL.isEmpty(), is(false));
-		assertThat(oracle10gConnURL.get("jdbcPrefix"), is("jdbc:oracle:thin:@"));
-		assertThat(oracle10gConnURL.get("jdbcIp"), is(":"));
-		assertThat(oracle10gConnURL.get("jdbcPort"), is(":"));
-		assertThat(oracle10gConnURL.get("jdbcBase"), is(""));
+		URLTemplate oracle10gConnURLTemplate = ConnUtil.getConnURLTemplate(DatabaseType.Oracle10g.getCode());
+		assertThat(oracle10gConnURLTemplate == null, is(false));
+		assertThat(oracle10gConnURLTemplate.getUrlPrefix(), is("jdbc:oracle:thin:@"));
+		assertThat(oracle10gConnURLTemplate.getIpPlaceholder(), is(":"));
+		assertThat(oracle10gConnURLTemplate.getPortPlaceholder(), is(":"));
+		assertThat(oracle10gConnURLTemplate.getUrlSuffix(), is(""));
 
 		//正确的使用场景4、构建DB2数据库访问场景，断言得到的数据是否正确
-		Map<String, String> db2ConnURL = ConnUtil.getConnURL(DatabaseType.DB2.getCode());
-		assertThat(db2ConnURL.isEmpty(), is(false));
-		assertThat(db2ConnURL.get("jdbcPrefix"), is("jdbc:db2://"));
-		assertThat(db2ConnURL.get("jdbcIp"), is(":"));
-		assertThat(db2ConnURL.get("jdbcPort"), is("/"));
-		assertThat(db2ConnURL.get("jdbcBase"), is(""));
+		URLTemplate db2ConnURLTemplate = ConnUtil.getConnURLTemplate(DatabaseType.DB2.getCode());
+		assertThat(db2ConnURLTemplate == null, is(false));
+		assertThat(db2ConnURLTemplate.getUrlPrefix(), is("jdbc:db2://"));
+		assertThat(db2ConnURLTemplate.getIpPlaceholder(), is(":"));
+		assertThat(db2ConnURLTemplate.getPortPlaceholder(), is("/"));
+		assertThat(db2ConnURLTemplate.getUrlSuffix(), is(""));
 
 		//正确的使用场景5、构建SqlServer2000数据库访问场景，断言得到的数据是否正确
-		Map<String, String> sqlserver2000ConnURL = ConnUtil.getConnURL(DatabaseType.SqlServer2000.getCode());
-		assertThat(sqlserver2000ConnURL.isEmpty(), is(false));
-		assertThat(sqlserver2000ConnURL.get("jdbcPrefix"), is("jdbc:sqlserver://"));
-		assertThat(sqlserver2000ConnURL.get("jdbcIp"), is(":"));
-		assertThat(sqlserver2000ConnURL.get("jdbcPort"), is(";DatabaseName="));
-		assertThat(sqlserver2000ConnURL.get("jdbcBase"), is(""));
+		URLTemplate sqlServer2000ConnURLTemplate = ConnUtil.getConnURLTemplate(DatabaseType.SqlServer2000.getCode());
+		assertThat(sqlServer2000ConnURLTemplate == null, is(false));
+		assertThat(sqlServer2000ConnURLTemplate.getUrlPrefix(), is("jdbc:sqlserver://"));
+		assertThat(sqlServer2000ConnURLTemplate.getIpPlaceholder(), is(":"));
+		assertThat(sqlServer2000ConnURLTemplate.getPortPlaceholder(), is(";DatabaseName="));
+		assertThat(sqlServer2000ConnURLTemplate.getUrlSuffix(), is(""));
 
 		//正确的使用场景6、构建SqlServer2005数据库访问场景，断言得到的数据是否正确
-		Map<String, String> sqlserver2005URL = ConnUtil.getConnURL(DatabaseType.SqlServer2005.getCode());
-		assertThat(sqlserver2005URL.isEmpty(), is(false));
-		assertThat(sqlserver2005URL.get("jdbcPrefix"), is("jdbc:sqlserver://"));
-		assertThat(sqlserver2005URL.get("jdbcIp"), is(":"));
-		assertThat(sqlserver2005URL.get("jdbcPort"), is(";DatabaseName="));
-		assertThat(sqlserver2005URL.get("jdbcBase"), is(""));
+		URLTemplate sqlServer2005ConnURLTemplate = ConnUtil.getConnURLTemplate(DatabaseType.SqlServer2005.getCode());
+		assertThat(sqlServer2005ConnURLTemplate == null, is(false));
+		assertThat(sqlServer2005ConnURLTemplate.getUrlPrefix(), is("jdbc:sqlserver://"));
+		assertThat(sqlServer2005ConnURLTemplate.getIpPlaceholder(), is(":"));
+		assertThat(sqlServer2005ConnURLTemplate.getPortPlaceholder(), is(";DatabaseName="));
+		assertThat(sqlServer2005ConnURLTemplate.getUrlSuffix(), is(""));
 
 		//正确的使用场景7、构建Postgresql数据库访问场景，断言得到的数据是否正确
-		Map<String, String> postgresqlConnURL = ConnUtil.getConnURL(DatabaseType.Postgresql.getCode());
-		assertThat(postgresqlConnURL.isEmpty(), is(false));
-		assertThat(postgresqlConnURL.get("jdbcPrefix"), is("jdbc:postgresql://"));
-		assertThat(postgresqlConnURL.get("jdbcIp"), is(":"));
-		assertThat(postgresqlConnURL.get("jdbcPort"), is("/"));
-		assertThat(postgresqlConnURL.get("jdbcBase"), is(""));
+		URLTemplate postgresqlConnURLTemplate = ConnUtil.getConnURLTemplate(DatabaseType.Postgresql.getCode());
+		assertThat(postgresqlConnURLTemplate == null, is(false));
+		assertThat(postgresqlConnURLTemplate.getUrlPrefix(), is("jdbc:postgresql://"));
+		assertThat(postgresqlConnURLTemplate.getIpPlaceholder(), is(":"));
+		assertThat(postgresqlConnURLTemplate.getPortPlaceholder(), is("/"));
+		assertThat(postgresqlConnURLTemplate.getUrlSuffix(), is(""));
 
 		//正确的使用场景8、构建SybaseASE125数据库访问场景，断言得到的数据是否正确
-		Map<String, String> sybaseASE125ConnURL = ConnUtil.getConnURL(DatabaseType.SybaseASE125.getCode());
-		assertThat(sybaseASE125ConnURL.isEmpty(), is(false));
-		assertThat(sybaseASE125ConnURL.get("jdbcPrefix"), is("jdbc:sybase:Tds:"));
-		assertThat(sybaseASE125ConnURL.get("jdbcIp"), is(":"));
-		assertThat(sybaseASE125ConnURL.get("jdbcPort"), is("/"));
-		assertThat(sybaseASE125ConnURL.get("jdbcBase"), is(""));
+		URLTemplate sybaseASE125ConnURLTemplate = ConnUtil.getConnURLTemplate(DatabaseType.SybaseASE125.getCode());
+		assertThat(sybaseASE125ConnURLTemplate == null, is(false));
+		assertThat(sybaseASE125ConnURLTemplate.getUrlPrefix(), is("jdbc:sybase:Tds:"));
+		assertThat(sybaseASE125ConnURLTemplate.getIpPlaceholder(), is(":"));
+		assertThat(sybaseASE125ConnURLTemplate.getPortPlaceholder(), is("/"));
+		assertThat(sybaseASE125ConnURLTemplate.getUrlSuffix(), is(""));
 
 		//正确的使用场景9、构建ApacheDerby数据库访问场景，断言得到的数据是否正确
-		Map<String, String> apacheDerbyConnURL = ConnUtil.getConnURL(DatabaseType.ApacheDerby.getCode());
-		assertThat(apacheDerbyConnURL.isEmpty(), is(false));
-		assertThat(apacheDerbyConnURL.get("jdbcPrefix"), is("jdbc:derby://"));
-		assertThat(apacheDerbyConnURL.get("jdbcIp"), is(":"));
-		assertThat(apacheDerbyConnURL.get("jdbcPort"), is("/"));
-		assertThat(apacheDerbyConnURL.get("jdbcBase"), is(";create=true"));
+		URLTemplate apacheDerbyConnURLTemplate = ConnUtil.getConnURLTemplate(DatabaseType.ApacheDerby.getCode());
+		assertThat(apacheDerbyConnURLTemplate == null, is(false));
+		assertThat(apacheDerbyConnURLTemplate.getUrlPrefix(), is("jdbc:derby://"));
+		assertThat(apacheDerbyConnURLTemplate.getIpPlaceholder(), is(":"));
+		assertThat(apacheDerbyConnURLTemplate.getPortPlaceholder(), is("/"));
+		assertThat(apacheDerbyConnURLTemplate.getUrlSuffix(), is(";create=true"));
 
 		//正确的使用场景10、构建GBase数据库访问场景，断言得到的数据是否正确
-		Map<String, String> gbaseConnURL = ConnUtil.getConnURL(DatabaseType.GBase.getCode());
-		assertThat(gbaseConnURL.isEmpty(), is(false));
-		assertThat(gbaseConnURL.get("jdbcPrefix"), is("jdbc:gbase://"));
-		assertThat(gbaseConnURL.get("jdbcIp"), is(":"));
-		assertThat(gbaseConnURL.get("jdbcPort"), is("/"));
-		assertThat(gbaseConnURL.get("jdbcBase"), is(""));
+		URLTemplate gBaseConnURLTemplate = ConnUtil.getConnURLTemplate(DatabaseType.GBase.getCode());
+		assertThat(gBaseConnURLTemplate == null, is(false));
+		assertThat(gBaseConnURLTemplate.getUrlPrefix(), is("jdbc:gbase://"));
+		assertThat(gBaseConnURLTemplate.getIpPlaceholder(), is(":"));
+		assertThat(gBaseConnURLTemplate.getPortPlaceholder(), is("/"));
+		assertThat(gBaseConnURLTemplate.getUrlSuffix(), is(""));
 
 		//正确的使用场景11、构建TeraData数据库访问场景，断言得到的数据是否正确
-		Map<String, String> teradataConnURL = ConnUtil.getConnURL(DatabaseType.TeraData.getCode());
-		assertThat(teradataConnURL.isEmpty(), is(false));
-		assertThat(teradataConnURL.get("jdbcPrefix"), is("jdbc:teradata://"));
-		assertThat(teradataConnURL.get("jdbcIp"), is("/TMODE=TERA,CHARSET=ASCII,CLIENT_CHARSET=cp936,DATABASE="));
-		assertThat(teradataConnURL.get("jdbcPort"), is(""));
-		assertThat(teradataConnURL.get("jdbcBase"), is(",lob_support=off"));
+		URLTemplate teraDataConnURLTemplate = ConnUtil.getConnURLTemplate(DatabaseType.TeraData.getCode());
+		assertThat(teraDataConnURLTemplate == null, is(false));
+		assertThat(teraDataConnURLTemplate.getUrlPrefix(), is("jdbc:teradata://"));
+		assertThat(teraDataConnURLTemplate.getIpPlaceholder(), is("/TMODE=TERA,CHARSET=ASCII,CLIENT_CHARSET=cp936,DATABASE="));
+		assertThat(teraDataConnURLTemplate.getPortPlaceholder(), is(""));
+		assertThat(teraDataConnURLTemplate.getUrlSuffix(), is(",lob_support=off"));
 
 		//正确的使用场景12、构建Informatic数据库访问场景，断言得到的数据是否正确
-		Map<String, String> informaticConnURL = ConnUtil.getConnURL(DatabaseType.Informatic.getCode());
-		assertThat(informaticConnURL.isEmpty(), is(false));
-		assertThat(informaticConnURL.get("jdbcPrefix"), is("jdbc:informix-sqli://"));
-		assertThat(informaticConnURL.get("jdbcIp"), is(":"));
-		assertThat(informaticConnURL.get("jdbcPort"), is("/"));
-		assertThat(informaticConnURL.get("jdbcBase"), is(":INFORMIXSERVER=myserver"));
+		URLTemplate informaticConnURLTemplate = ConnUtil.getConnURLTemplate(DatabaseType.Informatic.getCode());
+		assertThat(informaticConnURLTemplate == null, is(false));
+		assertThat(informaticConnURLTemplate.getUrlPrefix(), is("jdbc:informix-sqli://"));
+		assertThat(informaticConnURLTemplate.getIpPlaceholder(), is(":"));
+		assertThat(informaticConnURLTemplate.getPortPlaceholder(), is("/"));
+		assertThat(informaticConnURLTemplate.getUrlSuffix(), is(":INFORMIXSERVER=myserver"));
 
 		//正确的使用场景13、构建H2数据库访问场景，断言得到的数据是否正确
-		Map<String, String> h2ConnURL = ConnUtil.getConnURL(DatabaseType.H2.getCode());
-		assertThat(h2ConnURL.isEmpty(), is(false));
-		assertThat(h2ConnURL.get("jdbcPrefix"), is("jdbc:h2:tcp://"));
-		assertThat(h2ConnURL.get("jdbcIp"), is(":"));
-		assertThat(h2ConnURL.get("jdbcPort"), is("/"));
-		assertThat(h2ConnURL.get("jdbcBase"), is(""));
+		URLTemplate h2ConnURLTemplate = ConnUtil.getConnURLTemplate(DatabaseType.H2.getCode());
+		assertThat(h2ConnURLTemplate == null, is(false));
+		assertThat(h2ConnURLTemplate.getUrlPrefix(), is("jdbc:h2:tcp://"));
+		assertThat(h2ConnURLTemplate.getIpPlaceholder(), is(":"));
+		assertThat(h2ConnURLTemplate.getPortPlaceholder(), is("/"));
+		assertThat(h2ConnURLTemplate.getUrlSuffix(), is(""));
 
 		//错误的使用场景14、构建错误的数据库访问场景，断言代码对错误逻辑的处理是否符合预期，该场景在DBConfStepActionTest测试用例的getJDBCDriver中有了体现
 	}

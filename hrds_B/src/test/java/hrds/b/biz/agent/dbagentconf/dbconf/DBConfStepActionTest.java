@@ -56,7 +56,7 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 	 *      2、Agent_info表：有2条数据,全部是数据库采集Agent，agent_id分别为7001，7002,source_id为1
 	 *      3、database_set表：有2条数据,database_id为1001,1002, agent_id分别为7001,7002，1001的classifyId是10086，1002的classifyId是10010
 	 *      1001设置完成并发送成功(is_sendok)
-	 *      4、collect_job_classify表：有3条数据，classify_id为10086L、10010L、12306L，agent_id分别为7001L、7002L7001L,user_id为-9997L
+	 *      4、collect_job_classify表：有3条数据，classify_id为10086L、10010L、12306L，agent_id分别为7001L、7002L，7001L,user_id为-9997L
 	 *
 	 *
 	 * @Param: 无
