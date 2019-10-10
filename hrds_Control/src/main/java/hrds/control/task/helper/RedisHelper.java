@@ -24,8 +24,15 @@ public class RedisHelper {
     // 目的是做成单例
     private static final RedisHelper INSTANCE = new RedisHelper();
 
+    /**
+     * RedisHelper类构造器。<br>
+     * 1.初始化类变量。
+     * @author Tiger.Wang
+     * @date 2019/10/9
+     */
     private RedisHelper() {
 
+        //1.初始化类变量。
         this.redisIp = ControlConfigure.RedisConfig.redisIp;
         this.redisPort = ControlConfigure.RedisConfig.redisPort;
         this.timeout = ControlConfigure.RedisConfig.timeout;
@@ -36,22 +43,31 @@ public class RedisHelper {
     }
 
     /**
-     * 获得RedisHelper实例
+     * 获得RedisHelper实例。<br>
+     * 1.返回RedisHelper实例。
      * @author Tiger.Wang
-     * @date 2019/9/5
+     * @date 2019/10/9
      * @return hrds.control.task.helper.RedisHelper
+     *          含义：RedisHelper类实例。
+     *          取值范围：不会为null。
      */
     public static RedisHelper getInstance() {
 
+        //1.返回RedisHelper实例。
         return INSTANCE;
     }
 
     /**
-     * 根据key删除redis中的记录
+     * 根据key删除redis中的记录。<br>
+     * 1.删除redis中的记录。
      * @author Tiger.Wang
-     * @date 2019/9/5
-     * @param key   redis键值
-     * @return long 删除的数据行数
+     * @date 2019/10/9
+     * @param key
+     *          含义：redis键值。
+     *          取值范围：不能为null。
+     * @return long
+     *          含义：删除的数据行数。
+     *          取值范围：long范围内任何数值。
      */
     public long deleteByKey(String... key) {
 
@@ -59,14 +75,21 @@ public class RedisHelper {
     }
 
     /**
-     * 根据key，将内容追加到redis队列后面。注意，该方法若push失败，将会重新连接redis并一直尝试重新rpush
+     * 根据key，将内容追加到redis队列后。注意，
+     * 该方法若push失败，将会重新连接redis并一直尝试重新rpush。<br>
+     * 1.将内容追加到redis队列后。
      * @author Tiger.Wang
-     * @date 2019/9/5
-     * @param key   redis键值
-     * @param content   追加的内容
+     * @date 2019/10/9
+     * @param key
+     *          含义：redis键值。
+     *          取值范围：不能为null。
+     * @param content
+     *          含义：追加的内容。
+     *          取值范围：不能为null。
      */
     public void rpush(String key, String content) {
 
+        //1.将内容追加到redis队列后。
         while( true ) {
             try {
                 jedis.rpush(key, content);
@@ -80,15 +103,21 @@ public class RedisHelper {
     }
 
     /**
-     * 根据键值获取redis中，该键值对应的数据行数。
-     * 注意，该方法不会弹出redis中的数据，且若获取数据失败，将会重新连接redis并一直尝试重新llen。
+     * 根据键值获取redis中，该键值对应的数据行数。注意，
+     * 该方法不会弹出redis中的数据，且若获取数据失败，将会重新连接redis并一直尝试重新llen。<br>
+     * 1.获取redis中，该键值对应的数据行数。
      * @author Tiger.Wang
-     * @date 2019/9/5
-     * @param key   redis键值
-     * @return long redis键值对应的数据行数
+     * @date 2019/10/9
+     * @param key
+     *          含义：redis键值。
+     *          取值范围：不能为null。
+     * @return long
+     *          含义：redis键值对应的数据行数。
+     *          取值范围：long范围内的任意数值。
      */
     public long llen(String key) {
 
+        //1.获取redis中，该键值对应的数据行数。
         while( true ) {
             try {
                 return jedis.llen(key);
@@ -101,14 +130,20 @@ public class RedisHelper {
     }
 
     /**
-     * 根据键值，将redis中最靠前的数据弹出
+     * 根据键值，将redis中最靠前的数据弹出。<br>
+     * 1.弹出redis中最靠前的数据。
      * @author Tiger.Wang
-     * @date 2019/9/5
-     * @param key   redis键值
-     * @return java.lang.String redis键值对应的数据
+     * @date 2019/10/9
+     * @param key
+     *          含义：redis键值。
+     *          取值范围：不能为null。
+     * @return java.lang.String
+     *          含义：redis键值对应的数据。
+     *          取值范围：任何值。
      */
     public String lpop(String key) {
 
+        //1.弹出redis中最靠前的数据。
         while( true ) {
             try {
                 return jedis.lpop(key);
@@ -121,12 +156,14 @@ public class RedisHelper {
     }
 
     /**
-     * 重新连接redis
+     * 重新连接redis。<br>
+     * 1.重新连接redis。
      * @author Tiger.Wang
-     * @date 2019/9/5
+     * @date 2019/10/9
      */
     public void reconnect() {
 
+        //1.重新连接redis。
         while( true ) {
             try {
                 close();
@@ -139,12 +176,14 @@ public class RedisHelper {
     }
 
     /**
-     * 关闭redis连接
+     * 关闭redis连接。<br>
+     * 1.关闭redis连接。
      * @author Tiger.Wang
-     * @date 2019/9/5
+     * @date 2019/10/9
      */
     public void close() {
 
+        //1.关闭redis连接。
         if(jedis.isConnected()){
             jedis.disconnect();
         }

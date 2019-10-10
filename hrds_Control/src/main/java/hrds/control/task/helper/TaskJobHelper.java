@@ -27,15 +27,24 @@ public class TaskJobHelper {
     private TaskJobHelper() {}
 
     /**
-     * 对作业的作业目录（程序目录、日志目录）及程序名称参数进行处理，转换参数中的占位符（占位符如：#{txdate}）。
+     * 对作业的作业目录（程序目录、日志目录）及程序名称参数进行处理，
+     * 转换参数中的占位符（占位符如：#{txdate}）。<br>
+     * 1.转换目录或名字的参数字符串。
      * @author Tiger.Wang
-     * @date 2019/9/25
-     * @param currBathDate  当前跑批日期，该日期将会设置到参数中
-     * @param dirOrName    原始的目录或名称参数
-     * @return java.lang.String 转换后的目录或名称参数
+     * @date 2019/10/9
+     * @param currBathDate
+     *          含义：当前跑批日期，该日期将会设置到参数中。
+     *          取值范围：yyyyMMdd格式的日期，不能为null。
+     * @param dirOrName
+     *          含义：原始的目录或名称参数。
+     *          取值范围：不能为null。
+     * @return java.lang.String
+     *          含义：转换后的目录或名称参数。
+     *          取值范围：不会为null。
      */
     public static String transformDirOrName(String currBathDate, String dirOrName) {
 
+        //1.转换参数字符串。
         String[] params = TaskJobHelper.transformPara(currBathDate, dirOrName);
 
         if(params.length < 1) { return dirOrName; }
@@ -50,12 +59,19 @@ public class TaskJobHelper {
     }
 
     /**
-     * 对作业的作业程序参数进行处理，转换参数中的占位符（占位符如：#{txdate}）。
+     * 对作业的作业程序参数进行处理，转换参数中的占位符（占位符如：#{txdate}）。<br>
+     * 1.转换程序的参数字符串。
      * @author Tiger.Wang
-     * @date 2019/9/25
-     * @param currBathDate  当前跑批日期，该日期将会设置到参数中
-     * @param programPara   原始的作业程序参数
-     * @return java.lang.String 转换后的作业程序参数
+     * @date 2019/10/9
+     * @param currBathDate
+     *          含义：当前跑批日期，该日期将会设置到参数中。
+     *          取值范围：yyyyMMdd格式的字符串，不能为null。
+     * @param programPara
+     *          含义：原始的作业程序参数。
+     *          取值范围：不能为null。
+     * @return java.lang.String
+     *          含义：转换后的作业程序参数。
+     *          取值范围：不会为null。
      */
     public static String transformProgramPara(String currBathDate, String programPara) {
 
@@ -73,15 +89,21 @@ public class TaskJobHelper {
 
     /**
      * 用于处理参数字符串中的占位符，将占位符替换为实际的数据。
-     * 注意，若占位符前缀不在[#、!]范围内，则抛出AppSystemException异常。
-     * @note    1、所有参数字符串按固定分隔符分割，并且开始识别占位符关键字；
-     *          2、占位符前缀有[#、!]，这两种前缀都处理txdate、date、txdate_pre、txdate_next关键字，
-     *             不同的是[!]前缀允许处理自定义日期格式及自定义关键字和值。
+     * 注意，若占位符前缀不在[#、!]范围内，则抛出AppSystemException异常。<br>
+     * 1、所有参数字符串按固定分隔符分割，并且开始识别占位符关键字；<br>
+     * 2、占位符前缀有[#、!]，这两种前缀都处理txdate、date、txdate_pre、txdate_next关键字，
+     *    不同的是[!]前缀允许处理自定义日期格式及自定义关键字和值。
      * @author Tiger.Wang
-     * @date 2019/9/25
-     * @param currBathDate  当前批量日期
-     * @param para  参数字符串
-     * @return java.lang.String[]   无占位符的参数字符数组，因不同的参数类型有不同的字符串组织方式，故而提供数组形式。
+     * @date 2019/10/9
+     * @param currBathDate
+     *          含义：当前批量日期。
+     *          取值范围：yyyyMMdd格式字符串，不能为null。
+     * @param para
+     *          含义：参数字符串。
+     *          取值范围：不能为null。
+     * @return java.lang.String[]
+     *          含义：无占位符的参数字符数组，因不同的参数类型有不同的字符串组织方式，故而提供数组形式。
+     *          取值范围：不会为null。
      */
     private static String[] transformPara(String currBathDate, String para) {
 
@@ -120,15 +142,19 @@ public class TaskJobHelper {
                     //TODO 此处改动：多个if 改为if else if的结构
                     LocalDate date = LocalDate.parse(currBathDate, DateUtil.DATE_DEFAULT);
                     if ("#txdate".equals(paraCd)) {
-                        arr[i] = arr[i].replace("#{txdate}", date.format(DateUtil.DATE_DEFAULT));
+                        arr[i] = arr[i].replace("#{txdate}",
+                                date.format(DateUtil.DATE_DEFAULT));
                     }else if ("#date".equals(paraCd)) {
-                        arr[i] = arr[i].replace("#{date}", LocalDate.now().format(DateUtil.DATE_DEFAULT));
+                        arr[i] = arr[i].replace("#{date}", LocalDate.now()
+                                .format(DateUtil.DATE_DEFAULT));
                     }else if ("#txdate_pre".equals(paraCd)) {
                         arr[i] = arr[i].replace("#{txdate_pre}",
-                                date.plus(-1, ChronoUnit.DAYS).format(DateUtil.DATE_DEFAULT));
+                                date.plus(-1, ChronoUnit.DAYS)
+                                        .format(DateUtil.DATE_DEFAULT));
                     }else if ("#txdate_next".equals(paraCd)) {
                         arr[i] = arr[i].replace("#{txdate_next}",
-                                date.plus(1, ChronoUnit.DAYS).format(DateUtil.DATE_DEFAULT));
+                                date.plus(1, ChronoUnit.DAYS)
+                                        .format(DateUtil.DATE_DEFAULT));
                     }
                 } else if ('!' == prefix) {
                     //TODO 这里etlSysCd为""，意味着这是默认系统参数？
@@ -144,11 +170,13 @@ public class TaskJobHelper {
                     switch(paraCd) {
                         case "!txdate":
                             pattern = DateTimeFormatter.ofPattern(paraVal);
-                            arr[i] = arr[i].replace("!{" + strsc + "}", date.format(pattern));
+                            arr[i] = arr[i].replace("!{" + strsc + "}",
+                                    date.format(pattern));
                             break;
                         case "!date":
                             pattern = DateTimeFormatter.ofPattern(paraVal);
-                            arr[i] = arr[i].replace("!{" + strsc + "}", LocalDate.now().format(pattern));
+                            arr[i] = arr[i].replace("!{" + strsc + "}",
+                                    LocalDate.now().format(pattern));
                             break;
                         case "!txdate_pre":
                             pattern = DateTimeFormatter.ofPattern(paraVal);
@@ -177,51 +205,87 @@ public class TaskJobHelper {
     }
 
     /**
-     * 根据当前的跑批日期，计算作业的下一次跑批日期。
+     * 根据当前的跑批日期，计算作业的下一次跑批日期。<br>
+     * 1.计算作业的下一次跑批日期。
      * @author Tiger.Wang
-     * @date 2019/9/11
-     * @param currBathDateStr  当前跑批日期   （yyyyMMdd）
-     * @return java.lang.String 下一次跑批日期 （yyyyMMdd）
+     * @date 2019/10/9
+     * @param currBathDateStr
+     *          含义：当前跑批日期。
+     *          取值范围：yyyyMMdd格式的字符串，不能为null。
+     * @return java.lang.String
+     *          含义：下一次跑批日期。
+     *          取值范围：yyyyMMdd格式的字符串，不会为null。
      */
     public static String getNextBathDate(String currBathDateStr) {
 
+        //1.计算作业的下一次跑批日期。
         return LocalDate.parse(currBathDateStr, DateUtil.DATE_DEFAULT)
                 .plus(1, ChronoUnit.DAYS).format(DateUtil.DATE_DEFAULT);
     }
 
     /**
-     * 计算作业的下次执行日期。
-     * @param currBathDate 当次执行日期（yyyyMMdd）
-     * @param freqType 执行频率
-     * @return 下次执行日期（yyyyMMdd）
+     * 计算作业的下次执行日期。<br>
+     * 1.计算下次执行日期。
+     * @author Tiger.Wang
+     * @date 2019/10/9
+     * @param currBathDate
+     *          含义：当次执行日期。
+     *          取值范围：yyyyMMdd格式的字符串，不能为null。
+     * @param freqType
+     *          含义：执行频率。
+     *          取值范围：Dispatch_Frequency枚举值，不能为null。
+     * @return java.lang.String
+     *          含义：下次执行日期。
+     *          取值范围：yyyyMMdd格式的字符串，不会为null。
      */
     public static String getNextExecuteDate(String currBathDate, String freqType) {
 
+        //1.计算下次执行日期。
         return getExecuteDate(currBathDate, freqType, 1);
     }
 
     /**
-     * 计算作业的上次执行日期。
-     * @param currBathDate 当次执行日期（yyyyMMdd）
-     * @param freqType 执行频率
-     * @return 上一次执行日期（yyyyMMdd）
+     * 计算作业的上次执行日期。。<br>
+     * 1.计算上次执行日期。
+     * @author Tiger.Wang
+     * @date 2019/10/9
+     * @param currBathDate
+     *          含义：当次执行日期。
+     *          取值范围：yyyyMMdd格式的字符串，不能为null。
+     * @param freqType
+     *          含义：执行频率。
+     *          取值范围：Dispatch_Frequency枚举值，不能为null。
+     * @return java.lang.String
+     *          含义：上次执行日期。
+     *          取值范围：yyyyMMdd格式的字符串，不会为null。
      */
     public static String getPreExecuteDate(String currBathDate, String freqType) {
 
+        //1.计算上次执行日期。
         return getExecuteDate(currBathDate, freqType, -1);
     }
 
     /**
-     * 根据调度频率类型及偏移量，使用指定的日期计算出作业的下一次执行日期。
+     * 根据调度频率类型及偏移量，使用指定的日期计算出作业的下一次执行日期。<br>
+     * 1.使用指定的日期计算出下一次执行日期。
      * @author Tiger.Wang
-     * @date 2019/9/17
-     * @param currBathDateStr  当前跑批日期（yyyyMMdd）
-     * @param freqType  频率类型
-     * @param offset    偏移量
-     * @return java.lang.String 日期字符串（yyyyMMdd）
+     * @date 2019/10/9
+     * @param currBathDateStr
+     *          含义：当前跑批日期。
+     *          取值范围：yyyyMMdd格式的字符串，不能为null。
+     * @param freqType
+     *          含义：执行频率。
+     *          取值范围：Dispatch_Frequency枚举值，不能为null。
+     * @param offset
+     *          含义：偏移量。
+     *          取值范围：不能为null。
+     * @return java.lang.String
+     *          含义：下次执行日期。
+     *          取值范围：yyyyMMdd格式的字符串，不会为null。
      */
     private static String getExecuteDate(String currBathDateStr, String freqType, int offset) {
 
+        //1.使用指定的日期计算出下一次执行日期。
         LocalDate currBathDate = LocalDate.parse(currBathDateStr, DateUtil.DATE_DEFAULT);
 
         if(Dispatch_Frequency.DAILY.getCode().equals(freqType)) {   // 每日调度
@@ -240,14 +304,21 @@ public class TaskJobHelper {
     }
 
     /**
-     * 在作业调度类型为T+1时使用，通过指定日期时间，计算出下一次执行日期时间
+     * 在作业调度类型为T+1时使用，通过指定日期时间，计算出下一次执行日期时间。<br>
+     * 1.计算T+1时，下一次执行日期时间。
      * @author Tiger.Wang
-     * @date 2019/9/17
-     * @param strDateTime   当前日期时间（yyyyMMdd HHmmss）
+     * @date 2019/10/9
+     * @param strDateTime
+     *          含义：当前日期时间。
+     *          取值范围：yyyyMMdd HHmmss格式字符串，不能为null。
      * @return java.time.LocalDateTime
+     *          含义：计算完成后的日期时间对象。
+     *          取值范围：不会为null。
      */
     public static LocalDateTime getExecuteTimeByTPlus1(String strDateTime) {
 
-        return LocalDateTime.parse(strDateTime, DateUtil.DATETIME_DEFAULT).plus(1, ChronoUnit.DAYS);
+        //1.计算T+1时，下一次执行日期时间。
+        return LocalDateTime.parse(strDateTime, DateUtil.DATETIME_DEFAULT)
+                .plus(1, ChronoUnit.DAYS);
     }
 }

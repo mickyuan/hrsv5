@@ -23,18 +23,20 @@ import hrds.control.task.helper.TaskSqlHelper;
 public class AppMain {
 
 	/**
-	 * 主程序入口，会验证传递的参数是否正常，调度系统是否存在
-	 * @note 方法逻辑为： 1、验证参数正确性合法性；
-	 * 					 2、启动调度服务。
+	 * 主程序入口，会验证传递的参数是否正常，调度系统是否存在。<br>
+	 *  1、初始化命令行参数；
+	 *  2、启动调度服务。
 	 * @author Tiger.Wang
-	 * @date 2019/8/30
-	 * @param args	String数组，四个参数：跑批批次日期（8位字符）、调度系统代码、
-	 *              是否续跑（true/false）、是否自动日切（true/false）
+	 * @date 2019/10/8
+	 * @param args <br>
+	 *          含义：程序运行所需要的参数。 <br>
+	 *          取值范围：String数组，四个参数：跑批批次日期（8位字符）、
+	 *                   调度系统代码、是否续跑（true/false）、是否自动日切（true/false）。
 	 */
 	public static void main(String[] args) {
 		//1、初始化命令行参数。
 		ArgsParser CMD_ARGS = new ArgsParser()
-				.defOptionPair("etl.date", true, "跑批日期，格式为：yyyyMMDD")
+				.defOptionPair("etl.date", true, "跑批日期yyyyMMDD")
 				.defOptionPair("sys.code", true, "调度系统代码")
 				.defOptionPair("-AS", true, "是否自动日切")
 				.defOptionPair("-CR", true, "是否为续跑")
@@ -46,8 +48,8 @@ public class AppMain {
 		boolean isAutoShift = Boolean.parseBoolean(CMD_ARGS.opt("-AS").value);  //是否自动日切
 		String strSystemCode = CMD_ARGS.opt("sys.code").value; //调度系统代码
 		Etl_sys etlSys = TaskSqlHelper.getEltSysBySysCode(strSystemCode);
-
-		LocalDate bathDate = LocalDate.parse(bathDateStr, DateUtil.DATE_DEFAULT);//此处隐式的验证字符串日期是否格式正确
+		//此处隐式的验证字符串日期是否格式正确
+		LocalDate bathDate = LocalDate.parse(bathDateStr, DateUtil.DATE_DEFAULT);
 		/*
 		 * 一、若调度服务启动时，调度系统已经在运行，则抛出异常；
 		 * 二、若以续跑的方式启动调度服务，续跑日期与当前批量日期不一致，则抛出异常。
@@ -61,12 +63,14 @@ public class AppMain {
 			}
 		}
 
-		System.out.println(String.format("开始启动Agent服务，跑批日期：%s，系统代码：%s，是否续跑：%s，是否自动日切：%s",
-				bathDate.toString(), strSystemCode, isResumeRun, isAutoShift));
+		System.out.println(String.format("开始启动Agent服务，跑批日期：%s，系统代码：%s，" +
+						"是否续跑：%s，是否自动日切：%s",bathDate.toString(), strSystemCode,
+				isResumeRun, isAutoShift));
 
 		//2、启动调度服务。
 		//FIXME 讨论：启动一个HTTP SERVE，用于接收管理类通知（比如退出/暂停/DB连接等资源重置
-		ControlManageServer cm = new ControlManageServer(strSystemCode, bathDateStr, isResumeRun, isAutoShift);
+		ControlManageServer cm = new ControlManageServer(strSystemCode, bathDateStr,
+				isResumeRun, isAutoShift);
 		cm.initCMServer();
 		cm.runCMServer();
 		//FIXME 是否有不同的任务线程被启动？如果有，在这里一个个启动。

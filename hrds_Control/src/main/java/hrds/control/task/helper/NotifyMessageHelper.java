@@ -36,39 +36,55 @@ public class NotifyMessageHelper {
 
     private static final NotifyMessageHelper INSTANCE = new NotifyMessageHelper();
 
+    /**
+     * NotifyMessageHelper类构造器。<br>
+     * 1.初始化类变量。
+     * @author Tiger.Wang
+     * @date 2019/10/9
+     */
     private NotifyMessageHelper() {
 
-        smsAccountName = ControlConfigure.NotifyConfig.smsAccountName;
-        smsAccountPasswd = ControlConfigure.NotifyConfig.smsAccountPasswd;
-        cmHostIp = ControlConfigure.NotifyConfig.cmHostIp;
-        cmHostPort = ControlConfigure.NotifyConfig.cmHostPort;
-        wsHostIp = ControlConfigure.NotifyConfig.wsHostIp;
-        wsHostPort = ControlConfigure.NotifyConfig.wsHostPort;
-        bizType = ControlConfigure.NotifyConfig.bizType;
-        phoneNumber = ControlConfigure.NotifyConfig.phoneNumber;
+        //1.初始化类变量。
+        this.smsAccountName = ControlConfigure.NotifyConfig.smsAccountName;
+        this.smsAccountPasswd = ControlConfigure.NotifyConfig.smsAccountPasswd;
+        this.cmHostIp = ControlConfigure.NotifyConfig.cmHostIp;
+        this.cmHostPort = ControlConfigure.NotifyConfig.cmHostPort;
+        this.wsHostIp = ControlConfigure.NotifyConfig.wsHostIp;
+        this.wsHostPort = ControlConfigure.NotifyConfig.wsHostPort;
+        this.bizType = ControlConfigure.NotifyConfig.bizType;
+        this.phoneNumber = ControlConfigure.NotifyConfig.phoneNumber;
     }
 
     /**
-     * 获取NotifyMessageHelper实例
+     * 获取NotifyMessageHelper实例。<br>
+     * 1.返回NotifyMessageHelper实例。
      * @author Tiger.Wang
-     * @date 2019/9/6
+     * @date 2019/10/9
      * @return hrds.control.task.helper.NotifyMessageHelper
+     *          含义：NotifyMessageHelper实例。
+     *          取值范围：不会为null。
      */
     public static NotifyMessageHelper getInstance() {
 
+        //1.返回NotifyMessageHelper实例。
         return INSTANCE;
     }
 
     /**
-     * 发送警告信息。注意，发送的对象配置信息（手机号等）在配置文件中，该类在第一次加载时会读取配置文件来构造实例。
+     * 发送警告信息。注意，发送的对象配置信息（手机号等）在配置文件中，
+     * 该类在第一次加载时会读取配置文件来构造实例。<br>
+     * 1.发送警告信息。
      * @author Tiger.Wang
-     * @date 2019/9/6
-     * @param message   信息内容
+     * @date 2019/10/9
+     * @param message
+     *          含义：信息内容。
+     *          取值范围：任意字符串，不能为null。
      */
     public void sendMsg(String message) {
 
         //TODO 此处缺少实现，因为此处使用的postmsg-ump-2.1.jar在maven中找不到，不知道该jar应该放在什么地方
         // 这个jar包是不是自己写的？
+        //1.发送警告信息。
         Account ac = new Account(smsAccountName, smsAccountPasswd);// 设置帐号密码
         PostMsg pm = new PostMsg(); // 新建一个PostMsg对象
         pm.getCmHost().setHost(cmHostIp, cmHostPort);// 您设置的下行端口 400

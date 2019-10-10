@@ -4,17 +4,17 @@ import hrds.commons.entity.Etl_job_cur;
 
 public class EtlJobBean extends Etl_job_cur implements Comparable<EtlJobBean>  {
 
-	// 后一批次作业的调度日期
+	//后一批次作业的调度日期
 	private String strNextDate;
-	// 前一批次作业是否完成flag
+	//前一批次作业是否完成flag
 	private boolean preDateFlag;
-	// 依赖作业完成flag
+	//依赖作业完成flag
 	private boolean dependencyFlag;
-	// 已经完成的依赖作业个数
+	//已经完成的依赖作业个数
 	private int DoneDependencyJobCount;
-	// 作业调度触发时间,仅在调度触发方式为"T"时有效
+	//作业调度触发时间,仅在调度触发方式为"T"时有效
 	private long executeTime;
-	// 作业开始被调度的时间
+	//作业开始被调度的时间
 	private long jobStartTime;
 
 	public EtlJobBean() {

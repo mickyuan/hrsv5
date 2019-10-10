@@ -61,9 +61,9 @@ public class TaskJobHandleHelper {
 	/**干预类型，系统日切SF（SYS_SHIFT）标识*/
 	private static final String SF = "SF";
 
-	private static final String DEFAULT_BATH_DATE = "0";    //默认跑批日期
+//	private static final String DEFAULT_BATH_DATE = "0";    //默认跑批日期
 
-	private static final String PARAERROR = "干预类型不支持或参数错误"; //参数错误信息
+	private static final String PARAERROR = "干预参数错误"; //参数错误信息
 	private static final String NOEXITSERROR = "任务不存在"; //任务不存在错误信息
 	private static final String STATEERROR = "当前状态不允许执行此操作"; //状态异常错误信息
 	private static final String JOBSTOPERROR = "任务停止失败"; //状态异常错误信息
@@ -75,24 +75,32 @@ public class TaskJobHandleHelper {
 	private final TaskManager taskManager;
 
 	/**
-	 * TaskJobHandleHelper类构造器，构造器私有化，不允许外部构造，请使用newInstance方法构造。
+	 * TaskJobHandleHelper类构造器。<br>
+	 * 1.初始化类变量。
 	 * @author Tiger.Wang
-	 * @date 2019/9/9
-	 * @param taskManager   TaskManager类
+	 * @date 2019/10/9
+	 * @param taskManager
+	 *          含义：TaskManager类实例，意味着这两个类共同使用，不可分割。
+	 *          取值范围：不能为null。
 	 */
 	public TaskJobHandleHelper(TaskManager taskManager) {
 
+		//1.初始化类变量。
 		this.taskManager = taskManager;
 	}
 
 	/**
-	 * 根据干预信息集合，对集合内的每一项进行识别及执行作业干预。
+	 * 根据干预信息集合，对集合内的每一项进行识别及执行作业干预。<br>
+	 * 1.根据传入的系统/作业干预信息，实行干预。
 	 * @author Tiger.Wang
-	 * @date 2019/9/11
-	 * @param handles   Etl_job_hand对象，表示干预信息集合
+	 * @date 2019/10/9
+	 * @param handles
+	 *          含义：表示干预信息集合。
+	 *          取值范围：不能为null。
 	 */
 	public void doHandle(List<Etl_job_hand> handles) {
 
+		//1.根据传入的系统/作业干预信息，实行干预。
 		for(Etl_job_hand handle : handles) {
 			logger.info("检测到作业干预，作业名为 {}，干预类型为 {}",
 					handle.getEtl_job(), handle.getEtl_hand_type());
@@ -117,36 +125,42 @@ public class TaskJobHandleHelper {
 	}
 
 	/**
-	 * 用于干预类型为：作业直接触发JT（JOB_TRIGGER）的处理。注意，此方法会更新调度作业干预表信息。
-	 * @note 1、解析调度作业干预表的参数信息；
-	 *       2、检查该次干预的作业是否存在；
-	 *       3、对作业状态为挂起、等待的作业进行干预。
+	 * 用于干预类型为：作业直接触发JT（JOB_TRIGGER）的处理。注意，
+	 * 此方法会更新调度作业干预表信息。<br>
+	 * 1.解析调度作业干预表的参数信息；<br>
+	 * 2.检查该次干预的作业是否存在；<br>
+	 * 3.对作业状态为挂起、等待的作业进行干预。
 	 * @author Tiger.Wang
-	 * @date 2019/9/9
-	 * @param handle    Etl_job_hand，表示干预信息
+	 * @date 2019/10/9
+	 * @param handle
+	 *          含义：表示一次干预。
+	 *          取值范围：不能为null。
 	 */
 	private void handleRunning(Etl_job_hand handle) {
 
-		//1、解析调度作业干预表的参数信息。
-		Optional<Etl_job_cur> etlJobOptional = analyzeParameter(handle.getEtl_hand_type(), handle.getPro_para());
+		//1.解析调度作业干预表的参数信息。
+		Optional<Etl_job_cur> etlJobOptional = analyzeParameter(handle.getEtl_hand_type(),
+				handle.getPro_para());
 		if(!etlJobOptional.isPresent()) {
 			logger.warn("{}任务分析参数异常，{}", handle.getEtl_job(), PARAERROR);
+			handle.setWarning(PARAERROR);
+			updateErrorHandle(handle);
 			return;
 		}
-		//2、检查该次干预的作业是否存在。
+		//2.检查该次干预的作业是否存在。
 		String etlSysCd = handle.getEtl_sys_cd();
 		String etlJobStr = handle.getEtl_job();
 		String currBathDate = etlJobOptional.get().getCurr_bath_date();
 		Etl_job_cur etlJobCur;
 		try{
 			etlJobCur = TaskSqlHelper.getEtlJob(etlSysCd, etlJobStr, currBathDate);
-		}catch (AppSystemException e) {
+		}catch(AppSystemException e) {
 			handle.setWarning(NOEXITSERROR);
 			updateErrorHandle(handle);
-			throw new AppSystemException("根据调度系统编号、调度作业标识、当前跑批日期获取调度作业信息失败" + etlSysCd);
+			return;
 		}
 		/*
-		 * 3、对作业状态为挂起、等待的作业进行干预。
+		 * 3.对作业状态为挂起、等待的作业进行干预。
 		 *      一、若作业状态为挂起、等待中，则更新干预状态为运行中，则调用TaskManager的干预接口，进行干预；
 		 *      二、否则，更新调度作业干预表，该次干预出现异常。
 		 */
@@ -167,70 +181,76 @@ public class TaskJobHandleHelper {
 	}
 
 	/**
-	 * 用于干预类型为：系统重跑SO（SYS_ORIGINAL）标识的处理。注意，此方法会更新调度作业干预表信息。
-	 * @note 1、检查调度系统状态是否已暂停，以及是否还存在未完成或未停止的作业；
-	 *       2、将所有作业置为挂起状态（PENDING）；
-	 *       3、重新设置内存表（map）的作业状态；
-	 *       4、取消调度系统暂停状态；
-	 *       5、更新调度作业干预表，干预完成。
+	 * 用于干预类型为：系统重跑SO（SYS_ORIGINAL）标识的处理。注意，此方法会更新调度作业干预表信息。<br>
+	 * 1.检查调度系统状态是否已暂停，以及是否还存在未完成或未停止的作业；<br>
+	 * 2.将所有作业置为挂起状态（PENDING）；<br>
+	 * 3.重新设置内存表（map）的作业状态；<br>
+	 * 4.取消调度系统暂停状态；<br>
+	 * 5.更新调度作业干预表，干预完成。
 	 * @author Tiger.Wang
-	 * @date 2019/9/10
-	 * @param handle    Etl_job_hand，表示干预信息
+	 * @date 2019/10/9
+	 * @param handle
+	 *          含义：表示一次干预。
+	 *          取值范围：不能为null。
 	 */
 	private void handleSysRerun(Etl_job_hand handle) {
 
-		//1、检查调度系统状态是否已暂停，以及是否还存在未完成或未停止的作业
+		String etlSysCd = handle.getEtl_sys_cd();
+		//1.检查调度系统状态是否已暂停，以及是否还存在未完成或未停止的作业
 		if(!taskManager.isSysPause()) {
-			logger.warn("在进行重跑干预时，[{}]不是暂停状态，{}", handle.getEtl_job(), STATEERROR);
+			logger.warn("在进行重跑干预时，系统[{}]不是暂停状态，{}", etlSysCd, STATEERROR);
 			handle.setWarning(STATEERROR);
 			updateErrorHandle(handle);
 			return;
 		}
-		String etlSysCd = handle.getEtl_sys_cd();
 		List<Etl_job_cur> etlJobs = TaskSqlHelper.getReadyEtlJobs(etlSysCd);
 		if(0 != etlJobs.size()) {
 			// 有未完成或停止的job
-			logger.warn("在进行重跑干预时，[{}]有未完成或未停止的作业，{}", handle.getEtl_job(), STATEERROR);
+			logger.warn("在进行重跑干预时，[{}]有未完成或未停止的作业，{}",
+					handle.getEtl_job(), STATEERROR);
 			handle.setWarning(STATEERROR);
 			updateErrorHandle(handle);
 			return;
 		}
-		//2、将所有作业置为挂起状态（PENDING）
+		//2.将所有作业置为挂起状态（PENDING）
 		TaskSqlHelper.updateEtlJobToPending(etlSysCd);
-		//3、重新设置内存表（map）的作业状态
+		//3.重新设置内存表（map）的作业状态
 		taskManager.handleSys2Rerun();
-		//4、取消调度系统暂停状态
+		//4.取消调度系统暂停状态
 		taskManager.closeSysPause();
-		//5、更新调度作业干预表信息
+		//5.更新调度作业干预表信息
 		updateDoneHandle(handle);
 	}
 
 	/**
-	 * 用于干预类型为：系统暂停SP（SYS_PAUSE）标识的处理。注意，此方法会更新调度作业干预表信息。
-	 * @note 1、检查调度系统是否已经是暂停状态；
-	 *       2、修改内存表（map）中的作业状态；
-	 *       3、将调度作业表中的所有作业的作业状态标识为[停止]；
-	 *       4、停止所有已经在运行中的作业；
-	 *       5、暂停调度系统的运行；
-	 *       6、更新调度作业干预表，干预完成。
+	 * 用于干预类型为：系统暂停SP（SYS_PAUSE）标识的处理。注意，此方法会更新调度作业干预表信息。<br>
+	 * 1.检查调度系统是否已经是暂停状态；<br>
+	 * 2.修改内存表（map）中的作业状态；<br>
+	 * 3.将调度作业表中的所有作业的作业状态标识为[停止]；<br>
+	 * 4.停止所有已经在运行中的作业；<br>
+	 * 5.暂停调度系统的运行；<br>
+	 * 6.更新调度作业干预表，干预完成。
 	 * @author Tiger.Wang
-	 * @date 2019/9/10
-	 * @param handle    Etl_job_hand，表示干预信息
+	 * @date 2019/10/9
+	 * @param handle
+	 *          含义：表示一次干预。
+	 *          取值范围：不能为null。
 	 */
 	private void handleSysPause(Etl_job_hand handle) {
 
-		//1、检查调度系统是否已经是暂停状态
+		//1.检查调度系统是否已经是暂停状态
 		if(taskManager.isSysPause()){
-			logger.warn("在进行系统暂停干预时，[{}]已经是暂停状态，{}", handle.getEtl_job(), STATEERROR);
+			logger.warn("在进行系统暂停干预时，[{}]已经是暂停状态，{}",
+					handle.getEtl_job(), STATEERROR);
 			handle.setWarning(STATEERROR);
 			updateErrorHandle(handle);
 			return;
 		}
-		//2、修改内存表（map）中的作业状态
+		//2.修改内存表（map）中的作业状态
 		taskManager.handleSys2Pause();
-		//3、将调度作业表中的所有作业的作业状态标识为[停止]，
+		//3.将调度作业表中的所有作业的作业状态为[等待、挂起]的作业置为[停止]，
 		TaskSqlHelper.updateReadyEtlJobStatus(handle.getEtl_sys_cd(), Job_Status.STOP.getCode());
-		//4、停止所有已经在运行中的作业
+		//4.停止所有已经在运行中的作业
 		List<Etl_job_cur> etlJobs = TaskSqlHelper.getEtlJobsByJobStatus(handle.getEtl_sys_cd(),
 				Job_Status.RUNNING.getCode());
 		if(etlJobs.size() != 0) {
@@ -238,34 +258,37 @@ public class TaskJobHandleHelper {
 			try {
 				do {
 					Thread.sleep(DEFAULT_MILLISECONDS);
-				} while (checkJobsNotStop(etlJobs));
+				}while(checkJobsNotStop(etlJobs));
 			}
 			catch(InterruptedException e) {
 				e.printStackTrace();
 			}
 		}
-		//5、开启调度系统的运行
+		//5.开启调度系统的运行
 		taskManager.openSysPause();
-		//6、更新调度作业干预表，干预完成
+		//6.更新调度作业干预表，干预完成
 		updateDoneHandle(handle);
 	}
 
 	/**
-	 * 用于干预类型为：系统续跑SR（SYS_RESUME）标识的处理。注意，此方法会更新调度作业干预表信息。
-	 * @note 1、判断当前状态是否是暂停状态，不是暂停状态时不能重跑；
-	 *       2、将STOP/ERROR作业置为挂起状态（PENDING）；
-	 *       3、重新设置内存表（map）的作业状态；
-	 *       4、取消调度系统暂停状态；
-	 *       5、更新调度作业干预表信息。
+	 * 用于干预类型为：系统续跑SR（SYS_RESUME）标识的处理。注意，此方法会更新调度作业干预表信息。<br>
+	 * 1.判断当前状态是否是暂停状态，不是暂停状态时不能重跑；<br>
+	 * 2.将STOP/ERROR作业置为挂起状态（PENDING）；<br>
+	 * 3.重新设置内存表（map）的作业状态；<br>
+	 * 4.取消调度系统暂停状态；<br>
+	 * 5.更新调度作业干预表信息。
 	 * @author Tiger.Wang
-	 * @date 2019/9/10
-	 * @param handle    Etl_job_hand，表示干预信息
+	 * @date 2019/10/9
+	 * @param handle
+	 *          含义：表示一次干预。
+	 *          取值范围：不能为null。
 	 */
 	private void handleSysResume(Etl_job_hand handle) {
 
-		//1、判断当前状态是否是暂停状态，不是暂停状态时不能重跑
+		//1.判断当前状态是否是暂停状态，不是暂停状态时不能重跑
 		if(!taskManager.isSysPause()) {
-			logger.warn("在进行续跑干预时，[{}]不是暂停状态，{}", handle.getEtl_job(), STATEERROR);
+			logger.warn("在进行续跑干预时，[{}]不是暂停状态，{}",
+					handle.getEtl_job(), STATEERROR);
 			handle.setWarning(STATEERROR);
 			updateErrorHandle(handle);
 			return;
@@ -275,36 +298,40 @@ public class TaskJobHandleHelper {
 		List<Etl_job_cur> etlJobs = TaskSqlHelper.getReadyEtlJobs(etlSysCd);
 		if(0 != etlJobs.size()) {
 			// 有未完成或停止的job
-			logger.warn("在进行续跑干预时，[{}]有未完成或未停止的作业，{}", handle.getEtl_job(), STATEERROR);
+			logger.warn("在进行续跑干预时，[{}]有未完成或未停止的作业，{}",
+					handle.getEtl_job(), STATEERROR);
 			handle.setWarning(STATEERROR);
 			updateErrorHandle(handle);
 			return;
 		}
-		//2、将STOP/ERROR作业置为挂起状态（PENDING）
+		//2.将STOP/ERROR作业置为挂起状态（PENDING）
 		TaskSqlHelper.updateEtlJobToPendingInResume(etlSysCd, Job_Status.PENDING.getCode());
-		//3、重新设置内存表（map）的作业状态
+		//3.重新设置内存表（map）的作业状态
 		taskManager.handleSys2Resume();
-		//4、取消调度系统暂停状态
+		//4.取消调度系统暂停状态
 		taskManager.closeSysPause();
-		//5、更新调度作业干预表信息
+		//5.更新调度作业干预表信息
 		updateDoneHandle(handle);
 	}
 
 	/**
-	 * 用于干预类型为：系统停止SS（SYS_STOP）标识的处理。注意，此方法会更新调度作业干预表信息。
-	 * @note 1、将作业状态为PENDING/WAITING的作业置为STOP；
-	 *       2、停止全部Running作业；
-	 *       3、更新ETL_SYS运行状态为STOP；
-	 *       4、更新干预表，干预完成。
+	 * 用于干预类型为：系统停止SS（SYS_STOP）标识的处理。注意，此方法会更新调度作业干预表信息。<br>
+	 * 1.将作业状态为PENDING/WAITING的作业置为STOP；<br>
+	 * 2.停止全部Running作业；<br>
+	 * 3.更新ETL_SYS运行状态为STOP；<br>
+	 * 4.更新干预表，干预完成。
 	 * @author Tiger.Wang
-	 * @date 2019/9/10
-	 * @param handle    Etl_job_hand，表示干预信息
+	 * @date 2019/10/9
+	 * @param handle
+	 *          含义：表示一次干预。
+	 *          取值范围：不能为null。
 	 */
 	private void handleSysStopAll(Etl_job_hand handle) {
 
-		//1、将作业状态为PENDING/WAITING的作业置为STOP
-		TaskSqlHelper.updateReadyEtlJobsDispStatus(handle.getEtl_sys_cd(), Job_Status.STOP.getCode());
-		//2、停止全部Running作业
+		//1.将作业状态为PENDING/WAITING的作业置为STOP
+		TaskSqlHelper.updateReadyEtlJobsDispStatus(handle.getEtl_sys_cd(),
+				Job_Status.STOP.getCode());
+		//2.停止全部Running作业
 		List<Etl_job_cur> etlJobs = TaskSqlHelper.getEtlJobsByJobStatus(handle.getEtl_sys_cd(),
 				Job_Status.RUNNING.getCode());
 		if(0 != etlJobs.size()) {
@@ -318,27 +345,32 @@ public class TaskJobHandleHelper {
 				e.printStackTrace();
 			}
 		}
-		//3、更新ETL_SYS运行状态为STOP
+		//3.更新ETL_SYS运行状态为STOP
 		TaskSqlHelper.updateEtlSysRunStatus(handle.getEtl_sys_cd(), Job_Status.STOP.getCode());
-		//4、更新干预表，干预完成
+		//4.更新干预表，干预完成
 		updateDoneHandle(handle);
 	}
 
 	/**
-	 * 用于干预类型为：作业停止JS（JOB_STOP）标识的处理。
-	 * @note    1、检查该次干预的参数是否正确、该作业是否已经登记；
-	 *          2、若干预的作业已经在运行中，则要结束该作业，并更新作业表的作业状态；
-	 *          3、若干预的作业还未运行（挂起和等待中），则更新内存表（map）及数据库的作业状态；
+	 * 用于干预类型为：作业停止JS（JOB_STOP）标识的处理。<br>
+	 * 1.检查该次干预的参数是否正确、该作业是否已经登记；<br>
+	 * 2.若干预的作业已经在运行中，则要结束该作业，并更新作业表的作业状态；<br>
+	 * 3.若干预的作业还未运行（挂起和等待中），则更新内存表（map）及数据库的作业状态；
 	 * @author Tiger.Wang
-	 * @date 2019/9/11
-	 * @param handle    Etl_job_hand，表示干预信息
+	 * @date 2019/10/9
+	 * @param handle
+	 *          含义：表示一次干预。
+	 *          取值范围：不能为null。
 	 */
 	private void handleJobStop(Etl_job_hand handle) {
 
-		//1、检查该次干预的参数是否正确、该作业是否已经登记；
-		Optional<Etl_job_cur> etlJobOptional = analyzeParameter(handle.getEtl_hand_type(), handle.getPro_para());
+		//1.检查该次干预的参数是否正确、该作业是否已经登记；
+		Optional<Etl_job_cur> etlJobOptional = analyzeParameter(handle.getEtl_hand_type(),
+				handle.getPro_para());
 		if(!etlJobOptional.isPresent()) {
 			logger.warn("{}任务分析参数异常，{}", handle.getEtl_job(), PARAERROR);
+			handle.setWarning(PARAERROR);
+			updateErrorHandle(handle);
 			return;
 		}
 		String etlSysCd = handle.getEtl_sys_cd();
@@ -350,9 +382,9 @@ public class TaskJobHandleHelper {
 		}catch (AppSystemException e) {
 			handle.setWarning(NOEXITSERROR);
 			updateErrorHandle(handle);
-			throw new AppSystemException("根据调度系统编号、调度作业标识、当前跑批日期获取调度作业信息失败" + etlSysCd);
+			return;
 		}
-		//2、若干预的作业已经在运行中，则要结束该作业，并更新作业表的作业状态；
+		//2.若干预的作业已经在运行中，则要结束该作业，并更新作业表的作业状态；
 		if(Job_Status.RUNNING.getCode().equals(etlJob.getJob_disp_status())) {
 			//Running状态job停止，将干预的信息置为Running
 			updateRunningHandle(handle);
@@ -377,7 +409,7 @@ public class TaskJobHandleHelper {
 					etlJob.getEtl_sys_cd(), etlJob.getEtl_job());
 		}else if(Job_Status.PENDING.getCode().equals(etlJob.getJob_disp_status()) ||
 				Job_Status.WAITING.getCode().equals(etlJob.getJob_disp_status())) {
-			//3、若干预的作业还未运行（挂起和等待中），则更新内存表（map）及数据库的作业状态；
+			//3.若干预的作业还未运行（挂起和等待中），则更新内存表（map）及数据库的作业状态；
 			taskManager.handleJob2Stop(etlJob.getCurr_bath_date(), handle.getEtl_job());
 			updateDoneHandle(handle);
 		}else {
@@ -388,19 +420,24 @@ public class TaskJobHandleHelper {
 	}
 
 	/**
-	 * 用于干预类型为：作业重跑JR（JOB_RERUN）标识的处理
-	 * @note    1、检查该次干预的参数是否正确、该作业是否已经登记；
-	 *          2、干预作业状态为停止、错误、完成的作业。
+	 * 用于干预类型为：作业重跑JR（JOB_RERUN）标识的处理。<br>
+	 * 1.检查该次干预的参数是否正确、该作业是否已经登记；<br>
+	 * 2.干预作业状态为停止、错误、完成的作业。
 	 * @author Tiger.Wang
-	 * @date 2019/9/11
-	 * @param handle     Etl_job_hand，表示干预信息
+	 * @date 2019/10/9
+	 * @param handle
+	 *          含义：表示一次干预。
+	 *          取值范围：不能为null。
 	 */
 	private void handleJobRerun(Etl_job_hand handle) {
 
-		//1、检查该次干预的参数是否正确、该作业是否已经登记；
-		Optional<Etl_job_cur> etlJobOptional = analyzeParameter(handle.getEtl_hand_type(), handle.getPro_para());
+		//1.检查该次干预的参数是否正确、该作业是否已经登记；
+		Optional<Etl_job_cur> etlJobOptional = analyzeParameter(handle.getEtl_hand_type(),
+				handle.getPro_para());
 		if(!etlJobOptional.isPresent()) {
 			logger.warn("{} 任务分析参数异常，{}", handle.getEtl_job(), PARAERROR);
+			handle.setWarning(PARAERROR);
+			updateErrorHandle(handle);
 			return;
 		}
 		String etlSysCd = handle.getEtl_sys_cd();
@@ -412,9 +449,9 @@ public class TaskJobHandleHelper {
 		}catch (AppSystemException e) {
 			handle.setWarning(NOEXITSERROR);
 			updateErrorHandle(handle);
-			throw new AppSystemException("根据调度系统编号、调度作业标识、当前跑批日期获取调度作业信息失败 " + etlSysCd);
+			return;
 		}
-		//2、干预作业状态为停止、错误、完成的作业。
+		//2.干预作业状态为停止、错误、完成的作业。
 		if(Job_Status.STOP.getCode().equals(etlJob.getJob_disp_status()) ||
 				Job_Status.ERROR.getCode().equals(etlJob.getJob_disp_status()) ||
 				Job_Status.DONE.getCode().equals(etlJob.getJob_disp_status())) {
@@ -428,20 +465,25 @@ public class TaskJobHandleHelper {
 	}
 
 	/**
-	 * 用于干预类型为：作业临时调整优先级JP（JOB_PRIORITY）标识的处理。
-	 * @note    1、检查该次干预的参数是否正确、该作业是否已经登记；
-	 *          2、检查该次干预所指定的作业优先级是否在合法范围内；
-	 *          3、若被干预的作业不在运行中，则更新内存Map以及更新数据库中的作业状态。
+	 * 用于干预类型为：作业临时调整优先级JP（JOB_PRIORITY）标识的处理。<br>
+	 * 1.检查该次干预的参数是否正确、该作业是否已经登记；<br>
+	 * 2.检查该次干预所指定的作业优先级是否在合法范围内；<br>
+	 * 3.若被干预的作业不在运行中，则更新内存Map以及更新数据库中的作业状态。
 	 * @author Tiger.Wang
-	 * @date 2019/9/17
-	 * @param handle    Etl_job_hand对象，表示一次干预
+	 * @date 2019/10/9
+	 * @param handle
+	 *          含义：表示一次干预。
+	 *          取值范围：不能为null。
 	 */
 	private void handleJobPriority(Etl_job_hand handle) {
 
-		//1、检查该次干预的参数是否正确、该作业是否已经登记；
-		Optional<Etl_job_cur> etlJobOptional = analyzeParameter(handle.getEtl_hand_type(), handle.getPro_para());
+		//1.检查该次干预的参数是否正确、该作业是否已经登记；
+		Optional<Etl_job_cur> etlJobOptional = analyzeParameter(handle.getEtl_hand_type(),
+				handle.getPro_para());
 		if(!etlJobOptional.isPresent()) {
 			logger.warn("{} 任务分析参数异常，{}", handle.getEtl_job(), PARAERROR);
+			handle.setWarning(PARAERROR);
+			updateErrorHandle(handle);
 			return;
 		}
 		String etlSysCd = handle.getEtl_sys_cd();
@@ -453,16 +495,16 @@ public class TaskJobHandleHelper {
 		}catch (AppSystemException e) {
 			handle.setWarning(NOEXITSERROR);
 			updateErrorHandle(handle);
-			throw new AppSystemException("根据调度系统编号、调度作业标识、当前跑批日期获取调度作业信息失败" + etlSysCd);
+			return;
 		}
-		//2、检查该次干预所指定的作业优先级是否在合法范围内；
+		//2.检查该次干预所指定的作业优先级是否在合法范围内；
 		int priority = etlJobOptional.get().getJob_priority();
 		if( priority < TaskManager.MINPRIORITY || priority > TaskManager.MAXPRIORITY ) {
 			handle.setWarning(PRIORITYERROR);
 			updateErrorHandle(handle);
 			return;
 		}
-		//3、若被干预的作业不在运行中，则更新内存Map以及更新数据库中的作业状态。
+		//3.若被干预的作业不在运行中，则更新内存Map以及更新数据库中的作业状态。
 		if(Job_Status.RUNNING.getCode().equals(etlJob.getJob_disp_status())) {
 			handle.setWarning(STATEERROR);
 			updateErrorHandle(handle);
@@ -473,19 +515,24 @@ public class TaskJobHandleHelper {
 	}
 
 	/**
-	 * 用于干预类型为：作业跳过JJ（JOB_JUMP）标识的处理。
-	 * @note    1、检查该次干预的参数是否正确、该作业是否已经登记；
-	 *          2、干预作业状态除[运行中]和[已完成]的作业。
+	 * 用于干预类型为：作业跳过JJ（JOB_JUMP）标识的处理。<br>
+	 * 1.检查该次干预的参数是否正确、该作业是否已经登记；<br>
+	 * 2.干预作业状态除[运行中]和[已完成]的作业。
 	 * @author Tiger.Wang
-	 * @date 2019/9/11
-	 * @param handle    Etl_job_hand，表示干预信息
+	 * @date 2019/10/9
+	 * @param handle
+	 *          含义：表示一次干预。
+	 *          取值范围：不能为null。
 	 */
 	private void handleJobskip(Etl_job_hand handle) {
 
-		//1、检查该次干预的参数是否正确、该作业是否已经登记；
-		Optional<Etl_job_cur> etlJobOptional = analyzeParameter(handle.getEtl_hand_type(), handle.getPro_para());
+		//1.检查该次干预的参数是否正确、该作业是否已经登记；
+		Optional<Etl_job_cur> etlJobOptional = analyzeParameter(handle.getEtl_hand_type(),
+				handle.getPro_para());
 		if(!etlJobOptional.isPresent()) {
 			logger.warn("{} 任务分析参数异常，{}", handle.getEtl_job(), PARAERROR);
+			handle.setWarning(PARAERROR);
+			updateErrorHandle(handle);
 			return;
 		}
 		String etlSysCd = handle.getEtl_sys_cd();
@@ -497,9 +544,9 @@ public class TaskJobHandleHelper {
 		}catch (AppSystemException e) {
 			handle.setWarning(NOEXITSERROR);
 			updateErrorHandle(handle);
-			throw new AppSystemException("根据调度系统编号、调度作业标识、当前跑批日期获取调度作业信息失败" + etlSysCd);
+			return;
 		}
-		//2、干预作业状态除[运行中]和[已完成]的作业。
+		//2.干预作业状态除[运行中]和[已完成]的作业。
 		if(Job_Status.RUNNING.getCode().equals(etlJob.getJob_disp_status()) ||
 				Job_Status.DONE.getCode().equals(etlJob.getJob_disp_status())) {
 			handle.setWarning(STATEERROR);
@@ -511,34 +558,45 @@ public class TaskJobHandleHelper {
 	}
 
 	/**
-	 * 用于干预类型：系统日切SF（SYS_SHIFT）标识的处理。
-	 * @note    1、系统日切干预；
-	 *          2、更新调度作业干预表，干预完成。
+	 * 用于干预类型：系统日切SF（SYS_SHIFT）标识的处理。<br>
+	 * 1.系统日切干预；<br>
+	 * 2.更新调度作业干预表，干预完成。
 	 * @author Tiger.Wang
-	 * @date 2019/9/11
-	 * @param handle    Etl_job_hand，表示干预信息
+	 * @date 2019/10/9
+	 * @param handle
+	 *          含义：表示一次干预。
+	 *          取值范围：不能为null。
 	 */
 	private void handleSysShift(Etl_job_hand handle) {
-		//系统日切干预
+
+		//1.系统日切干预
 		taskManager.handleSysDayShift();
-		//更新干预表
+		//2.更新干预表
 		updateDoneHandle(handle);
 	}
 
 	/**
-	 * 该方法根据调度作业列表，检查作业列表是否都已经运行完成。注意，此处会再次查询数据库来获取最新的作业状态。
+	 * 该方法根据调度作业列表，检查作业列表是否都已经运行完成。注意，此处会再次查询数据库来获取最新的作业状态。<br>
+	 * 1.检查每个作业是否已经运行完成。
 	 * @author Tiger.Wang
-	 * @date 2019/9/10
-	 * @param etlJobs   调度作业列表
-	 * @return boolean  作业是否已经全部运行完成
+	 * @date 2019/10/9
+	 * @param etlJobs
+	 *          含义：调度作业列表。
+	 *          取值范围：不能为null。
+	 * @return boolean
+	 *          含义：作业是否已经全部运行完成。
+	 *          取值范围：true/false。
 	 */
 	private boolean checkJobsNotStop(List<Etl_job_cur> etlJobs) {
 
+		//1.检查每个作业是否已经运行完成。
 		for(Etl_job_cur job : etlJobs) {
 			try{
-				job = TaskSqlHelper.getEtlJob(job.getEtl_sys_cd(), job.getEtl_job(), job.getCurr_bath_date());
+				job = TaskSqlHelper.getEtlJob(job.getEtl_sys_cd(), job.getEtl_job(),
+						job.getCurr_bath_date());
 			}catch (AppSystemException e) {
-				throw new AppSystemException("在检查作业是否为停止状态时发生异常，该作业不存在：" + job.getEtl_job());
+				throw new AppSystemException("在检查作业是否为停止状态时发生异常，该作业不存在：" +
+						job.getEtl_job());
 			}
 			if(Job_Status.RUNNING.getCode().equals(job.getJob_disp_status())) {
 				return true;
@@ -549,32 +607,45 @@ public class TaskJobHandleHelper {
 	}
 
 	/**
-	 * 该方法根据调度作业列表来结束作业。注意，该方法会在系统级别结束（杀死）作业，同时会更新调度作业状态到停止状态。
+	 * 该方法根据调度作业列表来结束作业。注意，该方法会在系统级别结束（杀死）作业，同时会更新调度作业状态到停止状态。<br>
+	 * 1.杀死传入的作业集合中每个作业；<br>
+	 * 2.每个被杀死的作业更新数据库作业状态为[停止]。
 	 * @author Tiger.Wang
-	 * @date 2019/9/10
-	 * @param etlJobs   调度作业列表
+	 * @date 2019/10/9
+	 * @param etlJobs
+	 *          含义：调度作业列表。
+	 *          取值范围：不能为null。
 	 */
 	private void stopRunningJobs(List<Etl_job_cur> etlJobs) {
 
 		for(Etl_job_cur etlJob : etlJobs) {
+			//1.杀死传入的作业集合中每个作业；
 			closeProcessById(etlJob.getJob_process_id(), etlJob.getPro_type());
+			//2.每个被杀死的作业更新数据库作业状态为[停止]。
 			TaskSqlHelper.updateEtlJobDispStatus(Job_Status.STOP.getCode(), etlJob.getEtl_sys_cd(),
 					etlJob.getEtl_job());
 		}
 	}
 
 	/**
-	 * 根据进程编号关闭进程（结束作业）。注意，此方法会判断作业类型来觉得结束作业的方式。
-	 * @note 1、当作业类型为Yarn时，意味着该任务在yarn上运行，使用杀死yarn作业的方式来结束作业；
-	 *       2、当作业类型不为Yarn时，意味着该任务在本地系统上运行，使用linux质量来结束作业。
+	 * 根据进程编号关闭进程（结束作业）。注意，此方法会判断作业类型来觉得结束作业的方式。<br>
+	 * 1、当作业类型为Yarn时，意味着该任务在yarn上运行，使用杀死yarn作业的方式来结束作业；<br>
+	 * 2、当作业类型不为Yarn时，意味着该任务在本地系统上运行，使用linux指令来结束作业。
 	 * @author Tiger.Wang
-	 * @date 2019/9/10
-	 * @param processId 进程编号
-	 * @param proType   作业类型
-	 * @return boolean  作业是否成功结束
+	 * @date 2019/10/9
+	 * @param processId
+	 *          含义：进程编号。
+	 *          取值范围：不能为null。
+	 * @param proType
+	 *          含义：作业类型。
+	 *          取值范围：Pro_Type枚举值，不能为null。
+	 * @return boolean
+	 *          含义：作业是否成功结束。
+	 *          取值范围：true/false。
 	 */
 	private boolean closeProcessById(String processId, String proType) {
 
+		//1、当作业类型为Yarn时，意味着该任务在yarn上运行，使用杀死yarn作业的方式来结束作业；
 		if(Pro_Type.Yarn.getCode().equals(proType)) {
 			logger.info("Will close job, process id is {}", processId);
 			try {
@@ -586,10 +657,11 @@ public class TaskJobHandleHelper {
 				return false;
 			}
 		}else {
+			//2、当作业类型不为Yarn时，意味着该任务在本地系统上运行，使用linux指令来结束作业。
 			if(StringUtil.isEmpty(processId)) return true;
 
-			String cmd = KILL9COMMANDLINE + " " + processId;
-//			String cmd = "taskkill -PID " + processId + " -F";
+//			String cmd = KILL9COMMANDLINE + " " + processId;
+			String cmd = "taskkill -PID " + processId + " -F";
 			try {
 				Runtime.getRuntime().exec(cmd); //执行命令
 			}
@@ -603,12 +675,19 @@ public class TaskJobHandleHelper {
 
 	/**
 	 * 根据任务/作业的干预类型，解析参数字符串，得出某个作业的跑批日期及优先级。
-	 * 注意，此处返回的Etl_job只包含当前跑批日期（curr_bath_date）及作业优先级（priority）。
+	 * 注意，此处返回的Etl_job只包含当前跑批日期（curr_bath_date）及作业优先级（priority）。<br>
+	 * 1.根据不同的干预类型，进行不同的参数解析方式。
 	 * @author Tiger.Wang
-	 * @date 2019/9/9
-	 * @param handleType    干预类型
-	 * @param paraStr   参数字符串
-	 * @return java.util.Optional<hrds.commons.entity.Etl_job>  作业对象
+	 * @date 2019/10/9
+	 * @param handleType
+	 *          含义：干预类型。
+	 *          取值范围：不能为null。
+	 * @param paraStr
+	 *          含义：参数字符串。
+	 *          取值范围：不能为null。
+	 * @return java.util.Optional<hrds.commons.entity.Etl_job_cur>
+	 *          含义：表示一个作业。
+	 *          取值范围：只使用对象的curr_bath_date、job_priority属性。
 	 */
 	private Optional<Etl_job_cur> analyzeParameter(String handleType, String paraStr) {
 
@@ -617,6 +696,7 @@ public class TaskJobHandleHelper {
 		}
 		String[] paraArray = paraStr.split(TaskManager.PARASEPARATOR);
 		Etl_job_cur etlJob = new Etl_job_cur();
+		//1.根据不同的干预类型，进行不同的参数解析方式。
 		switch (handleType){
 			case JT:
 			case JS:
@@ -625,7 +705,12 @@ public class TaskJobHandleHelper {
 				if(3 == paraArray.length){
 					etlJob.setCurr_bath_date(paraArray[2]);
 				}else {
-					etlJob.setCurr_bath_date(DEFAULT_BATH_DATE);
+					//TODO 此处较原版改动：不再设置当前跑批日期，而直接返回空，原因有2点：
+					// 1、概念上来说，若干预时参数错误，意味着这次干预不是本人的意愿，应该返回参数错误；
+					// 2、若参数错误而设置默认跑批日期，意味着该跑批日期在作业登记表中不存在，
+					//    含义为该作业不存在，但实际是“作业存在，只是干预时参数写错了”。
+//					etlJob.setCurr_bath_date(DEFAULT_BATH_DATE);
+					return Optional.empty();
 				}
 				break;
 			case JP:
@@ -633,8 +718,9 @@ public class TaskJobHandleHelper {
 					etlJob.setCurr_bath_date(paraArray[2]);
 					etlJob.setJob_priority(paraArray[3]);
 				}else {
-					etlJob.setCurr_bath_date(DEFAULT_BATH_DATE);
-					etlJob.setJob_priority(TaskManager.DEFAULT_PRIORITY);
+//					etlJob.setCurr_bath_date(DEFAULT_BATH_DATE);
+//					etlJob.setJob_priority(TaskManager.DEFAULT_PRIORITY);
+					return Optional.empty();
 				}
 				break;
 			case SS:
@@ -643,9 +729,9 @@ public class TaskJobHandleHelper {
 			case SR:
 				if(2 == paraArray.length) {
 					etlJob.setCurr_bath_date(paraArray[1]);
-				}
-				else {
-					etlJob.setCurr_bath_date(DEFAULT_BATH_DATE);
+				}else {
+//					etlJob.setCurr_bath_date(DEFAULT_BATH_DATE);
+					return Optional.empty();
 				}
 				break;
 			default:
@@ -656,39 +742,51 @@ public class TaskJobHandleHelper {
 	}
 
 	/**
-	 * 当任务/作业干预失败时，使用此方法来更新干预状态。
+	 * 当任务/作业干预失败时，使用此方法来更新干预状态。<br>
+	 * 1.更新干预状态。
 	 * @author Tiger.Wang
-	 * @date 2019/9/9
-	 * @param etlJobHand    Etl_job_hand对象
+	 * @date 2019/10/9
+	 * @param etlJobHand
+	 *          含义：表示一次干预的信息。
+	 *          取值范围：不能为null。
 	 */
 	private void updateErrorHandle(Etl_job_hand etlJobHand) {
 
+		//1.更新干预状态。
 		etlJobHand.setHand_status(Meddle_status.ERROR.getCode());
 		etlJobHand.setMain_serv_sync(Main_Server_Sync.NO.getCode());
 		updateHandle(etlJobHand);
 	}
 
 	/**
-	 * 当任务/作业干预完成时，使用此方法来更新干预状态
+	 * 当任务/作业干预完成时，使用此方法来更新干预状态。<br>
+	 * 1.更新干预状态。
 	 * @author Tiger.Wang
-	 * @date 2019/9/10
-	 * @param etlJobHand    Etl_job_hand对象
+	 * @date 2019/10/9
+	 * @param etlJobHand
+	 *          含义：表示一次干预的信息。
+	 *          取值范围：不能为null。
 	 */
 	private void updateDoneHandle(Etl_job_hand etlJobHand) {
 
+		//1.更新干预状态。
 		etlJobHand.setHand_status(Meddle_status.DONE.getCode());
 		etlJobHand.setMain_serv_sync(Main_Server_Sync.YES.getCode());
 		updateHandle(etlJobHand);
 	}
 
 	/**
-	 * 当任务/作业需要干预为运行中时，使用此方法来更新干预状态
+	 * 当任务/作业需要干预为运行中时，使用此方法来更新干预状态。<br>
+	 * 1.更新干预状态。
 	 * @author Tiger.Wang
-	 * @date 2019/9/10
-	 * @param etlJobHand    Etl_job_hand对象
+	 * @date 2019/10/9
+	 * @param etlJobHand
+	 *          含义：表示一次干预的信息。
+	 *          取值范围：不能为null。
 	 */
 	private void updateRunningHandle(Etl_job_hand etlJobHand) {
 
+		//1.更新干预状态。
 		etlJobHand.setHand_status(Meddle_status.RUNNING.getCode());
 		etlJobHand.setMain_serv_sync(Main_Server_Sync.YES.getCode());
 		TaskSqlHelper.updateEtlJobHandle(etlJobHand);
@@ -696,21 +794,23 @@ public class TaskJobHandleHelper {
 
 	/**
 	 * 该方法用于更新调度作业干预信息。注意：1、此方法会更新调度作业干预表，以及记录干预历史；
-	 * 2、该方法依赖于传入的etlJobHand参数，会直接使用该对象，这意味着你可以为该对象设置任意的值来更新数据到数据库中。
-	 * @note    1、更新调度作业干预表（etl_job_hand）；
-	 *          2、调度作业干预历史表（etl_job_hand_his）中新增一条记录；
-	 *          3、删除调度作业干预表（etl_job_hand）信息。
+	 * 2、该方法依赖于传入的etlJobHand参数，会直接使用该对象，这意味着你可以为该对象设置任意的值来更新数据到数据库中。<br>
+	 * 1.更新调度作业干预表（etl_job_hand）；<br>
+	 * 2.调度作业干预历史表（etl_job_hand_his）中新增一条记录；<br>
+	 * 3.删除调度作业干预表（etl_job_hand）信息。
 	 * @author Tiger.Wang
-	 * @date 2019/9/10
-	 * @param etlJobHand    Etl_job_hand对象，表示一个作业干预
+	 * @date 2019/10/9
+	 * @param etlJobHand
+	 *          含义：表示一个作业干预。
+	 *          取值范围：不能为null。
 	 */
 	private void updateHandle(Etl_job_hand etlJobHand) {
 
 		etlJobHand.setEnd_time(DateUtil.getDateTime(DateUtil.DATETIME_DEFAULT));
 		//TODO 此处第三步既然要删除，为什么第一步要更新
-		//1、更新调度作业干预表（etl_job_hand）。
+		//1.更新调度作业干预表（etl_job_hand）。
 		TaskSqlHelper.updateEtlJobHandle(etlJobHand);
-		//2、调度作业干预历史表（etl_job_hand_his）中新增一条记录。
+		//2.调度作业干预历史表（etl_job_hand_his）中新增一条记录。
 		Etl_job_hand_his etlJobHandHis = new Etl_job_hand_his();
 		etlJobHandHis.setEvent_id(PrimayKeyGener.getNextId());
 		etlJobHandHis.setEtl_sys_cd(etlJobHand.getEtl_sys_cd());
@@ -723,7 +823,7 @@ public class TaskJobHandleHelper {
 		etlJobHandHis.setWarning(etlJobHand.getWarning());
 		etlJobHandHis.setMain_serv_sync(etlJobHand.getMain_serv_sync());
 		TaskSqlHelper.insertIntoEtlJobHandleHistory(etlJobHandHis);
-		//3、删除调度干预表（etl_job_hand）信息。
+		//3.删除调度干预表（etl_job_hand）信息。
 		TaskSqlHelper.deleteEtlJobHand(etlJobHand.getEtl_sys_cd(), etlJobHand.getEtl_job(),
 				etlJobHand.getEtl_hand_type());
 	}

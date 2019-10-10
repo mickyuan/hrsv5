@@ -31,7 +31,11 @@ public class TaskManagerTest {
 	private static final Logger logger = LogManager.getLogger();
 
 	public static final String syscode = "110";
-	public static final String currBathDate = LocalDate.now().format(DateUtil.DATE_DEFAULT);
+	private static final String currBathDate = LocalDate.now().format(DateUtil.DATE_DEFAULT);
+
+	private static final String SLEEP1S_SHELL = "HelloWord.sh";
+	private static final String SLEEP1M_SHELL = "HelloWordWaitLongTime.sh";
+	private static final String FAUIL_SHELL = "HelloWordFailure.sh";
 
 	private static TaskManager taskManager;
 	private static List<Etl_job_def> etlJobDefs = new ArrayList<>();
@@ -57,7 +61,7 @@ public class TaskManagerTest {
 				etlJobDef.setCurr_bath_date(currBathDate);
 				etlJobDef.setPro_type(Pro_Type.SHELL.getCode());
 				etlJobDef.setPro_dic("/mnt/d/");
-				etlJobDef.setPro_name("HelloWord.sh");
+				etlJobDef.setPro_name(SLEEP1S_SHELL);
 				etlJobDef.setLog_dic("D:\\");
 //				etlJobDef.setDisp_time("235959");
 //				etlJobDef.setExe_frequency(1);
@@ -176,21 +180,8 @@ public class TaskManagerTest {
 	}
 
 	@Test
-	public void initEtlSystem() {
-		//TODO 问题2，对于类中不为public的方法不应该测试？ 问题3，对于类中为public的方法，无返回值，无法获取内部状态，
-		// 应该如何测试？
-		taskManager.initEtlSystem();
-	}
-
-	@Test
-	public void loadReadyJob() {
-		//TODO 问题4，对于需要内存数据的taskManager.loadReadyJob()方法，该类不对外提供内存表操作，只能这样进行测试？
-		taskManager.initEtlSystem();
-		taskManager.loadReadyJob();
-	}
-
-	@Test
 	public void publishReadyJob() {
+
 		//TODO 这个测试用例需要trigger来执行任务，并且有执行结果后，该程序才能继续往下走。
 		taskManager.initEtlSystem();
 		taskManager.loadReadyJob();
@@ -214,10 +205,12 @@ public class TaskManagerTest {
 
 	@Test
 	public void handleJob2Run() {
+
 		//作业干预类型为[直接触发]的作业，仅在作业还未运行过（未来才会第一次运行）时才能使用。
-		String handleEtlJob = "JobRun";
 		try(DatabaseWrapper db = new DatabaseWrapper()) {
-			//T+1作业
+
+			//正确的数据访问1、干预已存在的作业，且该作业还未执行。
+			String handleEtlJob = "JobRun";
 			Etl_job_def etlJobDef = new Etl_job_def();
 			etlJobDef.setEtl_sys_cd(syscode);
 			etlJobDef.setEtl_job(handleEtlJob);
@@ -226,14 +219,14 @@ public class TaskManagerTest {
 			etlJobDef.setDisp_freq(Dispatch_Frequency.DAILY.getCode());
 			etlJobDef.setDisp_type(Dispatch_Type.TPLUS1.getCode());
 			etlJobDef.setCom_exe_num(0);
-			etlJobDef.setDisp_time("172200");
+			etlJobDef.setDisp_time("000001");
 			etlJobDef.setDisp_offset(1);    //偏移量跟DAILY没关系
 			etlJobDef.setJob_priority(100);
 			etlJobDef.setJob_priority_curr(100);
 			etlJobDef.setCurr_bath_date(currBathDate);
 			etlJobDef.setPro_type(Pro_Type.SHELL.getCode());
 			etlJobDef.setPro_dic("/mnt/d/");
-			etlJobDef.setPro_name("HelloWord.sh");
+			etlJobDef.setPro_name(SLEEP1S_SHELL);
 			etlJobDef.setLog_dic("D:\\");
 			etlJobDef.setExe_frequency(1);
 			etlJobDef.add(db);
@@ -253,108 +246,196 @@ public class TaskManagerTest {
 			resource.add(db);
 
 			Etl_job_hand etlJobHand = new Etl_job_hand();
+			etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
 			etlJobHand.setEtl_sys_cd(syscode);
 			etlJobHand.setEtl_job(handleEtlJob);
 			etlJobHand.setPro_para(syscode + "," + handleEtlJob + "," + currBathDate);
 			etlJobHand.setEtl_hand_type("JT");
-			etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
 			etlJobHand.setHand_status(Meddle_status.TRUE.getCode());
 			etlJobHand.setMain_serv_sync(Main_Server_Sync.YES.getCode());
 			etlJobHand.add(db);
 
+			//错误的数据访问1、干预不存在的作业。
+			String noExitEtlJob = "NoExitEtlJob";
+			etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+			etlJobHand.setEtl_job(noExitEtlJob);
+			etlJobHand.setPro_para(syscode + "," + noExitEtlJob + "," + currBathDate);
+			etlJobHand.add(db);
+
+			//错误的数据访问2、干预设置错误的作业，该干预不允许对已执行的作业操作
+			String errorStatusEtlJob = "errorStatusEtlJob";
+			etlJobDef.setEtl_job(errorStatusEtlJob);
+			etlJobDef.setDisp_type(Dispatch_Type.TPLUS0.getCode());
+			etlJobDef.add(db);
+
+			etlJobResourceRela.setEtl_job(errorStatusEtlJob);
+			etlJobResourceRela.setResource_type(errorStatusEtlJob + 100);
+			etlJobResourceRela.add(db);
+
+			resource.setResource_type(etlJobResourceRela.getResource_type());
+			resource.add(db);
+
+			Thread thread = new Thread(() -> {
+
+				logger.info("--------------- 沉睡4秒 ---------------");
+				try {
+					Thread.sleep(4000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+				etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+				etlJobHand.setEtl_job(errorStatusEtlJob);
+				etlJobHand.setPro_para(syscode + "," + errorStatusEtlJob + "," + currBathDate);
+				etlJobHand.add(db);
+
+				SqlOperator.commitTransaction(db);
+			});
+
+			thread.start();
+
+			//错误的数据访问3、干预设置错误的作业，该干预不允许[干预参数]错误
+			String errorParaEtlJob = "errorParaEtlJob";
+			etlJobDef.setEtl_job(errorParaEtlJob);
+			etlJobDef.setDisp_type(Dispatch_Type.TPLUS0.getCode());
+			etlJobDef.add(db);
+
+			etlJobResourceRela.setEtl_job(errorParaEtlJob);
+			etlJobResourceRela.setResource_type(errorParaEtlJob + 100);
+			etlJobResourceRela.add(db);
+
+			resource.setResource_type(etlJobResourceRela.getResource_type());
+			resource.add(db);
+
+			etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+			etlJobHand.setEtl_job(errorParaEtlJob);
+			etlJobHand.setPro_para(syscode + "," + errorParaEtlJob + "," + currBathDate + ",1");
+			etlJobHand.add(db);
+
 			SqlOperator.commitTransaction(db);
-		}
 
-		taskManager.initEtlSystem();
-		taskManager.loadReadyJob();
-		taskManager.publishReadyJob();
-
-		//为了测试干预类型为[直接触发]的作业，需要检查本应在未来执行的作业今天是否已经调度（今天是否已进入调度历史表）
-		try(DatabaseWrapper db = new DatabaseWrapper()) {
+			taskManager.initEtlSystem();
+			taskManager.loadReadyJob();
+			taskManager.publishReadyJob();
 
 			Etl_job_disp_his etlJobDispHis = SqlOperator.queryOneObject(db, Etl_job_disp_his.class,
 					"SELECT * FROM etl_job_disp_his WHERE etl_sys_cd = ? AND etl_job = ?"
-			, syscode, handleEtlJob).orElseThrow(() ->
+					, syscode, handleEtlJob).orElseThrow(() ->
 					new AppSystemException("测试作业干预类型为[直接触发]的作业失败"));
 
-			assertEquals("测试作业干预类型为[直接触发]的作业，是否执行完成",
+			assertEquals("测试作业干预类型为[直接触发]的作业，在正确数据情况下作业是否完成",
 					Job_Status.DONE.getCode(), etlJobDispHis.getJob_disp_status());
-		}
-	}
 
-	@Test
-	public void handleSys2Rerun() {
-		//作业干预类型为[系统重跑]的作业，若想成功干预，必须先系统暂停。
-		//系统级别的干预应该无作业名
-		String handleEtlJob = "SystemRerun";
-		try(DatabaseWrapper db = new DatabaseWrapper()) {
+			Etl_job_hand_his etlJobHandHis = SqlOperator.queryOneObject(db, Etl_job_hand_his.class,
+					"SELECT * FROM etl_job_hand_his WHERE etl_sys_cd = ? AND etl_job = ?"
+					, syscode, handleEtlJob).orElseThrow(() ->
+					new AppSystemException("测试作业干预类型为[直接触发]的作业失败"));
 
-			Etl_job_hand etlJobHand = new Etl_job_hand();
-			etlJobHand.setEtl_sys_cd(syscode);
-			etlJobHand.setEtl_job(handleEtlJob);
-			etlJobHand.setPro_para(syscode + "," + handleEtlJob + "," + currBathDate);
-			etlJobHand.setEtl_hand_type("SP");
-			etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
-			etlJobHand.setHand_status(Meddle_status.TRUE.getCode());
-			etlJobHand.setMain_serv_sync(Main_Server_Sync.YES.getCode());
-			etlJobHand.add(db);
+			assertEquals("测试作业干预类型为[直接触发]的作业，在正确数据情况下是否干预完成",
+					Meddle_status.DONE.getCode(), etlJobHandHis.getHand_status());
 
-			etlJobHand.setEtl_hand_type("SO");
-			etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
-			etlJobHand.add(db);
+			List<Etl_job_hand_his> etlJobHandHiss = SqlOperator.queryList(db,
+					Etl_job_hand_his.class, "SELECT * FROM etl_job_hand_his " +
+							"WHERE etl_sys_cd = ? AND (etl_job = ? OR etl_job = ? OR etl_job = ?)",
+					syscode, noExitEtlJob, errorStatusEtlJob, errorParaEtlJob);
 
-			SqlOperator.commitTransaction(db);
-		}
-
-		taskManager.initEtlSystem();
-		taskManager.loadReadyJob();
-		taskManager.publishReadyJob();
-
-		//为了测试干预类型为[系统重跑]的作业，需要检查调度历史中，每个作业是否调度了两次
-		try(DatabaseWrapper db = new DatabaseWrapper()) {
-
-			for (Etl_job_def etlJobDef : etlJobDefs) {
-				//98是虚作业，虚作业不会存在于调度表
-				if("98".equals(etlJobDef.getEtl_job())) continue;
-
-				long nums = SqlOperator.queryNumber(db,
-						"SELECT count(*) FROM etl_job_disp_his WHERE etl_sys_cd = ? AND etl_job = ?",
-						etlJobDef.getEtl_sys_cd(), etlJobDef.getEtl_job()).orElse(0);
-
-				assertEquals("测试作业干预类型为[系统重跑]的作业，是否每个任务调度了2次，作业名为："
-						+ etlJobDef.getEtl_job(), 2, nums);
+			for(Etl_job_hand_his etlJobDispHis1 : etlJobHandHiss) {
+				assertEquals("测试作业干预类型为[直接触发]的作业，在错误数据情况下是否干预错误",
+						Meddle_status.ERROR.getCode(), etlJobDispHis1.getHand_status());
 			}
 		}
 	}
 
 	@Test
+	public void handleSys2Rerun() {
+
+		//TODO 系统级干预跟etl_job无关，该字段不应该作为主键
+		//作业干预类型为[系统重跑]的作业，若想成功干预，必须先系统暂停。
+		try(DatabaseWrapper db = new DatabaseWrapper()) {
+
+			String errorStatusEtlJob = "errorStatusEtlJob";
+			String handleEtlJob = "handleEtlJob";
+			Thread thread = new Thread(() -> {
+				logger.info("--------------- 沉睡4秒 ---------------");
+				try {
+					Thread.sleep(4000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+				//错误的数据访问1、进行干预时，系统不暂停，干预将会失败。
+				Etl_job_hand etlJobHand = new Etl_job_hand();
+				etlJobHand.setEtl_job(errorStatusEtlJob);
+				etlJobHand.setEtl_sys_cd(syscode);
+				etlJobHand.setEtl_hand_type("SO");
+				etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+				etlJobHand.setHand_status(Meddle_status.TRUE.getCode());
+				etlJobHand.setMain_serv_sync(Main_Server_Sync.YES.getCode());
+				etlJobHand.add(db);
+
+				//正确的数据访问1、进行干预时，系统暂停，干预会成功。
+				etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+				etlJobHand.setEtl_job(handleEtlJob);
+				etlJobHand.setEtl_hand_type("SP");
+				etlJobHand.add(db);
+
+				etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+				etlJobHand.setEtl_hand_type("SO");
+				etlJobHand.add(db);
+
+				SqlOperator.commitTransaction(db);
+			});
+
+			thread.start();
+
+			taskManager.initEtlSystem();
+			taskManager.loadReadyJob();
+			taskManager.publishReadyJob();
+
+			List<Etl_job_hand_his> etlJobHandHiss = SqlOperator.queryList(db,
+					Etl_job_hand_his.class, "SELECT * FROM etl_job_hand_his WHERE etl_sys_cd = ? " +
+							"AND etl_job = ?", syscode, handleEtlJob);
+
+			for(Etl_job_hand_his etlJobHandHis : etlJobHandHiss) {
+				assertEquals("测试作业干预类型为[系统重跑]的作业，在正确数据情况下是否干预完成",
+						Meddle_status.DONE.getCode(), etlJobHandHis.getHand_status());
+			}
+
+			Etl_job_hand_his etlJobHandHis = SqlOperator.queryOneObject(db, Etl_job_hand_his.class,
+					"SELECT * FROM etl_job_hand_his WHERE etl_sys_cd = ? AND etl_job = ?"
+					, syscode, errorStatusEtlJob).orElseThrow(() ->
+					new AppSystemException("测试作业干预类型为[直接触发]的作业失败"));
+
+			assertEquals("测试作业干预类型为[系统重跑]的作业，在错误数据情况下是否干预错误",
+					Meddle_status.ERROR.getCode(), etlJobHandHis.getHand_status());
+		}
+	}
+
+	@Test
 	public void handleSys2Pause() {
-		//TODO 这个没法单独测试，要配合干预类型为[系统续跑]进行测试。又因为要结束该次测试，
-		// 所以要将[挂起]状态的作业直接调起，需要配合干预类型为[直接触发]进行测试
+
 		//作业干预类型为[系统暂停]的作业，含义为：
-		// 1、对于作业状态为[运行中]的作业，会设置该作业状态为[停止]，但是[运行中]的作业几乎已经发布到redis中，
+		// 1、对于作业状态为[运行中]的作业，会设置该作业状态为[停止]，但是[运行中]的作业已经发布到redis中，
 		//    对于已发布的作业，该干预无效；
 		// 2、对于作业状态为[挂起]的作业，会设置该作业状态为[停止]，该作业不再执行。
 		//系统级别的干预应该无作业名
-		String handleEtlJob = "SystemPause";
 		try(DatabaseWrapper db = new DatabaseWrapper()) {
-			//T+1作业
+			//正确的数据访问1、
+			String handleEtlJob = "SystemPause";
 			Etl_job_def etlJobDef = new Etl_job_def();
 			etlJobDef.setEtl_sys_cd(syscode);
 			etlJobDef.setEtl_job(handleEtlJob);
 			etlJobDef.setSub_sys_cd(syscode);
 			etlJobDef.setJob_eff_flag(Job_Effective_Flag.YES.getCode());
 			etlJobDef.setDisp_freq(Dispatch_Frequency.DAILY.getCode());
-			etlJobDef.setDisp_type(Dispatch_Type.TPLUS1.getCode());
+			etlJobDef.setDisp_type(Dispatch_Type.TPLUS0.getCode());
 			etlJobDef.setCom_exe_num(0);
-			etlJobDef.setDisp_time("172200");
+			etlJobDef.setDisp_time("000001");
 			etlJobDef.setDisp_offset(1);    //TODO 偏移量跟DAILY没关系
 			etlJobDef.setJob_priority(100);
 			etlJobDef.setJob_priority_curr(100);
 			etlJobDef.setCurr_bath_date(currBathDate);
 			etlJobDef.setPro_type(Pro_Type.SHELL.getCode());
 			etlJobDef.setPro_dic("/mnt/d/");
-			etlJobDef.setPro_name("HelloWord.sh");
+			etlJobDef.setPro_name(SLEEP1S_SHELL);
 			etlJobDef.setLog_dic("D:\\");
 			etlJobDef.setExe_frequency(1);
 			etlJobDef.add(db);
@@ -374,15 +455,14 @@ public class TaskManagerTest {
 			resource.add(db);
 
 			SqlOperator.commitTransaction(db);
-		}
 
-		taskManager.initEtlSystem();
-		taskManager.loadReadyJob();
-
-		Thread thread = new Thread(() -> {
-			try(DatabaseWrapper db = new DatabaseWrapper()) {
+			Thread thread = new Thread(() -> {
 				logger.info("--------------- 沉睡4秒 ---------------");
-				Thread.sleep(4000);
+				try {
+					Thread.sleep(4000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
 
 				Etl_job_hand etlJobHand = new Etl_job_hand();
 				etlJobHand.setEtl_sys_cd(syscode);
@@ -398,21 +478,14 @@ public class TaskManagerTest {
 				etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
 				etlJobHand.add(db);
 
-				etlJobHand.setEtl_hand_type("JT");
-				etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
-				etlJobHand.add(db);
-
 				SqlOperator.commitTransaction(db);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		});
+			});
 
-		thread.start();
+			thread.start();
 
-		taskManager.publishReadyJob();
-
-		try(DatabaseWrapper db = new DatabaseWrapper()) {
+			taskManager.initEtlSystem();
+			taskManager.loadReadyJob();
+			taskManager.publishReadyJob();
 
 			Etl_job_disp_his etlJobDispHis = SqlOperator.queryOneObject(db, Etl_job_disp_his.class,
 					"SELECT * FROM etl_job_disp_his WHERE etl_sys_cd = ? AND etl_job = ?"
@@ -451,7 +524,7 @@ public class TaskManagerTest {
 			etlJobDef.setCurr_bath_date(currBathDate);
 			etlJobDef.setPro_type(Pro_Type.SHELL.getCode());
 			etlJobDef.setPro_dic("/mnt/d/");
-			etlJobDef.setPro_name("HelloWordWaitLongTime.sh");
+			etlJobDef.setPro_name(SLEEP1M_SHELL);
 			etlJobDef.setLog_dic("D:\\");
 			etlJobDef.add(db);
 
@@ -529,12 +602,12 @@ public class TaskManagerTest {
 			etlJobDef.setCurr_bath_date(currBathDate);
 			etlJobDef.setPro_type(Pro_Type.SHELL.getCode());
 			etlJobDef.setPro_dic("/mnt/d/");
-			etlJobDef.setPro_name("HelloWordWaitLongTime.sh");
+			etlJobDef.setPro_name(SLEEP1M_SHELL);
 			etlJobDef.setLog_dic("D:\\");
 			etlJobDef.add(db);
 
 			etlJobDef.setEtl_job(handleErrorEtlJob);
-			etlJobDef.setPro_name("HelloWordFailure.sh");
+			etlJobDef.setPro_name(FAUIL_SHELL);
 			etlJobDef.add(db);
 
 			Etl_job_resource_rela etlJobResourceRela = new Etl_job_resource_rela();
@@ -655,7 +728,7 @@ public class TaskManagerTest {
 			etlJobDef.setCurr_bath_date(currBathDate);
 			etlJobDef.setPro_type(Pro_Type.SHELL.getCode());
 			etlJobDef.setPro_dic("/mnt/d/");
-			etlJobDef.setPro_name("HelloWord.sh");
+			etlJobDef.setPro_name(SLEEP1S_SHELL);
 			etlJobDef.setLog_dic("D:\\");
 			etlJobDef.setExe_frequency(1);
 			etlJobDef.add(db);
@@ -706,7 +779,7 @@ public class TaskManagerTest {
 		taskManager.publishReadyJob();
 	}
 
-	@Test
+	//@Test
 	public void handleSysDayShift() {
 		//TODO 系统干预日切待确认
 		String handleEtlJob = "SysDayShift";

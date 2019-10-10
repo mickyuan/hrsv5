@@ -81,7 +81,8 @@ class ClassPathResLoader {
 	}
 
 	/**
-	 * 加载指定目录下的文件到classpath。
+	 * 加载指定目录下的文件到classpath。<br>
+	 * 1.执行反射调用。
 	 * @author Tiger.Wang
 	 * @date 2019/10/8
 	 * @param file <br>
@@ -90,6 +91,7 @@ class ClassPathResLoader {
 	 */
 	private static void addURL(File file) {
 
+		//1.执行反射调用。
 		try {
 			addURL.invoke(classloader, file.toURI().toURL());
 		}catch(Exception e) {
