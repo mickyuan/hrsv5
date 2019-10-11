@@ -2,18 +2,22 @@ package hrds.b.biz.agentinfo;
 
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.StringUtil;
+import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.annotation.RequestBean;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.AgentStatus;
 import hrds.commons.codes.AgentType;
+import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Agent_info;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.key.PrimayKeyGener;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * agent增删改类
@@ -22,6 +26,70 @@ import java.util.List;
  * @date 2019-09-04 17:30:27
  */
 public class AgentInfoAction extends BaseAction {
+	/**
+	 * 查询所有agent信息,agent页面展示(测试用例还未写）
+	 *
+	 * @param sourceId       long
+	 *                       含义：data_source表主键，source_relation_dep表外键
+	 *                       取值范围：不为空，10位数字
+	 * @param datasourceName String
+	 *                       含义：数据源名称
+	 *                       取值范围：不为空且不为空格
+	 * @return java.util.Map
+	 * 含义：存放数据源及agent信息的集合
+	 */
+	public Map<String, Object> searchAgentInfo(long sourceId, long datasourceName) {
+		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
+		asmSql.addSql("select gi.*,su.user_name,su.user_id,t3.deploy,(case t3.deploy when ? then 'yes' " +
+				" else 'no' end) agentStatu from agent_info gi LEFT JOIN agent_down_info t3 ON " +
+				" gi.agent_ip = t3.agent_ip AND gi.agent_port = t3.agent_port AND gi.agent_id = t3.agent_id left " +
+				" join sys_user su on gi.user_id=su.user_id  where gi.source_id = ? and gi.agent_type = ?" +
+				" order by gi.agent_id");
+		asmSql.addParam(IsFlag.Shi.getCode());
+		asmSql.addParam(sourceId);
+		asmSql.addParam(AgentType.ShuJuKu.getCode());
+		List<Map<String, Object>> sjkAgentList = Dbo.queryList(asmSql.sql(), asmSql.params());
+		asmSql.cleanParams();
+		// 文件系统Agent
+		asmSql.addParam(IsFlag.Shi.getCode());
+		asmSql.addParam(sourceId);
+		asmSql.addParam(AgentType.WenJianXiTong.getCode());
+		List<Map<String, Object>> fileAgentList = Dbo.queryList(asmSql.sql(), asmSql.params());
+		asmSql.cleanParams();
+		// DB文件Agent
+		asmSql.addParam(IsFlag.Shi.getCode());
+		asmSql.addParam(sourceId);
+		asmSql.addParam(AgentType.DBWenJian.getCode());
+		List<Map<String, Object>> DBWJAgentList = Dbo.queryList(asmSql.sql(), asmSql.params());
+		asmSql.cleanParams();
+		// 对象Agent
+		asmSql.addParam(IsFlag.Shi.getCode());
+		asmSql.addParam(sourceId);
+		asmSql.addParam(AgentType.DuiXiang.getCode());
+		List<Map<String, Object>> dxAgentList = Dbo.queryList(asmSql.sql(), asmSql.params());
+		asmSql.cleanParams();
+		// FTP Agent
+		asmSql.addParam(IsFlag.Shi.getCode());
+		asmSql.addParam(sourceId);
+		asmSql.addParam(AgentType.FTP.getCode());
+		List<Map<String, Object>> ftpAgentList = Dbo.queryList(asmSql.sql(), asmSql.params());
+		// 创建存放agent信息的集合
+		Map<String, Object> map = new HashMap<>();
+		map.put("sjkAgent", sjkAgentList);
+		map.put("DBAgent", sjkAgentList);
+		map.put("fileAgent", sjkAgentList);
+		map.put("dxAgent", sjkAgentList);
+		map.put("ftpAgent", sjkAgentList);
+		map.put("datasourceName", datasourceName);
+		map.put("connection", AgentStatus.YiLianJie.getCode());
+		map.put("sjk", AgentType.ShuJuKu.getCode());
+		map.put("DB", AgentType.DBWenJian.getCode());
+		map.put("dx", AgentType.DuiXiang.getCode());
+		map.put("file", AgentType.WenJianXiTong.getCode());
+		map.put("ftp", AgentType.FTP.getCode());
+		return map;
+	}
+
 	/**
 	 * 保存agent信息
 	 * <p>
