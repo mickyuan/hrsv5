@@ -10,7 +10,7 @@ import fd.ng.netserver.conf.HttpServerConfBean;
 import fd.ng.web.action.ActionResult;
 import fd.ng.web.annotation.RequestBean;
 import fd.ng.web.util.Dbo;
-import hrds.b.biz.agent.bean.URLTemplate;
+import hrds.b.biz.agent.bean.DBConnectionProp;
 import hrds.b.biz.agent.tools.ConnUtil;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.CleanType;
@@ -43,7 +43,7 @@ public class DBConfStepAction extends BaseAction{
 	 *
 	 * @Param: databaseId long
 	 *         含义：database_set表主键
-	 *         取值范围：不为空
+		 *         取值范围：不为空
 	 * @return: fd.ng.db.resultset.Result
 	 *          含义：数据源信息查询结果集
 	 *          取值范围：不会为null
@@ -80,15 +80,12 @@ public class DBConfStepAction extends BaseAction{
 	 * @Param: dbType String
 	 *         含义：数据库类型
 	 *         取值范围：DatabaseType代码项code值
-	 * @Param: port String
-	 *         含义：数据库连接端口号
-	 *         取值范围：不为空
 	 * @return: String
 	 *          含义：数据库连接url
 	 *          取值范围：不会为null
 	 *
 	 * */
-	public URLTemplate getJDBCDriver(String dbType) {
+	public DBConnectionProp getJDBCDriver(String dbType) {
 		return ConnUtil.getConnURLTemplate(dbType);
 		//数据可访问权限处理方式
 		//不与数据库交互，无需限制访问权限
@@ -342,9 +339,8 @@ public class DBConfStepAction extends BaseAction{
 	 * @Param: databaseSet Database_set
 	 *         含义：存有agent_id, driver, url, username, password, dbtype等信息的Database_set实体类对象
 	 *         取值范围：Database_set实体类对象，不为空
-	 * @return: ActionResult对象
-	 *          含义：封装了Agent响应信息
-	 *          取值范围：不为空
+	 *
+	 * @return: 无
 	 *
 	 * */
 	public void testConnection(@RequestBean Database_set databaseSet) {

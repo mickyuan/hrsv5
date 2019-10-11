@@ -45,7 +45,7 @@ public class AgentListAction extends BaseAction {
 	 * */
 	public Result getAgentInfoList() {
 		//1、获取用户ID并根据用户ID去数据库中查询数据源信息
-		return Dbo.queryResult("select datas.source_id,datasource_name from "+Data_source.TableName
+		return Dbo.queryResult("select datas.source_id,datasource_name from " + Data_source.TableName
 				+ " datas " + "where datas.create_user_id = ?", getUserId());
 		//数据可访问权限处理方式
 		//以上SQL中，通过当前用户ID进行关联查询，达到了数据权限的限制
