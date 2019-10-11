@@ -6,6 +6,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+import fd.ng.core.utils.FileUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.*;
@@ -37,7 +38,6 @@ public class TaskManagerTest {
 	private static final String SLEEP1M_SHELL = "HelloWordWaitLongTime.sh";
 	private static final String FAUIL_SHELL = "HelloWordFailure.sh";
 
-	private static TaskManager taskManager;
 	private static List<Etl_job_def> etlJobDefs = new ArrayList<>();
 
 	@Before
@@ -60,9 +60,9 @@ public class TaskManagerTest {
 				etlJobDef.setJob_priority_curr(i);
 				etlJobDef.setCurr_bath_date(currBathDate);
 				etlJobDef.setPro_type(Pro_Type.SHELL.getCode());
-				etlJobDef.setPro_dic("/mnt/d/");
+				etlJobDef.setPro_dic("/tmp");
 				etlJobDef.setPro_name(SLEEP1S_SHELL);
-				etlJobDef.setLog_dic("D:\\");
+				etlJobDef.setLog_dic(FileUtil.TEMP_DIR_NAME);
 //				etlJobDef.setDisp_time("235959");
 //				etlJobDef.setExe_frequency(1);
 				etlJobDef.add(db);
@@ -110,9 +110,6 @@ public class TaskManagerTest {
 
 			SqlOperator.commitTransaction(db);
 		}
-
-		//TODO 问题1，对于不同的构造参数，应该如何测试
-		taskManager = new TaskManager(syscode, currBathDate, false, false);
 	}
 
 	@After
@@ -150,18 +147,19 @@ public class TaskManagerTest {
 	@BeforeClass
 	public static void beforeSomething() {
 
+		//FIXME 这里用 new File 方式，动态在临时目录下创建 shell 脚本文件
 		try(DatabaseWrapper db = new DatabaseWrapper()) {
 			Etl_sys etlSys = new Etl_sys();
 			etlSys.setEtl_sys_cd(syscode);
 			etlSys.setEtl_sys_name("测试1");
-			etlSys.setEtl_serv_ip("127.0.0.1");
-			etlSys.setEtl_serv_port("8088");
+			etlSys.setEtl_serv_ip("");
+			etlSys.setEtl_serv_port("");
 			etlSys.setUser_id("1001");
-			etlSys.setCurr_bath_date(DateUtil.getDateTime(DateUtil.DATETIME_DEFAULT));
+			etlSys.setCurr_bath_date(DateUtil.getDateTime());
 			etlSys.setBath_shift_time(LocalDate.now().plusDays(1).format(DateUtil.DATE_DEFAULT));
 			etlSys.setSys_run_status(Job_Status.STOP.getCode());
-			etlSys.setUser_name("smk");
-			etlSys.setUser_pwd("q1w2e3");
+			etlSys.setUser_name("");
+			etlSys.setUser_pwd("");
 			etlSys.add(db);
 			SqlOperator.commitTransaction(db);
 		}
@@ -180,7 +178,20 @@ public class TaskManagerTest {
 	}
 
 	@Test
-	public void publishReadyJob() {
+	public void testHasShift() {
+		TaskManager taskManager = new TaskManager(syscode, currBathDate, false, true);
+
+		publishReadyJob(taskManager);
+	}
+
+	@Test
+	public void testHasnotShift() {
+		TaskManager taskManager = new TaskManager(syscode, currBathDate, false, false);
+
+		publishReadyJob(taskManager);
+	}
+
+	public void publishReadyJob(TaskManager taskManager) {
 
 		//TODO 这个测试用例需要trigger来执行任务，并且有执行结果后，该程序才能继续往下走。
 		taskManager.initEtlSystem();
