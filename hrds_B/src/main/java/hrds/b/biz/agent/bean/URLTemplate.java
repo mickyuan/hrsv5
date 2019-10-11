@@ -7,8 +7,10 @@ package hrds.b.biz.agent.bean;
  * @BelongsProject: hrsv5
  * @BelongsPackage: hrds.b.biz.agent.bean
  **/
+//FIXME 名字应该符合功能。比如：DBConnectionProp。
 public class URLTemplate {
 
+	//FIXME 注释说明每个变量的含义，用真实的值做例子来说明。
 	private String urlPrefix;
 	private String ipPlaceholder;
 	private String portPlaceholder;
