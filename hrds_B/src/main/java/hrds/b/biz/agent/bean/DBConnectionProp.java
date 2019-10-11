@@ -7,13 +7,18 @@ package hrds.b.biz.agent.bean;
  * @BelongsProject: hrsv5
  * @BelongsPackage: hrds.b.biz.agent.bean
  **/
-//FIXME 名字应该符合功能。比如：DBConnectionProp。
-public class URLTemplate {
+//FIXME 名字应该符合功能。比如：DBConnectionProp，已修复
+public class DBConnectionProp {
 
-	//FIXME 注释说明每个变量的含义，用真实的值做例子来说明。
+	//FIXME 注释说明每个变量的含义，用真实的值做例子来说明，已修复。
+	//JDBCURL串前缀，如jdbc:mysql://
 	private String urlPrefix;
+	//JDBCURL串拼接数据库连接IP地址的占位符，一般用:，前端直接在冒号后面动态追加用户输入的IP地址
 	private String ipPlaceholder;
+	//JDBCURL串拼接数据库连接端口号的占位符，一般用/，前端直接在冒号后面动态追加用户输入的端口号
 	private String portPlaceholder;
+	//JDBCURL串后缀，在连接TeraData，Informatic，MYSQL数据库时，有后缀
+	//如：?characterEncoding=utf8&zeroDateTimeBehavior=convertToNull，其他类型的数据库设置这个值为空字符串
 	private String urlSuffix;
 
 	public String getUrlPrefix() {

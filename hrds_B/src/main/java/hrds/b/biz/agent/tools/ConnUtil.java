@@ -1,7 +1,7 @@
 
 package hrds.b.biz.agent.tools;
 
-import hrds.b.biz.agent.bean.URLTemplate;
+import hrds.b.biz.agent.bean.DBConnectionProp;
 import hrds.commons.codes.DatabaseType;
 import hrds.commons.exception.AppSystemException;
 import org.apache.logging.log4j.LogManager;
@@ -40,9 +40,9 @@ public class ConnUtil {
 	 *
 	 * */
 	//FIXME 方法名字不贴切
-	public static URLTemplate getConnURLTemplate(String dbType) {
+	public static DBConnectionProp getConnURLTemplate(String dbType) {
 		//1、构建返回使用Map集合
-		URLTemplate template = new URLTemplate();
+		DBConnectionProp template = new DBConnectionProp();
 		//2、判断数据库类型，根据数据库类型构建数据库连接信息填写模板并放入Map
 		//FIXME DatabaseType.ofEnumByCode(dbType) 应该拿到外面来。如果getConnURL被反复调用，就会多次查找转换枚举对象了，已修复
 		DatabaseType databaseType = DatabaseType.ofEnumByCode(dbType);
