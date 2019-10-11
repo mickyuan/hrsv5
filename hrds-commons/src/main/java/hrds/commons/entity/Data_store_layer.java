@@ -34,10 +34,12 @@ public class Data_store_layer extends ProjectTableEntity
 	private Long datasc_id;
 	@DocBean(name ="storage_target",value="存储类型",dataType = String.class,required = true)
 	private String storage_target;
-	@DocBean(name ="storage_property",value="存储属性信息",dataType = String.class,required = true)
-	private String storage_property;
+	@DocBean(name ="storage_property_key",value="属性key",dataType = String.class,required = true)
+	private String storage_property_key;
 	@DocBean(name ="dsl_remark",value="备注",dataType = String.class,required = false)
 	private String dsl_remark;
+	@DocBean(name ="storage_property_val",value="属性value",dataType = String.class,required = false)
+	private String storage_property_val;
 
 	/** 取得：存储配置主键信息 */
 	public Long getDatasc_id(){
@@ -61,13 +63,13 @@ public class Data_store_layer extends ProjectTableEntity
 	public void setStorage_target(String storage_target){
 		this.storage_target=storage_target;
 	}
-	/** 取得：存储属性信息 */
-	public String getStorage_property(){
-		return storage_property;
+	/** 取得：属性key */
+	public String getStorage_property_key(){
+		return storage_property_key;
 	}
-	/** 设置：存储属性信息 */
-	public void setStorage_property(String storage_property){
-		this.storage_property=storage_property;
+	/** 设置：属性key */
+	public void setStorage_property_key(String storage_property_key){
+		this.storage_property_key=storage_property_key;
 	}
 	/** 取得：备注 */
 	public String getDsl_remark(){
@@ -76,5 +78,13 @@ public class Data_store_layer extends ProjectTableEntity
 	/** 设置：备注 */
 	public void setDsl_remark(String dsl_remark){
 		this.dsl_remark=dsl_remark;
+	}
+	/** 取得：属性value */
+	public String getStorage_property_val(){
+		return storage_property_val;
+	}
+	/** 设置：属性value */
+	public void setStorage_property_val(String storage_property_val){
+		this.storage_property_val=storage_property_val;
 	}
 }

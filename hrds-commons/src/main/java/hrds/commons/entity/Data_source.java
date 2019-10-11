@@ -30,14 +30,6 @@ public class Data_source extends ProjectTableEntity
 		__tmpPKS.add("source_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="source_id",value="数据源ID",dataType = Long.class,required = true)
-	private Long source_id;
-	@DocBean(name ="datasource_name",value="数据源名称",dataType = String.class,required = true)
-	private String datasource_name;
-	@DocBean(name ="datasource_number",value="数据源编号",dataType = String.class,required = false)
-	private String datasource_number;
-	@DocBean(name ="source_remark",value="数据源详细描述",dataType = String.class,required = false)
-	private String source_remark;
 	@DocBean(name ="create_date",value="创建日期",dataType = String.class,required = true)
 	private String create_date;
 	@DocBean(name ="create_time",value="创建时间",dataType = String.class,required = true)
@@ -46,45 +38,15 @@ public class Data_source extends ProjectTableEntity
 	private Long create_user_id;
 	@DocBean(name ="datasource_remark",value="备注",dataType = String.class,required = false)
 	private String datasource_remark;
+	@DocBean(name ="source_id",value="数据源ID",dataType = Long.class,required = true)
+	private Long source_id;
+	@DocBean(name ="datasource_name",value="数据源名称",dataType = String.class,required = true)
+	private String datasource_name;
+	@DocBean(name ="datasource_number",value="数据源编号",dataType = String.class,required = false)
+	private String datasource_number;
+	@DocBean(name ="source_remark",value="数据源详细描述",dataType = String.class,required = false)
+	private String source_remark;
 
-	/** 取得：数据源ID */
-	public Long getSource_id(){
-		return source_id;
-	}
-	/** 设置：数据源ID */
-	public void setSource_id(Long source_id){
-		this.source_id=source_id;
-	}
-	/** 设置：数据源ID */
-	public void setSource_id(String source_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(source_id)){
-			this.source_id=new Long(source_id);
-		}
-	}
-	/** 取得：数据源名称 */
-	public String getDatasource_name(){
-		return datasource_name;
-	}
-	/** 设置：数据源名称 */
-	public void setDatasource_name(String datasource_name){
-		this.datasource_name=datasource_name;
-	}
-	/** 取得：数据源编号 */
-	public String getDatasource_number(){
-		return datasource_number;
-	}
-	/** 设置：数据源编号 */
-	public void setDatasource_number(String datasource_number){
-		this.datasource_number=datasource_number;
-	}
-	/** 取得：数据源详细描述 */
-	public String getSource_remark(){
-		return source_remark;
-	}
-	/** 设置：数据源详细描述 */
-	public void setSource_remark(String source_remark){
-		this.source_remark=source_remark;
-	}
 	/** 取得：创建日期 */
 	public String getCreate_date(){
 		return create_date;
@@ -122,5 +84,43 @@ public class Data_source extends ProjectTableEntity
 	/** 设置：备注 */
 	public void setDatasource_remark(String datasource_remark){
 		this.datasource_remark=datasource_remark;
+	}
+	/** 取得：数据源ID */
+	public Long getSource_id(){
+		return source_id;
+	}
+	/** 设置：数据源ID */
+	public void setSource_id(Long source_id){
+		this.source_id=source_id;
+	}
+	/** 设置：数据源ID */
+	public void setSource_id(String source_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(source_id)){
+			this.source_id=new Long(source_id);
+		}
+	}
+	/** 取得：数据源名称 */
+	public String getDatasource_name(){
+		return datasource_name;
+	}
+	/** 设置：数据源名称 */
+	public void setDatasource_name(String datasource_name){
+		this.datasource_name=datasource_name;
+	}
+	/** 取得：数据源编号 */
+	public String getDatasource_number(){
+		return datasource_number;
+	}
+	/** 设置：数据源编号 */
+	public void setDatasource_number(String datasource_number){
+		this.datasource_number=datasource_number;
+	}
+	/** 取得：数据源详细描述 */
+	public String getSource_remark(){
+		return source_remark;
+	}
+	/** 设置：数据源详细描述 */
+	public void setSource_remark(String source_remark){
+		this.source_remark=source_remark;
 	}
 }
