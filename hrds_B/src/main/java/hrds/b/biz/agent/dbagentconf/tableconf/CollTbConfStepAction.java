@@ -55,7 +55,7 @@ public class CollTbConfStepAction extends BaseAction {
 	}
 
 	/**
-	 * 根据模糊表名和数据库设置id和agentId得到表相关信息
+	 * 根据模糊表名和数据库设置id和agentId得到表相关信息，即查询按钮
 	 *
 	 * TODO 该方法是为前台界面的模糊查询功能提供的，关于这个功能要满足的要求，希望可以讨论一下
 	 *
@@ -136,7 +136,7 @@ public class CollTbConfStepAction extends BaseAction {
 	}
 
 	/**
-	 * 根据数据库设置id和agentId得到所有表相关信息
+	 * 根据数据库设置id和agentId得到所有表相关信息，即查看所有表
 	 *
 	 * 1、根据colSetId去数据库中获取数据库设置相关信息
 	 * 2、将查询结果转换成json
@@ -150,9 +150,6 @@ public class CollTbConfStepAction extends BaseAction {
 	 * @Param: colSetId long
 	 *         含义：数据库设置ID,database_set表主键,table_info表外键
 	 *         取值范围：不为空
-	 * @Param: inputString long
-	 *         含义：用户界面输入的字符串
-	 *         取值范围:
 	 *
 	 * @return: List<Result>
 	 *          含义：查询结果集
@@ -208,26 +205,33 @@ public class CollTbConfStepAction extends BaseAction {
 	/**
 	 * SQL查询设置页面，保存按钮后台方法
 	 *
-	 * 1、将前端传过来的参数转为List<Table_info>集合
-	 * 2、使用databaseId在table_info表中删除所有自定义SQL采集的记录
-	 * 3、遍历list,给每条记录生成ID，设置有效开始日期、有效结束日期、是否自定义SQL采集(是)、是否使用MD5(是)、
+	 * 1、根据databaseId去数据库中查询该数据库采集任务是否存在
+	 * 2、将前端传过来的参数转为List<Table_info>集合
+	 * 3、使用databaseId在table_info表中删除所有自定义SQL采集的记录
+	 * 4、遍历list,给每条记录生成ID，设置有效开始日期、有效结束日期、是否自定义SQL采集(是)、是否使用MD5(是)、
 	 *    是否仅登记(是)
-	 * 4、保存数据进库
+	 * 5、保存数据进库
 	 *
 	 * @Param: tableInfoArray String
-	 *         含义：table_info表的JSONArray格式的字符串，数组中的每一个对象必须包含table_name,table_ch_name,sql
+	 *         含义：List<Table_info>的JSONArray格式的字符串，数组中的每一个对象必须包含table_name,table_ch_name,sql
 	 *         取值范围：不为空
 	 * @Param: colSetId long
 	 *         含义：数据库设置ID,database_set表主键,table_info表外键
 	 *         取值范围：不为空
 	 * */
 	public void saveAllSQL(String tableInfoArray, long databaseId){
-		//1、将前端传过来的参数转为List<Table_info>集合
+		//1、根据databaseId去数据库中查询该数据库采集任务是否存在
+		long dbSetCount = Dbo.queryNumber("select count(1) from database_set where database_id = ?"
+				, databaseId).orElseThrow(() -> new BusinessException("必须有且只有一条数据"));
+		if(dbSetCount != 1){
+			throw new BusinessException("数据库采集任务未找到");
+		}
+		//2、将前端传过来的参数转为List<Table_info>集合
 		List<Table_info> tableInfos = JSONArray.parseArray(tableInfoArray, Table_info.class);
-		//2、使用databaseId在table_info表中删除所有自定义SQL采集的记录，不关注是否删除成功，结果可以是0-N
+		//3、使用databaseId在table_info表中删除所有自定义SQL采集的记录，不关注是否删除成功，结果可以是0-N
 		Dbo.execute("delete from " + Table_info.TableName + " database_id = ? AND is_user_defined = ? ",
 				databaseId, IsFlag.Shi.getCode());
-		//3、遍历list,给每条记录生成ID，设置有效开始日期、有效结束日期、是否自定义SQL采集(是)、是否使用MD5(是)、
+		//4、遍历list,给每条记录生成ID，设置有效开始日期、有效结束日期、是否自定义SQL采集(是)、是否使用MD5(是)、
 		// 是否仅登记(是)
 		for(int i = 0; i < tableInfos.size(); i++){
 			Table_info tableInfo = tableInfos.get(i);
@@ -249,7 +253,7 @@ public class CollTbConfStepAction extends BaseAction {
 			tableInfo.setIs_md5(IsFlag.Shi.getCode());
 			//TODO 待讨论：这个字段的值，如果画面上允许配置，就不需要设置默认值
 			tableInfo.setIs_register(IsFlag.Shi.getCode());
-			//4、保存数据进库
+			//5、保存数据进库
 			tableInfo.add(Dbo.db());
 			//数据可访问权限处理方式
 			//以上table_info表中都没有user_id字段，解决方式待讨论
@@ -293,7 +297,7 @@ public class CollTbConfStepAction extends BaseAction {
 	 * */
 	public List<Table_info> getAllSQLs(long colSetId){
 		return Dbo.queryList(Table_info.class, " SELECT * FROM "+ Table_info.TableName +
-				" WHERE database_id = ? " + "AND is_user_defined = ? ", colSetId, IsFlag.Shi.getCode());
+				" WHERE database_id = ? " + "AND is_user_defined = ? order by table_id", colSetId, IsFlag.Shi.getCode());
 		//数据可访问权限处理方式
 		//以上table_info表中都没有user_id字段，解决方式待讨论
 	}
@@ -400,7 +404,7 @@ public class CollTbConfStepAction extends BaseAction {
 	 * @Param: tableInfo Table_info
 	 *         含义：一个Table_info对象必须包含table_name,table_ch_name，
 	 *         table_count,is_md5,如果是新增的采集表，table_id为空，如果是编辑修改采集表，table_id不能为空
-	 *         用于过滤的sql页面没定义就是空，页面定义了就不为空
+	 *         用于单表过滤的sql页面没定义就是空，页面定义了就不为空
 	 *         取值范围：不为空，Table_info类的实体类对象
 	 * @Param: colSetId long
 	 *         含义：数据库设置ID，databse_set表主键，table_info表外键

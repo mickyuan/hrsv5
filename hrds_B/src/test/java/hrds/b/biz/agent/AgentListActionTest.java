@@ -4,6 +4,7 @@ import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
+import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.test.junit.TestCaseLog;
 import fd.ng.web.action.ActionResult;
@@ -387,15 +388,19 @@ public class AgentListActionTest extends WebBaseTestCase {
 	 * */
 	@Test
 	public void getAgentInfoList() {
-		//1、正确数据访问：正确的userId,http请求访问被测试方法,得到响应，判断结果是否正确
+		//1、正确数据访问：模拟正确的用户登录,http请求访问被测试方法,得到响应，判断结果是否正确
 		String rightString = new HttpClient()
 				.post(getActionUrl("getAgentInfoList")).getBodyString();
 
 		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(rightResult.isSuccess(), is(true));
+		/*
 		List<Object> data = (List<Object>)rightResult.getData();
 		assertThat("根据测试数据，查询到的数据源信息应该有" + data.size() + "条", data.size(), is(1));
+		*/
+		Result data = rightResult.getDataForResult();
+		assertThat("根据测试数据，查询到的数据源信息应该有" + data.getRowCount() + "条", data.getRowCount(), is(1));
 
 	}
 
@@ -448,32 +453,53 @@ public class AgentListActionTest extends WebBaseTestCase {
 		ActionResult dbAgent = JsonUtil.toObjectSafety(dbAgentResp, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(dbAgent.isSuccess(), is(true));
+		/*
 		List<Object> dbData = (List<Object>) dbAgent.getData();
 		assertThat("根据测试数据，在该数据源下共有" + dbData.size() + "条数据库Agent数据", dbData.size(), is(1));
+		*/
+		Result dbData = dbAgent.getDataForResult();
+		assertThat("根据测试数据，在该数据源下共有" + dbData.getRowCount() + "条数据库Agent数据", dbData.getRowCount(), is(1));
 
 		ActionResult nonStructAgent = JsonUtil.toObjectSafety(nonStructResp, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(nonStructAgent.isSuccess(), is(true));
+		/*
 		List<Object> nonStructData = (List<Object>) nonStructAgent.getData();
 		assertThat("根据测试数据，在该数据源下共有" + nonStructData.size() + "条非结构化Agent数据", nonStructData.size(), is(1));
+		*/
+		Result nonStructData = nonStructAgent.getDataForResult();
+		assertThat("根据测试数据，在该数据源下共有" + nonStructData.getRowCount() + "条非结构化Agent数据", nonStructData.getRowCount(), is(1));
 
 		ActionResult ftpAgent = JsonUtil.toObjectSafety(ftpResp, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(ftpAgent.isSuccess(), is(true));
+		/*
 		List<Object> ftpData = (List<Object>) ftpAgent.getData();
 		assertThat("根据测试数据，在该数据源下共有" + ftpData.size() + "条FTPAgent数据", ftpData.size(), is(1));
+		*/
+		Result ftpData = ftpAgent.getDataForResult();
+		assertThat("根据测试数据，在该数据源下共有" + ftpData.getRowCount() + "条FTPAgent数据", ftpData.getRowCount(), is(1));
+
 
 		ActionResult dataFileAgent = JsonUtil.toObjectSafety(dataFileResp, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(dataFileAgent.isSuccess(), is(true));
+		/*
 		List<Object> dataFileData = (List<Object>) dataFileAgent.getData();
 		assertThat("根据测试数据，在该数据源下共有" + dataFileData.size() + "条FTPAgent数据", dataFileData.size(), is(1));
+		*/
+		Result dataFileData = dataFileAgent.getDataForResult();
+		assertThat("根据测试数据，在该数据源下共有" + dataFileData.getRowCount() + "条FTPAgent数据", dataFileData.getRowCount(), is(1));
 
 		ActionResult halfStructAgent = JsonUtil.toObjectSafety(halfStructResp, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(halfStructAgent.isSuccess(), is(true));
+		/*
 		List<Object> halfStructData = (List<Object>) halfStructAgent.getData();
 		assertThat("根据测试数据，在该数据源下共有" + halfStructData.size() + "条半结构化Agent数据", halfStructData.size(), is(1));
+		*/
+		Result halfStructData = halfStructAgent.getDataForResult();
+		assertThat("根据测试数据，在该数据源下共有" + halfStructData.getRowCount() + "条半结构化Agent数据", halfStructData.getRowCount(), is(1));
 
 		//错误数据访问1：构建错误的sourceId，判断拿到的数据是否为空
 		long wrongSourceId = 2L;
@@ -484,8 +510,12 @@ public class AgentListActionTest extends WebBaseTestCase {
 		ActionResult wrongSourceIdResult = JsonUtil.toObjectSafety(wrongSourceIdResp, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(wrongSourceIdResult.isSuccess(), is(true));
+		/*
 		List<Object> wrongSourceIdData = (List<Object>) wrongSourceIdResult.getData();
 		assertThat("根据测试数据，构造错误的source_id，应该获得" + wrongSourceIdData.size() + "条Agent数据", wrongSourceIdData.size(), is(0));
+		*/
+		Result wrongSourceIdData = wrongSourceIdResult.getDataForResult();
+		assertThat("根据测试数据，构造错误的source_id，应该获得" + wrongSourceIdData.getRowCount() + "条Agent数据", wrongSourceIdData.getRowCount(), is(0));
 
 		//错误数据访问2：构建错误的agentType，判断拿到的数据是否为空
 		String wrongAgentType = "6";
@@ -496,8 +526,12 @@ public class AgentListActionTest extends WebBaseTestCase {
 		ActionResult wrongAgentTypeResult = JsonUtil.toObjectSafety(wrongAgentTypeResp, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(wrongAgentTypeResult.isSuccess(), is(true));
+		/*
 		List<Object> wrongAgentTypeData = (List<Object>) wrongAgentTypeResult.getData();
 		assertThat("根据测试数据，构造错误的agent_type，应该获得" + wrongAgentTypeData.size() + "条Agent数据", wrongAgentTypeData.size(), is(0));
+		*/
+		Result wrongAgentTypeData = wrongAgentTypeResult.getDataForResult();
+		assertThat("根据测试数据，构造错误的agent_type，应该获得" + wrongAgentTypeData.getRowCount() + "条Agent数据", wrongAgentTypeData.getRowCount(), is(0));
 
 	}
 
@@ -512,7 +546,7 @@ public class AgentListActionTest extends WebBaseTestCase {
 	 *
 	 * 错误数据访问1：agentId传入一个errorAgentId，判断ar.isSuccess()是否为false
 	 * 错误数据访问2：sourceId传入一个errorSourceId，判断ar.isSuccess()是否为false
-	 * 错误数据访问3：userId传入一个errorUserId，判断ar.isSuccess()是否为false
+	 * 错误的测试用例未达到三组:getTaskInfo()方法只有两个入参
 	 *
 	 * @Param: 无
 	 * @return: 无
@@ -529,8 +563,12 @@ public class AgentListActionTest extends WebBaseTestCase {
 		ActionResult dbResult = JsonUtil.toObjectSafety(dbBodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(dbResult.isSuccess(), is(true));
+		/*
 		List<Object> firResult = (List<Object>)dbResult.getData();
 		assertThat("根据测试数据，查询得到的数据库采集任务有" + firResult.size() + "项", firResult.size(), is(1));
+		*/
+		Result firResult = dbResult.getDataForResult();
+		assertThat("根据测试数据，查询得到的数据库采集任务有" + firResult.getRowCount() + "项", firResult.getRowCount(), is(1));
 
 		//正确数据访问2：http请求访问被测试方法，agentId传入DF_AGENT_ID，判断结果是否正确
 		String dfBodyString = new HttpClient()
@@ -541,8 +579,12 @@ public class AgentListActionTest extends WebBaseTestCase {
 		ActionResult dfResult = JsonUtil.toObjectSafety(dfBodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(dfResult.isSuccess(), is(true));
+		/*
 		List<Object> secResult = (List<Object>)dfResult.getData();
 		assertThat("根据测试数据，查询得到的数据库采集任务有" + secResult.size() + "项", secResult.size(), is(1));
+		*/
+		Result secResult = dfResult.getDataForResult();
+		assertThat("根据测试数据，查询得到的数据库采集任务有" + secResult.getRowCount() + "项", secResult.getRowCount(), is(1));
 
 		//正确数据访问3：http请求访问被测试方法，agentId传入FTP_AGENT_ID，判断结果是否正确
 		String ftpBodyString = new HttpClient()
@@ -553,8 +595,12 @@ public class AgentListActionTest extends WebBaseTestCase {
 		ActionResult ftpResult = JsonUtil.toObjectSafety(ftpBodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(ftpResult.isSuccess(), is(true));
+		/*
 		List<Object> thrResult = (List<Object>)ftpResult.getData();
 		assertThat("根据测试数据，查询得到的数据库采集任务有" + thrResult.size() + "项", thrResult.size(), is(2));
+		*/
+		Result thrResult = ftpResult.getDataForResult();
+		assertThat("根据测试数据，查询得到的数据库采集任务有" + thrResult.getRowCount() + "项", thrResult.getRowCount(), is(2));
 
 		//正确数据访问4：http请求访问被测试方法，agentId传入HALF_STRUCT_AGENT_ID，判断结果是否正确
 		String halfBodyString = new HttpClient()
@@ -565,8 +611,12 @@ public class AgentListActionTest extends WebBaseTestCase {
 		ActionResult halfResult = JsonUtil.toObjectSafety(halfBodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(halfResult.isSuccess(), is(true));
+		/*
 		List<Object> fouResult = (List<Object>)halfResult.getData();
 		assertThat("根据测试数据，查询得到的数据库采集任务有" + fouResult.size() + "项", fouResult.size(), is(2));
+		*/
+		Result fouResult = halfResult.getDataForResult();
+		assertThat("根据测试数据，查询得到的数据库采集任务有" + fouResult.getRowCount() + "项", fouResult.getRowCount(), is(2));
 
 		//正确数据访问5：http请求访问被测试方法，agentId传入NON_STRUCT_AGENT_ID，判断结果是否正确
 		String nonBodyString = new HttpClient()
@@ -577,8 +627,13 @@ public class AgentListActionTest extends WebBaseTestCase {
 		ActionResult nonResult = JsonUtil.toObjectSafety(nonBodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(nonResult.isSuccess(), is(true));
+		/*
 		List<Object> fifResult = (List<Object>)nonResult.getData();
 		assertThat("根据测试数据，查询得到的数据库采集任务有" + fifResult.size() + "项", fifResult.size(), is(2));
+		*/
+		Result fifResult = nonResult.getDataForResult();
+		assertThat("根据测试数据，查询得到的数据库采集任务有" + fifResult.getRowCount() + "项", fifResult.getRowCount(), is(2));
+
 
 		//错误数据访问1：agentId传入一个errorAgentId，判断isSuccess()是false
 		long errorAgentId = 1000L;
@@ -599,16 +654,6 @@ public class AgentListActionTest extends WebBaseTestCase {
 		ActionResult errorSourceIdResult = JsonUtil.toObjectSafety(errorSourceIdString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(errorSourceIdResult.isSuccess(), is(false));
-
-		//错误数据访问3：userId传入一个errorUserId，判断ar.isSuccess()是否为false
-		long errorUserId = -9998L;
-		String errorUserIdString = new HttpClient()
-				.addData("sourceId", SOURCE_ID)
-				.addData("agentId", DB_AGENT_ID)
-				.post(getActionUrl("getTaskInfo")).getBodyString();
-		ActionResult errorUserIdResult = JsonUtil.toObjectSafety(errorUserIdString, ActionResult.class).orElseThrow(()
-				-> new BusinessException("连接失败!"));
-		assertThat(errorUserIdResult.isSuccess(), is(false));
 	}
 
 	/**
@@ -616,13 +661,11 @@ public class AgentListActionTest extends WebBaseTestCase {
 	 *
 	 * 正确数据访问1：
 	 *      1、删除前查询数据库，确认预期删除的数据存在
-	 *      2、构造正确的collectSetId和userId，http请求逻辑处理方法，删除数据,得到响应，判断删除是否成功
+	 *      2、构造正确的collectSetId，http请求逻辑处理方法，删除数据,得到响应，判断删除是否成功
 	 *      3、删除后，确认数据是否被真正删除
 	 *
-	 * 错误的数据访问1：构造正确的collectSetId和错误的userId，断言响应是否失败
-	 * 错误的数据访问2：构造错误的collectSetId和正确的userId，断言响应是否失败
-	 * 错误的数据访问3：构造错误的collectSetId和错误的userId，断言响应是否失败
-	 *
+	 * 错误的数据访问1：构造错误的collectSetId，断言响应是否失败
+	 * 错误的测试用例未达到三组:deleteHalfStructTask()方法只有一个入参
 	 *
 	 * @Param: 无
 	 * @return: 无
@@ -636,7 +679,7 @@ public class AgentListActionTest extends WebBaseTestCase {
 			OptionalLong before = SqlOperator.queryNumber(db, "select count(1) from object_collect where odc_id = ?", 2001L);
 			assertThat("删除操作前，object_collect表中的确存在这样一条数据", before.orElse(Long.MIN_VALUE), is(1L));
 
-			//2、构造正确的collectSetId和userId，http请求逻辑处理方法，删除数据,得到响应，判断删除是否成功
+			//2、构造正确的collectSetId，http请求逻辑处理方法，删除数据,得到响应，判断删除是否成功
 			String rightString = new HttpClient()
 					.addData("collectSetId", 2001L)
 					.post(getActionUrl("deleteHalfStructTask")).getBodyString();
@@ -648,16 +691,7 @@ public class AgentListActionTest extends WebBaseTestCase {
 			OptionalLong after = SqlOperator.queryNumber(db, "select count(1) from object_collect where odc_id = ?", 2001L);
 			assertThat("删除操作后，object_collect表中这样一条数据没有了", after.orElse(Long.MIN_VALUE), is(0L));
 
-			//错误的数据访问1：构造正确的collectSetId和错误的userId，断言响应是否失败
-			long wrongUserId = 1000L;
-			String wrongUserIdString = new HttpClient()
-					.addData("collectSetId", 2001L)
-					.post(getActionUrl("deleteHalfStructTask")).getBodyString();
-			ActionResult wrongUserIdResult = JsonUtil.toObjectSafety(wrongUserIdString, ActionResult.class).orElseThrow(()
-					-> new BusinessException("连接失败!"));
-			assertThat(wrongUserIdResult.isSuccess(), is(false));
-
-			//错误的数据访问2：构造错误的collectSetId和正确的userId，断言响应是否失败
+			//错误的数据访问1：构造错误的collectSetId，断言响应是否失败
 			long wrongCollectSetId = 2003L;
 			String wrongCollectSetIdString = new HttpClient()
 					.addData("collectSetId", wrongCollectSetId)
@@ -665,14 +699,6 @@ public class AgentListActionTest extends WebBaseTestCase {
 			ActionResult wrongCollectSetIdResult = JsonUtil.toObjectSafety(wrongCollectSetIdString, ActionResult.class).orElseThrow(()
 					-> new BusinessException("连接失败!"));
 			assertThat(wrongCollectSetIdResult.isSuccess(), is(false));
-
-			//错误的数据访问3：构造错误的collectSetId和错误的userId，断言响应是否失败
-			String bothWrongString = new HttpClient()
-					.addData("collectSetId", wrongCollectSetId)
-					.post(getActionUrl("deleteHalfStructTask")).getBodyString();
-			ActionResult bothWrongResult = JsonUtil.toObjectSafety(bothWrongString, ActionResult.class).orElseThrow(()
-					-> new BusinessException("连接失败!"));
-			assertThat(bothWrongResult.isSuccess(), is(false));
 		}
 	}
 
@@ -681,11 +707,10 @@ public class AgentListActionTest extends WebBaseTestCase {
 	 *
 	 * 正确数据访问1：
 	 *      1、删除前查询数据库，确认预期删除的数据存在
-	 *      2、构造正确的collectSetId和userId，http请求逻辑处理方法，删除数据,得到响应，判断删除是否成功
+	 *      2、构造正确的collectSetId，http请求逻辑处理方法，删除数据,得到响应，判断删除是否成功
 	 *      3、删除后，确认数据是否被真正删除
-	 * 错误数据访问1：构造正确的collectSetId和错误的userId，断言响应是否失败
-	 * 错误数据访问2：构造错误的collectSetId和正确的userId，断言响应是否失败
-	 * 错误数据访问3：构造错误的collectSetId和错误的userId，断言响应是否失败
+	 * 错误数据访问2：构造错误的collectSetId，断言响应是否失败
+	 * 错误的测试用例未达到三组:deleteFTPTask()方法只有一个入参
 	 *
 	 * @Param: 无
 	 * @return: 无
@@ -699,7 +724,7 @@ public class AgentListActionTest extends WebBaseTestCase {
 			OptionalLong before = SqlOperator.queryNumber(db, "select count(1) from ftp_collect where ftp_id = ?", 3001L);
 			assertThat("删除操作前，ftp_collect表中的确存在这样一条数据", before.orElse(Long.MIN_VALUE), is(1L));
 
-			//2、构造正确的collectSetId和userId，http请求逻辑处理方法，删除数据,得到响应，判断删除是否成功
+			//2、构造正确的collectSetId，http请求逻辑处理方法，删除数据,得到响应，判断删除是否成功
 			String bodyString = new HttpClient()
 					.addData("collectSetId", 3001L)
 					.post(getActionUrl("deleteFTPTask")).getBodyString();
@@ -711,16 +736,7 @@ public class AgentListActionTest extends WebBaseTestCase {
 			OptionalLong after = SqlOperator.queryNumber(db, "select count(1) from ftp_collect where ftp_id = ?", 3001L);
 			assertThat("删除操作后，ftp_collect表中这样一条数据没有了", after.orElse(Long.MIN_VALUE), is(0L));
 
-			//错误数据访问1：构造正确的collectSetId和错误的userId，断言响应是否失败
-			long wrongUserId = 1000L;
-			String wrongUserIdString = new HttpClient()
-					.addData("collectSetId", 3001L)
-					.post(getActionUrl("deleteFTPTask")).getBodyString();
-			ActionResult wrongUserIdResult = JsonUtil.toObjectSafety(wrongUserIdString, ActionResult.class).orElseThrow(()
-					-> new BusinessException("连接失败!"));
-			assertThat(wrongUserIdResult.isSuccess(), is(false));
-
-			//错误数据访问2：构造错误的collectSetId和正确的userId，断言响应是否失败
+			//错误数据访问1：构造错误的collectSetId，断言响应是否失败
 			long wrongCollectSetId = 2003L;
 			String wrongCollectSetIdString = new HttpClient()
 					.addData("collectSetId", wrongCollectSetId)
@@ -728,14 +744,6 @@ public class AgentListActionTest extends WebBaseTestCase {
 			ActionResult wrongCollectSetIdResult = JsonUtil.toObjectSafety(wrongCollectSetIdString, ActionResult.class).orElseThrow(()
 					-> new BusinessException("连接失败!"));
 			assertThat(wrongCollectSetIdResult.isSuccess(), is(false));
-
-			//错误数据访问3：构造错误的collectSetId和错误的userId，断言响应是否失败
-			String bothWrongString = new HttpClient()
-					.addData("collectSetId", wrongCollectSetId)
-					.post(getActionUrl("deleteFTPTask")).getBodyString();
-			ActionResult bothWrongResult = JsonUtil.toObjectSafety(bothWrongString, ActionResult.class).orElseThrow(()
-					-> new BusinessException("连接失败!"));
-			assertThat(bothWrongResult.isSuccess(), is(false));
 		}
 	}
 
@@ -744,12 +752,10 @@ public class AgentListActionTest extends WebBaseTestCase {
 	 *
 	 * 正确数据访问1：
 	 *      1、删除前查询数据库，确认预期删除的数据存在
-	 *      2、构造正确的collectSetId和userId，http请求逻辑处理方法，删除数据,得到响应，判断删除是否成功
+	 *      2、构造正确的collectSetId，http请求逻辑处理方法，删除数据,得到响应，判断删除是否成功
 	 *      3、删除后，确认数据是否被真正删除
-	 * 错误数据访问1：构造正确的collectSetId和错误的userId，断言响应是否失败
-	 * 错误数据访问2：构造错误的collectSetId和正确的userId，断言响应是否失败
-	 * 错误数据访问3：构造错误的collectSetId和错误的userId，断言响应是否失败
-	 *
+	 * 错误数据访问1：构造错误的collectSetId，断言响应是否失败
+	 * 错误的测试用例未达到三组:deleteDBTask()方法只有一个入参
 	 *
 	 * @Param: 无
 	 * @return: 无
@@ -760,16 +766,16 @@ public class AgentListActionTest extends WebBaseTestCase {
 		try(DatabaseWrapper db = new DatabaseWrapper()){
 			//正确数据访问1：
 			//1、删除前查询数据库，确认预期删除的数据存在
-			OptionalLong firBefore = SqlOperator.queryNumber(db, "select count(1) from database_set where database_id = ?", 1002L);
-			assertThat("删除操作前，database_set表中的确存在这样一条数据", firBefore.orElse(Long.MIN_VALUE), is(1L));
+			long firCount = SqlOperator.queryNumber(db, "select count(1) from database_set where database_id = ?", 1002L).orElseThrow(() -> new BusinessException("必须有且只有一条数据"));
+			assertThat("删除操作前，database_set表中的确存在这样一条数据", firCount, is(1L));
 
-			OptionalLong secBefore = SqlOperator.queryNumber(db, "select count(1) from table_column where table_id = ?", TABLE_ID);
-			assertThat("删除操作前，table_column表中的确存在" + secBefore.getAsLong() + "条数据", secBefore.orElse(Long.MIN_VALUE), is(10L));
+			long secCount = SqlOperator.queryNumber(db, "select count(1) from table_column where table_id = ?", TABLE_ID).orElseThrow(() -> new BusinessException("必须有且只有一条数据"));
+			assertThat("删除操作前，table_column表中的确存在" + secCount + "条数据", secCount, is(10L));
 
-			OptionalLong thiBefore = SqlOperator.queryNumber(db, "select count(1) from table_info where table_id = ?", TABLE_ID);
-			assertThat("删除操作前，table_info表中的确存在一条数据", thiBefore.orElse(Long.MIN_VALUE), is(1L));
+			long tirCount = SqlOperator.queryNumber(db, "select count(1) from table_info where table_id = ?", TABLE_ID).orElseThrow(() -> new BusinessException("必须有且只有一条数据"));
+			assertThat("删除操作前，table_info表中的确存在一条数据", tirCount, is(1L));
 
-			//2、构造正确的collectSetId和userId，http请求逻辑处理方法，删除数据,得到响应，判断删除是否成功
+			//2、构造正确的collectSetId，http请求逻辑处理方法，删除数据,得到响应，判断删除是否成功
 			String rightString = new HttpClient()
 					.addData("collectSetId", 1002L)
 					.post(getActionUrl("deleteDBTask")).getBodyString();
@@ -787,16 +793,7 @@ public class AgentListActionTest extends WebBaseTestCase {
 			OptionalLong thiAfter = SqlOperator.queryNumber(db, "select count(1) from table_info where table_id = ?", TABLE_ID);
 			assertThat("删除操作后，table_info表中指定数据没有了", thiAfter.orElse(Long.MIN_VALUE), is(0L));
 
-			//错误数据访问1：构造正确的collectSetId和错误的userId，断言响应是否失败
-			long wrongUserId = 1000L;
-			String wrongUserIdString = new HttpClient()
-					.addData("collectSetId", 1002L)
-					.post(getActionUrl("deleteDBTask")).getBodyString();
-			ActionResult wrongUserIdResult = JsonUtil.toObjectSafety(wrongUserIdString, ActionResult.class).orElseThrow(()
-					-> new BusinessException("连接失败!"));
-			assertThat(wrongUserIdResult.isSuccess(), is(false));
-
-			//错误数据访问2：构造错误的collectSetId和正确的userId，断言响应是否失败
+			//错误数据访问1：构造错误的collectSetId，断言响应是否失败
 			long wrongCollectSetId = 2003L;
 			String wrongCollectSetIdString = new HttpClient()
 					.addData("collectSetId", wrongCollectSetId)
@@ -805,13 +802,6 @@ public class AgentListActionTest extends WebBaseTestCase {
 					-> new BusinessException("连接失败!"));
 			assertThat(wrongCollectSetIdResult.isSuccess(), is(false));
 
-			//错误数据访问3：构造错误的collectSetId和错误的userId，断言响应是否失败
-			String bothWrongString = new HttpClient()
-					.addData("collectSetId", wrongCollectSetId)
-					.post(getActionUrl("deleteDBTask")).getBodyString();
-			ActionResult bothWrongResult = JsonUtil.toObjectSafety(bothWrongString, ActionResult.class).orElseThrow(()
-					-> new BusinessException("连接失败!"));
-			assertThat(bothWrongResult.isSuccess(), is(false));
 		}
 	}
 
@@ -820,13 +810,11 @@ public class AgentListActionTest extends WebBaseTestCase {
 	 *
 	 * 正确数据访问1：
 	 *      1、删除前查询数据库，确认预期删除的数据存在
-	 *      2、构造正确的collectSetId和userId，http请求逻辑处理方法，删除数据,得到响应，判断删除是否成功
+	 *      2、构造正确的collectSetId，http请求逻辑处理方法，删除数据,得到响应，判断删除是否成功
 	 *      3、删除后，确认数据是否被真正删除
 	 *
-	 * 错误数据访问1：构造正确的collectSetId和错误的userId，断言响应是否失败
-	 * 错误数据访问2：构造错误的collectSetId和正确的userId，断言响应是否失败
-	 * 错误数据访问3：构造错误的collectSetId和错误的userId，断言响应是否失败
-	 *
+	 * 错误数据访问1：构造错误的collectSetId，断言响应是否失败
+	 * 错误的测试用例未达到三组:deleteDFTask()方法只有一个入参
 	 * @Param: 无
 	 * @return: 无
 	 *
@@ -836,10 +824,10 @@ public class AgentListActionTest extends WebBaseTestCase {
 		try(DatabaseWrapper db = new DatabaseWrapper()){
 			//正确数据访问1：
 			//1、删除前查询数据库，确认预期删除的数据存在
-			OptionalLong firBefore = SqlOperator.queryNumber(db, "select count(1) from database_set where database_id = ?", 1001L);
-			assertThat("删除操作前，database_set表中的确存在这样一条数据", firBefore.orElse(Long.MIN_VALUE), is(1L));
+			long firCountBefore = SqlOperator.queryNumber(db, "select count(1) from database_set where database_id = ?", 1001L).orElseThrow(() -> new BusinessException("必须有且只有一条数据"));
+			assertThat("删除操作前，database_set表中的确存在这样一条数据", firCountBefore, is(1L));
 
-			//2、构造正确的collectSetId和userId，http请求逻辑处理方法，删除数据,得到响应，判断删除是否成功
+			//2、构造正确的collectSetId，http请求逻辑处理方法，删除数据,得到响应，判断删除是否成功
 			String rightString = new HttpClient()
 					.addData("collectSetId", 1001L)
 					.post(getActionUrl("deleteDFTask")).getBodyString();
@@ -848,19 +836,10 @@ public class AgentListActionTest extends WebBaseTestCase {
 			assertThat(ar.isSuccess(), is(true));
 
 			//3、删除后，确认数据是否被真正删除
-			OptionalLong firAfter = SqlOperator.queryNumber(db, "select count(1) from database_set where database_id = ?", 1001L);
-			assertThat("删除操作后，database_set表中指定数据没有了", firAfter.orElse(Long.MIN_VALUE), is(0L));
+			long firCountAfter = SqlOperator.queryNumber(db, "select count(1) from database_set where database_id = ?", 1001L).orElseThrow(() -> new BusinessException("必须有且只有一条数据"));
+			assertThat("删除操作后，database_set表中指定数据没有了", firCountAfter, is(0L));
 
-			//错误数据访问1：构造正确的collectSetId和错误的userId，断言响应是否失败
-			long wrongUserId = 1000L;
-			String wrongUserIdString = new HttpClient()
-					.addData("collectSetId", 1001L)
-					.post(getActionUrl("deleteDFTask")).getBodyString();
-			ActionResult wrongUserIdResult = JsonUtil.toObjectSafety(wrongUserIdString, ActionResult.class).orElseThrow(()
-					-> new BusinessException("连接失败!"));
-			assertThat(wrongUserIdResult.isSuccess(), is(false));
-
-			//错误数据访问2：构造错误的collectSetId和正确的userId，断言响应是否失败
+			//错误数据访问1：构造错误的collectSetId，断言响应是否失败
 			long wrongCollectSetId = 2003L;
 			String wrongCollectSetIdString = new HttpClient()
 					.addData("collectSetId", wrongCollectSetId)
@@ -869,13 +848,6 @@ public class AgentListActionTest extends WebBaseTestCase {
 					-> new BusinessException("连接失败!"));
 			assertThat(wrongCollectSetIdResult.isSuccess(), is(false));
 
-			//错误数据访问3：构造错误的collectSetId和错误的userId，断言响应是否失败
-			String bothWrongString = new HttpClient()
-					.addData("collectSetId", wrongCollectSetId)
-					.post(getActionUrl("deleteDFTask")).getBodyString();
-			ActionResult bothWrongResult = JsonUtil.toObjectSafety(bothWrongString, ActionResult.class).orElseThrow(()
-					-> new BusinessException("连接失败!"));
-			assertThat(bothWrongResult.isSuccess(), is(false));
 		}
 	}
 
@@ -884,12 +856,10 @@ public class AgentListActionTest extends WebBaseTestCase {
 	 *
 	 * 正确数据访问1：
 	 *      1、删除前查询数据库，确认预期删除的数据存在
-	 *      2、构造正确的collectSetId和错误的userId，http请求逻辑处理方法，删除数据,得到响应，判断删除是否成功
+	 *      2、构造正确的collectSetId，http请求逻辑处理方法，删除数据,得到响应，判断删除是否成功
 	 *      3、删除后，确认数据是否被真正删除
-	 * 错误数据访问1：构造正确的collectSetId和错误的userId，断言响应是否失败
-	 * 错误数据访问2：构造错误的collectSetId和正确的userId，断言响应是否失败
-	 * 错误数据访问3：构造错误的collectSetId和错误的userId，断言响应是否失败
-	 *
+	 * 错误数据访问1：构造错误的collectSetId，断言响应是否失败
+	 * 错误的测试用例未达到三组:deleteNonStructTask()方法只有一个入参
 	 *
 	 * @Param: 无
 	 * @return: 无
@@ -900,13 +870,13 @@ public class AgentListActionTest extends WebBaseTestCase {
 		try(DatabaseWrapper db = new DatabaseWrapper()){
 			//正确数据访问1：
 			//1、删除前查询数据库，确认预期删除的数据存在
-			OptionalLong firBefore = SqlOperator.queryNumber(db, "select count(1) from file_collect_set where fcs_id = ?", 4001L);
-			assertThat("删除操作前，file_collect_set表中的确存在这样一条数据", firBefore.orElse(Long.MIN_VALUE), is(1L));
+			long firCountBefore = SqlOperator.queryNumber(db, "select count(1) from file_collect_set where fcs_id = ?", 4001L).orElseThrow(() -> new BusinessException("必须有且只有一条数据"));
+			assertThat("删除操作前，file_collect_set表中的确存在这样一条数据", firCountBefore, is(1L));
 
-			OptionalLong secBefore = SqlOperator.queryNumber(db, "select count(1) from file_source where fcs_id = ?", 4001L);
-			assertThat("删除操作前，file_collect_set表中的确存在这样一条数据", secBefore.orElse(Long.MIN_VALUE), is(2L));
+			long secCountBefore = SqlOperator.queryNumber(db, "select count(1) from file_source where fcs_id = ?", 4001L).orElseThrow(() -> new BusinessException("必须有且只有一条数据"));
+			assertThat("删除操作前，file_collect_set表中的确存在这样一条数据", secCountBefore, is(2L));
 
-			//2、构造正确的collectSetId和错误的userId，http请求逻辑处理方法，删除数据,得到响应，判断删除是否成功
+			//2、构造正确的collectSetId，http请求逻辑处理方法，删除数据,得到响应，判断删除是否成功
 			String rightString = new HttpClient()
 					.addData("collectSetId", 4001L)
 					.post(getActionUrl("deleteNonStructTask")).getBodyString();
@@ -915,22 +885,14 @@ public class AgentListActionTest extends WebBaseTestCase {
 			assertThat(ar.isSuccess(), is(true));
 
 			//3、删除后，确认数据是否被真正删除
-			OptionalLong firAfter = SqlOperator.queryNumber(db, "select count(1) from file_collect_set where fcs_id = ?", 4001L);
-			assertThat("删除操作后，file_collect_set表中这样一条数据没有了", firAfter.orElse(Long.MIN_VALUE), is(0L));
+			long firCountAfter = SqlOperator.queryNumber(db, "select count(1) from file_collect_set where fcs_id = ?", 4001L).orElseThrow(() -> new BusinessException("必须有且只有一条数据"));
+			assertThat("删除操作后，file_collect_set表中这样一条数据没有了", firCountAfter, is(0L));
 
-			OptionalLong secAfter = SqlOperator.queryNumber(db, "select count(1) from file_source where fcs_id = ?", 4001L);
-			assertThat("删除操作后，file_collect_set表中这样一条数据没有了", secAfter.orElse(Long.MIN_VALUE), is(0L));
+			long secCountAfter = SqlOperator.queryNumber(db, "select count(1) from file_source where fcs_id = ?", 4001L).orElseThrow(() -> new BusinessException("必须有且只有一条数据"));
+			assertThat("删除操作后，file_collect_set表中这样一条数据没有了", secCountAfter, is(0L));
 
-			//错误数据访问1：构造正确的collectSetId和错误的userId，断言响应是否失败，获取到的数据是否是空字符串
-			long wrongUserId = 1000L;
-			String wrongUserIdString = new HttpClient()
-					.addData("collectSetId", 1001L)
-					.post(getActionUrl("deleteNonStructTask")).getBodyString();
-			ActionResult wrongUserIdResult = JsonUtil.toObjectSafety(wrongUserIdString, ActionResult.class).orElseThrow(()
-					-> new BusinessException("连接失败!"));
-			assertThat(wrongUserIdResult.isSuccess(), is(false));
 
-			//错误数据访问2：构造错误的collectSetId和正确的userId，断言响应是否失败，获取到的数据是否是空字符串
+			//错误数据访问1：构造错误的collectSetId，断言响应是否失败，获取到的数据是否是空字符串
 			long wrongCollectSetId = 2003L;
 			String wrongCollectSetIdString = new HttpClient()
 					.addData("collectSetId", wrongCollectSetId)
@@ -939,31 +901,22 @@ public class AgentListActionTest extends WebBaseTestCase {
 					-> new BusinessException("连接失败!"));
 			assertThat(wrongCollectSetIdResult.isSuccess(), is(false));
 
-			//错误数据访问3：构造错误的collectSetId和错误的userId，断言响应是否失败
-			String bothWrongString = new HttpClient()
-					.addData("collectSetId", wrongCollectSetId)
-					.post(getActionUrl("deleteNonStructTask")).getBodyString();
-			ActionResult bothWrongResult = JsonUtil.toObjectSafety(bothWrongString, ActionResult.class).orElseThrow(()
-					-> new BusinessException("连接失败!"));
-			assertThat(bothWrongResult.isSuccess(), is(false));
 		}
 	}
 
 	/**
 	 * 测试根据sourceId查询出设置完成的数据库采集任务和DB文件采集任务的任务ID
 	 *
-	 * 正确的数据访问1：使用正确的userId和正确的sourceId,http请求访问被测试方法,得到响应，判断结果是否正确
-	 * 错误的数据访问1：使用错误的userId和正确的sourceId,http请求访问被测试方法,得到响应，判断结果集中没有数据
-	 * 错误的数据访问2：使用正确的userId和错误的sourceId,http请求访问被测试方法,得到响应，判断结果集中没有数据
-	 * 错误的数据访问3：使用错误的userId和错误的sourceId,http请求访问被测试方法,得到响应，判断结果集中没有数据
-	 *
+	 * 正确的数据访问1：使用正确的sourceId,http请求访问被测试方法,得到响应，判断结果是否正确
+	 * 错误的数据访问1：使用错误的sourceId,http请求访问被测试方法,得到响应，判断结果集中没有数据
+	 * 错误的测试用例未达到三组:getDBAndDFTaskBySourceId()方法只有一个入参
 	 * @Param: 无
 	 * @return: 无
 	 *
 	 * */
 	@Test
 	public void getDBAndDFTaskBySourceId() {
-		//正确的数据访问1：使用正确的userId和正确的sourceId,http请求访问被测试方法,得到响应，判断结果是否正确
+		//正确的数据访问1：使用正确的sourceId,http请求访问被测试方法,得到响应，判断结果是否正确
 		String databaseSetString = new HttpClient()
 				.addData("sourceId", SOURCE_ID)
 				.post(getActionUrl("getDBAndDFTaskBySourceId")).getBodyString();
@@ -971,22 +924,14 @@ public class AgentListActionTest extends WebBaseTestCase {
 		ActionResult databaseSetResult = JsonUtil.toObjectSafety(databaseSetString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(databaseSetResult.isSuccess(), is(true));
+		/*
 		List<Object> firResult = (List<Object>)databaseSetResult.getData();
-		assertThat("根据测试数据，使用正确的userId和正确的sourceId查询得到的数据库采集任务和数据文件采集任务有" + firResult.size() + "项", firResult.size(), is(2));
+		assertThat("根据测试数据，使用正确的sourceId查询得到的数据库采集任务和数据文件采集任务有" + firResult.size() + "项", firResult.size(), is(2));
+		*/
+		Result firResult = databaseSetResult.getDataForResult();
+		assertThat("根据测试数据，使用正确的sourceId查询得到的数据库采集任务和数据文件采集任务有" + firResult.getRowCount() + "项", firResult.getRowCount(), is(2));
 
-		//错误的数据访问1：使用错误的userId和正确的sourceId,http请求访问被测试方法,得到响应，判断结果集中没有数据
-		long wrongUserId = 1003L;
-		String wrongUserIdString = new HttpClient()
-				.addData("sourceId", SOURCE_ID)
-				.post(getActionUrl("getDBAndDFTaskBySourceId")).getBodyString();
-
-		ActionResult wrongUserIdResult = JsonUtil.toObjectSafety(wrongUserIdString, ActionResult.class).orElseThrow(()
-				-> new BusinessException("连接失败!"));
-		assertThat(wrongUserIdResult.isSuccess(), is(true));
-		List<Object> wrongUserIdResultData = (List<Object>)wrongUserIdResult.getData();
-		assertThat("根据测试数据，使用错误的userId和正确的sourceId查询得到的数据库采集任务和数据文件采集任务有" + wrongUserIdResultData.size() + "项", wrongUserIdResultData.size(), is(0));
-
-		//错误的数据访问2：使用正确的userId和错误的sourceId,http请求访问被测试方法,得到响应，判断结果集中没有数据
+		//错误的数据访问1：使用错误的sourceId,http请求访问被测试方法,得到响应，判断结果集中没有数据
 		long wrongSourceId = 2L;
 		String wrongSourceIdString = new HttpClient()
 				.addData("sourceId", wrongSourceId)
@@ -995,36 +940,27 @@ public class AgentListActionTest extends WebBaseTestCase {
 		ActionResult wrongDatabaseSetResult = JsonUtil.toObjectSafety(wrongSourceIdString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(wrongDatabaseSetResult.isSuccess(), is(true));
+		/*
 		List<Object> wrongDatabaseSetData = (List<Object>)wrongDatabaseSetResult.getData();
-		assertThat("根据测试数据，使用正确的userId和错误的sourceId查询得到的数据库采集任务和数据文件采集任务有" + wrongDatabaseSetData.size() + "项", wrongDatabaseSetData.size(), is(0));
-
-		//错误的数据访问3：使用错误的userId和错误的sourceId,http请求访问被测试方法,得到响应，判断结果集中没有数据
-		String bothWrongString = new HttpClient()
-				.addData("sourceId", wrongSourceId)
-				.post(getActionUrl("getDBAndDFTaskBySourceId")).getBodyString();
-
-		ActionResult bothWrongResult = JsonUtil.toObjectSafety(bothWrongString, ActionResult.class).orElseThrow(()
-				-> new BusinessException("连接失败!"));
-		assertThat(bothWrongResult.isSuccess(), is(true));
-		List<Object> bothWrongData = (List<Object>)bothWrongResult.getData();
-		assertThat("根据测试数据，使用错误的userId和错误的sourceId查询得到的数据库采集任务和数据文件采集任务有" + bothWrongData.size() + "项", bothWrongData.size(), is(0));
+		assertThat("根据测试数据，使用和错误的sourceId查询得到的数据库采集任务和数据文件采集任务有" + wrongDatabaseSetData.size() + "项", wrongDatabaseSetData.size(), is(0));
+		*/
+		Result wrongDatabaseSetData = wrongDatabaseSetResult.getDataForResult();
+		assertThat("根据测试数据，使用和错误的sourceId查询得到的数据库采集任务和数据文件采集任务有" + wrongDatabaseSetData.getRowCount() + "项", wrongDatabaseSetData.getRowCount(), is(0));
 	}
 
 	/**
 	 * 测试根据sourceId查询出设置完成的非结构化文件采集任务的任务ID
 	 *
-	 * 正确的数据访问1:使用正确的userId和正确的sourceId,http请求访问被测试方法,得到响应，判断结果是否正确
-	 * 错误的数据访问1:使用错误的userId和正确的sourceId,http请求访问被测试方法,得到响应，判断结果集中没有数据
-	 * 错误的数据访问2:使用正确的userId和错误的sourceId,http请求访问被测试方法,得到响应，判断结果集中没有数据
-	 * 错误的数据访问3:使用错误的userId和错误的sourceId,http请求访问被测试方法,得到响应，判断结果集中没有数据
-	 *
+	 * 正确的数据访问1:使用正确的sourceId,http请求访问被测试方法,得到响应，判断结果是否正确
+	 * 错误的数据访问1:使用错误的sourceId,http请求访问被测试方法,得到响应，判断结果集中没有数据
+	 * 错误的测试用例未达到三组:getNonStructTaskBySourceId()方法只有一个入参
 	 * @Param: 无
 	 * @return: 无
 	 *
 	 * */
 	@Test
 	public void getNonStructTaskBySourceId() {
-		//正确的数据访问1:使用正确的userId和正确的sourceId,http请求访问被测试方法,得到响应，判断结果是否正确
+		//正确的数据访问1:使用正确的sourceId,http请求访问被测试方法,得到响应，判断结果是否正确
 		String nonStructString = new HttpClient()
 				.addData("sourceId", SOURCE_ID)
 				.post(getActionUrl("getNonStructTaskBySourceId")).getBodyString();
@@ -1032,22 +968,14 @@ public class AgentListActionTest extends WebBaseTestCase {
 		ActionResult nonStructResult = JsonUtil.toObjectSafety(nonStructString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(nonStructResult.isSuccess(), is(true));
+		/*
 		List<Object> firResult = (List<Object>)nonStructResult.getData();
-		assertThat("根据测试数据，使用正确的userId和正确的sourceId查询得到的非结构化采集任务有" + firResult.size() + "项", firResult.size(), is(2));
+		assertThat("根据测试数据，使用和正确的sourceId查询得到的非结构化采集任务有" + firResult.size() + "项", firResult.size(), is(2));
+		*/
+		Result firResult = nonStructResult.getDataForResult();
+		assertThat("根据测试数据，使用和正确的sourceId查询得到的非结构化采集任务有" + firResult.getRowCount() + "项", firResult.getRowCount(), is(2));
 
-		//错误的数据访问1:使用错误的userId和正确的sourceId,http请求访问被测试方法,得到响应，判断结果集中没有数据
-		long wrongUserId = 1003L;
-		String wrongUserIdString = new HttpClient()
-				.addData("sourceId", SOURCE_ID)
-				.post(getActionUrl("getNonStructTaskBySourceId")).getBodyString();
-
-		ActionResult wrongUserIdResult = JsonUtil.toObjectSafety(wrongUserIdString, ActionResult.class).orElseThrow(()
-				-> new BusinessException("连接失败!"));
-		assertThat(wrongUserIdResult.isSuccess(), is(true));
-		List<Object> wrongUserIdResultData = (List<Object>)wrongUserIdResult.getData();
-		assertThat("根据测试数据，使用错误的userId和正确的sourceId查询得到的非结构化采集任务有" + wrongUserIdResultData.size() + "项", wrongUserIdResultData.size(), is(0));
-
-		//错误的数据访问2:使用正确的userId和错误的sourceId,http请求访问被测试方法,得到响应，判断结果集中没有数据
+		//错误的数据访问1:使用错误的sourceId,http请求访问被测试方法,得到响应，判断结果集中没有数据
 		long wrongSourceId = 2L;
 		String wrongSourceIdString = new HttpClient()
 				.addData("sourceId", wrongSourceId)
@@ -1056,35 +984,28 @@ public class AgentListActionTest extends WebBaseTestCase {
 		ActionResult wrongDatabaseSetResult = JsonUtil.toObjectSafety(wrongSourceIdString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(wrongDatabaseSetResult.isSuccess(), is(true));
+		/*
 		List<Object> wrongDatabaseSetData = (List<Object>)wrongDatabaseSetResult.getData();
-		assertThat("根据测试数据，使用正确的userId和错误的sourceId查询得到的非结构化采集任务有" + wrongDatabaseSetData.size() + "项", wrongDatabaseSetData.size(), is(0));
+		assertThat("根据测试数据，使用和错误的sourceId查询得到的非结构化采集任务有" + wrongDatabaseSetData.size() + "项", wrongDatabaseSetData.size(), is(0));
+		*/
+		Result wrongDatabaseSetData = wrongDatabaseSetResult.getDataForResult();
+		assertThat("根据测试数据，使用和错误的sourceId查询得到的非结构化采集任务有" + wrongDatabaseSetData.getRowCount() + "项", wrongDatabaseSetData.getRowCount(), is(0));
 
-		//错误的数据访问3:使用错误的userId和错误的sourceId,http请求访问被测试方法,得到响应，判断结果集中没有数据
-		String bothWrongString = new HttpClient()
-				.addData("sourceId", wrongSourceId)
-				.post(getActionUrl("getNonStructTaskBySourceId")).getBodyString();
-
-		ActionResult bothWrongResult = JsonUtil.toObjectSafety(bothWrongString, ActionResult.class).orElseThrow(()
-				-> new BusinessException("连接失败!"));
-		assertThat(bothWrongResult.isSuccess(), is(true));
-		List<Object> bothWrongData = (List<Object>)bothWrongResult.getData();
-		assertThat("根据测试数据，使用错误的userId和错误的sourceId查询得到的数据库采集任务和数据文件采集任务有" + bothWrongData.size() + "项", bothWrongData.size(), is(0));
 	}
 
 	/**
 	 * 测试根据sourceId查询出设置完成的半结构化文件采集任务的任务ID
 	 *
-	 * 正确的数据访问1：使用正确的userId和正确的sourceId,http请求访问被测试方法,得到响应，判断结果集中没有数据
-	 * 错误的数据访问1：使用错误的userId和正确的sourceId,http请求访问被测试方法,得到响应，判断结果集中没有数据
-	 * 错误的数据访问2：使用正确的userId和错误的sourceId,http请求访问被测试方法,得到响应，判断结果集中没有数据
-	 * 错误的数据访问3：使用错误的userId和错误的sourceId,http请求访问被测试方法,得到响应，判断结果集中没有数据
+	 * 正确的数据访问1：使用正确的sourceId,http请求访问被测试方法,得到响应，判断结果集中没有数据
+	 * 错误的数据访问2：使用错误的sourceId,http请求访问被测试方法,得到响应，判断结果集中没有数据
+	 * 错误的测试用例未达到三组:getHalfStructTaskBySourceId()方法只有一个入参
 	 * @Param: 无
 	 * @return: 无
 	 *
 	 * */
 	@Test
 	public void getHalfStructTaskBySourceId() {
-		//正确的数据访问1：使用正确的userId和正确的sourceId,http请求访问被测试方法,得到响应，判断结果是否正确
+		//正确的数据访问1：使用和正确的sourceId,http请求访问被测试方法,得到响应，判断结果是否正确
 		String halfStructString = new HttpClient()
 				.addData("sourceId", SOURCE_ID)
 				.post(getActionUrl("getHalfStructTaskBySourceId")).getBodyString();
@@ -1092,22 +1013,14 @@ public class AgentListActionTest extends WebBaseTestCase {
 		ActionResult halfStructResult = JsonUtil.toObjectSafety(halfStructString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(halfStructResult.isSuccess(), is(true));
+		/*
 		List<Object> firResult = (List<Object>)halfStructResult.getData();
-		assertThat("根据测试数据，使用正确的userId和正确的sourceId查询得到的半结构化采集任务有" + firResult.size() + "项", firResult.size(), is(2));
+		assertThat("根据测试数据，使用正确的sourceId查询得到的半结构化采集任务有" + firResult.size() + "项", firResult.size(), is(2));
+		*/
+		Result firResult = halfStructResult.getDataForResult();
+		assertThat("根据测试数据，使用正确的sourceId查询得到的半结构化采集任务有" + firResult.getRowCount() + "项", firResult.getRowCount(), is(2));
 
-		//错误的数据访问1：使用错误的userId和正确的sourceId,http请求访问被测试方法,得到响应，判断结果集中没有数据
-		long wrongUserId = 1003L;
-		String wrongUserIdString = new HttpClient()
-				.addData("sourceId", SOURCE_ID)
-				.post(getActionUrl("getHalfStructTaskBySourceId")).getBodyString();
-
-		ActionResult wrongUserIdResult = JsonUtil.toObjectSafety(wrongUserIdString, ActionResult.class).orElseThrow(()
-				-> new BusinessException("连接失败!"));
-		assertThat(wrongUserIdResult.isSuccess(), is(true));
-		List<Object> wrongUserIdResultData = (List<Object>)wrongUserIdResult.getData();
-		assertThat("根据测试数据，使用错误的userId和正确的sourceId查询得到的半结构化采集任务有" + wrongUserIdResultData.size() + "项", wrongUserIdResultData.size(), is(0));
-
-		//错误的数据访问2：使用正确的userId和错误的sourceId,http请求访问被测试方法,得到响应，判断结果集中没有数据
+		//错误的数据访问1：使用错误的sourceId,http请求访问被测试方法,得到响应，判断结果集中没有数据
 		long wrongSourceId = 2L;
 		String wrongSourceIdString = new HttpClient()
 				.addData("sourceId", wrongSourceId)
@@ -1116,35 +1029,27 @@ public class AgentListActionTest extends WebBaseTestCase {
 		ActionResult wrongDatabaseSetResult = JsonUtil.toObjectSafety(wrongSourceIdString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(wrongDatabaseSetResult.isSuccess(), is(true));
+		/*
 		List<Object> wrongDatabaseSetData = (List<Object>)wrongDatabaseSetResult.getData();
-		assertThat("根据测试数据，使用正确的userId和错误的sourceId查询得到的半结构化采集任务有" + wrongDatabaseSetData.size() + "项", wrongDatabaseSetData.size(), is(0));
-
-		//错误的数据访问3：使用错误的userId和错误的sourceId,http请求访问被测试方法,得到响应，判断结果集中没有数据
-		String bothWrongString = new HttpClient()
-				.addData("sourceId", wrongSourceId)
-				.post(getActionUrl("getHalfStructTaskBySourceId")).getBodyString();
-
-		ActionResult bothWrongResult = JsonUtil.toObjectSafety(bothWrongString, ActionResult.class).orElseThrow(()
-				-> new BusinessException("连接失败!"));
-		assertThat(bothWrongResult.isSuccess(), is(true));
-		List<Object> bothWrongData = (List<Object>)bothWrongResult.getData();
-		assertThat("根据测试数据，使用错误的userId和错误的sourceId查询得到的数据库采集任务和数据文件采集任务有" + bothWrongData.size() + "项", bothWrongData.size(), is(0));
+		assertThat("根据测试数据，使用错误的sourceId查询得到的半结构化采集任务有" + wrongDatabaseSetData.size() + "项", wrongDatabaseSetData.size(), is(0));
+		*/
+		Result wrongDatabaseSetData = wrongDatabaseSetResult.getDataForResult();
+		assertThat("根据测试数据，使用错误的sourceId查询得到的半结构化采集任务有" + wrongDatabaseSetData.getRowCount() + "项", wrongDatabaseSetData.getRowCount(), is(0));
 	}
 
 	/**
 	 * 测试根据sourceId查询出设置完成的FTP采集任务的任务ID
 	 *
-	 * 正确的数据访问1：使用正确的userId和正确的sourceId,http请求访问被测试方法,得到响应，判断结果集中没有数据
-	 * 错误的数据访问1：使用错误的userId和正确的sourceId,http请求访问被测试方法,得到响应，判断结果集中没有数据
-	 * 错误的数据访问2：使用正确的userId和错误的sourceId,http请求访问被测试方法,得到响应，判断结果集中没有数据
-	 * 错误的数据访问3：使用错误的userId和错误的sourceId,http请求访问被测试方法,得到响应，判断结果集中没有数据
+	 * 正确的数据访问1：使用正确的sourceId,http请求访问被测试方法,得到响应，判断结果集中没有数据
+	 * 错误的数据访问2：使用错误的sourceId,http请求访问被测试方法,得到响应，判断结果集中没有数据
+	 * 错误的测试用例未达到三组:getFTPTaskBySourceId()方法只有一个入参
 	 * @Param: 无
 	 * @return: 无
 	 *
 	 * */
 	@Test
 	public void getFTPTaskBySourceId() {
-		//正确的数据访问1：使用正确的userId和正确的sourceId,http请求访问被测试方法,得到响应，判断结果集中没有数据
+		//正确的数据访问1：使用正确的sourceId,http请求访问被测试方法,得到响应，判断结果集中没有数据
 		String ftpString = new HttpClient()
 				.addData("sourceId", SOURCE_ID)
 				.post(getActionUrl("getFTPTaskBySourceId")).getBodyString();
@@ -1152,22 +1057,14 @@ public class AgentListActionTest extends WebBaseTestCase {
 		ActionResult ftpResult = JsonUtil.toObjectSafety(ftpString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(ftpResult.isSuccess(), is(true));
+		/*
 		List<Object> firResult = (List<Object>)ftpResult.getData();
-		assertThat("根据测试数据，使用正确的userId和正确的sourceId查询得到的FTP采集任务有" + firResult.size() + "项", firResult.size(), is(2));
+		assertThat("根据测试数据，使用正确的sourceId查询得到的FTP采集任务有" + firResult.size() + "项", firResult.size(), is(2));
+		*/
+		Result firResult = ftpResult.getDataForResult();
+		assertThat("根据测试数据，使用正确的sourceId查询得到的FTP采集任务有" + firResult.getRowCount() + "项", firResult.getRowCount(), is(2));
 
-		//错误的数据访问1：使用错误的userId和正确的sourceId,http请求访问被测试方法,得到响应，判断结果集中没有数据
-		long wrongUserId = 1003L;
-		String wrongUserIdString = new HttpClient()
-				.addData("sourceId", SOURCE_ID)
-				.post(getActionUrl("getFTPTaskBySourceId")).getBodyString();
-
-		ActionResult wrongUserIdResult = JsonUtil.toObjectSafety(wrongUserIdString, ActionResult.class).orElseThrow(()
-				-> new BusinessException("连接失败!"));
-		assertThat(wrongUserIdResult.isSuccess(), is(true));
-		List<Object> wrongUserIdResultData = (List<Object>)wrongUserIdResult.getData();
-		assertThat("根据测试数据，使用错误的userId和正确的sourceId查询得到的FTP采集任务有" + wrongUserIdResultData.size() + "项", wrongUserIdResultData.size(), is(0));
-
-		//错误的数据访问2：使用正确的userId和错误的sourceId,http请求访问被测试方法,得到响应，判断结果是否正确
+		//错误的数据访问1：使用错误的sourceId,http请求访问被测试方法,得到响应，判断结果是否正确
 		long wrongSourceId = 2L;
 		String wrongSourceIdString = new HttpClient()
 				.addData("sourceId", wrongSourceId)
@@ -1176,19 +1073,12 @@ public class AgentListActionTest extends WebBaseTestCase {
 		ActionResult wrongDatabaseSetResult = JsonUtil.toObjectSafety(wrongSourceIdString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(wrongDatabaseSetResult.isSuccess(), is(true));
+		/*
 		List<Object> wrongDatabaseSetData = (List<Object>)wrongDatabaseSetResult.getData();
-		assertThat("根据测试数据，使用正确的userId和错误的sourceId查询得到的FTP采集任务有" + wrongDatabaseSetData.size() + "项", wrongDatabaseSetData.size(), is(0));
-
-		//错误的数据访问3：使用错误的userId和错误的sourceId,http请求访问被测试方法,得到响应，判断结果集中没有数据
-		String bothWrongString = new HttpClient()
-				.addData("sourceId", wrongSourceId)
-				.post(getActionUrl("getFTPTaskBySourceId")).getBodyString();
-
-		ActionResult bothWrongResult = JsonUtil.toObjectSafety(bothWrongString, ActionResult.class).orElseThrow(()
-				-> new BusinessException("连接失败!"));
-		assertThat(bothWrongResult.isSuccess(), is(true));
-		List<Object> bothWrongData = (List<Object>)bothWrongResult.getData();
-		assertThat("根据测试数据，使用错误的userId和错误的sourceId查询得到的数据库采集任务和数据文件采集任务有" + bothWrongData.size() + "项", bothWrongData.size(), is(0));
+		assertThat("根据测试数据，使用错误的sourceId查询得到的FTP采集任务有" + wrongDatabaseSetData.size() + "项", wrongDatabaseSetData.size(), is(0));
+		*/
+		Result wrongDatabaseSetData = wrongDatabaseSetResult.getDataForResult();
+		assertThat("根据测试数据，使用错误的sourceId查询得到的FTP采集任务有" + wrongDatabaseSetData.getRowCount() + "项", wrongDatabaseSetData.getRowCount(), is(0));
 	}
 
 	/**
@@ -1298,11 +1188,11 @@ public class AgentListActionTest extends WebBaseTestCase {
 			//4、提交事务后，对数据表中的数据进行检查，断言删除是否成功
 			long users = SqlOperator.queryNumber(db, "select count(1) from " + Sys_user.TableName + " WHERE user_id = ?", TEST_USER_ID)
 					.orElseThrow(() -> new RuntimeException("count fail!"));
-			assertThat("测试完成后删除的用户数据有:" + beforeUsers + "条", users, is(0L));
+			assertThat("测试完成后删除的用户数据有:" + deleteUserNum + "条", users, is(0L));
 
 			long depts = SqlOperator.queryNumber(db, "select count(1) from " + Department_info.TableName + " WHERE dep_id = ?", TEST_USER_ID)
 					.orElseThrow(() -> new RuntimeException("count fail!"));
-			assertThat("测试完成后删除的部门数据有:" + beforeDepts + "条", depts, is(0L));
+			assertThat("测试完成后删除的部门数据有:" + deleteDepNum + "条", depts, is(0L));
 
 			long dataSources = SqlOperator.queryNumber(db, "select count(1) from " + Data_source.TableName + " WHERE create_user_id = ?", TEST_USER_ID)
 					.orElseThrow(() -> new RuntimeException("count fail!"));

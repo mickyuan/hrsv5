@@ -1,12 +1,18 @@
 package hrds.b.biz.agent.dbagentconf.tableconf;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.utils.DateUtil;
+import fd.ng.core.utils.JsonUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
+import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
+import fd.ng.web.action.ActionResult;
 import hrds.commons.codes.*;
 import hrds.commons.entity.*;
+import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.Constant;
 import hrds.testbase.WebBaseTestCase;
 import org.junit.After;
@@ -70,7 +76,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 	 *      1001设置完成并发送成功(is_sendok)
 	 *      6、collect_job_classify表：有2条数据，classify_id为10086L、10010L，agent_id分别为7001L、7002L,user_id为-9997L
 	 *      7、table_info表测试数据共4条，databaseset_id为1001
-	 *          7-1、table_id:7001,table_name:sys_user,按照画面配置信息进行采集
+	 *          7-1、table_id:7001,table_name:sys_user,按照画面配置信息进行采集，并且配置了单表过滤SQL,select * from sys_user where user_id = 2001
 	 *          7-2、table_id:7002,table_name:code_info,按照画面配置信息进行采集
 	 *          7-3、table_id:7003,table_name:agent_info,按照自定义SQL进行采集
 	 *          7-4、table_id:7004,table_name:data_source,按照自定义SQL进行采集
@@ -201,7 +207,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 					tableId = SYS_USER_TABLE_ID;
 					tableName = "sys_user";
 					tableChName = "用户表";
-					customizeSQL = "";
+					customizeSQL = "select * from sys_user where user_id = 2001";
 					customizFlag = IsFlag.Fou.getCode();
 					break;
 				case 2:
@@ -215,14 +221,14 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 					tableId = AGENT_INFO_TABLE_ID;
 					tableName = "agent_info";
 					tableChName = "Agent信息表";
-					customizeSQL = " select * from agent_info";
+					customizeSQL = "select * from agent_info";
 					customizFlag = IsFlag.Shi.getCode();
 					break;
 				case 4:
 					tableId = DATA_SOURCE_TABLE_ID;
 					tableName = "data_source";
 					tableChName = "数据源表";
-					customizeSQL = " select * from data_source";
+					customizeSQL = "select * from data_source";
 					customizFlag = IsFlag.Shi.getCode();
 					break;
 				default:
@@ -598,10 +604,8 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 	 * 测试根据模糊表名和数据库设置id和agentId得到表相关信息功能
 	 *
 	 * 正确数据访问1：构造正确的colSetId(FIRST_DATABASESET_ID)
-	 * 错误的数据访问1：
-	 * 错误的数据访问2：
-	 * 错误的数据访问3：
-	 *
+	 * 错误的数据访问1：构造错误的colSetId
+	 * 错误的测试用例未达到三组:getInitInfo方法只有一个参数
 	 * @Param: 无
 	 * @return: 无
 	 *
@@ -612,12 +616,27 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		String rightString = new HttpClient()
 				.addData("colSetId", FIRST_DATABASESET_ID)
 				.post(getActionUrl("getInitInfo")).getBodyString();
+		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResult.isSuccess(), is(true));
+		Result rightData = rightResult.getDataForResult();
+		assertThat("根据测试数据，输入正确的colSetId查询到的非自定义采集表信息应该有" + rightData.getRowCount() + "条", rightData.getRowCount(), is(2));
 
+		//错误的数据访问1：构造错误的colSetId
+		long wrongColSetId = 99999L;
+		String wrongString = new HttpClient()
+				.addData("colSetId", wrongColSetId)
+				.post(getActionUrl("getInitInfo")).getBodyString();
+		ActionResult wrongResult = JsonUtil.toObjectSafety(wrongString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResult.isSuccess(), is(true));
+		Result wrongData = wrongResult.getDataForResult();
+		assertThat("根据测试数据，输入错误的colSetId查询到的非自定义采集表信息应该有" + wrongData.getRowCount() + "条", rightData.getRowCount(), is(2));
 	}
 
 	/**
 	 * 测试根据数据库设置id和agentId得到所有表相关信息功能
-	 *
+	 * TODO 由于被测方法未完成，所以测试用例暂无
 	 * 正确数据访问1：
 	 * 错误的数据访问1：
 	 * 错误的数据访问2：
@@ -633,8 +652,8 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 	}
 
 	/**
-	 * 测试SQL查询设置页面，保存按钮后台方法功能
-	 *
+	 * 测试根据数据库设置id和agentId得到所有表相关信息
+	 * TODO 由于被测方法未完成，所以测试用例暂无
 	 * 正确数据访问1：
 	 * 错误的数据访问1：
 	 * 错误的数据访问2：
@@ -650,12 +669,13 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 	}
 
 	/**
-	 * 测试SQL查询设置页面操作栏，删除按钮后台方法功能
+	 * 测试SQL查询设置页面，保存按钮后台方法功能
 	 *
-	 * 正确数据访问1：
-	 * 错误的数据访问1：
-	 * 错误的数据访问2：
-	 * 错误的数据访问3：
+	 * 正确数据访问1：构造两条自定义SQL查询设置数据，测试保存功能
+	 * 错误的数据访问1：构造两条自定义SQL查询设置数据，第一条数据的表名为空
+	 * 错误的数据访问2：构造两条自定义SQL查询设置数据，第二条数据的中文名为空
+	 * 错误的数据访问3：构造两条自定义SQL查询设置数据，第一条数据的sql为空
+	 * 错误的数据访问4：构造不存在与测试用例模拟数据中的databaseId
 	 *
 	 * @Param: 无
 	 * @return: 无
@@ -663,16 +683,221 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 	 * */
 	@Test
 	public void saveAllSQL(){
+		//正确数据访问1：构造两条自定义SQL查询设置数据，测试保存功能
+		List<Table_info> tableInfos = new ArrayList<>();
+		for(int i = 1; i <= 2; i++){
+			String tableName;
+			String tableChName;
+			String customizeSQL;
+			switch (i) {
+				case 1 :
+					tableName = "getHalfStructTaskBySourceId";
+					tableChName = "通过数据源ID获得半结构化采集任务";
+					customizeSQL = "SELECT fcs.odc_id " +
+							"FROM "+ Data_source.TableName +" ds " +
+							"JOIN "+ Agent_info.TableName +" ai ON ds.source_id = ai.source_id " +
+							"JOIN "+ Object_collect.TableName +" fcs ON ai.agent_id = fcs.agent_id " +
+							"WHERE ds.source_id = ? AND fcs.is_sendok = ? AND ds.create_user_id = ?";
+					break;
+				case 2 :
+					tableName = "getFTPTaskBySourceId";
+					tableChName = "通过数据源ID获得FTP采集任务";
+					customizeSQL = "SELECT fcs.ftp_id " +
+							"FROM "+ Data_source.TableName +" ds " +
+							"JOIN "+ Agent_info.TableName +" ai ON ds.source_id = ai.source_id " +
+							"JOIN "+ Ftp_collect.TableName +" fcs ON ai.agent_id = fcs.agent_id " +
+							"WHERE ds.source_id = ? AND fcs.is_sendok = ? AND ds.create_user_id = ? ";
+					break;
+				default:
+					tableName = "unexpected_tableName";
+					tableChName = "unexpected_tableChName";
+					customizeSQL = "unexpected_customizeSQL";
+			}
+			Table_info tableInfo = new Table_info();
+			tableInfo.setTable_name(tableName);
+			tableInfo.setTable_ch_name(tableChName);
+			tableInfo.setSql(customizeSQL);
 
+			tableInfos.add(tableInfo);
+		}
+		JSONArray array= JSONArray.parseArray(JSON.toJSONString(tableInfos));
+		String rightString = new HttpClient()
+				.addData("tableInfoArray", array.toJSONString())
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.post(getActionUrl("saveAllSQL")).getBodyString();
+		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResult.isSuccess(), is(true));
+		//保存成功，验证数据库中的记录是否符合预期
+		try (DatabaseWrapper db = new DatabaseWrapper()) {
+			List<Table_info> expectedList = SqlOperator.queryList(db, Table_info.class, "select * from " + Table_info.TableName + " where database_id = ? AND is_user_defined = ?", FIRST_DATABASESET_ID, IsFlag.Shi.getCode());
+			assertThat("保存成功后，table_info表中的用户自定义SQL查询数目应该有2条", expectedList.size(), is(2));
+			for(Table_info tableInfo : expectedList){
+				if(tableInfo.getTable_name().equalsIgnoreCase("getHalfStructTaskBySourceId")){
+					assertThat("保存成功后，自定义SQL查询getHalfStructTaskBySourceId的中文名应该是<通过数据源ID获得半结构化采集任务>", tableInfo.getTable_ch_name(), is("通过数据源ID获得半结构化采集任务"));
+				}else if(tableInfo.getTable_name().equalsIgnoreCase("getFTPTaskBySourceId")){
+					assertThat("保存成功后，自定义SQL查询getFTPTaskBySourceId的中文名应该是<通过数据源ID获得FTP采集任务>", tableInfo.getTable_ch_name(), is("通过数据源ID获得FTP采集任务"));
+				}else{
+					assertThat("保存出错，出现了不希望出现的数据，表id为" + tableInfo.getTable_id(), true, is(false));
+				}
+			}
+			//验证完毕后，将自己在本方法中构造的数据删除掉
+			int firCount = SqlOperator.execute(db, "delete from " + Table_info.TableName + " WHERE table_name = ?", "getHalfStructTaskBySourceId");
+			assertThat("测试完成后，table_name为getHalfStructTaskBySourceId的测试数据被删除了", firCount, is(1));
+			int secCount = SqlOperator.execute(db, "delete from " + Table_info.TableName + " WHERE table_name = ?", "getFTPTaskBySourceId");
+			assertThat("测试完成后，table_name为getFTPTaskBySourceId的测试数据被删除了", secCount, is(1));
+		}
+
+
+
+		//错误的数据访问1：构造两条自定义SQL查询设置数据，第一条数据的表名为空
+		List<Table_info> errorTableInfosOne = new ArrayList<>();
+		for(int i = 1; i <= 2; i++){
+			String tableName;
+			String tableChName;
+			String customizeSQL;
+			switch (i) {
+				case 1 :
+					tableName = null;
+					tableChName = "通过数据源ID获得半结构化采集任务";
+					customizeSQL = "SELECT fcs.odc_id " +
+							"FROM "+ Data_source.TableName +" ds " +
+							"JOIN "+ Agent_info.TableName +" ai ON ds.source_id = ai.source_id " +
+							"JOIN "+ Object_collect.TableName +" fcs ON ai.agent_id = fcs.agent_id " +
+							"WHERE ds.source_id = ? AND fcs.is_sendok = ? AND ds.create_user_id = ?";
+					break;
+				case 2 :
+					tableName = "getFTPTaskBySourceId";
+					tableChName = "通过数据源ID获得FTP采集任务";
+					customizeSQL = "SELECT fcs.ftp_id " +
+							"FROM "+ Data_source.TableName +" ds " +
+							"JOIN "+ Agent_info.TableName +" ai ON ds.source_id = ai.source_id " +
+							"JOIN "+ Ftp_collect.TableName +" fcs ON ai.agent_id = fcs.agent_id " +
+							"WHERE ds.source_id = ? AND fcs.is_sendok = ? AND ds.create_user_id = ? ";
+					break;
+				default:
+					tableName = "unexpected_tableName";
+					tableChName = "unexpected_tableChName";
+					customizeSQL = "unexpected_customizeSQL";
+			}
+			Table_info tableInfo = new Table_info();
+			tableInfo.setTable_name(tableName);
+			tableInfo.setTable_ch_name(tableChName);
+			tableInfo.setSql(customizeSQL);
+
+			errorTableInfosOne.add(tableInfo);
+		}
+		JSONArray errorArrayOne= JSONArray.parseArray(JSON.toJSONString(errorTableInfosOne));
+		String errorStringOne = new HttpClient()
+				.addData("tableInfoArray", errorArrayOne.toJSONString())
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.post(getActionUrl("saveAllSQL")).getBodyString();
+		ActionResult errorResultOne = JsonUtil.toObjectSafety(errorStringOne, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(errorResultOne.isSuccess(), is(false));
+		//错误的数据访问2：构造两条自定义SQL查询设置数据，第二条数据的中文名为空
+		List<Table_info> errorTableInfosTwo = new ArrayList<>();
+		for(int i = 1; i <= 2; i++){
+			String tableName;
+			String tableChName;
+			String customizeSQL;
+			switch (i) {
+				case 1 :
+					tableName = "getHalfStructTaskBySourceId";
+					tableChName = "通过数据源ID获得半结构化采集任务";
+					customizeSQL = "SELECT fcs.odc_id " +
+							"FROM "+ Data_source.TableName +" ds " +
+							"JOIN "+ Agent_info.TableName +" ai ON ds.source_id = ai.source_id " +
+							"JOIN "+ Object_collect.TableName +" fcs ON ai.agent_id = fcs.agent_id " +
+							"WHERE ds.source_id = ? AND fcs.is_sendok = ? AND ds.create_user_id = ?";
+					break;
+				case 2 :
+					tableName = "getFTPTaskBySourceId";
+					tableChName = null;
+					customizeSQL = "SELECT fcs.ftp_id " +
+							"FROM "+ Data_source.TableName +" ds " +
+							"JOIN "+ Agent_info.TableName +" ai ON ds.source_id = ai.source_id " +
+							"JOIN "+ Ftp_collect.TableName +" fcs ON ai.agent_id = fcs.agent_id " +
+							"WHERE ds.source_id = ? AND fcs.is_sendok = ? AND ds.create_user_id = ? ";
+					break;
+				default:
+					tableName = "unexpected_tableName";
+					tableChName = "unexpected_tableChName";
+					customizeSQL = "unexpected_customizeSQL";
+			}
+			Table_info tableInfo = new Table_info();
+			tableInfo.setTable_name(tableName);
+			tableInfo.setTable_ch_name(tableChName);
+			tableInfo.setSql(customizeSQL);
+
+			errorTableInfosTwo.add(tableInfo);
+		}
+		JSONArray errorArrayTwo= JSONArray.parseArray(JSON.toJSONString(errorTableInfosTwo));
+		String errorStringTwo = new HttpClient()
+				.addData("tableInfoArray", errorArrayTwo.toJSONString())
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.post(getActionUrl("saveAllSQL")).getBodyString();
+		ActionResult errorResultTwo = JsonUtil.toObjectSafety(errorStringTwo, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(errorResultTwo.isSuccess(), is(false));
+		//错误的数据访问3：构造两条自定义SQL查询设置数据，第一条数据的sql为空
+		List<Table_info> errortableInfoThree = new ArrayList<>();
+		for(int i = 1; i <= 2; i++){
+			String tableName;
+			String tableChName;
+			String customizeSQL;
+			switch (i) {
+				case 1 :
+					tableName = "getHalfStructTaskBySourceId";
+					tableChName = "通过数据源ID获得半结构化采集任务";
+					customizeSQL = null;
+					break;
+				case 2 :
+					tableName = "getFTPTaskBySourceId";
+					tableChName = "通过数据源ID获得FTP采集任务";
+					customizeSQL = "SELECT fcs.ftp_id " +
+							"FROM "+ Data_source.TableName +" ds " +
+							"JOIN "+ Agent_info.TableName +" ai ON ds.source_id = ai.source_id " +
+							"JOIN "+ Ftp_collect.TableName +" fcs ON ai.agent_id = fcs.agent_id " +
+							"WHERE ds.source_id = ? AND fcs.is_sendok = ? AND ds.create_user_id = ? ";
+					break;
+				default:
+					tableName = "unexpected_tableName";
+					tableChName = "unexpected_tableChName";
+					customizeSQL = "unexpected_customizeSQL";
+			}
+			Table_info tableInfo = new Table_info();
+			tableInfo.setTable_name(tableName);
+			tableInfo.setTable_ch_name(tableChName);
+			tableInfo.setSql(customizeSQL);
+
+			errortableInfoThree.add(tableInfo);
+		}
+		JSONArray errorArrayThree= JSONArray.parseArray(JSON.toJSONString(errortableInfoThree));
+		String errorStringThree = new HttpClient()
+				.addData("tableInfoArray", errorArrayThree.toJSONString())
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.post(getActionUrl("saveAllSQL")).getBodyString();
+		ActionResult errorResultThree = JsonUtil.toObjectSafety(errorStringThree, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(errorResultThree.isSuccess(), is(false));
+
+		//错误的数据访问4：构造不存在与测试用例模拟数据中的databaseId
+		String errorDatabaseId = new HttpClient()
+				.addData("tableInfoArray", array.toJSONString())
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.post(getActionUrl("saveAllSQL")).getBodyString();
+		ActionResult errorDatabaseIdResult = JsonUtil.toObjectSafety(errorDatabaseId, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(errorDatabaseIdResult.isSuccess(), is(false));
 	}
 
 	/**
 	 * 测试SQL查询设置页面操作栏，删除按钮后台方法功能
 	 *
-	 * 正确数据访问1：
-	 * 错误的数据访问1：
-	 * 错误的数据访问2：
-	 * 错误的数据访问3：
+	 * 正确数据访问1：模拟删除table_id为7003的自定义SQL采集数据
+	 * 错误的数据访问1：模拟删除一个不存在的table_id的自定义SQL采集数据
+	 * 错误的测试用例未达到三组: deleteSQLConf()方法只有一个参数
 	 *
 	 * @Param: 无
 	 * @return: 无
@@ -680,46 +905,131 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 	 * */
 	@Test
 	public void deleteSQLConf(){
+		//正确数据访问1：模拟删除table_id为7003的自定义SQL采集数据
+		//删除前，确认待删除数据是否存在
+		try(DatabaseWrapper db = new DatabaseWrapper()){
+			long beforeCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_id = ?", AGENT_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("必须有且只有一条数据"));
+			assertThat("删除前，table_id为" + AGENT_INFO_TABLE_ID + "的数据确实存在", beforeCount, is(1));
+		}
+		//构造正确的数据进行删除
+		String rightString = new HttpClient()
+				.addData("tableId", AGENT_INFO_TABLE_ID)
+				.post(getActionUrl("deleteSQLConf")).getBodyString();
+		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResult.isSuccess(), is(true));
+		//删除后，确认数据是否真的被删除了
+		try(DatabaseWrapper db = new DatabaseWrapper()){
+			long afterCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_id = ?", AGENT_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("必须有且只有一条数据"));
+			assertThat("删除后，table_id为" + AGENT_INFO_TABLE_ID + "的数据不存在了", afterCount, is(0));
+		}
 
+		//错误的数据访问1：模拟删除一个不存在的table_id的自定义SQL采集数据
+		long errorTableId = 88888L;
+		String wrongString = new HttpClient()
+				.addData("tableId", errorTableId)
+				.post(getActionUrl("deleteSQLConf")).getBodyString();
+		ActionResult wrongResult = JsonUtil.toObjectSafety(wrongString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResult.isSuccess(), is(false));
 	}
 
 	/**
-	 * 测试配置采集表页面，SQL设置按钮后台方法功能
+	 * 测试配置采集表页面，SQL设置按钮后台方法功能，用于回显已经设置的SQL
 	 *
-	 * 正确数据访问1：
-	 * 错误的数据访问1：
-	 * 错误的数据访问2：
-	 * 错误的数据访问3：
+	 * 正确数据访问1：构造正确的，且有数据的colSetId(FIRST_DATABASESET_ID)
+	 * 正确的数据访问2：构造正确的，但没有数据的colSetId(SECOND_DATABASESET_ID)
 	 *
+	 * 错误的测试用例未达到三组:getAllSQL()只有一个参数，且只要用户登录，能查到数据就是能查到，查不到就是查不到
 	 * @Param: 无
 	 * @return: 无
 	 *
 	 * */
 	@Test
 	public void getAllSQLs(){
-
+		//正确数据访问1：构造正确的，且有数据的colSetId(FIRST_DATABASESET_ID)
+		String rightStringOne = new HttpClient()
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.post(getActionUrl("getAllSQLs")).getBodyString();
+		ActionResult rightResultOne = JsonUtil.toObjectSafety(rightStringOne, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResultOne.isSuccess(), is(true));
+		List<Table_info> rightDataOne = rightResultOne.getDataForEntityList(Table_info.class);
+		assertThat("在ID为" + FIRST_DATABASESET_ID + "的数据库采集任务下，有2条自定义采集SQL", rightDataOne.size(), is(2));
+		for(Table_info tableInfo : rightDataOne){
+			if(tableInfo.getTable_id() == AGENT_INFO_TABLE_ID){
+				assertThat("在table_id为" + AGENT_INFO_TABLE_ID + "的自定义采集SQL中，自定义SQL为", tableInfo.getSql(), is("select * from agent_info"));
+			}else if(tableInfo.getTable_id() == DATA_SOURCE_TABLE_ID){
+				assertThat("在table_id为" + DATA_SOURCE_TABLE_ID + "的自定义采集SQL中，自定义SQL为", tableInfo.getSql(), is("select * from data_source"));
+			}else{
+				assertThat("获取到了不期望获取的数据，该条数据的table_name为" + tableInfo.getTable_name(), true, is(false));
+			}
+		}
+		//正确的数据访问2：构造正确的，但没有数据的colSetId(SECOND_DATABASESET_ID)
+		String rightStringTwo = new HttpClient()
+				.addData("colSetId", SECOND_DATABASESET_ID)
+				.post(getActionUrl("getAllSQLs")).getBodyString();
+		ActionResult rightResultTwo = JsonUtil.toObjectSafety(rightStringTwo, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResultTwo.isSuccess(), is(true));
+		List<Table_info> rightDataTwo = rightResultTwo.getDataForEntityList(Table_info.class);
+		assertThat("在ID为" + SECOND_DATABASESET_ID + "的数据库采集任务下，有0条自定义采集SQL", rightDataTwo.size(), is(0));
 	}
 
 	/**
 	 * 测试配置采集表页面,定义过滤按钮后台方法，用于回显已经对单表定义好的SQL功能
 	 *
-	 * 正确数据访问1：
-	 * 错误的数据访问1：
-	 * 错误的数据访问2：
-	 * 错误的数据访问3：
-	 *
+	 * 正确的数据访问1：模拟回显table_name为sys_user的表定义的对sys_user表的过滤SQL，可以拿到设置的SQL语句select * from sys_user where user_id = 2001
+	 * 正确的数据访问2：模拟回显table_name为code_info的过滤SQL，因为测试数据没有设置，所以得到的结果是空字符串
+	 * 错误的数据访问1：查询database_id为1002的数据，应该查不到结果，因为在这个数据库采集任务中，没有配置采集表
+	 * 错误的测试用例未达到三组:getSingleTableSQL()只有一个参数，且只要用户登录，能查到数据就是能查到，查不到就是查不到
 	 * @Param: 无
 	 * @return: 无
 	 *
 	 * */
 	@Test
 	public void getSingleTableSQL(){
+		//正确的数据访问1：模拟回显table_name为sys_user的表定义的对sys_user表的过滤SQL，可以拿到设置的SQL语句select * from sys_user where user_id = 2001
+		String rightTableNameOne = "sys_user";
+		String rightStringOne = new HttpClient()
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.addData("tableName", rightTableNameOne)
+				.post(getActionUrl("getSingleTableSQL")).getBodyString();
+		ActionResult rightResultOne = JsonUtil.toObjectSafety(rightStringOne, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResultOne.isSuccess(), is(true));
+		Result rightDataOne = rightResultOne.getDataForResult();
+		assertThat("使用database_id为" + FIRST_DATABASESET_ID + "和table_name为" + rightTableNameOne + "得到1条数据", rightDataOne.getRowCount(), is(1));
+		assertThat("回显table_name为sys_user表定义的过滤SQL", rightDataOne.getString(0, "sql"), is("select * from sys_user where user_id = 2001"));
+		//正确的数据访问2：模拟回显table_name为code_info的过滤SQL，因为测试数据没有设置，所以拿不到
+		String rightTableNameTwo = "code_info";
+		String rightStringTwo = new HttpClient()
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.addData("tableName", rightTableNameTwo)
+				.post(getActionUrl("getSingleTableSQL")).getBodyString();
+		ActionResult rightResultTwo = JsonUtil.toObjectSafety(rightStringTwo, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResultTwo.isSuccess(), is(true));
+		Result rightDataTwo = rightResultTwo.getDataForResult();
+		assertThat("使用database_id为" + FIRST_DATABASESET_ID + "和table_name为" + rightTableNameTwo + "得到1条数据", rightDataTwo.getRowCount(), is(1));
+		assertThat("code_info表没有定义过滤SQL",  rightDataTwo.getString(0, "sql"), is(""));
 
+		//错误的数据访问1：查询database_id为1002的数据，应该查不到结果，因为在这个数据库采集任务中，没有配置采集表
+		String wrongString = new HttpClient()
+				.addData("colSetId", SECOND_DATABASESET_ID)
+				.addData("tableName", rightTableNameTwo)
+				.post(getActionUrl("getSingleTableSQL")).getBodyString();
+		ActionResult wrongResult = JsonUtil.toObjectSafety(wrongString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResult.isSuccess(), is(true));
+		Result wrongData = wrongResult.getDataForResult();
+		assertThat("使用database_id为" + SECOND_DATABASESET_ID + "和table_name为" + rightTableNameTwo + "得到0条数据", wrongData.getRowCount(), is(0));
 	}
 
 	/**
 	 * 测试配置采集表页面,选择列按钮后台功能
 	 *
+	 * TODO 由于与Agent端获取列信息的方法还没有完成，所以测试用例暂无
 	 * 正确数据访问1：
 	 * 错误的数据访问1：
 	 * 错误的数据访问2：
@@ -737,6 +1047,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 	/**
 	 * 测试保存单个表的采集信息功能
 	 *
+	 * TODO 由于与Agent端获取列信息的方法还没有完成，所以测试用例暂无
 	 * 正确数据访问1：
 	 * 错误的数据访问1：
 	 * 错误的数据访问2：
@@ -754,18 +1065,34 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 	/**
 	 * 测试如果页面只有自定义SQL查询采集，保存该界面配置的所有信息功能
 	 *
-	 * 正确数据访问1：
-	 * 错误的数据访问1：
-	 * 错误的数据访问2：
-	 * 错误的数据访问3：
-	 *
+	 * 正确的数据访问1：模拟这样一种情况，在构造的测试数据的基础上，不采集页面上配置的两张表，然后点击下一步，也就是说现在datavase_id为FIRST_DATABASESET_ID的数据库采集任务全部是采集自定义SQL
+	 * 错误的测试用例未达到三组:因为自定义表已经入库了，所以要在table_info表中删除不是自定义SQL的表信息，删除的条数可能为0-N，不关注是否删除了数据和删除的数目
 	 * @Param: 无
 	 * @return: 无
 	 *
 	 * */
 	@Test
 	public void saveCustomizeCollTbInfo(){
+		//正确的数据访问1：模拟这样一种情况，在构造的测试数据的基础上，不采集页面上配置的两张表，然后点击下一步，也就是说现在datavase_id为FIRST_DATABASESET_ID的数据库采集任务全部是采集自定义SQL
+		//删除前，确认待删除数据是否存在
+		try(DatabaseWrapper db = new DatabaseWrapper()){
+			long beforeCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " WHERE database_id = ? AND valid_e_date = ? AND is_user_defined = ?", FIRST_DATABASESET_ID, Constant.MAXDATE, IsFlag.Fou.getCode()).orElseThrow(() -> new BusinessException("必须有且只有一条数据"));
+			assertThat("方法调用前，table_info表中的非用户自定义采集有2条", beforeCount, is(2));
+		}
 
+		//构造正确的数据访问
+		String rightString = new HttpClient()
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.post(getActionUrl("saveCustomizeCollTbInfo")).getBodyString();
+		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResult.isSuccess(), is(true));
+
+		//删除后，确认数据是否真的被删除了
+		try(DatabaseWrapper db = new DatabaseWrapper()){
+			long afterCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " WHERE database_id = ? AND valid_e_date = ? AND is_user_defined = ?", FIRST_DATABASESET_ID, Constant.MAXDATE, IsFlag.Fou.getCode()).orElseThrow(() -> new BusinessException("必须有且只有一条数据"));
+			assertThat("方法调用后，table_info表中的非用户自定义采集有0条", afterCount, is(0));
+		}
 	}
 
 	/**
