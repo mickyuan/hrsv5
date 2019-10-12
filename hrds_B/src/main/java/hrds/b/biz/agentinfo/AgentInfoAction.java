@@ -60,7 +60,7 @@ public class AgentInfoAction extends BaseAction {
 		asmSql.addParam(IsFlag.Shi.getCode());
 		asmSql.addParam(sourceId);
 		asmSql.addParam(AgentType.DBWenJian.getCode());
-		List<Map<String, Object>> DBWJAgentList = Dbo.queryList(asmSql.sql(), asmSql.params());
+		List<Map<String, Object>> dbWjAgentList = Dbo.queryList(asmSql.sql(), asmSql.params());
 		asmSql.cleanParams();
 		// 对象Agent
 		asmSql.addParam(IsFlag.Shi.getCode());
@@ -76,7 +76,7 @@ public class AgentInfoAction extends BaseAction {
 		// 创建存放agent信息的集合
 		Map<String, Object> map = new HashMap<>();
 		map.put("sjkAgent", sjkAgentList);
-		map.put("DBAgent", DBWJAgentList);
+		map.put("DBAgent", dbWjAgentList);
 		map.put("fileAgent", fileAgentList);
 		map.put("dxAgent", dxAgentList);
 		map.put("ftpAgent", ftpAgentList);
