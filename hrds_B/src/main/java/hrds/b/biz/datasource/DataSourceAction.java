@@ -302,16 +302,15 @@ public class DataSourceAction extends BaseAction {
 	 *                   含义：data_source表实体类
 	 *                   取值范围：datasource_name不为空以及不为空格，datasource_number不为空以及不为空格
 	 *                   *                   ，source_remark可为空，其余字段取系统值
-	 * @param depIds     Long[]
-	 *                   含义：存储source_relation_dep表主键ID的数组，定义为Long是为了
-	 *                   判断是否为null
-	 *                   取值范围：不为空以及不为空格
+	 * @param depIds           String
+	 *                         含义：存储source_relation_dep表主键ID，可能是一个也可能是多个拼接的字符串
+	 *                         取值范围：不为空以及不为空格
 	 */
 	public void saveDataSource(@RequestBean Data_source dataSource, String depIds) {
 		// 1.数据可访问权限处理方式，新增时会设置创建用户ID，会获取当前用户ID，所以不需要权限验证
 		// 2.字段做合法性检查
-		//fieldLegalityValidation(dataSource.getDatasource_name(), dataSource.getDatasource_number(),
-		//		depIds);
+		fieldLegalityValidation(dataSource.getDatasource_name(), dataSource.getDatasource_number(),
+				depIds);
 		// 3.对data_source初始化一些非页面传值
 		// 数据源主键ID
 		dataSource.setSource_id(PrimayKeyGener.getNextId());
@@ -324,7 +323,7 @@ public class DataSourceAction extends BaseAction {
 		// 4.保存data_source信息
 		dataSource.add(Dbo.db());
 		// 5.保存source_relation_dep表信息
-		//saveSourceRelationDep(dataSource.getSource_id(), depIds);
+		saveSourceRelationDep(dataSource.getSource_id(), depIds);
 	}
 
 	/**
