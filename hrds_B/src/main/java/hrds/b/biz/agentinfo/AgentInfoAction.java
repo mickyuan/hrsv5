@@ -38,7 +38,7 @@ public class AgentInfoAction extends BaseAction {
 	 * @return java.util.Map
 	 * 含义：存放数据源及agent信息的集合
 	 */
-	public Map<String, Object> searchAgentInfo(long sourceId, long datasourceName) {
+	public Map<String, Object> searchDatasourceAndAgentInfo(long sourceId, long datasourceName) {
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		asmSql.addSql("select gi.*,su.user_name,su.user_id,t3.deploy,(case t3.deploy when ? then 'yes' " +
 				" else 'no' end) agentStatu from agent_info gi LEFT JOIN agent_down_info t3 ON " +
@@ -81,6 +81,7 @@ public class AgentInfoAction extends BaseAction {
 		map.put("dxAgent", sjkAgentList);
 		map.put("ftpAgent", sjkAgentList);
 		map.put("datasourceName", datasourceName);
+		map.put("sourceId", sourceId);
 		map.put("connection", AgentStatus.YiLianJie.getCode());
 		map.put("sjk", AgentType.ShuJuKu.getCode());
 		map.put("DB", AgentType.DBWenJian.getCode());
