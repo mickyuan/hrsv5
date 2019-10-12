@@ -33,9 +33,14 @@ public class SFTPChannel {
 		return (ChannelSftp) channel;
 	}
 
-	//FIXME 不要使用Map做参数！使用多个明确的参数，或者提供一个构建参数BEAN：本类的一个public static class
-	public ChannelSftp getChannel(String ftpHost, String ftpUserName, String ftpPassword, int ftpPort, int timeout) throws JSchException {
-		return getChannel(getSftpDetails(ftpHost, ftpUserName, ftpPassword, ftpPort), timeout);
+	public ChannelSftp getChannel(Session session, int timeout) throws JSchException {
+		channel = session.openChannel("sftp"); // 打开SFTP通道
+		channel.connect(); // 建立SFTP通道的连接
+		return (ChannelSftp) channel;
+	}
+
+	public Session getJSchSession(String ftpHost, String ftpUserName, String ftpPassword, int ftpPort, int timeout) throws JSchException {
+		return getJSchSession(getSftpDetails(ftpHost, ftpUserName, ftpPassword, ftpPort), timeout);
 	}
 
 	/**
@@ -123,7 +128,6 @@ public class SFTPChannel {
 	}
 
 	public void closeChannel() throws Exception {
-
 		if (channel != null) {
 			channel.disconnect();
 		}
@@ -139,7 +143,7 @@ public class SFTPChannel {
 	 * @param ftpPort     int
 	 * @return Map<String, String>
 	 */
-	private Map<String, String> getSftpDetails(String ftpHost, String ftpUserName, String ftpPassword, int ftpPort) {
+	private static Map<String, String> getSftpDetails(String ftpHost, String ftpUserName, String ftpPassword, int ftpPort) {
 		Map<String, String> sftpDetails = new HashMap<>();
 		sftpDetails.put(SCPFileSender.HOST, ftpHost);
 		sftpDetails.put(SCPFileSender.PORT, String.valueOf(ftpPort));
