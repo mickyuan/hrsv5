@@ -204,12 +204,11 @@ public class DataSourceAction extends BaseAction {
 	 * @param sourceId long
 	 *                 含义：data_source表主键ID
 	 *                 取值范围：不为空的十位数字，新增时通过主键生成规则自动生成
-	 * @param depIds   Long[]
-	 *                 含义：存储source_relation_dep表主键ID的数组，定义为Long是为了
-	 *                 判断是否为null
+	 * @param depIds   String
+	 *                 含义：存储source_relation_dep表主键ID，可能是一个也可能是多个拼接的字符串
 	 *                 取值范围：不为空以及不为空格
 	 */
-	public void updateAuditSourceRelationDep(long sourceId, Long[] depIds) {
+	public void updateAuditSourceRelationDep(long sourceId, String depIds) {
 		// 1.数据可访问权限处理方式，通过sourceId与user_id关联检查
 		if (Dbo.queryNumber("select count(1) from data_source ds left join source_relation_dep srd" +
 						" on ds.source_id=srd.source_id where ds.source_id=? and ds.create_user_id=?",
@@ -308,11 +307,11 @@ public class DataSourceAction extends BaseAction {
 	 *                   判断是否为null
 	 *                   取值范围：不为空以及不为空格
 	 */
-	public void saveDataSource(@RequestBean Data_source dataSource, Long[] depIds) {
+	public void saveDataSource(@RequestBean Data_source dataSource, String depIds) {
 		// 1.数据可访问权限处理方式，新增时会设置创建用户ID，会获取当前用户ID，所以不需要权限验证
 		// 2.字段做合法性检查
-		fieldLegalityValidation(dataSource.getDatasource_name(), dataSource.getDatasource_number(),
-				depIds);
+		//fieldLegalityValidation(dataSource.getDatasource_name(), dataSource.getDatasource_number(),
+		//		depIds);
 		// 3.对data_source初始化一些非页面传值
 		// 数据源主键ID
 		dataSource.setSource_id(PrimayKeyGener.getNextId());
@@ -325,7 +324,7 @@ public class DataSourceAction extends BaseAction {
 		// 4.保存data_source信息
 		dataSource.add(Dbo.db());
 		// 5.保存source_relation_dep表信息
-		saveSourceRelationDep(dataSource.getSource_id(), depIds);
+		//saveSourceRelationDep(dataSource.getSource_id(), depIds);
 	}
 
 	/**
@@ -351,13 +350,12 @@ public class DataSourceAction extends BaseAction {
 	 * @param datasourceNumber String
 	 *                         含义：数据源编号
 	 *                         取值范围：不为空且不为空格，长度不超过四位
-	 * @param depIds           Long[]
-	 *                         含义：存储source_relation_dep表主键ID的数组，定义为Long是为了
-	 *                         判断是否为null
+	 * @param depIds           String
+	 *                         含义：存储source_relation_dep表主键ID，可能是一个也可能是多个拼接的字符串
 	 *                         取值范围：不为空以及不为空格
 	 */
 	public void updateDataSource(Long sourceId, String sourceRemark, String datasourceName,
-	                             String datasourceNumber, Long[] depIds) {
+	                             String datasourceNumber, String depIds) {
 		// 1.数据可访问权限处理方式，通过sourceId与user_id关联检查
 		if (Dbo.queryNumber("select count(1) from data_source where source_id=? and create_user_id=?",
 				sourceId, getUserId()).orElseThrow(() -> new BusinessException("sql查询错误！")) == 0) {
@@ -404,16 +402,16 @@ public class DataSourceAction extends BaseAction {
 	 * @param datasourceNumber String
 	 *                         含义：数据源编号
 	 *                         取值范围：不为空以及不为空格，长度不超过4
-	 * @param depIds           Long[]
-	 *                         含义：存储source_relation_dep主键ID(dep_id)的数组,定义为Long是为了
-	 *                         判断是否为null
-	 *                         取值范围：10为数字
+	 * @param depIds           String
+	 *                         含义：存储source_relation_dep表主键ID，可能是一个也可能是多个拼接的字符串
+	 *                         取值范围：不为空以及不为空格
 	 */
-	private void fieldLegalityValidation(String datasourceName, String datasourceNumber, Long[] depIds) {
+	private void fieldLegalityValidation(String datasourceName, String datasourceNumber, String depIds) {
 		// 1.数据可访问权限处理方式，通过create_user_id检查
 		// 2.循环遍历获取source_relation_dep主键ID，验证dep_id合法性
-		for (Long depId : depIds) {
-			if (depId == null) {
+		String[] split = depIds.split(",");
+		for (String depId : split) {
+			if (StringUtil.isBlank(depId)) {
 				throw new BusinessException("部门不能为空或者空格，新增部门时通过主键生成!");
 			}
 		}
@@ -448,15 +446,16 @@ public class DataSourceAction extends BaseAction {
 	 * @param sourceId long
 	 *                 含义：source_relation_dep表外键ID
 	 *                 取值范围，不能为空以及不能为空格
-	 * @param depIds   Long[]
-	 *                 含义：存放source_relation_dep表主键ID的数组
-	 *                 取值范围：不为空
+	 * @param depIds   String
+	 *                 含义：存储source_relation_dep表主键ID，可能是一个也可能是多个拼接的字符串
+	 *                 取值范围：不为空以及不为空格
 	 */
-	private void saveSourceRelationDep(long sourceId, Long[] depIds) {
+	private void saveSourceRelationDep(long sourceId, String depIds) {
 		// 1.数据可访问权限处理方式，这是一个私有方法，不会单独被调用，所以这里不需要做权限验证
 		// 2.验证传递的部门ID对应的部门信息是否存在
-		for (Long depId : depIds) {
-			if (Dbo.queryNumber("select count(*) from department_info where dep_id=?", depId)
+		String[] split = depIds.split(",");
+		for (String depId : split) {
+			if (Dbo.queryNumber("select count(*) from department_info where dep_id=?", Long.valueOf(depId))
 					.orElseThrow(() -> new BusinessException("sql查询错误")) == 0) {
 				throw new BusinessException("该部门ID对应的部门不存在，请检查！");
 			}
@@ -465,8 +464,8 @@ public class DataSourceAction extends BaseAction {
 		Source_relation_dep sourceRelationDep = new Source_relation_dep();
 		sourceRelationDep.setSource_id(sourceId);
 		// 4.循环遍历存储部门ID的数组并保存source_relation_dep表信息
-		for (long depId : depIds) {
-			sourceRelationDep.setDep_id(depId);
+		for (String depId : split) {
+			sourceRelationDep.setDep_id(Long.valueOf(depId));
 			sourceRelationDep.add(Dbo.db());
 		}
 	}
@@ -495,7 +494,7 @@ public class DataSourceAction extends BaseAction {
 		// 1.数据可访问权限处理方式，以下SQL关联sourceId与user_id检查
 		// 2.创建并封装数据源与部门关联信息以及部门信息集合
 		Map<String, Object> map = new HashMap<>();
-		// 3.判断是新增还是编辑时查询回显数据，如果是新增，只查询部门信息，如果是编辑，还需查询数据源信息
+		// 3.判断是新增还是更新，如果是新增，只查询部门信息，如果是更新，还需查询回显数据源数据
 		if (sourceId != null) {
 			// 编辑时查询
 			// 3.1关联查询data_source表与source_relation_dep表信息
