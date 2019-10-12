@@ -76,10 +76,10 @@ public class AgentInfoAction extends BaseAction {
 		// 创建存放agent信息的集合
 		Map<String, Object> map = new HashMap<>();
 		map.put("sjkAgent", sjkAgentList);
-		map.put("DBAgent", sjkAgentList);
-		map.put("fileAgent", sjkAgentList);
-		map.put("dxAgent", sjkAgentList);
-		map.put("ftpAgent", sjkAgentList);
+		map.put("DBAgent", DBWJAgentList);
+		map.put("fileAgent", fileAgentList);
+		map.put("dxAgent", dxAgentList);
+		map.put("ftpAgent", ftpAgentList);
 		map.put("datasourceName", datasourceName);
 		map.put("sourceId", sourceId);
 		map.put("connection", AgentStatus.YiLianJie.getCode());
