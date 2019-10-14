@@ -4,9 +4,14 @@ import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
+import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
-import hrds.commons.codes.*;
+import hrds.b.biz.agent.bean.DBConnectionProp;
+import hrds.commons.codes.AgentStatus;
+import hrds.commons.codes.AgentType;
+import hrds.commons.codes.DatabaseType;
+import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Agent_info;
 import hrds.commons.entity.Collect_job_classify;
 import hrds.commons.entity.Data_source;
@@ -19,7 +24,6 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.OptionalLong;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -183,10 +187,10 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 	/**
 	 * 测试数据库直连采集，根据databaseId进行查询并在页面上回显数据源配置信息
 	 *
-	 * 正确数据访问1：传入正确的userId和is_sendok字段为1的databaseId(正确)
-	 * 错误的数据访问1：传入正确的userId和is_sendok字段为0的databaseId(正确)
-	 * 错误的数据访问2：传入正确的userId和错误的databaseId
-	 * 错误的数据访问3：传入错误的userId和正确的databaseId
+	 * 正确数据访问1：传入is_sendok字段为1的databaseId
+	 * 错误的数据访问1：传入is_sendok字段为0的databaseId
+	 * 错误的数据访问2：传入不存在的databaseId
+	 * 错误的测试用例未达到三组:两组错误的测试用例已经可以覆盖所有可能出现的错误情况
 	 *
 	 * @Param: 无
 	 * @return: 无
@@ -194,43 +198,38 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 	 * */
 	@Test
 	public void getDBConfInfo(){
-		long wrongUserId = 3333L;
 		long wrongDatabaseId = 1003L;
-		//正确数据访问1：传入正确的userId和is_sendok字段为1的databaseId
+		//正确数据访问1：传入is_sendok字段为1的databaseId
 		String rightString = new HttpClient()
 				.addData("databaseId", 1002L)
-				.addData("userId", TEST_USER_ID)
 				.post(getActionUrl("getDBConfInfo")).getBodyString();
 
-		ActionResult rightResult = JsonUtil.toObject(rightString, ActionResult.class);
+		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
 		assertThat(rightResult.isSuccess(), is(true));
+		/*
 		List<Object> data = (List<Object>) rightResult.getData();
 		assertThat("根据测试数据，查询到的数据库配置信息应该有" + data.size() + "条", data.size(), is(1));
+		*/
+		Result data = rightResult.getDataForResult();
+		assertThat("根据测试数据，查询到的数据库配置信息应该有" + data.getRowCount() + "条", data.getRowCount(), is(1));
 
-		//错误的数据访问1：传入正确的userId和is_sendok字段为0的databaseId
+		//错误的数据访问1：传入is_sendok字段为0的databaseId
 		String firWrongString = new HttpClient()
 				.addData("databaseId", 1001L)
-				.addData("userId", TEST_USER_ID)
 				.post(getActionUrl("getDBConfInfo")).getBodyString();
 
-		ActionResult firWrongResult = JsonUtil.toObject(firWrongString, ActionResult.class);
+		ActionResult firWrongResult = JsonUtil.toObjectSafety(firWrongString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
 		assertThat(firWrongResult.isSuccess(), is(false));
 
-		//错误的数据访问2：传入正确的userId和错误的databaseId
+		//错误的数据访问2：传入不存在的databaseId
 		String secWrongString = new HttpClient()
 				.addData("databaseId", wrongDatabaseId)
-				.addData("userId", TEST_USER_ID)
 				.post(getActionUrl("getDBConfInfo")).getBodyString();
-		ActionResult secWrongResult = JsonUtil.toObject(secWrongString, ActionResult.class);
+		ActionResult secWrongResult = JsonUtil.toObjectSafety(secWrongString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
 		assertThat(secWrongResult.isSuccess(), is(false));
-
-		//错误的数据访问3：传入错误的userId和正确的databaseId
-		String thiWrongString = new HttpClient()
-				.addData("databaseId", 1001)
-				.addData("userId", wrongUserId)
-				.post(getActionUrl("getDBConfInfo")).getBodyString();
-		ActionResult thiWrongResult = JsonUtil.toObject(thiWrongString, ActionResult.class);
-		assertThat(thiWrongResult.isSuccess(), is(false));
 	}
 
 	/**
@@ -251,139 +250,116 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 		String rightString = new HttpClient()
 				.addData("dbType", DatabaseType.MYSQL.getCode())
 				.post(getActionUrl("getJDBCDriver")).getBodyString();
-		ActionResult rightResult = JsonUtil.toObject(rightString, ActionResult.class);
+		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
 		assertThat(rightResult.isSuccess(), is(true));
+		/*
 		Map<String, String> data = (Map<String, String>) rightResult.getData();
 		assertThat("根据测试数据，查询到的数据库信息应该有" + data.size() + "组键值对", data.size(), is(4));
 		assertThat( data.get("jdbcPrefix"), is("jdbc:mysql://"));
 		assertThat( data.get("jdbcIp"), is(":"));
 		assertThat( data.get("jdbcPort"), is("/"));
 		assertThat( data.get("jdbcBase"), is("?characterEncoding=utf8&zeroDateTimeBehavior=convertToNull"));
+		*/
+		List<DBConnectionProp> data = rightResult.getDataForEntityList(DBConnectionProp.class);
+		assertThat("根据测试数据，查询到的数据库连接信息应该有" + data.size() + "条", data.size(), is(1));
+		assertThat( data.get(0).getUrlPrefix(), is("jdbc:mysql://"));
+		assertThat( data.get(0).getIpPlaceholder(), is(":"));
+		assertThat( data.get(0).getPortPlaceholder(), is("/"));
+		assertThat( data.get(0).getUrlSuffix(), is("?characterEncoding=utf8&zeroDateTimeBehavior=convertToNull"));
 
 		//错误的数据访问1：构建dbType不在DatabaseType代码项中的code值，断言得到的数据是否正确
 		String wrongString = new HttpClient()
 				.addData("dbType", wrongDBType)
 				.post(getActionUrl("getJDBCDriver")).getBodyString();
-		ActionResult wrongResult = JsonUtil.toObject(wrongString, ActionResult.class);
+		ActionResult wrongResult = JsonUtil.toObjectSafety(wrongString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
 		assertThat(wrongResult.isSuccess(), is(false));
 	}
 
 	/**
 	 * 测试根据classifyId判断当前分类是否被使用，如果被使用，则不能编辑，否则，可以编辑
 	 *
-	 * 正确数据访问1：传入正确的userId和正确的classifyId
-	 * 错误的数据访问1：传入正确的userId和错误的classifyId
-	 * 错误的数据访问2：传入错误的userId和正确的classifyId
-	 * 错误的数据访问3：传入错误的userId和错误的classifyId
-	 *
+	 * 正确数据访问1：传入正确的已被database_set表使用的classifyId
+	 * 正确数据访问2：传入正确的未被database_set表使用的classifyId
+	 * 错误的数据访问1：传入错误的classifyId
+	 * 错误访问场景不足的原因：该方法调用只需要一个参数
 	 * @Param: 无
 	 * @return: 无
 	 *
 	 * */
 	@Test
 	public void checkClassifyId(){
-		long wrongUserId = 3333L;
-		long wrongClassifyId = 10000L;
-		//正确数据访问1：传入正确的userId和正确的已被database_set表使用的classifyId
+		//正确数据访问1：传入正确的已被database_set表使用的classifyId
 		String usedClassifyIdString = new HttpClient()
 				.addData("classifyId", FIRST_CLASSIFY_ID)
-				.addData("userId", TEST_USER_ID)
 				.post(getActionUrl("checkClassifyId")).getBodyString();
-		ActionResult usedClassifyIdResult = JsonUtil.toObject(usedClassifyIdString, ActionResult.class);
+		ActionResult usedClassifyIdResult = JsonUtil.toObjectSafety(usedClassifyIdString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
 		assertThat(usedClassifyIdResult.isSuccess(), is(true));
 		boolean usedClassifyResult = (boolean) usedClassifyIdResult.getData();
 		assertThat(usedClassifyResult, is(false));
 
-		//正确数据访问2：传入正确的userId和正确的未被database_set表使用的classifyId
+		//正确数据访问2：传入正确的未被database_set表使用的classifyId
 		String unusedClassifyIdString = new HttpClient()
 				.addData("classifyId", THIRD_CLASSIFY_ID)
-				.addData("userId", TEST_USER_ID)
 				.post(getActionUrl("checkClassifyId")).getBodyString();
-		ActionResult unusedClassifyIdResult = JsonUtil.toObject(unusedClassifyIdString, ActionResult.class);
+		ActionResult unusedClassifyIdResult = JsonUtil.toObjectSafety(unusedClassifyIdString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
 		assertThat(unusedClassifyIdResult.isSuccess(), is(true));
 		boolean checkResult = (boolean) unusedClassifyIdResult.getData();
 		assertThat(checkResult, is(true));
 
-		//错误的数据访问1：传入正确的userId和错误的classifyId
+		//错误的数据访问1：错误的classifyId
 		String wrongUserString = new HttpClient()
 				.addData("classifyId", FIRST_CLASSIFY_ID)
-				.addData("userId", wrongUserId)
 				.post(getActionUrl("checkClassifyId")).getBodyString();
-		ActionResult wrongUserResult = JsonUtil.toObject(wrongUserString, ActionResult.class);
+		ActionResult wrongUserResult = JsonUtil.toObjectSafety(wrongUserString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
 		assertThat(wrongUserResult.isSuccess(), is(false));
-
-		//错误的数据访问2：传入错误的userId和正确的classifyId
-		String wrongClassifyString = new HttpClient()
-				.addData("classifyId", wrongClassifyId)
-				.addData("userId", TEST_USER_ID)
-				.post(getActionUrl("checkClassifyId")).getBodyString();
-		ActionResult wrongClassifyResult = JsonUtil.toObject(wrongClassifyString, ActionResult.class);
-		assertThat(wrongClassifyResult.isSuccess(), is(false));
-
-		//错误的数据访问3：传入错误的userId和错误的classifyId
-		String bothWrongString = new HttpClient()
-				.addData("classifyId", wrongClassifyId)
-				.addData("userId", wrongUserId)
-				.post(getActionUrl("checkClassifyId")).getBodyString();
-		ActionResult bothWrongResult = JsonUtil.toObject(bothWrongString, ActionResult.class);
-		assertThat(bothWrongResult.isSuccess(), is(false));
 	}
 
 	/**
 	 * 测试根据sourceId获取分类信息
 	 *
-	 * 正确数据访问1：传入正确的userId和正确的sourceId
-	 * 错误的数据访问1：传入错误的userId和正确的sourceId
-	 * 错误的数据访问2：传入正确的userId和错误的sourceId
-	 * 错误的数据访问3：传入错误的userId和错误的sourceId
-	 *
+	 * 正确数据访问1：传入正确的sourceId
+	 * 错误的数据访问1：传入错误的sourceId
+	 * 错误访问场景不足的原因：该方法调用只需要一个参数
 	 * @Param: 无
 	 * @return: 无
 	 *
 	 * */
 	@Test
 	public void getClassifyInfo(){
-		long wrongUserId = 3333L;
 		long wrongSourceId = 2L;
 		//正确数据访问1：传入正确的userId和正确的sourceId
 		String rightString = new HttpClient()
 				.addData("sourceId", SOURCE_ID)
-				.addData("userId", TEST_USER_ID)
 				.post(getActionUrl("getClassifyInfo")).getBodyString();
-		ActionResult rightResult = JsonUtil.toObject(rightString, ActionResult.class);
+		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
 		assertThat(rightResult.isSuccess(), is(true));
+		/*
 		List<Object> data = (List<Object>) rightResult.getData();
 		assertThat("查询得到的分类信息数据有" + data.size() + "条", data.size(), is(3));
+		*/
+		List<Collect_job_classify> data = rightResult.getDataForEntityList(Collect_job_classify.class);
+		assertThat("查询得到的分类信息数据有" + data.size() + "条", data.size(), is(3));
 
-		//错误的数据访问1：传入错误的userId和正确的sourceId
-		String wrongUserIdString = new HttpClient()
-				.addData("sourceId", SOURCE_ID)
-				.addData("userId", wrongUserId)
-				.post(getActionUrl("getClassifyInfo")).getBodyString();
-		ActionResult wrongUserResult = JsonUtil.toObject(wrongUserIdString, ActionResult.class);
-		assertThat(wrongUserResult.isSuccess(), is(true));
-		List<Object> wrongUserIdData = (List<Object>) wrongUserResult.getData();
-		assertThat("传入错误的userId和正确的sourceId,获得的数据为" + wrongUserIdData.size() + "条", wrongUserIdData.size(), is(0));
 
-		//错误的数据访问2：传入正确的userId和错误的sourceId
+		//错误的数据访问2：传入错误的sourceId
 		String wrongSourceString = new HttpClient()
 				.addData("sourceId", wrongSourceId)
-				.addData("userId", TEST_USER_ID)
 				.post(getActionUrl("getClassifyInfo")).getBodyString();
-		ActionResult wrongSourceResult = JsonUtil.toObject(wrongSourceString, ActionResult.class);
+		ActionResult wrongSourceResult = JsonUtil.toObjectSafety(wrongSourceString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
 		assertThat(wrongSourceResult.isSuccess(), is(true));
+		/*
 		List<Object> wrongSourceData = (List<Object>) wrongSourceResult.getData();
-		assertThat("传入正确的userId和错误的sourceId,获得的数据为" + wrongSourceData.size() + "条", wrongSourceData.size(), is(0));
-
-		//错误的数据访问3：传入错误的userId和错误的sourceId
-		String bothWrongString = new HttpClient()
-				.addData("sourceId", wrongSourceId)
-				.addData("userId", TEST_USER_ID)
-				.post(getActionUrl("getClassifyInfo")).getBodyString();
-		ActionResult bothWrongResult = JsonUtil.toObject(bothWrongString, ActionResult.class);
-		assertThat(bothWrongResult.isSuccess(), is(true));
-		List<Object> bothWrongData = (List<Object>) bothWrongResult.getData();
-		assertThat("传入错误的userId和错误的sourceId,获得的数据为" + bothWrongData.size() + "条", bothWrongData.size(), is(0));
+		assertThat("传入错误的sourceId,获得的数据为" + wrongSourceData.size() + "条", wrongSourceData.size(), is(0));
+		*/
+		List<Collect_job_classify> wrongSourceData = wrongSourceResult.getDataForEntityList(Collect_job_classify.class);
+		assertThat("传入错误的sourceId,获得的数据为" + wrongSourceData.size() + "条", wrongSourceData.size(), is(0));
 	}
 
 	/**
@@ -415,9 +391,9 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 				.addData("user_id", TEST_USER_ID)
 				.addData("agent_id", FIRST_DB_AGENT_ID)
 				.addData("sourceId", SOURCE_ID)
-				.addData("userId", TEST_USER_ID)
 				.post(getActionUrl("saveClassifyInfo")).getBodyString();
-		ActionResult rightResult = JsonUtil.toObject(rightString, ActionResult.class);
+		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
 		assertThat(rightResult.isSuccess(), is(true));
 
 		//验证DB里面的数据是否正确
@@ -433,9 +409,9 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 				.addData("user_id", TEST_USER_ID)
 				.addData("agent_id", FIRST_DB_AGENT_ID)
 				.addData("sourceId", SOURCE_ID)
-				.addData("userId", TEST_USER_ID)
 				.post(getActionUrl("saveClassifyInfo")).getBodyString();
-		ActionResult repeatResult = JsonUtil.toObject(repeatString, ActionResult.class);
+		ActionResult repeatResult = JsonUtil.toObjectSafety(repeatString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
 		assertThat(repeatResult.isSuccess(), is(false));
 
 		//以上全部执行成功，表示插入数据成功，删除刚刚插入的数据
@@ -453,9 +429,9 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 				.addData("user_id", TEST_USER_ID)
 				.addData("agent_id", FIRST_DB_AGENT_ID)
 				.addData("sourceId", SOURCE_ID)
-				.addData("userId", TEST_USER_ID)
 				.post(getActionUrl("saveClassifyInfo")).getBodyString();
-		ActionResult withoutClassifyNumResult = JsonUtil.toObject(withoutClassifyNum, ActionResult.class);
+		ActionResult withoutClassifyNumResult = JsonUtil.toObjectSafety(withoutClassifyNum, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
 		assertThat(withoutClassifyNumResult.isSuccess(), is(false));
 
 		//错误的数据访问2：不传入classify_name
@@ -464,9 +440,9 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 				.addData("user_id", TEST_USER_ID)
 				.addData("agent_id", FIRST_DB_AGENT_ID)
 				.addData("sourceId", SOURCE_ID)
-				.addData("userId", TEST_USER_ID)
 				.post(getActionUrl("saveClassifyInfo")).getBodyString();
-		ActionResult withoutClassifyNameResult = JsonUtil.toObject(withoutClassifyName, ActionResult.class);
+		ActionResult withoutClassifyNameResult = JsonUtil.toObjectSafety(withoutClassifyName, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
 		assertThat(withoutClassifyNameResult.isSuccess(), is(false));
 
 		//错误的数据访问3：不传入user_id
@@ -475,9 +451,9 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 				.addData("classify_name", classifyName)
 				.addData("agent_id", FIRST_DB_AGENT_ID)
 				.addData("sourceId", SOURCE_ID)
-				.addData("userId", TEST_USER_ID)
 				.post(getActionUrl("saveClassifyInfo")).getBodyString();
-		ActionResult withoutUserIdResult = JsonUtil.toObject(withoutUserId, ActionResult.class);
+		ActionResult withoutUserIdResult = JsonUtil.toObjectSafety(withoutUserId, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
 		assertThat(withoutUserIdResult.isSuccess(), is(false));
 
 		//错误的数据访问4：不传入Agent_id
@@ -486,9 +462,9 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 				.addData("classify_name", classifyName)
 				.addData("user_id", TEST_USER_ID)
 				.addData("sourceId", SOURCE_ID)
-				.addData("userId", TEST_USER_ID)
 				.post(getActionUrl("saveClassifyInfo")).getBodyString();
-		ActionResult withoutAgentIdResult = JsonUtil.toObject(withoutAgentId, ActionResult.class);
+		ActionResult withoutAgentIdResult = JsonUtil.toObjectSafety(withoutAgentId, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
 		assertThat(withoutAgentIdResult.isSuccess(), is(false));
 	}
 
@@ -521,9 +497,9 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 				.addData("user_id", TEST_USER_ID)
 				.addData("agent_id", FIRST_DB_AGENT_ID)
 				.addData("sourceId", SOURCE_ID)
-				.addData("userId", TEST_USER_ID)
 				.post(getActionUrl("updateClassifyInfo")).getBodyString();
-		ActionResult rightResult = JsonUtil.toObject(rightString, ActionResult.class);
+		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
 		assertThat(rightResult.isSuccess(), is(true));
 
 		//验证DB里面的数据是否正确
@@ -541,9 +517,9 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 				.addData("user_id", TEST_USER_ID)
 				.addData("agent_id", FIRST_DB_AGENT_ID)
 				.addData("sourceId", SOURCE_ID)
-				.addData("userId", TEST_USER_ID)
 				.post(getActionUrl("updateClassifyInfo")).getBodyString();
-		ActionResult repeatClassifyNumResult = JsonUtil.toObject(repeatClassifyNumString, ActionResult.class);
+		ActionResult repeatClassifyNumResult = JsonUtil.toObjectSafety(repeatClassifyNumString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
 		assertThat(repeatClassifyNumResult.isSuccess(), is(false));
 
 		//错误的数据访问2：构造的数据中，缺少classify_id
@@ -553,9 +529,9 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 				.addData("user_id", TEST_USER_ID)
 				.addData("agent_id", FIRST_DB_AGENT_ID)
 				.addData("sourceId", SOURCE_ID)
-				.addData("userId", TEST_USER_ID)
 				.post(getActionUrl("updateClassifyInfo")).getBodyString();
-		ActionResult withoutClassifyIdResult = JsonUtil.toObject(withoutClassifyIdString, ActionResult.class);
+		ActionResult withoutClassifyIdResult = JsonUtil.toObjectSafety(withoutClassifyIdString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
 		assertThat(withoutClassifyIdResult.isSuccess(), is(false));
 
 		//错误的数据访问3：构造的数据中，缺少classify_num
@@ -565,9 +541,9 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 				.addData("user_id", TEST_USER_ID)
 				.addData("agent_id", FIRST_DB_AGENT_ID)
 				.addData("sourceId", SOURCE_ID)
-				.addData("userId", TEST_USER_ID)
 				.post(getActionUrl("updateClassifyInfo")).getBodyString();
-		ActionResult withoutClassifyNumResult = JsonUtil.toObject(withoutClassifyNumString, ActionResult.class);
+		ActionResult withoutClassifyNumResult = JsonUtil.toObjectSafety(withoutClassifyNumString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
 		assertThat(withoutClassifyNumResult.isSuccess(), is(false));
 
 		//错误的数据访问4：构造的数据中，缺少user_id
@@ -577,9 +553,9 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 				.addData("classify_name", classifyName)
 				.addData("agent_id", FIRST_DB_AGENT_ID)
 				.addData("sourceId", SOURCE_ID)
-				.addData("userId", TEST_USER_ID)
 				.post(getActionUrl("updateClassifyInfo")).getBodyString();
-		ActionResult withoutUserIdResult = JsonUtil.toObject(withoutUserIdString, ActionResult.class);
+		ActionResult withoutUserIdResult = JsonUtil.toObjectSafety(withoutUserIdString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
 		assertThat(withoutUserIdResult.isSuccess(), is(false));
 
 		//错误的数据访问5：构造的数据中，缺少Agent_id
@@ -589,9 +565,9 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 				.addData("classify_name", classifyName)
 				.addData("user_id", TEST_USER_ID)
 				.addData("sourceId", SOURCE_ID)
-				.addData("userId", TEST_USER_ID)
 				.post(getActionUrl("updateClassifyInfo")).getBodyString();
-		ActionResult withoutAgentIdResult = JsonUtil.toObject(withoutAgentIdtring, ActionResult.class);
+		ActionResult withoutAgentIdResult = JsonUtil.toObjectSafety(withoutAgentIdtring, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
 		assertThat(withoutAgentIdResult.isSuccess(), is(false));
 	}
 
@@ -606,9 +582,8 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 	 *      删除前，确认待删除数据是否存在
 	 *      构建正确的但是未被databse_set表使用过的classify_id，执行删除操作，操作应该成功
 	 *      删除后，确认数据是否被删除
-	 * 错误的数据访问1：传入正确的userId和错误的classifyId
-	 * 错误的数据访问2：传入错误的userId和正确的classifyId
-	 * 错误的数据访问3：传入错误的userId和错误的classifyId
+	 * 错误的数据访问1：传入错误的classifyId
+	 * 错误的测试用例未达到三组:deleteClassifyInfo()方法只有一个入参
 	 *
 	 * @Param: 无
 	 * @return: 无
@@ -625,9 +600,9 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 			//构建正确的但是被databse_set表使用过的classify_id，执行删除操作，操作应该失败
 			String bodyString = new HttpClient()
 					.addData("classifyId", FIRST_CLASSIFY_ID)
-					.addData("userId", TEST_USER_ID)
 					.post(getActionUrl("deleteClassifyInfo")).getBodyString();
-			ActionResult ar = JsonUtil.toObject(bodyString, ActionResult.class);
+			ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+					-> new BusinessException("连接失败!"));
 			assertThat(ar.isSuccess(), is(false));
 
 			//删除后，确认数据是否被删除
@@ -644,9 +619,9 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 			//构建正确的但是未被databse_set表使用过的classify_id，执行删除操作，操作应该成功
 			String bodyString = new HttpClient()
 					.addData("classifyId", THIRD_CLASSIFY_ID)
-					.addData("userId", TEST_USER_ID)
 					.post(getActionUrl("deleteClassifyInfo")).getBodyString();
-			ActionResult ar = JsonUtil.toObject(bodyString, ActionResult.class);
+			ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+					-> new BusinessException("连接失败!"));
 			assertThat(ar.isSuccess(), is(true));
 
 			//删除后，确认数据是否被删除
@@ -654,32 +629,14 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 			assertThat("删除操作后，collect_job_classify表中这样一条数据没有了", after.orElse(Long.MIN_VALUE), is(0L));
 		}
 
-		//错误的数据访问1：传入正确的userId和错误的classifyId
+		//错误的数据访问1：传入错误的classifyId
 		long wrongClassifyId = 12345L;
 		String wrongClassifyIdString = new HttpClient()
 				.addData("classifyId", wrongClassifyId)
-				.addData("userId", TEST_USER_ID)
 				.post(getActionUrl("deleteClassifyInfo")).getBodyString();
-		ActionResult wrongClassifyIdResult = JsonUtil.toObject(wrongClassifyIdString, ActionResult.class);
+		ActionResult wrongClassifyIdResult = JsonUtil.toObjectSafety(wrongClassifyIdString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
 		assertThat(wrongClassifyIdResult.isSuccess(), is(false));
-
-		//错误的数据访问2：传入错误的userId和正确的classifyId
-		long wrongUserId = -9998L;
-		String wrongUserIdString = new HttpClient()
-				.addData("classifyId", FIRST_CLASSIFY_ID)
-				.addData("userId", wrongUserId)
-				.post(getActionUrl("deleteClassifyInfo")).getBodyString();
-		ActionResult wrongUserIdResult = JsonUtil.toObject(wrongUserIdString, ActionResult.class);
-		assertThat(wrongUserIdResult.isSuccess(), is(false));
-
-		//错误的数据访问3：传入错误的userId和错误的classifyId
-		String bothWrongString = new HttpClient()
-				.addData("classifyId", wrongClassifyId)
-				.addData("userId", wrongUserId)
-				.post(getActionUrl("deleteClassifyInfo")).getBodyString();
-		ActionResult bothWrongResult = JsonUtil.toObject(bothWrongString, ActionResult.class);
-		assertThat(bothWrongResult.isSuccess(), is(false));
-
 	}
 
 	/**
@@ -717,9 +674,9 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 				.addData("database_port", "31001")
 				.addData("classify_id", FIRST_CLASSIFY_ID)
 				.addData("jdbc_url", jdbcURL)
-				.addData("userId", TEST_USER_ID)
 				.post(getActionUrl("saveDbConf")).getBodyString();
-		ActionResult insertRuselt = JsonUtil.toObject(insertString, ActionResult.class);
+		ActionResult insertRuselt = JsonUtil.toObjectSafety(insertString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
 		assertThat(insertRuselt.isSuccess(), is(true));
 		Integer returnValue = (Integer) insertRuselt.getData();
 		assertThat("该方法的返回值不为空", returnValue != null, is(true));
@@ -761,9 +718,9 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 				.addData("database_port", "31001")
 				.addData("classify_id", FIRST_CLASSIFY_ID)
 				.addData("jdbc_url", updateJDBCURL)
-				.addData("userId", TEST_USER_ID)
 				.post(getActionUrl("saveDbConf")).getBodyString();
-		ActionResult updateRuselt = JsonUtil.toObject(updateString, ActionResult.class);
+		ActionResult updateRuselt = JsonUtil.toObjectSafety(updateString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
 		assertThat(updateRuselt.isSuccess(), is(true));
 
 		//验证DB里面的数据是否正确
@@ -787,9 +744,9 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 				.addData("database_ip", "127.0.0.1")
 				.addData("database_port", "31001")
 				.addData("jdbc_url", jdbcURL)
-				.addData("userId", TEST_USER_ID)
 				.post(getActionUrl("saveDbConf")).getBodyString();
-		ActionResult withoutClassfyIdRuselt = JsonUtil.toObject(withoutClassfyIdString, ActionResult.class);
+		ActionResult withoutClassfyIdRuselt = JsonUtil.toObjectSafety(withoutClassfyIdString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
 		assertThat(withoutClassfyIdRuselt.isSuccess(), is(false));
 
 		//错误的数据访问2：新增数据时，缺少database_type
@@ -804,9 +761,9 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 				.addData("database_port", "31001")
 				.addData("classify_id", FIRST_CLASSIFY_ID)
 				.addData("jdbc_url", jdbcURL)
-				.addData("userId", TEST_USER_ID)
 				.post(getActionUrl("saveDbConf")).getBodyString();
-		ActionResult withoutDatabaseTypeRuselt = JsonUtil.toObject(withoutDatabaseTypeString, ActionResult.class);
+		ActionResult withoutDatabaseTypeRuselt = JsonUtil.toObjectSafety(withoutDatabaseTypeString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
 		assertThat(withoutDatabaseTypeRuselt.isSuccess(), is(false));
 
 		//错误的数据访问3：新增数据时，输入了取值范围异常的database_type
@@ -823,9 +780,9 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 				.addData("database_port", "31001")
 				.addData("classify_id", FIRST_CLASSIFY_ID)
 				.addData("jdbc_url", jdbcURL)
-				.addData("userId", TEST_USER_ID)
 				.post(getActionUrl("saveDbConf")).getBodyString();
-		ActionResult wrongoutDatabaseTypeRuselt = JsonUtil.toObject(wrongDatabaseTypeString, ActionResult.class);
+		ActionResult wrongoutDatabaseTypeRuselt = JsonUtil.toObjectSafety(wrongDatabaseTypeString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
 		assertThat(wrongoutDatabaseTypeRuselt.isSuccess(), is(false));
 	}
 

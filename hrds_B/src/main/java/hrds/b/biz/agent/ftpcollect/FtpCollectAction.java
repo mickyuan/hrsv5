@@ -1,6 +1,8 @@
 package hrds.b.biz.agent.ftpcollect;
 
-import fd.ng.web.annotation.RequestBean;
+import fd.ng.core.annotation.Method;
+import fd.ng.core.annotation.Param;
+import fd.ng.core.annotation.Return;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.IsFlag;
@@ -15,18 +17,10 @@ import hrds.commons.utils.key.PrimayKeyGener;
  */
 public class FtpCollectAction extends BaseAction {
 
-	/**
-	 * 根据ftp_id查询ftp采集设置表
-	 * <p>
-	 * 1.根据ftp采集表id查询ftp采集表返回到前端
-	 *
-	 * @param ftp_id Long
-	 *               含义：ftp采集表id
-	 *               取值范围：不可为空
-	 * @return hrds.commons.entity.Ftp_collect
-	 * 含义：ftp采集设置表的值，新增状态下为空
-	 * 取值范围：不会为空
-	 */
+	@Method(desc = "根据ftp_id查询ftp采集设置表",
+			logicStep = "1.根据ftp采集表id查询ftp采集表返回到前端")
+	@Param(name = "ftp_id", desc = "ftp采集表id", range = "不可为空")
+	@Return(desc = "ftp采集设置表的值，新增状态下为空", range = "不会为空")
 	public Ftp_collect searchFtp_collect(long ftp_id) {
 		//1.根据ftp采集表id查询ftp采集表返回到前端
 		return Dbo.queryOneObject(Ftp_collect.class,
@@ -35,17 +29,11 @@ public class FtpCollectAction extends BaseAction {
 				-> new BusinessException("根据ftp_id:" + ftp_id + "查询不到ftp_collect表信息"));
 	}
 
-	/**
-	 * 保存ftp采集表对象
-	 * <p>
-	 * 1.判断ftp采集任务名称是否重复
-	 * 2.保存ftp采集表对象
-	 *
-	 * @param ftp_collect Ftp_collect
-	 *                    含义：ftp采集表对象对象不可为空的变量必须有值
-	 *                    取值范围：不能为空
-	 */
-	public void addFtp_collect(@RequestBean Ftp_collect ftp_collect) {
+	@Method(desc = "保存ftp采集表对象",
+			logicStep = "1.判断ftp采集任务名称是否重复" +
+					"2.保存ftp采集表对象")
+	@Param(name = "ftp_collect", desc = "ftp采集表对象对象不可为空的变量必须有值", range = "不能为空", isBean = true)
+	public void addFtp_collect(Ftp_collect ftp_collect) {
 		//数据可访问权限处理方式：该表没有对应的用户访问权限限制
 		//TODO 使用公共方法校验数据的正确性
 		//为空则新增
@@ -63,18 +51,12 @@ public class FtpCollectAction extends BaseAction {
 		}
 	}
 
-	/**
-	 * 更新ftp采集表对象
-	 * <p>
-	 * 1.获取ftp采集表对象判断主键是否为空
-	 * 2.根据ftp_name查询ftp采集任务名称是否与其他采集任务名称重复
-	 * 3.更新ftp采集表对象
-	 *
-	 * @param ftp_collect Ftp_collect
-	 *                    含义：ftp采集表对象对象不可为空的变量必须有值
-	 *                    取值范围：不能为空
-	 */
-	public void updateFtp_collect(@RequestBean Ftp_collect ftp_collect) {
+	@Method(desc = "更新ftp采集表对象",
+			logicStep = "1.获取ftp采集表对象判断主键是否为空" +
+					"2.根据ftp_name查询ftp采集任务名称是否与其他采集任务名称重复" +
+					"3.更新ftp采集表对象")
+	@Param(name = "ftp_collect", desc = "ftp采集表对象对象不可为空的变量必须有值", range = "不能为空", isBean = true)
+	public void updateFtp_collect(Ftp_collect ftp_collect) {
 		//数据可访问权限处理方式：该表没有对应的用户访问权限限制
 		//TODO 使用公共方法校验数据的正确性
 		//1.获取ftp采集表对象判断主键是否为空

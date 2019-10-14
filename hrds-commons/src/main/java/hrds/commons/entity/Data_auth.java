@@ -2,7 +2,7 @@ package hrds.commons.entity;
 /**Auto Created by VBScript Do not modify!*/
 import hrds.commons.entity.fdentity.ProjectTableEntity;
 import fd.ng.db.entity.anno.Table;
-import fd.ng.core.docannotation.DocBean;
+import fd.ng.core.annotation.DocBean;
 import java.math.BigDecimal;
 import java.util.Set;
 import java.util.HashSet;
@@ -30,6 +30,10 @@ public class Data_auth extends ProjectTableEntity
 		__tmpPKS.add("da_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
+	@DocBean(name ="source_id",value="数据源ID",dataType = Long.class,required = true)
+	private Long source_id;
+	@DocBean(name ="collect_set_id",value="数据库设置id",dataType = Long.class,required = true)
+	private Long collect_set_id;
 	@DocBean(name ="da_id",value="数据权限设置ID",dataType = Long.class,required = true)
 	private Long da_id;
 	@DocBean(name ="apply_date",value="申请日期",dataType = String.class,required = true)
@@ -56,11 +60,35 @@ public class Data_auth extends ProjectTableEntity
 	private Long user_id;
 	@DocBean(name ="agent_id",value="Agent_id",dataType = Long.class,required = true)
 	private Long agent_id;
-	@DocBean(name ="source_id",value="数据源ID",dataType = Long.class,required = true)
-	private Long source_id;
-	@DocBean(name ="collect_set_id",value="数据库设置id",dataType = Long.class,required = true)
-	private Long collect_set_id;
 
+	/** 取得：数据源ID */
+	public Long getSource_id(){
+		return source_id;
+	}
+	/** 设置：数据源ID */
+	public void setSource_id(Long source_id){
+		this.source_id=source_id;
+	}
+	/** 设置：数据源ID */
+	public void setSource_id(String source_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(source_id)){
+			this.source_id=new Long(source_id);
+		}
+	}
+	/** 取得：数据库设置id */
+	public Long getCollect_set_id(){
+		return collect_set_id;
+	}
+	/** 设置：数据库设置id */
+	public void setCollect_set_id(Long collect_set_id){
+		this.collect_set_id=collect_set_id;
+	}
+	/** 设置：数据库设置id */
+	public void setCollect_set_id(String collect_set_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(collect_set_id)){
+			this.collect_set_id=new Long(collect_set_id);
+		}
+	}
 	/** 取得：数据权限设置ID */
 	public Long getDa_id(){
 		return da_id;
@@ -193,34 +221,6 @@ public class Data_auth extends ProjectTableEntity
 	public void setAgent_id(String agent_id){
 		if(!fd.ng.core.utils.StringUtil.isEmpty(agent_id)){
 			this.agent_id=new Long(agent_id);
-		}
-	}
-	/** 取得：数据源ID */
-	public Long getSource_id(){
-		return source_id;
-	}
-	/** 设置：数据源ID */
-	public void setSource_id(Long source_id){
-		this.source_id=source_id;
-	}
-	/** 设置：数据源ID */
-	public void setSource_id(String source_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(source_id)){
-			this.source_id=new Long(source_id);
-		}
-	}
-	/** 取得：数据库设置id */
-	public Long getCollect_set_id(){
-		return collect_set_id;
-	}
-	/** 设置：数据库设置id */
-	public void setCollect_set_id(Long collect_set_id){
-		this.collect_set_id=collect_set_id;
-	}
-	/** 设置：数据库设置id */
-	public void setCollect_set_id(String collect_set_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(collect_set_id)){
-			this.collect_set_id=new Long(collect_set_id);
 		}
 	}
 }

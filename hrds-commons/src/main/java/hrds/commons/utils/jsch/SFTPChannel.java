@@ -6,13 +6,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.*;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
 public class SFTPChannel {
 
-	Channel channel = null;
-	Session session = null;
+	private Channel channel = null;
+	private Session session = null;
 	private static final String ENCODING = "UTF-8";
 
 	private static final Logger logger = LogManager.getLogger();
@@ -29,18 +30,26 @@ public class SFTPChannel {
 		channel = session.openChannel("sftp"); // 打开SFTP通道
 		channel.connect(); // 建立SFTP通道的连接
 		logger.debug("Connected successfully to ftpHost = " + ftpHost + ",as ftpUserName = " + ftpUserName + ", returning: " + channel);
-		return (ChannelSftp)channel;
+		return (ChannelSftp) channel;
+	}
+
+	public ChannelSftp getChannel(Session session, int timeout) throws JSchException {
+		channel = session.openChannel("sftp"); // 打开SFTP通道
+		channel.connect(); // 建立SFTP通道的连接
+		return (ChannelSftp) channel;
+	}
+
+	public Session getJSchSession(String ftpHost, String ftpUserName, String ftpPassword, int ftpPort, int timeout) throws JSchException {
+		return getJSchSession(getSftpDetails(ftpHost, ftpUserName, ftpPassword, ftpPort), timeout);
 	}
 
 	/**
 	 * 获取session
 	 *
-	 * @param sftpDetails
-	 * @param timeout
-	 * @return
-	 * @throws JSchException
+	 * @param sftpDetails Map<String, String>
+	 * @param timeout     int
+	 * @return Session
 	 */
-
 	//FIXME 不要使用Map做参数！使用多个明确的参数，或者提供一个构建参数BEAN：本类的一个public static class
 	public static Session getJSchSession(Map<String, String> sftpDetails, int timeout) throws JSchException {
 
@@ -54,7 +63,7 @@ public class SFTPChannel {
 		JSch jsch = new JSch(); // 创建JSch对象
 		Session session = jsch.getSession(ftpUserName, ftpHost, ftpPort); // 根据用户名，主机ip，端口获取一个Session对象
 		logger.debug("Session created.");
-		if( ftpPassword != null ) {
+		if (ftpPassword != null) {
 			session.setPassword(ftpPassword); // 设置密码
 		}
 		Properties config = new Properties();
@@ -70,7 +79,7 @@ public class SFTPChannel {
 	public static void execCommandByJSchNoRs(Session session, String command) throws Exception {
 
 		logger.info("执行命令为 : ", command);
-		ChannelExec channelExec = (ChannelExec)session.openChannel("exec");
+		ChannelExec channelExec = (ChannelExec) session.openChannel("exec");
 		channelExec.getInputStream();
 		channelExec.setCommand(command);
 		channelExec.setErrStream(System.err);
@@ -83,7 +92,7 @@ public class SFTPChannel {
 	public static String execCommandByJSch(Session session, String command) throws JSchException, IOException {
 
 		logger.info("执行命令为 : ", command);
-		ChannelExec channelExec = (ChannelExec)session.openChannel("exec");
+		ChannelExec channelExec = (ChannelExec) session.openChannel("exec");
 		InputStream in = channelExec.getInputStream();
 		channelExec.setCommand(command);
 		channelExec.setErrStream(System.err);
@@ -97,7 +106,7 @@ public class SFTPChannel {
 	public static String execCommandByJSchToReadLine(Session session, String command) throws JSchException, Exception {
 
 		logger.info("执行命令为 : ", command);
-		ChannelExec channelExec = (ChannelExec)session.openChannel("exec");
+		ChannelExec channelExec = (ChannelExec) session.openChannel("exec");
 		InputStream inputStream = channelExec.getInputStream();//从远程端到达的所有数据都能从这个流中读取到
 		OutputStream outputStream = channelExec.getOutputStream();//写入该流的所有数据都将发送到远程端。
 		//使用PrintWriter流的目的就是为了使用println这个方法
@@ -109,8 +118,8 @@ public class SFTPChannel {
 		printWriter.flush();
 		BufferedReader in = new BufferedReader(new InputStreamReader(inputStream));
 		String msg = null;
-		StringBuffer result = new StringBuffer();
-		while( (msg = in.readLine()) != null ) {
+		StringBuilder result = new StringBuilder();
+		while ((msg = in.readLine()) != null) {
 			result.append(msg);
 		}
 		in.close();
@@ -119,12 +128,27 @@ public class SFTPChannel {
 	}
 
 	public void closeChannel() throws Exception {
-
-		if( channel != null ) {
+		if (channel != null) {
 			channel.disconnect();
 		}
-		if( session != null ) {
+		if (session != null) {
 			session.disconnect();
 		}
+	}
+
+	/**
+	 * @param ftpHost     String
+	 * @param ftpUserName String
+	 * @param ftpPassword String
+	 * @param ftpPort     int
+	 * @return Map<String, String>
+	 */
+	private static Map<String, String> getSftpDetails(String ftpHost, String ftpUserName, String ftpPassword, int ftpPort) {
+		Map<String, String> sftpDetails = new HashMap<>();
+		sftpDetails.put(SCPFileSender.HOST, ftpHost);
+		sftpDetails.put(SCPFileSender.PORT, String.valueOf(ftpPort));
+		sftpDetails.put(SCPFileSender.USERNAME, ftpUserName);
+		sftpDetails.put(SCPFileSender.PASSWORD, ftpPassword);
+		return sftpDetails;
 	}
 }

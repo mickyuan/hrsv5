@@ -2,7 +2,7 @@ package hrds.commons.entity;
 /**Auto Created by VBScript Do not modify!*/
 import hrds.commons.entity.fdentity.ProjectTableEntity;
 import fd.ng.db.entity.anno.Table;
-import fd.ng.core.docannotation.DocBean;
+import fd.ng.core.annotation.DocBean;
 import java.math.BigDecimal;
 import java.util.Set;
 import java.util.HashSet;
@@ -74,6 +74,10 @@ public class Ftp_collect extends ProjectTableEntity
 	private String reduce_type;
 	@DocBean(name ="ftp_model",value="FTP推拉模式是为推模式",dataType = String.class,required = true)
 	private String ftp_model;
+	@DocBean(name ="is_read_realtime",value="是否实时读取",dataType = String.class,required = true)
+	private String is_read_realtime;
+	@DocBean(name ="realtime_interval",value="实时读取间隔时间",dataType = Long.class,required = true)
+	private Long realtime_interval;
 
 	/** 取得：ftp采集id */
 	public Long getFtp_id(){
@@ -262,5 +266,27 @@ public class Ftp_collect extends ProjectTableEntity
 	/** 设置：FTP推拉模式是为推模式 */
 	public void setFtp_model(String ftp_model){
 		this.ftp_model=ftp_model;
+	}
+	/** 取得：是否实时读取 */
+	public String getIs_read_realtime(){
+		return is_read_realtime;
+	}
+	/** 设置：是否实时读取 */
+	public void setIs_read_realtime(String is_read_realtime){
+		this.is_read_realtime=is_read_realtime;
+	}
+	/** 取得：实时读取间隔时间 */
+	public Long getRealtime_interval(){
+		return realtime_interval;
+	}
+	/** 设置：实时读取间隔时间 */
+	public void setRealtime_interval(Long realtime_interval){
+		this.realtime_interval=realtime_interval;
+	}
+	/** 设置：实时读取间隔时间 */
+	public void setRealtime_interval(String realtime_interval){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(realtime_interval)){
+			this.realtime_interval=new Long(realtime_interval);
+		}
 	}
 }

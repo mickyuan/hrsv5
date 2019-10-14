@@ -143,12 +143,12 @@ public class SysParaAction extends BaseAction {
 		long queryNum = Dbo.queryNumber("SELECT count(1) FROM " + Sys_para.TableName
 						+ " WHERE para_id = ? AND para_name = ?", para_id, para_name).
 						orElseThrow(() -> new BusinessException(
-										String.format("未找到的 %s 信息", para_name)));
+										String.format("未找到系统参数名称为 :  %s 信息", para_name)));
 
 		//2 : 判断查询的记录信息是否符合
 		if( queryNum != 1 ) {
 			throw new BusinessException(
-							String.format("未找到的 %s 信息", para_name));
+							String.format("未找到系统参数名称为 : %s 信息", para_name));
 		}
 	}
 }

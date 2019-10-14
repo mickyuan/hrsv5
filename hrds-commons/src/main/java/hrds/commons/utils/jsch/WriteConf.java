@@ -34,31 +34,36 @@ public class WriteConf {
 
 	/**
 	 * <p>方法描述: 写部署Agent需要的HttpServer配置文件</p>
-	 * <p> 1: 获取本项目下的配置文件信息</p>
+	 * <p> 1: 获取Agent的配置文件信息</p>
+	 * <p> 2: 获取的配置文件信息,写入到文件中</p>
 	 * <p>@author: Mr.Lee </p>
 	 * <p>创建时间: 2019-09-06</p>
-	 * <p>参   数:  </p>
-	 * <p>return:  </p>
+	 *
+	 * @param confName 配置文件中的name名称
 	 */
 	public static void writeHttpServeConf(String confName) {
+		//1: 获取Agent的配置文件信息
+		HttpServerConfBean httpServer = HttpServerConf.getHttpServer(null);
 
-		final HttpServerConfBean httpServer = HttpServerConf.getHttpServer();
+		//2: 获取的配置文件信息,写入到文件中
 		writeData(parseConfInfoToStr(httpServer, true), confName, false);
 
 	}
 
 	/**
 	 * <p>方法描述: DB配置文件写入</p>
-	 * <p>1 : 重新设置配置文件的Name</p>
+	 * <p>1 : 获取HyrenAgent的配置文件信息</p>
+	 * <p>2 : 将获取HyrenAgent的配置文件信息,追加写入到同一个文件中</p>
 	 * <p>@author: Mr.Lee </p>
 	 * <p>创建时间: 2019-09-06</p>
-	 * <p>参   数:  </p>
-	 * <p>return:  </p>
+	 *
+	 * @param confName 配置文件中的name名称
 	 */
 	public static void writeHyRenConf(String confName) {
 
+		//1 : 获取HyrenAgent的配置文件信息
 		final HttpServerConfBean confBean = HttpServerConf.confBean;
-		//1 : 重新设置配置文件的Name
+		//2 : 将获取HyrenAgent的配置文件信息,追加写入到同一个文件中
 		writeData(parseConfInfoToStr(confBean, false), confName, true);
 	}
 
@@ -67,8 +72,10 @@ public class WriteConf {
 	 * <p>1 : 如果不是追加的方式,则做文件的判断删除,防止有上次文件的存在</p>
 	 * <p>@author: Mr.Lee </p>
 	 * <p>创建时间: 2019-09-06</p>
-	 * <p>参   数:  </p>
-	 * <p>return:  </p>
+	 *
+	 * @param confData 写入Agent中的配置文件信息
+	 * @param fileName 写入的文件名称
+	 * @param isAppend 是否在文件的后面进行追加写入
 	 */
 	private static void writeData(String confData, String fileName, Boolean isAppend) {
 

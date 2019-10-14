@@ -651,6 +651,8 @@ REMARK                                            VARCHAR(512) NULL, --备注
 IS_SENDOK                                         CHAR(1) NOT NULL, --是否完成
 IS_UNZIP                                          CHAR(1) NOT NULL, --是否解压
 REDUCE_TYPE                                       CHAR(1) NULL, --解压格式
+IS_READ_REALTIME                                  CHAR(1) NOT NULL, --是否实时读取
+REALTIME_INTERVAL                                 DECIMAL(16) default 0 NOT NULL, --实时读取间隔时间
 AGENT_ID                                          BIGINT default 0 NOT NULL, --Agent_id
 CONSTRAINT FTP_COLLECT_PK PRIMARY KEY(FTP_ID)   );
 
@@ -682,7 +684,8 @@ DROP TABLE IF EXISTS DATA_STORE_LAYER ;
 CREATE TABLE DATA_STORE_LAYER(
 DATASC_ID                                         BIGINT default 0 NOT NULL, --存储配置主键信息
 STORAGE_TARGET                                    CHAR(1) NOT NULL, --存储类型
-STORAGE_PROPERTY                                  VARCHAR(1024) NOT NULL, --存储属性信息
+STORAGE_PROPERTY_KEY                              VARCHAR(1024) NOT NULL, --属性key
+STORAGE_PROPERTY_VAL                              VARCHAR(1024) NULL, --属性value
 DSL_REMARK                                        VARCHAR(512) NULL, --备注
 CONSTRAINT DATA_STORE_LAYER_PK PRIMARY KEY(DATASC_ID)   );
 
