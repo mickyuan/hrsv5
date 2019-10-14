@@ -180,20 +180,6 @@ public class DataSourceAction extends BaseAction {
 		return dsResult;
 	}
 
-	/**
-	 * 数据权限管理，更新数据源关系部门信息
-	 * <p>
-	 * 1.数据可访问权限处理方式，通过sourceId与user_id关联检查
-	 * 2.先删除数据源与部门关系信息,删除几条数据不确定，一个数据源对应多个部门，所以不能用DboExecute
-	 * 3.建立新关系，保存source_relation_dep表信息
-	 *
-	 * @param sourceId long
-	 *                 含义：data_source表主键ID
-	 *                 取值范围：不为空的十位数字，新增时通过主键生成规则自动生成
-	 * @param depIds   String
-	 *                 含义：存储source_relation_dep表主键ID，可能是一个也可能是多个拼接的字符串
-	 *                 取值范围：不为空以及不为空格
-	 */
 	@Method(desc = "数据权限管理，更新数据源关系部门信息",
 			logicStep = "1.数据可访问权限处理方式，通过sourceId与user_id关联检查" +
 					"2.先删除数据源与部门关系信息,删除几条数据不确定，一个数据源对应多个部门，所以不能用DboExecute" +
