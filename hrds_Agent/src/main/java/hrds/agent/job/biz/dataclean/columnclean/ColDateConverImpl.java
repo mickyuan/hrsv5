@@ -1,5 +1,8 @@
 package hrds.agent.job.biz.dataclean.columnclean;
 
+import fd.ng.core.annotation.Method;
+import fd.ng.core.annotation.Param;
+import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.constant.JobConstant;
 
@@ -19,25 +22,13 @@ import java.util.List;
  * Since JDK 1.8
  **/
 public class ColDateConverImpl extends AbstractColumnClean {
-	/**
-	 * 列清洗日期格式化实现
-	 *
-	 * 1、判断dateSB是否为空，如果不为空，表示要进行日期格式化
-	 * 2、按照分隔符分割dateSB，获得新格式和原格式
-	 * 3、进行格式化
-	 *
-	 * @Param: dateSB StringBuilder
-	 *         含义：用于日期转换
-	 *         取值范围：不为空, 格式为：新格式`老格式
-	 * @Param: columnValue String
-	 *         含义：待清洗字段值
-	 *         取值范围：不为空
-	 *
-	 * @return: String
-	 *          含义：清洗后的字段值
-	 *          取值范围：不会为null
-	 *
-	 * */
+	@Method(desc = "列清洗日期格式化实现", logicStep = "" +
+			"1、判断dateSB是否为空，如果不为空，表示要进行日期格式化" +
+			"2、按照分隔符分割dateSB，获得新格式和原格式" +
+			"3、进行格式化")
+	@Param(name = "dateSB", desc = "用于日期转换", range = "不为空, 格式为：新格式`老格式")
+	@Param(name = "columnValue", desc = "待清洗字段值", range = "不为空")
+	@Return(desc = "清洗后的字段值", range = "不会为null")
 	@Override
 	public String dateConver(StringBuilder dateSB, String columnValue) throws ParseException {
 		//1、判断dateSB是否为空，如果不为空，表示要进行日期格式化

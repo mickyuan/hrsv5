@@ -1,5 +1,8 @@
 package hrds.b.biz.agent.tools;
 
+import fd.ng.core.annotation.Method;
+import fd.ng.core.annotation.Param;
+import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.CodecUtil;
 import fd.ng.core.utils.StringUtil;
 import hrds.commons.exception.AppSystemException;
@@ -18,22 +21,15 @@ import java.util.Map;
  **/
 public class PackUtil {
 
-	/**
-	 * 对传入的json数据进行处理，根据长度判断是否需要进行压缩加密
-	 *
-	 * 1、将jsonData转换为byte数组，并获取该数组的长度，对获取到的长度做特殊处理
-	 * 2、判断处理byte数组的长度，如果长度达到300，就调用工具类对数据进行压缩
-	 * 3、如果长度未达到300，就不需要压缩
-	 * 4、返回经过处理后的数据
-	 *
-	 * @Param: jsonData String
-	 *         含义：JSON格式的字符串，内容是根据colSetId去数据库中获取的数据库设置相关信息
-	 *         取值范围：如果是根据表名模糊查询，则FuzzyQueryTableName的值为表名字符串(如果是多个中间用|分隔)，
-	 *         如果是获取所有表信息，则FuzzyQueryTableName的值为NOTHING
-	 * @Param: String
-	 *         含义：经过处理后的信息
-	 *         取值范围：不为空
-	 * */
+	@Method(desc = "对传入的json数据进行处理，根据长度判断是否需要进行压缩加密", logicStep = "" +
+			"1、将jsonData转换为byte数组，并获取该数组的长度，对获取到的长度做特殊处理" +
+			"2、判断处理byte数组的长度，如果长度达到300，就调用工具类对数据进行压缩" +
+			"3、如果长度未达到300，就不需要压缩" +
+			"4、返回经过处理后的数据")
+	@Param(name = "jsonData", desc = "JSON格式的字符串，内容是根据colSetId去数据库中获取的数据库设置相关信息", range = "" +
+			"如果是根据表名模糊查询，则FuzzyQueryTableName的值为表名字符串(如果是多个中间用|分隔)" +
+			"如果是获取所有表信息，则FuzzyQueryTableName的值为NOTHING")
+	@Return(desc = "经过处理后的信息", range = "不为空")
 	public static String packMsg(String jsonData) {
 		try {
 			//1、将jsonData转换为byte数组，并获取该数组的长度，对获取到的长度做特殊处理
@@ -57,26 +53,14 @@ public class PackUtil {
 		}
 	}
 
-	/**
-	 * 对字节数组的长度补0，补齐7位
-	 *
-	 * 1、获取要补齐的0的个数
-	 * 2、构造补齐字符串
-	 * 3、根据atHead判断是进行前补齐还是后补齐并返回
-	 *
-	 * @Param: src String
-	 *         含义：待补齐的原字符串
-	 *         取值范围：不限
-	 * @Param: addChar char
-	 *         含义：补齐使用的字符
-	 *         取值范围：不为空
-	 * @Param: length int
-	 *         含义：补齐后的字符串长度
-	 *         取值范围：不为空
-	 * @Param: atHead boolean
-	 *         含义：进行前补齐还是后补齐
-	 *         取值范围：true为前补齐，false为后补齐
-	 * */
+	@Method(desc = "对字节数组的长度补0，补齐7位", logicStep = "" +
+			"1、获取要补齐的0的个数" +
+			"2、构造补齐字符串")
+	@Param(name = "src", desc = "待补齐的原字符串", range = "不限")
+	@Param(name = "addChar", desc = "补齐使用的字符", range = "不为空")
+	@Param(name = "length", desc = "补齐后的字符串长度", range = "不为空")
+	@Param(name = "atHead", desc = "进行前补齐还是后补齐", range = "true为前补齐，false为后补齐")
+	@Return(desc = "补齐后的待发送数据", range = "不为空")
 	private static String appendCharToLength(String src, char addChar, int length, boolean atHead) throws Exception {
 		StringBuilder sb = new StringBuilder();
 		if (src == null) {
@@ -92,20 +76,12 @@ public class PackUtil {
 		return atHead ? sb + src : src + sb;
 	}
 
-	/**
-	 * 对传入的json数据进行处理，获取http响应的各个部分的数据，封装成Map<String,String>返回
-	 *
-	 * 1、获取数据，获得前26个字符，并进行特殊处理
-	 * 2、判断响应数据是否被压缩，如果被压缩，要进行解压解密
-	 * 3、将以上部分封装到Map集合中并返回
-	 *
-	 * @Param: jsonData String
-	 *         含义：Agent端响应的数据
-	 *         取值范围：不为空
-	 * @Param: Map<String, String>
-	 *         含义：经过处理后的响应数据
-	 *         取值范围：四对Entry，key分别为bit_head, head_msg, iscompress, msg(数据部分)
-	 * */
+	@Method(desc = "对传入的json数据进行处理，获取http响应的各个部分的数据，封装成Map<String,String>返回", logicStep = "" +
+			"1、获取数据，获得前26个字符，并进行特殊处理" +
+			"2、判断响应数据是否被压缩，如果被压缩，要进行解压解密" +
+			"3、将以上部分封装到Map集合中并返回")
+	@Param(name = "data", desc = "Agent端响应的数据", range = "不为空")
+	@Return(desc = "经过处理后的响应数据", range = "四对Entry，key分别为bit_head, head_msg, iscompress, msg(数据部分)")
 	public static Map<String, String> unpackMsg(String data) {
 		Map<String, String> map = new HashMap<>();
 		String fileNameHead = data.substring(0, 15);

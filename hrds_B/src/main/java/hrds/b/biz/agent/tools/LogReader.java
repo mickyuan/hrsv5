@@ -2,6 +2,9 @@ package hrds.b.biz.agent.tools;
 
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
+import fd.ng.core.annotation.Method;
+import fd.ng.core.annotation.Param;
+import fd.ng.core.annotation.Return;
 import hrds.commons.utils.jsch.SFTPChannel;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -21,38 +24,19 @@ public class LogReader {
 
 	private static final Logger logger = LogManager.getLogger(LogReader.class);
 
-	/**
-	 * 根据日志文件路径、agent_ip,agent_port,userName,password读取readNum行日志
-	 *
-	 * 1、构建使用jsch访问日志的Map集合
-	 * 2、调用方法获取jSchSession
-	 * 3、拼接读取日志的linux命令
-	 * 4、读取日志
-	 * 5、返回日志信息
-	 *
-	 * 该方法不与数据库交互，无需限制数据库访问权限
-	 *
-	 * @Param: logPath String
-	 *         含义: 日志文件路径
-	 *         取值范围：不为空
-	 * @Param: ip String
-	 *         含义: agent所在服务器ip
-	 *         取值范围：不为空,格式为 : XXX.XXX.XXX.XXX
-	 * @Param: port String
-	 *         含义: agent提供服务的端口
-	 *         取值范围：不为空
-	 * @Param: password String
-	 *         含义: jsch使用的password
-	 *         取值范围：不为空
-	 * @Param: readNum int
-	 *         含义: 读取日志文件的行数
-	 *         取值范围：不为空
-	 *
-	 * @return: String
-	 *          含义 : 日志信息
-	 *          取值范围 : 不为空，如果没有日志信息，返回值为空字符串
-	 *
-	 * */
+	@Method(desc = "根据日志文件路径、agent_ip,agent_port,userName,password读取readNum行日志", logicStep = "" +
+			"1、构建使用jsch访问日志的Map集合" +
+			"2、调用方法获取jSchSession" +
+			"3、拼接读取日志的linux命令" +
+			"4、读取日志" +
+			"5、返回日志信息")
+	@Param(name = "logPath", desc = "日志文件路径", range = "不为空")
+	@Param(name = "ip", desc = "agent所在服务器ip", range = "不为空,格式为 : XXX.XXX.XXX.XXX")
+	@Param(name = "port", desc = "agent提供服务的端口", range = "")
+	@Param(name = "userName", desc = "jsch使用的userName", range = "不为空")
+	@Param(name = "password", desc = "jsch使用的password", range = "不为空")
+	@Param(name = "readNum", desc = "读取日志文件的行数", range = "不为空")
+	@Return(desc = "日志信息", range = "不为空，如果没有日志信息，返回值为空字符串")
 	public static String readAgentLog(String logPath, String ip, String port, String userName,
 	                                  String password, int readNum) {
 		String execCommandByJSch;

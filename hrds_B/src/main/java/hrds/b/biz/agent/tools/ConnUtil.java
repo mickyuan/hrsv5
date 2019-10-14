@@ -1,6 +1,9 @@
 
 package hrds.b.biz.agent.tools;
 
+import fd.ng.core.annotation.Method;
+import fd.ng.core.annotation.Param;
+import fd.ng.core.annotation.Return;
 import hrds.b.biz.agent.bean.DBConnectionProp;
 import hrds.commons.codes.DatabaseType;
 import hrds.commons.exception.AppSystemException;
@@ -21,26 +24,14 @@ public class ConnUtil {
 	private static final Logger logger = LogManager.getLogger();
 
 
-	/**
-	 * 根据数据库类型获取数据库连接信息填写模板
-	 *
-	 * 1、构建返回使用Map集合
-	 * 2、判断数据库类型，根据数据库类型构建数据库连接信息填写模板并放入Map
-	 * 3、返回Map集合
-	 *
-	 * 该方法不与数据库交互，无需限制访问权限
-	 *
-	 * @Param: dbType String
-	 *         含义: 数据库类型
-	 *         取值范围：不为空，DatabaseType代码项code值
-	 *
-	 * @return: Map<String, String>
-	 *          含义 : 存放数据库连接信息填写模板的集合
-	 *          取值范围 : 不为空，key为jdbcPrefix, jdbcIp, jdbcPort, jdbcBase
-	 *
-	 * */
-	//FIXME 方法名字不贴切
-	public static DBConnectionProp getConnURLTemplate(String dbType) {
+	//FIXME 方法名字不贴切，已修复
+	@Method(desc = "根据数据库类型获取数据库连接信息填写模板", logicStep = "" +
+			"1、构建返回使用Map集合" +
+			"2、判断数据库类型，根据数据库类型构建数据库连接信息填写模板并放入Map" +
+			"3、返回Map集合")
+	@Param(name = "dbType", desc = "数据库类型", range = "不为空，DatabaseType代码项code值")
+	@Return(desc = "保存着数据库连接URL相关信息的实体类对象", range = "DBConnectionProp实体类对象")
+	public static DBConnectionProp getConnURLProp(String dbType) {
 		//1、构建返回使用Map集合
 		DBConnectionProp template = new DBConnectionProp();
 		//2、判断数据库类型，根据数据库类型构建数据库连接信息填写模板并放入Map

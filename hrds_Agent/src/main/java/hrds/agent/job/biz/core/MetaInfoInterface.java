@@ -1,5 +1,7 @@
 package hrds.agent.job.biz.core;
 
+import fd.ng.core.annotation.Method;
+import fd.ng.core.annotation.Return;
 import hrds.agent.job.biz.bean.MetaInfoBean;
 
 import java.util.List;
@@ -15,27 +17,11 @@ import java.util.List;
  **/
 public interface MetaInfoInterface {
 
-	/**
-	 * 获得meta信息，提供多于1个meta
-	 *
-	 * @Param: 无
-	 *
-	 * @return: List<MetaInfoBean>
-	 *          含义：存放Meta信息的Bean对象的List集合
-	 *          取值范围：不会为null
-	 *
-	 * */
+	@Method(desc = "获得meta信息，提供多于1个meta", logicStep = "")
+	@Return(desc = "存放Meta信息的Bean对象的List集合", range = "不会为null")
 	List<MetaInfoBean> getMetaInfoGroup();
 
-	/**
-	 * 获得meta信息，提供1个meta
-	 *
-	 * @Param: 无
-	 *
-	 * @return: MetaInfoBean
-	 *          含义：存放Meta信息的Bean对象
-	 *          取值范围：不会为null
-	 *
-	 * */
+	@Method(desc = "获得meta信息，提供1个meta", logicStep = "")
+	@Return(desc = "存放Meta信息的Bean对象", range = "不会为null")
 	MetaInfoBean getMetaInfo();
 }

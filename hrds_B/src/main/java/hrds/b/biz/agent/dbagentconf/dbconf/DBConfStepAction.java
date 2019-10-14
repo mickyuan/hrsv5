@@ -1,14 +1,14 @@
 package hrds.b.biz.agent.dbagentconf.dbconf;
 
 import com.alibaba.fastjson.JSONObject;
+import fd.ng.core.annotation.Method;
+import fd.ng.core.annotation.Param;
+import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
-import fd.ng.netserver.conf.HttpServerConf;
-import fd.ng.netserver.conf.HttpServerConfBean;
 import fd.ng.web.action.ActionResult;
-import fd.ng.web.annotation.RequestBean;
 import fd.ng.web.util.Dbo;
 import hrds.b.biz.agent.bean.DBConnectionProp;
 import hrds.b.biz.agent.tools.ConnUtil;
@@ -21,11 +21,11 @@ import hrds.commons.entity.Collect_job_classify;
 import hrds.commons.entity.Data_source;
 import hrds.commons.entity.Database_set;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.utils.AgentActionUtil;
 import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.key.PrimayKeyGener;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * @description: 应用管理端数据库采集配置步骤一、数据库连接信息配置
@@ -34,21 +34,12 @@ import java.util.Map;
  **/
 public class DBConfStepAction extends BaseAction{
 
-	/**
-	 * 数据库直连采集，根据databaseId进行查询并在页面上回显数据源配置信息
-	 *
-	 * 1、在数据库设置表(database_set)中，根据databaseId判断是否查询到数据，如果查询不到，抛异常给前端
-	 * 2、如果任务已经设置完成并发送成功，则不允许编辑
-	 * 3、在数据库设置表表中，关联采集作业分类表(collect_job_classify)，查询出当前database_id的所有信息并返回
-	 *
-	 * @Param: databaseId long
-	 *         含义：database_set表主键
-		 *         取值范围：不为空
-	 * @return: fd.ng.db.resultset.Result
-	 *          含义：数据源信息查询结果集
-	 *          取值范围：不会为null
-	 *
-	 * */
+	@Method(desc = "数据库直连采集，根据databaseId进行查询并在页面上回显数据源配置信息", logicStep = "" +
+			"1、在数据库设置表(database_set)中，根据databaseId判断是否查询到数据，如果查询不到，抛异常给前端" +
+			"2、如果任务已经设置完成并发送成功，则不允许编辑" +
+			"3、在数据库设置表表中，关联采集作业分类表(collect_job_classify)，查询出当前database_id的所有信息并返回")
+	@Param(name = "databaseId", desc = "database_set表主键", range = "不为空")
+	@Return(desc = "数据源信息查询结果集", range = "不会为null")
 	public Result getDBConfInfo(long databaseId) {
 		//1、在数据库设置表(database_set)中，根据databaseId判断是否查询到数据，如果查询不到，抛异常给前端
 		Database_set dbSet = Dbo.queryOneObject(Database_set.class,
@@ -72,41 +63,24 @@ public class DBConfStepAction extends BaseAction{
 				"t1.classify_id = t2.classify_id  where database_id = ?", databaseId);
 	}
 
-	/**
-	 * 根据数据库类型和端口获得数据库连接url等信息
-	 *
-	 * 1、调用工具类方法直接获取数据并返回
-	 *
-	 * @Param: dbType String
-	 *         含义：数据库类型
-	 *         取值范围：DatabaseType代码项code值
-	 * @return: String
-	 *          含义：数据库连接url
-	 *          取值范围：不会为null
-	 *
-	 * */
+	@Method(desc = "根据数据库类型和端口获得数据库连接url等信息", logicStep = "" +
+			"1、调用工具类方法直接获取数据并返回")
+	@Param(name = "dbType", desc = "数据库类型", range = "DatabaseType代码项code值")
+	@Return(desc = "数据库连接url",range = "不会为null")
 	public DBConnectionProp getJDBCDriver(String dbType) {
-		return ConnUtil.getConnURLTemplate(dbType);
+		return ConnUtil.getConnURLProp(dbType);
 		//数据可访问权限处理方式
 		//不与数据库交互，无需限制访问权限
 	}
 
-	/**
-	 * 根据classifyId判断当前分类是否被使用，如果被使用，则不能编辑，否则，可以编辑
-	 *
-	 * 1、在collect_job_classify表中查询传入的classifyId是否存在
-	 * 2、如果存在，在数据库中查询database_set表中是否有使用到当前classifyId的数据
-	 * 3、如果有，返回false，表示该分类被使用，不能编辑
-	 * 4、如果没有，返回true，表示该分类没有被使用，可以编辑
-	 *
-	 * @Param: classifyId long
-	 *         含义：采集任务分类表ID
-	 *         取值范围：不可为空
-	 * @return: boolean
-	 *          含义：该分类是否可以被编辑
-	 *          取值范围：返回false，表示该分类被使用，不能编辑；返回true，表示该分类没有被使用，可以编辑
-	 *
-	 * */
+	@Method(desc = "根据classifyId判断当前分类是否被使用，如果被使用，则不能编辑，否则，可以编辑", logicStep = "" +
+			"1、在collect_job_classify表中查询传入的classifyId是否存在" +
+			"2、如果存在，在数据库中查询database_set表中是否有使用到当前classifyId的数据" +
+			"3、如果有，返回false，表示该分类被使用，不能编辑" +
+			"4、如果没有，返回true，表示该分类没有被使用，可以编辑")
+	@Param(name = "classifyId", desc = "采集任务分类表ID", range = "不可为空")
+	@Return(desc = "该分类是否可以被编辑", range = "返回false，表示该分类被使用，不能编辑；返回true，" +
+			"表示该分类没有被使用，可以编辑")
 	public boolean checkClassifyId(long classifyId){
 		//1、在collect_job_classify表中查询传入的classifyId是否存在
 		long count = Dbo.queryNumber(" SELECT count(1) FROM " + Collect_job_classify.TableName +
@@ -129,19 +103,9 @@ public class DBConfStepAction extends BaseAction{
 		return val == 0;
 	}
 
-	/**
-	 * 根据sourceId获取分类信息
-	 *
-	 * 1、在数据库中查询相应的信息并返回
-	 *
-	 * @Param: sourceId long
-	 *         含义：数据源表ID
-	 *         取值范围：不可为空
-	 * @return: List<Collect_job_classify>
-	 *          含义：所有在该数据源下的分类信息的List集合
-	 *          取值范围：不会为空
-	 *
-	 * */
+	@Method(desc = "根据sourceId获取分类信息", logicStep = "1、在数据库中查询相应的信息并返回")
+	@Param(name = "sourceId", desc = "数据源表ID", range = "不可为空")
+	@Return(desc = "所有在该数据源下的分类信息的List集合", range = "不会为空")
 	public List<Collect_job_classify> getClassifyInfo(long sourceId){
 		//1、在数据库中查询相应的信息并返回
 		return Dbo.queryList(Collect_job_classify.class,
@@ -154,26 +118,17 @@ public class DBConfStepAction extends BaseAction{
 		//以上SQL中，通过当前用户ID进行关联查询，达到了数据权限的限制
 	}
 
-	/**
-	 * 保存采集任务分类信息
-	 *
-	 * 1、对传入的数据进行判断，对不能为空的字段进行校验，如果不合法，提供明确的提示信息
-	 * 2、在数据库或中对新增数据进行校验
-	 * 3、分类编号重复抛异常给前台
-	 * 4、分类编号不重复可以新增
-	 * 5、给新增数据设置ID
-	 * 6、完成新增
-	 *
-	 * @Param: sourceId long
-	 *         含义：数据源表ID
-	 *         取值范围：不可为空
-	 * @Param: classify Collect_job_classify
-	 *         含义：Collect_job_classify类对象，保存着待保存的信息
-	 *         取值范围：Collect_job_classify类对象
-	 * @return: 无
-	 *
-	 * */
-	public void saveClassifyInfo(@RequestBean Collect_job_classify classify, long sourceId){
+	@Method(desc = "保存采集任务分类信息", logicStep = "" +
+			"1、对传入的数据进行判断，对不能为空的字段进行校验，如果不合法，提供明确的提示信息" +
+			"2、在数据库或中对新增数据进行校验" +
+			"3、分类编号重复抛异常给前台" +
+			"4、分类编号不重复可以新增" +
+			"5、给新增数据设置ID" +
+			"6、完成新增")
+	@Param(name = "classify", desc = "Collect_job_classify类对象，保存着待保存的信息",
+			range = "Collect_job_classify类对象",isBean = true)
+	@Param(name = "sourceId", desc = "数据源表ID", range = "不可为空")
+	public void saveClassifyInfo(Collect_job_classify classify, long sourceId){
 		//1、对传入的数据进行判断，对不能为空的字段进行校验，如果不合法，提供明确的提示信息
 		verifyClassifyEntity(classify, true);
 		//2、在数据库或中对新增数据进行校验
@@ -197,25 +152,16 @@ public class DBConfStepAction extends BaseAction{
 			throw new BusinessException("保存分类信息失败！data=" + classify);
 	}
 
-	/**
-	 * 更新采集任务分类信息
-	 *
-	 * 1、对传入的数据进行判断，对不能为空的字段进行校验，如果不合法，提供明确的提示信息
-	 * 2、在数据库或中对待更新数据进行校验，判断待更新的数据是否存在
-	 * 3、不存在抛异常给前台
-	 * 4、存在则校验更新后的分类编号是否重复
-	 * 5、完成更新操作
-	 *
-	 * @Param: sourceId long
-	 *         含义：数据源表ID
-	 *         取值范围：不可为空
-	 * @Param: classify Collect_job_classify
-	 *         含义：Collect_job_classify类对象，保存着待保存的信息
-	 *         取值范围：Collect_job_classify类对象
-	 * @return: 无
-	 *
-	 * */
-	public void updateClassifyInfo(@RequestBean Collect_job_classify classify, long sourceId){
+	@Method(desc = "更新采集任务分类信息", logicStep = "" +
+			"1、对传入的数据进行判断，对不能为空的字段进行校验，如果不合法，提供明确的提示信息" +
+			"2、在数据库或中对待更新数据进行校验，判断待更新的数据是否存在" +
+			"3、不存在抛异常给前台" +
+			"4、存在则校验更新后的分类编号是否重复" +
+			"5、完成更新操作")
+	@Param(name = "classify", desc = "Collect_job_classify类对象，保存着待保存的信息",
+			range = "Collect_job_classify类对象",isBean = true)
+	@Param(name = "sourceId", desc = "数据源表ID", range = "不可为空")
+	public void updateClassifyInfo(Collect_job_classify classify, long sourceId){
 		//1、对传入的数据进行判断，对不能为空的字段进行校验，如果不合法，提供明确的提示信息
 		verifyClassifyEntity(classify, false);
 		//2、在数据库或中对待更新数据进行校验，判断待更新的数据是否存在
@@ -246,19 +192,11 @@ public class DBConfStepAction extends BaseAction{
 			throw new BusinessException("保存分类信息失败！data=" + classify);
 	}
 
-	/**
-	 * 删除采集任务分类信息
-	 *
-	 * 1、在数据库或中对待更新数据进行校验，判断待删除的分类数据是否被使用
-	 * 2、若正在被使用，则不能删除
-	 * 3、若没有被使用，可以删除
-	 *
-	 * @Param: classifyId long
-	 *         含义：采集任务分类表ID
-	 *         取值范围：不可为空
-	 * @return: 无
-	 *
-	 * */
+	@Method(desc = "删除采集任务分类信息", logicStep = "" +
+			"1、在数据库或中对待更新数据进行校验，判断待删除的分类数据是否被使用" +
+			"2、若正在被使用，则不能删除" +
+			"3、若没有被使用，可以删除")
+	@Param(name = "classifyId", desc = "采集任务分类表ID", range = "不可为空")
 	public void deleteClassifyInfo(long classifyId){
 		//1、在数据库或中对待更新数据进行校验，判断待删除的分类数据是否被使用
 		boolean flag = checkClassifyId(classifyId);
@@ -271,21 +209,13 @@ public class DBConfStepAction extends BaseAction{
 				" where classify_id = ?", classifyId);
 	}
 
-	/**
-	 * 保存数据库采集Agent数据库配置信息
-	 *
-	 * 1、调用方法对传入数据的合法性进行校验
-	 * 2、获取实体中的database_id
-	 * 3、如果存在，则更新信息
-	 * 4、如果不存在，则新增信息
-	 *
-	 * @Param: databaseSet Database_set
-	 *         含义：待保存的Database_set实体对象
-	 *         取值范围：不为空
-	 * @return: 无
-	 *
-	 * */
-	public long saveDbConf(@RequestBean Database_set databaseSet) {
+	@Method(desc = "保存数据库采集Agent数据库配置信息", logicStep = "" +
+			"1、调用方法对传入数据的合法性进行校验" +
+			"2、获取实体中的database_id" +
+			"3、如果存在，则更新信息" +
+			"4、如果不存在，则新增信息")
+	@Param(name = "databaseSet", desc = "待保存的Database_set实体对象", range = "不为空", isBean = true)
+	public long saveDbConf(Database_set databaseSet) {
 		//1、调用方法对传入数据的合法性进行校验
 		verifyDatabaseSetEntity(databaseSet);
 		//2、获取实体中的database_id
@@ -328,42 +258,26 @@ public class DBConfStepAction extends BaseAction{
 		return databaseSet.getDatabase_id();
 	}
 
-	/**
-	 * 测试连接
-	 *
-	 * 1、根据agent_id获得agent_ip,agent_port
-	 * 2、在配置文件中获取webContext和actionPattern
-	 * 3、调用工具类方法给agent发消息，并获取agent响应
-	 * 4、将响应封装成ActionResult的对象
-	 *
-	 * @Param: databaseSet Database_set
-	 *         含义：存有agent_id, driver, url, username, password, dbtype等信息的Database_set实体类对象
-	 *         取值范围：Database_set实体类对象，不为空
-	 *
-	 * @return: 无
-	 *
-	 * */
-	public void testConnection(@RequestBean Database_set databaseSet) {
-		//1、根据agent_id获得agent_ip,agent_port
-		//FIXME 使用queryOneObject方法, 已修复
-		Map<String, Object> agentInfo = Dbo.queryOneObject("select agent_ip, agent_port from agent_info " +
-						"where agent_id = ?", databaseSet.getAgent_id());
-		//2、在配置文件中获取webContext和actionPattern
-		HttpServerConfBean test = HttpServerConf.getHttpServer("testConnection");
-		String webContext = test.getWebContext();
-		String actionPattern = test.getActionPattern();
-		String agentIp = (String) agentInfo.get("agent_ip");
-		String agentPort = (String) agentInfo.get("agent_port");
-		String url = "http://" + agentIp + ":" + agentPort + webContext;
-		//3、调用工具类方法给agent发消息，并获取agent响应
+	@Method(desc = "测试连接", logicStep = "" +
+			"1、调用工具类获取本次访问的agentserver端url" +
+			"2、给agent发消息，并获取agent响应" +
+			"3、如果测试连接不成功，则抛异常给前端，说明连接失败，如果成功，则不做任务处理")
+	@Param(name = "databaseSet", desc = "有agent_id, driver, url, username, password, dbtype信息的Database_set实体类对象"
+			, range = "Database_set实体类对象，不为空")
+	public void testConnection(Database_set databaseSet) {
+		//1、调用工具类获取本次访问的agentserver端url
+		String url = AgentActionUtil.getUrl(databaseSet.getAgent_id(), getUserId(), AgentActionUtil.TESTCONNECTION);
+
+		//2、给agent发消息，并获取agent响应
 		HttpClient.ResponseValue resVal = new HttpClient()
 				.addData("driver", databaseSet.getDatabase_drive())
 				.addData("url", databaseSet.getJdbc_url())
 				.addData("username", databaseSet.getUser_name())
 				.addData("password", databaseSet.getDatabase_pad())
 				.addData("dbtype", databaseSet.getDatabase_type())
-				.post(url + actionPattern);
-		//4、将响应封装成ActionResult的对象
+				.post(url);
+
+		//3、如果测试连接不成功，则抛异常给前端，说明连接失败，如果成功，则不做任务处理
 		//FIXME JsonUtil.toObject()这个方法只能在测试用例中使用，已修复
 		ActionResult actionResult = JsonUtil.toObjectSafety(resVal.getBodyString(), ActionResult.class).
 				orElseThrow(() -> new BusinessException("应用管理端与" + url + "服务交互异常"));
@@ -372,27 +286,16 @@ public class DBConfStepAction extends BaseAction{
 		}
 	}
 
-	/**
-	 * 新增/更新操作校验Collect_job_classify中数据的合法性，对数据库中不能为空的字段，校验合法性，若不合法，
-	 * 提供明确的提示信息
-	 *
-	 * 1、对于新增操作，校验classify_id不能为空
-	 * 2、校验classify_num不能为空
-	 * 3、校验classify_name不能为空
-	 * 4、校验user_id不能为空
-	 * 5、校验Agent_id不能为空
-	 *
-	 * @Param: entity Collect_job_classify
-	 *         含义：存有classify_num、classify_name、user_id、Agent_id的Collect_job_classify实体类对象
-	 *         取值范围：Collect_job_classify实体类对象，不为空
-	 *
-	 * @Param: isAdd boolean
-	 *         含义：新增/更新的标识位
-	 *         取值范围：true为新增，false为更新
-	 *
-	 * @return: 无
-	 *
-	 * */
+	@Method(desc = "新增/更新操作校验Collect_job_classify中数据的合法性，对数据库中不能为空的字段，校验合法性，" +
+			"       若不合法，提供明确的提示信息", logicStep = "" +
+			"1、对于新增操作，校验classify_id不能为空" +
+			"2、校验classify_num不能为空" +
+			"3、校验classify_name不能为空" +
+			"4、校验user_id不能为空" +
+			"5、校验Agent_id不能为空")
+	@Param(name = "entity", desc = "存有classify_num、classify_name、user_id、Agent_id的Collect_job_classify实体类对象"
+			, range = "Collect_job_classify实体类对象，不为空")
+	@Param(name = "isAdd", desc = "新增/更新的标识位", range = "true为新增，false为更新")
 	private void verifyClassifyEntity(Collect_job_classify entity, boolean isAdd){
 		//1、对于新增操作，校验classify_id不能为空
 		if(!isAdd){
@@ -420,21 +323,11 @@ public class DBConfStepAction extends BaseAction{
 		//该方法不与数据库交互，无需校验用户访问权限
 	}
 
-	/**
-	 * 保存数据库配置页面时，校验Database_set中数据的合法性，对数据库中不能为空的字段，校验合法性，若不合法，
-	 * 提供明确的提示信息
-	 *
-	 * 1、校验database_type不能为空，并且取值范围必须在DatabaseType代码项中
-	 * 2、校验classify_id不能为空
-	 *
-	 * @Param: databaseSet Database_set
-	 *         含义：存有待保存信息的Database_set实体类对象
-	 *         取值范围：Database_set实体类对象，不为空
-	 *
-	 *
-	 * @return: 无
-	 *
-	 * */
+	@Method(desc = "保存数据库配置页面时，校验Database_set中数据的合法性，对数据库中不能为空的字段，校验合法性，若不合法" +
+			"提供明确的提示信息", logicStep = "" +
+			"1、校验database_type不能为空，并且取值范围必须在DatabaseType代码项中" +
+			"2、校验classify_id不能为空")
+	@Param(name = "databaseSet", desc = "存有待保存信息的Database_set实体类对象", range = "Database_set实体类对象，不为空")
 	private void verifyDatabaseSetEntity(Database_set databaseSet){
 		//1、校验database_type不能为空，并且取值范围必须在DatabaseType代码项中
 		if(StringUtil.isBlank(databaseSet.getDatabase_type())){

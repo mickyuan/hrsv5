@@ -1,5 +1,8 @@
 package hrds.agent.job.biz.dataclean.columnclean;
 
+import fd.ng.core.annotation.Method;
+import fd.ng.core.annotation.Param;
+import fd.ng.core.annotation.Return;
 import hrds.agent.job.biz.bean.ColumnSplitBean;
 import hrds.agent.job.biz.constant.JobConstant;
 import hrds.commons.exception.AppSystemException;
@@ -26,40 +29,19 @@ public class ColumnCleanUtil {
 
 	private final static Logger LOGGER = LoggerFactory.getLogger(ColumnCleanUtil.class);
 
-	/**
-	 * 列清洗入口方法
-	 *
-	 * 1、校验入参合法性
-	 * 2、根据列名拿到该列的清洗规则
-	 * 3、按照清洗优先级，从大到小对该列数据进行数据清洗
-	 *
-	 * @Param: columnValue String
-	 *         含义：待清洗列值
-	 *         取值范围：不为空
-	 * @Param: columnName String
-	 *         含义：待清洗列的列名
-	 *         取值范围：不为空
-	 * @Param: group Group
-	 *         含义：用于写Parquet的一行数据
-	 *         取值范围：不为空
-	 * @Param: colType String
-	 *         含义：列类型
-	 *         取值范围：不为空
-	 * @Param: fileType String
-	 *         含义：卸数落地数据文件的格式
-	 *         取值范围：不为空，FileFormatConstant代码项的code
-	 * @Param: colCleanRule Map<String, Map<String, Object>>
-	 *         含义：存放当前采集表所有列的清洗规则的Map集合
-	 *         取值范围：不为空，key为列名，value为该列对应的清洗规则
-	 * @Param: lineData List<Object>
-	 *         含义：用于写ORC
-	 *         取值范围：不为空
-	 *
-	 * @return: String
-	 *          含义：清洗后的字段值
-	 *          取值范围：不会为null
-	 *
-	 * */
+	@Method(desc = "列清洗入口方法", logicStep = "" +
+			"1、校验入参合法性" +
+			"2、根据列名拿到该列的清洗规则" +
+			"3、按照清洗优先级，从大到小对该列数据进行数据清洗")
+	@Param(name = "columnValue", desc = "待清洗列值", range = "不为空")
+	@Param(name = "columnName", desc = "待清洗列的列名", range = "不为空")
+	@Param(name = "group", desc = "用于写Parquet的一行数据", range = "不为空")
+	@Param(name = "colType", desc = "列类型", range = "不为空")
+	@Param(name = "fileType", desc = "卸数落地数据文件的格式", range = "不为空，FileFormatConstant代码项的code")
+	@Param(name = "colCleanRule", desc = "存放当前采集表所有列的清洗规则的Map集合",
+			range = "不为空，key为列名，value为该列对应的清洗规则")
+	@Param(name = "lineData", desc = "用于写ORC", range = "不为空")
+	@Return(desc = "清洗后的字段值", range = "不会为null")
 	public static String colDataClean(String columnValue, String columnName, Group group,
 	                                  String colType, String fileType,
 	                                  Map<String, Map<String, Object>> colCleanRule,

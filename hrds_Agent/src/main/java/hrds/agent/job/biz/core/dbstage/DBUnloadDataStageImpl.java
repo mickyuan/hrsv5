@@ -10,10 +10,7 @@ import hrds.agent.job.biz.core.AbstractJobStage;
 import hrds.agent.job.biz.core.dbstage.dbdialect.DialectStrategyFactory;
 import hrds.agent.job.biz.core.dbstage.dbdialect.strategy.DataBaseDialectStrategy;
 import hrds.agent.job.biz.core.dbstage.service.CollectPage;
-import hrds.agent.job.biz.utils.DateUtil;
-import hrds.agent.job.biz.utils.FileUtil;
-import hrds.agent.job.biz.utils.JobUtil;
-import hrds.agent.job.biz.utils.SQLUtil;
+import hrds.agent.job.biz.utils.*;
 import hrds.commons.exception.AppSystemException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,7 +92,7 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 		String tableName = jobInfo.getTable_name();
 		String tableCount = jobInfo.getTable_count();
 		List<ColumnCleanResult> columnList = jobInfo.getColumnList();
-		Set<String> collectColumnNames = JobUtil.getCollectColumnName(columnList);
+		Set<String> collectColumnNames = ColumnTool.getCollectColumnName(columnList);
 		//3、根据列名和表名获得采集SQL
 		// TODO 缺少支持自定义SQL
 		String collectSQL = SQLUtil.getCollectSQL(tableName, collectColumnNames,

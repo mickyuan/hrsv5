@@ -1,5 +1,7 @@
 package hrds.agent.job.biz.core;
 
+import fd.ng.core.annotation.Method;
+import fd.ng.core.annotation.Return;
 import hrds.agent.job.biz.bean.*;
 import hrds.agent.job.biz.core.dbstage.*;
 import hrds.agent.job.biz.utils.DateUtil;
@@ -32,22 +34,13 @@ public class DataBaseJobImpl implements JobInterface {
 		this.jobStatus = jobStatus;
 	}
 
-	/**
-	 * 重写接口中的runJob()方法，实现数据库直连采集的逻辑
-	 *
-	 * 1、设置作业ID，开始时间
-	 * 2、构建每个阶段具体的实现类对象
-	 * 3、构建责任链，串起每个阶段
-	 * 4、按照顺序从第一个阶段开始执行作业
-	 * 5、阶段执行完成后，写meta信息
-	 *
-	 * @Param: 无
-	 *
-	 * @return: JobStatusInfo
-	 *          含义：封装有作业状态信息的实体类对象
-	 *          取值范围：JobStatusInfo类对象，不会为null
-	 *
-	 * */
+	@Method(desc = "重写接口中的runJob()方法，实现数据库直连采集的逻辑", logicStep = "" +
+			"1、设置作业ID，开始时间" +
+			"2、构建每个阶段具体的实现类对象" +
+			"3、构建责任链，串起每个阶段" +
+			"4、按照顺序从第一个阶段开始执行作业" +
+			"5、阶段执行完成后，写meta信息")
+	@Return(desc = "封装有作业状态信息的实体类对象", range = "JobStatusInfo类对象，不会为null")
 	@Override
 	public JobStatusInfo runJob() {
 		JobStatusInfo jobStatusInfo = this.jobStatus;

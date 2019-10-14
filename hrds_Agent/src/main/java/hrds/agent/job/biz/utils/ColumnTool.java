@@ -1,41 +1,33 @@
 package hrds.agent.job.biz.utils;
 
+import fd.ng.core.annotation.Method;
+import fd.ng.core.annotation.Param;
+import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
+import hrds.agent.job.biz.bean.ColumnCleanResult;
 import hrds.agent.job.biz.bean.ColumnSplitBean;
 import hrds.agent.job.biz.constant.JobConstant;
 import hrds.commons.exception.AppSystemException;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
- * @description: 用于对需要进行列合并(表清洗)、列拆分(列清洗)清洗的列，更新列信息的工具类
+ * @description: 用于对需要进行列合并(表清洗)、列拆分(列清洗)清洗的列，获取采集列列名，更新列信息的工具类
  * @author: WangZhengcheng
  * @create: 2019-08-28 15:37
  **/
 public class ColumnTool {
 
-	/**
-	 * 列拆分
-	 *
-	 * 1、
-	 *
-	 * @Param: columns StringBuilder
-	 *         含义：所有列列名,使用\001分隔
-	 *         取值范围：不为空
-	 * @Param: columnsTypeAndPreci StringBuilder
-	 *         含义：所有列类型(长度/精度)，使用 | 分隔
-	 *         取值范围：不为空
-	 * @Param: columnsLength StringBuilder
-	 *         含义：所有列长度，使用 | 分隔
-	 *         取值范围：不为空
-	 * @Param: allSplitRule Map<String, List<ColumnSplitBean>>
-	 *         含义：所有列的拆分规则
-	 *         取值范围：不为空,key为列名，value为ColumnSplitBean的List集合,也就是该列的拆分规则
-	 *
-	 * @return: 无
-	 *
-	 * */
+	@Method(desc = "列拆分", logicStep = "" +
+			"")
+	@Param(name = "columns", desc = "所有列列名,使用\001分隔", range = "不为空")
+	@Param(name = "columnsTypeAndPreci", desc = "所有列类型(长度/精度)，使用 | 分隔", range = "不为空")
+	@Param(name = "columnsLength", desc = "所有列长度，使用 | 分隔", range = "不为空")
+	@Param(name = "allSplitRule", desc = "所有列的拆分规则", range = "不为空,key为列名，" +
+			"value为ColumnSplitBean的List集合,也就是该列的拆分规则")
 	public static void updateColumnSplit(StringBuilder columns, StringBuilder columnsTypeAndPreci,
 	                                     StringBuilder columnsLength,
 	                                     Map<String, List<ColumnSplitBean>> allSplitRule) {
@@ -100,27 +92,11 @@ public class ColumnTool {
 		columns.delete(0, columns.length()).append(columnsName);
 	}
 
-	/**
-	 * 列合并
-	 *
-	 * 1、
-	 *
-	 * @Param: columns StringBuilder
-	 *         含义：所有列列名,使用\001分隔
-	 *         取值范围：不为空
-	 * @Param: columnsTypeAndPreci StringBuilder
-	 *         含义：所有列类型(长度/精度)，使用 | 分隔
-	 *         取值范围：不为空
-	 * @Param: columnsLength StringBuilder
-	 *         含义：所有列长度，使用 | 分隔
-	 *         取值范围：不为空
-	 * @Param: tbMergeRule Map<String, String>
-	 *         含义：所有列的合并规则
-	 *         取值范围：不为空,key为列名`列类型，value为合并前的列原名
-	 *
-	 * @return: 无
-	 *
-	 * */
+	@Method(desc = "列合并", logicStep = "")
+	@Param(name = "columns", desc = "所有列列名,使用\001分隔", range = "不为空")
+	@Param(name = "columnsTypeAndPreci", desc = "所有列类型(长度/精度)，使用 | 分隔", range = "不为空")
+	@Param(name = "columnsLength", desc = "所有列长度，使用 | 分隔", range = "不为空")
+	@Param(name = "tbMergeRule", desc = "所有列的合并规则", range = "不为空,key为列名`列类型，value为合并前的列原名")
 	public static void updateColumnMerge(StringBuilder columns, StringBuilder columnsTypeAndPreci,
 	                                     StringBuilder columnsLength, Map<String, String> tbMergeRule) {
 		if (columns == null || columns.length() == 0) {
@@ -141,23 +117,10 @@ public class ColumnTool {
 		}
 	}
 
-	/**
-	 * 找到将要被合并的列在表的所有列中的下标
-	 *
-	 * 1、
-	 *
-	 * @Param: column String[]
-	 *         含义：该张表所有的列的列名
-	 *         取值范围：不为空
-	 * @Param: str String
-	 *         含义：将要被合并的列名，列与列之间用逗号分隔
-	 *         取值范围：不为空
-	 *
-	 * @return: int[]
-	 *          含义：要被合并的列在表的所有列中的下标
-	 *          取值范围：不会为null
-	 *
-	 * */
+	@Method(desc = "找到将要被合并的列在表的所有列中的下标", logicStep = "")
+	@Param(name = "column", desc = "该张表所有的列的列名", range = "不为空")
+	@Param(name = "str", desc = "将要被合并的列名，列与列之间用逗号分隔", range = "不为空")
+	@Return(desc = "要被合并的列在表的所有列中的下标", range = "不会为null")
 	public static int[] findColIndex(String[] column, String str) {
 		List<String> split = StringUtil.split(str, ",");
 		int[] index = new int[split.size()];
@@ -171,26 +134,32 @@ public class ColumnTool {
 		return index;
 	}
 
-	/**
-	 * 在原列名信息中，按照某分隔符，找到某列所在位置并返回
-	 *
-	 * 1、
-	 *
-	 * @Param: columnsName String
-	 *         含义：原列名
-	 *         取值范围：不为空
-	 * @Param: colName String
-	 *         含义：要寻找的列名
-	 *         取值范围：不为空
-	 * @Param: separator String
-	 *         含义：分隔符
-	 *         取值范围：不为空
-	 *
-	 * @return: int
-	 *          含义：查找到的列的位置
-	 *          取值范围：不会为null
-	 *
-	 * */
+	@Method(desc = "根据JobInfo中的列清洗信息返回需要采集的列名", logicStep = "" +
+			"1、验证入参是否为空，如果为空，则抛出异常" +
+			"2、遍历list集合，获取每一个ColumnCleanResult对象的columnName" +
+			"3、将得到的columnName放入Set集合并返回")
+	@Param(name = "list", desc = "装有所有采集列的列清洗规则的List集合", range = "不为空")
+	@Return(desc = "装有所有采集列列名的Set集合", range = "不为空")
+	public static Set<String> getCollectColumnName(List<ColumnCleanResult> list) {
+		//1、验证入参是否为空，如果为空，则抛出异常
+		if (list == null || list.isEmpty()) {
+			throw new AppSystemException("采集作业信息不能为空");
+		}
+		//2、遍历list集合，获取每一个ColumnCleanResult对象的columnName
+		Set<String> columnNames = new HashSet<>();
+		for (ColumnCleanResult column : list) {
+			String columnName = column.getColumnName();
+			columnNames.add(columnName);
+		}
+		//3、将得到的columnName放入Set集合并返回
+		return columnNames;
+	}
+
+	@Method(desc = "在原列名信息中，按照某分隔符，找到某列所在位置并返回", logicStep = "")
+	@Param(name = "columnsName", desc = "原列名", range = "不为空")
+	@Param(name = "colName", desc = "要寻找的列名", range = "不为空")
+	@Param(name = "separator", desc = "分隔符", range = "不为空")
+	@Return(desc = "查找到的列的位置", range = "不会为null")
 	private static int findColIndex(String columnsName, String colName, String separator) {
 		List<String> column = StringUtil.split(columnsName, separator);
 		int index = 0;
@@ -203,20 +172,9 @@ public class ColumnTool {
 		return index;
 	}
 
-	/**
-	 * 获取每个数据类型的长度
-	 *
-	 * 1、
-	 *
-	 * @Param: columnType String
-	 *         含义：列类型
-	 *         取值范围：不为空
-	 *
-	 * @return: int
-	 *          含义：数据类型的长度
-	 *          取值范围：不会为null
-	 *
-	 * */
+	@Method(desc = "获取每个数据类型的长度", logicStep = "")
+	@Param(name = "columnType", desc = "列类型", range = "不为空")
+	@Return(desc = "数据类型的长度", range = "不会为null")
 	private static int getLength(String columnType) {
 		columnType = columnType.trim();
 		int length;
@@ -257,26 +215,11 @@ public class ColumnTool {
 		return length;
 	}
 
-	/**
-	 * 用于获取对应列类型的位置
-	 *
-	 * 1、
-	 *
-	 * @Param: columnsTypeAndPreci String
-	 *         含义：列类型
-	 *         取值范围：不为空,格式为列类型(长度,精度)
-	 * @Param: index int
-	 *         含义：该列在原字符串中出现的位置
-	 *         取值范围：不为空
-	 * @Param: separator String
-	 *         含义：分隔符
-	 *         取值范围：不为空
-	 *
-	 * @return: int
-	 *          含义：对应列类型的位置
-	 *          取值范围：不会为null
-	 *
-	 * */
+	@Method(desc = "用于获取对应列类型的位置", logicStep = "")
+	@Param(name = "columnsTypeAndPreci", desc = "列类型", range = "不为空,格式为列类型(长度,精度)")
+	@Param(name = "index", desc = "该列在原字符串中出现的位置", range = "不为空")
+	@Param(name = "separator", desc = "分隔符", range = "不为空")
+	@Return(desc = "对应列类型的位置", range = "不会为null")
 	private static int searchIndex(String columnsTypeAndPreci, int index, String separator) {
 		int temp = 0;//第一个出现的索引位置
 		int num = 0;

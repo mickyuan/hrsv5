@@ -1,5 +1,9 @@
 package hrds.agent.job.biz.utils;
 
+import fd.ng.core.annotation.Method;
+import fd.ng.core.annotation.Param;
+import fd.ng.core.utils.StringUtil;
+import hrds.commons.exception.AppSystemException;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,125 +30,129 @@ public class ScriptExecutor {
 	private final static String SHELL_COMMAND = "sh";
 	private final static String PUTHDFS_SCRIPTS = "uploadHDFS.sh";
 
-	/**
-	 * 上传单个文件至hdfs
-	 *
-	 * @param localFile 本地文件地址
-	 * @param remoteDir hdfs目录地址
-	 * @return void
-	 * @throws InterruptedException  当执行脚本的进程无法启动时抛出该异常
-	 * @throws IllegalStateException 当脚本执行错误时抛出该异常
-	 * @author 13616
-	 * @date 2019/8/7 11:17
-	 */
+	@Method(desc = "上传单个文件至hdfs", logicStep = "" +
+			"1、对入参进行合法性校验，校验不通过，抛异常" +
+			"2、调用本类中的service方法完成处理逻辑")
+	@Param(name = "localFile", desc = "本地文件地址", range = "不为空")
+	@Param(name = "remoteDir", desc = "hdfs目录地址", range = "不为空")
 	public void executeUpload2Hdfs(String localFile, String remoteDir)
 			throws InterruptedException, IllegalStateException {
-
+		//1、对入参进行合法性校验，校验不通过，抛异常
+		if(StringUtil.isBlank(localFile)){
+			throw new AppSystemException("本地文件地址不能为空");
+		}
+		if(StringUtil.isBlank(remoteDir)){
+			throw new AppSystemException("hdfs目录地址不能为空");
+		}
+		//2、调用本类中的service方法完成处理逻辑
 		service(PUTHDFS_SCRIPTS, localFile, remoteDir);
 	}
 
-	/**
-	 * 上传多个文件至hdfs
-	 *
-	 * @param localFiles 本地文件地址数组
-	 * @param remoteDir  hdfs目录地址
-	 * @return void
-	 * @throws InterruptedException  当执行脚本的进程无法启动时抛出该异常
-	 * @throws IllegalStateException 当脚本执行错误时抛出该异常
-	 */
+	@Method(desc = "上传多个文件至hdfs", logicStep = "" +
+			"1、对入参进行合法性校验，校验不通过，抛异常" +
+			"2、调用本类中的service方法完成处理逻辑")
+	@Param(name = "localFiles", desc = "本地文件地址数组", range = "不为空")
+	@Param(name = "remoteDir", desc = "hdfs目录地址", range = "不为空")
 	public void executeUpload2Hdfs(String[] localFiles, String remoteDir)
 			throws InterruptedException, IllegalStateException {
-
+		//1、对入参进行合法性校验，校验不通过，抛异常
+		if(localFiles.length == 0){
+			throw new AppSystemException("本地文件地址不能为空");
+		}
+		if(StringUtil.isBlank(remoteDir)){
+			throw new AppSystemException("hdfs目录地址不能为空");
+		}
+		//2、调用本类中的service方法完成处理逻辑
 		service(PUTHDFS_SCRIPTS, localFiles, remoteDir);
 	}
 
 	/**
-	 * 用于寻找脚本路径，单文件上传使用
-	 *
-	 * @param shellName 脚本文件名
-	 * @param args      执行参数
-	 * @return void
 	 * @throws InterruptedException  当执行脚本的进程无法启动时抛出该异常
 	 * @throws IllegalStateException 当脚本执行错误时抛出该异常
-	 * @author 13616
-	 * @date 2019/8/7 11:25
-	 */
+	 * */
+	@Method(desc = "用于寻找脚本路径，单文件上传使用", logicStep = "" +
+			"1、获取脚本所在的目录" +
+			"2、构建命令并执行")
+	@Param(name = "shellName", desc = "脚本文件名", range = "不为空")
+	@Param(name = "args", desc = "执行参数", range = "可变参数，可能有多个，传入本地文件地址，hdfs目录地址不能为空")
 	private void service(String shellName, String... args)
 			throws InterruptedException, IllegalStateException {
-		//获取脚本所在的目录
+		//1、获取脚本所在的目录
 		String shellPath = ProductFileUtil.getProjectPath() + File.separatorChar
 				+ StringUtils.join(new String[]{"src", "main", "resources"}, File.separatorChar)
 				+ File.separatorChar + SCRIPTS_DIR + File.separatorChar + shellName;
-		//构建命令并执行
+		//2、构建命令并执行
 		buildCommandAndExe(shellPath, args);
 	}
 
 	/**
-	 * 用于寻找脚本路径，多文件上传使用
-	 *
-	 * @param shellName  脚本文件名
-	 * @param localFiles 文件路径数组
-	 * @param remoteDir  上传目录
-	 * @return void
 	 * @throws InterruptedException  当执行脚本的进程无法启动时抛出该异常
 	 * @throws IllegalStateException 当脚本执行错误时抛出该异常
-	 */
+	 * */
+	@Method(desc = "用于寻找脚本路径，多文件上传使用", logicStep = "" +
+			"1、获取脚本所在的目录" +
+			"2、构建命令并执行")
+	@Param(name = "shellName", desc = "脚本文件名", range = "不为空")
+	@Param(name = "localFiles", desc = "文件路径数组", range = "不为空")
+	@Param(name = "remoteDir", desc = "上传目录", range = "不为空")
 	private void service(String shellName, String[] localFiles, String remoteDir)
 			throws InterruptedException, IllegalStateException {
-		//获取脚本所在的目录
+		//1、获取脚本所在的目录
 		String shellPath = ProductFileUtil.getProjectPath() + File.separatorChar
 				+ StringUtils.join(new String[]{"src", "main", "resources"}, File.separatorChar)
 				+ File.separatorChar + SCRIPTS_DIR + File.separatorChar + shellName;
-		//构建命令并执行
+		//2、构建命令并执行
 		buildCommandAndExe(shellPath, localFiles, remoteDir);
 	}
 
 	/**
-	 * 用于构建命令并执行，单文件上传使用
-	 *
-	 * @param script 脚本文件名
-	 * @param args   执行参数
-	 * @return void
 	 * @throws InterruptedException  当执行脚本的进程无法启动时抛出该异常
 	 * @throws IllegalStateException 当脚本执行错误时抛出该异常
-	 */
+	 * */
+	@Method(desc = "用于构建命令并执行，单文件上传使用", logicStep = "" +
+			"1、拼接最终执行的linux命令" +
+			"2、调用本类的callScript()方法执行命令")
+	@Param(name = "script", desc = "脚本文件名", range = "不为空")
+	@Param(name = "args", desc = "执行参数", range = "不为空")
 	private void buildCommandAndExe(String script, String... args)
 			throws InterruptedException, IllegalStateException {
+		//1、拼接最终执行的linux命令
 		String cmd = SHELL_COMMAND + " " + script + " " + StringUtils.join(args, " ");
+		//2、调用本类的callScript()方法执行命令
 		callScript(script, cmd);
 	}
 
 	/**
-	 * 用于构建命令并执行，多文件上传使用
-	 *
-	 * @param script     脚本文件名
-	 * @param localFiles 文件路径数组
-	 * @param remoteDir  上传目录
-	 * @return void
 	 * @throws InterruptedException  当执行脚本的进程无法启动时抛出该异常
 	 * @throws IllegalStateException 当脚本执行错误时抛出该异常
-	 */
+	 * */
+	@Method(desc = "用于构建命令并执行，多文件上传使用", logicStep = "" +
+			"1、拼接最终执行的linux命令" +
+			"2、调用本类的callScript()方法执行命令")
+	@Param(name = "script", desc = "脚本文件名", range = "不为空")
+	@Param(name = "localFiles", desc = "文件路径数组", range = "不为空")
+	@Param(name = "remoteDir", desc = "上传目录", range = "不为空")
 	private void buildCommandAndExe(String script, String[] localFiles, String remoteDir)
 			throws InterruptedException, IllegalStateException {
+		//1、拼接最终执行的linux命令
 		String cmd = SHELL_COMMAND + " " + script + " " + StringUtils.join(localFiles, " ") + " " + remoteDir;
+		//2、调用本类的callScript()方法执行命令
 		callScript(script, cmd);
 	}
 
 	/**
-	 * 用于构造脚本执行命令，并且执行
-	 *
-	 * @param script 脚本地址
-	 * @param cmd    执行命令
-	 * @return void
 	 * @throws InterruptedException  当执行脚本的进程无法启动时抛出该异常
 	 * @throws IllegalStateException 当脚本执行错误时抛出该异常
-	 * @author 13616
-	 * @date 2019/8/6 11:32
-	 */
+	 * */
+	@Method(desc = "用于构造脚本执行命令，并且执行", logicStep = "" +
+			"1、启动独立线程等待process执行完成" +
+			"2、检查脚本执行结果状态码")
+	@Param(name = "script", desc = "脚本地址", range = "不为空")
+	@Param(name = "cmd", desc = "执行命令", range = "不为空")
 	private void callScript(String script, String cmd)
 			throws InterruptedException, IllegalStateException {
 
-		//启动独立线程等待process执行完成
+		//1、启动独立线程等待process执行完成
 		CommandWaitForThread commandThread = new CommandWaitForThread(cmd);
 		commandThread.start();
 
@@ -153,7 +161,7 @@ public class ScriptExecutor {
 			Thread.sleep(5000);
 		}
 
-		//检查脚本执行结果状态码
+		//2、检查脚本执行结果状态码
 		if (commandThread.getExitCode() != 0) {
 			throw new IllegalStateException(cmd + " 执行失败, exitCode = " + commandThread.getExitCode());
 		}
@@ -166,7 +174,7 @@ public class ScriptExecutor {
 		private boolean finish = false;
 		private int exitValue = -1;
 
-		public CommandWaitForThread(String cmd) {
+		CommandWaitForThread(String cmd) {
 			this.cmd = cmd;
 		}
 
@@ -181,7 +189,7 @@ public class ScriptExecutor {
 				//写出脚本执行中的过程信息
 				infoInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
 				errorInput = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-				String line = "";
+				String line;
 				while ((line = infoInput.readLine()) != null) {
 					LOGGER.info(line);
 				}
@@ -214,6 +222,7 @@ public class ScriptExecutor {
 			}
 		}
 
+		//成员变量的getter/setter，没有业务处理逻辑
 		public boolean isFinish() {
 			return finish;
 		}

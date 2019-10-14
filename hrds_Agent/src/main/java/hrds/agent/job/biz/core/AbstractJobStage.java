@@ -1,5 +1,9 @@
 package hrds.agent.job.biz.core;
 
+import fd.ng.core.annotation.Method;
+import fd.ng.core.annotation.Param;
+import fd.ng.core.annotation.Return;
+
 /**
  * ClassName: AbstractJobStage <br/>
  * Function: 作业阶段接口适配器，请每种类型任务的每个阶段继承该类 <br/>
@@ -16,31 +20,15 @@ public abstract class AbstractJobStage implements JobStageInterface {
 	protected static final String FAILD_MSG = "脚本执行失败";
 	protected JobStageInterface nextStage;
 
-	/**
-	 * 设置当前阶段的下一处理阶段，该方法在AbstractJobStage抽象类中做了默认实现，请每种类型任务的每个阶段实现类不要覆盖该方法
-	 *
-	 * @Param: stage JobStageInterface
-	 *         含义：stage代表下一阶段
-	 *         取值范围：JobStageInterface的实例，也就是JobStageInterface的具体实现类对象
-	 *
-	 * @return: 无
-	 *
-	 * */
+	@Method(desc = "设置当前阶段的下一处理阶段，该方法在AbstractJobStage抽象类中做了默认实现，请每种类型任务的每个阶段实现类不要覆盖该方法", logicStep = "")
+	@Param(name = "stage", desc = "stage代表下一阶段", range = "JobStageInterface的实例，也就是JobStageInterface的具体实现类对象")
 	@Override
 	public void setNextStage(JobStageInterface stage) {
 		this.nextStage = stage;
 	}
 
-	/**
-	 * 获得当前阶段的下一处理阶段，该方法在AbstractJobStage抽象类中做了默认实现，请每种类型任务的每个阶段实现类不要覆盖该方法
-	 *
-	 * @Param: 无
-	 *
-	 * @return: JobStageInterface
-	 *          含义：当前处理阶段的下一个阶段
-	 *          取值范围：JobStageInterface的实例，也就是JobStageInterface的具体实现类对象
-	 *
-	 * */
+	@Method(desc = "获得当前阶段的下一处理阶段，该方法在AbstractJobStage抽象类中做了默认实现，请每种类型任务的每个阶段实现类不要覆盖该方法", logicStep = "")
+	@Return(desc = "当前处理阶段的下一个阶段", range = "JobStageInterface的实例，也就是JobStageInterface的具体实现类对象")
 	@Override
 	public JobStageInterface getNextStage() {
 		return nextStage;

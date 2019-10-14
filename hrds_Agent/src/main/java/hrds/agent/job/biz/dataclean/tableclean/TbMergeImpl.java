@@ -1,5 +1,8 @@
 package hrds.agent.job.biz.dataclean.tableclean;
 
+import fd.ng.core.annotation.Method;
+import fd.ng.core.annotation.Param;
+import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.constant.FileFormatConstant;
 import hrds.agent.job.biz.constant.JobConstant;
@@ -22,6 +25,14 @@ import java.util.Map;
  **/
 public class TbMergeImpl extends AbstractTableClean {
 
+	@Method(desc = "表列合并实现", logicStep = "")
+	@Param(name = "mergeRule", desc = "存放有列合并规则的map集合", range = "不为空，key为合并后的列名`合并后的列类型，value为原列的列名")
+	@Param(name = "columnsValue", desc = "待合并的若干列的列值", range = "不为空")
+	@Param(name = "columnsName", desc = "待合并的若干列的列名", range = "不为空")
+	@Param(name = "group", desc = "用于写Parquet的一行数据", range = "不为空")
+	@Param(name = "lineData", desc = "用于写ORC", range = "不为空")
+	@Param(name = "fileType", desc = "卸数落地数据文件的格式", range = "不为空，FileFormatConstant代码项的code")
+	@Return(desc = "清洗后的字段值", range = "不会为null")
 	//TODO ORC,SEQUENCE未实现
 	@Override
 	public String merge(Map<String, String> mergeRule, String[] columnsValue, String[] columnsName,
