@@ -1,6 +1,9 @@
 package hrds.agent.job.biz.core;
 
 import com.jcraft.jsch.ChannelSftp.LsEntry;
+import fd.ng.core.annotation.Method;
+import fd.ng.core.annotation.Param;
+import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.NumberUtil;
 import fd.ng.core.utils.StringUtil;
@@ -62,18 +65,16 @@ public class FtpCollectJobImpl implements JobInterface {
 		this.jobStatus = jobStatus;
 	}
 
-	/**
-	 * ftp采集执行的主方法
-	 * <p>
-	 * 1.获取ftp_id根据ftp_id判断任务是否是重复发送，实时的仍然在继续运行，是则中断上一个实时线程
-	 * 2.开始执行ftp采集，根据当前任务id将线程放入存放线程的集合
-	 * 3.判断是否是实时读取，如果不是实时读取，只进一次此循环就会退出
-	 * 4.根据ftp表的信息初始化sftp对象
-	 * 5.根据下级目录类型定义ftp拉取或者推送的下级目录
-	 * 6.判断是推送还是拉取，根据不同的模式建立目录，并推送或拉取文件
-	 * 7.判断实时读取间隔时间为0或为空时为防止循环死读，默认线程休眠1秒
-	 * 8.任务结束，根据当前任务id移除线程
-	 */
+	@Method(desc = "ftp采集执行的主方法",
+			logicStep = "1.获取ftp_id根据ftp_id判断任务是否是重复发送，实时的仍然在继续运行，是则中断上一个实时线程" +
+					"2.开始执行ftp采集，根据当前任务id将线程放入存放线程的集合" +
+					"3.判断是否是实时读取，如果不是实时读取，只进一次此循环就会退出" +
+					"4.根据ftp表的信息初始化sftp对象" +
+					"5.根据下级目录类型定义ftp拉取或者推送的下级目录" +
+					"6.判断是推送还是拉取，根据不同的模式建立目录，并推送或拉取文件" +
+					"7.判断实时读取间隔时间为0或为空时为防止循环死读，默认线程休眠1秒" +
+					"8.任务结束，根据当前任务id移除线程")
+	@Return(desc = "作业执行信息对象", range = "不能为空")
 	@Override
 	public JobStatusInfo runJob() {
 		//数据可访问权限处理方式：此方法不需要对数据可访问权限处理
@@ -149,19 +150,11 @@ public class FtpCollectJobImpl implements JobInterface {
 		return jobStatus;
 	}
 
-	/**
-	 * 验证目录是否存在，不存在则创建目录
-	 * <p>
-	 * 1.判断文件是否存在，存在返回true
-	 * 2.不存在，创建目录并返回
-	 *
-	 * @param filePath String
-	 *                 含义：需要验证的路径
-	 *                 取值范围：不能为空
-	 * @return boolean
-	 * 含义：目录是否存在的返回值，true表示存在
-	 * 取值范围：不会为空
-	 */
+	@Method(desc = "验证目录是否存在，不存在则创建目录",
+			logicStep = "1.判断文件是否存在，存在返回true" +
+					"2.不存在，创建目录并返回")
+	@Param(name = "filePath", desc = "需要验证的路径", range = "不能为空")
+	@Return(desc = "目录是否存在的返回值，true表示存在", range = "不会为空")
 	private boolean validateDirectory(String filePath) {
 		//数据可访问权限处理方式：此方法不需要对数据可访问权限处理
 		File file = new File(filePath);
@@ -173,19 +166,11 @@ public class FtpCollectJobImpl implements JobInterface {
 		return file.mkdirs();
 	}
 
-	/**
-	 * 下级目录规则如果是采取按时间，则根据用户定义的时间区间来建立目录
-	 * <p>
-	 * 1.获取当前服务器的日期时间
-	 * 2.根据时间的精确度来截取时间
-	 *
-	 * @param childTime String
-	 *                  含义：按时间建立的下级文件夹类型
-	 *                  取值范围：不能为空
-	 * @return String
-	 * 含义：需要创建的时间文件夹名称
-	 * 取值范围：不会为空
-	 */
+	@Method(desc = "下级目录规则如果是采取按时间，则根据用户定义的时间区间来建立目录",
+			logicStep = "1.获取当前服务器的日期时间" +
+					"2.根据时间的精确度来截取时间")
+	@Param(name = "childTime", desc = "按时间建立的下级文件夹类型", range = "不能为空")
+	@Return(desc = "需要创建的时间文件夹名称", range = "不会为空")
 	private String getDateDir(String childTime) {
 		//数据可访问权限处理方式：此方法不需要对数据可访问权限处理
 		//1.获取当前服务器的日期时间
@@ -208,30 +193,16 @@ public class FtpCollectJobImpl implements JobInterface {
 		}
 	}
 
-	/**
-	 * 通过ftp获取远程目录下的文件，根据MapDB中存储的已经被传输的文件过滤出需要被传输到本地目录的文件
-	 * <p>
-	 * 1.根据文件后缀拉取远程目录下的文件
-	 * 2.遍历拉取到的远程文件对象
-	 * 3.判断是文件夹，递归调用本方法
-	 * 4.不是文件夹，判断文件有没有被拉取过，没有拉取过放到需要被拉取的文件对象的集合
-	 *
-	 * @param ftpDir           String
-	 *                         含义：待传输的文件所在远程机器的目录
-	 *                         取值范围：不能为空
-	 * @param fileSuffix       String
-	 *                         含义：文件后缀名
-	 *                         取值范围：可以为空
-	 * @param sftp             SftpOperate
-	 *                         含义：sftp操作类
-	 *                         取值范围：不能为空
-	 * @param fileNameHTreeMap HTreeMap<String, String>
-	 *                         含义：已经传输过的文件的键值对集合
-	 *                         取值范围：可以为空对象
-	 * @param fileToBeTransfer List<LsEntry>
-	 *                         含义：需要被拉取的远程的文件的集合
-	 *                         取值范围：可以为空对象
-	 */
+	@Method(desc = "通过ftp获取远程目录下的文件，根据MapDB中存储的已经被传输的文件过滤出需要被传输到本地目录的文件",
+			logicStep = "1.根据文件后缀拉取远程目录下的文件" +
+					"2.遍历拉取到的远程文件对象" +
+					"3.判断是文件夹，递归调用本方法" +
+					"4.不是文件夹，判断文件有没有被拉取过，没有拉取过放到需要被拉取的文件对象的集合")
+	@Param(name = "ftpDir", desc = "待传输的文件所在远程机器的目录", range = "不能为空")
+	@Param(name = "fileSuffix", desc = "文件后缀名", range = "可以为空")
+	@Param(name = "sftp", desc = "sftp操作类", range = "不能为空")
+	@Param(name = "fileNameHTreeMap", desc = "已经传输过的文件的键值对集合", range = "可以为空对象")
+	@Param(name = "fileToBeTransfer", desc = "需要被拉取的远程的文件的集合", range = "可以为空对象")
 	private void getFileNameToBeTransfer(String ftpDir, String fileSuffix, SftpOperate sftp, HTreeMap<String, String>
 			fileNameHTreeMap, List<LsEntry> fileToBeTransfer) {
 		//数据可访问权限处理方式：此方法不需要对数据可访问权限处理
@@ -271,35 +242,19 @@ public class FtpCollectJobImpl implements JobInterface {
 		}
 	}
 
-	/**
-	 * 将远程目录下的指定后缀名下的文件ftp拉取到本地的机器目录
-	 * <p>
-	 * 1.根据ftpId获取MapDB操作类的对象
-	 * 2.通过ftp获取远程目录下的文件，根据MapDB中存储的已经被传输的文件过滤出需要被传输到本地目录的文件
-	 * 3.拉取文件到本地
-	 * 4.判断是否需要解压，需要解压则根据对应的压缩方式将文件解压到本地
-	 * 5.将拉取成功的文件放到MapDB
-	 * 6.提交MapDB
-	 *
-	 * @param ftpDir        String
-	 *                      含义：待传输的文件所在远程机器的目录
-	 *                      取值范围：不能为空
-	 * @param destDir       String
-	 *                      含义：需要拉取到的本地目录
-	 *                      取值范围：不能为空
-	 * @param sftp          SftpOperate
-	 *                      含义：sftp操作类
-	 *                      取值范围：不能为空
-	 * @param isUnzip       String
-	 *                      含义：是否需要解压缩
-	 *                      取值范围：不能为空
-	 * @param deCompressWay String
-	 *                      含义：解压缩的方式
-	 *                      取值范围：可以为空
-	 * @param fileSuffix    String
-	 *                      含义：文件后缀名
-	 *                      取值范围：可以为空
-	 */
+	@Method(desc = "将远程目录下的指定后缀名下的文件ftp拉取到本地的机器目录",
+			logicStep = "1.根据ftpId获取MapDB操作类的对象" +
+					"2.通过ftp获取远程目录下的文件，根据MapDB中存储的已经被传输的文件过滤出需要被传输到本地目录的文件" +
+					"3.拉取文件到本地" +
+					"4.判断是否需要解压，需要解压则根据对应的压缩方式将文件解压到本地" +
+					"5.将拉取成功的文件放到MapDB" +
+					"6.提交MapDB")
+	@Param(name = "ftpDir", desc = "待传输的文件所在远程机器的目录", range = "不能为空")
+	@Param(name = "destDir", desc = "需要拉取到的本地目录", range = "不能为空")
+	@Param(name = "sftp", desc = "sftp操作类", range = "不能为空")
+	@Param(name = "isUnzip", desc = "是否需要解压缩", range = "不能为空")
+	@Param(name = "deCompressWay", desc = "解压缩的方式", range = "可以为空")
+	@Param(name = "fileSuffix", desc = "文件后缀名", range = "可以为空")
 	private void transferGet(String ftpDir, String destDir, SftpOperate sftp, String isUnzip,
 	                         String deCompressWay, String fileSuffix) {
 		//数据可访问权限处理方式：此方法不需要对数据可访问权限处理
@@ -346,27 +301,15 @@ public class FtpCollectJobImpl implements JobInterface {
 		}
 	}
 
-	/**
-	 * 将本地目录下的指定后缀名下的文件ftp推送到远程的机器目录
-	 * <p>
-	 * 1.根据ftpId获取MapDB操作类的对象
-	 * 2.获取需要进行ftp传输的文件夹及其子文件夹下的文件
-	 * 3.进行ftp传输，将传输成功的文件放到MapDB
-	 * 4.提交MapDB
-	 *
-	 * @param ftpDir     String
-	 *                   含义：ftp推送的远程机器的目录
-	 *                   取值范围：不能为空
-	 * @param localPath  String
-	 *                   含义：本地目录
-	 *                   取值范围：不能为空
-	 * @param sftp       SftpOperate
-	 *                   含义：sftp操作类
-	 *                   取值范围：不能为空
-	 * @param fileSuffix String
-	 *                   含义：文件后缀名
-	 *                   取值范围：可以为空
-	 */
+	@Method(desc = "将本地目录下的指定后缀名下的文件ftp推送到远程的机器目录",
+			logicStep = "1.根据ftpId获取MapDB操作类的对象" +
+					"2.获取需要进行ftp传输的文件夹及其子文件夹下的文件" +
+					"3.进行ftp传输，将传输成功的文件放到MapDB" +
+					"4.提交MapDB")
+	@Param(name = "ftpDir", desc = "ftp推送的远程机器的目录", range = "不能为空")
+	@Param(name = "localPath", desc = "本地目录", range = "不能为空")
+	@Param(name = "sftp", desc = "sftp操作类", range = "不能为空")
+	@Param(name = "fileSuffix", desc = "文件后缀名", range = "可以为空")
 	private void transferPut(String ftpDir, String localPath, SftpOperate sftp, String fileSuffix) {
 		//数据可访问权限处理方式：此方法不需要对数据可访问权限处理
 		//1.根据ftpId获取MapDB操作类的对象
@@ -389,26 +332,14 @@ public class FtpCollectJobImpl implements JobInterface {
 		}
 	}
 
-	/**
-	 * 获取需要进行ftp传输的文件夹及其子文件夹下的文件
-	 * <p>
-	 * 1.取文件夹下未被传输过的文件或者已经传输过但被修改后的文件或者文件夹
-	 * 2.遍历文件的集合，判断是文件夹则递归调用当前方法，是文件则判断文件后缀名是否符合规则
-	 * 3.将符合的文件放到集合中
-	 *
-	 * @param strPath          String
-	 *                         含义：需要进行ftp传输的文件夹
-	 *                         取值范围：不能为空
-	 * @param fileSuffix       String
-	 *                         含义：需要传输的文件的后缀名
-	 *                         取值范围：可以为空
-	 * @param fileList         List<File>
-	 *                         含义：符合条件的文件的集合
-	 *                         取值范围：可以为空
-	 * @param fileNameHTreeMap HTreeMap<String, String>
-	 *                         含义：已经传输过的文件的键值对集合
-	 *                         取值范围：可以为空对象
-	 */
+	@Method(desc = "获取需要进行ftp传输的文件夹及其子文件夹下的文件",
+			logicStep = "1.取文件夹下未被传输过的文件或者已经传输过但被修改后的文件或者文件夹" +
+					"2.遍历文件的集合，判断是文件夹则递归调用当前方法，是文件则判断文件后缀名是否符合规则" +
+					"3.将符合的文件放到集合中")
+	@Param(name = "strPath", desc = "需要进行ftp传输的文件夹", range = "不能为空")
+	@Param(name = "fileSuffix", desc = "需要传输的文件的后缀名", range = "可以为空")
+	@Param(name = "fileList", desc = "符合条件的文件的集合", range = "可以为空")
+	@Param(name = "fileNameHTreeMap", desc = "已经传输过的文件的键值对集合", range = "可以为空对象")
 	private void getFileList(String strPath, String fileSuffix, List<File> fileList,
 	                         HTreeMap<String, String> fileNameHTreeMap) {
 		//数据可访问权限处理方式：此方法不需要对数据可访问权限处理
@@ -434,21 +365,13 @@ public class FtpCollectJobImpl implements JobInterface {
 		}
 	}
 
-	/**
-	 * 获取目录下数字文件夹，取数字最大的文件夹加一
-	 * <p>
-	 * 1.取当前文件夹下的所有为数字的文件夹的集合
-	 * 2.判断集合是否为空，为空则返回字符串0
-	 * 3.不为空则遍历集合，取最大值
-	 * 4.返回最大值加一
-	 *
-	 * @param userCustomizeDbDir String
-	 *                           含义：文件夹路径
-	 *                           取值范围：不能为空
-	 * @return String
-	 * 含义：该文件夹下数值最大的文件夹加一
-	 * 取值范围：不会为空
-	 */
+	@Method(desc = "获取目录下数字文件夹，取数字最大的文件夹加一",
+			logicStep = "1.取当前文件夹下的所有为数字的文件夹的集合" +
+					"2.判断集合是否为空，为空则返回字符串0" +
+					"3.不为空则遍历集合，取最大值" +
+					"4.返回最大值加一")
+	@Param(name = "userCustomizeDbDir", desc = "文件夹路径", range = "不能为空")
+	@Return(desc = "该文件夹下数值最大的文件夹加一", range = "不会为空")
 	private String currentDateDir(String userCustomizeDbDir) {
 		//数据可访问权限处理方式：此方法不需要对数据可访问权限处理
 		//1.取当前文件夹下的所有为数字的文件夹的集合

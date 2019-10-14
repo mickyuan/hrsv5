@@ -1,9 +1,11 @@
 package hrds.agent.trans.biz.AgentServer;
 
+import fd.ng.core.annotation.Method;
+import fd.ng.core.annotation.Param;
+import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.core.utils.SystemUtil;
-import fd.ng.web.annotation.RequestParam;
 import hrds.commons.base.BaseAction;
 import hrds.commons.exception.BusinessException;
 
@@ -38,15 +40,9 @@ public class AgentServerInfo extends BaseAction {
 		linux_list.add("/home");
 	}
 
-	/**
-	 * 获取当前服务器的时间、日期、操作系统名称、操作系统用户名
-	 * <p>
-	 * 1.获取当前日期、时间、系统名称、用户名称放到map
-	 *
-	 * @return Map<String, Object>
-	 * 含义：包含Agent日期、时间、系统名称、用户名称的map
-	 * 取值范围：不会为空
-	 */
+	@Method(desc = "获取当前服务器的时间、日期、操作系统名称、操作系统用户名"
+			, logicStep = "1.获取当前日期、时间、系统名称、用户名称放到map")
+	@Return(desc = "包含Agent日期、时间、系统名称、用户名称的map", range = "不会为空")
 	public Map<String, Object> getServerInfo() {
 		//1.获取当前日期、时间、系统名称、用户名称放map
 		Map<String, Object> map = new HashMap<>();
@@ -57,25 +53,15 @@ public class AgentServerInfo extends BaseAction {
 		return map;
 	}
 
-	/**
-	 * 获取服务器指定文件夹下的目录及文件
-	 * <p>
-	 * 1.如果需要显示文件夹的路径为空，则默认取根目录下的文件和文件夹
-	 * 2.取到文件和文件夹则进行遍历
-	 * 3.根据操作系统的类型取消系统的一些目录
-	 * 4.需要显示文件且是文件则放到list
-	 *
-	 * @param pathVal String
-	 *                含义：页面选择的文件夹路径，为空则表示根目录
-	 *                取值范围：可为空
-	 * @param isFile  String
-	 *                含义：是否显示当前目录下的文件，默认false
-	 *                取值范围：可为空
-	 * @return List<String>
-	 * 含义：当前文件夹下所有的目录(当isFile为true时返回当前文件夹下所有的目录和文件)
-	 * 取值范围：可能为空
-	 */
-	public List<String> getSystemFileInfo(@RequestParam(nullable = true) String pathVal, @RequestParam(valueIfNull = "false") String isFile) {
+	@Method(desc = "获取服务器指定文件夹下的目录及文件"
+			, logicStep = "1.如果需要显示文件夹的路径为空，则默认取根目录下的文件和文件夹" +
+			"2.取到文件和文件夹则进行遍历" +
+			"3.根据操作系统的类型取消系统的一些目录" +
+			"4.需要显示文件且是文件则放到list")
+	@Param(name = "pathVal", desc = "页面选择的文件夹路径，为空则表示根目录", nullable = true, range = "可为空")
+	@Param(name = "isFile", desc = "是否显示当前目录下的文件，默认false", valueIfNull = "false", range = "可为空")
+	@Return(desc = "当前文件夹下所有的目录(当isFile为true时返回当前文件夹下所有的目录和文件)", range = "可能为空")
+	public List<String> getSystemFileInfo(String pathVal, String isFile) {
 		File[] file_array;
 		//1.如果需要显示文件夹的路径为空，则默认取根目录下的文件和文件夹
 		if (StringUtil.isBlank(pathVal)) {
