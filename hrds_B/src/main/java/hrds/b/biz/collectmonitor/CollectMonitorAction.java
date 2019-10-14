@@ -33,7 +33,7 @@ public class CollectMonitorAction extends BaseAction {
 	public Map<String, Object> getAgentNumAndSourceNum() {
 
 		return Dbo.queryOneObject("SELECT COUNT(agent_id) agentNum,COUNT(DISTINCT(source_id)) sourceNum FROM " + Agent_info.TableName
-						+ "WHERE user_id = ?", getUserId());
+						+ " WHERE user_id = ?", getUserId());
 	}
 
 	/**
