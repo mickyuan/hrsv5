@@ -1,6 +1,9 @@
 package hrds.b.biz.datasource;
 
 import com.alibaba.fastjson.TypeReference;
+import fd.ng.core.annotation.Method;
+import fd.ng.core.annotation.Param;
+import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.CodecUtil;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
@@ -8,14 +11,13 @@ import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DefaultPageImpl;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.db.resultset.Result;
-import fd.ng.web.annotation.RequestBean;
-import fd.ng.web.annotation.RequestParam;
 import fd.ng.web.util.Dbo;
 import fd.ng.web.util.FileUploadUtil;
 import fd.ng.web.util.ResponseUtil;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.ApplyType;
 import hrds.commons.codes.AuthType;
+import hrds.commons.codes.FileType;
 import hrds.commons.codes.UserType;
 import hrds.commons.entity.*;
 import hrds.commons.exception.AppSystemException;
@@ -42,30 +44,19 @@ import java.util.*;
 public class DataSourceAction extends BaseAction {
 	private static final Logger logger = LogManager.getLogger();
 
-	/**
-	 * 查询数据源，部门、agent,申请审批,业务用户和采集用户,部门与数据源关系表信息，首页展示
-	 * <p>
-	 * 1.数据可访问权限处理方式，以下sql通过user_id关联进行权限检查
-	 * 2.查询部门信息
-	 * 3.查询数据源及Agent数
-	 * 4.数据权限管理，分页查询数据源及部门关系信息
-	 * 5.查询申请审批信息
-	 * 6.创建存放数据源，部门、agent,申请审批,业务用户和采集用户,部门与数据源关系表信息的集合并将数据进行封装
-	 * 7.设置权限类型
-	 * 8.返回放数据源，部门、agent,申请审批,业务用户和采集用户,部门与数据源关系表信息的集合
-	 *
-	 * @param currPage int
-	 *                 含义：分页查询，当前页
-	 *                 取值范围：大于0的正整数
-	 * @param pageSize int
-	 *                 含义：分页查询每页显示条数
-	 *                 取值范围：大于0的正整数
-	 * @return java.util.Map
-	 * 含义：存放数据源，部门、agent,申请审批,业务用户和采集用户,部门与数据源关系表信息的集合
-	 * 取值范围：无限制
-	 */
-	public Map<String, Object> searchDataSourceInfo(@RequestParam(valueIfNull = "1") int currPage,
-	                                                @RequestParam(valueIfNull = "5") int pageSize) {
+	@Method(desc = "查询数据源，部门、agent,申请审批,业务用户和采集用户,部门与数据源关系表信息，首页展示",
+			logicStep = "1.数据可访问权限处理方式，以下sql通过user_id关联进行权限检查" +
+					"2.查询部门信息" +
+					"3.查询数据源及Agent数" +
+					"4.数据权限管理，分页查询数据源及部门关系信息" +
+					"5.查询申请审批信息" +
+					"6.创建存放数据源，部门、agent,申请审批,业务用户和采集用户,部门与数据源关系表信息的集合并将数据进行封装" +
+					"7.设置权限类型" +
+					"8.返回存放数据源，部门、agent,申请审批,业务用户和采集用户,部门与数据源关系表信息的集合")
+	@Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数", valueIfNull = "1")
+	@Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", valueIfNull = "5")
+	@Return(desc = "存放数据源，部门、agent,申请审批,业务用户和采集用户,部门与数据源关系表信息的集合", range = "无限制")
+	public Map<String, Object> searchDataSourceInfo(int currPage, int pageSize) {
 		// 1.数据可访问权限处理方式，以下sql通过user_id关联进行权限检查
 		// 2.查询部门信息
 		List<Department_info> diList = Dbo.queryList(Department_info.class, "select * from department_info");
@@ -98,17 +89,11 @@ public class DataSourceAction extends BaseAction {
 		return dataSourceInfoMap;
 	}
 
-	/**
-	 * 获取数据申请审批信息的集合
-	 * <p>
-	 * 1.数据可访问权限处理方式，这是一个私有方法不需要权限控制
-	 * 2.查询data_source表所有source_id封装入数组
-	 * 3.查询数据源申请审批信息集合并返回
-	 *
-	 * @return java.util.List
-	 * 含义：存放数据申请审批信息的集合
-	 * 取值范围：无限制
-	 */
+	@Method(desc = "获取数据申请审批信息的集合",
+			logicStep = "1.数据可访问权限处理方式，这是一个私有方法不需要权限控制" +
+					"2.查询data_source表所有source_id封装入数组" +
+					"3.查询数据源申请审批信息集合并返回")
+	@Return(desc = "存放数据申请审批信息的集合", range = "无限制")
 	private List<Map<String, Object>> getDataAuditList() {
 		// 1.数据可访问权限处理方式，这是一个私有方法不需要权限控制
 		// 2.查询data_source表所有source_id封装入数组
@@ -125,36 +110,37 @@ public class DataSourceAction extends BaseAction {
 				" on da.file_id= sfa.file_id  where su.create_id in (select user_id from sys_user where user_type=?" +
 				" or user_id = ?) ").addParam(UserType.XiTongGuanLiYuan.getCode()).addParam(getUserId())
 				.addORParam("sfa.source_id", sourceId).addSql(" ORDER BY  da_id desc");
-		return Dbo.queryList(asmSql.sql(), asmSql.params());
+		Result result = Dbo.queryResult(asmSql.sql(), asmSql.params());
+		if (!result.isEmpty()) {
+			for (int i = 0; i < result.getRowCount(); i++) {
+				result.setObject(i, "applyDataTime", DateUtil.parseStr2DateWith8Char
+						(result.getString(i, "apply_date")) + " " + DateUtil.parseStr2TimeWith6Char
+						(result.getString(i, "apply_time")));
+				result.setObject(i, "applyType_zh", ApplyType.ofValueByCode
+						(result.getString(i, "apply_type")));
+				result.setObject(i, "fileType_zh", FileType.ofValueByCode
+						(result.getString(i, "file_type")));
+			}
+		}
+		return result.toList();
 	}
 
-	/**
-	 * 数据权限管理，分页查询数据源及部门关系信息
-	 * <p>
-	 * 1.数据可访问权限处理方式，以下sql通过user_id关联进行权限检查
-	 * 2.分页查询数据源及部门关系
-	 * 3.判断数据源是否为空
-	 * 4.循环数据源
-	 * 5.创建存放数据源对应部门集合
-	 * 6.查询获取数据源对应部门结果集
-	 * 7.判断数据源对应的部门结果集是否为空
-	 * 8.循环部门获取部门名称
-	 * 9.将各个数据源对应的部门名称加入list
-	 * 10.封装部门名称到结果集
-	 * 11.返回结果集
-	 *
-	 * @param currPage int
-	 *                 含义：当前页
-	 *                 取值范围：大于0的正常数
-	 * @param pageSize int
-	 *                 含义：查询每页显示数
-	 *                 取值范围：大于0的正常数
-	 * @return fd.ng.db.resultset.Result
-	 * 含义：返回分页查询数据源及部门关系
-	 * 取值范围：无限制
-	 */
-	public Result searchSourceRelationDepForPage(@RequestParam(valueIfNull = "1") int currPage,
-	                                             @RequestParam(valueIfNull = "5") int pageSize) {
+	@Method(desc = "数据权限管理，分页查询数据源及部门关系信息",
+			logicStep = "1.数据可访问权限处理方式，以下sql通过user_id关联进行权限检查" +
+					"2.分页查询数据源及部门关系" +
+					"3.判断数据源是否为空" +
+					"4.循环数据源" +
+					"5.创建存放数据源对应部门集合" +
+					"6.查询获取数据源对应部门结果集" +
+					"7.判断数据源对应的部门结果集是否为空" +
+					"8.循环部门获取部门名称" +
+					"9.将各个数据源对应的部门名称加入list" +
+					"10.封装部门名称到结果集" +
+					"11.返回结果集")
+	@Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数", valueIfNull = "1")
+	@Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", valueIfNull = "5")
+	@Return(desc = "返回分页查询数据源及部门关系", range = "无限制")
+	public Result searchSourceRelationDepForPage(int currPage, int pageSize) {
 
 		// 1.数据可访问权限处理方式，以下sql通过user_id关联进行权限检查
 		// 2.分页查询数据源及部门关系
@@ -208,6 +194,13 @@ public class DataSourceAction extends BaseAction {
 	 *                 含义：存储source_relation_dep表主键ID，可能是一个也可能是多个拼接的字符串
 	 *                 取值范围：不为空以及不为空格
 	 */
+	@Method(desc = "数据权限管理，更新数据源关系部门信息",
+			logicStep = "1.数据可访问权限处理方式，通过sourceId与user_id关联检查" +
+					"2.先删除数据源与部门关系信息,删除几条数据不确定，一个数据源对应多个部门，所以不能用DboExecute" +
+					"3.建立新关系，保存source_relation_dep表信息")
+	@Param(name = "sourceId", desc = "data_source表主键ID", range = "不为空的十位数字，新增时通过主键生成规则自动生成")
+	@Param(name = "depIds", desc = "存储source_relation_dep表主键ID，可能是一个也可能是多个拼接的字符串",
+			range = "不为空以及不为空格")
 	public void updateAuditSourceRelationDep(long sourceId, String depIds) {
 		// 1.数据可访问权限处理方式，通过sourceId与user_id关联检查
 		if (Dbo.queryNumber("select count(1) from data_source ds left join source_relation_dep srd" +
@@ -226,25 +219,15 @@ public class DataSourceAction extends BaseAction {
 		saveSourceRelationDep(sourceId, depIds);
 	}
 
-	/**
-	 * 数据管理列表，数据申请审批并返回最新数据申请审批数据信息
-	 * <p>
-	 * 1.数据可访问权限处理方式，根据user_id进行权限控制
-	 * 2.根据数据权限设置ID查询数据申请审批信息
-	 * 3.判断查询信息是否不存在
-	 * 4.根据数据权限设置ID以及权限类型进行审批
-	 * 5.查询审批后的最新数据申请审批信息并返回
-	 *
-	 * @param daId     long
-	 *                 含义：数据权限设置ID，表data_auth表主键
-	 *                 取值范围：不为空的十位数字，新增时自动生成
-	 * @param authType String
-	 *                 含义：权限类型，0-申请<ShenQing>，1-允许<YunXu>，2-不允许<BuYunXu>，3-一次<YiCi>
-	 *                 取值范围：
-	 * @return java.util.List
-	 * 含义：存放数据申请审批信息的集合
-	 * 取值范围：无限制
-	 */
+	@Method(desc = "数据管理列表，数据申请审批并返回最新数据申请审批数据信息",
+			logicStep = "1.数据可访问权限处理方式，根据user_id进行权限控制" +
+					"2.根据数据权限设置ID查询数据申请审批信息" +
+					"3.判断查询信息是否不存在" +
+					"4.根据数据权限设置ID以及权限类型进行审批" +
+					"5.查询审批后的最新数据申请审批信息并返回")
+	@Param(name = "daId", desc = "数据权限设置ID，表data_auth表主键", range = "不为空的十位数字，新增时通过主键生成规则自动生成")
+	@Param(name = "authType", desc = "权限类型", range = "0-申请<ShenQing>，1-允许<YunXu>，2-不允许<BuYunXu>，3-一次<YiCi>")
+	@Return(desc = "存放数据申请审批信息的集合", range = "无限制")
 	public List<Map<String, Object>> dataAudit(long daId, String authType) {
 		// 1.数据可访问权限处理方式，根据user_id进行权限控制
 		// authType代码项合法性验证，如果不存在该方法直接会抛异常
@@ -270,16 +253,12 @@ public class DataSourceAction extends BaseAction {
 
 	}
 
-	/**
-	 * 根据权限设置ID进行权限回收并将最新数据申请审批信息返回
-	 *
-	 * @param daId long
-	 *             含义：数据权限设置ID，表data_auth主键
-	 *             取值范围：不为空的十位数字，新增时自动生成
-	 * @return java.util.List
-	 * 含义：存放数据申请审批信息的集合
-	 * 取值范围：无限制
-	 */
+	@Method(desc = "根据权限设置ID进行权限回收并将最新数据申请审批信息返回",
+			logicStep = "1.数据可访问权限处理方式，根据user_id进行权限控制" +
+					"2.权限回收" +
+					"3.查询审批后的最新数据申请审批信息并返回")
+	@Param(name = "daId", desc = "数据权限设置ID，表data_auth表主键", range = "不为空的十位数字，新增时通过主键生成规则自动生成")
+	@Return(desc = "存放数据申请审批信息的集合", range = "无限制")
 	public List<Map<String, Object>> deleteAudit(long daId) {
 		// 1.数据可访问权限处理方式，根据user_id进行权限控制
 		// 2.权限回收
@@ -289,24 +268,16 @@ public class DataSourceAction extends BaseAction {
 		return getDataAuditList();
 	}
 
-	/**
-	 * 新增数据源
-	 * <p>
-	 * 1.数据可访问权限处理方式，新增时会设置创建用户ID，会获取当前用户ID，所以不需要权限验证
-	 * 2.字段合法性检查
-	 * 3.对data_source初始化一些非页面传值
-	 * 4.保存data_source信息
-	 * 5.保存source_relation_dep表信息
-	 *
-	 * @param dataSource data_source
-	 *                   含义：data_source表实体类
-	 *                   取值范围：datasource_name不为空以及不为空格，datasource_number不为空以及不为空格
-	 *                   *                   ，source_remark可为空，其余字段取系统值
-	 * @param depIds           String
-	 *                         含义：存储source_relation_dep表主键ID，可能是一个也可能是多个拼接的字符串
-	 *                         取值范围：不为空以及不为空格
-	 */
-	public void saveDataSource(@RequestBean Data_source dataSource, String depIds) {
+	@Method(desc = "新增数据源",
+			logicStep = "1.数据可访问权限处理方式，新增时会设置创建用户ID，会获取当前用户ID，所以不需要权限验证" +
+					"2.字段合法性检查" +
+					"3.对data_source初始化一些非页面传值" +
+					"4.保存data_source信息" +
+					"5.保存source_relation_dep表信息")
+	@Param(name = "dataSource", desc = "data_source表实体对象", range = "与data_source表字段规则一致", isBean = true)
+	@Param(name = "depIds", desc = "存储source_relation_dep表主键ID，可能是一个也可能是多个拼接的字符串",
+			range = "不为空以及不为空格")
+	public void saveDataSource(Data_source dataSource, String depIds) {
 		// 1.数据可访问权限处理方式，新增时会设置创建用户ID，会获取当前用户ID，所以不需要权限验证
 		// 2.字段做合法性检查
 		fieldLegalityValidation(dataSource.getDatasource_name(), dataSource.getDatasource_number(),
@@ -326,33 +297,20 @@ public class DataSourceAction extends BaseAction {
 		saveSourceRelationDep(dataSource.getSource_id(), depIds);
 	}
 
-	/**
-	 * 更新数据源信息
-	 * <p>
-	 * 1.数据可访问权限处理方式，通过sourceId与user_id关联检查
-	 * 2.验证sourceId是否合法
-	 * 3.字段合法性检查
-	 * 4.将data_source实体数据封装
-	 * 5.更新数据源信息
-	 * 6.先删除数据源与部门关系信息,删除几条数据不确定，一个数据源对应多个部门，所以不能用DboExecute
-	 * 7.保存source_relation_dep表信息
-	 *
-	 * @param sourceId         long
-	 *                         含义：data_source表主键，source_relation_dep表外键
-	 *                         取值范围：不为空，10位数字
-	 * @param sourceRemark     String
-	 *                         含义：备注
-	 *                         取值范围：没有限制
-	 * @param datasourceName   String
-	 *                         含义：数据源名称
-	 *                         取值范围：不为空且不为空格
-	 * @param datasourceNumber String
-	 *                         含义：数据源编号
-	 *                         取值范围：不为空且不为空格，长度不超过四位
-	 * @param depIds           String
-	 *                         含义：存储source_relation_dep表主键ID，可能是一个也可能是多个拼接的字符串
-	 *                         取值范围：不为空以及不为空格
-	 */
+	@Method(desc = "更新数据源信息",
+			logicStep = "1.数据可访问权限处理方式，通过sourceId与user_id关联检查" +
+					"2.验证sourceId是否合法" +
+					"3.字段合法性检查" +
+					"4.将data_source实体数据封装" +
+					"5.更新数据源信息" +
+					"6.先删除数据源与部门关系信息,删除几条数据不确定，一个数据源对应多个部门，所以不能用DboExecute" +
+					"7.保存source_relation_dep表信息")
+	@Param(name = "sourceId", desc = "data_source表主键，source_relation_dep表外键", range = "10位数字,新增时生成")
+	@Param(name = "sourceRemark", desc = "备注，source_relation_dep表外键", range = "无限制")
+	@Param(name = "datasourceName", desc = "数据源名称", range = "不为空且不为空格")
+	@Param(name = "datasourceNumber", desc = "数据源编号", range = "不为空且不为空格，长度不超过四位")
+	@Param(name = "depIds", desc = "存储source_relation_dep表主键ID，可能是一个也可能是多个拼接的字符串",
+			range = "不为空以及不为空格")
 	public void updateDataSource(Long sourceId, String sourceRemark, String datasourceName,
 	                             String datasourceNumber, String depIds) {
 		// 1.数据可访问权限处理方式，通过sourceId与user_id关联检查
@@ -386,25 +344,17 @@ public class DataSourceAction extends BaseAction {
 		saveSourceRelationDep(sourceId, depIds);
 	}
 
-	/**
-	 * 字段合法性验证
-	 * <p>
-	 * 1.数据可访问权限处理方式，这是个私有方法，不会单独被调用，所以不需要权限验证
-	 * 2.循环遍历获取source_relation_dep主键ID，验证dep_id合法性
-	 * 3.验证datasource_name是否合法
-	 * 4.datasource_number是否合法
-	 * 5.更新前查询数据源编号是否已存在
-	 *
-	 * @param datasourceName   String
-	 *                         含义：数据源名称
-	 *                         取值范围：不为空及空格
-	 * @param datasourceNumber String
-	 *                         含义：数据源编号
-	 *                         取值范围：不为空以及不为空格，长度不超过4
-	 * @param depIds           String
-	 *                         含义：存储source_relation_dep表主键ID，可能是一个也可能是多个拼接的字符串
-	 *                         取值范围：不为空以及不为空格
-	 */
+	@Method(desc = "字段合法性验证",
+			logicStep = "1.数据可访问权限处理方式，这是个私有方法，不会单独被调用，所以不需要权限验证" +
+					"2.循环遍历获取source_relation_dep主键ID，验证dep_id合法性" +
+					"3.验证datasource_name是否合法" +
+					"4.datasource_number是否合法" +
+					"5.更新前查询数据源编号是否已存在" +
+					"7.保存source_relation_dep表信息")
+	@Param(name = "datasourceName", desc = "数据源名称", range = "不为空且不为空格")
+	@Param(name = "datasourceNumber", desc = "数据源编号", range = "不为空且不为空格，长度不超过四位")
+	@Param(name = "depIds", desc = "存储source_relation_dep表主键ID，可能是一个也可能是多个拼接的字符串",
+			range = "不为空以及不为空格")
 	private void fieldLegalityValidation(String datasourceName, String datasourceNumber, String depIds) {
 		// 1.数据可访问权限处理方式，通过create_user_id检查
 		// 2.循环遍历获取source_relation_dep主键ID，验证dep_id合法性
@@ -434,21 +384,14 @@ public class DataSourceAction extends BaseAction {
 		}
 	}
 
-	/**
-	 * 保存数据源与部门关系表信息
-	 * <p>
-	 * 1.数据可访问权限处理方式，这是一个私有方法，不会单独被调用，所以这里不需要做权限验证
-	 * 2.验证传递的部门ID对应的部门信息是否存在
-	 * 3.创建source_relation_dep对象，并封装数据
-	 * 4.循环遍历存储部门ID的数组并保存source_relation_dep表信息
-	 *
-	 * @param sourceId long
-	 *                 含义：source_relation_dep表外键ID
-	 *                 取值范围，不能为空以及不能为空格
-	 * @param depIds   String
-	 *                 含义：存储source_relation_dep表主键ID，可能是一个也可能是多个拼接的字符串
-	 *                 取值范围：不为空以及不为空格
-	 */
+	@Method(desc = "保存数据源与部门关系表信息",
+			logicStep = "1.数据可访问权限处理方式，这是一个私有方法，不会单独被调用，所以这里不需要做权限验证" +
+					"2.验证传递的部门ID对应的部门信息是否存在" +
+					"3.创建source_relation_dep对象，并封装数据" +
+					"4.循环遍历存储部门ID的数组并保存source_relation_dep表信息")
+	@Param(name = "sourceId", desc = "source_relation_dep表外键ID", range = "不能为空以及不能为空格")
+	@Param(name = "depIds", desc = "存储source_relation_dep表主键ID，可能是一个也可能是多个拼接的字符串",
+			range = "不为空以及不为空格")
 	private void saveSourceRelationDep(long sourceId, String depIds) {
 		// 1.数据可访问权限处理方式，这是一个私有方法，不会单独被调用，所以这里不需要做权限验证
 		// 2.验证传递的部门ID对应的部门信息是否存在
@@ -469,27 +412,18 @@ public class DataSourceAction extends BaseAction {
 		}
 	}
 
-	/**
-	 * 根据数据源编号查询数据源及数据源与部门关系信息以及部门信息
-	 *
-	 * <p>
-	 * 1.数据可访问权限处理方式，以下SQL关联sourceId与user_id检查
-	 * 2.创建并封装数据源与部门关联信息以及部门信息集合
-	 * 3.判断是新增还是编辑时查询回显数据，如果是新增，只查询部门信息，如果是编辑，还需查询数据源信息
-	 * 3.1关联查询data_source表与source_relation_dep表信息
-	 * 3.2.将数据源信息添加入Map
-	 * 4.查询部门信息，不需要用户权限控制
-	 * 5.将部门信息封装入Map
-	 * 6.返回封装数据源与部门关联信息以及部门信息集合
-	 *
-	 * @param sourceId Long
-	 *                 含义：data_source表主键，source_relation_dep表外键，定义为null是为了判断是否为null
-	 *                 取值范围：不能为空或空格
-	 * @return java.util.List
-	 * 含义：返回关联查询data_source表与source_relation_dep表信息结果以及部门信息
-	 * 取值范围：无限制
-	 */
-	public Map<String, Object> searchDataSource(@RequestParam(nullable = true) Long sourceId) {
+	@Method(desc = "根据数据源编号查询数据源及数据源与部门关系信息以及部门信息",
+			logicStep = "1.数据可访问权限处理方式，以下SQL关联sourceId与user_id检查" +
+					"2.创建并封装数据源与部门关联信息以及部门信息集合" +
+					"3.判断是新增还是编辑时查询回显数据，如果是新增，只查询部门信息，如果是编辑，还需查询数据源信息" +
+					"3.1关联查询data_source表与source_relation_dep表信息" +
+					"3.2.将数据源信息添加入Map" +
+					"4.查询部门信息，不需要用户权限控制" +
+					"5.将部门信息封装入Map" +
+					"6.返回封装数据源与部门关联信息以及部门信息集合")
+	@Param(name = "sourceId", desc = "source_relation_dep表外键ID", range = "不能为空以及不能为空格", nullable = true)
+	@Return(desc = "返回关联查询data_source表与source_relation_dep表信息结果以及部门信息", range = "无限制")
+	public Map<String, Object> searchDataSource(Long sourceId) {
 		// 1.数据可访问权限处理方式，以下SQL关联sourceId与user_id检查
 		// 2.创建并封装数据源与部门关联信息以及部门信息集合
 		Map<String, Object> map = new HashMap<>();
@@ -512,19 +446,13 @@ public class DataSourceAction extends BaseAction {
 		return map;
 	}
 
-	/**
-	 * 删除数据源信息
-	 * <p>
-	 * 1.数据可访问权限处理方式，以下SQL关联sourceId与user_id检查
-	 * 2.先查询该datasource下是否还有agent,有不能删除，没有，可以删除
-	 * 3.删除data_source表信息
-	 * 4.删除source_relation_dep信息,因为一个数据源可能对应多个部门，所以这里无法使用DboExecute的删除方法
-	 * 5.删除source_relation_dep信息
-	 *
-	 * @param sourceId long
-	 *                 含义：data_source表主键，agent_info表外键
-	 *                 取值范围：不可为空以及不可为空格
-	 */
+	@Method(desc = "删除数据源信息",
+			logicStep = "1.数据可访问权限处理方式，以下SQL关联sourceId与user_id检查" +
+					"2.先查询该datasource下是否还有agent,有不能删除，没有，可以删除" +
+					"3.删除data_source表信息" +
+					"4.删除source_relation_dep信息,因为一个数据源可能对应多个部门，所以这里无法使用DboExecute的删除方法" +
+					"5.删除source_relation_dep信息")
+	@Param(name = "sourceId", desc = "source_relation_dep表外键ID", range = "不能为空以及不能为空格")
 	public void deleteDataSource(long sourceId) {
 
 		// 1.数据可访问权限处理方式，以下SQL关联sourceId与user_id检查
@@ -546,16 +474,10 @@ public class DataSourceAction extends BaseAction {
 		}
 	}
 
-	/**
-	 * 查询数据采集用户信息
-	 * <p>
-	 * 1.数据可访问权限处理方式，此方法不需要权限验证
-	 * 2.查询数据采集用户信息并返回查询结果
-	 *
-	 * @return java.util.List
-	 * 含义：存放数据采集用户信息的集合
-	 * 取值范围：无限制
-	 */
+	@Method(desc = "查询数据采集用户信息",
+			logicStep = "1.数据可访问权限处理方式，此方法不需要权限验证" +
+					"2.查询数据采集用户信息并返回查询结果")
+	@Return(desc = "存放数据采集用户信息的集合", range = "无限制")
 	public List<Sys_user> searchDataCollectUser() {
 		// 1.数据可访问权限处理方式，此方法不需要权限验证，没有用户访问限制
 		// 2.查询数据采集用户信息并返回查询结果
@@ -568,31 +490,18 @@ public class DataSourceAction extends BaseAction {
 				"%" + UserType.CaiJiYongHu.getCode() + "%");
 	}
 
-	/**
-	 * 导入数据源，数据源下载文件提供的文件中涉及到的所有表的数据导入数据库中对应的表中
-	 *
-	 * <p>
-	 * 1.数据可访问权限处理方式，此方法不需要权限验证，不涉及用户权限
-	 * 2.判断agent_ip是否是一个合法的ip
-	 * 3.判断agent_port是否是一个有效的端口
-	 * 4.验证userCollectId是否为null
-	 * 5.通过文件名称获取文件
-	 * 6.使用base64对数据进行解码
-	 * 7.导入数据源数据，将涉及到的所有表的数据导入数据库中对应的表中
-	 *
-	 * @param agentIp       String
-	 *                      含义：agent地址
-	 *                      取值范围：不能为空，服务器ip地址
-	 * @param agentPort     String
-	 *                      含义：agent端口
-	 *                      取值范围：1024-65535
-	 * @param userCollectId long
-	 *                      含义：数据采集用户ID
-	 *                      取值范围：不能为空以及空格，页面传值
-	 * @param file          String
-	 *                      含义：上传文件名称（全路径），上传要导入的数据源
-	 *                      取值范围：不能为空以及空格
-	 */
+	@Method(desc = "导入数据源，数据源下载文件提供的文件中涉及到的所有表的数据导入数据库中对应的表中",
+			logicStep = "1.数据可访问权限处理方式，此方法不需要权限验证，不涉及用户权限" +
+					"2.判断agent_ip是否是一个合法的ip" +
+					"3.判断agent_port是否是一个有效的端口" +
+					"4.验证userCollectId是否为null" +
+					"5.通过文件名称获取文件" +
+					"6.使用base64对数据进行解码" +
+					"7.导入数据源数据，将涉及到的所有表的数据导入数据库中对应的表中")
+	@Param(name = "agentIp", desc = "agent地址", range = "不能为空，服务器ip地址")
+	@Param(name = "agentPort", desc = "agent端口", range = "1024-65535")
+	@Param(name = "userCollectId", desc = "数据采集用户ID，指定谁可以查看该用户对应表信息", range = "不能为空以及空格，页面传值")
+	@Param(name = "file", desc = "上传文件名称（全路径），上传要导入的数据源", range = "不能为空以及空格")
 	public void uploadFile(String agentIp, String agentPort, Long userCollectId, String file) {
 		try {
 			// 1.数据可访问权限处理方式，此方法不需要权限验证，不涉及用户权限
@@ -629,52 +538,38 @@ public class DataSourceAction extends BaseAction {
 		}
 	}
 
-	/**
-	 * 导入数据源数据，将涉及到的所有表的数据导入数据库中对应的表中(修改中,未完成测试）
-	 *
-	 * <p>
-	 * 1.获取文件对应所有表信息的map
-	 * 2.遍历并解析拿到每张表的信息，map里封装的是所有数据源相关的表信息
-	 * 3.获取数据源data_source信息并插入数据库
-	 * 4.将department_info表数据插入数据库
-	 * 5.将source_relation_dep数据插入数据库
-	 * 6.将agent_info表数据插入数据库
-	 * 7.将Agent_down_info表数据插入数据库
-	 * 8.将collect_job_classify表数据插入数据库
-	 * 9.将ftp采集设置ftp_collect表数据插入数据库
-	 * 10.将ftp已传输表ftp_transfered表数据插入数据库
-	 * 11.将ftp目录表ftp_folder表数据插入数据库
-	 * 12.将对象采集设置object_collect表数据插入数据库
-	 * 13.将对象采集对应信息object_collect_task表数据插入数据库
-	 * 14.将对象采集存储设置object_storage表数据插入数据库
-	 * 15.将对象采集结构信息object_collect_struct表数据插入数据库
-	 * 16.将数据库设置database_set表数据插入数据库
-	 * 17.将文件系统设置file_collect_set表数据插入数据库
-	 * 18.将文件源设置file_source表数据插入数据库
-	 * 19.将信号文件入库信息signal_file表数据插入数据库
-	 * 20.将数据库对应的表table_info表数据插入数据库
-	 * 21.将列合并信息column_merge表数据插入数据库
-	 * 22.将表存储信息table_storage_info表数据插入数据库
-	 * 23.将表清洗参数信息table_clean表数据插入数据库
-	 * 24.将表对应的字段table_column表数据插入数据库
-	 * 25.将列清洗参数信息column_clean表数据插入数据库
-	 * 26.将列拆分信息表column_split表数据插入数据库
-	 *
-	 * @param strTemp       String
-	 *                      含义：涉及数据源文件下载相关的所有表进行base64编码后的信息
-	 * @param agentIp       String
-	 *                      含义：agent地址
-	 *                      取值范围：不能为空，服务器ip地址
-	 * @param agentPort     String
-	 *                      含义：agent端口
-	 *                      取值范围：1024-65535
-	 * @param userCollectId long
-	 *                      含义：数据采集用户ID，指定谁可以查看该用户对应表信息
-	 *                      取值范围：不能为空以及空格，长度不超过10
-	 * @param userId        long
-	 *                      含义：data_source表数据源创建用户ID，代表数据是由谁创建的
-	 *                      取值范围：不为空以及不为空格，长度不超过10位
-	 */
+	@Method(desc = "导入数据源数据，将涉及到的所有表的数据导入数据库中对应的表中",
+			logicStep = "1.获取文件对应所有表信息的map" +
+					"2.遍历并解析拿到每张表的信息，map里封装的是所有数据源相关的表信息" +
+					"3.获取数据源data_source信息并插入数据库" +
+					"4.将department_info表数据插入数据库" +
+					"5.将source_relation_dep数据插入数据库" +
+					"6.将agent_info表数据插入数据库" +
+					"7.将Agent_down_info表数据插入数据库" +
+					"8.将collect_job_classify表数据插入数据库" +
+					"9.将ftp采集设置ftp_collect表数据插入数据库" +
+					"10.将ftp已传输表ftp_transfered表数据插入数据库" +
+					"11.将ftp目录表ftp_folder表数据插入数据库" +
+					"12.将对象采集设置object_collect表数据插入数据库" +
+					"13.将对象采集对应信息object_collect_task表数据插入数据库" +
+					"14.将对象采集存储设置object_storage表数据插入数据库" +
+					"15.将对象采集结构信息object_collect_struct表数据插入数据库" +
+					"16.将数据库设置database_set表数据插入数据库" +
+					"17.将文件系统设置file_collect_set表数据插入数据库" +
+					"18.将文件源设置file_source表数据插入数据库" +
+					"19.将信号文件入库信息signal_file表数据插入数据库" +
+					"20.将数据库对应的表table_info表数据插入数据库" +
+					"21.将列合并信息column_merge表数据插入数据库" +
+					"22.将表存储信息table_storage_info表数据插入数据库" +
+					"23.将表清洗参数信息table_clean表数据插入数据库" +
+					"24.将表对应的字段table_column表数据插入数据库" +
+					"25.将列清洗参数信息column_clean表数据插入数据库" +
+					"26.将列拆分信息表column_split表数据插入数据库")
+	@Param(name = "strTemp", desc = "涉及数据源文件下载相关的所有表进行base64编码后的信息", range = "不能为空")
+	@Param(name = "agentIp", desc = "agent地址", range = "不能为空，服务器ip地址")
+	@Param(name = "agentPort", desc = "agent端口", range = "1024-65535")
+	@Param(name = "userCollectId", desc = "数据采集用户ID，指定谁可以查看该用户对应表信息", range = "不能为空以及空格，页面传值")
+	@Param(name = "userId", desc = "data_source表数据源创建用户ID，代表数据是由谁创建的", range = "10位数字，新增用户时生成")
 	private void importDataSource(String strTemp, String agentIp, String agentPort, long
 			userCollectId, long userId) {
 		Type type = new TypeReference<Map<String, Object>>() {
@@ -732,18 +627,12 @@ public class DataSourceAction extends BaseAction {
 		addColumnSplit(collectMap);
 	}
 
-	/**
-	 * 将table_storage_info表数据插入数据库
-	 * <p>
-	 * 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-	 * 2.判断map中的key值是否为table_storage_info对应表数据
-	 * 3.获取表存储信息table_storage_info信息
-	 * 4.将table_storage_info表数据循环入数据库
-	 *
-	 * @param collectMap java.util.Map
-	 *                   含义：所有表数据的map的实体
-	 *                   取值范围：不为空
-	 */
+	@Method(desc = "将table_storage_info表数据插入数据库",
+			logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
+					"2.判断map中的key值是否为table_storage_info对应表数据" +
+					"3.获取表存储信息table_storage_info信息" +
+					"4.将table_storage_info表数据循环入数据库")
+	@Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
 	private void addTableStorageInfo(Map<String, Object> collectMap) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
 		for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
@@ -764,18 +653,12 @@ public class DataSourceAction extends BaseAction {
 		}
 	}
 
-	/**
-	 * 将column_merge表数据插入数据库
-	 * <p>
-	 * 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-	 * 2.判断map中的key值是否为column_merge对应表数据
-	 * 3.获取列合并信息column_merge信息
-	 * 4.将column_merge表数据循环入数据库
-	 *
-	 * @param collectMap java.util.Map
-	 *                   含义：所有表数据的map的实体
-	 *                   取值范围：不为空
-	 */
+	@Method(desc = "将column_merge表数据插入数据库",
+			logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
+					"2.判断map中的key值是否为column_merge对应表数据" +
+					"3.获取列合并信息column_merge信息" +
+					"4.将column_merge表数据循环入数据库")
+	@Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
 	private void addColumnMerge(Map<String, Object> collectMap) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
 		for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
@@ -796,18 +679,12 @@ public class DataSourceAction extends BaseAction {
 		}
 	}
 
-	/**
-	 * 将column_split表数据插入数据库
-	 * <p>
-	 * 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-	 * 2.判断map中的key值是否为column_split对应表数据
-	 * 3.获取列拆分信息表column_split信息
-	 * 4.将column_split表数据循环入数据库
-	 *
-	 * @param collectMap java.util.Map
-	 *                   含义：所有表数据的map的实体
-	 *                   取值范围：不为空
-	 */
+	@Method(desc = "将column_split表数据插入数据库",
+			logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
+					"2.判断map中的key值是否为column_split对应表数据" +
+					"3.获取列拆分信息表column_split信息" +
+					"4.将column_split表数据循环入数据库")
+	@Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
 	private void addColumnSplit(Map<String, Object> collectMap) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
 		for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
@@ -828,18 +705,12 @@ public class DataSourceAction extends BaseAction {
 		}
 	}
 
-	/**
-	 * 将column_clean表数据插入数据库
-	 * <p>
-	 * 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-	 * 2.判断map中的key值是否为column_clean对应表数据
-	 * 3.获取列清洗参数信息column_clean信息
-	 * 4.将column_clean表数据循环入数据库
-	 *
-	 * @param collectMap java.util.Map
-	 *                   含义：所有表数据的map的实体
-	 *                   取值范围：不为空
-	 */
+	@Method(desc = "将column_clean表数据插入数据库",
+			logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
+					"2.判断map中的key值是否为column_clean对应表数据" +
+					"3.获取列清洗参数信息column_clean信息" +
+					"4.将column_clean表数据循环入数据库")
+	@Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
 	private void addColumnClean(Map<String, Object> collectMap) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
 		for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
@@ -860,18 +731,12 @@ public class DataSourceAction extends BaseAction {
 		}
 	}
 
-	/**
-	 * 将table_column表数据插入数据库
-	 * <p>
-	 * 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-	 * 2.判断map中的key值是否为table_column对应表数据
-	 * 3.获取表对应的字段table_column信息
-	 * 4.将table_column表数据循环入数据库
-	 *
-	 * @param collectMap java.util.Map
-	 *                   含义：所有表数据的map的实体
-	 *                   取值范围：不为空
-	 */
+	@Method(desc = "将table_column表数据插入数据库",
+			logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
+					"2.判断map中的key值是否为table_column对应表数据" +
+					"3.获取表对应的字段table_column信息" +
+					"4.将table_column表数据循环入数据库")
+	@Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
 	private void addTableColumn(Map<String, Object> collectMap) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
 		for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
@@ -892,18 +757,12 @@ public class DataSourceAction extends BaseAction {
 		}
 	}
 
-	/**
-	 * 将table_clean表数据插入数据库
-	 * <p>
-	 * 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-	 * 2.判断map中的key值是否为table_clean对应表数据
-	 * 3.获取表清洗参数信息table_clean信息
-	 * 4.将table_clean表数据循环入数据库
-	 *
-	 * @param collectMap java.util.Map
-	 *                   含义：所有表数据的map的实体
-	 *                   取值范围：不为空
-	 */
+	@Method(desc = "将table_clean表数据插入数据库",
+			logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
+					"2.判断map中的key值是否为table_column对应表数据" +
+					"3.获取表对应的字段table_column信息" +
+					"4.将table_column表数据循环入数据库")
+	@Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
 	private void addTableClean(Map<String, Object> collectMap) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
 		for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
@@ -924,18 +783,12 @@ public class DataSourceAction extends BaseAction {
 		}
 	}
 
-	/**
-	 * 将table_info表数据插入数据库
-	 * <p>
-	 * 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-	 * 2.判断map中的key值是否为table_info对应表数据
-	 * 3.获取数据库对应的表table_info信息
-	 * 4.将table_info表数据循环入数据库
-	 *
-	 * @param collectMap java.util.Map
-	 *                   含义：所有表数据的map的实体
-	 *                   取值范围：不为空
-	 */
+	@Method(desc = "将table_info表数据插入数据库",
+			logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
+					"2.判断map中的key值是否为table_info对应表数据" +
+					"3.获取数据库对应的表table_info信息" +
+					"4.将table_info表数据循环入数据库")
+	@Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
 	private void addTableInfo(Map<String, Object> collectMap) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
 		for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
@@ -956,18 +809,12 @@ public class DataSourceAction extends BaseAction {
 		}
 	}
 
-	/**
-	 * 将signal_file表数据插入数据库
-	 * <p>
-	 * 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-	 * 2.判断map中的key值是否为signal_file对应表数据
-	 * 3.获取信号文件入库信息signal_file信息
-	 * 4.将signal_file表数据循环入数据库
-	 *
-	 * @param collectMap java.util.Map
-	 *                   含义：所有表数据的map的实体
-	 *                   取值范围：不为空
-	 */
+	@Method(desc = "将signal_file表数据插入数据库",
+			logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
+					"2.判断map中的key值是否为signal_file对应表数据" +
+					"3.获取信号文件入库信息signal_file信息" +
+					"4.将signal_file表数据循环入数据库")
+	@Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
 	private void addSignalFile(Map<String, Object> collectMap) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
 		for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
@@ -988,18 +835,12 @@ public class DataSourceAction extends BaseAction {
 		}
 	}
 
-	/**
-	 * 将file_source表数据插入数据库
-	 * <p>
-	 * 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-	 * 2.判断map中的key值是否为file_source对应表数据
-	 * 3.获取文件源设置file_source信息
-	 * 4.将file_source表数据循环入数据库
-	 *
-	 * @param collectMap java.util.Map
-	 *                   含义：所有表数据的map的实体
-	 *                   取值范围：不为空
-	 */
+	@Method(desc = "将file_source表数据插入数据库",
+			logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
+					"2.判断map中的key值是否为file_source对应表数据" +
+					"3.获取文件源设置file_source信息" +
+					"4.将file_source表数据循环入数据库")
+	@Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
 	private void addFileSource(Map<String, Object> collectMap) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
 		for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
@@ -1020,18 +861,12 @@ public class DataSourceAction extends BaseAction {
 		}
 	}
 
-	/**
-	 * 将file_collect_set表数据插入数据库
-	 * <p>
-	 * 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-	 * 2.判断map中的key值是否为file_collect_set对应表数据
-	 * 3.获取文件系统设置file_collect_set信息
-	 * 4.将file_collect_set表数据循环入数据库
-	 *
-	 * @param collectMap java.util.Map
-	 *                   含义：所有表数据的map的实体
-	 *                   取值范围：不为空
-	 */
+	@Method(desc = "将file_collect_set表数据插入数据库",
+			logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
+					"2.判断map中的key值是否为file_collect_set对应表数据" +
+					"3.获取文件系统设置file_collect_set信息" +
+					"4.将file_collect_set表数据循环入数据库")
+	@Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
 	private void addFileCollectSet(Map<String, Object> collectMap) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
 		for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
@@ -1052,18 +887,12 @@ public class DataSourceAction extends BaseAction {
 		}
 	}
 
-	/**
-	 * 将database_set表数据插入数据库
-	 * <p>
-	 * 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-	 * 2.判断map中的key值是否为database_set对应表数据
-	 * 3.获取数据库设置database_set信息
-	 * 4.将database_set表数据循环入数据库
-	 *
-	 * @param collectMap java.util.Map
-	 *                   含义：所有表数据的map的实体
-	 *                   取值范围：不为空
-	 */
+	@Method(desc = "将database_set表数据插入数据库",
+			logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
+					"2.判断map中的key值是否为database_set对应表数据" +
+					"3.获取数据库设置database_set信息" +
+					"4.将database_set表数据循环入数据库")
+	@Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
 	private void addDatabaseSet(Map<String, Object> collectMap) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
 		for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
@@ -1084,18 +913,12 @@ public class DataSourceAction extends BaseAction {
 		}
 	}
 
-	/**
-	 * 将object_collect_struct表数据插入数据库
-	 * <p>
-	 * 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-	 * 2.判断map中的key值是否为object_collect_struct对应表数据
-	 * 3.获取对象采集结构信息object_collect_struct信息
-	 * 4.将object_collect_struct表数据循环入数据库
-	 *
-	 * @param collectMap java.util.Map
-	 *                   含义：所有表数据的map的实体
-	 *                   取值范围：不为空
-	 */
+	@Method(desc = "将object_collect_struct表数据插入数据库",
+			logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
+					"2.判断map中的key值是否为object_collect_struct对应表数据" +
+					"3.获取对象采集结构信息object_collect_struct信息" +
+					"4.将object_collect_struct表数据循环入数据库")
+	@Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
 	private void addObjectCollectStruct(Map<String, Object> collectMap) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
 		for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
@@ -1116,18 +939,12 @@ public class DataSourceAction extends BaseAction {
 		}
 	}
 
-	/**
-	 * 将object_storage表数据插入数据库
-	 * <p>
-	 * 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-	 * 2.判断map中的key值是否为object_storage对应表数据
-	 * 3.获取tp采集设置object_storage信息
-	 * 4.将object_storage表数据循环入数据库
-	 *
-	 * @param collectMap java.util.Map
-	 *                   含义：所有表数据的map的实体
-	 *                   取值范围：不为空
-	 */
+	@Method(desc = "将object_storage表数据插入数据库",
+			logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
+					"2.判断map中的key值是否为object_storage对应表数据" +
+					"3.获取tp采集设置object_storage信息" +
+					"4.将object_storage表数据循环入数据库")
+	@Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
 	private void addObjectStorage(Map<String, Object> collectMap) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
 		for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
@@ -1148,18 +965,12 @@ public class DataSourceAction extends BaseAction {
 		}
 	}
 
-	/**
-	 * 将object_collect_task表数据插入数据库
-	 * <p>
-	 * 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-	 * 2.判断map中的key值是否为object_collect_task对应表数据
-	 * 3.获取对象采集对应信息object_collect_task信息
-	 * 4.将object_collect_task表数据循环入数据库
-	 *
-	 * @param collectMap java.util.Map
-	 *                   含义：所有表数据的map的实体
-	 *                   取值范围：不为空
-	 */
+	@Method(desc = "将object_collect_task表数据插入数据库",
+			logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
+					"2.判断map中的key值是否为object_collect_task对应表数据" +
+					"3.获取对象采集对应信息object_collect_task信息" +
+					"4.将object_collect_task表数据循环入数据库")
+	@Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
 	private void addObjectCollectTask(Map<String, Object> collectMap) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
 		for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
@@ -1180,18 +991,12 @@ public class DataSourceAction extends BaseAction {
 		}
 	}
 
-	/**
-	 * 将object_collect表数据插入数据库
-	 * <p>
-	 * 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-	 * 2.判断map中的key值是否为object_collect对应表数据
-	 * 3.获取对象采集设置object_collect信息
-	 * 4.将object_collect表数据循环入数据库
-	 *
-	 * @param collectMap java.util.Map
-	 *                   含义：所有表数据的map的实体
-	 *                   取值范围：不为空
-	 */
+	@Method(desc = "将object_collect表数据插入数据库",
+			logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
+					"2.判断map中的key值是否为object_collect对应表数据" +
+					"3.获取对象采集设置object_collect信息" +
+					"4.将object_collect表数据循环入数据库")
+	@Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
 	private void addObjectCollect(Map<String, Object> collectMap) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
 		for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
@@ -1212,18 +1017,12 @@ public class DataSourceAction extends BaseAction {
 		}
 	}
 
-	/**
-	 * 将ftp_folder表数据插入数据库
-	 * <p>
-	 * 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-	 * 2.判断map中的key值是否为ftp_folder对应表数据
-	 * 3.获取ftp目录表ftp_folder信息
-	 * 4.将ftp_folder表数据循环入数据库
-	 *
-	 * @param collectMap java.util.Map
-	 *                   含义：所有表数据的map的实体
-	 *                   取值范围：不为空
-	 */
+	@Method(desc = "将ftp_folder表数据插入数据库",
+			logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
+					"2.判断map中的key值是否为ftp_folder对应表数据" +
+					"3.获取ftp目录表ftp_folder信息" +
+					"4.将ftp_folder表数据循环入数据库")
+	@Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
 	private void addFtpFolder(Map<String, Object> collectMap) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
 		for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
@@ -1244,18 +1043,12 @@ public class DataSourceAction extends BaseAction {
 		}
 	}
 
-	/**
-	 * 将ftp_transfered表数据插入数据库
-	 * <p>
-	 * 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-	 * 2.判断map中的key值是否为ftp_transfered对应表数据
-	 * 3.获取tp采集设置ftp_transfered信息
-	 * 4.将ftp_transfered表数据循环入数据库
-	 *
-	 * @param collectMap java.util.Map
-	 *                   含义：所有表数据的map的实体
-	 *                   取值范围：不为空
-	 */
+	@Method(desc = "将ftp_transfered表数据插入数据库",
+			logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
+					"2.判断map中的key值是否为ftp_transfered对应表数据" +
+					"3.获取tp采集设置ftp_transfered信息" +
+					"4.将ftp_transfered表数据循环入数据库")
+	@Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
 	private void addFtpTransfered(Map<String, Object> collectMap) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
 		for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
@@ -1276,18 +1069,12 @@ public class DataSourceAction extends BaseAction {
 		}
 	}
 
-	/**
-	 * 将ftp_collect表数据插入数据库
-	 * <p>
-	 * 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-	 * 2.判断map中的key值是否为ftp_collect对应表数据
-	 * 3.获取tp采集设置ftp_collect信息
-	 * 4.将ftp_collect表数据循环入数据库
-	 *
-	 * @param collectMap java.util.Map
-	 *                   含义：所有表数据的map的实体
-	 *                   取值范围：不为空
-	 */
+	@Method(desc = "将ftp_collect表数据插入数据库",
+			logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
+					"2.判断map中的key值是否为ftp_collect对应表数据" +
+					"3.获取tp采集设置ftp_collect信息" +
+					"4.将ftp_collect表数据循环入数据库")
+	@Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
 	private void addFtpCollect(Map<String, Object> collectMap) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
 		for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
@@ -1308,21 +1095,12 @@ public class DataSourceAction extends BaseAction {
 		}
 	}
 
-	/**
-	 * 将collect_job_classify表数据插入数据库
-	 * <p>
-	 * 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-	 * 2.判断map中的key值是否为collect_job_classify对应表数据
-	 * 3.获取采集任务分类表collect_job_classify信息
-	 * 4.将collect_job_classify表数据循环入数据库
-	 *
-	 * @param userCollectId long
-	 *                      含义：数据采集用户，代表此数据属于哪个用户
-	 *                      取值范围：不为空以及不为空格，长度不超过10位
-	 * @param collectMap    java.util.Map
-	 *                      含义：所有表数据的map的实体
-	 *                      取值范围：不为空
-	 */
+	@Method(desc = "将collect_job_classify表数据插入数据库",
+			logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
+					"2.判断map中的key值是否为collect_job_classify对应表数据" +
+					"3.获取采集任务分类表collect_job_classify信息" +
+					"4.将collect_job_classify表数据循环入数据库")
+	@Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
 	private void addCollectJobClassify(long userCollectId, Map<String, Object> collectMap) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
 		for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
@@ -1344,27 +1122,15 @@ public class DataSourceAction extends BaseAction {
 		}
 	}
 
-	/**
-	 * 将agent_down_info表数据插入数据库
-	 * <p>
-	 * 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-	 * 2.判断map中的key值是否为agent_down_info对应表数据
-	 * 3.获取agent_down_info表数据
-	 * 4.将agent_down_info表数据循环入数据库
-	 *
-	 * @param agentIp       String
-	 *                      含义：agent地址
-	 *                      取值范围：不能为空，服务器ip地址
-	 * @param agentPort     String
-	 *                      含义：agent端口
-	 *                      取值范围：1024-65535
-	 * @param userCollectId long
-	 *                      含义：数据采集用户，代表此数据属于哪个用户
-	 *                      取值范围：不为空以及不为空格，长度不超过10位
-	 * @param collectMap    java.util.Map
-	 *                      含义：所有表数据的map的实体
-	 *                      取值范围：不为空
-	 */
+	@Method(desc = "将agent_down_info表数据插入数据库",
+			logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
+					"2.判断map中的key值是否为agent_down_info对应表数据" +
+					"3.获取agent_down_info表数据" +
+					"4.将agent_down_info表数据循环入数据库")
+	@Param(name = "agentIp", desc = "agent地址", range = "不能为空，服务器ip地址")
+	@Param(name = "agentPort", desc = "agent端口", range = "1024-65535")
+	@Param(name = "userCollectId", desc = "数据采集用户，代表此数据属于哪个用户", range = "10位数字")
+	@Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
 	private void addAgentDownInfo(String agentIp, String agentPort, long userCollectId,
 	                              Map<String, Object> collectMap) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
@@ -1389,19 +1155,14 @@ public class DataSourceAction extends BaseAction {
 		}
 	}
 
-	/**
-	 * 将department_info表数据插入数据库
-	 * <p>
-	 * 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-	 * 2.创建新的department_info表数据集合
-	 * 3.判断map中的key值是否为对应department_info表数据
-	 * 4.获取部门表department_info表数据
-	 * 5.将department_info表数据循环插入数据库
-	 *
-	 * @param collectMap java.util.Map
-	 *                   含义：所有表数据的map的实体
-	 *                   取值范围：不为空
-	 */
+	@Method(desc = "将department_info表数据插入数据库",
+			logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
+					"2.创建新的department_info表数据集合" +
+					"3.判断map中的key值是否为对应department_info表数据" +
+					"4.获取部门表department_info表数据" +
+					"5.将department_info表数据循环插入数据库")
+	@Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
+	@Return(desc = "所有表数据的map的实体", range = "不为空")
 	private List<Department_info> addDepartmentInfo(Map<String, Object> collectMap) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
 		List<Department_info> departmentInfoListNew = new ArrayList<>();
@@ -1426,25 +1187,14 @@ public class DataSourceAction extends BaseAction {
 		return departmentInfoListNew;
 	}
 
-	/**
-	 * 将source_relation_dep表数据插入数据库
-	 * <p>
-	 * 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-	 * 2.判断map中的key值是否为对应source_relation_dep表数据
-	 * 3.获取数据源和部门关系表source_relation_dep表数据
-	 * 4.遍历department_info表数据，目的是获取最新的部门ID，dep_id
-	 * 5.将source_relation_dep表数据循环插入数据库
-	 *
-	 * @param collectMap         java.util.Map
-	 *                           含义：所有表数据的map的实体
-	 *                           取值范围：不为空
-	 * @param dataSource         entity
-	 *                           含义： source_relation_dep表对应实体
-	 *                           取值范围：不为空
-	 * @param departmentInfoList java.uti.List
-	 *                           含义：存放department_info表数据的集合
-	 *                           取值范围：不为空
-	 */
+	@Method(desc = "将source_relation_dep表数据插入数据库",
+			logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
+					"2.判断map中的key值是否为对应source_relation_dep表数据" +
+					"3.获取数据源和部门关系表source_relation_dep表数据" +
+					"4.遍历department_info表数据，目的是获取最新的部门ID，dep_id" +
+					"5.将source_relation_dep表数据循环插入数据库")
+	@Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
+	@Param(name = "departmentInfoList", desc = "存放department_info表数据的集合", range = "不为空")
 	private void addSourceRelationDep(Map<String, Object> collectMap, Data_source dataSource,
 	                                  List<Department_info> departmentInfoList) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
@@ -1470,26 +1220,16 @@ public class DataSourceAction extends BaseAction {
 		}
 	}
 
-	/**
-	 * 将data_source表数据入库并返回data_source实体对象
-	 * <p>
-	 * 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-	 * 2.创建data_source表实体对象
-	 * 3.判断map中的key值是否为对应data_source表数据
-	 * 4.获取数据源data_source表信息
-	 * 5.将data_source表数据插入数据库
-	 * 6.返回data_source表数据对应实体对象
-	 *
-	 * @param userId     long
-	 *                   含义：创建用户ID，代表此数据源由哪个用户创建
-	 *                   取值范围：不为空，创建用户时自动生成
-	 * @param collectMap java.util.Map
-	 *                   含义：所有表数据的map的实体
-	 *                   取值范围：不为空
-	 * @return entity
-	 * 含义：data_source表实体对象
-	 * 取值范围：不为空
-	 */
+	@Method(desc = "将data_source表数据入库并返回data_source实体对象",
+			logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
+					"2.创建data_source表实体对象" +
+					"3.判断map中的key值是否为对应data_source表数据" +
+					"4.获取数据源data_source表信息" +
+					"5.将data_source表数据插入数据库" +
+					"6.返回data_source表数据对应实体对象")
+	@Param(name = "userId", desc = "创建用户ID，代表此数据源由哪个用户创建", range = "不为空，创建用户时自动生成")
+	@Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
+	@Return(desc = "data_source表实体对象", range = "data_source表实体对象", isBean = true)
 	private Data_source getDataSource(long userId, Map<String, Object> collectMap) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
 		// 2.创建data_source表实体对象
@@ -1511,27 +1251,15 @@ public class DataSourceAction extends BaseAction {
 		// 7.返回data_source表数据对应实体对象
 	}
 
-	/**
-	 * 将agent_info表信息入数据库
-	 * <p>
-	 * 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-	 * 2.判断map中的key值是否为对应agent_info表数据
-	 * 3.获取agent_info表数据
-	 * 4.循环入库agent_info
-	 *
-	 * @param agentIp       String
-	 *                      含义：agent地址
-	 *                      取值范围：不能为空，服务器ip地址
-	 * @param agentPort     String
-	 *                      含义：agent端口
-	 *                      取值范围：1024-65535
-	 * @param userCollectId long
-	 *                      含义：数据采集用户，代表此数据属于哪个用户
-	 *                      取值范围：不为空以及不为空格，长度不超过10位
-	 * @param collectMap    java.util.Map
-	 *                      含义：所有表数据的map的实体
-	 *                      取值范围：不为空
-	 */
+	@Method(desc = "将agent_info表信息入数据库",
+			logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
+					"2.判断map中的key值是否为对应agent_info表数据" +
+					"3.获取agent_info表数据" +
+					"4.循环入库agent_info")
+	@Param(name = "agentIp", desc = "agent地址", range = "不为空，服务器ip地址")
+	@Param(name = "agentPort", desc = "agent端口", range = "不为空，1024-65535")
+	@Param(name = "userCollectId", desc = "数据采集用户，代表此数据属于哪个用户", range = "10位数字，不为空")
+	@Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
 	private void addAgentInfo(String agentIp, String agentPort, long userCollectId,
 	                          Map<String, Object> collectMap) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
@@ -1559,46 +1287,38 @@ public class DataSourceAction extends BaseAction {
 		}
 	}
 
-
-	/**
-	 * 下载文件（数据源下载功能使用，下载数据源给数据源导入提供上传文件）,暂时未完成，修改中
-	 *
-	 * <p>
-	 * 1.数据可访问权限处理方式，这里是下载数据源，所以不需要数据权限验证
-	 * 2.创建存放所有数据源下载，所有相关表数据库查询获取数据的map集合
-	 * 3.获取data_source表信息集合，将data_source表信息封装入map
-	 * 4.获取source_relation_dep表信息集合，将source_relation_dep表数据封装入map
-	 * 5.获取department_info表信息集合，将department_info表数据封装入map
-	 * 6.获取agent_info表信息集合，将agent_info表信息封装入map
-	 * 7.获取Agent_down_info表信息集合封装入map
-	 * 8.采集任务分类表collect_job_classify，获取collect_job_classify表信息集合入map
-	 * 9.ftp采集设置ftp_collect,获取ftp_collect表信息集合
-	 * 10.ftp已传输表ftp_transfered,获取ftp_transfered表信息集合入map
-	 * 11.ftp目录表ftp_folder,获取ftp_folder表信息集合入map
-	 * 12.对象采集设置object_collect,获取object_collect表信息集合入map
-	 * 13.对象采集对应信息object_collect_task,获取object_collect_task表信息集合入map
-	 * 14.对象采集存储设置object_storage,获取object_storage表信息集合入map
-	 * 15.对象采集结构信息object_collect_struct,获取object_collect_struct表信息集合入map
-	 * 16.数据库设置database_set,获取database_set表信息集合入map
-	 * 17.文件系统设置file_collect_set,获取file_collect_set表信息集合入map
-	 * 18.文件源设置file_source,获取file_source表信息集合入map
-	 * 19.信号文件入库信息signal_file,获取signal_file表信息集合入map
-	 * 20.数据库对应的表table_info,获取table_info表信息集合入map
-	 * 21.列合并信息表column_merge,获取column_merge表信息集合入map
-	 * 22.表存储信息table_storage_info,获取table_storage_info表信息集合入map
-	 * 23.表清洗参数信息table_clean,获取table_clean表信息集合入map
-	 * 24.表对应的字段table_column,获取table_column表信息集合入map
-	 * 25.列清洗参数信息column_clean,获取column_clean表信息集合入map
-	 * 26.列拆分信息表column_split,获取column_split表信息集合入map
-	 * 27.使用base64编码
-	 * 28.判断文件是否存在
-	 * 29.清空response，设置响应头，响应编码格式，控制浏览器下载该文件
-	 * 30.通过流的方式写入文件
-	 *
-	 * @param sourceId long
-	 *                 含义：data_source表主键
-	 *                 取值范围：不为空以及不为空格，长度不超过10
-	 */
+	@Method(desc = "下载文件（数据源下载功能使用，下载数据源给数据源导入提供上传文件）",
+			logicStep = "1.数据可访问权限处理方式，这里是下载数据源，所以不需要数据权限验证" +
+					"2.创建存放所有数据源下载，所有相关表数据库查询获取数据的map集合" +
+					"3.获取data_source表信息集合，将data_source表信息封装入map" +
+					"4.获取source_relation_dep表信息集合，将source_relation_dep表数据封装入map" +
+					"5.获取department_info表信息集合，将department_info表数据封装入map" +
+					"6.获取agent_info表信息集合，将agent_info表信息封装入map" +
+					"7.获取Agent_down_info表信息集合封装入map" +
+					"8.采集任务分类表collect_job_classify，获取collect_job_classify表信息集合入map" +
+					"9.ftp采集设置ftp_collect,获取ftp_collect表信息集合" +
+					"10.ftp已传输表ftp_transfered,获取ftp_transfered表信息集合入map" +
+					"11.ftp目录表ftp_folder,获取ftp_folder表信息集合入map" +
+					"12.对象采集设置object_collect,获取object_collect表信息集合入map" +
+					"13.对象采集对应信息object_collect_task,获取object_collect_task表信息集合入map" +
+					"14.对象采集存储设置object_storage,获取object_storage表信息集合入map" +
+					"15.对象采集结构信息object_collect_struct,获取object_collect_struct表信息集合入map" +
+					"16.数据库设置database_set,获取database_set表信息集合入map" +
+					"17.文件系统设置file_collect_set,获取file_collect_set表信息集合入map" +
+					"18.文件源设置file_source,获取file_source表信息集合入map" +
+					"19.信号文件入库信息signal_file,获取signal_file表信息集合入map" +
+					"20.数据库对应的表table_info,获取table_info表信息集合入map" +
+					"21.列合并信息表column_merge,获取column_merge表信息集合入map" +
+					"22.表存储信息table_storage_info,获取table_storage_info表信息集合入map" +
+					"23.表清洗参数信息table_clean,获取table_clean表信息集合入map" +
+					"24.表对应的字段table_column,获取table_column表信息集合入map" +
+					"25.列清洗参数信息column_clean,获取column_clean表信息集合入map" +
+					"26.列拆分信息表column_split,获取column_split表信息集合入map" +
+					"27.使用base64编码" +
+					"28.判断文件是否存在" +
+					"29.清空response，设置响应头，响应编码格式，控制浏览器下载该文件" +
+					"30.通过流的方式写入文件")
+	@Param(name = "sourceId", desc = "data_source表主键", range = "不为空以及不为空格，10位数字，新增数据源时生成")
 	public void downloadFile(long sourceId) {
 		// 1.数据可访问权限处理方式，这里是下载数据源，所以不需要数据权限验证
 		HttpServletResponse response = ResponseUtil.getResponse();
@@ -1672,22 +1392,33 @@ public class DataSourceAction extends BaseAction {
 		}
 	}
 
-	/**
-	 * 将department_info表数据加入map
-	 * <p>
-	 * 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
-	 * 2.创建存放department_info表数据的集合
-	 * 3.循环source_relation_dep表集合获取dep_id，通过dep_id获取department_info表数据
-	 * 4.将department_info表信息加入集合
-	 * 5.将department_info表数据集合入map
-	 *
-	 * @param collectionMap         java.util.Map
-	 *                              含义：封装数据源下载信息（这里封装的是department_info表数据集合）
-	 *                              取值范围：key唯一
-	 * @param sourceRelationDepList java.util.List
-	 *                              含义：存放source_relation_dep表数据集合
-	 *                              取值范围：不为空
-	 */
+	@Method(desc = "获取agent_info表数据集合",
+			logicStep = "1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证" +
+					"2.将agent_info表数据集合存入map" +
+					"3.将agent_info表数据集合返回")
+	@Param(name = "sourceId", desc = "data_source表主键，source_relation_dep表外键", range = "不为空及空格，10位数字，" +
+			"新增data_source表时自动生成")
+	@Param(name = "collectionMap", desc = "封装数据源下载信息（这里封装的是source_relation_dep表数据集合）",
+			range = "key值唯一，不为空")
+	@Return(desc = "返回source_relation_dep表数据的集合", range = "不为空")
+	private List<Agent_info> getAgentInfoList(long sourceId, Map<String, Object> collectionMap) {
+		// 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
+		List<Agent_info> agentInfoList = Dbo.queryList(Agent_info.class, "select * from " +
+				"agent_info  where source_id = ?", sourceId);
+		// 2.将agent_info表数据集合存入map
+		collectionMap.put("agentInfo", agentInfoList);
+		// 3.将agent_info表数据集合返回
+		return agentInfoList;
+	}
+
+	@Method(desc = "将department_info表数据加入map",
+			logicStep = "1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证" +
+					"2.创建存放department_info表数据的集合" +
+					"3.循环source_relation_dep表集合获取dep_id，通过dep_id获取department_info表数据" +
+					"4.将department_info表信息加入集合" +
+					"5.将department_info表数据集合入map")
+	@Param(name = "collectionMap", desc = "所有表数据的map的实体", range = "不能为空")
+	@Param(name = "sourceRelationDepList", desc = "存放source_relation_dep表数据集合", range = "key值唯一，不为空")
 	private void addDepartmentInfoToMap(Map<String, Object> collectionMap,
 	                                    List<Source_relation_dep> sourceRelationDepList) {
 		// 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
@@ -1705,51 +1436,16 @@ public class DataSourceAction extends BaseAction {
 		collectionMap.put("departmentInfo", departmentInfoList);
 	}
 
-	/**
-	 * 获取agent_info表数据集合
-	 * <p>
-	 * 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
-	 * 2.将agent_info表数据集合存入map
-	 * 3.将agent_info表数据集合返回
-	 *
-	 * @param sourceId      long
-	 *                      含义：data_source表主键，source_relation_dep表外键
-	 *                      取值范围：不为空及空格，10位数字，新增data_source表时自动生成
-	 * @param collectionMap java.util.Map
-	 *                      含义：封装数据源下载信息（这里封装的是source_relation_dep表数据集合）
-	 *                      取值范围：key唯一
-	 * @return java.util.List
-	 * 含义：返回source_relation_dep表数据的集合
-	 * 取值范围：不为空
-	 */
-	private List<Agent_info> getAgentInfoList(long sourceId, Map<String, Object> collectionMap) {
-		// 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
-		List<Agent_info> agentInfoList = Dbo.queryList(Agent_info.class, "select * from " +
-				"agent_info  where source_id = ?", sourceId);
-		// 2.将agent_info表数据集合存入map
-		collectionMap.put("agentInfo", agentInfoList);
-		// 3.将agent_info表数据集合返回
-		return agentInfoList;
-	}
-
-	/**
-	 * 将source_relation_dep表数据入map
-	 * <p>
-	 * 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
-	 * 2.查询数据源与部门关系表信息
-	 * 3.将source_relation_dep表数据入map
-	 * 4.返回source_relation_dep表数据集合
-	 *
-	 * @param sourceId      long
-	 *                      含义：data_source表主键，source_relation_dep表外键
-	 *                      取值范围：不为空及空格，10位数字，新增data_source表时自动生成
-	 * @param collectionMap java.util.Map
-	 *                      含义：封装数据源下载信息（这里封装的是source_relation_dep表数据集合）
-	 *                      取值范围：key唯一
-	 * @return java.util.List
-	 * 含义：返回source_relation_dep表数据的集合
-	 * 取值范围：不为空
-	 */
+	@Method(desc = "将source_relation_dep表数据入map",
+			logicStep = "1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证" +
+					"2.查询数据源与部门关系表信息" +
+					"3.将source_relation_dep表数据入map" +
+					"4.返回source_relation_dep表数据集合")
+	@Param(name = "collectionMap", desc = "封装数据源下载信息（这里封装的是source_relation_dep表数据集合）",
+			range = "不能为空,key唯一")
+	@Param(name = "sourceId", desc = "data_source表主键，source_relation_dep表外键",
+			range = "不为空及空格，10位数字，新增data_source表时自动生成")
+	@Return(desc = "返回source_relation_dep表数据的集合", range = "不为空")
 	private List<Source_relation_dep> addSourceRelationDepToMap(long sourceId, Map<String, Object> collectionMap) {
 		// 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
 		// 2.查询数据源与部门关系表信息
@@ -1761,22 +1457,15 @@ public class DataSourceAction extends BaseAction {
 		return sourceRelationDepList;
 	}
 
-	/**
-	 * 将column_split表数据集合存入map
-	 * <p>
-	 * 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
-	 * 2.创建存放column_split表信息的集合
-	 * 3.遍历table_column结果集获取column_id,通过column_id查询column_split表信息
-	 * 4.将查询到的信息封装入集合
-	 * 5.将column_split表集合信息存入map
-	 *
-	 * @param collectionMap     java.util.Map
-	 *                          含义：封装数据源下载信息（这里封装的是column_split表数据集合）
-	 *                          取值范围：key唯一
-	 * @param tableColumnResult fd.ng.db.resultset.Result
-	 *                          含义：table_column表数据结果集
-	 *                          取值范围：不为空
-	 */
+	@Method(desc = "将column_split表数据集合存入map",
+			logicStep = "1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证" +
+					"2.创建存放column_split表信息的集合" +
+					"3.遍历table_column结果集获取column_id,通过column_id查询column_split表信息" +
+					"4.将查询到的信息封装入集合" +
+					"5.将column_split表集合信息存入map")
+	@Param(name = "collectionMap", desc = "封装数据源下载信息（这里封装的是column_split表数据集合）",
+			range = "不能为空,key唯一")
+	@Param(name = "tableColumnResult", desc = "table_column表数据结果集", range = "不为空")
 	private void addColumnSplitToMap(Map<String, Object> collectionMap, Result tableColumnResult) {
 		// 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
 		// 2.创建存放column_split表信息的集合
@@ -1792,22 +1481,15 @@ public class DataSourceAction extends BaseAction {
 		collectionMap.put("columnSplit", columnSplitResult.toList());
 	}
 
-	/**
-	 * 将column_clean表数据集合存入map
-	 * <p>
-	 * 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
-	 * 2.创建存放column_clean表信息的集合
-	 * 3.遍历table_column结果集获取column_id,通过column_id查询column_clean表信息
-	 * 4.将查询到的信息封装入集合
-	 * 5.将column_clean表集合信息存入map
-	 *
-	 * @param collectionMap     java.util.Map
-	 *                          含义：封装数据源下载信息（这里封装的是column_clean表数据集合）
-	 *                          取值范围：key唯一
-	 * @param tableColumnResult fd.ng.db.resultset.Result
-	 *                          含义：table_column表数据结果集
-	 *                          取值范围：不为空
-	 */
+	@Method(desc = "将column_clean表数据集合存入map",
+			logicStep = "1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证" +
+					"2.创建存放column_clean表信息的集合" +
+					"3.遍历table_column结果集获取column_id,通过column_id查询column_clean表信息" +
+					"4.将查询到的信息封装入集合" +
+					"5.将column_clean表集合信息存入map")
+	@Param(name = "collectionMap", desc = "封装数据源下载信息（这里封装的是column_clean表数据集合）",
+			range = "不能为空,key唯一")
+	@Param(name = "tableColumnResult", desc = "table_column表数据结果集", range = "不为空")
 	private void addColumnCleanToMap(Map<String, Object> collectionMap, Result tableColumnResult) {
 		// 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
 		// 2.创建存放column_clean表信息的集合
@@ -1823,23 +1505,17 @@ public class DataSourceAction extends BaseAction {
 		collectionMap.put("columnClean", columnCleanResult.toList());
 	}
 
-	/**
-	 * 将table_column表数据集合存入map
-	 * <p>
-	 * 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
-	 * 2.创建存放table_column表信息的集合
-	 * 3.遍历table_info结果集获取table_id,通过table_id查询table_column表信息
-	 * 4.将查询到的信息封装入集合
-	 * 5.将table_column表集合信息存入map
-	 * 6.将table_column表结果集返回
-	 *
-	 * @param collectionMap   java.util.Map
-	 *                        含义：封装数据源下载信息（这里封装的是table_column表数据集合）
-	 *                        取值范围：key唯一
-	 * @param tableInfoResult fd.ng.db.resultset.Result
-	 *                        含义：table_info表数据结果集
-	 *                        取值范围：不为空
-	 */
+	@Method(desc = "将table_column表数据集合存入map",
+			logicStep = "1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证" +
+					"2.创建存放table_column表信息的集合" +
+					"3.遍历table_info结果集获取table_id,通过table_id查询table_column表信息" +
+					"4.将查询到的信息封装入集合" +
+					"5.将table_column表集合信息存入map" +
+					"6.将table_column表结果集返回")
+	@Param(name = "collectionMap", desc = "封装数据源下载信息（这里封装的是table_column表数据集合）",
+			range = "不能为空,key唯一")
+	@Param(name = "tableColumnResult", desc = "table_column表数据结果集", range = "不为空")
+	@Return(desc = "将table_column表结果集返回", range = "不为空")
 	private Result getTableColumnResult(Map<String, Object> collectionMap, Result tableInfoResult) {
 		// 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
 		// 2.创建存放table_column表信息的集合
@@ -1857,22 +1533,15 @@ public class DataSourceAction extends BaseAction {
 		return tableColumnResult;
 	}
 
-	/**
-	 * 将table_clean表数据集合存入map
-	 * <p>
-	 * 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
-	 * 2.创建存放table_clean表信息的集合
-	 * 3.遍历table_info结果集获取table_id,通过table_id查询table_clean表信息
-	 * 4.将查询到的信息封装入集合
-	 * 5.将table_clean表集合信息存入map
-	 *
-	 * @param collectionMap   java.util.Map
-	 *                        含义：封装数据源下载信息（这里封装的是table_clean表数据集合）
-	 *                        取值范围：key唯一
-	 * @param tableInfoResult fd.ng.db.resultset.Result
-	 *                        含义：table_info表数据结果集
-	 *                        取值范围：不为空
-	 */
+	@Method(desc = "将table_clean表数据集合存入map",
+			logicStep = "1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证" +
+					"2.创建存放table_clean表信息的集合" +
+					"3.遍历table_info结果集获取table_id,通过table_id查询table_clean表信息" +
+					"4.将查询到的信息封装入集合" +
+					"5.将table_clean表集合信息存入map")
+	@Param(name = "collectionMap", desc = "封装数据源下载信息（这里封装的是table_clean表数据集合）",
+			range = "不能为空,key唯一")
+	@Param(name = "tableColumnResult", desc = "table_column表数据结果集", range = "不为空")
 	private void addTableCleanToMap(Map<String, Object> collectionMap, Result tableInfoResult) {
 		// 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
 		// 2.创建存放table_clean表信息的集合
@@ -1888,22 +1557,15 @@ public class DataSourceAction extends BaseAction {
 		collectionMap.put("tableClean", tableCleanResult.toList());
 	}
 
-	/**
-	 * 将object_collect_struct表数据集合存入map
-	 * <p>
-	 * 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
-	 * 1.创建存放object_collect_struct表信息的集合
-	 * 2.遍历object_collect_task结果集获取table_id,通过table_id查询object_collect_struct表信息
-	 * 3.将查询到的信息封装入集合
-	 * 4.将object_collect_struct表集合信息存入map
-	 *
-	 * @param collectionMap   java.util.Map
-	 *                        含义：封装数据源下载信息（这里封装的是object_collect_struct表数据集合）
-	 *                        取值范围：key唯一
-	 * @param tableInfoResult fd.ng.db.resultset.Result
-	 *                        含义：table_info表数据结果集
-	 *                        取值范围：不为空
-	 */
+	@Method(desc = "将object_collect_struct表数据集合存入map",
+			logicStep = " 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证" +
+					"1.创建存放object_collect_struct表信息的集合" +
+					"2.遍历object_collect_task结果集获取table_id,通过table_id查询object_collect_struct表信息" +
+					"3.将查询到的信息封装入集合" +
+					"4.将object_collect_struct表集合信息存入map")
+	@Param(name = "collectionMap", desc = "封装数据源下载信息（这里封装的是object_collect_struct表数据集合）",
+			range = "不能为空,key唯一")
+	@Param(name = "tableInfoResult", desc = "table_info表数据结果集", range = "不为空")
 	private void addTableStorageInfoToMap(Map<String, Object> collectionMap, Result tableInfoResult) {
 		Result tableStorageInfoResult = new Result();
 		for (int i = 0; i < tableInfoResult.getRowCount(); i++) {
@@ -1914,22 +1576,15 @@ public class DataSourceAction extends BaseAction {
 		collectionMap.put("tableStorageInfo", tableStorageInfoResult.toList());
 	}
 
-	/**
-	 * 将column_merge表数据集合存入map
-	 * <p>
-	 * 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
-	 * 1.创建存放column_merge表信息的集合
-	 * 2.遍历table_info结果集获取table_id,通过table_id查询column_merge表信息
-	 * 3.将查询到的信息封装入集合
-	 * 4.将object_collect_struct表集合信息存入map
-	 *
-	 * @param collectionMap   java.util.Map
-	 *                        含义：封装数据源下载信息（这里封装的是column_merge表数据集合）
-	 *                        取值范围：key唯一
-	 * @param tableInfoResult fd.ng.db.resultset.Result
-	 *                        含义：table_info表数据结果集
-	 *                        取值范围：不为空
-	 */
+	@Method(desc = "将column_merge表数据集合存入map",
+			logicStep = "1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证" +
+					"1.创建存放column_merge表信息的集合" +
+					"2.遍历table_info结果集获取table_id,通过table_id查询column_merge表信息" +
+					"3.将查询到的信息封装入集合" +
+					"4.将column_merge表集合信息存入map")
+	@Param(name = "collectionMap", desc = "封装数据源下载信息（这里封装的是column_merge表数据集合）",
+			range = "不能为空,key唯一")
+	@Param(name = "tableInfoResult", desc = "table_info表数据结果集", range = "不为空")
 	private void addColumnMergeToMap(Map<String, Object> collectionMap, Result tableInfoResult) {
 		Result columnMergeResult = new Result();
 		for (int i = 0; i < tableInfoResult.getRowCount(); i++) {
@@ -1940,22 +1595,15 @@ public class DataSourceAction extends BaseAction {
 		collectionMap.put("columnMerge", columnMergeResult.toList());
 	}
 
-	/**
-	 * 将table_info表数据集合存入map
-	 * <p>
-	 * 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
-	 * 2.创建存放table_info表信息的集合
-	 * 3.遍历database_set结果集获取database_set,通过database_set查询table_info表信息
-	 * 4.将查询到的信息封装入集合
-	 * 5.将table_info表集合信息存入map
-	 *
-	 * @param collectionMap     java.util.Map
-	 *                          含义：封装数据源下载信息（这里封装的是table_info表数据集合）
-	 *                          取值范围：key唯一
-	 * @param databaseSetResult fd.ng.db.resultset.Result
-	 *                          含义：database_set表数据结果集
-	 *                          取值范围：不为空
-	 */
+	@Method(desc = "将table_info表数据集合存入map",
+			logicStep = "1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证" +
+					"2.创建存放table_info表信息的集合" +
+					"3.遍历database_set结果集获取database_set,通过database_set查询table_info表信息" +
+					"4.将查询到的信息封装入集合" +
+					"5.将table_info表集合信息存入map")
+	@Param(name = "collectionMap", desc = "封装数据源下载信息（这里封装的是column_merge表数据集合）",
+			range = "不能为空,key唯一")
+	@Param(name = "databaseSetResult", desc = "database_set表数据结果集", range = "不为空")
 	private Result getTableInfoResult(Map<String, Object> collectionMap, Result databaseSetResult) {
 		// 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
 		// 2.创建存放table_info表信息的集合
@@ -1972,22 +1620,15 @@ public class DataSourceAction extends BaseAction {
 		return tableInfoResult;
 	}
 
-	/**
-	 * 将signal_file表数据集合存入map
-	 * <p>
-	 * 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
-	 * 2.创建存放signal_file表信息的集合
-	 * 3.遍历database_set结果集获取database_id,通过ocs_id查询signal_file表信息
-	 * 4.将查询到的信息封装入集合
-	 * 5.将signal_file表集合信息存入map
-	 *
-	 * @param collectionMap     java.util.Map
-	 *                          含义：封装数据源下载信息（这里封装的是signal_file表数据集合）
-	 *                          取值范围：key唯一
-	 * @param databaseSetResult fd.ng.db.resultset.Result
-	 *                          含义：database_set表数据结果集
-	 *                          取值范围：不为空
-	 */
+	@Method(desc = "将signal_file表数据集合存入map",
+			logicStep = "1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证" +
+					"2.创建存放signal_file表信息的集合" +
+					"3.遍历database_set结果集获取database_id,通过ocs_id查询signal_file表信息" +
+					"4.将查询到的信息封装入集合" +
+					"5.将signal_file表集合信息存入map")
+	@Param(name = "collectionMap", desc = "封装数据源下载信息（这里封装的是signal_file表数据集合）",
+			range = "不能为空,key唯一")
+	@Param(name = "databaseSetResult", desc = "database_set表数据结果集", range = "不为空")
 	private void addSignalFileToMap(Map<String, Object> collectionMap, Result databaseSetResult) {
 		// 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
 		// 2.创建存放signal_file表信息的集合
@@ -2003,22 +1644,15 @@ public class DataSourceAction extends BaseAction {
 		collectionMap.put("signalFile", signalFileResult.toList());
 	}
 
-	/**
-	 * 将file_source表数据集合存入map
-	 * <p>
-	 * 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
-	 * 2.创建存放file_source表信息的集合
-	 * 3.遍历file_collect_set结果集获取fcs_id(文件系统采集ID),通过fcs_id查询file_source表信息
-	 * 4.将查询到的信息封装入集合
-	 * 5.将file_source表集合信息存入map
-	 *
-	 * @param collectionMap          java.util.Map
-	 *                               含义：封装数据源下载信息（这里封装的是file_source表数据集合）
-	 *                               取值范围：key唯一
-	 * @param file_collect_setResult fd.ng.db.resultset.Result
-	 *                               含义：file_collect_set表数据结果集
-	 *                               取值范围：不为空
-	 */
+	@Method(desc = "将file_source表数据集合存入map",
+			logicStep = "1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证" +
+					"2.创建存放file_source表信息的集合" +
+					"3.遍历file_collect_set结果集获取fcs_id(文件系统采集ID),通过fcs_id查询file_source表信息" +
+					"4.将查询到的信息封装入集合" +
+					"5.将file_source表集合信息存入map")
+	@Param(name = "collectionMap", desc = "封装数据源下载信息（这里封装的是file_source表数据集合）",
+			range = "不能为空,key唯一")
+	@Param(name = "databaseSetResult", desc = "database_set表数据结果集", range = "不为空")
 	private void addFileSourceToMap(Map<String, Object> collectionMap, Result file_collect_setResult) {
 		// 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
 		// 2.创建存放file_source表信息的集合
@@ -2034,23 +1668,16 @@ public class DataSourceAction extends BaseAction {
 		collectionMap.put("fileSource", fileSourceResult.toList());
 	}
 
-	/**
-	 * 将file_collect_set表数据集合存入map
-	 * <p>
-	 * 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
-	 * 2.创建存放file_collect_set表信息的集合
-	 * 3.遍历agent_info结果集获取agent_id,通过agent_id查询file_collect_set表信息
-	 * 4.将查询到的信息封装入集合
-	 * 5.将file_collect_set表集合信息存入map
-	 * 6.返回file_collect_set数据结果集
-	 *
-	 * @param collectionMap java.util.Map
-	 *                      含义：封装数据源下载信息（这里封装的是file_collect_set表数据集合）
-	 *                      取值范围：key唯一
-	 * @param agentInfoList java.util.List
-	 *                      含义：agent_info表数据结果集合
-	 *                      取值范围：不为空
-	 */
+	@Method(desc = "将file_collect_set表数据集合存入map",
+			logicStep = "1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证" +
+					"2.创建存放file_collect_set表信息的集合" +
+					"3.遍历agent_info结果集获取agent_id,通过agent_id查询file_collect_set表信息" +
+					"4.将查询到的信息封装入集合" +
+					"5.将file_collect_set表集合信息存入map" +
+					"6.返回file_collect_set数据结果集")
+	@Param(name = "collectionMap", desc = "封装数据源下载信息（这里封装的是file_collect_set表数据集合）",
+			range = "不能为空,key唯一")
+	@Param(name = "agentInfoList", desc = "agent_info表数据结果集合", range = "不为空")
 	private Result getFileCollectSetResult(Map<String, Object> collectionMap, List<Agent_info> agentInfoList) {
 		// 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
 		// 2.创建存放file_collect_set表信息的集合
@@ -2068,23 +1695,16 @@ public class DataSourceAction extends BaseAction {
 		return fileCollectSetResult;
 	}
 
-	/**
-	 * 将database_set表数据集合存入map
-	 * <p>
-	 * 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
-	 * 2.创建存放database_set表信息的集合
-	 * 3.遍历agent_info结果集获取agent_id,通过agent_id查询database_set表信息
-	 * 4.将查询到的信息封装入集合
-	 * 5.将database_set表集合信息存入map
-	 * 6.返回database_result表数据结果集
-	 *
-	 * @param collectionMap java.util.Map
-	 *                      含义：封装数据源下载信息（这里封装的是database_set表数据集合）
-	 *                      取值范围：key唯一
-	 * @param agentInfoList java.util.List
-	 *                      含义：agent_info表数据结果集合
-	 *                      取值范围：不为空
-	 */
+	@Method(desc = "将database_set表数据集合存入map",
+			logicStep = "1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证" +
+					"2.创建存放database_set表信息的集合" +
+					"3.遍历agent_info结果集获取agent_id,通过agent_id查询database_set表信息" +
+					"4.将查询到的信息封装入集合" +
+					"5.将database_set表集合信息存入map" +
+					"6.返回database_result表数据结果集")
+	@Param(name = "collectionMap", desc = "封装数据源下载信息（这里封装的是database_set表数据集合）",
+			range = "不能为空,key唯一")
+	@Param(name = "agentInfoList", desc = "agent_info表数据结果集合", range = "不为空")
 	private Result getDatabaseSetResult(Map<String, Object> collectionMap, List<Agent_info> agentInfoList) {
 		// 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
 		// 2.创建存放database_set表信息的集合
@@ -2102,22 +1722,15 @@ public class DataSourceAction extends BaseAction {
 		return databaseSetResult;
 	}
 
-	/**
-	 * 将ftp_folder表数据集合存入map
-	 * <p>
-	 * 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
-	 * 2.创建存放ftp_folder表信息的集合
-	 * 3.遍历ftp_collect结果集获取ftp_id(ftp采集任务编号),通过ftp_id查询ftp_folder表信息
-	 * 4.将查询到的信息封装入集合
-	 * 5.将ftp_folder表集合信息存入map
-	 *
-	 * @param collectionMap    java.util.Map
-	 *                         含义：封装数据源下载信息（这里封装的是ftp_folder表数据结果集）
-	 *                         取值范围：key唯一
-	 * @param ftpCollectResult fd.ng.db.resultset.Result
-	 *                         含义：ftp_collect表数据结果集
-	 *                         取值范围：不为空
-	 */
+	@Method(desc = "将ftp_folder表数据集合存入map",
+			logicStep = "1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证" +
+					"2.创建存放ftp_folder表信息的集合" +
+					"3.遍历ftp_collect结果集获取ftp_id(ftp采集任务编号),通过ftp_id查询ftp_folder表信息" +
+					"4.将查询到的信息封装入集合" +
+					"5.将ftp_folder表集合信息存入map")
+	@Param(name = "collectionMap", desc = "封装数据源下载信息（这里封装的是ftp_folder表数据结果集）",
+			range = "不能为空,key唯一")
+	@Param(name = "ftpCollectResult", desc = "ftp_collect表数据结果集", range = "不为空")
 	private void addFtpFolderToMap(Map<String, Object> collectionMap, Result ftpCollectResult) {
 		// 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
 		// 2.创建存放ftp_folder表信息的集合
@@ -2133,22 +1746,15 @@ public class DataSourceAction extends BaseAction {
 		collectionMap.put("ftpFolder", ftpFolderResult.toList());
 	}
 
-	/**
-	 * 将object_collect_struct表数据集合存入map
-	 * <p>
-	 * 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
-	 * 2.创建存放object_collect_struct表信息的集合
-	 * 3.遍历object_collect_task结果集获取ocs_id(对象采集任务id),通过ocs_id查询object_collect_struct表信息
-	 * 4.将查询到的信息封装入集合
-	 * 5.将object_collect_struct表集合信息存入map
-	 *
-	 * @param collectionMap           java.util.Map
-	 *                                含义：封装数据源下载信息（这里封装的是object_collect_struct表数据集合）
-	 *                                取值范围：key唯一
-	 * @param objectCollectTaskResult fd.ng.db.resultset.Result
-	 *                                含义：object_collect_task表数据结果集
-	 *                                取值范围：不为空
-	 */
+	@Method(desc = "将object_collect_struct表数据集合存入map",
+			logicStep = "1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证" +
+					"2.创建存放object_collect_struct表信息的集合" +
+					"3.遍历object_collect_task结果集获取ocs_id(对象采集任务id),通过ocs_id查询object_collect_struct表信息" +
+					"4.将查询到的信息封装入集合" +
+					"5.将object_collect_struct表集合信息存入map")
+	@Param(name = "collectionMap", desc = "封装数据源下载信息（这里封装的是object_collect_struct表数据集合）",
+			range = "不能为空,key唯一")
+	@Param(name = "objectCollectTaskResult", desc = "object_collect_task表数据结果集", range = "不为空")
 	private void addObjectCollectStructResultToMap(Map<String, Object> collectionMap,
 	                                               Result objectCollectTaskResult) {
 		// 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
@@ -2165,22 +1771,15 @@ public class DataSourceAction extends BaseAction {
 		collectionMap.put("objectCollectStruct", objectCollectStructResult.toList());
 	}
 
-	/**
-	 * 将object_storage表数据集合存入map
-	 * <p>
-	 * 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
-	 * 2.创建存放object_storage信息结果集
-	 * 3.遍历object_collect_task结果集获取ocs_id（对象采集任务id），通过ocs_id查询object_storage表信息
-	 * 4.将查询到的信息封装入集合
-	 * 5.将object_storage集合信息存入map
-	 *
-	 * @param collectionMap           java.util.Map
-	 *                                含义：封装数据源下载信息（这里封装的是object_storage表数据集合）
-	 *                                取值范围：key唯一
-	 * @param objectCollectTaskResult fd.ng.db.resultset.Result
-	 *                                含义：object_collect_task表数据结果集
-	 *                                取值范围：不为空
-	 */
+	@Method(desc = "将object_storage表数据集合存入map",
+			logicStep = "1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证" +
+					"2.创建存放object_storage信息结果集" +
+					"3.遍历object_collect_task结果集获取ocs_id（对象采集任务id），通过ocs_id查询object_storage表信息" +
+					"4.将查询到的信息封装入集合" +
+					"5.将object_storage集合信息存入map")
+	@Param(name = "collectionMap", desc = "封装数据源下载信息（这里封装的是object_storage表数据集合）",
+			range = "不能为空,key唯一")
+	@Param(name = "objectCollectTaskResult", desc = "object_collect_task表数据结果集", range = "不为空")
 	private void addObjectStorageToMap(Map<String, Object> collectionMap, Result objectCollectTaskResult) {
 		// 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
 		// 2.创建存放object_storage信息的结果集
@@ -2196,25 +1795,16 @@ public class DataSourceAction extends BaseAction {
 		collectionMap.put("objectStorage", objectStorageResult.toList());
 	}
 
-	/**
-	 * 封装object_collect_task表信息入map并返回object_collect_task表信息
-	 * <p>
-	 * 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
-	 * 2.创建存放object_collect_task表数据的结果集对象
-	 * 3.循环遍历object_collect表数据获取odc_id，根据odc_id查询object_collect_task表信息并封装
-	 * 4.将object_collect_task表结果集封装入map
-	 * 5.返回object_collect_task表结果集
-	 *
-	 * @param collectionMap       java.util.Map
-	 *                            含义：封装数据源下载信息（这里封装的是object_collect_task表数据集合）
-	 *                            取值范围：key唯一
-	 * @param objectCollectResult fd.ng.db.resultset.Result
-	 *                            含义：object_collect表数据结果集
-	 *                            取值范围：不为空
-	 * @return fd.ng.db.resultset.Result
-	 * 含义：返回object_collect_task表数据集合信息
-	 * 取值范围：不为空
-	 */
+	@Method(desc = "封装object_collect_task表信息入map并返回object_collect_task表信息",
+			logicStep = "1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证" +
+					"2.创建存放object_collect_task表数据的结果集对象" +
+					"3.循环遍历object_collect表数据获取odc_id，根据odc_id查询object_collect_task表信息并封装" +
+					"4.将object_collect_task表结果集封装入map" +
+					"5.返回object_collect_task表结果集")
+	@Param(name = "collectionMap", desc = "封装数据源下载信息（这里封装的是object_collect_task表数据集合）",
+			range = "不能为空,key唯一")
+	@Param(name = "objectCollectResult", desc = "object_collect表数据结果集", range = "不为空")
+	@Return(desc = "返回object_collect_task表数据集合信息", range = "不为空")
 	private Result getObjectCollectTaskResult(Map<String, Object> collectionMap, Result objectCollectResult) {
 		// 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
 		// 2.创建存放object_collect_task表数据的结果集对象
@@ -2231,26 +1821,16 @@ public class DataSourceAction extends BaseAction {
 		return objectCollectTaskResult;
 	}
 
-	/**
-	 * 封装object_collect表信息入map并返回object_collect表信息
-	 * <p>
-	 * 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
-	 * 2.创建封装object_collect信息的结果集对象
-	 * 3.循环遍历agent_info表信息集合获取agent_id（agent_info表主键，object_collect表外键）
-	 * 4.根据agent_id查询object_collect表获取结果集并添加到结果集对象中
-	 * 5.将object_collect结果集封装入map
-	 * 6.返回object_collect结果集
-	 *
-	 * @param collectionMap java.util.Map
-	 *                      含义：封装数据源下载信息（这里封装的是object_collect表数据集合）
-	 *                      取值范围：key唯一
-	 * @param agentInfoList java.util.List
-	 *                      含义：agent_info表数据集合
-	 *                      取值范围：不为空
-	 * @return fd.ng.db.resultset.Result
-	 * 含义：返回object_collect表数据集合信息
-	 * 取值范围：不为空
-	 */
+	@Method(desc = "封装object_collect表信息入map并返回object_collect表信息",
+			logicStep = "1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证" +
+					"2.创建封装object_collect信息的结果集对象" +
+					"3.循环遍历agent_info表信息集合获取agent_id（agent_info表主键，object_collect表外键）" +
+					"4.根据agent_id查询object_collect表获取结果集并添加到结果集对象中" +
+					"5.将object_collect结果集封装入map")
+	@Param(name = "collectionMap", desc = "封装数据源下载信息（这里封装的是object_collect表数据集合）",
+			range = "不能为空,key唯一")
+	@Param(name = "agentInfoList", desc = "agent_info表数据集合", range = "不为空")
+	@Return(desc = "返回object_collect表数据集合信息", range = "不为空")
 	private Result getObjectCollectResult(Map<String, Object> collectionMap, List<Agent_info> agentInfoList) {
 		// 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
 		// 2.创建封装object_collect信息的结果集对象
@@ -2268,23 +1848,16 @@ public class DataSourceAction extends BaseAction {
 		return objectCollectResult;
 	}
 
-	/**
-	 * 封装agent_down_info表数据集合到map
-	 * <p>
-	 * 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
-	 * 2.创建封装agent_down_info表信息集合
-	 * 3.遍历agent_info表信息获取agent_id（agent_info表主键，agent_down_info表外键）
-	 * 4.通过agent_id查询agent_down_info表信息
-	 * 5.将agent_down_info表信息放入list
-	 * 6.将agent_down_info表信息入map
-	 *
-	 * @param collectionMap java.util.Map
-	 *                      含义：封装数据源下载信息（这里封装的是agent_down_info表数据集合）
-	 *                      取值范围：key唯一
-	 * @param agentInfoList java.util.List
-	 *                      含义：agent_info表数据集合
-	 *                      取值范围：不为空
-	 */
+	@Method(desc = "封装agent_down_info表数据集合到map",
+			logicStep = "1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证" +
+					"2.创建封装agent_down_info表信息集合" +
+					"3.遍历agent_info表信息获取agent_id（agent_info表主键，agent_down_info表外键）" +
+					"4.通过agent_id查询agent_down_info表信息" +
+					"5.将agent_down_info表信息放入list" +
+					"6.将agent_down_info表信息入map")
+	@Param(name = "collectionMap", desc = "封装数据源下载信息（这里封装的是agent_down_info表数据集合）",
+			range = "不能为空,key唯一")
+	@Param(name = "agentInfoList", desc = "agent_info表数据集合", range = "不为空")
 	private void addAgentDownInfoToMap(Map<String, Object> collectionMap, List<Agent_info> agentInfoList) {
 		// 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
 		// 2.创建封装agent_down_info表信息集合
@@ -2305,21 +1878,14 @@ public class DataSourceAction extends BaseAction {
 		collectionMap.put("agentDownInfo", agentDownInfoList);
 	}
 
-	/**
-	 * 封装data_source表数据集合到map
-	 * <p>
-	 * 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
-	 * 2.根据数据源ID查询数据源data_source集合
-	 * 3.判断获取到的集合是否有数据，没有抛异常，有返回数据
-	 * 4.将data_source数据入map
-	 *
-	 * @param sourceId      long
-	 *                      含义：data_source主键ID
-	 *                      取值范围：不为空以及空格，长度不超过10
-	 * @param collectionMap java.util.Map
-	 *                      含义：封装数据源下载信息（这里封装的是data_source表数据集合）
-	 *                      取值范围：key唯一
-	 */
+	@Method(desc = "封装data_source表数据集合到map",
+			logicStep = "1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证" +
+					"2.根据数据源ID查询数据源data_source集合" +
+					"3.判断获取到的集合是否有数据，没有抛异常，有返回数据" +
+					"4.将data_source数据入map")
+	@Param(name = "sourceId", desc = "data_source主键ID", range = "不为空,10位数字，新增数据源时生成")
+	@Param(name = "collectionMap", desc = "封装数据源下载信息（这里封装的是agent_down_info表数据集合）",
+			range = "不能为空,key唯一")
 	private void addDataSourceToMap(long sourceId, Map<String, Object> collectionMap) {
 		// 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
 		// 2.根据数据源ID查询数据源data_source集合
@@ -2333,23 +1899,15 @@ public class DataSourceAction extends BaseAction {
 		collectionMap.put("dataSource", dataSource);
 	}
 
-	/**
-	 * 封装ftp_transfered表数据集合到map
-	 *
-	 * <p>
-	 * 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
-	 * 2.创建封装ftp_transfered信息的集合
-	 * 3.遍历Ftp_collect信息，获取ftp_id(ftp_transfered主键，ftp_collect外键）
-	 * 4. 根据ftp_id查询ftp_transfered信息
-	 * 5.将ftp_transfered表数据结果集信息入map
-	 *
-	 * @param collectionMap    java.util.Map
-	 *                         含义：封装数据源下载信息（这里封装的是ftp_transfered表数据集合）
-	 *                         取值范围：key唯一
-	 * @param ftpCollectResult fd.ng.db.resultset.Result
-	 *                         含义：ftp_collect表数据集
-	 *                         取值范围：不为空
-	 */
+	@Method(desc = "封装ftp_transfered表数据集合到map",
+			logicStep = "1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证" +
+					"2.创建封装ftp_transfered信息的集合" +
+					"3.遍历Ftp_collect信息，获取ftp_id(ftp_transfered主键，ftp_collect外键）" +
+					"4. 根据ftp_id查询ftp_transfered信息" +
+					"5.将ftp_transfered表数据结果集信息入map")
+	@Param(name = "collectionMap", desc = "封装数据源下载信息（这里封装的是ftp_transfered表数据集合）",
+			range = "不能为空,key唯一")
+	@Param(name = "ftpCollectResult", desc = "ftp_collect表数据集", range = "不为空")
 	private void addFtpTransferedToMap(Map<String, Object> collectionMap, Result ftpCollectResult) {
 		// 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
 		// 2.创建封装ftp_transfered信息的集合
@@ -2365,23 +1923,17 @@ public class DataSourceAction extends BaseAction {
 		collectionMap.put("ftpTransfered", ftpTransferedResult.toList());
 	}
 
-	/**
-	 * 获取ftp_collect表信息
-	 * <p>
-	 * 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
-	 * 2.创建封装ftp_collect信息的集合
-	 * 3.遍历agent_info信息，获取agent_id(agent_info主键，ftp_collect外键）
-	 * 4. 根据agent_id查询ftp_collect信息
-	 * 5.将ftp_collect表信息入map
-	 * 6.返回ftp_collect表结果集信息
-	 *
-	 * @param agentInfoList java.util.List
-	 *                      含义：agent_info表数据集合
-	 *                      取值范围：不为空
-	 * @return fd.ng.db.resultset.Result
-	 * 含义：返回ftp_collect集合信息
-	 * 取值范围：不为空
-	 */
+	@Method(desc = "将ftp_collect表信息封装入map",
+			logicStep = "1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证" +
+					"2.创建封装ftp_collect信息的集合" +
+					"3.遍历agent_info信息，获取agent_id(agent_info主键，ftp_collect外键）" +
+					"4. 根据agent_id查询ftp_collect信息" +
+					"5.将ftp_collect表信息入map" +
+					"6.返回ftp_collect表结果集信息")
+	@Param(name = "collectionMap", desc = "封装数据源下载信息（这里封装的是ftp_collect表数据集合）",
+			range = "不能为空,key唯一")
+	@Param(name = "agentInfoList", desc = "agent_info表数据集合", range = "不为空")
+	@Return(desc = "返回ftp_collect集合信息", range = "不为空")
 	private Result getFtpCollectResult(Map<String, Object> collectionMap, List<Agent_info> agentInfoList) {
 		// 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
 		// 2.创建封装ftp_collect信息的集合
@@ -2399,22 +1951,15 @@ public class DataSourceAction extends BaseAction {
 		return ftpCollectResult;
 	}
 
-	/**
-	 * 封装collect_job_classify表信息入map
-	 * <p>
-	 * 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
-	 * 2.创建封装Collect_job_classify信息的集合
-	 * 3.遍历agent_info信息，获取agent_id(agent_info主键，Collect_job_classify外键）
-	 * 4. 根据agent_id查询Collect_job_classify信息
-	 * 5.将collect_job_classify表数据结果集入map
-	 *
-	 * @param collectionMap java.util.Map
-	 *                      含义：封装数据源下载信息（这里封装的是collect_job_classify表数据集合）
-	 *                      取值范围：key唯一
-	 * @param agentInfoList java.util.list
-	 *                      含义：agent_info表信息集合
-	 *                      取值范围：不为空
-	 */
+	@Method(desc = "封装collect_job_classify表信息入map",
+			logicStep = "1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证" +
+					"2.创建封装Collect_job_classify信息的集合" +
+					"3.遍历agent_info信息，获取agent_id(agent_info主键，Collect_job_classify外键）" +
+					"4. 根据agent_id查询Collect_job_classify信息" +
+					"5.将collect_job_classify表数据结果集入map")
+	@Param(name = "collectionMap", desc = "封装数据源下载信息（这里封装的是collect_job_classify表数据集合）",
+			range = "不能为空,key唯一")
+	@Param(name = "agentInfoList", desc = "agent_info表数据集合", range = "不为空")
 	private void addCollectJobClassifyToMap(Map<String, Object> collectionMap, List<Agent_info> agentInfoList) {
 		// 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
 		// 2.创建封装collect_job_classify信息的集合

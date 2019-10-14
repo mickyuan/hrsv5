@@ -1,10 +1,12 @@
 package hrds.b.biz.agentinfo;
 
+import fd.ng.core.annotation.Method;
+import fd.ng.core.annotation.Param;
+import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.netclient.http.HttpClient;
-import fd.ng.web.annotation.RequestBean;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.AgentStatus;
@@ -14,6 +16,8 @@ import hrds.commons.entity.Agent_info;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.key.PrimayKeyGener;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.HashMap;
 import java.util.List;
@@ -26,19 +30,16 @@ import java.util.Map;
  * @date 2019-09-04 17:30:27
  */
 public class AgentInfoAction extends BaseAction {
-	/**
-	 * 查询所有agent信息,agent页面展示(测试用例还未写）
-	 *
-	 * @param sourceId       long
-	 *                       含义：data_source表主键，source_relation_dep表外键
-	 *                       取值范围：不为空，10位数字
-	 * @param datasourceName String
-	 *                       含义：数据源名称
-	 *                       取值范围：不为空且不为空格
-	 * @return java.util.Map
-	 * 含义：存放数据源及agent信息的集合
-	 */
-	public Map<String, Object> searchDatasourceAndAgentInfo(long sourceId, long datasourceName) {
+	private static final Logger logger = LogManager.getLogger();
+
+	@Method(desc = "查询所有agent信息,agent页面展示(测试用例还未写）",
+			logicStep = "1.数据可访问权限处理方式，这是一个私有方法不需要权限控制" +
+					"2.查询data_source表所有source_id封装入数组" +
+					"3.查询数据源申请审批信息集合并返回")
+	@Param(name = "sourceId", desc = "data_source表主键，source_relation_dep表外键", range = "10位数字，新增时自动生成")
+	@Param(name = "datasourceName", desc = "数据源名称", range = "不为空，10位数字")
+	@Return(desc = "存放数据申请审批信息的集合", range = "无限制")
+	public Map<String, Object> searchDatasourceAndAgentInfo(long sourceId, String datasourceName) {
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		asmSql.addSql("select gi.*,su.user_name,su.user_id,t3.deploy,(case t3.deploy when ? then 'yes' " +
 				" else 'no' end) agentStatu from agent_info gi LEFT JOIN agent_down_info t3 ON " +
@@ -91,21 +92,15 @@ public class AgentInfoAction extends BaseAction {
 		return map;
 	}
 
-	/**
-	 * 保存agent信息
-	 * <p>
-	 * 1.数据可访问权限处理方式，新增时会设置创建用户ID，会获取当前用户ID，所以不需要权限验证
-	 * 2.字段合法性验证
-	 * 3.判断端口是否被占用，被占用抛异常，否则正常保存
-	 * 4.初始化AgentInfo的一些非页面传值
-	 * 5.检查数据源是否还存在以及判断数据源下相同的IP地址中是否包含相同的端口
-	 * 6.保存agent信息
-	 *
-	 * @param agentInfo agent_info表对象
-	 *                  含义：agent_info表实体对象
-	 *                  取值范围：与数据库agent_info表字段定义规则一致
-	 */
-	public void saveAgent(@RequestBean Agent_info agentInfo) {
+	@Method(desc = "保存agent信息",
+			logicStep = "1.数据可访问权限处理方式，新增时会设置创建用户ID，会获取当前用户ID，所以不需要权限验证" +
+					"2.字段合法性验证" +
+					"3.判断端口是否被占用，被占用抛异常，否则正常保存" +
+					"4.初始化AgentInfo的一些非页面传值" +
+					"5.检查数据源是否还存在以及判断数据源下相同的IP地址中是否包含相同的端口" +
+					"6.保存agent信息")
+	@Param(name = "agentInfo", desc = "agent_info表实体对象", range = "与数据库agent_info表字段定义规则一致", isBean = true)
+	public void saveAgent(Agent_info agentInfo) {
 		// 1.数据可访问权限处理方式，新增时会设置创建用户ID，会获取当前用户ID，所以不需要权限验证
 		// 2.字段合法性验证
 		fieldLegalityValidation(agentInfo.getAgent_name(), agentInfo.getAgent_type(),
@@ -131,26 +126,15 @@ public class AgentInfoAction extends BaseAction {
 		agentInfo.add(Dbo.db());
 	}
 
-	/**
-	 * 检查数据源是否还存在以及数据源下相同的IP地址中是否包含相同的端口
-	 * <p>
-	 * 1.数据可访问权限处理方式，这是一个私有方法，不会单独被调用，所以不需要权限验证
-	 * 2.验证数据源是否还存在,查到至少一条数据，查不到为0
-	 * 3.判断数据源下相同的IP地址中是否包含相同的端口,查到至少一条数据，查不到为0
-	 *
-	 * @param sourceId  long
-	 *                  含义：data_source表主键ID
-	 *                  取值范围：10位数字，新增时自动生成
-	 * @param agentType String
-	 *                  含义：agent类型
-	 *                  取值范围：1:数据库Agent,2:文件系统Agent,3:FtpAgent,4:数据文件Agent,5:对象Agent
-	 * @param agentIp   String
-	 *                  含义：agent所在服务器ip
-	 *                  取值范围：合法IP地址
-	 * @param agentPort String
-	 *                  含义：agent连接端口
-	 *                  取值范围：1024-65535
-	 */
+	@Method(desc = "检查数据源是否还存在以及数据源下相同的IP地址中是否包含相同的端口",
+			logicStep = "1.数据可访问权限处理方式，这是一个私有方法，不会单独被调用，所以不需要权限验证" +
+					"2.验证数据源是否还存在,查到至少一条数据，查不到为0" +
+					"3.判断数据源下相同的IP地址中是否包含相同的端口,查到至少一条数据，查不到为0")
+	@Param(name = "sourceId", desc = "data_source表主键", range = "10位数字，新增时自动生成")
+	@Param(name = "agentType", desc = "agent类型", range = "1:数据库Agent,2:文件系统Agent,3:FtpAgent," +
+			"4:数据文件Agent,5:对象Agent")
+	@Param(name = "agentIp", desc = "agent所在服务器ip", range = "合法IP地址")
+	@Param(name = "agentPort", desc = "agent连接端口", range = "1024-65535")
 	private void check(long sourceId, String agentType, String agentIp, String agentPort) {
 		// 1.数据可访问权限处理方式，这是一个私有方法，不会单独被调用，所以不需要权限验证
 		// 2.验证数据源是否还存在,查到至少一条数据，查不到为0
@@ -167,36 +151,69 @@ public class AgentInfoAction extends BaseAction {
 		}
 	}
 
-	/**
-	 * 字段合法性验证
-	 * <p>
-	 * 1.数据可访问权限处理方式，这是个私有方法，不会单独被调用，所以不需要权限验证
-	 * 2.验证agent_type是否为空或空格
-	 * 3. 验证agent_name是否为空或空格
-	 * 4.判断agent_ip是否是一个合法的ip
-	 * 5.判断agent_port是否是一个有效的端口
-	 * 6.验证user_id是否为空或空格
-	 * 7.验证source_id是否为空或空格
-	 *
-	 * @param agentName String
-	 *                  含义：agent名称
-	 *                  取值范围：不为空以及空格
-	 * @param agentType String
-	 *                  含义：agent类型
-	 *                  取值范围：1:数据库Agent,2:文件系统Agent,3:FtpAgent,4:数据文件Agent,5:对象Agent
-	 * @param agentIp   String
-	 *                  含义：agent所在服务器ip
-	 *                  取值范围：合法IP地址
-	 * @param agentPort String
-	 *                  含义：agent连接端口
-	 *                  取值范围：1024-65535
-	 * @param sourceId  Long
-	 *                  含义：agent_info表外键ID，data_source表主键ID,定义为Long目的是判null
-	 *                  取值范围：十位数字，新增数据源时自动生成
-	 * @param userId    Long
-	 *                  含义：数据采集用户ID,定义为Long目的是判null
-	 *                  取值范围：四位数字，新增用户时自动生成
-	 */
+	@Method(desc = "更新agent信息",
+			logicStep = "1.数据可访问权限处理方式，通过关联agent_id与user_id检查" +
+					"2.验证agent_id是否合法" +
+					"3.字段合法性验证" +
+					"4.创建agent_info实体对象，同时封装值" +
+					"5.创建agent_info实体对象，同时封装值" +
+					"6.更新agent信息")
+	@Param(name = "agentId", desc = "agent_info主键ID,定义为Long为了判断是否为空", range = "10位数字，新增时自动生成")
+	@Param(name = "agentName", desc = "data_source表主键", range = "10位数字，新增时自动生成")
+	@Param(name = "agentType", desc = "agent类型", range = "1:数据库Agent,2:文件系统Agent,3:FtpAgent," +
+			"4:数据文件Agent,5:对象Agent")
+	@Param(name = "agentIp", desc = "agent所在服务器ip", range = "合法IP地址")
+	@Param(name = "agentPort", desc = "agent连接端口", range = "1024-65535")
+	@Param(name = "sourceId", desc = "agent_info表外键ID，data_source表主键ID,定义为Long目的是判null",
+			range = "10位数字，新增时自动生成")
+	@Param(name = "userId", desc = "数据采集用户ID,定义为Long目的是判null", range = "四位数字，新增用户时自动生成")
+	public void updateAgent(Long agentId, String agentName, String agentType, String agentIp
+			, String agentPort, long sourceId, long userId) {
+		// 1.数据可访问权限处理方式，通过关联agent_id与user_id检查
+		if (Dbo.queryNumber("select count(1) from agent_info where agent_id=? and user_id=?",
+				agentId, userId).orElseThrow(() -> new BusinessException("sql查询错误")) > 0) {
+			throw new BusinessException("数据权限校验失败，数据不可访问！");
+		}
+		// 2.验证agent_id是否合法
+		if (agentId == null) {
+			throw new BusinessException("agent_id为一个10位数字，不能为空，新增时自动生成");
+		}
+		// 3.字段合法性验证
+		fieldLegalityValidation(agentName, agentType, agentIp, agentPort, sourceId, userId);
+		// 4.创建agent_info实体对象，同时封装值
+		Agent_info agentInfo = new Agent_info();
+		agentInfo.setAgent_id(agentId);
+		agentInfo.setUser_id(userId);
+		agentInfo.setSource_id(sourceId);
+		agentInfo.setAgent_ip(agentIp);
+		agentInfo.setAgent_port(agentPort);
+		agentInfo.setAgent_type(agentType);
+		agentInfo.setAgent_name(agentName);
+		// 5.检查数据源是否还存在以及判断数据源下相同的IP地址中是否包含相同的端口
+		check(sourceId, agentType, agentIp, agentPort);
+		// 6.更新agent信息
+		if (agentInfo.update(Dbo.db()) != 1) {
+			throw new BusinessException("更新表信息失败," + "agent_port=" + agentInfo.getAgent_port()
+					+ ",agent_ip =" + agentInfo.getAgent_ip() + ",agent_name=" + agentInfo.getAgent_name());
+		}
+	}
+
+	@Method(desc = "字段合法性验证",
+			logicStep = "1.数据可访问权限处理方式，这是个私有方法，不会单独被调用，所以不需要权限验证" +
+					"2.验证agent_type是否为空或空格" +
+					"3. 验证agent_name是否为空或空格" +
+					"4.判断agent_ip是否是一个合法的ip" +
+					"5.判断agent_port是否是一个有效的端口" +
+					"6.验证user_id是否为空或空格" +
+					"7.验证source_id是否为空或空格")
+	@Param(name = "agentName", desc = "data_source表主键", range = "10位数字，新增时自动生成")
+	@Param(name = "agentType", desc = "agent类型", range = "1:数据库Agent,2:文件系统Agent,3:FtpAgent," +
+			"4:数据文件Agent,5:对象Agent")
+	@Param(name = "agentIp", desc = "agent所在服务器ip", range = "合法IP地址")
+	@Param(name = "agentPort", desc = "agent连接端口", range = "1024-65535")
+	@Param(name = "sourceId", desc = "agent_info表外键ID，data_source表主键ID,定义为Long目的是判null",
+			range = "10位数字，新增时自动生成")
+	@Param(name = "userId", desc = "数据采集用户ID,定义为Long目的是判null", range = "四位数字，新增用户时自动生成")
 	private void fieldLegalityValidation(String agentName, String agentType, String agentIp, String agentPort,
 	                                     Long sourceId, Long userId) {
 		// 1.数据可访问权限处理方式，这是个私有方法，不会单独被调用，所以不需要权限验证
@@ -237,85 +254,12 @@ public class AgentInfoAction extends BaseAction {
 		}
 	}
 
-	/**
-	 * 更新agent信息
-	 * <p>
-	 * 1.数据可访问权限处理方式，通过关联agent_id与user_id检查
-	 * 2.验证agent_id是否合法
-	 * 3.字段合法性验证
-	 * 4.创建agent_info实体对象，同时封装值
-	 * 5.创建agent_info实体对象，同时封装值
-	 * 6.更新agent信息
-	 *
-	 * @param agentId   Long
-	 *                  含义：agent_info主键ID,定义为Long为了判断是否为空
-	 *                  取值范围：十位数字，新增时自动生成
-	 * @param agentName String
-	 *                  含义：agent名称
-	 *                  取值范围：不为空以及空格
-	 * @param agentType String
-	 *                  含义：agent类型
-	 *                  取值范围：1:数据库Agent,2:文件系统Agent,3:FtpAgent,4:数据文件Agent,5:对象Agent
-	 * @param agentIp   String
-	 *                  含义：agent所在服务器ip
-	 *                  取值范围：合法IP地址
-	 * @param agentPort String
-	 *                  含义：agent连接端口
-	 *                  取值范围：1024-65535
-	 * @param sourceId  long
-	 *                  含义：agent_info表外键ID，data_source表主键ID
-	 *                  取值范围：十位数字，新增数据源时自动生成
-	 * @param userId    long
-	 *                  含义：数据采集用户ID
-	 *                  取值范围：四位数字，新增用户时自动生成
-	 */
-	public void updateAgent(Long agentId, String agentName, String agentType, String agentIp
-			, String agentPort, long sourceId, long userId) {
-		// 1.数据可访问权限处理方式，通过关联agent_id与user_id检查
-		if (Dbo.queryNumber("select count(1) from agent_info where agent_id=? and user_id=?",
-				agentId, userId).orElseThrow(() -> new BusinessException("sql查询错误")) > 0) {
-			throw new BusinessException("数据权限校验失败，数据不可访问！");
-		}
-		// 2.验证agent_id是否合法
-		if (agentId == null) {
-			throw new BusinessException("agent_id为一个10位数字，不能为空，新增时自动生成");
-		}
-		// 3.字段合法性验证
-		fieldLegalityValidation(agentName, agentType, agentIp, agentPort, sourceId, userId);
-		// 4.创建agent_info实体对象，同时封装值
-		Agent_info agentInfo = new Agent_info();
-		agentInfo.setAgent_id(agentId);
-		agentInfo.setUser_id(userId);
-		agentInfo.setSource_id(sourceId);
-		agentInfo.setAgent_ip(agentIp);
-		agentInfo.setAgent_port(agentPort);
-		agentInfo.setAgent_type(agentType);
-		agentInfo.setAgent_name(agentName);
-		// 5.检查数据源是否还存在以及判断数据源下相同的IP地址中是否包含相同的端口
-		check(sourceId, agentType, agentIp, agentPort);
-		// 6.更新agent信息
-		if (agentInfo.update(Dbo.db()) != 1) {
-			throw new BusinessException("更新表信息失败," + "agent_port=" + agentInfo.getAgent_port()
-					+ ",agent_ip =" + agentInfo.getAgent_ip() + ",agent_name=" + agentInfo.getAgent_name());
-		}
-	}
-
-	/**
-	 * 监控agent端口是否被占用（后期移动到hrds-commons下）
-	 * <p>
-	 * 1.数据可访问权限处理方式，这是一个私有方法，不会单独被调用，所以这里不需要做权限验证
-	 * 2.通过http方式去测试端口连通情况，测通则被占用，不通则可以使用
-	 *
-	 * @param agentIp   String
-	 *                  含义： agent地址
-	 *                  取值范围：不为空，服务器地址
-	 * @param agentPort int
-	 *                  含义：agent端口
-	 *                  取值范围：1024-65535
-	 * @return boolean
-	 * 含义：返回端口是否被占用信号
-	 * 取值范围：false,true
-	 */
+	@Method(desc = "监控agent端口是否被占用（后期移动到hrds-commons下）",
+			logicStep = "1.数据可访问权限处理方式，这是一个私有方法，不会单独被调用，所以这里不需要做权限验证" +
+					"2.通过http方式去测试端口连通情况，测通则被占用，不通则可以使用")
+	@Param(name = "agentIp", desc = "agent所在服务器ip", range = "合法IP地址")
+	@Param(name = "agentPort", desc = "agent连接端口", range = "1024-65535")
+	@Return(desc = "返回端口是否被占用信号", range = "false,true")
 	private boolean isPortOccupied(String agentIp, int agentPort) {
 		// 1.数据可访问权限处理方式，这是一个私有方法，不会单独被调用，所以这里不需要做权限验证
 		// 2.通过http方式去测试端口连通情况，测通则被占用，不通则可以使用
@@ -332,22 +276,13 @@ public class AgentInfoAction extends BaseAction {
 		}
 	}
 
-	/**
-	 * 查询Agent信息
-	 * <p>
-	 * 1.数据可访问权限处理方式，通过agent_id,agent_type，user_id关联检查
-	 * 2.根据agent_id与agent_type查询该agent信息
-	 *
-	 * @param agentId   long
-	 *                  含义：agent_info表主键
-	 *                  取值范围：不为空且不为空格，长度不超过10
-	 * @param agentType String
-	 *                  含义：agent类型
-	 *                  取值范围：1:数据库Agent,2:文件系统Agent,3:FtpAgent,4:数据文件Agent,5:对象Agent
-	 * @return java.util.List
-	 * 含义：返回根据agent_id与agent_type查询该agent_info信息集合
-	 * 取值范围：无限制
-	 */
+	@Method(desc = "查询Agent信息",
+			logicStep = "1.数据可访问权限处理方式，通过agent_id,agent_type，user_id关联检查" +
+					"2.根据agent_id与agent_type查询该agent信息")
+	@Param(name = "agentId", desc = "agent_info表主键", range = "10位数字，新增时生成")
+	@Param(name = "agentType", desc = "agent类型", range = "1:数据库Agent,2:文件系统Agent,3:FtpAgent," +
+			"4:数据文件Agent,5:对象Agent")
+	@Return(desc = "返回根据agent_id与agent_type查询该agent_info信息集合", range = "无限制")
 	public List<Agent_info> searchAgent(long agentId, String agentType) {
 		// 1.数据可访问权限处理方式，通过agent_id,agent_type，user_id关联检查
 		// 2.根据agent_id与agent_type查询该agent信息
@@ -355,21 +290,14 @@ public class AgentInfoAction extends BaseAction {
 				" AND agent_type = ? and user_id=?", agentId, agentType, getUserId());
 	}
 
-	/**
-	 * 删除agent
-	 * <p>
-	 * 1.数据可访问权限处理方式，以下SQL关联user_id检查
-	 * 2.删除前查询此agent是否已部署，已部署不能删除
-	 * 3.判断此数据源与agent下是否有任务，有任务不能删除
-	 * 4.删除agent
-	 *
-	 * @param agentId   long
-	 *                  含义：agent_info表主键
-	 *                  取值范围：不为空且不为空格，长度不超过10
-	 * @param agentType String
-	 *                  含义：agent类型
-	 *                  取值范围：1:数据库Agent,2:文件系统Agent,3:FtpAgent,4:数据文件Agent,5:对象Agent
-	 */
+	@Method(desc = "删除agent",
+			logicStep = "1.数据可访问权限处理方式，以下SQL关联user_id检查" +
+					"2.删除前查询此agent是否已部署，已部署不能删除" +
+					"3.判断此数据源与agent下是否有任务，有任务不能删除" +
+					"4.删除agent")
+	@Param(name = "agentId", desc = "agent_info表主键", range = "10位数字，新增时生成")
+	@Param(name = "agentType", desc = "agent类型", range = "1:数据库Agent,2:文件系统Agent,3:FtpAgent," +
+			"4:数据文件Agent,5:对象Agent")
 	public void deleteAgent(Long agentId, String agentType) {
 		// 1.数据可访问权限处理方式，通过agent_id,agent_type,user_id关联检查
 		if (Dbo.queryNumber("select count(*) from agent_info where agent_id=? and user_id=? " +
