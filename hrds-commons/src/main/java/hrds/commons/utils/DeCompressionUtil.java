@@ -1,5 +1,8 @@
 package hrds.commons.utils;
 
+import fd.ng.core.annotation.Method;
+import fd.ng.core.annotation.Param;
+import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
 import hrds.commons.codes.ReduceType;
 import hrds.commons.exception.BusinessException;
@@ -28,24 +31,14 @@ public class DeCompressionUtil {
 	private DeCompressionUtil() {
 	}
 
-	/**
-	 * 将文件根据对应的解压缩方式进行解压
-	 * <p>
-	 * 1.判断文件是否存在，不存在直接返回false
-	 * 2.判断解压缩方式是否为空，为空则默认使用Gzip进行解压
-	 * 3.不为空则根据对应的方式进行解压，对应不上抛异常
-	 * 4.将解压后的文件重新写出来
-	 *
-	 * @param filePath      String
-	 *                      含义：压缩文件的全路径
-	 *                      取值范围：不能为空
-	 * @param deCompressWay String
-	 *                      含义：解压缩方式
-	 *                      取值范围：可以为空
-	 * @return boolean
-	 * 含义：解压缩成功或失败的判断
-	 * 取值范围：不会为空
-	 */
+	@Method(desc = "将文件根据对应的解压缩方式进行解压",
+			logicStep = "1.判断文件是否存在，不存在直接返回false" +
+					"2.判断解压缩方式是否为空，为空则默认使用Gzip进行解压" +
+					"3.不为空则根据对应的方式进行解压，对应不上抛异常" +
+					"4.将解压后的文件重新写出来")
+	@Param(name = "filePath", desc = "压缩文件的全路径", range = "不能为空")
+	@Param(name = "deCompressWay", desc = "解压缩方式", range = "可以为空")
+	@Return(desc = "解压缩成功或失败的判断", range = "不会为空")
 	public static boolean deCompression(String filePath, String deCompressWay) {
 		//1.判断文件是否存在，不存在直接返回false
 		File input = new File(filePath);
