@@ -1,12 +1,13 @@
 package hrds.b.biz.agent.unstructuredfilecollect;
 
 import com.alibaba.fastjson.JSONArray;
+import fd.ng.core.annotation.Method;
+import fd.ng.core.annotation.Param;
+import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
-import fd.ng.web.annotation.RequestBean;
-import fd.ng.web.annotation.RequestParam;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.IsFlag;
@@ -27,21 +28,15 @@ import java.util.Map;
  */
 public class UnstructuredFileCollectAction extends BaseAction {
 
-	/**
-	 * 该方法在页面点击添加非结构化文件采集时调用，获取非结构化采集配置页面初始化的值,当为编辑时，则同时返回回显的值
-	 * <p>
-	 * 1.根据前端传过来的agent_id获取agent的连接url
-	 * 2.调用远程Agent的后端代码获取采集服务器上的日期、时间、操作系统类型和主机名等基本信息
-	 * 3.文件系统采集ID不为空则获取文件系统设置表信息
-	 *
-	 * @param file_collect_set File_collect_set
-	 *                         含义：文件系统设置表对象，接收页面传过来的参数Agent_id和fcs_id(文件系统采集ID)
-	 *                         取值范围：Agent_id不可为空，fcs_id可为空
-	 * @return Map<String, Object>
-	 * 含义：页面需要的Agent所在服务器的基本信息、文件系统设置表信息
-	 * 取值范围：不会为空
-	 */
-	public Map<String, Object> searchFileCollect(@RequestBean File_collect_set file_collect_set) {
+	@Method(desc = "该方法在页面点击添加非结构化文件采集时调用，获取非结构化采集配置页面初始化的值" +
+			",当为编辑时，则同时返回回显的值",
+			logicStep = "1.根据前端传过来的agent_id获取agent的连接url" +
+					"2.调用远程Agent的后端代码获取采集服务器上的日期、时间、操作系统类型和主机名等基本信息" +
+					"3.文件系统采集ID不为空则获取文件系统设置表信息")
+	@Param(name = "file_collect_set", desc = "文件系统设置表对象，接收页面传过来的参数Agent_id和fcs_id(文件系统采集ID)"
+			, range = "Agent_id不可为空，fcs_id可为空", isBean = true)
+	@Return(desc = "页面需要的Agent所在服务器的基本信息、文件系统设置表信息", range = "不会为空")
+	public Map<String, Object> searchFileCollect(File_collect_set file_collect_set) {
 		//TODO file_collect_set里面各字段的值需要校验，应该使用一个公共的校验类进行校验
 		if (file_collect_set.getAgent_id() == null) {
 			throw new BusinessException("agent_id不能为空");
@@ -73,20 +68,12 @@ public class UnstructuredFileCollectAction extends BaseAction {
 		return map;
 	}
 
-	/**
-	 * 保存非结构化文件采集页面信息到文件系统设置表对象，同时返回文件系统采集表id
-	 * <p>
-	 * 1.根据fcs_name查询非结构化任务名称是否重复
-	 * 2.保存File_collect_set表
-	 *
-	 * @param file_collect_set File_collect_set
-	 *                         含义：文件系统设置表对象
-	 *                         取值范围：不可为空
-	 * @return long
-	 * 含义：返回文件系统采集表主键，保证添加源文件设置表时可以取到主键
-	 * 取值范围：不会为空
-	 */
-	public long addFileCollect(@RequestBean File_collect_set file_collect_set) {
+	@Method(desc = "保存非结构化文件采集页面信息到文件系统设置表对象，同时返回文件系统采集表id",
+			logicStep = "1.根据fcs_name查询非结构化任务名称是否重复" +
+					"2.保存File_collect_set表")
+	@Param(name = "file_collect_set", desc = "文件系统设置表对象", range = "不可为空", isBean = true)
+	@Return(desc = "返回文件系统采集表主键，保证添加源文件设置表时可以取到主键", range = "不会为空")
+	public long addFileCollect(File_collect_set file_collect_set) {
 		//数据可访问权限处理方式：该表没有对应的用户访问权限限制
 		//TODO file_collect_set里面各字段的值需要校验，应该使用一个公共的校验类进行校验
 		//1.根据fcs_name查询非结构化任务名称是否重复
@@ -102,17 +89,11 @@ public class UnstructuredFileCollectAction extends BaseAction {
 		return file_collect_set.getFcs_id();
 	}
 
-	/**
-	 * 更新非结构化文件采集页面信息到文件系统设置表对象
-	 * <p>
-	 * 1.根据fcs_name查询非结构化任务名称是否与其他采集任务名称重复
-	 * 2.更新File_collect_set表
-	 *
-	 * @param file_collect_set File_collect_set
-	 *                         含义：文件系统设置表对象
-	 *                         取值范围：不可为空
-	 */
-	public void updateFileCollect(@RequestBean File_collect_set file_collect_set) {
+	@Method(desc = "更新非结构化文件采集页面信息到文件系统设置表对象",
+			logicStep = "1.根据fcs_name查询非结构化任务名称是否与其他采集任务名称重复" +
+					"2.更新File_collect_set表")
+	@Param(name = "file_collect_set", desc = "文件系统设置表对象", range = "不可为空", isBean = true)
+	public void updateFileCollect(File_collect_set file_collect_set) {
 		//数据可访问权限处理方式：该表没有对应的用户访问权限限制
 		//TODO file_collect_set里面各字段的值需要校验，应该使用一个公共的校验类进行校验
 		//新增逻辑
@@ -131,18 +112,10 @@ public class UnstructuredFileCollectAction extends BaseAction {
 		file_collect_set.update(Dbo.db());
 	}
 
-	/**
-	 * 根据文件系统设置表id获取源文件设置表的合集
-	 * <p>
-	 * 1.根据文件系统采集id查询源文件设置表返回到前端
-	 *
-	 * @param fcs_id long
-	 *               含义：文件系统设置表的id
-	 *               取值范围：不可为空
-	 * @return Result
-	 * 含义：源文件设置表基本信息
-	 * 取值范围：可能为空
-	 */
+	@Method(desc = "根据文件系统设置表id获取源文件设置表的合集",
+			logicStep = "1.根据文件系统采集id查询源文件设置表返回到前端")
+	@Param(name = "fcs_id", desc = "文件系统设置表的id", range = "不可为空")
+	@Return(desc = "源文件设置表基本信息", range = "可能为空")
 	public Result searchFileSource(long fcs_id) {
 		//数据可访问权限处理方式：该表没有对应的用户访问权限限制
 		//FIXME 数据权限检查呢？本类所有方法都没有做检查！
@@ -150,25 +123,15 @@ public class UnstructuredFileCollectAction extends BaseAction {
 		return Dbo.queryResult("SELECT * FROM " + File_source.TableName + " WHERE fcs_id = ?", fcs_id);
 	}
 
-	/**
-	 * 选择文件夹Agent所在服务器的文件夹
-	 * <p>
-	 * 1.根据前端传过来的agent_id获取需要访问的url
-	 * 2.调用远程Agent后端代码获取Agent服务器上文件夹路径
-	 * 3.返回到前端
-	 *
-	 * @param agent_id long
-	 *                 含义：文件采集Agent的id
-	 *                 取值范围：不能为空
-	 * @param path     String
-	 *                 含义：选择Agent服务器所在路径下的文件夹，为空则返回根目录下的所有文件夹
-	 *                 取值范围：可为空
-	 * @return List<String>
-	 * 含义：路径下文件夹的名称和服务器操作系统的名称的集合
-	 * 取值范围：可能为空
-	 */
+	@Method(desc = "选择文件夹Agent所在服务器的文件夹",
+			logicStep = "1.根据前端传过来的agent_id获取需要访问的url" +
+					"2.调用远程Agent后端代码获取Agent服务器上文件夹路径" +
+					"3.返回到前端")
+	@Param(name = "agent_id", desc = "文件采集Agent的id", range = "不能为空", valueIfNull = "")
+	@Param(name = "path", desc = "选择Agent服务器所在路径下的文件夹，为空则返回根目录下的所有文件夹", range = "可为空")
+	@Return(desc = "路径下文件夹的名称和服务器操作系统的名称的集合", range = "可能为空")
 	//XXX 这里不用nullable是不想下面传参数那里判断null
-	public List<String> selectPath(long agent_id, @RequestParam(valueIfNull = "") String path) {
+	public List<String> selectPath(long agent_id, String path) {
 		//TODO 根据操作系统校验文件路径，应该使用一个公共的校验类进行校验
 		//数据可访问权限处理方式，传入用户需要有Agent对应数据的访问权限
 		//1.根据前端传过来的agent_id获取需要访问的url
@@ -187,19 +150,13 @@ public class UnstructuredFileCollectAction extends BaseAction {
 		return ar.getDataForEntityList(String.class);
 	}
 
-	/**
-	 * 将页面选择的需要采集的源文件路径保存到数据库
-	 * <p>
-	 * 1.获取json数组转成源文件设置表的集合
-	 * 2.根据文件系统设置表id删除源文件设置表
-	 * 3.遍历源文件设置表的集合，将对象的数据插入到源文件设置表
-	 * 4.更新文件系统设置表
-	 *
-	 * @param file_sources_array String
-	 *                           含义：源文件设置表的JSONArray格式的字符串，其中file_source表不能
-	 *                           为空的列所对应的值不能为空
-	 *                           取值范围：不能为空
-	 */
+	@Method(desc = "将页面选择的需要采集的源文件路径保存到数据库",
+			logicStep = "1.获取json数组转成源文件设置表的集合" +
+					"2.根据文件系统设置表id删除源文件设置表" +
+					"3.遍历源文件设置表的集合，将对象的数据插入到源文件设置表" +
+					"4.更新文件系统设置表")
+	@Param(name = "file_sources_array", desc = "多条源文件设置表的JSONArray格式的字符串，" +
+			"其中file_source表不能为空的列所对应的值不能为空", range = "不能为空")
 	public void saveFileSource(String file_sources_array) {
 		//数据可访问权限处理方式：该表没有对应的用户访问权限限制
 		//1.获取json数组转成源文件设置表的集合

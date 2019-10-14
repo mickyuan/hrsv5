@@ -1,12 +1,14 @@
 package hrds.b.biz.agent.objectcollect;
 
 import com.alibaba.fastjson.JSONArray;
+import fd.ng.core.annotation.Method;
+import fd.ng.core.annotation.Param;
+import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
-import fd.ng.web.annotation.RequestBean;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.IsFlag;
@@ -29,33 +31,28 @@ import java.util.Map;
  */
 public class ObjectCollectAction extends BaseAction {
 
-	/**
-	 * 获取半结构化采集配置页面初始化的值，当odc_id不为空时，则同时返回object_collect表的值
-	 * <p>
-	 * 1.根据前端传过来的agent_id获取调用Agent服务的接口
-	 * 2.根据Agent的ip和端口远程调用Agent的后端代码获取采集服务器上的日期、时间、操作系统类型和主机名等基本信息
-	 * 3.对象采集id不为空则获取对象采集设置表信息
-	 *
-	 * @param object_collect Object_collect
-	 *                       含义：对象采集设置表对象，接收页面传过来的参数Agent_id和odc_id(对象采集id)
-	 *                       取值范围：agent_id不可为空，odc_id可为空
-	 * @return Map<String, Object>
-	 * 含义：Agent所在服务器的基本信息、对象采集设置表信息
-	 * 取值范围：不会为空
-	 */
-	public Map<String, Object> searchObjectCollect(@RequestBean Object_collect object_collect) {
+
+	@Method(desc = "获取半结构化采集配置页面初始化的值，当odc_id不为空时，则同时返回object_collect表的值",
+			logicStep = "1.根据前端传过来的agent_id获取调用Agent服务的接口" +
+					"2.根据url远程调用Agent的后端代码获取采集服务器上的日期、" +
+					"时间、操作系统类型和主机名等基本信息" +
+					"3.对象采集id不为空则获取对象采集设置表信息")
+	@Param(name = "object_collect", desc = "对象采集设置表对象，接收页面传过来的参数Agent_id和odc_id(对象采集id)",
+			range = "agent_id不可为空，odc_id可为空", isBean = true)
+	@Return(desc = "Agent所在服务器的基本信息、对象采集设置表信息", range = "不会为空")
+	public Map<String, Object> searchObjectCollect(Object_collect object_collect) {
 		if (object_collect.getAgent_id() == null) {
-			throw new BusinessException("agent_id不能为空");
+			throw new BusinessException("object_collect对象agent_id不能为空");
 		}
 		//数据可访问权限处理方式：传入用户需要有Agent信息表对应数据的访问权限
 		//1.根据前端传过来的agent_id获取调用Agent服务的接口
 		String url = AgentActionUtil.getUrl(object_collect.getAgent_id(), getUserId()
 				, AgentActionUtil.GETSERVERINFO);
 		//调用工具类方法给agent发消息，并获取agent响应
-		//2.根据Agent的ip和端口远程调用Agent的后端代码获取采集服务器上的日期、时间、操作系统类型和主机名等基本信息
+		//2.根据url远程调用Agent的后端代码获取采集服务器上的日期、时间、操作系统类型和主机名等基本信息
 		HttpClient.ResponseValue resVal = new HttpClient().post(url);
 		ActionResult ar = JsonUtil.toObjectSafety(resVal.getBodyString(), ActionResult.class)
-				.orElseThrow(() -> new BusinessException("连接" + url + "服务异常"));
+				.orElseThrow(() -> new BusinessException("连接远程" + url + "服务异常"));
 		if (!ar.isSuccess()) {
 			throw new BusinessException("远程连接" + url + "的Agent失败");
 		}
@@ -75,24 +72,16 @@ public class ObjectCollectAction extends BaseAction {
 					"根据odc_id" + object_collect.getOdc_id() + "查询不到object_collect表信息"));
 			map.put("object_collect_info", object_collect_info);
 		}
-		//FIXME else哪去了？
 		return map;
 	}
 
-	/**
-	 * 保存半结构化文件采集页面信息到对象采集设置表对象，同时返回对象采集id
-	 * <p>
-	 * 1.根据obj_collect_name查询半结构化任务名称是否重复
-	 * 2.保存object_collect表
-	 *
-	 * @param object_collect Object_collect
-	 *                       含义：对象采集设置表对象，对象中不能为空的字段必须有值
-	 *                       取值范围：不可为空
-	 * @return long
-	 * 含义：对象采集设置表id，新建的id后台生成的所以要返回到前端
-	 * 取值范围：不会为空
-	 */
-	public long addObjectCollect(@RequestBean Object_collect object_collect) {
+	@Method(desc = "保存半结构化文件采集页面信息到对象采集设置表对象，同时返回对象采集id",
+			logicStep = "1.根据obj_collect_name查询半结构化任务名称是否重复" +
+					"2.保存object_collect表")
+	@Param(name = "object_collect", desc = "对象采集设置表对象，对象中不能为空的字段必须有值",
+			range = "不可为空", isBean = true)
+	@Return(desc = "对象采集设置表id，新建的id后台生成的所以要返回到前端", range = "不会为空")
+	public long addObjectCollect(Object_collect object_collect) {
 		//数据可访问权限处理方式：该表没有对应的用户访问权限限制
 		//TODO 应该使用一个公共的校验类进行校验
 		//1.根据obj_collect_name查询半结构化任务名称是否重复
@@ -108,17 +97,11 @@ public class ObjectCollectAction extends BaseAction {
 		return object_collect.getOdc_id();
 	}
 
-	/**
-	 * 更新半结构化文件采集页面信息到对象采集设置表对象，同时返回对象采集id
-	 * <p>
-	 * 1.根据obj_collect_name查询半结构化任务名称是否与其他采集任务名称重复
-	 * 2.更新object_collect表
-	 *
-	 * @param object_collect Object_collect
-	 *                       含义：对象采集设置表对象
-	 *                       取值范围：不可为空
-	 */
-	public void updateObjectCollect(@RequestBean Object_collect object_collect) {
+	@Method(desc = "更新半结构化文件采集页面信息到对象采集设置表对象，同时返回对象采集id",
+			logicStep = "1.根据obj_collect_name查询半结构化任务名称是否与其他采集任务名称重复" +
+					"2.更新object_collect表")
+	@Param(name = "object_collect", desc = "对象采集设置表对象", range = "不可为空", isBean = true)
+	public void updateObjectCollect(Object_collect object_collect) {
 		//数据可访问权限处理方式：该表没有对应的用户访问权限限制
 		//TODO 应该使用一个公共的校验类进行校验
 		if (object_collect.getOdc_id() == null) {
@@ -136,18 +119,10 @@ public class ObjectCollectAction extends BaseAction {
 		object_collect.update(Dbo.db());
 	}
 
-	/**
-	 * 根据对象采集id查询对象采集对应信息的合集
-	 * <p>
-	 * 1.根据对象采集id查询对象采集对应信息表返回到前端
-	 *
-	 * @param odc_id long
-	 *               含义：对象采集id
-	 *               取值范围：不能为空
-	 * @return fd.ng.db.resultset.Result
-	 * 含义：对象采集对应信息的合集
-	 * 取值范围：可能为空
-	 */
+	@Method(desc = "根据对象采集id查询对象采集对应信息的合集",
+			logicStep = "1.根据对象采集id查询对象采集对应信息表返回到前端")
+	@Param(name = "odc_id", desc = "对象采集id", range = "不能为空")
+	@Return(desc = "对象采集对应信息的合集", range = "可能为空")
 	public Result searchObjectCollectTask(long odc_id) {
 		//数据可访问权限处理方式：该表没有对应的用户访问权限限制
 		//1.根据对象采集id查询对象采集对应信息表返回到前端
@@ -155,17 +130,11 @@ public class ObjectCollectAction extends BaseAction {
 				+ " WHERE odc_id = ?", odc_id);
 	}
 
-	/**
-	 * 对象采集任务编号删除对象采集对应信息表
-	 * <p>
-	 * 1.根据对象采集任务编号查询对象采集存储设置表是否有数据，有数据不能删除
-	 * 2.根据对象采集任务编号查询对象对应的对象采集结构信息表是否有数据，有数据不能删除
-	 * 3.根据对象采集任务编号删除对象采集对应信息表
-	 *
-	 * @param ocs_id long
-	 *               含义：对象采集任务编号
-	 *               取值范围：不可为空
-	 */
+	@Method(desc = "对象采集任务编号删除对象采集对应信息表",
+			logicStep = "1.根据对象采集任务编号查询对象采集存储设置表是否有数据，有数据不能删除" +
+					"2.根据对象采集任务编号查询对象对应的对象采集结构信息表是否有数据，有数据不能删除" +
+					"3.根据对象采集任务编号删除对象采集对应信息表")
+	@Param(name = "ocs_id", desc = "对象采集任务编号", range = "不可为空")
 	public void deleteObjectCollectTask(long ocs_id) {
 		//数据可访问权限处理方式：该表没有对应的用户访问权限限制
 		//1.根据对象采集任务编号查询对象采集存储设置表是否有数据，有数据不能删除
@@ -195,19 +164,13 @@ public class ObjectCollectAction extends BaseAction {
 		}
 	}
 
-	/**
-	 * 保存对象采集对应信息表
-	 * <p>
-	 * 1.获取json数组转成对象采集对应信息表的集合
-	 * 2.获取对象采集对应信息表list进行遍历
-	 * 3.根据对象采集对应信息表id判断是新增还是编辑
-	 * 4.根据en_name查询对象采集对应信息表的英文名称是否重复
-	 *
-	 * @param object_collect_task_array String
-	 *                                  含义：对象采集对应信息表的JSONArray格式的字符串，其中object_collect_task
-	 *                                  表不能为空的列所对应的值不能为空
-	 *                                  取值范围：不能为空
-	 */
+	@Method(desc = "保存对象采集对应信息表",
+			logicStep = "1.获取json数组转成对象采集对应信息表的集合" +
+					"2.获取对象采集对应信息表list进行遍历" +
+					"3.根据对象采集对应信息表id判断是新增还是编辑" +
+					"4.根据en_name查询对象采集对应信息表的英文名称是否重复")
+	@Param(name = "object_collect_task_array", desc = "多条对象采集对应信息表的JSONArray格式的字符串，" +
+			"其中object_collect_task表不能为空的列所对应的值不能为空", range = "不能为空")
 	public void saveObjectCollectTask(String object_collect_task_array) {
 		//数据可访问权限处理方式：该表没有对应的用户访问权限限制
 		//1.获取json数组转成对象采集对应信息表的集合
@@ -245,18 +208,10 @@ public class ObjectCollectAction extends BaseAction {
 		}
 	}
 
-	/**
-	 * 根据ocs_idc查询对象采集任务对应对象采集结构信息
-	 * <p>
-	 * 1.查询对应对象采集结构信息表，返回前端
-	 *
-	 * @param ocs_id long
-	 *               含义：对象采集任务编号
-	 *               取值范围：不可为空
-	 * @return fd.ng.db.resultset.Result
-	 * 含义：对象采集任务对应对象采集结构信息的集合
-	 * 取值范围：可能为空
-	 */
+	@Method(desc = "根据ocs_idc查询对象采集任务对应对象采集结构信息",
+			logicStep = "1.查询对应对象采集结构信息表，返回前端")
+	@Param(name = "ocs_id", desc = "对象采集任务编号", range = "不可为空")
+	@Return(desc = "对象采集任务对应对象采集结构信息的集合", range = "可能为空")
 	public Result searchObject_collect_struct(long ocs_id) {
 		//数据可访问权限处理方式：该表没有对应的用户访问权限限制
 		//1.查询对应对象采集结构信息表，返回前端
@@ -264,16 +219,10 @@ public class ObjectCollectAction extends BaseAction {
 				+ " WHERE ocs_id = ?", ocs_id);
 	}
 
-	/**
-	 * 根据结构信息id删除对象采集结构信息表
-	 * <p>
-	 * 1.获取结构信息id，删除对象采集结构信息表
-	 * 2.判断库里是否没有这条数据
-	 *
-	 * @param struct_id long
-	 *                  含义：结构信息id
-	 *                  取值范围：不可为空
-	 */
+	@Method(desc = "根据结构信息id删除对象采集结构信息表",
+			logicStep = "1.获取结构信息id，删除对象采集结构信息表" +
+					"2.判断库里是否没有这条数据")
+	@Param(name = "struct_id", desc = "结构信息id", range = "不可为空")
 	public void deleteObject_collect_struct(long struct_id) {
 		//数据可访问权限处理方式：该表没有对应的用户访问权限限制
 		//1.获取结构信息id，删除对象采集结构信息表
@@ -289,20 +238,15 @@ public class ObjectCollectAction extends BaseAction {
 		}
 	}
 
-	/**
-	 * 保存对象采集对应结构信息表
-	 * <p>
-	 * 1.获取json数组转成对象采集结构信息表的集合
-	 * 2.获取对象采集结构信息list进行遍历
-	 * 3.根据对象采集结构信息id判断是新增还是编辑
-	 * 4.判断同一个对象采集任务下，对象采集结构信息表的coll_name有没有重复
-	 * 5.新增或更新数据库
-	 *
-	 * @param object_collect_struct_array String
-	 *                                    含义：对象采集对应结构信息表的JSONArray格式的字符串，其中
-	 *                                    object_collect_struct表不能为空的列所对应的值不能为空
-	 *                                    取值范围：不可为空
-	 */
+
+	@Method(desc = "保存对象采集对应结构信息表",
+			logicStep = "1.获取json数组转成对象采集结构信息表的集合" +
+					"2.获取对象采集结构信息list进行遍历" +
+					"3.根据对象采集结构信息id判断是新增还是编辑" +
+					"4.判断同一个对象采集任务下，对象采集结构信息表的coll_name有没有重复" +
+					"5.新增或更新数据库")
+	@Param(name = "object_collect_struct_array", desc = "多条对象采集对应结构信息表的JSONArray格式的字符串，" +
+			"其中object_collect_struct表不能为空的列所对应的值不能为空", range = "不可为空")
 	public void saveObject_collect_struct(String object_collect_struct_array) {
 		//数据可访问权限处理方式：该表没有对应的用户访问权限限制
 		//1.获取json数组转成对象采集结构信息表的集合
@@ -342,18 +286,10 @@ public class ObjectCollectAction extends BaseAction {
 		}
 	}
 
-	/**
-	 * 根据对象采集id查询对象采集任务存储设置
-	 * <p>
-	 * 1.根据对象采集id，查询对象采集任务及每个任务对象的存储设置
-	 *
-	 * @param odc_id long
-	 *               含义：对象采集id
-	 *               取值范围：不可为空
-	 * @return fd.ng.db.resultset.Result
-	 * 含义：采集任务及每个任务的存储设置
-	 * 取值范围：不会为空
-	 */
+	@Method(desc = "根据对象采集id查询对象采集任务存储设置",
+			logicStep = "1.根据对象采集id，查询对象采集任务及每个任务对象的存储设置")
+	@Param(name = "odc_id", desc = "对象采集id", range = "不可为空")
+	@Return(desc = "采集任务及每个任务的存储设置", range = "不会为空")
 	public Result searchObject_storage(long odc_id) {
 		//数据可访问权限处理方式：该表没有对应的用户访问权限限制
 		//1.根据对象采集id，查询对象采集任务及每个任务对象的存储设置
@@ -365,22 +301,14 @@ public class ObjectCollectAction extends BaseAction {
 		return result;
 	}
 
-	/**
-	 * 保存对象采集存储设置表
-	 * <p>
-	 * 1.获取json数组转成对象采集结构信息表的集合
-	 * 2.根据对象采集存储设置表id是否为空判断是编辑还是新增
-	 * 3.保存对象采集存储设置表
-	 * 4.更新对象采集设置表的字段是否完成设置并发送成功为是
-	 *
-	 * @param object_storage_array String
-	 *                             含义：对象采集存储设置表的JSONArray格式的字符串，其中
-	 *                             object_storage表不能为空的列所对应的值不能为空
-	 *                             取值范围：不能为空
-	 * @param odc_id               long
-	 *                             含义：对象采集id
-	 *                             取值范围：不能为空
-	 */
+	@Method(desc = "保存对象采集存储设置表",
+			logicStep = "1.获取json数组转成对象采集结构信息表的集合" +
+					"2.根据对象采集存储设置表id是否为空判断是编辑还是新增" +
+					"3.保存对象采集存储设置表" +
+					"4.更新对象采集设置表的字段是否完成设置并发送成功为是")
+	@Param(name = "object_storage_array", desc = "多条对象采集存储设置表的JSONArray格式的字符串，" +
+			"其中object_storage表不能为空的列所对应的值不能为空", range = "不能为空")
+	@Param(name = "odc_id", desc = "对象采集id", range = "不能为空")
 	public void saveObject_storage(String object_storage_array, long odc_id) {
 		//数据可访问权限处理方式：该表没有对应的用户访问权限限制
 		//1.获取json数组转成对象采集结构信息表的集合
