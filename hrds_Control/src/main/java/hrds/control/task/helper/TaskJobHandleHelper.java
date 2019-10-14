@@ -65,6 +65,7 @@ public class TaskJobHandleHelper {
 
 	private static final String PARAERROR = "干预参数错误"; //参数错误信息
 	private static final String NOEXITSERROR = "任务不存在"; //任务不存在错误信息
+	private static final String NOSUPPORT = "不支持的干预类型"; //干预类型不存在错误信息
 	private static final String STATEERROR = "当前状态不允许执行此操作"; //状态异常错误信息
 	private static final String JOBSTOPERROR = "任务停止失败"; //状态异常错误信息
 	private static final String PRIORITYERROR = "任务优先级设置超过范围"; //作业优先级异常
@@ -119,7 +120,12 @@ public class TaskJobHandleHelper {
 //				case GC:break;
 //				case GR:break;
 				case SF:handleSysShift(handle);break;   //系统日切
-				default:break;
+				default:{
+					//TODO 较原版改动：增加了以下代码块，响应不支持的干预类型问题
+					logger.warn("{}  {}，{}", handle.getEtl_job(), handle.getEtl_hand_type(), NOSUPPORT);
+					handle.setWarning(NOSUPPORT);
+					updateErrorHandle(handle);
+				} break;
 			}
 		}
 	}
@@ -339,7 +345,7 @@ public class TaskJobHandleHelper {
 			try {
 				do {
 					Thread.sleep(DEFAULT_MILLISECONDS);
-				} while (checkJobsNotStop(etlJobs));
+				}while (checkJobsNotStop(etlJobs));
 			}
 			catch(InterruptedException e) {
 				e.printStackTrace();
@@ -647,10 +653,8 @@ public class TaskJobHandleHelper {
 
 		//1、当作业类型为Yarn时，意味着该任务在yarn上运行，使用杀死yarn作业的方式来结束作业；
 		if(Pro_Type.Yarn.getCode().equals(proType)) {
-			logger.info("Will close job, process id is {}", processId);
 			try {
 				YarnUtil.killApplicationByid(processId);
-				return true;
 			}
 			catch(Exception e) {
 				e.printStackTrace();
@@ -660,8 +664,8 @@ public class TaskJobHandleHelper {
 			//2、当作业类型不为Yarn时，意味着该任务在本地系统上运行，使用linux指令来结束作业。
 			if(StringUtil.isEmpty(processId)) return true;
 
-			String cmd = KILL9COMMANDLINE + " " + processId;
-//			String cmd = "taskkill -PID " + processId + " -F";
+//			String cmd = KILL9COMMANDLINE + " " + processId;
+			String cmd = "taskkill -PID " + processId + " -F";
 			try {
 				Runtime.getRuntime().exec(cmd); //执行命令
 			}
@@ -669,8 +673,10 @@ public class TaskJobHandleHelper {
 				e.printStackTrace();
 				return false;
 			}
-			return true;
 		}
+
+		logger.info("作业关闭成功，进程号为 {}", processId);
+		return true;
 	}
 
 	/**

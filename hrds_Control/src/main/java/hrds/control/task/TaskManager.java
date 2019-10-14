@@ -109,6 +109,7 @@ public class TaskManager {
 	 *          取值范围：不能为null。
 	 */
 	public TaskManager(String etlSysCd, String bathDate, boolean isResumeRun, boolean isAutoShift) {
+
 		//1.构造全局变量。
 		this.etlSysCd = etlSysCd;
 		this.bathDateStr = bathDate;
@@ -158,6 +159,7 @@ public class TaskManager {
 	 * @date 2019/10/8
 	 */
 	public void startCheckWaitFileThread() {
+
 		//1.在初次调用时构造CheckWaitFileThread对象；
 	 	if(null == checkWaitFileThread) {
 		    checkWaitFileThread = new CheckWaitFileThread();
@@ -174,6 +176,7 @@ public class TaskManager {
 	 * @date 2019/10/8
 	 */
 	public void stopCheckWaitFileThread() {
+
 		//1.停止信号文件（Wait file）监控线程。
 		if(null != checkWaitFileThread) {
 			checkWaitFileThread.stopThread();
@@ -191,6 +194,7 @@ public class TaskManager {
 	 * @date 2019/8/31
 	 */
 	public void loadReadyJob() {
+
 		//1、清理内存：作业定义map、作业间关系依赖map、待调度作业map。
 		jobDefineMap.clear();
 		jobTimeDependencyMap.clear();
@@ -654,6 +658,7 @@ public class TaskManager {
 	 *          取值范围：yyyyMMdd格式的字符串，不能为null。
 	 */
 	private void loadExecuteJobWithRunning(String strSystemCode, String strBathDate) {
+
 		//1.根据调度系统编号、跑批日期获取所属的所有作业；
 		List<Etl_job_cur> currentJobs= TaskSqlHelper.getEtlJobs(strSystemCode, strBathDate);
 		for(Etl_job_cur job : currentJobs) {
@@ -941,6 +946,7 @@ public class TaskManager {
 	 *          取值范围：true/false。
 	 */
 	private boolean checkEtlDefJob(EtlJobDefBean job) {
+
 		//1.检查该作业的已执行次数是否达到总执行次数；
 		int exeNum = job.getExe_num();
 		int exeedNum = job.getCom_exe_num();	//已经执行次数
@@ -968,6 +974,7 @@ public class TaskManager {
 	 *          取值范围：true/false。
 	 */
 	private boolean checkEtlJob(EtlJobBean exeJob) {
+
 		//FIXME 这个方法在海量循环中被反复调用，用一个SQL找出来所有不符合的数据，而不是在循环中一个个的找
 		// 最好这么弄，但是可以不这么弄，理由有3点：
 		// 1、该方法只有作业在频率或频率多次执行的情况下调用，在一批次作业的情况下，实际调用次数不大；
@@ -1268,6 +1275,7 @@ public class TaskManager {
 	 * @date 2019/10/9
 	 */
 	private void checkFinishedJob() {
+
 		//TODO 把redis的数据改成有含义的数据组织方式，考虑存map数据，取的时候转bean
 		//1.从redis中获取已经完成的作业，同步及更新这些作业的状态。
 		long finishedListSize = REDIS.llen(strFinishedJob);
@@ -2144,13 +2152,13 @@ public class TaskManager {
 
 		//判断该调度日期的作业是否状态全部为"D"
 		Iterator<String> jobIter = jobMap.keySet().iterator();
-		logger.info("内存表中存在 {} 个作业", jobMap.size());
 		Set<String> status = new HashSet<>();
 		while( jobIter.hasNext() ) {
 			EtlJobBean exeJobInfo = jobMap.get(jobIter.next());
 			status.add(exeJobInfo.getJob_disp_status());
 		}
-		logger.info("它们的调度状态种类有 {}", status.toString());
+		logger.info("内存表中存在 {} 个作业，它们的调度状态种类有 {}",
+				jobMap.size(), status.toString());
 
 		return !status.contains(Job_Status.RUNNING.getCode()) &&
 				status.contains(Job_Status.ERROR.getCode());
@@ -2201,6 +2209,7 @@ public class TaskManager {
 	 *          取值范围：yyyyMMdd格式的字符串，不能为null。
 	 */
 	private void removeExecuteJobs(String bathDateStr) {
+
 		//1.根据当前跑批日期，移除内存Map中定义的作业；
 		Map<String, EtlJobBean> jobMap = jobExecuteMap.get(bathDateStr);
 

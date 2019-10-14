@@ -827,7 +827,8 @@ public class TaskSqlHelper {
 						"AND etl_job = ?", etlSysCd, etlJob);
 
 		if(0 == etlJobCurObj.length) {
-			throw new AppSystemException("根据调度系统编号、调度作业标识获取调度作业信息失败 " + etlSysCd);
+			throw new AppSystemException("根据调度系统编号、调度作业标识获取调度作业信息失败 "
+					+ etlSysCd);
 		}
 
 		return TaskSqlHelper.obj2EtlJobCur(etlJobCurObj);
@@ -989,8 +990,7 @@ public class TaskSqlHelper {
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
 
 		int[] nums = SqlOperator.executeBatch(db, "UPDATE etl_resource " +
-				"SET resource_used = ? WHERE etl_sys_cd = ? AND resource_type = ?",
-				params);
+				"SET resource_used = ? WHERE etl_sys_cd = ? AND resource_type = ?", params);
 
 		for(int i = 0 ; i < nums.length ; i++) {
 			//params.get(i)[2]表示resource_type
@@ -1197,11 +1197,11 @@ public class TaskSqlHelper {
 		int num = SqlOperator.execute(db, "UPDATE etl_job_cur SET job_disp_status = ?, " +
 						"main_serv_sync = ?, job_priority_curr = job_priority " +
 						"WHERE etl_sys_cd = ? AND today_disp = ?", Job_Status.PENDING.getCode(),
-				Main_Server_Sync.YES.getCode(), etlSysCd,
-				Today_Dispatch_Flag.YES.getCode());
+				Main_Server_Sync.YES.getCode(), etlSysCd, Today_Dispatch_Flag.YES.getCode());
 
 		if(num < 1) {
-			throw new AppSystemException("根据调度系统编号，将该系统下的作业置为挂起状态失败" + etlSysCd);
+			throw new AppSystemException("根据调度系统编号，将该系统下的作业置为挂起状态失败" +
+					etlSysCd);
 		}
 
 		SqlOperator.commitTransaction(db);
