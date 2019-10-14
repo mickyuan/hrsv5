@@ -2,7 +2,7 @@ package hrds.commons.entity;
 /**Auto Created by VBScript Do not modify!*/
 import hrds.commons.entity.fdentity.ProjectTableEntity;
 import fd.ng.db.entity.anno.Table;
-import fd.ng.core.docannotation.DocBean;
+import fd.ng.core.annotation.DocBean;
 import java.math.BigDecimal;
 import java.util.Set;
 import java.util.HashSet;
