@@ -12,7 +12,7 @@ import hrds.commons.base.BaseAction;
 import hrds.commons.codes.AgentStatus;
 import hrds.commons.codes.AgentType;
 import hrds.commons.codes.IsFlag;
-import hrds.commons.entity.Agent_info;
+import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.key.PrimayKeyGener;
@@ -42,10 +42,10 @@ public class AgentInfoAction extends BaseAction {
 	public Map<String, Object> searchDatasourceAndAgentInfo(long sourceId, String datasourceName) {
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		asmSql.addSql("select gi.*,su.user_name,su.user_id,t3.deploy,(case t3.deploy when ? then 'yes' " +
-				" else 'no' end) agentStatu from agent_info gi LEFT JOIN agent_down_info t3 ON " +
-				" gi.agent_ip = t3.agent_ip AND gi.agent_port = t3.agent_port AND gi.agent_id = t3.agent_id left " +
-				" join sys_user su on gi.user_id=su.user_id  where gi.source_id = ? and gi.agent_type = ?" +
-				" order by gi.agent_id");
+				" else 'no' end) agentStatu from " + Agent_info.TableName + " gi LEFT JOIN " +
+				Agent_down_info.TableName + " t3 ON gi.agent_ip = t3.agent_ip AND gi.agent_port = t3.agent_port" +
+				" AND gi.agent_id = t3.agent_id left join " + Sys_user.TableName + " su on gi.user_id=su.user_id " +
+				" where gi.source_id = ? and gi.agent_type = ? order by gi.agent_id");
 		asmSql.addParam(IsFlag.Shi.getCode());
 		asmSql.addParam(sourceId);
 		asmSql.addParam(AgentType.ShuJuKu.getCode());
@@ -138,12 +138,12 @@ public class AgentInfoAction extends BaseAction {
 	private void check(long sourceId, String agentType, String agentIp, String agentPort) {
 		// 1.数据可访问权限处理方式，这是一个私有方法，不会单独被调用，所以不需要权限验证
 		// 2.验证数据源是否还存在,查到至少一条数据，查不到为0
-		if (Dbo.queryNumber("select count(1) from data_source where source_id = ?",
+		if (Dbo.queryNumber("select count(1) from " + Data_source.TableName + " where source_id = ?",
 				sourceId).orElseThrow(() -> new BusinessException("sql查询错误！")) == 0) {
 			throw new BusinessException("该agent对应的数据源已不存在不可新增，source_id=" + sourceId);
 		}
 		// 3.判断数据源下相同的IP地址中是否包含相同的端口,查到至少一条数据，查不到为0
-		if (Dbo.queryNumber("SELECT count(1) FROM agent_info WHERE source_id=? AND agent_type=?"
+		if (Dbo.queryNumber("SELECT count(1) FROM " + Agent_info.TableName + " WHERE source_id=? AND agent_type=?"
 				+ " AND agent_ip=? AND agent_port=?", sourceId, agentType, agentIp, agentPort)
 				.orElseThrow(() -> new BusinessException("sql查询错误！")) > 0) {
 			throw new BusinessException("该agent对应的数据源下相同的IP地址中包含相同的端口，" +
@@ -170,7 +170,7 @@ public class AgentInfoAction extends BaseAction {
 	public void updateAgent(Long agentId, String agentName, String agentType, String agentIp
 			, String agentPort, long sourceId, long userId) {
 		// 1.数据可访问权限处理方式，通过关联agent_id与user_id检查
-		if (Dbo.queryNumber("select count(1) from agent_info where agent_id=? and user_id=?",
+		if (Dbo.queryNumber("select count(1) from " + Agent_info.TableName + " where agent_id=? and user_id=?",
 				agentId, userId).orElseThrow(() -> new BusinessException("sql查询错误")) > 0) {
 			throw new BusinessException("数据权限校验失败，数据不可访问！");
 		}
@@ -286,8 +286,8 @@ public class AgentInfoAction extends BaseAction {
 	public List<Agent_info> searchAgent(long agentId, String agentType) {
 		// 1.数据可访问权限处理方式，通过agent_id,agent_type，user_id关联检查
 		// 2.根据agent_id与agent_type查询该agent信息
-		return Dbo.queryList(Agent_info.class, " SELECT * FROM agent_info WHERE agent_id = ? " +
-				" AND agent_type = ? and user_id=?", agentId, agentType, getUserId());
+		return Dbo.queryList(Agent_info.class, " SELECT * FROM " + Agent_info.TableName + " WHERE agent_id=?" +
+				" AND agent_type =? and user_id=?", agentId, agentType, getUserId());
 	}
 
 	@Method(desc = "删除agent",
@@ -300,27 +300,28 @@ public class AgentInfoAction extends BaseAction {
 			"4:数据文件Agent,5:对象Agent")
 	public void deleteAgent(Long agentId, String agentType) {
 		// 1.数据可访问权限处理方式，通过agent_id,agent_type,user_id关联检查
-		if (Dbo.queryNumber("select count(*) from agent_info where agent_id=? and user_id=? " +
-				"and agent_type=?", agentId, getUserId(), agentType)
+		if (Dbo.queryNumber("select count(*) from " + Agent_info.TableName + " where agent_id=? " +
+				"and user_id=? and agent_type=?", agentId, getUserId(), agentType)
 				.orElseThrow(() -> new BusinessException("sql查询错误！")) == 0) {
 			throw new BusinessException("数据可访问权限校验失败，数据不可访问");
 		}
 		// 2.删除前查询此agent是否已部署
-		if (Dbo.queryNumber("select count(1) from agent_down_info where agent_id=?", agentId)
+		if (Dbo.queryNumber("select count(1) from " + Agent_down_info.TableName + " where agent_id=?", agentId)
 				.orElseThrow(() -> new BusinessException("sql查询错误！")) > 0) {
 			// 此agent已部署不能删除
 			throw new BusinessException("此agent已部署不能删除");
 		}
 		// 3.判断此数据源与agent下是否有任务
-		if (Dbo.queryNumber(" SELECT count(1) FROM agent_info t1 join database_set t2 on " +
-						" t1.agent_id=t2.agent_id WHERE  t1.agent_id=? and  t1.agent_type=?",
-				agentId, agentType).orElseThrow(() -> new BusinessException("sql查询错误！")) > 0) {
+		if (Dbo.queryNumber(" SELECT count(1) FROM " + Agent_info.TableName + " t1 join "
+				+ Database_set.TableName + " t2 on t1.agent_id=t2.agent_id WHERE  t1.agent_id=? " +
+				" and t1.agent_type=?", agentId, agentType).
+				orElseThrow(() -> new BusinessException("sql查询错误！")) > 0) {
 			// 此数据源与agent下有任务，不能删除
 			throw new BusinessException("此数据源对应的agent下有任务，不能删除");
 		}
 		// 4.删除agent
 		DboExecute.deletesOrThrow("删除表信息失败，agent_id=" + agentId + ",agent_type=" + agentType,
-				"delete from agent_info where agent_id=?", agentId);
+				"delete from " + Agent_info.TableName + " where agent_id=?", agentId);
 	}
 
 }
