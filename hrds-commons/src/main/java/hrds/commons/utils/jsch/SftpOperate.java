@@ -5,6 +5,7 @@ import com.jcraft.jsch.ChannelSftp.LsEntry;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 import com.jcraft.jsch.SftpException;
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -16,20 +17,16 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.Vector;
 
-/**
- * sftp远程创建文件拉取文件操作类
- * date: 2019/10/11 11:29
- * author: zxz
- */
+@DocClass(desc = "sftp远程创建文件拉取文件操作类", author = "zxz", createdate = "2019/10/11 11:29")
 public class SftpOperate implements Closeable {
 	//打印日志
 	private static final Log logger = LogFactory.getLog(SftpOperate.class);
 	//默认超时时间
 	private static final int SFTP_timeout = 6 * 1000;
 	//sftp连接的session
-	private Session session ;
+	private Session session;
 	//sftp连接
-	private ChannelSftp sftp ;
+	private ChannelSftp sftp;
 
 	/**
 	 * sftp远程创建文件拉取文件操作类构造方法
@@ -86,21 +83,21 @@ public class SftpOperate implements Closeable {
 		}
 	}
 
-	@Method(desc = "使用sftp拉取远程服务器上的文件到本地",logicStep = "1.使用sftp拉取远程服务器上的文件到本地")
+	@Method(desc = "使用sftp拉取远程服务器上的文件到本地", logicStep = "1.使用sftp拉取远程服务器上的文件到本地")
 	@Param(name = "srcFile", desc = "远程文件全路径", range = "不能为空")
 	@Param(name = "destFile", desc = "本地目录", range = "不能为空")
 	public void transferFile(String srcFile, String destFile) throws SftpException {
 		sftp.get(srcFile, destFile);
 	}
 
-	@Method(desc = "使用sftp推送本地文件到远程服务器",logicStep = "1.使用sftp推送本地文件到远程服务器")
+	@Method(desc = "使用sftp推送本地文件到远程服务器", logicStep = "1.使用sftp推送本地文件到远程服务器")
 	@Param(name = "srcFile", desc = "本地文件全路径", range = "不能为空")
 	@Param(name = "destFile", desc = "远程目录", range = "不能为空")
 	public void transferPutFile(String srcFile, String destFile) throws SftpException {
 		sftp.put(srcFile, destFile);
 	}
 
-	@Method(desc = "使用sftp远程创建目录",logicStep = "1.拼接创建文件夹的命令，使用SFTPChannel执行")
+	@Method(desc = "使用sftp远程创建目录", logicStep = "1.拼接创建文件夹的命令，使用SFTPChannel执行")
 	@Param(name = "currentLoadDir", desc = "需要被创建的远程目录", range = "不能为空")
 	public void scpMkdir(String currentLoadDir) throws JSchException, IOException {
 		//1.拼接创建文件夹的命令，使用SFTPChannel执行

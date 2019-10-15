@@ -1,5 +1,6 @@
 package hrds.b.biz.agent.ftpcollect;
 
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -10,12 +11,12 @@ import hrds.commons.entity.Ftp_collect;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.key.PrimayKeyGener;
 
-/**
- * Ftp采集前端接口类，处理ftp采集的增改查
- * date: 2019/9/16 17:55
- * author: zxz
- */
+@DocClass(desc = "Ftp采集前端接口类，处理ftp采集的增改查", author = "zxz", createdate = "2019/9/16 17:55")
 public class FtpCollectAction extends BaseAction {
+	@Override
+	protected Long getUserId() {
+		return 1001L;
+	}
 
 	@Method(desc = "根据ftp_id查询ftp采集设置表",
 			logicStep = "1.根据ftp采集表id查询ftp采集表返回到前端")
