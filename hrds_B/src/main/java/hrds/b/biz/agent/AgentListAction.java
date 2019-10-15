@@ -1,9 +1,11 @@
 package hrds.b.biz.agent;
 
+import fd.ng.core.annotation.Method;
+import fd.ng.core.annotation.Param;
+import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.CodecUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.resultset.Result;
-import fd.ng.web.annotation.RequestParam;
 import fd.ng.web.util.Dbo;
 import fd.ng.web.util.RequestUtil;
 import fd.ng.web.util.ResponseUtil;
@@ -32,17 +34,8 @@ import java.util.Map;
  **/
 public class AgentListAction extends BaseAction {
 
-	/**
-	 * 获取数据源Agent列表信息
-	 *
-	 * 1、获取用户ID并根据用户ID去数据库中查询数据源信息
-	 *
-	 * @Param: 无
-	 * @return: fd.ng.db.resultset.Result
-	 *          含义：数据源信息查询结果集
-	 *          取值范围：不会为null
-	 *
-	 * */
+	@Method(desc = "获取数据源Agent列表信息", logicStep = "1、获取用户ID并根据用户ID去数据库中查询数据源信息")
+	@Return(desc = "数据源信息查询结果集", range = "不会为null")
 	public Result getAgentInfoList() {
 		//1、获取用户ID并根据用户ID去数据库中查询数据源信息
 		return Dbo.queryResult("select datas.source_id,datasource_name from " + Data_source.TableName
@@ -51,22 +44,11 @@ public class AgentListAction extends BaseAction {
 		//以上SQL中，通过当前用户ID进行关联查询，达到了数据权限的限制
 	}
 
-	/**
-	 * 根据sourceId、agentType、userId获取相应信息
-	 *
-	 * 1、获取用户ID并根据用户ID去数据库中查询数据源信息
-	 *
-	 * @Param: sourceId long
-	 *         含义：数据源ID,data_source表主键，agent_info表外键
-	 *         取值范围：不为空
-	 * @Param: agentType String
-	 *         含义：agent类型
-	 *         取值范围：AgentType代码项的code值(1-5)
-	 * @return: fd.ng.db.resultset.Result
-	 *          含义：查询结果集
-	 *          取值范围：不会为null
-	 *
-	 * */
+	@Method(desc = "根据sourceId、agentType、userId获取相应信息", logicStep = "" +
+			"1、获取用户ID并根据用户ID去数据库中查询数据源信息")
+	@Param(name = "sourceId", desc = "数据源ID,data_source表主键，agent_info表外键", range = "不为空")
+	@Param(name = "agentType", desc = "agent类型", range = "AgentType代码项的code值")
+	@Return(desc = "查询结果集", range = "不会为null")
 	public Result getAgentInfo(long sourceId, String agentType) {
 		//1、根据sourceId和agentType查询数据库获取相应信息
 		return Dbo.queryResult("SELECT * FROM "+ Agent_info.TableName +" WHERE source_id = ? " +
@@ -75,25 +57,14 @@ public class AgentListAction extends BaseAction {
 		//以上SQL中，通过当前用户ID进行关联查询，达到了数据权限的限制
 	}
 
-	/**
-	 * 根据sourceId和agentId获取某agent下所有任务的信息
-	 *
-	 * 1、获取用户ID, 判断在当前用户，当前数据源下，某一类型的agent是否存在
-	 * 2、如果存在，查询结果中应该有且只有一条数据
-	 * 3、判断该agent是那种类型，并且根据类型，到对应的数据库表中查询采集任务管理详细信息
-	 * 4、返回结果
-	 *
-	 * @Param: sourceId long
-	 *         含义：数据源ID,data_source表主键，agent_info表外键
-	 *         取值范围：不为空
-	 * @Param: agentId long
-	 *         含义：agentID,agent_info表主键
-	 *         取值范围：不为空
-	 * @return: fd.ng.db.resultset.Result
-	 *          含义：查询结果集
-	 *          取值范围：不会为null
-	 *
-	 * */
+	@Method(desc = "根据sourceId和agentId获取某agent下所有任务的信息", logicStep = "" +
+			"1、获取用户ID, 判断在当前用户，当前数据源下，某一类型的agent是否存在" +
+			"2、如果存在，查询结果中应该有且只有一条数据" +
+			"3、判断该agent是那种类型，并且根据类型，到对应的数据库表中查询采集任务管理详细信息" +
+			"4、返回结果")
+	@Param(name = "sourceId", desc = "数据源ID,data_source表主键，agent_info表外键", range = "不为空")
+	@Param(name = "agentId", desc = "agentID,agent_info表主键", range = "不为空")
+	@Return(desc = "查询结果集", range = "不会为null")
 	//TODO 采集频率目前暂未拿到
 	public Result getTaskInfo(long sourceId, long agentId) {
 		//1、判断在当前用户，当前数据源下，agent是否存在
@@ -159,29 +130,16 @@ public class AgentListAction extends BaseAction {
 				IsFlag.Shi.getCode());
 	}
 
-	/**
-	 * 查看任务日志
-	 *
-	 * 1、对显示日志条数做处理，该方法在加载页面时被调用，readNum可以不传，则默认显示100条，
-	 *    如果用户在页面上进行了选择并点击查看按钮，则最多给用户显示1000条日志
-	 * 2、调用方法读取日志并返回
-	 *
-	 * @Param: sourceId long
-	 *         含义：数据源ID,data_source表主键，agent_info表外键
-	 *         取值范围：不为空
-	 * @Param: logType String
-	 *         含义：日志类型(完整日志、错误日志)
-	 *         取值范围：All : 完整日志, Wrong : 错误日志
-	 * @Param: readNum int
-	 *         含义：查看日志条数
-	 *         取值范围：不为空
-	 * @return: String
-	 *          含义：日志信息
-	 *          取值范围：不会为null
-	 *
-	 * */
-	public String viewTaskLog(long agentId, String logType,
-	                          @RequestParam(nullable = true, valueIfNull = "100") int readNum) {
+	@Method(desc = "查看任务日志", logicStep = "" +
+			"1、对显示日志条数做处理，该方法在加载页面时被调用，readNum可以不传，则默认显示100条，" +
+			"如果用户在页面上进行了选择并点击查看按钮，则最多给用户显示1000条日志" +
+			"2、调用方法读取日志并返回")
+	@Param(name = "agentId", desc = "数据源ID,data_source表主键，agent_info表外键", range = "不为空")
+	@Param(name = "logType", desc = "日志类型(完整日志、错误日志)", range = "All : 完整日志, Wrong : 错误日志")
+	@Param(name = "readNum", desc = "查看日志条数", range = "可以不传，默认显示100条", nullable = true,
+			valueIfNull = "100")
+	@Return(desc = "日志信息" ,range = "不会为null")
+	public String viewTaskLog(long agentId, String logType, int readNum) {
 		//1、对显示日志条数做处理，该方法在加载页面时被调用，readNum可以不传，则默认显示100条，
 		// 如果用户在页面上进行了选择并点击查看按钮，则最多给用户显示1000条日志
 		if (readNum > 1000) readNum = 1000;
@@ -192,30 +150,41 @@ public class AgentListAction extends BaseAction {
 	}
 
 	/**
-	 * 任务日志下载
 	 *
-	 * 1、对显示日志条数做处理，该方法在加载页面时被调用，readNum可以不传，则默认显示100条，
-	 *    如果用户在页面上进行了选择并点击查看按钮，如果用户输入的条目多于1000，则给用户显示3000条
-	 * 2、调用方法读取日志，获得日志信息和日志文件路径
-	 * 3、将日志信息由字符串转为byte[]
-	 * 4、得到本次http交互的request和response
-	 * 5、设置响应头信息
-	 * 6、使用response获得输出流，完成文件下载
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
 	 *
 	 * @Param: sourceId long
-	 *         含义：数据源ID,data_source表主键，agent_info表外键
-	 *         取值范围：不为空
+	 *         含义：
+	 *         取值范围：
 	 * @Param: logType String
-	 *         含义：日志类型(完整日志、错误日志)
-	 *         取值范围：All : 完整日志, Wrong : 错误日志
+	 *         含义：
+	 *         取值范围：
 	 * @Param: readNum int
-	 *         含义：查看日志条数
+	 *         含义：
 	 *         取值范围：不为空
 	 * @return: 无
 	 *
 	 * */
-	public void downloadTaskLog(long agentId, String logType,
-	                            @RequestParam(nullable = true, valueIfNull = "100") int readNum) {
+	@Method(desc = "任务日志下载", logicStep = "" +
+			"1、对显示日志条数做处理，该方法在加载页面时被调用，readNum可以不传，则默认显示100条，" +
+			"如果用户在页面上进行了选择并点击查看按钮，如果用户输入的条目多于1000，则给用户显示3000条" +
+			"2、调用方法读取日志，获得日志信息和日志文件路径" +
+			"3、将日志信息由字符串转为byte[]" +
+			"4、得到本次http交互的request和response" +
+			"5、设置响应头信息" +
+			"6、使用response获得输出流，完成文件下载")
+	@Param(name = "agentId", desc = "数据源ID,data_source表主键，agent_info表外键", range = "不为空")
+	@Param(name = "logType", desc = "日志类型(完整日志、错误日志)", range = "All : 完整日志, Wrong : 错误日志")
+	@Param(name = "readNum", desc = "查看日志条数", range = "可以不传，默认下载100条", nullable = true,
+			valueIfNull = "100")
+	public void downloadTaskLog(long agentId, String logType, int readNum) {
 		//FIXME 改成JDK8的方式：try(OutputStream out = response.getOutputStream())。不用有finally处理了,已修复
 		//1、对显示日志条数做处理，该方法在加载页面时被调用，readNum可以不传，则默认显示100条，
 		// 如果用户在页面上进行了选择并点击查看按钮，如果用户输入的条目多于1000，则给用户显示3000条
@@ -254,18 +223,11 @@ public class AgentListAction extends BaseAction {
 		}
 	}
 
-	/**
-	 * 根据ID删除半结构化采集任务数据
-	 *
-	 * 1、根据collectSetId和user_id判断是否有这样一条数据
-	 * 2、在对象采集设置表(object_collect)中删除该条数据
-	 * TODO IOnWayCtrl.checkExistsTask()暂时先不管
-	 * @Param: collectSetId long
-	 *         含义：源文件属性表ID,object_collect表ID
-	 *         取值范围：不为空
-	 * @return: 无
-	 *
-	 * */
+	@Method(desc = "根据ID删除半结构化采集任务数据", logicStep = "" +
+			"1、根据collectSetId和user_id判断是否有这样一条数据" +
+			"2、在对象采集设置表(object_collect)中删除该条数据")
+	@Param(name = "collectSetId", desc = "源文件属性表ID,object_collect表ID", range = "不为空")
+	//TODO IOnWayCtrl.checkExistsTask()暂时先不管
 	public void deleteHalfStructTask(long collectSetId) {
 		/*
 		//1、根据collectSetId在源文件属性表(source_file_attribute)中获得采集的原始表名(table_name)，可能有多条
@@ -296,18 +258,11 @@ public class AgentListAction extends BaseAction {
 				Object_collect.TableName + " where odc_id = ?",collectSetId );
 	}
 
-	/**
-	 * 根据ID删除FTP采集任务数据
-	 *
-	 * 1、根据collectSetId和user_id判断是否有这样一条数据
-	 * 2、在FTP采集设置表(ftp_collect)中删除该条数据
-	 * TODO IOnWayCtrl.checkExistsTask()暂时先不管
-	 * @Param: collectSetId long
-	 *         含义：源文件属性表ID,object_collect表ID
-	 *         取值范围：不为空
-	 * @return: 无
-	 *
-	 * */
+	@Method(desc = "根据ID删除FTP采集任务数据", logicStep = "" +
+			"1、根据collectSetId和user_id判断是否有这样一条数据" +
+			"2、在FTP采集设置表(ftp_collect)中删除该条数据")
+	@Param(name = "collectSetId", desc = "源文件属性表ID,ftp_collect表ID", range = "不为空")
+	//TODO IOnWayCtrl.checkExistsTask()暂时先不管
 	public void deleteFTPTask(long collectSetId) {
 		/*
 		//1、根据collectSetId在源文件属性表(source_file_attribute)中获得采集的原始表名(table_name)，可能有多条
@@ -339,20 +294,13 @@ public class AgentListAction extends BaseAction {
 				Ftp_collect.TableName +" where ftp_id = ?", collectSetId);
 	}
 
-	/**
-	 * 根据collectSetId删除数据库直连采集任务
-	 *
-	 * 1、根据collectSetId和user_id判断是否有这样一条数据
-	 * 2、在数据库设置表中删除对应的记录
-	 * 3、在表对应字段表中找到对应的记录并删除
-	 * 4、在数据库对应表删除对应的记录
-	 * TODO IOnWayCtrl.checkExistsTask()暂时先不管
-	 * @Param: collectSetId long
-	 *         含义：源文件属性表ID,object_collect表ID
-	 *         取值范围：不为空
-	 * @return: 无
-	 *
-	 * */
+	@Method(desc = "根据collectSetId删除数据库直连采集任务", logicStep = "" +
+			"1、根据collectSetId和user_id判断是否有这样一条数据" +
+			"2、在数据库设置表中删除对应的记录" +
+			"3、在表对应字段表中找到对应的记录并删除" +
+			"4、在数据库对应表删除对应的记录")
+	@Param(name = "collectSetId", desc = "源文件属性表ID,database_set表ID", range = "不为空")
+	//TODO IOnWayCtrl.checkExistsTask()暂时先不管
 	public void deleteDBTask(long collectSetId){
 		//1、根据collectSetId和user_id判断是否有这样一条数据
 		long val = Dbo.queryNumber("select count(1) from " + Data_source.TableName + " ds " +
@@ -384,21 +332,11 @@ public class AgentListAction extends BaseAction {
 		}
 	}
 
-	/**
-	 * 根据collectSetId删除DB文件采集任务数据
-	 *
-	 * 1、根据collectSetId和user_id判断是否有这样一条数据
-	 * 2、在数据库设置表中删除对应的记录
-	 * TODO IOnWayCtrl.checkExistsTask()暂时先不管
-	 * @Param: collectSetId long
-	 *         含义：源文件属性表ID,object_collect表ID
-	 *         取值范围：不为空
-	 * @Param: agentType String
-	 *         含义：agent类型
-	 *         取值范围：AgentType代码项的code值(1-5)
-	 * @return: 无
-	 *
-	 * */
+	@Method(desc = "根据collectSetId删除DB文件采集任务数据", logicStep = "" +
+			"1、根据collectSetId和user_id判断是否有这样一条数据" +
+			"2、在数据库设置表中删除对应的记录")
+	@Param(name = "collectSetId", desc = "源文件属性表ID,database_set表ID", range = "不为空")
+	//TODO IOnWayCtrl.checkExistsTask()暂时先不管
 	public void deleteDFTask(long collectSetId){
 		//1、根据collectSetId和user_id判断是否有这样一条数据
 		long val = Dbo.queryNumber("select count(1) from " + Data_source.TableName + " ds " +
@@ -416,22 +354,12 @@ public class AgentListAction extends BaseAction {
 				Database_set.TableName +" where database_id =?", collectSetId);
 	}
 
-	/**
-	 * 根据collectSetId删除非结构化文件采集任务数据
-	 *
-	 * 1、根据collectSetId和user_id判断是否有这样一条数据
-	 * 2、在文件系统设置表删除对应的记录
-	 * 3、在文件源设置表删除对应的记录
-	 * TODO IOnWayCtrl.checkExistsTask()暂时先不管
-	 * @Param: collectSetId long
-	 *         含义：源文件属性表ID,object_collect表ID
-	 *         取值范围：不为空
-	 * @Param: agentType String
-	 *         含义：agent类型
-	 *         取值范围：AgentType代码项的code值(1-5)
-	 * @return: 无
-	 *
-	 * */
+	@Method(desc = "根据collectSetId删除非结构化文件采集任务数据", logicStep = "" +
+			"1、根据collectSetId和user_id判断是否有这样一条数据" +
+			"2、在文件系统设置表删除对应的记录" +
+			"3、在文件源设置表删除对应的记录")
+	@Param(name = "collectSetId", desc = "源文件属性表ID,object_collect表ID", range = "不为空")
+	//TODO IOnWayCtrl.checkExistsTask()暂时先不管
 	public void deleteNonStructTask(long collectSetId){
 		//1、根据collectSetId和user_id判断是否有这样一条数据
 		long val = Dbo.queryNumber("select count(1) from " + Data_source.TableName + " ds " +
@@ -457,17 +385,9 @@ public class AgentListAction extends BaseAction {
 		}
 	}
 
-	/**
-	 * 查询工程信息
-	 *
-	 * 1、根据用户ID在工程登记表(etl_sys)中查询工程代码(etl_sys_cd)和工程名称(etl_sys_name)并返回
-	 *
-	 * @Param: 无
-	 * @return: fd.ng.db.resultset.Result
-	 *          含义：查询结果集
-	 *          取值范围：不会为null
-	 *
-	 * */
+	@Method(desc = "查询工程信息", logicStep = "" +
+			"1、根据用户ID在工程登记表(etl_sys)中查询工程代码(etl_sys_cd)和工程名称(etl_sys_name)并返回")
+	@Return(desc = "查询结果集", range = "不会为null")
 	public Result getProjectInfo() {
 		//1、根据用户ID在工程登记表(etl_sys)中查询工程代码(etl_sys_cd)和工程名称(etl_sys_name)并返回
 		return Dbo.queryResult("select etl_sys_cd,etl_sys_name from "+ Etl_sys.TableName +
@@ -476,19 +396,10 @@ public class AgentListAction extends BaseAction {
 		//该方法首先使用user_id去数据库中查询相应的数据
 	}
 
-	/**
-	 * 根据taskId获得某个工程下的任务信息
-	 *
-	 * 1、根据工程代码在子系统定义表(etl_sub_sys_list)中查询子系统代码(sub_sys_cd)和子系统描述(sub_sys_desc)并返回
-	 *
-	 * @Param: taskId String
-	 *         含义 : 任务ID, etl_sub_sys_list表主键
-	 *         取值范围 : 不为空
-	 * @return: fd.ng.db.resultset.Result
-	 *          含义：查询结果集
-	 *          取值范围：不会为null
-	 *
-	 * */
+	@Method(desc = "根据taskId获得某个工程下的任务信息", logicStep = "" +
+			"1、根据工程代码在子系统定义表(etl_sub_sys_list)中查询子系统代码(sub_sys_cd)和子系统描述(sub_sys_desc)并返回")
+	@Param(name = "taskId", desc = "任务ID, etl_sub_sys_list表主键", range = "不为空")
+	@Return(desc = "查询结果集", range = "不会为null")
 	public Result getTaskInfoByTaskId(String taskId) {
 		return Dbo.queryResult(" select ess.sub_sys_cd,ess.sub_sys_desc from "+
 				Etl_sub_sys_list.TableName + " ess join "+ Etl_sys.TableName +
@@ -498,27 +409,13 @@ public class AgentListAction extends BaseAction {
 		//该方法首先使用user_id去数据库中查询相应的数据
 	}
 
-
-	/**
-	 * 保存FTP采集工程信息
-	 *
-	 *
-	 * @Param: ftpId String
-	 *         含义 : ftp_collect表主键
-	 *         取值范围 : 不为空
-	 * @Param: projectCode String
-	 *         含义 : 工程编码，etl_sub_sys_list表主键
-	 *         取值范围 : 不为空
-	 * @Param: subSysCode String
-	 *         含义 : 子系统代码，etl_sub_sys_list表主键，etl_job_def表外键
-	 *         取值范围 : 不为空
-	 * @return: fd.ng.db.resultset.Result
-	 *          含义：查询结果集
-	 *          取值范围：不会为null
-	 *
-	 * */
+	/*
+	@Method(desc = "保存FTP采集工程信息", logicStep = "")
+	@Param(name = "ftpId", desc = "ftp_collect表主键", range = "不为空")
+	@Param(name = "projectCode", desc = "工程编码，etl_sub_sys_list表主键", range = "不为空")
+	@Param(name = "subSysCd", desc = "子系统代码，etl_sub_sys_list表主键，etl_job_def表外键", range = "不为空")
 	public void saveFTPProjectInfo(String ftpId, String projectCode, String subSysCd) {
-		/*
+
 		StringBuilder sql = new StringBuilder();
 		sql.append(" select datasource_number,datasource_name, ")
 				.append(" agent_name,ftp_number,ftp_name,c.ftp_id ")
@@ -543,88 +440,43 @@ public class AgentListAction extends BaseAction {
 		String etlJob = subSysCode + "_" + "etljob";
 		String etlJobDesc = subSysDesc + "_" + "etljob";
 		String proParam = "etljob" + "@" + "B301@2008";
-		*/
 	}
+	*/
 
-	/**
-	 * 保存半结构化(对象)采集工程信息
-	 *
-	 *
-	 * @Param: objCollId String
-	 *         含义 : object_collect表主键
-	 *         取值范围 : 不为空
-	 * @Param: projectCode String
-	 *         含义 : 工程编码，etl_sub_sys_list表主键
-	 *         取值范围 : 不为空
-	 * @Param: subSysCode String
-	 *         含义 : 子系统代码，etl_sub_sys_list表主键，etl_job_def表外键
-	 *         取值范围 : 不为空
-	 * @return: fd.ng.db.resultset.Result
-	 *          含义：查询结果集
-	 *          取值范围：不会为null
-	 *
-	 * */
+	/*
+	@Method(desc = "保存半结构化(对象)采集工程信息", logicStep = "不为空")
+	@Param(name = "objCollId", desc = "object_collect表主键", range = "")
+	@Param(name = "projectCode", desc = "工程编码，etl_sub_sys_list表主键", range = "不为空")
+	@Param(name = "subSysCode", desc = "子系统代码，etl_sub_sys_list表主键，etl_job_def表外键", range = "不为空")
 	public void saveHalfStructProjectInfo(String objCollId, String projectCode, String subSysCode){
 
 	}
+	*/
 
-	/**
-	 * 保存非结构化(文件系统)采集工程信息
-	 *
-	 *
-	 * @Param: fileCollId String
-	 *         含义 : file_collect_set表主键
-	 *         取值范围 : 不为空
-	 * @Param: projectCode String
-	 *         含义 : 工程编码，etl_sub_sys_list表主键
-	 *         取值范围 : 不为空
-	 * @Param: subSysCode String
-	 *         含义 : 子系统代码，etl_sub_sys_list表主键，etl_job_def表外键
-	 *         取值范围 : 不为空
-	 * @return: fd.ng.db.resultset.Result
-	 *          含义：查询结果集
-	 *          取值范围：不会为null
-	 *
-	 * */
+	/*
+	@Method(desc = "保存非结构化(文件系统)采集工程信息", logicStep = "")
+	@Param(name = "fileCollId", desc = "file_collect_set表主键", range = "不为空")
+	@Param(name = "projectCode", desc = "工程编码，etl_sub_sys_list表主键", range = "不为空")
+	@Param(name = "subSysCode", desc = "子系统代码，etl_sub_sys_list表主键，etl_job_def表外键", range = "不为空")
 	public void saveNonStructProjectInfo(String fileCollId, String projectCode, String subSysCode){
 
 	}
+	*/
 
-	/**
-	 * 保存数据文件采集和数据库采集采集工程信息
-	 *
-	 *
-	 * @Param: dataSourceId String
-	 *         含义 : datasource_set表主键
-	 *         取值范围 : 不为空
-	 * @Param: projectCode String
-	 *         含义 : 工程编码，etl_sub_sys_list表主键
-	 *         取值范围 : 不为空
-	 * @Param: subSysCode String
-	 *         含义 : 子系统代码，etl_sub_sys_list表主键，etl_job_def表外键
-	 *         取值范围 : 不为空
-	 * @return: fd.ng.db.resultset.Result
-	 *          含义：查询结果集
-	 *          取值范围：不会为null
-	 *
-	 * */
+	/*
+	@Method(desc = "保存数据文件采集和数据库采集采集工程信息", logicStep = "")
+	@Param(name = "dataSourceId", desc = "datasource_set表主键", range = "不为空")
+	@Param(name = "projectCode", desc = "工程编码，etl_sub_sys_list表主键", range = "不为空")
+	@Param(name = "subSysCode", desc = "子系统代码，etl_sub_sys_list表主键，etl_job_def表外键", range = "不为空")
 	public void saveDBAndDFProjectInfo(String dataSourceId, String projectCode, String subSysCode){
 
 	}
+	*/
 
-	/**
-	 * 根据sourceId查询出设置完成的数据库采集任务和DB文件采集任务的任务ID
-	 *
-	 * 1、根据数据源ID和用户ID查询出设置完成的数据库采集任务和DB文件采集任务的任务ID并返回
-	 *
-	 * @Param: sourceId long
-	 *         含义 : data_source表主键, agent_info表外键
-	 *         取值范围 : 不为空
-	 * @return: fd.ng.db.resultset.Result
-	 *          含义：查询结果集
-	 *          取值范围：不会为null
-	 *
-	 * */
+	@Method(desc = "根据sourceId查询出设置完成的数据库采集任务和DB文件采集任务的任务ID", logicStep = "" +
+			"1、根据数据源ID和用户ID查询出设置完成的数据库采集任务和DB文件采集任务的任务ID并返回")
+	@Param(name = "sourceId", desc = "data_source表主键, agent_info表外键", range = "不为空")
+	@Return(desc = "查询结果集", range = "不会为null")
 	public Result getDBAndDFTaskBySourceId(long sourceId) {
 		//1、根据数据源ID和用户ID查询出设置完成的数据库采集任务和DB文件采集任务的任务ID并返回
 		return Dbo.queryResult("SELECT das.database_id " +
@@ -637,19 +489,10 @@ public class AgentListAction extends BaseAction {
 		//以上SQL中，通过当前用户ID进行关联查询，达到了数据权限的限制
 	}
 
-	/**
-	 * 根据sourceId查询出设置完成的非结构化文件采集任务的任务ID
-	 *
-	 * 1、根据数据源ID和用户ID查询出设置完成的非结构化文件采集任务的任务ID并返回
-	 *
-	 * @Param: sourceId long
-	 *         含义 : data_source表主键, agent_info表外键
-	 *         取值范围 : 不为空
-	 * @return: fd.ng.db.resultset.Result
-	 *          含义：查询结果集
-	 *          取值范围：不会为null
-	 *
-	 * */
+	@Method(desc = "根据sourceId查询出设置完成的非结构化文件采集任务的任务ID", logicStep = "" +
+			"1、根据数据源ID和用户ID查询出设置完成的非结构化文件采集任务的任务ID并返回")
+	@Param(name = "sourceId", desc = "data_source表主键, agent_info表外键", range = "不为空")
+	@Return(desc = "查询结果集", range = "不会为null")
 	public Result getNonStructTaskBySourceId(long sourceId) {
 		//1、根据数据源ID和用户ID查询出设置完成的非结构化文件采集任务的任务ID并返回
 		return Dbo.queryResult("SELECT fcs.fcs_id " +
@@ -662,19 +505,10 @@ public class AgentListAction extends BaseAction {
 		//以上SQL中，通过当前用户ID进行关联查询，达到了数据权限的限制
 	}
 
-	/**
-	 * 根据sourceId查询出设置完成的半结构化文件采集任务的任务ID
-	 *
-	 * 1、根据数据源ID和用户ID查询出设置完成的半结构化文件采集任务的任务ID并返回
-	 *
-	 * @Param: sourceId long
-	 *         含义 : data_source表主键, agent_info表外键
-	 *         取值范围 : 不为空
-	 * @return: fd.ng.db.resultset.Result
-	 *          含义：查询结果集
-	 *          取值范围：不会为null
-	 *
-	 * */
+	@Method(desc = "根据sourceId查询出设置完成的半结构化文件采集任务的任务ID", logicStep = "" +
+			"1、根据数据源ID和用户ID查询出设置完成的半结构化文件采集任务的任务ID并返回")
+	@Param(name = "sourceId", desc = "data_source表主键, agent_info表外键", range = "不为空")
+	@Return(desc = "查询结果集", range = "不会为null")
 	public Result getHalfStructTaskBySourceId(long sourceId) {
 		//1、根据数据源ID和用户ID查询出设置完成的半结构化文件采集任务的任务ID并返回
 		return Dbo.queryResult("SELECT fcs.odc_id " +
@@ -687,19 +521,10 @@ public class AgentListAction extends BaseAction {
 		//以上SQL中，通过当前用户ID进行关联查询，达到了数据权限的限制
 	}
 
-	/**
-	 * 根据sourceId查询出FTP采集任务的任务ID
-	 *
-	 * 1、根据数据源ID和用户ID查询出FTP采集任务的任务ID并返回
-	 *
-	 * @Param: sourceId long
-	 *         含义 : data_source表主键, agent_info表外键
-	 *         取值范围 : 不为空
-	 * @return: fd.ng.db.resultset.Result
-	 *          含义：查询结果集
-	 *          取值范围：不会为null
-	 *
-	 * */
+	@Method(desc = "根据sourceId查询出FTP采集任务的任务ID", logicStep = "" +
+			"1、根据数据源ID和用户ID查询出FTP采集任务的任务ID并返回")
+	@Param(name = "sourceId", desc = "data_source表主键, agent_info表外键", range = "不为空")
+	@Return(desc = "查询结果集", range = "不会为null")
 	public Result getFTPTaskBySourceId(long sourceId) {
 		//1、根据数据源ID和用户ID查询出FTP采集任务的任务ID并返回
 		return Dbo.queryResult("SELECT fcs.ftp_id " +
@@ -712,32 +537,19 @@ public class AgentListAction extends BaseAction {
 		//以上SQL中，通过当前用户ID进行关联查询，达到了数据权限的限制
 	}
 
-	/**
-	 * 根据参数获得任务日志信息
-	 *
-	 * 1、根据agent_id和user_id获取agent信息
-	 * 2、在agent信息中获取日志目录
-	 * 3、调用方法获取日志,目前工具类不存在
-	 * 4、将日志信息和日志文件的路径封装成map
-	 * 5、返回map
-	 *
-	 * @Param: agentId long
-	 *         含义 : agent_info表主键, ftp_collect, object_collect, file_collect_set, database_set表外键
-	 *         取值范围 : 不为空
-	 * @Param: userId long
-	 *         含义 : 用户ID，sys_user表主键, agent_down_info表外键
-	 *         取值范围 : 不为空
-	 * @Param: logType String
-	 *         含义：日志类型(完整日志、错误日志)
-	 *         取值范围：All : 完整日志, Wrong : 错误日志
-	 * @Param: readNum int
-	 *         含义：查看日志条数
-	 *         取值范围：不为空
-	 * @return: Map<String, String></>
-	 *          含义：存放文件内容和日志文件路径的map集合
-	 *          取值范围：存放文件内容的Entry,key为log，存放文件路径的Entry,key为filePath
-	 *
-	 * */
+	@Method(desc = "根据参数获得任务日志信息", logicStep = "" +
+			"1、根据agent_id和user_id获取agent信息" +
+			"2、在agent信息中获取日志目录" +
+			"3、调用方法获取日志,目前工具类不存在" +
+			"4、将日志信息和日志文件的路径封装成map" +
+			"5、返回map")
+	@Param(name = "agentId", desc = "agent_info表主键, ftp_collect, object_collect, file_collect_set, " +
+			"database_set表外键", range = "不为空")
+	@Param(name = "userId", desc = "用户ID，sys_user表主键, agent_down_info表外键", range = "不为空")
+	@Param(name = "logType", desc = "日志类型(完整日志、错误日志)", range = "All : 完整日志, Wrong : 错误日志")
+	@Param(name = "readNum", desc = "查看日志条数", range = "不为空")
+	@Return(desc = "存放文件内容和日志文件路径的map集合", range = "存放文件内容的Entry,key为log，" +
+			"存放文件路径的Entry,key为filePath")
 	private Map<String, String> getTaskLog(long agentId, long userId, String logType, int readNum){
 		//1、根据agent_id和user_id获取agent信息
 		Agent_down_info AgentDownInfo = Dbo.queryOneObject(

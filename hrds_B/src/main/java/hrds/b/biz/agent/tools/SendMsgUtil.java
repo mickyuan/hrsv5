@@ -1,5 +1,8 @@
 package hrds.b.biz.agent.tools;
 
+import fd.ng.core.annotation.Method;
+import fd.ng.core.annotation.Param;
+import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.netclient.http.HttpClient;
@@ -20,33 +23,19 @@ public class SendMsgUtil {
 
 	private static final Log logger = LogFactory.getLog(SendMsgUtil.class);
 
-	/**
-	 * 海云应用管理端根据agentIp和agentPort向Agent端发送jsonData
-	 *
-	 * 1、对参数合法性进行校验
-	 * 2、对请求的参数调用工具类做压缩加密操作，得到处理后的数据并封装
-	 * 3、httpClient发送请求并接收响应
-	 * 4、根据响应状态码判断响应是否成功
-	 * 5、若响应成功，调用方法解析响应报文，并返回响应数据
-	 * 6、若响应不成功，记录日志，并返回操作失败
-	 *
-	 * @Param: agentId Long
-	 *         含义：agentId，agent_info表主键，agent_down_info表外键
-	 *         取值范围：不为空
-	 * @Param: userId Long
-	 *         含义：当前登录用户Id，sys_user表主键，agent_down_info表外键
-	 *         取值范围：不为空
-	 * @Param: jsonData String
-	 *         含义：海云应用管理端到Agent端的请求参数
-	 *         取值范围 : json格式的字符串
-	 * @Param: methodName String
-	 *         含义：Agent端的提供服务的方法的方法名
-	 *         取值范围 : AgentActionUtil类中的静态常量
-	 *
-	 * @return: String
-	 *          含义 : Agent端通过本地http交互得到的响应数据的msg部分，内容是按照表名模糊查询或者查询所有表得到的表信息
-	 *          取值范围 : json格式的字符串
-	 * */
+	@Method(desc = "海云应用管理端根据agentIp和agentPort向Agent端发送jsonData", logicStep = "" +
+			"1、对参数合法性进行校验" +
+			"2、对请求的参数调用工具类做压缩加密操作，得到处理后的数据并封装" +
+			"3、httpClient发送请求并接收响应" +
+			"4、根据响应状态码判断响应是否成功" +
+			"5、若响应成功，调用方法解析响应报文，并返回响应数据" +
+			"6、若响应不成功，记录日志，并返回操作失败")
+	@Param(name = "agentId", desc = "agentId，agent_info表主键，agent_down_info表外键", range = "不为空")
+	@Param(name = "userId", desc = "当前登录用户Id，sys_user表主键，agent_down_info表外键", range = "不为空")
+	@Param(name = "jsonData", desc = "海云应用管理端到Agent端的请求参数", range = "json格式的字符串")
+	@Param(name = "methodName", desc = "Agent端的提供服务的方法的方法名", range = "AgentActionUtil类中的静态常量")
+	@Return(desc = "Agent端通过本地http交互得到的响应数据的msg部分，内容是按照表名模糊查询或者查询所有表得到的表信息"
+			, range = "json格式的字符串")
 	public static String sendMsg(Long agentId, Long userId, String jsonData, String methodName){
 		//1、对参数合法性进行校验
 		if(agentId == null){

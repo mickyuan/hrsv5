@@ -3,6 +3,9 @@ package hrds.agent.job.biz.core.dbstage.service;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import fd.ng.core.annotation.Method;
+import fd.ng.core.annotation.Param;
+import fd.ng.core.annotation.Return;
 import hrds.agent.job.biz.bean.TableCleanResult;
 import hrds.agent.job.biz.bean.TableTrimResult;
 import hrds.agent.job.biz.constant.JobConstant;
@@ -19,25 +22,15 @@ import java.util.*;
  **/
 public class TbCleanRuleParser {
 
-	/**
-	 * 解析表清洗规则
-	 *
-	 * 1、解析表清洗优先级
-	 * 2、解析表所有字段替换规则
-	 * 3、解析表所有字段补齐规则
-	 * 4、解析表所有字段是否进行首尾去空
-	 * 5、解析列合并规则
-	 * 6、将上述所有组装成Map<String, Object>返回，key是清洗项名称，value是清洗规则
-	 *
-	 * @Param: tbCleanRule TableCleanResult
-	 *         含义：存有表清洗规则的实体类对象
-	 *         取值范围：不为空，ColumnCleanResult类型对象
-	 *
-	 * @return: Map<String, Object>
-	 *          含义：存放有解析后的表清洗规则的集合
-	 *          取值范围：不会为null，key是清洗项名称，value是清洗规则
-	 *
-	 * */
+	@Method(desc = "解析表清洗规则", logicStep = "" +
+			"1、解析表清洗优先级" +
+			"2、解析表所有字段替换规则" +
+			"3、解析表所有字段补齐规则" +
+			"4、解析表所有字段是否进行首尾去空" +
+			"5、解析列合并规则" +
+			"6、将上述所有组装成Map<String, Object>返回，key是清洗项名称，value是清洗规则")
+	@Param(name = "tbCleanRule", desc = "存有表清洗规则的实体类对象", range = "不为空，ColumnCleanResult类型对象")
+	@Return(desc = "存放有解析后的表清洗规则的集合", range = "不会为null，key是清洗项名称，value是清洗规则")
 	public static Map<String, Object> parseTbCleanRule(TableCleanResult tbCleanRule) {
 		if (tbCleanRule == null) {
 			throw new AppSystemException("解析表清洗规则时，清洗规则对象不能为空");

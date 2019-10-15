@@ -1,11 +1,13 @@
 package hrds.b.biz.dataquery;
 
+import fd.ng.core.annotation.Method;
+import fd.ng.core.annotation.Param;
+import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.FileUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.db.resultset.Result;
-import fd.ng.web.annotation.RequestParam;
 import fd.ng.web.util.Dbo;
 import fd.ng.web.util.ResponseUtil;
 import hrds.commons.base.BaseAction;
@@ -29,18 +31,13 @@ import java.util.*;
  * @since JDK1.8
  */
 public class DataQueryAction extends BaseAction {
-	/**
-	 * <p>方法名: getFileDataSource</p>
-	 * <p>方法说明: 获取部门的包含文件采集任务的数据源信息</p>
-	 * 1.根据部门id获取该部门下所有包含文件采集任务的数据源信息的list
-	 *
-	 * @param depId Long
-	 *              含义：部门id
-	 *              取值范围: long类型值
-	 * @return List<Map < String, Object>>
-	 * 含义: 数据源查询结果的list集合
-	 * 取值范围: 不为NULL
-	 */
+
+	@Method(desc = "获取部门的包含文件采集任务的数据源信息",
+			logicStep = "数据可访问权限处理方式: 根据登录用户的 user_id 进行权限检查" +
+					"1.根据部门id获取该部门下所有包含文件采集任务的数据源信息的list"
+	)
+	@Param(name = "depId", desc = "部门id", range = "long类型值，不为空的数字，通过生成规则自动生成")
+	@Return(desc = "存放包含文件采集任务的数据源的集合", range = "无限制")
 	public List<Map<String, Object>> getFileDataSource(long depId) {
 		//数据可访问权限处理方式: 根据 Agent_info 的 user_id 进行权限检查
 		//1.根据部门id获取该部门下所有包含文件采集任务的数据源信息的list
@@ -55,17 +52,12 @@ public class DataQueryAction extends BaseAction {
 		);
 	}
 
-	/**
-	 * <p>方法名: getFileCollectionTask</p>
-	 * <p>方法说明: 根据数据源id获取数据源下所有文件采集任务</p>
-	 * 1.根据数据源id获取该数据源下所有文件采集任务的list
-	 *
-	 * @param sourceId 含义: 数据源id
-	 *                 取值范围: long类型值
-	 * @return List<Map < String, Object>>
-	 * 含义: 返回文件采集任务的map
-	 * 取值范围: 不为NULL
-	 */
+	@Method(desc = "获取数据源下所有文件采集任务",
+			logicStep = "数据可访问权限处理方式: 根据登录用户的 user_id 进行权限检查" +
+					"1.根据数据源id获取该数据源下所有文件采集任务的list"
+	)
+	@Param(name = "sourceId", desc = "数据源id", range = "long类型值，不为空的数字，通过生成规则自动生成")
+	@Return(desc = "存放数据源下文件采集任务的集合", range = "无限制")
 	public List<Map<String, Object>> getFileCollectionTask(long sourceId) {
 		//数据可访问权限处理方式: 根据 Agent_info 的 user_id 进行权限检查
 		//1.根据数据源id获取该数据源下所有文件采集任务的list
@@ -77,19 +69,14 @@ public class DataQueryAction extends BaseAction {
 		);
 	}
 
-	/**
-	 * <p>方法名: downloadFileCheck</p>
-	 * <p>方法说明: 检查文件的下载权限</p>
-	 * 1.根据登录用户id和文件id获取文件检查后的结果集
-	 * 2.检查申请的操作是否是下载
-	 * 2-1.类型是下载，检查是否具有下载权限
-	 *
-	 * @param fileId 含义: 文件id
-	 *               取值范围: String类型值的UUID（32位）
-	 * @return boolean
-	 * 含义: 文件是否具有下载权限
-	 * 取值范围: true 或者 false
-	 */
+	@Method(desc = "检查文件的下载权限",
+			logicStep = "数据可访问权限处理方式: 根据登录用户的 user_id 进行权限检查" +
+					"1.根据登录用户id和文件id获取文件检查后的结果集" +
+					"2.检查申请的操作是否是下载" +
+					"2-1.类型是下载，检查是否具有下载权限"
+	)
+	@Param(name = "fileId", desc = "文件id", range = "String类型值的唯一id（32位），不包含特殊字符")
+	@Return(desc = "boolean类型", range = "true 或者 false")
 	private boolean downloadFileCheck(String fileId) {
 		//数据可访问权限处理方式: 根据 Data_auth 的 user_id 进行权限检查
 		//1.根据登录用户id和文件id获取文件检查后的结果集
@@ -115,21 +102,16 @@ public class DataQueryAction extends BaseAction {
 		return false;
 	}
 
-	/**
-	 * <p>方法名: downloadFile</p>
-	 * <p>方法说明: 根据文件id下载文件</p>
-	 * 1.根据文件id检查文件是否有下载权限
-	 * 2.通过文件id获取文件的 byte
-	 * 3.写入输出流，返回结果
-	 * 4.下载文件完成后修改文件下载计数信息
-	 *
-	 * @param fileId       含义:文件id
-	 *                     取值范围: String类型值的 UUID（32位）
-	 * @param fileName     含义: 文件名
-	 *                     取值范围: String类型值
-	 * @param queryKeyword 含义:文件查询关键字
-	 *                     取值范围: 没有输入限制
-	 */
+	@Method(desc = "下载文件",
+			logicStep = "数据可访问权限处理方式: 无数据库操作不需要权限检查" +
+					"1.根据文件id检查文件是否有下载权限" +
+					"2.通过文件id获取文件的 byte" +
+					"3.写出输出流，返回结果" +
+					"4.下载文件完成后修改文件下载计数信息"
+	)
+	@Param(name = "fileId", desc = "文件id", range = "String类型值的唯一id（32位），不包含特殊字符")
+	@Param(name = "fileName", desc = "文件名", range = "String类型值，无输入限制")
+	@Param(name = "queryKeyword", desc = "文件查询关键字", range = "String类型值，无输入限制")
 	public void downloadFile(String fileId, String fileName, String queryKeyword) {
 		//数据可访问权限处理方式: 无数据库操作不需要权限检查
 		//1.根据文件id检查文件是否有下载权限
@@ -154,24 +136,20 @@ public class DataQueryAction extends BaseAction {
 
 	/**
 	 * <p>方法名: getFileBytesFromAvro</p>
-	 * <p>方法说明: 占位方法，方法写完后删除</p>
+	 * <p>方法说明: 在hdfs上获取文件信息； 占位方法，方法写完后删除</p>
 	 */
 	private byte[] getFileBytesFromAvro(String fileId) {
 		byte[] bye = fileId.getBytes();
 		return bye;
 	}
 
-	/**
-	 * <p>方法名: modifySortCount</p>
-	 * <p>方法说明: 修改文件计数</p>
-	 * 1.通过文件id获取文件计数信息
-	 * 2.获取不到文件计数信息则添加一条计数信息,获取到则修改文件计数信息
-	 *
-	 * @param fileId       含义:文件id
-	 *                     取值范围: String类型值的UUID（32位）
-	 * @param queryKeyword 含义:查询关键字
-	 *                     取值范围: String类型值，没有输入限制
-	 */
+	@Method(desc = "修改文件计数",
+			logicStep = "数据可访问权限处理方式: 修改文件计数信息，不需要检查" +
+					"1.通过文件id获取文件计数信息" +
+					"2.获取不到文件计数信息则添加一条计数信息,获取到则修改文件计数信息"
+	)
+	@Param(name = "fileId", desc = "文件id", range = "String类型值的唯一id（32位），不包含特殊字符")
+	@Param(name = "queryKeyword", desc = "文件查询关键字", range = "String类型值，无输入限制")
 	private void modifySortCount(String fileId, String queryKeyword) {
 		//数据可访问权限处理方式: 修改文件计数信息，不需要检查
 		//1.通过文件id获取文件计数信息
@@ -200,16 +178,12 @@ public class DataQueryAction extends BaseAction {
 		}
 	}
 
-	/**
-	 * <p>方法名: saveFavoriteFile</p>
-	 * <p>方法说明: 保存文件收藏方法</p>
-	 * 1.根据文件id获取文件名
-	 * 2.根据文件id和文件名收藏该文件
-	 *
-	 * @param fileId String
-	 *               含义: 文件id
-	 *               取值范围: String类型值的 UUID（32位）主键唯一
-	 */
+	@Method(desc = "保存文件收藏方法",
+			logicStep = "数据可访问权限处理方式: 根据表的 user_id做权限校验" +
+					"1.根据文件id获取文件名" +
+					"2.根据文件id和文件名收藏该文件"
+	)
+	@Param(name = "fileId", desc = "文件id", range = "String类型值的唯一id（32位），不包含特殊字符")
 	public void saveFavoriteFile(String fileId) {
 		//数据可访问权限处理方式: 根据 User_fav 表的 user_id做权限校验
 		//1.根据文件id获取文件名
@@ -231,21 +205,18 @@ public class DataQueryAction extends BaseAction {
 		}
 	}
 
-	/**
-	 * <p>方法名: cancelFavoriteFile</p>
-	 * <p>方法说明: 删除已收藏文件方法</p>
-	 * 1.根据收藏文件id删除收藏记录
-	 *
-	 * @param favId long
-	 *              含义: 收藏文件的id
-	 *              取值范围: long类型值
-	 */
-	public void cancelFavoriteFile(@RequestParam(valueIfNull = "0") Long favId) {
+	@Method(desc = "删除已收藏文件方法",
+			logicStep = "数据可访问权限处理方式: 根据表的 user_id 做权限校验" +
+					"1.根据收藏文件id删除收藏记录"
+	)
+	@Param(name = "favId", desc = "收藏文件id", range = "long类型值的唯一id（10位）")
+	public void cancelFavoriteFile(Long favId) {
+		//数据可访问权限处理方式: 根据表的 user_id做权限校验
 		//1.根据收藏文件id删除收藏记录
 		User_fav userFav = new User_fav();
 		userFav.setFav_id(favId);
 		int deleteUserFavNum = Dbo.execute(
-				"delete from " + User_fav.TableName + " where fav_id=?", favId);
+				"delete from " + User_fav.TableName + " where fav_id=? and user_id=?", favId, getUserId());
 		if (deleteUserFavNum != 1) {
 			if (deleteUserFavNum == 0) {
 				throw new BusinessException("表中不存在该条记录！favId=" + favId);
@@ -254,18 +225,14 @@ public class DataQueryAction extends BaseAction {
 		}
 	}
 
-	/**
-	 * <p>方法名: getFileClassifySum</p>
-	 * <p>方法说明: 文件采集分类统计</p>
-	 * 1.根据登录用户的id获取用户文件采集统计的结果
-	 * 2.根据统计类型设置返回的map结果集
-	 *
-	 * @return classificationSumMap
-	 * 含义 返回的结果集map
-	 * 取值范围: 不为NULL
-	 * @author BY-HLL
-	 */
+	@Method(desc = "文件采集分类统计",
+			logicStep = "数据可访问权限处理方式: 根据表的 user_id 做权限校验" +
+					"1.根据登录用户的id获取用户文件采集统计的结果" +
+					"2.根据统计类型,设置返回的map结果集"
+	)
+	@Return(desc = "存放采集分类统计结果的集合", range = "无限制")
 	public Map<String, Object> getFileClassifySum() {
+		//数据可访问权限处理方式: 根据表的 user_id做权限校验
 		//1.根据登录用户的id获取用户文件采集统计的结果
 		List<Map<String, Object>> fcsList = Dbo.queryList("select count(1) sum_num,file_type" +
 						" from " + Source_file_attribute.TableName + " sfa join" +
@@ -285,24 +252,18 @@ public class DataQueryAction extends BaseAction {
 		return classificationSumMap;
 	}
 
-	/**
-	 * <p>方法名: getSevenDayCollectFileSum</p>
-	 * <p>方法说明: 7天内文件采集统计</p>
-	 * 1.如果查询天数小于1条则显示默认7天，查询条数大于30天则显示30天，否则取传入的查询天数
-	 * 2.根据登录用户的id获取用户最近7天的文件采集信息
-	 * 3.根据查询结果设置返回的map结果集
-	 *
-	 * @param queryDays 含义:查询天数
-	 *                  取值范围:int类型值 1-30 默认为7
-	 * @return sevenDayCollectFileSumMap
-	 * 含义 返回的结果集map
-	 * 取值范围: 不为NULL
-	 * @author BY-HLL
-	 */
-	public Map<String, Object> getSevenDayCollectFileSum(@RequestParam(valueIfNull = "7") int queryDays) {
+	@Method(desc = "最近7天文件采集统计",
+			logicStep = "数据可访问权限处理方式: 根据表的 user_id 做权限校验" +
+					"1.如果查询天数小于1条则显示默认7天，查询条数大于30天则显示30天，否则取传入的查询天数" +
+					"2.根据登录用户的id获取用户最近7天的文件采集信息" +
+					"3.根据查询结果设置返回的map结果集"
+	)
+	@Param(name = "queryDays", desc = "查询天数", range = "int类型值 1-30 默认为7", valueIfNull = "7")
+	@Return(desc = "存放统计结果的集合", range = "无限制")
+	public Map<String, Object> getSevenDayCollectFileSum(int queryDays) {
 		//1.如果查询天数数小于1条则显示默认7天，查询条数大于30天则显示30天，否则取传入的查询天数
-		queryDays = queryDays < 1 ? 7 : queryDays;
-		queryDays = queryDays > 30 ? 30 : queryDays;
+		queryDays = Math.max(1, queryDays);
+		queryDays = Math.min(queryDays, 30);
 		//2.根据登录用户的id获取用户最近7天的文件采集信息
 		List<Map<String, Object>> scfList = Dbo.queryList("select count(1) count,storage_date" +
 						" from " + Source_file_attribute.TableName + " sfa join" +
@@ -327,24 +288,18 @@ public class DataQueryAction extends BaseAction {
 		return sevenDayCollectFileSumMap;
 	}
 
-	/**
-	 * <p>方法名: getLast3FileCollections</p>
-	 * <p>方法说明: 获取最近的3次文件采集信息</p>
-	 * 1.如果查询最近次数小于1则显示默认最近3次，查询最近次数大于30天则显示最近30次，否则取传入的查询次数
-	 * 2.根据登录用户的id获取用户最近3次的文件采集信息
-	 * 3.根据查询结果设置返回的map结果集
-	 *
-	 * @param timesRecently 含义:查询最近采集的次数
-	 *                      取值范围:int类型值 1-30 默认为3
-	 * @return last3FileCollectionsMapList
-	 * 含义 返回的结果集map
-	 * 取值范围: 不为NULL
-	 * @author BY-HLL
-	 */
-	public List<Map<String, Object>> getLast3FileCollections(@RequestParam(valueIfNull = "3") int timesRecently) {
+	@Method(desc = "最近的3次文件采集信息",
+			logicStep = "数据可访问权限处理方式: 根据表的 user_id 做权限校验" +
+					"1.如果查询最近次数小于1则显示默认最近3次，查询最近次数大于30天则显示最近30次，否则取传入的查询次数" +
+					"2.根据登录用户的id获取用户最近3次的文件采集信息" +
+					"3.根据查询结果设置返回的map结果集"
+	)
+	@Param(name = "timesRecently", desc = "查询最近采集的次数", range = "int类型值 1-30 默认为7", valueIfNull = "7")
+	@Return(desc = "存放统计结果的集合", range = "无限制")
+	public List<Map<String, Object>> getLast3FileCollections(int timesRecently) {
 		//1.如果查询最近次数小于1则显示默认最近3次，查询最近次数大于30天则显示最近30次，否则取传入的查询次数
-		timesRecently = timesRecently < 1 ? 3 : timesRecently;
-		timesRecently = timesRecently > 30 ? 30 : timesRecently;
+		timesRecently = Math.max(1, timesRecently);
+		timesRecently = Math.min(timesRecently, 30);
 		//2.根据登录用户的id获取用户最近3次的文件采集信息
 		List<Map<String, Object>> l3fcList = Dbo.queryList("select storage_date, storage_time," +
 						" max(concat(storage_date,storage_time)) max_date, count(1) count," +
@@ -378,36 +333,22 @@ public class DataQueryAction extends BaseAction {
 		return last3FileCollectionsMapList;
 	}
 
-	/**
-	 * <p>方法名: getConditionalQuery</p>
-	 * <p>方法说明: 根据查询条件获取文件的信息后设置下载和认证信息</p>
-	 * <p>
-	 * 1.获取文件的申请和审核信息
-	 * 2.设置下载和认证信息
-	 * 3.设置文件各类申请详情汇总
-	 * 4.设置文件申请统计汇总
-	 * 5.设置文件属性信息
-	 *
-	 * @param sourceId  含义: 数据源id
-	 *                  取值范围: long类型值
-	 * @param fcsId     含义: 文件采集任务id
-	 *                  取值范围: long类型值
-	 * @param fileType  含义: 文件类型代码值
-	 *                  取值范围: "1001","全部文件" "1002","图片" "1003","文档" "1013","PDF文件" "1023","office文件" "1033","文本文件"
-	 *                  "1043","压缩文件" "1053","日志文件" "1063","表数据文件" "1004","视频" "1005","音频" "1006","其它"
-	 * @param startDate 含义: 查询开始日期
-	 *                  取值范围: 日期格式 yyyy-mm-dd
-	 * @param endDate   含义: 查询结束日期
-	 *                  取值范围: 日期格式 yyyy-mm-dd
-	 * @return conditionalQueryResult
-	 * 含义 返回的查询数据结果集map
-	 * 取值范围: 不为NULL
-	 */
-	public Map<String, Object> getConditionalQuery(@RequestParam(nullable = true) String sourceId,
-	                                               @RequestParam(nullable = true) String fcsId,
-	                                               @RequestParam(nullable = true) String fileType,
-	                                               @RequestParam(nullable = true) String startDate,
-	                                               @RequestParam(nullable = true) String endDate) {
+	@Method(desc = "自定义查询条件获取采集文件的信息",
+			logicStep = "数据可访问权限处理方式: 根据表的 user_id 做权限校验" +
+					"1.获取文件的申请和审核信息" +
+					"2.设置下载和认证信息" +
+					"3.设置文件各类申请详情汇总" +
+					"4.设置文件申请统计汇总" +
+					"5.设置文件属性信息"
+	)
+	@Param(name = "sourceId", desc = "数据源id", range = "long类型值，10位长度")
+	@Param(name = "fcsId", desc = "采集任务id", range = "long类型值，10位长度")
+	@Param(name = "fileType", desc = "文件采集类型", range = "文件类型代码值")
+	@Param(name = "startDate", desc = "查询开始日期", range = "日期格式 yyyy-mm-dd")
+	@Param(name = "endDate", desc = "查询结束日期", range = "日期格式 yyyy-mm-dd")
+	@Return(desc = "存放自定义查询结果的数据集合", range = "无限制")
+	public Map<String, Object> getConditionalQuery(String sourceId, String fcsId, String fileType, String startDate,
+	                                               String endDate) {
 		//1.获取文件的申请和审核信息
 		Result fileRs = conditionalQuery(sourceId, fcsId, fileType, startDate, endDate);
 		Map<String, Object> conditionalQueryMap = new HashMap<>();
@@ -433,26 +374,27 @@ public class DataQueryAction extends BaseAction {
 		return conditionalQueryMap;
 	}
 
-	/**
-	 * <p>方法名: conditionalQuery</p>
-	 * <p>方法说明: 根据查询条件获取文件的信息</p>
-	 * 1.查看待查询的数据源是否属于登录用户所在部门
-	 * 2.是当前登录用户所属部门的数据源
-	 * 2-1.根据查询条件返回查询结果
-	 * 2-1-1.根据选择的数据源查询
-	 * 2-1-2.根据选择的文件采集任务查询
-	 * 2-1-3.根据选择的开始日期查询
-	 * 2-1-4.根据选择的结束日期查询
-	 * 2-2.如果没选择任何查询条件或者所有参数为空,则查询最近的文件采集信息
-	 * 3.非本部门发布的数据
-	 * 3-1.获取文件采集的数据列表
-	 * 3-2.获取数据的访问权限和审核信息
-	 */
-	private Result conditionalQuery(@RequestParam(nullable = true) String sourceId,
-	                                @RequestParam(nullable = true) String fcsId,
-	                                @RequestParam(nullable = true) String fileType,
-	                                @RequestParam(nullable = true) String startDate,
-	                                @RequestParam(nullable = true) String endDate) {
+	@Method(desc = "自定义查询条件获取采集文件的信息",
+			logicStep = "数据可访问权限处理方式: 根据表的 user_id 做权限校验" +
+					"1.查看待查询的数据源是否属于登录用户所在部门" +
+					"2.是当前登录用户所属部门的数据源" +
+					"2-1.根据查询条件返回查询结果" +
+					"2-1-1.根据选择的数据源查询" +
+					"2-1-2.根据选择的文件采集任务查询" +
+					"2-1-3.根据选择的开始日期查询" +
+					"2-1-4.根据选择的结束日期查询" +
+					"2-2.如果没选择任何查询条件或者所有参数为空,则查询最近的文件采集信息" +
+					"3.非本部门发布的数据" +
+					"3-1.获取文件采集的数据列表" +
+					"3-2.获取数据的访问权限和审核信息"
+	)
+	@Param(name = "sourceId", desc = "数据源id", range = "long类型值，10位长度")
+	@Param(name = "fcsId", desc = "采集任务id", range = "long类型值，10位长度")
+	@Param(name = "fileType", desc = "文件采集类型", range = "文件类型代码值")
+	@Param(name = "startDate", desc = "查询开始日期", range = "日期格式 yyyy-mm-dd")
+	@Param(name = "endDate", desc = "查询结束日期", range = "日期格式 yyyy-mm-dd")
+	@Return(desc = "存放自定义查询结果的Result", range = "无限制")
+	private Result conditionalQuery(String sourceId, String fcsId, String fileType, String startDate, String endDate) {
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		//1.查看待查询的数据源是否属于登录用户所在部门
 		Source_file_attribute sourceFileAttribute = new Source_file_attribute();
@@ -519,14 +461,14 @@ public class DataQueryAction extends BaseAction {
 									" auth_type != ?", searchResult.getString(i, "file_id"), getUserId(),
 							AuthType.BuYunXu.getCode());
 					if (!daResult.isEmpty()) {
-						StringBuffer authType = new StringBuffer();
-						StringBuffer applyType = new StringBuffer();
+						StringBuilder authType = new StringBuilder();
+						StringBuilder applyType = new StringBuilder();
 						for (int j = 0; j < daResult.getRowCount(); j++) {
 							authType.append(daResult.getString(j, "auth_type")).append(',');
 							applyType.append(daResult.getString(j, "apply_type")).append(',');
 						}
-						authType = deleteTheLastCharacter(authType);
-						applyType = deleteTheLastCharacter(applyType);
+						authType.delete(authType.length() - 1, authType.length());
+						applyType.delete(applyType.length() - 1, applyType.length());
 						searchResult.setObject(i, "auth_type", authType.toString());
 						searchResult.setObject(i, "apply_type", applyType.toString());
 					}
@@ -555,8 +497,8 @@ public class DataQueryAction extends BaseAction {
 							.addORParam("auth_type", authTypes);
 					Result daResult = Dbo.queryResult(asmSql.sql(), asmSql.params());
 					if (!daResult.isEmpty()) {
-						StringBuffer authType = new StringBuffer();
-						StringBuffer applyType = new StringBuffer();
+						StringBuilder authType = new StringBuilder();
+						StringBuilder applyType = new StringBuilder();
 						for (int j = 0; j < daResult.getRowCount(); j++) {
 							authType.append(daResult.getString(i, "auth_type")).append(',');
 							applyType.append(daResult.getString(i, "apply_type")).append(',');
@@ -586,13 +528,14 @@ public class DataQueryAction extends BaseAction {
 		return searchResult;
 	}
 
-	/**
-	 * 设置下载和认证信息
-	 *
-	 * @param conditionalQueryMap 含义: 待返回Map
-	 *                            取值范围: 设置待返回数据的下载和认证信息
-	 */
+	@Method(desc = "设置下载和认证信息",
+			logicStep = "数据可访问权限处理方式: 无数据库查询动作，不需要验证权限" +
+					"1.自定义条件查询结果设置下载和认证信息"
+	)
+	@Param(name = "conditionalQueryMap", desc = "自定义条件查询结果map", range = "自定义条件查询结果的数据集合")
+	@Return(desc = "自定义查询结果的数据集合", range = "无限制")
 	private void setDownloadAndAuth(Map<String, Object> conditionalQueryMap) {
+		//1.自定义条件查询结果设置下载和认证信息
 		conditionalQueryMap.put("view", ApplyType.ChaKan.getCode());
 		conditionalQueryMap.put("view_zh", ApplyType.ChaKan.getValue());
 		conditionalQueryMap.put("download", ApplyType.XiaZai.getCode());
@@ -609,13 +552,13 @@ public class DataQueryAction extends BaseAction {
 		conditionalQueryMap.put("auth_zh", authTypeZh);
 	}
 
-	/**
-	 * <p>方法名: getFileApplicationDetails</p>
-	 * <p>方法说明: 获取文件申请详情</p>
-	 * 1.初始化待返回数据的Map
-	 * 2.各类型文件的申请汇总
-	 * 3.文件的申请汇总
-	 */
+	@Method(desc = "获取文件申请详情",
+			logicStep = "数据可访问权限处理方式: 根据登录用户的 user_id 校验数据访问权限" +
+					"1.初始化待返回数据的Map" +
+					"1.不同类型文件的申请汇总" +
+					"1.文件的申请汇总"
+	)
+	@Return(desc = "文件申请类型统计信息", range = "无限制")
 	private Map<String, Object> getFileApplicationDetails() {
 		//1.初始化待返回数据的Map
 		Map<String, Object> fileApplicationDetails = new HashMap<>();
@@ -626,6 +569,7 @@ public class DataQueryAction extends BaseAction {
 				" ON da.file_id = sfa.file_id where USER_ID = ? and auth_type = ?");
 		asmSql.addParam(getUserId());
 		asmSql.addParam(AuthType.ShenQing.getCode());
+		List<Object> sourceIdList = Dbo.queryOneColumnList("select source_id from data_source");
 		asmSql.addORParam("sfa.source_id", getAllSourceId());
 		asmSql.addSql(" GROUP BY apply_type");
 		Result applyRequestRs = Dbo.queryResult(asmSql.sql(), asmSql.params());
@@ -642,11 +586,14 @@ public class DataQueryAction extends BaseAction {
 		return fileApplicationDetails;
 	}
 
-	/**
-	 * <p>方法名: setFileAttribute</p>
-	 * <p>方法说明: 设置文件属性信息</p>
-	 */
+	@Method(desc = "设置文件属性信息",
+			logicStep = "数据可访问权限处理方式: 无数据库查询动作，不需要验证权限" +
+					"1.设置文件公共的属性信息"
+	)
+	@Param(name = "conditionalQueryMap", desc = "自定义条件查询结果map", range = "自定义条件查询结果的数据集合")
+	@Return(desc = "自定义查询结果的数据集合", range = "无限制")
 	private void setFileAttribute(Map<String, Object> conditionalQueryMap) {
+		//1.设置文件公共的属性信息"
 		conditionalQueryMap.put("all", FileType.All.getCode());
 		conditionalQueryMap.put("all_zh", FileType.All.getValue());
 		conditionalQueryMap.put("pic", FileType.TuPian.getCode());
@@ -673,28 +620,18 @@ public class DataQueryAction extends BaseAction {
 		conditionalQueryMap.put("other_zh", FileType.Other.getValue());
 	}
 
-	/**
-	 * StringBuffer的字符串删除最后一个字符
-	 */
-	private static StringBuffer deleteTheLastCharacter(StringBuffer authType) {
-		return authType.delete(authType.length() - 1, authType.length());
-	}
-
-	/**
-	 * <p>方法名: getSourceId</p>
-	 * <p>方法说明: 获取所有数据源id</p>
-	 *
-	 * @return sourceId
-	 * 含义 返回的查询到所有数据源id的结果集数组
-	 * 取值范围: long类型的id
-	 */
-	private static Long[] getAllSourceId() {
+	@Method(desc = "获取所有数据源id数组",
+			logicStep = "数据可访问权限处理方式: 无数据库查询动作，不需要验证权限" +
+					"1.获取所有数据源id数组"
+	)
+	@Return(desc = "数据源id数组", range = "无限制")
+	public static Long[] getAllSourceId() {
+		//1.获取所有数据源id数组
 		Result query = Dbo.queryResult("select source_id from data_source");
-		Long[] sourceId = new Long[query.getRowCount()];
+		Long[] sourceIds = new Long[query.getRowCount()];
 		for (int i = 0; i < query.getRowCount(); ++i) {
-			sourceId[i] = query.getLong(i, "source_id");
+			sourceIds[i] = query.getLong(i, "source_id");
 		}
-		return sourceId;
+		return sourceIds;
 	}
-
 }

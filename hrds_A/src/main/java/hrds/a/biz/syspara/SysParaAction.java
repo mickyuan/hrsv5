@@ -1,8 +1,9 @@
 package hrds.a.biz.syspara;
 
+import fd.ng.core.annotation.Method;
+import fd.ng.core.annotation.Param;
+import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
-import fd.ng.web.annotation.RequestBean;
-import fd.ng.web.annotation.RequestParam;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.entity.Sys_para;
@@ -22,44 +23,32 @@ import java.util.List;
  */
 public class SysParaAction extends BaseAction {
 
-	/**
-	 * 根据用户的模糊查询获取系统参数信息
-	 * 1 : 根据输入的系统参数名称进行模糊查询
-	 * 2 : 没有输入的系统参数名称
-	 *
-	 * @param paraName 含义 : 系统参数名称
-	 *                 取值范围 : 可以为空,这个参数是搜索的才会有
-	 * @return List<Sys_para>
-	 * 含义 : 返回系统参数的集合
-	 * 取值范围 : 允许为空,为空表示没有系统参数信息
-	 */
-	public List<Sys_para> getSysPara(@RequestParam(valueIfNull = "") String paraName) {
+	@Method(desc = "根据用户的模糊查询获取系统参数信息",
+					logicStep = "1 : 根据输入的系统参数名称进行模糊查询" +
+									"2 : 没有输入的系统参数名称")
+	@Param(name = "para_name", desc = "参数名称", nullable = true, range = "可以为空,如果为空表示并未使用搜索")
+	@Return(desc = "返回系统参数的集合信息", range = "可以为空,为空表示系统参数信息")
+	public List<Sys_para> getSysPara(String para_name) {
 
 		//1 : 根据输入的系统参数名称进行模糊查询
-		if( !StringUtil.isBlank(paraName) ) {
+		if( !StringUtil.isBlank(para_name) ) {
 			return Dbo.queryList(Sys_para.class, "SELECT * FROM " + Sys_para.TableName
-							+ " WHERE para_name like '%?%'", paraName);
+							+ " WHERE para_name like '%?%'", para_name);
 		}
 		else {
 			//2 : 没有输入的系统参数名称
 			return Dbo.queryList(Sys_para.class, "SELECT * FROM " + Sys_para.TableName);
 		}
+
 	}
 
-	/**
-	 * 删除系统参数
-	 * 1 : 先检查当前要删除的参数信息是否存在
-	 * 2 : 删除参数信息
-	 * 3 : 返回新的系统参数信息
-	 *
-	 * @param para_id   含义 : 系统参数ID
-	 *                  取值范围 : 不能为空,这个是主键
-	 * @param para_name 含义 : 系统参数名称
-	 *                  取值范围 : 不能为空,系统参数的名称
-	 * @return List<Sys_para>
-	 * 含义 : 系统参数的集合
-	 * 取值范围 : 允许为空,为空表示没有系统参数信息
-	 */
+	@Method(desc = "删除系统参数",
+					logicStep = "1 : 先检查当前要删除的参数信息是否存在" +
+									"2:删除参数信息" +
+									"3:返回新的系统参数集合信息")
+	@Param(name = "para_id", desc = "系统参数的主键ID", range = "不为空的整数")
+	@Param(name = "para_name", desc = "系统参数的名称", range = "不为空的字符串")
+	@Return(desc = "返回删除完后,新的数据集合", range = "可以是空,空的表示没有系统参数信息存在")
 	public List<Sys_para> deleteSysPara(long para_id, String para_name) {
 
 		//1 : 先检查当前要删除的参数信息是否存在
@@ -73,82 +62,71 @@ public class SysParaAction extends BaseAction {
 		return getSysPara("");
 	}
 
-	/**
-	 * 编辑系统参数
-	 * 1 : 先检查当前要删除的参数信息是否存在
-	 * 2 : 更新参数信息
-	 * 3 : 返回新的系统参数信息
-	 *
-	 * @param sys_para 含义 : 系统参数信息实体类信息
-	 *                 取值范围 : 不能为空
-	 * @return List<Sys_para>
-	 * 含义 : 系统参数的集合
-	 * 取值范围 : 允许为空,为空表示没有系统参数信息
-	 */
-	public List<Sys_para> editorSysPara(@RequestBean Sys_para sys_para) {
+	@Method(desc = "编辑系统参数",
+					logicStep = "1 : 先检查当前要删除的参数信息是否存在" +
+									"2 : 更新参数信息" +
+									"3 : 返回新的系统参数信息")
+	@Param(name = "sys_para", desc = "参数信息的实体类容",
+					range = "para_id : 参数主键ID 不能为空" +
+									"para_name : 系统参数名称,不能为空" +
+									"para_value : 系统参数值,允许为空" +
+									"para_type : 参数类型, 不能为空,目前默认的为 server.properties" +
+									"remark : 系统参数描述,可以为空", isBean = true)
+	@Return(desc = "返回编辑完后,新的数据集合", range = "可以是空,空的表示没有系统参数信息存在")
+	public List<Sys_para> editorSysPara(Sys_para sys_para) {
 
 		//1 : 先检查当前要删除的参数信息是否存在
 		checkSysParaIsExist(sys_para.getPara_id(), sys_para.getPara_name());
 
 		//2 : 更新参数信息
-		int update = sys_para.update(Dbo.db());
-		if( update != 1 ) {
-			throw new BusinessException(String.format("系统参数 %s 更新失败", sys_para.getPara_name()));
-		}
+		sys_para.update(Dbo.db());
 
 		//3 : 返回新的系统参数信息
 		return getSysPara("");
 	}
 
-	/**
-	 * 新增系统参数
-	 * 1 : 首先生成系统参数的主键
-	 * 2 : 然后新增系统参数信息
-	 * 3 : 返回新的系统参数信息
-	 *
-	 * @param sys_para 含义 : 系统参数信息实体类信息
-	 *                 取值范围 : 不能为空
-	 * @return List<Sys_para>
-	 * 含义 : 系统参数的集合
-	 * 取值范围 : 允许为空,为空表示没有系统参数信息
-	 */
-	public List<Sys_para> addSysPara(@RequestBean Sys_para sys_para) {
+	@Method(desc = "新增系统参数",
+					logicStep = "1 : 新增时检查,系统参数名称是否已经存在" +
+									"2 : 首先生成系统参数的主键" +
+									"3 : 然后新增系统参数信息" +
+									"4 : 返回新的系统参数信息")
+	@Param(name = "sys_para", desc = "参数信息的实体类容",
+					range = "para_id : 参数主键ID 不能为空" +
+									"para_name : 系统参数名称,不能为空" +
+									"para_value : 系统参数值,允许为空" +
+									"para_type : 参数类型, 不能为空,目前默认的为 server.properties" +
+									"remark : 系统参数描述,可以为空", isBean = true)
+	@Return(desc = "返回编辑完后,新的数据集合", range = "可以是空,空的表示没有系统参数信息存在")
+	public List<Sys_para> addSysPara(Sys_para sys_para) {
 
-		//1 : 首先生成系统参数的主键
+		//1 : 新增时检查,系统参数名称是否已经存在
+		if( Dbo.queryNumber("SELECT COUNT(1) FROM " + Sys_para.TableName + " WHERE para_name = ?",
+						sys_para.getPara_name()).orElseThrow(() -> new BusinessException("新增检查参数名称SQL编写错误")
+		) != 0 ) {
+			throw new BusinessException(String.format("系统参数名称 %s 已经存在,添加错误", sys_para.getPara_name()));
+		}
+
+		//2 : 首先生成系统参数的主键
 		sys_para.setPara_id(PrimayKeyGener.getNextId());
 
-		//2 : 然后新增系统参数信息
-		int add = sys_para.add(Dbo.db());
-		if( add != 1 ) {
-			throw new BusinessException(String.format("系统参数 %s 新增失败", sys_para.getPara_name()));
-		}
+		//3 : 然后新增系统参数信息
+		sys_para.add(Dbo.db());
 
-		//3 : 返回新的系统参数信息
+		//4 : 返回新的系统参数信息
 		return getSysPara("");
 	}
 
-	/**
-	 * 检查当前的系统参数信息是否存在
-	 * 1 : 根据系统参数的主键和名称查询记录信息是否存在(1 : 表示存在, 其他为异常情况,因为根据主键只能查出一条记录信息)
-	 * 2 : 判断查询的记录信息是否符合
-	 *
-	 * @param para_id   含义 : 系统参数ID
-	 *                  取值范围 : 不能为空,这个是主键
-	 * @param para_name 含义 : 系统参数名称
-	 *                  取值范围 : 不能为空,系统参数的名称
-	 */
+	@Method(desc = "检查当前的系统参数信息是否存在",
+					logicStep = "1 : 根据系统参数的主键和名称查询记录信息是否存在(1 : 表示存在, 其他为异常情况,因为根据主键只能查出一条记录信息")
+	@Param(name = "para_id", desc = "系统参数主键ID", range = "不能为空的整数,这个是系统参数的主键")
+	@Param(name = "para_name", desc = "系统参数名称", range = "不能为空的字符串")
 	private void checkSysParaIsExist(long para_id, String para_name) {
 
 		//1 : 根据系统参数的主键和名称查询记录信息是否存在(1 : 表示存在, 其他为异常情况,因为根据主键只能查出一条记录信息)
-		long queryNum = Dbo.queryNumber("SELECT count(1) FROM " + Sys_para.TableName
-						+ " WHERE para_id = ? AND para_name = ?", para_id, para_name).
-						orElseThrow(() -> new BusinessException(
-										String.format("未找到系统参数名称为 :  %s 信息", para_name)));
-
-		//2 : 判断查询的记录信息是否符合
-		if( queryNum != 1 ) {
-			throw new BusinessException(
-							String.format("未找到系统参数名称为 : %s 信息", para_name));
+		if( Dbo.queryNumber("SELECT COUNT(1) FROM " + Sys_para.TableName
+						+ " WHERE para_id = ? AND para_name = ?", para_id, para_name).orElseThrow(
+						() -> new BusinessException("检查系统参数是否存在的SQL编写错误")) != 1 ) {
+			throw new BusinessException(String.format("未找到系统参数名称为 :  %s 信息", para_name));
 		}
 	}
 }

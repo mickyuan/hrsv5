@@ -1,5 +1,8 @@
 package hrds.agent.job.biz.dataclean.tableclean;
 
+import fd.ng.core.annotation.Method;
+import fd.ng.core.annotation.Param;
+import fd.ng.core.annotation.Return;
 import hrds.commons.exception.AppSystemException;
 import org.apache.parquet.example.data.Group;
 
@@ -17,37 +20,17 @@ import java.util.Map;
  **/
 public class TableCleanUtil {
 
-	/**
-	 * 表清洗入口方法
-	 *
-	 * 1、校验入参合法性
-	 * 2、根据列名拿到该表的清洗规则
-	 * 3、按照清洗优先级，从大到小对该表所有数据进行数据清洗
-	 *
-	 * @Param: columnValue String
-	 *         含义：待清洗字段值
-	 *         取值范围：不为空
-	 * @Param: columnsName String
-	 *         含义：待清洗列名
-	 *         取值范围：不为空
-	 * @Param: group Group
-	 *         含义：用于写Parquet的一行数据
-	 *         取值范围：不为空
-	 * @Param: colType String
-	 *         含义：列类型
-	 *         取值范围：不为空
-	 * @Param: fileType String
-	 *         含义：卸数落地数据文件的格式
-	 *         取值范围：不为空，FileFormatConstant代码项的code
-	 * @Param: tableCleanRule Map<String, Object>
-	 *         含义：存放有表清洗规则的map集合
-	 *         取值范围：不为空，key为清洗项名称，value是清洗规则
-	 *
-	 * @return: String
-	 *          含义：清洗后的字段值
-	 *          取值范围：不会为null
-	 *
-	 * */
+	@Method(desc = "表清洗入口方法", logicStep = "" +
+			"1、校验入参合法性" +
+			"2、根据列名拿到该表的清洗规则" +
+			"3、按照清洗优先级，从大到小对该表所有数据进行数据清洗")
+	@Param(name = "columnValue", desc = "待清洗字段值", range = "不为空")
+	@Param(name = "columnName", desc = "待清洗列名", range = "不为空")
+	@Param(name = "group", desc = "用于写Parquet的一行数据", range = "不为空")
+	@Param(name = "colType", desc = "列类型", range = "不为空")
+	@Param(name = "fileType", desc = "卸数落地数据文件的格式", range = "不为空，FileFormatConstant代码项的code")
+	@Param(name = "tableCleanRule", desc = "存放有表清洗规则的map集合", range = "不为空，key为清洗项名称，value是清洗规则")
+	@Return(desc = "", range = "")
 	public static String tbDataClean(String columnValue, String columnName, Group group,
 	                                 String colType, String fileType, Map<String, Object> tableCleanRule) {
 		//1、校验入参合法性

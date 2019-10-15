@@ -1,6 +1,9 @@
 package hrds.agent.job.biz.core;
 
 import com.alibaba.fastjson.JSONObject;
+import fd.ng.core.annotation.Method;
+import fd.ng.core.annotation.Param;
+import fd.ng.core.annotation.Return;
 import hrds.agent.job.biz.bean.JobStatusInfo;
 import hrds.agent.job.biz.bean.StageStatusInfo;
 import hrds.agent.job.biz.constant.RunStatusConstant;
@@ -26,37 +29,19 @@ public class JobStageController {
 	//责任链尾节点
 	private JobStageInterface last;
 
-	/**
-	 * 注册阶段,使用可变参数，供外部传入1-N个阶段进行注册
-	 *
-	 * 1、调用本类中的重载的registerJobStage方法完成阶段注册
-	 *
-	 * @Param: stages JobStageInterface
-	 *         含义：要被注册到责任链中的一个采集作业的0-N个阶段
-	 *         取值范围：可变参数，可以传入0-N个JobStageInterface实例
-	 *
-	 * @return: 无
-	 *
-	 * */
+	@Method(desc = "注册阶段,使用可变参数，供外部传入1-N个阶段进行注册", logicStep = "" +
+			"1、调用本类中的重载的registerJobStage方法完成阶段注册")
+	@Param(name = "stages", desc = "要被注册到责任链中的一个采集作业的0-N个阶段", range = "可变参数，可以传入0-N个JobStageInterface实例")
 	public void registerJobStage(JobStageInterface... stages) {
 		for (JobStageInterface stage : stages) {
 			registerJobStage(stage);
 		}
 	}
 
-	/**
-	 * 重载注册阶段，本类内部使用，真正处理阶段处理逻辑
-	 *
-	 * 1、如果责任链头节点为空，说明整个责任链为空，构建只有一个节点的责任链
-	 * 2、如果责任链头节点不为空，则设置尾节点的下一个节点是传入的stage节点，stage节点变为尾节点
-	 *
-	 * @Param: stages JobStageInterface
-	 *         含义：要被注册到责任链中的一个采集作业的1个阶段
-	 *         取值范围：JobStageInterface实例
-	 *
-	 * @return: 无
-	 *
-	 * */
+	@Method(desc = "重载注册阶段，本类内部使用，真正处理阶段处理逻辑", logicStep = "" +
+			"1、如果责任链头节点为空，说明整个责任链为空，构建只有一个节点的责任链" +
+			"2、如果责任链头节点不为空，则设置尾节点的下一个节点是传入的stage节点，stage节点变为尾节点")
+	@Param(name = "stage", desc = "要被注册到责任链中的一个采集作业的1个阶段", range = "JobStageInterface实例")
 	private void registerJobStage(JobStageInterface stage) {
 		//1、如果责任链头节点为空，说明整个责任链为空，构建只有一个节点的责任链
 		if (head == null) {
@@ -67,26 +52,14 @@ public class JobStageController {
 		}
 	}
 
-	/**
-	 * 按照顺序从采集作业的第一个阶段开始执行
-	 *
-	 * 1、从第一个阶段开始执行，并判断执行结果
-	 * 2、若第一阶段执行成功，记录阶段执行状态，并继续向下面的阶段执行
-	 * 3、若第一阶段执行失败，目前的处理逻辑是直接记录错误信息，然后返回jobStatusInfo
-	 * 4、若除第一阶段外的其他阶段执行失败，记录错误信息，尚欠是否继续运行下一阶段的逻辑
-	 *
-	 * @Param: statusFilePath String
-	 *         含义：作业状态文件路径
-	 *         取值范围：不为空
-	 * @Param: jobStatus JobStatusInfo
-	 *         含义：作业状态对象
-	 *         取值范围：JobStatusInfo实体类对象
-	 *
-	 * @return: fd.ng.db.resultset.Result
-	 *          含义：查询结果集，查询出的结果可能有0-N条
-	 *          取值范围：不会为null
-	 *
-	 * */
+	@Method(desc = "按照顺序从采集作业的第一个阶段开始执行", logicStep = "" +
+			"1、从第一个阶段开始执行，并判断执行结果" +
+			"2、若第一阶段执行成功，记录阶段执行状态，并继续向下面的阶段执行" +
+			"3、若第一阶段执行失败，目前的处理逻辑是直接记录错误信息，然后返回jobStatusInfo" +
+			"4、若除第一阶段外的其他阶段执行失败，记录错误信息，尚欠是否继续运行下一阶段的逻辑")
+	@Param(name = "statusFilePath", desc = "作业状态文件路径", range = "不为空")
+	@Param(name = "jobStatus", desc = "作业状态对象", range = "JobStatusInfo实体类对象")
+	@Return(desc = "查询结果集，查询出的结果可能有0-N条", range = "不会为null")
 	public JobStatusInfo handleStageByOrder(String statusFilePath, JobStatusInfo jobStatus)
 			throws Exception {
 
@@ -137,24 +110,12 @@ public class JobStageController {
 		return jobInfo;
 	}
 
-	/**
-	 * 每个阶段执行完之后，无论成功还是失败，记录阶段执行状态
-	 *
-	 * 1、通过stageStatus得到当前任务的阶段
-	 * 2、判断处于哪一个阶段，在jobStatus设置当前阶段的状态信息
-	 *
-	 * @Param: stageStatus StageStatusInfo
-	 *         含义：阶段状态信息
-	 *         取值范围：StageStatusInfo实体类对象
-	 * @Param: jobStatus JobStatusInfo
-	 *         含义：作业状态信息
-	 *         取值范围：JobStatusInfo实体类对象
-	 *
-	 * @return: fd.ng.db.resultset.Result
-	 *          含义：查询结果集，查询出的结果可能有0-N条
-	 *          取值范围：不会为null
-	 *
-	 * */
+	@Method(desc = "每个阶段执行完之后，无论成功还是失败，记录阶段执行状态", logicStep = "" +
+			"1、通过stageStatus得到当前任务的阶段" +
+			"2、判断处于哪一个阶段，在jobStatus设置当前阶段的状态信息")
+	@Param(name = "stageStatus", desc = "阶段状态信息", range = "StageStatusInfo实体类对象")
+	@Param(name = "jobStatus", desc = "作业状态信息", range = "JobStatusInfo实体类对象")
+	@Return(desc = "查询结果集，查询出的结果可能有0-N条", range = "不会为null")
 	private JobStatusInfo setStageStatus(StageStatusInfo stageStatus, JobStatusInfo jobStatus) {
 		//1、通过stageStatus得到当前任务的阶段
 		StageConstant stage = EnumUtil.getEnumByCode(StageConstant.class,

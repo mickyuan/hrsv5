@@ -1,4 +1,4 @@
-package hrds.agent.trans.biz.FtpCollect;
+package hrds.agent.trans.biz.ftpCollect;
 
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
