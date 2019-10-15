@@ -390,7 +390,8 @@ public class TaskManager {
 			}
 			try {
 				Thread.sleep(SLEEPMILLIS);
-				logger.info("还有任务未执行完");
+				logger.info("当前时间为 {}，还有任务未执行完",
+						LocalDateTime.now().format(DateUtil.DATETIME_ZHCN));
 			}
 			catch(InterruptedException e) {
 				logger.warn("系统出现异常：{}，但是继续执行", e.getMessage());
@@ -1518,7 +1519,6 @@ public class TaskManager {
 	 */
 	private void checkExecutedJob() {
 
-		logger.info("当前时间为 {}", LocalDateTime.now().format(DateUtil.DATETIME_ZHCN));
 		for(Map<String, EtlJobBean> jobMap : jobExecuteMap.values()) {
 			for(EtlJobBean exeJob : jobMap.values()) {
 				 //1.若作业状态为[挂起]，则会检查该作业的前置作业是否已经完成、调度时间是否已经到达，若检查通过则会更新该

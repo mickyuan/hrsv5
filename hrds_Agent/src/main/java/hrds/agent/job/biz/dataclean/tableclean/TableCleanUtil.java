@@ -1,5 +1,6 @@
 package hrds.agent.job.biz.dataclean.tableclean;
 
+import fd.ng.core.annotation.Class;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -8,16 +9,7 @@ import org.apache.parquet.example.data.Group;
 
 import java.util.Map;
 
-/**
- * ClassName: TableCleanUtil <br/>
- * Function: 数据库直连采集表清洗工具类 <br/>
- * Reason:
- * Date: 2019/8/1 15:24 <br/>
- * <p>
- * Author WangZhengcheng
- * Version 1.0
- * Since JDK 1.8
- **/
+@Class(desc = "数据库直连采集表清洗工具类", author = "WangZhengcheng")
 public class TableCleanUtil {
 
 	@Method(desc = "表清洗入口方法", logicStep = "" +

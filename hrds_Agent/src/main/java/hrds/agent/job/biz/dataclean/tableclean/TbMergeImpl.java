@@ -1,5 +1,6 @@
 package hrds.agent.job.biz.dataclean.tableclean;
 
+import fd.ng.core.annotation.Class;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -13,16 +14,7 @@ import org.apache.parquet.example.data.Group;
 import java.util.List;
 import java.util.Map;
 
-/**
- * ClassName: TbMergeImpl <br/>
- * Function: 数据库直连采集表清洗列合并实现类 <br/>
- * Reason: 继承AbstractTableClean抽象类，只针对一个列合并方法进行实现
- * Date: 2019/8/1 15:24 <br/>
- * <p>
- * Author WangZhengcheng
- * Version 1.0
- * Since JDK 1.8
- **/
+@Class(desc = "数据库直连采集表清洗列合并实现类,继承AbstractTableClean抽象类，只针对一个列合并方法进行实现", author = "WangZhengcheng")
 public class TbMergeImpl extends AbstractTableClean {
 
 	@Method(desc = "表列合并实现", logicStep = "")

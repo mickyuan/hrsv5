@@ -1,10 +1,8 @@
 package hrds.agent.job.biz.utils;
 
-/**
- * @description: 用于校验列类型中是否包含以下特殊类型
- * @author: WangZhengcheng
- * @create: 2019-08-29 12:01
- **/
+import fd.ng.core.annotation.Class;
+
+@Class(desc = "用于校验列类型中是否包含以下特殊类型", author = "WangZhengcheng")
 public class DataTypeCheck {
 
 	private static final String INT = "int";

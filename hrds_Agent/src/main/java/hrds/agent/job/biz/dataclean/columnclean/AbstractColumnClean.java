@@ -1,5 +1,6 @@
 package hrds.agent.job.biz.dataclean.columnclean;
 
+import fd.ng.core.annotation.Class;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -10,16 +11,8 @@ import java.text.ParseException;
 import java.util.List;
 import java.util.Map;
 
-/**
- * ClassName: AbstractCleanRule <br/>
- * Function: 数据库直连采集列清洗规则接口适配器 <br/>
- * Reason: 抽象类中提供接口中所有抽象方法的空实现，请子类继承抽象类后按功能点给出方法的具体实现
- * Date: 2019/8/1 15:24 <br/>
- * <p>
- * Author WangZhengcheng
- * Version 1.0
- * Since JDK 1.8
- **/
+@Class(desc = "数据库直连采集列清洗规则接口适配器,提供接口中所有抽象方法的空实现，" +
+		"请子类继承抽象类后按功能点给出方法的具体实现", author = "WangZhengcheng")
 public abstract class AbstractColumnClean implements ColumnCleanInterface {
 
 	@Method(desc = "字符替换,这里给一个空实现，后面具体的列清洗实现类只需按需实现某个清洗方法", logicStep = "")

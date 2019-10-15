@@ -1,5 +1,6 @@
 package hrds.agent.job.biz.dataclean.columnclean;
 
+import fd.ng.core.annotation.Class;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -7,16 +8,8 @@ import fd.ng.core.utils.StringUtil;
 
 import java.util.Map;
 
-/**
- * ClassName: ColCVConverImpl <br/>
- * Function: 数据库直连采集列清洗码值转换实现类 <br/>
- * Reason: 继承AbstractColumnClean抽象类，只针对一个码值转换方法进行实现
- * Date: 2019/8/1 15:24 <br/>
- * <p>
- * Author WangZhengcheng
- * Version 1.0
- * Since JDK 1.8
- **/
+@Class(desc = "数据库直连采集列清洗码值转换实现类,继承AbstractColumnClean抽象类，只针对一个码值转换方法进行实现",
+		author = "WangZhengcheng")
 public class ColCVConverImpl extends AbstractColumnClean {
 	@Method(desc = "列清洗码值转换实现", logicStep = "" +
 			"1、判断ruleMap是否为空，如果不为空，表示要进行码值转换操作" +

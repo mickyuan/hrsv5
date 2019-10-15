@@ -2,6 +2,7 @@ package hrds.agent.job.biz.core.dbstage.writer;
 
 import com.univocity.parsers.csv.CsvWriter;
 import com.univocity.parsers.csv.CsvWriterSettings;
+import fd.ng.core.annotation.Class;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -36,16 +37,7 @@ import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
-/**
- * ClassName: DBCollCSVWriter <br/>
- * Function: 数据库直连采集以CSV格式进行列数据清洗并写CSV文件. <br/>
- * Reason:
- * Date: 2019/8/1 15:24 <br/>
- * <p>
- * Author WangZhengcheng
- * Version 1.0
- * Since JDK 1.8
- **/
+@Class(desc = "数据库直连采集以CSV格式进行列数据清洗并写CSV文件", author = "WangZhengcheng")
 public class DBCollCSVWriter extends AbstractFileWriter {
 
 	private final static Logger LOGGER = LoggerFactory.getLogger(DBCollCSVWriter.class);

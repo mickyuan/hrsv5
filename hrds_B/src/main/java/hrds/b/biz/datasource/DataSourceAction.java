@@ -1,6 +1,7 @@
 package hrds.b.biz.datasource;
 
 import com.alibaba.fastjson.TypeReference;
+import fd.ng.core.annotation.Class;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -35,13 +36,7 @@ import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.util.*;
 
-/**
- * 数据源增删改，导入、下载类
- *
- * @author dhw
- * @version 5.0
- * @date 2019-09-03 16:44:25
- */
+@Class(desc = "数据源增删改查，导入、下载类", author = "dhw", createdate = "2019-10-15 17:23:06")
 public class DataSourceAction extends BaseAction {
 	private static final Logger logger = LogManager.getLogger();
 
@@ -94,17 +89,13 @@ public class DataSourceAction extends BaseAction {
 
 	@Method(desc = "获取数据申请审批信息的集合",
 			logicStep = "1.数据可访问权限处理方式，这是一个私有方法不需要权限控制" +
-					"2.查询data_source表所有source_id封装入数组" +
+					"2.获取所有的source_id" +
 					"3.查询数据源申请审批信息集合并返回")
 	@Return(desc = "存放数据申请审批信息的集合", range = "无限制")
 	private List<Map<String, Object>> getDataAuditList() {
 		// 1.数据可访问权限处理方式，这是一个私有方法不需要权限控制
-		// 2.查询data_source表所有source_id封装入数组
+		// 2.获取所有的source_id
 		List<Long> sourceIdList = Dbo.queryOneColumnList("select source_id from " + Data_source.TableName);
-		Long[] sourceId = new Long[sourceIdList.size()];
-		for (int i = 0; i < sourceIdList.size(); ++i) {
-			sourceId[i] = sourceIdList.get(i);
-		}
 		// 3.查询数据源申请审批信息集合并返回
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		asmSql.addSql("select da.DA_ID,da.APPLY_DATE,da.APPLY_TIME,da.APPLY_TYPE,da.AUTH_TYPE,da.AUDIT_DATE," +
@@ -113,7 +104,7 @@ public class DataSourceAction extends BaseAction {
 				" join " + Source_file_attribute.TableName + " sfa on da.file_id= sfa.file_id  where " +
 				"su.create_id in (select user_id from sys_user where user_type=? or user_id = ?) ")
 				.addParam(UserType.XiTongGuanLiYuan.getCode()).addParam(getUserId())
-				.addORParam("sfa.source_id", sourceId).addSql(" ORDER BY  da_id desc");
+				.addORParam("sfa.source_id", sourceIdList.toArray()).addSql(" ORDER BY  da_id desc");
 		Result result = Dbo.queryResult(asmSql.sql(), asmSql.params());
 		if (!result.isEmpty()) {
 			for (int i = 0; i < result.getRowCount(); i++) {
