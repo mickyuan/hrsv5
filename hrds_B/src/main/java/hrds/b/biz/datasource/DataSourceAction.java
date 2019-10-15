@@ -1,7 +1,7 @@
 package hrds.b.biz.datasource;
 
 import com.alibaba.fastjson.TypeReference;
-import fd.ng.core.annotation.Class;
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -36,7 +36,7 @@ import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.util.*;
 
-@Class(desc = "数据源增删改查，导入、下载类", author = "dhw", createdate = "2019-10-15 17:23:06")
+@DocClass(desc = "数据源增删改查，导入、下载类", author = "dhw", createdate = "2019-10-15 17:23:06")
 public class DataSourceAction extends BaseAction {
 	private static final Logger logger = LogManager.getLogger();
 
@@ -90,7 +90,8 @@ public class DataSourceAction extends BaseAction {
 	@Method(desc = "获取数据申请审批信息的集合",
 			logicStep = "1.数据可访问权限处理方式，这是一个私有方法不需要权限控制" +
 					"2.获取所有的source_id" +
-					"3.查询数据源申请审批信息集合并返回")
+					"3.查询数据源申请审批信息集合并返回" +
+					"4.判断dataAuditResult是否为空,不为空就封装一些字段修改后的数据，比如类型需要返回中文，时间改为日期+时间格式")
 	@Return(desc = "存放数据申请审批信息的集合", range = "无限制")
 	private List<Map<String, Object>> getDataAuditList() {
 		// 1.数据可访问权限处理方式，这是一个私有方法不需要权限控制
@@ -105,19 +106,20 @@ public class DataSourceAction extends BaseAction {
 				"su.create_id in (select user_id from sys_user where user_type=? or user_id = ?) ")
 				.addParam(UserType.XiTongGuanLiYuan.getCode()).addParam(getUserId())
 				.addORParam("sfa.source_id", sourceIdList.toArray()).addSql(" ORDER BY  da_id desc");
-		Result result = Dbo.queryResult(asmSql.sql(), asmSql.params());
-		if (!result.isEmpty()) {
-			for (int i = 0; i < result.getRowCount(); i++) {
-				result.setObject(i, "applyDataTime", DateUtil.parseStr2DateWith8Char
-						(result.getString(i, "apply_date")) + " " + DateUtil.parseStr2TimeWith6Char
-						(result.getString(i, "apply_time")));
-				result.setObject(i, "applyType_zh", ApplyType.ofValueByCode
-						(result.getString(i, "apply_type")));
-				result.setObject(i, "fileType_zh", FileType.ofValueByCode
-						(result.getString(i, "file_type")));
+		Result dataAuditResult = Dbo.queryResult(asmSql.sql(), asmSql.params());
+		// 4.判断dataAuditResult是否为空,不为空就封装一些字段修改后的数据，比如类型需要返回中文，时间改为日期+时间格式
+		if (!dataAuditResult.isEmpty()) {
+			for (int i = 0; i < dataAuditResult.getRowCount(); i++) {
+				dataAuditResult.setObject(i, "applyDataTime", DateUtil.parseStr2DateWith8Char
+						(dataAuditResult.getString(i, "apply_date")) + " " + DateUtil.parseStr2TimeWith6Char
+						(dataAuditResult.getString(i, "apply_time")));
+				dataAuditResult.setObject(i, "applyType_zh", ApplyType.ofValueByCode
+						(dataAuditResult.getString(i, "apply_type")));
+				dataAuditResult.setObject(i, "fileType_zh", FileType.ofValueByCode
+						(dataAuditResult.getString(i, "file_type")));
 			}
 		}
-		return result.toList();
+		return dataAuditResult.toList();
 	}
 
 	@Method(desc = "数据权限管理，分页查询数据源及部门关系信息",
