@@ -401,10 +401,9 @@ public class DataSourceAction extends BaseAction {
 					"2.创建并封装数据源与部门关联信息以及部门信息集合" +
 					"3.判断是新增还是编辑时查询回显数据，如果是新增，只查询部门信息，如果是编辑，还需查询数据源信息" +
 					"3.1关联查询data_source表信息" +
-					"3.2获取数据源对应部门ID所有值" +
+					"3.2获取数据源对应部门ID所有值，不需要权限控制" +
 					"3.3.封装部门到结果集" +
 					"3.4将部门ID封装入数据源信息中" +
-					"3.5.将数据源信息添加入Map" +
 					"4.查询部门信息，不需要用户权限控制" +
 					"5.将部门信息封装入Map" +
 					"6.返回封装数据源与部门关联信息以及部门信息集合")
@@ -413,14 +412,14 @@ public class DataSourceAction extends BaseAction {
 	public Map<String, Object> searchDataSource(Long source_id) {
 		// 1.数据可访问权限处理方式，以下SQL关联sourceId与user_id检查
 		// 2.创建并封装数据源与部门关联信息以及部门信息集合
-		Map<String, Object> map = new HashMap<>();
+		Map<String, Object> datasourceMap = new HashMap<>();
 		// 3.判断是新增还是更新，如果是新增，只查询部门信息，如果是更新，还需查询回显数据源数据
 		if (source_id != null) {
 			// 编辑时查询
 			// 3.1关联查询data_source表信息
-			Result datasourceResult = Dbo.queryResult("select * from " + Data_source.TableName +
+			datasourceMap = Dbo.queryOneObject("select * from " + Data_source.TableName +
 					" where source_id=? and create_user_id=?", source_id, getUserId());
-			// 3.2获取数据源对应部门ID所有值
+			// 3.2获取数据源对应部门ID所有值,不需要权限控制
 			List<Long> depIdList = Dbo.queryOneColumnList("select dep_id from " + Source_relation_dep.TableName +
 					" where source_id=?", source_id);
 			if (!depIdList.isEmpty()) {
@@ -434,18 +433,16 @@ public class DataSourceAction extends BaseAction {
 					}
 				}
 				// 3.4将部门ID封装入数据源信息中
-				datasourceResult.setObject(0, "dep_id", sb.toString());
-				// 3.5将数据源信息添加入Map
-				map.put("datasourceAndDep", datasourceResult.toList());
+				datasourceMap.put("dep_id", sb.toString());
 			}
 		}
 		// 4.查询部门信息，不需要用户权限控制
 		List<Department_info> departmentInfoList = Dbo.queryList(Department_info.class,
 				"select * from " + Department_info.TableName);
 		// 5.将部门信息封装入Map
-		map.put("departmentInfo", departmentInfoList);
+		datasourceMap.put("departmentInfo", departmentInfoList);
 		// 6.返回封装数据源与部门关联信息以及部门信息集合
-		return map;
+		return datasourceMap;
 	}
 
 	@Method(desc = "删除数据源信息",
