@@ -3,6 +3,9 @@ package hrds.agent.job.biz.core.dbstage.service;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import fd.ng.core.annotation.Method;
+import fd.ng.core.annotation.Param;
+import fd.ng.core.annotation.Return;
 import hrds.agent.job.biz.bean.ColumnCleanResult;
 import hrds.agent.job.biz.bean.ColumnSplitBean;
 import hrds.agent.job.biz.constant.JobConstant;
@@ -23,27 +26,17 @@ import java.util.Map;
  **/
 public class ColCleanRuleParser {
 
-	/**
-	 * 解析列清洗规则
-	 *
-	 * 1、解析清洗顺序
-	 * 2、解析字符替换规则
-	 * 3、解析字符补齐规则
-	 * 4、解析日期转换规则
-	 * 5、码值转换
-	 * 6、首尾去空
-	 * 7、解析字段拆分规则
-	 * 8、将上述所有组装成Map<String, Object> 集合并返回，
-	 *
-	 * @Param: rule ColumnCleanResult
-	 *         含义：存有列清洗规则的实体类对象
-	 *         取值范围：不为空，ColumnCleanResult类型对象
-	 *
-	 * @return: Map<String, Object>
-	 *          含义：存放有解析后的列清洗规则的集合
-	 *          取值范围：不会为null，key是清洗项名称，value是清洗规则
-	 *
-	 * */
+	@Method(desc = "解析列清洗规则", logicStep = "" +
+			"1、解析清洗顺序" +
+			"2、解析字符替换规则" +
+			"3、解析字符补齐规则" +
+			"4、解析日期转换规则" +
+			"5、码值转换" +
+			"6、首尾去空" +
+			"7、解析字段拆分规则" +
+			"8、将上述所有组装成Map<String, Object> 集合并返回")
+	@Param(name = "rule", desc = "存有列清洗规则的实体类对象", range = "不为空，ColumnCleanResult类型对象")
+	@Return(desc = "存放有解析后的列清洗规则的集合", range = "不会为null，key是清洗项名称，value是清洗规则")
 	public static Map<String, Object> parseColCleanRule(ColumnCleanResult rule)
 			throws UnsupportedEncodingException {
 		if (rule == null) {

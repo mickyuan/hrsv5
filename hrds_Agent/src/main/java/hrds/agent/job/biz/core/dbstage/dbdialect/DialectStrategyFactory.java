@@ -1,5 +1,8 @@
 package hrds.agent.job.biz.core.dbstage.dbdialect;
 
+import fd.ng.core.annotation.Method;
+import fd.ng.core.annotation.Param;
+import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.core.dbstage.dbdialect.strategy.DataBaseDialectStrategy;
 import hrds.agent.job.biz.core.dbstage.dbdialect.strategy.MySQLDialectStrategy;
@@ -41,21 +44,11 @@ public class DialectStrategyFactory {
 		return Inner.instance;
 	}
 
-	/**
-	 * 根据数据库类型获取对应的数据库分页策略
-	 *
-	 * 1、判断数据库类型
-	 * 2、根据不同的类型，返回对应数据库的分页方言策略
-	 *
-	 * @Param: dbType String
-	 *         含义：数据库类型
-	 *         取值范围：DatabaseType代码项code值
-	 *
-	 * @return: DataBaseDialectStrategy
-	 *          含义：具体的某种数据库方言策略实例
-	 *          取值范围：不会为null
-	 *
-	 * */
+	@Method(desc = "根据数据库类型获取对应的数据库分页策略", logicStep = "" +
+			"1、判断数据库类型" +
+			"2、根据不同的类型，返回对应数据库的分页方言策略")
+	@Param(name = "dbType", desc = "数据库类型", range = "DatabaseType代码项code值")
+	@Return(desc = "具体的某种数据库方言策略实例", range = "不会为null")
 	public DataBaseDialectStrategy createDialectStrategy(String dbType) {
 		if (StringUtil.isNotEmpty(dbType)) {
 			throw new AppSystemException("数据库类型不能为空");

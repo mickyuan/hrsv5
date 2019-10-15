@@ -1,5 +1,8 @@
 package hrds.agent.job.biz.core.dbstage;
 
+import fd.ng.core.annotation.Method;
+import fd.ng.core.annotation.Param;
+import fd.ng.core.annotation.Return;
 import hrds.agent.job.biz.bean.ColumnCleanResult;
 import hrds.agent.job.biz.bean.DBConfigBean;
 import hrds.agent.job.biz.bean.JobInfo;
@@ -10,7 +13,10 @@ import hrds.agent.job.biz.core.AbstractJobStage;
 import hrds.agent.job.biz.core.dbstage.dbdialect.DialectStrategyFactory;
 import hrds.agent.job.biz.core.dbstage.dbdialect.strategy.DataBaseDialectStrategy;
 import hrds.agent.job.biz.core.dbstage.service.CollectPage;
-import hrds.agent.job.biz.utils.*;
+import hrds.agent.job.biz.utils.ColumnTool;
+import hrds.agent.job.biz.utils.DateUtil;
+import hrds.agent.job.biz.utils.FileUtil;
+import hrds.agent.job.biz.utils.SQLUtil;
 import hrds.commons.exception.AppSystemException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,23 +63,33 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 	}
 
 	/**
-	 * 数据库直连采集数据卸数阶段处理逻辑，处理完成后，无论成功还是失败，将相关状态信息封装到StageStatusInfo对象中返回
 	 *
-	 * 1、创建卸数阶段状态信息，更新作业ID,阶段名，阶段开始时间
-	 * 2、解析作业信息，得到表名和表数据量
-	 * 3、根据列名和表名获得采集SQL
-	 * 4、使用工厂模式获得数据库方言策略
-	 * 5、根据采集线程数，计算每个任务的采集数量
-	 * 6、构建线程对象CollectPage，放入线程池执行
-	 * 7、获得结果,用于校验多线程采集的结果和写Meta文件
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
 	 *
 	 * @Param: 无
 	 *
 	 * @return: StageStatusInfo
-	 *          含义：StageStatusInfo是保存每个阶段状态信息的实体类
-	 *          取值范围：不会为null
+	 *          含义：
+	 *          取值范围：
 	 *
 	 * */
+	@Method(desc = "数据库直连采集数据卸数阶段处理逻辑，处理完成后，无论成功还是失败，" +
+			"将相关状态信息封装到StageStatusInfo对象中返回", logicStep = "" +
+			"1、创建卸数阶段状态信息，更新作业ID,阶段名，阶段开始时间" +
+			"2、解析作业信息，得到表名和表数据量" +
+			"3、根据列名和表名获得采集SQL" +
+			"4、使用工厂模式获得数据库方言策略" +
+			"5、根据采集线程数，计算每个任务的采集数量" +
+			"6、构建线程对象CollectPage，放入线程池执行" +
+			"7、获得结果,用于校验多线程采集的结果和写Meta文件")
+	@Return(desc = "StageStatusInfo是保存每个阶段状态信息的实体类", range = "不会为null，StageStatusInfo实体类对象")
 	@Override
 	public StageStatusInfo handleStage()
 			throws InterruptedException, ExecutionException, SQLException {
@@ -207,88 +223,41 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 		}
 	}
 
-	/**
-	 * 获取数据列类型，用于写meta文件
-	 *
-	 * 1、直接返回成员变量columnTypes
-	 *
-	 * @Param: 无
-	 *
-	 * @return: List<String>
-	 *          含义：当前采集表所有列的列类型
-	 *          取值范围：不会为null
-	 *
-	 * */
+	@Method(desc = "获取数据列类型，用于写meta文件", logicStep = "1、直接返回成员变量columnTypes")
+	@Return(desc = "当前采集表所有列的列类型", range = "不会为null")
 	public List<String> getColumnTypes() {
 		return this.columnTypes;
 	}
 
-	/**
-	 * 获取本次数据库直连采集作业采集到的数据总条数，用于写meta文件
-	 *
-	 * 1、直接返回成员变量rowCount
-	 *
-	 * @Param: 无
-	 *
-	 * @return: long
-	 *          含义：当前作业采集数据量(一张表一个作业，作业内部使用多线程对表数据进行采集)
-	 *          取值范围：不限
-	 *
-	 * */
+	@Method(desc = "获取本次数据库直连采集作业采集到的数据总条数，用于写meta文件",
+			logicStep = "1、直接返回成员变量rowCount")
+	@Return(desc = "当前作业采集数据量(一张表一个作业，作业内部使用多线程对表数据进行采集)", range = "不限")
 	public long getRowCount() {
 		return rowCount;
 	}
 
-	/**
-	 * 获取本次数据库直连采集作业采集卸数后生成的数据文件总大小，用于写meta文件
-	 *
-	 * 1、直接返回成员变量fileSize
-	 *
-	 * @Param: 无
-	 *
-	 * @return: long
-	 *          含义：多线程卸数落地数据文件的文件总大小
-	 *          取值范围：不限，单位是字节
-	 *
-	 * */
+	@Method(desc = "获取本次数据库直连采集作业采集卸数后生成的数据文件总大小，用于写meta文件",
+			logicStep = "1、直接返回成员变量fileSize")
+	@Return(desc = "多线程卸数落地数据文件的文件总大小", range = "不限，单位是字节")
 	public long getFileSize() {
 		return fileSize;
 	}
 
-	/**
-	 * 获取本次数据库直连采集作业采集卸数后生成的数据文件的路径，用于上传HDFS
-	 *
-	 * 1、直接返回成员变成fileArr
-	 *
-	 * @Param: 无
-	 *
-	 * @return: String[]
-	 *          含义：多线程采集，每个线程写一个数据文件，多线程采集最终会有多个文件，用数组存放多个文件的路径
-	 *          取值范围：不会为null
-	 *
-	 * */
+	@Method(desc = "获取本次数据库直连采集作业采集卸数后生成的数据文件的路径，用于上传HDFS",
+			logicStep = "1、直接返回成员变成fileArr")
+	@Return(desc = "多线程采集，每个线程写一个数据文件，多线程采集最终会有多个文件，用数组存放多个文件的路径",
+			range = "不会为null")
 	public String[] getFileArr() {
 		return fileArr;
 	}
 
-	/**
-	 * 获得列类型，对于像varchar这种有列长度的类型，只保留类型，不保留长度/精度
-	 *
-	 * 1、如果长度为0，则不做任何处理
-	 * 2、如果长度不为0，则只保留数据类型，不保留长度
-	 *
-	 * @Param: columnTypeName String
-	 *         含义：列类型
-	 *         取值范围：不为空，格式：列类型(长度)/列类型
-	 * @Param: precision int
-	 *         含义：对于数字类型，precision表示的是数字的精度，对于字符类型，这里表示的是长度
-	 *         取值范围：不限
-	 *
-	 * @return: String
-	 *          含义：只保留类型，不保留长度/精度
-	 *          取值范围：不会为null
-	 *
-	 * */
+	@Method(desc = "获得列类型，对于像varchar这种有列长度的类型，只保留类型，不保留长度/精度", logicStep = "" +
+			"1、如果长度为0，则不做任何处理" +
+			"2、如果长度不为0，则只保留数据类型，不保留长度")
+	@Param(name = "columnTypeName", desc = "列类型", range = "不为空，格式：列类型(长度)/列类型")
+	@Param(name = "precision", desc = "对于数字类型，precision表示的是数字的精度，对于字符类型，这里表示的是长度"
+			, range = "不限")
+	@Return(desc = "只保留类型，不保留长度/精度", range = "不会为null")
 	private String getColumnType(String columnTypeName, int precision) {
 		//1、如果长度为0，则不做任何处理
 		//2、如果长度不为0，则只保留数据类型，不保留长度

@@ -1,5 +1,8 @@
 package hrds.agent.job.biz.core.dbstage.writer;
 
+import fd.ng.core.annotation.Method;
+import fd.ng.core.annotation.Param;
+import fd.ng.core.annotation.Return;
 import hrds.agent.job.biz.bean.JobInfo;
 import hrds.agent.job.biz.bean.TaskInfo;
 import hrds.agent.job.biz.constant.FileFormatConstant;
@@ -74,43 +77,30 @@ public class DBCollParquetWriter extends AbstractFileWriter {
 		lineCounter = new AtomicLong(pageNum * pageRow);
 	}
 
-	/**
-	 * 根据数据元信息和ResultSet，写指定格式的数据文件
-	 *
-	 * 1、校验方法入参合法性
-	 * 2、创建数据文件存放目录
-	 * 3、创建数据文件文件名，文件名为jobID + 处理线程号 + 时间戳.parquet,在作业配置文件目录下的datafile目录中
-	 * 4、判断本次采集得到的RS是否有CLOB，BLOB，LONGVARCHAR的大字段类型，如果有，则创建LOBs目录用于存放avro文件，并初始化写avro相关类对象
-	 * 5、开始写parquet文件，
-	 *      (1)、创建文件
-	 *      (2)、循环RS，获得每一行数据，针对每一行数据，循环每一列，根据每一列的类型，决定是写avro还是进行清洗
-	 *      (3)、执行数据清洗，包括表清洗和列清洗
-	 *      (4)、清洗后的结果追加到构建MD5的StringBuilder
-	 *      (5)、将数据放入group，写一行数据，执行下一次RS循环
-	 * 6、关闭资源，并返回文件路径
-	 *
-	 * @Param: metaDataMap Map<String, Object>
-	 *         含义：包含有列元信息，清洗规则的map
-	 *         取值范围：不为空，共有7对Entry，key分别为
-	 *                      columnsTypeAndPreci：表示列数据类型(长度/精度)
-	 *                      columnsLength : 列长度，在生成信号文件的时候需要使用
-	 *                      columns : 列名
-	 *                      colTypeArr : 列数据类型(java.sql.Types),用于判断，对不同数据类型做不同处理
-	 *                      columnCount ：该表的列的数目
-	 *                      columnCleanRule ：该表每列的清洗规则
-	 *                      tableCleanRule ：整表清洗规则
-	 * @Param: rs ResultSet
-	 *         含义：当前线程执行分页SQL得到的结果集
-	 *         取值范围：不为空
-	 * @Param: tableName String
-	 *         含义：表名, 用于大字段数据写avro
-	 *         取值范围：不为空
-	 *
-	 * @return: String
-	 *          含义：生成的数据文件的路径
-	 *          取值范围：不会为null
-	 *
-	 * */
+	@Method(desc = "根据数据元信息和ResultSet，写指定格式的数据文件", logicStep = "" +
+			"1、校验方法入参合法性" +
+			"2、创建数据文件存放目录" +
+			"3、创建数据文件文件名，文件名为jobID + 处理线程号 + 时间戳.parquet,在作业配置文件目录下的datafile目录中" +
+			"4、判断本次采集得到的RS是否有CLOB，BLOB，LONGVARCHAR的大字段类型，如果有，则创建LOBs目录用于存放avro文件，" +
+			"并初始化写avro相关类对象" +
+			"5、开始写parquet文件" +
+			"       (1)、创建文件" +
+			"       (2)、循环RS，获得每一行数据，针对每一行数据，循环每一列，根据每一列的类型，决定是写avro还是进行清洗" +
+			"       (3)、执行数据清洗，包括表清洗和列清洗" +
+			"       (4)、清洗后的结果追加到构建MD5的StringBuilder" +
+			"       (5)、将数据放入group，写一行数据，执行下一次RS循环" +
+			"6、关闭资源，并返回文件路径")
+	@Param(name = "metaDataMap", desc = "包含有列元信息，清洗规则的map", range = "不为空，共有7对Entry，key分别为" +
+			"1、columnsTypeAndPreci：表示列数据类型(长度/精度)" +
+			"2、columnsLength : 列长度，在生成信号文件的时候需要使用" +
+			"3、columns : 列名" +
+			"4、colTypeArr : 列数据类型(java.sql.Types),用于判断，对不同数据类型做不同处理" +
+			"5、columnCount ：该表的列的数目" +
+			"6、columnCleanRule ：该表每列的清洗规则" +
+			"7、tableCleanRule ：整表清洗规则")
+	@Param(name = "rs", desc = "当前线程执行分页SQL得到的结果集", range = "不为空")
+	@Param(name = "tableName", desc = "表名, 用于大字段数据写avro", range = "不为空")
+	@Return(desc = "生成的数据文件的路径", range = "不会为null")
 	@Override
 	public String writeDataAsSpecifieFormat(Map<String, Object> metaDataMap, ResultSet rs, String tableName)
 			throws IOException, SQLException {
@@ -317,27 +307,14 @@ public class DBCollParquetWriter extends AbstractFileWriter {
 		return outputPath;
 	}
 
-	/**
-	 * 用于写一行数据，且追加MD5和开始时间结束时间
-	 *
-	 * 1、追加开始时间
-	 * 2、计算MD5，并追加
-	 * 3、追加结束时间
-	 * 4、写一行数据
-	 *
-	 * @Param: group Group
-	 *         含义：包含了一行经过处理后的采集数据
-	 *         取值范围：不为空
-	 * @Param: MD5 StringBuilder
-	 *         含义：包含了每一列的值，用于生成该列的MD5
-	 *         取值范围：不为空
-	 * @Param: startDate String
-	 *         含义：本次采集任务的开始时间
-	 *         取值范围：不为空
-	 *
-	 * @return: 无
-	 *
-	 * */
+	@Method(desc = "用于写一行数据，且追加MD5和开始时间结束时间", logicStep = "" +
+			"1、追加开始时间" +
+			"2、计算MD5，并追加" +
+			"3、追加结束时间" +
+			"4、写一行数据")
+	@Param(name = "group", desc = "包含了一行经过处理后的采集数据", range = "不为空")
+	@Param(name = "MD5", desc = "包含了每一列的值，用于生成该列的MD5", range = "不为空")
+	@Param(name = "startDate", desc = "本次采集任务的开始时间", range = "不为空")
 	private void writeLine(Group group, StringBuilder MD5, String startDate) throws IOException {
 		//1、追加开始时间
 		group.append(JobConstant.START_DATE_NAME, startDate);
@@ -350,33 +327,14 @@ public class DBCollParquetWriter extends AbstractFileWriter {
 		writer.write(group);
 	}
 
-	/**
-	 * 用于写一行数据，而不追加MD5和开始时间结束时间
-	 *
-	 * 1、调用方法写一行数据
-	 *
-	 * @Param: group Group
-	 *         含义：包含了一行经过处理后的采集数据
-	 *         取值范围：不为空
-	 *
-	 * @return: 无
-	 *
-	 * */
+	@Method(desc = "用于写一行数据，而不追加MD5和开始时间结束时间", logicStep = "1、调用方法写一行数据")
+	@Param(name = "group", desc = "包含了一行经过处理后的采集数据", range = "不为空")
 	private void writeLine(Group group) throws IOException {
 		//1、调用方法写一行数据
 		writer.write(group);
 	}
 
-	/**
-	 * 关闭资源
-	 *
-	 * 1、调用方法关闭资源
-	 *
-	 * @Param: 无
-	 *
-	 * @return: 无
-	 *
-	 * */
+	@Method(desc = "关闭资源", logicStep = "1、调用方法关闭资源")
 	private void stopStream() throws IOException {
 		//1、调用方法关闭资源
 		writer.close();

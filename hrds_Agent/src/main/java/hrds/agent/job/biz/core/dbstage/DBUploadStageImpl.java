@@ -1,5 +1,7 @@
 package hrds.agent.job.biz.core.dbstage;
 
+import fd.ng.core.annotation.Method;
+import fd.ng.core.annotation.Return;
 import hrds.agent.job.biz.bean.StageStatusInfo;
 import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.constant.StageConstant;
@@ -32,19 +34,11 @@ public class DBUploadStageImpl extends AbstractJobStage {
 		this.remoteDir = remoteDir;
 	}
 
-	/**
-	 * 数据库直连采集数据上传阶段处理逻辑，处理完成后，无论成功还是失败，将相关状态信息封装到StageStatusInfo对象中返回
-	 *
-	 * 1、创建卸数阶段状态信息，更新作业ID,阶段名，阶段开始时间
-	 * 2、调用方法，进行文件上传，文件数组和上传目录由构造器传入
-	 *
-	 * @Param: 无
-	 *
-	 * @return: StageStatusInfo
-	 *          含义：StageStatusInfo是保存每个阶段状态信息的实体类
-	 *          取值范围：不会为null
-	 *
-	 * */
+	@Method(desc = "数据库直连采集数据上传阶段处理逻辑，处理完成后，无论成功还是失败，" +
+			"将相关状态信息封装到StageStatusInfo对象中返回", logicStep = "" +
+			"1、创建卸数阶段状态信息，更新作业ID,阶段名，阶段开始时间" +
+			"2、调用方法，进行文件上传，文件数组和上传目录由构造器传入")
+	@Return(desc = "StageStatusInfo是保存每个阶段状态信息的实体类", range = "不会为null,StageStatusInfo实体类对象")
 	@Override
 	public StageStatusInfo handleStage() {
 		LOGGER.info("------------------数据库直连采集上传阶段开始------------------");

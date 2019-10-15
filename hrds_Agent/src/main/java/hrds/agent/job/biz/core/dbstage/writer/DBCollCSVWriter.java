@@ -2,6 +2,9 @@ package hrds.agent.job.biz.core.dbstage.writer;
 
 import com.univocity.parsers.csv.CsvWriter;
 import com.univocity.parsers.csv.CsvWriterSettings;
+import fd.ng.core.annotation.Method;
+import fd.ng.core.annotation.Param;
+import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.JobInfo;
 import hrds.agent.job.biz.bean.TaskInfo;
@@ -65,43 +68,30 @@ public class DBCollCSVWriter extends AbstractFileWriter {
 		this.lineCounter = new AtomicLong(pageNum * pageRow);
 	}
 
-	/**
-	 * 根据数据元信息和ResultSet，写指定格式的数据文件
-	 *
-	 * 1、校验方法入参合法性
-	 * 2、创建数据文件存放目录
-	 * 3、创建数据文件文件名，文件名为jobID + 处理线程号 + 时间戳.csv,在作业配置文件目录下的datafile目录中
-	 * 4、判断本次采集得到的RS是否有CLOB，BLOB，LONGVARCHAR的大字段类型，如果有，则创建LOBs目录用于存放avro文件，并初始化写avro相关类对象
-	 * 5、开始写CSV文件，
-	 *      (1)、创建文件，写表头
-	 *      (2)、循环RS，获得每一行数据，针对每一行数据，循环每一列，根据每一列的类型，决定是写avro还是进行清洗
-	 *      (3)、执行数据清洗，包括表清洗和列清洗
-	 *      (4)、清洗后的结果追加到构建MD5的StringBuilder，并且放入list(用于存放一行数据)
-	 *      (5)、写一行数据，并清空list，执行下一次RS循环
-	 * 6、关闭资源，并返回文件路径
-	 *
-	 * @Param: metaDataMap Map<String, Object>
-	 *         含义：包含有列元信息，清洗规则的map
-	 *         取值范围：不为空，共有7对Entry，key分别为
-	 *                      columnsTypeAndPreci：表示列数据类型(长度/精度)
-	 *                      columnsLength : 列长度，在生成信号文件的时候需要使用
-	 *                      columns : 列名
-	 *                      colTypeArr : 列数据类型(java.sql.Types),用于判断，对不同数据类型做不同处理
-	 *                      columnCount ：该表的列的数目
-	 *                      columnCleanRule ：该表每列的清洗规则
-	 *                      tableCleanRule ：整表清洗规则
-	 * @Param: rs ResultSet
-	 *         含义：当前线程执行分页SQL得到的结果集
-	 *         取值范围：不为空
-	 * @Param: tableName String
-	 *         含义：表名, 用于大字段数据写avro
-	 *         取值范围：不为空
-	 *
-	 * @return: String
-	 *          含义：生成的数据文件的路径
-	 *          取值范围：不会为null
-	 *
-	 * */
+	@Method(desc = "根据数据元信息和ResultSet，写指定格式的数据文件", logicStep = "" +
+			"1、校验方法入参合法性" +
+			"2、创建数据文件存放目录" +
+			"3、创建数据文件文件名，文件名为jobID + 处理线程号 + 时间戳.csv,在作业配置文件目录下的datafile目录中" +
+			"4、判断本次采集得到的RS是否有CLOB，BLOB，LONGVARCHAR的大字段类型，如果有，则创建LOBs目录用于存放avro文件，" +
+			"并初始化写avro相关类对象" +
+			"5、开始写CSV文件" +
+			"       (1)、创建文件，写表头" +
+			"       (2)、循环RS，获得每一行数据，针对每一行数据，循环每一列，根据每一列的类型，决定是写avro还是进行清洗" +
+			"       (3)、执行数据清洗，包括表清洗和列清洗" +
+			"       (4)、清洗后的结果追加到构建MD5的StringBuilder，并且放入list(用于存放一行数据)" +
+			"       (5)、写一行数据，并清空list，执行下一次RS循环" +
+			"6、关闭资源，并返回文件路径")
+	@Param(name = "metaDataMap", desc = "包含有列元信息，清洗规则的map", range = "不为空，共有7对Entry，key分别为" +
+			"1、columnsTypeAndPreci：表示列数据类型(长度/精度)" +
+			"2、columnsLength : 列长度，在生成信号文件的时候需要使用" +
+			"3、columns : 列名" +
+			"4、colTypeArr : 列数据类型(java.sql.Types),用于判断，对不同数据类型做不同处理" +
+			"5、columnCount ：该表的列的数目" +
+			"6、columnCleanRule ：该表每列的清洗规则" +
+			"7、tableCleanRule ：整表清洗规则")
+	@Param(name = "rs", desc = "当前线程执行分页SQL得到的结果集", range = "不为空")
+	@Param(name = "tableName", desc = "表名, 用于大字段数据写avro", range = "不为空")
+	@Return(desc = "生成的数据文件的路径", range = "不会为null")
 	@Override
 	public String writeDataAsSpecifieFormat(Map<String, Object> metaDataMap, ResultSet rs, String tableName)
 			throws IOException, SQLException {
