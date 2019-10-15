@@ -436,7 +436,7 @@ public class DataSourceAction extends BaseAction {
 				// 3.4将部门ID封装入数据源信息中
 				datasourceResult.setObject(0, "dep_id", sb.toString());
 				// 3.5将数据源信息添加入Map
-				map.put("dataSourceAndDep", datasourceResult.toList());
+				map.put("datasourceAndDep", datasourceResult.toList());
 			}
 		}
 		// 4.查询部门信息，不需要用户权限控制
