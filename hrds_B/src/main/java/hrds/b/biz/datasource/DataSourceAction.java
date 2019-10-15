@@ -100,7 +100,7 @@ public class DataSourceAction extends BaseAction {
 	private List<Map<String, Object>> getDataAuditList() {
 		// 1.数据可访问权限处理方式，这是一个私有方法不需要权限控制
 		// 2.查询data_source表所有source_id封装入数组
-		List<Long> sourceIdList = Dbo.queryOneColumnList("select source_id from " + Data_source.TableName + "");
+		List<Long> sourceIdList = Dbo.queryOneColumnList("select source_id from " + Data_source.TableName);
 		Long[] sourceId = new Long[sourceIdList.size()];
 		for (int i = 0; i < sourceIdList.size(); ++i) {
 			sourceId[i] = sourceIdList.get(i);
@@ -217,8 +217,8 @@ public class DataSourceAction extends BaseAction {
 					"3.判断查询信息是否不存在" +
 					"4.根据数据权限设置ID以及权限类型进行审批" +
 					"5.查询审批后的最新数据申请审批信息并返回")
-	@Param(name = "daId", desc = "数据权限设置ID，表data_auth表主键", range = "不为空的十位数字，新增时通过主键生成规则自动生成")
-	@Param(name = "authType", desc = "权限类型", range = "0-申请<ShenQing>，1-允许<YunXu>，2-不允许<BuYunXu>，3-一次<YiCi>")
+	@Param(name = "da_id", desc = "数据权限设置ID，表data_auth表主键", range = "不为空的十位数字，新增时通过主键生成规则自动生成")
+	@Param(name = "auth_type", desc = "权限类型", range = "0-申请<ShenQing>，1-允许<YunXu>，2-不允许<BuYunXu>，3-一次<YiCi>")
 	@Return(desc = "存放数据申请审批信息的集合", range = "无限制")
 	public List<Map<String, Object>> dataAudit(long da_id, String auth_type) {
 		// 1.数据可访问权限处理方式，根据user_id进行权限控制
@@ -249,7 +249,7 @@ public class DataSourceAction extends BaseAction {
 			logicStep = "1.数据可访问权限处理方式，根据user_id进行权限控制" +
 					"2.权限回收" +
 					"3.查询审批后的最新数据申请审批信息并返回")
-	@Param(name = "daId", desc = "数据权限设置ID，表data_auth表主键", range = "不为空的十位数字，新增时通过主键生成规则自动生成")
+	@Param(name = "da_id", desc = "数据权限设置ID，表data_auth表主键", range = "不为空的十位数字，新增时通过主键生成规则自动生成")
 	@Return(desc = "存放数据申请审批信息的集合", range = "无限制")
 	public List<Map<String, Object>> deleteAudit(long da_id) {
 		// 1.数据可访问权限处理方式，根据user_id进行权限控制
@@ -407,12 +407,15 @@ public class DataSourceAction extends BaseAction {
 			logicStep = "1.数据可访问权限处理方式，以下SQL关联sourceId与user_id检查" +
 					"2.创建并封装数据源与部门关联信息以及部门信息集合" +
 					"3.判断是新增还是编辑时查询回显数据，如果是新增，只查询部门信息，如果是编辑，还需查询数据源信息" +
-					"3.1关联查询data_source表与source_relation_dep表信息" +
-					"3.2.将数据源信息添加入Map" +
+					"3.1关联查询data_source表信息" +
+					"3.2获取数据源对应部门ID所有值" +
+					"3.3.封装部门到结果集" +
+					"3.4将部门ID封装入数据源信息中" +
+					"3.5.将数据源信息添加入Map" +
 					"4.查询部门信息，不需要用户权限控制" +
 					"5.将部门信息封装入Map" +
 					"6.返回封装数据源与部门关联信息以及部门信息集合")
-	@Param(name = "sourceId", desc = "source_relation_dep表外键ID", range = "不能为空以及不能为空格", nullable = true)
+	@Param(name = "source_id", desc = "source_relation_dep表外键ID", range = "不能为空以及不能为空格", nullable = true)
 	@Return(desc = "返回关联查询data_source表与source_relation_dep表信息结果以及部门信息", range = "无限制")
 	public Map<String, Object> searchDataSource(Long source_id) {
 		// 1.数据可访问权限处理方式，以下SQL关联sourceId与user_id检查
@@ -421,37 +424,26 @@ public class DataSourceAction extends BaseAction {
 		// 3.判断是新增还是更新，如果是新增，只查询部门信息，如果是更新，还需查询回显数据源数据
 		if (source_id != null) {
 			// 编辑时查询
-			// 3.1关联查询data_source表与source_relation_dep表信息
-			Result srdResult = Dbo.queryResult("select ds.*,srd.dep_id from "
-							+ Data_source.TableName + " ds join " + Source_relation_dep.TableName + " srd on " +
-							" ds.source_id=srd.source_id where ds.source_id = ? and ds.create_user_id=?", source_id,
-					getUserId());
-			if (!srdResult.isEmpty()) {
-				List<Long> depIdList = new ArrayList<>();
-				for (int i = 0; i < srdResult.getRowCount(); i++) {
-					depIdList.add(srdResult.getLong(i, "dep_id"));
-				}
-				// 10.封装部门名称到结果集
+			// 3.1关联查询data_source表信息
+			Result datasourceResult = Dbo.queryResult("select * from " + Data_source.TableName +
+					" where source_id=? and create_user_id=?", source_id, getUserId());
+			// 3.2获取数据源对应部门ID所有值
+			List<Long> depIdList = Dbo.queryOneColumnList("select dep_id from " + Source_relation_dep.TableName +
+					" where source_id=?", source_id);
+			if (!depIdList.isEmpty()) {
+				// 3.3.封装部门到结果集
 				StringBuilder sb = new StringBuilder();
-				for (int n = 0; n < depIdList.size(); n++) {
-					if (n != depIdList.size() - 1) {
-						sb.append(depIdList.get(n)).append(",");
+				for (int i = 0; i < depIdList.size(); i++) {
+					if (i != depIdList.size() - 1) {
+						sb.append(depIdList.get(i)).append(",");
 					} else {
-						sb.append(depIdList.get(n));
+						sb.append(depIdList.get(i));
 					}
 				}
-				// 一个数据源对应多个部门，所以除了dep_id部门ID以外其他字段都一样，所以只取一个
-				srdResult.setObject(0, "dep_id", sb.toString());
-				srdResult.setObject(0, "source_id", srdResult.getString(0,
-						"source_id"));
-				srdResult.setObject(0, "datasource_name", srdResult.getString(0,
-						"datasource_name"));
-				srdResult.setObject(0, "datasource_number", srdResult.getString(0,
-						"datasource_number"));
-				srdResult.setObject(0, "source_remark", srdResult.getString(0,
-						"source_remark"));
-				// 3.2.将数据源信息添加入Map
-				map.put("dataSourceAndDep", srdResult.toList());
+				// 3.4将部门ID封装入数据源信息中
+				datasourceResult.setObject(0, "dep_id", sb.toString());
+				// 3.5将数据源信息添加入Map
+				map.put("dataSourceAndDep", datasourceResult.toList());
 			}
 		}
 		// 4.查询部门信息，不需要用户权限控制
@@ -469,7 +461,7 @@ public class DataSourceAction extends BaseAction {
 					"3.删除data_source表信息" +
 					"4.删除source_relation_dep信息,因为一个数据源可能对应多个部门，所以这里无法使用DboExecute的删除方法" +
 					"5.删除source_relation_dep信息")
-	@Param(name = "sourceId", desc = "source_relation_dep表外键ID", range = "不能为空以及不能为空格")
+	@Param(name = "source_id", desc = "source_relation_dep表外键ID", range = "不能为空以及不能为空格")
 	public void deleteDataSource(long source_id) {
 
 		// 1.数据可访问权限处理方式，以下SQL关联sourceId与user_id检查
