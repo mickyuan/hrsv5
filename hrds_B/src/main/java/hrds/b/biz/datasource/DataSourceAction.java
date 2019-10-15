@@ -62,8 +62,9 @@ public class DataSourceAction extends BaseAction {
 		List<Department_info> diList = Dbo.queryList(Department_info.class, "select * " + Department_info.TableName + "");
 		// 3.查询数据源及Agent数
 		List<Map<String, Object>> dsAiList = Dbo.queryList("select ds.source_id,ds.datasource_name," +
-				"count(ai.Agent_id) sumAgent from " + Data_source.TableName + " ds left join agent_info ai on ds.source_id=" +
-				"ai.source_id where ds.create_user_id=? GROUP BY ds.source_id,ds.datasource_name", getUserId());
+				"count(ai.Agent_id) sumAgent from " + Data_source.TableName + " ds left join "
+				+ Agent_info.TableName + " ai on ds.source_id=ai.source_id where ds.create_user_id=? " +
+				" GROUP BY ds.source_id,ds.datasource_name", getUserId());
 		// 4.数据权限管理，分页查询数据源及部门关系信息
 		Result dataSourceRelationDep = searchSourceRelationDepForPage(currPage, pageSize);
 		// 5.查询数据申请审批信息
@@ -106,9 +107,10 @@ public class DataSourceAction extends BaseAction {
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		asmSql.addSql("select da.DA_ID,da.APPLY_DATE,da.APPLY_TIME,da.APPLY_TYPE,da.AUTH_TYPE,da.AUDIT_DATE," +
 				"da.AUDIT_TIME,da.AUDIT_USERID,da.AUDIT_NAME,da.FILE_ID,da.USER_ID,da.DEP_ID,sfa.*,su.user_name" +
-				" from data_auth da join sys_user su on da.user_id=su.user_id join source_file_attribute sfa" +
-				" on da.file_id= sfa.file_id  where su.create_id in (select user_id from sys_user where user_type=?" +
-				" or user_id = ?) ").addParam(UserType.XiTongGuanLiYuan.getCode()).addParam(getUserId())
+				" from " + Data_auth.TableName + " da join " + Sys_user.TableName + " su on da.user_id=su.user_id " +
+				" join " + Source_file_attribute.TableName + " sfa on da.file_id= sfa.file_id  where " +
+				"su.create_id in (select user_id from sys_user where user_type=? or user_id = ?) ")
+				.addParam(UserType.XiTongGuanLiYuan.getCode()).addParam(getUserId())
 				.addORParam("sfa.source_id", sourceId).addSql(" ORDER BY  da_id desc");
 		Result result = Dbo.queryResult(asmSql.sql(), asmSql.params());
 		if (!result.isEmpty()) {
@@ -180,20 +182,6 @@ public class DataSourceAction extends BaseAction {
 		return dsResult;
 	}
 
-	/**
-	 * 数据权限管理，更新数据源关系部门信息
-	 * <p>
-	 * 1.数据可访问权限处理方式，通过sourceId与user_id关联检查
-	 * 2.先删除数据源与部门关系信息,删除几条数据不确定，一个数据源对应多个部门，所以不能用DboExecute
-	 * 3.建立新关系，保存source_relation_dep表信息
-	 *
-	 * @param sourceId long
-	 *                 含义：data_source表主键ID
-	 *                 取值范围：不为空的十位数字，新增时通过主键生成规则自动生成
-	 * @param depIds   String
-	 *                 含义：存储source_relation_dep表主键ID，可能是一个也可能是多个拼接的字符串
-	 *                 取值范围：不为空以及不为空格
-	 */
 	@Method(desc = "数据权限管理，更新数据源关系部门信息",
 			logicStep = "1.数据可访问权限处理方式，通过sourceId与user_id关联检查" +
 					"2.先删除数据源与部门关系信息,删除几条数据不确定，一个数据源对应多个部门，所以不能用DboExecute" +
@@ -203,13 +191,14 @@ public class DataSourceAction extends BaseAction {
 			range = "不为空以及不为空格")
 	public void updateAuditSourceRelationDep(long sourceId, String depIds) {
 		// 1.数据可访问权限处理方式，通过sourceId与user_id关联检查
-		if (Dbo.queryNumber("select count(1) from " + Data_source.TableName + " ds left join source_relation_dep srd" +
-						" on ds.source_id=srd.source_id where ds.source_id=? and ds.create_user_id=?",
-				sourceId, getUserId()).orElseThrow(() -> new BusinessException("sql查询错误！")) == 0) {
+		if (Dbo.queryNumber("select count(1) from " + Data_source.TableName + " ds left join " +
+				Source_relation_dep.TableName + " srd on ds.source_id=srd.source_id where ds.source_id=?" +
+				" and ds.create_user_id=?", sourceId, getUserId())
+				.orElseThrow(() -> new BusinessException("sql查询错误！")) == 0) {
 			throw new BusinessException("数据权限校验失败，数据不可访问！");
 		}
 		// 2.先删除数据源与部门关系信息,删除几条数据不确定，一个数据源对应多个部门，所以不能用DboExecute
-		int num = Dbo.execute("delete from source_relation_dep where source_id=?",
+		int num = Dbo.execute("delete from " + Source_relation_dep.TableName + " where source_id=?",
 				sourceId);
 		if (num < 1) {
 			throw new BusinessException("编辑时会先删除原数据源与部门关系信息，删除错旧关系时错误，" +
@@ -233,8 +222,8 @@ public class DataSourceAction extends BaseAction {
 		// authType代码项合法性验证，如果不存在该方法直接会抛异常
 		AuthType.ofEnumByCode(authType);
 		// 2.根据数据权限设置ID查询数据申请审批信息
-		Optional<Data_auth> dataAuth = Dbo.queryOneObject(Data_auth.class, "select * from data_auth " +
-				" where da_id=? and user_id=?", daId, getUserId());
+		Optional<Data_auth> dataAuth = Dbo.queryOneObject(Data_auth.class, "select * from "
+				+ Data_auth.TableName + " where da_id=? and user_id=?", daId, getUserId());
 		// 3.判断查询信息是否不存在
 		if (!dataAuth.isPresent()) {
 			// 不存在值
@@ -262,7 +251,7 @@ public class DataSourceAction extends BaseAction {
 	public List<Map<String, Object>> deleteAudit(long daId) {
 		// 1.数据可访问权限处理方式，根据user_id进行权限控制
 		// 2.权限回收
-		DboExecute.deletesOrThrow("权限回收成功!", "delete from data_auth " +
+		DboExecute.deletesOrThrow("权限回收成功!", "delete from " + Data_auth.TableName +
 				" where da_id = ? and user_id=?", daId, getUserId());
 		// 3.查询审批后的最新数据申请审批信息并返回
 		return getDataAuditList();
@@ -314,8 +303,9 @@ public class DataSourceAction extends BaseAction {
 	public void updateDataSource(Long sourceId, String sourceRemark, String datasourceName,
 	                             String datasourceNumber, String depIds) {
 		// 1.数据可访问权限处理方式，通过sourceId与user_id关联检查
-		if (Dbo.queryNumber("select count(1) from " + Data_source.TableName + " where source_id=? and create_user_id=?",
-				sourceId, getUserId()).orElseThrow(() -> new BusinessException("sql查询错误！")) == 0) {
+		if (Dbo.queryNumber("select count(1) from " + Data_source.TableName +
+				" where source_id=? and create_user_id=?", sourceId, getUserId())
+				.orElseThrow(() -> new BusinessException("sql查询错误！")) == 0) {
 			throw new BusinessException("数据权限校验失败，数据不可访问！");
 		}
 		//sourceId长度
@@ -334,7 +324,7 @@ public class DataSourceAction extends BaseAction {
 		// 5.更新数据源信息
 		dataSource.update(Dbo.db());
 		// 6.先删除数据源与部门关系信息,删除几条数据不确定，一个数据源对应多个部门，所以不能用DboExecute
-		int num = Dbo.execute("delete from source_relation_dep where source_id=?",
+		int num = Dbo.execute("delete from " + Source_relation_dep.TableName + " where source_id=?",
 				dataSource.getSource_id());
 		if (num < 1) {
 			throw new BusinessException("编辑时会先删除原数据源与部门关系信息，删除错旧关系时错误，" +
@@ -397,8 +387,8 @@ public class DataSourceAction extends BaseAction {
 		// 2.验证传递的部门ID对应的部门信息是否存在
 		String[] split = depIds.split(",");
 		for (String depId : split) {
-			if (Dbo.queryNumber("select count(*) from " + Department_info.class + " where dep_id=?", Long.valueOf(depId))
-					.orElseThrow(() -> new BusinessException("sql查询错误")) == 0) {
+			if (Dbo.queryNumber("select count(*) from " + Department_info.class + " where dep_id=?",
+					Long.valueOf(depId)).orElseThrow(() -> new BusinessException("sql查询错误")) == 0) {
 				throw new BusinessException("该部门ID对应的部门不存在，请检查！");
 			}
 		}
@@ -432,7 +422,7 @@ public class DataSourceAction extends BaseAction {
 			// 编辑时查询
 			// 3.1关联查询data_source表与source_relation_dep表信息
 			List<Map<String, Object>> dataSourceList = Dbo.queryList("select ds.*,srd.dep_id from "
-							+ Data_source.TableName + "ds join " + Source_relation_dep.TableName + " srd on " +
+							+ Data_source.TableName + " ds join " + Source_relation_dep.TableName + " srd on " +
 							" ds.source_id=srd.source_id where ds.source_id = ? and ds.create_user_id=?", sourceId,
 					getUserId());
 			// 3.2.将数据源信息添加入Map
@@ -459,7 +449,7 @@ public class DataSourceAction extends BaseAction {
 		// 1.数据可访问权限处理方式，以下SQL关联sourceId与user_id检查
 		// 2.先查询该datasource下是否还有agent
 		// FIXME: orElse用法有误，逻辑有问题，用orElseThrow  已解决
-		if (Dbo.queryNumber("SELECT count(1) FROM " + Agent_info.TableName + "  WHERE source_id=? and user_id=?",
+		if (Dbo.queryNumber("SELECT count(1) FROM " + Agent_info.TableName + " WHERE source_id=? and user_id=?",
 				sourceId, getUserId()).orElseThrow(() -> new BusinessException("sql查询错误！")) > 0) {
 			throw new BusinessException("此数据源下还有agent，不能删除,sourceId=" + sourceId);
 		}
