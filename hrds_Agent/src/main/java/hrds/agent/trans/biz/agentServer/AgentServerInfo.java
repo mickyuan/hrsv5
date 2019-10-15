@@ -1,5 +1,6 @@
 package hrds.agent.trans.biz.agentServer;
 
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -15,13 +16,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * 获取当前程序所在的服务器信息的接口类
- * date: 2019/9/11 17:38
- * author: zxz
- */
 //FIXME @徐超
 // Agent等程序，也要有自己的 BaseAction。因为也需要做权限控制，比如每次交互都有传递一个固定的令牌做验证
+@DocClass(desc = "获取当前程序所在的服务器信息的接口类", author = "zxz", createdate = "2019/9/11 17:38")
 public class AgentServerInfo extends BaseAction {
 	//系统目录的集合
 	private static final ArrayList<String> windows_nolist;

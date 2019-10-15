@@ -1,6 +1,7 @@
 package hrds.agent.job.biz.core;
 
 import com.jcraft.jsch.ChannelSftp.LsEntry;
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -29,11 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
-/**
- * 执行ftp采集的作业
- * date: 2019/10/12 10:29
- * author: zxz
- */
+@DocClass(desc = "执行ftp采集的作业", author = "zxz", createdate = "2019/10/12 10:29")
 public class FtpCollectJobImpl implements JobInterface {
 	//打印日志
 	private static final Log log = LogFactory.getLog(FtpCollectJobImpl.class);
