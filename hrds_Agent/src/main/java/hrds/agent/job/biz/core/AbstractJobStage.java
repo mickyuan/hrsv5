@@ -1,19 +1,12 @@
 package hrds.agent.job.biz.core;
 
+import fd.ng.core.annotation.Class;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 
-/**
- * ClassName: AbstractJobStage <br/>
- * Function: 作业阶段接口适配器，请每种类型任务的每个阶段继承该类 <br/>
- * Reason: 提供setNextStage()和getNextStage()的默认实现,这两个方法的作用是设置和返回责任链中当前环节的下一环节
- * Date: 2019/8/1 15:24 <br/>
- * <p>
- * Author WangZhengcheng
- * Version 1.0
- * Since JDK 1.8
- **/
+@Class(desc = "作业阶段接口适配器，请每种类型任务的每个阶段继承该类,提供setNextStage()和getNextStage()的默认实现," +
+		"这两个方法的作用是设置和返回责任链中当前环节的下一环节", author = "WangZhengcheng")
 public abstract class AbstractJobStage implements JobStageInterface {
 
 	protected static final String TERMINATED_MSG = "脚本执行完成";

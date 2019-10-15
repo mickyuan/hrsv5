@@ -1,5 +1,6 @@
 package hrds.b.biz.agent.tools;
 
+import fd.ng.core.annotation.Class;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -12,13 +13,7 @@ import hrds.commons.utils.AgentActionUtil;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-/**
- * @Description: 海云应用管理端向Agent端发送消息的工具类
- * @Author: wangz
- * @CreateTime: 2019-09-26-11:36
- * @BelongsProject: hrsv5
- * @BelongsPackage: hrds.b.biz.agent.tools
- **/
+@Class(desc = "海云应用管理端向Agent端发送消息的工具类", author = "WangZhengcheng")
 public class SendMsgUtil {
 
 	private static final Log logger = LogFactory.getLog(SendMsgUtil.class);

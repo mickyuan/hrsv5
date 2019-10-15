@@ -1,5 +1,6 @@
 package hrds.agent.job.biz.core.dbstage.writer;
 
+import fd.ng.core.annotation.Class;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -11,16 +12,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Map;
 
-/**
- * ClassName: FileWriterInterface <br/>
- * Function: 数据库直连采集以指定的格式将数据卸到指定的数据文件. <br/>
- * Reason: 接口
- * Date: 2019/8/1 15:24 <br/>
- * <p>
- * Author WangZhengcheng
- * Version 1.0
- * Since JDK 1.8
- **/
+@Class(desc = "数据库直连采集以指定的格式将数据卸到指定的数据文件的接口", author = "WangZhengcheng")
 public interface FileWriterInterface {
 
 	@Method(desc = "根据数据元信息和ResultSet，写指定格式的数据文件", logicStep = "")

@@ -1,17 +1,10 @@
 package hrds.agent.job.biz.core.dfstage.fileparser.service;
 
+import fd.ng.core.annotation.Class;
+
 import java.io.IOException;
 
-/**
- * ClassName: FileParserInterface <br/>
- * Function: 数据采集所用到的文件分析接口. <br/>
- * Reason: 所有采集的文件处理，都有该类中的实现. <br/>
- * Date: 2019/8/2 11:37 <br/>
- * <p>
- * Author 13616
- * Version 1.0
- * Since JDK 1.8
- **/
+@Class(desc = "数据采集所用到的文件分析接口,所有采集的文件处理，都有该类中的实现", author = "WangZhengcheng")
 public interface FileParserInterface {
 	/**
 	 * 用于处理使用定长方式组织数据文件的接口

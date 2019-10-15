@@ -1,5 +1,6 @@
 package hrds.agent.job.biz.dataclean.columnclean;
 
+import fd.ng.core.annotation.Class;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -11,16 +12,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
-/**
- * ClassName: ColDateConverImpl <br/>
- * Function: 数据库直连采集列清洗日期格式化实现类 <br/>
- * Reason: 继承AbstractColumnClean抽象类，只针对一个日期格式化方法进行实现
- * Date: 2019/8/1 15:24 <br/>
- * <p>
- * Author WangZhengcheng
- * Version 1.0
- * Since JDK 1.8
- **/
+@Class(desc = "数据库直连采集列清洗日期格式化实现类，继承AbstractColumnClean抽象类，只针对一个日期格式化方法进行实现",
+		author = "WangZhengcheng")
 public class ColDateConverImpl extends AbstractColumnClean {
 	@Method(desc = "列清洗日期格式化实现", logicStep = "" +
 			"1、判断dateSB是否为空，如果不为空，表示要进行日期格式化" +

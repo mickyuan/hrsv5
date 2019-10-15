@@ -1,21 +1,13 @@
 package hrds.agent.job.biz.core;
 
 
+import fd.ng.core.annotation.Class;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import hrds.agent.job.biz.bean.StageStatusInfo;
 
-/**
- * ClassName: JobStageInterface <br/>
- * Function: 作业阶段接口，作业中每个阶段处理使用责任链模式 <br/>
- * Reason:
- * Date: 2019/8/1 15:24 <br/>
- * <p>
- * Author WangZhengcheng
- * Version 1.0
- * Since JDK 1.8
- **/
+@Class(desc = "作业阶段接口，作业中每个阶段处理使用责任链模式", author = "WangZhengcheng")
 public interface JobStageInterface {
 
 	@Method(desc = "实现具体阶段处理逻辑，处理完成后，无论成功还是失败，将相关状态信息封装到StageStatusInfo对象中返回", logicStep = "")

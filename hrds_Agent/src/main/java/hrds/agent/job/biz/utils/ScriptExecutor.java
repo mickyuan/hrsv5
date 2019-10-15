@@ -1,5 +1,6 @@
 package hrds.agent.job.biz.utils;
 
+import fd.ng.core.annotation.Class;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.utils.StringUtil;
@@ -13,16 +14,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-/**
- * ClassName: ScriptExecutor <br/>
- * Function: 脚本执行工具 <br/>
- * Reason: 用于在java中执行各种类型的脚本. <br/>
- * Date: 2019/8/6 10:40 <br/>
- * <p>
- * Author 13616
- * Version 1.0
- * Since JDK 1.8
- **/
+@Class(desc = "脚本执行工具,用于在java中执行各种类型的脚本", author = "WangZhengcheng")
 public class ScriptExecutor {
 	private final static Logger LOGGER = LoggerFactory.getLogger(ScriptExecutor.class);
 

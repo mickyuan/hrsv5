@@ -1,5 +1,6 @@
 package hrds.agent.job.biz.core.dfstage.fileparser.service;
 
+import fd.ng.core.annotation.Class;
 import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.utils.ParquetUtil;
 import org.apache.parquet.example.data.Group;
@@ -11,16 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
-/**
- * ClassName: ParquetFileParser <br/>
- * Function: 写parquet文件的类. <br/>
- * Reason: 有写为parquet文件的需求，则使用该类. <br/>
- * Date: 2019/8/2 14:19 <br/>
- * <p>
- * Author 13616
- * Version 1.0
- * Since JDK 1.8
- **/
+@Class(desc = "写parquet文件的类，有写为parquet文件的需求，则使用该类", author = "WangZhengcheng")
 public class ParquetFileParser extends AbstractFileParser {
 
 	private final static Logger LOGGER = LoggerFactory.getLogger(ParquetFileParser.class);
