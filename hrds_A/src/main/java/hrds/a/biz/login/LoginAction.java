@@ -1,5 +1,8 @@
 package hrds.a.biz.login;
 
+import fd.ng.core.annotation.Method;
+import fd.ng.core.annotation.Param;
+import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.web.action.ActionResult;
 import fd.ng.web.util.Dbo;
@@ -24,86 +27,58 @@ import javax.servlet.http.HttpServletRequest;
  */
 public class LoginAction extends BaseAction {
 
-	/**
-	 * 用户登陆入口
-	 * 1 : 获取并检查,用户名是否为空
-	 * 2 : 获取并检查,密码是否做为空
-	 * 3 : 检查当前用户的登陆是否正确,并返回cookie数据信息
-	 *
-	 * @param request request.getParameter("username")
-	 *                含义 : 页面的请求用户名
-	 *                取值范围 : 不能为空,否则登陆验证将失败
-	 *                request.getParameter("password")
-	 *                含义 : 页面的请求用户密码
-	 *                取值范围 : 不能为空,否则登陆验证将失败
-	 * @return String
-	 * 含义 : 登陆用户的数据信息(使用Base64加密)
-	 * 取值范围 : 不能为空,如果为空表示为获取到用户信息
-	 */
-
-	@Method
+	@Method(desc = "用户登陆入口",
+					logicStep = "1 : 获取并检查,用户名是否为空" +
+									"2 : 获取并检查,密码是否做为空" +
+									"3 : 检查当前用户的登陆是否正确,并返回cookie数据信息")
+	@Param(name = "request", desc = "前端登陆提交的请求", range = "user_id : 登陆用户的ID,password : 登陆用户的密码")
+	@Return(desc = "登陆用户的加密信息Cookie", range = "不能为空,为空则表示用户无效")
 	public String login(HttpServletRequest request) {
 
 		//1 : 获取并检查,用户名是否为空
-		String user_id = request.getParameter("username");
+		String user_id = request.getParameter("user_id");
 		if( StringUtil.isBlank(user_id) ) {
 			throw new BusinessException(ExceptionEnum.USER_NOT_EMPTY);
 		}
 		//2 : 获取并检查,密码是否做为空
-		String pwd = request.getParameter("password");
-		if( StringUtil.isBlank(pwd) ) {
+		String password = request.getParameter("password");
+		if( StringUtil.isBlank(password) ) {
 			throw new BusinessException(ExceptionEnum.USER_PWD_EMPTY);
 		}
 
 		//3 : 检查当前用户的登陆是否正确,并返回cookie数据信息
-		return checkLogin(Long.parseLong(user_id), pwd);
+		return checkLogin(Long.parseLong(user_id), password);
 
 	}
 
-	/**
-	 * 重写登陆时的用户验证情况(这里不希望父类的方法做SESSION的管理认证,
-	 * 因为所有Action中的方法请求时,都会做session的认证,而登陆不需要)
-	 *
-	 * @param request 含义 : 页面的请求Http对象
-	 *                取值范围 :  从中获取需要的数据,也就是页面的name对应的属性
-	 * @return ActionResult
-	 * 含义 : 返回验证的结果信息,
-	 * 取值范围  :  null--表示为正常通过,其他情况则会抛出异常
-	 */
+	@Method(desc = "重写登陆时的用户验证情况(这里不希望父类的方法做SESSION的管理认证,因为所有Action中的方法请求时,都会做session的认证,而登陆不需要)",
+					logicStep = "重写父类的方法")
+	@Return(desc = "返回 null", range = "可以为空,因为此处为登陆验证,不需要取Cookie进行验证")
 	@Override
 	protected ActionResult _doPreProcess(HttpServletRequest request) {
 
 		return null;
 	}
 
-	/**
-	 *
-	 * 检查当前用户的登陆是否正确
-	 * 1 : 查询当前用户的记录信息
-	 * 2 : 如果当前包装的值为 null，那么抛出异常,说明当前用户不存在
-	 * 3 : 如果为获取到信息,则判断用户密码是否正确
-	 * 4 : 将此次登陆的用户信息,设置到Cookie中
-	 * 5 : 设置登陆用户的cookie
-	 *
-	 * @param user_id long
-	 *                含义 : 用户ID
-	 *                取值范围 : 不可为空的长整型, 用于用户登陆的身份认证
-	 * @param pwd     String
-	 *                含义 :  用户密码
-	 * @return String
-	 * 含义 :  当前用户的信息
-	 * 取值返回 : 不能为空,为空表示用户无效
-	 */
-	private String checkLogin(long user_id, String pwd) {
+	@Method(desc = "检查当前用户的登陆是否正确",
+					logicStep = "1 : 查询当前用户的记录信息" +
+									"2 : 如果当前包装的值为 null，那么抛出异常,说明当前用户不存在" +
+									"3 : 如果为获取到信息,则判断用户密码是否正确" +
+									"4 : 将此次登陆的用户信息,设置到Cookie中" +
+									"5 : 设置登陆用户的cookie,并返回加密后Cookie信息")
+	@Param(name = "user_id", desc = "用户登陆ID", range = "不能为空的整数")
+	@Param(name = "password", desc = "用户登陆密码", range = "不能为空的字符串")
+	@Return(desc = "加密后的Cookie信息", range = "不能为空,为空则表示用户无效")
+	private String checkLogin(long user_id, String password) {
 
 		//1 : 查询当前用户的记录信息
-		Sys_user logInUser = Dbo.queryOneObject(Sys_user.class, "select * from " +
-						Sys_user.TableName + " where user_id = ?", user_id)
+		Sys_user logInUser = Dbo.queryOneObject(Sys_user.class, "SELECT * FROM " +
+						Sys_user.TableName + " WHERE user_id = ?", user_id)
 						.orElseThrow(() -> new BusinessException(ExceptionEnum.USER_NOT_EXISTS));
 
 		//3 : 如果为获取到信息,则判断用户密码是否正确
 		String user_password = logInUser.getUser_password();
-		if( !pwd.equals(user_password) ) {
+		if( !password.equals(user_password) ) {
 			throw new BusinessException(ExceptionEnum.PASSWORD_ERROR.getMessage());
 		}
 //		4 ; 将此次登陆的用户信息,设置到Cookie中
@@ -112,23 +87,17 @@ public class LoginAction extends BaseAction {
 		return ActionUtil.setCookieUser(user);
 	}
 
-	/**
-	 * 将此次登陆的用户信息,设置到Cookie中
-	 * 1 : 根据登陆成功的用户信息获取部门信息
-	 * 2 : 如果当前包装的值为 null，那么抛出异常,说明部门信息不存在
-	 * 3 : 组成需要生成的Cookie
-	 *
-	 * @param logInUser 含义 : 登陆用户的信息实体
-	 *                  取值范围 : 用户的具体信息
-	 * @return User
-	 * 含义 : 返回Cookie需要的数据信息
-	 * 取值范围 : 不会为空
-	 */
+	@Method(desc = "将此次登陆的用户信息,设置到Cookie中",
+					logicStep = "1 : 根据登陆成功的用户信息获取部门信息" +
+									"2 : 如果当前包装的值为 null，那么抛出异常,说明部门信息不存在" +
+									"3 : 组成需要生成的Cookie")
+	@Param(name = "logInUser", desc = "用户登陆的实体数据,数据库表结构", range = "不能为空,为空表示为获取到登陆用户信息", isBean = true)
+	@Return(desc = "用户的登陆信息", range = "不能为空,为空表示未获取到登陆用户信息")
 	private User putUserInfo(Sys_user logInUser) {
 
 		// 1 : 根据登陆成功的用户信息获取部门信息
-		Department_info departmentInfo = Dbo.queryOneObject(Department_info.class, "select * from " +
-						Department_info.TableName + " where dep_id = ?", logInUser.getDep_id())
+		Department_info departmentInfo = Dbo.queryOneObject(Department_info.class, "SELECT * FROM " +
+						Department_info.TableName + " WHERE dep_id = ?", logInUser.getDep_id())
 						.orElseThrow(() -> new BusinessException("部门信息不存在"));
 
 		//3 : 组成需要生成的Cookie
