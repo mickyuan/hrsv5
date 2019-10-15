@@ -64,11 +64,11 @@ public class TaskJobHandleHelper {
 //	private static final String DEFAULT_BATH_DATE = "0";    //默认跑批日期
 
 	private static final String PARAERROR = "干预参数错误"; //参数错误信息
-	private static final String NOEXITSERROR = "任务不存在"; //任务不存在错误信息
+	private static final String NOEXITSERROR = "作业不存在"; //任务不存在错误信息
 	private static final String NOSUPPORT = "不支持的干预类型"; //干预类型不存在错误信息
 	private static final String STATEERROR = "当前状态不允许执行此操作"; //状态异常错误信息
-	private static final String JOBSTOPERROR = "任务停止失败"; //状态异常错误信息
-	private static final String PRIORITYERROR = "任务优先级设置超过范围"; //作业优先级异常
+	private static final String JOBSTOPERROR = "作业停止失败"; //状态异常错误信息
+	private static final String PRIORITYERROR = "作业优先级设置超过范围"; //作业优先级异常
 
 	private static final String KILL9COMMANDLINE = "kill -9";
 	private static final int DEFAULT_MILLISECONDS = 5000;   //默认尝试作业停止毫秒数
