@@ -1,6 +1,6 @@
 package hrds.agent.job.biz.dataclean.tableclean;
 
-import fd.ng.core.annotation.Class;
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -9,7 +9,7 @@ import org.apache.parquet.example.data.Group;
 
 import java.util.Map;
 
-@Class(desc = "数据库直连采集表清洗工具类", author = "WangZhengcheng")
+@DocClass(desc = "数据库直连采集表清洗工具类", author = "WangZhengcheng")
 public class TableCleanUtil {
 
 	@Method(desc = "表清洗入口方法", logicStep = "" +

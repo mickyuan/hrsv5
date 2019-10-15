@@ -1,6 +1,6 @@
 package hrds.agent.job.biz.dataclean.tableclean;
 
-import fd.ng.core.annotation.Class;
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -11,7 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
 
-@Class(desc = "数据库直连采集表清洗字符补齐实现类，继承AbstractTableClean抽象类，只针对一个字符补齐方法进行实现", author = "WangZhengcheng")
+@DocClass(desc = "数据库直连采集表清洗字符补齐实现类，继承AbstractTableClean抽象类，只针对一个字符补齐方法进行实现", author = "WangZhengcheng")
 public class TbCompleteImpl extends AbstractTableClean {
 	@Method(desc = "表清洗字符补齐实现", logicStep = "" +
 			"1、判断completeSB是否为空，如果不为空，表示要进行字符补齐" +

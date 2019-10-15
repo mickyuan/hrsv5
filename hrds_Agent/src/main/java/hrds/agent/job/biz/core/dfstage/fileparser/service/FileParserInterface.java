@@ -1,10 +1,10 @@
 package hrds.agent.job.biz.core.dfstage.fileparser.service;
 
-import fd.ng.core.annotation.Class;
+import fd.ng.core.annotation.DocClass;
 
 import java.io.IOException;
 
-@Class(desc = "数据采集所用到的文件分析接口,所有采集的文件处理，都有该类中的实现", author = "WangZhengcheng")
+@DocClass(desc = "数据采集所用到的文件分析接口,所有采集的文件处理，都有该类中的实现", author = "WangZhengcheng")
 public interface FileParserInterface {
 	/**
 	 * 用于处理使用定长方式组织数据文件的接口

@@ -1,6 +1,6 @@
 package hrds.agent.job.biz.dataclean.columnclean;
 
-import fd.ng.core.annotation.Class;
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -15,7 +15,7 @@ import org.apache.parquet.example.data.Group;
 
 import java.util.List;
 
-@Class(desc = "数据库直连采集列拆分清洗实现类,继承AbstractColumnClean抽象类，只针对一个列拆分方法进行实现",
+@DocClass(desc = "数据库直连采集列拆分清洗实现类,继承AbstractColumnClean抽象类，只针对一个列拆分方法进行实现",
 		author = "WangZhengcheng")
 public class ColSplitImpl extends AbstractColumnClean {
 	//TODO ORC,SEQUENCE未实现

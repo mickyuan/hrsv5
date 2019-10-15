@@ -1,13 +1,13 @@
 package hrds.agent.job.biz.core.dbstage.dbdialect.strategy;
 
-import fd.ng.core.annotation.Class;
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.db.jdbc.nature.PostgreSQL;
 
 
-@Class(desc = "数据库方言策略接口PostgreSQL数据库实现类", author = "WangZhengcheng")
+@DocClass(desc = "数据库方言策略接口PostgreSQL数据库实现类", author = "WangZhengcheng")
 public class PgSQLDialectStrategy implements DataBaseDialectStrategy {
 	@Method(desc = "PgSQL根据对应的数据库分页类型，获取分页SQL", logicStep = "1、调用封装好的已有实现获得分页SQL")
 	@Param(name = "strSql", desc = "采集SQL", range = "不为空")

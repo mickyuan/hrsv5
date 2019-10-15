@@ -1,11 +1,11 @@
 package hrds.agent.job.biz.dataclean.tableclean;
 
-import fd.ng.core.annotation.Class;
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 
-@Class(desc = "数据库直连采集表清洗首尾去空实现类，继承AbstractTableClean抽象类，只针对一个首尾去空方法进行实现", author = "WangZhengcheng")
+@DocClass(desc = "数据库直连采集表清洗首尾去空实现类，继承AbstractTableClean抽象类，只针对一个首尾去空方法进行实现", author = "WangZhengcheng")
 public class TbTrimImpl extends AbstractTableClean {
 	@Method(desc = "表清洗首尾去空实现", logicStep = "" +
 			"1、判断是否进行首尾去空" +

@@ -1,6 +1,6 @@
 package hrds.agent.job.biz.dataclean.columnclean;
 
-import fd.ng.core.annotation.Class;
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -11,7 +11,7 @@ import java.text.ParseException;
 import java.util.List;
 import java.util.Map;
 
-@Class(desc = "列清洗规则接口，定义了按列清洗的6种清洗规则", author = "WangZhengcheng")
+@DocClass(desc = "列清洗规则接口，定义了按列清洗的6种清洗规则", author = "WangZhengcheng")
 public interface ColumnCleanInterface {
 
 	@Method(desc = "字符替换", logicStep = "")

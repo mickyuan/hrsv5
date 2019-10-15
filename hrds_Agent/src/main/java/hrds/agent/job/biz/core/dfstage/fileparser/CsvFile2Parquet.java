@@ -1,6 +1,6 @@
 package hrds.agent.job.biz.core.dfstage.fileparser;
 
-import fd.ng.core.annotation.Class;
+import fd.ng.core.annotation.DocClass;
 import hrds.agent.job.biz.constant.DataTypeConstant;
 import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.core.dfstage.fileparser.service.FileParserSetting;
@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
-@Class(desc = "csv文件转为parquet文件", author = "WangZhengcheng")
+@DocClass(desc = "csv文件转为parquet文件", author = "WangZhengcheng")
 public class CsvFile2Parquet {
 
 	private final static Logger LOGGER = LoggerFactory.getLogger(CsvFile2Parquet.class);

@@ -1,6 +1,6 @@
 package hrds.b.biz.agent;
 
-import fd.ng.core.annotation.Class;
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -28,7 +28,7 @@ import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
 
-@Class(desc = "数据库采集应用管理端数据源Agent列表后台服务类", author = "WangZhengcheng")
+@DocClass(desc = "数据库采集应用管理端数据源Agent列表后台服务类", author = "WangZhengcheng")
 public class AgentListAction extends BaseAction {
 
 	@Method(desc = "获取数据源Agent列表信息", logicStep = "1、获取用户ID并根据用户ID去数据库中查询数据源信息")

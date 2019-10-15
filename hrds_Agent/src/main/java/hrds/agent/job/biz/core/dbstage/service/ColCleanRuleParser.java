@@ -3,7 +3,7 @@ package hrds.agent.job.biz.core.dbstage.service;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import fd.ng.core.annotation.Class;
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Class(desc = "列清洗规则解析类，对实体中的JSON信息解析，在程序内部参数传递过程中，不允许使用JSON格式数据",
+@DocClass(desc = "列清洗规则解析类，对实体中的JSON信息解析，在程序内部参数传递过程中，不允许使用JSON格式数据",
 		author = "WangZhengcheng")
 public class ColCleanRuleParser {
 

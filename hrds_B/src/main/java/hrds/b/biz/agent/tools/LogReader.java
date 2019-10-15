@@ -2,7 +2,7 @@ package hrds.b.biz.agent.tools;
 
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
-import fd.ng.core.annotation.Class;
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -14,7 +14,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-@Class(desc = "日志读取工具类", author = "WangZhengcheng")
+@DocClass(desc = "日志读取工具类", author = "WangZhengcheng")
 public class LogReader {
 
 	private static final Logger logger = LogManager.getLogger(LogReader.class);

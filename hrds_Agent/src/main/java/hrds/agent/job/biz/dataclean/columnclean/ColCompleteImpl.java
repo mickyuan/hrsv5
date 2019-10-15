@@ -1,6 +1,6 @@
 package hrds.agent.job.biz.dataclean.columnclean;
 
-import fd.ng.core.annotation.Class;
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -11,7 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
 
-@Class(desc = "数据库直连采集列清洗字符补齐实现类,继承AbstractColumnClean抽象类，只针对一个字符补齐方法进行实现",
+@DocClass(desc = "数据库直连采集列清洗字符补齐实现类,继承AbstractColumnClean抽象类，只针对一个字符补齐方法进行实现",
 		author = "WangZhengcheng")
 public class ColCompleteImpl extends AbstractColumnClean {
 

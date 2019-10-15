@@ -1,6 +1,6 @@
 package hrds.agent.job.biz.core;
 
-import fd.ng.core.annotation.Class;
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Return;
 import hrds.agent.job.biz.bean.*;
@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-@Class(desc = "完成数据库直连采集的作业实现", author = "WangZhengcheng")
+@DocClass(desc = "完成数据库直连采集的作业实现", author = "WangZhengcheng")
 public class DataBaseJobImpl implements JobInterface {
 
 	private MetaInfoBean mateInfo = new MetaInfoBean();

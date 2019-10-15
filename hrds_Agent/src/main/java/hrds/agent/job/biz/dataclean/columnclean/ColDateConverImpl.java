@@ -1,6 +1,6 @@
 package hrds.agent.job.biz.dataclean.columnclean;
 
-import fd.ng.core.annotation.Class;
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -12,7 +12,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
-@Class(desc = "数据库直连采集列清洗日期格式化实现类，继承AbstractColumnClean抽象类，只针对一个日期格式化方法进行实现",
+@DocClass(desc = "数据库直连采集列清洗日期格式化实现类，继承AbstractColumnClean抽象类，只针对一个日期格式化方法进行实现",
 		author = "WangZhengcheng")
 public class ColDateConverImpl extends AbstractColumnClean {
 	@Method(desc = "列清洗日期格式化实现", logicStep = "" +

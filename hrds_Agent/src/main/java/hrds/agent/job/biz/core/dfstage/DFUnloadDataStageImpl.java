@@ -1,6 +1,6 @@
 package hrds.agent.job.biz.core.dfstage;
 
-import fd.ng.core.annotation.Class;
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Return;
 import hrds.agent.job.biz.bean.StageStatusInfo;
@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.util.List;
 
-@Class(desc = "数据文件采集，数据卸数阶段实现", author = "WangZhengcheng")
+@DocClass(desc = "数据文件采集，数据卸数阶段实现", author = "WangZhengcheng")
 public class DFUnloadDataStageImpl extends AbstractJobStage {
 
 	private final static Logger LOGGER = LoggerFactory.getLogger(DFUnloadDataStageImpl.class);

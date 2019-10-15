@@ -1,7 +1,7 @@
 package hrds.b.biz.agent.dbagentconf.dbconf;
 
 import com.alibaba.fastjson.JSONObject;
-import fd.ng.core.annotation.Class;
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -28,7 +28,7 @@ import hrds.commons.utils.key.PrimayKeyGener;
 
 import java.util.List;
 
-@Class(desc = "应用管理端数据库采集配置步骤一、数据库连接信息配置", author = "WangZhengcheng")
+@DocClass(desc = "应用管理端数据库采集配置步骤一、数据库连接信息配置", author = "WangZhengcheng")
 public class DBConfStepAction extends BaseAction{
 
 	@Method(desc = "数据库直连采集，根据databaseId进行查询并在页面上回显数据源配置信息", logicStep = "" +

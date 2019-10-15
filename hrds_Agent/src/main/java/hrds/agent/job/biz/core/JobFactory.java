@@ -1,6 +1,6 @@
 package hrds.agent.job.biz.core;
 
-import fd.ng.core.annotation.Class;
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -10,7 +10,7 @@ import hrds.agent.job.biz.bean.JobParamBean;
 import hrds.agent.job.biz.bean.JobStatusInfo;
 import hrds.agent.job.biz.constant.JobCollectTypeConstant;
 
-@Class(desc = "作业工厂类，用于创建不同的作业实例", author = "WangZhengcheng")
+@DocClass(desc = "作业工厂类，用于创建不同的作业实例", author = "WangZhengcheng")
 public class JobFactory {
 
 	private JobFactory() {

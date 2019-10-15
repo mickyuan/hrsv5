@@ -1,11 +1,11 @@
 package hrds.agent.job.biz.utils;
 
-import fd.ng.core.annotation.Class;
+import fd.ng.core.annotation.DocClass;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-@Class(desc = "处理日期的工具", author = "WangZhengcheng")
+@DocClass(desc = "处理日期的工具", author = "WangZhengcheng")
 public class DateUtil {
 
 	public final static String DATE_CHAR8_FORMAT = "yyyyMMdd";

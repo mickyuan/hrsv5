@@ -1,8 +1,8 @@
 package hrds.agent.job.biz.utils;
 
-import fd.ng.core.annotation.Class;
+import fd.ng.core.annotation.DocClass;
 
-@Class(desc = "用于校验列类型中是否包含以下特殊类型", author = "WangZhengcheng")
+@DocClass(desc = "用于校验列类型中是否包含以下特殊类型", author = "WangZhengcheng")
 public class DataTypeCheck {
 
 	private static final String INT = "int";

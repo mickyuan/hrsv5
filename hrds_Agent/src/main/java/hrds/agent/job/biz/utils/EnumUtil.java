@@ -1,9 +1,9 @@
 package hrds.agent.job.biz.utils;
 
-import fd.ng.core.annotation.Class;
+import fd.ng.core.annotation.DocClass;
 import hrds.agent.job.biz.constant.EnumConstantInterface;
 
-@Class(desc = "用于枚举类的工具", author = "WangZhengcheng")
+@DocClass(desc = "用于枚举类的工具", author = "WangZhengcheng")
 public class EnumUtil {
 
 	/**
@@ -16,7 +16,7 @@ public class EnumUtil {
 	 * @date 2019/8/7 11:40
 	 * @note 使用的枚举必须实现EnumConstantInterface接口
 	 */
-	public static <T extends EnumConstantInterface> T getEnumByCode(java.lang.Class<T> enumClass, int code) {
+	public static <T extends EnumConstantInterface> T getEnumByCode(Class<T> enumClass, int code) {
 		for (T each : enumClass.getEnumConstants()) {
 			if (each.getCode() == code) {
 				return each;

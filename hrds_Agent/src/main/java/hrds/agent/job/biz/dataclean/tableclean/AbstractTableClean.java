@@ -1,6 +1,6 @@
 package hrds.agent.job.biz.dataclean.tableclean;
 
-import fd.ng.core.annotation.Class;
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -9,7 +9,7 @@ import org.apache.parquet.example.data.Group;
 import java.util.List;
 import java.util.Map;
 
-@Class(desc = "数据库直连采集表清洗规则接口适配器，抽象类中提供接口中所有抽象方法的空实现，请子类继承抽象类后按功能点给出方法的具体实现", author = "WangZhengcheng")
+@DocClass(desc = "数据库直连采集表清洗规则接口适配器，抽象类中提供接口中所有抽象方法的空实现，请子类继承抽象类后按功能点给出方法的具体实现", author = "WangZhengcheng")
 public abstract class AbstractTableClean implements TableCleanInterface {
 
 	@Method(desc = "字符替换，抽象类中给一个空实现，后面具体的表清洗实现类只需按需实现某个清洗方法", logicStep = "")

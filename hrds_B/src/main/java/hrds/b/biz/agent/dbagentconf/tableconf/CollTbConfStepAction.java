@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.Class;
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -29,7 +30,7 @@ import hrds.commons.utils.key.PrimayKeyGener;
 
 import java.util.*;
 
-@Class(desc = "数据库直连采集步骤二、配置采集表页面后台服务类", author = "WangZhengcheng")
+@DocClass(desc = "数据库直连采集步骤二、配置采集表页面后台服务类", author = "WangZhengcheng")
 public class CollTbConfStepAction extends BaseAction {
 
 	private static final long DEFAULT_TABLE_ID = 999999L;

@@ -1,9 +1,9 @@
 package hrds.agent.job.biz.core.dfstage.fileparser.service;
 
-import fd.ng.core.annotation.Class;
+import fd.ng.core.annotation.DocClass;
 import hrds.agent.job.biz.constant.CharSetConstant;
 
-@Class(desc = "用于文件分析处理的设置类", author = "WangZhengcheng")
+@DocClass(desc = "用于文件分析处理的设置类", author = "WangZhengcheng")
 public class FileParserSetting {
 	//以下是必要参数
 	private final String inputfile;

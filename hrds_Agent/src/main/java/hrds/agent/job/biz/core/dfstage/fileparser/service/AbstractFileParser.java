@@ -2,7 +2,7 @@ package hrds.agent.job.biz.core.dfstage.fileparser.service;
 
 import com.univocity.parsers.csv.CsvParser;
 import com.univocity.parsers.csv.CsvParserSettings;
-import fd.ng.core.annotation.Class;
+import fd.ng.core.annotation.DocClass;
 import hrds.agent.job.biz.constant.CharSetConstant;
 import hrds.agent.job.biz.constant.JobConstant;
 import org.apache.commons.lang3.StringUtils;
@@ -13,7 +13,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-@Class(desc = "数据采集所用到的文件分析抽象类,所有采集的文件处理，都可以为该类的字类，该类提供部分默认实现",
+@DocClass(desc = "数据采集所用到的文件分析抽象类,所有采集的文件处理，都可以为该类的字类，该类提供部分默认实现",
 		author = "WangZhengcheng")
 public abstract class AbstractFileParser implements FileParserInterface {
 

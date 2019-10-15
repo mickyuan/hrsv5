@@ -1,11 +1,11 @@
 package hrds.agent.job.biz.utils;
 
-import fd.ng.core.annotation.Class;
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.utils.StringUtil;
 
 import java.util.StringTokenizer;
 
-@Class(desc = "操作字符串的工具类，从老项目中摘出来，根据idea的提示对逻辑不合理的地方稍作优化",
+@DocClass(desc = "操作字符串的工具类，从老项目中摘出来，根据idea的提示对逻辑不合理的地方稍作优化",
 		author = "WangZhengcheng")
 public class StringOperator {
 

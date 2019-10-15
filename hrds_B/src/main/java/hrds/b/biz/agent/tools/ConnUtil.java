@@ -1,7 +1,7 @@
 
 package hrds.b.biz.agent.tools;
 
-import fd.ng.core.annotation.Class;
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -11,7 +11,7 @@ import hrds.commons.exception.AppSystemException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-@Class(desc = "数据库直连采集获取数据库连接相关信息的工具类", author = "WangZhengcheng")
+@DocClass(desc = "数据库直连采集获取数据库连接相关信息的工具类", author = "WangZhengcheng")
 public class ConnUtil {
 
 	//FIXME getLogger 经常传入错误是参数，所以，使用无参方法吧，已修复

@@ -1,6 +1,6 @@
 package hrds.agent.job.biz.utils;
 
-import fd.ng.core.annotation.Class;
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -9,7 +9,7 @@ import hrds.commons.codes.DatabaseType;
 
 import java.util.Set;
 
-@Class(desc = "根据表名和列名获取采集SQL,数据库直连采集", author = "WangZhengcheng")
+@DocClass(desc = "根据表名和列名获取采集SQL,数据库直连采集", author = "WangZhengcheng")
 public class SQLUtil {
 	@Method(desc = "根据表名和列名获取采集SQL, 根据不同数据库的类型对SQL语句中的列名进行处理", logicStep = "" +
 			"1、获得数据库类型的枚举" +

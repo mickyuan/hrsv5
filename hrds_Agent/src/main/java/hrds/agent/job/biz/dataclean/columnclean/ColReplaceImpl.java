@@ -1,6 +1,6 @@
 package hrds.agent.job.biz.dataclean.columnclean;
 
-import fd.ng.core.annotation.Class;
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -8,7 +8,7 @@ import fd.ng.core.utils.StringUtil;
 
 import java.util.Map;
 
-@Class(desc = "数据库直连采集列清洗字符替换实现类,继承AbstractColumnClean抽象类，只针对一个字符替换方法进行实现",
+@DocClass(desc = "数据库直连采集列清洗字符替换实现类,继承AbstractColumnClean抽象类，只针对一个字符替换方法进行实现",
 		author = "WangZhengcheng")
 public class ColReplaceImpl extends AbstractColumnClean {
 

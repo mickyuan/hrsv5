@@ -1,12 +1,12 @@
 package hrds.agent.job.biz.core.dfstage;
 
-import fd.ng.core.annotation.Class;
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Return;
 import hrds.agent.job.biz.bean.StageStatusInfo;
 import hrds.agent.job.biz.core.AbstractJobStage;
 
-@Class(desc = "数据文件采集，计算增量阶段实现", author = "WangZhengcheng")
+@DocClass(desc = "数据文件采集，计算增量阶段实现", author = "WangZhengcheng")
 public class DFCalIncrementStageImpl extends AbstractJobStage {
 
 	@Method(desc = "数据文件采集，计算增量阶段实现，处理完成后，无论成功还是失败，" +

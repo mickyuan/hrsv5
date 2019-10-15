@@ -1,6 +1,6 @@
 package hrds.agent.job.biz.core.dbstage;
 
-import fd.ng.core.annotation.Class;
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -31,7 +31,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.*;
 
-@Class(desc = "数据库直连采集数据卸数阶段", author = "WangZhengcheng")
+@DocClass(desc = "数据库直连采集数据卸数阶段", author = "WangZhengcheng")
 public class DBUnloadDataStageImpl extends AbstractJobStage {
 
 	private final static Logger LOGGER = LoggerFactory.getLogger(DBUnloadDataStageImpl.class);

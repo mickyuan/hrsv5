@@ -1,6 +1,6 @@
 package hrds.agent.job.biz.dataclean.columnclean;
 
-import fd.ng.core.annotation.Class;
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -16,7 +16,7 @@ import java.text.ParseException;
 import java.util.List;
 import java.util.Map;
 
-@Class(desc = "数据库直连采集列清洗工具类", author = "WangZhengcheng")
+@DocClass(desc = "数据库直连采集列清洗工具类", author = "WangZhengcheng")
 public class ColumnCleanUtil {
 
 	private final static Logger LOGGER = LoggerFactory.getLogger(ColumnCleanUtil.class);

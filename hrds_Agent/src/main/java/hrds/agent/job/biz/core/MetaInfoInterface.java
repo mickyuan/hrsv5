@@ -1,13 +1,13 @@
 package hrds.agent.job.biz.core;
 
-import fd.ng.core.annotation.Class;
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Return;
 import hrds.agent.job.biz.bean.MetaInfoBean;
 
 import java.util.List;
 
-@Class(desc = "meta信息接口类，任务/作业提供meta信息，实现该接口", author = "WangZhengcheng")
+@DocClass(desc = "meta信息接口类，任务/作业提供meta信息，实现该接口", author = "WangZhengcheng")
 public interface MetaInfoInterface {
 
 	@Method(desc = "获得meta信息，提供多于1个meta", logicStep = "")

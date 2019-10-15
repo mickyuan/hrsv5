@@ -1,11 +1,11 @@
 package hrds.agent.job.biz.dataclean.columnclean;
 
-import fd.ng.core.annotation.Class;
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 
-@Class(desc = "数据库直连采集列清洗首尾去空实现类,继承AbstractCleanRule抽象类，只针对一个首尾去空方法进行实现",
+@DocClass(desc = "数据库直连采集列清洗首尾去空实现类,继承AbstractCleanRule抽象类，只针对一个首尾去空方法进行实现",
 		author = "WangZhengcheng")
 public class ColTrimImpl extends AbstractColumnClean {
 	@Method(desc = "列清洗首尾去空实现", logicStep = "" +
