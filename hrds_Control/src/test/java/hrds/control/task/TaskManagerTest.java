@@ -41,7 +41,7 @@ public class TaskManagerTest {
 	private static final Logger logger = LogManager.getLogger();
 
 	public static final String syscode = "110";
-	private static final String PRO_DIR = "/mnt/d/";
+	private static final String PRO_DIR = "/tmp/";
 	private static final String currBathDate = LocalDate.now().format(DateUtil.DATE_DEFAULT);
 
 	private static TaskManager taskManagerAutoShift;
