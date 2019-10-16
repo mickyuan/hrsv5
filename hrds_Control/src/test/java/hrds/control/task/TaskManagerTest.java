@@ -28,7 +28,8 @@ import hrds.control.task.helper.TaskSqlHelper;
 /**
  * 用于测试TaskManager类，注意，该类需要配合trigger进行测试，请不要单独测试该类。
  * 该类也无法在Windows环境下测试，除非安装好Windows的shell环境，并且PRO_DIR变量改为/mnt/d/，
- * 同时将3个shell手动创建到D://目录下。此测试类还需要数据库环境、redis环境。
+ * 同时将3个shell手动创建到D://目录下，以及调整TaskJobHandleHelper类中667行部分。
+ * 此测试类还需要数据库环境、redis环境。
  * @ClassName: hrds.control.task.TaskManagerTest
  * @Author: Tiger.Wang
  * @Date: 2019/9/2 14:06
@@ -40,7 +41,7 @@ public class TaskManagerTest {
 	private static final Logger logger = LogManager.getLogger();
 
 	public static final String syscode = "110";
-	private static final String PRO_DIR = "/tmp/";
+	private static final String PRO_DIR = "/mnt/d/";
 	private static final String currBathDate = LocalDate.now().format(DateUtil.DATE_DEFAULT);
 
 	private static TaskManager taskManagerAutoShift;
@@ -959,12 +960,12 @@ public class TaskManagerTest {
 			long waitLongTimeHisNum = SqlOperator.queryNumber(db, "SELECT COUNT(*) " +
 							"FROM etl_job_disp_his WHERE etl_sys_cd = ? AND etl_job = ? " +
 							"AND (job_disp_status = ? OR job_disp_status = ?)", syscode,
-					waitLongTimeEtlJob.getEtl_job(), Job_Status.ERROR.getCode(),
+					waitLongTimeEtlJob, Job_Status.ERROR.getCode(),
 					Job_Status.DONE.getCode()).orElseThrow(() -> new AppSystemException(
 							"测试作业干预类型为[系统暂停]的作业失败"));
 
 			assertEquals("测试作业干预类型为[系统暂停]的作业，特定的作业执行结果是否符合期望，作业名为："
-					+ waitLongTimeEtlJob.getEtl_job(), 2, waitLongTimeHisNum);
+					+ waitLongTimeEtlJob, 2, waitLongTimeHisNum);
 
 			//TODO 此处有问题，期望应该是：未执行过但已经在等待执行的作业，经过干预后，该作业将不再执行，
 			// 该问题跟TaskManager类中代码1689、1730行一致。导致此干预功能测试的点不能全覆盖，也
