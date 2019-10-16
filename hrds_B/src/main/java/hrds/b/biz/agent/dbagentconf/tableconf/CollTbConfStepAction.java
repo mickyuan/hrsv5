@@ -3,7 +3,6 @@ package hrds.b.biz.agent.dbagentconf.tableconf;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import fd.ng.core.annotation.Class;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
@@ -481,7 +480,7 @@ public class CollTbConfStepAction extends BaseAction {
 
 	@Method(desc = "如果页面只有自定义SQL查询采集，保存该界面配置的所有信息", logicStep = "" +
 			"1、因为自定义表已经入库了，所以要在table_info表中删除不是自定义的表，删除的条数可能为0-N")
-	@Param(desc = "数据库设置ID，databse_set表主键，table_info表外键", range = "不为空")
+	@Param(name = "colSetId", desc = "数据库设置ID，databse_set表主键，table_info表外键", range = "不为空")
 	@Return(desc = "保存成功后返回database_id，用于下一个页面能够拿到上一个页面的信息", range = "不为空")
 	public long saveCustomizeCollTbInfo(long colSetId){
 		//1、因为自定义表已经入库了，所以要在table_info表中删除不是自定义SQL的表信息，删除的条数可能为0-N

@@ -3,6 +3,9 @@ package hrds.control.task;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -10,6 +13,7 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.*;
+import org.junit.runners.MethodSorters;
 
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.FileUtil;
@@ -20,10 +24,12 @@ import hrds.commons.entity.*;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.control.task.helper.TaskSqlHelper;
-import org.junit.runners.MethodSorters;
 
 /**
  * 用于测试TaskManager类，注意，该类需要配合trigger进行测试，请不要单独测试该类。
+ * 该类也无法在Windows环境下测试，除非安装好Windows的shell环境，并且PRO_DIR变量改为/mnt/d/，
+ * 同时将3个shell手动创建到D://目录下，以及调整TaskJobHandleHelper类中667行部分。
+ * 此测试类还需要数据库环境、redis环境。
  * @ClassName: hrds.control.task.TaskManagerTest
  * @Author: Tiger.Wang
  * @Date: 2019/9/2 14:06
@@ -35,15 +41,19 @@ public class TaskManagerTest {
 	private static final Logger logger = LogManager.getLogger();
 
 	public static final String syscode = "110";
+	private static final String PRO_DIR = "/tmp/";
 	private static final String currBathDate = LocalDate.now().format(DateUtil.DATE_DEFAULT);
-	private static final String PRO_DIR = "/mnt/d/";
 
 	private static TaskManager taskManagerAutoShift;
 	private static TaskManager taskManagerNoShift;
 
-	private static final String SLEEP1S_SHELL = "HelloWord.sh";
-	private static final String SLEEP1M_SHELL = "HelloWordWaitLongTime.sh";
-	private static final String FAUIL_SHELL = "HelloWordFailure.sh";
+	private static final String SLEEP1S_SHELL = "EtlSleep1S.sh";
+	private static final String SLEEP1M_SHELL = "EtlSleep1M.sh";
+	private static final String FAUIL_SHELL = "EtlFailure.sh";
+
+	private static final String SLEEP1S_SHELL_PATH = PRO_DIR + SLEEP1S_SHELL;
+	private static final String SLEEP1M_SHELL_PATH = PRO_DIR + SLEEP1M_SHELL;
+	private static final String FAUIL_SHELL_PATH = PRO_DIR + FAUIL_SHELL;
 
 	private static List<Etl_job_def> etlJobDefs = new ArrayList<>();
 
@@ -136,9 +146,29 @@ public class TaskManagerTest {
 	}
 
 	@BeforeClass
-	public static void beforeSomething() {
+	public static void beforeSomething() throws IOException {
 
-		//FIXME 这里用 new File 方式，动态在临时目录下创建 shell 脚本文件
+		File file = new File(SLEEP1S_SHELL_PATH);
+		if(file.exists() && !file.delete()){
+			throw new AppSystemException("初始化运行环境失败");
+		}
+		if(!file.createNewFile()) throw new AppSystemException("初始化运行环境失败");
+		Files.write(file.toPath(), "#!/bin/bash\nsleep 1s\nexit 0".getBytes());
+
+		file = new File(SLEEP1M_SHELL_PATH);
+		if(file.exists() && !file.delete()){
+			throw new AppSystemException("初始化运行环境失败");
+		}
+		if(!file.createNewFile()) throw new AppSystemException("初始化运行环境失败");
+		Files.write(file.toPath(), "#!/bin/bash\nsleep 1m\nexit 0".getBytes());
+
+		file = new File(FAUIL_SHELL_PATH);
+		if(file.exists() && !file.delete()){
+			throw new AppSystemException("初始化运行环境失败");
+		}
+		if(!file.createNewFile()) throw new AppSystemException("初始化运行环境失败");
+		Files.write(file.toPath(), "#!/bin/bash\nexit -1".getBytes());
+
 		try(DatabaseWrapper db = new DatabaseWrapper()) {
 			Etl_sys etlSys = new Etl_sys();
 			etlSys.setEtl_sys_cd(syscode);
@@ -158,6 +188,10 @@ public class TaskManagerTest {
 
 	@AfterClass
 	public static void finallySomething() {
+
+		new File(SLEEP1S_SHELL_PATH).deleteOnExit();
+		new File(SLEEP1M_SHELL_PATH).deleteOnExit();
+		new File(FAUIL_SHELL_PATH).deleteOnExit();
 
 		try(DatabaseWrapper db = new DatabaseWrapper()) {
 			int num = SqlOperator.execute(db, "DELETE FROM etl_sys WHERE etl_sys_cd = ? ", syscode);
@@ -923,15 +957,15 @@ public class TaskManagerTest {
 			taskManager.publishReadyJob();
 
 			//1、1个能运行1分钟并成功的作业，干预结束后，在etl_job_disp_his表中有两条数据，调度状态为[错误、完成]
-			long waitLongTimeHisNum = SqlOperator.queryNumber(db, "SELECT COUNT(*) " +
-							"FROM etl_job_disp_his WHERE etl_sys_cd = ? AND etl_job = ? " +
-							"AND (job_disp_status = ? OR job_disp_status = ?)", syscode,
-					waitLongTimeEtlJob.getEtl_job(), Job_Status.ERROR.getCode(),
+			long waitLongTimeHisNum = SqlOperator.queryNumber(db,
+					"SELECT COUNT(*) FROM etl_job_disp_his WHERE etl_sys_cd = ? " +
+							"AND etl_job = ? AND (job_disp_status = ? OR job_disp_status = ?)",
+					syscode, handleEtlJob, Job_Status.ERROR.getCode(),
 					Job_Status.DONE.getCode()).orElseThrow(() -> new AppSystemException(
 							"测试作业干预类型为[系统暂停]的作业失败"));
 
 			assertEquals("测试作业干预类型为[系统暂停]的作业，特定的作业执行结果是否符合期望，作业名为："
-					+ waitLongTimeEtlJob.getEtl_job(), 2, waitLongTimeHisNum);
+					+ handleEtlJob, 2, waitLongTimeHisNum);
 
 			//TODO 此处有问题，期望应该是：未执行过但已经在等待执行的作业，经过干预后，该作业将不再执行，
 			// 该问题跟TaskManager类中代码1689、1730行一致。导致此干预功能测试的点不能全覆盖，也
@@ -1215,9 +1249,9 @@ public class TaskManagerTest {
 
 			String handleEtlJob = "SystemStop";
 			Thread thread = new Thread(() -> {
-				logger.info("--------------- 沉睡20秒 ---------------");
+				logger.info("--------------- 沉睡30秒 ---------------");
 				try {
-					Thread.sleep(20000);
+					Thread.sleep(30000);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}

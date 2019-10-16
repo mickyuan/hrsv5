@@ -664,8 +664,8 @@ public class TaskJobHandleHelper {
 			//2、当作业类型不为Yarn时，意味着该任务在本地系统上运行，使用linux指令来结束作业。
 			if(StringUtil.isEmpty(processId)) return true;
 
-//			String cmd = KILL9COMMANDLINE + " " + processId;
-			String cmd = "taskkill -PID " + processId + " -F";
+			String cmd = KILL9COMMANDLINE + " " + processId;
+//			String cmd = "taskkill -PID " + processId + " -F";
 			try {
 				Runtime.getRuntime().exec(cmd); //执行命令
 			}
