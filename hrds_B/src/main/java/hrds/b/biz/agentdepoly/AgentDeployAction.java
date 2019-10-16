@@ -45,7 +45,7 @@ public class AgentDeployAction extends BaseAction {
 	}
 
 	@Method(desc = "获取当前部署的Agent信息", logicStep = "根据选择的数据源及Agent类型查询其对应的Agent")
-	@Param(name = "source_id", desc = "数据源ID", range = "不能为空的整数")
+	@Param(name = "agent_id", desc = "数据源ID", range = "不能为空的整数")
 	@Param(name = "agent_type", desc = "Agent类型", range = "不能为空的字符串")
 	@Return(desc = "当前Agent的部署信息", range = "可以为空,因为会出现是第一次部署", isBean = true)
 	public Agent_down_info getAgentDownInfo(long agent_id, String agent_type) {
