@@ -1,6 +1,7 @@
 package hrds.agent.job.biz.core;
 
 import com.alibaba.fastjson.JSONObject;
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -12,16 +13,8 @@ import hrds.agent.job.biz.utils.EnumUtil;
 import hrds.agent.job.biz.utils.ProductFileUtil;
 import hrds.commons.exception.AppSystemException;
 
-/**
- * ClassName: JobStageController <br/>
- * Function: 作业阶段控制器 <br/>
- * Reason: 用于注册各个阶段，形成一个采集作业阶段链条，从第一个阶段开始执行，并且根据上一阶段的执行状态判断下一阶段是否执行
- * Date: 2019/8/1 15:24 <br/>
- * <p>
- * Author WangZhengcheng
- * Version 1.0
- * Since JDK 1.8
- **/
+@DocClass(desc = "作业阶段控制器,用于注册各个阶段，形成一个采集作业阶段链条，从第一个阶段开始执行，" +
+		"并且根据上一阶段的执行状态判断下一阶段是否执行", author = "WangZhengcheng")
 public class JobStageController {
 
 	//责任链头节点

@@ -2,6 +2,7 @@ package hrds.b.biz.agent.tools;
 
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -13,13 +14,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @Description: 日志读取工具类
- * @Author: wangz
- * @CreateTime: 2019-09-16-15:53
- * @BelongsProject: hrsv5
- * @BelongsPackage: hrds.b.biz.agent.tools
- **/
+@DocClass(desc = "日志读取工具类", author = "WangZhengcheng")
 public class LogReader {
 
 	private static final Logger logger = LogManager.getLogger(LogReader.class);

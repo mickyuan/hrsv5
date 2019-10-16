@@ -1,5 +1,6 @@
 package hrds.agent.job.biz.dataclean.tableclean;
 
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -7,16 +8,7 @@ import fd.ng.core.utils.StringUtil;
 
 import java.util.Map;
 
-/**
- * ClassName: TbReplaceImpl <br/>
- * Function: 数据库直连采集表清洗字符替换实现类 <br/>
- * Reason: 继承AbstractTableClean抽象类，只针对一个字符替换方法进行实现
- * Date: 2019/8/1 15:24 <br/>
- * <p>
- * Author WangZhengcheng
- * Version 1.0
- * Since JDK 1.8
- **/
+@DocClass(desc = "数据库直连采集表清洗字符替换实现类，继承AbstractTableClean抽象类，只针对一个字符替换方法进行实现", author = "WangZhengcheng")
 public class TbReplaceImpl extends AbstractTableClean {
 	@Method(desc = "表清洗字符替换实现", logicStep = "" +
 			"1、判断replaceMap是否为空，不为空则表示要进行字符替换" +

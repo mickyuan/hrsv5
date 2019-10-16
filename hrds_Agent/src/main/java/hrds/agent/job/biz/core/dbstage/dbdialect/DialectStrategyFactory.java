@@ -1,5 +1,6 @@
 package hrds.agent.job.biz.core.dbstage.dbdialect;
 
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -11,16 +12,7 @@ import hrds.agent.job.biz.core.dbstage.dbdialect.strategy.PgSQLDialectStrategy;
 import hrds.commons.codes.DatabaseType;
 import hrds.commons.exception.AppSystemException;
 
-/**
- * ClassName: DialectStrategyFactory <br/>
- * Function: 数据库方言策略工厂 <br/>
- * Reason: 根据数据库类型获取数据库方言策略(简单工厂模式)
- * Date: 2019/8/1 15:24 <br/>
- * <p>
- * Author WangZhengcheng
- * Version 1.0
- * Since JDK 1.8
- **/
+@DocClass(desc = "数据库方言策略工厂，根据数据库类型获取数据库方言策略(简单工厂模式)", author = "WangZhengcheng")
 public class DialectStrategyFactory {
 
 	private static boolean flag;

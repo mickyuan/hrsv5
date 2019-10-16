@@ -1,5 +1,6 @@
 package hrds.agent.job.biz.core.dbstage;
 
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -30,16 +31,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.*;
 
-/**
- * ClassName: DBUnloadDataStageImpl <br/>
- * Function: 数据卸数阶段  <br/>
- * Reason: 数据库直连采集
- * Date: 2019/8/1 15:24 <br/>
- * <p>
- * Author WangZhengcheng
- * Version 1.0
- * Since JDK 1.8
- **/
+@DocClass(desc = "数据库直连采集数据卸数阶段", author = "WangZhengcheng")
 public class DBUnloadDataStageImpl extends AbstractJobStage {
 
 	private final static Logger LOGGER = LoggerFactory.getLogger(DBUnloadDataStageImpl.class);
@@ -62,24 +54,6 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 		this.jobInfo = jobInfo;
 	}
 
-	/**
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 * @Param: 无
-	 *
-	 * @return: StageStatusInfo
-	 *          含义：
-	 *          取值范围：
-	 *
-	 * */
 	@Method(desc = "数据库直连采集数据卸数阶段处理逻辑，处理完成后，无论成功还是失败，" +
 			"将相关状态信息封装到StageStatusInfo对象中返回", logicStep = "" +
 			"1、创建卸数阶段状态信息，更新作业ID,阶段名，阶段开始时间" +

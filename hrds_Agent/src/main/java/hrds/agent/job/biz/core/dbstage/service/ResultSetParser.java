@@ -1,5 +1,6 @@
 package hrds.agent.job.biz.core.dbstage.service;
 
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -30,16 +31,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * ClassName: ResultSetParser <br/>
- * Function: 每个采集线程分别调用，用于解析当前线程采集到的ResultSet,并根据卸数的数据文件类型，调用相应的方法写数据文件. <br/>
- * Reason: 数据库直连采集
- * Date: 2019/8/1 15:24 <br/>
- * <p>
- * Author WangZhengcheng
- * Version 1.0
- * Since JDK 1.8
- **/
+@DocClass(desc = "每个采集线程分别调用，用于解析当前线程采集到的ResultSet,并根据卸数的数据文件类型，" +
+		"调用相应的方法写数据文件", author = "WangZhengcheng")
 public class ResultSetParser {
 	@Method(desc = "解析ResultSet", logicStep = "" +
 			"1、获得本次采集的数据库META信息" +

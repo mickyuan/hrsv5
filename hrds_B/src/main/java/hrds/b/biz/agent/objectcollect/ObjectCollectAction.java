@@ -1,6 +1,7 @@
 package hrds.b.biz.agent.objectcollect;
 
 import com.alibaba.fastjson.JSONArray;
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -24,13 +25,12 @@ import hrds.commons.utils.key.PrimayKeyGener;
 import java.util.List;
 import java.util.Map;
 
-/**
- * 对象采集接口类，处理对象采集的增删改查
- * date: 2019/9/16 15:02
- * author: zxz
- */
+@DocClass(desc = "对象采集接口类，处理对象采集的增删改查", author = "zxz", createdate = "2019/9/16 15:02")
 public class ObjectCollectAction extends BaseAction {
-
+	@Override
+	protected Long getUserId() {
+		return 1001L;
+	}
 
 	@Method(desc = "获取半结构化采集配置页面初始化的值，当odc_id不为空时，则同时返回object_collect表的值",
 			logicStep = "1.根据前端传过来的agent_id获取调用Agent服务的接口" +

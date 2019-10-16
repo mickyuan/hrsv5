@@ -1,20 +1,12 @@
 package hrds.agent.job.biz.core.dbstage;
 
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Return;
 import hrds.agent.job.biz.bean.StageStatusInfo;
 import hrds.agent.job.biz.core.AbstractJobStage;
 
-/**
- * ClassName: DBDataRegistrationStageImpl <br/>
- * Function: 数据登记阶段  <br/>
- * Reason: 数据库直连采集
- * Date: 2019/8/1 15:24 <br/>
- * <p>
- * Author WangZhengcheng
- * Version 1.0
- * Since JDK 1.8
- **/
+@DocClass(desc = "数据库直连采集数据登记阶段", author = "WangZhengcheng")
 public class DBDataRegistrationStageImpl extends AbstractJobStage {
 
 	@Method(desc = "数据库直连采集数据登记阶段处理逻辑，处理完成后，无论成功还是失败，" +

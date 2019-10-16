@@ -1,5 +1,6 @@
 package hrds.commons.utils;
 
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -18,11 +19,7 @@ import org.apache.commons.logging.LogFactory;
 
 import java.io.*;
 
-/**
- * 解压缩文件的工具类
- * date: 2019/10/12 14:29
- * author: zxz
- */
+@DocClass(desc = "解压缩文件的工具类", author = "zxz", createdate = "2019/10/12 14:29")
 public class DeCompressionUtil {
 	//打印日志
 	private static final Log log = LogFactory.getLog(DeCompressionUtil.class);

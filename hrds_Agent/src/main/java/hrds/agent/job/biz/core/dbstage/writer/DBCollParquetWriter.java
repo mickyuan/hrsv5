@@ -1,5 +1,6 @@
 package hrds.agent.job.biz.core.dbstage.writer;
 
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -38,16 +39,8 @@ import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
-/**
- * ClassName: DBCollParquetWriter <br/>
- * Function: 数据库直连采集以Parquet格式进行列数据清洗并写Parquet文件. <br/>
- * Reason: 目前只有列数据清洗功能
- * Date: 2019/8/1 15:24 <br/>
- * <p>
- * Author WangZhengcheng
- * Version 1.0
- * Since JDK 1.8
- **/
+@DocClass(desc = "数据库直连采集以Parquet格式进行列数据清洗并写Parquet文件", author = "WangZhengcheng")
+//TODO 目前只有列数据清洗功能
 public class DBCollParquetWriter extends AbstractFileWriter {
 
 	private final static Logger LOGGER = LoggerFactory.getLogger(DBCollParquetWriter.class);

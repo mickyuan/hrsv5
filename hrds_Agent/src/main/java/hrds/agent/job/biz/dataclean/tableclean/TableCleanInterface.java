@@ -1,5 +1,6 @@
 package hrds.agent.job.biz.dataclean.tableclean;
 
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -8,9 +9,7 @@ import org.apache.parquet.example.data.Group;
 import java.util.List;
 import java.util.Map;
 
-/*
- * 表清洗规则接口，定义了按表清洗的4种清洗规则
- * */
+@DocClass(desc = "表清洗规则接口，定义了按表清洗的4种清洗规则", author = "WangZhengcheng")
 public interface TableCleanInterface {
 
 	@Method(desc = "字符替换", logicStep = "")

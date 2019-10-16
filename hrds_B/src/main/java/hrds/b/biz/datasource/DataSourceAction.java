@@ -1,6 +1,7 @@
 package hrds.b.biz.datasource;
 
 import com.alibaba.fastjson.TypeReference;
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -35,13 +36,7 @@ import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.util.*;
 
-/**
- * 数据源增删改，导入、下载类
- *
- * @author dhw
- * @version 5.0
- * @date 2019-09-03 16:44:25
- */
+@DocClass(desc = "数据源增删改查，导入、下载类", author = "dhw", createdate = "2019-10-15 17:23:06")
 public class DataSourceAction extends BaseAction {
 	private static final Logger logger = LogManager.getLogger();
 
@@ -94,17 +89,14 @@ public class DataSourceAction extends BaseAction {
 
 	@Method(desc = "获取数据申请审批信息的集合",
 			logicStep = "1.数据可访问权限处理方式，这是一个私有方法不需要权限控制" +
-					"2.查询data_source表所有source_id封装入数组" +
-					"3.查询数据源申请审批信息集合并返回")
+					"2.获取所有的source_id" +
+					"3.查询数据源申请审批信息集合并返回" +
+					"4.判断dataAuditResult是否为空,不为空就封装一些字段修改后的数据，比如类型需要返回中文，时间改为日期+时间格式")
 	@Return(desc = "存放数据申请审批信息的集合", range = "无限制")
 	private List<Map<String, Object>> getDataAuditList() {
 		// 1.数据可访问权限处理方式，这是一个私有方法不需要权限控制
-		// 2.查询data_source表所有source_id封装入数组
+		// 2.获取所有的source_id
 		List<Long> sourceIdList = Dbo.queryOneColumnList("select source_id from " + Data_source.TableName);
-		Long[] sourceId = new Long[sourceIdList.size()];
-		for (int i = 0; i < sourceIdList.size(); ++i) {
-			sourceId[i] = sourceIdList.get(i);
-		}
 		// 3.查询数据源申请审批信息集合并返回
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		asmSql.addSql("select da.DA_ID,da.APPLY_DATE,da.APPLY_TIME,da.APPLY_TYPE,da.AUTH_TYPE,da.AUDIT_DATE," +
@@ -113,20 +105,21 @@ public class DataSourceAction extends BaseAction {
 				" join " + Source_file_attribute.TableName + " sfa on da.file_id= sfa.file_id  where " +
 				"su.create_id in (select user_id from sys_user where user_type=? or user_id = ?) ")
 				.addParam(UserType.XiTongGuanLiYuan.getCode()).addParam(getUserId())
-				.addORParam("sfa.source_id", sourceId).addSql(" ORDER BY  da_id desc");
-		Result result = Dbo.queryResult(asmSql.sql(), asmSql.params());
-		if (!result.isEmpty()) {
-			for (int i = 0; i < result.getRowCount(); i++) {
-				result.setObject(i, "applyDataTime", DateUtil.parseStr2DateWith8Char
-						(result.getString(i, "apply_date")) + " " + DateUtil.parseStr2TimeWith6Char
-						(result.getString(i, "apply_time")));
-				result.setObject(i, "applyType_zh", ApplyType.ofValueByCode
-						(result.getString(i, "apply_type")));
-				result.setObject(i, "fileType_zh", FileType.ofValueByCode
-						(result.getString(i, "file_type")));
+				.addORParam("sfa.source_id", sourceIdList.toArray()).addSql(" ORDER BY  da_id desc");
+		Result dataAuditResult = Dbo.queryResult(asmSql.sql(), asmSql.params());
+		// 4.判断dataAuditResult是否为空,不为空就封装一些字段修改后的数据，比如类型需要返回中文，时间改为日期+时间格式
+		if (!dataAuditResult.isEmpty()) {
+			for (int i = 0; i < dataAuditResult.getRowCount(); i++) {
+				dataAuditResult.setObject(i, "applyDataTime", DateUtil.parseStr2DateWith8Char
+						(dataAuditResult.getString(i, "apply_date")) + " " + DateUtil.parseStr2TimeWith6Char
+						(dataAuditResult.getString(i, "apply_time")));
+				dataAuditResult.setObject(i, "applyType_zh", ApplyType.ofValueByCode
+						(dataAuditResult.getString(i, "apply_type")));
+				dataAuditResult.setObject(i, "fileType_zh", FileType.ofValueByCode
+						(dataAuditResult.getString(i, "file_type")));
 			}
 		}
-		return result.toList();
+		return dataAuditResult.toList();
 	}
 
 	@Method(desc = "数据权限管理，分页查询数据源及部门关系信息",
@@ -408,10 +401,9 @@ public class DataSourceAction extends BaseAction {
 					"2.创建并封装数据源与部门关联信息以及部门信息集合" +
 					"3.判断是新增还是编辑时查询回显数据，如果是新增，只查询部门信息，如果是编辑，还需查询数据源信息" +
 					"3.1关联查询data_source表信息" +
-					"3.2获取数据源对应部门ID所有值" +
+					"3.2获取数据源对应部门ID所有值，不需要权限控制" +
 					"3.3.封装部门到结果集" +
 					"3.4将部门ID封装入数据源信息中" +
-					"3.5.将数据源信息添加入Map" +
 					"4.查询部门信息，不需要用户权限控制" +
 					"5.将部门信息封装入Map" +
 					"6.返回封装数据源与部门关联信息以及部门信息集合")
@@ -420,14 +412,14 @@ public class DataSourceAction extends BaseAction {
 	public Map<String, Object> searchDataSource(Long source_id) {
 		// 1.数据可访问权限处理方式，以下SQL关联sourceId与user_id检查
 		// 2.创建并封装数据源与部门关联信息以及部门信息集合
-		Map<String, Object> map = new HashMap<>();
+		Map<String, Object> datasourceMap = new HashMap<>();
 		// 3.判断是新增还是更新，如果是新增，只查询部门信息，如果是更新，还需查询回显数据源数据
 		if (source_id != null) {
 			// 编辑时查询
 			// 3.1关联查询data_source表信息
-			Result datasourceResult = Dbo.queryResult("select * from " + Data_source.TableName +
+			datasourceMap = Dbo.queryOneObject("select * from " + Data_source.TableName +
 					" where source_id=? and create_user_id=?", source_id, getUserId());
-			// 3.2获取数据源对应部门ID所有值
+			// 3.2获取数据源对应部门ID所有值,不需要权限控制
 			List<Long> depIdList = Dbo.queryOneColumnList("select dep_id from " + Source_relation_dep.TableName +
 					" where source_id=?", source_id);
 			if (!depIdList.isEmpty()) {
@@ -441,18 +433,16 @@ public class DataSourceAction extends BaseAction {
 					}
 				}
 				// 3.4将部门ID封装入数据源信息中
-				datasourceResult.setObject(0, "dep_id", sb.toString());
-				// 3.5将数据源信息添加入Map
-				map.put("dataSourceAndDep", datasourceResult.toList());
+				datasourceMap.put("dep_id", sb.toString());
 			}
 		}
 		// 4.查询部门信息，不需要用户权限控制
 		List<Department_info> departmentInfoList = Dbo.queryList(Department_info.class,
 				"select * from " + Department_info.TableName);
 		// 5.将部门信息封装入Map
-		map.put("departmentInfo", departmentInfoList);
+		datasourceMap.put("departmentInfo", departmentInfoList);
 		// 6.返回封装数据源与部门关联信息以及部门信息集合
-		return map;
+		return datasourceMap;
 	}
 
 	@Method(desc = "删除数据源信息",

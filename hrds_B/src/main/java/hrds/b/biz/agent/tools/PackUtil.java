@@ -1,5 +1,6 @@
 package hrds.b.biz.agent.tools;
 
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -12,13 +13,7 @@ import hrds.commons.utils.ZipUtils;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @Description: 海云应用管理端向Agent发送消息的报文打包工具类
- * @Author: wangz
- * @CreateTime: 2019-09-26-12:00
- * @BelongsProject: hrsv5
- * @BelongsPackage: hrds.b.biz.agent.tools
- **/
+@DocClass(desc = "海云应用管理端向Agent发送消息的报文打包工具类", author = "WangZhengcheng")
 public class PackUtil {
 
 	@Method(desc = "对传入的json数据进行处理，根据长度判断是否需要进行压缩加密", logicStep = "" +

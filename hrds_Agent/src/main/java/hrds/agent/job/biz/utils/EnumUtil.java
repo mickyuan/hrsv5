@@ -1,16 +1,9 @@
 package hrds.agent.job.biz.utils;
 
+import fd.ng.core.annotation.DocClass;
 import hrds.agent.job.biz.constant.EnumConstantInterface;
 
-/**
- * ClassName: EnumUtil <br/>
- * Function: 用于枚举类的工具 <br/>
- * Date: 2019/8/5 11:01 <br/>
- * <p>
- * Author 13616
- * Version 1.0
- * Since JDK 1.8
- **/
+@DocClass(desc = "用于枚举类的工具", author = "WangZhengcheng")
 public class EnumUtil {
 
 	/**

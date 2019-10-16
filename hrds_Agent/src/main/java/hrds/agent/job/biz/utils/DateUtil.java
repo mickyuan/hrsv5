@@ -1,17 +1,11 @@
 package hrds.agent.job.biz.utils;
 
+import fd.ng.core.annotation.DocClass;
+
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-/**
- * ClassName: DateUtil <br/>
- * Function: 处理日期的工具. <br/>
- * Date: 2019/7/31 10:31 <br/>
- * <p>
- * Author 13616
- * Version 1.0
- * Since JDK 1.8
- **/
+@DocClass(desc = "处理日期的工具", author = "WangZhengcheng")
 public class DateUtil {
 
 	public final static String DATE_CHAR8_FORMAT = "yyyyMMdd";

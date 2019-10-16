@@ -1,6 +1,7 @@
 package hrds.b.biz.agent.unstructuredfilecollect;
 
 import com.alibaba.fastjson.JSONArray;
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -21,12 +22,12 @@ import hrds.commons.utils.key.PrimayKeyGener;
 import java.util.List;
 import java.util.Map;
 
-/**
- * 非结构化文件采集接口类，处理非机构化采集的增改查
- * date: 2019/9/11 14:47
- * author: zxz
- */
+@DocClass(desc = "非结构化文件采集接口类，处理非机构化采集的增改查", author = "zxz", createdate = "2019/9/11 14:47")
 public class UnstructuredFileCollectAction extends BaseAction {
+	@Override
+	protected Long getUserId() {
+		return 1001L;
+	}
 
 	@Method(desc = "该方法在页面点击添加非结构化文件采集时调用，获取非结构化采集配置页面初始化的值" +
 			",当为编辑时，则同时返回回显的值",

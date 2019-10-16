@@ -562,6 +562,7 @@ public class DataQueryAction extends BaseAction {
 	private Map<String, Object> getFileApplicationDetails() {
 		//1.初始化待返回数据的Map
 		Map<String, Object> fileApplicationDetails = new HashMap<>();
+		Object[] sourceIdsObj = Dbo.queryOneColumnList("select source_id from data_source").toArray();
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		//2.各类型文件的申请汇总
 		asmSql.clean();
@@ -569,8 +570,7 @@ public class DataQueryAction extends BaseAction {
 				" ON da.file_id = sfa.file_id where USER_ID = ? and auth_type = ?");
 		asmSql.addParam(getUserId());
 		asmSql.addParam(AuthType.ShenQing.getCode());
-		List<Object> sourceIdList = Dbo.queryOneColumnList("select source_id from data_source");
-		asmSql.addORParam("sfa.source_id", getAllSourceId());
+		asmSql.addORParam("sfa.source_id", sourceIdsObj);
 		asmSql.addSql(" GROUP BY apply_type");
 		Result applyRequestRs = Dbo.queryResult(asmSql.sql(), asmSql.params());
 		fileApplicationDetails.put("applyRequestRs", applyRequestRs);
@@ -579,7 +579,7 @@ public class DataQueryAction extends BaseAction {
 		asmSql.addSql(" select  MAX(apply_date || apply_time) applytime,da.file_id,apply_type from data_auth da JOIN " +
 				"source_file_attribute sfa ON da.file_id = sfa.file_id where user_id=? ");
 		asmSql.addParam(getUserId());
-		asmSql.addORParam("sfa.source_id", getAllSourceId());
+		asmSql.addORParam("sfa.source_id", sourceIdsObj);
 		asmSql.addSql(" GROUP BY da.file_id,apply_type");
 		Result countRs = Dbo.queryResult(asmSql.sql(), asmSql.params());
 		fileApplicationDetails.put("countRs", countRs);
@@ -618,20 +618,5 @@ public class DataQueryAction extends BaseAction {
 		conditionalQueryMap.put("yinPin_zh", FileType.YinPin.getValue());
 		conditionalQueryMap.put("other", FileType.Other.getCode());
 		conditionalQueryMap.put("other_zh", FileType.Other.getValue());
-	}
-
-	@Method(desc = "获取所有数据源id数组",
-			logicStep = "数据可访问权限处理方式: 无数据库查询动作，不需要验证权限" +
-					"1.获取所有数据源id数组"
-	)
-	@Return(desc = "数据源id数组", range = "无限制")
-	public static Long[] getAllSourceId() {
-		//1.获取所有数据源id数组
-		Result query = Dbo.queryResult("select source_id from data_source");
-		Long[] sourceIds = new Long[query.getRowCount()];
-		for (int i = 0; i < query.getRowCount(); ++i) {
-			sourceIds[i] = query.getLong(i, "source_id");
-		}
-		return sourceIds;
 	}
 }

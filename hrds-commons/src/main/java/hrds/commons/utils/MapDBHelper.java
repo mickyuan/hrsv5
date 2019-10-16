@@ -1,5 +1,6 @@
 package hrds.commons.utils;
 
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -13,11 +14,7 @@ import java.io.Closeable;
 import java.io.File;
 import java.util.concurrent.TimeUnit;
 
-/**
- * 创建mapDB数据库的操作类
- * date: 2019/10/12 15:44
- * author: zxz
- */
+@DocClass(desc = "创建mapDB数据库的操作类", author = "zxz", createdate = "2019/10/12 15:44")
 public class MapDBHelper implements Closeable {
 	//mapDB的数据库操作对象
 	private DB db;
@@ -59,7 +56,7 @@ public class MapDBHelper implements Closeable {
 	@Return(desc = "自定义的表对象HTreeMap", range = "不会为空")
 	public HTreeMap<String, String> htMap(String tableName, int afterWriter) {
 		return db.createHashMap(tableName).keySerializer(Serializer.STRING).valueSerializer(Serializer.STRING)
-				.expireAfterWrite(afterWriter, TimeUnit.MINUTES).makeOrGet();
+				.expireAfterWrite(afterWriter, TimeUnit.SECONDS).makeOrGet();
 	}
 
 	@Method(desc = "实现Closeable重写的方法，try中构造这个对象，结束方法后会自动调用这个方法",
@@ -79,4 +76,20 @@ public class MapDBHelper implements Closeable {
 		}
 	}
 
+	public static void main(String[] args) {
+		try (MapDBHelper mapDBHelper = new MapDBHelper("D:\\tmp", "zxz_test")) {
+			HTreeMap<String, String> zzz = mapDBHelper.htMap("zzz", 1);
+			for (int i = 0; i < 100; i++) {
+//				zzz.put("zxz"+i,"最帅"+i);
+//				try {
+//					TimeUnit.MILLISECONDS.sleep(100);
+//				} catch (InterruptedException e) {
+//					e.printStackTrace();
+//				}
+				System.out.println(zzz.get("zxz" + i));
+			}
+//			System.exit(0);
+			mapDBHelper.commit();
+		}
+	}
 }

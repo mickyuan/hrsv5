@@ -1,5 +1,6 @@
 package hrds.b.biz.agentinfo;
 
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -23,13 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * agent增删改类
- *
- * @author dhw
- * @version 5.0
- * @date 2019-09-04 17:30:27
- */
+@DocClass(desc = "agent增删改查类", author = "dhw", createdate = "2019-10-15 17:23:06")
 public class AgentInfoAction extends BaseAction {
 	private static final Logger logger = LogManager.getLogger();
 

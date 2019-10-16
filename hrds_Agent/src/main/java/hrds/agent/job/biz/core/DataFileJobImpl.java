@@ -1,5 +1,6 @@
 package hrds.agent.job.biz.core;
 
+import fd.ng.core.annotation.DocClass;
 import hrds.agent.job.biz.bean.*;
 import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.core.dfstage.*;
@@ -12,15 +13,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * ClassName: DataFileJobImpl <br/>
- * Function: 完成数据文件采集的作业实现. <br/>
- * Date: 2019/8/1 15:24 <br/>
- * <p>
- * Author 13616
- * Version 1.0
- * Since JDK 1.8
- **/
+@DocClass(desc = "完成数据文件采集的作业实现", author = "WangZhengcheng")
 public class DataFileJobImpl implements JobInterface {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(DataFileJobImpl.class);

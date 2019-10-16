@@ -1,5 +1,6 @@
 package hrds.agent.job.biz.utils;
 
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -14,11 +15,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * @description: 用于对需要进行列合并(表清洗)、列拆分(列清洗)清洗的列，获取采集列列名，更新列信息的工具类
- * @author: WangZhengcheng
- * @create: 2019-08-28 15:37
- **/
+@DocClass(desc = "用于对需要进行列合并(表清洗)、列拆分(列清洗)清洗的列，获取采集列列名，更新列信息的工具类",
+		author = "WangZhengcheng")
 public class ColumnTool {
 
 	@Method(desc = "列拆分", logicStep = "" +

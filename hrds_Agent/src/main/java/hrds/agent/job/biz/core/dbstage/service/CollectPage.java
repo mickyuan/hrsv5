@@ -1,5 +1,6 @@
 package hrds.agent.job.biz.core.dbstage.service;
 
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -16,16 +17,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-/**
- * ClassName: CollectPage <br/>
- * Function: 多线程采集线程类 <br/>
- * Reason: 子线程向主线程返回的有生成的文件路径，当前线程采集到的ResultSet，当前线程采集到的数据量
- * Date: 2019/8/1 15:24 <br/>
- * <p>
- * Author WangZhengcheng
- * Version 1.0
- * Since JDK 1.8
- **/
+@DocClass(desc = "多线程采集线程类，子线程向主线程返回的有生成的文件路径，当前线程采集到的ResultSet，" +
+		"当前线程采集到的数据量", author = "WangZhengcheng")
 public class CollectPage implements Callable<Map<String, Object>> {
 
 	private DBConfigBean dbInfo;

@@ -1,5 +1,6 @@
 package hrds.agent.job.biz.utils;
 
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.constant.DataTypeConstant;
 import hrds.agent.job.biz.constant.JobConstant;
@@ -19,15 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-/**
- * ClassName: ParquetUtil <br/>
- * Function: 构建parquet对象. <br/>
- * Date: 2019/8/2 10:01 <br/>
- * <p>
- * Author 13616
- * Version 1.0
- * Since JDK 1.8
- **/
+@DocClass(desc = "构建parquet对象", author = "WangZhengcheng")
 public class ParquetUtil {
 
 	/**
