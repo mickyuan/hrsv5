@@ -24,10 +24,6 @@ import java.util.Map;
 
 @DocClass(desc = "非结构化文件采集接口类，处理非机构化采集的增改查", author = "zxz", createdate = "2019/9/11 14:47")
 public class UnstructuredFileCollectAction extends BaseAction {
-	@Override
-	protected Long getUserId() {
-		return 1001L;
-	}
 
 	@Method(desc = "该方法在页面点击添加非结构化文件采集时调用，获取非结构化采集配置页面初始化的值" +
 			",当为编辑时，则同时返回回显的值",
