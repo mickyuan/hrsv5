@@ -27,6 +27,8 @@ import hrds.control.task.helper.TaskSqlHelper;
 
 /**
  * 用于测试TaskManager类，注意，该类需要配合trigger进行测试，请不要单独测试该类。
+ * 该类也无法在Windows环境下测试，除非安装好Windows的shell环境，并且PRO_DIR变量改为/mnt/d/，
+ * 同时将3个shell手动创建到D://目录下。此测试类还需要数据库环境、redis环境。
  * @ClassName: hrds.control.task.TaskManagerTest
  * @Author: Tiger.Wang
  * @Date: 2019/9/2 14:06
