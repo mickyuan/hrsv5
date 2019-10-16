@@ -24,7 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@DocClass(desc = "agent增删改查类", author = "dhw", createdate = "2019-10-15 17:23:06")
+@DocClass(desc = "agent增删改查类", author = "dhw", createdate = "2019-9-23 10:32:16")
 public class AgentInfoAction extends BaseAction {
 	private static final Logger logger = LogManager.getLogger();
 
@@ -157,7 +157,7 @@ public class AgentInfoAction extends BaseAction {
 	@Param(name = "agent_name", desc = "data_source表主键", range = "10位数字，新增时自动生成")
 	@Param(name = "agent_type", desc = "agent类型", range = "1:数据库Agent,2:文件系统Agent,3:FtpAgent," +
 			"4:数据文件Agent,5:对象Agent")
-	@Param(name = "agent_ip", desc = "agent所在服务器ip", range = "合法IP地址")
+	@Param(name = "agent_ip", desc = "agent所在服务器ip", range = "合法IP地址", example = "127.0.0.1")
 	@Param(name = "agent_port", desc = "agent连接端口", range = "1024-65535")
 	@Param(name = "source_id", desc = "agent_info表外键ID，data_source表主键ID,定义为Long目的是判null",
 			range = "10位数字，新增时自动生成")
@@ -204,7 +204,7 @@ public class AgentInfoAction extends BaseAction {
 	@Param(name = "agent_name", desc = "data_source表主键", range = "10位数字，新增时自动生成")
 	@Param(name = "agent_type", desc = "agent类型", range = "1:数据库Agent,2:文件系统Agent,3:FtpAgent," +
 			"4:数据文件Agent,5:对象Agent")
-	@Param(name = "agent_ip", desc = "agent所在服务器ip", range = "合法IP地址")
+	@Param(name = "agent_ip", desc = "agent所在服务器ip", range = "合法IP地址", example = "127.0.0.1")
 	@Param(name = "agent_port", desc = "agent连接端口", range = "1024-65535")
 	@Param(name = "source_id", desc = "agent_info表外键ID，data_source表主键ID,定义为Long目的是判null",
 			range = "10位数字，新增时自动生成")
@@ -245,7 +245,7 @@ public class AgentInfoAction extends BaseAction {
 	@Method(desc = "监控agent端口是否被占用（后期移动到hrds-commons下）",
 			logicStep = "1.数据可访问权限处理方式，这是一个私有方法，不会单独被调用，所以这里不需要做权限验证" +
 					"2.通过http方式去测试端口连通情况，测通则被占用，不通则可以使用")
-	@Param(name = "agent_ip", desc = "agent所在服务器ip", range = "合法IP地址")
+	@Param(name = "agent_ip", desc = "agent所在服务器ip", range = "合法IP地址", example = "127.0.0.1")
 	@Param(name = "agent_port", desc = "agent连接端口", range = "1024-65535")
 	@Return(desc = "返回端口是否被占用信号", range = "false,true")
 	private boolean isPortOccupied(String agent_ip, int agent_port) {

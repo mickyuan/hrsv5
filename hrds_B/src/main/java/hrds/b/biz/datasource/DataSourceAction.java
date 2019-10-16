@@ -36,7 +36,7 @@ import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.util.*;
 
-@DocClass(desc = "数据源增删改查，导入、下载类", author = "dhw", createdate = "2019-10-15 17:23:06")
+@DocClass(desc = "数据源增删改查，导入、下载类", author = "dhw", createdate = "2019-9-20 09:23:06")
 public class DataSourceAction extends BaseAction {
 	private static final Logger logger = LogManager.getLogger();
 
@@ -498,7 +498,7 @@ public class DataSourceAction extends BaseAction {
 					"5.通过文件名称获取文件" +
 					"6.使用base64对数据进行解码" +
 					"7.导入数据源数据，将涉及到的所有表的数据导入数据库中对应的表中")
-	@Param(name = "agent_ip", desc = "agent地址", range = "不能为空，服务器ip地址")
+	@Param(name = "agent_ip", desc = "agent地址", range = "不能为空，服务器ip地址", example = "127.0.0.1")
 	@Param(name = "agent_port", desc = "agent端口", range = "1024-65535")
 	@Param(name = "user_id", desc = "数据采集用户ID，指定谁可以查看该用户对应表信息", range = "不能为空以及空格，页面传值")
 	@Param(name = "file", desc = "上传文件名称（全路径），上传要导入的数据源", range = "不能为空以及空格")
@@ -566,10 +566,10 @@ public class DataSourceAction extends BaseAction {
 					"25.将列清洗参数信息column_clean表数据插入数据库" +
 					"26.将列拆分信息表column_split表数据插入数据库")
 	@Param(name = "strTemp", desc = "涉及数据源文件下载相关的所有表进行base64编码后的信息", range = "不能为空")
-	@Param(name = "agent_ip", desc = "agent地址", range = "不能为空，服务器ip地址")
+	@Param(name = "agent_ip", desc = "agent地址", range = "不能为空，服务器ip地址", example = "127.0.0.1")
 	@Param(name = "agent_port", desc = "agent端口", range = "1024-65535")
-	@Param(name = "user_id", desc = "数据采集用户ID，指定谁可以查看该用户对应表信息", range = "不能为空以及空格，页面传值")
-	@Param(name = "create_user_id", desc = "data_source表数据源创建用户ID，代表数据是由谁创建的", range = "10位数字，新增用户时生成")
+	@Param(name = "user_id", desc = "数据采集用户ID，指定谁可以查看该用户对应表信息", range = "不能为空以及空格，页面传值,新增时生成")
+	@Param(name = "create_user_id", desc = "data_source表数据源创建用户ID，代表数据是由谁创建的", range = "4位数字，新增用户时生成")
 	private void importDataSource(String strTemp, String agent_ip, String agent_port, long
 			user_id, long create_user_id) {
 		Type type = new TypeReference<Map<String, Object>>() {
@@ -1127,7 +1127,7 @@ public class DataSourceAction extends BaseAction {
 					"2.判断map中的key值是否为agent_down_info对应表数据" +
 					"3.获取agent_down_info表数据" +
 					"4.将agent_down_info表数据循环入数据库")
-	@Param(name = "agent_ip", desc = "agent地址", range = "不能为空，服务器ip地址")
+	@Param(name = "agent_ip", desc = "agent地址", range = "不能为空，服务器ip地址", example = "127.0.0.1")
 	@Param(name = "agent_port", desc = "agent端口", range = "1024-65535")
 	@Param(name = "userCollectId", desc = "数据采集用户，代表此数据属于哪个用户", range = "10位数字")
 	@Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
@@ -1256,9 +1256,9 @@ public class DataSourceAction extends BaseAction {
 					"2.判断map中的key值是否为对应agent_info表数据" +
 					"3.获取agent_info表数据" +
 					"4.循环入库agent_info")
-	@Param(name = "agent_ip", desc = "agent地址", range = "不为空，服务器ip地址")
+	@Param(name = "agent_ip", desc = "agent地址", range = "不为空，服务器ip地址", example = "127.0.0.1")
 	@Param(name = "agent_port", desc = "agent端口", range = "不为空，1024-65535")
-	@Param(name = "userCollectId", desc = "数据采集用户，代表此数据属于哪个用户", range = "10位数字，不为空")
+	@Param(name = "userCollectId", desc = "数据采集用户，代表此数据属于哪个用户", range = "4位数字，不为空,页面传值")
 	@Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
 	private void addAgentInfo(String agent_ip, String agent_port, long userCollectId,
 	                          Map<String, Object> collectMap) {
