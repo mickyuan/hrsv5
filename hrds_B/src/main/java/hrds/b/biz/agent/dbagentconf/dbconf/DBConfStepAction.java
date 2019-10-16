@@ -28,7 +28,7 @@ import hrds.commons.utils.key.PrimayKeyGener;
 
 import java.util.List;
 
-@DocClass(desc = "应用管理端数据库采集配置步骤一、数据库连接信息配置", author = "WangZhengcheng")
+@DocClass(desc = "配置源DB属性", author = "WangZhengcheng")
 public class DBConfStepAction extends BaseAction{
 
 	@Method(desc = "数据库直连采集，根据databaseId进行查询并在页面上回显数据源配置信息", logicStep = "" +
@@ -260,7 +260,7 @@ public class DBConfStepAction extends BaseAction{
 			"2、给agent发消息，并获取agent响应" +
 			"3、如果测试连接不成功，则抛异常给前端，说明连接失败，如果成功，则不做任务处理")
 	@Param(name = "databaseSet", desc = "有agent_id, driver, url, username, password, dbtype信息的Database_set实体类对象"
-			, range = "Database_set实体类对象，不为空")
+			, range = "Database_set实体类对象，不为空", isBean = true)
 	public void testConnection(Database_set databaseSet) {
 		//1、调用工具类获取本次访问的agentserver端url
 		String url = AgentActionUtil.getUrl(databaseSet.getAgent_id(), getUserId(), AgentActionUtil.TESTCONNECTION);

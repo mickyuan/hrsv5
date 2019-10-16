@@ -69,8 +69,6 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		columnCleanOrder.put(CleanType.ZiFuTrim.getCode(), 6);
 	}
 
-
-
 	/**
 	 * 为每个方法的单元测试初始化测试数据
 	 *
@@ -111,9 +109,10 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 	 *      10、table_clean表测试数据：
 	 *          10-1、模拟数据对sys_user表进行整表清洗，分别做了列合并和首尾去空
 	 *          10-2、模拟数据对code_info表进行了整表清洗，分别做了字符替换字符补齐，将所有列值的abc全部替换为def，将所有列值的前面补上beyond字符串
-	 *      11、column_merge表测试数据：对sys_user设置了两个列合并
-	 *          11-1、模拟数据将user_id和create_id两列合并为user_create_id
-	 *          11-2、模拟数据将user_name和user_password两列合并为user_name_password
+	 *      11、column_merge表测试数据：对sys_user设置了两个列合并，对code_info表设置了一个列合并
+	 *          11-1、模拟数据将sys_user表的user_id和create_id两列合并为user_create_id
+	 *          11-2、模拟数据将sys_user表的user_name和user_password两列合并为user_name_password
+	 *          11-3、模拟数据将code_info表的ci_sp_classname和ci_sp_name两列合并为ci_sp_classname_name
 	 *
 	 * @Param: 无
 	 * @return: 无
@@ -1698,7 +1697,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			long storageAfterDeleteCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_storage_info.TableName + "where table_id = ?", tableInfoThree.getTable_id()).orElseThrow(() -> new BusinessException("结果必须有且只有一条数据"));
 			long cleanAfterDeleteCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_clean.TableName + "where table_id = ?", tableInfoThree.getTable_id()).orElseThrow(() -> new BusinessException("结果必须有且只有一条数据"));
 			long columnMergeAfterDeleteCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_merge.TableName + "where table_id = ?", tableInfoThree.getTable_id()).orElseThrow(() -> new BusinessException("结果必须有且只有一条数据"));
-			
+
 			assertThat("正确的数据访问2测试成功后，删除table_info表插入的数据成功", codeInfoAfterDeleteCount == 0, is(true));
 			assertThat("正确的数据访问2测试成功后，删除table_column表插入的数据成功", codeInfoColumnAfterDeleteCount == 0, is(true));
 			assertThat("正确的数据访问2测试成功后，删除table_storage_info表被修改table_id后的数据成功", storageAfterDeleteCount == 0, is(true));

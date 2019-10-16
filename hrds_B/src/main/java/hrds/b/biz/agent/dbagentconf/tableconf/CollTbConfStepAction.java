@@ -29,7 +29,7 @@ import hrds.commons.utils.key.PrimayKeyGener;
 
 import java.util.*;
 
-@DocClass(desc = "数据库直连采集步骤二、配置采集表页面后台服务类", author = "WangZhengcheng")
+@DocClass(desc = "定义表抽取属性", author = "WangZhengcheng")
 public class CollTbConfStepAction extends BaseAction {
 
 	private static final long DEFAULT_TABLE_ID = 999999L;
@@ -54,8 +54,7 @@ public class CollTbConfStepAction extends BaseAction {
 			"2、将查询结果转换成json，并追加模糊查询表名" +
 			"3、和Agent端进行交互，得到Agent返回的数据" +
 			"4、对获取到的数据进行处理，获得模糊查询到的表名" +
-			"5、根据表名和colSetId获取界面需要显示的信息" +
-			"6、返回信息")
+			"5、根据表名和colSetId获取界面需要显示的信息并返回")
 	@Param(name = "colSetId", desc = "数据库设置ID,database_set表主键,table_info表外键", range = "不为空")
 	@Param(name = "inputString", desc = "用户界面输入用于模糊查询的关键词", range = "不为空")
 	@Return(desc = "查询结果集", range = "如果模糊查询没有查询到数据，list中没有数据，如果模糊查询查到了N条数据，" +
@@ -77,102 +76,39 @@ public class CollTbConfStepAction extends BaseAction {
 		String respMsg = SendMsgUtil.sendMsg(result.getLong(0, "agent_id"), getUserId(),
 				resultObj.toJSONString(), fakeMethodName);
 		//4、对获取到的数据进行处理，获得模糊查询到的表名
-		JSONObject respObj = JSON.parseObject(respMsg);//FIXME 为什么要用JSON？能不能改成BEAN对象
+		JSONObject respObj = JSON.parseObject(respMsg);//TODO 能不能改成BEAN对象
 		List<String> rightTables = (List<String>) respObj.get("tableName");
-		//FIXME 以上整个逻辑，用一句sql where in不就解决了吗？
-
-		//FIXME 以下整个循环，用一句sql where in不就解决了吗？
-		List<Result> returnList = new ArrayList<>();
-		//5、根据表名和colSetId获取界面需要显示的信息
-		if(!rightTables.isEmpty()){
-			//根据String的自然顺序(字母a-z)对表名进行升序排序
-			Collections.sort(rightTables);
-			for(String tableName : rightTables){
-				//TODO 按照新的原型设计，这个方法应该查询的内容为table_id，,table_name,table_ch_name,是否并行抽取(这个字段目前还没有)
-				Result tableResult = Dbo.queryResult(" select ti.table_id,ti.table_name,ti.table_ch_name" +
-						" FROM "+ Table_info.TableName +" ti " +
-						" WHERE ti.database_id = ? AND ti.valid_e_date = ? AND ti.table_name = ? " +
-						" AND ti.is_user_defined = ? ", colSetId, Constant.MAXDATE, tableName, IsFlag.Fou.getCode());
-				//tableResult结果可能有数据，也可能没有数据
-				//有数据的情况：编辑采集任务，模糊查询的这张表已经存在于本次采集任务中
-				if(!tableResult.isEmpty()){
-					if(tableResult.getRowCount() != 1){
-						throw new BusinessException(tableName + "表详细信息不唯一");
-					}
-					returnList.add(tableResult);
-				}
-				//没有数据的情况：新增采集任务，那么所有的表都无法在table_info中查到数据，给是否并行抽取默认值为否
-				//TODO 但是由于数据库表没有修改，所以Table_info实体类里面没有这个property
-				if(tableResult.isEmpty()){
-					tableResult.setValue(0, "table_name", tableName);
-					tableResult.setValue(0, "table_ch_name", tableName);
-					//TODO 给是否并行抽取默认值为否
-					returnList.add(tableResult);
-				}
-			}
-		}
-		//6、返回信息
-		return returnList;
+		//5、根据表名和colSetId获取界面需要显示的信息并返回
+		return getTableInfoByTableName(rightTables, colSetId);
 	}
 
 	@Method(desc = "根据数据库设置id得到所有表相关信息，即查看所有表", logicStep = "" +
 			"1、根据colSetId去数据库中获取数据库设置相关信息" +
-			"2、将查询结果转换成json" +
+			"2、将查询结果转换成json，并追加获取所有表" +
 			"3、和Agent端进行交互，得到Agent返回的数据" +
-			"4、根据表名和colSetId获取界面需要显示的信息" +
-			"5、返回信息")
+			"4、对获取到的数据进行处理，根据表名和colSetId获取界面需要显示的信息并返回")
 	@Param(name = "colSetId", desc = "数据库设置ID,database_set表主键,table_info表外键", range = "不为空")
 	@Return(desc = "查询结果集", range = "如果模糊查询没有查询到数据，list中没有数据，如果模糊查询查到了N条数据，" +
 			"list.size()为N")
 	public List<Result> getAllTableInfo(long colSetId){
-		//2、根据colSetId去数据库中获取数据库设置相关信息
+		//1、根据colSetId去数据库中获取数据库设置相关信息
 		Result result = getDatabaseSetInfo(colSetId, getUserId());
 		if(result.isEmpty()){
 			throw new BusinessException("未找到数据库采集任务");
 		}
-		//3、将查询结果转换成json，并追加模糊查询表名
+		//2、将查询结果转换成json，并追加获取所有表
 		JSONObject resultObj = JSON.parseObject(result.toJSON());
 		//注意：查看所有表向Agent端传递的信息中FuzzyQueryTableName为NOTHING
 		resultObj.put("FuzzyQueryTableName", "NOTHING");
-		//4、和Agent端进行交互，得到Agent返回的数据
+		//3、和Agent端进行交互，得到Agent返回的数据
 		//TODO 由于Agent端服务方法暂时还没有，所以这里使用的是fakeMethodName，后期会改为取AgentActionUtil类中的静态常量
 		String fakeMethodName = "FAKEMETHODNAME";
 		String respMsg = SendMsgUtil.sendMsg(result.getLong(0, "agent_id"), getUserId(),
 				resultObj.toJSONString(), fakeMethodName);
-		//5、对获取到的数据进行处理，获得模糊查询到的表名
+		//4、对获取到的数据进行处理，根据表名和colSetId获取界面需要显示的信息并返回
 		JSONObject respObj = JSON.parseObject(respMsg);
 		List<String> tableNames = (List<String>) respObj.get("tableName");
-		//FIXME 以下整个循环，用一句sql where in不就解决了吗？待讨论：和getTableInfo()方法原因一样
-		List<Result> returnList = new ArrayList<>();
-		if(!tableNames.isEmpty()){
-			//根据String的自然顺序(字母a-z)对表名进行升序排序
-			Collections.sort(tableNames);
-			for(String tableName : tableNames){
-				//TODO 按照新的原型设计，这个方法应该查询的内容为table_id，,table_name,table_ch_name,是否并行抽取(这个字段目前还没有)
-				Result tableResult = Dbo.queryResult(" select ti.table_id,ti.table_name,ti.table_ch_name" +
-						" FROM "+ Table_info.TableName +" ti " +
-						" WHERE ti.database_id = ? AND ti.valid_e_date = ? AND ti.table_name = ? " +
-						" AND ti.is_user_defined = ? ", colSetId, Constant.MAXDATE, tableName, IsFlag.Fou.getCode());
-				//tableResult结果可能有数据，也可能没有数据
-				//有数据的情况：编辑采集任务，模糊查询的这张表已经存在于本次采集任务中
-				if(!tableResult.isEmpty()){
-					if(tableResult.getRowCount() != 1){
-						throw new BusinessException(tableName + "表详细信息不唯一");
-					}
-					returnList.add(tableResult);
-				}
-
-				//没有数据的情况：新增采集任务，那么所有的表都无法在table_info中查到数据，给是否并行抽取默认值为否
-				if(tableResult.isEmpty()){
-					tableResult.setValue(0, "table_name", tableName);
-					tableResult.setValue(0, "table_ch_name", tableName);
-					//TODO 给是否并行抽取默认值为否
-
-					returnList.add(tableResult);
-				}
-			}
-		}
-		return returnList;
+		return getTableInfoByTableName(tableNames, colSetId);
 	}
 
 	@Method(desc = "测试并行抽取SQL", logicStep = "" +
@@ -598,5 +534,46 @@ public class CollTbConfStepAction extends BaseAction {
 				" left join "+ Agent_info.TableName +" ai on ai.agent_id = t1.agent_id" +
 				" left join "+ Collect_job_classify.TableName +" t2 on t1.classify_id = t2.classify_id" +
 				" where t1.database_id = ? and ai.user_id = ? ", colSetId, userId);
+	}
+
+	@Method(desc = "根据表名和数据库设置表主键获得表详细信息", logicStep = "" +
+			"1、如果集合为空，则直接返回空集合" +
+			"2、如果集合不是空，则进行如下处理" +
+			"2-1、根据String的自然顺序(字母a-z)对表名进行升序排序" +
+			"2-2、tableResult结果可能有数据，也可能没有数据" +
+			"2-3、有数据的情况：编辑采集任务，模糊查询的这张表已经存在于本次采集任务中" +
+			"2-4、没有数据的情况：新增采集任务，那么所有的表都无法在table_info中查到数据，给是否并行抽取默认值为否")
+	@Param(name = "tableNames", desc = "需要获取详细信息的表名集合", range = "不限")
+	@Param(name = "colSetId", desc = "数据库设置ID", range = "不为空")
+	@Return(desc = "存有表详细信息的List集合", range = "查到信息则不为空，没有查到信息则为空")
+	private List<Result> getTableInfoByTableName(List<String> tableNames, long colSetId){
+		//1、如果集合为空，则直接返回空集合
+		if(tableNames.isEmpty()) return Collections.emptyList();
+		//2、如果集合不是空，则进行如下处理
+		List<Result> returnList = new ArrayList<>();
+		//2-1、根据String的自然顺序(字母a-z)对表名进行升序排序
+		Collections.sort(tableNames);
+		for(String tableName : tableNames){
+			//TODO 按照新的原型设计，这个方法应该查询的内容为table_id，,table_name,table_ch_name,是否并行抽取(这个字段目前还没有)
+			Result tableResult = Dbo.queryResult(" select ti.table_id,ti.table_name,ti.table_ch_name" +
+					" FROM "+ Table_info.TableName +" ti " +
+					" WHERE ti.database_id = ? AND ti.valid_e_date = ? AND ti.table_name = ? " +
+					" AND ti.is_user_defined = ? ", colSetId, Constant.MAXDATE, tableName, IsFlag.Fou.getCode());
+			//2-2、tableResult结果可能有数据，也可能没有数据
+			//2-3、有数据的情况：编辑采集任务，模糊查询的这张表已经存在于本次采集任务中
+			//2-4、没有数据的情况：新增采集任务，那么所有的表都无法在table_info中查到数据，给是否并行抽取默认值为否
+			if(tableResult.isEmpty()){
+				tableResult.setValue(0, "table_name", tableName);
+				tableResult.setValue(0, "table_ch_name", tableName);
+				//TODO 给是否并行抽取默认值为否
+
+				returnList.add(tableResult);
+			}else if(tableResult.getRowCount() == 1){
+				returnList.add(tableResult);
+			}else{
+				throw new BusinessException(tableName + "表详细信息不唯一");
+			}
+		}
+		return returnList;
 	}
 }
