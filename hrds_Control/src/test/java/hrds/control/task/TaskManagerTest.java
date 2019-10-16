@@ -3,6 +3,9 @@ package hrds.control.task;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -10,6 +13,7 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.*;
+import org.junit.runners.MethodSorters;
 
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.FileUtil;
@@ -20,7 +24,6 @@ import hrds.commons.entity.*;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.control.task.helper.TaskSqlHelper;
-import org.junit.runners.MethodSorters;
 
 /**
  * 用于测试TaskManager类，注意，该类需要配合trigger进行测试，请不要单独测试该类。
@@ -35,15 +38,19 @@ public class TaskManagerTest {
 	private static final Logger logger = LogManager.getLogger();
 
 	public static final String syscode = "110";
+	private static final String PRO_DIR = "/tmp/";
 	private static final String currBathDate = LocalDate.now().format(DateUtil.DATE_DEFAULT);
-	private static final String PRO_DIR = "/mnt/d/";
 
 	private static TaskManager taskManagerAutoShift;
 	private static TaskManager taskManagerNoShift;
 
-	private static final String SLEEP1S_SHELL = "HelloWord.sh";
-	private static final String SLEEP1M_SHELL = "HelloWordWaitLongTime.sh";
-	private static final String FAUIL_SHELL = "HelloWordFailure.sh";
+	private static final String SLEEP1S_SHELL = "EtlSleep1S.sh";
+	private static final String SLEEP1M_SHELL = "EtlSleep1M.sh";
+	private static final String FAUIL_SHELL = "EtlFailure.sh";
+
+	private static final String SLEEP1S_SHELL_PATH = PRO_DIR + SLEEP1S_SHELL;
+	private static final String SLEEP1M_SHELL_PATH = PRO_DIR + SLEEP1M_SHELL;
+	private static final String FAUIL_SHELL_PATH = PRO_DIR + FAUIL_SHELL;
 
 	private static List<Etl_job_def> etlJobDefs = new ArrayList<>();
 
@@ -136,9 +143,29 @@ public class TaskManagerTest {
 	}
 
 	@BeforeClass
-	public static void beforeSomething() {
+	public static void beforeSomething() throws IOException {
 
-		//FIXME 这里用 new File 方式，动态在临时目录下创建 shell 脚本文件
+		File file = new File(SLEEP1S_SHELL_PATH);
+		if(file.exists() && !file.delete()){
+			throw new AppSystemException("初始化运行环境失败");
+		}
+		if(!file.createNewFile()) throw new AppSystemException("初始化运行环境失败");
+		Files.write(file.toPath(), "#!/bin/bash\nsleep 1s\nexit 0".getBytes());
+
+		file = new File(SLEEP1M_SHELL_PATH);
+		if(file.exists() && !file.delete()){
+			throw new AppSystemException("初始化运行环境失败");
+		}
+		if(!file.createNewFile()) throw new AppSystemException("初始化运行环境失败");
+		Files.write(file.toPath(), "#!/bin/bash\nsleep 1m\nexit 0".getBytes());
+
+		file = new File(FAUIL_SHELL_PATH);
+		if(file.exists() && !file.delete()){
+			throw new AppSystemException("初始化运行环境失败");
+		}
+		if(!file.createNewFile()) throw new AppSystemException("初始化运行环境失败");
+		Files.write(file.toPath(), "#!/bin/bash\nexit -1".getBytes());
+
 		try(DatabaseWrapper db = new DatabaseWrapper()) {
 			Etl_sys etlSys = new Etl_sys();
 			etlSys.setEtl_sys_cd(syscode);
@@ -158,6 +185,10 @@ public class TaskManagerTest {
 
 	@AfterClass
 	public static void finallySomething() {
+
+		new File(SLEEP1S_SHELL_PATH).deleteOnExit();
+		new File(SLEEP1M_SHELL_PATH).deleteOnExit();
+		new File(FAUIL_SHELL_PATH).deleteOnExit();
 
 		try(DatabaseWrapper db = new DatabaseWrapper()) {
 			int num = SqlOperator.execute(db, "DELETE FROM etl_sys WHERE etl_sys_cd = ? ", syscode);
@@ -1215,9 +1246,9 @@ public class TaskManagerTest {
 
 			String handleEtlJob = "SystemStop";
 			Thread thread = new Thread(() -> {
-				logger.info("--------------- 沉睡20秒 ---------------");
+				logger.info("--------------- 沉睡30秒 ---------------");
 				try {
-					Thread.sleep(20000);
+					Thread.sleep(30000);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
