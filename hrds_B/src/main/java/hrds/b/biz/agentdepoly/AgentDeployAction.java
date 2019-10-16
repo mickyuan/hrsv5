@@ -33,7 +33,6 @@ public class AgentDeployAction extends BaseAction {
 						getUserId());
 	}
 
-
 	@Method(desc = "获取数据源下对应某种Agent的信息", logicStep = "根据选择的数据源及Agent类型查询其对应的Agent")
 	@Param(name = "source_id", desc = "数据源ID", range = "不能为空的整数")
 	@Param(name = "agent_type", desc = "Agent类型", range = "不能为空的字符串")
@@ -45,14 +44,14 @@ public class AgentDeployAction extends BaseAction {
 	}
 
 	@Method(desc = "获取当前部署的Agent信息", logicStep = "根据选择的数据源及Agent类型查询其对应的Agent")
-	@Param(name = "source_id", desc = "数据源ID", range = "不能为空的整数")
+	@Param(name = "agent_id", desc = "数据源ID", range = "不能为空的整数")
 	@Param(name = "agent_type", desc = "Agent类型", range = "不能为空的字符串")
 	@Return(desc = "当前Agent的部署信息", range = "可以为空,因为会出现是第一次部署", isBean = true)
 	public Agent_down_info getAgentDownInfo(long agent_id, String agent_type) {
 
 		return Dbo.queryOneObject(Agent_down_info.class, "SELECT * FROM " + Agent_down_info.TableName + " WHERE " +
-														"agent_id = ? AND agent_type = ? AND user_id = ?",
-										agent_id, agent_type, getUserId()).orElseThrow(()->new BusinessException("部署Agnet信息查询错误!"));
+										"agent_id = ? AND agent_type = ? AND user_id = ?",
+						agent_id, agent_type, getUserId()).orElseThrow(() -> new BusinessException("部署Agent信息查询错误!"));
 	}
 
 	@Method(desc = "获取Agent的全部类型信息", logicStep = "获取Agent的全部类型信息")
@@ -70,20 +69,22 @@ public class AgentDeployAction extends BaseAction {
 	}
 
 	@Method(desc = "获取当前部署的Agent信息", logicStep = "根据选择的数据源及Agent类型查询其对应的Agent")
-	@Param(name = "agent_down_info", desc = "", range = "不能为空的整数", isBean = true)
+	@Param(name = "agent_down_info", desc = "部署Agent的填写信息," +
+					"agent_name : Agent名称," +
+					"agent_ip : Agent IP," +
+					"agent_port : Agent端口," +
+					"user_name : 用户名," +
+					"passwd : 密码," +
+					"save_dir :存放目录," +
+					"log_dir : 日志目录," +
+					"deploy : 是否部署,1-表示部署完成后,不自动启动,0-表示部署完成后自动启动," +
+					"ai_desc : 描述", range = "不能为空的整数", isBean = true)
 	public void deployAgent(Agent_down_info agent_down_info) {
 
 	}
 
-	/**
-	 * <p>方法描述: 保存此次部署Agent的信息</p>
-	 * <p>@author: Mr.Lee </p>
-	 * <p>创建时间: 2019-09-04</p>
-	 * <p>参   数:  </p>
-	 * <p>return:  </p>
-	 */
 	@Method(desc = "保存此次部署Agent的信息", logicStep = "保存此次部署Agent的信息")
-	@Param(name = "agent_down_info", desc = "", range = "不能为空的整数", isBean = true)
+	@Param(name = "agent_down_info", desc = "保存部署Agent信息", range = "不能为空的整数", isBean = true)
 	private void saveAgentDownInfo(Agent_down_info agent_down_info) {
 
 		if( agent_down_info.add(Dbo.db()) != 1 ) {

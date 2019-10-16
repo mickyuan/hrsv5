@@ -1,5 +1,6 @@
 package hrds.a.biz.zauth;
 
+import fd.ng.core.annotation.DocClass;
 import fd.ng.web.action.ActionResult;
 import fd.ng.web.action.ActionResultHelper;
 import fd.ng.web.util.RequestUtil;
@@ -9,6 +10,8 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.Map;
 
+
+@DocClass(desc = "这个类暂时不修改,后面做成菜单",author = "Mr.Lee")
 public class LoginAuthAction extends BaseAction {
 
 	/**
@@ -23,7 +26,7 @@ public class LoginAuthAction extends BaseAction {
 	 *          含义 : 登陆验证对比信息
 	 *          取值范围 : 根据具体情况获取不同的信息
 	 */
-	public ActionResult loginCheck(long username, String password) {
+	private ActionResult loginCheck(long username, String password) {
 
 		if( getUserId() == username && getUser().getUserPassword().equalsIgnoreCase(password) ) {
 
