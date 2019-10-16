@@ -957,15 +957,15 @@ public class TaskManagerTest {
 			taskManager.publishReadyJob();
 
 			//1、1个能运行1分钟并成功的作业，干预结束后，在etl_job_disp_his表中有两条数据，调度状态为[错误、完成]
-			long waitLongTimeHisNum = SqlOperator.queryNumber(db, "SELECT COUNT(*) " +
-							"FROM etl_job_disp_his WHERE etl_sys_cd = ? AND etl_job = ? " +
-							"AND (job_disp_status = ? OR job_disp_status = ?)", syscode,
-					waitLongTimeEtlJob, Job_Status.ERROR.getCode(),
+			long waitLongTimeHisNum = SqlOperator.queryNumber(db,
+					"SELECT COUNT(*) FROM etl_job_disp_his WHERE etl_sys_cd = ? " +
+							"AND etl_job = ? AND (job_disp_status = ? OR job_disp_status = ?)",
+					syscode, handleEtlJob, Job_Status.ERROR.getCode(),
 					Job_Status.DONE.getCode()).orElseThrow(() -> new AppSystemException(
 							"测试作业干预类型为[系统暂停]的作业失败"));
 
 			assertEquals("测试作业干预类型为[系统暂停]的作业，特定的作业执行结果是否符合期望，作业名为："
-					+ waitLongTimeEtlJob, 2, waitLongTimeHisNum);
+					+ handleEtlJob, 2, waitLongTimeHisNum);
 
 			//TODO 此处有问题，期望应该是：未执行过但已经在等待执行的作业，经过干预后，该作业将不再执行，
 			// 该问题跟TaskManager类中代码1689、1730行一致。导致此干预功能测试的点不能全覆盖，也
