@@ -14,11 +14,9 @@ import org.apache.logging.log4j.Logger;
 @DocClass(desc = "数据库直连采集获取数据库连接相关信息的工具类", author = "WangZhengcheng")
 public class ConnUtil {
 
-	//FIXME getLogger 经常传入错误是参数，所以，使用无参方法吧，已修复
-	private static final Logger logger = LogManager.getLogger();
+	private static final Logger logger = LogManager.getLogger(ConnUtil.class);
 
 
-	//FIXME 方法名字不贴切，已修复
 	@Method(desc = "根据数据库类型获取数据库连接信息填写模板", logicStep = "" +
 			"1、构建返回使用Map集合" +
 			"2、判断数据库类型，根据数据库类型构建数据库连接信息填写模板并放入Map" +
@@ -29,7 +27,6 @@ public class ConnUtil {
 		//1、构建返回使用Map集合
 		DBConnectionProp template = new DBConnectionProp();
 		//2、判断数据库类型，根据数据库类型构建数据库连接信息填写模板并放入Map
-		//FIXME DatabaseType.ofEnumByCode(dbType) 应该拿到外面来。如果getConnURL被反复调用，就会多次查找转换枚举对象了，已修复
 		DatabaseType databaseType = DatabaseType.ofEnumByCode(dbType);
 		if(DatabaseType.MYSQL == databaseType){
 			template.setUrlPrefix("jdbc:mysql://");
@@ -91,7 +88,6 @@ public class ConnUtil {
 			throw new AppSystemException("目前不支持对该数据库类型进行采集，请联系管理员");
 		}
 		//3、返回Map集合
-		//FIXME 是不是返回BEAN更好？已修复
 		return template;
 	}
 

@@ -46,8 +46,6 @@ public class SendMsgUtil {
 		String url = AgentActionUtil.getUrl(agentId, userId, methodName);
 		logger.debug("准备建立连接，请求的URL为" + url);
 
-		//FIXME 为什么要用这个HTTPCLIENT包？已修复
-
 		//2、对请求的参数调用工具类做压缩加密操作，得到处理后的数据并封装
 		String sendStr = PackUtil.packMsg(jsonData);
 		//3、httpClient发送请求并接收响应
