@@ -238,7 +238,7 @@ public class DataQueryActionTest extends WebBaseTestCase {
 			SqlOperator.commitTransaction(db);
 			//12.根据初始化的 Sys_user 用户模拟登陆
 			bodyString = new HttpClient()
-					.addData("username", USER_ID)
+					.addData("user_id", USER_ID)
 					.addData("password", "111111")
 					.post("http://127.0.0.1:8099/A/action/hrds/a/biz/login/login").getBodyString();
 			ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
