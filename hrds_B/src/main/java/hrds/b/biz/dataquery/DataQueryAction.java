@@ -1,5 +1,6 @@
 package hrds.b.biz.dataquery;
 
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -22,14 +23,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.*;
 
-/**
- * <p>类名: DataQueryAction</p>
- * <p>类说明: Web服务查询数据界面后台处理类</p>
- *
- * @author BY-HLL
- * @date 2019/9/3 0003 下午 03:26
- * @since JDK1.8
- */
+@DocClass(desc = "Web服务查询数据界面后台处理类", author = "BY-HLL", createdate ="2019/9/3 0003 下午 03:26")
 public class DataQueryAction extends BaseAction {
 
 	@Method(desc = "获取部门的包含文件采集任务的数据源信息",

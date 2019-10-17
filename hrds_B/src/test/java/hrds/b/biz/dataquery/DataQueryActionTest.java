@@ -1,5 +1,9 @@
 package hrds.b.biz.dataquery;
 
+import fd.ng.core.annotation.DocClass;
+import fd.ng.core.annotation.Method;
+import fd.ng.core.annotation.Param;
+import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
@@ -23,14 +27,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-/**
- * <p>类名: DataQueryWebAction</p>
- * <p>类说明: Web服务查询数据界面后台处理测试类</p>
- *
- * @author BY-HLL
- * @date 2019/9/3 0003 下午 03:26
- * @since JDK1.8
- */
+@DocClass(desc = "Web服务查询数据界面后台处理测试类", author = "BY-HLL", createdate = "2019/9/3 0003 下午 03:26")
 public class DataQueryActionTest extends WebBaseTestCase {
 	//测试数据的用户ID
 	private static final long USER_ID = 5000L;
@@ -54,37 +51,34 @@ public class DataQueryActionTest extends WebBaseTestCase {
 	private static String bodyString;
 	private static ActionResult ar;
 
-	/**
-	 * <p>方法名: before</p>
-	 * <p>方法说明: 初始化测试用例依赖表数据</p>
-	 * 1.初始化 Data_source 数据
-	 * 2.初始化 Source_relation_dep 数据
-	 * 3.初始化 Agent_info 数据
-	 * 4.初始化 File_collect_set 数据
-	 * 5.初始化 Source_file_attribute 数据
-	 * 6.初始化 Data_auth 数据
-	 * 7.初始化 Search_info 数据
-	 * 8.初始化 User_fav 数据
-	 * 9.初始化 Sys_user 数据
-	 * 10.初始化 Department_info 数据
-	 * 11.提交所有数据库执行操作
-	 * 12.根据初始化的 Sys_user 用户模拟登陆
-	 * 测试数据:
-	 * <p>
-	 * 1.data_source表中有1条数据 source_id:5000000000 create_user_id:5000
-	 * 2.Source_relation_dep表中有1条数据 dep_id:5000000000 source_id:5000000000
-	 * 3.Agent_info表中有5条数据 agent_id:5000000001-5000000005 agent_type:1-5 source_id:5000000000
-	 * user_id:5000
-	 * 4.File_collect_set表中有1条数据 File_collect_set:5000000000 agent_id: 5000000002
-	 * 5.Source_file_attribute表中有1条数据 file_id: 999999999999999999999999 agent_id:5000000002
-	 * source_id:5000000000 collect_set_id:5000000000
-	 * 6.Data_auth表中有1条数据 da_id:5000000000 file_id:999999999999999999999999 user_id:5000
-	 * dep_id:5000000000 agent_id:5000000002 source_id:5000000000 collect_set_id:5000000000
-	 * 7.Search_info表中有1条数据 si_id:5000000000 file_id:999999999999999999999999
-	 * 8.User_fav表中有1条数据 fav_id:5000000000 file_id:999999999999999999999999 user_id:5000
-	 * 9.Sys_user表中有1条数据 user_id: 5000 dep_id: 5000000000 role_id: 1001
-	 * 10.Department_info表中有1条数据 dep_id: 5000000000
-	 */
+	@Method(desc = "初始化测试用例依赖表数据",
+			logicStep = "1.初始化 Data_source 数据" +
+					"2.初始化 Source_relation_dep 数据" +
+					"3.初始化 Agent_info 数据" +
+					"4.初始化 File_collect_set 数据" +
+					"5.初始化 Source_file_attribute 数据" +
+					"6.初始化 Data_auth 数据" +
+					"7.初始化 Search_info 数据" +
+					"8.初始化 User_fav 数据" +
+					"9.初始化 Sys_user 数据" +
+					"10.初始化 Department_info 数据" +
+					"11.提交所有数据库执行操作" +
+					"12.根据初始化的 Sys_user 用户模拟登陆" +
+					"测试数据:" +
+					"* 1.data_source表中有1条数据 source_id:5000000000 create_user_id:5000" +
+					"* 2.Source_relation_dep表中有1条数据 dep_id:5000000000 source_id:5000000000" +
+					"* 3.Agent_info表中有5条数据 agent_id:5000000001-5000000005 agent_type:1-5 source_id:5000000000 " +
+					"user_id:5000" +
+					"* 4.File_collect_set表中有1条数据 File_collect_set:5000000000 agent_id: 5000000002" +
+					"* 5.Source_file_attribute表中有1条数据 file_id: 999999999999999999999999 agent_id:5000000002" +
+					"* source_id:5000000000 collect_set_id:5000000000" +
+					"* 6.Data_auth表中有1条数据 da_id:5000000000 file_id:999999999999999999999999 user_id:5000" +
+					"* dep_id:5000000000 agent_id:5000000002 source_id:5000000000 collect_set_id:5000000000" +
+					"* 7.Search_info表中有1条数据 si_id:5000000000 file_id:999999999999999999999999" +
+					"* 8.User_fav表中有1条数据 fav_id:5000000000 file_id:999999999999999999999999 user_id:5000" +
+					"* 9.Sys_user表中有1条数据 user_id: 5000 dep_id: 5000000000 role_id: 1001" +
+					"* 10.Department_info表中有1条数据 dep_id: 5000000000"
+	)
 	@BeforeClass
 	public static void before() {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
@@ -252,18 +246,15 @@ public class DataQueryActionTest extends WebBaseTestCase {
 		}
 	}
 
-	/**
-	 * <p>方法名: after</p>
-	 * <p>方法说明: 测试案例执行完成后清理测试数据</p>
-	 * 1.删除 Data_source 表测试数据
-	 * 2.删除 Source_relation_dep 测试数据
-	 * 3.删除 Agent_info 测试数据
-	 * 4.删除 File_collect_set 测试数据
-	 * 5.删除 Source_file_attribute 测试数据
-	 * 6.删除 Data_auth 测试数据
-	 * 7.删除 Search_info 表测试数据
-	 * 8.删除 User_fav 表测试数据
-	 */
+	@Method(desc = "测试案例执行完成后清理测试数据",
+			logicStep = "1.删除 Data_source 表测试数据" +
+					"2.删除 Source_relation_dep 测试数据" +
+					"3.删除 Agent_info 测试数据" +
+					"4.删除 File_collect_set 测试数据" +
+					"5.删除 Source_file_attribute 测试数据" +
+					"6.删除 Data_auth 测试数据" +
+					"7.删除 Search_info 表测试数据" +
+					"8.删除 User_fav 表测试数据")
 	@AfterClass
 	public static void after() {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
@@ -370,14 +361,11 @@ public class DataQueryActionTest extends WebBaseTestCase {
 		}
 	}
 
-	/**
-	 * <p>方法名: getFileDataSource</p>
-	 * <p>方法说明: 获取部门的包含文件采集任务的数据源信息的测试方法</p>
-	 * 正确数据访问：
-	 * 1.部门id存在,有返回结果 检查返回结果是否是预期值
-	 * 错误数据访问：
-	 * 2.部门id不存在，无返回结果，检查返回结果集条数为0
-	 */
+	@Method(desc = "获取部门的包含文件采集任务的数据源信息的测试方法",
+			logicStep = "正确数据访问：" +
+					"1.部门id存在,有返回结果 检查返回结果是否是预期值" +
+					"错误数据访问：" +
+					"2.部门id不存在，无返回结果，检查返回结果集条数为0")
 	@Test
 	public void getFileDataSource() {
 
@@ -400,14 +388,11 @@ public class DataQueryActionTest extends WebBaseTestCase {
 		assertThat(ar.getDataForResult().getRowCount(), is(0));
 	}
 
-	/**
-	 * <p>方法名: getFileCollectionTask</p>
-	 * <p>方法说明: 根据数据源id获取数据源下所有文件采集任务测试方法</p>
-	 * 1. 正确数据访问:
-	 * 1-1.数据源id存在,有返回结果 检查返回结果是否是预期值
-	 * 2.错误数据访问:
-	 * 2-1.数据源id不存在，无返回结果，检查返回结果集为条数为0
-	 */
+	@Method(desc = "根据数据源id获取数据源下所有文件采集任务测试方法",
+			logicStep = "正确数据访问:" +
+					"1.数据源id存在,有返回结果 检查返回结果是否是预期值" +
+					"错误数据访问:" +
+					"2-1.数据源id不存在，无返回结果，检查返回结果集为条数为0")
 	@Test
 	public void getFileCollectionTask() {
 		//1-1.数据源id存在,有返回结果 检查返回结果是否是预期值
@@ -435,14 +420,11 @@ public class DataQueryActionTest extends WebBaseTestCase {
 		assertThat(ar.getDataForResult().getRowCount(), is(0));
 	}
 
-	/**
-	 * <p>方法名: downloadFile</p>
-	 * <p>方法说明: 根据文件id下载文件的测试方法</p>
-	 * 正确数据访问:
-	 * 1.文件id存在,有返回结果 检查返回结果是否是预期值
-	 * 错误数据访问:
-	 * 2.文件id不存在，无返回结果，检查返回结果集为条数为0
-	 */
+	@Method(desc = "根据文件id下载文件的测试方法",
+			logicStep = "正确数据访问:" +
+					"1.文件id存在,有返回结果 检查返回结果是否是预期值" +
+					"错误数据访问:" +
+					"2.文件id不存在，无返回结果，检查返回结果集为条数为0")
 	@Test
 	public void downloadFile() {
 		//1.文件id存在,有返回结果 检查返回结果不是空
@@ -463,14 +445,11 @@ public class DataQueryActionTest extends WebBaseTestCase {
 		assertThat(ar.isSuccess(), is(false));
 	}
 
-	/**
-	 * <p>方法名: saveFavoriteFile</p>
-	 * <p>方法说明: 保存文件收藏方法测试类</p>
-	 * 1.正确数据访问
-	 * 1-1.待收藏的文件id存在 fileId="999999999999999999999999"
-	 * 2.错误数据访问
-	 * 2-1.待收藏的文件id不存在 fileId="-999999999999999999999999"
-	 */
+	@Method(desc = "保存文件收藏方法测试类",
+			logicStep = "1.正确数据访问:" +
+					"1-1.待收藏的文件id存在 fileId=999999999999999999999999" +
+					"2.错误数据访问:" +
+					"2-1.待收藏的文件id不存在 fileId=-999999999999999999999999")
 	@Test
 	public void saveFavoriteFile() {
 		//1-1.待收藏的文件id存在
@@ -487,14 +466,11 @@ public class DataQueryActionTest extends WebBaseTestCase {
 		assertThat(ar.isSuccess(), is(false));
 	}
 
-	/**
-	 * <p>方法名: cancelFavoriteFile</p>
-	 * <p>方法说明: 取消文件收藏方法测试类</p>
-	 * 1.正确数据访问
-	 * 1-1.已经收藏的文件id存在
-	 * 2.错误数据访问
-	 * 2-1.已经收藏的文件id不存在
-	 */
+	@Method(desc = "取消文件收藏方法测试类",
+			logicStep = "正确数据访问：" +
+					"1.已经收藏的文件id存在" +
+					"错误数据访问：" +
+					"2.已经收藏的文件id不存在")
 	@Test
 	public void cancelFavoriteFile() {
 		//1-1.已经收藏的收藏id存在
@@ -511,14 +487,11 @@ public class DataQueryActionTest extends WebBaseTestCase {
 		assertThat(ar.isSuccess(), is(false));
 	}
 
-	/**
-	 * <p>方法名: fileClassifySum</p>
-	 * <p>方法说明: 文件采集分类统计的测试方法</p>
-	 * <p>备注：无传入参数,根据测试数据校验结果预期值是否一致</p>
-	 * 1.正确数据访问
-	 * 1-1.正确数据访问结果
-	 * 1-2.正确数据访问结果校验
-	 */
+	@Method(desc = "文件采集分类统计的测试方法",
+			logicStep = "无传入参数,根据测试数据校验结果预期值是否一致" +
+					"1.正确数据访问" +
+					"1-1.正确数据访问结果" +
+					"1-2.正确数据访问结果校验")
 	@Test
 	public void getFileClassifySum() {
 		//1-1.正确数据访问结果
@@ -530,17 +503,14 @@ public class DataQueryActionTest extends WebBaseTestCase {
 		assertThat(ar.getDataForMap().get(FileType.WenDang.getValue()), is(5));
 	}
 
-	/**
-	 * <p>方法名: getSevenDayCollectFileSum</p>
-	 * <p>方法说明: 7天内文件采集统计测试方法，默认统计7天</p>
-	 * <p>如果查询天数小于1天则显示默认7天，查询条数大于30天则显示30天，否则取传入的查询天数</p>
-	 * 1.正确数据访问:
-	 * 1-1.int类型值的 queryDays 1-30 之间的整数，取输入的整数
-	 * 1-2.int类型值的 queryDays 小于1 的整数，取默认的查询条数7
-	 * 1-3.int类型值的 queryDays 大于30 的整数，取最大显示条数30
-	 * 2.错误数据访问:
-	 * 2-1.非int类型值的 queryDays
-	 */
+	@Method(desc = "7天内文件采集统计测试方法，默认统计7天",
+			logicStep = "如果查询天数小于1天则显示默认7天，查询条数大于30天则显示30天，否则取传入的查询天数" +
+					"1.正确数据访问:" +
+					"1-1.int类型值的 queryDays 1-30 之间的整数，取输入的整数" +
+					"1-2.int类型值的 queryDays 小于1 的整数，取默认的查询条数7" +
+					"1-3.int类型值的 queryDays 大于30 的整数，取最大显示条数30" +
+					"2.错误数据访问:" +
+					"2-1.非int类型值的 queryDays")
 	@Test
 	public void getSevenDayCollectFileSum() {
 		//1-1.int类型值的 queryDays 1-30 之间的整数，取输入的整数
@@ -584,17 +554,14 @@ public class DataQueryActionTest extends WebBaseTestCase {
 		assertThat(ar.isSuccess(), is(false));
 	}
 
-	/**
-	 * <p>方法名: getLast3FileCollections</p>
-	 * <p>方法说明: 最近3次内的文件采集统计测试方法，默认统计3次</p>
-	 * <p>如果查询次数小于1条则显示默认3次，查询次数大于30次则显示最近30次，否则取传入的查询次数</p>
-	 * 1.正确数据访问:
-	 * 1-1.int类型值的 timesRecently 1-30 之间的整数，取输入的整数
-	 * 1-2.int类型值的 timesRecently 小于1 的整数，取默认的查询次数3
-	 * 1-3.int类型值的 timesRecently 大于30 的整数，取最大显示次数30
-	 * 2.错误数据访问:
-	 * 2-1.非int类型值的 timesRecently
-	 */
+	@Method(desc = "最近3次内的文件采集统计测试方法，默认统计3次",
+			logicStep = "如果查询次数小于1条则显示默认3次，查询次数大于30次则显示最近30次，否则取传入的查询次数" +
+					"1.正确数据访问:" +
+					"1-1.int类型值的 timesRecently 1-30 之间的整数，取输入的整数" +
+					"1-2.int类型值的 timesRecently 小于1 的整数，取默认的查询次数3" +
+					"1-3.int类型值的 timesRecently 大于30 的整数，取最大显示次数30" +
+					"2.错误数据访问:" +
+					"2-1.非int类型值的 timesRecently")
 	@Test
 	public void getLast3FileCollections() {
 		//1-1.int类型值的 timesRecently 1-30 之间的整数，取输入的整数
@@ -606,7 +573,6 @@ public class DataQueryActionTest extends WebBaseTestCase {
 		for (int i = 0; i < ar.getDataForResult().getRowCount(); i++) {
 			assertThat(ar.getDataForResult().getString(i, "collectName"), is("init-hll"));
 			assertThat(ar.getDataForResult().getInt(i, "collectSum"), is(1));
-
 		}
 		//1-2.int类型值的 timesRecently 小于1 的整数，取默认的查询次数3
 		bodyString = new HttpClient()
@@ -636,21 +602,18 @@ public class DataQueryActionTest extends WebBaseTestCase {
 		assertThat(ar.isSuccess(), is(false));
 	}
 
-	/**
-	 * <p>方法名: conditionalQuery</p>
-	 * <p>方法说明: 根据指定条件查询</p>
-	 * 1.正确数据访问:
-	 * 1-1.无条件查询
-	 * 1-2.数据源id查询
-	 * 1-3.数据源id和任务id查询
-	 * 1-4.数据源id和开始时间查询
-	 * 1-5.数据源id和结束时间查询
-	 * 1-6.数据源id，任务id和开始时间查询
-	 * 1-7.数据源id，任务id和结束时间查询
-	 * 1-8.数据源id，任务id，开始时间和结束时间查询
-	 * 2.错误数据访问:
-	 * 2-1.
-	 */
+	@Method(desc = "根据指定条件查询",
+			logicStep = "如果查询次数小于1条则显示默认3次，查询次数大于30次则显示最近30次，否则取传入的查询次数" +
+					"1.正确数据访问:" +
+					"1-1.无条件查询" +
+					"1-2.数据源id查询" +
+					"1-3.数据源id和任务id查询" +
+					"1-4.数据源id和开始时间查询" +
+					"1-5.数据源id和结束时间查询" +
+					"1-6.数据源id，任务id和开始时间查询" +
+					"1-7.数据源id，任务id和结束时间查询" +
+					"1-8.数据源id，任务id，开始时间和结束时间查询" +
+					"2.错误的数据访问：")
 	@Test
 	public void getConditionalQuery() {
 		//1-1.无条件查询
