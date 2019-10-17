@@ -41,11 +41,16 @@ public class AgentListAction extends BaseAction {
 		//以上SQL中，通过当前用户ID进行关联查询，达到了数据权限的限制
 	}
 
-	@Method(desc = "根据sourceId、agentType获取相应信息", logicStep = "" +
+	@Method(desc = "根据数据源ID、agent类型获取Agent信息", logicStep = "" +
 			"1、获取用户ID并根据用户ID去数据库中查询数据源信息")
-	@Param(name = "sourceId", desc = "数据源ID,data_source表主键，agent_info表外键", range = "不为空")
-	@Param(name = "agentType", desc = "agent类型", range = "AgentType代码项的code值")
-	@Return(desc = "查询结果集", range = "不会为null")
+	@Param(name = "sourceId", desc = "数据源ID,数据源表主键，agent信息表外键", range = "不为空")
+	@Param(name = "agentType", desc = "agent类型", range = "AgentType代码项的code值" +
+			"1：数据库采集Agent" +
+			"2：非结构化采集Agent" +
+			"3：Ftp采集Agent" +
+			"4：数据文件采集Agent" +
+			"5：半结构化采集Agent")
+	@Return(desc = "Agent信息查询结果集", range = "不会为null")
 	public Result getAgentInfo(long sourceId, String agentType) {
 		//1、根据sourceId和agentType查询数据库获取相应信息
 		return Dbo.queryResult("SELECT * FROM "+ Agent_info.TableName +" WHERE source_id = ? " +
@@ -54,18 +59,17 @@ public class AgentListAction extends BaseAction {
 		//以上SQL中，通过当前用户ID进行关联查询，达到了数据权限的限制
 	}
 
-	@Method(desc = "根据sourceId和agentId获取某agent下所有任务的信息", logicStep = "" +
+	@Method(desc = "根据数据源ID和AgentId获取该agent下所有任务的信息", logicStep = "" +
 			"1、获取用户ID, 判断在当前用户，当前数据源下，某一类型的agent是否存在" +
 			"2、如果存在，查询结果中应该有且只有一条数据" +
 			"3、判断该agent是那种类型，并且根据类型，到对应的数据库表中查询采集任务管理详细信息" +
 			"4、返回结果")
-	@Param(name = "sourceId", desc = "数据源ID,data_source表主键，agent_info表外键", range = "不为空")
-	@Param(name = "agentId", desc = "agentID,agent_info表主键", range = "不为空")
+	@Param(name = "sourceId", desc = "数据源ID,数据源表主键，agent信息表外键", range = "不为空")
+	@Param(name = "agentId", desc = "agentID,agent信息表主键", range = "不为空")
 	@Return(desc = "查询结果集", range = "不会为null")
 	//TODO 采集频率目前暂未拿到
 	public Result getTaskInfo(long sourceId, long agentId) {
 		//1、判断在当前用户，当前数据源下，agent是否存在
-		//FIXME 下面只用到了两个字段，那么这里就不应用用 ai.* 。而且，下面用的都是第0行数据，那么这个结果集是不是应该判断不等于就是异常？，已修复，使用queryOneObject
 		Map<String, Object> agentInfo = Dbo.queryOneObject("select ai.agent_type,ai.agent_id from " +
 				Data_source.TableName + " ds  left join " + Agent_info.TableName +
 				" ai on ds.SOURCE_ID = ai.SOURCE_ID  where ds.source_id = ? AND ai.user_id = ? " +
@@ -133,7 +137,7 @@ public class AgentListAction extends BaseAction {
 			"2、调用方法读取日志并返回")
 	@Param(name = "agentId", desc = "数据源ID,data_source表主键，agent_info表外键", range = "不为空")
 	@Param(name = "logType", desc = "日志类型(完整日志、错误日志)", range = "All : 完整日志, Wrong : 错误日志")
-	@Param(name = "readNum", desc = "查看日志条数", range = "可以不传，默认显示100条", nullable = true,
+	@Param(name = "readNum", desc = "查看日志条数", range = "该参数可以不传", nullable = true,
 			valueIfNull = "100")
 	@Return(desc = "日志信息" ,range = "不会为null")
 	public String viewTaskLog(long agentId, String logType, int readNum) {
@@ -146,29 +150,6 @@ public class AgentListAction extends BaseAction {
 		//在getTaskLog()方法中做了处理
 	}
 
-	/**
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 * @Param: sourceId long
-	 *         含义：
-	 *         取值范围：
-	 * @Param: logType String
-	 *         含义：
-	 *         取值范围：
-	 * @Param: readNum int
-	 *         含义：
-	 *         取值范围：不为空
-	 * @return: 无
-	 *
-	 * */
 	@Method(desc = "任务日志下载", logicStep = "" +
 			"1、对显示日志条数做处理，该方法在加载页面时被调用，readNum可以不传，则默认显示100条，" +
 			"如果用户在页面上进行了选择并点击查看按钮，如果用户输入的条目多于1000，则给用户显示3000条" +
@@ -179,10 +160,9 @@ public class AgentListAction extends BaseAction {
 			"6、使用response获得输出流，完成文件下载")
 	@Param(name = "agentId", desc = "数据源ID,data_source表主键，agent_info表外键", range = "不为空")
 	@Param(name = "logType", desc = "日志类型(完整日志、错误日志)", range = "All : 完整日志, Wrong : 错误日志")
-	@Param(name = "readNum", desc = "查看日志条数", range = "可以不传，默认下载100条", nullable = true,
+	@Param(name = "readNum", desc = "查看日志条数", range = "该参数可以不传", nullable = true,
 			valueIfNull = "100")
 	public void downloadTaskLog(long agentId, String logType, int readNum) {
-		//FIXME 改成JDK8的方式：try(OutputStream out = response.getOutputStream())。不用有finally处理了,已修复
 		//1、对显示日志条数做处理，该方法在加载页面时被调用，readNum可以不传，则默认显示100条，
 		// 如果用户在页面上进行了选择并点击查看按钮，如果用户输入的条目多于1000，则给用户显示3000条
 		if (readNum > 1000) readNum = 3000;
@@ -223,7 +203,7 @@ public class AgentListAction extends BaseAction {
 	@Method(desc = "根据ID删除半结构化采集任务数据", logicStep = "" +
 			"1、根据collectSetId和user_id判断是否有这样一条数据" +
 			"2、在对象采集设置表(object_collect)中删除该条数据")
-	@Param(name = "collectSetId", desc = "源文件属性表ID,object_collect表ID", range = "不为空")
+	@Param(name = "collectSetId", desc = "半结构化采集设置表ID", range = "不为空")
 	//TODO IOnWayCtrl.checkExistsTask()暂时先不管
 	public void deleteHalfStructTask(long collectSetId) {
 		/*
@@ -258,7 +238,7 @@ public class AgentListAction extends BaseAction {
 	@Method(desc = "根据ID删除FTP采集任务数据", logicStep = "" +
 			"1、根据collectSetId和user_id判断是否有这样一条数据" +
 			"2、在FTP采集设置表(ftp_collect)中删除该条数据")
-	@Param(name = "collectSetId", desc = "源文件属性表ID,ftp_collect表ID", range = "不为空")
+	@Param(name = "collectSetId", desc = "FTP采集设置表ID", range = "不为空")
 	//TODO IOnWayCtrl.checkExistsTask()暂时先不管
 	public void deleteFTPTask(long collectSetId) {
 		/*
@@ -286,17 +266,16 @@ public class AgentListAction extends BaseAction {
 		//该方法首先使用user_id和collectSetId去数据库中查找要删除的数据是否存在
 
 		//2、在FTP采集设置表(ftp_collect)中删除该条数据，有且只有一条
-		//FIXME 不应该写这样的错误提示。因为这是返给前端让用户看到的，前端不应该知道数据库表名字，包括其他删除方法，已全部修复
 		DboExecute.deletesOrThrow("删除FTP采集任务数据异常!", "delete from "+
 				Ftp_collect.TableName +" where ftp_id = ?", collectSetId);
 	}
 
-	@Method(desc = "根据collectSetId删除数据库直连采集任务", logicStep = "" +
+	@Method(desc = "根据ID删除数据库直连采集任务", logicStep = "" +
 			"1、根据collectSetId和user_id判断是否有这样一条数据" +
 			"2、在数据库设置表中删除对应的记录" +
 			"3、在表对应字段表中找到对应的记录并删除" +
 			"4、在数据库对应表删除对应的记录")
-	@Param(name = "collectSetId", desc = "源文件属性表ID,database_set表ID", range = "不为空")
+	@Param(name = "collectSetId", desc = "源系统数据库设置表ID", range = "不为空")
 	//TODO IOnWayCtrl.checkExistsTask()暂时先不管
 	public void deleteDBTask(long collectSetId){
 		//1、根据collectSetId和user_id判断是否有这样一条数据
@@ -329,10 +308,10 @@ public class AgentListAction extends BaseAction {
 		}
 	}
 
-	@Method(desc = "根据collectSetId删除DB文件采集任务数据", logicStep = "" +
+	@Method(desc = "根据ID删除DB文件采集任务数据", logicStep = "" +
 			"1、根据collectSetId和user_id判断是否有这样一条数据" +
 			"2、在数据库设置表中删除对应的记录")
-	@Param(name = "collectSetId", desc = "源文件属性表ID,database_set表ID", range = "不为空")
+	@Param(name = "collectSetId", desc = "源系统数据库设置表ID", range = "不为空")
 	//TODO IOnWayCtrl.checkExistsTask()暂时先不管
 	public void deleteDFTask(long collectSetId){
 		//1、根据collectSetId和user_id判断是否有这样一条数据
@@ -351,11 +330,11 @@ public class AgentListAction extends BaseAction {
 				Database_set.TableName +" where database_id =?", collectSetId);
 	}
 
-	@Method(desc = "根据collectSetId删除非结构化文件采集任务数据", logicStep = "" +
+	@Method(desc = "根据ID删除非结构化文件采集任务数据", logicStep = "" +
 			"1、根据collectSetId和user_id判断是否有这样一条数据" +
 			"2、在文件系统设置表删除对应的记录" +
 			"3、在文件源设置表删除对应的记录")
-	@Param(name = "collectSetId", desc = "源文件属性表ID,object_collect表ID", range = "不为空")
+	@Param(name = "collectSetId", desc = "非结构化采集设置表ID", range = "不为空")
 	//TODO IOnWayCtrl.checkExistsTask()暂时先不管
 	public void deleteNonStructTask(long collectSetId){
 		//1、根据collectSetId和user_id判断是否有这样一条数据
@@ -371,7 +350,6 @@ public class AgentListAction extends BaseAction {
 		//该方法首先使用user_id和collectSetId去数据库中查找要删除的数据是否存在
 
 		//2、在文件系统设置表删除对应的记录，有且只有一条数据
-		//FIXME 下面删除了两次是为什么？已修复，原因：非结构化采集的画面配置信息是保存在这两张表中的，用fcs_id关联File_collect_set和File_source是一对多的关系
 		DboExecute.deletesOrThrow("删除非结构化采集任务数据异常!", "delete  from "+
 						File_collect_set.TableName +" where fcs_id = ? ", collectSetId);
 		//3、在文件源设置表删除对应的记录，可以有多条
@@ -393,9 +371,9 @@ public class AgentListAction extends BaseAction {
 		//该方法首先使用user_id去数据库中查询相应的数据
 	}
 
-	@Method(desc = "根据taskId获得某个工程下的任务信息", logicStep = "" +
+	@Method(desc = "根据Id获得某个工程下的任务信息", logicStep = "" +
 			"1、根据工程代码在子系统定义表(etl_sub_sys_list)中查询子系统代码(sub_sys_cd)和子系统描述(sub_sys_desc)并返回")
-	@Param(name = "taskId", desc = "任务ID, etl_sub_sys_list表主键", range = "不为空")
+	@Param(name = "taskId", desc = "任务ID, 子系统定义表主键", range = "不为空")
 	@Return(desc = "查询结果集", range = "不会为null")
 	public Result getTaskInfoByTaskId(String taskId) {
 		return Dbo.queryResult(" select ess.sub_sys_cd,ess.sub_sys_desc from "+
@@ -470,10 +448,11 @@ public class AgentListAction extends BaseAction {
 	}
 	*/
 
-	@Method(desc = "根据sourceId查询出设置完成的数据库采集任务和DB文件采集任务的任务ID", logicStep = "" +
+	@Method(desc = "根据数据源ID查询出设置完成的数据库采集任务和DB文件采集任务的任务ID", logicStep = "" +
 			"1、根据数据源ID和用户ID查询出设置完成的数据库采集任务和DB文件采集任务的任务ID并返回")
-	@Param(name = "sourceId", desc = "data_source表主键, agent_info表外键", range = "不为空")
+	@Param(name = "sourceId", desc = "数据源表主键, agent信息表外键", range = "不为空")
 	@Return(desc = "查询结果集", range = "不会为null")
+	//获得设置完成的任务，用于发送
 	public Result getDBAndDFTaskBySourceId(long sourceId) {
 		//1、根据数据源ID和用户ID查询出设置完成的数据库采集任务和DB文件采集任务的任务ID并返回
 		return Dbo.queryResult("SELECT das.database_id " +
@@ -486,10 +465,11 @@ public class AgentListAction extends BaseAction {
 		//以上SQL中，通过当前用户ID进行关联查询，达到了数据权限的限制
 	}
 
-	@Method(desc = "根据sourceId查询出设置完成的非结构化文件采集任务的任务ID", logicStep = "" +
+	@Method(desc = "根据数据源ID查询出设置完成的非结构化文件采集任务的任务ID", logicStep = "" +
 			"1、根据数据源ID和用户ID查询出设置完成的非结构化文件采集任务的任务ID并返回")
-	@Param(name = "sourceId", desc = "data_source表主键, agent_info表外键", range = "不为空")
+	@Param(name = "sourceId", desc = "数据源表主键, agent信息表外键", range = "不为空")
 	@Return(desc = "查询结果集", range = "不会为null")
+	//获得设置完成的任务，用于发送
 	public Result getNonStructTaskBySourceId(long sourceId) {
 		//1、根据数据源ID和用户ID查询出设置完成的非结构化文件采集任务的任务ID并返回
 		return Dbo.queryResult("SELECT fcs.fcs_id " +
@@ -502,10 +482,11 @@ public class AgentListAction extends BaseAction {
 		//以上SQL中，通过当前用户ID进行关联查询，达到了数据权限的限制
 	}
 
-	@Method(desc = "根据sourceId查询出设置完成的半结构化文件采集任务的任务ID", logicStep = "" +
+	@Method(desc = "根据数据源ID查询出设置完成的半结构化文件采集任务的任务ID", logicStep = "" +
 			"1、根据数据源ID和用户ID查询出设置完成的半结构化文件采集任务的任务ID并返回")
-	@Param(name = "sourceId", desc = "data_source表主键, agent_info表外键", range = "不为空")
+	@Param(name = "sourceId", desc = "数据源表主键, agent信息表外键", range = "不为空")
 	@Return(desc = "查询结果集", range = "不会为null")
+	//获得设置完成的任务，用于发送
 	public Result getHalfStructTaskBySourceId(long sourceId) {
 		//1、根据数据源ID和用户ID查询出设置完成的半结构化文件采集任务的任务ID并返回
 		return Dbo.queryResult("SELECT fcs.odc_id " +
@@ -518,10 +499,11 @@ public class AgentListAction extends BaseAction {
 		//以上SQL中，通过当前用户ID进行关联查询，达到了数据权限的限制
 	}
 
-	@Method(desc = "根据sourceId查询出FTP采集任务的任务ID", logicStep = "" +
+	@Method(desc = "根据数据源ID查询出FTP采集任务的任务ID", logicStep = "" +
 			"1、根据数据源ID和用户ID查询出FTP采集任务的任务ID并返回")
-	@Param(name = "sourceId", desc = "data_source表主键, agent_info表外键", range = "不为空")
+	@Param(name = "sourceId", desc = "数据源表主键, agent信息表外键", range = "不为空")
 	@Return(desc = "查询结果集", range = "不会为null")
+	//获得设置完成的任务，用于发送
 	public Result getFTPTaskBySourceId(long sourceId) {
 		//1、根据数据源ID和用户ID查询出FTP采集任务的任务ID并返回
 		return Dbo.queryResult("SELECT fcs.ftp_id " +
@@ -540,13 +522,13 @@ public class AgentListAction extends BaseAction {
 			"3、调用方法获取日志,目前工具类不存在" +
 			"4、将日志信息和日志文件的路径封装成map" +
 			"5、返回map")
-	@Param(name = "agentId", desc = "agent_info表主键, ftp_collect, object_collect, file_collect_set, " +
-			"database_set表外键", range = "不为空")
-	@Param(name = "userId", desc = "用户ID，sys_user表主键, agent_down_info表外键", range = "不为空")
+	@Param(name = "agentId", desc = "agent信息表主键, ftp采集表, 半结构化文件采集表, 非结构化采集表, " +
+			"源系统数据库设置表外键", range = "不为空")
+	@Param(name = "userId", desc = "用户ID，用户表主键, agent下载信息表外键", range = "不为空")
 	@Param(name = "logType", desc = "日志类型(完整日志、错误日志)", range = "All : 完整日志, Wrong : 错误日志")
 	@Param(name = "readNum", desc = "查看日志条数", range = "不为空")
-	@Return(desc = "存放文件内容和日志文件路径的map集合", range = "存放文件内容的Entry,key为log，" +
-			"存放文件路径的Entry,key为filePath")
+	@Return(desc = "存放文件内容和日志文件路径的map集合", range = "获取文件内容，key为log，" +
+			"获取文件路径的,key为filePath")
 	private Map<String, String> getTaskLog(long agentId, long userId, String logType, int readNum){
 		//1、根据agent_id和user_id获取agent信息
 		Agent_down_info AgentDownInfo = Dbo.queryOneObject(

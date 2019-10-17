@@ -31,11 +31,11 @@ import java.util.List;
 @DocClass(desc = "配置源DB属性", author = "WangZhengcheng")
 public class DBConfStepAction extends BaseAction{
 
-	@Method(desc = "数据库直连采集，根据databaseId进行查询并在页面上回显数据源配置信息", logicStep = "" +
+	@Method(desc = "根据数据库采集任务ID进行查询并在页面上回显数据源配置信息", logicStep = "" +
 			"1、在数据库设置表(database_set)中，根据databaseId判断是否查询到数据，如果查询不到，抛异常给前端" +
 			"2、如果任务已经设置完成并发送成功，则不允许编辑" +
 			"3、在数据库设置表表中，关联采集作业分类表(collect_job_classify)，查询出当前database_id的所有信息并返回")
-	@Param(name = "databaseId", desc = "database_set表主键", range = "不为空")
+	@Param(name = "databaseId", desc = "源系统数据库设置表主键", range = "不为空")
 	@Return(desc = "数据源信息查询结果集", range = "不会为null")
 	public Result getDBConfInfo(long databaseId) {
 		//1、在数据库设置表(database_set)中，根据databaseId判断是否查询到数据，如果查询不到，抛异常给前端
@@ -62,15 +62,28 @@ public class DBConfStepAction extends BaseAction{
 
 	@Method(desc = "根据数据库类型和端口获得数据库连接url等信息", logicStep = "" +
 			"1、调用工具类方法直接获取数据并返回")
-	@Param(name = "dbType", desc = "数据库类型", range = "DatabaseType代码项code值")
-	@Return(desc = "数据库连接url",range = "不会为null")
+	@Param(name = "dbType", desc = "数据库类型", range = "DatabaseType代码项code值" +
+			"01：MYSQL" +
+			"02：Oracle9i以下(包括9i)" +
+			"03：Oracle10g以上(包括10g)" +
+			"04：SQLSERVER2000" +
+			"05：SQLSERVER2005" +
+			"06：DB2" +
+			"07：SybaseASE12.5及以上" +
+			"08：Informatic" +
+			"09：H2" +
+			"10：ApacheDerby" +
+			"11：Postgresql" +
+			"12：GBase" +
+			"13：TeraData")
+	@Return(desc = "数据库连接url属性信息",range = "不会为null",isBean = true)
 	public DBConnectionProp getJDBCDriver(String dbType) {
 		return ConnUtil.getConnURLProp(dbType);
 		//数据可访问权限处理方式
 		//不与数据库交互，无需限制访问权限
 	}
 
-	@Method(desc = "根据classifyId判断当前分类是否被使用，如果被使用，则不能编辑，否则，可以编辑", logicStep = "" +
+	@Method(desc = "根据分类Id判断当前分类是否被使用", logicStep = "" +
 			"1、在collect_job_classify表中查询传入的classifyId是否存在" +
 			"2、如果存在，在数据库中查询database_set表中是否有使用到当前classifyId的数据" +
 			"3、如果有，返回false，表示该分类被使用，不能编辑" +
@@ -100,7 +113,7 @@ public class DBConfStepAction extends BaseAction{
 		return val == 0;
 	}
 
-	@Method(desc = "根据sourceId获取分类信息", logicStep = "1、在数据库中查询相应的信息并返回")
+	@Method(desc = "根据数据源ID获取分类信息", logicStep = "1、在数据库中查询相应的信息并返回")
 	@Param(name = "sourceId", desc = "数据源表ID", range = "不可为空")
 	@Return(desc = "所有在该数据源下的分类信息的List集合", range = "不会为空")
 	public List<Collect_job_classify> getClassifyInfo(long sourceId){
@@ -122,7 +135,7 @@ public class DBConfStepAction extends BaseAction{
 			"4、分类编号不重复可以新增" +
 			"5、给新增数据设置ID" +
 			"6、完成新增")
-	@Param(name = "classify", desc = "Collect_job_classify类对象，保存着待保存的信息",
+	@Param(name = "classify", desc = "Collect_job_classify类对象",
 			range = "Collect_job_classify类对象",isBean = true)
 	@Param(name = "sourceId", desc = "数据源表ID", range = "不可为空")
 	public void saveClassifyInfo(Collect_job_classify classify, long sourceId){
@@ -155,7 +168,7 @@ public class DBConfStepAction extends BaseAction{
 			"3、不存在抛异常给前台" +
 			"4、存在则校验更新后的分类编号是否重复" +
 			"5、完成更新操作")
-	@Param(name = "classify", desc = "Collect_job_classify类对象，保存着待保存的信息",
+	@Param(name = "classify", desc = "Collect_job_classify类对象",
 			range = "Collect_job_classify类对象",isBean = true)
 	@Param(name = "sourceId", desc = "数据源表ID", range = "不可为空")
 	public void updateClassifyInfo(Collect_job_classify classify, long sourceId){
@@ -211,7 +224,8 @@ public class DBConfStepAction extends BaseAction{
 			"2、获取实体中的database_id" +
 			"3、如果存在，则更新信息" +
 			"4、如果不存在，则新增信息")
-	@Param(name = "databaseSet", desc = "待保存的Database_set实体对象", range = "不为空", isBean = true)
+	@Param(name = "databaseSet", desc = "Database_set实体对象", range = "不为空", isBean = true)
+	@Return(desc = "保存成功后返回当前采集任务ID", range = "不为空")
 	public long saveDbConf(Database_set databaseSet) {
 		//1、调用方法对传入数据的合法性进行校验
 		verifyDatabaseSetEntity(databaseSet);
@@ -259,8 +273,8 @@ public class DBConfStepAction extends BaseAction{
 			"1、调用工具类获取本次访问的agentserver端url" +
 			"2、给agent发消息，并获取agent响应" +
 			"3、如果测试连接不成功，则抛异常给前端，说明连接失败，如果成功，则不做任务处理")
-	@Param(name = "databaseSet", desc = "有agent_id, driver, url, username, password, dbtype信息的Database_set实体类对象"
-			, range = "Database_set实体类对象，不为空", isBean = true)
+	@Param(name = "databaseSet", desc = "Database_set实体类对象"
+			, range = "不为空", isBean = true)
 	public void testConnection(Database_set databaseSet) {
 		//1、调用工具类获取本次访问的agentserver端url
 		String url = AgentActionUtil.getUrl(databaseSet.getAgent_id(), getUserId(), AgentActionUtil.TESTCONNECTION);
@@ -275,7 +289,6 @@ public class DBConfStepAction extends BaseAction{
 				.post(url);
 
 		//3、如果测试连接不成功，则抛异常给前端，说明连接失败，如果成功，则不做任务处理
-		//FIXME JsonUtil.toObject()这个方法只能在测试用例中使用，已修复
 		ActionResult actionResult = JsonUtil.toObjectSafety(resVal.getBodyString(), ActionResult.class).
 				orElseThrow(() -> new BusinessException("应用管理端与" + url + "服务交互异常"));
 		if(!actionResult.isSuccess()){
@@ -290,8 +303,8 @@ public class DBConfStepAction extends BaseAction{
 			"3、校验classify_name不能为空" +
 			"4、校验user_id不能为空" +
 			"5、校验Agent_id不能为空")
-	@Param(name = "entity", desc = "存有classify_num、classify_name、user_id、Agent_id的Collect_job_classify实体类对象"
-			, range = "Collect_job_classify实体类对象，不为空")
+	@Param(name = "entity", desc = "Collect_job_classify实体类对象"
+			, range = "不为空")
 	@Param(name = "isAdd", desc = "新增/更新的标识位", range = "true为新增，false为更新")
 	private void verifyClassifyEntity(Collect_job_classify entity, boolean isAdd){
 		//1、对于新增操作，校验classify_id不能为空
@@ -324,7 +337,7 @@ public class DBConfStepAction extends BaseAction{
 			"提供明确的提示信息", logicStep = "" +
 			"1、校验database_type不能为空，并且取值范围必须在DatabaseType代码项中" +
 			"2、校验classify_id不能为空")
-	@Param(name = "databaseSet", desc = "存有待保存信息的Database_set实体类对象", range = "Database_set实体类对象，不为空")
+	@Param(name = "databaseSet", desc = "Database_set实体类对象", range = "不为空")
 	private void verifyDatabaseSetEntity(Database_set databaseSet){
 		//1、校验database_type不能为空，并且取值范围必须在DatabaseType代码项中
 		if(StringUtil.isBlank(databaseSet.getDatabase_type())){
