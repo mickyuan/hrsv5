@@ -7,6 +7,7 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
+import fd.ng.core.utils.FileNameUtils;
 import fd.ng.core.utils.NumberUtil;
 import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.JobStatusInfo;
@@ -19,7 +20,6 @@ import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.DeCompressionUtil;
 import hrds.commons.utils.MapDBHelper;
 import hrds.commons.utils.jsch.SftpOperate;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.beyoundsoft.mapdb.HTreeMap;
@@ -86,8 +86,8 @@ public class FtpCollectJobImpl implements JobInterface {
 		Long realtime_interval = ftp_collect.getRealtime_interval();
 		String ftpDir = ftp_collect.getFtp_dir();
 		String localPath = ftp_collect.getLocal_path();
-		ftpDir = FilenameUtils.normalize(ftpDir, true);
-		localPath = FilenameUtils.normalize(localPath, true);
+		ftpDir = FileNameUtils.normalize(ftpDir, true);
+		localPath = FileNameUtils.normalize(localPath, true);
 		String ftpRulePath = ftp_collect.getFtp_rule_path();
 		String fileSuffix = ftp_collect.getFile_suffix();
 		//2.开始执行ftp采集，根据当前任务id将线程放入存放线程的集合
