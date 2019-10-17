@@ -28,7 +28,7 @@ import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
 
-@DocClass(desc = "数据库采集应用管理端数据源Agent列表后台服务类", author = "WangZhengcheng")
+@DocClass(desc = "获取数据源Agent列表", author = "WangZhengcheng")
 public class AgentListAction extends BaseAction {
 
 	@Method(desc = "获取数据源Agent列表信息", logicStep = "1、获取用户ID并根据用户ID去数据库中查询数据源信息")
@@ -41,7 +41,7 @@ public class AgentListAction extends BaseAction {
 		//以上SQL中，通过当前用户ID进行关联查询，达到了数据权限的限制
 	}
 
-	@Method(desc = "根据sourceId、agentType、userId获取相应信息", logicStep = "" +
+	@Method(desc = "根据sourceId、agentType获取相应信息", logicStep = "" +
 			"1、获取用户ID并根据用户ID去数据库中查询数据源信息")
 	@Param(name = "sourceId", desc = "数据源ID,data_source表主键，agent_info表外键", range = "不为空")
 	@Param(name = "agentType", desc = "agent类型", range = "AgentType代码项的code值")

@@ -1,5 +1,6 @@
 package hrds.a.biz.syspara;
 
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -12,15 +13,8 @@ import hrds.commons.utils.key.PrimayKeyGener;
 
 import java.util.List;
 
-/**
- * <p>标    题: 海云数服 V5.0</p>
- * <p>描    述: 系统参数</p>
- * <p>版    权: Copyright (c) 2019</p>
- * <p>公    司: 博彦科技(上海)有限公司</p>
- * <p>@author : Mr.Lee</p>
- * <p>创建时间 : 2019-09-19 09:57</p>
- * <p>version: JDK 1.8</p>
- */
+
+@DocClass(desc = "系统参数",author = "Mr.Lee")
 public class SysParaAction extends BaseAction {
 
 	@Method(desc = "根据用户的模糊查询获取系统参数信息",
