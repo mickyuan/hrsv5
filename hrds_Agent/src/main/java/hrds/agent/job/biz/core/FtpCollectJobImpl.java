@@ -142,10 +142,16 @@ public class FtpCollectJobImpl implements JobInterface {
 						transferGet(ftpDir, currentLoadDir, sftp, ftp_collect.getIs_unzip(),
 								ftp_collect.getReduce_type(), fileSuffix, mapDBHelper, fileNameHTreeMap);
 					}
+				} catch (Exception e) {
+					log.error("创建或打开mapDB文件失败，ftp传输失败", e);
+					throw new BusinessException("创建或打开mapDB文件失败，ftp传输失败");
 				}
 			} catch (Exception e) {
 				log.error("FTP传输失败！！！", e);
-				throw new BusinessException("ftp传输失败！");
+				//TODO 运行失败需要给什么值，需要讨论
+				jobStatus.setRunStatus(-1);
+				//异常退出
+				break;
 			}
 			//7.判断实时读取间隔时间为0或为空时为防止循环死读，默认线程休眠1秒
 			if (realtime_interval == null || realtime_interval == 0) {
