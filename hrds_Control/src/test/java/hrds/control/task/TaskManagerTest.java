@@ -141,6 +141,10 @@ public class TaskManagerTest {
 					"DELETE FROM etl_job_hand_his WHERE etl_sys_cd = ?", syscode);
 			logger.info("清理etl_job_hand_his表{}条数据", num);
 
+			num = SqlOperator.execute(db,
+					"DELETE FROM etl_dependency WHERE etl_sys_cd = ?", syscode);
+			logger.info("清理etl_dependency表{}条数据", num);
+
 			SqlOperator.commitTransaction(db);
 		}
 	}
@@ -418,11 +422,15 @@ public class TaskManagerTest {
 	}
 
 	/**
-	 * 使用5个能执行成功、1个虚作业、1个能执行失败的作业，以此来测试调度系统核心逻辑的执行情况。
-	 * 测试结果期望：<br>
+	 * 使用5个能执行成功、1个虚作业、1个能执行失败、1个能执行成功且上一作业执行成功的依赖作业、
+	 * 1个能执行成功且上一作业执行失败的依赖作业、1个缺少执行资源且能执行成功的作业，
+	 * 以此来测试调度系统核心逻辑的执行情况。测试结果期望：<br>
 	 * 1、5个能执行成功的作业，在etl_job_disp_his表中的作业状态为完成（D）；<br>
 	 * 2、在非自动日切时，1个虚作业，在etl_job_cur表中的作业状态为完成（D）；<br>
-	 * 3、1个执行失败的作业，在etl_job_disp_his表中存在作业状态为错误（E）。
+	 * 3、1个执行失败的作业，在etl_job_disp_his表中存在作业状态为错误（E）；
+	 * 4、1个能执行成功且上一作业执行成功的依赖作业，在etl_job_disp_his表中的作业状态为完成（D）；<br>
+	 * 5、1个能执行成功且上一作业执行失败的依赖作业，在etl_job_disp_his表中的作业状态为完成（D）；<br>
+	 * 6、1个缺少执行资源且能执行成功的作业，在etl_job_disp_his表中的作业状态为完成（D）。
 	 * @author Tiger.Wang
 	 * @date 2019/10/11
 	 * @param taskManager
@@ -435,41 +443,89 @@ public class TaskManagerTest {
 		// 缺依赖作业的测试
 		try(DatabaseWrapper db = new DatabaseWrapper()) {
 
-			//错误的数据访问1、测试程序接受到执行错误的作业
-			String errorEtlJob = "99";
-			Etl_job_def errorEtlJobDef = new Etl_job_def();
-			errorEtlJobDef.setEtl_sys_cd(syscode);
-			errorEtlJobDef.setSub_sys_cd(syscode);
-			errorEtlJobDef.setEtl_job(errorEtlJob);
-			errorEtlJobDef.setJob_eff_flag(Job_Effective_Flag.YES.getCode());
-			errorEtlJobDef.setDisp_freq(Dispatch_Frequency.DAILY.getCode());
-			errorEtlJobDef.setDisp_type(Dispatch_Type.TPLUS0.getCode());
-			errorEtlJobDef.setCom_exe_num(0);
-			errorEtlJobDef.setJob_priority(100);
-			errorEtlJobDef.setJob_priority_curr(100);
-			errorEtlJobDef.setCurr_bath_date(currBathDate);
-			errorEtlJobDef.setPro_type(Pro_Type.SHELL.getCode());
-			errorEtlJobDef.setPro_name(FAUIL_SHELL);
-			errorEtlJobDef.setPro_dic(PRO_DIR);
-			errorEtlJobDef.setLog_dic(FileUtil.TEMP_DIR_NAME);
-			errorEtlJobDef.add(db);
+			//1个能执行成功且上一作业执行成功的依赖作业
+			String dependencySuccessEtlJob = "DependencySuccessEtlJob";
+			Etl_job_def etlJobDef = new Etl_job_def();
+			etlJobDef.setEtl_sys_cd(syscode);
+			etlJobDef.setSub_sys_cd(syscode);
+			etlJobDef.setEtl_job(dependencySuccessEtlJob);
+			etlJobDef.setJob_eff_flag(Job_Effective_Flag.YES.getCode());
+			etlJobDef.setDisp_freq(Dispatch_Frequency.DAILY.getCode());
+			etlJobDef.setDisp_type(Dispatch_Type.DEPENDENCE.getCode());
+			etlJobDef.setCom_exe_num(0);
+			etlJobDef.setJob_priority(100);
+			etlJobDef.setJob_priority_curr(100);
+			etlJobDef.setCurr_bath_date(currBathDate);
+			etlJobDef.setPro_type(Pro_Type.SHELL.getCode());
+			etlJobDef.setPro_name(SLEEP1S_SHELL);
+			etlJobDef.setPro_dic(PRO_DIR);
+			etlJobDef.setLog_dic(FileUtil.TEMP_DIR_NAME);
+			etlJobDef.add(db);
+
+			Etl_dependency etlDependency = new Etl_dependency();
+			etlDependency.setEtl_sys_cd(syscode);
+			etlDependency.setEtl_job(dependencySuccessEtlJob);
+			etlDependency.setPre_etl_job(etlJobDefs.get(0).getEtl_job());
+			etlDependency.setPre_etl_sys_cd(syscode);
+			etlDependency.setMain_serv_sync(Main_Server_Sync.YES.getCode());
+			etlDependency.setStatus(Status.TRUE.getCode());
+			etlDependency.add(db);
 
 			Etl_job_resource_rela etlJobResourceRela = new Etl_job_resource_rela();
 			etlJobResourceRela.setEtl_sys_cd(syscode);
-			etlJobResourceRela.setEtl_job(errorEtlJobDef.getEtl_job());
-			etlJobResourceRela.setResource_type(errorEtlJobDef.getEtl_job() + 100);
-			etlJobResourceRela.setResource_req(1);
+			etlJobResourceRela.setEtl_job(etlJobDef.getEtl_job());
+			etlJobResourceRela.setResource_type(etlJobDef.getEtl_job() + 100);
+			etlJobResourceRela.setResource_req(2);
 			etlJobResourceRela.add(db);
 
 			Etl_resource resource = new Etl_resource();
 			resource.setEtl_sys_cd(syscode);
 			resource.setResource_type(etlJobResourceRela.getResource_type());
 			resource.setMain_serv_sync(Main_Server_Sync.YES.getCode());
-			resource.setResource_max(10);
+			resource.setResource_max(3);
 			resource.add(db);
 
+			//错误的数据访问1、测试程序接受到执行错误的作业
+			String errorEtlJob = "ErrorEtlJob";
+			etlJobDef.setEtl_job(errorEtlJob);
+			etlJobDef.setDisp_type(Dispatch_Type.TPLUS0.getCode());
+			etlJobDef.setPro_name(FAUIL_SHELL);
+			etlJobDef.add(db);
+
+			etlJobResourceRela.setEtl_job(etlJobDef.getEtl_job());
+			etlJobResourceRela.setResource_type(etlJobDef.getEtl_job() + 100);
+			etlJobResourceRela.setResource_req(2);
+			etlJobResourceRela.add(db);
+
+			resource.setResource_type(etlJobResourceRela.getResource_type());
+			resource.setResource_max(3);
+			resource.add(db);
+
+			//1个能执行成功且上一作业执行失败的依赖作业
+			String dependencyFailureEtlJob = "dependencyFailureEtlJob";
+			etlJobDef.setEtl_job(dependencyFailureEtlJob);
+			etlJobDef.setDisp_type(Dispatch_Type.DEPENDENCE.getCode());
+			etlJobDef.setPro_name(SLEEP1S_SHELL);
+			etlJobDef.add(db);
+
+			etlDependency.setEtl_job(dependencyFailureEtlJob);
+			etlDependency.setPre_etl_job(errorEtlJob);
+			etlDependency.add(db);
+
+			etlJobResourceRela.setEtl_job(etlJobDef.getEtl_job());
+			etlJobResourceRela.add(db);
+
+			//1个缺少执行资源且能执行成功的作业
+			String absenceEtlJob = "AbsenceEtlJob";
+			etlJobDef.setEtl_job(absenceEtlJob);
+			etlJobDef.setDisp_type(Dispatch_Type.TPLUS0.getCode());
+			etlJobDef.add(db);
+
+			etlJobResourceRela.setEtl_job(etlJobDef.getEtl_job());
+			etlJobResourceRela.add(db);
+
 			//虚作业
-			String virtualEtlJob = "98";
+			String virtualEtlJob = "VirtualEtlJob";
 			Etl_job_def virtualEtlJobDef = new Etl_job_def();
 			virtualEtlJobDef.setEtl_sys_cd(syscode);
 			virtualEtlJobDef.setEtl_job(virtualEtlJob);
@@ -507,8 +563,8 @@ public class TaskManagerTest {
 				Etl_job_hand etlJobHand = new Etl_job_hand();
 				etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
 				etlJobHand.setEtl_sys_cd(syscode);
-				etlJobHand.setEtl_job(errorEtlJobDef.getEtl_job());
-				etlJobHand.setPro_para(syscode + "," + errorEtlJobDef.getEtl_job() + "," + currBathDate);
+				etlJobHand.setEtl_job(errorEtlJob);
+				etlJobHand.setPro_para(syscode + "," + errorEtlJob + "," + currBathDate);
 				etlJobHand.setEtl_hand_type("JJ");
 				etlJobHand.setHand_status(Meddle_status.TRUE.getCode());
 				etlJobHand.setMain_serv_sync(Main_Server_Sync.YES.getCode());
@@ -525,19 +581,20 @@ public class TaskManagerTest {
 			taskManager.publishReadyJob();
 
 			//1、5个能执行成功的作业在etl_job_disp_his表中的作业状态为完成（D）；
-			for (Etl_job_def etlJobDef : etlJobDefs) {
+			for (Etl_job_def etlJobDefInit : etlJobDefs) {
 
 				Etl_job_disp_his etlJobDispHis = SqlOperator.queryOneObject(db, Etl_job_disp_his.class,
 						"SELECT * FROM etl_job_disp_his WHERE etl_sys_cd = ? AND etl_job = ?",
-						etlJobDef.getEtl_sys_cd(), etlJobDef.getEtl_job())
+						etlJobDefInit.getEtl_sys_cd(), etlJobDefInit.getEtl_job())
 						.orElseThrow(() -> new AppSystemException("无法在etl_job_disp_his查询到数据："
-								+ etlJobDef.getEtl_job()));
+								+ etlJobDefInit.getEtl_job()));
 
-				assertEquals("测试当前作业已经结束时，作业是否为完成状态" + etlJobDef.getEtl_job(),
+				assertEquals("测试当前作业已经结束时，作业是否为完成状态" +
+								etlJobDefInit.getEtl_job(),
 						Job_Status.DONE.getCode(), etlJobDispHis.getJob_disp_status());
 			}
 
-			//TODO 对于自动日切的虚作业，将会无迹可寻！
+			//TODO 在自动日切情况下，etl_job_cur表会被清空
 			if(!taskManager.needDailyShift()) {
 				//2、在非自动日切时，1个虚作业在etl_job_cur表中的作业状态为完成（D）；
 				Etl_job_cur etlJobCur = SqlOperator.queryOneObject(db, Etl_job_cur.class,
@@ -554,13 +611,40 @@ public class TaskManagerTest {
 			//etl_job_cur表中的作业状态为完成（D）的原因是进行了干预。
 			long etlJobDispHisNum = SqlOperator.queryNumber(db, "SELECT COUNT(*) FROM " +
 							"etl_job_disp_his WHERE etl_sys_cd = ? AND etl_job = ? AND " +
-							"job_disp_status = ?", errorEtlJobDef.getEtl_sys_cd(),
-					errorEtlJobDef.getEtl_job(), Job_Status.ERROR.getCode())
+							"job_disp_status = ?", syscode, errorEtlJob, Job_Status.ERROR.getCode())
 					.orElseThrow(() -> new AppSystemException("etl_job_disp_his查询到数据：" +
-							errorEtlJobDef.getEtl_job()));
+							errorEtlJob));
 
 			assertTrue("测试当前作业已经结束时，作业状态是否为错误（E）"
-					+ errorEtlJobDef.getEtl_job(), etlJobDispHisNum > 0);
+					+ errorEtlJob, etlJobDispHisNum > 0);
+
+			//4、1个能执行成功且上一作业执行成功的依赖作业，在etl_job_disp_his表中的作业状态为完成（D）；
+			Etl_job_disp_his etlJobDispHis = SqlOperator.queryOneObject(db, Etl_job_disp_his.class,
+					"SELECT * FROM etl_job_disp_his WHERE etl_sys_cd = ? AND etl_job = ?",
+					syscode, dependencySuccessEtlJob).orElseThrow(() ->
+					new AppSystemException("无法在etl_job_disp_his查询到数据：" + dependencySuccessEtlJob));
+
+			assertEquals("测试当前作业已经结束时，作业是否为完成状态" + dependencySuccessEtlJob,
+					Job_Status.DONE.getCode(), etlJobDispHis.getJob_disp_status());
+
+			//5、1个能执行成功且上一作业执行失败的依赖作业，在etl_job_disp_his表中的作业状态为完成（D）；
+			//状态为完成的原因是，对失败的作业进行了跳过干预，否则该作业应该为挂起（P）
+			etlJobDispHis = SqlOperator.queryOneObject(db, Etl_job_disp_his.class,
+					"SELECT * FROM etl_job_disp_his WHERE etl_sys_cd = ? AND etl_job = ?",
+					syscode, dependencyFailureEtlJob).orElseThrow(() ->
+					new AppSystemException("无法在etl_job_disp_his查询到数据：" + dependencyFailureEtlJob));
+
+			assertEquals("测试当前作业已经结束时，作业是否为完成状态" + dependencyFailureEtlJob,
+					Job_Status.DONE.getCode(), etlJobDispHis.getJob_disp_status());
+
+			//6、1个缺少执行资源且能执行成功的作业，在etl_job_disp_his表中的作业状态为完成（D）。
+			etlJobDispHis = SqlOperator.queryOneObject(db, Etl_job_disp_his.class,
+					"SELECT * FROM etl_job_disp_his WHERE etl_sys_cd = ? AND etl_job = ?",
+					syscode, absenceEtlJob).orElseThrow(() ->
+					new AppSystemException("无法在etl_job_disp_his查询到数据：" + absenceEtlJob));
+
+			assertEquals("测试当前作业已经结束时，作业是否为完成状态" + absenceEtlJob,
+					Job_Status.DONE.getCode(), etlJobDispHis.getJob_disp_status());
 		}
 	}
 
