@@ -412,6 +412,7 @@ public class DataSourceAction extends BaseAction {
 	public Map<String, Object> searchDataSource(Long source_id) {
 		// 1.数据可访问权限处理方式，以下SQL关联sourceId与user_id检查
 		// 2.创建并封装数据源与部门关联信息以及部门信息集合
+		System.out.println("================================");
 		Map<String, Object> datasourceMap = new HashMap<>();
 		// 3.判断是新增还是更新，如果是新增，只查询部门信息，如果是更新，还需查询回显数据源数据
 		if (source_id != null) {
