@@ -381,7 +381,7 @@ public class DataSourceAction extends BaseAction {
 		// 2.验证传递的部门ID对应的部门信息是否存在
 		String[] depIds = dep_id.split(",");
 		for (String depId : depIds) {
-			if (Dbo.queryNumber("select count(*) from " + Department_info.class + " where dep_id=?",
+			if (Dbo.queryNumber("select count(*) from " + Department_info.TableName + " where dep_id=?",
 					Long.valueOf(depId)).orElseThrow(() -> new BusinessException("sql查询错误")) == 0) {
 				throw new BusinessException("该部门ID对应的部门不存在，请检查！");
 			}
@@ -412,6 +412,7 @@ public class DataSourceAction extends BaseAction {
 	public Map<String, Object> searchDataSource(Long source_id) {
 		// 1.数据可访问权限处理方式，以下SQL关联sourceId与user_id检查
 		// 2.创建并封装数据源与部门关联信息以及部门信息集合
+		System.out.println("================================");
 		Map<String, Object> datasourceMap = new HashMap<>();
 		// 3.判断是新增还是更新，如果是新增，只查询部门信息，如果是更新，还需查询回显数据源数据
 		if (source_id != null) {
@@ -482,10 +483,10 @@ public class DataSourceAction extends BaseAction {
 		// 1.数据可访问权限处理方式，此方法不需要权限验证，没有用户访问限制
 		// 2.查询数据采集用户信息并返回查询结果
 		// FIXME: 为什么用union all以及为什么用like,注释说明      已解决
-		//我们需要的是当前用户类型是数据采集（前半句sql查询结果）以及数据类型组包含数据采集的用户信息（后半句sql查询结果），所以用union all,
-		// 用户类型组中数据可能是多个用户类型组成的也可能是单个的，所以用like
+		//我们需要的是当前用户类型是数据采集（前半句sql查询结果）以及数据类型组包含数据采集的用户信息（后半句sql查询结果），所以用union,
+		// 用户类型组中数据可能是多个用户类型组成的也可能是单个的，所以用like,我们这里不需要重复数据所以不用union all
 		return Dbo.queryList(Sys_user.class, "select * from " + Sys_user.TableName + " where user_type=? " +
-						" and dep_id=? union all select * from " + Sys_user.TableName + " where " +
+						" and dep_id=? union select * from " + Sys_user.TableName + " where " +
 						" usertype_group like ?", UserType.CaiJiYongHu.getCode(), getUser().getDepId(),
 				"%" + UserType.CaiJiYongHu.getCode() + "%");
 	}

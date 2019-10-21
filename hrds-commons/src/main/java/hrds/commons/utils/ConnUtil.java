@@ -6,6 +6,7 @@ import hrds.commons.codes.DatabaseType;
 import hrds.commons.exception.BusinessException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.poi.ss.formula.functions.T;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -272,51 +273,81 @@ public class ConnUtil {
 	}
 
 	@SuppressWarnings("unchecked")
-	public static JSONObject getColumnByTable(String filename, String tablename) {
+	public static List<Map<String, String>> getColumnByTable(String filename, String tablename) {
 
-		JSONObject jsonTable = new JSONObject();
-		JSONArray jsonArray = new JSONArray();
+		List<Map<String, String>> columnList = new ArrayList<>();
 		Map<?, ?> retMap = loadStoreInfo(filename);
 		Map<String, Element> mapCol = (Map<String, Element>) retMap.get("mapCol");
 		Element colList = mapCol.get(tablename);
 		//当xml树中没有节点的时候跳出
 		if (null == colList) {
-			jsonTable.put(tablename, jsonArray);
-			return jsonTable;
+			return columnList;
 		}
 		List<?> acctTypes = XMLUtil.getChildElements(colList, "column");
-		for (int i = 0; i < acctTypes.size(); i++) {
-			Element type = (Element) acctTypes.get(i);
-			JSONObject json = new JSONObject();
-			json.put("colume_name", type.getAttribute("name"));
-			json.put("is_primary_key", "true".equals(type.getAttribute("primaryKey")) ? "0" : "1");
-			json.put("required", type.getAttribute("required"));
-			json.put("type", type.getAttribute("column_type"));
-			json.put("column_id", "");
-			json.put("size", type.getAttribute("length"));
-			json.put("autoIncrement", type.getAttribute("autoIncrement"));
-			json.put("colume_ch_name", type.getAttribute("column_cn_name"));
-			jsonArray.add(json);
+		for (Object object : acctTypes) {
+			Element type = (Element) object;
+			Map<String, String> hashMap = new HashMap<>();
+			hashMap.put("column_name", type.getAttribute("name"));
+			hashMap.put("is_primary_key", "true".equals(type.getAttribute("primaryKey")) ? "0" : "1");
+			hashMap.put("required", type.getAttribute("required"));
+			hashMap.put("type", type.getAttribute("column_type"));
+			hashMap.put("column_id", "");
+			hashMap.put("size", type.getAttribute("length"));
+			hashMap.put("autoIncrement", type.getAttribute("autoIncrement"));
+			hashMap.put("column_ch_name", type.getAttribute("column_cn_name"));
+			columnList.add(hashMap);
 		}
-		jsonTable.put(tablename, jsonArray);
-		return jsonTable;
+		return columnList;
 	}
 
 	/**
 	 * 获取表信息
 	 *
-	 * @param filename
+	 * @param filename 文件名
 	 */
-	public static JSONObject getTable(String filename) {
-
-		Map<?, ?> retMap = loadStoreInfo(filename);
-		return (JSONObject) retMap.get("jsonTable");
+	@SuppressWarnings("unchecked")
+	public static List<Object> getTable(String filename) {
+		Map<String, Object> retMap = loadStoreInfo(filename);
+		return (List<Object>) retMap.get("tableNameList");
 	}
 
-	private static Map<String, ?> loadStoreInfo(String filename) {
+	private static Map<String, Object> loadStoreInfo(String filename) {
+		List<?> tableList = getXmlToList(filename);
+		Map<String, Element> mapCol = new HashMap<String, Element>();
+		List<String> tableNameList = new ArrayList<>();
+		for (Object element : tableList) {
+			Element table = (Element) element;
+			String tableName = table.getAttribute("name");
+			mapCol.put(tableName, table);
+			tableNameList.add(tableName);
+		}
+		HashMap<String, Object> retMap = new HashMap<String, Object>();
+		retMap.put("tableNameList", tableNameList);
+		retMap.put("mapCol", mapCol);
+		return retMap;
+	}
 
-		File f = new File(filename);
+	private static List<Object> loadStoreInfoXML(String filename) {
+		List<?> tableList = getXmlToList(filename);
+		List<Object> tables = new ArrayList<>();
+		for (Object element : tableList) {
+			Element table = (Element) element;
+			String tableName = table.getAttribute("name");
+			String description = table.getAttribute("description");
+			String storage_type = table.getAttribute("storage_type");
+			Map<String, String> map = new HashMap<>();
+			map.put("tableName", tableName);
+			map.put("description", description);
+			map.put("storage_type", storage_type);
+			tables.add(map);
+		}
+		return tables;
+
+	}
+
+	private static List<?> getXmlToList(String filename) {
 		try {
+			File f = new File(filename);
 			DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 			dbf.setNamespaceAware(true);
 			DocumentBuilder db;
@@ -327,68 +358,13 @@ public class ConnUtil {
 			}
 			Document doc = db.parse(f);
 			Element root = (Element) doc.getElementsByTagName("database").item(0);
-			List<?> tableList = XMLUtil.getChildElements(root, "table");
-
-			Map<String, Element> mapCol = new HashMap<String, Element>();
-			JSONObject jsonTable = new JSONObject();
-
-			List<String> tableNameList = new ArrayList<String>();
-			for (int b = 0; b < tableList.size(); b++) {
-				Element table = (Element) tableList.get(b);
-				String tableName = table.getAttribute("name");
-
-				mapCol.put(tableName, table);
-				tableNameList.add(tableName);
-			}
-			jsonTable.put("tablename", tableNameList);
-			HashMap<String, Object> retMap = new HashMap<String, Object>();
-			retMap.put("jsonTable", jsonTable);
-			retMap.put("mapCol", mapCol);
-			return retMap;
+			return XMLUtil.getChildElements(root, "table");
 		} catch (Exception ex) {
 			throw new BusinessException("加载信息异常！ " + ex.getMessage());
 		}
 	}
 
-	private static JSONObject loadStoreInfoXML(String filename) {
-
-		File f = new File(filename);
-		try {
-			DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-			dbf.setNamespaceAware(true);
-			DocumentBuilder db;
-			try {
-				db = dbf.newDocumentBuilder();
-			} catch (ParserConfigurationException e) {
-				throw new BusinessException("创建文档管理器失败" + e.getMessage());
-			}
-			Document doc = db.parse(f);
-			Element root = (Element) doc.getElementsByTagName("database").item(0);
-			List<?> tableList = XMLUtil.getChildElements(root, "table");
-
-			JSONObject jsonTable = new JSONObject();
-			JSONArray jsonArray = new JSONArray();
-
-			for (int b = 0; b < tableList.size(); b++) {
-				Element table = (Element) tableList.get(b);
-				String tableName = table.getAttribute("name");
-				String description = table.getAttribute("description");
-				String storage_type = table.getAttribute("storage_type");
-
-				JSONObject json = new JSONObject();
-				json.put("tableName", tableName);
-				json.put("description", description);
-				json.put("storage_type", storage_type);
-				jsonArray.add(json);
-			}
-			jsonTable.put("tablename", jsonArray);
-			return jsonTable;
-		} catch (Exception ex) {
-			throw new BusinessException("加载信息异常！ " + ex.getMessage());
-		}
-	}
-
-	public static JSONObject getTableToXML(String filename) {
+	public static List<Object> getTableToXML(String filename) {
 
 		return loadStoreInfoXML(filename);
 	}
@@ -400,53 +376,4 @@ public class ConnUtil {
 		return uri.getHost();
 	}
 
-	public static void main(String[] args) throws Exception {
-
-		//
-		//				String aaa = "jdbc:teradata://hdp003/TMODE=TERA,CHARSET=ASCII,CLIENT_CHARSET=cp936,DATABASE=hrds,lob_support=off,DBS_PORT=31001";
-		//				String cleanURI = aaa.substring(5);
-		//				URI uri = URI.create(cleanURI);
-		//				System.out.println(uri.getHost());
-		System.out.println(
-				getJDBCUrlInfo("jdbc:teradata://10.71.4.56/TMODE=TERA,CHARSET=ASCII,CLIENT_CHARSET=cp936,DATABASE=hrds,lob_support=off,DBS_PORT=31001",
-						"13"));
-		//		JSONObject conn_url = getConn_url("13", "1233");
-		//		System.out.println(conn_url);
-
-		//Connection conn = ConnUtil.getConnection("com.gbase.jdbc.Driver", "172.168.0.24", "5258", "gbase", "root", "root", CodeDefine.GBase);
-		//Platform.readModelFromDatabase(conn, "d://ss.xml", CodeDefine.GBase);
-		/*JSONArray jsss = new JSONArray();
-		
-		JSONObject table = getTableToXML("D:\\c.xml");
-		JSONArray json = table.getJSONArray("tablename");
-		for(int i = 0; i < json.size(); i++) {
-			JSONObject jj = json.getJSONObject(i);
-			JSONObject ta = new JSONObject();
-			ta.put("table_name", jj.get("tableName"));
-			ta.put("table_cn_name", jj.get("description"));
-			ta.put("storage_type", jj.get("storage_type"));
-			if( !ObjectUtil.isEmpty(jj.getString("tableName")) ) {
-				System.out.println(jj.getString("tableName"));
-				JSONObject columnByTable = getColumnByTable("D:\\c.xml", jj.getString("tableName"));
-				JSONArray jsonArray = columnByTable.getJSONArray(jj.getString("tableName"));
-				JSONArray ccc = new JSONArray();
-				for(int j = 0; j < jsonArray.size(); j++) {
-					JSONObject c = jsonArray.getJSONObject(j);
-					JSONObject ccf = new JSONObject();
-					ccf.put("column_id", j);
-					ccf.put("column_name", c.getString("colume_name"));
-					ccf.put("column_cn_name", c.getString("colume_ch_name"));
-					ccf.put("column_type", c.getString("type"));
-					ccf.put("column_key", "N");
-					ccf.put("column_null", "Y");
-					ccf.put("column_remark", c.getString("required"));
-					ccc.add(ccf);
-				}
-				ta.put("columns", ccc);
-			}
-			jsss.add(ta);
-		}
-		System.out.println(jsss);*/
-
-	}
 }

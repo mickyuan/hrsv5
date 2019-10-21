@@ -16,10 +16,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.math.BigDecimal;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.OptionalLong;
+import java.util.*;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -292,7 +289,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			sysUser.setCreate_time(DateUtil.getSysTime());
 			sysUser.setRole_id("1001");
 			sysUser.setUser_name("csUser");
-			sysUser.setUser_password("111111");
+			sysUser.setUser_password("1");
 			sysUser.setUser_type(UserType.CaiJiYongHu.getCode());
 			sysUser.setUseris_admin("1");
 			sysUser.setUsertype_group("02,03,04,08");
@@ -546,27 +543,27 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			sourceFileAttribute.setIs_in_hbase(IsFlag.Fou.getCode());
 			sourceFileAttribute.setSeqencing(0L);
 			sourceFileAttribute.setCollect_type(CollectType.ShuJuKuCaiJi.getCode());
-			sourceFileAttribute.setOriginal_name("init-dhw");
+			sourceFileAttribute.setOriginal_name("文本文件");
 			sourceFileAttribute.setOriginal_update_date(DateUtil.getSysDate());
 			sourceFileAttribute.setOriginal_update_time(DateUtil.getSysTime());
-			sourceFileAttribute.setTable_name("init-dhw");
-			sourceFileAttribute.setHbase_name("init-dhw");
+			sourceFileAttribute.setTable_name("agentInfo");
+			sourceFileAttribute.setHbase_name("agent_info");
 			sourceFileAttribute.setMeta_info("init-dhw");
 			sourceFileAttribute.setStorage_date(DateUtil.getSysDate());
 			sourceFileAttribute.setStorage_time(DateUtil.getSysTime());
 			sourceFileAttribute.setFile_size(BigDecimal.valueOf(1024));
 			sourceFileAttribute.setFile_type(FileType.WenDang.getCode());
-			sourceFileAttribute.setFile_suffix("init-dhw");
-			sourceFileAttribute.setSource_path("init-dhw");
-			sourceFileAttribute.setFile_md5("init-dhw");
-			sourceFileAttribute.setFile_avro_path("init-dhw");
+			sourceFileAttribute.setFile_suffix("txt");
+			sourceFileAttribute.setSource_path("/home/hyshf/dhw");
+			sourceFileAttribute.setFile_md5("fsfsdfsfsf");
+			sourceFileAttribute.setFile_avro_path("/home/hyshf/dhw");
 			sourceFileAttribute.setFile_avro_block(1024L);
 			sourceFileAttribute.setIs_big_file(IsFlag.Fou.getCode());
 			sourceFileAttribute.setIs_cache(IsFlag.Fou.getCode());
-			sourceFileAttribute.setFolder_id(10L);
+			sourceFileAttribute.setFolder_id(FtpFolderId);
 			sourceFileAttribute.setAgent_id(DBAgentId);
 			sourceFileAttribute.setSource_id(SourceId);
-			sourceFileAttribute.setCollect_set_id(FcsId);
+			sourceFileAttribute.setCollect_set_id(DatabaseId);
 			sourceFileAttribute.add(db);
 			// 27.初始化 data_auth 数据
 			Data_auth dataAuth = new Data_auth();
@@ -589,9 +586,9 @@ public class DataSourceActionTest extends WebBaseTestCase {
 		// 29.模拟用户登录
 		String responseValue = new HttpClient()
 				.buildSession()
-				.addData("username", UserId)
-				.addData("password", "111111")
-				.post("http://127.0.0.1:8099/A/action/hrds/a/biz/login/login")
+				.addData("user_id", UserId)
+				.addData("password", "1")
+				.post("http://127.0.0.1:8088/A/action/hrds/a/biz/login/login")
 				.getBodyString();
 		Optional<ActionResult> ar = JsonUtil.toObjectSafety(responseValue, ActionResult.class);
 		assertThat("用户登录", ar.get().isSuccess(), is(true));
@@ -1077,8 +1074,8 @@ public class DataSourceActionTest extends WebBaseTestCase {
 	public void updateAuditSourceRelationDep() {
 		// 1.正确的数据访问1，更新数据源关系部门信息，数据全有效
 		String bodyString = new HttpClient()
-				.addData("sourceId", SourceId)
-				.addData("depIds", new String[]{"-3000000012"})
+				.addData("source_id", SourceId)
+				.addData("dep_id", "-3000000012")
 				.post(getActionUrl("updateAuditSourceRelationDep")).getBodyString();
 		Optional<ActionResult> ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		assertThat(ar.get().isSuccess(), is(true));
@@ -1094,15 +1091,15 @@ public class DataSourceActionTest extends WebBaseTestCase {
 		}
 		// 2.错误的数据访问1，更新数据源关系部门信息，source_id不存在
 		bodyString = new HttpClient()
-				.addData("sourceId", 111)
-				.addData("depIds", new String[]{"-3000000012"})
+				.addData("source_id", 111)
+				.addData("dep_id", "-3000000012")
 				.post(getActionUrl("updateAuditSourceRelationDep")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		assertThat(ar.get().isSuccess(), is(false));
 		// 3.错误的数据访问2，更新数据源关系部门信息，dep_id对应的部门不存在
 		bodyString = new HttpClient()
-				.addData("sourceId", SourceId)
-				.addData("depIds", new String[]{"-111"})
+				.addData("source_id", SourceId)
+				.addData("dep_id", "-111")
 				.post(getActionUrl("updateAuditSourceRelationDep")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		assertThat(ar.get().isSuccess(), is(false));
@@ -1119,8 +1116,8 @@ public class DataSourceActionTest extends WebBaseTestCase {
 	public void dataAudit() {
 		// 1.正确的数据访问1，数据申请审批，数据全有效
 		String bodyString = new HttpClient()
-				.addData("daId", DaId)
-				.addData("authType", AuthType.YiCi.getCode())
+				.addData("da_id", DaId)
+				.addData("auth_type", AuthType.YiCi.getCode())
 				.post(getActionUrl("dataAudit")).getBodyString();
 		Optional<ActionResult> ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		assertThat(ar.get().isSuccess(), is(true));
@@ -1133,15 +1130,15 @@ public class DataSourceActionTest extends WebBaseTestCase {
 		}
 		// 2.错误的数据访问1，数据申请审批，daId不存在
 		bodyString = new HttpClient()
-				.addData("daId", 111)
-				.addData("authType", AuthType.YiCi.getCode())
+				.addData("da_id", 111)
+				.addData("auth_type", AuthType.YiCi.getCode())
 				.post(getActionUrl("dataAudit")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		assertThat(ar.get().isSuccess(), is(false));
 		// 3.错误的数据访问2，数据申请审批，authType不存在
 		bodyString = new HttpClient()
-				.addData("daId", DaId)
-				.addData("authType", 6)
+				.addData("da_id", DaId)
+				.addData("auth_type", 6)
 				.post(getActionUrl("dataAudit")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		assertThat(ar.get().isSuccess(), is(false));
@@ -1163,7 +1160,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 					" data_auth where da_id = ?", DaId);
 			assertThat("删除操作前，data_source表中的确存在这样一条数据", optionalLong.
 					orElse(Long.MIN_VALUE), is(1L));
-			String bodyString = new HttpClient().addData("daId", DaId)
+			String bodyString = new HttpClient().addData("da_id", DaId)
 					.post(getActionUrl("deleteAudit")).getBodyString();
 			Optional<ActionResult> ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 			assertThat(ar.get().isSuccess(), is(true));
@@ -1180,7 +1177,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			assertThat("删除操作后，确认data_auth表这条数据已删除", optionalLong.
 					orElse(Long.MIN_VALUE), is(0L));
 			// 2.错误的数据访问1，数据申请审批，daId不存在
-			bodyString = new HttpClient().addData("daId", 111)
+			bodyString = new HttpClient().addData("da_id", 111)
 					.post(getActionUrl("deleteAudit")).getBodyString();
 			ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 			assertThat(ar.get().isSuccess(), is(false));
@@ -1207,7 +1204,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 				.addData("source_remark", "测试")
 				.addData("datasource_name", "dsName2")
 				.addData("datasource_number", "cs01")
-				.addData("depIds", new String[]{"-3000000011", "-3000000012"})
+				.addData("dep_id", "-3000000011,-3000000012")
 				.post(getActionUrl("saveDataSource")).getBodyString();
 		Optional<ActionResult> ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		assertThat(ar.get().isSuccess(), is(true));
@@ -1231,7 +1228,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 				.addData("source_remark", "测试")
 				.addData("datasource_name", "")
 				.addData("datasource_number", "cs02")
-				.addData("depIds", new String[]{"-3000000011"})
+				.addData("dep_id", "-3000000011")
 				.post(getActionUrl("saveDataSource")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		assertThat(ar.get().isSuccess(), is(false));
@@ -1240,7 +1237,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 				.addData("source_remark", "测试")
 				.addData("datasource_name", " ")
 				.addData("datasource_number", "cs03")
-				.addData("depIds", new String[]{"-3000000011"})
+				.addData("dep_id", "-3000000011")
 				.post(getActionUrl("saveDataSource")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		;
@@ -1250,7 +1247,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 				.addData("source_remark", "测试")
 				.addData("datasource_name", "dsName02")
 				.addData("datasource_number", "")
-				.addData("depIds", new String[]{"-3000000011"})
+				.addData("dep_id", "-3000000011")
 				.post(getActionUrl("saveDataSource")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		assertThat(ar.get().isSuccess(), is(false));
@@ -1259,7 +1256,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 				.addData("source_remark", "测试")
 				.addData("datasource_name", "dsName03")
 				.addData("datasource_number", " ")
-				.addData("depIds", new String[]{"-3000000011"})
+				.addData("dep_id", "-3000000011")
 				.post(getActionUrl("saveDataSource")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		assertThat(ar.get().isSuccess(), is(false));
@@ -1268,7 +1265,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 				.addData("source_remark", "测试")
 				.addData("datasource_name", "dsName04")
 				.addData("datasource_number", "cs100")
-				.addData("depIds", new String[]{"-3000000011"})
+				.addData("dep_id", "-3000000011")
 				.post(getActionUrl("saveDataSource")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		assertThat(ar.get().isSuccess(), is(false));
@@ -1277,7 +1274,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 				.addData("source_remark", "测试")
 				.addData("datasource_name", "dsName05")
 				.addData("datasource_number", "cs05")
-				.addData("depIds", "")
+				.addData("dep_id", "")
 				.post(getActionUrl("saveDataSource")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		assertThat(ar.get().isSuccess(), is(false));
@@ -1286,7 +1283,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 				.addData("source_remark", "测试")
 				.addData("datasource_name", "dsName06")
 				.addData("datasource_number", "cs06")
-				.addData("depIds", " ")
+				.addData("dep_id", " ")
 				.post(getActionUrl("saveDataSource")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		assertThat(ar.get().isSuccess(), is(false));
@@ -1295,7 +1292,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 				.addData("source_remark", "测试")
 				.addData("datasource_name", "dsName06")
 				.addData("datasource_number", "cs06")
-				.addData("depIds", new String[]{"-100"})
+				.addData("dep_id", new String[]{"-100"})
 				.post(getActionUrl("saveDataSource")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		assertThat(ar.get().isSuccess(), is(false));
@@ -1318,11 +1315,11 @@ public class DataSourceActionTest extends WebBaseTestCase {
 	public void updateDataSource() {
 		// 1.正确的数据访问1，更新数据源信息，所有数据都有效
 		String bodyString = new HttpClient()
-				.addData("sourceId", SourceId)
-				.addData("sourceRemark", "测试update")
-				.addData("datasourceName", "updateName")
-				.addData("datasourceNumber", "up01")
-				.addData("depIds", new String[]{"-3000000011"})
+				.addData("source_id", SourceId)
+				.addData("source_remark", "测试update")
+				.addData("datasource_name", "updateName")
+				.addData("datasource_number", "up01")
+				.addData("dep_id", "-3000000011")
 				.post(getActionUrl("updateDataSource")).getBodyString();
 		Optional<ActionResult> ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		assertThat(ar.get().isSuccess(), is(true));
@@ -1347,81 +1344,81 @@ public class DataSourceActionTest extends WebBaseTestCase {
 		}
 		// 2.错误的数据访问1，更新数据源信息，数据源名称不能为空
 		bodyString = new HttpClient()
-				.addData("sourceId", SourceId)
-				.addData("sourceRemark", "测试")
-				.addData("datasourceName", "")
-				.addData("datasourceNumber", "up02")
-				.addData("depIds", new String[]{"-1000000001"})
+				.addData("source_id", SourceId)
+				.addData("source_remark", "测试")
+				.addData("datasource_name", "")
+				.addData("datasource_number", "up02")
+				.addData("dep_id", "-1000000001")
 				.post(getActionUrl("updateDataSource")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		assertThat(ar.get().isSuccess(), is(false));
 		// 3.错误的数据访问2，更新数据源信息，数据源名称不能为空格
 		bodyString = new HttpClient()
-				.addData("sourceId", SourceId)
-				.addData("sourceRemark", "测试")
-				.addData("datasourceName", " ")
-				.addData("datasourceNumber", "up03")
-				.addData("depIds", new String[]{"-3000000011"})
+				.addData("source_id", SourceId)
+				.addData("source_remark", "测试")
+				.addData("datasource_name", " ")
+				.addData("datasource_number", "up03")
+				.addData("dep_id", "-3000000011")
 				.post(getActionUrl("updateDataSource")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		assertThat(ar.get().isSuccess(), is(false));
 		// 4.错误的数据访问3，更新数据源信息，数据源编号不能为空
 		bodyString = new HttpClient()
-				.addData("sourceId", SourceId)
-				.addData("sourceRemark", "测试")
-				.addData("datasourceName", "dsName02")
-				.addData("datasourceNumber", "")
-				.addData("depIds", new String[]{"-3000000011"})
+				.addData("source_id", SourceId)
+				.addData("source_remark", "测试")
+				.addData("datasource_name", "dsName02")
+				.addData("datasource_number", "")
+				.addData("dep_id", "-3000000011")
 				.post(getActionUrl("updateDataSource")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		assertThat(ar.get().isSuccess(), is(false));
 		// 5.错误的数据访问4，更新数据源信息，数据源编号不能为空格
 		bodyString = new HttpClient()
-				.addData("sourceId", SourceId)
-				.addData("sourceRemark", "测试")
-				.addData("datasourceName", "dsName03")
-				.addData("datasourceNumber", " ")
-				.addData("depIds", new String[]{"-3000000011"})
+				.addData("source_id", SourceId)
+				.addData("source_remark", "测试")
+				.addData("datasource_name", "dsName03")
+				.addData("datasource_number", " ")
+				.addData("dep_id", "-3000000011")
 				.post(getActionUrl("updateDataSource")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		assertThat(ar.get().isSuccess(), is(false));
 		// 6.错误的数据访问5，更新数据源信息，数据源编号长度不能超过四位
 		bodyString = new HttpClient()
-				.addData("sourceId", SourceId)
-				.addData("sourceRemark", "测试")
-				.addData("datasourceName", "dsName04")
-				.addData("datasourceNumber", "up100")
-				.addData("depIds", new String[]{"-3000000011"})
+				.addData("source_id", SourceId)
+				.addData("source_remark", "测试")
+				.addData("datasource_name", "dsName04")
+				.addData("datasource_number", "up100")
+				.addData("dep_id", "-3000000011")
 				.post(getActionUrl("updateDataSource")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		assertThat(ar.get().isSuccess(), is(false));
 		// 7.错误的数据访问6，更新数据源信息，部门id不能为空,创建部门表department_info时通过主键自动生成
 		bodyString = new HttpClient()
-				.addData("sourceId", SourceId)
-				.addData("sourceRemark", "测试")
-				.addData("datasourceName", "dsName05")
-				.addData("datasourceNumber", "up05")
-				.addData("depIds", "")
+				.addData("source_id", SourceId)
+				.addData("source_remark", "测试")
+				.addData("datasource_name", "dsName05")
+				.addData("datasource_number", "up05")
+				.addData("dep_id", "")
 				.post(getActionUrl("updateDataSource")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		assertThat(ar.get().isSuccess(), is(false));
 		// 8.错误的数据访问7，更新数据源信息，部门id不能为空格，创建部门表department_info时通过主键自动生成
 		bodyString = new HttpClient()
-				.addData("sourceId", SourceId)
-				.addData("sourceRemark", "测试")
-				.addData("datasourceName", "dsName06")
-				.addData("datasourceNumber", "up06")
-				.addData("depIds", " ")
+				.addData("source_id", SourceId)
+				.addData("source_remark", "测试")
+				.addData("datasource_name", "dsName06")
+				.addData("datasource_number", "up06")
+				.addData("dep_id", " ")
 				.post(getActionUrl("updateDataSource")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		assertThat(ar.get().isSuccess(), is(false));
 		// 9.错误的数据访问8，更新数据源信息，部门id对应的部门不存在
 		bodyString = new HttpClient()
-				.addData("sourceId", SourceId)
-				.addData("sourceRemark", "测试")
-				.addData("datasourceName", "dsName06")
-				.addData("datasourceNumber", "up06")
-				.addData("depIds", new String[]{"-101"})
+				.addData("source_id", SourceId)
+				.addData("source_remark", "测试")
+				.addData("datasource_name", "dsName06")
+				.addData("datasource_number", "up06")
+				.addData("dep_id", "-101")
 				.post(getActionUrl("updateDataSource")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		assertThat(ar.get().isSuccess(), is(false));
@@ -1438,13 +1435,12 @@ public class DataSourceActionTest extends WebBaseTestCase {
 	@Test
 	public void searchDataSource() {
 		// 1.正确的数据访问1，查询数据源信息,正常返回数据
-		String bodyString = new HttpClient().addData("sourceId", SourceId)
+		String bodyString = new HttpClient().addData("source_id", SourceId)
 				.post(getActionUrl("searchDataSource")).getBodyString();
 		Optional<ActionResult> ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		assertThat(ar.get().isSuccess(), is(true));
 		// 获取返回结果
-		List<Map<String, Object>> dataResource = (List<Map<String, Object>>) ar.get().getDataForMap()
-				.get("dataResource");
+		List<Map<String, Object>> dataResource = (List<Map<String, Object>>) ar.get().getDataForMap();
 		// 循环验证查询结果的正确性
 		for (int i = 0; i < dataResource.size(); i++) {
 			assertThat(String.valueOf(SourceId), is(dataResource.get(i).get("source_id").toString()));
@@ -1473,7 +1469,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 		assertThat(dataResource.isEmpty(), is(false));
 
 		// 3.错误的数据访问1，查询数据源信息，此数据源下没有数据
-		bodyString = new HttpClient().addData("sourceId", -1000000009L)
+		bodyString = new HttpClient().addData("source_id", -1000000009L)
 				.post(getActionUrl("searchDataSource")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		assertThat(ar.get().isSuccess(), is(true));
@@ -1517,7 +1513,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			assertThat("删除操作前，data_source表中的确存在这样一条数据", optionalLong.
 					orElse(Long.MIN_VALUE), is(1L));
 			String bodyString = new HttpClient()
-					.addData("sourceId", SourceId2)
+					.addData("source_id", SourceId2)
 					.post(getActionUrl("deleteDataSource"))
 					.getBodyString();
 			Optional<ActionResult> ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
@@ -1530,7 +1526,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 
 			// 2.错误的数据访问1，删除数据源信息，数据源下有agent，不能删除
 			bodyString = new HttpClient()
-					.addData("sourceId", SourceId)
+					.addData("source_id", SourceId)
 					.post(getActionUrl("deleteDataSource"))
 					.getBodyString();
 			ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
@@ -1538,7 +1534,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 
 			// 3.错误的数据访问2，删除数据源信息，此数据源下没有数据
 			bodyString = new HttpClient()
-					.addData("sourceId", -1000000009L)
+					.addData("source_id", -1000000009L)
 					.post(getActionUrl("deleteDataSource"))
 					.getBodyString();
 			ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
@@ -1556,13 +1552,13 @@ public class DataSourceActionTest extends WebBaseTestCase {
 	public void downloadFile() {
 		// 1.错误的数据访问1，数据源下载,source_id存在
 		String bodyString = new HttpClient()
-				.addData("sourceId", SourceId)
+				.addData("source_id", SourceId)
 				.post(getActionUrl("downloadFile"))
 				.getBodyString();
 		assertThat(bodyString, is(notNullValue()));
 		// 2.错误的数据访问1，数据源下载,source_id不存在
 		bodyString = new HttpClient()
-				.addData("sourceId", -100L)
+				.addData("source_id", -100L)
 				.post(getActionUrl("downloadFile"))
 				.getBodyString();
 		assertThat(bodyString, is(""));
@@ -1581,9 +1577,9 @@ public class DataSourceActionTest extends WebBaseTestCase {
 	public void uploadFile() {
 		// 1.正确的数据访问1，导入数据源，数据全有效
 		String bodyString = new HttpClient()
-				.addData("agentIp", "10.71.4.51")
-				.addData("agentPort", "4321")
-				.addData("userCollectId", UserId)
+				.addData("agent_ip", "10.71.4.51")
+				.addData("agent_port", "4321")
+				.addData("user_id", UserId)
 				.addData("file", "C:\\Users\\mine\\Desktop\\1000028765.hrds")
 				.post(getActionUrl("uploadFile"))
 				.getBodyString();
@@ -1660,9 +1656,9 @@ public class DataSourceActionTest extends WebBaseTestCase {
 		}
 		// 2.错误的数据访问1，导入数据源，agentIp不合法
 		bodyString = new HttpClient()
-				.addData("agentIp", "10.71.4.666")
-				.addData("agentPort", "4321")
-				.addData("userCollectId", UserId)
+				.addData("agent_ip", "10.71.4.666")
+				.addData("agent_port", "4321")
+				.addData("user_id", UserId)
 				.addData("file", "C:\\Users\\mine\\Desktop\\1000028765.hrds")
 				.post(getActionUrl("uploadFile"))
 				.getBodyString();
@@ -1670,9 +1666,9 @@ public class DataSourceActionTest extends WebBaseTestCase {
 		assertThat(ar.get().isSuccess(), is(false));
 		// 3.错误的数据访问2，导入数据源，agentPort不合法
 		bodyString = new HttpClient()
-				.addData("agentIp", "10.71.4.51")
-				.addData("agentPort", "666666")
-				.addData("userCollectId", UserId)
+				.addData("agent_ip", "10.71.4.51")
+				.addData("agent_port", "666666")
+				.addData("user_id", UserId)
 				.addData("file", "C:\\Users\\mine\\Desktop\\1000028765.hrds")
 				.post(getActionUrl("uploadFile"))
 				.getBodyString();
@@ -1680,9 +1676,9 @@ public class DataSourceActionTest extends WebBaseTestCase {
 		assertThat(ar.get().isSuccess(), is(false));
 		// 4.错误的数据访问3，导入数据源，userCollectId为空
 		bodyString = new HttpClient()
-				.addData("agentIp", "10.71.4.51")
-				.addData("agentPort", "4321")
-				.addData("userCollectId", "")
+				.addData("agent_ip", "10.71.4.51")
+				.addData("agent_port", "4321")
+				.addData("user_id", "")
 				.addData("file", "C:\\Users\\mine\\Desktop\\1000028765.hrds")
 				.post(getActionUrl("uploadFile"))
 				.getBodyString();
@@ -1690,9 +1686,9 @@ public class DataSourceActionTest extends WebBaseTestCase {
 		assertThat(ar.get().isSuccess(), is(false));
 		// 5.错误的数据访问4，导入数据源，file为空
 		bodyString = new HttpClient()
-				.addData("agentIp", "10.71.4.51")
-				.addData("agentPort", "4321")
-				.addData("userCollectId", UserId)
+				.addData("agent_ip", "10.71.4.51")
+				.addData("agent_port", "4321")
+				.addData("user_id", UserId)
 				.addData("file", "")
 				.post(getActionUrl("uploadFile"))
 				.getBodyString();

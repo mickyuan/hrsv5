@@ -308,26 +308,33 @@ public class Platform {
 		return column_type;
 	}
 
-	public static JSONObject getSqlInfo(String sql, Connection conn) throws SQLException {
+	public static List<Map<String, String>> getSqlInfo(String sql, Connection conn) {
 
 		Statement statement = null;
 		ResultSet executeQuery = null;
 		try {
-			JSONObject json = new JSONObject(true);
+			List<Map<String, String>> columnList = new ArrayList<>();
 			statement = conn.createStatement();
 			executeQuery = statement.executeQuery(sql);
 			ResultSetMetaData metaData = executeQuery.getMetaData();
 			for (int i = 1; i <= metaData.getColumnCount(); i++) {
-				String columnName = metaData.getColumnName(i);
-				json.put(columnName, getColType(metaData.getColumnType(i), metaData.getColumnTypeName(i), metaData.getPrecision(i), metaData.getScale(i)));
+				Map<String, String> hashMap = new HashMap<>();
+				hashMap.put("column_name", metaData.getColumnName(i));
+				hashMap.put("type", getColType(metaData.getColumnType(i), metaData.getColumnTypeName(i), metaData.getPrecision(i), metaData.getScale(i)));
+				columnList.add(hashMap);
 			}
-			return json;
+			return columnList;
+		} catch (SQLException e) {
+			throw new BusinessException("sql错误" + e.getMessage());
 		} finally {
-			if (executeQuery != null) {
-				executeQuery.close();
+			try {
+				if (executeQuery != null)
+					executeQuery.close();
+				if (statement != null)
+					statement.close();
+			} catch (SQLException e) {
+				logger.error("关闭statement错误", e);
 			}
-			statement.close();
-			conn.close();
 		}
 	}
 

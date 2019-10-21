@@ -4,8 +4,8 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
+import fd.ng.core.utils.FileNameUtils;
 import hrds.commons.exception.BusinessException;
-import org.apache.commons.io.FilenameUtils;
 
 @DocClass(desc = "路径处理工具类", author = "BY-HLL", createdate = "2019/10/17 0017")
 public class PathUtil {
@@ -16,7 +16,7 @@ public class PathUtil {
 	@Param(name = "localPath", desc = "本地文件路径", range = "本地文件的全路径")
 	@Return(desc = "HDFSPath", range = "HDFS的数据存储路径")
 	public static String convertLocalPathToHDFSPath(String localPath) {
-		localPath = FilenameUtils.normalize(localPath).replace("\\", "/");
+		localPath = FileNameUtils.normalize(localPath).replace("\\", "/");
 		String HDFSPath;
 		try {
 			HDFSPath = localPath.substring(localPath.lastIndexOf(PREFIX));

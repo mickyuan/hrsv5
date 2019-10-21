@@ -1,11 +1,13 @@
 package hrds.agent.job.biz.core;
 
 import com.jcraft.jsch.ChannelSftp.LsEntry;
+import com.jcraft.jsch.SftpException;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
+import fd.ng.core.utils.FileNameUtils;
 import fd.ng.core.utils.NumberUtil;
 import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.JobStatusInfo;
@@ -23,7 +25,6 @@ import org.apache.commons.logging.LogFactory;
 import org.beyoundsoft.mapdb.HTreeMap;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
@@ -36,8 +37,6 @@ public class FtpCollectJobImpl implements JobInterface {
 	private static final Log log = LogFactory.getLog(FtpCollectJobImpl.class);
 	//存放每次启动任务时候的线程的集合
 	private static volatile ConcurrentMap<String, Thread> mapJob = new ConcurrentHashMap<>();
-	//ftpId的字符串
-	private volatile String ftpId = "";
 	//当前程序运行的目录
 	private static final String USER_DIR = System.getProperty("user.dir");
 	//是否实时读取，默认为true，保证程序最少进一次循环
@@ -76,7 +75,7 @@ public class FtpCollectJobImpl implements JobInterface {
 	public JobStatusInfo runJob() {
 		//数据可访问权限处理方式：此方法不需要对数据可访问权限处理
 		//1.获取ftp_id根据ftp_id判断任务是否是重复发送，实时的仍然在继续运行，是则中断上一个实时线程
-		this.ftpId = ftp_collect.getFtp_id().toString();
+		String ftpId = ftp_collect.getFtp_id().toString();
 		Thread thread = mapJob.get(ftpId);
 		if (thread != null && !thread.isInterrupted()) {
 			log.info("重复发送，中断上一个实时线程");
@@ -87,6 +86,8 @@ public class FtpCollectJobImpl implements JobInterface {
 		Long realtime_interval = ftp_collect.getRealtime_interval();
 		String ftpDir = ftp_collect.getFtp_dir();
 		String localPath = ftp_collect.getLocal_path();
+		ftpDir = FileNameUtils.normalize(ftpDir, true);
+		localPath = FileNameUtils.normalize(localPath, true);
 		String ftpRulePath = ftp_collect.getFtp_rule_path();
 		String fileSuffix = ftp_collect.getFile_suffix();
 		//2.开始执行ftp采集，根据当前任务id将线程放入存放线程的集合
@@ -104,7 +105,13 @@ public class FtpCollectJobImpl implements JobInterface {
 				//5.根据下级目录类型定义ftp拉取或者推送的下级目录
 				String ftpFolderName;
 				if (ftpRulePath.equals(FtpRule.LiuShuiHao.getCode())) {
-					ftpFolderName = currentDateDir(localPath);
+					if (IsFlag.Shi.getCode().equals(ftp_collect.getFtp_model())) {
+						//推模式，获取远程目录下文件夹流水号
+						ftpFolderName = remoteNumberDir(ftpDir, sftp);
+					} else {
+						//拉模式，获取本地目录下文件夹流水号
+						ftpFolderName = localNumberDir(localPath);
+					}
 				} else if (ftpRulePath.equals(FtpRule.GuDingMuLu.getCode())) {
 					ftpFolderName = ftp_collect.getChild_file_path();
 				} else if (ftpRulePath.equals(FtpRule.AnShiJian.getCode())) {
@@ -113,22 +120,38 @@ public class FtpCollectJobImpl implements JobInterface {
 					throw new BusinessException("FTP rule 不存在：" + ftpRulePath);
 				}
 				//6.判断是推送还是拉取，根据不同的模式建立目录，并推送或拉取文件
-				if (IsFlag.Shi.getCode().equals(ftp_collect.getFtp_model())) {
-					String currentFTPDir = ftpDir + "/" + ftpFolderName;
-					sftp.scpMkdir(currentFTPDir);
-					transferPut(currentFTPDir, localPath, sftp, fileSuffix);
-				} else {
-					String currentLoadDir = localPath + "/" + ftpFolderName;
-					boolean flag = validateDirectory(currentLoadDir);//验证并保证目录文件是存在的
-					if (!flag) {
-						throw new BusinessException("创建文件夹失败");
+				//根据ftpId获取MapDB操作类的对象
+				try (MapDBHelper mapDBHelper = new MapDBHelper(USER_DIR + File.separator + ftpId,
+						ftpId + ".db")) {
+					HTreeMap<String, String> fileNameHTreeMap = mapDBHelper.htMap(ftpId, 24 * 60);
+					if (IsFlag.Shi.getCode().equals(ftp_collect.getFtp_model())) {
+						String currentFTPDir;
+						if (ftpDir.endsWith("/")) {
+							currentFTPDir = ftpDir + ftpFolderName;
+						} else {
+							currentFTPDir = ftpDir + "/" + ftpFolderName;
+						}
+						transferPut(currentFTPDir, localPath, sftp, fileSuffix, mapDBHelper, fileNameHTreeMap);
+					} else {
+						String currentLoadDir;
+						if (localPath.endsWith("/")) {
+							currentLoadDir = localPath + ftpFolderName;
+						} else {
+							currentLoadDir = localPath + "/" + ftpFolderName;
+						}
+						transferGet(ftpDir, currentLoadDir, sftp, ftp_collect.getIs_unzip(),
+								ftp_collect.getReduce_type(), fileSuffix, mapDBHelper, fileNameHTreeMap);
 					}
-					transferGet(ftpDir, currentLoadDir, sftp, ftp_collect.getIs_unzip()
-							, ftp_collect.getReduce_type(), fileSuffix);
+				} catch (Exception e) {
+					log.error("创建或打开mapDB文件失败，ftp传输失败", e);
+					throw new BusinessException("创建或打开mapDB文件失败，ftp传输失败");
 				}
 			} catch (Exception e) {
 				log.error("FTP传输失败！！！", e);
-				throw new BusinessException("ftp传输失败！");
+				//TODO 运行失败需要给什么值，需要讨论
+				jobStatus.setRunStatus(-1);
+				//异常退出
+				break;
 			}
 			//7.判断实时读取间隔时间为0或为空时为防止循环死读，默认线程休眠1秒
 			if (realtime_interval == null || realtime_interval == 0) {
@@ -190,108 +213,88 @@ public class FtpCollectJobImpl implements JobInterface {
 		}
 	}
 
-	@Method(desc = "通过ftp获取远程目录下的文件，根据MapDB中存储的已经被传输的文件过滤出需要被传输到本地目录的文件",
-			logicStep = "1.根据文件后缀拉取远程目录下的文件" +
-					"2.遍历拉取到的远程文件对象" +
-					"3.判断是文件夹，递归调用本方法" +
-					"4.不是文件夹，判断文件有没有被拉取过，没有拉取过放到需要被拉取的文件对象的集合")
-	@Param(name = "ftpDir", desc = "待传输的文件所在远程机器的目录", range = "不能为空")
-	@Param(name = "fileSuffix", desc = "文件后缀名", range = "可以为空")
-	@Param(name = "sftp", desc = "sftp操作类", range = "不能为空")
-	@Param(name = "fileNameHTreeMap", desc = "已经传输过的文件的键值对集合", range = "可以为空对象")
-	@Param(name = "fileToBeTransfer", desc = "需要被拉取的远程的文件的集合", range = "可以为空对象")
-	private void getFileNameToBeTransfer(String ftpDir, String fileSuffix, SftpOperate sftp, HTreeMap<String, String>
-			fileNameHTreeMap, List<LsEntry> fileToBeTransfer) {
-		//数据可访问权限处理方式：此方法不需要对数据可访问权限处理
-		try {
-			Vector<LsEntry> listDir;
-			//1.根据文件后缀拉取远程目录下的文件
-			if (StringUtil.isBlank(fileSuffix)) {
-				//目录下文件全部获取
-				listDir = sftp.listDir(ftpDir);
-			} else {
-				//以fileSuffix为后缀的文件才获取回来
-				listDir = sftp.listDir(ftpDir, "*." + fileSuffix);
-			}
-			//2.遍历拉取到的远程文件对象
-			for (LsEntry lsEntry : listDir) {
-				//3.判断是文件夹，递归调用本方法
-				if (lsEntry.getAttrs().isDir()) {
-					if (ftpDir.endsWith("/")) {
-						ftpDir = ftpDir + lsEntry.getFilename();
-					} else {
-						ftpDir = ftpDir + "/" + lsEntry.getFilename();
-					}
-					getFileNameToBeTransfer(ftpDir, fileSuffix, sftp, fileNameHTreeMap, fileToBeTransfer);
-				} else {
-					//4.不是文件夹，判断文件有没有被拉取过，没有拉取过放到需要被拉取的文件对象的集合
-					if (!fileNameHTreeMap.containsKey(lsEntry.getFilename())
-							|| (fileNameHTreeMap.containsKey(lsEntry.getFilename())
-							&& !fileNameHTreeMap.get(lsEntry.getFilename())
-							.equals(lsEntry.getAttrs().getMtimeString()))) {
-						fileToBeTransfer.add(lsEntry);
-					}
-				}
-			}
-		} catch (Exception e) {
-			log.error("远程拉取文件失败", e);
-			throw new BusinessException("远程拉取文件失败");
-		}
-	}
-
 	@Method(desc = "将远程目录下的指定后缀名下的文件ftp拉取到本地的机器目录",
-			logicStep = "1.根据ftpId获取MapDB操作类的对象" +
-					"2.通过ftp获取远程目录下的文件，根据MapDB中存储的已经被传输的文件过滤出需要被传输到本地目录的文件" +
-					"3.拉取文件到本地" +
-					"4.判断是否需要解压，需要解压则根据对应的压缩方式将文件解压到本地" +
-					"5.将拉取成功的文件放到MapDB" +
-					"6.提交MapDB")
+			logicStep = "1.验证本地需要传输的目录文件是否存在，不存在则创建" +
+					"2.根据文件后缀拉取远程目录下的文件" +
+					"3.遍历拉取到的远程文件对象" +
+					"4.判断是文件夹，递归调用本方法" +
+					"5.不是文件夹，判断文件有没有被拉取过，没有拉取过则调用sftp方法拉取文件" +
+					"6.判断是否需要解压，需要解压则根据对应的压缩方式将文件解压到本地" +
+					"7.将拉取成功的文件放到MapDB，提交mapDB")
 	@Param(name = "ftpDir", desc = "待传输的文件所在远程机器的目录", range = "不能为空")
 	@Param(name = "destDir", desc = "需要拉取到的本地目录", range = "不能为空")
 	@Param(name = "sftp", desc = "sftp操作类", range = "不能为空")
 	@Param(name = "isUnzip", desc = "是否需要解压缩", range = "不能为空")
 	@Param(name = "deCompressWay", desc = "解压缩的方式", range = "可以为空")
 	@Param(name = "fileSuffix", desc = "文件后缀名", range = "可以为空")
-	private void transferGet(String ftpDir, String destDir, SftpOperate sftp, String isUnzip,
-	                         String deCompressWay, String fileSuffix) {
-		//数据可访问权限处理方式：此方法不需要对数据可访问权限处理
-		//1.根据ftpId获取MapDB操作类的对象
-		try (MapDBHelper mapDBHelper = new MapDBHelper(USER_DIR + File.separator
-				+ this.ftpId, this.ftpId + ".db")) {
-			HTreeMap<String, String> fileNameHTreeMap = mapDBHelper.htMap(this.ftpId, 24 * 60);
-			//2.通过ftp获取远程目录下的文件，根据MapDB中存储的已经被传输的文件过滤出需要被传输到本地目录的文件
-			//需要被传输的文件
-			List<LsEntry> fileNameToBeTransfer = new ArrayList<>();
-			getFileNameToBeTransfer(destDir, fileSuffix, sftp, fileNameHTreeMap, fileNameToBeTransfer);
-			for (LsEntry lsEntry : fileNameToBeTransfer) {
-				String fileName = lsEntry.getFilename();
-				String ftpFile = ftpDir + "/" + fileName;
-				//3.拉取文件到本地
-				sftp.transferFile(ftpFile, destDir);
-				String destFilePath = destDir + "/" + fileName;
-				boolean isSuccessful;
-				//4.判断是否需要解压，需要解压则根据对应的压缩方式将文件解压到本地
-				if (IsFlag.Shi.getCode().equals(isUnzip)) {
-					//将文件根据对应的解压缩方式进行解压
-					isSuccessful = DeCompressionUtil.deCompression(destFilePath, deCompressWay);
-					File file = new File(destFilePath);
-					if (file.exists()) {
-						if (!file.delete()) {
-							throw new BusinessException("删除文件失败");
+	@Param(name = "mapDBHelper", desc = "mapDB数据库操作类", range = "不可为空")
+	@Param(name = "fileNameHTreeMap", desc = "mapDB数据库表的操作类", range = "不可为空")
+	private void transferGet(String ftpDir, String destDir, SftpOperate sftp, String isUnzip, String deCompressWay,
+	                         String fileSuffix, MapDBHelper mapDBHelper, HTreeMap<String, String> fileNameHTreeMap) {
+		//1.验证本地需要传输的目录文件是否存在，不存在则创建
+		boolean flag = validateDirectory(destDir);
+		if (!flag) {
+			throw new BusinessException("创建文件夹失败");
+		}
+		try {
+			Vector<LsEntry> listDir;
+			//2.根据文件后缀拉取远程目录下的文件
+			if (StringUtil.isEmpty(fileSuffix)) {
+				//目录下文件全部获取
+				listDir = sftp.listDir(ftpDir);
+			} else {
+				//以fileSuffix为后缀的文件才获取回来
+				listDir = sftp.listDir(ftpDir, "*." + fileSuffix);
+			}
+			//3.遍历拉取到的远程文件对象
+			for (LsEntry lsEntry : listDir) {
+				String tmpDestDir;
+				String tmpFtpDir;
+				if (ftpDir.endsWith("/")) {
+					tmpFtpDir = ftpDir + lsEntry.getFilename();
+				} else {
+					tmpFtpDir = ftpDir + "/" + lsEntry.getFilename();
+				}
+				if (destDir.endsWith("/")) {
+					tmpDestDir = destDir + lsEntry.getFilename();
+				} else {
+					tmpDestDir = destDir + "/" + lsEntry.getFilename();
+				}
+				//4.判断是文件夹，递归调用本方法
+				if (lsEntry.getAttrs().isDir()) {
+					transferGet(tmpFtpDir, tmpDestDir, sftp, isUnzip, deCompressWay, fileSuffix,
+							mapDBHelper, fileNameHTreeMap);
+				} else {
+					//5.不是文件夹，判断文件有没有被拉取过，没有拉取过则调用sftp方法拉取文件
+					if (!fileNameHTreeMap.containsKey(tmpFtpDir)
+							|| (fileNameHTreeMap.containsKey(tmpFtpDir)
+							&& !fileNameHTreeMap.get(tmpFtpDir)
+							.equals(lsEntry.getAttrs().getMtimeString()))) {
+						sftp.transferFile(tmpFtpDir, destDir);
+						boolean isSuccessful;
+						//6.判断是否需要解压，需要解压则根据对应的压缩方式将文件解压到本地
+						if (IsFlag.Shi.getCode().equals(isUnzip)) {
+							//将文件根据对应的解压缩方式进行解压
+							isSuccessful = DeCompressionUtil.deCompression(tmpDestDir, deCompressWay);
+							File file = new File(tmpDestDir);
+							if (file.exists()) {
+								if (!file.delete()) {
+									throw new BusinessException("删除文件失败");
+								}
+							}
+						} else {
+							isSuccessful = true;
+						}
+						//7.将拉取成功的文件放到MapDB，提交mapDB
+						if (isSuccessful) {
+							fileNameHTreeMap.put(tmpFtpDir, lsEntry.getAttrs().getMtimeString());
+							mapDBHelper.commit();
+						} else {
+							throw new BusinessException("解压文件失败！！！");
 						}
 					}
-				} else {
-					isSuccessful = true;
-				}
-				//5.将拉取成功的文件放到MapDB
-				if (isSuccessful) {
-					fileNameHTreeMap.put(fileName, lsEntry.getAttrs().getMtimeString());
-				} else {
-					throw new BusinessException("解压文件失败！！！");
 				}
 			}
-			//6.提交MapDB
-			mapDBHelper.commit();
 		} catch (Exception e) {
 			log.error("FTP传输失败！！！", e);
 			throw new BusinessException("ftp传输失败！");
@@ -299,67 +302,87 @@ public class FtpCollectJobImpl implements JobInterface {
 	}
 
 	@Method(desc = "将本地目录下的指定后缀名下的文件ftp推送到远程的机器目录",
-			logicStep = "1.根据ftpId获取MapDB操作类的对象" +
-					"2.获取需要进行ftp传输的文件夹及其子文件夹下的文件" +
-					"3.进行ftp传输，将传输成功的文件放到MapDB" +
-					"4.提交MapDB")
+			logicStep = "1.创建远程需要ftp的目录" +
+					"2.根据mapDB的记录和该目录下文件属性过滤文件" +
+					"3.判断是文件还是文件夹" +
+					"4.文件夹则将此目录作为ftp目录递归调用本方法" +
+					"5.是文件则调用sftp，推送文件到远程服务器，存到mapDB，提交mapDB")
 	@Param(name = "ftpDir", desc = "ftp推送的远程机器的目录", range = "不能为空")
 	@Param(name = "localPath", desc = "本地目录", range = "不能为空")
 	@Param(name = "sftp", desc = "sftp操作类", range = "不能为空")
 	@Param(name = "fileSuffix", desc = "文件后缀名", range = "可以为空")
-	private void transferPut(String ftpDir, String localPath, SftpOperate sftp, String fileSuffix) {
+	@Param(name = "mapDBHelper", desc = "mapDB数据库操作类", range = "不可为空")
+	@Param(name = "fileNameHTreeMap", desc = "mapDB数据库表的操作类", range = "不可为空")
+	private void transferPut(String ftpDir, String localPath, SftpOperate sftp, String fileSuffix,
+	                         MapDBHelper mapDBHelper, HTreeMap<String, String> fileNameHTreeMap) {
 		//数据可访问权限处理方式：此方法不需要对数据可访问权限处理
-		//1.根据ftpId获取MapDB操作类的对象
-		try (MapDBHelper mapDBHelper = new MapDBHelper(USER_DIR + File.separator
-				+ this.ftpId, this.ftpId + ".db")) {
-			HTreeMap<String, String> fileNameHTreeMap = mapDBHelper.htMap(this.ftpId, 24 * 60);
-			List<File> fileList = new ArrayList<>();
-			//2.获取需要进行ftp传输的文件夹及其子文件夹下的文件
-			getFileList(localPath, fileSuffix, fileList, fileNameHTreeMap);
-			for (File fileName : fileList) {
-				//3.进行ftp传输，将传输成功的文件放到MapDB
-				sftp.transferPutFile(fileName.getAbsolutePath(), ftpDir + "/" + fileName.getName());
-				fileNameHTreeMap.put(fileName.getName(), String.valueOf(fileName.lastModified()));
+		try {
+			//1.创建远程需要ftp的目录
+			sftp.scpMkdir(ftpDir);
+			//2.根据mapDB的记录和该目录下文件属性过滤文件
+			File[] files = new File(localPath).listFiles((file) -> (!fileNameHTreeMap.containsKey(
+					file.getAbsolutePath()) || file.isDirectory() || (fileNameHTreeMap.containsKey(
+					file.getAbsolutePath()) && !fileNameHTreeMap.get(file.getAbsolutePath()).
+					equals(String.valueOf(file.lastModified())))));
+			if (files != null && files.length > 0) {
+				for (File file : files) {
+					String fileName = file.getName();
+					String tmpFtpDir;
+					if (ftpDir.endsWith("/")) {
+						tmpFtpDir = ftpDir + fileName;
+					} else {
+						tmpFtpDir = ftpDir + "/" + fileName;
+					}
+					//3.判断是文件还是文件夹
+					if (file.isDirectory()) {
+						//4.文件夹则将此目录作为ftp目录递归调用本方法
+						transferPut(tmpFtpDir, file.getAbsolutePath(), sftp, fileSuffix, mapDBHelper,
+								fileNameHTreeMap); // 获取文件绝对路径
+					} else {
+						//5.是文件则调用sftp，推送文件到远程服务器，存到mapDB，提交mapDB
+						if (StringUtil.isBlank(fileSuffix) || fileName.endsWith(fileSuffix)) {
+							sftp.transferPutFile(file.getAbsolutePath(), tmpFtpDir);
+							fileNameHTreeMap.put(file.getAbsolutePath(), String.valueOf(file.lastModified()));
+							mapDBHelper.commit();
+						}
+					}
+				}
 			}
-			//4.提交MapDB
-			mapDBHelper.commit();
 		} catch (Exception e) {
 			log.error("FTP传输失败！！！", e);
 			throw new BusinessException("ftp传输失败！");
 		}
 	}
 
-	@Method(desc = "获取需要进行ftp传输的文件夹及其子文件夹下的文件",
-			logicStep = "1.取文件夹下未被传输过的文件或者已经传输过但被修改后的文件或者文件夹" +
-					"2.遍历文件的集合，判断是文件夹则递归调用当前方法，是文件则判断文件后缀名是否符合规则" +
-					"3.将符合的文件放到集合中")
-	@Param(name = "strPath", desc = "需要进行ftp传输的文件夹", range = "不能为空")
-	@Param(name = "fileSuffix", desc = "需要传输的文件的后缀名", range = "可以为空")
-	@Param(name = "fileList", desc = "符合条件的文件的集合", range = "可以为空")
-	@Param(name = "fileNameHTreeMap", desc = "已经传输过的文件的键值对集合", range = "可以为空对象")
-	private void getFileList(String strPath, String fileSuffix, List<File> fileList,
-	                         HTreeMap<String, String> fileNameHTreeMap) {
-		//数据可访问权限处理方式：此方法不需要对数据可访问权限处理
-		//1.取文件夹下未被传输过的文件或者已经传输过但被修改后的文件或者文件夹
-		File[] files = new File(strPath).listFiles((file) -> (!fileNameHTreeMap.containsKey(file.getName())
-				|| file.isDirectory() || (fileNameHTreeMap.containsKey(file.getName())
-				&& !fileNameHTreeMap.get(file.getName()).equals(String.valueOf(file.lastModified())))));
-		if (files != null) {
-			//2.遍历文件的集合，判断是文件夹则递归调用当前方法，是文件则判断文件后缀名是否符合规则
-			for (File file : files) {
-				// 判断是文件还是文件夹
-				if (file.isDirectory()) {
-					getFileList(file.getAbsolutePath(), fileSuffix, fileList, fileNameHTreeMap);
-				} else {
-					if (StringUtil.isBlank(fileSuffix)) {
-						//3.将符合的文件放到集合中
-						fileList.add(file);
-					} else if (file.getName().endsWith(fileSuffix)) {
-						fileList.add(file);
-					}
+	@Method(desc = "获取远程目录下数字文件夹，取数字最大的文件夹加一",
+			logicStep = "1.取远程文件夹下的所有文件夹的集合" +
+					"2.遍历集合，取为数字的文件夹的最大值" +
+					"3.取不到则返回0" +
+					"4.取到则返回最大文件夹数字加1")
+	@Param(name = "dir", desc = "文件夹路径", range = "不能为空")
+	@Param(name = "sftp", desc = "远程操作类", range = "远程操作类")
+	@Return(desc = "该文件夹下数值最大的文件夹加一", range = "不会为空")
+	private String remoteNumberDir(String dir, SftpOperate sftp) throws SftpException {
+		//1.取远程文件夹下的所有文件夹的集合
+		Vector<LsEntry> listDir = sftp.listDir(dir);
+		int max = -1;
+		//2.遍历集合，取为数字的文件夹的最大值
+		for (LsEntry lsEntry : listDir) {
+			String filename = lsEntry.getFilename();
+			if (lsEntry.getAttrs().isDir() && NumberUtil.isNumberic(filename)) {
+				//取最大数字的文件夹
+				int parseInt = Integer.parseInt(filename);
+				if (parseInt > max) {
+					max = parseInt;
 				}
 			}
 		}
+		//3.取不到则从零开始
+		if (max == -1) {
+			return "0";
+		}
+		//4.取到则返回最大文件夹数字加1
+		return String.valueOf(max + 1);
 	}
 
 	@Method(desc = "获取目录下数字文件夹，取数字最大的文件夹加一",
@@ -367,13 +390,13 @@ public class FtpCollectJobImpl implements JobInterface {
 					"2.判断集合是否为空，为空则返回字符串0" +
 					"3.不为空则遍历集合，取最大值" +
 					"4.返回最大值加一")
-	@Param(name = "userCustomizeDbDir", desc = "文件夹路径", range = "不能为空")
+	@Param(name = "dir", desc = "文件夹路径", range = "不能为空")
 	@Return(desc = "该文件夹下数值最大的文件夹加一", range = "不会为空")
-	private String currentDateDir(String userCustomizeDbDir) {
-		//数据可访问权限处理方式：此方法不需要对数据可访问权限处理
+	private String localNumberDir(String dir) {
+
+		File pmFile = new File(dir);
 		//1.取当前文件夹下的所有为数字的文件夹的集合
-		File[] listFiles = new File(userCustomizeDbDir).listFiles((file) ->
-				NumberUtil.isNumberic(file.getName()) && file.isDirectory());
+		File[] listFiles = pmFile.listFiles((file) -> NumberUtil.isNumberic(file.getName()) && file.isDirectory());
 		//2.判断集合是否为空，为空则返回字符串0
 		if (listFiles == null || listFiles.length == 0) {
 			return "0";
@@ -381,7 +404,9 @@ public class FtpCollectJobImpl implements JobInterface {
 		int max = 0;
 		//3.不为空则遍历集合，取最大值
 		for (File file : listFiles) {
-			int parseInt = Integer.parseInt(file.getName());
+			String name = file.getName();
+			// 取最大数字的文件夹
+			int parseInt = Integer.parseInt(name);
 			if (parseInt > max) {
 				max = parseInt;
 			}

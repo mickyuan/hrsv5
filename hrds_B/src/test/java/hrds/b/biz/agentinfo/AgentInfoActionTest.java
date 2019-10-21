@@ -14,6 +14,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
 
@@ -98,7 +99,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 			// 封装data_source表数据
 			data_source.setSource_id(SourceId);
 			data_source.setDatasource_number("init");
-			data_source.setDatasource_name("init");
+			data_source.setDatasource_name("dsName");
 			data_source.setCreate_date(DateUtil.getSysDate());
 			data_source.setCreate_time(DateUtil.getSysTime());
 			data_source.setCreate_user_id(UserId);
@@ -242,10 +243,10 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 			sysUser.setCreate_date(DateUtil.getSysDate());
 			sysUser.setCreate_time(DateUtil.getSysTime());
 			sysUser.setRole_id("1001");
-			sysUser.setUser_name("dhw");
-			sysUser.setUser_password("111111");
+			sysUser.setUser_name("testUser");
+			sysUser.setUser_password("1");
 			sysUser.setUser_type(UserType.CaiJiYongHu.getCode());
-			sysUser.setUseris_admin("1");
+			sysUser.setUseris_admin(IsFlag.Shi.toString());
 			sysUser.setUsertype_group("02,03,04,08");
 			sysUser.setUser_state(IsFlag.Shi.getCode());
 			sysUser.add(db);
@@ -273,9 +274,9 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 		// 8.模拟用户登录
 		String responseValue = new HttpClient()
 				.buildSession()
-				.addData("username", UserId)
-				.addData("password", "111111")
-				.post("http://127.0.0.1:8099/A/action/hrds/a/biz/login/login")
+				.addData("user_id", UserId)
+				.addData("password", "1")
+				.post("http://127.0.0.1:8088/A/action/hrds/a/biz/login/login")
 				.getBodyString();
 		Optional<ActionResult> ar = JsonUtil.toObjectSafety(responseValue, ActionResult.class);
 		assertThat("用户登录", ar.get().isSuccess(), is(true));
@@ -405,6 +406,35 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 			// 14.提交事务
 			SqlOperator.commitTransaction(db);
 		}
+	}
+
+	@Test
+	public void searchDatasourceAndAgentInfo() {
+		// 1.正确的数组访问1，新增数据库agent信息,数据都有效
+		String bodyString = new HttpClient()
+				.addData("source_id", SourceId)
+				.addData("datasource_name", "dsName")
+				.post(getActionUrl("searchDatasourceAndAgentInfo")).getBodyString();
+		Optional<ActionResult> ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
+		assertThat(ar.get().isSuccess(), is(true));
+		Map<Object, Object> agentInfoMap = ar.get().getDataForMap();
+		List<Map<String, Object>> sjkAgent = (List<Map<String, Object>>) agentInfoMap.get("sjkAgent");
+		for (Map<String, Object> map : sjkAgent) {
+			//assertThat(map.get(""));
+		}
+		List<Map<String, Object>> DBAgent = (List<Map<String, Object>>) agentInfoMap.get("DBAgent");
+		List<Map<String, Object>> fileAgent = (List<Map<String, Object>>) agentInfoMap.get("fileAgent");
+		List<Map<String, Object>> dxAgent = (List<Map<String, Object>>) agentInfoMap.get("dxAgent");
+		List<Map<String, Object>> ftpAgent = (List<Map<String, Object>>) agentInfoMap.get("ftpAgent");
+		assertThat(agentInfoMap.get("datasource_name").toString(), is("dsName"));
+		assertThat(agentInfoMap.get("source_id").toString(), is(String.valueOf(SourceId)));
+		assertThat(agentInfoMap.get("connection").toString(), is(AgentStatus.YiLianJie.getCode()));
+		assertThat(agentInfoMap.get("sjk").toString(), is(AgentType.ShuJuKu.getCode()));
+		assertThat(agentInfoMap.get("DB").toString(), is(AgentType.DBWenJian.getCode()));
+		assertThat(agentInfoMap.get("dx").toString(), is(AgentType.DuiXiang.getCode()));
+		assertThat(agentInfoMap.get("file").toString(), is(AgentType.WenJianXiTong.getCode()));
+		assertThat(agentInfoMap.get("ftp").toString(), is(AgentType.FTP.getCode()));
+
 	}
 
 	/**
@@ -761,13 +791,13 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 	public void updateAgent() {
 		// 1.正确的数据访问1，更新agent信息，数据都不为空且为有效数据
 		String bodyString = new HttpClient()
-				.addData("agentId", DBAgentId)
-				.addData("agentName", "sjkUpAgent")
-				.addData("agentType", AgentType.ShuJuKu.getCode())
-				.addData("agentIp", "10.71.4.52")
-				.addData("agentPort", "45678")
-				.addData("sourceId", SourceId)
-				.addData("userId", UserId2)
+				.addData("agent_id", DBAgentId)
+				.addData("agent_name", "sjkUpAgent")
+				.addData("agent_type", AgentType.ShuJuKu.getCode())
+				.addData("agent_ip", "10.71.4.52")
+				.addData("agent_port", "45678")
+				.addData("source_id", SourceId)
+				.addData("user_id", UserId2)
 				.post(getActionUrl("updateAgent")).getBodyString();
 		Optional<ActionResult> ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		assertThat(ar.get().isSuccess(), is(true));
@@ -785,13 +815,13 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 		}
 		// 2.正确的数组访问2，更新数据文件agent信息,数据都有效
 		bodyString = new HttpClient()
-				.addData("agentId", DFAgentId)
-				.addData("agentName", "DFUpAgent")
-				.addData("agentType", AgentType.DBWenJian.getCode())
-				.addData("agentIp", "10.71.4.52")
-				.addData("agentPort", "45679")
-				.addData("sourceId", SourceId)
-				.addData("userId", UserId2)
+				.addData("agent_id", DFAgentId)
+				.addData("agent_name", "DFUpAgent")
+				.addData("agent_type", AgentType.DBWenJian.getCode())
+				.addData("agent_ip", "10.71.4.52")
+				.addData("agent_port", "45679")
+				.addData("source_id", SourceId)
+				.addData("user_id", UserId2)
 				.post(getActionUrl("updateAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		assertThat(ar.get().isSuccess(), is(true));
@@ -815,13 +845,13 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 		}
 		// 3.正确的数组访问3，更新非结构化agent信息,数据都有效
 		bodyString = new HttpClient()
-				.addData("agentId", UnsAgentId)
-				.addData("agentName", "UnsUpAgent")
-				.addData("agentType", AgentType.WenJianXiTong.getCode())
-				.addData("agentIp", "10.71.4.52")
-				.addData("agentPort", "45680")
-				.addData("sourceId", SourceId)
-				.addData("userId", UserId2)
+				.addData("agent_id", UnsAgentId)
+				.addData("agent_name", "UnsUpAgent")
+				.addData("agent_type", AgentType.WenJianXiTong.getCode())
+				.addData("agent_ip", "10.71.4.52")
+				.addData("agent_port", "45680")
+				.addData("source_id", SourceId)
+				.addData("user_id", UserId2)
 				.post(getActionUrl("updateAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		assertThat(ar.get().isSuccess(), is(true));
@@ -845,13 +875,13 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 		}
 		// 4.正确的数组访问4，更新半结构化agent信息,数据都有效
 		bodyString = new HttpClient()
-				.addData("agentId", SemiAgentId)
-				.addData("agentName", "SemiUpAgent")
-				.addData("agentType", AgentType.DuiXiang.getCode())
-				.addData("agentIp", "10.71.4.52")
-				.addData("agentPort", "45681")
-				.addData("sourceId", SourceId)
-				.addData("userId", UserId2)
+				.addData("agent_id", SemiAgentId)
+				.addData("agent_name", "SemiUpAgent")
+				.addData("agent_type", AgentType.DuiXiang.getCode())
+				.addData("agent_ip", "10.71.4.52")
+				.addData("agent_port", "45681")
+				.addData("source_id", SourceId)
+				.addData("user_id", UserId2)
 				.post(getActionUrl("updateAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		assertThat(ar.get().isSuccess(), is(true));
@@ -876,13 +906,13 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 		}
 		// 5.正确的数组访问5，更新FTP agent信息,数据都有效
 		bodyString = new HttpClient()
-				.addData("agentId", FTPAgentId)
-				.addData("agentName", "ftpUpAgent")
-				.addData("agentType", AgentType.FTP.getCode())
-				.addData("agentIp", "10.71.4.52")
-				.addData("agentPort", "45682")
-				.addData("sourceId", SourceId)
-				.addData("userId", UserId2)
+				.addData("agent_id", FTPAgentId)
+				.addData("agent_name", "ftpUpAgent")
+				.addData("agent_type", AgentType.FTP.getCode())
+				.addData("agent_ip", "10.71.4.52")
+				.addData("agent_port", "45682")
+				.addData("source_id", SourceId)
+				.addData("user_id", UserId2)
 				.post(getActionUrl("updateAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		assertThat(ar.get().isSuccess(), is(true));
@@ -906,203 +936,203 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 		}
 		// 6.错误的数据访问1，更新agent信息,agent_name为空
 		bodyString = new HttpClient()
-				.addData("agentId", DBAgentId)
-				.addData("agentName", "")
-				.addData("agentType", AgentType.DBWenJian.getCode())
-				.addData("agentIp", "10.71.4.52")
-				.addData("agentPort", "3457")
-				.addData("sourceId", SourceId)
-				.addData("userId", UserId)
+				.addData("agent_id", DBAgentId)
+				.addData("agent_name", "")
+				.addData("agent_type", AgentType.DBWenJian.getCode())
+				.addData("agent_ip", "10.71.4.52")
+				.addData("agent_port", "3457")
+				.addData("source_id", SourceId)
+				.addData("user_id", UserId)
 				.post(getActionUrl("updateAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		// 7.错误的数据访问2，更新agent信息,agent_name为空格
 		bodyString = new HttpClient()
-				.addData("agentId", DBAgentId)
-				.addData("agentName", " ")
-				.addData("agentType", AgentType.DBWenJian.getCode())
-				.addData("agentIp", "10.71.4.52")
-				.addData("agentPort", "3457")
-				.addData("sourceId", SourceId)
-				.addData("userId", UserId)
+				.addData("agent_id", DBAgentId)
+				.addData("agent_name", " ")
+				.addData("agent_type", AgentType.DBWenJian.getCode())
+				.addData("agent_ip", "10.71.4.52")
+				.addData("agent_port", "3457")
+				.addData("source_id", SourceId)
+				.addData("user_id", UserId)
 				.post(getActionUrl("updateAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		assertThat(ar.get().isSuccess(), is(false));
 		// 8.错误的数据访问3，更新agent信息,agent_type为空
 		bodyString = new HttpClient()
-				.addData("agentId", DBAgentId)
-				.addData("agentName", "db文件Agent")
-				.addData("agentType", "")
-				.addData("agentIp", "10.71.4.52")
-				.addData("agentPort", "3457")
-				.addData("sourceId", SourceId)
-				.addData("userId", UserId)
+				.addData("agent_id", DBAgentId)
+				.addData("agent_name", "db文件Agent")
+				.addData("agent_type", "")
+				.addData("agent_ip", "10.71.4.52")
+				.addData("agent_port", "3457")
+				.addData("source_id", SourceId)
+				.addData("user_id", UserId)
 				.post(getActionUrl("updateAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		// 9.错误的数据访问4，更新agent信息,agent_type为空格
 		bodyString = new HttpClient()
-				.addData("agentId", DBAgentId)
-				.addData("agentName", "sjkAgent")
-				.addData("agentType", " ")
-				.addData("agentIp", "10.71.4.52")
-				.addData("agentPort", "3457")
-				.addData("sourceId", SourceId)
-				.addData("userId", UserId)
+				.addData("agent_id", DBAgentId)
+				.addData("agent_name", "sjkAgent")
+				.addData("agent_type", " ")
+				.addData("agent_ip", "10.71.4.52")
+				.addData("agent_port", "3457")
+				.addData("source_id", SourceId)
+				.addData("user_id", UserId)
 				.post(getActionUrl("updateAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		assertThat(ar.get().isSuccess(), is(false));
 		// 10.错误的数据访问5，更新agent信息,agent_ip为空
 		bodyString = new HttpClient()
-				.addData("agentId", DBAgentId)
-				.addData("agentName", "sjkAgent")
-				.addData("agentType", AgentType.ShuJuKu.getCode())
-				.addData("agentIp", "")
-				.addData("agentPort", "3457")
-				.addData("sourceId", SourceId)
-				.addData("userId", UserId)
+				.addData("agent_id", DBAgentId)
+				.addData("agent_name", "sjkAgent")
+				.addData("agent_type", AgentType.ShuJuKu.getCode())
+				.addData("agent_ip", "")
+				.addData("agent_port", "3457")
+				.addData("source_id", SourceId)
+				.addData("user_id", UserId)
 				.post(getActionUrl("updateAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		assertThat(ar.get().isSuccess(), is(false));
 		// 11.错误的数据访问6，更新agent信息,agent_ip为空格
 		bodyString = new HttpClient()
-				.addData("agentId", DBAgentId)
-				.addData("agentName", "sjkAgent")
-				.addData("agentType", AgentType.ShuJuKu.getCode())
-				.addData("agentIp", " ")
-				.addData("agentPort", "3458")
-				.addData("sourceId", SourceId)
-				.addData("userId", UserId)
+				.addData("agent_id", DBAgentId)
+				.addData("agent_name", "sjkAgent")
+				.addData("agent_type", AgentType.ShuJuKu.getCode())
+				.addData("agent_ip", " ")
+				.addData("agent_port", "3458")
+				.addData("source_id", SourceId)
+				.addData("user_id", UserId)
 				.post(getActionUrl("updateAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		assertThat(ar.get().isSuccess(), is(false));
 		// 12.错误的数据访问7，更新agent信息,agent_ip不合法（不是有效的ip）
 		bodyString = new HttpClient()
-				.addData("agentId", DBAgentId)
-				.addData("agentName", "sjkAgent")
-				.addData("agentType", AgentType.ShuJuKu.getCode())
-				.addData("agentIp", "127.1.2.300")
-				.addData("agentPort", "3458")
-				.addData("sourceId", SourceId)
-				.addData("userId", UserId)
+				.addData("agent_id", DBAgentId)
+				.addData("agent_name", "sjkAgent")
+				.addData("agent_type", AgentType.ShuJuKu.getCode())
+				.addData("agent_ip", "127.1.2.300")
+				.addData("agent_port", "3458")
+				.addData("source_id", SourceId)
+				.addData("user_id", UserId)
 				.post(getActionUrl("updateAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		assertThat(ar.get().isSuccess(), is(false));
 		// 13.错误的数据访问8，更新agent信息,agent_port为空
 		bodyString = new HttpClient()
-				.addData("agentId", DBAgentId)
-				.addData("agentName", "sjkAgent")
-				.addData("agentType", AgentType.ShuJuKu.getCode())
-				.addData("agentIp", "10.71.4.51")
-				.addData("agentPort", "")
-				.addData("sourceId", SourceId)
-				.addData("userId", UserId)
+				.addData("agent_id", DBAgentId)
+				.addData("agent_name", "sjkAgent")
+				.addData("agent_type", AgentType.ShuJuKu.getCode())
+				.addData("agent_ip", "10.71.4.51")
+				.addData("agent_port", "")
+				.addData("source_id", SourceId)
+				.addData("user_id", UserId)
 				.post(getActionUrl("updateAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		assertThat(ar.get().isSuccess(), is(false));
 		// 14.错误的数据访问9，更新agent信息,agent_port为空格
 		bodyString = new HttpClient()
-				.addData("agentId", DBAgentId)
-				.addData("agentName", "sjkAgent")
+				.addData("agent_id", DBAgentId)
+				.addData("agent_name", "sjkAgent")
 				.addData("agent_type", AgentType.ShuJuKu.getCode())
-				.addData("agentIp", "10.71.4.51")
-				.addData("agentPort", " ")
-				.addData("sourceId", SourceId)
-				.addData("userId", UserId)
+				.addData("agent_ip", "10.71.4.51")
+				.addData("agent_port", " ")
+				.addData("source_id", SourceId)
+				.addData("user_id", UserId)
 				.post(getActionUrl("updateAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		assertThat(ar.get().isSuccess(), is(false));
 		// 15.错误的数据访问10，更新agent信息,agent_port不合法（不是有效的端口）
 		bodyString = new HttpClient()
-				.addData("agentId", DBAgentId)
-				.addData("agentName", "sjkAgent")
+				.addData("agent_id", DBAgentId)
+				.addData("agent_name", "sjkAgent")
 				.addData("agent_type", AgentType.ShuJuKu.getCode())
-				.addData("agentIp", "10.71.4.51")
-				.addData("agentPort", "1000")
-				.addData("sourceId", SourceId)
-				.addData("userId", UserId)
+				.addData("agent_ip", "10.71.4.51")
+				.addData("agent_port", "1000")
+				.addData("source_id", SourceId)
+				.addData("user_id", UserId)
 				.post(getActionUrl("updateAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		assertThat(ar.get().isSuccess(), is(false));
 		// 16.错误的数据访问11，更新agent信息,sourceId为空
 		bodyString = new HttpClient()
-				.addData("agentId", DBAgentId)
-				.addData("agentName", "sjkAgent")
+				.addData("agent_id", DBAgentId)
+				.addData("agent_name", "sjkAgent")
 				.addData("agent_type", AgentType.ShuJuKu.getCode())
-				.addData("agentIp", "10.71.4.51")
-				.addData("agentPort", "")
-				.addData("sourceId", "")
-				.addData("userId", UserId)
+				.addData("agent_ip", "10.71.4.51")
+				.addData("agent_port", "")
+				.addData("source_id", "")
+				.addData("user_id", UserId)
 				.post(getActionUrl("updateAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		assertThat(ar.get().isSuccess(), is(false));
 		// 17.错误的数据访问12，更新agent信息,sourceId为空格
 		bodyString = new HttpClient()
-				.addData("agentId", DBAgentId)
-				.addData("agentName", "sjkAgent")
+				.addData("agent_id", DBAgentId)
+				.addData("agent_name", "sjkAgent")
 				.addData("agent_type", AgentType.ShuJuKu.getCode())
-				.addData("agentIp", "10.71.4.51")
-				.addData("agentPort", " ")
-				.addData("sourceId", " ")
-				.addData("userId", UserId)
+				.addData("agent_ip", "10.71.4.51")
+				.addData("agent_port", " ")
+				.addData("source_id", " ")
+				.addData("user_id", UserId)
 				.post(getActionUrl("updateAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		assertThat(ar.get().isSuccess(), is(false));
 		// 18.错误的数据访问13，更新agent信息,user_id为空
 		bodyString = new HttpClient()
-				.addData("agentId", DBAgentId)
-				.addData("agentName", "sjkAgent")
+				.addData("agent_id", DBAgentId)
+				.addData("agent_name", "sjkAgent")
 				.addData("agent_type", AgentType.ShuJuKu.getCode())
-				.addData("agentIp", "10.71.4.51")
-				.addData("agentPort", "4568")
-				.addData("sourceId", SourceId)
-				.addData("userId", "")
+				.addData("agent_ip", "10.71.4.51")
+				.addData("agent_port", "4568")
+				.addData("source_id", SourceId)
+				.addData("user_id", "")
 				.post(getActionUrl("updateAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		assertThat(ar.get().isSuccess(), is(false));
 		// 19.错误的数据访问14，更新agent信息,user_id为空格
 		bodyString = new HttpClient()
-				.addData("agentId", DBAgentId)
-				.addData("agentName", "sjkAgent")
+				.addData("agent_id", DBAgentId)
+				.addData("agent_name", "sjkAgent")
 				.addData("agent_type", AgentType.ShuJuKu.getCode())
-				.addData("agentIp", "10.71.4.51")
-				.addData("agentPort", "4568")
-				.addData("sourceId", SourceId)
-				.addData("userId", " ")
+				.addData("agent_ip", "10.71.4.51")
+				.addData("agent_port", "4568")
+				.addData("source_id", SourceId)
+				.addData("user_id", " ")
 				.post(getActionUrl("updateAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		assertThat(ar.get().isSuccess(), is(false));
 		// 20.错误的数据访问15，更新agent信息,端口被占用
 		bodyString = new HttpClient()
-				.addData("agentId", DBAgentId)
-				.addData("agentName", "sjkAgent")
+				.addData("agent_id", DBAgentId)
+				.addData("agent_name", "sjkAgent")
 				.addData("agent_type", AgentType.ShuJuKu.getCode())
-				.addData("agentIp", "10.71.4.51")
-				.addData("agentPort", "34567")
-				.addData("sourceId", SourceId)
-				.addData("userId", UserId)
+				.addData("agent_ip", "10.71.4.51")
+				.addData("agent_port", "34567")
+				.addData("source_id", SourceId)
+				.addData("user_id", UserId)
 				.post(getActionUrl("updateAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		assertThat(ar.get().isSuccess(), is(false));
 		// 21.错误的数据访问16，更新agent信息,agent对应的数据源下相同的IP地址中包含相同的端口
 		bodyString = new HttpClient()
-				.addData("agentId", DBAgentId)
-				.addData("agentName", "sjkUpAgent2")
+				.addData("agent_id", DBAgentId)
+				.addData("agent_name", "sjkUpAgent2")
 				.addData("agent_type", AgentType.ShuJuKu.getCode())
-				.addData("agentIp", "10.71.4.52")
-				.addData("agentPort", "45678")
-				.addData("sourceId", SourceId)
-				.addData("userId", UserId)
+				.addData("agent_ip", "10.71.4.52")
+				.addData("agent_port", "45678")
+				.addData("source_id", SourceId)
+				.addData("user_id", UserId)
 				.post(getActionUrl("updateAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		assertThat(ar.get().isSuccess(), is(false));
 		// 22.错误的数据访问17，更新agent信息,agent对应的数据源已不存在不可更新
 		bodyString = new HttpClient()
-				.addData("agentId", DBAgentId)
-				.addData("agentName", "sjkUpAgent3")
-				.addData("agentType", AgentType.ShuJuKu.getCode())
-				.addData("agentIp", "10.71.4.52")
-				.addData("agentPort", "45689")
-				.addData("sourceId", SourceId2)
-				.addData("userId", UserId)
+				.addData("agent_id", DBAgentId)
+				.addData("agent_name", "sjkUpAgent3")
+				.addData("agent_type", AgentType.ShuJuKu.getCode())
+				.addData("agent_ip", "10.71.4.52")
+				.addData("agent_port", "45689")
+				.addData("source_id", SourceId2)
+				.addData("user_id", UserId)
 				.post(getActionUrl("updateAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		assertThat(ar.get().isSuccess(), is(false));
@@ -1118,8 +1148,8 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 	@Test
 	public void searchAgent() {
 		// 1.正常的数据访问1，查询agent_info表数据，数据都有效
-		String bodyString = new HttpClient().addData("agentId", DBAgentId)
-				.addData("agentType", AgentType.ShuJuKu.getCode())
+		String bodyString = new HttpClient().addData("agent_id", DBAgentId)
+				.addData("agent_type", AgentType.ShuJuKu.getCode())
 				.post(getActionUrl("searchAgent")).getBodyString();
 		Optional<ActionResult> ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		assertThat(ar.get().isSuccess(), is(true));
@@ -1136,16 +1166,16 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 			assertThat("查询数据成功", agent_info.getUser_id(), is(UserId));
 		}
 		// 2.错误的数据访问1，查询agent_info表数据，agent_id是一个不存在的数据
-		bodyString = new HttpClient().addData("agentId", -1000000009L)
-				.addData("agentType", AgentType.ShuJuKu.getCode())
+		bodyString = new HttpClient().addData("agent_id", -1000000009L)
+				.addData("agent_type", AgentType.ShuJuKu.getCode())
 				.post(getActionUrl("searchAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		assertThat(ar.get().isSuccess(), is(true));
 		assertThat(ar.get().getDataForResult().getRowCount(), is(0));
 
 		// 3.错误的数据访问2，查询agent_info表数据，agent_type是一个合法的数据
-		bodyString = new HttpClient().addData("agentId", SourceId)
-				.addData("agentType", "6")
+		bodyString = new HttpClient().addData("agent_id", SourceId)
+				.addData("agent_type", "6")
 				.post(getActionUrl("searchAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 		assertThat(ar.get().isSuccess(), is(true));
@@ -1172,8 +1202,8 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 					AgentType.ShuJuKu.getCode());
 			assertThat("删除操作前，保证agent_info表中的确存在这样一条数据", optionalLong.
 					orElse(Long.MIN_VALUE), is(1L));
-			String bodyString = new HttpClient().addData("agentId", DBAgentId5)
-					.addData("agentType", AgentType.ShuJuKu.getCode())
+			String bodyString = new HttpClient().addData("agent_id", DBAgentId5)
+					.addData("agent_type", AgentType.ShuJuKu.getCode())
 					.post(getActionUrl("deleteAgent")).getBodyString();
 			Optional<ActionResult> ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 			assertThat(ar.get().isSuccess(), is(true));
@@ -1184,26 +1214,26 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 			assertThat("删除操作后，确认该条数据被删除", optionalLong.orElse(Long.MIN_VALUE),
 					is(0L));
 			// 2.错误的数据访问1，删除agent_info表数据，agent已部署不能删除
-			bodyString = new HttpClient().addData("agentId", DFAgentId)
-					.addData("agentType", AgentType.DBWenJian.getCode())
+			bodyString = new HttpClient().addData("agent_id", DFAgentId)
+					.addData("agent_type", AgentType.DBWenJian.getCode())
 					.post(getActionUrl("deleteAgent")).getBodyString();
 			ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 			assertThat(ar.get().isSuccess(), is(false));
 			// 3.错误的数据访问2,删除agent_info表数据，此数据源对应的agent下有任务，不能删除
-			bodyString = new HttpClient().addData("agentId", DBAgentId4)
-					.addData("agentType", AgentType.ShuJuKu.getCode())
+			bodyString = new HttpClient().addData("agent_id", DBAgentId4)
+					.addData("agent_type", AgentType.ShuJuKu.getCode())
 					.post(getActionUrl("deleteAgent")).getBodyString();
 			ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 			assertThat(ar.get().isSuccess(), is(false));
 			// 4.错误的数据访问3，删除agent_info表数据，agent_type是一个不存在的数据
-			bodyString = new HttpClient().addData("agentId", -1000000009L)
-					.addData("agentType", AgentType.ShuJuKu.getCode())
+			bodyString = new HttpClient().addData("agent_id", -1000000009L)
+					.addData("agent_type", AgentType.ShuJuKu.getCode())
 					.post(getActionUrl("deleteAgent")).getBodyString();
 			ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 			assertThat(ar.get().isSuccess(), is(false));
 			// 5.错误的数据访问4，删除agent_info表数据，agent_id是一个不存在的数据
-			bodyString = new HttpClient().addData("agentId", DBAgentId)
-					.addData("agentType", "6")
+			bodyString = new HttpClient().addData("agent_id", DBAgentId)
+					.addData("agent_type", "6")
 					.post(getActionUrl("deleteAgent")).getBodyString();
 			ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
 			assertThat(ar.get().isSuccess(), is(false));
