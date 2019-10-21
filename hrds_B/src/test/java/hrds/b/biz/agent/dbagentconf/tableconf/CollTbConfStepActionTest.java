@@ -3,6 +3,7 @@ package hrds.b.biz.agent.dbagentconf.tableconf;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
@@ -26,13 +27,7 @@ import java.util.Map;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-/**
- * @Description: CollTbConfStepAction单元测试类
- * @Author: wangz
- * @CreateTime: 2019-10-10-14:16
- * @BelongsProject: hrsv5
- * @BelongsPackage: hrds.b.biz.agent.dbagentconf.tableconf
- **/
+@DocClass(desc = "CollTbConfStepAction单元测试类", author = "WangZhengcheng")
 public class CollTbConfStepActionTest extends WebBaseTestCase{
 
 	private static final long SYS_USER_TABLE_ID = 7001L;
@@ -120,21 +115,6 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 	 * */
 	@Before
 	public void before() {
-		//1、构造默认表清洗顺序
-		JSONObject tableCleanOrder = new JSONObject();
-		tableCleanOrder.put(CleanType.ZiFuBuQi.getCode(), 1);
-		tableCleanOrder.put(CleanType.ZiFuTiHuan.getCode(), 2);
-		tableCleanOrder.put(CleanType.ZiFuHeBing.getCode(), 3);
-		tableCleanOrder.put(CleanType.ZiFuTrim.getCode(), 4);
-		//2、构造默认列清洗顺序
-		JSONObject columnCleanOrder = new JSONObject();
-		columnCleanOrder.put(CleanType.ZiFuBuQi.getCode(), 1);
-		columnCleanOrder.put(CleanType.ZiFuTiHuan.getCode(), 2);
-		columnCleanOrder.put(CleanType.ShiJianZhuanHuan.getCode(), 3);
-		columnCleanOrder.put(CleanType.MaZhiZhuanHuan.getCode(), 4);
-		columnCleanOrder.put(CleanType.ZiFuChaiFen.getCode(), 5);
-		columnCleanOrder.put(CleanType.ZiFuTrim.getCode(), 6);
-
 		//3、构造data_source表测试数据
 		Data_source dataSource = new Data_source();
 		dataSource.setSource_id(SOURCE_ID);
@@ -671,7 +651,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 				-> new BusinessException("连接失败!"));
 		assertThat(wrongResult.isSuccess(), is(true));
 		Result wrongData = wrongResult.getDataForResult();
-		assertThat("根据测试数据，输入错误的colSetId查询到的非自定义采集表信息应该有" + wrongData.getRowCount() + "条", rightData.getRowCount(), is(2));
+		assertThat("根据测试数据，输入错误的colSetId查询到的非自定义采集表信息应该有" + wrongData.getRowCount() + "条", rightData.getRowCount(), is(0));
 	}
 
 	/**

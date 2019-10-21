@@ -1,5 +1,6 @@
 package hrds.b.biz.agent.dbagentconf.dbconf;
 
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
@@ -29,11 +30,7 @@ import java.util.OptionalLong;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-/**
- * @description: DBConfStepAction单元测试类
- * @author: WangZhengcheng
- * @create: 2019-09-05 18:06
- **/
+@DocClass(desc = "DBConfStepAction单元测试类", author = "WangZhengcheng")
 public class DBConfStepActionTest extends WebBaseTestCase{
 
 	//测试数据用户ID
