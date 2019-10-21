@@ -1,69 +1,65 @@
 package hrds.commons.action;
 
-import fd.ng.core.docannotation.*;
-import fd.ng.core.exception.internal.FrameworkRuntimeException;
+import fd.ng.core.annotation.DocClass;
+import fd.ng.core.annotation.Method;
+import fd.ng.core.annotation.Param;
+import fd.ng.core.annotation.Return;
 import fd.ng.db.resultset.Result;
-import fd.ng.web.annotation.RequestBean;
-import hrds.commons.codes.AgentStatus;
+import hrds.commons.base.BaseAction;
+import hrds.commons.entity.Sys_user;
 import hrds.commons.utils.User;
-import org.junit.Test;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @program: hrsv5
- * @description: action注释模版
- * @author: xchao
- * @create: 2019-09-16 10:57
- */
-@DocClass(describe = "类注释模版",author = "xchao",time = "2019年9月16日 09:21:41")
-public class actionTemplate {
-	@DocMethod(description = "获取用户",isRest = true)
-	@Params({
-			@Param(name = "name", intro = "用户名", required = true, range = "任意",example = "李强"),
-			@Param(name = "sex", intro = "性别", required = true, range = "男，女",example = "女"),
-			@Param(name = "use", intro = "用户实体", dataType = User.class,isRequestBean = true,range = "实体bean"),
-			@Param(name = "age", intro = "年龄", dataType = Long.class,range = "10-100之间"),
-			@Param(name = "ip", intro = "agentIp信息", dataType = String.class,range = "任意",example = "10.71.9.100")
-	}
-	)
-	public void getUserInfo(String name, String sex, @RequestBean User user, int age,String ip) {
+@DocClass(desc = "action注释模版",author = "xchao",createdate = "2019-09-16 10:57")
+public class actionTemplate extends BaseAction {
+    @Method(desc = "获取用户",
+            logicStep = "1、获取用户相似度级分类" +
+                    "2、斯蒂芬吉林省地方j" +
+                    "3、sdfdsfsd" +
+                    "4、斯蒂芬来看待警方立刻收到了放开就说了肯定塑料袋看风景" +
+                    "5、莱克斯顿副经理看路上看到剧分里看电视剧了是的看积分历史库到机房" +
+                    "6、送到路口附近了历史解放路看电视两市低开解放路看电视禄口街道私聊发历史库到机房了开始记得发")
+    @Param(name = "name", desc = "用户名", range = "任意", example = "李强",valueIfNull = "xchao")
+    @Param(name = "sex", desc = "性别", range = "男，女", example = "女",valueIfNull = "男")
+    @Param(name = "user", desc = "用户实体", range = "实体bean",isBean = true)
+    @Param(name = "age", desc = "年龄", range = "10-100之间")
+    @Param(name = "ip", desc = "agentIp信息", range = "任意", example = "10.71.9.100")
+    public void getUserInfo(String name, String sex, Sys_user user, int age, String ip) {
 
-	}
+    }
 
-	@DocMethod(description = "新增用户",isRest = true)
-	@Param(name = "user", intro = "用户实体", dataType = User.class,isRequestBean = true,range = "实体bean")
-	@DocReturn(description = "返回是否新增成功的表示",dataType = Boolean.class,range = "true,false")
-	public boolean addUser(@RequestBean User user) {
+    @Method(desc = "新增用户", logicStep = "")
+    @Param(name = "user", desc = "用户实体", isBean = true, range = "实体bean")
+    @Return(desc = "返回是否新增成功的表示",range = "true,false")
+    public boolean addUser(Sys_user user) {
 
-		return false;
-	}
+        return false;
+    }
 
-	@DocMethod(description = "获取用户信息，返回实体信息",isRest = true)
-	@Param(name = "use", intro = "用户实体", dataType = User.class,isRequestBean = true,range = "实体bean")
-	@DocReturn(description = "返回用户的基本信息以实体返回",dataType = User.class,range = "User实体ben",isRequestBean=true)
-	public User getUser(@RequestBean User user) {
+    @Method(desc = "获取用户信息，返回实体信息", logicStep = "")
+    @Param(name = "user", desc = "用户实体", isBean = true, range = "实体bean")
+    @Return(desc = "返回用户的基本信息以实体返回", range = "User实体ben", isBean = true)
+    public User getUser(Sys_user user) {
 
-		return new User();
-	}
+        return new User();
+    }
 
 
-	@DocMethod(description = "新增用户",isRest = true)
-	@DocReturn(description = "返回用户的基本信息以result返回",dataType = Result.class,range = "返回用户result")
-	public Result getUser() {
-		List aa = new ArrayList<Map<String,Object>>();
-		Map map = new HashMap();
-		map.put("abc","sdfdsfsd");
-		aa.add(map);
-		Result a = new Result();
-		a.add(aa);
+    @Method(desc = "新增用户", logicStep = "")
+    @Return(desc = "返回用户的基本信息以result返回", range = "返回用户result")
+    public Result getUsercc() {
+        List aa = new ArrayList<Map<String, Object>>();
+        Map map = new HashMap();
+        map.put("abc", "sdfdsfsd");
+        aa.add(map);
+        Result a = new Result();
+        a.add(aa);
 
-		a.getString(0,"abc");
-		return new Result();
-	}
+        a.getString(0, "abc");
+        return new Result();
+    }
 }

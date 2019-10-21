@@ -1,7 +1,11 @@
 package hrds.commons.code;
 
+import fd.ng.core.annotation.Method;
+import fd.ng.core.annotation.Param;
+import fd.ng.core.annotation.Return;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
+import hrds.commons.base.BaseAction;
 import hrds.commons.codes.AgentStatus;
 import hrds.commons.entity.Sys_para;
 import org.hamcrest.Matchers;
@@ -19,22 +23,16 @@ import static org.hamcrest.Matchers.nullValue;
  * @author: xchao
  * @create: 2019-09-10 09:42
  */
-public class codeTest {
-	@Test
-	public void getCode(){
-		/*AgentStatus weiLianJie = AgentStatus.WeiLianJie;
-		assertThat(weiLianJie.getCode(),is("2"));
-		assertThat(weiLianJie.getValue(),is("未连接"));
-		assertThat(weiLianJie.getCatCode(),is("4"));
-		assertThat(weiLianJie.getCatValue(),is("Agent状态"));
-		assertThat(AgentStatus.ofValueByCode(weiLianJie.getCode()),is("未连接"));*/
-		/*AgentStatus.WeiLianJie.getCode().toString();
-		AgentStatus.getObjCatValue().toString();
-		AgentStatus.YiLianJie.toString();
-		AgentStatus.values().toString();*/
-	}
-	@Test
-	public void t41_queryToBean() {
+public class codeTest extends BaseAction {
+	@Method(desc = "获取用户",
+			logicStep = "1、获取用户相似度级分类" +
+					"2、斯蒂芬吉林省地方j" +
+					"3、sdfdsfsd" +
+					"4、斯蒂芬来看待警方立刻收到了放开就说了肯定塑料袋看风景" +
+					"5、莱克斯顿副经理看路上看到剧分里看电视剧了是的看积分历史库到机房" +
+					"6、送到路口附近了历史解放路看电视两市低开解放路看电视禄口街道私聊发历史库到机房了开始记得发")
+	@Param(name = "ip", desc = "agentIp信息", range = "任意", example = "10.71.9.100")
+	public void t41_queryToBean(String ip) {
 		try(DatabaseWrapper db = new DatabaseWrapper()) {
 			Optional<Sys_para> result = SqlOperator.queryOneObject(db, Sys_para.class,
 					"select * from " + Sys_para.TableName + " where para_name=?",
