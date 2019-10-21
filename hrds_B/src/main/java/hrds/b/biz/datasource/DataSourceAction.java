@@ -381,7 +381,7 @@ public class DataSourceAction extends BaseAction {
 		// 2.验证传递的部门ID对应的部门信息是否存在
 		String[] depIds = dep_id.split(",");
 		for (String depId : depIds) {
-			if (Dbo.queryNumber("select count(*) from " + Department_info.class + " where dep_id=?",
+			if (Dbo.queryNumber("select count(*) from " + Department_info.TableName + " where dep_id=?",
 					Long.valueOf(depId)).orElseThrow(() -> new BusinessException("sql查询错误")) == 0) {
 				throw new BusinessException("该部门ID对应的部门不存在，请检查！");
 			}

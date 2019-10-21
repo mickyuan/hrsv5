@@ -31,7 +31,7 @@ public class AgentInfoAction extends BaseAction {
     @Method(desc = "查询所有agent信息,agent页面展示(测试用例还未写）",
             logicStep = "1.数据可访问权限处理方式，通过user_id关联进行权限控制" +
                     "2.验证此数据源是否还存在" +
-                    "3.通过agent_info,agent_down_info,sys_user三张表关联分类查询所有agent信息" +
+                    "3.通过agent_info,agent_down_info,sys_user三张表关联查询所有类型agent信息" +
                     "4.创建存放agent信息的集合并封装不同类型agent信息" +
                     "5.将封装不同类型agent信息的集合返回")
     @Param(name = "source_id", desc = "data_source表主键，source_relation_dep表外键", range = "10位数字，新增时自动生成")
@@ -41,7 +41,7 @@ public class AgentInfoAction extends BaseAction {
         // 1.数据可访问权限处理方式，通过user_id关联进行权限控制
         // 2.验证此数据源是否还存在
         isDatasourceExist(source_id);
-        // 3.通过agent_info,agent_down_info,sys_user三张表关联分类查询所有agent信息
+        // 3.通过agent_info,agent_down_info,sys_user三张表关联查询所有类型agent信息
         SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
         asmSql.addSql("select gi.*,su.user_name,su.user_id,t3.deploy,(case t3.deploy when ? then 'yes' " +
                 " else 'no' end) agentStatu from " + Agent_info.TableName + " gi LEFT JOIN " +
@@ -76,7 +76,7 @@ public class AgentInfoAction extends BaseAction {
         asmSql.addParam(source_id);
         asmSql.addParam(AgentType.FTP.getCode());
         List<Map<String, Object>> ftpAgentList = Dbo.queryList(asmSql.sql(), asmSql.params());
-        // 2.创建存放agent信息的集合并封装不同类型agent信息
+        // 4.创建存放agent信息的集合并封装不同类型agent信息
         Map<String, Object> map = new HashMap<>();
         map.put("sjkAgent", sjkAgentList);
         map.put("DBAgent", dbWjAgentList);
@@ -92,7 +92,7 @@ public class AgentInfoAction extends BaseAction {
         map.put("file", AgentType.WenJianXiTong.getCode());
         map.put("ftp", AgentType.FTP.getCode());
 
-        // 3.将封装不同类型agent信息的集合返回
+        // 5.将封装不同类型agent信息的集合返回
         return map;
     }
 
@@ -154,7 +154,7 @@ public class AgentInfoAction extends BaseAction {
     @Param(name = "agent_port", desc = "agent连接端口", range = "1024-65535")
     private void check(long source_id, String agent_type, String agent_ip, String agent_port) {
         // 1.数据可访问权限处理方式，这是一个私有方法，不会单独被调用，所以不需要权限验证
-        // 2.验证agent对应的数据源是否还存在,查到至少一条数据，查不到为0
+        // 2.验证数据源是否还存在,查到至少一条数据，查不到为0
         isDatasourceExist(source_id);
         // 3.判断数据源下相同的IP地址中是否包含相同的端口,查到至少一条数据，查不到为0
         if (Dbo.queryNumber("SELECT count(1) FROM " + Agent_info.TableName + " WHERE source_id=? AND agent_type=?"
