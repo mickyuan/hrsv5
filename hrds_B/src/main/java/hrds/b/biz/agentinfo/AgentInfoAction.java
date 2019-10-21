@@ -30,13 +30,18 @@ public class AgentInfoAction extends BaseAction {
 
     @Method(desc = "查询所有agent信息,agent页面展示(测试用例还未写）",
             logicStep = "1.数据可访问权限处理方式，通过user_id关联进行权限控制" +
-                    "2.创建存放agent信息的集合并封装不同类型agent信息" +
-                    "3.将封装不同类型agent信息的集合返回")
+                    "2.验证此数据源是否还存在" +
+                    "3.通过agent_info,agent_down_info,sys_user三张表关联分类查询所有agent信息" +
+                    "4.创建存放agent信息的集合并封装不同类型agent信息" +
+                    "5.将封装不同类型agent信息的集合返回")
     @Param(name = "source_id", desc = "data_source表主键，source_relation_dep表外键", range = "10位数字，新增时自动生成")
     @Param(name = "datasource_name", desc = "数据源名称", range = "不为空")
     @Return(desc = "存放封装不同类型agent信息的集合", range = "无限制")
     public Map<String, Object> searchDatasourceAndAgentInfo(long source_id, String datasource_name) {
         // 1.数据可访问权限处理方式，通过user_id关联进行权限控制
+        // 2.验证此数据源是否还存在
+        isDatasourceExist(source_id);
+        // 3.通过agent_info,agent_down_info,sys_user三张表关联分类查询所有agent信息
         SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
         asmSql.addSql("select gi.*,su.user_name,su.user_id,t3.deploy,(case t3.deploy when ? then 'yes' " +
                 " else 'no' end) agentStatu from " + Agent_info.TableName + " gi LEFT JOIN " +
@@ -91,6 +96,20 @@ public class AgentInfoAction extends BaseAction {
         return map;
     }
 
+    @Method(desc = "验证agent对应的数据源是否存在",
+            logicStep = "1.数据可访问权限处理方式，通过user_id进行权限验证" +
+                    "2.验证该agent对应的数据源是否还存在")
+    @Param(name = "source_id", desc = "data_source表主键ID", range = "不为空，10位数字新增时生成")
+    private void isDatasourceExist(long source_id) {
+        // 1.数据可访问权限处理方式，通过user_id进行权限验证
+        // 2.验证该agent对应的数据源是否还存在
+        if (Dbo.queryNumber("select count(1) from " + Data_source.TableName + " where source_id = ? " +
+                " and create_user_id=?", source_id, getUserId()).
+                orElseThrow(() -> new BusinessException("sql查询错误！")) == 0) {
+            throw new BusinessException("该agent对应的数据源已不存在，source_id=" + source_id);
+        }
+    }
+
     @Method(desc = "保存agent信息",
             logicStep = "1.数据可访问权限处理方式，新增时会设置创建用户ID，会获取当前用户ID，所以不需要权限验证" +
                     "2.字段合法性验证" +
@@ -135,11 +154,8 @@ public class AgentInfoAction extends BaseAction {
     @Param(name = "agent_port", desc = "agent连接端口", range = "1024-65535")
     private void check(long source_id, String agent_type, String agent_ip, String agent_port) {
         // 1.数据可访问权限处理方式，这是一个私有方法，不会单独被调用，所以不需要权限验证
-        // 2.验证数据源是否还存在,查到至少一条数据，查不到为0
-        if (Dbo.queryNumber("select count(1) from " + Data_source.TableName + " where source_id = ?",
-                source_id).orElseThrow(() -> new BusinessException("sql查询错误！")) == 0) {
-            throw new BusinessException("该agent对应的数据源已不存在不可新增，source_id=" + source_id);
-        }
+        // 2.验证agent对应的数据源是否还存在,查到至少一条数据，查不到为0
+        isDatasourceExist(source_id);
         // 3.判断数据源下相同的IP地址中是否包含相同的端口,查到至少一条数据，查不到为0
         if (Dbo.queryNumber("SELECT count(1) FROM " + Agent_info.TableName + " WHERE source_id=? AND agent_type=?"
                 + " AND agent_ip=? AND agent_port=?", source_id, agent_type, agent_ip, agent_port)
