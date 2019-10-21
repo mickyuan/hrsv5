@@ -43,38 +43,43 @@ public class AgentInfoAction extends BaseAction {
         isDatasourceExist(source_id);
         // 3.通过agent_info,agent_down_info,sys_user三张表关联查询所有类型agent信息
         SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
-        asmSql.addSql("select gi.*,su.user_name,su.user_id,t3.deploy,(case t3.deploy when ? then 'yes' " +
-                " else 'no' end) agentStatu from " + Agent_info.TableName + " gi LEFT JOIN " +
-                Agent_down_info.TableName + " t3 ON gi.agent_ip = t3.agent_ip AND gi.agent_port = t3.agent_port" +
-                " AND gi.agent_id = t3.agent_id left join " + Sys_user.TableName + " su on gi.user_id=su.user_id " +
-                " where gi.source_id = ? and gi.agent_type = ? order by gi.agent_id");
+        asmSql.addSql("select ai.*,su.user_name,su.user_id,adi.deploy,(case adi.deploy when ? then 'yes' " +
+                " else 'no' end) agentStatu from " + Agent_info.TableName + " ai LEFT JOIN " +
+                Agent_down_info.TableName + " adi ON ai.agent_ip = adi.agent_ip AND ai.agent_port = adi.agent_port" +
+                " AND ai.agent_id = adi.agent_id left join " + Sys_user.TableName + " su on ai.user_id=su.user_id " +
+                " where ai.source_id = ? and ai.agent_type = ? and ai.user_id=? order by ai.agent_id");
         asmSql.addParam(IsFlag.Shi.getCode());
         asmSql.addParam(source_id);
         asmSql.addParam(AgentType.ShuJuKu.getCode());
+        asmSql.addParam(getUserId());
         List<Map<String, Object>> sjkAgentList = Dbo.queryList(asmSql.sql(), asmSql.params());
         asmSql.cleanParams();
         // 文件系统Agent
         asmSql.addParam(IsFlag.Shi.getCode());
         asmSql.addParam(source_id);
         asmSql.addParam(AgentType.WenJianXiTong.getCode());
+        asmSql.addParam(getUserId());
         List<Map<String, Object>> fileAgentList = Dbo.queryList(asmSql.sql(), asmSql.params());
         asmSql.cleanParams();
         // DB文件Agent
         asmSql.addParam(IsFlag.Shi.getCode());
         asmSql.addParam(source_id);
         asmSql.addParam(AgentType.DBWenJian.getCode());
+        asmSql.addParam(getUserId());
         List<Map<String, Object>> dbWjAgentList = Dbo.queryList(asmSql.sql(), asmSql.params());
         asmSql.cleanParams();
         // 对象Agent
         asmSql.addParam(IsFlag.Shi.getCode());
         asmSql.addParam(source_id);
         asmSql.addParam(AgentType.DuiXiang.getCode());
+        asmSql.addParam(getUserId());
         List<Map<String, Object>> dxAgentList = Dbo.queryList(asmSql.sql(), asmSql.params());
         asmSql.cleanParams();
         // FTP Agent
         asmSql.addParam(IsFlag.Shi.getCode());
         asmSql.addParam(source_id);
         asmSql.addParam(AgentType.FTP.getCode());
+        asmSql.addParam(getUserId());
         List<Map<String, Object>> ftpAgentList = Dbo.queryList(asmSql.sql(), asmSql.params());
         // 4.创建存放agent信息的集合并封装不同类型agent信息
         Map<String, Object> map = new HashMap<>();
@@ -169,7 +174,7 @@ public class AgentInfoAction extends BaseAction {
             logicStep = "1.数据可访问权限处理方式，通过关联agent_id与user_id检查" +
                     "2.验证agent_id是否合法" +
                     "3.字段合法性验证" +
-                    "4.创建agent_info实体对象，同时封装值" +
+                    "4.检查数据源是否还存在以及判断数据源下相同的IP地址中是否包含相同的端口" +
                     "5.创建agent_info实体对象，同时封装值" +
                     "6.更新agent信息")
     @Param(name = "agent_id", desc = "agent_info主键ID,定义为Long为了判断是否为空", range = "10位数字，新增时自动生成")
@@ -185,7 +190,7 @@ public class AgentInfoAction extends BaseAction {
                             String agent_port, long source_id, long user_id) {
         // 1.数据可访问权限处理方式，通过关联agent_id与user_id检查
         if (Dbo.queryNumber("select count(1) from " + Agent_info.TableName + " where agent_id=? and user_id=?",
-                agent_id, user_id).orElseThrow(() -> new BusinessException("sql查询错误")) > 0) {
+                agent_id, user_id).orElseThrow(() -> new BusinessException("sql查询错误")) == 0) {
             throw new BusinessException("数据权限校验失败，数据不可访问！");
         }
         // 2.验证agent_id是否合法
@@ -194,7 +199,9 @@ public class AgentInfoAction extends BaseAction {
         }
         // 3.字段合法性验证
         fieldLegalityValidation(agent_name, agent_type, agent_ip, agent_port, source_id, user_id);
-        // 4.创建agent_info实体对象，同时封装值
+        // 4.检查数据源是否还存在以及判断数据源下相同的IP地址中是否包含相同的端口
+        check(source_id, agent_type, agent_ip, agent_port);
+        // 5.创建agent_info实体对象，同时封装值
         Agent_info agentInfo = new Agent_info();
         agentInfo.setAgent_id(agent_id);
         agentInfo.setUser_id(user_id);
@@ -203,13 +210,8 @@ public class AgentInfoAction extends BaseAction {
         agentInfo.setAgent_port(agent_port);
         agentInfo.setAgent_type(agent_type);
         agentInfo.setAgent_name(agent_name);
-        // 5.检查数据源是否还存在以及判断数据源下相同的IP地址中是否包含相同的端口
-        check(source_id, agent_type, agent_ip, agent_port);
         // 6.更新agent信息
-        if (agentInfo.update(Dbo.db()) != 1) {
-            throw new BusinessException("更新表信息失败," + "agent_port=" + agent_port + ",agent_ip =" + agent_ip
-                    + ",agent_name=" + agent_name);
-        }
+        agentInfo.update(Dbo.db());
     }
 
     @Method(desc = "字段合法性验证",
