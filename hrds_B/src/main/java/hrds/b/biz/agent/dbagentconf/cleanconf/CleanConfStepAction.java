@@ -417,6 +417,9 @@ public class CleanConfStepAction {
 
 		//3、如果配置了字符替换
 		if(replaceFlag){
+			if(oriFieldArr.length == 0 || replaceFeildArr.length == 0){
+				throw new BusinessException("保存字符替换时，请填写原字符和替换后字符");
+			}
 			for(int i = 0; i < oriFieldArr.length; i++){
 				//3-1、构建Clean_parameter对象，设置原字段，替换后字段
 				Clean_parameter allTbClean = new Clean_parameter();
@@ -506,6 +509,12 @@ public class CleanConfStepAction {
 	@Param(name = "dateFormat", desc = "待保存的Column_clean类对象", range = "不为空，注意清洗方式代码项：" +
 			"3：时间转换", isBean = true)
 	public void saveDateFormatInfo(Column_clean dateFormat){
+		if(StringUtil.isBlank(dateFormat.getOld_format())){
+			throw new BusinessException("请填写原日期格式");
+		}
+		if(StringUtil.isBlank(dateFormat.getConvert_format())){
+			throw new BusinessException("请填写转换后日期格式");
+		}
 		//1、如果之前针对该列设置过日期格式化，要删除之前的设置
 		Dbo.execute("DELETE FROM "+ Column_clean.TableName +" WHERE column_id = ? AND clean_type = ?"
 				, dateFormat.getColumn_id(), CleanType.ShiJianZhuanHuan.getCode());
@@ -585,7 +594,7 @@ public class CleanConfStepAction {
 			"字符拆分(6)", isBean = true)
 	@Param(name = "columnSplitString", desc = "待保存的列拆分信息", range = "json字符串，不为空，注意拆分方式：" +
 			"偏移量(1)" +
-			"自定符号(2)", isBean = true)
+			"自定符号(2)")
 	@Param(name = "tableId", desc = "数据库对应表主键，表清洗参数表外键", range = "不为空")
 	public void saveColSplitInfo(Column_clean columnClean, String columnSplitString, long tableId){
 		//1、首先，在column_clean表中，保存该列的列清洗信息
@@ -630,13 +639,12 @@ public class CleanConfStepAction {
 			tableColumn.setTable_id(tableId);
 			tableColumn.setIs_new(IsFlag.Shi.getCode());
 			tableColumn.setColumn_id(PrimayKeyGener.getNextId());
-			tableColumn.setIs_primary_key(IsFlag.Fou.toString());
+			tableColumn.setIs_primary_key(IsFlag.Fou.getCode());
 			tableColumn.setColume_name(columnSplit.getCol_name());
 			tableColumn.setColumn_type(columnSplit.getCol_type());
 			tableColumn.setColume_ch_name(columnSplit.getCol_zhname());
 			tableColumn.setValid_s_date(DateUtil.getSysDate());
 			tableColumn.setValid_e_date(Constant.MAXDATE);
-			tableColumn.setIs_new(IsFlag.Shi.toString());
 
 			tableColumn.add(Dbo.db());
 		}
