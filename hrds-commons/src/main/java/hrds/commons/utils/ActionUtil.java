@@ -28,10 +28,12 @@ public class ActionUtil {
 		User user = new User();
 		try {
 			//这样便可以获取一个cookie数组
-			//String cookieSrc = RequestUtil.getCookieObject(_userCookieName, String.class);
-			String jsonSrc = new String(Base64.getDecoder().decode(cookieSrc));
-			logger.info(jsonSrc);
-			Optional<User> optional = JsonUtil.toObjectSafety(jsonSrc, User.class);
+			if(StringUtil.isEmpty(cookieSrc)){
+				cookieSrc = RequestUtil.getCookieObject(_userCookieName, String.class);
+			}else {
+				cookieSrc = new String(Base64.getDecoder().decode(cookieSrc));
+			}
+			Optional<User> optional = JsonUtil.toObjectSafety(cookieSrc, User.class);
 			if(optional.isPresent()){
 				User user1 = optional.get();
 				return user1;

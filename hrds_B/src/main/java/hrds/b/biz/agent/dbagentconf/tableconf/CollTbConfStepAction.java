@@ -34,8 +34,8 @@ public class CollTbConfStepAction extends BaseAction {
 
 	private static final long DEFAULT_TABLE_ID = 999999L;
 
-	@Method(desc = "根据colSetId加载页面初始化数据", logicStep = "1、查询数据并返回")
-	@Param(name = "colSetId", desc = "数据库设置ID,database_set表主键,table_info表外键", range = "不为空")
+	@Method(desc = "根据数据库采集设置表ID加载页面初始化数据", logicStep = "1、查询数据并返回")
+	@Param(name = "colSetId", desc = "数据库设置ID,源系统数据库设置表主键,数据库对应表外键", range = "不为空")
 	@Return(desc = "查询结果集，查询出的结果可能有0-N条", range = "不会为null")
 	//TODO 按照新的原型设计，这个方法应该查询的内容为table_id，,table_name,table_ch_name,是否并行抽取(这个字段目前还没有)
 	public Result getInitInfo(long colSetId) {
@@ -49,16 +49,16 @@ public class CollTbConfStepAction extends BaseAction {
 	}
 
 	//TODO 该方法是为前台界面的模糊查询功能提供的，关于这个功能要满足的要求，希望可以讨论一下
-	@Method(desc = "根据模糊表名和数据库设置id得到表相关信息，即查询按钮", logicStep = "" +
+	@Method(desc = "根据模糊表名和数据库设置id得到表相关信息", logicStep = "" +
 			"1、根据colSetId去数据库中获取数据库设置相关信息" +
 			"2、将查询结果转换成json，并追加模糊查询表名" +
 			"3、和Agent端进行交互，得到Agent返回的数据" +
 			"4、对获取到的数据进行处理，获得模糊查询到的表名" +
 			"5、根据表名和colSetId获取界面需要显示的信息并返回")
-	@Param(name = "colSetId", desc = "数据库设置ID,database_set表主键,table_info表外键", range = "不为空")
+	@Param(name = "colSetId", desc = "数据库设置ID,源系统数据库设置表主键,数据库对应表外键", range = "不为空")
 	@Param(name = "inputString", desc = "用户界面输入用于模糊查询的关键词", range = "不为空")
-	@Return(desc = "查询结果集", range = "如果模糊查询没有查询到数据，list中没有数据，如果模糊查询查到了N条数据，" +
-			"list.size()为N")
+	@Return(desc = "查询结果集", range = "结果集大小视是否查询到数据而定")
+	//查询按钮
 	public List<Result> getTableInfo(long colSetId, String inputString){
 		//1、根据colSetId去数据库中获取数据库设置相关信息
 		Result result = getDatabaseSetInfo(colSetId, getUserId());
@@ -82,14 +82,14 @@ public class CollTbConfStepAction extends BaseAction {
 		return getTableInfoByTableName(rightTables, colSetId);
 	}
 
-	@Method(desc = "根据数据库设置id得到所有表相关信息，即查看所有表", logicStep = "" +
+	@Method(desc = "根据数据库设置id得到所有表相关信息", logicStep = "" +
 			"1、根据colSetId去数据库中获取数据库设置相关信息" +
 			"2、将查询结果转换成json，并追加获取所有表" +
 			"3、和Agent端进行交互，得到Agent返回的数据" +
 			"4、对获取到的数据进行处理，根据表名和colSetId获取界面需要显示的信息并返回")
-	@Param(name = "colSetId", desc = "数据库设置ID,database_set表主键,table_info表外键", range = "不为空")
-	@Return(desc = "查询结果集", range = "如果模糊查询没有查询到数据，list中没有数据，如果模糊查询查到了N条数据，" +
-			"list.size()为N")
+	@Param(name = "colSetId", desc = "数据库设置ID,源系统数据库设置表主键,数据库对应表外键", range = "不为空")
+	@Return(desc = "查询结果集", range = "不为空")
+	//查看所有表
 	public List<Result> getAllTableInfo(long colSetId){
 		//1、根据colSetId去数据库中获取数据库设置相关信息
 		Result result = getDatabaseSetInfo(colSetId, getUserId());
@@ -116,8 +116,8 @@ public class CollTbConfStepAction extends BaseAction {
 			"2、调用AgentActionUtil工具类获取访问Agent端服务的url" +
 			"3、构建http请求访问Agent端服务" +
 			"4、如果响应失败，则抛出异常")
-	@Param(name = "colSetId", desc = "数据库设置ID,database_set表主键,table_info表外键", range = "不为空")
-	@Param(name = "sql", desc = "前端画面传过来的用户设置的并行采集SQL", range = "不为空")
+	@Param(name = "colSetId", desc = "数据库设置ID,源系统数据库设置表主键,数据库对应表外键", range = "不为空")
+	@Param(name = "sql", desc = "用户设置的并行采集SQL", range = "不为空")
 	public void testParallelExtraction(long colSetId, String sql){
 		//1、根据colSetId在database_set表中获得数据库设置信息
 		Map<String, Object> resultMap = Dbo.queryOneObject("select database_name, database_pad, database_drive, " +
@@ -146,7 +146,7 @@ public class CollTbConfStepAction extends BaseAction {
 		}
 	}
 
-	@Method(desc = "使用SQL抽取数据页面，保存按钮后台方法", logicStep = "" +
+	@Method(desc = "保存自定义抽取数据SQL", logicStep = "" +
 			"1、根据databaseId去数据库中查询该数据库采集任务是否存在" +
 			"2、将前端传过来的参数(JSON)转为List<Table_info>集合" +
 			"3、使用databaseId在table_info表中删除所有自定义SQL采集的记录" +
@@ -154,8 +154,9 @@ public class CollTbConfStepAction extends BaseAction {
 			"   是否仅登记(是)" +
 			"5、保存数据进库")
 	@Param(name = "tableInfoArray", desc = "List<Table_info>的JSONArray格式的字符串，" +
-			"数组中的每一个对象必须包含table_name,table_ch_name,sql", range = "不为空")
-	@Param(name = "databaseId", desc = "数据库设置ID,database_set表主键,table_info表外键", range = "不为空")
+			"每一个Table_info对象必须包含table_name,table_ch_name,sql", range = "不为空")
+	@Param(name = "databaseId", desc = "数据库设置ID,源系统数据库设置表主键,数据库对应表外键", range = "不为空")
+	//使用SQL抽取数据页面，保存按钮后台方法
 	public void saveAllSQL(String tableInfoArray, long databaseId){
 		//1、根据databaseId去数据库中查询该数据库采集任务是否存在
 		long dbSetCount = Dbo.queryNumber("select count(1) from database_set where database_id = ?"
@@ -197,10 +198,11 @@ public class CollTbConfStepAction extends BaseAction {
 		}
 	}
 
-	@Method(desc = "使用SQL抽取数据页面操作栏，删除按钮后台方法", logicStep = "" +
+	@Method(desc = "根据数据库对应表ID删除自定义抽取SQL", logicStep = "" +
 			"1、根据tableId在table_info表中找到该条记录" +
 			"2、根据tableId在table_info表中删除该条记录")
-	@Param(name = "tableId", desc = "table_info表主键", range = "不为空")
+	@Param(name = "tableId", desc = "数据库对应表主键", range = "不为空")
+	//使用SQL抽取数据页面操作栏，删除按钮后台方法
 	public void deleteSQLConf(long tableId){
 		//1、根据tableId在table_info表中找到该条记录
 		long count = Dbo.queryNumber(" select count(1) from " + Table_info.TableName + " where table_id = ? " +
@@ -217,11 +219,11 @@ public class CollTbConfStepAction extends BaseAction {
 		//以上table_info表中都没有user_id字段，解决方式待讨论
 	}
 
-	@Method(desc = "配置采集表页面，使用SQL抽取数据Tab页后台方法，用于回显已经设置的SQL", logicStep = "" +
+	@Method(desc = "根据数据库设置ID获得用户自定义抽取SQL", logicStep = "" +
 			"1、根据colSetId在table_info表中查询数据并返回")
-	@Param(name = "colSetId", desc = "数据库设置ID,databse_set表主键，table_info表外键", range = "不为空")
-	@Return(desc = "查询结果集", range = "如果用户在SQL设置界面设置了自定义查询SQL，那么List集合中就有数据，" +
-			"否则list.size()为0")
+	@Param(name = "colSetId", desc = "数据库设置ID,源系统数据库设置表主键，数据库对应表外键", range = "不为空")
+	@Return(desc = "查询结果集", range = "不为空，是否有数据视查询结果而定")
+	//配置采集表页面，使用SQL抽取数据Tab页后台方法，用于回显已经设置的SQL
 	public List<Table_info> getAllSQLs(long colSetId){
 		return Dbo.queryList(Table_info.class, " SELECT * FROM "+ Table_info.TableName +
 				" WHERE database_id = ? " + "AND is_user_defined = ? order by table_id", colSetId, IsFlag.Shi.getCode());
@@ -229,11 +231,12 @@ public class CollTbConfStepAction extends BaseAction {
 		//以上table_info表中都没有user_id字段，解决方式待讨论
 	}
 
-	@Method(desc = "配置采集表页面,定义过滤按钮后台方法，用于回显已经对单表定义好的SQL", logicStep = "" +
+	@Method(desc = "根据数据库设置ID和表名，获取在该表采集时使用的过滤SQL", logicStep = "" +
 			"1、根据colSetId和tableName在table_info表中获取数据并返回")
-	@Param(name = "colSetId", desc = "数据库设置ID,databse_set表主键，table_info表外键", range = "不为空")
-	@Param(name = "tableName", desc = "表名，table_info表的table_name字段", range = "不为空")
-	@Return(desc = "查询结果集", range = "不为空，如果单表定义的SQL过滤，那么Result中就有数据，否则，就没有数据")
+	@Param(name = "colSetId", desc = "数据库设置ID,源系统数据库设置表主键，数据库对应表外键", range = "不为空")
+	@Param(name = "tableName", desc = "表名", range = "不为空")
+	@Return(desc = "查询结果集", range = "不为空，是否有数据视实际情况而定")
+	//配置采集表页面,定义过滤按钮后台方法，用于回显已经对单表定义好的SQL
 	public Result getSingleTableSQL(long colSetId, String tableName){
 		return Dbo.queryResult("SELECT table_id,table_name,table_ch_name,storage_type,table_count,sql " +
 				" FROM "+ Table_info.TableName +" WHERE database_id = ? AND valid_e_date = ? AND table_name = ? ",
@@ -242,7 +245,7 @@ public class CollTbConfStepAction extends BaseAction {
 		//以上table_info表中都没有user_id字段，解决方式待讨论
 	}
 
-	@Method(desc = "配置采集表页面,选择列按钮后台方法", logicStep = "" +
+	@Method(desc = "根据参数获取表的所有列信息", logicStep = "" +
 			"1、判断tableId的值" +
 			"2、若tableId为999999，表示要获取当前采集任务中不存在的表的所有列，需要和agent进行交互" +
 			"      2-1、根据colSetId去数据库中查出DB连接信息" +
@@ -250,13 +253,14 @@ public class CollTbConfStepAction extends BaseAction {
 			"3、若tableId不为999999，表示要获取当前采集任务中存在的表的所有列，直接在table_column表中查询即可" +
 			"      3-1、根据tableId在table_column表中获取列信息" +
 			"4、返回")
-	@Param(name = "tableName", desc = "要获取所有列的表的名字，table_info表的table_name字段", range = "不为空")
-	@Param(name = "colSetId", desc = "数据库设置ID，databse_set表主键，table_info表外键", range = "不为空")
-	@Param(name = "tableId", desc = "table_info表主键,table_column表外键",
-			range = "可以为空，表示当前采集任务中不包含这张表，如果为空，默认值为999999", nullable = true,
+	@Param(name = "tableName", desc = "表名", range = "不为空")
+	@Param(name = "colSetId", desc = "数据库设置ID，源系统数据库设置表主键，数据库对应表外键", range = "不为空")
+	@Param(name = "tableId", desc = "数据库对应表主键,表对应的字段表外键",
+			range = "如果要获取不是当前采集中已经存在的表的列信息，这个参数可以不传", nullable = true,
 			valueIfNull = "999999")
-	@Return(desc = "列信息，有两对Entry，一对的key为table_name，value为要获得列信息的表的表名" +
-			"另一对的key为columnInfo，value为List<Table_column> 表示列的信息", range = "不为空")
+	@Return(desc = "key为table_name，value为表名；key为columnInfo，value为List<Table_column> 表示列的信息"
+			, range = "不为空")
+	//配置采集表页面,选择列按钮后台方法
 	public Map<String, Object> getColumnInfo(String tableName, long colSetId, long tableId){
 		Map<String, Object> returnMap = new HashMap<>();
 		returnMap.put("tableName", tableName);
@@ -279,8 +283,7 @@ public class CollTbConfStepAction extends BaseAction {
 		return returnMap;
 	}
 
-	@Method(desc = "如果页面既有基于配置的采集表，又有自定义SQL查询采集，保存单个表的采集信息，如果要采集多张表，" +
-			"前端多次调用该方法，自定义SQL查询采集信息已经调用saveAllSQL()方法保存了", logicStep = "" +
+	@Method(desc = "保存画面配置的单表采集信息，如果画面配置采集多张表，前端多次调用该方法", logicStep = "" +
 			"1、校验Table_info对象中的信息是否合法" +
 			"2、给Table_info对象设置基本信息(valid_s_date,valid_e_date,is_user_defined,is_register)" +
 			"3、不论新增采集表还是编辑采集表，页面上所有的内容都可能被修改，所以直接执行SQL，" +
@@ -301,18 +304,19 @@ public class CollTbConfStepAction extends BaseAction {
 			"           7-3-3、更新column_merge表对应条目的table_id字段" +
 			"8、不是新增采集表还是编辑采集表，都需要将该表要采集的列信息保存到相应的表里面")
 	//TODO 注意这边，目前是否并行抽取和并且抽取SQL还没有
-	@Param(name = "tableInfo", desc = "一个Table_info对象必须包含table_name,table_ch_name和是否并行抽取，如果并行抽取，" +
-			"那么并行抽取SQL也要有，如果是新增的采集表，table_id为空，如果是编辑修改采集表，table_id不能为空" +
-			"用于单表过滤的sql页面没定义就是空，页面定义了就不为空", range = "不为空，Table_info类的实体类对象"
-			, isBean = true)
-	@Param(name = "colSetId", desc = "数据库设置ID，databse_set表主键，table_info表外键", range = "不为空")
-	@Param(name = "collColumn", desc = "该表要采集的字段信息", range = "可以为空，如果用户没有选择采集列，" +
-			"则这个参数可以不传，默认值为空字符串,如果用户指定了采集某张表的某些字段，则这个参数不为空，json数组格式，" +
-			" 一个json对象内容包括是否主键(is_primary_key)，列名(colume_name)，字段类型(column_type)" +
-			"，列中文名(colume_ch_name)", nullable = true, valueIfNull = "")
-	@Param(name = "columnSort", desc = "该表要采集的字段的排序", range = "可以为空，如果用户没有自定义采集字段排序，" +
-			"则该参数可以不传，默认值为空字符串", nullable = true, valueIfNull = "")
-	@Return(desc = "保存成功后返回database_id，用于下一个页面能够拿到上一个页面的信息", range = "不为空")
+	@Param(name = "tableInfo", desc = "如果是新增的采集表，table_id为空，如果是编辑修改采集表，table_id不能为空"
+			, range = "不为空，Table_info类的实体类对象", isBean = true)
+	@Param(name = "colSetId", desc = "数据库设置ID，源系统数据库设置表主键，数据库对应表外键", range = "不为空")
+	@Param(name = "collColumn", desc = "该表要采集的字段信息", range = "如果用户没有选择采集列，这个参数可以不传，" +
+			"表示采集这张表的所有字段;" +
+			"参数格式：json" +
+			"内容：是否主键(is_primary_key)" +
+			"      列名(colume_name)" +
+			"      字段类型(column_type)" +
+			"      列中文名(colume_ch_name)", nullable = true, valueIfNull = "")
+	@Param(name = "columnSort", desc = "该表要采集的字段的排序",
+			range = "如果用户没有自定义采集字段排序，该参数可以不传", nullable = true, valueIfNull = "")
+	@Return(desc = "保存成功后返回当前采集任务ID", range = "不为空")
 	public long saveCollSingleTbInfo(Table_info tableInfo, long colSetId, String collColumn, String columnSort){
 		//1、校验Table_info对象中的信息是否合法
 		if(StringUtil.isBlank(tableInfo.getTable_name())){
@@ -415,8 +419,8 @@ public class CollTbConfStepAction extends BaseAction {
 	}
 
 	@Method(desc = "如果页面只有自定义SQL查询采集，保存该界面配置的所有信息", logicStep = "" +
-			"1、因为自定义表已经入库了，所以要在table_info表中删除不是自定义的表，删除的条数可能为0-N")
-	@Param(name = "colSetId", desc = "数据库设置ID，databse_set表主键，table_info表外键", range = "不为空")
+			"1、因为自定义SQL已经入库了，所以要在table_info表中删除不是非自定义SQL的记录，删除的条数可能为0-N")
+	@Param(name = "colSetId", desc = "数据库设置ID，源系统数据库设置表主键，数据库对应表外键", range = "不为空")
 	@Return(desc = "保存成功后返回database_id，用于下一个页面能够拿到上一个页面的信息", range = "不为空")
 	public long saveCustomizeCollTbInfo(long colSetId){
 		//1、因为自定义表已经入库了，所以要在table_info表中删除不是自定义SQL的表信息，删除的条数可能为0-N
@@ -435,13 +439,15 @@ public class CollTbConfStepAction extends BaseAction {
 	@Param(name = "tableInfo", desc = "一个Table_info对象必须包含table_name,table_ch_name和是否并行抽取，" +
 			"如果并行抽取，那么并行抽取SQL也要有；如果是新增的采集表，table_id为空，如果是编辑修改采集表，table_id不能为空" +
 			"用于过滤的sql页面没定义就是空，页面定义了就不为空", range = "不为空，Table_info类的实体类对象")
-	@Param(name = "collColumn", desc = "该表要采集的字段信息", range = "可以为空，如果用户没有选择采集列，" +
-			"则这个参数可以不传，默认值为空字符串;如果用户指定了采集某张表的某些字段，则这个参数不为空，json数组格式，" +
-			"一个json对象内容包括是否主键(is_primary_key)，列名(colume_name)，字段类型(column_type)，列中文名(colume_ch_name)")
-	@Param(name = "columnSort", desc = "该表要采集的字段的排序", range = "" +
-			"可以为空，如果用户没有自定义采集字段排序，则该参数可以不传，默认值为空字符串" +
-			"如果用户定义了，key为列名,value为列的排序")
-	@Param(name = "colSetId", desc = "数据库设置ID，databse_set表主键，table_info表外键", range = "不为空")
+	@Param(name = "collColumn", desc = "该表要采集的字段信息", range = "如果用户没有选择采集列，这个参数可以不传，" +
+			"表示采集这张表的所有字段;" +
+			"参数格式：json" +
+			"内容：是否主键(is_primary_key)" +
+			"      列名(colume_name)" +
+			"      字段类型(column_type)" +
+			"      列中文名(colume_ch_name)")
+	@Param(name = "columnSort", desc = "该表要采集的字段的排序", range = "如果用户没有自定义采集字段排序，该参数可以不传")
+	@Param(name = "colSetId", desc = "数据库设置ID，源系统数据库设置表主键，数据库对应表外键", range = "不为空")
 	@Param(name = "columnCleanOrder", desc = "列清洗默认优先级", range = "不为空，json格式的字符串")
 	private void saveTableColumnInfoForAdd(Table_info tableInfo, String collColumn, String columnSort,
 	                                       long colSetId, String columnCleanOrder){
@@ -485,13 +491,15 @@ public class CollTbConfStepAction extends BaseAction {
 			"如果并行抽取，那么并行抽取SQL也要有,如果是新增的采集表，table_id为空，如果是编辑修改采集表，table_id不能为空" +
 			"用于过滤的sql页面没定义就是空，页面定义了就不为空", range = "不为空，Table_info类的实体类对象")
 	@Param(name = "oldTableID", desc = "修改前的table_info表ID", range = "不为空")
-	@Param(name = "collColumn", desc = "该表要采集的字段信息", range = "" +
-			"可以为空，如果用户没有选择采集列，则这个参数可以不传，默认值为空字符串" +
-			"如果用户指定了采集某张表的某些字段，则这个参数不为空，json数组格式，" +
-			"一个json对象内容包括是否主键(is_primary_key)，列名(colume_name)，" +
-			"字段类型(column_type)，列中文名(colume_ch_name)")
-	@Param(name = "columnSort", desc = "该表要采集的字段的排序", range = "不为空")
-	@Param(name = "colSetId", desc = "数据库设置ID，databse_set表主键，table_info表外键", range = "不为空")
+	@Param(name = "collColumn", desc = "该表要采集的字段信息", range = "如果用户没有选择采集列，这个参数可以不传，" +
+			"表示采集这张表的所有字段;" +
+			"参数格式：json" +
+			"内容：是否主键(is_primary_key)" +
+			"      列名(colume_name)" +
+			"      字段类型(column_type)" +
+			"      列中文名(colume_ch_name)")
+	@Param(name = "columnSort", desc = "该表要采集的字段的排序", range = "如果用户没有自定义采集字段排序，该参数可以不传")
+	@Param(name = "colSetId", desc = "数据库设置ID，源系统数据库设置表主键，数据库对应表外键", range = "不为空")
 	@Param(name = "columnCleanOrder", desc = "默认的表清洗优先级", range = "不为空，JSON字符串")
 	private void saveTableColumnInfoForUpdate(Table_info tableInfo, long oldTableID, String collColumn,
 	                                          String columnSort, long colSetId,
@@ -505,7 +513,7 @@ public class CollTbConfStepAction extends BaseAction {
 
 	@Method(desc = "根据colSetId, userId和表名与Agent端交互得到该表的列信息", logicStep = "" +
 			"1、根据colSetId和userId去数据库中查出DB连接信息")
-	@Param(name = "colSetId", desc = "数据库设置ID，databse_set表主键，table_info表外键", range = "不为空")
+	@Param(name = "colSetId", desc = "数据库设置ID，源系统数据库设置表主键，数据库对应表外键", range = "不为空")
 	@Param(name = "userId", desc = "当前登录用户ID，sys_user表主键", range = "不为空")
 	@Param(name = "tableName", desc = "要获取列的表名", range = "不为空")
 	@Return(desc = "在Agent端获取到的该表的列信息", range = "不为空，" +
@@ -525,7 +533,7 @@ public class CollTbConfStepAction extends BaseAction {
 	}
 
 	@Method(desc = "根据colSetId去数据库中查出DB连接信息", logicStep = "1、根据colSetId和userId去数据库中查出DB连接信息")
-	@Param(name = "colSetId", desc = "数据库设置ID，databse_set表主键，table_info表外键", range = "不为空")
+	@Param(name = "colSetId", desc = "数据库设置ID，源系统数据库设置表主键，数据库对应表外键", range = "不为空")
 	@Param(name = "userId", desc = "当前登录用户ID，sys_user表主键", range = "不为空")
 	@Return(desc = "查询结果集", range = "不为空")
 	private Result getDatabaseSetInfo(long colSetId, long userId){
@@ -548,7 +556,7 @@ public class CollTbConfStepAction extends BaseAction {
 	@Return(desc = "存有表详细信息的List集合", range = "查到信息则不为空，没有查到信息则为空")
 	private List<Result> getTableInfoByTableName(List<String> tableNames, long colSetId){
 		//1、如果集合为空，则直接返回空集合
-		if(tableNames.isEmpty()) return Collections.emptyList();
+		if(tableNames.isEmpty()){ return Collections.emptyList(); }
 		//2、如果集合不是空，则进行如下处理
 		List<Result> returnList = new ArrayList<>();
 		//2-1、根据String的自然顺序(字母a-z)对表名进行升序排序

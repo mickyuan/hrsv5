@@ -19,7 +19,7 @@ public class LogReader {
 
 	private static final Logger logger = LogManager.getLogger(LogReader.class);
 
-	@Method(desc = "根据日志文件路径、agent_ip,agent_port,userName,password读取readNum行日志", logicStep = "" +
+	@Method(desc = "根据日志文件路径、agent_ip,agent_port,userName,password读取日志", logicStep = "" +
 			"1、构建使用jsch访问日志的Map集合" +
 			"2、调用方法获取jSchSession" +
 			"3、拼接读取日志的linux命令" +
@@ -51,10 +51,10 @@ public class LogReader {
 			//4、读取日志
 			execCommandByJSch = SFTPChannel.execCommandByJSch(jSchSession, readShell);
 		} catch (JSchException ex) {
-			execCommandByJSch = "读取Agent日志失败!";//FIXME 这里应该赋值为：读取Agent日志失败！已修复
+			execCommandByJSch = "读取Agent日志失败!";
 			logger.error("登录验证失败...", ex);
 		} catch (IOException ex) {
-			execCommandByJSch = "读取Agent日志失败!";//FIXME 这里应该赋值为：读取Agent日志失败！已修复
+			execCommandByJSch = "读取Agent日志失败!";
 			logger.error("读取日志文件-----\" + logPath + \"-----失败...", ex);
 		} finally {
 			if (jSchSession != null) {

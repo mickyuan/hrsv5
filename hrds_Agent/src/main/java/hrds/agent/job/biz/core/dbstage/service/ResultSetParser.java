@@ -136,12 +136,10 @@ public class ResultSetParser {
 
 		//如果用户需要追加MD5，则需要再添加一列
 		String isMD5 = jobInfo.getIs_md5();
-		if (isMD5 != null && !isMD5.isEmpty()) {
-			if (IsFlag.Shi == IsFlag.ofEnumByCode(isMD5)) {
-				columnsTypeAndPreci.append(JobConstant.COLUMN_TYPE_SEPARATOR).append("char(32)");
-				columnsLength.append(JobConstant.COLUMN_TYPE_SEPARATOR).append("32");
-				columns.append(JobConstant.COLUMN_NAME_SEPARATOR).append(JobConstant.MD5_NAME);
-			}
+		if (isMD5 != null && !isMD5.isEmpty() && IsFlag.Shi == IsFlag.ofEnumByCode(isMD5)) {
+			columnsTypeAndPreci.append(JobConstant.COLUMN_TYPE_SEPARATOR).append("char(32)");
+			columnsLength.append(JobConstant.COLUMN_TYPE_SEPARATOR).append("32");
+			columns.append(JobConstant.COLUMN_NAME_SEPARATOR).append(JobConstant.MD5_NAME);
 		}
 		//7、构造metaDataMap，根据落地数据文件类型，初始化FileWriterInterface实现类，由实现类去写文件
 		Map<String, Object> metaDataMap = new HashMap<>();
@@ -184,6 +182,8 @@ public class ResultSetParser {
 			//写ORC文件
 		} else if (FileFormatConstant.SEQUENCEFILE.getCode() == Integer.parseInt(format)) {
 			//写SEQUENCE文件
+		}else{
+			throw new AppSystemException("系统仅支持落地CSV/PARQUET/ORC/SEQUENCE数据文件");
 		}
 		//8、写文件结束，返回本线程生成数据文件的路径
 		return filePath;

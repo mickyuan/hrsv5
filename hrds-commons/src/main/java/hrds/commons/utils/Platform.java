@@ -1,6 +1,5 @@
 package hrds.commons.utils;
 
-import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.utils.StringUtil;
 import hrds.commons.codes.DatabaseType;
 import hrds.commons.exception.BusinessException;
@@ -20,12 +19,12 @@ import java.util.Map;
 public class Platform {
 
 	private static final Log logger = LogFactory.getLog(Platform.class);
-	public static XmlCreater xmlCreater = null;
+	private static XmlCreater xmlCreater = null;
 	public static Element table = null;
 	public static Element root = null;
 	public static Element column = null;
 
-	public static void createXml(String path, String name) {
+	private static void createXml(String path, String name) {
 
 		xmlCreater = new XmlCreater(path);
 		root = xmlCreater.createRootElement("database");
@@ -40,7 +39,7 @@ public class Platform {
 		root = xmlCreater.getElement();
 	}
 
-	public static void addTable(String en_table_name, String cn_table_name) {
+	private static void addTable(String en_table_name, String cn_table_name) {
 
 		table = xmlCreater.createElement(root, "table");
 		xmlCreater.createAttribute(table, "name", en_table_name.toLowerCase());
@@ -48,8 +47,8 @@ public class Platform {
 		xmlCreater.createAttribute(table, "storage_type", "1");
 	}
 
-	public static void addColumn(String colName, String primaryKey, String column_type, String typeName, String precision, String isNull,
-	                             String dataType, String scale) {
+	private static void addColumn(String colName, String primaryKey, String column_type, String typeName, String precision, String isNull,
+	                              String dataType, String scale) {
 
 		column = xmlCreater.createElement(table, "column");
 		xmlCreater.createAttribute(column, "name", colName);
@@ -96,7 +95,7 @@ public class Platform {
 							oracle 貌似需要大写
 						3、第二个参数，mysql可以加上面所有的都是ok的
 					 */
-					Map<String, String> isPrimaryKey = new HashMap<String, String>();
+					Map<String, String> isPrimaryKey = new HashMap<>();
 					if (!tableName.equals(tableNameTemp)) {
 						tableNameTemp = tableName;
 						//添加表名
@@ -147,10 +146,10 @@ public class Platform {
 						 */
 						ResultSet columnSet = dbmd.getColumns(null, schemaPattern, tableName, "%");
 
-						List<Map<String, String>> list = new ArrayList<Map<String, String>>();
+						List<Map<String, String>> list = new ArrayList<>();
 
 						while (columnSet.next()) {
-							Map<String, String> mapColumn = new HashMap<String, String>();
+							Map<String, String> mapColumn = new HashMap<>();
 							String colName = columnSet.getString("COLUMN_NAME");//列名
 							String typeName = columnSet.getString("TYPE_NAME");//类型名称
 							int precision = columnSet.getInt("COLUMN_SIZE");//长度
@@ -171,12 +170,11 @@ public class Platform {
 						}
 						columnSet.close();
 						ResultSet rs = dbmd.getPrimaryKeys(null, null, tableName.toUpperCase());
-						Map<String, String> isPrimaryKey = new HashMap<String, String>();
+						Map<String, String> isPrimaryKey = new HashMap<>();
 						while (rs.next()) {
 							isPrimaryKey.put(rs.getString("COLUMN_NAME"), "true");
 						}
-						for (int i = 0; i < list.size(); i++) {
-							Map<String, String> mapColumn = list.get(i);
+						for (Map<String, String> mapColumn : list) {
 							String colName = mapColumn.get("colName");
 							String typeName = mapColumn.get("typeName");
 							String precision = mapColumn.get("precision");
@@ -224,11 +222,11 @@ public class Platform {
 			}
 			//table是多张表
 			List<String> names = StringUtil.split(table, "|");
-			for (int i = 0; i < names.size(); i++) {
-				ResultSet columnSet = dbmd.getColumns(null, schemaPattern, names.get(i), "%");
+			for (String name : names) {
+				ResultSet columnSet = dbmd.getColumns(null, schemaPattern, name, "%");
 				//获取所有表
 				String tableNameTemp = "";
-				Map<String, String> isPrimaryKey = new HashMap<String, String>();
+				Map<String, String> isPrimaryKey = new HashMap<>();
 				while (columnSet.next()) {
 					String tableName = columnSet.getString("TABLE_NAME");
 					if (!tableName.equals(tableNameTemp)) {
@@ -273,9 +271,8 @@ public class Platform {
 	 * @param typeName  {@link String} 数据类型
 	 * @param precision {@link String} 数据长度
 	 * @param scale     {@link String} 数据精度
-	 * @return
 	 */
-	public static String getColType(int dataType, String typeName, int precision, int scale) {
+	private static String getColType(int dataType, String typeName, int precision, int scale) {
 
 		//TODO 各数据库不同遇到在修改
 		typeName = StringUtil.replace(typeName, "UNSIGNED", "");
@@ -286,7 +283,7 @@ public class Platform {
 				typeName = typeName.substring(0, ic);
 			}
 		}
-		String column_type = "";
+		String column_type;
 		if (Types.INTEGER == dataType || Types.TINYINT == dataType || Types.SMALLINT == dataType || Types.BIGINT == dataType) {
 			column_type = typeName;
 		} else if (Types.NUMERIC == dataType || Types.FLOAT == dataType || Types.DOUBLE == dataType || Types.DECIMAL == dataType) {
@@ -308,74 +305,69 @@ public class Platform {
 		return column_type;
 	}
 
-	public static JSONObject getSqlInfo(String sql, Connection conn) throws SQLException {
+	public static List<Map<String, String>> getSqlInfo(String sql, Connection conn) {
 
 		Statement statement = null;
 		ResultSet executeQuery = null;
 		try {
-			JSONObject json = new JSONObject(true);
+			List<Map<String, String>> columnList = new ArrayList<>();
 			statement = conn.createStatement();
 			executeQuery = statement.executeQuery(sql);
 			ResultSetMetaData metaData = executeQuery.getMetaData();
 			for (int i = 1; i <= metaData.getColumnCount(); i++) {
-				String columnName = metaData.getColumnName(i);
-				json.put(columnName, getColType(metaData.getColumnType(i), metaData.getColumnTypeName(i), metaData.getPrecision(i), metaData.getScale(i)));
+				Map<String, String> hashMap = new HashMap<>();
+				hashMap.put("column_name", metaData.getColumnName(i));
+				hashMap.put("type", getColType(metaData.getColumnType(i), metaData.getColumnTypeName(i), metaData.getPrecision(i), metaData.getScale(i)));
+				columnList.add(hashMap);
 			}
-			return json;
-		} finally {
-			if (executeQuery != null) {
-				executeQuery.close();
-			}
-			statement.close();
-			conn.close();
-		}
-	}
-
-	public static void main(String[] args) throws ClassNotFoundException, SQLException {
-
-		getConnectionTest();
-		String typeName = "int";
-		int ic = typeName.indexOf("(");
-		if (ic != -1) {
-			typeName = typeName.substring(0, ic);
-		}
-
-		System.out.println(typeName);
-	}
-
-	public static Connection getConnectionTest() {
-
-		Connection conn = null;
-		//		PreparedStatement stmt;
-		try {
-			Class.forName("org.postgresql.Driver");
-			String url = "jdbc:postgresql://10.71.4.61:31001/hrsdxg";
-			String user = "hrsdxg";
-			String pass = "hrds";
-
-			//			Class.forName("com.mysql.jdbc.Driver");
-			//			String url = "jdbc:mysql://172.168.0.200:3306/hrds";
-			conn = DriverManager.getConnection(url, user, pass);
-
-			readModelFromDatabase(conn, "666666.xml", DatabaseType.Postgresql.getCode(), "hrds", "code_info");
-			//			String sql = "select * from result_table_copy limit 1";
-			//			stmt = (PreparedStatement)conn.prepareStatement(sql);
-			//
-			//			ResultSet rs = stmt.executeQuery();
-			//
-			//			ResultSetMetaData data = rs.getMetaData();
-			//
-			//			while( rs.next() ) {
-			//				for(int i = 1; i <= data.getColumnCount(); i++) {
-			//					System.out.println(Platform.getColType(data.getColumnType(i), data.getColumnTypeName(i), data.getPrecision(i), data.getScale(i)));
-			//				}
-			//			}
-
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
+			return columnList;
 		} catch (SQLException e) {
-			e.printStackTrace();
+			throw new BusinessException("sql错误" + e.getMessage());
+		} finally {
+			try {
+				if (executeQuery != null)
+					executeQuery.close();
+				if (statement != null)
+					statement.close();
+			} catch (SQLException e) {
+				logger.error("关闭statement错误", e);
+			}
 		}
-		return conn;
 	}
+
+//	public static Connection getConnectionTest() {
+//
+//		Connection conn = null;
+//		//		PreparedStatement stmt;
+//		try {
+//			Class.forName("org.postgresql.Driver");
+//			String url = "jdbc:postgresql://10.71.4.61:31001/hrsdxg";
+//			String user = "hrsdxg";
+//			String pass = "hrds";
+//
+//			//			Class.forName("com.mysql.jdbc.Driver");
+//			//			String url = "jdbc:mysql://172.168.0.200:3306/hrds";
+//			conn = DriverManager.getConnection(url, user, pass);
+//
+//			readModelFromDatabase(conn, "666666.xml", DatabaseType.Postgresql.getCode(), "hrds", "code_info");
+//			//			String sql = "select * from result_table_copy limit 1";
+//			//			stmt = (PreparedStatement)conn.prepareStatement(sql);
+//			//
+//			//			ResultSet rs = stmt.executeQuery();
+//			//
+//			//			ResultSetMetaData data = rs.getMetaData();
+//			//
+//			//			while( rs.next() ) {
+//			//				for(int i = 1; i <= data.getColumnCount(); i++) {
+//			//					System.out.println(Platform.getColType(data.getColumnType(i), data.getColumnTypeName(i), data.getPrecision(i), data.getScale(i)));
+//			//				}
+//			//			}
+//
+//		} catch (ClassNotFoundException e) {
+//			e.printStackTrace();
+//		} catch (SQLException e) {
+//			e.printStackTrace();
+//		}
+//		return conn;
+//	}
 }

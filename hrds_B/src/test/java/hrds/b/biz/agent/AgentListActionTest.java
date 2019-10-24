@@ -1,5 +1,6 @@
 package hrds.b.biz.agent;
 
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
@@ -23,13 +24,9 @@ import java.util.OptionalLong;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-/**
- * @description: AgentListAction的单元测试类
- * @author: WangZhengcheng
- * @create: 2019-09-05 17:41
- **/
 //TODO 日志文件下载的测试用例暂无
 //TODO 调用工具类生成作业/发送任务测试用例暂无
+@DocClass(desc = "AgentListAction的单元测试类", author = "WangZhengcheng")
 public class AgentListActionTest extends WebBaseTestCase {
 
 	//测试数据用户ID
