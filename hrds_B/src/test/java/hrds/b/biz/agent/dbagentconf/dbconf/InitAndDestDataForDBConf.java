@@ -1,19 +1,14 @@
 package hrds.b.biz.agent.dbagentconf.dbconf;
 
 import fd.ng.core.annotation.DocClass;
-import fd.ng.core.utils.DateUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
-import hrds.commons.codes.AgentStatus;
-import hrds.commons.codes.AgentType;
-import hrds.commons.codes.DatabaseType;
-import hrds.commons.codes.IsFlag;
+import hrds.b.biz.agent.dbagentconf.InitBaseData;
 import hrds.commons.entity.Agent_info;
 import hrds.commons.entity.Collect_job_classify;
 import hrds.commons.entity.Data_source;
 import hrds.commons.entity.Database_set;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -23,93 +18,22 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class InitAndDestDataForDBConf {
 	//测试数据用户ID
 	private static final long TEST_USER_ID = -9997L;
-	//source_id
-	private static final long SOURCE_ID = 1L;
 	private static final long FIRST_DB_AGENT_ID = 7001L;
 	private static final long SECOND_DB_AGENT_ID = 7002L;
-	private static final long FIRST_CLASSIFY_ID = 10086L;
-	private static final long SECOND_CLASSIFY_ID = 10010L;
 	private static final long THIRD_CLASSIFY_ID = 12306L;
 
 	public static void before(){
 		//1、构建data_source表测试数据
-		Data_source dataSource = new Data_source();
-		dataSource.setSource_id(SOURCE_ID);
-		dataSource.setDatasource_number("ds_");
-		dataSource.setDatasource_name("wzctest_");
-		dataSource.setDatasource_remark("wzctestremark_");
-		dataSource.setCreate_date(DateUtil.getSysDate());
-		dataSource.setCreate_time(DateUtil.getSysTime());
-		dataSource.setCreate_user_id(TEST_USER_ID);
+		Data_source dataSource = InitBaseData.buildDataSourceData();
 
 		//2、构建agent_info表测试数据
-		List<Agent_info> agents = new ArrayList<>();
-		for (int i = 1; i <= 2; i++) {
-			String agentType = null;
-			long agentId = 0L;
-			switch (i) {
-				case 1:
-					agentType = AgentType.ShuJuKu.getCode();
-					agentId = FIRST_DB_AGENT_ID;
-					break;
-				case 2:
-					agentType = AgentType.ShuJuKu.getCode();
-					agentId = SECOND_DB_AGENT_ID;
-					break;
-			}
-			Agent_info agentInfo = new Agent_info();
-			agentInfo.setAgent_id(agentId);
-			agentInfo.setAgent_name("agent_" + i);
-			agentInfo.setAgent_type(agentType);
-			agentInfo.setAgent_ip("127.0.0.1");
-			agentInfo.setAgent_port("55555");
-			agentInfo.setAgent_status(AgentStatus.WeiLianJie.getCode());
-			agentInfo.setCreate_date(DateUtil.getSysDate());
-			agentInfo.setCreate_time(DateUtil.getSysTime());
-			agentInfo.setUser_id(TEST_USER_ID);
-			agentInfo.setSource_id(SOURCE_ID);
-
-			agents.add(agentInfo);
-		}
+		List<Agent_info> agents = InitBaseData.buildAgentInfosData();
 
 		//3、构建database_set表测试数据
-		List<Database_set> databases = new ArrayList<>();
-		for (int i = 0; i < 2; i++) {
-			long agentId = i % 2 == 0 ? FIRST_DB_AGENT_ID : SECOND_DB_AGENT_ID;
-			long classifyId = i % 2 == 0 ? FIRST_CLASSIFY_ID : SECOND_CLASSIFY_ID;
-			long id = i % 2 == 0 ? 1001L : 1002L;
-			String isSendOk = i % 2 == 0 ? IsFlag.Shi.getCode() : IsFlag.Fou.getCode();
-			String databaseType = i % 2 == 0 ? DatabaseType.Postgresql.getCode() : DatabaseType.DB2.getCode();
-			Database_set databaseSet = new Database_set();
-			databaseSet.setDatabase_id(id);
-			databaseSet.setAgent_id(agentId);
-			databaseSet.setDatabase_number("dbtest" + i);
-			databaseSet.setDb_agent(IsFlag.Shi.getCode());
-			databaseSet.setIs_load(IsFlag.Shi.getCode());
-			databaseSet.setIs_hidden(IsFlag.Shi.getCode());
-			databaseSet.setIs_sendok(isSendOk);
-			databaseSet.setIs_header(IsFlag.Shi.getCode());
-			databaseSet.setClassify_id(classifyId);
-			databaseSet.setTask_name("wzcTaskName" + i);
-			databaseSet.setDatabase_type(databaseType);
-
-			databases.add(databaseSet);
-		}
+		List<Database_set> databases = InitBaseData.buildDbSetData();
 
 		//4、构建collect_job_classify表测试数据
-		List<Collect_job_classify> classifies = new ArrayList<>();
-		for(int i = 0; i < 2; i++){
-			Collect_job_classify classify = new Collect_job_classify();
-			long classifyId = i % 2 == 0 ? FIRST_CLASSIFY_ID : SECOND_CLASSIFY_ID;
-			long agentId = i % 2 == 0 ? FIRST_DB_AGENT_ID : SECOND_DB_AGENT_ID;
-			classify.setClassify_id(classifyId);
-			classify.setClassify_num("wzc_test_classify_num" + i);
-			classify.setClassify_name("wzc_test_classify_name" + i);
-			classify.setUser_id(TEST_USER_ID);
-			classify.setAgent_id(agentId);
-
-			classifies.add(classify);
-		}
+		List<Collect_job_classify> classifies = InitBaseData.buildClassifyData();
 		Collect_job_classify thridClassify = new Collect_job_classify();
 		thridClassify.setClassify_id(THIRD_CLASSIFY_ID);
 		thridClassify.setAgent_id(FIRST_DB_AGENT_ID);
@@ -117,7 +41,6 @@ public class InitAndDestDataForDBConf {
 		thridClassify.setClassify_name("wzc_test_classify_name3");
 		thridClassify.setUser_id(TEST_USER_ID);
 		classifies.add(thridClassify);
-
 
 		//插入数据
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
