@@ -810,30 +810,28 @@ public class CleanConfStepAction {
 			"2-5、判断最终保存时，是否选择了列拆分，否，则进行删除列拆分的操作" +
 			"2-6、判断最终保存时，是否选择了列首尾去空，进行首尾去空的保存处理")
 	@Param(name = "colCleanString", desc = "所有列的列清洗参数信息,JSON格式", range = "不为空，" +
-			"如：[{\"columnId\":1001,\"complementFlag\":true,\"replaceFlag\":true,\"formatFlag\":true,\"conversionFlag\":4,\"spiltFlag\":false,\"trimFlag\":true},{\"columnId\":1002,\"complementFlag\":true,\"replaceFlag\":true,\"formatFlag\":true,\"conversionFlag\":4,\"spiltFlag\":false,\"trimFlag\":true}]" +
+			"如：[{\"columnId\":1001,\"complementFlag\":true,\"replaceFlag\":true,\"formatFlag\":true,\"conversionFlag\":4,\"spiltFlag\":false,\"trimFlag\":true}," +
+			"{\"columnId\":1002,\"complementFlag\":true,\"replaceFlag\":true,\"formatFlag\":true,\"conversionFlag\":4,\"spiltFlag\":false,\"trimFlag\":true}]" +
 			"注意：请务必按照示例来命名")
 	public void saveColCleanConfig(String colCleanString){
 		//1、将colCleanString反序列化为List<ColumnCleanParam>
 		List<ColumnCleanParam> columnCleanParams = JSONArray.parseArray(colCleanString, ColumnCleanParam.class);
 		//2、遍历List集合
 		for(ColumnCleanParam param : columnCleanParams){
-			//2-1、判断最终保存时，是否选择了字符补齐，否，则根据columnId去column_clean表中删除一条记录
+			//2-1、判断最终保存时，是否选择了字符补齐，否，则根据columnId去column_clean表中尝试删除记录，不关心具体的数目
 			if(!param.isComplementFlag()){
-				DboExecute.deletesOrThrow("删除ID为" + param.getColumnId() + "的列字符补齐信息失败",
-						"DELETE FROM "+ Column_clean.TableName +" WHERE column_id = ? AND clean_type = ?"
+				Dbo.execute("DELETE FROM "+ Column_clean.TableName +" WHERE column_id = ? AND clean_type = ?"
 						, param.getColumnId(), CleanType.ZiFuBuQi.getCode());
 			}
-			//2-2、判断最终保存时，是否选择了字符替换，否，则根据columnId去column_clean表中删除一条记录
+			//2-2、判断最终保存时，是否选择了字符替换，否，则根据columnId去column_clean表中尝试删除记录，不关心具体的数目
 			if(!param.isReplaceFlag()){
-				Dbo.execute("删除ID为" + param.getColumnId() + "的列字符替换信息失败",
-						"DELETE FROM "+ Column_clean.TableName +" WHERE column_id = ? AND clean_type = ?"
+				Dbo.execute("DELETE FROM "+ Column_clean.TableName +" WHERE column_id = ? AND clean_type = ?"
 						, param.getColumnId(), CleanType.ZiFuTiHuan.getCode());
 			}
-			//2-3、判断最终保存时，是否选择了日期格式化，否，则根据columnId去column_clean表中删除一条记录
+			//2-3、判断最终保存时，是否选择了日期格式化，否，则根据columnId去column_clean表中尝试删除记录，不关心具体的数目
 			if(!param.isFormatFlag()){
-				Dbo.execute("删除ID为" + param.getColumnId() + "的列日期格式化信息失败", "DELETE FROM "
-						+ Column_clean.TableName +" WHERE column_id = ? AND clean_type = ?", param.getColumnId(),
-						CleanType.ShiJianZhuanHuan.getCode());
+				Dbo.execute( "DELETE FROM " + Column_clean.TableName +" WHERE column_id = ? AND clean_type = ?"
+						, param.getColumnId(), CleanType.ShiJianZhuanHuan.getCode());
 			}
 			//TODO 2-4、判断最终保存时，是否选择了码值转换，否，则进行删除当前列码值转换的处理，目前没搞清楚码值转换的保存逻辑，所以这个处理暂时没有
 
