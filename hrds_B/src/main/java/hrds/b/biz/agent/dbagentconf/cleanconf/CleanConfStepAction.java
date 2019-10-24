@@ -878,16 +878,14 @@ public class CleanConfStepAction {
 		List<TableCleanParam> tableCleanParams = JSONArray.parseArray(tbCleanString, TableCleanParam.class);
 		//2、遍历List集合
 		for(TableCleanParam param : tableCleanParams){
-			//2-1、判断最终保存时，是否选择了字符补齐，否，则根据tableId去table_clean表中删除一条记录
+			//2-1、判断最终保存时，是否选择了字符补齐，否，则根据tableId去table_clean表中尝试删除记录，不关心删除的数目
 			if(!param.isComplementFlag()){
-				DboExecute.deletesOrThrow("删除表名为" + param.getTableName() + "的字符补齐信息失败",
-						"DELETE FROM "+ Table_clean.TableName +" WHERE table_id = ? AND clean_type = ?"
+				Dbo.execute("DELETE FROM "+ Table_clean.TableName +" WHERE table_id = ? AND clean_type = ?"
 						, param.getTableId(), CleanType.ZiFuBuQi.getCode());
 			}
-			//2-2、判断最终保存时，是否选择了字符替换，否，则根据tableId去table_clean表中删除一条记录
+			//2-2、判断最终保存时，是否选择了字符替换，否，则根据tableId去table_clean表中删除一条记录，不关心删除的数目
 			if(!param.isReplaceFlag()){
-				DboExecute.deletesOrThrow("删除表名为" + param.getTableName() + "的字符替换信息失败",
-						"DELETE FROM "+ Table_clean.TableName +" WHERE table_id = ? AND clean_type = ?"
+				Dbo.execute("DELETE FROM "+ Table_clean.TableName +" WHERE table_id = ? AND clean_type = ?"
 						, param.getTableId(), CleanType.ZiFuTiHuan.getCode());
 			}
 			//2-3、判断最终保存时，是否选择了列首尾去空，进行首尾去空的保存处理
