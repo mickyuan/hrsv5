@@ -21,6 +21,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -90,8 +91,8 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 *          7-3、table_id:7003,table_name:agent_info,按照自定义SQL进行采集
 	 *          7-4、table_id:7004,table_name:data_source,按照自定义SQL进行采集
 	 *      8、table_column表测试数据：只有在画面上进行配置的采集表才会向table_column表中保存数据
-	 *          8-1、column_id为2001-2010，模拟采集了sys_user表的前10个列，列名为user_id，create_id，dep_id，role_id，
-	 *               user_name，user_password，user_email，user_mobile，useris_admin，user_type，设置了remark字段，也就是采集顺序，分别是1、2、3、4、5、6、7、8、9、10
+	 *          8-1、column_id为2001-2011，模拟采集了sys_user表的前10个列，列名为user_id，create_id，dep_id，role_id，
+	 *               user_name，user_password，user_email，user_mobile，useris_admin，user_type，和一个login_date,设置了remark字段，也就是采集顺序，分别是1、2、3、4、5、6、7、8、9、10、11
 	 *          8-2、column_id为3001-3005，模拟采集了code_info表的所有列，列名为ci_sp_code，ci_sp_class，ci_sp_classname，
 	 *               ci_sp_name，ci_sp_remark
 	 *      9、table_clean表测试数据：
@@ -100,8 +101,13 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
      *      10、column_clean表测试数据
 	 *          10-1、对sys_user表的create_id、dep_id列设置列字符补齐
 	 *          10-2、对sys_user表的user_name列设置列字符替换
+	 *          10-3、对sys_user表的login_date列设置了日期格式化
      *      11、clean_parameter表测试数据
 	 *          11-1、对databaseset_id为1001的数据库直连采集作业设置一个全表的字符替换和字符补齐规则
+     *      12、column_spilt表测试数据
+	 *          12-1、对code_info表的ci_sp_name列设置字段拆分，按照偏移量，拆分为ci_s、p_name两列
+	 *          12-2、对code_info表的ci_sp_classname列设置字段拆分，按照下划线拆分ci、sp、classname三列
+     *      13、由于配置了列拆分，需要把拆分后的列加入到Table_column表中
 	 *
 	 * @Param: 无
 	 * @return: 无
@@ -257,7 +263,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 
 		//8、构建table_column表测试数据
 		List<Table_column> sysUsers = new ArrayList<>();
-		for(int i = 1; i <= 10; i++){
+		for(int i = 1; i <= 11; i++){
 			String primaryKeyFlag;
 			String columnName;
 			String columnType;
@@ -333,6 +339,13 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 					columnType = "char";
 					columnChName = "用户类型";
 					remark = "10";
+					break;
+				case 11 :
+					primaryKeyFlag = IsFlag.Fou.getCode();
+					columnName = "login_date";
+					columnType = "char";
+					columnChName = "登录日期";
+					remark = "11";
 					break;
 				default:
 					primaryKeyFlag = "unexpected_primaryKeyFlag";
@@ -423,13 +436,13 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		List<Table_clean> tableCleans = new ArrayList<>();
 		for(int i = 1; i <= 2; i++){
 			long tbCleanId;
-			String compleType = null;
-			String cleanType = null;
+			String compleType;
+			String cleanType;
 			long tableId;
-			String compleChar = null;
+			String compleChar;
 			long length;
-			String oriField = null;
-			String newField = null;
+			String oriField;
+			String newField;
 			switch (i){
 				case 1 :
 					tbCleanId = 11111L;
@@ -475,7 +488,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		}
 
 
-		//10、构造column_clean表测试数据
+		//10、构造column_clean表测试数据，给create_id和dep_id设置字符补齐
 		List<Column_clean> colComples = new ArrayList<>();
 		for(int i = 0; i < 2; i++){
 			long colCleanId = i % 2 == 0 ? 22222L : 33333L;
@@ -496,7 +509,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 			colComples.add(colComple);
 		}
 
-		//11、column_clean表测试数据
+		//11、column_clean表测试数据，给user_name设置字符替换
 		Column_clean replace = new Column_clean();
 		replace.setCol_clean_id(555555L);
 		replace.setColumn_id(2005L);
@@ -504,7 +517,27 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		replace.setField("ceshi");
 		replace.setReplace_feild("test");
 
-		//12、clean_parameter表测试数据
+		//12、column_clean表测试数据，给login_date设置日期格式化
+		Column_clean dateFormat = new Column_clean();
+		dateFormat.setCol_clean_id(999999L);
+		dateFormat.setColumn_id(2010L);
+		dateFormat.setClean_type(CleanType.ShiJianZhuanHuan.getCode());
+		dateFormat.setOld_format("YYYY-MM-DD");
+		dateFormat.setConvert_format("YYYY-MM");
+
+		//13、column_clean表测试数据，给ci_sp_name（3004L）设置列拆分
+		Column_clean spilt = new Column_clean();
+		spilt.setCol_clean_id(101010101L);
+		spilt.setColumn_id(3004L);
+		spilt.setClean_type(CleanType.ZiFuChaiFen.getCode());
+
+		//column_clean表测试数据，给ci_sp_classname（3003L）设置列拆分
+		Column_clean spiltTwo = new Column_clean();
+		spiltTwo.setCol_clean_id(101010102L);
+		spiltTwo.setColumn_id(3003L);
+		spiltTwo.setClean_type(CleanType.ZiFuChaiFen.getCode());
+
+		//14、clean_parameter表测试数据
 		List<Clean_parameter> cleanParameters = new ArrayList<>();
 		for(int i = 0; i < 2 ;i++){
 			long cId = i % 2 == 0 ? 666666L : 777777L;
@@ -547,7 +580,141 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 			cleanParameters.add(cleanParameter);
 		}
 
-		//12、插入数据
+		//15、构造column_spilt表测试数据，按照偏移量拆分ci_sp_name
+		List<Column_split> offsetSpilts = new ArrayList<>();
+		for(int i = 0; i < 2; i++){
+			long colSplitId = i % 2 == 0 ? 1111111L : 2222222L;
+			String offset = i % 2 == 0 ? "3" : "0";
+			String columnName = i % 2 == 0 ? "ci_s" : "p_name";
+			String spiltType = "1";
+			String columnChName = i % 2 == 0 ? "ci_s_ch" : "p_name_ch";
+			String columnType = "varchar(512)";
+			long colCleanId = 101010101L;
+			long columnId = 3004L;
+
+			Column_split columnSplit = new Column_split();
+			columnSplit.setCol_split_id(colSplitId);
+			columnSplit.setCol_offset(offset);
+			columnSplit.setCol_name(columnName);
+			columnSplit.setSplit_type(spiltType);
+			columnSplit.setCol_zhname(columnChName);
+			columnSplit.setCol_type(columnType);
+			columnSplit.setCol_clean_id(colCleanId);
+			columnSplit.setColumn_id(columnId);
+			columnSplit.setValid_e_date(Constant.MAXDATE);
+			columnSplit.setValid_s_date(DateUtil.getSysDate());
+
+			offsetSpilts.add(columnSplit);
+		}
+
+		//16、构造column_spilt表测试数据，按照下划线拆分ci_sp_classname
+		List<Column_split> underLintSpilts = new ArrayList<>();
+		for(int i = 0; i < 3; i++){
+			long colSplitId = 0;
+			String columnName = null;
+			String spiltType = "2";
+			String columnChName = null;
+			String columnType = "varchar(512)";
+			long colCleanId = 101010102L;
+			long columnId = 3003L;
+			String splitSep = "_";
+			long seq = 0;
+			switch (i){
+				case 0 :
+					colSplitId = 101010103L;
+					columnName = "ci";
+					columnChName = "ci_ch";
+					seq = 1;
+					break;
+				case 1 :
+					colSplitId = 101010104L;
+					columnName = "sp";
+					columnChName = "sp_ch";
+					seq = 2;
+					break;
+				case 2 :
+					colSplitId = 101010105L;
+					columnName = "classname";
+					columnChName = "classname_ch";
+					seq = 3;
+					break;
+			}
+			Column_split columnSplit = new Column_split();
+			columnSplit.setCol_split_id(colSplitId);
+			columnSplit.setCol_name(columnName);
+			columnSplit.setSplit_type(spiltType);
+			columnSplit.setCol_zhname(columnChName);
+			columnSplit.setCol_type(columnType);
+			columnSplit.setCol_clean_id(colCleanId);
+			columnSplit.setColumn_id(columnId);
+			columnSplit.setValid_e_date(Constant.MAXDATE);
+			columnSplit.setValid_s_date(DateUtil.getSysDate());
+			columnSplit.setSeq(seq);
+			columnSplit.setSplit_sep(splitSep);
+
+			underLintSpilts.add(columnSplit);
+		}
+
+		//17、由于配置了列拆分，所以要构造模拟数据将拆分后的列加入Table_column表中
+		List<Table_column> splitOne = new ArrayList<>();
+		for(int i = 0; i < 2; i++){
+			long columnId = i % 2 == 0 ? 121212L : 232323L;
+			String columnName = i % 2 == 0 ? "ci_s" : "p_name";
+			String columnChName = i % 2 == 0 ? "ci_s_ch" : "p_name_ch";
+
+			Table_column tableColumn = new Table_column();
+			tableColumn.setTable_id(CODE_INFO_TABLE_ID);
+			tableColumn.setIs_new(IsFlag.Shi.getCode());
+			tableColumn.setColumn_id(columnId);
+			tableColumn.setIs_primary_key(IsFlag.Fou.getCode());
+			tableColumn.setColume_name(columnName);
+			tableColumn.setColumn_type("varchar(512)");
+			tableColumn.setColume_ch_name(columnChName);
+			tableColumn.setValid_s_date(DateUtil.getSysDate());
+			tableColumn.setValid_e_date(Constant.MAXDATE);
+
+			splitOne.add(tableColumn);
+		}
+
+		List<Table_column> splitTwo = new ArrayList<>();
+		for(int i = 0; i < 3; i++){
+			long columnId = 0;
+			String columnName = null;
+			String columnChName = null;
+
+			switch (i){
+				case 0 :
+					columnId = 141414L;
+					columnName = "ci";
+					columnChName = "ci_ch";
+					break;
+				case 1 :
+					columnId = 151515L;
+					columnName = "sp";
+					columnChName = "sp_ch";
+					break;
+				case 2 :
+					columnId = 161616L;
+					columnName = "classname";
+					columnChName = "classname_ch";
+					break;
+			}
+
+			Table_column tableColumn = new Table_column();
+			tableColumn.setTable_id(CODE_INFO_TABLE_ID);
+			tableColumn.setIs_new(IsFlag.Shi.getCode());
+			tableColumn.setColumn_id(columnId);
+			tableColumn.setIs_primary_key(IsFlag.Fou.getCode());
+			tableColumn.setColume_name(columnName);
+			tableColumn.setColumn_type("varchar(512)");
+			tableColumn.setColume_ch_name(columnChName);
+			tableColumn.setValid_s_date(DateUtil.getSysDate());
+			tableColumn.setValid_e_date(Constant.MAXDATE);
+
+			splitTwo.add(tableColumn);
+		}
+
+		//插入数据
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			//插入数据源表(data_source)测试数据
 			int dataSourceCount = dataSource.add(db);
@@ -595,7 +762,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 				int count = tableColumn.add(db);
 				tableColumnCount += count;
 			}
-			assertThat("表对应字段表测试数据初始化", tableColumnCount, is(15));
+			assertThat("表对应字段表测试数据初始化", tableColumnCount, is(16));
 
 			//插入table_clean测试数据
 			int tableCleanCount = 0;
@@ -613,7 +780,13 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 			}
 			int replaceCount = replace.add(db);
 			columnCleanCount += replaceCount;
-			assertThat("列清洗参数信息表测试数据初始化", columnCleanCount, is(3));
+			int dateFormatCount = dateFormat.add(db);
+			columnCleanCount += dateFormatCount;
+			int spiltCount = spilt.add(db);
+			columnCleanCount += spiltCount;
+			int spiltTwoCount = spiltTwo.add(db);
+			columnCleanCount += spiltTwoCount;
+			assertThat("列清洗参数信息表测试数据初始化", columnCleanCount, is(6));
 
 			//插入clean_parameter表测试数据
 			int cleanParameterCount = 0;
@@ -623,8 +796,37 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 			}
 			assertThat("清洗作业参数属性表测试数据初始化", cleanParameterCount, is(2));
 
+			//插入column_spilt表测试数据
+			int columnSpiltCount = 0;
+			for(Column_split columnSplit : offsetSpilts){
+				int count = columnSplit.add(db);
+				columnSpiltCount += count;
+			}
+			for(Column_split columnSplit : underLintSpilts){
+				int count = columnSplit.add(db);
+				columnSpiltCount += count;
+			}
+			assertThat("列拆分信息表测试数据初始化", columnSpiltCount, is(5));
+
+			//将列拆分信息加入Table_column表
+			int spiltColumnCount = 0;
+			for(Table_column tableColumn : splitOne){
+				int count = tableColumn.add(db);
+				spiltColumnCount += count;
+			}
+			for(Table_column tableColumn : splitTwo){
+				int count = tableColumn.add(db);
+				spiltColumnCount += count;
+			}
+			assertThat("将列拆分信息加入Table_column表", spiltColumnCount, is(5));
+
 			SqlOperator.commitTransaction(db);
 		}
+	}
+
+	@Test
+	public void test(){
+		System.out.println("-------------------------------------");
 	}
 
 	/**
@@ -677,7 +879,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	public void saveSingleTbCompletionInfo(){
 		//正确数据访问1：构造合法的修改数据进行访问，应该可以正确保存(对该表之前设置过字符补齐)
 		try(DatabaseWrapper db = new DatabaseWrapper()){
-			long oldCount = SqlOperator.queryNumber(db, "select count(1) from table_clean where table_id = ? and clean_type = ? and character_filling = ?", SYS_USER_TABLE_ID, CleanType.ZiFuBuQi.getCode(), "wzc").orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long oldCount = SqlOperator.queryNumber(db, "select count(1) from "+ Table_clean.TableName +" where table_id = ? and clean_type = ? and character_filling = ?", SYS_USER_TABLE_ID, CleanType.ZiFuBuQi.getCode(), "wzc").orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
 			assertThat("新增之前为sys_user表构造的字符补齐测试数据是存在的", oldCount == 1, is(true));
 		}
 
@@ -693,11 +895,11 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		assertThat(rightResultOne.isSuccess(), is(true));
 
 		try(DatabaseWrapper db = new DatabaseWrapper()){
-			long count = SqlOperator.queryNumber(db, "select count(1) from table_clean where table_id = ? and clean_type = ?", SYS_USER_TABLE_ID, CleanType.ZiFuBuQi.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long count = SqlOperator.queryNumber(db, "select count(1) from "+ Table_clean.TableName +" where table_id = ? and clean_type = ?", SYS_USER_TABLE_ID, CleanType.ZiFuBuQi.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
 			assertThat("新增成功，构造的整表字符补齐测试数据被成功保存", count == 1L, is(true));
-			long oldCount = SqlOperator.queryNumber(db, "select count(1) from table_clean where table_id = ? and clean_type = ? and character_filling = ?", SYS_USER_TABLE_ID, CleanType.ZiFuBuQi.getCode(), "wzc").orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long oldCount = SqlOperator.queryNumber(db, "select count(1) from "+ Table_clean.TableName +" where table_id = ? and clean_type = ? and character_filling = ?", SYS_USER_TABLE_ID, CleanType.ZiFuBuQi.getCode(), "wzc").orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
 			assertThat("新增成功，之前为sys_user表构造的字符补齐测试数据已经被删除了", oldCount == 0, is(true));
-			int deleteCount = SqlOperator.execute(db, "delete from table_clean where table_id = ? and clean_type = ? and character_filling = ?", SYS_USER_TABLE_ID, CleanType.ZiFuBuQi.getCode(), "beyond");
+			int deleteCount = SqlOperator.execute(db, "delete from " + Table_clean.TableName + " where table_id = ? and clean_type = ? and character_filling = ?", SYS_USER_TABLE_ID, CleanType.ZiFuBuQi.getCode(), "beyond");
 			assertThat("测试完成后，删除新增成功的整表字符补齐测试数据", deleteCount == 1, is(true));
 
 			SqlOperator.commitTransaction(db);
@@ -764,7 +966,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	public void saveColCompletionInfo(){
 		//正确数据访问1：构造合法的新增数据进行访问，应该可以正确保存(对该列之前没有设置过字符补齐)
 		try(DatabaseWrapper db = new DatabaseWrapper()){
-			long oldCount = SqlOperator.queryNumber(db, "select count(1) from column_clean where column_id = ? and clean_type = ? and character_filling = ?", 2002L, CleanType.ZiFuBuQi.getCode(), "wzc").orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long oldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where column_id = ? and clean_type = ? and character_filling = ?", 2002L, CleanType.ZiFuBuQi.getCode(), "wzc").orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
 			assertThat("新增列字符补齐之前为sys_user表的create_id列构造的字符补齐测试数据是存在的", oldCount == 1, is(true));
 		}
 
@@ -780,11 +982,11 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		assertThat(rightResult.isSuccess(), is(true));
 
 		try(DatabaseWrapper db = new DatabaseWrapper()){
-			long count = SqlOperator.queryNumber(db, "select count(1) from column_clean where column_id = ? and clean_type = ? and character_filling = ?", 2002L, CleanType.ZiFuBuQi.getCode(), "beyond").orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long count = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where column_id = ? and clean_type = ? and character_filling = ?", 2002L, CleanType.ZiFuBuQi.getCode(), "beyond").orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
 			assertThat("新增列字符补齐成功，构造的测试数据被成功保存", count == 1, is(true));
-			long oldCount = SqlOperator.queryNumber(db, "select count(1) from column_clean where column_id = ? and clean_type = ? and character_filling = ?", 2002L, CleanType.ZiFuBuQi.getCode(), "wzc").orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long oldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where column_id = ? and clean_type = ? and character_filling = ?", 2002L, CleanType.ZiFuBuQi.getCode(), "wzc").orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
 			assertThat("新增列字符补齐成功，之前为sys_user表的create_id列构造的字符补齐测试数据已经被删除了", oldCount == 0, is(true));
-			int deleteCount = SqlOperator.execute(db, "delete from column_clean where column_id = ? and clean_type = ? and character_filling = ?", 2002L, CleanType.ZiFuBuQi.getCode(), "beyond");
+			int deleteCount = SqlOperator.execute(db, "delete from " + Column_clean.TableName + " where column_id = ? and clean_type = ? and character_filling = ?", 2002L, CleanType.ZiFuBuQi.getCode(), "beyond");
 			assertThat("测试完成后，删除新增成功的列字符补齐测试数据", deleteCount == 1, is(true));
 
 			SqlOperator.commitTransaction(db);
@@ -938,8 +1140,8 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	public void saveSingleTbReplaceInfo(){
 		//正确数据访问1：构造正常的字符替换规则进行保存
 		try(DatabaseWrapper db = new DatabaseWrapper()){
-			long oldCount = SqlOperator.queryNumber(db, "select count(1) from table_clean where table_id = ? and clean_type = ? and field = ? and replace_feild = ?", SYS_USER_TABLE_ID, CleanType.ZiFuTiHuan.getCode(), "wzc", "wqp").orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
-			assertThat("新增整表字符补齐之前为sys_user表构造的字符替换测试数据是存在的", oldCount == 1, is(true));
+			long oldCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_clean.TableName + " where table_id = ? and clean_type = ? and field = ? and replace_feild = ?", SYS_USER_TABLE_ID, CleanType.ZiFuTiHuan.getCode(), "wzc", "wqp").orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			assertThat("新增整表字符替换之前为sys_user表构造的字符替换测试数据是存在的", oldCount == 1, is(true));
 		}
 		List<Table_clean> replaceList = new ArrayList<>();
 		for(int i = 1; i <= 2; i++){
@@ -984,11 +1186,11 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		assertThat(rightResultOne.isSuccess(), is(true));
 
 		try(DatabaseWrapper db = new DatabaseWrapper()){
-			long count = SqlOperator.queryNumber(db, "select count(1) from table_clean where table_id = ? and clean_type = ?", SYS_USER_TABLE_ID, CleanType.ZiFuTiHuan.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long count = SqlOperator.queryNumber(db, "select count(1) from " + Table_clean.TableName + " where table_id = ? and clean_type = ?", SYS_USER_TABLE_ID, CleanType.ZiFuTiHuan.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
 			assertThat("新增整表字符替换成功，构造的测试数据被成功保存", count == 2, is(true));
-			long oldCount = SqlOperator.queryNumber(db, "select count(1) from table_clean where table_id = ? and field = ? and replace_feild = ?", SYS_USER_TABLE_ID, CleanType.ZiFuTiHuan.getCode(), "wzc", "wqp").orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long oldCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_clean.TableName + " where table_id = ? and field = ? and replace_feild = ?", SYS_USER_TABLE_ID, CleanType.ZiFuTiHuan.getCode(), "wzc", "wqp").orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
 			assertThat("新增整表字符替换成功，之前为sys_user表构造的字符替换测试数据已经被删除了", oldCount == 0, is(true));
-			int deleteCount = SqlOperator.execute(db, "delete from table_clean where table_id = ? and clean_type = ?", SYS_USER_TABLE_ID, CleanType.ZiFuTiHuan.getCode());
+			int deleteCount = SqlOperator.execute(db, "delete from " + Table_clean.TableName + " where table_id = ? and clean_type = ?", SYS_USER_TABLE_ID, CleanType.ZiFuTiHuan.getCode());
 			assertThat("测试完成后，删除新增成功的整表字符替换测试数据", deleteCount == 2, is(true));
 
 			SqlOperator.commitTransaction(db);
@@ -1010,14 +1212,14 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		assertThat(rightResultTwo.isSuccess(), is(true));
 
 		try(DatabaseWrapper db = new DatabaseWrapper()){
-			long count = SqlOperator.queryNumber(db, "select count(1) from table_clean where table_id = ? and clean_type = ?", SYS_USER_TABLE_ID, CleanType.ZiFuTiHuan.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long count = SqlOperator.queryNumber(db, "select count(1) from " + Table_clean.TableName + " where table_id = ? and clean_type = ?", SYS_USER_TABLE_ID, CleanType.ZiFuTiHuan.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
 			assertThat("新增整表字符替换成功，构造的测试数据被成功保存", count == 1, is(true));
-			Result result = SqlOperator.queryResult(db, "select clean_type, field, replace_feild, table_id from table_clean where table_id = ?", SYS_USER_TABLE_ID);
+			Result result = SqlOperator.queryResult(db, "select clean_type, field, replace_feild, table_id from " + Table_clean.TableName + " where table_id = ?", SYS_USER_TABLE_ID);
 			assertThat(result.getRowCount() == 1, is(true));
 			assertThat(CleanType.ofEnumByCode(result.getString(0, "clean_type")) == CleanType.ZiFuTiHuan, is(true));
 			assertThat(result.getString(0, "field").equals("\n"), is(true));
 			assertThat(result.getString(0, "replace_feild").equals("|"), is(true));
-			int deleteCount = SqlOperator.execute(db, "delete from table_clean where table_id = ? and clean_type = ?", SYS_USER_TABLE_ID, CleanType.ZiFuTiHuan.getCode());
+			int deleteCount = SqlOperator.execute(db, "delete from " + Table_clean.TableName + " where table_id = ? and clean_type = ?", SYS_USER_TABLE_ID, CleanType.ZiFuTiHuan.getCode());
 			assertThat("测试完成后，删除新增成功的整表字符替换测试数据", deleteCount == 1, is(true));
 
 			SqlOperator.commitTransaction(db);
@@ -1037,8 +1239,8 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	public void saveColReplaceInfo(){
 		//正确数据访问1：构造正确的列字符替换规则进行保存
 		try(DatabaseWrapper db = new DatabaseWrapper()){
-			long oldCount = SqlOperator.queryNumber(db, "select count(1) from column_clean where column_id = ? and clean_type = ? and field = ? and replace_feild = ?", 2005L, CleanType.ZiFuTiHuan.getCode(), "ceshi", "test").orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
-			assertThat("新增列字符补齐之前为columnId列构造的字符替换测试数据是存在的", oldCount == 1, is(true));
+			long oldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where column_id = ? and clean_type = ? and field = ? and replace_feild = ?", 2005L, CleanType.ZiFuTiHuan.getCode(), "ceshi", "test").orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			assertThat("新增列字符补齐之前为sys_user表的user_name列构造的字符替换测试数据是存在的", oldCount == 1, is(true));
 		}
 
 		List<Column_clean> replaceList = new ArrayList<>();
@@ -1084,15 +1286,15 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		assertThat(rightResultOne.isSuccess(), is(true));
 
 		try(DatabaseWrapper db = new DatabaseWrapper()){
-			long count = SqlOperator.queryNumber(db, "select count(1) from column_clean where column_id = ? and clean_type = ?", 2005L, CleanType.ZiFuTiHuan.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long count = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where column_id = ? and clean_type = ?", 2005L, CleanType.ZiFuTiHuan.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
 			assertThat("新增列字符替换成功，构造的测试数据被成功保存", count == 2, is(true));
-			long oldCount = SqlOperator.queryNumber(db, "select count(1) from column_clean where column_id = ? and clean_type = ? and field = ? and replace_feild = ?", 2005L, CleanType.ZiFuTiHuan.getCode(), "ceshi", "test").orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
-			assertThat("新增列字符补齐成功之后，为columnId列构造的字符替换测试数据被删除了", oldCount == 0, is(true));
-			Result result = SqlOperator.queryResult(db, "select clean_type, replace_feild from column_clean where column_id = ? and field = ?", 2005L, "alibaba");
+			long oldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where column_id = ? and clean_type = ? and field = ? and replace_feild = ?", 2005L, CleanType.ZiFuTiHuan.getCode(), "ceshi", "test").orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			assertThat("新增列字符补齐成功之后，为sys_user表的user_name列构造的字符替换测试数据被删除了", oldCount == 0, is(true));
+			Result result = SqlOperator.queryResult(db, "select clean_type, replace_feild from " + Column_clean.TableName + " where column_id = ? and field = ?", 2005L, "alibaba");
 			assertThat(result.getRowCount() == 1, is(true));
 			assertThat(CleanType.ofEnumByCode(result.getString(0, "clean_type")) == CleanType.ZiFuTiHuan, is(true));
 			assertThat(result.getString(0, "replace_feild").equals("tencent"), is(true));
-			int deleteCount = SqlOperator.execute(db, "delete from column_clean where column_id = ? and clean_type = ?", 2005L, CleanType.ZiFuTiHuan.getCode());
+			int deleteCount = SqlOperator.execute(db, "delete from " + Column_clean.TableName + " where column_id = ? and clean_type = ?", 2005L, CleanType.ZiFuTiHuan.getCode());
 			assertThat("测试完成后，删除新增成功的整表字符替换测试数据", deleteCount == 2, is(true));
 
 			SqlOperator.commitTransaction(db);
@@ -1234,105 +1436,580 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 *
 	 * 正确数据访问1：模拟只设置全表字符补齐
 	 * 正确数据访问2：模拟只设置全表字符替换(设置两条)
-	 * 正确数据访问3：模拟既设置全表字符补齐，又这是全表字符替换
+	 * 正确数据访问3：模拟既设置全表字符补齐，又设置全表字符替换
+	 * 错误数据访问1：模拟值设置全表字符补齐，但是补齐方式是3，这样访问不会成功
+	 *
 	 * 错误的测试用例未达到三组: saveAllTbCleanConfigInfo是一个保存操作，上述三个测试用例已经可以覆盖所有的情况
 	 * @Param: 无
 	 * @return: 无
-	 *
+	 * TODO compFlag和replaceFlag由于addData不能传boolean类型，所以在测试的时候需要注意，修改被测方法代码
 	 * */
 	@Test
 	public void saveAllTbCleanConfigInfo(){
+		//正确数据访问1：模拟只设置全表字符补齐
+		try(DatabaseWrapper db = new DatabaseWrapper()){
+			long oldCount = SqlOperator.queryNumber(db, "select count(1) from " + Clean_parameter.TableName + " where database_id = ?", FIRST_DATABASESET_ID).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			assertThat("新增全表字符补齐之前为database_id为" + FIRST_DATABASESET_ID + "数据库直连采集作业构造的全表清洗测试数据是存在的", oldCount == 2, is(true));
+		}
 
+		String rightString = new HttpClient()
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.addData("compFlag", "true")
+				.addData("replaceFlag", "false")
+				.addData("compType", "1")
+				.addData("compChar", "test_saveAllTbCleanConfigInfo")
+				.addData("compLen", "29")
+				.post(getActionUrl("saveAllTbCleanConfigInfo")).getBodyString();
+		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResult.isSuccess(), is(true));
+
+		try(DatabaseWrapper db = new DatabaseWrapper()){
+			long oldCount = SqlOperator.queryNumber(db, "select count(1) from " + Clean_parameter.TableName + " where c_id in(666666, 777777)").orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			assertThat("新增全表字符补齐成功后，为database_id为" + FIRST_DATABASESET_ID + "数据库直连采集作业构造的全表清洗测试数据没有了", oldCount == 0, is(true));
+
+			Result compResult = SqlOperator.queryResult(db, "select filling_type, character_filling, filling_length from " + Clean_parameter.TableName + " where database_id = ? and clean_type = ?", FIRST_DATABASESET_ID, CleanType.ZiFuBuQi.getCode());
+			assertThat("新增全表字符补齐成功后，database_id为" + FIRST_DATABASESET_ID + "数据库直连采集作业设置字符补齐成功", compResult.getRowCount() == 1, is(true));
+			assertThat("新增全表字符补齐成功后，database_id为" + FIRST_DATABASESET_ID + "数据库直连采集作业设置的补齐方式为前补齐", compResult.getString(0, "filling_type"), is("1"));
+			assertThat("新增全表字符补齐成功后，database_id为" + FIRST_DATABASESET_ID + "数据库直连采集作业设置的补齐字符为test_saveAllTbCleanConfigInfo", compResult.getString(0, "character_filling"), is("test_saveAllTbCleanConfigInfo"));
+			assertThat("新增全表字符补齐成功后，database_id为" + FIRST_DATABASESET_ID + "数据库直连采集作业设置的补齐长度为29", compResult.getLong(0, "filling_length"), is(29L));
+
+			SqlOperator.execute(db, "delete from " + Clean_parameter.TableName + " where database_id = ? and clean_type = ?", FIRST_DATABASESET_ID, CleanType.ZiFuBuQi.getCode());
+
+			SqlOperator.commitTransaction(db);
+		}
+
+		//正确数据访问2：模拟只设置全表字符替换(设置两条)
+		String[] oriFieldArr = {"zxz", "hx"};
+		String[] replaceFeildArr = {"shl", "zq"};
+		String rightStringTwo = new HttpClient()
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.addData("compFlag", "false")
+				.addData("replaceFlag", "true")
+				.addData("oriFieldArr", oriFieldArr)
+				.addData("replaceFeildArr", replaceFeildArr)
+				.post(getActionUrl("saveAllTbCleanConfigInfo")).getBodyString();
+		ActionResult rightResultTwo = JsonUtil.toObjectSafety(rightStringTwo, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResultTwo.isSuccess(), is(true));
+
+		try(DatabaseWrapper db = new DatabaseWrapper()){
+			long oldCount = SqlOperator.queryNumber(db, "select count(1) from " + Clean_parameter.TableName + " where c_id in(666666, 777777)", FIRST_DATABASESET_ID).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			assertThat("新增全表字符替换成功后，为database_id为" + FIRST_DATABASESET_ID + "数据库直连采集作业构造的全表清洗测试数据没有了", oldCount == 0, is(true));
+
+			Result replaceResult = SqlOperator.queryResult(db, "select field, replace_feild from " + Clean_parameter.TableName + " where database_id = ? and clean_type = ?", FIRST_DATABASESET_ID, CleanType.ZiFuTiHuan.getCode());
+			assertThat("新增全表字符替换成功后，database_id为" + FIRST_DATABASESET_ID + "数据库直连采集作业设置字符替换成功", replaceResult.getRowCount() == 2, is(true));
+			assertThat("新增全表字符替换成功后，database_id为" + FIRST_DATABASESET_ID + "数据库直连采集作业设置的原字符为zxz", replaceResult.getString(0, "field"), is("zxz"));
+			assertThat("新增全表字符替换成功后，database_id为" + FIRST_DATABASESET_ID + "数据库直连采集作业设置的替换后字符为shl", replaceResult.getLong(0, "replace_feild"), is("shl"));
+			assertThat("新增全表字符替换成功后，database_id为" + FIRST_DATABASESET_ID + "数据库直连采集作业设置的原字符为hx", replaceResult.getString(1, "field"), is("hx"));
+			assertThat("新增全表字符替换成功后，database_id为" + FIRST_DATABASESET_ID + "数据库直连采集作业设置的替换后字符为zq", replaceResult.getLong(1, "replace_feild"), is("zq"));
+
+			SqlOperator.execute(db, "delete from " + Clean_parameter.TableName + " where database_id = ? and clean_type = ?", FIRST_DATABASESET_ID, CleanType.ZiFuTiHuan.getCode());
+
+			SqlOperator.commitTransaction(db);
+		}
+
+		//正确数据访问3：模拟既设置全表字符补齐，又设置全表字符替换
+		String rightStringThree = new HttpClient()
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.addData("compFlag", "true")
+				.addData("replaceFlag", "true")
+				.addData("compType", "1")
+				.addData("compChar", "test_saveAllTbCleanConfigInfo")
+				.addData("compLen", "29")
+				.addData("oriFieldArr", oriFieldArr)
+				.addData("replaceFeildArr", replaceFeildArr)
+				.post(getActionUrl("saveAllTbCleanConfigInfo")).getBodyString();
+		ActionResult rightResultThree = JsonUtil.toObjectSafety(rightStringThree, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResultThree.isSuccess(), is(true));
+
+		try(DatabaseWrapper db = new DatabaseWrapper()){
+			long oldCount = SqlOperator.queryNumber(db, "select count(1) from " + Clean_parameter.TableName + " where c_id in(666666, 777777)", FIRST_DATABASESET_ID).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			assertThat("新增全表字符替换成功后，为database_id为" + FIRST_DATABASESET_ID + "数据库直连采集作业构造的全表清洗测试数据没有了", oldCount == 0, is(true));
+
+			List<Clean_parameter> clean_parameters = SqlOperator.queryList(db, Clean_parameter.class, "select * from " + Clean_parameter.TableName + " where database_id = ?", FIRST_DATABASESET_ID);
+			assertThat("新增全表字符替换成功后，database_id为" + FIRST_DATABASESET_ID + "数据库直连采集作业设置全表清洗成功", clean_parameters.size() == 3, is(true));
+			for(Clean_parameter cleanParameter : clean_parameters){
+				if(CleanType.ofEnumByCode(cleanParameter.getClean_type()) == CleanType.ZiFuBuQi){
+					assertThat("新增全表字符补齐成功后，database_id为" + FIRST_DATABASESET_ID + "数据库直连采集作业设置的补齐方式为前补齐", cleanParameter.getFilling_type(), is("1"));
+					assertThat("新增全表字符补齐成功后，database_id为" + FIRST_DATABASESET_ID + "数据库直连采集作业设置的补齐字符为test_saveAllTbCleanConfigInfo", cleanParameter.getCharacter_filling(), is("test_saveAllTbCleanConfigInfo"));
+					assertThat("新增全表字符补齐成功后，database_id为" + FIRST_DATABASESET_ID + "数据库直连采集作业设置的补齐长度为29", cleanParameter.getFilling_length(), is(29L));
+				}else if(CleanType.ofEnumByCode(cleanParameter.getClean_type()) == CleanType.ZiFuTiHuan && cleanParameter.getField().equalsIgnoreCase("zxz")){
+					assertThat("新增全表字符替换成功后，database_id为" + FIRST_DATABASESET_ID + "数据库直连采集作业设置的替换后字符为shl", cleanParameter.getReplace_feild(), is("shl"));
+				}else if(CleanType.ofEnumByCode(cleanParameter.getClean_type()) == CleanType.ZiFuTiHuan && cleanParameter.getField().equalsIgnoreCase("hx")){
+					assertThat("新增全表字符替换成功后，database_id为" + FIRST_DATABASESET_ID + "数据库直连采集作业设置的替换后字符为zq", cleanParameter.getReplace_feild(), is("zq"));
+				}else{
+					assertThat("本测试用例出现了不符合预期的结果", true, is(false));
+				}
+			}
+
+			SqlOperator.execute(db, "delete from " + Clean_parameter.TableName + " where database_id = ? and clean_type = ?", FIRST_DATABASESET_ID, CleanType.ZiFuTiHuan.getCode());
+			SqlOperator.execute(db, "delete from " + Clean_parameter.TableName + " where database_id = ? and clean_type = ?", FIRST_DATABASESET_ID, CleanType.ZiFuBuQi.getCode());
+
+			SqlOperator.commitTransaction(db);
+		}
+
+		//错误数据访问1：模拟值设置全表字符补齐，但是补齐方式是3，这样访问不会成功
+		String wrongString = new HttpClient()
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.addData("compFlag", "true")
+				.addData("replaceFlag", "false")
+				.addData("compType", "3")
+				.addData("compChar", "test_saveAllTbCleanConfigInfo")
+				.addData("compLen", "29")
+				.post(getActionUrl("saveAllTbCleanConfigInfo")).getBodyString();
+		ActionResult wrongResult = JsonUtil.toObjectSafety(wrongString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResult.isSuccess(), is(false));
 	}
 
 	/**
 	 * 测试根据数据库设置ID查询所有表清洗设置字符补齐和字符替换规则
 	 *
-	 * 正确数据访问1：
-	 * 错误的数据访问1：
-	 * 错误的测试用例未达到三组:
+	 * 正确数据访问1：模拟获取database_id为1001的数据库直连采集作业所有表清洗规则，能够获取到两条，一条字符补齐规则，一条字符替换规则
+	 * 错误的数据访问1：模拟获取database_id为1002的数据库直连采集作业所有表清洗规则，因为在这个作业中没有配置表，所以获取不到数据
+	 * 错误的测试用例未达到三组: getAllTbCleanConfInfo不会因为正常情况下，不会因为参数不同而导致访问失败，只会因为参数的不同获取到的数据也不同
 	 * @Param: 无
 	 * @return: 无
 	 *
 	 * */
 	@Test
 	public void getAllTbCleanConfInfo(){
+		//正确数据访问1：模拟获取database_id为1001的数据库直连采集作业所有表清洗规则，能够获取到两条，一条字符补齐规则，一条字符替换规则
+		String rightString = new HttpClient()
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.post(getActionUrl("getAllTbCleanConfInfo")).getBodyString();
+		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResult.isSuccess(), is(true));
 
+		Map<Object, Object> rightData = rightResult.getDataForMap();
+		Result replaceResult = (Result) rightData.get("replace");
+		Result completionResult = (Result) rightData.get("completion");
+		assertThat("模拟获取database_id为1001的数据库直连采集作业所有表清洗规则,其中有一条字符替换规则", replaceResult.getRowCount() == 1, is(true));
+		assertThat("模拟获取database_id为1001的数据库直连采集作业所有表清洗规则,其中有一条字符替换规则，原字符为", replaceResult.getString(0, "field"), is("test_orifield"));
+		assertThat("模拟获取database_id为1001的数据库直连采集作业所有表清洗规则,其中有一条字符替换规则", replaceResult.getString(0, "replace_feild"), is("test_newField"));
+		assertThat("模拟获取database_id为1001的数据库直连采集作业所有表清洗规则,其中有一条字符补齐规则", completionResult.getRowCount() == 1, is(true));
+		assertThat("模拟获取database_id为1001的数据库直连采集作业所有表清洗规则,其中有一条字符补齐规则,补齐字符为 ", completionResult.getString(0, "character_filling"), is("cleanparameter"));
+		assertThat("模拟获取database_id为1001的数据库直连采集作业所有表清洗规则,其中有一条字符补齐规则,补齐长度为 ", completionResult.getLong(0, "filling_length"), is("14"));
+		assertThat("模拟获取database_id为1001的数据库直连采集作业所有表清洗规则,其中有一条字符补齐规则,补齐方式为 ", completionResult.getString(0, "filling_type"), is("1"));
+
+		//错误的数据访问1：模拟获取database_id为1002的数据库直连采集作业所有表清洗规则，因为在这个作业中没有配置表，所以获取不到数据
+		String rightStringTwo = new HttpClient()
+				.addData("colSetId", SECOND_DATABASESET_ID)
+				.post(getActionUrl("getAllTbCleanConfInfo")).getBodyString();
+		ActionResult rightResultTwo = JsonUtil.toObjectSafety(rightStringTwo, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResultTwo.isSuccess(), is(true));
+		Map<Object, Object> rightDataTwo = rightResultTwo.getDataForMap();
+
+		assertThat("模拟获取database_id为1002的数据库直连采集作业所有表清洗规则,获取不到数据", rightDataTwo.isEmpty(), is(true));
 	}
 
 	/**
 	 * 测试根据列ID获取针对该列设置的日期格式化规则
 	 *
-	 * 正确数据访问1：
-	 * 错误的数据访问1：
-	 * 错误的测试用例未达到三组:
+	 * 正确数据访问1：模拟获取sys_user表的login_date字段的日期格式化规则，由于之前在构造了初始化数据，所以可以查到
+	 * 正确数据访问2：模拟获取sys_user表的user_email字段的日期格式化规则，由于没有构造初始化数据，所以查不到
+	 * 错误的测试用例未达到三组:getDateFormatInfo()方法永远不会因为参数而导致方法访问失败，只会根据实际情况，根据不同的参数返回不同的结果集
 	 * @Param: 无
 	 * @return: 无
 	 *
 	 * */
 	@Test
 	public void getDateFormatInfo(){
+		//正确数据访问1：模拟获取sys_user表的login_date字段的日期格式化规则，由于之前在构造了初始化数据，所以可以查到
+		String rightStringOne = new HttpClient()
+				.addData("columnId", 2011L)
+				.post(getActionUrl("getDateFormatInfo")).getBodyString();
+		ActionResult rightResultOne = JsonUtil.toObjectSafety(rightStringOne, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResultOne.isSuccess(), is(true));
 
+		Result rightDataOne = rightResultOne.getDataForResult();
+		assertThat("模拟获取sys_user表的login_date字段的日期格式化规则，由于之前在构造了初始化数据，所以可以查到1条数据", rightDataOne.getRowCount() == 1, is(true));
+		assertThat("模拟获取sys_user表的login_date字段的日期格式化规则，原始格式为YYYY-MM-DD", rightDataOne.getString(0, "old_format").equalsIgnoreCase("YYYY-MM-DD"), is(true));
+		assertThat("模拟获取sys_user表的login_date字段的日期格式化规则，转换格式为YYYY-MM", rightDataOne.getString(0, "convert_format").equalsIgnoreCase("YYYY-MM"), is(true));
+
+		//正确数据访问2：模拟获取sys_user表的user_email字段的日期格式化规则，由于没有构造初始化数据，所以查不到
+		String rightStringTwo = new HttpClient()
+				.addData("columnId", 2007L)
+				.post(getActionUrl("getDateFormatInfo")).getBodyString();
+		ActionResult rightResultTwo = JsonUtil.toObjectSafety(rightStringTwo, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResultTwo.isSuccess(), is(true));
+
+		Result rightDataTwo = rightResultTwo.getDataForResult();
+		assertThat("模拟获取sys_user表的user_email字段的日期格式化规则，由于没有构造初始化数据，所以查不到数据", rightDataTwo.getRowCount() == 0, is(true));
 	}
 
 	/**
 	 * 测试保存列清洗日期格式化
 	 *
-	 * 正确数据访问1：
-	 * 错误的数据访问1：
-	 * 错误的测试用例未达到三组:
+	 * 正确数据访问1：模拟修改对sys_user表的login_date字段设置日期格式化
+	 * 错误数据访问1：模拟修改对sys_user表的login_date字段设置日期格式化，但是缺少原日期格式
+	 * 错误数据访问2：模拟修改对sys_user表的login_date字段设置日期格式化，但是缺少转换后日期格式
+	 * 错误的测试用例未达到三组:saveDateFormatInfo方法上述测试用例就可以覆盖所有可能出现的情况
 	 * @Param: 无
 	 * @return: 无
 	 *
 	 * */
 	@Test
 	public void saveDateFormatInfo(){
+		//正确数据访问1：模拟修改对sys_user表的login_date字段设置日期格式化
+		try(DatabaseWrapper db = new DatabaseWrapper()){
+			long oldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where column_id = ? and old_format = ? and convert_format = ?", 2011L, "YYYY-MM-DD", "YYYY-MM").orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			assertThat("模拟修改对sys_user表的login_date字段设置日期格式化之前，原数据存在", oldCount == 1, is(true));
+		}
 
+		String rightStringOne = new HttpClient()
+				.addData("clean_type", CleanType.ShiJianZhuanHuan.getCode())
+				.addData("convert_format", "yyyy年MM月dd日 HH:mm:ss")
+				.addData("old_format", "YYYY-MM-DD")
+				.addData("column_id", 2011L)
+				.post(getActionUrl("saveDateFormatInfo")).getBodyString();
+		ActionResult rightResultOne = JsonUtil.toObjectSafety(rightStringOne, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResultOne.isSuccess(), is(true));
+
+		try(DatabaseWrapper db = new DatabaseWrapper()){
+			long oldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where column_id = ? and old_format = ? and convert_format = ?", 2011L, "YYYY-MM-DD", "YYYY-MM").orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			assertThat("模拟修改对sys_user表的login_date字段设置日期格式化之后，原数据被删除了", oldCount == 0, is(true));
+			Result result = SqlOperator.queryResult(db, "select convert_format, old_format from " + Column_clean.TableName + " where column_id = ?", 2011L);
+			assertThat("模拟修改对sys_user表的login_date字段设置日期格式化之后，转换日期格式被改为yyyy年MM月dd日 HH:mm:ss", result.getString(0, "convert_format").equalsIgnoreCase("yyyy年MM月dd日 HH:mm:ss"), is(true));
+			assertThat("模拟修改对sys_user表的login_date字段设置日期格式化之后，原日期格式被改为YYYY-MM-DD HH:mm:ss", result.getString(0, "old_format").equalsIgnoreCase("YYYY-MM-DD"), is(true));
+
+			int count = SqlOperator.execute(db, "delete from " + Column_clean.TableName + " where column_id = ?", 2011L);
+			assertThat(count == 1, is(true));
+
+			SqlOperator.commitTransaction(db);
+		}
+
+		//错误数据访问1：模拟修改对sys_user表的login_date字段设置日期格式化，但是缺少原日期格式
+		String wrongStringOne = new HttpClient()
+				.addData("clean_type", CleanType.ShiJianZhuanHuan.getCode())
+				.addData("convert_format", "yyyy年MM月dd日 HH:mm:ss")
+				.addData("column_id", 2011L)
+				.post(getActionUrl("saveDateFormatInfo")).getBodyString();
+		ActionResult wrongResultOne = JsonUtil.toObjectSafety(wrongStringOne, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultOne.isSuccess(), is(false));
+
+		//错误数据访问2：模拟修改对sys_user表的login_date字段设置日期格式化，但是缺少转换后日期格式
+		String wrongStringTwo = new HttpClient()
+				.addData("clean_type", CleanType.ShiJianZhuanHuan.getCode())
+				.addData("old_format", "YYYY-MM-DD")
+				.addData("column_id", 2011L)
+				.post(getActionUrl("saveDateFormatInfo")).getBodyString();
+		ActionResult wrongResultTwo = JsonUtil.toObjectSafety(wrongStringTwo, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultTwo.isSuccess(), is(false));
 	}
 
 	/**
 	 * 测试根据columnId查询列拆分信息
 	 *
-	 * 正确数据访问1：
-	 * 错误的数据访问1：
-	 * 错误的测试用例未达到三组:
+	 * 正确数据访问1：模拟查询为code_info表的ci_sp_classname(3003)字段设置的列拆分信息，应该能查到三条数据
+	 * 正确数据访问2：模拟查询为code_info表的ci_sp_class(3002)字段设置的列拆分信息，由于没有为其构造初始化数据，所以查不到数据
+	 * 错误的测试用例未达到三组:getColSplitInfo方法永远不会因为传递的参数导致访问失败，只会根据实际情况，返回不同的查询结果
 	 * @Param: 无
 	 * @return: 无
 	 *
 	 * */
 	@Test
 	public void getColSplitInfo(){
+		//正确数据访问1：模拟查询为code_info表的ci_sp_classname字段设置的列拆分信息，应该能查到三条数据
+		String rightStringOne = new HttpClient()
+				.addData("columnId", 3003L)
+				.post(getActionUrl("getColSplitInfo")).getBodyString();
+		ActionResult rightResultOne = JsonUtil.toObjectSafety(rightStringOne, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResultOne.isSuccess(), is(true));
 
+		List<Column_split> rightDataOne = rightResultOne.getDataForEntityList(Column_split.class);
+		assertThat("模拟查询为code_info表的ci_sp_classname(3003)字段设置的列拆分信息，应该能查到三条数据", rightDataOne.size() == 3, is(true));
+		for(Column_split columnSplit : rightDataOne){
+			if(columnSplit.getCol_split_id() == 101010103L){
+				assertThat("模拟查询为code_info表的ci_sp_classname(3003)字段设置的列拆分信息，有一列拆分为了ci", columnSplit.getCol_name().equalsIgnoreCase("ci"), is(true));
+			}else if(columnSplit.getCol_split_id() == 101010104L){
+				assertThat("模拟查询为code_info表的ci_sp_classname(3003)字段设置的列拆分信息，有一列拆分为了sp", columnSplit.getCol_name().equalsIgnoreCase("sp"), is(true));
+			}else if(columnSplit.getCol_split_id() == 101010105L){
+				assertThat("模拟查询为code_info表的ci_sp_classname(3003)字段设置的列拆分信息，有一列拆分为了classname", columnSplit.getCol_name().equalsIgnoreCase("classname"), is(true));
+			}else{
+				assertThat("模拟查询为code_info表的ci_sp_classname(3003)字段设置的列拆分信息，出现了不符合期望的情况，列名为" + columnSplit.getCol_name(), false, is(true));
+			}
+		}
+		//正确数据访问2：模拟查询为code_info表的ci_sp_class字段设置的列拆分信息，由于没有为其构造初始化数据，所以查不到数据
+		String rightStringTwo = new HttpClient()
+				.addData("columnId", 3002L)
+				.post(getActionUrl("getColSplitInfo")).getBodyString();
+		ActionResult rightResultTwo = JsonUtil.toObjectSafety(rightStringTwo, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResultTwo.isSuccess(), is(true));
+
+		List<Column_split> rightDataTwo = rightResultTwo.getDataForEntityList(Column_split.class);
+		assertThat("模拟查询为code_info表的ci_sp_class(3002)字段设置的列拆分信息，应该查不到数据", rightDataTwo.isEmpty(), is(true));
 	}
 
 	/**
 	 * 测试删除一条列拆分规则
 	 *
-	 * 正确数据访问1：
-	 * 错误的数据访问1：
-	 * 错误的测试用例未达到三组:
+	 * 正确数据访问1：由于columnId为3003的列被拆分成了三列，所以进行三次删除，最后一次删除之后，由于该列已经在column_spilt表中已经没有数据了，所以应该在column_clean表中，把这一列的字段拆分清洗规则删除掉
+	 * 错误的数据访问1：传入错误的colSplitId
+	 * 错误的数据访问2：传入错误的colCleanId
+	 * 错误的数据访问3：传入错误的colSplitId和colCleanId
 	 * @Param: 无
 	 * @return: 无
 	 *
 	 * */
 	@Test
 	public void deleteColSplitInfo(){
+		//正确数据访问1：由于columnId为3003的列被拆分成了三列，所以进行三次删除，最后一次删除之后，由于该列已经在column_spilt表中已经没有数据了，所以应该在column_clean表中，把这一列的字段拆分清洗规则删除掉
+		try(DatabaseWrapper db = new DatabaseWrapper()){
+			long columnOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " where column_id = ?", 141414L).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			assertThat("进行第一次删除前，拆分为ci的列在table_column表中存在", columnOldCount == 1, is(true));
+			long spiltOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_split.TableName + " where col_split_id = ?", 101010103L).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			assertThat("进行第一次删除前，拆分为ci的列在column_spilt表中存在", spiltOldCount == 1, is(true));
+			long cleanOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where col_clean_id = ? and clean_type = ?", 101010102L, CleanType.ZiFuChaiFen.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			assertThat("进行第一次删除前，列ci_sp_classname的列拆分配置在column_clean表中存在", cleanOldCount == 1, is(true));
+		}
 
+		String rightStringOne = new HttpClient()
+				.addData("colSplitId", 101010103L)
+				.addData("colCleanId", 101010102L)
+				.post(getActionUrl("deleteColSplitInfo")).getBodyString();
+		ActionResult rightResultOne = JsonUtil.toObjectSafety(rightStringOne, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResultOne.isSuccess(), is(true));
+
+		try(DatabaseWrapper db = new DatabaseWrapper()){
+			long columnOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " where column_id = ?", 141414L).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			assertThat("进行第一次删除后，拆分为ci的列在table_column表中被删除了", columnOldCount == 0, is(true));
+			long spiltOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_split.TableName + " where col_split_id = ?", 101010103L).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			assertThat("进行第一次删除后，拆分为ci的列在column_spilt表中被删除了", spiltOldCount == 0, is(true));
+			long cleanOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where col_clean_id = ? and clean_type = ?", 101010102L, CleanType.ZiFuChaiFen.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			assertThat("进行第一次删除后，列ci_sp_classname的列拆分配置在column_clean表中存在", cleanOldCount == 1, is(true));
+		}
+
+		try(DatabaseWrapper db = new DatabaseWrapper()){
+			long columnOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " where column_id = ?", 151515L).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			assertThat("进行第二次删除前，拆分为sp的列在table_column表中存在", columnOldCount == 1, is(true));
+			long spiltOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_split.TableName + " where col_split_id = ?", 101010104L).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			assertThat("进行第二次删除前，拆分为sp的列在column_spilt表中存在", spiltOldCount == 1, is(true));
+			long cleanOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where col_clean_id = ? and clean_type = ?", 101010102L, CleanType.ZiFuChaiFen.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			assertThat("进行第二次删除前，列ci_sp_classname的列拆分配置在column_clean表中存在", cleanOldCount == 1, is(true));
+		}
+
+		String rightStringTwo = new HttpClient()
+				.addData("colSplitId", 101010104L)
+				.addData("colCleanId", 101010102L)
+				.post(getActionUrl("deleteColSplitInfo")).getBodyString();
+		ActionResult rightResultTwo = JsonUtil.toObjectSafety(rightStringTwo, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResultTwo.isSuccess(), is(true));
+
+		try(DatabaseWrapper db = new DatabaseWrapper()){
+			long columnOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " where column_id = ?", 151515L).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			assertThat("进行第二次删除后，拆分为sp的列在table_column表中被删除了", columnOldCount == 0, is(true));
+			long spiltOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_split.TableName + " where col_split_id = ?", 101010104L).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			assertThat("进行第二次删除后，拆分为sp的列在column_spilt表中被删除了", spiltOldCount == 0, is(true));
+			long cleanOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where col_clean_id = ? and clean_type = ?", 101010102L, CleanType.ZiFuChaiFen.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			assertThat("进行第二次删除后，列ci_sp_classname的列拆分配置在column_clean表中存在", cleanOldCount == 1, is(true));
+		}
+
+		try(DatabaseWrapper db = new DatabaseWrapper()){
+			long columnOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " where column_id = ?", 161616L).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			assertThat("进行第三次删除前，拆分为classname的列在table_column表中存在", columnOldCount == 1, is(true));
+			long spiltOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_split.TableName + " where col_split_id = ?", 101010105L).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			assertThat("进行第三次删除前，拆分为classname的列在column_spilt表中存在", spiltOldCount == 1, is(true));
+			long cleanOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where col_clean_id = ? and clean_type = ?", 101010102L, CleanType.ZiFuChaiFen.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			assertThat("进行第三次删除前，列ci_sp_classname的列拆分配置在column_clean表中存在", cleanOldCount == 1, is(true));
+		}
+
+		String rightStringThree = new HttpClient()
+				.addData("colSplitId", 101010105L)
+				.addData("colCleanId", 101010102L)
+				.post(getActionUrl("deleteColSplitInfo")).getBodyString();
+		ActionResult rightResultThree = JsonUtil.toObjectSafety(rightStringThree, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResultThree.isSuccess(), is(true));
+
+		try(DatabaseWrapper db = new DatabaseWrapper()){
+			long columnOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " where column_id = ?", 161616L).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			assertThat("进行第三次删除后，拆分为classname的列在table_column表中被删除了", columnOldCount == 0, is(true));
+			long spiltOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_split.TableName + " where col_split_id = ?", 101010105L).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			assertThat("进行第三次删除后，拆分为classname的列在column_spilt表中被删除了", spiltOldCount == 0, is(true));
+			long cleanOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where col_clean_id = ? and clean_type = ?", 101010102L, CleanType.ZiFuChaiFen.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			assertThat("进行第三次删除后，列ci_sp_classname的列拆分配置在column_clean表中被删除了", cleanOldCount == 0, is(true));
+		}
+
+		//错误的数据访问1：传入错误的colSplitId
+		String wrongStringOne = new HttpClient()
+				.addData("colSplitId", 999999999999L)
+				.addData("colCleanId", 101010101L)
+				.post(getActionUrl("deleteColSplitInfo")).getBodyString();
+		ActionResult wrongResultOne = JsonUtil.toObjectSafety(wrongStringOne, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultOne.isSuccess(), is(false));
+		//错误的数据访问2：传入错误的colCleanId
+		String wrongStringTwo = new HttpClient()
+				.addData("colSplitId", 1111111L)
+				.addData("colCleanId", 101010199L)
+				.post(getActionUrl("deleteColSplitInfo")).getBodyString();
+		ActionResult wrongResultTwo = JsonUtil.toObjectSafety(wrongStringTwo, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultTwo.isSuccess(), is(false));
+		//错误的数据访问3：传入错误的colSplitId和colCleanId
+		String wrongStringThree = new HttpClient()
+				.addData("colSplitId", 999999999999L)
+				.addData("colCleanId", 101010199L)
+				.post(getActionUrl("deleteColSplitInfo")).getBodyString();
+		ActionResult wrongResultThree = JsonUtil.toObjectSafety(wrongStringThree, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultThree.isSuccess(), is(false));
 	}
 
 	/**
 	 * 测试保存列拆分规则
 	 *
-	 * 正确数据访问1：
-	 * 错误的数据访问1：
-	 * 错误的测试用例未达到三组:
+	 * 正确数据访问1：模拟修改对code_info表的ci_sp_classname设置的字段拆分规则，由按照下划线分隔拆分，变为按照偏移量拆分为ci_s、p_class、name
+	 * 正确数据访问2：模拟新增对code_info表的ci_sp_code设置字段拆分规则，按照下划线分拆分为ci、sp、code三列
+	 * 错误的测试用例未达到三组:上述测试用例可以覆盖saveColSplitInfo()方法的所有场景
 	 * @Param: 无
 	 * @return: 无
 	 *
 	 * */
 	@Test
 	public void saveColSplitInfo(){
+		//正确数据访问1：模拟修改对code_info表的ci_sp_classname设置的字段拆分规则，由按照下划线分隔拆分，变为按照偏移量拆分为ci_s、p_class、name
+		List<Column_split> underLintSpilts = new ArrayList<>();
+		for(int i = 0; i < 3; i++){
+			long colSplitId = 0;
+			String columnName = null;
+			String spiltType = "1";
+			String columnChName = null;
+			String columnType = "varchar(512)";
+			long colCleanId = 101010102L;
+			long columnId = 3003L;
+			String offset = null;
+			switch (i){
+				case 0 :
+					colSplitId = 101010103L;
+					columnName = "ci_s";
+					columnChName = "ci_s_ch";
+					offset = "3";
+					break;
+				case 1 :
+					colSplitId = 101010104L;
+					columnName = "p_class";
+					columnChName = "p_class_ch";
+					offset = "10";
+					break;
+				case 2 :
+					colSplitId = 101010105L;
+					columnName = "name";
+					columnChName = "name_ch";
+					offset = "14";
+					break;
+			}
+			Column_split columnSplit = new Column_split();
+			columnSplit.setCol_split_id(colSplitId);
+			columnSplit.setCol_name(columnName);
+			columnSplit.setSplit_type(spiltType);
+			columnSplit.setCol_zhname(columnChName);
+			columnSplit.setCol_type(columnType);
+			columnSplit.setCol_clean_id(colCleanId);
+			columnSplit.setColumn_id(columnId);
+			columnSplit.setValid_e_date(Constant.MAXDATE);
+			columnSplit.setValid_s_date(DateUtil.getSysDate());
+			columnSplit.setCol_offset(offset);
 
+			underLintSpilts.add(columnSplit);
+		}
+
+		try(DatabaseWrapper db = new DatabaseWrapper()){
+			List<Table_column> tableColumns = SqlOperator.queryList(db, Table_column.class, "select * from " + Table_column.TableName + " where colume_name in" +
+							" (select t1.colume_name from table_column t1" +
+							" JOIN " + Column_split.TableName + " t2 ON t1.colume_name = t2.col_name " +
+							" JOIN " + Column_clean.TableName + " t3 ON t2.col_clean_id = t3.col_clean_id " +
+							" WHERE t2.col_clean_id = ? and t2.column_id = ? and t1.table_id = ? and t1.is_new = ?) ",
+					101010102L, 3003L, CODE_INFO_TABLE_ID, IsFlag.Shi.getCode());
+			assertThat("进行code_info表的ci_cp_classname列拆分修改保存前，拆分为ci、sp、classname的列在table_column表中存在", tableColumns.size() == 3, is(true));
+			for(Table_column tableColumn : tableColumns){
+				if(tableColumn.getColumn_id() == 141414L){
+					assertThat("进行code_info表的ci_cp_classname列拆分修改保存前，拆分为ci的列在table_column表中存在", tableColumn.getColume_name().equalsIgnoreCase("ci"), is(true));
+				}else if(tableColumn.getColumn_id() == 151515L){
+					assertThat("进行code_info表的ci_cp_classname列拆分修改保存前，拆分为sp的列在table_column表中存在", tableColumn.getColume_name().equalsIgnoreCase("sp"), is(true));
+				}else if(tableColumn.getColumn_id() == 161616L){
+					assertThat("进行code_info表的ci_cp_classname列拆分修改保存前，拆分为classname的列在table_column表中存在", tableColumn.getColume_name().equalsIgnoreCase("classname"), is(true));
+				}else{
+					assertThat("进行code_info表的ci_cp_classname列拆分修改保存前，在table_column表中查询到了不符合预期的列" + tableColumn.getColume_name(), false, is(true));
+				}
+			}
+			long beforeDelSpCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_split.TableName + " where col_split_id = in (101010103, 101010104, 101010105) ").orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			assertThat("进行code_info表的ci_cp_classname列拆分修改保存前，列拆分信息在column_split表中存在", beforeDelSpCount == 3, is(true));
+		}
+
+		String rightStringOne = new HttpClient()
+				.addData("col_clean_id", 101010102L)
+				.addData("clean_type", CleanType.ZiFuChaiFen.getCode())
+				.addData("column_id", 3003L)
+				.addData("columnSplitString", JSON.toJSONString(underLintSpilts))
+				.addData("tableId", CODE_INFO_TABLE_ID)
+				.post(getActionUrl("saveColSplitInfo")).getBodyString();
+		ActionResult rightResultOne = JsonUtil.toObjectSafety(rightStringOne, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResultOne.isSuccess(), is(true));
+
+		try(DatabaseWrapper db = new DatabaseWrapper()){
+			List<Table_column> tableColumns = SqlOperator.queryList(db, Table_column.class, "select * from " + Table_column.TableName + " where colume_name in" +
+							" (select t1.colume_name from table_column t1" +
+							" JOIN " + Column_split.TableName + " t2 ON t1.colume_name = t2.col_name " +
+							" JOIN " + Column_clean.TableName + " t3 ON t2.col_clean_id = t3.col_clean_id " +
+							" WHERE t2.col_clean_id = ? and t2.column_id = ? and t1.table_id = ? and t1.is_new = ?) ",
+					101010102L, 3003L, CODE_INFO_TABLE_ID, IsFlag.Shi.getCode());
+			assertThat("进行code_info表的ci_cp_classname列拆分修改保存后，拆分为ci_s、p_class、name的列在table_column表中存在", tableColumns.size() == 3, is(true));
+			for(Table_column tableColumn : tableColumns){
+				if(tableColumn.getColume_name().equalsIgnoreCase("ci_s")){
+					assertThat("进行code_info表的ci_cp_classname列拆分修改保存后，拆分为ci_s的列在table_column表中存在", tableColumn.getColume_name().equalsIgnoreCase("ci_s"), is(true));
+				}else if(tableColumn.getColume_name().equalsIgnoreCase("p_class")){
+					assertThat("进行code_info表的ci_cp_classname列拆分修改保存后，拆分为p_class的列在table_column表中存在", tableColumn.getColume_name().equalsIgnoreCase("p_class"), is(true));
+				}else if(tableColumn.getColume_name().equalsIgnoreCase("name")){
+					assertThat("进行code_info表的ci_cp_classname列拆分修改保存后，拆分为name的列在table_column表中存在", tableColumn.getColume_name().equalsIgnoreCase("name"), is(true));
+				}else{
+					assertThat("进行code_info表的ci_cp_classname列拆分修改保存后，在table_column表中查询到了不符合预期的列" + tableColumn.getColume_name(), false, is(true));
+				}
+			}
+			long afterDelSpCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_split.TableName + " where col_split_id = in (101010103, 101010104, 101010105) ").orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			assertThat("进行code_info表的ci_cp_classname列拆分修改保存后，原来对该列定义的列拆分信息在column_split表中不存在", afterDelSpCount == 0, is(true));
+
+			List<Column_split> afterUpdate = SqlOperator.queryList(db, Column_split.class, "select * from " + Column_split.TableName + " where column_id = ?", 3003L);
+			assertThat("进行code_info表的ci_cp_classname列拆分修改保存后，对该列定义的列拆分信息ci_s、p_class、name在column_split表中存在", afterUpdate.size() == 3, is(true));
+			for(Column_split columnSplit : afterUpdate){
+				if(columnSplit.getCol_name().equalsIgnoreCase("ci_s")){
+					assertThat("进行code_info表的ci_cp_classname列拆分修改保存后，对该列定义的列拆分信息ci_s在column_split表中存在", columnSplit.getCol_offset().equalsIgnoreCase("3"), is(true));
+				}else if(columnSplit.getCol_name().equalsIgnoreCase("p_class")){
+					assertThat("进行code_info表的ci_cp_classname列拆分修改保存后，对该列定义的列拆分信息p_class在column_split表中存在", columnSplit.getCol_offset().equalsIgnoreCase("10"), is(true));
+				}else if(columnSplit.getCol_name().equalsIgnoreCase("name")){
+					assertThat("进行code_info表的ci_cp_classname列拆分修改保存后，对该列定义的列拆分信息name在column_split表中存在", columnSplit.getCol_offset().equalsIgnoreCase("14"), is(true));
+				}else{
+					assertThat("进行code_info表的ci_cp_classname列拆分修改保存后，对该列定义的列拆分信息在column_split表中出现不符合期望的情况" + columnSplit.getCol_name(), false, is(true));
+				}
+			}
+
+			//删除新增时带来的数据
+			int execute = SqlOperator.execute(db, "delete from " + Column_split.TableName + "where column_id = ? and col_clean_id = ?", 3003L, 101010102L);
+			assertThat("删除新增列拆分时column_split表的测试数据", execute == 3, is(true));
+			int execute1 = SqlOperator.execute(db, "delete from " + Table_column.TableName + " where colume_name in " +
+							" (select t1.colume_name from table_column t1 " +
+							" JOIN " + Column_split.TableName + " t2 ON t1.colume_name = t2.col_name " +
+							" JOIN " + Column_clean.TableName + " t3 ON t2.col_clean_id = t3.col_clean_id " +
+							" WHERE t2.col_clean_id = ? and t2.column_id = ? and t1.table_id = ? and t1.is_new = ?)",
+					101010102L, 3003L, CODE_INFO_TABLE_ID, IsFlag.Shi.getCode());
+			assertThat("删除新增列拆分时table_column表的测试数据", execute1 == 3, is(true));
+		}
+		//正确数据访问2：模拟新增对code_info表的ci_sp_code设置字段拆分规则，按照下划线分拆分为ci、sp、code三列
 	}
 
 	/**
@@ -1512,9 +2189,16 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 			SqlOperator.execute(db, "delete from " + Column_clean.TableName + " where column_id = ? ", 2002L);
 			SqlOperator.execute(db, "delete from " + Column_clean.TableName + " where column_id = ? ", 2003L);
 			SqlOperator.execute(db, "delete from " + Column_clean.TableName + " where column_id = ? ", 2005L);
+			SqlOperator.execute(db, "delete from " + Column_clean.TableName + " where column_id = ? ", 2011L);
+			SqlOperator.execute(db, "delete from " + Column_clean.TableName + " where column_id = ? ", 3004L);
+			SqlOperator.execute(db, "delete from " + Column_clean.TableName + " where column_id = ? ", 3003L);
+			SqlOperator.execute(db, "delete from " + Column_clean.TableName + " where column_id = ? ", 2010L);
 			//9、删除clean_parameter表测试数据
 			SqlOperator.execute(db, "delete from " + Clean_parameter.TableName + " where database_id = ? ", FIRST_DATABASESET_ID);
-			//10、提交事务后，对数据表中的数据进行检查，断言删除是否成功
+			//10、删除column_spilt表测试数据
+			SqlOperator.execute(db, "delete from " + Column_split.TableName + " where column_id = ? ", 3004L);
+			SqlOperator.execute(db, "delete from " + Column_split.TableName + " where column_id = ? ", 3003L);
+			//11、提交事务后
 			SqlOperator.commitTransaction(db);
 		}
 	}

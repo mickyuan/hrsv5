@@ -506,6 +506,29 @@ public class InitAndDestDataForCleanConf {
 			splitTwo.add(tableColumn);
 		}
 
+		//18、column_merge表测试数据，对sys_user表中的user_mobile和useris_admin合并成列，名叫user_mobile_admin
+		Column_merge columnMerge = new Column_merge();
+		columnMerge.setCol_merge_id(16161616L);
+		columnMerge.setTable_id(SYS_USER_TABLE_ID);
+		columnMerge.setCol_name("user_mobile_admin");
+		columnMerge.setOld_name("user_mobile和useris_admin");
+		columnMerge.setCol_zhname("user_mobile_admin_ch");
+		columnMerge.setCol_type("varchar(512)");
+		columnMerge.setValid_s_date(DateUtil.getSysDate());
+		columnMerge.setValid_e_date(Constant.MAXDATE);
+
+		//19、由于配置了列合并，需要把合并后的列入到table_column表中
+		Table_column mergeColumn = new Table_column();
+		mergeColumn.setColumn_id(1717171717L);
+		mergeColumn.setTable_id(SYS_USER_TABLE_ID);
+		mergeColumn.setIs_new(IsFlag.Shi.getCode());
+		mergeColumn.setIs_primary_key(IsFlag.Fou.getCode());
+		mergeColumn.setColume_name("user_mobile_admin");
+		mergeColumn.setColumn_type("varchar(512)");
+		mergeColumn.setColume_ch_name("user_mobile_admin_ch");
+		mergeColumn.setValid_s_date(DateUtil.getSysDate());
+		mergeColumn.setValid_e_date(Constant.MAXDATE);
+
 		//插入数据
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			//插入数据源表(data_source)测试数据
@@ -612,6 +635,14 @@ public class InitAndDestDataForCleanConf {
 			}
 			assertThat("将列拆分信息加入Table_column表", spiltColumnCount, is(5));
 
+			//插入column_merge表
+			int mergeCount = columnMerge.add(db);
+			assertThat("插入column_merge表测试数据", mergeCount, is(1));
+
+			//由于配置了列合并，需要把合并后的列入到table_column表中
+			int mergeColumnCount = mergeColumn.add(db);
+			assertThat("把合并后的列入到table_column表中", mergeColumnCount, is(1));
+
 			SqlOperator.commitTransaction(db);
 		}
 	}
@@ -647,6 +678,8 @@ public class InitAndDestDataForCleanConf {
 			//10、删除column_spilt表测试数据
 			SqlOperator.execute(db, "delete from " + Column_split.TableName + " where column_id = ? ", 3004L);
 			SqlOperator.execute(db, "delete from " + Column_split.TableName + " where column_id = ? ", 3003L);
+			//11、删除column_merge表测试数据
+			SqlOperator.execute(db, "delete from " + Column_merge.TableName + " where table_id = ? ", SYS_USER_TABLE_ID);
 			//11、提交事务后
 			SqlOperator.commitTransaction(db);
 		}

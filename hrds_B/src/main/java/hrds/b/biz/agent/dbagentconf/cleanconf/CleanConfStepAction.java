@@ -883,7 +883,7 @@ public class CleanConfStepAction {
 				Dbo.execute("DELETE FROM "+ Table_clean.TableName +" WHERE table_id = ? AND clean_type = ?"
 						, param.getTableId(), CleanType.ZiFuBuQi.getCode());
 			}
-			//2-2、判断最终保存时，是否选择了字符替换，否，则根据tableId去table_clean表中删除一条记录，不关心删除的数目
+			//2-2、判断最终保存时，是否选择了字符替换，否，则根据tableId去table_clean表中尝试删除记录，不关心删除的数目
 			if(!param.isReplaceFlag()){
 				Dbo.execute("DELETE FROM "+ Table_clean.TableName +" WHERE table_id = ? AND clean_type = ?"
 						, param.getTableId(), CleanType.ZiFuTiHuan.getCode());

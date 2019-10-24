@@ -555,7 +555,7 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 		ActionResult insertRuselt = JsonUtil.toObjectSafety(insertString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(insertRuselt.isSuccess(), is(true));
-		Integer returnValue = (Integer) insertRuselt.getData();
+		Long returnValue = (Long) insertRuselt.getData();
 		assertThat("该方法的返回值不为空", returnValue != null, is(true));
 
 		//验证DB里面的数据是否正确

@@ -176,7 +176,6 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		assertThat(rightResultTwo.isSuccess(), is(true));
 		List<Result> rightDataTwo = rightResultTwo.getDataForEntityList(Result.class);
 		assertThat("使用sys做模糊查询得到的表信息有6条", rightDataTwo.size(), is(6));
-		//TODO 这种处理方式可以吗？
 		for(Result result : rightDataTwo){
 			String tableName = result.getString(0, "table_name");
 			if(tableName.equalsIgnoreCase("sys_dump")){
@@ -800,6 +799,8 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		ActionResult rightResultOne = JsonUtil.toObjectSafety(rightStringOne, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(rightResultOne.isSuccess(), is(true));
+		Long returnValueOne = (Long) rightResultOne.getData();
+		assertThat(returnValueOne == FIRST_DATABASESET_ID, is(true));
 
 		//断言table_info表中出现了这样一条数据
 		Table_info tableInfo;
@@ -887,6 +888,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 				}
 			}
 		}
+
 		//正确数据访问2：在database_id为7001的数据库采集任务下构造新增采集object_collect表的数据，选择采集列和列排序
 		String tableNameTwo = "object_collect";
 		String tableChNameTwo = "半结构化采集任务表";
@@ -960,6 +962,8 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		ActionResult rightResultTwo = JsonUtil.toObjectSafety(rightStringTwo, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(rightResultTwo.isSuccess(), is(true));
+		Long returnValueTwo = (Long) rightResultTwo.getData();
+		assertThat(returnValueTwo == FIRST_DATABASESET_ID, is(true));
 
 		Table_info tableInfoTwo;
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
@@ -1000,6 +1004,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 				}
 			}
 		}
+
 		//正确数据访问3：在database_id为7001的数据库采集任务下构造修改采集code_info表的数据，选择采集列和列排序，原来构造的模式数据是模拟采集code_info表下面所有的字段，现在只采集前2个字段
 		List<Table_column> codeInfos = new ArrayList<>();
 		for(int i = 1; i<= 2; i++){
@@ -1050,6 +1055,8 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		ActionResult rightResultThree = JsonUtil.toObjectSafety(rightStringThree, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(rightResultThree.isSuccess(), is(true));
+		Long returnValueThree = (Long) rightResultThree.getData();
+		assertThat(returnValueThree == FIRST_DATABASESET_ID, is(true));
 
 		Table_info tableInfoThree;
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
@@ -1198,6 +1205,8 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(rightResult.isSuccess(), is(true));
+		Long returnValue = (Long) rightResult.getData();
+		assertThat(returnValue == FIRST_DATABASESET_ID, is(true));
 
 		//删除后，确认数据是否真的被删除了
 		try(DatabaseWrapper db = new DatabaseWrapper()){
