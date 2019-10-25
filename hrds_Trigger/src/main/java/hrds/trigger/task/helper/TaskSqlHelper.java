@@ -150,6 +150,20 @@ public class TaskSqlHelper {
 		return TaskSqlHelper.obj2EtlJobCur(row);
 	}
 
+	/**
+	 * 根据调度系统编号、作业标识，修改该作业的开始执行时间。
+	 * @author Tiger.Wang
+	 * @date 2019/10/25
+	 * @param etlSysCode
+	 *          含义：调度系统编号。
+	 *          取值范围：不能为null。
+	 * @param etlJob
+	 *          含义：作业标识。
+	 *          取值范围：不能为null。
+	 * @param currStTime
+	 *          含义：开始执行时间。
+	 *          取值范围：不能为null。
+	 */
 	public static void updateEtlJob2Running(String etlSysCode, String etlJob, String currStTime) {
 
 		//1.更新数据库数据。
@@ -162,6 +176,14 @@ public class TaskSqlHelper {
 		SqlOperator.commitTransaction(db);
 	}
 
+	/**
+	 * 新增一条作业调度历史数据。
+	 * @author Tiger.Wang
+	 * @date 2019/10/25
+	 * @param etlJobDispHis
+	 *          含义：表示一个作业调度历史。
+	 *          取值范围：不能为null。
+	 */
 	public static void insertIntoEltJobDispHis(Etl_job_disp_his etlJobDispHis) {
 
 		//1.更新数据库数据。
@@ -172,6 +194,32 @@ public class TaskSqlHelper {
 		SqlOperator.commitTransaction(db);
 	}
 
+	/**
+	 * 在作业调度完成的情况下，修改作业的调度信息。
+	 * @author Tiger.Wang
+	 * @date 2019/10/25
+	 * @param jobDispStatus
+	 *          含义：调度作业状态。
+	 *          取值范围：不能为null。
+	 * @param currEndTime
+	 *          含义：结束日期时间。
+	 *          取值范围：不能为null。
+	 * @param jobReturnVal
+	 *          含义：作业返回值。
+	 *          取值范围：不能为null。
+	 * @param lastExeTime
+	 *          含义：最近执行日期时间。
+	 *          取值范围：不能为null。
+	 * @param etlSysCode
+	 *          含义：调度系统编号。
+	 *          取值范围：不能为null。
+	 * @param etlJob
+	 *          含义：作业标识。
+	 *          取值范围：不能为null。
+	 * @param currBathDate
+	 *          含义：当前跑批日期。
+	 *          取值范围：不能为null。
+	 */
 	public static void updateEtlJob2Complete(String jobDispStatus, String currEndTime,
 	                                        Integer jobReturnVal, String lastExeTime,
 	                                        String etlSysCode, String etlJob, String currBathDate) {
@@ -188,6 +236,20 @@ public class TaskSqlHelper {
 		SqlOperator.commitTransaction(db);
 	}
 
+	/**
+	 * 根据调度系统编号、作业标识，修改作业的最近执行日期时间。
+	 * @author Tiger.Wang
+	 * @date 2019/10/25
+	 * @param lastExeTime
+	 *          含义：最近执行日期时间。
+	 *          取值范围：不能为null。
+	 * @param etlSysCode
+	 *          含义：调度系统编号。
+	 *          取值范围：不能为null。
+	 * @param etlJob
+	 *          含义：作业标识。
+	 *          取值范围：不能为null。
+	 */
 	public static void updateEtlJobDefLastExeTime(String lastExeTime, String etlSysCode,
 	                                              String etlJob) {
 		//1.更新数据库数据。
@@ -200,6 +262,20 @@ public class TaskSqlHelper {
 		SqlOperator.commitTransaction(db);
 	}
 
+	/**
+	 * 根据调度系统编号、作业标识，更新作业的进程编号。
+	 * @author Tiger.Wang
+	 * @date 2019/10/25
+	 * @param processId
+	 *          含义：进程编号。
+	 *          取值范围：不能为null。
+	 * @param etlSysCode
+	 *          含义：调度系统编号。
+	 *          取值范围：不能为null。
+	 * @param etlJob
+	 *          含义：作业标识。
+	 *          取值范围：不能为null。
+	 */
 	public static void updateEtlJobProcessId(String processId, String etlSysCode, String etlJob) {
 
 		//1.更新数据库数据。
@@ -212,6 +288,23 @@ public class TaskSqlHelper {
 		SqlOperator.commitTransaction(db);
 	}
 
+	/**
+	 * 根据调度系统编号、作业标识、干预类型查询干预信息。
+	 * @author Tiger.Wang
+	 * @date 2019/10/25
+	 * @param etlSysCode
+	 *          含义：调度系统编号。
+	 *          取值范围：不能为null。
+	 * @param etlJob
+	 *          含义：作业标识。
+	 *          取值范围：不能为null。
+	 * @param handType
+	 *          含义：干预类型。
+	 *          取值范围：不能为null。
+	 * @return java.util.Optional<hrds.commons.entity.Etl_job_hand>
+	 *          含义：一条干预信息数据。
+	 *          取值范围：不会为null。
+	 */
 	public static Optional<Etl_job_hand> getEtlJobHandle(String etlSysCode,  String etlJob,
 	                                                     String handType) {
 

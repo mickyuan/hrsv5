@@ -1,7 +1,6 @@
 package hrds.trigger.task;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
@@ -25,7 +24,7 @@ import hrds.trigger.task.helper.TaskSqlHelper;
 
 /**
  * ClassName: TaskManager<br>
- * Description: <br>
+ * Description: trigger程序核心逻辑的管理类，用于管理系统/作业的状态，并且提供作业执行入口。<br>
  * Author: Tiger.Wang<br>
  * Date: 2019/10/23 11:56<br>
  * Since: JDK 1.8
@@ -44,7 +43,7 @@ public class TaskManager {
 	private final static String REDISHANDLE = "Handle"; //redis已干预标识
 	private final static String ERRORJOBMSG = "作业执行失败";
 	/**干预类型，作业直接触发JT（JOB_TRIGGER）标识*/
-	private static final String JT = "JT";
+	private final static String JT = "JT";
 
 	private static final RedisHelper REDIS = RedisHelper.getInstance();
 	private static final ExecutorService executeThread = Executors.newCachedThreadPool();
@@ -76,6 +75,7 @@ public class TaskManager {
 				logger.warn("----- 调度系统编号为{}的系统已是停止状态，系统停止 -----", etlSysCode);
 				return false;
 			}
+
 			return true;
 		}catch (AppSystemException e) {
 			logger.error("没有对应的调度系统，调度系统编号为{}", etlSysCode);
@@ -87,7 +87,7 @@ public class TaskManager {
 	 * 用于对redis中的作业数据进行分析，将其转换为EtlJobParaAnaly对象，主要逻辑点：<br>
 	 * 1、从redis中lpop1个作业描述字符串，并将其按固定分隔符分割；<br>
 	 * 2、根据分割后的字符，使用代表作业的作业标识，去数据库中获取完整作业信息；<br>
-	 * 3、设置EtlJobParaAnaly对象，并返回。
+	 * 3、将作业信息封装为EtlJobParaAnaly对象。
 	 * @author Tiger.Wang
 	 * @date 2019/10/23
 	 * @return hrds.trigger.beans.EtlJobParaAnaly
@@ -119,7 +119,7 @@ public class TaskManager {
 			return etlJobParaAnaly;
 		}
 
-		//3、设置EtlJobParaAnaly对象，并返回。
+		//3、将作业信息封装为EtlJobParaAnaly对象。
 		String etlJob = jobKey[0];
 		String currBathDate = jobKey[1];
 		try {
@@ -134,21 +134,36 @@ public class TaskManager {
 		}
 	}
 
+	/**
+	 * 以线程方式启动一个作业的执行，主要是用于管理一个作业生命周期中各种状态的更新，
+	 * 作业结束后会释放资源，若作业是以干预的途径启动，会更新干预信息。主要逻辑点：<br>
+	 * 1、将待执行的作业更新至运行中状态中，并开始执行作业；<br>
+	 * 2、作业执行完后，更新作业状态，包括：更新调度历史信息、更新作业状态、推送结束标识到redis；<br>
+	 * 3、作业执行完后，如果作业是干预途径来启动，修改干预信息。
+	 * @author Tiger.Wang
+	 * @date 2019/10/25
+	 * @param etlJobCur
+	 *          含义：表示一个已登记，并且需要执行的作业。
+	 *          取值范围：不能为null。
+	 * @param hasHandle
+	 *          含义：标识一个需要执行的作业，是否是通过干预途径而来的。
+	 *          取值范围：true/false。
+	 */
 	public void runEtlJob(final Etl_job_cur etlJobCur, final boolean hasHandle) {
 
 		executeThread.execute(() -> {
 
 			String etlJob = etlJobCur.getEtl_job();
 			try {
-				String currDateTime = LocalDateTime.now().format(DateUtil.DATETIME_DEFAULT);
+				String currDateTime = DateUtil.getDateTime(DateUtil.DATETIME_DEFAULT);
 				etlJobCur.setCurr_st_time(currDateTime);
-
+				//1、将待执行的作业更新至运行中状态中，并开始执行作业；
 				TaskSqlHelper.updateEtlJob2Running(currDateTime, etlSysCode, etlJob);
 
 				logger.info("{} 作业开始执行，开始执行时间为 {}", etlJob, currDateTime);
 				Etl_job_cur etlJobCurResult = TaskExecutor.executeEtlJob(etlJobCur);
 
-				//进程返回0，意味着正常结束
+				//进程返回0，意味着正常结束 TODO 注意，目前仅支持作业的[正确结束、异常结束]两种状态
 				if(TaskExecutor.PROGRAM_DONE_FLAG == etlJobCurResult.getJob_return_val()) {
 					etlJobCurResult.setJob_disp_status(Job_Status.DONE.getCode());
 				}else {
@@ -160,6 +175,7 @@ public class TaskManager {
 				etlJobCurResult.setCurr_end_time(currDateTime);
 				etlJobCurResult.setLast_exe_time(currDateTime);
 
+				//2、作业执行完后，更新作业状态，包括：更新调度历史信息、更新作业状态、推送结束标识到redis；
 				freedEtlJob(etlJobCurResult);
 			}catch(IOException | InterruptedException e) {
 				logger.warn("{} 作业异常结束并修改作业状态", etlJobCur.getEtl_job());
@@ -175,7 +191,7 @@ public class TaskManager {
 
 			//TODO 此处是否有问题（连带着control），对于任何干预，干预的状态应该与作业本身的执行状态无关，
 			// 即"干预成功了，但是作业执行成功/失败了"，trigger不应该理会干预的的状态问题。
-			//如果是干预来启动job，修改干预状态
+			//3、作业执行完后，如果作业是干预途径来启动，修改干预信息。
 			if(hasHandle) {
 
 				Optional<Etl_job_hand> etlJobHandOptional =
@@ -200,17 +216,32 @@ public class TaskManager {
 		});
 	}
 
+	/**
+	 * 使用于在作业执行完成后，更新作业为完成状态。主要逻辑点：<br>
+	 * 1、记录作业调度历史；<br>
+	 * 2、更新此作业所登记的信息（etl_job_cur表）为结束状态；<br>
+	 * 3、更新此作业所定义的信息（etl_job_def表）的最近执行日期时间；<br>
+	 * 4、以结束标识推送该作业到redis。
+	 * @author Tiger.Wang
+	 * @date 2019/10/25
+	 * @param etlJobCur
+	 *          含义：表示一个执行结束的作业。
+	 *          取值范围：不能为null。
+	 */
 	private void freedEtlJob(Etl_job_cur etlJobCur) {
 
+		//1、记录作业调度历史；
 		TaskSqlHelper.insertIntoEltJobDispHis(TaskManager.etlJobCur2EtlJobDispHis(etlJobCur));
+		//2、更新此作业所登记的信息（etl_job_cur表）为结束状态；
 		TaskSqlHelper.updateEtlJob2Complete(etlJobCur.getJob_disp_status(),
 				etlJobCur.getCurr_end_time(), etlJobCur.getJob_return_val(),
 				etlJobCur.getLast_exe_time(), etlJobCur.getEtl_sys_cd(), etlJobCur.getEtl_job(),
 				etlJobCur.getCurr_bath_date());
+		//3、更新此作业所定义的信息（etl_job_def表）的最近执行日期时间；
 		TaskSqlHelper.updateEtlJobDefLastExeTime(etlJobCur.getLast_exe_time(),
 				etlJobCur.getEtl_sys_cd(), etlJobCur.getEtl_job());
 
-		//该作业以结束标识推送到redis
+		//4、以结束标识推送该作业到redis。
 		String finishedJob =
 				etlJobCur.getEtl_job() + REDISCONTENTSEPARATOR + etlJobCur.getCurr_bath_date();
 		REDIS.rpush(strFinishedJob, finishedJob);
@@ -252,6 +283,17 @@ public class TaskManager {
 				etlJobHand.getEtl_hand_type());
 	}
 
+	/**
+	 * 将表示已登记作业的Etl_job_cur对象，转为表示作业调度历史的Etl_job_disp_his对象；
+	 * @author Tiger.Wang
+	 * @date 2019/10/25
+	 * @param etlJobCur
+	 *          含义：表示已登记的一个作业。
+	 *          取值范围：不能为null。
+	 * @return hrds.commons.entity.Etl_job_disp_his
+	 *          含义：表示一个作业的调度历史。
+	 *          取值范围：不会为null。
+	 */
 	private static Etl_job_disp_his etlJobCur2EtlJobDispHis(Etl_job_cur etlJobCur) {
 
 		Etl_job_disp_his etlJobDispHis = new Etl_job_disp_his();

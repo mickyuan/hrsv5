@@ -2,18 +2,24 @@ package hrds.trigger.utils;
 
 import java.lang.reflect.Field;
 
-import com.alibaba.fastjson.JSONObject;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.Platform;
+
 import fd.ng.core.utils.StringUtil;
 import hrds.commons.exception.AppSystemException;
 import hrds.trigger.task.executor.TaskExecutor;
 
+/**
+ * ClassName: ProcessUtil<br>
+ * Description: 用于控制作业进程的工具类。<br>
+ * Author: Tiger.Wang<br>
+ * Date: 2019/10/23 11:56<br>
+ * Since: JDK 1.8
+ **/
 public class ProcessUtil {
 
 	private final static long SLEEP_TIME = 3000;
-	private final static String YARN_STATUS_FLAG = "status";
 	private final static String WINDOWS_PID_FLAG = "handle";
 	private final static String LINUX_PID_FLAG = "pid";
 
@@ -24,26 +30,49 @@ public class ProcessUtil {
 		int GetProcessId(Long hProcess);
 	}
 
-	public static int getPid(Process p) {
+	/**
+	 * 获取操作系统为windows或linux中进程的进程号。
+	 * @author Tiger.Wang
+	 * @date 2019/10/25
+	 * @param process
+	 *          含义：进程对象。
+	 *          取值范围：不能为null。
+	 * @return int
+	 *          含义：进程号。
+	 *          取值范围：int范围数组。
+	 */
+	public static int getPid(Process process) {
 
 		try {
 			if(Platform.isWindows()) {
-				Field f = p.getClass().getDeclaredField(WINDOWS_PID_FLAG);
+				Field f = process.getClass().getDeclaredField(WINDOWS_PID_FLAG);
 				f.setAccessible(true);
-				return Kernel32.INSTANCE.GetProcessId((long)f.get(p));
+				return Kernel32.INSTANCE.GetProcessId((long)f.get(process));
 			}else if(Platform.isLinux()) {
-				Field f = p.getClass().getDeclaredField(LINUX_PID_FLAG);
+				Field f = process.getClass().getDeclaredField(LINUX_PID_FLAG);
 				f.setAccessible(true);
-				return (int)(Integer)f.get(p);
+				return (int)(Integer)f.get(process);
+			}else {
+				throw new AppSystemException("不支持的操作系统，目前仅支持Windows、Linux " +
+						Platform.getOSType());
 			}
 		}catch(Exception ex) {
-			ex.printStackTrace();
+			throw new AppSystemException("获取进程编号发生异常" + ex);
 		}
-
-		throw new AppSystemException("不支持的操作系统，目前仅支持Windows、Linux " + Platform.getOSType());
 	}
 
-	public static String getAppID(String yarnName) throws InterruptedException {
+	/**
+	 * 获取Yarn中作业的作业编号。
+	 * @author Tiger.Wang
+	 * @date 2019/10/25
+	 * @param yarnName
+	 *          含义：yarn中的作业名。
+	 *          取值范围：不能为null。
+	 * @return java.lang.String
+	 *          含义：Yarn中的作业编号。
+	 *          取值范围：不会为null。
+	 */
+	public static String getYarnAppID(String yarnName) throws InterruptedException {
 
 		while(true) {
 
@@ -57,12 +86,25 @@ public class ProcessUtil {
 		}
 	}
 
+	/**
+	 * 根据Yarn中的作业编号，获取该作业的运行状态。
+	 * @author Tiger.Wang
+	 * @date 2019/10/25
+	 * @param appId
+	 *          含义：Yarn中的作业编号。
+	 *          取值范围：不能为null。
+	 * @return int
+	 *          含义：作业运行状态。
+	 *          取值范围：TaskExecutor.PROGRAM_DONE_FLAG/TaskExecutor.PROGRAM_ERROR_FLAG。
+	 */
 	public static int getStatusOnYarn(String appId) throws InterruptedException {
 
 		while(true) {
 
-			JSONObject json = JSONObject.parseObject(YarnUtil.getStatusByAppId(appId));
-			String status = json.getString(YARN_STATUS_FLAG);
+			YarnUtil.YarnApplicationReport yarnApplicationReport =
+					YarnUtil.getApplicationReportByAppId(appId);
+
+			String status = yarnApplicationReport.getStatus();
 			//NEW, NEW_SAVING, SUBMITTED, ACCEPTED, RUNNING, FINISHED, FAILED, KILLED
 //			if( "NEW_SAVING".equals(status) || "NEW".equals(status) || "SUBMITTED".equals(status) || "ACCEPTED".equals(status) ) {
 //				continue;
@@ -71,13 +113,18 @@ public class ProcessUtil {
 				return TaskExecutor.PROGRAM_DONE_FLAG;
 			}else if(YarnStatus.FAILED.getValue().equals(status) ||
 					YarnStatus.KILLED.getValue().equals(status)) {
-				return TaskExecutor.PROGRAM_FAILED_FLAG;
+				return TaskExecutor.PROGRAM_ERROR_FLAG;
 			}
 
 			Thread.sleep(SLEEP_TIME);
 		}
 	}
 
+	/**
+	 * 表示Yarn中作业的作业状态。
+	 * @author Tiger.Wang
+	 * @date 2019/10/25
+	 */
 	private enum YarnStatus {
 		NEW("NEW"), NEW_SAVING("NEW_SAVING"), SUBMITTED("SUBMITTED"),
 		ACCEPTED("ACCEPTED"), RUNNING("RUNNING"), FINISHED("FINISHED"),

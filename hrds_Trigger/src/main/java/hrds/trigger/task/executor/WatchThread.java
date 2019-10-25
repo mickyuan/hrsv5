@@ -1,65 +1,58 @@
 package hrds.trigger.task.executor;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.*;
 
+/**
+ * ClassName: WatchThread<br>
+ * Description: 用于监控进程的执行日志的类。<br>
+ * Author: Tiger.Wang<br>
+ * Date: 2019/10/23 14:54<br>
+ * Since: JDK 1.8
+ **/
 class WatchThread extends Thread {
 
+	private static final Logger logger = LogManager.getLogger();
+
+	private static final String ENCODING = "UTF-8";
 	private InputStream inputStream;
 	private String logDirc;
 
-	public WatchThread(InputStream inputStream, String logDirc) {
+	WatchThread(InputStream inputStream, String logDirc) {
 
 		this.inputStream = inputStream;
 		this.logDirc = logDirc;
 	}
 
+	/**
+	 * 监控进程的执行日志，将日志写到指定文件中。
+	 * @author Tiger.Wang
+	 * @date 2019/10/25
+	 */
+	@Override
 	public void run() {
 
-		OutputStreamWriter outputStreamWriter = null;
-		PrintWriter pw = null;
-		BufferedReader br = null;
-		try {
-			InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
-			br = new BufferedReader(inputStreamReader);
-			String line = null;
+		File file = new File(logDirc);
 
-			File f = new File(logDirc);
-			if( !f.exists() ) {
-				f.createNewFile();
+		try(InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
+		    BufferedReader br = new BufferedReader(inputStreamReader);
+		    OutputStream outputStream = new FileOutputStream(file, true);
+		    OutputStreamWriter outputStreamWriter = new OutputStreamWriter(outputStream, ENCODING);
+		    PrintWriter pw = new PrintWriter(outputStreamWriter, true)) {
+
+			if(!file.exists() && !file.createNewFile()) {
+				logger.warn("日志文件创建失败 {}", logDirc);
 			}
-			@SuppressWarnings("resource")
-			OutputStream outputStream = new FileOutputStream(f, true);
-			outputStreamWriter = new OutputStreamWriter(outputStream, "UTF-8");
-			pw = new PrintWriter(outputStreamWriter, true);
-			while( br != null && (line = br.readLine()) != null ) {
+
+			String line;
+			while((line = br.readLine()) != null ) {
 				pw.write(line + "\r\n");
 				pw.flush();
 			}
-		}
-		catch(Exception e) {
+		}catch (IOException e) {
 			e.printStackTrace();
-		}
-		finally {
-			if( br != null ) {
-				try {
-					br.close();
-				}
-				catch(IOException e) {
-					e.printStackTrace();
-				}
-			}
-			if( pw != null ) {
-				pw.close();
-			}
-			if( outputStreamWriter != null ) {
-				try {
-					outputStreamWriter.close();
-				}
-				catch(IOException e) {
-					e.printStackTrace();
-				}
-			}
-
 		}
 	}
 }

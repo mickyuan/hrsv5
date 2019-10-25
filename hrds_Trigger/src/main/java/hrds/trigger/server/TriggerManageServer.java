@@ -9,7 +9,7 @@ import hrds.trigger.task.helper.TaskSqlHelper;
 
 /**
  * ClassName: TriggerManageServer<br>
- * Description: <br>
+ * Description: trigger程序核心逻辑的服务类，用于管理系统的启动/停止。<br>
  * Author: Tiger.Wang<br>
  * Date: 2019/10/23 11:34<br>
  * Since: JDK 1.8
@@ -18,7 +18,7 @@ public class TriggerManageServer {
 
 	private static final Logger logger = LogManager.getLogger();
 
-	private static final long SLEEP_TIME = 1000;
+	private static final long SLEEP_TIME = 1000;   //程序循环执行间隔时间
 
 	private final TaskManager taskManager;
 	private final CMServerThread cmThread;
@@ -80,7 +80,10 @@ public class TriggerManageServer {
 		}
 
 		/**
-		 * 执行作业调度服务。注意，该方法为线程的执行（run）方法。<br>
+		 * 执行作业调度服务。注意，该方法为线程的执行（run）方法。主要逻辑：<br>
+		 * 1、检查调度系统是否应该继续执行；<br>
+		 * 2、检查是否有需要立即执行的作业，有此作业则执行；<br>
+		 * 3、间隔一定时间后，再次循环执行。<br>
 		 * @author Tiger.Wang
 		 * @date 2019/10/8
 		 */
@@ -89,15 +92,15 @@ public class TriggerManageServer {
 
 			try {
 				while(run) {
-
+					//1、检查调度系统是否应该继续执行；
 					if(!taskManager.checkSysGoRun()){ return; }
-
+					//2、检查是否有需要立即执行的作业，有此作业则执行；
 					EtlJobParaAnaly etlJobParaAnaly = taskManager.getEtlJob();
 					if(etlJobParaAnaly.isHasEtlJob()) {
 						taskManager.runEtlJob(etlJobParaAnaly.getEtlJobCur(),
 								etlJobParaAnaly.isHasHandle());
 					}
-
+					//3、间隔一定时间后，再次循环执行。
 					Thread.sleep(SLEEP_TIME);
 				}
 			}catch(Exception ex) {
