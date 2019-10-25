@@ -6,6 +6,7 @@ import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
+import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import hrds.commons.entity.Department_info;
@@ -24,8 +25,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class DepartmentActionTest extends WebBaseTestCase {
 	//测试数据的用户ID
 	private static final long USER_ID = -1000L;
-	//测试数据的部门ID
-	private static final long DEP_ID = -1000000001L;
 	//测试数据用户名
 	private static final String USER_NAME = "超级管理员init-hll";
 	//测试数据用户密码
@@ -41,6 +40,7 @@ public class DepartmentActionTest extends WebBaseTestCase {
 					"1-2-1.初始化测试删除部门的数据" +
 					"1-2-2.初始化测试修改部门的数据" +
 					"1-2-3.初始化测试查询部门的数据" +
+					"1-2-4.初始化模拟登陆依赖部门的数据" +
 					"2.提交所有数据库执行操作" +
 					"3.用户模拟登陆" +
 					"测试数据:" +
@@ -54,7 +54,7 @@ public class DepartmentActionTest extends WebBaseTestCase {
 			Sys_user sys_user = new Sys_user();
 			sys_user.setUser_id(USER_ID);
 			sys_user.setCreate_id(USER_ID);
-			sys_user.setDep_id(1000000001L);
+			sys_user.setDep_id(-1000000004L);
 			sys_user.setRole_id("1001");
 			sys_user.setUser_name(USER_NAME);
 			sys_user.setUser_password(USER_PASSWORD);
@@ -80,18 +80,28 @@ public class DepartmentActionTest extends WebBaseTestCase {
 			dept.setCreate_date(DateUtil.getSysDate());
 			dept.setCreate_time(DateUtil.getSysTime());
 			dept.setDep_remark("测试删除部门init-hll");
+			dept.add(db);
 			//1-2-2.初始化测试修改部门的数据
 			dept.setDep_id(-1000000002L);
 			dept.setDep_name("测试修改部门init-hll");
 			dept.setCreate_date(DateUtil.getSysDate());
 			dept.setCreate_time(DateUtil.getSysTime());
 			dept.setDep_remark("测试修改部门init-hll");
+			dept.add(db);
 			//1-2-3.初始化测试查询部门的数据
 			dept.setDep_id(-1000000003L);
 			dept.setDep_name("测试查询部门init-hll");
 			dept.setCreate_date(DateUtil.getSysDate());
 			dept.setCreate_time(DateUtil.getSysTime());
 			dept.setDep_remark("测试查询部门init-hll");
+			dept.add(db);
+			//1-2-4.初始化模拟登陆依赖的部门
+			dept.setDep_id(-1000000004L);
+			dept.setDep_name("测试查询部门init-hll");
+			dept.setCreate_date(DateUtil.getSysDate());
+			dept.setCreate_time(DateUtil.getSysTime());
+			dept.setDep_remark("测试查询部门init-hll");
+			dept.add(db);
 			//2.提交所有数据库执行操作
 			SqlOperator.commitTransaction(db);
 			//3.用户模拟登陆
@@ -127,7 +137,7 @@ public class DepartmentActionTest extends WebBaseTestCase {
 					"测试删除部门init-hll");
 			SqlOperator.execute(db,
 					"delete from " + Department_info.TableName + " where dep_name=?",
-					"测试修改部门init-hll");
+					"修改+测试修改部门init-hll");
 			SqlOperator.execute(db,
 					"delete from " + Department_info.TableName + " where dep_name=?",
 					"测试查询部门init-hll");
@@ -143,7 +153,7 @@ public class DepartmentActionTest extends WebBaseTestCase {
 			assertThat("Department_info 表此条数据删除后,记录数应该为0", deptDataNum, is(0L));
 			deptDataNum = SqlOperator.queryNumber(db,
 					"select count(1) from " + Department_info.TableName + " where dep_name=?",
-					"测试修改部门init-hll"
+					"修改+测试修改部门init-hll"
 			).orElseThrow(() -> new RuntimeException("count fail!"));
 			assertThat("Department_info 表此条数据删除后,记录数应该为0", deptDataNum, is(0L));
 			deptDataNum = SqlOperator.queryNumber(db,
@@ -199,14 +209,14 @@ public class DepartmentActionTest extends WebBaseTestCase {
 		//1.正确数据访问
 		//1-1.等待删除的数据源id存在
 		bodyString = new HttpClient()
-				.addData("dep_id", DEP_ID)
+				.addData("dep_id", -1000000001L)
 				.post(getActionUrl("deleteDepartmentInfo")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
 		assertThat(ar.isSuccess(), is(true));
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			//1-1-1.检查 Department_info 部门是否新增成功
 			OptionalLong number = SqlOperator.queryNumber(db, "select count(*) from " + Department_info.TableName +
-					" where dep_id=?", DEP_ID);
+					" where dep_id=?", -1000000001L);
 			assertThat("检查 Department_info 表数据，表 Department_info 数据删除成功", number.getAsLong(), is(0L));
 		}
 		//2.错误数据访问
@@ -229,12 +239,23 @@ public class DepartmentActionTest extends WebBaseTestCase {
 		//1.正确数据访问
 		//1-1.数据源id存在
 		bodyString = new HttpClient()
-				.addData("dep_id", DEP_ID)
-				.addData("dep_name", "测试部门init-hll")
-				.addData("dep_remark", "测试部门init-hll")
-				.post(getActionUrl("deleteDepartmentInfo")).getBodyString();
+				.addData("dep_id", -1000000002L)
+				.addData("dep_name", "修改+测试修改部门init-hll")
+				.addData("dep_remark", "修改+测试修改部门init-hll")
+				.post(getActionUrl("updateDepartmentInfo")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
 		assertThat(ar.isSuccess(), is(true));
+		try (DatabaseWrapper db = new DatabaseWrapper()) {
+			//1-1-1.检查 Sys_para 参数是否修改成功
+			OptionalLong number = SqlOperator.queryNumber(db, "select count(*) from " + Department_info.TableName +
+					" where dep_id=?", -1000000002L);
+			assertThat("检查 Sys_para 表数据，表 Sys_para 数据修改成功", number.getAsLong(), is(1L));
+			//1-1-2.检查数据更新是否正确
+			Result rs = SqlOperator.queryResult(db, "select * from " + Department_info.TableName + " where dep_id=?",
+					-1000000002L);
+			assertThat(rs.getLong(0, "dep_id"), is(-1000000002L));
+			assertThat(rs.getString(0, "dep_name"), is("修改+测试修改部门init-hll"));
+		}
 		//2.错误数据访问
 		//2-1.部门id不存在
 		bodyString = new HttpClient()
