@@ -158,7 +158,7 @@ public class TaskManager {
 				String currDateTime = DateUtil.getDateTime(DateUtil.DATETIME_DEFAULT);
 				etlJobCur.setCurr_st_time(currDateTime);
 				//1、将待执行的作业更新至运行中状态中，并开始执行作业；
-				TaskSqlHelper.updateEtlJob2Running(currDateTime, etlSysCode, etlJob);
+				TaskSqlHelper.updateEtlJob2Running(etlSysCode, etlJob, currDateTime);
 
 				logger.info("{} 作业开始执行，开始执行时间为 {}", etlJob, currDateTime);
 				Etl_job_cur etlJobCurResult = TaskExecutor.executeEtlJob(etlJobCur);
