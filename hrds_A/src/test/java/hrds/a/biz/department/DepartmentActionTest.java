@@ -44,7 +44,8 @@ public class DepartmentActionTest extends WebBaseTestCase {
 					"2.提交所有数据库执行操作" +
 					"3.用户模拟登陆" +
 					"测试数据:" +
-					"* 1.sys_user 表中有1条测试数据 user_id:-1000 user_password:111111")
+					"* 1.sys_user 表中有3条测试数据 user_id:-1000 user_password:111111, user_id:-1000 user_password:111111," +
+					"user_id:-1000 user_password:111111 ")
 	@BeforeClass
 	public static void before() {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
@@ -105,7 +106,8 @@ public class DepartmentActionTest extends WebBaseTestCase {
 
 	@Method(desc = "测试案例执行完成后清理测试数据",
 			logicStep = "1.删除测试数据" +
-					"1-1.删除 sys_user 表测试数据")
+					"1-1.删除 sys_user 表测试数据" +
+					"1-2.删除 Department_info 表测试数据")
 	@AfterClass
 	public static void after() {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
@@ -118,7 +120,7 @@ public class DepartmentActionTest extends WebBaseTestCase {
 					"select count(1) from " + Sys_user.TableName + " where user_id=?",
 					USER_ID
 			).orElseThrow(() -> new RuntimeException("count fail!"));
-			assertThat("data_source 表此条数据删除后,记录数应该为0", suDataNum, is(0L));
+			assertThat("Sys_user 表此条数据删除后,记录数应该为0", suDataNum, is(0L));
 			//1-2.删除 Department_info 表测试数据
 			SqlOperator.execute(db,
 					"delete from " + Department_info.TableName + " where dep_name=?",
@@ -133,11 +135,27 @@ public class DepartmentActionTest extends WebBaseTestCase {
 					"delete from " + Department_info.TableName + " where dep_name=?",
 					"测试添加部门init-hll");
 			SqlOperator.commitTransaction(db);
-			long deptDataNum = SqlOperator.queryNumber(db,
+			long deptDataNum;
+			deptDataNum = SqlOperator.queryNumber(db,
 					"select count(1) from " + Department_info.TableName + " where dep_name=?",
-					"测试部门init-hll"
+					"测试删除部门init-hll"
 			).orElseThrow(() -> new RuntimeException("count fail!"));
-			assertThat("data_source 表此条数据删除后,记录数应该为0", deptDataNum, is(0L));
+			assertThat("Department_info 表此条数据删除后,记录数应该为0", deptDataNum, is(0L));
+			deptDataNum = SqlOperator.queryNumber(db,
+					"select count(1) from " + Department_info.TableName + " where dep_name=?",
+					"测试修改部门init-hll"
+			).orElseThrow(() -> new RuntimeException("count fail!"));
+			assertThat("Department_info 表此条数据删除后,记录数应该为0", deptDataNum, is(0L));
+			deptDataNum = SqlOperator.queryNumber(db,
+					"select count(1) from " + Department_info.TableName + " where dep_name=?",
+					"测试查询部门init-hll"
+			).orElseThrow(() -> new RuntimeException("count fail!"));
+			assertThat("Department_info 表此条数据删除后,记录数应该为0", deptDataNum, is(0L));
+			deptDataNum = SqlOperator.queryNumber(db,
+					"select count(1) from " + Department_info.TableName + " where dep_name=?",
+					"测试添加部门init-hll"
+			).orElseThrow(() -> new RuntimeException("count fail!"));
+			assertThat("Department_info 表此条数据删除后,记录数应该为0", deptDataNum, is(0L));
 		}
 	}
 
@@ -238,6 +256,5 @@ public class DepartmentActionTest extends WebBaseTestCase {
 				.post(getActionUrl("getDepartmentInfo")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
 		assertThat(ar.isSuccess(), is(true));
-		//校验结果集
 	}
 }
