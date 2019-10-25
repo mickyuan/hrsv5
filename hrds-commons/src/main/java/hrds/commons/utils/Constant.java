@@ -16,7 +16,6 @@ public class Constant {
 	public static final String DB = "DB";
 	public static final String MAXDATE = "99991231";
 	public static final String SFTP_PORT = "22";
-
-	public Constant() {
-	}
+	public static final byte[] HBASE_COLUMN_FAMILY = "F".getBytes();
+	public static final String HBASE_ROW_KEY = "hyren_key";
 }
