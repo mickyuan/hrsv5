@@ -10,7 +10,7 @@ import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
-import hrds.commons.codes.CleanType;
+import hrds.b.biz.agent.dbagentconf.InitBaseData;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
@@ -36,22 +36,8 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 	private static final long FIRST_DATABASESET_ID = 1001L;
 	private static final long SECOND_DATABASESET_ID = 1002L;
 	private static final long DEFAULT_TABLE_ID = 999999L;
-	private static final JSONObject tableCleanOrder = new JSONObject();
-	private static final JSONObject columnCleanOrder = new JSONObject();
-
-	static{
-		tableCleanOrder.put(CleanType.ZiFuBuQi.getCode(), 1);
-		tableCleanOrder.put(CleanType.ZiFuTiHuan.getCode(), 2);
-		tableCleanOrder.put(CleanType.ZiFuHeBing.getCode(), 3);
-		tableCleanOrder.put(CleanType.ZiFuTrim.getCode(), 4);
-
-		columnCleanOrder.put(CleanType.ZiFuBuQi.getCode(), 1);
-		columnCleanOrder.put(CleanType.ZiFuTiHuan.getCode(), 2);
-		columnCleanOrder.put(CleanType.ShiJianZhuanHuan.getCode(), 3);
-		columnCleanOrder.put(CleanType.MaZhiZhuanHuan.getCode(), 4);
-		columnCleanOrder.put(CleanType.ZiFuChaiFen.getCode(), 5);
-		columnCleanOrder.put(CleanType.ZiFuTrim.getCode(), 6);
-	}
+	private static final JSONObject tableCleanOrder = InitBaseData.initTableCleanOrder();
+	private static final JSONObject columnCleanOrder = InitBaseData.initColumnCleanOrder();
 
 	/**
 	 * 为每个方法的单元测试初始化测试数据
@@ -166,6 +152,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		List<Result> rightDataOne = rightResultOne.getDataForEntityList(Result.class);
 		assertThat("使用code做模糊查询得到的表信息有1条", rightDataOne.size(), is(1));
 		assertThat("使用code做模糊查询得到的表名为code_info", rightDataOne.get(0).getString(0, "table_name"), is("code_info"));
+
 		//正确数据访问2：构造colSetId为1001，inputString为sys的测试数据
 		String rightStringTwo = new HttpClient()
 				.addData("colSetId", FIRST_DATABASESET_ID)
@@ -192,6 +179,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 				assertThat("使用sys做模糊查询得到的表名有不符合期望的情况，表名为" + tableName, true, is(false));
 			}
 		}
+
 		//正确数据访问3：构造colSetId为1001，inputString为sys|code的测试数据
 		String rightStringThree = new HttpClient()
 				.addData("colSetId", FIRST_DATABASESET_ID)
@@ -220,6 +208,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 				assertThat("使用sys|code做模糊查询得到的表名有不符合期望的情况，表名为" + tableName, true, is(false));
 			}
 		}
+
 		//正确数据访问4：构造colSetId为1001，inputString为wzc的测试数据
 		String rightStringFour = new HttpClient()
 				.addData("colSetId", FIRST_DATABASESET_ID)
@@ -230,6 +219,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		assertThat(rightResultFour.isSuccess(), is(true));
 		List<Result> rightDataFour = rightResultFour.getDataForEntityList(Result.class);
 		assertThat("使用wzc做模糊查询得到的表信息有7条", rightDataFour.isEmpty(), is(true));
+
 		//错误的数据访问1：构造colSetId为1003的测试数据
 		long wrongColSetId = 1003L;
 		String wrongColSetIdString = new HttpClient()
@@ -261,6 +251,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		assertThat(rightResult.isSuccess(), is(true));
 		List<Result> rightData = rightResult.getDataForEntityList(Result.class);
 		assertThat("截止2019.10.15，IP为47.103.83.1的测试库上有70张表",rightData.size(), is(70));
+
 		//错误的数据访问1：构造错误的colSetId进行测试
 		long wrongColSetId = 1003L;
 		String wrongString = new HttpClient()
@@ -292,6 +283,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(rightResult.isSuccess(), is(true));
+
 		//错误的数据访问1：构建错误的colSetId和正确的SQL语句
 		long wrongColSetId = 1003L;
 		String wrongColSetIdString = new HttpClient()
@@ -301,6 +293,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		ActionResult wrongColSetIdResult = JsonUtil.toObjectSafety(wrongColSetIdString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(wrongColSetIdResult.isSuccess(), is(false));
+
 		//错误的数据访问2：构建正确的colSetId和错误SQL语句
 		String wrongSQL = "select * from sys_user limit 10,20";
 		String wrongSQLString = new HttpClient()
@@ -437,6 +430,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		ActionResult errorResultOne = JsonUtil.toObjectSafety(errorStringOne, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(errorResultOne.isSuccess(), is(false));
+
 		//错误的数据访问2：构造两条自定义SQL查询设置数据，第二条数据的中文名为空
 		List<Table_info> errorTableInfosTwo = new ArrayList<>();
 		for(int i = 1; i <= 2; i++){
@@ -607,6 +601,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 				assertThat("获取到了不期望获取的数据，该条数据的table_name为" + tableInfo.getTable_name(), true, is(false));
 			}
 		}
+
 		//正确的数据访问2：构造正确的，但没有数据的colSetId(SECOND_DATABASESET_ID)
 		String rightStringTwo = new HttpClient()
 				.addData("colSetId", SECOND_DATABASESET_ID)
@@ -643,6 +638,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		Result rightDataOne = rightResultOne.getDataForResult();
 		assertThat("使用database_id为" + FIRST_DATABASESET_ID + "和table_name为" + rightTableNameOne + "得到1条数据", rightDataOne.getRowCount(), is(1));
 		assertThat("回显table_name为sys_user表定义的过滤SQL", rightDataOne.getString(0, "sql"), is("select * from sys_user where user_id = 2001"));
+
 		//正确的数据访问2：模拟回显table_name为code_info的过滤SQL，因为测试数据没有设置，所以拿不到
 		String rightTableNameTwo = "code_info";
 		String rightStringTwo = new HttpClient()
@@ -706,6 +702,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 				assertThat("返回的结果中，出现了不期望出现的内容", true, is(false));
 			}
 		}
+
 		//正确数据访问2：构造tableName为ftp_collect，tableId为999999，colSetId为1001的测试数据
 		String tableNameTwo = "ftp_collect";
 		String rightStringTwo = new HttpClient()
@@ -730,6 +727,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 				assertThat("返回的结果中，出现了不期望出现的内容", true, is(false));
 			}
 		}
+
 		//错误的数据访问1：构造tableName为ftp_collect，tableId为999999，colSetId为1003的测试数据
 		long wrongColSetId = 1003L;
 		String wrongColSetIdString = new HttpClient()
@@ -740,6 +738,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		ActionResult wrongColSetIdResult = JsonUtil.toObjectSafety(wrongColSetIdString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(wrongColSetIdResult.isSuccess(), is(false));
+
 		//错误的数据访问2：构造tableName为wzc_collect，tableId为999999，colSetId为1001的测试数据
 		String notExistTableName = "wzc_collect";
 		String wrongTableNameString = new HttpClient()
@@ -1117,6 +1116,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		ActionResult wrongResultOne = JsonUtil.toObjectSafety(wrongStringOne, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(wrongResultOne.isSuccess(), is(false));
+
 		//错误的数据访问2：构造缺少表中文名的采集数据
 		String wrongStringTwo = new HttpClient()
 				.addData("table_id", CODE_INFO_TABLE_ID)
@@ -1128,6 +1128,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		ActionResult wrongResultTwo = JsonUtil.toObjectSafety(wrongStringTwo, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(wrongResultTwo.isSuccess(), is(false));
+
 		//错误的数据访问3：构造在不存在的数据库采集任务中保存采集ftp_collect表数据
 		long wrongColSetId = 1003L;
 		String wrongStringThree = new HttpClient()
@@ -1217,17 +1218,6 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 
 	/**
 	 * 在测试用例执行完之后，删除测试数据
-	 *
-	 * 1、删除data_source表测试数据
-	 * 2、删除agent_info表测试数据
-	 * 3、删除database_set表测试数据
-	 * 4、删除Collect_job_classify表测试数据
-	 * 5、删除table_info表测试数据
-	 * 6、删除table_column表测试数据
-	 * 7、删除table_storage_info表测试数据
-	 * 8、删除table_clean表测试数据
-	 * 9、删除column_merge表测试数据
-	 * 10、提交事务后，对数据表中的数据进行检查，断言删除是否成功
 	 *
 	 * @Param: 无
 	 * @return: 无
