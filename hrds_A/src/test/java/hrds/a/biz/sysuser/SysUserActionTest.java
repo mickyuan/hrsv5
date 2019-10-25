@@ -9,6 +9,7 @@ import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
+import hrds.commons.entity.Department_info;
 import hrds.commons.entity.Sys_user;
 import hrds.testbase.WebBaseTestCase;
 import org.junit.AfterClass;
@@ -25,7 +26,7 @@ public class SysUserActionTest extends WebBaseTestCase {
 	//测试数据的用户ID
 	private static final long USER_ID = -1000L;
 	//测试数据的部门ID
-	private static final long DEP_ID = 1000000001L;
+	private static final long DEP_ID = -1000000001L;
 	//测试数据用户密码
 	private static final String USER_PASSWORD = "111111";
 
@@ -135,6 +136,14 @@ public class SysUserActionTest extends WebBaseTestCase {
 			sys_user.setToken("0");
 			sys_user.setValid_time("0");
 			sys_user.add(db);
+			//1-2.初始化 Department_info 表数据
+			Department_info dept = new Department_info();
+			dept.setDep_id(DEP_ID);
+			dept.setDep_name("测试系统参数类部门init-hll");
+			dept.setCreate_date(DateUtil.getSysDate());
+			dept.setCreate_time(DateUtil.getSysTime());
+			dept.setDep_remark("测试系统参数类部门init-hll");
+			dept.add(db);
 			//2.提交所有数据库执行操作
 			SqlOperator.commitTransaction(db);
 			//3.用户模拟登陆
@@ -149,7 +158,8 @@ public class SysUserActionTest extends WebBaseTestCase {
 
 	@Method(desc = "测试案例执行完成后清理测试数据",
 			logicStep = "1.删除测试数据" +
-					"1-1.删除 sys_user 表测试数据")
+					"1-1.删除 sys_user 表测试数据" +
+					"1-2.删除 Department_info 表测试数据")
 	@AfterClass
 	public static void after() {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
@@ -172,6 +182,14 @@ public class SysUserActionTest extends WebBaseTestCase {
 					USER_ID
 			).orElseThrow(() -> new RuntimeException("count fail!"));
 			assertThat("data_source 表此条数据删除后,记录数应该为0", suDataNum, is(0L));
+			//1-2.删除 Department_info 表测试数据
+			SqlOperator.execute(db,
+					"delete from " + Department_info.TableName + " where dep_id=?", DEP_ID);
+			SqlOperator.commitTransaction(db);
+			long deptDataNum = SqlOperator.queryNumber(db,
+					"select count(1) from " + Department_info.TableName + " where dep_id=?", DEP_ID
+			).orElseThrow(() -> new RuntimeException("count fail!"));
+			assertThat("Department_info 表此条数据删除后,记录数应该为0", deptDataNum, is(0L));
 		}
 	}
 
@@ -280,7 +298,7 @@ public class SysUserActionTest extends WebBaseTestCase {
 		//校验结果信息
 		assertThat(ar.getDataForMap().get("user_id"), is(-1000));
 		assertThat(ar.getDataForMap().get("create_id"), is(-1000));
-		assertThat(ar.getDataForMap().get("dep_id"), is(1000000001));
+		assertThat(ar.getDataForMap().get("dep_id"), is(-1000000001));
 		assertThat(ar.getDataForMap().get("role_id"), is(1001));
 		assertThat(ar.getDataForMap().get("user_name"), is("测试超级管理员init-hll"));
 		assertThat(ar.getDataForMap().get("user_password"), is("111111"));
