@@ -78,7 +78,7 @@ public class TaskExecutor {
 		String etlSysCode = etlJobCur.getEtl_sys_cd();
 		String etlJob = etlJobCur.getEtl_job();
 		String proType = etlJobCur.getPro_type();
-		//1、在程序类型为DBTRAN、DBJOB时，使用Kettle来完成对数据的基础转换，该种方式无法获得进程编号；
+		//1、在程序类型为DBTRAN、DBJOB时，使用Kettle来完成对数据的基础转换，该种方式无法使用进程编号；
 		if(Pro_Type.DBTRAN.getCode().equals(proType)) {
 			//调用资源库中的Trans
 			try {

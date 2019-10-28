@@ -101,13 +101,13 @@ public class TaskManager {
 		//1、从redis中lpop1个作业描述字符串，并将其按固定分隔符分割；
 		long runningListSize = REDIS.llen(strRunningJob);
 		if(runningListSize < 1) {
-			logger.info("------ 没探查到可运行的作业 ------");
+			logger.info("------ 没有被登记的可运行作业 ------");
 			return etlJobParaAnaly;
 		}
 
 		String runningJobStr = REDIS.lpop(strRunningJob);
 		if(StringUtil.isEmpty(runningJobStr)) {
-			logger.info("------ 无作业可运行 ------");
+			logger.info("------ 未被分配到可运行作业 ------");
 			return etlJobParaAnaly;
 		}
 

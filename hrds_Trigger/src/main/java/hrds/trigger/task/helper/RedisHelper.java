@@ -164,7 +164,7 @@ public class RedisHelper {
      * @author Tiger.Wang
      * @date 2019/10/9
      */
-    private void close() {
+    public void close() {
 
         //1.关闭redis连接。
         if(jedis.isConnected()){
