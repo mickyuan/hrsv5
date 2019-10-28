@@ -872,7 +872,7 @@ public class CleanConfStepAction {
 	@Param(name = "tbCleanString", desc = "所有表的清洗参数信息,JSON格式", range = "不为空，" +
 			"如：[{\"tableId\":1001,\"tableName\":\"table_info\",\"complementFlag\":true,\"replaceFlag\":true,trimFlag:true},{\"tableId\":1002,\"tableName\":\"table_column\",\"complementFlag\":true,\"replaceFlag\":true,trimFlag:true}]" +
 			"注意：请务必按照示例中给出的方式命名")
-	@Return(desc = "", range = "")
+	@Return(desc = "数据库设置ID", range = "便于下一个页面通过传递这个值，查询到之前设置的信息")
 	public long saveDataCleanConfig(long colSetId, String tbCleanString){
 		//1、将tbCleanString反序列化为List<TableCleanParam>
 		List<TableCleanParam> tableCleanParams = JSONArray.parseArray(tbCleanString, TableCleanParam.class);

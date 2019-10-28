@@ -91,6 +91,9 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 	@Before
 	public void before() {
 		InitAndDestDataForCollTb.before();
+		//模拟登陆
+		ActionResult actionResult = InitBaseData.simulatedLogin();
+		assertThat("模拟登陆", actionResult.isSuccess(), is(true));
 	}
 
 	/**

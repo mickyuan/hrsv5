@@ -1,5 +1,6 @@
 package hrds.b.biz.agent.dbagentconf.dbconf;
 
+import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
@@ -8,6 +9,7 @@ import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import hrds.b.biz.agent.bean.DBConnectionProp;
+import hrds.b.biz.agent.dbagentconf.InitBaseData;
 import hrds.commons.codes.DatabaseType;
 import hrds.commons.entity.Collect_job_classify;
 import hrds.commons.entity.Database_set;
@@ -59,6 +61,9 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 	@Before
 	public void before() {
 		InitAndDestDataForDBConf.before();
+		//模拟登陆
+		ActionResult actionResult = InitBaseData.simulatedLogin();
+		assertThat("模拟登陆", actionResult.isSuccess(), is(true));
 	}
 
 	/**
@@ -84,10 +89,6 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(rightResult.isSuccess(), is(true));
-		/*
-		List<Object> data = (List<Object>) rightResult.getData();
-		assertThat("根据测试数据，查询到的数据库配置信息应该有" + data.size() + "条", data.size(), is(1));
-		*/
 		Result data = rightResult.getDataForResult();
 		assertThat("根据测试数据，查询到的数据库配置信息应该有" + data.getRowCount() + "条", data.getRowCount(), is(1));
 
@@ -130,20 +131,14 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(rightResult.isSuccess(), is(true));
-		/*
-		Map<String, String> data = (Map<String, String>) rightResult.getData();
-		assertThat("根据测试数据，查询到的数据库信息应该有" + data.size() + "组键值对", data.size(), is(4));
-		assertThat( data.get("jdbcPrefix"), is("jdbc:mysql://"));
-		assertThat( data.get("jdbcIp"), is(":"));
-		assertThat( data.get("jdbcPort"), is("/"));
-		assertThat( data.get("jdbcBase"), is("?characterEncoding=utf8&zeroDateTimeBehavior=convertToNull"));
-		*/
-		List<DBConnectionProp> data = rightResult.getDataForEntityList(DBConnectionProp.class);
-		assertThat("根据测试数据，查询到的数据库连接信息应该有" + data.size() + "条", data.size(), is(1));
-		assertThat( data.get(0).getUrlPrefix(), is("jdbc:mysql://"));
-		assertThat( data.get(0).getIpPlaceholder(), is(":"));
-		assertThat( data.get(0).getPortPlaceholder(), is("/"));
-		assertThat( data.get(0).getUrlSuffix(), is("?characterEncoding=utf8&zeroDateTimeBehavior=convertToNull"));
+
+		DBConnectionProp dbConnectionProp = JSONObject.parseObject(rightResult.getData().toString(), DBConnectionProp.class);
+
+		assertThat("根据测试数据，查询到的数据库连接信息应该有1条", true, is(true));
+		assertThat( dbConnectionProp.getUrlPrefix(), is("jdbc:mysql://"));
+		assertThat( dbConnectionProp.getIpPlaceholder(), is(":"));
+		assertThat( dbConnectionProp.getPortPlaceholder(), is("/"));
+		assertThat( dbConnectionProp.getUrlSuffix(), is("?characterEncoding=utf8&zeroDateTimeBehavior=convertToNull"));
 
 		//错误的数据访问1：构建dbType不在DatabaseType代码项中的code值，断言得到的数据是否正确
 		String wrongString = new HttpClient()
@@ -188,12 +183,13 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 		assertThat(checkResult, is(true));
 
 		//错误的数据访问1：错误的classifyId
-		String wrongUserString = new HttpClient()
-				.addData("classifyId", FIRST_CLASSIFY_ID)
+		long wrongClassifyId = 999999L;
+		String wrongClassifyIdString = new HttpClient()
+				.addData("classifyId", wrongClassifyId)
 				.post(getActionUrl("checkClassifyId")).getBodyString();
-		ActionResult wrongUserResult = JsonUtil.toObjectSafety(wrongUserString, ActionResult.class).orElseThrow(()
+		ActionResult wrongClassifyIdStringResult = JsonUtil.toObjectSafety(wrongClassifyIdString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
-		assertThat(wrongUserResult.isSuccess(), is(false));
+		assertThat(wrongClassifyIdStringResult.isSuccess(), is(false));
 	}
 
 	/**
@@ -216,10 +212,6 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(rightResult.isSuccess(), is(true));
-		/*
-		List<Object> data = (List<Object>) rightResult.getData();
-		assertThat("查询得到的分类信息数据有" + data.size() + "条", data.size(), is(3));
-		*/
 		List<Collect_job_classify> data = rightResult.getDataForEntityList(Collect_job_classify.class);
 		assertThat("查询得到的分类信息数据有" + data.size() + "条", data.size(), is(3));
 
@@ -231,10 +223,6 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 		ActionResult wrongSourceResult = JsonUtil.toObjectSafety(wrongSourceString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(wrongSourceResult.isSuccess(), is(true));
-		/*
-		List<Object> wrongSourceData = (List<Object>) wrongSourceResult.getData();
-		assertThat("传入错误的sourceId,获得的数据为" + wrongSourceData.size() + "条", wrongSourceData.size(), is(0));
-		*/
 		List<Collect_job_classify> wrongSourceData = wrongSourceResult.getDataForEntityList(Collect_job_classify.class);
 		assertThat("传入错误的sourceId,获得的数据为" + wrongSourceData.size() + "条", wrongSourceData.size(), is(0));
 	}
@@ -555,7 +543,7 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 		ActionResult insertRuselt = JsonUtil.toObjectSafety(insertString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(insertRuselt.isSuccess(), is(true));
-		Long returnValue = (Long) insertRuselt.getData();
+		Integer returnValue = (Integer) insertRuselt.getData();
 		assertThat("该方法的返回值不为空", returnValue != null, is(true));
 
 		//验证DB里面的数据是否正确

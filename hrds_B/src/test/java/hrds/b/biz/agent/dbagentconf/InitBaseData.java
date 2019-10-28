@@ -3,8 +3,12 @@ package hrds.b.biz.agent.dbagentconf;
 import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.utils.DateUtil;
+import fd.ng.core.utils.JsonUtil;
+import fd.ng.netclient.http.HttpClient;
+import fd.ng.web.action.ActionResult;
 import hrds.commons.codes.*;
 import hrds.commons.entity.*;
+import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.Constant;
 
 import java.util.ArrayList;
@@ -15,6 +19,11 @@ public class InitBaseData {
 
 	//测试数据用户ID
 	private static final long TEST_USER_ID = -9997L;
+	//测试用户密码
+	private static final String TEST_USER_PASSWORD = "test_user";
+	//测试部门ID
+	private static final long TEST_DEPT_ID = -9987L;
+
 	//source_id
 	private static final long SOURCE_ID = 1L;
 
@@ -55,6 +64,42 @@ public class InitBaseData {
 		columnCleanOrder.put(CleanType.ZiFuTrim.getCode(), 6);
 
 		return columnCleanOrder;
+	}
+
+	//构造sys_user表数据库直连采集配置公共测试数据
+	public static Sys_user buildSysUserData(){
+		Sys_user user = new Sys_user();
+		user.setUser_id(TEST_USER_ID);
+		user.setCreate_id(TEST_USER_ID);
+		user.setDep_id(TEST_DEPT_ID);
+		user.setRole_id("1001");
+		user.setUser_name("超级管理员init-wzc");
+		user.setUser_password(TEST_USER_PASSWORD);
+		user.setUseris_admin("0");
+		user.setUser_type("00");
+		user.setUsertype_group(null);
+		user.setLogin_ip("127.0.0.1");
+		user.setLogin_date("20191001");
+		user.setUser_state("1");
+		user.setCreate_date(DateUtil.getSysDate());
+		user.setCreate_time(DateUtil.getSysTime());
+		user.setUpdate_date(DateUtil.getSysDate());
+		user.setUpdate_time(DateUtil.getSysTime());
+		user.setToken("0");
+		user.setValid_time("0");
+
+		return user;
+	}
+	//构造department_info表数据库直连采集配置公共测试数据
+	public static Department_info buildDeptInfoData(){
+		Department_info deptInfo = new Department_info();
+		deptInfo.setDep_id(TEST_DEPT_ID);
+		deptInfo.setDep_name("测试系统参数类部门init-wzc");
+		deptInfo.setCreate_date(DateUtil.getSysDate());
+		deptInfo.setCreate_time(DateUtil.getSysTime());
+		deptInfo.setDep_remark("测试系统参数类部门init-wzc");
+
+		return deptInfo;
 	}
 
 	//构造data_source表数据库直连采集配置公共测试数据
@@ -220,5 +265,13 @@ public class InitBaseData {
 		}
 
 		return codeInfos;
+	}
+
+	public static ActionResult simulatedLogin(){
+		String responseValue = new HttpClient().buildSession()
+				.addData("user_id", TEST_USER_ID)
+				.addData("password", TEST_USER_PASSWORD)
+				.post("http://127.0.0.1:8099/A/action/hrds/a/biz/login/login").getBodyString();
+		return JsonUtil.toObjectSafety(responseValue, ActionResult.class).orElseThrow(() -> new BusinessException("连接失败"));
 	}
 }

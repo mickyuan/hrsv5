@@ -12,6 +12,7 @@ import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import hrds.b.biz.agent.bean.ColumnCleanParam;
 import hrds.b.biz.agent.bean.TableCleanParam;
+import hrds.b.biz.agent.dbagentconf.InitBaseData;
 import hrds.commons.codes.CleanType;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.*;
@@ -96,6 +97,9 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	@Before
 	public void before(){
 		InitAndDestDataForCleanConf.before();
+		//模拟登陆
+		ActionResult actionResult = InitBaseData.simulatedLogin();
+		assertThat("模拟登陆", actionResult.isSuccess(), is(true));
 	}
 
 	/**

@@ -7,7 +7,6 @@ import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
-import fd.ng.test.junit.TestCaseLog;
 import fd.ng.web.action.ActionResult;
 import hrds.commons.codes.*;
 import hrds.commons.entity.*;
@@ -30,7 +29,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class AgentListActionTest extends WebBaseTestCase {
 
 	//测试数据用户ID
-	private static final long TEST_USER_ID = -9997L;
+	private static final long TEST_USER_ID = -9991L;
 	//测试用户密码
 	private static final String TEST_USER_PASSWORD = "test_user";
 	//测试部门ID
@@ -91,23 +90,31 @@ public class AgentListActionTest extends WebBaseTestCase {
 		Sys_user user = new Sys_user();
 		user.setUser_id(TEST_USER_ID);
 		user.setCreate_id(TEST_USER_ID);
-		user.setRole_id(TEST_USER_ID);
-		user.setUser_name("测试用户(-9997)");
+		user.setDep_id(TEST_DEPT_ID);
+		user.setRole_id("1001");
+		user.setUser_name("超级管理员init-wzc");
 		user.setUser_password(TEST_USER_PASSWORD);
-		user.setUseris_admin(IsFlag.Shi.getCode());
-		user.setUser_state(IsFlag.Shi.getCode());
+		// 0：管理员，1：操作员
+		user.setUseris_admin("0");
+		user.setUser_type("00");
+		user.setUsertype_group(null);
+		user.setLogin_ip("127.0.0.1");
+		user.setLogin_date("20191001");
+		user.setUser_state("1");
 		user.setCreate_date(DateUtil.getSysDate());
 		user.setCreate_time(DateUtil.getSysTime());
+		user.setUpdate_date(DateUtil.getSysDate());
+		user.setUpdate_time(DateUtil.getSysTime());
 		user.setToken("0");
 		user.setValid_time("0");
-		user.setDep_id(TEST_DEPT_ID);
 
 		//构建测试部门信息
 		Department_info deptInfo = new Department_info();
 		deptInfo.setDep_id(TEST_DEPT_ID);
-		deptInfo.setDep_name("测试部门(-9987)");
+		deptInfo.setDep_name("测试系统参数类部门init-wzc");
 		deptInfo.setCreate_date(DateUtil.getSysDate());
 		deptInfo.setCreate_time(DateUtil.getSysTime());
+		deptInfo.setDep_remark("测试系统参数类部门init-wzc");
 
 		//1、构建数据源Agent列表信息测试数据
 		//1-1、构建数据源表(data_source)测试数据
@@ -309,7 +316,7 @@ public class AgentListActionTest extends WebBaseTestCase {
 			assertThat("用户测试数据初始化", userCount, is(1));
 			//插入部门数据
 			int deptCount = deptInfo.add(db);
-			assertThat("用户测试数据初始化", deptCount, is(1));
+			assertThat("部门测试数据初始化", deptCount, is(1));
 
 			//插入数据源表(data_source)测试数据
 			int dataSourceCount = dataSource.add(db);
@@ -365,12 +372,11 @@ public class AgentListActionTest extends WebBaseTestCase {
 
 		//模拟用户登录
 		String responseValue = new HttpClient().buildSession()
-				.addData("username", TEST_USER_ID)
+				.addData("user_id", TEST_USER_ID)
 				.addData("password", TEST_USER_PASSWORD)
-				.post("http://127.0.0.1:8099/B/action/hrds" + "/a/biz/login/login").getBodyString();
+				.post("http://127.0.0.1:8099/A/action/hrds/a/biz/login/login").getBodyString();
 		ActionResult ar = JsonUtil.toObjectSafety(responseValue, ActionResult.class).orElseThrow(() -> new BusinessException("连接失败"));
 		assertThat(ar.isSuccess(), is(true));
-		TestCaseLog.println(String.format("用户 %s 登录", TEST_USER_ID));
 	}
 
 	/**
@@ -392,10 +398,6 @@ public class AgentListActionTest extends WebBaseTestCase {
 		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(rightResult.isSuccess(), is(true));
-		/*
-		List<Object> data = (List<Object>)rightResult.getData();
-		assertThat("根据测试数据，查询到的数据源信息应该有" + data.size() + "条", data.size(), is(1));
-		*/
 		Result data = rightResult.getDataForResult();
 		assertThat("根据测试数据，查询到的数据源信息应该有" + data.getRowCount() + "条", data.getRowCount(), is(1));
 
@@ -450,30 +452,18 @@ public class AgentListActionTest extends WebBaseTestCase {
 		ActionResult dbAgent = JsonUtil.toObjectSafety(dbAgentResp, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(dbAgent.isSuccess(), is(true));
-		/*
-		List<Object> dbData = (List<Object>) dbAgent.getData();
-		assertThat("根据测试数据，在该数据源下共有" + dbData.size() + "条数据库Agent数据", dbData.size(), is(1));
-		*/
 		Result dbData = dbAgent.getDataForResult();
 		assertThat("根据测试数据，在该数据源下共有" + dbData.getRowCount() + "条数据库Agent数据", dbData.getRowCount(), is(1));
 
 		ActionResult nonStructAgent = JsonUtil.toObjectSafety(nonStructResp, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(nonStructAgent.isSuccess(), is(true));
-		/*
-		List<Object> nonStructData = (List<Object>) nonStructAgent.getData();
-		assertThat("根据测试数据，在该数据源下共有" + nonStructData.size() + "条非结构化Agent数据", nonStructData.size(), is(1));
-		*/
 		Result nonStructData = nonStructAgent.getDataForResult();
 		assertThat("根据测试数据，在该数据源下共有" + nonStructData.getRowCount() + "条非结构化Agent数据", nonStructData.getRowCount(), is(1));
 
 		ActionResult ftpAgent = JsonUtil.toObjectSafety(ftpResp, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(ftpAgent.isSuccess(), is(true));
-		/*
-		List<Object> ftpData = (List<Object>) ftpAgent.getData();
-		assertThat("根据测试数据，在该数据源下共有" + ftpData.size() + "条FTPAgent数据", ftpData.size(), is(1));
-		*/
 		Result ftpData = ftpAgent.getDataForResult();
 		assertThat("根据测试数据，在该数据源下共有" + ftpData.getRowCount() + "条FTPAgent数据", ftpData.getRowCount(), is(1));
 
@@ -481,20 +471,12 @@ public class AgentListActionTest extends WebBaseTestCase {
 		ActionResult dataFileAgent = JsonUtil.toObjectSafety(dataFileResp, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(dataFileAgent.isSuccess(), is(true));
-		/*
-		List<Object> dataFileData = (List<Object>) dataFileAgent.getData();
-		assertThat("根据测试数据，在该数据源下共有" + dataFileData.size() + "条FTPAgent数据", dataFileData.size(), is(1));
-		*/
 		Result dataFileData = dataFileAgent.getDataForResult();
 		assertThat("根据测试数据，在该数据源下共有" + dataFileData.getRowCount() + "条FTPAgent数据", dataFileData.getRowCount(), is(1));
 
 		ActionResult halfStructAgent = JsonUtil.toObjectSafety(halfStructResp, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(halfStructAgent.isSuccess(), is(true));
-		/*
-		List<Object> halfStructData = (List<Object>) halfStructAgent.getData();
-		assertThat("根据测试数据，在该数据源下共有" + halfStructData.size() + "条半结构化Agent数据", halfStructData.size(), is(1));
-		*/
 		Result halfStructData = halfStructAgent.getDataForResult();
 		assertThat("根据测试数据，在该数据源下共有" + halfStructData.getRowCount() + "条半结构化Agent数据", halfStructData.getRowCount(), is(1));
 
@@ -507,10 +489,6 @@ public class AgentListActionTest extends WebBaseTestCase {
 		ActionResult wrongSourceIdResult = JsonUtil.toObjectSafety(wrongSourceIdResp, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(wrongSourceIdResult.isSuccess(), is(true));
-		/*
-		List<Object> wrongSourceIdData = (List<Object>) wrongSourceIdResult.getData();
-		assertThat("根据测试数据，构造错误的source_id，应该获得" + wrongSourceIdData.size() + "条Agent数据", wrongSourceIdData.size(), is(0));
-		*/
 		Result wrongSourceIdData = wrongSourceIdResult.getDataForResult();
 		assertThat("根据测试数据，构造错误的source_id，应该获得" + wrongSourceIdData.getRowCount() + "条Agent数据", wrongSourceIdData.getRowCount(), is(0));
 
@@ -523,10 +501,6 @@ public class AgentListActionTest extends WebBaseTestCase {
 		ActionResult wrongAgentTypeResult = JsonUtil.toObjectSafety(wrongAgentTypeResp, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(wrongAgentTypeResult.isSuccess(), is(true));
-		/*
-		List<Object> wrongAgentTypeData = (List<Object>) wrongAgentTypeResult.getData();
-		assertThat("根据测试数据，构造错误的agent_type，应该获得" + wrongAgentTypeData.size() + "条Agent数据", wrongAgentTypeData.size(), is(0));
-		*/
 		Result wrongAgentTypeData = wrongAgentTypeResult.getDataForResult();
 		assertThat("根据测试数据，构造错误的agent_type，应该获得" + wrongAgentTypeData.getRowCount() + "条Agent数据", wrongAgentTypeData.getRowCount(), is(0));
 
@@ -560,10 +534,6 @@ public class AgentListActionTest extends WebBaseTestCase {
 		ActionResult dbResult = JsonUtil.toObjectSafety(dbBodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(dbResult.isSuccess(), is(true));
-		/*
-		List<Object> firResult = (List<Object>)dbResult.getData();
-		assertThat("根据测试数据，查询得到的数据库采集任务有" + firResult.size() + "项", firResult.size(), is(1));
-		*/
 		Result firResult = dbResult.getDataForResult();
 		assertThat("根据测试数据，查询得到的数据库采集任务有" + firResult.getRowCount() + "项", firResult.getRowCount(), is(1));
 
@@ -576,10 +546,6 @@ public class AgentListActionTest extends WebBaseTestCase {
 		ActionResult dfResult = JsonUtil.toObjectSafety(dfBodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(dfResult.isSuccess(), is(true));
-		/*
-		List<Object> secResult = (List<Object>)dfResult.getData();
-		assertThat("根据测试数据，查询得到的数据库采集任务有" + secResult.size() + "项", secResult.size(), is(1));
-		*/
 		Result secResult = dfResult.getDataForResult();
 		assertThat("根据测试数据，查询得到的数据库采集任务有" + secResult.getRowCount() + "项", secResult.getRowCount(), is(1));
 
@@ -592,10 +558,6 @@ public class AgentListActionTest extends WebBaseTestCase {
 		ActionResult ftpResult = JsonUtil.toObjectSafety(ftpBodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(ftpResult.isSuccess(), is(true));
-		/*
-		List<Object> thrResult = (List<Object>)ftpResult.getData();
-		assertThat("根据测试数据，查询得到的数据库采集任务有" + thrResult.size() + "项", thrResult.size(), is(2));
-		*/
 		Result thrResult = ftpResult.getDataForResult();
 		assertThat("根据测试数据，查询得到的数据库采集任务有" + thrResult.getRowCount() + "项", thrResult.getRowCount(), is(2));
 
@@ -608,10 +570,6 @@ public class AgentListActionTest extends WebBaseTestCase {
 		ActionResult halfResult = JsonUtil.toObjectSafety(halfBodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(halfResult.isSuccess(), is(true));
-		/*
-		List<Object> fouResult = (List<Object>)halfResult.getData();
-		assertThat("根据测试数据，查询得到的数据库采集任务有" + fouResult.size() + "项", fouResult.size(), is(2));
-		*/
 		Result fouResult = halfResult.getDataForResult();
 		assertThat("根据测试数据，查询得到的数据库采集任务有" + fouResult.getRowCount() + "项", fouResult.getRowCount(), is(2));
 
@@ -624,10 +582,6 @@ public class AgentListActionTest extends WebBaseTestCase {
 		ActionResult nonResult = JsonUtil.toObjectSafety(nonBodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(nonResult.isSuccess(), is(true));
-		/*
-		List<Object> fifResult = (List<Object>)nonResult.getData();
-		assertThat("根据测试数据，查询得到的数据库采集任务有" + fifResult.size() + "项", fifResult.size(), is(2));
-		*/
 		Result fifResult = nonResult.getDataForResult();
 		assertThat("根据测试数据，查询得到的数据库采集任务有" + fifResult.getRowCount() + "项", fifResult.getRowCount(), is(2));
 
@@ -921,10 +875,6 @@ public class AgentListActionTest extends WebBaseTestCase {
 		ActionResult databaseSetResult = JsonUtil.toObjectSafety(databaseSetString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(databaseSetResult.isSuccess(), is(true));
-		/*
-		List<Object> firResult = (List<Object>)databaseSetResult.getData();
-		assertThat("根据测试数据，使用正确的sourceId查询得到的数据库采集任务和数据文件采集任务有" + firResult.size() + "项", firResult.size(), is(2));
-		*/
 		Result firResult = databaseSetResult.getDataForResult();
 		assertThat("根据测试数据，使用正确的sourceId查询得到的数据库采集任务和数据文件采集任务有" + firResult.getRowCount() + "项", firResult.getRowCount(), is(2));
 
@@ -937,10 +887,6 @@ public class AgentListActionTest extends WebBaseTestCase {
 		ActionResult wrongDatabaseSetResult = JsonUtil.toObjectSafety(wrongSourceIdString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(wrongDatabaseSetResult.isSuccess(), is(true));
-		/*
-		List<Object> wrongDatabaseSetData = (List<Object>)wrongDatabaseSetResult.getData();
-		assertThat("根据测试数据，使用和错误的sourceId查询得到的数据库采集任务和数据文件采集任务有" + wrongDatabaseSetData.size() + "项", wrongDatabaseSetData.size(), is(0));
-		*/
 		Result wrongDatabaseSetData = wrongDatabaseSetResult.getDataForResult();
 		assertThat("根据测试数据，使用和错误的sourceId查询得到的数据库采集任务和数据文件采集任务有" + wrongDatabaseSetData.getRowCount() + "项", wrongDatabaseSetData.getRowCount(), is(0));
 	}
@@ -965,10 +911,6 @@ public class AgentListActionTest extends WebBaseTestCase {
 		ActionResult nonStructResult = JsonUtil.toObjectSafety(nonStructString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(nonStructResult.isSuccess(), is(true));
-		/*
-		List<Object> firResult = (List<Object>)nonStructResult.getData();
-		assertThat("根据测试数据，使用和正确的sourceId查询得到的非结构化采集任务有" + firResult.size() + "项", firResult.size(), is(2));
-		*/
 		Result firResult = nonStructResult.getDataForResult();
 		assertThat("根据测试数据，使用和正确的sourceId查询得到的非结构化采集任务有" + firResult.getRowCount() + "项", firResult.getRowCount(), is(2));
 
@@ -981,10 +923,6 @@ public class AgentListActionTest extends WebBaseTestCase {
 		ActionResult wrongDatabaseSetResult = JsonUtil.toObjectSafety(wrongSourceIdString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(wrongDatabaseSetResult.isSuccess(), is(true));
-		/*
-		List<Object> wrongDatabaseSetData = (List<Object>)wrongDatabaseSetResult.getData();
-		assertThat("根据测试数据，使用和错误的sourceId查询得到的非结构化采集任务有" + wrongDatabaseSetData.size() + "项", wrongDatabaseSetData.size(), is(0));
-		*/
 		Result wrongDatabaseSetData = wrongDatabaseSetResult.getDataForResult();
 		assertThat("根据测试数据，使用和错误的sourceId查询得到的非结构化采集任务有" + wrongDatabaseSetData.getRowCount() + "项", wrongDatabaseSetData.getRowCount(), is(0));
 
@@ -1010,10 +948,6 @@ public class AgentListActionTest extends WebBaseTestCase {
 		ActionResult halfStructResult = JsonUtil.toObjectSafety(halfStructString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(halfStructResult.isSuccess(), is(true));
-		/*
-		List<Object> firResult = (List<Object>)halfStructResult.getData();
-		assertThat("根据测试数据，使用正确的sourceId查询得到的半结构化采集任务有" + firResult.size() + "项", firResult.size(), is(2));
-		*/
 		Result firResult = halfStructResult.getDataForResult();
 		assertThat("根据测试数据，使用正确的sourceId查询得到的半结构化采集任务有" + firResult.getRowCount() + "项", firResult.getRowCount(), is(2));
 
@@ -1026,10 +960,6 @@ public class AgentListActionTest extends WebBaseTestCase {
 		ActionResult wrongDatabaseSetResult = JsonUtil.toObjectSafety(wrongSourceIdString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(wrongDatabaseSetResult.isSuccess(), is(true));
-		/*
-		List<Object> wrongDatabaseSetData = (List<Object>)wrongDatabaseSetResult.getData();
-		assertThat("根据测试数据，使用错误的sourceId查询得到的半结构化采集任务有" + wrongDatabaseSetData.size() + "项", wrongDatabaseSetData.size(), is(0));
-		*/
 		Result wrongDatabaseSetData = wrongDatabaseSetResult.getDataForResult();
 		assertThat("根据测试数据，使用错误的sourceId查询得到的半结构化采集任务有" + wrongDatabaseSetData.getRowCount() + "项", wrongDatabaseSetData.getRowCount(), is(0));
 	}
@@ -1054,10 +984,6 @@ public class AgentListActionTest extends WebBaseTestCase {
 		ActionResult ftpResult = JsonUtil.toObjectSafety(ftpString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(ftpResult.isSuccess(), is(true));
-		/*
-		List<Object> firResult = (List<Object>)ftpResult.getData();
-		assertThat("根据测试数据，使用正确的sourceId查询得到的FTP采集任务有" + firResult.size() + "项", firResult.size(), is(2));
-		*/
 		Result firResult = ftpResult.getDataForResult();
 		assertThat("根据测试数据，使用正确的sourceId查询得到的FTP采集任务有" + firResult.getRowCount() + "项", firResult.getRowCount(), is(2));
 
@@ -1070,10 +996,6 @@ public class AgentListActionTest extends WebBaseTestCase {
 		ActionResult wrongDatabaseSetResult = JsonUtil.toObjectSafety(wrongSourceIdString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(wrongDatabaseSetResult.isSuccess(), is(true));
-		/*
-		List<Object> wrongDatabaseSetData = (List<Object>)wrongDatabaseSetResult.getData();
-		assertThat("根据测试数据，使用错误的sourceId查询得到的FTP采集任务有" + wrongDatabaseSetData.size() + "项", wrongDatabaseSetData.size(), is(0));
-		*/
 		Result wrongDatabaseSetData = wrongDatabaseSetResult.getDataForResult();
 		assertThat("根据测试数据，使用错误的sourceId查询得到的FTP采集任务有" + wrongDatabaseSetData.getRowCount() + "项", wrongDatabaseSetData.getRowCount(), is(0));
 	}
@@ -1096,7 +1018,6 @@ public class AgentListActionTest extends WebBaseTestCase {
 	 *          3-1-2、删除table_info(表对应字段)测试数据
 	 *          3-2、删除非结构化文件采集测试数据
 	 *          3-2-1、构建file_source(文件源设置)测试数据
-	 * 4、提交事务后，对数据表中的数据进行检查，断言删除是否成功
 	 *
 	 * @Param: 无
 	 * @return: 无
@@ -1105,129 +1026,36 @@ public class AgentListActionTest extends WebBaseTestCase {
 	@After
 	public void after() {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			long beforeUsers = SqlOperator.queryNumber(db, "select count(1) from " + Sys_user.TableName + " WHERE user_id = ?", TEST_USER_ID)
-					.orElseThrow(() -> new RuntimeException("count fail!"));
-			assertThat("删除前的用户数据有:" + beforeUsers + "条", beforeUsers, is(1L));
-
-			long beforeDepts = SqlOperator.queryNumber(db, "select count(1) from " + Department_info.TableName + " WHERE dep_id = ?", TEST_USER_ID)
-					.orElseThrow(() -> new RuntimeException("count fail!"));
-			assertThat("删除前的部门数据有:" + beforeDepts + "条", beforeDepts, is(1L));
-
-			long beforeDataSources = SqlOperator.queryNumber(db, "select count(1) from " + Data_source.TableName + " WHERE create_user_id = ?", TEST_USER_ID)
-					.orElseThrow(() -> new RuntimeException("count fail!"));
-			assertThat("删除前的数据源数据有:" + beforeDataSources + "条", beforeDataSources, is(1L));
-
-			long beforeAgents = SqlOperator.queryNumber(db, "select count(1) from " + Agent_info.TableName + " WHERE user_id = ?", TEST_USER_ID)
-					.orElseThrow(() -> new RuntimeException("count fail!"));
-			assertThat("删除前的Agent数据有:" + beforeAgents + "条", beforeAgents, is(5L));
-
-			long beforeDataSourceSetsOne = SqlOperator.queryNumber(db, "select count(1) from " + Database_set.TableName + " WHERE agent_id = ?", DB_AGENT_ID)
-					.orElseThrow(() -> new RuntimeException("count fail!"));
-			long beforeDataSourceSetsTwo = SqlOperator.queryNumber(db, "select count(1) from " + Database_set.TableName + " WHERE agent_id = ?", DF_AGENT_ID)
-					.orElseThrow(() -> new RuntimeException("count fail!"));
-			assertThat("删除前的数据库设置表数据有:" + (beforeDataSourceSetsOne + beforeDataSourceSetsTwo) + "条", beforeDataSourceSetsOne + beforeDataSourceSetsTwo, is(2L));
-
-			long beforeObjCollectsOne = SqlOperator.queryNumber(db, "select count(1) from " + Object_collect.TableName + " WHERE agent_id = ?", HALF_STRUCT_AGENT_ID)
-					.orElseThrow(() -> new RuntimeException("count fail!"));
-			assertThat("删除的对象采集表数据有:" + beforeObjCollectsOne + "条", beforeObjCollectsOne, is(2L));
-
-			long beforeFtpCollectsOne = SqlOperator.queryNumber(db, "select count(1) from " + Ftp_collect.TableName + " WHERE agent_id = ?", FTP_AGENT_ID)
-					.orElseThrow(() -> new RuntimeException("count fail!"));
-			assertThat("删除前的FTP采集表数据有:" + beforeFtpCollectsOne + "条", beforeFtpCollectsOne, is(2L));
-
-			long beforeFileCollectsOne = SqlOperator.queryNumber(db, "select count(1) from " + File_collect_set.TableName + " WHERE agent_id = ?", NON_STRUCT_AGENT_ID)
-					.orElseThrow(() -> new RuntimeException("count fail!"));
-			assertThat("删除前的非结构化采集表数据有:" + beforeFileCollectsOne + "条", beforeFileCollectsOne, is(2L));
-
-			long beforeTableColumnCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " WHERE table_id = ?", TABLE_ID)
-					.orElseThrow(() -> new RuntimeException("count fail!"));
-			assertThat("删除前的数据库对应表数据有:" + beforeTableColumnCount + "条", beforeTableColumnCount, is(10L));
-
-			long beforeTableInfoCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " WHERE table_id = ?", TABLE_ID)
-					.orElseThrow(() -> new RuntimeException("count fail!"));
-			assertThat("删除前的表对应字段表数据有:" + beforeTableInfoCount + "条", beforeTableInfoCount, is(1L));
-
-			long beforeFileSourceCount = SqlOperator.queryNumber(db, "select count(1) from " + File_source.TableName + " WHERE agent_id = ?", NON_STRUCT_AGENT_ID)
-					.orElseThrow(() -> new RuntimeException("count fail!"));
-			assertThat("删除前的数据库对应表数据有:" + beforeFileSourceCount + "条", beforeFileSourceCount, is(2L));
-
 			//删除用户信息
-			int deleteUserNum = SqlOperator.execute(db, "delete from " + Sys_user.TableName + " WHERE user_id = ?", TEST_USER_ID);
+			SqlOperator.execute(db, "delete from " + Sys_user.TableName + " WHERE user_id = ?", TEST_USER_ID);
 			//删除部门信息
-			int deleteDepNum = SqlOperator.execute(db, "delete from " + Department_info.TableName + " WHERE dep_id = ?", TEST_DEPT_ID);
+			SqlOperator.execute(db, "delete from " + Department_info.TableName + " WHERE dep_id = ?", TEST_DEPT_ID);
 			//1、删除数据源Agent列表信息测试数据
 			//1-1、删除数据源表(data_source)测试数据
-			int deleteSourceNum = SqlOperator.execute(db, "delete from " + Data_source.TableName + " WHERE create_user_id = ?", TEST_USER_ID);
+			SqlOperator.execute(db, "delete from " + Data_source.TableName + " WHERE create_user_id = ?", TEST_USER_ID);
 			//1-2、删除Agent信息表(agent_info)测试数据
-			int deleteAgentNum = SqlOperator.execute(db, "delete from " + Agent_info.TableName + " WHERE user_id = ?", TEST_USER_ID);
+			SqlOperator.execute(db, "delete from " + Agent_info.TableName + " WHERE user_id = ?", TEST_USER_ID);
 			//2、删除agent下任务的信息测试数据
 			//2-1、删除database_set表测试数据
-			int deleteDsNumOne = SqlOperator.execute(db, "delete from " + Database_set.TableName + " WHERE agent_id = ?", DB_AGENT_ID);
-			int deleteDsNumTwo = SqlOperator.execute(db, "delete from " + Database_set.TableName + " WHERE agent_id = ?", DF_AGENT_ID);
+			SqlOperator.execute(db, "delete from " + Database_set.TableName + " WHERE agent_id = ?", DB_AGENT_ID);
+			SqlOperator.execute(db, "delete from " + Database_set.TableName + " WHERE agent_id = ?", DF_AGENT_ID);
 			//2-2、删除object_collect表测试数据
-			int deleteOcNumOne = SqlOperator.execute(db, "delete from " + Object_collect.TableName + " WHERE agent_id = ?", HALF_STRUCT_AGENT_ID);
+			SqlOperator.execute(db, "delete from " + Object_collect.TableName + " WHERE agent_id = ?", HALF_STRUCT_AGENT_ID);
 			//2-3、删除ftp_collect表测试数据
-			int deleteFcNumOne = SqlOperator.execute(db, "delete from " + Ftp_collect.TableName + " WHERE agent_id = ?", FTP_AGENT_ID);
+			SqlOperator.execute(db, "delete from " + Ftp_collect.TableName + " WHERE agent_id = ?", FTP_AGENT_ID);
 			//2-4、删除file_collect_set表测试数据
-			int deleteFcsNumOne = SqlOperator.execute(db, "delete from " + File_collect_set.TableName + " WHERE agent_id = ?", NON_STRUCT_AGENT_ID);
+			SqlOperator.execute(db, "delete from " + File_collect_set.TableName + " WHERE agent_id = ?", NON_STRUCT_AGENT_ID);
 			//3、删除各种采集任务相关测试数据
 			//3-1、删除数据库直连采集测试数据
 			//3-1-1、删除table_column(数据库对应表)测试数据
-			int deleteTableColumnNum = SqlOperator.execute(db, "delete from " + Table_column.TableName + " WHERE table_id = ?", TABLE_ID);
+			SqlOperator.execute(db, "delete from " + Table_column.TableName + " WHERE table_id = ?", TABLE_ID);
 			//3-1-2、删除table_info(表对应字段)测试数据
-			int deleteTableInfoNum = SqlOperator.execute(db, "delete from " + Table_info.TableName + " WHERE table_id = ?", TABLE_ID);
+			SqlOperator.execute(db, "delete from " + Table_info.TableName + " WHERE table_id = ?", TABLE_ID);
 			//3-2、删除非结构化文件采集测试数据
 			//3-2-1、构建file_source(文件源设置)测试数据
-			int deleteFileSourceNum = SqlOperator.execute(db, "delete from " + File_source.TableName + " WHERE agent_id = ?", NON_STRUCT_AGENT_ID);
+			SqlOperator.execute(db, "delete from " + File_source.TableName + " WHERE agent_id = ?", NON_STRUCT_AGENT_ID);
 
 			SqlOperator.commitTransaction(db);
-
-			//4、提交事务后，对数据表中的数据进行检查，断言删除是否成功
-			long users = SqlOperator.queryNumber(db, "select count(1) from " + Sys_user.TableName + " WHERE user_id = ?", TEST_USER_ID)
-					.orElseThrow(() -> new RuntimeException("count fail!"));
-			assertThat("测试完成后删除的用户数据有:" + deleteUserNum + "条", users, is(0L));
-
-			long depts = SqlOperator.queryNumber(db, "select count(1) from " + Department_info.TableName + " WHERE dep_id = ?", TEST_USER_ID)
-					.orElseThrow(() -> new RuntimeException("count fail!"));
-			assertThat("测试完成后删除的部门数据有:" + deleteDepNum + "条", depts, is(0L));
-
-			long dataSources = SqlOperator.queryNumber(db, "select count(1) from " + Data_source.TableName + " WHERE create_user_id = ?", TEST_USER_ID)
-					.orElseThrow(() -> new RuntimeException("count fail!"));
-			assertThat("测试完成后删除的数据源数据有:" + deleteSourceNum + "条", dataSources, is(0L));
-
-			long agents = SqlOperator.queryNumber(db, "select count(1) from " + Agent_info.TableName + " WHERE user_id = ?", TEST_USER_ID)
-					.orElseThrow(() -> new RuntimeException("count fail!"));
-			assertThat("测试完成后删除的Agent数据有:" + deleteAgentNum + "条", agents, is(0L));
-
-			long dataSourceSetsOne = SqlOperator.queryNumber(db, "select count(1) from " + Database_set.TableName + " WHERE agent_id = ?", DB_AGENT_ID)
-					.orElseThrow(() -> new RuntimeException("count fail!"));
-			long dataSourceSetsTwo = SqlOperator.queryNumber(db, "select count(1) from " + Database_set.TableName + " WHERE agent_id = ?", DF_AGENT_ID)
-					.orElseThrow(() -> new RuntimeException("count fail!"));
-			assertThat("测试完成后删除的数据库设置表数据有:" + (deleteDsNumOne + deleteDsNumTwo) + "条", dataSourceSetsOne + dataSourceSetsTwo, is(0L));
-
-			long objCollectsOne = SqlOperator.queryNumber(db, "select count(1) from " + Object_collect.TableName + " WHERE agent_id = ?", HALF_STRUCT_AGENT_ID)
-					.orElseThrow(() -> new RuntimeException("count fail!"));
-			assertThat("测试完成后删除的对象采集表数据有:" + deleteOcNumOne + "条", objCollectsOne, is(0L));
-
-			long ftpCollectsOne = SqlOperator.queryNumber(db, "select count(1) from " + Ftp_collect.TableName + " WHERE agent_id = ?", FTP_AGENT_ID)
-					.orElseThrow(() -> new RuntimeException("count fail!"));
-			assertThat("测试完成后删除的FTP采集表数据有:" + deleteFcNumOne + "条", ftpCollectsOne, is(0L));
-
-			long fileCollectsOne = SqlOperator.queryNumber(db, "select count(1) from " + File_collect_set.TableName + " WHERE agent_id = ?", NON_STRUCT_AGENT_ID)
-					.orElseThrow(() -> new RuntimeException("count fail!"));
-			assertThat("测试完成后删除的非结构化采集表数据有:" + deleteFcsNumOne + "条", fileCollectsOne, is(0L));
-
-			long tableColumnCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " WHERE table_id = ?", TABLE_ID)
-					.orElseThrow(() -> new RuntimeException("count fail!"));
-			assertThat("测试完成后删除的数据库对应表数据有:" + deleteTableColumnNum + "条", tableColumnCount, is(0L));
-
-			long tableInfoCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " WHERE table_id = ?", TABLE_ID)
-					.orElseThrow(() -> new RuntimeException("count fail!"));
-			assertThat("测试完成后删除的表对应字段表数据有:" + deleteTableInfoNum + "条", tableInfoCount, is(0L));
-
-			long fileSourceCount = SqlOperator.queryNumber(db, "select count(1) from " + File_source.TableName + " WHERE agent_id = ?", NON_STRUCT_AGENT_ID)
-					.orElseThrow(() -> new RuntimeException("count fail!"));
-			assertThat("测试完成后删除的数据库对应表数据有:" + deleteFileSourceNum + "条", fileSourceCount, is(0L));
 		}
 	}
 }
