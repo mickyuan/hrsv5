@@ -46,8 +46,7 @@ public class DataSourceAction extends BaseAction {
                     "3.数据权限管理，分页查询数据源及部门关系信息" +
                     "4.查询申请审批信息" +
                     "5.创建存放数据源，部门、agent,申请审批,业务用户和采集用户,部门与数据源关系表信息的集合并将数据进行封装" +
-                    "6.设置权限类型" +
-                    "7.返回存放数据源，部门、agent,申请审批,业务用户和采集用户,部门与数据源关系表信息的集合")
+                    "6.返回存放数据源，部门、agent,申请审批,业务用户和采集用户,部门与数据源关系表信息的集合")
     @Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数", valueIfNull = "1")
     @Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", valueIfNull = "5")
     @Return(desc = "存放数据源，部门、agent,申请审批,业务用户和采集用户,部门与数据源关系表信息的集合", range = "无限制")
@@ -58,7 +57,7 @@ public class DataSourceAction extends BaseAction {
                 "count(ai.Agent_id) sumAgent from " + Data_source.TableName + " ds left join "
                 + Agent_info.TableName + " ai on ds.source_id=ai.source_id where ds.create_user_id=? " +
                 " GROUP BY ds.source_id,ds.datasource_name", getUserId());
-        // 2.数据权限管理，分页查询数据源及部门关系信息
+        // 3.数据权限管理，分页查询数据源及部门关系信息
         Result dataSourceRelationDep = searchSourceRelationDepForPage(currPage, pageSize);
         // 4.查询数据申请审批信息
         List<Map<String, Object>> dataAuditList = getDataAuditList();
@@ -67,17 +66,7 @@ public class DataSourceAction extends BaseAction {
         dataSourceInfoMap.put("dataSourceRelationDep", dataSourceRelationDep.toList());
         dataSourceInfoMap.put("dataAudit", dataAuditList);
         dataSourceInfoMap.put("dataSourceAndAgentCount", dsAiList);
-        // 6.设置权限类型
-        dataSourceInfoMap.put("yiCi", AuthType.YiCi.getCode());
-        dataSourceInfoMap.put("yunXu", AuthType.YunXu.getCode());
-        dataSourceInfoMap.put("buYunXu", AuthType.BuYunXu.getCode());
-        dataSourceInfoMap.put("yiCi_zh", AuthType.ofValueByCode(AuthType.YiCi.getCode()));
-        dataSourceInfoMap.put("yunXu_zh", AuthType.ofValueByCode(AuthType.YunXu.getCode()));
-        dataSourceInfoMap.put("buYunXu_zh", AuthType.ofValueByCode(AuthType.BuYunXu.getCode()));
-        dataSourceInfoMap.put("chaKan", ApplyType.ChaKan.getCode());
-        dataSourceInfoMap.put("caiJiYongHu", UserType.CaiJiYongHu.getCode());
-        dataSourceInfoMap.put("yeWu", UserType.YeWuYongHu.getCode());
-        // 7.返回放数据源，部门、agent,申请审批,业务用户和采集用户,部门与数据源关系表信息的集合
+        // 6.返回放数据源，部门、agent,申请审批,业务用户和采集用户,部门与数据源关系表信息的集合
         return dataSourceInfoMap;
     }
 
@@ -406,7 +395,6 @@ public class DataSourceAction extends BaseAction {
     public Map<String, Object> searchDataSource(Long source_id) {
         // 1.数据可访问权限处理方式，以下SQL关联sourceId与user_id检查
         // 2.创建并封装数据源与部门关联信息以及部门信息集合
-        System.out.println("================================");
         Map<String, Object> datasourceMap = new HashMap<>();
         // 3.判断是新增还是更新，如果是新增，只查询部门信息，如果是更新，还需查询回显数据源数据
         if (source_id != null) {

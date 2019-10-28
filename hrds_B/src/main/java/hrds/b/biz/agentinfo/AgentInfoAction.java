@@ -59,7 +59,7 @@ public class AgentInfoAction extends BaseAction {
         asmSql.addParam(source_id);
         asmSql.addParam(AgentType.WenJianXiTong.getCode());
         asmSql.addParam(getUserId());
-        List<Map<String, Object>> fileAgentList = Dbo.queryList(asmSql.sql(), asmSql.params());
+        List<Map<String, Object>> fileSystemAgentList = Dbo.queryList(asmSql.sql(), asmSql.params());
         asmSql.cleanParams();
         // DB文件Agent
         asmSql.addParam(IsFlag.Shi.getCode());
@@ -84,18 +84,12 @@ public class AgentInfoAction extends BaseAction {
         // 4.创建存放agent信息的集合并封装不同类型agent信息
         Map<String, Object> map = new HashMap<>();
         map.put("sjkAgent", sjkAgentList);
-        map.put("DBAgent", dbWjAgentList);
-        map.put("fileAgent", fileAgentList);
+        map.put("dbFileAgent", dbWjAgentList);
+        map.put("fileSystemAgent", fileSystemAgentList);
         map.put("dxAgent", dxAgentList);
         map.put("ftpAgent", ftpAgentList);
         map.put("datasource_name", datasource_name);
         map.put("source_id", source_id);
-        map.put("connection", AgentStatus.YiLianJie.getCode());
-        map.put("sjk", AgentType.ShuJuKu.getCode());
-        map.put("DB", AgentType.DBWenJian.getCode());
-        map.put("dx", AgentType.DuiXiang.getCode());
-        map.put("file", AgentType.WenJianXiTong.getCode());
-        map.put("ftp", AgentType.FTP.getCode());
 
         // 5.将封装不同类型agent信息的集合返回
         return map;

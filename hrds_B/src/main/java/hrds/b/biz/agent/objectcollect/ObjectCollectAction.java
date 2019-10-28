@@ -308,8 +308,8 @@ public class ObjectCollectAction extends BaseAction {
 	public void saveObject_storage(String object_storage_array, long odc_id) {
 		//数据可访问权限处理方式：该表没有对应的用户访问权限限制
 		//1.获取json数组转成对象采集结构信息表的集合
-		List<Object_storage> object_storages = JSONArray.parseArray(object_storage_array, Object_storage.class);
-		for (Object_storage object_storage : object_storages) {
+		List<Object_storage> object_storage_list = JSONArray.parseArray(object_storage_array, Object_storage.class);
+		for (Object_storage object_storage : object_storage_list) {
 			//2.根据对象采集存储设置表id是否为空判断是编辑还是新增
 			//TODO 应该使用一个公共的校验类进行校验
 			//XXX 这里新增和编辑是放在一起的，因为这里面是保存一个列表的数据，可能为一条或者多条。
