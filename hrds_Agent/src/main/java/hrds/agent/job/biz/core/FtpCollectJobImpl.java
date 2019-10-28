@@ -22,7 +22,6 @@ import hrds.commons.utils.MapDBHelper;
 import hrds.commons.utils.jsch.SftpOperate;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.beyoundsoft.mapdb.HTreeMap;
 
 import java.io.File;
 import java.util.List;
@@ -123,7 +122,7 @@ public class FtpCollectJobImpl implements JobInterface {
 				//根据ftpId获取MapDB操作类的对象
 				try (MapDBHelper mapDBHelper = new MapDBHelper(USER_DIR + File.separator + ftpId,
 						ftpId + ".db")) {
-					HTreeMap<String, String> fileNameHTreeMap = mapDBHelper.htMap(ftpId, 24 * 60);
+					ConcurrentMap<String, String> fileNameHTreeMap = mapDBHelper.htMap(ftpId, 25 * 12);
 					if (IsFlag.Shi.getCode().equals(ftp_collect.getFtp_model())) {
 						String currentFTPDir;
 						if (ftpDir.endsWith("/")) {
@@ -230,7 +229,7 @@ public class FtpCollectJobImpl implements JobInterface {
 	@Param(name = "mapDBHelper", desc = "mapDB数据库操作类", range = "不可为空")
 	@Param(name = "fileNameHTreeMap", desc = "mapDB数据库表的操作类", range = "不可为空")
 	private void transferGet(String ftpDir, String destDir, SftpOperate sftp, String isUnzip, String deCompressWay,
-	                         String fileSuffix, MapDBHelper mapDBHelper, HTreeMap<String, String> fileNameHTreeMap) {
+	                         String fileSuffix, MapDBHelper mapDBHelper, ConcurrentMap<String, String> fileNameHTreeMap) {
 		//1.验证本地需要传输的目录文件是否存在，不存在则创建
 		boolean flag = validateDirectory(destDir);
 		if (!flag) {
@@ -314,7 +313,7 @@ public class FtpCollectJobImpl implements JobInterface {
 	@Param(name = "mapDBHelper", desc = "mapDB数据库操作类", range = "不可为空")
 	@Param(name = "fileNameHTreeMap", desc = "mapDB数据库表的操作类", range = "不可为空")
 	private void transferPut(String ftpDir, String localPath, SftpOperate sftp, String fileSuffix,
-	                         MapDBHelper mapDBHelper, HTreeMap<String, String> fileNameHTreeMap) {
+	                         MapDBHelper mapDBHelper, ConcurrentMap<String, String> fileNameHTreeMap) {
 		//数据可访问权限处理方式：此方法不需要对数据可访问权限处理
 		try {
 			//1.创建远程需要ftp的目录

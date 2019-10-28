@@ -5,13 +5,13 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import hrds.commons.exception.BusinessException;
-import org.beyoundsoft.mapdb.DB;
-import org.beyoundsoft.mapdb.DBMaker;
-import org.beyoundsoft.mapdb.HTreeMap;
-import org.beyoundsoft.mapdb.Serializer;
+import org.mapdb.DB;
+import org.mapdb.DBMaker;
+import org.mapdb.Serializer;
 
 import java.io.Closeable;
 import java.io.File;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
 @DocClass(desc = "创建mapDB数据库的操作类", author = "zxz", createdate = "2019/10/12 15:44")
@@ -42,21 +42,30 @@ public class MapDBHelper implements Closeable {
 			}
 		}
 		//2.指定文件创建mapDB对象
-		db = DBMaker.newFileDB(new File(path + File.separator + fileName))
-				.mmapFileEnableIfSupported()
-				.cacheSize(500)
-				.closeOnJvmShutdown()
-				.make();
+		db = DBMaker.newFileDB(new File(path + File.separator + fileName)).mmapFileEnableIfSupported()
+				.closeOnJvmShutdown().cacheSize(500).make();
 	}
 
-	@Method(desc = "在mapDB下构建一个表，用于存值", logicStep = "1.在mapDB下构建一个表，用于存值")
+	@Method(desc = "在mapDB下构建一个表，用于存值",
+			logicStep = "1.在mapDB下构建一个表，用于存值" +
+					"2.存在则取已经存在的表" +
+					"3.不存在则在mapDB下构建一个表，用于存值")
 	@Param(name = "tableName", desc = "mapDB下指定的表名", range = "不可为空")
 	@Param(name = "afterWriter", range = "不可为空",
 			desc = "是指定项在一定时间内没有读写，会从缓存移除该key，下次取的时候从文件中取")
 	@Return(desc = "自定义的表对象HTreeMap", range = "不会为空")
-	public HTreeMap<String, String> htMap(String tableName, int afterWriter) {
-		return db.createHashMap(tableName).keySerializer(Serializer.STRING).valueSerializer(Serializer.STRING)
-				.expireAfterWrite(afterWriter, TimeUnit.SECONDS).makeOrGet();
+	public ConcurrentMap<String, String> htMap(String tableName, int afterWriter) {
+		ConcurrentMap<String, String> map;
+		//1.判断mapDb下是否存在该表
+		if (db.exists(tableName)) {
+			//2.存在则取已经存在的表
+			map = db.getHashMap(tableName);
+		} else {
+			//3.不存在则在mapDB下构建一个表，用于存值
+			map = db.createHashMap(tableName).keySerializer(Serializer.STRING)
+					.valueSerializer(Serializer.STRING).expireAfterWrite(afterWriter, TimeUnit.MINUTES).make();
+		}
+		return map;
 	}
 
 	@Method(desc = "实现Closeable重写的方法，try中构造这个对象，结束方法后会自动调用这个方法",
@@ -78,7 +87,7 @@ public class MapDBHelper implements Closeable {
 
 	public static void main(String[] args) {
 		try (MapDBHelper mapDBHelper = new MapDBHelper("D:\\tmp", "zxz_test")) {
-			HTreeMap<String, String> zzz = mapDBHelper.htMap("zzz", 1);
+			ConcurrentMap<String, String> zzz = mapDBHelper.htMap("zzz", 1);
 			for (int i = 0; i < 100; i++) {
 //				zzz.put("zxz"+i,"最帅"+i);
 //				try {
