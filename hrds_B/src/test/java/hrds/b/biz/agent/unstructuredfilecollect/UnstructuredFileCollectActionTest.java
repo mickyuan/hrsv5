@@ -10,25 +10,16 @@ import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
-import fd.ng.netserver.conf.HttpServerConf;
-import fd.ng.netserver.conf.HttpServerConfBean;
 import fd.ng.web.action.ActionResult;
-import hrds.commons.codes.AgentStatus;
 import hrds.commons.codes.AgentType;
 import hrds.commons.codes.IsFlag;
-import hrds.commons.entity.Agent_down_info;
-import hrds.commons.entity.Agent_info;
-import hrds.commons.entity.File_collect_set;
-import hrds.commons.entity.File_source;
+import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.testbase.WebBaseTestCase;
-import org.apache.commons.lang3.SystemUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.junit.*;
-
-import java.util.OptionalLong;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -52,19 +43,47 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 	// 文件采集设置表id
 	private static final long FCS_ID = 20000001L;
 	//用户id
-	private static final long USER_ID = 1001L;
+	private static final long USER_ID = 9001L;
+	//部门ID
+	private static final long DEPT_ID = 9002L;
 
 	/**
 	 * 为每个方法测试用例初始化参数//FIXME 初始化的数据，要有详细说明，参考王正诚的写法
 	 * <p>
-	 * 1.造agent_down_info表的数据，添加非结构化采集需要获取Agent所在机器的基本信息
-	 * 2.造file_collect_set表数据，初始化条数可调整，默认为2条，fcs_id为20000001和20000002
-	 * 3.造file_source表数据，初始化条数可调整，默认为10条，fcs_id为20000001
+	 * 1.造sys_user表数据，用于模拟用户登录。
+	 * 2.造部门表数据，用于模拟用户登录
+	 * 3.造agent_down_info表的数据，添加非结构化采集需要获取Agent所在机器的基本信息
+	 * 4.造file_collect_set表数据，初始化条数可调整，默认为2条，fcs_id为20000001和20000002
+	 * 5.造file_source表数据，初始化条数可调整，默认为10条，fcs_id为20000001
+	 * 6.模拟用户登录
 	 */
 	@Before
 	public void beforeTest() {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			//1、造agent_info表的数据，初始化数据可调整，默认为2条，agent_id为10000001和10000002
+			//1.造sys_user表数据，用于模拟用户登录。
+			Sys_user user = new Sys_user();
+			user.setUser_id(USER_ID);
+			user.setCreate_id(USER_ID);
+			user.setRole_id(USER_ID);
+			user.setUser_name("测试用户(9001)");
+			user.setUser_password("1");
+			user.setUseris_admin(IsFlag.Shi.getCode());
+			user.setUser_state(IsFlag.Shi.getCode());
+			user.setCreate_date(DateUtil.getSysDate());
+			user.setCreate_time(DateUtil.getSysTime());
+			user.setToken("0");
+			user.setValid_time("0");
+			user.setDep_id(DEPT_ID);
+			assertThat("初始化数据成功", user.add(db), is(1));
+			//2.造部门表数据，用于模拟用户登录
+			Department_info deptInfo = new Department_info();
+			deptInfo.setDep_id(DEPT_ID);
+			deptInfo.setDep_name("测试系统参数类部门init-zxz");
+			deptInfo.setCreate_date(DateUtil.getSysDate());
+			deptInfo.setCreate_time(DateUtil.getSysTime());
+			deptInfo.setDep_remark("测试系统参数类部门init-zxz");
+			assertThat("初始化数据成功", deptInfo.add(db), is(1));
+			//3.造agent_info表的数据，初始化数据可调整，默认为2条，agent_id为10000001和10000002
 			for (int i = 0; i < AGENT_INFO_ROWS; i++) {
 				Agent_down_info agent_info = new Agent_down_info();
 				agent_info.setDown_id(PrimayKeyGener.getNextId());
@@ -82,7 +101,7 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 				agent_info.setRemark("测试用例清除数据专用列");
 				assertThat("初始化数据成功", agent_info.add(db), is(1));
 			}
-			//2、造file_collect_set表数据，初始化条数可调整，默认为2条，fcs_id为20000001和20000002
+			//4.造file_collect_set表数据，初始化条数可调整，默认为2条，fcs_id为20000001和20000002
 			for (int i = 0; i < FILE_COLLECT_SET_ROWS; i++) {
 				File_collect_set file_collect_set = new File_collect_set();
 				file_collect_set.setFcs_id(FCS_ID + i);
@@ -94,7 +113,7 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 				file_collect_set.setAgent_id(AGENT_ID);
 				assertThat("初始化数据成功", file_collect_set.add(db), is(1));
 			}
-			// 3、造file_source表数据，初始化条数可调整，默认为10条，fcs_id为20000001
+			//5.造file_source表数据，初始化条数可调整，默认为10条，fcs_id为20000001
 			for (int i = 0; i < FILE_SOURCE_ROWS; i++) {
 				File_source file_source = new File_source();
 				file_source.setFile_source_id(PrimayKeyGener.getNextId());
@@ -112,6 +131,14 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 			}
 			SqlOperator.commitTransaction(db);
 		}
+		//6.模拟用户登录
+		String responseValue = new HttpClient().buildSession()
+				.addData("user_id", USER_ID)
+				.addData("password", "1")
+				.post("http://127.0.0.1:8099/A/action/hrds/a/biz/login/login").getBodyString();
+		ActionResult ar = JsonUtil.toObjectSafety(responseValue, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败"));
+		assertThat(ar.isSuccess(), is(true));
 	}
 
 	/**
@@ -395,7 +422,7 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 					.addData("path", "D:/")
 					.post(getActionUrl("selectPath")).getBodyString();
 			ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
-				-> new BusinessException("连接失败！"));
+					-> new BusinessException("连接失败！"));
 			assertThat(ar.isSuccess(), is(true));
 			assertThat(ar.getDataForEntityList(String.class).isEmpty(), is(false));
 		}
@@ -406,7 +433,7 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 					.addData("path", "/")
 					.post(getActionUrl("selectPath")).getBodyString();
 			ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
-				-> new BusinessException("连接失败！"));
+					-> new BusinessException("连接失败！"));
 			assertThat(ar.isSuccess(), is(true));
 			assertThat(ar.getDataForEntityList(String.class).isEmpty(), is(false));
 		}
@@ -548,20 +575,28 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 	/**
 	 * 测试用例清理数据
 	 * <p>
-	 * 1.清理agent_down_info表中造的数据
-	 * 2.清理file_collect_set表中造的数据
-	 * 3.清理file_source表中造的数据
+	 * 1.清理sys_user表中造的数据
+	 * 2.清理Department_info表中造的数据
+	 * 3.清理agent_down_info表中造的数据
+	 * 4.清理file_collect_set表中造的数据
+	 * 5.清理file_source表中造的数据
 	 */
 	@After
 	public void afterTest() {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			//1.清理agent_down_info表中造的数据
+			//1.清理sys_user表中造的数据
+			SqlOperator.execute(db, "DELETE FROM " + Sys_user.TableName + " WHERE user_id = ?"
+					, USER_ID);
+			//2.清理Department_info表中造的数据
+			SqlOperator.execute(db, "DELETE FROM " + Department_info.TableName + " WHERE dep_id = ?"
+					, DEPT_ID);
+			//3.清理agent_down_info表中造的数据
 			SqlOperator.execute(db, "DELETE FROM " + Agent_down_info.TableName + " WHERE remark = ?"
 					, "测试用例清除数据专用列");
-			//2.清理file_collect_set表中造的数据
+			//4.清理file_collect_set表中造的数据
 			SqlOperator.execute(db, "DELETE FROM " + File_collect_set.TableName
 					+ " WHERE agent_id = ?", AGENT_ID);
-			//3.清理file_source表中造的数据
+			//5.清理file_source表中造的数据
 			SqlOperator.execute(db, "DELETE FROM " + File_source.TableName + " WHERE agent_id = ?", AGENT_ID);
 			SqlOperator.commitTransaction(db);
 		}

@@ -43,7 +43,7 @@ public class FtpCollectJobImpl implements JobInterface {
 	//Ftp采集设置表对象
 	private Ftp_collect ftp_collect;
 	//JobStatusInfo对象，表示一个作业的状态
-	private final JobStatusInfo jobStatus;
+	private JobStatusInfo jobStatus;
 
 	/**
 	 * ftp采集的作业实现类构造方法.
