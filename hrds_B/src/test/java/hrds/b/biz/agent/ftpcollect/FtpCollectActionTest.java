@@ -7,7 +7,9 @@ import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import hrds.commons.codes.*;
+import hrds.commons.entity.Department_info;
 import hrds.commons.entity.Ftp_collect;
+import hrds.commons.entity.Sys_user;
 import hrds.commons.exception.BusinessException;
 import hrds.testbase.WebBaseTestCase;
 import org.junit.After;
@@ -31,16 +33,46 @@ public class FtpCollectActionTest extends WebBaseTestCase {
 	private static final long AGENT_ID = 10000001L;
 	//ftp采集设置表id
 	private static final long FTP_ID = 20000001L;
+	//用户id
+	private static final long USER_ID = 9001L;
+	//部门ID
+	private static final long DEPT_ID = 9002L;
 
 	/**
 	 * 测试用例初始化参数
 	 * <p>
-	 * 1、造ftp_collect表数据，默认为5条,ftp_id为20000001---20000005
+	 * 1.造sys_user表数据，用于模拟用户登录
+	 * 2.造部门表数据，用于模拟用户登录
+	 * 3.造ftp_collect表数据，默认为5条,ftp_id为20000001---20000005
+	 * 4.模拟用户登录
 	 */
 	@Before
 	public void beforeTest() {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			//1、造ftp_collect表数据，默认为5条,ftp_id为20000001---20000005
+			//1.造sys_user表数据，用于模拟用户登录
+			Sys_user user = new Sys_user();
+			user.setUser_id(USER_ID);
+			user.setCreate_id(USER_ID);
+			user.setRole_id(USER_ID);
+			user.setUser_name("测试用户(9001)");
+			user.setUser_password("1");
+			user.setUseris_admin(IsFlag.Shi.getCode());
+			user.setUser_state(IsFlag.Shi.getCode());
+			user.setCreate_date(DateUtil.getSysDate());
+			user.setCreate_time(DateUtil.getSysTime());
+			user.setToken("0");
+			user.setValid_time("0");
+			user.setDep_id(DEPT_ID);
+			assertThat("初始化数据成功", user.add(db), is(1));
+			//2.造部门表数据，用于模拟用户登录
+			Department_info deptInfo = new Department_info();
+			deptInfo.setDep_id(DEPT_ID);
+			deptInfo.setDep_name("测试系统参数类部门init-zxz");
+			deptInfo.setCreate_date(DateUtil.getSysDate());
+			deptInfo.setCreate_time(DateUtil.getSysTime());
+			deptInfo.setDep_remark("测试系统参数类部门init-zxz");
+			assertThat("初始化数据成功", deptInfo.add(db), is(1));
+			//3.造ftp_collect表数据，默认为5条,ftp_id为20000001---20000005
 			for (int i = 0; i < FTP_COLLECT_ROWS; i++) {
 				Ftp_collect ftp_collect = new Ftp_collect();
 				ftp_collect.setFtp_id(20000001L + i);
@@ -68,6 +100,14 @@ public class FtpCollectActionTest extends WebBaseTestCase {
 			}
 			SqlOperator.commitTransaction(db);
 		}
+		//4.模拟用户登录
+		String responseValue = new HttpClient().buildSession()
+				.addData("user_id", USER_ID)
+				.addData("password", "1")
+				.post("http://127.0.0.1:8099/A/action/hrds/a/biz/login/login").getBodyString();
+		ActionResult ar = JsonUtil.toObjectSafety(responseValue, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败"));
+		assertThat(ar.isSuccess(), is(true));
 	}
 
 	/**
@@ -367,12 +407,20 @@ public class FtpCollectActionTest extends WebBaseTestCase {
 	/**
 	 * 测试用例清理数据
 	 * <p>
-	 * 1.清理ftp_collect表中造的数据
+	 * 1.清理sys_user表中造的数据
+	 * 2.清理Department_info表中造的数据
+	 * 3.清理ftp_collect表中造的数据
 	 */
 	@After
 	public void afterTest() {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			//1.清理ftp_collect表中造的数据
+			//1.清理sys_user表中造的数据
+			SqlOperator.execute(db, "DELETE FROM " + Sys_user.TableName + " WHERE user_id = ?"
+					, USER_ID);
+			//2.清理Department_info表中造的数据
+			SqlOperator.execute(db, "DELETE FROM " + Department_info.TableName + " WHERE dep_id = ?"
+					, DEPT_ID);
+			//3.清理ftp_collect表中造的数据
 			SqlOperator.execute(db, "DELETE FROM " + Ftp_collect.TableName
 					+ " WHERE agent_id = ?", AGENT_ID);
 			SqlOperator.commitTransaction(db);

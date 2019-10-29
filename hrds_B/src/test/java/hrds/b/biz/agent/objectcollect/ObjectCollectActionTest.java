@@ -40,7 +40,9 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 	//Agent信息表id
 	private static final long AGENT_ID = 10000001L;
 	//用户id
-	private static final long USER_ID = 1001L;
+	private static final long USER_ID = 9001L;
+	//部门ID
+	private static final long DEPT_ID = 9002L;
 	//对象采集设置表id
 	private static final long ODC_ID = 20000001L;
 	//对象采集对应信息表任务
@@ -53,16 +55,42 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 	/**
 	 * 测试用例初始化参数
 	 * <p>
-	 * 1.造agent_down_info表数据，默认为1条，AGENT_ID为10000001
-	 * 2、造Object_collect表数据，默认为2条,ODC_ID为20000001---20000002
-	 * 3、造object_collect_task表数据，默认为10条,OCS_ID为30000001---30000010
-	 * 4、造object_storage表数据，默认为10条,OBJ_STID为40000001---40000010
-	 * 5、造object_collect_struct表数据，默认为10条,STRUCT_ID为50000001---50000010
+	 * 1.造sys_user表数据，用于模拟用户登录
+	 * 2.造部门表数据，用于模拟用户登录
+	 * 3.造agent_down_info表数据，默认为1条，AGENT_ID为10000001
+	 * 4.造Object_collect表数据，默认为2条,ODC_ID为20000001---20000002
+	 * 5.造object_collect_task表数据，默认为10条,OCS_ID为30000001---30000010
+	 * 6.造object_storage表数据，默认为10条,OBJ_STID为40000001---40000010
+	 * 7.造object_collect_struct表数据，默认为10条,STRUCT_ID为50000001---50000010
+	 * 8.模拟用户登录
 	 */
 	@Before
 	public void beforeTest() {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			//1.造agent_down_info表数据，默认为1条，AGENT_ID为10000001
+			//1.造sys_user表数据，用于模拟用户登录
+			Sys_user user = new Sys_user();
+			user.setUser_id(USER_ID);
+			user.setCreate_id(USER_ID);
+			user.setRole_id(USER_ID);
+			user.setUser_name("测试用户(9001)");
+			user.setUser_password("1");
+			user.setUseris_admin(IsFlag.Shi.getCode());
+			user.setUser_state(IsFlag.Shi.getCode());
+			user.setCreate_date(DateUtil.getSysDate());
+			user.setCreate_time(DateUtil.getSysTime());
+			user.setToken("0");
+			user.setValid_time("0");
+			user.setDep_id(DEPT_ID);
+			assertThat("初始化数据成功", user.add(db), is(1));
+			//2.造部门表数据，用于模拟用户登录
+			Department_info deptInfo = new Department_info();
+			deptInfo.setDep_id(DEPT_ID);
+			deptInfo.setDep_name("测试系统参数类部门init-zxz");
+			deptInfo.setCreate_date(DateUtil.getSysDate());
+			deptInfo.setCreate_time(DateUtil.getSysTime());
+			deptInfo.setDep_remark("测试系统参数类部门init-zxz");
+			assertThat("初始化数据成功", deptInfo.add(db), is(1));
+			//3.造agent_down_info表数据，默认为1条，AGENT_ID为10000001
 			Agent_down_info agent_info = new Agent_down_info();
 			agent_info.setDown_id(PrimayKeyGener.getNextId());
 			agent_info.setUser_id(USER_ID);
@@ -78,7 +106,7 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 			agent_info.setAgent_pattern("/receive/*");
 			agent_info.setRemark("测试用例清除数据专用列");
 			assertThat("初始化数据成功", agent_info.add(db), is(1));
-			//2、造Object_collect表数据，默认为2条,ODC_ID为20000001---20000002
+			//4.造Object_collect表数据，默认为2条,ODC_ID为20000001---20000002
 			for (int i = 0; i < OBJECT_COLLECT_ROWS; i++) {
 				Object_collect object_collect = new Object_collect();
 				object_collect.setOdc_id(ODC_ID + i);
@@ -98,7 +126,7 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 				object_collect.setAgent_id(AGENT_ID);
 				assertThat("初始化数据成功", object_collect.add(db), is(1));
 			}
-			//3、造object_collect_task表数据，默认为10条,OCS_ID为30000001---30000010
+			//5.造object_collect_task表数据，默认为10条,OCS_ID为30000001---30000010
 			for (int i = 0; i < OBJECT_COLLECT_TASK_ROWS; i++) {
 				Object_collect_task object_collect_task = new Object_collect_task();
 				object_collect_task.setOcs_id(OCS_ID + i);
@@ -110,7 +138,7 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 				object_collect_task.setOdc_id(ODC_ID);
 				assertThat("初始化数据成功", object_collect_task.add(db), is(1));
 			}
-			//4、造object_storage表数据，默认为10条,OBJ_STID为40000001---40000010
+			//6.造object_storage表数据，默认为10条,OBJ_STID为40000001---40000010
 			for (int i = 0; i < OBJECT_STORAGE_ROWS; i++) {
 				Object_storage object_storage = new Object_storage();
 				object_storage.setObj_stid(OBJ_STID + i);
@@ -120,7 +148,7 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 				object_storage.setRemark("zxz测试用例清除表object_storage专用");
 				assertThat("初始化数据成功", object_storage.add(db), is(1));
 			}
-			//5、造object_collect_struct表数据，默认为10条,STRUCT_ID为50000001---50000010
+			//7.造object_collect_struct表数据，默认为10条,STRUCT_ID为50000001---50000010
 			for (int i = 0; i < OBJECT_COLLECT_STRUCT_ROWS; i++) {
 				Object_collect_struct object_collect_struct = new Object_collect_struct();
 				object_collect_struct.setStruct_id(STRUCT_ID + i);
@@ -132,6 +160,14 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 			}
 			SqlOperator.commitTransaction(db);
 		}
+		//8.模拟用户登录
+		String responseValue = new HttpClient().buildSession()
+				.addData("user_id", USER_ID)
+				.addData("password", "1")
+				.post("http://127.0.0.1:8099/A/action/hrds/a/biz/login/login").getBodyString();
+		ActionResult ar = JsonUtil.toObjectSafety(responseValue, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败"));
+		assertThat(ar.isSuccess(), is(true));
 	}
 
 	/**
@@ -959,28 +995,36 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 	/**
 	 * 测试用例清理数据
 	 * <p>
-	 * 1.删除测试用例造的agent_down_info表数据，默认为1条，AGENT_ID为10000001
-	 * 2、删除测试用例造的Object_collect表数据，默认为2条,ODC_ID为20000001---20000002
-	 * 3、删除测试用例造的object_collect_task表数据，默认为10条,OCS_ID为30000001---30000010
-	 * 4、删除测试用例造的object_storage表数据，默认为10条,OBJ_STID为40000001---40000010
-	 * 5、删除测试用例造的object_collect_struct表数据，默认为10条,STRUCT_ID为50000001---50000010
+	 * 1.清理sys_user表中造的数据
+	 * 2.清理Department_info表中造的数据
+	 * 3.删除测试用例造的agent_down_info表数据，默认为1条，AGENT_ID为10000001
+	 * 4.删除测试用例造的Object_collect表数据，默认为2条,ODC_ID为20000001---20000002
+	 * 5.删除测试用例造的object_collect_task表数据，默认为10条,OCS_ID为30000001---30000010
+	 * 6.删除测试用例造的object_storage表数据，默认为10条,OBJ_STID为40000001---40000010
+	 * 7.删除测试用例造的object_collect_struct表数据，默认为10条,STRUCT_ID为50000001---50000010
 	 */
 	@After
 	public void afterTest() {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			//1.删除测试用例造的agent_down_info表数据，默认为1条，AGENT_ID为10000001
+			//1.清理sys_user表中造的数据
+			SqlOperator.execute(db, "DELETE FROM " + Sys_user.TableName + " WHERE user_id = ?"
+					, USER_ID);
+			//2.清理Department_info表中造的数据
+			SqlOperator.execute(db, "DELETE FROM " + Department_info.TableName + " WHERE dep_id = ?"
+					, DEPT_ID);
+			//3.删除测试用例造的agent_down_info表数据，默认为1条，AGENT_ID为10000001
 			SqlOperator.execute(db, "DELETE FROM " + Agent_down_info.TableName + " WHERE remark = ?"
 					, "测试用例清除数据专用列");
-			//2、删除测试用例造的Object_collect表数据，默认为2条,ODC_ID为20000001---20000002
+			//4.删除测试用例造的Object_collect表数据，默认为2条,ODC_ID为20000001---20000002
 			SqlOperator.execute(db, "DELETE FROM " + Object_collect.TableName + " WHERE agent_id = ?"
 					, AGENT_ID);
-			//3、删除测试用例造的object_collect_task表数据，默认为10条,OCS_ID为30000001---30000010
+			//5.删除测试用例造的object_collect_task表数据，默认为10条,OCS_ID为30000001---30000010
 			SqlOperator.execute(db, "DELETE FROM " + Object_collect_task.TableName
 					+ " WHERE agent_id = ?", AGENT_ID);
-			//4、删除测试用例造的object_storage表数据，默认为10条,OBJ_STID为40000001---40000010
+			//6.删除测试用例造的object_storage表数据，默认为10条,OBJ_STID为40000001---40000010
 			SqlOperator.execute(db, "DELETE FROM " + Object_storage.TableName
 					+ " WHERE remark = ?", "zxz测试用例清除表object_storage专用");
-			//5、删除测试用例造的object_collect_struct表数据，默认为10条,STRUCT_ID为50000001---50000010
+			//7.删除测试用例造的object_collect_struct表数据，默认为10条,STRUCT_ID为50000001---50000010
 			SqlOperator.execute(db, "DELETE FROM " + Object_collect_struct.TableName
 					+ " WHERE ocs_id = ?", OCS_ID);
 			SqlOperator.commitTransaction(db);
