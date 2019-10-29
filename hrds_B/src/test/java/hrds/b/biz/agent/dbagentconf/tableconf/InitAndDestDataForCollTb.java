@@ -28,8 +28,8 @@ public class InitAndDestDataForCollTb {
 	private static final long DATA_SOURCE_TABLE_ID = 7004L;
 	private static final long FIRST_DATABASESET_ID = 1001L;
 	private static final long BASE_SYS_USER_PRIMARY = 2000L;
-	private static final long FIRST_DB_AGENT_ID = 8001L;
-	private static final long SECOND_DB_AGENT_ID = 8002L;
+	private static final long FIRST_DB_AGENT_ID = 7001L;
+	private static final long SECOND_DB_AGENT_ID = 7002L;
 	private static final long FIRST_STORAGE_ID = 1234L;
 	private static final long SECOND_STORAGE_ID = 5678L;
 	private static final JSONObject tableCleanOrder = InitBaseData.initTableCleanOrder();

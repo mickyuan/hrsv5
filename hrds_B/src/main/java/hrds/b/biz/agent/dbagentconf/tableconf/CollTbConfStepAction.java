@@ -167,7 +167,7 @@ public class CollTbConfStepAction extends BaseAction {
 		//2、将前端传过来的参数转为List<Table_info>集合
 		List<Table_info> tableInfos = JSONArray.parseArray(tableInfoArray, Table_info.class);
 		//3、使用databaseId在table_info表中删除所有自定义SQL采集的记录，不关注是否删除成功，结果可以是0-N
-		Dbo.execute("delete from " + Table_info.TableName + " database_id = ? AND is_user_defined = ? ",
+		Dbo.execute("delete from " + Table_info.TableName + " where database_id = ? AND is_user_defined = ? ",
 				databaseId, IsFlag.Shi.getCode());
 		//4、遍历list,给每条记录生成ID，设置有效开始日期、有效结束日期、是否自定义SQL采集(是)、是否使用MD5(是)、
 		// 是否仅登记(是)
@@ -238,7 +238,7 @@ public class CollTbConfStepAction extends BaseAction {
 	@Return(desc = "查询结果集", range = "不为空，是否有数据视实际情况而定")
 	//配置采集表页面,定义过滤按钮后台方法，用于回显已经对单表定义好的SQL
 	public Result getSingleTableSQL(long colSetId, String tableName){
-		return Dbo.queryResult("SELECT table_id,table_name,table_ch_name,storage_type,table_count,sql " +
+		return Dbo.queryResult("SELECT table_id,table_name,table_ch_name,table_count,sql " +
 				" FROM "+ Table_info.TableName +" WHERE database_id = ? AND valid_e_date = ? AND table_name = ? ",
 				colSetId, Constant.MAXDATE, tableName);
 		//数据可访问权限处理方式

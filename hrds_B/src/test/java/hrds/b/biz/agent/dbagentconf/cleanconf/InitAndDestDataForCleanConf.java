@@ -3,6 +3,7 @@ package hrds.b.biz.agent.dbagentconf.cleanconf;
 import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.utils.DateUtil;
+import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
 import hrds.b.biz.agent.dbagentconf.InitBaseData;
@@ -223,7 +224,7 @@ public class InitAndDestDataForCleanConf {
 			sysUserColumn.setValid_s_date(DateUtil.getSysDate());
 			sysUserColumn.setValid_e_date(Constant.MAXDATE);
 			sysUserColumn.setIs_alive(IsFlag.Shi.getCode());
-			sysUserColumn.setIs_new(IsFlag.Shi.getCode());
+			sysUserColumn.setIs_new(IsFlag.Fou.getCode());
 			sysUserColumn.setTc_or(columnCleanOrder.toJSONString());
 			sysUserColumn.setRemark(remark);
 
@@ -249,7 +250,7 @@ public class InitAndDestDataForCleanConf {
 					compleType = PRE_COMPLE_FLAG;
 					cleanType = CleanType.ZiFuBuQi.getCode();
 					tableId = SYS_USER_TABLE_ID;
-					compleChar = "wzc";
+					compleChar = StringUtil.string2Unicode("wzc");
 					length = 3L;
 					oriField = "";
 					newField = "";
@@ -261,8 +262,8 @@ public class InitAndDestDataForCleanConf {
 					tableId = SYS_USER_TABLE_ID;
 					compleChar = "";
 					length = 0;
-					oriField = "wzc";
-					newField = "wqp";
+					oriField = StringUtil.string2Unicode("wzc");
+					newField = StringUtil.string2Unicode("wqp");
 					break;
 				default:
 					tbCleanId = UNEXPECTED_ID;
@@ -294,7 +295,7 @@ public class InitAndDestDataForCleanConf {
 			long colCleanId = i % 2 == 0 ? 22222L : 33333L;
 			String cleanType = CleanType.ZiFuBuQi.getCode();
 			String compleType = i % 2 == 0 ? PRE_COMPLE_FLAG : POST_COMPLE_FLAG;
-			String compleChar = i % 2 == 0 ? "wzc" : " ";
+			String compleChar = i % 2 == 0 ? StringUtil.string2Unicode("wzc") : StringUtil.string2Unicode(" ");
 			long length = i % 2 == 0 ? 3 : 1;
 			long columnId = i % 2 == 0 ? 2002L : 2003L;
 
@@ -314,13 +315,13 @@ public class InitAndDestDataForCleanConf {
 		replace.setCol_clean_id(555555L);
 		replace.setColumn_id(2005L);
 		replace.setClean_type(CleanType.ZiFuTiHuan.getCode());
-		replace.setField("ceshi");
-		replace.setReplace_feild("test");
+		replace.setField(StringUtil.string2Unicode("ceshi"));
+		replace.setReplace_feild(StringUtil.string2Unicode("test"));
 
 		//12、column_clean表测试数据，给login_date设置日期格式化
 		Column_clean dateFormat = new Column_clean();
 		dateFormat.setCol_clean_id(999999L);
-		dateFormat.setColumn_id(2010L);
+		dateFormat.setColumn_id(2011L);
 		dateFormat.setClean_type(CleanType.ShiJianZhuanHuan.getCode());
 		dateFormat.setOld_format("YYYY-MM-DD");
 		dateFormat.setConvert_format("YYYY-MM");
@@ -352,14 +353,14 @@ public class InitAndDestDataForCleanConf {
 					complChar = "cleanparameter";
 					compLength = 14;
 					complType = "1";
-					oriField = "";
-					newField = "";
+					oriField = StringUtil.string2Unicode("qwer");
+					newField = StringUtil.string2Unicode("asdf");
 					break;
 				case 1:
 					complChar = "";
 					compLength = 0;
-					oriField = "test_orifield";
-					newField = "test_newField";
+					oriField = StringUtil.string2Unicode("test_orifield");
+					newField = StringUtil.string2Unicode("test_newField");
 					break;
 				default:
 					complChar = "unexpected_complChar";

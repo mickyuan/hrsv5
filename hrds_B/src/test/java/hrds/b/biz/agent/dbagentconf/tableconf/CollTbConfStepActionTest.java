@@ -127,11 +127,12 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 				-> new BusinessException("连接失败!"));
 		assertThat(wrongResult.isSuccess(), is(true));
 		Result wrongData = wrongResult.getDataForResult();
-		assertThat("根据测试数据，输入错误的colSetId查询到的非自定义采集表信息应该有" + wrongData.getRowCount() + "条", rightData.getRowCount(), is(0));
+		assertThat("根据测试数据，输入错误的colSetId查询到的非自定义采集表信息应该有" + wrongData.getRowCount() + "条", wrongData.getRowCount(), is(0));
 	}
 
 	/**
 	 * 测试根据数据库设置id得到所有表相关信息功能
+	 * TODO 被测方法暂未完成
 	 * 正确数据访问1：构造colSetId为1001，inputString为code的测试数据
 	 * 正确数据访问2：构造colSetId为1001，inputString为sys的测试数据
 	 * 正确数据访问3：构造colSetId为1001，inputString为sys|code的测试数据
@@ -241,7 +242,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 	 * 错误的测试用例未达到三组:getAllTableInfo方法只有一个参数
 	 * @Param: 无
 	 * @return: 无
-	 * TODO 由于目前测试用的数据库是我们的测试库，所以表的数量不固定
+	 * TODO 由于目前测试用的数据库是我们的测试库，所以表的数量不固定，且被测方法未完成
 	 * */
 	@Test
 	public void getAllTableInfo(){
@@ -267,6 +268,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 
 	/**
 	 * 测试并行采集SQL测试功能
+	 * TODO 被测方法未完成
 	 * 正确数据访问1：构建正确的colSetId和SQL语句
 	 * 错误的数据访问1：构建错误的colSetId和正确的SQL语句
 	 * 错误的数据访问2：构建正确的colSetId和错误SQL语句
@@ -363,7 +365,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		JSONArray array= JSONArray.parseArray(JSON.toJSONString(tableInfos));
 		String rightString = new HttpClient()
 				.addData("tableInfoArray", array.toJSONString())
-				.addData("colSetId", FIRST_DATABASESET_ID)
+				.addData("databaseId", FIRST_DATABASESET_ID)
 				.post(getActionUrl("saveAllSQL")).getBodyString();
 		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
@@ -386,6 +388,8 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			assertThat("测试完成后，table_name为getHalfStructTaskBySourceId的测试数据被删除了", firCount, is(1));
 			int secCount = SqlOperator.execute(db, "delete from " + Table_info.TableName + " WHERE table_name = ?", "getFTPTaskBySourceId");
 			assertThat("测试完成后，table_name为getFTPTaskBySourceId的测试数据被删除了", secCount, is(1));
+
+			SqlOperator.commitTransaction(db);
 		}
 
 		//错误的数据访问1：构造两条自定义SQL查询设置数据，第一条数据的表名为空
@@ -428,7 +432,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		JSONArray errorArrayOne= JSONArray.parseArray(JSON.toJSONString(errorTableInfosOne));
 		String errorStringOne = new HttpClient()
 				.addData("tableInfoArray", errorArrayOne.toJSONString())
-				.addData("colSetId", FIRST_DATABASESET_ID)
+				.addData("databaseId", FIRST_DATABASESET_ID)
 				.post(getActionUrl("saveAllSQL")).getBodyString();
 		ActionResult errorResultOne = JsonUtil.toObjectSafety(errorStringOne, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
@@ -474,7 +478,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		JSONArray errorArrayTwo= JSONArray.parseArray(JSON.toJSONString(errorTableInfosTwo));
 		String errorStringTwo = new HttpClient()
 				.addData("tableInfoArray", errorArrayTwo.toJSONString())
-				.addData("colSetId", FIRST_DATABASESET_ID)
+				.addData("databaseId", FIRST_DATABASESET_ID)
 				.post(getActionUrl("saveAllSQL")).getBodyString();
 		ActionResult errorResultTwo = JsonUtil.toObjectSafety(errorStringTwo, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
@@ -515,16 +519,17 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		JSONArray errorArrayThree= JSONArray.parseArray(JSON.toJSONString(errortableInfoThree));
 		String errorStringThree = new HttpClient()
 				.addData("tableInfoArray", errorArrayThree.toJSONString())
-				.addData("colSetId", FIRST_DATABASESET_ID)
+				.addData("databaseId", FIRST_DATABASESET_ID)
 				.post(getActionUrl("saveAllSQL")).getBodyString();
 		ActionResult errorResultThree = JsonUtil.toObjectSafety(errorStringThree, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(errorResultThree.isSuccess(), is(false));
 
-		//错误的数据访问4：构造不存在与测试用例模拟数据中的databaseId
+		//错误的数据访问4：构造不存在于测试用例模拟数据中的databaseId
+		long wrongDatabaseId = 8888888L;
 		String errorDatabaseId = new HttpClient()
 				.addData("tableInfoArray", array.toJSONString())
-				.addData("colSetId", FIRST_DATABASESET_ID)
+				.addData("databaseId", wrongDatabaseId)
 				.post(getActionUrl("saveAllSQL")).getBodyString();
 		ActionResult errorDatabaseIdResult = JsonUtil.toObjectSafety(errorDatabaseId, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
@@ -548,7 +553,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		//删除前，确认待删除数据是否存在
 		try(DatabaseWrapper db = new DatabaseWrapper()){
 			long beforeCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_id = ?", AGENT_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("必须有且只有一条数据"));
-			assertThat("删除前，table_id为" + AGENT_INFO_TABLE_ID + "的数据确实存在", beforeCount, is(1));
+			assertThat("删除前，table_id为" + AGENT_INFO_TABLE_ID + "的数据确实存在", beforeCount, is(1L));
 		}
 		//构造正确的数据进行删除
 		String rightString = new HttpClient()
@@ -560,7 +565,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		//删除后，确认数据是否真的被删除了
 		try(DatabaseWrapper db = new DatabaseWrapper()){
 			long afterCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_id = ?", AGENT_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("必须有且只有一条数据"));
-			assertThat("删除后，table_id为" + AGENT_INFO_TABLE_ID + "的数据不存在了", afterCount, is(0));
+			assertThat("删除后，table_id为" + AGENT_INFO_TABLE_ID + "的数据不存在了", afterCount, is(0L));
 		}
 
 		//错误的数据访问1：模拟删除一个不存在的table_id的自定义SQL采集数据
@@ -669,7 +674,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 
 	/**
 	 * 测试配置采集表页面,选择列按钮后台功能
-	 *
+	 * TODO 被测方法未完成
 	 * 正确数据访问1：构造tableName为code_info，tableId为7002，colSetId为1001的测试数据
 	 * 正确数据访问2：构造tableName为ftp_collect，tableId为999999，colSetId为1001的测试数据
 	 * 错误的数据访问1：构造tableName为ftp_collect，tableId为999999，colSetId为1003的测试数据
@@ -770,7 +775,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 
 	/**
 	 * 测试保存单个表的采集信息功能
-	 *
+	 * TODO 被测方法未完成
 	 * TODO 后面table_info表中加上是否并行抽取和分页SQL字段后，这个测试用例还要继续优化，在构造HTTP请求的时候加上这两个字段作为参数
 	 * 正确数据访问1：在database_id为7001的数据库采集任务下构造新增采集ftp_collect表的数据，不选择采集列和列排序
 	 * 正确数据访问2：在database_id为7001的数据库采集任务下构造新增采集object_collect表的数据，选择采集列和列排序
@@ -1199,7 +1204,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		//删除前，确认待删除数据是否存在
 		try(DatabaseWrapper db = new DatabaseWrapper()){
 			long beforeCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " WHERE database_id = ? AND valid_e_date = ? AND is_user_defined = ?", FIRST_DATABASESET_ID, Constant.MAXDATE, IsFlag.Fou.getCode()).orElseThrow(() -> new BusinessException("必须有且只有一条数据"));
-			assertThat("方法调用前，table_info表中的非用户自定义采集有2条", beforeCount, is(2));
+			assertThat("方法调用前，table_info表中的非用户自定义采集有2条", beforeCount, is(2L));
 		}
 
 		//构造正确的数据访问
@@ -1209,13 +1214,13 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(rightResult.isSuccess(), is(true));
-		Long returnValue = (Long) rightResult.getData();
+		Integer returnValue = (Integer) rightResult.getData();
 		assertThat(returnValue == FIRST_DATABASESET_ID, is(true));
 
 		//删除后，确认数据是否真的被删除了
 		try(DatabaseWrapper db = new DatabaseWrapper()){
 			long afterCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " WHERE database_id = ? AND valid_e_date = ? AND is_user_defined = ?", FIRST_DATABASESET_ID, Constant.MAXDATE, IsFlag.Fou.getCode()).orElseThrow(() -> new BusinessException("必须有且只有一条数据"));
-			assertThat("方法调用后，table_info表中的非用户自定义采集有0条", afterCount, is(0));
+			assertThat("方法调用后，table_info表中的非用户自定义采集有0条", afterCount, is(0L));
 		}
 	}
 

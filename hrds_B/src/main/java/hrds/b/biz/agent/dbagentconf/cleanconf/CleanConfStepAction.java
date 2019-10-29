@@ -11,6 +11,7 @@ import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
 import hrds.b.biz.agent.bean.ColumnCleanParam;
 import hrds.b.biz.agent.bean.TableCleanParam;
+import hrds.commons.base.BaseAction;
 import hrds.commons.codes.CharSplitType;
 import hrds.commons.codes.CleanType;
 import hrds.commons.codes.IsFlag;
@@ -25,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 @DocClass(desc = "配置清洗规则", author = "WangZhengcheng")
-public class CleanConfStepAction {
+public class CleanConfStepAction extends BaseAction{
 
 	/*
 	 * 从上一个页面跳转过来，拿到在配置数据清洗页面显示信息(agentStep2&agentStep2SDO)
@@ -36,31 +37,66 @@ public class CleanConfStepAction {
 			"3、否则根据采集表ID在table_info表和table_clean表中查出页面所需的信息")
 	@Param(name = "colSetId", desc = "数据库设置ID，源系统数据库设置表主键，数据库对应表外键", range = "不为空")
 	@Return(desc = "查询结果集", range = "不为空，其中compflag/replaceflag/trimflag三个字段的值，" +
-			"yes表示该表做了相应的清洗设置，no表示没有做相应的设置")
-	public Result getInitInfo(long colSetId){
+			"1表示该表做了相应的清洗设置，0表示没有做相应的设置")
+	public Result getCleanConfInfo(long colSetId){
 		//1、根据colSetId在table_info表中获取上一个页面配置好的采集表id
 		List<Object> tableIds = Dbo.queryOneColumnList("SELECT table_id FROM " + Table_info.TableName +
-				" WHERE database_id = ?", colSetId);
+				" WHERE database_id = ? and is_user_defined = ?", colSetId, IsFlag.Fou.getCode());
 		//2、如果没有查询到结果，返回空的Result
 		if(tableIds.isEmpty()){
 			return new Result();
 		}
 		//3、否则根据采集表ID在table_info表和table_clean表中查出页面所需的信息
-		StringBuilder sqlSB = new StringBuilder("select ti.table_id, ti.table_name, ti.table_ch_name, " +
-				" (case tc.clean_type when ? then 'yes' else 'no' end) as compflag, " +
-				" (case tc.clean_type when ? then 'yes' else 'no' end) as replaceflag, " +
-				" (case tc.clean_type when ? then 'yes' else 'no' end) as trimflag " +
-				" from "+ Table_info.TableName +" ti " +
-				" left join "+ Table_clean.TableName +" tc on ti.table_id = tc.table_id " +
+		StringBuilder strSB = new StringBuilder("SELECT ti.table_id, ti.table_name, ti.table_ch_name, " +
+				" sum(CASE tc.clean_type WHEN ? THEN 1 ELSE 0 END) as compflag, " +
+				" sum(CASE tc.clean_type WHEN ? THEN 1 ELSE 0 END) as replaceflag, " +
+				" sum(CASE tc.clean_type WHEN ? THEN 1 ELSE 0 END) as trimflag " +
+				" FROM "+ Table_info.TableName +" ti LEFT JOIN "+ Table_clean.TableName +" tc " +
+				" ON ti.table_id = tc.table_id " +
 				" where ti.table_id in ( ");
 		for(int i = 0; i < tableIds.size(); i++){
-			sqlSB.append((Long) tableIds.get(i));
+			strSB.append(tableIds.get(i));
 			if (i != tableIds.size() - 1)
-				sqlSB.append( ",");
+				strSB.append( ",");
 		}
-		sqlSB.append(" ) order by ti.table_name ");
-		return Dbo.queryResult(sqlSB.toString(), CleanType.ZiFuBuQi.getCode(), CleanType.ZiFuTiHuan.getCode(),
+		strSB.append(" ) GROUP BY ti.table_id ");
+
+		return Dbo.queryResult(strSB.toString(), CleanType.ZiFuBuQi.getCode(), CleanType.ZiFuTiHuan.getCode(),
 				CleanType.ZiFuTrim.getCode());
+		/*
+		//1、根据colSetId在table_info表中获取上一个页面配置好的采集表id
+		Result result = Dbo.queryResult("select * from (select table_id, table_name, table_ch_name, " +
+				"'' as compflag, '' as replaceflag, '' as trimflag " +
+				" from "+ Table_info.TableName +" WHERE database_id = ? AND is_user_defined = ?) as temp"
+				, colSetId, IsFlag.Fou.getCode());
+		//2、如果没有查询到结果，返回空的Result
+		if(result.isEmpty()){
+			return new Result();
+		}
+		//3、否则根据采集表ID在table_info表和table_clean表中查出页面所需的信息
+		for(int i = 0; i < result.getRowCount(); i++){
+			Result singleResult = Dbo.queryResult("select ti.table_id, " +
+					" (case tc.clean_type when ? then tc.clean_type else '' end) as compflag," +
+					" (case tc.clean_type when ? then tc.clean_type else '' end) as replaceflag," +
+					" (case tc.clean_type when ? then tc.clean_type else '' end) as trimflag" +
+					" from " + Table_info.TableName + " ti " +
+					" left join " + Table_clean.TableName + " tc on ti.table_id = tc.table_id " +
+					" where ti.table_id = ? ", CleanType.ZiFuBuQi.getCode(), CleanType.ZiFuTiHuan.getCode(),
+					CleanType.ZiFuTrim.getCode(), result.getLong(i, "table_id"));
+				for(int j = 0; j < singleResult.getRowCount(); j++){
+					if(StringUtil.isNotBlank(singleResult.getString(j, "compflag"))){
+						result.setObject(i ,"compflag", "yes");
+					}
+					if(StringUtil.isNotBlank(singleResult.getString(j, "replaceflag"))){
+						result.setObject(i ,"replaceflag", "yes");
+					}
+					if(StringUtil.isNotBlank(singleResult.getString(j, "trimflag"))){
+						result.setObject(i ,"trimflag", "yes");
+					}
+				}
+		}
+		return result;
+		*/
 	}
 
 	/*
@@ -314,16 +350,16 @@ public class CleanConfStepAction {
 		//3、如果没有列字符补齐信息，则根据columnId查其所在表是否配置了整表字符替换，如果查询到，则将补齐字符解码后返回前端
 		Result tableResult = Dbo.queryResult("SELECT tc.table_clean_id, tc.field, tc.replace_feild " +
 				" FROM "+ Table_clean.TableName +" tc" +
-				" WHERE tc.table_id = (SELECT table_id FROM table_column WHERE column_id = ?)" +
-				" AND tc.clean_type = ?", columnId, CleanType.ZiFuTiHuan.getCode());
+				" WHERE tc.table_id = (SELECT table_id FROM table_column WHERE column_id = ?" +
+				" AND tc.clean_type = ?)", columnId, CleanType.ZiFuTiHuan.getCode());
 		//4、如果整表字符替换信息也没有，返回空的Result
 		if(tableResult.isEmpty()){
 			return tableResult;
 		}
-		tableResult.setObject(0, "field", StringUtil.unicode2String(columnResult.getString(0,
+		tableResult.setObject(0, "field", StringUtil.unicode2String(tableResult.getString(0,
 				"field")));
 		tableResult.setObject(0, "replace_feild",
-				StringUtil.unicode2String(columnResult.getString(0, "replace_feild")));
+				StringUtil.unicode2String(tableResult.getString(0, "replace_feild")));
 		return tableResult;
 	}
 
@@ -338,7 +374,7 @@ public class CleanConfStepAction {
 	@Param(name = "tableId", desc = "数据库对应表主键，表清洗参数表外键", range = "不为空")
 	@Return(desc = "查询结果集", range = "不为空，数据的条数视实际情况而定" +
 			"注意compflag/replaceflag/formatflag/splitflag/codevalueflag/trimflag这六个字段的值" +
-			"yes表示该列做了相应的清洗设置，no表示没有列相应的设置")
+			"1表示该列做了相应的清洗设置，0表示没有列相应的设置")
 	public Result getColumnInfo(long tableId){
 		//1、根据tableId去到table_column表中查询采集的,并且不是变化而生成的列ID
 		List<Object> columnIds = Dbo.queryOneColumnList("select column_id from " + Table_column.TableName +
@@ -349,25 +385,76 @@ public class CleanConfStepAction {
 		}
 		//3、如果找到了，再进行关联查询，查询出页面需要显示的信息
 		StringBuilder sqlSB = new StringBuilder("SELECT t1.column_id,t1.colume_name,t1.colume_ch_name,t2.table_name," +
-				" (case t3.clean_type when ? then 'yes' else 'no' end) as compflag, " +
-				" (case t3.clean_type when ? then 'yes' else 'no' end) as replaceflag, " +
-				" (case t3.clean_type when ? then 'yes' else 'no' end ) as formatflag, " +
-				" (case t3.clean_type when ? then 'yes' else 'no' end) as splitflag, " +
-				" (case t3.clean_type when ? then 'yes' else 'no' end) as codevalueflag, " +
-				" (case t3.clean_type when ? then 'yes' else 'no' end) as trimflag " +
-				" FROM "+ Table_column.TableName +" t1 JOIN table_info t2 ON t1.table_id = t2.table_id " +
+				" sum(case t3.clean_type when ? then 1 else 0 end) as compflag, " +
+				" sum(case t3.clean_type when ? then 1 else 0 end) as replaceflag, " +
+				" sum(case t3.clean_type when ? then 1 else 0 end ) as formatflag, " +
+				" sum(case t3.clean_type when ? then 1 else 0 end) as splitflag, " +
+				" sum(case t3.clean_type when ? then 1 else 0 end) as codevalueflag, " +
+				" sum(case t3.clean_type when ? then 1 else 0 end) as trimflag " +
+				" FROM "+ Table_column.TableName +" t1 JOIN "+ Table_info.TableName +" t2 ON t1.table_id = t2.table_id " +
 				" left join "+ Column_clean.TableName +" t3 on t1.column_id = t3.column_id " +
 				" WHERE t1.column_id in ( ");
 		for(int i = 0; i < columnIds.size(); i++){
-			sqlSB.append((Long) columnIds.get(i));
+			sqlSB.append(columnIds.get(i));
 			if (i != columnIds.size() - 1)
 				sqlSB.append( ",");
 		}
-		sqlSB.append(" ) order by t1.remark asc ");
+		sqlSB.append(" ) GROUP BY t1.column_id, t2.table_name order by cast(t1.remark as integer) asc ");
 		//4、返回
 		return Dbo.queryResult(sqlSB.toString(), CleanType.ZiFuBuQi.getCode(), CleanType.ZiFuTiHuan.getCode(),
-				CleanType.ShiJianZhuanHuan.getCode(), CleanType.MaZhiZhuanHuan.getCode(),
-				CleanType.ZiFuChaiFen.getCode(), CleanType.ZiFuTrim.getCode());
+				CleanType.ShiJianZhuanHuan.getCode(), CleanType.ZiFuChaiFen.getCode(),
+				CleanType.MaZhiZhuanHuan.getCode(),CleanType.ZiFuTrim.getCode());
+		/*
+		//1、根据tableId去到table_column表中查询采集的,并且不是变化而生成的列ID
+		Result result = Dbo.queryResult("select * from ( " +
+						" select t1.column_id, t1.colume_name, t1.colume_ch_name,t2.table_name, '' as compflag, '' as replaceflag," +
+						" '' as formatflag, '' as splitflag, '' as codevalueflag, '' as trimflag " +
+						" from " + Table_column.TableName + " t1 " +
+						" join " + Table_info.TableName + " t2 " +
+						" on t1.table_id = t2.table_id" +
+						" where t1.table_id = 1001 and t1.is_get = '1' and t1.is_new = '1') as temp ",
+				tableId, IsFlag.Shi.getCode(), IsFlag.Fou.getCode());
+		//2、如果没有找到采集列，直接返回一个空的集合
+		if(result.isEmpty()){
+			return new Result();
+		}
+		//3、如果找到了，再进行关联查询，查询出页面需要显示的信息
+		for(int i = 0; i < result.getRowCount(); i++){
+			Result singleResult = Dbo.queryResult("select t1.table_id, " +
+							" (case t2.clean_type when ? then tc.clean_type else '' end) as compflag," +
+							" (case t2.clean_type when ? then tc.clean_type else '' end) as replaceflag," +
+							" (case t2.clean_type when ? then tc.clean_type else '' end) as formatflag" +
+							" (case t2.clean_type when ? then tc.clean_type else '' end) as splitflag" +
+							" (case t2.clean_type when ? then tc.clean_type else '' end) as codevalueflag" +
+							" (case t2.clean_type when ? then tc.clean_type else '' end) as trimflag" +
+							" from " + Table_column.TableName + " t1 " +
+							" left join " + Column_clean.TableName + " t2 on t1.column_id = t2.table_id " +
+							" where t1.column_id = ? ", CleanType.ZiFuBuQi.getCode(), CleanType.ZiFuTiHuan.getCode(),
+					CleanType.ShiJianZhuanHuan.getCode(), CleanType.MaZhiZhuanHuan.getCode(),
+					CleanType.ZiFuChaiFen.getCode(), CleanType.ZiFuTrim.getCode(), result.getLong(i, "column_id"));
+			for(int j = 0; j < singleResult.getRowCount(); j++){
+				if(StringUtil.isNotBlank(singleResult.getString(j, "compflag"))){
+					result.setObject(i ,"compflag", "yes");
+				}
+				if(StringUtil.isNotBlank(singleResult.getString(j, "replaceflag"))){
+					result.setObject(i ,"replaceflag", "yes");
+				}
+				if(StringUtil.isNotBlank(singleResult.getString(j, "formatflag"))){
+					result.setObject(i ,"formatflag", "yes");
+				}
+				if(StringUtil.isNotBlank(singleResult.getString(j, "splitflag"))){
+					result.setObject(i ,"splitflag", "yes");
+				}
+				if(StringUtil.isNotBlank(singleResult.getString(j, "codevalueflag"))){
+					result.setObject(i ,"codevalueflag", "yes");
+				}
+				if(StringUtil.isNotBlank(singleResult.getString(j, "trimflag"))){
+					result.setObject(i ,"trimflag", "yes");
+				}
+			}
+		}
+		return result;
+		*/
 	}
 
 	/*
@@ -400,7 +487,7 @@ public class CleanConfStepAction {
 		//2、如果配置了字符补齐
 		if(compFlag){
 			//这里表示校验补齐方式，1代表前补齐，2代表后补齐，目前没有代码项
-			if(Integer.parseInt(compType) != 1 || Integer.parseInt(compType) != 2){
+			if(Integer.parseInt(compType) != 1 && Integer.parseInt(compType) != 2){
 				throw new BusinessException("字符补齐方式错误");
 			}
 			//2-1、构建Clean_parameter对象，设置主键，存储字符补齐信息，将补齐字符转为unicode编码
@@ -534,19 +621,19 @@ public class CleanConfStepAction {
 			"3、如果查到了，需要把拆分分隔符解码")
 	@Param(name = "columnId", desc = "列ID，表对应字段表主键，列拆分表外键", range = "不为空")
 	@Return(desc = "查询结果集", range = "不为空")
-	public List<Column_split> getColSplitInfo(long columnId){
+	public Result getColSplitInfo(long columnId){
 		//1.使用columnId在column_split表中查询数据
-		List<Column_split> columnSplits = Dbo.queryList(Column_split.class, "select * from " +
+		Result result = Dbo.queryResult("select * from " +
 				Column_split.TableName + " WHERE column_id = ?", columnId);
 		//2、如果没有查到，直接返回空的List
-		if(columnSplits.isEmpty()){
-			return columnSplits;
+		if(result.isEmpty()){
+			return result;
 		}
 		//3、如果查到了，需要把拆分分隔符解码
-		for(Column_split columnSplit : columnSplits){
-			columnSplit.setSplit_sep(StringUtil.unicode2String(columnSplit.getSplit_sep()));
+		for(int i = 0; i < result.getRowCount(); i++){
+			result.setObject(i, "split_sep", StringUtil.unicode2String(result.getString(i, "split_sep")));
 		}
-		return columnSplits;
+		return result;
 	}
 
 	/*
@@ -608,8 +695,8 @@ public class CleanConfStepAction {
 					" (select t1.colume_name from table_column t1 " +
 					" JOIN "+ Column_split.TableName +" t2 ON t1.colume_name = t2.col_name " +
 					" JOIN "+ Column_clean.TableName +" t3 ON t2.col_clean_id = t3.col_clean_id " +
-					" WHERE t2.col_clean_id = ? and t2.column_id = ? and t1.table_id = ? and t1.is_new = ?)",
-					columnClean.getCol_clean_id(), columnClean.getColumn_id(), tableId, IsFlag.Shi.getCode());
+					" WHERE t2.col_clean_id = ? and t1.table_id = ? and t1.is_new = ?)",
+					columnClean.getCol_clean_id(), tableId, IsFlag.Shi.getCode());
 
 			//3、如果这个字段之前做过列拆分，需要在column_split表中根据column_id找到该列并删除，不关心数目
 			Dbo.execute("delete from "+ Column_split.TableName +" where column_id = ?",
@@ -652,19 +739,19 @@ public class CleanConfStepAction {
 
 	/*
 	 * 列清洗页面，点击码值转换列设置按钮，回显针对该列设置的码值转换信息(sysCodeSDO)
-	 * */
-	//TODO column_clean表中只能找到码值系统和码值名称，页面上需要展示的信息还不知道去哪里查
+	 * TODO column_clean表中只能找到码值系统和码值名称，页面上需要展示的信息还不知道去哪里查
 	public Result getCVConversionInfo(long columnId){
 		return null;
 	}
+	* */
 
 	/*
 	 * 列清洗页面，点击码值转换列设置按钮，码值转换弹框确定按钮(codeValueChangeCleanSDO)
-	 * */
-	//TODO 页面上的码值信息不知道往哪里存
+	 * TODO 页面上的码值信息不知道往哪里存
 	public void saveCVConversionInfo(){
 
 	}
+	* */
 
 	/*
 	 * 列清洗页面，点击列合并按钮，回显之前对该表设置的列合并信息(codeMergeLookSDO)
@@ -837,10 +924,10 @@ public class CleanConfStepAction {
 
 			//2-5、判断最终保存时，是否选择了列拆分，否，则进行删除列拆分的操作
 			if(!param.isSpiltFlag()){
-				List<Column_split> colSplitInfo = getColSplitInfo(param.getColumnId());
+				Result colSplitInfo = getColSplitInfo(param.getColumnId());
 				if(!colSplitInfo.isEmpty()){
-					for(Column_split columnSplit : colSplitInfo){
-						deleteColSplitInfo(columnSplit.getCol_split_id(), columnSplit.getCol_clean_id());
+					for(int i = 0; i < colSplitInfo.getRowCount(); i++){
+						deleteColSplitInfo(colSplitInfo.getLong(i, "col_split_id"), colSplitInfo.getLong(i, "col_clean_id"));
 					}
 				}
 			}
