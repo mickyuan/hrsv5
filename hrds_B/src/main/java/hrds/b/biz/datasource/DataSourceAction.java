@@ -16,9 +16,7 @@ import fd.ng.web.util.Dbo;
 import fd.ng.web.util.FileUploadUtil;
 import fd.ng.web.util.ResponseUtil;
 import hrds.commons.base.BaseAction;
-import hrds.commons.codes.ApplyType;
 import hrds.commons.codes.AuthType;
-import hrds.commons.codes.FileType;
 import hrds.commons.codes.UserType;
 import hrds.commons.entity.*;
 import hrds.commons.exception.AppSystemException;
@@ -44,7 +42,7 @@ public class DataSourceAction extends BaseAction {
             logicStep = "1.数据可访问权限处理方式，以下sql通过user_id关联进行权限检查" +
                     "2.查询数据源及Agent数" +
                     "3.数据权限管理，分页查询数据源及部门关系信息" +
-                    "4.查询申请审批信息" +
+                    "4.数据管理列表，查询申请审批信息" +
                     "5.创建存放数据源，部门、agent,申请审批,业务用户和采集用户,部门与数据源关系表信息的集合并将数据进行封装" +
                     "6.返回存放数据源，部门、agent,申请审批,业务用户和采集用户,部门与数据源关系表信息的集合")
     @Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数", valueIfNull = "1")
@@ -59,8 +57,8 @@ public class DataSourceAction extends BaseAction {
                 " GROUP BY ds.source_id,ds.datasource_name", getUserId());
         // 3.数据权限管理，分页查询数据源及部门关系信息
         Result dataSourceRelationDep = searchSourceRelationDepForPage(currPage, pageSize);
-        // 4.查询数据申请审批信息
-        List<Map<String, Object>> dataAuditList = getDataAuditList();
+        // 4.数据管理列表，查询数据申请审批信息
+        List<Map<String, Object>> dataAuditList = getDataAuditList(currPage, pageSize);
         // 5.创建存放数据源，部门、agent,申请审批,业务用户和采集用户,部门与数据源关系表信息的集合并将数据进行封装
         Map<String, Object> dataSourceInfoMap = new HashMap<>();
         dataSourceInfoMap.put("dataSourceRelationDep", dataSourceRelationDep.toList());
@@ -70,13 +68,14 @@ public class DataSourceAction extends BaseAction {
         return dataSourceInfoMap;
     }
 
-    @Method(desc = "获取数据申请审批信息的集合",
+    @Method(desc = "数据管理列表，获取数据申请审批信息的集合",
             logicStep = "1.数据可访问权限处理方式，这是一个私有方法不需要权限控制" +
                     "2.获取所有的source_id" +
-                    "3.查询数据源申请审批信息集合并返回" +
-                    "4.判断dataAuditResult是否为空,不为空就封装一些字段修改后的数据，比如类型需要返回中文，时间改为日期+时间格式")
+                    "3.查询数据源申请审批信息集合并返回")
+    @Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数", valueIfNull = "1")
+    @Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", valueIfNull = "5")
     @Return(desc = "存放数据申请审批信息的集合", range = "无限制")
-    private List<Map<String, Object>> getDataAuditList() {
+    private List<Map<String, Object>> getDataAuditList(int currPage, int pageSize) {
         // 1.数据可访问权限处理方式，这是一个私有方法不需要权限控制
         // 2.获取所有的source_id
         List<Long> sourceIdList = Dbo.queryOneColumnList("select source_id from " + Data_source.TableName);
@@ -89,20 +88,7 @@ public class DataSourceAction extends BaseAction {
                 "su.create_id in (select user_id from sys_user where user_type=? or user_id = ?) ")
                 .addParam(UserType.XiTongGuanLiYuan.getCode()).addParam(getUserId())
                 .addORParam("sfa.source_id", sourceIdList.toArray()).addSql(" ORDER BY  da_id desc");
-        Result dataAuditResult = Dbo.queryResult(asmSql.sql(), asmSql.params());
-        // 4.判断dataAuditResult是否为空,不为空就封装一些字段修改后的数据，比如类型需要返回中文，时间改为日期+时间格式
-        if (!dataAuditResult.isEmpty()) {
-            for (int i = 0; i < dataAuditResult.getRowCount(); i++) {
-                dataAuditResult.setObject(i, "applyDataTime", DateUtil.parseStr2DateWith8Char
-                        (dataAuditResult.getString(i, "apply_date")) + " " + DateUtil.parseStr2TimeWith6Char
-                        (dataAuditResult.getString(i, "apply_time")));
-                dataAuditResult.setObject(i, "applyType_zh", ApplyType.ofValueByCode
-                        (dataAuditResult.getString(i, "apply_type")));
-                dataAuditResult.setObject(i, "fileType_zh", FileType.ofValueByCode
-                        (dataAuditResult.getString(i, "file_type")));
-            }
-        }
-        return dataAuditResult.toList();
+        return Dbo.queryPagedList(new DefaultPageImpl(currPage, pageSize), asmSql.sql(), asmSql.params());
     }
 
     @Method(desc = "数据权限管理，分页查询数据源及部门关系信息",
@@ -217,7 +203,7 @@ public class DataSourceAction extends BaseAction {
         dataAuth.get().setDa_id(da_id);
         dataAuth.get().update(Dbo.db());
         // 5.查询审批后的最新数据申请审批信息并返回
-        return getDataAuditList();
+        return getDataAuditList(1, 5);
 
     }
 
@@ -233,7 +219,7 @@ public class DataSourceAction extends BaseAction {
         DboExecute.deletesOrThrow("权限回收成功!", "delete from " + Data_auth.TableName +
                 " where da_id = ? and user_id=?", da_id, getUserId());
         // 3.查询审批后的最新数据申请审批信息并返回
-        return getDataAuditList();
+        return getDataAuditList(1, 5);
     }
 
     @Method(desc = "新增数据源",
@@ -313,7 +299,7 @@ public class DataSourceAction extends BaseAction {
         saveSourceRelationDep(source_id, dep_id);
     }
 
-    @Method(desc = "字段合法性验证",
+    @Method(desc = "数据源表字段合法性验证",
             logicStep = "1.数据可访问权限处理方式，这是个私有方法，不会单独被调用，所以不需要权限验证" +
                     "2.循环遍历获取source_relation_dep主键ID，验证dep_id合法性" +
                     "3.验证datasource_name是否合法" +
