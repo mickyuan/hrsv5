@@ -258,7 +258,7 @@ public class InitBaseData {
 			codeInfoColumn.setValid_s_date(DateUtil.getSysDate());
 			codeInfoColumn.setValid_e_date(Constant.MAXDATE);
 			codeInfoColumn.setIs_alive(IsFlag.Shi.getCode());
-			codeInfoColumn.setIs_new(IsFlag.Shi.getCode());
+			codeInfoColumn.setIs_new(IsFlag.Fou.getCode());
 			codeInfoColumn.setTc_or(initColumnCleanOrder().toJSONString());
 
 			codeInfos.add(codeInfoColumn);

@@ -386,9 +386,9 @@ public class InitAndDestDataForCleanConf {
 		for(int i = 0; i < 2; i++){
 			long colSplitId = i % 2 == 0 ? 1111111L : 2222222L;
 			String offset = i % 2 == 0 ? "3" : "0";
-			String columnName = i % 2 == 0 ? "ci_s" : "p_name";
+			String columnName = i % 2 == 0 ? "ci_sp" : "_name";
 			String spiltType = "1";
-			String columnChName = i % 2 == 0 ? "ci_s_ch" : "p_name_ch";
+			String columnChName = i % 2 == 0 ? "ci_sp_ch" : "_name_ch";
 			String columnType = "varchar(512)";
 			long colCleanId = 101010101L;
 			long columnId = 3004L;
@@ -460,8 +460,8 @@ public class InitAndDestDataForCleanConf {
 		List<Table_column> splitOne = new ArrayList<>();
 		for(int i = 0; i < 2; i++){
 			long columnId = i % 2 == 0 ? 121212L : 232323L;
-			String columnName = i % 2 == 0 ? "ci_s" : "p_name";
-			String columnChName = i % 2 == 0 ? "ci_s_ch" : "p_name_ch";
+			String columnName = i % 2 == 0 ? "ci_sp" : "_name";
+			String columnChName = i % 2 == 0 ? "ci_sp_ch" : "_name_ch";
 
 			Table_column tableColumn = new Table_column();
 			tableColumn.setTable_id(CODE_INFO_TABLE_ID);

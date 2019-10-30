@@ -695,8 +695,8 @@ public class CleanConfStepAction extends BaseAction{
 					" (select t1.colume_name from table_column t1 " +
 					" JOIN "+ Column_split.TableName +" t2 ON t1.colume_name = t2.col_name " +
 					" JOIN "+ Column_clean.TableName +" t3 ON t2.col_clean_id = t3.col_clean_id " +
-					" WHERE t2.col_clean_id = ? and t1.table_id = ? and t1.is_new = ?)",
-					columnClean.getCol_clean_id(), tableId, IsFlag.Shi.getCode());
+					" WHERE t2.col_clean_id = ? and t2.column_id = ? and t1.table_id = ? and t1.is_new = ?)",
+					columnClean.getCol_clean_id(), columnClean.getColumn_id(), tableId, IsFlag.Shi.getCode());
 
 			//3、如果这个字段之前做过列拆分，需要在column_split表中根据column_id找到该列并删除，不关心数目
 			Dbo.execute("delete from "+ Column_split.TableName +" where column_id = ?",
@@ -760,10 +760,10 @@ public class CleanConfStepAction extends BaseAction{
 			"1、去column_merge表中按照table_id查询出数据直接返回")
 	@Param(name = "tableId", desc = "数据库对应表主键，列合并表外键", range = "不为空")
 	@Return(desc = "查询结果集", range = "Column_merge实体类对象，不为空")
-	public Column_merge getColMergeInfo(long tableId){
+	public Result getColMergeInfo(long tableId){
 		//1、去column_merge表中按照table_id查询出数据直接返回
-		return Dbo.queryOneObject(Column_merge.class, "select * from "+ Column_merge.TableName +
-				" where table_id = ?", tableId).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+		return Dbo.queryResult("select * from "+ Column_merge.TableName +
+				" where table_id = ?", tableId);
 	}
 
 	/*
@@ -782,6 +782,7 @@ public class CleanConfStepAction extends BaseAction{
 		Dbo.execute("delete from "+ Table_column.TableName +" where colume_name in " +
 				" (select t1.colume_name from "+ Table_column.TableName +" t1 " +
 				" JOIN "+ Column_merge.TableName +" t2 ON t1.table_id=t2.table_id " +
+				" and t1.colume_name = t2.col_name " +
 				" where t2.table_id = ? and t1.is_new = ? )", tableId, IsFlag.Shi.getCode());
 		//2、在column_merge表中，按照table_id删除该表配置的所有列合并信息
 		Dbo.execute("delete from "+ Column_merge.TableName +" where table_id = ?", tableId);
@@ -801,7 +802,7 @@ public class CleanConfStepAction extends BaseAction{
 			tableColumn.setTable_id(tableId);
 			tableColumn.setIs_new(IsFlag.Shi.getCode());
 			tableColumn.setColumn_id(PrimayKeyGener.getNextId());
-			tableColumn.setIs_primary_key(IsFlag.Fou.toString());
+			tableColumn.setIs_primary_key(IsFlag.Fou.getCode());
 			tableColumn.setColume_name(columnMerge.getCol_name());
 			tableColumn.setColumn_type(columnMerge.getCol_type());
 			tableColumn.setColume_ch_name(columnMerge.getCol_zhname());
@@ -826,6 +827,7 @@ public class CleanConfStepAction extends BaseAction{
 				" (select t1.colume_name " +
 				" from "+ Table_column.TableName +" t1 " +
 				" JOIN "+ Column_merge.TableName +" t2 ON t1.table_id = t2.table_id " +
+				" and t1.colume_name = t2.col_name " +
 				" where t2.col_merge_id = ?)", colMergeId);
 		//2、在column_merge表中按ID删除一条列合并信息
 		DboExecute.deletesOrThrow("删除列合并失败", "delete from "+ Column_merge.TableName +
@@ -932,7 +934,7 @@ public class CleanConfStepAction extends BaseAction{
 				}
 			}
 			//2-6、判断最终保存时，是否选择了列首尾去空，进行首尾去空的保存处理
-			if(!param.isTrimFlag()){
+			if(param.isTrimFlag()){
 				Dbo.execute("delete from "+ Column_clean.TableName +" where column_id = ? and clean_type = ?",
 						param.getColumnId(), CleanType.ZiFuTrim.getCode());
 				Column_clean trim = new Column_clean();
@@ -976,12 +978,16 @@ public class CleanConfStepAction extends BaseAction{
 						, param.getTableId(), CleanType.ZiFuTiHuan.getCode());
 			}
 			//2-3、判断最终保存时，是否选择了列首尾去空，进行首尾去空的保存处理
-			Dbo.execute("delete from "+ Table_clean.TableName +" where table_id = ? and clean_type = ?",
-					param.getTableId(), CleanType.ZiFuTrim.getCode());
-			Table_clean trim = new Table_clean();
-			trim.setTable_clean_id(PrimayKeyGener.getNextId());
-			trim.setClean_type(CleanType.ZiFuTrim.getCode());
-			trim.setTable_id(param.getTableId());
+			if(param.isTrimFlag()){
+				Dbo.execute("delete from "+ Table_clean.TableName +" where table_id = ? and clean_type = ?",
+						param.getTableId(), CleanType.ZiFuTrim.getCode());
+				Table_clean trim = new Table_clean();
+				trim.setTable_clean_id(PrimayKeyGener.getNextId());
+				trim.setClean_type(CleanType.ZiFuTrim.getCode());
+				trim.setTable_id(param.getTableId());
+
+				trim.add(Dbo.db());
+			}
 		}
 		return colSetId;
 	}
