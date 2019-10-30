@@ -32,11 +32,57 @@ import java.util.Map;
 public class AgentListAction extends BaseAction {
 
 	@Method(desc = "获取数据源Agent列表信息", logicStep = "1、获取用户ID并根据用户ID去数据库中查询数据源信息")
-	@Return(desc = "数据源信息查询结果集", range = "不会为null")
+	@Return(desc = "数据源信息查询结果集", range = "不会为null" +
+			"如果该数据源下面有相应的Agent，则XXXFlag值为true,否则为false")
 	public Result getAgentInfoList() {
 		//1、获取用户ID并根据用户ID去数据库中查询数据源信息
-		return Dbo.queryResult("select datas.source_id,datasource_name from " + Data_source.TableName
+		Result result = Dbo.queryResult("select datas.source_id,datasource_name from " + Data_source.TableName
 				+ " datas " + "where datas.create_user_id = ?", getUserId());
+		if(result.isEmpty()){
+			return result;
+		}
+		for(int i = 0; i < result.getRowCount(); i++){
+			long dbCount = Dbo.queryNumber("select count(1) from " + Agent_info.TableName + " where source_id = ? " +
+					"and agent_type = ? and user_id = ? ", result.getLong(i, "source_id"), AgentType.ShuJuKu.getCode(), getUserId()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			if(dbCount > 0){
+				result.setObject(i, "dbFlag", true);
+			}else{
+				result.setObject(i, "dbFlag", false);
+			}
+
+			long dfCount = Dbo.queryNumber("select count(1) from " + Agent_info.TableName + " where source_id = ? " +
+					"and agent_type = ? and user_id = ? ", result.getLong(i, "source_id"), AgentType.DBWenJian.getCode(), getUserId()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			if(dfCount > 0){
+				result.setObject(i, "dfFlag", true);
+			}else{
+				result.setObject(i, "dfFlag", false);
+			}
+
+			long nonStructCount = Dbo.queryNumber("select count(1) from " + Agent_info.TableName + " where source_id = ? " +
+					"and agent_type = ? and user_id = ? ", result.getLong(i, "source_id"), AgentType.WenJianXiTong.getCode(), getUserId()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			if(nonStructCount > 0){
+				result.setObject(i, "nonStructFlag", true);
+			}else{
+				result.setObject(i, "nonStructFlag", false);
+			}
+
+			long halfStructCount = Dbo.queryNumber("select count(1) from " + Agent_info.TableName + " where source_id = ? " +
+					"and agent_type = ? and user_id = ? ", result.getLong(i, "source_id"), AgentType.DuiXiang.getCode(), getUserId()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			if(halfStructCount > 0){
+				result.setObject(i, "halfStructFlag", true);
+			}else{
+				result.setObject(i, "halfStructFlag", false);
+			}
+
+			long ftpCount = Dbo.queryNumber("select count(1) from " + Agent_info.TableName + " where source_id = ? " +
+					"and agent_type = ? and user_id = ? ", result.getLong(i, "source_id"), AgentType.FTP.getCode(), getUserId()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			if(ftpCount > 0){
+				result.setObject(i, "ftpFlag", true);
+			}else{
+				result.setObject(i, "ftpFlag", false);
+			}
+		}
+		return result;
 		//数据可访问权限处理方式
 		//以上SQL中，通过当前用户ID进行关联查询，达到了数据权限的限制
 	}

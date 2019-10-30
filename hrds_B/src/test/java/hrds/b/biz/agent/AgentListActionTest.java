@@ -400,7 +400,13 @@ public class AgentListActionTest extends WebBaseTestCase {
 		assertThat(rightResult.isSuccess(), is(true));
 		Result data = rightResult.getDataForResult();
 		assertThat("根据测试数据，查询到的数据源信息应该有" + data.getRowCount() + "条", data.getRowCount(), is(1));
-
+		assertThat("根据测试数据，查询到的数据源ID为" + data.getLong(0, "source_id"), data.getLong(0, "source_id"), is(SOURCE_ID));
+		assertThat("根据测试数据，查询到的数据源名称为" + data.getString(0, "datasource_name"), data.getString(0, "datasource_name"), is("wzctest_"));
+		assertThat("根据测试数据，查询该数据源下有数据库采集Agent" + data.getBoolean(0, "dbFlag"), data.getBoolean(0, "dbFlag"), is(true));
+		assertThat("根据测试数据，查询该数据源下有数据文件采集Agent" + data.getBoolean(0, "dfFlag"), data.getBoolean(0, "dfFlag"), is(true));
+		assertThat("根据测试数据，查询该数据源下有非结构化采集Agent" + data.getBoolean(0, "nonStructFlag"), data.getBoolean(0, "nonStructFlag"), is(true));
+		assertThat("根据测试数据，查询该数据源下有半结构化采集Agent" + data.getBoolean(0, "halfStructFlag"), data.getBoolean(0, "halfStructFlag"), is(true));
+		assertThat("根据测试数据，查询该数据源下有FTP采集Agent" + data.getBoolean(0, "ftpFlag"), data.getBoolean(0, "ftpFlag"), is(true));
 	}
 
 	/**
