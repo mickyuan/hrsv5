@@ -1255,9 +1255,8 @@ public class TaskManager {
 							DateUtil.DATETIME_DEFAULT);
 					//如果作业开始时间还是默认时间(2000-12-31 23:59:59)，代表作业还没有被开始处理
 					if(currStTime.equals(JOB_DEFAULTSTART_DATETIME)) {
-						//TODO 此处是10分钟？
 						//判断作业调度开始时间是否超过10分钟，超过的话将会被重新调度
-						if(System.currentTimeMillis() - job.getJobStartTime() > 120000) {
+						if(System.currentTimeMillis() - job.getJobStartTime() > 600000) {
 							logger.warn("{} 被再次执行", etlJob);
 							String runningJob = etlJob + REDISCONTENTSEPARATOR + currBathDate;
 							REDIS.rpush(strRunningJob, runningJob);
