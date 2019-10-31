@@ -15,6 +15,7 @@ import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import fd.ng.web.util.Dbo;
+import hrds.b.biz.agent.tools.ListPageHelper;
 import hrds.b.biz.agent.tools.SendMsgUtil;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.CleanType;
@@ -61,9 +62,11 @@ public class CollTbConfStepAction extends BaseAction {
 			"5、根据表名和colSetId获取界面需要显示的信息并返回")
 	@Param(name = "colSetId", desc = "数据库设置ID,源系统数据库设置表主键,数据库对应表外键", range = "不为空")
 	@Param(name = "inputString", desc = "用户界面输入用于模糊查询的关键词", range = "不为空")
+	@Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数", nullable = true, valueIfNull = "1")
+	@Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", nullable = true, valueIfNull = "10")
 	@Return(desc = "查询结果集", range = "结果集大小视是否查询到数据而定")
 	//查询按钮
-	public List<Result> getTableInfo(long colSetId, String inputString){
+	public List<Result> getTableInfo(long colSetId, String inputString, int currPage, int pageSize){
 		//1、根据colSetId去数据库中获取数据库设置相关信息
 		Result result = getDatabaseSetInfo(colSetId, getUserId());
 		//数据可访问权限处理方式
@@ -83,7 +86,7 @@ public class CollTbConfStepAction extends BaseAction {
 		JSONObject respObj = JSON.parseObject(respMsg);//TODO 能不能改成BEAN对象
 		List<String> rightTables = (List<String>) respObj.get("tableName");
 		//5、根据表名和colSetId获取界面需要显示的信息并返回
-		return getTableInfoByTableName(rightTables, colSetId);
+		return getTableInfoByTableName(rightTables, colSetId, currPage, pageSize);
 	}
 
 	@Method(desc = "根据数据库设置id得到所有表相关信息", logicStep = "" +
@@ -92,9 +95,11 @@ public class CollTbConfStepAction extends BaseAction {
 			"3、和Agent端进行交互，得到Agent返回的数据" +
 			"4、对获取到的数据进行处理，根据表名和colSetId获取界面需要显示的信息并返回")
 	@Param(name = "colSetId", desc = "数据库设置ID,源系统数据库设置表主键,数据库对应表外键", range = "不为空")
+	@Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数", nullable = true, valueIfNull = "1")
+	@Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", nullable = true, valueIfNull = "10")
 	@Return(desc = "查询结果集", range = "不为空")
 	//查看所有表
-	public List<Result> getAllTableInfo(long colSetId){
+	public List<Result> getAllTableInfo(long colSetId, int currPage, int pageSize){
 		//1、根据colSetId去数据库中获取数据库设置相关信息
 		Result result = getDatabaseSetInfo(colSetId, getUserId());
 		if(result.isEmpty()){
@@ -112,7 +117,7 @@ public class CollTbConfStepAction extends BaseAction {
 		//4、对获取到的数据进行处理，根据表名和colSetId获取界面需要显示的信息并返回
 		JSONObject respObj = JSON.parseObject(respMsg);
 		List<String> tableNames = (List<String>) respObj.get("tableName");
-		return getTableInfoByTableName(tableNames, colSetId);
+		return getTableInfoByTableName(tableNames, colSetId, currPage, pageSize);
 	}
 
 	@Method(desc = "测试并行抽取SQL", logicStep = "" +
@@ -559,13 +564,15 @@ public class CollTbConfStepAction extends BaseAction {
 			"2-4、没有数据的情况：新增采集任务，那么所有的表都无法在table_info中查到数据，给是否并行抽取默认值为否")
 	@Param(name = "tableNames", desc = "需要获取详细信息的表名集合", range = "不限")
 	@Param(name = "colSetId", desc = "数据库设置ID", range = "不为空")
+	@Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数")
+	@Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数")
 	@Return(desc = "存有表详细信息的List集合", range = "查到信息则不为空，没有查到信息则为空")
-	private List<Result> getTableInfoByTableName(List<String> tableNames, long colSetId){
+	private List<Result> getTableInfoByTableName(List<String> tableNames, long colSetId, int currPage, int pageSize){
 		//1、如果集合为空，则直接返回空集合
 		if(tableNames.isEmpty()){ return Collections.emptyList(); }
 		//2、如果集合不是空，则进行如下处理
-		List<Result> returnList = new ArrayList<>();
-		//2-1、根据String的自然顺序(字母a-z)对表名进行升序排序
+		List<Result> results = new ArrayList<>();
+		//2-1、根据String的自然顺序(字母a-z)对表名进行升序排序,这一步的目的是为了使用下面的分页工具对List进行分页
 		Collections.sort(tableNames);
 		for(String tableName : tableNames){
 			//TODO 按照新的原型设计，这个方法应该查询的内容为table_id，,table_name,table_ch_name,是否并行抽取(这个字段目前还没有)
@@ -581,13 +588,13 @@ public class CollTbConfStepAction extends BaseAction {
 				tableResult.setValue(0, "table_ch_name", tableName);
 				//TODO 给是否并行抽取默认值为否
 
-				returnList.add(tableResult);
+				results.add(tableResult);
 			}else if(tableResult.getRowCount() == 1){
-				returnList.add(tableResult);
+				results.add(tableResult);
 			}else{
 				throw new BusinessException(tableName + "表详细信息不唯一");
 			}
 		}
-		return returnList;
+		return new ListPageHelper<>(results, currPage, pageSize).getList();
 	}
 }

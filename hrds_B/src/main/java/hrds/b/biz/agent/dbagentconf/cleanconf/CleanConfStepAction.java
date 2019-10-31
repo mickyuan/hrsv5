@@ -40,7 +40,7 @@ public class CleanConfStepAction extends BaseAction{
 	@Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数", nullable = true, valueIfNull = "1")
 	@Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", nullable = true, valueIfNull = "10")
 	@Return(desc = "查询结果集", range = "不为空，其中compflag/replaceflag/trimflag三个字段的值，" +
-			"1表示该表做了相应的清洗设置，0表示没有做相应的设置")
+			"不为0表示该表做了相应的清洗设置，0表示没有做相应的设置")
 	public Result getCleanConfInfo(long colSetId, int currPage, int pageSize){
 		//1、根据colSetId在table_info表中获取上一个页面配置好的采集表id
 		List<Object> tableIds = Dbo.queryOneColumnList("SELECT table_id FROM " + Table_info.TableName +
@@ -346,7 +346,7 @@ public class CleanConfStepAction extends BaseAction{
 	@Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", nullable = true, valueIfNull = "10")
 	@Return(desc = "查询结果集", range = "不为空，数据的条数视实际情况而定" +
 			"注意compflag/replaceflag/formatflag/splitflag/codevalueflag/trimflag这六个字段的值" +
-			"1表示该列做了相应的清洗设置，0表示没有列相应的设置")
+			"不为表示该列做了相应的清洗设置，0表示没有列相应的设置")
 	public Result getColumnInfo(long tableId, int currPage, int pageSize){
 		//1、根据tableId去到table_column表中查询采集的,并且不是变化而生成的列ID
 		List<Object> columnIds = Dbo.queryOneColumnList("select column_id from " + Table_column.TableName +

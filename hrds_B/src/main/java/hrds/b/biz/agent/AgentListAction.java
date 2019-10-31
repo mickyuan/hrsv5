@@ -33,7 +33,7 @@ public class AgentListAction extends BaseAction {
 
 	@Method(desc = "获取数据源Agent列表信息", logicStep = "1、获取用户ID并根据用户ID去数据库中查询数据源信息")
 	@Return(desc = "数据源信息查询结果集", range = "不会为null" +
-			"如果该数据源下面有相应的Agent，则XXXFlag值为true,否则为false")
+			"如果该数据源下面有相应的Agent，则XXXFlag值不为0,否则为0")
 	public Result getAgentInfoList() {
 		//1、获取用户ID并根据用户ID去数据库中查询数据源信息
 		return Dbo.queryResult("select ds.source_id, ds.datasource_name, " +

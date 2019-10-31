@@ -402,11 +402,11 @@ public class AgentListActionTest extends WebBaseTestCase {
 		assertThat("根据测试数据，查询到的数据源信息应该有" + data.getRowCount() + "条", data.getRowCount(), is(1));
 		assertThat("根据测试数据，查询到的数据源ID为" + data.getLong(0, "source_id"), data.getLong(0, "source_id"), is(SOURCE_ID));
 		assertThat("根据测试数据，查询到的数据源名称为" + data.getString(0, "datasource_name"), data.getString(0, "datasource_name"), is("wzctest_"));
-		assertThat("根据测试数据，查询该数据源下有数据库采集Agent" + data.getInt(0, "dbflag"), data.getInt(0, "dbflag"), is(1));
-		assertThat("根据测试数据，查询该数据源下有数据文件采集Agent" + data.getInt(0, "dfflag"), data.getInt(0, "dfflag"), is(1));
-		assertThat("根据测试数据，查询该数据源下有非结构化采集Agent" + data.getInt(0, "nonstructflag"), data.getInt(0, "nonstructflag"), is(1));
-		assertThat("根据测试数据，查询该数据源下有半结构化采集Agent" + data.getInt(0, "halfstructflag"), data.getInt(0, "halfstructflag"), is(1));
-		assertThat("根据测试数据，查询该数据源下有FTP采集Agent" + data.getInt(0, "ftpflag"), data.getInt(0, "ftpflag"), is(1));
+		assertThat("根据测试数据，查询该数据源下有一个数据库采集Agent" + data.getInt(0, "dbflag"), data.getInt(0, "dbflag"), is(1));
+		assertThat("根据测试数据，查询该数据源下有一个数据文件采集Agent" + data.getInt(0, "dfflag"), data.getInt(0, "dfflag"), is(1));
+		assertThat("根据测试数据，查询该数据源下有一个非结构化采集Agent" + data.getInt(0, "nonstructflag"), data.getInt(0, "nonstructflag"), is(1));
+		assertThat("根据测试数据，查询该数据源下有一个半结构化采集Agent" + data.getInt(0, "halfstructflag"), data.getInt(0, "halfstructflag"), is(1));
+		assertThat("根据测试数据，查询该数据源下有一个FTP采集Agent" + data.getInt(0, "ftpflag"), data.getInt(0, "ftpflag"), is(1));
 	}
 
 	/**
