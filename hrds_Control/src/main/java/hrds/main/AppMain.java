@@ -1,4 +1,4 @@
-package hrds.control.main;
+package hrds.main;
 
 import java.time.LocalDate;
 
