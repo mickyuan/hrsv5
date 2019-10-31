@@ -58,7 +58,7 @@ public class DataSourceAction extends BaseAction {
         // 3.数据权限管理，分页查询数据源及部门关系信息
         Result dataSourceRelationDep = searchSourceRelationDepForPage(currPage, pageSize);
         // 4.数据管理列表，查询数据申请审批信息
-        List<Map<String, Object>> dataAuditList = getDataAuditList(currPage, pageSize);
+        List<Map<String, Object>> dataAuditList = getDataAuditInfoForPage(currPage, pageSize);
         // 5.创建存放数据源，部门、agent,申请审批,业务用户和采集用户,部门与数据源关系表信息的集合并将数据进行封装
         Map<String, Object> dataSourceInfoMap = new HashMap<>();
         dataSourceInfoMap.put("dataSourceRelationDep", dataSourceRelationDep.toList());
@@ -68,17 +68,18 @@ public class DataSourceAction extends BaseAction {
         return dataSourceInfoMap;
     }
 
-    @Method(desc = "数据管理列表，获取数据申请审批信息的集合",
-            logicStep = "1.数据可访问权限处理方式，这是一个私有方法不需要权限控制" +
+    @Method(desc = "数据管理列表，分页查询获取数据申请审批信息的集合",
+            logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制" +
                     "2.获取所有的source_id" +
                     "3.查询数据源申请审批信息集合并返回")
     @Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数", valueIfNull = "1")
     @Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", valueIfNull = "5")
     @Return(desc = "存放数据申请审批信息的集合", range = "无限制")
-    private List<Map<String, Object>> getDataAuditList(int currPage, int pageSize) {
-        // 1.数据可访问权限处理方式，这是一个私有方法不需要权限控制
+    public List<Map<String, Object>> getDataAuditInfoForPage(int currPage, int pageSize) {
+        // 1.数据可访问权限处理方式，通过user_id进行权限控制
         // 2.获取所有的source_id
-        List<Long> sourceIdList = Dbo.queryOneColumnList("select source_id from " + Data_source.TableName);
+        List<Long> sourceIdList = Dbo.queryOneColumnList("select source_id from " + Data_source.TableName
+                + " where create_user_id=?", getUserId());
         // 3.查询数据源申请审批信息集合并返回
         SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
         asmSql.addSql("select da.DA_ID,da.APPLY_DATE,da.APPLY_TIME,da.APPLY_TYPE,da.AUTH_TYPE,da.AUDIT_DATE," +
@@ -203,7 +204,7 @@ public class DataSourceAction extends BaseAction {
         dataAuth.get().setDa_id(da_id);
         dataAuth.get().update(Dbo.db());
         // 5.查询审批后的最新数据申请审批信息并返回
-        return getDataAuditList(1, 5);
+        return getDataAuditInfoForPage(1, 5);
 
     }
 
@@ -219,7 +220,7 @@ public class DataSourceAction extends BaseAction {
         DboExecute.deletesOrThrow("权限回收成功!", "delete from " + Data_auth.TableName +
                 " where da_id = ? and user_id=?", da_id, getUserId());
         // 3.查询审批后的最新数据申请审批信息并返回
-        return getDataAuditList(1, 5);
+        return getDataAuditInfoForPage(1, 5);
     }
 
     @Method(desc = "新增数据源",
