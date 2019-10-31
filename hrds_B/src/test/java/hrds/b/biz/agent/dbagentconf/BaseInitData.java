@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @DocClass(desc = "为数据库直连采集测试用例构造公共的测试数据，仅本功能自用", author = "WangZhengcheng")
-public class InitBaseData {
+public class BaseInitData {
 
 	//测试数据用户ID
 	private static final long TEST_USER_ID = -9997L;

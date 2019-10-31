@@ -10,7 +10,7 @@ import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
-import hrds.b.biz.agent.dbagentconf.InitBaseData;
+import hrds.b.biz.agent.dbagentconf.BaseInitData;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
@@ -36,8 +36,8 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 	private static final long FIRST_DATABASESET_ID = 1001L;
 	private static final long SECOND_DATABASESET_ID = 1002L;
 	private static final long DEFAULT_TABLE_ID = 999999L;
-	private static final JSONObject tableCleanOrder = InitBaseData.initTableCleanOrder();
-	private static final JSONObject columnCleanOrder = InitBaseData.initColumnCleanOrder();
+	private static final JSONObject tableCleanOrder = BaseInitData.initTableCleanOrder();
+	private static final JSONObject columnCleanOrder = BaseInitData.initColumnCleanOrder();
 
 	/**
 	 * 为每个方法的单元测试初始化测试数据
@@ -92,7 +92,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 	public void before() {
 		InitAndDestDataForCollTb.before();
 		//模拟登陆
-		ActionResult actionResult = InitBaseData.simulatedLogin();
+		ActionResult actionResult = BaseInitData.simulatedLogin();
 		assertThat("模拟登陆", actionResult.isSuccess(), is(true));
 	}
 

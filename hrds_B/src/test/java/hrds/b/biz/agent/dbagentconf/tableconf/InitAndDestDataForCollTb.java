@@ -5,7 +5,7 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
-import hrds.b.biz.agent.dbagentconf.InitBaseData;
+import hrds.b.biz.agent.dbagentconf.BaseInitData;
 import hrds.commons.codes.*;
 import hrds.commons.entity.*;
 import hrds.commons.utils.Constant;
@@ -32,27 +32,27 @@ public class InitAndDestDataForCollTb {
 	private static final long SECOND_DB_AGENT_ID = 7002L;
 	private static final long FIRST_STORAGE_ID = 1234L;
 	private static final long SECOND_STORAGE_ID = 5678L;
-	private static final JSONObject tableCleanOrder = InitBaseData.initTableCleanOrder();
-	private static final JSONObject columnCleanOrder = InitBaseData.initColumnCleanOrder();
+	private static final JSONObject tableCleanOrder = BaseInitData.initTableCleanOrder();
+	private static final JSONObject columnCleanOrder = BaseInitData.initColumnCleanOrder();
 
 	public static void before(){
 		//构造sys_user表测试数据
-		Sys_user user = InitBaseData.buildSysUserData();
+		Sys_user user = BaseInitData.buildSysUserData();
 
 		//构造department_info表测试数据
-		Department_info departmentInfo = InitBaseData.buildDeptInfoData();
+		Department_info departmentInfo = BaseInitData.buildDeptInfoData();
 
 		//3、构造data_source表测试数据
-		Data_source dataSource = InitBaseData.buildDataSourceData();
+		Data_source dataSource = BaseInitData.buildDataSourceData();
 
 		//4、构造agent_info表测试数据
-		List<Agent_info> agents = InitBaseData.buildAgentInfosData();
+		List<Agent_info> agents = BaseInitData.buildAgentInfosData();
 
 		//5、构造database_set表测试数据
-		List<Database_set> databases = InitBaseData.buildDbSetData();
+		List<Database_set> databases = BaseInitData.buildDbSetData();
 
 		//6、构造Collect_job_classify表测试数据
-		List<Collect_job_classify> classifies = InitBaseData.buildClassifyData();
+		List<Collect_job_classify> classifies = BaseInitData.buildClassifyData();
 
 		//7、构建table_info测试数据
 		List<Table_info> tableInfos = new ArrayList<>();
@@ -206,7 +206,7 @@ public class InitAndDestDataForCollTb {
 			sysUsers.add(sysUserColumn);
 		}
 
-		List<Table_column> codeInfos = InitBaseData.buildCodeInfoTbColData();
+		List<Table_column> codeInfos = BaseInitData.buildCodeInfoTbColData();
 
 		//8、构造table_storage_info表测试数据
 		List<Table_storage_info> tableStorageInfos = new ArrayList<>();

@@ -9,7 +9,7 @@ import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import hrds.b.biz.agent.bean.DBConnectionProp;
-import hrds.b.biz.agent.dbagentconf.InitBaseData;
+import hrds.b.biz.agent.dbagentconf.BaseInitData;
 import hrds.commons.codes.DatabaseType;
 import hrds.commons.entity.Collect_job_classify;
 import hrds.commons.entity.Database_set;
@@ -62,7 +62,7 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 	public void before() {
 		InitAndDestDataForDBConf.before();
 		//模拟登陆
-		ActionResult actionResult = InitBaseData.simulatedLogin();
+		ActionResult actionResult = BaseInitData.simulatedLogin();
 		assertThat("模拟登陆", actionResult.isSuccess(), is(true));
 	}
 
