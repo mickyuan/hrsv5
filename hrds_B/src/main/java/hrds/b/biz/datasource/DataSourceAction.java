@@ -379,7 +379,7 @@ public class DataSourceAction extends BaseAction {
                     "6.返回封装数据源与部门关联信息以及部门信息集合")
     @Param(name = "source_id", desc = "source_relation_dep表外键ID", range = "不能为空以及不能为空格", nullable = true)
     @Return(desc = "返回关联查询data_source表与source_relation_dep表信息结果以及部门信息", range = "无限制")
-    public Map<String, Object> searchDataSource(Long source_id) {
+    public Map<String, Object> searchDataSourceById(Long source_id) {
         // 1.数据可访问权限处理方式，以下SQL关联sourceId与user_id检查
         // 2.创建并封装数据源与部门关联信息以及部门信息集合
         Map<String, Object> datasourceMap = new HashMap<>();
@@ -485,11 +485,7 @@ public class DataSourceAction extends BaseAction {
                 }
             }
             // 3.判断agent_port是否是一个有效的端口
-            // 端口范围最小值
-            int min = 1024;
-            // 端口范围最大值
-            int max = 65535;
-            if (Integer.parseInt(agent_port) < min || Integer.parseInt(agent_port) > max) {
+            if (Integer.parseInt(agent_port) < 1024 || Integer.parseInt(agent_port) > 65535) {
                 throw new BusinessException("agent_port端口不是有效的端口，不在取值范围内，" +
                         "agent_port=" + agent_port);
             }

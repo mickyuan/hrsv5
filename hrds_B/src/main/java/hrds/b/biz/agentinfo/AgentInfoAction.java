@@ -44,7 +44,7 @@ public class AgentInfoAction extends BaseAction {
         // 3.通过agent_info,agent_down_info,sys_user三张表关联查询所有类型agent信息
         SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
         asmSql.addSql("select ai.*,su.user_name,su.user_id,adi.deploy,(case adi.deploy when ? then 'yes' " +
-                " else 'no' end) agentStatu from " + Agent_info.TableName + " ai LEFT JOIN " +
+                " else 'no' end) agentStatus from " + Agent_info.TableName + " ai LEFT JOIN " +
                 Agent_down_info.TableName + " adi ON ai.agent_ip = adi.agent_ip AND ai.agent_port = adi.agent_port" +
                 " AND ai.agent_id = adi.agent_id left join " + Sys_user.TableName + " su on ai.user_id=su.user_id " +
                 " where ai.source_id = ? and ai.agent_type = ? and ai.user_id=? order by ai.agent_id");
@@ -109,15 +109,17 @@ public class AgentInfoAction extends BaseAction {
         }
     }
 
-    @Method(desc = "保存agent信息",
+    @Method(desc = "保存agent信息并返回更新后的最新agent类型对应agent信息",
             logicStep = "1.数据可访问权限处理方式，新增时会设置创建用户ID，会获取当前用户ID，所以不需要权限验证" +
                     "2.字段合法性验证" +
                     "3.判断端口是否被占用，被占用抛异常，否则正常保存" +
                     "4.初始化AgentInfo的一些非页面传值" +
                     "5.检查数据源是否还存在以及判断数据源下相同的IP地址中是否包含相同的端口" +
-                    "6.保存agent信息")
+                    "6.保存agent信息" +
+                    "7.返回最新的当前agent类型对应的agent信息")
     @Param(name = "agentInfo", desc = "agent_info表实体对象", range = "与数据库agent_info表字段定义规则一致", isBean = true)
-    public void saveAgent(Agent_info agentInfo) {
+    @Return(desc = "返回更新后的最新agent类型对应agent信息", range = "")
+    public List<Map<String, Object>> saveAgent(Agent_info agentInfo) {
         // 1.数据可访问权限处理方式，新增时会设置创建用户ID，会获取当前用户ID，所以不需要权限验证
         // 2.字段合法性验证
         fieldLegalityValidation(agentInfo.getAgent_name(), agentInfo.getAgent_type(), agentInfo.getAgent_ip(),
@@ -140,6 +142,12 @@ public class AgentInfoAction extends BaseAction {
                 agentInfo.getAgent_port());
         // 6.保存agent信息
         agentInfo.add(Dbo.db());
+        // 7.返回最新的当前agent类型对应的agent信息
+        return Dbo.queryList("SELECT t1.*,t2.deploy,(case t2.deploy when ? then 'yes' else 'no' end) agentStatus,"
+                        + " t3.user_name  FROM " + Agent_info.TableName + " t1 left join " + Agent_down_info.TableName
+                        + " t2 on t1.agent_id=t2.agent_id left join " + Sys_user.TableName + " t3 on " +
+                        " t1.user_id=t3.user_id WHERE t1.source_id=? AND t1.agent_type =? and t1.user_id=?",
+                IsFlag.Shi.getCode(), agentInfo.getSource_id(), agentInfo.getAgent_type(), getUserId());
     }
 
     @Method(desc = "检查数据源是否还存在以及数据源下相同的IP地址中是否包含相同的端口",
@@ -164,7 +172,7 @@ public class AgentInfoAction extends BaseAction {
         }
     }
 
-    @Method(desc = "更新agent信息",
+    @Method(desc = "更新agent信息并返回更新后的最新agent类型对应agent信息",
             logicStep = "1.数据可访问权限处理方式，通过关联agent_id与user_id检查" +
                     "2.验证agent_id是否合法" +
                     "3.字段合法性验证" +
@@ -180,11 +188,12 @@ public class AgentInfoAction extends BaseAction {
     @Param(name = "source_id", desc = "agent_info表外键ID，data_source表主键ID,定义为Long目的是判null",
             range = "10位数字，新增时自动生成")
     @Param(name = "user_id", desc = "数据采集用户ID,定义为Long目的是判null", range = "四位数字，新增用户时自动生成")
-    public void updateAgent(Long agent_id, String agent_name, String agent_type, String agent_ip,
-                            String agent_port, long source_id, long user_id) {
+    @Return(desc = "返回最新的当前agent类型对应的agent信息", range = "无限制")
+    public List<Map<String, Object>> updateAgent(Long agent_id, String agent_name, String agent_type, String agent_ip,
+                                                 String agent_port, long source_id, long user_id) {
         // 1.数据可访问权限处理方式，通过关联agent_id与user_id检查
         if (Dbo.queryNumber("select count(1) from " + Agent_info.TableName + " where agent_id=? and user_id=?",
-                agent_id, user_id).orElseThrow(() -> new BusinessException("sql查询错误")) == 0) {
+                agent_id, getUserId()).orElseThrow(() -> new BusinessException("sql查询错误")) == 0) {
             throw new BusinessException("数据权限校验失败，数据不可访问！");
         }
         // 2.验证agent_id是否合法
@@ -206,6 +215,12 @@ public class AgentInfoAction extends BaseAction {
         agentInfo.setAgent_name(agent_name);
         // 6.更新agent信息
         agentInfo.update(Dbo.db());
+        // 7.返回最新的当前agent类型对应的agent信息
+        return Dbo.queryList("SELECT t1.*,t2.deploy, (case t2.deploy when ? then 'yes' else 'no' end) agentStatus,"
+                        + " t3.user_name FROM " + Agent_info.TableName + " t1 left join " + Agent_down_info.TableName
+                        + " t2 on t1.agent_id=t2.agent_id left join " + Sys_user.TableName + " t3 on " +
+                        " t1.user_id=t3.user_id WHERE t1.source_id=? AND t1.agent_type =? and t1.user_id=?",
+                IsFlag.Shi.getCode(), source_id, agent_type, getUserId());
     }
 
     @Method(desc = "agent信息表字段合法性验证",
@@ -286,12 +301,14 @@ public class AgentInfoAction extends BaseAction {
     @Param(name = "agent_type", desc = "agent类型", range = "1:数据库Agent,2:文件系统Agent,3:FtpAgent," +
             "4:数据文件Agent,5:对象Agent")
     @Return(desc = "返回根据agent_id与agent_type查询该agent_info信息集合", range = "无限制")
-    public List<Agent_info> searchAgent(long agent_id, String agent_type) {
+    public List<Map<String, Object>> searchAgent(long agent_id, String agent_type) {
         // 1.数据可访问权限处理方式，通过agent_id,agent_type，user_id关联检查
         // 2.根据agent_id与agent_type查询该agent信息
-
-        return Dbo.queryList(Agent_info.class, " SELECT * FROM " + Agent_info.TableName + " WHERE agent_id=?" +
-                " AND agent_type =? and user_id=?", agent_id, agent_type, getUserId());
+        return Dbo.queryList("SELECT t1.*,t2.deploy,(case t2.deploy when ? then 'yes' else 'no' end) agentStatus," +
+                        " t3.user_name FROM " + Agent_info.TableName + " t1 left join " + Agent_down_info.TableName
+                        + " t2 on t1.agent_id=t2.agent_id left join " + Sys_user.TableName + " t3 on " +
+                        " t1.user_id=t3.user_id WHERE t1.agent_id=? AND t1.agent_type =? and t1.user_id=?",
+                IsFlag.Shi.getCode(), agent_id, agent_type, getUserId());
     }
 
     @Method(desc = "删除agent",
@@ -299,10 +316,11 @@ public class AgentInfoAction extends BaseAction {
                     "2.删除前查询此agent是否已部署，已部署不能删除" +
                     "3.判断此数据源与agent下是否有任务，有任务不能删除" +
                     "4.删除agent")
-    @Param(name = "agent_id", desc = "agent_info表主键", range = "10位数字，新增时生成")
+    @Param(name = "source_id", desc = "data_source表主键，agent_info表外键", range = "10位数字，新增数据源时生成")
+    @Param(name = "agent_id", desc = "agent_info表主键", range = "10位数字，新增agent时生成")
     @Param(name = "agent_type", desc = "agent类型", range = "1:数据库Agent,2:文件系统Agent,3:FtpAgent," +
             "4:数据文件Agent,5:对象Agent")
-    public void deleteAgent(Long agent_id, String agent_type) {
+    public List<Map<String, Object>> deleteAgent(long source_id, long agent_id, String agent_type) {
         // 1.数据可访问权限处理方式，通过agent_id,agent_type,user_id关联检查
         if (Dbo.queryNumber("select count(*) from " + Agent_info.TableName + " where agent_id=? " +
                 "and user_id=? and agent_type=?", agent_id, getUserId(), agent_type)
@@ -326,6 +344,12 @@ public class AgentInfoAction extends BaseAction {
         // 4.删除agent
         DboExecute.deletesOrThrow("删除表信息失败，agent_id=" + agent_id + ",agent_type=" + agent_type,
                 "delete from " + Agent_info.TableName + " where agent_id=?", agent_id);
+        // 5.返回最新的当前agent类型对应的agent信息
+        return Dbo.queryList("SELECT t1.*,t2.deploy,(case t2.deploy when ? then 'yes' else 'no' end) agentStatus,"
+                        + " t3.user_name  FROM " + Agent_info.TableName + " t1 left join " + Agent_down_info.TableName
+                        + " t2 on t1.agent_id=t2.agent_id left join " + Sys_user.TableName + " t3 on " +
+                        " t1.user_id=t3.user_id WHERE t1.source_id=? AND t1.agent_type =? and t1.user_id=?",
+                IsFlag.Shi.getCode(), source_id, agent_type, getUserId());
     }
 
 }
