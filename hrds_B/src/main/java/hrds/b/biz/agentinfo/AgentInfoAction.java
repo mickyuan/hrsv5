@@ -208,7 +208,7 @@ public class AgentInfoAction extends BaseAction {
         agentInfo.update(Dbo.db());
     }
 
-    @Method(desc = "字段合法性验证",
+    @Method(desc = "agent信息表字段合法性验证",
             logicStep = "1.数据可访问权限处理方式，这是个私有方法，不会单独被调用，所以不需要权限验证" +
                     "2.验证agent_type是否为空或空格" +
                     "3. 验证agent_name是否为空或空格" +

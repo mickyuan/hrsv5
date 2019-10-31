@@ -36,7 +36,7 @@ public class FileConfStepAction extends BaseAction{
 
 	/*
 	 * 保存所有表分隔符设置
-	public void SaveAllTbSepConf(){
+	public void saveAllTbSepConf(){
 
 	}
     * */

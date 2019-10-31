@@ -471,6 +471,8 @@ public class CollTbConfStepAction extends BaseAction {
 			tableColumn.setColumn_id(PrimayKeyGener.getNextId());
 			//设置外键
 			tableColumn.setTable_id(tableInfo.getTable_id());
+			//默认所有采集列都不是主键
+			tableColumn.setIs_primary_key(IsFlag.Fou.getCode());
 			//设置有效开始时间和有效结束时间
 			tableColumn.setValid_s_date(DateUtil.getSysDate());
 			tableColumn.setValid_e_date(Constant.MAXDATE);

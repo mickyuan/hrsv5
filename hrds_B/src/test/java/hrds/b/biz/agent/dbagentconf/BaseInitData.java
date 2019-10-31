@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @DocClass(desc = "为数据库直连采集测试用例构造公共的测试数据，仅本功能自用", author = "WangZhengcheng")
-public class InitBaseData {
+public class BaseInitData {
 
 	//测试数据用户ID
 	private static final long TEST_USER_ID = -9997L;
@@ -258,7 +258,7 @@ public class InitBaseData {
 			codeInfoColumn.setValid_s_date(DateUtil.getSysDate());
 			codeInfoColumn.setValid_e_date(Constant.MAXDATE);
 			codeInfoColumn.setIs_alive(IsFlag.Shi.getCode());
-			codeInfoColumn.setIs_new(IsFlag.Shi.getCode());
+			codeInfoColumn.setIs_new(IsFlag.Fou.getCode());
 			codeInfoColumn.setTc_or(initColumnCleanOrder().toJSONString());
 
 			codeInfos.add(codeInfoColumn);

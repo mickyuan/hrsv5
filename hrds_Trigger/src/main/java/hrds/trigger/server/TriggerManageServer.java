@@ -104,8 +104,9 @@ public class TriggerManageServer {
 					Thread.sleep(SLEEP_TIME);
 				}
 			}catch(Exception ex) {
-				TaskSqlHelper.closeDbConnector();//关闭数据库连接
 				logger.error("Exception happened!", ex);
+			}finally {
+				TaskSqlHelper.closeDbConnector();//关闭数据库连接
 			}
 		}
 	}

@@ -128,15 +128,15 @@ public class ControlManageServer {
 					taskManager.publishReadyJob();
 					//3、日切处理（继续还是整个程序退出） 。
 					if(!taskManager.needDailyShift()){
-						TaskSqlHelper.closeDbConnector();   //关闭数据库连接
 						logger.info("------ 系统无日切信号，系统退出 ------");
 						break;
 						//FIXME 作业能配置成：每天某个时刻执行，但是不日切吗？或者等待信号文件到达就执行，执行完继续等待，且没有日切的概念
 					}
 				}
 			}catch(Exception ex) {
-				TaskSqlHelper.closeDbConnector();//关闭数据库连接
 				logger.error("Exception happened!", ex);
+			}finally {
+				TaskSqlHelper.closeDbConnector();   //关闭数据库连接
 			}
 		}
 	}

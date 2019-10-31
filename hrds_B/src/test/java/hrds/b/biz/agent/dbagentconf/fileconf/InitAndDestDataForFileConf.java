@@ -1,4 +1,4 @@
-package hrds.b.biz.agent.dbagentconf.cleanconf;
+package hrds.b.biz.agent.dbagentconf.fileconf;
 
 import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.DocClass;
@@ -7,7 +7,9 @@ import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
 import hrds.b.biz.agent.dbagentconf.BaseInitData;
-import hrds.commons.codes.*;
+import hrds.commons.codes.CleanType;
+import hrds.commons.codes.CountNum;
+import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.*;
 import hrds.commons.utils.Constant;
 
@@ -19,9 +21,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 @DocClass(desc = "为CleanConfStepActionTest初始化和销毁数据", author = "WangZhengcheng")
 /*
- * 由于构造测试数据就有较多代码，所以将这部分代码迁移出来，CleanConfStepActionTest中只保存对被测方法的测试用例
+ * 由于构造测试数据就有较多代码，所以将这部分代码迁移出来，FileConfStepActionTest中只保存对被测方法的测试用例
  * */
-public class InitAndDestDataForCleanConf {
+public class InitAndDestDataForFileConf {
 
 	//测试数据用户ID
 	private static final long TEST_USER_ID = -9997L;
