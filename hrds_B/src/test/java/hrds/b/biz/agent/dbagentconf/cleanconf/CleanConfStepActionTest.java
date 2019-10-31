@@ -63,7 +63,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 *      4、agent_info表：有2条数据,全部是数据库采集Agent，agent_id分别为7001，7002,source_id为1
 	 *      5、database_set表：有2条数据,database_id为1001,1002, agent_id分别为7001,7002，1001的classifyId是10086，1002的classifyId是10010
 	 *      1001设置完成并发送成功(is_sendok)
-	 *      6、collect_job_classify表：有2条数据，classify_id为10086L、10010L，agent_id分别为7001L、7002L,user_id为-9997L
+	 *      6、collect_job_classify表：有2条数据，classify_id为10086L、10010L，agent_id分别为7001L、7002L,user_id为9997L
 	 *      7、table_info表测试数据共4条，databaseset_id为1001
 	 *          7-1、table_id:7001,table_name:sys_user,按照画面配置信息进行采集
 	 *          7-2、table_id:7002,table_name:code_info,按照画面配置信息进行采集
@@ -101,11 +101,6 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		//模拟登陆
 		ActionResult actionResult = BaseInitData.simulatedLogin();
 		assertThat("模拟登陆", actionResult.isSuccess(), is(true));
-	}
-
-	@Test
-	public void test(){
-		System.out.println("---------------------");
 	}
 
 	/**
@@ -680,16 +675,30 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		//正确数据访问1：尝试获取tableId为7002的表的所有列
 		String rightString = new HttpClient()
 				.addData("tableId", SYS_USER_TABLE_ID)
+				.addData("currPage", 1)
+				.addData("pageSize", 9)
 				.post(getActionUrl("getColumnInfo")).getBodyString();
 		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(rightResult.isSuccess(), is(true));
 
 		Result rightData = rightResult.getDataForResult();
-		assertThat("尝试获取tableId为7002的表的所有列，得到的结果集中有11条数据", rightData.getRowCount(), is(11));
+		assertThat("尝试获取tableId为7002的表的所有列，由于模拟了分页效果，所以第一页得到的结果集中有9条数据", rightData.getRowCount(), is(9));
 		assertThat("尝试获取tableId为7002的表的所有列，create_id做了字符补齐", rightData.getInt(1, "compflag"), is(1));
 		assertThat("尝试获取tableId为7002的表的所有列，dep_id做了字符补齐", rightData.getInt(2, "compflag"), is(1));
 		assertThat("尝试获取tableId为7002的表的所有列，user_name做了字符替换", rightData.getInt(4, "replaceflag"), is(1));
+
+		String rightStringPageTwo = new HttpClient()
+				.addData("tableId", SYS_USER_TABLE_ID)
+				.addData("currPage", 2)
+				.addData("pageSize", 9)
+				.post(getActionUrl("getColumnInfo")).getBodyString();
+		ActionResult rightResultPageTwo = JsonUtil.toObjectSafety(rightStringPageTwo, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResultPageTwo.isSuccess(), is(true));
+
+		Result rightDataPageTwo = rightResultPageTwo.getDataForResult();
+		assertThat("尝试获取tableId为7002的表的所有列，由于模拟了分页效果，所以第二页得到的结果集中有2条数据", rightDataPageTwo.getRowCount(), is(2));
 
 		//错误的数据访问1：尝试获取tableId为7006的表的所有列，由于初始化时没有构造tableId为999999999的数据，所以拿不到数据
 		String wrongString = new HttpClient()

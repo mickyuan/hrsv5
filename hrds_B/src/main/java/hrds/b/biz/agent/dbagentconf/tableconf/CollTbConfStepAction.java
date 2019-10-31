@@ -10,6 +10,7 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
+import fd.ng.db.jdbc.DefaultPageImpl;
 import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
@@ -36,11 +37,14 @@ public class CollTbConfStepAction extends BaseAction {
 
 	@Method(desc = "根据数据库采集设置表ID加载页面初始化数据", logicStep = "1、查询数据并返回")
 	@Param(name = "colSetId", desc = "数据库设置ID,源系统数据库设置表主键,数据库对应表外键", range = "不为空")
+	@Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数", nullable = true, valueIfNull = "1")
+	@Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", nullable = true, valueIfNull = "10")
 	@Return(desc = "查询结果集，查询出的结果可能有0-N条", range = "不会为null")
 	//TODO 按照新的原型设计，这个方法应该查询的内容为table_id，,table_name,table_ch_name,是否并行抽取(这个字段目前还没有)
-	public Result getInitInfo(long colSetId) {
+	public Result getInitInfo(long colSetId, int currPage, int pageSize) {
 			//1、查询数据并返回
-			return Dbo.queryResult(" select ti.table_id,ti.table_name,ti.table_ch_name" +
+			return Dbo.queryPagedResult(new DefaultPageImpl(currPage, pageSize),
+					" select ti.table_id,ti.table_name,ti.table_ch_name" +
 					" FROM "+ Table_info.TableName +" ti " +
 					" WHERE ti.database_id = ? AND ti.valid_e_date = ? AND ti.is_user_defined = ? ", colSetId,
 					Constant.MAXDATE, IsFlag.Fou.getCode());
