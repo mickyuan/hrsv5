@@ -379,11 +379,6 @@ public class AgentListActionTest extends WebBaseTestCase {
 		assertThat(ar.isSuccess(), is(true));
 	}
 
-	@Test
-	public void test(){
-		System.out.println("---------------------------");
-	}
-
 	/**
 	 * 测试获取数据源Agent列表信息
 	 *

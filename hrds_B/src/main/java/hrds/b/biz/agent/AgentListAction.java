@@ -64,8 +64,11 @@ public class AgentListAction extends BaseAction {
 	@Return(desc = "Agent信息查询结果集", range = "不会为null")
 	public Result getAgentInfo(long sourceId, String agentType) {
 		//1、根据sourceId和agentType查询数据库获取相应信息
-		return Dbo.queryResult("SELECT * FROM "+ Agent_info.TableName +" WHERE source_id = ? " +
-				"AND agent_type = ? AND user_id = ?", sourceId, agentType, getUserId());
+		return Dbo.queryResult("select ai.*, ds.datasource_name FROM "+ Agent_info.TableName + " ai " +
+						" join " + Data_source.TableName + " ds " +
+						" on ai.source_id = ds.source_id " +
+						" WHERE ds.source_id = ? " + "AND ai.agent_type = ? AND ds.create_user_id = ?"
+				, sourceId, agentType, getUserId());
 		//数据可访问权限处理方式
 		//以上SQL中，通过当前用户ID进行关联查询，达到了数据权限的限制
 	}
