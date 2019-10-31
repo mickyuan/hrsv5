@@ -14,8 +14,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 @DocClass(desc = "为DBConfStepAction单元测试类初始化和销毁数据", author = "WangZhengcheng")
 public class InitAndDestDataForDBConf {
 	//测试数据用户ID
-	private static final long TEST_USER_ID = -9997L;
-	private static final long TEST_DEPT_ID = -9987L;
+	private static final long TEST_USER_ID = 9997L;
+	private static final long TEST_DEPT_ID = 9987L;
 	private static final long FIRST_DB_AGENT_ID = 7001L;
 	private static final long SECOND_DB_AGENT_ID = 7002L;
 	private static final long THIRD_CLASSIFY_ID = 12306L;

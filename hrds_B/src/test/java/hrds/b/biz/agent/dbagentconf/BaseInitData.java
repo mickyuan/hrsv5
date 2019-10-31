@@ -18,11 +18,11 @@ import java.util.List;
 public class BaseInitData {
 
 	//测试数据用户ID
-	private static final long TEST_USER_ID = -9997L;
+	private static final long TEST_USER_ID = 9997L;
 	//测试用户密码
 	private static final String TEST_USER_PASSWORD = "test_user";
 	//测试部门ID
-	private static final long TEST_DEPT_ID = -9987L;
+	private static final long TEST_DEPT_ID = 9987L;
 
 	//source_id
 	private static final long SOURCE_ID = 1L;

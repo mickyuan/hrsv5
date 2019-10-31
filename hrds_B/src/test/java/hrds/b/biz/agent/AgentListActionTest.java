@@ -29,11 +29,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class AgentListActionTest extends WebBaseTestCase {
 
 	//测试数据用户ID
-	private static final long TEST_USER_ID = -9991L;
+	private static final long TEST_USER_ID = 9991L;
 	//测试用户密码
 	private static final String TEST_USER_PASSWORD = "test_user";
 	//测试部门ID
-	private static final long TEST_DEPT_ID = -9987L;
+	private static final long TEST_DEPT_ID = 9987L;
 	//source_id
 	private static final long SOURCE_ID = 1L;
 	//数据库agent_id

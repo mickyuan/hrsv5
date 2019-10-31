@@ -46,7 +46,7 @@ public class AgentListAction extends BaseAction {
 				" left join " + Agent_info.TableName + " ai " +
 				" on ds.source_id = ai.source_id" +
 				" where ds.create_user_id = ?" +
-				" group by ds.source_id; ", AgentType.ShuJuKu.getCode(), AgentType.DBWenJian.getCode(),
+				" group by ds.source_id", AgentType.ShuJuKu.getCode(), AgentType.DBWenJian.getCode(),
 				AgentType.WenJianXiTong.getCode(), AgentType.DuiXiang.getCode(), AgentType.FTP.getCode(), getUserId());
 		//数据可访问权限处理方式
 		//以上SQL中，通过当前用户ID进行关联查询，达到了数据权限的限制

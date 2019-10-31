@@ -20,8 +20,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class InitAndDestDataForCollTb {
 
 	//测试数据用户ID
-	private static final long TEST_USER_ID = -9997L;
-	private static final long TEST_DEPT_ID = -9987L;
+	private static final long TEST_USER_ID = 9997L;
+	private static final long TEST_DEPT_ID = 9987L;
 	private static final long SYS_USER_TABLE_ID = 7001L;
 	private static final long CODE_INFO_TABLE_ID = 7002L;
 	private static final long AGENT_INFO_TABLE_ID = 7003L;

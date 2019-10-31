@@ -62,7 +62,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 	 *      4、agent_info表：有2条数据,全部是数据库采集Agent，agent_id分别为7001，7002,source_id为1
 	 *      5、database_set表：有2条数据,database_id为1001,1002, agent_id分别为7001,7002，1001的classifyId是10086，1002的classifyId是10010
 	 *      1001设置完成并发送成功(is_sendok)
-	 *      6、collect_job_classify表：有2条数据，classify_id为10086L、10010L，agent_id分别为7001L、7002L,user_id为-9997L
+	 *      6、collect_job_classify表：有2条数据，classify_id为10086L、10010L，agent_id分别为7001L、7002L,user_id为9997L
 	 *      7、table_info表测试数据共4条，databaseset_id为1001
 	 *          7-1、table_id:7001,table_name:sys_user,按照画面配置信息进行采集，并且配置了单表过滤SQL,select * from sys_user where user_id = 2001
 	 *          7-2、table_id:7002,table_name:code_info,按照画面配置信息进行采集
