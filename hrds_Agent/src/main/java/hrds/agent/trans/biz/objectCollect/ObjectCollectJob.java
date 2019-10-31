@@ -22,7 +22,7 @@ public class ObjectCollectJob extends BaseAction {
 	@Param(name = "object_collect", desc = "半结构化对象采集设置表对象",
 			isBean = true, range = "所有这张表不能为空的字段的值必须有，为空则会抛异常")
 	@Param(name = "objectCollectParamBeanArray", desc = "多条半结构化对象采集存储到hadoop存储信息实体合集的" +
-			"json数组字符串", isBean = true, range = "所有这个实体不能为空的字段的值必须有，为空则会抛异常")
+			"json数组字符串", range = "所有ObjectCollectParamBean这个实体不能为空的字段的值必须有，为空则会抛异常")
 	public void execute(Object_collect object_collect, String objectCollectParamBeanArray) {
 		//1.获取json数组转成ObjectCollectParamBean的集合
 		List<ObjectCollectParamBean> objectCollectParamBeanList = JSONArray.parseArray(objectCollectParamBeanArray,

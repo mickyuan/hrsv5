@@ -19,21 +19,29 @@ import static org.hamcrest.MatcherAssert.assertThat;
 @DocClass(desc = "CollTbConfStepAction单元测试类", author = "WangZhengcheng")
 public class InitAndDestDataForCollTb {
 
+	//测试数据用户ID
+	private static final long TEST_USER_ID = -9997L;
+	private static final long TEST_DEPT_ID = -9987L;
 	private static final long SYS_USER_TABLE_ID = 7001L;
 	private static final long CODE_INFO_TABLE_ID = 7002L;
 	private static final long AGENT_INFO_TABLE_ID = 7003L;
 	private static final long DATA_SOURCE_TABLE_ID = 7004L;
 	private static final long FIRST_DATABASESET_ID = 1001L;
 	private static final long BASE_SYS_USER_PRIMARY = 2000L;
-	private static final long FIRST_DB_AGENT_ID = 8001L;
-	private static final long SECOND_DB_AGENT_ID = 8002L;
-	private static final long TEST_USER_ID = -9997L;
+	private static final long FIRST_DB_AGENT_ID = 7001L;
+	private static final long SECOND_DB_AGENT_ID = 7002L;
 	private static final long FIRST_STORAGE_ID = 1234L;
 	private static final long SECOND_STORAGE_ID = 5678L;
 	private static final JSONObject tableCleanOrder = InitBaseData.initTableCleanOrder();
 	private static final JSONObject columnCleanOrder = InitBaseData.initColumnCleanOrder();
 
 	public static void before(){
+		//构造sys_user表测试数据
+		Sys_user user = InitBaseData.buildSysUserData();
+
+		//构造department_info表测试数据
+		Department_info departmentInfo = InitBaseData.buildDeptInfoData();
+
 		//3、构造data_source表测试数据
 		Data_source dataSource = InitBaseData.buildDataSourceData();
 
@@ -352,29 +360,42 @@ public class InitAndDestDataForCollTb {
 		codeInfoMerge.add(codeInfo);
 		//12、插入数据
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
+			//插入用户表(sys_user)测试数据
+			int userCount = user.add(db);
+			assertThat("用户表测试数据初始化", userCount, is(1));
+
+			//插入部门表(department_info)测试数据
+			int deptCount = departmentInfo.add(db);
+			assertThat("部门表测试数据初始化", deptCount, is(1));
+
 			//插入数据源表(data_source)测试数据
 			int dataSourceCount = dataSource.add(db);
 			assertThat("数据源测试数据初始化", dataSourceCount, is(1));
+
 			//插入Agent信息表(agent_info)测试数据
 			for(Agent_info agentInfo : agents){
 				agentInfo.add(db);
 			}
 			assertThat("Agent测试数据初始化", agents.size(), is(2));
+
 			//插入database_set表测试数据
 			for(Database_set databaseSet : databases){
 				databaseSet.add(db);
 			}
 			assertThat("数据库设置测试数据初始化", databases.size(), is(2));
+
 			//插入collect_job_classify表测试数据
 			for(Collect_job_classify classify : classifies){
 				classify.add(db);
 			}
 			assertThat("采集任务分类表测试数据初始化", classifies.size(), is(2));
+
 			//插入table_info测试数据
 			for(Table_info tableInfo : tableInfos){
 				tableInfo.add(db);
 			}
 			assertThat("数据库对应表测试数据初始化", tableInfos.size(), is(4));
+
 			//插入table_column测试数据
 			for(Table_column tableColumn : sysUsers){
 				tableColumn.add(db);
@@ -383,11 +404,13 @@ public class InitAndDestDataForCollTb {
 				tableColumn.add(db);
 			}
 			assertThat("表对应字段表测试数据初始化", sysUsers.size() + codeInfos.size(), is(15));
+
 			//插入table_storage_info测试数据
 			for(Table_storage_info storageInfo : tableStorageInfos){
 				storageInfo.add(db);
 			}
 			assertThat("表存储信息表测试数据初始化", tableStorageInfos.size(), is(2));
+
 			//插入table_clean测试数据
 			for(Table_clean tableClean : sysUserCleans){
 				tableClean.add(db);
@@ -396,6 +419,7 @@ public class InitAndDestDataForCollTb {
 				tableClean.add(db);
 			}
 			assertThat("表清洗参数信息表测试数据初始化", sysUserCleans.size() + codeInfoCleans.size(), is(4));
+
 			//插入column_merge测试数据
 			for(Column_merge columnMerge : sysUserMerge){
 				columnMerge.add(db);
@@ -404,12 +428,17 @@ public class InitAndDestDataForCollTb {
 				columnMerge.add(db);
 			}
 			assertThat("列合并信息表测试数据初始化", sysUserMerge.size() + codeInfoMerge.size(), is(3));
+
 			SqlOperator.commitTransaction(db);
 		}
 	}
 
 	public static void after(){
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
+			//删除用户表(sys_user)测试数据
+			SqlOperator.execute(db, "delete from " + Sys_user.TableName + " WHERE user_id = ?", TEST_USER_ID);
+			//删除部门表(department_info)测试数据
+			SqlOperator.execute(db, "delete from " + Department_info.TableName + " WHERE dep_id = ?", TEST_DEPT_ID);
 			//1、删除数据源表(data_source)测试数据
 			SqlOperator.execute(db, "delete from " + Data_source.TableName + " WHERE create_user_id = ?", TEST_USER_ID);
 			//2、删除Agent信息表(agent_info)测试数据

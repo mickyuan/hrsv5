@@ -16,9 +16,9 @@ public class AgentActionUtil {
 	//所有操作方法的集合，新添加的方法必须放到集合中
 	private static final List<String> list;
 	//获取Agent服务器基本信息：用户名称、操作系统名称、日期、时间
-	public static final String GETSERVERINFO = "/hrds/agent/trans/biz/AgentServer/getServerInfo";
+	public static final String GETSERVERINFO = "/hrds/agent/trans/biz/agentServer/getServerInfo";
 	//获取Agent指定目录下的文件及文件夹
-	public static final String GETSYSTEMFILEINFO = "/hrds/agent/trans/biz/AgentServer/getSystemFileInfo";
+	public static final String GETSYSTEMFILEINFO = "/hrds/agent/trans/biz/agentServer/getSystemFileInfo";
 	//测试Agent是否可以连接某个指定的数据库
 	public static final String TESTCONNECTION = "/hrds/agent/trans/biz/testConn";
 

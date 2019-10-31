@@ -2,20 +2,16 @@ package hrds.b.biz.dataquery;
 
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
-import fd.ng.core.annotation.Param;
-import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
-import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import hrds.commons.codes.AgentType;
 import hrds.commons.codes.CollectType;
 import hrds.commons.codes.FileType;
 import hrds.commons.entity.*;
-import hrds.commons.exception.BusinessException;
 import hrds.testbase.WebBaseTestCase;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -613,7 +609,9 @@ public class DataQueryActionTest extends WebBaseTestCase {
 					"1-6.数据源id，任务id和开始时间查询" +
 					"1-7.数据源id，任务id和结束时间查询" +
 					"1-8.数据源id，任务id，开始时间和结束时间查询" +
-					"2.错误的数据访问：")
+					"2.错误的数据访问" +
+					"2-1.数据源id不存在" +
+					"2-2.数据源id存在,任务id不存在")
 	@Test
 	public void getConditionalQuery() {
 		//1-1.无条件查询
@@ -624,6 +622,67 @@ public class DataQueryActionTest extends WebBaseTestCase {
 		//1-2.根据数据源id查询
 		bodyString = new HttpClient()
 				.addData("sourceId", SOURCE_ID)
+				.post(getActionUrl("getConditionalQuery")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
+		assertThat(ar.isSuccess(), is(true));
+		//1-3.数据源id和任务id查询
+		bodyString = new HttpClient()
+				.addData("sourceId", SOURCE_ID)
+				.addData("fcsId", FCS_ID)
+				.post(getActionUrl("getConditionalQuery")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
+		assertThat(ar.isSuccess(), is(true));
+		//1-4.数据源id和开始时间查询
+		bodyString = new HttpClient()
+				.addData("sourceId", SOURCE_ID)
+				.addData("startDate", "20190101")
+				.post(getActionUrl("getConditionalQuery")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
+		assertThat(ar.isSuccess(), is(true));
+		//1-5.数据源id和结束时间查询
+		bodyString = new HttpClient()
+				.addData("sourceId", SOURCE_ID)
+				.addData("endDate", "99991231")
+				.post(getActionUrl("getConditionalQuery")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
+		assertThat(ar.isSuccess(), is(true));
+		//1-6.数据源id，任务id和开始时间查询
+		bodyString = new HttpClient()
+				.addData("sourceId", SOURCE_ID)
+				.addData("fcsId", FCS_ID)
+				.addData("startDate", "20190101")
+				.post(getActionUrl("getConditionalQuery")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
+		assertThat(ar.isSuccess(), is(true));
+		//1-7.数据源id，任务id和开始时间查询
+		bodyString = new HttpClient()
+				.addData("sourceId", SOURCE_ID)
+				.addData("fcsId", FCS_ID)
+				.addData("endDate", "99991231")
+				.post(getActionUrl("getConditionalQuery")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
+		assertThat(ar.isSuccess(), is(true));
+		//1-8.数据源id，任务id，开始时间和结束时间查询
+		bodyString = new HttpClient()
+				.addData("sourceId", SOURCE_ID)
+				.addData("fcsId", FCS_ID)
+				.addData("startDate", "20190101")
+				.addData("endDate", "99991231")
+				.post(getActionUrl("getConditionalQuery")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
+		assertThat(ar.isSuccess(), is(true));
+		//2.错误数据访问
+		//2-1.数据源id不存在
+		//数据源id不存在
+		bodyString = new HttpClient()
+				.addData("sourceId", -SOURCE_ID)
+				.post(getActionUrl("getConditionalQuery")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
+		assertThat(ar.isSuccess(), is(true));
+		//2-2.数据源id存在,任务id不存在
+		bodyString = new HttpClient()
+				.addData("sourceId", SOURCE_ID)
+				.addData("fcsId", -FCS_ID)
 				.post(getActionUrl("getConditionalQuery")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
 		assertThat(ar.isSuccess(), is(true));

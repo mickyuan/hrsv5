@@ -32,11 +32,22 @@ import java.util.Map;
 public class AgentListAction extends BaseAction {
 
 	@Method(desc = "获取数据源Agent列表信息", logicStep = "1、获取用户ID并根据用户ID去数据库中查询数据源信息")
-	@Return(desc = "数据源信息查询结果集", range = "不会为null")
+	@Return(desc = "数据源信息查询结果集", range = "不会为null" +
+			"如果该数据源下面有相应的Agent，则XXXFlag值为true,否则为false")
 	public Result getAgentInfoList() {
 		//1、获取用户ID并根据用户ID去数据库中查询数据源信息
-		return Dbo.queryResult("select datas.source_id,datasource_name from " + Data_source.TableName
-				+ " datas " + "where datas.create_user_id = ?", getUserId());
+		return Dbo.queryResult("select ds.source_id, ds.datasource_name, " +
+				" sum(case ai.agent_type when ? then 1 else 0 end) as dbflag, " +
+				" sum(case ai.agent_type when ? then 1 else 0 end) as dfflag, " +
+				" sum(case ai.agent_type when ? then 1 else 0 end) as nonstructflag," +
+				" sum(case ai.agent_type when ? then 1 else 0 end) as halfstructflag," +
+				" sum(case ai.agent_type when ? then 1 else 0 end) as ftpflag" +
+				" from " + Data_source.TableName + " ds " +
+				" left join " + Agent_info.TableName + " ai " +
+				" on ds.source_id = ai.source_id" +
+				" where ds.create_user_id = ?" +
+				" group by ds.source_id; ", AgentType.ShuJuKu.getCode(), AgentType.DBWenJian.getCode(),
+				AgentType.WenJianXiTong.getCode(), AgentType.DuiXiang.getCode(), AgentType.FTP.getCode(), getUserId());
 		//数据可访问权限处理方式
 		//以上SQL中，通过当前用户ID进行关联查询，达到了数据权限的限制
 	}

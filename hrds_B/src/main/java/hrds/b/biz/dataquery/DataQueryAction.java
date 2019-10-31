@@ -23,7 +23,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.*;
 
-@DocClass(desc = "Web服务查询数据界面后台处理类", author = "BY-HLL", createdate ="2019/9/3 0003 下午 03:26")
+@DocClass(desc = "Web服务查询数据界面后台处理类", author = "BY-HLL", createdate = "2019/9/3 0003 下午 03:26")
 public class DataQueryAction extends BaseAction {
 
 	@Method(desc = "获取部门的包含文件采集任务的数据源信息",
@@ -256,8 +256,8 @@ public class DataQueryAction extends BaseAction {
 	@Return(desc = "存放统计结果的集合", range = "无限制")
 	public Map<String, Object> getSevenDayCollectFileSum(int queryDays) {
 		//1.如果查询天数数小于1条则显示默认7天，查询条数大于30天则显示30天，否则取传入的查询天数
-		queryDays = Math.max(1, queryDays);
-		queryDays = Math.min(queryDays, 30);
+		queryDays = Math.max(7, queryDays);
+		queryDays = Math.min(queryDays, 7);
 		//2.根据登录用户的id获取用户最近7天的文件采集信息
 		List<Map<String, Object>> scfList = Dbo.queryList("select count(1) count,storage_date" +
 						" from " + Source_file_attribute.TableName + " sfa join" +
@@ -288,12 +288,12 @@ public class DataQueryAction extends BaseAction {
 					"2.根据登录用户的id获取用户最近3次的文件采集信息" +
 					"3.根据查询结果设置返回的map结果集"
 	)
-	@Param(name = "timesRecently", desc = "查询最近采集的次数", range = "int类型值 1-30 默认为7", valueIfNull = "7")
+	@Param(name = "timesRecently", desc = "查询最近采集的次数", range = "int类型值 1-30 默认为3", valueIfNull = "3")
 	@Return(desc = "存放统计结果的集合", range = "无限制")
 	public List<Map<String, Object>> getLast3FileCollections(int timesRecently) {
 		//1.如果查询最近次数小于1则显示默认最近3次，查询最近次数大于30天则显示最近30次，否则取传入的查询次数
-		timesRecently = Math.max(1, timesRecently);
-		timesRecently = Math.min(timesRecently, 30);
+		timesRecently = Math.max(3, timesRecently);
+		timesRecently = Math.min(timesRecently, 3);
 		//2.根据登录用户的id获取用户最近3次的文件采集信息
 		List<Map<String, Object>> l3fcList = Dbo.queryList("select storage_date, storage_time," +
 						" max(concat(storage_date,storage_time)) max_date, count(1) count," +
@@ -335,11 +335,11 @@ public class DataQueryAction extends BaseAction {
 					"4.设置文件申请统计汇总" +
 					"5.设置文件属性信息"
 	)
-	@Param(name = "sourceId", desc = "数据源id", range = "long类型值，10位长度")
-	@Param(name = "fcsId", desc = "采集任务id", range = "long类型值，10位长度")
-	@Param(name = "fileType", desc = "文件采集类型", range = "文件类型代码值")
-	@Param(name = "startDate", desc = "查询开始日期", range = "日期格式 yyyy-mm-dd")
-	@Param(name = "endDate", desc = "查询结束日期", range = "日期格式 yyyy-mm-dd")
+	@Param(name = "sourceId", desc = "数据源id", range = "long类型值，10位长度", nullable = true)
+	@Param(name = "fcsId", desc = "采集任务id", range = "long类型值，10位长度", nullable = true)
+	@Param(name = "fileType", desc = "文件采集类型", range = "文件类型代码值", nullable = true)
+	@Param(name = "startDate", desc = "查询开始日期", range = "日期格式 yyyy-mm-dd", nullable = true)
+	@Param(name = "endDate", desc = "查询结束日期", range = "日期格式 yyyy-mm-dd", nullable = true)
 	@Return(desc = "存放自定义查询结果的数据集合", range = "无限制")
 	public Map<String, Object> getConditionalQuery(String sourceId, String fcsId, String fileType, String startDate,
 	                                               String endDate) {

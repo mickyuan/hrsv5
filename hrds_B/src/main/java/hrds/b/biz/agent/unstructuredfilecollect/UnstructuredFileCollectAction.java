@@ -124,8 +124,9 @@ public class UnstructuredFileCollectAction extends BaseAction {
 			logicStep = "1.根据前端传过来的agent_id获取需要访问的url" +
 					"2.调用远程Agent后端代码获取Agent服务器上文件夹路径" +
 					"3.返回到前端")
-	@Param(name = "agent_id", desc = "文件采集Agent的id", range = "不能为空", valueIfNull = "")
-	@Param(name = "path", desc = "选择Agent服务器所在路径下的文件夹，为空则返回根目录下的所有文件夹", range = "可为空")
+	@Param(name = "agent_id", desc = "文件采集Agent的id", range = "不能为空")
+	@Param(name = "path", desc = "选择Agent服务器所在路径下的文件夹，为空则返回根目录下的所有文件夹",
+			valueIfNull = "", range = "可为空")
 	@Return(desc = "路径下文件夹的名称和服务器操作系统的名称的集合", range = "可能为空")
 	//XXX 这里不用nullable是不想下面传参数那里判断null
 	public List<String> selectPath(long agent_id, String path) {

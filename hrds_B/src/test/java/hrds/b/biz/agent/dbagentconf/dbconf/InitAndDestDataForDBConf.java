@@ -4,10 +4,7 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
 import hrds.b.biz.agent.dbagentconf.InitBaseData;
-import hrds.commons.entity.Agent_info;
-import hrds.commons.entity.Collect_job_classify;
-import hrds.commons.entity.Data_source;
-import hrds.commons.entity.Database_set;
+import hrds.commons.entity.*;
 
 import java.util.List;
 
@@ -18,11 +15,18 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class InitAndDestDataForDBConf {
 	//测试数据用户ID
 	private static final long TEST_USER_ID = -9997L;
+	private static final long TEST_DEPT_ID = -9987L;
 	private static final long FIRST_DB_AGENT_ID = 7001L;
 	private static final long SECOND_DB_AGENT_ID = 7002L;
 	private static final long THIRD_CLASSIFY_ID = 12306L;
 
 	public static void before(){
+		//构造sys_user表测试数据
+		Sys_user user = InitBaseData.buildSysUserData();
+
+		//构造department_info表测试数据
+		Department_info departmentInfo = InitBaseData.buildDeptInfoData();
+
 		//1、构建data_source表测试数据
 		Data_source dataSource = InitBaseData.buildDataSourceData();
 
@@ -44,6 +48,14 @@ public class InitAndDestDataForDBConf {
 
 		//插入数据
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
+			//插入用户表(sys_user)测试数据
+			int userCount = user.add(db);
+			assertThat("用户表测试数据初始化", userCount, is(1));
+
+			//插入部门表(department_info)测试数据
+			int deptCount = departmentInfo.add(db);
+			assertThat("部门表测试数据初始化", deptCount, is(1));
+
 			//插入数据源表(data_source)测试数据
 			int dataSourceCount = dataSource.add(db);
 			assertThat("数据源测试数据初始化", dataSourceCount, is(1));
@@ -68,39 +80,26 @@ public class InitAndDestDataForDBConf {
 
 			SqlOperator.commitTransaction(db);
 		}
+
 	}
 
 	public static void after(){
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
+			//删除用户表(sys_user)测试数据
+			SqlOperator.execute(db, "delete from " + Sys_user.TableName + " WHERE user_id = ?", TEST_USER_ID);
+			//删除部门表(department_info)测试数据
+			SqlOperator.execute(db, "delete from " + Department_info.TableName + " WHERE dep_id = ?", TEST_DEPT_ID);
 			//1、删除数据源表(data_source)测试数据
-			int deleteSourceNum = SqlOperator.execute(db, "delete from " + Data_source.TableName + " WHERE create_user_id = ?", TEST_USER_ID);
+			SqlOperator.execute(db, "delete from " + Data_source.TableName + " WHERE create_user_id = ?", TEST_USER_ID);
 			//2、删除Agent信息表(agent_info)测试数据
-			int deleteAgentNum = SqlOperator.execute(db, "delete from " + Agent_info.TableName + " WHERE user_id = ?", TEST_USER_ID);
+			SqlOperator.execute(db, "delete from " + Agent_info.TableName + " WHERE user_id = ?", TEST_USER_ID);
 			//3、删除database_set表测试数据
-			int deleteDsNumOne = SqlOperator.execute(db, "delete from " + Database_set.TableName + " WHERE agent_id = ?", FIRST_DB_AGENT_ID);
-			int deleteDsNumTwo = SqlOperator.execute(db, "delete from " + Database_set.TableName + " WHERE agent_id = ?", SECOND_DB_AGENT_ID);
+			SqlOperator.execute(db, "delete from " + Database_set.TableName + " WHERE agent_id = ?", FIRST_DB_AGENT_ID);
+			SqlOperator.execute(db, "delete from " + Database_set.TableName + " WHERE agent_id = ?", SECOND_DB_AGENT_ID);
 			//4、删除collect_job_classify表测试数据
-			int deleteCJCNum = SqlOperator.execute(db, "delete from " + Collect_job_classify.TableName + " WHERE user_id = ?", TEST_USER_ID);
+			SqlOperator.execute(db, "delete from " + Collect_job_classify.TableName + " WHERE user_id = ?", TEST_USER_ID);
 
 			SqlOperator.commitTransaction(db);
-
-			long dataSources = SqlOperator.queryNumber(db, "select count(1) from " + Data_source.TableName + " WHERE create_user_id = ?", TEST_USER_ID)
-					.orElseThrow(() -> new RuntimeException("count fail!"));
-			assertThat("测试完成后删除的数据源数据有:" + deleteSourceNum + "条", dataSources, is(0L));
-
-			long agents = SqlOperator.queryNumber(db, "select count(1) from " + Agent_info.TableName + " WHERE user_id = ?", TEST_USER_ID)
-					.orElseThrow(() -> new RuntimeException("count fail!"));
-			assertThat("测试完成后删除的Agent数据有:" + deleteAgentNum + "条", agents, is(0L));
-
-			long dataSourceSetsOne = SqlOperator.queryNumber(db, "select count(1) from " + Database_set.TableName + " WHERE agent_id = ?", FIRST_DB_AGENT_ID)
-					.orElseThrow(() -> new RuntimeException("count fail!"));
-			long dataSourceSetsTwo = SqlOperator.queryNumber(db, "select count(1) from " + Database_set.TableName + " WHERE agent_id = ?", SECOND_DB_AGENT_ID)
-					.orElseThrow(() -> new RuntimeException("count fail!"));
-			assertThat("测试完成后删除的数据库设置表数据有:" + (deleteDsNumOne + deleteDsNumTwo) + "条", dataSourceSetsOne + dataSourceSetsTwo, is(0L));
-
-			long collectJobClassifyNum = SqlOperator.queryNumber(db, "select count(1) from " + Collect_job_classify.TableName + " WHERE user_id = ?", TEST_USER_ID)
-					.orElseThrow(() -> new RuntimeException("count fail!"));
-			assertThat("测试完成后删除的采集作业分类表数据有:" + deleteCJCNum + "条", collectJobClassifyNum, is(0L));
 		}
 	}
 }

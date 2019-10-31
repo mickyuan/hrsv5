@@ -3,6 +3,7 @@ package hrds.b.biz.agent.dbagentconf.cleanconf;
 import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.utils.DateUtil;
+import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
 import hrds.b.biz.agent.dbagentconf.InitBaseData;
@@ -22,6 +23,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
  * */
 public class InitAndDestDataForCleanConf {
 
+	//测试数据用户ID
+	private static final long TEST_USER_ID = -9997L;
+	private static final long TEST_DEPT_ID = -9987L;
 	private static final long SYS_USER_TABLE_ID = 7001L;
 	private static final long CODE_INFO_TABLE_ID = 7002L;
 	private static final long AGENT_INFO_TABLE_ID = 7003L;
@@ -30,7 +34,6 @@ public class InitAndDestDataForCleanConf {
 	private static final long BASE_SYS_USER_PRIMARY = 2000L;
 	private static final long FIRST_DB_AGENT_ID = 7001L;
 	private static final long SECOND_DB_AGENT_ID = 7002L;
-	private static final long TEST_USER_ID = -9997L;
 	private static final long UNEXPECTED_ID = 999999999L;
 	private static final String PRE_COMPLE_FLAG = "1";
 	private static final String POST_COMPLE_FLAG = "2";
@@ -38,6 +41,12 @@ public class InitAndDestDataForCleanConf {
 	private static final JSONObject columnCleanOrder = InitBaseData.initColumnCleanOrder();
 
 	public static void before(){
+		//构造sys_user表测试数据
+		Sys_user user = InitBaseData.buildSysUserData();
+
+		//构造department_info表测试数据
+		Department_info departmentInfo = InitBaseData.buildDeptInfoData();
+
 		//3、构造data_source表测试数据
 		Data_source dataSource = InitBaseData.buildDataSourceData();
 
@@ -215,7 +224,7 @@ public class InitAndDestDataForCleanConf {
 			sysUserColumn.setValid_s_date(DateUtil.getSysDate());
 			sysUserColumn.setValid_e_date(Constant.MAXDATE);
 			sysUserColumn.setIs_alive(IsFlag.Shi.getCode());
-			sysUserColumn.setIs_new(IsFlag.Shi.getCode());
+			sysUserColumn.setIs_new(IsFlag.Fou.getCode());
 			sysUserColumn.setTc_or(columnCleanOrder.toJSONString());
 			sysUserColumn.setRemark(remark);
 
@@ -241,7 +250,7 @@ public class InitAndDestDataForCleanConf {
 					compleType = PRE_COMPLE_FLAG;
 					cleanType = CleanType.ZiFuBuQi.getCode();
 					tableId = SYS_USER_TABLE_ID;
-					compleChar = "wzc";
+					compleChar = StringUtil.string2Unicode("wzc");
 					length = 3L;
 					oriField = "";
 					newField = "";
@@ -253,8 +262,8 @@ public class InitAndDestDataForCleanConf {
 					tableId = SYS_USER_TABLE_ID;
 					compleChar = "";
 					length = 0;
-					oriField = "wzc";
-					newField = "wqp";
+					oriField = StringUtil.string2Unicode("wzc");
+					newField = StringUtil.string2Unicode("wqp");
 					break;
 				default:
 					tbCleanId = UNEXPECTED_ID;
@@ -286,7 +295,7 @@ public class InitAndDestDataForCleanConf {
 			long colCleanId = i % 2 == 0 ? 22222L : 33333L;
 			String cleanType = CleanType.ZiFuBuQi.getCode();
 			String compleType = i % 2 == 0 ? PRE_COMPLE_FLAG : POST_COMPLE_FLAG;
-			String compleChar = i % 2 == 0 ? "wzc" : " ";
+			String compleChar = i % 2 == 0 ? StringUtil.string2Unicode("wzc") : StringUtil.string2Unicode(" ");
 			long length = i % 2 == 0 ? 3 : 1;
 			long columnId = i % 2 == 0 ? 2002L : 2003L;
 
@@ -306,13 +315,13 @@ public class InitAndDestDataForCleanConf {
 		replace.setCol_clean_id(555555L);
 		replace.setColumn_id(2005L);
 		replace.setClean_type(CleanType.ZiFuTiHuan.getCode());
-		replace.setField("ceshi");
-		replace.setReplace_feild("test");
+		replace.setField(StringUtil.string2Unicode("ceshi"));
+		replace.setReplace_feild(StringUtil.string2Unicode("test"));
 
 		//12、column_clean表测试数据，给login_date设置日期格式化
 		Column_clean dateFormat = new Column_clean();
 		dateFormat.setCol_clean_id(999999L);
-		dateFormat.setColumn_id(2010L);
+		dateFormat.setColumn_id(2011L);
 		dateFormat.setClean_type(CleanType.ShiJianZhuanHuan.getCode());
 		dateFormat.setOld_format("YYYY-MM-DD");
 		dateFormat.setConvert_format("YYYY-MM");
@@ -344,14 +353,14 @@ public class InitAndDestDataForCleanConf {
 					complChar = "cleanparameter";
 					compLength = 14;
 					complType = "1";
-					oriField = "";
-					newField = "";
+					oriField = StringUtil.string2Unicode("qwer");
+					newField = StringUtil.string2Unicode("asdf");
 					break;
 				case 1:
 					complChar = "";
 					compLength = 0;
-					oriField = "test_orifield";
-					newField = "test_newField";
+					oriField = StringUtil.string2Unicode("test_orifield");
+					newField = StringUtil.string2Unicode("test_newField");
 					break;
 				default:
 					complChar = "unexpected_complChar";
@@ -377,9 +386,9 @@ public class InitAndDestDataForCleanConf {
 		for(int i = 0; i < 2; i++){
 			long colSplitId = i % 2 == 0 ? 1111111L : 2222222L;
 			String offset = i % 2 == 0 ? "3" : "0";
-			String columnName = i % 2 == 0 ? "ci_s" : "p_name";
+			String columnName = i % 2 == 0 ? "ci_sp" : "_name";
 			String spiltType = "1";
-			String columnChName = i % 2 == 0 ? "ci_s_ch" : "p_name_ch";
+			String columnChName = i % 2 == 0 ? "ci_sp_ch" : "_name_ch";
 			String columnType = "varchar(512)";
 			long colCleanId = 101010101L;
 			long columnId = 3004L;
@@ -451,8 +460,8 @@ public class InitAndDestDataForCleanConf {
 		List<Table_column> splitOne = new ArrayList<>();
 		for(int i = 0; i < 2; i++){
 			long columnId = i % 2 == 0 ? 121212L : 232323L;
-			String columnName = i % 2 == 0 ? "ci_s" : "p_name";
-			String columnChName = i % 2 == 0 ? "ci_s_ch" : "p_name_ch";
+			String columnName = i % 2 == 0 ? "ci_sp" : "_name";
+			String columnChName = i % 2 == 0 ? "ci_sp_ch" : "_name_ch";
 
 			Table_column tableColumn = new Table_column();
 			tableColumn.setTable_id(CODE_INFO_TABLE_ID);
@@ -531,6 +540,14 @@ public class InitAndDestDataForCleanConf {
 
 		//插入数据
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
+			//插入用户表(sys_user)测试数据
+			int userCount = user.add(db);
+			assertThat("用户表测试数据初始化", userCount, is(1));
+
+			//插入部门表(department_info)测试数据
+			int deptCount = departmentInfo.add(db);
+			assertThat("部门表测试数据初始化", deptCount, is(1));
+
 			//插入数据源表(data_source)测试数据
 			int dataSourceCount = dataSource.add(db);
 			assertThat("数据源测试数据初始化", dataSourceCount, is(1));
@@ -649,6 +666,10 @@ public class InitAndDestDataForCleanConf {
 
 	public static void after(){
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
+			//删除用户表(sys_user)测试数据
+			SqlOperator.execute(db, "delete from " + Sys_user.TableName + " WHERE user_id = ?", TEST_USER_ID);
+			//删除部门表(department_info)测试数据
+			SqlOperator.execute(db, "delete from " + Department_info.TableName + " WHERE dep_id = ?", TEST_DEPT_ID);
 			//1、删除数据源表(data_source)测试数据
 			SqlOperator.execute(db, "delete from " + Data_source.TableName + " WHERE create_user_id = ?", TEST_USER_ID);
 			//2、删除Agent信息表(agent_info)测试数据
