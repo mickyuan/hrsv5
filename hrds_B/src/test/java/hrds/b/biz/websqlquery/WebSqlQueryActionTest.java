@@ -37,6 +37,8 @@ public class WebSqlQueryActionTest extends WebBaseTestCase {
 	private static final long DATA_MART_ID = 5000000000L;
 	//集市数据表id
 	private static final long DATATABLE_ID = 5000000000L;
+	//FILE_ID
+	private static final String FILE_ID = "5000000000";
 
 	private static String bodyString;
 	private static ActionResult ar;
@@ -49,6 +51,7 @@ public class WebSqlQueryActionTest extends WebBaseTestCase {
 					"1-4.初始化 Database_set 数据" +
 					"1-5.初始化 Data_mart_info 数据" +
 					"1-6.初始化 Datatable_info 数据" +
+					"1-7.初始化 Source_file_attribute 数据" +
 					"2.模拟登陆" +
 					"2-1.初始化模拟登陆了数据" +
 					"2-1-1.初始化模拟登陆用户" +
@@ -103,7 +106,7 @@ public class WebSqlQueryActionTest extends WebBaseTestCase {
 			databaseSet.setDatabase_id(DATABASE_ID + 1);
 			databaseSet.setAgent_id(AGENT_ID + 1);
 			databaseSet.setHost_name("数据库采集任务测试init-hll");
-			databaseSet.setDatabase_number("数据库设置编号");
+			databaseSet.setDatabase_number("数据库设置编号1");
 			databaseSet.setSystem_type("00");
 			databaseSet.setTask_name("数据库采集任务测试init-hll");
 			databaseSet.setDatabase_name("postgres");
@@ -131,7 +134,7 @@ public class WebSqlQueryActionTest extends WebBaseTestCase {
 			databaseSet.setDatabase_id(DATABASE_ID + 2);
 			databaseSet.setAgent_id(AGENT_ID + 2);
 			databaseSet.setHost_name("DB文件采集任务测试init-hll");
-			databaseSet.setDatabase_number("数据库设置编号");
+			databaseSet.setDatabase_number("数据库设置编号2");
 			databaseSet.setSystem_type("01");
 			databaseSet.setTask_name("DB文件采集任务测试init-hll");
 			databaseSet.setDatabase_name("postgres");
@@ -208,7 +211,34 @@ public class WebSqlQueryActionTest extends WebBaseTestCase {
 			datatableInfo.setExfile_success("0");
 			datatableInfo.setRemark("0");
 			datatableInfo.add(db);
+			//1-7.初始化 Source_file_attribute 数据
+			Source_file_attribute sourceFileAttribute = new Source_file_attribute();
+			sourceFileAttribute.setFile_id(FILE_ID);
+			sourceFileAttribute.setIs_in_hbase("0");
+			sourceFileAttribute.setSeqencing(1L);
+			sourceFileAttribute.setCollect_type("0");
+			sourceFileAttribute.setOriginal_name("原始文件名或表中文名称");
+			sourceFileAttribute.setOriginal_update_date(DateUtil.getSysDate());
+			sourceFileAttribute.setOriginal_update_time(DateUtil.getSysTime());
+			sourceFileAttribute.setTable_name("采集的原始表名");
+			sourceFileAttribute.setHbase_name("系统内对应表名");
+			sourceFileAttribute.setMeta_info("META元信息");
+			sourceFileAttribute.setStorage_date(DateUtil.getSysDate());
+			sourceFileAttribute.setStorage_time(DateUtil.getSysTime());
+			sourceFileAttribute.setFile_size("1");
+			sourceFileAttribute.setFile_type("文件类型");
+			sourceFileAttribute.setFile_suffix("文件后缀");
+			sourceFileAttribute.setFile_md5("MD5");
 
+			sourceFileAttribute.setFile_avro_path("所在avro文件地址");
+			sourceFileAttribute.setFile_avro_block(1024L);
+			sourceFileAttribute.setIs_big_file("0");
+			sourceFileAttribute.setIs_cache("0");
+			sourceFileAttribute.setFolder_id(10L);
+			sourceFileAttribute.setAgent_id(AGENT_ID);
+			sourceFileAttribute.setSource_id(SOURCE_ID);
+			sourceFileAttribute.setCollect_set_id(DATABASE_ID + 1);
+			sourceFileAttribute.add(db);
 			//2.模拟登陆
 			//2-1.初始化模拟登陆数据
 			//2-1-1.初始化模拟登陆用户
@@ -339,7 +369,16 @@ public class WebSqlQueryActionTest extends WebBaseTestCase {
 					"select count(1) from " + Datatable_info.TableName + " where datatable_id =?",
 					DATATABLE_ID
 			).orElseThrow(() -> new RuntimeException("count fail!"));
-			assertThat("Data_mart_info 表此条数据删除后,记录数应该为0", dtNum, is(0L));
+			assertThat("Datatable_info 表此条数据删除后,记录数应该为0", dtNum, is(0L));
+			//1-9.删除 Source_file_attribute 数据
+			SqlOperator.execute(db,
+					"delete from " + Source_file_attribute.TableName + " where file_id=?", FILE_ID);
+			SqlOperator.commitTransaction(db);
+			long sfaNum = SqlOperator.queryNumber(db,
+					"select count(1) from " + Source_file_attribute.TableName + " where file_id =?",
+					FILE_ID
+			).orElseThrow(() -> new RuntimeException("count fail!"));
+			assertThat("Source_file_attribute 表此条数据删除后,记录数应该为0", dtNum, is(0L));
 		}
 	}
 
@@ -393,6 +432,28 @@ public class WebSqlQueryActionTest extends WebBaseTestCase {
 				assertThat(marketTables.get(i1).get("datatable_en_name"), is("sjb_init_hll"));
 				assertThat(marketTables.get(i1).get("datatable_cn_name"), is("数据表中文名称"));
 			}
+		}
+	}
+
+	@Method(desc = "根据数据库设置id获取表信息",
+			logicStep = "1.正确数据访问" +
+					"1-1.集市任务id存在" +
+					"2.错误数据访问" +
+					"2-1.集市任务id不存在")
+	@Test
+	public void getTableInfoByCollectSetId() {
+		//1.正确数据访问
+		//1-1.集市任务id存在
+		bodyString = new HttpClient()
+				.addData("collect_set_id", DATABASE_ID + 1)
+				.post(getActionUrl("getTableInfoByCollectSetId")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
+		assertThat(ar.isSuccess(), is(true));
+		for (int i = 0; i < ar.getDataForEntityList(Source_file_attribute.class).size(); i++) {
+			assertThat(ar.getDataForEntityList(Source_file_attribute.class).get(i).getFile_id(), is(FILE_ID));
+			assertThat(ar.getDataForEntityList(Source_file_attribute.class).get(i).getAgent_id(), is(AGENT_ID));
+			assertThat(ar.getDataForEntityList(Source_file_attribute.class).get(i).getSource_id(), is(SOURCE_ID));
+			assertThat(ar.getDataForEntityList(Source_file_attribute.class).get(i).getCollect_set_id(), is(DATABASE_ID + 1));
 		}
 
 	}

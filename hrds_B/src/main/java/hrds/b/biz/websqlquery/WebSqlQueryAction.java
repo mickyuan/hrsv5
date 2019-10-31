@@ -32,6 +32,7 @@ public class WebSqlQueryAction extends BaseAction {
 					"3-2.获取数据库采集任务信息")
 	@Return(desc = "登录用户部门的数据源所有任务信息", range = "无限制")
 	public Result getCollectionTaskInfo() {
+		//数据权限验证: 根据登录用户所在部门进行数据验证
 		//1.获取当前用户所在部门的所有数据源信息
 		Result dataSourceRs = Dbo.queryResult("SELECT ds.SOURCE_ID, ds.DATASOURCE_NAME from source_relation_dep srd" +
 				" JOIN data_source ds on srd.SOURCE_ID = ds.SOURCE_ID where srd.dep_id = ?", getUser().getDepId());
@@ -85,7 +86,7 @@ public class WebSqlQueryAction extends BaseAction {
 			dataTableInfo.setData_mart_id(dataMarketInfoRs.getString(i, "data_mart_id"));
 			asmSql.addSql("SELECT * from datatable_info where data_mart_id = ? ");
 			asmSql.addParam(dataTableInfo.getData_mart_id());
-			asmSql.addSql(" and datatable_due_date >=");
+			asmSql.addSql(" and datatable_due_date >=?");
 			asmSql.addParam(dataTableInfo.getDatatable_due_date());
 			marketTables = Dbo.queryResult(asmSql.sql(), asmSql.params());
 			dataMarketInfoRs.setObject(i, "marketTables", marketTables.toList());
@@ -93,13 +94,12 @@ public class WebSqlQueryAction extends BaseAction {
 		return dataMarketInfoRs;
 	}
 
-	@Method(desc = "根据获取集市任务的表名",
-			logicStep = "1.根据设置的采集任务获取任务下所有表名" +
-					"2.设置表名集合")
+	@Method(desc = "根据数据库设置id获取表信息",
+			logicStep = "1.根据数据库设置id获取表信息")
 	@Param(name = "collect_set_id", desc = "数据库设置id", range = "Integer类型，长度为10")
-	@Return(desc = "登录用户部门下所有集市数据表信息", range = "无限制")
-	public Result getTableNameByCollectSetId(long collect_set_id) {
-		//1.根据设置的采集任务获取任务下所有表名
+	@Return(desc = "集市数据表信息", range = "无限制")
+	public Result getTableInfoByCollectSetId(long collect_set_id) {
+		//1.根据数据库设置id获取表信息
 		return Dbo.queryResult("SELECT * FROM source_file_attribute WHERE COLLECT_SET_ID = ?",
 				collect_set_id);
 	}
