@@ -13,7 +13,7 @@ import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import hrds.b.biz.agent.bean.ColumnCleanParam;
 import hrds.b.biz.agent.bean.TableCleanParam;
-import hrds.b.biz.agent.dbagentconf.InitBaseData;
+import hrds.b.biz.agent.dbagentconf.BaseInitData;
 import hrds.commons.codes.CleanType;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.*;
@@ -99,7 +99,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	public void before(){
 		InitAndDestDataForCleanConf.before();
 		//模拟登陆
-		ActionResult actionResult = InitBaseData.simulatedLogin();
+		ActionResult actionResult = BaseInitData.simulatedLogin();
 		assertThat("模拟登陆", actionResult.isSuccess(), is(true));
 	}
 
@@ -1782,6 +1782,8 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 * 正确数据访问1：columnId为2002L，之前设置了字符补齐，但是保存的时候取消了字符补齐的勾选，同时做首尾去空
 	 * 正确数据访问2：columnId为2005L，之前设置了字符替换，但是保存的时候取消了字符替换的勾选，同时做首尾去空
 	 * 正确数据访问3：columnId为2011L，之前设置了日期格式化，但是保存的时候取消了日期格式化的勾选，同时做首尾去空
+	 * 正确数据访问4：columnId为3003L，之前设置了列拆分，但是保存的时候取消了列拆分的勾选，同时做首尾去空
+	 *
 	 * 错误的测试用例未达到三组:上面三组测试用例是结合初始化数据进行的，比较有代表性的。
 	 * @Param: 无
 	 * @return: 无
@@ -1888,6 +1890,73 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 			long afterFormatCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ? ", 2011L, CleanType.ShiJianZhuanHuan.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
 			long afterTrimCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ? ", 2011L, CleanType.ZiFuTrim.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
 			assertThat("在执行测试用例<正确数据访问3>之后，数据库中的数据符合预期", afterFormatCount == 0 && afterTrimCount == 1, is(true));
+		}
+
+		//正确数据访问4：columnId为3003L，之前设置了列拆分，但是保存的时候取消了列拆分的勾选，同时做首尾去空
+		try(DatabaseWrapper db = new DatabaseWrapper()){
+			List<Table_column> tableColumns = SqlOperator.queryList(db, Table_column.class, "select * from " + Table_column.TableName + " where colume_name in" +
+							" (select t1.colume_name from "+ Table_column.TableName +" t1" +
+							" JOIN " + Column_split.TableName + " t2 ON t1.colume_name = t2.col_name " +
+							" JOIN " + Column_clean.TableName + " t3 ON t2.col_clean_id = t3.col_clean_id " +
+							" WHERE t2.col_clean_id = ? and t2.column_id = ? and t1.table_id = ? and t1.is_new = ?) ",
+					101010102L, 3003L, CODE_INFO_TABLE_ID, IsFlag.Shi.getCode());
+			assertThat("在执行测试用例<正确数据访问4>之前，拆分为ci、sp、classname的列在table_column表中存在", tableColumns.size() == 3, is(true));
+			for(Table_column tableColumn : tableColumns){
+				if(tableColumn.getColumn_id() == 141414L){
+					assertThat("在执行测试用例<正确数据访问4>之前，拆分为ci的列在table_column表中存在", tableColumn.getColume_name().equalsIgnoreCase("ci"), is(true));
+				}else if(tableColumn.getColumn_id() == 151515L){
+					assertThat("在执行测试用例<正确数据访问4>之前，拆分为sp的列在table_column表中存在", tableColumn.getColume_name().equalsIgnoreCase("sp"), is(true));
+				}else if(tableColumn.getColumn_id() == 161616L){
+					assertThat("在执行测试用例<正确数据访问4>之前，拆分为classname的列在table_column表中存在", tableColumn.getColume_name().equalsIgnoreCase("classname"), is(true));
+				}else{
+					assertThat("在执行测试用例<正确数据访问4>之前，在table_column表中查询到了不符合预期的列" + tableColumn.getColume_name(), false, is(true));
+				}
+			}
+			long beforeDelSpCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_split.TableName + " where col_split_id in (101010103, 101010104, 101010105) ").orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			assertThat("在执行测试用例<正确数据访问4>之前，列拆分信息在column_split表中存在", beforeDelSpCount == 3, is(true));
+
+			long beforeDelColCleanCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where column_id = ? and clean_type = ?", 3003L, CleanType.ZiFuChaiFen.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			assertThat("在执行测试用例<正确数据访问4>之前，列拆分信息在column_clean表中不存在", beforeDelColCleanCount == 1, is(true));
+			long beforeTrimCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ? ", 3003L, CleanType.ZiFuTrim.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			assertThat("在执行测试用例<正确数据访问4>之前，列首尾去空存在", beforeTrimCount == 0, is(true));
+		}
+
+		columnCleanParams.clear();
+
+		ColumnCleanParam cleanParamFour = new ColumnCleanParam();
+
+		cleanParamFour.setColumnId(3003L);
+		cleanParamFour.setComplementFlag(false);
+		cleanParamFour.setConversionFlag(false);
+		cleanParamFour.setFormatFlag(false);
+		cleanParamFour.setReplaceFlag(false);
+		cleanParamFour.setSpiltFlag(false);
+		cleanParamFour.setTrimFlag(true);
+
+		columnCleanParams.add(cleanParamFour);
+
+		String rightStringFour = new HttpClient()
+				.addData("colCleanString", JSON.toJSONString(columnCleanParams))
+				.post(getActionUrl("saveColCleanConfig")).getBodyString();
+		ActionResult rightResultFour = JsonUtil.toObjectSafety(rightStringFour, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResultFour.isSuccess(), is(true));
+
+		try(DatabaseWrapper db = new DatabaseWrapper()){
+			List<Table_column> tableColumns = SqlOperator.queryList(db, Table_column.class, "select * from " + Table_column.TableName + " where colume_name in" +
+							" (select t1.colume_name from "+ Table_column.TableName +" t1" +
+							" JOIN " + Column_split.TableName + " t2 ON t1.colume_name = t2.col_name " +
+							" JOIN " + Column_clean.TableName + " t3 ON t2.col_clean_id = t3.col_clean_id " +
+							" WHERE t2.col_clean_id = ? and t2.column_id = ? and t1.table_id = ? and t1.is_new = ?) ",
+					101010102L, 3003L, CODE_INFO_TABLE_ID, IsFlag.Shi.getCode());
+			assertThat("在执行测试用例<正确数据访问4>之后，拆分为ci、sp、classname的列在table_column表中不存在", tableColumns.size() == 0, is(true));
+			long afterDelSpCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_split.TableName + " where col_split_id in (101010103, 101010104, 101010105) ").orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			assertThat("在执行测试用例<正确数据访问4>之后，列拆分信息在column_split表中不存在", afterDelSpCount == 0, is(true));
+
+			long afterDelColCleanCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where column_id = ? and clean_type = ?", 3003L, CleanType.ZiFuChaiFen.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			assertThat("在执行测试用例<正确数据访问4>之后，列拆分信息在column_clean表中不存在", afterDelColCleanCount == 0, is(true));
+			long afterTrimCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ? ", 3003L, CleanType.ZiFuTrim.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			assertThat("在执行测试用例<正确数据访问4>之后，列首尾去空存在", afterTrimCount == 1, is(true));
 		}
 	}
 

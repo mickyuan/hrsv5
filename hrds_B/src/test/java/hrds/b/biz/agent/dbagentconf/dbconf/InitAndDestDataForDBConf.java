@@ -3,7 +3,7 @@ package hrds.b.biz.agent.dbagentconf.dbconf;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
-import hrds.b.biz.agent.dbagentconf.InitBaseData;
+import hrds.b.biz.agent.dbagentconf.BaseInitData;
 import hrds.commons.entity.*;
 
 import java.util.List;
@@ -22,22 +22,22 @@ public class InitAndDestDataForDBConf {
 
 	public static void before(){
 		//构造sys_user表测试数据
-		Sys_user user = InitBaseData.buildSysUserData();
+		Sys_user user = BaseInitData.buildSysUserData();
 
 		//构造department_info表测试数据
-		Department_info departmentInfo = InitBaseData.buildDeptInfoData();
+		Department_info departmentInfo = BaseInitData.buildDeptInfoData();
 
 		//1、构建data_source表测试数据
-		Data_source dataSource = InitBaseData.buildDataSourceData();
+		Data_source dataSource = BaseInitData.buildDataSourceData();
 
 		//2、构建agent_info表测试数据
-		List<Agent_info> agents = InitBaseData.buildAgentInfosData();
+		List<Agent_info> agents = BaseInitData.buildAgentInfosData();
 
 		//3、构建database_set表测试数据
-		List<Database_set> databases = InitBaseData.buildDbSetData();
+		List<Database_set> databases = BaseInitData.buildDbSetData();
 
 		//4、构建collect_job_classify表测试数据
-		List<Collect_job_classify> classifies = InitBaseData.buildClassifyData();
+		List<Collect_job_classify> classifies = BaseInitData.buildClassifyData();
 		Collect_job_classify thridClassify = new Collect_job_classify();
 		thridClassify.setClassify_id(THIRD_CLASSIFY_ID);
 		thridClassify.setAgent_id(FIRST_DB_AGENT_ID);
