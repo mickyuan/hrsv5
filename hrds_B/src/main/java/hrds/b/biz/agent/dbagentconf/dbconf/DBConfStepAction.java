@@ -55,9 +55,13 @@ public class DBConfStepAction extends BaseAction{
 			throw new BusinessException("该任务已经设置完成并发送成功，不允许编辑");
 		}
 		//3、在数据库设置表表中，关联采集作业分类表(collect_job_classify)，查询出当前database_id的所有信息并返回
-		return Dbo.queryResult("select * from database_set t1 " +
-				"left join collect_job_classify t2 on " +
-				"t1.classify_id = t2.classify_id  where database_id = ?", databaseId);
+		return Dbo.queryResult("select t1.database_id, t1.agent_id, t1.database_number, t1.task_name, " +
+				" t1.database_name, t1.database_drive, t1.database_type, t1.user_name, t1.database_ip, " +
+				" t1.database_port, t1.db_agent, t1.is_sendok, t1.jdbc_url, t2.classify_id, t2.classify_num, " +
+				" t2.classify_name, t2.remark " +
+				" from database_set t1 " +
+				" left join collect_job_classify t2 on " +
+				" t1.classify_id = t2.classify_id  where database_id = ?", databaseId);
 	}
 
 	@Method(desc = "根据数据库类型和端口获得数据库连接url等信息", logicStep = "" +

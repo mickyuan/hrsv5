@@ -11,6 +11,7 @@ import fd.ng.web.action.ActionResult;
 import hrds.b.biz.agent.bean.DBConnectionProp;
 import hrds.b.biz.agent.dbagentconf.BaseInitData;
 import hrds.commons.codes.DatabaseType;
+import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Collect_job_classify;
 import hrds.commons.entity.Database_set;
 import hrds.commons.exception.BusinessException;
@@ -91,8 +92,25 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 		assertThat(rightResult.isSuccess(), is(true));
 		Result data = rightResult.getDataForResult();
 		assertThat("根据测试数据，查询到的数据库配置信息应该有" + data.getRowCount() + "条", data.getRowCount(), is(1));
+		assertThat(data.getLong(0, "database_id"), is(1002L));
+		assertThat(data.getLong(0, "agent_id"), is(7002L));
+		assertThat(data.getString(0, "database_number"), is("dbtest1"));
+		assertThat(data.getString(0, "task_name"), is("wzcTaskName1"));
+		assertThat(data.getString(0, "database_name"), is("postgresql"));
+		assertThat(data.getString(0, "database_drive"), is("org.postgresql.Driver"));
+		assertThat(data.getString(0, "database_type"), is("11"));
+		assertThat(data.getString(0, "user_name"), is("hrsdxg"));
+		assertThat(data.getString(0, "database_ip"), is("127.0.0.1"));
+		assertThat(data.getString(0, "database_port"), is("8888"));
+		assertThat(data.getString(0, "db_agent"), is(IsFlag.Fou.getCode()));
+		assertThat(data.getString(0, "is_sendok"), is(IsFlag.Fou.getCode()));
+		assertThat(data.getString(0, "jdbc_url"), is("jdbc:postgresql://127.0.0.1:8888/postgresql"));
+		assertThat(data.getLong(0, "classify_id"), is(10010L));
+		assertThat(data.getString(0, "classify_num"), is("wzc_test_classify_num1"));
+		assertThat(data.getString(0, "classify_name"), is("wzc_test_classify_name1"));
+		assertThat(data.getString(0, "remark"), is(""));
 
-		//错误的数据访问1：传入is_sendok字段为0的databaseId
+		//错误的数据访问1：传入is_sendok字段为1的databaseId
 		String firWrongString = new HttpClient()
 				.addData("databaseId", 1001L)
 				.post(getActionUrl("getDBConfInfo")).getBodyString();
