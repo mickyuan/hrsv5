@@ -232,8 +232,7 @@ public class AgentInfoAction extends BaseAction {
                     "6.验证user_id是否为空或空格" +
                     "7.验证source_id是否为空或空格")
     @Param(name = "agent_name", desc = "data_source表主键", range = "10位数字，新增时自动生成")
-    @Param(name = "agent_type", desc = "agent类型", range = "1:数据库Agent,2:文件系统Agent,3:FtpAgent," +
-            "4:数据文件Agent,5:对象Agent")
+    @Param(name = "agent_type", desc = "agent类型", range = "使用agent类别（AgentType）")
     @Param(name = "agent_ip", desc = "agent所在服务器ip", range = "合法IP地址", example = "127.0.0.1")
     @Param(name = "agent_port", desc = "agent连接端口", range = "1024-65535")
     @Param(name = "source_id", desc = "agent_info表外键ID，data_source表主键ID,定义为Long目的是判null",
@@ -294,21 +293,17 @@ public class AgentInfoAction extends BaseAction {
         }
     }
 
-    @Method(desc = "查询Agent信息",
-            logicStep = "1.数据可访问权限处理方式，通过agent_id,agent_type，user_id关联检查" +
+    @Method(desc = "根据agent ID以及agent类型查询Agent信息",
+            logicStep = "1.数据可访问权限处理方式，该方法不需要权限控制" +
                     "2.根据agent_id与agent_type查询该agent信息")
     @Param(name = "agent_id", desc = "agent_info表主键", range = "10位数字，新增时生成")
-    @Param(name = "agent_type", desc = "agent类型", range = "1:数据库Agent,2:文件系统Agent,3:FtpAgent," +
-            "4:数据文件Agent,5:对象Agent")
+    @Param(name = "agent_type", desc = "agent类型", range = "使用agent类别（AgentType）")
     @Return(desc = "返回根据agent_id与agent_type查询该agent_info信息集合", range = "无限制")
     public List<Map<String, Object>> searchAgent(long agent_id, String agent_type) {
-        // 1.数据可访问权限处理方式，通过agent_id,agent_type，user_id关联检查
+        // 1.数据可访问权限处理方式，该方法不需要权限控制
         // 2.根据agent_id与agent_type查询该agent信息
-        return Dbo.queryList("SELECT t1.*,t2.deploy,(case t2.deploy when ? then 'yes' else 'no' end) agentStatus," +
-                        " t3.user_name FROM " + Agent_info.TableName + " t1 left join " + Agent_down_info.TableName
-                        + " t2 on t1.agent_id=t2.agent_id left join " + Sys_user.TableName + " t3 on " +
-                        " t1.user_id=t3.user_id WHERE t1.agent_id=? AND t1.agent_type =? and t1.user_id=?",
-                IsFlag.Shi.getCode(), agent_id, agent_type, getUserId());
+        return Dbo.queryList("SELECT * FROM agent_info WHERE agent_id=? AND agent_type=? order by agent_id",
+                agent_id, agent_type);
     }
 
     @Method(desc = "删除agent",
@@ -318,8 +313,7 @@ public class AgentInfoAction extends BaseAction {
                     "4.删除agent")
     @Param(name = "source_id", desc = "data_source表主键，agent_info表外键", range = "10位数字，新增数据源时生成")
     @Param(name = "agent_id", desc = "agent_info表主键", range = "10位数字，新增agent时生成")
-    @Param(name = "agent_type", desc = "agent类型", range = "1:数据库Agent,2:文件系统Agent,3:FtpAgent," +
-            "4:数据文件Agent,5:对象Agent")
+    @Param(name = "agent_type", desc = "agent类型", range = "使用agent类别（AgentType）")
     public List<Map<String, Object>> deleteAgent(long source_id, long agent_id, String agent_type) {
         // 1.数据可访问权限处理方式，通过agent_id,agent_type,user_id关联检查
         if (Dbo.queryNumber("select count(*) from " + Agent_info.TableName + " where agent_id=? " +

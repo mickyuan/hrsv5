@@ -44,17 +44,20 @@ public class DataSourceAction extends BaseAction {
                     "3.数据权限管理，分页查询数据源及部门关系信息" +
                     "4.数据管理列表，查询申请审批信息" +
                     "5.创建存放数据源，部门、agent,申请审批,业务用户和采集用户,部门与数据源关系表信息的集合并将数据进行封装" +
-                    "6.返回存放数据源，部门、agent,申请审批,业务用户和采集用户,部门与数据源关系表信息的集合")
+                    "6.返回放数据源以及agent数,数据管理列表申请审批,部门与数据源关系表信息的集合")
     @Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数", valueIfNull = "1")
     @Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", valueIfNull = "5")
-    @Return(desc = "存放数据源，部门、agent,申请审批,业务用户和采集用户,部门与数据源关系表信息的集合", range = "无限制")
+    @Return(desc = "存放数据源，部门、agent,申请审批,业务用户和采集用户,部门与数据源关系表信息的集合",
+            range = "1.dataSourceRelationDep：数据权限管理：部门与数据源关系表信息的集合"
+                    + "2.dataAudit:数据管理列表：申请审批结果集"
+                    + "3.数据来源表，数据源以及agent数信息集合：dataSourceAndAgentCount")
     public Map<String, Object> searchDataSourceInfo(int currPage, int pageSize) {
         // 1.数据可访问权限处理方式，以下sql通过user_id关联进行权限检查
         // 2.查询数据源及Agent数
         List<Map<String, Object>> dsAiList = Dbo.queryList("select ds.source_id,ds.datasource_name," +
                 "count(ai.Agent_id) sumAgent from " + Data_source.TableName + " ds left join "
-                + Agent_info.TableName + " ai on ds.source_id=ai.source_id where ds.create_user_id=? " +
-                " GROUP BY ds.source_id,ds.datasource_name", getUserId());
+                + Agent_info.TableName + " ai on ds.source_id=ai.source_id and ds.create_user_id=ai.user_id " +
+                " where ai.user_id=? GROUP BY ds.source_id,ds.datasource_name", getUserId());
         // 3.数据权限管理，分页查询数据源及部门关系信息
         Result dataSourceRelationDep = searchSourceRelationDepForPage(currPage, pageSize);
         // 4.数据管理列表，查询数据申请审批信息
@@ -64,7 +67,7 @@ public class DataSourceAction extends BaseAction {
         dataSourceInfoMap.put("dataSourceRelationDep", dataSourceRelationDep.toList());
         dataSourceInfoMap.put("dataAudit", dataAuditList);
         dataSourceInfoMap.put("dataSourceAndAgentCount", dsAiList);
-        // 6.返回放数据源，部门、agent,申请审批,业务用户和采集用户,部门与数据源关系表信息的集合
+        // 6.返回放数据源以及agent数,数据管理列表申请审批,部门与数据源关系表信息的集合
         return dataSourceInfoMap;
     }
 
@@ -176,33 +179,31 @@ public class DataSourceAction extends BaseAction {
 
     @Method(desc = "数据管理列表，数据申请审批并返回最新数据申请审批数据信息",
             logicStep = "1.数据可访问权限处理方式，根据user_id进行权限控制" +
-                    "2.根据数据权限设置ID查询数据申请审批信息" +
-                    "3.判断查询信息是否不存在" +
+                    "2.authType代码项合法性验证，如果不存在该方法直接会抛异常" +
+                    "3.根据数据权限设置ID查询数据申请审批信息，确认要审批的信息一定存在" +
                     "4.根据数据权限设置ID以及权限类型进行审批" +
                     "5.查询审批后的最新数据申请审批信息并返回")
     @Param(name = "da_id", desc = "数据权限设置ID，表data_auth表主键", range = "不为空的十位数字，新增时通过主键生成规则自动生成")
-    @Param(name = "auth_type", desc = "权限类型", range = "0-申请<ShenQing>，1-允许<YunXu>，2-不允许<BuYunXu>，3-一次<YiCi>")
+    @Param(name = "auth_type", desc = "权限类型", range = "使用权限类型代码项(authType)")
     @Return(desc = "存放数据申请审批信息的集合", range = "无限制")
     public List<Map<String, Object>> dataAudit(long da_id, String auth_type) {
         // 1.数据可访问权限处理方式，根据user_id进行权限控制
-        // authType代码项合法性验证，如果不存在该方法直接会抛异常
+        // 2.authType代码项合法性验证，如果不存在该方法直接会抛异常
         AuthType.ofEnumByCode(auth_type);
-        // 2.根据数据权限设置ID查询数据申请审批信息
-        Optional<Data_auth> dataAuth = Dbo.queryOneObject(Data_auth.class, "select * from "
-                + Data_auth.TableName + " where da_id=? and user_id=?", da_id, getUserId());
-        // 3.判断查询信息是否不存在
-        if (!dataAuth.isPresent()) {
-            // 不存在值
+        // 3.根据数据权限设置ID查询数据申请审批信息，确认要审批的信息一定存在
+        if (Dbo.queryNumber("select count(*) from " + Data_auth.TableName + " where da_id=? and user_id=?",
+                da_id, getUserId()).orElseThrow(() -> new BusinessException("sql查询错误")) == 0) {
             throw new BusinessException("此申请已取消或不存在！");
         }
         // 4.根据数据权限设置ID以及权限类型进行审批
-        dataAuth.get().setAudit_date(DateUtil.getSysDate());
-        dataAuth.get().setAudit_time(DateUtil.getSysTime());
-        dataAuth.get().setAudit_userid(getUserId());
-        dataAuth.get().setAudit_name(getUserName());
-        dataAuth.get().setAuth_type(auth_type);
-        dataAuth.get().setDa_id(da_id);
-        dataAuth.get().update(Dbo.db());
+        Data_auth dataAuth = new Data_auth();
+        dataAuth.setAudit_date(DateUtil.getSysDate());
+        dataAuth.setAudit_time(DateUtil.getSysTime());
+        dataAuth.setAudit_userid(getUserId());
+        dataAuth.setAudit_name(getUserName());
+        dataAuth.setAuth_type(auth_type);
+        dataAuth.setDa_id(da_id);
+        dataAuth.update(Dbo.db());
         // 5.查询审批后的最新数据申请审批信息并返回
         return getDataAuditInfoForPage(1, 5);
 
@@ -377,9 +378,11 @@ public class DataSourceAction extends BaseAction {
                     "4.查询部门信息，不需要用户权限控制" +
                     "5.将部门信息封装入Map" +
                     "6.返回封装数据源与部门关联信息以及部门信息集合")
-    @Param(name = "source_id", desc = "source_relation_dep表外键ID", range = "不能为空以及不能为空格", nullable = true)
-    @Return(desc = "返回关联查询data_source表与source_relation_dep表信息结果以及部门信息", range = "无限制")
-    public Map<String, Object> searchDataSourceById(Long source_id) {
+    @Param(name = "source_id", desc = "data_source表主键ID，source_relation_dep表外键ID", range = "10位数字，新增数据源时生成",
+            nullable = true)
+    @Return(desc = "返回关联查询data_source表与source_relation_dep表信息结果以及部门信息",
+            range = "部门信息集合：departmentInfo,source_id为空，查询的是部门信息，不为空查询的是数据源以及部门信息")
+    public Map<String, Object> searchDataSourceOrDepartment(Long source_id) {
         // 1.数据可访问权限处理方式，以下SQL关联sourceId与user_id检查
         // 2.创建并封装数据源与部门关联信息以及部门信息集合
         Map<String, Object> datasourceMap = new HashMap<>();
