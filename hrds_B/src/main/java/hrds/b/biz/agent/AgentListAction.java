@@ -106,7 +106,7 @@ public class AgentListAction extends BaseAction {
 					" gi.source_id source_id" +
 					" FROM "+ Database_set.TableName +" ds " +
 					" LEFT JOIN "+ Agent_info.TableName +" gi ON ds.Agent_id = gi.Agent_id " +
-					" where ds.Agent_id=? and ds.is_sendok = ? ";
+					" where ds.Agent_id = ? ";
 		}
 		//数据文件Agent
 		else if (AgentType.DBWenJian == agentType){
@@ -114,35 +114,34 @@ public class AgentListAction extends BaseAction {
 					" gi.source_id source_id" +
 					" FROM "+ Database_set.TableName +" ds " +
 					" LEFT JOIN "+ Agent_info.TableName +" gi ON ds.Agent_id = gi.Agent_id " +
-					" where ds.Agent_id=? and ds.is_sendok = ? ";
+					" where ds.Agent_id = ? ";
 		}
 		//半结构化采集Agent
 		else if (AgentType.DuiXiang == agentType){
 			sqlStr = " SELECT fs.odc_id id,fs.obj_collect_name task_name,fs.AGENT_ID AGENT_ID,gi.source_id" +
 					" FROM "+ Object_collect.TableName +" fs " +
 					" LEFT JOIN "+ Agent_info.TableName +" gi ON gi.Agent_id = fs.Agent_id " +
-					" WHERE fs.Agent_id = ? AND fs.is_sendok = ? ";
+					" WHERE fs.Agent_id = ?";
 		}
 		//FtpAgent
 		else if (AgentType.FTP == agentType){
 			sqlStr = " SELECT fs.ftp_id id,fs.ftp_name task_name,fs.AGENT_ID AGENT_ID,gi.source_id" +
 					" FROM "+ Ftp_collect.TableName +" fs " +
 					" LEFT JOIN "+ Agent_info.TableName +" gi ON gi.Agent_id = fs.Agent_id " +
-					" WHERE fs.Agent_id = ? and fs.is_sendok = ? ";
+					" WHERE fs.Agent_id = ?";
 		}
 		//非结构化Agent
 		else if(AgentType.WenJianXiTong == agentType){
 			sqlStr = " SELECT fs.fcs_id id,fs.fcs_name task_name,fs.AGENT_ID AGENT_ID,gi.source_id" +
 					" FROM "+ File_collect_set.TableName +" fs " +
 					" LEFT JOIN "+ Agent_info.TableName +" gi ON gi.Agent_id = fs.Agent_id " +
-					" where fs.Agent_id=? and fs.is_sendok = ? ";
+					" where fs.Agent_id = ?";
 		}
 		else {
 			throw new BusinessException("从数据库中取到的Agent类型不合法");
 		}
 		//5、返回结果
-		return Dbo.queryResult(sqlStr, agentInfo.get("agent_id"),
-				IsFlag.Shi.getCode());
+		return Dbo.queryResult(sqlStr, agentInfo.get("agent_id"));
 	}
 
 	@Method(desc = "查看任务日志", logicStep = "" +

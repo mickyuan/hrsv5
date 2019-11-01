@@ -1,6 +1,7 @@
 package hrds.b.biz.agent.tools;
 
 import fd.ng.core.annotation.DocClass;
+import hrds.commons.exception.AppSystemException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,7 +42,7 @@ public class ListPageHelper<T> {
 		int toIndex   = 0;
 		fromIndex = pageNum * pageSize - pageSize;
 		if(pageNum == 0){
-			throw new ArithmeticException("第0页无法展示");
+			throw new AppSystemException("第0页无法展示");
 		}else if(pageNum > pages){
 			//如果查询的页码数大于总的页码数，list设置为[]
 			list = new ArrayList<>();
