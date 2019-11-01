@@ -30,29 +30,29 @@ public class File_source extends ProjectTableEntity
 		__tmpPKS.add("file_source_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="file_source_id",value="文件源ID",dataType = Long.class,required = true)
+	@DocBean(name ="file_source_id",value="文件源ID:",dataType = Long.class,required = true)
 	private Long file_source_id;
-	@DocBean(name ="file_source_path",value="文件源路径",dataType = String.class,required = true)
+	@DocBean(name ="file_source_path",value="文件源路径:",dataType = String.class,required = true)
 	private String file_source_path;
-	@DocBean(name ="is_pdf",value="PDF文件",dataType = String.class,required = true)
+	@DocBean(name ="is_pdf",value="PDF文件(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_pdf;
-	@DocBean(name ="is_office",value="office文件",dataType = String.class,required = true)
+	@DocBean(name ="is_office",value="office文件(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_office;
-	@DocBean(name ="is_text",value="文本文件",dataType = String.class,required = true)
+	@DocBean(name ="is_text",value="文本文件(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_text;
-	@DocBean(name ="is_video",value="视频文件",dataType = String.class,required = true)
+	@DocBean(name ="is_video",value="视频文件(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_video;
-	@DocBean(name ="is_audio",value="音频文件",dataType = String.class,required = true)
+	@DocBean(name ="is_audio",value="音频文件(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_audio;
-	@DocBean(name ="is_image",value="图片文件",dataType = String.class,required = true)
+	@DocBean(name ="is_image",value="图片文件(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_image;
-	@DocBean(name ="is_other",value="其他",dataType = String.class,required = true)
+	@DocBean(name ="is_other",value="其他(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_other;
-	@DocBean(name ="file_remark",value="备注",dataType = String.class,required = false)
+	@DocBean(name ="file_remark",value="备注:",dataType = String.class,required = false)
 	private String file_remark;
-	@DocBean(name ="fcs_id",value="文件系统采集ID",dataType = Long.class,required = true)
+	@DocBean(name ="fcs_id",value="文件系统采集ID:",dataType = Long.class,required = true)
 	private Long fcs_id;
-	@DocBean(name ="agent_id",value="Agent_id",dataType = Long.class,required = true)
+	@DocBean(name ="agent_id",value="Agent_id:",dataType = Long.class,required = true)
 	private Long agent_id;
 
 	/** 取得：文件源ID */

@@ -30,31 +30,31 @@ public class Sys_exeinfo extends ProjectTableEntity
 		__tmpPKS.add("exe_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="exe_id",value="执行id",dataType = Long.class,required = true)
+	@DocBean(name ="exe_id",value="执行id:",dataType = Long.class,required = true)
 	private Long exe_id;
-	@DocBean(name ="job_tablename",value="作业表名",dataType = String.class,required = false)
+	@DocBean(name ="job_tablename",value="作业表名:",dataType = String.class,required = false)
 	private String job_tablename;
-	@DocBean(name ="etl_date",value="执行日期",dataType = String.class,required = true)
+	@DocBean(name ="etl_date",value="执行日期:",dataType = String.class,required = true)
 	private String etl_date;
-	@DocBean(name ="execute_state",value="运行状态",dataType = String.class,required = true)
+	@DocBean(name ="execute_state",value="运行状态(ExecuteState):01-开始运行<KaiShiYunXing> 02-运行完成<YunXingWanCheng> 99-运行失败<YunXingShiBai> 20-通知成功<TongZhiChengGong> 21-通知失败<TongZhiShiBai> 30-暂停运行<ZanTingYunXing> ",dataType = String.class,required = true)
 	private String execute_state;
-	@DocBean(name ="job_name",value="作业名称名称",dataType = String.class,required = true)
+	@DocBean(name ="job_name",value="作业名称名称:",dataType = String.class,required = true)
 	private String job_name;
-	@DocBean(name ="exe_parameter",value="参数",dataType = String.class,required = true)
+	@DocBean(name ="exe_parameter",value="参数:",dataType = String.class,required = true)
 	private String exe_parameter;
-	@DocBean(name ="err_info",value="错误信息",dataType = String.class,required = true)
+	@DocBean(name ="err_info",value="错误信息:",dataType = String.class,required = true)
 	private String err_info;
-	@DocBean(name ="st_date",value="开始日期",dataType = String.class,required = true)
+	@DocBean(name ="st_date",value="开始日期:",dataType = String.class,required = true)
 	private String st_date;
-	@DocBean(name ="ed_date",value="结束日期",dataType = String.class,required = true)
+	@DocBean(name ="ed_date",value="结束日期:",dataType = String.class,required = true)
 	private String ed_date;
-	@DocBean(name ="is_valid",value="作业是否有效",dataType = String.class,required = true)
+	@DocBean(name ="is_valid",value="作业是否有效(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_valid;
-	@DocBean(name ="source_id",value="数据源ID",dataType = Long.class,required = true)
+	@DocBean(name ="source_id",value="数据源ID:",dataType = Long.class,required = true)
 	private Long source_id;
-	@DocBean(name ="agent_id",value="Agent_id",dataType = Long.class,required = true)
+	@DocBean(name ="agent_id",value="Agent_id:",dataType = Long.class,required = true)
 	private Long agent_id;
-	@DocBean(name ="database_id",value="数据库设置id",dataType = Long.class,required = true)
+	@DocBean(name ="database_id",value="数据库设置id:",dataType = Long.class,required = true)
 	private Long database_id;
 
 	/** 取得：执行id */

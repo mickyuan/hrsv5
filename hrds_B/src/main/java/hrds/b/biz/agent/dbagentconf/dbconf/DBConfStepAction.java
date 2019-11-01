@@ -62,20 +62,7 @@ public class DBConfStepAction extends BaseAction{
 
 	@Method(desc = "根据数据库类型和端口获得数据库连接url等信息", logicStep = "" +
 			"1、调用工具类方法直接获取数据并返回")
-	@Param(name = "dbType", desc = "数据库类型", range = "DatabaseType代码项code值" +
-			"01：MYSQL" +
-			"02：Oracle9i以下(包括9i)" +
-			"03：Oracle10g以上(包括10g)" +
-			"04：SQLSERVER2000" +
-			"05：SQLSERVER2005" +
-			"06：DB2" +
-			"07：SybaseASE12.5及以上" +
-			"08：Informatic" +
-			"09：H2" +
-			"10：ApacheDerby" +
-			"11：Postgresql" +
-			"12：GBase" +
-			"13：TeraData")
+	@Param(name = "dbType", desc = "数据库类型", range = "DatabaseType代码项")
 	@Return(desc = "数据库连接url属性信息",range = "不会为null",isBean = true)
 	public DBConnectionProp getJDBCDriver(String dbType) {
 		return ConnUtil.getConnURLProp(dbType);

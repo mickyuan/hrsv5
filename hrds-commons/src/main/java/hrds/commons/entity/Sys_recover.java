@@ -30,17 +30,17 @@ public class Sys_recover extends ProjectTableEntity
 		__tmpPKS.add("re_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="re_id",value="恢复id",dataType = Long.class,required = true)
+	@DocBean(name ="re_id",value="恢复id:",dataType = Long.class,required = true)
 	private Long re_id;
-	@DocBean(name ="re_date",value="恢复日期",dataType = String.class,required = true)
+	@DocBean(name ="re_date",value="恢复日期:",dataType = String.class,required = true)
 	private String re_date;
-	@DocBean(name ="re_time",value="恢复时间",dataType = String.class,required = true)
+	@DocBean(name ="re_time",value="恢复时间:",dataType = String.class,required = true)
 	private String re_time;
-	@DocBean(name ="length",value="恢复时长",dataType = String.class,required = true)
+	@DocBean(name ="length",value="恢复时长:",dataType = String.class,required = true)
 	private String length;
-	@DocBean(name ="remark",value="备注",dataType = String.class,required = false)
+	@DocBean(name ="remark",value="备注:",dataType = String.class,required = false)
 	private String remark;
-	@DocBean(name ="dump_id",value="备份id",dataType = Long.class,required = true)
+	@DocBean(name ="dump_id",value="备份id:",dataType = Long.class,required = true)
 	private Long dump_id;
 
 	/** 取得：恢复id */

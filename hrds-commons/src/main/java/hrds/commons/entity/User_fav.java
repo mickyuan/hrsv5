@@ -30,15 +30,15 @@ public class User_fav extends ProjectTableEntity
 		__tmpPKS.add("fav_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="fav_id",value="收藏ID",dataType = Long.class,required = true)
+	@DocBean(name ="fav_id",value="收藏ID:",dataType = Long.class,required = true)
 	private Long fav_id;
-	@DocBean(name ="fav_flag",value="是否有效",dataType = String.class,required = true)
+	@DocBean(name ="fav_flag",value="是否有效(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String fav_flag;
-	@DocBean(name ="original_name",value="原始文件名称",dataType = String.class,required = true)
+	@DocBean(name ="original_name",value="原始文件名称:",dataType = String.class,required = true)
 	private String original_name;
-	@DocBean(name ="file_id",value="文件编号",dataType = String.class,required = true)
+	@DocBean(name ="file_id",value="文件编号:",dataType = String.class,required = true)
 	private String file_id;
-	@DocBean(name ="user_id",value="用户ID",dataType = Long.class,required = true)
+	@DocBean(name ="user_id",value="用户ID:",dataType = Long.class,required = true)
 	private Long user_id;
 
 	/** 取得：收藏ID */

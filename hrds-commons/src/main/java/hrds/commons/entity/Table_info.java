@@ -30,33 +30,33 @@ public class Table_info extends ProjectTableEntity
 		__tmpPKS.add("table_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="table_id",value="表名ID",dataType = Long.class,required = true)
+	@DocBean(name ="table_id",value="表名ID:",dataType = Long.class,required = true)
 	private Long table_id;
-	@DocBean(name ="table_name",value="表名",dataType = String.class,required = true)
+	@DocBean(name ="table_name",value="表名:",dataType = String.class,required = true)
 	private String table_name;
-	@DocBean(name ="table_ch_name",value="中文名称",dataType = String.class,required = true)
+	@DocBean(name ="table_ch_name",value="中文名称:",dataType = String.class,required = true)
 	private String table_ch_name;
-	@DocBean(name ="table_count",value="记录数",dataType = String.class,required = false)
+	@DocBean(name ="table_count",value="记录数(CountNum):10000-1万左右<YiWan> 100000-10万左右<ShiWan> 1000000-100万左右<BaiWan> 10000000-1000万左右<Qianwan> 100000000-亿左右<Yi> 100000001-亿以上<YiYiShang> ",dataType = String.class,required = false)
 	private String table_count;
-	@DocBean(name ="source_tableid",value="源表ID",dataType = String.class,required = false)
+	@DocBean(name ="source_tableid",value="源表ID:",dataType = String.class,required = false)
 	private String source_tableid;
-	@DocBean(name ="valid_s_date",value="有效开始日期",dataType = String.class,required = true)
+	@DocBean(name ="valid_s_date",value="有效开始日期:",dataType = String.class,required = true)
 	private String valid_s_date;
-	@DocBean(name ="valid_e_date",value="有效结束日期",dataType = String.class,required = true)
+	@DocBean(name ="valid_e_date",value="有效结束日期:",dataType = String.class,required = true)
 	private String valid_e_date;
-	@DocBean(name ="sql",value="自定义sql语句",dataType = String.class,required = false)
+	@DocBean(name ="sql",value="自定义sql语句:",dataType = String.class,required = false)
 	private String sql;
-	@DocBean(name ="remark",value="备注",dataType = String.class,required = false)
+	@DocBean(name ="remark",value="备注:",dataType = String.class,required = false)
 	private String remark;
-	@DocBean(name ="is_user_defined",value="是否自定义sql采集",dataType = String.class,required = true)
+	@DocBean(name ="is_user_defined",value="是否自定义sql采集(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_user_defined;
-	@DocBean(name ="database_id",value="数据库设置id",dataType = Long.class,required = true)
+	@DocBean(name ="database_id",value="数据库设置id:",dataType = Long.class,required = true)
 	private Long database_id;
-	@DocBean(name ="ti_or",value="清洗顺序",dataType = String.class,required = false)
+	@DocBean(name ="ti_or",value="清洗顺序:",dataType = String.class,required = false)
 	private String ti_or;
-	@DocBean(name ="is_md5",value="是否使用MD5",dataType = String.class,required = true)
+	@DocBean(name ="is_md5",value="是否使用MD5(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_md5;
-	@DocBean(name ="is_register",value="是否仅登记",dataType = String.class,required = true)
+	@DocBean(name ="is_register",value="是否仅登记(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_register;
 
 	/** 取得：表名ID */

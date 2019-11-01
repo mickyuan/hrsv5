@@ -30,23 +30,23 @@ public class Column_storage_info extends ProjectTableEntity
 		__tmpPKS.add("cs_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="datasc_id",value="存储配置主键信息",dataType = Long.class,required = true)
+	@DocBean(name ="datasc_id",value="存储配置主键信息:",dataType = Long.class,required = true)
 	private Long datasc_id;
-	@DocBean(name ="cs_id",value="字段存储ID",dataType = Long.class,required = true)
+	@DocBean(name ="cs_id",value="字段存储ID:",dataType = Long.class,required = true)
 	private Long cs_id;
-	@DocBean(name ="column_id",value="字段ID",dataType = Long.class,required = true)
+	@DocBean(name ="column_id",value="字段ID:",dataType = Long.class,required = true)
 	private Long column_id;
-	@DocBean(name ="is_primary",value="是否为主键",dataType = String.class,required = true)
+	@DocBean(name ="is_primary",value="是否为主键(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_primary;
-	@DocBean(name ="is_pre",value="是否为cb预聚合列",dataType = String.class,required = true)
+	@DocBean(name ="is_pre",value="是否为cb预聚合列(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_pre;
-	@DocBean(name ="is_sortcolumns",value="是否为cb的排序列",dataType = String.class,required = true)
+	@DocBean(name ="is_sortcolumns",value="是否为cb的排序列(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_sortcolumns;
-	@DocBean(name ="cs_remark",value="备注",dataType = String.class,required = false)
+	@DocBean(name ="cs_remark",value="备注:",dataType = String.class,required = false)
 	private String cs_remark;
-	@DocBean(name ="is_solr",value="是否solr的索引列",dataType = String.class,required = true)
+	@DocBean(name ="is_solr",value="是否solr的索引列(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_solr;
-	@DocBean(name ="is_partition",value="是否为hive的分区列",dataType = String.class,required = true)
+	@DocBean(name ="is_partition",value="是否为hive的分区列(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_partition;
 
 	/** 取得：存储配置主键信息 */

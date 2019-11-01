@@ -30,21 +30,21 @@ public class Object_collect_task extends ProjectTableEntity
 		__tmpPKS.add("ocs_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="ocs_id",value="对象采集任务编号",dataType = Long.class,required = true)
+	@DocBean(name ="ocs_id",value="对象采集任务编号:",dataType = Long.class,required = true)
 	private Long ocs_id;
-	@DocBean(name ="en_name",value="英文名称",dataType = String.class,required = true)
+	@DocBean(name ="en_name",value="英文名称:",dataType = String.class,required = true)
 	private String en_name;
-	@DocBean(name ="zh_name",value="中文名称",dataType = String.class,required = true)
+	@DocBean(name ="zh_name",value="中文名称:",dataType = String.class,required = true)
 	private String zh_name;
-	@DocBean(name ="remark",value="备注",dataType = String.class,required = false)
+	@DocBean(name ="remark",value="备注:",dataType = String.class,required = false)
 	private String remark;
-	@DocBean(name ="collect_data_type",value="数据类型",dataType = String.class,required = true)
+	@DocBean(name ="collect_data_type",value="数据类型(CollectDataType):1-xml<XML> 2-json<JSON> ",dataType = String.class,required = true)
 	private String collect_data_type;
-	@DocBean(name ="odc_id",value="对象采集id",dataType = Long.class,required = true)
+	@DocBean(name ="odc_id",value="对象采集id:",dataType = Long.class,required = true)
 	private Long odc_id;
-	@DocBean(name ="database_code",value="采集编码",dataType = String.class,required = true)
+	@DocBean(name ="database_code",value="采集编码(DataBaseCode):1-UTF-8<UTF_8> 2-GBK<GBK> 3-UTF-16<UTF_16> 4-GB2312<GB2312> 5-ISO-8859-1<ISO_8859_1> ",dataType = String.class,required = true)
 	private String database_code;
-	@DocBean(name ="agent_id",value="Agent_id",dataType = Long.class,required = true)
+	@DocBean(name ="agent_id",value="Agent_id:",dataType = Long.class,required = true)
 	private Long agent_id;
 
 	/** 取得：对象采集任务编号 */

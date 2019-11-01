@@ -30,13 +30,13 @@ public class Etl_job_temp extends ProjectTableEntity
 		__tmpPKS.add("etl_temp_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="etl_temp_id",value="模版ID",dataType = Long.class,required = true)
+	@DocBean(name ="etl_temp_id",value="模版ID:",dataType = Long.class,required = true)
 	private Long etl_temp_id;
-	@DocBean(name ="etl_temp_type",value="模版名称",dataType = String.class,required = true)
+	@DocBean(name ="etl_temp_type",value="模版名称:",dataType = String.class,required = true)
 	private String etl_temp_type;
-	@DocBean(name ="pro_dic",value="模版shell路径",dataType = String.class,required = true)
+	@DocBean(name ="pro_dic",value="模版shell路径:",dataType = String.class,required = true)
 	private String pro_dic;
-	@DocBean(name ="pro_name",value="模版shell名称",dataType = String.class,required = true)
+	@DocBean(name ="pro_name",value="模版shell名称:",dataType = String.class,required = true)
 	private String pro_name;
 
 	/** 取得：模版ID */

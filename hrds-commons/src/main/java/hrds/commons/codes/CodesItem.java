@@ -8,91 +8,91 @@ import java.util.*;
 public class CodesItem{                        
 	private static final Log logger = LogFactory.getLog(CodesItem.class);                                                      
 	/**补齐方式   */
-	protected static final String fillingType=new String("55");
+	protected static final String fillingType=new String("FillingType");
 	/**数据申请类型   */
-	protected static final String applyType=new String("57");
+	protected static final String applyType=new String("ApplyType");
 	/**权限类型   */
-	protected static final String authType=new String("58");
+	protected static final String authType=new String("AuthType");
 	/**存储层类型   */
-	protected static final String store_type=new String("59");
+	protected static final String store_type=new String("store_type");
 	/**文件类型   */
-	protected static final String fileType=new String("60");
+	protected static final String fileType=new String("FileType");
 	/**用户类型   */
-	protected static final String userType=new String("17");
+	protected static final String userType=new String("UserType");
 	/**是否标识   */
-	protected static final String isFlag=new String("18");
+	protected static final String isFlag=new String("IsFlag");
 	/**用户状态   */
-	protected static final String userState=new String("19");
+	protected static final String userState=new String("UserState");
 	/**ETL作业类型   */
-	protected static final String pro_Type=new String("20");
+	protected static final String pro_Type=new String("Pro_Type");
 	/**用户优先级   */
-	protected static final String userPriority=new String("21");
+	protected static final String userPriority=new String("UserPriority");
 	/**ETL调度频率   */
-	protected static final String dispatch_Frequency=new String("22");
+	protected static final String dispatch_Frequency=new String("Dispatch_Frequency");
 	/**ETL调度类型   */
-	protected static final String dispatch_Type=new String("23");
+	protected static final String dispatch_Type=new String("Dispatch_Type");
 	/**ETl作业有效标志   */
-	protected static final String job_Effective_Flag=new String("24");
+	protected static final String job_Effective_Flag=new String("Job_Effective_Flag");
 	/**ETL作业状态   */
-	protected static final String job_Status=new String("25");
+	protected static final String job_Status=new String("Job_Status");
 	/**ETL当天调度标志   */
-	protected static final String today_Dispatch_Flag=new String("26");
+	protected static final String today_Dispatch_Flag=new String("Today_Dispatch_Flag");
 	/**ETL主服务器同步   */
-	protected static final String main_Server_Sync=new String("27");
+	protected static final String main_Server_Sync=new String("Main_Server_Sync");
 	/**ETL状态   */
-	protected static final String status=new String("28");
+	protected static final String status=new String("Status");
 	/**ETL干预类型   */
-	protected static final String meddle_type=new String("29");
+	protected static final String meddle_type=new String("Meddle_type");
 	/**ETL干预状态   */
-	protected static final String meddle_status=new String("30");
+	protected static final String meddle_status=new String("Meddle_status");
 	/**ETL变类型   */
-	protected static final String paramType=new String("31");
+	protected static final String paramType=new String("ParamType");
 	/**组件状态   */
-	protected static final String compState=new String("32");
+	protected static final String compState=new String("CompState");
 	/**组件类型   */
-	protected static final String compType=new String("33");
+	protected static final String compType=new String("CompType");
 	/**Agent状态   */
-	protected static final String agentStatus=new String("34");
+	protected static final String agentStatus=new String("AgentStatus");
 	/**Agent类别   */
-	protected static final String agentType=new String("35");
+	protected static final String agentType=new String("AgentType");
 	/**数据库类型   */
-	protected static final String databaseType=new String("36");
+	protected static final String databaseType=new String("DatabaseType");
 	/**启动方式   */
-	protected static final String executeWay=new String("37");
+	protected static final String executeWay=new String("ExecuteWay");
 	/**压缩范围   */
-	protected static final String reduceScope=new String("38");
+	protected static final String reduceScope=new String("ReduceScope");
 	/**运行状态   */
-	protected static final String executeState=new String("39");
+	protected static final String executeState=new String("ExecuteState");
 	/**采集类型   */
-	protected static final String collectType=new String("40");
+	protected static final String collectType=new String("CollectType");
 	/**进数方式   */
-	protected static final String storageType=new String("41");
+	protected static final String storageType=new String("StorageType");
 	/**采集编码   */
-	protected static final String dataBaseCode=new String("42");
+	protected static final String dataBaseCode=new String("DataBaseCode");
 	/**记录总数   */
-	protected static final String countNum=new String("43");
+	protected static final String countNum=new String("CountNum");
 	/**DB文件格式   */
-	protected static final String fileFormat=new String("44");
+	protected static final String fileFormat=new String("FileFormat");
 	/**压缩格式   */
-	protected static final String reduceType=new String("45");
+	protected static final String reduceType=new String("ReduceType");
 	/**数据类型   */
-	protected static final String collectDataType=new String("46");
+	protected static final String collectDataType=new String("CollectDataType");
 	/**对象采集方式   */
-	protected static final String objectCollectType=new String("47");
+	protected static final String objectCollectType=new String("ObjectCollectType");
 	/**对象数据类型   */
-	protected static final String objectDataType=new String("48");
+	protected static final String objectDataType=new String("ObjectDataType");
 	/**ftp目录规则   */
-	protected static final String ftpRule=new String("49");
+	protected static final String ftpRule=new String("FtpRule");
 	/**时间类型   */
-	protected static final String timeType=new String("50");
+	protected static final String timeType=new String("TimeType");
 	/**hive文件存储类型   */
-	protected static final String hiveStorageType=new String("51");
+	protected static final String hiveStorageType=new String("HiveStorageType");
 	/**字符拆分方式   */
-	protected static final String charSplitType=new String("52");
+	protected static final String charSplitType=new String("CharSplitType");
 	/**数据抽取方式   */
-	protected static final String dataExtractType=new String("53");
+	protected static final String dataExtractType=new String("DataExtractType");
 	/**清洗方式   */
-	protected static final String cleanType=new String("54");
+	protected static final String cleanType=new String("CleanType");
 
 
 	public static final Map<String,Class> mapCat= new HashMap<String,Class>(100);

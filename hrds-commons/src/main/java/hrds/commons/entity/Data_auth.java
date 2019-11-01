@@ -30,65 +30,37 @@ public class Data_auth extends ProjectTableEntity
 		__tmpPKS.add("da_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="source_id",value="数据源ID",dataType = Long.class,required = true)
-	private Long source_id;
-	@DocBean(name ="collect_set_id",value="数据库设置id",dataType = Long.class,required = true)
-	private Long collect_set_id;
-	@DocBean(name ="da_id",value="数据权限设置ID",dataType = Long.class,required = true)
+	@DocBean(name ="da_id",value="数据权限设置ID:",dataType = Long.class,required = true)
 	private Long da_id;
-	@DocBean(name ="apply_date",value="申请日期",dataType = String.class,required = true)
+	@DocBean(name ="apply_date",value="申请日期:",dataType = String.class,required = true)
 	private String apply_date;
-	@DocBean(name ="apply_time",value="申请时间",dataType = String.class,required = true)
+	@DocBean(name ="apply_time",value="申请时间:",dataType = String.class,required = true)
 	private String apply_time;
-	@DocBean(name ="apply_type",value="申请类型",dataType = String.class,required = true)
+	@DocBean(name ="apply_type",value="申请类型(ApplyType):1-查看<ChaKan> 2-下载<XiaZai> 3-发布<FaBu> 4-重命名<ChongMingMing> ",dataType = String.class,required = true)
 	private String apply_type;
-	@DocBean(name ="auth_type",value="权限类型",dataType = String.class,required = true)
+	@DocBean(name ="auth_type",value="权限类型(AuthType):1-允许<YunXu> 2-不允许<BuYunXu> 3-一次<YiCi> 0-申请<ShenQing> ",dataType = String.class,required = true)
 	private String auth_type;
-	@DocBean(name ="audit_date",value="审核日期",dataType = String.class,required = false)
+	@DocBean(name ="audit_date",value="审核日期:",dataType = String.class,required = false)
 	private String audit_date;
-	@DocBean(name ="audit_time",value="审核时间",dataType = String.class,required = false)
+	@DocBean(name ="audit_time",value="审核时间:",dataType = String.class,required = false)
 	private String audit_time;
-	@DocBean(name ="audit_userid",value="审核人ID",dataType = Long.class,required = false)
+	@DocBean(name ="audit_userid",value="审核人ID:",dataType = Long.class,required = false)
 	private Long audit_userid;
-	@DocBean(name ="audit_name",value="审核人名称",dataType = String.class,required = false)
+	@DocBean(name ="audit_name",value="审核人名称:",dataType = String.class,required = false)
 	private String audit_name;
-	@DocBean(name ="file_id",value="文件编号",dataType = String.class,required = true)
+	@DocBean(name ="file_id",value="文件编号:",dataType = String.class,required = true)
 	private String file_id;
-	@DocBean(name ="dep_id",value="部门ID",dataType = Long.class,required = true)
+	@DocBean(name ="dep_id",value="部门ID:",dataType = Long.class,required = true)
 	private Long dep_id;
-	@DocBean(name ="user_id",value="用户ID",dataType = Long.class,required = true)
+	@DocBean(name ="user_id",value="用户ID:",dataType = Long.class,required = true)
 	private Long user_id;
-	@DocBean(name ="agent_id",value="Agent_id",dataType = Long.class,required = true)
+	@DocBean(name ="agent_id",value="Agent_id:",dataType = Long.class,required = true)
 	private Long agent_id;
+	@DocBean(name ="source_id",value="数据源ID:",dataType = Long.class,required = true)
+	private Long source_id;
+	@DocBean(name ="collect_set_id",value="数据库设置id:",dataType = Long.class,required = true)
+	private Long collect_set_id;
 
-	/** 取得：数据源ID */
-	public Long getSource_id(){
-		return source_id;
-	}
-	/** 设置：数据源ID */
-	public void setSource_id(Long source_id){
-		this.source_id=source_id;
-	}
-	/** 设置：数据源ID */
-	public void setSource_id(String source_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(source_id)){
-			this.source_id=new Long(source_id);
-		}
-	}
-	/** 取得：数据库设置id */
-	public Long getCollect_set_id(){
-		return collect_set_id;
-	}
-	/** 设置：数据库设置id */
-	public void setCollect_set_id(Long collect_set_id){
-		this.collect_set_id=collect_set_id;
-	}
-	/** 设置：数据库设置id */
-	public void setCollect_set_id(String collect_set_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(collect_set_id)){
-			this.collect_set_id=new Long(collect_set_id);
-		}
-	}
 	/** 取得：数据权限设置ID */
 	public Long getDa_id(){
 		return da_id;
@@ -221,6 +193,34 @@ public class Data_auth extends ProjectTableEntity
 	public void setAgent_id(String agent_id){
 		if(!fd.ng.core.utils.StringUtil.isEmpty(agent_id)){
 			this.agent_id=new Long(agent_id);
+		}
+	}
+	/** 取得：数据源ID */
+	public Long getSource_id(){
+		return source_id;
+	}
+	/** 设置：数据源ID */
+	public void setSource_id(Long source_id){
+		this.source_id=source_id;
+	}
+	/** 设置：数据源ID */
+	public void setSource_id(String source_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(source_id)){
+			this.source_id=new Long(source_id);
+		}
+	}
+	/** 取得：数据库设置id */
+	public Long getCollect_set_id(){
+		return collect_set_id;
+	}
+	/** 设置：数据库设置id */
+	public void setCollect_set_id(Long collect_set_id){
+		this.collect_set_id=collect_set_id;
+	}
+	/** 设置：数据库设置id */
+	public void setCollect_set_id(String collect_set_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(collect_set_id)){
+			this.collect_set_id=new Long(collect_set_id);
 		}
 	}
 }

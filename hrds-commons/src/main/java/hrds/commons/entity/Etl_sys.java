@@ -30,37 +30,37 @@ public class Etl_sys extends ProjectTableEntity
 		__tmpPKS.add("etl_sys_cd");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="etl_sys_cd",value="工程代码",dataType = String.class,required = true)
+	@DocBean(name ="etl_sys_cd",value="工程代码:",dataType = String.class,required = true)
 	private String etl_sys_cd;
-	@DocBean(name ="etl_sys_name",value="工程名称",dataType = String.class,required = true)
+	@DocBean(name ="etl_sys_name",value="工程名称:",dataType = String.class,required = true)
 	private String etl_sys_name;
-	@DocBean(name ="etl_serv_ip",value="etl服务器ip",dataType = String.class,required = false)
+	@DocBean(name ="etl_serv_ip",value="etl服务器ip:",dataType = String.class,required = false)
 	private String etl_serv_ip;
-	@DocBean(name ="etl_serv_port",value="etl服务器端口",dataType = String.class,required = false)
+	@DocBean(name ="etl_serv_port",value="etl服务器端口:",dataType = String.class,required = false)
 	private String etl_serv_port;
-	@DocBean(name ="contact_person",value="联系人",dataType = String.class,required = false)
+	@DocBean(name ="contact_person",value="联系人:",dataType = String.class,required = false)
 	private String contact_person;
-	@DocBean(name ="contact_phone",value="联系电话",dataType = String.class,required = false)
+	@DocBean(name ="contact_phone",value="联系电话:",dataType = String.class,required = false)
 	private String contact_phone;
-	@DocBean(name ="comments",value="备注信息",dataType = String.class,required = false)
+	@DocBean(name ="comments",value="备注信息:",dataType = String.class,required = false)
 	private String comments;
-	@DocBean(name ="curr_bath_date",value="当前批量日期",dataType = String.class,required = false)
+	@DocBean(name ="curr_bath_date",value="当前批量日期:",dataType = String.class,required = false)
 	private String curr_bath_date;
-	@DocBean(name ="bath_shift_time",value="系统日切时间",dataType = String.class,required = false)
+	@DocBean(name ="bath_shift_time",value="系统日切时间:",dataType = String.class,required = false)
 	private String bath_shift_time;
-	@DocBean(name ="main_serv_sync",value="主服务器同步标志",dataType = String.class,required = false)
+	@DocBean(name ="main_serv_sync",value="主服务器同步标志(Main_Server_Sync):L-锁定<LOCK> N-不同步<NO> Y-同步<YES> B-备份中<BACKUP> ",dataType = String.class,required = false)
 	private String main_serv_sync;
-	@DocBean(name ="sys_run_status",value="系统状态",dataType = String.class,required = false)
+	@DocBean(name ="sys_run_status",value="系统状态(Job_Status):D-完成<DONE> E-错误<ERROR> P-挂起<PENDING> R-运行<RUNNING> S-停止<STOP> W-等待<WAITING> ",dataType = String.class,required = false)
 	private String sys_run_status;
-	@DocBean(name ="serv_file_path",value="部署服务器路径",dataType = String.class,required = false)
+	@DocBean(name ="serv_file_path",value="部署服务器路径:",dataType = String.class,required = false)
 	private String serv_file_path;
-	@DocBean(name ="user_name",value="主机服务器用户名",dataType = String.class,required = false)
+	@DocBean(name ="user_name",value="主机服务器用户名:",dataType = String.class,required = false)
 	private String user_name;
-	@DocBean(name ="user_pwd",value="主机用户密码",dataType = String.class,required = false)
+	@DocBean(name ="user_pwd",value="主机用户密码:",dataType = String.class,required = false)
 	private String user_pwd;
-	@DocBean(name ="remarks",value="备注",dataType = String.class,required = false)
+	@DocBean(name ="remarks",value="备注:",dataType = String.class,required = false)
 	private String remarks;
-	@DocBean(name ="user_id",value="用户ID",dataType = Long.class,required = true)
+	@DocBean(name ="user_id",value="用户ID:",dataType = Long.class,required = true)
 	private Long user_id;
 
 	/** 取得：工程代码 */

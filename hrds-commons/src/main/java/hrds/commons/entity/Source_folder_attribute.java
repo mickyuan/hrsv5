@@ -30,29 +30,29 @@ public class Source_folder_attribute extends ProjectTableEntity
 		__tmpPKS.add("folder_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="folder_id",value="文件夹编号",dataType = Long.class,required = true)
+	@DocBean(name ="folder_id",value="文件夹编号:",dataType = Long.class,required = true)
 	private Long folder_id;
-	@DocBean(name ="folder_name",value="文件夹名",dataType = String.class,required = true)
+	@DocBean(name ="folder_name",value="文件夹名:",dataType = String.class,required = true)
 	private String folder_name;
-	@DocBean(name ="folder_size",value="文件夹大小",dataType = BigDecimal.class,required = true)
+	@DocBean(name ="folder_size",value="文件夹大小:",dataType = BigDecimal.class,required = true)
 	private BigDecimal folder_size;
-	@DocBean(name ="original_create_time",value="文件夹生成时间",dataType = String.class,required = true)
+	@DocBean(name ="original_create_time",value="文件夹生成时间:",dataType = String.class,required = true)
 	private String original_create_time;
-	@DocBean(name ="storage_date",value="文件夹入库日期",dataType = String.class,required = true)
+	@DocBean(name ="storage_date",value="文件夹入库日期:",dataType = String.class,required = true)
 	private String storage_date;
-	@DocBean(name ="folders_in_no",value="文件夹内文件夹数量",dataType = Long.class,required = true)
+	@DocBean(name ="folders_in_no",value="文件夹内文件夹数量:",dataType = Long.class,required = true)
 	private Long folders_in_no;
-	@DocBean(name ="location_in_hdfs",value="hdfs中存储位置",dataType = String.class,required = true)
+	@DocBean(name ="location_in_hdfs",value="hdfs中存储位置:",dataType = String.class,required = true)
 	private String location_in_hdfs;
-	@DocBean(name ="original_create_date",value="文件夹生产日期",dataType = String.class,required = true)
+	@DocBean(name ="original_create_date",value="文件夹生产日期:",dataType = String.class,required = true)
 	private String original_create_date;
-	@DocBean(name ="storage_time",value="文件夹入库时间",dataType = String.class,required = true)
+	@DocBean(name ="storage_time",value="文件夹入库时间:",dataType = String.class,required = true)
 	private String storage_time;
-	@DocBean(name ="super_id",value="文件夹编号",dataType = Long.class,required = false)
+	@DocBean(name ="super_id",value="文件夹编号:",dataType = Long.class,required = false)
 	private Long super_id;
-	@DocBean(name ="agent_id",value="Agent_id",dataType = Long.class,required = true)
+	@DocBean(name ="agent_id",value="Agent_id:",dataType = Long.class,required = true)
 	private Long agent_id;
-	@DocBean(name ="source_id",value="数据源ID",dataType = Long.class,required = true)
+	@DocBean(name ="source_id",value="数据源ID:",dataType = Long.class,required = true)
 	private Long source_id;
 
 	/** 取得：文件夹编号 */

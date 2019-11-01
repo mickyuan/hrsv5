@@ -30,47 +30,47 @@ public class Collect_case extends ProjectTableEntity
 		__tmpPKS.add("job_rs_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="job_rs_id",value="作业执行结果ID",dataType = String.class,required = true)
+	@DocBean(name ="job_rs_id",value="作业执行结果ID:",dataType = String.class,required = true)
 	private String job_rs_id;
-	@DocBean(name ="colect_record",value="总共采集记录数",dataType = Long.class,required = true)
+	@DocBean(name ="colect_record",value="总共采集记录数:",dataType = Long.class,required = true)
 	private Long colect_record;
-	@DocBean(name ="collect_total",value="总共采集(文件)表",dataType = Long.class,required = false)
+	@DocBean(name ="collect_total",value="总共采集(文件)表:",dataType = Long.class,required = false)
 	private Long collect_total;
-	@DocBean(name ="collet_database_size",value="总共采集数据大小",dataType = String.class,required = false)
+	@DocBean(name ="collet_database_size",value="总共采集数据大小:",dataType = String.class,required = false)
 	private String collet_database_size;
-	@DocBean(name ="collect_s_time",value="开始采集时间",dataType = String.class,required = true)
+	@DocBean(name ="collect_s_time",value="开始采集时间:",dataType = String.class,required = true)
 	private String collect_s_time;
-	@DocBean(name ="collect_s_date",value="开始采集日期",dataType = String.class,required = true)
+	@DocBean(name ="collect_s_date",value="开始采集日期:",dataType = String.class,required = true)
 	private String collect_s_date;
-	@DocBean(name ="collect_e_date",value="采集结束日期",dataType = String.class,required = false)
+	@DocBean(name ="collect_e_date",value="采集结束日期:",dataType = String.class,required = false)
 	private String collect_e_date;
-	@DocBean(name ="collect_e_time",value="采集结束时间",dataType = String.class,required = false)
+	@DocBean(name ="collect_e_time",value="采集结束时间:",dataType = String.class,required = false)
 	private String collect_e_time;
-	@DocBean(name ="execute_state",value="运行状态",dataType = String.class,required = true)
+	@DocBean(name ="execute_state",value="运行状态(ExecuteState):01-开始运行<KaiShiYunXing> 02-运行完成<YunXingWanCheng> 99-运行失败<YunXingShiBai> 20-通知成功<TongZhiChengGong> 21-通知失败<TongZhiShiBai> 30-暂停运行<ZanTingYunXing> ",dataType = String.class,required = true)
 	private String execute_state;
-	@DocBean(name ="execute_length",value="运行总时长",dataType = String.class,required = false)
+	@DocBean(name ="execute_length",value="运行总时长:",dataType = String.class,required = false)
 	private String execute_length;
-	@DocBean(name ="is_again",value="是否重跑",dataType = String.class,required = true)
+	@DocBean(name ="is_again",value="是否重跑(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_again;
-	@DocBean(name ="job_group",value="agent组ID",dataType = String.class,required = true)
+	@DocBean(name ="job_group",value="agent组ID:",dataType = String.class,required = true)
 	private String job_group;
-	@DocBean(name ="collect_set_id",value="数据库设置id",dataType = Long.class,required = true)
+	@DocBean(name ="collect_set_id",value="数据库设置id:",dataType = Long.class,required = true)
 	private Long collect_set_id;
-	@DocBean(name ="table_name",value="表名",dataType = String.class,required = false)
+	@DocBean(name ="table_name",value="表名:",dataType = String.class,required = false)
 	private String table_name;
-	@DocBean(name ="collect_type",value="采集类型",dataType = String.class,required = true)
+	@DocBean(name ="collect_type",value="采集类型(CollectType):1-数据库采集<ShuJuKuCaiJi> 2-文件采集<WenJianCaiJi> 3-数据文件采集<DBWenJianCaiJi> 4-对象文件采集<DuiXiangWenJianCaiJi> 5-Ftp采集<FtpCaiJi> ",dataType = String.class,required = true)
 	private String collect_type;
-	@DocBean(name ="job_type",value="任务类型",dataType = String.class,required = false)
+	@DocBean(name ="job_type",value="任务类型:",dataType = String.class,required = false)
 	private String job_type;
-	@DocBean(name ="cc_remark",value="备注",dataType = String.class,required = false)
+	@DocBean(name ="cc_remark",value="备注:",dataType = String.class,required = false)
 	private String cc_remark;
-	@DocBean(name ="etl_date",value="跑批日期",dataType = String.class,required = false)
+	@DocBean(name ="etl_date",value="跑批日期:",dataType = String.class,required = false)
 	private String etl_date;
-	@DocBean(name ="again_num",value="重跑次数",dataType = Long.class,required = false)
+	@DocBean(name ="again_num",value="重跑次数:",dataType = Long.class,required = false)
 	private Long again_num;
-	@DocBean(name ="agent_id",value="Agent_id",dataType = Long.class,required = true)
+	@DocBean(name ="agent_id",value="Agent_id:",dataType = Long.class,required = true)
 	private Long agent_id;
-	@DocBean(name ="source_id",value="数据源ID",dataType = Long.class,required = true)
+	@DocBean(name ="source_id",value="数据源ID:",dataType = Long.class,required = true)
 	private Long source_id;
 
 	/** 取得：作业执行结果ID */

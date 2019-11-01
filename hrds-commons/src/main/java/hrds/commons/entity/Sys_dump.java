@@ -30,21 +30,21 @@ public class Sys_dump extends ProjectTableEntity
 		__tmpPKS.add("dump_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="dump_id",value="备份id",dataType = Long.class,required = true)
+	@DocBean(name ="dump_id",value="备份id:",dataType = Long.class,required = true)
 	private Long dump_id;
-	@DocBean(name ="bak_date",value="备份日期",dataType = String.class,required = true)
+	@DocBean(name ="bak_date",value="备份日期:",dataType = String.class,required = true)
 	private String bak_date;
-	@DocBean(name ="bak_time",value="备份时间",dataType = String.class,required = true)
+	@DocBean(name ="bak_time",value="备份时间:",dataType = String.class,required = true)
 	private String bak_time;
-	@DocBean(name ="file_size",value="文件大小",dataType = String.class,required = true)
+	@DocBean(name ="file_size",value="文件大小:",dataType = String.class,required = true)
 	private String file_size;
-	@DocBean(name ="hdfs_path",value="文件存放hdfs路径",dataType = String.class,required = true)
+	@DocBean(name ="hdfs_path",value="文件存放hdfs路径:",dataType = String.class,required = true)
 	private String hdfs_path;
-	@DocBean(name ="length",value="备份时长",dataType = String.class,required = true)
+	@DocBean(name ="length",value="备份时长:",dataType = String.class,required = true)
 	private String length;
-	@DocBean(name ="remark",value="备注",dataType = String.class,required = false)
+	@DocBean(name ="remark",value="备注:",dataType = String.class,required = false)
 	private String remark;
-	@DocBean(name ="file_name",value="文件名称",dataType = String.class,required = true)
+	@DocBean(name ="file_name",value="文件名称:",dataType = String.class,required = true)
 	private String file_name;
 
 	/** 取得：备份id */

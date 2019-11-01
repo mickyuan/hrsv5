@@ -30,21 +30,21 @@ public class Component_info extends ProjectTableEntity
 		__tmpPKS.add("comp_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="comp_id",value="组件编号",dataType = String.class,required = true)
+	@DocBean(name ="comp_id",value="组件编号:",dataType = String.class,required = true)
 	private String comp_id;
-	@DocBean(name ="comp_name",value="组件名称",dataType = String.class,required = true)
+	@DocBean(name ="comp_name",value="组件名称:",dataType = String.class,required = true)
 	private String comp_name;
-	@DocBean(name ="comp_state",value="组件状态",dataType = String.class,required = true)
+	@DocBean(name ="comp_state",value="组件状态(CompState):1-启用<QiYong> 2-禁用<JinYong> ",dataType = String.class,required = true)
 	private String comp_state;
-	@DocBean(name ="comp_remark",value="备注",dataType = String.class,required = false)
+	@DocBean(name ="comp_remark",value="备注:",dataType = String.class,required = false)
 	private String comp_remark;
-	@DocBean(name ="comp_version",value="组件版本",dataType = String.class,required = true)
+	@DocBean(name ="comp_version",value="组件版本:",dataType = String.class,required = true)
 	private String comp_version;
-	@DocBean(name ="icon_info",value="图标",dataType = String.class,required = false)
+	@DocBean(name ="icon_info",value="图标:",dataType = String.class,required = false)
 	private String icon_info;
-	@DocBean(name ="color_info",value="颜色",dataType = String.class,required = false)
+	@DocBean(name ="color_info",value="颜色:",dataType = String.class,required = false)
 	private String color_info;
-	@DocBean(name ="comp_type",value="组件类型",dataType = String.class,required = true)
+	@DocBean(name ="comp_type",value="组件类型(CompType):1-系统内置组件<NeiZhiZuJian> 2-系统运行组件<YunXingZuJian> ",dataType = String.class,required = true)
 	private String comp_type;
 
 	/** 取得：组件编号 */

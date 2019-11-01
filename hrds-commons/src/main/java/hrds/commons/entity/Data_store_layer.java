@@ -30,15 +30,15 @@ public class Data_store_layer extends ProjectTableEntity
 		__tmpPKS.add("datasc_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="datasc_id",value="存储配置主键信息",dataType = Long.class,required = true)
+	@DocBean(name ="datasc_id",value="存储配置主键信息:",dataType = Long.class,required = true)
 	private Long datasc_id;
-	@DocBean(name ="storage_target",value="存储类型",dataType = String.class,required = true)
+	@DocBean(name ="storage_target",value="存储类型(store_type):1-关系型数据库<DATABASE> 2-Hbase<HBASE> 3-solr<SOLR> 4-ElasticSearch<ElasticSearch> 5-mongodb<MONGODB> ",dataType = String.class,required = true)
 	private String storage_target;
-	@DocBean(name ="storage_property_key",value="属性key",dataType = String.class,required = true)
+	@DocBean(name ="storage_property_key",value="属性key:",dataType = String.class,required = true)
 	private String storage_property_key;
-	@DocBean(name ="dsl_remark",value="备注",dataType = String.class,required = false)
+	@DocBean(name ="dsl_remark",value="备注:",dataType = String.class,required = false)
 	private String dsl_remark;
-	@DocBean(name ="storage_property_val",value="属性value",dataType = String.class,required = false)
+	@DocBean(name ="storage_property_val",value="属性value:",dataType = String.class,required = false)
 	private String storage_property_val;
 
 	/** 取得：存储配置主键信息 */

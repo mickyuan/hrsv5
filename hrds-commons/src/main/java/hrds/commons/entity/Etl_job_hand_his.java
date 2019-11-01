@@ -32,25 +32,25 @@ public class Etl_job_hand_his extends ProjectTableEntity
 		__tmpPKS.add("etl_sys_cd");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="event_id",value="干预发生时间",dataType = String.class,required = true)
+	@DocBean(name ="event_id",value="干预发生时间:",dataType = String.class,required = true)
 	private String event_id;
-	@DocBean(name ="etl_hand_type",value="干预类型",dataType = String.class,required = false)
+	@DocBean(name ="etl_hand_type",value="干预类型(Meddle_type):GR-分组级续跑<GRP_RESUME> GP-分组级暂停<GRP_PAUSE> GO-分组级重跑，从源头开始<GRP_ORIGINAL> JT-作业直接跑<JOB_TRIGGER> JS-作业停止<JOB_STOP> JR-作业重跑<JOB_RERUN> JP-作业临时调整优先级<JOB_PRIORITY> JJ-作业跳过<JOB_JUMP> SF-系统日切<SYS_SHIFT> SS-系统停止<SYS_STOP> SP-系统级暂停<SYS_PAUSE> SO-系统级重跑，从源头开始<SYS_ORIGINAL> SR-系统级续跑<SYS_RESUME> ",dataType = String.class,required = false)
 	private String etl_hand_type;
-	@DocBean(name ="pro_para",value="干预参数",dataType = String.class,required = false)
+	@DocBean(name ="pro_para",value="干预参数:",dataType = String.class,required = false)
 	private String pro_para;
-	@DocBean(name ="hand_status",value="干预状态",dataType = String.class,required = false)
+	@DocBean(name ="hand_status",value="干预状态(Meddle_status):D-完成<DONE> E-异常<ERROR> F-失效<FALSE> T-有效<TRUE> R-干预中<RUNNING> ",dataType = String.class,required = false)
 	private String hand_status;
-	@DocBean(name ="st_time",value="开始时间",dataType = String.class,required = false)
+	@DocBean(name ="st_time",value="开始时间:",dataType = String.class,required = false)
 	private String st_time;
-	@DocBean(name ="end_time",value="结束时间",dataType = String.class,required = false)
+	@DocBean(name ="end_time",value="结束时间:",dataType = String.class,required = false)
 	private String end_time;
-	@DocBean(name ="warning",value="错误信息",dataType = String.class,required = false)
+	@DocBean(name ="warning",value="错误信息:",dataType = String.class,required = false)
 	private String warning;
-	@DocBean(name ="main_serv_sync",value="同步标志位",dataType = String.class,required = false)
+	@DocBean(name ="main_serv_sync",value="同步标志位(Main_Server_Sync):L-锁定<LOCK> N-不同步<NO> Y-同步<YES> B-备份中<BACKUP> ",dataType = String.class,required = false)
 	private String main_serv_sync;
-	@DocBean(name ="etl_job",value="作业名",dataType = String.class,required = true)
+	@DocBean(name ="etl_job",value="作业名:",dataType = String.class,required = true)
 	private String etl_job;
-	@DocBean(name ="etl_sys_cd",value="工程代码",dataType = String.class,required = true)
+	@DocBean(name ="etl_sys_cd",value="工程代码:",dataType = String.class,required = true)
 	private String etl_sys_cd;
 
 	/** 取得：干预发生时间 */

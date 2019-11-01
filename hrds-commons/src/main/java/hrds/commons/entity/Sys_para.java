@@ -30,15 +30,15 @@ public class Sys_para extends ProjectTableEntity
 		__tmpPKS.add("para_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="para_id",value="参数ID",dataType = Long.class,required = true)
+	@DocBean(name ="para_id",value="参数ID:",dataType = Long.class,required = true)
 	private Long para_id;
-	@DocBean(name ="para_name",value="para_name",dataType = String.class,required = false)
+	@DocBean(name ="para_name",value="para_name:",dataType = String.class,required = false)
 	private String para_name;
-	@DocBean(name ="para_value",value="para_value",dataType = String.class,required = false)
+	@DocBean(name ="para_value",value="para_value:",dataType = String.class,required = false)
 	private String para_value;
-	@DocBean(name ="para_type",value="para_type",dataType = String.class,required = false)
+	@DocBean(name ="para_type",value="para_type:",dataType = String.class,required = false)
 	private String para_type;
-	@DocBean(name ="remark",value="备注",dataType = String.class,required = false)
+	@DocBean(name ="remark",value="备注:",dataType = String.class,required = false)
 	private String remark;
 
 	/** 取得：参数ID */

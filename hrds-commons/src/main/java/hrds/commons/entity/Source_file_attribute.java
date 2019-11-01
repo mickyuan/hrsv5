@@ -30,135 +30,57 @@ public class Source_file_attribute extends ProjectTableEntity
 		__tmpPKS.add("file_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="file_id",value="文件编号",dataType = String.class,required = true)
-	private String file_id;
-	@DocBean(name ="original_name",value="原始文件名或表中文名称",dataType = String.class,required = true)
-	private String original_name;
-	@DocBean(name ="original_update_date",value="原文件最后修改日期",dataType = String.class,required = true)
-	private String original_update_date;
-	@DocBean(name ="hbase_name",value="系统内对应表名",dataType = String.class,required = true)
-	private String hbase_name;
-	@DocBean(name ="storage_date",value="入库日期",dataType = String.class,required = true)
-	private String storage_date;
-	@DocBean(name ="file_size",value="文件大小",dataType = BigDecimal.class,required = true)
-	private BigDecimal file_size;
-	@DocBean(name ="file_type",value="文件类型",dataType = String.class,required = true)
-	private String file_type;
-	@DocBean(name ="original_update_time",value="原文件最后修改时间",dataType = String.class,required = true)
-	private String original_update_time;
-	@DocBean(name ="storage_time",value="入库时间",dataType = String.class,required = true)
-	private String storage_time;
-	@DocBean(name ="file_suffix",value="文件后缀",dataType = String.class,required = true)
+	@DocBean(name ="file_suffix",value="文件后缀:",dataType = String.class,required = true)
 	private String file_suffix;
-	@DocBean(name ="table_name",value="采集的原始表名",dataType = String.class,required = false)
+	@DocBean(name ="table_name",value="采集的原始表名:",dataType = String.class,required = false)
 	private String table_name;
-	@DocBean(name ="collect_type",value="采集类型",dataType = String.class,required = true)
+	@DocBean(name ="collect_type",value="采集类型(CollectType):1-数据库采集<ShuJuKuCaiJi> 2-文件采集<WenJianCaiJi> 3-数据文件采集<DBWenJianCaiJi> 4-对象文件采集<DuiXiangWenJianCaiJi> 5-Ftp采集<FtpCaiJi> ",dataType = String.class,required = true)
 	private String collect_type;
-	@DocBean(name ="source_path",value="文件路径",dataType = String.class,required = false)
+	@DocBean(name ="source_path",value="文件路径:",dataType = String.class,required = false)
 	private String source_path;
-	@DocBean(name ="meta_info",value="META元信息",dataType = String.class,required = false)
+	@DocBean(name ="meta_info",value="META元信息:",dataType = String.class,required = false)
 	private String meta_info;
-	@DocBean(name ="seqencing",value="排序计数",dataType = Long.class,required = true)
+	@DocBean(name ="seqencing",value="排序计数:",dataType = Long.class,required = true)
 	private Long seqencing;
-	@DocBean(name ="is_in_hbase",value="是否已进入HBASE",dataType = String.class,required = true)
+	@DocBean(name ="is_in_hbase",value="是否已进入HBASE(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_in_hbase;
-	@DocBean(name ="file_md5",value="文件MD5值",dataType = String.class,required = false)
+	@DocBean(name ="file_md5",value="文件MD5值:",dataType = String.class,required = false)
 	private String file_md5;
-	@DocBean(name ="file_avro_path",value="所在avro文件地址",dataType = String.class,required = false)
+	@DocBean(name ="file_avro_path",value="所在avro文件地址:",dataType = String.class,required = false)
 	private String file_avro_path;
-	@DocBean(name ="file_avro_block",value="所存avro文件block号",dataType = Long.class,required = false)
+	@DocBean(name ="file_avro_block",value="所存avro文件block号:",dataType = Long.class,required = false)
 	private Long file_avro_block;
-	@DocBean(name ="is_big_file",value="是否为大文件",dataType = String.class,required = false)
+	@DocBean(name ="is_big_file",value="是否为大文件(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = false)
 	private String is_big_file;
-	@DocBean(name ="is_cache",value="是否本地缓存",dataType = String.class,required = false)
+	@DocBean(name ="is_cache",value="是否本地缓存(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = false)
 	private String is_cache;
-	@DocBean(name ="agent_id",value="Agent_id",dataType = Long.class,required = true)
+	@DocBean(name ="agent_id",value="Agent_id:",dataType = Long.class,required = true)
 	private Long agent_id;
-	@DocBean(name ="source_id",value="数据源ID",dataType = Long.class,required = true)
+	@DocBean(name ="source_id",value="数据源ID:",dataType = Long.class,required = true)
 	private Long source_id;
-	@DocBean(name ="collect_set_id",value="数据库设置id",dataType = Long.class,required = true)
+	@DocBean(name ="collect_set_id",value="数据库设置id:",dataType = Long.class,required = true)
 	private Long collect_set_id;
-	@DocBean(name ="folder_id",value="文件夹编号",dataType = Long.class,required = true)
+	@DocBean(name ="folder_id",value="文件夹编号:",dataType = Long.class,required = true)
 	private Long folder_id;
+	@DocBean(name ="file_id",value="文件编号:",dataType = String.class,required = true)
+	private String file_id;
+	@DocBean(name ="original_name",value="原始文件名或表中文名称:",dataType = String.class,required = true)
+	private String original_name;
+	@DocBean(name ="original_update_date",value="原文件最后修改日期:",dataType = String.class,required = true)
+	private String original_update_date;
+	@DocBean(name ="hbase_name",value="系统内对应表名:",dataType = String.class,required = true)
+	private String hbase_name;
+	@DocBean(name ="storage_date",value="入库日期:",dataType = String.class,required = true)
+	private String storage_date;
+	@DocBean(name ="file_size",value="文件大小:",dataType = BigDecimal.class,required = true)
+	private BigDecimal file_size;
+	@DocBean(name ="file_type",value="文件类型:",dataType = String.class,required = true)
+	private String file_type;
+	@DocBean(name ="original_update_time",value="原文件最后修改时间:",dataType = String.class,required = true)
+	private String original_update_time;
+	@DocBean(name ="storage_time",value="入库时间:",dataType = String.class,required = true)
+	private String storage_time;
 
-	/** 取得：文件编号 */
-	public String getFile_id(){
-		return file_id;
-	}
-	/** 设置：文件编号 */
-	public void setFile_id(String file_id){
-		this.file_id=file_id;
-	}
-	/** 取得：原始文件名或表中文名称 */
-	public String getOriginal_name(){
-		return original_name;
-	}
-	/** 设置：原始文件名或表中文名称 */
-	public void setOriginal_name(String original_name){
-		this.original_name=original_name;
-	}
-	/** 取得：原文件最后修改日期 */
-	public String getOriginal_update_date(){
-		return original_update_date;
-	}
-	/** 设置：原文件最后修改日期 */
-	public void setOriginal_update_date(String original_update_date){
-		this.original_update_date=original_update_date;
-	}
-	/** 取得：系统内对应表名 */
-	public String getHbase_name(){
-		return hbase_name;
-	}
-	/** 设置：系统内对应表名 */
-	public void setHbase_name(String hbase_name){
-		this.hbase_name=hbase_name;
-	}
-	/** 取得：入库日期 */
-	public String getStorage_date(){
-		return storage_date;
-	}
-	/** 设置：入库日期 */
-	public void setStorage_date(String storage_date){
-		this.storage_date=storage_date;
-	}
-	/** 取得：文件大小 */
-	public BigDecimal getFile_size(){
-		return file_size;
-	}
-	/** 设置：文件大小 */
-	public void setFile_size(BigDecimal file_size){
-		this.file_size=file_size;
-	}
-	/** 设置：文件大小 */
-	public void setFile_size(String file_size){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(file_size)){
-			this.file_size=new BigDecimal(file_size);
-		}
-	}
-	/** 取得：文件类型 */
-	public String getFile_type(){
-		return file_type;
-	}
-	/** 设置：文件类型 */
-	public void setFile_type(String file_type){
-		this.file_type=file_type;
-	}
-	/** 取得：原文件最后修改时间 */
-	public String getOriginal_update_time(){
-		return original_update_time;
-	}
-	/** 设置：原文件最后修改时间 */
-	public void setOriginal_update_time(String original_update_time){
-		this.original_update_time=original_update_time;
-	}
-	/** 取得：入库时间 */
-	public String getStorage_time(){
-		return storage_time;
-	}
-	/** 设置：入库时间 */
-	public void setStorage_time(String storage_time){
-		this.storage_time=storage_time;
-	}
 	/** 取得：文件后缀 */
 	public String getFile_suffix(){
 		return file_suffix;
@@ -322,5 +244,83 @@ public class Source_file_attribute extends ProjectTableEntity
 		if(!fd.ng.core.utils.StringUtil.isEmpty(folder_id)){
 			this.folder_id=new Long(folder_id);
 		}
+	}
+	/** 取得：文件编号 */
+	public String getFile_id(){
+		return file_id;
+	}
+	/** 设置：文件编号 */
+	public void setFile_id(String file_id){
+		this.file_id=file_id;
+	}
+	/** 取得：原始文件名或表中文名称 */
+	public String getOriginal_name(){
+		return original_name;
+	}
+	/** 设置：原始文件名或表中文名称 */
+	public void setOriginal_name(String original_name){
+		this.original_name=original_name;
+	}
+	/** 取得：原文件最后修改日期 */
+	public String getOriginal_update_date(){
+		return original_update_date;
+	}
+	/** 设置：原文件最后修改日期 */
+	public void setOriginal_update_date(String original_update_date){
+		this.original_update_date=original_update_date;
+	}
+	/** 取得：系统内对应表名 */
+	public String getHbase_name(){
+		return hbase_name;
+	}
+	/** 设置：系统内对应表名 */
+	public void setHbase_name(String hbase_name){
+		this.hbase_name=hbase_name;
+	}
+	/** 取得：入库日期 */
+	public String getStorage_date(){
+		return storage_date;
+	}
+	/** 设置：入库日期 */
+	public void setStorage_date(String storage_date){
+		this.storage_date=storage_date;
+	}
+	/** 取得：文件大小 */
+	public BigDecimal getFile_size(){
+		return file_size;
+	}
+	/** 设置：文件大小 */
+	public void setFile_size(BigDecimal file_size){
+		this.file_size=file_size;
+	}
+	/** 设置：文件大小 */
+	public void setFile_size(String file_size){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(file_size)){
+			this.file_size=new BigDecimal(file_size);
+		}
+	}
+	/** 取得：文件类型 */
+	public String getFile_type(){
+		return file_type;
+	}
+	/** 设置：文件类型 */
+	public void setFile_type(String file_type){
+		this.file_type=file_type;
+	}
+	/** 取得：原文件最后修改时间 */
+	public String getOriginal_update_time(){
+		return original_update_time;
+	}
+	/** 设置：原文件最后修改时间 */
+	public void setOriginal_update_time(String original_update_time){
+		this.original_update_time=original_update_time;
+	}
+	/** 取得：入库时间 */
+	public String getStorage_time(){
+		return storage_time;
+	}
+	/** 设置：入库时间 */
+	public void setStorage_time(String storage_time){
+		this.storage_time=storage_time;
 	}
 }
