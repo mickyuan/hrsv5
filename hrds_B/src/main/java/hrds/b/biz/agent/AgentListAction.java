@@ -55,12 +55,7 @@ public class AgentListAction extends BaseAction {
 	@Method(desc = "根据数据源ID、agent类型获取Agent信息", logicStep = "" +
 			"1、获取用户ID并根据用户ID去数据库中查询数据源信息")
 	@Param(name = "sourceId", desc = "数据源ID,数据源表主键，agent信息表外键", range = "不为空")
-	@Param(name = "agentType", desc = "agent类型", range = "AgentType代码项的code值" +
-			"1：数据库采集Agent" +
-			"2：非结构化采集Agent" +
-			"3：Ftp采集Agent" +
-			"4：数据文件采集Agent" +
-			"5：半结构化采集Agent")
+	@Param(name = "agentType", desc = "agent类型", range = "AgentType代码项")
 	@Return(desc = "Agent信息查询结果集", range = "不会为null")
 	public Result getAgentInfo(long sourceId, String agentType) {
 		//1、根据sourceId和agentType查询数据库获取相应信息
