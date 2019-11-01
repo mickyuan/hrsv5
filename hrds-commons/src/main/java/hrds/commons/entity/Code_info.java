@@ -31,15 +31,15 @@ public class Code_info extends ProjectTableEntity
 		__tmpPKS.add("ci_sp_class");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="ci_sp_code",value="代码值",dataType = String.class,required = true)
+	@DocBean(name ="ci_sp_code",value="代码值:",dataType = String.class,required = true)
 	private String ci_sp_code;
-	@DocBean(name ="ci_sp_class",value="所属类别号",dataType = String.class,required = true)
+	@DocBean(name ="ci_sp_class",value="所属类别号:",dataType = String.class,required = true)
 	private String ci_sp_class;
-	@DocBean(name ="ci_sp_classname",value="类别名称",dataType = String.class,required = true)
+	@DocBean(name ="ci_sp_classname",value="类别名称:",dataType = String.class,required = true)
 	private String ci_sp_classname;
-	@DocBean(name ="ci_sp_name",value="代码名称",dataType = String.class,required = true)
+	@DocBean(name ="ci_sp_name",value="代码名称:",dataType = String.class,required = true)
 	private String ci_sp_name;
-	@DocBean(name ="ci_sp_remark",value="备注",dataType = String.class,required = false)
+	@DocBean(name ="ci_sp_remark",value="备注:",dataType = String.class,required = false)
 	private String ci_sp_remark;
 
 	/** 取得：代码值 */

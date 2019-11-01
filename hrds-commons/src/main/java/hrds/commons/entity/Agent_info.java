@@ -30,25 +30,25 @@ public class Agent_info extends ProjectTableEntity
 		__tmpPKS.add("agent_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="source_id",value="数据源ID",dataType = Long.class,required = true)
+	@DocBean(name ="source_id",value="数据源ID:",dataType = Long.class,required = true)
 	private Long source_id;
-	@DocBean(name ="agent_id",value="Agent_id",dataType = Long.class,required = true)
+	@DocBean(name ="agent_id",value="Agent_id:",dataType = Long.class,required = true)
 	private Long agent_id;
-	@DocBean(name ="agent_name",value="Agent名称",dataType = String.class,required = true)
+	@DocBean(name ="agent_name",value="Agent名称:",dataType = String.class,required = true)
 	private String agent_name;
-	@DocBean(name ="agent_ip",value="Agent所在服务器IP",dataType = String.class,required = true)
+	@DocBean(name ="agent_ip",value="Agent所在服务器IP:",dataType = String.class,required = true)
 	private String agent_ip;
-	@DocBean(name ="agent_port",value="agent服务器端口",dataType = String.class,required = false)
+	@DocBean(name ="agent_port",value="agent服务器端口:",dataType = String.class,required = false)
 	private String agent_port;
-	@DocBean(name ="agent_status",value="agent状态",dataType = String.class,required = true)
+	@DocBean(name ="agent_status",value="agent状态(AgentStatus):1-已连接<YiLianJie> 2-未连接<WeiLianJie> 3-正在运行<ZhengZaiYunXing> ",dataType = String.class,required = true)
 	private String agent_status;
-	@DocBean(name ="agent_type",value="agent类别",dataType = String.class,required = true)
+	@DocBean(name ="agent_type",value="agent类别(AgentType):1-数据库Agent<ShuJuKu> 2-文件系统Agent<WenJianXiTong> 3-FtpAgent<FTP> 4-数据文件Agent<DBWenJian> 5-对象Agent<DuiXiang> ",dataType = String.class,required = true)
 	private String agent_type;
-	@DocBean(name ="create_date",value="创建日期",dataType = String.class,required = true)
+	@DocBean(name ="create_date",value="创建日期:",dataType = String.class,required = true)
 	private String create_date;
-	@DocBean(name ="create_time",value="创建时间",dataType = String.class,required = true)
+	@DocBean(name ="create_time",value="创建时间:",dataType = String.class,required = true)
 	private String create_time;
-	@DocBean(name ="user_id",value="用户ID",dataType = Long.class,required = false)
+	@DocBean(name ="user_id",value="用户ID:",dataType = Long.class,required = false)
 	private Long user_id;
 
 	/** 取得：数据源ID */

@@ -31,9 +31,9 @@ public class Data_relation_table extends ProjectTableEntity
 		__tmpPKS.add("storage_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="datasc_id",value="存储配置主键信息",dataType = Long.class,required = true)
+	@DocBean(name ="datasc_id",value="存储配置主键信息:",dataType = Long.class,required = true)
 	private Long datasc_id;
-	@DocBean(name ="storage_id",value="储存编号",dataType = Long.class,required = true)
+	@DocBean(name ="storage_id",value="储存编号:",dataType = Long.class,required = true)
 	private Long storage_id;
 
 	/** 取得：存储配置主键信息 */

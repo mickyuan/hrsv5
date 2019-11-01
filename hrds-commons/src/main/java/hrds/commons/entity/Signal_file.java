@@ -30,27 +30,27 @@ public class Signal_file extends ProjectTableEntity
 		__tmpPKS.add("signal_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="signal_id",value="信号id",dataType = Long.class,required = true)
+	@DocBean(name ="signal_id",value="信号id:",dataType = Long.class,required = true)
 	private Long signal_id;
-	@DocBean(name ="is_into_hbase",value="是否入hbase",dataType = String.class,required = true)
+	@DocBean(name ="is_into_hbase",value="是否入hbase(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_into_hbase;
-	@DocBean(name ="is_into_hive",value="是否入hive",dataType = String.class,required = true)
+	@DocBean(name ="is_into_hive",value="是否入hive(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_into_hive;
-	@DocBean(name ="is_fullindex",value="是否创建全文索引",dataType = String.class,required = true)
+	@DocBean(name ="is_fullindex",value="是否创建全文索引(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_fullindex;
-	@DocBean(name ="file_format",value="文件格式",dataType = String.class,required = true)
+	@DocBean(name ="file_format",value="文件格式(HiveStorageType):1-TEXTFILE<TEXTFILE> 2-SEQUENCEFILE<SEQUENCEFILE> 3-PARQUET<PARQUET> 4-CSV<CSV> 5-ORC<ORC> ",dataType = String.class,required = true)
 	private String file_format;
-	@DocBean(name ="is_compression",value="Hbase是使用压缩",dataType = String.class,required = true)
+	@DocBean(name ="is_compression",value="Hbase是使用压缩(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_compression;
-	@DocBean(name ="is_mpp",value="是否为MPP",dataType = String.class,required = true)
+	@DocBean(name ="is_mpp",value="是否为MPP(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_mpp;
-	@DocBean(name ="table_type",value="是内部表还是外部表",dataType = String.class,required = true)
+	@DocBean(name ="table_type",value="是内部表还是外部表(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String table_type;
-	@DocBean(name ="is_solr_hbase",value="是否使用solrOnHbase",dataType = String.class,required = true)
+	@DocBean(name ="is_solr_hbase",value="是否使用solrOnHbase(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_solr_hbase;
-	@DocBean(name ="database_id",value="数据库设置id",dataType = Long.class,required = true)
+	@DocBean(name ="database_id",value="数据库设置id:",dataType = Long.class,required = true)
 	private Long database_id;
-	@DocBean(name ="is_cbd",value="是否使用carbondata",dataType = String.class,required = true)
+	@DocBean(name ="is_cbd",value="是否使用carbondata(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_cbd;
 
 	/** 取得：信号id */

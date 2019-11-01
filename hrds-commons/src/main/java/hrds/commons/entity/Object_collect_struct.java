@@ -30,17 +30,17 @@ public class Object_collect_struct extends ProjectTableEntity
 		__tmpPKS.add("struct_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="struct_id",value="结构信息id",dataType = Long.class,required = true)
+	@DocBean(name ="struct_id",value="结构信息id:",dataType = Long.class,required = true)
 	private Long struct_id;
-	@DocBean(name ="coll_name",value="采集结构名称",dataType = String.class,required = true)
+	@DocBean(name ="coll_name",value="采集结构名称:",dataType = String.class,required = true)
 	private String coll_name;
-	@DocBean(name ="remark",value="备注",dataType = String.class,required = false)
+	@DocBean(name ="remark",value="备注:",dataType = String.class,required = false)
 	private String remark;
-	@DocBean(name ="ocs_id",value="对象采集任务编号",dataType = Long.class,required = true)
+	@DocBean(name ="ocs_id",value="对象采集任务编号:",dataType = Long.class,required = true)
 	private Long ocs_id;
-	@DocBean(name ="struct_type",value="对象数据类型",dataType = String.class,required = true)
+	@DocBean(name ="struct_type",value="对象数据类型(ObjectDataType):1-数组<ShuZu> 2-字符串<ZiFuChuan> ",dataType = String.class,required = true)
 	private String struct_type;
-	@DocBean(name ="data_desc",value="中文描述信息",dataType = String.class,required = false)
+	@DocBean(name ="data_desc",value="中文描述信息:",dataType = String.class,required = false)
 	private String data_desc;
 
 	/** 取得：结构信息id */

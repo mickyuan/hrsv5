@@ -30,53 +30,53 @@ public class Ftp_collect extends ProjectTableEntity
 		__tmpPKS.add("ftp_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="ftp_id",value="ftp采集id",dataType = Long.class,required = true)
+	@DocBean(name ="ftp_id",value="ftp采集id:",dataType = Long.class,required = true)
 	private Long ftp_id;
-	@DocBean(name ="ftp_number",value="ftp任务编号",dataType = String.class,required = true)
+	@DocBean(name ="ftp_number",value="ftp任务编号:",dataType = String.class,required = true)
 	private String ftp_number;
-	@DocBean(name ="ftp_name",value="ftp采集任务名称",dataType = String.class,required = true)
+	@DocBean(name ="ftp_name",value="ftp采集任务名称:",dataType = String.class,required = true)
 	private String ftp_name;
-	@DocBean(name ="start_date",value="开始日期",dataType = String.class,required = true)
+	@DocBean(name ="start_date",value="开始日期:",dataType = String.class,required = true)
 	private String start_date;
-	@DocBean(name ="end_date",value="结束日期",dataType = String.class,required = true)
+	@DocBean(name ="end_date",value="结束日期:",dataType = String.class,required = true)
 	private String end_date;
-	@DocBean(name ="ftp_ip",value="ftp服务IP",dataType = String.class,required = true)
+	@DocBean(name ="ftp_ip",value="ftp服务IP:",dataType = String.class,required = true)
 	private String ftp_ip;
-	@DocBean(name ="ftp_port",value="ftp服务器端口",dataType = String.class,required = true)
+	@DocBean(name ="ftp_port",value="ftp服务器端口:",dataType = String.class,required = true)
 	private String ftp_port;
-	@DocBean(name ="ftp_username",value="ftp用户名",dataType = String.class,required = true)
+	@DocBean(name ="ftp_username",value="ftp用户名:",dataType = String.class,required = true)
 	private String ftp_username;
-	@DocBean(name ="ftp_password",value="用户密码",dataType = String.class,required = true)
+	@DocBean(name ="ftp_password",value="用户密码:",dataType = String.class,required = true)
 	private String ftp_password;
-	@DocBean(name ="ftp_dir",value="ftp服务器目录",dataType = String.class,required = true)
+	@DocBean(name ="ftp_dir",value="ftp服务器目录:",dataType = String.class,required = true)
 	private String ftp_dir;
-	@DocBean(name ="local_path",value="本地路径",dataType = String.class,required = true)
+	@DocBean(name ="local_path",value="本地路径:",dataType = String.class,required = true)
 	private String local_path;
-	@DocBean(name ="file_suffix",value="获取文件后缀",dataType = String.class,required = false)
+	@DocBean(name ="file_suffix",value="获取文件后缀:",dataType = String.class,required = false)
 	private String file_suffix;
-	@DocBean(name ="run_way",value="启动方式",dataType = String.class,required = true)
+	@DocBean(name ="run_way",value="启动方式(ExecuteWay):1-按时启动<AnShiQiDong> 2-命令触发<MingLingChuFa> 3-信号文件触发<QianZhiTiaoJian> ",dataType = String.class,required = true)
 	private String run_way;
-	@DocBean(name ="remark",value="备注",dataType = String.class,required = false)
+	@DocBean(name ="remark",value="备注:",dataType = String.class,required = false)
 	private String remark;
-	@DocBean(name ="agent_id",value="Agent_id",dataType = Long.class,required = true)
+	@DocBean(name ="agent_id",value="Agent_id:",dataType = Long.class,required = true)
 	private Long agent_id;
-	@DocBean(name ="ftp_rule_path",value="下级目录规则",dataType = String.class,required = true)
+	@DocBean(name ="ftp_rule_path",value="下级目录规则(FtpRule):1-流水号<LiuShuiHao> 2-固定目录<GuDingMuLu> 3-按时间<AnShiJian> ",dataType = String.class,required = true)
 	private String ftp_rule_path;
-	@DocBean(name ="child_file_path",value="下级文件路径",dataType = String.class,required = false)
+	@DocBean(name ="child_file_path",value="下级文件路径:",dataType = String.class,required = false)
 	private String child_file_path;
-	@DocBean(name ="child_time",value="下级文件时间",dataType = String.class,required = false)
+	@DocBean(name ="child_time",value="下级文件时间(TimeType):1-日<Day> 2-小时<Hour> 3-分钟<Minute> 4-秒<Second> ",dataType = String.class,required = false)
 	private String child_time;
-	@DocBean(name ="is_sendok",value="是否完成",dataType = String.class,required = true)
+	@DocBean(name ="is_sendok",value="是否完成(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_sendok;
-	@DocBean(name ="is_unzip",value="是否解压",dataType = String.class,required = true)
+	@DocBean(name ="is_unzip",value="是否解压(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_unzip;
-	@DocBean(name ="reduce_type",value="解压格式",dataType = String.class,required = false)
+	@DocBean(name ="reduce_type",value="解压格式(ReduceType):1-tar<TAR> 2-gz<GZ> 3-zip<ZIP> 4-none<NONE> ",dataType = String.class,required = false)
 	private String reduce_type;
-	@DocBean(name ="ftp_model",value="FTP推拉模式是为推模式",dataType = String.class,required = true)
+	@DocBean(name ="ftp_model",value="FTP推拉模式是为推模式(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String ftp_model;
-	@DocBean(name ="is_read_realtime",value="是否实时读取",dataType = String.class,required = true)
+	@DocBean(name ="is_read_realtime",value="是否实时读取(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_read_realtime;
-	@DocBean(name ="realtime_interval",value="实时读取间隔时间",dataType = Long.class,required = true)
+	@DocBean(name ="realtime_interval",value="实时读取间隔时间:",dataType = Long.class,required = true)
 	private Long realtime_interval;
 
 	/** 取得：ftp采集id */

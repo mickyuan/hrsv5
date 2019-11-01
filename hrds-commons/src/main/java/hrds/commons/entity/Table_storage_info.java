@@ -30,19 +30,19 @@ public class Table_storage_info extends ProjectTableEntity
 		__tmpPKS.add("storage_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="storage_id",value="储存编号",dataType = Long.class,required = true)
+	@DocBean(name ="storage_id",value="储存编号:",dataType = Long.class,required = true)
 	private Long storage_id;
-	@DocBean(name ="file_format",value="文件格式",dataType = String.class,required = true)
+	@DocBean(name ="file_format",value="文件格式(HiveStorageType):1-TEXTFILE<TEXTFILE> 2-SEQUENCEFILE<SEQUENCEFILE> 3-PARQUET<PARQUET> 4-CSV<CSV> 5-ORC<ORC> ",dataType = String.class,required = true)
 	private String file_format;
-	@DocBean(name ="table_id",value="表名ID",dataType = Long.class,required = false)
+	@DocBean(name ="table_id",value="表名ID:",dataType = Long.class,required = false)
 	private Long table_id;
-	@DocBean(name ="storage_type",value="进数方式",dataType = String.class,required = true)
+	@DocBean(name ="storage_type",value="进数方式(StorageType):1-增量<ZengLiang> 2-追加<ZhuiJia> 3-替换<TiHuan> ",dataType = String.class,required = true)
 	private String storage_type;
-	@DocBean(name ="storage_time",value="存储期限（以天为单位）",dataType = Long.class,required = true)
+	@DocBean(name ="storage_time",value="存储期限（以天为单位）:",dataType = Long.class,required = true)
 	private Long storage_time;
-	@DocBean(name ="is_zipper",value="是否拉链存储",dataType = String.class,required = true)
+	@DocBean(name ="is_zipper",value="是否拉链存储(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_zipper;
-	@DocBean(name ="is_everyday",value="是否每天存一份",dataType = String.class,required = true)
+	@DocBean(name ="is_everyday",value="是否每天存一份(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_everyday;
 
 	/** 取得：储存编号 */

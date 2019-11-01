@@ -30,47 +30,47 @@ public class Sys_user extends ProjectTableEntity
 		__tmpPKS.add("user_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="user_id",value="用户ID",dataType = Long.class,required = true)
+	@DocBean(name ="user_id",value="用户ID:",dataType = Long.class,required = true)
 	private Long user_id;
-	@DocBean(name ="user_name",value="用户名称",dataType = String.class,required = true)
+	@DocBean(name ="user_name",value="用户名称:",dataType = String.class,required = true)
 	private String user_name;
-	@DocBean(name ="user_password",value="用户密码",dataType = String.class,required = true)
+	@DocBean(name ="user_password",value="用户密码:",dataType = String.class,required = true)
 	private String user_password;
-	@DocBean(name ="user_email",value="邮箱",dataType = String.class,required = false)
+	@DocBean(name ="user_email",value="邮箱:",dataType = String.class,required = false)
 	private String user_email;
-	@DocBean(name ="user_mobile",value="移动电话",dataType = String.class,required = false)
+	@DocBean(name ="user_mobile",value="移动电话:",dataType = String.class,required = false)
 	private String user_mobile;
-	@DocBean(name ="user_type",value="用户类型",dataType = String.class,required = false)
+	@DocBean(name ="user_type",value="用户类型(UserType):00-系统管理员<XiTongGuanLiYuan> 01-采集管理<CaijiGuanLiYuan> 02-数据采集<CaiJiYongHu> 03-数据查询<YeWuYongHu> 04-作业调度<ZuoYeGuanLiYuan> 05-作业操作员<ZuoYeCaoZuoYuan> 06-数据可视化管理<ShuJuKSHGuanLiYuan> 07-可视化数据源<ShuJuKSHSJY> 08-数据可视化分析<ShuJuKSHBianJI> 09-数据可视化查看<ShuJuKSHChaKan> 10-监控管理<JianKongGuanLiYuan> 11-服务接口管理<RESTJieKouGuanLiYuan> 12-服务接口用户<RESTYongHu> 13-分词器管理<FenCiQiGuanLiYuan> 14-数据集市<JiShiGuanLiYuan> 15-数据加工<JiShiJiaGongGuanLiYuan> 16-机器学习工作台<JiQiXueXiGuanLiYuan> 17-机器学习业务<JiQiXueXiYongHu> 18-流数据管理<LiuShuJuGuanLiYuan> 19-流数据生产<LiuShuJuShengChanYongHu> 20-数据库配置(永洪)<ShuJuKuPeiZhi> 21-报表创建(永洪)<BaoBiaoChuanJian> 22-报表查看(永洪)<BaoBiaoChaKan> 23-流数据消费<LiuShuJuXiaoFeiYongHu> 24-数据管控<ShuJuGuanKongGuanLiYuan> 25-自主分析管理<ZiZhuFenXiGuanLi> 26-自主分析操作<ZiZhuFenXiCaoZuo> ",dataType = String.class,required = false)
 	private String user_type;
-	@DocBean(name ="login_ip",value="登录IP",dataType = String.class,required = false)
+	@DocBean(name ="login_ip",value="登录IP:",dataType = String.class,required = false)
 	private String login_ip;
-	@DocBean(name ="login_date",value="最后登录时间",dataType = String.class,required = false)
+	@DocBean(name ="login_date",value="最后登录时间:",dataType = String.class,required = false)
 	private String login_date;
-	@DocBean(name ="user_state",value="用户状态",dataType = String.class,required = true)
+	@DocBean(name ="user_state",value="用户状态(UserState):1-正常<ZhengChang> 2-禁用<JinYong> 3-删除<ShanChu> 4-正在使用<ZhengZaiShiYong> ",dataType = String.class,required = true)
 	private String user_state;
-	@DocBean(name ="create_date",value="创建日期",dataType = String.class,required = true)
+	@DocBean(name ="create_date",value="创建日期:",dataType = String.class,required = true)
 	private String create_date;
-	@DocBean(name ="create_time",value="创建时间",dataType = String.class,required = false)
+	@DocBean(name ="create_time",value="创建时间:",dataType = String.class,required = false)
 	private String create_time;
-	@DocBean(name ="update_date",value="更新日期",dataType = String.class,required = false)
+	@DocBean(name ="update_date",value="更新日期:",dataType = String.class,required = false)
 	private String update_date;
-	@DocBean(name ="update_time",value="更新时间",dataType = String.class,required = false)
+	@DocBean(name ="update_time",value="更新时间:",dataType = String.class,required = false)
 	private String update_time;
-	@DocBean(name ="user_remark",value="备注",dataType = String.class,required = false)
+	@DocBean(name ="user_remark",value="备注:",dataType = String.class,required = false)
 	private String user_remark;
-	@DocBean(name ="create_id",value="建立用户ID",dataType = Long.class,required = true)
+	@DocBean(name ="create_id",value="建立用户ID:",dataType = Long.class,required = true)
 	private Long create_id;
-	@DocBean(name ="token",value="token",dataType = String.class,required = true)
+	@DocBean(name ="token",value="token:",dataType = String.class,required = true)
 	private String token;
-	@DocBean(name ="valid_time",value="token有效时间",dataType = String.class,required = true)
+	@DocBean(name ="valid_time",value="token有效时间:",dataType = String.class,required = true)
 	private String valid_time;
-	@DocBean(name ="usertype_group",value="用户类型组",dataType = String.class,required = false)
+	@DocBean(name ="usertype_group",value="用户类型组:",dataType = String.class,required = false)
 	private String usertype_group;
-	@DocBean(name ="useris_admin",value="是否为管理员",dataType = String.class,required = true)
+	@DocBean(name ="useris_admin",value="是否为管理员(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String useris_admin;
-	@DocBean(name ="role_id",value="角色ID",dataType = Long.class,required = true)
+	@DocBean(name ="role_id",value="角色ID:",dataType = Long.class,required = true)
 	private Long role_id;
-	@DocBean(name ="dep_id",value="部门ID",dataType = Long.class,required = true)
+	@DocBean(name ="dep_id",value="部门ID:",dataType = Long.class,required = true)
 	private Long dep_id;
 
 	/** 取得：用户ID */

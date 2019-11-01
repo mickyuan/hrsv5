@@ -30,11 +30,11 @@ public class Sys_role extends ProjectTableEntity
 		__tmpPKS.add("role_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="role_id",value="角色ID",dataType = Long.class,required = true)
+	@DocBean(name ="role_id",value="角色ID:",dataType = Long.class,required = true)
 	private Long role_id;
-	@DocBean(name ="role_name",value="角色名称",dataType = String.class,required = true)
+	@DocBean(name ="role_name",value="角色名称:",dataType = String.class,required = true)
 	private String role_name;
-	@DocBean(name ="role_remark",value="备注",dataType = String.class,required = false)
+	@DocBean(name ="role_remark",value="备注:",dataType = String.class,required = false)
 	private String role_remark;
 
 	/** 取得：角色ID */

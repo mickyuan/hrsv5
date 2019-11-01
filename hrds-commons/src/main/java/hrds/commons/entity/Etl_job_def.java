@@ -30,73 +30,73 @@ public class Etl_job_def extends ProjectTableEntity
 		__tmpPKS.add("etl_job");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="etl_job",value="作业名",dataType = String.class,required = true)
+	@DocBean(name ="etl_job",value="作业名:",dataType = String.class,required = true)
 	private String etl_job;
-	@DocBean(name ="etl_job_desc",value="作业描述",dataType = String.class,required = false)
+	@DocBean(name ="etl_job_desc",value="作业描述:",dataType = String.class,required = false)
 	private String etl_job_desc;
-	@DocBean(name ="pro_type",value="作业程序类型",dataType = String.class,required = true)
+	@DocBean(name ="pro_type",value="作业程序类型(Pro_Type):SHELL-SHELL<SHELL> PERL-PERL<PERL> BAT-BAT<BAT> JAVA-JAVA<JAVA> PYTHON-PYTHON<PYTHON> WF-WF<WF> DBTRAN-DBTRAN<DBTRAN> DBJOB-DBJOB<DBJOB> Yarn-Yarn<Yarn> Thrift-Thrift<Thrift> ",dataType = String.class,required = true)
 	private String pro_type;
-	@DocBean(name ="pro_dic",value="作业程序目录",dataType = String.class,required = false)
+	@DocBean(name ="pro_dic",value="作业程序目录:",dataType = String.class,required = false)
 	private String pro_dic;
-	@DocBean(name ="pro_name",value="作业程序名称",dataType = String.class,required = false)
+	@DocBean(name ="pro_name",value="作业程序名称:",dataType = String.class,required = false)
 	private String pro_name;
-	@DocBean(name ="pro_para",value="作业程序参数",dataType = String.class,required = false)
+	@DocBean(name ="pro_para",value="作业程序参数:",dataType = String.class,required = false)
 	private String pro_para;
-	@DocBean(name ="log_dic",value="日志目录",dataType = String.class,required = false)
+	@DocBean(name ="log_dic",value="日志目录:",dataType = String.class,required = false)
 	private String log_dic;
-	@DocBean(name ="disp_freq",value="调度频率",dataType = String.class,required = false)
+	@DocBean(name ="disp_freq",value="调度频率(Dispatch_Frequency):D-天(D)<DAILY> M-月(M)<MONTHLY> W-周(W)<WEEKLY> X-旬(X)<TENDAYS> Y-年(Y)<YEARLY> F-频率(F)<PinLv> ",dataType = String.class,required = false)
 	private String disp_freq;
-	@DocBean(name ="disp_offset",value="调度时间位移",dataType = Integer.class,required = false)
+	@DocBean(name ="disp_offset",value="调度时间位移:",dataType = Integer.class,required = false)
 	private Integer disp_offset;
-	@DocBean(name ="disp_type",value="调度触发方式",dataType = String.class,required = false)
+	@DocBean(name ="disp_type",value="调度触发方式(Dispatch_Type):B-批前(B)<BEFORE> D-依赖触发(D)<DEPENDENCE> T-定时T+1触发(T)<TPLUS1> Z-定时T+0触发(Z)<TPLUS0> A-批后(A)<AFTER> ",dataType = String.class,required = false)
 	private String disp_type;
-	@DocBean(name ="disp_time",value="调度触发时间",dataType = String.class,required = false)
+	@DocBean(name ="disp_time",value="调度触发时间:",dataType = String.class,required = false)
 	private String disp_time;
-	@DocBean(name ="job_eff_flag",value="作业有效标志",dataType = String.class,required = false)
+	@DocBean(name ="job_eff_flag",value="作业有效标志(Job_Effective_Flag):Y-有效(Y)<YES> N-无效(N)<NO> V-空跑(V)<VIRTUAL> ",dataType = String.class,required = false)
 	private String job_eff_flag;
-	@DocBean(name ="job_priority",value="作业优先级",dataType = Integer.class,required = false)
+	@DocBean(name ="job_priority",value="作业优先级:",dataType = Integer.class,required = false)
 	private Integer job_priority;
-	@DocBean(name ="job_disp_status",value="作业调度状态",dataType = String.class,required = false)
+	@DocBean(name ="job_disp_status",value="作业调度状态(Job_Status):D-完成<DONE> E-错误<ERROR> P-挂起<PENDING> R-运行<RUNNING> S-停止<STOP> W-等待<WAITING> ",dataType = String.class,required = false)
 	private String job_disp_status;
-	@DocBean(name ="curr_st_time",value="开始时间",dataType = String.class,required = false)
+	@DocBean(name ="curr_st_time",value="开始时间:",dataType = String.class,required = false)
 	private String curr_st_time;
-	@DocBean(name ="curr_end_time",value="结束时间",dataType = String.class,required = false)
+	@DocBean(name ="curr_end_time",value="结束时间:",dataType = String.class,required = false)
 	private String curr_end_time;
-	@DocBean(name ="overlength_val",value="超长阀值",dataType = Integer.class,required = false)
+	@DocBean(name ="overlength_val",value="超长阀值:",dataType = Integer.class,required = false)
 	private Integer overlength_val;
-	@DocBean(name ="overtime_val",value="超时阀值",dataType = Integer.class,required = false)
+	@DocBean(name ="overtime_val",value="超时阀值:",dataType = Integer.class,required = false)
 	private Integer overtime_val;
-	@DocBean(name ="comments",value="备注信息",dataType = String.class,required = false)
+	@DocBean(name ="comments",value="备注信息:",dataType = String.class,required = false)
 	private String comments;
-	@DocBean(name ="curr_bath_date",value="当前批量日期",dataType = String.class,required = false)
+	@DocBean(name ="curr_bath_date",value="当前批量日期:",dataType = String.class,required = false)
 	private String curr_bath_date;
-	@DocBean(name ="today_disp",value="当天是否调度",dataType = String.class,required = false)
+	@DocBean(name ="today_disp",value="当天是否调度(Today_Dispatch_Flag):Y-是(Y)<YES> N-否(N)<NO> ",dataType = String.class,required = false)
 	private String today_disp;
-	@DocBean(name ="main_serv_sync",value="主服务器同步标志",dataType = String.class,required = false)
+	@DocBean(name ="main_serv_sync",value="主服务器同步标志(Main_Server_Sync):L-锁定<LOCK> N-不同步<NO> Y-同步<YES> B-备份中<BACKUP> ",dataType = String.class,required = false)
 	private String main_serv_sync;
-	@DocBean(name ="job_process_id",value="作业进程号",dataType = String.class,required = false)
+	@DocBean(name ="job_process_id",value="作业进程号:",dataType = String.class,required = false)
 	private String job_process_id;
-	@DocBean(name ="job_priority_curr",value="作业当前优先级",dataType = Integer.class,required = false)
+	@DocBean(name ="job_priority_curr",value="作业当前优先级:",dataType = Integer.class,required = false)
 	private Integer job_priority_curr;
-	@DocBean(name ="job_return_val",value="作业返回值",dataType = Integer.class,required = false)
+	@DocBean(name ="job_return_val",value="作业返回值:",dataType = Integer.class,required = false)
 	private Integer job_return_val;
-	@DocBean(name ="upd_time",value="更新日期",dataType = String.class,required = false)
+	@DocBean(name ="upd_time",value="更新日期:",dataType = String.class,required = false)
 	private String upd_time;
-	@DocBean(name ="sub_sys_cd",value="子系统代码",dataType = String.class,required = true)
+	@DocBean(name ="sub_sys_cd",value="子系统代码:",dataType = String.class,required = true)
 	private String sub_sys_cd;
-	@DocBean(name ="exe_frequency",value="每隔(分钟)执行",dataType = Integer.class,required = true)
+	@DocBean(name ="exe_frequency",value="每隔(分钟)执行:",dataType = Integer.class,required = true)
 	private Integer exe_frequency;
-	@DocBean(name ="exe_num",value="执行次数",dataType = Integer.class,required = false)
+	@DocBean(name ="exe_num",value="执行次数:",dataType = Integer.class,required = false)
 	private Integer exe_num;
-	@DocBean(name ="com_exe_num",value="已经执行次数",dataType = Integer.class,required = false)
+	@DocBean(name ="com_exe_num",value="已经执行次数:",dataType = Integer.class,required = false)
 	private Integer com_exe_num;
-	@DocBean(name ="last_exe_time",value="上次执行时间",dataType = String.class,required = false)
+	@DocBean(name ="last_exe_time",value="上次执行时间:",dataType = String.class,required = false)
 	private String last_exe_time;
-	@DocBean(name ="star_time",value="开始执行时间",dataType = String.class,required = false)
+	@DocBean(name ="star_time",value="开始执行时间:",dataType = String.class,required = false)
 	private String star_time;
-	@DocBean(name ="end_time",value="结束执行时间",dataType = String.class,required = false)
+	@DocBean(name ="end_time",value="结束执行时间:",dataType = String.class,required = false)
 	private String end_time;
-	@DocBean(name ="etl_sys_cd",value="工程代码",dataType = String.class,required = true)
+	@DocBean(name ="etl_sys_cd",value="工程代码:",dataType = String.class,required = true)
 	private String etl_sys_cd;
 
 	/** 取得：作业名 */

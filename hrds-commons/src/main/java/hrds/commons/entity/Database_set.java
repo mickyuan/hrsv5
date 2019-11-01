@@ -30,59 +30,59 @@ public class Database_set extends ProjectTableEntity
 		__tmpPKS.add("database_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="agent_id",value="Agent_id",dataType = Long.class,required = false)
+	@DocBean(name ="agent_id",value="Agent_id:",dataType = Long.class,required = false)
 	private Long agent_id;
-	@DocBean(name ="database_id",value="数据库设置id",dataType = Long.class,required = true)
+	@DocBean(name ="database_id",value="数据库设置id:",dataType = Long.class,required = true)
 	private Long database_id;
-	@DocBean(name ="task_name",value="数据库采集任务名称",dataType = String.class,required = false)
+	@DocBean(name ="task_name",value="数据库采集任务名称:",dataType = String.class,required = false)
 	private String task_name;
-	@DocBean(name ="database_name",value="数据库名称",dataType = String.class,required = false)
+	@DocBean(name ="database_name",value="数据库名称:",dataType = String.class,required = false)
 	private String database_name;
-	@DocBean(name ="database_pad",value="数据库密码",dataType = String.class,required = false)
+	@DocBean(name ="database_pad",value="数据库密码:",dataType = String.class,required = false)
 	private String database_pad;
-	@DocBean(name ="database_drive",value="数据库驱动",dataType = String.class,required = false)
+	@DocBean(name ="database_drive",value="数据库驱动:",dataType = String.class,required = false)
 	private String database_drive;
-	@DocBean(name ="database_type",value="数据库类型",dataType = String.class,required = true)
+	@DocBean(name ="database_type",value="数据库类型(DatabaseType):01-MYSQL<MYSQL> 02-Oracle9i及一下<Oracle9i> 03-Oracle10g及以上<Oracle10g> 04-SQLSERVER2000<SqlServer2000> 05-SQLSERVER2005<SqlServer2005> 06-DB2<DB2> 07-SybaseASE12.5及以上<SybaseASE125> 08-Informatic<Informatic> 09-H2<H2> 10-ApacheDerby<ApacheDerby> 11-Postgresql<Postgresql> 12-GBase<GBase> 13-TeraData<TeraData> ",dataType = String.class,required = true)
 	private String database_type;
-	@DocBean(name ="user_name",value="用户名称",dataType = String.class,required = false)
+	@DocBean(name ="user_name",value="用户名称:",dataType = String.class,required = false)
 	private String user_name;
-	@DocBean(name ="database_ip",value="数据库服务器IP",dataType = String.class,required = false)
+	@DocBean(name ="database_ip",value="数据库服务器IP:",dataType = String.class,required = false)
 	private String database_ip;
-	@DocBean(name ="database_port",value="数据库端口",dataType = String.class,required = false)
+	@DocBean(name ="database_port",value="数据库端口:",dataType = String.class,required = false)
 	private String database_port;
-	@DocBean(name ="host_name",value="主机名",dataType = String.class,required = false)
+	@DocBean(name ="host_name",value="主机名:",dataType = String.class,required = false)
 	private String host_name;
-	@DocBean(name ="system_type",value="操作系统类型",dataType = String.class,required = false)
+	@DocBean(name ="system_type",value="操作系统类型:",dataType = String.class,required = false)
 	private String system_type;
-	@DocBean(name ="is_sendok",value="是否设置完成并发送成功",dataType = String.class,required = true)
+	@DocBean(name ="is_sendok",value="是否设置完成并发送成功(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_sendok;
-	@DocBean(name ="database_number",value="数据库设置编号",dataType = String.class,required = true)
+	@DocBean(name ="database_number",value="数据库设置编号:",dataType = String.class,required = true)
 	private String database_number;
-	@DocBean(name ="db_agent",value="是否为平面DB数据采集",dataType = String.class,required = true)
+	@DocBean(name ="db_agent",value="是否为平面DB数据采集(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String db_agent;
-	@DocBean(name ="plane_url",value="DB文件源数据路径",dataType = String.class,required = false)
+	@DocBean(name ="plane_url",value="DB文件源数据路径:",dataType = String.class,required = false)
 	private String plane_url;
-	@DocBean(name ="database_separatorr",value="数据采用分隔符",dataType = String.class,required = false)
+	@DocBean(name ="database_separatorr",value="数据采用分隔符:",dataType = String.class,required = false)
 	private String database_separatorr;
-	@DocBean(name ="database_code",value="数据使用编码格式",dataType = String.class,required = false)
+	@DocBean(name ="database_code",value="数据使用编码格式(DataBaseCode):1-UTF-8<UTF_8> 2-GBK<GBK> 3-UTF-16<UTF_16> 4-GB2312<GB2312> 5-ISO-8859-1<ISO_8859_1> ",dataType = String.class,required = false)
 	private String database_code;
-	@DocBean(name ="dbfile_format",value="DB文件格式",dataType = String.class,required = false)
+	@DocBean(name ="dbfile_format",value="DB文件格式(FileFormat):0-定长<DingChang> 1-非定长<FeiDingChang> 2-CSV<CSV> ",dataType = String.class,required = false)
 	private String dbfile_format;
-	@DocBean(name ="is_hidden",value="分隔符是否为ASCII隐藏字符",dataType = String.class,required = true)
+	@DocBean(name ="is_hidden",value="分隔符是否为ASCII隐藏字符(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_hidden;
-	@DocBean(name ="file_suffix",value="采集文件名后缀",dataType = String.class,required = false)
+	@DocBean(name ="file_suffix",value="采集文件名后缀:",dataType = String.class,required = false)
 	private String file_suffix;
-	@DocBean(name ="is_load",value="是否直接加载数据",dataType = String.class,required = true)
+	@DocBean(name ="is_load",value="是否直接加载数据(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_load;
-	@DocBean(name ="row_separator",value="数据行分隔符",dataType = String.class,required = false)
+	@DocBean(name ="row_separator",value="数据行分隔符:",dataType = String.class,required = false)
 	private String row_separator;
-	@DocBean(name ="classify_id",value="分类id",dataType = Long.class,required = true)
+	@DocBean(name ="classify_id",value="分类id:",dataType = Long.class,required = true)
 	private Long classify_id;
-	@DocBean(name ="is_header",value="是否有表头",dataType = String.class,required = true)
+	@DocBean(name ="is_header",value="是否有表头(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_header;
-	@DocBean(name ="cp_or",value="清洗顺序",dataType = String.class,required = false)
+	@DocBean(name ="cp_or",value="清洗顺序:",dataType = String.class,required = false)
 	private String cp_or;
-	@DocBean(name ="jdbc_url",value="数据库连接地址",dataType = String.class,required = false)
+	@DocBean(name ="jdbc_url",value="数据库连接地址:",dataType = String.class,required = false)
 	private String jdbc_url;
 
 	/** 取得：Agent_id */

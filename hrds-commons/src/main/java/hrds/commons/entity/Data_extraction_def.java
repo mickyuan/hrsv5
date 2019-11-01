@@ -30,29 +30,29 @@ public class Data_extraction_def extends ProjectTableEntity
 		__tmpPKS.add("ded_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="ded_id",value="数据抽取定义主键",dataType = Long.class,required = true)
+	@DocBean(name ="ded_id",value="数据抽取定义主键:",dataType = Long.class,required = true)
 	private Long ded_id;
-	@DocBean(name ="table_id",value="表名ID",dataType = Long.class,required = true)
+	@DocBean(name ="table_id",value="表名ID:",dataType = Long.class,required = true)
 	private Long table_id;
-	@DocBean(name ="is_header",value="是否需要表头",dataType = String.class,required = true)
+	@DocBean(name ="is_header",value="是否需要表头(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_header;
-	@DocBean(name ="data_extract_type",value="数据抽取方式",dataType = String.class,required = true)
+	@DocBean(name ="data_extract_type",value="数据抽取方式(DataExtractType):1-仅数据抽取<JinShuJuChouQu> 2-数据抽取及入库<ShuJuChouQuJiRuKu> ",dataType = String.class,required = true)
 	private String data_extract_type;
-	@DocBean(name ="database_code",value="数据抽取落地编码",dataType = String.class,required = true)
+	@DocBean(name ="database_code",value="数据抽取落地编码(DataBaseCode):1-UTF-8<UTF_8> 2-GBK<GBK> 3-UTF-16<UTF_16> 4-GB2312<GB2312> 5-ISO-8859-1<ISO_8859_1> ",dataType = String.class,required = true)
 	private String database_code;
-	@DocBean(name ="row_separator",value="行分隔符",dataType = String.class,required = false)
+	@DocBean(name ="row_separator",value="行分隔符:",dataType = String.class,required = false)
 	private String row_separator;
-	@DocBean(name ="database_separatorr",value="列分割符",dataType = String.class,required = false)
+	@DocBean(name ="database_separatorr",value="列分割符:",dataType = String.class,required = false)
 	private String database_separatorr;
-	@DocBean(name ="is_hidden",value="分隔符是否为ASCII隐藏字符",dataType = String.class,required = true)
+	@DocBean(name ="is_hidden",value="分隔符是否为ASCII隐藏字符(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_hidden;
-	@DocBean(name ="ded_remark",value="备注",dataType = String.class,required = false)
+	@DocBean(name ="ded_remark",value="备注:",dataType = String.class,required = false)
 	private String ded_remark;
-	@DocBean(name ="dbfile_format",value="数据落地格式",dataType = String.class,required = true)
+	@DocBean(name ="dbfile_format",value="数据落地格式(FileFormat):0-定长<DingChang> 1-非定长<FeiDingChang> 2-CSV<CSV> ",dataType = String.class,required = true)
 	private String dbfile_format;
-	@DocBean(name ="plane_url",value="数据落地目录",dataType = String.class,required = false)
+	@DocBean(name ="plane_url",value="数据落地目录:",dataType = String.class,required = false)
 	private String plane_url;
-	@DocBean(name ="file_suffix",value="落地文件后缀名",dataType = String.class,required = false)
+	@DocBean(name ="file_suffix",value="落地文件后缀名:",dataType = String.class,required = false)
 	private String file_suffix;
 
 	/** 取得：数据抽取定义主键 */

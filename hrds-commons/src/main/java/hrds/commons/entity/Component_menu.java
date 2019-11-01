@@ -30,17 +30,17 @@ public class Component_menu extends ProjectTableEntity
 		__tmpPKS.add("menu_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="menu_id",value="主键菜单id",dataType = Long.class,required = true)
+	@DocBean(name ="menu_id",value="主键菜单id:",dataType = Long.class,required = true)
 	private Long menu_id;
-	@DocBean(name ="menu_path",value="菜单path",dataType = String.class,required = true)
+	@DocBean(name ="menu_path",value="菜单path:",dataType = String.class,required = true)
 	private String menu_path;
-	@DocBean(name ="user_type",value="用户类型",dataType = String.class,required = true)
+	@DocBean(name ="user_type",value="用户类型(UserType):00-系统管理员<XiTongGuanLiYuan> 01-采集管理<CaijiGuanLiYuan> 02-数据采集<CaiJiYongHu> 03-数据查询<YeWuYongHu> 04-作业调度<ZuoYeGuanLiYuan> 05-作业操作员<ZuoYeCaoZuoYuan> 06-数据可视化管理<ShuJuKSHGuanLiYuan> 07-可视化数据源<ShuJuKSHSJY> 08-数据可视化分析<ShuJuKSHBianJI> 09-数据可视化查看<ShuJuKSHChaKan> 10-监控管理<JianKongGuanLiYuan> 11-服务接口管理<RESTJieKouGuanLiYuan> 12-服务接口用户<RESTYongHu> 13-分词器管理<FenCiQiGuanLiYuan> 14-数据集市<JiShiGuanLiYuan> 15-数据加工<JiShiJiaGongGuanLiYuan> 16-机器学习工作台<JiQiXueXiGuanLiYuan> 17-机器学习业务<JiQiXueXiYongHu> 18-流数据管理<LiuShuJuGuanLiYuan> 19-流数据生产<LiuShuJuShengChanYongHu> 20-数据库配置(永洪)<ShuJuKuPeiZhi> 21-报表创建(永洪)<BaoBiaoChuanJian> 22-报表查看(永洪)<BaoBiaoChaKan> 23-流数据消费<LiuShuJuXiaoFeiYongHu> 24-数据管控<ShuJuGuanKongGuanLiYuan> 25-自主分析管理<ZiZhuFenXiGuanLi> 26-自主分析操作<ZiZhuFenXiCaoZuo> ",dataType = String.class,required = true)
 	private String user_type;
-	@DocBean(name ="menu_name",value="菜单名称",dataType = String.class,required = true)
+	@DocBean(name ="menu_name",value="菜单名称:",dataType = String.class,required = true)
 	private String menu_name;
-	@DocBean(name ="comp_id",value="组件编号",dataType = String.class,required = true)
+	@DocBean(name ="comp_id",value="组件编号:",dataType = String.class,required = true)
 	private String comp_id;
-	@DocBean(name ="menu_remark",value="备注",dataType = String.class,required = false)
+	@DocBean(name ="menu_remark",value="备注:",dataType = String.class,required = false)
 	private String menu_remark;
 
 	/** 取得：主键菜单id */

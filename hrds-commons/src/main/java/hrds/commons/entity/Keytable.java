@@ -30,9 +30,9 @@ public class Keytable extends ProjectTableEntity
 		__tmpPKS.add("key_name");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="key_name",value="key_name",dataType = String.class,required = true)
+	@DocBean(name ="key_name",value="key_name:",dataType = String.class,required = true)
 	private String key_name;
-	@DocBean(name ="key_value",value="value",dataType = Integer.class,required = false)
+	@DocBean(name ="key_value",value="value:",dataType = Integer.class,required = false)
 	private Integer key_value;
 
 	/** 取得：key_name */

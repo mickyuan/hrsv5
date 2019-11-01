@@ -30,25 +30,25 @@ public class Etl_agent_downinfo extends ProjectTableEntity
 		__tmpPKS.add("down_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="down_id",value="下载编号(primary)",dataType = Long.class,required = true)
+	@DocBean(name ="down_id",value="下载编号(primary):",dataType = Long.class,required = true)
 	private Long down_id;
-	@DocBean(name ="agent_name",value="Agent名称",dataType = String.class,required = true)
+	@DocBean(name ="agent_name",value="Agent名称:",dataType = String.class,required = true)
 	private String agent_name;
-	@DocBean(name ="agent_ip",value="Agent IP",dataType = String.class,required = true)
+	@DocBean(name ="agent_ip",value="Agent IP:",dataType = String.class,required = true)
 	private String agent_ip;
-	@DocBean(name ="save_dir",value="存放目录",dataType = String.class,required = true)
+	@DocBean(name ="save_dir",value="存放目录:",dataType = String.class,required = true)
 	private String save_dir;
-	@DocBean(name ="ai_desc",value="描述",dataType = String.class,required = false)
+	@DocBean(name ="ai_desc",value="描述:",dataType = String.class,required = false)
 	private String ai_desc;
-	@DocBean(name ="remark",value="备注",dataType = String.class,required = false)
+	@DocBean(name ="remark",value="备注:",dataType = String.class,required = false)
 	private String remark;
-	@DocBean(name ="user_id",value="用户id",dataType = Long.class,required = true)
+	@DocBean(name ="user_id",value="用户id:",dataType = Long.class,required = true)
 	private Long user_id;
-	@DocBean(name ="user_name",value="用户名",dataType = String.class,required = false)
+	@DocBean(name ="user_name",value="用户名:",dataType = String.class,required = false)
 	private String user_name;
-	@DocBean(name ="passwd",value="密码",dataType = String.class,required = false)
+	@DocBean(name ="passwd",value="密码:",dataType = String.class,required = false)
 	private String passwd;
-	@DocBean(name ="agent_type",value="agent类别",dataType = String.class,required = true)
+	@DocBean(name ="agent_type",value="agent类别:",dataType = String.class,required = true)
 	private String agent_type;
 
 	/** 取得：下载编号(primary) */

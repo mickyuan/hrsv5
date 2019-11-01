@@ -3,22 +3,32 @@ package hrds.commons;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.*;
+import fd.ng.core.exception.internal.FrameworkRuntimeException;
+import fd.ng.core.exception.internal.RawlayerRuntimeException;
 import fd.ng.core.utils.ClassUtil;
 import fd.ng.core.utils.StringUtil;
+import fd.ng.core.utils.SystemUtil;
+import fd.ng.core.utils.Validator;
 import fd.ng.netserver.conf.HttpServerConf;
 import fd.ng.web.annotation.Action;
 import fd.ng.web.annotation.UrlName;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
+import java.net.JarURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.charset.Charset;
 import java.util.*;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 public class ParsingAnnotaion {
     private static final Logger logger = LogManager.getLogger();
@@ -29,6 +39,7 @@ public class ParsingAnnotaion {
 
     public static void start() {
         try {
+           // ClassLoader.getSystemClassLoader().getResource(resourceName);
             List<Class<?>> actionClassList = ClassUtil.getClassListByAnnotation("hrds", Action.class);
             Map<String,String> errorMethod = new HashMap<>();
             JSONArray jsonArray = new JSONArray();
@@ -197,7 +208,7 @@ public class ParsingAnnotaion {
                     }
                 }
             }
-            SaveWriteFile("d://aa.txt", jsonArray.toString());
+            SaveWriteFile("d://data.json", jsonArray.toString());
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
@@ -358,18 +369,26 @@ public class ParsingAnnotaion {
 
     public static void SaveWriteFile(String fileName, String content) {
 
-        FileWriter fw = null;
-        PrintWriter out = null;
+        //FileWriter fw = null;
+        //PrintWriter out = null;
+        Writer writer = null;
         try {
-            fw = new FileWriter(fileName, true);
+            File file1 = new File(fileName);
+            writer = new BufferedWriter(
+                    new OutputStreamWriter(
+                            new FileOutputStream(file1), "UTF-8"));
+            writer.write(content);
+            writer.flush();
+           /* fw = new FileWriter(fileName, true);
             out = new PrintWriter(fw);
-            out.println(content);
+            out.println(content);*/
         } catch (IOException ioe) {
             logger.error("shibai");
         } finally {
-            if (out != null) {
+            if (writer != null) {
                 try {
-                    out.close();
+                    writer.close();
+                    //out.close();
                 } catch (Exception ioe) {
                 }
             }

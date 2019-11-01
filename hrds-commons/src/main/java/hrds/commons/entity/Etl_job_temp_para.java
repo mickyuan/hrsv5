@@ -30,17 +30,17 @@ public class Etl_job_temp_para extends ProjectTableEntity
 		__tmpPKS.add("etl_temp_para_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="etl_temp_para_id",value="模版参数主键",dataType = Long.class,required = true)
+	@DocBean(name ="etl_temp_para_id",value="模版参数主键:",dataType = Long.class,required = true)
 	private Long etl_temp_para_id;
-	@DocBean(name ="etl_para_type",value="参数类型",dataType = String.class,required = true)
+	@DocBean(name ="etl_para_type",value="参数类型:",dataType = String.class,required = true)
 	private String etl_para_type;
-	@DocBean(name ="etl_job_pro_para",value="参数名称",dataType = String.class,required = true)
+	@DocBean(name ="etl_job_pro_para",value="参数名称:",dataType = String.class,required = true)
 	private String etl_job_pro_para;
-	@DocBean(name ="etl_job_para_size",value="参数",dataType = String.class,required = true)
+	@DocBean(name ="etl_job_para_size",value="参数:",dataType = String.class,required = true)
 	private String etl_job_para_size;
-	@DocBean(name ="etl_pro_para_sort",value="参数排序",dataType = Long.class,required = true)
+	@DocBean(name ="etl_pro_para_sort",value="参数排序:",dataType = Long.class,required = true)
 	private Long etl_pro_para_sort;
-	@DocBean(name ="etl_temp_id",value="模版ID",dataType = Long.class,required = true)
+	@DocBean(name ="etl_temp_id",value="模版ID:",dataType = Long.class,required = true)
 	private Long etl_temp_id;
 
 	/** 取得：模版参数主键 */
