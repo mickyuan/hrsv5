@@ -348,7 +348,7 @@ public class DataQueryAction extends BaseAction {
 		Map<String, Object> conditionalQueryMap = new HashMap<>();
 		conditionalQueryMap.put("fileRs", fileRs);
 		//2.设置下载和认证信息
-		setDownloadAndAuth(conditionalQueryMap);
+		//setDownloadAndAuth(conditionalQueryMap);
 		Map<String, Object> fadMap = getFileApplicationDetails();
 		//3.设置文件各类申请详情汇总
 		Result applyRequestRs = (Result) fadMap.get("applyRequestRs");
@@ -364,7 +364,7 @@ public class DataQueryAction extends BaseAction {
 			conditionalQueryMap.put("sum", countRs.getRowCount());
 		}
 		//5.设置文件属性信息
-		setFileAttribute(conditionalQueryMap);
+		//setFileAttribute(conditionalQueryMap);
 		return conditionalQueryMap;
 	}
 
@@ -528,6 +528,7 @@ public class DataQueryAction extends BaseAction {
 	)
 	@Param(name = "conditionalQueryMap", desc = "自定义条件查询结果map", range = "自定义条件查询结果的数据集合")
 	@Return(desc = "自定义查询结果的数据集合", range = "无限制")
+	@Deprecated
 	private void setDownloadAndAuth(Map<String, Object> conditionalQueryMap) {
 		//1.自定义条件查询结果设置下载和认证信息
 		conditionalQueryMap.put("view", ApplyType.ChaKan.getCode());
@@ -586,6 +587,7 @@ public class DataQueryAction extends BaseAction {
 	)
 	@Param(name = "conditionalQueryMap", desc = "自定义条件查询结果map", range = "自定义条件查询结果的数据集合")
 	@Return(desc = "自定义查询结果的数据集合", range = "无限制")
+	@Deprecated
 	private void setFileAttribute(Map<String, Object> conditionalQueryMap) {
 		//1.设置文件公共的属性信息"
 		conditionalQueryMap.put("all", FileType.All.getCode());
