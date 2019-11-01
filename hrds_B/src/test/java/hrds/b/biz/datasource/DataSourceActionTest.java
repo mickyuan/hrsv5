@@ -1181,13 +1181,26 @@ public class DataSourceActionTest extends WebBaseTestCase {
         // 1.正确的数据访问1，数据申请审批，数据全有效
         String bodyString = new HttpClient()
                 .addData("da_id", DaId)
-                .addData("auth_type", AuthType.YiCi.getCode())
+                .addData("auth_type", AuthType.ShenQing.getCode())
                 .post(getActionUrl("dataAudit")).getBodyString();
         Optional<ActionResult> ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
         assertThat(ar.get().isSuccess(), is(true));
         List<Map<String, Object>> dataAuthList = (List<Map<String, Object>>) ar.get().getData();
         for (int i = 0; i < dataAuthList.size(); i++) {
-            assertThat(dataAuthList.get(i).get("auth_type").toString(), is(AuthType.YiCi.getCode()));
+            switch (i){
+                case 0:
+                    assertThat(dataAuthList.get(i).get("auth_type").toString(), is(AuthType.YiCi.getCode()));
+                    break;
+                case 1:
+                    assertThat(dataAuthList.get(i).get("auth_type").toString(), is(AuthType.BuYunXu.getCode()));
+                    break;
+                case 2:
+                    assertThat(dataAuthList.get(i).get("auth_type").toString(), is(AuthType.YunXu.getCode()));
+                    break;
+                case 3:
+                    assertThat(dataAuthList.get(i).get("auth_type").toString(), is(AuthType.ShenQing.getCode()));
+                    break;
+            }
             assertThat(dataAuthList.get(i).get("da_id").toString(), is(String.valueOf(DaId +
                     dataAuthList.size() - i - 1)));
             assertThat(dataAuthList.get(i).get("user_id").toString(), is(String.valueOf(UserId)));
