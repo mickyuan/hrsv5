@@ -9,6 +9,7 @@ import fd.ng.db.jdbc.DefaultPageImpl;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.entity.Department_info;
+import hrds.commons.entity.Sys_user;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.key.PrimayKeyGener;
@@ -41,7 +42,10 @@ public class DepartmentAction extends BaseAction {
 	@Return(desc = "void 无返回结果", range = "无")
 	public void deleteDepartmentInfo(long dep_id) {
 		//数据权限校验：不做权限检查
-		//1.检查待删除的系统用户是否存在，存在则根据 dep_id 删除
+		//1.检查待删除的部门是否存在，存在则根据 dep_id 删除
+		if (checkExistDataUnderTheDep(dep_id)) {
+			throw new BusinessException("部门下还存在用户!");
+		}
 		if (checkDepIdIsExist(dep_id)) {
 			DboExecute.deletesOrThrow("删除部门失败!，dep_id=" + dep_id,
 					"DELETE FROM " + Department_info.TableName + " WHERE dep_id = ? ", dep_id);
@@ -90,4 +94,16 @@ public class DepartmentAction extends BaseAction {
 		return Dbo.queryNumber("select count(dep_name) count from " + Department_info.TableName + " WHERE dep_name =?",
 				dep_name).orElseThrow(() -> new BusinessException("检查部门名称否重复的SQL编写错误")) != 0;
 	}
+
+	@Method(desc = "检查部门下是否存在用户",
+			logicStep = "1.根据 dep_id 检查部门下是否存在用户")
+	@Param(name = "dep_id", desc = "部门id", range = "long类型，长度限制19，该值唯一", example = "5000000000")
+	@Return(desc = "部门下是否存在用户", range = "true：有，false：没有")
+	private boolean checkExistDataUnderTheDep(long dep_id) {
+		//1.根据 data_mart_id 检查集市下是否存在数据表
+		return Dbo.queryNumber("select count(dep_id) count from " + Sys_user.TableName + " WHERE " +
+						"dep_id =?",
+				dep_id).orElseThrow(() -> new BusinessException("检查部门下是否存在用户的SQL编写错误")) != 0;
+	}
+
 }
