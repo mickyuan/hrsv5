@@ -30,17 +30,17 @@ public class Ftp_transfered extends ProjectTableEntity
 		__tmpPKS.add("ftp_transfered_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="ftp_transfered_id",value="已传输表id",dataType = Long.class,required = true)
+	@DocBean(name ="ftp_transfered_id",value="已传输表id:",dataType = Long.class,required = true)
 	private Long ftp_transfered_id;
-	@DocBean(name ="transfered_name",value="已传输文件名称",dataType = String.class,required = true)
+	@DocBean(name ="transfered_name",value="已传输文件名称:",dataType = String.class,required = true)
 	private String transfered_name;
-	@DocBean(name ="ftp_date",value="ftp日期",dataType = String.class,required = true)
+	@DocBean(name ="ftp_date",value="ftp日期:",dataType = String.class,required = true)
 	private String ftp_date;
-	@DocBean(name ="ftp_time",value="ftp时间",dataType = String.class,required = true)
+	@DocBean(name ="ftp_time",value="ftp时间:",dataType = String.class,required = true)
 	private String ftp_time;
-	@DocBean(name ="remark",value="备注",dataType = String.class,required = false)
+	@DocBean(name ="remark",value="备注:",dataType = String.class,required = false)
 	private String remark;
-	@DocBean(name ="ftp_id",value="ftp采集id",dataType = Long.class,required = true)
+	@DocBean(name ="ftp_id",value="ftp采集id:",dataType = Long.class,required = true)
 	private Long ftp_id;
 
 	/** 取得：已传输表id */

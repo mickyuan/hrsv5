@@ -30,15 +30,15 @@ public class Department_info extends ProjectTableEntity
 		__tmpPKS.add("dep_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="dep_id",value="部门ID",dataType = Long.class,required = true)
+	@DocBean(name ="dep_id",value="部门ID:",dataType = Long.class,required = true)
 	private Long dep_id;
-	@DocBean(name ="dep_name",value="部门名称",dataType = String.class,required = true)
+	@DocBean(name ="dep_name",value="部门名称:",dataType = String.class,required = true)
 	private String dep_name;
-	@DocBean(name ="create_date",value="创建日期",dataType = String.class,required = true)
+	@DocBean(name ="create_date",value="创建日期:",dataType = String.class,required = true)
 	private String create_date;
-	@DocBean(name ="create_time",value="创建时间",dataType = String.class,required = true)
+	@DocBean(name ="create_time",value="创建时间:",dataType = String.class,required = true)
 	private String create_time;
-	@DocBean(name ="dep_remark",value="备注",dataType = String.class,required = false)
+	@DocBean(name ="dep_remark",value="备注:",dataType = String.class,required = false)
 	private String dep_remark;
 
 	/** 取得：部门ID */

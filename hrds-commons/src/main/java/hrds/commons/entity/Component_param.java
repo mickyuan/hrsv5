@@ -30,17 +30,17 @@ public class Component_param extends ProjectTableEntity
 		__tmpPKS.add("param_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="param_id",value="主键参数id",dataType = Long.class,required = true)
+	@DocBean(name ="param_id",value="主键参数id:",dataType = Long.class,required = true)
 	private Long param_id;
-	@DocBean(name ="param_name",value="参数名称",dataType = String.class,required = true)
+	@DocBean(name ="param_name",value="参数名称:",dataType = String.class,required = true)
 	private String param_name;
-	@DocBean(name ="param_value",value="参数value",dataType = String.class,required = true)
+	@DocBean(name ="param_value",value="参数value:",dataType = String.class,required = true)
 	private String param_value;
-	@DocBean(name ="is_must",value="是否必要",dataType = String.class,required = true)
+	@DocBean(name ="is_must",value="是否必要(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_must;
-	@DocBean(name ="param_remark",value="备注",dataType = String.class,required = true)
+	@DocBean(name ="param_remark",value="备注:",dataType = String.class,required = true)
 	private String param_remark;
-	@DocBean(name ="comp_id",value="组件编号",dataType = String.class,required = false)
+	@DocBean(name ="comp_id",value="组件编号:",dataType = String.class,required = false)
 	private String comp_id;
 
 	/** 取得：主键参数id */

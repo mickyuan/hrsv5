@@ -30,31 +30,31 @@ public class Table_column extends ProjectTableEntity
 		__tmpPKS.add("column_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="column_id",value="字段ID",dataType = Long.class,required = true)
+	@DocBean(name ="column_id",value="字段ID:",dataType = Long.class,required = true)
 	private Long column_id;
-	@DocBean(name ="is_primary_key",value="是否为主键",dataType = String.class,required = true)
+	@DocBean(name ="is_primary_key",value="是否为主键(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_primary_key;
-	@DocBean(name ="colume_name",value="列名",dataType = String.class,required = true)
+	@DocBean(name ="colume_name",value="列名:",dataType = String.class,required = true)
 	private String colume_name;
-	@DocBean(name ="colume_ch_name",value="列中文名称",dataType = String.class,required = false)
+	@DocBean(name ="colume_ch_name",value="列中文名称:",dataType = String.class,required = false)
 	private String colume_ch_name;
-	@DocBean(name ="valid_s_date",value="有效开始日期",dataType = String.class,required = true)
+	@DocBean(name ="valid_s_date",value="有效开始日期:",dataType = String.class,required = true)
 	private String valid_s_date;
-	@DocBean(name ="valid_e_date",value="有效结束日期",dataType = String.class,required = true)
+	@DocBean(name ="valid_e_date",value="有效结束日期:",dataType = String.class,required = true)
 	private String valid_e_date;
-	@DocBean(name ="is_get",value="是否采集",dataType = String.class,required = false)
+	@DocBean(name ="is_get",value="是否采集(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = false)
 	private String is_get;
-	@DocBean(name ="column_type",value="列字段类型",dataType = String.class,required = false)
+	@DocBean(name ="column_type",value="列字段类型:",dataType = String.class,required = false)
 	private String column_type;
-	@DocBean(name ="table_id",value="表名ID",dataType = Long.class,required = true)
+	@DocBean(name ="table_id",value="表名ID:",dataType = Long.class,required = true)
 	private Long table_id;
-	@DocBean(name ="remark",value="备注",dataType = String.class,required = false)
+	@DocBean(name ="remark",value="备注:",dataType = String.class,required = false)
 	private String remark;
-	@DocBean(name ="is_alive",value="是否保留原字段",dataType = String.class,required = true)
+	@DocBean(name ="is_alive",value="是否保留原字段(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_alive;
-	@DocBean(name ="is_new",value="是否为变化生成",dataType = String.class,required = true)
+	@DocBean(name ="is_new",value="是否为变化生成(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_new;
-	@DocBean(name ="tc_or",value="清洗顺序",dataType = String.class,required = false)
+	@DocBean(name ="tc_or",value="清洗顺序:",dataType = String.class,required = false)
 	private String tc_or;
 
 	/** 取得：字段ID */

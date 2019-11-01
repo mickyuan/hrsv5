@@ -30,37 +30,37 @@ public class Object_collect extends ProjectTableEntity
 		__tmpPKS.add("odc_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="odc_id",value="对象采集id",dataType = Long.class,required = true)
+	@DocBean(name ="odc_id",value="对象采集id:",dataType = Long.class,required = true)
 	private Long odc_id;
-	@DocBean(name ="obj_number",value="对象采集设置编号",dataType = String.class,required = true)
+	@DocBean(name ="obj_number",value="对象采集设置编号:",dataType = String.class,required = true)
 	private String obj_number;
-	@DocBean(name ="obj_collect_name",value="对象采集任务名称",dataType = String.class,required = true)
+	@DocBean(name ="obj_collect_name",value="对象采集任务名称:",dataType = String.class,required = true)
 	private String obj_collect_name;
-	@DocBean(name ="system_name",value="操作系统类型",dataType = String.class,required = true)
+	@DocBean(name ="system_name",value="操作系统类型:",dataType = String.class,required = true)
 	private String system_name;
-	@DocBean(name ="host_name",value="主机名称",dataType = String.class,required = true)
+	@DocBean(name ="host_name",value="主机名称:",dataType = String.class,required = true)
 	private String host_name;
-	@DocBean(name ="local_time",value="本地系统时间",dataType = String.class,required = true)
+	@DocBean(name ="local_time",value="本地系统时间:",dataType = String.class,required = true)
 	private String local_time;
-	@DocBean(name ="server_date",value="服务器日期",dataType = String.class,required = true)
+	@DocBean(name ="server_date",value="服务器日期:",dataType = String.class,required = true)
 	private String server_date;
-	@DocBean(name ="s_date",value="开始日期",dataType = String.class,required = true)
+	@DocBean(name ="s_date",value="开始日期:",dataType = String.class,required = true)
 	private String s_date;
-	@DocBean(name ="e_date",value="结束日期",dataType = String.class,required = true)
+	@DocBean(name ="e_date",value="结束日期:",dataType = String.class,required = true)
 	private String e_date;
-	@DocBean(name ="database_code",value="采集编码",dataType = String.class,required = true)
+	@DocBean(name ="database_code",value="采集编码(DataBaseCode):1-UTF-8<UTF_8> 2-GBK<GBK> 3-UTF-16<UTF_16> 4-GB2312<GB2312> 5-ISO-8859-1<ISO_8859_1> ",dataType = String.class,required = true)
 	private String database_code;
-	@DocBean(name ="run_way",value="启动方式",dataType = String.class,required = true)
+	@DocBean(name ="run_way",value="启动方式(ExecuteWay):1-按时启动<AnShiQiDong> 2-命令触发<MingLingChuFa> 3-信号文件触发<QianZhiTiaoJian> ",dataType = String.class,required = true)
 	private String run_way;
-	@DocBean(name ="file_path",value="采集文件路径",dataType = String.class,required = true)
+	@DocBean(name ="file_path",value="采集文件路径:",dataType = String.class,required = true)
 	private String file_path;
-	@DocBean(name ="remark",value="备注",dataType = String.class,required = false)
+	@DocBean(name ="remark",value="备注:",dataType = String.class,required = false)
 	private String remark;
-	@DocBean(name ="agent_id",value="Agent_id",dataType = Long.class,required = true)
+	@DocBean(name ="agent_id",value="Agent_id:",dataType = Long.class,required = true)
 	private Long agent_id;
-	@DocBean(name ="is_sendok",value="是否设置完成并发送成功",dataType = String.class,required = true)
+	@DocBean(name ="is_sendok",value="是否设置完成并发送成功(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_sendok;
-	@DocBean(name ="object_collect_type",value="对象采集方式",dataType = String.class,required = true)
+	@DocBean(name ="object_collect_type",value="对象采集方式(ObjectCollectType):1-行采集<HangCaiJi> 2-对象采集<DuiXiangCaiJi> ",dataType = String.class,required = true)
 	private String object_collect_type;
 
 	/** 取得：对象采集id */

@@ -30,31 +30,31 @@ public class Column_split extends ProjectTableEntity
 		__tmpPKS.add("col_split_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="col_split_id",value="字段编号",dataType = Long.class,required = true)
+	@DocBean(name ="col_split_id",value="字段编号:",dataType = Long.class,required = true)
 	private Long col_split_id;
-	@DocBean(name ="col_name",value="字段名称",dataType = String.class,required = true)
+	@DocBean(name ="col_name",value="字段名称:",dataType = String.class,required = true)
 	private String col_name;
-	@DocBean(name ="col_offset",value="字段偏移量",dataType = String.class,required = false)
+	@DocBean(name ="col_offset",value="字段偏移量:",dataType = String.class,required = false)
 	private String col_offset;
-	@DocBean(name ="col_zhname",value="中文名称",dataType = String.class,required = false)
+	@DocBean(name ="col_zhname",value="中文名称:",dataType = String.class,required = false)
 	private String col_zhname;
-	@DocBean(name ="col_type",value="字段类型",dataType = String.class,required = true)
+	@DocBean(name ="col_type",value="字段类型:",dataType = String.class,required = true)
 	private String col_type;
-	@DocBean(name ="remark",value="备注",dataType = String.class,required = false)
+	@DocBean(name ="remark",value="备注:",dataType = String.class,required = false)
 	private String remark;
-	@DocBean(name ="col_clean_id",value="清洗参数编号",dataType = Long.class,required = true)
+	@DocBean(name ="col_clean_id",value="清洗参数编号:",dataType = Long.class,required = true)
 	private Long col_clean_id;
-	@DocBean(name ="column_id",value="字段ID",dataType = Long.class,required = true)
+	@DocBean(name ="column_id",value="字段ID:",dataType = Long.class,required = true)
 	private Long column_id;
-	@DocBean(name ="valid_s_date",value="有效开始日期",dataType = String.class,required = true)
+	@DocBean(name ="valid_s_date",value="有效开始日期:",dataType = String.class,required = true)
 	private String valid_s_date;
-	@DocBean(name ="valid_e_date",value="有效结束日期",dataType = String.class,required = true)
+	@DocBean(name ="valid_e_date",value="有效结束日期:",dataType = String.class,required = true)
 	private String valid_e_date;
-	@DocBean(name ="seq",value="拆分对应序号",dataType = Long.class,required = false)
+	@DocBean(name ="seq",value="拆分对应序号:",dataType = Long.class,required = false)
 	private Long seq;
-	@DocBean(name ="split_sep",value="拆分分隔符",dataType = String.class,required = false)
+	@DocBean(name ="split_sep",value="拆分分隔符:",dataType = String.class,required = false)
 	private String split_sep;
-	@DocBean(name ="split_type",value="拆分方式",dataType = String.class,required = true)
+	@DocBean(name ="split_type",value="拆分方式(CharSplitType):1-偏移量<PianYiLiang> 2-自定符号<ZhiDingFuHao> ",dataType = String.class,required = true)
 	private String split_type;
 
 	/** 取得：字段编号 */

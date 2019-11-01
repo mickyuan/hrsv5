@@ -31,13 +31,13 @@ public class Etl_job_resource_rela extends ProjectTableEntity
 		__tmpPKS.add("etl_sys_cd");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="resource_type",value="资源使用类型",dataType = String.class,required = false)
+	@DocBean(name ="resource_type",value="资源使用类型:",dataType = String.class,required = false)
 	private String resource_type;
-	@DocBean(name ="resource_req",value="资源需求数",dataType = Integer.class,required = false)
+	@DocBean(name ="resource_req",value="资源需求数:",dataType = Integer.class,required = false)
 	private Integer resource_req;
-	@DocBean(name ="etl_job",value="作业名",dataType = String.class,required = true)
+	@DocBean(name ="etl_job",value="作业名:",dataType = String.class,required = true)
 	private String etl_job;
-	@DocBean(name ="etl_sys_cd",value="工程代码",dataType = String.class,required = true)
+	@DocBean(name ="etl_sys_cd",value="工程代码:",dataType = String.class,required = true)
 	private String etl_sys_cd;
 
 	/** 取得：资源使用类型 */

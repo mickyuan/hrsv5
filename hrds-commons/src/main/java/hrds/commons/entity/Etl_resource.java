@@ -31,15 +31,15 @@ public class Etl_resource extends ProjectTableEntity
 		__tmpPKS.add("etl_sys_cd");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="resource_type",value="资源使用类型",dataType = String.class,required = true)
+	@DocBean(name ="resource_type",value="资源使用类型:",dataType = String.class,required = true)
 	private String resource_type;
-	@DocBean(name ="resource_max",value="资源阀值",dataType = Integer.class,required = false)
+	@DocBean(name ="resource_max",value="资源阀值:",dataType = Integer.class,required = false)
 	private Integer resource_max;
-	@DocBean(name ="resource_used",value="已使用数",dataType = Integer.class,required = false)
+	@DocBean(name ="resource_used",value="已使用数:",dataType = Integer.class,required = false)
 	private Integer resource_used;
-	@DocBean(name ="main_serv_sync",value="主服务器同步标志",dataType = String.class,required = true)
+	@DocBean(name ="main_serv_sync",value="主服务器同步标志(Main_Server_Sync):L-锁定<LOCK> N-不同步<NO> Y-同步<YES> B-备份中<BACKUP> ",dataType = String.class,required = true)
 	private String main_serv_sync;
-	@DocBean(name ="etl_sys_cd",value="工程代码",dataType = String.class,required = true)
+	@DocBean(name ="etl_sys_cd",value="工程代码:",dataType = String.class,required = true)
 	private String etl_sys_cd;
 
 	/** 取得：资源使用类型 */

@@ -30,15 +30,15 @@ public class Req_agenttype extends ProjectTableEntity
 		__tmpPKS.add("req_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="req_name",value="中文名称",dataType = String.class,required = true)
+	@DocBean(name ="req_name",value="中文名称:",dataType = String.class,required = true)
 	private String req_name;
-	@DocBean(name ="req_no",value="请求编号",dataType = String.class,required = false)
+	@DocBean(name ="req_no",value="请求编号:",dataType = String.class,required = false)
 	private String req_no;
-	@DocBean(name ="req_remark",value="备注",dataType = String.class,required = false)
+	@DocBean(name ="req_remark",value="备注:",dataType = String.class,required = false)
 	private String req_remark;
-	@DocBean(name ="req_id",value="请求ID",dataType = Long.class,required = true)
+	@DocBean(name ="req_id",value="请求ID:",dataType = Long.class,required = true)
 	private Long req_id;
-	@DocBean(name ="comp_id",value="组件编号",dataType = String.class,required = true)
+	@DocBean(name ="comp_id",value="组件编号:",dataType = String.class,required = true)
 	private String comp_id;
 
 	/** 取得：中文名称 */

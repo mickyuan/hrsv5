@@ -32,19 +32,19 @@ public class Datastage extends ProjectTableEntity
 		__tmpPKS.add("stage");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="jobkey",value="数据库设置id",dataType = Long.class,required = true)
+	@DocBean(name ="jobkey",value="数据库设置id:",dataType = Long.class,required = true)
 	private Long jobkey;
-	@DocBean(name ="tablename",value="表名字",dataType = String.class,required = true)
+	@DocBean(name ="tablename",value="表名字:",dataType = String.class,required = true)
 	private String tablename;
-	@DocBean(name ="stage",value="采集阶段",dataType = String.class,required = true)
+	@DocBean(name ="stage",value="采集阶段:",dataType = String.class,required = true)
 	private String stage;
-	@DocBean(name ="state",value="所处状态",dataType = String.class,required = true)
+	@DocBean(name ="state",value="所处状态:",dataType = String.class,required = true)
 	private String state;
-	@DocBean(name ="previousstage",value="上一阶段",dataType = String.class,required = false)
+	@DocBean(name ="previousstage",value="上一阶段:",dataType = String.class,required = false)
 	private String previousstage;
-	@DocBean(name ="nextstage",value="下一阶段",dataType = String.class,required = false)
+	@DocBean(name ="nextstage",value="下一阶段:",dataType = String.class,required = false)
 	private String nextstage;
-	@DocBean(name ="remark",value="备注",dataType = String.class,required = false)
+	@DocBean(name ="remark",value="备注:",dataType = String.class,required = false)
 	private String remark;
 
 	/** 取得：数据库设置id */

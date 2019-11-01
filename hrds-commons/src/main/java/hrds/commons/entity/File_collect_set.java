@@ -30,21 +30,21 @@ public class File_collect_set extends ProjectTableEntity
 		__tmpPKS.add("fcs_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="fcs_id",value="文件系统采集ID",dataType = Long.class,required = true)
+	@DocBean(name ="fcs_id",value="文件系统采集ID:",dataType = Long.class,required = true)
 	private Long fcs_id;
-	@DocBean(name ="agent_id",value="Agent_id",dataType = Long.class,required = false)
+	@DocBean(name ="agent_id",value="Agent_id:",dataType = Long.class,required = false)
 	private Long agent_id;
-	@DocBean(name ="host_name",value="主机名称",dataType = String.class,required = false)
+	@DocBean(name ="host_name",value="主机名称:",dataType = String.class,required = false)
 	private String host_name;
-	@DocBean(name ="system_type",value="操作系统类型",dataType = String.class,required = false)
+	@DocBean(name ="system_type",value="操作系统类型:",dataType = String.class,required = false)
 	private String system_type;
-	@DocBean(name ="remark",value="备注",dataType = String.class,required = false)
+	@DocBean(name ="remark",value="备注:",dataType = String.class,required = false)
 	private String remark;
-	@DocBean(name ="fcs_name",value="文件系统采集任务名称",dataType = String.class,required = true)
+	@DocBean(name ="fcs_name",value="文件系统采集任务名称:",dataType = String.class,required = true)
 	private String fcs_name;
-	@DocBean(name ="is_sendok",value="是否设置完成并发送成功",dataType = String.class,required = true)
+	@DocBean(name ="is_sendok",value="是否设置完成并发送成功(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_sendok;
-	@DocBean(name ="is_solr",value="是否入solr",dataType = String.class,required = true)
+	@DocBean(name ="is_solr",value="是否入solr(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_solr;
 
 	/** 取得：文件系统采集ID */

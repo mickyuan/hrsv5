@@ -31,9 +31,9 @@ public class Source_relation_dep extends ProjectTableEntity
 		__tmpPKS.add("dep_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="source_id",value="数据源ID",dataType = Long.class,required = true)
+	@DocBean(name ="source_id",value="数据源ID:",dataType = Long.class,required = true)
 	private Long source_id;
-	@DocBean(name ="dep_id",value="部门ID",dataType = Long.class,required = true)
+	@DocBean(name ="dep_id",value="部门ID:",dataType = Long.class,required = true)
 	private Long dep_id;
 
 	/** 取得：数据源ID */

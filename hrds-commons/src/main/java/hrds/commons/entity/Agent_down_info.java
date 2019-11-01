@@ -30,37 +30,37 @@ public class Agent_down_info extends ProjectTableEntity
 		__tmpPKS.add("down_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="down_id",value="下载编号(primary)",dataType = Long.class,required = true)
+	@DocBean(name ="down_id",value="下载编号(primary):",dataType = Long.class,required = true)
 	private Long down_id;
-	@DocBean(name ="agent_name",value="Agent名称",dataType = String.class,required = true)
+	@DocBean(name ="agent_name",value="Agent名称:",dataType = String.class,required = true)
 	private String agent_name;
-	@DocBean(name ="agent_ip",value="Agent IP",dataType = String.class,required = true)
+	@DocBean(name ="agent_ip",value="Agent IP:",dataType = String.class,required = true)
 	private String agent_ip;
-	@DocBean(name ="agent_port",value="Agent端口",dataType = String.class,required = true)
+	@DocBean(name ="agent_port",value="Agent端口:",dataType = String.class,required = true)
 	private String agent_port;
-	@DocBean(name ="save_dir",value="存放目录",dataType = String.class,required = true)
+	@DocBean(name ="save_dir",value="存放目录:",dataType = String.class,required = true)
 	private String save_dir;
-	@DocBean(name ="log_dir",value="日志目录",dataType = String.class,required = true)
+	@DocBean(name ="log_dir",value="日志目录:",dataType = String.class,required = true)
 	private String log_dir;
-	@DocBean(name ="deploy",value="是否部署",dataType = String.class,required = true)
+	@DocBean(name ="deploy",value="是否部署(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String deploy;
-	@DocBean(name ="ai_desc",value="描述",dataType = String.class,required = false)
+	@DocBean(name ="ai_desc",value="描述:",dataType = String.class,required = false)
 	private String ai_desc;
-	@DocBean(name ="remark",value="备注",dataType = String.class,required = false)
+	@DocBean(name ="remark",value="备注:",dataType = String.class,required = false)
 	private String remark;
-	@DocBean(name ="agent_id",value="Agent_id",dataType = Long.class,required = false)
+	@DocBean(name ="agent_id",value="Agent_id:",dataType = Long.class,required = false)
 	private Long agent_id;
-	@DocBean(name ="user_name",value="用户名",dataType = String.class,required = false)
+	@DocBean(name ="user_name",value="用户名:",dataType = String.class,required = false)
 	private String user_name;
-	@DocBean(name ="passwd",value="密码",dataType = String.class,required = false)
+	@DocBean(name ="passwd",value="密码:",dataType = String.class,required = false)
 	private String passwd;
-	@DocBean(name ="agent_type",value="agent类别",dataType = String.class,required = true)
+	@DocBean(name ="agent_type",value="agent类别(AgentType):1-数据库Agent<ShuJuKu> 2-文件系统Agent<WenJianXiTong> 3-FtpAgent<FTP> 4-数据文件Agent<DBWenJian> 5-对象Agent<DuiXiang> ",dataType = String.class,required = true)
 	private String agent_type;
-	@DocBean(name ="user_id",value="用户ID",dataType = Long.class,required = true)
+	@DocBean(name ="user_id",value="用户ID:",dataType = Long.class,required = true)
 	private Long user_id;
-	@DocBean(name ="agent_context",value="agent的context",dataType = String.class,required = true)
+	@DocBean(name ="agent_context",value="agent的context:",dataType = String.class,required = true)
 	private String agent_context;
-	@DocBean(name ="agent_pattern",value="agent的访问路径",dataType = String.class,required = true)
+	@DocBean(name ="agent_pattern",value="agent的访问路径:",dataType = String.class,required = true)
 	private String agent_pattern;
 
 	/** 取得：下载编号(primary) */
