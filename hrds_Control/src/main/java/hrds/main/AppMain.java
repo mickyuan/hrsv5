@@ -12,7 +12,7 @@ import hrds.control.task.helper.TaskSqlHelper;
 
 /**
  *
- * ClassName: Main <br/>
+ * ClassName: AppMain <br/>
  * Function: 调度系统Control程序启动类. <br/>
  * Date: 2019年7月26日 下午5:49:25 <br/>
  *

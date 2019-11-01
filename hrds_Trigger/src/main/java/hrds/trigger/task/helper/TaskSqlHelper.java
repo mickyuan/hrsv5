@@ -79,11 +79,11 @@ public class TaskSqlHelper {
 
 		//1.数据库查询，并转换为实体。
 		Object[] row = SqlOperator.queryArray(
-				TaskSqlHelper.getDbConnector(), "SELECT etl_sys_cd, etl_sys_name, " +
-						"etl_serv_ip, etl_serv_port, contact_person, contact_phone, comments, " +
-						"curr_bath_date, bath_shift_time, main_serv_sync, sys_run_status, " +
-						"user_name, user_pwd, serv_file_path, remarks FROM etl_sys " +
-						"WHERE etl_sys_cd = ?", etlSysCd);
+				TaskSqlHelper.getDbConnector(), "SELECT etl_sys_cd, etl_sys_name," +
+						" etl_serv_ip, etl_serv_port, contact_person, contact_phone, comments," +
+						" curr_bath_date, bath_shift_time, main_serv_sync, sys_run_status," +
+						" user_name, user_pwd, serv_file_path, remarks FROM " + Etl_sys.TableName +
+						" WHERE etl_sys_cd = ?", etlSysCd);
 
 		if(0 == row.length) {
 			throw new AppSystemException("无法根据调度系统编号获取系统信息 " + etlSysCd);
@@ -132,14 +132,14 @@ public class TaskSqlHelper {
 
 		//1.查询数据库获取数据，并转换为Etl_job_cur实体。
 		Object[] row = SqlOperator.queryArray(TaskSqlHelper.getDbConnector(),
-				"SELECT etl_sys_cd, etl_job, sub_sys_cd, etl_job_desc, pro_type, pro_dic, " +
-						"pro_name, pro_para, log_dic, disp_freq, disp_offset, disp_type, " +
-						"disp_time, job_eff_flag, job_priority, job_disp_status, curr_st_time, " +
-						"curr_end_time, overlength_val, overtime_val, curr_bath_date, comments, " +
-						"today_disp, main_serv_sync, job_process_id, job_priority_curr, " +
-						"job_return_val, exe_frequency, exe_num, com_exe_num, last_exe_time, " +
-						"star_time, end_time FROM etl_job_cur WHERE etl_sys_cd = ? " +
-						"AND etl_job = ? AND curr_bath_date = ?",
+				"SELECT etl_sys_cd, etl_job, sub_sys_cd, etl_job_desc, pro_type, pro_dic," +
+						" pro_name, pro_para, log_dic, disp_freq, disp_offset, disp_type," +
+						" disp_time, job_eff_flag, job_priority, job_disp_status, curr_st_time," +
+						" curr_end_time, overlength_val, overtime_val, curr_bath_date, comments," +
+						" today_disp, main_serv_sync, job_process_id, job_priority_curr," +
+						" job_return_val, exe_frequency, exe_num, com_exe_num, last_exe_time," +
+						" star_time, end_time FROM " + Etl_job_cur.TableName +
+						" WHERE etl_sys_cd = ? AND etl_job = ? AND curr_bath_date = ?",
 				etlSysCd, etlJob, currBathDate);
 
 		if(row.length == 0) {
@@ -169,8 +169,8 @@ public class TaskSqlHelper {
 		//1.更新数据库数据。
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
 
-		SqlOperator.execute(db, "UPDATE etl_job_cur SET curr_st_time = ?, " +
-						"main_serv_sync = ? WHERE etl_sys_cd = ? AND etl_job = ? ",
+		SqlOperator.execute(db, "UPDATE " + Etl_job_cur.TableName + " SET curr_st_time = ?," +
+						" main_serv_sync = ? WHERE etl_sys_cd = ? AND etl_job = ?",
 				currStTime, Main_Server_Sync.YES.getCode(), etlSysCode, etlJob);
 
 		SqlOperator.commitTransaction(db);
@@ -226,10 +226,10 @@ public class TaskSqlHelper {
 		//1.更新数据库数据。
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
 
-		SqlOperator.execute(db, "UPDATE etl_job_cur SET job_disp_status = ?, " +
-						"main_serv_sync = ?, curr_end_time = ?, job_return_val = ?, " +
-						"last_exe_time = ?, com_exe_num = com_exe_num+1 " +
-						"WHERE etl_sys_cd = ? AND etl_job = ? AND curr_bath_date = ?",
+		SqlOperator.execute(db, "UPDATE " + Etl_job_cur.TableName + " SET job_disp_status = ?," +
+						" main_serv_sync = ?, curr_end_time = ?, job_return_val = ?," +
+						" last_exe_time = ?, com_exe_num = com_exe_num + 1" +
+						" WHERE etl_sys_cd = ? AND etl_job = ? AND curr_bath_date = ?",
 				jobDispStatus, Main_Server_Sync.YES.getCode(), currEndTime, jobReturnVal,
 				lastExeTime, etlSysCode, etlJob, currBathDate);
 
@@ -255,8 +255,8 @@ public class TaskSqlHelper {
 		//1.更新数据库数据。
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
 
-		SqlOperator.execute(db, "UPDATE etl_job_def SET last_exe_time = ?, " +
-						"com_exe_num = com_exe_num+1 WHERE etl_sys_cd = ? AND etl_job = ?",
+		SqlOperator.execute(db, "UPDATE " + Etl_job_def.TableName + " SET last_exe_time = ?," +
+						" com_exe_num = com_exe_num + 1 WHERE etl_sys_cd = ? AND etl_job = ?",
 				lastExeTime, etlSysCode, etlJob);
 
 		SqlOperator.commitTransaction(db);
@@ -281,9 +281,8 @@ public class TaskSqlHelper {
 		//1.更新数据库数据。
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
 
-		SqlOperator.execute(db, "UPDATE etl_job_cur SET job_process_id = ? " +
-						"WHERE etl_sys_cd = ? AND etl_job = ?",
-				processId, etlSysCode, etlJob);
+		SqlOperator.execute(db, "UPDATE " + Etl_job_cur.TableName + " SET job_process_id = ?" +
+						" WHERE etl_sys_cd = ? AND etl_job = ?", processId, etlSysCode, etlJob);
 
 		SqlOperator.commitTransaction(db);
 	}
@@ -309,8 +308,9 @@ public class TaskSqlHelper {
 	                                                     String handType) {
 
 		return SqlOperator.queryOneObject(TaskSqlHelper.getDbConnector(), Etl_job_hand.class,
-				"SELECT * FROM etl_job_hand WHERE etl_sys_cd = ? AND etl_job = ? AND " +
-						"etl_hand_type = ?", etlSysCode, etlJob, handType);
+				"SELECT * FROM " + Etl_job_hand.TableName +
+						" WHERE etl_sys_cd = ? AND etl_job = ? AND etl_hand_type = ?",
+				etlSysCode, etlJob, handType);
 
 	}
 
@@ -330,11 +330,11 @@ public class TaskSqlHelper {
 		//1.更新数据库数据。
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
 
-		int num = SqlOperator.execute(db, "UPDATE etl_job_hand SET hand_status = ?, " +
-						"main_serv_sync = ?, end_time = ?, warning = ? WHERE etl_sys_cd = ? " +
-						"AND etl_job = ? AND etl_hand_type = ?", etlJobHand.getHand_status(),
-				etlJobHand.getMain_serv_sync(), etlJobHand.getEnd_time(),
-				etlJobHand.getWarning(), etlJobHand.getEtl_sys_cd(),
+		int num = SqlOperator.execute(db, "UPDATE " + Etl_job_hand.TableName +
+						" SET hand_status = ?, main_serv_sync = ?, end_time = ?, warning = ?" +
+						" WHERE etl_sys_cd = ? AND etl_job = ? AND etl_hand_type = ?",
+				etlJobHand.getHand_status(), etlJobHand.getMain_serv_sync(),
+				etlJobHand.getEnd_time(), etlJobHand.getWarning(), etlJobHand.getEtl_sys_cd(),
 				etlJobHand.getEtl_job(), etlJobHand.getEtl_hand_type());
 
 		if(num < 1) {
@@ -385,8 +385,9 @@ public class TaskSqlHelper {
 		//1.更新数据库数据。
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
 
-		SqlOperator.execute(db, "DELETE FROM etl_job_hand WHERE etl_sys_cd = ? " +
-				"AND etl_job = ? AND etl_hand_type = ?", etlSysCd, etlJob, etlHandType);
+		SqlOperator.execute(db, "DELETE FROM " + Etl_job_hand.TableName +
+				" WHERE etl_sys_cd = ? AND etl_job = ? AND etl_hand_type = ?",
+				etlSysCd, etlJob, etlHandType);
 
 		SqlOperator.commitTransaction(db);
 	}

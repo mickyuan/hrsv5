@@ -85,8 +85,8 @@ public class TaskSqlHelper {
 				TaskSqlHelper.getDbConnector(), "SELECT etl_sys_cd, etl_sys_name, " +
 						"etl_serv_ip, etl_serv_port, contact_person, contact_phone, comments, " +
 						"curr_bath_date, bath_shift_time, main_serv_sync, sys_run_status, " +
-						"user_name, user_pwd, serv_file_path, remarks FROM etl_sys " +
-						"WHERE etl_sys_cd = ?", etlSysCd);
+						"user_name, user_pwd, serv_file_path, remarks FROM " + Etl_sys.TableName +
+						" WHERE etl_sys_cd = ?", etlSysCd);
 
 		if(0 == row.length) {
 			throw new AppSystemException("无法根据调度系统编号获取系统信息 " + etlSysCd);
@@ -133,8 +133,8 @@ public class TaskSqlHelper {
 		//1.查询数据库获取数据。
 		List<Etl_job_resource_rela> jobNeedResources
 				= SqlOperator.queryList(TaskSqlHelper.getDbConnector(), Etl_job_resource_rela.class,
-				"SELECT * FROM etl_job_resource_rela WHERE etl_sys_cd = ? AND etl_job = ?",
-				etlSysCd, etlJob);
+				"SELECT * FROM " + Etl_job_resource_rela.TableName +
+						" WHERE etl_sys_cd = ? AND etl_job = ?", etlSysCd, etlJob);
 		//TODO 为作业配置资源后才认为该作业有效，否则报错
 		if(null == jobNeedResources || jobNeedResources.size() == 0) {
 			throw new AppSystemException("根据调度系统编号、调度作业名获取不到该作业需要的资源 "
@@ -161,7 +161,8 @@ public class TaskSqlHelper {
 
 		//1.查询数据库获取数据。
 		return SqlOperator.queryList(TaskSqlHelper.getDbConnector(), EtlJobDefBean.class,
-						"SELECT * FROM etl_job_def WHERE etl_sys_cd = ? AND job_eff_flag != ?",
+						"SELECT * FROM " + Etl_job_def.TableName +
+								" WHERE etl_sys_cd = ? AND job_eff_flag != ?",
 				etlSysCd, Job_Effective_Flag.NO.getCode());
 	}
 
@@ -181,7 +182,8 @@ public class TaskSqlHelper {
 
 		//1.查询数据库获取数据。
 		return SqlOperator.queryList(TaskSqlHelper.getDbConnector(), Etl_dependency.class,
-						"SELECT * FROM etl_dependency WHERE etl_sys_cd = ? AND status = ?",
+						"SELECT * FROM " + Etl_dependency.TableName +
+								" WHERE etl_sys_cd = ? AND status = ?",
 				etlSysCd, Status.TRUE.getCode());
 	}
 
@@ -203,9 +205,9 @@ public class TaskSqlHelper {
 		//1.更新数据库表数据。
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
 
-		int num = SqlOperator.execute(db, "UPDATE etl_sys SET main_serv_sync = ?, " +
-				"curr_bath_date = ? WHERE etl_sys_cd = ?", Main_Server_Sync.YES.getCode(),
-				currBathDate, etlSysCd);
+		int num = SqlOperator.execute(db, "UPDATE " + Etl_sys.TableName +
+						" SET main_serv_sync = ?, curr_bath_date = ? WHERE etl_sys_cd = ?",
+				Main_Server_Sync.YES.getCode(), currBathDate, etlSysCd);
 
 		if(num != 1) {
 			SqlOperator.rollbackTransaction(db);
@@ -233,9 +235,9 @@ public class TaskSqlHelper {
 		//1.更新数据库表数据。
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
 
-		int num = SqlOperator.execute(db, "UPDATE etl_sys SET main_serv_sync = ?, " +
-				"sys_run_status = ? WHERE etl_sys_cd = ?", Main_Server_Sync.YES.getCode(),
-				runStatus, etlSysCd);
+		int num = SqlOperator.execute(db, "UPDATE " + Etl_sys.TableName +
+						" SET main_serv_sync = ?, sys_run_status = ? WHERE etl_sys_cd = ?",
+				Main_Server_Sync.YES.getCode(), runStatus, etlSysCd);
 
 		if(num != 1) {
 			//FIXME 这里要执行回滚！
@@ -268,7 +270,7 @@ public class TaskSqlHelper {
 
 		//FIXME 这个更新不需要判断结果吗？ 下面的很多方法都没有判断结果
 		// 因为这个程序是动态的，在作业运行的过程中在有些情况下没法知道当时符合条件的作业是几个
-		SqlOperator.execute(db, "UPDATE etl_job_cur SET job_disp_status = ?, " +
+		SqlOperator.execute(db, "UPDATE " + Etl_job_cur.TableName + " SET job_disp_status = ?, " +
 						"main_serv_sync = ? WHERE (job_disp_status = ? or job_disp_status = ?) " +
 						"AND etl_sys_cd = ?", runStatus, Main_Server_Sync.YES.getCode(),
 				Job_Status.PENDING.getCode(), Job_Status.WAITING.getCode(), etlSysCd);
@@ -294,7 +296,7 @@ public class TaskSqlHelper {
 		//1.更新数据库表数据。
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
 
-		SqlOperator.execute(db, "UPDATE etl_job_cur SET job_disp_status = ? " +
+		SqlOperator.execute(db, "UPDATE " + Etl_job_cur.TableName + " SET job_disp_status = ? " +
 						"WHERE etl_sys_cd = ? AND (job_disp_status = ? OR job_disp_status = ?)",
 				dispStatus, etlSysCd, Job_Status.PENDING.getCode(), Job_Status.WAITING.getCode());
 
@@ -323,9 +325,10 @@ public class TaskSqlHelper {
 		//1.更新数据库表数据。
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
 
-		int num = SqlOperator.execute(db, "UPDATE etl_sys SET main_serv_sync = ?, " +
-						"curr_bath_date = ?, sys_run_status = ? WHERE etl_sys_cd = ?",
-				Main_Server_Sync.YES.getCode(), strBathDate, runStatus, etlSysCd);
+		int num = SqlOperator.execute(db, "UPDATE " + Etl_sys.TableName +
+						" SET main_serv_sync = ?, curr_bath_date = ?, sys_run_status = ?" +
+						" WHERE etl_sys_cd = ?", Main_Server_Sync.YES.getCode(), strBathDate,
+				runStatus, etlSysCd);
 
 		if(num != 1) {
 			throw new AppSystemException("根据调度系统编号修改调度系统运行状态及当前跑批日期失败 " +
@@ -353,7 +356,7 @@ public class TaskSqlHelper {
 		//1.更新数据库表数据。
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
 
-		SqlOperator.execute(db, "DELETE FROM etl_job_cur WHERE etl_sys_cd = ? " +
+		SqlOperator.execute(db, "DELETE FROM " + Etl_job_cur.TableName + " WHERE etl_sys_cd = ? " +
 						"AND curr_bath_date = ? AND disp_type != ? AND disp_freq != ?",
 				etlSysCd, currBathDate, Dispatch_Type.TPLUS0.getCode(),
 				Dispatch_Frequency.PinLv.getCode());
@@ -375,7 +378,8 @@ public class TaskSqlHelper {
 		//1.更新数据库表数据。
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
 
-		SqlOperator.execute(db, "DELETE FROM etl_job_cur WHERE etl_sys_cd = ? ", etlSysCd);
+		SqlOperator.execute(db, "DELETE FROM " + Etl_job_cur.TableName +
+				" WHERE etl_sys_cd = ? ", etlSysCd);
 
 		SqlOperator.commitTransaction(db);
 	}
@@ -402,7 +406,7 @@ public class TaskSqlHelper {
 		//1.更新数据库表数据。
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
 
-		SqlOperator.execute(db, "DELETE FROM etl_job_cur WHERE etl_sys_cd = ? " +
+		SqlOperator.execute(db, "DELETE FROM " + Etl_job_cur.TableName + " WHERE etl_sys_cd = ? " +
 						"AND curr_bath_date = ? AND job_disp_status = ? AND disp_type != ?",
 				etlSysCd, currBathDate, jobStatus, Dispatch_Frequency.PinLv.getCode());
 
@@ -430,7 +434,7 @@ public class TaskSqlHelper {
 		//1.更新数据库表数据。
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
 
-		SqlOperator.execute(db, "DELETE FROM etl_job_cur WHERE etl_sys_cd = ? " +
+		SqlOperator.execute(db, "DELETE FROM " + Etl_job_cur.TableName + " WHERE etl_sys_cd = ? " +
 				"AND curr_bath_date = ? AND job_disp_status = ?",
 				etlSysCd, currBathDate, jobStatus);
 
@@ -456,8 +460,8 @@ public class TaskSqlHelper {
 
 		//1.查询数据库获取数据。
 		Object[] row = SqlOperator.queryArray(TaskSqlHelper.getDbConnector(),
-				"SELECT para_val FROM etl_para WHERE etl_sys_cd = ? AND para_cd = ?",
-				eltSysCd, paraCd);
+				"SELECT para_val FROM " + Etl_para.TableName +
+						" WHERE etl_sys_cd = ? AND para_cd = ?", eltSysCd, paraCd);
 
 		if(row.length == 0) {
 			throw new AppSystemException(String.format("找不到对应的变量[%s]", paraCd));
@@ -508,9 +512,10 @@ public class TaskSqlHelper {
 		//1.更新数据库表数据。
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
 
-		int num = SqlOperator.execute(db, "UPDATE etl_job_cur SET job_disp_status = ?, " +
-						"main_serv_sync = ? WHERE etl_sys_cd = ? AND curr_bath_date = ?",
-				dispStatus, Main_Server_Sync.YES.getCode(), etlSysCd, currBathDate);
+		int num = SqlOperator.execute(db, "UPDATE " + Etl_job_cur.TableName +
+						" SET job_disp_status = ?, main_serv_sync = ? WHERE etl_sys_cd = ?" +
+						" AND curr_bath_date = ?", dispStatus, Main_Server_Sync.YES.getCode(),
+				etlSysCd, currBathDate);
 
 		if(num < 1) {
 			throw new AppSystemException("根据调度系统编号、当前批量日期修改作业信息失败" + etlSysCd);
@@ -544,9 +549,9 @@ public class TaskSqlHelper {
 		//1.更新数据库表数据。
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
 
-		int num = SqlOperator.execute(db, "UPDATE etl_job_cur SET job_disp_status = ? " +
-				"WHERE etl_sys_cd = ? AND etl_job = ? AND curr_bath_date = ?",
-				dispStatus, etlSysCd, etlJob, currBathDate);
+		int num = SqlOperator.execute(db, "UPDATE " + Etl_job_cur.TableName +
+				" SET job_disp_status = ? WHERE etl_sys_cd = ? AND etl_job = ?" +
+				" AND curr_bath_date = ?", dispStatus, etlSysCd, etlJob, currBathDate);
 
 		if(num != 1) {
 			throw new AppSystemException("根据调度系统编号、调度作业标识、" +
@@ -589,9 +594,9 @@ public class TaskSqlHelper {
 		}
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
 
-		int[] nums = SqlOperator.executeBatch(db, "UPDATE etl_job_cur " +
-				"SET job_disp_status = ? WHERE etl_sys_cd = ? AND etl_job = ? " +
-				"AND curr_bath_date = ?", params);
+		int[] nums = SqlOperator.executeBatch(db, "UPDATE " + Etl_job_cur.TableName +
+				" SET job_disp_status = ? WHERE etl_sys_cd = ? AND etl_job = ?" +
+				" AND curr_bath_date = ?", params);
 
 		for(int i = 0 ; i < nums.length ; i++) {
 			if(nums[i] != 1) {
@@ -626,8 +631,9 @@ public class TaskSqlHelper {
 		//1.更新数据库数据。
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
 
-		int num = SqlOperator.execute(db, "UPDATE etl_job_cur SET job_disp_status = ?, " +
-						"main_serv_sync = ? WHERE etl_sys_cd = ? AND etl_job = ?",
+		int num = SqlOperator.execute(db, "UPDATE " + Etl_job_cur.TableName +
+						" SET job_disp_status = ?, main_serv_sync = ? WHERE etl_sys_cd = ?" +
+						" AND etl_job = ?",
 				dispStatus, Main_Server_Sync.YES.getCode(), etlSysCd, etlJob);
 
 		if(num != 1) {
@@ -658,9 +664,10 @@ public class TaskSqlHelper {
 		//1.更新数据库数据。
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
 
-		int num = SqlOperator.execute(db, "UPDATE etl_job_cur SET curr_st_time = ?, " +
-						"main_serv_sync = ? WHERE etl_sys_cd = ? AND etl_job = ?",
-				currStTime, Main_Server_Sync.YES.getCode(), etlSysCd, etlJob);
+		int num = SqlOperator.execute(db, "UPDATE " + Etl_job_cur.TableName +
+						" SET curr_st_time = ?, main_serv_sync = ? WHERE etl_sys_cd = ?" +
+						" AND etl_job = ?", currStTime, Main_Server_Sync.YES.getCode(), etlSysCd,
+				etlJob);
 
 		if(num != 1) {
 			throw new AppSystemException("根据调度系统编号、调度作业标识，进行修改当前执行时间失败" + etlJob);
@@ -696,9 +703,9 @@ public class TaskSqlHelper {
 		//1.更新数据库数据。
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
 
-		SqlOperator.execute(db, "UPDATE etl_job_cur SET main_serv_sync = ?, " +
-						"job_disp_status = ?, curr_st_time = ?, curr_end_time = ? " +
-						"WHERE etl_sys_cd = ? AND etl_job = ? AND curr_bath_date = ?",
+		SqlOperator.execute(db, "UPDATE " + Etl_job_cur.TableName + " SET main_serv_sync = ?," +
+						" job_disp_status = ?, curr_st_time = ?, curr_end_time = ?" +
+						" WHERE etl_sys_cd = ? AND etl_job = ? AND curr_bath_date = ?",
 				Main_Server_Sync.YES.getCode(), Job_Status.DONE.getCode(),
 				currStTime, currEndTime, etlSysCd, eltJob, currBathDate);
 
@@ -724,9 +731,9 @@ public class TaskSqlHelper {
 		//1.更新数据库数据。
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
 
-		SqlOperator.execute(db, "UPDATE etl_job_cur SET job_disp_status = ?, " +
-						"main_serv_sync = ? WHERE etl_sys_cd = ? AND curr_bath_date = ? " +
-						"AND job_disp_status NOT IN (?, ?) AND today_disp = ?",
+		SqlOperator.execute(db, "UPDATE " + Etl_job_cur.TableName + " SET job_disp_status = ?," +
+						" main_serv_sync = ? WHERE etl_sys_cd = ? AND curr_bath_date = ?" +
+						" AND job_disp_status NOT IN (?, ?) AND today_disp = ?",
 				Job_Status.PENDING.getCode(), Main_Server_Sync.YES.getCode(),
 				etlSysCd, currBathDate, Job_Status.PENDING.getCode(), Job_Status.DONE.getCode(),
 				Today_Dispatch_Flag.YES.getCode());
@@ -753,8 +760,8 @@ public class TaskSqlHelper {
 
 		//1.查询数据库获取数据。
 		return SqlOperator.queryList(TaskSqlHelper.getDbConnector(), Etl_job_cur.class,
-				"SELECT * FROM etl_job_cur WHERE etl_sys_cd = ? AND curr_bath_date <= ?",
-				etlSysCd, currBathDate);
+				"SELECT * FROM " + Etl_job_cur.TableName + " WHERE etl_sys_cd = ?" +
+						" AND curr_bath_date <= ?", etlSysCd, currBathDate);
 	}
 
 	/**
@@ -780,14 +787,14 @@ public class TaskSqlHelper {
 
 		//1.查询数据库获取数据，并转换为Etl_job_cur实体。
 		Object[] row = SqlOperator.queryArray(TaskSqlHelper.getDbConnector(),
-				"SELECT etl_sys_cd, etl_job, sub_sys_cd, etl_job_desc, pro_type, pro_dic, " +
-						"pro_name, pro_para, log_dic, disp_freq, disp_offset, disp_type, " +
-						"disp_time, job_eff_flag, job_priority, job_disp_status, curr_st_time, " +
-						"curr_end_time, overlength_val, overtime_val, curr_bath_date, comments, " +
-						"today_disp, main_serv_sync, job_process_id, job_priority_curr, " +
-						"job_return_val, exe_frequency, exe_num, com_exe_num, last_exe_time, " +
-						"star_time, end_time FROM etl_job_cur WHERE etl_sys_cd = ? " +
-						"AND etl_job = ? AND curr_bath_date = ?",
+				"SELECT etl_sys_cd, etl_job, sub_sys_cd, etl_job_desc, pro_type, pro_dic," +
+						" pro_name, pro_para, log_dic, disp_freq, disp_offset, disp_type," +
+						" disp_time, job_eff_flag, job_priority, job_disp_status, curr_st_time," +
+						" curr_end_time, overlength_val, overtime_val, curr_bath_date, comments," +
+						" today_disp, main_serv_sync, job_process_id, job_priority_curr," +
+						" job_return_val, exe_frequency, exe_num, com_exe_num, last_exe_time," +
+						" star_time, end_time FROM " + Etl_job_cur.TableName +
+						" WHERE etl_sys_cd = ? AND etl_job = ? AND curr_bath_date = ?",
 				etlSysCd, etlJob, currBathDate);
 
 		if(row.length == 0) {
@@ -817,14 +824,14 @@ public class TaskSqlHelper {
 
 		//1.查询数据库获取数据，并转换为Etl_job_cur实体。
 		Object[] etlJobCurObj = SqlOperator.queryArray(TaskSqlHelper.getDbConnector(),
-				"SELECT etl_sys_cd, etl_job, sub_sys_cd, etl_job_desc, pro_type, pro_dic, " +
-						"pro_name, pro_para, log_dic, disp_freq, disp_offset, disp_type, " +
-						"disp_time, job_eff_flag, job_priority, job_disp_status, curr_st_time, " +
-						"curr_end_time, overlength_val, overtime_val, curr_bath_date, comments, " +
-						"today_disp, main_serv_sync, job_process_id, job_priority_curr, " +
-						"job_return_val, exe_frequency, exe_num, com_exe_num, last_exe_time, " +
-						"star_time, end_time FROM etl_job_cur WHERE etl_sys_cd = ? " +
-						"AND etl_job = ?", etlSysCd, etlJob);
+				"SELECT etl_sys_cd, etl_job, sub_sys_cd, etl_job_desc, pro_type, pro_dic," +
+						" pro_name, pro_para, log_dic, disp_freq, disp_offset, disp_type," +
+						" disp_time, job_eff_flag, job_priority, job_disp_status, curr_st_time," +
+						" curr_end_time, overlength_val, overtime_val, curr_bath_date, comments," +
+						" today_disp, main_serv_sync, job_process_id, job_priority_curr," +
+						" job_return_val, exe_frequency, exe_num, com_exe_num, last_exe_time," +
+						" star_time, end_time FROM " + Etl_job_cur.TableName +
+						" WHERE etl_sys_cd= ? AND etl_job = ?", etlSysCd, etlJob);
 
 		if(0 == etlJobCurObj.length) {
 			throw new AppSystemException("根据调度系统编号、调度作业标识获取调度作业信息失败 "
@@ -910,8 +917,8 @@ public class TaskSqlHelper {
 
 		//1.查询数据库获取数据，并转换为Etl_resource实体。
 		List<Object[]> rows = SqlOperator.queryArrayList(TaskSqlHelper.getDbConnector(),
-				"SELECT etl_sys_cd, resource_type, resource_max, resource_used, " +
-						"main_serv_sync FROM etl_resource WHERE etl_sys_cd = ?", etlSysCd);
+				"SELECT etl_sys_cd, resource_type, resource_max, resource_used, main_serv_sync" +
+						" FROM " + Etl_resource.TableName + " WHERE etl_sys_cd = ?", etlSysCd);
 
 		if(rows.size() == 0) {
 			throw new AppSystemException("根据调度系统编号获取系统资源信息失败" + etlSysCd);
@@ -949,9 +956,8 @@ public class TaskSqlHelper {
 		//1.更新数据库数据。
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
 
-		int num = SqlOperator.execute(db,
-				"UPDATE etl_resource SET resource_used = ? WHERE etl_sys_cd = ?",
-				used, etlSysCd);
+		int num = SqlOperator.execute(db, "UPDATE " + Etl_resource.TableName + " SET" +
+				" resource_used = ? WHERE etl_sys_cd = ?", used, etlSysCd);
 
 		if(num < 1) {
 			throw new AppSystemException("根据调度系统编号来更新[资源使用数]失败" + etlSysCd);
@@ -989,8 +995,8 @@ public class TaskSqlHelper {
 
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
 
-		int[] nums = SqlOperator.executeBatch(db, "UPDATE etl_resource " +
-				"SET resource_used = ? WHERE etl_sys_cd = ? AND resource_type = ?", params);
+		int[] nums = SqlOperator.executeBatch(db, "UPDATE " + Etl_resource.TableName +
+				" SET resource_used = ? WHERE etl_sys_cd = ? AND resource_type = ?", params);
 
 		for(int i = 0 ; i < nums.length ; i++) {
 			//params.get(i)[2]表示resource_type
@@ -1025,8 +1031,9 @@ public class TaskSqlHelper {
 		//1.更新数据库数据。
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
 
-		int num = SqlOperator.execute(db, "UPDATE etl_resource SET resource_used = ? " +
-				"WHERE etl_sys_cd = ? AND resource_type = ?", used, etlSysCd, resourceType);
+		int num = SqlOperator.execute(db, "UPDATE " + Etl_resource.TableName +
+				" SET resource_used = ? WHERE etl_sys_cd = ? AND resource_type = ?",
+				used, etlSysCd, resourceType);
 
 		if(num != 1) {
 			throw new AppSystemException(String.format("据调度系统编号%s、" +
@@ -1053,7 +1060,8 @@ public class TaskSqlHelper {
 		//1.查询数据库获取数据。
 		//虽然该SQL一直在查询，但是干预的情况不多，不需要不用反射
 		return SqlOperator.queryList(TaskSqlHelper.getDbConnector(), Etl_job_hand.class,
-				"SELECT * FROM etl_job_hand WHERE hand_status = ? AND etl_sys_cd = ?",
+				"SELECT * FROM " + Etl_job_hand.TableName +
+						" WHERE hand_status = ? AND etl_sys_cd = ?",
 				Meddle_status.TRUE.getCode(), etlSyscd);
 	}
 
@@ -1073,11 +1081,11 @@ public class TaskSqlHelper {
 		//1.更新数据库数据。
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
 
-		int num = SqlOperator.execute(db, "UPDATE etl_job_hand SET hand_status = ?, " +
-						"main_serv_sync = ?, end_time = ?, warning = ? WHERE etl_sys_cd = ? " +
-						"AND etl_job = ? AND etl_hand_type = ?", etlJobHand.getHand_status(),
-				etlJobHand.getMain_serv_sync(), etlJobHand.getEnd_time(),
-				etlJobHand.getWarning(), etlJobHand.getEtl_sys_cd(),
+		int num = SqlOperator.execute(db, "UPDATE " + Etl_job_hand.TableName +
+						" SET hand_status = ?, main_serv_sync = ?, end_time = ?, warning = ?" +
+						" WHERE etl_sys_cd = ? AND etl_job = ? AND etl_hand_type = ?",
+				etlJobHand.getHand_status(), etlJobHand.getMain_serv_sync(),
+				etlJobHand.getEnd_time(), etlJobHand.getWarning(), etlJobHand.getEtl_sys_cd(),
 				etlJobHand.getEtl_job(), etlJobHand.getEtl_hand_type());
 
 		if(num < 1) {
@@ -1128,8 +1136,9 @@ public class TaskSqlHelper {
 		//1.更新数据库数据。
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
 
-		SqlOperator.execute(db, "DELETE FROM etl_job_hand WHERE etl_sys_cd = ? " +
-						"AND etl_job = ? AND etl_hand_type = ?", etlSysCd, etlJob, etlHandType);
+		SqlOperator.execute(db, "DELETE FROM " + Etl_job_hand.TableName +
+				" WHERE etl_sys_cd = ? AND etl_job = ? AND etl_hand_type = ?",
+				etlSysCd, etlJob, etlHandType);
 
 		SqlOperator.commitTransaction(db);
 	}
@@ -1150,8 +1159,8 @@ public class TaskSqlHelper {
 
 		//1.查询数据库获取数据。
 		return SqlOperator.queryList(TaskSqlHelper.getDbConnector(), Etl_job_cur.class,
-				"SELECT * FROM etl_job_cur " +
-						"WHERE (job_disp_status = ? OR job_disp_status = ?) AND etl_sys_cd = ?",
+				"SELECT * FROM " + Etl_job_cur.TableName +
+						" WHERE (job_disp_status = ? OR job_disp_status = ?) AND etl_sys_cd = ?",
 				Job_Status.PENDING.getCode(), Job_Status.WAITING.getCode(), etlSysCd);
 	}
 
@@ -1174,8 +1183,8 @@ public class TaskSqlHelper {
 
 		//1.查询数据库获取数据。
 		return SqlOperator.queryList(TaskSqlHelper.getDbConnector(), Etl_job_cur.class,
-				"SELECT * FROM etl_job_cur WHERE etl_sys_cd = ? AND job_disp_status = ?",
-				etlSysCd, jobStatus);
+				"SELECT * FROM " + Etl_job_cur.TableName +
+						" WHERE etl_sys_cd = ? AND job_disp_status = ?", etlSysCd, jobStatus);
 	}
 
 	/**
@@ -1194,10 +1203,11 @@ public class TaskSqlHelper {
 		//1.更新数据库数据。
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
 
-		int num = SqlOperator.execute(db, "UPDATE etl_job_cur SET job_disp_status = ?, " +
-						"main_serv_sync = ?, job_priority_curr = job_priority " +
-						"WHERE etl_sys_cd = ? AND today_disp = ?", Job_Status.PENDING.getCode(),
-				Main_Server_Sync.YES.getCode(), etlSysCd, Today_Dispatch_Flag.YES.getCode());
+		int num = SqlOperator.execute(db, "UPDATE " + Etl_job_cur.TableName +
+						" SET job_disp_status = ?, main_serv_sync = ?," +
+						" job_priority_curr = job_priority WHERE etl_sys_cd= ? AND today_disp = ?",
+				Job_Status.PENDING.getCode(), Main_Server_Sync.YES.getCode(), etlSysCd,
+				Today_Dispatch_Flag.YES.getCode());
 
 		if(num < 1) {
 			throw new AppSystemException("根据调度系统编号，将该系统下的作业置为挂起状态失败" +
@@ -1224,9 +1234,9 @@ public class TaskSqlHelper {
 		//1.更新数据库数据。
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
 
-		SqlOperator.execute(db, "UPDATE etl_job_cur SET job_disp_status = ?, " +
-						"main_serv_sync = ?, job_priority_curr = job_priority WHERE " +
-						"(job_disp_status = ? OR job_disp_status = ?) AND etl_sys_cd = ?",
+		SqlOperator.execute(db, "UPDATE " + Etl_job_cur.TableName + " SET job_disp_status = ?," +
+						" main_serv_sync = ?, job_priority_curr = job_priority WHERE" +
+						" (job_disp_status = ? OR job_disp_status = ?) AND etl_sys_cd = ?",
 				jobStatus, Main_Server_Sync.YES.getCode(), Job_Status.STOP.getCode(),
 				Job_Status.ERROR.getCode(), etlSysCd);
 
@@ -1258,9 +1268,9 @@ public class TaskSqlHelper {
 		//1.更新数据库数据。
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
 
-		int num = SqlOperator.execute(db, "UPDATE etl_job_cur SET job_priority_curr = ? " +
-						"WHERE etl_sys_cd = ? AND etl_job = ? AND curr_bath_date = ?",
-				jobPriorityCurr, etlSysCd, etlJob, currBathDate);
+		int num = SqlOperator.execute(db, "UPDATE " + Etl_job_cur.TableName +
+						" SET job_priority_curr = ? WHERE etl_sys_cd = ? AND etl_job = ?" +
+						" AND curr_bath_date = ?", jobPriorityCurr, etlSysCd, etlJob, currBathDate);
 
 		if(num != 1) {
 			throw new AppSystemException("根据调度系统编号、调度作业编号、" +
@@ -1326,12 +1336,12 @@ public class TaskSqlHelper {
 		//1.更新数据库数据。
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
 
-		int num = SqlOperator.execute(db, "UPDATE etl_job_cur SET main_serv_sync = ?, " +
-						"job_disp_status = ?, curr_end_time = ?, job_return_val = ? " +
-						"WHERE etl_sys_cd = ? AND etl_job = ? AND curr_bath_date = ?",
-				Main_Server_Sync.YES.getCode(), etlJobCur.getJob_disp_status(),
-				etlJobCur.getCurr_end_time(), etlJobCur.getJob_return_val(),
-				etlJobCur.getEtl_sys_cd(), etlJobCur.getEtl_job(),
+		int num = SqlOperator.execute(db, "UPDATE " + Etl_job_cur.TableName +
+						" SET main_serv_sync = ?, job_disp_status = ?, curr_end_time = ?," +
+						" job_return_val = ? WHERE etl_sys_cd = ? AND etl_job = ?" +
+						" AND curr_bath_date = ?", Main_Server_Sync.YES.getCode(),
+				etlJobCur.getJob_disp_status(), etlJobCur.getCurr_end_time(),
+				etlJobCur.getJob_return_val(), etlJobCur.getEtl_sys_cd(), etlJobCur.getEtl_job(),
 				etlJobCur.getCurr_bath_date());
 
 		if(num != 1) {
@@ -1358,7 +1368,7 @@ public class TaskSqlHelper {
 	public static String getParaByPara(String para) {
 
 		Object[] row = SqlOperator.queryArray(TaskSqlHelper.getDbConnector(),
-				"SELECT para_cd FROM etl_para WHERE para_cd = ?", para);
+				"SELECT para_cd FROM " + Etl_para.TableName + " WHERE para_cd = ?", para);
 
 		if(row.length == 0) {
 			throw new AppSystemException("所使用的参数标识不存在" + para);
