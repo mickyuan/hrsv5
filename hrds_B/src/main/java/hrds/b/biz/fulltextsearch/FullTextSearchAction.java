@@ -87,7 +87,8 @@ public class FullTextSearchAction extends BaseAction {
 					//TODO 获取分词查询的方法未实现
 					queryKeyword = getParticipleQuery(queryKeyword.trim());
 					result = getFinalResult(queryKeyword, start, pageSize, currPage, totalSize);
-					List<String> analysis = Arrays.asList(queryKeyword.substring(1, queryKeyword.length() - 1).split("\" OR \""));
+					List<String> analysis = Arrays.asList(queryKeyword.substring(1, queryKeyword.length() - 1)
+							.split("\" OR \""));
 					ftsMap.put("analysis", analysis);
 					if (!result.isEmpty()) {
 						// 返回总数据记录
@@ -187,12 +188,12 @@ public class FullTextSearchAction extends BaseAction {
 		asmSql.clean();
 		asmSql.addSql(" SELECT sfa.source_path,sfa.file_suffix,sfa.file_id,sfa.storage_time,sfa.storage_date," +
 				" sfa.original_update_date,sfa.hbase_name, sfa.original_update_time,sfa.file_md5,sfa.original_name," +
-				" sfa.file_size,sfa.seqencing,collect_type,sfa.collect_set_id,sfa.source_id,sfa.agent_id,fcs.fcs_name," +
-				" datasource_name,agent_name,si.si_count,uf.fav_id,uf.fav_flag FROM data_source ds JOIN agent_info gi" +
-				" ON gi.SOURCE_ID = ds.SOURCE_ID JOIN file_collect_set fcs ON fcs.agent_id= gi.agent_id JOIN" +
-				" source_file_attribute sfa ON sfa.SOURCE_ID = ds.SOURCE_ID and sfa.AGENT_ID = gi.AGENT_ID and" +
-				" sfa.COLLECT_SET_ID = fcs.FCS_ID left join search_info si on sfa.file_id = si.file_id and" +
-				" word_name = ?");
+				" sfa.file_size,sfa.seqencing,collect_type,sfa.collect_set_id,sfa.source_id,sfa.agent_id," +
+				" fcs.fcs_name,datasource_name,agent_name,si.si_count,uf.fav_id,uf.fav_flag FROM data_source ds" +
+				" JOIN agent_info gi ON gi.SOURCE_ID = ds.SOURCE_ID JOIN file_collect_set fcs ON " +
+				" fcs.agent_id = gi.agent_id JOIN source_file_attribute sfa ON sfa.SOURCE_ID = ds.SOURCE_ID and" +
+				" sfa.AGENT_ID = gi.AGENT_ID and sfa.COLLECT_SET_ID = fcs.FCS_ID left join search_info si on" +
+				" sfa.file_id = si.file_id and word_name = ?");
 		asmSql.addParam(searchInfo.getWord_name());
 		asmSql.addSql(" LEFT JOIN user_fav uf ON sfa.file_id = uf.file_id where collect_type = ? ");
 		asmSql.addParam(sourceFileAttribute.getCollect_type());
@@ -225,9 +226,12 @@ public class FullTextSearchAction extends BaseAction {
 			for (int j = 0; j < resultSet.getRowCount(); j++) {
 				String fileIdSolr = resultSet.getString(j, "file_id");
 				if (fileId.equals(fileIdSolr)) {
-					resultSet.setObject(i, "summary_content", resultProcessing.getString(j, "summary_content"));
-					resultSet.setObject(i, "totalSize", resultProcessing.getString(j, "totalSize"));
-					resultSet.setObject(i, "csv", resultProcessing.getString(j, "csv"));
+					resultSet.setObject(i, "summary_content",
+							resultProcessing.getString(j, "summary_content"));
+					resultSet.setObject(i, "totalSize",
+							resultProcessing.getString(j, "totalSize"));
+					resultSet.setObject(i, "csv",
+							resultProcessing.getString(j, "csv"));
 				}
 			}
 		}
@@ -269,7 +273,7 @@ public class FullTextSearchAction extends BaseAction {
 	}
 
 	@Method(desc = "查询结果集处理",
-			logicStep = "数据可访问权限处理方式: source_file_attribute 暂不做数据校验处理（该表存储数据量多的情况下，数据查询效率问题）" +
+			logicStep = "数据可访问权限处理方式:暂不做数据校验处理（该表存储数据量多的情况下，数据查询效率问题）" +
 					"1.获取solr返回结果" +
 					"2.返回两类数据 数据文件和文本文件" +
 					"2-1.存放文件卸数的 因为有摘要" +
@@ -471,9 +475,12 @@ public class FullTextSearchAction extends BaseAction {
 			asmSql.addParam(CollectType.WenJianCaiJi.getCode());
 			Result query = Dbo.queryPagedResult(new DefaultPageImpl(currPage, pageSize), asmSql.sql(), asmSql.params());
 			if (!query.isEmpty()) {
-				query.setObject(0, "summary_content", documentSimilar.getString(i, "summary_content"));
-				query.setObject(0, "rate", documentSimilar.getString(i, "rate"));
-				query.setObject(0, "totalSize", documentSimilar.getRowCount());
+				query.setObject(0, "summary_content",
+						documentSimilar.getString(i, "summary_content"));
+				query.setObject(0, "rate",
+						documentSimilar.getString(i, "rate"));
+				query.setObject(0, "totalSize",
+						documentSimilar.getRowCount());
 				filterQuery.add(query);
 			}
 		}

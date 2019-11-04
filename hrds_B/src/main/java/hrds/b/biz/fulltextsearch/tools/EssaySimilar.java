@@ -16,7 +16,8 @@ public class EssaySimilar {
 	@Method(desc = "从solr中获取相似的文章", logicStep = "从solr中获取相似的文章")
 	@Param(name = "filePath", desc = "文件在HDFS上的路径", range = "HDFS文件全路径")
 	@Param(name = "similarityRate", desc = "文章相似率", range = "String类型的字符串0-1", valueIfNull = "1")
-	@Param(name = "flag", desc = "是否返回检索到文章的文本内容", range = "boolean类型值，默认为false", valueIfNull = "false")
+	@Param(name = "flag", desc = "是否返回检索到文章的文本内容", range = "boolean类型值，默认为false",
+			valueIfNull = "false")
 	@Return(desc = "solr获取到的相似文章的结果集", range = "无限制")
 	public Result getDocumentSimilarFromSolr(String filePath, String similarityRate, boolean flag) {
 		//记录文件在hdfs上的地址

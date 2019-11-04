@@ -284,7 +284,7 @@ public class DataQueryAction extends BaseAction {
 
 	@Method(desc = "最近的3次文件采集信息",
 			logicStep = "数据可访问权限处理方式: 根据表的 user_id 做权限校验" +
-					"1.如果查询最近次数小于1则显示默认最近3次，查询最近次数大于30天则显示最近30次，否则取传入的查询次数" +
+					"1.查询最近次数小于1则显示默认最近3次,查询最近次数大于30天则显示最近30次,否则取传入的查询次数" +
 					"2.根据登录用户的id获取用户最近3次的文件采集信息" +
 					"3.根据查询结果设置返回的map结果集"
 	)
@@ -449,9 +449,12 @@ public class DataQueryAction extends BaseAction {
 							DateUtil.parseStr2DateWith8Char(searchResult.getString(i, "storage_date")));
 					searchResult.setObject(i, "storage_time",
 							DateUtil.parseStr2TimeWith6Char(searchResult.getString(i, "storage_time")));
-					searchResult.setObject(i, "title", searchResult.getString(i, "original_name"));
-					searchResult.setObject(i, "original_name", searchResult.getString(i, "original_name"));
-					Result daResult = Dbo.queryResult("select * from data_auth WHERE file_id = ? and user_id = ? and " +
+					searchResult.setObject(i, "title",
+							searchResult.getString(i, "original_name"));
+					searchResult.setObject(i, "original_name",
+							searchResult.getString(i, "original_name"));
+					Result daResult = Dbo.queryResult(
+							"select * from data_auth WHERE file_id = ? and user_id = ? and " +
 									" auth_type != ?", searchResult.getString(i, "file_id"), getUserId(),
 							AuthType.BuYunXu.getCode());
 					if (!daResult.isEmpty()) {
@@ -500,18 +503,24 @@ public class DataQueryAction extends BaseAction {
 							applyType.delete(applyType.length() - 1, applyType.length());
 							daResult.setObject(j, "auth_type", authType.toString());
 							daResult.setObject(j, "apply_type", authType.toString());
-							daResult.setObject(j, "file_id", sfaRsAll.getString(i, "file_id"));
-							daResult.setObject(j, "collect_type", sfaRsAll.getString(i, "collect_type"));
-							daResult.setObject(j, "hbase_name", sfaRsAll.getString(i, "hbase_name"));
-							daResult.setObject(j, "title", sfaRsAll.getString(i, "original_name"));
-							daResult.setObject(j, "original_name", sfaRsAll.getString(i, "original_name"));
+							daResult.setObject(j, "file_id",
+									sfaRsAll.getString(i, "file_id"));
+							daResult.setObject(j, "collect_type",
+									sfaRsAll.getString(i, "collect_type"));
+							daResult.setObject(j, "hbase_name",
+									sfaRsAll.getString(i, "hbase_name"));
+							daResult.setObject(j, "title",
+									sfaRsAll.getString(i, "original_name"));
+							daResult.setObject(j, "original_name",
+									sfaRsAll.getString(i, "original_name"));
 							daResult.setObject(j, "storage_date", DateUtil.parseStr2DateWith8Char(
 									sfaRsAll.getString(i, "storage_date")));
 							daResult.setObject(j, "storage_time", DateUtil.parseStr2TimeWith6Char(
 									sfaRsAll.getString(i, "storage_time")));
 							daResult.setObject(j, "file_size", FileUtil.fileSizeConversion(
 									sfaRsAll.getLongDefaultZero(i, "file_size")));
-							daResult.setObject(j, "file_suffix", sfaRsAll.getString(i, "file_suffix"));
+							daResult.setObject(j, "file_suffix",
+									sfaRsAll.getString(i, "file_suffix"));
 							daResult.setObject(j, "is_others_apply", "9999");
 							searchResult.add(daResult);
 						}
@@ -571,7 +580,7 @@ public class DataQueryAction extends BaseAction {
 		fileApplicationDetails.put("applyRequestRs", applyRequestRs);
 		//3.文件的申请汇总
 		asmSql.clean();
-		asmSql.addSql(" select  MAX(apply_date || apply_time) applytime,da.file_id,apply_type from data_auth da JOIN " +
+		asmSql.addSql("select  MAX(apply_date || apply_time) applytime,da.file_id,apply_type from data_auth da JOIN " +
 				"source_file_attribute sfa ON da.file_id = sfa.file_id where user_id=? ");
 		asmSql.addParam(getUserId());
 		asmSql.addORParam("sfa.source_id", sourceIdsObj);
