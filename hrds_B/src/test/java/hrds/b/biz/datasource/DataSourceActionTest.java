@@ -1047,7 +1047,6 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .post(getActionUrl("searchSourceRelationDepForPage")).getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
         assertThat(ar.get().isSuccess(), is(true));
-        assertThat(ar.get().getDataForResult().getRowCount(), is(0));
         // 5.错误的数据访问2，数据权限管理，每页显示条数pageSize不合法
         bodyString = new HttpClient()
                 .addData("currPage", 2)
@@ -1151,8 +1150,8 @@ public class DataSourceActionTest extends WebBaseTestCase {
                     .post(getActionUrl("deleteAudit")).getBodyString();
             Optional<ActionResult> ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
             assertThat(ar.get().isSuccess(), is(true));
-            List<Map<String, Object>> dataAuthList = (List<Map<String, Object>>) ar.get().getData();
-            List<Map<String, Object>> dataAuditInfoList = (List<Map<String, Object>>) ar.get().getData();
+            Map<String, Object> dataAuthMap = ar.get().getDataForMap();
+            List<Map<String, Object>> dataAuditInfoList = (List<Map<String, Object>>) dataAuthMap.get("dataAuditList");
             for (int i = 0; i < dataAuditInfoList.size(); i++) {
                 assertThat(dataAuditInfoList.get(i).get("da_id").toString(), is(String.valueOf(DaId
                         + dataAuditInfoList.size() - i)));
@@ -1192,7 +1191,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .addData("source_remark", "测试")
                 .addData("datasource_name", "dsName2")
                 .addData("datasource_number", "cs01")
-                .addData("dep_id", DepId1+","+DepId2)
+                .addData("dep_id", DepId1 + "," + DepId2)
                 .post(getActionUrl("saveDataSource")).getBodyString();
         Optional<ActionResult> ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
         assertThat(ar.get().isSuccess(), is(true));
