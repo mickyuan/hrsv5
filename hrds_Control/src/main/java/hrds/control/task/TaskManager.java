@@ -324,9 +324,11 @@ public class TaskManager {
 			}
 
 			//6、将已经执行的作业从等待执行列表中移除
-			for(Etl_job_cur tempJob : removeList) {
-				jobWaitingList.remove(tempJob);
-			}
+			jobWaitingList.removeIf(removeList::contains);
+
+//			for(Etl_job_cur tempJob : removeList) {
+//				jobWaitingList.remove(tempJob);
+//			}
 
 			isLock = false;
 			//判断等待执行列表的作业是否全部完成
@@ -951,7 +953,7 @@ public class TaskManager {
 		//1.检查该作业的已执行次数是否达到总执行次数；
 		int exeNum = job.getExe_num();
 		int exeedNum = job.getCom_exe_num();	//已经执行次数
-		if( exeedNum >= exeNum ) {	//已执行的次数>=总执行次数，作业不再执行
+		if(exeedNum >= exeNum) {	//已执行的次数>=总执行次数，作业不再执行
 			return false;
 		}
 		//2.检查当前系统时间是否在作业结束时间范围内。
@@ -1075,7 +1077,7 @@ public class TaskManager {
 			return x == y;
 		}else if(frequancy.equals(Dispatch_Frequency.PinLv.getCode())) {
 			//xchao--2017年8月15日 16:25:51 添加按秒、分钟、小时进行执行
-			if( com_exe_num < exe_num ) {
+			if(com_exe_num < exe_num) {
 				LocalDateTime startDateTime = LocalDateTime.parse(star_time,
 						DateUtil.DATETIME_DEFAULT);
 				LocalDateTime endDateTime = LocalDateTime.parse(end_time,
@@ -1388,7 +1390,7 @@ public class TaskManager {
 								//如果是虚作业，直接完成
 								nextJobInfo.setJob_disp_status(Job_Status.RUNNING.getCode());
 								handleVirtualJob(nextEtlJob, nextEtlJobCurrBathDate);
-							} else {
+							}else {
 								//将这个作业的状态更新成Waiting,并将这个作业加入JobWaitingList
 								nextJobInfo.setJob_disp_status(Job_Status.WAITING.getCode());
 								//更新[依赖作业]的状态（挂起状态置为等待状态），标识该作业可以运行。
@@ -1399,7 +1401,7 @@ public class TaskManager {
 //								etlJobs2Update.add(nextJobInfo);
 								if(Pro_Type.WF.getCode().equals(nextJobInfo.getPro_type())) {
 									addWaitFileJobToList(nextJobInfo);
-								} else {
+								}else {
 									jobWaitingList.add(nextJobInfo);
 								}
 							}
@@ -1480,7 +1482,7 @@ public class TaskManager {
 	private void increaseResource(String etlJobKey) {
 
 		EtlJobDefBean jobDefine = jobDefineMap.get(etlJobKey);
-		if( null == jobDefine ) {
+		if(null == jobDefine) {
 			throw new AppSystemException("无法在内存表jobDefineMap中找到作业" + etlJobKey);
 		}
 		//1.更新作业使用资源。
@@ -1668,16 +1670,16 @@ public class TaskManager {
 	public void handleSys2Rerun() {
 
 		//1.重新设置内存Map中的作业信息；
-		for (String strBathDate : jobExecuteMap.keySet()) {
+		for(String strBathDate : jobExecuteMap.keySet()) {
 			Map<String, EtlJobBean> jobMap = jobExecuteMap.get(strBathDate);
-			for (String strJobName : jobMap.keySet()) {
+			for(String strJobName : jobMap.keySet()) {
 				EtlJobBean exeJobInfo = jobMap.get(strJobName);
 				exeJobInfo.setPreDateFlag(false);
 				exeJobInfo.setJob_disp_status(Job_Status.PENDING.getCode());
 				exeJobInfo.setDependencyFlag(false);
 				exeJobInfo.setDoneDependencyJobCount(0);
 				EtlJobDefBean jobDefine = jobDefineMap.get(strJobName);
-				if (jobDefine != null) {
+				if(jobDefine != null) {
 					exeJobInfo.setJob_priority_curr(jobDefine.getJob_priority());
 				}
 			}
@@ -1710,15 +1712,15 @@ public class TaskManager {
 	public void handleSys2Pause() {
 
 		//1.将内存中作业状态不为[运行中]的作业状态置为停止；
-		for (String strBathDate : jobExecuteMap.keySet()) {
+		for(String strBathDate : jobExecuteMap.keySet()) {
 			Map<String, EtlJobBean> jobMap = jobExecuteMap.get(strBathDate);
-			for (String strJobName : jobMap.keySet()) {
+			for(String strJobName : jobMap.keySet()) {
 				EtlJobBean exeJobInfo = jobMap.get(strJobName);
-				if (Job_Status.PENDING.getCode().equals(exeJobInfo.getJob_disp_status()) ||
+				if(Job_Status.PENDING.getCode().equals(exeJobInfo.getJob_disp_status()) ||
 						Job_Status.WAITING.getCode().equals(exeJobInfo.getJob_disp_status())) {
 					exeJobInfo.setJob_disp_status(Job_Status.STOP.getCode());
 				}
-				if (Pro_Type.WF.getCode().equals(exeJobInfo.getPro_type()) &&
+				if(Pro_Type.WF.getCode().equals(exeJobInfo.getPro_type()) &&
 						Job_Status.RUNNING.getCode().equals(exeJobInfo.getJob_disp_status())) {
 					exeJobInfo.setJob_disp_status(Job_Status.STOP.getCode());
 				}
@@ -1743,16 +1745,16 @@ public class TaskManager {
 	public void handleSys2Resume() {
 
 		//1.将内存Map中作业状态为[停止/错误]的作业置为[挂起]状态；
-		for (Map<String, EtlJobBean> jobMap : jobExecuteMap.values()) {
+		for(Map<String, EtlJobBean> jobMap : jobExecuteMap.values()) {
 
-			for (String strJobName : jobMap.keySet()) {
+			for(String strJobName : jobMap.keySet()) {
 				EtlJobBean exeJobInfo = jobMap.get(strJobName);
 
-				if (Job_Status.STOP.getCode().equals(exeJobInfo.getJob_disp_status()) ||
+				if(Job_Status.STOP.getCode().equals(exeJobInfo.getJob_disp_status()) ||
 						Job_Status.ERROR.getCode().equals(exeJobInfo.getJob_disp_status())) {
 					exeJobInfo.setJob_disp_status(Job_Status.PENDING.getCode());
 					EtlJobDefBean jobDefine = jobDefineMap.get(strJobName);
-					if (jobDefine != null) {
+					if(jobDefine != null) {
 						exeJobInfo.setJob_priority_curr(jobDefine.getJob_priority());
 					}
 				}
@@ -1778,12 +1780,12 @@ public class TaskManager {
 	public void handleJob2Stop(String currbathDate, String etlJob) {
 
 		Map<String, EtlJobBean> jobMap = jobExecuteMap.get(currbathDate);
-		if( null == jobMap ) {
+		if(null == jobMap) {
 			return;
 		}
 
 		EtlJobBean exeJobInfo = jobMap.get(etlJob);
-		if( null == exeJobInfo ) {
+		if(null == exeJobInfo) {
 			return;
 		}
 		//1.将作业状态为[挂起/等待]的作业置为[停止]状态。
@@ -1921,12 +1923,12 @@ public class TaskManager {
 	public void handleJob2ChangePriority(String currBathDate, String etlJob, int priority) {
 
 		Map<String, EtlJobBean> jobMap = jobExecuteMap.get(currBathDate);
-		if( null == jobMap ) {
+		if(null == jobMap) {
 			return;
 		}
 
 		EtlJobBean exeJobInfo = jobMap.get(etlJob);
-		if( null == exeJobInfo ) {
+		if(null == exeJobInfo) {
 			return;
 		}
 
@@ -2022,7 +2024,7 @@ public class TaskManager {
 	private void decreaseResource(String etlJob) {
 
 		EtlJobDefBean jobDefine = jobDefineMap.get(etlJob);
-		if( null == jobDefine ) {
+		if(null == jobDefine) {
 			throw new AppSystemException("无法在内存表jobDefineMap中找到作业" + etlJob);
 		}
 //		List<Etl_resource> etlResources = new ArrayList<>();
@@ -2069,7 +2071,7 @@ public class TaskManager {
 		//1.对比系统定义的资源数是否足够作业使用。
 		EtlJobDefBean jobDefine = jobDefineMap.get(etlJob);
 		logger.info("检测资源：{}", etlJob);
-		if( null == jobDefine ) {
+		if(null == jobDefine) {
 			return true;
 		}
 		List<Etl_job_resource_rela> resources = jobDefine.getJobResources();
@@ -2118,7 +2120,7 @@ public class TaskManager {
 			 * xchao--2017年8月15日 16:25:51 添加按秒、分钟、小时进行执行
 			 * 不把执行时间为9999999的设置为完成不完成
 			 */
-			if (exeJobInfo.getExecuteTime() == zclong) {
+			if(exeJobInfo.getExecuteTime() == zclong) {
 				continue;
 			}
 			if(!Job_Status.DONE.getCode().equals(exeJobInfo.getJob_disp_status())) {
@@ -2145,14 +2147,14 @@ public class TaskManager {
 
 		//1.判断当天调度作业是否已经全部是完成和失败。
 		Map<String, EtlJobBean> jobMap = jobExecuteMap.get(bathDateStr);
-		if( null == jobMap ) {
+		if(null == jobMap) {
 			return false;
 		}
 
 		//判断该调度日期的作业是否状态全部为"D"
 		Iterator<String> jobIter = jobMap.keySet().iterator();
 		Set<String> status = new HashSet<>();
-		while( jobIter.hasNext() ) {
+		while(jobIter.hasNext()) {
 			EtlJobBean exeJobInfo = jobMap.get(jobIter.next());
 			status.add(exeJobInfo.getJob_disp_status());
 		}
@@ -2213,10 +2215,10 @@ public class TaskManager {
 		Map<String, EtlJobBean> jobMap = jobExecuteMap.get(bathDateStr);
 
 		Iterator<String> jobIter = jobMap.keySet().iterator();
-		while( jobIter.hasNext() ) {
+		while(jobIter.hasNext()) {
 			String strJobName = jobIter.next();
 			EtlJobDefBean jobDefine = jobDefineMap.get(strJobName);
-			if( null == jobDefine ) {
+			if(null == jobDefine) {
 				jobIter.remove();
 				continue;
 			}
@@ -2313,7 +2315,7 @@ public class TaskManager {
 
 			try {
 				while(run) {
-					while (isLock) {
+					while(isLock) {
 						logger.info("Wait file lock is true.Please wait");
 						try{
 							Thread.sleep(LOCKMILLISECONDS);
@@ -2326,9 +2328,9 @@ public class TaskManager {
 					List<WaitFileJobInfo> checkList = new ArrayList<>(jobList);
 					List<WaitFileJobInfo> finishedJobList = new ArrayList<>();
 					//2.检查信号文件是否到达；
-					for (WaitFileJobInfo jobInfo : checkList) {
+					for(WaitFileJobInfo jobInfo : checkList) {
 						File file = new File(jobInfo.getWaitFilePath());
-						if (file.exists()) {
+						if(file.exists()) {
 							waitFileJobFinished(jobInfo);
 							finishedJobList.add(jobInfo);
 							logger.info("{} 文件已经等到。", jobInfo.getStrJobName());
@@ -2336,17 +2338,19 @@ public class TaskManager {
 					}
 					//3.释放锁。
 					isLock = false;
-					//TODO 这里的remove没问题？
-					for (WaitFileJobInfo waitFileJobInfo : finishedJobList) {
-						jobList.remove(waitFileJobInfo);
-					}
+
+					jobList.removeIf(finishedJobList::contains);
+
+//					for (WaitFileJobInfo waitFileJobInfo : finishedJobList) {
+//						jobList.remove(waitFileJobInfo);
+//					}
 
 					try {
 						Thread.sleep(CHECKMILLISECONDS);
 					}catch (InterruptedException ignored) {
 					}
 				}
-			} catch (Exception ex) {
+			}catch (Exception ex) {
 				logger.error("CheckWaitFileThread exception happened! {}",
 						ex.getMessage());
 			}
