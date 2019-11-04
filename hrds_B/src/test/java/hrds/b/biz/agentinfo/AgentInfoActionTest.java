@@ -15,8 +15,6 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
 
@@ -1116,7 +1114,8 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                     "3.错误的数据访问2，查询agent_info表数据，agent_type是一个合法的数据")
     @Test
     public void searchAgent() {
-        // 1.正常的数据访问1，查询agent_info表数据，数据都有效,不能保证数据库原表数据为空，目前不知道该如何验证数据正确性，只能判断请求成功
+        // 目前不知道该如何验证数据正确性，只能判断请求成功
+        // 1.正常的数据访问1，查询agent_info表数据，数据都有效,不能保证数据库原表数据为空
         String bodyString = new HttpClient().addData("agent_id", DBAgentId)
                 .addData("agent_type", AgentType.ShuJuKu.getCode())
                 .post(getActionUrl("searchAgent")).getBodyString();
@@ -1140,7 +1139,8 @@ public class AgentInfoActionTest extends WebBaseTestCase {
     }
 
     @Method(desc = "根据agent_id,agent_type删除agent_info信息",
-            logicStep = "1.正确的数据访问1，删除agent_info表数据，正常删除,agent类型有5种，这里只测一种（其他除了类型都一样）" +
+            logicStep = "1.正确的数据访问1，删除agent_info表数据，正常删除,agent类型有5种，" +
+                    "这里只测一种（其他除了类型都一样）" +
                     "2.错误的数据访问1，删除agent_info表数据，agent已部署不能删除" +
                     "3.错误的数据访问2,删除agent_info表数据，此数据源对应的agent下有任务，不能删除" +
                     "4.错误的数据访问3，删除agent_info表数据，agent_id是一个不存在的数据" +
