@@ -210,11 +210,13 @@ public class BaseInitData {
 			Collect_job_classify classify = new Collect_job_classify();
 			long classifyId = i % 2 == 0 ? FIRST_CLASSIFY_ID : SECOND_CLASSIFY_ID;
 			long agentId = i % 2 == 0 ? FIRST_DB_AGENT_ID : SECOND_DB_AGENT_ID;
+			String remark = "remark" + String.valueOf(classifyId);
 			classify.setClassify_id(classifyId);
 			classify.setClassify_num("wzc_test_classify_num" + i);
 			classify.setClassify_name("wzc_test_classify_name" + i);
 			classify.setUser_id(TEST_USER_ID);
 			classify.setAgent_id(agentId);
+			classify.setRemark(remark);
 
 			classifies.add(classify);
 		}

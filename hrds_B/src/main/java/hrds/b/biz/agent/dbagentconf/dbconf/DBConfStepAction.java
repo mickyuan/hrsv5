@@ -170,8 +170,9 @@ public class DBConfStepAction extends BaseAction{
 			throw new BusinessException("分类编号重复，请重新输入");
 		}
 		//4、分类编号不重复可以新增
-		//5、给新增数据设置ID
+		//5、给新增数据设置ID和user_id
 		classify.setClassify_id(PrimayKeyGener.getNextId());
+		classify.setUser_id(getUserId());
 		//6、完成新增
 		if (classify.add(Dbo.db()) != 1)
 			throw new BusinessException("保存分类信息失败！data=" + classify);

@@ -343,27 +343,31 @@ public class CleanConfStepAction extends BaseAction{
 			"4、返回")
 	@Param(name = "tableId", desc = "数据库对应表主键，表清洗参数表外键", range = "不为空")
 	@Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数", nullable = true, valueIfNull = "1")
-	@Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", nullable = true, valueIfNull = "10")
+	@Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", nullable = true,
+			valueIfNull = "10")
 	@Return(desc = "查询结果集", range = "不为空，数据的条数视实际情况而定" +
 			"注意compflag/replaceflag/formatflag/splitflag/codevalueflag/trimflag这六个字段的值" +
 			"不为0表示该列做了相应的清洗设置，0表示没有列相应的设置")
 	public Result getColumnInfo(long tableId, int currPage, int pageSize){
 		//1、根据tableId去到table_column表中查询采集的,并且不是变化而生成的列ID
 		List<Object> columnIds = Dbo.queryOneColumnList("select column_id from " + Table_column.TableName +
-				" where table_id = ? and is_get = ? and is_new = ?", tableId, IsFlag.Shi.getCode(), IsFlag.Fou.getCode());
+				" where table_id = ? and is_get = ? and is_new = ?", tableId, IsFlag.Shi.getCode(),
+				IsFlag.Fou.getCode());
 		//2、如果没有找到采集列，直接返回一个空的集合
 		if(columnIds.isEmpty()){
 			return new Result();
 		}
 		//3、如果找到了，再进行关联查询，查询出页面需要显示的信息
-		StringBuilder sqlSB = new StringBuilder("SELECT t1.column_id,t1.colume_name,t1.colume_ch_name,t2.table_name," +
+		StringBuilder sqlSB = new StringBuilder("SELECT t1.column_id,t1.colume_name,t1.colume_ch_name," +
+				" t2.table_name," +
 				" sum(case t3.clean_type when ? then 1 else 0 end) as compflag, " +
 				" sum(case t3.clean_type when ? then 1 else 0 end) as replaceflag, " +
 				" sum(case t3.clean_type when ? then 1 else 0 end ) as formatflag, " +
 				" sum(case t3.clean_type when ? then 1 else 0 end) as splitflag, " +
 				" sum(case t3.clean_type when ? then 1 else 0 end) as codevalueflag, " +
 				" sum(case t3.clean_type when ? then 1 else 0 end) as trimflag " +
-				" FROM "+ Table_column.TableName +" t1 JOIN "+ Table_info.TableName +" t2 ON t1.table_id = t2.table_id " +
+				" FROM "+ Table_column.TableName +" t1 JOIN "+ Table_info.TableName +
+				" t2 ON t1.table_id = t2.table_id " +
 				" left join "+ Column_clean.TableName +" t3 on t1.column_id = t3.column_id " +
 				" WHERE t1.column_id in ( ");
 		for(int i = 0; i < columnIds.size(); i++){
@@ -553,7 +557,8 @@ public class CleanConfStepAction extends BaseAction{
 		}
 		//3、如果查到了，需要把拆分分隔符解码
 		for(int i = 0; i < result.getRowCount(); i++){
-			result.setObject(i, "split_sep", StringUtil.unicode2String(result.getString(i, "split_sep")));
+			result.setObject(i, "split_sep", StringUtil.unicode2String(result.
+					getString(i, "split_sep")));
 		}
 		return result;
 	}
@@ -767,7 +772,8 @@ public class CleanConfStepAction extends BaseAction{
 			"注意：json的key请务必按照示例中给出的写")
 	public void saveAllTbCleanOrder(long[] tableIds, String sort){
 		//1、根据table_id,在table_info表中找到对应的记录，将sort更新进去
-		StringBuilder sqlSB = new StringBuilder("update " + Table_info.TableName + " set ti_or = ? where table_id in ( ");
+		StringBuilder sqlSB = new StringBuilder("update " + Table_info.TableName +
+				" set ti_or = ? where table_id in ( ");
 		for(int i = 0; i < tableIds.length; i++){
 			sqlSB.append(tableIds[i]);
 			if (i != tableIds.length - 1)
@@ -851,7 +857,8 @@ public class CleanConfStepAction extends BaseAction{
 				Result colSplitInfo = getColSplitInfo(param.getColumnId());
 				if(!colSplitInfo.isEmpty()){
 					for(int i = 0; i < colSplitInfo.getRowCount(); i++){
-						deleteColSplitInfo(colSplitInfo.getLong(i, "col_split_id"), colSplitInfo.getLong(i, "col_clean_id"));
+						deleteColSplitInfo(colSplitInfo.getLong(i, "col_split_id"),
+								colSplitInfo.getLong(i, "col_clean_id"));
 					}
 				}
 			}

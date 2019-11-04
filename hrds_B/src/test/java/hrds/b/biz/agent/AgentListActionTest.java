@@ -1058,7 +1058,6 @@ public class AgentListActionTest extends WebBaseTestCase {
 			//3-1-2、删除table_info(表对应字段)测试数据
 			SqlOperator.execute(db, "delete from " + Table_info.TableName + " WHERE table_id = ?", TABLE_ID);
 			//3-2、删除非结构化文件采集测试数据
-			//3-2-1、构建file_source(文件源设置)测试数据
 			SqlOperator.execute(db, "delete from " + File_source.TableName + " WHERE agent_id = ?", NON_STRUCT_AGENT_ID);
 
 			SqlOperator.commitTransaction(db);
