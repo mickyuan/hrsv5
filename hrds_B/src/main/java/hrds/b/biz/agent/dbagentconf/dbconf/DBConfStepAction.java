@@ -26,6 +26,7 @@ import hrds.commons.utils.AgentActionUtil;
 import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.key.PrimayKeyGener;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @DocClass(desc = "配置源DB属性", author = "WangZhengcheng")
@@ -72,6 +73,29 @@ public class DBConfStepAction extends BaseAction{
 		return ConnUtil.getConnURLProp(dbType);
 		//数据可访问权限处理方式
 		//不与数据库交互，无需限制访问权限
+	}
+
+	@Method(desc = "获取所有数据库的名称和编码信息", logicStep = "" +
+			"1、构造List集合，放入所有数据库信息" +
+			"2、返回")
+	@Return(desc = "数据库名称及编码信息",range = "不会为null")
+	public List<DatabaseType> getDatabaseType(){
+		List<DatabaseType> returnList = new ArrayList<>();
+		returnList.add(DatabaseType.ApacheDerby);
+		returnList.add(DatabaseType.DB2);
+		returnList.add(DatabaseType.GBase);
+		returnList.add(DatabaseType.H2);
+		returnList.add(DatabaseType.Informatic);
+		returnList.add(DatabaseType.MYSQL);
+		returnList.add(DatabaseType.Oracle9i);
+		returnList.add(DatabaseType.Oracle10g);
+		returnList.add(DatabaseType.Postgresql);
+		returnList.add(DatabaseType.SqlServer2000);
+		returnList.add(DatabaseType.SqlServer2005);
+		returnList.add(DatabaseType.SybaseASE125);
+		returnList.add(DatabaseType.TeraData);
+
+		return returnList;
 	}
 
 	@Method(desc = "根据分类Id判断当前分类是否被使用", logicStep = "" +
