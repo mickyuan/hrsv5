@@ -91,7 +91,8 @@ public class DepartmentAction extends BaseAction {
 	@Return(desc = "部门名称是否重复", range = "true：重复，false：不重复")
 	public boolean checkDepNameIsRepeat(String dep_name) {
 		//1.根据 dep_name 检查部门名称是否重复
-		return Dbo.queryNumber("select count(dep_name) count from " + Department_info.TableName + " WHERE dep_name =?",
+		return Dbo.queryNumber("select count(dep_name) count from " + Department_info.TableName + "" +
+						" WHERE dep_name =?",
 				dep_name).orElseThrow(() -> new BusinessException("检查部门名称否重复的SQL编写错误")) != 0;
 	}
 
