@@ -323,7 +323,7 @@ public class DBConfStepAction extends BaseAction{
 			, range = "不为空")
 	@Param(name = "isAdd", desc = "新增/更新的标识位", range = "true为新增，false为更新")
 	private void verifyClassifyEntity(Collect_job_classify entity, boolean isAdd){
-		//1、对于新增操作，校验classify_id不能为空
+		//1、对于更新操作，校验classify_id不能为空
 		if(!isAdd){
 			if(entity.getClassify_id() == null){
 				throw new BusinessException("分类id不能为空");
@@ -337,11 +337,7 @@ public class DBConfStepAction extends BaseAction{
 		if(StringUtil.isBlank(entity.getClassify_name())){
 			throw new BusinessException("分类名称不能为空");
 		}
-		//4、校验user_id不能为空
-		if(entity.getUser_id() == null){
-			throw new BusinessException("用户ID不能为空");
-		}
-		//5、校验Agent_id不能为空
+		//4、校验Agent_id不能为空
 		if(entity.getAgent_id() == null){
 			throw new BusinessException("AgentID不能为空");
 		}
