@@ -211,7 +211,7 @@ public class SysUserActionTest extends WebBaseTestCase {
 				.addData("useris_admin", 0)
 				//user_type 用户默认功能，"00"：超级管理员功能代码项，"01"-"26"：功能菜单代码项
 				.addData("user_type", "01")
-				//usertype_group 功能菜单 管理员：01,04,07,10,11,13,16,18,20,25 操作员：02,03,04,08,09,12,14,15,19,21,22,23,24,26
+				//usertype_group 功能菜单
 				.addData("usertype_group", "01,04,07,10,11,13,16,18,20,25")
 				.post(getActionUrl("addSysUser")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
@@ -232,7 +232,7 @@ public class SysUserActionTest extends WebBaseTestCase {
 				.addData("useris_admin", 1)
 				//user_type 用户默认功能，"00"：超级管理员功能代码项，"01"-"26"：功能菜单代码项
 				.addData("user_type", "02")
-				//usertype_group 功能菜单 管理员：01,04,07,10,11,13,16,18,20,25 操作员：02,03,04,08,09,12,14,15,19,21,22,23,24,26
+				//usertype_group 功能菜单
 				.addData("usertype_group", "02,03,04,08,09,12,14,15,19,21,22,23,24,26")
 				.post(getActionUrl("addSysUser")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
@@ -255,7 +255,7 @@ public class SysUserActionTest extends WebBaseTestCase {
 				.addData("useris_admin", 0)
 				//user_state 账户状态 1：正常 0：未启用
 				.addData("user_state", 0)
-				//usertype_group 功能菜单 管理员：01,04,07,10,11,13,16,18,20,25 操作员：02,03,04,08,09,12,14,15,19,21,22,23,24,26
+				//usertype_group 功能菜单
 				.addData("usertype_group", "02")
 				.post(getActionUrl("updateSysUser")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();

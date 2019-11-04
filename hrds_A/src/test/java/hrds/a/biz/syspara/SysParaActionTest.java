@@ -44,9 +44,9 @@ public class SysParaActionTest extends WebBaseTestCase {
 					"3.用户模拟登陆" +
 					"测试数据:" +
 					"* 1.sys_para 表中有3条测试数据" +
-					"   para_id:-1000 para_name:测试删除配置参数 para_value:测试删除配置参数 para_type:server.properties," +
-					"   para_id:-1001 para_name:测试修改配置参数 para_value:测试修改配置参数 para_type:server.properties," +
-					"   para_id:-1002 para_name:测试查询配置参数 para_value:测试查询配置参数 para_type:server.properties,")
+					"   para_id:-1000 para_name:测试删除配置参数 para_value:测试删除配置参数" +
+					"   para_id:-1001 para_name:测试修改配置参数 para_value:测试修改配置参数" +
+					"   para_id:-1002 para_name:测试查询配置参数 para_value:测试查询配置参数")
 	@BeforeClass
 	public static void before() {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
@@ -148,17 +148,17 @@ public class SysParaActionTest extends WebBaseTestCase {
 					"测试新增配置参数init-hll");
 			SqlOperator.commitTransaction(db);
 			long spDataNum;
-			spDataNum = SqlOperator.queryNumber(db, "select count(1) from " + Sys_para.TableName + " where para_id=?",
-					-1000L).orElseThrow(() -> new RuntimeException("count fail!"));
+			spDataNum = SqlOperator.queryNumber(db, "select count(1) from " + Sys_para.TableName +
+					" where para_id=?", -1000L).orElseThrow(() -> new RuntimeException("count fail!"));
 			assertThat("Sys_para 表此条数据删除后,记录数应该为0", spDataNum, is(0L));
-			spDataNum = SqlOperator.queryNumber(db, "select count(1) from " + Sys_para.TableName + " where para_id=?",
-					-1001L).orElseThrow(() -> new RuntimeException("count fail!"));
+			spDataNum = SqlOperator.queryNumber(db, "select count(1) from " + Sys_para.TableName +
+					" where para_id=?", -1001L).orElseThrow(() -> new RuntimeException("count fail!"));
 			assertThat("Sys_para 表此条数据删除后,记录数应该为0", spDataNum, is(0L));
-			spDataNum = SqlOperator.queryNumber(db, "select count(1) from " + Sys_para.TableName + " where para_id=?",
-					-1002L).orElseThrow(() -> new RuntimeException("count fail!"));
+			spDataNum = SqlOperator.queryNumber(db, "select count(1) from " + Sys_para.TableName +
+					" where para_id=?", -1002L).orElseThrow(() -> new RuntimeException("count fail!"));
 			assertThat("Sys_para 表此条数据删除后,记录数应该为0", spDataNum, is(0L));
-			spDataNum = SqlOperator.queryNumber(db, "select count(1) from " + Sys_para.TableName + " where para_id=?",
-					-1003L).orElseThrow(() -> new RuntimeException("count fail!"));
+			spDataNum = SqlOperator.queryNumber(db, "select count(1) from " + Sys_para.TableName +
+					" where para_id=?", -1003L).orElseThrow(() -> new RuntimeException("count fail!"));
 			assertThat("Sys_para 表此条数据删除后,记录数应该为0", spDataNum, is(0L));
 		}
 	}

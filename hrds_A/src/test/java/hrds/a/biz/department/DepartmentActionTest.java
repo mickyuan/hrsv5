@@ -44,8 +44,9 @@ public class DepartmentActionTest extends WebBaseTestCase {
 					"2.提交所有数据库执行操作" +
 					"3.用户模拟登陆" +
 					"测试数据:" +
-					"* 1.sys_user 表中有3条测试数据 user_id:-1000 user_password:111111, user_id:-1000 user_password:111111," +
-					"user_id:-1000 user_password:111111 ")
+					"* 1.sys_user 表中有3条测试数据 user_id:-1000 user_password:111111," +
+					" user_id:-1000 user_password:111111," +
+					" user_id:-1000 user_password:111111 ")
 	@BeforeClass
 	public static void before() {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
@@ -186,7 +187,8 @@ public class DepartmentActionTest extends WebBaseTestCase {
 			//1-1-1.检查 Department_info 部门是否新增成功
 			OptionalLong number = SqlOperator.queryNumber(db, "select count(*) from " + Department_info.TableName +
 					" where dep_name=?", "测试添加部门init-hll");
-			assertThat("检查 Department_info 表数据，表 Department_info 数据新增成功", number.getAsLong(), is(1L));
+			assertThat("检查 Department_info 表数据，表 Department_info 数据新增成功",
+					number.getAsLong(), is(1L));
 		}
 		//2.错误数据访问
 		//2-1.部门名称重复
@@ -217,7 +219,8 @@ public class DepartmentActionTest extends WebBaseTestCase {
 			//1-1-1.检查 Department_info 部门是否新增成功
 			OptionalLong number = SqlOperator.queryNumber(db, "select count(*) from " + Department_info.TableName +
 					" where dep_id=?", -1000000001L);
-			assertThat("检查 Department_info 表数据，表 Department_info 数据删除成功", number.getAsLong(), is(0L));
+			assertThat("检查 Department_info 表数据，表 Department_info 数据删除成功",
+					number.getAsLong(), is(0L));
 		}
 		//2.错误数据访问
 		//2-1.待删除的数据源id不存在
@@ -251,8 +254,8 @@ public class DepartmentActionTest extends WebBaseTestCase {
 					" where dep_id=?", -1000000002L);
 			assertThat("检查 Sys_para 表数据，表 Sys_para 数据修改成功", number.getAsLong(), is(1L));
 			//1-1-2.检查数据更新是否正确
-			Result rs = SqlOperator.queryResult(db, "select * from " + Department_info.TableName + " where dep_id=?",
-					-1000000002L);
+			Result rs = SqlOperator.queryResult(db, "select * from " + Department_info.TableName +
+					" where dep_id=?", -1000000002L);
 			assertThat(rs.getLong(0, "dep_id"), is(-1000000002L));
 			assertThat(rs.getString(0, "dep_name"), is("修改+测试修改部门init-hll"));
 		}
