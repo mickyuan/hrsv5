@@ -34,8 +34,9 @@ public class WebSqlQueryAction extends BaseAction {
 	public Result getCollectionTaskInfo() {
 		//数据权限验证: 根据登录用户所在部门进行数据验证
 		//1.获取当前用户所在部门的所有数据源信息
-		Result dataSourceRs = Dbo.queryResult("SELECT ds.SOURCE_ID, ds.DATASOURCE_NAME from source_relation_dep srd" +
-				" JOIN data_source ds on srd.SOURCE_ID = ds.SOURCE_ID where srd.dep_id = ?", getUser().getDepId());
+		Result dataSourceRs = Dbo.queryResult("SELECT ds.SOURCE_ID, ds.DATASOURCE_NAME from" +
+				" source_relation_dep srd JOIN data_source ds on srd.SOURCE_ID = ds.SOURCE_ID" +
+				" where srd.dep_id = ?", getUser().getDepId());
 		//2.初始化采集任务信息
 		Result databaseCollectionTaskRs = new Result();
 		Result dbFileCollectionTaskRs = new Result();

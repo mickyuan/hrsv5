@@ -654,18 +654,19 @@ public class DataSourceActionTest extends WebBaseTestCase {
             long num2 = SqlOperator.queryNumber(db, "select count(1) from data_source where source_id=?",
                     SourceId2).orElseThrow(() -> new RuntimeException("count fail!"));
             assertThat("此条数据删除后，记录数应该为0", num2, is(0L));
-            long num3 = SqlOperator.queryNumber(db, "select count(1) from data_source where datasource_number=?",
-                    "init").orElseThrow(() -> new RuntimeException("count fail!"));
+            long num3 = SqlOperator.queryNumber(db, "select count(1) from data_source where " +
+                    "datasource_number=?", "init").orElseThrow(() ->
+                    new RuntimeException("count fail!"));
             assertThat("此条数据删除后，记录数应该为0", num3, is(0L));
             // 2.测试完成后删除source_relation_dep表测试数据
             SqlOperator.execute(db, "delete from source_relation_dep where dep_id=?", DepId1);
             SqlOperator.execute(db, "delete from source_relation_dep where dep_id=?", DepId2);
             // 判断source_relation_dep数据是否被删除
-            long srdNum = SqlOperator.queryNumber(db, "select count(1) from source_relation_dep where dep_id=?",
-                    DepId1).orElseThrow(() -> new RuntimeException("count fail!"));
+            long srdNum = SqlOperator.queryNumber(db, "select count(1) from source_relation_dep where " +
+                    " dep_id=?", DepId1).orElseThrow(() -> new RuntimeException("count fail!"));
             assertThat("此条数据删除后，记录数应该为0", srdNum, is(0L));
-            long srdNum2 = SqlOperator.queryNumber(db, "select count(1) from source_relation_dep where dep_id=?",
-                    DepId2).orElseThrow(() -> new RuntimeException("count fail!"));
+            long srdNum2 = SqlOperator.queryNumber(db, "select count(1) from source_relation_dep where" +
+                    " dep_id=?", DepId2).orElseThrow(() -> new RuntimeException("count fail!"));
             assertThat("此条数据删除后，记录数应该为0", srdNum2, is(0L));
 
             // 3.测试完成后删除agent_info表数据库agent测试数据
@@ -700,14 +701,16 @@ public class DataSourceActionTest extends WebBaseTestCase {
             SqlOperator.execute(db, "delete from department_info where dep_name=?", "测试第1部门");
             SqlOperator.execute(db, "delete from department_info where dep_name=?", "测试第2部门");
             // 判断department_info表数据是否被删除
-            long diNum = SqlOperator.queryNumber(db, "select count(1) from department_info where dep_id=?",
-                    DepId1).orElseThrow(() -> new RuntimeException("count fail!"));
+            long diNum = SqlOperator.queryNumber(db, "select count(1) from department_info where " +
+                    " dep_id=?", DepId1).orElseThrow(() -> new RuntimeException("count fail!"));
             long diNum2 = SqlOperator.queryNumber(db, "select count(1) from department_info "
                     + " where dep_id=?", DepId2).orElseThrow(() -> new RuntimeException("count fail!"));
             long diNum3 = SqlOperator.queryNumber(db, "select count(1) from department_info "
-                    + " where dep_name=?", "测试第1部门").orElseThrow(() -> new RuntimeException("count fail!"));
+                    + " where dep_name=?", "测试第1部门").orElseThrow(() ->
+                    new RuntimeException("count fail!"));
             long diNum4 = SqlOperator.queryNumber(db, "select count(1) from department_info "
-                    + " where dep_name=?", "测试第2部门").orElseThrow(() -> new RuntimeException("count fail!"));
+                    + " where dep_name=?", "测试第2部门").orElseThrow(() ->
+                    new RuntimeException("count fail!"));
             assertThat("此条数据删除后，记录数应该为0", diNum, is(0L));
             assertThat("此条数据删除后，记录数应该为0", diNum2, is(0L));
             assertThat("此条数据删除后，记录数应该为0", diNum3, is(0L));
@@ -723,10 +726,10 @@ public class DataSourceActionTest extends WebBaseTestCase {
             SqlOperator.execute(db, "delete from agent_down_info where down_id=?", DownId);
             SqlOperator.execute(db, "delete from agent_down_info where user_id=?", UserId);
             // 判断agent_down_info表数据是否被删除
-            long adiNum = SqlOperator.queryNumber(db, "select count(1) from agent_down_info where down_id=?",
-                    DownId).orElseThrow(() -> new RuntimeException("count fail!"));
-            long adiNum2 = SqlOperator.queryNumber(db, "select count(1) from agent_down_info where user_id=?",
-                    DownId).orElseThrow(() -> new RuntimeException("count fail!"));
+            long adiNum = SqlOperator.queryNumber(db, "select count(1) from agent_down_info where" +
+                    " down_id=?", DownId).orElseThrow(() -> new RuntimeException("count fail!"));
+            long adiNum2 = SqlOperator.queryNumber(db, "select count(1) from agent_down_info where" +
+                    " user_id=?", DownId).orElseThrow(() -> new RuntimeException("count fail!"));
             assertThat("此条数据删除后，记录数应该为0", adiNum, is(0L));
             assertThat("此条数据删除后，记录数应该为0", adiNum2, is(0L));
             // 7.测试完成后删除database_set表测试数据
@@ -743,10 +746,10 @@ public class DataSourceActionTest extends WebBaseTestCase {
             SqlOperator.execute(db, "delete from collect_job_classify where classify_id=?", ClassifyId);
             SqlOperator.execute(db, "delete from collect_job_classify where agent_id=?", DBAgentId);
             // 判断collect_job_classify表数据是否被删除
-            long cjcNum = SqlOperator.queryNumber(db, "select count(1) from collect_job_classify where " +
-                    "classify_id=?", ClassifyId).orElseThrow(() -> new RuntimeException("count fail!"));
-            long cjcNum2 = SqlOperator.queryNumber(db, "select count(1) from collect_job_classify where " +
-                    "agent_id=?", DBAgentId).orElseThrow(() -> new RuntimeException("count fail!"));
+            long cjcNum = SqlOperator.queryNumber(db, "select count(1) from collect_job_classify where "
+                    + "classify_id=?", ClassifyId).orElseThrow(() -> new RuntimeException("count fail!"));
+            long cjcNum2 = SqlOperator.queryNumber(db, "select count(1) from collect_job_classify where "
+                    + "agent_id=?", DBAgentId).orElseThrow(() -> new RuntimeException("count fail!"));
             assertThat("此条数据删除后，记录数应该为0", cjcNum, is(0L));
             assertThat("此条数据删除后，记录数应该为0", cjcNum2, is(0L));
             // 9.测试完成后删除ftp_collect表测试数据
@@ -760,11 +763,13 @@ public class DataSourceActionTest extends WebBaseTestCase {
             assertThat("此条数据删除后，记录数应该为0", fcNum, is(0L));
             assertThat("此条数据删除后，记录数应该为0", fcNum2, is(0L));
             // 10.测试完成后删除ftp_transfered表测试数据
-            SqlOperator.execute(db, "delete from ftp_transfered where ftp_transfered_id=?", FtpTransferedId);
+            SqlOperator.execute(db, "delete from ftp_transfered where ftp_transfered_id=?",
+                    FtpTransferedId);
             SqlOperator.execute(db, "delete from ftp_transfered where ftp_id=?", FtpId);
             // 判断ftp_transfered表数据是否被删除
             long ftrNum = SqlOperator.queryNumber(db, "select count(1) from ftp_transfered where " +
-                    "ftp_transfered_id=?", FtpTransferedId).orElseThrow(() -> new RuntimeException("count fail!"));
+                    "ftp_transfered_id=?", FtpTransferedId).orElseThrow(() ->
+                    new RuntimeException("count fail!"));
             assertThat("此条数据删除后，记录数应该为0", ftrNum, is(0L));
             long ftrNum2 = SqlOperator.queryNumber(db, "select count(1) from ftp_transfered where " +
                     "ftp_id=?", FtpId).orElseThrow(() -> new RuntimeException("count fail!"));
@@ -793,11 +798,11 @@ public class DataSourceActionTest extends WebBaseTestCase {
             SqlOperator.execute(db, "delete from object_collect_task where ocs_id=?", OcsId);
             SqlOperator.execute(db, "delete from object_collect_task where odc_id=?", OdcId);
             // 判断object_collect_task表数据是否被删除
-            long octNum = SqlOperator.queryNumber(db, "select count(1) from object_collect_task where " +
-                    "ocs_id=?", OcsId).orElseThrow(() -> new RuntimeException("count fail!"));
+            long octNum = SqlOperator.queryNumber(db, "select count(1) from object_collect_task where "
+                    + "ocs_id=?", OcsId).orElseThrow(() -> new RuntimeException("count fail!"));
             assertThat("此条数据删除后，记录数应该为0", octNum, is(0L));
-            long octNum2 = SqlOperator.queryNumber(db, "select count(1) from object_collect_task where " +
-                    "odc_id=?", OdcId).orElseThrow(() -> new RuntimeException("count fail!"));
+            long octNum2 = SqlOperator.queryNumber(db, "select count(1) from object_collect_task where "
+                    + "odc_id=?", OdcId).orElseThrow(() -> new RuntimeException("count fail!"));
             assertThat("此条数据删除后，记录数应该为0", octNum2, is(0L));
             // 14.测试完成后删除object_storage表测试数据
             SqlOperator.execute(db, "delete from object_storage where obj_stid=?", ObjStid);
@@ -813,11 +818,11 @@ public class DataSourceActionTest extends WebBaseTestCase {
             SqlOperator.execute(db, "delete from object_collect_struct where struct_id=?", StructId);
             SqlOperator.execute(db, "delete from object_collect_struct where ocs_id=?", OcsId);
             // 判断object_collect_struct表数据是否被删除
-            long ocsNum = SqlOperator.queryNumber(db, "select count(1) from object_collect_struct where " +
-                    "struct_id=?", StructId).orElseThrow(() -> new RuntimeException("count fail!"));
+            long ocsNum = SqlOperator.queryNumber(db, "select count(1) from object_collect_struct where"
+                    + " struct_id=?", StructId).orElseThrow(() -> new RuntimeException("count fail!"));
             assertThat("此条数据删除后，记录数应该为0", ocsNum, is(0L));
-            long ocsNum2 = SqlOperator.queryNumber(db, "select count(1) from object_collect_struct where " +
-                    "ocs_id=?", OcsId).orElseThrow(() -> new RuntimeException("count fail!"));
+            long ocsNum2 = SqlOperator.queryNumber(db, "select count(1) from object_collect_struct where"
+                    + " ocs_id=?", OcsId).orElseThrow(() -> new RuntimeException("count fail!"));
             assertThat("此条数据删除后，记录数应该为0", ocsNum2, is(0L));
             // 16.判断file_collect_set表数据是否被删除
             SqlOperator.execute(db, "delete from file_collect_set where fcs_id=?", FcsId);
@@ -968,7 +973,8 @@ public class DataSourceActionTest extends WebBaseTestCase {
             logicStep = "1.正确的数据访问1，数据管理列表，数据全有效" +
                     "2.正确的数据访问2，数据管理列表，当前页currPage为空" +
                     "3.正确的数据访问3，数据管理列表，每页显示条数pageSize为空" +
-                    "4.错误的数据访问1，数据管理列表，当前页currPage不合理，currPage*pageSize超过总数(currPage为负数结果一样)" +
+                    "4.错误的数据访问1，数据管理列表，当前页currPage不合理，currPage*pageSize超过总数" +
+                    "(currPage为负数结果一样)" +
                     "5.错误的数据访问2，数据管理列表，每页显示条数pageSize不合法")
     @Test
     public void getDataAuditInfoForPage() {
@@ -1014,7 +1020,8 @@ public class DataSourceActionTest extends WebBaseTestCase {
             logicStep = "1.正确的数据访问1，数据权限管理，数据全有效" +
                     "2.正确的数据访问2，数据权限管理，当前页currPage为空" +
                     "3.正确的数据访问3，数据权限管理，每页显示条数pageSize为空" +
-                    "4.错误的数据访问1，数据权限管理，当前页currPage不合理，currPage*pageSize超过总数(currPage为负数结果一样)" +
+                    "4.错误的数据访问1，数据权限管理，当前页currPage不合理，currPage*pageSize超过总数" +
+                    "(currPage为负数结果一样)" +
                     "5.错误的数据访问2，数据权限管理，每页显示条数pageSize不合法")
     @Test
     public void searchSourceRelationDepForPage() {
@@ -1047,7 +1054,6 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .post(getActionUrl("searchSourceRelationDepForPage")).getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
         assertThat(ar.get().isSuccess(), is(true));
-        assertThat(ar.get().getDataForResult().getRowCount(), is(0));
         // 5.错误的数据访问2，数据权限管理，每页显示条数pageSize不合法
         bodyString = new HttpClient()
                 .addData("currPage", 2)
@@ -1073,7 +1079,8 @@ public class DataSourceActionTest extends WebBaseTestCase {
         // 验证source_relation_dep表数据是否更新成功
         try (DatabaseWrapper db = new DatabaseWrapper()) {
             Optional<Source_relation_dep> source_relation_dep = SqlOperator.queryOneObject(db,
-                    Source_relation_dep.class, "select * from source_relation_dep where source_id=?", SourceId);
+                    Source_relation_dep.class, "select * from source_relation_dep where source_id=?",
+                    SourceId);
             assertThat("更新source_relation_dep数据成功", source_relation_dep.get().
                     getSource_id(), is(SourceId));
             assertThat("更新source_relation_dep数据成功", source_relation_dep.get().getDep_id(),
@@ -1111,8 +1118,8 @@ public class DataSourceActionTest extends WebBaseTestCase {
         Optional<ActionResult> ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
         assertThat(ar.get().isSuccess(), is(true));
         try (DatabaseWrapper db = new DatabaseWrapper()) {
-            Optional<Data_auth> dataAuth = SqlOperator.queryOneObject(db, Data_auth.class, "select * from "
-                    + Data_auth.TableName + " where da_id=? and user_id=?", DaId, UserId);
+            Optional<Data_auth> dataAuth = SqlOperator.queryOneObject(db, Data_auth.class, "select * " +
+                    " from " + Data_auth.TableName + " where da_id=? and user_id=?", DaId, UserId);
             assertThat(dataAuth.get().getAuth_type(), is(AuthType.YiCi.getCode()));
             assertThat(dataAuth.get().getDa_id(), is(DaId));
             assertThat(dataAuth.get().getUser_id(), is(UserId));
@@ -1151,8 +1158,9 @@ public class DataSourceActionTest extends WebBaseTestCase {
                     .post(getActionUrl("deleteAudit")).getBodyString();
             Optional<ActionResult> ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
             assertThat(ar.get().isSuccess(), is(true));
-            List<Map<String, Object>> dataAuthList = (List<Map<String, Object>>) ar.get().getData();
-            List<Map<String, Object>> dataAuditInfoList = (List<Map<String, Object>>) ar.get().getData();
+            Map<String, Object> dataAuthMap = ar.get().getDataForMap();
+            List<Map<String, Object>> dataAuditInfoList = (List<Map<String, Object>>)
+                    dataAuthMap.get("dataAuditList");
             for (int i = 0; i < dataAuditInfoList.size(); i++) {
                 assertThat(dataAuditInfoList.get(i).get("da_id").toString(), is(String.valueOf(DaId
                         + dataAuditInfoList.size() - i)));
@@ -1192,7 +1200,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .addData("source_remark", "测试")
                 .addData("datasource_name", "dsName2")
                 .addData("datasource_number", "cs01")
-                .addData("dep_id", DepId1+","+DepId2)
+                .addData("dep_id", DepId1 + "," + DepId2)
                 .post(getActionUrl("saveDataSource")).getBodyString();
         Optional<ActionResult> ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
         assertThat(ar.get().isSuccess(), is(true));
@@ -1314,13 +1322,16 @@ public class DataSourceActionTest extends WebBaseTestCase {
             Optional<Data_source> data_source = SqlOperator.queryOneObject(db, Data_source.class,
                     "select * from data_source where source_id=?", SourceId);
             assertThat("更新data_source数据成功", data_source.get().getSource_id(), is(SourceId));
-            assertThat("更新data_source数据成功", data_source.get().getDatasource_name(), is("updateName"));
-            assertThat("更新data_source数据成功", data_source.get().getDatasource_number(), is("up01"));
+            assertThat("更新data_source数据成功", data_source.get().getDatasource_name(),
+                    is("updateName"));
+            assertThat("更新data_source数据成功", data_source.get().getDatasource_number(),
+                    is("up01"));
             assertThat("更新data_source数据成功", data_source.get().getSource_remark(),
                     is("测试update"));
             // 判断source_relation_dep表数据是否更新成功
             Optional<Source_relation_dep> source_relation_dep = SqlOperator.queryOneObject(db,
-                    Source_relation_dep.class, "select * from source_relation_dep where source_id=?", SourceId);
+                    Source_relation_dep.class, "select * from source_relation_dep where source_id=?",
+                    SourceId);
             assertThat("更新source_relation_dep数据成功", source_relation_dep.get().
                     getSource_id(), is(SourceId));
             assertThat("更新source_relation_dep数据成功", source_relation_dep.get().getDep_id(),
@@ -1431,7 +1442,8 @@ public class DataSourceActionTest extends WebBaseTestCase {
         assertThat("数据源详细描述0", is(dataResource.get("source_remark")));
         assertThat(DepId1 + "," + DepId2, is(dataResource.get("dep_id").toString()));
         // 验证部门表数据
-        List<Department_info> departmentInfoList = (List<Department_info>) ar.get().getDataForMap().get("departmentInfo");
+        List<Department_info> departmentInfoList = (List<Department_info>) ar.get().getDataForMap()
+                .get("departmentInfo");
         // 部门表初始化了两条数据
         assertThat(dataResource.isEmpty(), is(false));
         // 2.正确的数据访问2，查询数据源信息,正常返回数据，source_id为空
@@ -1556,8 +1568,9 @@ public class DataSourceActionTest extends WebBaseTestCase {
         assertThat(ar.get().isSuccess(), is(true));
         // 验证导入数据是否成功，查询的数据会比初始化的数据多一倍，因为导入时主键会发生变化，新增主键
         try (DatabaseWrapper db = new DatabaseWrapper()) {
-            long num = SqlOperator.queryNumber(db, "select count(1) from data_source where datasource_name=?",
-                    "dsName0").orElseThrow(() -> new RuntimeException("count fail!"));
+            long num = SqlOperator.queryNumber(db, "select count(1) from data_source where" +
+                    " datasource_name=?", "dsName0").orElseThrow(() ->
+                    new RuntimeException("count fail!"));
             assertThat("导入data_source表一条数据", num, is(2L));
             num = SqlOperator.queryNumber(db, "select count(1) from agent_info where source_id=?",
                     SourceId).orElseThrow(() -> new RuntimeException("count fail!"));

@@ -1,12 +1,10 @@
 package hrds.b.biz.websqlquery;
 
-import com.ctc.wstx.util.DataUtil;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
-import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import hrds.commons.codes.AgentType;
@@ -394,17 +392,19 @@ public class WebSqlQueryActionTest extends WebBaseTestCase {
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
 		assertThat(ar.isSuccess(), is(true));
 		for (int i = 0; i < ar.getDataForResult().getRowCount(); i++) {
-			assertThat(ar.getDataForResult().getString(i, "datasource_name"), is("测试数据源init-hll"));
+			assertThat(ar.getDataForResult().getString(i, "datasource_name"),
+					is("测试数据源init-hll"));
 			assertThat(ar.getDataForResult().getLong(i, "source_id"), is(SOURCE_ID));
 			List<Map<String, Object>> databaseCollectionTaskRs =
 					(List<Map<String, Object>>) ar.getDataForResult().getObject(i,
 							"databaseCollectionTaskRs");
 			for (int i1 = 0; i1 < databaseCollectionTaskRs.size(); i1++) {
-				assertThat(databaseCollectionTaskRs.get(i1).get("task_name"), is("数据库采集任务测试init-hll"));
+				assertThat(databaseCollectionTaskRs.get(i1).get("task_name"),
+						is("数据库采集任务测试init-hll"));
 				assertThat(databaseCollectionTaskRs.get(i1).get("database_id"), is(5000000001L));
 			}
-			List<Map<String, Object>> dbFileCollectionTaskRs = (List<Map<String, Object>>) ar.getDataForResult().getObject(i,
-					"dbFileCollectionTaskRs");
+			List<Map<String, Object>> dbFileCollectionTaskRs = (List<Map<String, Object>>) ar.getDataForResult()
+					.getObject(i, "dbFileCollectionTaskRs");
 			for (int i1 = 0; i1 < dbFileCollectionTaskRs.size(); i1++) {
 				assertThat(dbFileCollectionTaskRs.get(i1).get("task_name"), is("DB文件采集任务测试init-hll"));
 				assertThat(dbFileCollectionTaskRs.get(i1).get("database_id"), is(5000000002L));
@@ -453,7 +453,8 @@ public class WebSqlQueryActionTest extends WebBaseTestCase {
 			assertThat(ar.getDataForEntityList(Source_file_attribute.class).get(i).getFile_id(), is(FILE_ID));
 			assertThat(ar.getDataForEntityList(Source_file_attribute.class).get(i).getAgent_id(), is(AGENT_ID));
 			assertThat(ar.getDataForEntityList(Source_file_attribute.class).get(i).getSource_id(), is(SOURCE_ID));
-			assertThat(ar.getDataForEntityList(Source_file_attribute.class).get(i).getCollect_set_id(), is(DATABASE_ID + 1));
+			assertThat(ar.getDataForEntityList(Source_file_attribute.class).get(i).getCollect_set_id(),
+					is(DATABASE_ID + 1));
 		}
 
 	}

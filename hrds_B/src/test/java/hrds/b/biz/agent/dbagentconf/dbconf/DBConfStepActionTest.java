@@ -129,6 +129,60 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 	}
 
 	/**
+	 * 测试获取所有数据库的名称和编码信息
+	 *
+	 * 正确数据访问1：直接访问方法，应该拿到13个DatabaseType
+	 * 错误访问场景不足的原因：该方法调用不需要参数，不与数据库交互
+	 *
+	 * @Param: 无
+	 * @return: 无
+	 *
+	 * */
+	@Test
+	public void getDatabaseType(){
+		//正确数据访问1：直接访问方法，应该拿到13个DatabaseType
+		String rightString = new HttpClient()
+				.post(getActionUrl("getDatabaseType")).getBodyString();
+
+		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResult.isSuccess(), is(true));
+
+		List<DatabaseType> rightData = rightResult.getDataForEntityList(DatabaseType.class);
+		for(DatabaseType type : rightData){
+			if(type.getCode().equalsIgnoreCase("01")){
+				assertThat("获取MYSQL信息成功", type.getValue(), is("MYSQL"));
+			}else if(type.getCode().equalsIgnoreCase("02")){
+				assertThat("获取Oracle9i信息成功", type.getValue(), is("Oracle9i及以下"));
+			}else if(type.getCode().equalsIgnoreCase("03")){
+				assertThat("获取Oracle10g信息成功", type.getValue(), is("Oracle10g及以上"));
+			}else if(type.getCode().equalsIgnoreCase("04")){
+				assertThat("获取SQLSERVER2000信息成功", type.getValue(), is("SQLSERVER2000"));
+			}else if(type.getCode().equalsIgnoreCase("05")){
+				assertThat("获取SQLSERVER2005信息成功", type.getValue(), is("SQLSERVER2005"));
+			}else if(type.getCode().equalsIgnoreCase("06")){
+				assertThat("获取DB2信息成功", type.getValue(), is("DB2"));
+			}else if(type.getCode().equalsIgnoreCase("07")){
+				assertThat("获取SybaseASE12.5及以上信息成功", type.getValue(), is("SybaseASE12.5及以上"));
+			}else if(type.getCode().equalsIgnoreCase("08")){
+				assertThat("获取Informatic信息成功", type.getValue(), is("Informatic"));
+			}else if(type.getCode().equalsIgnoreCase("09")){
+				assertThat("获取H2信息成功", type.getValue(), is("H2"));
+			}else if(type.getCode().equalsIgnoreCase("10")){
+				assertThat("获取ApacheDerby信息成功", type.getValue(), is("ApacheDerby"));
+			}else if(type.getCode().equalsIgnoreCase("11")){
+				assertThat("获取Postgresql信息成功", type.getValue(), is("Postgresql"));
+			}else if(type.getCode().equalsIgnoreCase("12")){
+				assertThat("获取GBase信息成功", type.getValue(), is("GBase"));
+			}else if(type.getCode().equalsIgnoreCase("13")){
+				assertThat("获取TeraData信息成功", type.getValue(), is("TeraData"));
+			}else{
+				assertThat("访问该方法，获取到了不期望的出现的值：" + type.getValue(), true, is(false));
+			}
+		}
+	}
+
+	/**
 	 * 测试根据数据库类型和端口获得数据库连接url等信息
 	 *
 	 * 正确数据访问1：构建mysql数据库访问场景，断言得到的数据是否正确

@@ -10,6 +10,7 @@ import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DefaultPageImpl;
+import fd.ng.db.jdbc.Page;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
@@ -54,19 +55,25 @@ public class DataSourceAction extends BaseAction {
     public Map<String, Object> searchDataSourceInfo(int currPage, int pageSize) {
         // 1.数据可访问权限处理方式，以下sql通过user_id关联进行权限检查
         // 2.查询数据源及Agent数
-        List<Map<String, Object>> dsAiList = Dbo.queryList("select ds.source_id,ds.datasource_name," +
-                "count(ai.Agent_id) sumAgent from " + Data_source.TableName + " ds left join "
-                + Agent_info.TableName + " ai on ds.source_id=ai.source_id and ds.create_user_id=ai.user_id " +
-                " where ai.user_id=? GROUP BY ds.source_id,ds.datasource_name", getUserId());
+        Result dsResult = Dbo.queryResult("SELECT * FROM " + Data_source.TableName + " WHERE " +
+                " create_user_id=?", getUserId());
+        if (!dsResult.isEmpty()) {
+            for (int i = 0; i < dsResult.getRowCount(); i++) {
+                OptionalLong number = Dbo.queryNumber("select count(*) from " + Agent_info.TableName
+                                + " where source_id=? and user_id=?",
+                        dsResult.getLong(i, "source_id"), getUserId());
+                dsResult.setObject(i, "sumAgent", number.getAsLong());
+            }
+        }
         // 3.数据权限管理，分页查询数据源及部门关系信息
-        Result dataSourceRelationDep = searchSourceRelationDepForPage(currPage, pageSize);
+        Map<String, Object> sourceRelationDep = searchSourceRelationDepForPage(currPage, pageSize);
         // 4.数据管理列表，查询数据申请审批信息
-        List<Map<String, Object>> dataAuditList = getDataAuditInfoForPage(currPage, pageSize);
+        Map<String, Object> dataAudit = getDataAuditInfoForPage(currPage, pageSize);
         // 5.创建存放数据源，部门、agent,申请审批,业务用户和采集用户,部门与数据源关系表信息的集合并将数据进行封装
         Map<String, Object> dataSourceInfoMap = new HashMap<>();
-        dataSourceInfoMap.put("dataSourceRelationDep", dataSourceRelationDep.toList());
-        dataSourceInfoMap.put("dataAudit", dataAuditList);
-        dataSourceInfoMap.put("dataSourceAndAgentCount", dsAiList);
+        dataSourceInfoMap.put("dataSourceRelationDep", sourceRelationDep);
+        dataSourceInfoMap.put("dataAudit", dataAudit);
+        dataSourceInfoMap.put("dataSourceAndAgentCount", dsResult.toList());
         // 6.返回放数据源以及agent数,数据管理列表申请审批,部门与数据源关系表信息的集合
         return dataSourceInfoMap;
     }
@@ -78,21 +85,28 @@ public class DataSourceAction extends BaseAction {
     @Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数", valueIfNull = "1")
     @Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", valueIfNull = "5")
     @Return(desc = "存放数据申请审批信息的集合", range = "无限制")
-    public List<Map<String, Object>> getDataAuditInfoForPage(int currPage, int pageSize) {
+    public Map<String, Object> getDataAuditInfoForPage(int currPage, int pageSize) {
         // 1.数据可访问权限处理方式，通过user_id进行权限控制
         // 2.获取所有的source_id
         List<Long> sourceIdList = Dbo.queryOneColumnList("select source_id from " + Data_source.TableName
                 + " where create_user_id=?", getUserId());
-        // 3.查询数据源申请审批信息集合并返回
+        // 3.查询数据源申请审批信息集合
         SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
-        asmSql.addSql("select da.DA_ID,da.APPLY_DATE,da.APPLY_TIME,da.APPLY_TYPE,da.AUTH_TYPE,da.AUDIT_DATE," +
-                "da.AUDIT_TIME,da.AUDIT_USERID,da.AUDIT_NAME,da.FILE_ID,da.USER_ID,da.DEP_ID,sfa.*,su.user_name" +
-                " from " + Data_auth.TableName + " da join " + Sys_user.TableName + " su on da.user_id=su.user_id " +
-                " join " + Source_file_attribute.TableName + " sfa on da.file_id= sfa.file_id  where " +
-                "su.create_id in (select user_id from sys_user where user_type=? or user_id = ?) ")
-                .addParam(UserType.XiTongGuanLiYuan.getCode()).addParam(getUserId())
-                .addORParam("sfa.source_id", sourceIdList.toArray()).addSql(" ORDER BY  da_id desc");
-        return Dbo.queryPagedList(new DefaultPageImpl(currPage, pageSize), asmSql.sql(), asmSql.params());
+        asmSql.addSql("select da.DA_ID,da.APPLY_DATE,da.APPLY_TIME,da.APPLY_TYPE,da.AUTH_TYPE,da.AUDIT_DATE,"
+                + "da.AUDIT_TIME,da.AUDIT_USERID,da.AUDIT_NAME,da.FILE_ID,da.USER_ID,da.DEP_ID,sfa.*," +
+                "su.user_name from " + Data_auth.TableName + " da join " + Sys_user.TableName +
+                " su on da.user_id=su.user_id join " + Source_file_attribute.TableName + " sfa " +
+                " on da.file_id= sfa.file_id  where su.create_id in (select user_id from sys_user where" +
+                " user_type=? or user_id = ?) ").addParam(UserType.XiTongGuanLiYuan.getCode())
+                .addParam(getUserId()).addORParam("sfa.source_id", sourceIdList.toArray())
+                .addSql(" ORDER BY  da_id desc");
+        Page page = new DefaultPageImpl(currPage, pageSize);
+        List<Map<String, Object>> dataAuditList = Dbo.queryPagedList(page, asmSql.sql(), asmSql.params());
+        // 4.封装分页查询数据源申请审批信息集合并返回
+        Map<String, Object> dataAuditMap = new HashMap<>();
+        dataAuditMap.put("dataAuditList", dataAuditList);
+        dataAuditMap.put("totalSize", page.getTotalSize());
+        return dataAuditMap;
     }
 
     @Method(desc = "数据权限管理，分页查询数据源及部门关系信息",
@@ -106,17 +120,18 @@ public class DataSourceAction extends BaseAction {
                     "8.循环部门获取部门名称" +
                     "9.将各个数据源对应的部门名称加入list" +
                     "10.封装部门名称到结果集" +
-                    "11.返回结果集")
+                    "11.封装分页查询数据源与部门关系信息以及总数" +
+                    "12.返回结果集")
     @Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数", valueIfNull = "1")
     @Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", valueIfNull = "5")
     @Return(desc = "返回分页查询数据源及部门关系", range = "无限制")
-    public Result searchSourceRelationDepForPage(int currPage, int pageSize) {
+    public Map<String, Object> searchSourceRelationDepForPage(int currPage, int pageSize) {
 
         // 1.数据可访问权限处理方式，以下sql通过user_id关联进行权限检查
         // 2.分页查询数据源及部门关系
-        Result dsResult = Dbo.queryPagedResult(new DefaultPageImpl(currPage, pageSize), " SELECT * from " +
-                        Data_source.TableName + " where create_user_id=? order by create_date desc,create_time desc",
-                getUserId());
+        Page page = new DefaultPageImpl(currPage, pageSize);
+        Result dsResult = Dbo.queryPagedResult(page, "SELECT * from " + Data_source.TableName +
+                " where create_user_id=? order by create_date desc,create_time desc", getUserId());
         // 3.判断数据源是否为空
         if (!dsResult.isEmpty()) {
             // 4.循环数据源
@@ -124,9 +139,12 @@ public class DataSourceAction extends BaseAction {
                 // 5.创建存放数据源对应部门集合
                 List<String> depList = new ArrayList<>();
                 // 6.查询获取数据源对应部门结果集
-                Result depResult = Dbo.queryResult(" select di.* from " + Department_info.TableName +
-                        " di left join " + Source_relation_dep.TableName + " srd on di.dep_id = srd.dep_id" +
-                        " where srd.source_id=?", dsResult.getLong(i, "source_id"));
+                Result depResult = Dbo.queryResult("select di.* from " + Department_info.TableName +
+                                " di left join " + Source_relation_dep.TableName + " srd " +
+                                " on di.dep_id = srd.dep_id left join " + Data_source.TableName +
+                                " ds on ds.source_id=srd.source_id where srd.source_id=? and " +
+                                " ds.create_user_id=?", dsResult.getLong(i, "source_id"),
+                        getUserId());
                 // 7.判断数据源对应的部门结果集是否为空
                 if (!depResult.isEmpty()) {
                     // 8.循环部门获取部门名称
@@ -147,8 +165,12 @@ public class DataSourceAction extends BaseAction {
                 }
             }
         }
-        // 11.返回结果集
-        return dsResult;
+        // 11.封装分页查询数据源与部门关系信息以及总数
+        Map<String, Object> sourceRelationDep = new HashMap<>();
+        sourceRelationDep.put("sourceRelationDep", dsResult.toList());
+        sourceRelationDep.put("totalSize", page.getTotalSize());
+        // 12.返回结果集
+        return sourceRelationDep;
     }
 
     @Method(desc = "数据权限管理，更新数据源关系部门信息",
@@ -183,16 +205,18 @@ public class DataSourceAction extends BaseAction {
                     "3.根据数据权限设置ID查询数据申请审批信息，确认要审批的信息一定存在" +
                     "4.根据数据权限设置ID以及权限类型进行审批" +
                     "5.查询审批后的最新数据申请审批信息并返回")
-    @Param(name = "da_id", desc = "数据权限设置ID，表data_auth表主键", range = "不为空的十位数字，新增时通过主键生成规则自动生成")
+    @Param(name = "da_id", desc = "数据权限设置ID，表data_auth表主键", range = "不为空的十位数字，" +
+            "新增时通过主键生成规则自动生成")
     @Param(name = "auth_type", desc = "权限类型", range = "使用权限类型代码项(authType)")
     @Return(desc = "存放数据申请审批信息的集合", range = "无限制")
-    public List<Map<String, Object>> dataAudit(long da_id, String auth_type) {
+    public Map<String, Object> dataAudit(long da_id, String auth_type) {
         // 1.数据可访问权限处理方式，根据user_id进行权限控制
         // 2.authType代码项合法性验证，如果不存在该方法直接会抛异常
         AuthType.ofEnumByCode(auth_type);
         // 3.根据数据权限设置ID查询数据申请审批信息，确认要审批的信息一定存在
-        if (Dbo.queryNumber("select count(*) from " + Data_auth.TableName + " where da_id=? and user_id=?",
-                da_id, getUserId()).orElseThrow(() -> new BusinessException("sql查询错误")) == 0) {
+        if (Dbo.queryNumber("select count(*) from " + Data_auth.TableName + " where da_id=? and " +
+                " user_id=?", da_id, getUserId()).orElseThrow(() ->
+                new BusinessException("sql查询错误")) == 0) {
             throw new BusinessException("此申请已取消或不存在！");
         }
         // 4.根据数据权限设置ID以及权限类型进行审批
@@ -213,9 +237,10 @@ public class DataSourceAction extends BaseAction {
             logicStep = "1.数据可访问权限处理方式，根据user_id进行权限控制" +
                     "2.权限回收" +
                     "3.查询审批后的最新数据申请审批信息并返回")
-    @Param(name = "da_id", desc = "数据权限设置ID，表data_auth表主键", range = "不为空的十位数字，新增时通过主键生成规则自动生成")
+    @Param(name = "da_id", desc = "数据权限设置ID，表data_auth表主键",
+            range = "不为空的十位数字，新增时通过主键生成规则自动生成")
     @Return(desc = "存放数据申请审批信息的集合", range = "无限制")
-    public List<Map<String, Object>> deleteAudit(long da_id) {
+    public Map<String, Object> deleteAudit(long da_id) {
         // 1.数据可访问权限处理方式，根据user_id进行权限控制
         // 2.权限回收
         DboExecute.deletesOrThrow("权限回收成功!", "delete from " + Data_auth.TableName +
@@ -230,7 +255,8 @@ public class DataSourceAction extends BaseAction {
                     "3.对data_source初始化一些非页面传值" +
                     "4.保存data_source信息" +
                     "5.保存source_relation_dep表信息")
-    @Param(name = "dataSource", desc = "data_source表实体对象", range = "与data_source表字段规则一致", isBean = true)
+    @Param(name = "dataSource", desc = "data_source表实体对象", range = "与data_source表字段规则一致",
+            isBean = true)
     @Param(name = "dep_id", desc = "存储source_relation_dep表主键ID，可能是一个也可能是多个拼接的字符串",
             range = "不为空以及不为空格")
     public void saveDataSource(Data_source dataSource, String dep_id) {
@@ -261,7 +287,8 @@ public class DataSourceAction extends BaseAction {
                     "5.更新数据源信息" +
                     "6.先删除数据源与部门关系信息,删除几条数据不确定，一个数据源对应多个部门，所以不能用DboExecute" +
                     "7.保存source_relation_dep表信息")
-    @Param(name = "source_id", desc = "data_source表主键，source_relation_dep表外键", range = "10位数字,新增时生成")
+    @Param(name = "source_id", desc = "data_source表主键，source_relation_dep表外键",
+            range = "10位数字,新增时生成")
     @Param(name = "source_remark", desc = "备注，source_relation_dep表外键", range = "无限制")
     @Param(name = "datasource_name", desc = "数据源名称", range = "不为空且不为空格")
     @Param(name = "datasource_number", desc = "数据源编号", range = "不为空且不为空格，长度不超过四位")
@@ -331,7 +358,7 @@ public class DataSourceAction extends BaseAction {
                     "datasource_number=" + datasource_umber);
         }
         // 5.更新前查询数据源编号是否已存在
-        if (Dbo.queryNumber("select count(1) from " + Data_source.TableName + " where datasource_number=? "
+        if (Dbo.queryNumber("select count(1) from " + Data_source.TableName + " where datasource_number=?"
                 + " and create_user_id=?", datasource_umber, getUserId()).orElseThrow(() ->
                 new BusinessException("sql查询错误！")) > 0) {
             // 判断数据源编号是否重复
@@ -372,14 +399,14 @@ public class DataSourceAction extends BaseAction {
                     "2.创建并封装数据源与部门关联信息以及部门信息集合" +
                     "3.判断是新增还是编辑时查询回显数据，如果是新增，只查询部门信息，如果是编辑，还需查询数据源信息" +
                     "3.1关联查询data_source表信息" +
-                    "3.2获取数据源对应部门ID所有值，不需要权限控制" +
+                    "3.2获取数据源对应部门名称所有值，不需要权限控制" +
                     "3.3.封装部门到结果集" +
-                    "3.4将部门ID封装入数据源信息中" +
+                    "3.4将部门名称封装入数据源信息中" +
                     "4.查询部门信息，不需要用户权限控制" +
                     "5.将部门信息封装入Map" +
                     "6.返回封装数据源与部门关联信息以及部门信息集合")
-    @Param(name = "source_id", desc = "data_source表主键ID，source_relation_dep表外键ID", range = "10位数字，新增数据源时生成",
-            nullable = true)
+    @Param(name = "source_id", desc = "data_source表主键ID，source_relation_dep表外键ID",
+            range = "10位数字，新增数据源时生成", nullable = true)
     @Return(desc = "返回关联查询data_source表与source_relation_dep表信息结果以及部门信息",
             range = "部门信息集合：departmentInfo,source_id为空，查询的是部门信息，不为空查询的是数据源以及部门信息")
     public Map<String, Object> searchDataSourceOrDepartment(Long source_id) {
@@ -392,9 +419,9 @@ public class DataSourceAction extends BaseAction {
             // 3.1关联查询data_source表信息
             datasourceMap = Dbo.queryOneObject("select * from " + Data_source.TableName +
                     " where source_id=? and create_user_id=?", source_id, getUserId());
-            // 3.2获取数据源对应部门ID所有值,不需要权限控制
-            List<Long> depIdList = Dbo.queryOneColumnList("select dep_id from " + Source_relation_dep.TableName +
-                    " where source_id=?", source_id);
+            // 3.2获取数据源对应部门名称所有值,不需要权限控制
+            List<Long> depIdList = Dbo.queryOneColumnList("select dep_name from "
+                    + Source_relation_dep.TableName + " where source_id=?", source_id);
             if (!depIdList.isEmpty()) {
                 // 3.3.封装部门到结果集
                 StringBuilder sb = new StringBuilder();
@@ -405,8 +432,8 @@ public class DataSourceAction extends BaseAction {
                         sb.append(depIdList.get(i));
                     }
                 }
-                // 3.4将部门ID封装入数据源信息中
-                datasourceMap.put("dep_id", sb.toString());
+                // 3.4将部门名称封装入数据源信息中
+                datasourceMap.put("dep_name", sb.toString());
             }
         }
         // 4.查询部门信息，不需要用户权限控制
@@ -430,16 +457,18 @@ public class DataSourceAction extends BaseAction {
         // 1.数据可访问权限处理方式，以下SQL关联sourceId与user_id检查
         // 2.先查询该datasource下是否还有agent
         // FIXME: orElse用法有误，逻辑有问题，用orElseThrow  已解决
-        if (Dbo.queryNumber("SELECT count(1) FROM " + Agent_info.TableName + " WHERE source_id=? and user_id=?",
-                source_id, getUserId()).orElseThrow(() -> new BusinessException("sql查询错误！")) > 0) {
+        if (Dbo.queryNumber("SELECT count(1) FROM " + Agent_info.TableName + " WHERE source_id=? and " +
+                " user_id=?", source_id, getUserId()).orElseThrow(() ->
+                new BusinessException("sql查询错误！")) > 0) {
             throw new BusinessException("此数据源下还有agent，不能删除,sourceId=" + source_id);
         }
         // 3.删除data_source表信息
         DboExecute.deletesOrThrow("删除数据源信息表data_source失败，sourceId=" + source_id,
-                "delete from " + Data_source.TableName + " where source_id=? and create_user_id=?", source_id,
-                getUserId());
+                "delete from " + Data_source.TableName + " where source_id=? and create_user_id=?",
+                source_id, getUserId());
         // 4.删除source_relation_dep信息,因为一个数据源可能对应多个部门，所以这里无法使用DboExecute的删除方法
-        int srdNum = Dbo.execute("delete from " + Source_relation_dep.TableName + " where source_id=?", source_id);
+        int srdNum = Dbo.execute("delete from " + Source_relation_dep.TableName + " where source_id=?",
+                source_id);
         if (srdNum < 1) {
             // 如果数据源存在，那么部门一定存在，所以这里不需要判断等于0的情况
             throw new BusinessException("删除该数据源下source_relation_dep表数据错误，sourceId="
@@ -455,11 +484,9 @@ public class DataSourceAction extends BaseAction {
         // 1.数据可访问权限处理方式，此方法不需要权限验证，没有用户访问限制
         // 2.查询数据采集用户信息并返回查询结果
         // FIXME: 为什么用union all以及为什么用like,注释说明      已解决
-        //我们需要的是当前用户类型是数据采集（前半句sql查询结果）以及数据类型组包含数据采集的用户信息（后半句sql查询结果），所以用union,
-        // 用户类型组中数据可能是多个用户类型组成的也可能是单个的，所以用like,我们这里不需要重复数据所以不用union all
-        return Dbo.queryList(Sys_user.class, "select * from " + Sys_user.TableName + " where user_type=? " +
-                        " and dep_id=? union select * from " + Sys_user.TableName + " where " +
-                        " usertype_group like ?", UserType.CaiJiYongHu.getCode(), getUser().getDepId(),
+        // 一个用户会有多种用户功能类型，默认用户功能只会有一种，我们需要的是用用户功能类型中包含采集用户的所有用户，所以用like
+        return Dbo.queryList(Sys_user.class, "select * from " + Sys_user.TableName + " where dep_id=?"
+                        + " and usertype_group like ? ", getUser().getDepId(),
                 "%" + UserType.CaiJiYongHu.getCode() + "%");
     }
 
@@ -499,7 +526,8 @@ public class DataSourceAction extends BaseAction {
             // 5.通过文件名称获取文件
             File uploadedFile = FileUploadUtil.getUploadedFile(file);
             // 6.使用base64解码
-            String strTemp = new String(Base64.getDecoder().decode(Files.readAllBytes(uploadedFile.toPath())));
+            String strTemp = new String(Base64.getDecoder().decode(Files.readAllBytes(
+                    uploadedFile.toPath())));
             // 7.导入数据源数据，将涉及到的所有表的数据导入数据库中对应的表中
             importDataSource(strTemp, agent_ip, agent_port, user_id, getUserId());
         } catch (Exception e) {
@@ -537,8 +565,10 @@ public class DataSourceAction extends BaseAction {
     @Param(name = "strTemp", desc = "涉及数据源文件下载相关的所有表进行base64编码后的信息", range = "不能为空")
     @Param(name = "agent_ip", desc = "agent地址", range = "不能为空，服务器ip地址", example = "127.0.0.1")
     @Param(name = "agent_port", desc = "agent端口", range = "1024-65535")
-    @Param(name = "user_id", desc = "数据采集用户ID，指定谁可以查看该用户对应表信息", range = "不能为空以及空格，页面传值,新增时生成")
-    @Param(name = "create_user_id", desc = "data_source表数据源创建用户ID，代表数据是由谁创建的", range = "4位数字，新增用户时生成")
+    @Param(name = "user_id", desc = "数据采集用户ID，指定谁可以查看该用户对应表信息",
+            range = "不能为空以及空格，页面传值,新增时生成")
+    @Param(name = "create_user_id", desc = "data_source表数据源创建用户ID，代表数据是由谁创建的",
+            range = "4位数字，新增用户时生成")
     private void importDataSource(String strTemp, String agent_ip, String agent_port, long
             user_id, long create_user_id) {
         Type type = new TypeReference<Map<String, Object>>() {
@@ -924,9 +954,9 @@ public class DataSourceAction extends BaseAction {
                 Type osType = new TypeReference<List<Object_storage>>() {
                 }.getType();
                 // 3.获取对象采集存储设置object_storage信息
-                List<Object_storage> objectStorageList = JsonUtil.toObject(entry.getValue().toString(), osType);
+                List<Object_storage> objStorageList = JsonUtil.toObject(entry.getValue().toString(), osType);
                 // 4.将object_storage表数据循环入数据库
-                for (Object_storage objectStorage : objectStorageList) {
+                for (Object_storage objectStorage : objStorageList) {
                     objectStorage.setObj_stid(PrimayKeyGener.getNextId());
                     objectStorage.add(Dbo.db());
                 }
@@ -976,9 +1006,9 @@ public class DataSourceAction extends BaseAction {
                 Type ocType = new TypeReference<List<Object_collect>>() {
                 }.getType();
                 // 3.获取对象采集设置object_collect信息
-                List<Object_collect> objectCollectList = JsonUtil.toObject(entry.getValue().toString(), ocType);
+                List<Object_collect> objCollectList = JsonUtil.toObject(entry.getValue().toString(), ocType);
                 // 4 .将object_collect表数据循环入数据库
-                for (Object_collect objectCollect : objectCollectList) {
+                for (Object_collect objectCollect : objCollectList) {
                     objectCollect.setOdc_id(PrimayKeyGener.getNextId());
                     objectCollect.add(Dbo.db());
                 }
@@ -1111,9 +1141,9 @@ public class DataSourceAction extends BaseAction {
                 Type adiType = new TypeReference<List<Agent_down_info>>() {
                 }.getType();
                 // 3.获取agent_down_info表数据
-                List<Agent_down_info> agentDownInfoList = JsonUtil.toObject(entry.getValue().toString(), adiType);
+                List<Agent_down_info> adiList = JsonUtil.toObject(entry.getValue().toString(), adiType);
                 // 4.将agent_down_info表数据循环入数据库
-                for (Agent_down_info agentDownInfo : agentDownInfoList) {
+                for (Agent_down_info agentDownInfo : adiList) {
                     agentDownInfo.setDown_id(PrimayKeyGener.getNextId());
                     agentDownInfo.setUser_id(userCollectId);
                     agentDownInfo.setAgent_ip(agent_ip);
@@ -1144,8 +1174,8 @@ public class DataSourceAction extends BaseAction {
                 Type srdType = new TypeReference<List<Department_info>>() {
                 }.getType();
                 // 4.获取部门表department_info表数据
-                List<Department_info> departmentInfoList = JsonUtil.toObject(entry.getValue().toString(), srdType);
-                for (Department_info departmentInfo : departmentInfoList) {
+                List<Department_info> depInfoList = JsonUtil.toObject(entry.getValue().toString(), srdType);
+                for (Department_info departmentInfo : depInfoList) {
                     departmentInfo.setDep_id(PrimayKeyGener.getNextId());
                     // 4.将department_info表数据循环插入数据库
                     departmentInfo.add(Dbo.db());
@@ -1297,7 +1327,8 @@ public class DataSourceAction extends BaseAction {
             // 3.获取data_source表信息集合，将data_source表信息封装入map
             addDataSourceToMap(source_id, collectionMap);
             // 4.获取source_relation_dep表信息集合，将source_relation_dep表数据封装入map
-            List<Source_relation_dep> sourceRelationDepList = addSourceRelationDepToMap(source_id, collectionMap);
+            List<Source_relation_dep> sourceRelationDepList = addSourceRelationDepToMap(source_id,
+                    collectionMap);
             // 5.获取department_info表信息集合，将department_info表数据封装入map
             addDepartmentInfoToMap(collectionMap, sourceRelationDepList);
             // 6.获取agent_info表信息集合，将agent_info表信息封装入map
@@ -1365,8 +1396,8 @@ public class DataSourceAction extends BaseAction {
             logicStep = "1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证" +
                     "2.将agent_info表数据集合存入map" +
                     "3.将agent_info表数据集合返回")
-    @Param(name = "sourceId", desc = "data_source表主键，source_relation_dep表外键", range = "不为空及空格，10位数字，" +
-            "新增data_source表时自动生成")
+    @Param(name = "sourceId", desc = "data_source表主键，source_relation_dep表外键",
+            range = "不为空及空格，10位数字，新增data_source表时自动生成")
     @Param(name = "collectionMap", desc = "封装数据源下载信息（这里封装的是source_relation_dep表数据集合）",
             range = "key值唯一，不为空")
     @Return(desc = "返回source_relation_dep表数据的集合", range = "不为空")
@@ -1415,7 +1446,8 @@ public class DataSourceAction extends BaseAction {
     @Param(name = "sourceId", desc = "data_source表主键，source_relation_dep表外键",
             range = "不为空及空格，10位数字，新增data_source表时自动生成")
     @Return(desc = "返回source_relation_dep表数据的集合", range = "不为空")
-    private List<Source_relation_dep> addSourceRelationDepToMap(long source_id, Map<String, Object> collectionMap) {
+    private List<Source_relation_dep> addSourceRelationDepToMap(long source_id,
+                                                                Map<String, Object> collectionMap) {
         // 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
         // 2.查询数据源与部门关系表信息
         List<Source_relation_dep> sourceRelationDepList = Dbo.queryList(Source_relation_dep.class,
@@ -1441,8 +1473,8 @@ public class DataSourceAction extends BaseAction {
         Result columnSplitResult = new Result();
         // 3.遍历table_column结果集获取column_id,通过column_id查询column_split表信息
         for (int i = 0; i < tableColumnResult.getRowCount(); i++) {
-            Result result = Dbo.queryResult("select * from " + Column_split.TableName + " where column_id = ?",
-                    tableColumnResult.getLong(i, "column_id"));
+            Result result = Dbo.queryResult("select * from " + Column_split.TableName +
+                    " where column_id = ?", tableColumnResult.getLong(i, "column_id"));
             // 4.将查询到的信息封装入集合
             columnSplitResult.add(result);
         }
@@ -1465,8 +1497,8 @@ public class DataSourceAction extends BaseAction {
         Result columnCleanResult = new Result();
         // 3.遍历table_column结果集获取column_id,通过column_id查询column_clean表信息
         for (int i = 0; i < tableColumnResult.getRowCount(); i++) {
-            Result result = Dbo.queryResult("select * from " + Column_clean.TableName + " where column_id=?",
-                    tableColumnResult.getLong(i, "column_id"));
+            Result result = Dbo.queryResult("select * from " + Column_clean.TableName +
+                    " where column_id=?", tableColumnResult.getLong(i, "column_id"));
             // 4.将查询到的信息封装入集合
             columnCleanResult.add(result);
         }
@@ -1491,8 +1523,8 @@ public class DataSourceAction extends BaseAction {
         Result tableColumnResult = new Result();
         // 3.遍历table_info结果集获取table_id,通过table_id查询table_column表信息
         for (int i = 0; i < tableInfoResult.getRowCount(); i++) {
-            Result result = Dbo.queryResult("select * from " + Table_column.TableName + " where table_id=?",
-                    tableInfoResult.getLong(i, "table_id"));
+            Result result = Dbo.queryResult("select * from " + Table_column.TableName +
+                    " where table_id=?", tableInfoResult.getLong(i, "table_id"));
             // 4.将查询到的信息封装入结果集
             tableColumnResult.add(result);
         }
@@ -1517,8 +1549,8 @@ public class DataSourceAction extends BaseAction {
         Result tableCleanResult = new Result();
         // 3.遍历table_info结果集获取table_id,通过table_id查询table_clean表信息
         for (int i = 0; i < tableInfoResult.getRowCount(); i++) {
-            Result result = Dbo.queryResult("select * from " + Table_clean.TableName + " where table_id = ?",
-                    tableInfoResult.getLong(i, "table_id"));
+            Result result = Dbo.queryResult("select * from " + Table_clean.TableName +
+                    " where table_id = ?", tableInfoResult.getLong(i, "table_id"));
             // 4.将查询到的信息封装入集合
             tableCleanResult.add(result);
         }
@@ -1557,8 +1589,8 @@ public class DataSourceAction extends BaseAction {
     private void addColumnMergeToMap(Map<String, Object> collectionMap, Result tableInfoResult) {
         Result columnMergeResult = new Result();
         for (int i = 0; i < tableInfoResult.getRowCount(); i++) {
-            Result result = Dbo.queryResult("select * from " + Column_merge.TableName + " where table_id = ?",
-                    tableInfoResult.getLong(i, "table_id"));
+            Result result = Dbo.queryResult("select * from " + Column_merge.TableName +
+                    " where table_id = ?", tableInfoResult.getLong(i, "table_id"));
             columnMergeResult.add(result);
         }
         collectionMap.put("columnMerge", columnMergeResult.toList());
@@ -1579,8 +1611,8 @@ public class DataSourceAction extends BaseAction {
         Result tableInfoResult = new Result();
         // 3.遍历database_set结果集获取database_set,通过database_set查询table_info表信息
         for (int i = 0; i < databaseSetResult.getRowCount(); i++) {
-            Result result = Dbo.queryResult("select * from " + Table_info.TableName + " where database_id = ?",
-                    databaseSetResult.getLong(i, "database_id"));
+            Result result = Dbo.queryResult("select * from " + Table_info.TableName +
+                    " where database_id = ?", databaseSetResult.getLong(i, "database_id"));
             tableInfoResult.add(result);
         }
         // 4.将查询到的信息封装入集合
@@ -1604,8 +1636,8 @@ public class DataSourceAction extends BaseAction {
         Result signalFileResult = new Result();
         // 3.遍历database_set结果集获取database_id,通过ocs_id查询signal_file表信息
         for (int i = 0; i < databaseSetResult.getRowCount(); i++) {
-            Result result = Dbo.queryResult("select * from " + Signal_file.TableName + " where database_id=?",
-                    databaseSetResult.getLong(i, "database_id"));
+            Result result = Dbo.queryResult("select * from " + Signal_file.TableName +
+                    " where database_id=?", databaseSetResult.getLong(i, "database_id"));
             // 4.将查询到的信息封装入集合
             signalFileResult.add(result);
         }
@@ -1628,8 +1660,8 @@ public class DataSourceAction extends BaseAction {
         Result fileSourceResult = new Result();
         // 3.遍历file_collect_set结果集获取fcs_id(文件系统采集ID),通过fcs_id查询file_source表信息
         for (int i = 0; i < file_collect_setResult.getRowCount(); i++) {
-            Result result = Dbo.queryResult("select * from " + File_source.TableName + " where fcs_id=?",
-                    file_collect_setResult.getLong(i, "fcs_id"));
+            Result result = Dbo.queryResult("select * from " + File_source.TableName +
+                    " where fcs_id=?", file_collect_setResult.getLong(i, "fcs_id"));
             // 4.将查询到的信息封装入集合
             fileSourceResult.add(result);
         }
@@ -1647,14 +1679,15 @@ public class DataSourceAction extends BaseAction {
     @Param(name = "collectionMap", desc = "封装数据源下载信息（这里封装的是file_collect_set表数据集合）",
             range = "不能为空,key唯一")
     @Param(name = "agentInfoList", desc = "agent_info表数据结果集合", range = "不为空")
-    private Result getFileCollectSetResult(Map<String, Object> collectionMap, List<Agent_info> agentInfoList) {
+    private Result getFileCollectSetResult(Map<String, Object> collectionMap,
+                                           List<Agent_info> agentInfoList) {
         // 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
         // 2.创建存放file_collect_set表信息的集合
         Result fileCollectSetResult = new Result();
         // 3.遍历agent_info结果集获取agent_id,通过agent_id查询file_collect_set表信息
         for (int i = 0; i < agentInfoList.size(); i++) {
-            Result result = Dbo.queryResult("select * from " + File_collect_set.TableName + " where agent_id=?",
-                    agentInfoList.get(i).getAgent_id());
+            Result result = Dbo.queryResult("select * from " + File_collect_set.TableName +
+                    " where agent_id=?", agentInfoList.get(i).getAgent_id());
             // 4.将查询到的信息封装入集合
             fileCollectSetResult.add(result);
         }
@@ -1680,8 +1713,8 @@ public class DataSourceAction extends BaseAction {
         Result databaseSetResult = new Result();
         // 3.遍历agent_info结果集获取agent_id,通过agent_id查询database_set表信息
         for (int i = 0; i < agentInfoList.size(); i++) {
-            Result result = Dbo.queryResult("select * from " + Database_set.TableName + " where agent_id = ?",
-                    agentInfoList.get(i).getAgent_id());
+            Result result = Dbo.queryResult("select * from " + Database_set.TableName +
+                    " where agent_id = ?", agentInfoList.get(i).getAgent_id());
             // 4.将查询到的信息封装入集合
             databaseSetResult.add(result);
         }
@@ -1706,8 +1739,8 @@ public class DataSourceAction extends BaseAction {
         Result ftpFolderResult = new Result();
         // 3.遍历ftp_collect结果集获取ftp_id(ftp采集任务编号),通过ftp_id查询ftp_folder表信息
         for (int i = 0; i < ftpCollectResult.getRowCount(); i++) {
-            Result result = Dbo.queryResult("select * from " + Ftp_folder.TableName + " where ftp_id = ?",
-                    ftpCollectResult.getLong(i, "ftp_id"));
+            Result result = Dbo.queryResult("select * from " + Ftp_folder.TableName +
+                    " where ftp_id = ?", ftpCollectResult.getLong(i, "ftp_id"));
             // 4.将查询到的信息封装入集合
             ftpFolderResult.add(result);
         }
@@ -1718,7 +1751,8 @@ public class DataSourceAction extends BaseAction {
     @Method(desc = "将object_collect_struct表数据集合存入map",
             logicStep = "1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证" +
                     "2.创建存放object_collect_struct表信息的集合" +
-                    "3.遍历object_collect_task结果集获取ocs_id(对象采集任务id),通过ocs_id查询object_collect_struct表信息" +
+                    "3.遍历object_collect_task结果集获取ocs_id(对象采集任务id),通过ocs_id查询" +
+                    "object_collect_struct表信息" +
                     "4.将查询到的信息封装入集合" +
                     "5.将object_collect_struct表集合信息存入map")
     @Param(name = "collectionMap", desc = "封装数据源下载信息（这里封装的是object_collect_struct表数据集合）",
@@ -1731,8 +1765,8 @@ public class DataSourceAction extends BaseAction {
         Result objectCollectStructResult = new Result();
         // 3.遍历object_collect_task结果集获取ocs_id,通过ocs_id查询object_collect_struct表信息
         for (int i = 0; i < objectCollectTaskResult.getRowCount(); i++) {
-            Result result = Dbo.queryResult("select * from " + Object_collect_struct.TableName + " where " +
-                    " ocs_id =?", objectCollectTaskResult.getLong(i, "ocs_id"));
+            Result result = Dbo.queryResult("select * from " + Object_collect_struct.TableName +
+                    " where ocs_id =?", objectCollectTaskResult.getLong(i, "ocs_id"));
             // 4.将查询到的信息封装入集合
             objectCollectStructResult.add(result);
         }
@@ -1755,8 +1789,8 @@ public class DataSourceAction extends BaseAction {
         Result objectStorageResult = new Result();
         // 3.遍历object_collect_task结果集获取ocs_id（对象采集任务编号），通过ocs_id查询object_storage表信息
         for (int i = 0; i < objectCollectTaskResult.getRowCount(); i++) {
-            Result result = Dbo.queryResult("select * from " + Object_storage.TableName + " where ocs_id =?",
-                    objectCollectTaskResult.getLong(i, "ocs_id"));
+            Result result = Dbo.queryResult("select * from " + Object_storage.TableName +
+                    " where ocs_id =?", objectCollectTaskResult.getLong(i, "ocs_id"));
             // 4.将查询到的信息封装入集合
             objectStorageResult.add(result);
         }
@@ -1780,8 +1814,8 @@ public class DataSourceAction extends BaseAction {
         Result objectCollectTaskResult = new Result();
         // 3.循环遍历object_collect表数据获取odc_id，根据odc_id查询object_collect_task表信息并封装
         for (int i = 0; i < objectCollectResult.getRowCount(); i++) {
-            Result result = Dbo.queryResult("select * from " + Object_collect_task.TableName + " where " +
-                    " odc_id=?", objectCollectResult.getLong(i, "odc_id"));
+            Result result = Dbo.queryResult("select * from " + Object_collect_task.TableName +
+                    " where odc_id=?", objectCollectResult.getLong(i, "odc_id"));
             objectCollectTaskResult.add(result);
         }
         // 4.将object_collect_task表结果集封装入map
@@ -1807,8 +1841,8 @@ public class DataSourceAction extends BaseAction {
         // 3.循环遍历agent_info表信息集合获取agent_id（agent_info表主键，object_collect表外键）
         for (int i = 0; i < agentInfoList.size(); i++) {
             // 4.根据agent_id查询object_collect表获取结果集并添加到结果集对象中
-            Result object_collect = Dbo.queryResult("select * from " + Object_collect.TableName + " where " +
-                    "agent_id=?", agentInfoList.get(i).getAgent_id());
+            Result object_collect = Dbo.queryResult("select * from " + Object_collect.TableName +
+                    " where agent_id=?", agentInfoList.get(i).getAgent_id());
             objectCollectResult.add(object_collect);
         }
         // 5.将object_collect结果集封装入map
@@ -1884,8 +1918,8 @@ public class DataSourceAction extends BaseAction {
         // 3.遍历Ftp_collect信息，获取ftp_id(ftp_transfered主键，ftp_collect外键）
         for (int i = 0; i < ftpCollectResult.getRowCount(); i++) {
             // 4. 根据ftp_id查询ftp_transfered信息
-            Result result = Dbo.queryResult("select * from " + Ftp_transfered.TableName + " where ftp_id=?",
-                    ftpCollectResult.getLong(i, "ftp_id"));
+            Result result = Dbo.queryResult("select * from " + Ftp_transfered.TableName +
+                    " where ftp_id=?", ftpCollectResult.getLong(i, "ftp_id"));
             ftpTransferedResult.add(result);
         }
         // 5.将ftp_transfered表数据结果集信息入map
@@ -1910,8 +1944,8 @@ public class DataSourceAction extends BaseAction {
         // 3.遍历agent_info信息，获取agent_id(agent_info主键，ftp_collect外键）
         for (int i = 0; i < agentInfoList.size(); i++) {
             // 4. 根据agent_id查询ftp_collect信息
-            Result result = Dbo.queryResult("select * from " + Ftp_collect.TableName + " where agent_id = ?",
-                    agentInfoList.get(i).getAgent_id());
+            Result result = Dbo.queryResult("select * from " + Ftp_collect.TableName +
+                    " where agent_id = ?", agentInfoList.get(i).getAgent_id());
             ftpCollectResult.add(result);
         }
         // 5.将ftp_collect表信息入map
@@ -1929,15 +1963,16 @@ public class DataSourceAction extends BaseAction {
     @Param(name = "collectionMap", desc = "封装数据源下载信息（这里封装的是collect_job_classify表数据集合）",
             range = "不能为空,key唯一")
     @Param(name = "agentInfoList", desc = "agent_info表数据集合", range = "不为空")
-    private void addCollectJobClassifyToMap(Map<String, Object> collectionMap, List<Agent_info> agentInfoList) {
+    private void addCollectJobClassifyToMap(Map<String, Object> collectionMap,
+                                            List<Agent_info> agentInfoList) {
         // 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
         // 2.创建封装collect_job_classify信息的集合
         Result collectJobClassifyResult = new Result();
         // 3.遍历agent_info信息，获取agent_id(agent_info主键，collect_job_classify外键）
         for (int i = 0; i < agentInfoList.size(); i++) {
             // 4.根据agent_id查询Collect_job_classify信息
-            Result result = Dbo.queryResult("select * from " + Collect_job_classify.TableName + " where " +
-                    " agent_id=?", agentInfoList.get(i).getAgent_id());
+            Result result = Dbo.queryResult("select * from " + Collect_job_classify.TableName +
+                    " where agent_id=?", agentInfoList.get(i).getAgent_id());
             collectJobClassifyResult.add(result);
         }
         // 5.将collect_job_classify表数据结果集入map

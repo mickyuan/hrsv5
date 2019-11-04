@@ -84,11 +84,12 @@ public class SysParaAction extends BaseAction {
 	}
 
 	@Method(desc = "检查当前的系统参数信息是否存在",
-			logicStep = "1 : 根据系统参数的主键和名称查询记录信息是否存在(1 : 表示存在, 其他为异常情况,因为根据主键只能查出一条记录信息")
+			logicStep = "1 : 根据系统参数的主键和名称查询记录信息是否存在" +
+					"(1 : 表示存在, 其他为异常情况,因为根据主键只能查出一条记录信息")
 	@Param(name = "para_id", desc = "系统参数主键ID", range = "不能为空的整数,这个是系统参数的主键")
 	@Param(name = "para_name", desc = "系统参数名称", range = "不能为空的字符串")
 	private void checkSysParaIsExist(long para_id, String para_name) {
-		//1 : 根据系统参数的主键和名称查询记录信息是否存在(1 : 表示存在, 其他为异常情况,因为根据主键只能查出一条记录信息)
+		//1:根据系统参数的主键和名称查询记录信息是否存在(1 : 表示存在, 其他为异常情况,因为根据主键只能查出一条记录信息)
 		if (Dbo.queryNumber("SELECT COUNT(1) FROM " + Sys_para.TableName
 				+ " WHERE para_id = ? AND para_name = ?", para_id, para_name).orElseThrow(
 				() -> new BusinessException("检查系统参数是否存在的SQL编写错误")) != 1) {

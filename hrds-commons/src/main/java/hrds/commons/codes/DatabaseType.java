@@ -7,7 +7,7 @@ public enum DatabaseType {
 	/**MYSQL<MYSQL>  */
 	MYSQL("01","MYSQL","36","数据库类型"),
 	/**Oracle9i及一下<Oracle9i>  */
-	Oracle9i("02","Oracle9i及一下","36","数据库类型"),
+	Oracle9i("02","Oracle9i及以下","36","数据库类型"),
 	/**Oracle10g及以上<Oracle10g>  */
 	Oracle10g("03","Oracle10g及以上","36","数据库类型"),
 	/**SQLSERVER2000<SqlServer2000>  */

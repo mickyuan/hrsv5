@@ -26,6 +26,7 @@ import hrds.commons.utils.AgentActionUtil;
 import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.key.PrimayKeyGener;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @DocClass(desc = "配置源DB属性", author = "WangZhengcheng")
@@ -72,6 +73,29 @@ public class DBConfStepAction extends BaseAction{
 		return ConnUtil.getConnURLProp(dbType);
 		//数据可访问权限处理方式
 		//不与数据库交互，无需限制访问权限
+	}
+
+	@Method(desc = "获取所有数据库的名称和编码信息", logicStep = "" +
+			"1、构造List集合，放入所有数据库信息" +
+			"2、返回")
+	@Return(desc = "数据库名称及编码信息",range = "不会为null")
+	public List<DatabaseType> getDatabaseType(){
+		List<DatabaseType> returnList = new ArrayList<>();
+		returnList.add(DatabaseType.ApacheDerby);
+		returnList.add(DatabaseType.DB2);
+		returnList.add(DatabaseType.GBase);
+		returnList.add(DatabaseType.H2);
+		returnList.add(DatabaseType.Informatic);
+		returnList.add(DatabaseType.MYSQL);
+		returnList.add(DatabaseType.Oracle9i);
+		returnList.add(DatabaseType.Oracle10g);
+		returnList.add(DatabaseType.Postgresql);
+		returnList.add(DatabaseType.SqlServer2000);
+		returnList.add(DatabaseType.SqlServer2005);
+		returnList.add(DatabaseType.SybaseASE125);
+		returnList.add(DatabaseType.TeraData);
+
+		return returnList;
 	}
 
 	@Method(desc = "根据分类Id判断当前分类是否被使用", logicStep = "" +
@@ -146,8 +170,9 @@ public class DBConfStepAction extends BaseAction{
 			throw new BusinessException("分类编号重复，请重新输入");
 		}
 		//4、分类编号不重复可以新增
-		//5、给新增数据设置ID
+		//5、给新增数据设置ID和user_id
 		classify.setClassify_id(PrimayKeyGener.getNextId());
+		classify.setUser_id(getUserId());
 		//6、完成新增
 		if (classify.add(Dbo.db()) != 1)
 			throw new BusinessException("保存分类信息失败！data=" + classify);
@@ -298,7 +323,7 @@ public class DBConfStepAction extends BaseAction{
 			, range = "不为空")
 	@Param(name = "isAdd", desc = "新增/更新的标识位", range = "true为新增，false为更新")
 	private void verifyClassifyEntity(Collect_job_classify entity, boolean isAdd){
-		//1、对于新增操作，校验classify_id不能为空
+		//1、对于更新操作，校验classify_id不能为空
 		if(!isAdd){
 			if(entity.getClassify_id() == null){
 				throw new BusinessException("分类id不能为空");
@@ -312,11 +337,7 @@ public class DBConfStepAction extends BaseAction{
 		if(StringUtil.isBlank(entity.getClassify_name())){
 			throw new BusinessException("分类名称不能为空");
 		}
-		//4、校验user_id不能为空
-		if(entity.getUser_id() == null){
-			throw new BusinessException("用户ID不能为空");
-		}
-		//5、校验Agent_id不能为空
+		//4、校验Agent_id不能为空
 		if(entity.getAgent_id() == null){
 			throw new BusinessException("AgentID不能为空");
 		}

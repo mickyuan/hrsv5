@@ -149,11 +149,12 @@ public class SysUserAction extends BaseAction {
 			logicStep = "1.管理员功能菜单" +
 					"2.操作员功能菜单" +
 					"3.返回功能菜单列表")
-	@Param(name = "user_is_admin", desc = "用户类别", range = "0：管理员功能菜单，1：操作员功能菜单", example = "1", valueIfNull = "0")
+	@Param(name = "user_is_admin", desc = "用户类别", range = "0：管理员功能菜单，1：操作员功能菜单", example = "1",
+			valueIfNull = "0")
 	@Return(desc = "用户功能菜单集合", range = "userFunctionMap：用户功能菜单")
 	public Map getUserFunctionMenu(String user_is_admin) {
 		Map<String, String> userFunctionMenuMap = new HashMap<>();
-		//0：管理员功能菜单
+		//0：否,管理员功能菜单,1：是,操作员功能菜单
 		if (IsFlag.Fou.getCode().equalsIgnoreCase(user_is_admin)) {
 			//1.管理员功能菜单
 			userFunctionMenuMap.put(UserType.CaijiGuanLiYuan.getCode(), UserType.CaijiGuanLiYuan.getValue());
@@ -166,9 +167,7 @@ public class SysUserAction extends BaseAction {
 			userFunctionMenuMap.put(UserType.LiuShuJuGuanLiYuan.getCode(), UserType.LiuShuJuGuanLiYuan.getValue());
 			userFunctionMenuMap.put(UserType.ShuJuKuPeiZhi.getCode(), UserType.ShuJuKuPeiZhi.getValue());
 			userFunctionMenuMap.put(UserType.ZiZhuFenXiGuanLi.getCode(), UserType.ZiZhuFenXiGuanLi.getValue());
-		}
-		//1：操作员功能菜单
-		else if (IsFlag.Shi.getCode().equalsIgnoreCase(user_is_admin)) {
+		} else if (IsFlag.Shi.getCode().equalsIgnoreCase(user_is_admin)) {
 			//2.操作员功能菜单
 			userFunctionMenuMap.put(UserType.CaiJiYongHu.getCode(), UserType.CaiJiYongHu.getValue());
 			userFunctionMenuMap.put(UserType.YeWuYongHu.getCode(), UserType.YeWuYongHu.getValue());
@@ -177,12 +176,16 @@ public class SysUserAction extends BaseAction {
 			userFunctionMenuMap.put(UserType.ShuJuKSHChaKan.getCode(), UserType.ShuJuKSHChaKan.getValue());
 			userFunctionMenuMap.put(UserType.RESTYongHu.getCode(), UserType.RESTYongHu.getValue());
 			userFunctionMenuMap.put(UserType.JiShiGuanLiYuan.getCode(), UserType.JiShiGuanLiYuan.getValue());
-			userFunctionMenuMap.put(UserType.JiShiJiaGongGuanLiYuan.getCode(), UserType.JiShiJiaGongGuanLiYuan.getValue());
-			userFunctionMenuMap.put(UserType.LiuShuJuShengChanYongHu.getCode(), UserType.LiuShuJuShengChanYongHu.getValue());
+			userFunctionMenuMap.put(UserType.JiShiJiaGongGuanLiYuan.getCode(),
+					UserType.JiShiJiaGongGuanLiYuan.getValue());
+			userFunctionMenuMap.put(UserType.LiuShuJuShengChanYongHu.getCode(),
+					UserType.LiuShuJuShengChanYongHu.getValue());
 			userFunctionMenuMap.put(UserType.BaoBiaoChuanJian.getCode(), UserType.BaoBiaoChuanJian.getValue());
 			userFunctionMenuMap.put(UserType.BaoBiaoChaKan.getCode(), UserType.BaoBiaoChaKan.getValue());
-			userFunctionMenuMap.put(UserType.LiuShuJuXiaoFeiYongHu.getCode(), UserType.LiuShuJuXiaoFeiYongHu.getValue());
-			userFunctionMenuMap.put(UserType.ShuJuGuanKongGuanLiYuan.getCode(), UserType.ShuJuGuanKongGuanLiYuan.getValue());
+			userFunctionMenuMap.put(UserType.LiuShuJuXiaoFeiYongHu.getCode(),
+					UserType.LiuShuJuXiaoFeiYongHu.getValue());
+			userFunctionMenuMap.put(UserType.ShuJuGuanKongGuanLiYuan.getCode(),
+					UserType.ShuJuGuanKongGuanLiYuan.getValue());
 			userFunctionMenuMap.put(UserType.ZiZhuFenXiCaoZuo.getCode(), UserType.ZiZhuFenXiCaoZuo.getValue());
 		}
 		//3.返回功能菜单列表
@@ -208,7 +211,7 @@ public class SysUserAction extends BaseAction {
 	}
 
 	@Method(desc = "根据用户id检查用户是否已经存在",
-			logicStep = "1.根据user_id检查用户是否存在(查询结果为1:表示存在, 其他为异常情况,因为根据主键只能查出一条记录信息)")
+			logicStep = "1.根据user_id检查用户是否存在(1:表示存在, 其他为异常情况,因为根据主键只能查出一条记录信息)")
 	@Param(name = "user_id", desc = "用户登录id", range = "自动生成的id", example = "5000")
 	@Return(desc = "用户id是否已经存在", range = "true 或者 false")
 	private boolean checkSysUserIsExist(long user_id) {

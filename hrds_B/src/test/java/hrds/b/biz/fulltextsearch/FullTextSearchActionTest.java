@@ -145,7 +145,8 @@ public class FullTextSearchActionTest extends WebBaseTestCase {
 		assertThat(ar.isSuccess(), is(true));
 		for (int i = 0; i < ar.getDataForResult().getRowCount(); i++) {
 			assertThat(ar.getDataForResult().getString(i, "original_name"), is("init-hll"));
-			assertThat(ar.getDataForResult().getString(i, "file_id"), is("999999999999999999999999"));
+			assertThat(ar.getDataForResult().getString(i, "file_id"),
+					is("999999999999999999999999"));
 			assertThat(ar.getDataForResult().getString(i, "fav_flag"), is("1"));
 		}
 		//1-2.int类型值的 queryNum 小于1 的整数，取输入的整数
@@ -156,7 +157,8 @@ public class FullTextSearchActionTest extends WebBaseTestCase {
 		assertThat(ar.isSuccess(), is(true));
 		for (int i = 0; i < ar.getDataForResult().getRowCount(); i++) {
 			assertThat(ar.getDataForResult().getString(i, "original_name"), is("init-hll"));
-			assertThat(ar.getDataForResult().getString(i, "file_id"), is("999999999999999999999999"));
+			assertThat(ar.getDataForResult().getString(i, "file_id"),
+					is("999999999999999999999999"));
 			assertThat(ar.getDataForResult().getString(i, "fav_flag"), is("1"));
 		}
 		//1-3.int类型值的 queryNum 大于99 的整数，取最大显示条数99
@@ -167,7 +169,8 @@ public class FullTextSearchActionTest extends WebBaseTestCase {
 		assertThat(ar.isSuccess(), is(true));
 		for (int i = 0; i < ar.getDataForResult().getRowCount(); i++) {
 			assertThat(ar.getDataForResult().getString(i, "original_name"), is("init-hll"));
-			assertThat(ar.getDataForResult().getString(i, "file_id"), is("999999999999999999999999"));
+			assertThat(ar.getDataForResult().getString(i, "file_id"),
+					is("999999999999999999999999"));
 			assertThat(ar.getDataForResult().getString(i, "fav_flag"), is("1"));
 		}
 		//2-1.非int类型值的 queryNum

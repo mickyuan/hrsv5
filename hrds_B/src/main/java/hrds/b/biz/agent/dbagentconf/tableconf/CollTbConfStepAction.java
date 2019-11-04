@@ -39,7 +39,8 @@ public class CollTbConfStepAction extends BaseAction {
 	@Method(desc = "根据数据库采集设置表ID加载页面初始化数据", logicStep = "1、查询数据并返回")
 	@Param(name = "colSetId", desc = "数据库设置ID,源系统数据库设置表主键,数据库对应表外键", range = "不为空")
 	@Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数", nullable = true, valueIfNull = "1")
-	@Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", nullable = true, valueIfNull = "10")
+	@Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", nullable = true,
+			valueIfNull = "10")
 	@Return(desc = "查询结果集，查询出的结果可能有0-N条", range = "不会为null")
 	//TODO 按照新的原型设计，这个方法应该查询的内容为table_id，,table_name,table_ch_name,是否并行抽取(这个字段目前还没有)
 	public Result getInitInfo(long colSetId, int currPage, int pageSize) {
@@ -63,7 +64,8 @@ public class CollTbConfStepAction extends BaseAction {
 	@Param(name = "colSetId", desc = "数据库设置ID,源系统数据库设置表主键,数据库对应表外键", range = "不为空")
 	@Param(name = "inputString", desc = "用户界面输入用于模糊查询的关键词", range = "不为空")
 	@Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数", nullable = true, valueIfNull = "1")
-	@Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", nullable = true, valueIfNull = "10")
+	@Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", nullable = true,
+			valueIfNull = "10")
 	@Return(desc = "查询结果集", range = "结果集大小视是否查询到数据而定")
 	//查询按钮
 	public List<Result> getTableInfo(long colSetId, String inputString, int currPage, int pageSize){
@@ -96,7 +98,8 @@ public class CollTbConfStepAction extends BaseAction {
 			"4、对获取到的数据进行处理，根据表名和colSetId获取界面需要显示的信息并返回")
 	@Param(name = "colSetId", desc = "数据库设置ID,源系统数据库设置表主键,数据库对应表外键", range = "不为空")
 	@Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数", nullable = true, valueIfNull = "1")
-	@Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", nullable = true, valueIfNull = "10")
+	@Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", nullable = true,
+			valueIfNull = "10")
 	@Return(desc = "查询结果集", range = "不为空")
 	//查看所有表
 	public List<Result> getAllTableInfo(long colSetId, int currPage, int pageSize){
@@ -136,7 +139,8 @@ public class CollTbConfStepAction extends BaseAction {
 		}
 		//2、调用AgentActionUtil工具类获取访问Agent端服务的url
 		//TODO 因为Agent端还没有用于测试并行抽取SQL的方法，所以这边暂时命名为fakemethodname，后面会取AgentActionUtil中定义的静态常量
-		String url = AgentActionUtil.getUrl((Long) resultMap.get("agent_id"), getUserId(), "FAKEMETHODNAME");
+		String url = AgentActionUtil.getUrl((Long) resultMap.get("agent_id"), getUserId(),
+				"FAKEMETHODNAME");
 		//3、构建http请求访问Agent端服务
 		//TODO 注意addData()的最后一个参数的名字，目前暂定为sql
 		HttpClient.ResponseValue resVal = new HttpClient()
