@@ -48,6 +48,8 @@ public class AgentListActionTest extends WebBaseTestCase {
 	private static final long NON_STRUCT_AGENT_ID = 7005L;
 	//数据库直连采集表id
 	private static final long TABLE_ID = 100201L;
+	private static final long FIRST_CLASSIFY_ID = 10086L;
+	private static final long SECOND_CLASSIFY_ID = 10010L;
 
 
 	/**
@@ -174,21 +176,47 @@ public class AgentListActionTest extends WebBaseTestCase {
 		List<Database_set> databases = new ArrayList<>();
 		for (int i = 0; i < 2; i++) {
 			long agentId = i % 2 == 0 ? DF_AGENT_ID : DB_AGENT_ID;
-			long classifyId = i % 2 == 0 ? 1 : 2;
+			long classifyId = i % 2 == 0 ? FIRST_CLASSIFY_ID : SECOND_CLASSIFY_ID;
 			long id = i % 2 == 0 ? 1001L : 1002L;
-			String databaseType = i % 2 == 0 ? DatabaseType.Postgresql.getCode() : DatabaseType.DB2.getCode();
+			String databaseType = i % 2 == 0 ? DatabaseType.DB2.getCode() : DatabaseType.Postgresql.getCode();
+			String databaseName = i % 2 == 0 ? "" : "postgresql";
+			String databasePwd = i % 2 == 0 ? "" : "postgresql";
+			String driver = i % 2 == 0 ? "" : "org.postgresql.Driver";
+			String ip = i % 2 == 0 ? "" : "127.0.0.1";
+			String port = i % 2 == 0 ? "" : "8888";
+			String databaseCode = i % 2 == 0 ? "" : "1";
+			String url = i % 2 == 0 ? "" : "jdbc:postgresql://127.0.0.1:8888/postgresql";
+			String dbfileFormat = i % 2 == 0 ? "1" : "";
+			String isHidden = i % 2 == 0 ? IsFlag.Fou.getCode() : IsFlag.Shi.getCode();
+			String fileSuffix = i % 2 == 0 ? "dat" : "";
+			String planeUrl = i % 2 == 0 ? "/home/hyrenshufu/wzc/test/data" : "";
+			String rowSeparator = i % 2 == 0 ? "|" : "";
+			String dbFlag = i % 2 == 0 ? IsFlag.Shi.getCode() : IsFlag.Fou.getCode();
+			String userName = i % 2 == 0 ? "" : "hrsdxg";
 			Database_set databaseSet = new Database_set();
 			databaseSet.setDatabase_id(id);
 			databaseSet.setAgent_id(agentId);
 			databaseSet.setDatabase_number("dbtest" + i);
-			databaseSet.setDb_agent(IsFlag.Shi.getCode());
+			databaseSet.setDb_agent(dbFlag);
 			databaseSet.setIs_load(IsFlag.Shi.getCode());
-			databaseSet.setIs_hidden(IsFlag.Shi.getCode());
-			databaseSet.setIs_sendok(IsFlag.Shi.getCode());
+			databaseSet.setIs_hidden(isHidden);
+			databaseSet.setIs_sendok(IsFlag.Fou.getCode());
 			databaseSet.setIs_header(IsFlag.Shi.getCode());
 			databaseSet.setClassify_id(classifyId);
 			databaseSet.setTask_name("wzcTaskName" + i);
 			databaseSet.setDatabase_type(databaseType);
+			databaseSet.setDatabase_name(databaseName);
+			databaseSet.setDatabase_drive(driver);
+			databaseSet.setDatabase_ip(ip);
+			databaseSet.setDatabase_port(port);
+			databaseSet.setDatabase_code(databaseCode);
+			databaseSet.setJdbc_url(url);
+			databaseSet.setDbfile_format(dbfileFormat);
+			databaseSet.setFile_suffix(fileSuffix);
+			databaseSet.setPlane_url(planeUrl);
+			databaseSet.setRow_separator(rowSeparator);
+			databaseSet.setDatabase_pad(databasePwd);
+			databaseSet.setUser_name(userName);
 
 			databases.add(databaseSet);
 		}

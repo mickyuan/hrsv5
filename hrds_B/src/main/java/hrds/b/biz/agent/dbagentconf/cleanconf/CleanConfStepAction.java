@@ -373,7 +373,7 @@ public class CleanConfStepAction extends BaseAction{
 		for(int i = 0; i < columnIds.size(); i++){
 			sqlSB.append(columnIds.get(i));
 			if (i != columnIds.size() - 1)
-				sqlSB.append( ",");
+				sqlSB.append(",");
 		}
 		sqlSB.append(" ) GROUP BY t1.column_id, t2.table_name order by cast(t1.remark as integer) asc ");
 		//4、返回

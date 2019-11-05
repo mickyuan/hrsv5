@@ -91,4 +91,40 @@ public class ConnUtil {
 		return template;
 	}
 
+	@Method(desc = "根据数据库类型获取数据库连接驱动", logicStep = "" +
+			"1、判断数据库类型，根据数据库类型返回数据库连接驱动")
+	@Param(name = "dbType", desc = "数据库类型", range = "不为空，DatabaseType代码项code值")
+	@Return(desc = "数据库连接驱动", range = "不为空")
+	public static String getJDBCDriver(String dbType){
+		DatabaseType databaseType = DatabaseType.ofEnumByCode(dbType);
+		if(DatabaseType.MYSQL == databaseType){
+			return "com.mysql.jdbc.Driver";
+		}else if(DatabaseType.Oracle9i == databaseType){
+			return "oracle.jdbc.driver.OracleDriver";
+		}else if(DatabaseType.Oracle10g == databaseType){
+			return "oracle.jdbc.OracleDriver";
+		}else if(DatabaseType.DB2 == databaseType){
+			return "com.ibm.db2.jcc.DB2Driver";
+		}else if(DatabaseType.SqlServer2000 == databaseType || DatabaseType.SqlServer2005 == databaseType){
+			return "com.microsoft.sqlserver.jdbc.SQLServerDriver";
+		}else if(DatabaseType.Postgresql == databaseType){
+			return "org.postgresql.Driver";
+		}else if(DatabaseType.SybaseASE125 == databaseType){
+			return "com.sybase.jdbc2.jdbc.SybDriver";
+		}else if(DatabaseType.ApacheDerby == databaseType){
+			return "org.apache.derby.jdbc.EmbeddedDriver";
+		}else if(DatabaseType.GBase == databaseType){
+			return "com.gbase.jdbc.Driver";
+		}else if(DatabaseType.TeraData == databaseType){
+			return "com.teradata.jdbc.TeraDriver";
+		}else if(DatabaseType.Informatic == databaseType){
+			return "com.informix.jdbc.IfxDriver";
+		}else if(DatabaseType.H2 == databaseType){
+			return "org.h2.Driver";
+		}else{
+			logger.error("目前不支持对该数据库类型进行采集，请联系管理员");
+			throw new AppSystemException("目前不支持对该数据库类型进行采集，请联系管理员");
+		}
+	}
+
 }

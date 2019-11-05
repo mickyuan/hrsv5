@@ -108,7 +108,7 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 		assertThat(data.getLong(0, "classify_id"), is(10010L));
 		assertThat(data.getString(0, "classify_num"), is("wzc_test_classify_num1"));
 		assertThat(data.getString(0, "classify_name"), is("wzc_test_classify_name1"));
-		assertThat(data.getString(0, "remark"), is(""));
+		assertThat(data.getString(0, "remark"), is("remark10010"));
 
 		//错误的数据访问1：传入is_sendok字段为1的databaseId
 		String firWrongString = new HttpClient()
@@ -194,12 +194,12 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 	 *
 	 * */
 	@Test
-	public void getJDBCDriver(){
+	public void getDBConnectionProp(){
 		String wrongDBType = "123";
 		//正确数据访问1：构建mysql数据库访问场景，断言得到的数据是否正确
 		String rightString = new HttpClient()
 				.addData("dbType", DatabaseType.MYSQL.getCode())
-				.post(getActionUrl("getJDBCDriver")).getBodyString();
+				.post(getActionUrl("getDBConnectionProp")).getBodyString();
 		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(rightResult.isSuccess(), is(true));
@@ -211,6 +211,41 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 		assertThat( dbConnectionProp.getIpPlaceholder(), is(":"));
 		assertThat( dbConnectionProp.getPortPlaceholder(), is("/"));
 		assertThat( dbConnectionProp.getUrlSuffix(), is("?characterEncoding=utf8&zeroDateTimeBehavior=convertToNull"));
+
+		//错误的数据访问1：构建dbType不在DatabaseType代码项中的code值，断言得到的数据是否正确
+		String wrongString = new HttpClient()
+				.addData("dbType", wrongDBType)
+				.post(getActionUrl("getDBConnectionProp")).getBodyString();
+		ActionResult wrongResult = JsonUtil.toObjectSafety(wrongString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResult.isSuccess(), is(false));
+	}
+
+	/**
+	 * 测试根据数据库类型获取数据库驱动
+	 *
+	 * 正确数据访问1：构建mysql数据库访问场景，断言得到的数据是否正确
+	 * 错误的数据访问1：构建dbType不在DatabaseType代码项中的code值，断言得到的数据是否正确
+	 * 错误访问场景不足的原因：该方法调用只需要一个参数
+	 *
+	 * @Param: 无
+	 * @return: 无
+	 *
+	 * */
+	@Test
+	public void getJDBCDriver(){
+		String wrongDBType = "123";
+		//正确数据访问1：构建mysql数据库访问场景，断言得到的数据是否正确
+		String rightString = new HttpClient()
+				.addData("dbType", DatabaseType.MYSQL.getCode())
+				.post(getActionUrl("getJDBCDriver")).getBodyString();
+		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResult.isSuccess(), is(true));
+
+		String rightData = (String) rightResult.getData();
+
+		assertThat(rightData, is("com.mysql.jdbc.Driver"));
 
 		//错误的数据访问1：构建dbType不在DatabaseType代码项中的code值，断言得到的数据是否正确
 		String wrongString = new HttpClient()
@@ -309,8 +344,7 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 	 *      以上全部执行成功，表示插入数据成功，删除刚刚插入的数据
 	 * 错误的数据访问1：不传入classify_num
 	 * 错误的数据访问2：不传入classify_name
-	 * 错误的数据访问3：不传入user_id
-	 * 错误的数据访问4：不传入Agent_id
+	 * 错误的数据访问3：不传入Agent_id
 	 *
 	 * @Param: 无
 	 * @return: 无
@@ -382,18 +416,7 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 				-> new BusinessException("连接失败!"));
 		assertThat(withoutClassifyNameResult.isSuccess(), is(false));
 
-		//错误的数据访问3：不传入user_id
-		String withoutUserId = new HttpClient()
-				.addData("classify_num", classifyNum)
-				.addData("classify_name", classifyName)
-				.addData("agent_id", FIRST_DB_AGENT_ID)
-				.addData("sourceId", SOURCE_ID)
-				.post(getActionUrl("saveClassifyInfo")).getBodyString();
-		ActionResult withoutUserIdResult = JsonUtil.toObjectSafety(withoutUserId, ActionResult.class).orElseThrow(()
-				-> new BusinessException("连接失败!"));
-		assertThat(withoutUserIdResult.isSuccess(), is(false));
-
-		//错误的数据访问4：不传入Agent_id
+		//错误的数据访问3：不传入Agent_id
 		String withoutAgentId = new HttpClient()
 				.addData("classify_num", classifyNum)
 				.addData("classify_name", classifyName)

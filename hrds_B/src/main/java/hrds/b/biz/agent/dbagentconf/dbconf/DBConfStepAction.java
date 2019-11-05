@@ -65,12 +65,22 @@ public class DBConfStepAction extends BaseAction{
 				" t1.classify_id = t2.classify_id  where database_id = ?", databaseId);
 	}
 
-	@Method(desc = "根据数据库类型和端口获得数据库连接url等信息", logicStep = "" +
+	@Method(desc = "根据数据库类型获得数据库连接url等信息", logicStep = "" +
 			"1、调用工具类方法直接获取数据并返回")
 	@Param(name = "dbType", desc = "数据库类型", range = "DatabaseType代码项")
 	@Return(desc = "数据库连接url属性信息",range = "不会为null",isBean = true)
-	public DBConnectionProp getJDBCDriver(String dbType) {
+	public DBConnectionProp getDBConnectionProp(String dbType) {
 		return ConnUtil.getConnURLProp(dbType);
+		//数据可访问权限处理方式
+		//不与数据库交互，无需限制访问权限
+	}
+
+	@Method(desc = "根据数据库类型获取数据库驱动", logicStep = "" +
+			"1、调用工具类方法直接获取数据并返回")
+	@Param(name = "dbType", desc = "数据库类型", range = "DatabaseType代码项")
+	@Return(desc = "数据库连接驱动信息",range = "不会为null")
+	public String getJDBCDriver(String dbType){
+		return ConnUtil.getJDBCDriver(dbType);
 		//数据可访问权限处理方式
 		//不与数据库交互，无需限制访问权限
 	}

@@ -43,7 +43,7 @@ public class ConnUtilTest {
 	 *
 	 * */
 	@Test
-	public void getConnURL(){
+	public void getDBConnectionProp(){
 		//正确的使用场景1、构建mysql数据库访问场景，断言得到的数据是否正确
 		DBConnectionProp mysqlConnDBConnectionProp = ConnUtil.getConnURLProp(DatabaseType.MYSQL.getCode());
 		assertThat(mysqlConnDBConnectionProp == null, is(false));
@@ -149,6 +149,64 @@ public class ConnUtilTest {
 		assertThat(h2ConnDBConnectionProp.getUrlSuffix(), is(""));
 
 		//错误的使用场景14、构建错误的数据库访问场景，断言代码对错误逻辑的处理是否符合预期，该场景在DBConfStepActionTest测试用例的getJDBCDriver中有了体现
+	}
+
+	/**
+	 * 测试根据数据库类型获取数据库驱动
+	 *
+	 * 正确的使用场景1、构建mysql数据库访问场景，断言得到的数据是否正确
+	 * 正确的使用场景2、构建oracle9i数据库访问场景，断言得到的数据是否正确
+	 * 正确的使用场景3、构建oracle10g数据库访问场景，断言得到的数据是否正确
+	 * 正确的使用场景4、构建DB2数据库访问场景，断言得到的数据是否正确
+	 * 正确的使用场景5、构建SqlServer2000数据库访问场景，断言得到的数据是否正确
+	 * 正确的使用场景6、构建SqlServer2005数据库访问场景，断言得到的数据是否正确
+	 * 正确的使用场景7、构建Postgresql数据库访问场景，断言得到的数据是否正确
+	 * 正确的使用场景8、构建SybaseASE125数据库访问场景，断言得到的数据是否正确
+	 * 正确的使用场景9、构建ApacheDerby数据库访问场景，断言得到的数据是否正确
+	 * 正确的使用场景10、构建GBase数据库访问场景，断言得到的数据是否正确
+	 * 正确的使用场景11、构建TeraData数据库访问场景，断言得到的数据是否正确
+	 * 正确的使用场景12、构建Informatic数据库访问场景，断言得到的数据是否正确
+	 * 正确的使用场景13、构建H2数据库访问场景，断言得到的数据是否正确
+	 *
+	 * 错误的使用场景1、构建错误的数据库访问场景，断言代码对错误逻辑的处理是否符合预期
+	 *
+	 * 错误的使用场景未达到三项原因：一个错误的使用场景即可代表所有的不合法访问方式
+	 *
+	 * @Param: 无
+	 *
+	 * @return: 无
+	 *
+	 * */
+	@Test
+	public void getJDBCDriver(){
+		//正确的使用场景1、构建mysql数据库访问场景，断言得到的数据是否正确
+		assertThat(ConnUtil.getJDBCDriver(DatabaseType.MYSQL.getCode()),is("com.mysql.jdbc.Driver"));
+		//正确的使用场景2、构建Oracle9i数据库访问场景，断言得到的数据是否正确
+		assertThat(ConnUtil.getJDBCDriver(DatabaseType.Oracle9i.getCode()),is("oracle.jdbc.driver.OracleDriver"));
+		//正确的使用场景3、构建Oracle10g数据库访问场景，断言得到的数据是否正确
+		assertThat(ConnUtil.getJDBCDriver(DatabaseType.Oracle10g.getCode()),is("oracle.jdbc.OracleDriver"));
+		//正确的使用场景4、构建DB2数据库访问场景，断言得到的数据是否正确
+		assertThat(ConnUtil.getJDBCDriver(DatabaseType.DB2.getCode()),is("com.ibm.db2.jcc.DB2Driver"));
+		//正确的使用场景5、构建SqlServer2000数据库访问场景，断言得到的数据是否正确
+		assertThat(ConnUtil.getJDBCDriver(DatabaseType.SqlServer2000.getCode()),is("com.microsoft.sqlserver.jdbc.SQLServerDriver"));
+		//正确的使用场景6、构建SqlServer2005数据库访问场景，断言得到的数据是否正确
+		assertThat(ConnUtil.getJDBCDriver(DatabaseType.SqlServer2005.getCode()),is("com.microsoft.sqlserver.jdbc.SQLServerDriver"));
+		//正确的使用场景7、构建Postgresql数据库访问场景，断言得到的数据是否正确
+		assertThat(ConnUtil.getJDBCDriver(DatabaseType.Postgresql.getCode()),is("org.postgresql.Driver"));
+		//正确的使用场景8、构建SybaseASE125数据库访问场景，断言得到的数据是否正确
+		assertThat(ConnUtil.getJDBCDriver(DatabaseType.SybaseASE125.getCode()),is("com.sybase.jdbc2.jdbc.SybDriver"));
+		//正确的使用场景9、构建ApacheDerby数据库访问场景，断言得到的数据是否正确
+		assertThat(ConnUtil.getJDBCDriver(DatabaseType.ApacheDerby.getCode()),is("org.apache.derby.jdbc.EmbeddedDriver"));
+		//正确的使用场景10、构建GBase数据库访问场景，断言得到的数据是否正确
+		assertThat(ConnUtil.getJDBCDriver(DatabaseType.GBase.getCode()),is("com.gbase.jdbc.Driver"));
+		//正确的使用场景11、构建TeraData数据库访问场景，断言得到的数据是否正确
+		assertThat(ConnUtil.getJDBCDriver(DatabaseType.TeraData.getCode()),is("com.teradata.jdbc.TeraDriver"));
+		//正确的使用场景12、构建Informatic数据库访问场景，断言得到的数据是否正确
+		assertThat(ConnUtil.getJDBCDriver(DatabaseType.Informatic.getCode()),is("com.informix.jdbc.IfxDriver"));
+		//正确的使用场景13、构建H2数据库访问场景，断言得到的数据是否正确
+		assertThat(ConnUtil.getJDBCDriver(DatabaseType.H2.getCode()),is("org.h2.Driver"));
+
+		//错误的使用场景1、构建错误的数据库访问场景，断言代码对错误逻辑的处理是否符合预期，这个场景在DBConfStepActionTest中的getJDBCDriver()中有体现
 	}
 
 }

@@ -30,7 +30,7 @@ public class TestConnection extends AbstractWebappBaseAction {
 		DbinfosConf.Dbinfo dbinfo = new DbinfosConf.Dbinfo();
 		dbinfo.setName(DbinfosConf.DEFAULT_DBNAME);
 		dbinfo.setDriver(dbSet.getDatabase_drive());
-		dbinfo.setUrl(dbSet.getDatabase_drive());
+		dbinfo.setUrl(dbSet.getJdbc_url());
 		dbinfo.setUsername(dbSet.getUser_name());
 		dbinfo.setPassword(dbSet.getDatabase_pad());
 		dbinfo.setWay(ConnWay.JDBC);
