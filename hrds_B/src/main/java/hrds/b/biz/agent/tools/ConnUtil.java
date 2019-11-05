@@ -5,6 +5,7 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
+import fd.ng.core.utils.StringUtil;
 import hrds.b.biz.agent.bean.DBConnectionProp;
 import hrds.commons.codes.DatabaseType;
 import hrds.commons.exception.AppSystemException;
@@ -23,7 +24,7 @@ public class ConnUtil {
 			"3、返回Map集合")
 	@Param(name = "dbType", desc = "数据库类型", range = "不为空，DatabaseType代码项code值")
 	@Return(desc = "保存着数据库连接URL相关信息的实体类对象", range = "DBConnectionProp实体类对象")
-	public static DBConnectionProp getConnURLProp(String dbType) {
+	public static DBConnectionProp getConnURLProp(String dbType, String port) {
 		//1、构建返回使用Map集合
 		DBConnectionProp template = new DBConnectionProp();
 		//2、判断数据库类型，根据数据库类型构建数据库连接信息填写模板并放入Map
@@ -69,10 +70,17 @@ public class ConnUtil {
 			template.setPortPlaceholder("/");
 			template.setUrlSuffix("");
 		}else if(DatabaseType.TeraData == databaseType){
-			template.setUrlPrefix("jdbc:teradata://");
-			template.setIpPlaceholder("/TMODE=TERA,CHARSET=ASCII,CLIENT_CHARSET=cp936,DATABASE=");
-			template.setPortPlaceholder("");
-			template.setUrlSuffix(",lob_support=off");
+			if(StringUtil.isBlank(port)){
+				template.setUrlPrefix("jdbc:teradata://");
+				template.setIpPlaceholder("/TMODE=TERA,CHARSET=ASCII,CLIENT_CHARSET=cp936,DATABASE=");
+				template.setPortPlaceholder("");
+				template.setUrlSuffix(",lob_support=off");
+			}else{
+				template.setUrlPrefix("jdbc:teradata://");
+				template.setIpPlaceholder("/TMODE=TERA,CHARSET=ASCII,CLIENT_CHARSET=cp936,DATABASE=");
+				template.setPortPlaceholder("");
+				template.setUrlSuffix(",lob_support=off,DBS_PORT=");
+			}
 		}else if(DatabaseType.Informatic == databaseType){
 			template.setUrlPrefix("jdbc:informix-sqli://");
 			template.setIpPlaceholder(":");

@@ -68,9 +68,11 @@ public class DBConfStepAction extends BaseAction{
 	@Method(desc = "根据数据库类型获得数据库连接url等信息", logicStep = "" +
 			"1、调用工具类方法直接获取数据并返回")
 	@Param(name = "dbType", desc = "数据库类型", range = "DatabaseType代码项")
+	@Param(name = "port", desc = "端口号", range = "如果用户选择TaraData，并且没有传端口号，则这个参数可以不传",
+			nullable = true, valueIfNull = "")
 	@Return(desc = "数据库连接url属性信息",range = "不会为null",isBean = true)
-	public DBConnectionProp getDBConnectionProp(String dbType) {
-		return ConnUtil.getConnURLProp(dbType);
+	public DBConnectionProp getDBConnectionProp(String dbType, String port) {
+		return ConnUtil.getConnURLProp(dbType, port);
 		//数据可访问权限处理方式
 		//不与数据库交互，无需限制访问权限
 	}

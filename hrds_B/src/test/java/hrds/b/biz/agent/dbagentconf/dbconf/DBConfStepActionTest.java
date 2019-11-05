@@ -186,6 +186,9 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 	 * 测试根据数据库类型和端口获得数据库连接url等信息
 	 *
 	 * 正确数据访问1：构建mysql数据库访问场景，断言得到的数据是否正确
+	 * 正确数据访问2：构建taradata数据库访问场景，携带端口号，断言得到的数据是否正确
+	 * 正确数据访问3：构建taradata数据库访问场景，不携带端口号，断言得到的数据是否正确
+	 * 正确数据访问1：构建mysql数据库访问场景，断言得到的数据是否正确
 	 * 错误的数据访问1：构建dbType不在DatabaseType代码项中的code值，断言得到的数据是否正确
 	 * 错误访问场景不足的原因：该方法调用只需要一个参数
 	 *
@@ -211,6 +214,39 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 		assertThat( dbConnectionProp.getIpPlaceholder(), is(":"));
 		assertThat( dbConnectionProp.getPortPlaceholder(), is("/"));
 		assertThat( dbConnectionProp.getUrlSuffix(), is("?characterEncoding=utf8&zeroDateTimeBehavior=convertToNull"));
+
+		//正确数据访问2：构建taradata数据库访问场景，携带端口号，断言得到的数据是否正确
+		String rightStringTwo = new HttpClient()
+				.addData("dbType", DatabaseType.TeraData.getCode())
+				.addData("port", "8080")
+				.post(getActionUrl("getDBConnectionProp")).getBodyString();
+		ActionResult rightResultTwo = JsonUtil.toObjectSafety(rightStringTwo, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResultTwo.isSuccess(), is(true));
+
+		DBConnectionProp dbConnectionPropTwo = JSONObject.parseObject(rightResultTwo.getData().toString(), DBConnectionProp.class);
+
+		assertThat("根据测试数据，查询到的数据库连接信息应该有1条", true, is(true));
+		assertThat( dbConnectionPropTwo.getUrlPrefix(), is("jdbc:teradata://"));
+		assertThat( dbConnectionPropTwo.getIpPlaceholder(), is("/TMODE=TERA,CHARSET=ASCII,CLIENT_CHARSET=cp936,DATABASE="));
+		assertThat( dbConnectionPropTwo.getPortPlaceholder(), is(""));
+		assertThat( dbConnectionPropTwo.getUrlSuffix(), is(",lob_support=off,DBS_PORT="));
+
+		//正确数据访问3：构建taradata数据库访问场景，不携带端口号，断言得到的数据是否正确
+		String rightStringThree = new HttpClient()
+				.addData("dbType", DatabaseType.TeraData.getCode())
+				.post(getActionUrl("getDBConnectionProp")).getBodyString();
+		ActionResult rightResultThree = JsonUtil.toObjectSafety(rightStringThree, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResultThree.isSuccess(), is(true));
+
+		DBConnectionProp dbConnectionPropThree = JSONObject.parseObject(rightResultThree.getData().toString(), DBConnectionProp.class);
+
+		assertThat("根据测试数据，查询到的数据库连接信息应该有1条", true, is(true));
+		assertThat( dbConnectionPropThree.getUrlPrefix(), is("jdbc:teradata://"));
+		assertThat( dbConnectionPropThree.getIpPlaceholder(), is("/TMODE=TERA,CHARSET=ASCII,CLIENT_CHARSET=cp936,DATABASE="));
+		assertThat( dbConnectionPropThree.getPortPlaceholder(), is(""));
+		assertThat( dbConnectionPropThree.getUrlSuffix(), is(",lob_support=off"));
 
 		//错误的数据访问1：构建dbType不在DatabaseType代码项中的code值，断言得到的数据是否正确
 		String wrongString = new HttpClient()
