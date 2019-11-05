@@ -83,7 +83,7 @@ public class SysUserAction extends BaseAction {
 	@Method(desc = "获取所有系统用户", logicStep = "获取所有系统用户")
 	@Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数", valueIfNull = "1")
 	@Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", valueIfNull = "10")
-	@Return(desc = "所有系统用户的List集合", range = "List集合")
+	@Return(desc = "所有系统用户的List集合", range = "List集合,类型(UserType)")
 	@Deprecated
 	public List<Sys_user> getSysUserAll(int currPage, int pageSize) {
 		//数据权限校验：根据登录用户的 user_id 进行权限校验
@@ -106,7 +106,7 @@ public class SysUserAction extends BaseAction {
 
 	@Method(desc = "获取所有系统用户列表（不包含超级管理员）",
 			logicStep = "1.查询管理员用户")
-	@Return(desc = "用户列表", range = "不包含超级管理员的系统用户列表")
+	@Return(desc = "用户列表", range = "不包含超级管理员的系统用户列表,类型(UserType)")
 	public Result getSysUserInfo() {
 		//1.查询管理员用户
 		String[] str = new String[]{
