@@ -20,7 +20,7 @@ public class SysParaAction extends BaseAction {
 
 	@Method(desc = "模糊查询获取系统参数信息",
 			logicStep = "获取系统参数信息")
-	@Return(desc = "返回系统参数的集合信息", range = "可以为空,为空表示系统参数信息为空")
+	@Return(desc = "返回系统参数的集合信息", range = "不为null")
 	public List<Sys_para> getSysPara() {
 		//数据权限校验：不做权限检查
 		return Dbo.queryList(Sys_para.class, "SELECT * FROM " + Sys_para.TableName);
@@ -62,17 +62,17 @@ public class SysParaAction extends BaseAction {
 	public void addSysPara(Sys_para sys_para) {
 		//1 : 检查参数合法性
 		//1-1 : 新增时检查,系统参数名称是否已经存在
-		if (Dbo.queryNumber("SELECT COUNT(1) FROM " + Sys_para.TableName + " WHERE para_name = ?",
+		if (Dbo.queryNumber("SELECT COUNT(para_name) FROM " + Sys_para.TableName + " WHERE para_name = ?",
 				sys_para.getPara_name()).orElseThrow(() -> new BusinessException("新增检查参数名称SQL编写错误")
 		) != 0) {
-			throw new BusinessException(String.format("系统参数名称 %s 已经存在,添加错误", sys_para.getPara_name()));
+			throw new BusinessException(String.format("系统参数名称 %s 已经存在,添加失败", sys_para.getPara_name()));
 		}
 		//1-2.校验参数传入参数
 		if (StringUtil.isBlank(sys_para.getPara_name())) {
-			throw new BusinessException("参数名为空！para_name=" + sys_para.getPara_name());
+			throw new BusinessException("参数名为空!" + sys_para.getPara_name());
 		}
 		if (StringUtil.isBlank(sys_para.getPara_value())) {
-			throw new BusinessException("参数值为空！para_name=" + sys_para.getPara_value());
+			throw new BusinessException("参数值为空!" + sys_para.getPara_value());
 		}
 		if (StringUtil.isBlank(sys_para.getPara_type())) {
 			throw new BusinessException("参数类型为空！para_name=" + sys_para.getPara_type());
