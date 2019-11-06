@@ -6,4 +6,5 @@ include 'hrds-commons'
 include 'hrds_Agent'
 include 'hrds_Trigger'
 include 'hrds_Control'
+include 'hrds_C'
 
