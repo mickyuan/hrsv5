@@ -6,6 +6,7 @@ import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.db.jdbc.DefaultPageImpl;
+import fd.ng.db.jdbc.Page;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.entity.Department_info;
@@ -14,7 +15,9 @@ import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.key.PrimayKeyGener;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @DocClass(desc = "部门管理", author = "BY-HLL", createdate = "2019/10/18 0018 下午 03:02")
 public class DepartmentAction extends BaseAction {
@@ -65,13 +68,19 @@ public class DepartmentAction extends BaseAction {
 	}
 
 	@Method(desc = "获取所有部门信息", logicStep = "获取所有部门信息")
-	@Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数", valueIfNull = "1")
-	@Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", valueIfNull = "10")
+	@Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数", nullable = true, valueIfNull = "1")
+	@Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", nullable = true,
+			valueIfNull = "10")
 	@Return(desc = "所有部门信息的List集合", range = "List集合")
-	public List<Department_info> getDepartmentInfo(int currPage, int pageSize) {
+	public Map<String, Object> getDepartmentInfo(int currPage, int pageSize) {
+		Map<String, Object> departmentInfoMap = new HashMap<>();
 		//数据权限校验：不做权限检查
-		return Dbo.queryPagedList(Department_info.class, new DefaultPageImpl(currPage, pageSize),
+		Page page = new DefaultPageImpl(currPage, pageSize);
+		List<Department_info> departmentInfos = Dbo.queryPagedList(Department_info.class, page,
 				"select * from " + Department_info.TableName);
+		departmentInfoMap.put("departmentInfos", departmentInfos);
+		departmentInfoMap.put("totalSize", page.getTotalSize());
+		return departmentInfoMap;
 	}
 
 	@Method(desc = "根据部门id检查部门是否已经存在",
@@ -89,7 +98,7 @@ public class DepartmentAction extends BaseAction {
 			logicStep = "1.根据 dep_name 检查部门名称是否重复")
 	@Param(name = "dep_name", desc = "部门名称", range = "String类型，长度为512，该值唯一", example = "业务部门")
 	@Return(desc = "部门名称是否重复", range = "true：重复，false：不重复")
-	public boolean checkDepNameIsRepeat(String dep_name) {
+	private boolean checkDepNameIsRepeat(String dep_name) {
 		//1.根据 dep_name 检查部门名称是否重复
 		return Dbo.queryNumber("select count(dep_name) count from " + Department_info.TableName + "" +
 						" WHERE dep_name =?",
