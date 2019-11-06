@@ -75,7 +75,7 @@ public class TaskSqlHelper {
 	 *          含义：标示一个调度系统。
 	 *          取值范围：不会为null。
 	 */
-	public static Etl_sys getEltSysBySysCode(String etlSysCd) {
+	public static Etl_sys getEltSysBySysCode(final String etlSysCd) {
 
 		//1.数据库查询，并转换为实体。
 		Object[] row = SqlOperator.queryArray(
@@ -128,7 +128,8 @@ public class TaskSqlHelper {
 	 *          含义：表示一个已登记执行的作业。
 	 *          取值范围：不会为null。
 	 */
-	public static Etl_job_cur getEtlJob(String etlSysCd, String etlJob, String currBathDate) {
+	public static Etl_job_cur getEtlJob(final String etlSysCd, final String etlJob,
+	                                    final String currBathDate) {
 
 		//1.查询数据库获取数据，并转换为Etl_job_cur实体。
 		Object[] row = SqlOperator.queryArray(TaskSqlHelper.getDbConnector(),
@@ -164,7 +165,8 @@ public class TaskSqlHelper {
 	 *          含义：开始执行时间。
 	 *          取值范围：不能为null。
 	 */
-	public static void updateEtlJob2Running(String etlSysCode, String etlJob, String currStTime) {
+	public static void updateEtlJob2Running(final String etlSysCode, final String etlJob,
+	                                        final String currStTime) {
 
 		//1.更新数据库数据。
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
@@ -184,7 +186,7 @@ public class TaskSqlHelper {
 	 *          含义：表示一个作业调度历史。
 	 *          取值范围：不能为null。
 	 */
-	public static void insertIntoEltJobDispHis(Etl_job_disp_his etlJobDispHis) {
+	public static void insertIntoEltJobDispHis(final Etl_job_disp_his etlJobDispHis) {
 
 		//1.更新数据库数据。
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
@@ -220,9 +222,10 @@ public class TaskSqlHelper {
 	 *          含义：当前跑批日期。
 	 *          取值范围：不能为null。
 	 */
-	public static void updateEtlJob2Complete(String jobDispStatus, String currEndTime,
-	                                        Integer jobReturnVal, String lastExeTime,
-	                                        String etlSysCode, String etlJob, String currBathDate) {
+	public static void updateEtlJob2Complete(final String jobDispStatus, final String currEndTime,
+	                                         final Integer jobReturnVal, final String lastExeTime,
+	                                         final String etlSysCode, final String etlJob,
+	                                         final String currBathDate) {
 		//1.更新数据库数据。
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
 
@@ -250,8 +253,8 @@ public class TaskSqlHelper {
 	 *          含义：作业标识。
 	 *          取值范围：不能为null。
 	 */
-	public static void updateEtlJobDefLastExeTime(String lastExeTime, String etlSysCode,
-	                                              String etlJob) {
+	public static void updateEtlJobDefLastExeTime(final String lastExeTime, final String etlSysCode,
+	                                              final String etlJob) {
 		//1.更新数据库数据。
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
 
@@ -276,7 +279,8 @@ public class TaskSqlHelper {
 	 *          含义：作业标识。
 	 *          取值范围：不能为null。
 	 */
-	public static void updateEtlJobProcessId(String processId, String etlSysCode, String etlJob) {
+	public static void updateEtlJobProcessId(final String processId, final String etlSysCode,
+	                                         final String etlJob) {
 
 		//1.更新数据库数据。
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
@@ -304,8 +308,8 @@ public class TaskSqlHelper {
 	 *          含义：一条干预信息数据。
 	 *          取值范围：不会为null。
 	 */
-	public static Optional<Etl_job_hand> getEtlJobHandle(String etlSysCode,  String etlJob,
-	                                                     String handType) {
+	public static Optional<Etl_job_hand> getEtlJobHandle(final String etlSysCode, final String etlJob,
+	                                                     final String handType) {
 
 		return SqlOperator.queryOneObject(TaskSqlHelper.getDbConnector(), Etl_job_hand.class,
 				"SELECT * FROM " + Etl_job_hand.TableName +
@@ -325,7 +329,7 @@ public class TaskSqlHelper {
 	 *          含义：表示一条系统/作业干预信息。
 	 *          取值范围：不能为null。
 	 */
-	public static void updateEtlJobHandle(Etl_job_hand etlJobHand) {
+	public static void updateEtlJobHandle(final Etl_job_hand etlJobHand) {
 
 		//1.更新数据库数据。
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
@@ -355,7 +359,7 @@ public class TaskSqlHelper {
 	 *          含义：表示一条系统/作业干预历史。
 	 *          取值范围：不能为null。
 	 */
-	public static void insertIntoEtlJobHandleHistory(Etl_job_hand_his etlJobHandHis) {
+	public static void insertIntoEtlJobHandleHistory(final Etl_job_hand_his etlJobHandHis) {
 
 		//1.更新数据库数据。
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
@@ -380,7 +384,8 @@ public class TaskSqlHelper {
 	 *          含义：干预类型。
 	 *          取值范围：TaskJobHandleHelper类中的固定值，不能为null。
 	 */
-	public static void deleteEtlJobHand(String etlSysCd, String etlJob, String etlHandType) {
+	public static void deleteEtlJobHand(final String etlSysCd, final String etlJob,
+	                                    final String etlHandType) {
 
 		//1.更新数据库数据。
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
@@ -406,7 +411,7 @@ public class TaskSqlHelper {
 	 *          含义：表示一个已登记执行的作业。
 	 *          取值范围：不会为null。
 	 */
-	private static Etl_job_cur obj2EtlJobCur(Object[] row) {
+	private static Etl_job_cur obj2EtlJobCur(final Object[] row) {
 
 		//1.检测传入的对象数组参数元素个数是否为33个；
 		if(row.length != 33 ) {

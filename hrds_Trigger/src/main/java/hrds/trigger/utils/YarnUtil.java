@@ -46,7 +46,7 @@ class YarnUtil {
 	 *          含义：作业编号。
 	 *          取值范围：作业编号/空字符串。
 	 */
-	static String getApplicationIdByJobName(String jobName) {
+	static String getApplicationIdByJobName(final String jobName) {
 
 		EnumSet<YarnApplicationState> appStates = EnumSet.noneOf(YarnApplicationState.class);
 		List<ApplicationReport> appsReport;
@@ -77,7 +77,7 @@ class YarnUtil {
 	 *          含义：表示作业的运行状况。
 	 *          取值范围：不会为null。
 	 */
-	static YarnApplicationReport getApplicationReportByAppId(String id) {
+	static YarnApplicationReport getApplicationReportByAppId(final String id) {
 
 		String[] split = id.split(YARN_PARA_SEPARATOR);
 		ApplicationId appId = ApplicationId.newInstance(Long.parseLong(split[1]),

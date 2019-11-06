@@ -41,7 +41,7 @@ public class ProcessUtil {
 	 *          含义：进程号。
 	 *          取值范围：int范围数组。
 	 */
-	public static int getPid(Process process) {
+	public static int getPid(final Process process) {
 
 		try {
 			if(Platform.isWindows()) {
@@ -72,7 +72,7 @@ public class ProcessUtil {
 	 *          含义：Yarn中的作业编号。
 	 *          取值范围：不会为null。
 	 */
-	public static String getYarnAppID(String yarnName) throws InterruptedException {
+	public static String getYarnAppID(final String yarnName) throws InterruptedException {
 
 		while(true) {
 
@@ -97,7 +97,7 @@ public class ProcessUtil {
 	 *          含义：作业运行状态。
 	 *          取值范围：TaskExecutor.PROGRAM_DONE_FLAG/TaskExecutor.PROGRAM_ERROR_FLAG。
 	 */
-	public static int getStatusOnYarn(String appId) throws InterruptedException {
+	public static int getStatusOnYarn(final String appId) throws InterruptedException {
 
 		while(true) {
 

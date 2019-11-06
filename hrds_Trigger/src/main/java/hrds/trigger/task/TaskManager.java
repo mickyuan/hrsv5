@@ -259,7 +259,7 @@ public class TaskManager {
 	 *          含义：表示一个作业干预。
 	 *          取值范围：不能为null。
 	 */
-	private static void updateHandle(Etl_job_hand etlJobHand) {
+	private static void updateHandle(final Etl_job_hand etlJobHand) {
 
 		etlJobHand.setEnd_time(DateUtil.getDateTime(DateUtil.DATETIME_DEFAULT));
 		//TODO 此处第三步既然要删除，为什么第一步要更新
@@ -294,7 +294,7 @@ public class TaskManager {
 	 *          含义：表示一个作业的调度历史。
 	 *          取值范围：不会为null。
 	 */
-	private static Etl_job_disp_his etlJobCur2EtlJobDispHis(Etl_job_cur etlJobCur) {
+	private static Etl_job_disp_his etlJobCur2EtlJobDispHis(final Etl_job_cur etlJobCur) {
 
 		Etl_job_disp_his etlJobDispHis = new Etl_job_disp_his();
 		etlJobDispHis.setEtl_sys_cd(etlJobCur.getEtl_sys_cd());
