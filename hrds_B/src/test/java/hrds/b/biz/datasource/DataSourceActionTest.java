@@ -604,7 +604,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .buildSession()
                 .addData("user_id", UserId)
                 .addData("password", "1")
-                .post("http://127.0.0.1:8888/A/action/hrds/a/biz/login/login")
+                .post("http://127.0.0.1:8099/A/action/hrds/a/biz/login/login")
                 .getBodyString();
         Optional<ActionResult> ar = JsonUtil.toObjectSafety(responseValue, ActionResult.class);
         assertThat("用户登录", ar.get().isSuccess(), is(true));
