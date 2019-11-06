@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -107,12 +108,15 @@ public class TaskJobHelperTest {
 		String dirPrefix1 = "/data01/#{txdate}/#{date}_prefix1/#{txdate_pre}/#{txdate_next}";
 		String dir1 = TaskJobHelper.transformDirOrName(currBathDate, dirPrefix1);
 		assertEquals("测试参数变量前缀为[#]时，参数占位符是否处理正确",
-				"/data01/20190915/20190925_prefix1/20190914/20190916", dir1);
+				"/data01/20190915/" + LocalDate.now().format(DateUtil.DATE_DEFAULT) +
+						"_prefix1/20190914/20190916",	dir1);
 
 		String dirPrefix2 = "/data01/!{txdate}/!{date}_prefix2/!{txdate_pre}/!{txdate_next}/!{test}";
 		String dir2 = TaskJobHelper.transformDirOrName(currBathDate, dirPrefix2);
 		assertEquals("测试参数变量前缀为[!]时，参数占位符是否处理正确",
-				"/data01/2019年09月15日/2019-09-25_prefix2/2019-09-14/20190916/anyone", dir2);
+				"/data01/2019年09月15日/" + LocalDate.now().format(
+						DateTimeFormatter.ofPattern("yyyy-MM-dd")) + "_prefix2/2019-09-14" +
+						"/20190916/anyone", dir2);
 
 		String programName = "!{execute_target}.jar";
 		String program = TaskJobHelper.transformDirOrName(currBathDate, programName);
