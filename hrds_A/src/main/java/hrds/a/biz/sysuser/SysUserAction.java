@@ -20,10 +20,7 @@ import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.key.PrimayKeyGener;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @DocClass(desc = "系统用户管理", author = "BY-HLL", createdate = "2019/10/17 0017")
 public class SysUserAction extends BaseAction {
@@ -32,13 +29,13 @@ public class SysUserAction extends BaseAction {
 	private static final long ROLE_ID = 1001;
 	private static final SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 
-	@Method(desc = "新增系统用户",
+	@Method(desc = "保存系统用户",
 			logicStep = "1.校验输入参数正确性" +
 					"2.设置用户属性信息(非页面传入的值)" +
 					"3.新增系统用户信息")
 	@Param(name = "sysUser", desc = "Sys_user的实体", range = "Sys_user的实体", example = "sysUser", isBean = true)
 	@Return(desc = "void 无返回结果", range = "无")
-	public void addSysUser(Sys_user sysUser) {
+	public void saveSysUser(Sys_user sysUser) {
 		//数据权限校验：根据登录用户的 user_id 进行权限校验
 		//1.校验输入参数正确性
 		if (StringUtil.isBlank(sysUser.getDep_id().toString())) {
@@ -94,15 +91,17 @@ public class SysUserAction extends BaseAction {
 
 	@Method(desc = "获取单个用户信息",
 			logicStep = "1.根据用户id查询，返回查询结果")
-	@Param(name = "user_id", desc = "用户id", range = "自动生成的id")
+	@Param(name = "user_id", desc = "用户id", range = "自动生成的id", nullable = true)
 	@Return(desc = "单个用户的对象", range = "无限制")
-	public Optional<Sys_user> getUserByUserId(long user_id) {
+	public Optional<Sys_user> getSysUserByUserId(long user_id) {
 		//1.根据用户id查询，返回查询结果
 		if (checkSysUserIsExist(user_id)) {
 			throw new BusinessException("查询不存在的用户id，user_id=" + user_id);
 		}
-		return Dbo.queryOneObject(Sys_user.class, "select * from sys_user where user_id = ?", user_id);
+		return Dbo.queryOneObject(Sys_user.class, "select * from " + Sys_user.TableName + " where user_id = ?",
+				user_id);
 	}
+
 
 	@Method(desc = "获取所有系统用户列表（不包含超级管理员）",
 			logicStep = "1.查询管理员用户")
@@ -149,55 +148,96 @@ public class SysUserAction extends BaseAction {
 			logicStep = "1.管理员功能菜单" +
 					"2.操作员功能菜单" +
 					"3.返回功能菜单列表")
-	@Param(name = "user_is_admin", desc = "用户类别", range = "0：管理员功能菜单，1：操作员功能菜单", example = "1",
+	@Param(name = "userIsAdmin", desc = "用户类别", range = "0：管理员功能菜单，1：操作员功能菜单", example = "1",
 			valueIfNull = "0")
 	@Return(desc = "用户功能菜单集合", range = "userFunctionMap：用户功能菜单")
-	public Map getUserFunctionMenu(String user_is_admin) {
-		Map<String, String> userFunctionMenuMap = new HashMap<>();
+	public List<String> getUserFunctionMenu(String userIsAdmin) {
 		//0：否,管理员功能菜单,1：是,操作员功能菜单
-		if (IsFlag.Fou.getCode().equalsIgnoreCase(user_is_admin)) {
+		List<String> menuList = new ArrayList<>();
+		if (IsFlag.Fou.getCode().equalsIgnoreCase(userIsAdmin)) {
 			//1.管理员功能菜单
-			userFunctionMenuMap.put(UserType.CaijiGuanLiYuan.getCode(), UserType.CaijiGuanLiYuan.getValue());
-			userFunctionMenuMap.put(UserType.ZuoYeGuanLiYuan.getCode(), UserType.ZuoYeGuanLiYuan.getValue());
-			userFunctionMenuMap.put(UserType.ShuJuKSHSJY.getCode(), UserType.ShuJuKSHSJY.getValue());
-			userFunctionMenuMap.put(UserType.JianKongGuanLiYuan.getCode(), UserType.JianKongGuanLiYuan.getValue());
-			userFunctionMenuMap.put(UserType.RESTJieKouGuanLiYuan.getCode(), UserType.RESTJieKouGuanLiYuan.getValue());
-			userFunctionMenuMap.put(UserType.FenCiQiGuanLiYuan.getCode(), UserType.FenCiQiGuanLiYuan.getValue());
-			userFunctionMenuMap.put(UserType.JiQiXueXiGuanLiYuan.getCode(), UserType.JiQiXueXiGuanLiYuan.getValue());
-			userFunctionMenuMap.put(UserType.LiuShuJuGuanLiYuan.getCode(), UserType.LiuShuJuGuanLiYuan.getValue());
-			userFunctionMenuMap.put(UserType.ShuJuKuPeiZhi.getCode(), UserType.ShuJuKuPeiZhi.getValue());
-			userFunctionMenuMap.put(UserType.ZiZhuFenXiGuanLi.getCode(), UserType.ZiZhuFenXiGuanLi.getValue());
-		} else if (IsFlag.Shi.getCode().equalsIgnoreCase(user_is_admin)) {
+			menuList.add(UserType.CaijiGuanLiYuan.getCode());
+			menuList.add(UserType.ZuoYeGuanLiYuan.getCode());
+			menuList.add(UserType.ShuJuKSHSJY.getCode());
+			menuList.add(UserType.JianKongGuanLiYuan.getCode());
+			menuList.add(UserType.RESTJieKouGuanLiYuan.getCode());
+			menuList.add(UserType.FenCiQiGuanLiYuan.getCode());
+			menuList.add(UserType.JiQiXueXiGuanLiYuan.getCode());
+			menuList.add(UserType.LiuShuJuGuanLiYuan.getCode());
+			menuList.add(UserType.ShuJuKuPeiZhi.getCode());
+			menuList.add(UserType.ZiZhuFenXiGuanLi.getCode());
+		} else if (IsFlag.Shi.getCode().equalsIgnoreCase(userIsAdmin)) {
 			//2.操作员功能菜单
-			userFunctionMenuMap.put(UserType.CaiJiYongHu.getCode(), UserType.CaiJiYongHu.getValue());
-			userFunctionMenuMap.put(UserType.YeWuYongHu.getCode(), UserType.YeWuYongHu.getValue());
-			userFunctionMenuMap.put(UserType.ZuoYeGuanLiYuan.getCode(), UserType.ZuoYeGuanLiYuan.getValue());
-			userFunctionMenuMap.put(UserType.ShuJuKSHBianJI.getCode(), UserType.ShuJuKSHBianJI.getValue());
-			userFunctionMenuMap.put(UserType.ShuJuKSHChaKan.getCode(), UserType.ShuJuKSHChaKan.getValue());
-			userFunctionMenuMap.put(UserType.RESTYongHu.getCode(), UserType.RESTYongHu.getValue());
-			userFunctionMenuMap.put(UserType.JiShiGuanLiYuan.getCode(), UserType.JiShiGuanLiYuan.getValue());
-			userFunctionMenuMap.put(UserType.JiShiJiaGongGuanLiYuan.getCode(),
-					UserType.JiShiJiaGongGuanLiYuan.getValue());
-			userFunctionMenuMap.put(UserType.LiuShuJuShengChanYongHu.getCode(),
-					UserType.LiuShuJuShengChanYongHu.getValue());
-			userFunctionMenuMap.put(UserType.BaoBiaoChuanJian.getCode(), UserType.BaoBiaoChuanJian.getValue());
-			userFunctionMenuMap.put(UserType.BaoBiaoChaKan.getCode(), UserType.BaoBiaoChaKan.getValue());
-			userFunctionMenuMap.put(UserType.LiuShuJuXiaoFeiYongHu.getCode(),
-					UserType.LiuShuJuXiaoFeiYongHu.getValue());
-			userFunctionMenuMap.put(UserType.ShuJuGuanKongGuanLiYuan.getCode(),
-					UserType.ShuJuGuanKongGuanLiYuan.getValue());
-			userFunctionMenuMap.put(UserType.ZiZhuFenXiCaoZuo.getCode(), UserType.ZiZhuFenXiCaoZuo.getValue());
+			menuList.add(UserType.CaiJiYongHu.getCode());
+			menuList.add(UserType.YeWuYongHu.getCode());
+			menuList.add(UserType.ZuoYeGuanLiYuan.getCode());
+			menuList.add(UserType.ShuJuKSHBianJI.getCode());
+			menuList.add(UserType.ShuJuKSHChaKan.getCode());
+			menuList.add(UserType.RESTYongHu.getCode());
+			menuList.add(UserType.JiShiGuanLiYuan.getCode());
+			menuList.add(UserType.JiShiJiaGongGuanLiYuan.getCode());
+			menuList.add(UserType.LiuShuJuShengChanYongHu.getCode());
+			menuList.add(UserType.BaoBiaoChuanJian.getCode());
+			menuList.add(UserType.BaoBiaoChaKan.getCode());
+			menuList.add(UserType.LiuShuJuXiaoFeiYongHu.getCode());
+			menuList.add(UserType.ShuJuGuanKongGuanLiYuan.getCode());
+			menuList.add(UserType.ZiZhuFenXiCaoZuo.getCode());
 		}
 		//3.返回功能菜单列表
-		return userFunctionMenuMap;
+		return menuList;
+	}
+
+	@Method(desc = "获取部门信息和用户功能菜单信息",
+			logicStep = "1.获取部门信息" +
+					"2.获取用户功能菜单,获取管理员功能菜单" +
+					"3.获取用户功能菜单,获取操作员功能菜单")
+	@Return(desc = "添加用户功能回显数据Map", range = "Map类型数据")
+	public Map<String, Object> getDepartmentInfoAndUserFunctionMenuInfo() {
+		Map<String, Object> addUserInfoMap = new HashMap<>();
+		//1.获取部门信息
+		addUserInfoMap.put("departmentList", getDepartmentInfo(null).toList());
+		//2.获取用户功能菜单,获取管理员功能菜单
+		addUserInfoMap.put("managerFunctionMenuList", getUserFunctionMenu("0"));
+		//3.获取用户功能菜单,获取操作员功能菜单
+		addUserInfoMap.put("operatorFunctionMenuList", getUserFunctionMenu("1"));
+		return addUserInfoMap;
+	}
+
+	@Method(desc = "编辑系统用户功能",
+			logicStep = "1.获取部门数据信息" +
+					"2.获取编辑的用户信息" +
+					"3.获取用户功能菜单,默认获取管理员功能菜单")
+	@Param(name = "userId", desc = "用户Id", range = "long类型值,10位长度")
+	@Return(desc = "编辑系统用户的回显数据Map", range = "Map类型数据")
+	public Map<String, Object> editSysUserFunction(long userId) {
+		Map<String, Object> editUserInfoMap = new HashMap<>();
+		//1.获取部门数据信息
+		Result departmentInfo = getDepartmentInfo(null);
+		editUserInfoMap.put("departmentList", departmentInfo.toList());
+		//2.获取编辑的用户信息
+		if (StringUtil.isBlank(String.valueOf(userId))) {
+			throw new BusinessException("编辑用户id为空!");
+		}
+		if (checkSysUserIsExist(userId)) {
+			throw new BusinessException("编辑的用户id不存在!");
+		}
+		Optional<Sys_user> editSysUserInfoOptional = getSysUserByUserId(userId);
+		editUserInfoMap.put("editSysUserInfo", editSysUserInfoOptional);
+		//3.获取用户功能菜单,获取编辑用户的功能菜单
+		if (!editSysUserInfoOptional.get().getUseris_admin().isEmpty()) {
+			editUserInfoMap.put("userFunctionMenuList",
+					getUserFunctionMenu(editSysUserInfoOptional.get().getUseris_admin()));
+		}
+		return editUserInfoMap;
 	}
 
 	@Method(desc = "获取部门信息",
 			logicStep = "获取部门信息" +
 					"如果部门id为空则获取所有部门信息")
-	@Param(name = "dep_id", desc = "部门id", range = "Integer类型，长度为10，此id唯一", example = "1000000001")
+	@Param(name = "dep_id", desc = "部门id", range = "Integer类型，长度为10，此id唯一", example = "1000000001",
+			nullable = true)
 	@Return(desc = "部门信息的Result", range = "无限制")
-	public Result getDepartmentInfo(String dep_id) {
+	private Result getDepartmentInfo(String dep_id) {
 		//获取部门信息
 		asmSql.clean();
 		asmSql.addSql("select * from department_info");
@@ -206,7 +246,7 @@ public class SysUserAction extends BaseAction {
 			asmSql.addSql(" where dep_id=?");
 			asmSql.addParam(Long.valueOf(dep_id));
 		}
-		asmSql.addParam(" order by create_date asc,create_time asc");
+		asmSql.addSql(" order by create_date asc,create_time asc");
 		return Dbo.queryResult(asmSql.sql(), asmSql.params());
 	}
 
