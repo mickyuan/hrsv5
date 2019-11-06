@@ -90,7 +90,8 @@ public class DBConfStepAction extends BaseAction{
 	@Method(desc = "获取所有数据库的名称和编码信息", logicStep = "" +
 			"1、构造List集合，放入所有数据库信息" +
 			"2、返回")
-	@Return(desc = "数据库名称及编码信息",range = "不会为null")
+	@Return(desc = "数据库名称及编码信息",range = "不会为null" +
+			"请前端人员展示value，向后端发送数据时发送code")
 	public List<DatabaseType> getDatabaseType(){
 		List<DatabaseType> returnList = new ArrayList<>();
 		returnList.add(DatabaseType.ApacheDerby);
