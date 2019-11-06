@@ -145,6 +145,9 @@ public class DepartmentActionTest extends WebBaseTestCase {
 			SqlOperator.execute(db,
 					"delete from " + Department_info.TableName + " where dep_name=?",
 					"测试添加部门init-hll");
+			SqlOperator.execute(db,
+					"delete from " + Department_info.TableName + " where dep_name=?",
+					"测试修改部门init-hll");
 			SqlOperator.commitTransaction(db);
 			long deptDataNum;
 			deptDataNum = SqlOperator.queryNumber(db,
@@ -165,6 +168,10 @@ public class DepartmentActionTest extends WebBaseTestCase {
 			deptDataNum = SqlOperator.queryNumber(db,
 					"select count(1) from " + Department_info.TableName + " where dep_name=?",
 					"测试添加部门init-hll"
+			).orElseThrow(() -> new RuntimeException("count fail!"));
+			deptDataNum = SqlOperator.queryNumber(db,
+					"select count(1) from " + Department_info.TableName + " where dep_name=?",
+					"测试修改部门init-hll"
 			).orElseThrow(() -> new RuntimeException("count fail!"));
 			assertThat("Department_info 表此条数据删除后,记录数应该为0", deptDataNum, is(0L));
 		}
@@ -252,7 +259,7 @@ public class DepartmentActionTest extends WebBaseTestCase {
 			//1-1-1.检查 Sys_para 参数是否修改成功
 			OptionalLong number = SqlOperator.queryNumber(db, "select count(*) from " + Department_info.TableName +
 					" where dep_id=?", -1000000002L);
-			assertThat("检查 Sys_para 表数据，表 Sys_para 数据修改成功", number.getAsLong(), is(1L));
+			assertThat("检查表 DepartmentInfo 数据修改成功", number.getAsLong(), is(1L));
 			//1-1-2.检查数据更新是否正确
 			Result rs = SqlOperator.queryResult(db, "select * from " + Department_info.TableName +
 					" where dep_id=?", -1000000002L);
