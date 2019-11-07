@@ -334,7 +334,7 @@ public class TaskManager {
 			//判断等待执行列表的作业是否全部完成
 			if(jobWaitingList.size() == 0) {
 
-				/**
+				/*
 				 * xchao 2019年7月20日 11:37:49
 				 * 如果没有等待的作业，判断作业是否有失败的作业，
 				 * 如果有，强制性将错误的作业执行一次
@@ -368,7 +368,7 @@ public class TaskManager {
 						sysDateShiftFlag = false;
 						return;
 					}else if(isAutoShift) {
-						handleErrorEtlJob = false;
+//						handleErrorEtlJob = false;
 						/*xchao--一天调度多次的作业2017年8月15日 16:25:51 添加按秒、分钟、小时进行执行
 						 *	如果需要日且，日期的时候不在查询作业为F类型的
 						 * */
