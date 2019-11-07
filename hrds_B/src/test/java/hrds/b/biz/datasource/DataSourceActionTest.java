@@ -1295,6 +1295,15 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .post(getActionUrl("saveDataSource")).getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
         assertThat(ar.get().isSuccess(), is(false));
+        // 9.错误的数据访问8，新增数据源信息,数据源编号不是以字母开头的四位字母与数字组合
+        bodyString = new HttpClient()
+                .addData("source_remark", "测试")
+                .addData("datasource_name", "dsName07")
+                .addData("datasource_number", "1234")
+                .addData("dep_id", new String[]{"-100"})
+                .post(getActionUrl("saveDataSource")).getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
+        assertThat(ar.get().isSuccess(), is(false));
     }
 
     @Method(desc = "更新数据源data_source,source_relation_dep表信息",

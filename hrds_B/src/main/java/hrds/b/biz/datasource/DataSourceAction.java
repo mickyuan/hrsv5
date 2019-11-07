@@ -33,8 +33,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @DocClass(desc = "数据源增删改查，导入、下载类", author = "dhw", createdate = "2019-9-20 09:23:06")
 public class DataSourceAction extends BaseAction {
@@ -353,10 +354,11 @@ public class DataSourceAction extends BaseAction {
         if (StringUtil.isBlank(datasource_name)) {
             throw new BusinessException("数据源名称不能为空以及不能为空格，datasource_name=" + datasource_name);
         }
-        // 4.datasource_number是否为空且长度是否超过4位
-        if (StringUtil.isBlank(datasource_umber) || datasource_umber.length() > 4) {
-            throw new BusinessException("数据源编号不能为空以及不能为空格或数据源编号长度不能超过四位，" +
-                    "datasource_number=" + datasource_umber);
+        // 4.验证datasource_number为以字母开头的4位字符
+        Matcher matcher = Pattern.compile("^[a-zA-Z][a-zA-z0-9]{3}").matcher(datasource_umber);
+        if (StringUtil.isBlank(datasource_umber) || !matcher.matches()) {
+            throw new BusinessException("数据源编号只能是以字母开头的不超过四位数的字母数字组合，"
+                    + "datasource_number=" + datasource_umber);
         }
         // 5.更新前查询数据源编号是否已存在
         if (Dbo.queryNumber("select count(1) from " + Data_source.TableName + " where datasource_number=?"
