@@ -54,7 +54,7 @@ public class CollTbConfStepAction extends BaseAction {
 						" FROM " + Table_info.TableName + " ti " +
 						" WHERE ti.database_id = ? AND ti.valid_e_date = ? AND ti.is_user_defined = ? ", colSetId,
 				Constant.MAXDATE, IsFlag.Fou.getCode());
-		returnList.put("collTableInfo", returnResult);
+		returnList.put("collTableInfo", returnResult.toList());
 		returnList.put("totalSize", page.getTotalSize());
 
 		return returnList;

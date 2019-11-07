@@ -26,6 +26,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -121,8 +122,8 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(rightResult.isSuccess(), is(true));
-		Result rightData = rightResult.getDataForResult();
-		assertThat("根据测试数据，输入正确的colSetId查询到的非自定义采集表信息应该有" + rightData.getRowCount() + "条", rightData.getRowCount(), is(2));
+		Map<String, Object> rightData = rightResult.getDataForMap(String.class, Object.class);
+		assertThat("根据测试数据，输入正确的colSetId查询到的非自定义采集表总条数应该有2条", rightData.get("totalSize"), is(2));
 
 		//错误的数据访问1：使用错误的colSetId访问，应该拿不到任何数据，但是不会报错，访问正常返回
 		long wrongColSetId = 99999L;
@@ -132,8 +133,8 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		ActionResult wrongResult = JsonUtil.toObjectSafety(wrongString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(wrongResult.isSuccess(), is(true));
-		Result wrongData = wrongResult.getDataForResult();
-		assertThat("根据测试数据，输入错误的colSetId查询到的非自定义采集表信息应该有，但是HTTP访问成功返回" + wrongData.getRowCount() + "条", wrongData.getRowCount(), is(0));
+		Map<String, Object> wrongData = wrongResult.getDataForMap(String.class, Object.class);
+		assertThat("根据测试数据，输入错误的colSetId查询到的非自定义采集表信息应该有0条，但是HTTP访问成功返回", wrongData.get("totalSize"), is(0));
 	}
 
 	/**
@@ -331,12 +332,12 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 				-> new BusinessException("连接失败!"));
 		assertThat(rightResultOne.isSuccess(), is(true));
 
-		Result rightDataOne = rightResultOne.getDataForResult();
-		assertThat("columnId为2003的列字符补齐信息中，col_clean_id为33333", rightDataOne.getLong(0, "col_clean_id"), is(33333L));
-		assertThat("columnId为2003的列字符补齐信息中，补齐类型为后补齐", rightDataOne.getInt(0, "filling_type"), is(Integer.parseInt(POST_COMPLE_FLAG)));
-		assertThat("columnId为2003的列字符补齐信息中，补齐字符为空格", rightDataOne.getString(0, "character_filling"), is(" "));
-		assertThat("columnId为2003的列字符补齐信息中，补齐长度为1", rightDataOne.getLong(0, "filling_length"), is(1L));
-		assertThat("columnId为2003的列字符补齐信息中，columnId为2003", rightDataOne.getLong(0, "column_id"), is(2003L));
+		Map<String, Object> rightDataOne = rightResultOne.getDataForMap(String.class, Object.class);
+		assertThat("columnId为2003的列字符补齐信息中，col_clean_id为33333", rightDataOne.get("col_clean_id"), is(33333));
+		assertThat("columnId为2003的列字符补齐信息中，补齐类型为后补齐", rightDataOne.get("filling_type"), is(POST_COMPLE_FLAG));
+		assertThat("columnId为2003的列字符补齐信息中，补齐字符为空格", rightDataOne.get("character_filling"), is(" "));
+		assertThat("columnId为2003的列字符补齐信息中，补齐长度为1", rightDataOne.get("filling_length"), is(1));
+		assertThat("columnId为2003的列字符补齐信息中，columnId为2003", rightDataOne.get("column_id"), is(2003));
 
 		//正确数据访问2：构造正确的columnId进行测试(2001，对该列没有设置过字符补齐，但是对其所在的表设置过整表字符补齐)
 		String rightStringTwo = new HttpClient()
@@ -346,11 +347,11 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 				-> new BusinessException("连接失败!"));
 		assertThat(rightResultTwo.isSuccess(), is(true));
 
-		Result rightDataTwo = rightResultTwo.getDataForResult();
-		assertThat("columnId为2001的字段，没有设置列字符补齐，所以其所在表sys_user的字符补齐信息中，table_clean_id为11111", rightDataTwo.getLong(0, "table_clean_id"), is(11111L));
-		assertThat("columnId为2001的字段，没有设置列字符补齐，所以其所在表sys_user的字符补齐信息中，补齐类型为前补齐", rightDataTwo.getInt(0, "filling_type"), is(Integer.parseInt(PRE_COMPLE_FLAG)));
-		assertThat("columnId为2001的字段，没有设置列字符补齐，所以其所在表sys_user的字符补齐信息中，补齐字符为wzc", rightDataTwo.getString(0, "character_filling"), is("wzc"));
-		assertThat("columnId为2001的字段，没有设置列字符补齐，所以其所在表sys_user的字符补齐信息中，补齐长度为3", rightDataTwo.getLong(0, "filling_length"), is(3L));
+		Map<String, Object> rightDataTwo = rightResultTwo.getDataForMap(String.class, Object.class);
+		assertThat("columnId为2001的字段，没有设置列字符补齐，所以其所在表sys_user的字符补齐信息中，table_clean_id为11111", rightDataTwo.get("table_clean_id"), is(11111));
+		assertThat("columnId为2001的字段，没有设置列字符补齐，所以其所在表sys_user的字符补齐信息中，补齐类型为前补齐", rightDataTwo.get("filling_type"), is(PRE_COMPLE_FLAG));
+		assertThat("columnId为2001的字段，没有设置列字符补齐，所以其所在表sys_user的字符补齐信息中，补齐字符为wzc", rightDataTwo.get("character_filling"), is("wzc"));
+		assertThat("columnId为2001的字段，没有设置列字符补齐，所以其所在表sys_user的字符补齐信息中，补齐长度为3", rightDataTwo.get("filling_length"), is(3));
 
 		//正确数据访问3：构造没有设置过列字符补齐，也没有设置过表字符补齐的columnId进行测试(3004)，拿到的应该是空的数据集
 		String rightStringThree = new HttpClient()
@@ -359,7 +360,8 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		ActionResult rightResultThree = JsonUtil.toObjectSafety(rightStringThree, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(rightResultThree.isSuccess(), is(true));
-		assertThat("columnId为3004的字段，没有设置列字符补齐，其所在表也没有设置字符补齐，所以访问得到的数据集没有数据", rightResultThree.getDataForResult().getRowCount(), is(0));
+		Map<String, Object> rightDataThree = rightResultThree.getDataForMap(String.class, Object.class);
+		assertThat("columnId为3004的字段，没有设置列字符补齐，其所在表也没有设置字符补齐，所以访问得到的数据集没有数据", rightDataThree.isEmpty(), is(true));
 	}
 
 	/**
@@ -382,11 +384,11 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 				-> new BusinessException("连接失败!"));
 		assertThat(rightResultOne.isSuccess(), is(true));
 
-		Result rightDataOne = rightResultOne.getDataForResult();
-		assertThat("tableId为7001的表字符补齐信息中，table_clean_id为11111", rightDataOne.getLong(0, "table_clean_id"), is(11111L));
-		assertThat("tableId为7001的表字符补齐信息中，补齐类型为前补齐", rightDataOne.getInt(0, "filling_type"), is(Integer.parseInt(PRE_COMPLE_FLAG)));
-		assertThat("tableId为7001的表字符补齐信息中，补齐字符为wzc", rightDataOne.getString(0, "character_filling"), is("wzc"));
-		assertThat("tableId为7001的表字符补齐信息中，补齐长度为3", rightDataOne.getLong(0, "filling_length"), is(3L));
+		Map<String, Object> rightDataOne = rightResultOne.getDataForMap(String.class, Object.class);
+		assertThat("tableId为7001的表字符补齐信息中，table_clean_id为11111", rightDataOne.get("table_clean_id"), is(11111));
+		assertThat("tableId为7001的表字符补齐信息中，补齐类型为前补齐", rightDataOne.get("filling_type"), is(PRE_COMPLE_FLAG));
+		assertThat("tableId为7001的表字符补齐信息中，补齐字符为wzc", rightDataOne.get("character_filling"), is("wzc"));
+		assertThat("tableId为7001的表字符补齐信息中，补齐长度为3", rightDataOne.get("filling_length"), is(3));
 
 		//正确数据访问2：构造正确的tableId进行测试(7002，没有对该表设置过整表字符补齐)，得不到数据
 		String rightStringTwo = new HttpClient()
@@ -395,7 +397,8 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		ActionResult rightResultTwo = JsonUtil.toObjectSafety(rightStringTwo, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(rightResultTwo.isSuccess(), is(true));
-		assertThat("tableId为7001的表，没有设置字符补齐，所以访问得到的数据集没有数据", rightResultTwo.getDataForResult().getRowCount(), is(0));
+		Map<String, Object> rightDataTwo = rightResultTwo.getDataForMap(String.class, Object.class);
+		assertThat("tableId为7001的表，没有设置字符补齐，所以访问得到的数据集没有数据", rightDataTwo.isEmpty(), is(true));
 	}
 
 	/**
@@ -681,11 +684,13 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 				-> new BusinessException("连接失败!"));
 		assertThat(rightResult.isSuccess(), is(true));
 
-		Result rightData = rightResult.getDataForResult();
-		assertThat("尝试获取tableId为7002的表的所有列，由于模拟了分页效果，所以第一页得到的结果集中有9条数据", rightData.getRowCount(), is(9));
-		assertThat("尝试获取tableId为7002的表的所有列，create_id做了字符补齐", rightData.getInt(1, "compflag"), is(1));
-		assertThat("尝试获取tableId为7002的表的所有列，dep_id做了字符补齐", rightData.getInt(2, "compflag"), is(1));
-		assertThat("尝试获取tableId为7002的表的所有列，user_name做了字符替换", rightData.getInt(4, "replaceflag"), is(1));
+		Map<String, Object> rightData = rightResult.getDataForMap(String.class, Object.class);
+		Result columnInfoOne = new Result((List<Map<String, Object>>) rightData.get("columnInfo"));
+		assertThat("尝试获取tableId为7002的表的所有列，得到的全部数据是11条", rightData.get("totalSize"), is(11));
+		assertThat("尝试获取tableId为7002的表的所有列，由于模拟了分页效果，所以第一页得到的结果集中有9条数据", columnInfoOne.getRowCount(), is(9));
+		assertThat("尝试获取tableId为7002的表的所有列，create_id做了字符补齐", columnInfoOne.getInt(1, "compflag"), is(1));
+		assertThat("尝试获取tableId为7002的表的所有列，dep_id做了字符补齐", columnInfoOne.getInt(2, "compflag"), is(1));
+		assertThat("尝试获取tableId为7002的表的所有列，user_name做了字符替换", columnInfoOne.getInt(4, "replaceflag"), is(1));
 
 		String rightStringPageTwo = new HttpClient()
 				.addData("tableId", SYS_USER_TABLE_ID)
@@ -696,8 +701,9 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 				-> new BusinessException("连接失败!"));
 		assertThat(rightResultPageTwo.isSuccess(), is(true));
 
-		Result rightDataPageTwo = rightResultPageTwo.getDataForResult();
-		assertThat("尝试获取tableId为7002的表的所有列，由于模拟了分页效果，所以第二页得到的结果集中有2条数据", rightDataPageTwo.getRowCount(), is(2));
+		Map<String, Object> rightDataPageTwo = rightResultPageTwo.getDataForMap(String.class, Object.class);
+		Result columnInfoTwo = new Result((List<Map<String, Object>>) rightDataPageTwo.get("columnInfo"));
+		assertThat("尝试获取tableId为7002的表的所有列，由于模拟了分页效果，所以第二页得到的结果集中有2条数据", columnInfoTwo.getRowCount(), is(2));
 
 		//错误的数据访问1：尝试获取tableId为7006的表的所有列，由于初始化时没有构造tableId为999999999的数据，所以拿不到数据
 		String wrongString = new HttpClient()
@@ -707,8 +713,8 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 				-> new BusinessException("连接失败!"));
 		assertThat(wrongResult.isSuccess(), is(true));
 
-		Result wrongData = wrongResult.getDataForResult();
-		assertThat("尝试获取tableId为999999999的表的所有列，得到的结果集为空", wrongData.isEmpty(), is(true));
+		Map<String, Object> wrongData = wrongResult.getDataForMap(String.class, Object.class);
+		assertThat("尝试获取tableId为999999999的表的所有列，得到的结果集为空", wrongData.get("totalSize"), is(0));
 	}
 
 	/**

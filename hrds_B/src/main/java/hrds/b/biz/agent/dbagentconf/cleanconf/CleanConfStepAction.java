@@ -16,6 +16,7 @@ import hrds.b.biz.agent.bean.TableCleanParam;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.CharSplitType;
 import hrds.commons.codes.CleanType;
+import hrds.commons.codes.FillingType;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
@@ -77,7 +78,7 @@ public class CleanConfStepAction extends BaseAction{
 		Result returnResult = Dbo.queryPagedResult(page,
 				strSB.toString(), CleanType.ZiFuBuQi.getCode(), CleanType.ZiFuTiHuan.getCode(),
 				CleanType.ZiFuTrim.getCode());
-		returnMap.put("cleanConf", returnResult);
+		returnMap.put("cleanConf", returnResult.toList());
 		returnMap.put("totalSize", page.getTotalSize());
 
 		return returnMap;
@@ -173,30 +174,28 @@ public class CleanConfStepAction extends BaseAction{
 			"   则将补齐字符解码后返回前端" +
 			"4、如果整表字符补齐信息也没有，返回空的Result")
 	@Param(name = "columnId", desc = "列ID，表对应字段表主键，列清洗信息表外键", range = "不为空")
-	@Return(desc = "查询结果集", range = "不为空")
-	public Result getColCompletionInfo(long columnId){
+	@Return(desc = "查询结果集", range = "不为空,key为列名，value为列值")
+	public Map<String, Object> getColCompletionInfo(long columnId){
 		//1、根据columnId在column_clean中查询该表的字符补齐信息
-		Result columnResult = Dbo.queryResult("select col_clean_id, filling_type, character_filling, " +
-				" filling_length, column_id from "+ Column_clean.TableName + " where column_id = ? and clean_type = ?"
+		Map<String, Object> compMap = Dbo.queryOneObject("select col_clean_id, filling_type, character_filling, " +
+						" filling_length, column_id from " + Column_clean.TableName + " where column_id = ? and clean_type = ?"
 				, columnId, CleanType.ZiFuBuQi.getCode());
 		//2、如果查询到，则将补齐字符解码后返回前端
-		if(!columnResult.isEmpty()){
-			columnResult.setObject(0, "character_filling", StringUtil.unicode2String(
-					columnResult.getString(0, "character_filling")));
-			return columnResult;
+		if(!compMap.isEmpty()){
+			compMap.put("character_filling", StringUtil.unicode2String((String) compMap.get("character_filling")));
+			return compMap;
 		}
 		//3、如果没有列字符补齐信息，则根据columnId查其所在表是否配置了整表字符补齐，如果查询到，则将补齐字符解码后返回前端
-		Result tableResult = Dbo.queryResult("SELECT tc.table_clean_id, tc.filling_type, tc.character_filling," +
-				" tc.filling_length FROM "+ Table_clean.TableName +" tc" +
+		Map<String, Object> tbCompMap = Dbo.queryOneObject("SELECT tc.table_clean_id, tc.filling_type, tc.character_filling," +
+				" tc.filling_length FROM " + Table_clean.TableName + " tc" +
 				" WHERE tc.table_id = (SELECT table_id FROM table_column WHERE column_id = ?)" +
 				" AND tc.clean_type = ?", columnId, CleanType.ZiFuBuQi.getCode());
-		//4、如果整表字符补齐信息也没有，返回空的Result
-		if(tableResult.isEmpty()){
-			return tableResult;
+		//4、如果整表字符补齐信息也没有，返回空的map
+		if(tbCompMap.isEmpty()){
+			return tbCompMap;
 		}
-		tableResult.setObject(0, "character_filling",
-				StringUtil.unicode2String(tableResult.getString(0, "character_filling")));
-		return tableResult;
+		tbCompMap.put("character_filling", StringUtil.unicode2String((String) tbCompMap.get("character_filling")));
+		return tbCompMap;
 	}
 
 	/*
@@ -208,19 +207,18 @@ public class CleanConfStepAction extends BaseAction{
 			"3、如果查到了数据，将补齐字符解码之后返回前端")
 	@Param(name = "tableId", desc = "数据库对应表主键，表对应字段表外键，表清洗参数表外键", range = "不为空")
 	@Return(desc = "查询结果集", range = "不为空")
-	public Result getTbCompletionInfo(long tableId){
+	public Map<String, Object> getTbCompletionInfo(long tableId){
 		//1、根据tableId去table_clean表中查询字符补齐规则
-		Result result = Dbo.queryResult("SELECT table_clean_id, filling_type, character_filling, " +
-				"filling_length  FROM "+ Table_clean.TableName +" WHERE table_id = ? AND clean_type = ?"
+		Map<String, Object> tbCompMap = Dbo.queryOneObject("SELECT table_clean_id, filling_type, character_filling, " +
+						"filling_length  FROM " + Table_clean.TableName + " WHERE table_id = ? AND clean_type = ?"
 				, tableId, CleanType.ZiFuBuQi.getCode());
 		//2、如果没有查询到数据，返回空的Result
-		if(result.isEmpty()){
-			return result;
+		if(tbCompMap.isEmpty()){
+			return tbCompMap;
 		}
 		//3、如果查到了数据，将补齐字符解码之后返回前端
-		result.setObject(0, "character_filling",
-				StringUtil.unicode2String(result.getString(0, "character_filling")));
-		return result;
+		tbCompMap.put("character_filling", StringUtil.unicode2String((String) tbCompMap.get("character_filling")));
+		return tbCompMap;
 	}
 
 	/*
@@ -395,12 +393,13 @@ public class CleanConfStepAction extends BaseAction{
 		}
 		sqlSB.append(" ) GROUP BY t1.column_id, t2.table_name order by cast(t1.remark as integer) asc ");
 		//4、返回
-		Result returnResult = Dbo.queryPagedResult(new DefaultPageImpl(currPage, pageSize),
+		Page page = new DefaultPageImpl(currPage, pageSize);
+		Result returnResult = Dbo.queryPagedResult(page,
 				sqlSB.toString(), CleanType.ZiFuBuQi.getCode(), CleanType.ZiFuTiHuan.getCode(),
 				CleanType.ShiJianZhuanHuan.getCode(), CleanType.ZiFuChaiFen.getCode(),
 				CleanType.MaZhiZhuanHuan.getCode(), CleanType.ZiFuTrim.getCode());
-		returnMap.put("columnInfo", returnResult);
-		returnMap.put("totalSize", EMPTY_RESULT_COUNT);
+		returnMap.put("columnInfo", returnResult.toList());
+		returnMap.put("totalSize", page.getTotalSize());
 		return returnMap;
 	}
 
@@ -433,16 +432,14 @@ public class CleanConfStepAction extends BaseAction{
 		Dbo.execute("DELETE FROM clean_parameter WHERE database_id = ?", colSetId);
 		//2、如果配置了字符补齐
 		if(IsFlag.ofEnumByCode(compFlag) == IsFlag.Shi){
-			//这里表示校验补齐方式，1代表前补齐，2代表后补齐，目前没有代码项
-			if(Integer.parseInt(compType) != 1 && Integer.parseInt(compType) != 2){
-				throw new BusinessException("字符补齐方式错误");
-			}
+			//这里表示校验补齐方式，1代表前补齐，2代表后补齐，如果传入的值不对，代码项校验就会报错
+			FillingType fillingType = FillingType.ofEnumByCode(compType);
 			//2-1、构建Clean_parameter对象，设置主键，存储字符补齐信息，将补齐字符转为unicode编码
 			Clean_parameter allTbClean = new Clean_parameter();
 			allTbClean.setC_id(PrimayKeyGener.getNextId());
 			allTbClean.setDatabase_id(colSetId);
 			allTbClean.setClean_type(CleanType.ZiFuBuQi.getCode());
-			allTbClean.setFilling_type(compType);
+			allTbClean.setFilling_type(fillingType.getCode());
 			allTbClean.setCharacter_filling(StringUtil.string2Unicode(compChar));
 			allTbClean.setFilling_length(compLen);
 			//2-2、保存字符补齐信息
