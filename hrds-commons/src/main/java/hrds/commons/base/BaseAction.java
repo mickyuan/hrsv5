@@ -30,6 +30,9 @@ public abstract class BaseAction extends AbstractWebappBaseAction {
         if (user == null) {
             return ActionResultHelper.bizError("no cookies");
         }
+        if (null == user.getUserId()) {
+            return ActionResultHelper.bizError("no cookies");
+        }
         //2、userid是否存在，不存在抛异常
         String userId = String.valueOf(user.getUserId());
         if (StringUtil.isEmpty(userId)) {
