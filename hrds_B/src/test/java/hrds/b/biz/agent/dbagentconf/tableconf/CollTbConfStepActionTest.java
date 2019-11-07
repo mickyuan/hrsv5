@@ -266,6 +266,11 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		assertThat(wrongResult.isSuccess(), is(false));
 	}
 
+	@Test
+	public void getPageSQL(){
+
+	}
+
 	/**
 	 * 测试并行采集SQL测试功能
 	 * TODO 被测方法未完成

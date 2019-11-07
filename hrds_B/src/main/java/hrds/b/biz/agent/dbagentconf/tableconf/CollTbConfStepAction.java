@@ -11,6 +11,7 @@ import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DefaultPageImpl;
+import fd.ng.db.jdbc.Page;
 import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
@@ -41,17 +42,24 @@ public class CollTbConfStepAction extends BaseAction {
 	@Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数", nullable = true, valueIfNull = "1")
 	@Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", nullable = true,
 			valueIfNull = "10")
-	@Return(desc = "查询结果集，查询出的结果可能有0-N条", range = "不会为null")
+	@Return(desc = "查询结果集，key为collTableInfo表示查询到的数据" +
+			"key为totalSize表示查询到的数据的总条数", range = "不会为null")
 	//TODO 按照新的原型设计，这个方法应该查询的内容为table_id，,table_name,table_ch_name,是否并行抽取(这个字段目前还没有)
-	public Result getInitInfo(long colSetId, int currPage, int pageSize) {
-			//1、查询数据并返回
-			return Dbo.queryPagedResult(new DefaultPageImpl(currPage, pageSize),
-					" select ti.table_id,ti.table_name,ti.table_ch_name" +
-					" FROM "+ Table_info.TableName +" ti " +
-					" WHERE ti.database_id = ? AND ti.valid_e_date = ? AND ti.is_user_defined = ? ", colSetId,
-					Constant.MAXDATE, IsFlag.Fou.getCode());
-			//数据可访问权限处理方式
-			//以上table_info表中都没有user_id字段，解决方式待讨论
+	public Map<String, Object> getInitInfo(long colSetId, int currPage, int pageSize) {
+		Map<String, Object> returnList = new HashMap<>();
+		//1、查询数据并返回
+		Page page = new DefaultPageImpl(currPage, pageSize);
+		Result returnResult = Dbo.queryPagedResult(page,
+				" select ti.table_id,ti.table_name,ti.table_ch_name" +
+						" FROM " + Table_info.TableName + " ti " +
+						" WHERE ti.database_id = ? AND ti.valid_e_date = ? AND ti.is_user_defined = ? ", colSetId,
+				Constant.MAXDATE, IsFlag.Fou.getCode());
+		returnList.put("collTableInfo", returnResult);
+		returnList.put("totalSize", page.getTotalSize());
+
+		return returnList;
+		//数据可访问权限处理方式
+		//以上table_info表中都没有user_id字段，解决方式待讨论
 	}
 
 	//TODO 该方法是为前台界面的模糊查询功能提供的，关于这个功能要满足的要求，希望可以讨论一下
@@ -66,9 +74,10 @@ public class CollTbConfStepAction extends BaseAction {
 	@Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数", nullable = true, valueIfNull = "1")
 	@Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", nullable = true,
 			valueIfNull = "10")
-	@Return(desc = "查询结果集", range = "结果集大小视是否查询到数据而定")
+	@Return(desc = "查询结果集", range = "key为tableInfo表示当前页的数据，可以为totalSize表示获取到的总条数")
 	//查询按钮
-	public List<Result> getTableInfo(long colSetId, String inputString, int currPage, int pageSize){
+	public Map<String, Object> getTableInfo(long colSetId, String inputString, int currPage, int pageSize){
+		Map<String, Object> returnMap = new HashMap<>();
 		//1、根据colSetId去数据库中获取数据库设置相关信息
 		Result result = getDatabaseSetInfo(colSetId, getUserId());
 		//数据可访问权限处理方式
@@ -88,7 +97,10 @@ public class CollTbConfStepAction extends BaseAction {
 		JSONObject respObj = JSON.parseObject(respMsg);//TODO 能不能改成BEAN对象
 		List<String> rightTables = (List<String>) respObj.get("tableName");
 		//5、根据表名和colSetId获取界面需要显示的信息并返回
-		return getTableInfoByTableName(rightTables, colSetId, currPage, pageSize);
+		List<Result> tbInfoByTbName = getTableInfoByTableName(rightTables, colSetId, currPage, pageSize);
+		returnMap.put("tableInfo", tbInfoByTbName);
+		returnMap.put("totalSize", rightTables.size());
+		return returnMap;
 	}
 
 	@Method(desc = "根据数据库设置id得到所有表相关信息", logicStep = "" +
@@ -100,9 +112,10 @@ public class CollTbConfStepAction extends BaseAction {
 	@Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数", nullable = true, valueIfNull = "1")
 	@Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", nullable = true,
 			valueIfNull = "10")
-	@Return(desc = "查询结果集", range = "不为空")
+	@Return(desc = "查询结果集", range = "不为空,key为allTableInfo表示当前页数据，key为totalSize表示获取所有数据条目")
 	//查看所有表
-	public List<Result> getAllTableInfo(long colSetId, int currPage, int pageSize){
+	public Map<String, Object> getAllTableInfo(long colSetId, int currPage, int pageSize){
+		Map<String, Object> returnMap = new HashMap<>();
 		//1、根据colSetId去数据库中获取数据库设置相关信息
 		Result result = getDatabaseSetInfo(colSetId, getUserId());
 		if(result.isEmpty()){
@@ -120,7 +133,11 @@ public class CollTbConfStepAction extends BaseAction {
 		//4、对获取到的数据进行处理，根据表名和colSetId获取界面需要显示的信息并返回
 		JSONObject respObj = JSON.parseObject(respMsg);
 		List<String> tableNames = (List<String>) respObj.get("tableName");
-		return getTableInfoByTableName(tableNames, colSetId, currPage, pageSize);
+		List<Result> allTableInfo = getTableInfoByTableName(tableNames, colSetId, currPage, pageSize);
+		returnMap.put("allTableInfo", allTableInfo);
+		returnMap.put("totalSize", tableNames.size());
+
+		return returnMap;
 	}
 
 	@Method(desc = "根据表ID获取给该表定义的分页抽取SQL", logicStep = "" +

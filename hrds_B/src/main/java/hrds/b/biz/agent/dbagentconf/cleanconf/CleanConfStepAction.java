@@ -8,6 +8,7 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DefaultPageImpl;
+import fd.ng.db.jdbc.Page;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
 import hrds.b.biz.agent.bean.ColumnCleanParam;
@@ -22,10 +23,14 @@ import hrds.commons.utils.Constant;
 import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.key.PrimayKeyGener;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @DocClass(desc = "配置清洗规则", author = "WangZhengcheng")
 public class CleanConfStepAction extends BaseAction{
+
+	private static final int EMPTY_RESULT_COUNT = 0;
 
 	/*
 	 * 从上一个页面跳转过来，拿到在配置数据清洗页面显示信息(agentStep2&agentStep2SDO)
@@ -37,15 +42,20 @@ public class CleanConfStepAction extends BaseAction{
 	@Param(name = "colSetId", desc = "数据库设置ID，源系统数据库设置表主键，数据库对应表外键", range = "不为空")
 	@Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数", nullable = true, valueIfNull = "1")
 	@Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", nullable = true, valueIfNull = "10")
-	@Return(desc = "查询结果集", range = "不为空，其中compflag/replaceflag/trimflag三个字段的值，" +
-			"不为0表示该表做了相应的清洗设置，0表示没有做相应的设置")
-	public Result getCleanConfInfo(long colSetId, int currPage, int pageSize){
+	@Return(desc = "查询结果集", range = "不为空，" +
+			"key为cleanConf，表示当前页数据，其中compflag/replaceflag/trimflag三个字段的值，" +
+			"不为0表示该表做了相应的清洗设置，0表示没有做相应的设置" +
+			"key为totalSize，表示查询到的总页数")
+	public Map<String, Object> getCleanConfInfo(long colSetId, int currPage, int pageSize){
+		Map<String, Object> returnMap = new HashMap<>();
 		//1、根据colSetId在table_info表中获取上一个页面配置好的采集表id
 		List<Object> tableIds = Dbo.queryOneColumnList("SELECT table_id FROM " + Table_info.TableName +
 				" WHERE database_id = ? and is_user_defined = ?", colSetId, IsFlag.Fou.getCode());
 		//2、如果没有查询到结果，返回空的Result
 		if(tableIds.isEmpty()){
-			return new Result();
+			returnMap.put("cleanConf", new Result());
+			returnMap.put("totalSize", EMPTY_RESULT_COUNT);
+			return returnMap;
 		}
 		//3、否则根据采集表ID在table_info表和table_clean表中查出页面所需的信息
 		StringBuilder strSB = new StringBuilder("SELECT ti.table_id, ti.table_name, ti.table_ch_name, " +
@@ -62,9 +72,15 @@ public class CleanConfStepAction extends BaseAction{
 		}
 		strSB.append(" ) GROUP BY ti.table_id ");
 
-		return Dbo.queryPagedResult(new DefaultPageImpl(currPage, pageSize),
+		Page page = new DefaultPageImpl(currPage, pageSize);
+
+		Result returnResult = Dbo.queryPagedResult(page,
 				strSB.toString(), CleanType.ZiFuBuQi.getCode(), CleanType.ZiFuTiHuan.getCode(),
 				CleanType.ZiFuTrim.getCode());
+		returnMap.put("cleanConf", returnResult);
+		returnMap.put("totalSize", page.getTotalSize());
+
+		return returnMap;
 	}
 
 	/*
@@ -344,16 +360,20 @@ public class CleanConfStepAction extends BaseAction{
 	@Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", nullable = true,
 			valueIfNull = "10")
 	@Return(desc = "查询结果集", range = "不为空，数据的条数视实际情况而定" +
-			"注意compflag/replaceflag/formatflag/splitflag/codevalueflag/trimflag这六个字段的值" +
-			"不为0表示该列做了相应的清洗设置，0表示没有列相应的设置")
-	public Result getColumnInfo(long tableId, int currPage, int pageSize){
+			"key为columnInfo表示列信息，注意compflag/replaceflag/formatflag/splitflag/codevalueflag/trimflag这六个字段的值" +
+			"不为0表示该列做了相应的清洗设置，0表示没有列相应的设置" +
+			"key为totalSize表示查询到的总条数")
+	public Map<String, Object> getColumnInfo(long tableId, int currPage, int pageSize){
+		Map<String, Object> returnMap = new HashMap<>();
 		//1、根据tableId去到table_column表中查询采集的,并且不是变化而生成的列ID
 		List<Object> columnIds = Dbo.queryOneColumnList("select column_id from " + Table_column.TableName +
 				" where table_id = ? and is_get = ? and is_new = ?", tableId, IsFlag.Shi.getCode(),
 				IsFlag.Fou.getCode());
 		//2、如果没有找到采集列，直接返回一个空的集合
 		if(columnIds.isEmpty()){
-			return new Result();
+			returnMap.put("columnInfo", new Result());
+			returnMap.put("totalSize", EMPTY_RESULT_COUNT);
+			return returnMap;
 		}
 		//3、如果找到了，再进行关联查询，查询出页面需要显示的信息
 		StringBuilder sqlSB = new StringBuilder("SELECT t1.column_id,t1.colume_name,t1.colume_ch_name," +
@@ -375,10 +395,13 @@ public class CleanConfStepAction extends BaseAction{
 		}
 		sqlSB.append(" ) GROUP BY t1.column_id, t2.table_name order by cast(t1.remark as integer) asc ");
 		//4、返回
-		return Dbo.queryPagedResult(new DefaultPageImpl(currPage, pageSize),
+		Result returnResult = Dbo.queryPagedResult(new DefaultPageImpl(currPage, pageSize),
 				sqlSB.toString(), CleanType.ZiFuBuQi.getCode(), CleanType.ZiFuTiHuan.getCode(),
 				CleanType.ShiJianZhuanHuan.getCode(), CleanType.ZiFuChaiFen.getCode(),
-				CleanType.MaZhiZhuanHuan.getCode(),CleanType.ZiFuTrim.getCode());
+				CleanType.MaZhiZhuanHuan.getCode(), CleanType.ZiFuTrim.getCode());
+		returnMap.put("columnInfo", returnResult);
+		returnMap.put("totalSize", EMPTY_RESULT_COUNT);
+		return returnMap;
 	}
 
 	/*
@@ -484,16 +507,15 @@ public class CleanConfStepAction extends BaseAction{
 		Result compResult = Dbo.queryResult("SELECT c_id, filling_type, character_filling, filling_length " +
 						" FROM "+ Clean_parameter.TableName +" WHERE database_id = ? AND clean_type = ?"
 				, colSetId, CleanType.ZiFuBuQi.getCode());
-
+		if(compResult.isEmpty()){
+			return compResult;
+		}
 		if(compResult.getRowCount() > 1){
 			throw new BusinessException("对所有表设置的字符补齐规则不唯一");
 		}
-
-		if(!compResult.isEmpty()){
-			//4、将补齐字符解码
-			compResult.setObject(0, "character_filling",
-					StringUtil.unicode2String(compResult.getString(0, "character_filling")));
-		}
+		//4、将补齐字符解码
+		compResult.setObject(0, "character_filling",
+				StringUtil.unicode2String(compResult.getString(0, "character_filling")));
 		return compResult;
 	}
 
