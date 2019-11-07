@@ -5,6 +5,8 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
+import fd.ng.db.jdbc.DefaultPageImpl;
+import fd.ng.db.jdbc.Page;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.entity.Sys_para;
@@ -12,7 +14,9 @@ import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.key.PrimayKeyGener;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 @DocClass(desc = "系统参数", author = "Mr.Lee")
@@ -20,10 +24,17 @@ public class SysParaAction extends BaseAction {
 
 	@Method(desc = "模糊查询获取系统参数信息",
 			logicStep = "获取系统参数信息")
+	@Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数", valueIfNull = "1")
+	@Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", valueIfNull = "10")
 	@Return(desc = "返回系统参数的集合信息", range = "不为null")
-	public List<Sys_para> getSysPara() {
+	public Map<String, Object> getSysPara(int currPage, int pageSize) {
+		Map<String, Object> sysParaMap = new HashMap<>();
 		//数据权限校验：不做权限检查
-		return Dbo.queryList(Sys_para.class, "SELECT * FROM " + Sys_para.TableName);
+		Page page = new DefaultPageImpl(currPage, pageSize);
+		List<Sys_para> sysParas = Dbo.queryPagedList(Sys_para.class, page, "SELECT * FROM " + Sys_para.TableName);
+		sysParaMap.put("sysParas", sysParas);
+		sysParaMap.put("totalSize", page.getTotalSize());
+		return sysParaMap;
 	}
 
 	@Method(desc = "删除系统参数",
