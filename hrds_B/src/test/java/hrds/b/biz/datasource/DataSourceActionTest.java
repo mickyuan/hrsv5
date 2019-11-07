@@ -2,6 +2,7 @@ package hrds.b.biz.datasource;
 
 import fd.ng.core.annotation.Method;
 import fd.ng.core.utils.DateUtil;
+import fd.ng.core.utils.FileUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.SystemUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
@@ -950,6 +951,8 @@ public class DataSourceActionTest extends WebBaseTestCase {
                     "cs05");
             SqlOperator.execute(db, "delete from data_source where datasource_number=?",
                     "cs06");
+            SqlOperator.execute(db, "delete from data_source where datasource_number=?",
+                    "ds01");
             // 29.提交事务
             SqlOperator.commitTransaction(db);
         }
@@ -1440,10 +1443,6 @@ public class DataSourceActionTest extends WebBaseTestCase {
         assertThat("dsName0", is(dataResource.get("datasource_name").toString()));
         assertThat("ds01", is(dataResource.get("datasource_number").toString()));
         assertThat("数据源详细描述0", is(dataResource.get("source_remark")));
-        assertThat(DepId1 + "," + DepId2, is(dataResource.get("dep_id").toString()));
-        // 验证部门表数据
-        List<Department_info> departmentInfoList = (List<Department_info>) ar.get().getDataForMap()
-                .get("departmentInfo");
         // 部门表初始化了两条数据
         assertThat(dataResource.isEmpty(), is(false));
         // 2.正确的数据访问2，查询数据源信息,正常返回数据，source_id为空
@@ -1452,7 +1451,6 @@ public class DataSourceActionTest extends WebBaseTestCase {
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
         assertThat(ar.get().isSuccess(), is(true));
         // 验证部门表数据
-        departmentInfoList = (List<Department_info>) ar.get().getDataForMap().get("departmentInfo");
         // 部门表初始化了两条数据,判断不为空，因为不确定原数据库是否初始化了数据，这里查询的是所有部门
         assertThat(dataResource.isEmpty(), is(false));
 
@@ -1462,14 +1460,12 @@ public class DataSourceActionTest extends WebBaseTestCase {
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
         assertThat(ar.get().isSuccess(), is(true));
         dataResource = ar.get().getDataForMap();
-        departmentInfoList = (List<Department_info>) ar.get().getDataForMap().get("departmentInfo");
         assertThat(dataResource.get("source_id"), nullValue());
         assertThat(dataResource.get("create_user_id"), nullValue());
         assertThat(dataResource.get("datasource_name"), nullValue());
         assertThat(dataResource.get("datasource_number"), nullValue());
         assertThat(dataResource.get("source_remark"), nullValue());
-        assertThat(dataResource.get("dep_id"), nullValue());
-        assertThat(departmentInfoList.isEmpty(), is(false));
+        assertThat(dataResource.get("dep_name"), nullValue());
     }
 
     @Method(desc = "查询数据采集用户信息，此方法只有一种可能",
@@ -1556,13 +1552,13 @@ public class DataSourceActionTest extends WebBaseTestCase {
                     "5.错误的数据访问4，导入数据源，file为空")
     @Test
     public void uploadFile() {
-        // TODO 这个测试用例上传文件可以去原系统下载一个然后指定文件位置
         // 1.正确的数据访问1，导入数据源，数据全有效
         String bodyString = new HttpClient()
                 .addData("agent_ip", "10.71.4.51")
                 .addData("agent_port", "4321")
                 .addData("user_id", UserId)
-                .addData("file", "C:\\Users\\mine\\Desktop\\1000028765.hrds")
+                .addData("file", FileUtil.getFile("src/test/java/hrds/b/biz/datasource/" +
+                        "uploadFile/upload.hrds").getAbsolutePath())
                 .post(getActionUrl("uploadFile"))
                 .getBodyString();
         Optional<ActionResult> ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
@@ -1642,7 +1638,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .addData("agent_ip", "10.71.4.666")
                 .addData("agent_port", "4321")
                 .addData("user_id", UserId)
-                .addData("file", "C:\\Users\\mine\\Desktop\\1000028765.hrds")
+                .addData("file", "C:\\Users\\mine\\Desktop\\upload.hrds")
                 .post(getActionUrl("uploadFile"))
                 .getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
@@ -1652,7 +1648,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .addData("agent_ip", "10.71.4.51")
                 .addData("agent_port", "666666")
                 .addData("user_id", UserId)
-                .addData("file", "C:\\Users\\mine\\Desktop\\1000028765.hrds")
+                .addData("file", "C:\\Users\\mine\\Desktop\\upload.hrds")
                 .post(getActionUrl("uploadFile"))
                 .getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
@@ -1662,7 +1658,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .addData("agent_ip", "10.71.4.51")
                 .addData("agent_port", "4321")
                 .addData("user_id", "")
-                .addData("file", "C:\\Users\\mine\\Desktop\\1000028765.hrds")
+                .addData("file", "C:\\Users\\mine\\Desktop\\upload.hrds")
                 .post(getActionUrl("uploadFile"))
                 .getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);

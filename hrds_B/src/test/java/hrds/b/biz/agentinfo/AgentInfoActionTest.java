@@ -444,7 +444,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                 .addData("agent_name", "sjkAddAgent")
                 .addData("agent_type", AgentType.ShuJuKu.getCode())
                 .addData("agent_ip", "10.71.4.52")
-                .addData("agent_port", "3456")
+                .addData("agent_port", "3451")
                 .addData("source_id", SourceId)
                 .addData("user_id", UserId)
                 .post(getActionUrl("saveAgent")).getBodyString();

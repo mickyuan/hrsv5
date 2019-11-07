@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 
 @DocClass(desc = "数据源增删改查，导入、下载类", author = "dhw", createdate = "2019-9-20 09:23:06")
@@ -1428,7 +1429,7 @@ public class DataSourceAction extends BaseAction {
         // 3.循环source_relation_dep表集合获取dep_id，通过dep_id获取department_info表数据
         for (Source_relation_dep sourceRelationDep : sourceRelationDepList) {
             Optional<Department_info> departmentInfo = Dbo.queryOneObject(Department_info.class
-                    , "select * " + Department_info.TableName + " where dep_id=?",
+                    , "select * from " + Department_info.TableName + " where dep_id=?",
                     sourceRelationDep.getDep_id());
             // 4.将department_info表信息加入集合
             departmentInfoList.add(departmentInfo);
