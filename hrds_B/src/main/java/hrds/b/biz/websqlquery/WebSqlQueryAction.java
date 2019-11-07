@@ -77,19 +77,12 @@ public class WebSqlQueryAction extends BaseAction {
 		//1.获取当前用户所在部门的所有集市源信息
 		Result dataMarketInfoRs = Dbo.queryResult("SELECT data_mart_id from data_mart_info");
 		//2.初始化集市表信息
-		Result marketTables = new Result();
+		Result marketTables;
 		//3.获取集市表信息
-		//设置实体
-		Datatable_info dataTableInfo = new Datatable_info();
-		dataTableInfo.setDatatable_due_date(DateUtil.getSysDate());
 		for (int i = 0; i < dataMarketInfoRs.getRowCount(); i++) {
-			asmSql.clean();
-			dataTableInfo.setData_mart_id(dataMarketInfoRs.getString(i, "data_mart_id"));
-			asmSql.addSql("SELECT * from datatable_info where data_mart_id = ? ");
-			asmSql.addParam(dataTableInfo.getData_mart_id());
-			asmSql.addSql(" and datatable_due_date >=?");
-			asmSql.addParam(dataTableInfo.getDatatable_due_date());
-			marketTables = Dbo.queryResult(asmSql.sql(), asmSql.params());
+			marketTables = Dbo.queryResult("SELECT * from datatable_info where data_mart_id = ?" +
+							" and datatable_due_date >=?",
+					dataMarketInfoRs.getLong(i, "data_mart_id"), DateUtil.getSysDate());
 			dataMarketInfoRs.setObject(i, "marketTables", marketTables.toList());
 		}
 		return dataMarketInfoRs;
