@@ -92,7 +92,6 @@ public class AgentInfoAction extends BaseAction {
         map.put("ftpAgent", ftpAgentList);
         map.put("datasource_name", datasource_name);
         map.put("source_id", source_id);
-
         // 5.将封装不同类型agent信息的集合返回
         return map;
     }
@@ -128,8 +127,7 @@ public class AgentInfoAction extends BaseAction {
         fieldLegalityValidation(agentInfo.getAgent_name(), agentInfo.getAgent_type(), agentInfo.getAgent_ip(),
                 agentInfo.getAgent_port(), agentInfo.getSource_id(), agentInfo.getUser_id());
         // 3.判断端口是否被占用
-        boolean flag = isPortOccupied(agentInfo.getAgent_ip(),
-                Integer.parseInt(agentInfo.getAgent_port()));
+        boolean flag = isPortOccupied(agentInfo.getAgent_ip(), Integer.parseInt(agentInfo.getAgent_port()));
         if (flag) {
             // 端口被占用，不可使用
             throw new BusinessException("端口被占用，agent_port=" + agentInfo.getAgent_port() + "," +

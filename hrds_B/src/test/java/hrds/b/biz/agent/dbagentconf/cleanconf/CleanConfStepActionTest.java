@@ -26,7 +26,6 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -723,7 +722,6 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 * 错误的测试用例未达到三组: saveAllTbCleanConfigInfo是一个保存操作，上述三个测试用例已经可以覆盖所有的情况
 	 * @Param: 无
 	 * @return: 无
-	 * TODO compFlag和replaceFlag由于addData不能传boolean类型，所以在测试的时候需要注意，修改被测方法代码
 	 * */
 	@Test
 	public void saveAllTbCleanConfigInfo(){
@@ -735,8 +733,8 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 
 		String rightString = new HttpClient()
 				.addData("colSetId", FIRST_DATABASESET_ID)
-				.addData("compFlag", "true")
-				.addData("replaceFlag", "false")
+				.addData("compFlag", "1")
+				.addData("replaceFlag", "0")
 				.addData("compType", "1")
 				.addData("compChar", "test_saveAllTbCleanConfigInfo")
 				.addData("compLen", "29")
@@ -765,8 +763,8 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		String[] replaceFeildArr = {"shl", "zq"};
 		String rightStringTwo = new HttpClient()
 				.addData("colSetId", FIRST_DATABASESET_ID)
-				.addData("compFlag", "false")
-				.addData("replaceFlag", "true")
+				.addData("compFlag", "0")
+				.addData("replaceFlag", "1")
 				.addData("oriFieldArr", oriFieldArr)
 				.addData("replaceFeildArr", replaceFeildArr)
 				.post(getActionUrl("saveAllTbCleanConfigInfo")).getBodyString();
@@ -793,8 +791,8 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		//正确数据访问3：模拟既设置全表字符补齐，又设置全表字符替换
 		String rightStringThree = new HttpClient()
 				.addData("colSetId", FIRST_DATABASESET_ID)
-				.addData("compFlag", "true")
-				.addData("replaceFlag", "true")
+				.addData("compFlag", "1")
+				.addData("replaceFlag", "1")
 				.addData("compType", "1")
 				.addData("compChar", "test_saveAllTbCleanConfigInfo")
 				.addData("compLen", "29")
@@ -834,8 +832,8 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		//错误数据访问1：模拟值设置全表字符补齐，但是补齐方式是3，这样访问不会成功
 		String wrongString = new HttpClient()
 				.addData("colSetId", FIRST_DATABASESET_ID)
-				.addData("compFlag", "true")
-				.addData("replaceFlag", "false")
+				.addData("compFlag", "1")
+				.addData("replaceFlag", "0")
 				.addData("compType", "3")
 				.addData("compChar", "test_saveAllTbCleanConfigInfo")
 				.addData("compLen", "29")
@@ -848,42 +846,77 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	/**
 	 * 测试根据数据库设置ID查询所有表清洗设置字符补齐和字符替换规则
 	 *
-	 * 正确数据访问1：模拟获取database_id为1001的数据库直连采集作业所有表清洗规则，能够获取到两条，一条字符补齐规则，一条字符替换规则
+	 * 正确数据访问1：模拟获取database_id为1001的数据库直连采集作业所有表清洗规则，能够获取到一条字符替换规则
 	 * 错误的数据访问1：模拟获取database_id为1002的数据库直连采集作业所有表清洗规则，因为在这个作业中没有配置表，所以获取不到数据
-	 * 错误的测试用例未达到三组: getAllTbCleanConfInfo不会因为正常情况下，不会因为参数不同而导致访问失败，只会因为参数的不同获取到的数据也不同
+	 * 错误的测试用例未达到三组: getAllTbCleanReplaceInfo不会因为正常情况下，不会因为参数不同而导致访问失败，只会因为参数的不同获取到的数据也不同
 	 * @Param: 无
 	 * @return: 无
-	 * TODO getDataForMap()泛型没用
 	 * */
 	@Test
-	public void getAllTbCleanConfInfo(){
-		//正确数据访问1：模拟获取database_id为1001的数据库直连采集作业所有表清洗规则，能够获取到两条，一条字符补齐规则，一条字符替换规则
+	public void getAllTbCleanReplaceInfo(){
+		//正确数据访问1：模拟获取database_id为1001的数据库直连采集作业所有表清洗规则，能够获取到一条字符替换规则
 		String rightString = new HttpClient()
 				.addData("colSetId", FIRST_DATABASESET_ID)
-				.post(getActionUrl("getAllTbCleanConfInfo")).getBodyString();
+				.post(getActionUrl("getAllTbCleanReplaceInfo")).getBodyString();
 		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(rightResult.isSuccess(), is(true));
 
-		Map<Object, Object> rightData = rightResult.getDataForMap();
-		Result replaceResult =  (Result)rightData.get("replace");
-		Result completionResult =  (Result)rightData.get("completion");
-		assertThat("模拟获取database_id为1001的数据库直连采集作业所有表清洗规则,其中有一条字符替换规则", replaceResult.getRowCount() == 1, is(true));
+		Result replaceResult = rightResult.getDataForResult();
+
+		assertThat("模拟获取database_id为1001的数据库直连采集作业所有表清洗规则,其中有一条字符替换规则", replaceResult.getRowCount(), is(1));
 		assertThat("模拟获取database_id为1001的数据库直连采集作业所有表清洗规则,其中有一条字符替换规则，原字符为", replaceResult.getString(0, "field"), is("test_orifield"));
 		assertThat("模拟获取database_id为1001的数据库直连采集作业所有表清洗规则,其中有一条字符替换规则", replaceResult.getString(0, "replace_feild"), is("test_newField"));
+
+
+		//错误的数据访问1：模拟获取database_id为1002的数据库直连采集作业所有表清洗规则，因为在这个作业中没有配置表，所以获取不到数据
+		String rightStringTwo = new HttpClient()
+				.addData("colSetId", SECOND_DATABASESET_ID)
+				.post(getActionUrl("getAllTbCleanReplaceInfo")).getBodyString();
+		ActionResult rightResultTwo = JsonUtil.toObjectSafety(rightStringTwo, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResultTwo.isSuccess(), is(true));
+
+		Result rightDataTwo = rightResultTwo.getDataForResult();
+
+		assertThat("模拟获取database_id为1002的数据库直连采集作业所有表清洗规则,获取不到数据", rightDataTwo.isEmpty(), is(true));
+	}
+
+	/**
+	 * 测试根据数据库设置ID查询所有表清洗设置字符补齐和字符替换规则
+	 *
+	 * 正确数据访问1：模拟获取database_id为1001的数据库直连采集作业所有表清洗规则，能够获取到一条字符补齐规则
+	 * 错误的数据访问1：模拟获取database_id为1002的数据库直连采集作业所有表清洗规则，因为在这个作业中没有配置表，所以获取不到数据
+	 * 错误的测试用例未达到三组: getAllTbCleanCompInfo不会因为正常情况下，不会因为参数不同而导致访问失败，只会因为参数的不同获取到的数据也不同
+	 * @Param: 无
+	 * @return: 无
+	 * */
+	@Test
+	public void getAllTbCleanCompInfo(){
+		//正确数据访问1：模拟获取database_id为1001的数据库直连采集作业所有表清洗规则，能够获取到一条字符补齐规则
+		String rightString = new HttpClient()
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.post(getActionUrl("getAllTbCleanCompInfo")).getBodyString();
+		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResult.isSuccess(), is(true));
+
+		Result completionResult = rightResult.getDataForResult();
+
 		assertThat("模拟获取database_id为1001的数据库直连采集作业所有表清洗规则,其中有一条字符补齐规则", completionResult.getRowCount() == 1, is(true));
 		assertThat("模拟获取database_id为1001的数据库直连采集作业所有表清洗规则,其中有一条字符补齐规则,补齐字符为 ", completionResult.getString(0, "character_filling"), is("cleanparameter"));
-		assertThat("模拟获取database_id为1001的数据库直连采集作业所有表清洗规则,其中有一条字符补齐规则,补齐长度为 ", completionResult.getLong(0, "filling_length"), is("14"));
+		assertThat("模拟获取database_id为1001的数据库直连采集作业所有表清洗规则,其中有一条字符补齐规则,补齐长度为 ", completionResult.getLong(0, "filling_length"), is(14L));
 		assertThat("模拟获取database_id为1001的数据库直连采集作业所有表清洗规则,其中有一条字符补齐规则,补齐方式为 ", completionResult.getString(0, "filling_type"), is("1"));
 
 		//错误的数据访问1：模拟获取database_id为1002的数据库直连采集作业所有表清洗规则，因为在这个作业中没有配置表，所以获取不到数据
 		String rightStringTwo = new HttpClient()
 				.addData("colSetId", SECOND_DATABASESET_ID)
-				.post(getActionUrl("getAllTbCleanConfInfo")).getBodyString();
+				.post(getActionUrl("getAllTbCleanCompInfo")).getBodyString();
 		ActionResult rightResultTwo = JsonUtil.toObjectSafety(rightStringTwo, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(rightResultTwo.isSuccess(), is(true));
-		Map<Object, Object> rightDataTwo = rightResultTwo.getDataForMap();
+
+		Result rightDataTwo = rightResultTwo.getDataForResult();
 
 		assertThat("模拟获取database_id为1002的数据库直连采集作业所有表清洗规则,获取不到数据", rightDataTwo.isEmpty(), is(true));
 	}

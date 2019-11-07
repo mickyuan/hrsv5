@@ -45,7 +45,7 @@ public class TaskManagerTest {
 	private static final String currBathDate = LocalDate.now().format(DateUtil.DATE_DEFAULT);
 
 	private static TaskManager taskManagerAutoShift;
-	private static TaskManager taskManagerNoShift;
+//	private static TaskManager taskManagerNoShift;
 
 	private static final String SLEEP1S_SHELL = "EtlSleep1S.sh";
 	private static final String SLEEP1M_SHELL = "EtlSleep1M.sh";
@@ -66,7 +66,7 @@ public class TaskManagerTest {
 	public void before() {
 
 		taskManagerAutoShift = new TaskManager(syscode, currBathDate, false, true);
-		taskManagerNoShift = new TaskManager(syscode, currBathDate, false, false);
+//		taskManagerNoShift = new TaskManager(syscode, currBathDate, false, false);
 
 		try(DatabaseWrapper db = new DatabaseWrapper()) {
 
@@ -217,16 +217,16 @@ public class TaskManagerTest {
 		publishReadyJob(taskManagerAutoShift);
 	}
 
-	/**
-	 * 测试程序在无干预、不自动日切情况下的调度系统核心执行逻辑。
-	 * @author Tiger.Wang
-	 * @date 2019/10/11
-	 */
-	@Test
-	public void apublishReadyJobNoShift() {
-
-		publishReadyJob(taskManagerNoShift);
-	}
+//	/**
+//	 * 测试程序在无干预、不自动日切情况下的调度系统核心执行逻辑。
+//	 * @author Tiger.Wang
+//	 * @date 2019/10/11
+//	 */
+//	@Test
+//	public void apublishReadyJobNoShift() {
+//
+//		publishReadyJob(taskManagerNoShift);
+//	}
 
 	/**
 	 * 测试程序在自动日切情况下的调度系统核心中[作业直接触发]干预的执行逻辑。
@@ -239,16 +239,16 @@ public class TaskManagerTest {
 		handleJob2Run(taskManagerAutoShift);
 	}
 
-	/**
-	 * 测试程序在无自动日切情况下的调度系统核心中[作业直接触发]干预的执行逻辑。
-	 * @author Tiger.Wang
-	 * @date 2019/10/12
-	 */
-	@Test
-	public void bhandleJob2RunNoShift() {
-
-		handleJob2Run(taskManagerNoShift);
-	}
+//	/**
+//	 * 测试程序在无自动日切情况下的调度系统核心中[作业直接触发]干预的执行逻辑。
+//	 * @author Tiger.Wang
+//	 * @date 2019/10/12
+//	 */
+//	@Test
+//	public void bhandleJob2RunNoShift() {
+//
+//		handleJob2Run(taskManagerNoShift);
+//	}
 
 	/**
 	 * 测试程序在自动日切情况下的调度系统核心中[系统重跑]干预的执行逻辑。
@@ -261,16 +261,16 @@ public class TaskManagerTest {
 		handleSys2Rerun(taskManagerAutoShift);
 	}
 
-	/**
-	 * 测试程序在无自动日切情况下的调度系统核心中[系统重跑]干预的执行逻辑。
-	 * @author Tiger.Wang
-	 * @date 2019/10/12
-	 */
-	@Test
-	public void chandleSys2RerunNoShift() {
-
-		handleSys2Rerun(taskManagerNoShift);
-	}
+//	/**
+//	 * 测试程序在无自动日切情况下的调度系统核心中[系统重跑]干预的执行逻辑。
+//	 * @author Tiger.Wang
+//	 * @date 2019/10/12
+//	 */
+//	@Test
+//	public void chandleSys2RerunNoShift() {
+//
+//		handleSys2Rerun(taskManagerNoShift);
+//	}
 
 	/**
 	 * 测试程序在自动日切情况下的调度系统核心中[系统暂停]干预的执行逻辑。
@@ -283,16 +283,16 @@ public class TaskManagerTest {
 		handleSys2Pause(taskManagerAutoShift);
 	}
 
-	/**
-	 * 测试程序在无自动日切情况下的调度系统核心中[系统暂停]干预的执行逻辑。
-	 * @author Tiger.Wang
-	 * @date 2019/10/12
-	 */
-	@Test
-	public void dhandleSys2PauseNoShift() {
-
-		handleSys2Pause(taskManagerNoShift);
-	}
+//	/**
+//	 * 测试程序在无自动日切情况下的调度系统核心中[系统暂停]干预的执行逻辑。
+//	 * @author Tiger.Wang
+//	 * @date 2019/10/12
+//	 */
+//	@Test
+//	public void dhandleSys2PauseNoShift() {
+//
+//		handleSys2Pause(taskManagerNoShift);
+//	}
 
 	/**
 	 * 测试程序在自动日切情况下的调度系统核心中[系统续跑]干预的执行逻辑。
@@ -305,33 +305,38 @@ public class TaskManagerTest {
 		handleSys2Resume(taskManagerAutoShift);
 	}
 
-	/**
-	 * 测试程序在无自动日切情况下的调度系统核心中[系统续跑]干预的执行逻辑。
-	 * @author Tiger.Wang
-	 * @date 2019/10/12
-	 */
-	@Test
-	public void ehandleSys2ResumeNoShift() {
-
-		handleSys2Resume(taskManagerNoShift);
-	}
-
+//	/**
+//	 * 测试程序在无自动日切情况下的调度系统核心中[系统续跑]干预的执行逻辑。
+//	 * @author Tiger.Wang
+//	 * @date 2019/10/12
+//	 */
 //	@Test
-//	public void handleSys2StopAutoShift() {
+//	public void ehandleSys2ResumeNoShift() {
 //
-//		handleSys2Stop(taskManagerAutoShift);
+//		handleSys2Resume(taskManagerNoShift);
 //	}
 
 	/**
-	 * 测试程序在无自动日切情况下的调度系统核心中[系统停止]干预的执行逻辑。
+	 * 测试程序在自动日切情况下的调度系统核心中[系统停止]干预的执行逻辑。
 	 * @author Tiger.Wang
 	 * @date 2019/10/12
 	 */
 	@Test
-	public void zhandleSys2StopNoShift() {
+	public void zhandleSys2StopAutoShift() {
 
-		handleSys2Stop(taskManagerNoShift);
+		handleSys2Stop(taskManagerAutoShift);
 	}
+
+//	/**
+//	 * 测试程序在无自动日切情况下的调度系统核心中[系统停止]干预的执行逻辑。
+//	 * @author Tiger.Wang
+//	 * @date 2019/10/12
+//	 */
+//	@Test
+//	public void zhandleSys2StopNoShift() {
+//
+//		handleSys2Stop(taskManagerNoShift);
+//	}
 
 	/**
 	 * 测试程序在自动日切情况下的调度系统核心中[作业停止]干预的执行逻辑。
@@ -344,16 +349,16 @@ public class TaskManagerTest {
 		handleJob2Stop(taskManagerAutoShift);
 	}
 
-	/**
-	 * 测试程序在无自动日切情况下的调度系统核心中[作业停止]干预的执行逻辑。
-	 * @author Tiger.Wang
-	 * @date 2019/10/12
-	 */
-	@Test
-	public void fhandleJob2StopNoShift() {
-
-		handleJob2Stop(taskManagerNoShift);
-	}
+//	/**
+//	 * 测试程序在无自动日切情况下的调度系统核心中[作业停止]干预的执行逻辑。
+//	 * @author Tiger.Wang
+//	 * @date 2019/10/12
+//	 */
+//	@Test
+//	public void fhandleJob2StopNoShift() {
+//
+//		handleJob2Stop(taskManagerNoShift);
+//	}
 
 	/**
 	 * 测试程序在自动日切情况下的调度系统核心中[作业重跑]干预的执行逻辑。
@@ -366,16 +371,16 @@ public class TaskManagerTest {
 		handleJob2Rerun(taskManagerAutoShift);
 	}
 
-	/**
-	 * 测试程序在无自动日切情况下的调度系统核心中[作业重跑]干预的执行逻辑。
-	 * @author Tiger.Wang
-	 * @date 2019/10/12
-	 */
-	@Test
-	public void ghandleJob2RerunNoShift() {
-
-		handleJob2Rerun(taskManagerNoShift);
-	}
+//	/**
+//	 * 测试程序在无自动日切情况下的调度系统核心中[作业重跑]干预的执行逻辑。
+//	 * @author Tiger.Wang
+//	 * @date 2019/10/12
+//	 */
+//	@Test
+//	public void ghandleJob2RerunNoShift() {
+//
+//		handleJob2Rerun(taskManagerNoShift);
+//	}
 
 	/**
 	 * 测试程序在自动日切情况下的调度系统核心中[作业优先级调整]干预的执行逻辑。
@@ -388,16 +393,16 @@ public class TaskManagerTest {
 		handleJob2ChangePriority(taskManagerAutoShift);
 	}
 
-	/**
-	 * 测试程序在无自动日切情况下的调度系统核心中[作业优先级调整]干预的执行逻辑。
-	 * @author Tiger.Wang
-	 * @date 2019/10/12
-	 */
-	@Test
-	public void hhandleJob2ChangePriorityNoShift() {
-
-		handleJob2ChangePriority(taskManagerNoShift);
-	}
+//	/**
+//	 * 测试程序在无自动日切情况下的调度系统核心中[作业优先级调整]干预的执行逻辑。
+//	 * @author Tiger.Wang
+//	 * @date 2019/10/12
+//	 */
+//	@Test
+//	public void hhandleJob2ChangePriorityNoShift() {
+//
+//		handleJob2ChangePriority(taskManagerNoShift);
+//	}
 
 	/**
 	 * 测试程序在自动日切情况下的调度系统核心中[作业跳过]干预的执行逻辑。
@@ -410,16 +415,16 @@ public class TaskManagerTest {
 		handleJob2Skip(taskManagerAutoShift);
 	}
 
-	/**
-	 * 测试程序在无自动日切情况下的调度系统核心中[作业跳过]干预的执行逻辑。
-	 * @author Tiger.Wang
-	 * @date 2019/10/12
-	 */
-	@Test
-	public void ihandleJob2SkipNoShift() {
-
-		handleJob2Skip(taskManagerNoShift);
-	}
+//	/**
+//	 * 测试程序在无自动日切情况下的调度系统核心中[作业跳过]干预的执行逻辑。
+//	 * @author Tiger.Wang
+//	 * @date 2019/10/12
+//	 */
+//	@Test
+//	public void ihandleJob2SkipNoShift() {
+//
+//		handleJob2Skip(taskManagerNoShift);
+//	}
 
 	/**
 	 * 使用5个能执行成功、1个虚作业、1个能执行失败、1个能执行成功且上一作业执行成功的依赖作业、
@@ -2304,26 +2309,26 @@ public class TaskManagerTest {
 	}
 
 	//@Test
-	public void handleSysDayShift() {
-		//TODO 系统干预日切待确认
-		String handleEtlJob = "SysDayShift";
-
-		try(DatabaseWrapper db = new DatabaseWrapper()) {
-			logger.info("--------------- 沉睡100秒 ---------------");
-//			Thread.sleep(100000);
-
-			Etl_job_hand etlJobHand = new Etl_job_hand();
-			etlJobHand.setEtl_sys_cd(syscode);
-			etlJobHand.setEtl_job(handleEtlJob);
-			etlJobHand.setPro_para(syscode + "," + handleEtlJob + "," + currBathDate);
-			etlJobHand.setEtl_hand_type("SF");
-			etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
-			etlJobHand.setHand_status(Meddle_status.TRUE.getCode());
-			etlJobHand.setMain_serv_sync(Main_Server_Sync.YES.getCode());
-			etlJobHand.add(db);
-
-			SqlOperator.commitTransaction(db);
-		}
+//	public void handleSysDayShift() {
+//		//TODO 系统干预日切待确认
+//		String handleEtlJob = "SysDayShift";
+//
+//		try(DatabaseWrapper db = new DatabaseWrapper()) {
+//			logger.info("--------------- 沉睡100秒 ---------------");
+////			Thread.sleep(100000);
+//
+//			Etl_job_hand etlJobHand = new Etl_job_hand();
+//			etlJobHand.setEtl_sys_cd(syscode);
+//			etlJobHand.setEtl_job(handleEtlJob);
+//			etlJobHand.setPro_para(syscode + "," + handleEtlJob + "," + currBathDate);
+//			etlJobHand.setEtl_hand_type("SF");
+//			etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+//			etlJobHand.setHand_status(Meddle_status.TRUE.getCode());
+//			etlJobHand.setMain_serv_sync(Main_Server_Sync.YES.getCode());
+//			etlJobHand.add(db);
+//
+//			SqlOperator.commitTransaction(db);
+//		}
 //		catch (InterruptedException e) {
 //			e.printStackTrace();
 //		}
@@ -2342,5 +2347,5 @@ public class TaskManagerTest {
 //			taskManager.loadReadyJob();
 //			taskManager.publishReadyJob();
 //		}
-	}
+//	}
 }

@@ -5,6 +5,8 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
+import fd.ng.db.jdbc.DefaultPageImpl;
+import fd.ng.db.jdbc.Page;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.entity.Sys_para;
@@ -12,7 +14,9 @@ import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.key.PrimayKeyGener;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 @DocClass(desc = "系统参数", author = "Mr.Lee")
@@ -20,10 +24,17 @@ public class SysParaAction extends BaseAction {
 
 	@Method(desc = "模糊查询获取系统参数信息",
 			logicStep = "获取系统参数信息")
-	@Return(desc = "返回系统参数的集合信息", range = "可以为空,为空表示系统参数信息为空")
-	public List<Sys_para> getSysPara() {
+	@Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数", valueIfNull = "1")
+	@Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", valueIfNull = "10")
+	@Return(desc = "返回系统参数的集合信息", range = "不为null")
+	public Map<String, Object> getSysPara(int currPage, int pageSize) {
+		Map<String, Object> sysParaMap = new HashMap<>();
 		//数据权限校验：不做权限检查
-		return Dbo.queryList(Sys_para.class, "SELECT * FROM " + Sys_para.TableName);
+		Page page = new DefaultPageImpl(currPage, pageSize);
+		List<Sys_para> sysParas = Dbo.queryPagedList(Sys_para.class, page, "SELECT * FROM " + Sys_para.TableName);
+		sysParaMap.put("sysParas", sysParas);
+		sysParaMap.put("totalSize", page.getTotalSize());
+		return sysParaMap;
 	}
 
 	@Method(desc = "删除系统参数",
@@ -62,17 +73,17 @@ public class SysParaAction extends BaseAction {
 	public void addSysPara(Sys_para sys_para) {
 		//1 : 检查参数合法性
 		//1-1 : 新增时检查,系统参数名称是否已经存在
-		if (Dbo.queryNumber("SELECT COUNT(1) FROM " + Sys_para.TableName + " WHERE para_name = ?",
+		if (Dbo.queryNumber("SELECT COUNT(para_name) FROM " + Sys_para.TableName + " WHERE para_name = ?",
 				sys_para.getPara_name()).orElseThrow(() -> new BusinessException("新增检查参数名称SQL编写错误")
 		) != 0) {
-			throw new BusinessException(String.format("系统参数名称 %s 已经存在,添加错误", sys_para.getPara_name()));
+			throw new BusinessException(String.format("系统参数名称 %s 已经存在,添加失败", sys_para.getPara_name()));
 		}
 		//1-2.校验参数传入参数
 		if (StringUtil.isBlank(sys_para.getPara_name())) {
-			throw new BusinessException("参数名为空！para_name=" + sys_para.getPara_name());
+			throw new BusinessException("参数名为空!" + sys_para.getPara_name());
 		}
 		if (StringUtil.isBlank(sys_para.getPara_value())) {
-			throw new BusinessException("参数值为空！para_name=" + sys_para.getPara_value());
+			throw new BusinessException("参数值为空!" + sys_para.getPara_value());
 		}
 		if (StringUtil.isBlank(sys_para.getPara_type())) {
 			throw new BusinessException("参数类型为空！para_name=" + sys_para.getPara_type());

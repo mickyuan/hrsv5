@@ -123,6 +123,17 @@ public class CollTbConfStepAction extends BaseAction {
 		return getTableInfoByTableName(tableNames, colSetId, currPage, pageSize);
 	}
 
+	@Method(desc = "根据表ID获取给该表定义的分页抽取SQL", logicStep = "" +
+			"1、去数据库中根据table_id查出该表定义的分页抽取SQL" +
+			"2、如果获取到的结果集为空，则返回前端该表未定义分页抽取SQL" +
+			"3、如果获取到的结果集不为空，则返回前端该表定义的分页抽取SQL")
+	@Param(name = "tableId", desc = "数据库对应表ID", range = "不为空")
+	@Return(desc = "分页SQL", range = "只要正常返回肯定不是空字符串")
+	//TODO 因为table_info表中缺少字段，所以方法未完成
+	public Result getPageSQL(long tableId){
+		return null;
+	}
+
 	@Method(desc = "测试并行抽取SQL", logicStep = "" +
 			"1、根据colSetId在database_set表中获得数据库设置信息" +
 			"2、调用AgentActionUtil工具类获取访问Agent端服务的url" +
@@ -316,7 +327,7 @@ public class CollTbConfStepAction extends BaseAction {
 			"           7-3-2、更新table_clean表对应条目的table_id字段" +
 			"           7-3-3、更新column_merge表对应条目的table_id字段" +
 			"8、不是新增采集表还是编辑采集表，都需要将该表要采集的列信息保存到相应的表里面")
-	//TODO 注意这边，目前是否并行抽取和并且抽取SQL还没有
+	//TODO 注意这边，目前是否并行抽取和并行抽取SQL还没有
 	@Param(name = "tableInfo", desc = "如果是新增的采集表，table_id为空，如果是编辑修改采集表，table_id不能为空"
 			, range = "不为空，Table_info类的实体类对象", isBean = true)
 	@Param(name = "colSetId", desc = "数据库设置ID，源系统数据库设置表主键，数据库对应表外键", range = "不为空")

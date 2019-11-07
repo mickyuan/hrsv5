@@ -1,16 +1,10 @@
 package hrds.b.biz.agent.bean;
 
-/**
- * @Description: 数据库连接URL模板
- * @Author: wangz
- * @CreateTime: 2019-10-09-15:40
- * @BelongsProject: hrsv5
- * @BelongsPackage: hrds.b.biz.agent.bean
- **/
-//FIXME 名字应该符合功能。比如：DBConnectionProp，已修复
+import fd.ng.core.annotation.DocClass;
+
+@DocClass(desc = "数据库连接URL拼接参数类", author = "WangZhengcheng")
 public class DBConnectionProp {
 
-	//FIXME 注释说明每个变量的含义，用真实的值做例子来说明，已修复。
 	//JDBCURL串前缀，如jdbc:mysql://
 	private String urlPrefix;
 	//JDBCURL串拼接数据库连接IP地址的占位符，一般用:，前端直接在冒号后面动态追加用户输入的IP地址

@@ -16,6 +16,8 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.List;
+import java.util.Map;
 import java.util.OptionalLong;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -200,7 +202,7 @@ public class SysUserActionTest extends WebBaseTestCase {
 					"2.错误数据访问" +
 					"2-1.部门id不存在")
 	@Test
-	public void addSysUser() {
+	public void saveSysUser() {
 		//1.正确数据访问
 		//1-1.新增用户
 		bodyString = new HttpClient()
@@ -213,7 +215,7 @@ public class SysUserActionTest extends WebBaseTestCase {
 				.addData("user_type", "01")
 				//usertype_group 功能菜单
 				.addData("usertype_group", "01,04,07,10,11,13,16,18,20,25")
-				.post(getActionUrl("addSysUser")).getBodyString();
+				.post(getActionUrl("saveSysUser")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
 		assertThat(ar.isSuccess(), is(true));
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
@@ -287,12 +289,12 @@ public class SysUserActionTest extends WebBaseTestCase {
 					"2.错误数据访问" +
 					"2-1.用户id不存在")
 	@Test
-	public void getUserByUserId() {
+	public void getSysUserByUserId() {
 		//1.正确数据访问
 		//1-1.用户id存在
 		bodyString = new HttpClient()
 				.addData("user_id", USER_ID)
-				.post(getActionUrl("getUserByUserId")).getBodyString();
+				.post(getActionUrl("getSysUserByUserId")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
 		assertThat(ar.isSuccess(), is(true));
 		//校验结果信息
@@ -323,11 +325,6 @@ public class SysUserActionTest extends WebBaseTestCase {
 				.post(getActionUrl("getSysUserInfo")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
 		assertThat(ar.isSuccess(), is(true));
-		//校验结果信息
-		for (int i = 0; i < ar.getDataForResult().getRowCount(); i++) {
-			assertThat(ar.getDataForResult().getLong(i, "user_id"), is(USER_ID + 2 + i));
-			assertThat(ar.getDataForResult().getLong(i, "create_id"), is(-1000L));
-		}
 	}
 
 	@Method(desc = "删除系统用户测试方法",
@@ -357,5 +354,52 @@ public class SysUserActionTest extends WebBaseTestCase {
 				.post(getActionUrl("deleteSysUser")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
 		assertThat(ar.isSuccess(), is(false));
+	}
+
+	@Method(desc = "获取部门信息和用户功能菜单信息",
+			logicStep = "1.正确数据访问" +
+					"1-1.获取功能菜单" +
+					"1-2.校验管理员功能菜单" +
+					"1-3.校验操作员功能菜单")
+	@Test
+	public void getDepartmentInfoAndUserFunctionMenuInfo() {
+		//1.正确数据访问
+		//1-1.获取管理员功能菜单 0:管理员功能菜单
+		bodyString = new HttpClient()
+				.post(getActionUrl("getDepartmentInfoAndUserFunctionMenuInfo")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
+		assertThat(ar.isSuccess(), is(true));
+		//1-2.校验操作员功能菜单
+		List<Map<String, Object>> managerFunctionMenuList = (List<Map<String, Object>>)
+				ar.getDataForMap().get("managerFunctionMenuList");
+		for (int i = 0; i < managerFunctionMenuList.size(); i++) {
+			assertThat(managerFunctionMenuList.size(), is(10));
+		}
+		//1-3.校验操作员功能菜单
+		List<Map<String, Object>> operatorFunctionMenuList = (List<Map<String, Object>>)
+				ar.getDataForMap().get("operatorFunctionMenuList");
+		for (int i = 0; i < operatorFunctionMenuList.size(); i++) {
+			assertThat(operatorFunctionMenuList.size(), is(14));
+		}
+	}
+
+	@Method(desc = "获取编辑的用户信息",
+			logicStep = "1.正确数据访问" +
+					"1-1.用户id存在" +
+					"2.错误数据访问" +
+					"2-1.用户id不存在")
+	@Test
+	public void editSysUserFunction() {
+		//1.正确数据访问
+		//1-1.用户id存在
+		bodyString = new HttpClient()
+				.addData("userId", USER_ID)
+				.post(getActionUrl("editSysUserFunction")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
+		assertThat(ar.isSuccess(), is(true));
+		Map<String, Object> editSysUserInfo = (Map<String, Object>) ar.getDataForMap().get("editSysUserInfo");
+		assertThat(editSysUserInfo.get("user_id"), is(-1000));
+		assertThat(editSysUserInfo.get("create_id"), is(-1000));
+		assertThat(editSysUserInfo.get("user_name"), is("测试超级管理员init-hll"));
 	}
 }

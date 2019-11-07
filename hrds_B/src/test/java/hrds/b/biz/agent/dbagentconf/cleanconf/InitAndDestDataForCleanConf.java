@@ -373,7 +373,7 @@ public class InitAndDestDataForCleanConf {
 			cleanParameter.setDatabase_id(FIRST_DATABASESET_ID);
 			cleanParameter.setClean_type(cleanType);
 			cleanParameter.setFilling_type(complType);
-			cleanParameter.setCharacter_filling(complChar);
+			cleanParameter.setCharacter_filling(StringUtil.string2Unicode(complChar));
 			cleanParameter.setFilling_length(compLength);
 			cleanParameter.setField(oriField);
 			cleanParameter.setReplace_feild(newField);

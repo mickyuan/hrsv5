@@ -22,9 +22,7 @@ import hrds.commons.utils.Constant;
 import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.key.PrimayKeyGener;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @DocClass(desc = "配置清洗规则", author = "WangZhengcheng")
 public class CleanConfStepAction extends BaseAction{
@@ -394,8 +392,8 @@ public class CleanConfStepAction extends BaseAction{
 			"3-1、构建Clean_parameter对象，设置原字段，替换后字段" +
 			"3-2、保存字符替换信息")
 	@Param(name = "colSetId", desc = "数据库设置ID，源系统数据库设置表主键，清洗参数属性表外键", range = "不为空")
-	@Param(name = "compFlag", desc = "是否设置字符补齐标识位", range = "true：是，false：否")
-	@Param(name = "replaceFlag", desc = "是否设置字符替换标识位", range = "true：是，false：否")
+	@Param(name = "compFlag", desc = "是否设置字符补齐标识位", range = "1：是，0：否")
+	@Param(name = "replaceFlag", desc = "是否设置字符替换标识位", range = "1：是，0：否")
 	@Param(name = "compType", desc = "字符补齐类型", range = "1：前补齐，2：后补齐", nullable = true, valueIfNull = "0")
 	@Param(name = "compChar", desc = "补齐字符", range = "如果要进行字符补齐，该参数不为空", nullable = true,
 			valueIfNull = "")
@@ -405,13 +403,13 @@ public class CleanConfStepAction extends BaseAction{
 			valueIfNull = "")
 	@Param(name = "replaceFeildArr", desc = "替换后字符", range = "如果要进行字符替换，该参数不为空", nullable = true,
 			valueIfNull = "")
-	public void saveAllTbCleanConfigInfo(long colSetId, boolean compFlag, boolean replaceFlag, String compType,
+	public void saveAllTbCleanConfigInfo(long colSetId, String compFlag, String replaceFlag, String compType,
 	                                     String compChar, String compLen, String[] oriFieldArr,
 	                                     String[] replaceFeildArr){
 		//1、根据colSetId在清洗参数属性表中删除记录，不关心是否删除到相应的数据
 		Dbo.execute("DELETE FROM clean_parameter WHERE database_id = ?", colSetId);
 		//2、如果配置了字符补齐
-		if(compFlag){
+		if(IsFlag.ofEnumByCode(compFlag) == IsFlag.Shi){
 			//这里表示校验补齐方式，1代表前补齐，2代表后补齐，目前没有代码项
 			if(Integer.parseInt(compType) != 1 && Integer.parseInt(compType) != 2){
 				throw new BusinessException("字符补齐方式错误");
@@ -429,7 +427,7 @@ public class CleanConfStepAction extends BaseAction{
 		}
 
 		//3、如果配置了字符替换
-		if(replaceFlag){
+		if(IsFlag.ofEnumByCode(replaceFlag) == IsFlag.Shi){
 			if(oriFieldArr.length == 0 || replaceFeildArr.length == 0){
 				throw new BusinessException("保存字符替换时，请填写原字符和替换后字符");
 			}
@@ -450,19 +448,13 @@ public class CleanConfStepAction extends BaseAction{
 	/*
 	 * 点击所有表清洗设置，回显所有表清洗设置字符补齐和字符替换规则(jobCleanSDO)
 	 * */
-	@Method(desc = "根据数据库设置ID查询所有表清洗设置字符补齐和字符替换规则", logicStep = "" +
+	@Method(desc = "根据数据库设置ID查询所有表清洗设置字符替换规则", logicStep = "" +
 			"1、根据colSetId在清洗参数属性表中获取字符替换规则" +
 			"2、将原字符和替换后字符解码" +
-			"3、根据colSetId在清洗参数属性表中获取字符补齐规则" +
-			"4、将补齐字符解码" +
-			"5、构建用于返回的Map集合，将两个Result放入集合中，并返回")
+			"3、返回")
 	@Param(name = "colSetId", desc = "数据库设置ID，源系统数据库设置表主键，清洗参数属性表外键", range = "不为空")
-	@Return(desc = "装有查询结果集的Map集合", range = "不为空，" +
-			"通过key为replace获取对所有表设置的字符替换规则" +
-			"通过key为completion获取对所有表设置的字符补齐规则")
-	public Map<String, Result> getAllTbCleanConfInfo(long colSetId){
-		Map<String, Result> resultMap = new HashMap<>();
-
+	@Return(desc = "查询结果集", range = "不为空")
+	public Result getAllTbCleanReplaceInfo(long colSetId){
 		//1、根据colSetId在清洗参数属性表中获取字符替换规则
 		Result replaceResult = Dbo.queryResult("SELECT c_id, field, replace_feild FROM "+
 				Clean_parameter.TableName + " WHERE database_id = ? AND clean_type = ?", colSetId,
@@ -476,9 +468,18 @@ public class CleanConfStepAction extends BaseAction{
 				replaceResult.setObject(i, "replace_feild", StringUtil.unicode2String(
 						replaceResult.getString(i, "replace_feild")));
 			}
-			resultMap.put("replace", replaceResult);
 		}
+		//3、返回
+		return replaceResult;
+	}
 
+	@Method(desc = "根据数据库设置ID查询所有表清洗设置字符补齐规则", logicStep = "" +
+			"1、根据colSetId在清洗参数属性表中获取字符补齐规则" +
+			"2、将补齐字符解码" +
+			"3、返回")
+	@Param(name = "colSetId", desc = "数据库设置ID，源系统数据库设置表主键，清洗参数属性表外键", range = "不为空")
+	@Return(desc = "查询结果集", range = "不为空")
+	public Result getAllTbCleanCompInfo(long colSetId){
 		//3、根据colSetId在清洗参数属性表中获取字符补齐规则
 		Result compResult = Dbo.queryResult("SELECT c_id, filling_type, character_filling, filling_length " +
 						" FROM "+ Clean_parameter.TableName +" WHERE database_id = ? AND clean_type = ?"
@@ -492,11 +493,8 @@ public class CleanConfStepAction extends BaseAction{
 			//4、将补齐字符解码
 			compResult.setObject(0, "character_filling",
 					StringUtil.unicode2String(compResult.getString(0, "character_filling")));
-			resultMap.put("completion", compResult);
 		}
-
-		//5、构建用于返回的Map集合，将两个Result放入集合中，并返回
-		return resultMap;
+		return compResult;
 	}
 
 	/*

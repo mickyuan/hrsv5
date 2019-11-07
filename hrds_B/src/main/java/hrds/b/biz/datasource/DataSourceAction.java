@@ -420,8 +420,9 @@ public class DataSourceAction extends BaseAction {
             datasourceMap = Dbo.queryOneObject("select * from " + Data_source.TableName +
                     " where source_id=? and create_user_id=?", source_id, getUserId());
             // 3.2获取数据源对应部门名称所有值,不需要权限控制
-            List<Long> depIdList = Dbo.queryOneColumnList("select dep_name from "
-                    + Source_relation_dep.TableName + " where source_id=?", source_id);
+            List<String> depIdList = Dbo.queryOneColumnList("select dep_name from "
+                    + Source_relation_dep.TableName + " t1 left join " + Department_info.TableName +
+                    " t2 on t1.dep_id=t2.dep_id where t1.source_id=?", source_id);
             if (!depIdList.isEmpty()) {
                 // 3.3.封装部门到结果集
                 StringBuilder sb = new StringBuilder();

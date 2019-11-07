@@ -50,7 +50,7 @@ public class ClassPathResLoader {
 	 *          含义：Hadoop相关的配置文件所在目录路径。 <br>
 	 *          取值范围：任意字符串。
 	 */
-	public static void loadResourceDir(String dirPath) {
+	public static void loadResourceDir(final String dirPath) {
 
 		//1.加载配置文件。
 		File file = new File(dirPath);
@@ -66,7 +66,7 @@ public class ClassPathResLoader {
 	 *          含义：表示一个目录对象。 <br>
 	 *          取值范围：不能为null。
 	 */
-	private static void loopDirs(File file) {
+	private static void loopDirs(final File file) {
 
 		//1.递归扫描目录。
 		if(file.isDirectory()) {
@@ -89,7 +89,7 @@ public class ClassPathResLoader {
 	 *          含义：表示一个待加载配置文件的目录对象。 <br>
 	 *          取值范围：不能为null。
 	 */
-	private static void addURL(File file) {
+	private static void addURL(final File file) {
 
 		//1.执行反射调用。
 		try {
