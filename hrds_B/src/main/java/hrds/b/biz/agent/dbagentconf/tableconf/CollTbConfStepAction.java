@@ -323,7 +323,7 @@ public class CollTbConfStepAction extends BaseAction {
 		return returnMap;
 	}
 
-	@Method(desc = "保存画面配置的单表采集信息，如果画面配置采集多张表，前端多次调用该方法", logicStep = "" +
+	@Method(desc = "保存画面配置的所有采集信息，所有表信息放在一起是为了本次保存在一个事务中，同时成功或同时失败", logicStep = "" +
 			"1、校验Table_info对象中的信息是否合法" +
 			"2、给Table_info对象设置基本信息(valid_s_date,valid_e_date,is_user_defined,is_register)" +
 			"3、不论新增采集表还是编辑采集表，页面上所有的内容都可能被修改，所以直接执行SQL，" +
@@ -344,117 +344,122 @@ public class CollTbConfStepAction extends BaseAction {
 			"           7-3-3、更新column_merge表对应条目的table_id字段" +
 			"8、不是新增采集表还是编辑采集表，都需要将该表要采集的列信息保存到相应的表里面")
 	//TODO 注意这边，目前是否并行抽取和并行抽取SQL还没有
-	@Param(name = "tableInfo", desc = "如果是新增的采集表，table_id为空，如果是编辑修改采集表，table_id不能为空"
-			, range = "不为空，Table_info类的实体类对象", isBean = true)
+	@Param(name = "tableInfoString", desc = "如果是新增的采集表，table_id为空，如果是编辑修改采集表，table_id不能为空"
+			, range = "不为空，json格式，能够转为Table_info类的实体类对象", isBean = true)
 	@Param(name = "colSetId", desc = "数据库设置ID，源系统数据库设置表主键，数据库对应表外键", range = "不为空")
-	@Param(name = "collColumn", desc = "该表要采集的字段信息", range = "如果用户没有选择采集列，这个参数可以不传，" +
-			"表示采集这张表的所有字段;" +
+	@Param(name = "collColumnArray", desc = "所有表要采集的字段信息封装成json字符串组成的数组", range = "如果用户对某张表没有选择采集列，在数组中该位置放一个空字符串" +
+			"后台会去采集这张表的所有字段;" +
 			"参数格式：json" +
 			"内容：是否主键(is_primary_key)" +
 			"      列名(colume_name)" +
 			"      字段类型(column_type)" +
-			"      列中文名(colume_ch_name)", nullable = true, valueIfNull = "")
-	@Param(name = "columnSort", desc = "该表要采集的字段的排序",
-			range = "如果用户没有自定义采集字段排序，该参数可以不传", nullable = true, valueIfNull = "")
+			"      列中文名(colume_ch_name)")
+	@Param(name = "columnSortArray", desc = "所有表要采集的字段的排序所组成的数组",
+			range = "如果用户对某张表没有定义采集排序，这个数组中的对应位置传空字符串，json格式，key为字段名，value为字段排序")
 	@Return(desc = "保存成功后返回当前采集任务ID", range = "不为空")
-	public long saveCollSingleTbInfo(Table_info tableInfo, long colSetId, String collColumn, String columnSort){
-		//1、校验Table_info对象中的信息是否合法
-		if(StringUtil.isBlank(tableInfo.getTable_name())){
-			throw new BusinessException("保存采集表配置，表名不能为空!");
-		}
-		if(StringUtil.isBlank(tableInfo.getTable_ch_name())){
-			throw new BusinessException("保存采集表配置，表中文名不能为空!");
-		}
-		/*
-		TODO 下面两个应该改为校验是否并行抽取，如果并行抽取，则是否配置了并行抽取SQL
-		if(StringUtil.isBlank(tableInfo.getIs_md5())){
-			throw new BusinessException("保存采集表配置，是否计算MD5不能为空!");
-		}
-		if(IsFlag.ofEnumByCode(tableInfo.getIs_md5()) == null){
-			throw new BusinessException("是否计算MD5配置值错误，系统无法识别");
-		}
-		*/
-		Map<String, Object> resultMap = Dbo.queryOneObject("select * from " + Database_set.TableName
-				+ "where database_id = ?", colSetId);
-		if(resultMap.isEmpty()){
-			throw new BusinessException("未找到数据库采集任务");
-		}
-		//2、给Table_info对象设置基本信息(valid_s_date,valid_e_date,is_user_defined,is_register)
-		tableInfo.setValid_s_date(DateUtil.getSysDate());
-		tableInfo.setValid_e_date(Constant.MAXDATE);
-		tableInfo.setIs_user_defined(IsFlag.Fou.getCode());
-		//TODO 这一项是否需要设置待讨论，如果允许页面上配置，那么就不需要设置默认值
-		tableInfo.setIs_register(IsFlag.Shi.getCode());
-		//3、不论新增采集表还是编辑采集表，页面上所有的内容都可能被修改，所以直接执行SQL，按database_id删除table_info表
-		// 中,所有非自定义采集SQL的数据，不关心删除数据的条数
-		Dbo.execute(" DELETE FROM "+ Table_info.TableName +" WHERE database_id =? AND valid_e_date = ? " +
-						"AND is_user_defined = ? ", colSetId, Constant.MAXDATE, IsFlag.Fou.getCode());
-		//4、获取Table_info对象的table_id属性，如果该属性没有值，说明这张采集表是新增的，否则这张采集表在当前采集任务中
-		//已经存在，且有可能经过了修改
-		//5、不论新增还是修改，构造默认的表清洗优先级和列清洗优先级(JSON格式的字符串，保存进入数据库)
-		JSONObject tableCleanOrder = new JSONObject();
-		tableCleanOrder.put(CleanType.ZiFuBuQi.getCode(), 1);
-		tableCleanOrder.put(CleanType.ZiFuTiHuan.getCode(), 2);
-		tableCleanOrder.put(CleanType.ZiFuHeBing.getCode(), 3);
-		tableCleanOrder.put(CleanType.ZiFuTrim.getCode(), 4);
+	public long saveCollSingleTbInfo(String tableInfoString, long colSetId, String[] collColumnArray, String[] columnSortArray){
+		List<Table_info> tableInfos = JSONArray.parseArray(tableInfoString, Table_info.class);
+		for(int i = 0; i < tableInfos.size(); i++){
+			Table_info tableInfo = tableInfos.get(i);
+			String collColumn = collColumnArray[i];
+			String columnSort = columnSortArray[i];
+			//1、校验Table_info对象中的信息是否合法
+			if(StringUtil.isBlank(tableInfo.getTable_name())){
+				throw new BusinessException("保存采集表配置，表名不能为空!");
+			}
+			if(StringUtil.isBlank(tableInfo.getTable_ch_name())){
+				throw new BusinessException("保存采集表配置，表中文名不能为空!");
+			}
+			/*
+			TODO 下面两个应该改为校验是否并行抽取，如果并行抽取，则是否配置了并行抽取SQL
+			if(StringUtil.isBlank(tableInfo.getIs_md5())){
+				throw new BusinessException("保存采集表配置，是否计算MD5不能为空!");
+			}
+			if(IsFlag.ofEnumByCode(tableInfo.getIs_md5()) == null){
+				throw new BusinessException("是否计算MD5配置值错误，系统无法识别");
+			}
+			*/
+			Map<String, Object> resultMap = Dbo.queryOneObject("select * from " + Database_set.TableName
+					+ "where database_id = ?", colSetId);
+			if(resultMap.isEmpty()){
+				throw new BusinessException("未找到数据库采集任务");
+			}
+			//2、给Table_info对象设置基本信息(valid_s_date,valid_e_date,is_user_defined,is_register)
+			tableInfo.setValid_s_date(DateUtil.getSysDate());
+			tableInfo.setValid_e_date(Constant.MAXDATE);
+			tableInfo.setIs_user_defined(IsFlag.Fou.getCode());
+			//TODO 这一项是否需要设置待讨论，如果允许页面上配置，那么就不需要设置默认值
+			tableInfo.setIs_register(IsFlag.Shi.getCode());
+			//3、不论新增采集表还是编辑采集表，页面上所有的内容都可能被修改，所以直接执行SQL，按database_id删除table_info表
+			// 中,所有非自定义采集SQL的数据，不关心删除数据的条数
+			Dbo.execute(" DELETE FROM "+ Table_info.TableName +" WHERE database_id =? AND valid_e_date = ? " +
+							"AND is_user_defined = ? ", colSetId, Constant.MAXDATE, IsFlag.Fou.getCode());
+			//4、获取Table_info对象的table_id属性，如果该属性没有值，说明这张采集表是新增的，否则这张采集表在当前采集任务中
+			//已经存在，且有可能经过了修改
+			//5、不论新增还是修改，构造默认的表清洗优先级和列清洗优先级(JSON格式的字符串，保存进入数据库)
+			JSONObject tableCleanOrder = new JSONObject();
+			tableCleanOrder.put(CleanType.ZiFuBuQi.getCode(), 1);
+			tableCleanOrder.put(CleanType.ZiFuTiHuan.getCode(), 2);
+			tableCleanOrder.put(CleanType.ZiFuHeBing.getCode(), 3);
+			tableCleanOrder.put(CleanType.ZiFuTrim.getCode(), 4);
 
-		JSONObject columnCleanOrder = new JSONObject();
-		columnCleanOrder.put(CleanType.ZiFuBuQi.getCode(), 1);
-		columnCleanOrder.put(CleanType.ZiFuTiHuan.getCode(), 2);
-		columnCleanOrder.put(CleanType.ShiJianZhuanHuan.getCode(), 3);
-		columnCleanOrder.put(CleanType.MaZhiZhuanHuan.getCode(), 4);
-		columnCleanOrder.put(CleanType.ZiFuChaiFen.getCode(), 5);
-		columnCleanOrder.put(CleanType.ZiFuTrim.getCode(), 6);
-		//6、如果是新增采集表
-		if(tableInfo.getTable_id() == null){
-			//6-1、生成table_id，并存入Table_info对象中
-			tableInfo.setTable_id(PrimayKeyGener.getNextId());
-			tableInfo.setTi_or(tableCleanOrder.toJSONString());
-			//6-2、保存Table_info对象
-			tableInfo.add(Dbo.db());
-			//6-3、新增采集表，将该表要采集的列信息保存到相应的表里面
-			saveTableColumnInfoForAdd(tableInfo, collColumn, columnSort, colSetId,
-					columnCleanOrder.toJSONString());
+			JSONObject columnCleanOrder = new JSONObject();
+			columnCleanOrder.put(CleanType.ZiFuBuQi.getCode(), 1);
+			columnCleanOrder.put(CleanType.ZiFuTiHuan.getCode(), 2);
+			columnCleanOrder.put(CleanType.ShiJianZhuanHuan.getCode(), 3);
+			columnCleanOrder.put(CleanType.MaZhiZhuanHuan.getCode(), 4);
+			columnCleanOrder.put(CleanType.ZiFuChaiFen.getCode(), 5);
+			columnCleanOrder.put(CleanType.ZiFuTrim.getCode(), 6);
+			//6、如果是新增采集表
+			if(tableInfo.getTable_id() == null){
+				//6-1、生成table_id，并存入Table_info对象中
+				tableInfo.setTable_id(PrimayKeyGener.getNextId());
+				tableInfo.setTi_or(tableCleanOrder.toJSONString());
+				//6-2、保存Table_info对象
+				tableInfo.add(Dbo.db());
+				//6-3、新增采集表，将该表要采集的列信息保存到相应的表里面
+				saveTableColumnInfoForAdd(tableInfo, collColumn, columnSort, colSetId,
+						columnCleanOrder.toJSONString());
+			}
+			//7、如果是修改采集表
+			else{
+				//7-1、保留原有的table_id，为当前数据设置新的table_id
+				long oldID = tableInfo.getTable_id();
+				String newID = PrimayKeyGener.getNextId();
+				tableInfo.setTable_id(newID);
+				tableInfo.setTi_or(tableCleanOrder.toJSONString());
+				//7-2、保存Table_info对象
+				tableInfo.add(Dbo.db());
+				//7-3、所有关联了原table_id的表，找到对应的字段，为这些字段设置新的table_id
+				//7-3-1、更新table_storage_info表对应条目的table_id字段
+				List<Object> storageIdList = Dbo.queryOneColumnList(" select storage_id from "+
+						Table_storage_info.TableName + "where table_id = ? ", oldID);
+				for(Object obj : storageIdList){
+					long storageId = (long)obj;
+					Dbo.execute("update "+ Table_storage_info.TableName +" set table_id = ? where storage_id = ?",
+							newID, storageId);
+				}
+				//7-3-2、更新table_clean表对应条目的table_id字段
+				List<Object> tableCleanIdList = Dbo.queryOneColumnList(" select c_id from "+ Table_clean.TableName
+						+ " where table_id = ? ", oldID);
+				for(Object obj : tableCleanIdList){
+					long tableCleanId = (long)obj;
+					Dbo.execute("update "+ Table_clean.TableName +" set table_id = ? where c_id = ?",
+							newID, tableCleanId);
+				}
+				//7-3-3、更新column_merge表对应条目的table_id字段
+				List<Object> colMergeIdList = Dbo.queryOneColumnList(" select col_id from "
+						+ Column_merge.TableName + "where table_id = ? ", oldID);
+				for(Object obj : colMergeIdList){
+					long colMergeId = (long)obj;
+					Dbo.execute("update "+ Column_merge.TableName +" set table_id = ? where col_id = ?",
+							newID, colMergeId);
+				}
+				//7-3-4、编辑采集表，将该表要采集的列信息保存到相应的表里面
+				saveTableColumnInfoForUpdate(tableInfo, oldID, collColumn, columnSort, colSetId,
+						columnCleanOrder.toJSONString());
+			}
 		}
-		//7、如果是修改采集表
-		else{
-			//7-1、保留原有的table_id，为当前数据设置新的table_id
-			long oldID = tableInfo.getTable_id();
-			String newID = PrimayKeyGener.getNextId();
-			tableInfo.setTable_id(newID);
-			tableInfo.setTi_or(tableCleanOrder.toJSONString());
-			//7-2、保存Table_info对象
-			tableInfo.add(Dbo.db());
-			//7-3、所有关联了原table_id的表，找到对应的字段，为这些字段设置新的table_id
-			//7-3-1、更新table_storage_info表对应条目的table_id字段
-			List<Object> storageIdList = Dbo.queryOneColumnList(" select storage_id from "+
-					Table_storage_info.TableName + "where table_id = ? ", oldID);
-			for(Object obj : storageIdList){
-				long storageId = (long)obj;
-				Dbo.execute("update "+ Table_storage_info.TableName +" set table_id = ? where storage_id = ?",
-						newID, storageId);
-			}
-			//7-3-2、更新table_clean表对应条目的table_id字段
-			List<Object> tableCleanIdList = Dbo.queryOneColumnList(" select c_id from "+ Table_clean.TableName
-					+ " where table_id = ? ", oldID);
-			for(Object obj : tableCleanIdList){
-				long tableCleanId = (long)obj;
-				Dbo.execute("update "+ Table_clean.TableName +" set table_id = ? where c_id = ?",
-						newID, tableCleanId);
-			}
-			//7-3-3、更新column_merge表对应条目的table_id字段
-			List<Object> colMergeIdList = Dbo.queryOneColumnList(" select col_id from "
-					+ Column_merge.TableName + "where table_id = ? ", oldID);
-			for(Object obj : colMergeIdList){
-				long colMergeId = (long)obj;
-				Dbo.execute("update "+ Column_merge.TableName +" set table_id = ? where col_id = ?",
-						newID, colMergeId);
-			}
-			//7-3-4、编辑采集表，将该表要采集的列信息保存到相应的表里面
-			saveTableColumnInfoForUpdate(tableInfo, oldID, collColumn, columnSort, colSetId,
-					columnCleanOrder.toJSONString());
-		}
-
 		return colSetId;
 	}
 
