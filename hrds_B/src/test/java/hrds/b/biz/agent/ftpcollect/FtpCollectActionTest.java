@@ -87,6 +87,8 @@ public class FtpCollectActionTest extends WebBaseTestCase {
 				ftp_collect.setFtp_dir("/ccc/fff/" + i);
 				ftp_collect.setLocal_path("/uuu/ddd/" + i);
 				ftp_collect.setFtp_rule_path(FtpRule.AnShiJian.getCode());
+				ftp_collect.setIs_read_realtime(IsFlag.Shi.getCode());
+				ftp_collect.setRealtime_interval(1000L);
 				ftp_collect.setChild_file_path("/aaa/bbb/" + i);
 				ftp_collect.setChild_time(TimeType.Hour.getCode());
 				ftp_collect.setFile_suffix("dat");
@@ -163,6 +165,8 @@ public class FtpCollectActionTest extends WebBaseTestCase {
 				.addData("ftp_rule_path", FtpRule.AnShiJian.getCode())
 				.addData("child_file_path", "/aaa/bbb/")
 				.addData("child_time", TimeType.Hour.getCode())
+				.addData("is_read_realtime", IsFlag.Shi.getCode())
+				.addData("realtime_interval", 1000L)
 				.addData("file_suffix", "dat")
 				.addData("ftp_model", IsFlag.Shi.getCode())
 				.addData("run_way", ExecuteWay.MingLingChuFa.getCode())
@@ -200,6 +204,8 @@ public class FtpCollectActionTest extends WebBaseTestCase {
 				.addData("ftp_dir", "/ccc/fff/")
 				.addData("local_path", "/uuu/ddd/")
 				.addData("ftp_rule_path", FtpRule.AnShiJian.getCode())
+				.addData("is_read_realtime", IsFlag.Shi.getCode())
+				.addData("realtime_interval", 1000L)
 				.addData("child_file_path", "/aaa/bbb/")
 				.addData("child_time", TimeType.Hour.getCode())
 				.addData("file_suffix", "dat")
@@ -292,6 +298,8 @@ public class FtpCollectActionTest extends WebBaseTestCase {
 				.addData("ftp_password", "1111111")
 				.addData("ftp_dir", "/ccc/fff/")
 				.addData("local_path", "/uuu/ddd/")
+				.addData("is_read_realtime", IsFlag.Shi.getCode())
+				.addData("realtime_interval", 1000L)
 				.addData("ftp_rule_path", FtpRule.AnShiJian.getCode())
 				.addData("child_file_path", "/aaa/bbb/")
 				.addData("child_time", TimeType.Hour.getCode())
@@ -336,6 +344,8 @@ public class FtpCollectActionTest extends WebBaseTestCase {
 				.addData("child_file_path", "/aaa/bbb/")
 				.addData("child_time", TimeType.Hour.getCode())
 				.addData("file_suffix", "dat")
+				.addData("is_read_realtime", IsFlag.Shi.getCode())
+				.addData("realtime_interval", 1000L)
 				.addData("ftp_model", IsFlag.Shi.getCode())
 				.addData("run_way", ExecuteWay.MingLingChuFa.getCode())
 				.addData("is_sendok", IsFlag.Fou.getCode())
