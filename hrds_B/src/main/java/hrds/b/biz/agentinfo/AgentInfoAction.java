@@ -21,6 +21,7 @@ import hrds.commons.utils.key.PrimayKeyGener;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @DocClass(desc = "agent增删改查类", author = "dhw", createdate = "2019-9-23 10:32:16")
 public class AgentInfoAction extends BaseAction {
@@ -41,12 +42,12 @@ public class AgentInfoAction extends BaseAction {
         isDatasourceExist(source_id);
         // 3.通过agent_info,agent_down_info,sys_user三张表关联查询所有类型agent信息
         SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
-        asmSql.addSql("select ai.*,su.user_name,su.user_id,adi.deploy,(case adi.deploy when ? then 'yes' "
-                + " else 'no' end) agentStatus from " + Agent_info.TableName + " ai LEFT JOIN " +
-                Agent_down_info.TableName + " adi ON ai.agent_ip = adi.agent_ip AND " +
-                " ai.agent_port = adi.agent_port AND ai.agent_id = adi.agent_id left join "
-                + Sys_user.TableName + " su on ai.user_id=su.user_id where ai.source_id = ? " +
-                " and ai.agent_type = ? and ai.user_id=? order by ai.agent_id");
+        asmSql.addSql("select ai.agent_id,ai.source_id,ai.agent_name,ai.agent_ip,ai.agent_port,su.user_name," +
+                "su.user_id,adi.deploy,(case adi.deploy when ? then 'yes' else 'no' end) agentStatus from "
+                + Agent_info.TableName + " ai LEFT JOIN " + Agent_down_info.TableName +
+                " adi ON ai.agent_ip = adi.agent_ip AND ai.agent_port = adi.agent_port " +
+                " AND ai.agent_id=adi.agent_id left join " + Sys_user.TableName + " su on ai.user_id=su.user_id"
+                + " where ai.source_id = ? and ai.agent_type = ? and ai.user_id=? order by ai.agent_id");
         asmSql.addParam(IsFlag.Shi.getCode());
         asmSql.addParam(source_id);
         asmSql.addParam(AgentType.ShuJuKu.getCode());
@@ -281,11 +282,16 @@ public class AgentInfoAction extends BaseAction {
     @Param(name = "agent_id", desc = "agent_info表主键", range = "10位数字，新增时生成")
     @Param(name = "agent_type", desc = "agent类型", range = "使用agent类别（AgentType）")
     @Return(desc = "返回根据agent_id与agent_type查询该agent_info信息集合", range = "无限制")
-    public List<Map<String, Object>> searchAgent(long agent_id, String agent_type) {
+    public Optional<Agent_info> searchAgent(long agent_id, String agent_type) {
         // 1.数据可访问权限处理方式，该方法不需要权限控制
         // 2.根据agent_id与agent_type查询该agent信息
-        return Dbo.queryList("SELECT * FROM agent_info WHERE agent_id=? AND agent_type=?" +
-                " order by agent_id", agent_id, agent_type);
+        Optional<Agent_info> agentInfo = Dbo.queryOneObject(Agent_info.class, "SELECT * FROM "
+                        + Agent_info.TableName + " WHERE agent_id=? AND agent_type=? order by agent_id",
+                agent_id, agent_type);
+        if (!agentInfo.isPresent()) {
+            throw new BusinessException("该结果集有且只有一条数据,不能为空！");
+        }
+        return agentInfo;
     }
 
     @Method(desc = "删除agent",

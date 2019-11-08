@@ -12,10 +12,12 @@ import hrds.commons.codes.*;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.testbase.WebBaseTestCase;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
 
@@ -80,8 +82,8 @@ public class AgentInfoActionTest extends WebBaseTestCase {
             "4.database_set表，有1条数据，database_id为DatabaseId" +
             "5.sys_user表，有1条数据，user_id为UserId" +
             "6.department_info表，有2条数据，dep_id为DepId1，DepId2")
-    @BeforeClass
-    public static void before() {
+    @Before
+    public void before() {
         try (DatabaseWrapper db = new DatabaseWrapper()) {
             // 1.构造数据源data_source表测试数据
             // 创建data_source表实体对象
@@ -104,8 +106,6 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                 // 封装agent_info数据
                 agent_info.setCreate_date(DateUtil.getSysDate());
                 agent_info.setCreate_time(DateUtil.getSysTime());
-                agent_info.setAgent_ip("10.71.4.51");
-                agent_info.setAgent_port("34567");
                 // 初始化不同类型的agent
                 if (i == 0) {
                     // 数据库 agent
@@ -114,6 +114,8 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                     agent_info.setAgent_id(DBAgentId);
                     agent_info.setAgent_type(AgentType.ShuJuKu.getCode());
                     agent_info.setAgent_name("sjkAgent");
+                    agent_info.setAgent_ip("10.71.4.51");
+                    agent_info.setAgent_port("3451");
                 } else if (i == 1) {
                     // 数据文件 Agent
                     agent_info.setUser_id(UserId);
@@ -121,6 +123,8 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                     agent_info.setAgent_id(DFAgentId);
                     agent_info.setAgent_type(AgentType.DBWenJian.getCode());
                     agent_info.setAgent_name("DFAgent");
+                    agent_info.setAgent_ip("10.71.4.52");
+                    agent_info.setAgent_port("3452");
                 } else if (i == 2) {
                     // 非结构化 Agent
                     agent_info.setUser_id(UserId);
@@ -128,6 +132,8 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                     agent_info.setAgent_id(UnsAgentId);
                     agent_info.setAgent_type(AgentType.WenJianXiTong.getCode());
                     agent_info.setAgent_name("UnsAgent");
+                    agent_info.setAgent_ip("10.71.4.53");
+                    agent_info.setAgent_port("3453");
                 } else if (i == 3) {
                     // 半结构化 Agent
                     agent_info.setUser_id(UserId);
@@ -135,6 +141,8 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                     agent_info.setAgent_id(SemiAgentId);
                     agent_info.setAgent_type(AgentType.FTP.getCode());
                     agent_info.setAgent_name("SemiAgent");
+                    agent_info.setAgent_ip("10.71.4.54");
+                    agent_info.setAgent_port("3454");
                 } else if (i == 4) {
                     // FTP Agent
                     agent_info.setUser_id(UserId);
@@ -142,6 +150,8 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                     agent_info.setAgent_id(FTPAgentId);
                     agent_info.setAgent_type(AgentType.FTP.getCode());
                     agent_info.setAgent_name("FTPAgent");
+                    agent_info.setAgent_ip("10.71.4.55");
+                    agent_info.setAgent_port("3455");
                 } else if (i == 5) {
                     // 测试SourceId被删除，agent还存在
                     agent_info.setUser_id(UserId);
@@ -149,6 +159,8 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                     agent_info.setAgent_id(DBAgentId2);
                     agent_info.setAgent_type(AgentType.ShuJuKu.getCode());
                     agent_info.setAgent_name("sjkAgent2");
+                    agent_info.setAgent_ip("10.71.4.56");
+                    agent_info.setAgent_port("3456");
                 } else if (i == 6) {
                     // 测试更新agent时切换数据采集用户
                     agent_info.setUser_id(UserId2);
@@ -156,6 +168,8 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                     agent_info.setAgent_id(DBAgentId3);
                     agent_info.setAgent_type(AgentType.ShuJuKu.getCode());
                     agent_info.setAgent_name("sjkAgent3");
+                    agent_info.setAgent_ip("10.71.4.57");
+                    agent_info.setAgent_port("3457");
                 } else if (i == 8) {
                     // 测试更新agent时切换数据采集用户
                     agent_info.setUser_id(UserId);
@@ -163,12 +177,16 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                     agent_info.setAgent_id(DBAgentId4);
                     agent_info.setAgent_type(AgentType.ShuJuKu.getCode());
                     agent_info.setAgent_name("sjkAgent4");
+                    agent_info.setAgent_ip("10.71.4.57");
+                    agent_info.setAgent_port("3458");
                 } else {
                     agent_info.setUser_id(UserId);
                     agent_info.setSource_id(SourceId);
                     agent_info.setAgent_id(DBAgentId5);
                     agent_info.setAgent_type(AgentType.ShuJuKu.getCode());
                     agent_info.setAgent_name("sjkAgent5");
+                    agent_info.setAgent_ip("10.71.4.55");
+                    agent_info.setAgent_port("3459");
                 }
                 // 初始化agent不同的连接状态
                 if (i < 2) {
@@ -233,7 +251,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
             sysUser.setCreate_date(DateUtil.getSysDate());
             sysUser.setCreate_time(DateUtil.getSysTime());
             sysUser.setRole_id("1001");
-            sysUser.setUser_name("testUser");
+            sysUser.setUser_name("数据源agent测试用户");
             sysUser.setUser_password("1");
             sysUser.setUser_type(UserType.CaiJiYongHu.getCode());
             sysUser.setUseris_admin(IsFlag.Shi.getCode());
@@ -288,8 +306,8 @@ public class AgentInfoActionTest extends WebBaseTestCase {
             "12.判断data_source表数据是否被删除" +
             "13.单独删除新增数据，因为新增数据主键是自动生成的，所以要通过其他方式删除" +
             "14.提交事务")
-    @AfterClass
-    public static void after() {
+    @After
+    public void after() {
         try (DatabaseWrapper db = new DatabaseWrapper()) {
             // 1.测试完成后删除data_source表数据库agent测试数据
             SqlOperator.execute(db, "delete from data_source where source_id=?", SourceId);
@@ -409,6 +427,65 @@ public class AgentInfoActionTest extends WebBaseTestCase {
         ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
         assertThat(ar.isSuccess(), is(true));
+        // TODO 无法确认原表是否有数据，目前只能测试自己造的数据
+        Map<Object, Object> dataForMap = ar.getDataForMap();
+        List<Map<String, Object>> sjkAgent = (List<Map<String, Object>>) dataForMap.get("sjkAgent");
+        if (!sjkAgent.isEmpty()) {
+            for (Map<String, Object> map : sjkAgent) {
+                if (String.valueOf(DBAgentId).equals(map.get("agent_id").toString())) {
+                    assertThat(map.get("agent_ip").toString(), is("10.71.4.51"));
+                    assertThat(map.get("agent_port").toString(), is("3451"));
+                    assertThat(map.get("agent_name").toString(), is("sjkAgent"));
+                    assertThat(map.get("user_name").toString(), is("数据源agent测试用户"));
+                }
+            }
+        }
+        List<Map<String, Object>> dbFileAgent = (List<Map<String, Object>>) dataForMap.get("dbFileAgent");
+        if (!dbFileAgent.isEmpty()) {
+            for (Map<String, Object> map : dbFileAgent) {
+                if (String.valueOf(DFAgentId).equals(map.get("agent_id").toString())) {
+                    assertThat(map.get("agent_ip").toString(), is("10.71.4.52"));
+                    assertThat(map.get("agent_port").toString(), is("3452"));
+                    assertThat(map.get("agent_name").toString(), is("DFAgent"));
+                    assertThat(map.get("user_name").toString(), is("数据源agent测试用户"));
+                }
+            }
+        }
+        List<Map<String, Object>> fileSystemAgent = (List<Map<String, Object>>) dataForMap.get("fileSystemAgent");
+        if (!fileSystemAgent.isEmpty()) {
+            for (Map<String, Object> map : fileSystemAgent) {
+                if (String.valueOf(UnsAgentId).equals(map.get("agent_id").toString())) {
+                    assertThat(map.get("agent_ip").toString(), is("10.71.4.53"));
+                    assertThat(map.get("agent_port").toString(), is("3453"));
+                    assertThat(map.get("agent_name").toString(), is("UnsAgent"));
+                    assertThat(map.get("user_name").toString(), is("数据源agent测试用户"));
+                }
+            }
+        }
+        List<Map<String, Object>> dxAgent = (List<Map<String, Object>>) dataForMap.get("dxAgent");
+        if (!dxAgent.isEmpty()) {
+            for (Map<String, Object> map : dxAgent) {
+                if (String.valueOf(SemiAgentId).equals(map.get("agent_id").toString())) {
+                    assertThat(map.get("agent_ip").toString(), is("10.71.4.54"));
+                    assertThat(map.get("agent_port").toString(), is("3454"));
+                    assertThat(map.get("agent_name").toString(), is("SemiAgent"));
+                    assertThat(map.get("user_name").toString(), is("数据源agent测试用户"));
+                }
+            }
+        }
+        List<Map<String, Object>> ftpAgent = (List<Map<String, Object>>) dataForMap.get("ftpAgent");
+        if (!ftpAgent.isEmpty()) {
+            for (Map<String, Object> map : ftpAgent) {
+                if (String.valueOf(FTPAgentId).equals(map.get("agent_id").toString())) {
+                    assertThat(map.get("agent_ip").toString(), is("10.71.4.55"));
+                    assertThat(map.get("agent_port").toString(), is("3455"));
+                    assertThat(map.get("agent_name").toString(), is("FTPAgent"));
+                    assertThat(map.get("user_name").toString(), is("数据源agent测试用户"));
+                }
+            }
+        }
+        assertThat(dataForMap.get("datasource_name"), is("dsName"));
+        assertThat(dataForMap.get("source_id").toString(), is(String.valueOf(SourceId)));
         // 2.错误的数据访问1，source_id不存在
         bodyString = new HttpClient()
                 .addData("source_id", 111)
@@ -459,10 +536,15 @@ public class AgentInfoActionTest extends WebBaseTestCase {
         // 验证新增数据是否成功
         try (DatabaseWrapper db = new DatabaseWrapper()) {
             // 判断agent_info表数据是否新增成功
-            OptionalLong number = SqlOperator.queryNumber(db, "select count(*) from " +
-                            " agent_info where source_id=? and agent_type=? and agent_name=?",
-                    SourceId, AgentType.ShuJuKu.getCode(), "sjkAddAgent");
-            assertThat("添加agent_info数据成功", number.getAsLong(), is(1L));
+            Optional<Agent_info> agentInfo = SqlOperator.queryOneObject(db, Agent_info.class,
+                    "select * from " + Agent_info.TableName + " where source_id=? and agent_type=?" +
+                            " and agent_name=?", SourceId, AgentType.ShuJuKu.getCode(), "sjkAddAgent");
+            assertThat("sjkAddAgent", is(agentInfo.get().getAgent_name()));
+            assertThat(AgentType.ShuJuKu.getCode(), is(agentInfo.get().getAgent_type()));
+            assertThat("10.71.4.52", is(agentInfo.get().getAgent_ip()));
+            assertThat("3451", is(agentInfo.get().getAgent_port()));
+            assertThat(SourceId, is(agentInfo.get().getSource_id()));
+            assertThat(UserId, is(agentInfo.get().getUser_id()));
         }
         // 2.正确的数组访问2，新增数据文件agent信息,数据都有效
         bodyString = new HttpClient()
@@ -1163,7 +1245,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                     "3.错误的数据访问2，查询agent_info表数据，agent_type是一个合法的数据")
     @Test
     public void searchAgent() {
-        // 目前不知道该如何验证数据正确性，只能判断请求成功
+        // TODO 无法确认原表数据为空目前不知道该如何验证数据正确性，只能判断自己造的数据
         // 1.正常的数据访问1，查询agent_info表数据，数据都有效,不能保证数据库原表数据为空
         String bodyString = new HttpClient().addData("agent_id", DBAgentId)
                 .addData("agent_type", AgentType.ShuJuKu.getCode())
@@ -1171,6 +1253,13 @@ public class AgentInfoActionTest extends WebBaseTestCase {
         ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
         assertThat(ar.isSuccess(), is(true));
+        List<Agent_info> agentInfoList = ar.getDataForEntityList(Agent_info.class);
+        // 这里list集合只有一条数据
+        assertThat(agentInfoList.get(0).getAgent_ip(), is("10.71.4.51"));
+        assertThat(agentInfoList.get(0).getAgent_port(), is("3451"));
+        assertThat(agentInfoList.get(0).getAgent_name(), is("sjkAgent"));
+        assertThat(agentInfoList.get(0).getUser_id(), is(UserId));
+        assertThat(DBAgentId, is(agentInfoList.get(0).getAgent_id()));
         // 2.错误的数据访问1，查询agent_info表数据，agent_id是一个不存在的数据
         bodyString = new HttpClient().addData("agent_id", -1000000009L)
                 .addData("agent_type", AgentType.ShuJuKu.getCode())

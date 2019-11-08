@@ -1314,6 +1314,26 @@ public class DataSourceActionTest extends WebBaseTestCase {
         }
     }
 
+    @Method(desc = "查询部门信息", logicStep = "1.正确的数据访问1，查询部门信息,该方法只有一种可能，因为没有参数")
+    @Test
+    public void searchDepartmentInfo() {
+        // 1.正确的数据访问1，查询部门信息
+        String bodyString = new HttpClient().post(getActionUrl("searchDepartmentInfo"))
+                .getBodyString();
+        ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        List<Department_info> departmentInfoList = ar.getDataForEntityList(Department_info.class);
+        // TODO 不能确定原表是否有数据，目前只能测试自己造的数据
+        for (Department_info departmentInfo : departmentInfoList) {
+            if (departmentInfo.getDep_id() == DepId1) {
+                assertThat("测试第1部门", is(departmentInfo.getDep_name()));
+            }
+            if (departmentInfo.getDep_id() == DepId2) {
+                assertThat("测试第2部门", is(departmentInfo.getDep_name()));
+            }
+        }
+    }
+
     @Method(desc = "新增/更新数据源测试",
             logicStep = "1.正确的数据访问1，测试数据源新增功能,数据都有效" +
                     "2.错误的数据访问1，新增数据源信息,数据源名称不能为空" +

@@ -383,11 +383,11 @@ public class DataSourceAction extends BaseAction {
 
     @Method(desc = "查询部门信息",
             logicStep = "1.数据可访问权限处理方式，该方法不需要权限控制" +
-                    "2.返回查询部门信息")
+                    "2.查询部门信息并返回")
     @Return(desc = "返回查询部门信息", range = "无限制")
     public List<Department_info> searchDepartmentInfo() {
         // 1.数据可访问权限处理方式，该方法不需要权限控制
-        // 2.返回查询部门信息
+        // 2.查询部门信息并返回
         return Dbo.queryList(Department_info.class, "select * from " + Department_info.TableName);
     }
 
