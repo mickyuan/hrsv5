@@ -1451,10 +1451,9 @@ public class DataSourceActionTest extends WebBaseTestCase {
         assertThat(ar.isSuccess(), is(false));
     }
 
-    @Method(desc = "根据数据源编号查询数据源信息,该测试方法只会返回三种情况",
+    @Method(desc = "根据数据源编号查询数据源信息,该测试方法只会返回两种情况，有数据，没有数据",
             logicStep = "1.正确的数据访问1，查询数据源信息,正常返回数据" +
-                    "2.错误的数据访问1，查询数据源信息，此数据源下没有数据" +
-                    "3.错误的数据访问2，查询数据源信息,source_id为空")
+                    "2.错误的数据访问1，查询数据源信息，此数据源下没有数据")
     @Test
     public void searchDataSourceById() {
         // 1.正确的数据访问1，查询数据源信息,正常返回数据
@@ -1486,12 +1485,6 @@ public class DataSourceActionTest extends WebBaseTestCase {
         assertThat(dataResource.get("datasource_number"), nullValue());
         assertThat(dataResource.get("source_remark"), nullValue());
         assertThat(dataResource.get("dep_name"), nullValue());
-        // 3.错误的数据访问2，查询数据源信息,source_id为空
-        bodyString = new HttpClient()
-                .post(getActionUrl("searchDataSourceById")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
-                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
-        assertThat(ar.isSuccess(), is(false));
     }
 
     @Method(desc = "更新数据源data_source,source_relation_dep表信息",
