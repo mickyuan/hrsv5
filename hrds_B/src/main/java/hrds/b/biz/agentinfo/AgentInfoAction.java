@@ -17,8 +17,6 @@ import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.key.PrimayKeyGener;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.util.HashMap;
 import java.util.List;
@@ -26,9 +24,8 @@ import java.util.Map;
 
 @DocClass(desc = "agent增删改查类", author = "dhw", createdate = "2019-9-23 10:32:16")
 public class AgentInfoAction extends BaseAction {
-    private static final Logger logger = LogManager.getLogger();
 
-    @Method(desc = "查询所有agent信息,agent页面展示(测试用例还未写）",
+    @Method(desc = "查询所有agent信息,agent页面展示",
             logicStep = "1.数据可访问权限处理方式，通过user_id关联进行权限控制" +
                     "2.验证此数据源是否还存在" +
                     "3.通过agent_info,agent_down_info,sys_user三张表关联查询所有类型agent信息" +
@@ -125,7 +122,7 @@ public class AgentInfoAction extends BaseAction {
         // 1.数据可访问权限处理方式，新增时会设置创建用户ID，会获取当前用户ID，所以不需要权限验证
         // 2.字段合法性验证
         fieldLegalityValidation(agentInfo.getAgent_name(), agentInfo.getAgent_type(), agentInfo.getAgent_ip(),
-                agentInfo.getAgent_port(), agentInfo.getSource_id(), agentInfo.getUser_id());
+                agentInfo.getAgent_port());
         // 3.判断端口是否被占用
         boolean flag = isPortOccupied(agentInfo.getAgent_ip(), Integer.parseInt(agentInfo.getAgent_port()));
         if (flag) {
@@ -139,8 +136,8 @@ public class AgentInfoAction extends BaseAction {
         agentInfo.setCreate_time(DateUtil.getSysTime());
         agentInfo.setCreate_date(DateUtil.getSysDate());
         // 5.检查数据源是否还存在以及判断数据源下相同的IP地址中是否包含相同的端口
-        check(agentInfo.getSource_id(), agentInfo.getAgent_type(), agentInfo.getAgent_ip(),
-                agentInfo.getAgent_port());
+        isDatasourceAndAgentExist(agentInfo.getSource_id(), agentInfo.getAgent_type(),
+                agentInfo.getAgent_ip(), agentInfo.getAgent_port());
         // 6.保存agent信息
         agentInfo.add(Dbo.db());
         // 7.返回最新的当前agent类型对应的agent信息
@@ -160,14 +157,14 @@ public class AgentInfoAction extends BaseAction {
     @Param(name = "agent_type", desc = "agent类型", range = "使用agent类型代码项（agentType）")
     @Param(name = "agent_ip", desc = "agent所在服务器ip", range = "合法IP地址", example = "127.0.0.1")
     @Param(name = "agent_port", desc = "agent连接端口", range = "1024-65535")
-    private void check(long source_id, String agent_type, String agent_ip, String agent_port) {
+    private void isDatasourceAndAgentExist(long source_id, String agent_type, String agent_ip, String agent_port) {
         // 1.数据可访问权限处理方式，这是一个私有方法，不会单独被调用，所以不需要权限验证
         // 2.验证数据源是否还存在,查到至少一条数据，查不到为0
         isDatasourceExist(source_id);
         // 3.判断数据源下相同的IP地址中是否包含相同的端口,查到至少一条数据，查不到为0
-        if (Dbo.queryNumber("SELECT count(1) FROM " + Agent_info.TableName + " WHERE source_id=? AND agent_type=?"
-                + " AND agent_ip=? AND agent_port=?", source_id, agent_type, agent_ip, agent_port)
-                .orElseThrow(() -> new BusinessException("sql查询错误！")) > 0) {
+        if (Dbo.queryNumber("SELECT count(1) FROM " + Agent_info.TableName + " WHERE source_id=?" +
+                        " AND agent_type=? AND agent_ip=? AND agent_port=?", source_id, agent_type, agent_ip,
+                agent_port).orElseThrow(() -> new BusinessException("sql查询错误！")) > 0) {
             throw new BusinessException("该agent对应的数据源下相同的IP地址中包含相同的端口，" +
                     "source_id=" + source_id);
         }
@@ -182,8 +179,7 @@ public class AgentInfoAction extends BaseAction {
                     "6.返回最新的当前agent类型对应的agent信息")
     @Param(name = "agent_id", desc = "agent_info主键ID", range = "10位数字，新增时自动生成")
     @Param(name = "agent_name", desc = "data_source表主键", range = "10位数字，新增时自动生成")
-    @Param(name = "agent_type", desc = "agent类型", range = "1:数据库Agent,2:文件系统Agent,3:FtpAgent," +
-            "4:数据文件Agent,5:对象Agent")
+    @Param(name = "agent_type", desc = "agent类型", range = "使用agent类型代码项（AgentType）")
     @Param(name = "agent_ip", desc = "agent所在服务器ip", range = "合法IP地址", example = "127.0.0.1")
     @Param(name = "agent_port", desc = "agent连接端口", range = "1024-65535")
     @Param(name = "source_id", desc = "agent_info表外键ID，data_source表主键ID,定义为Long目的是判null",
@@ -200,9 +196,9 @@ public class AgentInfoAction extends BaseAction {
             throw new BusinessException("数据权限校验失败，数据不可访问！");
         }
         // 2.字段合法性验证
-        fieldLegalityValidation(agent_name, agent_type, agent_ip, agent_port, source_id, user_id);
+        fieldLegalityValidation(agent_name, agent_type, agent_ip, agent_port);
         // 3.检查数据源是否还存在以及判断数据源下相同的IP地址中是否包含相同的端口
-        check(source_id, agent_type, agent_ip, agent_port);
+        isDatasourceAndAgentExist(source_id, agent_type, agent_ip, agent_port);
         // 4.创建agent_info实体对象，同时封装值
         Agent_info agentInfo = new Agent_info();
         agentInfo.setAgent_id(agent_id);
@@ -228,18 +224,13 @@ public class AgentInfoAction extends BaseAction {
                     "2.验证agent_type是否为空或空格" +
                     "3. 验证agent_name是否为空或空格" +
                     "4.判断agent_ip是否是一个合法的ip" +
-                    "5.判断agent_port是否是一个有效的端口" +
-                    "6.验证user_id是否为空或空格" +
-                    "7.验证source_id是否为空或空格")
-    @Param(name = "agent_name", desc = "data_source表主键", range = "10位数字，新增时自动生成")
-    @Param(name = "agent_type", desc = "agent类型", range = "使用agent类别（AgentType）")
+                    "5.判断agent_port是否是一个有效的端口")
+    @Param(name = "agent_name", desc = "agent名称", range = "10位数字，新增时自动生成")
+    @Param(name = "agent_type", desc = "agent类型", range = "使用agent类型代码项（AgentType）")
     @Param(name = "agent_ip", desc = "agent所在服务器ip", range = "合法IP地址", example = "127.0.0.1")
     @Param(name = "agent_port", desc = "agent连接端口", range = "1024-65535")
-    @Param(name = "source_id", desc = "agent_info表外键ID，data_source表主键ID,定义为Long目的是判null",
-            range = "10位数字，新增时自动生成")
-    @Param(name = "user_id", desc = "数据采集用户ID,定义为Long目的是判null", range = "四位数字，新增用户时自动生成")
     private void fieldLegalityValidation(String agent_name, String agent_type, String agent_ip,
-                                         String agent_port, Long source_id, Long user_id) {
+                                         String agent_port) {
         // 1.数据可访问权限处理方式，这是个私有方法，不会单独被调用，所以不需要权限验证
         // 2.验证agent_type是否合法，不合法该方法会直接抛异常
         AgentType.ofEnumByCode(agent_type);
@@ -249,9 +240,8 @@ public class AgentInfoAction extends BaseAction {
         }
         // 4.判断agent_ip是否是一个合法的ip
         String[] split = agent_ip.split("\\.");
-        for (int i = 0; i < split.length; i++) {
-            int temp = Integer.parseInt(split[i]);
-            if (temp < 0 || temp > 255) {
+        for (String s : split) {
+            if (Integer.parseInt(s) < 0 || Integer.parseInt(s) > 255) {
                 throw new BusinessException("agent_ip不是一个为空或空格的ip地址," +
                         "agent_ip=" + agent_ip);
             }
@@ -260,14 +250,6 @@ public class AgentInfoAction extends BaseAction {
         if (StringUtil.isBlank(agent_port) || Integer.parseInt(agent_port) < 1024 ||
                 Integer.parseInt(agent_port) > 65535) {
             throw new BusinessException("agent_port端口不是有效的端口，不在取值范围内，agent_port=" + agent_port);
-        }
-        // 6.验证user_id是否为空或空格
-        if (user_id == null) {
-            throw new BusinessException("user_id不为空且不为空格");
-        }
-        // 7.验证source_id是否为空或空格
-        if (source_id == null) {
-            throw new BusinessException("source_id不为空且不为空格");
         }
     }
 

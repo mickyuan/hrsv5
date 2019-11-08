@@ -10,6 +10,7 @@ import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import hrds.commons.codes.*;
 import hrds.commons.entity.*;
+import hrds.commons.exception.BusinessException;
 import hrds.testbase.WebBaseTestCase;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -267,8 +268,10 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                 .addData("password", "1")
                 .post("http://127.0.0.1:8099/A/action/hrds/a/biz/login/login")
                 .getBodyString();
-        Optional<ActionResult> ar = JsonUtil.toObjectSafety(responseValue, ActionResult.class);
-        assertThat("用户登录", ar.get().isSuccess(), is(true));
+        ActionResult ar = JsonUtil.toObjectSafety(responseValue, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        ;
+        assertThat("用户登录", ar.isSuccess(), is(true));
     }
 
     @Method(desc = "测试完删除测试数据", logicStep = "1.测试完成后删除data_source表数据库agent测试数据" +
@@ -403,15 +406,17 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                 .addData("source_id", SourceId)
                 .addData("datasource_name", "dsName")
                 .post(getActionUrl("searchDatasourceAndAgentInfo")).getBodyString();
-        Optional<ActionResult> ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(true));
+        ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(true));
         // 2.错误的数据访问1，source_id不存在
         bodyString = new HttpClient()
                 .addData("source_id", 111)
                 .addData("datasource_name", "dsName")
                 .post(getActionUrl("searchDatasourceAndAgentInfo")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
     }
 
     @Method(desc = "新增agent_info表数据测试",
@@ -448,8 +453,9 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                 .addData("source_id", SourceId)
                 .addData("user_id", UserId)
                 .post(getActionUrl("saveAgent")).getBodyString();
-        Optional<ActionResult> ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(true));
+        ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(true));
         // 验证新增数据是否成功
         try (DatabaseWrapper db = new DatabaseWrapper()) {
             // 判断agent_info表数据是否新增成功
@@ -467,8 +473,9 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                 .addData("source_id", SourceId)
                 .addData("user_id", UserId)
                 .post(getActionUrl("saveAgent")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(true));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(true));
         // 验证新增数据是否成功
         try (DatabaseWrapper db = new DatabaseWrapper()) {
             // 判断agent_info表数据是否新增成功
@@ -486,8 +493,9 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                 .addData("source_id", SourceId)
                 .addData("user_id", UserId)
                 .post(getActionUrl("saveAgent")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(true));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(true));
         // 验证新增数据是否成功
         try (DatabaseWrapper db = new DatabaseWrapper()) {
             // 判断agent_info表数据是否新增成功
@@ -505,8 +513,9 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                 .addData("source_id", SourceId)
                 .addData("user_id", UserId)
                 .post(getActionUrl("saveAgent")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(true));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(true));
         // 验证新增数据是否成功
         try (DatabaseWrapper db = new DatabaseWrapper()) {
             // 判断agent_info表数据是否新增成功
@@ -524,8 +533,9 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                 .addData("source_id", SourceId)
                 .addData("user_id", UserId)
                 .post(getActionUrl("saveAgent")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(true));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(true));
         // 验证新增数据是否成功
         try (DatabaseWrapper db = new DatabaseWrapper()) {
             // 判断agent_info表数据是否新增成功
@@ -543,7 +553,8 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                 .addData("source_id", SourceId)
                 .addData("user_id", UserId)
                 .post(getActionUrl("saveAgent")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
         // 7.错误的数据访问2，新增agent信息,agent_name为空格
         bodyString = new HttpClient()
                 .addData("agent_name", " ")
@@ -553,8 +564,9 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                 .addData("source_id", SourceId)
                 .addData("user_id", UserId)
                 .post(getActionUrl("saveAgent")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
         // 8.错误的数据访问3，新增agent信息,agent_type为空
         bodyString = new HttpClient()
                 .addData("agent_name", "db文件Agent")
@@ -564,7 +576,8 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                 .addData("source_id", SourceId)
                 .addData("user_id", UserId)
                 .post(getActionUrl("saveAgent")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
         // 9.错误的数据访问4，新增agent信息,agent_type为空格
         bodyString = new HttpClient()
                 .addData("agent_name", "sjkAgent")
@@ -574,8 +587,9 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                 .addData("source_id", SourceId)
                 .addData("user_id", UserId)
                 .post(getActionUrl("saveAgent")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
         // 10.错误的数据访问5，新增agent信息,agent_ip为空
         bodyString = new HttpClient()
                 .addData("agent_name", "sjkAgent")
@@ -585,8 +599,9 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                 .addData("source_id", SourceId)
                 .addData("user_id", UserId)
                 .post(getActionUrl("saveAgent")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
         // 11.错误的数据访问6，新增agent信息,agent_ip为空格
         bodyString = new HttpClient()
                 .addData("agent_name", "sjkAgent")
@@ -596,8 +611,9 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                 .addData("source_id", SourceId)
                 .addData("user_id", UserId)
                 .post(getActionUrl("saveAgent")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
         // 12.错误的数据访问7，新增agent信息,agent_ip不合法（不是有效的ip）
         bodyString = new HttpClient()
                 .addData("agent_name", "sjkAgent")
@@ -607,8 +623,9 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                 .addData("source_id", SourceId)
                 .addData("user_id", UserId)
                 .post(getActionUrl("saveAgent")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
         // 13.错误的数据访问8，新增agent信息,agent_port为空
         bodyString = new HttpClient()
                 .addData("agent_name", "sjkAgent")
@@ -618,8 +635,9 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                 .addData("source_id", SourceId)
                 .addData("user_id", UserId)
                 .post(getActionUrl("saveAgent")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
         // 14.错误的数据访问9，新增agent信息,agent_port为空格
         bodyString = new HttpClient()
                 .addData("agent_name", "sjkAgent")
@@ -629,8 +647,9 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                 .addData("source_id", SourceId)
                 .addData("user_id", UserId)
                 .post(getActionUrl("saveAgent")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
         // 15.错误的数据访问10，新增agent信息,agent_port不合法（不是有效的端口）
         bodyString = new HttpClient()
                 .addData("agent_name", "sjkAgent")
@@ -640,8 +659,9 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                 .addData("source_id", SourceId)
                 .addData("user_id", UserId)
                 .post(getActionUrl("saveAgent")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
         // 16.错误的数据访问11，新增agent信息,SourceId为空
         bodyString = new HttpClient()
                 .addData("agent_name", "sjkAgent")
@@ -651,8 +671,9 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                 .addData("source_id", "")
                 .addData("user_id", UserId)
                 .post(getActionUrl("saveAgent")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
         // 17.错误的数据访问12，新增agent信息,SourceId为空格
         bodyString = new HttpClient()
                 .addData("agent_name", "sjkAgent")
@@ -662,8 +683,9 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                 .addData("source_id", " ")
                 .addData("user_id", UserId)
                 .post(getActionUrl("saveAgent")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
         // 18.错误的数据访问13，新增agent信息,user_id为空
         bodyString = new HttpClient()
                 .addData("agent_name", "sjkAgent")
@@ -673,8 +695,9 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                 .addData("source_id", SourceId)
                 .addData("user_id", "")
                 .post(getActionUrl("saveAgent")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
         // 19.错误的数据访问14，新增agent信息,user_id为空格
         bodyString = new HttpClient()
                 .addData("agent_name", "sjkAgent")
@@ -684,8 +707,9 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                 .addData("source_id", SourceId)
                 .addData("user_id", " ")
                 .post(getActionUrl("saveAgent")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
         // 20.错误的数据访问15，新增agent信息,端口被占用
         bodyString = new HttpClient()
                 .addData("agent_name", "sjkAgent")
@@ -695,8 +719,9 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                 .addData("source_id", SourceId)
                 .addData("user_id", UserId)
                 .post(getActionUrl("saveAgent")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
         // 21.错误的数据访问16，新增agent信息,agent对应的数据源下相同的IP地址中包含相同的端口
         bodyString = new HttpClient()
                 .addData("agent_name", "sjkAgent")
@@ -706,8 +731,9 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                 .addData("source_id", SourceId)
                 .addData("user_id", UserId)
                 .post(getActionUrl("saveAgent")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
         // 22.错误的数据访问17，新增agent信息,agent对应的数据源已不存在不可新增
         bodyString = new HttpClient()
                 .addData("agent_name", "sjkAgent")
@@ -717,8 +743,9 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                 .addData("source_id", SourceId2)
                 .addData("user_id", UserId)
                 .post(getActionUrl("saveAgent")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
     }
 
     @Method(desc = "更新agent_info表数据测试",
@@ -769,8 +796,9 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                 .addData("source_id", SourceId)
                 .addData("user_id", UserId2)
                 .post(getActionUrl("updateAgent")).getBodyString();
-        Optional<ActionResult> ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(true));
+        ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(true));
         // 验证更新数据是否成功
         try (DatabaseWrapper db = new DatabaseWrapper()) {
             // 判断agent_info表数据是否更新成功
@@ -793,8 +821,9 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                 .addData("source_id", SourceId)
                 .addData("user_id", UserId2)
                 .post(getActionUrl("updateAgent")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(true));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(true));
         // 验证更新数据是否成功
         try (DatabaseWrapper db = new DatabaseWrapper()) {
             // 判断agent_info表数据是否更新成功
@@ -823,8 +852,9 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                 .addData("source_id", SourceId)
                 .addData("user_id", UserId2)
                 .post(getActionUrl("updateAgent")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(true));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(true));
         // 验证更新数据是否成功
         try (DatabaseWrapper db = new DatabaseWrapper()) {
             // 判断agent_info表数据是否更新成功
@@ -853,8 +883,9 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                 .addData("source_id", SourceId)
                 .addData("user_id", UserId2)
                 .post(getActionUrl("updateAgent")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(true));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(true));
         // 验证更新数据是否成功
         try (DatabaseWrapper db = new DatabaseWrapper()) {
             // 判断agent_info表数据是否更新成功
@@ -884,8 +915,9 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                 .addData("source_id", SourceId)
                 .addData("user_id", UserId2)
                 .post(getActionUrl("updateAgent")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(true));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(true));
         // 验证更新数据是否成功
         try (DatabaseWrapper db = new DatabaseWrapper()) {
             // 判断agent_info表数据是否更新成功
@@ -914,7 +946,8 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                 .addData("source_id", SourceId)
                 .addData("user_id", UserId)
                 .post(getActionUrl("updateAgent")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
         // 7.错误的数据访问2，更新agent信息,agent_name为空格
         bodyString = new HttpClient()
                 .addData("agent_id", DBAgentId)
@@ -925,8 +958,9 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                 .addData("source_id", SourceId)
                 .addData("user_id", UserId)
                 .post(getActionUrl("updateAgent")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
         // 8.错误的数据访问3，更新agent信息,agent_type为空
         bodyString = new HttpClient()
                 .addData("agent_id", DBAgentId)
@@ -937,7 +971,8 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                 .addData("source_id", SourceId)
                 .addData("user_id", UserId)
                 .post(getActionUrl("updateAgent")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
         // 9.错误的数据访问4，更新agent信息,agent_type为空格
         bodyString = new HttpClient()
                 .addData("agent_id", DBAgentId)
@@ -948,8 +983,9 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                 .addData("source_id", SourceId)
                 .addData("user_id", UserId)
                 .post(getActionUrl("updateAgent")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
         // 10.错误的数据访问5，更新agent信息,agent_ip为空
         bodyString = new HttpClient()
                 .addData("agent_id", DBAgentId)
@@ -960,8 +996,9 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                 .addData("source_id", SourceId)
                 .addData("user_id", UserId)
                 .post(getActionUrl("updateAgent")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
         // 11.错误的数据访问6，更新agent信息,agent_ip为空格
         bodyString = new HttpClient()
                 .addData("agent_id", DBAgentId)
@@ -972,8 +1009,9 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                 .addData("source_id", SourceId)
                 .addData("user_id", UserId)
                 .post(getActionUrl("updateAgent")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
         // 12.错误的数据访问7，更新agent信息,agent_ip不合法（不是有效的ip）
         bodyString = new HttpClient()
                 .addData("agent_id", DBAgentId)
@@ -984,8 +1022,9 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                 .addData("source_id", SourceId)
                 .addData("user_id", UserId)
                 .post(getActionUrl("updateAgent")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
         // 13.错误的数据访问8，更新agent信息,agent_port为空
         bodyString = new HttpClient()
                 .addData("agent_id", DBAgentId)
@@ -996,8 +1035,9 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                 .addData("source_id", SourceId)
                 .addData("user_id", UserId)
                 .post(getActionUrl("updateAgent")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
         // 14.错误的数据访问9，更新agent信息,agent_port为空格
         bodyString = new HttpClient()
                 .addData("agent_id", DBAgentId)
@@ -1008,8 +1048,9 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                 .addData("source_id", SourceId)
                 .addData("user_id", UserId)
                 .post(getActionUrl("updateAgent")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
         // 15.错误的数据访问10，更新agent信息,agent_port不合法（不是有效的端口）
         bodyString = new HttpClient()
                 .addData("agent_id", DBAgentId)
@@ -1020,8 +1061,9 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                 .addData("source_id", SourceId)
                 .addData("user_id", UserId)
                 .post(getActionUrl("updateAgent")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
         // 16.错误的数据访问11，更新agent信息,sourceId为空
         bodyString = new HttpClient()
                 .addData("agent_id", DBAgentId)
@@ -1032,8 +1074,9 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                 .addData("source_id", "")
                 .addData("user_id", UserId)
                 .post(getActionUrl("updateAgent")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
         // 17.错误的数据访问12，更新agent信息,sourceId为空格
         bodyString = new HttpClient()
                 .addData("agent_id", DBAgentId)
@@ -1044,8 +1087,9 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                 .addData("source_id", " ")
                 .addData("user_id", UserId)
                 .post(getActionUrl("updateAgent")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
         // 18.错误的数据访问13，更新agent信息,user_id为空
         bodyString = new HttpClient()
                 .addData("agent_id", DBAgentId)
@@ -1056,8 +1100,9 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                 .addData("source_id", SourceId)
                 .addData("user_id", "")
                 .post(getActionUrl("updateAgent")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
         // 19.错误的数据访问14，更新agent信息,user_id为空格
         bodyString = new HttpClient()
                 .addData("agent_id", DBAgentId)
@@ -1068,8 +1113,9 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                 .addData("source_id", SourceId)
                 .addData("user_id", " ")
                 .post(getActionUrl("updateAgent")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
         // 20.错误的数据访问15，更新agent信息,端口被占用
         bodyString = new HttpClient()
                 .addData("agent_id", DBAgentId)
@@ -1080,8 +1126,9 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                 .addData("source_id", SourceId)
                 .addData("user_id", UserId)
                 .post(getActionUrl("updateAgent")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
         // 21.错误的数据访问16，更新agent信息,agent对应的数据源下相同的IP地址中包含相同的端口
         bodyString = new HttpClient()
                 .addData("agent_id", DBAgentId)
@@ -1092,8 +1139,9 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                 .addData("source_id", SourceId)
                 .addData("user_id", UserId)
                 .post(getActionUrl("updateAgent")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
         // 22.错误的数据访问17，更新agent信息,agent对应的数据源已不存在不可更新
         bodyString = new HttpClient()
                 .addData("agent_id", DBAgentId)
@@ -1104,8 +1152,9 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                 .addData("source_id", SourceId2)
                 .addData("user_id", UserId)
                 .post(getActionUrl("updateAgent")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
     }
 
     @Method(desc = "根据agent_id,agent_type查询agent_info信息,此方法只会有3种可能",
@@ -1119,23 +1168,26 @@ public class AgentInfoActionTest extends WebBaseTestCase {
         String bodyString = new HttpClient().addData("agent_id", DBAgentId)
                 .addData("agent_type", AgentType.ShuJuKu.getCode())
                 .post(getActionUrl("searchAgent")).getBodyString();
-        Optional<ActionResult> ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(true));
+        ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(true));
         // 2.错误的数据访问1，查询agent_info表数据，agent_id是一个不存在的数据
         bodyString = new HttpClient().addData("agent_id", -1000000009L)
                 .addData("agent_type", AgentType.ShuJuKu.getCode())
                 .post(getActionUrl("searchAgent")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(true));
-        assertThat(ar.get().getDataForResult().getRowCount(), is(0));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(true));
+        assertThat(ar.getDataForResult().getRowCount(), is(0));
 
         // 3.错误的数据访问2，查询agent_info表数据，agent_type是一个合法的数据
         bodyString = new HttpClient().addData("agent_id", SourceId)
                 .addData("agent_type", "6")
                 .post(getActionUrl("searchAgent")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(true));
-        assertThat(ar.get().getDataForResult().getRowCount(), is(0));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(true));
+        assertThat(ar.getDataForResult().getRowCount(), is(0));
     }
 
     @Method(desc = "根据agent_id,agent_type删除agent_info信息",
@@ -1160,8 +1212,9 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                     .addData("agent_id", DBAgentId5)
                     .addData("agent_type", AgentType.ShuJuKu.getCode())
                     .post(getActionUrl("deleteAgent")).getBodyString();
-            Optional<ActionResult> ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-            assertThat(ar.get().isSuccess(), is(true));
+            ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+            assertThat(ar.isSuccess(), is(true));
             // 删除后查询数据库，确认预期删除的数据存在
             optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
                             " agent_info where agent_id = ? and agent_type=?", DBAgentId5,
@@ -1173,29 +1226,33 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                     .addData("agent_id", DFAgentId)
                     .addData("agent_type", AgentType.DBWenJian.getCode())
                     .post(getActionUrl("deleteAgent")).getBodyString();
-            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-            assertThat(ar.get().isSuccess(), is(false));
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+            assertThat(ar.isSuccess(), is(false));
             // 3.错误的数据访问2,删除agent_info表数据，此数据源对应的agent下有任务，不能删除
             bodyString = new HttpClient().addData("source_id", SourceId)
                     .addData("agent_id", DBAgentId4)
                     .addData("agent_type", AgentType.ShuJuKu.getCode())
                     .post(getActionUrl("deleteAgent")).getBodyString();
-            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-            assertThat(ar.get().isSuccess(), is(false));
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+            assertThat(ar.isSuccess(), is(false));
             // 4.错误的数据访问3，删除agent_info表数据，agent_type是一个不存在的数据
             bodyString = new HttpClient().addData("source_id", SourceId)
                     .addData("agent_id", -1000000009L)
                     .addData("agent_type", AgentType.ShuJuKu.getCode())
                     .post(getActionUrl("deleteAgent")).getBodyString();
-            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-            assertThat(ar.get().isSuccess(), is(false));
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+            assertThat(ar.isSuccess(), is(false));
             // 5.错误的数据访问4，删除agent_info表数据，agent_id是一个不存在的数据
             bodyString = new HttpClient().addData("source_id", SourceId)
                     .addData("agent_id", DBAgentId)
                     .addData("agent_type", "6")
                     .post(getActionUrl("deleteAgent")).getBodyString();
-            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-            assertThat(ar.get().isSuccess(), is(false));
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+            assertThat(ar.isSuccess(), is(false));
         }
     }
 }

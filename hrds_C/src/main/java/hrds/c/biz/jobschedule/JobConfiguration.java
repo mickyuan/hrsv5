@@ -494,7 +494,7 @@ public class JobConfiguration extends BaseAction {
                 etl_job_def.getPro_type());
         // 5.如果是依赖作业则保存作业依赖信息
         if (Dispatch_Type.DEPENDENCE == Dispatch_Type.ofEnumByCode(etl_job_def.getDisp_type())) {
-            dependToEtl_job(etl_dependency);
+            dependToEtlJob(etl_dependency);
         }
         // 6.判断调度频率是否为频率，根据调度频率不同封装作业定义实体对象的不同属性
         isDispatchFrequency(etl_job_def);
@@ -581,10 +581,10 @@ public class JobConfiguration extends BaseAction {
                     " WHERE etl_job=? AND etl_sys_cd=?", etl_job, etl_sys_cd).orElseThrow(() ->
                     new BusinessException("sql查询错误")) == 0) {
                 // 不存在资源分配,保存资源分配信息
-//                saveResourcesUsage(etlJobResourceRela);
+                saveResourcesUsage(etlJobResourceRela);
             } else {
                 // 存在,则更新资源分配
-//                updateResourceUsage(etlJobResourceRela);
+                updateResourceUsage(etlJobResourceRela);
             }
         } else {
             // 4.当作业程序类型由thrift或yarn更改为其他类型时需删除新增时分配的资源
@@ -603,11 +603,27 @@ public class JobConfiguration extends BaseAction {
         }
     }
 
+    @Method(desc = "更新资源分配信息并返回更新后最新信息", logicStep = "方法步骤")
+    @Param(name = "etlJobResourceRela", desc = "资源使用表实体对象", range = "与数据库表定义规则一致", isBean = true)
+    @Return(desc = "返回内容描述", range = "取值范围")
+    private Map<String, Object> updateResourceUsage(Etl_job_resource_rela etlJobResourceRela) {
+
+        return null;
+    }
+
+    @Method(desc = "保存资源分配信息并返回新增后最新信息", logicStep = "方法步骤")
+    @Param(name = "etlJobResourceRela", desc = "资源使用表实体对象", range = "与数据库表定义规则一致", isBean = true)
+    @Return(desc = "返回内容描述", range = "取值范围")
+    private Map<String, Object> saveResourcesUsage(Etl_job_resource_rela etlJobResourceRela) {
+
+        return null;
+    }
+
     @Method(desc = "保存作业添加时的作业依赖",
             logicStep = "1.数据可访问权限处理方式，该方法不需要权限验证" +
                     "2.判断依赖作业是否存在，存在不能新增，不存在则新增")
     @Param(name = "etl_dependency", desc = "作业依赖实体对象", range = "与数据库对应表字段规则一致", isBean = true)
-    private void dependToEtl_job(Etl_dependency etl_dependency) {
+    private void dependToEtlJob(Etl_dependency etl_dependency) {
         // 1.数据可访问权限处理方式，该方法不需要权限验证
         // 2.判断依赖作业是否存在，存在不能新增，不存在则新增
         if (StringUtil.isNotBlank(etl_dependency.getPre_etl_job())) {
@@ -671,7 +687,7 @@ public class JobConfiguration extends BaseAction {
             // 3.2调度触发方式改变时，修改前的调度触发方式是定时,判断修改后的调度方式为依赖还是定时
             if (Dispatch_Type.DEPENDENCE == Dispatch_Type.ofEnumByCode(etl_job_def.getDisp_type())) {
                 // 3.2.1调度触发方式改变时，修改后的调度触发方式定时  将定时更改为依赖,则新增，（定时---->依赖）
-                dependToEtl_job(etl_dependency);
+                dependToEtlJob(etl_dependency);
             }
         }
         // 4.判断作业程序类型是否为yarn或者thrift类型，如果是，进行资源分配处理

@@ -1,16 +1,19 @@
 package hrds.b.biz.datasource;
 
 import fd.ng.core.annotation.Method;
+import fd.ng.core.annotation.Param;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.FileUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.SystemUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
+import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import hrds.commons.codes.*;
 import hrds.commons.entity.*;
+import hrds.commons.exception.BusinessException;
 import hrds.testbase.WebBaseTestCase;
 import org.junit.After;
 import org.junit.Before;
@@ -538,11 +541,37 @@ public class DataSourceActionTest extends WebBaseTestCase {
             columnSplit.add(db);
             // 26.初始化 Source_file_attribute 数据
             Source_file_attribute sourceFileAttribute = new Source_file_attribute();
-            sourceFileAttribute.setFile_id(FileId);
+            for (int i = 0; i < 4; i++) {
+                switch (i) {
+                    case 0:
+                        sourceFileAttribute.setFile_id(FileId);
+                        sourceFileAttribute.setOriginal_name("文本文件");
+                        sourceFileAttribute.setFile_suffix("txt");
+                        sourceFileAttribute.setFile_type(FileType.WenBenFile.getCode());
+                        break;
+                    case 1:
+                        sourceFileAttribute.setFile_id(FileId + i);
+                        sourceFileAttribute.setOriginal_name("文档文件");
+                        sourceFileAttribute.setFile_type(FileType.WenDang.getCode());
+                        sourceFileAttribute.setFile_suffix("doc");
+                        break;
+                    case 2:
+                        sourceFileAttribute.setFile_id(FileId + i);
+                        sourceFileAttribute.setOriginal_name("图片");
+                        sourceFileAttribute.setFile_type(FileType.TuPian.getCode());
+                        sourceFileAttribute.setFile_suffix("jpg");
+                        break;
+                    case 3:
+                        sourceFileAttribute.setFile_id(FileId + i);
+                        sourceFileAttribute.setOriginal_name("PDF文件");
+                        sourceFileAttribute.setFile_type(FileType.PDFFile.getCode());
+                        sourceFileAttribute.setFile_suffix("pdf");
+                        break;
+                }
+            }
             sourceFileAttribute.setIs_in_hbase(IsFlag.Fou.getCode());
             sourceFileAttribute.setSeqencing(0L);
             sourceFileAttribute.setCollect_type(CollectType.ShuJuKuCaiJi.getCode());
-            sourceFileAttribute.setOriginal_name("文本文件");
             sourceFileAttribute.setOriginal_update_date(DateUtil.getSysDate());
             sourceFileAttribute.setOriginal_update_time(DateUtil.getSysTime());
             sourceFileAttribute.setTable_name("agentInfo");
@@ -551,8 +580,6 @@ public class DataSourceActionTest extends WebBaseTestCase {
             sourceFileAttribute.setStorage_date(DateUtil.getSysDate());
             sourceFileAttribute.setStorage_time(DateUtil.getSysTime());
             sourceFileAttribute.setFile_size(BigDecimal.valueOf(1024));
-            sourceFileAttribute.setFile_type(FileType.WenDang.getCode());
-            sourceFileAttribute.setFile_suffix("txt");
             sourceFileAttribute.setSource_path("/home/hyshf/dhw");
             sourceFileAttribute.setFile_md5("fsfsdfsfsf");
             sourceFileAttribute.setFile_avro_path("/home/hyshf/dhw");
@@ -607,8 +634,9 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .addData("password", "1")
                 .post("http://127.0.0.1:8099/A/action/hrds/a/biz/login/login")
                 .getBodyString();
-        Optional<ActionResult> ar = JsonUtil.toObjectSafety(responseValue, ActionResult.class);
-        assertThat("用户登录", ar.get().isSuccess(), is(true));
+        ActionResult ar = JsonUtil.toObjectSafety(responseValue, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat("用户登录", ar.isSuccess(), is(true));
     }
 
     @Method(desc = "测试完删除测试数据",
@@ -925,17 +953,21 @@ public class DataSourceActionTest extends WebBaseTestCase {
                     "column_id=?", ColumnId).orElseThrow(() -> new RuntimeException("count fail!"));
             assertThat("此条数据删除后，记录数应该为0", csNum2, is(0L));
             // 26.测试完成后删除source_file_attribute表测试数据
-            SqlOperator.execute(db, "delete from source_file_attribute where file_id=?", FileId);
-            // 判断source_file_attribute表数据是否被删除
-            long sfaNum = SqlOperator.queryNumber(db, "select count(1) from source_file_attribute where " +
-                    "file_id=?", FileId).orElseThrow(() -> new RuntimeException("count fail!"));
-            assertThat("此条数据删除后，记录数应该为0", sfaNum, is(0L));
+            for (int i = 0; i < 4; i++) {
+                SqlOperator.execute(db, "delete from source_file_attribute where file_id=?",
+                        FileId + i);
+                // 判断source_file_attribute表数据是否被删除
+                long sfaNum = SqlOperator.queryNumber(db, "select count(1) from source_file_attribute " +
+                        " where file_id=?", FileId + i).orElseThrow(() ->
+                        new RuntimeException("count fail!"));
+                assertThat("此条数据删除后，记录数应该为0", sfaNum, is(0L));
+            }
             // 27.测试完成后删除data_auth表测试数据
             for (int i = 0; i < 4; i++) {
                 SqlOperator.execute(db, "delete from data_auth where da_id=?", DaId + i);
                 // 判断data_auth表数据是否被删除
-                long daNum = SqlOperator.queryNumber(db, "select count(1) from data_auth where " +
-                        "da_id=?", DaId + i).orElseThrow(() -> new RuntimeException("count fail!"));
+                long daNum = SqlOperator.queryNumber(db, "select count(1) from data_auth where da_id=?",
+                        DaId + i).orElseThrow(() -> new RuntimeException("count fail!"));
                 assertThat("此条数据删除后，记录数应该为0", daNum, is(0L));
             }
             // 28.单独删除新增数据，因为新增数据主键是自动生成的，所以要通过其他方式删除
@@ -960,16 +992,26 @@ public class DataSourceActionTest extends WebBaseTestCase {
     }
 
     @Method(desc = "查询数据源，部门、agent,申请审批,业务用户和采集用户,部门与数据源关系表信息，首页展示",
-            logicStep = "1.正确的数据访问1，查询数据源，部门、agent,申请审批,业务用户和采集用户," +
-                    "部门与数据源关系表信息(此方法没有错误数据情况，因为没有传参）")
+            logicStep = "1.正确的数据访问1，查询数据源以及数据源对应agent个数信息，该方法只有一种情况，因为没有传参")
     @Test
-    public void searchDataSourceInfo() {
-        // TODO 不能保证数据库原表数据为空，目前不知道该如何验证数据正确性，只能判断请求成功
-        // 1.正确的数据访问1，查询数据源，部门、agent,申请审批,业务用户和采集用户,部门与数据源关系表信息
+    public void searchDataSourceAndAgentCount() {
+        // 1.正确的数据访问1，查询数据源以及数据源对应agent个数信息，该方法只有一种情况，因为没有传参
         String bodyString = new HttpClient()
-                .post(getActionUrl("searchDataSourceInfo")).getBodyString();
-        Optional<ActionResult> ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(true));
+                .post(getActionUrl("searchDataSourceAndAgentCount")).getBodyString();
+        ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(true));
+        Result dataForResult = ar.getDataForResult();
+        if (dataForResult.isEmpty()) {
+            // TODO 不能保证数据库原表数据为空，只能校验自己造的数据
+            for (int i = 0; i < dataForResult.getRowCount(); i++) {
+                if (dataForResult.getLong(i, "source_id") == SourceId) {
+                    assertThat("datasource_name", is("dsName0"));
+                } else if (dataForResult.getLong(i, "source_id") == SourceId2) {
+                    assertThat("datasource_name", is("dsName1"));
+                }
+            }
+        }
     }
 
     @Method(desc = "数据管理列表，分页查询获取数据申请审批信息的集合",
@@ -981,42 +1023,103 @@ public class DataSourceActionTest extends WebBaseTestCase {
                     "5.错误的数据访问2，数据管理列表，每页显示条数pageSize不合法")
     @Test
     public void getDataAuditInfoForPage() {
-        // TODO 不能保证数据库原表数据为空，目前不知道该如何验证数据正确性，只能判断请求成功
         // 1.正确的数据访问1，数据管理列表，数据全有效
         String bodyString = new HttpClient()
                 .addData("currPage", 1)
                 .addData("pageSize", 5)
                 .post(getActionUrl("getDataAuditInfoForPage")).getBodyString();
-        Optional<ActionResult> ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(true));
+        ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(true));
+        Result dataForResult = ar.getDataForResult();
+        // 验证申请审批数据的正确性
+        // TODO 不能保证数据库原表数据为空，只能测试自己造的数据，总记录数目前不知如何验证
+        checkDataAuditData(dataForResult);
         // 2.正确的数据访问2，数据管理列表，当前页currPage为空
         bodyString = new HttpClient()
                 .addData("currPage", "")
                 .addData("pageSize", 5)
                 .post(getActionUrl("getDataAuditInfoForPage")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(true));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(true));
+        dataForResult = ar.getDataForResult();
+        // 验证申请审批数据的正确性
+        checkDataAuditData(dataForResult);
         // 3.正确的数据访问3，数据管理列表，每页显示条数pageSize为空
         bodyString = new HttpClient()
                 .addData("currPage", 1)
                 .addData("pageSize", "")
                 .post(getActionUrl("getDataAuditInfoForPage")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(true));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(true));
+        dataForResult = ar.getDataForResult();
+        // 验证申请审批数据的正确性
+        checkDataAuditData(dataForResult);
         // 4.错误的数据访问1，数据管理列表，当前页currPage不合理，超过总数(currPage为负数结果一样)
         bodyString = new HttpClient()
                 .addData("currPage", 2)
                 .addData("pageSize", 5)
                 .post(getActionUrl("getDataAuditInfoForPage")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(true));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(true));
+        dataForResult = ar.getDataForResult();
+        assertThat(dataForResult.getRowCount(), is(0));
         // 5.错误的数据访问2，数据管理列表，每页显示条数pageSize不合法
         bodyString = new HttpClient()
                 .addData("currPage", 2)
                 .addData("pageSize", -1)
                 .post(getActionUrl("getDataAuditInfoForPage")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
+    }
+
+    @Method(desc = "验证申请审批数据的正确性",
+            logicStep = "1.判断结果集是否为空，不为空验证申请审批数据的正确性，" +
+                    "该方法不需要测试")
+    @Param(name = "dataForResult", desc = "申请审批数据结果集", range = "取值范围")
+    private void checkDataAuditData(Result dataForResult) {
+        // 1.判断结果集是否为空，不为空验证申请审批数据的正确性
+        if (!dataForResult.isEmpty()) {
+            // TODO 不能保证数据库原表数据为空，只能测试自己造的数据,总记录数目前不知如何验证
+            for (int i = 0; i < dataForResult.getRowCount(); i++) {
+                if (dataForResult.getLong(i, "da_id") == DaId) {
+                    assertThat("文本文件", is(dataForResult.getString(i, "original_name")));
+                    assertThat("txt", is(dataForResult.getString(i, "file_suffix")));
+                    assertThat("数据源功能测试", is(dataForResult.getString(i, "user_name")));
+                    assertThat(ApplyType.ChaKan.getCode(), is(dataForResult.getString(i,
+                            "apply_type")));
+                    assertThat(AuthType.ShenQing.getCode(), is(dataForResult.getString(i,
+                            "auth_type")));
+                } else if (dataForResult.getLong(i, "da_id") == DaId + 1) {
+                    assertThat("文档文件", is(dataForResult.getString(i, "original_name")));
+                    assertThat("doc", is(dataForResult.getString(i, "file_suffix")));
+                    assertThat(ApplyType.XiaZai.getCode(), is(dataForResult.getString(i,
+                            "apply_type")));
+                    assertThat(AuthType.YunXu.getCode(), is(dataForResult.getString(i,
+                            "auth_type")));
+                } else if (dataForResult.getLong(i, "da_id") == DaId + 2) {
+                    assertThat("图片", is(dataForResult.getString(i, "original_name")));
+                    assertThat("jpg", is(dataForResult.getString(i, "file_suffix")));
+                    assertThat("数据源功能测试", is(dataForResult.getString(i, "user_name")));
+                    assertThat(ApplyType.FaBu.getCode(), is(dataForResult.getString(i,
+                            "apply_type")));
+                    assertThat(AuthType.BuYunXu.getCode(), is(dataForResult.getString(i,
+                            "auth_type")));
+                } else if (dataForResult.getLong(i, "da_id") == DaId + 3) {
+                    assertThat("PDF文件", is(dataForResult.getString(i, "original_name")));
+                    assertThat("pdf", is(dataForResult.getString(i, "file_suffix")));
+                    assertThat("数据源功能测试", is(dataForResult.getString(i, "user_name")));
+                    assertThat(ApplyType.ChongMingMing.getCode(), is(dataForResult.getString(i,
+                            "apply_type")));
+                    assertThat(AuthType.YiCi.getCode(), is(dataForResult.getString(i,
+                            "auth_type")));
+                }
+            }
+        }
     }
 
     @Method(desc = "数据权限管理，分页查询数据源及部门关系信息",
@@ -1028,42 +1131,72 @@ public class DataSourceActionTest extends WebBaseTestCase {
                     "5.错误的数据访问2，数据权限管理，每页显示条数pageSize不合法")
     @Test
     public void searchSourceRelationDepForPage() {
-        // TODO 不能保证数据库原表数据为空，目前不知道该如何验证数据正确性，只能判断请求成功
+        // TODO 不能保证数据库原表数据为空，只能判断自己造的数据,分页总记录数暂时不知如何验证
         // 1.正确的数据访问1，数据权限管理，数据全有效
         String bodyString = new HttpClient()
                 .addData("currPage", 1)
                 .addData("pageSize", 5)
                 .post(getActionUrl("searchSourceRelationDepForPage")).getBodyString();
-        Optional<ActionResult> ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(true));
+        ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(true));
+        // 验证数据源与部门关系数据是否正确
+        Result dataForResult = ar.getDataForResult();
+        checkSourceRelationDepData(dataForResult);
         // 2.正确的数据访问2，数据权限管理，当前页currPage为空
         bodyString = new HttpClient()
                 .addData("currPage", "")
                 .addData("pageSize", 5)
                 .post(getActionUrl("searchSourceRelationDepForPage")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(true));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(true));
+        dataForResult = ar.getDataForResult();
+        checkSourceRelationDepData(dataForResult);
         // 3.正确的数据访问3，数据权限管理，每页显示条数pageSize为空
         bodyString = new HttpClient()
                 .addData("currPage", 1)
                 .addData("pageSize", "")
                 .post(getActionUrl("searchSourceRelationDepForPage")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(true));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(true));
+        dataForResult = ar.getDataForResult();
+        checkSourceRelationDepData(dataForResult);
         // 4.错误的数据访问1，数据权限管理，当前页currPage不合理，超过总数(currPage为负数结果一样)
         bodyString = new HttpClient()
                 .addData("currPage", 2)
                 .addData("pageSize", 5)
                 .post(getActionUrl("searchSourceRelationDepForPage")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(true));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(true));
+        assertThat(ar.getDataForResult().getRowCount(), is(0));
         // 5.错误的数据访问2，数据权限管理，每页显示条数pageSize不合法
         bodyString = new HttpClient()
                 .addData("currPage", 2)
                 .addData("pageSize", -1)
                 .post(getActionUrl("searchSourceRelationDepForPage")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
+    }
+
+    @Method(desc = "验证数据源与部门关系数据是否正确", logicStep = "1.验证数据源与部门关系数据是否正确，该方法不用测试")
+    @Param(name = "dataForResult", desc = "数据源与部门关系信息集合", range = "无限制")
+    private void checkSourceRelationDepData(Result dataForResult) {
+        // 1.验证数据源与部门关系数据是否正确,该方法不用测试
+        if (dataForResult.isEmpty()) {
+            for (int i = 0; i < dataForResult.getRowCount(); i++) {
+                if (dataForResult.getLong(i, "source_id") == SourceId) {
+                    assertThat(dataForResult.getLong(i, "datasource_name"), is("dsName0"));
+                    assertThat(dataForResult.getLong(i, "dep_name"), is("测试第1部门,测试第2部门"));
+                } else if (dataForResult.getLong(i, "source_id") == SourceId2) {
+                    assertThat(dataForResult.getLong(i, "datasource_name"), is("dsName1"));
+                    assertThat(dataForResult.getLong(i, "dep_name"), is("测试第1部门,测试第2部门"));
+                }
+            }
+        }
     }
 
     @Method(desc = "数据权限管理，更新数据源关系部门信息",
@@ -1077,8 +1210,9 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .addData("source_id", SourceId)
                 .addData("dep_id", DepId2)
                 .post(getActionUrl("updateAuditSourceRelationDep")).getBodyString();
-        Optional<ActionResult> ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(true));
+        ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(true));
         // 验证source_relation_dep表数据是否更新成功
         try (DatabaseWrapper db = new DatabaseWrapper()) {
             Optional<Source_relation_dep> source_relation_dep = SqlOperator.queryOneObject(db,
@@ -1095,15 +1229,17 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .addData("source_id", 111)
                 .addData("dep_id", DepId2)
                 .post(getActionUrl("updateAuditSourceRelationDep")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
         // 3.错误的数据访问2，更新数据源关系部门信息，dep_id对应的部门不存在
         bodyString = new HttpClient()
                 .addData("source_id", SourceId)
                 .addData("dep_id", "-111")
                 .post(getActionUrl("updateAuditSourceRelationDep")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
     }
 
     @Method(desc = "数据申请审批并返回最新数据申请审批数据信息",
@@ -1112,17 +1248,17 @@ public class DataSourceActionTest extends WebBaseTestCase {
                     "3.错误的数据访问2，数据申请审批，authType不存在")
     @Test
     public void dataAudit() {
-        // TODO 不能保证数据库原表数据为空，目前不知道该如何验证数据正确性，只能判断请求成功
         // 1.正确的数据访问1，数据申请审批，数据全有效
         String bodyString = new HttpClient()
                 .addData("da_id", DaId)
                 .addData("auth_type", AuthType.YiCi.getCode())
                 .post(getActionUrl("dataAudit")).getBodyString();
-        Optional<ActionResult> ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(true));
+        ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(true));
         try (DatabaseWrapper db = new DatabaseWrapper()) {
-            Optional<Data_auth> dataAuth = SqlOperator.queryOneObject(db, Data_auth.class, "select * " +
-                    " from " + Data_auth.TableName + " where da_id=? and user_id=?", DaId, UserId);
+            Optional<Data_auth> dataAuth = SqlOperator.queryOneObject(db, Data_auth.class,
+                    "select * from " + Data_auth.TableName + " where da_id=? and user_id=?", DaId, UserId);
             assertThat(dataAuth.get().getAuth_type(), is(AuthType.YiCi.getCode()));
             assertThat(dataAuth.get().getDa_id(), is(DaId));
             assertThat(dataAuth.get().getUser_id(), is(UserId));
@@ -1133,15 +1269,17 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .addData("da_id", 111)
                 .addData("auth_type", AuthType.YiCi.getCode())
                 .post(getActionUrl("dataAudit")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
         // 3.错误的数据访问2，数据申请审批，authType不存在
         bodyString = new HttpClient()
                 .addData("da_id", DaId)
                 .addData("auth_type", 6)
                 .post(getActionUrl("dataAudit")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
     }
 
     @Method(desc = "数据申请审批并返回最新数据申请审批数据信息",
@@ -1159,20 +1297,9 @@ public class DataSourceActionTest extends WebBaseTestCase {
                     orElse(Long.MIN_VALUE), is(1L));
             String bodyString = new HttpClient().addData("da_id", DaId)
                     .post(getActionUrl("deleteAudit")).getBodyString();
-            Optional<ActionResult> ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-            assertThat(ar.get().isSuccess(), is(true));
-            Map<String, Object> dataAuthMap = ar.get().getDataForMap();
-            List<Map<String, Object>> dataAuditInfoList = (List<Map<String, Object>>)
-                    dataAuthMap.get("dataAuditList");
-            for (int i = 0; i < dataAuditInfoList.size(); i++) {
-                assertThat(dataAuditInfoList.get(i).get("da_id").toString(), is(String.valueOf(DaId
-                        + dataAuditInfoList.size() - i)));
-                assertThat(dataAuditInfoList.get(i).get("original_name").toString(), is("文本文件"));
-                assertThat(dataAuditInfoList.get(i).get("file_suffix").toString(), is("txt"));
-                assertThat(dataAuditInfoList.get(i).get("file_type").toString(), is(notNullValue()));
-                assertThat(dataAuditInfoList.get(i).get("user_name").toString(), is("数据源功能测试"));
-                assertThat(dataAuditInfoList.get(i).get("apply_type").toString(), is(notNullValue()));
-            }
+            ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+            assertThat(ar.isSuccess(), is(true));
             // 删除后查询数据库，确认预期删除的数据已删除
             optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
                     " data_auth where da_id = ?", DaId);
@@ -1181,8 +1308,9 @@ public class DataSourceActionTest extends WebBaseTestCase {
             // 2.错误的数据访问1，数据申请审批，daId不存在
             bodyString = new HttpClient().addData("da_id", 111)
                     .post(getActionUrl("deleteAudit")).getBodyString();
-            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-            assertThat(ar.get().isSuccess(), is(false));
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+            assertThat(ar.isSuccess(), is(false));
         }
     }
 
@@ -1199,28 +1327,36 @@ public class DataSourceActionTest extends WebBaseTestCase {
     @Test
     public void saveDataSource() {
         // 1.正确的数据访问1，新增数据源信息,数据都有效
+        String dep_id = DepId1 + "," + DepId2;
         String bodyString = new HttpClient()
                 .addData("source_remark", "测试")
                 .addData("datasource_name", "dsName2")
                 .addData("datasource_number", "cs01")
-                .addData("dep_id", DepId1 + "," + DepId2)
+                .addData("dep_id", dep_id)
                 .post(getActionUrl("saveDataSource")).getBodyString();
-        Optional<ActionResult> ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(true));
+        ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(true));
         // 验证新增数据是否成功
         try (DatabaseWrapper db = new DatabaseWrapper()) {
             // 判断data_source表数据是否新增成功
-            OptionalLong number = SqlOperator.queryNumber(db, "select count(*) from" +
-                    " data_source where datasource_number=?", "cs01");
-            assertThat("添加data_source数据成功", number.getAsLong(), is(1L));
-            // 判断source_relation_dep表数据是否新增成功，初始化2条，新增一条，SourceId不同
-            OptionalLong srdNumber = SqlOperator.queryNumber(db, "select count(*) from" +
-                    " source_relation_dep where dep_id=?", DepId1);
-            assertThat("添加data_source数据成功", srdNumber.getAsLong(), is(3L));
-            //判断source_relation_dep表数据是否新增成功，初始化2条，新增一条，SourceId不同
-            OptionalLong srdNumber2 = SqlOperator.queryNumber(db, "select count(*) from" +
-                    " source_relation_dep where dep_id=?", DepId2);
-            assertThat("添加data_source数据成功", srdNumber2.getAsLong(), is(3L));
+            Optional<Data_source> dataSource = SqlOperator.queryOneObject(db, Data_source.class,
+                    "select * from " + Data_source.TableName + " where datasource_number=?", "cs01");
+            assertThat(dataSource.get().getDatasource_name(), is("dsName2"));
+            assertThat(dataSource.get().getDatasource_number(), is("cs01"));
+            assertThat(dataSource.get().getSource_remark(), is("测试"));
+            // 判断source_relation_dep表数据是否新增成功
+            for (String s : dep_id.split(",")) {
+                List<Source_relation_dep> relationDepList = SqlOperator.queryList(db,
+                        Source_relation_dep.class, "select * from " + Source_relation_dep.TableName
+                                + " where dep_id=?", Long.valueOf(s));
+                for (Source_relation_dep srd : relationDepList) {
+                    if (srd.getSource_id() != SourceId && srd.getSource_id() != SourceId2) {
+                        assertThat(dataSource.get().getSource_id(), is(srd.getSource_id()));
+                        assertThat(srd.getSource_id(), is(dataSource.get().getSource_id()));
+                    }
+                }
+            }
         }
         // 2.错误的数据访问1，新增数据源信息,数据源名称不能为空
         bodyString = new HttpClient()
@@ -1229,8 +1365,9 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .addData("datasource_number", "cs02")
                 .addData("dep_id", DepId1)
                 .post(getActionUrl("saveDataSource")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
         // 3.错误的数据访问2，新增数据源信息,数据源名称不能为空格
         bodyString = new HttpClient()
                 .addData("source_remark", "测试")
@@ -1238,9 +1375,10 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .addData("datasource_number", "cs03")
                 .addData("dep_id", DepId1)
                 .post(getActionUrl("saveDataSource")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
         ;
-        assertThat(ar.get().isSuccess(), is(false));
+        assertThat(ar.isSuccess(), is(false));
         // 4.错误的数据访问3，新增数据源信息,数据源编号不能为空
         bodyString = new HttpClient()
                 .addData("source_remark", "测试")
@@ -1248,8 +1386,9 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .addData("datasource_number", "")
                 .addData("dep_id", DepId1)
                 .post(getActionUrl("saveDataSource")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
         // 5.错误的数据访问4，新增数据源信息,数据源编号不能为空格
         bodyString = new HttpClient()
                 .addData("source_remark", "测试")
@@ -1257,8 +1396,9 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .addData("datasource_number", " ")
                 .addData("dep_id", DepId1)
                 .post(getActionUrl("saveDataSource")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
         // 6.错误的数据访问5，新增数据源信息,数据源编号长度不能超过四位
         bodyString = new HttpClient()
                 .addData("source_remark", "测试")
@@ -1266,8 +1406,9 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .addData("datasource_number", "cs100")
                 .addData("dep_id", DepId1)
                 .post(getActionUrl("saveDataSource")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
         // 7.错误的数据访问6，新增数据源信息,部门id不能为空,创建部门表department_info时通过主键自动生成
         bodyString = new HttpClient()
                 .addData("source_remark", "测试")
@@ -1275,8 +1416,9 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .addData("datasource_number", "cs05")
                 .addData("dep_id", "")
                 .post(getActionUrl("saveDataSource")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
         // 8.错误的数据访问7，新增数据源信息,部门id不能为空格，创建部门表department_info时通过主键自动生成
         bodyString = new HttpClient()
                 .addData("source_remark", "测试")
@@ -1284,26 +1426,72 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .addData("datasource_number", "cs06")
                 .addData("dep_id", " ")
                 .post(getActionUrl("saveDataSource")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
         // 9.错误的数据访问8，新增数据源信息,部门id对应的部门不存在
         bodyString = new HttpClient()
                 .addData("source_remark", "测试")
                 .addData("datasource_name", "dsName06")
                 .addData("datasource_number", "cs06")
-                .addData("dep_id", new String[]{"-100"})
+                .addData("dep_id", "-100")
                 .post(getActionUrl("saveDataSource")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
         // 9.错误的数据访问8，新增数据源信息,数据源编号不是以字母开头的四位字母与数字组合
         bodyString = new HttpClient()
                 .addData("source_remark", "测试")
                 .addData("datasource_name", "dsName07")
                 .addData("datasource_number", "1234")
-                .addData("dep_id", new String[]{"-100"})
+                .addData("dep_id", "-100")
                 .post(getActionUrl("saveDataSource")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
+    }
+
+    @Method(desc = "根据数据源编号查询数据源信息,该测试方法只会返回三种情况",
+            logicStep = "1.正确的数据访问1，查询数据源信息,正常返回数据" +
+                    "2.错误的数据访问1，查询数据源信息，此数据源下没有数据" +
+                    "3.错误的数据访问2，查询数据源信息,source_id为空")
+    @Test
+    public void searchDataSourceById() {
+        // 1.正确的数据访问1，查询数据源信息,正常返回数据
+        String bodyString = new HttpClient().addData("source_id", SourceId)
+                .post(getActionUrl("searchDataSourceById")).getBodyString();
+        ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(true));
+        // 获取返回结果
+        Map<String, Object> dataResource = ar.getDataForMap();
+        // 验证查询结果的正确性
+        assertThat(String.valueOf(SourceId), is(dataResource.get("source_id").toString()));
+        assertThat(String.valueOf(UserId), is(dataResource.get("create_user_id").toString()));
+        assertThat("dsName0", is(dataResource.get("datasource_name").toString()));
+        assertThat("ds01", is(dataResource.get("datasource_number").toString()));
+        assertThat("数据源详细描述0", is(dataResource.get("source_remark")));
+        assertThat("测试第1部门,测试第2部门", is(dataResource.get("dep_name")));
+
+        // 2.错误的数据访问1，查询数据源信息，此数据源下没有数据
+        bodyString = new HttpClient().addData("source_id", -1000000009L)
+                .post(getActionUrl("searchDataSourceById")).getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(true));
+        dataResource = ar.getDataForMap();
+        assertThat(dataResource.get("source_id"), nullValue());
+        assertThat(dataResource.get("create_user_id"), nullValue());
+        assertThat(dataResource.get("datasource_name"), nullValue());
+        assertThat(dataResource.get("datasource_number"), nullValue());
+        assertThat(dataResource.get("source_remark"), nullValue());
+        assertThat(dataResource.get("dep_name"), nullValue());
+        // 3.错误的数据访问2，查询数据源信息,source_id为空
+        bodyString = new HttpClient()
+                .post(getActionUrl("searchDataSourceById")).getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
     }
 
     @Method(desc = "更新数据源data_source,source_relation_dep表信息",
@@ -1326,8 +1514,9 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .addData("datasource_number", "up01")
                 .addData("dep_id", DepId1)
                 .post(getActionUrl("updateDataSource")).getBodyString();
-        Optional<ActionResult> ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(true));
+        ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(true));
         // 验证更新数据是否成功
         try (DatabaseWrapper db = new DatabaseWrapper()) {
             // 判断data_source表数据是否更新成功,这里指定类型返回会报错
@@ -1358,8 +1547,9 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .addData("datasource_number", "up02")
                 .addData("dep_id", "-1000000001")
                 .post(getActionUrl("updateDataSource")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
         // 3.错误的数据访问2，更新数据源信息，数据源名称不能为空格
         bodyString = new HttpClient()
                 .addData("source_id", SourceId)
@@ -1368,8 +1558,9 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .addData("datasource_number", "up03")
                 .addData("dep_id", DepId1)
                 .post(getActionUrl("updateDataSource")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
         // 4.错误的数据访问3，更新数据源信息，数据源编号不能为空
         bodyString = new HttpClient()
                 .addData("source_id", SourceId)
@@ -1378,8 +1569,9 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .addData("datasource_number", "")
                 .addData("dep_id", DepId1)
                 .post(getActionUrl("updateDataSource")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
         // 5.错误的数据访问4，更新数据源信息，数据源编号不能为空格
         bodyString = new HttpClient()
                 .addData("source_id", SourceId)
@@ -1388,8 +1580,9 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .addData("datasource_number", " ")
                 .addData("dep_id", DepId1)
                 .post(getActionUrl("updateDataSource")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
         // 6.错误的数据访问5，更新数据源信息，数据源编号长度不能超过四位
         bodyString = new HttpClient()
                 .addData("source_id", SourceId)
@@ -1398,8 +1591,9 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .addData("datasource_number", "up100")
                 .addData("dep_id", DepId1)
                 .post(getActionUrl("updateDataSource")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
         // 7.错误的数据访问6，更新数据源信息，部门id不能为空,创建部门表department_info时通过主键自动生成
         bodyString = new HttpClient()
                 .addData("source_id", SourceId)
@@ -1408,8 +1602,9 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .addData("datasource_number", "up05")
                 .addData("dep_id", "")
                 .post(getActionUrl("updateDataSource")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
         // 8.错误的数据访问7，更新数据源信息，部门id不能为空格，创建部门表department_info时通过主键自动生成
         bodyString = new HttpClient()
                 .addData("source_id", SourceId)
@@ -1418,8 +1613,9 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .addData("datasource_number", "up06")
                 .addData("dep_id", " ")
                 .post(getActionUrl("updateDataSource")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
         // 9.错误的数据访问8，更新数据源信息，部门id对应的部门不存在
         bodyString = new HttpClient()
                 .addData("source_id", SourceId)
@@ -1428,53 +1624,10 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .addData("datasource_number", "up06")
                 .addData("dep_id", "-101")
                 .post(getActionUrl("updateDataSource")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
 
-    }
-
-    @Method(desc = "查询数据源信息,该测试方法只会返回两种情况，能查到数据或者查不到数据",
-            logicStep = "1.正确的数据访问1，查询数据源信息,正常返回数据" +
-                    "2.正确的数据访问2，查询数据源信息,正常返回数据，source_id为空" +
-                    "3.错误的数据访问1，查询数据源信息，查询不到数据")
-    @Test
-    public void searchDataSourceOrDepartment() {
-        // 1.正确的数据访问1，查询数据源信息,正常返回数据
-        String bodyString = new HttpClient().addData("source_id", SourceId)
-                .post(getActionUrl("searchDataSourceOrDepartment")).getBodyString();
-        Optional<ActionResult> ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(true));
-        // 获取返回结果
-        Map<String, Object> dataResource = ar.get().getDataForMap();
-        // 验证查询结果的正确性
-        assertThat(String.valueOf(SourceId), is(dataResource.get("source_id").toString()));
-        assertThat(String.valueOf(UserId), is(dataResource.get("create_user_id").toString()));
-        assertThat("dsName0", is(dataResource.get("datasource_name").toString()));
-        assertThat("ds01", is(dataResource.get("datasource_number").toString()));
-        assertThat("数据源详细描述0", is(dataResource.get("source_remark")));
-        // 部门表初始化了两条数据
-        assertThat(dataResource.isEmpty(), is(false));
-        // 2.正确的数据访问2，查询数据源信息,正常返回数据，source_id为空
-        bodyString = new HttpClient()
-                .post(getActionUrl("searchDataSourceOrDepartment")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(true));
-        // 验证部门表数据
-        // 部门表初始化了两条数据,判断不为空，因为不确定原数据库是否初始化了数据，这里查询的是所有部门
-        assertThat(dataResource.isEmpty(), is(false));
-
-        // 3.错误的数据访问1，查询数据源信息，此数据源下没有数据
-        bodyString = new HttpClient().addData("source_id", -1000000009L)
-                .post(getActionUrl("searchDataSourceOrDepartment")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(true));
-        dataResource = ar.get().getDataForMap();
-        assertThat(dataResource.get("source_id"), nullValue());
-        assertThat(dataResource.get("create_user_id"), nullValue());
-        assertThat(dataResource.get("datasource_name"), nullValue());
-        assertThat(dataResource.get("datasource_number"), nullValue());
-        assertThat(dataResource.get("source_remark"), nullValue());
-        assertThat(dataResource.get("dep_name"), nullValue());
     }
 
     @Method(desc = "查询数据采集用户信息，此方法只有一种可能",
@@ -1484,11 +1637,18 @@ public class DataSourceActionTest extends WebBaseTestCase {
         // 1.正确的数据访问1，查询数据源信息,正常返回数据
         String bodyString = new HttpClient()
                 .post(getActionUrl("searchDataCollectUser")).getBodyString();
-        Optional<ActionResult> ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(true));
-        List<Sys_user> sysUserList = ar.get().getDataForEntityList(Sys_user.class);
-        // 只需要判断不为空就行
-        assertThat(sysUserList.isEmpty(), is(false));
+        ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(true));
+        List<Sys_user> sysUserList = ar.getDataForEntityList(Sys_user.class);
+        if (sysUserList.isEmpty()) {
+            for (Sys_user sys_user : sysUserList) {
+                // TODO 不能确定原表数据为空，所以只能测试自己造的数据
+                if (sys_user.getUser_id() == UserId) {
+                    assertThat(sys_user.getUser_name(), is("数据源功能测试"));
+                }
+            }
+        }
     }
 
     @Method(desc = "删除数据源信息，该测试方法只有三种情况",
@@ -1508,8 +1668,9 @@ public class DataSourceActionTest extends WebBaseTestCase {
                     .addData("source_id", SourceId2)
                     .post(getActionUrl("deleteDataSource"))
                     .getBodyString();
-            Optional<ActionResult> ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-            assertThat(ar.get().isSuccess(), is(true));
+            ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+            assertThat(ar.isSuccess(), is(true));
             // 删除后查询数据库，确认预期数据已删除
             optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
                     " data_source where source_id = ?", SourceId2);
@@ -1521,16 +1682,18 @@ public class DataSourceActionTest extends WebBaseTestCase {
                     .addData("source_id", SourceId)
                     .post(getActionUrl("deleteDataSource"))
                     .getBodyString();
-            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-            assertThat(ar.get().isSuccess(), is(false));
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+            assertThat(ar.isSuccess(), is(false));
 
             // 3.错误的数据访问2，删除数据源信息，此数据源下没有数据
             bodyString = new HttpClient()
                     .addData("source_id", -1000000009L)
                     .post(getActionUrl("deleteDataSource"))
                     .getBodyString();
-            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-            assertThat(ar.get().isSuccess(), is(false));
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+            assertThat(ar.isSuccess(), is(false));
         }
     }
 
@@ -1561,17 +1724,19 @@ public class DataSourceActionTest extends WebBaseTestCase {
                     "5.错误的数据访问4，导入数据源，file为空")
     @Test
     public void uploadFile() {
+        String filePath = FileUtil.getFile("src/test/java/hrds/b/biz/datasource/" +
+                "uploadFile/upload.hrds").getAbsolutePath();
         // 1.正确的数据访问1，导入数据源，数据全有效
         String bodyString = new HttpClient()
                 .addData("agent_ip", "10.71.4.51")
                 .addData("agent_port", "4321")
                 .addData("user_id", UserId)
-                .addData("file", FileUtil.getFile("src/test/java/hrds/b/biz/datasource/" +
-                        "uploadFile/upload.hrds").getAbsolutePath())
+                .addData("file", filePath)
                 .post(getActionUrl("uploadFile"))
                 .getBodyString();
-        Optional<ActionResult> ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(true));
+        ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(true));
         // 验证导入数据是否成功，查询的数据会比初始化的数据多一倍，因为导入时主键会发生变化，新增主键
         try (DatabaseWrapper db = new DatabaseWrapper()) {
             long num = SqlOperator.queryNumber(db, "select count(1) from data_source where" +
@@ -1647,31 +1812,34 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .addData("agent_ip", "10.71.4.666")
                 .addData("agent_port", "4321")
                 .addData("user_id", UserId)
-                .addData("file", "C:\\Users\\mine\\Desktop\\upload.hrds")
+                .addData("file", filePath)
                 .post(getActionUrl("uploadFile"))
                 .getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
         // 3.错误的数据访问2，导入数据源，agentPort不合法
         bodyString = new HttpClient()
                 .addData("agent_ip", "10.71.4.51")
                 .addData("agent_port", "666666")
                 .addData("user_id", UserId)
-                .addData("file", "C:\\Users\\mine\\Desktop\\upload.hrds")
+                .addData("file", filePath)
                 .post(getActionUrl("uploadFile"))
                 .getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
         // 4.错误的数据访问3，导入数据源，userCollectId为空
         bodyString = new HttpClient()
                 .addData("agent_ip", "10.71.4.51")
                 .addData("agent_port", "4321")
                 .addData("user_id", "")
-                .addData("file", "C:\\Users\\mine\\Desktop\\upload.hrds")
+                .addData("file", filePath)
                 .post(getActionUrl("uploadFile"))
                 .getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
         // 5.错误的数据访问4，导入数据源，file为空
         bodyString = new HttpClient()
                 .addData("agent_ip", "10.71.4.51")
@@ -1680,8 +1848,9 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .addData("file", "")
                 .post(getActionUrl("uploadFile"))
                 .getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(false));
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
     }
 
 }
