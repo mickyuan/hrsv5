@@ -162,8 +162,7 @@ public class DBConfStepAction extends BaseAction{
 		classify.setClassify_id(PrimayKeyGener.getNextId());
 		classify.setUser_id(getUserId());
 		//6、完成新增
-		if (classify.add(Dbo.db()) != 1)
-			throw new BusinessException("保存分类信息失败！data=" + classify);
+		classify.add(Dbo.db());
 	}
 
 	@Method(desc = "更新采集任务分类信息", logicStep = "" +

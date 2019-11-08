@@ -23,7 +23,6 @@ import hrds.commons.codes.CleanType;
 import hrds.commons.codes.CountNum;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.*;
-import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.AgentActionUtil;
 import hrds.commons.utils.Constant;
@@ -307,7 +306,7 @@ public class CollTbConfStepAction extends BaseAction {
 		returnMap.put("tableName", tableName);
 		//1、判断tableId的值
 		//2、如果要获取当前采集任务中不存在的表的所有列，需要和agent进行交互
-		if(tableId != DEFAULT_TABLE_ID){
+		if(tableId == DEFAULT_TABLE_ID){
 			//2-1、根据colSetId去数据库中查出DB连接信息
 			//2-2、和Agent交互，获取表中的列信息
 			List<Table_column> tableColumns = getColumnInfoByTableName(colSetId, getUserId(), tableName);
@@ -564,7 +563,7 @@ public class CollTbConfStepAction extends BaseAction {
 	private List<Table_column> getColumnInfoByTableName(long colSetId, long userId, String tableName){
 		Result result = getDatabaseSetInfo(colSetId, userId);
 		if(result.isEmpty()){
-			throw new AppSystemException("未找到数据库采集任务");
+			throw new BusinessException("未找到数据库采集任务");
 		}
 		JSONObject resultObj = JSON.parseObject(result.toJSON());
 		resultObj.put("basedTableName", tableName);
