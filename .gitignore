@@ -4,6 +4,15 @@
 out
 gen
 
+# main/resources
+hrds_A/src/main/resources/
+hrds_B/src/main/resources/
+hrds_Agent/src/main/resources/
+
+# test/resources
+hrds_A/src/test/resources/
+hrds_B/src/test/resources/
+
 # Gradle
 .gradle
 /gradle

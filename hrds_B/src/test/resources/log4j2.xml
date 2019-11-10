@@ -13,10 +13,9 @@
         <!-- （1）输出到控制台的配置-->
         <Console name="Console" target="SYSTEM_OUT">
             <!--只输出level及以上级别的信息（onMatch），其他的直接拒绝（onMismatch）-->
-            <ThresholdFilter level="debug" onMatch="ACCEPT" onMismatch="DENY" />
+            <ThresholdFilter level="trace" onMatch="ACCEPT" onMismatch="DENY" />
             <!-- 输出日志的格式-->
-            <!-- 长度小于30，则右边用空格填充；若名字空间长度超过30，截去多余字符 -->
-            <PatternLayout pattern="[%-30.30C{1}][%-5level] %msg%xEx%n" />
+            <PatternLayout pattern="[%-5level] %msg%xEx%n" />
         </Console>
 
         <!-- （2）覆盖输出到文件。这个log每次运行程序会自动清空，适合临时测试用-->
@@ -41,7 +40,7 @@
     <Loggers>
         <!--过滤掉其他软件包中的无用的DEBUG信息-->
         <Logger name="org.apache" level="WARN"></Logger>
-        <Root level="debug">
+        <Root level="trace">
             <AppenderRef ref="Console"/>
         </Root>
     </Loggers>
