@@ -353,8 +353,8 @@ public class InitAndDestDataForCleanConf {
 					complChar = "cleanparameter";
 					compLength = 14;
 					complType = "1";
-					oriField = StringUtil.string2Unicode("qwer");
-					newField = StringUtil.string2Unicode("asdf");
+					oriField = "";
+					newField = "";
 					break;
 				case 1:
 					complChar = "";

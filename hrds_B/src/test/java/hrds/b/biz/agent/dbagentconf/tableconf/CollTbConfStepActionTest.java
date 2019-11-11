@@ -819,17 +819,19 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 	 * */
 	@Test
 	public void saveCollSingleTbInfo(){
+		List<Table_info> tableInfos = new ArrayList<>();
 		//正确数据访问1：在database_id为7001的数据库采集任务下构造新增采集ftp_collect表的数据，不选择采集列和列排序，这样就会按照默认的顺序采集所有的列
-		String tableNameOne = "ftp_collect";
-		String tableChNameOne = "FTP采集任务表";
+		Table_info ftpColl = new Table_info();
+		ftpColl.setTable_name("ftp_collect");
+		ftpColl.setTable_ch_name("FTP采集任务表");
+		tableInfos.add(ftpColl);
 		//TODO 设置是否并行抽取
 		//TODO 如果并行抽取，设置抽取SQL
 
 		//新增逻辑的第一个保存信息是将画面配置信息，保存进入table_info表
 		//模拟HTTP访问
 		String rightStringOne = new HttpClient()
-				.addData("table_name", tableNameOne)
-				.addData("table_ch_name", tableChNameOne)
+				.addData("tableInfoString", JSON.toJSONString(tableInfos))
 				.addData("colSetId", FIRST_DATABASESET_ID)
 				.post(getActionUrl("saveCollSingleTbInfo")).getBodyString();
 		ActionResult rightResultOne = JsonUtil.toObjectSafety(rightStringOne, ActionResult.class).orElseThrow(()
@@ -841,8 +843,8 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		//断言table_info表中出现了这样一条数据
 		Table_info tableInfo;
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			tableInfo = SqlOperator.queryOneObject(db, Table_info.class, "select * from " + Table_info.class + "where table_name = ?", tableNameOne).orElseThrow(() -> new BusinessException("必须有且只有一条数据"));
-			assertThat("模拟保存新增ftp_collect表，新增成功后，得到的表中文名为<FTP采集任务表>", tableInfo.getTable_ch_name(), is(tableChNameOne));
+			tableInfo = SqlOperator.queryOneObject(db, Table_info.class, "select * from " + Table_info.class + "where table_name = ?", "ftp_collect").orElseThrow(() -> new BusinessException("必须有且只有一条数据"));
+			assertThat("模拟保存新增ftp_collect表，新增成功后，得到的表中文名为<FTP采集任务表>", tableInfo.getTable_ch_name(), is("FTP采集任务表"));
 			assertThat("模拟保存新增ftp_collect表，新增成功后，得到的有效结束日期为<99991231>", tableInfo.getValid_e_date(), is(Constant.MAXDATE));
 			assertThat("模拟保存新增ftp_collect表，新增成功后，得到的是否自定义sql采集为<否>", IsFlag.ofEnumByCode(tableInfo.getIs_user_defined()), is(IsFlag.Fou));
 			assertThat("模拟保存新增ftp_collect表，新增成功后，得到的是否仅登记为<是>", IsFlag.ofEnumByCode(tableInfo.getIs_register()), is(IsFlag.Shi));
@@ -925,9 +927,13 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			}
 		}
 
+		tableInfos.clear();
+
 		//正确数据访问2：在database_id为7001的数据库采集任务下构造新增采集object_collect表的数据，选择采集列和列排序
-		String tableNameTwo = "object_collect";
-		String tableChNameTwo = "半结构化采集任务表";
+		Table_info objColl = new Table_info();
+		objColl.setTable_name("object_collect");
+		objColl.setTable_ch_name("半结构化采集任务表");
+		tableInfos.add(objColl);
 		//object_collect一共有16列，只采集前5列
 		List<Table_column> tableColumns = new ArrayList<>();
 		for(int i = 1; i <= 5; i++){
@@ -980,6 +986,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 
 			tableColumns.add(tableColumn);
 		}
+		String[] collColumnArray = {JSON.toJSONString(tableColumns)};
 		//构造采集顺序
 		JSONObject columnSort = new JSONObject();
 		columnSort.put("odc_id", 1);
@@ -987,12 +994,12 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		columnSort.put("obj_number", 3);
 		columnSort.put("obj_collect_name", 4);
 		columnSort.put("system_name", 5);
+		String[] columnSortArray = {columnSort.toJSONString()};
 
 		String rightStringTwo = new HttpClient()
-				.addData("table_name", tableNameTwo)
-				.addData("table_ch_name", tableChNameTwo)
-				.addData("collColumn", JSON.toJSONString(tableColumns))
-				.addData("columnSort", columnSort.toJSONString())
+				.addData("tableInfoString", JSON.toJSONString(tableInfos))
+				.addData("collColumnArray", collColumnArray)
+				.addData("columnSortArray", columnSortArray)
 				.addData("colSetId", FIRST_DATABASESET_ID)
 				.post(getActionUrl("saveCollSingleTbInfo")).getBodyString();
 		ActionResult rightResultTwo = JsonUtil.toObjectSafety(rightStringTwo, ActionResult.class).orElseThrow(()
@@ -1003,8 +1010,8 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 
 		Table_info tableInfoTwo;
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			tableInfoTwo = SqlOperator.queryOneObject(db, Table_info.class, "select * from " + Table_info.class + "where table_name = ?", tableNameTwo).orElseThrow(() -> new BusinessException("必须有且只有一条数据"));
-			assertThat("模拟保存新增object_collect表，新增成功后，得到的表中文名为<半结构化采集任务表>", tableInfoTwo.getTable_ch_name(), is(tableNameTwo));
+			tableInfoTwo = SqlOperator.queryOneObject(db, Table_info.class, "select * from " + Table_info.class + "where table_name = ?", "object_collect").orElseThrow(() -> new BusinessException("必须有且只有一条数据"));
+			assertThat("模拟保存新增object_collect表，新增成功后，得到的表中文名为<半结构化采集任务表>", tableInfoTwo.getTable_ch_name(), is("半结构化采集任务表"));
 			assertThat("模拟保存新增object_collect表，新增成功后，得到的有效结束日期为<99991231>", tableInfoTwo.getValid_e_date(), is(Constant.MAXDATE));
 			assertThat("模拟保存新增object_collect表，新增成功后，得到的是否自定义sql采集为<否>", IsFlag.ofEnumByCode(tableInfoTwo.getIs_user_defined()), is(IsFlag.Fou));
 			assertThat("模拟保存新增object_collect表，新增成功后，得到的是否仅登记为<是>", IsFlag.ofEnumByCode(tableInfoTwo.getIs_register()), is(IsFlag.Shi));
@@ -1041,7 +1048,14 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			}
 		}
 
-		//正确数据访问3：在database_id为7001的数据库采集任务下构造修改采集code_info表的数据，选择采集列和列排序，原来构造的模式数据是模拟采集code_info表下面所有的字段，现在只采集前2个字段
+		tableInfos.clear();
+		Table_info table_info = new Table_info();
+		table_info.setTable_id(CODE_INFO_TABLE_ID);
+		table_info.setTable_name("code_info");
+		table_info.setTable_ch_name("代码信息表");
+		tableInfos.add(table_info);
+
+		//正确数据访问3：在database_id为7001的数据库采集任务下构造修改采集code_info表的数据，选择采集列和列排序，原来构造的模拟数据是模拟采集code_info表下面所有的字段，现在只采集前2个字段
 		List<Table_column> codeInfos = new ArrayList<>();
 		for(int i = 1; i<= 2; i++){
 			String columnName;
@@ -1076,16 +1090,19 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			codeInfos.add(tableColumn);
 		}
 
+		String[] collColumnArrayForCodeInfo = {JSON.toJSONString(tableInfos)};
+
 		JSONObject codeInfoSort = new JSONObject();
 		codeInfoSort.put("ci_sp_code", 1);
 		codeInfoSort.put("ci_sp_class", 2);
 
+		String[] columnSortArrayForCodeInfo = {JSON.toJSONString(codeInfos)};
+
 		String rightStringThree = new HttpClient()
 				.addData("table_id", CODE_INFO_TABLE_ID)
-				.addData("table_name", "code_info")
-				.addData("table_ch_name", "代码信息表")
-				.addData("collColumn", JSON.toJSONString(codeInfos))
-				.addData("columnSort", codeInfoSort.toJSONString())
+				.addData("tableInfoString", collColumnArrayForCodeInfo)
+				.addData("collColumnArray", columnSortArrayForCodeInfo)
+				.addData("columnSortArray", codeInfoSort.toJSONString())
 				.addData("colSetId", FIRST_DATABASESET_ID)
 				.post(getActionUrl("saveCollSingleTbInfo")).getBodyString();
 		ActionResult rightResultThree = JsonUtil.toObjectSafety(rightStringThree, ActionResult.class).orElseThrow(()
@@ -1097,7 +1114,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		Table_info tableInfoThree;
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			tableInfoThree = SqlOperator.queryOneObject(db, Table_info.class, "select * from " + Table_info.class + "where table_name = ?", "code_info").orElseThrow(() -> new BusinessException("必须有且只有一条数据"));
-			assertThat("模拟保存修改code_info表，修改成功后，得到的表中文名为<代码信息表>", tableInfoThree.getTable_ch_name(), is("code_info"));
+			assertThat("模拟保存修改code_info表，修改成功后，得到的表中文名为<代码信息表>", tableInfoThree.getTable_ch_name(), is("代码信息表"));
 			assertThat("模拟保存修改code_info表，修改成功后，得到的有效结束日期为<99991231>", tableInfoThree.getValid_e_date(), is(Constant.MAXDATE));
 			assertThat("模拟保存修改code_info表，修改成功后，得到的是否自定义sql采集为<否>", IsFlag.ofEnumByCode(tableInfoThree.getIs_user_defined()), is(IsFlag.Fou));
 			assertThat("模拟保存修改code_info表，修改成功后，得到的是否仅登记为<是>", IsFlag.ofEnumByCode(tableInfoThree.getIs_register()), is(IsFlag.Shi));
