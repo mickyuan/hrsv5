@@ -58,6 +58,10 @@ public class Table_info extends ProjectTableEntity
 	private String is_md5;
 	@DocBean(name ="is_register",value="是否仅登记(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_register;
+	@DocBean(name ="is_parallel",value="是否并行抽取(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
+	private String is_parallel;
+	@DocBean(name ="page_sql",value="分页sql:",dataType = String.class,required = true)
+	private String page_sql;
 
 	/** 取得：表名ID */
 	public Long getTable_id(){
@@ -182,5 +186,21 @@ public class Table_info extends ProjectTableEntity
 	/** 设置：是否仅登记 */
 	public void setIs_register(String is_register){
 		this.is_register=is_register;
+	}
+	/** 取得：是否并行抽取 */
+	public String getIs_parallel(){
+		return is_parallel;
+	}
+	/** 设置：是否并行抽取 */
+	public void setIs_parallel(String is_parallel){
+		this.is_parallel=is_parallel;
+	}
+	/** 取得：分页sql */
+	public String getPage_sql(){
+		return page_sql;
+	}
+	/** 设置：分页sql */
+	public void setPage_sql(String page_sql){
+		this.page_sql=page_sql;
 	}
 }

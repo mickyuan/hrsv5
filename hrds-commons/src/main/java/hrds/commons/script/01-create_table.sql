@@ -182,7 +182,6 @@ DATA_EXTRACT_TYPE                                 CHAR(1) NOT NULL, --数据抽�
 IS_HEADER                                         CHAR(1) NOT NULL, --是否需要表头
 DATABASE_CODE                                     CHAR(1) NOT NULL, --数据抽取落地编码
 ROW_SEPARATOR                                     VARCHAR(512) NULL, --行分隔符
-IS_HIDDEN                                         CHAR(1) NOT NULL, --分隔符是否为ASCII隐藏字符
 DATABASE_SEPARATORR                               VARCHAR(512) NULL, --列分割符
 DBFILE_FORMAT                                     CHAR(1) default '1' NOT NULL, --数据落地格式
 PLANE_URL                                         VARCHAR(512) NULL, --数据落地目录
@@ -683,6 +682,7 @@ CONSTRAINT FTP_FOLDER_PK PRIMARY KEY(FTP_FOLDER_ID)   );
 DROP TABLE IF EXISTS DATA_STORE_LAYER ;
 CREATE TABLE DATA_STORE_LAYER(
 DATASC_ID                                         BIGINT default 0 NOT NULL, --存储配置主键信息
+LSL_NAME                                          VARCHAR(512) NOT NULL, --数据存储层名称
 STORAGE_TARGET                                    CHAR(1) NOT NULL, --存储类型
 STORAGE_PROPERTY_KEY                              VARCHAR(1024) NOT NULL, --属性key
 STORAGE_PROPERTY_VAL                              VARCHAR(1024) NULL, --属性value
@@ -833,6 +833,8 @@ IS_USER_DEFINED                                   CHAR(1) default '1' NOT NULL, 
 TI_OR                                             VARCHAR(512) NULL, --清洗顺序
 IS_MD5                                            CHAR(1) NOT NULL, --是否使用MD5
 IS_REGISTER                                       CHAR(1) NOT NULL, --是否仅登记
+IS_PARALLEL                                       CHAR(1) NOT NULL, --是否并行抽取
+PAGE_SQL                                          VARCHAR(6000) NOT NULL, --分页sql
 REMARK                                            VARCHAR(512) NULL, --备注
 CONSTRAINT TABLE_INFO_PK PRIMARY KEY(TABLE_ID)   );
 
@@ -990,4 +992,33 @@ IS_SENDOK                                         CHAR(1) NOT NULL, --是否设�
 IS_SOLR                                           CHAR(1) NOT NULL, --是否入solr
 REMARK                                            VARCHAR(512) NULL, --备注
 CONSTRAINT FILE_COLLECT_SET_PK PRIMARY KEY(FCS_ID)   );
+
+--编码信息表
+DROP TABLE IF EXISTS HYREN_CODE_INFO ;
+CREATE TABLE HYREN_CODE_INFO(
+CODE_CLASSIFY                                     VARCHAR(100) NOT NULL, --编码分类
+CODE_VALUE                                        VARCHAR(100) NOT NULL, --编码类型值
+CODE_CLASSIFY_NAME                                VARCHAR(512) NOT NULL, --编码分类名称
+CODE_TYPE_NAME                                    VARCHAR(512) NOT NULL, --编码名称
+CODE_REMARK                                       VARCHAR(512) NULL, --编码描述
+CONSTRAINT HYREN_CODE_INFO_PK PRIMARY KEY(CODE_CLASSIFY,CODE_VALUE)   );
+
+--源系统编码信息
+DROP TABLE IF EXISTS ORIG_CODE_INFO ;
+CREATE TABLE ORIG_CODE_INFO(
+ORIG_ID                                           BIGINT default 0 NOT NULL, --源系统编码主键
+ORIG_SYS_CODE                                     VARCHAR(100) NULL, --码值系统编码
+CODE_CLASSIFY                                     VARCHAR(100) NOT NULL, --编码分类
+CODE_VALUE                                        VARCHAR(100) NOT NULL, --编码类型值
+ORIG_VALUE                                        VARCHAR(100) NOT NULL, --源系统编码值
+CODE_REMARK                                       VARCHAR(512) NULL, --系统编码描述
+CONSTRAINT ORIG_CODE_INFO_PK PRIMARY KEY(ORIG_ID)   );
+
+--源系统信
+DROP TABLE IF EXISTS ORIG_SYSO_INFO ;
+CREATE TABLE ORIG_SYSO_INFO(
+ORIG_SYS_CODE                                     VARCHAR(100) NOT NULL, --码值系统编码
+ORIG_SYS_NAME                                     VARCHAR(100) NOT NULL, --码值系统名称
+ORIG_SYS_REMARK                                   VARCHAR(512) NULL, --码值系统描述
+CONSTRAINT ORIG_SYSO_INFO_PK PRIMARY KEY(ORIG_SYS_CODE)   );
 

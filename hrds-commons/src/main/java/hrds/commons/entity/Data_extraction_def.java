@@ -44,8 +44,6 @@ public class Data_extraction_def extends ProjectTableEntity
 	private String row_separator;
 	@DocBean(name ="database_separatorr",value="列分割符:",dataType = String.class,required = false)
 	private String database_separatorr;
-	@DocBean(name ="is_hidden",value="分隔符是否为ASCII隐藏字符(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
-	private String is_hidden;
 	@DocBean(name ="ded_remark",value="备注:",dataType = String.class,required = false)
 	private String ded_remark;
 	@DocBean(name ="dbfile_format",value="数据落地格式(FileFormat):0-定长<DingChang> 1-非定长<FeiDingChang> 2-CSV<CSV> ",dataType = String.class,required = true)
@@ -122,14 +120,6 @@ public class Data_extraction_def extends ProjectTableEntity
 	/** 设置：列分割符 */
 	public void setDatabase_separatorr(String database_separatorr){
 		this.database_separatorr=database_separatorr;
-	}
-	/** 取得：分隔符是否为ASCII隐藏字符 */
-	public String getIs_hidden(){
-		return is_hidden;
-	}
-	/** 设置：分隔符是否为ASCII隐藏字符 */
-	public void setIs_hidden(String is_hidden){
-		this.is_hidden=is_hidden;
 	}
 	/** 取得：备注 */
 	public String getDed_remark(){

@@ -40,6 +40,8 @@ public class Data_store_layer extends ProjectTableEntity
 	private String dsl_remark;
 	@DocBean(name ="storage_property_val",value="属性value:",dataType = String.class,required = false)
 	private String storage_property_val;
+	@DocBean(name ="lsl_name",value="数据存储层名称:",dataType = String.class,required = true)
+	private String lsl_name;
 
 	/** 取得：存储配置主键信息 */
 	public Long getDatasc_id(){
@@ -86,5 +88,13 @@ public class Data_store_layer extends ProjectTableEntity
 	/** 设置：属性value */
 	public void setStorage_property_val(String storage_property_val){
 		this.storage_property_val=storage_property_val;
+	}
+	/** 取得：数据存储层名称 */
+	public String getLsl_name(){
+		return lsl_name;
+	}
+	/** 设置：数据存储层名称 */
+	public void setLsl_name(String lsl_name){
+		this.lsl_name=lsl_name;
 	}
 }
