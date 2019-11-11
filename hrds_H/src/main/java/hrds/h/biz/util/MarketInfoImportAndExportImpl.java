@@ -339,6 +339,7 @@ public class MarketInfoImportAndExportImpl implements ImportAndExport {
 			datatableOwnSourceInfo.setDatatable_id(datatableId);
 			datatableOwnSourceInfo.add(Dbo.db());
 			//1-1.导入结果映射信息表信息
+			//TODO 这里重复导入了结果映射信息表数据
 			setEtlMapInfo(etlMapInfos, datatableId, datatableOwnSourceInfo);
 		}
 	}
