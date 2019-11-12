@@ -148,16 +148,9 @@ public class ObjectCollectAction extends BaseAction {
 			throw new BusinessException("此对象对应的对象采集结构信息表下有数据，不能删除");
 		}
 		//3.根据对象采集任务编号删除对象采集对应信息表
-		int num = Dbo.execute("DELETE FROM " + Object_collect_task.TableName
-				+ " WHERE ocs_id = ?", ocs_id);
-		if (num != 1) {
-			// 判断库里是否没有这条数据
-			if (num == 0) {
-				throw new BusinessException("删除object_collect_task表信息失败，数据库里没有此条数据，"
-						+ "ocs_id=" + ocs_id);
-			}
-			throw new BusinessException("删除object_collect_task表信息异常，ocs_id=" + ocs_id);
-		}
+		DboExecute.deletesOrThrow("删除object_collect_task表信息异常，ocs_id=" + ocs_id,
+				"DELETE FROM " + Object_collect_task.TableName
+						+ " WHERE ocs_id = ?", ocs_id);
 	}
 
 	@Method(desc = "保存对象采集对应信息表",
@@ -216,22 +209,14 @@ public class ObjectCollectAction extends BaseAction {
 	}
 
 	@Method(desc = "根据结构信息id删除对象采集结构信息表",
-			logicStep = "1.获取结构信息id，删除对象采集结构信息表" +
-					"2.判断库里是否没有这条数据")
+			logicStep = "1.获取结构信息id，删除对象采集结构信息表")
 	@Param(name = "struct_id", desc = "结构信息id", range = "不可为空")
 	public void deleteObject_collect_struct(long struct_id) {
 		//数据可访问权限处理方式：该表没有对应的用户访问权限限制
 		//1.获取结构信息id，删除对象采集结构信息表
-		int num = Dbo.execute("DELETE FROM " + Object_collect_struct.TableName
-				+ " WHERE struct_id = ?", struct_id);
-		if (num != 1) {
-			// 2.判断库里是否没有这条数据
-			if (num == 0) {
-				throw new BusinessException("删除object_collect_struct表信息失败，数据库里没有此条数据，"
-						+ "struct_id = " + struct_id);
-			}
-			throw new BusinessException("删除object_collect_struct表信息异常，struct_id = " + struct_id);
-		}
+		DboExecute.deletesOrThrow("删除object_collect_struct表信息异常，struct_id = " + struct_id,
+				"DELETE FROM " + Object_collect_struct.TableName
+						+ " WHERE struct_id = ?", struct_id);
 	}
 
 
