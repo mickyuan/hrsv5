@@ -477,8 +477,8 @@ public class DataSourceAction extends BaseAction {
             // 1.数据可访问权限处理方式，此方法不需要权限验证，不涉及用户权限
             // 2.判断agent_ip是否是一个合法的ip
             String[] split = agent_ip.split("\\.");
-            for (String s : split) {
-                if (Integer.parseInt(s) < 0 || Integer.parseInt(s) > 255) {
+            for (String agentPort : split) {
+                if (Integer.parseInt(agentPort) < 0 || Integer.parseInt(agentPort) > 255) {
                     throw new BusinessException("agent_ip不是一个为空或空格的ip地址," +
                             "agent_ip=" + agent_ip);
                 }
@@ -541,63 +541,66 @@ public class DataSourceAction extends BaseAction {
         // 1.获取文件对应所有表信息的map
         Map<String, Object> collectMap = JsonUtil.toObject(strTemp, type);
         // 2.遍历并解析拿到每张表的信息，map里封装的是所有数据源相关的表信息
-        // 3.获取数据源data_source信息并插入数据库
-        Data_source dataSource = getDataSource(create_user_id, collectMap);
+        // 3.获取重新生成的数据源ID集合并将数据源信息插入数据库
+        String source_id = getDataSource(create_user_id, collectMap);
         // 4.将department_info表数据插入数据库
-        List<Department_info> departmentInfoList = addDepartmentInfo(collectMap);
+        Map<Long, String> departmentInfo = addDepartmentInfo(collectMap);
         // 5.将source_relation_dep数据插入数据库
-        addSourceRelationDep(collectMap, dataSource, departmentInfoList);
-        // 6.将agent_info表数据插入数据库
-        addAgentInfo(agent_ip, agent_port, user_id, collectMap);
+        addSourceRelationDep(collectMap, source_id, departmentInfo);
+        // 6.将agent_info表数据插入数据库并返回存放新旧agentID的集合
+        Map<Long, String> agentIdMap = addAgentInfo(agent_ip, agent_port, user_id, source_id, collectMap);
         // 7.将Agent_down_info表数据插入数据库
-        addAgentDownInfo(agent_ip, agent_port, user_id, collectMap);
+        addAgentDownInfo(agent_ip, agent_port, user_id, collectMap, agentIdMap);
         // 8.将collect_job_classify表数据插入数据库
-        addCollectJobClassify(create_user_id, collectMap);
+        Map<String, String> classifyAndAgentId = addCollectJobClassify(create_user_id, collectMap, agentIdMap);
         // 9.将ftp采集设置ftp_collect表数据插入数据库
-        addFtpCollect(collectMap);
+        Map<Long, String> ftpIdMap = addFtpCollect(collectMap, agentIdMap);
         // 10.将ftp已传输表ftp_transfered表数据插入数据库
-        addFtpTransfered(collectMap);
+        addFtpTransfered(collectMap, ftpIdMap);
         // 11.将ftp目录表ftp_folder表数据插入数据库
-        addFtpFolder(collectMap);
-        // 12.将对象采集设置object_collect表数据插入数据库
-        addObjectCollect(collectMap);
-        // 13.将对象采集对应信息object_collect_task表数据插入数据库
-        addObjectCollectTask(collectMap);
+        addFtpFolder(collectMap, ftpIdMap);
+        // 12.将对象采集设置object_collect表数据插入数据库并返回agent ID以及对象采集ID的集合
+        Map<String, String> odcMap = addObjectCollect(collectMap, agentIdMap);
+        // 13.将对象采集对应信息object_collect_task表数据插入数据库并返回新旧对象采集任务编号的集合
+        Map<Long, String> ocsIdMap = addObjectCollectTask(collectMap, odcMap);
         // 14.将对象采集存储设置object_storage表数据插入数据库
-        addObjectStorage(collectMap);
+        addObjectStorage(collectMap, ocsIdMap);
         // 15.将对象采集结构信息object_collect_struct表数据插入数据库
-        addObjectCollectStruct(collectMap);
+        addObjectCollectStruct(collectMap, ocsIdMap);
         // 16.将数据库设置database_set表数据插入数据库
-        addDatabaseSet(collectMap);
+        Map<Long, String> databaseIdMap = addDatabaseSet(collectMap, classifyAndAgentId);
         // 17.将文件系统设置file_collect_set表数据插入数据库
-        addFileCollectSet(collectMap);
+        Map<String, String> agentAndFcsIdMap = addFileCollectSet(collectMap, agentIdMap);
         // 18.将文件源设置file_source表数据插入数据库
-        addFileSource(collectMap);
+        addFileSource(collectMap, agentAndFcsIdMap);
         // 19.将信号文件入库信息signal_file表数据插入数据库
-        addSignalFile(collectMap);
+        addSignalFile(collectMap, databaseIdMap);
         // 20.将数据库对应的表table_info表数据插入数据库
-        addTableInfo(collectMap);
+        Map<Long, String> tableIdMap = addTableInfo(collectMap, databaseIdMap);
         // 21.将列合并信息column_merge表数据插入数据库
-        addColumnMerge(collectMap);
+        addColumnMerge(collectMap, tableIdMap);
         // 22.将表存储信息table_storage_info表数据插入数据库
-        addTableStorageInfo(collectMap);
+        addTableStorageInfo(collectMap, tableIdMap);
         // 23.将表清洗参数信息table_clean表数据插入数据库
-        addTableClean(collectMap);
+        addTableClean(collectMap, tableIdMap);
         // 24.将表对应的字段table_column表数据插入数据库
-        addTableColumn(collectMap);
+        Map<Long, String> columnIdMap = addTableColumn(collectMap, tableIdMap);
         // 25.将列清洗参数信息column_clean表数据插入数据库
-        addColumnClean(collectMap);
+        Map<String, String> columnAndColIdMap = addColumnClean(collectMap, columnIdMap);
         // 26.将列拆分信息表column_split表数据插入数据库
-        addColumnSplit(collectMap);
+        addColumnSplit(collectMap, columnAndColIdMap);
     }
 
     @Method(desc = "将table_storage_info表数据插入数据库",
             logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
                     "2.判断map中的key值是否为table_storage_info对应表数据" +
                     "3.获取表存储信息table_storage_info信息" +
-                    "4.将table_storage_info表数据循环入数据库")
+                    "4.遍历table_storage_info表数据" +
+                    "5.用新的数据库对应表信息ID替换旧的数据库对应表信息ID" +
+                    "6.将table_storage_info表数据循环入数据库")
     @Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
-    private void addTableStorageInfo(Map<String, Object> collectMap) {
+    @Param(name = "tableIdMap", desc = "存放新旧表ID的集合（key为表旧ID，value为表新ID）", range = "无限制")
+    private void addTableStorageInfo(Map<String, Object> collectMap, Map<Long, String> tableIdMap) {
         // 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
         for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
             // 2.判断map中的key值是否为table_storage_info对应表数据
@@ -608,10 +611,19 @@ public class DataSourceAction extends BaseAction {
                 }.getType();
                 // 3.获取表存储信息table_storage_info信息
                 List<Table_storage_info> tsiList = JsonUtil.toObject(entry.getValue().toString(), tsiType);
-                // 4.将table_storage_info表数据循环入数据库
-                for (Table_storage_info tableStorageInfo : tsiList) {
-                    tableStorageInfo.setStorage_id(PrimayKeyGener.getNextId());
-                    tableStorageInfo.add(Dbo.db());
+                if (!tsiList.isEmpty()) {
+                    // 4.遍历table_storage_info表数据
+                    for (Table_storage_info tableStorageInfo : tsiList) {
+                        // 5.用新的数据库对应表信息ID替换旧的数据库对应表信息ID
+                        for (Map.Entry<Long, String> tableIdEntry : tableIdMap.entrySet()) {
+                            if (tableIdEntry.getKey().longValue() == tableStorageInfo.getTable_id().longValue()) {
+                                tableStorageInfo.setTable_id(tableIdEntry.getValue());
+                                tableStorageInfo.setStorage_id(PrimayKeyGener.getNextId());
+                                // 6.将table_storage_info表数据循环入数据库
+                                tableStorageInfo.add(Dbo.db());
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -621,9 +633,12 @@ public class DataSourceAction extends BaseAction {
             logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
                     "2.判断map中的key值是否为column_merge对应表数据" +
                     "3.获取列合并信息column_merge信息" +
-                    "4.将column_merge表数据循环入数据库")
+                    "4.遍历column_merge表数据" +
+                    "5.用新的数据库对应表信息ID替换旧的数据库对应表信息ID" +
+                    "6.将column_merge表数据循环入数据库")
     @Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
-    private void addColumnMerge(Map<String, Object> collectMap) {
+    @Param(name = "tableIdMap", desc = "存放新旧表ID的集合（key为表旧ID，value为表新ID）", range = "无限制")
+    private void addColumnMerge(Map<String, Object> collectMap, Map<Long, String> tableIdMap) {
         // 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
         for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
             // 2.判断map中的key值是否为column_merge对应表数据
@@ -634,10 +649,19 @@ public class DataSourceAction extends BaseAction {
                 }.getType();
                 // 3.获取列合并信息column_merge信息
                 List<Column_merge> columnMergeList = JsonUtil.toObject(entry.getValue().toString(), cmType);
-                // 4.将column_merge表数据循环入数据库
-                for (Column_merge columnMerge : columnMergeList) {
-                    columnMerge.setCol_merge_id(PrimayKeyGener.getNextId());
-                    columnMerge.add(Dbo.db());
+                if (!columnMergeList.isEmpty()) {
+                    // 4.遍历column_merge表数据
+                    for (Column_merge columnMerge : columnMergeList) {
+                        // 5.用新的数据库对应表信息ID替换旧的数据库对应表信息ID
+                        for (Map.Entry<Long, String> tableIdEntry : tableIdMap.entrySet()) {
+                            if (tableIdEntry.getKey().longValue() == columnMerge.getTable_id().longValue()) {
+                                columnMerge.setTable_id(tableIdEntry.getValue());
+                                columnMerge.setCol_merge_id(PrimayKeyGener.getNextId());
+                                // 6.将column_merge表数据循环入数据库
+                                columnMerge.add(Dbo.db());
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -647,9 +671,14 @@ public class DataSourceAction extends BaseAction {
             logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
                     "2.判断map中的key值是否为column_split对应表数据" +
                     "3.获取列拆分信息表column_split信息" +
-                    "4.将column_split表数据循环入数据库")
+                    "4.遍历column_split表数据循" +
+                    "5.获取新旧字段ID与列清洗参数编号，第一个值为旧值，第二个值为新值" +
+                    "6.用新字段ID与列清洗参数编号替换旧字段ID与列清洗参数编号，保证关联关系不变" +
+                    "7.循环保存列拆分信息入数据库")
     @Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
-    private void addColumnSplit(Map<String, Object> collectMap) {
+    @Param(name = "columnAndColIdMap", desc = "新旧字段ID与列清洗参数编号的集合（key为旧的字段ID与列清洗参数编号，value为新值）",
+            range = "不能为空")
+    private void addColumnSplit(Map<String, Object> collectMap, Map<String, String> columnAndColIdMap) {
         // 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
         for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
             // 2.判断map中的key值是否为column_split对应表数据
@@ -660,10 +689,24 @@ public class DataSourceAction extends BaseAction {
                 }.getType();
                 // 3.获取列拆分信息表column_split信息
                 List<Column_split> columnSplitList = JsonUtil.toObject(entry.getValue().toString(), csType);
-                // 4.将column_split表数据循环入数据库
-                for (Column_split columnSplit : columnSplitList) {
-                    columnSplit.setCol_split_id(PrimayKeyGener.getNextId());
-                    columnSplit.add(Dbo.db());
+                if (!columnSplitList.isEmpty()) {
+                    // 4.遍历column_split表数据循
+                    for (Column_split columnSplit : columnSplitList) {
+                        for (Map.Entry<String, String> idEntry : columnAndColIdMap.entrySet()) {
+                            // 5.获取新旧字段ID与列清洗参数编号，第一个值为旧值，第二个值为新值
+                            String[] oldId = idEntry.getKey().split(",");
+                            String[] newId = idEntry.getValue().split(",");
+                            // 6.用新字段ID与列清洗参数编号替换旧字段ID与列清洗参数编号，保证关联关系不变
+                            if (oldId[0].equals(String.valueOf(columnSplit.getColumn_id())) &&
+                                    oldId[1].equals(String.valueOf(columnSplit.getCol_clean_id()))) {
+                                columnSplit.setColumn_id(newId[0]);
+                                columnSplit.setCol_clean_id(newId[1]);
+                                columnSplit.setCol_split_id(PrimayKeyGener.getNextId());
+                                // 7.循环保存列拆分信息入数据库
+                                columnSplit.add(Dbo.db());
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -673,10 +716,16 @@ public class DataSourceAction extends BaseAction {
             logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
                     "2.判断map中的key值是否为column_clean对应表数据" +
                     "3.获取列清洗参数信息column_clean信息" +
-                    "4.将column_clean表数据循环入数据库")
+                    "4.遍历column_clean表数据循" +
+                    "5.用新的字段ID替换旧的字段ID，保证关联关系不变" +
+                    "6.保存新旧字段ID与列清洗参数编号（key为旧的字段ID与列清洗参数编号，value为新值）" +
+                    "7.循环保存列清洗参数信息column_clean信息入数据库" +
+                    "8.返回新旧字段ID与列清洗参数编号的集合（key为旧的字段ID与列清洗参数编号，value为新值）")
     @Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
-    private void addColumnClean(Map<String, Object> collectMap) {
+    @Param(name = "columnIdMap", desc = "新旧字段ID的集合（key为旧的字段ID，value为新的字段ID）", range = "无限制")
+    private Map<String, String> addColumnClean(Map<String, Object> collectMap, Map<Long, String> columnIdMap) {
         // 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
+        Map<String, String> columnAndColIdMap = new HashMap<>();
         for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
             // 2.判断map中的key值是否为column_clean对应表数据
             // map中key的值，也是下载数据源时对应表信息封装入map的key值
@@ -686,23 +735,44 @@ public class DataSourceAction extends BaseAction {
                 }.getType();
                 // 3.获取列清洗参数信息column_clean信息
                 List<Column_clean> columnCleanList = JsonUtil.toObject(entry.getValue().toString(), ccType);
-                // 4.将column_clean表数据循环入数据库
-                for (Column_clean columnClean : columnCleanList) {
-                    columnClean.setCol_clean_id(PrimayKeyGener.getNextId());
-                    columnClean.add(Dbo.db());
+                if (!columnCleanList.isEmpty()) {
+                    // 4.遍历column_clean表数据循
+                    for (Column_clean columnClean : columnCleanList) {
+                        for (Map.Entry<Long, String> columnIdEntry : columnIdMap.entrySet()) {
+                            // 5.用新的字段ID替换旧的字段ID，保证关联关系不变
+                            if (columnIdEntry.getKey().longValue() == columnClean.getColumn_id().longValue()) {
+                                columnClean.setColumn_id(columnIdEntry.getValue());
+                                String colCleanId = PrimayKeyGener.getNextId();
+                                // 6.保存新旧字段ID与列清洗参数编号（key为旧的字段ID与列清洗参数编号，value为新值）
+                                columnAndColIdMap.put(columnIdEntry.getKey() + "," + columnClean.getCol_clean_id(),
+                                        columnIdEntry.getValue() + "," + colCleanId);
+                                columnClean.setCol_clean_id(colCleanId);
+                                // 7.循环保存列清洗参数信息column_clean信息入数据库
+                                columnClean.add(Dbo.db());
+                            }
+                        }
+                    }
                 }
             }
         }
+        // 8.返回新旧字段ID与列清洗参数编号的集合（key为旧的字段ID与列清洗参数编号，value为新值）
+        return columnAndColIdMap;
     }
 
     @Method(desc = "将table_column表数据插入数据库",
             logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
                     "2.判断map中的key值是否为table_column对应表数据" +
                     "3.获取表对应的字段table_column信息" +
-                    "4.将table_column表数据循环入数据库")
+                    "4.遍历table_column表数据" +
+                    "5.用新的数据库设置ID替换旧的数据库设置ID,保证关联关系不变" +
+                    "6.保存新旧字段ID（key为旧的字段ID，value为新的字段ID）" +
+                    "7.将table_column表数据循环入数据库" +
+                    "8.返回新旧字段ID的集合（key为旧的字段ID，value为新的字段ID）")
     @Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
-    private void addTableColumn(Map<String, Object> collectMap) {
+    @Param(name = "tableIdMap", desc = "存放新旧表ID的集合（key为表旧ID，value为表新ID）", range = "无限制")
+    private Map<Long, String> addTableColumn(Map<String, Object> collectMap, Map<Long, String> tableIdMap) {
         // 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
+        Map<Long, String> columnIdMap = new HashMap<>();
         for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
             // 2.判断map中的key值是否为table_column对应表数据
             // map中key的值，也是下载数据源时对应表信息封装入map的key值
@@ -712,22 +782,39 @@ public class DataSourceAction extends BaseAction {
                 }.getType();
                 // 3.获取表对应的字段table_column信息
                 List<Table_column> tableColumnList = JsonUtil.toObject(entry.getValue().toString(), tcnType);
-                // 4.将table_column表数据循环入数据库
-                for (Table_column tableColumn : tableColumnList) {
-                    tableColumn.setColumn_id(PrimayKeyGener.getNextId());
-                    tableColumn.add(Dbo.db());
+                if (!tableColumnList.isEmpty()) {
+                    // 4.遍历table_column表数据
+                    for (Table_column tableColumn : tableColumnList) {
+                        for (Map.Entry<Long, String> tableIdEntry : tableIdMap.entrySet()) {
+                            // 5.用新的数据库设置ID替换旧的数据库设置ID，保证关联关系不变
+                            if (tableIdEntry.getKey().longValue() == tableColumn.getTable_id().longValue()) {
+                                String column_id = PrimayKeyGener.getNextId();
+                                // 6.保存新旧字段ID（key为旧的字段ID，value为新的字段ID）
+                                columnIdMap.put(tableColumn.getColumn_id(), column_id);
+                                tableColumn.setColumn_id(column_id);
+                                tableColumn.setTable_id(tableIdEntry.getValue());
+                                // 7.将table_column表数据循环入数据库
+                                tableColumn.add(Dbo.db());
+                            }
+                        }
+                    }
                 }
             }
         }
+        // 8.返回新旧字段ID的集合（key为旧的字段ID，value为新的字段ID）
+        return columnIdMap;
     }
 
     @Method(desc = "将table_clean表数据插入数据库",
             logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
                     "2.判断map中的key值是否为table_column对应表数据" +
                     "3.获取表对应的字段table_column信息" +
-                    "4.将table_column表数据循环入数据库")
+                    "4.遍历table_clean表数据" +
+                    "5.用新的数据库对应表ID替换旧的ID,保证关联关系不变" +
+                    "6.循环保存表清洗参数信息入数据库")
     @Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
-    private void addTableClean(Map<String, Object> collectMap) {
+    @Param(name = "tableIdMap", desc = "存放新旧表ID的集合（key为表旧ID，value为表新ID）", range = "无限制")
+    private void addTableClean(Map<String, Object> collectMap, Map<Long, String> tableIdMap) {
         // 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
         for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
             // 2.判断map中的key值是否为table_clean对应表数据
@@ -738,10 +825,19 @@ public class DataSourceAction extends BaseAction {
                 }.getType();
                 // 3.获取表清洗参数信息table_clean信息
                 List<Table_clean> tableCleanList = JsonUtil.toObject(entry.getValue().toString(), tcType);
-                // 4.将table_clean表数据循环入数据库
-                for (Table_clean tableClean : tableCleanList) {
-                    tableClean.setTable_clean_id(PrimayKeyGener.getNextId());
-                    tableClean.add(Dbo.db());
+                if (!tableCleanList.isEmpty()) {
+                    // 4.遍历table_clean表数据
+                    for (Table_clean tableClean : tableCleanList) {
+                        for (Map.Entry<Long, String> tableIdEntry : tableIdMap.entrySet()) {
+                            // 5.用新的数据库对应表ID替换旧的ID,保证关联关系不变
+                            if (tableIdEntry.getKey().longValue() == tableClean.getTable_id().longValue()) {
+                                tableClean.setTable_id(tableIdEntry.getValue());
+                                tableClean.setTable_clean_id(PrimayKeyGener.getNextId());
+                                // 6.循环保存表清洗参数信息入数据库
+                                tableClean.add(Dbo.db());
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -751,10 +847,16 @@ public class DataSourceAction extends BaseAction {
             logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
                     "2.判断map中的key值是否为table_info对应表数据" +
                     "3.获取数据库对应的表table_info信息" +
-                    "4.将table_info表数据循环入数据库")
+                    "4.遍历table_info表数据" +
+                    "5.用新的数据库设置ID替换旧的数据库设置ID，保证关联关系不变" +
+                    "6.将新旧表ID保存，（key为表旧ID，value为表新ID）" +
+                    "7.循环将数据库对应表信息存入数据库" +
+                    "8.返回存放新旧表ID的集合（key为表旧ID，value为表新ID）")
     @Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
-    private void addTableInfo(Map<String, Object> collectMap) {
+    @Param(name = "databaseIdMap", desc = "存放新旧数据库设置ID（key为旧值，value为新值）的集合", range = "不能为空")
+    private Map<Long, String> addTableInfo(Map<String, Object> collectMap, Map<Long, String> databaseIdMap) {
         // 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
+        Map<Long, String> tableIdMap = new HashMap<>();
         for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
             // 2.判断map中的key值是否为table_info对应表数据
             // map中key的值，也是下载数据源时对应表信息封装入map的key值
@@ -764,22 +866,39 @@ public class DataSourceAction extends BaseAction {
                 }.getType();
                 // 3.获取数据库对应的表table_info信息
                 List<Table_info> tableInfoList = JsonUtil.toObject(entry.getValue().toString(), tiType);
-                // 4.将table_info表数据循环入数据库
-                for (Table_info tableInfo : tableInfoList) {
-                    tableInfo.setTable_id(PrimayKeyGener.getNextId());
-                    tableInfo.add(Dbo.db());
+                // 4.遍历table_info表数据
+                if (!tableInfoList.isEmpty()) {
+                    // 5.用新的数据库设置ID替换旧的数据库设置ID，保证关联关系不变
+                    for (Table_info tableInfo : tableInfoList) {
+                        for (Map.Entry<Long, String> databaseIdEntry : databaseIdMap.entrySet()) {
+                            if (databaseIdEntry.getKey().longValue() == tableInfo.getDatabase_id().longValue()) {
+                                tableInfo.setDatabase_id(databaseIdEntry.getValue());
+                                String table_id = PrimayKeyGener.getNextId();
+                                // 6.将新旧表ID保存，（key为表旧ID，value为表新ID）
+                                tableIdMap.put(tableInfo.getTable_id(), table_id);
+                                tableInfo.setTable_id(table_id);
+                                // 7.循环将数据库对应表信息存入数据库
+                                tableInfo.add(Dbo.db());
+                            }
+                        }
+                    }
                 }
             }
         }
+        // 8.返回存放新旧表ID的集合（key为表旧ID，value为表新ID）
+        return tableIdMap;
     }
 
     @Method(desc = "将signal_file表数据插入数据库",
             logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
                     "2.判断map中的key值是否为signal_file对应表数据" +
                     "3.获取信号文件入库信息signal_file信息" +
-                    "4.将signal_file表数据循环入数据库")
+                    "4.遍历signal_file表数据" +
+                    "5.用新的数据库设置ID替换旧的数据库设置ID，保证关联关系不变" +
+                    "6.将信号文件信息循环入数据库")
     @Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
-    private void addSignalFile(Map<String, Object> collectMap) {
+    @Param(name = "databaseIdMap", desc = "存放新旧数据库设置ID（key为旧值，value为新值）的集合", range = "不能为空")
+    private void addSignalFile(Map<String, Object> collectMap, Map<Long, String> databaseIdMap) {
         // 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
         for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
             // 2.判断map中的key值是否为signal_file对应表数据
@@ -790,10 +909,19 @@ public class DataSourceAction extends BaseAction {
                 }.getType();
                 // 3.获取信号文件入库信息signal_file信息
                 List<Signal_file> signalFileList = JsonUtil.toObject(entry.getValue().toString(), sfType);
-                // 4.将signal_file表数据循环入数据库
-                for (Signal_file signalFile : signalFileList) {
-                    signalFile.setSignal_id(PrimayKeyGener.getNextId());
-                    signalFile.add(Dbo.db());
+                if (!signalFileList.isEmpty()) {
+                    // 4.遍历signal_file表数据
+                    for (Signal_file signalFile : signalFileList) {
+                        for (Map.Entry<Long, String> databaseIdEntry : databaseIdMap.entrySet()) {
+                            // 5.用新的数据库设置ID替换旧的数据库设置ID，保证关联关系不变
+                            if (databaseIdEntry.getKey().longValue() == signalFile.getDatabase_id().longValue()) {
+                                signalFile.setDatabase_id(databaseIdEntry.getValue());
+                                signalFile.setSignal_id(PrimayKeyGener.getNextId());
+                                // 6.将信号文件信息循环入数据库
+                                signalFile.add(Dbo.db());
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -803,9 +931,14 @@ public class DataSourceAction extends BaseAction {
             logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
                     "2.判断map中的key值是否为file_source对应表数据" +
                     "3.获取文件源设置file_source信息" +
-                    "4.将file_source表数据循环入数据库")
+                    "4.将file_source表数据循环入数据库" +
+                    "5.获取存放新旧agent与文件采集系统ID,第一个值为agent与文件采集系统旧ID，第二个为新ID" +
+                    "6.用新的agent与文件采集系统ID替换旧的agent与文件采集系统ID，保证关联关系不变" +
+                    "7.循环保存文件源设置信息入数据库")
     @Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
-    private void addFileSource(Map<String, Object> collectMap) {
+    @Param(name = "agentAndFcsIdMap", desc = "存放新旧agent与文件采集系统ID（key为agent与文件采集系统旧ID，value为新ID）的集合",
+            range = "不能为空")
+    private void addFileSource(Map<String, Object> collectMap, Map<String, String> agentAndFcsIdMap) {
         // 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
         for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
             // 2.判断map中的key值是否为file_source对应表数据
@@ -816,10 +949,24 @@ public class DataSourceAction extends BaseAction {
                 }.getType();
                 // 3.获取文件源设置file_source信息
                 List<File_source> fileSourceList = JsonUtil.toObject(entry.getValue().toString(), fsType);
-                // 4.将file_source表数据循环入数据库
-                for (File_source fileSource : fileSourceList) {
-                    fileSource.setFile_source_id(PrimayKeyGener.getNextId());
-                    fileSource.add(Dbo.db());
+                if (!fileSourceList.isEmpty()) {
+                    // 4.遍历file_source表数据
+                    for (File_source fileSource : fileSourceList) {
+                        for (Map.Entry<String, String> idEntry : agentAndFcsIdMap.entrySet()) {
+                            // 5.获取存放新旧agent与文件采集系统ID,第一个值为agent与文件采集系统旧ID，第二个为新ID
+                            String[] oldId = idEntry.getKey().split(",");
+                            String[] newId = idEntry.getValue().split(",");
+                            // 6.用新的agent与文件采集系统ID替换旧的agent与文件采集系统ID，保证关联关系不变
+                            if (oldId[0].equals(String.valueOf(fileSource.getAgent_id())) &&
+                                    oldId[1].equals(String.valueOf(fileSource.getFcs_id()))) {
+                                fileSource.setAgent_id(newId[0]);
+                                fileSource.setFcs_id(newId[1]);
+                                fileSource.setFile_source_id(PrimayKeyGener.getNextId());
+                                // 7.循环保存文件源设置信息入数据库
+                                fileSource.add(Dbo.db());
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -829,10 +976,16 @@ public class DataSourceAction extends BaseAction {
             logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
                     "2.判断map中的key值是否为file_collect_set对应表数据" +
                     "3.获取文件系统设置file_collect_set信息" +
-                    "4.将file_collect_set表数据循环入数据库")
+                    "4.遍历file_collect_set表数" +
+                    "5.用新的agent ID替换旧的agent ID，保证关联关系不变" +
+                    "6.将新旧agent与文件采集系统ID（key为agent与文件采集系统旧ID，value为新ID）保存" +
+                    "7.循环保存文件系统设置表信息入数据库" +
+                    "8.返回存放新旧agent与文件采集系统ID（key为agent与文件采集系统旧ID，value为新ID）的集合")
     @Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
-    private void addFileCollectSet(Map<String, Object> collectMap) {
+    @Param(name = "agentIdMap", desc = "存放新旧agent ID的集合", range = "不能为空")
+    private Map<String, String> addFileCollectSet(Map<String, Object> collectMap, Map<Long, String> agentIdMap) {
         // 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
+        Map<String, String> agentAndFcsIdMap = new HashMap<>();
         for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
             // 2.判断map中的key值是否为file_collect_set对应表数据
             // map中key的值，也是下载数据源时对应表信息封装入map的key值
@@ -842,23 +995,48 @@ public class DataSourceAction extends BaseAction {
                 }.getType();
                 // 3.获取文件系统设置file_collect_set信息
                 List<File_collect_set> fcsList = JsonUtil.toObject(entry.getValue().toString(), fcsType);
-                // 4.将file_collect_set表数据循环入数据库
-                for (File_collect_set fileCollectSet : fcsList) {
-                    fileCollectSet.setFcs_id(PrimayKeyGener.getNextId());
-                    fileCollectSet.add(Dbo.db());
+                if (!fcsList.isEmpty()) {
+                    // 4.遍历file_collect_set表数据
+                    for (File_collect_set fileCollectSet : fcsList) {
+                        for (Map.Entry<Long, String> agentIdEntry : agentIdMap.entrySet()) {
+                            // 5.用新的agent ID替换旧的agent ID，保证关联关系不变
+                            if (agentIdEntry.getKey().longValue() == fileCollectSet.getAgent_id().longValue()) {
+                                String fcs_id = PrimayKeyGener.getNextId();
+                                // 6.将新旧agent与文件采集系统ID（key为agent与文件采集系统旧ID，value为新ID）保存
+                                agentAndFcsIdMap.put(agentIdEntry.getKey() + "," + fileCollectSet.getFcs_id(),
+                                        agentIdEntry.getValue() + "," + fcs_id);
+                                fileCollectSet.setFcs_id(fcs_id);
+                                fileCollectSet.setAgent_id(agentIdEntry.getValue());
+                                // 7.循环保存文件系统设置表信息入数据库
+                                fileCollectSet.add(Dbo.db());
+                            }
+                        }
+                    }
                 }
             }
         }
+
+        // 8.返回存放新旧agent与文件采集系统ID（key为agent与文件采集系统旧ID，value为新ID）的集合
+        return agentAndFcsIdMap;
     }
 
     @Method(desc = "将database_set表数据插入数据库",
             logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
                     "2.判断map中的key值是否为database_set对应表数据" +
                     "3.获取数据库设置database_set信息" +
-                    "4.将database_set表数据循环入数据库")
+                    "4.遍历database_set表数据" +
+                    "5.获取存放新旧agent与分类ID的数组，第一个值是agent与分类旧值，第二个值是agent与分类新值" +
+                    "6.用新agent与分类ID替换旧agent与分类ID" +
+                    "7.将新旧数据库设置ID（key为旧值，value为新值）保存" +
+                    "8.循环保存数据库设置表信息" +
+                    "9.返回存放新旧数据库设置ID（key为旧值，value为新值）的集合")
     @Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
-    private void addDatabaseSet(Map<String, Object> collectMap) {
+    @Param(name = "classifyAndAgentId", desc = "新旧agent与分类ID（key为agent与分类旧ID，value为agent与分类新ID）的集合",
+            range = "不能为空")
+    @Return(desc = "存放新旧数据库设置ID（key为旧值，value为新值）的集合", range = "无限制")
+    private Map<Long, String> addDatabaseSet(Map<String, Object> collectMap, Map<String, String> classifyAndAgentId) {
         // 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
+        Map<Long, String> databaseIdMap = new HashMap<>();
         for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
             // 2.判断map中的key值是否为database_set对应表数据
             // map中key的值，也是下载数据源时对应表信息封装入map的key值
@@ -868,22 +1046,44 @@ public class DataSourceAction extends BaseAction {
                 }.getType();
                 // 3.获取数据库设置database_set信息
                 List<Database_set> databaseSetList = JsonUtil.toObject(entry.getValue().toString(), dsType);
-                // 4.将database_set表数据循环入数据库
-                for (Database_set databaseSet : databaseSetList) {
-                    databaseSet.setDatabase_id(PrimayKeyGener.getNextId());
-                    databaseSet.add(Dbo.db());
+                if (!databaseSetList.isEmpty()) {
+                    // 4.遍历database_set表数据
+                    for (Database_set databaseSet : databaseSetList) {
+                        for (Map.Entry<String, String> idEntry : classifyAndAgentId.entrySet()) {
+                            // 5.获取存放新旧agent与分类ID的数组，第一个值是agent与分类旧值，第二个值是agent与分类新值
+                            String[] oldId = idEntry.getKey().split(",");
+                            String[] newId = idEntry.getValue().split(",");
+                            // 6.用新agent与分类ID替换旧agent与分类ID
+                            if (oldId[0].equals(String.valueOf(databaseSet.getAgent_id()))
+                                    && oldId[1].equals(String.valueOf(databaseSet.getClassify_id()))) {
+                                databaseSet.setAgent_id(newId[0]);
+                                databaseSet.setClassify_id(newId[1]);
+                                String database_id = PrimayKeyGener.getNextId();
+                                // 7.将新旧数据库设置ID（key为旧值，value为新值）保存
+                                databaseIdMap.put(databaseSet.getDatabase_id(), database_id);
+                                databaseSet.setDatabase_id(database_id);
+                                // 8.循环保存数据库设置表信息
+                                databaseSet.add(Dbo.db());
+                            }
+                        }
+                    }
                 }
             }
         }
+        // 9.返回存放新旧数据库设置ID（key为旧值，value为新值）的集合
+        return databaseIdMap;
     }
 
     @Method(desc = "将object_collect_struct表数据插入数据库",
             logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
                     "2.判断map中的key值是否为object_collect_struct对应表数据" +
                     "3.获取对象采集结构信息object_collect_struct信息" +
-                    "4.将object_collect_struct表数据循环入数据库")
+                    "4.遍历object_collect_struct表数据" +
+                    "5.用新的对象采集任务编号替换新的对象采集任务编号,保证关联关系不变" +
+                    "6.将object_collect_struct表数据循环入数据库")
     @Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
-    private void addObjectCollectStruct(Map<String, Object> collectMap) {
+    @Param(name = "ocsIdMap", desc = "存放新旧对象采集任务编号(key为旧的ID，value为新的ID）的集合", range = "不能为空")
+    private void addObjectCollectStruct(Map<String, Object> collectMap, Map<Long, String> ocsIdMap) {
         // 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
         for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
             // 2.判断map中的key值是否为object_collect_struct对应表数据
@@ -894,10 +1094,19 @@ public class DataSourceAction extends BaseAction {
                 }.getType();
                 // 3.获取对象采集结构信息object_collect_struct信息
                 List<Object_collect_struct> ocsList = JsonUtil.toObject(entry.getValue().toString(), ocsType);
-                // 4.将object_collect_struct表数据循环入数据库
-                for (Object_collect_struct objectCollectStruct : ocsList) {
-                    objectCollectStruct.setStruct_id(PrimayKeyGener.getNextId());
-                    objectCollectStruct.add(Dbo.db());
+                if (!ocsList.isEmpty()) {
+                    // 4.遍历object_collect_struct表数据
+                    for (Object_collect_struct objectCollectStruct : ocsList) {
+                        for (Map.Entry<Long, String> ocsIdEntry : ocsIdMap.entrySet()) {
+                            // 5.用新的对象采集任务编号替换新的对象采集任务编号,保证关联关系不变
+                            if (ocsIdEntry.getKey().longValue() == objectCollectStruct.getOcs_id().longValue()) {
+                                objectCollectStruct.setStruct_id(PrimayKeyGener.getNextId());
+                                objectCollectStruct.setOcs_id(ocsIdEntry.getValue());
+                                // 6.将object_collect_struct表数据循环入数据库
+                                objectCollectStruct.add(Dbo.db());
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -907,9 +1116,12 @@ public class DataSourceAction extends BaseAction {
             logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
                     "2.判断map中的key值是否为object_storage对应表数据" +
                     "3.获取tp采集设置object_storage信息" +
-                    "4.将object_storage表数据循环入数据库")
+                    "4.遍历object_storage表数据" +
+                    "5.用新的对象采集任务编号替换新的对象采集任务编号,保证关联关系不变" +
+                    "6.将object_storage表数据循环入数据库")
     @Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
-    private void addObjectStorage(Map<String, Object> collectMap) {
+    @Param(name = "ocsIdMap", desc = "存放新旧对象采集任务编号(key为旧的ID，value为新的ID）的集合", range = "不能为空")
+    private void addObjectStorage(Map<String, Object> collectMap, Map<Long, String> ocsIdMap) {
         // 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
         for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
             // 2.判断map中的key值是否为object_storage对应表数据
@@ -920,10 +1132,19 @@ public class DataSourceAction extends BaseAction {
                 }.getType();
                 // 3.获取对象采集存储设置object_storage信息
                 List<Object_storage> objStorageList = JsonUtil.toObject(entry.getValue().toString(), osType);
-                // 4.将object_storage表数据循环入数据库
-                for (Object_storage objectStorage : objStorageList) {
-                    objectStorage.setObj_stid(PrimayKeyGener.getNextId());
-                    objectStorage.add(Dbo.db());
+                if (!objStorageList.isEmpty()) {
+                    // 4.遍历object_storage表数据
+                    for (Object_storage objectStorage : objStorageList) {
+                        for (Map.Entry<Long, String> ocsIdEntry : ocsIdMap.entrySet()) {
+                            // 5.用新的对象采集任务编号替换新的对象采集任务编号
+                            if (ocsIdEntry.getKey().longValue() == objectStorage.getOcs_id().longValue()) {
+                                objectStorage.setObj_stid(PrimayKeyGener.getNextId());
+                                objectStorage.setOcs_id(ocsIdEntry.getValue());
+                                // 6.将object_storage表数据循环入数据库
+                                objectStorage.add(Dbo.db());
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -933,10 +1154,18 @@ public class DataSourceAction extends BaseAction {
             logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
                     "2.判断map中的key值是否为object_collect_task对应表数据" +
                     "3.获取对象采集对应信息object_collect_task信息" +
-                    "4.将object_collect_task表数据循环入数据库")
+                    "4.遍历object_collect_task表数据" +
+                    "5.获取新旧对象采集与agent ID的数组,第一个值为对象采集ID，第二个值为agent ID" +
+                    "6.用新的对象采集与agent ID替换旧的对象采集与agent ID,保证关联关系不变" +
+                    "7.将新旧对象采集任务编号保存" +
+                    "8.循环保存对象采集任务信息入数据库" +
+                    "9.返回存放新旧对象采集任务编号(key为旧的ID，value为新的ID）的集合")
     @Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
-    private void addObjectCollectTask(Map<String, Object> collectMap) {
+    @Param(name = "odcMap", desc = "存放新旧对象采集任务编号(key为旧的ID，value为新的ID）的集合", range = "无限制")
+    @Return(desc = "返回存放新旧对象采集任务编号(key为旧的ID，value为新的ID）的集合", range = "无限制")
+    private Map<Long, String> addObjectCollectTask(Map<String, Object> collectMap, Map<String, String> odcMap) {
         // 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
+        Map<Long, String> ocsIdMap = new HashMap<>();
         for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
             // 2.判断map中的key值是否为object_collect_task对应表数据
             // map中key的值，也是下载数据源时对应表信息封装入map的key值
@@ -946,23 +1175,50 @@ public class DataSourceAction extends BaseAction {
                 }.getType();
                 // 3.获取对象采集对应信息object_collect_task信息
                 List<Object_collect_task> octList = JsonUtil.toObject(entry.getValue().toString(), octType);
-                // 4.将object_collect_task表数据循环入数据库
-                for (Object_collect_task objectCollectTask : octList) {
-                    objectCollectTask.setOcs_id(PrimayKeyGener.getNextId());
-                    objectCollectTask.add(Dbo.db());
+                if (!octList.isEmpty()) {
+                    // 4.遍历object_collect_task表数据
+                    for (Object_collect_task octTask : octList) {
+                        for (Map.Entry<String, String> odcEntry : odcMap.entrySet()) {
+                            // 5.获取新旧对象采集与agent ID的数组,第一个值为对象采集ID，第二个值为agent ID
+                            String[] oldOdcAndAgentId = odcEntry.getKey().split(",");
+                            String[] newOdcAndAgentId = odcEntry.getValue().split(",");
+                            // 6.用新的对象采集与agent ID替换旧的对象采集与agent ID
+                            if (oldOdcAndAgentId[0].equals(String.valueOf(octTask.getOdc_id())) &&
+                                    oldOdcAndAgentId[1].equals(String.valueOf(octTask.getAgent_id()))) {
+                                String ocs_id = PrimayKeyGener.getNextId();
+                                // 7.将新旧对象采集任务编号保存
+                                ocsIdMap.put(octTask.getOcs_id(), ocs_id);
+                                octTask.setOcs_id(ocs_id);
+                                octTask.setAgent_id(newOdcAndAgentId[1]);
+                                octTask.setOdc_id(newOdcAndAgentId[0]);
+                                // 8.循环保存对象采集任务信息入数据库
+                                octTask.add(Dbo.db());
+                            }
+                        }
+                    }
                 }
             }
         }
+        // 9.返回存放新旧对象采集任务编号(key为旧的ID，value为新的ID）的集合
+        return ocsIdMap;
     }
 
     @Method(desc = "将object_collect表数据插入数据库",
             logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
                     "2.判断map中的key值是否为object_collect对应表数据" +
                     "3.获取对象采集设置object_collect信息" +
-                    "4.将object_collect表数据循环入数据库")
+                    "4.将object_collect表数据循环入数据库" +
+                    "5.用新的agent ID替换旧的agent ID,,保证关联关系不变" +
+                    "6.存放新旧对象采集ID（key为旧的ID，value为新的采集ID）的集合" +
+                    "7.object_collect表数据循环入数据库" +
+                    "8.返回存放新旧对象采集ID（key为旧的ID，value为新的采集ID）的集合")
     @Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
-    private void addObjectCollect(Map<String, Object> collectMap) {
+    @Param(name = "agentIdMap", desc = "存放新旧agnet ID（新的ID作为value，旧的agent ID作为key）的集合",
+            range = "无限制")
+    @Return(desc = "返回存放新旧对象采集与agent ID（key为旧的ID，value为新的ID）的集合", range = "无限制")
+    private Map<String, String> addObjectCollect(Map<String, Object> collectMap, Map<Long, String> agentIdMap) {
         // 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
+        Map<String, String> odcMap = new HashMap<>();
         for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
             // 2.判断map中的key值是否为object_collect对应表数据
             // map中key的值，也是下载数据源时对应表信息封装入map的key值
@@ -972,22 +1228,41 @@ public class DataSourceAction extends BaseAction {
                 }.getType();
                 // 3.获取对象采集设置object_collect信息
                 List<Object_collect> objCollectList = JsonUtil.toObject(entry.getValue().toString(), ocType);
-                // 4 .将object_collect表数据循环入数据库
-                for (Object_collect objectCollect : objCollectList) {
-                    objectCollect.setOdc_id(PrimayKeyGener.getNextId());
-                    objectCollect.add(Dbo.db());
+                if (!objCollectList.isEmpty()) {
+                    // 4 .遍历object_collect表数据
+                    for (Object_collect objCollect : objCollectList) {
+                        for (Map.Entry<Long, String> agentIdEntry : agentIdMap.entrySet()) {
+                            // 5.用新的agent ID替换旧的agent ID,,保证关联关系不变
+                            if (agentIdEntry.getKey().longValue() == objCollect.getAgent_id().longValue()) {
+                                String odc_id = PrimayKeyGener.getNextId();
+                                // 6.存放新旧对象采集ID（key为旧的ID，value为新的采集ID）的集合
+                                odcMap.put(objCollect.getOdc_id() + "," + agentIdEntry.getKey(),
+                                        odc_id + "," + agentIdEntry.getValue());
+                                objCollect.setOdc_id(odc_id);
+                                objCollect.setAgent_id(agentIdEntry.getValue());
+                                // 7.object_collect表数据循环入数据库
+                                objCollect.add(Dbo.db());
+                            }
+                        }
+                    }
                 }
             }
         }
+        // 8.返回存放新旧对象采集ID（key为旧的ID，value为新的采集ID）的集合
+        return odcMap;
     }
 
     @Method(desc = "将ftp_folder表数据插入数据库",
             logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
                     "2.判断map中的key值是否为ftp_folder对应表数据" +
                     "3.获取ftp目录表ftp_folder信息" +
-                    "4.将ftp_folder表数据循环入数据库")
+                    "4.遍历ftp_folder表数据集合" +
+                    "5.用重新生成的ftp_id替换旧的ftp_id,保证关联关系不变" +
+                    "6.将ftp_folder表数据循环入数据库")
     @Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
-    private void addFtpFolder(Map<String, Object> collectMap) {
+    @Param(name = "ftpIdMap", desc = "存放重新生成的ftp采集ID（作为value）,旧的ftp采集ID（作为key）的集合",
+            range = "不能为空")
+    private void addFtpFolder(Map<String, Object> collectMap, Map<Long, String> ftpIdMap) {
         // 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
         for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
             // 2.判断map中的key值是否为ftp_folder对应表数据
@@ -998,10 +1273,19 @@ public class DataSourceAction extends BaseAction {
                 }.getType();
                 // 3.获取ftp目录表ftp_folder信息
                 List<Ftp_folder> ftpFolderList = JsonUtil.toObject(entry.getValue().toString(), ffType);
-                // 4.将ftp_folder表数据循环入数据库
-                for (Ftp_folder ftpFolder : ftpFolderList) {
-                    ftpFolder.setFtp_folder_id(PrimayKeyGener.getNextId());
-                    ftpFolder.add(Dbo.db());
+                if (!ftpFolderList.isEmpty()) {
+                    // 4.遍历ftp_folder表数据集合
+                    for (Ftp_folder ftpFolder : ftpFolderList) {
+                        for (Map.Entry<Long, String> ftpIdEntry : ftpIdMap.entrySet()) {
+                            // 5.用重新生成的ftp_id替换旧的ftp_id,保证关联关系不变
+                            if (ftpIdEntry.getKey().longValue() == ftpFolder.getFtp_id().longValue()) {
+                                ftpFolder.setFtp_folder_id(PrimayKeyGener.getNextId());
+                                ftpFolder.setFtp_id(ftpIdEntry.getValue());
+                                // 6.将ftp_folder表数据循环入数据库
+                                ftpFolder.add(Dbo.db());
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -1011,9 +1295,13 @@ public class DataSourceAction extends BaseAction {
             logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
                     "2.判断map中的key值是否为ftp_transfered对应表数据" +
                     "3.获取tp采集设置ftp_transfered信息" +
-                    "4.将ftp_transfered表数据循环入数据库")
+                    "4.遍历ftp_transfered表数据集合" +
+                    "5.用重新生成的ftp_id替换旧的ftp_id,保证关联关系不变" +
+                    "6.将ftp_transfered表数据循环入数据库")
     @Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
-    private void addFtpTransfered(Map<String, Object> collectMap) {
+    @Param(name = "ftpIdMap", desc = "存放重新生成的ftp采集ID（作为value）,旧的ftp采集ID（作为key）的集合",
+            range = "不能为空")
+    private void addFtpTransfered(Map<String, Object> collectMap, Map<Long, String> ftpIdMap) {
         // 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
         for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
             // 2.判断map中的key值是否为ftp_transfered对应表数据
@@ -1024,10 +1312,19 @@ public class DataSourceAction extends BaseAction {
                 }.getType();
                 // 3.获取ftp已传输表ftp_transfered信息
                 List<Ftp_transfered> transferList = JsonUtil.toObject(entry.getValue().toString(), ftType);
-                // 4.将ftp_transfered表数据循环入数据库
-                for (Ftp_transfered ftpTransfered : transferList) {
-                    ftpTransfered.setFtp_transfered_id(PrimayKeyGener.getNextId());
-                    ftpTransfered.add(Dbo.db());
+                // 4.遍历ftp_transfered表数据
+                if (!transferList.isEmpty()) {
+                    for (Ftp_transfered ftpTransfered : transferList) {
+                        for (Map.Entry<Long, String> ftpIdEntry : ftpIdMap.entrySet()) {
+                            // 5.用重新生成的ftp_id替换旧的ftp_id,保证关联关系不变
+                            if (ftpIdEntry.getKey().longValue() == ftpTransfered.getFtp_id().longValue()) {
+                                ftpTransfered.setFtp_transfered_id(PrimayKeyGener.getNextId());
+                                ftpTransfered.setFtp_id(ftpIdEntry.getValue());
+                                // 6.将ftp_transfered表数据循环入数据库
+                                ftpTransfered.add(Dbo.db());
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -1037,10 +1334,18 @@ public class DataSourceAction extends BaseAction {
             logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
                     "2.判断map中的key值是否为ftp_collect对应表数据" +
                     "3.获取tp采集设置ftp_collect信息" +
-                    "4.将ftp_collect表数据循环入数据库")
+                    "4.遍历ftp_collect表数据集合" +
+                    "5.用重新生成的agent ID替换旧的agent ID，保证关联关系不变" +
+                    "6.将重新生成的ftp采集ID作为value,旧的ftp采集ID作为key保存" +
+                    "7.将ftp_collect表数据循环入数据库" +
+                    "8.返回存放将重新生成的ftp采集ID（作为value）,旧的ftp采集ID（作为key）的集合")
     @Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
-    private void addFtpCollect(Map<String, Object> collectMap) {
+    @Param(name = "agentIdMap", desc = "存放重新生成的agnet ID（作为value），旧的agent ID（作为key）的集合",
+            range = "无限制")
+    @Return(desc = "8.返回存放将重新生成的ftp采集ID（作为value）,旧的ftp采集ID（作为key）的集合", range = "无限制")
+    private Map<Long, String> addFtpCollect(Map<String, Object> collectMap, Map<Long, String> agentIdMap) {
         // 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
+        Map<Long, String> ftpIdMap = new HashMap<>();
         for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
             // 2.判断map中的key值是否为ftp_collect对应表数据
             // map中key的值，也是下载数据源时对应表信息封装入map的key值
@@ -1048,55 +1353,46 @@ public class DataSourceAction extends BaseAction {
             if (fc.equals(entry.getKey())) {
                 Type fcType = new TypeReference<List<Ftp_collect>>() {
                 }.getType();
-                // 3.获取tp采集设置ftp_collect信息
+                // 3.获取tp采集设置ftp_collect信息集合
                 List<Ftp_collect> ftpCollectList = JsonUtil.toObject(entry.getValue().toString(), fcType);
-                // 4.将ftp_collect表数据循环入数据库
-                for (Ftp_collect ftpCollect : ftpCollectList) {
-                    ftpCollect.setFtp_id(PrimayKeyGener.getNextId());
-                    ftpCollect.add(Dbo.db());
+                if (!ftpCollectList.isEmpty()) {
+                    // 4.遍历ftp_collect表数据
+                    for (Ftp_collect ftpCollect : ftpCollectList) {
+                        // 5.用重新生成的agent ID替换旧的agent ID
+                        for (Map.Entry<Long, String> agentIdEntry : agentIdMap.entrySet()) {
+                            if (agentIdEntry.getKey().longValue() == ftpCollect.getAgent_id().longValue()) {
+                                String ftp_id = PrimayKeyGener.getNextId();
+                                // 6.将重新生成的ftp采集ID作为value,旧的ftp采集ID作为key保存
+                                ftpIdMap.put(ftpCollect.getFtp_id(), ftp_id);
+                                ftpCollect.setFtp_id(ftp_id);
+                                ftpCollect.setAgent_id(agentIdEntry.getValue());
+                                // 7.ftp_collect表数据循环入数据库
+                                ftpCollect.add(Dbo.db());
+                            }
+                        }
+                    }
                 }
             }
         }
-    }
-
-    @Method(desc = "将collect_job_classify表数据插入数据库",
-            logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
-                    "2.判断map中的key值是否为collect_job_classify对应表数据" +
-                    "3.获取采集任务分类表collect_job_classify信息" +
-                    "4.将collect_job_classify表数据循环入数据库")
-    @Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
-    private void addCollectJobClassify(long userCollectId, Map<String, Object> collectMap) {
-        // 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-        for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
-            // 2.判断map中的key值是否为collect_job_classify对应表数据
-            // map中key的值，也是下载数据源时对应表信息封装入map的key值
-            String cjc = "collectJobClassify";
-            if (cjc.equals(entry.getKey())) {
-                Type cjcType = new TypeReference<List<Collect_job_classify>>() {
-                }.getType();
-                // 3.获取采集任务分类表collect_job_classify信息
-                List<Collect_job_classify> cjcList = JsonUtil.toObject(entry.getValue().toString(), cjcType);
-                // 4.将collect_job_classify表数据循环入数据库
-                for (Collect_job_classify collectJobClassify : cjcList) {
-                    collectJobClassify.setClassify_id(PrimayKeyGener.getNextId());
-                    collectJobClassify.setUser_id(userCollectId);
-                    collectJobClassify.add(Dbo.db());
-                }
-            }
-        }
+        // 8.返回存放将重新生成的ftp采集ID（作为value）,旧的ftp采集ID（作为key）的集合
+        return ftpIdMap;
     }
 
     @Method(desc = "将agent_down_info表数据插入数据库",
             logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
                     "2.判断map中的key值是否为agent_down_info对应表数据" +
                     "3.获取agent_down_info表数据" +
-                    "4.将agent_down_info表数据循环入数据库")
+                    "4.遍历agent_down_info表数据集合" +
+                    "5.用重新生成的agent ID替换旧的agent ID，保证关联关系不变" +
+                    "6.将agent_down_info表数据循环入数据库")
     @Param(name = "agent_ip", desc = "agent地址", range = "不能为空，服务器ip地址", example = "127.0.0.1")
     @Param(name = "agent_port", desc = "agent端口", range = "1024-65535")
-    @Param(name = "userCollectId", desc = "数据采集用户，代表此数据属于哪个用户", range = "10位数字")
-    @Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
+    @Param(name = "userCollectId", desc = "数据采集用户，代表此数据属于哪个用户", range = "新增用户时生成")
+    @Param(name = "source_id", desc = "导入数据源重新生成的数据源ID", range = "无限制")
+    @Param(name = "collectMap", desc = "所有表数据的map的实体", range = "无限制")
+    @Param(name = "agentIdMap", desc = "存放新旧agentID的集合", range = "无限制")
     private void addAgentDownInfo(String agent_ip, String agent_port, long userCollectId,
-                                  Map<String, Object> collectMap) {
+                                  Map<String, Object> collectMap, Map<Long, String> agentIdMap) {
         // 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
         for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
             // 2.判断map中的key值是否为agent_down_info对应表数据
@@ -1107,16 +1403,76 @@ public class DataSourceAction extends BaseAction {
                 }.getType();
                 // 3.获取agent_down_info表数据
                 List<Agent_down_info> adiList = JsonUtil.toObject(entry.getValue().toString(), adiType);
-                // 4.将agent_down_info表数据循环入数据库
-                for (Agent_down_info agentDownInfo : adiList) {
-                    agentDownInfo.setDown_id(PrimayKeyGener.getNextId());
-                    agentDownInfo.setUser_id(userCollectId);
-                    agentDownInfo.setAgent_ip(agent_ip);
-                    agentDownInfo.setAgent_port(agent_port);
-                    agentDownInfo.add(Dbo.db());
+                if (!adiList.isEmpty()) {
+                    // 4.遍历agent_down_info表数据集合
+                    for (Agent_down_info agentDownInfo : adiList) {
+                        // 5.用重新生成的agent ID替换旧的agent ID
+                        for (Map.Entry<Long, String> agentIdEntry : agentIdMap.entrySet()) {
+                            if (agentDownInfo.getAgent_id().longValue() == agentIdEntry.getKey().longValue()) {
+                                agentDownInfo.setDown_id(PrimayKeyGener.getNextId());
+                                agentDownInfo.setUser_id(userCollectId);
+                                agentDownInfo.setAgent_ip(agent_ip);
+                                agentDownInfo.setAgent_port(agent_port);
+                                agentDownInfo.setAgent_id(agentIdEntry.getValue());
+                                // 6.将agent_down_info表数据循环入数据库
+                                agentDownInfo.add(Dbo.db());
+                            }
+                        }
+                    }
                 }
             }
         }
+    }
+
+    @Method(desc = "将collect_job_classify表数据插入数据库",
+            logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
+                    "2.判断map中的key值是否为collect_job_classify对应表数据" +
+                    "3.获取采集任务分类表collect_job_classify信息" +
+                    "4.遍历collect_job_classify表数据" +
+                    "5.用重新生成的agent ID替换旧的agent ID，保证关联关系不变" +
+                    "6.将新旧agent与分类ID保存（key为agent与分类旧ID，value为agent与分类新ID）" +
+                    "7.将collect_job_classify表数据循环入数据库" +
+                    "8.返回存放新旧分类与agent ID的集合")
+    @Param(name = "userCollectId", desc = "采集用户ID", range = "不能为空")
+    @Param(name = "collectMap", desc = "所有表数据的map的实体", range = "无限制")
+    @Param(name = "agentIdMap", desc = "存放新旧agentID的集合", range = "无限制")
+    private Map<String, String> addCollectJobClassify(long userCollectId, Map<String, Object> collectMap,
+                                                      Map<Long, String> agentIdMap) {
+        // 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
+        Map<String, String> classifyAndAgentIdMap = new HashMap<>();
+        for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
+            // 2.判断map中的key值是否为collect_job_classify对应表数据
+            // map中key的值，也是下载数据源时对应表信息封装入map的key值
+            String cjc = "collectJobClassify";
+            if (cjc.equals(entry.getKey())) {
+                Type cjcType = new TypeReference<List<Collect_job_classify>>() {
+                }.getType();
+                // 3.获取采集任务分类表collect_job_classify信息
+                List<Collect_job_classify> cjcList = JsonUtil.toObject(entry.getValue().toString(), cjcType);
+                if (!cjcList.isEmpty()) {
+                    // 4.将collect_job_classify表数据循环入数据库
+                    for (Collect_job_classify classify : cjcList) {
+                        // 5.用重新生成的agent ID替换旧的agent ID
+                        for (Map.Entry<Long, String> agentIdEntry : agentIdMap.entrySet()) {
+                            if (classify.getAgent_id().longValue() == agentIdEntry.getKey().longValue()) {
+                                String classify_id = PrimayKeyGener.getNextId();
+                                // 6.将新旧agent与分类ID保存（key为agent与分类旧ID，value为agent与分类新ID）
+                                classifyAndAgentIdMap.put(agentIdEntry.getKey() + "," +
+                                        classify.getClassify_id(), agentIdEntry.getValue() + "," + classify_id);
+                                classify.setClassify_id(classify_id);
+                                classify.setUser_id(userCollectId);
+                                classify.setAgent_id(agentIdEntry.getValue());
+                                // 7.将collect_job_classify表数据循环入数据库
+                                classify.add(Dbo.db());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 8.返回存放新旧分类与agent ID的集合
+        return classifyAndAgentIdMap;
     }
 
     @Method(desc = "将department_info表数据插入数据库",
@@ -1124,12 +1480,14 @@ public class DataSourceAction extends BaseAction {
                     "2.创建新的department_info表数据集合" +
                     "3.判断map中的key值是否为对应department_info表数据" +
                     "4.获取部门表department_info表数据" +
-                    "5.将department_info表数据循环插入数据库")
-    @Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
-    @Return(desc = "所有表数据的map的实体", range = "不为空")
-    private List<Department_info> addDepartmentInfo(Map<String, Object> collectMap) {
+                    "5.将新旧主键ID保存" +
+                    "6.将department_info表数据循环插入数据库" +
+                    "7.返回新的新旧部门主键ID集合")
+    @Param(name = "collectMap", desc = "所有表数据的map的实体", range = "无限制")
+    @Return(desc = "返回新的新旧部门主键ID集合", range = "不为空")
+    private Map<Long, String> addDepartmentInfo(Map<String, Object> collectMap) {
         // 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-        List<Department_info> departmentInfoListNew = new ArrayList<>();
+        Map<Long, String> depMap = new HashMap<>();
         // 2.创建新的department_info表数据集合
         for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
             // 3.判断map中的key值是否为对应department_info表数据
@@ -1140,27 +1498,33 @@ public class DataSourceAction extends BaseAction {
                 }.getType();
                 // 4.获取部门表department_info表数据
                 List<Department_info> depInfoList = JsonUtil.toObject(entry.getValue().toString(), srdType);
-                for (Department_info departmentInfo : depInfoList) {
-                    departmentInfo.setDep_id(PrimayKeyGener.getNextId());
-                    // 4.将department_info表数据循环插入数据库
-                    departmentInfo.add(Dbo.db());
+                if (!depInfoList.isEmpty()) {
+                    for (Department_info departmentInfo : depInfoList) {
+                        String dep_id = PrimayKeyGener.getNextId();
+                        // 5.将新旧主键ID保存
+                        depMap.put(departmentInfo.getDep_id(), dep_id);
+                        departmentInfo.setDep_id(dep_id);
+                        // 6.将department_info表数据循环插入数据库
+                        departmentInfo.add(Dbo.db());
+                    }
                 }
             }
         }
-        // 5.返回新的department_info表数据集合
-        return departmentInfoListNew;
+        // 7.返回新的新旧部门主键ID集合
+        return depMap;
     }
 
     @Method(desc = "将source_relation_dep表数据插入数据库",
             logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
                     "2.判断map中的key值是否为对应source_relation_dep表数据" +
                     "3.获取数据源和部门关系表source_relation_dep表数据" +
-                    "4.遍历department_info表数据，目的是获取最新的部门ID，dep_id" +
-                    "5.将source_relation_dep表数据循环插入数据库")
-    @Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
-    @Param(name = "departmentInfoList", desc = "存放department_info表数据的集合", range = "不为空")
-    private void addSourceRelationDep(Map<String, Object> collectMap, Data_source dataSource,
-                                      List<Department_info> departmentInfoList) {
+                    "4.遍历department_info表新旧ID，用重新生成的部门ID替换旧的部门ID，保证关联关系不变" +
+                    "5.保存source_relation_dep表数据")
+    @Param(name = "collectMap", desc = "所有表数据的map的实体", range = "无限制")
+    @Param(name = "source_id", desc = "导入数据源重新生成的数据源ID", range = "无限制")
+    @Param(name = "departmentInfo", desc = "存放department_info表新旧部门ID数据的集合", range = "无限制")
+    private void addSourceRelationDep(Map<String, Object> collectMap, String source_id,
+                                      Map<Long, String> departmentInfo) {
         // 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
         for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
             // 2.判断map中的key值是否为对应source_relation_dep表数据
@@ -1171,13 +1535,17 @@ public class DataSourceAction extends BaseAction {
                 }.getType();
                 // 3.获取数据源和部门关系表source_relation_dep表数据
                 List<Source_relation_dep> srdList = JsonUtil.toObject(entry.getValue().toString(), srdType);
-                for (Source_relation_dep sourceRelationDep : srdList) {
-                    sourceRelationDep.setSource_id(dataSource.getSource_id());
-                    // 4.遍历department_info表数据，目的是获取最新的部门ID，dep_id
-                    for (Department_info departmentInfo : departmentInfoList) {
-                        sourceRelationDep.setDep_id(departmentInfo.getDep_id());
-                        // 5.将source_relation_dep表数据循环插入数据库
-                        sourceRelationDep.add(Dbo.db());
+                if (!srdList.isEmpty()) {
+                    for (Source_relation_dep sourceRelationDep : srdList) {
+                        sourceRelationDep.setSource_id(source_id);
+                        // 4.遍历department_info表新旧ID，用重新生成的部门ID替换旧的部门ID
+                        for (Map.Entry<Long, String> depIdEntry : departmentInfo.entrySet()) {
+                            if (depIdEntry.getKey().longValue() == sourceRelationDep.getDep_id().longValue()) {
+                                sourceRelationDep.setDep_id(depIdEntry.getValue());
+                                // 5.保存source_relation_dep表数据
+                                sourceRelationDep.add(Dbo.db());
+                            }
+                        }
                     }
                 }
             }
@@ -1186,48 +1554,53 @@ public class DataSourceAction extends BaseAction {
 
     @Method(desc = "将data_source表数据入库并返回data_source实体对象",
             logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
-                    "2.创建data_source表实体对象" +
+                    "2.导入数据源需要重新生成主键ID，获取新的数据源ID" +
                     "3.判断map中的key值是否为对应data_source表数据" +
                     "4.获取数据源data_source表信息" +
                     "5.将data_source表数据插入数据库" +
                     "6.返回data_source表数据对应实体对象")
     @Param(name = "userId", desc = "创建用户ID，代表此数据源由哪个用户创建", range = "不为空，创建用户时自动生成")
-    @Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
-    @Return(desc = "data_source表实体对象", range = "data_source表实体对象", isBean = true)
-    private Data_source getDataSource(long userId, Map<String, Object> collectMap) {
+    @Param(name = "collectMap", desc = "所有表数据的map的实体", range = "无限制")
+    @Return(desc = "返回重新生成的数据源ID", range = "无限制", isBean = true)
+    private String getDataSource(long userId, Map<String, Object> collectMap) {
         // 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-        // 2.创建data_source表实体对象
-        Data_source dataSource = new Data_source();
+        // 2.导入数据源需要重新生成主键ID，获取新的数据源ID
+        String source_id = PrimayKeyGener.getNextId();
         for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
             // 3.判断map中的key值是否为对应data_source表数据
             // map中key的值，也是下载数据源时对应表信息封装入map的key值
             String ds = "dataSource";
             if (ds.equals(entry.getKey())) {
                 // 4.获取数据源data_source表信息
-                dataSource = JsonUtil.toObjectSafety(entry.getValue().toString(),
+                Data_source dataSource = JsonUtil.toObjectSafety(entry.getValue().toString(),
                         Data_source.class).orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
                 // 5.将data_source表数据插入数据库
-                dataSource.setSource_id(PrimayKeyGener.getNextId());
+                dataSource.setSource_id(source_id);
                 dataSource.setCreate_user_id(userId);
                 dataSource.add(Dbo.db());
             }
         }
-        // 6.返回data_source表数据对应实体对象
-        return dataSource;
+        // 6.返回存放新旧数据源ID的集合
+        return source_id;
     }
 
     @Method(desc = "将agent_info表信息入数据库",
             logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
                     "2.判断map中的key值是否为对应agent_info表数据" +
                     "3.获取agent_info表数据" +
-                    "4.循环入库agent_info")
+                    "4.循环入库agent_info" +
+                    "5.保存新旧agent ID（key为旧的agent ID，value为新值）" +
+                    "6.循环保存agent信息" +
+                    "7.返回存放新旧agent_id的集合")
     @Param(name = "agent_ip", desc = "agent地址", range = "不为空，服务器ip地址", example = "127.0.0.1")
     @Param(name = "agent_port", desc = "agent端口", range = "不为空，1024-65535")
     @Param(name = "userCollectId", desc = "数据采集用户，代表此数据属于哪个用户", range = "4位数字，不为空,页面传值")
-    @Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
-    private void addAgentInfo(String agent_ip, String agent_port, long userCollectId,
-                              Map<String, Object> collectMap) {
+    @Param(name = "source_id", desc = "导入数据源重新生成的数据源ID", range = "无限制")
+    @Param(name = "collectMap", desc = "所有表数据的map的实体", range = "无限制")
+    private Map<Long, String> addAgentInfo(String agent_ip, String agent_port, long userCollectId,
+                                           String source_id, Map<String, Object> collectMap) {
         // 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
+        Map<Long, String> agentIdMap = new HashMap<>();
         for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
             // 2.判断map中的key值是否为对应agent_info表数据
             // map中key的值，也是下载数据源时对应表信息封装入map的key值
@@ -1241,15 +1614,22 @@ public class DataSourceAction extends BaseAction {
                 // 4.判断结果集是否为空，不为空循环入库agent_info
                 if (!agentInfoList.isEmpty()) {
                     for (Agent_info agentInfo : agentInfoList) {
-                        agentInfo.setAgent_id(PrimayKeyGener.getNextId());
+                        String agent_id = PrimayKeyGener.getNextId();
+                        // 5.保存新旧agent ID（key为旧的agent ID，value为新值）
+                        agentIdMap.put(agentInfo.getAgent_id(), agent_id);
+                        agentInfo.setAgent_id(agent_id);
+                        agentInfo.setSource_id(source_id);
                         agentInfo.setUser_id(userCollectId);
                         agentInfo.setAgent_ip(agent_ip);
                         agentInfo.setAgent_port(agent_port);
+                        // 6.循环入库agent信息
                         agentInfo.add(Dbo.db());
                     }
                 }
             }
         }
+        // 7.返回存放新旧agent_id的集合
+        return agentIdMap;
     }
 
     @Method(desc = "下载文件（数据源下载功能使用，下载数据源给数据源导入提供上传文件）",
@@ -1673,7 +2053,8 @@ public class DataSourceAction extends BaseAction {
     @Param(name = "collectionMap", desc = "封装数据源下载信息（这里封装的是database_set表数据集合）",
             range = "不能为空,key唯一")
     @Param(name = "agentInfoList", desc = "agent_info表数据结果集合", range = "不为空")
-    private Result getDatabaseSetResult(Map<String, Object> collectionMap, List<Agent_info> agentInfoList) {
+    private Result getDatabaseSetResult
+            (Map<String, Object> collectionMap, List<Agent_info> agentInfoList) {
         // 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
         // 2.创建存放database_set表信息的集合
         Result databaseSetResult = new Result();
@@ -1749,7 +2130,8 @@ public class DataSourceAction extends BaseAction {
     @Param(name = "collectionMap", desc = "封装数据源下载信息（这里封装的是object_storage表数据集合）",
             range = "不能为空,key唯一")
     @Param(name = "objectCollectTaskResult", desc = "object_collect_task表数据结果集", range = "不为空")
-    private void addObjectStorageToMap(Map<String, Object> collectionMap, Result objectCollectTaskResult) {
+    private void addObjectStorageToMap(Map<String, Object> collectionMap, Result
+            objectCollectTaskResult) {
         // 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
         // 2.创建存放object_storage信息的结果集
         Result objectStorageResult = new Result();
@@ -1774,7 +2156,8 @@ public class DataSourceAction extends BaseAction {
             range = "不能为空,key唯一")
     @Param(name = "objectCollectResult", desc = "object_collect表数据结果集", range = "不为空")
     @Return(desc = "返回object_collect_task表数据集合信息", range = "不为空")
-    private Result getObjectCollectTaskResult(Map<String, Object> collectionMap, Result objectCollectResult) {
+    private Result getObjectCollectTaskResult(Map<String, Object> collectionMap, Result
+            objectCollectResult) {
         // 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
         // 2.创建存放object_collect_task表数据的结果集对象
         Result objectCollectTaskResult = new Result();
@@ -1800,7 +2183,8 @@ public class DataSourceAction extends BaseAction {
             range = "不能为空,key唯一")
     @Param(name = "agentInfoList", desc = "agent_info表数据集合", range = "不为空")
     @Return(desc = "返回object_collect表数据集合信息", range = "不为空")
-    private Result getObjectCollectResult(Map<String, Object> collectionMap, List<Agent_info> agentInfoList) {
+    private Result getObjectCollectResult
+            (Map<String, Object> collectionMap, List<Agent_info> agentInfoList) {
         // 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
         // 2.创建封装object_collect信息的结果集对象
         Result objectCollectResult = new Result();
@@ -1827,7 +2211,8 @@ public class DataSourceAction extends BaseAction {
     @Param(name = "collectionMap", desc = "封装数据源下载信息（这里封装的是agent_down_info表数据集合）",
             range = "不能为空,key唯一")
     @Param(name = "agentInfoList", desc = "agent_info表数据集合", range = "不为空")
-    private void addAgentDownInfoToMap(Map<String, Object> collectionMap, List<Agent_info> agentInfoList) {
+    private void addAgentDownInfoToMap
+            (Map<String, Object> collectionMap, List<Agent_info> agentInfoList) {
         // 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
         // 2.创建封装agent_down_info表信息集合
         List<Optional<Agent_down_info>> agentDownInfoList =
@@ -1903,7 +2288,8 @@ public class DataSourceAction extends BaseAction {
             range = "不能为空,key唯一")
     @Param(name = "agentInfoList", desc = "agent_info表数据集合", range = "不为空")
     @Return(desc = "返回ftp_collect集合信息", range = "不为空")
-    private Result getFtpCollectResult(Map<String, Object> collectionMap, List<Agent_info> agentInfoList) {
+    private Result getFtpCollectResult
+            (Map<String, Object> collectionMap, List<Agent_info> agentInfoList) {
         // 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
         // 2.创建封装ftp_collect信息的集合
         Result ftpCollectResult = new Result();
