@@ -60,7 +60,7 @@ public class Table_info extends ProjectTableEntity
 	private String is_register;
 	@DocBean(name ="is_parallel",value="是否并行抽取(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_parallel;
-	@DocBean(name ="page_sql",value="分页sql:",dataType = String.class,required = true)
+	@DocBean(name ="page_sql",value="分页sql:",dataType = String.class,required = false)
 	private String page_sql;
 
 	/** 取得：表名ID */

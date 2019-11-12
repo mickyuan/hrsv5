@@ -30,20 +30,6 @@ public class Source_file_attribute extends ProjectTableEntity
 		__tmpPKS.add("file_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="file_suffix",value="文件后缀:",dataType = String.class,required = true)
-	private String file_suffix;
-	@DocBean(name ="table_name",value="采集的原始表名:",dataType = String.class,required = false)
-	private String table_name;
-	@DocBean(name ="collect_type",value="采集类型(CollectType):1-数据库采集<ShuJuKuCaiJi> 2-文件采集<WenJianCaiJi> 3-数据文件采集<DBWenJianCaiJi> 4-对象文件采集<DuiXiangWenJianCaiJi> 5-Ftp采集<FtpCaiJi> ",dataType = String.class,required = true)
-	private String collect_type;
-	@DocBean(name ="source_path",value="文件路径:",dataType = String.class,required = false)
-	private String source_path;
-	@DocBean(name ="meta_info",value="META元信息:",dataType = String.class,required = false)
-	private String meta_info;
-	@DocBean(name ="seqencing",value="排序计数:",dataType = Long.class,required = true)
-	private Long seqencing;
-	@DocBean(name ="is_in_hbase",value="是否已进入HBASE(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
-	private String is_in_hbase;
 	@DocBean(name ="file_md5",value="文件MD5值:",dataType = String.class,required = false)
 	private String file_md5;
 	@DocBean(name ="file_avro_path",value="所在avro文件地址:",dataType = String.class,required = false)
@@ -80,69 +66,21 @@ public class Source_file_attribute extends ProjectTableEntity
 	private String original_update_time;
 	@DocBean(name ="storage_time",value="入库时间:",dataType = String.class,required = true)
 	private String storage_time;
+	@DocBean(name ="file_suffix",value="文件后缀:",dataType = String.class,required = true)
+	private String file_suffix;
+	@DocBean(name ="table_name",value="采集的原始表名:",dataType = String.class,required = false)
+	private String table_name;
+	@DocBean(name ="collect_type",value="采集类型(CollectType):1-数据库采集<ShuJuKuCaiJi> 2-文件采集<WenJianCaiJi> 3-数据文件采集<DBWenJianCaiJi> 4-对象文件采集<DuiXiangWenJianCaiJi> 5-Ftp采集<FtpCaiJi> ",dataType = String.class,required = true)
+	private String collect_type;
+	@DocBean(name ="source_path",value="文件路径:",dataType = String.class,required = false)
+	private String source_path;
+	@DocBean(name ="meta_info",value="META元信息:",dataType = String.class,required = false)
+	private String meta_info;
+	@DocBean(name ="seqencing",value="排序计数:",dataType = Long.class,required = true)
+	private Long seqencing;
+	@DocBean(name ="is_in_hbase",value="是否已进入HBASE(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
+	private String is_in_hbase;
 
-	/** 取得：文件后缀 */
-	public String getFile_suffix(){
-		return file_suffix;
-	}
-	/** 设置：文件后缀 */
-	public void setFile_suffix(String file_suffix){
-		this.file_suffix=file_suffix;
-	}
-	/** 取得：采集的原始表名 */
-	public String getTable_name(){
-		return table_name;
-	}
-	/** 设置：采集的原始表名 */
-	public void setTable_name(String table_name){
-		this.table_name=table_name;
-	}
-	/** 取得：采集类型 */
-	public String getCollect_type(){
-		return collect_type;
-	}
-	/** 设置：采集类型 */
-	public void setCollect_type(String collect_type){
-		this.collect_type=collect_type;
-	}
-	/** 取得：文件路径 */
-	public String getSource_path(){
-		return source_path;
-	}
-	/** 设置：文件路径 */
-	public void setSource_path(String source_path){
-		this.source_path=source_path;
-	}
-	/** 取得：META元信息 */
-	public String getMeta_info(){
-		return meta_info;
-	}
-	/** 设置：META元信息 */
-	public void setMeta_info(String meta_info){
-		this.meta_info=meta_info;
-	}
-	/** 取得：排序计数 */
-	public Long getSeqencing(){
-		return seqencing;
-	}
-	/** 设置：排序计数 */
-	public void setSeqencing(Long seqencing){
-		this.seqencing=seqencing;
-	}
-	/** 设置：排序计数 */
-	public void setSeqencing(String seqencing){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(seqencing)){
-			this.seqencing=new Long(seqencing);
-		}
-	}
-	/** 取得：是否已进入HBASE */
-	public String getIs_in_hbase(){
-		return is_in_hbase;
-	}
-	/** 设置：是否已进入HBASE */
-	public void setIs_in_hbase(String is_in_hbase){
-		this.is_in_hbase=is_in_hbase;
-	}
 	/** 取得：文件MD5值 */
 	public String getFile_md5(){
 		return file_md5;
@@ -322,5 +260,67 @@ public class Source_file_attribute extends ProjectTableEntity
 	/** 设置：入库时间 */
 	public void setStorage_time(String storage_time){
 		this.storage_time=storage_time;
+	}
+	/** 取得：文件后缀 */
+	public String getFile_suffix(){
+		return file_suffix;
+	}
+	/** 设置：文件后缀 */
+	public void setFile_suffix(String file_suffix){
+		this.file_suffix=file_suffix;
+	}
+	/** 取得：采集的原始表名 */
+	public String getTable_name(){
+		return table_name;
+	}
+	/** 设置：采集的原始表名 */
+	public void setTable_name(String table_name){
+		this.table_name=table_name;
+	}
+	/** 取得：采集类型 */
+	public String getCollect_type(){
+		return collect_type;
+	}
+	/** 设置：采集类型 */
+	public void setCollect_type(String collect_type){
+		this.collect_type=collect_type;
+	}
+	/** 取得：文件路径 */
+	public String getSource_path(){
+		return source_path;
+	}
+	/** 设置：文件路径 */
+	public void setSource_path(String source_path){
+		this.source_path=source_path;
+	}
+	/** 取得：META元信息 */
+	public String getMeta_info(){
+		return meta_info;
+	}
+	/** 设置：META元信息 */
+	public void setMeta_info(String meta_info){
+		this.meta_info=meta_info;
+	}
+	/** 取得：排序计数 */
+	public Long getSeqencing(){
+		return seqencing;
+	}
+	/** 设置：排序计数 */
+	public void setSeqencing(Long seqencing){
+		this.seqencing=seqencing;
+	}
+	/** 设置：排序计数 */
+	public void setSeqencing(String seqencing){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(seqencing)){
+			this.seqencing=new Long(seqencing);
+		}
+	}
+	/** 取得：是否已进入HBASE */
+	public String getIs_in_hbase(){
+		return is_in_hbase;
+	}
+	/** 设置：是否已进入HBASE */
+	public void setIs_in_hbase(String is_in_hbase){
+		this.is_in_hbase=is_in_hbase;
 	}
 }

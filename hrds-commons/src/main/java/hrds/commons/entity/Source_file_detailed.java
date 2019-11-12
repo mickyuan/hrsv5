@@ -30,8 +30,6 @@ public class Source_file_detailed extends ProjectTableEntity
 		__tmpPKS.add("sfd_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="folder_id",value="文件夹编号:",dataType = Long.class,required = true)
-	private Long folder_id;
 	@DocBean(name ="original_name",value="原始文件名或表中文名称:",dataType = String.class,required = true)
 	private String original_name;
 	@DocBean(name ="original_update_date",value="原文件最后修改日期:",dataType = String.class,required = true)
@@ -76,21 +74,9 @@ public class Source_file_detailed extends ProjectTableEntity
 	private Long source_id;
 	@DocBean(name ="collect_set_id",value="数据库设置id:",dataType = Long.class,required = true)
 	private Long collect_set_id;
+	@DocBean(name ="folder_id",value="文件夹编号:",dataType = Long.class,required = true)
+	private Long folder_id;
 
-	/** 取得：文件夹编号 */
-	public Long getFolder_id(){
-		return folder_id;
-	}
-	/** 设置：文件夹编号 */
-	public void setFolder_id(Long folder_id){
-		this.folder_id=folder_id;
-	}
-	/** 设置：文件夹编号 */
-	public void setFolder_id(String folder_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(folder_id)){
-			this.folder_id=new Long(folder_id);
-		}
-	}
 	/** 取得：原始文件名或表中文名称 */
 	public String getOriginal_name(){
 		return original_name;
@@ -295,6 +281,20 @@ public class Source_file_detailed extends ProjectTableEntity
 	public void setCollect_set_id(String collect_set_id){
 		if(!fd.ng.core.utils.StringUtil.isEmpty(collect_set_id)){
 			this.collect_set_id=new Long(collect_set_id);
+		}
+	}
+	/** 取得：文件夹编号 */
+	public Long getFolder_id(){
+		return folder_id;
+	}
+	/** 设置：文件夹编号 */
+	public void setFolder_id(Long folder_id){
+		this.folder_id=folder_id;
+	}
+	/** 设置：文件夹编号 */
+	public void setFolder_id(String folder_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(folder_id)){
+			this.folder_id=new Long(folder_id);
 		}
 	}
 }
