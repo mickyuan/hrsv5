@@ -34,6 +34,7 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 	//source_id
 	private static final long SOURCE_ID = 1L;
 	private static final long FIRST_DB_AGENT_ID = 7001L;
+	private static final long SECOND_DB_AGENT_ID = 7002L;
 	private static final long FIRST_CLASSIFY_ID = 10086L;
 	private static final long SECOND_CLASSIFY_ID = 10010L;
 	private static final long THIRD_CLASSIFY_ID = 12306L;
@@ -126,6 +127,59 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 		ActionResult secWrongResult = JsonUtil.toObjectSafety(secWrongString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(secWrongResult.isSuccess(), is(false));
+	}
+
+	/**
+	 * 测试通过对数据库IP和端口号进行分组筛选数据库直连采集配置信息
+	 *
+	 * 正确数据访问1：构造一批IP和端口号相同的数据，直接访问方法，断言返回结果是否正确
+	 * 错误的测试用例未达到三组 : 所有返回结果均根据实际情况
+	 *
+	 * @Param: 无
+	 * @return: 无
+	 *
+	 * */
+	@Test
+	public void getHisConnection(){
+		//正确数据访问1：构造一批IP和端口号相同的数据，直接访问方法，断言返回结果是否正确
+		try(DatabaseWrapper db = new DatabaseWrapper()){
+			SqlOperator.execute(db, "INSERT INTO database_set VALUES (100208, 7002, NULL, 'dbtest1', NULL, 'wzcTaskName4', 'postgresql', 'postgresql', 'org.postgresql.Driver', '1', 'hrsdxg', '127.0.0.1', '8888', '0', ' ', '', '1', '1', NULL, '', '1', '', '0', '1', NULL, 'jdbc:postgresql://127.0.0.1:8888/postgresql', 1001001)");
+			SqlOperator.execute(db, "INSERT INTO database_set VALUES (100209, 7002, NULL, 'dbtest1', NULL, 'wzcTaskName4', 'mysql', 'mysql', 'com.mysql.Driver', '1', 'hrsdxg', '192.168.123.0', '32001', '0', ' ', '', '1', '1', NULL, '', '1', '', '0', '1', NULL, 'jdbc:mysql://192.168.123.0:32001/mysql', 1001001);");
+
+			SqlOperator.commitTransaction(db);
+		}
+
+		String rightString = new HttpClient()
+				.addData("agentId", SECOND_DB_AGENT_ID)
+				.post(getActionUrl("getHisConnection")).getBodyString();
+
+		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResult.isSuccess(), is(true));
+
+		Result rightData = rightResult.getDataForResult();
+		assertThat("获得的数据有两条", rightData.getRowCount(), is(2));
+		for(int i = 0; i < rightData.getRowCount(); i++){
+			if(rightData.getString(i, "database_port").equalsIgnoreCase("8888") && rightData.getString(i, "database_ip").equalsIgnoreCase("127.0.0.1")){
+				assertThat("数据库名称为postgresql", rightData.getString(i, "database_name"), is("postgresql"));
+				assertThat("数据库密码为postgresql", rightData.getString(i, "database_pad"), is("postgresql"));
+				assertThat("数据库密码为用户名", rightData.getString(i, "user_name"), is("hrsdxg"));
+			}else if(rightData.getString(i, "database_port").equalsIgnoreCase("32001") && rightData.getString(i, "database_ip").equalsIgnoreCase("192.168.123.0")){
+				assertThat("数据库名称为mysql", rightData.getString(i, "database_name"), is("mysql"));
+				assertThat("数据库密码为mysql", rightData.getString(i, "database_pad"), is("mysql"));
+				assertThat("数据库密码为用户名", rightData.getString(i, "user_name"), is("hrsdxg"));
+			}else{
+				assertThat("获得的数据不符合预期，IP地址和端口号如下" + rightData.getString(i, "database_ip") + rightData.getString(i, "database_port"), true, is(false));
+			}
+		}
+
+		//测试完成后，删除刚刚为本方法构造的数据
+		try(DatabaseWrapper db = new DatabaseWrapper()){
+			SqlOperator.execute(db, "delete from " + Database_set.TableName + " where database_id = 100208");
+			SqlOperator.execute(db, "delete from " + Database_set.TableName + " where database_id = 100209");
+
+			SqlOperator.commitTransaction(db);
+		}
 	}
 
 	/**

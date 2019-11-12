@@ -81,9 +81,23 @@ public class DBConfStepAction extends BaseAction{
 	@Param(name = "dbType", desc = "数据库类型", range = "DatabaseType代码项")
 	@Return(desc = "数据库连接驱动信息",range = "不会为null")
 	public String getJDBCDriver(String dbType){
+		//1、调用工具类方法直接获取数据并返回
 		return ConnUtil.getJDBCDriver(dbType);
 		//数据可访问权限处理方式
 		//不与数据库交互，无需限制访问权限
+	}
+
+	@Method(desc = "通过对数据库IP和端口号进行分组筛选数据库直连采集配置信息", logicStep = "" +
+			"1、查询数据并返回")
+	@Param(name = "agentId", desc = "AgentID", range = "agent_info表主键，database_set表外键")
+	@Return(desc = "查询结果，包含数据库名称、用户名、密码、IP、端口号",range = "不会为null")
+	public Result getHisConnection(long agentId){
+		//1、查询数据并返回
+		return Dbo.queryResult("select ds.database_name, ds.database_pad, ds.user_name, ds.database_port, " +
+				" ds.database_ip from "+ Database_set.TableName +" ds" +
+				" where ds.database_id in" +
+				" (select max(database_id) as id from database_set group by database_port, database_ip)" +
+				" and ds.agent_id = ? ", agentId);
 	}
 
 	@Method(desc = "根据分类Id判断当前分类是否被使用", logicStep = "" +
