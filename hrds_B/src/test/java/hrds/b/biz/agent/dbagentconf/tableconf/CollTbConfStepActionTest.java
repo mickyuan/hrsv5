@@ -31,6 +31,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class CollTbConfStepActionTest extends WebBaseTestCase{
 
 	private static final long CODE_INFO_TABLE_ID = 7002L;
+	private static final long SYS_USER_TABLE_ID = 7001L;
 	private static final long AGENT_INFO_TABLE_ID = 7003L;
 	private static final long DATA_SOURCE_TABLE_ID = 7004L;
 	private static final long FIRST_DATABASESET_ID = 1001L;
@@ -64,10 +65,10 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 	 *      1001设置完成并发送成功(is_sendok)
 	 *      6、collect_job_classify表：有2条数据，classify_id为10086L、10010L，agent_id分别为7001L、7002L,user_id为9997L
 	 *      7、table_info表测试数据共4条，databaseset_id为1001
-	 *          7-1、table_id:7001,table_name:sys_user,按照画面配置信息进行采集，并且配置了单表过滤SQL,select * from sys_user where user_id = 2001
-	 *          7-2、table_id:7002,table_name:code_info,按照画面配置信息进行采集
-	 *          7-3、table_id:7003,table_name:agent_info,按照自定义SQL进行采集
-	 *          7-4、table_id:7004,table_name:data_source,按照自定义SQL进行采集
+	 *          7-1、table_id:7001,table_name:sys_user,按照画面配置信息进行采集，并且配置了单表过滤SQL,select * from sys_user where user_id = 2001，不进行并行抽取
+	 *          7-2、table_id:7002,table_name:code_info,按照画面配置信息进行采集,进行并行抽取，分页SQL为select * from code_info limit 10
+	 *          7-3、table_id:7003,table_name:agent_info,按照自定义SQL进行采集，不进行并行抽取
+	 *          7-4、table_id:7004,table_name:data_source,按照自定义SQL进行采集，不进行并行抽取
 	 *      8、table_column表测试数据：只有在画面上进行配置的采集表才会向table_column表中保存数据
 	 *          8-1、column_id为2001-2010，模拟采集了sys_user表的前10个列，列名为user_id，create_id，dep_id，role_id，
 	 *               user_name，user_password，user_email，user_mobile，useris_admin，user_type
@@ -281,18 +282,45 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 
 	/**
 	 * 测试根据table_id获取对该表定义的分页SQL
-	 * 正确数据访问1：使用设置了分页SQL的tableId进行查询
-	 * 错误的数据访问1：使用未设置分页SQL的tableId进行查询
-	 * 错误的测试用例未达到三组:getPageSQL方法只有一个参数
+	 * 正确数据访问1：使用设置了分页SQL的tableId进行查询(code_info)
+	 * 错误的数据访问1：使用未设置分页SQL的tableId进行查询(sys_user)
+	 * 错误的数据访问2：使用不存在的tableId进行查询
+	 * 错误的测试用例未达到三组:getPageSQL方法只有一个参数,上述测试用例已经可以覆盖所有可能出现的情况
 	 * @Param: 无
 	 * @return: 无
-	 * TODO 由于数据库表缺字段，被测方法未完成
 	 * */
 	@Test
 	public void getPageSQL(){
 		//正确数据访问1：使用设置了分页SQL的tableId进行查询
+		String rightString = new HttpClient()
+				.addData("tableId", CODE_INFO_TABLE_ID)
+				.post(getActionUrl("getPageSQL")).getBodyString();
+		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResult.isSuccess(), is(true));
+		Result rightData = rightResult.getDataForResult();
+		assertThat("获得了一条数据", rightData.getRowCount(), is(1));
+		assertThat("获得的分页抽取SQL是select * from code_info limit 10", rightData.getString(0, "page_sql"), is("select * from code_info limit 10"));
 
 		//错误的数据访问1：使用未设置分页SQL的tableId进行查询
+		String wrongStringOne = new HttpClient()
+				.addData("tableId", SYS_USER_TABLE_ID)
+				.post(getActionUrl("getPageSQL")).getBodyString();
+		ActionResult wrongResultOne = JsonUtil.toObjectSafety(wrongStringOne, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultOne.isSuccess(), is(true));
+		Result wrongDataOne = wrongResultOne.getDataForResult();
+		assertThat("获得了一条数据", wrongDataOne.getRowCount(), is(1));
+		assertThat("获得的分页抽取SQL是空字符串", wrongDataOne.getString(0, "page_sql"), is(""));
+
+		//错误的数据访问2：使用不存在的tableId进行查询
+		long wrongTableId = 12138L;
+		String wrongStringTwo = new HttpClient()
+				.addData("tableId", wrongTableId)
+				.post(getActionUrl("getPageSQL")).getBodyString();
+		ActionResult wrongResultTwo = JsonUtil.toObjectSafety(wrongStringTwo, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultTwo.isSuccess(), is(false));
 	}
 
 	/**

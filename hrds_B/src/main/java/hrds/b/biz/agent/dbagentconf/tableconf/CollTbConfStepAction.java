@@ -61,7 +61,6 @@ public class CollTbConfStepAction extends BaseAction {
 		//以上table_info表中都没有user_id字段，解决方式待讨论
 	}
 
-	//TODO 该方法是为前台界面的模糊查询功能提供的，关于这个功能要满足的要求，希望可以讨论一下
 	@Method(desc = "根据模糊表名和数据库设置id得到表相关信息", logicStep = "" +
 			"1、根据colSetId去数据库中获取数据库设置相关信息" +
 			"2、将查询结果转换成json，并追加模糊查询表名" +
@@ -141,13 +140,16 @@ public class CollTbConfStepAction extends BaseAction {
 
 	@Method(desc = "根据表ID获取给该表定义的分页抽取SQL", logicStep = "" +
 			"1、去数据库中根据table_id查出该表定义的分页抽取SQL" +
-			"2、如果获取到的结果集为空，则返回前端该表未定义分页抽取SQL" +
-			"3、如果获取到的结果集不为空，则返回前端该表定义的分页抽取SQL")
+			"2、返回")
 	@Param(name = "tableId", desc = "数据库对应表ID", range = "不为空")
 	@Return(desc = "分页SQL", range = "只要正常返回肯定不是空字符串")
-	//TODO 因为table_info表中缺少字段，所以方法未完成
 	public Result getPageSQL(long tableId){
-		return null;
+		Result result = Dbo.queryResult("select ti.table_id, ti.page_sql from " + Table_info.TableName +
+				" ti where ti.table_id = ?", tableId);
+		if(result.isEmpty()){
+			throw new BusinessException("获取分页抽取SQL失败");
+		}
+		return result;
 	}
 
 	@Method(desc = "测试并行抽取SQL", logicStep = "" +

@@ -65,10 +65,10 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 *      1001设置完成并发送成功(is_sendok)
 	 *      6、collect_job_classify表：有3条数据，classify_id为10086L、10010L，12306L，agent_id分别为7001L、7002L,7001L，user_id为9997L
 	 *      7、table_info表测试数据共4条，databaseset_id为1001
-	 *          7-1、table_id:7001,table_name:sys_user,按照画面配置信息进行采集
-	 *          7-2、table_id:7002,table_name:code_info,按照画面配置信息进行采集
-	 *          7-3、table_id:7003,table_name:agent_info,按照自定义SQL进行采集
-	 *          7-4、table_id:7004,table_name:data_source,按照自定义SQL进行采集
+	 *          7-1、table_id:7001,table_name:sys_user,按照画面配置信息进行采集,按照画面配置信息进行采集，并且配置了单表过滤SQL,select * from sys_user where user_id = 2001，不进行并行抽取
+	 *          7-2、table_id:7002,table_name:code_info,按照画面配置信息进行采集,按照画面配置信息进行采集,进行并行抽取，分页SQL为select * from code_info limit 10
+	 *          7-3、table_id:7003,table_name:agent_info,按照自定义SQL进行采集,按照自定义SQL进行采集，不进行并行抽取
+	 *          7-4、table_id:7004,table_name:data_source,按照自定义SQL进行采集,按照自定义SQL进行采集，不进行并行抽取
 	 *      8、table_column表测试数据：只有在画面上进行配置的采集表才会向table_column表中保存数据
 	 *          8-1、column_id为2001-2011，模拟采集了sys_user表的前10个列，列名为user_id，create_id，dep_id，role_id，
 	 *               user_name，user_password，user_email，user_mobile，useris_admin，user_type，和一个login_date列,设置了remark字段，也就是采集顺序，分别是1、2、3、4、5、6、7、8、9、10、11
