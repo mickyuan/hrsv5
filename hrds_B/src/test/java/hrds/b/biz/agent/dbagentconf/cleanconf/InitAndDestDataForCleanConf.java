@@ -347,6 +347,7 @@ public class InitAndDestDataForCleanConf {
 		codeValue.setColumn_id(2010L);
 		codeValue.setCodename("codeClassify_one");
 		codeValue.setCodesys("origSysCode_one");
+		codeValue.setClean_type(CleanType.MaZhiZhuanHuan.getCode());
 
 		//13、column_clean表测试数据，给ci_sp_name（3004L）设置列拆分
 		Column_clean spilt = new Column_clean();
@@ -824,11 +825,11 @@ public class InitAndDestDataForCleanConf {
 			SqlOperator.execute(db, "delete from " + Column_merge.TableName + " where table_id = ? ", SYS_USER_TABLE_ID);
 			//12、删除orig_syso_info表数据
 			SqlOperator.execute(db, "delete from " + Orig_syso_info.TableName + " where Orig_sys_code = ? ", "origSysCode_one");
-			SqlOperator.execute(db, "delete from " + Orig_syso_info.TableName + " where Orig_sys_code = ? ", "origSysCode_Two");
-			SqlOperator.execute(db, "delete from " + Orig_syso_info.TableName + " where Orig_sys_code = ? ", "origSysCode_Three");
+			SqlOperator.execute(db, "delete from " + Orig_syso_info.TableName + " where Orig_sys_code = ? ", "origSysCode_two");
+			SqlOperator.execute(db, "delete from " + Orig_syso_info.TableName + " where Orig_sys_code = ? ", "origSysCode_three");
 			//13、删除orig_code_info表数据
-			SqlOperator.execute(db, "delete from " + Orig_syso_info.TableName + " where orig_id = ? ", 6001L);
-			SqlOperator.execute(db, "delete from " + Orig_syso_info.TableName + " where orig_id = ? ", 6002L);
+			SqlOperator.execute(db, "delete from " + Orig_code_info.TableName + " where orig_id = ? ", 6001L);
+			SqlOperator.execute(db, "delete from " + Orig_code_info.TableName + " where orig_id = ? ", 6002L);
 			SqlOperator.execute(db, "delete from " + Orig_code_info.TableName + " where orig_id = ? ", 6003L);
 			//13、提交事务
 			SqlOperator.commitTransaction(db);

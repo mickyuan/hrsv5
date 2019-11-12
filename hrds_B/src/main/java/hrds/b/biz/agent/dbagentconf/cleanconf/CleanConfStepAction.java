@@ -112,6 +112,7 @@ public class CleanConfStepAction extends BaseAction{
 		if(charCompletion.getTable_id() == null){
 			throw new BusinessException("保存整表字符补齐规则是，必须关联表信息");
 		}
+		FillingType.ofEnumByCode(charCompletion.getFilling_type());
 		//2、在table_clean表中根据table_id删除该表原有的字符补齐设置，不关注删除数据的数目
 		Dbo.execute("DELETE FROM "+ Table_clean.TableName +" WHERE table_id = ? AND clean_type = ?",
 				charCompletion.getTable_id(), CleanType.ZiFuBuQi.getCode());
@@ -152,6 +153,7 @@ public class CleanConfStepAction extends BaseAction{
 		if(charCompletion.getColumn_id() == null){
 			throw new BusinessException("保存列字符补齐规则是，必须关联列信息");
 		}
+		FillingType.ofEnumByCode(charCompletion.getFilling_type());
 		//2、在column_clean表中根据column_id删除该表原有的字符补齐设置，不关注删除数据的数目
 		Dbo.execute("DELETE FROM "+ Column_clean.TableName +" WHERE column_id = ? AND clean_type = ?",
 				charCompletion.getColumn_id(), CleanType.ZiFuBuQi.getCode());
