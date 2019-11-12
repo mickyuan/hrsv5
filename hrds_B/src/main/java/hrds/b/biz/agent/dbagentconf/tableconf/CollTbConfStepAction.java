@@ -43,13 +43,12 @@ public class CollTbConfStepAction extends BaseAction {
 			valueIfNull = "10")
 	@Return(desc = "查询结果集，key为collTableInfo表示查询到的数据" +
 			"key为totalSize表示查询到的数据的总条数", range = "不会为null")
-	//TODO 按照新的原型设计，这个方法应该查询的内容为table_id，,table_name,table_ch_name,是否并行抽取(这个字段目前还没有)
 	public Map<String, Object> getInitInfo(long colSetId, int currPage, int pageSize) {
 		Map<String, Object> returnList = new HashMap<>();
 		//1、查询数据并返回
 		Page page = new DefaultPageImpl(currPage, pageSize);
 		Result returnResult = Dbo.queryPagedResult(page,
-				" select ti.table_id,ti.table_name,ti.table_ch_name" +
+				" select ti.table_id,ti.table_name,ti.table_ch_name, ti.is_parallel" +
 						" FROM " + Table_info.TableName + " ti " +
 						" WHERE ti.database_id = ? AND ti.valid_e_date = ? AND ti.is_user_defined = ? ", colSetId,
 				Constant.MAXDATE, IsFlag.Fou.getCode());
@@ -158,8 +157,8 @@ public class CollTbConfStepAction extends BaseAction {
 			"3、构建http请求访问Agent端服务" +
 			"4、如果响应失败，则抛出异常")
 	@Param(name = "colSetId", desc = "数据库设置ID,源系统数据库设置表主键,数据库对应表外键", range = "不为空")
-	@Param(name = "sql", desc = "用户设置的并行采集SQL", range = "不为空")
-	public void testParallelExtraction(long colSetId, String sql){
+	@Param(name = "pageSql", desc = "用户设置的并行采集SQL", range = "不为空")
+	public void testParallelExtraction(long colSetId, String pageSql){
 		//1、根据colSetId在database_set表中获得数据库设置信息
 		Map<String, Object> resultMap = Dbo.queryOneObject("select database_name, database_pad, database_drive, " +
 				"database_type, jdbc_url from " + Database_set.TableName + "where database_id = ?", colSetId);
@@ -178,7 +177,7 @@ public class CollTbConfStepAction extends BaseAction {
 				.addData("username", (String) resultMap.get("user_name"))
 				.addData("password", (String) resultMap.get("database_pad"))
 				.addData("dbtype", (String) resultMap.get("database_type"))
-				.addData("sql", sql)
+				.addData("pageSql", pageSql)
 				.post(url);
 		ActionResult actionResult = JsonUtil.toObjectSafety(resVal.getBodyString(), ActionResult.class).
 				orElseThrow(() -> new BusinessException("应用管理端与" + url + "服务交互异常"));
@@ -212,7 +211,7 @@ public class CollTbConfStepAction extends BaseAction {
 		Dbo.execute("delete from " + Table_info.TableName + " where database_id = ? AND is_user_defined = ? ",
 				databaseId, IsFlag.Shi.getCode());
 		//4、遍历list,给每条记录生成ID，设置有效开始日期、有效结束日期、是否自定义SQL采集(是)、是否使用MD5(是)、
-		// 是否仅登记(是)
+		// 是否仅登记(这个字段的值，要根据配置源DB属性来决定，贴源登记就是IsFlag.Shi,数据采集就是IsFlag.Fou)
 		for(int i = 0; i < tableInfos.size(); i++){
 			Table_info tableInfo = tableInfos.get(i);
 			if(StringUtil.isBlank(tableInfo.getTable_name())){
@@ -231,8 +230,7 @@ public class CollTbConfStepAction extends BaseAction {
 			tableInfo.setValid_e_date(Constant.MAXDATE);
 			tableInfo.setIs_user_defined(IsFlag.Shi.getCode());
 			tableInfo.setIs_md5(IsFlag.Shi.getCode());
-			//TODO 待讨论：这个字段的值，如果画面上允许配置，就不需要设置默认值
-			tableInfo.setIs_register(IsFlag.Shi.getCode());
+			tableInfo.setIs_register(IsFlag.Fou.getCode());
 			//5、保存数据进库
 			tableInfo.add(Dbo.db());
 			//数据可访问权限处理方式
@@ -345,7 +343,6 @@ public class CollTbConfStepAction extends BaseAction {
 			"           7-3-2、更新table_clean表对应条目的table_id字段" +
 			"           7-3-3、更新column_merge表对应条目的table_id字段" +
 			"8、不是新增采集表还是编辑采集表，都需要将该表要采集的列信息保存到相应的表里面")
-	//TODO 注意这边，目前是否并行抽取和并行抽取SQL还没有
 	@Param(name = "tableInfoString", desc = "如果是新增的采集表，table_id为空，如果是编辑修改采集表，table_id不能为空"
 			, range = "不为空，json格式，能够转为Table_info类的实体类对象", isBean = true)
 	@Param(name = "colSetId", desc = "数据库设置ID，源系统数据库设置表主键，数据库对应表外键", range = "不为空")
@@ -359,7 +356,7 @@ public class CollTbConfStepAction extends BaseAction {
 	@Param(name = "columnSortArray", desc = "所有表要采集的字段的排序所组成的数组",
 			range = "如果用户对某张表没有定义采集排序，这个数组中的对应位置传空字符串，json格式，key为字段名，value为字段排序")
 	@Return(desc = "保存成功后返回当前采集任务ID", range = "不为空")
-	public long saveCollSingleTbInfo(String tableInfoString, long colSetId, String[] collColumnArray, String[] columnSortArray){
+	public long saveCollTbInfo(String tableInfoString, long colSetId, String[] collColumnArray, String[] columnSortArray){
 		List<Table_info> tableInfos = JSONArray.parseArray(tableInfoString, Table_info.class);
 		for(int i = 0; i < tableInfos.size(); i++){
 			Table_info tableInfo = tableInfos.get(i);
@@ -367,20 +364,17 @@ public class CollTbConfStepAction extends BaseAction {
 			String columnSort = columnSortArray[i];
 			//1、校验Table_info对象中的信息是否合法
 			if(StringUtil.isBlank(tableInfo.getTable_name())){
-				throw new BusinessException("保存采集表配置，表名不能为空!");
+				throw new BusinessException("保存采集表配置，第"+ (i + 1) +"条数据表名不能为空!");
 			}
 			if(StringUtil.isBlank(tableInfo.getTable_ch_name())){
-				throw new BusinessException("保存采集表配置，表中文名不能为空!");
+				throw new BusinessException("保存采集表配置，第"+ (i + 1) +"条数据表中文名不能为空!");
 			}
-			/*
-			TODO 下面两个应该改为校验是否并行抽取，如果并行抽取，则是否配置了并行抽取SQL
-			if(StringUtil.isBlank(tableInfo.getIs_md5())){
-				throw new BusinessException("保存采集表配置，是否计算MD5不能为空!");
+			IsFlag isFlag = IsFlag.ofEnumByCode(tableInfo.getIs_parallel());
+			if(isFlag == IsFlag.Shi){
+				if(StringUtil.isBlank(tableInfo.getPage_sql())){
+					throw new BusinessException("保存采集表配置，第"+ (i + 1) +"条数据分页抽取SQL不能为空!");
+				}
 			}
-			if(IsFlag.ofEnumByCode(tableInfo.getIs_md5()) == null){
-				throw new BusinessException("是否计算MD5配置值错误，系统无法识别");
-			}
-			*/
 			Map<String, Object> resultMap = Dbo.queryOneObject("select * from " + Database_set.TableName
 					+ "where database_id = ?", colSetId);
 			if(resultMap.isEmpty()){
@@ -390,8 +384,8 @@ public class CollTbConfStepAction extends BaseAction {
 			tableInfo.setValid_s_date(DateUtil.getSysDate());
 			tableInfo.setValid_e_date(Constant.MAXDATE);
 			tableInfo.setIs_user_defined(IsFlag.Fou.getCode());
-			//TODO 这一项是否需要设置待讨论，如果允许页面上配置，那么就不需要设置默认值
-			tableInfo.setIs_register(IsFlag.Shi.getCode());
+			//数据采集，该字段就是否
+			tableInfo.setIs_register(IsFlag.Fou.getCode());
 			//3、不论新增采集表还是编辑采集表，页面上所有的内容都可能被修改，所以直接执行SQL，按database_id删除table_info表
 			// 中,所有非自定义采集SQL的数据，不关心删除数据的条数
 			Dbo.execute(" DELETE FROM "+ Table_info.TableName +" WHERE database_id =? AND valid_e_date = ? " +
@@ -506,7 +500,7 @@ public class CollTbConfStepAction extends BaseAction {
 		//2、判断collColumn参数是否为空字符串
 		List<Table_column> tableColumns;
 		if(StringUtil.isBlank(collColumn)){
-			//2-1、是，表示用户没有选择采集列，则应用管理端同Agent端交互
+			//2-1、是，表示用户没有选择采集列，则应用管理端同Agent端交互,获取该表所有列进行采集
 			tableColumns = getColumnInfoByTableName(colSetId, getUserId(), tableInfo.getTable_name());
 		}else{
 			//1-2、否，表示用户自定义采集列，则解析collColumn为List集合
@@ -613,8 +607,7 @@ public class CollTbConfStepAction extends BaseAction {
 		//2-1、根据String的自然顺序(字母a-z)对表名进行升序排序,这一步的目的是为了使用下面的分页工具对List进行分页
 		Collections.sort(tableNames);
 		for(String tableName : tableNames){
-			//TODO 按照新的原型设计，这个方法应该查询的内容为table_id，,table_name,table_ch_name,是否并行抽取(这个字段目前还没有)
-			Result tableResult = Dbo.queryResult(" select ti.table_id,ti.table_name,ti.table_ch_name" +
+			Result tableResult = Dbo.queryResult(" select ti.table_id,ti.table_name,ti.table_ch_name, ti.is_parallel" +
 					" FROM "+ Table_info.TableName +" ti " +
 					" WHERE ti.database_id = ? AND ti.valid_e_date = ? AND ti.table_name = ? " +
 					" AND ti.is_user_defined = ? ", colSetId, Constant.MAXDATE, tableName, IsFlag.Fou.getCode());
@@ -624,8 +617,8 @@ public class CollTbConfStepAction extends BaseAction {
 			if(tableResult.isEmpty()){
 				tableResult.setValue(0, "table_name", tableName);
 				tableResult.setValue(0, "table_ch_name", tableName);
-				//TODO 给是否并行抽取默认值为否
-
+				//给是否并行抽取默认值为否
+				tableResult.setValue(0, "is_parallel", IsFlag.Fou.getCode());
 				results.add(tableResult);
 			}else if(tableResult.getRowCount() == 1){
 				results.add(tableResult);
