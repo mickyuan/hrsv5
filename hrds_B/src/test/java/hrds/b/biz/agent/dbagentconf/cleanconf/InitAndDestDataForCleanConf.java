@@ -37,6 +37,7 @@ public class InitAndDestDataForCleanConf {
 	private static final long UNEXPECTED_ID = 999999999L;
 	private static final String PRE_COMPLE_FLAG = "1";
 	private static final String POST_COMPLE_FLAG = "2";
+	private static final long BASE_ORIG_ID = 6000L;
 	private static final JSONObject tableCleanOrder = BaseInitData.initTableCleanOrder();
 	private static final JSONObject columnCleanOrder = BaseInitData.initColumnCleanOrder();
 
@@ -340,6 +341,13 @@ public class InitAndDestDataForCleanConf {
 		dateFormat.setOld_format("YYYY-MM-DD");
 		dateFormat.setConvert_format("YYYY-MM");
 
+		//column_clean表测试数据，给user_type设置码值转换
+		Column_clean codeValue = new Column_clean();
+		codeValue.setCol_clean_id(999989L);
+		codeValue.setColumn_id(2010L);
+		codeValue.setCodename("codeClassify_one");
+		codeValue.setCodesys("origSysCode_one");
+
 		//13、column_clean表测试数据，给ci_sp_name（3004L）设置列拆分
 		Column_clean spilt = new Column_clean();
 		spilt.setCol_clean_id(101010101L);
@@ -552,6 +560,87 @@ public class InitAndDestDataForCleanConf {
 		mergeColumn.setValid_s_date(DateUtil.getSysDate());
 		mergeColumn.setValid_e_date(Constant.MAXDATE);
 
+		List<Orig_syso_info> origSysoInfos = new ArrayList<>();
+		for(int i = 0; i < 3; i++){
+			String origSysCode;
+			String origSysName;
+			String origSysRemark;
+			switch (i){
+				case 0 :
+					origSysCode = "origSysCode_one";
+					origSysName = "origSysName_one";
+					origSysRemark = "origSysRemark_one";
+					break;
+				case 1 :
+					origSysCode = "origSysCode_two";
+					origSysName = "origSysName_two";
+					origSysRemark = "origSysRemark_two";
+					break;
+				case 2 :
+					origSysCode = "origSysCode_three";
+					origSysName = "origSysName_three";
+					origSysRemark = "origSysRemark_three";
+					break;
+				default:
+					origSysCode = "unexcepted_origSysCode";
+					origSysName = "unexcepted_origSysCode";
+					origSysRemark = "unexcepted_origSysCode";
+			}
+			Orig_syso_info origSysoInfo = new Orig_syso_info();
+			origSysoInfo.setOrig_sys_code(origSysCode);
+			origSysoInfo.setOrig_sys_name(origSysName);
+			origSysoInfo.setOrig_sys_remark(origSysRemark);
+
+			origSysoInfos.add(origSysoInfo);
+		}
+
+		List<Orig_code_info> origCodeInfos = new ArrayList<>();
+		for(int i = 1; i <= 3; i++){
+			long id;
+			String origSysCode;
+			String codeClassify;
+			String newValue;
+			String oriValue;
+			switch (i) {
+				case 1 :
+					id = BASE_ORIG_ID + i;
+					origSysCode = "origSysCode_one";
+					codeClassify = "codeClassify_one";
+					newValue = "newValue_one";
+					oriValue = "oriValue_one";
+					break;
+				case 2 :
+					id = BASE_ORIG_ID + i;
+					origSysCode = "origSysCode_two";
+					codeClassify = "codeClassify_two";
+					newValue = "newValue_two";
+					oriValue = "oriValue_two";
+					break;
+				case 3 :
+					id = BASE_ORIG_ID + i;
+					origSysCode = "origSysCode_three";
+					codeClassify = "codeClassify_three";
+					newValue = "newValue_three";
+					oriValue = "oriValue_three";
+					break;
+				default:
+					id = BASE_ORIG_ID;
+					origSysCode = "unexpected_origSysCode";
+					codeClassify = "unexpected_codeClassify";
+					newValue = "unexpected_newValue";
+					oriValue = "unexpected_oriValue";
+					break;
+			}
+			Orig_code_info origCodeInfo = new Orig_code_info();
+			origCodeInfo.setOrig_id(id);
+			origCodeInfo.setOrig_sys_code(origSysCode);
+			origCodeInfo.setCode_classify(codeClassify);
+			origCodeInfo.setCode_value(newValue);
+			origCodeInfo.setOrig_value(oriValue);
+
+			origCodeInfos.add(origCodeInfo);
+		}
+
 		//插入数据
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			//插入用户表(sys_user)测试数据
@@ -632,7 +721,9 @@ public class InitAndDestDataForCleanConf {
 			columnCleanCount += spiltCount;
 			int spiltTwoCount = spiltTwo.add(db);
 			columnCleanCount += spiltTwoCount;
-			assertThat("列清洗参数信息表测试数据初始化", columnCleanCount, is(6));
+			int cvcCount = codeValue.add(db);
+			columnCleanCount += cvcCount;
+			assertThat("列清洗参数信息表测试数据初始化", columnCleanCount, is(7));
 
 			//插入clean_parameter表测试数据
 			int cleanParameterCount = 0;
@@ -673,6 +764,22 @@ public class InitAndDestDataForCleanConf {
 			//由于配置了列合并，需要把合并后的列入到table_column表中
 			int mergeColumnCount = mergeColumn.add(db);
 			assertThat("把合并后的列入到table_column表中", mergeColumnCount, is(1));
+
+			//插入orig_syso_info表测试数据
+			int origSysoInfoCount = 0;
+			for(Orig_syso_info origSysoInfo : origSysoInfos){
+				int count = origSysoInfo.add(db);
+				origSysoInfoCount += count;
+			}
+			assertThat("插入orig_syso_info表测试数据成功", origSysoInfoCount, is(3));
+
+			//插入orig_code_info表测试数据
+			int origCodeInfoCount = 0;
+			for(Orig_code_info origCodeInfo : origCodeInfos){
+				int count = origCodeInfo.add(db);
+				origCodeInfoCount += count;
+			}
+			assertThat("插入orig_code_info表测试数据成功", origCodeInfoCount, is(3));
 
 			SqlOperator.commitTransaction(db);
 		}
@@ -715,7 +822,15 @@ public class InitAndDestDataForCleanConf {
 			SqlOperator.execute(db, "delete from " + Column_split.TableName + " where column_id = ? ", 3003L);
 			//11、删除column_merge表测试数据
 			SqlOperator.execute(db, "delete from " + Column_merge.TableName + " where table_id = ? ", SYS_USER_TABLE_ID);
-			//11、提交事务后
+			//12、删除orig_syso_info表数据
+			SqlOperator.execute(db, "delete from " + Orig_syso_info.TableName + " where Orig_sys_code = ? ", "origSysCode_one");
+			SqlOperator.execute(db, "delete from " + Orig_syso_info.TableName + " where Orig_sys_code = ? ", "origSysCode_Two");
+			SqlOperator.execute(db, "delete from " + Orig_syso_info.TableName + " where Orig_sys_code = ? ", "origSysCode_Three");
+			//13、删除orig_code_info表数据
+			SqlOperator.execute(db, "delete from " + Orig_syso_info.TableName + " where orig_id = ? ", 6001L);
+			SqlOperator.execute(db, "delete from " + Orig_syso_info.TableName + " where orig_id = ? ", 6002L);
+			SqlOperator.execute(db, "delete from " + Orig_code_info.TableName + " where orig_id = ? ", 6003L);
+			//13、提交事务
 			SqlOperator.commitTransaction(db);
 		}
 	}

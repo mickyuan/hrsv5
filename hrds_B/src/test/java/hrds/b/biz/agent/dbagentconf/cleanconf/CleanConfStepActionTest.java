@@ -81,6 +81,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 *          10-1、对sys_user表的create_id、dep_id列设置列字符补齐
 	 *          10-2、对sys_user表的user_name列设置列字符替换
 	 *          10-3、对sys_user表的login_date列设置了日期格式化
+	 *          10-4、对sys_user表的user_type列设置码值转换
      *      11、clean_parameter表测试数据
 	 *          11-1、对databaseset_id为1001的数据库直连采集作业设置一个全表的字符替换和字符补齐规则
      *      12、column_split表测试数据
@@ -90,6 +91,8 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 *      14、column_merge表测试数据
 	 *          14-1、对sys_user表中的user_mobile和useris_admin合并成列，名叫user_mobile_admin
 	 *      15、由于配置了列合并，需要把合并后的列入到table_column表中
+	 *      16、构造orig_syso_info表测试数据，里面是当前系统中所有的码值信息,共有三条数据
+	 *      17、构造orig_code_info表测试数据,共有三条数据
 	 *
 	 * @Param: 无
 	 * @return: 无
@@ -1428,9 +1431,119 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	}
 
 	/**
-	 * 测试获取列码值转换清洗规则
+	 * 测试根据列ID获取该列在列清洗参数表中定义码值系统编码(codesys)的和编码分类(codename)
 	 *
-	 * TODO 被测方式未完成
+	 * 正确数据访问1：获取column_id为2010的列的码值转换信息
+	 * 错误的数据访问1：获取column_id为2009的列的码值转换信息，因为在构造数据的时候没有设置过，所以获取不到
+	 * 错误的测试用例未达到三组:getCVConversionInfo永远不会因为参数不同而导致访问失败
+	 * @Param: 无
+	 * @return: 无
+	 *
+	 * */
+	@Test
+	public void getCVConversionInfo(){
+		//正确数据访问1：获取column_id为2010的列的码值转换信息
+		String rightStringOne = new HttpClient()
+				.addData("columnId", 2010L)
+				.post(getActionUrl("getCVConversionInfo")).getBodyString();
+		ActionResult rightResultOne = JsonUtil.toObjectSafety(rightStringOne, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResultOne.isSuccess(), is(true));
+
+		Result rightDataOne = rightResultOne.getDataForResult();
+		assertThat("user_type列定义了码值转换信息", rightDataOne.getRowCount(), is(1));
+		assertThat("user_type列定义了码值转换信息, 码值所属系统符合预期", rightDataOne.getString(0, "codesys"), is("origSysCode_one"));
+		assertThat("user_type列定义了码值转换信息, 码值名称符合预期", rightDataOne.getString(0, "codename"), is("codeClassify_one"));
+
+		//错误的数据访问1：获取column_id为2009的列的码值转换信息，因为在构造数据的时候没有设置过，所以获取不到
+		String wrongString = new HttpClient()
+				.addData("columnId", 2009L)
+				.post(getActionUrl("getCVConversionInfo")).getBodyString();
+		ActionResult wrongResult = JsonUtil.toObjectSafety(wrongString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResult.isSuccess(), is(true));
+
+		Result wrongData = wrongResult.getDataForResult();
+
+		assertThat("user_isadmin列没有定义码值转换信息", wrongData.getRowCount(), is(0));
+	}
+
+	/**
+	 * 测试获取当前系统中的所有码值信息
+	 *
+	 * 正确数据访问1：直接访问方法，断言获取到的数据是否正确
+	 * 错误的测试用例未达到三组:getSysCVInfo没有传参，只会根据当前系统的实际情况来返回相应的数据条数
+	 * @Param: 无
+	 * @return: 无
+	 *
+	 * */
+	@Test
+	public void getSysCVInfo(){
+		//测试获取当前系统中的所有码值信息
+		String rightStringOne = new HttpClient()
+				.post(getActionUrl("getSysCVInfo")).getBodyString();
+		ActionResult rightResultOne = JsonUtil.toObjectSafety(rightStringOne, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResultOne.isSuccess(), is(true));
+
+		List<Orig_syso_info> data = rightResultOne.getDataForEntityList(Orig_syso_info.class);
+		assertThat("系统中定义的码值信息有3条", data.size(), is(3));
+		for(Orig_syso_info origSysoInfo : data){
+			if(origSysoInfo.getOrig_sys_code().equalsIgnoreCase("origSysCode_one")){
+				assertThat(origSysoInfo.getOrig_sys_name(), is("origSysName_one"));
+				assertThat(origSysoInfo.getOrig_sys_remark(), is("origSysRemark_one"));
+			}else if(origSysoInfo.getOrig_sys_code().equalsIgnoreCase("origSysCode_two")){
+				assertThat(origSysoInfo.getOrig_sys_name(), is("origSysName_two"));
+				assertThat(origSysoInfo.getOrig_sys_remark(), is("origSysRemark_two"));
+			}else if(origSysoInfo.getOrig_sys_code().equalsIgnoreCase("origSysCode_three")){
+				assertThat(origSysoInfo.getOrig_sys_name(), is("origSysName_three"));
+				assertThat(origSysoInfo.getOrig_sys_remark(), is("origSysRemark_three"));
+			}else{
+				assertThat("出现了不符合预期的情况" + origSysoInfo.getOrig_sys_name(), true, is(false));
+			}
+		}
+	}
+
+	/**
+	 * 测试根据码值系统编码获取编码分类
+	 *
+	 *
+	 * 正确数据访问1：使用origSysCode_one获取编码类型，能够获取到codeClassify_one
+	 * 错误的数据访问1：使用codeClassify_four获取编码类型，获取不到数据
+	 * 错误的测试用例未达到三组:getCVClassifyBySysCode方法不会因为参数而导致接口访问失败，只会根据实际情况返回不同的数据
+	 * @Param: 无
+	 * @return: 无
+	 *
+	 * */
+	@Test
+	public void getCVClassifyBySysCode(){
+		//正确数据访问1：使用origSysCode_one获取编码类型，能够获取到codeClassify_one
+		String rightStringOne = new HttpClient()
+				.addData("origSysCode", "origSysCode_one")
+				.post(getActionUrl("getCVClassifyBySysCode")).getBodyString();
+		ActionResult rightResultOne = JsonUtil.toObjectSafety(rightStringOne, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResultOne.isSuccess(), is(true));
+
+		Result rightData = rightResultOne.getDataForResult();
+		assertThat(rightData.getRowCount(), is(1));
+		assertThat(rightData.getString(0, "code_classify"), is("codeClassify_one"));
+		
+		//错误的数据访问1：使用codeClassify_four获取编码类型，获取不到数据
+		String wrongString = new HttpClient()
+				.addData("origSysCode", "origSysCode_four")
+				.post(getActionUrl("getCVClassifyBySysCode")).getBodyString();
+		ActionResult wrongResult = JsonUtil.toObjectSafety(wrongString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResult.isSuccess(), is(true));
+
+		Result wrongData = wrongResult.getDataForResult();
+		assertThat(wrongData.getRowCount(), is(0));
+	}
+
+	/**
+	 * 测试根据码值系统编码和编码分类获得原码值(orig_value)和新码值(code_value)
+	 *
 	 *
 	 * 正确数据访问1：
 	 * 错误的数据访问1：
@@ -1440,14 +1553,13 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 *
 	 * */
 	@Test
-	public void getCVConversionInfo(){
+	public void getCVInfo(){
 
 	}
 
 	/**
 	 * 测试保存列码值转换清洗规则
 	 *
-	 * TODO 被测方式未完成
 	 *
 	 * 正确数据访问1：
 	 * 正确数据访问2：

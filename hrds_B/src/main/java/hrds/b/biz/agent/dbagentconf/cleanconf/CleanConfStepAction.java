@@ -682,20 +682,84 @@ public class CleanConfStepAction extends BaseAction{
 	}
 
 	/*
-	 * 列清洗页面，点击码值转换列设置按钮，回显针对该列设置的码值转换信息(sysCodeSDO)
-	 * TODO column_clean表中只能找到码值系统和码值名称，页面上需要展示的信息还不知道去哪里查
+	 * 列清洗页面，点击码值转换列设置按钮，获取该列在列清洗表中定义的码值系统编码和码值系统名称
+	 * */
+	@Method(desc = "根据列ID获取该列在列清洗参数表中定义码值系统编码(codesys)的和编码分类(codename)", logicStep = "" +
+			"1、直接拼接SQL语句去数据中进行查询并返回")
+	@Param(name = "columnId", desc = "列ID，采集列信息表主键，列清洗参数表外键", range = "不为空")
+	@Return(desc = "查询结果", range = "不为空，条数根据实际情况决定")
 	public Result getCVConversionInfo(long columnId){
-		return null;
+		//1、直接拼接SQL语句去数据中进行查询并返回
+		return Dbo.queryResult("select codename, codesys from " + Column_clean.TableName +
+				" where column_id = ? and clean_type = ?", columnId, CleanType.MaZhiZhuanHuan.getCode());
 	}
-	* */
+
+	/*
+	 * 获取当前系统中的所有码值信息
+	 * */
+	@Method(desc = "获取当前系统中的所有码值信息", logicStep = "" +
+			"1、直接使用SQL语句去数据中进行查询并返回")
+	@Return(desc = "系统中所有码值信息", range = "数据条数根据实际情况决定")
+	public List<Orig_syso_info> getSysCVInfo(){
+		//1、直接使用SQL语句去数据中进行查询并返回
+		return Dbo.queryList(Orig_syso_info.class, "select * from " + Orig_syso_info.TableName);
+	}
+
+	/*
+	 * 选择好码值系统后，关联出编码分类(sysTypeSDO)
+	 * */
+	@Method(desc = "根据码值系统编码获取编码分类", logicStep = "" +
+			"1、执行SQL语句去数据库中查询编码分类")
+	@Param(name = "origSysCode", desc = "码值系统编码", range = "不为空")
+	@Return(desc = "查询结果集", range = "不为空，具体数据条数根据实际情况决定")
+	public Result getCVClassifyBySysCode(String origSysCode){
+		//1、执行SQL语句去数据库中查询编码分类
+		return Dbo.queryResult("select code_classify,orig_sys_code from " + Orig_code_info.TableName +
+				" where orig_sys_code = ? group by code_classify,orig_sys_code", origSysCode);
+	}
+
+	/*
+	 * 根据码值系统编码和编码分类获得原码值(orig_value)和新码值(code_value)(sysCodeValSDO)
+	 * */
+	@Method(desc = "根据码值系统编码和编码分类获得原码值(orig_value)和新码值(code_value)", logicStep = "" +
+			"1、执行SQL语句去数据库中查询数据")
+	@Param(name = "codeClassify", desc = "编码分类", range = "不为空")
+	@Param(name = "origSysCode", desc = "码值系统编码", range = "不为空")
+	@Return(desc = "查询结果集", range = "不为空，具体数据条数根据实际情况决定")
+	public Result getCVInfo(String codeClassify, String origSysCode){
+		return Dbo.queryResult("select code_value, orig_value from " + Orig_code_info.TableName + " " +
+				"where code_classify = ? and orig_sys_code = ? group by code_value, orig_value", codeClassify, origSysCode);
+	}
+
 
 	/*
 	 * 列清洗页面，点击码值转换列设置按钮，码值转换弹框确定按钮(codeValueChangeCleanSDO)
-	 * TODO 页面上的码值信息不知道往哪里存
-	public void saveCVConversionInfo(){
-
+	 * String codeClassify, String origSysCode
+	 * */
+	@Method(desc = "保存码值转换信息", logicStep = "" +
+			"1、校验码值系统编码、编码分类、表ID" +
+			"2、根据columnId在列清洗参数表中删除对该列定义的码值相关信息，不关注删除的条目" +
+			"3、保存")
+	@Param(name = "columnClean", desc = "待保存的码值转换信息", range = "Column_clean类型对象")
+	public void saveCVConversionInfo(Column_clean columnClean){
+		//1、校验码值系统编码、编码分类、表ID
+		if(StringUtil.isBlank(columnClean.getCodename())){
+			throw new BusinessException("请选择码值系统类型");
+		}
+		if(StringUtil.isBlank(columnClean.getCodesys())){
+			throw new BusinessException("请选择码值系统名称");
+		}
+		if(columnClean.getColumn_id() == null){
+			throw new BusinessException("保存失败");
+		}
+		//2、根据columnId在列清洗参数表中删除对该列定义的码值相关信息，不关注删除的条目
+		Dbo.execute("DELETE FROM " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ?",
+				columnClean.getColumn_id(), CleanType.MaZhiZhuanHuan.getCode());
+		//3、保存
+		columnClean.setCol_clean_id(PrimayKeyGener.getNextId());
+		columnClean.setClean_type(CleanType.MaZhiZhuanHuan.getCode());
+		columnClean.add(Dbo.db());
 	}
-	* */
 
 	/*
 	 * 列清洗页面，点击列合并按钮，回显之前对该表设置的列合并信息(codeMergeLookSDO)
@@ -867,7 +931,11 @@ public class CleanConfStepAction extends BaseAction{
 				Dbo.execute( "DELETE FROM " + Column_clean.TableName +" WHERE column_id = ? AND clean_type = ?"
 						, param.getColumnId(), CleanType.ShiJianZhuanHuan.getCode());
 			}
-			//TODO 2-4、判断最终保存时，是否选择了码值转换，否，则进行删除当前列码值转换的处理，目前没搞清楚码值转换的保存逻辑，所以这个处理暂时没有
+			//2-4、判断最终保存时，是否选择了码值转换，否，则根据columnId去column_clean表中尝试删除记录，不关心具体的数目
+			if(!param.isConversionFlag()){
+				Dbo.execute( "DELETE FROM " + Column_clean.TableName +" WHERE column_id = ? AND clean_type = ?"
+						, param.getColumnId(), CleanType.MaZhiZhuanHuan.getCode());
+			}
 
 			//2-5、判断最终保存时，是否选择了列拆分，否，则进行删除列拆分的操作
 			if(!param.isSpiltFlag()){
