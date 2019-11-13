@@ -25,6 +25,7 @@ public class InitAndDestDataForCleanConf {
 
 	//测试数据用户ID
 	private static final long TEST_USER_ID = 9997L;
+	private static final long SOURCE_ID = 1L;
 	private static final long TEST_DEPT_ID = 9987L;
 	private static final long SYS_USER_TABLE_ID = 7001L;
 	private static final long CODE_INFO_TABLE_ID = 7002L;
@@ -74,7 +75,8 @@ public class InitAndDestDataForCleanConf {
 					tableId = SYS_USER_TABLE_ID;
 					tableName = "sys_user";
 					tableChName = "用户表";
-					customizeSQL = "";
+					//自定义过滤
+					customizeSQL = "select * from sys_user where user_id = " + TEST_USER_ID;
 					customizFlag = IsFlag.Fou.getCode();
 					parallelFlag = IsFlag.Fou.getCode();
 					pageSql = "";
@@ -92,7 +94,8 @@ public class InitAndDestDataForCleanConf {
 					tableId = AGENT_INFO_TABLE_ID;
 					tableName = "agent_info";
 					tableChName = "Agent信息表";
-					customizeSQL = "select * from agent_info";
+					//自定义采集
+					customizeSQL = "select agent_id, agent_name, agent_type from agent_info where source_id = " + SOURCE_ID;
 					customizFlag = IsFlag.Shi.getCode();
 					parallelFlag = IsFlag.Fou.getCode();
 					pageSql = "";
@@ -101,7 +104,8 @@ public class InitAndDestDataForCleanConf {
 					tableId = DATA_SOURCE_TABLE_ID;
 					tableName = "data_source";
 					tableChName = "数据源表";
-					customizeSQL = "select * from data_source";
+					//自定义采集
+					customizeSQL = "select source_id, datasource_number, datasource_name from data_source where source_id = " + SOURCE_ID;
 					customizFlag = IsFlag.Shi.getCode();
 					parallelFlag = IsFlag.Fou.getCode();
 					pageSql = "";
@@ -246,6 +250,10 @@ public class InitAndDestDataForCleanConf {
 		}
 
 		List<Table_column> codeInfos = BaseInitData.buildCodeInfoTbColData();
+
+		List<Table_column> dataSources = BaseInitData.buildDataSourceTbColData();
+
+		List<Table_column> agentInfos = BaseInitData.buildAgentInfoTbColData();
 
 		//9、构造table_clean表测试数据
 		List<Table_clean> tableCleans = new ArrayList<>();
@@ -611,16 +619,30 @@ public class InitAndDestDataForCleanConf {
 			assertThat("数据库对应表测试数据初始化", tableInfoCount, is(4));
 
 			//插入table_column测试数据
-			int tableColumnCount = 0;
+			int sysUserCount = 0;
 			for(Table_column tableColumn : sysUsers){
 				int count = tableColumn.add(db);
-				tableColumnCount += count;
+				sysUserCount += count;
 			}
+			assertThat("sys_user表对应字段表测试数据初始化", sysUserCount, is(11));
+			int codeInfoCount = 0;
 			for(Table_column tableColumn : codeInfos){
 				int count = tableColumn.add(db);
-				tableColumnCount += count;
+				codeInfoCount += count;
 			}
-			assertThat("表对应字段表测试数据初始化", tableColumnCount, is(16));
+			assertThat("code_info表对应字段表测试数据初始化", codeInfoCount, is(5));
+			int agentInfosCount = 0;
+			for(Table_column tableColumn : agentInfos){
+				int count = tableColumn.add(db);
+				agentInfosCount += count;
+			}
+			assertThat("agent_info表对应字段表测试数据初始化", agentInfosCount, is(3));
+			int dataSourcesCount = 0;
+			for(Table_column tableColumn : dataSources){
+				int count = tableColumn.add(db);
+				dataSourcesCount += count;
+			}
+			assertThat("data_source表对应字段表测试数据初始化", dataSourcesCount, is(3));
 
 			//插入table_clean测试数据
 			int tableCleanCount = 0;
@@ -728,6 +750,8 @@ public class InitAndDestDataForCleanConf {
 			//6、删除table_column表测试数据
 			SqlOperator.execute(db, "delete from " + Table_column.TableName + " where table_id = ? ", SYS_USER_TABLE_ID);
 			SqlOperator.execute(db, "delete from " + Table_column.TableName + " where table_id = ? ", CODE_INFO_TABLE_ID);
+			SqlOperator.execute(db, "delete from " + Table_column.TableName + " where table_id = ? ", AGENT_INFO_TABLE_ID);
+			SqlOperator.execute(db, "delete from " + Table_column.TableName + " where table_id = ? ", DATA_SOURCE_TABLE_ID);
 			//7、删除table_clean表测试数据
 			SqlOperator.execute(db, "delete from " + Table_clean.TableName + " where table_id = ? ", SYS_USER_TABLE_ID);
 			//8、删除column_clean表测试数据

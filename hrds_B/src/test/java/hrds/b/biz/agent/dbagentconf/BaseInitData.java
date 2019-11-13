@@ -38,6 +38,12 @@ public class BaseInitData {
 
 	private static final long BASE_CODE_INFO_PRIMARY = 3000L;
 
+	private static final long BASE_AGENT_INFO_PRIMAY = 3111L;
+
+	private static final long BASE_DATA_SOURCE_PRIMAY = 5111L;
+
+	private static final long AGENT_INFO_TABLE_ID = 7003L;
+	private static final long DATA_SOURCE_TABLE_ID = 7004L;
 	private static final long CODE_INFO_TABLE_ID = 7002L;
 
 	private static final long BASE_ORIG_ID = 6000L;
@@ -224,6 +230,102 @@ public class BaseInitData {
 		}
 
 		return classifies;
+	}
+
+	//构建采集agent_info表在table_column表中的数据
+	public static List<Table_column> buildAgentInfoTbColData(){
+		List<Table_column> agentInfos = new ArrayList<>();
+		for(int i = 1; i <= 3; i++){
+			String columnName;
+			String columnType;
+			String columnChName;
+			switch (i){
+				case 1 :
+					columnName = "agent_id";
+					columnType = "bigint";
+					columnChName = "agent_id";
+					break;
+				case 2 :
+					columnName = "agent_name";
+					columnType = "varchar(512)";
+					columnChName = "Agent名称";
+					break;
+				case 3 :
+					columnName = "agent_type";
+					columnType = "char(1)";
+					columnChName = "agent类别";
+					break;
+				default:
+					columnName = "unexpected_columnName";
+					columnType = "unexpected_columnType";
+					columnChName = "unexpected_columnChName";
+			}
+			Table_column agentInfoColumn = new Table_column();
+			agentInfoColumn.setColumn_id(BASE_AGENT_INFO_PRIMAY + i);
+			agentInfoColumn.setIs_get(IsFlag.Shi.getCode());
+			agentInfoColumn.setIs_primary_key(IsFlag.Fou.getCode());
+			agentInfoColumn.setColume_name(columnName);
+			agentInfoColumn.setColumn_type(columnType);
+			agentInfoColumn.setColume_ch_name(columnChName);
+			agentInfoColumn.setTable_id(AGENT_INFO_TABLE_ID);
+			agentInfoColumn.setValid_s_date(DateUtil.getSysDate());
+			agentInfoColumn.setValid_e_date(Constant.MAXDATE);
+			agentInfoColumn.setIs_alive(IsFlag.Shi.getCode());
+			agentInfoColumn.setIs_new(IsFlag.Fou.getCode());
+			agentInfoColumn.setTc_or(initColumnCleanOrder().toJSONString());
+
+			agentInfos.add(agentInfoColumn);
+		}
+
+		return agentInfos;
+	}
+
+	//构建采集data_source表在table_column表中的数据
+	public static List<Table_column> buildDataSourceTbColData(){
+		List<Table_column> dataSources = new ArrayList<>();
+		for(int i = 1; i <= 3; i++){
+			String columnName;
+			String columnType;
+			String columnChName;
+			switch (i){
+				case 1 :
+					columnName = "source_id";
+					columnType = "bigint";
+					columnChName = "数据源ID";
+					break;
+				case 2 :
+					columnName = "datasource_number";
+					columnType = "varchar(100)";
+					columnChName = "数据源编号";
+					break;
+				case 3 :
+					columnName = "datasource_name";
+					columnType = "varchar(512)";
+					columnChName = "数据源名称";
+					break;
+				default:
+					columnName = "unexpected_columnName";
+					columnType = "unexpected_columnType";
+					columnChName = "unexpected_columnChName";
+			}
+			Table_column dataSourceColumn = new Table_column();
+			dataSourceColumn.setColumn_id(BASE_DATA_SOURCE_PRIMAY + i);
+			dataSourceColumn.setIs_get(IsFlag.Shi.getCode());
+			dataSourceColumn.setIs_primary_key(IsFlag.Fou.getCode());
+			dataSourceColumn.setColume_name(columnName);
+			dataSourceColumn.setColumn_type(columnType);
+			dataSourceColumn.setColume_ch_name(columnChName);
+			dataSourceColumn.setTable_id(DATA_SOURCE_TABLE_ID);
+			dataSourceColumn.setValid_s_date(DateUtil.getSysDate());
+			dataSourceColumn.setValid_e_date(Constant.MAXDATE);
+			dataSourceColumn.setIs_alive(IsFlag.Shi.getCode());
+			dataSourceColumn.setIs_new(IsFlag.Fou.getCode());
+			dataSourceColumn.setTc_or(initColumnCleanOrder().toJSONString());
+
+			dataSources.add(dataSourceColumn);
+		}
+
+		return dataSources;
 	}
 
 	//构建采集code_info表在table_column表中的数据

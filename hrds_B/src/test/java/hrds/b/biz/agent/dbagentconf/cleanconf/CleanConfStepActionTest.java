@@ -107,6 +107,11 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		assertThat("模拟登陆", actionResult.isSuccess(), is(true));
 	}
 
+	@Test
+	public void test(){
+		System.out.println("------------------------------------------------");
+	}
+
 	/**
 	 * 测试根据数据库设置ID获得清洗规则配置页面初始信息
 	 *
@@ -2042,6 +2047,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 * 正确数据访问2：columnId为2005L，之前设置了字符替换，但是保存的时候取消了字符替换的勾选，同时做首尾去空
 	 * 正确数据访问3：columnId为2011L，之前设置了日期格式化，但是保存的时候取消了日期格式化的勾选，同时做首尾去空
 	 * 正确数据访问4：columnId为3003L，之前设置了列拆分，但是保存的时候取消了列拆分的勾选，同时做首尾去空
+	 * 正确数据访问5：columnId为2010L，之前设置了码值转换，但是保存的时候取消了列拆分的勾选，同时做首尾去空
 	 *
 	 * 错误的测试用例未达到三组:上面三组测试用例是结合初始化数据进行的，比较有代表性的。
 	 * @Param: 无
@@ -2216,6 +2222,40 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 			assertThat("在执行测试用例<正确数据访问4>之后，列拆分信息在column_clean表中不存在", afterDelColCleanCount == 0, is(true));
 			long afterTrimCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ? ", 3003L, CleanType.ZiFuTrim.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
 			assertThat("在执行测试用例<正确数据访问4>之后，列首尾去空存在", afterTrimCount == 1, is(true));
+		}
+
+		//正确数据访问5：columnId为2010L，之前设置了码值转换，但是保存的时候取消了码值转换的勾选，同时做首尾去空
+		try(DatabaseWrapper db = new DatabaseWrapper()){
+			long beforeCVCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ? ", 2010L, CleanType.MaZhiZhuanHuan.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long beforeTrimCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ? ", 2010L, CleanType.ZiFuTrim.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			assertThat("在执行测试用例<正确数据访问5>之前，数据库中的数据符合预期", beforeCVCount == 1 && beforeTrimCount == 0, is(true));
+		}
+
+		columnCleanParams.clear();
+
+		ColumnCleanParam cleanParamFive = new ColumnCleanParam();
+
+		cleanParamFive.setColumnId(2010L);
+		cleanParamFive.setComplementFlag(false);
+		cleanParamFive.setConversionFlag(false);
+		cleanParamFive.setFormatFlag(false);
+		cleanParamFive.setReplaceFlag(false);
+		cleanParamFive.setSpiltFlag(false);
+		cleanParamFive.setTrimFlag(true);
+
+		columnCleanParams.add(cleanParamFive);
+
+		String rightStringFive = new HttpClient()
+				.addData("colCleanString", JSON.toJSONString(columnCleanParams))
+				.post(getActionUrl("saveColCleanConfig")).getBodyString();
+		ActionResult rightResultFive = JsonUtil.toObjectSafety(rightStringFive, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResultFive.isSuccess(), is(true));
+
+		try(DatabaseWrapper db = new DatabaseWrapper()){
+			long afterCVCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ? ", 2010L, CleanType.MaZhiZhuanHuan.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long afterTrimCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ? ", 2010L, CleanType.ZiFuTrim.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			assertThat("在执行测试用例<正确数据访问5>之后，数据库中的数据符合预期", afterCVCount == 0 && afterTrimCount == 1, is(true));
 		}
 	}
 
