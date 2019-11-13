@@ -51,7 +51,7 @@ public class CleanConfStepAction extends BaseAction{
 		Map<String, Object> returnMap = new HashMap<>();
 		//1、根据colSetId在table_info表中获取上一个页面配置好的采集表id
 		List<Object> tableIds = Dbo.queryOneColumnList("SELECT table_id FROM " + Table_info.TableName +
-				" WHERE database_id = ? and is_user_defined = ?", colSetId, IsFlag.Fou.getCode());
+				" WHERE database_id = ?", colSetId);
 		//2、如果没有查询到结果，返回空的Result
 		if(tableIds.isEmpty()){
 			returnMap.put("cleanConf", new Result());
@@ -190,7 +190,7 @@ public class CleanConfStepAction extends BaseAction{
 		//3、如果没有列字符补齐信息，则根据columnId查其所在表是否配置了整表字符补齐，如果查询到，则将补齐字符解码后返回前端
 		Map<String, Object> tbCompMap = Dbo.queryOneObject("SELECT tc.table_clean_id, tc.filling_type, tc.character_filling," +
 				" tc.filling_length FROM " + Table_clean.TableName + " tc" +
-				" WHERE tc.table_id = (SELECT table_id FROM table_column WHERE column_id = ?)" +
+				" WHERE tc.table_id = (SELECT table_id FROM "+ Table_column.TableName +" WHERE column_id = ?)" +
 				" AND tc.clean_type = ?", columnId, CleanType.ZiFuBuQi.getCode());
 		//4、如果整表字符补齐信息也没有，返回空的map
 		if(tbCompMap.isEmpty()){
@@ -334,7 +334,7 @@ public class CleanConfStepAction extends BaseAction{
 		//3、如果没有列字符补齐信息，则根据columnId查其所在表是否配置了整表字符替换，如果查询到，则将补齐字符解码后返回前端
 		Result tableResult = Dbo.queryResult("SELECT tc.table_clean_id, tc.field, tc.replace_feild " +
 				" FROM "+ Table_clean.TableName +" tc" +
-				" WHERE tc.table_id = (SELECT table_id FROM table_column WHERE column_id = ?" +
+				" WHERE tc.table_id = (SELECT table_id FROM "+ Table_column.TableName +" WHERE column_id = ?" +
 				" AND tc.clean_type = ?)", columnId, CleanType.ZiFuTiHuan.getCode());
 		//4、如果整表字符替换信息也没有，返回空的Result
 		if(tableResult.isEmpty()){
@@ -595,7 +595,7 @@ public class CleanConfStepAction extends BaseAction{
 	public void deleteColSplitInfo(long colSplitId, long colCleanId){
 		//1、在table_column表中找到拆分生成的新列，并删除,应该删除一条数据
 		DboExecute.deletesOrThrow("列拆分规则删除失败", "delete from "+ Table_column.TableName  +
-				" where colume_name = (select t1.colume_name from table_column t1 " +
+				" where colume_name = (select t1.colume_name from "+ Table_column.TableName +" t1 " +
 				" JOIN "+ Column_split.TableName +" t2 ON t1.colume_name = t2.col_name " +
 				" JOIN "+ Column_clean.TableName +" t3 ON t2.col_clean_id = t3.col_clean_id " +
 				" WHERE t2.col_clean_id = ? and  t2.col_split_id = ? and t1.is_new = ?)",
@@ -638,7 +638,7 @@ public class CleanConfStepAction extends BaseAction{
 
 			//2、如果之前这个字段做过列拆分，需要在table_column表中找到拆分生成的新列，并删除,不关心删除的数目
 			Dbo.execute("delete from "+ Table_column.TableName +" where colume_name in " +
-					" (select t1.colume_name from table_column t1 " +
+					" (select t1.colume_name from "+ Table_column.TableName +" t1 " +
 					" JOIN "+ Column_split.TableName +" t2 ON t1.colume_name = t2.col_name " +
 					" JOIN "+ Column_clean.TableName +" t3 ON t2.col_clean_id = t3.col_clean_id " +
 					" WHERE t2.col_clean_id = ? and t2.column_id = ? and t1.table_id = ? and t1.is_new = ?)",
@@ -670,7 +670,10 @@ public class CleanConfStepAction extends BaseAction{
 			//6、将本次拆分生成的新列保存到table_column表中
 			Table_column tableColumn = new Table_column();
 			tableColumn.setTable_id(tableId);
+			//是否为变化生成，设置为是
 			tableColumn.setIs_new(IsFlag.Shi.getCode());
+			//保存原字段
+			tableColumn.setIs_alive(IsFlag.Shi.getCode());
 			tableColumn.setColumn_id(PrimayKeyGener.getNextId());
 			tableColumn.setIs_primary_key(IsFlag.Fou.getCode());
 			tableColumn.setColume_name(columnSplit.getCol_name());
@@ -811,6 +814,7 @@ public class CleanConfStepAction extends BaseAction{
 			Table_column tableColumn = new Table_column();
 			tableColumn.setTable_id(tableId);
 			tableColumn.setIs_new(IsFlag.Shi.getCode());
+			tableColumn.setIs_alive(IsFlag.Shi.getCode());
 			tableColumn.setColumn_id(PrimayKeyGener.getNextId());
 			tableColumn.setIs_primary_key(IsFlag.Fou.getCode());
 			tableColumn.setColume_name(columnMerge.getCol_name());

@@ -90,7 +90,7 @@ public class CollectPage implements Callable<Map<String, Object>> {
 	                              String pageColumn, int start, int end) {
 		//TODO pageColumn是海云应用管理端传过来的，画面上由用户提供的用于分页的列名，但是目前使用的是拼接SQL语句进行分页，所以pageColumn暂时用不到
 		//1、将DBConfigBean对象传入工具类ConnetionTool，得到DatabaseWrapper
-		try(DatabaseWrapper dbWrapper = ConnetionTool.getDBWrapper(dbInfo);){
+		try(DatabaseWrapper dbWrapper = ConnetionTool.getDBWrapper(dbInfo)){
 			//2、将采集SQL，当前页的start，end转换通过strategy转为分页SQL
 			String pageSql = strategy.createPageSql(strSql, start, end);
 			//3、调用方法获得当前线程的分页数据并返回

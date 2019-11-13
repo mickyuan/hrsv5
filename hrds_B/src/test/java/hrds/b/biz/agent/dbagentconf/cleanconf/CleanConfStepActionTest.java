@@ -109,7 +109,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	/**
 	 * 测试根据数据库设置ID获得清洗规则配置页面初始信息
 	 *
-	 * 正确数据访问1：使用正确的colSetId访问，应该可以拿到两条数据
+	 * 正确数据访问1：使用正确的colSetId访问，应该可以拿到4条数据
 	 * 错误的数据访问1：使用错误的colSetId访问，应该拿不到任何数据，但是不会报错，访问正常返回
 	 * 错误的测试用例未达到三组:getInitInfo只有一个参数
 	 * @Param: 无
@@ -118,7 +118,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 * */
 	@Test
 	public void getCleanConfInfo(){
-		//正确数据访问1：使用正确的colSetId访问，应该可以拿到两条数据
+		//正确数据访问1：使用正确的colSetId访问，应该可以拿到4条数据
 		String rightString = new HttpClient()
 				.addData("colSetId", FIRST_DATABASESET_ID)
 				.post(getActionUrl("getCleanConfInfo")).getBodyString();
@@ -126,7 +126,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 				-> new BusinessException("连接失败!"));
 		assertThat(rightResult.isSuccess(), is(true));
 		Map<String, Object> rightData = rightResult.getDataForMap(String.class, Object.class);
-		assertThat("根据测试数据，输入正确的colSetId查询到的非自定义采集表总条数应该有2条", rightData.get("totalSize"), is(2));
+		assertThat("根据测试数据，输入正确的colSetId查询到的非自定义采集表总条数应该有4条", rightData.get("totalSize"), is(4));
 
 		//错误的数据访问1：使用错误的colSetId访问，应该拿不到任何数据，但是不会报错，访问正常返回
 		long wrongColSetId = 99999L;
