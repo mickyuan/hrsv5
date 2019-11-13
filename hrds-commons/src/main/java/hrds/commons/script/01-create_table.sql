@@ -22,7 +22,7 @@ FILE_FORMAT                                       CHAR(1) NOT NULL, --文件格�
 STORAGE_TYPE                                      CHAR(1) NOT NULL, --进数方式
 IS_ZIPPER                                         CHAR(1) NOT NULL, --是否拉链存储
 IS_EVERYDAY                                       CHAR(1) NOT NULL, --是否每天存一份
-STORAGE_TIME                                      DECIMAL(16) default 0 NOT NULL, --存储期限（以天为单位）
+STORAGE_TIME                                      BIGINT default 0 NOT NULL, --存储期限（以天为单位）
 TABLE_ID                                          BIGINT default 0 NULL, --表名ID
 CONSTRAINT TABLE_STORAGE_INFO_PK PRIMARY KEY(STORAGE_ID)   );
 
@@ -112,7 +112,7 @@ C_ID                                              BIGINT default 0 NOT NULL, --�
 CLEAN_TYPE                                        CHAR(1) NOT NULL, --清洗方式
 FILLING_TYPE                                      CHAR(1) NULL, --补齐方式
 CHARACTER_FILLING                                 VARCHAR(512) NULL, --补齐字符
-FILLING_LENGTH                                    DECIMAL(16) default 0 NULL, --补齐长度
+FILLING_LENGTH                                    BIGINT default 0 NULL, --补齐长度
 FIELD                                             VARCHAR(512) NULL, --原字段
 REPLACE_FEILD                                     VARCHAR(512) NULL, --替换字段
 DATABASE_ID                                       BIGINT default 0 NOT NULL, --数据库设置id
@@ -146,7 +146,7 @@ TABLE_CLEAN_ID                                    BIGINT default 0 NOT NULL, --�
 CLEAN_TYPE                                        CHAR(1) NOT NULL, --清洗方式
 FILLING_TYPE                                      CHAR(1) NULL, --补齐方式
 CHARACTER_FILLING                                 VARCHAR(512) NULL, --补齐字符
-FILLING_LENGTH                                    DECIMAL(16) default 0 NULL, --补齐长度
+FILLING_LENGTH                                    BIGINT default 0 NULL, --补齐长度
 FIELD                                             VARCHAR(512) NULL, --原字段
 REPLACE_FEILD                                     VARCHAR(512) NULL, --替换字段
 TABLE_ID                                          BIGINT default 0 NOT NULL, --表名ID
@@ -161,7 +161,7 @@ OLD_FORMAT                                        VARCHAR(512) NULL, --原始格
 CLEAN_TYPE                                        CHAR(1) NOT NULL, --清洗方式
 FILLING_TYPE                                      CHAR(1) NULL, --补齐方式
 CHARACTER_FILLING                                 VARCHAR(512) NULL, --补齐字符
-FILLING_LENGTH                                    DECIMAL(16) default 0 NULL, --补齐长度
+FILLING_LENGTH                                    BIGINT default 0 NULL, --补齐长度
 CODENAME                                          VARCHAR(512) NULL, --码值名称
 CODESYS                                           VARCHAR(512) NULL, --码值所属系统
 FIELD                                             VARCHAR(512) NULL, --原字段
@@ -243,7 +243,7 @@ COL_SPLIT_ID                                      BIGINT default 0 NOT NULL, --�
 COL_NAME                                          VARCHAR(512) NOT NULL, --字段名称
 COL_OFFSET                                        VARCHAR(512) NULL, --字段偏移量
 SPLIT_SEP                                         VARCHAR(512) NULL, --拆分分隔符
-SEQ                                               DECIMAL(16) default 0 NULL, --拆分对应序号
+SEQ                                               BIGINT default 0 NULL, --拆分对应序号
 SPLIT_TYPE                                        CHAR(1) NOT NULL, --拆分方式
 COL_ZHNAME                                        VARCHAR(512) NULL, --中文名称
 REMARK                                            VARCHAR(512) NULL, --备注
@@ -407,7 +407,7 @@ DROP TABLE IF EXISTS SOURCE_FILE_ATTRIBUTE ;
 CREATE TABLE SOURCE_FILE_ATTRIBUTE(
 FILE_ID                                           VARCHAR(40) NOT NULL, --文件编号
 IS_IN_HBASE                                       CHAR(1) default '1' NOT NULL, --是否已进入HBASE
-SEQENCING                                         DECIMAL(16) default 0 NOT NULL, --排序计数
+SEQENCING                                         BIGINT default 0 NOT NULL, --排序计数
 COLLECT_TYPE                                      CHAR(1) NOT NULL, --采集类型
 ORIGINAL_NAME                                     VARCHAR(512) NOT NULL, --原始文件名或表中文名称
 ORIGINAL_UPDATE_DATE                              CHAR(8) NOT NULL, --原文件最后修改日期
@@ -443,7 +443,7 @@ ORIGINAL_CREATE_TIME                              CHAR(6) NOT NULL, --文件夹�
 FOLDER_SIZE                                       DECIMAL(16,2) default 0 NOT NULL, --文件夹大小
 STORAGE_DATE                                      CHAR(8) NOT NULL, --文件夹入库日期
 STORAGE_TIME                                      CHAR(6) NOT NULL, --文件夹入库时间
-FOLDERS_IN_NO                                     DECIMAL(16) default 0 NOT NULL, --文件夹内文件夹数量
+FOLDERS_IN_NO                                     BIGINT default 0 NOT NULL, --文件夹内文件夹数量
 LOCATION_IN_HDFS                                  VARCHAR(512) NOT NULL, --hdfs中存储位置
 AGENT_ID                                          BIGINT default 0 NOT NULL, --Agent_id
 SOURCE_ID                                         BIGINT default 0 NOT NULL, --数据源ID
@@ -455,7 +455,7 @@ CREATE TABLE SEARCH_INFO(
 SI_ID                                             BIGINT default 0 NOT NULL, --si_id
 FILE_ID                                           VARCHAR(40) NOT NULL, --文件编号
 WORD_NAME                                         VARCHAR(1024) NOT NULL, --关键字
-SI_COUNT                                          DECIMAL(16) default 0 NOT NULL, --点击量
+SI_COUNT                                          BIGINT default 0 NOT NULL, --点击量
 SI_REMARK                                         VARCHAR(512) NULL, --备注
 CONSTRAINT SEARCH_INFO_PK PRIMARY KEY(SI_ID)   );
 
@@ -598,7 +598,7 @@ MAIN_SERV_SYNC                                    CHAR(1) NULL, --主服务器�
 JOB_PROCESS_ID                                    VARCHAR(100) NULL, --作业进程号
 JOB_PRIORITY_CURR                                 INTEGER default 0 NULL, --作业当前优先级
 JOB_RETURN_VAL                                    INTEGER default 0 NULL, --作业返回值
-EXE_FREQUENCY                                     DECIMAL(16) default 0 NULL, --每隔(分钟)执行
+EXE_FREQUENCY                                     BIGINT default 0 NULL, --每隔(分钟)执行
 EXE_NUM                                           INTEGER default 0 NULL, --执行次数
 COM_EXE_NUM                                       INTEGER default 0 NULL, --已经执行次数
 LAST_EXE_TIME                                     VARCHAR(20) NULL, --上次执行时间
@@ -662,7 +662,7 @@ MAIN_SERV_SYNC                                    CHAR(1) NULL, --主服务器�
 JOB_PROCESS_ID                                    VARCHAR(100) NULL, --作业进程号
 JOB_PRIORITY_CURR                                 INTEGER default 0 NULL, --作业当前优先级
 JOB_RETURN_VAL                                    INTEGER default 0 NULL, --作业返回值
-EXE_FREQUENCY                                     DECIMAL(16) default 0 NULL, --每隔(分钟)执行	exe_frequency
+EXE_FREQUENCY                                     BIGINT default 0 NULL, --每隔(分钟)执行	exe_frequency
 EXE_NUM                                           INTEGER default 0 NULL, --执行次数
 COM_EXE_NUM                                       INTEGER default 0 NULL, --已经执行次数
 LAST_EXE_TIME                                     VARCHAR(20) NULL, --上次执行时间
@@ -697,7 +697,7 @@ ETL_TEMP_PARA_ID                                  BIGINT default 0 NOT NULL, --�
 ETL_PARA_TYPE                                     VARCHAR(512) NOT NULL, --参数类型
 ETL_JOB_PRO_PARA                                  VARCHAR(512) NOT NULL, --参数名称
 ETL_JOB_PARA_SIZE                                 VARCHAR(512) NOT NULL, --参数
-ETL_PRO_PARA_SORT                                 DECIMAL(16) default 0 NOT NULL, --参数排序
+ETL_PRO_PARA_SORT                                 BIGINT default 0 NOT NULL, --参数排序
 ETL_TEMP_ID                                       BIGINT default 0 NOT NULL, --模版ID
 CONSTRAINT ETL_JOB_TEMP_PARA_PK PRIMARY KEY(ETL_TEMP_PARA_ID)   );
 
@@ -800,7 +800,7 @@ CONSTRAINT KEYTABLE_PK PRIMARY KEY(KEY_NAME)   );
 --系统参数配置
 DROP TABLE IF EXISTS SYS_PARA ;
 CREATE TABLE SYS_PARA(
-PARA_ID                                           DECIMAL(16) default 0 NOT NULL, --参数ID
+PARA_ID                                           BIGINT default 0 NOT NULL, --参数ID
 PARA_NAME                                         VARCHAR(512) NULL, --para_name
 PARA_VALUE                                        VARCHAR(512) NULL, --para_value
 PARA_TYPE                                         VARCHAR(512) NULL, --para_type
@@ -920,7 +920,7 @@ CREATE TABLE COLLECT_CASE(
 JOB_RS_ID                                         VARCHAR(40) NOT NULL, --作业执行结果ID
 COLLECT_TYPE                                      CHAR(1) NOT NULL, --采集类型
 JOB_TYPE                                          VARCHAR(10) NULL, --任务类型
-COLLECT_TOTAL                                     DECIMAL(16) default 0 NULL, --总共采集(文件)表
+COLLECT_TOTAL                                     BIGINT default 0 NULL, --总共采集(文件)表
 COLECT_RECORD                                     DECIMAL(16) default 0 NOT NULL, --总共采集记录数
 COLLET_DATABASE_SIZE                              VARCHAR(100) NULL, --总共采集数据大小
 COLLECT_S_DATE                                    CHAR(8) NOT NULL, --开始采集日期
@@ -930,7 +930,7 @@ COLLECT_E_TIME                                    CHAR(6) NULL, --采集结束�
 EXECUTE_LENGTH                                    VARCHAR(10) NULL, --运行总时长
 EXECUTE_STATE                                     CHAR(2) NOT NULL, --运行状态
 IS_AGAIN                                          CHAR(1) NOT NULL, --是否重跑
-AGAIN_NUM                                         DECIMAL(16) default 0 NULL, --重跑次数
+AGAIN_NUM                                         BIGINT default 0 NULL, --重跑次数
 JOB_GROUP                                         VARCHAR(100) NOT NULL, --agent组ID
 TABLE_NAME                                        VARCHAR(512) NULL, --表名
 ETL_DATE                                          VARCHAR(18) NULL, --跑批日期
@@ -976,7 +976,7 @@ IS_SENDOK                                         CHAR(1) NOT NULL, --是否完�
 IS_UNZIP                                          CHAR(1) NOT NULL, --是否解压
 REDUCE_TYPE                                       CHAR(1) NULL, --解压格式
 IS_READ_REALTIME                                  CHAR(1) NOT NULL, --是否实时读取
-REALTIME_INTERVAL                                 DECIMAL(16) default 0 NOT NULL, --实时读取间隔时间
+REALTIME_INTERVAL                                 BIGINT default 0 NOT NULL, --实时读取间隔时间
 AGENT_ID                                          BIGINT default 0 NOT NULL, --Agent_id
 CONSTRAINT FTP_COLLECT_PK PRIMARY KEY(FTP_ID)   );
 
