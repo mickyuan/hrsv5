@@ -1528,7 +1528,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		Result rightData = rightResultOne.getDataForResult();
 		assertThat(rightData.getRowCount(), is(1));
 		assertThat(rightData.getString(0, "code_classify"), is("codeClassify_one"));
-		
+
 		//错误的数据访问1：使用codeClassify_four获取编码类型，获取不到数据
 		String wrongString = new HttpClient()
 				.addData("origSysCode", "origSysCode_four")
@@ -1545,32 +1545,130 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 * 测试根据码值系统编码和编码分类获得原码值(orig_value)和新码值(code_value)
 	 *
 	 *
-	 * 正确数据访问1：
-	 * 错误的数据访问1：
-	 * 错误的测试用例未达到三组:
+	 * 正确数据访问1：使用code_classify(codeClassify_two)，orig_sys_code(origSysCode_two)查询，能够获得源码值为oriValue_two， 新码值为newValue_two
+	 * 错误的数据访问1：使用code_classify(codeClassify_one)，orig_sys_code(origSysCode_two)查询，获取不到数据
+	 * 错误的测试用例未达到三组:getCVInfo方法永远不会因为参数传递错误而导致访问失败，只会根据实际情况返回不同的数据
 	 * @Param: 无
 	 * @return: 无
 	 *
 	 * */
 	@Test
 	public void getCVInfo(){
+		//正确数据访问1：使用code_classify(codeClassify_two)，orig_sys_code(origSysCode_two)查询，能够获得源码值为oriValue_two， 新码值为newValue_two
+		String rightStringOne = new HttpClient()
+				.addData("codeClassify", "codeClassify_two")
+				.addData("origSysCode", "origSysCode_two")
+				.post(getActionUrl("getCVInfo")).getBodyString();
+		ActionResult rightResultOne = JsonUtil.toObjectSafety(rightStringOne, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResultOne.isSuccess(), is(true));
 
+		Result rightData = rightResultOne.getDataForResult();
+		assertThat("获取到的数据有一条", rightData.getRowCount(), is(1));
+		assertThat("获取到的原码值为oriValue_two", rightData.getString(0, "orig_value"), is("oriValue_two"));
+		assertThat("获取到的原码值为newValue_two", rightData.getString(0, "code_value"), is("newValue_two"));
+
+		//错误的数据访问1：使用code_classify(codeClassify_one)，orig_sys_code(origSysCode_two)查询，获取不到数据
+		String wrongString = new HttpClient()
+				.addData("codeClassify", "codeClassify_one")
+				.addData("origSysCode", "origSysCode_two")
+				.post(getActionUrl("getCVInfo")).getBodyString();
+		ActionResult wrongResult = JsonUtil.toObjectSafety(wrongString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResult.isSuccess(), is(true));
+
+		Result wrongData = wrongResult.getDataForResult();
+
+		assertThat("获取不到数据", wrongData.getRowCount(), is(0));
 	}
 
 	/**
 	 * 测试保存列码值转换清洗规则
 	 *
 	 *
-	 * 正确数据访问1：
-	 * 正确数据访问2：
-	 * 错误的测试用例未达到三组:
+	 * 正确数据访问1：构造正确的码值转换新增场景
+	 * 正确数据访问2：构造正确的码值转换修改场景
+	 * 错误的数据访问1：保存码值转换缺少码值系统类型
+	 * 错误的数据访问2：保存码值转换缺少码值系统名称
+	 * 错误的数据访问3：保存码值转换缺少列ID
 	 * @Param: 无
 	 * @return: 无
 	 *
 	 * */
 	@Test
 	public void saveCVConversionInfo(){
+		//正确数据访问1：构造正确的码值转换新增场景
+		String rightStringOne = new HttpClient()
+				.addData("clean_type", CleanType.MaZhiZhuanHuan.getCode())
+				.addData("codename", "codeClassify_three")
+				.addData("codesys", "origSysCode_three")
+				.addData("column_id", 2001L)
+				.post(getActionUrl("saveCVConversionInfo")).getBodyString();
+		ActionResult rightResultOne = JsonUtil.toObjectSafety(rightStringOne, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResultOne.isSuccess(), is(true));
 
+		//查询数据库，确认新增是否成功,并删除新增的数据
+		try(DatabaseWrapper db = new DatabaseWrapper()){
+			Result result = SqlOperator.queryResult(db, "select codename, codesys from " + Column_clean.TableName + " where column_id = ? and clean_type = ?", 2001L, CleanType.MaZhiZhuanHuan.getCode());
+			assertThat("获得到一条数据", result.getRowCount(), is(1));
+			assertThat("获得到的码值名称为", result.getString(0, "codename"), is("codeClassify_three"));
+			assertThat("获得到的码值所属系统为", result.getString(0, "codesys"), is("origSysCode_three"));
+
+			int count = SqlOperator.execute(db, "delete from " + Column_clean.TableName + " where column_id = ? and clean_type = ?", 2001L, CleanType.MaZhiZhuanHuan.getCode());
+			assertThat("删除成功", count, is(1));
+
+			SqlOperator.commitTransaction(db);
+		}
+
+		//正确数据访问2：构造正确的码值转换修改场景,对2010L列在构造初始化测试数据的时候就设置了码值转换
+		String rightStringTwo = new HttpClient()
+				.addData("clean_type", CleanType.MaZhiZhuanHuan.getCode())
+				.addData("codename", "codeClassify_two")
+				.addData("codesys", "origSysCode_two")
+				.addData("column_id", 2010L)
+				.post(getActionUrl("saveCVConversionInfo")).getBodyString();
+		ActionResult rightResultTwo = JsonUtil.toObjectSafety(rightStringTwo, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResultTwo.isSuccess(), is(true));
+
+		//查询数据库，确认修改是否成功
+		try(DatabaseWrapper db = new DatabaseWrapper()){
+			Result result = SqlOperator.queryResult(db, "select codename, codesys from " + Column_clean.TableName + " where column_id = ? and clean_type = ?", 2010L, CleanType.MaZhiZhuanHuan.getCode());
+			assertThat("获得到一条数据", result.getRowCount(), is(1));
+			assertThat("获得到的码值名称为", result.getString(0, "codename"), is("codeClassify_two"));
+			assertThat("获得到的码值所属系统为", result.getString(0, "codesys"), is("origSysCode_two"));
+		}
+
+		//错误的数据访问1：保存码值转换缺少码值系统类型
+		String wrongStringOne = new HttpClient()
+				.addData("clean_type", CleanType.MaZhiZhuanHuan.getCode())
+				.addData("codename", "codeClassify_two")
+				.addData("column_id", 2001L)
+				.post(getActionUrl("saveCVConversionInfo")).getBodyString();
+		ActionResult wrongResultOne = JsonUtil.toObjectSafety(wrongStringOne, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultOne.isSuccess(), is(false));
+
+		//错误的数据访问2：保存码值转换缺少码值系统名称
+		String wrongStringTwo = new HttpClient()
+				.addData("clean_type", CleanType.MaZhiZhuanHuan.getCode())
+				.addData("codesys", "origSysCode_three")
+				.addData("column_id", 2001L)
+				.post(getActionUrl("saveCVConversionInfo")).getBodyString();
+		ActionResult wrongResultTwo = JsonUtil.toObjectSafety(wrongStringTwo, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultTwo.isSuccess(), is(false));
+
+		//错误的数据访问3：保存码值转换缺少列ID
+		String wrongStringThree = new HttpClient()
+				.addData("clean_type", CleanType.MaZhiZhuanHuan.getCode())
+				.addData("codename", "codeClassify_three")
+				.addData("codesys", "origSysCode_three")
+				.post(getActionUrl("saveCVConversionInfo")).getBodyString();
+		ActionResult wrongResultThree = JsonUtil.toObjectSafety(wrongStringThree, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultThree.isSuccess(), is(false));
 	}
 
 	/**
