@@ -72,8 +72,7 @@ public class CollTbConfStepAction extends BaseAction {
 		Result returnResult = Dbo.queryPagedResult(page,
 				" select ti.table_id,ti.table_name,ti.table_ch_name, ti.is_parallel" +
 						" FROM " + Table_info.TableName + " ti " +
-						" WHERE ti.database_id = ? AND ti.valid_e_date = ? AND ti.is_user_defined = ? ", colSetId,
-				Constant.MAXDATE, IsFlag.Fou.getCode());
+						" WHERE ti.database_id = ? AND ti.is_user_defined = ? ", colSetId, IsFlag.Fou.getCode());
 		returnList.put("collTableInfo", returnResult.toList());
 		returnList.put("totalSize", page.getTotalSize());
 
@@ -566,6 +565,8 @@ public class CollTbConfStepAction extends BaseAction {
 			tableColumn.setIs_alive(IsFlag.Shi.getCode());
 			//是否为变化生成设为否
 			tableColumn.setIs_new(IsFlag.Fou.getCode());
+			//是否采集设置为是
+			tableColumn.setIs_get(IsFlag.Shi.getCode());
 			if(sortObj != null){
 				tableColumn.setRemark((String) sortObj.get(tableColumn.getColume_name()));
 			}

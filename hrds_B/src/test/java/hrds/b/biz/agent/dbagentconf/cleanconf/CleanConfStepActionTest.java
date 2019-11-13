@@ -14,6 +14,7 @@ import fd.ng.web.action.ActionResult;
 import hrds.b.biz.agent.bean.ColumnCleanParam;
 import hrds.b.biz.agent.bean.TableCleanParam;
 import hrds.b.biz.agent.dbagentconf.BaseInitData;
+import hrds.commons.codes.CharSplitType;
 import hrds.commons.codes.CleanType;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.*;
@@ -1213,7 +1214,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		for(int i = 0; i < 3; i++){
 			long colSplitId = 0;
 			String columnName = null;
-			String splitType = "1";
+			String splitType = CharSplitType.PianYiLiang.getCode();
 			String columnChName = null;
 			String columnType = "varchar(512)";
 			long colCleanId = 101010102L;
@@ -1346,7 +1347,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 			String colName = null;
 			String splitSep = "_";
 			long seq = 0;
-			String splitType = "2";
+			String splitType = CharSplitType.ZhiDingFuHao.getCode();
 			String colChName = null;
 			String colType = "varchar(512)";
 			switch (i){

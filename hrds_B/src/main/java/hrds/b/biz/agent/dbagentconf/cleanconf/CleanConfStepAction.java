@@ -5,6 +5,7 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
+import fd.ng.core.exception.BusinessSystemException;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DefaultPageImpl;
@@ -151,7 +152,7 @@ public class CleanConfStepAction extends BaseAction{
 			throw new BusinessException("保存列字符补齐规则时，必须选择补齐方式");
 		}
 		if(charCompletion.getColumn_id() == null){
-			throw new BusinessException("保存列字符补齐规则是，必须关联列信息");
+			throw new BusinessException("保存列字符补齐规则是，必须关联字段信息");
 		}
 		FillingType.ofEnumByCode(charCompletion.getFilling_type());
 		//2、在column_clean表中根据column_id删除该表原有的字符补齐设置，不关注删除数据的数目
@@ -240,10 +241,18 @@ public class CleanConfStepAction extends BaseAction{
 		Dbo.execute("DELETE FROM "+ Table_clean.TableName +" WHERE table_id = ? AND clean_type = ?", tableId,
 				CleanType.ZiFuTiHuan.getCode());
 		//2、遍历replaceList
-		for(Table_clean tableClean : replaceList){
+		for(int i = 0; i < replaceList.size(); i++){
+			Table_clean tableClean = replaceList.get(i);
+			if(StringUtil.isBlank(tableClean.getField())){
+				throw new BusinessException("保存表字符替换规则时，第"+ (i + 1) +"条数据缺少源字符串");
+			}
+			if(StringUtil.isBlank(tableClean.getReplace_feild())){
+				throw new BusinessException("保存表字符替换规则时，第"+ (i + 1) +"条数据缺少替换字符串");
+			}
 			//2-1、为每一个Table_clean对象设置主键
 			tableClean.setTable_clean_id(PrimayKeyGener.getNextId());
 			tableClean.setClean_type(CleanType.ZiFuTiHuan.getCode());
+			tableClean.setTable_id(tableId);
 			//2-2、原字符串和替换字符串转为Unicode码
 			tableClean.setField(StringUtil.string2Unicode(tableClean.getField()));
 			tableClean.setReplace_feild(StringUtil.string2Unicode(tableClean.getReplace_feild()));
@@ -269,10 +278,18 @@ public class CleanConfStepAction extends BaseAction{
 		Dbo.execute("DELETE FROM "+ Column_clean.TableName +" WHERE column_id = ? AND clean_type = ?", columnId,
 				CleanType.ZiFuTiHuan.getCode());
 		//2、遍历replaceList
-		for(Column_clean columnClean : replaceList){
+		for(int i = 0; i < replaceList.size(); i++){
+			Column_clean columnClean = replaceList.get(i);
+			if(StringUtil.isBlank(columnClean.getField())){
+				throw new BusinessException("保存列字符替换规则时，第"+ (i + 1) +"条数据缺少源字符串");
+			}
+			if(StringUtil.isBlank(columnClean.getReplace_feild())){
+				throw new BusinessException("保存列字符替换规则时，第"+ (i + 1) +"条数据缺少替换字符串");
+			}
 			//2-1、为每一个Column_clean对象设置主键
 			columnClean.setCol_clean_id(PrimayKeyGener.getNextId());
 			columnClean.setClean_type(CleanType.ZiFuTiHuan.getCode());
+			columnClean.setColumn_id(columnId);
 			//2-2、原字符串和替换字符串转为Unicode码
 			columnClean.setField(StringUtil.string2Unicode(columnClean.getField()));
 			columnClean.setReplace_feild(StringUtil.string2Unicode(columnClean.getReplace_feild()));
@@ -450,17 +467,22 @@ public class CleanConfStepAction extends BaseAction{
 
 		//3、如果配置了字符替换
 		if(IsFlag.ofEnumByCode(replaceFlag) == IsFlag.Shi){
-			if(oriFieldArr.length == 0 || replaceFeildArr.length == 0){
-				throw new BusinessException("保存字符替换时，请填写原字符和替换后字符");
-			}
 			for(int i = 0; i < oriFieldArr.length; i++){
+				String oriField = oriFieldArr[i];
+				String replaceFeild = replaceFeildArr[i];
+				if(StringUtil.isBlank(oriField)){
+					throw new BusinessSystemException("保存所有表字符替换清洗时，请填写第"+ (i + 1) +"条数据的原字符");
+				}
+				if(StringUtil.isBlank(replaceFeild)){
+					throw new BusinessSystemException("保存所有表字符替换清洗时，请填写第"+ (i + 1) +"条数据的替换字符");
+				}
 				//3-1、构建Clean_parameter对象，设置原字段，替换后字段
 				Clean_parameter allTbClean = new Clean_parameter();
 				allTbClean.setC_id(PrimayKeyGener.getNextId());
 				allTbClean.setDatabase_id(colSetId);
 				allTbClean.setClean_type(CleanType.ZiFuTiHuan.getCode());
-				allTbClean.setField(StringUtil.string2Unicode(oriFieldArr[i]));
-				allTbClean.setReplace_feild(StringUtil.string2Unicode(replaceFeildArr[i]));
+				allTbClean.setField(StringUtil.string2Unicode(oriField));
+				allTbClean.setReplace_feild(StringUtil.string2Unicode(replaceFeild));
 				//3-2、保存字符替换信息
 				allTbClean.add(Dbo.db());
 			}
@@ -547,6 +569,9 @@ public class CleanConfStepAction extends BaseAction{
 		if(StringUtil.isBlank(dateFormat.getConvert_format())){
 			throw new BusinessException("请填写转换后日期格式");
 		}
+		if(dateFormat.getColumn_id() == null){
+			throw new BusinessException("保存日期转换信息必须关联字段");
+		}
 		//1、如果之前针对该列设置过日期格式化，要删除之前的设置
 		Dbo.execute("DELETE FROM "+ Column_clean.TableName +" WHERE column_id = ? AND clean_type = ?"
 				, dateFormat.getColumn_id(), CleanType.ShiJianZhuanHuan.getCode());
@@ -630,6 +655,9 @@ public class CleanConfStepAction extends BaseAction{
 			"自定符号(2)")
 	@Param(name = "tableId", desc = "数据库对应表主键，表清洗参数表外键", range = "不为空")
 	public void saveColSplitInfo(Column_clean columnClean, String columnSplitString, long tableId){
+		if(columnClean.getColumn_id() == null){
+			throw new BusinessException("保存列拆分时必须关联字段");
+		}
 		//1、首先，在column_clean表中，保存该列的列清洗信息
 		if(columnClean.getCol_clean_id() != null){
 			//id有值，表示修改对该列设置的列拆分
@@ -654,7 +682,26 @@ public class CleanConfStepAction extends BaseAction{
 			columnClean.add(Dbo.db());
 		}
 		List<Column_split> columnSplits = JSONArray.parseArray(columnSplitString, Column_split.class);
-		for(Column_split columnSplit : columnSplits){
+		for(int i = 0; i < columnSplits.size(); i++){
+			Column_split columnSplit = columnSplits.get(i);
+			if(StringUtil.isBlank(columnSplit.getSplit_type())){
+				throw new BusinessSystemException("保存字符拆分信息时，第"+ (i + 1) +"条数据拆分方式不能为空");
+			}
+			CharSplitType charSplitType = CharSplitType.ofEnumByCode(columnSplit.getSplit_type());
+			if(charSplitType == CharSplitType.ZhiDingFuHao){
+				if(StringUtil.isBlank(columnSplit.getSplit_sep())){
+					throw new BusinessSystemException("按照自定符号进行拆分，第"+ (i + 1) +"条数据必须填写自定义符号");
+				}
+				if(columnSplit.getSeq() == null){
+					throw new BusinessSystemException("按照自定符号进行拆分，第"+ (i + 1) +"条数据必须填写值位置");
+				}
+			}else if(charSplitType == CharSplitType.PianYiLiang){
+				if(StringUtil.isBlank(columnSplit.getCol_offset())){
+					throw new BusinessSystemException("按照偏移量进行拆分，第"+ (i + 1) +"条数据必须填写字段偏移量");
+				}
+			}else{
+				throw new BusinessSystemException("第"+ (i + 1) +"条数据拆分方式错误");
+			}
 			//4、为Column_split实体类对象中必须有值的属性设置值
 			columnSplit.setCol_split_id(PrimayKeyGener.getNextId());
 			columnSplit.setColumn_id(columnClean.getColumn_id());
@@ -662,7 +709,7 @@ public class CleanConfStepAction extends BaseAction{
 			columnSplit.setValid_s_date(DateUtil.getSysDate());
 			columnSplit.setValid_e_date(Constant.MAXDATE);
 
-			if(CharSplitType.ofEnumByCode(columnSplit.getSplit_type()) == CharSplitType.ZhiDingFuHao){
+			if(charSplitType == CharSplitType.ZhiDingFuHao){
 				columnSplit.setSplit_sep(StringUtil.string2Unicode(columnSplit.getSplit_sep()));
 			}
 			//5、保存Column_split实体类对象
@@ -755,7 +802,7 @@ public class CleanConfStepAction extends BaseAction{
 			throw new BusinessException("请选择码值系统名称");
 		}
 		if(columnClean.getColumn_id() == null){
-			throw new BusinessException("保存失败");
+			throw new BusinessException("保存码值转换，必须关联字段");
 		}
 		//2、根据columnId在列清洗参数表中删除对该列定义的码值相关信息，不关注删除的条目
 		Dbo.execute("DELETE FROM " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ?",
@@ -801,7 +848,17 @@ public class CleanConfStepAction extends BaseAction{
 		Dbo.execute("delete from "+ Column_merge.TableName +" where table_id = ?", tableId);
 		//3、为Column_merge实体类对象属性中设置必填的值
 		List<Column_merge> columnMerges = JSONArray.parseArray(columnMergeString, Column_merge.class);
-		for(Column_merge columnMerge : columnMerges){
+		for(int i = 0; i < columnMerges.size(); i++){
+			Column_merge columnMerge = columnMerges.get(i);
+			if(StringUtil.isBlank(columnMerge.getOld_name())){
+				throw new BusinessSystemException("保存列合并时，第" + (i + 1) + "条数据必须选择要合并的字段");
+			}
+			if(StringUtil.isBlank(columnMerge.getCol_name())){
+				throw new BusinessSystemException("保存列合并时，第" + (i + 1) + "条数据必须填写合并后字段名称");
+			}
+			if(StringUtil.isBlank(columnMerge.getCol_type())){
+				throw new BusinessSystemException("保存列合并时，第" + (i + 1) + "条数据必须填写字段类型");
+			}
 			//4、保存Column_merge实体类对象
 			columnMerge.setTable_id(tableId);
 			columnMerge.setCol_merge_id(PrimayKeyGener.getNextId());
