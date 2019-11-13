@@ -37,7 +37,6 @@ public class InitAndDestDataForCleanConf {
 	private static final long UNEXPECTED_ID = 999999999L;
 	private static final String PRE_COMPLE_FLAG = "1";
 	private static final String POST_COMPLE_FLAG = "2";
-	private static final long BASE_ORIG_ID = 6000L;
 	private static final JSONObject tableCleanOrder = BaseInitData.initTableCleanOrder();
 	private static final JSONObject columnCleanOrder = BaseInitData.initColumnCleanOrder();
 
@@ -128,7 +127,7 @@ public class InitAndDestDataForCleanConf {
 			tableInfo.setIs_user_defined(customizFlag);
 			tableInfo.setTi_or(tableCleanOrder.toJSONString());
 			tableInfo.setIs_md5(IsFlag.Shi.getCode());
-			tableInfo.setIs_register(IsFlag.Shi.getCode());
+			tableInfo.setIs_register(IsFlag.Fou.getCode());
 			tableInfo.setIs_parallel(parallelFlag);
 			tableInfo.setPage_sql(pageSql);
 
@@ -561,86 +560,9 @@ public class InitAndDestDataForCleanConf {
 		mergeColumn.setValid_s_date(DateUtil.getSysDate());
 		mergeColumn.setValid_e_date(Constant.MAXDATE);
 
-		List<Orig_syso_info> origSysoInfos = new ArrayList<>();
-		for(int i = 0; i < 3; i++){
-			String origSysCode;
-			String origSysName;
-			String origSysRemark;
-			switch (i){
-				case 0 :
-					origSysCode = "origSysCode_one";
-					origSysName = "origSysName_one";
-					origSysRemark = "origSysRemark_one";
-					break;
-				case 1 :
-					origSysCode = "origSysCode_two";
-					origSysName = "origSysName_two";
-					origSysRemark = "origSysRemark_two";
-					break;
-				case 2 :
-					origSysCode = "origSysCode_three";
-					origSysName = "origSysName_three";
-					origSysRemark = "origSysRemark_three";
-					break;
-				default:
-					origSysCode = "unexcepted_origSysCode";
-					origSysName = "unexcepted_origSysCode";
-					origSysRemark = "unexcepted_origSysCode";
-			}
-			Orig_syso_info origSysoInfo = new Orig_syso_info();
-			origSysoInfo.setOrig_sys_code(origSysCode);
-			origSysoInfo.setOrig_sys_name(origSysName);
-			origSysoInfo.setOrig_sys_remark(origSysRemark);
+		List<Orig_syso_info> origSysoInfos = BaseInitData.buildOrigSysInfo();
 
-			origSysoInfos.add(origSysoInfo);
-		}
-
-		List<Orig_code_info> origCodeInfos = new ArrayList<>();
-		for(int i = 1; i <= 3; i++){
-			long id;
-			String origSysCode;
-			String codeClassify;
-			String newValue;
-			String oriValue;
-			switch (i) {
-				case 1 :
-					id = BASE_ORIG_ID + i;
-					origSysCode = "origSysCode_one";
-					codeClassify = "codeClassify_one";
-					newValue = "newValue_one";
-					oriValue = "oriValue_one";
-					break;
-				case 2 :
-					id = BASE_ORIG_ID + i;
-					origSysCode = "origSysCode_two";
-					codeClassify = "codeClassify_two";
-					newValue = "newValue_two";
-					oriValue = "oriValue_two";
-					break;
-				case 3 :
-					id = BASE_ORIG_ID + i;
-					origSysCode = "origSysCode_three";
-					codeClassify = "codeClassify_three";
-					newValue = "newValue_three";
-					oriValue = "oriValue_three";
-					break;
-				default:
-					id = BASE_ORIG_ID;
-					origSysCode = "unexpected_origSysCode";
-					codeClassify = "unexpected_codeClassify";
-					newValue = "unexpected_newValue";
-					oriValue = "unexpected_oriValue";
-					break;
-			}
-			Orig_code_info origCodeInfo = new Orig_code_info();
-			origCodeInfo.setOrig_id(id);
-			origCodeInfo.setOrig_sys_code(origSysCode);
-			origCodeInfo.setCode_classify(codeClassify);
-			origCodeInfo.setCode_value(newValue);
-			origCodeInfo.setOrig_value(oriValue);
-
-			origCodeInfos.add(origCodeInfo);
-		}
+		List<Orig_code_info> origCodeInfos = BaseInitData.buildOrigCodeInfo();
 
 		//插入数据
 		try (DatabaseWrapper db = new DatabaseWrapper()) {

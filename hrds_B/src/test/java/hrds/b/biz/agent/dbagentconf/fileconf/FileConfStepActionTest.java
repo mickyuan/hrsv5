@@ -80,6 +80,8 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 	 *          16-2、构造采集code_info表的存储方式为定长，换行符为|，列分隔符为空格，数据字符集为UTF-8
      *      17、构造所有表分隔符设置数据
 	 *          17-1、给所有表设置储存方式为非定长，换行符为回车符，列分隔符为|，数据字符集为UTF-8
+ *          18、构造orig_syso_info表测试数据，里面是当前系统中所有的码值信息,共有三条数据
+ *          19、构造orig_code_info表测试数据,共有三条数据
 	 * @Param: 无
 	 * @return: 无
 	 *
