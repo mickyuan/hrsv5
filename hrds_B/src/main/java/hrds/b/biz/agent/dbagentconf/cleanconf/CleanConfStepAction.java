@@ -51,7 +51,7 @@ public class CleanConfStepAction extends BaseAction{
 		Map<String, Object> returnMap = new HashMap<>();
 		//1、根据colSetId在table_info表中获取上一个页面配置好的采集表id
 		List<Object> tableIds = Dbo.queryOneColumnList("SELECT table_id FROM " + Table_info.TableName +
-				" WHERE database_id = ? and is_user_defined = ?", colSetId, IsFlag.Fou.getCode());
+				" WHERE database_id = ?", colSetId);
 		//2、如果没有查询到结果，返回空的Result
 		if(tableIds.isEmpty()){
 			returnMap.put("cleanConf", new Result());
@@ -112,6 +112,7 @@ public class CleanConfStepAction extends BaseAction{
 		if(charCompletion.getTable_id() == null){
 			throw new BusinessException("保存整表字符补齐规则是，必须关联表信息");
 		}
+		FillingType.ofEnumByCode(charCompletion.getFilling_type());
 		//2、在table_clean表中根据table_id删除该表原有的字符补齐设置，不关注删除数据的数目
 		Dbo.execute("DELETE FROM "+ Table_clean.TableName +" WHERE table_id = ? AND clean_type = ?",
 				charCompletion.getTable_id(), CleanType.ZiFuBuQi.getCode());
@@ -152,6 +153,7 @@ public class CleanConfStepAction extends BaseAction{
 		if(charCompletion.getColumn_id() == null){
 			throw new BusinessException("保存列字符补齐规则是，必须关联列信息");
 		}
+		FillingType.ofEnumByCode(charCompletion.getFilling_type());
 		//2、在column_clean表中根据column_id删除该表原有的字符补齐设置，不关注删除数据的数目
 		Dbo.execute("DELETE FROM "+ Column_clean.TableName +" WHERE column_id = ? AND clean_type = ?",
 				charCompletion.getColumn_id(), CleanType.ZiFuBuQi.getCode());
@@ -188,7 +190,7 @@ public class CleanConfStepAction extends BaseAction{
 		//3、如果没有列字符补齐信息，则根据columnId查其所在表是否配置了整表字符补齐，如果查询到，则将补齐字符解码后返回前端
 		Map<String, Object> tbCompMap = Dbo.queryOneObject("SELECT tc.table_clean_id, tc.filling_type, tc.character_filling," +
 				" tc.filling_length FROM " + Table_clean.TableName + " tc" +
-				" WHERE tc.table_id = (SELECT table_id FROM table_column WHERE column_id = ?)" +
+				" WHERE tc.table_id = (SELECT table_id FROM "+ Table_column.TableName +" WHERE column_id = ?)" +
 				" AND tc.clean_type = ?", columnId, CleanType.ZiFuBuQi.getCode());
 		//4、如果整表字符补齐信息也没有，返回空的map
 		if(tbCompMap.isEmpty()){
@@ -332,7 +334,7 @@ public class CleanConfStepAction extends BaseAction{
 		//3、如果没有列字符补齐信息，则根据columnId查其所在表是否配置了整表字符替换，如果查询到，则将补齐字符解码后返回前端
 		Result tableResult = Dbo.queryResult("SELECT tc.table_clean_id, tc.field, tc.replace_feild " +
 				" FROM "+ Table_clean.TableName +" tc" +
-				" WHERE tc.table_id = (SELECT table_id FROM table_column WHERE column_id = ?" +
+				" WHERE tc.table_id = (SELECT table_id FROM "+ Table_column.TableName +" WHERE column_id = ?" +
 				" AND tc.clean_type = ?)", columnId, CleanType.ZiFuTiHuan.getCode());
 		//4、如果整表字符替换信息也没有，返回空的Result
 		if(tableResult.isEmpty()){
@@ -593,7 +595,7 @@ public class CleanConfStepAction extends BaseAction{
 	public void deleteColSplitInfo(long colSplitId, long colCleanId){
 		//1、在table_column表中找到拆分生成的新列，并删除,应该删除一条数据
 		DboExecute.deletesOrThrow("列拆分规则删除失败", "delete from "+ Table_column.TableName  +
-				" where colume_name = (select t1.colume_name from table_column t1 " +
+				" where colume_name = (select t1.colume_name from "+ Table_column.TableName +" t1 " +
 				" JOIN "+ Column_split.TableName +" t2 ON t1.colume_name = t2.col_name " +
 				" JOIN "+ Column_clean.TableName +" t3 ON t2.col_clean_id = t3.col_clean_id " +
 				" WHERE t2.col_clean_id = ? and  t2.col_split_id = ? and t1.is_new = ?)",
@@ -636,7 +638,7 @@ public class CleanConfStepAction extends BaseAction{
 
 			//2、如果之前这个字段做过列拆分，需要在table_column表中找到拆分生成的新列，并删除,不关心删除的数目
 			Dbo.execute("delete from "+ Table_column.TableName +" where colume_name in " +
-					" (select t1.colume_name from table_column t1 " +
+					" (select t1.colume_name from "+ Table_column.TableName +" t1 " +
 					" JOIN "+ Column_split.TableName +" t2 ON t1.colume_name = t2.col_name " +
 					" JOIN "+ Column_clean.TableName +" t3 ON t2.col_clean_id = t3.col_clean_id " +
 					" WHERE t2.col_clean_id = ? and t2.column_id = ? and t1.table_id = ? and t1.is_new = ?)",
@@ -668,7 +670,10 @@ public class CleanConfStepAction extends BaseAction{
 			//6、将本次拆分生成的新列保存到table_column表中
 			Table_column tableColumn = new Table_column();
 			tableColumn.setTable_id(tableId);
+			//是否为变化生成，设置为是
 			tableColumn.setIs_new(IsFlag.Shi.getCode());
+			//保存原字段
+			tableColumn.setIs_alive(IsFlag.Shi.getCode());
 			tableColumn.setColumn_id(PrimayKeyGener.getNextId());
 			tableColumn.setIs_primary_key(IsFlag.Fou.getCode());
 			tableColumn.setColume_name(columnSplit.getCol_name());
@@ -682,20 +687,84 @@ public class CleanConfStepAction extends BaseAction{
 	}
 
 	/*
-	 * 列清洗页面，点击码值转换列设置按钮，回显针对该列设置的码值转换信息(sysCodeSDO)
-	 * TODO column_clean表中只能找到码值系统和码值名称，页面上需要展示的信息还不知道去哪里查
+	 * 列清洗页面，点击码值转换列设置按钮，获取该列在列清洗表中定义的码值系统编码和码值系统名称
+	 * */
+	@Method(desc = "根据列ID获取该列在列清洗参数表中定义码值系统编码(codesys)的和编码分类(codename)", logicStep = "" +
+			"1、直接拼接SQL语句去数据中进行查询并返回")
+	@Param(name = "columnId", desc = "列ID，采集列信息表主键，列清洗参数表外键", range = "不为空")
+	@Return(desc = "查询结果", range = "不为空，条数根据实际情况决定")
 	public Result getCVConversionInfo(long columnId){
-		return null;
+		//1、直接拼接SQL语句去数据中进行查询并返回
+		return Dbo.queryResult("select codename, codesys from " + Column_clean.TableName +
+				" where column_id = ? and clean_type = ?", columnId, CleanType.MaZhiZhuanHuan.getCode());
 	}
-	* */
+
+	/*
+	 * 获取当前系统中的所有码值信息
+	 * */
+	@Method(desc = "获取当前系统中的所有码值信息", logicStep = "" +
+			"1、直接使用SQL语句去数据中进行查询并返回")
+	@Return(desc = "系统中所有码值信息", range = "数据条数根据实际情况决定")
+	public List<Orig_syso_info> getSysCVInfo(){
+		//1、直接使用SQL语句去数据中进行查询并返回
+		return Dbo.queryList(Orig_syso_info.class, "select * from " + Orig_syso_info.TableName);
+	}
+
+	/*
+	 * 选择好码值系统后，关联出编码分类(sysTypeSDO)
+	 * */
+	@Method(desc = "根据码值系统编码获取编码分类", logicStep = "" +
+			"1、执行SQL语句去数据库中查询编码分类")
+	@Param(name = "origSysCode", desc = "码值系统编码", range = "不为空")
+	@Return(desc = "查询结果集", range = "不为空，具体数据条数根据实际情况决定")
+	public Result getCVClassifyBySysCode(String origSysCode){
+		//1、执行SQL语句去数据库中查询编码分类
+		return Dbo.queryResult("select code_classify,orig_sys_code from " + Orig_code_info.TableName +
+				" where orig_sys_code = ? group by code_classify,orig_sys_code", origSysCode);
+	}
+
+	/*
+	 * 根据码值系统编码和编码分类获得原码值(orig_value)和新码值(code_value)(sysCodeValSDO)
+	 * */
+	@Method(desc = "根据码值系统编码和编码分类获得原码值(orig_value)和新码值(code_value)", logicStep = "" +
+			"1、执行SQL语句去数据库中查询数据")
+	@Param(name = "codeClassify", desc = "编码分类", range = "不为空")
+	@Param(name = "origSysCode", desc = "码值系统编码", range = "不为空")
+	@Return(desc = "查询结果集", range = "不为空，具体数据条数根据实际情况决定")
+	public Result getCVInfo(String codeClassify, String origSysCode){
+		return Dbo.queryResult("select code_value, orig_value from " + Orig_code_info.TableName + " " +
+				"where code_classify = ? and orig_sys_code = ? group by code_value, orig_value", codeClassify, origSysCode);
+	}
+
 
 	/*
 	 * 列清洗页面，点击码值转换列设置按钮，码值转换弹框确定按钮(codeValueChangeCleanSDO)
-	 * TODO 页面上的码值信息不知道往哪里存
-	public void saveCVConversionInfo(){
-
+	 * String codeClassify, String origSysCode
+	 * */
+	@Method(desc = "保存码值转换信息", logicStep = "" +
+			"1、校验码值系统编码、编码分类、表ID" +
+			"2、根据columnId在列清洗参数表中删除对该列定义的码值相关信息，不关注删除的条目" +
+			"3、保存")
+	@Param(name = "columnClean", desc = "待保存的码值转换信息", range = "Column_clean类型对象")
+	public void saveCVConversionInfo(Column_clean columnClean){
+		//1、校验码值系统编码、编码分类、表ID
+		if(StringUtil.isBlank(columnClean.getCodename())){
+			throw new BusinessException("请选择码值系统类型");
+		}
+		if(StringUtil.isBlank(columnClean.getCodesys())){
+			throw new BusinessException("请选择码值系统名称");
+		}
+		if(columnClean.getColumn_id() == null){
+			throw new BusinessException("保存失败");
+		}
+		//2、根据columnId在列清洗参数表中删除对该列定义的码值相关信息，不关注删除的条目
+		Dbo.execute("DELETE FROM " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ?",
+				columnClean.getColumn_id(), CleanType.MaZhiZhuanHuan.getCode());
+		//3、保存
+		columnClean.setCol_clean_id(PrimayKeyGener.getNextId());
+		columnClean.setClean_type(CleanType.MaZhiZhuanHuan.getCode());
+		columnClean.add(Dbo.db());
 	}
-	* */
 
 	/*
 	 * 列清洗页面，点击列合并按钮，回显之前对该表设置的列合并信息(codeMergeLookSDO)
@@ -745,6 +814,7 @@ public class CleanConfStepAction extends BaseAction{
 			Table_column tableColumn = new Table_column();
 			tableColumn.setTable_id(tableId);
 			tableColumn.setIs_new(IsFlag.Shi.getCode());
+			tableColumn.setIs_alive(IsFlag.Shi.getCode());
 			tableColumn.setColumn_id(PrimayKeyGener.getNextId());
 			tableColumn.setIs_primary_key(IsFlag.Fou.getCode());
 			tableColumn.setColume_name(columnMerge.getCol_name());
@@ -867,7 +937,11 @@ public class CleanConfStepAction extends BaseAction{
 				Dbo.execute( "DELETE FROM " + Column_clean.TableName +" WHERE column_id = ? AND clean_type = ?"
 						, param.getColumnId(), CleanType.ShiJianZhuanHuan.getCode());
 			}
-			//TODO 2-4、判断最终保存时，是否选择了码值转换，否，则进行删除当前列码值转换的处理，目前没搞清楚码值转换的保存逻辑，所以这个处理暂时没有
+			//2-4、判断最终保存时，是否选择了码值转换，否，则根据columnId去column_clean表中尝试删除记录，不关心具体的数目
+			if(!param.isConversionFlag()){
+				Dbo.execute( "DELETE FROM " + Column_clean.TableName +" WHERE column_id = ? AND clean_type = ?"
+						, param.getColumnId(), CleanType.MaZhiZhuanHuan.getCode());
+			}
 
 			//2-5、判断最终保存时，是否选择了列拆分，否，则进行删除列拆分的操作
 			if(!param.isSpiltFlag()){

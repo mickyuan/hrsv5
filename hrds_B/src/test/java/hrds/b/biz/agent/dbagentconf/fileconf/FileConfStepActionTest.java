@@ -2,8 +2,6 @@ package hrds.b.biz.agent.dbagentconf.fileconf;
 
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.utils.JsonUtil;
-import fd.ng.db.jdbc.DatabaseWrapper;
-import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
@@ -80,6 +78,8 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 	 *          16-2、构造采集code_info表的存储方式为定长，换行符为|，列分隔符为空格，数据字符集为UTF-8
      *      17、构造所有表分隔符设置数据
 	 *          17-1、给所有表设置储存方式为非定长，换行符为回车符，列分隔符为|，数据字符集为UTF-8
+ *          18、构造orig_syso_info表测试数据，里面是当前系统中所有的码值信息,共有三条数据
+ *          19、构造orig_code_info表测试数据,共有三条数据
 	 * @Param: 无
 	 * @return: 无
 	 *
@@ -140,147 +140,6 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 		assertThat(wrongResult.isSuccess(), is(true));
 		Map<String, Object> wrongData = wrongResult.getDataForMap(String.class, Object.class);
 		assertThat("根据测试数据，输入错误的colSetId查询到的非自定义采集表信息应该有0条，但是HTTP访问成功返回", wrongData.get("totalSize"), is(0));
-	}
-
-	/**
-	 * 测试根据数据库设置ID获取所有表分隔符设置
-	 *
-	 * 正确数据访问1：使用正确的colSetId访问，应该可以拿到一条数据
-	 * 错误的数据访问1：使用错误的colSetId访问，应该拿不到任何数据，但是不会报错，访问正常返回
-	 * 错误的测试用例未达到三组:getAllTbSepConf()方法只有一个参数
-	 * @Param: 无
-	 * @return: 无
-	 *
-	 * */
-	@Test
-	public void getAllTbSepConf(){
-		//正确数据访问1：使用正确的colSetId访问，应该可以拿到一条数据
-		String rightString = new HttpClient()
-				.addData("colSetId", FIRST_DATABASESET_ID)
-				.post(getActionUrl("getAllTbSepConf")).getBodyString();
-		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
-				-> new BusinessException("连接失败!"));
-		assertThat(rightResult.isSuccess(), is(true));
-		Result rightData = rightResult.getDataForResult();
-		//TODO 下面的断言要等被测方法写好之后再进行补充
-		assertThat("使用正确的colSetId访问，应该可以拿到一条数据", rightData.getRowCount(), is(1));
-		assertThat("使用正确的colSetId访问，获得的抽取数据存储格式为非定长", rightData.getString(0, ""), is(""));
-		assertThat("使用正确的colSetId访问，获得的换行符为回车符", rightData.getString(0, ""), is(""));
-		assertThat("使用正确的colSetId访问，获得的列分隔符为|", rightData.getString(0, ""), is(""));
-		assertThat("使用正确的colSetId访问，获得的字符集为UTF-8", rightData.getString(0, ""), is(""));
-
-		//错误的数据访问1：使用错误的colSetId访问，应该拿不到任何数据，但是不会报错，访问正常返回
-		long wrongColSetId = 99999L;
-		String wrongString = new HttpClient()
-				.addData("colSetId", wrongColSetId)
-				.post(getActionUrl("getAllTbSepConf")).getBodyString();
-		ActionResult wrongResult = JsonUtil.toObjectSafety(wrongString, ActionResult.class).orElseThrow(()
-				-> new BusinessException("连接失败!"));
-		assertThat(wrongResult.isSuccess(), is(true));
-		Result wrongData = wrongResult.getDataForResult();
-		assertThat("使用错误的colSetId访问，应该拿不到数据", wrongData.isEmpty(), is(true));
-	}
-
-	/**
-	 * 测试保存所有表分隔符设置
-	 *
-	 * 正确数据访问1：构建数据存储方式为ORC，行分隔符和列分隔符不传，字符编码为UTF-8，数据库设置ID为1001的数据访问
-	 * 正确数据访问2：构建数据存储方式为定长，行分隔符为|，列分隔符为/，字符编码为UTF-8，数据库设置ID为1001的数据访问
-	 * 错误的数据访问1：构建数据存储方式为定长，不传字符编码
-	 * 错误的数据访问2：构建数据存储方式为PARQUET，不传字符编码
-	 * 错误的数据访问3：构建数据存储方式为SEQUENCEFILE，传了行分隔符
-	 * 错误的数据访问4：构建数据存储方式为ORC，传了列分隔符
-	 * 错误的数据访问5：构建数据存储方式为定长，行分隔符为|，列分隔符为/，字符编码为UTF-8，但是不传数据库设置ID
-	 * @Param: 无
-	 * @return: 无
-	 *
-	 * */
-	@Test
-	public void saveAllTbSepConf(){
-		//正确数据访问1：构建数据存储方式为ORC，行分隔符和列分隔符不传，字符编码为UTF-8，数据库设置ID为1001的数据访问
-		String rightStringOne = new HttpClient()
-				.addData("", "")
-				.addData("", "")
-				.addData("colSetId", FIRST_DATABASESET_ID)
-				.post(getActionUrl("saveAllTbSepConf")).getBodyString();
-		ActionResult rightResultOne = JsonUtil.toObjectSafety(rightStringOne, ActionResult.class).orElseThrow(()
-				-> new BusinessException("连接失败!"));
-		assertThat(rightResultOne.isSuccess(), is(true));
-		try(DatabaseWrapper db = new DatabaseWrapper()){
-			//保存后，校验数据库中新增是否成功
-			//将新增的数据删除掉
-			SqlOperator.commitTransaction(db);
-		}
-
-		//正确数据访问2：构建数据存储方式为定长，行分隔符为|，列分隔符为/，字符编码为UTF-8，数据库设置ID为1001的数据访问
-		String rightStringTwo = new HttpClient()
-				.addData("", "")
-				.addData("", "|")
-				.addData("", "/")
-				.addData("", "")
-				.addData("colSetId", FIRST_DATABASESET_ID)
-				.post(getActionUrl("saveAllTbSepConf")).getBodyString();
-		ActionResult rightResultTwo = JsonUtil.toObjectSafety(rightStringTwo, ActionResult.class).orElseThrow(()
-				-> new BusinessException("连接失败!"));
-		assertThat(rightResultTwo.isSuccess(), is(true));
-		try(DatabaseWrapper db = new DatabaseWrapper()){
-			//保存后，校验数据库中新增是否成功
-			//将新增的数据删除掉
-			SqlOperator.commitTransaction(db);
-		}
-
-		//错误的数据访问1：构建数据存储方式为定长，传行分隔符、列分隔符和数据库设置ID，但是不传字符编码
-		String wrongStringOne = new HttpClient()
-				.addData("", "")
-				.addData("", "")
-				.addData("", "")
-				.addData("colSetId", FIRST_DATABASESET_ID)
-				.post(getActionUrl("getAllTbSepConf")).getBodyString();
-		ActionResult wrongResultOne = JsonUtil.toObjectSafety(wrongStringOne, ActionResult.class).orElseThrow(()
-				-> new BusinessException("连接失败!"));
-		assertThat(wrongResultOne.isSuccess(), is(false));
-
-		//错误的数据访问2：构建数据存储方式为PARQUET，传数据库设置ID，不传字符编码、行分隔符和列分隔符
-		String wrongStringTwo = new HttpClient()
-				.addData("", "")
-				.addData("colSetId", FIRST_DATABASESET_ID)
-				.post(getActionUrl("getAllTbSepConf")).getBodyString();
-		ActionResult wrongResultTwo = JsonUtil.toObjectSafety(wrongStringTwo, ActionResult.class).orElseThrow(()
-				-> new BusinessException("连接失败!"));
-		assertThat(wrongResultTwo.isSuccess(), is(false));
-
-		//错误的数据访问3：构建数据存储方式为SEQUENCEFILE，传了行分隔符和字符编码
-		String wrongStringThree = new HttpClient()
-				.addData("", "")
-				.addData("", "")
-				.addData("", "")
-				.addData("colSetId", FIRST_DATABASESET_ID)
-				.post(getActionUrl("getAllTbSepConf")).getBodyString();
-		ActionResult wrongResultThree = JsonUtil.toObjectSafety(wrongStringThree, ActionResult.class).orElseThrow(()
-				-> new BusinessException("连接失败!"));
-		assertThat(wrongResultThree.isSuccess(), is(false));
-
-		//错误的数据访问4：构建数据存储方式为ORC，传了列分隔符和字符编码
-		String wrongStringFour = new HttpClient()
-				.addData("", "")
-				.addData("", "")
-				.addData("", "")
-				.addData("colSetId", FIRST_DATABASESET_ID)
-				.post(getActionUrl("getAllTbSepConf")).getBodyString();
-		ActionResult wrongResultFour = JsonUtil.toObjectSafety(wrongStringFour, ActionResult.class).orElseThrow(()
-				-> new BusinessException("连接失败!"));
-		assertThat(wrongResultFour.isSuccess(), is(false));
-
-		//错误的数据访问5：构建数据存储方式为定长，行分隔符为|，列分隔符为/，字符编码为UTF-8，但是不传数据库设置ID
-		String wrongStringFive = new HttpClient()
-				.addData("", "")
-				.addData("", "")
-				.addData("", "")
-				.addData("", "")
-				.post(getActionUrl("getAllTbSepConf")).getBodyString();
-		ActionResult wrongResultFive = JsonUtil.toObjectSafety(wrongStringFive, ActionResult.class).orElseThrow(()
-				-> new BusinessException("连接失败!"));
-		assertThat(wrongResultFive.isSuccess(), is(false));
 	}
 
 	/**

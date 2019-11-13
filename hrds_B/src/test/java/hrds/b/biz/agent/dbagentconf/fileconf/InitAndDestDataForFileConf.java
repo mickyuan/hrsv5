@@ -19,7 +19,7 @@ import java.util.List;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-@DocClass(desc = "为CleanConfStepActionTest初始化和销毁数据", author = "WangZhengcheng")
+@DocClass(desc = "为FileConfStepActionTest初始化和销毁数据", author = "WangZhengcheng")
 /*
  * 由于构造测试数据就有较多代码，所以将这部分代码迁移出来，FileConfStepActionTest中只保存对被测方法的测试用例
  * */
@@ -69,6 +69,8 @@ public class InitAndDestDataForFileConf {
 			String tableChName;
 			String customizeSQL;
 			String customizFlag;
+			String parallelFlag;
+			String pageSql;
 			switch (i) {
 				case 1:
 					tableId = SYS_USER_TABLE_ID;
@@ -76,6 +78,8 @@ public class InitAndDestDataForFileConf {
 					tableChName = "用户表";
 					customizeSQL = "";
 					customizFlag = IsFlag.Fou.getCode();
+					parallelFlag = IsFlag.Fou.getCode();
+					pageSql = "";
 					break;
 				case 2:
 					tableId = CODE_INFO_TABLE_ID;
@@ -83,6 +87,8 @@ public class InitAndDestDataForFileConf {
 					tableChName = "代码信息表";
 					customizeSQL = "";
 					customizFlag = IsFlag.Fou.getCode();
+					parallelFlag = IsFlag.Shi.getCode();
+					pageSql = "select * from code_info limit 10";
 					break;
 				case 3:
 					tableId = AGENT_INFO_TABLE_ID;
@@ -90,6 +96,8 @@ public class InitAndDestDataForFileConf {
 					tableChName = "Agent信息表";
 					customizeSQL = "select * from agent_info";
 					customizFlag = IsFlag.Shi.getCode();
+					parallelFlag = IsFlag.Fou.getCode();
+					pageSql = "";
 					break;
 				case 4:
 					tableId = DATA_SOURCE_TABLE_ID;
@@ -97,6 +105,8 @@ public class InitAndDestDataForFileConf {
 					tableChName = "数据源表";
 					customizeSQL = "select * from data_source";
 					customizFlag = IsFlag.Shi.getCode();
+					parallelFlag = IsFlag.Fou.getCode();
+					pageSql = "";
 					break;
 				default:
 					tableId = 0L;
@@ -104,6 +114,8 @@ public class InitAndDestDataForFileConf {
 					tableChName = "unexpected_tableChName";
 					customizeSQL = "unexpected_customizeSQL";
 					customizFlag = "error_customizFlag";
+					parallelFlag = "error_parallelFlag";
+					pageSql = "unexpected_pageSql";
 			}
 			Table_info tableInfo = new Table_info();
 			tableInfo.setTable_id(tableId);
@@ -117,7 +129,9 @@ public class InitAndDestDataForFileConf {
 			tableInfo.setIs_user_defined(customizFlag);
 			tableInfo.setTi_or(tableCleanOrder.toJSONString());
 			tableInfo.setIs_md5(IsFlag.Shi.getCode());
-			tableInfo.setIs_register(IsFlag.Shi.getCode());
+			tableInfo.setIs_register(IsFlag.Fou.getCode());
+			tableInfo.setIs_parallel(parallelFlag);
+			tableInfo.setPage_sql(pageSql);
 
 			tableInfos.add(tableInfo);
 		}
@@ -327,6 +341,14 @@ public class InitAndDestDataForFileConf {
 		dateFormat.setClean_type(CleanType.ShiJianZhuanHuan.getCode());
 		dateFormat.setOld_format("YYYY-MM-DD");
 		dateFormat.setConvert_format("YYYY-MM");
+
+		//column_clean表测试数据，给user_type设置码值转换
+		Column_clean codeValue = new Column_clean();
+		codeValue.setCol_clean_id(999989L);
+		codeValue.setColumn_id(2010L);
+		codeValue.setCodename("codeClassify_one");
+		codeValue.setCodesys("origSysCode_one");
+		codeValue.setClean_type(CleanType.MaZhiZhuanHuan.getCode());
 
 		//13、column_clean表测试数据，给ci_sp_name（3004L）设置列拆分
 		Column_clean spilt = new Column_clean();
@@ -540,6 +562,10 @@ public class InitAndDestDataForFileConf {
 		mergeColumn.setValid_s_date(DateUtil.getSysDate());
 		mergeColumn.setValid_e_date(Constant.MAXDATE);
 
+		List<Orig_syso_info> origSysoInfos = BaseInitData.buildOrigSysInfo();
+
+		List<Orig_code_info> origCodeInfos = BaseInitData.buildOrigCodeInfo();
+
 		//插入数据
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			//插入用户表(sys_user)测试数据
@@ -620,7 +646,9 @@ public class InitAndDestDataForFileConf {
 			columnCleanCount += spiltCount;
 			int spiltTwoCount = spiltTwo.add(db);
 			columnCleanCount += spiltTwoCount;
-			assertThat("列清洗参数信息表测试数据初始化", columnCleanCount, is(6));
+			int cvcCount = codeValue.add(db);
+			columnCleanCount += cvcCount;
+			assertThat("列清洗参数信息表测试数据初始化", columnCleanCount, is(7));
 
 			//插入clean_parameter表测试数据
 			int cleanParameterCount = 0;
@@ -661,6 +689,22 @@ public class InitAndDestDataForFileConf {
 			//由于配置了列合并，需要把合并后的列入到table_column表中
 			int mergeColumnCount = mergeColumn.add(db);
 			assertThat("把合并后的列入到table_column表中", mergeColumnCount, is(1));
+
+			//插入orig_syso_info表测试数据
+			int origSysoInfoCount = 0;
+			for(Orig_syso_info origSysoInfo : origSysoInfos){
+				int count = origSysoInfo.add(db);
+				origSysoInfoCount += count;
+			}
+			assertThat("插入orig_syso_info表测试数据成功", origSysoInfoCount, is(3));
+
+			//插入orig_code_info表测试数据
+			int origCodeInfoCount = 0;
+			for(Orig_code_info origCodeInfo : origCodeInfos){
+				int count = origCodeInfo.add(db);
+				origCodeInfoCount += count;
+			}
+			assertThat("插入orig_code_info表测试数据成功", origCodeInfoCount, is(3));
 
 			SqlOperator.commitTransaction(db);
 		}
@@ -703,7 +747,15 @@ public class InitAndDestDataForFileConf {
 			SqlOperator.execute(db, "delete from " + Column_split.TableName + " where column_id = ? ", 3003L);
 			//11、删除column_merge表测试数据
 			SqlOperator.execute(db, "delete from " + Column_merge.TableName + " where table_id = ? ", SYS_USER_TABLE_ID);
-			//11、提交事务后
+			//12、删除orig_syso_info表数据
+			SqlOperator.execute(db, "delete from " + Orig_syso_info.TableName + " where Orig_sys_code = ? ", "origSysCode_one");
+			SqlOperator.execute(db, "delete from " + Orig_syso_info.TableName + " where Orig_sys_code = ? ", "origSysCode_two");
+			SqlOperator.execute(db, "delete from " + Orig_syso_info.TableName + " where Orig_sys_code = ? ", "origSysCode_three");
+			//13、删除orig_code_info表数据
+			SqlOperator.execute(db, "delete from " + Orig_code_info.TableName + " where orig_id = ? ", 6001L);
+			SqlOperator.execute(db, "delete from " + Orig_code_info.TableName + " where orig_id = ? ", 6002L);
+			SqlOperator.execute(db, "delete from " + Orig_code_info.TableName + " where orig_id = ? ", 6003L);
+			//14、提交事务后
 			SqlOperator.commitTransaction(db);
 		}
 	}

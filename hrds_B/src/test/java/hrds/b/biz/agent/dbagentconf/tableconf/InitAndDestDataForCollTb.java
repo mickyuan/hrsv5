@@ -62,6 +62,8 @@ public class InitAndDestDataForCollTb {
 			String tableChName;
 			String customizeSQL;
 			String customizFlag;
+			String parallelFlag;
+			String pageSql;
 			switch (i) {
 				case 1:
 					tableId = SYS_USER_TABLE_ID;
@@ -69,6 +71,8 @@ public class InitAndDestDataForCollTb {
 					tableChName = "用户表";
 					customizeSQL = "select * from sys_user where user_id = 2001";
 					customizFlag = IsFlag.Fou.getCode();
+					parallelFlag = IsFlag.Fou.getCode();
+					pageSql = "";
 					break;
 				case 2:
 					tableId = CODE_INFO_TABLE_ID;
@@ -76,6 +80,8 @@ public class InitAndDestDataForCollTb {
 					tableChName = "代码信息表";
 					customizeSQL = "";
 					customizFlag = IsFlag.Fou.getCode();
+					parallelFlag = IsFlag.Shi.getCode();
+					pageSql = "select * from code_info limit 10";
 					break;
 				case 3:
 					tableId = AGENT_INFO_TABLE_ID;
@@ -83,6 +89,8 @@ public class InitAndDestDataForCollTb {
 					tableChName = "Agent信息表";
 					customizeSQL = "select * from agent_info";
 					customizFlag = IsFlag.Shi.getCode();
+					parallelFlag = IsFlag.Fou.getCode();
+					pageSql = "";
 					break;
 				case 4:
 					tableId = DATA_SOURCE_TABLE_ID;
@@ -90,6 +98,8 @@ public class InitAndDestDataForCollTb {
 					tableChName = "数据源表";
 					customizeSQL = "select * from data_source";
 					customizFlag = IsFlag.Shi.getCode();
+					parallelFlag = IsFlag.Fou.getCode();
+					pageSql = "";
 					break;
 				default:
 					tableId = 0L;
@@ -97,6 +107,8 @@ public class InitAndDestDataForCollTb {
 					tableChName = "unexpected_tableChName";
 					customizeSQL = "unexpected_customizeSQL";
 					customizFlag = "error_customizFlag";
+					parallelFlag = "error_parallelFlag";
+					pageSql = "unexpected_pageSql";
 			}
 			Table_info tableInfo = new Table_info();
 			tableInfo.setTable_id(tableId);
@@ -111,6 +123,8 @@ public class InitAndDestDataForCollTb {
 			tableInfo.setTi_or(tableCleanOrder.toJSONString());
 			tableInfo.setIs_md5(IsFlag.Shi.getCode());
 			tableInfo.setIs_register(IsFlag.Shi.getCode());
+			tableInfo.setIs_parallel(parallelFlag);
+			tableInfo.setPage_sql(pageSql);
 
 			tableInfos.add(tableInfo);
 		}

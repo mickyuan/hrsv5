@@ -36,71 +36,75 @@ import static org.hamcrest.MatcherAssert.assertThat;
  */
 public class DataSourceActionTest extends WebBaseTestCase {
     // 测试登录用户ID
-    private static final long UserId = 3333L;
+    private static final long UserId = 6666L;
+    // 测试数据采集用户
+    private static final long CollectUserId = 1234L;
     // 初始化创建用户ID
     private static final long CreateId = 1000L;
     // 测试数据源 SourceId
-    private static final long SourceId = -100000001L;
+    private static final long SourceId = 10000001L;
     // 测试数据源 SourceId,新建数据源，下面没有agent
-    private static final long SourceId2 = -100000002L;
+    private static final long SourceId2 = 10000002L;
     // 测试数据库 agent_id
-    private static final long DBAgentId = -200000011L;
+    private static final long DBAgentId = 20000011L;
     // 测试数据文件 agent_id
-    private static final long DFAgentId = -200000012L;
+    private static final long DFAgentId = 20000012L;
     // 测试非结构化 agent_id
-    private static final long UnsAgentId = -200000013L;
+    private static final long UnsAgentId = 20000013L;
     // 测试半结构化 agent_id
-    private static final long SemiAgentId = -200000014L;
+    private static final long SemiAgentId = 20000014L;
     // 测试FTP agent_id
-    private static final long FTPAgentId = -200000015L;
+    private static final long FTPAgentId = 20000015L;
     // 测试部门ID dep_id,测试第一部门
-    private static final long DepId1 = -300000011L;
+    private static final long DepId1 = 30000011L;
     // 测试部门ID dep_id 测试第二部门
-    private static final long DepId2 = -300000012L;
+    private static final long DepId2 = 30000012L;
     // 测试agent_down_info down_id
-    private static final long DownId = -300000001L;
+    private static final long DownId = 30000001L;
     // 测试 分类ID，classify_id
-    private static final long ClassifyId = -400000001L;
+    private static final long ClassifyId = 40000001L;
     // 测试 数据库设置ID，DatabaseId
-    private static final long DatabaseId = -500000001L;
+    private static final long DatabaseId = 50000001L;
     // 测试 ftp_collect表ID，ftp_id
-    private static final long FtpId = -500000011L;
+    private static final long FtpId = 50000011L;
     // 测试 ftp_collect表ID，ftp_transfered_id
-    private static final long FtpTransferedId = -500000012L;
+    private static final long FtpTransferedId = 50000012L;
     // 测试 ftp_folder表ID，ftp_folder_id
-    private static final long FtpFolderId = -500000091L;
+    private static final long FtpFolderId = 50000091L;
     // 测试 object_collect表ID，odc_id
-    private static final long OdcId = -500000101L;
+    private static final long OdcId = 50000101L;
     // 测试 object_collect_task表ID，ocs_id
-    private static final long OcsId = -500000102L;
+    private static final long OcsId = 50000102L;
     // 测试 object_storage表ID，obj_stid
-    private static final long ObjStid = -500000103L;
+    private static final long ObjStid = 50000103L;
     // 测试 object_collect_struct表ID，struct_id
-    private static final long StructId = -500000104L;
+    private static final long StructId = 50000104L;
     // 测试 file_collect_set表ID，fcs_id
-    private static final long FcsId = -500000105L;
+    private static final long FcsId = 50000105L;
     // 测试 file_source表ID，file_source_id
-    private static final long FileSourceId = -500000106L;
+    private static final long FileSourceId = 50000106L;
     // 测试 signal_file表ID，signal_id
-    private static final long SignalId = -500000107L;
+    private static final long SignalId = 50000107L;
     // 测试 table_info表ID，table_id
-    private static final long TableId = -500000108L;
+    private static final long TableId = 50000108L;
     // 测试 column_merge表ID，col_merge_id
-    private static final long ColumnMergeId = -500000109L;
+    private static final long ColumnMergeId = 50000109L;
     // 测试 table_storage_info表ID，storage_id
-    private static final long StorageId = -500000110L;
+    private static final long StorageId = 50000110L;
     // 测试 table_clean表ID，table_clean_id
-    private static final long TableCleanId = -500000111L;
+    private static final long TableCleanId = 50000111L;
     // 测试 table_column表ID，column_id
-    private static final long ColumnId = -500000112L;
+    private static final long ColumnId = 50000112L;
     // 测试 column_clean表ID，col_clean_id
-    private static final long ColumnCleanId = -500000113L;
+    private static final long ColumnCleanId = 50000113L;
     // 测试 column_split表ID，col_split_id
-    private static final long ColSplitId = -500000114L;
+    private static final long ColSplitId = 50000114L;
     // 测试 source_file_attribute表ID，file_id
     private static final String FileId = "200000000000";
     // 测试 data_auth表ID，da_id
-    private static final long DaId = -500000115L;
+    private static final long DaId = 50000115L;
+    private static final String SysDate = DateUtil.getSysDate();
+    private static final String SysTime = DateUtil.getSysTime();
 
     @Method(desc = "初始化测试用例数据", logicStep = "1.构建数据源data_source表测试数据" +
             "2.构造department_info部门表测试数据" +
@@ -157,7 +161,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
             "22.table_column表，有1条数据，column_id为ColumnId" +
             "23.column_clean表，有1条数据，col_clean_id为ColumnCleanId" +
             "24.column_split表，有1条数据，col_split_id为ColSplitId" +
-            "25.sys_user表，有1条数据，user_id为UserId" +
+            "25.sys_user表，有2条数据，user_id为UserId,CollectUserId" +
             "26.source_file_attribute表，有一条数据,file_id为FileId" +
             "27.data_auth表，有一条数据，da_id为DaId")
     @Before
@@ -176,8 +180,8 @@ public class DataSourceActionTest extends WebBaseTestCase {
                     data_source.setDatasource_number("ds02");
                 }
                 data_source.setDatasource_name("dsName" + i);
-                data_source.setCreate_date(DateUtil.getSysDate());
-                data_source.setCreate_time(DateUtil.getSysTime());
+                data_source.setCreate_date(SysDate);
+                data_source.setCreate_time(SysTime);
                 data_source.setCreate_user_id(UserId);
                 data_source.setSource_remark("数据源详细描述" + i);
                 data_source.setDatasource_remark("备注" + i);
@@ -196,8 +200,8 @@ public class DataSourceActionTest extends WebBaseTestCase {
                     department_info.setDep_id(DepId2);
                     department_info.setDep_name("测试第" + (i + 1) + "部门");
                 }
-                department_info.setCreate_date(DateUtil.getSysDate());
-                department_info.setCreate_time(DateUtil.getSysTime());
+                department_info.setCreate_date(SysDate);
+                department_info.setCreate_time(SysTime);
                 department_info.setDep_remark("测试");
                 int diNum = department_info.add(db);
                 assertThat("测试数据department_info初始化", diNum, is(1));
@@ -233,35 +237,43 @@ public class DataSourceActionTest extends WebBaseTestCase {
             for (int i = 0; i < 5; i++) {
                 // 封装agent_info数据
                 agent_info.setSource_id(SourceId);
-                agent_info.setCreate_date(DateUtil.getSysDate());
-                agent_info.setCreate_time(DateUtil.getSysTime());
-                agent_info.setAgent_ip("10.71.4.51");
+                agent_info.setCreate_date(SysDate);
+                agent_info.setCreate_time(SysTime);
                 agent_info.setUser_id(UserId);
-                agent_info.setAgent_port("34567");
                 // 初始化不同类型的agent
                 if (i == 1) {
                     // 数据库 agent
+                    agent_info.setAgent_ip("10.71.4.51");
+                    agent_info.setAgent_port("4561");
                     agent_info.setAgent_id(DBAgentId);
                     agent_info.setAgent_type(AgentType.ShuJuKu.getCode());
                     agent_info.setAgent_name("sjkAgent");
                 } else if (i == 2) {
                     // 数据文件 Agent
+                    agent_info.setAgent_ip("10.71.4.52");
+                    agent_info.setAgent_port("4562");
                     agent_info.setAgent_id(DFAgentId);
                     agent_info.setAgent_type(AgentType.DBWenJian.getCode());
                     agent_info.setAgent_name("DFAgent");
 
                 } else if (i == 3) {
                     // 非结构化 Agent
+                    agent_info.setAgent_ip("10.71.4.53");
+                    agent_info.setAgent_port("4563");
                     agent_info.setAgent_id(UnsAgentId);
                     agent_info.setAgent_type(AgentType.WenJianXiTong.getCode());
                     agent_info.setAgent_name("UnsAgent");
                 } else if (i == 4) {
                     // 半结构化 Agent
+                    agent_info.setAgent_ip("10.71.4.54");
+                    agent_info.setAgent_port("4564");
                     agent_info.setAgent_id(SemiAgentId);
                     agent_info.setAgent_type(AgentType.DuiXiang.getCode());
                     agent_info.setAgent_name("SemiAgent");
                 } else {
                     // FTP Agent
+                    agent_info.setAgent_ip("10.71.4.55");
+                    agent_info.setAgent_port("4565");
                     agent_info.setAgent_id(FTPAgentId);
                     agent_info.setAgent_type(AgentType.FTP.getCode());
                     agent_info.setAgent_name("FTPAgent");
@@ -283,19 +295,28 @@ public class DataSourceActionTest extends WebBaseTestCase {
             }
             // 5.构造sys_user表测试数据
             Sys_user sysUser = new Sys_user();
-            sysUser.setUser_id(UserId);
-            sysUser.setCreate_id(CreateId);
-            sysUser.setDep_id(DepId1);
-            sysUser.setCreate_date(DateUtil.getSysDate());
-            sysUser.setCreate_time(DateUtil.getSysTime());
-            sysUser.setRole_id("1001");
-            sysUser.setUser_name("数据源功能测试");
-            sysUser.setUser_password("1");
-            sysUser.setUser_type(UserType.CaiJiYongHu.getCode());
-            sysUser.setUseris_admin("1");
-            sysUser.setUsertype_group("02,03,04,08");
-            sysUser.setUser_state(IsFlag.Shi.getCode());
-            sysUser.add(db);
+            for (int i = 0; i < 2; i++) {
+                if (i == 0) {
+                    sysUser.setUser_id(UserId);
+                    sysUser.setDep_id(DepId1);
+                    sysUser.setUser_name("数据源功能测试");
+                } else {
+                    sysUser.setUser_id(CollectUserId);
+                    sysUser.setDep_id(DepId2);
+                    sysUser.setUser_name("采集用户功能测试");
+                }
+                sysUser.setCreate_id(CreateId);
+                sysUser.setCreate_date(SysDate);
+                sysUser.setCreate_time(SysTime);
+                sysUser.setRole_id("1001");
+                sysUser.setUser_password("1");
+                sysUser.setUser_type(UserType.CaiJiYongHu.getCode());
+                sysUser.setUseris_admin("1");
+                sysUser.setUsertype_group("02,03,04,08");
+                sysUser.setUser_state(IsFlag.Shi.getCode());
+                sysUser.add(db);
+            }
+
             // 6.构造database_set表测试数据
             Database_set databaseSet = new Database_set();
             databaseSet.setDatabase_id(DatabaseId);
@@ -305,8 +326,9 @@ public class DataSourceActionTest extends WebBaseTestCase {
             databaseSet.setDatabase_drive("org.postgresql.Driver");
             databaseSet.setDatabase_ip("10.71.4.51");
             databaseSet.setDatabase_name("数据库采集测试");
-            databaseSet.setDatabase_number("-50000000");
+            databaseSet.setDatabase_number("cs01");
             databaseSet.setDatabase_pad("hrsdxg");
+            databaseSet.setUser_name("hrsdxg");
             databaseSet.setDatabase_port("34567");
             databaseSet.setDbfile_format(FileFormat.CSV.getCode());
             databaseSet.setIs_sendok(IsFlag.Fou.getCode());
@@ -349,7 +371,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
             ftpCollect.setFtp_id(FtpId);
             ftpCollect.setFtp_number("ftpcj01");
             ftpCollect.setFtp_name("ftp采集");
-            ftpCollect.setStart_date(DateUtil.getSysDate());
+            ftpCollect.setStart_date(SysDate);
             ftpCollect.setEnd_date("99991231");
             ftpCollect.setFtp_ip("10.71.4.52");
             ftpCollect.setFtp_port("34567");
@@ -364,21 +386,22 @@ public class DataSourceActionTest extends WebBaseTestCase {
             ftpCollect.setIs_unzip(IsFlag.Shi.getCode());
             ftpCollect.setAgent_id(DBAgentId);
             ftpCollect.setIs_read_realtime(IsFlag.Shi.getCode());
+            ftpCollect.setRealtime_interval(1L);
             ftpCollect.add(db);
             // 10.构造ftp_transfered表测试数据
             Ftp_transfered ftpTransfered = new Ftp_transfered();
             ftpTransfered.setFtp_transfered_id(FtpTransferedId);
             ftpTransfered.setFtp_id(FtpId);
-            ftpTransfered.setFtp_date(DateUtil.getSysDate());
-            ftpTransfered.setFtp_time(DateUtil.getSysTime());
+            ftpTransfered.setFtp_date(SysDate);
+            ftpTransfered.setFtp_time(SysTime);
             ftpTransfered.setTransfered_name("ftp传输测试");
             ftpTransfered.add(db);
             // 11.构造ftp_folder表测试数据
             Ftp_folder ftpFolder = new Ftp_folder();
             ftpFolder.setFtp_folder_id(FtpFolderId);
             ftpFolder.setFtp_id(FtpId);
-            ftpFolder.setFtp_date(DateUtil.getSysDate());
-            ftpFolder.setFtp_time(DateUtil.getSysTime());
+            ftpFolder.setFtp_date(SysDate);
+            ftpFolder.setFtp_time(SysTime);
             ftpFolder.setFtp_folder_name("ftp采集目录");
             ftpFolder.setIs_processed(IsFlag.Shi.getCode());
             ftpFolder.add(db);
@@ -391,12 +414,14 @@ public class DataSourceActionTest extends WebBaseTestCase {
             objectCollect.setFile_path("/home/hyshf/objCollect");
             objectCollect.setHost_name("10.71.4.52");
             objectCollect.setIs_sendok(IsFlag.Shi.getCode());
-            objectCollect.setLocal_time(DateUtil.getSysDate());
+            objectCollect.setLocal_time(DateUtil.parseStr2DateWith8Char(SysDate) + " "
+                    + DateUtil.parseStr2TimeWith6Char(SysTime));
             objectCollect.setObj_collect_name("对象采集测试");
             objectCollect.setObj_number("dxcj01");
             objectCollect.setRun_way(ExecuteWay.AnShiQiDong.getCode());
-            objectCollect.setS_date(DateUtil.getSysDate());
-            objectCollect.setServer_date(DateUtil.getSysDate());
+            objectCollect.setS_date(SysDate);
+            objectCollect.setServer_date(DateUtil.parseStr2DateWith8Char(SysDate) + " "
+                    + DateUtil.parseStr2TimeWith6Char(SysTime));
             objectCollect.setSystem_name("windows");
             objectCollect.setObject_collect_type(ObjectCollectType.DuiXiangCaiJi.getCode());
             objectCollect.add(db);
@@ -472,24 +497,25 @@ public class DataSourceActionTest extends WebBaseTestCase {
             tableInfo.setIs_user_defined(IsFlag.Fou.getCode());
             tableInfo.setTable_ch_name("agent_info");
             tableInfo.setTable_name("agent_info");
-            tableInfo.setValid_s_date(DateUtil.getSysDate());
+            tableInfo.setValid_s_date(SysDate);
             tableInfo.setValid_e_date("99991231");
+            tableInfo.setIs_parallel(IsFlag.Shi.getCode());
             tableInfo.add(db);
             // 20.构造column_merge表测试数据
             Column_merge columnMerge = new Column_merge();
             columnMerge.setCol_merge_id(ColumnMergeId);
             columnMerge.setTable_id(TableId);
             columnMerge.setCol_name("agentAddress");
-            columnMerge.setCol_type(CollectType.ShuJuKuCaiJi.getCode());
+            columnMerge.setCol_type("1");
             columnMerge.setCol_zhname("agent地址");
             columnMerge.setOld_name("agent_ip");
-            columnMerge.setValid_s_date(DateUtil.getSysDate());
+            columnMerge.setValid_s_date(SysDate);
             columnMerge.setValid_e_date("99991231");
             columnMerge.add(db);
             // 21.构造table_storage_info表测试数据
             Table_storage_info tableStorageInfo = new Table_storage_info();
             tableStorageInfo.setStorage_id(StorageId);
-            tableStorageInfo.setStorage_time(DateUtil.getSysTime());
+            tableStorageInfo.setStorage_time(1L);
             tableStorageInfo.setTable_id(TableId);
             tableStorageInfo.setFile_format(FileFormat.CSV.getCode());
             tableStorageInfo.setIs_everyday(IsFlag.Fou.getCode());
@@ -503,7 +529,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
             tableClean.setFilling_length(1L);
             tableClean.setCharacter_filling("#");
             tableClean.setField("create_date");
-            tableClean.setClean_type(CleanType.MaZhiZhuanHuan.getCode());
+            tableClean.setClean_type(CleanType.ZiFuBuQi.getCode());
             tableClean.setFilling_type(FillingType.HouBuQi.getCode());
             tableClean.setReplace_feild("agent_ip");
             tableClean.add(db);
@@ -513,7 +539,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
             tableColumn.setTable_id(TableId);
             tableColumn.setColume_name("create_date");
             tableColumn.setIs_primary_key(IsFlag.Fou.getCode());
-            tableColumn.setValid_s_date(DateUtil.getSysDate());
+            tableColumn.setValid_s_date(SysDate);
             tableColumn.setValid_e_date("99991231");
             tableColumn.setIs_alive(IsFlag.Shi.getCode());
             tableColumn.setIs_new(IsFlag.Fou.getCode());
@@ -524,7 +550,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
             columnClean.setColumn_id(ColumnId);
             columnClean.setFilling_length(1L);
             columnClean.setCharacter_filling("#");
-            columnClean.setClean_type(CleanType.MaZhiZhuanHuan.getCode());
+            columnClean.setClean_type(CleanType.ZiFuBuQi.getCode());
             columnClean.setCodename("是");
             columnClean.setCodesys("1");
             columnClean.add(db);
@@ -535,7 +561,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
             columnSplit.setCol_clean_id(ColumnCleanId);
             columnSplit.setCol_type("1");
             columnSplit.setSplit_type(CharSplitType.ZhiDingFuHao.getCode());
-            columnSplit.setValid_s_date(DateUtil.getSysDate());
+            columnSplit.setValid_s_date(SysDate);
             columnSplit.setValid_e_date("99991231");
             columnSplit.setColumn_id(ColumnId);
             columnSplit.add(db);
@@ -572,13 +598,13 @@ public class DataSourceActionTest extends WebBaseTestCase {
             sourceFileAttribute.setIs_in_hbase(IsFlag.Fou.getCode());
             sourceFileAttribute.setSeqencing(0L);
             sourceFileAttribute.setCollect_type(CollectType.ShuJuKuCaiJi.getCode());
-            sourceFileAttribute.setOriginal_update_date(DateUtil.getSysDate());
-            sourceFileAttribute.setOriginal_update_time(DateUtil.getSysTime());
+            sourceFileAttribute.setOriginal_update_date(SysDate);
+            sourceFileAttribute.setOriginal_update_time(SysTime);
             sourceFileAttribute.setTable_name("agentInfo");
             sourceFileAttribute.setHbase_name("agent_info");
             sourceFileAttribute.setMeta_info("init-dhw");
-            sourceFileAttribute.setStorage_date(DateUtil.getSysDate());
-            sourceFileAttribute.setStorage_time(DateUtil.getSysTime());
+            sourceFileAttribute.setStorage_date(SysDate);
+            sourceFileAttribute.setStorage_time(SysTime);
             sourceFileAttribute.setFile_size(BigDecimal.valueOf(1024));
             sourceFileAttribute.setSource_path("/home/hyshf/dhw");
             sourceFileAttribute.setFile_md5("fsfsdfsfsf");
@@ -613,8 +639,8 @@ public class DataSourceActionTest extends WebBaseTestCase {
                         dataAuth.setAuth_type(AuthType.YiCi.getCode());
                         break;
                 }
-                dataAuth.setApply_date(DateUtil.getSysDate());
-                dataAuth.setApply_time(DateUtil.getSysTime());
+                dataAuth.setApply_date(SysDate);
+                dataAuth.setApply_time(SysTime);
                 dataAuth.setFile_id(FileId);
                 dataAuth.setUser_id(UserId);
                 dataAuth.setDep_id(DepId1);
@@ -747,10 +773,14 @@ public class DataSourceActionTest extends WebBaseTestCase {
             // 5.测试完成后删除sys_user表测试数据
             SqlOperator.execute(db, "delete from sys_user where user_id=?", UserId);
             // 判断sys_user表数据是否被删除
-            long userNum =
-                    SqlOperator.queryNumber(db, "select count(1) from sys_user where user_id=?",
-                            UserId).orElseThrow(() -> new RuntimeException("count fail!"));
+            long userNum = SqlOperator.queryNumber(db, "select count(1) from sys_user where user_id=?",
+                    UserId).orElseThrow(() -> new RuntimeException("count fail!"));
             assertThat("此条数据删除后，记录数应该为0", userNum, is(0L));
+            SqlOperator.execute(db, "delete from sys_user where user_id=?", CollectUserId);
+            // 判断sys_user表数据是否被删除
+            long userNum2 = SqlOperator.queryNumber(db, "select count(1) from sys_user where user_id=?",
+                    CollectUserId).orElseThrow(() -> new RuntimeException("count fail!"));
+            assertThat("此条数据删除后，记录数应该为0", userNum2, is(0L));
             // 6.测试完成后删除agent_down_info表测试数据
             SqlOperator.execute(db, "delete from agent_down_info where down_id=?", DownId);
             SqlOperator.execute(db, "delete from agent_down_info where user_id=?", UserId);
@@ -1334,7 +1364,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
         }
     }
 
-    @Method(desc = "新增/更新数据源测试",
+    @Method(desc = "新数据源测试",
             logicStep = "1.正确的数据访问1，测试数据源新增功能,数据都有效" +
                     "2.错误的数据访问1，新增数据源信息,数据源名称不能为空" +
                     "3.错误的数据访问2，新增数据源信息,数据源名称不能为空格" +
@@ -1493,7 +1523,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
         assertThat("测试第1部门,测试第2部门", is(dataResource.get("dep_name")));
 
         // 2.错误的数据访问1，查询数据源信息，此数据源下没有数据
-        bodyString = new HttpClient().addData("source_id", -1000000009L)
+        bodyString = new HttpClient().addData("source_id", 1000009L)
                 .post(getActionUrl("searchDataSourceById")).getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -1558,7 +1588,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .addData("source_remark", "测试")
                 .addData("datasource_name", "")
                 .addData("datasource_number", "up02")
-                .addData("dep_id", "-1000000001")
+                .addData("dep_id", "100001")
                 .post(getActionUrl("updateDataSource")).getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -1635,7 +1665,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .addData("source_remark", "测试")
                 .addData("datasource_name", "dsName06")
                 .addData("datasource_number", "up06")
-                .addData("dep_id", "-101")
+                .addData("dep_id", "101")
                 .post(getActionUrl("updateDataSource")).getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -1701,7 +1731,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 
             // 3.错误的数据访问2，删除数据源信息，此数据源下没有数据
             bodyString = new HttpClient()
-                    .addData("source_id", -1000000009L)
+                    .addData("source_id", 100009L)
                     .post(getActionUrl("deleteDataSource"))
                     .getBodyString();
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -1723,7 +1753,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
         assertThat(bodyString, is(notNullValue()));
         // 2.错误的数据访问1，数据源下载,source_id不存在
         bodyString = new HttpClient()
-                .addData("source_id", -100L)
+                .addData("source_id", 100L)
                 .post(getActionUrl("downloadFile"))
                 .getBodyString();
         assertThat(bodyString, is(""));
@@ -1743,82 +1773,245 @@ public class DataSourceActionTest extends WebBaseTestCase {
         String bodyString = new HttpClient()
                 .addData("agent_ip", "10.71.4.51")
                 .addData("agent_port", "4321")
-                .addData("user_id", UserId)
+                .addData("user_id", CollectUserId)
                 .addData("file", filePath)
                 .post(getActionUrl("uploadFile"))
                 .getBodyString();
         ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
         assertThat(ar.isSuccess(), is(true));
-        // 验证导入数据是否成功，查询的数据会比初始化的数据多一倍，因为导入时主键会发生变化，新增主键
+        // 验证导入数据是否成功
         try (DatabaseWrapper db = new DatabaseWrapper()) {
-            long num = SqlOperator.queryNumber(db, "select count(1) from data_source where" +
-                    " datasource_name=?", "dsName0").orElseThrow(() ->
-                    new RuntimeException("count fail!"));
-            assertThat("导入data_source表一条数据", num, is(2L));
-            num = SqlOperator.queryNumber(db, "select count(1) from agent_info where source_id=?",
-                    SourceId).orElseThrow(() -> new RuntimeException("count fail!"));
-            assertThat("导入agent_info表5条数据", num, is(10L));
-            num = SqlOperator.queryNumber(db, "select count(2) from agent_down_info where agent_id=?",
-                    DFAgentId).orElseThrow(() -> new RuntimeException("count fail!"));
-            assertThat("导入agent_down_info表一条数据", num, is(2L));
-            num = SqlOperator.queryNumber(db, "select count(2) from database_set where " +
-                    "agent_id=?", DBAgentId).orElseThrow(() -> new RuntimeException("count fail!"));
-            assertThat("导入database_set表一条数据", num, is(2L));
-            num = SqlOperator.queryNumber(db, "select count(2) from collect_job_classify where " +
-                    "agent_id=?", DBAgentId).orElseThrow(() -> new RuntimeException("count fail!"));
-            assertThat("导入collect_job_classify表一条数据", num, is(2L));
-            num = SqlOperator.queryNumber(db, "select count(2) from ftp_collect where " +
-                    "agent_id=?", DBAgentId).orElseThrow(() -> new RuntimeException("count fail!"));
-            assertThat("导入ftp_collect表一条数据", num, is(2L));
-            num = SqlOperator.queryNumber(db, "select count(2) from ftp_transfered where " +
-                    "ftp_id=?", FtpId).orElseThrow(() -> new RuntimeException("count fail!"));
-            assertThat("导入ftp_transfered表一条数据", num, is(2L));
-            num = SqlOperator.queryNumber(db, "select count(2) from ftp_folder where " +
-                    "ftp_id=?", FtpId).orElseThrow(() -> new RuntimeException("count fail!"));
-            assertThat("导入ftp_folder表一条数据", num, is(2L));
-            num = SqlOperator.queryNumber(db, "select count(2) from object_collect where " +
-                    "agent_id=?", DBAgentId).orElseThrow(() -> new RuntimeException("count fail!"));
-            assertThat("导入object_collect表一条数据", num, is(2L));
-            num = SqlOperator.queryNumber(db, "select count(2) from object_collect_task where " +
-                    "odc_id=?", OdcId).orElseThrow(() -> new RuntimeException("count fail!"));
-            assertThat("导入object_collect_task表一条数据", num, is(2L));
-            num = SqlOperator.queryNumber(db, "select count(2) from object_storage where " +
-                    "ocs_id=?", OcsId).orElseThrow(() -> new RuntimeException("count fail!"));
-            assertThat("导入object_storage表一条数据", num, is(2L));
-            num = SqlOperator.queryNumber(db, "select count(2) from object_collect_struct where " +
-                    "ocs_id=?", OcsId).orElseThrow(() -> new RuntimeException("count fail!"));
-            assertThat("导入object_collect_struct表一条数据", num, is(2L));
-            num = SqlOperator.queryNumber(db, "select count(2) from file_collect_set where " +
-                    "agent_id=?", DBAgentId).orElseThrow(() -> new RuntimeException("count fail!"));
-            assertThat("导入file_collect_set表一条数据", num, is(2L));
-            num = SqlOperator.queryNumber(db, "select count(2) from file_source where " +
-                    "agent_id=?", DBAgentId).orElseThrow(() -> new RuntimeException("count fail!"));
-            assertThat("导入file_source表一条数据", num, is(2L));
-            num = SqlOperator.queryNumber(db, "select count(2) from signal_file where " +
-                    "database_id=?", DatabaseId).orElseThrow(() -> new RuntimeException("count fail!"));
-            assertThat("导入signal_file表一条数据", num, is(2L));
-            num = SqlOperator.queryNumber(db, "select count(2) from table_info where " +
-                    "database_id=?", DatabaseId).orElseThrow(() -> new RuntimeException("count fail!"));
-            assertThat("导入table_info表一条数据", num, is(2L));
-            num = SqlOperator.queryNumber(db, "select count(2) from column_merge where " +
-                    "table_id=?", TableId).orElseThrow(() -> new RuntimeException("count fail!"));
-            assertThat("导入column_merge表一条数据", num, is(2L));
-            num = SqlOperator.queryNumber(db, "select count(2) from table_storage_info where " +
-                    "table_id=?", TableId).orElseThrow(() -> new RuntimeException("count fail!"));
-            assertThat("导入table_storage_info表一条数据", num, is(2L));
-            num = SqlOperator.queryNumber(db, "select count(2) from table_clean where " +
-                    "table_id=?", TableId).orElseThrow(() -> new RuntimeException("count fail!"));
-            assertThat("导入table_clean表一条数据", num, is(2L));
-            num = SqlOperator.queryNumber(db, "select count(2) from table_column where " +
-                    "table_id=?", TableId).orElseThrow(() -> new RuntimeException("count fail!"));
-            assertThat("导入table_column表一条数据", num, is(2L));
-            num = SqlOperator.queryNumber(db, "select count(2) from column_clean where " +
-                    "column_id=?", ColumnId).orElseThrow(() -> new RuntimeException("count fail!"));
-            assertThat("导入column_clean表一条数据", num, is(2L));
-            num = SqlOperator.queryNumber(db, "select count(2) from column_split where " +
-                    "column_id=?", ColumnId).orElseThrow(() -> new RuntimeException("count fail!"));
-            assertThat("导入column_split表一条数据", num, is(2L));
+            Data_source dataSource = SqlOperator.queryOneObject(db, Data_source.class,
+                    "select * from data_source where datasource_name=? and source_id<>?",
+                    "dsName0", SourceId).orElseThrow(() -> new BusinessException("sql执行错误!"));
+            // 导入会替换原来的主键，这里只判断可以确认的数据，例如时间日期取得系统时间，不好确认，主键也无法确定自动生成
+            assertThat(dataSource.getDatasource_name(), is("dsName0"));
+            assertThat(dataSource.getDatasource_number(), is("ds01"));
+            assertThat(dataSource.getSource_remark(), is("数据源详细描述0"));
+            assertThat(dataSource.getDatasource_remark(), is("备注0"));
+            assertThat(dataSource.getCreate_user_id(), is(UserId));
+            List<Agent_info> agentInfoList = SqlOperator.queryList(db, Agent_info.class, "select * from " +
+                    " agent_info where source_id=?", dataSource.getSource_id());
+            long dfAgentId = 0;
+            long dbAgentId = 0;
+            for (Agent_info agentInfo : agentInfoList) {
+                if (agentInfo.getAgent_name().equals("sjkAgent")) {
+                    dbAgentId = agentInfo.getAgent_id();
+                    assertThat(agentInfo.getAgent_type(), is(AgentType.ShuJuKu.getCode()));
+                    assertThat(agentInfo.getAgent_status(), is(AgentStatus.YiLianJie.getCode()));
+                } else if (agentInfo.getAgent_name().equals("DFAgent")) {
+                    dfAgentId = agentInfo.getAgent_id();
+                    assertThat(agentInfo.getAgent_type(), is(AgentType.DBWenJian.getCode()));
+                    assertThat(agentInfo.getAgent_status(), is(AgentStatus.WeiLianJie.getCode()));
+                } else if (agentInfo.getAgent_name().equals("UnsAgent")) {
+                    assertThat(agentInfo.getAgent_type(), is(AgentType.WenJianXiTong.getCode()));
+                    assertThat(agentInfo.getAgent_status(), is(AgentStatus.WeiLianJie.getCode()));
+                } else if (agentInfo.getAgent_name().equals("SemiAgent")) {
+                    assertThat(agentInfo.getAgent_type(), is(AgentType.DuiXiang.getCode()));
+                    assertThat(agentInfo.getAgent_status(), is(AgentStatus.ZhengZaiYunXing.getCode()));
+                } else if (agentInfo.getAgent_name().equals("FTPAgent")) {
+                    assertThat(agentInfo.getAgent_type(), is(AgentType.FTP.getCode()));
+                    assertThat(agentInfo.getAgent_status(), is(AgentStatus.YiLianJie.getCode()));
+                }
+                assertThat(agentInfo.getAgent_ip(), is("10.71.4.51"));
+                assertThat(agentInfo.getAgent_port(), is("4321"));
+                assertThat(agentInfo.getUser_id(), is(CollectUserId));
+                assertThat(agentInfo.getSource_id(), is(dataSource.getSource_id()));
+            }
+            Agent_down_info agentDownInfo = SqlOperator.queryOneObject(db, Agent_down_info.class,
+                    "select * from agent_down_info where agent_id=?", dfAgentId).orElseThrow(() ->
+                    new RuntimeException("sql查询错误"));
+            assertThat(agentDownInfo.getAgent_ip(), is("10.71.4.51"));
+            assertThat(agentDownInfo.getAgent_port(), is("4321"));
+            assertThat(agentDownInfo.getAgent_name(), is("DFAgent"));
+            assertThat(agentDownInfo.getAgent_pattern(), is("/hrds/agent/trans/biz/AgentServer/" +
+                    "getSystemFileInfo"));
+            assertThat(agentDownInfo.getAgent_context(), is("/agent"));
+            assertThat(agentDownInfo.getLog_dir(), is("/home/hyshf/sjkAgent_34567/log/"));
+            assertThat(agentDownInfo.getPasswd(), is("hyshf"));
+            assertThat(agentDownInfo.getUser_name(), is("hyshf"));
+            assertThat(agentDownInfo.getAi_desc(), is("agent部署"));
+            assertThat(agentDownInfo.getAgent_type(), is(AgentType.DBWenJian.getCode()));
+            assertThat(agentDownInfo.getDeploy(), is(IsFlag.Fou.getCode()));
+            assertThat(agentDownInfo.getSave_dir(), is("/home/hyshf/sjkAgent_34567/"));
+            assertThat(agentDownInfo.getUser_id(), is(CollectUserId));
+            assertThat(agentDownInfo.getRemark(), is("备注"));
+            Collect_job_classify jobClassify = SqlOperator.queryOneObject(db, Collect_job_classify.class,
+                    "select * from collect_job_classify where agent_id=?", dbAgentId).orElseThrow(() ->
+                    new RuntimeException("sql执行错误!"));
+            assertThat(jobClassify.getClassify_name(), is("数据库采集测试"));
+            assertThat(jobClassify.getClassify_num(), is("sjkCs01"));
+            assertThat(jobClassify.getRemark(), is("测试"));
+            assertThat(jobClassify.getUser_id(), is(UserId));
+            Database_set databaseSet = SqlOperator.queryOneObject(db, Database_set.class,
+                    "select * from database_set where agent_id=?", dbAgentId).orElseThrow(() ->
+                    new RuntimeException("sql执行错误!"));
+            assertThat(databaseSet.getDatabase_pad(), is("hrsdxg"));
+            assertThat(databaseSet.getUser_name(), is("hrsdxg"));
+            assertThat(databaseSet.getDatabase_type(), is(DatabaseType.Postgresql.getCode()));
+            assertThat(databaseSet.getDatabase_drive(), is("org.postgresql.Driver"));
+            assertThat(databaseSet.getDatabase_name(), is("数据库采集测试"));
+            assertThat(databaseSet.getJdbc_url(), is("jdbc:postgresql://10.71.4.52:31001/hrsdxgtest"));
+            assertThat(databaseSet.getDatabase_ip(), is("10.71.4.51"));
+            assertThat(databaseSet.getDatabase_port(), is("34567"));
+            assertThat(databaseSet.getDb_agent(), is(IsFlag.Shi.getCode()));
+            assertThat(databaseSet.getTask_name(), is("数据库测试"));
+            assertThat(databaseSet.getIs_sendok(), is(IsFlag.Fou.getCode()));
+            assertThat(databaseSet.getDatabase_code(), is(DataBaseCode.UTF_8.getCode()));
+            assertThat(databaseSet.getDatabase_number(), is("cs01"));
+            assertThat(databaseSet.getDbfile_format(), is(FileFormat.CSV.getCode()));
+            assertThat(databaseSet.getIs_header(), is(IsFlag.Shi.getCode()));
+            assertThat(databaseSet.getIs_hidden(), is(IsFlag.Shi.getCode()));
+            assertThat(databaseSet.getClassify_id(), is(jobClassify.getClassify_id()));
+            Map<String, Object> ftpCollect = SqlOperator.queryOneObject(db,
+                    "select * from " + Ftp_collect.TableName + " where agent_id=?", dbAgentId);
+            assertThat(ftpCollect.get("ftp_username").toString(), is("hrsdxg"));
+            assertThat(ftpCollect.get("ftp_number").toString(), is("ftpcj01"));
+            assertThat(ftpCollect.get("realtime_interval").toString(), is(IsFlag.Shi.getCode()));
+            assertThat(ftpCollect.get("ftp_ip").toString(), is("10.71.4.52"));
+            assertThat(ftpCollect.get("ftp_password").toString(), is("hrsdxg"));
+            assertThat(ftpCollect.get("ftp_port").toString(), is("34567"));
+            assertThat(ftpCollect.get("ftp_rule_path").toString(), is(FtpRule.AnShiJian.getCode()));
+            assertThat(ftpCollect.get("local_path").toString(), is("/home/hyshf/ftp_34567/"));
+            assertThat(ftpCollect.get("run_way").toString(), is(ExecuteWay.AnShiQiDong.getCode()));
+            assertThat(ftpCollect.get("end_date").toString(), is("99991231"));
+            Ftp_transfered ftpTransfered = SqlOperator.queryOneObject(db, Ftp_transfered.class,
+                    "select * from ftp_transfered where ftp_id=?", ftpCollect.get("ftp_id"))
+                    .orElseThrow(() -> new RuntimeException("sql执行错误!"));
+            assertThat(ftpTransfered.getTransfered_name(), is("ftp传输测试"));
+            assertThat(ftpTransfered.getFtp_date(), is(SysDate));
+            Ftp_folder ftpFolder = SqlOperator.queryOneObject(db, Ftp_folder.class,
+                    "select * from ftp_folder where ftp_id=?", ftpCollect.get("ftp_id"))
+                    .orElseThrow(() -> new RuntimeException("sql执行错误!"));
+            assertThat(ftpFolder.getFtp_date(), is(SysDate));
+            assertThat(ftpFolder.getFtp_folder_name(), is("ftp采集目录"));
+            assertThat(ftpFolder.getIs_processed(), is(IsFlag.Shi.getCode()));
+            Object_collect objectCollect = SqlOperator.queryOneObject(db, Object_collect.class,
+                    "select * from object_collect where agent_id=?", dbAgentId).orElseThrow(() ->
+                    new RuntimeException("sql执行错误!"));
+            assertThat(objectCollect.getFile_path(), is("/home/hyshf/objCollect"));
+            assertThat(objectCollect.getObject_collect_type(), is(ObjectCollectType.DuiXiangCaiJi.getCode()));
+            assertThat(objectCollect.getObj_collect_name(), is("对象采集测试"));
+            assertThat(objectCollect.getSystem_name(), is("windows"));
+            assertThat(objectCollect.getIs_sendok(), is(IsFlag.Shi.getCode()));
+            assertThat(objectCollect.getRun_way(), is(ExecuteWay.AnShiQiDong.getCode()));
+            assertThat(objectCollect.getDatabase_code(), is(DataBaseCode.UTF_8.getCode()));
+            assertThat(objectCollect.getS_date(), is(SysDate));
+            assertThat(objectCollect.getObj_number(), is("dxcj01"));
+            assertThat(objectCollect.getHost_name(), is("10.71.4.52"));
+            Object_collect_task collectTask = SqlOperator.queryOneObject(db, Object_collect_task.class,
+                    "select * from object_collect_task where odc_id=?", objectCollect.getOdc_id())
+                    .orElseThrow(() -> new RuntimeException("sql执行错误!"));
+            assertThat(collectTask.getEn_name(), is("dxcjrwmc"));
+            assertThat(collectTask.getAgent_id(), is(dbAgentId));
+            assertThat(collectTask.getCollect_data_type(), is(CollectDataType.JSON.getCode()));
+            assertThat(collectTask.getDatabase_code(), is(DataBaseCode.UTF_8.getCode()));
+            assertThat(collectTask.getZh_name(), is("对象采集任务名称"));
+            Object_storage storage = SqlOperator.queryOneObject(db, Object_storage.class,
+                    "select * from object_storage where ocs_id=?", collectTask.getOcs_id())
+                    .orElseThrow(() -> new RuntimeException("sql执行错误!"));
+            assertThat(storage.getIs_hbase(), is(IsFlag.Shi.getCode()));
+            assertThat(storage.getIs_hdfs(), is(IsFlag.Fou.getCode()));
+            Object_collect_struct collectStruct = SqlOperator.queryOneObject(db, Object_collect_struct.class,
+                    "select * from object_collect_struct where ocs_id=?", collectTask.getOcs_id())
+                    .orElseThrow(() -> new RuntimeException("sql执行错误!"));
+            assertThat(collectStruct.getColl_name(), is("对象采集结构"));
+            assertThat(collectStruct.getData_desc(), is("测试"));
+            assertThat(collectStruct.getStruct_type(), is(ObjectDataType.ZiFuChuan.getCode()));
+            File_collect_set collectSet = SqlOperator.queryOneObject(db, File_collect_set.class,
+                    "select * from file_collect_set where agent_id=?", dbAgentId).orElseThrow(() ->
+                    new RuntimeException("sql执行错误!"));
+            assertThat(collectSet.getFcs_name(), is("文件系统设置"));
+            assertThat(collectSet.getHost_name(), is("DESKTOP-DE7CNE1"));
+            assertThat(collectSet.getIs_sendok(), is(IsFlag.Shi.getCode()));
+            assertThat(collectSet.getIs_solr(), is(IsFlag.Fou.getCode()));
+            assertThat(collectSet.getSystem_type(), is("windows"));
+            File_source fileSource = SqlOperator.queryOneObject(db, File_source.class,
+                    "select * from file_source where agent_id=?", dbAgentId).orElseThrow(() ->
+                    new RuntimeException("sql执行错误!"));
+            assertThat(fileSource.getFcs_id(), is(collectSet.getFcs_id()));
+            assertThat(fileSource.getIs_audio(), is(IsFlag.Fou.getCode()));
+            assertThat(fileSource.getIs_image(), is(IsFlag.Fou.getCode()));
+            assertThat(fileSource.getIs_office(), is(IsFlag.Fou.getCode()));
+            assertThat(fileSource.getIs_other(), is(IsFlag.Fou.getCode()));
+            assertThat(fileSource.getIs_pdf(), is(IsFlag.Fou.getCode()));
+            assertThat(fileSource.getIs_text(), is(IsFlag.Shi.getCode()));
+            assertThat(fileSource.getFile_source_path(), is("/home/hyshf/fileSource/"));
+            Signal_file signalFile = SqlOperator.queryOneObject(db, Signal_file.class,
+                    "select * from signal_file where database_id=?", databaseSet.getDatabase_id())
+                    .orElseThrow(() -> new RuntimeException("sql执行错误!"));
+            assertThat(signalFile.getFile_format(), is(FileFormat.CSV.getCode()));
+            assertThat(signalFile.getIs_cbd(), is(IsFlag.Shi.getCode()));
+            assertThat(signalFile.getIs_compression(), is(IsFlag.Fou.getCode()));
+            assertThat(signalFile.getIs_fullindex(), is(IsFlag.Fou.getCode()));
+            assertThat(signalFile.getIs_into_hbase(), is(IsFlag.Fou.getCode()));
+            assertThat(signalFile.getIs_into_hive(), is(IsFlag.Shi.getCode()));
+            assertThat(signalFile.getIs_mpp(), is(IsFlag.Fou.getCode()));
+            assertThat(signalFile.getIs_solr_hbase(), is(IsFlag.Fou.getCode()));
+            assertThat(signalFile.getTable_type(), is(IsFlag.Shi.getCode()));
+            Table_info tableInfo = SqlOperator.queryOneObject(db, Table_info.class,
+                    "select * from table_info where database_id=?", databaseSet.getDatabase_id())
+                    .orElseThrow(() -> new RuntimeException("sql执行错误!"));
+            assertThat(tableInfo.getTable_ch_name(), is("agent_info"));
+            assertThat(tableInfo.getTable_name(), is("agent_info"));
+            assertThat(tableInfo.getIs_register(), is(IsFlag.Fou.getCode()));
+            assertThat(tableInfo.getIs_user_defined(), is(IsFlag.Fou.getCode()));
+            assertThat(tableInfo.getTable_count(), is("0"));
+            assertThat(tableInfo.getIs_md5(), is(IsFlag.Shi.getCode()));
+            assertThat(tableInfo.getValid_e_date(), is("99991231"));
+            assertThat(tableInfo.getValid_s_date(), is(SysDate));
+            Column_merge columnMerge = SqlOperator.queryOneObject(db, Column_merge.class,
+                    "select * from column_merge where table_id=?", tableInfo.getTable_id())
+                    .orElseThrow(() -> new RuntimeException("sql执行错误!"));
+            assertThat(columnMerge.getCol_name(), is("agentAddress"));
+            assertThat(columnMerge.getCol_type(), is("1"));
+            assertThat(columnMerge.getCol_zhname(), is("agent地址"));
+            assertThat(columnMerge.getValid_e_date(), is("99991231"));
+            assertThat(columnMerge.getValid_s_date(), is(SysDate));
+            assertThat(columnMerge.getOld_name(), is("agent_ip"));
+            Map<String, Object> storageInfo = SqlOperator.queryOneObject(db,
+                    "select * from " + Table_storage_info.TableName + " where table_id=?",
+                    tableInfo.getTable_id());
+            assertThat(storageInfo.get("file_format"), is(FileFormat.CSV.getCode()));
+            assertThat(storageInfo.get("is_everyday"), is(IsFlag.Fou.getCode()));
+            assertThat(storageInfo.get("is_zipper"), is(IsFlag.Fou.getCode()));
+            assertThat(storageInfo.get("storage_time").toString(), is("1"));
+            assertThat(storageInfo.get("storage_type"), is(StorageType.TiHuan.getCode()));
+            Map<String, Object> tableClean = SqlOperator.queryOneObject(db,
+                    "select * from table_clean where table_id=?", tableInfo.getTable_id());
+            assertThat(tableClean.get("character_filling"), is("#"));
+            assertThat(tableClean.get("filling_length").toString(), is("1"));
+            assertThat(tableClean.get("filling_type"), is(FillingType.HouBuQi.getCode()));
+            assertThat(tableClean.get("replace_feild"), is("agent_ip"));
+            assertThat(tableClean.get("clean_type"), is(CleanType.ZiFuBuQi.getCode()));
+            Table_column tableColumn = SqlOperator.queryOneObject(db, Table_column.class,
+                    "select * from table_column where table_id=?", tableInfo.getTable_id())
+                    .orElseThrow(() -> new RuntimeException("sql执行错误!"));
+            assertThat(tableColumn.getColume_name(), is("create_date"));
+            assertThat(tableColumn.getTable_id(), is(tableInfo.getTable_id()));
+            assertThat(tableColumn.getIs_alive(), is(IsFlag.Shi.getCode()));
+            assertThat(tableColumn.getIs_primary_key(), is(IsFlag.Fou.getCode()));
+            assertThat(tableColumn.getIs_new(), is(IsFlag.Fou.getCode()));
+            assertThat(tableColumn.getIs_get(), is(IsFlag.Fou.getCode()));
+            assertThat(tableColumn.getValid_s_date(), is(SysDate));
+            assertThat(tableColumn.getValid_e_date(), is("99991231"));
+            Map<String, Object> columnClean = SqlOperator.queryOneObject(db,
+                    "select * from column_clean where column_id=?", tableColumn.getColumn_id());
+            assertThat(columnClean.get("filling_length").toString(), is("1"));
+            assertThat(columnClean.get("codesys"), is("1"));
+            assertThat(columnClean.get("codename"), is("是"));
+            assertThat(columnClean.get("character_filling"), is("#"));
+            assertThat(columnClean.get("clean_type"), is(CleanType.ZiFuBuQi.getCode()));
+            Map<String, Object> columnSplit = SqlOperator.queryOneObject(db,
+                    "select * from column_split where column_id=?", tableColumn.getColumn_id());
+            assertThat(columnSplit.get("col_type"), is("1"));
+            assertThat(columnSplit.get("col_clean_id"), is(columnClean.get("col_clean_id")));
+            assertThat(columnSplit.get("col_name"), is("agent_ip"));
+            assertThat(columnSplit.get("split_type"), is(CharSplitType.ZhiDingFuHao.getCode()));
+            assertThat(columnSplit.get("seq").toString(), is("0"));
+            assertThat(columnSplit.get("valid_s_date"), is(SysDate));
+            assertThat(columnSplit.get("valid_e_date"), is("99991231"));
         }
         // 2.错误的数据访问1，导入数据源，agentIp不合法
         bodyString = new HttpClient()
@@ -1830,6 +2023,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+
         assertThat(ar.isSuccess(), is(false));
         // 3.错误的数据访问2，导入数据源，agentPort不合法
         bodyString = new HttpClient()
