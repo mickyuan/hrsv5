@@ -239,7 +239,7 @@ public class ObjectLoadingDataStageImpl extends AbstractJobStage {
 				put.addColumn(Constant.HBASE_COLUMN_FAMILY, HYREN_S_DATE.getBytes(), time);
 				putList.add(put);
 			} else {
-				//XXX 目前只实现了xml文件的解析
+				//XXX 目前只实现了JSON文件的解析
 				//4.根据文件数据的类型解析数据
 				if (CollectDataType.JSON.getCode().equals(file_type)) {
 					//XXX 进HBase的rowkey应该使用什么值

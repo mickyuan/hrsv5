@@ -8,6 +8,7 @@ import fd.ng.db.conf.DbinfosConf;
 import fd.ng.db.conf.Dbtype;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.web.action.AbstractWebappBaseAction;
+import hrds.commons.base.AgentBaseAction;
 import hrds.commons.codes.DatabaseType;
 import hrds.commons.entity.Database_set;
 
@@ -16,7 +17,7 @@ import hrds.commons.entity.Database_set;
  * author: xchao
  * create: 2019-09-05 11:18
  */
-public class TestConnection extends AbstractWebappBaseAction {
+public class TestConnection extends AgentBaseAction {
 
 	@Method(desc = "测试连接的方法",
 			logicStep = "1、通过request获取服务发过来的数据" +

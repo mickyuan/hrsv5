@@ -2,9 +2,11 @@ package hrds.agent.job.biz.bean;
 
 import fd.ng.core.annotation.DocBean;
 import fd.ng.core.annotation.DocClass;
+import org.apache.hadoop.hbase.util.Bytes;
 
 @DocClass(desc = "非结构化对象采集任务表和结构表的字段综合的实体", author = "zxz", createdate = "2019/10/24 10:07")
 public class ObjectCollectParamBean {
+	public static final byte[] FILE_HBASE = Bytes.toBytes("file_hbase");
 	@DocBean(name = "ocs_id", value = "对象采集任务编号", dataType = Long.class, required = true)
 	private Long ocs_id;
 	@DocBean(name = "en_name", value = "英文名称", dataType = String.class, required = true)

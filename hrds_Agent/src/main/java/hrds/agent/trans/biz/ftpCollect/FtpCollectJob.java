@@ -5,11 +5,12 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import hrds.agent.job.biz.bean.JobParamBean;
 import hrds.agent.job.biz.core.JobFactory;
+import hrds.commons.base.AgentBaseAction;
 import hrds.commons.base.BaseAction;
 import hrds.commons.entity.Ftp_collect;
 
 @DocClass(desc = "接收页面定义的参数执行ftp采集", author = "zxz", createdate = "2019/10/10 16:29")
-public class FtpCollectJob extends BaseAction {
+public class FtpCollectJob extends AgentBaseAction {
 
 	@Method(desc = "ftp采集和前端交互的接口",
 			logicStep = "1.获取参数，校验对象的值是否正确" +

@@ -4,6 +4,7 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
+import hrds.commons.base.AgentBaseAction;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Database_set;
@@ -21,7 +22,7 @@ import java.util.Map;
  * date: 2019/10/15 14:40
  * author: zxz
  */
-public class DatabaseInfo extends BaseAction {
+public class DatabaseInfo extends AgentBaseAction {
 
 	@Method(desc = "根据数据库连接获取数据库下表信息",
 			logicStep = "1.根据Db_agent判断是否为平面DB数据采集" +

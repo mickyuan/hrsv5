@@ -7,6 +7,8 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.core.utils.SystemUtil;
+import fd.ng.web.action.AbstractWebappBaseAction;
+import hrds.commons.base.AgentBaseAction;
 import hrds.commons.base.BaseAction;
 import hrds.commons.exception.BusinessException;
 
@@ -19,7 +21,7 @@ import java.util.Map;
 //FIXME @徐超
 // Agent等程序，也要有自己的 BaseAction。因为也需要做权限控制，比如每次交互都有传递一个固定的令牌做验证
 @DocClass(desc = "获取当前程序所在的服务器信息的接口类", author = "zxz", createdate = "2019/9/11 17:38")
-public class AgentServerInfo extends BaseAction {
+public class AgentServerInfo extends AgentBaseAction {
 	//系统目录的集合
 	private static final ArrayList<String> windows_nolist;
 	//linux可查看的目录的集合

@@ -31,9 +31,9 @@ public class CommunicationTest {
     @Test
     public void testConnection(){
         // 1、获取agent的连接,ip端口，都是从数据库中获取
-        HttpServerConfBean hyrenagent = HttpServerConf.getHttpServer("hyrenagent");
-        String url = "http://"+hyrenagent.getHost()+":"+hyrenagent.getHttpPort()+"/agent/receive/";
-        String action = "hrds/commons/testcc";
+//        HttpServerConfBean hyrenagent = HttpServerConf.getHttpServer("hyrenagent");
+//        String url = "http://"+hyrenagent.getHost()+":"+hyrenagent.getHttpPort()+"/agent/receive/";
+//        String action = "hrds/commons/testcc";
         /*Map map = new HashMap<>();
         //2、从想要的数据库中获取连接信息
         map.put("dbtype", DatabaseType.Postgresql.getValue());

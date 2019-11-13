@@ -12,6 +12,7 @@ import fd.ng.core.utils.NumberUtil;
 import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.JobStatusInfo;
 import hrds.agent.job.biz.bean.MetaInfoBean;
+import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.commons.codes.FtpRule;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.TimeType;
@@ -35,7 +36,7 @@ public class FtpCollectJobImpl implements JobInterface {
 	//打印日志
 	private static final Log log = LogFactory.getLog(FtpCollectJobImpl.class);
 	//存放每次启动任务时候的线程的集合
-	private static volatile ConcurrentMap<String, Thread> mapJob = new ConcurrentHashMap<>();
+	private static ConcurrentMap<String, Thread> mapJob = new ConcurrentHashMap<>();
 	//当前程序运行的目录
 	private static final String USER_DIR = System.getProperty("user.dir");
 	//是否实时读取，默认为true，保证程序最少进一次循环
@@ -148,7 +149,7 @@ public class FtpCollectJobImpl implements JobInterface {
 			} catch (Exception e) {
 				log.error("FTP传输失败！！！", e);
 				//TODO 运行失败需要给什么值，需要讨论
-				jobStatus.setRunStatus(-1);
+				jobStatus.setRunStatus(RunStatusConstant.FAILED.getCode());
 				//异常退出
 				break;
 			}

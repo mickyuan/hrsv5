@@ -69,7 +69,7 @@ public class ObjectCollectJobImpl implements JobInterface {
 				this.objectCollectParamBeanList);
 		//空实现
 		JobStageInterface dataRegistration = new ObjectRegistrationStageImpl();
-		//利用JobStageController构建本次数据库直连采集作业流程
+		//利用JobStageController构建本次半结构化对象采集作业流程
 		JobStageController controller = new JobStageController();
 		//3、构建责任链，串起每个阶段
 		controller.registerJobStage(unloadData, upload, dataRegistration);
