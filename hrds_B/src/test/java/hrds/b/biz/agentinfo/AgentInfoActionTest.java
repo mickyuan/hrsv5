@@ -27,7 +27,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 @DocClass(desc = "agent增删改测试类", author = "dhw", createdate = "2019-09-18 10:49:51")
 public class AgentInfoActionTest extends WebBaseTestCase {
     // 初始化登录用户ID
-    private static final long UserId = 5555L;
+    private static final long UserId = 6666L;
     // 初始化创建用户ID
     private static final long CreateId = 1000L;
     // 初始化登录用户ID，更新agent时更新数据采集用户
@@ -288,7 +288,6 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                 .getBodyString();
         ActionResult ar = JsonUtil.toObjectSafety(responseValue, ActionResult.class)
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
-        ;
         assertThat("用户登录", ar.isSuccess(), is(true));
     }
 
@@ -1242,7 +1241,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
     @Method(desc = "根据agent_id,agent_type查询agent_info信息,此方法只会有3种可能",
             logicStep = "1.查询agent_info表数据，agent_id,agent_type都不为空，正常删除" +
                     "2.错误的数据访问1，查询agent_info表数据，agent_id是一个不存在的数据" +
-                    "3.错误的数据访问2，查询agent_info表数据，agent_type是一个合法的数据")
+                    "3.错误的数据访问2，查询agent_info表数据，agent_type是一个不合法的数据")
     @Test
     public void searchAgent() {
         // TODO 无法确认原表数据为空目前不知道该如何验证数据正确性，只能判断自己造的数据
@@ -1253,30 +1252,31 @@ public class AgentInfoActionTest extends WebBaseTestCase {
         ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
         assertThat(ar.isSuccess(), is(true));
-        List<Agent_info> agentInfoList = ar.getDataForEntityList(Agent_info.class);
+        Map<String, Object> agentInfo = ar.getDataForMap();
         // 这里list集合只有一条数据
-        assertThat(agentInfoList.get(0).getAgent_ip(), is("10.71.4.51"));
-        assertThat(agentInfoList.get(0).getAgent_port(), is("3451"));
-        assertThat(agentInfoList.get(0).getAgent_name(), is("sjkAgent"));
-        assertThat(agentInfoList.get(0).getUser_id(), is(UserId));
-        assertThat(DBAgentId, is(agentInfoList.get(0).getAgent_id()));
+        assertThat(agentInfo.get("agent_ip"), is("10.71.4.51"));
+        assertThat(agentInfo.get("agent_port"), is("3451"));
+        assertThat(agentInfo.get("agent_name"), is("sjkAgent"));
+        assertThat(agentInfo.get("user_id").toString(), is(String.valueOf(UserId)));
+        assertThat(agentInfo.get("agent_id").toString(), is(String.valueOf(DBAgentId)));
+        assertThat(agentInfo.get("user_name"), is("数据源agent测试用户"));
         // 2.错误的数据访问1，查询agent_info表数据，agent_id是一个不存在的数据
-        bodyString = new HttpClient().addData("agent_id", -1000000009L)
+        bodyString = new HttpClient().addData("agent_id", 100009L)
                 .addData("agent_type", AgentType.ShuJuKu.getCode())
                 .post(getActionUrl("searchAgent")).getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
         assertThat(ar.isSuccess(), is(true));
-        assertThat(ar.getDataForResult().getRowCount(), is(0));
+        agentInfo = ar.getDataForMap();
+        assertThat(agentInfo.isEmpty(), is(true));
 
-        // 3.错误的数据访问2，查询agent_info表数据，agent_type是一个合法的数据
+        // 3.错误的数据访问2，查询agent_info表数据，agent_type是一个不合法的数据
         bodyString = new HttpClient().addData("agent_id", SourceId)
                 .addData("agent_type", "6")
                 .post(getActionUrl("searchAgent")).getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
-        assertThat(ar.isSuccess(), is(true));
-        assertThat(ar.getDataForResult().getRowCount(), is(0));
+        assertThat(ar.isSuccess(), is(false));
     }
 
     @Method(desc = "根据agent_id,agent_type删除agent_info信息",
@@ -1328,7 +1328,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
             assertThat(ar.isSuccess(), is(false));
             // 4.错误的数据访问3，删除agent_info表数据，agent_type是一个不存在的数据
             bodyString = new HttpClient().addData("source_id", SourceId)
-                    .addData("agent_id", -1000000009L)
+                    .addData("agent_id", 10009L)
                     .addData("agent_type", AgentType.ShuJuKu.getCode())
                     .post(getActionUrl("deleteAgent")).getBodyString();
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)

@@ -38,71 +38,71 @@ public class DataSourceActionTest extends WebBaseTestCase {
     // 测试登录用户ID
     private static final long UserId = 6666L;
     // 测试数据采集用户
-    private static final long CollectUserId = -1234L;
+    private static final long CollectUserId = 1234L;
     // 初始化创建用户ID
     private static final long CreateId = 1000L;
     // 测试数据源 SourceId
-    private static final long SourceId = -100000001L;
+    private static final long SourceId = 10000001L;
     // 测试数据源 SourceId,新建数据源，下面没有agent
-    private static final long SourceId2 = -100000002L;
+    private static final long SourceId2 = 10000002L;
     // 测试数据库 agent_id
-    private static final long DBAgentId = -200000011L;
+    private static final long DBAgentId = 20000011L;
     // 测试数据文件 agent_id
-    private static final long DFAgentId = -200000012L;
+    private static final long DFAgentId = 20000012L;
     // 测试非结构化 agent_id
-    private static final long UnsAgentId = -200000013L;
+    private static final long UnsAgentId = 20000013L;
     // 测试半结构化 agent_id
-    private static final long SemiAgentId = -200000014L;
+    private static final long SemiAgentId = 20000014L;
     // 测试FTP agent_id
-    private static final long FTPAgentId = -200000015L;
+    private static final long FTPAgentId = 20000015L;
     // 测试部门ID dep_id,测试第一部门
-    private static final long DepId1 = -300000011L;
+    private static final long DepId1 = 30000011L;
     // 测试部门ID dep_id 测试第二部门
-    private static final long DepId2 = -300000012L;
+    private static final long DepId2 = 30000012L;
     // 测试agent_down_info down_id
-    private static final long DownId = -300000001L;
+    private static final long DownId = 30000001L;
     // 测试 分类ID，classify_id
-    private static final long ClassifyId = -400000001L;
+    private static final long ClassifyId = 40000001L;
     // 测试 数据库设置ID，DatabaseId
-    private static final long DatabaseId = -500000001L;
+    private static final long DatabaseId = 50000001L;
     // 测试 ftp_collect表ID，ftp_id
-    private static final long FtpId = -500000011L;
+    private static final long FtpId = 50000011L;
     // 测试 ftp_collect表ID，ftp_transfered_id
-    private static final long FtpTransferedId = -500000012L;
+    private static final long FtpTransferedId = 50000012L;
     // 测试 ftp_folder表ID，ftp_folder_id
-    private static final long FtpFolderId = -500000091L;
+    private static final long FtpFolderId = 50000091L;
     // 测试 object_collect表ID，odc_id
-    private static final long OdcId = -500000101L;
+    private static final long OdcId = 50000101L;
     // 测试 object_collect_task表ID，ocs_id
-    private static final long OcsId = -500000102L;
+    private static final long OcsId = 50000102L;
     // 测试 object_storage表ID，obj_stid
-    private static final long ObjStid = -500000103L;
+    private static final long ObjStid = 50000103L;
     // 测试 object_collect_struct表ID，struct_id
-    private static final long StructId = -500000104L;
+    private static final long StructId = 50000104L;
     // 测试 file_collect_set表ID，fcs_id
-    private static final long FcsId = -500000105L;
+    private static final long FcsId = 50000105L;
     // 测试 file_source表ID，file_source_id
-    private static final long FileSourceId = -500000106L;
+    private static final long FileSourceId = 50000106L;
     // 测试 signal_file表ID，signal_id
-    private static final long SignalId = -500000107L;
+    private static final long SignalId = 50000107L;
     // 测试 table_info表ID，table_id
-    private static final long TableId = -500000108L;
+    private static final long TableId = 50000108L;
     // 测试 column_merge表ID，col_merge_id
-    private static final long ColumnMergeId = -500000109L;
+    private static final long ColumnMergeId = 50000109L;
     // 测试 table_storage_info表ID，storage_id
-    private static final long StorageId = -500000110L;
+    private static final long StorageId = 50000110L;
     // 测试 table_clean表ID，table_clean_id
-    private static final long TableCleanId = -500000111L;
+    private static final long TableCleanId = 50000111L;
     // 测试 table_column表ID，column_id
-    private static final long ColumnId = -500000112L;
+    private static final long ColumnId = 50000112L;
     // 测试 column_clean表ID，col_clean_id
-    private static final long ColumnCleanId = -500000113L;
+    private static final long ColumnCleanId = 50000113L;
     // 测试 column_split表ID，col_split_id
-    private static final long ColSplitId = -500000114L;
+    private static final long ColSplitId = 50000114L;
     // 测试 source_file_attribute表ID，file_id
     private static final String FileId = "200000000000";
     // 测试 data_auth表ID，da_id
-    private static final long DaId = -500000115L;
+    private static final long DaId = 50000115L;
     private static final String SysDate = DateUtil.getSysDate();
     private static final String SysTime = DateUtil.getSysTime();
 
@@ -529,7 +529,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
             tableClean.setFilling_length(1L);
             tableClean.setCharacter_filling("#");
             tableClean.setField("create_date");
-            tableClean.setClean_type(CleanType.MaZhiZhuanHuan.getCode());
+            tableClean.setClean_type(CleanType.ZiFuBuQi.getCode());
             tableClean.setFilling_type(FillingType.HouBuQi.getCode());
             tableClean.setReplace_feild("agent_ip");
             tableClean.add(db);
@@ -1364,7 +1364,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
         }
     }
 
-    @Method(desc = "新增/更新数据源测试",
+    @Method(desc = "新数据源测试",
             logicStep = "1.正确的数据访问1，测试数据源新增功能,数据都有效" +
                     "2.错误的数据访问1，新增数据源信息,数据源名称不能为空" +
                     "3.错误的数据访问2，新增数据源信息,数据源名称不能为空格" +
@@ -1523,7 +1523,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
         assertThat("测试第1部门,测试第2部门", is(dataResource.get("dep_name")));
 
         // 2.错误的数据访问1，查询数据源信息，此数据源下没有数据
-        bodyString = new HttpClient().addData("source_id", -1000000009L)
+        bodyString = new HttpClient().addData("source_id", 1000009L)
                 .post(getActionUrl("searchDataSourceById")).getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -1588,7 +1588,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .addData("source_remark", "测试")
                 .addData("datasource_name", "")
                 .addData("datasource_number", "up02")
-                .addData("dep_id", "-1000000001")
+                .addData("dep_id", "100001")
                 .post(getActionUrl("updateDataSource")).getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -1665,7 +1665,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .addData("source_remark", "测试")
                 .addData("datasource_name", "dsName06")
                 .addData("datasource_number", "up06")
-                .addData("dep_id", "-101")
+                .addData("dep_id", "101")
                 .post(getActionUrl("updateDataSource")).getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -1731,7 +1731,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 
             // 3.错误的数据访问2，删除数据源信息，此数据源下没有数据
             bodyString = new HttpClient()
-                    .addData("source_id", -1000000009L)
+                    .addData("source_id", 100009L)
                     .post(getActionUrl("deleteDataSource"))
                     .getBodyString();
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -1753,7 +1753,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
         assertThat(bodyString, is(notNullValue()));
         // 2.错误的数据访问1，数据源下载,source_id不存在
         bodyString = new HttpClient()
-                .addData("source_id", -100L)
+                .addData("source_id", 100L)
                 .post(getActionUrl("downloadFile"))
                 .getBodyString();
         assertThat(bodyString, is(""));
@@ -1984,7 +1984,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
             assertThat(tableClean.get("filling_length").toString(), is("1"));
             assertThat(tableClean.get("filling_type"), is(FillingType.HouBuQi.getCode()));
             assertThat(tableClean.get("replace_feild"), is("agent_ip"));
-            assertThat(tableClean.get("clean_type"), is(CleanType.MaZhiZhuanHuan.getCode()));
+            assertThat(tableClean.get("clean_type"), is(CleanType.ZiFuBuQi.getCode()));
             Table_column tableColumn = SqlOperator.queryOneObject(db, Table_column.class,
                     "select * from table_column where table_id=?", tableInfo.getTable_id())
                     .orElseThrow(() -> new RuntimeException("sql执行错误!"));
