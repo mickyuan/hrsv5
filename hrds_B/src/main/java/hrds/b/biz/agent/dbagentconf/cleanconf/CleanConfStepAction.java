@@ -915,6 +915,9 @@ public class CleanConfStepAction extends BaseAction{
 			"如：{\"complement\":1,\"replacement\":2,\"formatting\":3,\"conversion\":4,\"merge\":5,\"split\":6,\"trim\":7}" +
 			"注意：json的key请务必按照示例中给出的写")
 	public void saveAllTbCleanOrder(long[] tableIds, String sort){
+		if(!(tableIds.length > 0)){
+			throw new BusinessSystemException("保存所有表清洗优先级时未获取到表ID");
+		}
 		//1、根据table_id,在table_info表中找到对应的记录，将sort更新进去
 		StringBuilder sqlSB = new StringBuilder("update " + Table_info.TableName +
 				" set ti_or = ? where table_id in ( ");

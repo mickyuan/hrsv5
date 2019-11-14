@@ -107,11 +107,6 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		assertThat("模拟登陆", actionResult.isSuccess(), is(true));
 	}
 
-	@Test
-	public void test(){
-		System.out.println("------------------------------------------------");
-	}
-
 	/**
 	 * 测试根据数据库设置ID获得清洗规则配置页面初始信息
 	 *
