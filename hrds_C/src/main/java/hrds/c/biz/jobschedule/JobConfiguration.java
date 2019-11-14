@@ -599,7 +599,7 @@ public class JobConfiguration extends BaseAction {
                     "2.判断工程是否存在" +
                     "3.检测当前作业分配的占用资源数是否过大" +
                     "4.更新保存资源分配信息")
-    @Param(name = "etlJobResourceRela", desc = "资源使用表实体对象", range = "与数据库表定义规则一致", isBean = true)
+    @Param(name = "jobResourceRelation", desc = "资源使用表实体对象", range = "与数据库表定义规则一致", isBean = true)
     public void updateJobResourceRelation(Etl_job_resource_rela jobResourceRelation) {
         // TODO 字段验证应该有一个统一的工具类
         // 1.数据可访问权限处理方式，通过user_id进行权限验证
@@ -637,7 +637,7 @@ public class JobConfiguration extends BaseAction {
                     "3.新增时.检测当前作业是否已经分配过资源" +
                     "4.检测当前作业分配的占用资源数是否过大" +
                     "5.新增保存资源分配信息")
-    @Param(name = "etlJobResourceRela", desc = "资源使用表实体对象", range = "与数据库表定义规则一致", isBean = true)
+    @Param(name = "jobResourceRelation", desc = "资源使用表实体对象", range = "与数据库表定义规则一致", isBean = true)
     public void saveJobResourceRelation(Etl_job_resource_rela jobResourceRelation) {
         // TODO 字段验证应该有一个统一的工具类
         // 1.数据可访问权限处理方式，通过user_id进行权限验证
@@ -743,7 +743,7 @@ public class JobConfiguration extends BaseAction {
                     "7.作业被删除的同时,删除作业的资源分配情况" +
                     "8.判断当前作业是否有依赖作业，有依赖删除依赖作业")
     @Param(name = "etl_sys_cd", desc = "工程代码", range = "取值范围")
-    @Param(name = "batchEtlJob", desc = "批量作业名称", range = "无限制", nullable = true)
+    @Param(name = "batchEtlJob", desc = "批量作业名称", range = "无限制")
     public void BatchDeleteJobDefine(String etl_sys_cd, String batchEtlJob) {
         // 1.数据可访问权限处理方式，通过user_id进行权限控制
         // 2.验证当前用户下的工程是否存在
@@ -830,7 +830,7 @@ public class JobConfiguration extends BaseAction {
                     "5.判断当前工程对应作业资源分配信息是否存在" +
                     "6.循环删除作业资源分配信息")
     @Param(name = "etl_sys_cd", desc = "工程代码", range = "取值范围")
-    @Param(name = "batchEtlJob", desc = "批量作业编号", range = "无限制", nullable = true)
+    @Param(name = "batchEtlJob", desc = "批量作业编号", range = "无限制")
     public void BatchDeleteJobResourceRela(String etl_sys_cd, String batchEtlJob) {
         // 1.数据可访问权限处理方式，该方法不需要权限验证
         // 2.验证当前用户下的工程是否存在
@@ -894,7 +894,7 @@ public class JobConfiguration extends BaseAction {
                     "5.判断要删除的作业依赖是否存在" +
                     "6.循环删除作业依赖关系")
     @Param(name = "etl_sys_cd", desc = "工程代码", range = "取值范围")
-    @Param(name = "batchEtlJob", desc = "批量作业编号", range = "无限制", nullable = true)
+    @Param(name = "batchEtlJob", desc = "批量作业编号", range = "无限制")
     public void BatchDeleteJobDependency(String etl_sys_cd, String batchEtlJob) {
         // 1.数据可访问权限处理方式，该方法不需要权限验证
         // 2.验证当前用户下的工程是否存在
@@ -1017,13 +1017,13 @@ public class JobConfiguration extends BaseAction {
     @Param(name = "currPage", desc = "分页查询当前页", range = "大于0的正整数", valueIfNull = "1")
     @Param(name = "pageSize", desc = "分页查询每页显示记录数", range = "大于0的正整数", valueIfNull = "10")
     @Return(desc = "返回作业调度系统参数信息", range = "取值范围")
-    public Map<String, Object> getEtlPara(String etl_sys_cd, String para_cd, int currPage, int pageSize) {
+    public Map<String, Object> getEtlParaByPage(String etl_sys_cd, String para_cd, int currPage, int pageSize) {
         // 1.数据可访问权限处理方式，通过user_id进行权限验证
         // 2.验证当前用户下的工程是否存在
         isEtlSysExist(etl_sys_cd, getUserId());
         // 3.根据工程编号查询工程名称
         String etlSysName = getEtlSysNameByCd(etl_sys_cd, getUserId());
-        asmSql.addSql("select * from " + Etl_para.TableName + " where etl_sys_cd = ?");
+        asmSql.addSql("select * from " + Etl_para.TableName + " where etl_sys_cd IN (?,?)");
         asmSql.addParam(etl_sys_cd);
         // 4.判断变量名称是否存在，存在加条件查询
         if (StringUtil.isNotBlank(para_cd)) {
@@ -1041,26 +1041,27 @@ public class JobConfiguration extends BaseAction {
         // 6.返回分页查询系统资源信息
         return etlParaMap;
     }
-
+    @Method(desc = "新增保存作业系统参数",logicStep = "方法步骤")
+    @Param(name = "etl_para", desc = "作业系统参数实体对象", range = "与数据库对应表字段规则一致")
     public void saveEtlPara(Etl_para etl_para) {
 
     }
-
+    @Method(desc = "更新保存作业系统参数",logicStep = "方法步骤")
+    @Param(name = "etl_para", desc = "作业系统参数实体对象", range = "与数据库对应表字段规则一致")
     public void updateEtlPara(Etl_para etl_para) {
 
     }
 
-    @Method(desc = "方法描述", logicStep = "方法步骤")
+    @Method(desc = "批量删除", logicStep = "方法步骤")
     @Param(name = "etl_sys_cd", desc = "工程编号", range = "取值范围")
-    @Param(name = "para_cd", desc = "变量名称", range = "取值范围", nullable = true)
-    public void BatcheDeleteEtlPara(String etl_sys_cd, String para_cd) {
+    @Param(name = "para_cd", desc = "变量名称", range = "取值范围")
+    public void BatcheDeleteJobSystemPara(String etl_sys_cd, String para_cd) {
 
     }
 
-    @Method(desc = "方法描述", logicStep = "方法步骤")
+    @Method(desc = "删除作业系统参数", logicStep = "方法步骤")
     @Param(name = "etl_sys_cd", desc = "工程编号", range = "取值范围")
-    @Param(name = "para_cd", desc = "变量名称", range = "取值范围", nullable = true)
-    @Return(desc = "返回内容描述", range = "取值范围")
+    @Param(name = "para_cd", desc = "变量名称", range = "取值范围")
     public void deleteEtlPara(String etl_sys_cd, String para_cd) {
 
     }

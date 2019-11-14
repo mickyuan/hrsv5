@@ -331,5 +331,18 @@ public class JobConfigurationTest extends WebBaseTestCase {
         Optional<ActionResult> ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
         assertThat(ar.get().isSuccess(), is(true));
     }
+
+    @Test
+    public void getEtlParaByPage() {
+        // 1.正常的数据访问1，数据都正常
+        String bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                .addData("para_cd", "")
+                .addData("currPage", 1)
+                .addData("pageSize", 5)
+                .post(getActionUrl("getEtlParaByPage"))
+                .getBodyString();
+        Optional<ActionResult> ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
+        assertThat(ar.get().isSuccess(), is(true));
+    }
 }
 
