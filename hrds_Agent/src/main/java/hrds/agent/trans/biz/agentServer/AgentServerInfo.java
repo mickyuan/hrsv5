@@ -7,10 +7,10 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.core.utils.SystemUtil;
-import fd.ng.web.action.AbstractWebappBaseAction;
 import hrds.commons.base.AgentBaseAction;
-import hrds.commons.base.BaseAction;
 import hrds.commons.exception.BusinessException;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -22,6 +22,8 @@ import java.util.Map;
 // Agent等程序，也要有自己的 BaseAction。因为也需要做权限控制，比如每次交互都有传递一个固定的令牌做验证
 @DocClass(desc = "获取当前程序所在的服务器信息的接口类", author = "zxz", createdate = "2019/9/11 17:38")
 public class AgentServerInfo extends AgentBaseAction {
+	//打印日志
+	private static final Log log = LogFactory.getLog(AgentServerInfo.class);
 	//系统目录的集合
 	private static final ArrayList<String> windows_nolist;
 	//linux可查看的目录的集合
@@ -71,6 +73,7 @@ public class AgentServerInfo extends AgentBaseAction {
 		List<String> list = new ArrayList<>();
 		//获取操作系统的名称
 		String osName = SystemUtil.OS_NAME;
+		log.info("获取到了操作系统的名称============" + osName);
 		//2.取到文件和文件夹则进行遍历
 		if (file_array != null && file_array.length > 0) {
 			for (File file : file_array) {
@@ -84,7 +87,8 @@ public class AgentServerInfo extends AgentBaseAction {
 							list.add(name + "^" + path_hy + "^folder^" + osName);
 						}
 					} else if (osName.toLowerCase().contains("linux")) {
-						if (linux_list.contains(path_hy) || path_hy.startsWith("/home" + SystemUtil.USER_NAME)) {
+						if (linux_list.contains(path_hy) || path_hy.startsWith("/home/" + SystemUtil.USER_NAME) ||
+								path_hy.startsWith("/tmp/")) {
 							list.add(name + "^" + path_hy + "^folder^" + osName);
 						}
 					} else {
