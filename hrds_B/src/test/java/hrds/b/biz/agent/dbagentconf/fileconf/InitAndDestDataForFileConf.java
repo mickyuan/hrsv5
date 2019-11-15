@@ -7,9 +7,7 @@ import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
 import hrds.b.biz.agent.dbagentconf.BaseInitData;
-import hrds.commons.codes.CleanType;
-import hrds.commons.codes.CountNum;
-import hrds.commons.codes.IsFlag;
+import hrds.commons.codes.*;
 import hrds.commons.entity.*;
 import hrds.commons.utils.Constant;
 
@@ -37,8 +35,8 @@ public class InitAndDestDataForFileConf {
 	private static final long FIRST_DB_AGENT_ID = 7001L;
 	private static final long SECOND_DB_AGENT_ID = 7002L;
 	private static final long UNEXPECTED_ID = 999999999L;
-	private static final String PRE_COMPLE_FLAG = "1";
-	private static final String POST_COMPLE_FLAG = "2";
+	private static final long SOURCE_ID = 1L;
+	private static final long BASE_EXTRACTION_DEF_ID = 7788L;
 	private static final JSONObject tableCleanOrder = BaseInitData.initTableCleanOrder();
 	private static final JSONObject columnCleanOrder = BaseInitData.initColumnCleanOrder();
 
@@ -76,7 +74,8 @@ public class InitAndDestDataForFileConf {
 					tableId = SYS_USER_TABLE_ID;
 					tableName = "sys_user";
 					tableChName = "用户表";
-					customizeSQL = "";
+					//自定义过滤
+					customizeSQL = "select * from sys_user where user_id = " + TEST_USER_ID;
 					customizFlag = IsFlag.Fou.getCode();
 					parallelFlag = IsFlag.Fou.getCode();
 					pageSql = "";
@@ -94,7 +93,8 @@ public class InitAndDestDataForFileConf {
 					tableId = AGENT_INFO_TABLE_ID;
 					tableName = "agent_info";
 					tableChName = "Agent信息表";
-					customizeSQL = "select * from agent_info";
+					//自定义采集
+					customizeSQL = "select agent_id, agent_name, agent_type from agent_info where source_id = " + SOURCE_ID;
 					customizFlag = IsFlag.Shi.getCode();
 					parallelFlag = IsFlag.Fou.getCode();
 					pageSql = "";
@@ -103,7 +103,8 @@ public class InitAndDestDataForFileConf {
 					tableId = DATA_SOURCE_TABLE_ID;
 					tableName = "data_source";
 					tableChName = "数据源表";
-					customizeSQL = "select * from data_source";
+					//自定义采集
+					customizeSQL = "select source_id, datasource_number, datasource_name from data_source where source_id = " + SOURCE_ID;
 					customizFlag = IsFlag.Shi.getCode();
 					parallelFlag = IsFlag.Fou.getCode();
 					pageSql = "";
@@ -249,6 +250,10 @@ public class InitAndDestDataForFileConf {
 
 		List<Table_column> codeInfos = BaseInitData.buildCodeInfoTbColData();
 
+		List<Table_column> dataSources = BaseInitData.buildDataSourceTbColData();
+
+		List<Table_column> agentInfos = BaseInitData.buildAgentInfoTbColData();
+
 		//9、构造table_clean表测试数据
 		List<Table_clean> tableCleans = new ArrayList<>();
 		for(int i = 1; i <= 2; i++){
@@ -263,7 +268,7 @@ public class InitAndDestDataForFileConf {
 			switch (i){
 				case 1 :
 					tbCleanId = 11111L;
-					compleType = PRE_COMPLE_FLAG;
+					compleType = FillingType.QianBuQi.getCode();
 					cleanType = CleanType.ZiFuBuQi.getCode();
 					tableId = SYS_USER_TABLE_ID;
 					compleChar = StringUtil.string2Unicode("wzc");
@@ -310,7 +315,7 @@ public class InitAndDestDataForFileConf {
 		for(int i = 0; i < 2; i++){
 			long colCleanId = i % 2 == 0 ? 22222L : 33333L;
 			String cleanType = CleanType.ZiFuBuQi.getCode();
-			String compleType = i % 2 == 0 ? PRE_COMPLE_FLAG : POST_COMPLE_FLAG;
+			String compleType = i % 2 == 0 ? FillingType.QianBuQi.getCode() : FillingType.HouBuQi.getCode();
 			String compleChar = i % 2 == 0 ? StringUtil.string2Unicode("wzc") : StringUtil.string2Unicode(" ");
 			long length = i % 2 == 0 ? 3 : 1;
 			long columnId = i % 2 == 0 ? 2002L : 2003L;
@@ -566,6 +571,69 @@ public class InitAndDestDataForFileConf {
 
 		List<Orig_code_info> origCodeInfos = BaseInitData.buildOrigCodeInfo();
 
+		List<Data_extraction_def> extractionDefs = new ArrayList<>();
+		for(int i = 0; i < 4; i++){
+			long tableId;
+			String extractType;
+			String rowSeparator;
+			String databaseSeparatorr;
+			String fileFormat;
+			String planeUrl;
+			switch (i) {
+				case 0 :
+					tableId = SYS_USER_TABLE_ID;
+					extractType = DataExtractType.JinShuJuChouQu.getCode();
+					fileFormat = FileFormat.FeiDingChang.getCode();
+					rowSeparator = "\n";
+					databaseSeparatorr = "|";
+					planeUrl = "/root";
+					break;
+				case 1 :
+					tableId = CODE_INFO_TABLE_ID;
+					extractType = DataExtractType.JinShuJuChouQu.getCode();
+					fileFormat = FileFormat.DingChang.getCode();
+					rowSeparator = "";
+					databaseSeparatorr = "";
+					planeUrl = "/home";
+					break;
+				case 2 :
+					tableId = AGENT_INFO_TABLE_ID;
+					extractType = DataExtractType.ShuJuChouQuJiRuKu.getCode();
+					fileFormat = HiveStorageType.ORC.getCode();
+					rowSeparator = "";
+					databaseSeparatorr = "";
+					planeUrl = "";
+					break;
+				case 3 :
+					tableId = DATA_SOURCE_TABLE_ID;
+					extractType = DataExtractType.ShuJuChouQuJiRuKu.getCode();
+					fileFormat = HiveStorageType.TEXTFILE.getCode();
+					rowSeparator = "|";
+					databaseSeparatorr = " ";
+					planeUrl = "";
+					break;
+				default:
+					tableId = UNEXPECTED_ID;
+					extractType = "unexpected_extractType";
+					rowSeparator = "unexpected_rowSeparator";
+					databaseSeparatorr = "unexpected_databaseSeparatorr";
+					fileFormat = "unexpected_fileFormat";
+					planeUrl = "unexpected_planeUrl";
+			}
+			Data_extraction_def def = new Data_extraction_def();
+			def.setDed_id(BASE_EXTRACTION_DEF_ID + i);
+			def.setTable_id(tableId);
+			def.setData_extract_type(extractType);
+			def.setRow_separator(rowSeparator);
+			def.setDatabase_separatorr(databaseSeparatorr);
+			def.setDatabase_code(DataBaseCode.UTF_8.getCode());
+			def.setDbfile_format(fileFormat);
+			def.setPlane_url(planeUrl);
+			def.setIs_header(IsFlag.Shi.getCode());
+
+			extractionDefs.add(def);
+		}
+
 		//插入数据
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			//插入用户表(sys_user)测试数据
@@ -613,16 +681,30 @@ public class InitAndDestDataForFileConf {
 			assertThat("数据库对应表测试数据初始化", tableInfoCount, is(4));
 
 			//插入table_column测试数据
-			int tableColumnCount = 0;
+			int sysUserCount = 0;
 			for(Table_column tableColumn : sysUsers){
 				int count = tableColumn.add(db);
-				tableColumnCount += count;
+				sysUserCount += count;
 			}
+			assertThat("sys_user表对应字段表测试数据初始化", sysUserCount, is(11));
+			int codeInfoCount = 0;
 			for(Table_column tableColumn : codeInfos){
 				int count = tableColumn.add(db);
-				tableColumnCount += count;
+				codeInfoCount += count;
 			}
-			assertThat("表对应字段表测试数据初始化", tableColumnCount, is(16));
+			assertThat("code_info表对应字段表测试数据初始化", codeInfoCount, is(5));
+			int agentInfosCount = 0;
+			for(Table_column tableColumn : agentInfos){
+				int count = tableColumn.add(db);
+				agentInfosCount += count;
+			}
+			assertThat("agent_info表对应字段表测试数据初始化", agentInfosCount, is(3));
+			int dataSourcesCount = 0;
+			for(Table_column tableColumn : dataSources){
+				int count = tableColumn.add(db);
+				dataSourcesCount += count;
+			}
+			assertThat("data_source表对应字段表测试数据初始化", dataSourcesCount, is(3));
 
 			//插入table_clean测试数据
 			int tableCleanCount = 0;
@@ -706,6 +788,14 @@ public class InitAndDestDataForFileConf {
 			}
 			assertThat("插入orig_code_info表测试数据成功", origCodeInfoCount, is(3));
 
+			//插入data_extraction_def表数据
+			int extractionDefCount = 0;
+			for(Data_extraction_def def : extractionDefs){
+				int count = def.add(db);
+				extractionDefCount += count;
+			}
+			assertThat("插入data_extraction_def表测试数据成功", extractionDefCount, is(4));
+
 			SqlOperator.commitTransaction(db);
 		}
 	}
@@ -730,6 +820,8 @@ public class InitAndDestDataForFileConf {
 			//6、删除table_column表测试数据
 			SqlOperator.execute(db, "delete from " + Table_column.TableName + " where table_id = ? ", SYS_USER_TABLE_ID);
 			SqlOperator.execute(db, "delete from " + Table_column.TableName + " where table_id = ? ", CODE_INFO_TABLE_ID);
+			SqlOperator.execute(db, "delete from " + Table_column.TableName + " where table_id = ? ", AGENT_INFO_TABLE_ID);
+			SqlOperator.execute(db, "delete from " + Table_column.TableName + " where table_id = ? ", DATA_SOURCE_TABLE_ID);
 			//7、删除table_clean表测试数据
 			SqlOperator.execute(db, "delete from " + Table_clean.TableName + " where table_id = ? ", SYS_USER_TABLE_ID);
 			//8、删除column_clean表测试数据
@@ -755,6 +847,11 @@ public class InitAndDestDataForFileConf {
 			SqlOperator.execute(db, "delete from " + Orig_code_info.TableName + " where orig_id = ? ", 6001L);
 			SqlOperator.execute(db, "delete from " + Orig_code_info.TableName + " where orig_id = ? ", 6002L);
 			SqlOperator.execute(db, "delete from " + Orig_code_info.TableName + " where orig_id = ? ", 6003L);
+			//删除data_extraction_def表数据
+			SqlOperator.execute(db, "delete from " + Data_extraction_def.TableName + " where table_id = ? ", SYS_USER_TABLE_ID);
+			SqlOperator.execute(db, "delete from " + Data_extraction_def.TableName + " where table_id = ? ", CODE_INFO_TABLE_ID);
+			SqlOperator.execute(db, "delete from " + Data_extraction_def.TableName + " where table_id = ? ", AGENT_INFO_TABLE_ID);
+			SqlOperator.execute(db, "delete from " + Data_extraction_def.TableName + " where table_id = ? ", DATA_SOURCE_TABLE_ID);
 			//14、提交事务后
 			SqlOperator.commitTransaction(db);
 		}

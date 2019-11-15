@@ -503,7 +503,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			int secCount = SqlOperator.execute(db, "delete from " + Table_info.TableName + " WHERE table_name = ?", "getFTPTask");
 			assertThat("测试完成后，table_name为getFTPTask的测试数据被删除了", secCount, is(1));
 
-			//验证完毕后，将自己在本方法中构造的数据删除掉(table_info表)
+			//验证完毕后，将自己在本方法中构造的数据删除掉(table_column表)
 			for(Table_info tableInfo : expectedList){
 				SqlOperator.execute(db, "delete from " + Table_column.TableName + " where table_id = ?", tableInfo.getTable_id());
 			}

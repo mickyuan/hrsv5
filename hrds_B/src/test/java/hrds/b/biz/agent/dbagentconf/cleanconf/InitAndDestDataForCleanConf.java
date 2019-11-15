@@ -36,8 +36,6 @@ public class InitAndDestDataForCleanConf {
 	private static final long FIRST_DB_AGENT_ID = 7001L;
 	private static final long SECOND_DB_AGENT_ID = 7002L;
 	private static final long UNEXPECTED_ID = 999999999L;
-	private static final String PRE_COMPLE_FLAG = "1";
-	private static final String POST_COMPLE_FLAG = "2";
 	private static final JSONObject tableCleanOrder = BaseInitData.initTableCleanOrder();
 	private static final JSONObject columnCleanOrder = BaseInitData.initColumnCleanOrder();
 
@@ -269,7 +267,7 @@ public class InitAndDestDataForCleanConf {
 			switch (i){
 				case 1 :
 					tbCleanId = 11111L;
-					compleType = PRE_COMPLE_FLAG;
+					compleType = FillingType.QianBuQi.getCode();
 					cleanType = CleanType.ZiFuBuQi.getCode();
 					tableId = SYS_USER_TABLE_ID;
 					compleChar = StringUtil.string2Unicode("wzc");
@@ -316,7 +314,7 @@ public class InitAndDestDataForCleanConf {
 		for(int i = 0; i < 2; i++){
 			long colCleanId = i % 2 == 0 ? 22222L : 33333L;
 			String cleanType = CleanType.ZiFuBuQi.getCode();
-			String compleType = i % 2 == 0 ? PRE_COMPLE_FLAG : POST_COMPLE_FLAG;
+			String compleType = i % 2 == 0 ? FillingType.QianBuQi.getCode() : FillingType.HouBuQi.getCode();
 			String compleChar = i % 2 == 0 ? StringUtil.string2Unicode("wzc") : StringUtil.string2Unicode(" ");
 			long length = i % 2 == 0 ? 3 : 1;
 			long columnId = i % 2 == 0 ? 2002L : 2003L;
