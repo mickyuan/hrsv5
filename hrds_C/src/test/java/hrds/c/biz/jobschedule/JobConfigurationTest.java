@@ -2,6 +2,7 @@ package hrds.c.biz.jobschedule;
 
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
+import fd.ng.core.annotation.Param;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
@@ -10,11 +11,14 @@ import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import hrds.commons.codes.*;
 import hrds.commons.entity.*;
+import hrds.commons.exception.BusinessException;
 import hrds.testbase.WebBaseTestCase;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -37,6 +41,8 @@ public class JobConfigurationTest extends WebBaseTestCase {
     private static final long CreateId = 1000L;
     // 测试部门ID dep_id,测试作业调度部门
     private static final long DepId = 1000011L;
+    // 初始化测试系统时间
+    private static final String SysDate = DateUtil.getSysDate();
 
     @Method(desc = "初始化测试用例数据", logicStep = "1.构造sys_user表测试数据" +
             "2.构造department_info部门表测试数据" +
@@ -193,11 +199,19 @@ public class JobConfigurationTest extends WebBaseTestCase {
             assertThat("测试数据etl_job_temp_para初始化", num, is(1));
             // 10.构造etl_para表测试数据
             Etl_para etl_para = new Etl_para();
-            etl_para.setEtl_sys_cd(EtlSysCd);
-            etl_para.setPara_cd("#date");
-            etl_para.setPara_val("#txdate-1");
-            num = etl_para.add(db);
-            assertThat("测试数据etl_job_temp_para初始化", num, is(1));
+            for (int i = 0; i < 2; i++) {
+                if (i == 0) {
+                    etl_para.setPara_cd("#starDate");
+                    etl_para.setPara_val(SysDate);
+                } else {
+                    etl_para.setPara_cd("#endDate");
+                    etl_para.setPara_val("99991231");
+                }
+                etl_para.setEtl_sys_cd(EtlSysCd);
+                etl_para.setPara_type(ParamType.CanShu.getCode());
+                num = etl_para.add(db);
+                assertThat("测试数据etl_job_temp_para初始化", num, is(1));
+            }
             // 11.构造Etl_dependency表测试数据
             Etl_dependency etlDependency = new Etl_dependency();
             etlDependency.setEtl_sys_cd(EtlSysCd);
@@ -323,7 +337,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
     public void getTaskInfoByPage() {
         // 1.正常的数据访问1，数据都正常
         String bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
-                .addData("sub_sys_cd", "")
+                .addData("sub_sys_cd", "#date")
                 .addData("currPage", 1)
                 .addData("pageSize", 10)
                 .post(getActionUrl("getTaskInfoByPage"))
@@ -332,17 +346,69 @@ public class JobConfigurationTest extends WebBaseTestCase {
         assertThat(ar.get().isSuccess(), is(true));
     }
 
+    @Method(desc = "分页查询作业系统参数，此方法只有三种情况",
+            logicStep = "1.正常的数据访问1，数据都正常,para_cd 为空" +
+                    "2.正常的数据访问2，数据都正常，para_cd不为空" +
+                    "3.错误的数据访问1，工程编号不存在")
     @Test
-    public void getEtlParaByPage() {
-        // 1.正常的数据访问1，数据都正常
+    public void searchEtlParaByPage() {
+        // 1.正常的数据访问1，数据都正常,para_cd 为空
         String bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
-                .addData("para_cd", "")
                 .addData("currPage", 1)
                 .addData("pageSize", 5)
-                .post(getActionUrl("getEtlParaByPage"))
+                .post(getActionUrl("searchEtlParaByPage"))
                 .getBodyString();
-        Optional<ActionResult> ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class);
-        assertThat(ar.get().isSuccess(), is(true));
+        ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(true));
+        // 验证查询数据的正确性
+        Map<String, Object> dataForMap = ar.getDataForMap();
+        assertThat(dataForMap.get("etlSysName"), is("dhwcs"));
+        List<Map<String, Object>> etlParaList = (List<Map<String, Object>>) dataForMap.get("etlParaList");
+        checkEtlParaData(etlParaList);
+        // 2.正常的数据访问2，数据都正常，para_cd不为空
+        bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                .addData("para_cd", "Date")
+                .addData("currPage", 1)
+                .addData("pageSize", 5)
+                .post(getActionUrl("searchEtlParaByPage"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(true));
+        // 验证查询数据的正确性
+        dataForMap = ar.getDataForMap();
+        assertThat(dataForMap.get("etlSysName"), is("dhwcs"));
+        etlParaList = (List<Map<String, Object>>) dataForMap.get("etlParaList");
+        checkEtlParaData(etlParaList);
+        // 3.错误的数据访问1，工程编号不存在
+        bodyString = new HttpClient().addData("etl_sys_cd", "100")
+                .addData("para_cd", "Date")
+                .addData("currPage", 1)
+                .addData("pageSize", 5)
+                .post(getActionUrl("searchEtlParaByPage"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(false));
     }
+
+    @Method(desc = "验证作业系统参数的正确性", logicStep = "该方法不需要测试")
+    @Param(name = "etlParaList", desc = "参数信息的集合", range = "不为空")
+    private void checkEtlParaData(List<Map<String, Object>> etlParaList) {
+        for (Map<String, Object> etlParaMap : etlParaList) {
+            // TODO 不确定原表是否有数据，所以只测自己造的测试数据
+            if (etlParaMap.get("para_cd").equals("#starDate") &&
+                    etlParaMap.get("etl_sys_cd").equals("zypzglcs")) {
+                assertThat(etlParaMap.get("para_type"), is(ParamType.CanShu.getCode()));
+                assertThat(etlParaMap.get("para_val"), is(SysDate));
+            } else if (etlParaMap.get("para_cd").equals("#endDate") &&
+                    etlParaMap.get("etl_sys_cd").equals("zypzglcs")) {
+                assertThat(etlParaMap.get("para_type"), is(ParamType.CanShu.getCode()));
+                assertThat(etlParaMap.get("para_val"), is("99991231"));
+            }
+        }
+    }
+
 }
 
