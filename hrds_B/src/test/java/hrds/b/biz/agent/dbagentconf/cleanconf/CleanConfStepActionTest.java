@@ -16,6 +16,7 @@ import hrds.b.biz.agent.bean.TableCleanParam;
 import hrds.b.biz.agent.dbagentconf.BaseInitData;
 import hrds.commons.codes.CharSplitType;
 import hrds.commons.codes.CleanType;
+import hrds.commons.codes.FillingType;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
@@ -40,8 +41,8 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	private static final long FIRST_DATABASESET_ID = 1001L;
 	private static final long SECOND_DATABASESET_ID = 1002L;
 	private static final long UNEXPECTED_ID = 999999999L;
-	private static final String PRE_COMPLE_FLAG = "1";
-	private static final String POST_COMPLE_FLAG = "2";
+	private static final JSONObject tableCleanOrder = BaseInitData.initTableCleanOrder();
+	private static final JSONObject columnCleanOrder = BaseInitData.initColumnCleanOrder();
 
 	/**
 	 * 为每个方法的单元测试初始化测试数据
@@ -166,7 +167,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 				.addData("clean_type", CleanType.ZiFuBuQi.getCode())
 				.addData("character_filling", "beyond")
 				.addData("filling_length" ,6)
-				.addData("filling_type", POST_COMPLE_FLAG)
+				.addData("filling_type", FillingType.HouBuQi.getCode())
 				.post(getActionUrl("saveSingleTbCompletionInfo")).getBodyString();
 		ActionResult rightResultOne = JsonUtil.toObjectSafety(rightStringOne, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
@@ -188,7 +189,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 				.addData("table_id", SYS_USER_TABLE_ID)
 				.addData("clean_type", CleanType.ZiFuBuQi.getCode())
 				.addData("filling_length" ,6)
-				.addData("filling_type", POST_COMPLE_FLAG)
+				.addData("filling_type", FillingType.HouBuQi.getCode())
 				.post(getActionUrl("saveSingleTbCompletionInfo")).getBodyString();
 		ActionResult wrongResultOne = JsonUtil.toObjectSafety(wrongStringOne, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
@@ -199,7 +200,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 				.addData("table_id", SYS_USER_TABLE_ID)
 				.addData("clean_type", CleanType.ZiFuBuQi.getCode())
 				.addData("character_filling", "beyond")
-				.addData("filling_type", POST_COMPLE_FLAG)
+				.addData("filling_type", FillingType.HouBuQi.getCode())
 				.post(getActionUrl("saveSingleTbCompletionInfo")).getBodyString();
 		ActionResult wrongResultTwo = JsonUtil.toObjectSafety(wrongStringTwo, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
@@ -221,7 +222,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 				.addData("clean_type", CleanType.ZiFuBuQi.getCode())
 				.addData("character_filling", "beyond")
 				.addData("filling_length" ,6)
-				.addData("filling_type", POST_COMPLE_FLAG)
+				.addData("filling_type", FillingType.HouBuQi.getCode())
 				.post(getActionUrl("saveSingleTbCompletionInfo")).getBodyString();
 		ActionResult wrongResultFour = JsonUtil.toObjectSafety(wrongStringFour, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
@@ -253,7 +254,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 				.addData("clean_type", CleanType.ZiFuBuQi.getCode())
 				.addData("character_filling", "beyond")
 				.addData("filling_length" ,6)
-				.addData("filling_type", POST_COMPLE_FLAG)
+				.addData("filling_type", FillingType.HouBuQi.getCode())
 				.post(getActionUrl("saveColCompletionInfo")).getBodyString();
 		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
@@ -275,7 +276,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 				.addData("column_id", SYS_USER_TABLE_ID)
 				.addData("clean_type", CleanType.ZiFuBuQi.getCode())
 				.addData("filling_length" ,6)
-				.addData("filling_type", POST_COMPLE_FLAG)
+				.addData("filling_type", FillingType.HouBuQi.getCode())
 				.post(getActionUrl("saveColCompletionInfo")).getBodyString();
 		ActionResult wrongResultOne = JsonUtil.toObjectSafety(wrongStringOne, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
@@ -286,7 +287,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 				.addData("column_id", SYS_USER_TABLE_ID)
 				.addData("clean_type", CleanType.ZiFuBuQi.getCode())
 				.addData("character_filling", "beyond")
-				.addData("filling_type", POST_COMPLE_FLAG)
+				.addData("filling_type", FillingType.HouBuQi.getCode())
 				.post(getActionUrl("saveColCompletionInfo")).getBodyString();
 		ActionResult wrongResultTwo = JsonUtil.toObjectSafety(wrongStringTwo, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
@@ -308,7 +309,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 				.addData("clean_type", CleanType.ZiFuBuQi.getCode())
 				.addData("character_filling", "beyond")
 				.addData("filling_length" ,6)
-				.addData("filling_type", POST_COMPLE_FLAG)
+				.addData("filling_type", FillingType.HouBuQi.getCode())
 				.post(getActionUrl("saveColCompletionInfo")).getBodyString();
 		ActionResult wrongResultFour = JsonUtil.toObjectSafety(wrongStringFour, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
@@ -338,7 +339,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 
 		Map<String, Object> rightDataOne = rightResultOne.getDataForMap(String.class, Object.class);
 		assertThat("columnId为2003的列字符补齐信息中，col_clean_id为33333", rightDataOne.get("col_clean_id"), is(33333));
-		assertThat("columnId为2003的列字符补齐信息中，补齐类型为后补齐", rightDataOne.get("filling_type"), is(POST_COMPLE_FLAG));
+		assertThat("columnId为2003的列字符补齐信息中，补齐类型为后补齐", rightDataOne.get("filling_type"), is(FillingType.HouBuQi.getCode()));
 		assertThat("columnId为2003的列字符补齐信息中，补齐字符为空格", rightDataOne.get("character_filling"), is(" "));
 		assertThat("columnId为2003的列字符补齐信息中，补齐长度为1", rightDataOne.get("filling_length"), is(1));
 		assertThat("columnId为2003的列字符补齐信息中，columnId为2003", rightDataOne.get("column_id"), is(2003));
@@ -353,7 +354,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 
 		Map<String, Object> rightDataTwo = rightResultTwo.getDataForMap(String.class, Object.class);
 		assertThat("columnId为2001的字段，没有设置列字符补齐，所以其所在表sys_user的字符补齐信息中，table_clean_id为11111", rightDataTwo.get("table_clean_id"), is(11111));
-		assertThat("columnId为2001的字段，没有设置列字符补齐，所以其所在表sys_user的字符补齐信息中，补齐类型为前补齐", rightDataTwo.get("filling_type"), is(PRE_COMPLE_FLAG));
+		assertThat("columnId为2001的字段，没有设置列字符补齐，所以其所在表sys_user的字符补齐信息中，补齐类型为前补齐", rightDataTwo.get("filling_type"), is(FillingType.QianBuQi.getCode()));
 		assertThat("columnId为2001的字段，没有设置列字符补齐，所以其所在表sys_user的字符补齐信息中，补齐字符为wzc", rightDataTwo.get("character_filling"), is("wzc"));
 		assertThat("columnId为2001的字段，没有设置列字符补齐，所以其所在表sys_user的字符补齐信息中，补齐长度为3", rightDataTwo.get("filling_length"), is(3));
 
@@ -390,7 +391,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 
 		Map<String, Object> rightDataOne = rightResultOne.getDataForMap(String.class, Object.class);
 		assertThat("tableId为7001的表字符补齐信息中，table_clean_id为11111", rightDataOne.get("table_clean_id"), is(11111));
-		assertThat("tableId为7001的表字符补齐信息中，补齐类型为前补齐", rightDataOne.get("filling_type"), is(PRE_COMPLE_FLAG));
+		assertThat("tableId为7001的表字符补齐信息中，补齐类型为前补齐", rightDataOne.get("filling_type"), is(FillingType.QianBuQi.getCode()));
 		assertThat("tableId为7001的表字符补齐信息中，补齐字符为wzc", rightDataOne.get("character_filling"), is("wzc"));
 		assertThat("tableId为7001的表字符补齐信息中，补齐长度为3", rightDataOne.get("filling_length"), is(3));
 
@@ -2171,12 +2172,12 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	/**
 	 * 测试保存所有表清洗优先级
 	 *
-	 * 正确数据访问1：将sys_user和code_info表的表清洗优先级设置为
+	 * 正确数据访问1：对ID为FIRST_DATABASESET_ID的数据库采集任务设置任务级别的清洗优先级
 	 *                  1、字符替换
 	 *                  2、字符补齐
 	 *                  3、字符trim
 	 *                  4、字符合并
-	 * 错误的数据访问1：设置表清洗优先级时，传递的tableId数组为空
+	 * 错误的数据访问1：设置任务级别清洗优先级时，传递错误的colSetId
 	 * 错误的测试用例未达到三组: 一个测试用例已经可以覆盖代码中所有可能出现的场景
 	 * @Param: 无
 	 * @return: 无
@@ -2184,13 +2185,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 * */
 	@Test
 	public void saveAllTbCleanOrder(){
-		//正确数据访问1：将sys_user和code_info表的表清洗优先级设置为1、字符替换 2、字符补齐 3、字符trim 4、字符合并
-		JSONObject oriSort = new JSONObject();
-		oriSort.put(CleanType.ZiFuBuQi.getCode(), 1);
-		oriSort.put(CleanType.ZiFuTiHuan.getCode(), 2);
-		oriSort.put(CleanType.ZiFuHeBing.getCode(), 3);
-		oriSort.put(CleanType.ZiFuTrim.getCode(), 4);
-
+		//正确数据访问1：将sys_user、code_info、agent_info表、data_source表清洗优先级设置为1、字符替换 2、字符补齐 3、字符trim 4、字符合并
 		JSONObject newSort = new JSONObject();
 		newSort.put(CleanType.ZiFuTiHuan.getCode(), 1);
 		newSort.put(CleanType.ZiFuBuQi.getCode(), 2);
@@ -2198,16 +2193,13 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		newSort.put(CleanType.ZiFuHeBing.getCode(), 4);
 
 		try(DatabaseWrapper db = new DatabaseWrapper()){
-			List<Object> list = SqlOperator.queryOneColumnList(db, "select ti_or from " + Table_info.TableName + " where table_id in (?, ?) order by table_id", SYS_USER_TABLE_ID, CODE_INFO_TABLE_ID);
-			assertThat("查询获得了两条数据", list.size() == 2, is(true));
-			assertThat("第一条数据获取的是sys_user表的默认表清洗规则，结果符合预期", list.get(0).toString().equalsIgnoreCase(oriSort.toJSONString()), is(true));
-			assertThat("第一条数据获取的是code_info表的默认表清洗规则，结果符合预期", list.get(1).toString().equalsIgnoreCase(oriSort.toJSONString()), is(true));
+			Result result = SqlOperator.queryResult(db, "select cp_or from " + Database_set.TableName + " where database_id = ?", FIRST_DATABASESET_ID);
+			assertThat("共获得了1条数据", result.getRowCount(), is(1));
+			assertThat("未定义全表清洗优先级", result.getString(0, "cp_or"), is(""));
 		}
 
-		long[] tableIds = {SYS_USER_TABLE_ID, CODE_INFO_TABLE_ID};
-
 		String rightStringOne = new HttpClient()
-				.addData("tableIds", tableIds)
+				.addData("colSetId", FIRST_DATABASESET_ID)
 				.addData("sort", newSort.toJSONString())
 				.post(getActionUrl("saveAllTbCleanOrder")).getBodyString();
 		ActionResult rightResultOne = JsonUtil.toObjectSafety(rightStringOne, ActionResult.class).orElseThrow(()
@@ -2215,18 +2207,70 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		assertThat(rightResultOne.isSuccess(), is(true));
 
 		try(DatabaseWrapper db = new DatabaseWrapper()){
-			List<Object> list = SqlOperator.queryOneColumnList(db, "select ti_or from " + Table_info.TableName + " where table_id in (?, ?) order by table_id", SYS_USER_TABLE_ID, CODE_INFO_TABLE_ID);
-			assertThat("查询获得了两条数据", list.size() == 2, is(true));
-			assertThat("第一条数据获取的是sys_user表修改后的清洗规则，结果符合预期", list.get(0).toString().equalsIgnoreCase(newSort.toJSONString()), is(true));
-			assertThat("第一条数据获取的是code_info表修改后的清洗规则，结果符合预期", list.get(1).toString().equalsIgnoreCase(newSort.toJSONString()), is(true));
+			Result result = SqlOperator.queryResult(db, "select cp_or from " + Database_set.TableName + " where database_id = ?", FIRST_DATABASESET_ID);
+			assertThat("共获得了1条数据", result.getRowCount(), is(1));
+			assertThat("定义全表清洗优先级,结果符合期望", result.getString(0, "cp_or"), is(newSort.toJSONString()));
 		}
 
-		//错误的数据访问1：设置表清洗优先级时，传递的tableId数组为空
-		long[] wrongTableIds = {};
+		//错误的数据访问1：设置任务级别清洗优先级时，传递的tableId数组为空
 		String wrongStringOne = new HttpClient()
-				.addData("tableIds", wrongTableIds)
+				.addData("colSetId", UNEXPECTED_ID)
 				.addData("sort", newSort.toJSONString())
 				.post(getActionUrl("saveAllTbCleanOrder")).getBodyString();
+		ActionResult wrongResultOne = JsonUtil.toObjectSafety(wrongStringOne, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultOne.isSuccess(), is(false));
+	}
+
+	/**
+	 * 测试回显全表清洗优先级
+	 *
+	 * 正确数据访问1：对ID为FIRST_DATABASESET_ID的数据库采集任务设置任务级别的清洗优先级，并尝试获取
+	 *                  1、字符替换
+	 *                  2、字符补齐
+	 *                  3、字符trim
+	 *                  4、字符合并
+	 * 错误的数据访问1：获取任务级别清洗优先级时，传递错误的colSetId
+	 * 错误的测试用例未达到三组: 一个测试用例已经可以覆盖代码中所有可能出现的场景
+	 * @Param: 无
+	 * @return: 无
+	 *
+	 * */
+	@Test
+	public void getAllTbCleanOrder(){
+		//正确数据访问1：对ID为FIRST_DATABASESET_ID的数据库采集任务设置任务级别的清洗优先级，并尝试获取
+		JSONObject newSort = new JSONObject();
+		newSort.put(CleanType.ZiFuTiHuan.getCode(), 1);
+		newSort.put(CleanType.ZiFuBuQi.getCode(), 2);
+		newSort.put(CleanType.ZiFuTrim.getCode(), 3);
+		newSort.put(CleanType.ZiFuHeBing.getCode(), 4);
+
+		try(DatabaseWrapper db = new DatabaseWrapper()){
+			Result result = SqlOperator.queryResult(db, "select cp_or from " + Database_set.TableName + " where database_id = ?", FIRST_DATABASESET_ID);
+			assertThat("共获得了1条数据", result.getRowCount(), is(1));
+			assertThat("未定义全表清洗优先级", result.getString(0, "cp_or"), is(""));
+
+			int execute = SqlOperator.execute(db, "update " + Database_set.TableName + " set cp_or = ? where database_id = ?", newSort.toJSONString(), FIRST_DATABASESET_ID);
+			assertThat("对ID为FIRST_DATABASESET_ID的数据库采集任务设置任务级别的清洗优先级成功", execute, is(1));
+
+			SqlOperator.commitTransaction(db);
+		}
+
+		String rightStringOne = new HttpClient()
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.post(getActionUrl("getAllTbCleanOrder")).getBodyString();
+		ActionResult rightResultOne = JsonUtil.toObjectSafety(rightStringOne, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResultOne.isSuccess(), is(true));
+
+		Result rightData = rightResultOne.getDataForResult();
+		assertThat("共获得了1条数据", rightData.getRowCount(), is(1));
+		assertThat("定义全表清洗优先级,结果符合期望", rightData.getString(0, "cp_or"), is(newSort.toJSONString()));
+
+		//错误的数据访问1：获取任务级别清洗优先级时，传递错误的colSetId
+		String wrongStringOne = new HttpClient()
+				.addData("colSetId", UNEXPECTED_ID)
+				.post(getActionUrl("getAllTbCleanOrder")).getBodyString();
 		ActionResult wrongResultOne = JsonUtil.toObjectSafety(wrongStringOne, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(wrongResultOne.isSuccess(), is(false));
@@ -2288,16 +2332,51 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	}
 
 	/**
+	 * 测试根据表ID回显整表清洗优先级
+	 *
+	 * 正确数据访问1：尝试获取在构造初始化数据时对sys_user表定义的整表清洗优先级
+	 * 错误的数据访问1：传入错误的colSetId
+	 * 错误的测试用例未达到三组:以上两种情况已经可以覆盖getSingleTbCleanOrder表所有可能出现的情况了
+	 * @Param: 无
+	 * @return: 无
+	 *
+	 * */
+	@Test
+	public void getSingleTbCleanOrder(){
+		//正确数据访问1：尝试获取在构造初始化数据时对sys_user表定义的整表清洗优先级
+		String rightStringOne = new HttpClient()
+				.addData("tableId", SYS_USER_TABLE_ID)
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.post(getActionUrl("getSingleTbCleanOrder")).getBodyString();
+		ActionResult rightResultOne = JsonUtil.toObjectSafety(rightStringOne, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResultOne.isSuccess(), is(true));
+
+		Result rightData = rightResultOne.getDataForResult();
+		assertThat("获取到了一条数据", rightData.getRowCount(), is(1));
+		assertThat("对sys_user表设置的整表清洗优先级符合期望", rightData.getString(0, "ti_or"), is(tableCleanOrder.toJSONString()));
+
+		//错误的数据访问1：传入错误的colSetId
+		String wrongStringOne = new HttpClient()
+				.addData("tableId", SYS_USER_TABLE_ID)
+				.addData("colSetId", UNEXPECTED_ID)
+				.post(getActionUrl("getSingleTbCleanOrder")).getBodyString();
+		ActionResult wrongResultOne = JsonUtil.toObjectSafety(wrongStringOne, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultOne.isSuccess(), is(false));
+	}
+
+	/**
 	 * 测试保存单个字段清洗优先级
 	 *
-	 * 正确数据访问1：尝试对sys_user表的role_id字段设置清洗规则为
+	 * 正确数据访问1：尝试对sys_user表的role_id字段设置清洗优先级为
 	 *                  1、字符trim
 	 *                  2、字符拆分
 	 *                  3、码值转换
 	 *                  4、时间转换
 	 *                  5、字符替换
 	 *                  6、字符补齐
-	 * 错误的数据访问1：尝试对一个本次采集作业中没有的列设置清洗规则
+	 * 错误的数据访问1：尝试对一个本次采集作业中没有的列设置清洗优先级
 	 * 错误的测试用例未达到三组:以上两个测试用例已经可以覆盖saveColCleanOrder方法所有可能出现的情况了
 	 *
 	 * @Param: 无
@@ -2351,6 +2430,42 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		ActionResult wrongResult = JsonUtil.toObjectSafety(wrongString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(wrongResult.isSuccess(), is(false));
+	}
+
+	/**
+	 * 测试根据列ID回显列清洗优先级
+	 *
+	 * 正确数据访问1：尝试获取为sys_user表的role_id字段设置的清洗优先级
+	 * 错误的数据访问1：尝试对一个不存在于sys_user表中的字段获取列清洗优先级
+	 * 错误的测试用例未达到三组:以上两个测试用例已经可以覆盖getColCleanOrder方法所有可能出现的情况了
+	 *
+	 * @Param: 无
+	 * @return: 无
+	 *
+	 * */
+	@Test
+	public void getColCleanOrder(){
+		//正确数据访问1：尝试获取为sys_user表的role_id字段设置的清洗优先级
+		String rightStringOne = new HttpClient()
+				.addData("columnId", 2004L)
+				.addData("tableId", SYS_USER_TABLE_ID)
+				.post(getActionUrl("getColCleanOrder")).getBodyString();
+		ActionResult rightResultOne = JsonUtil.toObjectSafety(rightStringOne, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResultOne.isSuccess(), is(true));
+
+		Result rightData = rightResultOne.getDataForResult();
+		assertThat("获取到一条数据", rightData.getRowCount(), is(1));
+		assertThat("获取到的对sys_user表的role_id字段定义的清洗优先级符合期望", rightData.getString(0, "tc_or"), is(columnCleanOrder.toJSONString()));
+
+		//错误的数据访问1：尝试对一个不存在于sys_user表中的字段获取列清洗优先级
+		String wrongStringOne = new HttpClient()
+				.addData("columnId", 2014L)
+				.addData("tableId", SYS_USER_TABLE_ID)
+				.post(getActionUrl("getColCleanOrder")).getBodyString();
+		ActionResult wrongResultOne = JsonUtil.toObjectSafety(wrongStringOne, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultOne.isSuccess(), is(false));
 	}
 
 	/**

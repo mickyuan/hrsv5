@@ -918,25 +918,45 @@ public class CleanConfStepAction extends BaseAction{
 	 * 全表清洗优先级保存按钮(saveClearSortSDO)，针对本次采集任务的所有表保存清洗优先级
 	 * */
 	@Method(desc = "保存所有表清洗优先级", logicStep = "" +
-			"1、根据table_id,在table_info表中找到对应的记录，将sort更新进去")
-	@Param(name = "tableIds", desc = "存放本次采集任务中所有表ID的数组", range = "不为空")
+			"1、使用colSetId在database_set表中查找，看是否能找到对应的记录" +
+			"2、如果没有找到，直接抛异常" +
+			"3、如果找到了，根据colSetId,在database_set表中找到对应的记录，将sort更新进去")
+	@Param(name = "colSetId", desc = "数据库采集设置ID", range = "不为空")
 	@Param(name = "sort", desc = "所有表清洗优先级，JSON格式", range = "不为空，" +
 			"如：{\"complement\":1,\"replacement\":2,\"formatting\":3,\"conversion\":4,\"merge\":5,\"split\":6,\"trim\":7}" +
 			"注意：json的key请务必按照示例中给出的写")
-	public void saveAllTbCleanOrder(long[] tableIds, String sort){
-		if(!(tableIds.length > 0)){
-			throw new BusinessSystemException("保存所有表清洗优先级时未获取到表ID");
+	public void saveAllTbCleanOrder(long colSetId, String sort){
+		//1、使用colSetId在database_set表中查找，看是否能找到对应的记录
+		long count = Dbo.queryNumber("select count(1) from " + Database_set.TableName + " where database_id = ?"
+				, colSetId).orElseThrow(() -> new BusinessSystemException("查询出的数据必须有且只有一条"));
+		//2、如果没有找到，直接抛异常
+		if(count != 1){
+			throw new BusinessSystemException("未能找到数据库采集任务");
 		}
-		//1、根据table_id,在table_info表中找到对应的记录，将sort更新进去
-		StringBuilder sqlSB = new StringBuilder("update " + Table_info.TableName +
-				" set ti_or = ? where table_id in ( ");
-		for(int i = 0; i < tableIds.length; i++){
-			sqlSB.append(tableIds[i]);
-			if (i != tableIds.length - 1)
-				sqlSB.append(",");
+		//3、如果找到了，根据table_id,在table_info表中找到对应的记录，将sort更新进去
+		DboExecute.updatesOrThrow("保存全表清洗优先级失败", "update " +
+				Database_set.TableName + " set cp_or = ? where database_id = ?", sort, colSetId);
+	}
+
+	/*
+	 * 回显全表清洗优先级
+	 * */
+	@Method(desc = "根据数据库设置ID回显全表清洗优先级", logicStep = "" +
+			"1、使用colSetId在database_set表中查找，看是否能找到对应的记录" +
+			"2、如果没有找到，直接抛异常" +
+			"3、如果找到了，根据colSetId,在database_set表中找到对应的记录，并返回")
+	@Param(name = "colSetId", desc = "数据库采集设置ID", range = "不为空")
+	@Return(desc = "查询结果集", range = "不为空")
+	public Result getAllTbCleanOrder(long colSetId){
+		//1、使用colSetId在database_set表中查找，看是否能找到对应的记录
+		long count = Dbo.queryNumber("select count(1) from " + Database_set.TableName + " where database_id = ?"
+				, colSetId).orElseThrow(() -> new BusinessSystemException("查询出的数据必须有且只有一条"));
+		//2、如果没有找到，直接抛异常
+		if(count != 1){
+			throw new BusinessSystemException("未能找到数据库采集任务");
 		}
-		sqlSB.append(" )");
-		DboExecute.updatesOrThrow(tableIds.length, "保存全表清洗优先级失败", sqlSB.toString(), sort);
+		//3、如果找到了，根据colSetId,在database_set表中找到对应的记录，并返回
+		return Dbo.queryResult("select cp_or from " + Database_set.TableName + " where database_id = ?", colSetId);
 	}
 
 	/*
@@ -955,6 +975,28 @@ public class CleanConfStepAction extends BaseAction{
 	}
 
 	/*
+	 * 列清洗页面，回显整表优先级
+	 * */
+	@Method(desc = "根据表ID回显整表清洗优先级", logicStep = "" +
+			"1、在数据库设置表中，根据tableId和colSetId查找该采集任务中是否存在该表" +
+			"2、如果不存在，直接抛异常" +
+			"3、如果存在，查询正表清洗优先级并返回")
+	@Param(name = "tableId", desc = "表ID", range = "不为空")
+	@Param(name = "colSetId", desc = "数据库设置ID", range = "不为空")
+	@Return(desc = "查询结果集", range = "不为空")
+	public Result getSingleTbCleanOrder(long tableId, long colSetId){
+		//1、在数据库设置表中，根据tableId和colSetId查找该采集任务中是否存在该表
+		long count = Dbo.queryNumber("select count(1) from " + Table_info.TableName + " where table_id = ? and " +
+				"database_id = ?", tableId, colSetId).orElseThrow(() -> new BusinessSystemException("查询结果必须有且只有一条"));
+		//2、如果不存在，直接抛异常
+		if(count != 1){
+			throw new BusinessSystemException("在当前数据库采集任务中未找到该采集表");
+		}
+		//3、如果存在，查询整表清洗优先级并返回
+		return Dbo.queryResult("select ti_or from " + Table_info.TableName + " where table_id = ?", tableId);
+	}
+
+	/*
 	 * 列清洗页面，优先级调整设置，对单个字段设置清洗优先级
 	 * */
 	@Method(desc = "保存单个字段清洗优先级", logicStep = "" +
@@ -967,6 +1009,28 @@ public class CleanConfStepAction extends BaseAction{
 		//1、根据columnId,在table_column表中找到对应的字段，将清洗顺序设置进去
 		DboExecute.updatesOrThrow("保存列清洗优先级失败",
 				"update "+ Table_column.TableName +" set tc_or = ? where column_id = ?", sort, columnId);
+	}
+
+	/*
+	 * 列清洗页面，回显列清洗优先级
+	 * */
+	@Method(desc = "根据列ID回显列清洗优先级", logicStep = "" +
+			"1、在table_column表中，判断列是否存在" +
+			"2、不存在，直接抛异常" +
+			"3、若存在，查询出该列的清洗优先级返回给前端")
+	@Param(name = "columnId", desc = "列ID", range = "不为空")
+	@Param(name = "tableId", desc = "表ID", range = "不为空")
+	@Return(desc = "查询结果集", range = "不为空")
+	public Result getColCleanOrder(long columnId, long tableId){
+		//1、在table_column表中，判断列是否存在
+		long count = Dbo.queryNumber("select count(1) from " + Table_column.TableName + " where column_id = ? " +
+				"and table_id = ?", columnId, tableId).orElseThrow(() -> new BusinessSystemException("查询结果必须有且只有一条数据"));
+		//2、不存在，直接抛异常
+		if(count != 1){
+			throw new BusinessSystemException("未找到字段");
+		}
+		//3、若存在，查询出该列的清洗优先级返回给前端
+		return Dbo.queryResult("select tc_or from " + Table_column.TableName + " where column_id = ?", columnId);
 	}
 
 	/*
