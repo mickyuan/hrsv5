@@ -16,8 +16,6 @@ import hrds.commons.codes.*;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.DboExecute;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.util.HashMap;
 import java.util.List;
@@ -25,7 +23,6 @@ import java.util.Map;
 
 @DocClass(desc = "作业调度配置管理", author = "dhw", createdate = "2019/10/28 11:36")
 public class JobConfiguration extends BaseAction {
-    private static final Logger logger = LogManager.getLogger();
     private static final SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 
     @Method(desc = "分页查询作业调度某工程任务信息",
@@ -33,15 +30,16 @@ public class JobConfiguration extends BaseAction {
                     "2.判断工程是否存在" +
                     "3.获取工程名称" +
                     "4.获取某个工程下任务信息" +
-                    "5.判断任务编号是否为空，如果为空则查询所有任务信息，如果不为空则查询单个任务信息用于更新任务数据回显" +
+                    "5.判断任务编号是否为空，如果为空则查询所有任务信息，如果不为空则模糊查询任务信息（搜索）" +
                     "6.创建存放工程作业任务信息的集合并封装数据" +
                     "7.返回存放某个工程下任务信息以及工程编号工程名称的集合")
     @Param(name = "etl_sys_cd", desc = "工程编号", range = "无限制")
-    @Param(name = "sub_sys_cd", desc = "任务编号", range = "可为空", nullable = true)
+    @Param(name = "sub_sys_cd", desc = "任务编号", range = "无限制", nullable = true)
     @Param(name = "currPage", desc = "分页查询当前页", range = "大于0的正整数", valueIfNull = "1")
     @Param(name = "pageSize", desc = "分页查询每页显示记录数", range = "大于0的正整数", valueIfNull = "10")
     @Return(desc = "返回存放某个工程下任务信息以及工程代码、工程名称的集合", range = "无限制")
-    public Map<String, Object> getTaskInfoByPage(String etl_sys_cd, String sub_sys_cd, int currPage, int pageSize) {
+    public Map<String, Object> getTaskInfoByPage(String etl_sys_cd, String sub_sys_cd,
+                                                 int currPage, int pageSize) {
         // 1.数据可访问权限处理方式，通过user_id进行权限控制
         // 2.判断工程是否存在
         isEtlSysExist(etl_sys_cd, getUserId());
@@ -51,22 +49,32 @@ public class JobConfiguration extends BaseAction {
         asmSql.clean();
         asmSql.addSql("select distinct * from " + Etl_sub_sys_list.TableName + " where etl_sys_cd = ?");
         asmSql.addParam(etl_sys_cd);
-        asmSql.addParam(getUserId());
-        // 5.判断任务编号是否为空，如果为空则查询所有任务信息，如果不为空则查询单个任务信息用于更新任务数据回显
+        // 5.判断任务编号是否为空，如果为空则查询所有任务信息，如果不为空则模糊查询任务信息（搜索）
         if (StringUtil.isNotBlank(sub_sys_cd)) {
             asmSql.addLikeParam("sub_sys_cd", sub_sys_cd);
         }
         asmSql.addSql(" order by etl_sys_cd,sub_sys_cd");
         Page page = new DefaultPageImpl(currPage, pageSize);
-        List<Map<String, Object>> etlSubSysList = Dbo.queryPagedList(page, asmSql.sql(), asmSql.params());
+        List<Etl_sub_sys_list> subSysLists = Dbo.queryPagedList(Etl_sub_sys_list.class, page, asmSql.sql(),
+                asmSql.params());
         // 6.创建存放工程作业任务信息的集合并封装数据
         Map<String, Object> taskInfo = new HashMap<>();
         taskInfo.put("etl_sys_cd", etl_sys_cd);
         taskInfo.put("etl_sys_name", etlSysName);
-        taskInfo.put("etlSubSysList", etlSubSysList);
+        taskInfo.put("etlSubSysList", subSysLists);
         taskInfo.put("totalSize", page.getTotalSize());
         // 7.返回存放某个工程下所有任务信息以及工程代码、工程名称的集合
         return taskInfo;
+    }
+
+    @Method(desc = "根据工程编号，任务编号查询任务信息", logicStep = "方法步骤")
+    @Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
+    @Param(name = "sub_sys_cd", desc = "任务编号", range = "新增任务时生成")
+    @Return(desc = "返回根据工程编号，任务编号查询任务信息", range = "无限制")
+    public Map<String, Object> searchTaskInfoByCd(String etl_sys_cd, String sub_sys_cd) {
+        return Dbo.queryOneObject("select distinct * from "
+                + Etl_sub_sys_list.TableName + " where etl_sys_cd=? and sub_sys_cd=? " +
+                "order by etl_sys_cd, sub_sys_cd", etl_sys_cd, sub_sys_cd);
     }
 
     @Method(desc = "判断当前工程是否还存在",
@@ -77,8 +85,8 @@ public class JobConfiguration extends BaseAction {
     private void isEtlSysExist(String etl_sys_cd, long user_id) {
         // 1.数据可访问权限处理方式，通过user_id进行权限控制
         // 2.判断当前工程是否还存在，不存在抛异常
-        if (Dbo.queryNumber("select count(*) from " + Etl_sys.TableName + " where etl_sys_cd=? and " +
-                " user_id=?", etl_sys_cd, user_id).orElseThrow(() ->
+        if (Dbo.queryNumber("select count(*) from " + Etl_sys.TableName + " where etl_sys_cd=?" +
+                " and user_id=?", etl_sys_cd, user_id).orElseThrow(() ->
                 new BusinessException("sql查询错误")) == 0) {
             throw new BusinessException("当前工程已不存在");
         }
@@ -92,9 +100,11 @@ public class JobConfiguration extends BaseAction {
     @Return(desc = "返回工程名称", range = "不能为空")
     private String getEtlSysNameByCd(String etl_sys_cd, long user_id) {
         // 1.数据可访问权限处理方式，根据user_id进行权限验证
-        // 2.根据工程编号查询工程名称
-        return Dbo.queryOneObject(Etl_sys.class, "select etl_sys_name from " + Etl_sys.TableName +
-                " where etl_sys_cd=? and user_id=?", etl_sys_cd, user_id).get().getEtl_sys_name();
+        // 2.判断当前工程是否还存在
+        isEtlSysExist(etl_sys_cd, getUserId());
+        // 3.根据工程编号查询工程名称,工程存在，工程名称肯定存在，所以不需要判断结果集是否为空
+        return Dbo.queryOneColumnList("select etl_sys_name from " + Etl_sys.TableName +
+                " where etl_sys_cd=? and user_id=?", etl_sys_cd, user_id).get(0).toString();
     }
 
     @Method(desc = "作业调度任务表字段合法性验证",
@@ -157,11 +167,9 @@ public class JobConfiguration extends BaseAction {
                     "2.验证当前用户下的工程是否存在" +
                     "3.判断工程对应的任务是否已存在" +
                     "4.字段合法性验证" +
-                    "5.新增任务" +
-                    "6.返回重新查询作业调度某工程所有任务信息")
+                    "5.新增任务")
     @Param(name = "etl_sub_sys_list", desc = "参数描述", range = "与数据库表字段规则一致", isBean = true)
-    @Return(desc = "返回重新查询作业调度某工程任务信息", range = "无限制")
-    public Map<String, Object> saveTask(Etl_sub_sys_list etl_sub_sys_list) {
+    public void saveTask(Etl_sub_sys_list etl_sub_sys_list) {
         // 1.数据可访问权限处理方式，通过user_id关联进行权限控制
         // 2.验证当前用户下的工程是否存在
         isEtlSysExist(etl_sub_sys_list.getEtl_sys_cd(), getUserId());
@@ -177,8 +185,6 @@ public class JobConfiguration extends BaseAction {
         fieldLegalityValidation(etl_sub_sys_list);
         // 5.新增任务
         etl_sub_sys_list.add(Dbo.db());
-        // 6.返回重新查询作业调度某工程所有任务信息
-        return getTaskInfoByPage(etl_sub_sys_list.getEtl_sys_cd(), "", 1, 5);
     }
 
     @Method(desc = "更新任务",
@@ -186,11 +192,9 @@ public class JobConfiguration extends BaseAction {
                     "2.验证当前用户下的工程是否存在" +
                     "3.确定该工程下对应要修改的任务确实存在" +
                     "4.字段合法性验证" +
-                    "5.修改任务信息" +
-                    "6.返回重新查询作业调度某工程任务信息")
+                    "5.修改任务信息")
     @Param(name = "etl_sub_sys_list", desc = "参数描述", range = "与数据库表字段规则一致", isBean = true)
-    @Return(desc = "返回重新查询作业调度某工程所有任务信息", range = "无限制")
-    public Map<String, Object> updateTask(Etl_sub_sys_list etl_sub_sys_list) {
+    public void updateTask(Etl_sub_sys_list etl_sub_sys_list) {
         // 1.数据可访问权限处理方式，通过user_id关联进行权限控制
         // 2.验证当前用户下的工程是否存在
         isEtlSysExist(etl_sub_sys_list.getEtl_sys_cd(), getUserId());
@@ -200,8 +204,6 @@ public class JobConfiguration extends BaseAction {
         fieldLegalityValidation(etl_sub_sys_list);
         // 5.修改任务信息
         etl_sub_sys_list.update(Dbo.db());
-        // 6.重新查询作业调度某工程所有任务信息
-        return getTaskInfoByPage(etl_sub_sys_list.getEtl_sys_cd(), "", 1, 5);
     }
 
     @Method(desc = "确定该工程下对应的任务确实存在",
@@ -220,34 +222,28 @@ public class JobConfiguration extends BaseAction {
         }
     }
 
-    @Method(desc = "删除任务信息（单个/批量）",
+    @Method(desc = "批量删除任务信息",
             logicStep = "1.数据可访问权限处理方式，通过user_id关联进行权限控制" +
                     "2.验证当前用户下的工程是否存在" +
-                    "3.判断是批量删除还是单个删除" +
-                    "3.1批量删除,遍历所有批量删除任务编号的数组获取各个任务编号,根据工程编号，任务编号删除任务信息" +
-                    "3.2单个删除,根据工程编号，任务编号删除任务信息" +
-                    "4.重新查询作业调度某工程所有任务信息")
+                    "3.获取批量删除所有任务ID的数组" +
+                    "4.遍历所有批量删除任务编号的数组获取各个任务编号" +
+                    "5.确定该工该工程下程下对应要删除的任务确实存在" +
+                    "6.根据工程编号，任务编号循环删除任务信息")
     @Param(name = "etl_sys_cd", desc = "工程编号", range = "不为空")
-    @Param(name = "sub_sys_cd", desc = "单个删除任务编号", range = "不为空")
-    @Param(name = "batchSubSysCd", desc = "批量删除任务编号", range = "可为空", nullable = true)
-    @Return(desc = "返回内容描述", range = "取值范围")
-    public Map<String, Object> deleteTask(String etl_sys_cd, String sub_sys_cd, String batchSubSysCd) {
+    @Param(name = "batchSubSysCd", desc = "批量删除任务编号", range = "不为空")
+    public void BatchdeleteTask(String etl_sys_cd, String batchSubSysCd) {
         // 1.数据可访问权限处理方式，通过user_id关联进行权限控制
         // 2.验证当前用户下的工程是否存在
         isEtlSysExist(etl_sys_cd, getUserId());
-        // 3.判断是批量删除还是单个删除
-        if (StringUtil.isNotBlank(batchSubSysCd)) {
-            String[] subSysCds = batchSubSysCd.split(",");
-            // 3.1批量删除,遍历所有批量删除任务编号的数组获取各个任务编号,根据工程编号，任务编号删除任务信息
-            for (int i = 0; i < subSysCds.length; i++) {
-                deleteTaskById(etl_sys_cd, subSysCds[i]);
-            }
-        } else {
-            // 3.2单个删除,根据工程编号，任务编号删除任务信息
-            deleteTaskById(etl_sys_cd, sub_sys_cd);
+        // 3.获取批量删除所有任务ID的数组
+        String[] subSysCds = batchSubSysCd.split(",");
+        // 4.遍历所有批量删除任务编号的数组获取各个任务编号
+        for (String subSysCd : subSysCds) {
+            // 5.确定该工该工程下程下对应要删除的任务确实存在
+            isTaskExist(etl_sys_cd, subSysCd);
+            // 6.根据工程编号，任务编号循环删除任务信息
+            deleteTaskById(etl_sys_cd, subSysCd);
         }
-        // 4.重新查询作业调度某工程所有任务信息
-        return getTaskInfoByPage(etl_sys_cd, "", 1, 5);
     }
 
     @Method(desc = "根据工程编号，任务编号删除任务信息",
@@ -257,10 +253,10 @@ public class JobConfiguration extends BaseAction {
                     "4.根据工程编号，任务编号删除任务信息")
     @Param(name = "etl_sys_cd", desc = "工程编号", range = "无限制")
     @Param(name = "sub_sys_cd", desc = "任务编号", range = "无限制")
-    private void deleteTaskById(String etl_sys_cd, String sub_sys_cd) {
+    public void deleteTaskById(String etl_sys_cd, String sub_sys_cd) {
         // 1.数据可访问权限处理方式，通过user_id关联进行权限控制
         // 2.判断该工程对应的任务下是否还有作业
-        isJobDefExistWithTask(etl_sys_cd, sub_sys_cd);
+        isJobDefineUnderTheTask(etl_sys_cd, sub_sys_cd);
         // 3.确定该工该工程下程下对应要删除的任务确实存在
         isTaskExist(etl_sys_cd, sub_sys_cd);
         // 4.根据工程编号，任务编号删除任务信息
@@ -275,7 +271,7 @@ public class JobConfiguration extends BaseAction {
                     "2.判断该工程对应的任务下是否还有作业，有作业则不能删除")
     @Param(name = "etl_sys_cd", desc = "工程编号", range = "无限制")
     @Param(name = "sub_sys_cd", desc = "任务编号", range = "无限制")
-    private void isJobDefExistWithTask(String etl_sys_cd, String sub_sys_cd) {
+    private void isJobDefineUnderTheTask(String etl_sys_cd, String sub_sys_cd) {
         // 1.数据可访问权限处理方式，通过user_id关联进行权限控制
         // 2.判断该工程对应的任务下是否还有作业，有作业则不能删除
         if (Dbo.queryNumber("select count(1) count from " + Etl_job_def.TableName + " t1 left join "
@@ -398,7 +394,7 @@ public class JobConfiguration extends BaseAction {
             }
         }
         // 7.判断作业名称是否已存在，存在不能新增
-        isExistEtlJobDef(etl_job_def);
+        isJobDefExist(etl_sys_cd, etl_job);
         // 8.保存模板作业
         Etl_dependency etlDependency = new Etl_dependency();
         etlDependency.setEtl_sys_cd(etl_sys_cd);
@@ -477,18 +473,16 @@ public class JobConfiguration extends BaseAction {
                     "4.判断如果作业程序类型是  Thrift 或者 Yarn.则默认分配一条资源使用信息" +
                     "5.判断调度频率是否为频率，根据调度频率不同封装不同属性" +
                     "6.保存资源分配信息" +
-                    "7.如果是依赖作业则保存作业依赖信息" +
-                    "8.返回新增后新的作业信息")
+                    "7.如果是依赖作业则保存作业依赖信息")
     @Param(name = "etl_job_def", desc = "作业定义实体对象", range = "与数据库对应表字段规则一致", isBean = true)
     @Param(name = "etl_dependency", desc = "作业依赖实体对象", range = "与数据库对应表字段规则一致", isBean = true)
-    @Return(desc = "返回新增后新的作业信息", range = "无限制")
-    public Map<String, Object> saveEtlJobDefine(Etl_job_def etl_job_def,
-                                                Etl_dependency etl_dependency) {
+    public void saveEtlJobDefine(Etl_job_def etl_job_def,
+                                 Etl_dependency etl_dependency) {
         // 1.数据可访问权限处理方式，通过user_id进行权限控制
         // 2.验证当前用户下的工程是否存在
         isEtlSysExist(etl_job_def.getEtl_sys_cd(), getUserId());
         // 3.判断作业名称是否已存在，存在，不能新增
-        isExistEtlJobDef(etl_job_def);
+        isJobDefExist(etl_job_def.getEtl_sys_cd(), etl_job_def.getEtl_job());
         // 4.判断如果作业程序类型是  Thrift 或者 Yarn.则默认分配一条资源使用信息
         isThriftOrYarnProType(etl_job_def.getEtl_sys_cd(), etl_job_def.getEtl_job(),
                 etl_job_def.getPro_type());
@@ -500,9 +494,6 @@ public class JobConfiguration extends BaseAction {
         isDispatchFrequency(etl_job_def);
         // 7.新增作业
         etl_job_def.add(Dbo.db());
-        // 8.返回新增后新的作业信息数据
-        return searchEtlJobDefineByPage(etl_job_def.getEtl_sys_cd(), "", "",
-                "", "", 1, 10);
     }
 
     @Method(desc = "新增作业判断作业名称是否已存在，存在不能新增",
@@ -510,12 +501,12 @@ public class JobConfiguration extends BaseAction {
                     "2.新增作业判断作业名称是否已存在，存在不能新增")
     @Param(name = "etl_job_def", desc = "作业定义实体对象", range = "与etl_job_def数据库表定义规则一致",
             isBean = true)
-    private void isExistEtlJobDef(Etl_job_def etl_job_def) {
+    private void isJobDefExist(String etl_sys_cd, String etl_job) {
         // 1.数据可访问权限处理方式，该方法不需要权限验证
         // 2.新增作业判断作业名称是否已存在，存在不能新增
         if (Dbo.queryNumber("SELECT count(1) FROM " + Etl_job_def.TableName + " WHERE etl_job=? " +
-                " AND etl_sys_cd=?", etl_job_def.getEtl_job(), etl_job_def.getEtl_sys_cd())
-                .orElseThrow(() -> new BusinessException("sql查询错误")) > 0) {
+                " AND etl_sys_cd=?", etl_job, etl_sys_cd).orElseThrow(() ->
+                new BusinessException("sql查询错误")) > 0) {
             throw new BusinessException("该工程对应的作业名称已存在，不能新增！");
         }
     }
@@ -581,10 +572,10 @@ public class JobConfiguration extends BaseAction {
                     " WHERE etl_job=? AND etl_sys_cd=?", etl_job, etl_sys_cd).orElseThrow(() ->
                     new BusinessException("sql查询错误")) == 0) {
                 // 不存在资源分配,保存资源分配信息
-                saveResourcesUsage(etlJobResourceRela);
+                saveJobResourceRelation(etlJobResourceRela);
             } else {
                 // 存在,则更新资源分配
-                updateResourceUsage(etlJobResourceRela);
+                updateJobResourceRelation(etlJobResourceRela);
             }
         } else {
             // 4.当作业程序类型由thrift或yarn更改为其他类型时需删除新增时分配的资源
@@ -603,20 +594,62 @@ public class JobConfiguration extends BaseAction {
         }
     }
 
-    @Method(desc = "更新资源分配信息并返回更新后最新信息", logicStep = "方法步骤")
-    @Param(name = "etlJobResourceRela", desc = "资源使用表实体对象", range = "与数据库表定义规则一致", isBean = true)
-    @Return(desc = "返回内容描述", range = "取值范围")
-    private Map<String, Object> updateResourceUsage(Etl_job_resource_rela etlJobResourceRela) {
-
-        return null;
+    @Method(desc = "更新资源分配信息",
+            logicStep = "1.数据可访问权限处理方式，通过user_id进行权限验证" +
+                    "2.判断工程是否存在" +
+                    "3.检测当前作业分配的占用资源数是否过大" +
+                    "4.更新保存资源分配信息")
+    @Param(name = "jobResourceRelation", desc = "资源使用表实体对象", range = "与数据库表定义规则一致", isBean = true)
+    public void updateJobResourceRelation(Etl_job_resource_rela jobResourceRelation) {
+        // TODO 字段验证应该有一个统一的工具类
+        // 1.数据可访问权限处理方式，通过user_id进行权限验证
+        // 2.判断工程是否存在
+        isEtlSysExist(jobResourceRelation.getEtl_sys_cd(), getUserId());
+        // 3.检测当前作业分配的占用资源数是否过大
+        isResourceDemandTooLarge(jobResourceRelation.getEtl_sys_cd(), jobResourceRelation.getResource_type(),
+                jobResourceRelation.getResource_req());
+        // 4.更新保存资源分配信息
+        jobResourceRelation.update(Dbo.db());
     }
 
-    @Method(desc = "保存资源分配信息并返回新增后最新信息", logicStep = "方法步骤")
-    @Param(name = "etlJobResourceRela", desc = "资源使用表实体对象", range = "与数据库表定义规则一致", isBean = true)
+    @Method(desc = "判断是否资源需求过大",
+            logicStep = "1.数据可访问权限处理方式，此方法不需要权限控制" +
+                    "2.判断资源是否存在" +
+                    "3.检测当前作业分配的占用资源数是否过大")
+    @Param(name = "参数名称", desc = "参数描述", range = "取值范围")
     @Return(desc = "返回内容描述", range = "取值范围")
-    private Map<String, Object> saveResourcesUsage(Etl_job_resource_rela etlJobResourceRela) {
+    private void isResourceDemandTooLarge(String etl_sys_cd, String resource_type, Integer resource_seq) {
+        // 1.数据可访问权限处理方式，此方法不需要权限控制
+        // 2.判断资源是否存在
+        isEtlResourceExist(etl_sys_cd, resource_type);
+        // 3.检测当前作业分配的占用资源数是否过大
+        List<Integer> resource_max = Dbo.queryOneColumnList("select resource_max from "
+                        + Etl_resource.TableName + " where etl_sys_cd=? AND resource_type=?",
+                etl_sys_cd, resource_type);
+        if (resource_seq > resource_max.get(0)) {
+            throw new BusinessException("当前分配的作业资源需求数过大 ,已超过当前资源类型的最大阀值数!");
+        }
+    }
 
-        return null;
+    @Method(desc = "保存资源分配信息",
+            logicStep = "1.数据可访问权限处理方式，通过user_id进行权限验证" +
+                    "2.判断工程是否存在" +
+                    "3.新增时.检测当前作业是否已经分配过资源" +
+                    "4.检测当前作业分配的占用资源数是否过大" +
+                    "5.新增保存资源分配信息")
+    @Param(name = "jobResourceRelation", desc = "资源使用表实体对象", range = "与数据库表定义规则一致", isBean = true)
+    public void saveJobResourceRelation(Etl_job_resource_rela jobResourceRelation) {
+        // TODO 字段验证应该有一个统一的工具类
+        // 1.数据可访问权限处理方式，通过user_id进行权限验证
+        // 2.判断工程是否存在
+        isEtlSysExist(jobResourceRelation.getEtl_sys_cd(), getUserId());
+        // 3.新增时.检测当前作业是否已经分配过资源
+        isJobResourceRelaExist(jobResourceRelation.getEtl_sys_cd(), jobResourceRelation.getEtl_job());
+        // 4.检测当前作业分配的占用资源数是否过大
+        isResourceDemandTooLarge(jobResourceRelation.getEtl_sys_cd(), jobResourceRelation.getResource_type(),
+                jobResourceRelation.getResource_req());
+        // 5.新增保存资源分配信息
+        jobResourceRelation.add(Dbo.db());
     }
 
     @Method(desc = "保存作业添加时的作业依赖",
@@ -649,16 +682,14 @@ public class JobConfiguration extends BaseAction {
                     "3.2.1调度触发方式改变时，修改后的调度触发方式定时  将定时更改为依赖,则新增，（定时---->依赖）" +
                     "4.判断作业程序类型是否为yarn或者thrift类型，如果是，进行资源分配处理" +
                     "5.根据调度频率不同封装作业定义实体对象的不同属性" +
-                    "6.保存更新的作业信息" +
-                    "7.返回更新后的最新的作业信息")
+                    "6.保存更新的作业信息")
     @Param(name = "etl_job_def", desc = "作业定义实体对象", range = "与数据库对应表字段规则一致", isBean = true)
     @Param(name = "etl_dependency", desc = "作业依赖实体对象", range = "与数据库对应表字段规则一致", isBean = true)
     @Param(name = "old_pre_etl_job", desc = "作业依赖变动时,修改前的上游作业名称", range = "无限制")
     @Param(name = "old_dispatch_type", desc = "调度触发方式改变时，修改前的调度触发方式",
             range = "使用调度触发方式代码项（DispatchType）")
-    @Return(desc = "返回更新后的最新的作业信息", range = "无限制")
-    public Map<String, Object> updateEtlJobDefine(Etl_job_def etl_job_def, Etl_dependency etl_dependency,
-                                                  String old_pre_etl_job, String old_dispatch_type) {
+    public void updateEtlJobDefine(Etl_job_def etl_job_def, Etl_dependency etl_dependency,
+                                   String old_pre_etl_job, String old_dispatch_type) {
         // 1.数据可访问权限处理方式，通过user_id进行权限控制
         // 2.验证当前用户下的工程是否存在
         isEtlSysExist(etl_job_def.getEtl_sys_cd(), getUserId());
@@ -699,150 +730,195 @@ public class JobConfiguration extends BaseAction {
         etl_job_def.setUpd_time(DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate()) + " " +
                 DateUtil.parseStr2TimeWith6Char(DateUtil.getSysTime()));
         etl_job_def.update(Dbo.db());
-        // 7.返回更新后的最新的作业信息
-        return searchEtlJobDefineByPage(etl_job_def.getEtl_sys_cd(), "", "", "",
-                "", 1, 5);
     }
 
-    @Method(desc = "删除Etl作业定义信息（批量、单个）",
+    @Method(desc = "批量删除Etl作业定义信息",
             logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制" +
                     "2.验证当前用户下的工程是否存在" +
-                    "3.判断是批量删除还是单个删除" +
-                    "3.1批量删除，循环删除作业信息" +
-                    "3.2单个删除，删除作业信息" +
+                    "3.获取所有要删除的作业名称" +
+                    "4.遍历所有要删除的作业名称" +
+                    "5.判断要删除的作业是否存在" +
                     "4.作业被删除的同时,删除作业的资源分配情况" +
-                    "5.判断当前作业是否有依赖作业，有依赖删除依赖作业" +
-                    "6.返回删除后的最新作业信息")
+                    "6.循环删除作业" +
+                    "7.作业被删除的同时,删除作业的资源分配情况" +
+                    "8.判断当前作业是否有依赖作业，有依赖删除依赖作业")
     @Param(name = "etl_sys_cd", desc = "工程代码", range = "取值范围")
-    @Param(name = "etl_job", desc = "作业名", range = "无限制")
-    @Param(name = "batchEtlJob", desc = "批量作业编号", range = "无限制", nullable = true)
-    @Return(desc = "返回删除后最新作业信息", range = "无限制")
-    public Map<String, Object> deleteEtlJobDefine(String etl_sys_cd, String etl_job, String batchEtlJob) {
+    @Param(name = "batchEtlJob", desc = "批量作业名称", range = "无限制")
+    public void BatchDeleteJobDefine(String etl_sys_cd, String batchEtlJob) {
         // 1.数据可访问权限处理方式，通过user_id进行权限控制
         // 2.验证当前用户下的工程是否存在
         isEtlSysExist(etl_sys_cd, getUserId());
-        // 3.判断是批量删除还是单个删除
-        if (StringUtil.isNotBlank(batchEtlJob)) {
-            String[] etlJobs = batchEtlJob.split(",");
-            // 3.1批量删除，循环删除作业信息
-            for (int i = 0; i < etlJobs.length; i++) {
-                DboExecute.deletesOrThrow("删除作业信息失败，etl_sys_cd=" + etl_sys_cd + ",etl_job="
-                        + etl_job, "delete from " + Etl_job_def.TableName + " where etl_sys_cd=?" +
-                        " and etl_job=?", etl_sys_cd, etlJobs[i]);
-            }
-        } else {
-            // 3.2单个删除，删除作业信息
+        // 3.获取所有要删除的作业名称
+        String[] etlJobs = batchEtlJob.split(",");
+        // 4.遍历所有要删除的作业名称
+        for (String etl_job : etlJobs) {
+            // 5.判断要删除的作业是否存在
+            isJobDefExist(etl_sys_cd, etl_job);
+            // 6.循环删除作业
             DboExecute.deletesOrThrow("删除作业信息失败，etl_sys_cd=" + etl_sys_cd + ",etl_job="
                     + etl_job, "delete from " + Etl_job_def.TableName + " where etl_sys_cd=?" +
                     " and etl_job=?", etl_sys_cd, etl_job);
         }
-        // 4.作业被删除的同时,删除作业的资源分配情况
-        deleteEtlJobResourceRelation(etl_sys_cd, etl_job, batchEtlJob);
-        // 5.判断当前作业是否有依赖作业，有依赖删除依赖作业
-        deleteEtlDependency(etl_sys_cd, etl_job, batchEtlJob);
-        // 6.返回删除后的最新作业信息
-        return searchEtlJobDefineByPage(etl_sys_cd, "", "", "", "",
-                1, 5);
+        // 7.作业被删除的同时,删除作业的资源分配情况
+        BatchDeleteJobResourceRela(etl_sys_cd, batchEtlJob);
+        // 8.判断当前作业是否有依赖作业，有依赖删除依赖作业
+        BatchDeleteJobDependency(etl_sys_cd, batchEtlJob);
+    }
+
+    @Method(desc = "删除Etl作业定义信息",
+            logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制" +
+                    "2.验证当前用户下的工程是否存在" +
+                    "3.判断当前工程对应作业信息是否存在" +
+                    "4.删除作业信息" +
+                    "4.作业被删除的同时,删除作业的资源分配情况" +
+                    "5.判断当前作业是否有依赖作业，有依赖删除依赖作业")
+    @Param(name = "etl_sys_cd", desc = "工程代码", range = "取值范围")
+    @Param(name = "etl_job", desc = "作业名称", range = "无限制")
+    @Param(name = "batchEtlJob", desc = "批量作业编号", range = "无限制", nullable = true)
+    public void deleteEtlJobDefine(String etl_sys_cd, String etl_job) {
+        // 1.数据可访问权限处理方式，通过user_id进行权限控制
+        // 2.验证当前用户下的工程是否存在
+        isEtlSysExist(etl_sys_cd, getUserId());
+        // 3.判断当前工程对应作业信息是否存在
+        isJobDefExist(etl_sys_cd, etl_job);
+        // 4.删除作业信息
+        DboExecute.deletesOrThrow("删除作业信息失败，etl_sys_cd=" + etl_sys_cd + ",etl_job="
+                + etl_job, "delete from " + Etl_job_def.TableName + " where etl_sys_cd=?" +
+                " and etl_job=?", etl_sys_cd, etl_job);
+        // 5.作业被删除的同时,删除作业的资源分配情况
+        deleteJobResourceRela(etl_sys_cd, etl_job);
+        // 6.判断当前作业是否有依赖作业，有依赖删除依赖作业
+        deleteJobDependency(etl_sys_cd, etl_job);
+    }
+
+    @Method(desc = "判断当前工程对应作业资源分配信息是否存在",
+            logicStep = "1.数据可访问权限处理方式，该方法不需要权限验证" +
+                    "2.判断当前工程对应作业资源分配信息是否存在")
+    @Param(name = "etl_sys_cd", desc = "参数描述", range = "新增工程时生成")
+    @Param(name = "etl_job", desc = "参数描述", range = "新增作业时生成")
+    private void isJobResourceRelaExist(String etl_sys_cd, String etl_job) {
+        // 1.数据可访问权限处理方式，该方法不需要权限验证
+        // 2.判断当前工程对应作业资源分配信息是否存在
+        if (Dbo.queryNumber("select count(*) from " + Etl_job_resource_rela.TableName +
+                " where etl_sys_cd=? and etl_job=?", etl_sys_cd, etl_job).orElseThrow(() ->
+                new BusinessException("sql查询错误")) == 0) {
+            throw new BusinessException("当前工程对应作业资源分配信息不存在！");
+        }
     }
 
     @Method(desc = "判断当前表信息是否存在",
             logicStep = "1.数据可访问权限处理方式，该方法不需要权限验证" +
-                    "2.判断当前表信息是否存在" +
-                    "2.1不存在，返回false" +
-                    "2.2存在,返回true")
+                    "2.判断当前工程对应作业依赖作业是否存在")
     @Param(name = "etl_sys_cd", desc = "参数描述", range = "取值范围")
     @Param(name = "etl_job", desc = "参数描述", range = "取值范围")
     @Return(desc = "返回当前表信息是否存在标志", range = "true代表表信息存在，false代表表信息不存在")
-    private boolean isTableInfoExist(String etl_sys_cd, String etl_job, String tableName) {
+    private void isJobDependencyExist(String etl_sys_cd, String etl_job) {
         // 1.数据可访问权限处理方式，该方法不需要权限验证
-        // 2.判断当前表信息是否存在
-        if (Dbo.queryNumber("select count(*) from " + tableName + " where etl_sys_cd=? and etl_job=?",
-                etl_sys_cd, etl_job).orElseThrow(() -> new BusinessException("sql查询错误")) == 0) {
-            // 2.1不存在，返回false
-            return false;
+        // 2.判断当前工程对应作业依赖作业是否存在
+        if (Dbo.queryNumber("select count(*) from " + Etl_dependency.TableName + " where etl_sys_cd=?" +
+                " and etl_job=?", etl_sys_cd, etl_job).orElseThrow(() ->
+                new BusinessException("sql查询错误")) == 0) {
+            throw new BusinessException("当前工程对应作业的依赖不存在！");
         }
-        // 2.2存在,返回true
-        return true;
     }
 
-    @Method(desc = "删除Etl作业资源关系并返回删除后查询最新的作业资源分配信息",
+    @Method(desc = "根据工程编号，作业名称批量删除Etl作业资源关系",
             logicStep = "1.数据可访问权限处理方式，该方法不需要权限验证" +
                     "2.验证当前用户下的工程是否存在" +
-                    "3.判断是批量删除还是单个删除" +
-                    "3.1批量删除，循环删除作业资源分配信息，只有当作业有资源分配时才删除" +
-                    "3.2单个删除，只有当作业有资源分配时才删除" +
-                    "4.返回删除后查询最新的作业资源分配信息")
+                    "3.获取批量删除的所有任务名称" +
+                    "4.遍历获取所有任务名称" +
+                    "5.判断当前工程对应作业资源分配信息是否存在" +
+                    "6.循环删除作业资源分配信息")
     @Param(name = "etl_sys_cd", desc = "工程代码", range = "取值范围")
-    @Param(name = "etl_job", desc = "作业名", range = "无限制")
-    @Param(name = "batchEtlJob", desc = "批量作业编号", range = "无限制", nullable = true)
-    @Return(desc = "返回删除后查询最新的作业资源分配信息", range = "无限制")
-    public Map<String, Object> deleteEtlJobResourceRelation(String etl_sys_cd, String etl_job, String batchEtlJob) {
+    @Param(name = "batchEtlJob", desc = "批量作业编号", range = "无限制")
+    public void BatchDeleteJobResourceRela(String etl_sys_cd, String batchEtlJob) {
         // 1.数据可访问权限处理方式，该方法不需要权限验证
         // 2.验证当前用户下的工程是否存在
         isEtlSysExist(etl_sys_cd, getUserId());
-        // 3.判断是批量删除还是单个删除
-        if (StringUtil.isNotBlank(batchEtlJob)) {
-            String[] etlJobs = batchEtlJob.split(",");
-            // 3.1批量删除，循环删除作业资源分配信息，只有当作业有资源分配时才删除
-            for (int i = 0; i < etlJobs.length; i++) {
-                if (isTableInfoExist(etl_sys_cd, etl_job, Etl_job_resource_rela.TableName)) {
-                    DboExecute.deletesOrThrow("删除资源分配信息失败，etl_sys_cd=" + etl_sys_cd +
-                            ",etl_job=" + etl_job, "delete from " + Etl_job_resource_rela.TableName +
-                            " where etl_sys_cd =? and etl_job=?", etl_sys_cd, etlJobs[i]);
-                }
-            }
-        } else {
-            // 3.2单个删除，只有当作业有资源分配时才删除
-            if (isTableInfoExist(etl_sys_cd, etl_job, Etl_job_resource_rela.TableName)) {
-                DboExecute.deletesOrThrow("删除资源分配信息失败，etl_sys_cd=" + etl_sys_cd +
-                        ",etl_job=" + etl_job, "delete from " + Etl_job_resource_rela.TableName +
-                        " where etl_sys_cd =? AND etl_job = ?", etl_sys_cd, etl_job);
-            }
+        // 3.获取批量删除的所有任务名称
+        String[] etlJobs = batchEtlJob.split(",");
+        // 4.遍历获取所有任务名称
+        for (String etl_job : etlJobs) {
+            // 5.判断当前工程对应作业资源分配信息是否存在
+            isJobResourceRelaExist(etl_sys_cd, etl_job);
+            // 6.循环删除作业资源分配信息
+            DboExecute.deletesOrThrow("删除资源分配信息失败，etl_sys_cd=" + etl_sys_cd +
+                    ",etl_job=" + etl_job, "delete from " + Etl_job_resource_rela.TableName +
+                    " where etl_sys_cd =? and etl_job=?", etl_sys_cd, etl_job);
         }
-        // 4.返回删除后查询最新的作业资源分配信息
-        return searchEtlResourceInfoByPage(etl_sys_cd, "", 1, 10);
     }
 
-    @Method(desc = "删除作业依赖并返回删除后最新的作业依赖信息",
+    @Method(desc = "根据工程编号，作业名称删除Etl作业资源关系",
             logicStep = "1.数据可访问权限处理方式，该方法不需要权限验证" +
                     "2.验证当前用户下的工程是否存在" +
-                    "3.判断是批量删除还是单个删除" +
-                    "3.1批量删除，循环删除依赖作业，判断当前作业是否有依赖作业，只有包含依赖的作业才进行删除操作" +
-                    "3.2单个删除,只有包含依赖的作业才进行删除操作" +
-                    "4.返回删除后最新的作业依赖关系信息")
+                    "3.判断当前工程对应作业资源分配信息是否存在" +
+                    "4.删除资源分配信息")
     @Param(name = "etl_sys_cd", desc = "工程代码", range = "取值范围")
-    @Param(name = "etl_job", desc = "作业名", range = "无限制")
-    @Param(name = "batchEtlJob", desc = "批量作业编号", range = "无限制", nullable = true)
-    @Param(name = "pre_etl_job", desc = "依赖上游作业名称", range = "无限制", nullable = true)
-    @Return(desc = "返回内容描述", range = "取值范围")
-    public Map<String, Object> deleteEtlDependency(String etl_sys_cd, String etl_job, String batchEtlJob) {
+    @Param(name = "etl_job", desc = "作业名称", range = "无限制")
+    public void deleteJobResourceRela(String etl_sys_cd, String etl_job) {
         // 1.数据可访问权限处理方式，该方法不需要权限验证
         // 2.验证当前用户下的工程是否存在
         isEtlSysExist(etl_sys_cd, getUserId());
-        // 3.判断是批量删除还是单个删除
-        if (StringUtil.isNotBlank(batchEtlJob)) {
-            String[] etlJobs = batchEtlJob.split(",");
-            // 3.1批量删除，循环删除依赖作业，判断当前作业是否有依赖作业，只有包含依赖的作业才进行删除操作
-            for (int i = 0; i < etlJobs.length; i++) {
-                if (isTableInfoExist(etl_sys_cd, etlJobs[i], Etl_dependency.TableName)) {
-                    DboExecute.deletesOrThrow("删除作业依赖失败，etl_sys_cd=" + etl_sys_cd +
-                            ",etl_job=" + etl_job, "delete from " + Etl_dependency.TableName +
-                            " where etl_sys_cd = ? AND etl_job = ?", etl_sys_cd, etl_job);
-                }
-            }
-        } else {
-            // 3.2单个删除,只有包含依赖的作业才进行删除操作
-            if (isTableInfoExist(etl_sys_cd, etl_job, Etl_dependency.TableName)) {
-                DboExecute.deletesOrThrow("删除作业依赖失败，etl_sys_cd=" + etl_sys_cd +
-                        ",etl_job=" + etl_job, "delete from " + Etl_dependency.TableName +
-                        " where etl_sys_cd = ? AND etl_job = ?", etl_sys_cd, etl_job);
-            }
-        }
-        // 4.返回删除后最新的作业依赖关系信息
-        return null;
+        // 3.判断当前工程对应作业资源分配信息是否存在
+        isJobResourceRelaExist(etl_sys_cd, etl_job);
+        // 4.删除资源分配信息
+        DboExecute.deletesOrThrow("删除资源分配信息失败，etl_sys_cd=" + etl_sys_cd +
+                ",etl_job=" + etl_job, "delete from " + Etl_job_resource_rela.TableName +
+                " where etl_sys_cd =? AND etl_job = ?", etl_sys_cd, etl_job);
     }
 
-    @Method(desc = "分页查询etl资源定义信息", logicStep = "方法步骤")
+    @Method(desc = "删除作业依赖",
+            logicStep = "1.数据可访问权限处理方式，该方法不需要权限验证" +
+                    "2.验证当前用户下的工程是否存在" +
+                    "3.判断当前工程对应作业的依赖关系是否存在" +
+                    "4.删除作业依赖")
+    @Param(name = "etl_sys_cd", desc = "工程代码", range = "取值范围")
+    @Param(name = "etl_job", desc = "作业名", range = "无限制")
+    public void deleteJobDependency(String etl_sys_cd, String etl_job) {
+        // 1.数据可访问权限处理方式，该方法不需要权限验证
+        // 2.验证当前用户下的工程是否存在
+        isEtlSysExist(etl_sys_cd, getUserId());
+        // 3.判断当前工程对应作业的依赖关系是否存在
+        isJobDependencyExist(etl_sys_cd, etl_job);
+        // 4.删除作业依赖
+        DboExecute.deletesOrThrow("删除作业依赖失败，etl_sys_cd=" + etl_sys_cd +
+                ",etl_job=" + etl_job, "delete from " + Etl_dependency.TableName +
+                " where etl_sys_cd = ? AND etl_job = ?", etl_sys_cd, etl_job);
+    }
+
+    @Method(desc = "批量删除作业依赖",
+            logicStep = "1.数据可访问权限处理方式，该方法不需要权限验证" +
+                    "2.验证当前用户下的工程是否存在" +
+                    "3.获取所有要删除的依赖作业名称" +
+                    "4.遍历所有的依赖作业名称" +
+                    "5.判断要删除的作业依赖是否存在" +
+                    "6.循环删除作业依赖关系")
+    @Param(name = "etl_sys_cd", desc = "工程代码", range = "取值范围")
+    @Param(name = "batchEtlJob", desc = "批量作业编号", range = "无限制")
+    public void BatchDeleteJobDependency(String etl_sys_cd, String batchEtlJob) {
+        // 1.数据可访问权限处理方式，该方法不需要权限验证
+        // 2.验证当前用户下的工程是否存在
+        isEtlSysExist(etl_sys_cd, getUserId());
+        // 3.获取所有要删除的依赖作业名称
+        String[] etlJobs = batchEtlJob.split(",");
+        // 4.遍历所有的依赖作业名称
+        for (String etl_job : etlJobs) {
+            // 5.判断要删除的作业依赖是否存在
+            isJobDependencyExist(etl_sys_cd, etl_job);
+            // 6.循环删除作业依赖关系
+            DboExecute.deletesOrThrow("删除作业依赖失败，etl_sys_cd=" + etl_sys_cd +
+                    ",etl_job=" + etl_job, "delete from " + Etl_dependency.TableName +
+                    " where etl_sys_cd = ? AND etl_job = ?", etl_sys_cd, etl_job);
+        }
+    }
+
+    @Method(desc = "分页查询etl资源定义信息",
+            logicStep = "1.数据可访问权限处理方式，通过user_id进行权限验证" +
+                    "2.验证当前用户下的工程是否存在" +
+                    "3.根据工程编号查询工程名称" +
+                    "4.判断资源类型是否存在，存在加条件查询" +
+                    "5.分页查询资源信息" +
+                    "6.返回分页查询资源信息")
     @Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
     @Param(name = "resource_type", desc = "资源类型", range = "无限制", nullable = true)
     @Param(name = "currPage", desc = "分页查询当前页", range = "大于0的正整数", valueIfNull = "1")
@@ -855,7 +931,7 @@ public class JobConfiguration extends BaseAction {
         isEtlSysExist(etl_sys_cd, getUserId());
         // 3.根据工程编号查询工程名称
         String etlSysName = getEtlSysNameByCd(etl_sys_cd, getUserId());
-        asmSql.addSql("select * from etl_resource where etl_sys_cd = ?");
+        asmSql.addSql("select * from " + Etl_resource.TableName + " where etl_sys_cd = ?");
         asmSql.addParam(etl_sys_cd);
         // 4.判断资源类型是否存在，存在加条件查询
         if (StringUtil.isNotBlank(resource_type)) {
@@ -870,45 +946,50 @@ public class JobConfiguration extends BaseAction {
         etlResourceMap.put("etlResourceList", etlResourceList);
         etlResourceMap.put("totalSize", page.getTotalSize());
         etlResourceMap.put("etlSysName", etlSysName);
+        // 6.返回分页查询资源信息
         return etlResourceMap;
     }
-
 
     @Method(desc = "新增保存etl资源定义信息并返回最新资源信息",
             logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制" +
                     "2.判断当前工程是否还存在" +
                     "3.确认新增的资源不存在，存在不能新增" +
-                    "4.新增资源定义信息" +
-                    "5.新增资源后返回最新资源信息")
+                    "4.新增资源定义信息")
     @Param(name = "etl_resource", desc = "etl_resource表实体对象", range = "与数据库对应表定义规则一致",
             isBean = true)
-    @Return(desc = "返回新增后最新资源信息", range = "无限制")
-    public Map<String, Object> saveEtlResource(Etl_resource etl_resource) {
+    public void saveEtlResource(Etl_resource etl_resource) {
         // 1.数据可访问权限处理方式，通过user_id进行权限控制
         // 2.判断当前工程是否还存在
         isEtlSysExist(etl_resource.getEtl_sys_cd(), getUserId());
         // 3.确认新增的资源不存在，存在不能新增
-        if (Dbo.queryNumber("SELECT count(1) FROM " + Etl_resource.TableName + " WHERE resource_type=?"
-                + " AND etl_sys_cd=?", etl_resource.getResource_type(), etl_resource.getEtl_sys_cd())
-                .orElseThrow(() -> new BusinessException("sql查询错误！")) > 0) {
-            throw new BusinessException("当前工程对应的资源已存在,不能新增！");
-        }
+        isEtlResourceExist(etl_resource.getEtl_sys_cd(), etl_resource.getResource_type());
         // 目前的服务器同步标志先使用默认的同步
         etl_resource.setMain_serv_sync(Main_Server_Sync.YES.getCode());
         // 4.新增资源定义信息
         etl_resource.add(Dbo.db());
-        // 5.新增资源后返回最新资源信息
-        return searchEtlResourceInfoByPage(etl_resource.getEtl_sys_cd(), "",
-                1, 10);
     }
 
-    @Method(desc = "更新资源信息", logicStep = "方法步骤")
+    @Method(desc = "判断资源是否存在", logicStep = "方法步骤")
+    @Param(name = "etl_sys_cd", desc = "工程编号", range = "无限制")
+    @Param(name = "resource_type", desc = "资源类型", range = "无限制")
+    private void isEtlResourceExist(String etl_sys_cd, String resource_type) {
+        if (Dbo.queryNumber("SELECT count(1) FROM " + Etl_resource.TableName + " WHERE resource_type=?"
+                + " AND etl_sys_cd=?", resource_type, etl_sys_cd)
+                .orElseThrow(() -> new BusinessException("sql查询错误！")) > 0) {
+            throw new BusinessException("当前工程对应的资源已存在,不能新增！");
+        }
+    }
+
+    @Method(desc = "更新资源信息",
+            logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制" +
+                    "2.判断当前工程是否还存在" +
+                    "3.确认要更新的资源存在" +
+                    "4.更新资源信息")
     @Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
     @Param(name = "resource_type", desc = "资源类型", range = "新增资源时生成")
     @Param(name = "resource_max", desc = "资源阀值", range = "大于0的正整数")
-    @Return(desc = "返回更新后最新的资源信息", range = "无限制")
-    public Map<String, Object> updateEtlResource(String etl_sys_cd, String resource_type,
-                                                 String resource_max) {
+    public void updateEtlResource(String etl_sys_cd, String resource_type,
+                                  String resource_max) {
         // 1.数据可访问权限处理方式，通过user_id进行权限控制
         // 2.判断当前工程是否还存在
         isEtlSysExist(etl_sys_cd, getUserId());
@@ -922,8 +1003,67 @@ public class JobConfiguration extends BaseAction {
         DboExecute.updatesOrThrow("更新资源失败，etl_sys_cd=" + etl_sys_cd + ",resource_type="
                 + resource_type, "update " + Etl_resource.TableName + " set resource_max=? " +
                 " where etl_sys_cd=? and resource_type=?", etl_sys_cd, resource_type);
-        // 5.返回更新后最新的资源信息
-        return searchEtlResourceInfoByPage(etl_sys_cd, "", 1, 10);
+    }
+
+    @Method(desc = "分页查询作业调度系统参数信息",
+            logicStep = "1.数据可访问权限处理方式，通过user_id进行权限验证" +
+                    "2.验证当前用户下的工程是否存在" +
+                    "3.根据工程编号查询工程名称" +
+                    "4.判断变量名称是否存在，存在加条件查询" +
+                    "5.分页查询系统参数信息" +
+                    "6.返回分页查询系统资源信息")
+    @Param(name = "etl_sys_cd", desc = "工程编号", range = "取值范围")
+    @Param(name = "para_cd", desc = "变量名称", range = "取值范围", nullable = true)
+    @Param(name = "currPage", desc = "分页查询当前页", range = "大于0的正整数", valueIfNull = "1")
+    @Param(name = "pageSize", desc = "分页查询每页显示记录数", range = "大于0的正整数", valueIfNull = "10")
+    @Return(desc = "返回作业调度系统参数信息", range = "取值范围")
+    public Map<String, Object> getEtlParaByPage(String etl_sys_cd, String para_cd, int currPage, int pageSize) {
+        // 1.数据可访问权限处理方式，通过user_id进行权限验证
+        // 2.验证当前用户下的工程是否存在
+        isEtlSysExist(etl_sys_cd, getUserId());
+        // 3.根据工程编号查询工程名称
+        String etlSysName = getEtlSysNameByCd(etl_sys_cd, getUserId());
+        asmSql.addSql("select * from " + Etl_para.TableName + " where etl_sys_cd IN (?,?)");
+        asmSql.addParam(etl_sys_cd);
+        // 4.判断变量名称是否存在，存在加条件查询
+        if (StringUtil.isNotBlank(para_cd)) {
+            asmSql.addLikeParam("etl_resource", para_cd);
+        }
+        asmSql.addSql(" order by etl_sys_cd,para_cd");
+        Page page = new DefaultPageImpl(currPage, pageSize);
+        // 5.分页查询系统参数信息
+        List<Etl_para> etlParaList = Dbo.queryPagedList(Etl_para.class, page, asmSql.sql(),
+                asmSql.params());
+        Map<String, Object> etlParaMap = new HashMap<>();
+        etlParaMap.put("etlParaList", etlParaList);
+        etlParaMap.put("totalSize", page.getTotalSize());
+        etlParaMap.put("etlSysName", etlSysName);
+        // 6.返回分页查询系统资源信息
+        return etlParaMap;
+    }
+    @Method(desc = "新增保存作业系统参数",logicStep = "方法步骤")
+    @Param(name = "etl_para", desc = "作业系统参数实体对象", range = "与数据库对应表字段规则一致")
+    public void saveEtlPara(Etl_para etl_para) {
+
+    }
+    @Method(desc = "更新保存作业系统参数",logicStep = "方法步骤")
+    @Param(name = "etl_para", desc = "作业系统参数实体对象", range = "与数据库对应表字段规则一致")
+    public void updateEtlPara(Etl_para etl_para) {
+
+    }
+
+    @Method(desc = "批量删除", logicStep = "方法步骤")
+    @Param(name = "etl_sys_cd", desc = "工程编号", range = "取值范围")
+    @Param(name = "para_cd", desc = "变量名称", range = "取值范围")
+    public void BatcheDeleteJobSystemPara(String etl_sys_cd, String para_cd) {
+
+    }
+
+    @Method(desc = "删除作业系统参数", logicStep = "方法步骤")
+    @Param(name = "etl_sys_cd", desc = "工程编号", range = "取值范围")
+    @Param(name = "para_cd", desc = "变量名称", range = "取值范围")
+    public void deleteEtlPara(String etl_sys_cd, String para_cd) {
+
     }
 }
 

@@ -243,10 +243,11 @@ public class CleanConfStepAction extends BaseAction{
 		//2、遍历replaceList
 		for(int i = 0; i < replaceList.size(); i++){
 			Table_clean tableClean = replaceList.get(i);
-			if(StringUtil.isBlank(tableClean.getField())){
+			//这里用isEmpty的目的是，有可能原字符串和替换字符串都是空格或者特殊字符
+			if(StringUtil.isEmpty(tableClean.getField())){
 				throw new BusinessException("保存表字符替换规则时，第"+ (i + 1) +"条数据缺少源字符串");
 			}
-			if(StringUtil.isBlank(tableClean.getReplace_feild())){
+			if(StringUtil.isEmpty(tableClean.getReplace_feild())){
 				throw new BusinessException("保存表字符替换规则时，第"+ (i + 1) +"条数据缺少替换字符串");
 			}
 			//2-1、为每一个Table_clean对象设置主键
@@ -280,10 +281,11 @@ public class CleanConfStepAction extends BaseAction{
 		//2、遍历replaceList
 		for(int i = 0; i < replaceList.size(); i++){
 			Column_clean columnClean = replaceList.get(i);
-			if(StringUtil.isBlank(columnClean.getField())){
+			//这里使用isEmpty的目的是，在保存字符替换规则的时候，源字符串和替换字符串可能都是空格
+			if(StringUtil.isEmpty(columnClean.getField())){
 				throw new BusinessException("保存列字符替换规则时，第"+ (i + 1) +"条数据缺少源字符串");
 			}
-			if(StringUtil.isBlank(columnClean.getReplace_feild())){
+			if(StringUtil.isEmpty(columnClean.getReplace_feild())){
 				throw new BusinessException("保存列字符替换规则时，第"+ (i + 1) +"条数据缺少替换字符串");
 			}
 			//2-1、为每一个Column_clean对象设置主键
@@ -467,13 +469,20 @@ public class CleanConfStepAction extends BaseAction{
 
 		//3、如果配置了字符替换
 		if(IsFlag.ofEnumByCode(replaceFlag) == IsFlag.Shi){
+			if(!(oriFieldArr.length > 0)){
+				throw new BusinessSystemException("保存所有表字符替换清洗设置时，缺失原字符");
+			}
+			if(!(replaceFeildArr.length > 0)){
+				throw new BusinessSystemException("保存所有表字符替换清洗设置时，缺失替换字符");
+			}
 			for(int i = 0; i < oriFieldArr.length; i++){
 				String oriField = oriFieldArr[i];
 				String replaceFeild = replaceFeildArr[i];
-				if(StringUtil.isBlank(oriField)){
+				//这里使用isEmpty的原因是，在保存字符替换的时候，原字符和替换字符都可能是空格
+				if(StringUtil.isEmpty(oriField)){
 					throw new BusinessSystemException("保存所有表字符替换清洗时，请填写第"+ (i + 1) +"条数据的原字符");
 				}
-				if(StringUtil.isBlank(replaceFeild)){
+				if(StringUtil.isEmpty(replaceFeild)){
 					throw new BusinessSystemException("保存所有表字符替换清洗时，请填写第"+ (i + 1) +"条数据的替换字符");
 				}
 				//3-1、构建Clean_parameter对象，设置原字段，替换后字段
@@ -915,6 +924,9 @@ public class CleanConfStepAction extends BaseAction{
 			"如：{\"complement\":1,\"replacement\":2,\"formatting\":3,\"conversion\":4,\"merge\":5,\"split\":6,\"trim\":7}" +
 			"注意：json的key请务必按照示例中给出的写")
 	public void saveAllTbCleanOrder(long[] tableIds, String sort){
+		if(!(tableIds.length > 0)){
+			throw new BusinessSystemException("保存所有表清洗优先级时未获取到表ID");
+		}
 		//1、根据table_id,在table_info表中找到对应的记录，将sort更新进去
 		StringBuilder sqlSB = new StringBuilder("update " + Table_info.TableName +
 				" set ti_or = ? where table_id in ( ");

@@ -22,16 +22,23 @@ public class InitAndDestDataForCollTb {
 	//测试数据用户ID
 	private static final long TEST_USER_ID = 9997L;
 	private static final long TEST_DEPT_ID = 9987L;
+	private static final long SOURCE_ID = 1L;
+
+	private static final long FIRST_DATABASESET_ID = 1001L;
+
+	private static final long FIRST_DB_AGENT_ID = 7001L;
+	private static final long SECOND_DB_AGENT_ID = 7002L;
+
 	private static final long SYS_USER_TABLE_ID = 7001L;
 	private static final long CODE_INFO_TABLE_ID = 7002L;
 	private static final long AGENT_INFO_TABLE_ID = 7003L;
 	private static final long DATA_SOURCE_TABLE_ID = 7004L;
-	private static final long FIRST_DATABASESET_ID = 1001L;
+
 	private static final long BASE_SYS_USER_PRIMARY = 2000L;
-	private static final long FIRST_DB_AGENT_ID = 7001L;
-	private static final long SECOND_DB_AGENT_ID = 7002L;
+
 	private static final long FIRST_STORAGE_ID = 1234L;
 	private static final long SECOND_STORAGE_ID = 5678L;
+
 	private static final JSONObject tableCleanOrder = BaseInitData.initTableCleanOrder();
 	private static final JSONObject columnCleanOrder = BaseInitData.initColumnCleanOrder();
 
@@ -69,7 +76,8 @@ public class InitAndDestDataForCollTb {
 					tableId = SYS_USER_TABLE_ID;
 					tableName = "sys_user";
 					tableChName = "用户表";
-					customizeSQL = "select * from sys_user where user_id = 2001";
+					//自定义过滤
+					customizeSQL = "select * from sys_user where user_id = " + TEST_USER_ID;
 					customizFlag = IsFlag.Fou.getCode();
 					parallelFlag = IsFlag.Fou.getCode();
 					pageSql = "";
@@ -81,13 +89,15 @@ public class InitAndDestDataForCollTb {
 					customizeSQL = "";
 					customizFlag = IsFlag.Fou.getCode();
 					parallelFlag = IsFlag.Shi.getCode();
+					//自定义过滤
 					pageSql = "select * from code_info limit 10";
 					break;
 				case 3:
 					tableId = AGENT_INFO_TABLE_ID;
 					tableName = "agent_info";
 					tableChName = "Agent信息表";
-					customizeSQL = "select * from agent_info";
+					//自定义采集
+					customizeSQL = "select agent_id, agent_name, agent_type from agent_info where source_id = " + SOURCE_ID;
 					customizFlag = IsFlag.Shi.getCode();
 					parallelFlag = IsFlag.Fou.getCode();
 					pageSql = "";
@@ -96,7 +106,8 @@ public class InitAndDestDataForCollTb {
 					tableId = DATA_SOURCE_TABLE_ID;
 					tableName = "data_source";
 					tableChName = "数据源表";
-					customizeSQL = "select * from data_source";
+					//自定义采集
+					customizeSQL = "select source_id, datasource_number, datasource_name from data_source where source_id = " + SOURCE_ID;
 					customizFlag = IsFlag.Shi.getCode();
 					parallelFlag = IsFlag.Fou.getCode();
 					pageSql = "";
@@ -221,6 +232,10 @@ public class InitAndDestDataForCollTb {
 		}
 
 		List<Table_column> codeInfos = BaseInitData.buildCodeInfoTbColData();
+
+		List<Table_column> dataSources = BaseInitData.buildDataSourceTbColData();
+
+		List<Table_column> agentInfos = BaseInitData.buildAgentInfoTbColData();
 
 		//8、构造table_storage_info表测试数据
 		List<Table_storage_info> tableStorageInfos = new ArrayList<>();
@@ -387,37 +402,62 @@ public class InitAndDestDataForCollTb {
 			assertThat("数据源测试数据初始化", dataSourceCount, is(1));
 
 			//插入Agent信息表(agent_info)测试数据
+			int agentInfoCount = 0;
 			for(Agent_info agentInfo : agents){
-				agentInfo.add(db);
+				int count = agentInfo.add(db);
+				agentInfoCount += count;
 			}
-			assertThat("Agent测试数据初始化", agents.size(), is(2));
+			assertThat("Agent测试数据初始化", agentInfoCount, is(2));
 
 			//插入database_set表测试数据
+			int databaseSetCount = 0;
 			for(Database_set databaseSet : databases){
-				databaseSet.add(db);
+				int count = databaseSet.add(db);
+				databaseSetCount += count;
 			}
-			assertThat("数据库设置测试数据初始化", databases.size(), is(2));
+			assertThat("数据库设置测试数据初始化", databaseSetCount, is(2));
 
 			//插入collect_job_classify表测试数据
+			int classifyCount = 0;
 			for(Collect_job_classify classify : classifies){
-				classify.add(db);
+				int count = classify.add(db);
+				classifyCount += count;
 			}
-			assertThat("采集任务分类表测试数据初始化", classifies.size(), is(2));
+			assertThat("采集任务分类表测试数据初始化", classifyCount, is(2));
 
 			//插入table_info测试数据
+			int tableInfoCount = 0;
 			for(Table_info tableInfo : tableInfos){
-				tableInfo.add(db);
+				int count = tableInfo.add(db);
+				tableInfoCount += count;
 			}
-			assertThat("数据库对应表测试数据初始化", tableInfos.size(), is(4));
+			assertThat("数据库对应表测试数据初始化", tableInfoCount, is(4));
 
 			//插入table_column测试数据
+			int sysUserCount = 0;
 			for(Table_column tableColumn : sysUsers){
-				tableColumn.add(db);
+				int count = tableColumn.add(db);
+				sysUserCount += count;
 			}
+			assertThat("sys_user表对应字段表测试数据初始化", sysUserCount, is(10));
+			int codeInfoCount = 0;
 			for(Table_column tableColumn : codeInfos){
-				tableColumn.add(db);
+				int count = tableColumn.add(db);
+				codeInfoCount += count;
 			}
-			assertThat("表对应字段表测试数据初始化", sysUsers.size() + codeInfos.size(), is(15));
+			assertThat("code_info表对应字段表测试数据初始化", codeInfoCount, is(5));
+			int agentInfosCount = 0;
+			for(Table_column tableColumn : agentInfos){
+				int count = tableColumn.add(db);
+				agentInfosCount += count;
+			}
+			assertThat("agent_info表对应字段表测试数据初始化", agentInfosCount, is(3));
+			int dataSourcesCount = 0;
+			for(Table_column tableColumn : dataSources){
+				int count = tableColumn.add(db);
+				dataSourcesCount += count;
+			}
+			assertThat("data_source表对应字段表测试数据初始化", dataSourcesCount, is(3));
 
 			//插入table_storage_info测试数据
 			for(Table_storage_info storageInfo : tableStorageInfos){
@@ -467,6 +507,8 @@ public class InitAndDestDataForCollTb {
 			//6、删除table_column表测试数据
 			SqlOperator.execute(db, "delete from " + Table_column.TableName + " where table_id = ? ", SYS_USER_TABLE_ID);
 			SqlOperator.execute(db, "delete from " + Table_column.TableName + " where table_id = ? ", CODE_INFO_TABLE_ID);
+			SqlOperator.execute(db, "delete from " + Table_column.TableName + " where table_id = ? ", AGENT_INFO_TABLE_ID);
+			SqlOperator.execute(db, "delete from " + Table_column.TableName + " where table_id = ? ", DATA_SOURCE_TABLE_ID);
 			//7、删除table_storage_info表测试数据
 			SqlOperator.execute(db, "delete from " + Table_storage_info.TableName + " where table_id = ? ", SYS_USER_TABLE_ID);
 			SqlOperator.execute(db, "delete from " + Table_storage_info.TableName + " where table_id = ? ", CODE_INFO_TABLE_ID);

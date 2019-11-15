@@ -410,6 +410,8 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 *
 	 * 正确数据访问1：构造正常的字符替换规则进行保存，由于后端接收json格式字符串，测试用例中使用List集合模拟保存两条字符替换规则
 	 * 正确数据访问2：构造特殊字符，如回车
+	 * 错误的数据访问1：保存时，不传递原字符
+	 * 错误的数据访问2：保存时，不传递替换后字符
 	 * 错误的测试用例未达到三组:saveSingleTbReplaceInfo方法目前还没有明确是否要对原字符和替换后的字符进行校验
 	 * @Param: 无
 	 * @return: 无
@@ -501,12 +503,46 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 
 			SqlOperator.commitTransaction(db);
 		}
+
+		//错误的数据访问1：保存时，不传递原字符
+		replaceList.clear();
+		Table_clean wrongTcOne = new Table_clean();
+		wrongTcOne.setTable_id(SYS_USER_TABLE_ID);
+		wrongTcOne.setClean_type(CleanType.ZiFuTiHuan.getCode());
+		wrongTcOne.setReplace_feild("|");
+		replaceList.add(wrongTcOne);
+
+		String wrongStringOne = new HttpClient()
+				.addData("replaceString", JSON.toJSONString(replaceList))
+				.addData("tableId", SYS_USER_TABLE_ID)
+				.post(getActionUrl("saveSingleTbReplaceInfo")).getBodyString();
+		ActionResult wrongResultOne = JsonUtil.toObjectSafety(wrongStringOne, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultOne.isSuccess(), is(false));
+
+		//错误的数据访问2：保存时，不传递替换后字符
+		replaceList.clear();
+		Table_clean wrongTcTwo = new Table_clean();
+		wrongTcTwo.setTable_id(SYS_USER_TABLE_ID);
+		wrongTcTwo.setField("\n");
+		wrongTcTwo.setClean_type(CleanType.ZiFuTiHuan.getCode());
+		replaceList.add(wrongTcTwo);
+
+		String wrongStringTwo = new HttpClient()
+				.addData("replaceString", JSON.toJSONString(replaceList))
+				.addData("tableId", SYS_USER_TABLE_ID)
+				.post(getActionUrl("saveSingleTbReplaceInfo")).getBodyString();
+		ActionResult wrongResultTwo = JsonUtil.toObjectSafety(wrongStringTwo, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultTwo.isSuccess(), is(false));
 	}
 
 	/**
 	 * 测试保存单个字段的字符替换规则
 	 *
 	 * 正确数据访问1：构造正确的列字符替换规则进行保存
+	 * 错误的数据访问1：保存时，不传递原字符
+	 * 错误的数据访问2：保存时，不传递替换后字符
 	 * 错误的测试用例未达到三组:saveColReplaceInfo方法目前还没有明确是否要对原字符和替换后的字符进行校验
 	 * @Param: 无
 	 * @return: 无
@@ -572,6 +608,38 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 
 			SqlOperator.commitTransaction(db);
 		}
+
+		//错误的数据访问1：保存时，不传递原字符
+		replaceList.clear();
+		Column_clean wrongTcOne = new Column_clean();
+		wrongTcOne.setColumn_id(2005L);
+		wrongTcOne.setClean_type(CleanType.ZiFuTiHuan.getCode());
+		wrongTcOne.setReplace_feild("|");
+		replaceList.add(wrongTcOne);
+
+		String wrongStringOne = new HttpClient()
+				.addData("replaceString", JSON.toJSONString(replaceList))
+				.addData("columnId", 2005L)
+				.post(getActionUrl("saveColReplaceInfo")).getBodyString();
+		ActionResult wrongResultOne = JsonUtil.toObjectSafety(wrongStringOne, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultOne.isSuccess(), is(false));
+
+		//错误的数据访问2：保存时，不传递替换后字符
+		replaceList.clear();
+		Column_clean wrongTcTwo = new Column_clean();
+		wrongTcTwo.setColumn_id(SYS_USER_TABLE_ID);
+		wrongTcTwo.setField("\n");
+		wrongTcTwo.setClean_type(CleanType.ZiFuTiHuan.getCode());
+		replaceList.add(wrongTcTwo);
+
+		String wrongStringTwo = new HttpClient()
+				.addData("replaceString", JSON.toJSONString(replaceList))
+				.addData("columnId", 2005L)
+				.post(getActionUrl("saveColReplaceInfo")).getBodyString();
+		ActionResult wrongResultTwo = JsonUtil.toObjectSafety(wrongStringTwo, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultTwo.isSuccess(), is(false));
 	}
 
 	/**
@@ -727,9 +795,10 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 * 正确数据访问1：模拟只设置全表字符补齐
 	 * 正确数据访问2：模拟只设置全表字符替换(设置两条)
 	 * 正确数据访问3：模拟既设置全表字符补齐，又设置全表字符替换
-	 * 错误数据访问1：模拟值设置全表字符补齐，但是补齐方式是3，这样访问不会成功
+	 * 错误数据访问1：模拟只设置全表字符补齐，但是补齐方式是3，这样访问不会成功
+	 * 错误数据访问2：模拟只设置全表字符替换，但是缺少原字符串
+	 * 错误数据访问3：模拟只设置全表字符替换，但是缺少补齐字符串
 	 *
-	 * 错误的测试用例未达到三组: saveAllTbCleanConfigInfo是一个保存操作，上述三个测试用例已经可以覆盖所有的情况
 	 * @Param: 无
 	 * @return: 无
 	 * */
@@ -851,6 +920,28 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		ActionResult wrongResult = JsonUtil.toObjectSafety(wrongString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(wrongResult.isSuccess(), is(false));
+
+		//错误数据访问2：模拟只设置全表字符替换，但是缺少原字符串
+		String wrongStringTwo = new HttpClient()
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.addData("compFlag", "0")
+				.addData("replaceFlag", "1")
+				.addData("replaceFeildArr", replaceFeildArr)
+				.post(getActionUrl("saveAllTbCleanConfigInfo")).getBodyString();
+		ActionResult wrongResultTwo = JsonUtil.toObjectSafety(wrongStringTwo, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultTwo.isSuccess(), is(false));
+
+		//错误数据访问3：模拟只设置全表字符替换，但是缺少补齐字符串
+		String wrongStringThree = new HttpClient()
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.addData("compFlag", "0")
+				.addData("replaceFlag", "1")
+				.addData("oriFieldArr", oriFieldArr)
+				.post(getActionUrl("saveAllTbCleanConfigInfo")).getBodyString();
+		ActionResult wrongResultThree = JsonUtil.toObjectSafety(wrongStringThree, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultThree.isSuccess(), is(false));
 	}
 
 	/**
@@ -974,7 +1065,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 * 正确数据访问1：模拟修改对sys_user表的login_date字段设置日期格式化
 	 * 错误数据访问1：模拟修改对sys_user表的login_date字段设置日期格式化，但是缺少原日期格式
 	 * 错误数据访问2：模拟修改对sys_user表的login_date字段设置日期格式化，但是缺少转换后日期格式
-	 * 错误的测试用例未达到三组:saveDateFormatInfo方法上述测试用例就可以覆盖所有可能出现的情况
+	 * 错误数据访问3：模拟修改对sys_user表的login_date字段设置日期格式化，但是保存时没有关联字段ID
 	 * @Param: 无
 	 * @return: 无
 	 *
@@ -1029,6 +1120,16 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		ActionResult wrongResultTwo = JsonUtil.toObjectSafety(wrongStringTwo, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(wrongResultTwo.isSuccess(), is(false));
+
+		//错误数据访问3：模拟修改对sys_user表的login_date字段设置日期格式化，但是保存时没有关联字段ID
+		String wrongStringThree = new HttpClient()
+				.addData("clean_type", CleanType.ShiJianZhuanHuan.getCode())
+				.addData("convert_format", "yyyy年MM月dd日 HH:mm:ss")
+				.addData("old_format", "YYYY-MM-DD")
+				.post(getActionUrl("saveDateFormatInfo")).getBodyString();
+		ActionResult wrongResultThree = JsonUtil.toObjectSafety(wrongStringThree, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultThree.isSuccess(), is(false));
 	}
 
 	/**
@@ -1202,7 +1303,10 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 *
 	 * 正确数据访问1：模拟修改对code_info表的ci_sp_classname设置的字段拆分规则，由按照下划线分隔拆分，变为按照偏移量拆分为ci_s、p_class、name
 	 * 正确数据访问2：模拟新增对code_info表的ci_sp_code设置字段拆分规则，按照下划线分拆分为ci、sp、code三列
-	 * 错误的测试用例未达到三组:上述测试用例可以覆盖saveColSplitInfo()方法的所有场景
+	 * 错误的数据访问1：模拟新增对code_info表的ci_sp_code设置字段拆分规则，但是保存时没有关联字段
+	 * 错误的数据访问2：模拟新增对code_info表的ci_sp_code设置字段拆分规则，但是保存时，由于是按照自定义符号进行拆分，但是缺少了自定义符号
+	 * 错误的数据访问3：模拟新增对code_info表的ci_sp_code设置字段拆分规则，但是保存时，由于是按照自定义符号进行拆分，但是缺少了值位置
+	 * 错误的数据访问4：模拟新增对code_info表的ci_sp_classname设置字段拆分规则，但是保存时，由于是按照偏移量进行拆分，但是缺少了偏移量
 	 * @Param: 无
 	 * @return: 无
 	 *
@@ -1429,6 +1533,156 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 
 			SqlOperator.commitTransaction(db);
 		}
+
+		//错误的数据访问1：模拟新增对code_info表的ci_sp_code设置字段拆分规则，但是保存时没有关联字段
+		String wrongStringOne = new HttpClient()
+				.addData("clean_type", CleanType.ZiFuChaiFen.getCode())
+				.addData("columnSplitString", JSON.toJSONString(splitByUnderLine))
+				.addData("tableId", CODE_INFO_TABLE_ID)
+				.post(getActionUrl("saveColSplitInfo")).getBodyString();
+		ActionResult wrongResultOne = JsonUtil.toObjectSafety(wrongStringOne, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultOne.isSuccess(), is(false));
+		//错误的数据访问2：模拟新增对code_info表的ci_sp_code设置字段拆分规则，但是保存时，由于是按照自定义符号进行拆分，但是缺少了自定义符号
+		List<Column_split> wrongSplitByUnderLineOne = new ArrayList<>();
+		for(int i = 0; i < 3; i++){
+			String colName = null;
+			long seq = 0;
+			String splitType = CharSplitType.ZhiDingFuHao.getCode();
+			String colChName = null;
+			String colType = "varchar(512)";
+			switch (i){
+				case 0 :
+					colName = "ci";
+					seq = 1;
+					colChName = "ci_ch";
+					break;
+				case 1 :
+					colName = "sp";
+					seq = 2;
+					colChName = "sp_ch";
+					break;
+				case 2 :
+					colName = "code";
+					seq = 3;
+					colChName = "code_ch";
+					break;
+			}
+
+			Column_split columnSplit = new Column_split();
+			columnSplit.setCol_name(colName);
+			columnSplit.setSeq(seq);
+			columnSplit.setCol_type(colType);
+			columnSplit.setCol_zhname(colChName);
+			columnSplit.setSplit_type(splitType);
+
+			wrongSplitByUnderLineOne.add(columnSplit);
+		}
+
+		String wrongStringTwo = new HttpClient()
+				.addData("clean_type", CleanType.ZiFuChaiFen.getCode())
+				.addData("column_id", 3001L)
+				.addData("columnSplitString", JSON.toJSONString(wrongSplitByUnderLineOne))
+				.addData("tableId", CODE_INFO_TABLE_ID)
+				.post(getActionUrl("saveColSplitInfo")).getBodyString();
+		ActionResult wrongResultTwo = JsonUtil.toObjectSafety(wrongStringTwo, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultTwo.isSuccess(), is(false));
+
+		// 错误的数据访问3：模拟新增对code_info表的ci_sp_code设置字段拆分规则，但是保存时，由于是按照自定义符号进行拆分，但是缺少了值位置
+		List<Column_split> wrongSplitByUnderLineTwo = new ArrayList<>();
+		for(int i = 0; i < 3; i++){
+			String colName = null;
+			String splitSep = "_";
+			String splitType = CharSplitType.ZhiDingFuHao.getCode();
+			String colChName = null;
+			String colType = "varchar(512)";
+			switch (i){
+				case 0 :
+					colName = "ci";
+					colChName = "ci_ch";
+					break;
+				case 1 :
+					colName = "sp";
+					colChName = "sp_ch";
+					break;
+				case 2 :
+					colName = "code";
+					colChName = "code_ch";
+					break;
+			}
+
+			Column_split columnSplit = new Column_split();
+			columnSplit.setCol_name(colName);
+			columnSplit.setSplit_sep(splitSep);
+			columnSplit.setCol_type(colType);
+			columnSplit.setCol_zhname(colChName);
+			columnSplit.setSplit_type(splitType);
+
+			wrongSplitByUnderLineTwo.add(columnSplit);
+		}
+
+		String wrongStringThree = new HttpClient()
+				.addData("clean_type", CleanType.ZiFuChaiFen.getCode())
+				.addData("column_id", 3001L)
+				.addData("columnSplitString", JSON.toJSONString(wrongSplitByUnderLineTwo))
+				.addData("tableId", CODE_INFO_TABLE_ID)
+				.post(getActionUrl("saveColSplitInfo")).getBodyString();
+		ActionResult wrongResultThree = JsonUtil.toObjectSafety(wrongStringThree, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultThree.isSuccess(), is(false));
+
+		// 错误的数据访问3：模拟新增对code_info表的ci_sp_classname设置字段拆分规则，但是保存时，由于是按照偏移量进行拆分，但是缺少了偏移量
+		List<Column_split> wrongOffsetSpiltsOne = new ArrayList<>();
+		for(int i = 0; i < 3; i++){
+			long colSplitId = 0;
+			String columnName = null;
+			String splitType = CharSplitType.PianYiLiang.getCode();
+			String columnChName = null;
+			String columnType = "varchar(512)";
+			long colCleanId = 101010102L;
+			long columnId = 3003L;
+			switch (i){
+				case 0 :
+					colSplitId = 101010103L;
+					columnName = "ci_s";
+					columnChName = "ci_s_ch";
+					break;
+				case 1 :
+					colSplitId = 101010104L;
+					columnName = "p_class";
+					columnChName = "p_class_ch";
+					break;
+				case 2 :
+					colSplitId = 101010105L;
+					columnName = "name";
+					columnChName = "name_ch";
+					break;
+			}
+			Column_split columnSplit = new Column_split();
+			columnSplit.setCol_split_id(colSplitId);
+			columnSplit.setCol_name(columnName);
+			columnSplit.setSplit_type(splitType);
+			columnSplit.setCol_zhname(columnChName);
+			columnSplit.setCol_type(columnType);
+			columnSplit.setCol_clean_id(colCleanId);
+			columnSplit.setColumn_id(columnId);
+			columnSplit.setValid_e_date(Constant.MAXDATE);
+			columnSplit.setValid_s_date(DateUtil.getSysDate());
+
+			wrongOffsetSpiltsOne.add(columnSplit);
+		}
+
+		String rightStringFour = new HttpClient()
+				.addData("col_clean_id", 101010102L)
+				.addData("clean_type", CleanType.ZiFuChaiFen.getCode())
+				.addData("column_id", 3003L)
+				.addData("columnSplitString", JSON.toJSONString(wrongOffsetSpiltsOne))
+				.addData("tableId", CODE_INFO_TABLE_ID)
+				.post(getActionUrl("saveColSplitInfo")).getBodyString();
+		ActionResult rightResultFour = JsonUtil.toObjectSafety(rightStringFour, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResultFour.isSuccess(), is(false));
 	}
 
 	/**
@@ -1714,9 +1968,11 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 * 测试保存列合并信息
 	 *
 	 * 正确数据访问1：模拟对sys_user表设置好的列合并进行修改
-	 * 正确数据访问2：正确数据访问2：模拟对code_info表设置列合并
-	 * 错误的数据访问1：
-	 * 错误的测试用例未达到三组:saveColMergeInfo方法两个测试用例可以覆盖被测方法中所有的分支
+	 * 正确数据访问2：模拟对code_info表设置列合并
+	 * 错误的数据访问1：保存列合并时没有填写要合并的字段
+	 * 错误的数据访问2：保存列合并时没有填写合并后的字段名称
+	 * 错误的数据访问3：保存列合并时没有填写字段类型
+	 *
 	 * @Param: 无
 	 * @return: 无
 	 *
@@ -1811,6 +2067,57 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 
 			SqlOperator.commitTransaction(db);
 		}
+
+		//错误的数据访问1：保存列合并时没有填写要合并的字段
+		columnMerges.clear();
+		Column_merge wrongColumnMergeOne = new Column_merge();
+		wrongColumnMergeOne.setCol_name("ci_sp_name_remark");
+		wrongColumnMergeOne.setCol_zhname("ci_sp_name_remark_ch");
+		wrongColumnMergeOne.setCol_type("varchar(512)");
+
+		columnMerges.add(wrongColumnMergeOne);
+
+		String wrongStringOne = new HttpClient()
+				.addData("columnMergeString", JSON.toJSONString(columnMerges))
+				.addData("tableId", CODE_INFO_TABLE_ID)
+				.post(getActionUrl("saveColMergeInfo")).getBodyString();
+		ActionResult wrongResultOne = JsonUtil.toObjectSafety(wrongStringOne, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultOne.isSuccess(), is(false));
+
+		//错误的数据访问2：保存列合并时没有填写合并后的字段名称
+		columnMerges.clear();
+		Column_merge wrongColumnMergeTwo = new Column_merge();
+		wrongColumnMergeTwo.setOld_name("ci_sp_name和ci_sp_remark");
+		wrongColumnMergeTwo.setCol_zhname("ci_sp_name_remark_ch");
+		wrongColumnMergeTwo.setCol_type("varchar(512)");
+
+		columnMerges.add(wrongColumnMergeTwo);
+
+		String wrongStringTwo = new HttpClient()
+				.addData("columnMergeString", JSON.toJSONString(columnMerges))
+				.addData("tableId", CODE_INFO_TABLE_ID)
+				.post(getActionUrl("saveColMergeInfo")).getBodyString();
+		ActionResult wrongResultTwo = JsonUtil.toObjectSafety(wrongStringTwo, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultTwo.isSuccess(), is(false));
+
+		//错误的数据访问3：保存列合并时没有填写字段类型
+		columnMerges.clear();
+		Column_merge wrongColumnMergeThree = new Column_merge();
+		wrongColumnMergeThree.setOld_name("ci_sp_name和ci_sp_remark");
+		wrongColumnMergeThree.setCol_zhname("ci_sp_name_remark_ch");
+		wrongColumnMergeThree.setCol_name("ci_sp_name_remark");
+
+		columnMerges.add(wrongColumnMergeThree);
+
+		String wrongStringThree = new HttpClient()
+				.addData("columnMergeString", JSON.toJSONString(columnMerges))
+				.addData("tableId", CODE_INFO_TABLE_ID)
+				.post(getActionUrl("saveColMergeInfo")).getBodyString();
+		ActionResult wrongResultThree = JsonUtil.toObjectSafety(wrongStringThree, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultThree.isSuccess(), is(false));
 	}
 
 	/**
@@ -1869,6 +2176,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 *                  2、字符补齐
 	 *                  3、字符trim
 	 *                  4、字符合并
+	 * 错误的数据访问1：设置表清洗优先级时，传递的tableId数组为空
 	 * 错误的测试用例未达到三组: 一个测试用例已经可以覆盖代码中所有可能出现的场景
 	 * @Param: 无
 	 * @return: 无
@@ -1912,6 +2220,16 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 			assertThat("第一条数据获取的是sys_user表修改后的清洗规则，结果符合预期", list.get(0).toString().equalsIgnoreCase(newSort.toJSONString()), is(true));
 			assertThat("第一条数据获取的是code_info表修改后的清洗规则，结果符合预期", list.get(1).toString().equalsIgnoreCase(newSort.toJSONString()), is(true));
 		}
+
+		//错误的数据访问1：设置表清洗优先级时，传递的tableId数组为空
+		long[] wrongTableIds = {};
+		String wrongStringOne = new HttpClient()
+				.addData("tableIds", wrongTableIds)
+				.addData("sort", newSort.toJSONString())
+				.post(getActionUrl("saveAllTbCleanOrder")).getBodyString();
+		ActionResult wrongResultOne = JsonUtil.toObjectSafety(wrongStringOne, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultOne.isSuccess(), is(false));
 	}
 
 	/**
@@ -2042,6 +2360,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 * 正确数据访问2：columnId为2005L，之前设置了字符替换，但是保存的时候取消了字符替换的勾选，同时做首尾去空
 	 * 正确数据访问3：columnId为2011L，之前设置了日期格式化，但是保存的时候取消了日期格式化的勾选，同时做首尾去空
 	 * 正确数据访问4：columnId为3003L，之前设置了列拆分，但是保存的时候取消了列拆分的勾选，同时做首尾去空
+	 * 正确数据访问5：columnId为2010L，之前设置了码值转换，但是保存的时候取消了列拆分的勾选，同时做首尾去空
 	 *
 	 * 错误的测试用例未达到三组:上面三组测试用例是结合初始化数据进行的，比较有代表性的。
 	 * @Param: 无
@@ -2216,6 +2535,40 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 			assertThat("在执行测试用例<正确数据访问4>之后，列拆分信息在column_clean表中不存在", afterDelColCleanCount == 0, is(true));
 			long afterTrimCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ? ", 3003L, CleanType.ZiFuTrim.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
 			assertThat("在执行测试用例<正确数据访问4>之后，列首尾去空存在", afterTrimCount == 1, is(true));
+		}
+
+		//正确数据访问5：columnId为2010L，之前设置了码值转换，但是保存的时候取消了码值转换的勾选，同时做首尾去空
+		try(DatabaseWrapper db = new DatabaseWrapper()){
+			long beforeCVCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ? ", 2010L, CleanType.MaZhiZhuanHuan.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long beforeTrimCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ? ", 2010L, CleanType.ZiFuTrim.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			assertThat("在执行测试用例<正确数据访问5>之前，数据库中的数据符合预期", beforeCVCount == 1 && beforeTrimCount == 0, is(true));
+		}
+
+		columnCleanParams.clear();
+
+		ColumnCleanParam cleanParamFive = new ColumnCleanParam();
+
+		cleanParamFive.setColumnId(2010L);
+		cleanParamFive.setComplementFlag(false);
+		cleanParamFive.setConversionFlag(false);
+		cleanParamFive.setFormatFlag(false);
+		cleanParamFive.setReplaceFlag(false);
+		cleanParamFive.setSpiltFlag(false);
+		cleanParamFive.setTrimFlag(true);
+
+		columnCleanParams.add(cleanParamFive);
+
+		String rightStringFive = new HttpClient()
+				.addData("colCleanString", JSON.toJSONString(columnCleanParams))
+				.post(getActionUrl("saveColCleanConfig")).getBodyString();
+		ActionResult rightResultFive = JsonUtil.toObjectSafety(rightStringFive, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResultFive.isSuccess(), is(true));
+
+		try(DatabaseWrapper db = new DatabaseWrapper()){
+			long afterCVCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ? ", 2010L, CleanType.MaZhiZhuanHuan.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long afterTrimCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ? ", 2010L, CleanType.ZiFuTrim.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			assertThat("在执行测试用例<正确数据访问5>之后，数据库中的数据符合预期", afterCVCount == 0 && afterTrimCount == 1, is(true));
 		}
 	}
 

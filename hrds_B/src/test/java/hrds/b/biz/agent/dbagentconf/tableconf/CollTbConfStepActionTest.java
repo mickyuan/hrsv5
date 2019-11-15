@@ -390,22 +390,14 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			String customizeSQL;
 			switch (i) {
 				case 1 :
-					tableName = "getHalfStructTaskBySourceId";
-					tableChName = "通过数据源ID获得半结构化采集任务";
-					customizeSQL = "SELECT fcs.odc_id " +
-							"FROM "+ Data_source.TableName +" ds " +
-							"JOIN "+ Agent_info.TableName +" ai ON ds.source_id = ai.source_id " +
-							"JOIN "+ Object_collect.TableName +" fcs ON ai.agent_id = fcs.agent_id " +
-							"WHERE ds.source_id = ? AND fcs.is_sendok = ? AND ds.create_user_id = ?";
+					tableName = "getHalfStructTask";
+					tableChName = "获得半结构化采集任务";
+					customizeSQL = "SELECT odc_id, object_collect_type, obj_number FROM "+ Object_collect.TableName;
 					break;
 				case 2 :
-					tableName = "getFTPTaskBySourceId";
-					tableChName = "通过数据源ID获得FTP采集任务";
-					customizeSQL = "SELECT fcs.ftp_id " +
-							"FROM "+ Data_source.TableName +" ds " +
-							"JOIN "+ Agent_info.TableName +" ai ON ds.source_id = ai.source_id " +
-							"JOIN "+ Ftp_collect.TableName +" fcs ON ai.agent_id = fcs.agent_id " +
-							"WHERE ds.source_id = ? AND fcs.is_sendok = ? AND ds.create_user_id = ? ";
+					tableName = "getFTPTask";
+					tableChName = "获得FTP采集任务";
+					customizeSQL = "SELECT ftp_id, ftp_number, ftp_name FROM "+ Ftp_collect.TableName;
 					break;
 				default:
 					tableName = "unexpected_tableName";
@@ -427,25 +419,94 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(rightResult.isSuccess(), is(true));
+
+		List<Table_info> expectedList;
+
 		//保存成功，验证数据库中的记录是否符合预期
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			List<Table_info> expectedList = SqlOperator.queryList(db, Table_info.class, "select * from " + Table_info.TableName + " where database_id = ? AND is_user_defined = ?", FIRST_DATABASESET_ID, IsFlag.Shi.getCode());
+			expectedList = SqlOperator.queryList(db, Table_info.class, "select * from " + Table_info.TableName + " where database_id = ? AND is_user_defined = ?", FIRST_DATABASESET_ID, IsFlag.Shi.getCode());
 			assertThat("保存成功后，table_info表中的用户自定义SQL查询数目应该有2条", expectedList.size(), is(2));
 			for(Table_info tableInfo : expectedList){
-				if(tableInfo.getTable_name().equalsIgnoreCase("getHalfStructTaskBySourceId")){
-					assertThat("保存成功后，自定义SQL查询getHalfStructTaskBySourceId的中文名应该是<通过数据源ID获得半结构化采集任务>", tableInfo.getTable_ch_name(), is("通过数据源ID获得半结构化采集任务"));
-				}else if(tableInfo.getTable_name().equalsIgnoreCase("getFTPTaskBySourceId")){
-					assertThat("保存成功后，自定义SQL查询getFTPTaskBySourceId的中文名应该是<通过数据源ID获得FTP采集任务>", tableInfo.getTable_ch_name(), is("通过数据源ID获得FTP采集任务"));
+				if(tableInfo.getTable_name().equalsIgnoreCase("getHalfStructTask")){
+					assertThat("保存成功后，自定义SQL查询getHalfStructTask的中文名应该是<获得半结构化采集任务>", tableInfo.getTable_ch_name(), is("获得半结构化采集任务"));
+					Result resultOne = SqlOperator.queryResult(db, "select is_get, is_primary_key, colume_name, column_type, colume_ch_name, is_alive, is_new, tc_or from " + Table_column.TableName + " where table_id = ?", tableInfo.getTable_id());
+					assertThat("保存成功后，自定义SQL采集的三列数据被保存到了table_column表中", resultOne.getRowCount(), is(3));
+					for(int i = 0; i < resultOne.getRowCount(); i++){
+						if(resultOne.getString(i, "colume_name").equalsIgnoreCase("odc_id")){
+							assertThat("采集列名为odc_id，is_get字段符合预期", resultOne.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
+							assertThat("采集列名为odc_id，is_primary_key字段符合预期", resultOne.getString(i, "is_primary_key"), is(IsFlag.Fou.getCode()));
+							assertThat("采集列名为odc_id，column_type字段符合预期", resultOne.getString(i, "column_type").equalsIgnoreCase("int8"), is(true));
+							assertThat("采集列名为odc_id，colume_ch_name字段符合预期", resultOne.getString(i, "colume_ch_name"), is("odc_id"));
+							assertThat("采集列名为odc_id，is_alive字段符合预期", resultOne.getString(i, "is_alive"), is(IsFlag.Shi.getCode()));
+							assertThat("采集列名为odc_id，is_new字段符合预期", resultOne.getString(i, "is_new"), is(IsFlag.Fou.getCode()));
+							assertThat("采集列名为odc_id，tc_or字段符合预期", resultOne.getString(i, "tc_or"), is(columnCleanOrder.toJSONString()));
+						}else if(resultOne.getString(i, "colume_name").equalsIgnoreCase("object_collect_type")){
+							assertThat("采集列名为object_collect_type，is_get字段符合预期", resultOne.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
+							assertThat("采集列名为object_collect_type，is_primary_key字段符合预期", resultOne.getString(i, "is_primary_key"), is(IsFlag.Fou.getCode()));
+							assertThat("采集列名为object_collect_type，column_type字段符合预期", resultOne.getString(i, "column_type").equalsIgnoreCase("bpchar(1)"), is(true));
+							assertThat("采集列名为object_collect_type，colume_ch_name字段符合预期", resultOne.getString(i, "colume_ch_name"), is("object_collect_type"));
+							assertThat("采集列名为object_collect_type，is_alive字段符合预期", resultOne.getString(i, "is_alive"), is(IsFlag.Shi.getCode()));
+							assertThat("采集列名为object_collect_type，is_new字段符合预期", resultOne.getString(i, "is_new"), is(IsFlag.Fou.getCode()));
+							assertThat("采集列名为object_collect_type，tc_or字段符合预期", resultOne.getString(i, "tc_or"), is(columnCleanOrder.toJSONString()));
+						}else if(resultOne.getString(i, "colume_name").equalsIgnoreCase("obj_number")){
+							assertThat("采集列名为obj_number，is_get字段符合预期", resultOne.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
+							assertThat("采集列名为obj_number，is_primary_key字段符合预期", resultOne.getString(i, "is_primary_key"), is(IsFlag.Fou.getCode()));
+							assertThat("采集列名为obj_number，column_type字段符合预期", resultOne.getString(i, "column_type").equalsIgnoreCase("varchar(200)"), is(true));
+							assertThat("采集列名为obj_number，colume_ch_name字段符合预期", resultOne.getString(i, "colume_ch_name"), is("obj_number"));
+							assertThat("采集列名为obj_number，is_alive字段符合预期", resultOne.getString(i, "is_alive"), is(IsFlag.Shi.getCode()));
+							assertThat("采集列名为obj_number，is_new字段符合预期", resultOne.getString(i, "is_new"), is(IsFlag.Fou.getCode()));
+							assertThat("采集列名为obj_number，tc_or字段符合预期", resultOne.getString(i, "tc_or"), is(columnCleanOrder.toJSONString()));
+						}else{
+							assertThat("出现了不符合预期的情况，采集列名为：" + resultOne.getString(i, "colume_name"), true, is(false));
+						}
+					}
+				}else if(tableInfo.getTable_name().equalsIgnoreCase("getFTPTask")){
+					assertThat("保存成功后，自定义SQL查询getFTPTask的中文名应该是<获得FTP采集任务>", tableInfo.getTable_ch_name(), is("获得FTP采集任务"));
+					Result resultTwo = SqlOperator.queryResult(db, "select is_get, is_primary_key, colume_name, column_type, colume_ch_name, is_alive, is_new, tc_or from " + Table_column.TableName + " where table_id = ?", tableInfo.getTable_id());
+					assertThat("保存成功后，自定义SQL采集的三列数据被保存到了table_column表中", resultTwo.getRowCount(), is(3));
+					for(int i = 0; i < resultTwo.getRowCount(); i++){
+						if(resultTwo.getString(i, "colume_name").equalsIgnoreCase("ftp_id")){
+							assertThat("采集列名为ftp_id，is_get字段符合预期", resultTwo.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
+							assertThat("采集列名为ftp_id，is_primary_key字段符合预期", resultTwo.getString(i, "is_primary_key"), is(IsFlag.Fou.getCode()));
+							assertThat("采集列名为ftp_id，column_type字段符合预期", resultTwo.getString(i, "column_type").equalsIgnoreCase("int8"), is(true));
+							assertThat("采集列名为ftp_id，colume_ch_name字段符合预期", resultTwo.getString(i, "colume_ch_name"), is("ftp_id"));
+							assertThat("采集列名为ftp_id，is_alive字段符合预期", resultTwo.getString(i, "is_alive"), is(IsFlag.Shi.getCode()));
+							assertThat("采集列名为ftp_id，is_new字段符合预期", resultTwo.getString(i, "is_new"), is(IsFlag.Fou.getCode()));
+							assertThat("采集列名为ftp_id，tc_or字段符合预期", resultTwo.getString(i, "tc_or"), is(columnCleanOrder.toJSONString()));
+						}else if(resultTwo.getString(i, "colume_name").equalsIgnoreCase("ftp_number")){
+							assertThat("采集列名为ftp_number，is_get字段符合预期", resultTwo.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
+							assertThat("采集列名为ftp_number，is_primary_key字段符合预期", resultTwo.getString(i, "is_primary_key"), is(IsFlag.Fou.getCode()));
+							assertThat("采集列名为ftp_number，column_type字段符合预期", resultTwo.getString(i, "column_type").equalsIgnoreCase("varchar(200)"), is(true));
+							assertThat("采集列名为ftp_number，colume_ch_name字段符合预期", resultTwo.getString(i, "colume_ch_name"), is("ftp_number"));
+							assertThat("采集列名为ftp_number，is_alive字段符合预期", resultTwo.getString(i, "is_alive"), is(IsFlag.Shi.getCode()));
+							assertThat("采集列名为ftp_number，is_new字段符合预期", resultTwo.getString(i, "is_new"), is(IsFlag.Fou.getCode()));
+							assertThat("采集列名为ftp_number，tc_or字段符合预期", resultTwo.getString(i, "tc_or"), is(columnCleanOrder.toJSONString()));
+						}else if(resultTwo.getString(i, "colume_name").equalsIgnoreCase("ftp_name")){
+							assertThat("采集列名为ftp_name，is_get字段符合预期", resultTwo.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
+							assertThat("采集列名为ftp_name，is_primary_key字段符合预期", resultTwo.getString(i, "is_primary_key"), is(IsFlag.Fou.getCode()));
+							assertThat("采集列名为ftp_name，column_type字段符合预期", resultTwo.getString(i, "column_type").equalsIgnoreCase("varchar(512)"), is(true));
+							assertThat("采集列名为ftp_name，colume_ch_name字段符合预期", resultTwo.getString(i, "colume_ch_name"), is("ftp_name"));
+							assertThat("采集列名为ftp_name，is_alive字段符合预期", resultTwo.getString(i, "is_alive"), is(IsFlag.Shi.getCode()));
+							assertThat("采集列名为ftp_name，is_new字段符合预期", resultTwo.getString(i, "is_new"), is(IsFlag.Fou.getCode()));
+							assertThat("采集列名为ftp_name，tc_or字段符合预期", resultTwo.getString(i, "tc_or"), is(columnCleanOrder.toJSONString()));
+						}else{
+							assertThat("出现了不符合预期的情况，采集列名为：" + resultTwo.getString(i, "colume_name"), true, is(false));
+						}
+					}
 				}else{
 					assertThat("保存出错，出现了不希望出现的数据，表id为" + tableInfo.getTable_id(), true, is(false));
 				}
 			}
-			//验证完毕后，将自己在本方法中构造的数据删除掉
-			int firCount = SqlOperator.execute(db, "delete from " + Table_info.TableName + " WHERE table_name = ?", "getHalfStructTaskBySourceId");
-			assertThat("测试完成后，table_name为getHalfStructTaskBySourceId的测试数据被删除了", firCount, is(1));
-			int secCount = SqlOperator.execute(db, "delete from " + Table_info.TableName + " WHERE table_name = ?", "getFTPTaskBySourceId");
-			assertThat("测试完成后，table_name为getFTPTaskBySourceId的测试数据被删除了", secCount, is(1));
+			//验证完毕后，将自己在本方法中构造的数据删除掉(table_info表)
+			int firCount = SqlOperator.execute(db, "delete from " + Table_info.TableName + " WHERE table_name = ?", "getHalfStructTask");
+			assertThat("测试完成后，table_name为getHalfStructTask的测试数据被删除了", firCount, is(1));
+			int secCount = SqlOperator.execute(db, "delete from " + Table_info.TableName + " WHERE table_name = ?", "getFTPTask");
+			assertThat("测试完成后，table_name为getFTPTask的测试数据被删除了", secCount, is(1));
 
+			//验证完毕后，将自己在本方法中构造的数据删除掉(table_info表)
+			for(Table_info tableInfo : expectedList){
+				SqlOperator.execute(db, "delete from " + Table_column.TableName + " where table_id = ?", tableInfo.getTable_id());
+			}
 			SqlOperator.commitTransaction(db);
 		}
 
@@ -540,6 +601,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		ActionResult errorResultTwo = JsonUtil.toObjectSafety(errorStringTwo, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(errorResultTwo.isSuccess(), is(false));
+
 		//错误的数据访问3：构造两条自定义SQL查询设置数据，第一条数据的sql为空
 		List<Table_info> errortableInfoThree = new ArrayList<>();
 		for(int i = 1; i <= 2; i++){
@@ -610,7 +672,9 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		//删除前，确认待删除数据是否存在
 		try(DatabaseWrapper db = new DatabaseWrapper()){
 			long beforeCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_id = ?", AGENT_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("必须有且只有一条数据"));
-			assertThat("删除前，table_id为" + AGENT_INFO_TABLE_ID + "的数据确实存在", beforeCount, is(1L));
+			assertThat("删除前，table_id为" + AGENT_INFO_TABLE_ID + "的数据在table_info表中确实存在", beforeCount, is(1L));
+			long beforeAgentInfoCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " where table_id = ?", AGENT_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("必须有且只有一条数据"));
+			assertThat("删除前，table_id为" + AGENT_INFO_TABLE_ID + "的数据在table_column表中确实存在", beforeAgentInfoCount, is(3L));
 		}
 		//构造正确的数据进行删除
 		String rightString = new HttpClient()
@@ -623,6 +687,8 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		try(DatabaseWrapper db = new DatabaseWrapper()){
 			long afterCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_id = ?", AGENT_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("必须有且只有一条数据"));
 			assertThat("删除后，table_id为" + AGENT_INFO_TABLE_ID + "的数据不存在了", afterCount, is(0L));
+			long afterAgentInfoCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " where table_id = ?", AGENT_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("必须有且只有一条数据"));
+			assertThat("删除前，table_id为" + AGENT_INFO_TABLE_ID + "的数据在table_column表中确实存在", afterAgentInfoCount, is(0L));
 		}
 
 		//错误的数据访问1：模拟删除一个不存在的table_id的自定义SQL采集数据
