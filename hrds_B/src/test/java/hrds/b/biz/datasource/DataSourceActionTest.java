@@ -1238,26 +1238,31 @@ public class DataSourceActionTest extends WebBaseTestCase {
         // 1.正确的数据访问1，更新数据源关系部门信息，数据全有效
         String bodyString = new HttpClient()
                 .addData("source_id", SourceId)
-                .addData("dep_id", DepId2)
+                .addData("dep_id", new long[]{DepId1, DepId2})
                 .post(getActionUrl("updateAuditSourceRelationDep")).getBodyString();
         ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
         assertThat(ar.isSuccess(), is(true));
         // 验证source_relation_dep表数据是否更新成功
         try (DatabaseWrapper db = new DatabaseWrapper()) {
-            Optional<Source_relation_dep> source_relation_dep = SqlOperator.queryOneObject(db,
-                    Source_relation_dep.class, "select * from source_relation_dep where source_id=?",
-                    SourceId);
-            assertThat("更新source_relation_dep数据成功", source_relation_dep.get().
-                    getSource_id(), is(SourceId));
-            assertThat("更新source_relation_dep数据成功", source_relation_dep.get().getDep_id(),
-                    is(DepId2));
+            Source_relation_dep sourceRelationDep = SqlOperator.queryOneObject(db,
+                    Source_relation_dep.class, "select * from source_relation_dep where source_id=?" +
+                            " and dep_id=?", SourceId, DepId1).orElseThrow(() ->
+                    new BusinessException("sql查询错误或者映射错误"));
+            assertThat("更新source_relation_dep数据成功", sourceRelationDep.getSource_id(), is(SourceId));
+            assertThat("更新source_relation_dep数据成功", sourceRelationDep.getDep_id(), is(DepId1));
+            sourceRelationDep = SqlOperator.queryOneObject(db,
+                    Source_relation_dep.class, "select * from source_relation_dep where source_id=?" +
+                            " and dep_id=?", SourceId, DepId2).orElseThrow(() ->
+                    new BusinessException("sql查询错误或者映射错误"));
+            assertThat("更新source_relation_dep数据成功", sourceRelationDep.getSource_id(), is(SourceId));
+            assertThat("更新source_relation_dep数据成功", sourceRelationDep.getDep_id(), is(DepId2));
 
         }
         // 2.错误的数据访问1，更新数据源关系部门信息，source_id不存在
         bodyString = new HttpClient()
                 .addData("source_id", 111)
-                .addData("dep_id", DepId2)
+                .addData("dep_id", new long[]{DepId1})
                 .post(getActionUrl("updateAuditSourceRelationDep")).getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -1265,7 +1270,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
         // 3.错误的数据访问2，更新数据源关系部门信息，dep_id对应的部门不存在
         bodyString = new HttpClient()
                 .addData("source_id", SourceId)
-                .addData("dep_id", "-111")
+                .addData("dep_id", new String[]{"-111"})
                 .post(getActionUrl("updateAuditSourceRelationDep")).getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -1377,12 +1382,12 @@ public class DataSourceActionTest extends WebBaseTestCase {
     @Test
     public void saveDataSource() {
         // 1.正确的数据访问1，新增数据源信息,数据都有效
-        String dep_id = DepId1 + "," + DepId2;
+        long[] depIds = {DepId1, DepId2};
         String bodyString = new HttpClient()
                 .addData("source_remark", "测试")
                 .addData("datasource_name", "dsName2")
                 .addData("datasource_number", "cs01")
-                .addData("dep_id", dep_id)
+                .addData("dep_id", depIds)
                 .post(getActionUrl("saveDataSource")).getBodyString();
         ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -1396,10 +1401,10 @@ public class DataSourceActionTest extends WebBaseTestCase {
             assertThat(dataSource.get().getDatasource_number(), is("cs01"));
             assertThat(dataSource.get().getSource_remark(), is("测试"));
             // 判断source_relation_dep表数据是否新增成功
-            for (String s : dep_id.split(",")) {
+            for (long dep_id : depIds) {
                 List<Source_relation_dep> relationDepList = SqlOperator.queryList(db,
                         Source_relation_dep.class, "select * from " + Source_relation_dep.TableName
-                                + " where dep_id=?", Long.valueOf(s));
+                                + " where dep_id=?", dep_id);
                 for (Source_relation_dep srd : relationDepList) {
                     if (srd.getSource_id() != SourceId && srd.getSource_id() != SourceId2) {
                         assertThat(dataSource.get().getSource_id(), is(srd.getSource_id()));
@@ -1413,7 +1418,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .addData("source_remark", "测试")
                 .addData("datasource_name", "")
                 .addData("datasource_number", "cs02")
-                .addData("dep_id", DepId1)
+                .addData("dep_id", depIds)
                 .post(getActionUrl("saveDataSource")).getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -1423,7 +1428,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .addData("source_remark", "测试")
                 .addData("datasource_name", " ")
                 .addData("datasource_number", "cs03")
-                .addData("dep_id", DepId1)
+                .addData("dep_id", depIds)
                 .post(getActionUrl("saveDataSource")).getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -1434,7 +1439,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .addData("source_remark", "测试")
                 .addData("datasource_name", "dsName02")
                 .addData("datasource_number", "")
-                .addData("dep_id", DepId1)
+                .addData("dep_id", depIds)
                 .post(getActionUrl("saveDataSource")).getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -1444,7 +1449,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .addData("source_remark", "测试")
                 .addData("datasource_name", "dsName03")
                 .addData("datasource_number", " ")
-                .addData("dep_id", DepId1)
+                .addData("dep_id", depIds)
                 .post(getActionUrl("saveDataSource")).getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -1454,7 +1459,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .addData("source_remark", "测试")
                 .addData("datasource_name", "dsName04")
                 .addData("datasource_number", "cs100")
-                .addData("dep_id", DepId1)
+                .addData("dep_id", depIds)
                 .post(getActionUrl("saveDataSource")).getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -1484,7 +1489,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .addData("source_remark", "测试")
                 .addData("datasource_name", "dsName06")
                 .addData("datasource_number", "cs06")
-                .addData("dep_id", "-100")
+                .addData("dep_id", new String[]{"-100"})
                 .post(getActionUrl("saveDataSource")).getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -1494,7 +1499,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .addData("source_remark", "测试")
                 .addData("datasource_name", "dsName07")
                 .addData("datasource_number", "1234")
-                .addData("dep_id", "-100")
+                .addData("dep_id", depIds)
                 .post(getActionUrl("saveDataSource")).getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -1549,13 +1554,14 @@ public class DataSourceActionTest extends WebBaseTestCase {
                     "9.错误的数据访问8，更新数据源信息，部门id对应的部门不存在")
     @Test
     public void updateDataSource() {
+        long[] depIds = {DepId1};
         // 1.正确的数据访问1，更新数据源信息，所有数据都有效
         String bodyString = new HttpClient()
                 .addData("source_id", SourceId)
                 .addData("source_remark", "测试update")
                 .addData("datasource_name", "updateName")
                 .addData("datasource_number", "up01")
-                .addData("dep_id", DepId1)
+                .addData("dep_id", depIds)
                 .post(getActionUrl("updateDataSource")).getBodyString();
         ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -1574,8 +1580,8 @@ public class DataSourceActionTest extends WebBaseTestCase {
                     is("测试update"));
             // 判断source_relation_dep表数据是否更新成功
             Optional<Source_relation_dep> source_relation_dep = SqlOperator.queryOneObject(db,
-                    Source_relation_dep.class, "select * from source_relation_dep where source_id=?",
-                    SourceId);
+                    Source_relation_dep.class, "select * from " + Source_relation_dep.TableName +
+                            " where source_id=? and dep_id=?", SourceId, DepId1);
             assertThat("更新source_relation_dep数据成功", source_relation_dep.get().
                     getSource_id(), is(SourceId));
             assertThat("更新source_relation_dep数据成功", source_relation_dep.get().getDep_id(),
@@ -1588,7 +1594,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .addData("source_remark", "测试")
                 .addData("datasource_name", "")
                 .addData("datasource_number", "up02")
-                .addData("dep_id", "100001")
+                .addData("dep_id", depIds)
                 .post(getActionUrl("updateDataSource")).getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -1599,7 +1605,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .addData("source_remark", "测试")
                 .addData("datasource_name", " ")
                 .addData("datasource_number", "up03")
-                .addData("dep_id", DepId1)
+                .addData("dep_id", depIds)
                 .post(getActionUrl("updateDataSource")).getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -1610,7 +1616,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .addData("source_remark", "测试")
                 .addData("datasource_name", "dsName02")
                 .addData("datasource_number", "")
-                .addData("dep_id", DepId1)
+                .addData("dep_id", depIds)
                 .post(getActionUrl("updateDataSource")).getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -1621,7 +1627,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .addData("source_remark", "测试")
                 .addData("datasource_name", "dsName03")
                 .addData("datasource_number", " ")
-                .addData("dep_id", DepId1)
+                .addData("dep_id", depIds)
                 .post(getActionUrl("updateDataSource")).getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -1632,7 +1638,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .addData("source_remark", "测试")
                 .addData("datasource_name", "dsName04")
                 .addData("datasource_number", "up100")
-                .addData("dep_id", DepId1)
+                .addData("dep_id", depIds)
                 .post(getActionUrl("updateDataSource")).getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -1665,7 +1671,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .addData("source_remark", "测试")
                 .addData("datasource_name", "dsName06")
                 .addData("datasource_number", "up06")
-                .addData("dep_id", "101")
+                .addData("dep_id", new String[]{"101"})
                 .post(getActionUrl("updateDataSource")).getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -1880,11 +1886,9 @@ public class DataSourceActionTest extends WebBaseTestCase {
                     "select * from ftp_transfered where ftp_id=?", ftpCollect.get("ftp_id"))
                     .orElseThrow(() -> new RuntimeException("sql执行错误!"));
             assertThat(ftpTransfered.getTransfered_name(), is("ftp传输测试"));
-            assertThat(ftpTransfered.getFtp_date(), is(SysDate));
             Ftp_folder ftpFolder = SqlOperator.queryOneObject(db, Ftp_folder.class,
                     "select * from ftp_folder where ftp_id=?", ftpCollect.get("ftp_id"))
                     .orElseThrow(() -> new RuntimeException("sql执行错误!"));
-            assertThat(ftpFolder.getFtp_date(), is(SysDate));
             assertThat(ftpFolder.getFtp_folder_name(), is("ftp采集目录"));
             assertThat(ftpFolder.getIs_processed(), is(IsFlag.Shi.getCode()));
             Object_collect objectCollect = SqlOperator.queryOneObject(db, Object_collect.class,
@@ -1897,7 +1901,6 @@ public class DataSourceActionTest extends WebBaseTestCase {
             assertThat(objectCollect.getIs_sendok(), is(IsFlag.Shi.getCode()));
             assertThat(objectCollect.getRun_way(), is(ExecuteWay.AnShiQiDong.getCode()));
             assertThat(objectCollect.getDatabase_code(), is(DataBaseCode.UTF_8.getCode()));
-            assertThat(objectCollect.getS_date(), is(SysDate));
             assertThat(objectCollect.getObj_number(), is("dxcj01"));
             assertThat(objectCollect.getHost_name(), is("10.71.4.52"));
             Object_collect_task collectTask = SqlOperator.queryOneObject(db, Object_collect_task.class,
@@ -1960,7 +1963,6 @@ public class DataSourceActionTest extends WebBaseTestCase {
             assertThat(tableInfo.getTable_count(), is("0"));
             assertThat(tableInfo.getIs_md5(), is(IsFlag.Shi.getCode()));
             assertThat(tableInfo.getValid_e_date(), is("99991231"));
-            assertThat(tableInfo.getValid_s_date(), is(SysDate));
             Column_merge columnMerge = SqlOperator.queryOneObject(db, Column_merge.class,
                     "select * from column_merge where table_id=?", tableInfo.getTable_id())
                     .orElseThrow(() -> new RuntimeException("sql执行错误!"));
@@ -1968,7 +1970,6 @@ public class DataSourceActionTest extends WebBaseTestCase {
             assertThat(columnMerge.getCol_type(), is("1"));
             assertThat(columnMerge.getCol_zhname(), is("agent地址"));
             assertThat(columnMerge.getValid_e_date(), is("99991231"));
-            assertThat(columnMerge.getValid_s_date(), is(SysDate));
             assertThat(columnMerge.getOld_name(), is("agent_ip"));
             Map<String, Object> storageInfo = SqlOperator.queryOneObject(db,
                     "select * from " + Table_storage_info.TableName + " where table_id=?",
@@ -1994,7 +1995,6 @@ public class DataSourceActionTest extends WebBaseTestCase {
             assertThat(tableColumn.getIs_primary_key(), is(IsFlag.Fou.getCode()));
             assertThat(tableColumn.getIs_new(), is(IsFlag.Fou.getCode()));
             assertThat(tableColumn.getIs_get(), is(IsFlag.Fou.getCode()));
-            assertThat(tableColumn.getValid_s_date(), is(SysDate));
             assertThat(tableColumn.getValid_e_date(), is("99991231"));
             Map<String, Object> columnClean = SqlOperator.queryOneObject(db,
                     "select * from column_clean where column_id=?", tableColumn.getColumn_id());
@@ -2010,7 +2010,6 @@ public class DataSourceActionTest extends WebBaseTestCase {
             assertThat(columnSplit.get("col_name"), is("agent_ip"));
             assertThat(columnSplit.get("split_type"), is(CharSplitType.ZhiDingFuHao.getCode()));
             assertThat(columnSplit.get("seq").toString(), is("0"));
-            assertThat(columnSplit.get("valid_s_date"), is(SysDate));
             assertThat(columnSplit.get("valid_e_date"), is("99991231"));
         }
         // 2.错误的数据访问1，导入数据源，agentIp不合法
