@@ -49,7 +49,7 @@ public class JobConfiguration extends BaseAction {
         // 2.判断工程是否存在
         isEtlSysExist(etl_sys_cd, getUserId());
         // 3.获取工程名称
-        String etlSysName = getEtlSysName(etl_sys_cd, getUserId());
+        String etl_sys_name = getEtlSysName(etl_sys_cd, getUserId());
         // 4.获取某个工程下任务信息,每次拼接新sql之前清空原来的sql以及参数
         asmSql.clean();
         asmSql.addSql("select distinct * from " + Etl_sub_sys_list.TableName + " where etl_sys_cd = ?");
@@ -66,7 +66,7 @@ public class JobConfiguration extends BaseAction {
         // 7.创建存放分页查询任务信息、分页查询总记录数、工程编号、工程名称的集合并封装数据
         Map<String, Object> etlSubSysMap = new HashMap<>();
         etlSubSysMap.put("etl_sys_cd", etl_sys_cd);
-        etlSubSysMap.put("etl_sys_name", etlSysName);
+        etlSubSysMap.put("etl_sys_name", etl_sys_name);
         etlSubSysMap.put("etlSubSysList", etlSubSysList);
         etlSubSysMap.put("totalSize", page.getTotalSize());
         // 8.返回存放分页查询任务信息、分页查询总记录数、工程编号、工程名称的集合
@@ -76,7 +76,8 @@ public class JobConfiguration extends BaseAction {
     @Method(desc = "根据工程编号，任务编号查询任务信息",
             logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制" +
                     "2.判断当前工程是否还存在" +
-                    "3.返回根据工程编号，任务编号查询任务信息,实体字段基本都需要所以查询所有字段")
+                    "3.判断当前工程下的任务是否存在" +
+                    "4.返回根据工程编号，任务编号查询任务信息,实体字段基本都需要所以查询所有字段")
     @Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
     @Param(name = "sub_sys_cd", desc = "任务编号", range = "新增任务时生成")
     @Return(desc = "返回根据工程编号，任务编号查询任务信息", range = "无限制")
@@ -84,7 +85,9 @@ public class JobConfiguration extends BaseAction {
         // 1.数据可访问权限处理方式，通过user_id进行权限控制
         // 2.判断当前工程是否还存在
         isEtlSysExist(etl_sys_cd, getUserId());
-        // 3.返回根据工程编号，任务编号查询任务信息,实体字段基本都需要所以查询所有字段
+        // 3.判断当前工程下的任务是否存在
+        isEtlSubSysExist(etl_sys_cd, sub_sys_cd);
+        // 4.返回根据工程编号，任务编号查询任务信息,实体字段基本都需要所以查询所有字段
         return Dbo.queryOneObject("select distinct * from "
                 + Etl_sub_sys_list.TableName + " where etl_sys_cd=? and sub_sys_cd=? " +
                 "order by etl_sys_cd, sub_sys_cd", etl_sys_cd, sub_sys_cd);
@@ -383,7 +386,7 @@ public class JobConfiguration extends BaseAction {
         // 2.验证当前用户下的工程是否存在
         isEtlSysExist(etl_sys_cd, getUserId());
         // 3.获取工程名称
-        String etlSysName = getEtlSysName(etl_sys_cd, getUserId());
+        String etl_sys_name = getEtlSysName(etl_sys_cd, getUserId());
         // 3.每次拼接新sql之前清理原sql以及参数
         asmSql.clean();
         asmSql.addSql("select distinct t1.*,t2.etl_sys_name from " + Etl_job_def.TableName + " t1 left join "
@@ -415,7 +418,7 @@ public class JobConfiguration extends BaseAction {
         Map<String, Object> etlJobDefMap = new HashMap<>();
         etlJobDefMap.put("etlJobDefList", etlJobDefList);
         etlJobDefMap.put("totalSize", page.getTotalSize());
-        etlJobDefMap.put("etlSysName", etlSysName);
+        etlJobDefMap.put("etl_sys_name", etl_sys_name);
         etlJobDefMap.put("etl_sys_cd", etl_sys_cd);
         // 10.返回分页查询作业定义信息、分页查询总记录数、工程编号、工程名称
         return etlJobDefMap;
@@ -424,7 +427,8 @@ public class JobConfiguration extends BaseAction {
     @Method(desc = "根据工程编号、作业名称查询作业定义信息",
             logicStep = "1.数据可访问权限处理方式，通过user_id进行权限验证" +
                     "2.验证当前用户下的工程是否存在" +
-                    "3.返回根据工程编号、作业名称查询作业定义信息，实体字段基本都需要所以查询所有字段")
+                    "3.判断当前工程下作业是否存在" +
+                    "4.返回根据工程编号、作业名称查询作业定义信息，实体字段基本都需要所以查询所有字段")
     @Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
     @Param(name = "etl_job", desc = "作业名称", range = "新增作业时生成")
     @Return(desc = "返回根据工程编号、作业名称查询作业定义信息", range = "取值范围")
@@ -432,7 +436,9 @@ public class JobConfiguration extends BaseAction {
         // 1.数据可访问权限处理方式，通过user_id进行权限验证
         // 2.验证当前用户下的工程是否存在
         isEtlSysExist(etl_sys_cd, getUserId());
-        // 3.返回根据工程编号、作业名称查询作业定义信息，实体字段基本都需要所以查询所有字段
+        // 3.判断当前工程下作业是否存在
+        isEtlJobDefExist(etl_sys_cd, etl_job);
+        // 4.返回根据工程编号、作业名称查询作业定义信息，实体字段基本都需要所以查询所有字段
         return Dbo.queryOneObject("select * from " + Etl_job_def.TableName + " where etl_sys_cd=?" +
                 " AND etl_job=?", etl_sys_cd, etl_job);
     }
@@ -616,7 +622,7 @@ public class JobConfiguration extends BaseAction {
         // 2.判断工程是否存在
         isEtlSysExist(jobResourceRelation.getEtl_sys_cd(), getUserId());
         // 3.新增时.检测当前作业是否已经分配过资源
-        isJobResourceRelationExist(jobResourceRelation.getEtl_sys_cd(), jobResourceRelation.getEtl_job());
+        isEtlJobResourceRelationExist(jobResourceRelation.getEtl_sys_cd(), jobResourceRelation.getEtl_job());
         // 4.检测当前作业分配的占用资源数是否过大
         isResourceDemandTooLarge(jobResourceRelation.getEtl_sys_cd(), jobResourceRelation.getResource_type(),
                 jobResourceRelation.getResource_req());
@@ -646,7 +652,7 @@ public class JobConfiguration extends BaseAction {
         // 2.判断工程是否存在
         isEtlSysExist(etl_sys_cd, getUserId());
         // 3.获取工程名称
-        String etlSysName = getEtlSysName(etl_sys_cd, getUserId());
+        String etl_sys_name = getEtlSysName(etl_sys_cd, getUserId());
         asmSql.clean();
         asmSql.addSql("select distinct * from " + Etl_job_resource_rela.TableName + " where etl_sys_cd=? ");
         asmSql.addParam(etl_sys_cd);
@@ -666,7 +672,7 @@ public class JobConfiguration extends BaseAction {
         Map<String, Object> resourceRelationMap = new HashMap<>();
         resourceRelationMap.put("jobResourceRelation", resourceRelation);
         resourceRelationMap.put("totalSize", page.getTotalSize());
-        resourceRelationMap.put("etlSysName", etlSysName);
+        resourceRelationMap.put("etl_sys_name", etl_sys_name);
         resourceRelationMap.put("etl_sys_cd", etl_sys_cd);
         // 8.返回分页查询资源分配信息、分页查询总记录数、工程编号、工程名称
         return resourceRelationMap;
@@ -675,7 +681,8 @@ public class JobConfiguration extends BaseAction {
     @Method(desc = "根据工程编号、作业名称查询作业资源分配情况",
             logicStep = "1.数据可访问权限处理方式，通过user_id进行权限验证" +
                     "2.判断工程是否存在" +
-                    "3.返回根据工程编号、作业名称查询作业资源分配情况，实体字段基本都需要所以查询所有字段")
+                    "3.判断当前工程下作业资源使用情况是否存在" +
+                    "4.返回根据工程编号、作业名称查询作业资源分配情况，实体字段基本都需要所以查询所有字段")
     @Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
     @Param(name = "etl_job", desc = "作业名称", range = "新增作业时生成")
     @Return(desc = "返回根据工程编号、作业名称查询作业资源分配情况，实体字段基本都需要所以查询所有字段", range = "无限制")
@@ -683,7 +690,9 @@ public class JobConfiguration extends BaseAction {
         // 1.数据可访问权限处理方式，通过user_id进行权限验证
         // 2.判断工程是否存在
         isEtlSysExist(etl_sys_cd, getUserId());
-        // 3.返回根据工程编号、作业名称查询作业资源分配情况，实体字段基本都需要所以查询所有字段
+        // 3.判断当前工程下作业资源使用情况是否存在
+        isEtlJobResourceRelationExist(etl_sys_cd, etl_job);
+        // 4.返回根据工程编号、作业名称查询作业资源分配情况，实体字段基本都需要所以查询所有字段
         return Dbo.queryOneObject("select * from " + Etl_job_resource_rela.TableName +
                 " where etl_sys_cd=? AND etl_job=?", etl_sys_cd, etl_job);
     }
@@ -860,7 +869,7 @@ public class JobConfiguration extends BaseAction {
                     "2.判断当前工程对应作业资源分配信息是否存在")
     @Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
     @Param(name = "etl_job", desc = "作业名称", range = "新增作业时生成")
-    private void isJobResourceRelationExist(String etl_sys_cd, String etl_job) {
+    private void isEtlJobResourceRelationExist(String etl_sys_cd, String etl_job) {
         // 1.数据可访问权限处理方式，该方法不需要权限验证
         // 2.判断当前工程对应作业资源分配信息是否存在
         if (Dbo.queryNumber("select count(*) from " + Etl_job_resource_rela.TableName +
@@ -926,7 +935,7 @@ public class JobConfiguration extends BaseAction {
         // 2.验证当前用户下的工程是否存在
         isEtlSysExist(etl_sys_cd, getUserId());
         // 3.根据工程编号查询工程名称
-        String etlSysName = getEtlSysName(etl_sys_cd, getUserId());
+        String etl_sys_name = getEtlSysName(etl_sys_cd, getUserId());
         asmSql.addSql("select distinct * from " + Etl_resource.TableName + " where etl_sys_cd = ?");
         asmSql.addParam(etl_sys_cd);
         // 4.判断资源类型是否存在，存在加条件查询
@@ -942,7 +951,7 @@ public class JobConfiguration extends BaseAction {
         Map<String, Object> etlResourceMap = new HashMap<>();
         etlResourceMap.put("etlResourceList", etlResourceList);
         etlResourceMap.put("totalSize", page.getTotalSize());
-        etlResourceMap.put("etlSysName", etlSysName);
+        etlResourceMap.put("etl_sys_name", etl_sys_name);
         etlResourceMap.put("etl_sys_cd", etl_sys_cd);
         // 7.返回分页查询资源信息、分页查询总记录数，工程编号、工程名称
         return etlResourceMap;
@@ -951,7 +960,8 @@ public class JobConfiguration extends BaseAction {
     @Method(desc = "根据工程编号、资源类型查询资源定义信息",
             logicStep = "1.数据可访问权限处理方式，通过user_id进行权限验证" +
                     "2.验证当前用户下的工程是否存在" +
-                    "3.返回根据工程编号、资源类型查询资源定义信息,实体字段基本都需要所以查询所有字段")
+                    "3.判断当前工程下资源定义信息是否存在" +
+                    "4.返回根据工程编号、资源类型查询资源定义信息,实体字段基本都需要所以查询所有字段")
     @Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
     @Param(name = "resource_type", desc = "资源类型", range = "新增资源时生成")
     @Return(desc = "返回根据工程编号、资源类型查询资源定义信息", range = "无限制")
@@ -959,7 +969,9 @@ public class JobConfiguration extends BaseAction {
         // 1.数据可访问权限处理方式，通过user_id进行权限验证
         // 2.验证当前用户下的工程是否存在
         isEtlSysExist(etl_sys_cd, getUserId());
-        // 3.返回根据工程编号、资源类型查询资源定义信息,实体字段基本都需要所以查询所有字段
+        // 3.判断当前工程下资源定义信息是否存在
+        isEtlResourceExist(etl_sys_cd, resource_type);
+        // 4.返回根据工程编号、资源类型查询资源定义信息,实体字段基本都需要所以查询所有字段
         return Dbo.queryOneObject("select * from " + Etl_resource.TableName + " where etl_sys_cd=?" +
                 " AND resource_type=?", etl_sys_cd, resource_type);
     }
@@ -1074,7 +1086,7 @@ public class JobConfiguration extends BaseAction {
         // 2.验证当前用户下的工程是否存在
         isEtlSysExist(etl_sys_cd, getUserId());
         // 3.根据工程编号查询工程名称
-        String etlSysName = getEtlSysName(etl_sys_cd, getUserId());
+        String etl_sys_name = getEtlSysName(etl_sys_cd, getUserId());
         asmSql.clean();
         asmSql.addSql("select distinct * from " + Etl_para.TableName + " where etl_sys_cd IN (?,?)");
         asmSql.addParam(etl_sys_cd);
@@ -1093,7 +1105,7 @@ public class JobConfiguration extends BaseAction {
         Map<String, Object> etlParaMap = new HashMap<>();
         etlParaMap.put("etlParaList", etlParaList);
         etlParaMap.put("totalSize", page.getTotalSize());
-        etlParaMap.put("etlSysName", etlSysName);
+        etlParaMap.put("etl_sys_name", etl_sys_name);
         etlParaMap.put("etl_sys_cd", etl_sys_cd);
         // 7.返回分页查询系统参数信息、分页查询总记录数、工程编号、工程名称
         return etlParaMap;
@@ -1146,7 +1158,8 @@ public class JobConfiguration extends BaseAction {
     @Method(desc = "3.根据工程编号、变量名称查询作业系统参数",
             logicStep = "1.数据可访问权限处理方式，通过user_id进行权限验证" +
                     "2.验证当前用户下的工程是否存在" +
-                    "3.返回根据工程编号、变量名称查询作业系统参数，实体字段基本都需要所以查询所有字段")
+                    "3.判断当前工程下作业系统参数是否存在" +
+                    "4.返回根据工程编号、变量名称查询作业系统参数，实体字段基本都需要所以查询所有字段")
     @Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
     @Param(name = "para_cd", desc = "变量名称", range = "新增作业系统参数时生成")
     @Return(desc = "返回根据工程编号、变量名称查询作业系统参数信息", range = "取值范围")
@@ -1154,7 +1167,9 @@ public class JobConfiguration extends BaseAction {
         // 1.数据可访问权限处理方式，通过user_id进行权限验证
         // 2.验证当前用户下的工程是否存在
         isEtlSysExist(etl_sys_cd, getUserId());
-        // 3.返回根据工程编号、变量名称查询作业系统参数，实体字段基本都需要所以查询所有字段
+        // 3.判断当前工程下作业系统参数是否存在
+        isEtlParaExist(etl_sys_cd, para_cd);
+        // 4.返回根据工程编号、变量名称查询作业系统参数，实体字段基本都需要所以查询所有字段
         return Dbo.queryOneObject("select * from " + Etl_para.TableName + " where etl_sys_cd=?" +
                 " AND para_cd=?", etl_sys_cd, para_cd);
     }
@@ -1216,7 +1231,7 @@ public class JobConfiguration extends BaseAction {
         // 2.验证当前用户下的工程是否存在
         isEtlSysExist(etl_sys_cd, getUserId());
         // 3.获取工程名称
-        String etlSysName = getEtlSysName(etl_sys_cd, getUserId());
+        String etl_sys_name = getEtlSysName(etl_sys_cd, getUserId());
         asmSql.clean();
         asmSql.addSql("select distinct * from etl_dependency where etl_sys_cd = ? ");
         asmSql.addParam(etl_sys_cd);
@@ -1236,7 +1251,7 @@ public class JobConfiguration extends BaseAction {
         Map<String, Object> etlDependencyMap = new HashMap<>();
         etlDependencyMap.put("etlDependencyList", etlDependencyList);
         etlDependencyMap.put("totalSize", page.getTotalSize());
-        etlDependencyMap.put("etlSysName", etlSysName);
+        etlDependencyMap.put("etl_sys_name", etl_sys_name);
         etlDependencyMap.put("etl_sys_cd", etl_sys_cd);
         // 8.返回分页查询作业依赖信息、分页查询总记录数、工程编号、工程名称
         return etlDependencyMap;
@@ -1245,7 +1260,8 @@ public class JobConfiguration extends BaseAction {
     @Method(desc = "根据工程编号查询作业依赖信息",
             logicStep = "1.数据可访问权限处理方式，通过user_id进行权限验证" +
                     "2.验证当前用户下的工程是否存在" +
-                    "3.返回根据工程编号查询作业依赖信息,实体字段基本都需要所以查询所有字段")
+                    "3.判断当前工程下的依赖作业是否存在" +
+                    "4.返回根据工程编号查询作业依赖信息,实体字段基本都需要所以查询所有字段")
     @Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
     @Param(name = "etl_job", desc = "作业名称", range = "新增作业时生成")
     @Param(name = "pre_etl_job", desc = "上游作业名称", range = "新增作业依赖时生成")
@@ -1254,7 +1270,9 @@ public class JobConfiguration extends BaseAction {
         // 1.数据可访问权限处理方式，通过user_id进行权限验证
         // 2.验证当前用户下的工程是否存在
         isEtlSysExist(etl_sys_cd, getUserId());
-        // 3.返回根据工程编号查询作业依赖信息,实体字段基本都需要所以查询所有字段
+        // 3.判断当前工程下的依赖作业是否存在
+        isEtlDependencyExist(etl_sys_cd, etl_sys_cd, etl_job, pre_etl_job);
+        // 4.返回根据工程编号查询作业依赖信息,实体字段基本都需要所以查询所有字段
         return Dbo.queryOneObject("select * from " + Etl_dependency.TableName + " where etl_sys_cd=?" +
                 " AND etl_job=? and pre_etl_job=?", etl_sys_cd, etl_job, pre_etl_job);
     }
@@ -1264,8 +1282,7 @@ public class JobConfiguration extends BaseAction {
                     "2.验证当前用户下的工程是否存在" +
                     "3.判断当前依赖是否已存在，如何存在则不能新增" +
                     "4.将当前作业与上游作业交换，看是否已经存在依赖关系" +
-                    "5.判断作业名称与上游作业名称是否相同，相同则不能依赖" +
-                    "6.新增保存作业依赖")
+                    "5.新增保存作业依赖")
     @Param(name = "etl_dependency", desc = "作业系统参数实体对象", range = "与数据库对应表字段规则一致", isBean = true)
     public void saveEtlDependency(Etl_dependency etl_dependency) {
         // 1.数据可访问权限处理方式，通过user_id进行权限验证
@@ -1277,26 +1294,96 @@ public class JobConfiguration extends BaseAction {
         // 4.将当前作业与上游作业交换，看是否已经存在依赖关系
         isEtlDependencyExist(etl_dependency.getEtl_sys_cd(), etl_dependency.getPre_etl_sys_cd(),
                 etl_dependency.getPre_etl_job(), etl_dependency.getEtl_job());
-        // 5.判断作业名称与上游作业名称是否相同，相同则不能依赖
-        if (etl_dependency.getEtl_job().equals(etl_dependency.getPre_etl_job())) {
-            throw new BusinessException("作业名称与上游作业名称相同不能依赖！");
-        }
-        // 6.新增保存作业依赖
+        // 5.新增保存作业依赖
         etl_dependency.add(Dbo.db());
+    }
+
+    @Method(desc = "批量新增保存作业依赖",
+            logicStep = "1.数据可访问权限处理方式，通过user_id进行权限验证" +
+                    "2.验证当前用户下的工程是否存在" +
+                    "3.获取当前任务下的所有作业" +
+                    "4.获取上游任务下的所有作业即上游作业" +
+                    "5.双重循环添加不同任务下的所有作业之间的依赖" +
+                    "6.判断当前作业下的依赖是否存在，存在就跳过，不存在则依赖" +
+                    "7.如果当前作业为定时作业则跳过" +
+                    "8.将当前作业与上游作业交换，看是否已经存在依赖关系,存在则跳过" +
+                    "9.循环保存作业依赖关系")
+    @Param(name = "etl_dependency", desc = "作业系统参数实体对象", range = "与数据库对应表字段规则一致", isBean = true)
+    @Param(name = "sub_sys_cd", desc = "任务编号", range = "新增任务时生成")
+    @Param(name = "pre_sub_sys_cd", desc = "上游任务编号", range = "新增任务时生成")
+    public void batchSaveEtlDependency(Etl_dependency etl_dependency, String sub_sys_cd, String pre_sub_sys_cd) {
+        // 1.数据可访问权限处理方式，通过user_id进行权限验证
+        // 2.验证当前用户下的工程是否存在
+        isEtlSysExist(etl_dependency.getEtl_sys_cd(), getUserId());
+        // 3.获取当前任务下的所有作业
+        List<Etl_job_def> etlJobList = Dbo.queryList(Etl_job_def.class, "select DISTINCT etl_job,dis_type"
+                        + " from " + Etl_job_def.TableName + " where sub_sys_cd=? and etl_sys_cd=?",
+                sub_sys_cd, etl_dependency.getEtl_sys_cd());
+        // 4.获取上游任务下的所有作业即上游作业
+        List<String> preEtlJobList = Dbo.queryOneColumnList("select DISTINCT pre_etl_job from "
+                        + Etl_job_def.TableName + " where sub_sys_cd=? and etl_sys_cd=?", pre_sub_sys_cd,
+                etl_dependency.getEtl_sys_cd());
+        // 5.双重循环添加不同任务下的所有作业之间的依赖
+        for (Etl_job_def etl_job_def : etlJobList) {
+            for (String pre_etl_job : preEtlJobList) {
+                // 6.判断当前作业下的依赖是否存在，存在就跳过，不存在则依赖
+                if (saveEtlDependencyIfNotExist(etl_dependency.getEtl_sys_cd(),
+                        etl_dependency.getPre_etl_sys_cd(), etl_job_def.getEtl_job(), pre_etl_job)) {
+                    continue;
+                }
+                // 7.如果当前作业为定时作业则跳过
+                if (Dispatch_Type.DEPENDENCE != Dispatch_Type.ofEnumByCode(etl_job_def.getDisp_type())) {
+                    continue;
+                }
+                // 8.将当前作业与上游作业交换，看是否已经存在依赖关系,存在则跳过
+                if (saveEtlDependencyIfNotExist(etl_dependency.getEtl_sys_cd(),
+                        etl_dependency.getPre_etl_sys_cd(), pre_etl_job, etl_job_def.getEtl_job())) {
+                    continue;
+                }
+                // 9.循环保存作业依赖关系
+                etl_dependency.setEtl_job(etl_job_def.getEtl_job());
+                etl_dependency.setEtl_job(pre_etl_job);
+                etl_dependency.add(Dbo.db());
+            }
+        }
+    }
+
+    @Method(desc = "判断当前作业依赖关系是否存在，存在返回false，不存在返回true",
+            logicStep = "方法步骤")
+    @Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
+    @Param(name = "pre_etl_sys_cd", desc = "上游工程编号", range = "新增工程时生成")
+    @Param(name = "etl_job", desc = "作业名称", range = "新增作业时生成")
+    @Param(name = "pre_etl_job", desc = "上游作业名称", range = "新增作业时生成")
+    @Return(desc = "判断当前作业依赖关系是否存在，存在返回false，不存在返回true", range = "false,true")
+    private boolean saveEtlDependencyIfNotExist(String etl_sys_cd, String pre_etl_sys_cd,
+                                                String etl_job, String pre_etl_job) {
+        // 1.数据可访问权限处理方式，该方法不需要权限控制
+        // 2.判断当前作业依赖关系是否存在，存在返回false，不存在返回true
+        if (Dbo.queryNumber("select count(1) from " + Etl_dependency.TableName + " where etl_sys_cd=?" +
+                        " and etl_job=? AND pre_etl_sys_cd=? AND pre_etl_job=?", etl_sys_cd, etl_job,
+                pre_etl_sys_cd, pre_etl_job).orElseThrow(() -> new BusinessException("sql查询错误！")) > 0
+                || etl_job.equals(pre_etl_job)) {
+            return false;
+        }
+        return true;
     }
 
     @Method(desc = "判断当前表信息是否存在",
             logicStep = "1.数据可访问权限处理方式，该方法不需要权限验证" +
-                    "2.判断当前工程对应作业依赖作业是否存在")
+                    "2.判断作业名称与上游作业名称是否相同，相同则不能依赖" +
+                    "3.判断当前工程对应作业依赖作业是否存在")
     @Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
     @Param(name = "pre_etl_sys_cd", desc = "上游工程编号", range = "目前与工程编号相同（因为暂无工程之间依赖）")
     @Param(name = "etl_job", desc = "作业名称", range = "新增作业时生成")
     @Param(name = "pre_etl_job", desc = "作业名称", range = "无限制")
-    @Return(desc = "返回当前表信息是否存在标志", range = "true代表表信息存在，false代表表信息不存在")
     private void isEtlDependencyExist(String etl_sys_cd, String pre_etl_sys_cd, String etl_job,
                                       String pre_etl_job) {
         // 1.数据可访问权限处理方式，该方法不需要权限验证
-        // 2.判断当前工程对应作业依赖作业是否存在
+        // 2.判断作业名称与上游作业名称是否相同，相同则不能依赖
+        if (etl_job.equals(pre_etl_job)) {
+            throw new BusinessException("作业名称与上游作业名称相同不能依赖！");
+        }
+        // 3.判断当前工程对应作业依赖作业是否存在
         if (Dbo.queryNumber("select count(*) from " + Etl_dependency.TableName + " where etl_sys_cd=?" +
                         " And etl_job=? AND pre_etl_sys_cd=? AND pre_etl_job=?", etl_sys_cd, etl_job,
                 pre_etl_sys_cd, pre_etl_job).orElseThrow(() -> new BusinessException("sql查询错误")) == 0) {
