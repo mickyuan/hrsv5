@@ -15,8 +15,8 @@ import hrds.commons.codes.*;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.testbase.WebBaseTestCase;
-import org.junit.After;
-import org.junit.Before;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.math.BigDecimal;
@@ -164,8 +164,8 @@ public class DataSourceActionTest extends WebBaseTestCase {
             "25.sys_user表，有2条数据，user_id为UserId,CollectUserId" +
             "26.source_file_attribute表，有一条数据,file_id为FileId" +
             "27.data_auth表，有一条数据，da_id为DaId")
-    @Before
-    public void before() {
+    @BeforeClass
+    public static void before() {
         try (DatabaseWrapper db = new DatabaseWrapper()) {
             // 1.构建数据源data_source表测试数据
             // 创建data_source表实体对象
@@ -695,8 +695,8 @@ public class DataSourceActionTest extends WebBaseTestCase {
                     "27.测试完成后删除data_auth表测试数据" +
                     "28.单独删除新增数据，因为新增数据主键是自动生成的，所以要通过其他方式删除" +
                     "29.提交事务")
-    @After
-    public void after() {
+    @AfterClass
+    public static void after() {
         try (DatabaseWrapper db = new DatabaseWrapper()) {
             // 1.测试完成后删除data_source表测试数据
             SqlOperator.execute(db, "delete from data_source where source_id=?", SourceId);
@@ -1285,7 +1285,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
     public void dataAudit() {
         // 1.正确的数据访问1，数据申请审批，数据全有效
         String bodyString = new HttpClient()
-                .addData("da_id", DaId)
+                .addData("da_id", DaId + 2)
                 .addData("auth_type", AuthType.YiCi.getCode())
                 .post(getActionUrl("dataAudit")).getBodyString();
         ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -1293,9 +1293,10 @@ public class DataSourceActionTest extends WebBaseTestCase {
         assertThat(ar.isSuccess(), is(true));
         try (DatabaseWrapper db = new DatabaseWrapper()) {
             Optional<Data_auth> dataAuth = SqlOperator.queryOneObject(db, Data_auth.class,
-                    "select * from " + Data_auth.TableName + " where da_id=? and user_id=?", DaId, UserId);
+                    "select * from " + Data_auth.TableName + " where da_id=? and user_id=?",
+                    DaId + 2, UserId);
             assertThat(dataAuth.get().getAuth_type(), is(AuthType.YiCi.getCode()));
-            assertThat(dataAuth.get().getDa_id(), is(DaId));
+            assertThat(dataAuth.get().getDa_id(), is(DaId + 2));
             assertThat(dataAuth.get().getUser_id(), is(UserId));
             assertThat(dataAuth.get().getAudit_name(), is("数据源功能测试"));
         }
@@ -1710,7 +1711,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
             // 1.正确的数据访问1，删除数据源信息，数据为有效数据
             // 删除前查询数据库，确认预期删除的数据存在
             OptionalLong optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
-                    " data_source where source_id = ?", SourceId2);
+                    Data_source.TableName + " where source_id = ?", SourceId2);
             assertThat("删除操作前，data_source表中的确存在这样一条数据", optionalLong.
                     orElse(Long.MIN_VALUE), is(1L));
             String bodyString = new HttpClient()
@@ -1722,7 +1723,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
             assertThat(ar.isSuccess(), is(true));
             // 删除后查询数据库，确认预期数据已删除
             optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
-                    " data_source where source_id = ?", SourceId2);
+                    Data_source.TableName + " where source_id = ?", SourceId2);
             assertThat("删除操作后，确认这条数据已删除", optionalLong.
                     orElse(Long.MIN_VALUE), is(0L));
 
@@ -1789,7 +1790,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
         // 验证导入数据是否成功
         try (DatabaseWrapper db = new DatabaseWrapper()) {
             Data_source dataSource = SqlOperator.queryOneObject(db, Data_source.class,
-                    "select * from data_source where datasource_name=? and source_id<>?",
+                    "select * from " + Data_source.TableName + " where datasource_name=? and source_id<>?",
                     "dsName0", SourceId).orElseThrow(() -> new BusinessException("sql执行错误!"));
             // 导入会替换原来的主键，这里只判断可以确认的数据，例如时间日期取得系统时间，不好确认，主键也无法确定自动生成
             assertThat(dataSource.getDatasource_name(), is("dsName0"));
@@ -1797,8 +1798,8 @@ public class DataSourceActionTest extends WebBaseTestCase {
             assertThat(dataSource.getSource_remark(), is("数据源详细描述0"));
             assertThat(dataSource.getDatasource_remark(), is("备注0"));
             assertThat(dataSource.getCreate_user_id(), is(UserId));
-            List<Agent_info> agentInfoList = SqlOperator.queryList(db, Agent_info.class, "select * from " +
-                    " agent_info where source_id=?", dataSource.getSource_id());
+            List<Agent_info> agentInfoList = SqlOperator.queryList(db, Agent_info.class, "select * from "
+                    + Agent_info.TableName + " where source_id=?", dataSource.getSource_id());
             long dfAgentId = 0;
             long dbAgentId = 0;
             for (Agent_info agentInfo : agentInfoList) {
@@ -1826,8 +1827,8 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 assertThat(agentInfo.getSource_id(), is(dataSource.getSource_id()));
             }
             Agent_down_info agentDownInfo = SqlOperator.queryOneObject(db, Agent_down_info.class,
-                    "select * from agent_down_info where agent_id=?", dfAgentId).orElseThrow(() ->
-                    new RuntimeException("sql查询错误"));
+                    "select * from " + Agent_down_info.TableName + " where agent_id=?", dfAgentId)
+                    .orElseThrow(() -> new RuntimeException("sql查询错误"));
             assertThat(agentDownInfo.getAgent_ip(), is("10.71.4.51"));
             assertThat(agentDownInfo.getAgent_port(), is("4321"));
             assertThat(agentDownInfo.getAgent_name(), is("DFAgent"));
@@ -1844,15 +1845,15 @@ public class DataSourceActionTest extends WebBaseTestCase {
             assertThat(agentDownInfo.getUser_id(), is(CollectUserId));
             assertThat(agentDownInfo.getRemark(), is("备注"));
             Collect_job_classify jobClassify = SqlOperator.queryOneObject(db, Collect_job_classify.class,
-                    "select * from collect_job_classify where agent_id=?", dbAgentId).orElseThrow(() ->
-                    new RuntimeException("sql执行错误!"));
+                    "select * from " + Collect_job_classify.TableName + " where agent_id=?", dbAgentId)
+                    .orElseThrow(() -> new RuntimeException("sql执行错误!"));
             assertThat(jobClassify.getClassify_name(), is("数据库采集测试"));
             assertThat(jobClassify.getClassify_num(), is("sjkCs01"));
             assertThat(jobClassify.getRemark(), is("测试"));
             assertThat(jobClassify.getUser_id(), is(UserId));
             Database_set databaseSet = SqlOperator.queryOneObject(db, Database_set.class,
-                    "select * from database_set where agent_id=?", dbAgentId).orElseThrow(() ->
-                    new RuntimeException("sql执行错误!"));
+                    "select * from " + Database_set.TableName + " where agent_id=?", dbAgentId)
+                    .orElseThrow(() -> new RuntimeException("sql执行错误!"));
             assertThat(databaseSet.getDatabase_pad(), is("hrsdxg"));
             assertThat(databaseSet.getUser_name(), is("hrsdxg"));
             assertThat(databaseSet.getDatabase_type(), is(DatabaseType.Postgresql.getCode()));
@@ -1883,17 +1884,17 @@ public class DataSourceActionTest extends WebBaseTestCase {
             assertThat(ftpCollect.get("run_way").toString(), is(ExecuteWay.AnShiQiDong.getCode()));
             assertThat(ftpCollect.get("end_date").toString(), is("99991231"));
             Ftp_transfered ftpTransfered = SqlOperator.queryOneObject(db, Ftp_transfered.class,
-                    "select * from ftp_transfered where ftp_id=?", ftpCollect.get("ftp_id"))
-                    .orElseThrow(() -> new RuntimeException("sql执行错误!"));
+                    "select * from " + Ftp_transfered.TableName + " where ftp_id=?",
+                    ftpCollect.get("ftp_id")).orElseThrow(() -> new RuntimeException("sql执行错误!"));
             assertThat(ftpTransfered.getTransfered_name(), is("ftp传输测试"));
             Ftp_folder ftpFolder = SqlOperator.queryOneObject(db, Ftp_folder.class,
-                    "select * from ftp_folder where ftp_id=?", ftpCollect.get("ftp_id"))
+                    "select * from " + Ftp_folder.TableName + " where ftp_id=?", ftpCollect.get("ftp_id"))
                     .orElseThrow(() -> new RuntimeException("sql执行错误!"));
             assertThat(ftpFolder.getFtp_folder_name(), is("ftp采集目录"));
             assertThat(ftpFolder.getIs_processed(), is(IsFlag.Shi.getCode()));
             Object_collect objectCollect = SqlOperator.queryOneObject(db, Object_collect.class,
-                    "select * from object_collect where agent_id=?", dbAgentId).orElseThrow(() ->
-                    new RuntimeException("sql执行错误!"));
+                    "select * from " + Object_collect.TableName + " where agent_id=?", dbAgentId)
+                    .orElseThrow(() -> new RuntimeException("sql执行错误!"));
             assertThat(objectCollect.getFile_path(), is("/home/hyshf/objCollect"));
             assertThat(objectCollect.getObject_collect_type(), is(ObjectCollectType.DuiXiangCaiJi.getCode()));
             assertThat(objectCollect.getObj_collect_name(), is("对象采集测试"));
@@ -1904,27 +1905,27 @@ public class DataSourceActionTest extends WebBaseTestCase {
             assertThat(objectCollect.getObj_number(), is("dxcj01"));
             assertThat(objectCollect.getHost_name(), is("10.71.4.52"));
             Object_collect_task collectTask = SqlOperator.queryOneObject(db, Object_collect_task.class,
-                    "select * from object_collect_task where odc_id=?", objectCollect.getOdc_id())
-                    .orElseThrow(() -> new RuntimeException("sql执行错误!"));
+                    "select * from " + Object_collect_task.TableName + " where odc_id=?",
+                    objectCollect.getOdc_id()).orElseThrow(() -> new RuntimeException("sql执行错误!"));
             assertThat(collectTask.getEn_name(), is("dxcjrwmc"));
             assertThat(collectTask.getAgent_id(), is(dbAgentId));
             assertThat(collectTask.getCollect_data_type(), is(CollectDataType.JSON.getCode()));
             assertThat(collectTask.getDatabase_code(), is(DataBaseCode.UTF_8.getCode()));
             assertThat(collectTask.getZh_name(), is("对象采集任务名称"));
             Object_storage storage = SqlOperator.queryOneObject(db, Object_storage.class,
-                    "select * from object_storage where ocs_id=?", collectTask.getOcs_id())
-                    .orElseThrow(() -> new RuntimeException("sql执行错误!"));
+                    "select * from " + Object_storage.TableName + " where ocs_id=?",
+                    collectTask.getOcs_id()).orElseThrow(() -> new RuntimeException("sql执行错误!"));
             assertThat(storage.getIs_hbase(), is(IsFlag.Shi.getCode()));
             assertThat(storage.getIs_hdfs(), is(IsFlag.Fou.getCode()));
             Object_collect_struct collectStruct = SqlOperator.queryOneObject(db, Object_collect_struct.class,
-                    "select * from object_collect_struct where ocs_id=?", collectTask.getOcs_id())
-                    .orElseThrow(() -> new RuntimeException("sql执行错误!"));
+                    "select * from " + Object_collect_struct.TableName + " where ocs_id=?",
+                    collectTask.getOcs_id()).orElseThrow(() -> new RuntimeException("sql执行错误!"));
             assertThat(collectStruct.getColl_name(), is("对象采集结构"));
             assertThat(collectStruct.getData_desc(), is("测试"));
             assertThat(collectStruct.getStruct_type(), is(ObjectDataType.ZiFuChuan.getCode()));
             File_collect_set collectSet = SqlOperator.queryOneObject(db, File_collect_set.class,
-                    "select * from file_collect_set where agent_id=?", dbAgentId).orElseThrow(() ->
-                    new RuntimeException("sql执行错误!"));
+                    "select * from " + File_collect_set.TableName + " where agent_id=?", dbAgentId)
+                    .orElseThrow(() -> new RuntimeException("sql执行错误!"));
             assertThat(collectSet.getFcs_name(), is("文件系统设置"));
             assertThat(collectSet.getHost_name(), is("DESKTOP-DE7CNE1"));
             assertThat(collectSet.getIs_sendok(), is(IsFlag.Shi.getCode()));
@@ -1942,8 +1943,8 @@ public class DataSourceActionTest extends WebBaseTestCase {
             assertThat(fileSource.getIs_text(), is(IsFlag.Shi.getCode()));
             assertThat(fileSource.getFile_source_path(), is("/home/hyshf/fileSource/"));
             Signal_file signalFile = SqlOperator.queryOneObject(db, Signal_file.class,
-                    "select * from signal_file where database_id=?", databaseSet.getDatabase_id())
-                    .orElseThrow(() -> new RuntimeException("sql执行错误!"));
+                    "select * from " + Signal_file.TableName + " where database_id=?",
+                    databaseSet.getDatabase_id()).orElseThrow(() -> new RuntimeException("sql执行错误!"));
             assertThat(signalFile.getFile_format(), is(FileFormat.CSV.getCode()));
             assertThat(signalFile.getIs_cbd(), is(IsFlag.Shi.getCode()));
             assertThat(signalFile.getIs_compression(), is(IsFlag.Fou.getCode()));
@@ -1954,8 +1955,8 @@ public class DataSourceActionTest extends WebBaseTestCase {
             assertThat(signalFile.getIs_solr_hbase(), is(IsFlag.Fou.getCode()));
             assertThat(signalFile.getTable_type(), is(IsFlag.Shi.getCode()));
             Table_info tableInfo = SqlOperator.queryOneObject(db, Table_info.class,
-                    "select * from table_info where database_id=?", databaseSet.getDatabase_id())
-                    .orElseThrow(() -> new RuntimeException("sql执行错误!"));
+                    "select * from " + Table_info.TableName + " where database_id=?",
+                    databaseSet.getDatabase_id()).orElseThrow(() -> new RuntimeException("sql执行错误!"));
             assertThat(tableInfo.getTable_ch_name(), is("agent_info"));
             assertThat(tableInfo.getTable_name(), is("agent_info"));
             assertThat(tableInfo.getIs_register(), is(IsFlag.Fou.getCode()));
@@ -1964,8 +1965,8 @@ public class DataSourceActionTest extends WebBaseTestCase {
             assertThat(tableInfo.getIs_md5(), is(IsFlag.Shi.getCode()));
             assertThat(tableInfo.getValid_e_date(), is("99991231"));
             Column_merge columnMerge = SqlOperator.queryOneObject(db, Column_merge.class,
-                    "select * from column_merge where table_id=?", tableInfo.getTable_id())
-                    .orElseThrow(() -> new RuntimeException("sql执行错误!"));
+                    "select * from " + Column_merge.TableName + " where table_id=?",
+                    tableInfo.getTable_id()).orElseThrow(() -> new RuntimeException("sql执行错误!"));
             assertThat(columnMerge.getCol_name(), is("agentAddress"));
             assertThat(columnMerge.getCol_type(), is("1"));
             assertThat(columnMerge.getCol_zhname(), is("agent地址"));
@@ -1980,15 +1981,16 @@ public class DataSourceActionTest extends WebBaseTestCase {
             assertThat(storageInfo.get("storage_time").toString(), is("1"));
             assertThat(storageInfo.get("storage_type"), is(StorageType.TiHuan.getCode()));
             Map<String, Object> tableClean = SqlOperator.queryOneObject(db,
-                    "select * from table_clean where table_id=?", tableInfo.getTable_id());
+                    "select * from " + Table_clean.TableName + " where table_id=?",
+                    tableInfo.getTable_id());
             assertThat(tableClean.get("character_filling"), is("#"));
             assertThat(tableClean.get("filling_length").toString(), is("1"));
             assertThat(tableClean.get("filling_type"), is(FillingType.HouBuQi.getCode()));
             assertThat(tableClean.get("replace_feild"), is("agent_ip"));
             assertThat(tableClean.get("clean_type"), is(CleanType.ZiFuBuQi.getCode()));
             Table_column tableColumn = SqlOperator.queryOneObject(db, Table_column.class,
-                    "select * from table_column where table_id=?", tableInfo.getTable_id())
-                    .orElseThrow(() -> new RuntimeException("sql执行错误!"));
+                    "select * from " + Table_column.TableName + " where table_id=?",
+                    tableInfo.getTable_id()).orElseThrow(() -> new RuntimeException("sql执行错误!"));
             assertThat(tableColumn.getColume_name(), is("create_date"));
             assertThat(tableColumn.getTable_id(), is(tableInfo.getTable_id()));
             assertThat(tableColumn.getIs_alive(), is(IsFlag.Shi.getCode()));
@@ -1997,14 +1999,16 @@ public class DataSourceActionTest extends WebBaseTestCase {
             assertThat(tableColumn.getIs_get(), is(IsFlag.Fou.getCode()));
             assertThat(tableColumn.getValid_e_date(), is("99991231"));
             Map<String, Object> columnClean = SqlOperator.queryOneObject(db,
-                    "select * from column_clean where column_id=?", tableColumn.getColumn_id());
+                    "select * from " + Column_clean.TableName + " where column_id=?",
+                    tableColumn.getColumn_id());
             assertThat(columnClean.get("filling_length").toString(), is("1"));
             assertThat(columnClean.get("codesys"), is("1"));
             assertThat(columnClean.get("codename"), is("是"));
             assertThat(columnClean.get("character_filling"), is("#"));
             assertThat(columnClean.get("clean_type"), is(CleanType.ZiFuBuQi.getCode()));
             Map<String, Object> columnSplit = SqlOperator.queryOneObject(db,
-                    "select * from column_split where column_id=?", tableColumn.getColumn_id());
+                    "select * from " + Column_split.TableName + " where column_id=?",
+                    tableColumn.getColumn_id());
             assertThat(columnSplit.get("col_type"), is("1"));
             assertThat(columnSplit.get("col_clean_id"), is(columnClean.get("col_clean_id")));
             assertThat(columnSplit.get("col_name"), is("agent_ip"));

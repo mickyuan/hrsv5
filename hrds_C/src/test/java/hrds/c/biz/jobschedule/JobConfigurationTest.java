@@ -13,13 +13,14 @@ import hrds.commons.codes.*;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.testbase.WebBaseTestCase;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalLong;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -33,6 +34,8 @@ public class JobConfigurationTest extends WebBaseTestCase {
     private static final String SubSysCd = "zypzrwcs";
     private static final String SubSysCd2 = "zypzrwcs2";
     private static final String SubSysCd3 = "myrwcs";
+    private static final String SubSysCd4 = "myrwcs2";
+    private static final String SubSysCd5 = "myrwcs3";
     // 初始化模板ID
     private static final long EtlTempId = 20000L;
     // 初始化模板ID参数
@@ -71,8 +74,8 @@ public class JobConfigurationTest extends WebBaseTestCase {
             "9.etl_job_temp_para表，有1条数据，etl_temp_para_id为EtlTempParaId" +
             "10.etl_para表，有1条数据，etl_sys_cd为EtlSysCd" +
             "11.Etl_dependency表，有1条数据，etl_sys_cd为EtlSysCd")
-    @BeforeClass
-    public static void before() {
+    @Before
+    public void before() {
         try (DatabaseWrapper db = new DatabaseWrapper()) {
             // 1.构造sys_user表测试数据
             Sys_user sysUser = new Sys_user();
@@ -108,13 +111,17 @@ public class JobConfigurationTest extends WebBaseTestCase {
             assertThat("测试数据etl_sys初始化", num, is(1));
             // 4.构造etl_sub_sys_list表测试数据
             Etl_sub_sys_list etl_sub_sys_list = new Etl_sub_sys_list();
-            for (int i = 1; i <= 3; i++) {
+            for (int i = 1; i <= 5; i++) {
                 if (i == 1) {
                     etl_sub_sys_list.setSub_sys_cd(SubSysCd);
                 } else if (i == 2) {
                     etl_sub_sys_list.setSub_sys_cd(SubSysCd2);
-                } else {
+                } else if (i == 3) {
                     etl_sub_sys_list.setSub_sys_cd(SubSysCd3);
+                } else if (i == 4) {
+                    etl_sub_sys_list.setSub_sys_cd(SubSysCd4);
+                } else {
+                    etl_sub_sys_list.setSub_sys_cd(SubSysCd5);
                 }
                 etl_sub_sys_list.setEtl_sys_cd(EtlSysCd);
                 etl_sub_sys_list.setSub_sys_desc("任务测试" + i);
@@ -126,7 +133,6 @@ public class JobConfigurationTest extends WebBaseTestCase {
             for (int i = 0; i < 6; i++) {
                 Etl_job_def etl_job_def = new Etl_job_def();
                 etl_job_def.setEtl_sys_cd(EtlSysCd);
-                etl_job_def.setSub_sys_cd(SubSysCd);
                 etl_job_def.setEtl_job("测试作业" + i);
                 etl_job_def.setPro_type(Pro_Type.SHELL.getCode());
                 etl_job_def.setPro_name(i + "aaa.shell");
@@ -137,6 +143,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
                 etl_job_def.setToday_disp(IsFlag.Shi.getCode());
                 switch (i) {
                     case 0:
+                        etl_job_def.setSub_sys_cd(SubSysCd);
                         etl_job_def.setDisp_type(Dispatch_Type.TPLUS0.getCode());
                         etl_job_def.setDisp_freq(Dispatch_Frequency.PinLv.getCode());
                         etl_job_def.setExe_frequency(1);
@@ -146,25 +153,30 @@ public class JobConfigurationTest extends WebBaseTestCase {
                         etl_job_def.setEnd_time("2020-12-31 10:30:30");
                         break;
                     case 1:
+                        etl_job_def.setSub_sys_cd(SubSysCd);
                         etl_job_def.setDisp_type(Dispatch_Type.TPLUS1.getCode());
                         etl_job_def.setDisp_freq(Dispatch_Frequency.MONTHLY.getCode());
                         break;
                     case 2:
+                        etl_job_def.setSub_sys_cd(SubSysCd);
                         etl_job_def.setDisp_type(Dispatch_Type.DEPENDENCE.getCode());
                         etl_job_def.setDisp_freq(Dispatch_Frequency.WEEKLY.getCode());
                         etl_job_def.setJob_disp_status(IsFlag.Shi.getCode());
                         break;
                     case 3:
+                        etl_job_def.setSub_sys_cd(SubSysCd2);
                         etl_job_def.setDisp_type(Dispatch_Type.DEPENDENCE.getCode());
                         etl_job_def.setDisp_freq(Dispatch_Frequency.DAILY.getCode());
                         etl_job_def.setJob_disp_status(IsFlag.Shi.getCode());
                         break;
                     case 4:
+                        etl_job_def.setSub_sys_cd(SubSysCd2);
                         etl_job_def.setDisp_type(Dispatch_Type.DEPENDENCE.getCode());
                         etl_job_def.setDisp_freq(Dispatch_Frequency.TENDAYS.getCode());
                         etl_job_def.setJob_disp_status(IsFlag.Shi.getCode());
                         break;
                     case 5:
+                        etl_job_def.setSub_sys_cd(SubSysCd2);
                         etl_job_def.setDisp_type(Dispatch_Type.DEPENDENCE.getCode());
                         etl_job_def.setDisp_freq(Dispatch_Frequency.YEARLY.getCode());
                         etl_job_def.setJob_disp_status(IsFlag.Shi.getCode());
@@ -259,8 +271,8 @@ public class JobConfigurationTest extends WebBaseTestCase {
             "11.测试完删除department_info表测试数据" +
             "12.单独删除新增数据，因为新增数据主键是自动生成的，所以要通过其他方式删除" +
             "13.提交事务")
-    @AfterClass
-    public static void after() {
+    @After
+    public void after() {
         try (DatabaseWrapper db = new DatabaseWrapper()) {
             // 1.测试完成后删除sys_user表测试数据
             SqlOperator.execute(db, "delete from " + Sys_user.TableName + " where user_id=?", UserId);
@@ -389,7 +401,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
         assertThat(ar.isSuccess(), is(true));
         dataForMap = ar.getDataForMap();
         assertThat(dataForMap.get("etl_sys_cd"), is(EtlSysCd));
-        assertThat(dataForMap.get("totalSize"), is(3));
+        assertThat(dataForMap.get("totalSize"), is(5));
         assertThat(dataForMap.get("etl_sys_name"), is("dhwcs"));
         etlSubSysList = (List<Map<String, Object>>) dataForMap.get("etlSubSysList");
         for (Map<String, Object> etlSubSys : etlSubSysList) {
@@ -401,11 +413,19 @@ public class JobConfigurationTest extends WebBaseTestCase {
                 assertThat(etlSubSys.get("etl_sys_cd"), is(EtlSysCd));
                 assertThat(etlSubSys.get("comments"), is("测试2"));
                 assertThat(etlSubSys.get("sub_sys_desc"), is("任务测试2"));
-            } else {
+            } else if (etlSubSys.get("sub_sys_cd").equals(SubSysCd3)) {
                 assertThat(etlSubSys.get("etl_sys_cd"), is(EtlSysCd));
-                assertThat(etlSubSys.get("sub_sys_cd"), is(SubSysCd3));
                 assertThat(etlSubSys.get("comments"), is("测试3"));
                 assertThat(etlSubSys.get("sub_sys_desc"), is("任务测试3"));
+            } else if (etlSubSys.get("sub_sys_cd").equals(SubSysCd4)) {
+                assertThat(etlSubSys.get("etl_sys_cd"), is(EtlSysCd));
+                assertThat(etlSubSys.get("comments"), is("测试4"));
+                assertThat(etlSubSys.get("sub_sys_desc"), is("任务测试4"));
+            } else {
+                assertThat(etlSubSys.get("etl_sys_cd"), is(EtlSysCd));
+                assertThat(etlSubSys.get("sub_sys_cd"), is(SubSysCd5));
+                assertThat(etlSubSys.get("comments"), is("测试5"));
+                assertThat(etlSubSys.get("sub_sys_desc"), is("任务测试5"));
             }
         }
         // 3.正确的数据访问1，etl_sys_cd不合法，currPage,pageSize（为空有默认值），sub_sys_cd可为空所以错误数据只有一种情况
@@ -448,12 +468,343 @@ public class JobConfigurationTest extends WebBaseTestCase {
         assertThat(ar.isSuccess(), is(false));
         // 3.错误的数据访问2，sub_sys_cd不存在
         bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
-                .addData("sub_sys_cd", "subSysCd")
+                .addData("sub_sys_cd", "subSysCd1")
                 .post(getActionUrl("searchEtlSubSys"))
                 .getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                 .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
         assertThat(ar.isSuccess(), is(false));
+    }
+
+    @Method(desc = "新增保存任务",
+            logicStep = "1.正常的数据访问1，数据都正常" +
+                    "2.错误的数据访问1，etl_sys_cd为空" +
+                    "3.错误的数据访问2，etl_sys_cd为空格" +
+                    "4.错误的数据访问3，etl_sys_cd为不存在的数据" +
+                    "5.错误的数据访问4，sub_sys_cd为空" +
+                    "6.错误的数据访问5，sub_sys_cd为空格" +
+                    "7.错误的数据访问6，sub_sys_cd为已存在的数据" +
+                    "8.错误的数据访问7，sub_sys_desc为空" +
+                    "9.错误的数据访问8，sub_sys_desc为空格")
+    @Test
+    public void saveEtlSubSys() {
+        // 1.正常的数据访问1，数据都正常
+        String bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                .addData("sub_sys_cd", "addSubSys1")
+                .addData("sub_sys_desc", "addSubSys1")
+                .addData("comments", "新增任务测试1")
+                .post(getActionUrl("saveEtlSubSys"))
+                .getBodyString();
+        ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(true));
+        try (DatabaseWrapper db = new DatabaseWrapper()) {
+            Etl_sub_sys_list subSysList = SqlOperator.queryOneObject(db, Etl_sub_sys_list.class,
+                    "select * from " + Etl_sub_sys_list.TableName + " where etl_sys_cd=? and sub_sys_cd=?"
+                    , EtlSysCd, "addSubSys1").orElseThrow(() ->
+                    new BusinessException("sql查询错误或映射错误！"));
+            assertThat(subSysList.getEtl_sys_cd(), is(EtlSysCd));
+            assertThat(subSysList.getSub_sys_cd(), is("addSubSys1"));
+            assertThat(subSysList.getSub_sys_desc(), is("addSubSys1"));
+            assertThat(subSysList.getComments(), is("新增任务测试1"));
+        }
+        // 2.错误的数据访问1，etl_sys_cd为空
+        bodyString = new HttpClient().addData("etl_sys_cd", "")
+                .addData("sub_sys_cd", SubSysCd)
+                .addData("sub_sys_desc", "addSubSys2")
+                .addData("comments", "新增任务测试1")
+                .post(getActionUrl("saveEtlSubSys"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(false));
+        // 3.错误的数据访问2，etl_sys_cd为空格
+        bodyString = new HttpClient().addData("etl_sys_cd", " ")
+                .addData("sub_sys_cd", SubSysCd)
+                .addData("sub_sys_desc", "addSubSys3")
+                .addData("comments", "新增任务测试1")
+                .post(getActionUrl("saveEtlSubSys"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(false));
+        // 4.错误的数据访问3，etl_sys_cd为不存在的数据
+        bodyString = new HttpClient().addData("etl_sys_cd", "cwcs1")
+                .addData("sub_sys_cd", SubSysCd)
+                .addData("sub_sys_desc", "addSubSys4")
+                .addData("comments", "新增任务测试1")
+                .post(getActionUrl("saveEtlSubSys"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(false));
+        // 5.错误的数据访问4，sub_sys_cd为空
+        bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                .addData("sub_sys_cd", "")
+                .addData("sub_sys_desc", "addSubSys5")
+                .addData("comments", "新增任务测试1")
+                .post(getActionUrl("saveEtlSubSys"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(false));
+        // 6.错误的数据访问5，sub_sys_cd为空格
+        bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                .addData("sub_sys_cd", " ")
+                .addData("sub_sys_desc", "addSubSys6")
+                .addData("comments", "新增任务测试1")
+                .post(getActionUrl("saveEtlSubSys"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(false));
+        // 7.错误的数据访问6，sub_sys_cd为已存在的数据
+        bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                .addData("sub_sys_cd", SubSysCd)
+                .addData("sub_sys_desc", "addSubSys7")
+                .addData("comments", "新增任务测试1")
+                .post(getActionUrl("saveEtlSubSys"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(false));
+        // 8.错误的数据访问7，sub_sys_desc为空
+        bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                .addData("sub_sys_cd", SubSysCd)
+                .addData("sub_sys_desc", "addSubSys8")
+                .addData("comments", "新增任务测试1")
+                .post(getActionUrl("saveEtlSubSys"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(false));
+        // 9.错误的数据访问8，sub_sys_desc为空格
+        bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                .addData("sub_sys_cd", SubSysCd)
+                .addData("sub_sys_desc", " ")
+                .addData("comments", "新增任务测试1")
+                .post(getActionUrl("saveEtlSubSys"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(false));
+    }
+
+    @Method(desc = "更新保存任务",
+            logicStep = "1.正常的数据访问1，数据都正常" +
+                    "2.错误的数据访问1，etl_sys_cd为空" +
+                    "3.错误的数据访问2，etl_sys_cd为空格" +
+                    "4.错误的数据访问3，etl_sys_cd为不存在的数据" +
+                    "5.错误的数据访问4，sub_sys_cd为空" +
+                    "6.错误的数据访问5，sub_sys_cd为空格" +
+                    "7.错误的数据访问6，sub_sys_cd为不存在的数据" +
+                    "8.错误的数据访问7，sub_sys_desc为空" +
+                    "9.错误的数据访问8，sub_sys_desc为空格")
+    @Test
+    public void updateEtlSubSys() {
+        // 1.正常的数据访问1，数据都正常
+        String bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                .addData("sub_sys_cd", SubSysCd)
+                .addData("sub_sys_desc", "upSubSys1")
+                .addData("comments", "编辑任务测试1")
+                .post(getActionUrl("updateEtlSubSys"))
+                .getBodyString();
+        ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(true));
+        try (DatabaseWrapper db = new DatabaseWrapper()) {
+            Etl_sub_sys_list subSysList = SqlOperator.queryOneObject(db, Etl_sub_sys_list.class,
+                    "select * from " + Etl_sub_sys_list.TableName + " where etl_sys_cd=? and sub_sys_cd=?"
+                    , EtlSysCd, SubSysCd).orElseThrow(() ->
+                    new BusinessException("sql查询错误或映射错误！"));
+            assertThat(subSysList.getEtl_sys_cd(), is(EtlSysCd));
+            assertThat(subSysList.getSub_sys_cd(), is(SubSysCd));
+            assertThat(subSysList.getSub_sys_desc(), is("upSubSys1"));
+            assertThat(subSysList.getComments(), is("编辑任务测试1"));
+        }
+        // 2.错误的数据访问1，etl_sys_cd为空
+        bodyString = new HttpClient().addData("etl_sys_cd", "")
+                .addData("sub_sys_cd", SubSysCd)
+                .addData("sub_sys_desc", "upSubSys2")
+                .addData("comments", "编辑任务测试2")
+                .post(getActionUrl("updateEtlSubSys"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(false));
+        // 3.错误的数据访问2，etl_sys_cd为空格
+        bodyString = new HttpClient().addData("etl_sys_cd", " ")
+                .addData("sub_sys_cd", SubSysCd)
+                .addData("sub_sys_desc", "upSubSys3")
+                .addData("comments", "编辑任务测试3")
+                .post(getActionUrl("updateEtlSubSys"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(false));
+        // 4.错误的数据访问3，etl_sys_cd为不存在的数据
+        bodyString = new HttpClient().addData("etl_sys_cd", "cwcs1")
+                .addData("sub_sys_cd", SubSysCd)
+                .addData("sub_sys_desc", "upSubSys4")
+                .addData("comments", "编辑任务测试4")
+                .post(getActionUrl("saveEtlSubSys"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(false));
+        // 5.错误的数据访问4，sub_sys_cd为空
+        bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                .addData("sub_sys_cd", "")
+                .addData("sub_sys_desc", "upSubSys5")
+                .addData("comments", "编辑任务测试5")
+                .post(getActionUrl("updateEtlSubSys"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(false));
+        // 6.错误的数据访问5，sub_sys_cd为空格
+        bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                .addData("sub_sys_cd", " ")
+                .addData("sub_sys_desc", "upSubSys6")
+                .addData("comments", "编辑任务测试6")
+                .post(getActionUrl("updateEtlSubSys"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(false));
+        // 7.错误的数据访问6，sub_sys_cd为不存在的数据
+        bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                .addData("sub_sys_cd", "uprwcs")
+                .addData("sub_sys_desc", "upSubSys7")
+                .addData("comments", "编辑任务测试7")
+                .post(getActionUrl("updateEtlSubSys"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(false));
+        // 8.错误的数据访问7，sub_sys_desc为空
+        bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                .addData("sub_sys_cd", SubSysCd)
+                .addData("sub_sys_desc", "")
+                .addData("comments", "编辑任务测试8")
+                .post(getActionUrl("updateEtlSubSys"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(false));
+        // 9.错误的数据访问8，sub_sys_desc为空格
+        bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                .addData("sub_sys_cd", SubSysCd)
+                .addData("sub_sys_desc", " ")
+                .addData("comments", "编辑任务测试9")
+                .post(getActionUrl("updateEtlSubSys"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(false));
+    }
+
+    @Method(desc = "根据工程编号，任务编号删除任务信息",
+            logicStep = "1.正常的数据访问1，数据都正常" +
+                    "2.错误的数据访问1，etl_sys_cd不存在" +
+                    "3.错误的数据访问2，sub_sys_cd不存在" +
+                    "4.错误的数据访问3，工程任务下还有作业")
+    @Test
+    public void deleteEtlSubSys() {
+        // 1.正常的数据访问1，数据都正常
+        // 删除前查询数据库，确认预期删除的数据存在
+        try (DatabaseWrapper db = new DatabaseWrapper()) {
+            OptionalLong optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
+                    Etl_sub_sys_list.TableName + " where etl_sys_cd=? and sub_sys_cd=?", EtlSysCd, SubSysCd3);
+            assertThat("删除操作前，data_source表中的确存在这样一条数据", optionalLong.
+                    orElse(Long.MIN_VALUE), is(1L));
+            String bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("sub_sys_cd", SubSysCd3)
+                    .post(getActionUrl("deleteEtlSubSys"))
+                    .getBodyString();
+            ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(true));
+            // 删除后查询数据库，确认预期数据已删除
+            optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
+                    Etl_sub_sys_list.TableName + " where etl_sys_cd=? and sub_sys_cd=?", EtlSysCd, SubSysCd3);
+            assertThat("删除操作后，确认这条数据已删除", optionalLong.
+                    orElse(Long.MIN_VALUE), is(0L));
+            // 2.错误的数据访问1，etl_sys_cd不存在
+            bodyString = new HttpClient().addData("etl_sys_cd", "sccs1")
+                    .addData("sub_sys_cd", SubSysCd)
+                    .post(getActionUrl("deleteEtlSubSys"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 3.错误的数据访问2，sub_sys_cd不存在
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("sub_sys_cd", "sccs1")
+                    .post(getActionUrl("deleteEtlSubSys"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 4.错误的数据访问3，工程任务下还有作业
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("sub_sys_cd", SubSysCd)
+                    .post(getActionUrl("deleteEtlSubSys"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+            assertThat(ar.isSuccess(), is(false));
+        }
+    }
+
+    @Test
+    public void batchDeleteEtlSubSys() {
+        // 1.正常的数据访问1，数据都正常
+        // 删除前查询数据库，确认预期删除的数据存在
+        try (DatabaseWrapper db = new DatabaseWrapper()) {
+            OptionalLong optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
+                            Etl_sub_sys_list.TableName + " where etl_sys_cd=? and sub_sys_cd in (?,?)",
+                    EtlSysCd, SubSysCd5, SubSysCd4);
+            assertThat("删除操作前，data_source表中的确存在这样一条数据", optionalLong.
+                    orElse(Long.MIN_VALUE), is(2L));
+            String bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("sub_sys_cd", new String[]{SubSysCd5, SubSysCd4})
+                    .post(getActionUrl("batchDeleteEtlSubSys"))
+                    .getBodyString();
+            ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(true));
+            // 删除后查询数据库，确认预期数据已删除
+            optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
+                            Etl_sub_sys_list.TableName + " where etl_sys_cd=? and sub_sys_cd in (?,?)",
+                    EtlSysCd, SubSysCd5, SubSysCd4);
+            assertThat("删除操作后，确认这条数据已删除", optionalLong.
+                    orElse(Long.MIN_VALUE), is(0L));
+            // 2.错误的数据访问1，etl_sys_cd不存在
+            bodyString = new HttpClient().addData("etl_sys_cd", "sccs1")
+                    .addData("sub_sys_cd", new String[]{SubSysCd3, SubSysCd4})
+                    .post(getActionUrl("batchDeleteEtlSubSys"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 3.错误的数据访问2，sub_sys_cd不存在
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("sub_sys_cd", new String[]{"sccs1"})
+                    .post(getActionUrl("batchDeleteEtlSubSys"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 4.错误的数据访问3，sub_sys_cd下有作业(只要有一个下有作业就应该报错）
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("sub_sys_cd", new String[]{SubSysCd, SubSysCd3})
+                    .post(getActionUrl("batchDeleteEtlSubSys"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+            assertThat(ar.isSuccess(), is(false));
+        }
     }
 
     @Method(desc = "分页查询作业系统参数，此方法只有三种情况",
