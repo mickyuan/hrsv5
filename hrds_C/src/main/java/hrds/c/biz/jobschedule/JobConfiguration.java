@@ -264,18 +264,13 @@ public class JobConfiguration extends BaseAction {
 
     @Method(desc = "获取该工程下对应作业模板信息",
             logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制" +
-                    "2.验证当前用户下的工程是否存在" +
-                    "3.获取工程任务信息" +
-                    "4.判断作业模版ID是否为空，为空，查询所有模板信息，不为空，根据模板ID查询模板信息" +
-                    "5.返回作业模板相关信息集合")
+                    "2.返回作业模板相关信息集合")
     @Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
     @Param(name = "etl_temp_id", desc = "参数描述", range = "可为空", nullable = true)
     @Return(desc = "返回作业模板相关信息集合", range = "无限制")
     public Result searchEtlJobTemplate(String etl_sys_cd, String etl_temp_id) {
-        // 1.数据可访问权限处理方式，通过user_id进行权限控制
-        // 2.验证当前用户下的工程是否存在
-        isEtlSysExist(etl_sys_cd, getUserId());
-        // 3.返回作业模板相关信息集合
+        // 1.数据可访问权限处理方式，该方法不需要权限控制
+        // 2.返回作业模板相关信息集合
         return getJobTemplateById(etl_temp_id);
     }
 
