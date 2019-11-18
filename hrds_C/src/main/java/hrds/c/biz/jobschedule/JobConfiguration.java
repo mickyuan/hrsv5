@@ -1416,8 +1416,8 @@ public class JobConfiguration extends BaseAction {
         for (Etl_job_def etl_job_def : etlJobList) {
             for (String pre_etl_job : preEtlJobList) {
                 // 6.判断当前作业下的依赖是否存在，存在就跳过，不存在则依赖
-                if (saveEtlDependencyIfNotExist(etl_dependency.getEtl_sys_cd(),
-                        etl_dependency.getPre_etl_sys_cd(), etl_job_def.getEtl_job(), pre_etl_job)) {
+                if (isEtlDependencyExist(etl_dependency.getEtl_sys_cd(), etl_dependency.getPre_etl_sys_cd(),
+                        etl_job_def.getEtl_job(), pre_etl_job)) {
                     continue;
                 }
                 // 7.如果当前作业为定时作业则跳过
@@ -1425,8 +1425,8 @@ public class JobConfiguration extends BaseAction {
                     continue;
                 }
                 // 8.将当前作业与上游作业交换，看是否已经存在依赖关系,存在则跳过
-                if (saveEtlDependencyIfNotExist(etl_dependency.getEtl_sys_cd(),
-                        etl_dependency.getPre_etl_sys_cd(), pre_etl_job, etl_job_def.getEtl_job())) {
+                if (isEtlDependencyExist(etl_dependency.getEtl_sys_cd(), etl_dependency.getPre_etl_sys_cd(),
+                        pre_etl_job, etl_job_def.getEtl_job())) {
                     continue;
                 }
                 // 9.循环保存作业依赖关系
@@ -1435,26 +1435,6 @@ public class JobConfiguration extends BaseAction {
                 etl_dependency.add(Dbo.db());
             }
         }
-    }
-
-    @Method(desc = "判断当前作业依赖关系是否存在，存在返回false，不存在返回true",
-            logicStep = "方法步骤")
-    @Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
-    @Param(name = "pre_etl_sys_cd", desc = "上游工程编号", range = "新增工程时生成")
-    @Param(name = "etl_job", desc = "作业名称", range = "新增作业时生成")
-    @Param(name = "pre_etl_job", desc = "上游作业名称", range = "新增作业时生成")
-    @Return(desc = "判断当前作业依赖关系是否存在，存在返回false，不存在返回true", range = "false,true")
-    private boolean saveEtlDependencyIfNotExist(String etl_sys_cd, String pre_etl_sys_cd,
-                                                String etl_job, String pre_etl_job) {
-        // 1.数据可访问权限处理方式，该方法不需要权限控制
-        // 2.判断当前作业依赖关系是否存在，存在返回false，不存在返回true
-        if (Dbo.queryNumber("select count(1) from " + Etl_dependency.TableName + " where etl_sys_cd=?" +
-                        " and etl_job=? AND pre_etl_sys_cd=? AND pre_etl_job=?", etl_sys_cd, etl_job,
-                pre_etl_sys_cd, pre_etl_job).orElseThrow(() -> new BusinessException("sql查询错误！")) > 0
-                || etl_job.equals(pre_etl_job)) {
-            return false;
-        }
-        return true;
     }
 
     @Method(desc = "判断当前表信息是否存在",
