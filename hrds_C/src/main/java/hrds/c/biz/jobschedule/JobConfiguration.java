@@ -265,30 +265,21 @@ public class JobConfiguration extends BaseAction {
     @Method(desc = "获取该工程下对应作业模板信息",
             logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制" +
                     "2.返回作业模板相关信息集合")
-    @Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
-    @Param(name = "etl_temp_id", desc = "参数描述", range = "可为空", nullable = true)
     @Return(desc = "返回作业模板相关信息集合", range = "无限制")
-    public Result searchEtlJobTemplate(String etl_sys_cd, String etl_temp_id) {
+    public Result searchEtlJobTemplate() {
         // 1.数据可访问权限处理方式，该方法不需要权限控制
         // 2.返回作业模板相关信息集合
-        return getJobTemplateById(etl_temp_id);
+        return Dbo.queryResult("select * from " + Etl_job_temp.TableName);
     }
 
     @Method(desc = "获取模板信息",
             logicStep = "1.数据可访问权限处理方式，此方法不需要用户权限控制" +
-                    "2.判断作业模版ID是否为空，为空，查询所有模板信息，不为空，根据模板ID查询模板信息" +
-                    "2.1为空，查询所有模板信息" +
-                    "2.2不为空，根据模板ID查询模板信息")
-    @Param(name = "参数名称", desc = "参数描述", range = "取值范围")
-    @Return(desc = "返回内容描述", range = "取值范围")
-    private Result getJobTemplateById(String etl_temp_id) {
+                    "2.根据模板ID查询模板信息")
+    @Param(name = "etl_temp_id", desc = "模板作业ID", range = "无限制")
+    @Return(desc = "返回根据模板ID查询模板信息", range = "无限制")
+    public Result searchJobTemplateById(String etl_temp_id) {
         // 1.数据可访问权限处理方式，此方法不需要用户权限控制
-        // 2.判断作业模版ID是否为空，为空，查询所有模板信息，不为空，根据模板ID查询模板信息
-        if (StringUtil.isBlank(etl_temp_id)) {
-            // 2.1为空，查询所有模板信息
-            return Dbo.queryResult("select * from " + Etl_job_temp.TableName);
-        }
-        // 2.2不为空，根据模板ID查询模板信息
+        // 2.根据模板ID查询模板信息
         return Dbo.queryResult("select * from " + Etl_job_temp.TableName + " where etl_temp_id=?",
                 etl_temp_id);
     }
@@ -353,7 +344,7 @@ public class JobConfiguration extends BaseAction {
                 + " " + DateUtil.parseStr2TimeWith6Char(DateUtil.getSysDate()));
         etl_job_def.setMain_serv_sync(Main_Server_Sync.YES.getCode());
         // 6.获取作业模板信息封装作业实体对象
-        Result jobTemplate = getJobTemplateById(etl_temp_id);
+        Result jobTemplate = searchJobTemplateById(etl_temp_id);
         if (!jobTemplate.isEmpty()) {
             for (int i = 0; i < jobTemplate.getRowCount(); i++) {
                 String pro_dic = jobTemplate.getString(i, "pro_dic");

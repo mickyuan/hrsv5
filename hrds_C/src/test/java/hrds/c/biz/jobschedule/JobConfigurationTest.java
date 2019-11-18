@@ -7,6 +7,7 @@ import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
+import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import hrds.commons.codes.*;
@@ -827,6 +828,18 @@ public class JobConfigurationTest extends WebBaseTestCase {
                     .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
             assertThat(ar.isSuccess(), is(false));
         }
+    }
+
+    @Test
+    public void searchEtlJobTemplate() {
+        // 1.正常的数据访问1，数据都正常
+        String bodyString = new HttpClient().addData("etl_sys_cd", EtlTempId)
+                .post(getActionUrl("searchEtlJobTemplate"))
+                .getBodyString();
+        ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(true));
+        Result etlJobTemplate = ar.getDataForResult();
     }
 
     @Method(desc = "分页查询作业系统参数，此方法只有三种情况",
