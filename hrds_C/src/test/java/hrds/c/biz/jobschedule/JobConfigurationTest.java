@@ -51,6 +51,9 @@ public class JobConfigurationTest extends WebBaseTestCase {
     // 初始化系统参数编号
     private static final String ParaCd = PREFIX + "startDate";
     private static final String ParaCd2 = PREFIX + "endDate";
+    private static final String ParaCd3 = PREFIX + "delParaCd1";
+    private static final String ParaCd4 = PREFIX + "delParaCd2";
+    private static final String ParaCd5 = PREFIX + "delParaCd3";
     // 初始化测试系统时间
     private static final String SysDate = DateUtil.getSysDate();
 
@@ -226,13 +229,22 @@ public class JobConfigurationTest extends WebBaseTestCase {
             assertThat("测试数据etl_job_temp_para初始化", num, is(1));
             // 10.构造etl_para表测试数据
             Etl_para etl_para = new Etl_para();
-            for (int i = 0; i < 2; i++) {
+            for (int i = 0; i < 5; i++) {
                 if (i == 0) {
                     etl_para.setPara_cd(ParaCd);
                     etl_para.setPara_val(SysDate);
-                } else {
+                } else if (i == 1) {
                     etl_para.setPara_cd(ParaCd2);
                     etl_para.setPara_val("99991231");
+                } else if (i == 2) {
+                    etl_para.setPara_cd(ParaCd3);
+                    etl_para.setPara_val(IsFlag.Fou.getCode());
+                } else if (i == 3) {
+                    etl_para.setPara_cd(ParaCd4);
+                    etl_para.setPara_val(IsFlag.Shi.getCode());
+                } else {
+                    etl_para.setPara_cd(ParaCd5);
+                    etl_para.setPara_val(IsFlag.Shi.getCode());
                 }
                 etl_para.setEtl_sys_cd(EtlSysCd);
                 etl_para.setPara_type(ParamType.CanShu.getCode());
@@ -762,11 +774,16 @@ public class JobConfigurationTest extends WebBaseTestCase {
         }
     }
 
+    @Method(desc = "方法描述",
+            logicStep = "1.正常的数据访问1，数据都正常" +
+                    "2.错误的数据访问1，etl_sys_cd不存在" +
+                    "3.错误的数据访问2，sub_sys_cd不存在" +
+                    "4.错误的数据访问3，sub_sys_cd下有作业(只要有一个下有作业就应该报错）")
     @Test
     public void batchDeleteEtlSubSys() {
-        // 1.正常的数据访问1，数据都正常
-        // 删除前查询数据库，确认预期删除的数据存在
         try (DatabaseWrapper db = new DatabaseWrapper()) {
+            // 1.正常的数据访问1，数据都正常
+            // 删除前查询数据库，确认预期删除的数据存在
             OptionalLong optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
                             Etl_sub_sys_list.TableName + " where etl_sys_cd=? and sub_sys_cd in (?,?)",
                     EtlSysCd, SubSysCd5, SubSysCd4);
@@ -898,7 +915,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
         assertThat(ar.isSuccess(), is(false));
     }
 
-    @Method(desc = "方法描述",
+    @Method(desc = "新增保存作业系统参数",
             logicStep = "1.正常的数据访问1，数据都正常" +
                     "2.错误的数据访问1，etl_sys_cd为空" +
                     "3.错误的数据访问2，etl_sys_cd为空格" +
@@ -1022,17 +1039,6 @@ public class JobConfigurationTest extends WebBaseTestCase {
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                     .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
             assertThat(ar.isSuccess(), is(false));
-            // 9.错误的数据访问8，para_type为空格
-            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
-                    .addData("para_cd", "addParaCd9")
-                    .addData("para_type", " ")
-                    .addData("para_val", IsFlag.Shi.getCode())
-                    .addData("para_desc", "新增系统参数测试9")
-                    .post(getActionUrl("saveEtlPara"))
-                    .getBodyString();
-            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
-                    .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
-            assertThat(ar.isSuccess(), is(false));
             // 10.错误的数据访问9，para_type为不合法的，不存在的代码项
             bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
                     .addData("para_cd", "addParaCd9")
@@ -1065,6 +1071,256 @@ public class JobConfigurationTest extends WebBaseTestCase {
                     .getBodyString();
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                     .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+        }
+    }
+
+    @Method(desc = "更新保存作业系统参数",
+            logicStep = "1.正常的数据访问1，数据都正常" +
+                    "2.错误的数据访问1，etl_sys_cd为空" +
+                    "3.错误的数据访问2，etl_sys_cd为空格" +
+                    "4.错误的数据访问3，etl_sys_cd为不存在的数据" +
+                    "5.错误的数据访问4，para_cd为空" +
+                    "6.错误的数据访问5，para_cd为空格" +
+                    "7.错误的数据访问6，para_cd为不存在的数据" +
+                    "8.错误的数据访问7，para_type为空" +
+                    "9.错误的数据访问7，para_type为空格" +
+                    "10.错误的数据访问9，para_type为不合法的，不存在的代码项" +
+                    "11.错误的数据访问10，para_val为空格" +
+                    "12.错误的数据访问11，para_val为空格")
+    @Test
+    public void updateEtlPara() {
+        try (DatabaseWrapper db = new DatabaseWrapper()) {
+            // 1.正常的数据访问1，数据都正常
+            String bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("para_cd", ParaCd)
+                    .addData("para_type", ParamType.CanShu.getCode())
+                    .addData("para_val", IsFlag.Fou.getCode())
+                    .addData("para_desc", "编辑系统参数测试1")
+                    .post(getActionUrl("updateEtlPara"))
+                    .getBodyString();
+            ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(true));
+            Etl_para etlPara = SqlOperator.queryOneObject(db, Etl_para.class,
+                    "select * from " + Etl_para.TableName + " where etl_sys_cd=? and para_cd=?"
+                    , EtlSysCd, ParaCd).orElseThrow(() ->
+                    new BusinessException("sql查询错误或映射错误！"));
+            assertThat(EtlSysCd, is(etlPara.getEtl_sys_cd()));
+            assertThat(ParaCd, is(etlPara.getPara_cd()));
+            assertThat(ParamType.CanShu.getCode(), is(etlPara.getPara_type()));
+            assertThat(IsFlag.Fou.getCode(), is(etlPara.getPara_val()));
+            assertThat("编辑系统参数测试1", is(etlPara.getPara_desc()));
+            // 2.错误的数据访问1，etl_sys_cd为空
+            bodyString = new HttpClient().addData("etl_sys_cd", "")
+                    .addData("para_cd", "upParaCd2")
+                    .addData("para_type", ParamType.CanShu.getCode())
+                    .addData("para_val", IsFlag.Shi.getCode())
+                    .addData("para_desc", "编辑系统参数测试2")
+                    .post(getActionUrl("updateEtlPara"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 3.错误的数据访问2，etl_sys_cd为空格
+            bodyString = new HttpClient().addData("etl_sys_cd", " ")
+                    .addData("para_cd", "upParaCd3")
+                    .addData("para_type", ParamType.CanShu.getCode())
+                    .addData("para_val", IsFlag.Shi.getCode())
+                    .addData("para_desc", "编辑系统参数测试3")
+                    .post(getActionUrl("updateEtlPara"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 4.错误的数据访问3，etl_sys_cd为不存在的数据
+            bodyString = new HttpClient().addData("etl_sys_cd", "xtcscs1")
+                    .addData("para_cd", "upParaCd4")
+                    .addData("para_type", ParamType.CanShu.getCode())
+                    .addData("para_val", IsFlag.Shi.getCode())
+                    .addData("para_desc", "编辑系统参数测试4")
+                    .post(getActionUrl("updateEtlPara"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 5.错误的数据访问4，para_cd为空
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("para_cd", "")
+                    .addData("para_type", ParamType.CanShu.getCode())
+                    .addData("para_val", IsFlag.Shi.getCode())
+                    .addData("para_desc", "编辑系统参数测试5")
+                    .post(getActionUrl("updateEtlPara"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 6.错误的数据访问5，para_cd为空格
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("para_cd", " ")
+                    .addData("para_type", ParamType.CanShu.getCode())
+                    .addData("para_val", IsFlag.Shi.getCode())
+                    .addData("para_desc", "编辑系统参数测试6")
+                    .post(getActionUrl("updateEtlPara"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 7.错误的数据访问6，para_cd为不存在的数据
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("para_cd", "upParaCd")
+                    .addData("para_type", ParamType.CanShu.getCode())
+                    .addData("para_val", IsFlag.Shi.getCode())
+                    .addData("para_desc", "编辑系统参数测试7")
+                    .post(getActionUrl("updateEtlPara"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 8.错误的数据访问7，para_type为空
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("para_cd", "upParaCd8")
+                    .addData("para_type", "")
+                    .addData("para_val", IsFlag.Shi.getCode())
+                    .addData("para_desc", "编辑系统参数测试8")
+                    .post(getActionUrl("updateEtlPara"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 9.错误的数据访问8，para_type为空格
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("para_cd", "upParaCd9")
+                    .addData("para_type", " ")
+                    .addData("para_val", IsFlag.Shi.getCode())
+                    .addData("para_desc", "编辑系统参数测试9")
+                    .post(getActionUrl("updateEtlPara"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 10.错误的数据访问9，para_type为不合法的，不存在的代码项
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("para_cd", "upParaCd9")
+                    .addData("para_type", "date")
+                    .addData("para_val", IsFlag.Shi.getCode())
+                    .addData("para_desc", "编辑系统参数测试9")
+                    .post(getActionUrl("updateEtlPara"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 11.错误的数据访问10，para_val为空格
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("para_cd", "upParaCd9")
+                    .addData("para_type", " ")
+                    .addData("para_val", "")
+                    .addData("para_desc", "编辑系统参数测试9")
+                    .post(getActionUrl("updateEtlPara"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 12.错误的数据访问11，para_val为空格
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("para_cd", "upParaCd9")
+                    .addData("para_type", " ")
+                    .addData("para_val", " ")
+                    .addData("para_desc", "编辑系统参数测试9")
+                    .post(getActionUrl("updateEtlPara"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+        }
+    }
+
+    @Method(desc = "批量删除作业系统参数",
+            logicStep = "1.正常的数据访问1，数据都正常" +
+                    "2.错误的数据访问1，etl_sys_cd不存在" +
+                    "3.错误的数据访问2，para_cd不存在")
+    @Test
+    public void batchDeleteEtlPara() {
+        try (DatabaseWrapper db = new DatabaseWrapper()) {
+            // 1.正常的数据访问1，数据都正常
+            // 删除前查询数据库，确认预期删除的数据存在
+            OptionalLong optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
+                            Etl_para.TableName + " where etl_sys_cd=? and para_cd in (?,?)",
+                    EtlSysCd, ParaCd3, ParaCd4);
+            assertThat("删除操作前，data_source表中的确存在这样一条数据", optionalLong.
+                    orElse(Long.MIN_VALUE), is(2L));
+            String bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("para_cd", new String[]{ParaCd3, ParaCd4})
+                    .post(getActionUrl("batchDeleteEtlPara"))
+                    .getBodyString();
+            ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(true));
+            // 删除后查询数据库，确认预期数据已删除
+            optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
+                            Etl_para.TableName + " where etl_sys_cd=? and para_cd in (?,?)",
+                    EtlSysCd, ParaCd3, ParaCd4);
+            assertThat("删除操作后，确认这条数据已删除", optionalLong.
+                    orElse(Long.MIN_VALUE), is(0L));
+            // 2.错误的数据访问1，etl_sys_cd不存在
+            bodyString = new HttpClient().addData("etl_sys_cd", "sccs1")
+                    .addData("sub_sys_cd", new String[]{ParaCd, ParaCd2})
+                    .post(getActionUrl("batchDeleteEtlPara"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 3.错误的数据访问2，para_cd不存在
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("para_cd", new String[]{"sccs1", ParaCd3})
+                    .post(getActionUrl("batchDeleteEtlPara"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+            assertThat(ar.isSuccess(), is(false));
+        }
+    }
+
+    @Method(desc = "删除作业系统参数",
+            logicStep = "1.正常的数据访问1，数据都正常" +
+                    "2.错误的数据访问1，etl_sys_cd不存在" +
+                    "3.错误的数据访问2，para_cd不存在")
+    @Test
+    public void deleteEtlPara() {
+        try (DatabaseWrapper db = new DatabaseWrapper()) {
+            // 1.正常的数据访问1，数据都正常
+            // 删除前查询数据库，确认预期删除的数据存在
+            OptionalLong optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
+                    Etl_para.TableName + " where etl_sys_cd=? and para_cd=?", EtlSysCd, ParaCd5);
+            assertThat("删除操作前，data_source表中的确存在这样一条数据", optionalLong.
+                    orElse(Long.MIN_VALUE), is(1L));
+            String bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("para_cd", ParaCd5)
+                    .post(getActionUrl("deleteEtlPara"))
+                    .getBodyString();
+            ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(true));
+            // 删除后查询数据库，确认预期数据已删除
+            optionalLong = SqlOperator.queryNumber(db, "select count(1) from " + Etl_para.TableName
+                    + " where etl_sys_cd=? and para_cd=?", EtlSysCd, ParaCd5);
+            assertThat("删除操作后，确认这条数据已删除", optionalLong.
+                    orElse(Long.MIN_VALUE), is(0L));
+            // 2.错误的数据访问1，etl_sys_cd不存在
+            bodyString = new HttpClient().addData("etl_sys_cd", "sccs1")
+                    .addData("sub_sys_cd", new String[]{ParaCd, ParaCd2})
+                    .post(getActionUrl("deleteEtlPara"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 3.错误的数据访问2，para_cd不存在
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("para_cd", "sccs2")
+                    .post(getActionUrl("deleteEtlPara"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
             assertThat(ar.isSuccess(), is(false));
         }
     }

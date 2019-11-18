@@ -1156,24 +1156,26 @@ public class JobConfiguration extends BaseAction {
 
     @Method(desc = "新增保存作业系统参数",
             logicStep = "1.数据可访问权限处理方式，通过user_id进行权限验证" +
-                    "2.验证当前用户下的工程是否存在" +
-                    "3.判断作业系统参数变量名称是否已存在" +
-                    "4.保存作业系统参数")
+                    "2.字段合法性验证" +
+                    "3.验证当前用户下的工程是否存在" +
+                    "4.系统参数变量名称需要拼接前缀！" +
+                    "5.判断作业系统参数变量名称是否已存在" +
+                    "6.保存作业系统参数")
     @Param(name = "etl_para", desc = "作业系统参数实体对象", range = "与数据库对应表字段规则一致", isBean = true)
     public void saveEtlPara(Etl_para etl_para) {
         // 1.数据可访问权限处理方式，通过user_id进行权限验证
-        // 字段合法性验证
+        // 2.字段合法性验证
         checkEtlParaField(etl_para);
-        // 2.验证当前用户下的工程是否存在
+        // 3.验证当前用户下的工程是否存在
         isEtlSysExist(etl_para.getEtl_sys_cd(), getUserId());
-        // 系统参数变量名称需要拼接前缀！
+        // 4.系统参数变量名称需要拼接前缀！
         String para_cd = PREFIX + etl_para.getPara_cd();
-        // 3.判断作业系统参数变量名称是否已存在
+        // 5.判断作业系统参数变量名称是否已存在
         if (isEtlParaExist(etl_para.getEtl_sys_cd(), para_cd)) {
             throw new BusinessException("作业系统参数变量名称已存在,不能新增！");
         }
         etl_para.setPara_cd(para_cd);
-        // 4.保存作业系统参数
+        // 6.保存作业系统参数
         etl_para.add(Dbo.db());
     }
 
@@ -1218,13 +1220,19 @@ public class JobConfiguration extends BaseAction {
         return false;
     }
 
-    @Method(desc = "更新保存作业系统参数", logicStep = "方法步骤")
+    @Method(desc = "更新保存作业系统参数",
+            logicStep = "1.数据可访问权限处理方式，通过user_id进行权限验证" +
+                    "2.字段合法性验证" +
+                    "3.验证当前用户下的工程是否存在" +
+                    "4.更新作业系统参数")
     @Param(name = "etl_para", desc = "作业系统参数实体对象", range = "与数据库对应表字段规则一致")
     public void updateEtlPara(Etl_para etl_para) {
         // 1.数据可访问权限处理方式，通过user_id进行权限验证
-        // 2.验证当前用户下的工程是否存在
+        // 2.字段合法性验证
+        checkEtlParaField(etl_para);
+        // 3.验证当前用户下的工程是否存在
         isEtlSysExist(etl_para.getEtl_sys_cd(), getUserId());
-        // 3.更新作业系统参数
+        // 4.更新作业系统参数
         etl_para.update(Dbo.db());
     }
 
@@ -1256,7 +1264,7 @@ public class JobConfiguration extends BaseAction {
                     "4.循环删除作业系统参数")
     @Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
     @Param(name = "para_cd", desc = "变量名称的数组", range = "无限制")
-    public void batcheDeleteEtlPara(String etl_sys_cd, String[] para_cd) {
+    public void batchDeleteEtlPara(String etl_sys_cd, String[] para_cd) {
         // 1.数据可访问权限处理方式，该方法不需要权限验证
         // 2.验证当前用户下的工程是否存在
         isEtlSysExist(etl_sys_cd, getUserId());
@@ -1265,7 +1273,7 @@ public class JobConfiguration extends BaseAction {
             // 4.循环删除作业系统参数
             DboExecute.deletesOrThrow("删除作业系统参数失败，etl_sys_cd=" + etl_sys_cd +
                     ",para_cd=" + paraCd, "delete from " + Etl_para.TableName +
-                    " where etl_sys_cd = ? AND etl_job = ?", etl_sys_cd, paraCd);
+                    " where etl_sys_cd = ? AND para_cd = ?", etl_sys_cd, paraCd);
         }
     }
 
@@ -1282,7 +1290,7 @@ public class JobConfiguration extends BaseAction {
         // 3.删除作业系统参数
         DboExecute.deletesOrThrow("删除作业系统参数失败，etl_sys_cd=" + etl_sys_cd +
                 ",para_cd=" + para_cd, "delete from " + Etl_para.TableName +
-                " where etl_sys_cd = ? AND etl_job = ?", etl_sys_cd, para_cd);
+                " where etl_sys_cd = ? AND para_cd = ?", etl_sys_cd, para_cd);
     }
 
     @Method(desc = "分页查询作业依赖信息",
