@@ -262,7 +262,7 @@ public class JobConfiguration extends BaseAction {
         }
     }
 
-    @Method(desc = "获取该工程下对应作业模板信息",
+    @Method(desc = "获取该工程下素有作业模板信息",
             logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制" +
                     "2.返回作业模板相关信息集合")
     @Return(desc = "返回作业模板相关信息集合", range = "无限制")
@@ -272,7 +272,7 @@ public class JobConfiguration extends BaseAction {
         return Dbo.queryResult("select * from " + Etl_job_temp.TableName);
     }
 
-    @Method(desc = "获取模板信息",
+    @Method(desc = "通过模板ID获取模板信息",
             logicStep = "1.数据可访问权限处理方式，此方法不需要用户权限控制" +
                     "2.根据模板ID查询模板信息")
     @Param(name = "etl_temp_id", desc = "模板作业ID", range = "无限制")
