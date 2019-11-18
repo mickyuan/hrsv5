@@ -857,10 +857,11 @@ public class JobConfigurationTest extends WebBaseTestCase {
         assertThat(ar.isSuccess(), is(false));
     }
 
-    @Method(desc = "分页查询作业系统参数，此方法只有三种情况",
-            logicStep = "1.正常的数据访问1，数据都正常,para_cd 为空" +
-                    "2.正常的数据访问2，数据都正常，para_cd不为空" +
-                    "3.错误的数据访问1，工程编号不存在")
+    @Method(desc = "根据工程编号、变量名称查询作业系统参数，此方法只有三种情况",
+            logicStep = "1.正常的数据访问1" +
+                    "2.错误的数据访问1，etl_sys_cd不存在" +
+                    "3.错误的数据访问1，工程编号不存在" +
+                    "3.错误的数据访问2，para_cd不存在")
     @Test
     public void searchEtlPara() {
         // 1.正常的数据访问1，数据都正常
@@ -877,6 +878,22 @@ public class JobConfigurationTest extends WebBaseTestCase {
         assertThat(dataForMap.get("para_val"), is(SysDate));
         assertThat(dataForMap.get("etl_sys_cd"), is(EtlSysCd));
         assertThat(dataForMap.get("para_cd"), is(ParaCd));
+        // 2.错误的数据访问1，etl_sys_cd不存在
+        bodyString = new HttpClient().addData("etl_sys_cd", "searchEtlPara")
+                .addData("para_cd", ParaCd)
+                .post(getActionUrl("searchEtlPara"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(false));
+        // 3.错误的数据访问2，para_cd不存在
+        bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                .addData("para_cd", "paraCdCs")
+                .post(getActionUrl("searchEtlPara"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(false));
     }
 
     @Method(desc = "验证作业系统参数的正确性", logicStep = "该方法不需要测试")

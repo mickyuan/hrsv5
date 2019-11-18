@@ -1199,7 +1199,7 @@ public class JobConfiguration extends BaseAction {
         etl_para.update(Dbo.db());
     }
 
-    @Method(desc = "3.根据工程编号、变量名称查询作业系统参数",
+    @Method(desc = "根据工程编号、变量名称查询作业系统参数",
             logicStep = "1.数据可访问权限处理方式，通过user_id进行权限验证" +
                     "2.验证当前用户下的工程是否存在" +
                     "3.判断当前工程下作业系统参数是否存在" +
