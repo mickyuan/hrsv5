@@ -27,6 +27,7 @@ import java.util.Map;
 @DocClass(desc = "作业调度配置管理", author = "dhw", createdate = "2019/10/28 11:36")
 public class JobConfiguration extends BaseAction {
     private static final SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
+    // 作业系统参数变量名称前缀
     private static final String PREFIX = "!";
 
     @Method(desc = "分页查询作业调度某工程任务信息",
@@ -1161,15 +1162,43 @@ public class JobConfiguration extends BaseAction {
     @Param(name = "etl_para", desc = "作业系统参数实体对象", range = "与数据库对应表字段规则一致", isBean = true)
     public void saveEtlPara(Etl_para etl_para) {
         // 1.数据可访问权限处理方式，通过user_id进行权限验证
+        // 字段合法性验证
+        checkEtlParaField(etl_para);
         // 2.验证当前用户下的工程是否存在
         isEtlSysExist(etl_para.getEtl_sys_cd(), getUserId());
         // 系统参数变量名称需要拼接前缀！
         String para_cd = PREFIX + etl_para.getPara_cd();
         // 3.判断作业系统参数变量名称是否已存在
-        isEtlParaExist(etl_para.getEtl_sys_cd(), para_cd);
+        if (isEtlParaExist(etl_para.getEtl_sys_cd(), para_cd)) {
+            throw new BusinessException("作业系统参数变量名称已存在,不能新增！");
+        }
         etl_para.setPara_cd(para_cd);
         // 4.保存作业系统参数
         etl_para.add(Dbo.db());
+    }
+
+    @Method(desc = "验证作业系统参数字段合法性",
+            logicStep = "1.数据可访问权限处理方式，该方法不需要权限控制" +
+                    "2.验证etl_sys_cd合法性" +
+                    "3.验证para_cd合法性" +
+                    "4.验证para_val合法性")
+    @Param(name = "etl_para", desc = "作业系统参数实体对象", range = "与数据库对应表字段规则一致", isBean = true)
+    private void checkEtlParaField(Etl_para etl_para) {
+        // 1.数据可访问权限处理方式，该方法不需要权限控制
+        // 2.验证etl_sys_cd合法性
+        if (StringUtil.isBlank(etl_para.getEtl_sys_cd())) {
+            throw new BusinessException("etl_sys_cd不能为空以及空格！");
+        }
+        // 3.验证para_cd合法性
+        if (StringUtil.isBlank(etl_para.getPara_cd())) {
+            throw new BusinessException("para_cd不能为空以及空格！");
+        }
+        // 4.验证para_val合法性
+        if (StringUtil.isBlank(etl_para.getPara_val())) {
+            throw new BusinessException("para_val不能为空以及空格！");
+        }
+        // 5.验证para_type合法性
+        ParamType.ofEnumByCode(etl_para.getPara_type());
     }
 
     @Method(desc = "判断作业系统参数变量名称是否已存在",
