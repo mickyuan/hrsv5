@@ -368,7 +368,9 @@ public class JobConfiguration extends BaseAction {
             }
         }
         // 7.判断作业名称是否已存在，存在不能新增
-        isEtlJobDefExist(etl_sys_cd, etl_job);
+        if (isEtlJobDefExist(etl_sys_cd, etl_job)) {
+            throw new BusinessException("作业名称已存在不能新增!");
+        }
         // 8.保存模板作业
         Etl_dependency etlDependency = new Etl_dependency();
         etlDependency.setEtl_sys_cd(etl_sys_cd);
@@ -454,7 +456,9 @@ public class JobConfiguration extends BaseAction {
         // 2.验证当前用户下的工程是否存在
         isEtlSysExist(etl_sys_cd, getUserId());
         // 3.判断当前工程下作业是否存在
-        isEtlJobDefExist(etl_sys_cd, etl_job);
+        if (!isEtlJobDefExist(etl_sys_cd, etl_job)) {
+            throw new BusinessException("当前工程下作业已不存在,可能被删除！");
+        }
         // 4.返回根据工程编号、作业名称查询作业定义信息，实体字段基本都需要所以查询所有字段
         return Dbo.queryOneObject("select * from " + Etl_job_def.TableName + " where etl_sys_cd=?" +
                 " AND etl_job=?", etl_sys_cd, etl_job);
@@ -476,7 +480,9 @@ public class JobConfiguration extends BaseAction {
         // 2.验证当前用户下的工程是否存在
         isEtlSysExist(etl_job_def.getEtl_sys_cd(), getUserId());
         // 3.判断作业名称是否已存在，存在，不能新增
-        isEtlJobDefExist(etl_job_def.getEtl_sys_cd(), etl_job_def.getEtl_job());
+        if (isEtlJobDefExist(etl_job_def.getEtl_sys_cd(), etl_job_def.getEtl_job())) {
+            throw new BusinessException("作业名称已存在不能新增!");
+        }
         // 4.判断如果作业程序类型是  Thrift 或者 Yarn.则默认分配一条资源使用信息
         isThriftOrYarnProType(etl_job_def.getEtl_sys_cd(), etl_job_def.getEtl_job(),
                 etl_job_def.getPro_type());
@@ -495,14 +501,16 @@ public class JobConfiguration extends BaseAction {
                     "2.新增作业判断作业名称是否已存在，存在不能新增")
     @Param(name = "etl_job_def", desc = "作业定义实体对象", range = "与etl_job_def数据库表定义规则一致",
             isBean = true)
-    private void isEtlJobDefExist(String etl_sys_cd, String etl_job) {
+    @Return(desc = "作业名称是否已存在标志", range = "true代表已存在，false代表不存在")
+    private boolean isEtlJobDefExist(String etl_sys_cd, String etl_job) {
         // 1.数据可访问权限处理方式，该方法不需要权限验证
         // 2.新增作业判断作业名称是否已存在，存在不能新增
         if (Dbo.queryNumber("SELECT count(1) FROM " + Etl_job_def.TableName + " WHERE etl_job=? " +
                 " AND etl_sys_cd=?", etl_job, etl_sys_cd).orElseThrow(() ->
                 new BusinessException("sql查询错误")) > 0) {
-            throw new BusinessException("该工程对应的作业名称已存在，不能新增！");
+            return true;
         }
+        return false;
     }
 
     @Method(desc = "根据调度频率不同封装作业定义实体对象的不同属性",
@@ -616,7 +624,9 @@ public class JobConfiguration extends BaseAction {
     private void isResourceDemandTooLarge(String etl_sys_cd, String resource_type, Integer resource_seq) {
         // 1.数据可访问权限处理方式，此方法不需要权限控制
         // 2.判断资源是否存在
-        isEtlResourceExist(etl_sys_cd, resource_type);
+        if (!isEtlResourceExist(etl_sys_cd, resource_type)) {
+            throw new BusinessException("当前工程对应的资源已不存在！");
+        }
         // 3.检测当前作业分配的占用资源数是否过大
         List<Integer> resource_max = Dbo.queryOneColumnList("select resource_max from "
                         + Etl_resource.TableName + " where etl_sys_cd=? AND resource_type=?",
@@ -639,7 +649,9 @@ public class JobConfiguration extends BaseAction {
         // 2.判断工程是否存在
         isEtlSysExist(jobResourceRelation.getEtl_sys_cd(), getUserId());
         // 3.新增时.检测当前作业是否已经分配过资源
-        isEtlJobResourceRelationExist(jobResourceRelation.getEtl_sys_cd(), jobResourceRelation.getEtl_job());
+        if (isEtlJobResourceRelationExist(jobResourceRelation.getEtl_sys_cd(), jobResourceRelation.getEtl_job())) {
+            throw new BusinessException("当前工程对应作业资源分配信息已存在，不能新增！");
+        }
         // 4.检测当前作业分配的占用资源数是否过大
         isResourceDemandTooLarge(jobResourceRelation.getEtl_sys_cd(), jobResourceRelation.getResource_type(),
                 jobResourceRelation.getResource_req());
@@ -708,7 +720,9 @@ public class JobConfiguration extends BaseAction {
         // 2.判断工程是否存在
         isEtlSysExist(etl_sys_cd, getUserId());
         // 3.判断当前工程下作业资源使用情况是否存在
-        isEtlJobResourceRelationExist(etl_sys_cd, etl_job);
+        if (!isEtlJobResourceRelationExist(etl_sys_cd, etl_job)) {
+            throw new BusinessException("当前工程对应作业资源分配信息不存在！");
+        }
         // 4.返回根据工程编号、作业名称查询作业资源分配情况，实体字段基本都需要所以查询所有字段
         return Dbo.queryOneObject("select * from " + Etl_job_resource_rela.TableName +
                 " where etl_sys_cd=? AND etl_job=?", etl_sys_cd, etl_job);
@@ -886,15 +900,16 @@ public class JobConfiguration extends BaseAction {
                     "2.判断当前工程对应作业资源分配信息是否存在")
     @Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
     @Param(name = "etl_job", desc = "作业名称", range = "新增作业时生成")
-    private void isEtlJobResourceRelationExist(String etl_sys_cd, String etl_job) {
+    @Return(desc = "当前工程对应作业资源分配信息是否存在标志", range = "true代表存在，false代表不存在")
+    private boolean isEtlJobResourceRelationExist(String etl_sys_cd, String etl_job) {
         // 1.数据可访问权限处理方式，该方法不需要权限验证
         // 2.判断当前工程对应作业资源分配信息是否存在
         if (Dbo.queryNumber("select count(*) from " + Etl_job_resource_rela.TableName +
                 " where etl_sys_cd=? and etl_job=?", etl_sys_cd, etl_job).orElseThrow(() ->
-                new BusinessException("sql查询错误")) == 0) {
-            // 当前工程对应作业资源分配信息不存在,
-            throw new BusinessException("当前工程对应作业资源分配信息不存在！");
+                new BusinessException("sql查询错误")) > 0) {
+            return true;
         }
+        return false;
     }
 
     @Method(desc = "根据工程编号，作业名称批量删除Etl作业资源关系",
@@ -987,7 +1002,9 @@ public class JobConfiguration extends BaseAction {
         // 2.验证当前用户下的工程是否存在
         isEtlSysExist(etl_sys_cd, getUserId());
         // 3.判断当前工程下资源定义信息是否存在
-        isEtlResourceExist(etl_sys_cd, resource_type);
+        if (isEtlResourceExist(etl_sys_cd, resource_type)) {
+            throw new BusinessException("当前工程对应的资源已不存在！");
+        }
         // 4.返回根据工程编号、资源类型查询资源定义信息,实体字段基本都需要所以查询所有字段
         return Dbo.queryOneObject("select * from " + Etl_resource.TableName + " where etl_sys_cd=?" +
                 " AND resource_type=?", etl_sys_cd, resource_type);
@@ -1005,22 +1022,30 @@ public class JobConfiguration extends BaseAction {
         // 2.判断当前工程是否还存在
         isEtlSysExist(etl_resource.getEtl_sys_cd(), getUserId());
         // 3.确认新增的资源不存在，存在不能新增
-        isEtlResourceExist(etl_resource.getEtl_sys_cd(), etl_resource.getResource_type());
+        if (isEtlResourceExist(etl_resource.getEtl_sys_cd(), etl_resource.getResource_type())) {
+            throw new BusinessException("当前工程对应的资源已存在,不能新增！");
+        }
         // 目前的服务器同步标志先使用默认的同步
         etl_resource.setMain_serv_sync(Main_Server_Sync.YES.getCode());
         // 4.新增资源定义信息
         etl_resource.add(Dbo.db());
     }
 
-    @Method(desc = "判断资源是否存在", logicStep = "方法步骤")
+    @Method(desc = "判断资源是否存在",
+            logicStep = "1.数据可访问权限处理方式，该方法不需要权限控制" +
+                    "2.判断资源是否存在")
     @Param(name = "etl_sys_cd", desc = "工程编号", range = "无限制")
     @Param(name = "resource_type", desc = "资源类型", range = "无限制")
-    private void isEtlResourceExist(String etl_sys_cd, String resource_type) {
+    @Return(desc = "资源是否存在标志", range = "true代表存在，false代表不存在")
+    private boolean isEtlResourceExist(String etl_sys_cd, String resource_type) {
+        // 1.数据可访问权限处理方式，该方法不需要权限控制
+        // 2.判断资源是否存在
         if (Dbo.queryNumber("SELECT count(1) FROM " + Etl_resource.TableName + " WHERE resource_type=?"
                 + " AND etl_sys_cd=?", resource_type, etl_sys_cd)
                 .orElseThrow(() -> new BusinessException("sql查询错误！")) > 0) {
-            throw new BusinessException("当前工程对应的资源已存在,不能新增！");
+            return true;
         }
+        return false;
     }
 
     @Method(desc = "更新资源信息",
@@ -1152,14 +1177,16 @@ public class JobConfiguration extends BaseAction {
                     "2.判断作业系统参数变量名称是否已存在")
     @Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
     @Param(name = "para_cd", desc = "变量名称", range = "新增作业系统参数时生成")
-    private void isEtlParaExist(String etl_sys_cd, String para_cd) {
+    @Return(desc = "作业系统参数变量名称是否已存在标志", range = "true代表存在，false代表不存在")
+    private boolean isEtlParaExist(String etl_sys_cd, String para_cd) {
         // 1.数据可访问权限处理方式，此方法不需要权限认证
         // 2.判断作业系统参数变量名称是否已存在
         if (Dbo.queryNumber("select count(*) from " + Etl_para.TableName + " where etl_sys_cd=? " +
                 " AND para_cd=?", etl_sys_cd, para_cd)
                 .orElseThrow(() -> new BusinessException("sql查询错误！")) > 0) {
-            throw new BusinessException("作业系统参数变量名称已存在！");
+            return true;
         }
+        return false;
     }
 
     @Method(desc = "更新保存作业系统参数", logicStep = "方法步骤")
@@ -1185,7 +1212,9 @@ public class JobConfiguration extends BaseAction {
         // 2.验证当前用户下的工程是否存在
         isEtlSysExist(etl_sys_cd, getUserId());
         // 3.判断当前工程下作业系统参数是否存在
-        isEtlParaExist(etl_sys_cd, para_cd);
+        if (!isEtlParaExist(etl_sys_cd, para_cd)) {
+            throw new BusinessException("作业系统参数已不存在，可能被删除！");
+        }
         // 4.返回根据工程编号、变量名称查询作业系统参数，实体字段基本都需要所以查询所有字段
         return Dbo.queryOneObject("select * from " + Etl_para.TableName + " where etl_sys_cd=?" +
                 " AND para_cd=?", etl_sys_cd, para_cd);
@@ -1288,7 +1317,9 @@ public class JobConfiguration extends BaseAction {
         // 2.验证当前用户下的工程是否存在
         isEtlSysExist(etl_sys_cd, getUserId());
         // 3.判断当前工程下的依赖作业是否存在
-        isEtlDependencyExist(etl_sys_cd, etl_sys_cd, etl_job, pre_etl_job);
+        if (!isEtlDependencyExist(etl_sys_cd, etl_sys_cd, etl_job, pre_etl_job)) {
+            throw new BusinessException("当前工程对应作业的依赖不存在！");
+        }
         // 4.返回根据工程编号查询作业依赖信息,实体字段基本都需要所以查询所有字段
         return Dbo.queryOneObject("select * from " + Etl_dependency.TableName + " where etl_sys_cd=?" +
                 " AND etl_job=? and pre_etl_job=?", etl_sys_cd, etl_job, pre_etl_job);
@@ -1297,7 +1328,7 @@ public class JobConfiguration extends BaseAction {
     @Method(desc = "新增保存作业依赖",
             logicStep = "1.数据可访问权限处理方式，通过user_id进行权限验证" +
                     "2.验证当前用户下的工程是否存在" +
-                    "3.判断当前依赖是否已存在，如何存在则不能新增" +
+                    "3.判断当前依赖是否已存在，如果存在则不能新增" +
                     "4.将当前作业与上游作业交换，看是否已经存在依赖关系" +
                     "5.新增保存作业依赖")
     @Param(name = "etl_dependency", desc = "作业系统参数实体对象", range = "与数据库对应表字段规则一致", isBean = true)
@@ -1305,12 +1336,16 @@ public class JobConfiguration extends BaseAction {
         // 1.数据可访问权限处理方式，通过user_id进行权限验证
         // 2.验证当前用户下的工程是否存在
         isEtlSysExist(etl_dependency.getEtl_sys_cd(), getUserId());
-        // 3.判断当前依赖是否已存在，如何存在则不能新增
-        isEtlDependencyExist(etl_dependency.getEtl_sys_cd(), etl_dependency.getPre_etl_sys_cd(),
-                etl_dependency.getEtl_job(), etl_dependency.getPre_etl_job());
+        // 3.判断当前依赖是否已存在，如果存在则不能新增
+        if (isEtlDependencyExist(etl_dependency.getEtl_sys_cd(), etl_dependency.getPre_etl_sys_cd(),
+                etl_dependency.getEtl_job(), etl_dependency.getPre_etl_job())) {
+            throw new BusinessException("当前工程对应作业的依赖已存在！");
+        }
         // 4.将当前作业与上游作业交换，看是否已经存在依赖关系
-        isEtlDependencyExist(etl_dependency.getEtl_sys_cd(), etl_dependency.getPre_etl_sys_cd(),
-                etl_dependency.getPre_etl_job(), etl_dependency.getEtl_job());
+        if (isEtlDependencyExist(etl_dependency.getEtl_sys_cd(), etl_dependency.getPre_etl_sys_cd(),
+                etl_dependency.getPre_etl_job(), etl_dependency.getEtl_job())) {
+            throw new BusinessException("当前工程对应作业的依赖已存在！");
+        }
         // 5.新增保存作业依赖
         etl_dependency.add(Dbo.db());
     }
@@ -1393,8 +1428,9 @@ public class JobConfiguration extends BaseAction {
     @Param(name = "pre_etl_sys_cd", desc = "上游工程编号", range = "目前与工程编号相同（因为暂无工程之间依赖）")
     @Param(name = "etl_job", desc = "作业名称", range = "新增作业时生成")
     @Param(name = "pre_etl_job", desc = "作业名称", range = "无限制")
-    private void isEtlDependencyExist(String etl_sys_cd, String pre_etl_sys_cd, String etl_job,
-                                      String pre_etl_job) {
+    @Return(desc = "当前工程对应作业依赖作业是否存在标志", range = "true代表存在，false代表不存在")
+    private boolean isEtlDependencyExist(String etl_sys_cd, String pre_etl_sys_cd, String etl_job,
+                                         String pre_etl_job) {
         // 1.数据可访问权限处理方式，该方法不需要权限验证
         // 2.判断作业名称与上游作业名称是否相同，相同则不能依赖
         if (etl_job.equals(pre_etl_job)) {
@@ -1403,9 +1439,10 @@ public class JobConfiguration extends BaseAction {
         // 3.判断当前工程对应作业依赖作业是否存在
         if (Dbo.queryNumber("select count(*) from " + Etl_dependency.TableName + " where etl_sys_cd=?" +
                         " And etl_job=? AND pre_etl_sys_cd=? AND pre_etl_job=?", etl_sys_cd, etl_job,
-                pre_etl_sys_cd, pre_etl_job).orElseThrow(() -> new BusinessException("sql查询错误")) == 0) {
-            throw new BusinessException("当前工程对应作业的依赖不存在！");
+                pre_etl_sys_cd, pre_etl_job).orElseThrow(() -> new BusinessException("sql查询错误")) > 0) {
+            return true;
         }
+        return false;
     }
 
     @Method(desc = "更新保存作业依赖",
@@ -1417,7 +1454,7 @@ public class JobConfiguration extends BaseAction {
                     "3.3旧作业名称改变，上游名称改变" +
                     "3.4旧作业名称没有改变，上游名称没有改变" +
                     "3.5不存在的作业依赖关系" +
-                    "4.判断作业依赖是否存在" +
+                    "4.判断作业依赖是否存在，存在就不需要更新" +
                     "5.更新作业依赖")
     @Param(name = "etlDependency", desc = "作业系统参数实体对象", range = "与数据库对应表字段规则一致", isBean = true)
     @Param(name = "oldEtlJob", desc = "更新前作业名称", range = "新增作业时生成", isBean = true)
@@ -1448,9 +1485,11 @@ public class JobConfiguration extends BaseAction {
             // 3.5不存在的作业依赖关系
             throw new BusinessException("系统错误，不存在的作业依赖关系！");
         }
-        // 4.判断作业依赖是否存在
-        isEtlDependencyExist(etlDependency.getEtl_sys_cd(), etlDependency.getPre_etl_sys_cd(),
-                etlDependency.getEtl_job(), etlDependency.getPre_etl_job());
+        // 4.判断作业依赖是否存在，存在就不需要更新
+        if (isEtlDependencyExist(etlDependency.getEtl_sys_cd(), etlDependency.getPre_etl_sys_cd(),
+                etlDependency.getEtl_job(), etlDependency.getPre_etl_job())) {
+            throw new BusinessException("当前工程对应作业的依赖已存在！");
+        }
         // 5.更新作业依赖
         DboExecute.deletesOrThrow("更新作业依赖失败，etl_sys_cd=" + etlDependency.getEtl_sys_cd()
                         + ",pre_etl_sys_cd=" + etlDependency.getPre_etl_sys_cd() +

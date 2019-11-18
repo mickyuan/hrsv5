@@ -46,6 +46,9 @@ public class JobConfigurationTest extends WebBaseTestCase {
     private static final long CreateId = 1000L;
     // 测试部门ID dep_id,测试作业调度部门
     private static final long DepId = 1000011L;
+    // 初始化系统参数编号
+    private static final String ParaCd = "#startDate";
+    private static final String ParaCd2 = "#endDate";
     // 初始化测试系统时间
     private static final String SysDate = DateUtil.getSysDate();
 
@@ -223,10 +226,10 @@ public class JobConfigurationTest extends WebBaseTestCase {
             Etl_para etl_para = new Etl_para();
             for (int i = 0; i < 2; i++) {
                 if (i == 0) {
-                    etl_para.setPara_cd("#starDate");
+                    etl_para.setPara_cd(ParaCd);
                     etl_para.setPara_val(SysDate);
                 } else {
-                    etl_para.setPara_cd("#endDate");
+                    etl_para.setPara_cd(ParaCd2);
                     etl_para.setPara_val("99991231");
                 }
                 etl_para.setEtl_sys_cd(EtlSysCd);
@@ -854,16 +857,38 @@ public class JobConfigurationTest extends WebBaseTestCase {
         assertThat(ar.isSuccess(), is(false));
     }
 
+    @Method(desc = "分页查询作业系统参数，此方法只有三种情况",
+            logicStep = "1.正常的数据访问1，数据都正常,para_cd 为空" +
+                    "2.正常的数据访问2，数据都正常，para_cd不为空" +
+                    "3.错误的数据访问1，工程编号不存在")
+    @Test
+    public void searchEtlPara() {
+        // 1.正常的数据访问1，数据都正常
+        String bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                .addData("para_cd", ParaCd)
+                .post(getActionUrl("searchEtlPara"))
+                .getBodyString();
+        ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(true));
+        // 验证查询数据的正确性
+        Map<String, Object> dataForMap = ar.getDataForMap();
+        assertThat(dataForMap.get("para_type"), is(ParamType.CanShu.getCode()));
+        assertThat(dataForMap.get("para_val"), is(SysDate));
+        assertThat(dataForMap.get("etl_sys_cd"), is(EtlSysCd));
+        assertThat(dataForMap.get("para_cd"), is(ParaCd));
+    }
+
     @Method(desc = "验证作业系统参数的正确性", logicStep = "该方法不需要测试")
     @Param(name = "etlParaList", desc = "参数信息的集合", range = "不为空")
     private void checkEtlParaData(List<Map<String, Object>> etlParaList) {
         for (Map<String, Object> etlParaMap : etlParaList) {
             // TODO 不确定原表是否有数据，所以只测自己造的测试数据
-            if (etlParaMap.get("para_cd").equals("#starDate") &&
+            if (etlParaMap.get("para_cd").equals(ParaCd) &&
                     etlParaMap.get("etl_sys_cd").equals("zypzglcs")) {
                 assertThat(etlParaMap.get("para_type"), is(ParamType.CanShu.getCode()));
                 assertThat(etlParaMap.get("para_val"), is(SysDate));
-            } else if (etlParaMap.get("para_cd").equals("#endDate") &&
+            } else if (etlParaMap.get("para_cd").equals(ParaCd2) &&
                     etlParaMap.get("etl_sys_cd").equals("zypzglcs")) {
                 assertThat(etlParaMap.get("para_type"), is(ParamType.CanShu.getCode()));
                 assertThat(etlParaMap.get("para_val"), is("99991231"));
