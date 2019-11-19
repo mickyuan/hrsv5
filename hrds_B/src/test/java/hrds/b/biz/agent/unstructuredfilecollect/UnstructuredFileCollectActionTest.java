@@ -21,6 +21,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Map;
+
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -405,7 +407,7 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
-		assertThat(ar.getDataForEntityList(String.class).isEmpty(), is(false));
+		assertThat(ar.getDataForEntityList(Map.class).isEmpty(), is(false));
 
 		//2.一个错误的agent_id，没有路径
 		bodyString = new HttpClient()
@@ -424,7 +426,8 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 			ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 					-> new BusinessException("连接失败！"));
 			assertThat(ar.isSuccess(), is(true));
-			assertThat(ar.getDataForEntityList(String.class).isEmpty(), is(false));
+			assertThat(ar.getDataForEntityList(Map.class).isEmpty(), is(false));
+			System.out.println("==========="+ar.getData().toString());
 		}
 		//一个正确的agent_id，正确的路径
 		if (SystemUtil.OS_NAME.toLowerCase().contains("linux")) {
@@ -435,7 +438,7 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 			ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 					-> new BusinessException("连接失败！"));
 			assertThat(ar.isSuccess(), is(true));
-			assertThat(ar.getDataForEntityList(String.class).isEmpty(), is(false));
+			assertThat(ar.getDataForEntityList(Map.class).isEmpty(), is(false));
 		}
 		//4.一个正确的agent_id，错误的路径
 		bodyString = new HttpClient()
@@ -445,7 +448,7 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
-		assertThat(ar.getDataForEntityList(String.class).isEmpty(), is(true));
+		assertThat(ar.getDataForEntityList(Map.class).isEmpty(), is(true));
 	}
 
 	/**

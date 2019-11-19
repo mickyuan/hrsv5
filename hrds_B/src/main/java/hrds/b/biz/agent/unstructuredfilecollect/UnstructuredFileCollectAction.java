@@ -129,7 +129,7 @@ public class UnstructuredFileCollectAction extends BaseAction {
 			valueIfNull = "", range = "可为空")
 	@Return(desc = "路径下文件夹的名称和服务器操作系统的名称的集合", range = "可能为空")
 	//XXX 这里不用nullable是不想下面传参数那里判断null
-	public List<String> selectPath(long agent_id, String path) {
+	public List<Map> selectPath(long agent_id, String path) {
 		//TODO 根据操作系统校验文件路径，应该使用一个公共的校验类进行校验
 		//数据可访问权限处理方式，传入用户需要有Agent对应数据的访问权限
 		//1.根据前端传过来的agent_id获取需要访问的url
@@ -145,7 +145,7 @@ public class UnstructuredFileCollectAction extends BaseAction {
 			throw new BusinessException("连接远程Agent获取文件夹失败");
 		}
 		//3.返回到前端
-		return ar.getDataForEntityList(String.class);
+		return ar.getDataForEntityList(Map.class);
 	}
 
 	@Method(desc = "将页面选择的需要采集的源文件路径保存到数据库",
