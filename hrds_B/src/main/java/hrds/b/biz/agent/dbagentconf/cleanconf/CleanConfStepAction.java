@@ -47,7 +47,7 @@ public class CleanConfStepAction extends BaseAction{
 	@Return(desc = "查询结果集", range = "不为空，" +
 			"key为cleanConf，表示当前页数据，其中compflag/replaceflag/trimflag三个字段的值，" +
 			"不为0表示该表做了相应的清洗设置，0表示没有做相应的设置" +
-			"key为totalSize，表示查询到的总页数")
+			"key为totalSize，表示查询到的总条数")
 	public Map<String, Object> getCleanConfInfo(long colSetId, int currPage, int pageSize){
 		Map<String, Object> returnMap = new HashMap<>();
 		//1、根据colSetId在table_info表中获取上一个页面配置好的采集表id
@@ -75,10 +75,10 @@ public class CleanConfStepAction extends BaseAction{
 		strSB.append(" ) GROUP BY ti.table_id ");
 
 		Page page = new DefaultPageImpl(currPage, pageSize);
-
 		Result returnResult = Dbo.queryPagedResult(page,
 				strSB.toString(), CleanType.ZiFuBuQi.getCode(), CleanType.ZiFuTiHuan.getCode(),
 				CleanType.ZiFuTrim.getCode());
+
 		returnMap.put("cleanConf", returnResult.toList());
 		returnMap.put("totalSize", page.getTotalSize());
 
@@ -419,8 +419,11 @@ public class CleanConfStepAction extends BaseAction{
 				sqlSB.toString(), CleanType.ZiFuBuQi.getCode(), CleanType.ZiFuTiHuan.getCode(),
 				CleanType.ShiJianZhuanHuan.getCode(), CleanType.ZiFuChaiFen.getCode(),
 				CleanType.MaZhiZhuanHuan.getCode(), CleanType.ZiFuTrim.getCode());
+
+
 		returnMap.put("columnInfo", returnResult.toList());
 		returnMap.put("totalSize", page.getTotalSize());
+
 		return returnMap;
 	}
 
@@ -751,14 +754,16 @@ public class CleanConfStepAction extends BaseAction{
 	@Return(desc = "查询结果", range = "不为空，条数根据实际情况决定")
 	public Result getCVConversionInfo(long columnId){
 		//1、直接拼接SQL语句去数据中进行查询并返回
-		return Dbo.queryResult("select codename, codesys from " + Column_clean.TableName +
-				" where column_id = ? and clean_type = ?", columnId, CleanType.MaZhiZhuanHuan.getCode());
+		return Dbo.queryResult("select osi.orig_sys_code, osi.orig_sys_name ||'('||osi.orig_sys_code||')' as orig_sys_name, cc.codename as code_classify " +
+				" from " + Column_clean.TableName + " cc left join " + Orig_syso_info.TableName + " osi" +
+				" on cc.codesys = osi.orig_sys_code where cc.column_id = ? and clean_type = ?"
+				, columnId, CleanType.MaZhiZhuanHuan.getCode());
 	}
 
 	/*
-	 * 获取当前系统中的所有码值信息
+	 * 获取当前系统中的所有码值系统信息
 	 * */
-	@Method(desc = "获取当前系统中的所有码值信息", logicStep = "" +
+	@Method(desc = "获取当前系统中的所有码值系统信息", logicStep = "" +
 			"1、直接使用SQL语句去数据中进行查询并返回")
 	@Return(desc = "系统中所有码值信息", range = "数据条数根据实际情况决定")
 	public List<Orig_syso_info> getSysCVInfo(){

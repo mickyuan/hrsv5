@@ -31,7 +31,6 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 	private static final long SYS_USER_TABLE_ID = 7001L;
 	private static final long CODE_INFO_TABLE_ID = 7002L;
 	private static final long AGENT_INFO_TABLE_ID = 7003L;
-	private static final long DATA_SOURCE_TABLE_ID = 7004L;
 	private static final long UNEXPECTED_ID = 999999999L;
 
 	/**
@@ -82,7 +81,6 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 	 *      14、column_merge表测试数据
 	 *          14-1、对sys_user表中的user_mobile和useris_admin合并成列，名叫user_mobile_admin
 	 *      15、由于配置了列合并，需要把合并后的列入到table_column表中
-	 *      TODO 被测Action类写完之后，继续构造卸数文件相关数据
 	 *      16、构造卸数文件相关数据
 	 *          16-1、构造采集sys_user表，仅数据抽取，存储方式为非定长，换行符回车，列分隔符|，数据字符集为UTF-8
 	 *          16-2、构造采集code_info表，仅数据抽取，存储方式为定长，数据字符集为UTF-8
@@ -105,7 +103,7 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 	/**
 	 * 测试根据数据库设置ID获得定义卸数文件页面初始信息
 	 *
-	 * 正确数据访问1：使用正确的colSetId访问，应该可以拿到两条数据
+	 * 正确数据访问1：使用正确的colSetId访问，应该可以拿到4条数据
 	 * 错误的数据访问1：使用错误的colSetId访问，应该拿不到任何数据，但是不会报错，访问正常返回
 	 * 错误的测试用例未达到三组:getInitInfo只有一个参数
 	 * @Param: 无

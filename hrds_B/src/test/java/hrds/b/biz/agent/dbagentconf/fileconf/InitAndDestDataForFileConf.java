@@ -23,20 +23,26 @@ import static org.hamcrest.MatcherAssert.assertThat;
  * */
 public class InitAndDestDataForFileConf {
 
-	//测试数据用户ID
 	private static final long TEST_USER_ID = 9997L;
 	private static final long TEST_DEPT_ID = 9987L;
+
+	private static final long SOURCE_ID = 1L;
+
+	private static final long FIRST_DB_AGENT_ID = 7001L;
+	private static final long SECOND_DB_AGENT_ID = 7002L;
+
+	private static final long FIRST_DATABASESET_ID = 1001L;
+
 	private static final long SYS_USER_TABLE_ID = 7001L;
 	private static final long CODE_INFO_TABLE_ID = 7002L;
 	private static final long AGENT_INFO_TABLE_ID = 7003L;
 	private static final long DATA_SOURCE_TABLE_ID = 7004L;
-	private static final long FIRST_DATABASESET_ID = 1001L;
+
 	private static final long BASE_SYS_USER_PRIMARY = 2000L;
-	private static final long FIRST_DB_AGENT_ID = 7001L;
-	private static final long SECOND_DB_AGENT_ID = 7002L;
-	private static final long UNEXPECTED_ID = 999999999L;
-	private static final long SOURCE_ID = 1L;
 	private static final long BASE_EXTRACTION_DEF_ID = 7788L;
+
+	private static final long UNEXPECTED_ID = 999999999L;
+
 	private static final JSONObject tableCleanOrder = BaseInitData.initTableCleanOrder();
 	private static final JSONObject columnCleanOrder = BaseInitData.initColumnCleanOrder();
 

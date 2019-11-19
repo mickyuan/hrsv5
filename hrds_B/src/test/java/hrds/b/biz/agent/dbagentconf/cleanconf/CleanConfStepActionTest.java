@@ -76,6 +76,8 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 *               user_name，user_password，user_email，user_mobile，useris_admin，user_type，和一个login_date列,设置了remark字段，也就是采集顺序，分别是1、2、3、4、5、6、7、8、9、10、11
 	 *          8-2、column_id为3001-3005，模拟采集了code_info表的所有列，列名为ci_sp_code，ci_sp_class，ci_sp_classname，
 	 *               ci_sp_name，ci_sp_remark
+     *          8-3、模拟自定义采集agent_info表的agent_id，agent_name，agent_type三个字段
+	 *          8-4、模拟自定义采集data_source表的source_id，datasource_number，datasource_name三个字段
 	 *      9、table_clean表测试数据：
 	 *          9-1、对sys_user表设置一个整表字符补齐规则
 	 *          9-2、对sys_user表设置一个整表字符替换规则
@@ -1708,8 +1710,9 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 
 		Result rightDataOne = rightResultOne.getDataForResult();
 		assertThat("user_type列定义了码值转换信息", rightDataOne.getRowCount(), is(1));
-		assertThat("user_type列定义了码值转换信息, 码值所属系统符合预期", rightDataOne.getString(0, "codesys"), is("origSysCode_one"));
-		assertThat("user_type列定义了码值转换信息, 码值名称符合预期", rightDataOne.getString(0, "codename"), is("codeClassify_one"));
+		assertThat("user_type列定义了码值转换信息, 码值所属系统符合预期", rightDataOne.getString(0, "orig_sys_code"), is("origSysCode_one"));
+		assertThat("user_type列定义了码值转换信息, 码值名称符合预期", rightDataOne.getString(0, "orig_sys_name"), is("origSysName_one(origSysCode_one)"));
+		assertThat("user_type列定义了码值转换信息, 码值名称符合预期", rightDataOne.getString(0, "code_classify"), is("codeClassify_one"));
 
 		//错误的数据访问1：获取column_id为2009的列的码值转换信息，因为在构造数据的时候没有设置过，所以获取不到
 		String wrongString = new HttpClient()

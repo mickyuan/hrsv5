@@ -31,14 +31,16 @@ public class FileConfStepAction extends BaseAction{
 	@Param(name = "colSetId", desc = "数据库设置ID，源系统数据库设置表主键，数据库对应表外键", range = "不为空")
 	@Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数", nullable = true, valueIfNull = "1")
 	@Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", nullable = true, valueIfNull = "10")
-	@Return(desc = "查询结果集", range = "不为空")
+	@Return(desc = "查询结果集", range = "不为空" +
+			"key为fileConf，表示当前页数据，" +
+			"key为totalSize，表示查询到的总条数")
 	public Map<String, Object> getInitInfo(long colSetId, int currPage, int pageSize){
-		Map<String, Object> returnMap = new HashMap<>();
 		Page page = new DefaultPageImpl(currPage, pageSize);
 		Result result = Dbo.queryPagedResult(page, " select ti.table_id, ti.table_name, ti.table_ch_name, ded.dbfile_format, " +
 				" ded.data_extract_type, ded.row_separator, ded.database_separatorr, ded.database_code, ded.plane_url " +
 				" from " + Table_info.TableName + " ti left join " + Data_extraction_def.TableName + " ded " +
 				" on ti.table_id = ded.table_id where ti.database_id = ?", colSetId);
+		Map<String, Object> returnMap = new HashMap<>();
 		returnMap.put("fileConf", result.toList());
 		returnMap.put("totalSize", page.getTotalSize());
 
@@ -83,7 +85,8 @@ public class FileConfStepAction extends BaseAction{
 			"   3-3、如果是CSV，则不进行校验，即如果用户不填写，就卸成标准CSV，否则，按照用户指定的列分隔符写文件" +
 			"6、如果校验出现问题，直接抛出异常")
 	@Param(name = "def", desc = "用于对待保存的数据进行校验", range = "数据抽取定义实体类对象")
-	//TODO 这个校验的方法需要讨论，如果仅抽数，那么文件格式要从FileFormat代码项取值，如果抽取并入库，那么应该使用HIveStorageType代码项，目前讨论下来的结果是可能会将这两个代码项合并
+	//TODO 这个校验的方法需要讨论，如果仅抽数，那么文件格式要从FileFormat代码项取值，如果抽取并入库，那么应该使用HIveStorageType代码项
+	//TODO 还有需要讨论的地方就是下面的校验方式，如CSV文件的处理
 	private void verifySeqConf(List<Data_extraction_def> dataExtractionDefs){
 		for(int i = 0; i < dataExtractionDefs.size(); i++){
 			Data_extraction_def def = dataExtractionDefs.get(i);

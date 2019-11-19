@@ -74,6 +74,8 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 	 *               user_name，user_password，user_email，user_mobile，useris_admin，user_type
      *          8-2、column_id为3001-3005，模拟采集了code_info表的所有列，列名为ci_sp_code，ci_sp_class，ci_sp_classname，
 	 *               ci_sp_name，ci_sp_remark
+	 *          8-3、模拟自定义采集agent_info表的agent_id，agent_name，agent_type三个字段
+	 *          8-4、模拟自定义采集data_source表的source_id，datasource_number，datasource_name三个字段
 	 *      9、table_storage_info表测试数据：
 	 *          9-1、storage_id为1234，文件格式为CSV，存储方式为替换，table_id为sys_user表的ID
 	 *          9-2、storage_id为5678，文件格式为定长文件，存储方式为追加，table_id为code_info表的ID
