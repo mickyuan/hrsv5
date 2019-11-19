@@ -62,7 +62,7 @@ public class AgentServerInfo extends AgentBaseAction {
 	@Param(name = "pathVal", desc = "页面选择的文件夹路径，为空则表示根目录", nullable = true, range = "可为空")
 	@Param(name = "isFile", desc = "是否显示当前目录下的文件，默认false", valueIfNull = "false", range = "可为空")
 	@Return(desc = "当前文件夹下所有的目录(当isFile为true时返回当前文件夹下所有的目录和文件)", range = "可能为空")
-	public List<String> getSystemFileInfo(String pathVal, String isFile) {
+	public List<Map<String,String>> getSystemFileInfo(String pathVal, String isFile) {
 		File[] file_array;
 		//1.如果需要显示文件夹的路径为空，则默认取根目录下的文件和文件夹
 		if (StringUtil.isBlank(pathVal)) {
@@ -70,7 +70,7 @@ public class AgentServerInfo extends AgentBaseAction {
 		} else {
 			file_array = new File(pathVal).listFiles();
 		}
-		List<String> list = new ArrayList<>();
+		List<Map<String,String>> list = new ArrayList<>();
 		//获取操作系统的名称
 		String osName = SystemUtil.OS_NAME;
 		log.info("获取到了操作系统的名称============" + osName);
@@ -84,12 +84,23 @@ public class AgentServerInfo extends AgentBaseAction {
 					//3.根据操作系统的类型取消系统的一些目录
 					if (osName.toLowerCase().contains("windows")) {
 						if (!windows_nolist.contains(path_hy)) {
-							list.add(name + "^" + path_hy + "^folder^" + osName);
+							Map<String, String> map = new HashMap<>();
+							map.put("isFolder", "true");
+							map.put("name", name);
+							map.put("path", path_hy);
+							map.put("osName", osName);
+							list.add(map);
 						}
 					} else if (osName.toLowerCase().contains("linux")) {
+						//被允许的目录和自己用户下的所有目录和/tmp/下的所有目录
 						if (linux_list.contains(path_hy) || path_hy.startsWith("/home/" + SystemUtil.USER_NAME) ||
 								path_hy.startsWith("/tmp/")) {
-							list.add(name + "^" + path_hy + "^folder^" + osName);
+							Map<String, String> map = new HashMap<>();
+							map.put("name", name);
+							map.put("path", path_hy);
+							map.put("isFolder", "true");
+							map.put("osName", osName);
+							list.add(map);
 						}
 					} else {
 						throw new BusinessException("不支持的操作系统类型");
@@ -100,9 +111,14 @@ public class AgentServerInfo extends AgentBaseAction {
 			if ("true".equals(isFile)) {
 				for (File file : file_array) {
 					if (!file.isDirectory()) {
+						Map<String, String> map = new HashMap<>();
 						String name = file.getName();
 						String path = file.getPath();
-						list.add(name + "^" + path + "^file^" + osName);
+						map.put("name", name);
+						map.put("path", path);
+						map.put("isFolder", "false");
+						map.put("osName", osName);
+						list.add(map);
 					}
 				}
 			}
