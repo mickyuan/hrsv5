@@ -318,22 +318,22 @@ CONSTRAINT OBJECT_COLLECT_PK PRIMARY KEY(ODC_ID)   );
 --数据存储关系表
 DROP TABLE IF EXISTS DATA_RELATION_TABLE ;
 CREATE TABLE DATA_RELATION_TABLE(
-DATASC_ID                                         BIGINT default 0 NOT NULL, --存储配置主键信息
 STORAGE_ID                                        BIGINT default 0 NOT NULL, --储存编号
-CONSTRAINT DATA_RELATION_TABLE_PK PRIMARY KEY(DATASC_ID,STORAGE_ID)   );
+DSL_ID                                            BIGINT default 0 NOT NULL, --存储层配置ID
+CONSTRAINT DATA_RELATION_TABLE_PK PRIMARY KEY(STORAGE_ID,DSL_ID)   );
 
 --字段存储信息
 DROP TABLE IF EXISTS COLUMN_STORAGE_INFO ;
 CREATE TABLE COLUMN_STORAGE_INFO(
 CS_ID                                             BIGINT default 0 NOT NULL, --字段存储ID
-DATASC_ID                                         BIGINT default 0 NOT NULL, --存储配置主键信息
 IS_PRIMARY                                        CHAR(1) NOT NULL, --是否为主键
 IS_PRE                                            CHAR(1) NOT NULL, --是否为cb预聚合列
 IS_SORTCOLUMNS                                    CHAR(1) NOT NULL, --是否为cb的排序列
 IS_SOLR                                           CHAR(1) NOT NULL, --是否solr的索引列
 IS_PARTITION                                      CHAR(1) NOT NULL, --是否为hive的分区列
-COLUMN_ID                                         BIGINT default 0 NOT NULL, --字段ID
 CS_REMARK                                         VARCHAR(512) NULL, --备注
+DSL_ID                                            BIGINT default 0 NOT NULL, --存储层配置ID
+COLUMN_ID                                         BIGINT default 0 NOT NULL, --字段ID
 CONSTRAINT COLUMN_STORAGE_INFO_PK PRIMARY KEY(CS_ID)   );
 
 --数据权限设置表
@@ -1003,16 +1003,15 @@ FTP_TIME                                          CHAR(6) NOT NULL, --ftp时间
 REMARK                                            VARCHAR(512) NULL, --备注
 CONSTRAINT FTP_FOLDER_PK PRIMARY KEY(FTP_FOLDER_ID)   );
 
---数据存储层配置信息表
-DROP TABLE IF EXISTS DATA_STORE_LAYER ;
-CREATE TABLE DATA_STORE_LAYER(
-DATASC_ID                                         BIGINT default 0 NOT NULL, --存储配置主键信息
-LSL_NAME                                          VARCHAR(512) NOT NULL, --数据存储层名称
-STORAGE_TARGET                                    CHAR(1) NOT NULL, --存储类型
+--数据存储层配置属性表
+DROP TABLE IF EXISTS DATA_STORE_LAYER_ATTR ;
+CREATE TABLE DATA_STORE_LAYER_ATTR(
+DSLA_ID                                           BIGINT default 0 NOT NULL, --存储配置主键信息
 STORAGE_PROPERTY_KEY                              VARCHAR(1024) NOT NULL, --属性key
 STORAGE_PROPERTY_VAL                              VARCHAR(1024) NULL, --属性value
 DSL_REMARK                                        VARCHAR(512) NULL, --备注
-CONSTRAINT DATA_STORE_LAYER_PK PRIMARY KEY(DATASC_ID)   );
+DSL_ID                                            BIGINT default 0 NOT NULL, --存储层配置ID
+CONSTRAINT DATA_STORE_LAYER_ATTR_PK PRIMARY KEY(DSLA_ID)   );
 
 --错误信息表
 DROP TABLE IF EXISTS ERROR_INFO ;
@@ -1021,4 +1020,13 @@ ERROR_ID                                          BIGINT default 0 NOT NULL, --�
 JOB_RS_ID                                         VARCHAR(40) NULL, --作业执行结果ID
 ERROR_MSG                                         VARCHAR(15555) NULL, --error_msg
 CONSTRAINT ERROR_INFO_PK PRIMARY KEY(ERROR_ID)   );
+
+--数据存储层配置表
+DROP TABLE IF EXISTS DATA_STORE_LAYER ;
+CREATE TABLE DATA_STORE_LAYER(
+DSL_ID                                            BIGINT default 0 NOT NULL, --存储层配置ID
+DSL_NAME                                          VARCHAR(512) NOT NULL, --配置属性名称
+STORE_TYPE                                        CHAR(1) NOT NULL, --存储类型
+DSL_REMARK                                        VARCHAR(512) NULL, --备注
+CONSTRAINT DATA_STORE_LAYER_PK PRIMARY KEY(DSL_ID)   );
 

@@ -30,8 +30,6 @@ public class Column_storage_info extends ProjectTableEntity
 		__tmpPKS.add("cs_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="datasc_id",value="存储配置主键信息:",dataType = Long.class,required = true)
-	private Long datasc_id;
 	@DocBean(name ="cs_id",value="字段存储ID:",dataType = Long.class,required = true)
 	private Long cs_id;
 	@DocBean(name ="column_id",value="字段ID:",dataType = Long.class,required = true)
@@ -48,21 +46,9 @@ public class Column_storage_info extends ProjectTableEntity
 	private String is_solr;
 	@DocBean(name ="is_partition",value="是否为hive的分区列(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_partition;
+	@DocBean(name ="dsl_id",value="存储层配置ID:",dataType = Long.class,required = true)
+	private Long dsl_id;
 
-	/** 取得：存储配置主键信息 */
-	public Long getDatasc_id(){
-		return datasc_id;
-	}
-	/** 设置：存储配置主键信息 */
-	public void setDatasc_id(Long datasc_id){
-		this.datasc_id=datasc_id;
-	}
-	/** 设置：存储配置主键信息 */
-	public void setDatasc_id(String datasc_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(datasc_id)){
-			this.datasc_id=new Long(datasc_id);
-		}
-	}
 	/** 取得：字段存储ID */
 	public Long getCs_id(){
 		return cs_id;
@@ -138,5 +124,19 @@ public class Column_storage_info extends ProjectTableEntity
 	/** 设置：是否为hive的分区列 */
 	public void setIs_partition(String is_partition){
 		this.is_partition=is_partition;
+	}
+	/** 取得：存储层配置ID */
+	public Long getDsl_id(){
+		return dsl_id;
+	}
+	/** 设置：存储层配置ID */
+	public void setDsl_id(Long dsl_id){
+		this.dsl_id=dsl_id;
+	}
+	/** 设置：存储层配置ID */
+	public void setDsl_id(String dsl_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(dsl_id)){
+			this.dsl_id=new Long(dsl_id);
+		}
 	}
 }

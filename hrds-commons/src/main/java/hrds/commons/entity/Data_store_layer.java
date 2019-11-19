@@ -9,7 +9,7 @@ import java.util.HashSet;
 import java.util.Collections;
 
 /**
- * 数据存储层配置信息表
+ * 数据存储层配置表
  */
 @Table(tableName = "data_store_layer")
 public class Data_store_layer extends ProjectTableEntity
@@ -24,54 +24,50 @@ public class Data_store_layer extends ProjectTableEntity
 	*/
 	public static boolean isPrimaryKey(String name) { return __PrimaryKeys.contains(name); } 
 	public static Set<String> getPrimaryKeyNames() { return __PrimaryKeys; } 
-	/** 数据存储层配置信息表 */
+	/** 数据存储层配置表 */
 	static {
 		Set<String> __tmpPKS = new HashSet<>();
-		__tmpPKS.add("datasc_id");
+		__tmpPKS.add("dsl_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="datasc_id",value="存储配置主键信息:",dataType = Long.class,required = true)
-	private Long datasc_id;
-	@DocBean(name ="storage_target",value="存储类型(store_type):1-关系型数据库<DATABASE> 2-Hbase<HBASE> 3-solr<SOLR> 4-ElasticSearch<ElasticSearch> 5-mongodb<MONGODB> ",dataType = String.class,required = true)
-	private String storage_target;
-	@DocBean(name ="storage_property_key",value="属性key:",dataType = String.class,required = true)
-	private String storage_property_key;
+	@DocBean(name ="dsl_id",value="存储层配置ID:",dataType = Long.class,required = true)
+	private Long dsl_id;
+	@DocBean(name ="dsl_name",value="配置属性名称:",dataType = String.class,required = true)
+	private String dsl_name;
+	@DocBean(name ="store_type",value="存储类型:",dataType = String.class,required = true)
+	private String store_type;
 	@DocBean(name ="dsl_remark",value="备注:",dataType = String.class,required = false)
 	private String dsl_remark;
-	@DocBean(name ="storage_property_val",value="属性value:",dataType = String.class,required = false)
-	private String storage_property_val;
-	@DocBean(name ="lsl_name",value="数据存储层名称:",dataType = String.class,required = true)
-	private String lsl_name;
 
-	/** 取得：存储配置主键信息 */
-	public Long getDatasc_id(){
-		return datasc_id;
+	/** 取得：存储层配置ID */
+	public Long getDsl_id(){
+		return dsl_id;
 	}
-	/** 设置：存储配置主键信息 */
-	public void setDatasc_id(Long datasc_id){
-		this.datasc_id=datasc_id;
+	/** 设置：存储层配置ID */
+	public void setDsl_id(Long dsl_id){
+		this.dsl_id=dsl_id;
 	}
-	/** 设置：存储配置主键信息 */
-	public void setDatasc_id(String datasc_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(datasc_id)){
-			this.datasc_id=new Long(datasc_id);
+	/** 设置：存储层配置ID */
+	public void setDsl_id(String dsl_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(dsl_id)){
+			this.dsl_id=new Long(dsl_id);
 		}
 	}
+	/** 取得：配置属性名称 */
+	public String getDsl_name(){
+		return dsl_name;
+	}
+	/** 设置：配置属性名称 */
+	public void setDsl_name(String dsl_name){
+		this.dsl_name=dsl_name;
+	}
 	/** 取得：存储类型 */
-	public String getStorage_target(){
-		return storage_target;
+	public String getStore_type(){
+		return store_type;
 	}
 	/** 设置：存储类型 */
-	public void setStorage_target(String storage_target){
-		this.storage_target=storage_target;
-	}
-	/** 取得：属性key */
-	public String getStorage_property_key(){
-		return storage_property_key;
-	}
-	/** 设置：属性key */
-	public void setStorage_property_key(String storage_property_key){
-		this.storage_property_key=storage_property_key;
+	public void setStore_type(String store_type){
+		this.store_type=store_type;
 	}
 	/** 取得：备注 */
 	public String getDsl_remark(){
@@ -80,21 +76,5 @@ public class Data_store_layer extends ProjectTableEntity
 	/** 设置：备注 */
 	public void setDsl_remark(String dsl_remark){
 		this.dsl_remark=dsl_remark;
-	}
-	/** 取得：属性value */
-	public String getStorage_property_val(){
-		return storage_property_val;
-	}
-	/** 设置：属性value */
-	public void setStorage_property_val(String storage_property_val){
-		this.storage_property_val=storage_property_val;
-	}
-	/** 取得：数据存储层名称 */
-	public String getLsl_name(){
-		return lsl_name;
-	}
-	/** 设置：数据存储层名称 */
-	public void setLsl_name(String lsl_name){
-		this.lsl_name=lsl_name;
 	}
 }

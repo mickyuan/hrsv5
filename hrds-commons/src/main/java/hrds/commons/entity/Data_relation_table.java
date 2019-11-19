@@ -27,29 +27,15 @@ public class Data_relation_table extends ProjectTableEntity
 	/** 数据存储关系表 */
 	static {
 		Set<String> __tmpPKS = new HashSet<>();
-		__tmpPKS.add("datasc_id");
 		__tmpPKS.add("storage_id");
+		__tmpPKS.add("dsl_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="datasc_id",value="存储配置主键信息:",dataType = Long.class,required = true)
-	private Long datasc_id;
 	@DocBean(name ="storage_id",value="储存编号:",dataType = Long.class,required = true)
 	private Long storage_id;
+	@DocBean(name ="dsl_id",value="存储层配置ID:",dataType = Long.class,required = true)
+	private Long dsl_id;
 
-	/** 取得：存储配置主键信息 */
-	public Long getDatasc_id(){
-		return datasc_id;
-	}
-	/** 设置：存储配置主键信息 */
-	public void setDatasc_id(Long datasc_id){
-		this.datasc_id=datasc_id;
-	}
-	/** 设置：存储配置主键信息 */
-	public void setDatasc_id(String datasc_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(datasc_id)){
-			this.datasc_id=new Long(datasc_id);
-		}
-	}
 	/** 取得：储存编号 */
 	public Long getStorage_id(){
 		return storage_id;
@@ -62,6 +48,20 @@ public class Data_relation_table extends ProjectTableEntity
 	public void setStorage_id(String storage_id){
 		if(!fd.ng.core.utils.StringUtil.isEmpty(storage_id)){
 			this.storage_id=new Long(storage_id);
+		}
+	}
+	/** 取得：存储层配置ID */
+	public Long getDsl_id(){
+		return dsl_id;
+	}
+	/** 设置：存储层配置ID */
+	public void setDsl_id(Long dsl_id){
+		this.dsl_id=dsl_id;
+	}
+	/** 设置：存储层配置ID */
+	public void setDsl_id(String dsl_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(dsl_id)){
+			this.dsl_id=new Long(dsl_id);
 		}
 	}
 }
