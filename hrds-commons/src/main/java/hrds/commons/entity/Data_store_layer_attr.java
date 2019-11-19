@@ -1,0 +1,96 @@
+package hrds.commons.entity;
+/**Auto Created by VBScript Do not modify!*/
+import hrds.commons.entity.fdentity.ProjectTableEntity;
+import fd.ng.db.entity.anno.Table;
+import fd.ng.core.annotation.DocBean;
+import java.math.BigDecimal;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.Collections;
+
+/**
+ * 数据存储层配置属性表
+ */
+@Table(tableName = "data_store_layer_attr")
+public class Data_store_layer_attr extends ProjectTableEntity
+{
+	private static final long serialVersionUID = 321566870187324L;
+	private transient static final Set<String> __PrimaryKeys;
+	public static final String TableName = "data_store_layer_attr";
+	/**
+	* 检查给定的名字，是否为主键中的字段
+	* @param name String 检验是否为主键的名字
+	* @return
+	*/
+	public static boolean isPrimaryKey(String name) { return __PrimaryKeys.contains(name); } 
+	public static Set<String> getPrimaryKeyNames() { return __PrimaryKeys; } 
+	/** 数据存储层配置属性表 */
+	static {
+		Set<String> __tmpPKS = new HashSet<>();
+		__tmpPKS.add("dsla_id");
+		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
+	}
+	@DocBean(name ="dsla_id",value="存储配置主键信息:",dataType = Long.class,required = true)
+	private Long dsla_id;
+	@DocBean(name ="storage_property_key",value="属性key:",dataType = String.class,required = true)
+	private String storage_property_key;
+	@DocBean(name ="dsl_remark",value="备注:",dataType = String.class,required = false)
+	private String dsl_remark;
+	@DocBean(name ="storage_property_val",value="属性value:",dataType = String.class,required = false)
+	private String storage_property_val;
+	@DocBean(name ="dsl_id",value="存储层配置ID:",dataType = Long.class,required = true)
+	private Long dsl_id;
+
+	/** 取得：存储配置主键信息 */
+	public Long getDsla_id(){
+		return dsla_id;
+	}
+	/** 设置：存储配置主键信息 */
+	public void setDsla_id(Long dsla_id){
+		this.dsla_id=dsla_id;
+	}
+	/** 设置：存储配置主键信息 */
+	public void setDsla_id(String dsla_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(dsla_id)){
+			this.dsla_id=new Long(dsla_id);
+		}
+	}
+	/** 取得：属性key */
+	public String getStorage_property_key(){
+		return storage_property_key;
+	}
+	/** 设置：属性key */
+	public void setStorage_property_key(String storage_property_key){
+		this.storage_property_key=storage_property_key;
+	}
+	/** 取得：备注 */
+	public String getDsl_remark(){
+		return dsl_remark;
+	}
+	/** 设置：备注 */
+	public void setDsl_remark(String dsl_remark){
+		this.dsl_remark=dsl_remark;
+	}
+	/** 取得：属性value */
+	public String getStorage_property_val(){
+		return storage_property_val;
+	}
+	/** 设置：属性value */
+	public void setStorage_property_val(String storage_property_val){
+		this.storage_property_val=storage_property_val;
+	}
+	/** 取得：存储层配置ID */
+	public Long getDsl_id(){
+		return dsl_id;
+	}
+	/** 设置：存储层配置ID */
+	public void setDsl_id(Long dsl_id){
+		this.dsl_id=dsl_id;
+	}
+	/** 设置：存储层配置ID */
+	public void setDsl_id(String dsl_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(dsl_id)){
+			this.dsl_id=new Long(dsl_id);
+		}
+	}
+}
