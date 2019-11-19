@@ -10,13 +10,10 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
-import fd.ng.db.jdbc.DefaultPageImpl;
-import fd.ng.db.jdbc.Page;
 import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import fd.ng.web.util.Dbo;
-import hrds.b.biz.agent.tools.ListPageHelper;
 import hrds.b.biz.agent.tools.SendMsgUtil;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.CleanType;
@@ -61,23 +58,12 @@ public class CollTbConfStepAction extends BaseAction {
 
 	@Method(desc = "根据数据库采集设置表ID加载页面初始化数据", logicStep = "1、查询数据并返回")
 	@Param(name = "colSetId", desc = "数据库设置ID,源系统数据库设置表主键,数据库对应表外键", range = "不为空")
-	@Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数", nullable = true, valueIfNull = "1")
-	@Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", nullable = true,
-			valueIfNull = "10")
-	@Return(desc = "查询结果集，key为collTableInfo表示查询到的数据" +
-			"key为totalSize表示查询到的数据的总条数", range = "不会为null")
-	public Map<String, Object> getInitInfo(long colSetId, int currPage, int pageSize) {
-		Map<String, Object> returnList = new HashMap<>();
+	@Return(desc = "查询结果集" , range = "不会为null")
+	public Result getInitInfo(long colSetId) {
 		//1、查询数据并返回
-		Page page = new DefaultPageImpl(currPage, pageSize);
-		Result returnResult = Dbo.queryPagedResult(page,
-				" select ti.table_id,ti.table_name,ti.table_ch_name, ti.is_parallel" +
+		return Dbo.queryResult(" select ti.table_id,ti.table_name,ti.table_ch_name, ti.is_parallel" +
 						" FROM " + Table_info.TableName + " ti " +
 						" WHERE ti.database_id = ? AND ti.is_user_defined = ? ", colSetId, IsFlag.Fou.getCode());
-		returnList.put("collTableInfo", returnResult.toList());
-		returnList.put("totalSize", page.getTotalSize());
-
-		return returnList;
 		//数据可访问权限处理方式
 		//以上table_info表中都没有user_id字段，解决方式待讨论
 	}
@@ -90,13 +76,9 @@ public class CollTbConfStepAction extends BaseAction {
 			"5、根据表名和colSetId获取界面需要显示的信息并返回")
 	@Param(name = "colSetId", desc = "数据库设置ID,源系统数据库设置表主键,数据库对应表外键", range = "不为空")
 	@Param(name = "inputString", desc = "用户界面输入用于模糊查询的关键词", range = "不为空")
-	@Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数", nullable = true, valueIfNull = "1")
-	@Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", nullable = true,
-			valueIfNull = "10")
-	@Return(desc = "查询结果集", range = "key为tableInfo表示当前页的数据，可以为totalSize表示获取到的总条数")
+	@Return(desc = "查询结果集", range = "不为空")
 	//查询按钮
-	public Map<String, Object> getTableInfo(long colSetId, String inputString, int currPage, int pageSize){
-		Map<String, Object> returnMap = new HashMap<>();
+	public List<Result> getTableInfo(long colSetId, String inputString){
 		//1、根据colSetId去数据库中获取数据库设置相关信息
 		Result result = getDatabaseSetInfo(colSetId, getUserId());
 		//数据可访问权限处理方式
@@ -116,10 +98,7 @@ public class CollTbConfStepAction extends BaseAction {
 		JSONObject respObj = JSON.parseObject(respMsg);//TODO 能不能改成BEAN对象
 		List<String> rightTables = (List<String>) respObj.get("tableName");
 		//5、根据表名和colSetId获取界面需要显示的信息并返回
-		List<Result> tbInfoByTbName = getTableInfoByTableName(rightTables, colSetId, currPage, pageSize);
-		returnMap.put("tableInfo", tbInfoByTbName);
-		returnMap.put("totalSize", rightTables.size());
-		return returnMap;
+		return getTableInfoByTableName(rightTables, colSetId);
 	}
 
 	@Method(desc = "根据数据库设置id得到所有表相关信息", logicStep = "" +
@@ -128,12 +107,9 @@ public class CollTbConfStepAction extends BaseAction {
 			"3、和Agent端进行交互，得到Agent返回的数据" +
 			"4、对获取到的数据进行处理，根据表名和colSetId获取界面需要显示的信息并返回")
 	@Param(name = "colSetId", desc = "数据库设置ID,源系统数据库设置表主键,数据库对应表外键", range = "不为空")
-	@Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数", nullable = true, valueIfNull = "1")
-	@Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", nullable = true,
-			valueIfNull = "10")
-	@Return(desc = "查询结果集", range = "不为空,key为allTableInfo表示当前页数据，key为totalSize表示获取所有数据条目")
-	//查看所有表
-	public Map<String, Object> getAllTableInfo(long colSetId, int currPage, int pageSize){
+	@Return(desc = "查询结果集", range = "不为空")
+	//TODO 查看所有表，目前原型页面似乎没有设计触发这个接口的地方了，但是这个功能应该还是需要的
+	public List<Result> getAllTableInfo(long colSetId){
 		Map<String, Object> returnMap = new HashMap<>();
 		//1、根据colSetId去数据库中获取数据库设置相关信息
 		Result result = getDatabaseSetInfo(colSetId, getUserId());
@@ -152,11 +128,7 @@ public class CollTbConfStepAction extends BaseAction {
 		//4、对获取到的数据进行处理，根据表名和colSetId获取界面需要显示的信息并返回
 		JSONObject respObj = JSON.parseObject(respMsg);
 		List<String> tableNames = (List<String>) respObj.get("tableName");
-		List<Result> allTableInfo = getTableInfoByTableName(tableNames, colSetId, currPage, pageSize);
-		returnMap.put("allTableInfo", allTableInfo);
-		returnMap.put("totalSize", tableNames.size());
-
-		return returnMap;
+		return getTableInfoByTableName(tableNames, colSetId);
 	}
 
 	@Method(desc = "根据表ID获取给该表定义的分页抽取SQL", logicStep = "" +
@@ -649,10 +621,8 @@ public class CollTbConfStepAction extends BaseAction {
 			"2-4、没有数据的情况：新增采集任务，那么所有的表都无法在table_info中查到数据，给是否并行抽取默认值为否")
 	@Param(name = "tableNames", desc = "需要获取详细信息的表名集合", range = "不限")
 	@Param(name = "colSetId", desc = "数据库设置ID", range = "不为空")
-	@Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数")
-	@Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数")
 	@Return(desc = "存有表详细信息的List集合", range = "查到信息则不为空，没有查到信息则为空")
-	private List<Result> getTableInfoByTableName(List<String> tableNames, long colSetId, int currPage, int pageSize){
+	private List<Result> getTableInfoByTableName(List<String> tableNames, long colSetId){
 		//1、如果集合为空，则直接返回空集合
 		if(tableNames.isEmpty()){ return Collections.emptyList(); }
 		//2、如果集合不是空，则进行如下处理
@@ -679,7 +649,7 @@ public class CollTbConfStepAction extends BaseAction {
 				throw new BusinessException(tableName + "表详细信息不唯一");
 			}
 		}
-		return new ListPageHelper<>(results, currPage, pageSize).getList();
+		return results;
 	}
 
 	@Method(desc = "获取列数据类型和长度/精度", logicStep = "" +

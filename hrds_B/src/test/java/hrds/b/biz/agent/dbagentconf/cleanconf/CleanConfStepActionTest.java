@@ -129,8 +129,8 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(rightResult.isSuccess(), is(true));
-		Map<String, Object> rightData = rightResult.getDataForMap(String.class, Object.class);
-		assertThat("根据测试数据，输入正确的colSetId查询到的非自定义采集表总条数应该有4条", rightData.get("totalSize"), is(4));
+		Result rightData = rightResult.getDataForResult();
+		assertThat("根据测试数据，输入正确的colSetId查询到的非自定义采集表总条数应该有4条", rightData.getRowCount(), is(4));
 
 		//错误的数据访问1：使用错误的colSetId访问，应该拿不到任何数据，但是不会报错，访问正常返回
 		long wrongColSetId = 99999L;
@@ -140,8 +140,8 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		ActionResult wrongResult = JsonUtil.toObjectSafety(wrongString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(wrongResult.isSuccess(), is(true));
-		Map<String, Object> wrongData = wrongResult.getDataForMap(String.class, Object.class);
-		assertThat("根据测试数据，输入错误的colSetId查询到的非自定义采集表信息应该有0条，但是HTTP访问成功返回", wrongData.get("totalSize"), is(0));
+		Result wrongData = wrongResult.getDataForResult();
+		assertThat("根据测试数据，输入错误的colSetId查询到的非自定义采集表信息应该有0条，但是HTTP访问成功返回", wrongData.getRowCount(), is(0));
 	}
 
 	/**
@@ -759,26 +759,12 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 				-> new BusinessException("连接失败!"));
 		assertThat(rightResult.isSuccess(), is(true));
 
-		Map<String, Object> rightData = rightResult.getDataForMap(String.class, Object.class);
-		Result columnInfoOne = new Result((List<Map<String, Object>>) rightData.get("columnInfo"));
-		assertThat("尝试获取tableId为7002的表的所有列，得到的全部数据是11条", rightData.get("totalSize"), is(11));
-		assertThat("尝试获取tableId为7002的表的所有列，由于模拟了分页效果，所以第一页得到的结果集中有9条数据", columnInfoOne.getRowCount(), is(9));
+		Result columnInfoOne = rightResult.getDataForResult();
+
+		assertThat("尝试获取tableId为7002的表的所有列，得到的全部数据是11条", columnInfoOne.getRowCount(), is(11));
 		assertThat("尝试获取tableId为7002的表的所有列，create_id做了字符补齐", columnInfoOne.getInt(1, "compflag"), is(1));
 		assertThat("尝试获取tableId为7002的表的所有列，dep_id做了字符补齐", columnInfoOne.getInt(2, "compflag"), is(1));
 		assertThat("尝试获取tableId为7002的表的所有列，user_name做了字符替换", columnInfoOne.getInt(4, "replaceflag"), is(1));
-
-		String rightStringPageTwo = new HttpClient()
-				.addData("tableId", SYS_USER_TABLE_ID)
-				.addData("currPage", 2)
-				.addData("pageSize", 9)
-				.post(getActionUrl("getColumnInfo")).getBodyString();
-		ActionResult rightResultPageTwo = JsonUtil.toObjectSafety(rightStringPageTwo, ActionResult.class).orElseThrow(()
-				-> new BusinessException("连接失败!"));
-		assertThat(rightResultPageTwo.isSuccess(), is(true));
-
-		Map<String, Object> rightDataPageTwo = rightResultPageTwo.getDataForMap(String.class, Object.class);
-		Result columnInfoTwo = new Result((List<Map<String, Object>>) rightDataPageTwo.get("columnInfo"));
-		assertThat("尝试获取tableId为7002的表的所有列，由于模拟了分页效果，所以第二页得到的结果集中有2条数据", columnInfoTwo.getRowCount(), is(2));
 
 		//错误的数据访问1：尝试获取tableId为7006的表的所有列，由于初始化时没有构造tableId为999999999的数据，所以拿不到数据
 		String wrongString = new HttpClient()
@@ -788,8 +774,9 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 				-> new BusinessException("连接失败!"));
 		assertThat(wrongResult.isSuccess(), is(true));
 
-		Map<String, Object> wrongData = wrongResult.getDataForMap(String.class, Object.class);
-		assertThat("尝试获取tableId为999999999的表的所有列，得到的结果集为空", wrongData.get("totalSize"), is(0));
+		Result wrongData = wrongResult.getDataForResult();
+
+		assertThat("尝试获取tableId为999999999的表的所有列，得到的结果集为空", wrongData.getRowCount(), is(0));
 	}
 
 	/**

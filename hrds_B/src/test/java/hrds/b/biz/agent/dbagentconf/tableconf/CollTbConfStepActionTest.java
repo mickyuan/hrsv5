@@ -118,10 +118,8 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(rightResult.isSuccess(), is(true));
-		Map<String, Object> dataForMap = rightResult.getDataForMap(String.class, Object.class);
-		Result rightData = new Result((List<Map<String, Object>>)dataForMap.get("collTableInfo"));
-		assertThat("根据测试数据，输入正确的colSetId查询到的非自定义采集表当前页信息应该有" + rightData.getRowCount() + "条", rightData.getRowCount(), is(2));
-		assertThat("根据测试数据，输入正确的colSetId查询到的非自定义采集表总条数应该有" + dataForMap.get("totalSize") + "条", dataForMap.get("totalSize"), is(2));
+		Result rightData = rightResult.getDataForResult();
+		assertThat("根据测试数据，输入正确的colSetId查询到的非自定义采集表应该有" + rightData.getRowCount() + "条", rightData.getRowCount(), is(2));
 
 		//错误的数据访问1：构造错误的colSetId
 		long wrongColSetId = 99999L;
@@ -131,7 +129,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		ActionResult wrongResult = JsonUtil.toObjectSafety(wrongString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(wrongResult.isSuccess(), is(true));
-		Result wrongData = new Result((List<Map<String, Object>>)wrongResult.getDataForMap(String.class, Object.class).get("collTableInfo"));
+		Result wrongData = wrongResult.getDataForResult();
 		assertThat("根据测试数据，输入错误的colSetId查询到的非自定义采集表信息应该有" + wrongData.getRowCount() + "条", wrongData.getRowCount(), is(0));
 	}
 
@@ -159,11 +157,10 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 				-> new BusinessException("连接失败!"));
 		assertThat(rightResultOne.isSuccess(), is(true));
 
-		Map<String, Object> dataForMap = rightResultOne.getDataForMap(String.class, Object.class);
-		List<Result> rightDataOne = (List<Result>) dataForMap.get("tableInfo");
-		assertThat("使用code做模糊查询得到的当前页表信息有1条", rightDataOne.size(), is(1));
+		List<Result> rightDataOne = rightResultOne.getDataForEntityList(Result.class);
+
+		assertThat("使用code做模糊查询得到的表信息有1条", rightDataOne.size(), is(1));
 		assertThat("使用code做模糊查询得到的表名为code_info", rightDataOne.get(0).getString(0, "table_name"), is("code_info"));
-		assertThat("使用code做模糊查询得到的所有表信息有1条", dataForMap.get("totalSize"), is(1));
 
 		//正确数据访问2：构造colSetId为1001，inputString为sys的测试数据
 		String rightStringTwo = new HttpClient()
@@ -173,10 +170,8 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		ActionResult rightResultTwo = JsonUtil.toObjectSafety(rightStringTwo, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(rightResultTwo.isSuccess(), is(true));
-		Map<String, Object> dataForMap1 = rightResultTwo.getDataForMap(String.class, Object.class);
-		List<Result> rightDataTwo = (List<Result>) dataForMap1.get("tableInfo");
-		assertThat("使用sys做模糊查询得到的当前页表信息有6条", rightDataTwo.size(), is(6));
-		assertThat("使用sys做模糊查询得到的所有表信息有6条", dataForMap1.get("totalSize"), is(6));
+		List<Result> rightDataTwo = rightResultTwo.getDataForEntityList(Result.class);
+		assertThat("使用sys做模糊查询得到的表信息有6条", rightDataTwo.size(), is(6));
 		for(Result result : rightDataTwo){
 			String tableName = result.getString(0, "table_name");
 			if(tableName.equalsIgnoreCase("sys_dump")){
@@ -202,10 +197,8 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		ActionResult rightResultThree = JsonUtil.toObjectSafety(rightStringThree, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(rightResultThree.isSuccess(), is(true));
-		Map<String, Object> dataForMap2 = rightResultThree.getDataForMap(String.class, Object.class);
-		List<Result> rightDataThree = (List<Result>) dataForMap2.get("tableInfo");
-		assertThat("使用sys|code做模糊查询得到的当前页表信息有7条", rightDataThree.size(), is(7));
-		assertThat("使用sys|code做模糊查询得到的所有表信息有7条", dataForMap2.get("totalSize"), is(7));
+		List<Result> rightDataThree = rightResultThree.getDataForEntityList(Result.class);
+		assertThat("使用sys|code做模糊查询得到的表信息有7条", rightDataThree.size(), is(7));
 		for(Result result : rightDataThree){
 			String tableName = result.getString(0, "table_name");
 			if(tableName.equalsIgnoreCase("sys_dump")){
@@ -233,10 +226,8 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		ActionResult rightResultFour = JsonUtil.toObjectSafety(rightStringFour, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(rightResultFour.isSuccess(), is(true));
-		Map<String, Object> dataForMap3 = rightResultFour.getDataForMap(String.class, Object.class);
-		List<Result> rightDataFour = (List<Result>) dataForMap3.get("tableInfo");
+		List<Result> rightDataFour = rightResultFour.getDataForEntityList(Result.class);
 		assertThat("使用wzc做模糊查询得到的表信息有0条", rightDataFour.isEmpty(), is(true));
-		assertThat("使用wzc做模糊查询得到的表信息有0条", dataForMap3.get("totalSize"), is(0));
 
 		//错误的数据访问1：构造colSetId为1003的测试数据
 		long wrongColSetId = 1003L;
@@ -267,10 +258,8 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(rightResult.isSuccess(), is(true));
-		Map<String, Object> dataForMap = rightResult.getDataForMap(String.class, Object.class);
-		List<Result> rightData = (List<Result>) dataForMap.get("allTableInfo");
-		assertThat("截止2019.10.15，IP为47.103.83.1的测试库上有70张表",dataForMap.get("totalSize"), is(70));
-		assertThat("当前页有10条数据",rightData.size(), is(70));
+		List<Result> rightData = rightResult.getDataForEntityList(Result.class);
+		assertThat("截止2019.10.15，IP为47.103.83.1的测试库上有70张表",rightData.size(), is(70));
 
 		//错误的数据访问1：构造错误的colSetId进行测试
 		long wrongColSetId = 1003L;
