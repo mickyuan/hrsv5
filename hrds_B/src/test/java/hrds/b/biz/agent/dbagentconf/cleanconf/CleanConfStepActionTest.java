@@ -1837,6 +1837,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 * 错误的数据访问1：保存码值转换缺少码值系统类型
 	 * 错误的数据访问2：保存码值转换缺少码值系统名称
 	 * 错误的数据访问3：保存码值转换缺少列ID
+	 * 错误的数据访问4：保存码值转换,码值类型传空字符串
 	 * @Param: 无
 	 * @return: 无
 	 *
@@ -1915,6 +1916,16 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		ActionResult wrongResultThree = JsonUtil.toObjectSafety(wrongStringThree, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(wrongResultThree.isSuccess(), is(false));
+
+		//错误的数据访问4：保存码值转换,码值类型传空字符串
+		String wrongStringFour = new HttpClient()
+				.addData("clean_type", CleanType.MaZhiZhuanHuan.getCode())
+				.addData("codename", "")
+				.addData("codesys", "origSysCode_three")
+				.post(getActionUrl("saveCVConversionInfo")).getBodyString();
+		ActionResult wrongResultFour = JsonUtil.toObjectSafety(wrongStringFour, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultFour.isSuccess(), is(false));
 	}
 
 	/**

@@ -778,7 +778,7 @@ public class CleanConfStepAction extends BaseAction{
 			"1、校验码值系统编码、编码分类、表ID" +
 			"2、根据columnId在列清洗参数表中删除对该列定义的码值相关信息，不关注删除的条目" +
 			"3、保存")
-	@Param(name = "columnClean", desc = "待保存的码值转换信息", range = "Column_clean类型对象")
+	@Param(name = "columnClean", desc = "待保存的码值转换信息", range = "Column_clean类型对象", isBean = true)
 	public void saveCVConversionInfo(Column_clean columnClean){
 		//1、校验码值系统编码、编码分类、表ID
 		if(StringUtil.isBlank(columnClean.getCodename())){
