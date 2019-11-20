@@ -359,13 +359,10 @@ public class CleanConfStepAction extends BaseAction{
 			"3、如果找到了，再进行关联查询，查询出页面需要显示的信息" +
 			"4、返回")
 	@Param(name = "tableId", desc = "数据库对应表主键，表清洗参数表外键", range = "不为空")
-	@Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数", nullable = true, valueIfNull = "1")
-	@Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", nullable = true,
-			valueIfNull = "10")
 	@Return(desc = "查询结果集", range = "不为空，数据的条数视实际情况而定" +
 			"注意compflag/replaceflag/formatflag/splitflag/codevalueflag/trimflag这六个字段的值" +
 			"不为0表示该列做了相应的清洗设置，0表示没有列相应的设置")
-	public Result getColumnInfo(long tableId, int currPage, int pageSize){
+	public Result getColumnInfo(long tableId){
 		//1、根据tableId去到table_column表中查询采集的,并且不是变化而生成的列ID
 		List<Object> columnIds = Dbo.queryOneColumnList("select column_id from " + Table_column.TableName +
 				" where table_id = ? and is_get = ? and is_new = ?", tableId, IsFlag.Shi.getCode(),

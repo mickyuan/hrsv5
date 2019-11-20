@@ -752,8 +752,6 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		//正确数据访问1：尝试获取tableId为7002的表的所有列
 		String rightString = new HttpClient()
 				.addData("tableId", SYS_USER_TABLE_ID)
-				.addData("currPage", 1)
-				.addData("pageSize", 9)
 				.post(getActionUrl("getColumnInfo")).getBodyString();
 		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
