@@ -1,15 +1,16 @@
 package hrds.agent.trans.biz.database;
 
+import com.alibaba.fastjson.JSON;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
 import hrds.commons.base.AgentBaseAction;
-import hrds.commons.base.BaseAction;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Database_set;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.ConnUtil;
+import hrds.commons.utils.PackUtil;
 import hrds.commons.utils.Platform;
 import hrds.commons.utils.xlstoxml.Xls2xml;
 
@@ -33,8 +34,8 @@ public class DatabaseInfo extends AgentBaseAction {
 					"6.返回所有表的信息")
 	@Param(name = "database_set", desc = "数据库连接设置信息表", range = "表中不能为空的字段必须有值", isBean = true)
 	@Param(name = "search", desc = "需要查询的表，模糊查询，多条使用|分割", range = "可以为空", nullable = true)
-	@Return(desc = "数据库下表信息", range = "可能为空，极端情况下空的数据库返回值为空")
-	public List<?> getDatabaseTable(Database_set database_set, String search) {
+	@Return(desc = "数据库下表信息", range = "可能为空，极端情况下空的数据库返回值为空，如果长度超过300，则会进行压缩")
+	public String getDatabaseTable(Database_set database_set, String search) {
 		List<Object> table_List;
 		//1.根据Db_agent判断是否为平面DB数据采集
 		if (IsFlag.Shi.getCode().equals(database_set.getDb_agent())) {
@@ -69,7 +70,7 @@ public class DatabaseInfo extends AgentBaseAction {
 			}
 		}
 		//6.返回所有表的信息
-		return table_List;
+		return PackUtil.packMsg(JSON.toJSONString(table_List));
 	}
 
 	@Method(desc = "根据数据库连接和表名获取表的字段信息",
@@ -83,8 +84,8 @@ public class DatabaseInfo extends AgentBaseAction {
 			, isBean = true)
 	@Param(name = "tableName", desc = "需要查询字段的表", range = "可以为空", nullable = true)
 	@Param(name = "hy_sql_meta", desc = "表指定sql查询需要的列", range = "可以为空", nullable = true)
-	@Return(desc = "数据库下表的字段信息", range = "不会为空")
-	public List<Map<String, String>> getTableColumn(Database_set database_set, String tableName, String hy_sql_meta) {
+	@Return(desc = "数据库下表的字段信息", range = "不会为空，如果字符串的长度超过300，将会被压缩")
+	public String getTableColumn(Database_set database_set, String tableName, String hy_sql_meta) {
 
 		List<Map<String, String>> columnList;
 		//1.根据Db_agent判断是否为平面DB数据采集
@@ -134,6 +135,6 @@ public class DatabaseInfo extends AgentBaseAction {
 			}
 		}
 		//6.返回指定表的字段信息
-		return columnList;
+		return JSON.toJSONString(columnList);
 	}
 }
