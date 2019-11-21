@@ -54,6 +54,10 @@ public class File_source extends ProjectTableEntity
 	private Long fcs_id;
 	@DocBean(name ="agent_id",value="Agent_id:",dataType = Long.class,required = true)
 	private Long agent_id;
+	@DocBean(name ="is_compress",value="压缩文件(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
+	private String is_compress;
+	@DocBean(name ="custom_suffix",value="自定义后缀:",dataType = String.class,required = false)
+	private String custom_suffix;
 
 	/** 取得：文件源ID */
 	public Long getFile_source_id(){
@@ -168,5 +172,21 @@ public class File_source extends ProjectTableEntity
 		if(!fd.ng.core.utils.StringUtil.isEmpty(agent_id)){
 			this.agent_id=new Long(agent_id);
 		}
+	}
+	/** 取得：压缩文件 */
+	public String getIs_compress(){
+		return is_compress;
+	}
+	/** 设置：压缩文件 */
+	public void setIs_compress(String is_compress){
+		this.is_compress=is_compress;
+	}
+	/** 取得：自定义后缀 */
+	public String getCustom_suffix(){
+		return custom_suffix;
+	}
+	/** 设置：自定义后缀 */
+	public void setCustom_suffix(String custom_suffix){
+		this.custom_suffix=custom_suffix;
 	}
 }

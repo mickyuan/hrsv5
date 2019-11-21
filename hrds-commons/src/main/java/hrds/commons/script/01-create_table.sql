@@ -38,6 +38,8 @@ IS_TEXT                                           CHAR(1) NOT NULL, --文本文�
 IS_VIDEO                                          CHAR(1) NOT NULL, --视频文件
 IS_AUDIO                                          CHAR(1) NOT NULL, --音频文件
 IS_IMAGE                                          CHAR(1) NOT NULL, --图片文件
+IS_COMPRESS                                       CHAR(1) NOT NULL, --压缩文件
+CUSTOM_SUFFIX                                     VARCHAR(80) NULL, --自定义后缀
 IS_OTHER                                          CHAR(1) NOT NULL, --其他
 FILE_REMARK                                       VARCHAR(512) NULL, --备注
 FCS_ID                                            BIGINT default 0 NOT NULL, --文件系统采集ID
