@@ -5,6 +5,7 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
+import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
@@ -51,6 +52,8 @@ public class UnstructuredFileCollectAction extends BaseAction {
 			throw new BusinessException("连接" + url + "失败");
 		}
 		Map<String, Object> map = ar.getDataForMap();
+		map.put("localdate", DateUtil.getSysDate());
+		map.put("localtime", DateUtil.getSysTime());
 		//3.文件系统采集ID不为空则获取文件系统设置表信息
 		//XXX 这里的Fcs_id不为空则返回回显数据，为空则不处理
 		if (file_collect_set.getFcs_id() != null) {
