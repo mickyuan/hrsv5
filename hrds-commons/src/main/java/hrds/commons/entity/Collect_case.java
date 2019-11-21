@@ -56,8 +56,8 @@ public class Collect_case extends ProjectTableEntity
 	private String job_group;
 	@DocBean(name ="collect_set_id",value="数据库设置id:",dataType = Long.class,required = true)
 	private Long collect_set_id;
-	@DocBean(name ="table_name",value="表名:",dataType = String.class,required = false)
-	private String table_name;
+	@DocBean(name ="task_classify",value="任务分类（原子性）表名-顶级文件夹:",dataType = String.class,required = false)
+	private String task_classify;
 	@DocBean(name ="collect_type",value="采集类型(CollectType):1-数据库采集<ShuJuKuCaiJi> 2-文件采集<WenJianCaiJi> 3-数据文件采集<DBWenJianCaiJi> 4-对象文件采集<DuiXiangWenJianCaiJi> 5-Ftp采集<FtpCaiJi> ",dataType = String.class,required = true)
 	private String collect_type;
 	@DocBean(name ="job_type",value="任务类型:",dataType = String.class,required = false)
@@ -195,13 +195,13 @@ public class Collect_case extends ProjectTableEntity
 			this.collect_set_id=new Long(collect_set_id);
 		}
 	}
-	/** 取得：表名 */
-	public String getTable_name(){
-		return table_name;
+	/** 取得：任务分类（原子性）表名-顶级文件夹 */
+	public String getTask_classify(){
+		return task_classify;
 	}
-	/** 设置：表名 */
-	public void setTable_name(String table_name){
-		this.table_name=table_name;
+	/** 设置：任务分类（原子性）表名-顶级文件夹 */
+	public void setTask_classify(String task_classify){
+		this.task_classify=task_classify;
 	}
 	/** 取得：采集类型 */
 	public String getCollect_type(){

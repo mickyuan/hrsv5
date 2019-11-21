@@ -30,6 +30,16 @@ public class Source_folder_attribute extends ProjectTableEntity
 		__tmpPKS.add("folder_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
+	@DocBean(name ="folder_id",value="文件夹编号:",dataType = Long.class,required = true)
+	private Long folder_id;
+	@DocBean(name ="folder_name",value="文件夹名:",dataType = String.class,required = true)
+	private String folder_name;
+	@DocBean(name ="folder_size",value="文件夹大小:",dataType = BigDecimal.class,required = true)
+	private BigDecimal folder_size;
+	@DocBean(name ="original_create_time",value="文件夹生成时间:",dataType = String.class,required = true)
+	private String original_create_time;
+	@DocBean(name ="storage_date",value="文件夹入库日期:",dataType = String.class,required = true)
+	private String storage_date;
 	@DocBean(name ="folders_in_no",value="文件夹内文件夹数量:",dataType = Long.class,required = true)
 	private Long folders_in_no;
 	@DocBean(name ="location_in_hdfs",value="hdfs中存储位置:",dataType = String.class,required = true)
@@ -44,17 +54,59 @@ public class Source_folder_attribute extends ProjectTableEntity
 	private Long agent_id;
 	@DocBean(name ="source_id",value="数据源ID:",dataType = Long.class,required = true)
 	private Long source_id;
-	@DocBean(name ="folder_id",value="文件夹编号:",dataType = Long.class,required = true)
-	private Long folder_id;
-	@DocBean(name ="folder_name",value="文件夹名:",dataType = String.class,required = true)
-	private String folder_name;
-	@DocBean(name ="folder_size",value="文件夹大小:",dataType = BigDecimal.class,required = true)
-	private BigDecimal folder_size;
-	@DocBean(name ="original_create_time",value="文件夹生成时间:",dataType = String.class,required = true)
-	private String original_create_time;
-	@DocBean(name ="storage_date",value="文件夹入库日期:",dataType = String.class,required = true)
-	private String storage_date;
 
+	/** 取得：文件夹编号 */
+	public Long getFolder_id(){
+		return folder_id;
+	}
+	/** 设置：文件夹编号 */
+	public void setFolder_id(Long folder_id){
+		this.folder_id=folder_id;
+	}
+	/** 设置：文件夹编号 */
+	public void setFolder_id(String folder_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(folder_id)){
+			this.folder_id=new Long(folder_id);
+		}
+	}
+	/** 取得：文件夹名 */
+	public String getFolder_name(){
+		return folder_name;
+	}
+	/** 设置：文件夹名 */
+	public void setFolder_name(String folder_name){
+		this.folder_name=folder_name;
+	}
+	/** 取得：文件夹大小 */
+	public BigDecimal getFolder_size(){
+		return folder_size;
+	}
+	/** 设置：文件夹大小 */
+	public void setFolder_size(BigDecimal folder_size){
+		this.folder_size=folder_size;
+	}
+	/** 设置：文件夹大小 */
+	public void setFolder_size(String folder_size){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(folder_size)){
+			this.folder_size=new BigDecimal(folder_size);
+		}
+	}
+	/** 取得：文件夹生成时间 */
+	public String getOriginal_create_time(){
+		return original_create_time;
+	}
+	/** 设置：文件夹生成时间 */
+	public void setOriginal_create_time(String original_create_time){
+		this.original_create_time=original_create_time;
+	}
+	/** 取得：文件夹入库日期 */
+	public String getStorage_date(){
+		return storage_date;
+	}
+	/** 设置：文件夹入库日期 */
+	public void setStorage_date(String storage_date){
+		this.storage_date=storage_date;
+	}
 	/** 取得：文件夹内文件夹数量 */
 	public Long getFolders_in_no(){
 		return folders_in_no;
@@ -134,57 +186,5 @@ public class Source_folder_attribute extends ProjectTableEntity
 		if(!fd.ng.core.utils.StringUtil.isEmpty(source_id)){
 			this.source_id=new Long(source_id);
 		}
-	}
-	/** 取得：文件夹编号 */
-	public Long getFolder_id(){
-		return folder_id;
-	}
-	/** 设置：文件夹编号 */
-	public void setFolder_id(Long folder_id){
-		this.folder_id=folder_id;
-	}
-	/** 设置：文件夹编号 */
-	public void setFolder_id(String folder_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(folder_id)){
-			this.folder_id=new Long(folder_id);
-		}
-	}
-	/** 取得：文件夹名 */
-	public String getFolder_name(){
-		return folder_name;
-	}
-	/** 设置：文件夹名 */
-	public void setFolder_name(String folder_name){
-		this.folder_name=folder_name;
-	}
-	/** 取得：文件夹大小 */
-	public BigDecimal getFolder_size(){
-		return folder_size;
-	}
-	/** 设置：文件夹大小 */
-	public void setFolder_size(BigDecimal folder_size){
-		this.folder_size=folder_size;
-	}
-	/** 设置：文件夹大小 */
-	public void setFolder_size(String folder_size){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(folder_size)){
-			this.folder_size=new BigDecimal(folder_size);
-		}
-	}
-	/** 取得：文件夹生成时间 */
-	public String getOriginal_create_time(){
-		return original_create_time;
-	}
-	/** 设置：文件夹生成时间 */
-	public void setOriginal_create_time(String original_create_time){
-		this.original_create_time=original_create_time;
-	}
-	/** 取得：文件夹入库日期 */
-	public String getStorage_date(){
-		return storage_date;
-	}
-	/** 设置：文件夹入库日期 */
-	public void setStorage_date(String storage_date){
-		this.storage_date=storage_date;
 	}
 }

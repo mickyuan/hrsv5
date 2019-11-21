@@ -42,8 +42,6 @@ public class Table_storage_info extends ProjectTableEntity
 	private Long storage_time;
 	@DocBean(name ="is_zipper",value="是否拉链存储(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_zipper;
-	@DocBean(name ="is_everyday",value="是否每天存一份(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
-	private String is_everyday;
 
 	/** 取得：储存编号 */
 	public Long getStorage_id(){
@@ -110,13 +108,5 @@ public class Table_storage_info extends ProjectTableEntity
 	/** 设置：是否拉链存储 */
 	public void setIs_zipper(String is_zipper){
 		this.is_zipper=is_zipper;
-	}
-	/** 取得：是否每天存一份 */
-	public String getIs_everyday(){
-		return is_everyday;
-	}
-	/** 设置：是否每天存一份 */
-	public void setIs_everyday(String is_everyday){
-		this.is_everyday=is_everyday;
 	}
 }

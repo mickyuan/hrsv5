@@ -27,42 +27,17 @@ public class Column_storage_info extends ProjectTableEntity
 	/** 字段存储信息 */
 	static {
 		Set<String> __tmpPKS = new HashSet<>();
-		__tmpPKS.add("cs_id");
+		__tmpPKS.add("column_id");
+		__tmpPKS.add("dsla_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="cs_id",value="字段存储ID:",dataType = Long.class,required = true)
-	private Long cs_id;
 	@DocBean(name ="column_id",value="字段ID:",dataType = Long.class,required = true)
 	private Long column_id;
-	@DocBean(name ="is_primary",value="是否为主键(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
-	private String is_primary;
-	@DocBean(name ="is_pre",value="是否为cb预聚合列(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
-	private String is_pre;
-	@DocBean(name ="is_sortcolumns",value="是否为cb的排序列(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
-	private String is_sortcolumns;
-	@DocBean(name ="cs_remark",value="备注:",dataType = String.class,required = false)
-	private String cs_remark;
-	@DocBean(name ="is_solr",value="是否solr的索引列(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
-	private String is_solr;
-	@DocBean(name ="is_partition",value="是否为hive的分区列(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
-	private String is_partition;
-	@DocBean(name ="dsl_id",value="存储层配置ID:",dataType = Long.class,required = true)
-	private Long dsl_id;
+	@DocBean(name ="dsla_id",value="附加信息ID:",dataType = Long.class,required = true)
+	private Long dsla_id;
+	@DocBean(name ="csi_number",value="序号位置:",dataType = Long.class,required = true)
+	private Long csi_number;
 
-	/** 取得：字段存储ID */
-	public Long getCs_id(){
-		return cs_id;
-	}
-	/** 设置：字段存储ID */
-	public void setCs_id(Long cs_id){
-		this.cs_id=cs_id;
-	}
-	/** 设置：字段存储ID */
-	public void setCs_id(String cs_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(cs_id)){
-			this.cs_id=new Long(cs_id);
-		}
-	}
 	/** 取得：字段ID */
 	public Long getColumn_id(){
 		return column_id;
@@ -77,66 +52,32 @@ public class Column_storage_info extends ProjectTableEntity
 			this.column_id=new Long(column_id);
 		}
 	}
-	/** 取得：是否为主键 */
-	public String getIs_primary(){
-		return is_primary;
+	/** 取得：附加信息ID */
+	public Long getDsla_id(){
+		return dsla_id;
 	}
-	/** 设置：是否为主键 */
-	public void setIs_primary(String is_primary){
-		this.is_primary=is_primary;
+	/** 设置：附加信息ID */
+	public void setDsla_id(Long dsla_id){
+		this.dsla_id=dsla_id;
 	}
-	/** 取得：是否为cb预聚合列 */
-	public String getIs_pre(){
-		return is_pre;
+	/** 设置：附加信息ID */
+	public void setDsla_id(String dsla_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(dsla_id)){
+			this.dsla_id=new Long(dsla_id);
+		}
 	}
-	/** 设置：是否为cb预聚合列 */
-	public void setIs_pre(String is_pre){
-		this.is_pre=is_pre;
+	/** 取得：序号位置 */
+	public Long getCsi_number(){
+		return csi_number;
 	}
-	/** 取得：是否为cb的排序列 */
-	public String getIs_sortcolumns(){
-		return is_sortcolumns;
+	/** 设置：序号位置 */
+	public void setCsi_number(Long csi_number){
+		this.csi_number=csi_number;
 	}
-	/** 设置：是否为cb的排序列 */
-	public void setIs_sortcolumns(String is_sortcolumns){
-		this.is_sortcolumns=is_sortcolumns;
-	}
-	/** 取得：备注 */
-	public String getCs_remark(){
-		return cs_remark;
-	}
-	/** 设置：备注 */
-	public void setCs_remark(String cs_remark){
-		this.cs_remark=cs_remark;
-	}
-	/** 取得：是否solr的索引列 */
-	public String getIs_solr(){
-		return is_solr;
-	}
-	/** 设置：是否solr的索引列 */
-	public void setIs_solr(String is_solr){
-		this.is_solr=is_solr;
-	}
-	/** 取得：是否为hive的分区列 */
-	public String getIs_partition(){
-		return is_partition;
-	}
-	/** 设置：是否为hive的分区列 */
-	public void setIs_partition(String is_partition){
-		this.is_partition=is_partition;
-	}
-	/** 取得：存储层配置ID */
-	public Long getDsl_id(){
-		return dsl_id;
-	}
-	/** 设置：存储层配置ID */
-	public void setDsl_id(Long dsl_id){
-		this.dsl_id=dsl_id;
-	}
-	/** 设置：存储层配置ID */
-	public void setDsl_id(String dsl_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(dsl_id)){
-			this.dsl_id=new Long(dsl_id);
+	/** 设置：序号位置 */
+	public void setCsi_number(String csi_number){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(csi_number)){
+			this.csi_number=new Long(csi_number);
 		}
 	}
 }

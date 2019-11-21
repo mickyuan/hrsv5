@@ -1,4 +1,4 @@
---　系统的引用值个数:43
+--　系统的引用值个数:44
 --　本引用值的代码个数:2 -------i==1
 delete from code_info where ci_sp_class='55';
 INSERT INTO CODE_INFO  VALUES ('1', '55', '补齐方式', '前补齐', 'FillingType');
@@ -297,3 +297,11 @@ INSERT INTO CODE_INFO  VALUES ('4', '54', '清洗方式', '码值转换', 'Clean
 INSERT INTO CODE_INFO  VALUES ('5', '54', '清洗方式', '字符合并', 'CleanType');
 INSERT INTO CODE_INFO  VALUES ('6', '54', '清洗方式', '字符拆分', 'CleanType');
 INSERT INTO CODE_INFO  VALUES ('7', '54', '清洗方式', '字符trim', 'CleanType');
+--　本引用值的代码个数:6 -------i==44
+delete from code_info where ci_sp_class='62';
+INSERT INTO CODE_INFO  VALUES ('01', '62', '存储层附件属性', '主键', 'StoreLayerAdded');
+INSERT INTO CODE_INFO  VALUES ('02', '62', '存储层附件属性', 'rowkey', 'StoreLayerAdded');
+INSERT INTO CODE_INFO  VALUES ('03', '62', '存储层附件属性', '索引列', 'StoreLayerAdded');
+INSERT INTO CODE_INFO  VALUES ('04', '62', '存储层附件属性', '预聚合列', 'StoreLayerAdded');
+INSERT INTO CODE_INFO  VALUES ('05', '62', '存储层附件属性', '排序列', 'StoreLayerAdded');
+INSERT INTO CODE_INFO  VALUES ('06', '62', '存储层附件属性', '分区列', 'StoreLayerAdded');
