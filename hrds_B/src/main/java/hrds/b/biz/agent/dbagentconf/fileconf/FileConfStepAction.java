@@ -29,7 +29,7 @@ public class FileConfStepAction extends BaseAction{
 	@Return(desc = "查询结果集", range = "不为空")
 	public Result getInitInfo(long colSetId){
 		return Dbo.queryResult(" select ti.table_id, ti.table_name, ti.table_ch_name, ded.dbfile_format, " +
-				" ded.data_extract_type, ded.row_separator, ded.database_separatorr, ded.database_code, ded.plane_url " +
+				" ded.data_extract_type, ded.row_separator, ded.database_separatorr, ded.database_code " +
 				" from " + Table_info.TableName + " ti left join " + Data_extraction_def.TableName + " ded " +
 				" on ti.table_id = ded.table_id where ti.database_id = ?", colSetId);
 	}
