@@ -22,6 +22,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -173,6 +174,77 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 		assertThat(wrongResult.isSuccess(), is(true));
 		Result wrongData = wrongResult.getDataForResult();
 		assertThat("根据测试数据，输入错误的colSetId查询到的非自定义采集表信息应该有0条，但是HTTP访问成功返回", wrongData.isEmpty(), is(true));
+	}
+
+	/**
+	 * 测试根据数据抽取方式返回卸数文件格式
+	 *
+	 * 正确数据访问1：数据抽取方式为仅抽取
+	 * 正确数据访问2：数据抽取方式为抽取及入库
+	 * 错误的数据访问1：传入的数据抽取方式不是从代码项中取值
+	 * 错误的测试用例未达到三组: 以上三个测试用例已经足够覆盖所有访问场景
+	 * @Param: 无
+	 * @return: 无
+	 *
+	 * */
+	@Test
+	public void getFileFormatByExtractType(){
+		//正确数据访问1：数据抽取方式为仅抽取
+		String rightString = new HttpClient()
+				.addData("extractType", DataExtractType.JinShuJuChouQu.getCode())
+				.post(getActionUrl("getFileFormatByExtractType")).getBodyString();
+		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResult.isSuccess(), is(true));
+
+		Map<String, String> dataOne = rightResult.getDataForMap(String.class, String.class);
+		assertThat("共有3对Entry", dataOne.size(), is(3));
+		for(Map.Entry<String, String> entry : dataOne.entrySet()){
+			if(entry.getKey().equalsIgnoreCase("定长")){
+				assertThat("定长格式符合期望", entry.getValue(), is(FileFormat.DingChang.getCode()));
+			}else if(entry.getKey().equalsIgnoreCase("非定长")){
+				assertThat("非定长格式符合期望", entry.getValue(), is(FileFormat.FeiDingChang.getCode()));
+			}else if(entry.getKey().equalsIgnoreCase("CSV")){
+				assertThat("CSV格式符合期望", entry.getValue(), is(FileFormat.CSV.getCode()));
+			}else {
+				assertThat("出现了不符合期望的文件格式，格式为" + entry.getKey(), true, is(false));
+			}
+		}
+
+		//正确数据访问2：数据抽取方式为抽取及入库
+		String rightStringTwo = new HttpClient()
+				.addData("extractType", DataExtractType.ShuJuChouQuJiRuKu.getCode())
+				.post(getActionUrl("getFileFormatByExtractType")).getBodyString();
+		ActionResult rightResultTwo = JsonUtil.toObjectSafety(rightStringTwo, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResultTwo.isSuccess(), is(true));
+
+		Map<String, String> dataTwo = rightResultTwo.getDataForMap(String.class, String.class);
+		assertThat("共有5对Entry", dataTwo.size(), is(5));
+		for(Map.Entry<String, String> entry : dataTwo.entrySet()){
+			if(entry.getKey().equalsIgnoreCase("ORC")){
+				assertThat("ORC格式符合期望", entry.getValue(), is(FileFormat.ORC.getCode()));
+			}else if(entry.getKey().equalsIgnoreCase("非定长")){
+				assertThat("定长格式符合期望", entry.getValue(), is(FileFormat.FeiDingChang.getCode()));
+			}else if(entry.getKey().equalsIgnoreCase("CSV")){
+				assertThat("CSV格式符合期望", entry.getValue(), is(FileFormat.CSV.getCode()));
+			}else if(entry.getKey().equalsIgnoreCase("PARQUET")){
+				assertThat("PARQUET格式符合期望", entry.getValue(), is(FileFormat.PARQUET.getCode()));
+			}else if(entry.getKey().equalsIgnoreCase("SEQUENCEFILE")){
+				assertThat("SEQUENCEFILE格式符合期望", entry.getValue(), is(FileFormat.SEQUENCEFILE.getCode()));
+			}else {
+				assertThat("出现了不符合期望的文件格式，格式为" + entry.getKey(), true, is(false));
+			}
+		}
+
+		//错误的数据访问1：传入的数据抽取方式不是从代码项中取值
+		String wrongDataExtractType = "3";
+		String wrongString = new HttpClient()
+				.addData("extractType", wrongDataExtractType)
+				.post(getActionUrl("getFileFormatByExtractType")).getBodyString();
+		ActionResult wrongResult = JsonUtil.toObjectSafety(wrongString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResult.isSuccess(), is(false));
 	}
 
 	/**

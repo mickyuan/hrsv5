@@ -16,7 +16,9 @@ import hrds.commons.entity.Data_extraction_def;
 import hrds.commons.entity.Table_info;
 import hrds.commons.utils.key.PrimayKeyGener;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @DocClass(desc = "定义卸数文件配置", author = "WangZhengcheng")
 public class FileConfStepAction extends BaseAction{
@@ -30,6 +32,30 @@ public class FileConfStepAction extends BaseAction{
 				" ded.data_extract_type, ded.row_separator, ded.database_separatorr, ded.database_code, ded.plane_url " +
 				" from " + Table_info.TableName + " ti left join " + Data_extraction_def.TableName + " ded " +
 				" on ti.table_id = ded.table_id where ti.database_id = ?", colSetId);
+	}
+
+	@Method(desc = "根据数据抽取方式返回卸数文件格式", logicStep = "" +
+			"1、如果是仅做数据抽取，那么卸数文件格式为定长，非定长，CSV" +
+			"2、如果是抽取并入库，那么卸数文件格式为非定长，CSV，ORC，PARQUET，SEQUENCEFILE")
+	@Param(name = "extractType", desc = "数据抽取方式", range = "请从DataExtractType代码项取值")
+	@Return(desc = "map集合", range = "key为文件格式名称，用于在下拉框中显示" +
+			"value为文件格式code，用于保存时向后台接口传参")
+	public Map<String, String> getFileFormatByExtractType(String extractType){
+		DataExtractType dataExtractType = DataExtractType.ofEnumByCode(extractType);
+		Map<String, String> formatMap = new HashMap<>();
+		formatMap.put(FileFormat.FeiDingChang.getValue(), FileFormat.FeiDingChang.getCode());
+		formatMap.put(FileFormat.CSV.getValue(), FileFormat.CSV.getCode());
+		//1、如果是仅做数据抽取，那么卸数文件格式为定长，非定长，CSV
+		if(dataExtractType == DataExtractType.JinShuJuChouQu){
+			formatMap.put(FileFormat.DingChang.getValue(), FileFormat.DingChang.getCode());
+		}
+		//2、如果是抽取并入库，那么卸数文件格式为非定长，CSV，ORC，PARQUET，SEQUENCEFILE
+		else{
+			formatMap.put(FileFormat.ORC.getValue(), FileFormat.ORC.getCode());
+			formatMap.put(FileFormat.PARQUET.getValue(), FileFormat.PARQUET.getCode());
+			formatMap.put(FileFormat.SEQUENCEFILE.getValue(), FileFormat.SEQUENCEFILE.getCode());
+		}
+		return formatMap;
 	}
 
 	@Method(desc = "保存卸数文件配置", logicStep = "" +
@@ -52,7 +78,6 @@ public class FileConfStepAction extends BaseAction{
 			//3、根据table_id去data_extraction_def表中删除尝试删除该表曾经的卸数文件配置，不关心删除数目
 			Dbo.execute("delete from " + Data_extraction_def.TableName + " where table_id = ?", def.getTable_id());
 			def.setDed_id(PrimayKeyGener.getNextId());
-
 			def.add(Dbo.db());
 		}
 		//4、保存数据
