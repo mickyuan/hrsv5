@@ -135,10 +135,10 @@ CONSTRAINT DATA_RELATION_TABLE_PK PRIMARY KEY(STORAGE_ID,DSL_ID)   );
 --字段存储信息
 DROP TABLE IF EXISTS COLUMN_STORAGE_INFO ;
 CREATE TABLE COLUMN_STORAGE_INFO(
-DSLA_ID                                           BIGINT default 0 NOT NULL, --附加信息ID
+DSLAD_ID                                          BIGINT default 0 NOT NULL, --附加信息ID
 COLUMN_ID                                         BIGINT default 0 NOT NULL, --字段ID
 CSI_NUMBER                                        BIGINT default 0 NOT NULL, --序号位置
-CONSTRAINT COLUMN_STORAGE_INFO_PK PRIMARY KEY(DSLA_ID,COLUMN_ID)   );
+CONSTRAINT COLUMN_STORAGE_INFO_PK PRIMARY KEY(DSLAD_ID,COLUMN_ID)   );
 
 --数据权限设置表
 DROP TABLE IF EXISTS DATA_AUTH ;
@@ -820,8 +820,8 @@ CONSTRAINT FTP_FOLDER_PK PRIMARY KEY(FTP_FOLDER_ID)   );
 DROP TABLE IF EXISTS DATA_STORE_LAYER_ATTR ;
 CREATE TABLE DATA_STORE_LAYER_ATTR(
 DSLA_ID                                           BIGINT default 0 NOT NULL, --存储配置主键信息
-STORAGE_PROPERTY_KEY                              VARCHAR(1024) NOT NULL, --属性key
-STORAGE_PROPERTY_VAL                              VARCHAR(1024) NULL, --属性value
+STORAGE_PROPERTY_KEY                              VARCHAR(512) NOT NULL, --属性key
+STORAGE_PROPERTY_VAL                              VARCHAR(512) NOT NULL, --属性value
 DSL_REMARK                                        VARCHAR(512) NULL, --备注
 DSL_ID                                            BIGINT default 0 NOT NULL, --存储层配置ID
 CONSTRAINT DATA_STORE_LAYER_ATTR_PK PRIMARY KEY(DSLA_ID)   );
@@ -1028,9 +1028,9 @@ CONSTRAINT AGENT_DOWN_INFO_PK PRIMARY KEY(DOWN_ID)   );
 --数据存储附加信息表
 DROP TABLE IF EXISTS DATA_STORE_LAYER_ADDED ;
 CREATE TABLE DATA_STORE_LAYER_ADDED(
-DSLA_ID                                           BIGINT default 0 NOT NULL, --附加信息ID
+DSLAD_ID                                          BIGINT default 0 NOT NULL, --附加信息ID
 DSLA_STORELAYER                                   CHAR(2) NOT NULL, --配置附加属性信息
 DSLA_REMARK                                       VARCHAR(512) NULL, --备注
 DSL_ID                                            BIGINT default 0 NOT NULL, --存储层配置ID
-CONSTRAINT DATA_STORE_LAYER_ADDED_PK PRIMARY KEY(DSLA_ID)   );
+CONSTRAINT DATA_STORE_LAYER_ADDED_PK PRIMARY KEY(DSLAD_ID)   );
 

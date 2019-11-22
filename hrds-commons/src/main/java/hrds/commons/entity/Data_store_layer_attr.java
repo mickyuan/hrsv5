@@ -36,7 +36,7 @@ public class Data_store_layer_attr extends ProjectTableEntity
 	private String storage_property_key;
 	@DocBean(name ="dsl_remark",value="备注:",dataType = String.class,required = false)
 	private String dsl_remark;
-	@DocBean(name ="storage_property_val",value="属性value:",dataType = String.class,required = false)
+	@DocBean(name ="storage_property_val",value="属性value:",dataType = String.class,required = true)
 	private String storage_property_val;
 	@DocBean(name ="dsl_id",value="存储层配置ID:",dataType = Long.class,required = true)
 	private Long dsl_id;

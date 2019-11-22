@@ -28,13 +28,13 @@ public class Column_storage_info extends ProjectTableEntity
 	static {
 		Set<String> __tmpPKS = new HashSet<>();
 		__tmpPKS.add("column_id");
-		__tmpPKS.add("dsla_id");
+		__tmpPKS.add("dslad_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
 	@DocBean(name ="column_id",value="字段ID:",dataType = Long.class,required = true)
 	private Long column_id;
-	@DocBean(name ="dsla_id",value="附加信息ID:",dataType = Long.class,required = true)
-	private Long dsla_id;
+	@DocBean(name ="dslad_id",value="附加信息ID:",dataType = Long.class,required = true)
+	private Long dslad_id;
 	@DocBean(name ="csi_number",value="序号位置:",dataType = Long.class,required = true)
 	private Long csi_number;
 
@@ -53,17 +53,17 @@ public class Column_storage_info extends ProjectTableEntity
 		}
 	}
 	/** 取得：附加信息ID */
-	public Long getDsla_id(){
-		return dsla_id;
+	public Long getDslad_id(){
+		return dslad_id;
 	}
 	/** 设置：附加信息ID */
-	public void setDsla_id(Long dsla_id){
-		this.dsla_id=dsla_id;
+	public void setDslad_id(Long dslad_id){
+		this.dslad_id=dslad_id;
 	}
 	/** 设置：附加信息ID */
-	public void setDsla_id(String dsla_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(dsla_id)){
-			this.dsla_id=new Long(dsla_id);
+	public void setDslad_id(String dslad_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(dslad_id)){
+			this.dslad_id=new Long(dslad_id);
 		}
 	}
 	/** 取得：序号位置 */
