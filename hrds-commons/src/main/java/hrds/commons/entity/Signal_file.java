@@ -38,7 +38,7 @@ public class Signal_file extends ProjectTableEntity
 	private String is_into_hive;
 	@DocBean(name ="is_fullindex",value="是否创建全文索引(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_fullindex;
-	@DocBean(name ="file_format",value="文件格式(HiveStorageType):1-TEXTFILE<TEXTFILE> 2-SEQUENCEFILE<SEQUENCEFILE> 3-PARQUET<PARQUET> 4-CSV<CSV> 5-ORC<ORC> ",dataType = String.class,required = true)
+	@DocBean(name ="file_format",value="文件格式:",dataType = String.class,required = true)
 	private String file_format;
 	@DocBean(name ="is_compression",value="Hbase是使用压缩(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_compression;

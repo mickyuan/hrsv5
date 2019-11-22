@@ -1,4 +1,4 @@
---　系统的引用值个数:44
+--　系统的引用值个数:43
 --　本引用值的代码个数:2 -------i==1
 delete from code_info where ci_sp_class='55';
 INSERT INTO CODE_INFO  VALUES ('1', '55', '补齐方式', '前补齐', 'FillingType');
@@ -239,11 +239,14 @@ INSERT INTO CODE_INFO  VALUES ('1000000', '43', '记录总数', '100万左右', 
 INSERT INTO CODE_INFO  VALUES ('10000000', '43', '记录总数', '1000万左右', 'CountNum');
 INSERT INTO CODE_INFO  VALUES ('100000000', '43', '记录总数', '亿左右', 'CountNum');
 INSERT INTO CODE_INFO  VALUES ('100000001', '43', '记录总数', '亿以上', 'CountNum');
---　本引用值的代码个数:3 -------i==33
+--　本引用值的代码个数:6 -------i==33
 delete from code_info where ci_sp_class='44';
 INSERT INTO CODE_INFO  VALUES ('0', '44', 'DB文件格式', '定长', 'FileFormat');
 INSERT INTO CODE_INFO  VALUES ('1', '44', 'DB文件格式', '非定长', 'FileFormat');
 INSERT INTO CODE_INFO  VALUES ('2', '44', 'DB文件格式', 'CSV', 'FileFormat');
+INSERT INTO CODE_INFO  VALUES ('3', '44', 'DB文件格式', 'SEQUENCEFILE', 'FileFormat');
+INSERT INTO CODE_INFO  VALUES ('4', '44', 'DB文件格式', 'PARQUET', 'FileFormat');
+INSERT INTO CODE_INFO  VALUES ('5', '44', 'DB文件格式', 'ORC', 'FileFormat');
 --　本引用值的代码个数:4 -------i==34
 delete from code_info where ci_sp_class='45';
 INSERT INTO CODE_INFO  VALUES ('1', '45', '压缩格式', 'tar', 'ReduceType');
@@ -273,22 +276,15 @@ INSERT INTO CODE_INFO  VALUES ('1', '50', '时间类型', '日', 'TimeType');
 INSERT INTO CODE_INFO  VALUES ('2', '50', '时间类型', '小时', 'TimeType');
 INSERT INTO CODE_INFO  VALUES ('3', '50', '时间类型', '分钟', 'TimeType');
 INSERT INTO CODE_INFO  VALUES ('4', '50', '时间类型', '秒', 'TimeType');
---　本引用值的代码个数:5 -------i==40
-delete from code_info where ci_sp_class='51';
-INSERT INTO CODE_INFO  VALUES ('1', '51', 'hive文件存储类型', 'TEXTFILE', 'HiveStorageType');
-INSERT INTO CODE_INFO  VALUES ('2', '51', 'hive文件存储类型', 'SEQUENCEFILE', 'HiveStorageType');
-INSERT INTO CODE_INFO  VALUES ('3', '51', 'hive文件存储类型', 'PARQUET', 'HiveStorageType');
-INSERT INTO CODE_INFO  VALUES ('4', '51', 'hive文件存储类型', 'CSV', 'HiveStorageType');
-INSERT INTO CODE_INFO  VALUES ('5', '51', 'hive文件存储类型', 'ORC', 'HiveStorageType');
---　本引用值的代码个数:2 -------i==41
+--　本引用值的代码个数:2 -------i==40
 delete from code_info where ci_sp_class='52';
 INSERT INTO CODE_INFO  VALUES ('1', '52', '字符拆分方式', '偏移量', 'CharSplitType');
 INSERT INTO CODE_INFO  VALUES ('2', '52', '字符拆分方式', '自定符号', 'CharSplitType');
---　本引用值的代码个数:2 -------i==42
+--　本引用值的代码个数:2 -------i==41
 delete from code_info where ci_sp_class='53';
 INSERT INTO CODE_INFO  VALUES ('1', '53', '数据抽取方式', '仅数据抽取', 'DataExtractType');
 INSERT INTO CODE_INFO  VALUES ('2', '53', '数据抽取方式', '数据抽取及入库', 'DataExtractType');
---　本引用值的代码个数:7 -------i==43
+--　本引用值的代码个数:7 -------i==42
 delete from code_info where ci_sp_class='54';
 INSERT INTO CODE_INFO  VALUES ('1', '54', '清洗方式', '字符补齐', 'CleanType');
 INSERT INTO CODE_INFO  VALUES ('2', '54', '清洗方式', '字符替换', 'CleanType');
@@ -297,7 +293,7 @@ INSERT INTO CODE_INFO  VALUES ('4', '54', '清洗方式', '码值转换', 'Clean
 INSERT INTO CODE_INFO  VALUES ('5', '54', '清洗方式', '字符合并', 'CleanType');
 INSERT INTO CODE_INFO  VALUES ('6', '54', '清洗方式', '字符拆分', 'CleanType');
 INSERT INTO CODE_INFO  VALUES ('7', '54', '清洗方式', '字符trim', 'CleanType');
---　本引用值的代码个数:6 -------i==44
+--　本引用值的代码个数:6 -------i==43
 delete from code_info where ci_sp_class='62';
 INSERT INTO CODE_INFO  VALUES ('01', '62', '存储层附件属性', '主键', 'StoreLayerAdded');
 INSERT INTO CODE_INFO  VALUES ('02', '62', '存储层附件属性', 'rowkey', 'StoreLayerAdded');

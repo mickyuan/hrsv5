@@ -32,7 +32,7 @@ public class Table_storage_info extends ProjectTableEntity
 	}
 	@DocBean(name ="storage_id",value="储存编号:",dataType = Long.class,required = true)
 	private Long storage_id;
-	@DocBean(name ="file_format",value="文件格式(HiveStorageType):1-TEXTFILE<TEXTFILE> 2-SEQUENCEFILE<SEQUENCEFILE> 3-PARQUET<PARQUET> 4-CSV<CSV> 5-ORC<ORC> ",dataType = String.class,required = true)
+	@DocBean(name ="file_format",value="文件格式(FileFormat):0-定长<DingChang> 1-非定长<FeiDingChang> 2-CSV<CSV> 3-SEQUENCEFILE<SEQUENCEFILE> 4-PARQUET<PARQUET> 5-ORC<ORC> ",dataType = String.class,required = true)
 	private String file_format;
 	@DocBean(name ="table_id",value="表名ID:",dataType = Long.class,required = false)
 	private Long table_id;

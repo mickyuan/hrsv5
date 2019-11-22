@@ -46,7 +46,7 @@ public class Data_extraction_def extends ProjectTableEntity
 	private String database_separatorr;
 	@DocBean(name ="ded_remark",value="备注:",dataType = String.class,required = false)
 	private String ded_remark;
-	@DocBean(name ="dbfile_format",value="数据落地格式(FileFormat):0-定长<DingChang> 1-非定长<FeiDingChang> 2-CSV<CSV> ",dataType = String.class,required = true)
+	@DocBean(name ="dbfile_format",value="数据落地格式(FileFormat):0-定长<DingChang> 1-非定长<FeiDingChang> 2-CSV<CSV> 3-SEQUENCEFILE<SEQUENCEFILE> 4-PARQUET<PARQUET> 5-ORC<ORC> ",dataType = String.class,required = true)
 	private String dbfile_format;
 	@DocBean(name ="plane_url",value="数据落地目录:",dataType = String.class,required = false)
 	private String plane_url;

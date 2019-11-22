@@ -85,8 +85,6 @@ public class CodesItem{
 	protected static final String ftpRule=new String("FtpRule");
 	/**时间类型   */
 	protected static final String timeType=new String("TimeType");
-	/**hive文件存储类型   */
-	protected static final String hiveStorageType=new String("HiveStorageType");
 	/**字符拆分方式   */
 	protected static final String charSplitType=new String("CharSplitType");
 	/**数据抽取方式   */
@@ -138,7 +136,6 @@ public class CodesItem{
 		mapCat.put(objectDataType,ObjectDataType.class);
 		mapCat.put(ftpRule,FtpRule.class);
 		mapCat.put(timeType,TimeType.class);
-		mapCat.put(hiveStorageType,HiveStorageType.class);
 		mapCat.put(charSplitType,CharSplitType.class);
 		mapCat.put(dataExtractType,DataExtractType.class);
 		mapCat.put(cleanType,CleanType.class);

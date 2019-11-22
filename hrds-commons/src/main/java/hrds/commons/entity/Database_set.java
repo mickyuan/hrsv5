@@ -66,7 +66,7 @@ public class Database_set extends ProjectTableEntity
 	private String database_separatorr;
 	@DocBean(name ="database_code",value="数据使用编码格式(DataBaseCode):1-UTF-8<UTF_8> 2-GBK<GBK> 3-UTF-16<UTF_16> 4-GB2312<GB2312> 5-ISO-8859-1<ISO_8859_1> ",dataType = String.class,required = false)
 	private String database_code;
-	@DocBean(name ="dbfile_format",value="DB文件格式(FileFormat):0-定长<DingChang> 1-非定长<FeiDingChang> 2-CSV<CSV> ",dataType = String.class,required = false)
+	@DocBean(name ="dbfile_format",value="DB文件格式(FileFormat):0-定长<DingChang> 1-非定长<FeiDingChang> 2-CSV<CSV> 3-SEQUENCEFILE<SEQUENCEFILE> 4-PARQUET<PARQUET> 5-ORC<ORC> ",dataType = String.class,required = false)
 	private String dbfile_format;
 	@DocBean(name ="is_hidden",value="分隔符是否为ASCII隐藏字符(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_hidden;

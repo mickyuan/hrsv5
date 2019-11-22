@@ -854,7 +854,7 @@ CONSTRAINT SIGNAL_FILE_PK PRIMARY KEY(SIGNAL_ID)   );
 DROP TABLE IF EXISTS TABLE_STORAGE_INFO ;
 CREATE TABLE TABLE_STORAGE_INFO(
 STORAGE_ID                                        BIGINT default 0 NOT NULL, --储存编号
-FILE_FORMAT                                       CHAR(1) NOT NULL, --文件格式
+FILE_FORMAT                                       CHAR(1) default '1' NOT NULL, --文件格式
 STORAGE_TYPE                                      CHAR(1) NOT NULL, --进数方式
 IS_ZIPPER                                         CHAR(1) NOT NULL, --是否拉链存储
 STORAGE_TIME                                      BIGINT default 0 NOT NULL, --存储期限（以天为单位）
