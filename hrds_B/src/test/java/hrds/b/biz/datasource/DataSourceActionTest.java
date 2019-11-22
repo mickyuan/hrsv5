@@ -518,7 +518,6 @@ public class DataSourceActionTest extends WebBaseTestCase {
             tableStorageInfo.setStorage_time(1L);
             tableStorageInfo.setTable_id(TableId);
             tableStorageInfo.setFile_format(FileFormat.CSV.getCode());
-            tableStorageInfo.setIs_everyday(IsFlag.Fou.getCode());
             tableStorageInfo.setIs_zipper(IsFlag.Fou.getCode());
             tableStorageInfo.setStorage_type(StorageType.TiHuan.getCode());
             tableStorageInfo.add(db);

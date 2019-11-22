@@ -605,7 +605,7 @@ public class InitAndDestDataForFileConf {
 				case 2 :
 					tableId = AGENT_INFO_TABLE_ID;
 					extractType = DataExtractType.ShuJuChouQuJiRuKu.getCode();
-					fileFormat = HiveStorageType.ORC.getCode();
+					fileFormat = FileFormat.ORC.getCode();
 					rowSeparator = "";
 					databaseSeparatorr = "";
 					planeUrl = "";
@@ -613,7 +613,7 @@ public class InitAndDestDataForFileConf {
 				case 3 :
 					tableId = DATA_SOURCE_TABLE_ID;
 					extractType = DataExtractType.ShuJuChouQuJiRuKu.getCode();
-					fileFormat = HiveStorageType.TEXTFILE.getCode();
+					fileFormat = FileFormat.FeiDingChang.getCode();
 					rowSeparator = "|";
 					databaseSeparatorr = " ";
 					planeUrl = "";

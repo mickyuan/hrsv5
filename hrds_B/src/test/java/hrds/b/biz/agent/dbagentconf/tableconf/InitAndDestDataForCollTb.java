@@ -265,7 +265,6 @@ public class InitAndDestDataForCollTb {
 			tableStorageInfo.setFile_format(fileFormat);
 			tableStorageInfo.setStorage_type(storageType);
 			tableStorageInfo.setIs_zipper(IsFlag.Shi.getCode());
-			tableStorageInfo.setIs_everyday(IsFlag.Shi.getCode());
 			tableStorageInfo.setTable_id(tableId);
 
 			tableStorageInfos.add(tableStorageInfo);

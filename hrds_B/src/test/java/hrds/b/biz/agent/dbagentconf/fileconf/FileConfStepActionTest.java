@@ -9,7 +9,10 @@ import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import hrds.b.biz.agent.dbagentconf.BaseInitData;
-import hrds.commons.codes.*;
+import hrds.commons.codes.DataBaseCode;
+import hrds.commons.codes.DataExtractType;
+import hrds.commons.codes.FileFormat;
+import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Data_extraction_def;
 import hrds.commons.exception.BusinessException;
 import hrds.testbase.WebBaseTestCase;
@@ -19,7 +22,6 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -119,9 +121,8 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(rightResult.isSuccess(), is(true));
-		Map<String, Object> rightData = rightResult.getDataForMap(String.class, Object.class);
-		Result rightResultOne = new Result((List<Map<String, Object>>)rightData.get("fileConf"));
-		assertThat("根据测试数据，输入正确的colSetId查询到的非自定义采集表总条数应该有4条", rightData.get("totalSize"), is(4));
+		Result rightResultOne = rightResult.getDataForResult();
+		assertThat("根据测试数据，输入正确的colSetId查询到的采集表总条数应该有4条", rightResultOne.getRowCount(), is(4));
 		for(int i = 0; i < rightResultOne.getRowCount(); i++){
 			if(rightResultOne.getString(i, "table_name").equalsIgnoreCase("sys_user")){
 				assertThat("获取到的非自定义采集表为sys_user，得到的表中文名为<用户表>", rightResultOne.getString(i, "table_ch_name"), is("用户表"));
@@ -142,7 +143,7 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 			}else if(rightResultOne.getString(i, "table_name").equalsIgnoreCase("agent_info")){
 				assertThat("获取到的非自定义采集表为agent_info，得到的表中文名为<Agent信息表>", rightResultOne.getString(i, "table_ch_name"), is("Agent信息表"));
 				assertThat("获取到的非自定义采集表为agent_info，得到数据抽取方式为<数据抽取并入库>", rightResultOne.getString(i, "data_extract_type"), is(DataExtractType.ShuJuChouQuJiRuKu.getCode()));
-				assertThat("获取到的非自定义采集表为agent_info，得到的数据存储格式为<非定长>", rightResultOne.getString(i, "dbfile_format"), is(HiveStorageType.ORC.getCode()));
+				assertThat("获取到的非自定义采集表为agent_info，得到的数据存储格式为<非定长>", rightResultOne.getString(i, "dbfile_format"), is(FileFormat.ORC.getCode()));
 				assertThat("获取到的非自定义采集表为agent_info，不能指定行分隔符", rightResultOne.getString(i, "row_separator"), is(""));
 				assertThat("获取到的非自定义采集表为agent_info，不能指定列分隔符", rightResultOne.getString(i, "database_separatorr"), is(""));
 				assertThat("获取到的非自定义采集表为agent_info，得到的数据字符集为<UTF-8>", rightResultOne.getString(i, "database_code"), is(DataBaseCode.UTF_8.getCode()));
@@ -151,7 +152,7 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 			else if(rightResultOne.getString(i, "table_name").equalsIgnoreCase("data_source")){
 				assertThat("获取到的非自定义采集表为data_source，得到的表中文名为<用户表>", rightResultOne.getString(i, "table_ch_name"), is("数据源表"));
 				assertThat("获取到的非自定义采集表为data_source，得到数据抽取方式为<仅数据抽取>", rightResultOne.getString(i, "data_extract_type"), is(DataExtractType.ShuJuChouQuJiRuKu.getCode()));
-				assertThat("获取到的非自定义采集表为data_source，得到的数据存储格式为<非定长>", rightResultOne.getString(i, "dbfile_format"), is(HiveStorageType.TEXTFILE.getCode()));
+				assertThat("获取到的非自定义采集表为data_source，得到的数据存储格式为<非定长>", rightResultOne.getString(i, "dbfile_format"), is(FileFormat.FeiDingChang.getCode()));
 				assertThat("获取到的非自定义采集表为data_source，得到的行分隔符为<空格符>", rightResultOne.getString(i, "row_separator"), is("|"));
 				assertThat("获取到的非自定义采集表为data_source，得到的列分隔符为<|>", rightResultOne.getString(i, "database_separatorr"), is(" "));
 				assertThat("获取到的非自定义采集表为data_source，得到的数据字符集为<UTF-8>", rightResultOne.getString(i, "database_code"), is(DataBaseCode.UTF_8.getCode()));
@@ -170,8 +171,8 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 		ActionResult wrongResult = JsonUtil.toObjectSafety(wrongString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(wrongResult.isSuccess(), is(true));
-		Map<String, Object> wrongData = wrongResult.getDataForMap(String.class, Object.class);
-		assertThat("根据测试数据，输入错误的colSetId查询到的非自定义采集表信息应该有0条，但是HTTP访问成功返回", wrongData.get("totalSize"), is(0));
+		Result wrongData = wrongResult.getDataForResult();
+		assertThat("根据测试数据，输入错误的colSetId查询到的非自定义采集表信息应该有0条，但是HTTP访问成功返回", wrongData.isEmpty(), is(true));
 	}
 
 	/**
@@ -187,8 +188,12 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 	 * 错误的数据访问6：将code_info定义为抽取并入库，保存为ORC格式，但是指定了列分隔符
 	 * 错误的数据访问7：将code_info定义为抽取并入库，保存为SEQUENCEFILE格式，但是指定了行分隔符
 	 * 错误的数据访问8：将code_info定义为抽取并入库，保存为SEQUENCEFILE格式，但是指定了列分隔符
-	 * 错误的数据访问9：将code_info定义为抽取并入库，保存为TEXTFILE格式，但是没有指定行分隔符
-	 * 错误的数据访问10：将code_info定义为抽取并入库，保存为TEXTFILE格式，但是没有指定列分隔符
+	 * 错误的数据访问9：将code_info定义为抽取并入库，保存为非定长格式，但是没有指定行分隔符
+	 * 错误的数据访问10：将code_info定义为抽取并入库，保存为非定长格式，但是没有指定列分隔符
+	 * 错误的数据访问11：将code_info定义为抽取并入库，保存为定长格式
+	 * 错误的数据访问12：将code_info定义为仅抽取，保存为ORC格式
+	 * 错误的数据访问13：将code_info定义为仅抽取，保存为Parquet格式
+	 * 错误的数据访问14：将code_info定义为仅抽取，保存为SEQUENCEFILE格式
 	 * 错误的测试用例未达到三组:
 	 * @Param: 无
 	 * @return: 无
@@ -251,7 +256,7 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 					extractType = DataExtractType.ShuJuChouQuJiRuKu.getCode();
 					rowSeparator = "";
 					databaseSeparatorr = "";
-					fileFormat = HiveStorageType.PARQUET.getCode();
+					fileFormat = FileFormat.PARQUET.getCode();
 					planeUrl = "";
 					break;
 				case 1 :
@@ -301,7 +306,7 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 			Result result = SqlOperator.queryResult(db, "select * from " + Data_extraction_def.TableName + " where table_id = ?", CODE_INFO_TABLE_ID);
 			assertThat("查询得到的数据有一条", result.getRowCount(), is(1));
 			assertThat("code_info表配置的数据抽取定义中，抽取方式为<数据抽取并入库>", result.getString(0, "data_extract_type"), is(DataExtractType.ShuJuChouQuJiRuKu.getCode()));
-			assertThat("code_info表配置的数据抽取定义中，卸数文件格式为<PARQUET>", result.getString(0, "dbfile_format"), is(HiveStorageType.PARQUET.getCode()));
+			assertThat("code_info表配置的数据抽取定义中，卸数文件格式为<PARQUET>", result.getString(0, "dbfile_format"), is(FileFormat.PARQUET.getCode()));
 			assertThat("code_info表配置的数据抽取定义中，PARQUET文件不能定义行分隔符", result.getString(0, "row_separator"), is(""));
 			assertThat("code_info表配置的数据抽取定义中，PARQUET文件不能定义列分隔符", result.getString(0, "database_separatorr"), is(""));
 			assertThat("code_info表配置的数据抽取定义中，PARQUET文件不能定义数据落地目录", result.getString(0, "plane_url").equalsIgnoreCase(""), is(true));
@@ -321,7 +326,7 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 
 		//错误的数据访问1：对sys_user修改保存，将存储目的地从/root，修改为/home/wzc,但是保存为非定长文件，没有指定行分隔符
 		Data_extraction_def wrongSysUserDefsOne = new Data_extraction_def();
-		wrongSysUserDefsOne.setDed_id(7788L);
+		wrongSysUserDefsOne.setDed_id(7792L);
 		wrongSysUserDefsOne.setTable_id(SYS_USER_TABLE_ID);
 		wrongSysUserDefsOne.setData_extract_type(DataExtractType.JinShuJuChouQu.getCode());
 		wrongSysUserDefsOne.setIs_header(IsFlag.Shi.getCode());
@@ -344,7 +349,7 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 
 		//错误的数据访问2：对sys_user修改保存，将存储目的地从/root，修改为/home/wzc,但是保存为非定长文件，没有指定列分隔符
 		Data_extraction_def wrongSysUserDefsTwo = new Data_extraction_def();
-		wrongSysUserDefsTwo.setDed_id(7788L);
+		wrongSysUserDefsTwo.setDed_id(7793L);
 		wrongSysUserDefsTwo.setTable_id(SYS_USER_TABLE_ID);
 		wrongSysUserDefsTwo.setData_extract_type(DataExtractType.JinShuJuChouQu.getCode());
 		wrongSysUserDefsTwo.setIs_header(IsFlag.Shi.getCode());
@@ -367,12 +372,12 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 
 		//错误的数据访问3：将code_info定义为抽取并入库，保存为PARQUET格式，但是指定了行分隔符
 		Data_extraction_def wrongSysUserDefsThree = new Data_extraction_def();
-		wrongSysUserDefsThree.setDed_id(7789L);
+		wrongSysUserDefsThree.setDed_id(7794L);
 		wrongSysUserDefsThree.setTable_id(CODE_INFO_TABLE_ID);
 		wrongSysUserDefsThree.setData_extract_type(DataExtractType.ShuJuChouQuJiRuKu.getCode());
 		wrongSysUserDefsThree.setRow_separator("\n");
 		wrongSysUserDefsThree.setDatabase_code(DataBaseCode.UTF_8.getCode());
-		wrongSysUserDefsThree.setDbfile_format(HiveStorageType.PARQUET.getCode());
+		wrongSysUserDefsThree.setDbfile_format(FileFormat.PARQUET.getCode());
 		wrongSysUserDefsThree.setIs_header(IsFlag.Shi.getCode());
 
 		extractionDefs.add(wrongSysUserDefsThree);
@@ -388,12 +393,12 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 		extractionDefs.clear();
 		//错误的数据访问4：将code_info定义为抽取并入库，保存为PARQUET格式，但是指定了列分隔符
 		Data_extraction_def wrongSysUserDefsFour = new Data_extraction_def();
-		wrongSysUserDefsFour.setDed_id(7789L);
+		wrongSysUserDefsFour.setDed_id(7795L);
 		wrongSysUserDefsFour.setTable_id(CODE_INFO_TABLE_ID);
 		wrongSysUserDefsFour.setData_extract_type(DataExtractType.ShuJuChouQuJiRuKu.getCode());
 		wrongSysUserDefsFour.setDatabase_separatorr("|");
 		wrongSysUserDefsFour.setDatabase_code(DataBaseCode.UTF_8.getCode());
-		wrongSysUserDefsFour.setDbfile_format(HiveStorageType.PARQUET.getCode());
+		wrongSysUserDefsFour.setDbfile_format(FileFormat.PARQUET.getCode());
 		wrongSysUserDefsFour.setIs_header(IsFlag.Shi.getCode());
 
 		extractionDefs.add(wrongSysUserDefsFour);
@@ -410,12 +415,12 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 
 		//错误的数据访问5：将code_info定义为抽取并入库，保存为ORC格式，但是指定了行分隔符
 		Data_extraction_def wrongSysUserDefsFive = new Data_extraction_def();
-		wrongSysUserDefsFive.setDed_id(7789L);
+		wrongSysUserDefsFive.setDed_id(7796L);
 		wrongSysUserDefsFive.setTable_id(CODE_INFO_TABLE_ID);
 		wrongSysUserDefsFive.setData_extract_type(DataExtractType.ShuJuChouQuJiRuKu.getCode());
 		wrongSysUserDefsFive.setRow_separator("\n");
 		wrongSysUserDefsFive.setDatabase_code(DataBaseCode.UTF_8.getCode());
-		wrongSysUserDefsFive.setDbfile_format(HiveStorageType.ORC.getCode());
+		wrongSysUserDefsFive.setDbfile_format(FileFormat.ORC.getCode());
 		wrongSysUserDefsFive.setIs_header(IsFlag.Shi.getCode());
 
 		extractionDefs.add(wrongSysUserDefsFive);
@@ -432,12 +437,12 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 
 		//错误的数据访问6：将code_info定义为抽取并入库，保存为ORC格式，但是指定了列分隔符
 		Data_extraction_def wrongSysUserDefsSix = new Data_extraction_def();
-		wrongSysUserDefsSix.setDed_id(7789L);
+		wrongSysUserDefsSix.setDed_id(7797L);
 		wrongSysUserDefsSix.setTable_id(CODE_INFO_TABLE_ID);
 		wrongSysUserDefsSix.setData_extract_type(DataExtractType.ShuJuChouQuJiRuKu.getCode());
 		wrongSysUserDefsSix.setDatabase_separatorr("|");
 		wrongSysUserDefsSix.setDatabase_code(DataBaseCode.UTF_8.getCode());
-		wrongSysUserDefsSix.setDbfile_format(HiveStorageType.ORC.getCode());
+		wrongSysUserDefsSix.setDbfile_format(FileFormat.ORC.getCode());
 		wrongSysUserDefsSix.setIs_header(IsFlag.Shi.getCode());
 
 		extractionDefs.add(wrongSysUserDefsSix);
@@ -454,12 +459,12 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 
 		//错误的数据访问7：将code_info定义为抽取并入库，保存为SEQUENCEFILE格式，但是指定了行分隔符
 		Data_extraction_def wrongSysUserDefsSenven = new Data_extraction_def();
-		wrongSysUserDefsSenven.setDed_id(7789L);
+		wrongSysUserDefsSenven.setDed_id(7798L);
 		wrongSysUserDefsSenven.setTable_id(CODE_INFO_TABLE_ID);
 		wrongSysUserDefsSenven.setData_extract_type(DataExtractType.ShuJuChouQuJiRuKu.getCode());
 		wrongSysUserDefsSenven.setRow_separator("\n");
 		wrongSysUserDefsSenven.setDatabase_code(DataBaseCode.UTF_8.getCode());
-		wrongSysUserDefsSenven.setDbfile_format(HiveStorageType.ORC.getCode());
+		wrongSysUserDefsSenven.setDbfile_format(FileFormat.ORC.getCode());
 		wrongSysUserDefsSenven.setIs_header(IsFlag.Shi.getCode());
 
 		extractionDefs.add(wrongSysUserDefsSenven);
@@ -476,12 +481,12 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 
 		//错误的数据访问8：将code_info定义为抽取并入库，保存为SEQUENCEFILE格式，但是指定了列分隔符
 		Data_extraction_def wrongSysUserDefsEight = new Data_extraction_def();
-		wrongSysUserDefsEight.setDed_id(7789L);
+		wrongSysUserDefsEight.setDed_id(7799L);
 		wrongSysUserDefsEight.setTable_id(CODE_INFO_TABLE_ID);
 		wrongSysUserDefsEight.setData_extract_type(DataExtractType.ShuJuChouQuJiRuKu.getCode());
 		wrongSysUserDefsEight.setDatabase_separatorr("|");
 		wrongSysUserDefsEight.setDatabase_code(DataBaseCode.UTF_8.getCode());
-		wrongSysUserDefsEight.setDbfile_format(HiveStorageType.ORC.getCode());
+		wrongSysUserDefsEight.setDbfile_format(FileFormat.ORC.getCode());
 		wrongSysUserDefsEight.setIs_header(IsFlag.Shi.getCode());
 
 		extractionDefs.add(wrongSysUserDefsEight);
@@ -495,14 +500,14 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 		assertThat(wrongResultEight.isSuccess(), is(false));
 
 		extractionDefs.clear();
-		//错误的数据访问9：将code_info定义为抽取并入库，保存为TEXTFILE格式，但是没有指定行分隔符
+		//错误的数据访问9：将code_info定义为抽取并入库，保存为非定长格式，但是没有指定行分隔符
 		Data_extraction_def wrongSysUserDefsNine = new Data_extraction_def();
-		wrongSysUserDefsNine.setDed_id(7789L);
+		wrongSysUserDefsNine.setDed_id(7800L);
 		wrongSysUserDefsNine.setTable_id(CODE_INFO_TABLE_ID);
 		wrongSysUserDefsNine.setData_extract_type(DataExtractType.ShuJuChouQuJiRuKu.getCode());
 		wrongSysUserDefsNine.setDatabase_separatorr("|");
 		wrongSysUserDefsNine.setDatabase_code(DataBaseCode.UTF_8.getCode());
-		wrongSysUserDefsNine.setDbfile_format(HiveStorageType.TEXTFILE.getCode());
+		wrongSysUserDefsNine.setDbfile_format(FileFormat.FeiDingChang.getCode());
 		wrongSysUserDefsNine.setIs_header(IsFlag.Shi.getCode());
 
 		extractionDefs.add(wrongSysUserDefsNine);
@@ -515,14 +520,16 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 				-> new BusinessException("连接失败!"));
 		assertThat(wrongResultNine.isSuccess(), is(false));
 
-		//错误的数据访问10：将code_info定义为抽取并入库，保存为TEXTFILE格式，但是没有指定列分隔符
+		extractionDefs.clear();
+
+		//错误的数据访问10：将code_info定义为抽取并入库，保存为非定长格式，但是没有指定列分隔符
 		Data_extraction_def wrongSysUserDefsTen = new Data_extraction_def();
-		wrongSysUserDefsTen.setDed_id(7789L);
+		wrongSysUserDefsTen.setDed_id(7801L);
 		wrongSysUserDefsTen.setTable_id(CODE_INFO_TABLE_ID);
 		wrongSysUserDefsTen.setData_extract_type(DataExtractType.ShuJuChouQuJiRuKu.getCode());
 		wrongSysUserDefsTen.setRow_separator("\n");
 		wrongSysUserDefsTen.setDatabase_code(DataBaseCode.UTF_8.getCode());
-		wrongSysUserDefsTen.setDbfile_format(HiveStorageType.TEXTFILE.getCode());
+		wrongSysUserDefsTen.setDbfile_format(FileFormat.FeiDingChang.getCode());
 		wrongSysUserDefsTen.setIs_header(IsFlag.Shi.getCode());
 
 		extractionDefs.add(wrongSysUserDefsTen);
@@ -534,6 +541,96 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 		ActionResult wrongResultTen = JsonUtil.toObjectSafety(wrongStringTen, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(wrongResultTen.isSuccess(), is(false));
+
+		extractionDefs.clear();
+
+		//错误的数据访问11：将code_info定义为抽取并入库，保存为定长格式
+		Data_extraction_def wrongSysUserDefsEle = new Data_extraction_def();
+		wrongSysUserDefsEle.setDed_id(7802L);
+		wrongSysUserDefsEle.setTable_id(CODE_INFO_TABLE_ID);
+		wrongSysUserDefsEle.setData_extract_type(DataExtractType.ShuJuChouQuJiRuKu.getCode());
+		wrongSysUserDefsEle.setRow_separator("\n");
+		wrongSysUserDefsEle.setDatabase_code(DataBaseCode.UTF_8.getCode());
+		wrongSysUserDefsEle.setDbfile_format(FileFormat.DingChang.getCode());
+		wrongSysUserDefsEle.setIs_header(IsFlag.Shi.getCode());
+
+		extractionDefs.add(wrongSysUserDefsEle);
+
+		String wrongStringEle = new HttpClient()
+				.addData("extractionDefString", JSON.toJSONString(extractionDefs))
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.post(getActionUrl("saveFileConf")).getBodyString();
+		ActionResult wrongResultEle = JsonUtil.toObjectSafety(wrongStringEle, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultEle.isSuccess(), is(false));
+
+		extractionDefs.clear();
+
+		//错误的数据访问12：将code_info定义为仅抽取，保存为ORC格式
+		Data_extraction_def wrongSysUserDefsTwe = new Data_extraction_def();
+		wrongSysUserDefsTwe.setDed_id(7803L);
+		wrongSysUserDefsTwe.setTable_id(CODE_INFO_TABLE_ID);
+		wrongSysUserDefsTwe.setData_extract_type(DataExtractType.JinShuJuChouQu.getCode());
+		wrongSysUserDefsTwe.setRow_separator("\n");
+		wrongSysUserDefsTwe.setDatabase_code(DataBaseCode.UTF_8.getCode());
+		wrongSysUserDefsTwe.setDbfile_format(FileFormat.ORC.getCode());
+		wrongSysUserDefsTwe.setIs_header(IsFlag.Shi.getCode());
+
+		extractionDefs.add(wrongSysUserDefsTwe);
+
+		String wrongStringTwe = new HttpClient()
+				.addData("extractionDefString", JSON.toJSONString(extractionDefs))
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.post(getActionUrl("saveFileConf")).getBodyString();
+		ActionResult wrongResultTwe = JsonUtil.toObjectSafety(wrongStringTwe, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultTwe.isSuccess(), is(false));
+
+		extractionDefs.clear();
+
+		//错误的数据访问13：将code_info定义为仅抽取，保存为Parquet格式
+		Data_extraction_def wrongSysUserDefsThi = new Data_extraction_def();
+		wrongSysUserDefsThi.setDed_id(7804L);
+		wrongSysUserDefsThi.setTable_id(CODE_INFO_TABLE_ID);
+		wrongSysUserDefsThi.setData_extract_type(DataExtractType.JinShuJuChouQu.getCode());
+		wrongSysUserDefsThi.setRow_separator("\n");
+		wrongSysUserDefsThi.setDatabase_code(DataBaseCode.UTF_8.getCode());
+		wrongSysUserDefsThi.setDbfile_format(FileFormat.PARQUET.getCode());
+		wrongSysUserDefsThi.setIs_header(IsFlag.Shi.getCode());
+
+		extractionDefs.add(wrongSysUserDefsThi);
+
+		String wrongStringThi = new HttpClient()
+				.addData("extractionDefString", JSON.toJSONString(extractionDefs))
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.post(getActionUrl("saveFileConf")).getBodyString();
+		ActionResult wrongResultThi = JsonUtil.toObjectSafety(wrongStringThi, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultThi.isSuccess(), is(false));
+
+		extractionDefs.clear();
+
+		//错误的数据访问14：将code_info定义为仅抽取，保存为SEQUENCEFILE格式
+		Data_extraction_def wrongSysUserDefsFourt = new Data_extraction_def();
+		wrongSysUserDefsFourt.setDed_id(7804L);
+		wrongSysUserDefsFourt.setTable_id(CODE_INFO_TABLE_ID);
+		wrongSysUserDefsFourt.setData_extract_type(DataExtractType.JinShuJuChouQu.getCode());
+		wrongSysUserDefsFourt.setRow_separator("\n");
+		wrongSysUserDefsFourt.setDatabase_code(DataBaseCode.UTF_8.getCode());
+		wrongSysUserDefsFourt.setDbfile_format(FileFormat.PARQUET.getCode());
+		wrongSysUserDefsFourt.setIs_header(IsFlag.Shi.getCode());
+
+		extractionDefs.add(wrongSysUserDefsFourt);
+
+		String wrongStringFourt = new HttpClient()
+				.addData("extractionDefString", JSON.toJSONString(extractionDefs))
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.post(getActionUrl("saveFileConf")).getBodyString();
+		ActionResult wrongResultFourt = JsonUtil.toObjectSafety(wrongStringFourt, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultFourt.isSuccess(), is(false));
+
+		extractionDefs.clear();
 	}
 
 	@After
