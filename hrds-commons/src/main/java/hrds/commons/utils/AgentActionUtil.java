@@ -34,6 +34,10 @@ public class AgentActionUtil {
 	public static final String BATCHUPDATESOURCEFILEATTRIBUTE = "/hrds/server/batchUpdateSourceFileAttribute";
 	//获取dep_id,以逗号连接；获取数据源名称、agent名称、文件采集名称
 	public static final String GETBASEINFO = "/hrds/server/getBaseInfo";
+	//根据数据库连接获取数据库下表信息
+	public static final String GETDATABASETABLE = "/hrds/agent/trans/biz/database/getDatabaseTable";
+	//根据数据库连接和表名获取表的字段信息
+	public static final String GETTABLECOLUMN = "/hrds/agent/trans/biz/database/getTableColumn";
 
 	static {
 		list = new ArrayList<>();
@@ -46,6 +50,8 @@ public class AgentActionUtil {
 		list.add(BATCHADDSOURCEFILEATTRIBUTE);
 		list.add(BATCHUPDATESOURCEFILEATTRIBUTE);
 		list.add(GETBASEINFO);
+		list.add(GETDATABASETABLE);
+		list.add(GETTABLECOLUMN);
 	}
 
 	private AgentActionUtil() {

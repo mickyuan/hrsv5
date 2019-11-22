@@ -311,6 +311,10 @@ public class DBConfStepAction extends BaseAction{
 		if(!actionResult.isSuccess()){
 			throw new BusinessException("连接失败");
 		}
+		boolean connectFlag = (boolean) actionResult.getData();
+		if(!connectFlag){
+			throw new BusinessException("连接失败");
+		}
 	}
 
 	@Method(desc = "新增/更新操作校验Collect_job_classify中数据的合法性，对数据库中不能为空的字段，校验合法性，" +

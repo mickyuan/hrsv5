@@ -49,11 +49,11 @@ public class PackUtil {
 	@Param(name = "data", desc = "Agent端响应的数据", range = "不为空")
 	@Return(desc = "经过处理后的响应数据", range = "四对Entry，key分别为iscompress, msg(数据部分)")
 	public static Map<String, String> unpackMsg(String data) {
-		Map<String, String> map = new HashMap<>();
 		String compressed = data.substring(0, 1);
 		IsFlag compressedFlag = IsFlag.ofEnumByCode(compressed);
+		Map<String, String> map = new HashMap<>();
 		map.put("isCompress", compressed);
-		String msg = data.substring(1, data.length());
+		String msg = data.substring(1);
 		if (compressedFlag == IsFlag.Shi) {
 			map.put("msg", StringUtil.isBlank(msg) ? "" : ZipUtils.gunzip(msg));
 		}else{

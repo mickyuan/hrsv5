@@ -3,6 +3,7 @@ package hrds.b.biz.agent.dbagentconf.tableconf;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.TypeReference;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
@@ -70,64 +71,50 @@ public class CollTbConfStepAction extends BaseAction {
 
 	@Method(desc = "根据模糊表名和数据库设置id得到表相关信息", logicStep = "" +
 			"1、根据colSetId去数据库中获取数据库设置相关信息" +
-			"2、将查询结果转换成json，并追加模糊查询表名" +
-			"3、和Agent端进行交互，得到Agent返回的数据" +
-			"4、对获取到的数据进行处理，获得模糊查询到的表名" +
-			"5、根据表名和colSetId获取界面需要显示的信息并返回")
+			"2、和Agent端进行交互，得到Agent返回的数据" +
+			"3、对获取到的数据进行处理，获得模糊查询到的表名" +
+			"4、根据表名和colSetId获取界面需要显示的信息并返回")
 	@Param(name = "colSetId", desc = "数据库设置ID,源系统数据库设置表主键,数据库对应表外键", range = "不为空")
 	@Param(name = "inputString", desc = "用户界面输入用于模糊查询的关键词", range = "不为空")
 	@Return(desc = "查询结果集", range = "不为空")
 	//查询按钮
 	public List<Result> getTableInfo(long colSetId, String inputString){
 		//1、根据colSetId去数据库中获取数据库设置相关信息
-		Result result = getDatabaseSetInfo(colSetId, getUserId());
+		Map<String, Object> databaseInfo = getDatabaseSetInfo(colSetId, getUserId());
 		//数据可访问权限处理方式
 		//以上SQL中使用user_id作为过滤条件，达到了访问权限控制的目的
-		if(result.isEmpty()){
+		if(databaseInfo.isEmpty()){
 			throw new BusinessException("未找到数据库采集任务");
 		}
-		//2、将查询结果转换成json，并追加模糊查询表名
-		JSONObject resultObj = JSON.parseObject(result.toJSON());
-		resultObj.put("FuzzyQueryTableName", inputString);
-		//3、与Agent端进行交互，得到Agent返回的数据
-		//TODO 由于Agent端服务方法暂时还没有，所以这里使用的是fakeMethodName，后期会改为取AgentActionUtil类中的静态常量
-		String fakeMethodName = "FAKEMETHODNAME";
-		String respMsg = SendMsgUtil.sendMsg(result.getLong(0, "agent_id"), getUserId(),
-				resultObj.toJSONString(), fakeMethodName);
-		//4、对获取到的数据进行处理，获得模糊查询到的表名
-		JSONObject respObj = JSON.parseObject(respMsg);//TODO 能不能改成BEAN对象
-		List<String> rightTables = (List<String>) respObj.get("tableName");
-		//5、根据表名和colSetId获取界面需要显示的信息并返回
+		//2、与Agent端进行交互，得到Agent返回的数据
+		String methodName = AgentActionUtil.GETDATABASETABLE;
+		long agentId = (long)databaseInfo.get("agent_id");
+		String respMsg = SendMsgUtil.searchTableName(agentId, getUserId(), databaseInfo, inputString, methodName);
+		//3、对获取到的数据进行处理，获得模糊查询到的表名
+		List<String> rightTables = JSON.parseObject(respMsg, new TypeReference<List<String>>() {});
+		//4、根据表名和colSetId获取界面需要显示的信息并返回
 		return getTableInfoByTableName(rightTables, colSetId);
 	}
 
 	@Method(desc = "根据数据库设置id得到所有表相关信息", logicStep = "" +
 			"1、根据colSetId去数据库中获取数据库设置相关信息" +
-			"2、将查询结果转换成json，并追加获取所有表" +
-			"3、和Agent端进行交互，得到Agent返回的数据" +
-			"4、对获取到的数据进行处理，根据表名和colSetId获取界面需要显示的信息并返回")
+			"2、和Agent端进行交互，得到Agent返回的数据" +
+			"3、对获取到的数据进行处理，根据表名和colSetId获取界面需要显示的信息并返回")
 	@Param(name = "colSetId", desc = "数据库设置ID,源系统数据库设置表主键,数据库对应表外键", range = "不为空")
 	@Return(desc = "查询结果集", range = "不为空")
-	//TODO 查看所有表，目前原型页面似乎没有设计触发这个接口的地方了，但是这个功能应该还是需要的
+	//TODO 查看所有表，目前原型页面中，如果搜索框中用户输入了内容，就直接调用getTableInfo接口，如果用户没有输入内容就点击查询，那么就调用getAllTableInfo获取所有表
 	public List<Result> getAllTableInfo(long colSetId){
-		Map<String, Object> returnMap = new HashMap<>();
 		//1、根据colSetId去数据库中获取数据库设置相关信息
-		Result result = getDatabaseSetInfo(colSetId, getUserId());
-		if(result.isEmpty()){
+		Map<String, Object> databaseInfo = getDatabaseSetInfo(colSetId, getUserId());
+		if(databaseInfo.isEmpty()){
 			throw new BusinessException("未找到数据库采集任务");
 		}
-		//2、将查询结果转换成json，并追加获取所有表
-		JSONObject resultObj = JSON.parseObject(result.toJSON());
-		//注意：查看所有表向Agent端传递的信息中FuzzyQueryTableName为NOTHING
-		resultObj.put("FuzzyQueryTableName", "NOTHING");
-		//3、和Agent端进行交互，得到Agent返回的数据
-		//TODO 由于Agent端服务方法暂时还没有，所以这里使用的是fakeMethodName，后期会改为取AgentActionUtil类中的静态常量
-		String fakeMethodName = "FAKEMETHODNAME";
-		String respMsg = SendMsgUtil.sendMsg(result.getLong(0, "agent_id"), getUserId(),
-				resultObj.toJSONString(), fakeMethodName);
-		//4、对获取到的数据进行处理，根据表名和colSetId获取界面需要显示的信息并返回
-		JSONObject respObj = JSON.parseObject(respMsg);
-		List<String> tableNames = (List<String>) respObj.get("tableName");
+		//2、和Agent端进行交互，得到Agent返回的数据
+		String methodName = AgentActionUtil.GETDATABASETABLE;
+		long agentId = (long) databaseInfo.get("agent_id");
+		String respMsg = SendMsgUtil.getAllTableName(agentId, getUserId(), databaseInfo, methodName);
+		//3、对获取到的数据进行处理，根据表名和colSetId获取界面需要显示的信息并返回
+		List<String> tableNames = JSON.parseObject(respMsg, new TypeReference<List<String>>() {});
 		return getTableInfoByTableName(tableNames, colSetId);
 	}
 
@@ -587,28 +574,38 @@ public class CollTbConfStepAction extends BaseAction {
 	@Return(desc = "在Agent端获取到的该表的列信息", range = "不为空，" +
 			"一个在Agent端封装好的Table_column对象的is_primary_key,colume_name,column_type属性必须有值")
 	private List<Table_column> getColumnInfoByTableName(long colSetId, long userId, String tableName){
-		Result result = getDatabaseSetInfo(colSetId, userId);
-		if(result.isEmpty()){
+		//1、根据colSetId和userId去数据库中查出DB连接信息
+		Map<String, Object> databaseInfo = getDatabaseSetInfo(colSetId, userId);
+		if(databaseInfo.isEmpty()){
 			throw new BusinessException("未找到数据库采集任务");
 		}
-		JSONObject resultObj = JSON.parseObject(result.toJSON());
-		resultObj.put("basedTableName", tableName);
-		//TODO 由于Agent端服务方法暂时还没有，所以这里使用的是fakeMethodName，后期会改为取AgentActionUtil类中的静态常量
-		String fakeMethodName = "FAKEMETHODNAME";
-		String respMsg = SendMsgUtil.sendMsg(result.getLong(0, "agent_id"), getUserId(),
-				resultObj.toJSONString(), fakeMethodName);
-		return JSONObject.parseArray(respMsg, Table_column.class);
+		String methodName = AgentActionUtil.GETTABLECOLUMN;
+		long agentId = (long) databaseInfo.get("agent_id");
+		String respMsg = SendMsgUtil.getColInfoByTbName(agentId, getUserId(), databaseInfo, tableName, methodName);
+		JSONArray columnInfos = JSONObject.parseArray(respMsg);
+		List<Table_column> tableColumns = new ArrayList<>();
+		for(int i = 0; i < columnInfos.size(); i++){
+			JSONObject columnInfo = columnInfos.getJSONObject(i);
+			Table_column tableColumn = new Table_column();
+			tableColumn.setColume_name(columnInfo.getString("column_name"));
+			tableColumn.setColume_ch_name(columnInfo.getString("column_ch_name"));
+			tableColumn.setColumn_type(columnInfo.getString("type"));
+
+			tableColumns.add(tableColumn);
+		}
+		return tableColumns;
 	}
 
 	@Method(desc = "根据colSetId去数据库中查出DB连接信息", logicStep = "1、根据colSetId和userId去数据库中查出DB连接信息")
 	@Param(name = "colSetId", desc = "数据库设置ID，源系统数据库设置表主键，数据库对应表外键", range = "不为空")
 	@Param(name = "userId", desc = "当前登录用户ID，sys_user表主键", range = "不为空")
 	@Return(desc = "查询结果集", range = "不为空")
-	private Result getDatabaseSetInfo(long colSetId, long userId){
+	private Map<String, Object> getDatabaseSetInfo(long colSetId, long userId){
 		//1、根据colSetId和userId去数据库中查出DB连接信息
-		return Dbo.queryResult(" select t1.*, t2.* from "+ Database_set.TableName +" t1" +
+		return Dbo.queryOneObject(" select t1.database_type, t1.database_ip, t1.database_port, t1.database_name, " +
+				" t1.database_pad, t1.user_name, t1.database_drive, t1.jdbc_url, t1.agent_id, t1.db_agent, t1.plane_url" +
+				" from "+ Database_set.TableName +" t1" +
 				" left join "+ Agent_info.TableName +" ai on ai.agent_id = t1.agent_id" +
-				" left join "+ Collect_job_classify.TableName +" t2 on t1.classify_id = t2.classify_id" +
 				" where t1.database_id = ? and ai.user_id = ? ", colSetId, userId);
 	}
 

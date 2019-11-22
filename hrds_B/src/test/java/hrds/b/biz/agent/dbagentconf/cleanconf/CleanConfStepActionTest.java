@@ -785,7 +785,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 * 正确数据访问3：模拟既设置全表字符补齐，又设置全表字符替换
 	 * 错误数据访问1：模拟只设置全表字符补齐，但是补齐方式是3，这样访问不会成功
 	 * 错误数据访问2：模拟只设置全表字符替换，但是缺少原字符串
-	 * 错误数据访问3：模拟只设置全表字符替换，但是缺少补齐字符串
+	 * 错误数据访问3：模拟只设置全表字符替换，但是缺少替换字符串
 	 *
 	 * @Param: 无
 	 * @return: 无
@@ -930,6 +930,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		ActionResult wrongResultThree = JsonUtil.toObjectSafety(wrongStringThree, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(wrongResultThree.isSuccess(), is(false));
+
 	}
 
 	/**
