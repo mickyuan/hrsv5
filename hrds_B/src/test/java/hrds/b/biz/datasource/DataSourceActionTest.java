@@ -473,6 +473,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
             fileSource.setIs_pdf(IsFlag.Fou.getCode());
             fileSource.setIs_text(IsFlag.Shi.getCode());
             fileSource.setIs_video(IsFlag.Fou.getCode());
+            fileSource.setIs_compress(IsFlag.Shi.getCode());
             fileSource.add(db);
             // 18.构造signal_file表测试数据
             Signal_file signalFile = new Signal_file();
@@ -1054,8 +1055,8 @@ public class DataSourceActionTest extends WebBaseTestCase {
     public void getDataAuditInfoForPage() {
         // 1.正确的数据访问1，数据管理列表，数据全有效
         String bodyString = new HttpClient()
-                .addData("currPage", 1)
-                .addData("pageSize", 5)
+//                .addData("currPage", 1)
+//                .addData("pageSize", 5)
                 .post(getActionUrl("getDataAuditInfoForPage")).getBodyString();
         ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
