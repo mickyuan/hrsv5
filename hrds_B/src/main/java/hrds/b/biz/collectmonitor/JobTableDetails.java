@@ -40,7 +40,7 @@ public class JobTableDetails {
                   + ' '
                   + DateUtil.parseStr2TimeWith6Char(collect_case.getCollect_e_time()).toString();
           // 采集原表名称
-          String table_name = collect_case.getTable_name();
+          String table_name = collect_case.getTask_classify();
           /*
            * 作业步骤的类型
            *  1 : 卸数
