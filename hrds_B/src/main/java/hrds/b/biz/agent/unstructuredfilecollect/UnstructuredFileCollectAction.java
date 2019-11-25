@@ -85,6 +85,7 @@ public class UnstructuredFileCollectAction extends BaseAction {
 		}
 		//2.保存File_collect_set表
 		file_collect_set.setFcs_id(PrimayKeyGener.getNextId());
+		file_collect_set.setIs_sendok(IsFlag.Fou.getCode());
 		file_collect_set.add(Dbo.db());
 		return file_collect_set.getFcs_id();
 	}
@@ -100,6 +101,8 @@ public class UnstructuredFileCollectAction extends BaseAction {
 		if (file_collect_set.getFcs_id() == null) {
 			throw new BusinessException("更新file_collect_set表时fcs_id不能为空");
 		}
+		//更新之后没有重新发送之前默认为false
+		file_collect_set.setIs_sendok(IsFlag.Fou.getCode());
 		//1.根据fcs_name查询非结构化任务名称是否与其他采集任务名称重复
 		long count = Dbo.queryNumber("SELECT count(1) count FROM " + File_collect_set.TableName
 						+ " WHERE " + "fcs_name = ? AND fcs_id != ?"
