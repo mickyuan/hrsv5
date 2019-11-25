@@ -817,15 +817,15 @@ public class InitAndDestDataForStoDest {
 			long columnId;
 			switch (i) {
 				case 0 :
-					dsladId = 440000L;
+					dsladId = 439999L;
 					columnId = 3112L;
 					break;
 				case 1 :
-					dsladId = 440002L;
+					dsladId = 440001L;
 					columnId = 3112L;
 					break;
 				case 2 :
-					dsladId = 440001L;
+					dsladId = 440000L;
 					columnId = 5112L;
 					break;
 				default:

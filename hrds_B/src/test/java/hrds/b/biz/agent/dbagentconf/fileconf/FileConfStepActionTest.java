@@ -115,7 +115,7 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 	 * */
 	@Test
 	public void getInitInfo(){
-		//正确数据访问1：使用正确的colSetId访问，应该可以拿到两条数据
+		//正确数据访问1：使用正确的colSetId访问，应该可以拿到4条数据
 		String rightString = new HttpClient()
 				.addData("colSetId", FIRST_DATABASESET_ID)
 				.post(getActionUrl("getInitInfo")).getBodyString();

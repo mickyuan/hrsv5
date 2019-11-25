@@ -24,8 +24,6 @@ import java.util.List;
 @DocClass(desc = "定义存储目的地配置", author = "WangZhengcheng")
 public class StoDestStepConfAction extends BaseAction{
 
-	private static final int EMPTY_RESULT_COUNT = 0;
-
 	/*
 	* 根据数据库采集任务ID获取定义存储目的地配置信息
 	* * */
@@ -46,22 +44,16 @@ public class StoDestStepConfAction extends BaseAction{
 	}
 
 	/*
-	 * 对抽取并入库的表获取存储目的地
-	 * */
-	@Method(desc = "对抽取并入库的表获取存储目的地", logicStep = "" +
-			"1、查询数据库，获取存储目的地")
-	@Return(desc = "查询结果集", range = "不为空")
-	public Result getStoDestInfo(){
-		return Dbo.queryResult(" select dsl_id, dsl_name, store_type from " + Data_store_layer.TableName);
-	}
-
-	/*
 	 * 根据存储配置主键信息获取存储目的地详细信息
 	 * */
 	@Method(desc = "根据存储配置主键信息获取存储目的地详细信息", logicStep = "" +
 			"1、根据存储配置主键去数据库中查询存储目的地详细信息")
 	@Param(name = "dslId", desc = "数据存储层配置表主键，数据存储层配置属性表外键", range = "不为空")
-	@Return(desc = "查询结果集", range = "不为空")
+	@Return(desc = "查询结果集", range = "不为空" +
+			"注意：详细信息是根据选择的存储目的地不同动态变化的" +
+			"所以在显示的时候可以在页面显示两列，一列用于显示key，一列用于显示value" +
+			"如：数据库名称:PGSQL" +
+			"    数据库用户名:test")
 	public Result getStoDestDetail(long dslId){
 		return Dbo.queryResult(" select storage_property_key, storage_property_val from "
 				+ Data_store_layer_attr.TableName + " where dsl_id = ?", dslId);
@@ -71,7 +63,8 @@ public class StoDestStepConfAction extends BaseAction{
 	 * 对仅做数据抽取的表回显定义好的存储目的地
 	 * */
 	@Method(desc = "对仅做数据抽取的表回显定义好的存储目的地", logicStep = "" +
-			"1、校验该表定义的数据抽取信息是否存在" +
+			"1、校验该表定义的数据抽取信息是否存在，之所以这样校验是因为配置抽取属性是上一个页面的职责，" +
+			"如果有一张采集表没有配置抽取属性就进入到配置存储目的地页面，那么这样是不对的" +
 			"2、查询数据抽取定义表，获取数据落地目录")
 	@Param(name = "tableId", desc = "数据库采集表ID，数据抽取定义外键", range = "不为空")
 	@Return(desc = "查询结果集", range = "不为空")
@@ -106,7 +99,7 @@ public class StoDestStepConfAction extends BaseAction{
 		if(count != 1){
 			throw new BusinessSystemException("获取该表数据抽取信息异常");
 		}
-		//3、若存在，则将存储目的地更新到对应的字段中
+		//3、若存在，则将存储目的地更新到对应的字段中，必须更新一条数据，否则抛出异常
 		DboExecute.updatesOrThrow("保存存储目的地失败", "update " + Data_extraction_def.TableName
 				+ " set plane_url = ? where table_id = ?", stoDest, tableId);
 	}
@@ -114,31 +107,43 @@ public class StoDestStepConfAction extends BaseAction{
 	/*
 	* 根据tableId获取该表选择的存储目的地和系统中配置的所有存储目的地
 	* */
-	@Method(desc = "根据tableId获取该表选择的存储目的地和系统中配置的所有存储目的地", logicStep = "" +
-			"1、在数据库中，根据SQL语句查出当前系统中的所有存储配置和关联表的使用情况" +
-			"2、使用传入的tableId和查询出的tableId进行比较" +
-			"3、如果传入的tableId和查询出的tableId相等，则给该列结果加上一个usedFlag为true" +
-			"4、返回")
+	@Method(desc = "根据tableId回显该表选择的存储目的地和系统中配置的所有存储目的地", logicStep = "" +
+			"1、获取所有存储目的地信息，并且追加一列userflag，固定值为0，表示默认所有存储目的地没有被这个当前表所使用" +
+			"2、如果结果集为空，表示系统中没有定义存储目的地" +
+			"3、尝试获取该表定义好的存储目的地，如果之前定义过，那么就能获取到数据，否则就获取不到" +
+			"4、如果获取不到，说明之前该表未定义过存储目的地，则直接返回结果集" +
+			"5、否则，说明之前该表定义过存储目的地，则需要把定义好的找出来，把userflag标识位设置1" +
+			"6、返回")
 	@Param(name = "tableId", desc = "采集表ID，表存储信息表外键", range = "不为空")
 	@Return(desc = "查询结果集", range = "不为空，注意每条数据的usedFlag字段，true表示该表配置了该存储目的地，在页面上根据单选框请勾选，" +
 			"false表示该表没有配置这个存储目的地，在页面上单选框不要勾选")
 	public Result getStoDestByTableId(long tableId){
-		Result result = Dbo.queryResult("select dsl.dsl_name, dsl.store_type, tsi.table_id " +
-				" from " + Data_store_layer.TableName + " dsl" +
-				" left join " + Data_relation_table.TableName + " drt" +
-				" on drt.dsl_id = dsl.dsl_id" +
-				" left join " + Table_storage_info.TableName + " tsi" +
-				" on tsi.storage_id = drt.storage_id");
+		//1、获取所有存储目的地信息，并且追加一列userflag，固定值为0，表示默认所有存储目的地没有被这个当前表所使用
+		Result result = Dbo.queryResult("select dsl_id, dsl_name, store_type, '0' as userflag from "
+				+ Data_store_layer.TableName);
+		//2、如果结果集为空，表示系统中没有定义存储目的地
 		if(result.isEmpty()){
-			throw new BusinessSystemException("获取系统存储目的地信息失败，请联系管理员");
+			throw new BusinessSystemException("系统中未定义存储目的地信息，请联系管理员");
 		}
-		for(int i = 0; i < result.getRowCount(); i++){
-			if(result.getLong(i, "table_id") == tableId){
-				result.setObject(i, "usedFlag", true);
-			}else{
-				result.setObject(i, "usedFlag", false);
+		//3、尝试获取该表定义好的存储目的地，如果之前定义过，那么就能获取到数据，否则就获取不到
+		Result tbStoRela = Dbo.queryResult("select drt.dsl_id from " + Data_relation_table.TableName + " drt" +
+				" where drt.storage_id = (select storage_id from " + Table_storage_info.TableName +
+				" where table_id = ?)", tableId);
+		//4、如果获取不到，说明之前该表未定义过存储目的地，则直接返回结果集
+		if(tbStoRela.isEmpty()){
+			return result;
+		}
+		//5、否则，说明之前该表定义过存储目的地，则需要把定义好的找出来，把userflag标识位设置1
+		for(int i = 0; i < tbStoRela.getRowCount(); i++){
+			long dslId = tbStoRela.getLong(i, "dsl_id");
+			for(int j = 0;j < result.getRowCount(); j++){
+				long dslIdFromResult = result.getLong(i, "dsl_id");
+				if(dslId == dslIdFromResult){
+					result.setObject(j, "userflag", IsFlag.Shi.getCode());
+				}
 			}
 		}
+		//6、返回
 		return result;
 	}
 
@@ -162,7 +167,7 @@ public class StoDestStepConfAction extends BaseAction{
 		//2、根据存储目的地ID获取附加信息(结果集2)
 		Result resultTwo = Dbo.queryResult("select dsla.dsla_storelayer from " + Data_store_layer_added.TableName + " dsla" +
 				" join " + Data_store_layer.TableName + " dsl on dsla.dsl_id = dsl.dsl_id where dsl.dsl_id = ?", dslId);
-		//3、结果集2中查询到的行作为列添加到结果1里面，作为结果集3，形成前端页面展示的基础
+		//3、结果集2中查询到的行作为列添加到结果1里面，并且设置默认值为否，作为结果集3，形成前端页面展示的基础
 		if(!resultTwo.isEmpty()){
 			for(int i = 0; i < resultTwo.getRowCount(); i++){
 				for(int j = 0; j < resultOne.getRowCount(); j++){
@@ -198,25 +203,30 @@ public class StoDestStepConfAction extends BaseAction{
 	 * */
 	@Method(desc = "保存表的字段存储信息", logicStep = "" +
 			"1、将colStoInfoString解析为List集合" +
-			"2、遍历集合，在每保存一个字段的存储目的地前，先尝试在column_storage_info表中使用column_id删除这样一条记录，不关心是否删除到数据" +
-			"3、保存")
-	@Param(name = "colStoInfoString", desc = "存放待保存字段存储配置信息的json串", range = "不为空")
-	public void saveColStoInfoForHbase(String colStoInfoString){
+			"2、在每保存一个字段的存储目的地前，先尝试在column_storage_info表中删除该表所有列的信息，不关心删除的数据" +
+			"3、如果反序列得到的List集合不为空，则遍历集合" +
+			"4、保存")
+	@Param(name = "colStoInfoString", desc = "存放待保存字段存储配置信息的json串", range = "不为空", nullable = true, valueIfNull = "")
+	@Param(name = "tableId", desc = "字段所在表ID,table_info表主键，table_column表外键", range = "不为空")
+	public void saveColStoInfo(String colStoInfoString, long tableId){
 		//1、将colStoInfoString解析为List集合
 		List<Column_storage_info> storageInfos = JSONArray.parseArray(colStoInfoString, Column_storage_info.class);
-		//2、遍历集合
-		for(Column_storage_info storageInfo : storageInfos){
-			if(storageInfo.getColumn_id() == null){
-				throw new BusinessSystemException("保存字段存储信息时，必须关联字段");
+		//2、在每保存一个字段的存储目的地前，先尝试在column_storage_info表中删除该表所有列的信息，不关心删除的数据
+		Dbo.execute("delete from " + Column_storage_info.TableName + " where column_id in (select column_id " +
+						" from " + Table_column.TableName + " where table_id = ?)", tableId);
+		if(storageInfos != null){
+			//3、如果反序列得到的List集合不为空，则遍历集合
+			for(Column_storage_info storageInfo : storageInfos){
+				if(storageInfo.getColumn_id() == null){
+					throw new BusinessSystemException("保存字段存储信息时，必须关联字段");
+				}
+				if(storageInfo.getDslad_id() == null){
+					throw new BusinessSystemException("保存字段存储信息时，必须关联字段的特殊属性");
+				}
+
+				//4、保存
+				storageInfo.add(Dbo.db());
 			}
-			if(storageInfo.getDslad_id() == null){
-				throw new BusinessSystemException("保存字段存储信息时，必须关联字段的特殊属性");
-			}
-			//在每保存一个字段的存储目的地前，先尝试在column_storage_info表中使用column_id删除这样一条记录，不关心是否删除到数据
-			Dbo.execute("delete from " + Column_storage_info.TableName + " where column_id = ?",
-					storageInfo.getColumn_id());
-			//4、保存
-			storageInfo.add(Dbo.db());
 		}
 	}
 
@@ -228,10 +238,10 @@ public class StoDestStepConfAction extends BaseAction{
 			"2、将dslIdString反序列化为List集合，这个集合中的内容是用来保存进入数据存储关系表" +
 			"3、校验，每张入库的表都必须有其对应的存储目的地" +
 			"4、开始执行保存操作" +
-			"4-1、判断表储存ID是否为空，如果不为空，则删除该表原有的存储配置，重新插入新的数据" +
+			"4-1、如果是修改表的存储信息，则删除该表原有的存储配置，重新插入新的数据" +
 			"4-2、对待保存的数据设置主键等信息" +
 			"4-3、在数据抽取定义表中，根据表ID把数据文件格式查询出来存入Table_storage_info对象中" +
-			"4-4、获取一张表的ID" +
+			"4-4、获取当前保存表的ID" +
 			"4-5、遍历dataStoRelaParams集合，找到表ID相同的对象" +
 			"4-6、保存表存储信息" +
 			"5、返回数据库设置ID，目的是下一个页面可以找到上一个页面配置的信息")
@@ -254,13 +264,20 @@ public class StoDestStepConfAction extends BaseAction{
 
 		//4、开始执行保存操作
 		for(Table_storage_info storageInfo : tableStorageInfos){
-			//4-1、判断表储存ID是否为空，如果不为空，则删除该表原有的存储配置，重新插入新的数据
-			if(storageInfo.getStorage_id() != null){
-				//storage_id不为空，表示修改表存储信息
-				//在每保存一张表的存储目的地前，先尝试在table_storage_info表中使用table_id删除记录，不关心是否删除到数据
-				Dbo.execute("delete from " + Table_storage_info.TableName + " where storage_id = ?", storageInfo.getStorage_id());
-				//在每保存一张表的数据存储关系前，先尝试在data_relation_table表中使用storage_id删除记录，不关心是否删除到数据
-				Dbo.execute("delete from " + Data_relation_table.TableName + " where storage_id = ?", storageInfo.getStorage_id());
+			//4-1、删除该表原有的存储配置，重新插入新的数据
+			long count = Dbo.queryNumber("select count(1) from " + Table_storage_info.TableName +
+					" where table_id = ?", storageInfo.getTable_id()).orElseThrow(() ->
+					new BusinessSystemException("查询结果必须有且只有一条"));
+			if(count == 1){
+				//在table_storage_info表中查询到了数据，表示修改该表的存储信息
+				//在每保存一张表的存储目的地前，先尝试在table_storage_info表中使用table_id删除记录，因为一张需要入库的表在table_storage_info表中只保存一条记录，所以只能删除掉一条
+				DboExecute.deletesOrThrow("删除表存储信息异常，一张表入库信息只能在表存储信息表中出现一条记录",
+						"delete from " + Table_storage_info.TableName + " where table_id = ?"
+						, storageInfo.getTable_id());
+				//在每保存一张表的数据存储关系前，先尝试在data_relation_table表中使用storage_id删除记录，由于一张表可以选择多个目的地进行存储，所以不关心删除的数目
+				Dbo.execute("delete from " + Data_relation_table.TableName + " where storage_id in " +
+						"(select storage_id from " + Table_storage_info.TableName + " where table_id = ?)"
+						, storageInfo.getTable_id());
 			}
 			//4-2、对待保存的数据设置主键等信息
 			String storageId = PrimayKeyGener.getNextId();
@@ -275,7 +292,7 @@ public class StoDestStepConfAction extends BaseAction{
 				throw new BusinessSystemException("获取采集表卸数文件格式失败");
 			}
 			storageInfo.setFile_format((String) list.get(0));
-			//4-4、获取一张表的ID
+			//4-4、获取当前保存表的ID
 			Long tableIdFromTSI = storageInfo.getTable_id();
 			//4-5、遍历dataStoRelaParams集合，找到表ID相同的对象
 			for(DataStoRelaParam param : dataStoRelaParams){
@@ -283,7 +300,7 @@ public class StoDestStepConfAction extends BaseAction{
 				if(tableIdFromTSI.equals(tableIdFromParam)){
 					//将该张表的存储目的地保存到数据存储关系表中，有几个目的地，就保存几条
 					long[] dslIds = param.getDslIds();
-					if(!(dslIds.length > 0)){
+					if(dslIds == null || !(dslIds.length > 0)){
 						throw new BusinessSystemException("请检查配置信息，并为每张入库的表选择至少一个存储目的地");
 					}
 					for(long dslId : dslIds){
