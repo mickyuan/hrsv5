@@ -34,8 +34,8 @@ public class Data_store_layer_attr extends ProjectTableEntity
 	private Long dsla_id;
 	@DocBean(name ="storage_property_key",value="属性key:",dataType = String.class,required = true)
 	private String storage_property_key;
-	@DocBean(name ="dsl_remark",value="备注:",dataType = String.class,required = false)
-	private String dsl_remark;
+	@DocBean(name ="dsla_remark",value="备注:",dataType = String.class,required = false)
+	private String dsla_remark;
 	@DocBean(name ="storage_property_val",value="属性value:",dataType = String.class,required = true)
 	private String storage_property_val;
 	@DocBean(name ="dsl_id",value="存储层配置ID:",dataType = Long.class,required = true)
@@ -64,12 +64,12 @@ public class Data_store_layer_attr extends ProjectTableEntity
 		this.storage_property_key=storage_property_key;
 	}
 	/** 取得：备注 */
-	public String getDsl_remark(){
-		return dsl_remark;
+	public String getDsla_remark(){
+		return dsla_remark;
 	}
 	/** 设置：备注 */
-	public void setDsl_remark(String dsl_remark){
-		this.dsl_remark=dsl_remark;
+	public void setDsla_remark(String dsla_remark){
+		this.dsla_remark=dsla_remark;
 	}
 	/** 取得：属性value */
 	public String getStorage_property_val(){

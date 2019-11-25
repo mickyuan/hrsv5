@@ -36,8 +36,8 @@ public class Data_store_layer_added extends ProjectTableEntity
 	private Long dsl_id;
 	@DocBean(name ="dsla_storelayer",value="配置附加属性信息(StoreLayerAdded):01-主键<ZhuJian> 02-rowkey<RowKey> 03-索引列<SuoYinLie> 04-预聚合列<YuJuHe> 05-排序列<PaiXuLie> 06-分区列<FenQuLie> ",dataType = String.class,required = true)
 	private String dsla_storelayer;
-	@DocBean(name ="dsla_remark",value="备注:",dataType = String.class,required = false)
-	private String dsla_remark;
+	@DocBean(name ="dslad_remark",value="备注:",dataType = String.class,required = false)
+	private String dslad_remark;
 
 	/** 取得：附加信息ID */
 	public Long getDslad_id(){
@@ -76,11 +76,11 @@ public class Data_store_layer_added extends ProjectTableEntity
 		this.dsla_storelayer=dsla_storelayer;
 	}
 	/** 取得：备注 */
-	public String getDsla_remark(){
-		return dsla_remark;
+	public String getDslad_remark(){
+		return dslad_remark;
 	}
 	/** 设置：备注 */
-	public void setDsla_remark(String dsla_remark){
-		this.dsla_remark=dsla_remark;
+	public void setDslad_remark(String dslad_remark){
+		this.dslad_remark=dslad_remark;
 	}
 }

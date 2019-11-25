@@ -822,7 +822,7 @@ CREATE TABLE DATA_STORE_LAYER_ATTR(
 DSLA_ID                                           BIGINT default 0 NOT NULL, --存储配置主键信息
 STORAGE_PROPERTY_KEY                              VARCHAR(512) NOT NULL, --属性key
 STORAGE_PROPERTY_VAL                              VARCHAR(512) NOT NULL, --属性value
-DSL_REMARK                                        VARCHAR(512) NULL, --备注
+DSLA_REMARK                                       VARCHAR(512) NULL, --备注
 DSL_ID                                            BIGINT default 0 NOT NULL, --存储层配置ID
 CONSTRAINT DATA_STORE_LAYER_ATTR_PK PRIMARY KEY(DSLA_ID)   );
 
@@ -1030,7 +1030,7 @@ DROP TABLE IF EXISTS DATA_STORE_LAYER_ADDED ;
 CREATE TABLE DATA_STORE_LAYER_ADDED(
 DSLAD_ID                                          BIGINT default 0 NOT NULL, --附加信息ID
 DSLA_STORELAYER                                   CHAR(2) NOT NULL, --配置附加属性信息
-DSLA_REMARK                                       VARCHAR(512) NULL, --备注
+DSLAD_REMARK                                      VARCHAR(512) NULL, --备注
 DSL_ID                                            BIGINT default 0 NOT NULL, --存储层配置ID
 CONSTRAINT DATA_STORE_LAYER_ADDED_PK PRIMARY KEY(DSLAD_ID)   );
 
