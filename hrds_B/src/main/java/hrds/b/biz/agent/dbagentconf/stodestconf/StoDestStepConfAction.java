@@ -34,7 +34,7 @@ public class StoDestStepConfAction extends BaseAction{
 	@Return(desc = "查询结果集", range = "不为空" +
 			"注意data_extract_type字段，表示数据抽取方式，需要根据这个字段在选择目的地的时候展示不同的弹框" +
 			"1：仅数据抽取，则选择目的地需要让用户填写数据文件的存放路径" +
-			"2、数据抽取及入库，则选择目的地需要让用户选择存储的数据库，并配置列存储信息")
+			"2：数据抽取及入库，则选择目的地需要让用户选择存储的数据库，并配置列存储信息")
 	public Result getInitInfo(long colSetId){
 		return Dbo.queryResult(" select ti.table_id, ti.table_name, ti.table_ch_name, tsi.is_zipper, " +
 				" tsi.storage_type, tsi.storage_time, ded.data_extract_type from " + Table_info.TableName + " ti" +
@@ -183,7 +183,7 @@ public class StoDestStepConfAction extends BaseAction{
 		Result resultThree = Dbo.queryResult("select csi.column_id, dsla.dsla_storelayer, csi_number from " +
 				Column_storage_info.TableName + " csi left join " + Data_store_layer_added.TableName + " dsla" +
 				" on dsla.dslad_id = csi.dslad_id" +
-				" where csi.column_id in (select column_id from table_column where table_id = ?)", tableId);
+				" where csi.column_id in (select column_id from table_column where table_id = ?) and dsla.dsl_id = ?", tableId, dslId);
 		for(int i = 0; i < resultThree.getRowCount(); i++){
 			long columnIdFromCSI = resultThree.getLong(i, "column_id");
 			for(int j = 0; j < resultOne.getRowCount(); j++){
