@@ -113,7 +113,7 @@ public class LoginAction extends BaseAction {
 	@Method(desc = "获取登陆用户的菜单信息",logicStep = "1、通过用户组ID获取所有的菜单，2、返回图标、地址、名字")
 	public List<Map<String, Object>> getMenu() {
 		String userTypeGroup = this.getUser().getUserTypeGroup();
-		String userGroup = "'"+StringUtil.replace(userTypeGroup, ",", "','")+"'";
+		String userGroup = StringUtil.replace(userTypeGroup, ",", "','");
 		return Dbo.queryList("select * from component_menu where user_type in(?)", userGroup);
 	}
 }
