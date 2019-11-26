@@ -132,7 +132,6 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 				assertThat("获取到的非自定义采集表为sys_user，得到的行分隔符为<空格符>", rightResultOne.getString(i, "row_separator"), is("\n"));
 				assertThat("获取到的非自定义采集表为sys_user，得到的列分隔符为<|>", rightResultOne.getString(i, "database_separatorr"), is("|"));
 				assertThat("获取到的非自定义采集表为sys_user，得到的数据字符集为<UTF-8>", rightResultOne.getString(i, "database_code"), is(DataBaseCode.UTF_8.getCode()));
-				assertThat("获取到的非自定义采集表为sys_user，得到的数据落地目录", rightResultOne.getString(i, "plane_url"), is("/root"));
 			}else if(rightResultOne.getString(i, "table_name").equalsIgnoreCase("code_info")){
 				assertThat("获取到的非自定义采集表为code_info，得到的表中文名为<代码信息表>", rightResultOne.getString(i, "table_ch_name"), is("代码信息表"));
 				assertThat("获取到的非自定义采集表为code_info，得到数据抽取方式为<仅数据抽取>", rightResultOne.getString(i, "data_extract_type"), is(DataExtractType.JinShuJuChouQu.getCode()));
@@ -140,7 +139,6 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 				assertThat("获取到的非自定义采集表为code_info，没有指定行分隔符", rightResultOne.getString(i, "row_separator"), is(""));
 				assertThat("获取到的非自定义采集表为code_info，没有指定列分隔符", rightResultOne.getString(i, "database_separatorr"), is(""));
 				assertThat("获取到的非自定义采集表为code_info，得到的数据字符集为<UTF-8>", rightResultOne.getString(i, "database_code"), is(DataBaseCode.UTF_8.getCode()));
-				assertThat("获取到的非自定义采集表为code_info，得到的数据落地目录", rightResultOne.getString(i, "plane_url"), is("/home"));
 			}else if(rightResultOne.getString(i, "table_name").equalsIgnoreCase("agent_info")){
 				assertThat("获取到的非自定义采集表为agent_info，得到的表中文名为<Agent信息表>", rightResultOne.getString(i, "table_ch_name"), is("Agent信息表"));
 				assertThat("获取到的非自定义采集表为agent_info，得到数据抽取方式为<数据抽取并入库>", rightResultOne.getString(i, "data_extract_type"), is(DataExtractType.ShuJuChouQuJiRuKu.getCode()));
@@ -148,7 +146,6 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 				assertThat("获取到的非自定义采集表为agent_info，不能指定行分隔符", rightResultOne.getString(i, "row_separator"), is(""));
 				assertThat("获取到的非自定义采集表为agent_info，不能指定列分隔符", rightResultOne.getString(i, "database_separatorr"), is(""));
 				assertThat("获取到的非自定义采集表为agent_info，得到的数据字符集为<UTF-8>", rightResultOne.getString(i, "database_code"), is(DataBaseCode.UTF_8.getCode()));
-				assertThat("获取到的非自定义采集表为agent_info，不能指定数据落地目录", rightResultOne.getString(i, "plane_url"), is(""));
 			}
 			else if(rightResultOne.getString(i, "table_name").equalsIgnoreCase("data_source")){
 				assertThat("获取到的非自定义采集表为data_source，得到的表中文名为<用户表>", rightResultOne.getString(i, "table_ch_name"), is("数据源表"));
@@ -157,7 +154,6 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 				assertThat("获取到的非自定义采集表为data_source，得到的行分隔符为<空格符>", rightResultOne.getString(i, "row_separator"), is("|"));
 				assertThat("获取到的非自定义采集表为data_source，得到的列分隔符为<|>", rightResultOne.getString(i, "database_separatorr"), is(" "));
 				assertThat("获取到的非自定义采集表为data_source，得到的数据字符集为<UTF-8>", rightResultOne.getString(i, "database_code"), is(DataBaseCode.UTF_8.getCode()));
-				assertThat("获取到的非自定义采集表为data_source，不能指定数据落地目录", rightResultOne.getString(i, "plane_url"), is(""));
 			}
 			else{
 				assertThat("获取到了不符合期望的数据，表名为" + rightResultOne.getString(i, "table_name"), true, is(false));

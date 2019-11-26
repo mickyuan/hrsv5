@@ -12,6 +12,7 @@ import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.DataExtractType;
 import hrds.commons.codes.FileFormat;
+import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Data_extraction_def;
 import hrds.commons.entity.Table_info;
 import hrds.commons.utils.key.PrimayKeyGener;
@@ -78,6 +79,8 @@ public class FileConfStepAction extends BaseAction{
 			//3、根据table_id去data_extraction_def表中删除尝试删除该表曾经的卸数文件配置，不关心删除数目
 			Dbo.execute("delete from " + Data_extraction_def.TableName + " where table_id = ?", def.getTable_id());
 			def.setDed_id(PrimayKeyGener.getNextId());
+			//TODO data_extraction_def表is_header字段设置默认值为"是"，后期可能会修改
+			def.setIs_header(IsFlag.Shi.getCode());
 			def.add(Dbo.db());
 		}
 		//4、保存数据

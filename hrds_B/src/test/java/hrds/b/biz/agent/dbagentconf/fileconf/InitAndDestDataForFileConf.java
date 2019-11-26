@@ -590,7 +590,9 @@ public class InitAndDestDataForFileConf {
 					tableId = SYS_USER_TABLE_ID;
 					extractType = DataExtractType.JinShuJuChouQu.getCode();
 					fileFormat = FileFormat.FeiDingChang.getCode();
+					//rowSeparator = "\r";
 					rowSeparator = "\n";
+					//rowSeparator = "\r\n";
 					databaseSeparatorr = "|";
 					planeUrl = "/root";
 					break;

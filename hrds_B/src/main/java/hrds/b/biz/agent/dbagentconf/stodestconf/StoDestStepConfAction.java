@@ -108,18 +108,18 @@ public class StoDestStepConfAction extends BaseAction{
 	* 根据tableId获取该表选择的存储目的地和系统中配置的所有存储目的地
 	* */
 	@Method(desc = "根据tableId回显该表选择的存储目的地和系统中配置的所有存储目的地", logicStep = "" +
-			"1、获取所有存储目的地信息，并且追加一列userflag，固定值为0，表示默认所有存储目的地没有被这个当前表所使用" +
+			"1、获取所有存储目的地信息，并且追加一列usedflag，固定值为0，表示默认所有存储目的地没有被这个当前表所使用" +
 			"2、如果结果集为空，表示系统中没有定义存储目的地" +
 			"3、尝试获取该表定义好的存储目的地，如果之前定义过，那么就能获取到数据，否则就获取不到" +
 			"4、如果获取不到，说明之前该表未定义过存储目的地，则直接返回结果集" +
-			"5、否则，说明之前该表定义过存储目的地，则需要把定义好的找出来，把userflag标识位设置1" +
+			"5、否则，说明之前该表定义过存储目的地，则需要把定义好的找出来，把usedflag标识位设置1" +
 			"6、返回")
 	@Param(name = "tableId", desc = "采集表ID，表存储信息表外键", range = "不为空")
 	@Return(desc = "查询结果集", range = "不为空，注意每条数据的usedFlag字段，true表示该表配置了该存储目的地，在页面上根据单选框请勾选，" +
 			"false表示该表没有配置这个存储目的地，在页面上单选框不要勾选")
 	public Result getStoDestByTableId(long tableId){
-		//1、获取所有存储目的地信息，并且追加一列userflag，固定值为0，表示默认所有存储目的地没有被这个当前表所使用
-		Result result = Dbo.queryResult("select dsl_id, dsl_name, store_type, '0' as userflag from "
+		//1、获取所有存储目的地信息，并且追加一列usedflag，固定值为0，表示默认所有存储目的地没有被这个当前表所使用
+		Result result = Dbo.queryResult("select dsl_id, dsl_name, store_type, '0' as usedflag from "
 				+ Data_store_layer.TableName);
 		//2、如果结果集为空，表示系统中没有定义存储目的地
 		if(result.isEmpty()){
@@ -133,13 +133,13 @@ public class StoDestStepConfAction extends BaseAction{
 		if(tbStoRela.isEmpty()){
 			return result;
 		}
-		//5、否则，说明之前该表定义过存储目的地，则需要把定义好的找出来，把userflag标识位设置1
+		//5、否则，说明之前该表定义过存储目的地，则需要把定义好的找出来，把usedflag标识位设置1
 		for(int i = 0; i < tbStoRela.getRowCount(); i++){
 			long dslId = tbStoRela.getLong(i, "dsl_id");
 			for(int j = 0;j < result.getRowCount(); j++){
-				long dslIdFromResult = result.getLong(i, "dsl_id");
+				long dslIdFromResult = result.getLong(j, "dsl_id");
 				if(dslId == dslIdFromResult){
-					result.setObject(j, "userflag", IsFlag.Shi.getCode());
+					result.setObject(j, "usedflag", IsFlag.Shi.getCode());
 				}
 			}
 		}

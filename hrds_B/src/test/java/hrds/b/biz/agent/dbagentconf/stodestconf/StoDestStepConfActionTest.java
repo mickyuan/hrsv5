@@ -134,11 +134,6 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 		assertThat("模拟登陆", actionResult.isSuccess(), is(true));
 	}
 
-	@Test
-	public void test(){
-		System.out.println("-------------------------------");
-	}
-
 	/**
 	 * 测试根据数据库设置ID获得定义存储目的地页面初始化信息
 	 *
@@ -263,14 +258,14 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 		Result rightDataThree = rightResultThree.getDataForResult();
 		assertThat("获取存储目的地为hbase的详细信息,获取到了3条", rightDataThree.getRowCount(), is(3));
 		for(int i = 0; i < rightDataThree.getRowCount(); i++){
-			if(rightDataOne.getString(i, "storage_property_key").equalsIgnoreCase("Hbase-site-path")){
-				assertThat("获取存储目的地为hbase的详细信息，key为<Hbase-site-path>, value为<Hbase-site.xml>", rightDataOne.getString(i, "storage_property_val").equalsIgnoreCase("Hbase-site.xml"), is(true));
-			}else if(rightDataOne.getString(i, "storage_property_key").equalsIgnoreCase("Core-site-path")){
-				assertThat("获取存储目的地为hbase的详细信息，key为<Core-site-path>, value为<Core-site.xml>", rightDataOne.getString(i, "storage_property_val").equalsIgnoreCase("Core-site.xml"), is(true));
-			}else if(rightDataOne.getString(i, "storage_property_key").equalsIgnoreCase("Hdfs-site-path")){
-				assertThat("获取存储目的地为hbase的详细信息，key为<Hdfs-site-path>, value为<Hdfs-site.xml>", rightDataOne.getString(i, "storage_property_val").equalsIgnoreCase("Hdfs-site.xml"), is(true));
+			if(rightDataThree.getString(i, "storage_property_key").equalsIgnoreCase("Hbase-site-path")){
+				assertThat("获取存储目的地为hbase的详细信息，key为<Hbase-site-path>, value为<Hbase-site.xml>", rightDataThree.getString(i, "storage_property_val").equalsIgnoreCase("Hbase-site.xml"), is(true));
+			}else if(rightDataThree.getString(i, "storage_property_key").equalsIgnoreCase("Core-site-path")){
+				assertThat("获取存储目的地为hbase的详细信息，key为<Core-site-path>, value为<Core-site.xml>", rightDataThree.getString(i, "storage_property_val").equalsIgnoreCase("Core-site.xml"), is(true));
+			}else if(rightDataThree.getString(i, "storage_property_key").equalsIgnoreCase("Hdfs-site-path")){
+				assertThat("获取存储目的地为hbase的详细信息，key为<Hdfs-site-path>, value为<Hdfs-site.xml>", rightDataThree.getString(i, "storage_property_val").equalsIgnoreCase("Hdfs-site.xml"), is(true));
 			}else{
-				assertThat("获取存储目的地为hbase的详细信息出现了不符合期望的情况，key: " + rightDataOne.getString(i, "storage_property_key"), true, is(false));
+				assertThat("获取存储目的地为hbase的详细信息出现了不符合期望的情况，key: " + rightDataThree.getString(i, "storage_property_key"), true, is(false));
 			}
 		}
 
@@ -366,8 +361,8 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 	/**
 	 * 测试根据tableId获取该表选择的存储目的地和系统中配置的所有存储目的地
 	 *
-	 * 正确数据访问1：data_source表保存进入solr，所以使用data_source表的table_id访问方法，判断在得到的solr记录上的usedFlag是否为true,而其他的记录上usedflag为false
-	 * 正确数据访问2：agent_info表保存进入hbase和关系型数据库，所以使用agent_info表的table_id访问方法，判断在得到的hbase和关系型数据库记录上的usedflag是否为true,而其他的记录上usedflag为false
+	 * 正确数据访问1：data_source表保存进入solr，所以使用data_source表的table_id访问方法，判断在得到的solr记录上的usedFlag是否为1,而其他的记录上usedflag为0
+	 * 正确数据访问2：agent_info表保存进入hbase和关系型数据库，所以使用agent_info表的table_id访问方法，判断在得到的hbase和关系型数据库记录上的usedflag是否为1,而其他的记录上usedflag为0
 	 * 错误的测试用例未达到三组: 以上所有测试用例已经可以满足要求
 	 * @Param: 无
 	 * @return: 无
@@ -375,7 +370,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 	 * */
 	@Test
 	public void getStoDestByTableId(){
-		//正确数据访问1：data_source表保存进入solr，所以使用data_source表的table_id访问方法，判断在得到的solr记录上的usedflag是否为true,而其他的记录上usedflag为false
+		//正确数据访问1：data_source表保存进入solr，所以使用data_source表的table_id访问方法，判断在得到的solr记录上的usedflag是否为"1",而其他的记录上usedflag为"0"
 		String rightString = new HttpClient()
 				.addData("tableId", DATA_SOURCE_TABLE_ID)
 				.post(getActionUrl("getStoDestByTableId")).getBodyString();
@@ -388,19 +383,19 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 		for(int i = 0; i < rightDataOne.getRowCount(); i++){
 			if(rightDataOne.getString(i, "dsl_name").equalsIgnoreCase("SOLR")){
 				assertThat("<data_source>数据存储层配置属性名称为<SOLR>, 存储类型为<SOLR>", rightDataOne.getString(i, "store_type"), is(store_type.SOLR.getCode()));
-				assertThat("<data_source>数据存储层配置属性名称为<SOLR>, usedflag标识位为<true>", rightDataOne.getBoolean(i, "usedflag"), is(true));
+				assertThat("<data_source>数据存储层配置属性名称为<SOLR>, usedflag标识位为<1>", rightDataOne.getString(i, "usedflag"), is(IsFlag.Shi.getCode()));
 			}else if(rightDataOne.getString(i, "dsl_name").equalsIgnoreCase("Oralce")){
 				assertThat("<data_source>数据存储层配置属性名称为<Oralce>, 存储类型为<关系型数据库>", rightDataOne.getString(i, "store_type"), is(store_type.DATABASE.getCode()));
-				assertThat("<data_source>数据存储层配置属性名称为<Oralce>, usedflag标识位为<false>", rightDataOne.getBoolean(i, "usedflag"), is(false));
+				assertThat("<data_source>数据存储层配置属性名称为<Oralce>, usedflag标识位为<0>", rightDataOne.getString(i, "usedflag"), is(IsFlag.Fou.getCode()));
 			}else if(rightDataOne.getString(i, "dsl_name").equalsIgnoreCase("ElasticSearch")){
 				assertThat("<data_source>数据存储层配置属性名称为<ElasticSearch>, 存储类型为<ElasticSearch>", rightDataOne.getString(i, "store_type"), is(store_type.ElasticSearch.getCode()));
-				assertThat("<data_source>数据存储层配置属性名称为<ElasticSearch>, usedflag标识位为<false>", rightDataOne.getBoolean(i, "usedflag"), is(false));
+				assertThat("<data_source>数据存储层配置属性名称为<ElasticSearch>, usedflag标识位为<0>", rightDataOne.getString(i, "usedflag"), is(IsFlag.Fou.getCode()));
 			}else if(rightDataOne.getString(i, "dsl_name").equalsIgnoreCase("HBASE")){
 				assertThat("<data_source>数据存储层配置属性名称为<HBASE>, 存储类型为<HBASE>", rightDataOne.getString(i, "store_type"), is(store_type.HBASE.getCode()));
-				assertThat("<data_source>数据存储层配置属性名称为<HBASE>, usedflag标识位为<false>", rightDataOne.getBoolean(i, "usedflag"), is(false));
+				assertThat("<data_source>数据存储层配置属性名称为<HBASE>, usedflag标识位为<0>", rightDataOne.getString(i, "usedflag"), is(IsFlag.Fou.getCode()));
 			}else if(rightDataOne.getString(i, "dsl_name").equalsIgnoreCase("MONGODB")){
 				assertThat("<data_source>数据存储层配置属性名称为<MONGODB>, 存储类型为<MONGODB>", rightDataOne.getString(i, "store_type"), is(store_type.MONGODB.getCode()));
-				assertThat("<data_source>数据存储层配置属性名称为<MONGODB>, usedflag标识位为<false>", rightDataOne.getBoolean(i, "usedflag"), is(false));
+				assertThat("<data_source>数据存储层配置属性名称为<MONGODB>, usedflag标识位为<0>", rightDataOne.getString(i, "usedflag"), is(IsFlag.Fou.getCode()));
 			}else{
 				assertThat("<data_source>获取数据存储层配置出现了不符合期望的情况，数据存储层配置属性名称为：" + rightDataOne.getString(i, "dsl_name"), true, is(false));
 			}
@@ -419,19 +414,19 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 		for(int i = 0; i < rightDataTwo.getRowCount(); i++){
 			if(rightDataTwo.getString(i, "dsl_name").equalsIgnoreCase("SOLR")){
 				assertThat("<agent_info>数据存储层配置属性名称为<SOLR>, 存储类型为<SOLR>", rightDataTwo.getString(i, "store_type"), is(store_type.SOLR.getCode()));
-				assertThat("<agent_info>数据存储层配置属性名称为<SOLR>, usedflag标识位为<false>", rightDataTwo.getBoolean(i, "usedflag"), is(false));
+				assertThat("<agent_info>数据存储层配置属性名称为<SOLR>, usedflag标识位为<0>", rightDataTwo.getString(i, "usedflag"), is(IsFlag.Fou.getCode()));
 			}else if(rightDataTwo.getString(i, "dsl_name").equalsIgnoreCase("Oralce")){
 				assertThat("<agent_info>数据存储层配置属性名称为<Oralce>, 存储类型为<关系型数据库>", rightDataTwo.getString(i, "store_type"), is(store_type.DATABASE.getCode()));
-				assertThat("<agent_info>数据存储层配置属性名称为<Oralce>, usedflag标识位为<false>", rightDataTwo.getBoolean(i, "usedflag"), is(true));
+				assertThat("<agent_info>数据存储层配置属性名称为<Oralce>, usedflag标识位为<1>", rightDataTwo.getString(i, "usedflag"), is(IsFlag.Shi.getCode()));
 			}else if(rightDataTwo.getString(i, "dsl_name").equalsIgnoreCase("ElasticSearch")){
 				assertThat("<agent_info>数据存储层配置属性名称为<ElasticSearch>, 存储类型为<ElasticSearch>", rightDataTwo.getString(i, "store_type"), is(store_type.ElasticSearch.getCode()));
-				assertThat("<agent_info>数据存储层配置属性名称为<ElasticSearch>, usedflag标识位为<false>", rightDataTwo.getBoolean(i, "usedflag"), is(false));
+				assertThat("<agent_info>数据存储层配置属性名称为<ElasticSearch>, usedflag标识位为<0>", rightDataTwo.getString(i, "usedflag"), is(IsFlag.Fou.getCode()));
 			}else if(rightDataTwo.getString(i, "dsl_name").equalsIgnoreCase("HBASE")){
 				assertThat("<agent_info>数据存储层配置属性名称为<HBASE>, 存储类型为<HBASE>", rightDataTwo.getString(i, "store_type"), is(store_type.HBASE.getCode()));
-				assertThat("<agent_info>数据存储层配置属性名称为<HBASE>, usedflag标识位为<true>", rightDataTwo.getBoolean(i, "usedflag"), is(true));
+				assertThat("<agent_info>数据存储层配置属性名称为<HBASE>, usedflag标识位为<1>", rightDataTwo.getString(i, "usedflag"), is(IsFlag.Shi.getCode()));
 			}else if(rightDataTwo.getString(i, "dsl_name").equalsIgnoreCase("MONGODB")){
 				assertThat("<agent_info>数据存储层配置属性名称为<MONGODB>, 存储类型为<MONGODB>", rightDataTwo.getString(i, "store_type"), is(store_type.MONGODB.getCode()));
-				assertThat("<agent_info>数据存储层配置属性名称为<MONGODB>, usedflag标识位为<false>", rightDataTwo.getBoolean(i, "usedflag"), is(false));
+				assertThat("<agent_info>数据存储层配置属性名称为<MONGODB>, usedflag标识位为<0>", rightDataTwo.getString(i, "usedflag"), is(IsFlag.Fou.getCode()));
 			}else{
 				assertThat("<agent_info>获取数据存储层配置出现了不符合期望的情况，数据存储层配置属性名称为：" + rightDataTwo.getString(i, "dsl_name"), true, is(false));
 			}
@@ -595,7 +590,14 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 		storageInfo.setColumn_id(3113L);
 		storageInfo.setDslad_id(439999L);
 
+		//这样做的目的是继续保证agent_id列在hbase中做rowkey,维持构造的测试数据的原有的状态，保证能够顺利执行saveColStoInfo<正确的数据访问2>测试用例
+		Column_storage_info storageInfoRowKey = new Column_storage_info();
+		storageInfoRowKey.setColumn_id(3112L);
+		storageInfoRowKey.setDslad_id(440001L);
+
+
 		columnStorageInfos.add(storageInfo);
+		columnStorageInfos.add(storageInfoRowKey);
 
 		String rightStringOne = new HttpClient()
 				.addData("colStoInfoString", JSON.toJSONString(columnStorageInfos))
@@ -622,6 +624,12 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 					" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 3113L, store_type.DATABASE.getCode())
 					.orElseThrow(() -> new BusinessSystemException("查询结果必须有且只有一条"));
 			assertThat("agent_info表中的agent_name字段保存进入到关系型数据库做主键", countTwo, is(1L));
+
+			//删除因执行测试用例而新增的数据
+			int count = SqlOperator.execute(db, "delete from " + Column_storage_info.TableName + " where column_id = ?", 3113L);
+			assertThat("删除因执行saveColStoInfo<正确的数据访问2>测试用例而新增的数据", count, is(1));
+
+			SqlOperator.commitTransaction(db);
 		}
 
 		columnStorageInfos.clear();
@@ -686,7 +694,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 			assertThat("查询到的agent_info表在table_storage_info中的数据有一条，并且<是否拉链存储>符合期望", storageInfo.getString(0, "is_zipper"), is(IsFlag.Shi.getCode()));
 			assertThat("查询到的agent_info表在table_storage_info中的数据有一条，并且<存储期限>符合期望", storageInfo.getLong(0, "storage_time"), is(7L));
 			//在保存前，确认Data_relation_table表中的数据符合期望
-			Result relationTable = SqlOperator.queryResult(db, "select dsl_id from " + Data_relation_table.TableName + " where storage_id = in ( select storage_id from " + Table_storage_info.TableName + " where table_id = ?)", AGENT_INFO_TABLE_ID);
+			Result relationTable = SqlOperator.queryResult(db, "select dsl_id from " + Data_relation_table.TableName + " where storage_id in ( select storage_id from " + Table_storage_info.TableName + " where table_id = ?)", AGENT_INFO_TABLE_ID);
 			assertThat("查询到的agent_info表在data_relation_table中的数据有两条，符合期望", relationTable.getRowCount(), is(2));
 			for(int i = 0; i < relationTable.getRowCount(); i++){
 				if(relationTable.getLong(i, "dsl_id") == 4400L){
@@ -742,7 +750,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 			assertThat("查询到的agent_info表在table_storage_info中的数据有一条，并且<是否拉链存储>符合期望", afterStorageInfo.getString(0, "is_zipper"), is(IsFlag.Fou.getCode()));
 			assertThat("查询到的agent_info表在table_storage_info中的数据有一条，并且<存储期限>符合期望", afterStorageInfo.getLong(0, "storage_time"), is(1L));
 			//在保存前，确认Data_relation_table表中的数据符合期望
-			Result afterRelationTable = SqlOperator.queryResult(db, "select dsl_id from " + Data_relation_table.TableName + " where storage_id = in ( select storage_id from " + Table_storage_info.TableName + " where table_id = ?)", AGENT_INFO_TABLE_ID);
+			Result afterRelationTable = SqlOperator.queryResult(db, "select dsl_id from " + Data_relation_table.TableName + " where storage_id in ( select storage_id from " + Table_storage_info.TableName + " where table_id = ?)", AGENT_INFO_TABLE_ID);
 			assertThat("查询到的agent_info表在data_relation_table中的数据有一条，符合期望", afterRelationTable.getRowCount(), is(1));
 			assertThat("查询到的agent_info表在data_relation_table中的数据有一条，存储目的地为关系型数据库", afterRelationTable.getLong(0, "dsl_id"), is(4400L));
 		}
@@ -760,7 +768,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 			assertThat("查询到的data_source表在table_storage_info中的数据有一条，并且<是否拉链存储>符合期望", beforeStorageInfo.getString(0, "is_zipper"), is(IsFlag.Fou.getCode()));
 			assertThat("查询到的data_source表在table_storage_info中的数据有一条，并且<存储期限>符合期望", beforeStorageInfo.getLong(0, "storage_time"), is(1L));
 			//在保存前，确认Data_relation_table表中的数据符合期望
-			Result relationTable = SqlOperator.queryResult(db, "select dsl_id from " + Data_relation_table.TableName + " where storage_id = in ( select storage_id from " + Table_storage_info.TableName + " where table_id = ?)", DATA_SOURCE_TABLE_ID);
+			Result relationTable = SqlOperator.queryResult(db, "select dsl_id from " + Data_relation_table.TableName + " where storage_id in ( select storage_id from " + Table_storage_info.TableName + " where table_id = ?)", DATA_SOURCE_TABLE_ID);
 			assertThat("查询到的data_source表在data_relation_table中的数据有1条，符合期望", relationTable.getRowCount(), is(1));
 			assertThat("查询到的data_source表在data_relation_table中的数据有1条，符合期望", relationTable.getLong(0, "dsl_id"), is(4399L));
 			//在保存前，确认Data_extraction_def表中的数据符合期望
@@ -804,7 +812,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 			assertThat("查询到的data_source表在table_storage_info中的数据有一条，并且<是否拉链存储>符合期望", beforeStorageInfo.getString(0, "is_zipper"), is(IsFlag.Shi.getCode()));
 			assertThat("查询到的data_source表在table_storage_info中的数据有一条，并且<存储期限>符合期望", beforeStorageInfo.getLong(0, "storage_time"), is(7L));
 			//在保存后，确认Data_relation_table表中的数据符合期望
-			Result relationTable = SqlOperator.queryResult(db, "select dsl_id from " + Data_relation_table.TableName + " where storage_id = in ( select storage_id from " + Table_storage_info.TableName + " where table_id = ?)", DATA_SOURCE_TABLE_ID);
+			Result relationTable = SqlOperator.queryResult(db, "select dsl_id from " + Data_relation_table.TableName + " where storage_id in ( select storage_id from " + Table_storage_info.TableName + " where table_id = ?)", DATA_SOURCE_TABLE_ID);
 			assertThat("查询到的data_source表在data_relation_table中的数据有2条，符合期望", relationTable.getRowCount(), is(2));
 			for(int i = 0; i < relationTable.getRowCount(); i++){
 				if(relationTable.getLong(i, "dsl_id") == 4400L){
@@ -815,6 +823,12 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 					assertThat("查询到的data_source表在data_relation_table表中出现了不符合期望的数据", true, is(false));
 				}
 			}
+
+			//在保存后，将因执行saveTbStoInfo<正确的数据访问3>而新增的测试数据删除掉
+			int count = SqlOperator.execute(db, "delete from " + Data_relation_table.TableName + " where dsl_id = ?", 4403L);
+			assertThat("将因执行saveTbStoInfo<正确的数据访问3>而新增的测试数据删除掉", count, is(1));
+
+			SqlOperator.commitTransaction(db);
 		}
 
 		tableStorageInfos.clear();
@@ -871,7 +885,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 			assertThat("查询到的table_info表在table_storage_info中的数据有一条，并且<是否拉链存储>符合期望", beforeStorageInfo.getString(0, "is_zipper"), is(IsFlag.Shi.getCode()));
 			assertThat("查询到的table_info表在table_storage_info中的数据有一条，并且<存储期限>符合期望", beforeStorageInfo.getLong(0, "storage_time"), is(14L));
 			//在保存前，确认Data_relation_table表中的数据符合期望
-			Result relationTable = SqlOperator.queryResult(db, "select dsl_id from " + Data_relation_table.TableName + " where storage_id = in ( select storage_id from " + Table_storage_info.TableName + " where table_id = ?)", TABLE_INFO_TABLE_ID);
+			Result relationTable = SqlOperator.queryResult(db, "select dsl_id from " + Data_relation_table.TableName + " where storage_id in ( select storage_id from " + Table_storage_info.TableName + " where table_id = ?)", TABLE_INFO_TABLE_ID);
 			assertThat("查询到的table_info表在data_relation_table中的数据有两条，符合期望", relationTable.getRowCount(), is(2));
 			for(int i = 0; i < relationTable.getRowCount(); i++){
 				if(relationTable.getLong(i, "dsl_id") == 4400L){
@@ -885,8 +899,8 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 
 			//删除新增的测试数据
 			int countOne = SqlOperator.execute(db, "delete from " + Data_extraction_def.TableName + " where table_id = ?", TABLE_INFO_TABLE_ID);
-			int countTwo = SqlOperator.execute(db, "delete from " + Data_relation_table.TableName + " where storage_id in (select storage_id from " + Data_relation_table.TableName + " where table_id = ?)", TABLE_INFO_TABLE_ID);
-			int countThree = SqlOperator.execute(db, "delete from " + Table_storage_info.TableName + " where table_id = ?)", TABLE_INFO_TABLE_ID);
+			int countTwo = SqlOperator.execute(db, "delete from " + Data_relation_table.TableName + " where storage_id in (select storage_id from " + Table_storage_info.TableName + " where table_id = ?)", TABLE_INFO_TABLE_ID);
+			int countThree = SqlOperator.execute(db, "delete from " + Table_storage_info.TableName + " where table_id = ?", TABLE_INFO_TABLE_ID);
 
 			assertThat("saveTbStoInfo<正确的数据访问3>执行完毕后，删除新增的数据成功", countOne, is(1));
 			assertThat("saveTbStoInfo<正确的数据访问3>执行完毕后，删除新增的数据成功", countTwo, is(2));
