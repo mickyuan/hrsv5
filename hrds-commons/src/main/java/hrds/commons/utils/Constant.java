@@ -18,4 +18,7 @@ public class Constant {
 	public static final String SFTP_PORT = "22";
 	public static final byte[] HBASE_COLUMN_FAMILY = "F".getBytes();
 	public static final String HBASE_ROW_KEY = "hyren_key";
+	//XXX 这里文件采集上传到本地还是HDFS如果是页面上选的，下面这个参数就不需要了
+	public static final boolean hasHadoopEnv = HD.equalsIgnoreCase(PropertyParaUtil.
+			getString("ver_type", HD));//是否有大数据环境
 }

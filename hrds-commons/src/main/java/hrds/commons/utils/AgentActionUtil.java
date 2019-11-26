@@ -24,20 +24,18 @@ public class AgentActionUtil {
 	public static final String TESTCONNECTION = "/hrds/agent/trans/biz/testConn";
 	//agent调用海云服务端的保存错误信息到数据库的接口
 	public static final String SAVEERRORINFO = "/hrds/server/saveErrorInfo";
-	//agent调用海云服务端的获取source_file_attribute表的文件信息
-	public static final String GETSOURCEFILEINFO = "/hrds/server/getSourceFileInfo";
-	//根据file_id获取文件的md5值
-	public static final String GETFILEMD5BYFILEID = "/hrds/server/getFileMd5ByFileId";
-	//批量添加source_file_attribute
+	//agent连接服务端批量添加source_file_attribute
 	public static final String BATCHADDSOURCEFILEATTRIBUTE = "/hrds/server/batchAddSourceFileAttribute";
-	//批量更新source_file_attribute
+	//agent连接服务端批量更新source_file_attribute
 	public static final String BATCHUPDATESOURCEFILEATTRIBUTE = "/hrds/server/batchUpdateSourceFileAttribute";
-	//获取dep_id,以逗号连接；获取数据源名称、agent名称、文件采集名称
-	public static final String GETBASEINFO = "/hrds/server/getBaseInfo";
 	//根据数据库连接获取数据库下表信息
 	public static final String GETDATABASETABLE = "/hrds/agent/trans/biz/database/getDatabaseTable";
 	//根据数据库连接和表名获取表的字段信息
 	public static final String GETTABLECOLUMN = "/hrds/agent/trans/biz/database/getTableColumn";
+	//agent调用海云服务端保存采集情况信息表
+	public static final String SAVECOLLECTCASE = "/hrds/server/saveCollectCase";
+	//调用agent端执行文件采集
+	public static final String EXECUTEFILECOLLECT = "/hrds/agent/trans/biz/unstructuredFileCollect/execute";
 
 	static {
 		list = new ArrayList<>();
@@ -45,13 +43,12 @@ public class AgentActionUtil {
 		list.add(GETSYSTEMFILEINFO);
 		list.add(TESTCONNECTION);
 		list.add(SAVEERRORINFO);
-		list.add(GETSOURCEFILEINFO);
-		list.add(GETFILEMD5BYFILEID);
 		list.add(BATCHADDSOURCEFILEATTRIBUTE);
 		list.add(BATCHUPDATESOURCEFILEATTRIBUTE);
-		list.add(GETBASEINFO);
 		list.add(GETDATABASETABLE);
 		list.add(GETTABLECOLUMN);
+		list.add(SAVECOLLECTCASE);
+		list.add(EXECUTEFILECOLLECT);
 	}
 
 	private AgentActionUtil() {

@@ -86,18 +86,11 @@ public class MapDBHelper implements Closeable {
 	}
 
 	public static void main(String[] args) {
-		try (MapDBHelper mapDBHelper = new MapDBHelper("D:\\tmp", "zxz_test")) {
-			ConcurrentMap<String, String> zzz = mapDBHelper.htMap("zzz", 1);
-			for (int i = 0; i < 100; i++) {
-//				zzz.put("zxz"+i,"最帅"+i);
-//				try {
-//					TimeUnit.MILLISECONDS.sleep(100);
-//				} catch (InterruptedException e) {
-//					e.printStackTrace();
-//				}
-				System.out.println(zzz.get("zxz" + i));
+		try (MapDBHelper mapDBHelper = new MapDBHelper("D:\\hrsv5\\trunk\\10000001\\33332222", "33332222.db")) {
+			ConcurrentMap<String, String> zzz = mapDBHelper.htMap("33332222", 1);
+			for(String key : zzz.keySet()){
+				System.out.println(zzz.get(key));
 			}
-//			System.exit(0);
 			mapDBHelper.commit();
 		}
 	}
