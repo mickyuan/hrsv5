@@ -291,18 +291,18 @@ public class DBConfStepAction extends BaseAction{
 			"2、给agent发消息，并获取agent响应" +
 			"3、如果测试连接不成功，则抛异常给前端，说明连接失败，如果成功，则不做任务处理")
 	@Param(name = "databaseSet", desc = "Database_set实体类对象"
-			, range = "不为空", isBean = true)
+			, range = "不为空，只传database_drive，jdbc_url，user_name，database_pad，database_type这些字段即可", isBean = true)
 	public void testConnection(Database_set databaseSet) {
 		//1、调用工具类获取本次访问的agentserver端url
 		String url = AgentActionUtil.getUrl(databaseSet.getAgent_id(), getUserId(), AgentActionUtil.TESTCONNECTION);
 
 		//2、给agent发消息，并获取agent响应
 		HttpClient.ResponseValue resVal = new HttpClient()
-				.addData("driver", databaseSet.getDatabase_drive())
-				.addData("url", databaseSet.getJdbc_url())
-				.addData("username", databaseSet.getUser_name())
-				.addData("password", databaseSet.getDatabase_pad())
-				.addData("dbtype", databaseSet.getDatabase_type())
+				.addData("database_drive", databaseSet.getDatabase_drive())
+				.addData("jdbc_url", databaseSet.getJdbc_url())
+				.addData("user_name", databaseSet.getUser_name())
+				.addData("database_pad", databaseSet.getDatabase_pad())
+				.addData("database_type", databaseSet.getDatabase_type())
 				.post(url);
 
 		//3、如果测试连接不成功，则抛异常给前端，说明连接失败，如果成功，则不做任务处理
