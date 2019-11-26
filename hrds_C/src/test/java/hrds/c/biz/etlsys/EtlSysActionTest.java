@@ -1,0 +1,298 @@
+package hrds.c.biz.etlsys;
+
+import fd.ng.core.annotation.DocClass;
+import fd.ng.core.annotation.Method;
+import fd.ng.core.utils.DateUtil;
+import fd.ng.core.utils.JsonUtil;
+import fd.ng.db.jdbc.DatabaseWrapper;
+import fd.ng.db.jdbc.SqlOperator;
+import fd.ng.db.resultset.Result;
+import fd.ng.netclient.http.HttpClient;
+import fd.ng.web.action.ActionResult;
+import hrds.commons.codes.*;
+import hrds.commons.entity.Department_info;
+import hrds.commons.entity.Etl_resource;
+import hrds.commons.entity.Etl_sys;
+import hrds.commons.entity.Sys_user;
+import hrds.commons.exception.BusinessException;
+import hrds.testbase.WebBaseTestCase;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.util.Map;
+import java.util.Optional;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+
+@DocClass(desc = "作业调度工程测试", author = "dhw", createdate = "2019/11/25 17:22")
+public class EtlSysActionTest extends WebBaseTestCase {
+    // 初始化登录用户ID
+    private static final long UserId = 6666L;
+    // 初始化创建用户ID
+    private static final long CreateId = 1000L;
+    // 测试部门ID dep_id,测试作业调度部门
+    private static final long DepId = 1000011L;
+    // 初始化工程编号
+    private static final String EtlSysCd = "zypzglcs";
+
+    @Before
+    public void before() {
+        try (DatabaseWrapper db = new DatabaseWrapper()) {
+            // 1.构造sys_user表测试数据
+            Sys_user sysUser = new Sys_user();
+            sysUser.setUser_id(UserId);
+            sysUser.setCreate_id(CreateId);
+            sysUser.setDep_id(DepId);
+            sysUser.setCreate_date(DateUtil.getSysDate());
+            sysUser.setCreate_time(DateUtil.getSysTime());
+            sysUser.setRole_id("1001");
+            sysUser.setUser_name("作业配置功能测试");
+            sysUser.setUser_password("1");
+            sysUser.setUser_type(UserType.CaiJiYongHu.getCode());
+            sysUser.setUseris_admin("1");
+            sysUser.setUsertype_group("02,03,04,08");
+            sysUser.setUser_state(IsFlag.Shi.getCode());
+            int num = sysUser.add(db);
+            assertThat("测试数据sys_user数据初始化", num, is(1));
+            // 2.构造department_info部门表测试数据
+            Department_info department_info = new Department_info();
+            department_info.setDep_id(DepId);
+            department_info.setDep_name("测试作业调度部门");
+            department_info.setCreate_date(DateUtil.getSysDate());
+            department_info.setCreate_time(DateUtil.getSysTime());
+            department_info.setDep_remark("测试");
+            num = department_info.add(db);
+            assertThat("测试数据department_info初始化", num, is(1));
+            // 3.构造etl_sys表测试数据
+            Etl_sys etl_sys = new Etl_sys();
+            for (int i = 0; i < 2; i++) {
+                etl_sys.setEtl_sys_cd(EtlSysCd + i);
+                etl_sys.setEtl_sys_name("dhwcs" + i);
+                etl_sys.setComments("工程测试" + i);
+                etl_sys.setComments("工程测试" + i);
+                etl_sys.setEtl_sys_cd(EtlSysCd + i);
+                etl_sys.setEtl_sys_name("dhwcs" + i);
+                etl_sys.setCurr_bath_date(DateUtil.getSysDate());
+                etl_sys.setSys_run_status(Job_Status.STOP.getCode());
+                etl_sys.setComments("作业调度工程测试" + i);
+                etl_sys.setEtl_serv_ip("10.71.4.51");
+                etl_sys.setEtl_serv_port("22");
+                etl_sys.setUser_name("hyshf");
+                etl_sys.setUser_pwd("hyshf");
+                etl_sys.setServ_file_path("/home/hyshf/etl/");
+                etl_sys.setMain_serv_sync(Main_Server_Sync.YES.getCode());
+                etl_sys.setRemarks("10.71.4.52:56379");
+                etl_sys.setUser_id(UserId);
+                num = etl_sys.add(db);
+                assertThat("测试数据etl_sys初始化", num, is(1));
+            }
+            // 12.提交事务
+            SqlOperator.commitTransaction(db);
+        }
+        // 13.模拟用户登录
+        String responseValue = new HttpClient()
+                .buildSession()
+                .addData("user_id", UserId)
+                .addData("password", "1")
+                .post("http://127.0.0.1:8099/A/action/hrds/a/biz/login/login")
+                .getBodyString();
+        Optional<ActionResult> ar = JsonUtil.toObjectSafety(responseValue, ActionResult.class);
+        assertThat("用户登录", ar.get().isSuccess(), is(true));
+    }
+
+    @After
+    public void after() {
+        try (DatabaseWrapper db = new DatabaseWrapper()) {
+            // 1.测试完成后删除sys_user表测试数据
+            SqlOperator.execute(db, "delete from " + Sys_user.TableName + " where user_id=?", UserId);
+            // 判断sys_user数据是否被删除
+            long num = SqlOperator.queryNumber(db, "select count(1) from " + Sys_user.TableName +
+                    "  where user_id=?", UserId).orElseThrow(() -> new RuntimeException("count fail!"));
+            assertThat("此条数据删除后，记录数应该为0", num, is(0L));
+            // 2.测试完成后删除etl_sys表测试数据
+            for (int i = 0; i < 2; i++) {
+                SqlOperator.execute(db, "delete from " + Etl_sys.TableName + " where etl_sys_cd=?",
+                        EtlSysCd + i);
+                // 判断etl_sys数据是否被删除
+                num = SqlOperator.queryNumber(db, "select count(1) from " + Etl_sys.TableName +
+                        "  where etl_sys_cd=?", EtlSysCd + i).orElseThrow(() ->
+                        new RuntimeException("count fail!"));
+                assertThat("此条数据删除后，记录数应该为0", num, is(0L));
+            }
+            // 3.测试完删除department_info表测试数据
+            SqlOperator.execute(db, "delete from " + Department_info.TableName + " where dep_id=?",
+                    DepId);
+            // 判断department_info数据是否被删除
+            num = SqlOperator.queryNumber(db, "select count(1) from " + Department_info.TableName +
+                    "  where dep_id=?", DepId).orElseThrow(() -> new RuntimeException("count fail!"));
+            assertThat("此条数据删除后，记录数应该为0", num, is(0L));
+            // 4.测试完删除etl_resource表测试数据
+            SqlOperator.execute(db, "delete from " + Etl_resource.TableName + " where resource_type=?",
+                    Pro_Type.Thrift.getCode());
+            // 判断etl_resource数据是否被删除
+            num = SqlOperator.queryNumber(db, "select count(1) from " + Etl_resource.TableName +
+                    "  where resource_type=?", Pro_Type.Thrift.getCode()).orElseThrow(() ->
+                    new RuntimeException("count fail!"));
+            assertThat("此条数据删除后，记录数应该为0", num, is(0L));
+            SqlOperator.execute(db, "delete from " + Etl_resource.TableName + " where resource_type=?",
+                    Pro_Type.Yarn.getCode());
+            // 判断etl_resource数据是否被删除
+            num = SqlOperator.queryNumber(db, "select count(1) from " + Etl_resource.TableName +
+                    "  where resource_type=?", Pro_Type.Yarn.getCode()).orElseThrow(() ->
+                    new RuntimeException("count fail!"));
+            assertThat("此条数据删除后，记录数应该为0", num, is(0L));
+            // 测试完删除新增数据
+            SqlOperator.execute(db, "delete from " + Etl_sys.TableName + " where etl_sys_cd=?",
+                    "addCs1");
+            // 判断etl_sys数据是否被删除
+            num = SqlOperator.queryNumber(db, "select count(1) from " + Etl_sys.TableName +
+                    "  where etl_sys_cd=?", "addCs1").orElseThrow(() ->
+                    new RuntimeException("count fail!"));
+            assertThat("此条数据删除后，记录数应该为0", num, is(0L));
+            // 4.提交事务
+            SqlOperator.commitTransaction(db);
+        }
+    }
+
+    @Method(desc = "测试查询所有作业调度工程信息", logicStep = "1.正常的数据访问1，数据都正常，该方法只有一种情况")
+    @Test
+    public void searchEtlSys() {
+        // 1.正常的数据访问1，数据都正常
+        String bodyString = new HttpClient()
+                .post(getActionUrl("searchEtlSys"))
+                .getBodyString();
+        ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(true));
+        // 验证数据正确性
+        Result etlSys = ar.getDataForResult();
+        for (int i = 0; i < etlSys.getRowCount(); i++) {
+            assertThat(etlSys.getString(i, "etl_sys_cd"), is(EtlSysCd + i));
+            assertThat(etlSys.getString(i, "etl_sys_name"), is("dhwcs" + i));
+            assertThat(etlSys.getString(i, "curr_bath_date"), is(DateUtil.getSysDate()));
+            assertThat(etlSys.getString(i, "sys_run_status"), is(Job_Status.STOP.getCode()));
+            assertThat(etlSys.getString(i, "comments"), is("作业调度工程测试" + i));
+        }
+    }
+
+    @Method(desc = "根据工程编号查询工程信息",
+            logicStep = "1.正常的数据访问1，数据都正常" +
+                    "2.错误的数据访问1，etl_sys_cd不存在,该方法只有两种情况")
+    @Test
+    public void searchEtlSysById() {
+        // 1.正常的数据访问1，数据都正常
+        String bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd + 0)
+                .post(getActionUrl("searchEtlSysById"))
+                .getBodyString();
+        ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(true));
+        Map<Object, Object> map = ar.getDataForMap();
+        assertThat(map.get("etl_sys_cd"), is(EtlSysCd + 0));
+        assertThat(map.get("etl_sys_name"), is("dhwcs0"));
+        assertThat(map.get("comments"), is("作业调度工程测试0"));
+        assertThat(map.get("user_pwd"), is("hyshf"));
+        assertThat(map.get("user_pwd"), is("hyshf"));
+        assertThat(map.get("serv_file_path"), is("/home/hyshf/etl/"));
+        assertThat(map.get("etl_serv_ip"), is("10.71.4.51"));
+        assertThat(map.get("redisIp"), is("10.71.4.52"));
+        assertThat(map.get("redisPort"), is("56379"));
+        // 2.错误的数据访问1，etl_sys_cd不存在
+        bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                .post(getActionUrl("searchEtlSysById"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(false));
+    }
+
+    @Method(desc = "测试新增作业调度工程",
+            logicStep = "1.正常的数据访问1，数据都正常" +
+                    "2.错误的数据访问1，etl_sys_cd为空" +
+                    "3.错误的数据访问2，etl_sys_cd为空格" +
+                    "4.错误的数据访问3，etl_sys_cd为不合法（不为数字字母下划线）" +
+                    "5.错误的数据访问4，etl_sys_name为空" +
+                    "6.错误的数据访问5，etl_sys_name为空格")
+    @Test
+    public void addEtlSys() {
+        // 1.正常的数据访问1，数据都正常
+        String bodyString = new HttpClient()
+                .addData("etl_sys_cd", "addCs1")
+                .addData("etl_sys_name", "工程测试1")
+                .addData("comments", "新增作业调度工程测试1")
+                .post(getActionUrl("addEtlSys"))
+                .getBodyString();
+        ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(true));
+        // 验证数据正确性
+        try (DatabaseWrapper db = new DatabaseWrapper()) {
+            Etl_sys etl_sys = SqlOperator.queryOneObject(db, Etl_sys.class, "select * from "
+                    + Etl_sys.TableName + " where etl_sys_cd=?", "addCs1").orElseThrow(() ->
+                    new BusinessException("sql查询错误或者映射实体错误！"));
+            assertThat(etl_sys.getSys_run_status(), is(Job_Status.STOP.getCode()));
+            assertThat(etl_sys.getBath_shift_time(), is(DateUtil.getSysDate()));
+            assertThat(etl_sys.getEtl_sys_name(), is("工程测试1"));
+            assertThat(etl_sys.getComments(), is("新增作业调度工程测试1"));
+            assertThat(etl_sys.getMain_serv_sync(), is(Main_Server_Sync.YES.getCode()));
+            assertThat(etl_sys.getUser_id(), is(UserId));
+        }
+        // 2.错误的数据访问1，etl_sys_cd为空
+        bodyString = new HttpClient()
+                .addData("etl_sys_cd", "")
+                .addData("etl_sys_name", "工程测试1")
+                .addData("comments", "新增作业调度工程测试1")
+                .post(getActionUrl("addEtlSys"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(false));
+        // 3.错误的数据访问2，etl_sys_cd为空格
+        bodyString = new HttpClient()
+                .addData("etl_sys_cd", " ")
+                .addData("etl_sys_name", "工程测试1")
+                .addData("comments", "新增作业调度工程测试1")
+                .post(getActionUrl("addEtlSys"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(false));
+        // 4.错误的数据访问3，etl_sys_cd为不合法（不为数字字母下划线）
+        bodyString = new HttpClient()
+                .addData("etl_sys_cd", "etl-sys-cd")
+                .addData("etl_sys_name", "工程测试1")
+                .addData("comments", "新增作业调度工程测试1")
+                .post(getActionUrl("addEtlSys"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(false));
+        // 5.错误的数据访问4，etl_sys_name为空
+        bodyString = new HttpClient()
+                .addData("etl_sys_cd", "addCs2")
+                .addData("etl_sys_name", "")
+                .addData("comments", "新增作业调度工程测试1")
+                .post(getActionUrl("addEtlSys"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(false));
+        // 6.错误的数据访问5，etl_sys_name为空格
+        bodyString = new HttpClient()
+                .addData("etl_sys_cd", "addCs2")
+                .addData("etl_sys_name", " ")
+                .addData("comments", "新增作业调度工程测试1")
+                .post(getActionUrl("addEtlSys"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(false));
+    }
+
+    @Test
+    public void updateEtlSys() {
+
+    }
+}

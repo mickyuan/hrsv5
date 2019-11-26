@@ -36,7 +36,8 @@ public class DataStoreAction extends BaseAction {
                     "5.循环新增保存数据存储层配置属性信息")
     @Param(name = "dataStoreLayer", desc = "数据存储层配置表实体对象", range = "取值范围", isBean = true)
     @Param(name = "dataStoreLayerAdded", desc = "数据存储附加信息表实体对象", range = "取值范围", isBean = true)
-    @Param(name = "dataStoreLayerAttr", desc = "数据存储层信息属性信息集合", range = "key,value类型的json字符串")
+    @Param(name = "dataStoreLayerAttr", desc = "数据存储层信息属性信息集合", range = "key,value类型的json字符串," +
+            "storage_property_key，storage_property_val,dsla_remark代表key，对应的值为value")
     @Param(name = "dsla_storelayer", desc = "配置附加属性信息数组", range = "使用代码项（StoreLayerAdded）")
     public void addDataStore(Data_store_layer dataStoreLayer, Data_store_layer_added dataStoreLayerAdded,
                              String dataStoreLayerAttr, String[] dsla_storelayer) {
@@ -233,11 +234,13 @@ public class DataStoreAction extends BaseAction {
         // 2.查询所有数据存储层配置信息
         List<Map<String, Object>> storeLayer = Dbo.queryList("select * from " + Data_store_layer.TableName);
         // 3.关联查询获取数据存储层配置与数据存储附加信息
-        List<Map<String, Object>> layerAndAdded = Dbo.queryList("select * from " + Data_store_layer.TableName
-                + " t1 left join " + Data_store_layer_added.TableName + " t2 on t1.dsl_id=t2.dsl_id");
+        List<Map<String, Object>> layerAndAdded = Dbo.queryList("select t1.dsl_id,t2.* from "
+                + Data_store_layer.TableName + " t1 left join " + Data_store_layer_added.TableName +
+                " t2 on t1.dsl_id=t2.dsl_id");
         // 4.关联查询获取数据存储层配置与数据存储层配置属性信息
-        List<Map<String, Object>> layerAndAttr = Dbo.queryList("select * from " + Data_store_layer.TableName
-                + " t1 left join " + Data_store_layer_attr.TableName + " t2 on t1.dsl_id=t2.dsl_id");
+        List<Map<String, Object>> layerAndAttr = Dbo.queryList("select t1.dsl_id,t2.* from "
+                + Data_store_layer.TableName + " t1 left join " + Data_store_layer_attr.TableName +
+                " t2 on t1.dsl_id=t2.dsl_id");
         // 5.构建存放数据存储层配置信息、数据存储附加信息、数据存储层配置属性信息的集合并封装数据
         Map<String, Object> dataStore = new HashMap<>();
         dataStore.put("storeLayer", storeLayer);
@@ -262,13 +265,13 @@ public class DataStoreAction extends BaseAction {
         Map<String, Object> storeLayer = Dbo.queryOneObject("select * from " + Data_store_layer.TableName
                 + " where dsl_id=?", dsl_id);
         // 3.根据权限数据存储层配置ID关联查询获取数据存储层配置与数据存储附加信息
-        List<Map<String, Object>> layerAndAdded = Dbo.queryList("select * from " + Data_store_layer.TableName
-                + " t1 left join " + Data_store_layer_added.TableName + " t2 on t1.dsl_id=t2.dsl_id " +
-                " where t1.dsl_id=?", dsl_id);
+        List<Map<String, Object>> layerAndAdded = Dbo.queryList("select t1.dsl_id,t2.* from "
+                + Data_store_layer.TableName + " t1 left join " + Data_store_layer_added.TableName +
+                " t2 on t1.dsl_id=t2.dsl_id where t1.dsl_id=?", dsl_id);
         // 4.根据权限数据存储层配置ID关联查询获取数据存储层配置与数据存储层配置属性信息
-        List<Map<String, Object>> layerAndAttr = Dbo.queryList("select * from " + Data_store_layer.TableName
-                + " t1 left join " + Data_store_layer_attr.TableName + " t2 on t1.dsl_id=t2.dsl_id  " +
-                " where t1.dsl_id=?", dsl_id);
+        List<Map<String, Object>> layerAndAttr = Dbo.queryList("select t1.dsl_id,t2.* from "
+                + Data_store_layer.TableName + " t1 left join " + Data_store_layer_attr.TableName +
+                " t2 on t1.dsl_id=t2.dsl_id where t1.dsl_id=?", dsl_id);
         // 5.封装数据存储附件信息、数据存储层配置属性数据
         storeLayer.put("layerAndAdded", layerAndAdded);
         storeLayer.put("layerAndAttr", layerAndAttr);
