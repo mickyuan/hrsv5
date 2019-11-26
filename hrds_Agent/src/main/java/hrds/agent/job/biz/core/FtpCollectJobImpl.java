@@ -23,6 +23,7 @@ import hrds.commons.utils.MapDBHelper;
 import hrds.commons.utils.jsch.SftpOperate;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.poi.ss.formula.functions.T;
 
 import java.io.File;
 import java.util.List;
@@ -423,5 +424,11 @@ public class FtpCollectJobImpl implements JobInterface {
 	@Override
 	public MetaInfoBean getMetaInfo() {
 		return null;
+	}
+
+	@Override
+	public JobStatusInfo call() {
+		//多线程执行作业
+		return runJob();
 	}
 }

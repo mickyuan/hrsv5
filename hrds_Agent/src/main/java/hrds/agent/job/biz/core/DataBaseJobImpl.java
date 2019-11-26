@@ -95,4 +95,10 @@ public class DataBaseJobImpl implements JobInterface {
 	public MetaInfoBean getMetaInfo() {
 		return mateInfo;
 	}
+
+	@Override
+	public JobStatusInfo call() {
+		//多线程执行作业
+		return runJob();
+	}
 }

@@ -184,15 +184,12 @@ public class FileUtil {
 	 */
 	public static boolean decideFileExist(String filePath) {
 		File file = new File(filePath);
-		if (file.exists()) {
-			return true;
-		} else {
-			return false;
-		}
+		return file.exists();
 	}
 
 	public static long getFileSize(String filePath) {
 
 		return new File(filePath).length();
 	}
+
 }

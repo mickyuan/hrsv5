@@ -100,4 +100,10 @@ public class DataFileJobImpl implements JobInterface {
 
 		return mateInfo;
 	}
+
+	@Override
+	public JobStatusInfo call() {
+		//多线程执行作业
+		return runJob();
+	}
 }

@@ -92,4 +92,10 @@ public class ObjectCollectJobImpl implements JobInterface {
 	public MetaInfoBean getMetaInfo() {
 		return null;
 	}
+
+	@Override
+	public JobStatusInfo call() {
+		//多线程执行作业
+		return runJob();
+	}
 }
