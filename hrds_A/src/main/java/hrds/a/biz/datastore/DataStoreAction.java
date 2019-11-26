@@ -10,7 +10,7 @@ import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
-import hrds.commons.codes.StorageType;
+import hrds.commons.codes.store_type;
 import hrds.commons.entity.Data_store_layer;
 import hrds.commons.entity.Data_store_layer_added;
 import hrds.commons.entity.Data_store_layer_attr;
@@ -35,11 +35,11 @@ public class DataStoreAction extends BaseAction {
                     "4.循环新增保存数据存储附加信息" +
                     "5.循环新增保存数据存储层配置属性信息")
     @Param(name = "dataStoreLayer", desc = "数据存储层配置表实体对象", range = "取值范围", isBean = true)
-    @Param(name = "dataStoreLayerAdded", desc = "数据存储附加信息表实体对象", range = "取值范围", isBean = true)
+    @Param(name = "dslad_remark", desc = "数据存储附加信息表备注", range = "无限制", nullable = true)
     @Param(name = "dataStoreLayerAttr", desc = "数据存储层信息属性信息集合", range = "key,value类型的json字符串," +
             "storage_property_key，storage_property_val,dsla_remark代表key，对应的值为value")
     @Param(name = "dsla_storelayer", desc = "配置附加属性信息数组", range = "使用代码项（StoreLayerAdded）")
-    public void addDataStore(Data_store_layer dataStoreLayer, Data_store_layer_added dataStoreLayerAdded,
+    public void addDataStore(Data_store_layer dataStoreLayer, String dslad_remark,
                              String dataStoreLayerAttr, String[] dsla_storelayer) {
         // 1.数据可访问权限处理方式，该方法不需要权限控制
         // 2.检查数据存储配置字段合法性
@@ -49,8 +49,7 @@ public class DataStoreAction extends BaseAction {
         dataStoreLayer.setDsl_id(dsl_id);
         dataStoreLayer.add(Dbo.db());
         // 4.循环新增保存数据存储附加信息
-        dataStoreLayerAdded.setDsl_id(dsl_id);
-        addDataStoreLayerAdded(dataStoreLayerAdded, dsla_storelayer);
+        addDataStoreLayerAdded(dsl_id, dslad_remark, dsla_storelayer);
         // 5.循环新增保存数据存储层配置属性信息
         addDataStorageLayerAttr(dataStoreLayerAttr, dsl_id);
     }
@@ -67,23 +66,27 @@ public class DataStoreAction extends BaseAction {
             throw new BusinessException("配置属性名称不能为空！");
         }
         // 3.检查存储类型是否合法
-        StorageType.ofEnumByCode(dataStoreLayer.getStore_type());
+        store_type.ofEnumByCode(dataStoreLayer.getStore_type());
     }
 
     @Method(desc = "新增保存数据存储附加信息",
             logicStep = "1.数据可访问权限处理方式，该方法不需要权限控制" +
                     "2.检查配置附加属性信息合法性" +
                     "3.新增保存数据存储附加信息")
-    @Param(name = "dataStoreLayerAdded", desc = "数据存储附加信息表实体对象", range = "取值范围", isBean = true)
+    @Param(name = "dsl_id", desc = "数据存储层配置表主键ID", range = "新增数据存储层配置时生成")
+    @Param(name = "dslad_remark", desc = "数据存储附加信息表备注", range = "无限制", nullable = true)
     @Param(name = "dsla_storelayer", desc = "配置附加属性信息数组", range = "使用代码项（StoreLayerAdded）")
-    private void addDataStoreLayerAdded(Data_store_layer_added dataStoreLayerAdded, String[] dsla_storelayer) {
+    private void addDataStoreLayerAdded(String dsl_id, String dslad_remark, String[] dsla_storelayer) {
         // 1.数据可访问权限处理方式，该方法不需要权限控制
-        // 2.检查配置附加属性信息合法性
-        checkDataStoreLayerAddedField(dataStoreLayerAdded);
         // 3.新增保存数据存储附加信息
         for (String dslaStorelayer : dsla_storelayer) {
+            Data_store_layer_added dataStoreLayerAdded = new Data_store_layer_added();
+            dataStoreLayerAdded.setDsl_id(dsl_id);
+            dataStoreLayerAdded.setDslad_remark(dslad_remark);
             dataStoreLayerAdded.setDslad_id(PrimayKeyGener.getNextId());
             dataStoreLayerAdded.setDsla_storelayer(dslaStorelayer);
+            // 2.检查配置附加属性信息合法性
+            checkDataStoreLayerAddedField(dataStoreLayerAdded);
             dataStoreLayerAdded.add(Dbo.db());
         }
     }
@@ -163,11 +166,11 @@ public class DataStoreAction extends BaseAction {
                     "6.更新保存前先删除数据存储层配置属性信息" +
                     "7.更新数据存储层配置属性信息")
     @Param(name = "dataStoreLayer", desc = "数据存储层配置表实体对象", range = "取值范围", isBean = true)
-    @Param(name = "dataStoreLayerAdded", desc = "数据存储附加信息表实体对象", range = "取值范围", isBean = true)
+    @Param(name = "dslad_remark", desc = "数据存储附加信息表备注", range = "无限制", nullable = true)
     @Param(name = "dsl_id", desc = "数据存储层配置表主键", range = "新增数据存储层时生成")
     @Param(name = "dataStoreLayerAttr", desc = "数据存储层信息属性信息集合", range = "key,value类型的json字符串")
     @Param(name = "dsla_storelayer", desc = "配置附加属性信息数组", range = "使用代码项（StoreLayerAdded）")
-    public void updateDataStore(Data_store_layer dataStoreLayer, Data_store_layer_added dataStoreLayerAdded,
+    public void updateDataStore(Data_store_layer dataStoreLayer, String dslad_remark,
                                 long dsl_id, String dataStoreLayerAttr, String[] dsla_storelayer) {
         // 1.数据可访问权限处理方式，该方法不需要权限控制
         // 2.检查数据存储配置字段合法性
@@ -175,9 +178,9 @@ public class DataStoreAction extends BaseAction {
         // 3.更新数据存储配置信息
         dataStoreLayer.update(Dbo.db());
         // 4.更新保存前先删除原来的数据存储附加信息
-        deleteDataStoreLayerAdded(dataStoreLayerAdded.getDsl_id());
+        deleteDataStoreLayerAdded(dsl_id);
         // 5.更新数据存储附加信息
-        addDataStoreLayerAdded(dataStoreLayerAdded, dsla_storelayer);
+        addDataStoreLayerAdded(String.valueOf(dsl_id), dslad_remark, dsla_storelayer);
         // 6.更新保存前先删除数据存储层配置属性信息
         deleteDataStoreLayerAttr(dsl_id);
         // 7.更新数据存储层配置属性信息

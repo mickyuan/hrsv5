@@ -11,8 +11,8 @@ import hrds.commons.codes.*;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.testbase.WebBaseTestCase;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.*;
@@ -63,8 +63,8 @@ public class DataStoreActionTest extends WebBaseTestCase {
                     "3.Data_store_layer表有5条数据，dsl_id为dsl_id1--dsl_id5" +
                     "4.Data_store_layer_added有6条数据，dslad_id为dslad_id1--dslad_id6" +
                     "5.Data_store_layer_attr表有6条数据，dsla_id为dsla_id1--dsla_id6")
-    @BeforeClass
-    public static void before() {
+    @Before
+    public void before() {
         try (DatabaseWrapper db = new DatabaseWrapper()) {
             // 1.构造sys_user表测试数据
             Sys_user sysUser = new Sys_user();
@@ -99,12 +99,13 @@ public class DataStoreActionTest extends WebBaseTestCase {
                     dataStoreLayer.setStore_type(store_type.DATABASE.getCode());
                 } else if (i == 2) {
                     dataStoreLayer.setDsl_id(dsl_id2);
-                    dataStoreLayer.setStore_type(store_type.ElasticSearch.getCode());
+                    dataStoreLayer.setStore_type(store_type.HBASE.getCode());
                 } else if (i == 3) {
                     dataStoreLayer.setDsl_id(dsl_id3);
                     dataStoreLayer.setStore_type(store_type.SOLR.getCode());
                 } else if (i == 4) {
                     dataStoreLayer.setDsl_id(dsl_id4);
+                    dataStoreLayer.setStore_type(store_type.ElasticSearch.getCode());
                 } else if (i == 5) {
                     dataStoreLayer.setDsl_id(dsl_id5);
                     dataStoreLayer.setStore_type(store_type.MONGODB.getCode());
@@ -205,8 +206,8 @@ public class DataStoreActionTest extends WebBaseTestCase {
                     "7.删除数据存储附件信息数据" +
                     "8.删除新增数据存储层配置属性信息" +
                     "9.提交事务")
-    @AfterClass
-    public static void after() {
+    @After
+    public void after() {
         try (DatabaseWrapper db = new DatabaseWrapper()) {
             // 1.测试完成后删除sys_user表测试数据
             SqlOperator.execute(db, "delete from " + Sys_user.TableName + " where user_id=?", UserId);
@@ -507,86 +508,89 @@ public class DataStoreActionTest extends WebBaseTestCase {
         List<Map<String, Object>> layerAndAdded = (List<Map<String, Object>>) dataForMap.get("layerAndAdded");
         List<Map<String, Object>> layerAndAttr = (List<Map<String, Object>>) dataForMap.get("layerAndAttr");
         for (Map<String, Object> map : storeLayer) {
-            if (map.get("dsl_id").equals(String.valueOf(dsl_id1))) {
+            String dsl_id = map.get("dsl_id").toString();
+            if (dsl_id.equals(String.valueOf(dsl_id1))) {
                 assertThat(store_type.DATABASE.getCode(), is(map.get("store_type")));
                 assertThat("数据存储层配置测试名称1", is(map.get("dsl_name")));
                 assertThat("数据存储层配置测试1", is(map.get("dsl_remark")));
-            } else if (map.get("dsl_id").equals(String.valueOf(dsl_id2))) {
+            } else if (dsl_id.equals(String.valueOf(dsl_id2))) {
                 assertThat(store_type.HBASE.getCode(), is(map.get("store_type")));
                 assertThat("数据存储层配置测试名称2", is(map.get("dsl_name")));
                 assertThat("数据存储层配置测试2", is(map.get("dsl_remark")));
-            } else if (map.get("dsl_id").equals(String.valueOf(dsl_id3))) {
+            } else if (dsl_id.equals(String.valueOf(dsl_id3))) {
                 assertThat(store_type.SOLR.getCode(), is(map.get("store_type")));
                 assertThat("数据存储层配置测试名称3", is(map.get("dsl_name")));
                 assertThat("数据存储层配置测试3", is(map.get("dsl_remark")));
-            } else if (map.get("dsl_id").equals(String.valueOf(dsl_id4))) {
+            } else if (dsl_id.equals(String.valueOf(dsl_id4))) {
                 assertThat(store_type.ElasticSearch.getCode(), is(map.get("store_type")));
                 assertThat("数据存储层配置测试名称4", is(map.get("dsl_name")));
                 assertThat("数据存储层配置测试4", is(map.get("dsl_remark")));
-            } else if (map.get("dsl_id").equals(String.valueOf(dsl_id5))) {
+            } else if (dsl_id.equals(String.valueOf(dsl_id5))) {
                 assertThat(store_type.MONGODB.getCode(), is(map.get("store_type")));
                 assertThat("数据存储层配置测试名称5", is(map.get("dsl_name")));
                 assertThat("数据存储层配置测试5", is(map.get("dsl_remark")));
             }
         }
         for (Map<String, Object> map : layerAndAdded) {
-            if (map.get("dslad_id").equals(dslad_id1)) {
-                assertThat(String.valueOf(dsl_id1), is(map.get("dsl_id")));
+            String dslad_id = map.get("dslad_id").toString();
+            if (dslad_id.equals(String.valueOf(dslad_id1))) {
+                assertThat(String.valueOf(dsl_id1), is(map.get("dsl_id").toString()));
                 assertThat(StoreLayerAdded.ZhuJian.getCode(), is(map.get("dsla_storelayer")));
                 assertThat("数据存储附加信息测试1", is(map.get("dslad_remark")));
-            } else if (map.get("dslad_id").equals(dslad_id2)) {
-                assertThat(String.valueOf(dsl_id1), is(map.get("dsl_id")));
+            } else if (dslad_id.equals(String.valueOf(dslad_id2))) {
+                assertThat(String.valueOf(dsl_id1), is(map.get("dsl_id").toString()));
                 assertThat(StoreLayerAdded.RowKey.getCode(), is(map.get("dsla_storelayer")));
                 assertThat("数据存储附加信息测试2", is(map.get("dslad_remark")));
-            } else if (map.get("dslad_id").equals(dslad_id3)) {
-                assertThat(String.valueOf(dsl_id3), is(map.get("dsl_id")));
+            } else if (dslad_id.equals(String.valueOf(dslad_id3))) {
+                assertThat(String.valueOf(dsl_id3), is(map.get("dsl_id").toString()));
                 assertThat(StoreLayerAdded.SuoYinLie.getCode(), is(map.get("dsla_storelayer")));
                 assertThat("数据存储附加信息测试3", is(map.get("dslad_remark")));
-            } else if (map.get("dslad_id").equals(dslad_id4)) {
-                assertThat(String.valueOf(dsl_id4), is(map.get("dsl_id")));
+            } else if (dslad_id.equals(String.valueOf(dslad_id4))) {
+                assertThat(String.valueOf(dsl_id4), is(map.get("dsl_id").toString()));
                 assertThat(StoreLayerAdded.YuJuHe.getCode(), is(map.get("dsla_storelayer")));
                 assertThat("数据存储附加信息测试4", is(map.get("dslad_remark")));
-            } else if (map.get("dslad_id").equals(dslad_id5)) {
-                assertThat(String.valueOf(dsl_id5), is(map.get("dsl_id")));
+            } else if (dslad_id.equals(String.valueOf(dslad_id5))) {
+                assertThat(String.valueOf(dsl_id5), is(map.get("dsl_id").toString()));
                 assertThat(StoreLayerAdded.PaiXuLie.getCode(), is(map.get("dsla_storelayer")));
                 assertThat("数据存储附加信息测试5", is(map.get("dslad_remark")));
-            } else if (map.get("dslad_id").equals(dslad_id6)) {
-                assertThat(String.valueOf(dsl_id2), is(map.get("dsl_id")));
+            } else if (dslad_id.equals(String.valueOf(dslad_id6))) {
+                assertThat(String.valueOf(dsl_id2), is(map.get("dsl_id").toString()));
                 assertThat(StoreLayerAdded.FenQuLie.getCode(), is(map.get("dsla_storelayer")));
                 assertThat("数据存储附加信息测试6", is(map.get("dslad_remark")));
             }
         }
         for (Map<String, Object> map : layerAndAttr) {
-            if (map.get("dsla_id").equals(dsla_id1)) {
-                assertThat(map.get("dsl_id"), is(dsl_id1));
+            String dsla_id = map.get("dsla_id").toString();
+            if (dsla_id.equals(String.valueOf(dsla_id1))) {
+                assertThat(map.get("dsl_id").toString(), is(String.valueOf(dsl_id1)));
                 assertThat(map.get("storage_property_key"), is("数据库"));
                 assertThat(map.get("storage_property_val"), is(DatabaseType.Postgresql.getCode()));
-                assertThat(map.get("dsla_remak"), is("数据存储层配置属性测试1"));
-            } else if (map.get("dsla_id").equals(dsla_id2)) {
-                assertThat(map.get("dsl_id"), is(dsl_id1));
+                assertThat(map.get("dsla_remark"), is("数据存储层配置属性测试1"));
+            } else if (dsla_id.equals(String.valueOf(dsla_id2))) {
+                assertThat(map.get("dsl_id").toString(), is(String.valueOf(dsl_id1)));
                 assertThat(map.get("storage_property_key"), is("数据库驱动"));
                 assertThat(map.get("storage_property_val"), is("org.postgresql.Driver"));
-                assertThat(map.get("dsla_remak"), is("数据存储层配置属性测试2"));
-            } else if (map.get("dsla_id").equals(dsla_id3)) {
-                assertThat(map.get("dsl_id"), is(dsl_id2));
+                assertThat(map.get("dsla_remark"), is("数据存储层配置属性测试2"));
+            } else if (dsla_id.equals(String.valueOf(dsla_id3))) {
+                assertThat(map.get("dsl_id").toString(), is(String.valueOf(dsl_id2)));
                 assertThat(map.get("storage_property_key"), is("数据库服务器IP"));
                 assertThat(map.get("storage_property_val"), is("127.0.0.1"));
-                assertThat(map.get("dsla_remak"), is("数据存储层配置属性测试3"));
-            } else if (map.get("dsla_id").equals(dsla_id3)) {
-                assertThat(map.get("dsl_id"), is(dsl_id3));
+                assertThat(map.get("dsla_remark"), is("数据存储层配置属性测试3"));
+            } else if (dsla_id.equals(String.valueOf(dsla_id3))) {
+                assertThat(map.get("dsl_id").toString(), is(String.valueOf(dsl_id3)));
                 assertThat(map.get("storage_property_key"), is("数据库端口"));
                 assertThat(map.get("storage_property_val"), is("5432"));
-                assertThat(map.get("dsla_remak"), is("数据存储层配置属性测试4"));
-            } else if (map.get("dsla_id").equals(dsla_id5)) {
-                assertThat(map.get("dsl_id"), is(dsl_id4));
+                assertThat(map.get("dsla_remark"), is("数据存储层配置属性测试4"));
+            } else if (dsla_id.equals(String.valueOf(dsla_id5))) {
+                assertThat(map.get("dsl_id").toString(), is(String.valueOf(dsl_id4)));
                 assertThat(map.get("storage_property_key"), is("用户名"));
                 assertThat(map.get("storage_property_val"), is("hrsdxg"));
-                assertThat(map.get("dsla_remak"), is("数据存储层配置属性测试5"));
-            } else if (map.get("dsla_id").equals(dsla_id6)) {
-                assertThat(map.get("dsl_id"), is(dsl_id5));
+                assertThat(map.get("dsla_remark"), is("数据存储层配置属性测试5"));
+            } else if (dsla_id.equals(String.valueOf(dsla_id6))) {
+                assertThat(map.get("dsl_id").toString(), is(String.valueOf(dsl_id5)));
                 assertThat(map.get("storage_property_key"), is("密码"));
                 assertThat(map.get("storage_property_val"), is("hrsdxg"));
-                assertThat(map.get("dsla_remak"), is("数据存储层配置属性测试6"));
+                assertThat(map.get("dsla_remark"), is("数据存储层配置属性测试6"));
             }
         }
     }
@@ -608,27 +612,29 @@ public class DataStoreActionTest extends WebBaseTestCase {
         assertThat("数据存储层配置测试名称1", is(dataForMap.get("dsl_name")));
         assertThat("数据存储层配置测试1", is(dataForMap.get("dsl_remark")));
         for (Map<String, Object> map : layerAndAdded) {
-            if (map.get("dslad_id").equals(dslad_id1)) {
-                assertThat(String.valueOf(dsl_id1), is(map.get("dsl_id")));
+            String dslad_id = map.get("dslad_id").toString();
+            if (dslad_id.equals(String.valueOf(dslad_id1))) {
+                assertThat(String.valueOf(dsl_id1), is(map.get("dsl_id").toString()));
                 assertThat(StoreLayerAdded.ZhuJian.getCode(), is(map.get("dsla_storelayer")));
                 assertThat("数据存储附加信息测试1", is(map.get("dslad_remark")));
-            } else if (map.get("dslad_id").equals(dslad_id2)) {
-                assertThat(String.valueOf(dsl_id1), is(map.get("dsl_id")));
+            } else if (dslad_id.equals(String.valueOf(dslad_id2))) {
+                assertThat(String.valueOf(dsl_id1), is(map.get("dsl_id").toString()));
                 assertThat(StoreLayerAdded.RowKey.getCode(), is(map.get("dsla_storelayer")));
                 assertThat("数据存储附加信息测试2", is(map.get("dslad_remark")));
             }
         }
         for (Map<String, Object> map : layerAndAttr) {
-            if (map.get("dsla_id").equals(dsla_id1)) {
-                assertThat(map.get("dsl_id"), is(dsl_id1));
+            String dsla_id = map.get("dsla_id").toString();
+            if (dsla_id.equals(String.valueOf(dsla_id1))) {
+                assertThat(map.get("dsl_id").toString(), is(String.valueOf(dsl_id1)));
                 assertThat(map.get("storage_property_key"), is("数据库"));
                 assertThat(map.get("storage_property_val"), is(DatabaseType.Postgresql.getCode()));
-                assertThat(map.get("dsla_remak"), is("数据存储层配置属性测试1"));
-            } else if (map.get("dsla_id").equals(dsla_id2)) {
-                assertThat(map.get("dsl_id"), is(dsl_id1));
+                assertThat(map.get("dsla_remark"), is("数据存储层配置属性测试1"));
+            } else if (dsla_id.equals(String.valueOf(dsla_id2))) {
+                assertThat(map.get("dsl_id").toString(), is(String.valueOf(dsl_id1)));
                 assertThat(map.get("storage_property_key"), is("数据库驱动"));
                 assertThat(map.get("storage_property_val"), is("org.postgresql.Driver"));
-                assertThat(map.get("dsla_remak"), is("数据存储层配置属性测试2"));
+                assertThat(map.get("dsla_remark"), is("数据存储层配置属性测试2"));
             }
         }
     }
