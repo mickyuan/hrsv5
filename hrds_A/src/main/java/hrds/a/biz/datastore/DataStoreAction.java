@@ -71,22 +71,24 @@ public class DataStoreAction extends BaseAction {
 
     @Method(desc = "新增保存数据存储附加信息",
             logicStep = "1.数据可访问权限处理方式，该方法不需要权限控制" +
-                    "2.检查配置附加属性信息合法性" +
-                    "3.新增保存数据存储附加信息")
+                    "2.循环获取配置附加属性dslaStorelayer" +
+                    "3.检查配置附加属性信息合法性" +
+                    "4.新增保存数据存储附加信息")
     @Param(name = "dsl_id", desc = "数据存储层配置表主键ID", range = "新增数据存储层配置时生成")
     @Param(name = "dslad_remark", desc = "数据存储附加信息表备注", range = "无限制", nullable = true)
     @Param(name = "dsla_storelayer", desc = "配置附加属性信息数组", range = "使用代码项（StoreLayerAdded）")
     private void addDataStoreLayerAdded(String dsl_id, String dslad_remark, String[] dsla_storelayer) {
         // 1.数据可访问权限处理方式，该方法不需要权限控制
-        // 3.新增保存数据存储附加信息
+        // 2.循环获取配置附加属性dslaStorelayer
         for (String dslaStorelayer : dsla_storelayer) {
             Data_store_layer_added dataStoreLayerAdded = new Data_store_layer_added();
             dataStoreLayerAdded.setDsl_id(dsl_id);
             dataStoreLayerAdded.setDslad_remark(dslad_remark);
             dataStoreLayerAdded.setDslad_id(PrimayKeyGener.getNextId());
             dataStoreLayerAdded.setDsla_storelayer(dslaStorelayer);
-            // 2.检查配置附加属性信息合法性
+            // 3.检查配置附加属性信息合法性
             checkDataStoreLayerAddedField(dataStoreLayerAdded);
+            // 4.新增保存数据存储附加信息
             dataStoreLayerAdded.add(Dbo.db());
         }
     }
