@@ -54,9 +54,14 @@ insert into component_info(comp_id,comp_name,comp_state,comp_version,comp_type,c
 
 
 delete from component_menu;
-INSERT INTO component_menu (menu_id,comp_id,menu_path,user_type,menu_name,menu_remark) VALUES ('1000000001','A000','/A/hrds/biz/A0101/index.do','00','系统管理员','glyphicon-th-list');
-INSERT INTO component_menu (menu_id,comp_id,menu_path,user_type,menu_name,menu_remark) VALUES ('1000000002','B000','/B/hrds/biz/B0101/index.do','01','采集管理','glyphicon-envelope');
-INSERT INTO component_menu (menu_id,comp_id,menu_path,user_type,menu_name,menu_remark) VALUES ('1000000003','B000','/B/hrds/biz/B0501/index.do','02','数据采集','glyphicon-road');
+INSERT INTO component_menu (menu_id,comp_id,menu_path,user_type,menu_name,menu_remark) VALUES ('1000000099','A000','/userManagement','99','用户管理','glyphicon-th-list');
+INSERT INTO component_menu (menu_id,comp_id,menu_path,user_type,menu_name,menu_remark) VALUES ('1000000098','A000','/departmentalList','98','部门管理','glyphicon-envelope');
+INSERT INTO component_menu (menu_id,comp_id,menu_path,user_type,menu_name,menu_remark) VALUES ('1000000097','A000','systemParameters','97','系统参数管理','glyphicon-road');
+INSERT INTO component_menu (menu_id,comp_id,menu_path,user_type,menu_name,menu_remark) VALUES ('1000000096','A000','/XXXXX','96','数据整理','glyphicon-print');
+INSERT INTO component_menu (menu_id,comp_id,menu_path,user_type,menu_name,menu_remark) VALUES ('1000000095','A000','/XXXXXXX','95','数据存储层定义','glyphicon-print');
+
+INSERT INTO component_menu (menu_id,comp_id,menu_path,user_type,menu_name,menu_remark) VALUES ('1000000002','B000','/datasourceManagement','01','采集管理','glyphicon-envelope');
+INSERT INTO component_menu (menu_id,comp_id,menu_path,user_type,menu_name,menu_remark) VALUES ('1000000003','B000','/collectmonitor','02','数据采集','glyphicon-road');
 INSERT INTO component_menu (menu_id,comp_id,menu_path,user_type,menu_name,menu_remark) VALUES ('1000000004','B000','/B/hrds/biz/B0302/index.do','03','数据查询','glyphicon-print');
 INSERT INTO component_menu (menu_id,comp_id,menu_path,user_type,menu_name,menu_remark) VALUES ('1000000026','C000','/C/hrds/biz/C0501/index.do','04','作业调度','glyphicon-random');
 INSERT INTO component_menu (menu_id,comp_id,menu_path,user_type,menu_name,menu_remark) VALUES ('1000000009','D000','/D/hrds/biz/D0101/index.do','07','数据可视化查询','glyphicon-sound-dolby');
@@ -85,10 +90,9 @@ delete from department_info;
 INSERT INTO department_info (dep_id,dep_name,create_date,create_time,dep_remark) VALUES ('1000000001','第一部门','20160101','120500','');
 
 delete from sys_user;
-INSERT INTO sys_user(USER_ID, CREATE_ID, DEP_ID, ROLE_ID, USER_NAME, USER_PASSWORD, USER_EMAIL, USER_MOBILE, useris_admin,USER_TYPE, LOGIN_IP, LOGIN_DATE, USER_STATE, CREATE_DATE, CREATE_TIME, UPDATE_DATE, UPDATE_TIME, USER_REMARK, MAXIMUM_JOB, USER_PRIORITY, QUOTA_SPACE, TOKEN, VALID_TIME) VALUES ('1000', '1000', '1000000001', '1001', '超级管理员', 'Hrs@1025', 'cc', '11', '0','00', '11', '11', '1', '88888888', '111111', '88888888', '111111', '888', '0', NULL, NULL, '0', '0');
-INSERT INTO sys_user(user_id, create_id, dep_id, role_id, user_name, user_password, user_email, user_mobile, useris_admin,user_type, usertype_group, login_ip, login_date, user_state, create_date, create_time, update_date, update_time, user_remark, maximum_job, user_priority, quota_space, token, valid_time) VALUES (1001, 1000, 1000000001, '1001', '全功能管理员', 'hrs818', 'ccc@vv.com', '1234567890','0','01', '01,04,07,10,11,13,16,18,25', null, null, '1', '20181015', '145752', '20181015', '145752', '', 0, null, null, '0', '0');
-INSERT INTO sys_user(user_id, create_id, dep_id, role_id, user_name, user_password, user_email, user_mobile, useris_admin,user_type, usertype_group, login_ip, login_date, user_state, create_date, create_time, update_date, update_time, user_remark, maximum_job, user_priority, quota_space, token, valid_time) VALUES (2001, 1000, 1000000001, '1001', '全功能操作员', 'hrs666', 'ccc@vv.com', '1234567890', '0','02', '02,03,04,08,09,12,14,15,17,19,23,24,26', null, null, '1', '20181015', '145752', '20181015', '145752', '', 0, null, null, '0', '0');
-
+INSERT INTO sys_user(USER_ID, CREATE_ID, DEP_ID, ROLE_ID, USER_NAME, USER_PASSWORD, USER_EMAIL, USER_MOBILE, useris_admin,USER_TYPE, usertype_group,LOGIN_IP, LOGIN_DATE, USER_STATE, CREATE_DATE, CREATE_TIME, UPDATE_DATE, UPDATE_TIME, USER_REMARK, TOKEN, VALID_TIME) VALUES ('1000','1000','1000000001','1001','超级管理员', '1', 'ccc@vv.com', '1234567890', '0','00', '99,98,97,96,95','11', '11', '1', '88888888', '111111', '88888888', '111111', '888','0', '0');
+INSERT INTO sys_user(user_id, create_id, dep_id, role_id, user_name, user_password, user_email, user_mobile, useris_admin,user_type, usertype_group, login_ip, login_date, user_state, create_date, create_time, update_date, update_time, user_remark, token, valid_time) VALUES (1001, 1000, 1000000001, '1001', '全功能管理员', '1', 'ccc@vv.com', '1234567890','0','01', '01,04,07,10,11,13,16,18,25', null, null, '1', '20181015', '145752', '20181015', '145752', '','0', '0');
+INSERT INTO sys_user(user_id, create_id, dep_id, role_id, user_name, user_password, user_email, user_mobile, useris_admin,user_type, usertype_group, login_ip, login_date, user_state, create_date, create_time, update_date, update_time, user_remark, token, valid_time) VALUES (2001, 1000, 1000000001, '1001', '全功能操作员', '1', 'ccc@vv.com', '1234567890','0','02', '02,03,04,08,09,12,14,15,17,19,23,24,26', null, null, '1', '20181015', '145752', '20181015', '145752', '', '0', '0');
 
 delete from tokenizer_list;
 INSERT INTO tokenizer_list (TOKENIZER_ID, TOKENIZER_NAME, IS_FLAG) VALUES ('1', '词库管理', '0');

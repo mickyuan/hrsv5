@@ -16,6 +16,8 @@ import hrds.commons.utils.ActionUtil;
 import hrds.commons.utils.User;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
+import java.util.Map;
 
 
 @DocClass(desc = "登陆认证",author = "Mr.Lee")
@@ -108,4 +110,10 @@ public class LoginAction extends BaseAction {
 		return user;
 	}
 
+	@Method(desc = "获取登陆用户的菜单信息",logicStep = "1、通过用户组ID获取所有的菜单，2、返回图标、地址、名字")
+	public List<Map<String, Object>> getMenu() {
+		String userTypeGroup = this.getUser().getUserTypeGroup();
+		String userGroup = "'"+StringUtil.replace(userTypeGroup, ",", "','")+"'";
+		return Dbo.queryList("select * from component_menu where user_type in(?)", userGroup);
+	}
 }

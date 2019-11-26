@@ -57,7 +57,17 @@ public enum UserType {
 	/**自主分析管理<ZiZhuFenXiGuanLi>  */
 	ZiZhuFenXiGuanLi("25","自主分析管理","17","用户类型"),
 	/**自主分析操作<ZiZhuFenXiCaoZuo>  */
-	ZiZhuFenXiCaoZuo("26","自主分析操作","17","用户类型");
+	ZiZhuFenXiCaoZuo("26","自主分析操作","17","用户类型"),
+	/**用户管理<YongHuGuanLi>  */
+	YongHuGuanLi("99","用户管理","17","用户类型"),
+	/**部门管理<BuMenGuanLi>  */
+	BuMenGuanLi("98","部门管理","17","用户类型"),
+	/**系统参数管理<XiTongCanShuGuanLi>  */
+	XiTongCanShuGuanLi("97","系统参数管理","17","用户类型"),
+	/**数据整理<ShuJuZhengLi>  */
+	ShuJuZhengLi("96","数据整理","17","用户类型"),
+	/**数据存储层定义<ShuJunCunChuCengDingYi>  */
+	ShuJunCunChuCengDingYi("95","数据存储层定义","17","用户类型");
 
 	private final String code;
 	private final String value;

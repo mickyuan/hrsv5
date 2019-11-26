@@ -17,6 +17,8 @@ public class CodesItem{
 	protected static final String store_type=new String("store_type");
 	/**文件类型   */
 	protected static final String fileType=new String("FileType");
+	/**存储层附件属性   */
+	protected static final String storeLayerAdded=new String("StoreLayerAdded");
 	/**用户类型   */
 	protected static final String userType=new String("UserType");
 	/**是否标识   */
@@ -91,8 +93,6 @@ public class CodesItem{
 	protected static final String dataExtractType=new String("DataExtractType");
 	/**清洗方式   */
 	protected static final String cleanType=new String("CleanType");
-	/**存储层附件属性   */
-	protected static final String storeLayerAdded=new String("StoreLayerAdded");
 
 
 	public static final Map<String,Class> mapCat= new HashMap<String,Class>(100);
@@ -102,6 +102,7 @@ public class CodesItem{
 		mapCat.put(authType,AuthType.class);
 		mapCat.put(store_type,store_type.class);
 		mapCat.put(fileType,FileType.class);
+		mapCat.put(storeLayerAdded,StoreLayerAdded.class);
 		mapCat.put(userType,UserType.class);
 		mapCat.put(isFlag,IsFlag.class);
 		mapCat.put(userState,UserState.class);
@@ -139,7 +140,6 @@ public class CodesItem{
 		mapCat.put(charSplitType,CharSplitType.class);
 		mapCat.put(dataExtractType,DataExtractType.class);
 		mapCat.put(cleanType,CleanType.class);
-		mapCat.put(storeLayerAdded,StoreLayerAdded.class);
 	}
 
 
