@@ -127,17 +127,18 @@ public class EltSysAction extends BaseAction {
         }
     }
 
-    @Method(desc = "更新保存作业调度工程", logicStep = "")
+    @Method(desc = "更新保存作业调度工程",
+            logicStep = "1.数据可访问权限处理方式，该方法不需要权限控制" +
+                    "2.更新保存工程")
     @Param(name = "etl_sys_cd", desc = "作业调度工程登记表主键ID", range = "新增工程时生成")
     @Param(name = "etl_sys_name", desc = "工程名称", range = "新增工程时生成")
     @Param(name = "comments", desc = "工程描述", range = "无限制")
     public void updateEtlSys(String etl_sys_cd, String etl_sys_name, String comments) {
         // 1.数据可访问权限处理方式，该方法不需要权限控制
-        // 2.检查字段合法性
-        checkEtlSysField(etl_sys_cd, etl_sys_name);
-        // 3.更新保存工程
+        // 2.更新保存工程
         DboExecute.updatesOrThrow("更新保存失败!", "update " + Etl_sys.TableName +
-                " set etl_sys_name=?,comments=? where etl_sys_cd=?", etl_sys_cd, etl_sys_name, comments);
+                        " set etl_sys_name=?,comments=? where etl_sys_cd=? and user_id=?",
+                etl_sys_name, comments, etl_sys_cd, getUserId());
 
     }
 

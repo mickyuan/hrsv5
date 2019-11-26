@@ -84,6 +84,7 @@ public class EtlSysActionTest extends WebBaseTestCase {
                 etl_sys.setServ_file_path("/home/hyshf/etl/");
                 etl_sys.setMain_serv_sync(Main_Server_Sync.YES.getCode());
                 etl_sys.setRemarks("10.71.4.52:56379");
+                etl_sys.setBath_shift_time(DateUtil.getSysDate());
                 etl_sys.setUser_id(UserId);
                 num = etl_sys.add(db);
                 assertThat("测试数据etl_sys初始化", num, is(1));
@@ -293,6 +294,77 @@ public class EtlSysActionTest extends WebBaseTestCase {
 
     @Test
     public void updateEtlSys() {
-
+        // 1.正常的数据访问1，数据都正常
+        String bodyString = new HttpClient()
+                .addData("etl_sys_cd", "zypzglcs0")
+                .addData("etl_sys_name", "更新工程测试1")
+                .addData("comments", "更新作业调度工程测试1")
+                .post(getActionUrl("updateEtlSys"))
+                .getBodyString();
+        ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(true));
+        // 验证数据正确性
+        try (DatabaseWrapper db = new DatabaseWrapper()) {
+            Etl_sys etl_sys = SqlOperator.queryOneObject(db, Etl_sys.class, "select * from "
+                    + Etl_sys.TableName + " where etl_sys_cd=?", "zypzglcs0").orElseThrow(() ->
+                    new BusinessException("sql查询错误或者映射实体错误！"));
+            assertThat(etl_sys.getSys_run_status(), is(Job_Status.STOP.getCode()));
+            assertThat(etl_sys.getBath_shift_time(), is(DateUtil.getSysDate()));
+            assertThat(etl_sys.getEtl_sys_name(), is("更新工程测试1"));
+            assertThat(etl_sys.getComments(), is("更新作业调度工程测试1"));
+            assertThat(etl_sys.getMain_serv_sync(), is(Main_Server_Sync.YES.getCode()));
+            assertThat(etl_sys.getUser_id(), is(UserId));
+        }
+        // 2.错误的数据访问1，etl_sys_cd为空
+        bodyString = new HttpClient()
+                .addData("etl_sys_cd", "")
+                .addData("etl_sys_name", "更新测试2")
+                .addData("comments", "更新作业调度工程测试2")
+                .post(getActionUrl("updateEtlSys"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(false));
+        // 3.错误的数据访问2，etl_sys_cd为空格
+        bodyString = new HttpClient()
+                .addData("etl_sys_cd", " ")
+                .addData("etl_sys_name", "更新工程测试3")
+                .addData("comments", "更新作业调度工程测试3")
+                .post(getActionUrl("updateEtlSys"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(false));
+        // 4.错误的数据访问3，etl_sys_cd不存在
+        bodyString = new HttpClient()
+                .addData("etl_sys_cd", EtlSysCd)
+                .addData("etl_sys_name", "更新工程测试4")
+                .addData("comments", "更新作业调度工程测试4")
+                .post(getActionUrl("updateEtlSys"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(false));
+        // 5.错误的数据访问4，etl_sys_name为空
+        bodyString = new HttpClient()
+                .addData("etl_sys_cd", "upCs4")
+                .addData("etl_sys_name", "")
+                .addData("comments", "更新作业调度工程测试1")
+                .post(getActionUrl("updateEtlSys"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(false));
+        // 6.错误的数据访问5，etl_sys_name为空格
+        bodyString = new HttpClient()
+                .addData("etl_sys_cd", "upCs5")
+                .addData("etl_sys_name", " ")
+                .addData("comments", "更新作业调度工程测试5")
+                .post(getActionUrl("updateEtlSys"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(false));
     }
 }

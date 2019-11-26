@@ -11,6 +11,7 @@ public class AppMain extends WebServer{
 	private static final Logger logger = LogManager.getLogger(AppMain.class.getName());
 
 	public static void main(String[] args) {
+//		ParsingAnnotaion.main(args);
 		AppMain webServer = new AppMain();
 
 		webServer.init();
