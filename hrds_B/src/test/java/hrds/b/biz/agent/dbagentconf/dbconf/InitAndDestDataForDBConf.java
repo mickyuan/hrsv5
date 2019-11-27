@@ -19,6 +19,7 @@ public class InitAndDestDataForDBConf {
 	private static final long FIRST_DB_AGENT_ID = 7001L;
 	private static final long SECOND_DB_AGENT_ID = 7002L;
 	private static final long THIRD_CLASSIFY_ID = 12306L;
+	private static final long AGENT_DOWN_INFO_ID = 12581L;
 
 	public static void before(){
 		//构造sys_user表测试数据
@@ -46,6 +47,9 @@ public class InitAndDestDataForDBConf {
 		thridClassify.setUser_id(TEST_USER_ID);
 		classifies.add(thridClassify);
 
+		//5、由于该Action类的测试连接功能需要与agent端交互，所以需要配置一条agent_down_info表的记录，用于找到http访问的完整url
+		Agent_down_info agentDownInfo = BaseInitData.initAgentDownInfo();
+
 		//插入数据
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			//插入用户表(sys_user)测试数据
@@ -61,22 +65,32 @@ public class InitAndDestDataForDBConf {
 			assertThat("数据源测试数据初始化", dataSourceCount, is(1));
 
 			//插入Agent信息表(agent_info)测试数据
+			int agentInfoCount = 0;
 			for(Agent_info agentInfo : agents){
-				agentInfo.add(db);
+				int count = agentInfo.add(db);
+				agentInfoCount += count;
 			}
-			assertThat("Agent测试数据初始化", agents.size(), is(2));
+			assertThat("Agent测试数据初始化", agentInfoCount, is(2));
 
 			//插入database_set表测试数据
+			int databaseSetCount = 0;
 			for(Database_set databaseSet : databases){
-				databaseSet.add(db);
+				int count = databaseSet.add(db);
+				databaseSetCount += count;
 			}
-			assertThat("数据库设置测试数据初始化", databases.size(), is(2));
+			assertThat("数据库设置测试数据初始化", databaseSetCount, is(2));
 
 			//插入collect_job_classify表测试数据
+			int classifyCount = 0;
 			for(Collect_job_classify classify : classifies){
-				classify.add(db);
+				int count = classify.add(db);
+				classifyCount += count;
 			}
-			assertThat("采集任务分类表测试数据初始化", classifies.size(), is(3));
+			assertThat("采集任务分类表测试数据初始化", classifyCount, is(3));
+
+			//插入agent_down_info表测试数据
+			int agentDownInfoCount = agentDownInfo.add(db);
+			assertThat("agent_down_info表测试数据初始化", agentDownInfoCount, is(1));
 
 			SqlOperator.commitTransaction(db);
 		}
@@ -98,6 +112,8 @@ public class InitAndDestDataForDBConf {
 			SqlOperator.execute(db, "delete from " + Database_set.TableName + " WHERE agent_id = ?", SECOND_DB_AGENT_ID);
 			//4、删除collect_job_classify表测试数据
 			SqlOperator.execute(db, "delete from " + Collect_job_classify.TableName + " WHERE user_id = ?", TEST_USER_ID);
+			//5、删除agent_down_info表测试数据
+			SqlOperator.execute(db, "delete from " + Agent_down_info.TableName + " WHERE down_id = ?", AGENT_DOWN_INFO_ID);
 
 			SqlOperator.commitTransaction(db);
 		}

@@ -48,6 +48,8 @@ public class BaseInitData {
 
 	private static final long BASE_ORIG_ID = 6000L;
 
+	private static final long AGENT_DOWN_INFO_ID = 12581L;
+
 	//构造默认表清洗优先级
 	public static JSONObject initTableCleanOrder(){
 		JSONObject tableCleanOrder = new JSONObject();
@@ -480,6 +482,25 @@ public class BaseInitData {
 		}
 
 		return origCodeInfos;
+	}
+
+	//由于该Action类的测试连接功能需要与agent端交互，所以需要配置一条agent_down_info表的记录，用于找到http访问的完整url
+	public static Agent_down_info initAgentDownInfo(){
+		Agent_down_info agentDownInfo = new Agent_down_info();
+		agentDownInfo.setDown_id(AGENT_DOWN_INFO_ID);
+		agentDownInfo.setAgent_id(FIRST_DB_AGENT_ID);
+		agentDownInfo.setUser_id(TEST_USER_ID);
+		agentDownInfo.setAgent_name("test_agent_down_info_wzc");
+		agentDownInfo.setAgent_ip("127.0.0.1");
+		agentDownInfo.setAgent_port("56000");
+		agentDownInfo.setSave_dir("/test/save/dir");
+		agentDownInfo.setLog_dir("/test/log/dir");
+		agentDownInfo.setDeploy(IsFlag.Shi.getCode());
+		agentDownInfo.setAgent_context("/agent");
+		agentDownInfo.setAgent_pattern("/receive/*");
+		agentDownInfo.setAgent_type(AgentType.ShuJuKu.getCode());
+
+		return agentDownInfo;
 	}
 
 	public static ActionResult simulatedLogin(){

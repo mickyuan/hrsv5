@@ -349,51 +349,66 @@ public class AgentListActionTest extends WebBaseTestCase {
 			//插入数据源表(data_source)测试数据
 			int dataSourceCount = dataSource.add(db);
 			assertThat("数据源测试数据初始化", dataSourceCount, is(1));
+
 			//插入Agent信息表(agent_info)测试数据
+			int agentInfoCount = 0;
 			for(Agent_info agentInfo : agents){
-				agentInfo.add(db);
+				int count = agentInfo.add(db);
+				agentInfoCount += count;
 			}
-			assertThat("Agent测试数据初始化", agents.size(), is(5));
+			assertThat("Agent测试数据初始化", agentInfoCount, is(5));
 
 			//插入database_set表测试数据
+			int databaseSetCount = 0;
 			for(Database_set databaseSet : databases){
-				databaseSet.add(db);
+				int count = databaseSet.add(db);
+				databaseSetCount += count;
 			}
-			assertThat("数据库设置测试数据初始化", databases.size(), is(2));
+			assertThat("数据库设置测试数据初始化", databaseSetCount, is(2));
 
 			//插入object_collect表测试数据
+			int objectCollectCount = 0;
 			for(Object_collect objectCollect : objectCollects){
-				objectCollect.add(db);
+				int count = objectCollect.add(db);
+				objectCollectCount += count;
 			}
-			assertThat("半结构化文件采集设置测试数据初始化", objectCollects.size(), is(2));
+			assertThat("半结构化文件采集设置测试数据初始化", objectCollectCount, is(2));
 
 			//插入ftp_collect表测试数据
+			int ftpCollectCount = 0;
 			for(Ftp_collect ftpCollect : ftps){
-				ftpCollect.add(db);
+				int count = ftpCollect.add(db);
+				ftpCollectCount += count;
 			}
-			assertThat("FTP采集设置测试数据初始化", ftps.size(), is(2));
+			assertThat("FTP采集设置测试数据初始化", ftpCollectCount, is(2));
 
 			//插入file_collect_set表测试数据
+			int fileCollectSetCount = 0;
 			for(File_collect_set fileCollectSet : fileCollectSets){
-				fileCollectSet.add(db);
+				int count = fileCollectSet.add(db);
+				fileCollectSetCount += count;
 			}
-			assertThat("非结构化文件采集设置测试数据初始化", fileCollectSets.size(), is(2));
+			assertThat("非结构化文件采集设置测试数据初始化", fileCollectSetCount, is(2));
 
 			//插入table_info表测试数据
 			int tableInfoCount = tableInfo.add(db);
 			assertThat("数据库直连采集数据库对应表信息测试数据初始化", tableInfoCount, is(1));
 
 			//插入table_column表测试数据
+			int tableColumnCount = 0;
 			for(Table_column column : tableColumns){
-				column.add(db);
+				int count = column.add(db);
+				tableColumnCount += count;
 			}
-			assertThat("数据库直连采集表对应字段信息测试数据初始化", tableColumns.size(), is(10));
+			assertThat("数据库直连采集表对应字段信息测试数据初始化", tableColumnCount, is(10));
 
 			//插入file_source表测试数据
+			int fileSourceCount = 0;
 			for(File_source fileSource : fileSources){
-				fileSource.add(db);
+				int count = fileSource.add(db);
+				fileSourceCount += count;
 			}
-			assertThat("非结构化文件采集文件源设置测试数据初始化", fileSources.size(), is(2));
+			assertThat("非结构化文件采集文件源设置测试数据初始化", fileSourceCount, is(2));
 
 			SqlOperator.commitTransaction(db);
 		}

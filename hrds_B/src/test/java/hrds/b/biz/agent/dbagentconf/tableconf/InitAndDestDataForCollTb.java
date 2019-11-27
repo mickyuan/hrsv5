@@ -42,6 +42,8 @@ public class InitAndDestDataForCollTb {
 	private static final JSONObject tableCleanOrder = BaseInitData.initTableCleanOrder();
 	private static final JSONObject columnCleanOrder = BaseInitData.initColumnCleanOrder();
 
+	private static final long AGENT_DOWN_INFO_ID = 12581L;
+
 	public static void before(){
 		//构造sys_user表测试数据
 		Sys_user user = BaseInitData.buildSysUserData();
@@ -386,6 +388,10 @@ public class InitAndDestDataForCollTb {
 		codeInfo.setTable_id(CODE_INFO_TABLE_ID);
 
 		codeInfoMerge.add(codeInfo);
+
+		//5、由于该Action类的测试连接功能需要与agent端交互，所以需要配置一条agent_down_info表的记录，用于找到http访问的完整url
+		Agent_down_info agentDownInfo = BaseInitData.initAgentDownInfo();
+
 		//12、插入数据
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			//插入用户表(sys_user)测试数据
@@ -482,6 +488,10 @@ public class InitAndDestDataForCollTb {
 			}
 			assertThat("列合并信息表测试数据初始化", sysUserMerge.size() + codeInfoMerge.size(), is(3));
 
+			//插入agent_down_info表测试数据
+			int agentDownInfoCount = agentDownInfo.add(db);
+			assertThat("Agent下载信息表测试数据初始化", agentDownInfoCount, is(1));
+
 			SqlOperator.commitTransaction(db);
 		}
 	}
@@ -517,7 +527,9 @@ public class InitAndDestDataForCollTb {
 			//9、删除column_merge表测试数据
 			SqlOperator.execute(db, "delete from " + Column_merge.TableName + " where table_id = ? ", SYS_USER_TABLE_ID);
 			SqlOperator.execute(db, "delete from " + Column_merge.TableName + " where table_id = ? ", CODE_INFO_TABLE_ID);
-			//10、提交事务后，对数据表中的数据进行检查，断言删除是否成功
+			//10、删除agent_down_info表测试数据
+			SqlOperator.execute(db, "delete from " + Agent_down_info.TableName + " where down_id = ? ", AGENT_DOWN_INFO_ID);
+			//11、提交事务
 			SqlOperator.commitTransaction(db);
 		}
 	}

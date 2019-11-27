@@ -785,7 +785,7 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 	/**
 	 * 测试测试连接功能
 	 *
-	 * 正确数据访问1：使用47.103.83.1的数据库测试连接
+	 * 正确数据访问1：使用47.103.83.1的数据库测试连接，数据库类型为postgresql
 	 * 错误的数据访问1：使用47.103.83.1的数据库测试连接，但是使用错误的密码
 	 *
 	 * @Param: 无
@@ -796,6 +796,7 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 	public void testConnection(){
 		//正确数据访问1：使用47.103.83.1的数据库测试连接
 		String rightString = new HttpClient()
+				.addData("agent_id", FIRST_DB_AGENT_ID)
 				.addData("database_drive", "org.postgresql.Driver")
 				.addData("jdbc_url", "jdbc:postgresql://47.103.83.1:32001/hrsdxg")
 				.addData("user_name", "hrsdxg")
@@ -806,13 +807,13 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 				-> new BusinessException("连接失败!"));
 		assertThat(rightResult.isSuccess(), is(true));
 
-		//错误的数据访问1：使用47.103.83.1的数据库测试连接，但是使用错误的密码
-		String wrongPwd = "hrsdx";
+		//错误的数据访问1：使用47.103.83.1的数据库测试连接，但是使用错误URL
 		String wrongString = new HttpClient()
+				.addData("agent_id", FIRST_DB_AGENT_ID)
 				.addData("database_drive", "org.postgresql.Driver")
-				.addData("jdbc_url", "jdbc:postgresql://47.103.83.1:32001/hrsdxg")
+				.addData("jdbc_url", "jdbc:postgresql://47.103.83.1:32001/hrsdx")
 				.addData("user_name", "hrsdxg")
-				.addData("database_pad", wrongPwd)
+				.addData("database_pad", "hrsdxg")
 				.addData("database_type", DatabaseType.Postgresql.getCode())
 				.post(getActionUrl("testConnection")).getBodyString();
 		ActionResult wrongResult = JsonUtil.toObjectSafety(wrongString, ActionResult.class).orElseThrow(()
