@@ -4,7 +4,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.utils.StringUtil;
 import hrds.commons.exception.BusinessException;
-import hrds.commons.utils.PropertyParaValue;
+import hrds.commons.utils.PropertyParaUtil;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
@@ -18,7 +18,6 @@ import java.io.IOException;
  * @Date: 20160225 9:00:00
  * @version: 1.0
  * @Context: Solrj 4.9.1
- * 
  */
 @SuppressWarnings("deprecation")
 public class OperSolrImpl4_9_1 extends OperSolrImpl implements OperSolr {
@@ -40,12 +39,11 @@ public class OperSolrImpl4_9_1 extends OperSolrImpl implements OperSolr {
 	private void connectSolr() {
 
 		try {
-			String url = PropertyParaValue.getString("solrUrl", "http://10.0.168.103:18983/solr/");
-			url = url + PropertyParaValue.getString("collection", "fullTextIndexing");
+			String url = PropertyParaUtil.getString("solrUrl", "http://10.0.168.103:18983/solr/");
+			url = url + PropertyParaUtil.getString("collection", "fullTextIndexing");
 			server$ = new HttpSolrServer(url);
-			logger.info( "[info]solr server is connected successfully!");
-		}
-		catch(Exception e) {
+			logger.info("[info]solr server is connected successfully!");
+		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
 		}
 	}
@@ -53,62 +51,56 @@ public class OperSolrImpl4_9_1 extends OperSolrImpl implements OperSolr {
 	private void connectSolr(SolrParam solrParam) {
 
 		try {
-			String collection = "";
-			if( solrParam != null && !StringUtil.isEmpty(solrParam.getCollection()) ) {
+			String collection;
+			if (solrParam != null && !StringUtil.isEmpty(solrParam.getCollection())) {
 				collection = solrParam.getCollection();
-			}
-			else {
+			} else {
 				throw new BusinessException("collection 连接为空！！！");
 			}
-			String url = PropertyParaValue.getString("solrUrl", "http://10.0.168.103:18983/solr/");
+			String url = PropertyParaUtil.getString("solrUrl", "http://10.0.168.103:18983/solr/");
 			url = url + collection;
 			server$ = new HttpSolrServer(url);
-			logger.info( "[info]solr server is connected successfully!");
-		}
-		catch(Exception e) {
+			logger.info("[info]solr server is connected successfully!");
+		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
 		}
 	}
-	
+
 	/**
 	 * 针对请求solr的自定义handler，并且不需要返回值的情况
-	 * @param temp
-	 * 							可以为多个或空，默认："/reloadDictionary"
-	 * @return 					
-	 * 							返回运行情况，key为输入参数temp，value为执行状态或者错误信息
-	 * @throws IOException 
-	 * @throws SolrServerException 
+	 *
+	 * @param temp 可以为多个或空，默认："/reloadDictionary"
+	 * @return 返回运行情况，key为输入参数temp，value为执行状态或者错误信息
 	 */
 	@Override
 	public JSONArray requestHandler(String... temp) {
 
-		temp = temp.length < 1 ? temp = new String[] { handler } : temp;
+		temp = temp.length < 1 ? new String[]{handler} : temp;
 
 		JSONArray jsonArray = new JSONArray();
 		JSONObject jsonObject = new JSONObject();
 		SolrQuery sq = new SolrQuery();
 		QueryResponse response = null;
 
-		((HttpSolrServer)server).setParser(new QESXMLResponseParser());
+		((HttpSolrServer) server).setParser(new QESXMLResponseParser());
 
-		for(String handler : temp) {
+		for (String handler : temp) {
 
 			sq.setRequestHandler(handler);
 
 			try {
 				response = server.query(sq);
-			}
-			catch(SolrServerException | IOException e) {
+			} catch (SolrServerException | IOException e) {
 
 				jsonObject.put(handler, e);
 
 				e.printStackTrace();
 			}
-
-			jsonObject.put(handler, response.getStatus());
-			jsonArray.add(jsonObject);
-
-			logger.info( "[INFO] Spend time on request to custom handler    " + handler + " : " + response.getQTime() + " ms");
+			if (response != null) {
+				jsonObject.put(handler, response.getStatus());
+				jsonArray.add(jsonObject);
+				logger.info("[INFO] Spend time on request to custom handler    " + handler + " : " + response.getQTime() + " ms");
+			}
 		}
 
 		return jsonArray;
@@ -118,10 +110,8 @@ public class OperSolrImpl4_9_1 extends OperSolrImpl implements OperSolr {
 	public void close() {
 
 		try {
-			//			server.close();
-			logger.info( "[info]solr server is disconnected successfully!");
-		}
-		catch(Exception e) {
+			logger.info("[info]solr server is disconnected successfully!");
+		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
 		}
 	}

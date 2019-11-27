@@ -278,6 +278,6 @@ public class ReadFileUtil {
 
 	public static void main(String[] args) {
 
-		System.out.println(file2String("C:\\Users\\38407\\Desktop\\Etl_job_def.xls"));
+		System.out.println(file2String("D:\\文档\\海云文档\\专业领域智能问答系统设计与实现.pdf"));
 	}
 }

@@ -1,6 +1,7 @@
 package hrds.agent.trans.biz.unstructuredFileCollect;
 
 import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
@@ -14,6 +15,7 @@ import hrds.commons.exception.AppSystemException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
@@ -24,6 +26,14 @@ public class FileCollectJob extends AgentBaseAction {
 	private static final Log log = LogFactory.getLog(FtpCollectJobImpl.class);
 	//每个文件采集，存放队列的集合
 	public static final ConcurrentMap<String, ArrayBlockingQueue<String>> mapQueue = new ConcurrentHashMap<>();
+	//当前程序运行的目录
+	private static final String USER_DIR = System.getProperty("user.dir");
+	//mapDB文件存放的顶层目录
+	public static final String MAPDBPATH = USER_DIR + File.separator + "mapDB" + File.separator;
+	//jobInfo文件存放的顶层目录
+	public static final String JOBINFOPATH = USER_DIR + File.separator + "jobInfo" + File.separator;
+	//卸数文件存放的顶层目录
+	public static final String UNLOADFOLDER = USER_DIR + File.separator + "dirFile" + File.separator;
 
 	@Method(desc = "文件采集和前端交互的接口",
 			logicStep = "1.获取json数组转成File_source的集合" +
@@ -32,9 +42,12 @@ public class FileCollectJob extends AgentBaseAction {
 	@Param(name = "fileCollectParamBean", desc = "文件采集需要的参数实体bean",
 			isBean = true, range = "所有这张表不能为空的字段的值必须有，为空则会抛异常，" +
 			"file_source_array对应的表File_source这个实体不能为空的字段的值必须有，为空则会抛异常")
+
 	public void execute(FileCollectParamBean fileCollectParamBean) {
 		ThreadPoolExecutor executor = null;
 		try {
+			//初始化当前任务需要保存的文件的根目录
+			initPath(fileCollectParamBean.getFcs_id());
 			//1.获取json数组转成File_source的集合
 			List<File_source> fileSourceList = JSONArray.parseArray(fileCollectParamBean.getFile_source_array(),
 					File_source.class);
@@ -44,11 +57,14 @@ public class FileCollectJob extends AgentBaseAction {
 			List<Future<JobStatusInfo>> list = new ArrayList<>();
 			//2.校验对象的值是否正确
 			for (File_source file_source : fileSourceList) {
+				//为了确保两个线程之间的值不互相干涉，复制对象的值。
+				FileCollectParamBean fileCollectParamBean1 = JSONObject.parseObject(
+						JSONObject.toJSONString(fileCollectParamBean), FileCollectParamBean.class);
 				//XXX 多线程执行
 				//TODO 使用公共方法校验所有传入参数的对象的值的合法性
 				//TODO Agent这个参数该怎么接，是统一封装成工厂需要的参数吗？
 				//XXX 程序运行存储信息。
-				FileCollectJobImpl fileCollectJob = new FileCollectJobImpl(fileCollectParamBean, file_source);
+				FileCollectJobImpl fileCollectJob = new FileCollectJobImpl(fileCollectParamBean1, file_source);
 				//TODO 这个状态是不是可以在这里
 				Future<JobStatusInfo> submit = executor.submit(fileCollectJob);
 				list.add(submit);
@@ -67,6 +83,18 @@ public class FileCollectJob extends AgentBaseAction {
 		} finally {
 			if (executor != null)
 				executor.shutdown();
+		}
+	}
+
+	private void initPath(String fcs_id) {
+		String[] paths = {MAPDBPATH, JOBINFOPATH, UNLOADFOLDER};
+		for (String path : paths) {
+			File file = new File(path + fcs_id);
+			if (!file.exists()) {
+				if (!file.mkdirs()) {
+					throw new AppSystemException("创建文件夹" + file.getAbsolutePath() + "失败！");
+				}
+			}
 		}
 	}
 

@@ -13,8 +13,7 @@ import fd.ng.web.action.ActionResult;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.IsFlag;
-import hrds.commons.entity.File_collect_set;
-import hrds.commons.entity.File_source;
+import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.AgentActionUtil;
 import hrds.commons.utils.DboExecute;
@@ -167,7 +166,7 @@ public class UnstructuredFileCollectAction extends BaseAction {
 		List<File_source> file_sources = JSONArray.parseArray(file_sources_array, File_source.class);
 		//获取fcs_id
 		Long fcs_id;
-		if (file_sources != null && file_sources.size() > 0) {//FIXME 什么都不干就直接get了？
+		if (file_sources != null && file_sources.size() > 0) {
 			//获取fcs_id
 			fcs_id = file_sources.get(0).getFcs_id();
 			if (fcs_id == null) {
@@ -200,6 +199,58 @@ public class UnstructuredFileCollectAction extends BaseAction {
 		DboExecute.updatesOrThrow("更新表" + File_collect_set.TableName + "失败",
 				"UPDATE " + File_collect_set.TableName + " SET is_sendok = ?"
 						+ " WHERE fcs_id = ? ", IsFlag.Shi.getCode(), fcs_id);
+	}
+
+	@Method(desc = "执行文件采集", logicStep = "")
+	@Param(name = "fcs_id", desc = "文件采集id", range = "不可为空")
+	public void executeJob(long fcs_id) {
+		//XXX 接收参数，执行作业，立即启动这里应该会有超时问题，启动作业后是否马上给返回值，后面的作业调度，待讨论
+		Result result = Dbo.queryResult("SELECT " +
+				"    t1.*,t2.agent_name,t3.source_id,t3.datasource_name,t4.dep_id " +
+				"FROM " +
+				File_collect_set.TableName + " t1 " +
+				"LEFT JOIN " +
+				Agent_info.TableName + " t2 " +
+				"ON " +
+				"    t1.agent_id = t2.agent_id " +
+				"LEFT JOIN " +
+				Data_source.TableName + " t3 " +
+				"ON " +
+				"    t3.source_id = t2.source_id " +
+				"LEFT JOIN " +
+				Sys_user.TableName + " t4 " +
+				"ON " +
+				"    t4.user_id = t2.user_id " +
+				"    where t1.fcs_id = ?", fcs_id);
+		if (result.isEmpty()) {
+			throw new BusinessException("查询不到数据，请检查传入的id是否正确");
+		}
+		//获取需要采集的文件源列表
+		Result source = Dbo.queryResult("SELECT * FROM " + File_source.TableName + " where fcs_id = ?", fcs_id);
+		long agent_id = result.getLong(0, "agent_id");
+		//1.根据前端传过来的agent_id获取需要访问的url
+		String url = AgentActionUtil.getUrl(agent_id, getUserId(), AgentActionUtil.EXECUTEFILECOLLECT);
+		//调用工具类方法给agent发消息，并获取agent响应
+		//2.调用远程Agent后端代码获取Agent服务器上文件夹路径
+		HttpClient.ResponseValue resVal = new HttpClient()
+				.addData("fcs_id", result.getString(0, "fcs_id"))
+				.addData("agent_id", result.getString(0, "agent_id"))
+				.addData("fcs_name", result.getString(0, "fcs_name"))
+				.addData("host_name", result.getString(0, "host_name"))
+				.addData("system_type", result.getString(0, "system_type"))
+				.addData("is_sendok", result.getString(0, "is_sendok"))
+				.addData("is_solr", result.getString(0, "is_solr"))
+				.addData("agent_name", result.getString(0, "agent_name"))
+				.addData("source_id", result.getString(0, "source_id"))
+				.addData("datasource_name", result.getString(0, "datasource_name"))
+				.addData("dep_id", result.getString(0, "dep_id"))
+				.addData("file_source_array", source.toJSON())
+				.post(url);
+		ActionResult ar = JsonUtil.toObjectSafety(resVal.getBodyString(), ActionResult.class)
+				.orElseThrow(() -> new BusinessException("连接" + url + "服务异常"));
+		if (!ar.isSuccess()) {
+			throw new BusinessException("执行文件采集作业失败");
+		}
 	}
 
 }

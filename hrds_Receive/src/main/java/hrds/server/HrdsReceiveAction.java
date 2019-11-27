@@ -80,11 +80,13 @@ public class HrdsReceiveAction extends AgentBaseAction {
 		List<Object[]> arrayList = new ArrayList<>();
 		for (Object aaa : JSONArray.parseArray(paramPool)) {
 			JSONArray array1 = (JSONArray) aaa;
-			Object[] o = new Object[array1.size()];
-			for (int i = 0; i < array1.size(); i++) {
-				o[i] = array1.get(i);
+			if (array1 != null && array1.size() > 0) {
+				Object[] o = new Object[array1.size()];
+				for (int i = 0; i < array1.size(); i++) {
+					o[i] = array1.get(i);
+				}
+				arrayList.add(o);
 			}
-			arrayList.add(o);
 		}
 		return arrayList;
 	}

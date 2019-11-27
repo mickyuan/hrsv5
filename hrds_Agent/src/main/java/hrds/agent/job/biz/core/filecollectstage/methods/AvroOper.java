@@ -219,7 +219,7 @@ public class AvroOper {
 		if (!file2.exists()) {
 			boolean mkdirs = file2.mkdirs();
 			if (!mkdirs) {
-				throw new AppSystemException("创建文件夹失败");
+				throw new AppSystemException("创建文件夹" + file2.getAbsolutePath() + "失败");
 			}
 		}
 		//生成avro文件，每生成一个，立即放入队列，交给消费线程去处理

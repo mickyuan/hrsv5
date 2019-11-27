@@ -93,29 +93,31 @@ public class FileCollectLoadingDataStageImpl implements Callable<String> {
 				}
 				//获取AvroBeans
 				List<AvroBean> avroBeans = AvroOper.getAvroBeans(avroPath);
-				//存入Mysql和solr
 				AvroBeanProcess abp = new AvroBeanProcess(fileCollectParamBean, sysDate, jobRsId);
-				List<String[]> hbaseList = abp.saveInMySqlAndSolr(avroBeans, fileNameHTreeMap);
+				//判断是否入solr
+				if (IsFlag.Shi.getCode().equals(fileCollectParamBean.getIs_solr())) {
+					abp.saveInSolr(avroBeans);
+				}
+				//存入Mysql和solr
+				List<String[]> hbaseList = abp.saveMetaData(avroBeans, fileNameHTreeMap);
 				if (!Constant.hasHadoopEnv) {
 					abp.saveInPostgreSupersedeHbase(hbaseList);
 				} else {
 					//存入HBase
 					abp.saveInHbase(hbaseList);
 				}
-				//这一批avro采集完成的标识
-//				CollectionWatcher.moveElement(watcherId);
+				//保存到mapDB
+				saveInMapDB(avroBeans);
 				//处理完后 删除本地文件
 				boolean delete = FileUtils.getFile(avroFileAbsolutionPath).delete();
 				if (!delete) {
 					log.error("删除本地文件" + avroFileAbsolutionPath + "失败！");
 				}
-				//保存到mapDB
-				saveInMapDB(avroBeans);
 				//值为0代表当前拿到的值是队列最后一个,退出循环
 				if (watcherId == AvroOper.LASTELEMENT) {
+					log.info("End FileCollectLoadingDataStageImpl Thread ...");
 					break;
 				}
-
 			}
 		} catch (Exception e) {
 			log.error("Failed to process Avro file in hdfs FileSystem...", e);
@@ -124,6 +126,9 @@ public class FileCollectLoadingDataStageImpl implements Callable<String> {
 		return message;
 	}
 
+	/**
+	 * 保存文件信息到mapDB
+	 */
 	private void saveInMapDB(List<AvroBean> avroBeans) {
 		for (AvroBean bean : avroBeans) {
 			JSONObject object = new JSONObject();

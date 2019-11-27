@@ -16,15 +16,12 @@ import hrds.commons.hadoop.opersolr.SolrFactory;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.FileTypeUtil;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.solr.client.solrj.SolrClient;
-import org.apache.solr.client.solrj.util.ClientUtils;
-import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrInputDocument;
 
 import java.text.SimpleDateFormat;
@@ -98,14 +95,13 @@ public class AvroBeanProcess {
 	}
 
 	/**
-	 * 将AvroBean存入到mysql和solr中
+	 * 将AvroBean存入到元数据库
 	 *
 	 * @param avroBeans avro文件抽取出来的信息的集合
 	 * @return 需要插入到hbase的信息
 	 */
-	public List<String[]> saveInMySqlAndSolr(List<AvroBean> avroBeans, ConcurrentMap<String, String> fileNameHTreeMap) {
-
-		logger.info("Start to saveInMySqlAndSolr...");
+	public List<String[]> saveMetaData(List<AvroBean> avroBeans, ConcurrentMap<String, String> fileNameHTreeMap) {
+		logger.info("保存已采集文件信息到元数据库开始...");
 		//存储全量插入信息的list
 		List<Object[]> addParamsPool = new ArrayList<>();
 		// 存储update信息的list
@@ -201,7 +197,7 @@ public class AvroBeanProcess {
 					hbaseList.add(guanlian);
 					rowKey = fileId + "_" + avroBean.getFile_md5();
 				} else {
-					throw new AppSystemException("Is_increasement: 的值异常" + avroBean.getIs_increasement());
+					throw new AppSystemException("Is_increasement: 的值异常===" + avroBean.getIs_increasement());
 				}
 				//记录顺序为：rowKey,md5,file_avro_path,file_avro_block
 				String[] zengliang = new String[]{rowKey, avroBean.getFile_md5(), avroBean.getFile_avro_path(), avroBean.getFile_avro_block()};
@@ -218,13 +214,10 @@ public class AvroBeanProcess {
 				logger.info("执行增量插入数据（updateParamsPool）（executeBatch...）");
 				CommunicationUtil.batchUpdateSourceFileAttribute(updateParamsPool, updateSql, job_rs_id);
 			}
-			//判断是否入solr
-			if (IsFlag.Shi.getCode().equals(fileCollectParamBean.getIs_solr())) {
-				saveInSolr(avroBeans);
-			}
+			logger.info("保存已采集文件信息到元数据库结束...");
 		} catch (Exception e) {
-			logger.error("Failed to save in mysql", e);
-			throw new AppSystemException("Failed to save in mysql");
+			logger.error("保存文件信息到元数据库异常", e);
+			throw new AppSystemException("保存文件信息到元数据库异常" + e.getMessage());
 		}
 		return hbaseList;
 	}
@@ -342,14 +335,13 @@ public class AvroBeanProcess {
 			table.put(putList);
 		} catch (Exception e) {
 			logger.error("Failed to putInHbase", e);
-			throw new AppSystemException(e.getMessage());
+			throw new AppSystemException("Failed to putInHbase..." + e.getMessage());
 		}
 	}
 
-	private void saveInSolr(List<AvroBean> avroBeans) {
+	public void saveInSolr(List<AvroBean> avroBeans) {
 
-		logger.info("Start to saveInSolr...");
-
+		logger.info("开始进solr...");
 		long start = System.currentTimeMillis();
 		//进入solr的记录数
 		int count = 0;
@@ -360,53 +352,52 @@ public class AvroBeanProcess {
 			SolrInputDocument doc;
 			for (AvroBean avroBean : avroBeans) {
 				//如果id_cache这个字段不为null，就表示这个记录是通过本地缓存（单文件上传接口）的
-				if (!StringUtils.isBlank(avroBean.getIs_cache())) {
-					SolrDocument sd = server.getById(avroBean.getUuid());
-					if (sd == null) {
-						throw new IllegalStateException("File id exsits in meta store but not in solr!");
-					}
-					doc = ClientUtils.toSolrInputDocument(sd);
-					doc.removeField("tf-file_avro_path");
-					doc.addField("tf-file_avro_path", avroBean.getFile_avro_path());
-					doc.removeField("tf-file_avro_block");
-					doc.addField("tf-file_avro_block", avroBean.getFile_avro_block());
-					docs.add(doc);
-				} else {
-					//文本处理
-					String text = avroBean.getFile_text();
-					doc = new SolrInputDocument();
-					doc.addField("id", avroBean.getUuid());
-					doc.addField("tf-collect_type", CollectType.WenJianCaiJi.toString());
-					doc.addField("tf-file_name", avroBean.getFile_name());
-					//source_path
-					doc.addField("tf-file_scr_path", avroBean.getFile_scr_path());
-					doc.addField("tf-file_size", avroBean.getFile_size());
-					doc.addField("tf-file_time", avroBean.getFile_time());
-					doc.addField("tf-file_summary", avroBean.getFile_summary());
-					doc.addField("tf-file_text", text);
-					doc.addField("tf-file_md5", avroBean.getFile_md5());
-					doc.addField("tf-file_avro_path", avroBean.getFile_avro_path());
-					doc.addField("tf-file_avro_block", avroBean.getFile_avro_block());
-					doc.addField("tf-is_big_file", avroBean.getIs_big_file());
+//				if (!StringUtils.isBlank(avroBean.getIs_cache())) {
+//					SolrDocument sd = server.getById(avroBean.getUuid());
+//					if (sd == null) {
+//						throw new IllegalStateException("File id exsits in meta store but not in solr!");
+//					}
+//					doc = ClientUtils.toSolrInputDocument(sd);
+//					doc.removeField("tf-file_avro_path");
+//					doc.addField("tf-file_avro_path", avroBean.getFile_avro_path());
+//					doc.removeField("tf-file_avro_block");
+//					doc.addField("tf-file_avro_block", avroBean.getFile_avro_block());
+//					docs.add(doc);
+//				} else {
+				//文本处理
+				doc = new SolrInputDocument();
+				doc.addField("id", avroBean.getUuid());
+				doc.addField("tf-collect_type", CollectType.WenJianCaiJi.getCode());
+				doc.addField("tf-file_name", avroBean.getFile_name());
+				//source_path
+				doc.addField("tf-file_scr_path", avroBean.getFile_scr_path());
+				doc.addField("tf-file_size", avroBean.getFile_size());
+				doc.addField("tf-file_time", avroBean.getFile_time());
+				doc.addField("tf-file_summary", avroBean.getFile_summary());
+				doc.addField("tf-file_text", avroBean.getFile_text());
+				doc.addField("tf-file_md5", avroBean.getFile_md5());
+				doc.addField("tf-file_avro_path", avroBean.getFile_avro_path());
+				doc.addField("tf-file_avro_block", avroBean.getFile_avro_block());
+				doc.addField("tf-is_big_file", avroBean.getIs_big_file());
 
-					doc.addField("tf-file_suffix", FilenameUtils.getExtension(avroBean.getFile_name()));
-					doc.addField("tf-storage_date", DateUtil.getSysDate());
-					doc.addField("tf-fcs_id", fileCollectParamBean.getFcs_id());
-					doc.addField("tf-fcs_name", fileCollectParamBean.getFcs_name());
+				doc.addField("tf-file_suffix", FilenameUtils.getExtension(avroBean.getFile_name()));
+				doc.addField("tf-storage_date", DateUtil.getSysDate());
+				doc.addField("tf-fcs_id", fileCollectParamBean.getFcs_id());
+				doc.addField("tf-fcs_name", fileCollectParamBean.getFcs_name());
 
-					doc.addField("tf-agent_id", fileCollectParamBean.getAgent_id());
-					doc.addField("tf-agent_name", fileCollectParamBean.getAgent_name());
+				doc.addField("tf-agent_id", fileCollectParamBean.getAgent_id());
+				doc.addField("tf-agent_name", fileCollectParamBean.getAgent_name());
 
-					doc.addField("tf-source_id", fileCollectParamBean.getSource_id());
-					doc.addField("tf-datasource_name", fileCollectParamBean.getDatasource_name());
-					doc.addField("tf-dep_id", fileCollectParamBean.getDep_id());
-					docs.add(doc);
-				}
+				doc.addField("tf-source_id", fileCollectParamBean.getSource_id());
+				doc.addField("tf-datasource_name", fileCollectParamBean.getDatasource_name());
+				doc.addField("tf-dep_id", fileCollectParamBean.getDep_id());
+				docs.add(doc);
+//				}
 
 				// 将solr的document加入到list中去
 				count++;
 				// 防止内存溢出
-				if (docs.size() % commitNumber == 0) {
+				if (count % commitNumber == 0) {
 					server.add(docs);
 					server.commit();
 					docs.clear();
@@ -423,16 +414,16 @@ public class AvroBeanProcess {
 			}
 			logger.info("成功建立solr索引,共耗时：" + (System.currentTimeMillis() - start) * 1.0 / 1000 + "秒");
 		} catch (Exception e) {
-			logger.error("Failed to save in solr...", e);
-			throw new AppSystemException(e.getMessage());
+			logger.error("数据进solr失败...", e);
+			throw new AppSystemException("数据进solr失败..." + e.getMessage());
 		}
 	}
 
 	/**
 	 * 将long类型的毫秒数时间转换成固定格式的时间字符串
-	 * @param lo 毫秒数时间
+	 *
+	 * @param lo     毫秒数时间
 	 * @param format 时间字符串格式如： yyyy-MM-dd HH:mm:ss
-	 * @return
 	 */
 	private String stringToDate(String lo, String format) {
 		long time = Long.valueOf(lo);

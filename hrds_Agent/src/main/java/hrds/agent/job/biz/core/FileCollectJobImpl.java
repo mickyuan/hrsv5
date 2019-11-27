@@ -40,8 +40,6 @@ public class FileCollectJobImpl implements JobInterface {
 	private FileCollectParamBean fileCollectParamBean;
 	//源文件设置表
 	private File_source file_source;
-	//当前程序运行的目录
-	private static final String USER_DIR = System.getProperty("user.dir");
 	//job运行程序信息存储文件名称
 	private static final String JOBFILENAME = "jobInfo.json";
 
@@ -83,7 +81,7 @@ public class FileCollectJobImpl implements JobInterface {
 			ArrayBlockingQueue<String> queue = new ArrayBlockingQueue<>(10);
 			FileCollectJob.mapQueue.put(file_source_id, queue);
 		}
-		String statusFilePath = USER_DIR + File.separator + fcs_id
+		String statusFilePath = FileCollectJob.JOBINFOPATH + fcs_id
 				+ File.separator + file_source_id + File.separator + JOBFILENAME;
 		File file = new File(statusFilePath);
 		//JobStatusInfo对象，表示一个作业的状态
@@ -93,7 +91,7 @@ public class FileCollectJobImpl implements JobInterface {
 			try {
 				jobInfo = FileUtil.readFile2String(file);
 			} catch (IOException e) {
-				throw new AppSystemException("读取文件失败！");
+				throw new AppSystemException("读取文件失败！" + e.getMessage());
 			}
 			jobStatus = JSONArray.parseObject(jobInfo, JobStatusInfo.class);
 		} else {
@@ -102,7 +100,7 @@ public class FileCollectJobImpl implements JobInterface {
 			File parentPath = new File(parent);
 			if (!parentPath.exists()) {
 				if (!parentPath.mkdirs()) {
-					throw new AppSystemException("创建文件夹失败！");
+					throw new AppSystemException("创建文件夹" + parentPath + "失败！");
 				}
 			}
 			//2.设置作业ID、开始日期和开始时间
@@ -112,7 +110,7 @@ public class FileCollectJobImpl implements JobInterface {
 			jobStatus.setStartTime(DateUtil.getSysTime());
 		}
 		//3.创建mapDB对象，用于检测文件夹下文件是否被采集过
-		try (MapDBHelper mapDBHelper = new MapDBHelper(USER_DIR + File.separator + fcs_id + File.separator
+		try (MapDBHelper mapDBHelper = new MapDBHelper(FileCollectJob.MAPDBPATH + fcs_id + File.separator
 				+ file_source_id, file_source_id + ".db")) {
 			ConcurrentMap<String, String> fileNameHTreeMap = mapDBHelper.htMap(file_source_id, 25 * 12);
 			List<String> newFile = new ArrayList<>();
@@ -128,7 +126,7 @@ public class FileCollectJobImpl implements JobInterface {
 
 			//构建每个阶段具体的实现类，按照顺序执行(卸数,数据加载,数据登记)
 			JobStageInterface unloadData = new FileCollectUnloadDataStageImpl(fileCollectParamBean,
-					newFile, changeFileList, fileNameHTreeMap,mapDBHelper);
+					newFile, changeFileList, fileNameHTreeMap, mapDBHelper);
 			//利用JobStageController构建本次非结构化文件采集作业流程
 			JobStageController controller = new JobStageController();
 			//7.构建责任链，串起每个阶段

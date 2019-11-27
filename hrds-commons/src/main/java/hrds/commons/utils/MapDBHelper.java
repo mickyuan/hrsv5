@@ -38,7 +38,7 @@ public class MapDBHelper implements Closeable {
 		if (!dir.exists()) {
 			final boolean mkdirs = dir.mkdirs();
 			if (!mkdirs) {
-				throw new BusinessException("创建文件夹失败");
+				throw new BusinessException("创建文件夹" + dir + "失败");
 			}
 		}
 		//2.指定文件创建mapDB对象
@@ -88,7 +88,7 @@ public class MapDBHelper implements Closeable {
 	public static void main(String[] args) {
 		try (MapDBHelper mapDBHelper = new MapDBHelper("D:\\hrsv5\\trunk\\10000001\\33332222", "33332222.db")) {
 			ConcurrentMap<String, String> zzz = mapDBHelper.htMap("33332222", 1);
-			for(String key : zzz.keySet()){
+			for (String key : zzz.keySet()) {
 				System.out.println(zzz.get(key));
 			}
 			mapDBHelper.commit();

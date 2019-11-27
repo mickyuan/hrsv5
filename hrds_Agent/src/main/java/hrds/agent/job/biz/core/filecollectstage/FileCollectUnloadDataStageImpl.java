@@ -10,6 +10,7 @@ import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
 import hrds.agent.job.biz.core.filecollectstage.methods.AvroOper;
 import hrds.agent.job.biz.core.filecollectstage.methods.CollectionWatcher;
+import hrds.agent.trans.biz.unstructuredFileCollect.FileCollectJob;
 import hrds.commons.utils.MapDBHelper;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -35,8 +36,6 @@ public class FileCollectUnloadDataStageImpl extends AbstractJobStage {
 	private ConcurrentMap<String, String> fileNameHTreeMap;
 	//mapDB操作对象
 	private MapDBHelper mapDBHelper;
-	//XXX 文件采集卸数到本地所在的顶层目录
-	private static final String FOLDER = System.getProperty("user.dir") + File.separator + "DIRFile";
 
 	/**
 	 * 非结构化文件采集的作业实现类构造方法.
@@ -82,9 +81,8 @@ public class FileCollectUnloadDataStageImpl extends AbstractJobStage {
 			ExecutorService executorService = null;
 			try {
 				//2.文件临时存放目录,卸数到本地的目录
-				String unLoadPath = FOLDER + File.separator + fileCollectParamBean.getFcs_id() +
-						File.separator + fileCollectParamBean.getFile_source_id() + File.separator
-						+ DateUtil.getSysDate() + File.separator;
+				String unLoadPath = FileCollectJob.UNLOADFOLDER + fileCollectParamBean.getFcs_id() +
+						File.separator + fileCollectParamBean.getFile_source_id() + File.separator;
 				//将要存入数据库的路径都要改成一致的Unix分隔符
 				unLoadPath = FileNameUtils.normalize(unLoadPath, true);
 				fileCollectParamBean.setUnLoadPath(unLoadPath);
@@ -117,7 +115,7 @@ public class FileCollectUnloadDataStageImpl extends AbstractJobStage {
 				collectionWatcher.setExcuteLength(String.valueOf((System.currentTimeMillis() - startTime) / 1000));
 				collectionWatcher.endJob(loadMessage);
 			}
-		}else{
+		} else {
 			log.info("没有变化的文件，执行结束");
 		}
 		//这里进行结束标识登记

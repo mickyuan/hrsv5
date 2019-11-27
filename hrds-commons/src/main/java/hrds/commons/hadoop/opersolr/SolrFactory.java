@@ -1,5 +1,6 @@
 package hrds.commons.hadoop.opersolr;
 
+import hrds.commons.utils.PropertyParaUtil;
 import hrds.commons.utils.PropertyParaValue;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -16,7 +17,7 @@ public class SolrFactory {
 
 	private static final Log log = LogFactory.getLog(SolrFactory.class);
 	//获取solr具体实现类全名
-	private static final String CLASS_NAME = PropertyParaValue.getString("solrclassname", "opersolr.OperSolrImpl4_9_1");
+	private static final String CLASS_NAME = PropertyParaUtil.getString("solrclassname", "hrds.commons.hadoop.opersolr.OperSolrImpl4_9_1");
 
 	/**
 	 * 
