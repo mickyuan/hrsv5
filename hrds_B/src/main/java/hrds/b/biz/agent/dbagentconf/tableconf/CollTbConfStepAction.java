@@ -8,6 +8,7 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
+import fd.ng.core.exception.BusinessSystemException;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
@@ -15,6 +16,7 @@ import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import fd.ng.web.util.Dbo;
+import hrds.b.biz.agent.bean.CollTbConfParam;
 import hrds.b.biz.agent.tools.SendMsgUtil;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.CleanType;
@@ -335,7 +337,7 @@ public class CollTbConfStepAction extends BaseAction {
 		else{
 			//3-1、根据tableId在table_column表中获取列信息
 			List<Table_column> tableColumns = Dbo.queryList(Table_column.class, " SELECT * FROM "+
-					Table_column.TableName + "WHERE table_id = ? order by cast(remark as integer)", tableId);
+					Table_column.TableName + " WHERE table_id = ? order by cast(remark as integer)", tableId);
 			returnMap.put("columnInfo", tableColumns);
 		}
 		//4、返回
@@ -363,24 +365,29 @@ public class CollTbConfStepAction extends BaseAction {
 			"           7-3-3、更新column_merge表对应条目的table_id字段" +
 			"8、不是新增采集表还是编辑采集表，都需要将该表要采集的列信息保存到相应的表里面")
 	@Param(name = "tableInfoString", desc = "如果是新增的采集表，table_id为空，如果是编辑修改采集表，table_id不能为空"
-			, range = "不为空，json格式，能够转为Table_info类的实体类对象", isBean = true)
+			, range = "不为空，json格式，能够转为Table_info类的实体类对象")
 	@Param(name = "colSetId", desc = "数据库设置ID，源系统数据库设置表主键，数据库对应表外键", range = "不为空")
-	@Param(name = "collColumnArray", desc = "所有表要采集的字段信息封装成json字符串组成的数组", range = "如果用户对某张表没有选择采集列，在数组中该位置放一个空字符串" +
-			"后台会去采集这张表的所有字段;" +
-			"参数格式：json" +
-			"内容：是否主键(is_primary_key)" +
-			"      列名(colume_name)" +
-			"      字段类型(column_type)" +
-			"      列中文名(colume_ch_name)")
-	@Param(name = "columnSortArray", desc = "所有表要采集的字段的排序所组成的数组",
-			range = "如果用户对某张表没有定义采集排序，这个数组中的对应位置传空字符串，json格式，key为字段名，value为字段排序")
+	@Param(name = "collTbConfParamString", desc = "采集表对应采集字段配置参数", range = "" +
+			"包含两部分：" +
+			"1、collColumnString：一张表对应的所有要被采集的列组成的json格式的字符串，一个json对象中应该包括列名(colume_name)、字段类型(column_type)、列中文名(colume_ch_name)" +
+			"2、columnSortString：一张表所有要被采集的列的采集顺序，一个json对象中，key为columnName，value为列名，key为sort，value为顺序(1,2,3)")
 	@Return(desc = "保存成功后返回当前采集任务ID", range = "不为空")
-	public long saveCollTbInfo(String tableInfoString, long colSetId, String[] collColumnArray, String[] columnSortArray){
+	public long saveCollTbInfo(String tableInfoString, long colSetId, String collTbConfParamString){
 		List<Table_info> tableInfos = JSONArray.parseArray(tableInfoString, Table_info.class);
+		List<CollTbConfParam> tbConfParams = JSONArray.parseArray(collTbConfParamString, CollTbConfParam.class);
+		if(tableInfos.isEmpty()){
+			throw new BusinessSystemException("请选择采集表配置信息");
+		}
+		if(tbConfParams.isEmpty()){
+			throw new BusinessSystemException("请配置采集字段参数");
+		}
+		if(tableInfos.size() != tbConfParams.size()){
+			throw new BusinessSystemException("请在传参时确保采集表数组和配置采集字段信息一一对应");
+		}
 		for(int i = 0; i < tableInfos.size(); i++){
 			Table_info tableInfo = tableInfos.get(i);
-			String collColumn = collColumnArray[i];
-			String columnSort = columnSortArray[i];
+			String collColumn = tbConfParams.get(i).getCollColumnString();
+			String columnSort = tbConfParams.get(i).getColumnSortString();
 			//1、校验Table_info对象中的信息是否合法
 			if(StringUtil.isBlank(tableInfo.getTable_name())){
 				throw new BusinessException("保存采集表配置，第"+ (i + 1) +"条数据表名不能为空!");
@@ -499,9 +506,9 @@ public class CollTbConfStepAction extends BaseAction {
 	private void saveTableColumnInfoForAdd(Table_info tableInfo, String collColumn, String columnSort,
 	                                       long colSetId, String columnCleanOrder){
 		//1、判断columnSort是否为空字符串，如果不是空字符串，解析columnSort为json对象
-		JSONObject sortObj = null;
+		JSONArray sortArr = null;
 		if(StringUtil.isNotBlank(columnSort)){
-			sortObj = JSON.parseObject(columnSort);
+			sortArr = JSON.parseArray(columnSort);
 		}
 		//2、判断collColumn参数是否为空字符串
 		List<Table_column> tableColumns;
@@ -513,7 +520,8 @@ public class CollTbConfStepAction extends BaseAction {
 			tableColumns = JSON.parseArray(collColumn, Table_column.class);
 		}
 		//3、设置主键，外键等信息，如果columnSort不为空，则将Table_column对象的remark属性设置为该列的采集顺序
-		for(Table_column tableColumn : tableColumns){
+		for(int i = 0; i < tableColumns.size(); i++){
+			Table_column tableColumn = tableColumns.get(i);
 			//设置主键
 			tableColumn.setColumn_id(PrimayKeyGener.getNextId());
 			//设置外键
@@ -531,8 +539,8 @@ public class CollTbConfStepAction extends BaseAction {
 			tableColumn.setIs_new(IsFlag.Fou.getCode());
 			//是否采集设置为是
 			tableColumn.setIs_get(IsFlag.Shi.getCode());
-			if(sortObj != null){
-				tableColumn.setRemark((String) sortObj.get(tableColumn.getColume_name()));
+			if(sortArr != null){
+				tableColumn.setRemark((String) sortArr.getJSONObject(i).get(tableColumn.getColume_name()));
 			}
 			//4、保存这部分数据
 			tableColumn.add(Dbo.db());

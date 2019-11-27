@@ -36,7 +36,6 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 	private static final long DATA_SOURCE_TABLE_ID = 7004L;
 	private static final long FIRST_DATABASESET_ID = 1001L;
 	private static final long SECOND_DATABASESET_ID = 1002L;
-	private static final long DEFAULT_TABLE_ID = 999999L;
 	private static final JSONObject tableCleanOrder = BaseInitData.initTableCleanOrder();
 	private static final JSONObject columnCleanOrder = BaseInitData.initColumnCleanOrder();
 
@@ -99,11 +98,6 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		assertThat("模拟登陆", actionResult.isSuccess(), is(true));
 	}
 
-	@Test
-	public void test(){
-		System.out.println("----------------------------------");
-	}
-
 	/**
 	 * 测试根据colSetId加载页面初始化数据
 	 *
@@ -140,7 +134,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 
 	/**
 	 * 测试根据数据库设置id得到所有表相关信息功能
-	 * TODO 被测方法暂未完成
+	 * TODO 被测方法暂未完成，主要是agent端模糊查询有问题
 	 * 正确数据访问1：构造colSetId为1002，inputString为code的测试数据
 	 * 正确数据访问2：构造colSetId为1002，inputString为sys的测试数据
 	 * 正确数据访问3：构造colSetId为1001，inputString为sys|code的测试数据
@@ -793,7 +787,6 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 
 	/**
 	 * 测试配置采集表页面,选择列按钮后台功能
-	 * TODO 被测方法未完成
 	 * 正确数据访问1：构造tableName为code_info，tableId为7002，colSetId为1001的测试数据
 	 * 正确数据访问2：构造tableName为ftp_collect，tableId为999999，colSetId为1001的测试数据
 	 * 错误的数据访问1：构造tableName为ftp_collect，tableId为999999，colSetId为1003的测试数据
@@ -835,7 +828,6 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		String rightStringTwo = new HttpClient()
 				.addData("tableName", tableNameTwo)
 				.addData("colSetId", FIRST_DATABASESET_ID)
-				.addData("tableId", DEFAULT_TABLE_ID)
 				.post(getActionUrl("getColumnInfo")).getBodyString();
 		ActionResult rightResultTwo = JsonUtil.toObjectSafety(rightStringTwo, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
@@ -849,7 +841,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			}else if(key.equalsIgnoreCase("columnInfo")){
 				assertThat("返回的结果中，有一对Entry的key为columnInfo", key, is("columnInfo"));
 				List<Table_column> tableColumns = (List<Table_column>) entry.getValue();
-				assertThat("返回的结果中，key为columnInfo的Entry，value为List<Table_column>,ftp_collect表中有22列", tableColumns.size(), is(22));
+				assertThat("返回的结果中，key为columnInfo的Entry，value为List<Table_column>,ftp_collect表中有24列", tableColumns.size(), is(24));
 			}else{
 				assertThat("返回的结果中，出现了不期望出现的内容", true, is(false));
 			}
@@ -860,7 +852,8 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		String wrongColSetIdString = new HttpClient()
 				.addData("tableName", tableNameTwo)
 				.addData("colSetId", wrongColSetId)
-				.addData("tableId", DEFAULT_TABLE_ID)
+				.addData("collColumnArray", "")
+				.addData("columnSortArray", "")
 				.post(getActionUrl("getColumnInfo")).getBodyString();
 		ActionResult wrongColSetIdResult = JsonUtil.toObjectSafety(wrongColSetIdString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
@@ -871,7 +864,6 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		String wrongTableNameString = new HttpClient()
 				.addData("tableName", notExistTableName)
 				.addData("colSetId", FIRST_DATABASESET_ID)
-				.addData("tableId", DEFAULT_TABLE_ID)
 				.post(getActionUrl("getColumnInfo")).getBodyString();
 		ActionResult wrongTableNameResult = JsonUtil.toObjectSafety(wrongTableNameString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
@@ -881,7 +873,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			String key = (String) entry.getKey();
 			if(key.equalsIgnoreCase("tableName")){
 				assertThat("返回的结果中，有一对Entry的key为tableName", key, is("tableName"));
-				assertThat("返回的结果中，key为tableName的Entry，value为ftp_collect", entry.getValue(), is(tableNameTwo));
+				assertThat("返回的结果中，key为tableName的Entry，value为wzc_collect", entry.getValue(), is(notExistTableName));
 			}else if(key.equalsIgnoreCase("columnInfo")){
 				assertThat("返回的结果中，有一对Entry的key为columnInfo", key, is("columnInfo"));
 				List<Table_column> tableColumns = (List<Table_column>) entry.getValue();

@@ -135,6 +135,6 @@ public class DatabaseInfo extends AgentBaseAction {
 			}
 		}
 		//6.返回指定表的字段信息
-		return JSON.toJSONString(columnList);
+		return PackUtil.packMsg(JSON.toJSONString(columnList));
 	}
 }
