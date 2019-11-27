@@ -8,6 +8,7 @@ import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
+import hrds.commons.entity.Database_set;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.AgentActionUtil;
 import hrds.commons.utils.PackUtil;
@@ -47,6 +48,7 @@ public class SendMsgUtil {
 		if(databaseInfo.isEmpty()){
 			throw new BusinessException("向Agent发送信息，模糊查询表信息时，请指定数据库连接信息");
 		}
+		Database_set legalParam = getLegalParam(databaseInfo);
 		if(StringUtil.isBlank(inputString)){
 			throw new BusinessException("向Agent发送信息，模糊查询表信息时，请指定模糊查询字段");
 		}
@@ -60,16 +62,16 @@ public class SendMsgUtil {
 
 		//3、httpClient发送请求并接收响应
 		HttpClient.ResponseValue resVal = new HttpClient()
-				.addData("database_name", (String) databaseInfo.get("database_name"))
-				.addData("database_pad", (String) databaseInfo.get("database_pad"))
-				.addData("database_ip", (String) databaseInfo.get("database_ip"))
-				.addData("database_port", (String) databaseInfo.get("database_port"))
-				.addData("user_name", (String) databaseInfo.get("user_name"))
-				.addData("database_drive", (String) databaseInfo.get("database_drive"))
-				.addData("jdbc_url", (String) databaseInfo.get("jdbc_url"))
-				.addData("database_type", (String) databaseInfo.get("database_type"))
-				.addData("db_agent", (String) databaseInfo.get("db_agent"))
-				.addData("plane_url", (String) databaseInfo.get("plane_url"))
+				.addData("database_name", legalParam.getDatabase_name())
+				.addData("database_pad", legalParam.getDatabase_pad())
+				.addData("database_ip", legalParam.getDatabase_ip())
+				.addData("database_port", legalParam.getDatabase_port())
+				.addData("user_name", legalParam.getUser_name())
+				.addData("database_drive", legalParam.getDatabase_drive())
+				.addData("jdbc_url", legalParam.getJdbc_url())
+				.addData("database_type", legalParam.getDatabase_type())
+				.addData("db_agent", legalParam.getDb_agent())
+				.addData("plane_url", legalParam.getPlane_url())
 				.addData("search", inputString)
 				.post(url);
 
@@ -110,6 +112,7 @@ public class SendMsgUtil {
 		if(databaseInfo.isEmpty()){
 			throw new BusinessException("向Agent发送信息，获取目标数据库所有表时，请指定数据库连接信息");
 		}
+		Database_set legalParam = getLegalParam(databaseInfo);
 		if(StringUtil.isBlank(methodName)){
 			throw new BusinessException("向Agent发送信息时methodName不能为空");
 		}
@@ -120,16 +123,16 @@ public class SendMsgUtil {
 
 		//3、httpClient发送请求并接收响应
 		HttpClient.ResponseValue resVal = new HttpClient()
-				.addData("database_name", (String) databaseInfo.get("database_name"))
-				.addData("database_pad", (String) databaseInfo.get("database_pad"))
-				.addData("database_ip", (String) databaseInfo.get("database_ip"))
-				.addData("database_port", (String) databaseInfo.get("database_port"))
-				.addData("user_name", (String) databaseInfo.get("user_name"))
-				.addData("database_drive", (String) databaseInfo.get("database_drive"))
-				.addData("jdbc_url", (String) databaseInfo.get("jdbc_url"))
-				.addData("database_type", (String) databaseInfo.get("database_type"))
-				.addData("db_agent", (String) databaseInfo.get("db_agent"))
-				.addData("plane_url", (String) databaseInfo.get("plane_url"))
+				.addData("database_name", legalParam.getDatabase_name())
+				.addData("database_pad", legalParam.getDatabase_pad())
+				.addData("database_ip", legalParam.getDatabase_ip())
+				.addData("database_port", legalParam.getDatabase_port())
+				.addData("user_name", legalParam.getUser_name())
+				.addData("database_drive", legalParam.getDatabase_drive())
+				.addData("jdbc_url", legalParam.getJdbc_url())
+				.addData("database_type", legalParam.getDatabase_type())
+				.addData("db_agent", legalParam.getDb_agent())
+				.addData("plane_url", legalParam.getPlane_url())
 				.post(url);
 
 		ActionResult ar = JsonUtil.toObjectSafety(resVal.getBodyString(), ActionResult.class)
@@ -171,6 +174,7 @@ public class SendMsgUtil {
 		if(databaseInfo.isEmpty()){
 			throw new BusinessException("向Agent发送信息，根据表名查询表字段信息时，请指定数据库连接信息");
 		}
+		Database_set legalParam = getLegalParam(databaseInfo);
 		if(StringUtil.isBlank(tableName)){
 			throw new BusinessException("向Agent发送信息，根据表名查询表字段信息时，请填写表名");
 		}
@@ -184,16 +188,16 @@ public class SendMsgUtil {
 
 		//3、httpClient发送请求并接收响应
 		HttpClient.ResponseValue resVal = new HttpClient()
-				.addData("database_name", (String) databaseInfo.get("database_name"))
-				.addData("database_pad", (String) databaseInfo.get("database_pad"))
-				.addData("database_ip", (String) databaseInfo.get("database_ip"))
-				.addData("database_port", (String) databaseInfo.get("database_port"))
-				.addData("user_name", (String) databaseInfo.get("user_name"))
-				.addData("database_drive", (String) databaseInfo.get("database_drive"))
-				.addData("jdbc_url", (String) databaseInfo.get("jdbc_url"))
-				.addData("database_type", (String) databaseInfo.get("database_type"))
-				.addData("db_agent", (String) databaseInfo.get("db_agent"))
-				.addData("plane_url", (String) databaseInfo.get("plane_url"))
+				.addData("database_name", legalParam.getDatabase_name())
+				.addData("database_pad", legalParam.getDatabase_pad())
+				.addData("database_ip", legalParam.getDatabase_ip())
+				.addData("database_port", legalParam.getDatabase_port())
+				.addData("user_name", legalParam.getUser_name())
+				.addData("database_drive", legalParam.getDatabase_drive())
+				.addData("jdbc_url", legalParam.getJdbc_url())
+				.addData("database_type", legalParam.getDatabase_type())
+				.addData("db_agent", legalParam.getDb_agent())
+				.addData("plane_url", legalParam.getPlane_url())
 				.addData("tableName", tableName)
 				.post(url);
 
@@ -209,5 +213,29 @@ public class SendMsgUtil {
 		//6、若响应不成功，记录日志，并抛出异常告知操作失败
 		logger.error(">>>>>>>>>>>>>>>>>>>>>>>>错误信息为：" + ar.getMessage());
 		throw new BusinessException("根据表名获取该表的字段信息失败，详情请查看日志");
+	}
+
+	@Method(desc = "由于源数据库设置表中会保存数据库直连采集和DB文件采集的信息，所以查询得到的某些字段可能为null，" +
+			"为了保证传参时合法，不会出现空指针的情况，用该方法对查询得到的数据库设置信息进行重新封装", logicStep = "" +
+			"1、判断获取到的数据库连接信息是否有null值，如果有，将null值替换为空字符串然后封装到Database_set对象中")
+	@Param(name = "databaseInfo", desc = "查询得到的Map形式的数据库或DB文件采集信息", range = "不为空")
+	@Return(desc = "封装好的数据库或DB文件采集信息", range = "Database_set对象")
+	private static Database_set getLegalParam(Map<String, Object> databaseInfo){
+		//1、判断获取到的数据库连接信息是否有null值，如果有，将null值替换为空字符串然后封装到Database_set对象中
+		Database_set databaseSet = new Database_set();
+
+		databaseSet.setDatabase_name(databaseInfo.get("database_name") == null ? "" : (String) databaseInfo.get("database_name"));
+		databaseSet.setDatabase_pad(databaseInfo.get("database_pad") == null ? "" : (String) databaseInfo.get("database_pad"));
+		databaseSet.setDatabase_ip(databaseInfo.get("database_ip") == null ? "" : (String) databaseInfo.get("database_ip"));
+		databaseSet.setDatabase_port(databaseInfo.get("database_port") == null ? "" : (String) databaseInfo.get("database_port"));
+		databaseSet.setUser_name(databaseInfo.get("user_name") == null ? "" : (String) databaseInfo.get("user_name"));
+		databaseSet.setDatabase_drive(databaseInfo.get("database_drive") == null ? "" : (String) databaseInfo.get("database_drive"));
+		databaseSet.setJdbc_url(databaseInfo.get("jdbc_url") == null ? "" : (String) databaseInfo.get("jdbc_url"));
+		databaseSet.setDatabase_type(databaseInfo.get("database_type") == null ? "" : (String) databaseInfo.get("database_type"));
+		databaseSet.setDb_agent(databaseInfo.get("db_agent") == null ? "" : (String) databaseInfo.get("db_agent"));
+		databaseSet.setPlane_url(databaseInfo.get("plane_url") == null ? "" : (String) databaseInfo.get("plane_url"));
+		databaseSet.setPlane_url(databaseInfo.get("plane_url") == null ? "" : (String) databaseInfo.get("plane_url"));
+
+		return databaseSet;
 	}
 }

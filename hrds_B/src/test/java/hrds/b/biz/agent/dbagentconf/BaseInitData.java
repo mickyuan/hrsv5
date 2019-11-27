@@ -503,6 +503,24 @@ public class BaseInitData {
 		return agentDownInfo;
 	}
 
+	public static Agent_down_info initAgentDownInfoTwo(){
+		Agent_down_info agentDownInfo = new Agent_down_info();
+		agentDownInfo.setDown_id(AGENT_DOWN_INFO_ID + 1);
+		agentDownInfo.setAgent_id(SECOND_DB_AGENT_ID);
+		agentDownInfo.setUser_id(TEST_USER_ID);
+		agentDownInfo.setAgent_name("test_agent_down_info_wzc");
+		agentDownInfo.setAgent_ip("127.0.0.1");
+		agentDownInfo.setAgent_port("56000");
+		agentDownInfo.setSave_dir("/test/save/dir");
+		agentDownInfo.setLog_dir("/test/log/dir");
+		agentDownInfo.setDeploy(IsFlag.Shi.getCode());
+		agentDownInfo.setAgent_context("/agent");
+		agentDownInfo.setAgent_pattern("/receive/*");
+		agentDownInfo.setAgent_type(AgentType.ShuJuKu.getCode());
+
+		return agentDownInfo;
+	}
+
 	public static ActionResult simulatedLogin(){
 		String responseValue = new HttpClient().buildSession()
 				.addData("user_id", TEST_USER_ID)

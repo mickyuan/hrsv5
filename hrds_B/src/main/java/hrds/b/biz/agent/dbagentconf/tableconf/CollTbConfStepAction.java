@@ -78,7 +78,7 @@ public class CollTbConfStepAction extends BaseAction {
 	@Param(name = "inputString", desc = "用户界面输入用于模糊查询的关键词", range = "不为空")
 	@Return(desc = "查询结果集", range = "不为空")
 	//查询按钮
-	public List<Result> getTableInfo(long colSetId, String inputString){
+	public List<Map<String, Object>> getTableInfo(long colSetId, String inputString){
 		//1、根据colSetId去数据库中获取数据库设置相关信息
 		Map<String, Object> databaseInfo = getDatabaseSetInfo(colSetId, getUserId());
 		//数据可访问权限处理方式
@@ -103,7 +103,7 @@ public class CollTbConfStepAction extends BaseAction {
 	@Param(name = "colSetId", desc = "数据库设置ID,源系统数据库设置表主键,数据库对应表外键", range = "不为空")
 	@Return(desc = "查询结果集", range = "不为空")
 	//TODO 查看所有表，目前原型页面中，如果搜索框中用户输入了内容，就直接调用getTableInfo接口，如果用户没有输入内容就点击查询，那么就调用getAllTableInfo获取所有表
-	public List<Result> getAllTableInfo(long colSetId){
+	public List<Map<String, Object>> getAllTableInfo(long colSetId){
 		//1、根据colSetId去数据库中获取数据库设置相关信息
 		Map<String, Object> databaseInfo = getDatabaseSetInfo(colSetId, getUserId());
 		if(databaseInfo.isEmpty()){
@@ -335,7 +335,7 @@ public class CollTbConfStepAction extends BaseAction {
 		else{
 			//3-1、根据tableId在table_column表中获取列信息
 			List<Table_column> tableColumns = Dbo.queryList(Table_column.class, " SELECT * FROM "+
-					Table_column.TableName + "WHERE table_id = ? order by remark", tableId);
+					Table_column.TableName + "WHERE table_id = ? order by cast(remark as integer)", tableId);
 			returnMap.put("columnInfo", tableColumns);
 		}
 		//4、返回
@@ -619,31 +619,30 @@ public class CollTbConfStepAction extends BaseAction {
 	@Param(name = "tableNames", desc = "需要获取详细信息的表名集合", range = "不限")
 	@Param(name = "colSetId", desc = "数据库设置ID", range = "不为空")
 	@Return(desc = "存有表详细信息的List集合", range = "查到信息则不为空，没有查到信息则为空")
-	private List<Result> getTableInfoByTableName(List<String> tableNames, long colSetId){
+	private List<Map<String, Object>> getTableInfoByTableName(List<String> tableNames, long colSetId){
 		//1、如果集合为空，则直接返回空集合
 		if(tableNames.isEmpty()){ return Collections.emptyList(); }
 		//2、如果集合不是空，则进行如下处理
-		List<Result> results = new ArrayList<>();
-		//2-1、根据String的自然顺序(字母a-z)对表名进行升序排序,这一步的目的是为了使用下面的分页工具对List进行分页
+		List<Map<String, Object>> results = new ArrayList<>();
+		//2-1、根据String的自然顺序(字母a-z)对表名进行升序排序
 		Collections.sort(tableNames);
 		for(String tableName : tableNames){
-			Result tableResult = Dbo.queryResult(" select ti.table_id,ti.table_name,ti.table_ch_name, ti.is_parallel" +
-					" FROM "+ Table_info.TableName +" ti " +
-					" WHERE ti.database_id = ? AND ti.valid_e_date = ? AND ti.table_name = ? " +
-					" AND ti.is_user_defined = ? ", colSetId, Constant.MAXDATE, tableName, IsFlag.Fou.getCode());
+			Map<String, Object> tableResult = Dbo.queryOneObject(" select ti.table_id,ti.table_name,ti.table_ch_name, ti.is_parallel" +
+					" FROM " + Table_info.TableName + " ti " +
+					" WHERE ti.database_id = ? AND ti.table_name = ? " +
+					" AND ti.is_user_defined = ? ", colSetId, tableName, IsFlag.Fou.getCode());
 			//2-2、tableResult结果可能有数据，也可能没有数据
 			//2-3、有数据的情况：编辑采集任务，模糊查询的这张表已经存在于本次采集任务中
 			//2-4、没有数据的情况：新增采集任务，那么所有的表都无法在table_info中查到数据，给是否并行抽取默认值为否
 			if(tableResult.isEmpty()){
-				tableResult.setValue(0, "table_name", tableName);
-				tableResult.setValue(0, "table_ch_name", tableName);
+				Map<String, Object> map = new HashMap<>();
+				map.put("table_name", tableName);
+				map.put("table_ch_name", tableName);
 				//给是否并行抽取默认值为否
-				tableResult.setValue(0, "is_parallel", IsFlag.Fou.getCode());
-				results.add(tableResult);
-			}else if(tableResult.getRowCount() == 1){
-				results.add(tableResult);
+				map.put("is_parallel", IsFlag.Fou.getCode());
+				results.add(map);
 			}else{
-				throw new BusinessException(tableName + "表详细信息不唯一");
+				results.add(tableResult);
 			}
 		}
 		return results;

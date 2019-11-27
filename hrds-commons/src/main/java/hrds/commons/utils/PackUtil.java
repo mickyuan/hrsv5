@@ -32,7 +32,7 @@ public class PackUtil {
 				sbData.append(IsFlag.Shi.getCode());
 				sbData.append(ZipUtils.gzip(jsonData));
 			} else {
-				sbData.append(IsFlag.Shi.getCode());
+				sbData.append(IsFlag.Fou.getCode());
 				sbData.append(jsonData);
 			}
 			//4、返回经过处理后的数据

@@ -99,6 +99,11 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		assertThat("模拟登陆", actionResult.isSuccess(), is(true));
 	}
 
+	@Test
+	public void test(){
+		System.out.println("----------------------------------");
+	}
+
 	/**
 	 * 测试根据colSetId加载页面初始化数据
 	 *
@@ -136,8 +141,8 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 	/**
 	 * 测试根据数据库设置id得到所有表相关信息功能
 	 * TODO 被测方法暂未完成
-	 * 正确数据访问1：构造colSetId为1001，inputString为code的测试数据
-	 * 正确数据访问2：构造colSetId为1001，inputString为sys的测试数据
+	 * 正确数据访问1：构造colSetId为1002，inputString为code的测试数据
+	 * 正确数据访问2：构造colSetId为1002，inputString为sys的测试数据
 	 * 正确数据访问3：构造colSetId为1001，inputString为sys|code的测试数据
 	 * 正确数据访问4：构造colSetId为1001，inputString为wzc的测试数据
 	 * 错误的数据访问1：构造colSetId为1003的测试数据
@@ -148,7 +153,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 	 * */
 	@Test
 	public void getTableInfo(){
-		//正确数据访问1：构造colSetId为1001，inputString为code的测试数据
+		//正确数据访问1：构造colSetId为1002，inputString为code的测试数据
 		String rightStringOne = new HttpClient()
 				.addData("colSetId", FIRST_DATABASESET_ID)
 				.addData("inputString", "code")
@@ -162,7 +167,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		assertThat("使用code做模糊查询得到的表信息有1条", rightDataOne.size(), is(1));
 		assertThat("使用code做模糊查询得到的表名为code_info", rightDataOne.get(0).getString(0, "table_name"), is("code_info"));
 
-		//正确数据访问2：构造colSetId为1001，inputString为sys的测试数据
+		//正确数据访问2：构造colSetId为1002，inputString为sys的测试数据
 		String rightStringTwo = new HttpClient()
 				.addData("colSetId", FIRST_DATABASESET_ID)
 				.addData("inputString", "sys")
@@ -189,7 +194,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			}
 		}
 
-		//正确数据访问3：构造colSetId为1001，inputString为sys|code的测试数据
+		//正确数据访问3：构造colSetId为1002，inputString为sys|code的测试数据
 		String rightStringThree = new HttpClient()
 				.addData("colSetId", FIRST_DATABASESET_ID)
 				.addData("inputString", "sys|code")
@@ -218,7 +223,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			}
 		}
 
-		//正确数据访问4：构造colSetId为1001，inputString为wzc的测试数据
+		//正确数据访问4：构造colSetId为1002，inputString为wzc的测试数据
 		String rightStringFour = new HttpClient()
 				.addData("colSetId", FIRST_DATABASESET_ID)
 				.addData("inputString", "wzc")
@@ -247,7 +252,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 	 * 错误的测试用例未达到三组:getAllTableInfo方法只有一个参数
 	 * @Param: 无
 	 * @return: 无
-	 * TODO 由于目前测试用的数据库是我们的测试库，所以表的数量不固定，且被测方法未完成
+	 * TODO 由于目前测试用的数据库是我们的测试库，所以表的数量不固定
 	 * */
 	@Test
 	public void getAllTableInfo(){
@@ -258,8 +263,8 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(rightResult.isSuccess(), is(true));
-		List<Result> rightData = rightResult.getDataForEntityList(Result.class);
-		assertThat("截止2019.10.15，IP为47.103.83.1的测试库上有70张表",rightData.size(), is(70));
+		Result rightData = rightResult.getDataForResult();
+		assertThat("截止2019.11.27，IP为47.103.83.1的测试库上有74张表",rightData.getRowCount(), is(74));
 
 		//错误的数据访问1：构造错误的colSetId进行测试
 		long wrongColSetId = 1003L;
@@ -716,9 +721,9 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		assertThat("在ID为" + FIRST_DATABASESET_ID + "的数据库采集任务下，有2条自定义采集SQL", rightDataOne.size(), is(2));
 		for(Table_info tableInfo : rightDataOne){
 			if(tableInfo.getTable_id() == AGENT_INFO_TABLE_ID){
-				assertThat("在table_id为" + AGENT_INFO_TABLE_ID + "的自定义采集SQL中，自定义SQL为", tableInfo.getSql(), is("select * from agent_info"));
+				assertThat("在table_id为" + AGENT_INFO_TABLE_ID + "的自定义采集SQL中，自定义SQL为", tableInfo.getSql(), is("select agent_id, agent_name, agent_type from agent_info where source_id = 1"));
 			}else if(tableInfo.getTable_id() == DATA_SOURCE_TABLE_ID){
-				assertThat("在table_id为" + DATA_SOURCE_TABLE_ID + "的自定义采集SQL中，自定义SQL为", tableInfo.getSql(), is("select * from data_source"));
+				assertThat("在table_id为" + DATA_SOURCE_TABLE_ID + "的自定义采集SQL中，自定义SQL为", tableInfo.getSql(), is("select source_id, datasource_number, datasource_name from data_source where source_id = 1"));
 			}else{
 				assertThat("获取到了不期望获取的数据，该条数据的table_name为" + tableInfo.getTable_name(), true, is(false));
 			}
@@ -759,7 +764,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		assertThat(rightResultOne.isSuccess(), is(true));
 		Result rightDataOne = rightResultOne.getDataForResult();
 		assertThat("使用database_id为" + FIRST_DATABASESET_ID + "和table_name为" + rightTableNameOne + "得到1条数据", rightDataOne.getRowCount(), is(1));
-		assertThat("回显table_name为sys_user表定义的过滤SQL", rightDataOne.getString(0, "sql"), is("select * from sys_user where user_id = 2001"));
+		assertThat("回显table_name为sys_user表定义的过滤SQL", rightDataOne.getString(0, "sql"), is("select * from sys_user where user_id = 9997"));
 
 		//正确的数据访问2：模拟回显table_name为code_info的过滤SQL，因为测试数据没有设置，所以拿不到
 		String rightTableNameTwo = "code_info";

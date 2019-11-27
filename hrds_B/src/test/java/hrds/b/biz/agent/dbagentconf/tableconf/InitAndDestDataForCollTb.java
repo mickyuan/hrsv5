@@ -26,7 +26,6 @@ public class InitAndDestDataForCollTb {
 
 	private static final long FIRST_DATABASESET_ID = 1001L;
 
-	private static final long FIRST_DB_AGENT_ID = 7001L;
 	private static final long SECOND_DB_AGENT_ID = 7002L;
 
 	private static final long SYS_USER_TABLE_ID = 7001L;
@@ -58,7 +57,26 @@ public class InitAndDestDataForCollTb {
 		List<Agent_info> agents = BaseInitData.buildAgentInfosData();
 
 		//5、构造database_set表测试数据
-		List<Database_set> databases = BaseInitData.buildDbSetData();
+		Database_set databaseSet = new Database_set();
+		databaseSet.setDatabase_id(FIRST_DATABASESET_ID);
+		databaseSet.setAgent_id(SECOND_DB_AGENT_ID);
+		databaseSet.setDatabase_number(FIRST_DATABASESET_ID + "");
+		databaseSet.setTask_name("real_database_47.103.83.1");
+		databaseSet.setDatabase_name("hrsdxg");
+		databaseSet.setDatabase_pad("hrsdxg");
+		databaseSet.setUser_name("hrsdxg");
+		databaseSet.setDatabase_drive("org.postgresql.Driver");
+		databaseSet.setDatabase_type(DatabaseType.Postgresql.getCode());
+		databaseSet.setDatabase_ip("47.103.83.1");
+		databaseSet.setDatabase_port("32001");
+		databaseSet.setDb_agent(IsFlag.Fou.getCode());
+		databaseSet.setJdbc_url("jdbc:postgresql://47.103.83.1:32001/hrsdxg");
+
+		//以下数据全部设置默认值
+		databaseSet.setIs_load(IsFlag.Shi.getCode());
+		databaseSet.setIs_header(IsFlag.Shi.getCode());
+		databaseSet.setIs_hidden(IsFlag.Shi.getCode());
+		databaseSet.setIs_sendok(IsFlag.Shi.getCode());
 
 		//6、构造Collect_job_classify表测试数据
 		List<Collect_job_classify> classifies = BaseInitData.buildClassifyData();
@@ -390,7 +408,7 @@ public class InitAndDestDataForCollTb {
 		codeInfoMerge.add(codeInfo);
 
 		//5、由于该Action类的测试连接功能需要与agent端交互，所以需要配置一条agent_down_info表的记录，用于找到http访问的完整url
-		Agent_down_info agentDownInfo = BaseInitData.initAgentDownInfo();
+		Agent_down_info agentDownInfo = BaseInitData.initAgentDownInfoTwo();
 
 		//12、插入数据
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
@@ -415,12 +433,8 @@ public class InitAndDestDataForCollTb {
 			assertThat("Agent测试数据初始化", agentInfoCount, is(2));
 
 			//插入database_set表测试数据
-			int databaseSetCount = 0;
-			for(Database_set databaseSet : databases){
-				int count = databaseSet.add(db);
-				databaseSetCount += count;
-			}
-			assertThat("数据库设置测试数据初始化", databaseSetCount, is(2));
+			int databaseSetCount = databaseSet.add(db);
+			assertThat("数据库设置测试数据初始化", databaseSetCount, is(1));
 
 			//插入collect_job_classify表测试数据
 			int classifyCount = 0;
@@ -507,7 +521,6 @@ public class InitAndDestDataForCollTb {
 			//2、删除Agent信息表(agent_info)测试数据
 			SqlOperator.execute(db, "delete from " + Agent_info.TableName + " WHERE user_id = ?", TEST_USER_ID);
 			//3、删除database_set表测试数据
-			SqlOperator.execute(db, "delete from " + Database_set.TableName + " WHERE agent_id = ?", FIRST_DB_AGENT_ID);
 			SqlOperator.execute(db, "delete from " + Database_set.TableName + " WHERE agent_id = ?", SECOND_DB_AGENT_ID);
 			//4、删除collect_job_classify表测试数据
 			SqlOperator.execute(db, "delete from " + Collect_job_classify.TableName + " WHERE user_id = ?", TEST_USER_ID);
@@ -528,7 +541,7 @@ public class InitAndDestDataForCollTb {
 			SqlOperator.execute(db, "delete from " + Column_merge.TableName + " where table_id = ? ", SYS_USER_TABLE_ID);
 			SqlOperator.execute(db, "delete from " + Column_merge.TableName + " where table_id = ? ", CODE_INFO_TABLE_ID);
 			//10、删除agent_down_info表测试数据
-			SqlOperator.execute(db, "delete from " + Agent_down_info.TableName + " where down_id = ? ", AGENT_DOWN_INFO_ID);
+			SqlOperator.execute(db, "delete from " + Agent_down_info.TableName + " where down_id = ? ", AGENT_DOWN_INFO_ID + 1);
 			//11、提交事务
 			SqlOperator.commitTransaction(db);
 		}
