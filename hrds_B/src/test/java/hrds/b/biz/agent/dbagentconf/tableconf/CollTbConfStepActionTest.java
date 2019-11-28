@@ -13,7 +13,7 @@ import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import hrds.b.biz.agent.bean.CollTbConfParam;
 import hrds.b.biz.agent.dbagentconf.BaseInitData;
-import hrds.commons.codes.IsFlag;
+import hrds.commons.codes.*;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.Constant;
@@ -38,6 +38,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 	private static final long DATA_SOURCE_TABLE_ID = 7004L;
 	private static final long FIRST_DATABASESET_ID = 1001L;
 	private static final long SECOND_DATABASESET_ID = 1002L;
+	private static final long UNEXPECTED_ID = 999999;
 	private static final JSONObject tableCleanOrder = BaseInitData.initTableCleanOrder();
 	private static final JSONObject columnCleanOrder = BaseInitData.initColumnCleanOrder();
 
@@ -925,7 +926,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 	 *
 	 * */
 	@Test
-	public void saveCollTbInfo(){
+	public void saveCollTbInfoOne(){
 		List<Table_info> tableInfos = new ArrayList<>();
 		List<CollTbConfParam> tbConfParams = new ArrayList<>();
 
@@ -935,6 +936,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			long count = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_name = ?", "ftp_collect").orElseThrow(() -> new BusinessSystemException("查询结果必须有且只有一条"));
 			assertThat("在新增前，查询数据库，table_info表中应该没有采集ftp_collect表的信息", count, is(0));
 		}
+
 		Table_info FTPInfo = new Table_info();
 		FTPInfo.setTable_name("ftp_collect");
 		FTPInfo.setTable_ch_name("ftp采集设置表");
@@ -1033,16 +1035,28 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			int columnCount = SqlOperator.execute(db, "delete from " + Table_column.TableName + " where table_id = ?", afterTableInfo.getLong(0, "table_id"));
 			assertThat("删除<正确数据访问1>生成的数据成功<table_info>", tableCount, is(1));
 			assertThat("删除<正确数据访问1>生成的数据成功<table_column>", columnCount, is(24));
-		}
 
+			SqlOperator.commitTransaction(db);
+		}
 		tableInfos.clear();
 		tbConfParams.clear();
+	}
 
-		/*
-		* 正确数据访问2：
-		* 在database_id为1001的数据库采集任务下构造新增采集object_collect表的数据，选择采集列和列排序,不设置并行抽取(不需要和agent进行交互)
-		* 模拟采集object_collect表的odc_id、object_collect_type、obj_number三列
-		* */
+	/*
+	 * 正确数据访问2：
+	 * 在database_id为1001的数据库采集任务下构造新增采集object_collect表的数据，选择采集列和列排序,不设置并行抽取(不需要和agent进行交互)
+	 * 模拟采集object_collect表的odc_id、object_collect_type、obj_number三列
+	 * */
+	@Test
+	public void saveCollTbInfoTwo(){
+		List<Table_info> tableInfos = new ArrayList<>();
+		List<CollTbConfParam> tbConfParams = new ArrayList<>();
+
+		try(DatabaseWrapper db = new DatabaseWrapper()){
+			//在新增前，查询数据库，table_info表中应该没有采集object_collect表的信息
+			long count = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_name = ?", "object_collect").orElseThrow(() -> new BusinessSystemException("查询结果必须有且只有一条"));
+			assertThat("在新增前，查询数据库，table_info表中应该没有采集object_collect表的信息", count, is(0));
+		}
 		Table_info objInfo = new Table_info();
 		objInfo.setTable_name("object_collect");
 		objInfo.setTable_ch_name("半结构化文件采集设置表");
@@ -1091,43 +1105,591 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			int sort;
 			switch (i) {
 				case 0 :
-					columnName = "";
-
+					columnName = "odc_id";
+					sort = 1;
 					break;
 				case 1 :
+					columnName = "object_collect_type";
+					sort = 2;
 					break;
 				case 2 :
+					columnName = "obj_number";
+					sort = 3;
 					break;
+				default:
+					columnName = "unexpected_columnName";
+					sort = (int)UNEXPECTED_ID;
 			}
+			JSONObject object = new JSONObject();
+			object.put("columnName", columnName);
+			object.put("sort", sort);
+			objSort.add(object);
 		}
 
 		CollTbConfParam objParam = new CollTbConfParam();
 		objParam.setCollColumnString(JSON.toJSONString(objColumn));
-		objParam.setColumnSortString("");
+		objParam.setColumnSortString(objSort.toJSONString());
 
 		tbConfParams.add(objParam);
 
-		/*
-		* 正确数据访问3：在database_id为1001的数据库采集任务下构造修改采集code_info表的数据，选择采集列和列排序，不设置并行抽取，
-		* 注意，由于给code_info表构造了data_extraction_def表、table_clean表、table_srorage_info表、column_merge表、table_column表信息
-		* 因此对这个表的采集数据进行修改，要断言修改成功后这5张表的数据是否都被修改了。(不需要和agent进行交互)
-		* */
+		String rightStringTwo = new HttpClient()
+				.addData("tableInfoString", JSON.toJSONString(tableInfos))
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.addData("collTbConfParamString", JSON.toJSONString(tbConfParams))
+				.post(getActionUrl("saveCollTbInfo")).getBodyString();
+		ActionResult rightResultTwo = JsonUtil.toObjectSafety(rightStringTwo, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResultTwo.isSuccess(), is(true));
+		Integer returnValueTwo = (Integer) rightResultTwo.getData();
+		assertThat(returnValueTwo == FIRST_DATABASESET_ID, is(true));
 
-		//正确数据访问4：在database_id为1001的数据库采集任务下构造新增采集ftp_collect表和object_collect表的数据，不选择采集列和列排序，不设置并行抽取(需要和agent交互)
+		try(DatabaseWrapper db = new DatabaseWrapper()){
+			//新增成功后，断言数据库中的数据是否符合期望，如果符合期望，则删除本次新增带来的数据
+			Result afterTableInfo = SqlOperator.queryResult(db, "select * from " + Table_info.TableName + " where table_name = ?", "object_collect");
+			assertThat("<正确的测试用例2>执行成功后，table_info表中出现了采集object_collect表的配置", afterTableInfo.getRowCount(), is(1));
+			assertThat("<正确的测试用例2>执行成功后，采集object_collect表配置，<清洗顺序>符合期望", afterTableInfo.getString(0, "ti_or"), is(tableCleanOrder.toJSONString()));
+			assertThat("<正确的测试用例2>执行成功后，采集object_collect表配置，<是否使用MD5>符合期望", afterTableInfo.getString(0, "is_md5"), is(IsFlag.Shi.getCode()));
+			assertThat("<正确的测试用例2>执行成功后，采集object_collect表配置，<是否仅登记>符合期望", afterTableInfo.getString(0, "is_register"), is(IsFlag.Shi.getCode()));
+			assertThat("<正确的测试用例2>执行成功后，采集object_collect表配置，<是否仅登记>符合期望", afterTableInfo.getString(0, "is_register"), is(IsFlag.Shi.getCode()));
+			assertThat("<正确的测试用例2>执行成功后，采集object_collect表配置，<是否并行抽取>符合期望", afterTableInfo.getString(0, "is_parallel"), is(IsFlag.Fou.getCode()));
 
+			Result afterTableColumn = SqlOperator.queryResult(db, "select * from " + Table_column.TableName + " where table_id = ?", afterTableInfo.getLong(0, "table_id"));
+			assertThat("<正确的测试用例2>执行成功后，table_column表中有关object_collect表的列应该有<24>列", afterTableColumn.getRowCount(), is(3));
+			for(int i = 0; i < afterTableColumn.getRowCount(); i++){
+				if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("odc_id")){
+					assertThat("<正确的测试用例2>执行成功后, <odc_id>字段的类型为<int8>", afterTableColumn.getString(i, "column_type"), is("int8"));
+				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("object_collect_type")){
+					assertThat("<正确的测试用例2>执行成功后, <object_collect_type>字段的类型为<int8>", afterTableColumn.getString(i, "column_type"), is("bpchar(1)"));
+				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("obj_number")){
+					assertThat("<正确的测试用例2>执行成功后, <obj_number>字段的类型为<int8>", afterTableColumn.getString(i, "column_type"), is("varchar(200)"));
+				}else{
+					assertThat("<正确的测试用例2>执行成功后, 再次查询table_column表，出现了不符合期望的情况，表名为：" + afterTableColumn.getString(i, "colume_name"), true, is(false));
+				}
+			}
+
+			//以上断言都测试成功后，删除<正确数据访问1>生成的数据
+			int tableCount = SqlOperator.execute(db, "delete from " + Table_info.TableName + " where table_id = ?", afterTableInfo.getLong(0, "table_id"));
+			int columnCount = SqlOperator.execute(db, "delete from " + Table_column.TableName + " where table_id = ?", afterTableInfo.getLong(0, "table_id"));
+			assertThat("删除<正确数据访问2>生成的数据成功<table_info>", tableCount, is(1));
+			assertThat("删除<正确数据访问2>生成的数据成功<table_column>", columnCount, is(3));
+
+			SqlOperator.commitTransaction(db);
+		}
+
+		tableInfos.clear();
+		tbConfParams.clear();
+	}
+
+	/*
+	 * 正确数据访问3：在database_id为1001的数据库采集任务下构造修改采集code_info表的数据，选择采集列和列排序，不设置并行抽取，
+	 * 注意，由于给code_info表构造了data_extraction_def表、table_clean表、table_srorage_info表、column_merge表、table_column表信息
+	 * 因此对这个表的采集数据进行修改，要断言修改成功后这5张表的数据是否都被修改了。(不需要和agent进行交互)
+	 * */
+	@Test
+	public void saveCollTbInfoThree(){
+		List<Table_info> tableInfos = new ArrayList<>();
+		List<CollTbConfParam> tbConfParams = new ArrayList<>();
+
+		Table_info codeInfo = new Table_info();
+		codeInfo.setTable_name("code_info");
+		codeInfo.setTable_ch_name("代码信息表");
+		codeInfo.setDatabase_id(FIRST_DATABASESET_ID);
+		codeInfo.setIs_parallel(IsFlag.Fou.getCode());
+
+		tableInfos.add(codeInfo);
+
+		List<Table_column> codeColumn = new ArrayList<>();
+		for(int i = 0; i < 3; i++){
+			String columnName;
+			String columnChName;
+			String columnType;
+			switch (i) {
+				case 0 :
+					columnName = "ci_sp_code";
+					columnType = "varchar(200)";
+					columnChName = "ci_sp_code";
+					break;
+				case 1 :
+					columnName = "ci_sp_class";
+					columnType = "varchar(200)";
+					columnChName = "ci_sp_class";
+					break;
+				case 2 :
+					columnName = "ci_sp_classname";
+					columnType = "varchar(100)";
+					columnChName = "ci_sp_classname";
+					break;
+				default:
+					columnName = "unexpected_columnName";
+					columnChName = "unexpected_columnChName";
+					columnType = "unexpected_columnType";
+			}
+			Table_column tableColumn = new Table_column();
+			tableColumn.setColume_name(columnName);
+			tableColumn.setColume_ch_name(columnChName);
+			tableColumn.setColumn_type(columnType);
+
+			codeColumn.add(tableColumn);
+		}
+
+		JSONArray codeSort = new JSONArray();
+		for(int i = 0; i < 3; i++){
+			String columnName;
+			int sort;
+			switch (i) {
+				case 0 :
+					columnName = "ci_sp_code";
+					sort = 1;
+					break;
+				case 1 :
+					columnName = "ci_sp_class";
+					sort = 2;
+					break;
+				case 2 :
+					columnName = "ci_sp_classname";
+					sort = 3;
+					break;
+				default:
+					columnName = "unexpected_columnName";
+					sort = (int)UNEXPECTED_ID;
+			}
+			JSONObject object = new JSONObject();
+			object.put("columnName", columnName);
+			object.put("sort", sort);
+
+			codeSort.add(object);
+		}
+
+		CollTbConfParam codeParam = new CollTbConfParam();
+		codeParam.setCollColumnString(JSON.toJSONString(codeColumn));
+		codeParam.setColumnSortString(codeSort.toJSONString());
+
+		tbConfParams.add(codeParam);
+
+		String rightStringThree = new HttpClient()
+				.addData("tableInfoString", JSON.toJSONString(tableInfos))
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.addData("collTbConfParamString", JSON.toJSONString(tbConfParams))
+				.post(getActionUrl("saveCollTbInfo")).getBodyString();
+		ActionResult rightResultThree = JsonUtil.toObjectSafety(rightStringThree, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResultThree.isSuccess(), is(true));
+		Integer returnValueThree = (Integer) rightResultThree.getData();
+		assertThat(returnValueThree == FIRST_DATABASESET_ID, is(true));
+
+		try(DatabaseWrapper db = new DatabaseWrapper()){
+			//断言table_info表中的内容是否符合期望
+			long count = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_id = ?", CODE_INFO_TABLE_ID).orElseThrow(() -> new BusinessSystemException("查询结果必须有且只有一条"));
+			Result tableInfo = SqlOperator.queryResult(db, "select * from " + Table_info.TableName + " where table_name = ?", "code_info");
+			assertThat("code_info表在table_info表中有且只有一条数据，但是该条数据的id和构造初始化数据时不一致，导致这个事情的原因是保存操作全部都是按照先删除后新增的逻辑执行的", count, is(0));
+			assertThat("code_info表在table_info表中有且只有一条数据，但是该条数据的id和构造初始化数据时不一致，导致这个事情的原因是保存操作全部都是按照先删除后新增的逻辑执行的", tableInfo.getRowCount(), is(1));
+
+			long tableId = tableInfo.getLong(0, "table_id");
+
+			//断言table_column表中的内容是否符合期望
+			long tbColCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " where table_id = ?", CODE_INFO_TABLE_ID).orElseThrow(() -> new BusinessSystemException("查询结果必须有且只有一条"));
+			Result tableColumn = SqlOperator.queryResult(db, "select * from " + Table_column.TableName + " where table_id = ?", tableId);
+			assertThat("code_info表的采集列在table_column表中有数据，数据有三条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在table_column表中已经查不到数据了", tbColCount, is(0));
+			assertThat("code_info表的采集列在table_column表中有数据，数据有三条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在table_column表中已经查不到数据了", tableColumn.getRowCount(), is(3));
+			for(int i = 0; i < tableColumn.getRowCount(); i++){
+				if(tableColumn.getString(i, "colume_name").equalsIgnoreCase("ci_sp_code")){
+					assertThat("采集列名为<ci_sp_code>,该列的数据类型为<varchar(200)>", tableColumn.getString(i, "column_type"), is("varchar(200)"));
+				}else if(tableColumn.getString(i, "colume_name").equalsIgnoreCase("ci_sp_class")){
+					assertThat("采集列名为<ci_sp_class>,该列的数据类型为<varchar(200)>", tableColumn.getString(i, "column_type"), is("varchar(200)"));
+				}else if(tableColumn.getString(i, "colume_name").equalsIgnoreCase("ci_sp_classname")){
+					assertThat("采集列名为<ci_sp_classname>,该列的数据类型为<varchar(100)>", tableColumn.getString(i, "column_type"), is("varchar(100)"));
+				}else {
+					assertThat("设置采集code_info表的前三列，但是出现了不符合期望的列，列名为 : " + tableColumn.getString(i, "colume_name"), true, is(false));
+				}
+			}
+			//断言data_extraction_def表中的内容是否符合期望
+			long defCount = SqlOperator.queryNumber(db, "select count(1) from " + Data_extraction_def.TableName + " where table_id = ?", CODE_INFO_TABLE_ID).orElseThrow(() -> new BusinessSystemException("查询结果必须有且只有一条"));
+			Result dataExtractionDef = SqlOperator.queryResult(db, "select * from " + Data_extraction_def.TableName + " where table_id = ?", tableId);
+			assertThat("code_info表的数据抽取定义信息在Data_extraction_def表中有数据，数据有1条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在data_extraction_def表中已经查不到数据了", defCount, is(0));
+			assertThat("code_info表的数据抽取定义信息在Data_extraction_def表中有数据，数据有1条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在data_extraction_def表中已经查不到数据了", dataExtractionDef.getRowCount(), is(1));
+			assertThat("code_info表的数据抽取定义信息在Data_extraction_def表中有数据，<数据抽取方式>符合预期", dataExtractionDef.getString(0, "data_extract_type"), is(DataExtractType.ShuJuChouQuJiRuKu.getCode()));
+			assertThat("code_info表的数据抽取定义信息在Data_extraction_def表中有数据，<是否表头>符合预期", dataExtractionDef.getString(0, "is_header"), is(IsFlag.Fou.getCode()));
+			assertThat("code_info表的数据抽取定义信息在Data_extraction_def表中有数据，<落地文件编码>符合预期", dataExtractionDef.getString(0, "database_code"), is(DataBaseCode.UTF_8.getCode()));
+			assertThat("code_info表的数据抽取定义信息在Data_extraction_def表中有数据，<落地文件格式>符合预期", dataExtractionDef.getString(0, "dbfile_format"), is(FileFormat.PARQUET.getCode()));
+			assertThat("code_info表的数据抽取定义信息在Data_extraction_def表中有数据，<落地存储目录>符合预期", dataExtractionDef.getString(0, "plane_url"), is("/home/hyshf"));
+
+			//断言table_clean表中的内容是否符合期望
+			long cleanCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_clean.TableName + " where table_id = ?", CODE_INFO_TABLE_ID).orElseThrow(() -> new BusinessSystemException("查询结果必须有且只有一条"));
+			Result tableClean = SqlOperator.queryResult(db, "select * from " + Table_clean.TableName + " where table_id = ?", tableId);
+			assertThat("code_info表的表清洗信息在Table_clean表中有数据，数据有2条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在Table_clean表中已经查不到数据了", cleanCount, is(0));
+			assertThat("code_info表的表清洗信息在Table_clean表中有数据，数据有2条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在Table_clean表中已经查不到数据了", tableClean.getRowCount(), is(2));
+			for(int i = 0; i < tableClean.getRowCount(); i++){
+				if(tableClean.getString(i, "clean_type").equalsIgnoreCase(CleanType.ZiFuTiHuan.getCode())){
+					assertThat("字符替换，原字符串符合预期", tableClean.getString(i, "field"), is("abc"));
+					assertThat("字符替换，目标字符串符合预期", tableClean.getString(i, "replace_feild"), is("def"));
+				}else if(tableClean.getString(i, "clean_type").equalsIgnoreCase(CleanType.ZiFuBuQi.getCode())){
+					assertThat("字符补齐，补齐长度符合预期", tableClean.getInt(i, "filling_length"), is(6));
+					assertThat("字符补齐，补齐字符串符合预期", tableClean.getString(i, "character_filling"), is("beyond"));
+				}else{
+					assertThat("修改成功后，code_info表在table_clean表中定义的表清洗方式出现了不符合预期的情况,清洗方式为 : " + tableClean.getString(i, "clean_type"), true, is(false));
+				}
+			}
+
+			//断言table_srorage_info表中的内容是否符合期望
+			long storageCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_storage_info.TableName + " where table_id = ?", CODE_INFO_TABLE_ID).orElseThrow(() -> new BusinessSystemException("查询结果必须有且只有一条"));
+			Result tableStorage = SqlOperator.queryResult(db, "select * from " + Table_storage_info.TableName + " where table_id = ?", tableId);
+			assertThat("code_info表的表存储信息在Table_storage_info表中有数据，数据有1条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在Table_storage_info表中已经查不到数据了", storageCount, is(0));
+			assertThat("code_info表的表存储信息在Table_storage_info表中有数据，数据有1条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在Table_storage_info表中已经查不到数据了", tableStorage.getRowCount(), is(1));
+			assertThat("code_info表的表存储信息在Table_storage_info表中有数据，数据有1条，存储格式为<定长>", tableStorage.getString(0, "file_format"), is(FileFormat.DingChang.getCode()));
+			assertThat("code_info表的表存储信息在Table_storage_info表中有数据，数据有1条，进数方式为<追加>", tableStorage.getString(0, "storage_type"), is(StorageType.ZhuiJia.getCode()));
+
+
+			//断言column_merge表中的内容是否符合期望
+			long mergeCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_merge.TableName + " where table_id = ?", CODE_INFO_TABLE_ID).orElseThrow(() -> new BusinessSystemException("查询结果必须有且只有一条"));
+			Result columnMerge = SqlOperator.queryResult(db, "select * from " + Column_merge.TableName + " where table_id = ?", tableId);
+			assertThat("code_info表的列合并信息在column_merge表中有数据，数据有2条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在column_merge表中已经查不到数据了", mergeCount, is(0));
+			assertThat("code_info表的列合并信息在column_merge表中有数据，数据有2条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在column_merge表中已经查不到数据了", columnMerge.getRowCount(), is(2));
+			for(int i = 0; i < columnMerge.getRowCount(); i++){
+				if(columnMerge.getString(i, "col_name").equalsIgnoreCase("user_create_id")){
+					assertThat("ode_info表的列合并信息在column_merge表中有数据，数据有2条,<要合并的字段>符合预期", columnMerge.getString(i, "old_name"), is("user_id" + "|" + "create_id"));
+				}else if(columnMerge.getString(i, "col_name").equalsIgnoreCase("user_name_password")){
+					assertThat("ode_info表的列合并信息在column_merge表中有数据，数据有2条,<要合并的字段>符合预期", columnMerge.getString(i, "old_name"), is("user_name" + "|" + "user_password"));
+				}else{
+					assertThat("修改成功后，code_info表在column_merge表中定义的列合并方式出现了不符合预期的情况,合并后列名为 : " + columnMerge.getString(i, "col_name"), true, is(false));
+				}
+			}
+
+			//删除测试数据
+			SqlOperator.execute(db, "delete from " + Table_column.TableName + " where table_id = ? ", tableId);
+			SqlOperator.execute(db, "delete from " + Table_storage_info.TableName + " where table_id = ? ", tableId);
+			SqlOperator.execute(db, "delete from " + Table_clean.TableName + " where table_id = ? ", tableId);
+			SqlOperator.execute(db, "delete from " + Column_merge.TableName + " where table_id = ? ", tableId);
+			SqlOperator.execute(db, "delete from " + Data_extraction_def.TableName + " where table_id = ? ", tableId);
+
+			SqlOperator.commitTransaction(db);
+		}
+	}
+
+	/*
+	* 正确数据访问4：在database_id为1001的数据库采集任务下构造新增采集ftp_collect表和object_collect表的数据，
+	* ftp_collect表不选择采集列和列排序，object_collect表选择采集列和列排序,都不设置并行抽取(需要和agent交互)
+	* */
+	@Test
+	public void saveCollTbInfoFour(){
+		List<Table_info> tableInfos = new ArrayList<>();
+		List<CollTbConfParam> tbConfParams = new ArrayList<>();
+
+		try(DatabaseWrapper db = new DatabaseWrapper()){
+			//在新增前，查询数据库，table_info表中应该没有采集ftp_collect表的信息
+			long count = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_name = ?", "ftp_collect").orElseThrow(() -> new BusinessSystemException("查询结果必须有且只有一条"));
+			assertThat("在新增前，查询数据库，table_info表中应该没有采集ftp_collect表的信息", count, is(0));
+			//在新增前，查询数据库，table_info表中应该没有采集object_collect表的信息
+			long countTwo = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_name = ?", "object_collect").orElseThrow(() -> new BusinessSystemException("查询结果必须有且只有一条"));
+			assertThat("在新增前，查询数据库，table_info表中应该没有采集object_collect表的信息", countTwo, is(0));
+		}
+
+		Table_info FTPInfo = new Table_info();
+		FTPInfo.setTable_name("ftp_collect");
+		FTPInfo.setTable_ch_name("ftp采集设置表");
+		FTPInfo.setDatabase_id(FIRST_DATABASESET_ID);
+		FTPInfo.setIs_parallel(IsFlag.Fou.getCode());
+
+		Table_info objInfo = new Table_info();
+		objInfo.setTable_name("object_collect");
+		objInfo.setTable_ch_name("半结构化文件采集设置表");
+		objInfo.setDatabase_id(FIRST_DATABASESET_ID);
+		objInfo.setIs_parallel(IsFlag.Fou.getCode());
+
+		tableInfos.add(FTPInfo);
+		tableInfos.add(objInfo);
+
+		CollTbConfParam FTPParam = new CollTbConfParam();
+		FTPParam.setColumnSortString("");
+		FTPParam.setColumnSortString("");
+
+		CollTbConfParam objParam = new CollTbConfParam();
+		objParam.setColumnSortString("");
+		objParam.setColumnSortString("");
+
+		tbConfParams.add(FTPParam);
+		tbConfParams.add(objParam);
+
+		String rightStringFour = new HttpClient()
+				.addData("tableInfoString", JSON.toJSONString(tableInfos))
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.addData("collTbConfParamString", JSON.toJSONString(tbConfParams))
+				.post(getActionUrl("saveCollTbInfo")).getBodyString();
+		ActionResult rightResultFour = JsonUtil.toObjectSafety(rightStringFour, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResultFour.isSuccess(), is(true));
+		Integer returnValue = (Integer) rightResultFour.getData();
+		assertThat(returnValue == FIRST_DATABASESET_ID, is(true));
+
+		try(DatabaseWrapper db = new DatabaseWrapper()){
+			//新增成功后，断言数据库中的数据是否符合期望，如果符合期望，则删除本次新增带来的数据
+			Result afterTableInfo = SqlOperator.queryResult(db, "select * from " + Table_info.TableName + " where table_name = ?", "ftp_collect");
+			assertThat("<正确的测试用例4>执行成功后，table_info表中出现了采集ftp_collect表的配置", afterTableInfo.getRowCount(), is(1));
+			assertThat("<正确的测试用例4>执行成功后，采集ftp_collect表配置，<清洗顺序>符合期望", afterTableInfo.getString(0, "ti_or"), is(tableCleanOrder.toJSONString()));
+			assertThat("<正确的测试用例4>执行成功后，采集ftp_collect表配置，<是否使用MD5>符合期望", afterTableInfo.getString(0, "is_md5"), is(IsFlag.Shi.getCode()));
+			assertThat("<正确的测试用例4>执行成功后，采集ftp_collect表配置，<是否仅登记>符合期望", afterTableInfo.getString(0, "is_register"), is(IsFlag.Shi.getCode()));
+			assertThat("<正确的测试用例4>执行成功后，采集ftp_collect表配置，<是否仅登记>符合期望", afterTableInfo.getString(0, "is_register"), is(IsFlag.Shi.getCode()));
+			assertThat("<正确的测试用例4>执行成功后，采集ftp_collect表配置，<是否并行抽取>符合期望", afterTableInfo.getString(0, "is_parallel"), is(IsFlag.Fou.getCode()));
+
+			Result afterTableColumn = SqlOperator.queryResult(db, "select * from " + Table_column.TableName + " where table_id = ?", afterTableInfo.getLong(0, "table_id"));
+			assertThat("<正确的测试用例4>执行成功后，table_column表中有关ftp_collect表的列应该有<24>列", afterTableColumn.getRowCount(), is(24));
+			for(int i = 0; i < afterTableColumn.getRowCount(); i++){
+				if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("ftp_id")){
+					assertThat("<正确的测试用例4>执行成功后, <ftp_id>字段的类型为<int8>", afterTableColumn.getString(i, "column_type"), is("int8"));
+				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("ftp_number")){
+					assertThat("<正确的测试用例4>执行成功后, <ftp_number>字段的类型为<varchar(200)>", afterTableColumn.getString(i, "column_type"), is("varchar(200)"));
+				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("ftp_name")){
+					assertThat("<正确的测试用例4>执行成功后, <ftp_name>字段的类型为<varchar(512)>", afterTableColumn.getString(i, "column_type"), is("varchar(512)"));
+				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("start_date")){
+					assertThat("<正确的测试用例4>执行成功后, <start_date>字段的类型为<bpchar(8)>", afterTableColumn.getString(i, "column_type"), is("bpchar(8)"));
+				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("end_date")){
+					assertThat("<正确的测试用例4>执行成功后, <end_date>字段的类型为<bpchar(8)>", afterTableColumn.getString(i, "column_type"), is("bpchar(8)"));
+				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("ftp_ip")){
+					assertThat("<正确的测试用例4>执行成功后, <ftp_ip>字段的类型为<varchar(50)>", afterTableColumn.getString(i, "column_type"), is("varchar(50)"));
+				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("ftp_port")){
+					assertThat("<正确的测试用例4>执行成功后, <ftp_port>字段的类型为<varchar(10)>", afterTableColumn.getString(i, "column_type"), is("varchar(10)"));
+				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("ftp_username")){
+					assertThat("<正确的测试用例4>执行成功后, <ftp_username>字段的类型为<varchar(512)>", afterTableColumn.getString(i, "column_type"), is("varchar(512)"));
+				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("ftp_password")){
+					assertThat("<正确的测试用例4>执行成功后, <ftp_password>字段的类型为<varchar(100)>", afterTableColumn.getString(i, "column_type"), is("varchar(100)"));
+				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("ftp_dir")){
+					assertThat("<正确的测试用例4>执行成功后, <ftp_dir>字段的类型为<varchar(512)>", afterTableColumn.getString(i, "column_type"), is("varchar(512)"));
+				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("local_path")){
+					assertThat("<正确的测试用例4>执行成功后, <local_path>字段的类型为<varchar(512)>", afterTableColumn.getString(i, "column_type"), is("varchar(512)"));
+				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("ftp_rule_path")){
+					assertThat("<正确的测试用例4>执行成功后, <ftp_rule_path>字段的类型为<bpchar(1)>", afterTableColumn.getString(i, "column_type"), is("bpchar(1)"));
+				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("child_file_path")){
+					assertThat("<正确的测试用例4>执行成功后, <child_file_path>字段的类型为<varchar(512)>", afterTableColumn.getString(i, "column_type"), is("varchar(512)"));
+				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("child_time")){
+					assertThat("<正确的测试用例4>执行成功后, <child_time>字段的类型为<bpchar(1)>", afterTableColumn.getString(i, "column_type"), is("bpchar(1)"));
+				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("file_suffix")){
+					assertThat("<正确的测试用例4>执行成功后, <file_suffix>字段的类型为<varchar(200)>", afterTableColumn.getString(i, "column_type"), is("varchar(200)"));
+				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("ftp_model")){
+					assertThat("<正确的测试用例4>执行成功后, <ftp_model>字段的类型为<bpchar(1)>", afterTableColumn.getString(i, "column_type"), is("bpchar(1)"));
+				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("run_way")){
+					assertThat("<正确的测试用例4>执行成功后, <run_way>字段的类型为<bpchar(1)>", afterTableColumn.getString(i, "column_type"), is("bpchar(1)"));
+				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("remark")){
+					assertThat("<正确的测试用例4>执行成功后, <remark>字段的类型为<varchar(512)>", afterTableColumn.getString(i, "column_type"), is("varchar(512)"));
+				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("is_sendok")){
+					assertThat("<正确的测试用例4>执行成功后, <is_sendok>字段的类型为<bpchar(1)>", afterTableColumn.getString(i, "column_type"), is("bpchar(1)"));
+				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("is_unzip")){
+					assertThat("<正确的测试用例4>执行成功后, <is_unzip>字段的类型为<bpchar(1)>", afterTableColumn.getString(i, "column_type"), is("bpchar(1)"));
+				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("reduce_type")){
+					assertThat("<正确的测试用例4>执行成功后, <reduce_type>字段的类型为<bpchar(1)>", afterTableColumn.getString(i, "column_type"), is("bpchar(1)"));
+				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("is_read_realtime")){
+					assertThat("<正确的测试用例4>执行成功后, <is_read_realtime>字段的类型为<bpchar(1)>", afterTableColumn.getString(i, "column_type"), is("bpchar(1)"));
+				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("realtime_interval")){
+					assertThat("<正确的测试用例4>执行成功后, <realtime_interval>字段的类型为<int8>", afterTableColumn.getString(i, "column_type"), is("int8"));
+				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("agent_id")){
+					assertThat("<正确的测试用例4>执行成功后, <agent_id>字段的类型为<int8>", afterTableColumn.getString(i, "column_type"), is("int8"));
+				}else{
+					assertThat("<正确的测试用例4>执行完成之后，采集ftp_collect表的所有字段，出现了不符合期望的字段，字段名为 : " + afterTableColumn.getString(i, "colume_name"), true, is(false));
+				}
+			}
+
+			//以上断言都测试成功后，删除<正确数据访问4>生成的数据
+			int tableCount = SqlOperator.execute(db, "delete from " + Table_info.TableName + " where table_id = ?", afterTableInfo.getLong(0, "table_id"));
+			int columnCount = SqlOperator.execute(db, "delete from " + Table_column.TableName + " where table_id = ?", afterTableInfo.getLong(0, "table_id"));
+			assertThat("删除<正确数据访问4>生成的数据成功<table_info>", tableCount, is(1));
+			assertThat("删除<正确数据访问4>生成的数据成功<table_column>", columnCount, is(24));
+
+			SqlOperator.commitTransaction(db);
+		}
+
+		try(DatabaseWrapper db = new DatabaseWrapper()){
+			//新增成功后，断言数据库中的数据是否符合期望，如果符合期望，则删除本次新增带来的数据
+			Result afterTableInfo = SqlOperator.queryResult(db, "select * from " + Table_info.TableName + " where table_name = ?", "object_collect");
+			assertThat("<正确的测试用例4>执行成功后，table_info表中出现了采集object_collect表的配置", afterTableInfo.getRowCount(), is(1));
+			assertThat("<正确的测试用例4>执行成功后，采集object_collect表配置，<清洗顺序>符合期望", afterTableInfo.getString(0, "ti_or"), is(tableCleanOrder.toJSONString()));
+			assertThat("<正确的测试用例4>执行成功后，采集object_collect表配置，<是否使用MD5>符合期望", afterTableInfo.getString(0, "is_md5"), is(IsFlag.Shi.getCode()));
+			assertThat("<正确的测试用例4>执行成功后，采集object_collect表配置，<是否仅登记>符合期望", afterTableInfo.getString(0, "is_register"), is(IsFlag.Shi.getCode()));
+			assertThat("<正确的测试用例4>执行成功后，采集object_collect表配置，<是否仅登记>符合期望", afterTableInfo.getString(0, "is_register"), is(IsFlag.Shi.getCode()));
+			assertThat("<正确的测试用例4>执行成功后，采集object_collect表配置，<是否并行抽取>符合期望", afterTableInfo.getString(0, "is_parallel"), is(IsFlag.Fou.getCode()));
+
+			Result afterTableColumn = SqlOperator.queryResult(db, "select * from " + Table_column.TableName + " where table_id = ?", afterTableInfo.getLong(0, "table_id"));
+			assertThat("<正确的测试用例4>执行成功后，table_column表中有关object_collect表的列应该有<24>列", afterTableColumn.getRowCount(), is(3));
+			for(int i = 0; i < afterTableColumn.getRowCount(); i++){
+				if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("odc_id")){
+					assertThat("<正确的测试用例4>执行成功后, <odc_id>字段的类型为<int8>", afterTableColumn.getString(i, "column_type"), is("int8"));
+				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("object_collect_type")){
+					assertThat("<正确的测试用例4>执行成功后, <object_collect_type>字段的类型为<int8>", afterTableColumn.getString(i, "column_type"), is("bpchar(1)"));
+				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("obj_number")){
+					assertThat("<正确的测试用例4>执行成功后, <obj_number>字段的类型为<int8>", afterTableColumn.getString(i, "column_type"), is("varchar(200)"));
+				}else{
+					assertThat("<正确的测试用例4>执行成功后, 再次查询table_column表，出现了不符合期望的情况，表名为：" + afterTableColumn.getString(i, "colume_name"), true, is(false));
+				}
+			}
+
+			//以上断言都测试成功后，删除<正确数据访问4>生成的数据
+			int tableCount = SqlOperator.execute(db, "delete from " + Table_info.TableName + " where table_id = ?", afterTableInfo.getLong(0, "table_id"));
+			int columnCount = SqlOperator.execute(db, "delete from " + Table_column.TableName + " where table_id = ?", afterTableInfo.getLong(0, "table_id"));
+			assertThat("删除<正确数据访问4>生成的数据成功<table_info>", tableCount, is(1));
+			assertThat("删除<正确数据访问4>生成的数据成功<table_column>", columnCount, is(3));
+
+			SqlOperator.commitTransaction(db);
+		}
+	}
+
+	@Test
+	public void saveCollTbInfoFive(){
+		List<Table_info> tableInfos = new ArrayList<>();
+		List<CollTbConfParam> tbConfParams = new ArrayList<>();
 		//错误的数据访问1：构造缺少表名的采集数据
+		Table_info FTPInfo = new Table_info();
+		FTPInfo.setTable_ch_name("ftp采集设置表");
+		FTPInfo.setDatabase_id(FIRST_DATABASESET_ID);
+		FTPInfo.setIs_parallel(IsFlag.Fou.getCode());
+
+		tableInfos.add(FTPInfo);
+
+		CollTbConfParam FTPParam = new CollTbConfParam();
+		FTPParam.setColumnSortString("");
+		FTPParam.setColumnSortString("");
+
+		tbConfParams.add(FTPParam);
+
+		String wrongStringOne = new HttpClient()
+				.addData("tableInfoString", JSON.toJSONString(tableInfos))
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.addData("collTbConfParamString", JSON.toJSONString(tbConfParams))
+				.post(getActionUrl("saveCollTbInfo")).getBodyString();
+		ActionResult wrongResultOne = JsonUtil.toObjectSafety(wrongStringOne, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultOne.isSuccess(), is(false));
+
+		tableInfos.clear();
+		tbConfParams.clear();
 
 		//错误的数据访问2：构造缺少表中文名的采集数据
+		Table_info FTPInfoTwo = new Table_info();
+		FTPInfoTwo.setTable_name("ftp_collect");
+		FTPInfoTwo.setDatabase_id(FIRST_DATABASESET_ID);
+		FTPInfoTwo.setIs_parallel(IsFlag.Fou.getCode());
+
+		tableInfos.add(FTPInfoTwo);
+
+		CollTbConfParam FTPParamTwo = new CollTbConfParam();
+		FTPParamTwo.setColumnSortString("");
+		FTPParamTwo.setColumnSortString("");
+
+		tbConfParams.add(FTPParamTwo);
+
+		String wrongStringTwo = new HttpClient()
+				.addData("tableInfoString", JSON.toJSONString(tableInfos))
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.addData("collTbConfParamString", JSON.toJSONString(tbConfParams))
+				.post(getActionUrl("saveCollTbInfo")).getBodyString();
+		ActionResult wrongResultTwo = JsonUtil.toObjectSafety(wrongStringTwo, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultTwo.isSuccess(), is(false));
+
+		tableInfos.clear();
+		tbConfParams.clear();
 
 		//错误的数据访问3：构造设置了并行抽取，但没有设置并行抽取SQL的访问方式
+		Table_info FTPInfoThree = new Table_info();
+		FTPInfoThree.setTable_name("ftp_collect");
+		FTPInfoThree.setTable_ch_name("ftp采集设置表");
+		FTPInfoThree.setDatabase_id(FIRST_DATABASESET_ID);
+		FTPInfoThree.setIs_parallel(IsFlag.Shi.getCode());
+
+		tableInfos.add(FTPInfoThree);
+
+		CollTbConfParam FTPParamThree = new CollTbConfParam();
+		FTPParamThree.setColumnSortString("");
+		FTPParamThree.setColumnSortString("");
+
+		tbConfParams.add(FTPParamThree);
+
+		String wrongStringThree = new HttpClient()
+				.addData("tableInfoString", JSON.toJSONString(tableInfos))
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.addData("collTbConfParamString", JSON.toJSONString(tbConfParams))
+				.post(getActionUrl("saveCollTbInfo")).getBodyString();
+		ActionResult wrongResultThree = JsonUtil.toObjectSafety(wrongStringThree, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultThree.isSuccess(), is(false));
+
+		tableInfos.clear();
+		tbConfParams.clear();
 
 		//错误的数据访问4：构造在不存在的数据库采集任务中保存采集ftp_collect表数据
+		Table_info FTPInfoFour = new Table_info();
+		FTPInfoFour.setTable_name("ftp_collect");
+		FTPInfoFour.setTable_ch_name("ftp采集设置表");
+		FTPInfoFour.setDatabase_id(UNEXPECTED_ID);
+		FTPInfoFour.setIs_parallel(IsFlag.Fou.getCode());
+
+		tableInfos.add(FTPInfoFour);
+
+		CollTbConfParam FTPParamFour = new CollTbConfParam();
+		FTPParamFour.setColumnSortString("");
+		FTPParamFour.setColumnSortString("");
+
+		tbConfParams.add(FTPParamFour);
+
+		String wrongStringFour = new HttpClient()
+				.addData("tableInfoString", JSON.toJSONString(tableInfos))
+				.addData("colSetId", UNEXPECTED_ID)
+				.addData("collTbConfParamString", JSON.toJSONString(tbConfParams))
+				.post(getActionUrl("saveCollTbInfo")).getBodyString();
+		ActionResult wrongResultFour = JsonUtil.toObjectSafety(wrongStringFour, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultFour.isSuccess(), is(false));
+
+		tableInfos.clear();
+		tbConfParams.clear();
 
 		//错误的数据访问5：构造tableInfoString参数是空字符串的情况
+		String wrongStringFive = new HttpClient()
+				.addData("tableInfoString", "")
+				.addData("colSetId", UNEXPECTED_ID)
+				.addData("collTbConfParamString", JSON.toJSONString(tbConfParams))
+				.post(getActionUrl("saveCollTbInfo")).getBodyString();
+		ActionResult wrongResultFive = JsonUtil.toObjectSafety(wrongStringFive, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultFive.isSuccess(), is(false));
 
 		//错误的数据访问6：构造collTbConfParamString参数是空字符串的情况
+		String wrongStringSix = new HttpClient()
+				.addData("tableInfoString", JSON.toJSONString(tableInfos))
+				.addData("colSetId", UNEXPECTED_ID)
+				.addData("collTbConfParamString", "")
+				.post(getActionUrl("saveCollTbInfo")).getBodyString();
+		ActionResult wrongResultSix = JsonUtil.toObjectSafety(wrongStringSix, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultSix.isSuccess(), is(false));
 
 		//错误的数据访问7：构造tableInfoString和collTbConfParamString解析成的list集合大小不同的情况
+		Table_info FTPInfoSeven = new Table_info();
+		FTPInfoSeven.setTable_name("ftp_collect");
+		FTPInfoSeven.setTable_ch_name("ftp采集设置表");
+		FTPInfoSeven.setDatabase_id(FIRST_DATABASESET_ID);
+		FTPInfoSeven.setIs_parallel(IsFlag.Fou.getCode());
+
+		Table_info objInfoSeven = new Table_info();
+		objInfoSeven.setTable_name("object_collect");
+		objInfoSeven.setTable_ch_name("半结构化文件采集设置表");
+		objInfoSeven.setDatabase_id(FIRST_DATABASESET_ID);
+		objInfoSeven.setIs_parallel(IsFlag.Fou.getCode());
+
+		tableInfos.add(FTPInfoSeven);
+		tableInfos.add(objInfoSeven);
+
+		CollTbConfParam FTPParamSeven = new CollTbConfParam();
+		FTPParamSeven.setColumnSortString("");
+		FTPParamSeven.setColumnSortString("");
+
+		tbConfParams.add(FTPParamSeven);
+
+		String wrongStringSeven = new HttpClient()
+				.addData("tableInfoString", JSON.toJSONString(tableInfos))
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.addData("collTbConfParamString", JSON.toJSONString(tbConfParams))
+				.post(getActionUrl("saveCollTbInfo")).getBodyString();
+		ActionResult wrongResultSeven = JsonUtil.toObjectSafety(wrongStringSeven, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultSeven.isSuccess(), is(false));
+
 	}
 
 	/**
