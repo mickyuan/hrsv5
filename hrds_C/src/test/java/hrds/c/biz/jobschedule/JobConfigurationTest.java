@@ -1,5 +1,6 @@
 package hrds.c.biz.jobschedule;
 
+import com.alibaba.fastjson.TypeReference;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
@@ -18,6 +19,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -41,6 +43,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
     private static final String SubSysCd5 = "myrwcs3";
     // 初始化模板ID
     private static final long EtlTempId = 20000L;
+    private static final long EtlTempId2 = 20001L;
     // 初始化模板ID参数
     private static final long EtlTempParaId = 30000L;
     // 初始化登录用户ID
@@ -212,12 +215,20 @@ public class JobConfigurationTest extends WebBaseTestCase {
             assertThat("测试数据Etl_job_resource_rela初始化", num, is(1));
             // 8.构造etl_job_temp表测试数据
             Etl_job_temp etl_job_temp = new Etl_job_temp();
-            etl_job_temp.setEtl_temp_id(EtlTempId);
-            etl_job_temp.setEtl_temp_type("上传作业模板");
-            etl_job_temp.setPro_dic("/home/hyshf/zymb");
-            etl_job_temp.setPro_name("上传模板");
-            num = etl_job_temp.add(db);
-            assertThat("测试数据Etl_job_temp初始化", num, is(1));
+            for (int i = 1; i <= 2; i++) {
+                if (i == 1) {
+                    etl_job_temp.setEtl_temp_id(EtlTempId);
+                    etl_job_temp.setEtl_temp_type("作业模板" + i);
+                    etl_job_temp.setPro_name("upload.shell");
+                } else {
+                    etl_job_temp.setEtl_temp_id(EtlTempId2);
+                    etl_job_temp.setEtl_temp_type("作业模板" + i);
+                    etl_job_temp.setPro_name("download.shell");
+                }
+                etl_job_temp.setPro_dic("/home/hyshf/zymb");
+                num = etl_job_temp.add(db);
+                assertThat("测试数据Etl_job_temp初始化", num, is(1));
+            }
             // 9.构造etl_job_temp_para表测试数据
             Etl_job_temp_para etl_job_temp_para = new Etl_job_temp_para();
             etl_job_temp_para.setEtl_temp_para_id(EtlTempParaId);
@@ -318,6 +329,12 @@ public class JobConfigurationTest extends WebBaseTestCase {
             // 判断Etl_job_temp数据是否被删除
             num = SqlOperator.queryNumber(db, "select count(1) from " + Etl_job_temp.TableName +
                     "  where etl_temp_id=?", EtlTempId).orElseThrow(() -> new RuntimeException("count fail!"));
+            assertThat("此条数据删除后，记录数应该为0", num, is(0L));
+            SqlOperator.execute(db, "delete from " + Etl_job_temp.TableName + " where etl_temp_id=?",
+                    EtlTempId2);
+            // 判断Etl_job_temp数据是否被删除
+            num = SqlOperator.queryNumber(db, "select count(1) from " + Etl_job_temp.TableName +
+                    "  where etl_temp_id=?", EtlTempId2).orElseThrow(() -> new RuntimeException("count fail!"));
             assertThat("此条数据删除后，记录数应该为0", num, is(0L));
             // 5.测试完成后删除Etl_job_temp_para表测试数据
             SqlOperator.execute(db, "delete from " + Etl_job_temp_para.TableName + " where " +
@@ -830,16 +847,124 @@ public class JobConfigurationTest extends WebBaseTestCase {
         }
     }
 
+    @Method(desc = "查询作业模板信息", logicStep = "1.正常的数据访问1，数据都正常，该方法只有一种情况")
     @Test
     public void searchEtlJobTemplate() {
         // 1.正常的数据访问1，数据都正常
-        String bodyString = new HttpClient().addData("etl_sys_cd", EtlTempId)
+        String bodyString = new HttpClient()
                 .post(getActionUrl("searchEtlJobTemplate"))
                 .getBodyString();
         ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
-                .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
         assertThat(ar.isSuccess(), is(true));
         Result etlJobTemplate = ar.getDataForResult();
+        for (int i = 0; i < etlJobTemplate.getRowCount(); i++) {
+            if (etlJobTemplate.getLong(i, "etl_temp_id") == EtlTempId) {
+                assertThat(etlJobTemplate.getString(i, "etl_temp_type"), is("作业模板1"));
+                assertThat(etlJobTemplate.getString(i, "pro_dic"), is("/home/hyshf/zymb"));
+                assertThat(etlJobTemplate.getString(i, "pro_name"), is("upload.shell"));
+            } else {
+                assertThat(etlJobTemplate.getString(i, "etl_temp_type"), is("作业模板2"));
+                assertThat(etlJobTemplate.getString(i, "pro_dic"), is("/home/hyshf/zymb"));
+                assertThat(etlJobTemplate.getString(i, "pro_name"), is("download.shell"));
+            }
+        }
+    }
+
+    @Method(desc = "根据模板ID查询作业模板信息",
+            logicStep = "1.正常的数据访问1，数据都正常" +
+                    "2.错误的数据访问1，etl_temp_id不存在，该方法只有两种情况")
+    @Test
+    public void searchEtlJobTemplateById() {
+        // 1.正常的数据访问1，数据都正常
+        String bodyString = new HttpClient()
+                .addData("etl_temp_id", EtlTempId)
+                .post(getActionUrl("searchEtlJobTemplateById"))
+                .getBodyString();
+        ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(true));
+        Map<Object, Object> etlJobTemplate = ar.getDataForMap();
+        assertThat(etlJobTemplate.get("etl_temp_id").toString(), is(String.valueOf(EtlTempId)));
+        assertThat(etlJobTemplate.get("etl_temp_type"), is("作业模板1"));
+        assertThat(etlJobTemplate.get("pro_dic"), is("/home/hyshf/zymb"));
+        assertThat(etlJobTemplate.get("pro_name"), is("upload.shell"));
+        // 2.错误的数据访问1，etl_temp_id不存在
+        bodyString = new HttpClient()
+                .addData("etl_temp_id", 1)
+                .post(getActionUrl("searchEtlJobTemplateById"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        Map<Object, Object> dataForMap = ar.getDataForMap();
+        assertThat(ar.isSuccess(), is(true));
+        assertThat(dataForMap.isEmpty(), is(true));
+    }
+
+    @Method(desc = "关联查询作业模板表和作业模板参数表获取作业模板信息",
+            logicStep = "1.正常的数据访问1，数据都正常" +
+                    "2.错误的数据访问1，etl_temp_id不存在")
+    @Test
+    public void searchEtlJobTempAndParam() {
+        // 1.正常的数据访问1，数据都正常
+        String bodyString = new HttpClient()
+                .addData("etl_temp_id", EtlTempId)
+                .post(getActionUrl("searchEtlJobTempAndParam"))
+                .getBodyString();
+        ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(true));
+        Type type = new TypeReference<List<Map<String, Object>>>() {
+        }.getType();
+        List<Map<String, Object>> etlJobTempAndPara = JsonUtil.toObject(ar.getData().toString(), type);
+        for (Map<String, Object> map : etlJobTempAndPara) {
+            assertThat(map.get("etl_temp_id").toString(), is(String.valueOf(EtlTempId)));
+            assertThat(map.get("etl_temp_para_id").toString(), is(String.valueOf(EtlTempParaId)));
+            assertThat(map.get("etl_temp_type"), is("作业模板1"));
+            assertThat(map.get("pro_dic"), is("/home/hyshf/zymb"));
+            assertThat(map.get("pro_name"), is("upload.shell"));
+            assertThat(map.get("etl_para_type").toString(), is("text"));
+            assertThat(map.get("etl_job_para_size").toString(), is("0"));
+            assertThat(map.get("etl_pro_para_sort").toString(), is(String.valueOf(1)));
+            assertThat(map.get("etl_job_pro_para").toString(), is("是否压缩"));
+        }
+        // 2.错误的数据访问1，etl_temp_id不存在
+        bodyString = new HttpClient()
+                .addData("etl_temp_id", 1)
+                .post(getActionUrl("searchEtlJobTempAndParam"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(true));
+        etlJobTempAndPara = JsonUtil.toObject(ar.getData().toString(), type);
+        assertThat(etlJobTempAndPara.isEmpty(), is(true));
+    }
+
+    @Method(desc = "关联查询作业模板表和作业模板参数表获取作业模板信息",
+            logicStep = "1.正常的数据访问1，数据都正常" +
+                    "2.错误的数据访问1，etl_temp_id不存在")
+    @Test
+    public void saveEtlJobTemp() {
+        // 1.正常的数据访问1，数据都正常
+        String bodyString = new HttpClient()
+                .addData("etl_sys_cd", EtlSysCd)
+                .addData("sub_sys_cd", SubSysCd)
+                .addData("etl_job", "模板作业")
+                .addData("etl_temp_id", EtlTempId)
+                .addData("etl_job_temp_para", "0,1")
+                .post(getActionUrl("saveEtlJobTemp"))
+                .getBodyString();
+        ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(true));
+        try (DatabaseWrapper db = new DatabaseWrapper()) {
+            Map<String, Object> etlJobDef = SqlOperator.queryOneObject(db, "select * from " +
+                    Etl_job_def.TableName + " where etl_job=? and etl_sys_cd=?", "模板作业", EtlSysCd);
+            assertThat(etlJobDef.get("etl_sys_cd"),is(EtlSysCd));
+            assertThat(etlJobDef.get("sub_sys_cd"),is(SubSysCd));
+//            assertThat(etlJobDef.get("etl_sys_cd"),is(EtlSysCd));
+//            assertThat(etlJobDef.get("etl_sys_cd"),is(EtlSysCd));
+        }
     }
 
     @Method(desc = "分页查询作业系统参数，此方法只有三种情况",

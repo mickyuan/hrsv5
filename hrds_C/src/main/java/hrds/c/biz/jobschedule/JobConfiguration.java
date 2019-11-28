@@ -245,19 +245,19 @@ public class JobConfiguration extends BaseAction {
                     "2.根据模板ID查询模板信息")
     @Param(name = "etl_temp_id", desc = "模板作业ID", range = "无限制")
     @Return(desc = "返回根据模板ID查询模板信息", range = "无限制")
-    public Result searchJobTemplateById(String etl_temp_id) {
+    public Map<String, Object> searchEtlJobTemplateById(long etl_temp_id) {
         // 1.数据可访问权限处理方式，此方法不需要用户权限控制
         // 2.根据模板ID查询模板信息
-        return Dbo.queryResult("select * from " + Etl_job_temp.TableName + " where etl_temp_id=?",
+        return Dbo.queryOneObject("select * from " + Etl_job_temp.TableName + " where etl_temp_id=?",
                 etl_temp_id);
     }
 
     @Method(desc = "关联查询作业模板表和作业模板参数表获取作业模板信息",
             logicStep = "1.数据可访问权限处理方式，此方法不需要用户权限控制" +
                     "2.关联查询作业模板表和作业模板参数表获取作业模板信息")
-    @Param(name = "etl_temp_id", desc = "参数描述", range = "无限制")
+    @Param(name = "etl_temp_id", desc = "作业模板ID", range = "无限制")
     @Return(desc = "返回关联查询作业模板表和作业模板参数表获取作业模板信息", range = "无限制")
-    public List<Map<String, Object>> searchEtlJobTempAndParam(String etl_temp_id) {
+    public List<Map<String, Object>> searchEtlJobTempAndParam(long etl_temp_id) {
         // 1.数据可访问权限处理方式，此方法不需要用户权限控制
         // 2.关联查询作业模板表和作业模板参数表获取作业模板信息
         return Dbo.queryList("SELECT * FROM " + Etl_job_temp.TableName + " t1,"
@@ -279,7 +279,7 @@ public class JobConfiguration extends BaseAction {
     @Param(name = "etl_job", desc = "作业名称", range = "不能重复，新增作业时生成")
     @Param(name = "etl_temp_id", desc = "作业模板ID", range = "无限制")
     @Param(name = "etl_job_temp_para", desc = "作业模板参数", range = "无限制")
-    public void saveEtlJobTemp(String etl_sys_cd, String sub_sys_cd, String etl_job, String etl_temp_id,
+    public void saveEtlJobTemp(String etl_sys_cd, String sub_sys_cd, String etl_job, long etl_temp_id,
                                String etl_job_temp_para) {
         // 1.数据可访问权限处理方式，通过user_id进行权限控制
         // 2.验证当前用户下的工程是否存在
@@ -311,18 +311,14 @@ public class JobConfiguration extends BaseAction {
         etl_job_def.setToday_disp(Today_Dispatch_Flag.YES.getCode());
         etl_job_def.setDisp_freq(Dispatch_Frequency.DAILY.getCode());
         etl_job_def.setUpd_time(DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate())
-                + " " + DateUtil.parseStr2TimeWith6Char(DateUtil.getSysDate()));
+                + " " + DateUtil.parseStr2TimeWith6Char(DateUtil.getSysTime()));
         etl_job_def.setMain_serv_sync(Main_Server_Sync.YES.getCode());
         // 6.获取作业模板信息封装作业实体对象
-        Result jobTemplate = searchJobTemplateById(etl_temp_id);
+        Map<String, Object> jobTemplate = searchEtlJobTemplateById(etl_temp_id);
         if (!jobTemplate.isEmpty()) {
-            for (int i = 0; i < jobTemplate.getRowCount(); i++) {
-                String pro_dic = jobTemplate.getString(i, "pro_dic");
-                String pro_name = jobTemplate.getString(i, "pro_name");
-                etl_job_def.setPro_dic(pro_dic);
-                etl_job_def.setPro_name(pro_name);
-                etl_job_def.setLog_dic(pro_dic);
-            }
+            etl_job_def.setPro_dic(jobTemplate.get("pro_dic").toString());
+            etl_job_def.setPro_name(jobTemplate.get("pro_name").toString());
+            etl_job_def.setLog_dic(jobTemplate.get("pro_dic").toString());
         }
         // 7.判断作业名称是否已存在，存在不能新增
         if (ETLJobUtil.isEtlJobDefExist(etl_sys_cd, etl_job)) {
