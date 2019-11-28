@@ -121,8 +121,10 @@ public class FileCollectJobImpl implements JobInterface {
 			//5.获取所有需要采集的文件的后缀名
 			List<String> fileTypeList = getFileSuffixList(file_source);
 			//6.获取文件夹下需要采集的变化的文件和新增的文件
-			getNewFileListByFileType(fileSourcePath, fileTypeList, fileNameHTreeMap, newFile);
-			getChangeFileListByFileType(fileSourcePath, fileTypeList, fileNameHTreeMap, changeFileList);
+			getNewFileListByFileType(fileSourcePath, fileTypeList, fileNameHTreeMap, newFile
+					, file_source.getIs_other());
+			getChangeFileListByFileType(fileSourcePath, fileTypeList, fileNameHTreeMap, changeFileList
+					, file_source.getIs_other());
 
 			//构建每个阶段具体的实现类，按照顺序执行(卸数,数据加载,数据登记)
 			JobStageInterface unloadData = new FileCollectUnloadDataStageImpl(fileCollectParamBean,
@@ -151,16 +153,25 @@ public class FileCollectJobImpl implements JobInterface {
 	@Param(name = "fileNameHTreeMap", desc = "已经被采集过的文件，和文件最后一次修改时间的Map集合", range = "不可为空")
 	@Param(name = "newFile", desc = "文件夹下未被采集过的文件全路径的集合", range = "不可为空")
 	private void getNewFileListByFileType(String path, List<String> fileTypeList, ConcurrentMap<String, String>
-			fileNameHTreeMap, List<String> newFile) {
-		//1.获取文件夹下没有被采集过的文件或者文件夹
-		File[] files = new File(path).listFiles((file) -> file.isDirectory()
-				|| (!fileNameHTreeMap.containsKey(file.getAbsolutePath())
-				&& fileTypeList.contains(FileNameUtils.getExtension(file.getName()))));
+			fileNameHTreeMap, List<String> newFile, String is_other) {
+		File[] files;
+		//如果选择了其他，则fileTypeList里面的文件类型不采集
+		if (IsFlag.Shi.getCode().equals(is_other)) {
+			//1.获取文件夹下没有被采集过的文件或者文件夹
+			files = new File(path).listFiles((file) -> file.isDirectory()
+					|| (!fileNameHTreeMap.containsKey(file.getAbsolutePath())
+					&& !fileTypeList.contains(FileNameUtils.getExtension(file.getName()))));
+		} else {//如果没有选择其他，则只采集fileTypeList里面的文件类型
+			//1.获取文件夹下没有被采集过的文件或者文件夹
+			files = new File(path).listFiles((file) -> file.isDirectory()
+					|| (!fileNameHTreeMap.containsKey(file.getAbsolutePath())
+					&& fileTypeList.contains(FileNameUtils.getExtension(file.getName()))));
+		}
 		if (files != null && files.length > 0) {
 			for (File file : files) {
 				//2.文件夹则递归调用本方法，文件则放到新增的文件List中
 				if (file.isDirectory()) {
-					getNewFileListByFileType(file.getAbsolutePath(), fileTypeList, fileNameHTreeMap, newFile);
+					getNewFileListByFileType(file.getAbsolutePath(), fileTypeList, fileNameHTreeMap, newFile, is_other);
 				} else {
 					newFile.add(file.getAbsolutePath());
 				}
@@ -176,18 +187,30 @@ public class FileCollectJobImpl implements JobInterface {
 	@Param(name = "fileNameHTreeMap", desc = "已经被采集过的文件，和文件最后一次修改时间的Map集合", range = "不可为空")
 	@Param(name = "newFile", desc = "文件夹下被采集过的但又被编辑过的文件全路径的集合", range = "不可为空")
 	private void getChangeFileListByFileType(String path, List<String> fileTypeList, ConcurrentMap<String, String>
-			fileNameHTreeMap, List<String> changeFileList) {
-		//1.获取文件夹下被采集过的但又被编辑过的文件或者文件夹
-		File[] files = new File(path).listFiles((file) -> file.isDirectory()
-				|| (fileNameHTreeMap.containsKey(file.getAbsolutePath())
-				&& fileTypeList.contains(FileNameUtils.getExtension(file.getName()))
-				&& (!JSONObject.parseObject(fileNameHTreeMap.get(file.getAbsolutePath())).getString("file_md5")
-				.equals(MD5Util.md5File(file)))));
+			fileNameHTreeMap, List<String> changeFileList, String is_other) {
+		File[] files;
+		//如果选择了其他，则fileTypeList里面的文件类型不采集
+		if (IsFlag.Shi.getCode().equals(is_other)) {
+			//1.获取文件夹下被采集过的但又被编辑过的文件或者文件夹
+			files = new File(path).listFiles((file) -> file.isDirectory()
+					|| (fileNameHTreeMap.containsKey(file.getAbsolutePath())
+					&& !fileTypeList.contains(FileNameUtils.getExtension(file.getName()))
+					&& (!JSONObject.parseObject(fileNameHTreeMap.get(file.getAbsolutePath())).getString("file_md5")
+					.equals(MD5Util.md5File(file)))));
+		} else {//如果没有选择其他，则只采集fileTypeList里面的文件类型
+			//1.获取文件夹下被采集过的但又被编辑过的文件或者文件夹
+			files = new File(path).listFiles((file) -> file.isDirectory()
+					|| (fileNameHTreeMap.containsKey(file.getAbsolutePath())
+					&& fileTypeList.contains(FileNameUtils.getExtension(file.getName()))
+					&& (!JSONObject.parseObject(fileNameHTreeMap.get(file.getAbsolutePath())).getString("file_md5")
+					.equals(MD5Util.md5File(file)))));
+		}
 		if (files != null && files.length > 0) {
 			//2.文件夹则递归调用本方法，文件则放到改变过的文件List中
 			for (File file : files) {
 				if (file.isDirectory()) {
-					getChangeFileListByFileType(file.getAbsolutePath(), fileTypeList, fileNameHTreeMap, changeFileList);
+					getChangeFileListByFileType(file.getAbsolutePath(), fileTypeList, fileNameHTreeMap,
+							changeFileList, is_other);
 				} else {
 					changeFileList.add(file.getAbsolutePath());
 				}
@@ -202,41 +225,65 @@ public class FileCollectJobImpl implements JobInterface {
 		List<String> fileSuffixList = new ArrayList<>();
 		//1.获取所有文件对应名称和种类列表
 		Map<String, String[]> fileTypeMap = FileTypeUtil.getFileTypeMap();
-		//2.判断是否采集音频，图片，视频等将对应的需要采集的文件的后缀名放到需要返回的List
-		if (IsFlag.Shi.getCode().equals(file_source.getIs_audio())) {
-			fileSuffixList.addAll(Arrays.asList(fileTypeMap.get(FileTypeUtil.YinPin)));
-		}
-		if (IsFlag.Shi.getCode().equals(file_source.getIs_image())) {
-			fileSuffixList.addAll(Arrays.asList(fileTypeMap.get(FileTypeUtil.TuPian)));
-		}
-		if (IsFlag.Shi.getCode().equals(file_source.getIs_office())) {
-			fileSuffixList.addAll(Arrays.asList(fileTypeMap.get(FileTypeUtil.OfficeWenJian)));
-		}
-		if (IsFlag.Shi.getCode().equals(file_source.getIs_pdf())) {
-			fileSuffixList.addAll(Arrays.asList(fileTypeMap.get(FileTypeUtil.PDFWenJian)));
-		}
-		if (IsFlag.Shi.getCode().equals(file_source.getIs_text())) {
-			fileSuffixList.addAll(Arrays.asList(fileTypeMap.get(FileTypeUtil.WenBenWenJian)));
-			fileSuffixList.addAll(Arrays.asList(fileTypeMap.get(FileTypeUtil.RiZhiWenJian)));
-			fileSuffixList.addAll(Arrays.asList(fileTypeMap.get(FileTypeUtil.BiaoShuJuWenJian)));
-		}
-		if (IsFlag.Shi.getCode().equals(file_source.getIs_video())) {
-			fileSuffixList.addAll(Arrays.asList(fileTypeMap.get(FileTypeUtil.ShiPin)));
-		}
-		if (IsFlag.Shi.getCode().equals(file_source.getIs_compress())) {
-			fileSuffixList.addAll(Arrays.asList(fileTypeMap.get(FileTypeUtil.YaSuoWenJian)));
-		}
-		//选择了其他，则代表上面的值取反，则表示fileSuffixList里面已有的后缀名不取。
+		//如果选择了其他，则取所有未选择的文件类型后缀名，文件筛选时，只要是此类文件后缀名的不采集
 		if (IsFlag.Shi.getCode().equals(file_source.getIs_other())) {
-			List<String> allFileSuffixList = FileTypeUtil.getAllFileSuffixList();
-			allFileSuffixList.removeAll(fileSuffixList);
-			fileSuffixList = allFileSuffixList;
-		}
-		//再加上用户自定义的类型
-		if (!StringUtil.isBlank(file_source.getCustom_suffix())) {
-			fileSuffixList.addAll(StringUtil.split(file_source.getCustom_suffix(), "|"));
+			//2.判断未选择的音频，图片，视频等将对应的需要采集的文件的后缀名放到需要返回的List
+			if (IsFlag.Fou.getCode().equals(file_source.getIs_audio())) {
+				fileSuffixList.addAll(Arrays.asList(fileTypeMap.get(FileTypeUtil.YinPin)));
+			}
+			if (IsFlag.Fou.getCode().equals(file_source.getIs_image())) {
+				fileSuffixList.addAll(Arrays.asList(fileTypeMap.get(FileTypeUtil.TuPian)));
+			}
+			if (IsFlag.Fou.getCode().equals(file_source.getIs_office())) {
+				fileSuffixList.addAll(Arrays.asList(fileTypeMap.get(FileTypeUtil.OfficeWenJian)));
+			}
+			if (IsFlag.Fou.getCode().equals(file_source.getIs_pdf())) {
+				fileSuffixList.addAll(Arrays.asList(fileTypeMap.get(FileTypeUtil.PDFWenJian)));
+			}
+			if (IsFlag.Fou.getCode().equals(file_source.getIs_text())) {
+				addTextType(fileSuffixList, fileTypeMap);
+			}
+			if (IsFlag.Fou.getCode().equals(file_source.getIs_video())) {
+				fileSuffixList.addAll(Arrays.asList(fileTypeMap.get(FileTypeUtil.ShiPin)));
+			}
+			if (IsFlag.Fou.getCode().equals(file_source.getIs_compress())) {
+				fileSuffixList.addAll(Arrays.asList(fileTypeMap.get(FileTypeUtil.YaSuoWenJian)));
+			}
+		} else {//未选择其他则只采集已选文件后缀名的文件
+			//2.判断是否采集音频，图片，视频等将对应的需要采集的文件的后缀名放到需要返回的List
+			if (IsFlag.Shi.getCode().equals(file_source.getIs_audio())) {
+				fileSuffixList.addAll(Arrays.asList(fileTypeMap.get(FileTypeUtil.YinPin)));
+			}
+			if (IsFlag.Shi.getCode().equals(file_source.getIs_image())) {
+				fileSuffixList.addAll(Arrays.asList(fileTypeMap.get(FileTypeUtil.TuPian)));
+			}
+			if (IsFlag.Shi.getCode().equals(file_source.getIs_office())) {
+				fileSuffixList.addAll(Arrays.asList(fileTypeMap.get(FileTypeUtil.OfficeWenJian)));
+			}
+			if (IsFlag.Shi.getCode().equals(file_source.getIs_pdf())) {
+				fileSuffixList.addAll(Arrays.asList(fileTypeMap.get(FileTypeUtil.PDFWenJian)));
+			}
+			if (IsFlag.Shi.getCode().equals(file_source.getIs_text())) {
+				addTextType(fileSuffixList, fileTypeMap);
+			}
+			if (IsFlag.Shi.getCode().equals(file_source.getIs_video())) {
+				fileSuffixList.addAll(Arrays.asList(fileTypeMap.get(FileTypeUtil.ShiPin)));
+			}
+			if (IsFlag.Shi.getCode().equals(file_source.getIs_compress())) {
+				fileSuffixList.addAll(Arrays.asList(fileTypeMap.get(FileTypeUtil.YaSuoWenJian)));
+			}
+			//再加上用户自定义的类型
+			if (!StringUtil.isBlank(file_source.getCustom_suffix())) {
+				fileSuffixList.addAll(StringUtil.split(file_source.getCustom_suffix(), "|"));
+			}
 		}
 		return fileSuffixList;
+	}
+
+	private static void addTextType(List<String> fileSuffixList, Map<String, String[]> fileTypeMap) {
+		fileSuffixList.addAll(Arrays.asList(fileTypeMap.get(FileTypeUtil.WenBenWenJian)));
+		fileSuffixList.addAll(Arrays.asList(fileTypeMap.get(FileTypeUtil.RiZhiWenJian)));
+		fileSuffixList.addAll(Arrays.asList(fileTypeMap.get(FileTypeUtil.BiaoShuJuWenJian)));
 	}
 
 	@Override
