@@ -223,7 +223,8 @@ public class Platform {
 			//table是多张表
 			List<String> names = StringUtil.split(table, "|");
 			for (String name : names) {
-				ResultSet columnSet = dbmd.getColumns(null, schemaPattern, name, "%");
+				ResultSet columnSet = dbmd.getColumns(null, schemaPattern, "%" + name + "%"
+						, "%");
 				//获取所有表
 				String tableNameTemp = "";
 				Map<String, String> isPrimaryKey = new HashMap<>();
