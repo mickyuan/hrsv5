@@ -19,7 +19,9 @@ import hrds.commons.entity.*;
 import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.key.PrimayKeyGener;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @DocClass(desc = "定义存储目的地配置", author = "WangZhengcheng")
 public class StoDestStepConfAction extends BaseAction{
@@ -145,6 +147,30 @@ public class StoDestStepConfAction extends BaseAction{
 		}
 		//6、返回
 		return result;
+	}
+
+	@Method(desc = "根据存储目的地ID获取选择列画面需要展示的表头信息", logicStep = "" +
+			"1、无论是选择什么存储目的地，都需要展示列名和列中文名这两列" +
+			"2、根据存储目的地ID去数据存储附加信息表中获取需要额外展示的列" +
+			"3、将列的code值转换成枚举项的value放入map中" +
+			"4、返回前端")
+	@Param(name = "dslId", desc = "数据存储层配置表主键，数据存储附加信息表外键", range = "不为空")
+	@Return(desc = "表头map集合", range = "不为空，key为列存储信息结果集的列名，value为需要显示在界面上的中文名")
+	public Map<String, String> getColumnHeader(long dslId){
+		Map<String, String> header = new HashMap<>();
+		//1、无论是选择什么存储目的地，都需要展示列名和列中文名这两列
+		header.put("colume_name", "列名");
+		header.put("colume_ch_name", "列中文名");
+		//2、根据存储目的地ID去数据存储附加信息表中获取需要额外展示的列
+		List<Object> list = Dbo.queryOneColumnList("select dsla_storelayer from " + Data_store_layer_added.TableName + " where dsl_id = ?", dslId);
+		if(!list.isEmpty()){
+			for(Object obj : list){
+				//3、将列的code值转换成枚举项的value放入map中
+				header.put(StoreLayerAdded.ofValueByCode((String)obj), StoreLayerAdded.ofValueByCode((String)obj));
+			}
+		}
+		//4、返回前端
+		return header;
 	}
 
 

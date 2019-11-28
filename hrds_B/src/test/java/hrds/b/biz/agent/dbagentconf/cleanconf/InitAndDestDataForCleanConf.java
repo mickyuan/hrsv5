@@ -40,10 +40,10 @@ public class InitAndDestDataForCleanConf {
 	private static final JSONObject columnCleanOrder = BaseInitData.initColumnCleanOrder();
 
 	public static void before(){
-		//构造sys_user表测试数据
+		//1、构造sys_user表测试数据
 		Sys_user user = BaseInitData.buildSysUserData();
 
-		//构造department_info表测试数据
+		//2、构造department_info表测试数据
 		Department_info departmentInfo = BaseInitData.buildDeptInfoData();
 
 		//3、构造data_source表测试数据
@@ -354,7 +354,7 @@ public class InitAndDestDataForCleanConf {
 		codeValue.setCodesys("origSysCode_one");
 		codeValue.setClean_type(CleanType.MaZhiZhuanHuan.getCode());
 
-		//13、column_clean表测试数据，给ci_sp_name（3004L）设置列拆分
+		//column_clean表测试数据，给ci_sp_name（3004L）设置列拆分
 		Column_clean spilt = new Column_clean();
 		spilt.setCol_clean_id(101010101L);
 		spilt.setColumn_id(3004L);
@@ -366,7 +366,7 @@ public class InitAndDestDataForCleanConf {
 		spiltTwo.setColumn_id(3003L);
 		spiltTwo.setClean_type(CleanType.ZiFuChaiFen.getCode());
 
-		//14、clean_parameter表测试数据
+		//13、clean_parameter表测试数据
 		List<Clean_parameter> cleanParameters = new ArrayList<>();
 		for(int i = 0; i < 2 ;i++){
 			long cId = i % 2 == 0 ? 666666L : 777777L;
@@ -409,7 +409,7 @@ public class InitAndDestDataForCleanConf {
 			cleanParameters.add(cleanParameter);
 		}
 
-		//15、构造column_spilt表测试数据，按照偏移量拆分ci_sp_name
+		//14、构造column_spilt表测试数据，按照偏移量拆分ci_sp_name
 		List<Column_split> offsetSpilts = new ArrayList<>();
 		for(int i = 0; i < 2; i++){
 			long colSplitId = i % 2 == 0 ? 1111111L : 2222222L;
@@ -436,7 +436,7 @@ public class InitAndDestDataForCleanConf {
 			offsetSpilts.add(columnSplit);
 		}
 
-		//16、构造column_spilt表测试数据，按照下划线拆分ci_sp_classname
+		//15、构造column_spilt表测试数据，按照下划线拆分ci_sp_classname
 		List<Column_split> underLintSpilts = new ArrayList<>();
 		for(int i = 0; i < 3; i++){
 			long colSplitId = 0;
@@ -484,7 +484,7 @@ public class InitAndDestDataForCleanConf {
 			underLintSpilts.add(columnSplit);
 		}
 
-		//17、由于配置了列拆分，所以要构造模拟数据将拆分后的列加入Table_column表中
+		//16、由于配置了列拆分，所以要构造模拟数据将拆分后的列加入Table_column表中
 		List<Table_column> splitOne = new ArrayList<>();
 		for(int i = 0; i < 2; i++){
 			long columnId = i % 2 == 0 ? 121212L : 232323L;
@@ -543,7 +543,7 @@ public class InitAndDestDataForCleanConf {
 			splitTwo.add(tableColumn);
 		}
 
-		//18、column_merge表测试数据，对sys_user表中的user_mobile和useris_admin合并成列，名叫user_mobile_admin
+		//17、column_merge表测试数据，对sys_user表中的user_mobile和useris_admin合并成列，名叫user_mobile_admin
 		Column_merge columnMerge = new Column_merge();
 		columnMerge.setCol_merge_id(16161616L);
 		columnMerge.setTable_id(SYS_USER_TABLE_ID);
@@ -554,7 +554,7 @@ public class InitAndDestDataForCleanConf {
 		columnMerge.setValid_s_date(DateUtil.getSysDate());
 		columnMerge.setValid_e_date(Constant.MAXDATE);
 
-		//19、由于配置了列合并，需要把合并后的列入到table_column表中
+		//18、由于配置了列合并，需要把合并后的列入到table_column表中
 		Table_column mergeColumn = new Table_column();
 		mergeColumn.setColumn_id(1717171717L);
 		mergeColumn.setTable_id(SYS_USER_TABLE_ID);
@@ -566,6 +566,7 @@ public class InitAndDestDataForCleanConf {
 		mergeColumn.setValid_s_date(DateUtil.getSysDate());
 		mergeColumn.setValid_e_date(Constant.MAXDATE);
 
+		//19、为测试码值转换功能，在系统中构造码值相关的数据
 		List<Orig_syso_info> origSysoInfos = BaseInitData.buildOrigSysInfo();
 
 		List<Orig_code_info> origCodeInfos = BaseInitData.buildOrigCodeInfo();
@@ -730,29 +731,29 @@ public class InitAndDestDataForCleanConf {
 
 	public static void after(){
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			//删除用户表(sys_user)测试数据
+			//1、删除用户表(sys_user)测试数据
 			SqlOperator.execute(db, "delete from " + Sys_user.TableName + " WHERE user_id = ?", TEST_USER_ID);
-			//删除部门表(department_info)测试数据
+			//2、删除部门表(department_info)测试数据
 			SqlOperator.execute(db, "delete from " + Department_info.TableName + " WHERE dep_id = ?", TEST_DEPT_ID);
-			//1、删除数据源表(data_source)测试数据
+			//3、删除数据源表(data_source)测试数据
 			SqlOperator.execute(db, "delete from " + Data_source.TableName + " WHERE create_user_id = ?", TEST_USER_ID);
-			//2、删除Agent信息表(agent_info)测试数据
+			//4、删除Agent信息表(agent_info)测试数据
 			SqlOperator.execute(db, "delete from " + Agent_info.TableName + " WHERE user_id = ?", TEST_USER_ID);
-			//3、删除database_set表测试数据
+			//5、删除database_set表测试数据
 			SqlOperator.execute(db, "delete from " + Database_set.TableName + " WHERE agent_id = ?", FIRST_DB_AGENT_ID);
 			SqlOperator.execute(db, "delete from " + Database_set.TableName + " WHERE agent_id = ?", SECOND_DB_AGENT_ID);
-			//4、删除collect_job_classify表测试数据
+			//6、删除collect_job_classify表测试数据
 			SqlOperator.execute(db, "delete from " + Collect_job_classify.TableName + " WHERE user_id = ?", TEST_USER_ID);
-			//5、删除table_info表测试数据
+			//7、删除table_info表测试数据
 			SqlOperator.execute(db, "delete from " + Table_info.TableName + " where database_id = ? ", FIRST_DATABASESET_ID);
-			//6、删除table_column表测试数据
+			//8、删除table_column表测试数据
 			SqlOperator.execute(db, "delete from " + Table_column.TableName + " where table_id = ? ", SYS_USER_TABLE_ID);
 			SqlOperator.execute(db, "delete from " + Table_column.TableName + " where table_id = ? ", CODE_INFO_TABLE_ID);
 			SqlOperator.execute(db, "delete from " + Table_column.TableName + " where table_id = ? ", AGENT_INFO_TABLE_ID);
 			SqlOperator.execute(db, "delete from " + Table_column.TableName + " where table_id = ? ", DATA_SOURCE_TABLE_ID);
-			//7、删除table_clean表测试数据
+			//9、删除table_clean表测试数据
 			SqlOperator.execute(db, "delete from " + Table_clean.TableName + " where table_id = ? ", SYS_USER_TABLE_ID);
-			//8、删除column_clean表测试数据
+			//10、删除column_clean表测试数据
 			SqlOperator.execute(db, "delete from " + Column_clean.TableName + " where column_id = ? ", 2002L);
 			SqlOperator.execute(db, "delete from " + Column_clean.TableName + " where column_id = ? ", 2003L);
 			SqlOperator.execute(db, "delete from " + Column_clean.TableName + " where column_id = ? ", 2005L);
@@ -760,22 +761,22 @@ public class InitAndDestDataForCleanConf {
 			SqlOperator.execute(db, "delete from " + Column_clean.TableName + " where column_id = ? ", 3004L);
 			SqlOperator.execute(db, "delete from " + Column_clean.TableName + " where column_id = ? ", 3003L);
 			SqlOperator.execute(db, "delete from " + Column_clean.TableName + " where column_id = ? ", 2010L);
-			//9、删除clean_parameter表测试数据
+			//11、删除clean_parameter表测试数据
 			SqlOperator.execute(db, "delete from " + Clean_parameter.TableName + " where database_id = ? ", FIRST_DATABASESET_ID);
-			//10、删除column_spilt表测试数据
+			//12、删除column_spilt表测试数据
 			SqlOperator.execute(db, "delete from " + Column_split.TableName + " where column_id = ? ", 3004L);
 			SqlOperator.execute(db, "delete from " + Column_split.TableName + " where column_id = ? ", 3003L);
-			//11、删除column_merge表测试数据
+			//13、删除column_merge表测试数据
 			SqlOperator.execute(db, "delete from " + Column_merge.TableName + " where table_id = ? ", SYS_USER_TABLE_ID);
-			//12、删除orig_syso_info表数据
+			//14、删除orig_syso_info表数据
 			SqlOperator.execute(db, "delete from " + Orig_syso_info.TableName + " where Orig_sys_code = ? ", "origSysCode_one");
 			SqlOperator.execute(db, "delete from " + Orig_syso_info.TableName + " where Orig_sys_code = ? ", "origSysCode_two");
 			SqlOperator.execute(db, "delete from " + Orig_syso_info.TableName + " where Orig_sys_code = ? ", "origSysCode_three");
-			//13、删除orig_code_info表数据
+			//15、删除orig_code_info表数据
 			SqlOperator.execute(db, "delete from " + Orig_code_info.TableName + " where orig_id = ? ", 6001L);
 			SqlOperator.execute(db, "delete from " + Orig_code_info.TableName + " where orig_id = ? ", 6002L);
 			SqlOperator.execute(db, "delete from " + Orig_code_info.TableName + " where orig_id = ? ", 6003L);
-			//13、提交事务
+			//16、提交事务
 			SqlOperator.commitTransaction(db);
 		}
 	}

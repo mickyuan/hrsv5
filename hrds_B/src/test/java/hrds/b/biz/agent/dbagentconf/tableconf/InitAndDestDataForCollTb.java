@@ -34,6 +34,7 @@ public class InitAndDestDataForCollTb {
 	private static final long DATA_SOURCE_TABLE_ID = 7004L;
 
 	private static final long BASE_SYS_USER_PRIMARY = 2000L;
+	private static final long BASE_DATA_EXTRACTION_DEF = 3000L;
 
 	private static final long FIRST_STORAGE_ID = 1234L;
 	private static final long SECOND_STORAGE_ID = 5678L;
@@ -44,10 +45,10 @@ public class InitAndDestDataForCollTb {
 	private static final long AGENT_DOWN_INFO_ID = 12581L;
 
 	public static void before(){
-		//构造sys_user表测试数据
+		//1、构造sys_user表测试数据
 		Sys_user user = BaseInitData.buildSysUserData();
 
-		//构造department_info表测试数据
+		//2、构造department_info表测试数据
 		Department_info departmentInfo = BaseInitData.buildDeptInfoData();
 
 		//3、构造data_source表测试数据
@@ -257,7 +258,7 @@ public class InitAndDestDataForCollTb {
 
 		List<Table_column> agentInfos = BaseInitData.buildAgentInfoTbColData();
 
-		//8、构造table_storage_info表测试数据
+		//9、构造table_storage_info表测试数据
 		List<Table_storage_info> tableStorageInfos = new ArrayList<>();
 		for(int i = 1; i<= 2; i++){
 			String fileFormat;
@@ -354,6 +355,7 @@ public class InitAndDestDataForCollTb {
 
 			codeInfoCleans.add(codeInfoClean);
 		}
+
 		//11、构造column_merge表测试数据
 		List<Column_merge> sysUserMerge = new ArrayList<>();
 		for(int i = 1; i <= 2; i++){
@@ -407,10 +409,25 @@ public class InitAndDestDataForCollTb {
 
 		codeInfoMerge.add(codeInfo);
 
-		//5、由于该Action类的测试连接功能需要与agent端交互，所以需要配置一条agent_down_info表的记录，用于找到http访问的完整url
+		//12、构造data_extraction_def表数据
+		List<Data_extraction_def> extractionDefs = new ArrayList<>();
+		for(int i = 0; i < 2; i++){
+			Data_extraction_def def = new Data_extraction_def();
+			def.setDed_id(i % 2 == 0 ? BASE_DATA_EXTRACTION_DEF : BASE_DATA_EXTRACTION_DEF + 1);
+			def.setTable_id(i % 2 == 0 ? SYS_USER_TABLE_ID : CODE_INFO_TABLE_ID);
+			def.setData_extract_type(DataExtractType.ShuJuChouQuJiRuKu.getCode());
+			def.setIs_header(i % 2 == 0 ? IsFlag.Shi.getCode() : IsFlag.Fou.getCode());
+			def.setDatabase_code(DataBaseCode.UTF_8.getCode());
+			def.setDbfile_format(i % 2 == 0 ? FileFormat.ORC.getCode() : FileFormat.PARQUET.getCode());
+			def.setPlane_url(i % 2 == 0 ? "/root" : "/home/hyshf" );
+
+			extractionDefs.add(def);
+		}
+
+		//13、由于该Action类的测试连接功能需要与agent端交互，所以需要配置一条agent_down_info表的记录，用于找到http访问的完整url
 		Agent_down_info agentDownInfo = BaseInitData.initAgentDownInfoTwo();
 
-		//12、插入数据
+		//14、插入数据
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			//插入用户表(sys_user)测试数据
 			int userCount = user.add(db);
@@ -506,6 +523,14 @@ public class InitAndDestDataForCollTb {
 			int agentDownInfoCount = agentDownInfo.add(db);
 			assertThat("Agent下载信息表测试数据初始化", agentDownInfoCount, is(1));
 
+			//插入data_extraction_def表测试数据
+			int extractionDefCount = 0;
+			for(Data_extraction_def def : extractionDefs){
+				int count = def.add(db);
+				extractionDefCount += count;
+			}
+			assertThat("数据抽取定义表测试数据初始化", extractionDefCount, is(2));
+
 			SqlOperator.commitTransaction(db);
 		}
 	}
@@ -542,7 +567,11 @@ public class InitAndDestDataForCollTb {
 			SqlOperator.execute(db, "delete from " + Column_merge.TableName + " where table_id = ? ", CODE_INFO_TABLE_ID);
 			//10、删除agent_down_info表测试数据
 			SqlOperator.execute(db, "delete from " + Agent_down_info.TableName + " where down_id = ? ", AGENT_DOWN_INFO_ID + 1);
-			//11、提交事务
+			//11、删除data_extraction_def表测试数据
+			SqlOperator.execute(db, "delete from " + Data_extraction_def.TableName + " where table_id = ? ", SYS_USER_TABLE_ID);
+			SqlOperator.execute(db, "delete from " + Data_extraction_def.TableName + " where table_id = ? ", CODE_INFO_TABLE_ID);
+
+			//12、提交事务
 			SqlOperator.commitTransaction(db);
 		}
 	}

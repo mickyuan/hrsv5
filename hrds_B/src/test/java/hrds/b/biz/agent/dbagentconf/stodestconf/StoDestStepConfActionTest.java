@@ -21,6 +21,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -1142,6 +1143,81 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 			int countOne = SqlOperator.execute(db, "delete from " + Data_extraction_def.TableName + " where table_id = ?", TABLE_COLUMN_TABLE_ID);
 			assertThat("saveTbStoInfo<错误的数据访问6>执行完毕后，删除新增的数据成功", countOne, is(1));
 			SqlOperator.commitTransaction(db);
+		}
+	}
+
+	/**
+	 * 测试根据存储目的地ID获取选择列画面需要展示的表头信息
+	 *
+	 * 正确数据访问1：测试存储目的地为<关系型数据库>的表头信息
+	 * 正确数据访问2：测试存储目的地为<SOLR>的表头信息
+	 * 错误的数据访问1：测试存储目的地为<MONGODB>的表头信息
+	 * 错误的测试用例未达到三组：以上所有测试用例已经足够覆盖所有可能出现的情况了
+	 * @Param: 无
+	 * @return: 无
+	 *
+	 * */
+	@Test
+	public void getColumnHeader(){
+		//正确数据访问1：测试存储目的地为<关系型数据库>的表头信息
+		String rightStringOne = new HttpClient()
+				.addData("dslId", 4400L)
+				.post(getActionUrl("getColumnHeader")).getBodyString();
+		ActionResult rightResultOne = JsonUtil.toObjectSafety(rightStringOne, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResultOne.isSuccess(), is(true));
+
+		Map<String, String> oracleMap = rightResultOne.getDataForMap(String.class, String.class);
+		for(String key : oracleMap.keySet()){
+			if(key.equalsIgnoreCase("colume_name")){
+				assertThat(oracleMap.get(key).equalsIgnoreCase("列名"), is(true));
+			}else if(key.equalsIgnoreCase("colume_ch_name")){
+				assertThat(oracleMap.get(key).equalsIgnoreCase("列中文名"), is(true));
+			}else if(key.equalsIgnoreCase("主键")){
+				assertThat(oracleMap.get(key).equalsIgnoreCase("主键"), is(true));
+			}else{
+				assertThat("出现了不符合期望的情况,key为" + key, true, is(false));
+			}
+		}
+
+		//正确数据访问2：测试存储目的地为<SOLR>的表头信息
+		String rightStringTwo = new HttpClient()
+				.addData("dslId", 4399L)
+				.post(getActionUrl("getColumnHeader")).getBodyString();
+		ActionResult rightResultTwo = JsonUtil.toObjectSafety(rightStringTwo, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResultTwo.isSuccess(), is(true));
+
+		Map<String, String> solrMap = rightResultTwo.getDataForMap(String.class, String.class);
+		for(String key : solrMap.keySet()){
+			if(key.equalsIgnoreCase("colume_name")){
+				assertThat(solrMap.get(key).equalsIgnoreCase("列名"), is(true));
+			}else if(key.equalsIgnoreCase("colume_ch_name")){
+				assertThat(solrMap.get(key).equalsIgnoreCase("列中文名"), is(true));
+			}else if(key.equalsIgnoreCase("索引列")){
+				assertThat(solrMap.get(key).equalsIgnoreCase("索引列"), is(true));
+			}else{
+				assertThat("出现了不符合期望的情况,key为" + key, true, is(false));
+			}
+		}
+
+		//错误的数据访问1：测试存储目的地为<MONGODB>的表头信息
+		String wrongString = new HttpClient()
+				.addData("dslId", 4403L)
+				.post(getActionUrl("getColumnHeader")).getBodyString();
+		ActionResult wrongResult = JsonUtil.toObjectSafety(wrongString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResult.isSuccess(), is(true));
+
+		Map<String, String> mongoMap = wrongResult.getDataForMap(String.class, String.class);
+		for(String key : mongoMap.keySet()){
+			if(key.equalsIgnoreCase("colume_name")){
+				assertThat(mongoMap.get(key).equalsIgnoreCase("列名"), is(true));
+			}else if(key.equalsIgnoreCase("colume_ch_name")){
+				assertThat(mongoMap.get(key).equalsIgnoreCase("列中文名"), is(true));
+			}else{
+				assertThat("出现了不符合期望的情况,key为" + key, true, is(false));
+			}
 		}
 	}
 

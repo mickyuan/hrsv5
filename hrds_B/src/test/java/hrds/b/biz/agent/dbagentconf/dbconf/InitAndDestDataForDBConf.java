@@ -22,22 +22,22 @@ public class InitAndDestDataForDBConf {
 	private static final long AGENT_DOWN_INFO_ID = 12581L;
 
 	public static void before(){
-		//构造sys_user表测试数据
+		//1、构造sys_user表测试数据
 		Sys_user user = BaseInitData.buildSysUserData();
 
-		//构造department_info表测试数据
+		//2、构造department_info表测试数据
 		Department_info departmentInfo = BaseInitData.buildDeptInfoData();
 
-		//1、构建data_source表测试数据
+		//3、构建data_source表测试数据
 		Data_source dataSource = BaseInitData.buildDataSourceData();
 
-		//2、构建agent_info表测试数据
+		//4、构建agent_info表测试数据
 		List<Agent_info> agents = BaseInitData.buildAgentInfosData();
 
-		//3、构建database_set表测试数据
+		//5、构建database_set表测试数据
 		List<Database_set> databases = BaseInitData.buildDbSetData();
 
-		//4、构建collect_job_classify表测试数据
+		//6、构建collect_job_classify表测试数据
 		List<Collect_job_classify> classifies = BaseInitData.buildClassifyData();
 		Collect_job_classify thridClassify = new Collect_job_classify();
 		thridClassify.setClassify_id(THIRD_CLASSIFY_ID);
@@ -47,7 +47,7 @@ public class InitAndDestDataForDBConf {
 		thridClassify.setUser_id(TEST_USER_ID);
 		classifies.add(thridClassify);
 
-		//5、由于该Action类的测试连接功能需要与agent端交互，所以需要配置一条agent_down_info表的记录，用于找到http访问的完整url
+		//7、由于该Action类的测试连接功能需要与agent端交互，所以需要配置一条agent_down_info表的记录，用于找到http访问的完整url
 		Agent_down_info agentDownInfo = BaseInitData.initAgentDownInfo();
 
 		//插入数据
@@ -99,20 +99,20 @@ public class InitAndDestDataForDBConf {
 
 	public static void after(){
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			//删除用户表(sys_user)测试数据
+			//1、删除用户表(sys_user)测试数据
 			SqlOperator.execute(db, "delete from " + Sys_user.TableName + " WHERE user_id = ?", TEST_USER_ID);
-			//删除部门表(department_info)测试数据
+			//2、删除部门表(department_info)测试数据
 			SqlOperator.execute(db, "delete from " + Department_info.TableName + " WHERE dep_id = ?", TEST_DEPT_ID);
-			//1、删除数据源表(data_source)测试数据
+			//3、删除数据源表(data_source)测试数据
 			SqlOperator.execute(db, "delete from " + Data_source.TableName + " WHERE create_user_id = ?", TEST_USER_ID);
-			//2、删除Agent信息表(agent_info)测试数据
+			//4、删除Agent信息表(agent_info)测试数据
 			SqlOperator.execute(db, "delete from " + Agent_info.TableName + " WHERE user_id = ?", TEST_USER_ID);
-			//3、删除database_set表测试数据
+			//5、删除database_set表测试数据
 			SqlOperator.execute(db, "delete from " + Database_set.TableName + " WHERE agent_id = ?", FIRST_DB_AGENT_ID);
 			SqlOperator.execute(db, "delete from " + Database_set.TableName + " WHERE agent_id = ?", SECOND_DB_AGENT_ID);
-			//4、删除collect_job_classify表测试数据
+			//6、删除collect_job_classify表测试数据
 			SqlOperator.execute(db, "delete from " + Collect_job_classify.TableName + " WHERE user_id = ?", TEST_USER_ID);
-			//5、删除agent_down_info表测试数据
+			//7、删除agent_down_info表测试数据
 			SqlOperator.execute(db, "delete from " + Agent_down_info.TableName + " WHERE down_id = ?", AGENT_DOWN_INFO_ID);
 
 			SqlOperator.commitTransaction(db);
