@@ -35,4 +35,5 @@ public class TestConnection extends AgentBaseAction {
 			return db.isConnected();
 		}
 	}
+
 }

@@ -260,18 +260,6 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		assertThat(wrongColSetIdResult.isSuccess(), is(false));
 	}
 
-	@Test
-	public void test(){
-		String rightStringFour = new HttpClient()
-				.addData("colSetId", FIRST_DATABASESET_ID)
-				.addData("inputString", "wzc")
-				.post(getActionUrl("getTableInfo")).getBodyString();
-		ActionResult rightResultFour = JsonUtil.toObjectSafety(rightStringFour, ActionResult.class).orElseThrow(()
-				-> new BusinessException("连接失败!"));
-		assertThat(rightResultFour.isSuccess(), is(true));
-		Result rightDataFour = rightResultFour.getDataForResult();
-		assertThat("使用wzc做模糊查询得到的表信息有0条", rightDataFour.isEmpty(), is(true));
-	}
 	/**
 	 * 测试根据数据库设置id得到所有表相关信息
 	 * 正确数据访问1：构造正确的colSetId进行测试
@@ -1049,8 +1037,6 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 
 			SqlOperator.commitTransaction(db);
 		}
-		tableInfos.clear();
-		tbConfParams.clear();
 	}
 
 	/*
@@ -1188,9 +1174,6 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 
 			SqlOperator.commitTransaction(db);
 		}
-
-		tableInfos.clear();
-		tbConfParams.clear();
 	}
 
 	/*

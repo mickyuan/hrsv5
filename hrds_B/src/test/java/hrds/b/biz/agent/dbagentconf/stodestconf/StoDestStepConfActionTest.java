@@ -9,6 +9,7 @@ import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
+import hrds.b.biz.agent.bean.ColStoParam;
 import hrds.b.biz.agent.bean.DataStoRelaParam;
 import hrds.b.biz.agent.dbagentconf.BaseInitData;
 import hrds.commons.codes.*;
@@ -559,6 +560,8 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 	 *
 	 * 正确数据访问1：agent_info保存进入关系型数据库，现在不用agent_id做主键了，改用agent_name做主键
 	 * 正确数据访问2：agent_info原来还要保存进入Hbase，现在不进入Hbase了
+	 * 正确数据访问3：data_source表source_id保存进入关系型数据库做主键，保存进入hbase做rowkey，不再进solr做索引列
+	 * 错误的数据访问1：保存字段特殊属性的数组为空
 	 * 错误的测试用例未达到三组:
 	 * @Param: 无
 	 * @return: 无
@@ -566,7 +569,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 	 * */
 	@Test
 	public void saveColStoInfo(){
-		List<Column_storage_info> columnStorageInfos = new ArrayList<>();
+		List<ColStoParam> columnStorageInfos = new ArrayList<>();
 		//正确数据访问1：agent_info保存进入关系型数据库，现在不用agent_id做主键了，改用agent_name做主键
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			//在保存前，先检查数据库中的数据是否符合期望
@@ -587,18 +590,20 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 			assertThat("agent_info表中的agent_name字段没有保存进入到关系型数据库做主键", countTwo, is(0L));
 		}
 
-		Column_storage_info storageInfo = new Column_storage_info();
-		storageInfo.setColumn_id(3113L);
-		storageInfo.setDslad_id(439999L);
+		ColStoParam primayKeyParam = new ColStoParam();
+		primayKeyParam.setColumnId(3113L);
+		long[] dsladIds = {439999L};
+		primayKeyParam.setDsladIds(dsladIds);
 
 		//这样做的目的是继续保证agent_id列在hbase中做rowkey,维持构造的测试数据的原有的状态，保证能够顺利执行saveColStoInfo<正确的数据访问2>测试用例
-		Column_storage_info storageInfoRowKey = new Column_storage_info();
-		storageInfoRowKey.setColumn_id(3112L);
-		storageInfoRowKey.setDslad_id(440001L);
+		ColStoParam rowKeyParam = new ColStoParam();
+		rowKeyParam.setColumnId(3112L);
+		long[] dsladIdsTwo = {440001L};
+		rowKeyParam.setDsladIds(dsladIdsTwo);
+		rowKeyParam.setCsiNumber(1L);
 
-
-		columnStorageInfos.add(storageInfo);
-		columnStorageInfos.add(storageInfoRowKey);
+		columnStorageInfos.add(primayKeyParam);
+		columnStorageInfos.add(rowKeyParam);
 
 		String rightStringOne = new HttpClient()
 				.addData("colStoInfoString", JSON.toJSONString(columnStorageInfos))
@@ -625,6 +630,14 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 					" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 3113L, store_type.DATABASE.getCode())
 					.orElseThrow(() -> new BusinessSystemException("查询结果必须有且只有一条"));
 			assertThat("agent_info表中的agent_name字段保存进入到关系型数据库做主键", countTwo, is(1L));
+
+			Result result = SqlOperator.queryResult(db, "select csi.csi_number from " + Column_storage_info.TableName + " csi" +
+					" left join " + Data_store_layer_added.TableName + " dsld" +
+					" on dsld.dslad_id = csi.dslad_id" +
+					" left join " + Data_store_layer.TableName + " dsl" +
+					" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 3112L, store_type.HBASE.getCode());
+			assertThat("agent_info表中的agent_id字段保存进入到HBASE做主键rowkey", result.getRowCount(), is(1));
+			assertThat("agent_info表中的agent_id字段保存进入到HBASE做主键rowkey，序号为1", result.getLong(0, "csi_number"), is(1L));
 
 			//删除因执行测试用例而新增的数据
 			int count = SqlOperator.execute(db, "delete from " + Column_storage_info.TableName + " where column_id = ?", 3113L);
@@ -665,6 +678,85 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 					.orElseThrow(() -> new BusinessSystemException("查询结果必须有且只有一条"));
 			assertThat("agent_info表中的agent_id字段没有保存进入到HBASE做rowkey", countOne, is(0L));
 		}
+
+		columnStorageInfos.clear();
+
+		//正确数据访问3：data_source表source_id保存进入关系型数据库做主键，保存进入hbase做rowkey，不再进solr做索引列
+		try (DatabaseWrapper db = new DatabaseWrapper()) {
+			//在保存前，先检查数据库中的数据是否符合期望
+			long countOne = SqlOperator.queryNumber(db, "select count(1) from " + Column_storage_info.TableName + " csi" +
+					" left join " + Data_store_layer_added.TableName + " dsld" +
+					" on dsld.dslad_id = csi.dslad_id" +
+					" left join " + Data_store_layer.TableName + " dsl" +
+					" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 5112L, store_type.SOLR.getCode())
+					.orElseThrow(() -> new BusinessSystemException("查询结果必须有且只有一条"));
+			assertThat("data_source表中的source_id字段保存进入到solr做索引列", countOne, is(1L));
+		}
+		ColStoParam sourceIdParam = new ColStoParam();
+		sourceIdParam.setColumnId(5112L);
+		long[] dsladIdsThree = {439999L, 440001L};
+		sourceIdParam.setDsladIds(dsladIdsThree);
+		sourceIdParam.setCsiNumber(3L);
+
+		columnStorageInfos.add(sourceIdParam);
+
+		String rightStringThree = new HttpClient()
+				.addData("colStoInfoString", JSON.toJSONString(columnStorageInfos))
+				.addData("tableId", DATA_SOURCE_TABLE_ID)
+				.post(getActionUrl("saveColStoInfo")).getBodyString();
+		ActionResult rightResultThree = JsonUtil.toObjectSafety(rightStringThree, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResultThree.isSuccess(), is(true));
+
+		try (DatabaseWrapper db = new DatabaseWrapper()) {
+			//在保存前，先检查数据库中的数据是否符合期望
+			long countOne = SqlOperator.queryNumber(db, "select count(1) from " + Column_storage_info.TableName + " csi" +
+					" left join " + Data_store_layer_added.TableName + " dsld" +
+					" on dsld.dslad_id = csi.dslad_id" +
+					" left join " + Data_store_layer.TableName + " dsl" +
+					" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 5112L, store_type.SOLR.getCode())
+					.orElseThrow(() -> new BusinessSystemException("查询结果必须有且只有一条"));
+			assertThat("<正确的数据访问3>执行成功后，data_source表中的source_id字段不再进入到solr做索引列", countOne, is(0L));
+
+			long countTwo = SqlOperator.queryNumber(db, "select count(1) from " + Column_storage_info.TableName + " csi" +
+					" left join " + Data_store_layer_added.TableName + " dsld" +
+					" on dsld.dslad_id = csi.dslad_id" +
+					" left join " + Data_store_layer.TableName + " dsl" +
+					" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 5112L, store_type.DATABASE.getCode())
+					.orElseThrow(() -> new BusinessSystemException("查询结果必须有且只有一条"));
+			assertThat("<正确的数据访问3>执行成功后，data_source表中的source_id字段保存进入到关系型数据库做主键", countTwo, is(1L));
+
+			Result result = SqlOperator.queryResult(db, "select csi.csi_number from " + Column_storage_info.TableName + " csi" +
+					" left join " + Data_store_layer_added.TableName + " dsld" +
+					" on dsld.dslad_id = csi.dslad_id" +
+					" left join " + Data_store_layer.TableName + " dsl" +
+					" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 5112L, store_type.HBASE.getCode());
+			assertThat("<正确的数据访问3>执行成功后，data_source表中的source_id字段保存进入到Hbase做rowkey", result.getRowCount(), is(1));
+			assertThat("<正确的数据访问3>执行成功后，data_source表中的source_id字段保存进入到Hbase做rowkey，序号为3", result.getLong(0, "csi_number"), is(3L));
+
+			//执行成功后，删除新增的数据
+			int count = SqlOperator.execute(db, "delete from " + Column_storage_info.TableName + " where column_id = ?", 5112L);
+			assertThat("删除因执行saveColStoInfo<正确的数据访问3>测试用例而新增的数据", count, is(2));
+
+			SqlOperator.commitTransaction(db);
+		}
+
+		columnStorageInfos.clear();
+
+		//错误的数据访问1：保存字段特殊属性的数组为空
+		ColStoParam wrongParam = new ColStoParam();
+		wrongParam.setColumnId(5112L);
+		wrongParam.setCsiNumber(3L);
+
+		columnStorageInfos.add(wrongParam);
+
+		String wrongString = new HttpClient()
+				.addData("colStoInfoString", JSON.toJSONString(columnStorageInfos))
+				.addData("tableId", DATA_SOURCE_TABLE_ID)
+				.post(getActionUrl("saveColStoInfo")).getBodyString();
+		ActionResult wrongResult = JsonUtil.toObjectSafety(wrongString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResult.isSuccess(), is(false));
 	}
 
 	/**

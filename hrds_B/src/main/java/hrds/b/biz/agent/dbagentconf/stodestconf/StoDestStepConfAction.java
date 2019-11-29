@@ -9,12 +9,10 @@ import fd.ng.core.exception.BusinessSystemException;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
+import hrds.b.biz.agent.bean.ColStoParam;
 import hrds.b.biz.agent.bean.DataStoRelaParam;
 import hrds.commons.base.BaseAction;
-import hrds.commons.codes.DataExtractType;
-import hrds.commons.codes.IsFlag;
-import hrds.commons.codes.StorageType;
-import hrds.commons.codes.StoreLayerAdded;
+import hrds.commons.codes.*;
 import hrds.commons.entity.*;
 import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.key.PrimayKeyGener;
@@ -246,7 +244,7 @@ public class StoDestStepConfAction extends BaseAction{
 
 	/*
 	 * 保存字段存储信息
-	 * */
+
 	@Method(desc = "保存表的字段存储信息", logicStep = "" +
 			"1、将colStoInfoString解析为List集合" +
 			"2、在每保存一个字段的存储目的地前，先尝试在column_storage_info表中删除该表所有列的信息，不关心删除的数据" +
@@ -274,6 +272,55 @@ public class StoDestStepConfAction extends BaseAction{
 				storageInfo.add(Dbo.db());
 			}
 		}
+	}
+	 * */
+
+	/*
+	* 保存字段存储信息
+	* */
+	@Method(desc = "保存表的字段存储信息", logicStep = "" +
+			"1、将colStoInfoString解析为List集合" +
+			"2、在每保存一个字段的存储目的地前，先尝试在column_storage_info表中删除该表所有列的信息，不关心删除的数据" +
+			"3、如果反序列化得到的List集合不为空，则遍历集合" +
+			"4、保存")
+	@Param(name = "colStoInfoString", desc = "存放待保存字段存储配置信息的json串", range = "不为空", nullable = true, valueIfNull = "")
+	@Param(name = "tableId", desc = "字段所在表ID,table_info表主键，table_column表外键", range = "不为空")
+	public void saveColStoInfo(String colStoInfoString, long tableId){
+		//1、将colStoInfoString解析为List集合
+		List<ColStoParam> colStoParams = JSONArray.parseArray(colStoInfoString, ColStoParam.class);
+		//2、在每保存一个字段的存储目的地前，先尝试在column_storage_info表中删除该表所有列的信息，不关心删除的数据
+		Dbo.execute("delete from " + Column_storage_info.TableName + " where column_id in (select column_id " +
+				" from " + Table_column.TableName + " where table_id = ?)", tableId);
+		if(!colStoParams.isEmpty()){
+			//3、如果反序列化得到的List集合不为空，则遍历集合
+			for(ColStoParam param : colStoParams){
+				Long columnId = param.getColumnId();
+				long[] dsladIds = param.getDsladIds();
+				if(dsladIds == null || !(dsladIds.length > 0)){
+					throw new BusinessSystemException("请检查配置信息，并为待保存的字段选择其是否具有特殊性质");
+				}
+				for(long dsladId : dsladIds){
+					Column_storage_info columnStorageInfo = new Column_storage_info();
+					columnStorageInfo.setColumn_id(columnId);
+					columnStorageInfo.setDslad_id(dsladId);
+					//根据数据存储附加信息ID获取存储目的地类型
+					List<Object> list = Dbo.queryOneColumnList("select dsl.store_type from " +
+							Data_store_layer.TableName + " dsl, " + Data_store_layer_added.TableName +
+							" dsla where dsl.dsl_id = dsla.dsl_id and dsla.dslad_id = ?", dsladId);
+					//如果获取不到或者获取到的值有多个，则抛出异常
+					if(list.isEmpty() || list.size() > 1){
+						throw new BusinessSystemException("通过字段存储附加信息获得存储目的地信息出错");
+					}
+					//如果获取到的存储目的地为HBASE并且csiNumber不为空，则说明该列是作为hbase的rowkey
+					if(param.getCsiNumber() != null && store_type.HBASE.getCode().equalsIgnoreCase((String) list.get(0))){
+						//保存rowkey的顺序
+						columnStorageInfo.setCsi_number(param.getCsiNumber());
+					}
+					columnStorageInfo.add(Dbo.db());
+				}
+			}
+		}
+		//如果反序列化得到的List集合为空，则说明页面上用户没有定义任何一个具有特殊存储属性的字段，于是不做任何处理
 	}
 
 	/*
