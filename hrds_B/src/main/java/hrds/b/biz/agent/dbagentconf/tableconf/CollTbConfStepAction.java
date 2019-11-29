@@ -346,10 +346,10 @@ public class CollTbConfStepAction extends BaseAction {
 
 	@Method(desc = "保存单表查询画面配置的所有表采集信息", logicStep = "" +
 			"所有表信息放在一起是为了本次保存在一个事务中，同时成功或同时失败" +
-			"1、校验Table_info对象中的信息是否合法" +
-			"2、给Table_info对象设置基本信息(valid_s_date,valid_e_date,is_user_defined,is_register)" +
-			"3、不论新增采集表还是编辑采集表，页面上所有的内容都可能被修改，所以直接执行SQL，" +
+			"1、不论新增采集表还是编辑采集表，页面上所有的内容都可能被修改，所以直接执行SQL，" +
 			"按database_id删除table_info表中所有非自定义采集SQL的数据" +
+			"2、校验Table_info对象中的信息是否合法" +
+			"3、给Table_info对象设置基本信息(valid_s_date,valid_e_date,is_user_defined,is_register)" +
 			"4、获取Table_info对象的table_id属性，如果该属性没有值，说明这张采集表是新增的，" +
 			"否则这张采集表在当前采集任务中，已经存在，且有可能经过了修改" +
 			"5、不论新增还是修改，构造默认的表清洗优先级和列清洗优先级" +
@@ -390,11 +390,15 @@ public class CollTbConfStepAction extends BaseAction {
 		if(tableInfos.size() != tbConfParams.size()){
 			throw new BusinessSystemException("请在传参时确保采集表数组和配置采集字段信息一一对应");
 		}
+		//1、不论新增采集表还是编辑采集表，页面上所有的内容都可能被修改，所以直接执行SQL，按database_id删除table_info表
+		// 中,所有非自定义采集SQL的数据，不关心删除数据的条数
+		Dbo.execute(" DELETE FROM "+ Table_info.TableName +" WHERE database_id = ? AND is_user_defined = ? ",
+				colSetId, IsFlag.Fou.getCode());
 		for(int i = 0; i < tableInfos.size(); i++){
 			Table_info tableInfo = tableInfos.get(i);
 			String collColumn = tbConfParams.get(i).getCollColumnString();
 			String columnSort = tbConfParams.get(i).getColumnSortString();
-			//1、校验Table_info对象中的信息是否合法
+			//2、校验Table_info对象中的信息是否合法
 			if(StringUtil.isBlank(tableInfo.getTable_name())){
 				throw new BusinessException("保存采集表配置，第"+ (i + 1) +"条数据表名不能为空!");
 			}
@@ -408,11 +412,11 @@ public class CollTbConfStepAction extends BaseAction {
 				}
 			}
 			Map<String, Object> resultMap = Dbo.queryOneObject("select * from " + Database_set.TableName
-					+ "where database_id = ?", colSetId);
+					+ " where database_id = ?", colSetId);
 			if(resultMap.isEmpty()){
 				throw new BusinessException("未找到数据库采集任务");
 			}
-			//2、给Table_info对象设置基本信息(valid_s_date,valid_e_date,is_user_defined,is_register)
+			//3、给Table_info对象设置基本信息(valid_s_date,valid_e_date,is_user_defined,is_register)
 			tableInfo.setValid_s_date(DateUtil.getSysDate());
 			tableInfo.setValid_e_date(Constant.MAXDATE);
 			tableInfo.setIs_user_defined(IsFlag.Fou.getCode());
@@ -420,10 +424,7 @@ public class CollTbConfStepAction extends BaseAction {
 			tableInfo.setIs_register(IsFlag.Fou.getCode());
 			//TODO 是否使用MD5，目前页面没有供用户配置的选项，所以在保存是，后台给一个默认值为是
 			tableInfo.setIs_md5(IsFlag.Shi.getCode());
-			//3、不论新增采集表还是编辑采集表，页面上所有的内容都可能被修改，所以直接执行SQL，按database_id删除table_info表
-			// 中,所有非自定义采集SQL的数据，不关心删除数据的条数
-			Dbo.execute(" DELETE FROM "+ Table_info.TableName +" WHERE database_id = ? AND is_user_defined = ? ",
-					colSetId, IsFlag.Fou.getCode());
+
 			//4、获取Table_info对象的table_id属性，如果该属性没有值，说明这张采集表是新增的，否则这张采集表在当前采集任务中
 			//已经存在，且有可能经过了修改
 			//5、不论新增还是修改，使用默认的表清洗优先级和列清洗优先级(JSON格式的字符串，保存进入数据库)
@@ -459,37 +460,37 @@ public class CollTbConfStepAction extends BaseAction {
 					long storageId = (long)storageIdList.get(0);
 					DboExecute.updatesOrThrow("更新第"+ i + "条数据的表存储信息失败",
 							"update "+ Table_storage_info.TableName +" set table_id = ? where storage_id = ?",
-							newID, storageId);
+							Long.parseLong(newID), storageId);
 				}
 
 				//7-3-2、更新table_clean表对应条目的table_id字段，一个table_id在table_clean中可能有0-N条数据
-				List<Object> tableCleanIdList = Dbo.queryOneColumnList(" select c_id from "+ Table_clean.TableName
+				List<Object> tableCleanIdList = Dbo.queryOneColumnList(" select table_clean_id from "+ Table_clean.TableName
 						+ " where table_id = ? ", oldID);
 				if(!tableCleanIdList.isEmpty()){
 					StringBuilder tableCleanBuilder = new StringBuilder("update "+ Table_clean.TableName
-							+" set table_id = ? where c_id in ( ");
+							+" set table_id = ? where table_clean_id in ( ");
 					for(int j = 0; j < tableCleanIdList.size(); j++){
 						tableCleanBuilder.append((long)tableCleanIdList.get(j));
 						if (j != tableCleanIdList.size() - 1)
 							tableCleanBuilder.append(",");
 					}
 					tableCleanBuilder.append(" )");
-					Dbo.execute(tableCleanBuilder.toString(), newID);
+					Dbo.execute(tableCleanBuilder.toString(), Long.parseLong(newID));
 				}
 
 				//7-3-3、更新column_merge表对应条目的table_id字段，一个table_id在该表中的数据存在情况为0-N
-				List<Object> colMergeIdList = Dbo.queryOneColumnList(" select col_id from "
+				List<Object> colMergeIdList = Dbo.queryOneColumnList(" select col_merge_id from "
 						+ Column_merge.TableName + " where table_id = ? ", oldID);
 				if(!colMergeIdList.isEmpty()){
 					StringBuilder colMergeBuilder = new StringBuilder("update "+ Column_merge.TableName +
-							" set table_id = ? where col_id in ( ");
+							" set table_id = ? where col_merge_id in ( ");
 					for(int j = 0; j < colMergeIdList.size(); j++){
 						colMergeBuilder.append((long)colMergeIdList.get(j));
 						if (j != colMergeIdList.size() - 1)
 							colMergeBuilder.append(",");
 					}
 					colMergeBuilder.append(" )");
-					Dbo.execute(colMergeBuilder.toString(), newID);
+					Dbo.execute(colMergeBuilder.toString(), Long.parseLong(newID));
 				}
 
 				//7-3-4、更新data_extraction_def表对应条目的table_id，一个table_id在该表中的数据存在情况为0-1
@@ -502,7 +503,7 @@ public class CollTbConfStepAction extends BaseAction {
 					long dedId = (long)extractDefIdList.get(0);
 					DboExecute.updatesOrThrow("更新第"+ i + "条数据的数据抽取定义信息失败",
 							"update "+ Data_extraction_def.TableName +" set table_id = ? where ded_id = ?",
-							newID, dedId);
+							Long.parseLong(newID), dedId);
 				}
 				//7-3-5、编辑采集表，将该表要采集的列信息保存到相应的表里面
 				saveTableColumnInfoForUpdate(tableInfo, oldID, collColumn, columnSort, colSetId,
@@ -580,7 +581,12 @@ public class CollTbConfStepAction extends BaseAction {
 			//是否采集设置为是
 			tableColumn.setIs_get(IsFlag.Shi.getCode());
 			if(sortArr != null){
-				tableColumn.setRemark((String) sortArr.getJSONObject(i).get(tableColumn.getColume_name()));
+				for(int j = 0; j < sortArr.size(); j++){
+					JSONObject jsonObject = sortArr.getJSONObject(j);
+					if(jsonObject.getString("columnName").equalsIgnoreCase(tableColumn.getColume_name())){
+						tableColumn.setRemark(String.valueOf(jsonObject.get("sort")));
+					}
+				}
 			}
 			//4、保存这部分数据
 			tableColumn.add(Dbo.db());

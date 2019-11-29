@@ -260,6 +260,18 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		assertThat(wrongColSetIdResult.isSuccess(), is(false));
 	}
 
+	@Test
+	public void test(){
+		String rightStringFour = new HttpClient()
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.addData("inputString", "wzc")
+				.post(getActionUrl("getTableInfo")).getBodyString();
+		ActionResult rightResultFour = JsonUtil.toObjectSafety(rightStringFour, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResultFour.isSuccess(), is(true));
+		Result rightDataFour = rightResultFour.getDataForResult();
+		assertThat("使用wzc做模糊查询得到的表信息有0条", rightDataFour.isEmpty(), is(true));
+	}
 	/**
 	 * 测试根据数据库设置id得到所有表相关信息
 	 * 正确数据访问1：构造正确的colSetId进行测试
@@ -934,7 +946,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		try(DatabaseWrapper db = new DatabaseWrapper()){
 			//在新增前，查询数据库，table_info表中应该没有采集ftp_collect表的信息
 			long count = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_name = ?", "ftp_collect").orElseThrow(() -> new BusinessSystemException("查询结果必须有且只有一条"));
-			assertThat("在新增前，查询数据库，table_info表中应该没有采集ftp_collect表的信息", count, is(0));
+			assertThat("在新增前，查询数据库，table_info表中应该没有采集ftp_collect表的信息", count, is(0L));
 		}
 
 		Table_info FTPInfo = new Table_info();
@@ -969,8 +981,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			assertThat("<正确的测试用例1>执行成功后，table_info表中出现了采集ftp_collect表的配置", afterTableInfo.getRowCount(), is(1));
 			assertThat("<正确的测试用例1>执行成功后，采集ftp_collect表配置，<清洗顺序>符合期望", afterTableInfo.getString(0, "ti_or"), is(tableCleanOrder.toJSONString()));
 			assertThat("<正确的测试用例1>执行成功后，采集ftp_collect表配置，<是否使用MD5>符合期望", afterTableInfo.getString(0, "is_md5"), is(IsFlag.Shi.getCode()));
-			assertThat("<正确的测试用例1>执行成功后，采集ftp_collect表配置，<是否仅登记>符合期望", afterTableInfo.getString(0, "is_register"), is(IsFlag.Shi.getCode()));
-			assertThat("<正确的测试用例1>执行成功后，采集ftp_collect表配置，<是否仅登记>符合期望", afterTableInfo.getString(0, "is_register"), is(IsFlag.Shi.getCode()));
+			assertThat("<正确的测试用例1>执行成功后，采集ftp_collect表配置，<是否仅登记>符合期望", afterTableInfo.getString(0, "is_register"), is(IsFlag.Fou.getCode()));
 			assertThat("<正确的测试用例1>执行成功后，采集ftp_collect表配置，<是否并行抽取>符合期望", afterTableInfo.getString(0, "is_parallel"), is(IsFlag.Shi.getCode()));
 			assertThat("<正确的测试用例1>执行成功后，采集ftp_collect表配置，<分页SQL>符合期望", afterTableInfo.getString(0, "page_sql"), is("select * from ftp_collect limit 10;"));
 
@@ -1055,7 +1066,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		try(DatabaseWrapper db = new DatabaseWrapper()){
 			//在新增前，查询数据库，table_info表中应该没有采集object_collect表的信息
 			long count = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_name = ?", "object_collect").orElseThrow(() -> new BusinessSystemException("查询结果必须有且只有一条"));
-			assertThat("在新增前，查询数据库，table_info表中应该没有采集object_collect表的信息", count, is(0));
+			assertThat("在新增前，查询数据库，table_info表中应该没有采集object_collect表的信息", count, is(0L));
 		}
 		Table_info objInfo = new Table_info();
 		objInfo.setTable_name("object_collect");
@@ -1149,8 +1160,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			assertThat("<正确的测试用例2>执行成功后，table_info表中出现了采集object_collect表的配置", afterTableInfo.getRowCount(), is(1));
 			assertThat("<正确的测试用例2>执行成功后，采集object_collect表配置，<清洗顺序>符合期望", afterTableInfo.getString(0, "ti_or"), is(tableCleanOrder.toJSONString()));
 			assertThat("<正确的测试用例2>执行成功后，采集object_collect表配置，<是否使用MD5>符合期望", afterTableInfo.getString(0, "is_md5"), is(IsFlag.Shi.getCode()));
-			assertThat("<正确的测试用例2>执行成功后，采集object_collect表配置，<是否仅登记>符合期望", afterTableInfo.getString(0, "is_register"), is(IsFlag.Shi.getCode()));
-			assertThat("<正确的测试用例2>执行成功后，采集object_collect表配置，<是否仅登记>符合期望", afterTableInfo.getString(0, "is_register"), is(IsFlag.Shi.getCode()));
+			assertThat("<正确的测试用例2>执行成功后，采集object_collect表配置，<是否仅登记>符合期望", afterTableInfo.getString(0, "is_register"), is(IsFlag.Fou.getCode()));
 			assertThat("<正确的测试用例2>执行成功后，采集object_collect表配置，<是否并行抽取>符合期望", afterTableInfo.getString(0, "is_parallel"), is(IsFlag.Fou.getCode()));
 
 			Result afterTableColumn = SqlOperator.queryResult(db, "select * from " + Table_column.TableName + " where table_id = ?", afterTableInfo.getLong(0, "table_id"));
@@ -1158,10 +1168,13 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			for(int i = 0; i < afterTableColumn.getRowCount(); i++){
 				if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("odc_id")){
 					assertThat("<正确的测试用例2>执行成功后, <odc_id>字段的类型为<int8>", afterTableColumn.getString(i, "column_type"), is("int8"));
+					assertThat("<正确的测试用例2>执行成功后, <odc_id>字段的采集顺序为<1>", afterTableColumn.getString(i, "remark"), is("1"));
 				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("object_collect_type")){
 					assertThat("<正确的测试用例2>执行成功后, <object_collect_type>字段的类型为<int8>", afterTableColumn.getString(i, "column_type"), is("bpchar(1)"));
+					assertThat("<正确的测试用例2>执行成功后, <object_collect_type>字段的采集顺序为<2>", afterTableColumn.getString(i, "remark"), is("2"));
 				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("obj_number")){
 					assertThat("<正确的测试用例2>执行成功后, <obj_number>字段的类型为<int8>", afterTableColumn.getString(i, "column_type"), is("varchar(200)"));
+					assertThat("<正确的测试用例2>执行成功后, <obj_number>字段的采集顺序为<3>", afterTableColumn.getString(i, "remark"), is("3"));
 				}else{
 					assertThat("<正确的测试用例2>执行成功后, 再次查询table_column表，出现了不符合期望的情况，表名为：" + afterTableColumn.getString(i, "colume_name"), true, is(false));
 				}
@@ -1190,7 +1203,9 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		List<Table_info> tableInfos = new ArrayList<>();
 		List<CollTbConfParam> tbConfParams = new ArrayList<>();
 
+		//注意：由于这里是对code_info表的采集字段进行修改，所以必须要传table_id
 		Table_info codeInfo = new Table_info();
+		codeInfo.setTable_id(CODE_INFO_TABLE_ID);
 		codeInfo.setTable_name("code_info");
 		codeInfo.setTable_ch_name("代码信息表");
 		codeInfo.setDatabase_id(FIRST_DATABASESET_ID);
@@ -1281,7 +1296,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			//断言table_info表中的内容是否符合期望
 			long count = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_id = ?", CODE_INFO_TABLE_ID).orElseThrow(() -> new BusinessSystemException("查询结果必须有且只有一条"));
 			Result tableInfo = SqlOperator.queryResult(db, "select * from " + Table_info.TableName + " where table_name = ?", "code_info");
-			assertThat("code_info表在table_info表中有且只有一条数据，但是该条数据的id和构造初始化数据时不一致，导致这个事情的原因是保存操作全部都是按照先删除后新增的逻辑执行的", count, is(0));
+			assertThat("code_info表在table_info表中有且只有一条数据，但是该条数据的id和构造初始化数据时不一致，导致这个事情的原因是保存操作全部都是按照先删除后新增的逻辑执行的", count, is(0L));
 			assertThat("code_info表在table_info表中有且只有一条数据，但是该条数据的id和构造初始化数据时不一致，导致这个事情的原因是保存操作全部都是按照先删除后新增的逻辑执行的", tableInfo.getRowCount(), is(1));
 
 			long tableId = tableInfo.getLong(0, "table_id");
@@ -1289,7 +1304,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			//断言table_column表中的内容是否符合期望
 			long tbColCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " where table_id = ?", CODE_INFO_TABLE_ID).orElseThrow(() -> new BusinessSystemException("查询结果必须有且只有一条"));
 			Result tableColumn = SqlOperator.queryResult(db, "select * from " + Table_column.TableName + " where table_id = ?", tableId);
-			assertThat("code_info表的采集列在table_column表中有数据，数据有三条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在table_column表中已经查不到数据了", tbColCount, is(0));
+			assertThat("code_info表的采集列在table_column表中有数据，数据有三条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在table_column表中已经查不到数据了", tbColCount, is(0L));
 			assertThat("code_info表的采集列在table_column表中有数据，数据有三条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在table_column表中已经查不到数据了", tableColumn.getRowCount(), is(3));
 			for(int i = 0; i < tableColumn.getRowCount(); i++){
 				if(tableColumn.getString(i, "colume_name").equalsIgnoreCase("ci_sp_code")){
@@ -1305,7 +1320,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			//断言data_extraction_def表中的内容是否符合期望
 			long defCount = SqlOperator.queryNumber(db, "select count(1) from " + Data_extraction_def.TableName + " where table_id = ?", CODE_INFO_TABLE_ID).orElseThrow(() -> new BusinessSystemException("查询结果必须有且只有一条"));
 			Result dataExtractionDef = SqlOperator.queryResult(db, "select * from " + Data_extraction_def.TableName + " where table_id = ?", tableId);
-			assertThat("code_info表的数据抽取定义信息在Data_extraction_def表中有数据，数据有1条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在data_extraction_def表中已经查不到数据了", defCount, is(0));
+			assertThat("code_info表的数据抽取定义信息在Data_extraction_def表中有数据，数据有1条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在data_extraction_def表中已经查不到数据了", defCount, is(0L));
 			assertThat("code_info表的数据抽取定义信息在Data_extraction_def表中有数据，数据有1条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在data_extraction_def表中已经查不到数据了", dataExtractionDef.getRowCount(), is(1));
 			assertThat("code_info表的数据抽取定义信息在Data_extraction_def表中有数据，<数据抽取方式>符合预期", dataExtractionDef.getString(0, "data_extract_type"), is(DataExtractType.ShuJuChouQuJiRuKu.getCode()));
 			assertThat("code_info表的数据抽取定义信息在Data_extraction_def表中有数据，<是否表头>符合预期", dataExtractionDef.getString(0, "is_header"), is(IsFlag.Fou.getCode()));
@@ -1316,7 +1331,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			//断言table_clean表中的内容是否符合期望
 			long cleanCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_clean.TableName + " where table_id = ?", CODE_INFO_TABLE_ID).orElseThrow(() -> new BusinessSystemException("查询结果必须有且只有一条"));
 			Result tableClean = SqlOperator.queryResult(db, "select * from " + Table_clean.TableName + " where table_id = ?", tableId);
-			assertThat("code_info表的表清洗信息在Table_clean表中有数据，数据有2条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在Table_clean表中已经查不到数据了", cleanCount, is(0));
+			assertThat("code_info表的表清洗信息在Table_clean表中有数据，数据有2条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在Table_clean表中已经查不到数据了", cleanCount, is(0L));
 			assertThat("code_info表的表清洗信息在Table_clean表中有数据，数据有2条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在Table_clean表中已经查不到数据了", tableClean.getRowCount(), is(2));
 			for(int i = 0; i < tableClean.getRowCount(); i++){
 				if(tableClean.getString(i, "clean_type").equalsIgnoreCase(CleanType.ZiFuTiHuan.getCode())){
@@ -1333,7 +1348,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			//断言table_srorage_info表中的内容是否符合期望
 			long storageCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_storage_info.TableName + " where table_id = ?", CODE_INFO_TABLE_ID).orElseThrow(() -> new BusinessSystemException("查询结果必须有且只有一条"));
 			Result tableStorage = SqlOperator.queryResult(db, "select * from " + Table_storage_info.TableName + " where table_id = ?", tableId);
-			assertThat("code_info表的表存储信息在Table_storage_info表中有数据，数据有1条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在Table_storage_info表中已经查不到数据了", storageCount, is(0));
+			assertThat("code_info表的表存储信息在Table_storage_info表中有数据，数据有1条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在Table_storage_info表中已经查不到数据了", storageCount, is(0L));
 			assertThat("code_info表的表存储信息在Table_storage_info表中有数据，数据有1条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在Table_storage_info表中已经查不到数据了", tableStorage.getRowCount(), is(1));
 			assertThat("code_info表的表存储信息在Table_storage_info表中有数据，数据有1条，存储格式为<定长>", tableStorage.getString(0, "file_format"), is(FileFormat.DingChang.getCode()));
 			assertThat("code_info表的表存储信息在Table_storage_info表中有数据，数据有1条，进数方式为<追加>", tableStorage.getString(0, "storage_type"), is(StorageType.ZhuiJia.getCode()));
@@ -1342,17 +1357,10 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			//断言column_merge表中的内容是否符合期望
 			long mergeCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_merge.TableName + " where table_id = ?", CODE_INFO_TABLE_ID).orElseThrow(() -> new BusinessSystemException("查询结果必须有且只有一条"));
 			Result columnMerge = SqlOperator.queryResult(db, "select * from " + Column_merge.TableName + " where table_id = ?", tableId);
-			assertThat("code_info表的列合并信息在column_merge表中有数据，数据有2条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在column_merge表中已经查不到数据了", mergeCount, is(0));
-			assertThat("code_info表的列合并信息在column_merge表中有数据，数据有2条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在column_merge表中已经查不到数据了", columnMerge.getRowCount(), is(2));
-			for(int i = 0; i < columnMerge.getRowCount(); i++){
-				if(columnMerge.getString(i, "col_name").equalsIgnoreCase("user_create_id")){
-					assertThat("ode_info表的列合并信息在column_merge表中有数据，数据有2条,<要合并的字段>符合预期", columnMerge.getString(i, "old_name"), is("user_id" + "|" + "create_id"));
-				}else if(columnMerge.getString(i, "col_name").equalsIgnoreCase("user_name_password")){
-					assertThat("ode_info表的列合并信息在column_merge表中有数据，数据有2条,<要合并的字段>符合预期", columnMerge.getString(i, "old_name"), is("user_name" + "|" + "user_password"));
-				}else{
-					assertThat("修改成功后，code_info表在column_merge表中定义的列合并方式出现了不符合预期的情况,合并后列名为 : " + columnMerge.getString(i, "col_name"), true, is(false));
-				}
-			}
+			assertThat("code_info表的列合并信息在column_merge表中有数据，数据有1条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在column_merge表中已经查不到数据了", mergeCount, is(0L));
+			assertThat("code_info表的列合并信息在column_merge表中有数据，数据有1条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在column_merge表中已经查不到数据了", columnMerge.getRowCount(), is(1));
+			assertThat("ode_info表的列合并信息在column_merge表中有数据，数据有1条,<要合并的字段>符合预期", columnMerge.getString(0, "col_name"), is("ci_sp_classname_name"));
+			assertThat("ode_info表的列合并信息在column_merge表中有数据，数据有1条,<要合并的字段>符合预期", columnMerge.getString(0, "old_name"), is("ci_sp_classname|ci_sp_name"));
 
 			//删除测试数据
 			SqlOperator.execute(db, "delete from " + Table_column.TableName + " where table_id = ? ", tableId);
@@ -1377,10 +1385,10 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		try(DatabaseWrapper db = new DatabaseWrapper()){
 			//在新增前，查询数据库，table_info表中应该没有采集ftp_collect表的信息
 			long count = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_name = ?", "ftp_collect").orElseThrow(() -> new BusinessSystemException("查询结果必须有且只有一条"));
-			assertThat("在新增前，查询数据库，table_info表中应该没有采集ftp_collect表的信息", count, is(0));
+			assertThat("在新增前，查询数据库，table_info表中应该没有采集ftp_collect表的信息", count, is(0L));
 			//在新增前，查询数据库，table_info表中应该没有采集object_collect表的信息
 			long countTwo = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_name = ?", "object_collect").orElseThrow(() -> new BusinessSystemException("查询结果必须有且只有一条"));
-			assertThat("在新增前，查询数据库，table_info表中应该没有采集object_collect表的信息", countTwo, is(0));
+			assertThat("在新增前，查询数据库，table_info表中应该没有采集object_collect表的信息", countTwo, is(0L));
 		}
 
 		Table_info FTPInfo = new Table_info();
@@ -1426,8 +1434,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			assertThat("<正确的测试用例4>执行成功后，table_info表中出现了采集ftp_collect表的配置", afterTableInfo.getRowCount(), is(1));
 			assertThat("<正确的测试用例4>执行成功后，采集ftp_collect表配置，<清洗顺序>符合期望", afterTableInfo.getString(0, "ti_or"), is(tableCleanOrder.toJSONString()));
 			assertThat("<正确的测试用例4>执行成功后，采集ftp_collect表配置，<是否使用MD5>符合期望", afterTableInfo.getString(0, "is_md5"), is(IsFlag.Shi.getCode()));
-			assertThat("<正确的测试用例4>执行成功后，采集ftp_collect表配置，<是否仅登记>符合期望", afterTableInfo.getString(0, "is_register"), is(IsFlag.Shi.getCode()));
-			assertThat("<正确的测试用例4>执行成功后，采集ftp_collect表配置，<是否仅登记>符合期望", afterTableInfo.getString(0, "is_register"), is(IsFlag.Shi.getCode()));
+			assertThat("<正确的测试用例4>执行成功后，采集ftp_collect表配置，<是否仅登记>符合期望", afterTableInfo.getString(0, "is_register"), is(IsFlag.Fou.getCode()));
 			assertThat("<正确的测试用例4>执行成功后，采集ftp_collect表配置，<是否并行抽取>符合期望", afterTableInfo.getString(0, "is_parallel"), is(IsFlag.Fou.getCode()));
 
 			Result afterTableColumn = SqlOperator.queryResult(db, "select * from " + Table_column.TableName + " where table_id = ?", afterTableInfo.getLong(0, "table_id"));
@@ -1501,19 +1508,44 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			assertThat("<正确的测试用例4>执行成功后，table_info表中出现了采集object_collect表的配置", afterTableInfo.getRowCount(), is(1));
 			assertThat("<正确的测试用例4>执行成功后，采集object_collect表配置，<清洗顺序>符合期望", afterTableInfo.getString(0, "ti_or"), is(tableCleanOrder.toJSONString()));
 			assertThat("<正确的测试用例4>执行成功后，采集object_collect表配置，<是否使用MD5>符合期望", afterTableInfo.getString(0, "is_md5"), is(IsFlag.Shi.getCode()));
-			assertThat("<正确的测试用例4>执行成功后，采集object_collect表配置，<是否仅登记>符合期望", afterTableInfo.getString(0, "is_register"), is(IsFlag.Shi.getCode()));
-			assertThat("<正确的测试用例4>执行成功后，采集object_collect表配置，<是否仅登记>符合期望", afterTableInfo.getString(0, "is_register"), is(IsFlag.Shi.getCode()));
+			assertThat("<正确的测试用例4>执行成功后，采集object_collect表配置，<是否仅登记>符合期望", afterTableInfo.getString(0, "is_register"), is(IsFlag.Fou.getCode()));
 			assertThat("<正确的测试用例4>执行成功后，采集object_collect表配置，<是否并行抽取>符合期望", afterTableInfo.getString(0, "is_parallel"), is(IsFlag.Fou.getCode()));
 
 			Result afterTableColumn = SqlOperator.queryResult(db, "select * from " + Table_column.TableName + " where table_id = ?", afterTableInfo.getLong(0, "table_id"));
-			assertThat("<正确的测试用例4>执行成功后，table_column表中有关object_collect表的列应该有<24>列", afterTableColumn.getRowCount(), is(3));
+			assertThat("<正确的测试用例4>执行成功后，table_column表中有关object_collect表的列应该有<16>列", afterTableColumn.getRowCount(), is(16));
 			for(int i = 0; i < afterTableColumn.getRowCount(); i++){
 				if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("odc_id")){
 					assertThat("<正确的测试用例4>执行成功后, <odc_id>字段的类型为<int8>", afterTableColumn.getString(i, "column_type"), is("int8"));
 				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("object_collect_type")){
-					assertThat("<正确的测试用例4>执行成功后, <object_collect_type>字段的类型为<int8>", afterTableColumn.getString(i, "column_type"), is("bpchar(1)"));
+					assertThat("<正确的测试用例4>执行成功后, <object_collect_type>字段的类型为<bpchar(1)>", afterTableColumn.getString(i, "column_type"), is("bpchar(1)"));
 				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("obj_number")){
-					assertThat("<正确的测试用例4>执行成功后, <obj_number>字段的类型为<int8>", afterTableColumn.getString(i, "column_type"), is("varchar(200)"));
+					assertThat("<正确的测试用例4>执行成功后, <obj_number>字段的类型为<varchar(200)>", afterTableColumn.getString(i, "column_type"), is("varchar(200)"));
+				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("obj_collect_name")){
+					assertThat("<正确的测试用例4>执行成功后, <obj_collect_name>字段的类型为<varchar(512)>", afterTableColumn.getString(i, "column_type"), is("varchar(512)"));
+				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("system_name")){
+					assertThat("<正确的测试用例4>执行成功后, <system_name>字段的类型为<varchar(512)>", afterTableColumn.getString(i, "column_type"), is("varchar(512)"));
+				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("host_name")){
+					assertThat("<正确的测试用例4>执行成功后, <host_name>字段的类型为<varchar(512)>", afterTableColumn.getString(i, "column_type"), is("varchar(512)"));
+				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("local_time")){
+					assertThat("<正确的测试用例4>执行成功后, <local_time>字段的类型为<bpchar(20)>", afterTableColumn.getString(i, "column_type"), is("bpchar(20)"));
+				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("server_date")){
+					assertThat("<正确的测试用例4>执行成功后, <server_date>字段的类型为<bpchar(20)>", afterTableColumn.getString(i, "column_type"), is("bpchar(20)"));
+				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("s_date")){
+					assertThat("<正确的测试用例4>执行成功后, <s_date>字段的类型为<bpchar(8)>", afterTableColumn.getString(i, "column_type"), is("bpchar(8)"));
+				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("e_date")){
+					assertThat("<正确的测试用例4>执行成功后, <e_date>字段的类型为<bpchar(8)>", afterTableColumn.getString(i, "column_type"), is("bpchar(8)"));
+				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("database_code")){
+					assertThat("<正确的测试用例4>执行成功后, <database_code>字段的类型为<bpchar(1)>", afterTableColumn.getString(i, "column_type"), is("bpchar(1)"));
+				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("run_way")){
+					assertThat("<正确的测试用例4>执行成功后, <run_way>字段的类型为<bpchar(1)>", afterTableColumn.getString(i, "column_type"), is("bpchar(1)"));
+				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("file_path")){
+					assertThat("<正确的测试用例4>执行成功后, <file_path>字段的类型为<varchar(512)>", afterTableColumn.getString(i, "column_type"), is("varchar(512)"));
+				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("is_sendok")){
+					assertThat("<正确的测试用例4>执行成功后, <is_sendok>字段的类型为<bpchar(1)>", afterTableColumn.getString(i, "column_type"), is("bpchar(1)"));
+				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("remark")){
+					assertThat("<正确的测试用例4>执行成功后, <remark>字段的类型为<varchar(512)>", afterTableColumn.getString(i, "column_type"), is("varchar(512)"));
+				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("agent_id")){
+					assertThat("<正确的测试用例4>执行成功后, <agent_id>字段的类型为<int8>", afterTableColumn.getString(i, "column_type"), is("int8"));
 				}else{
 					assertThat("<正确的测试用例4>执行成功后, 再次查询table_column表，出现了不符合期望的情况，表名为：" + afterTableColumn.getString(i, "colume_name"), true, is(false));
 				}
@@ -1523,7 +1555,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			int tableCount = SqlOperator.execute(db, "delete from " + Table_info.TableName + " where table_id = ?", afterTableInfo.getLong(0, "table_id"));
 			int columnCount = SqlOperator.execute(db, "delete from " + Table_column.TableName + " where table_id = ?", afterTableInfo.getLong(0, "table_id"));
 			assertThat("删除<正确数据访问4>生成的数据成功<table_info>", tableCount, is(1));
-			assertThat("删除<正确数据访问4>生成的数据成功<table_column>", columnCount, is(3));
+			assertThat("删除<正确数据访问4>生成的数据成功<table_column>", columnCount, is(16));
 
 			SqlOperator.commitTransaction(db);
 		}
