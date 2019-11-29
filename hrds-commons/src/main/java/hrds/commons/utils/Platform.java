@@ -27,13 +27,6 @@ public class Platform {
 	public static Element column = null;
 
 	private static void createXml(String path, String name) {
-		//写文件之前先删除以前的文件
-		File file = new File(path);
-		if (file.exists()) {
-			if (!file.delete()) {
-				throw new AppSystemException("删除文件失败");
-			}
-		}
 		xmlCreater = new XmlCreater(path);
 		root = xmlCreater.createRootElement("database");
 		xmlCreater.createAttribute(root, "xmlns", "http://db.apache.org/ddlutils/schema/1.1");
@@ -215,10 +208,16 @@ public class Platform {
 			DatabaseMetaData dbmd = conn.getMetaData();
 			// 调用方法生成xml文件
 			String userName = dbmd.getUserName();
-			if (!FileUtils.getFile(xmlName).exists()) {
+			File file = FileUtils.getFile(xmlName);
+			if (!file.exists()) {
 				createXml(xmlName, userName);
 			} else {
-				openXml(new File(xmlName).getAbsolutePath());
+				//写文件之前先删除以前的文件
+				if (!file.delete()) {
+					throw new AppSystemException("删除文件失败");
+				}
+				createXml(xmlName, userName);
+//				openXml(new File(xmlName).getAbsolutePath());
 			}
 
 			String schemaPattern = "%";
