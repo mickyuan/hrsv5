@@ -173,6 +173,26 @@ public class StoDestStepConfAction extends BaseAction{
 		return header;
 	}
 
+	@Method(desc = "根据存储目的地ID获取选择列画面需要的附加属性信息ID", logicStep = "" +
+			"1、根据存储目的地ID去数据存储附加信息表中获取附加属性信息ID和附加属性信息" +
+			"2、封装成Map集合返回前端")
+	@Param(name = "dslId", desc = "数据存储层配置表主键，数据存储附加信息表外键", range = "不为空")
+	@Return(desc = "Map集合", range = "key为附加信息code，value为附加信息ID，" +
+			"这个附加信息ID就是在保存列存储信息的时候需要放在数组里面传递的" +
+			"如果该目的地没有附加信息，那么返回的集合就是空集合" +
+			"需要前端人员根据code再去StoreLayerAdded代码项中取得value")
+	public Map<String, Long> getDataStoreLayerAddedId(long dslId){
+		Map<String, Long> storeAddedId = new HashMap<>();
+		Result result = Dbo.queryResult("select dslad_id, dsla_storelayer from " + Data_store_layer_added.TableName + " where dsl_id = ?", dslId);
+		if(result.isEmpty()){
+			return storeAddedId;
+		}
+		for(int i = 0; i < result.getRowCount(); i++){
+			storeAddedId.put(result.getString(i, "dsla_storelayer"), result.getLong(i, "dslad_id"));
+		}
+		return storeAddedId;
+	}
+
 
 	@Method(desc = "根据表ID获取该表所有的列存储信息", logicStep = "" +
 			"1、根据表ID查询出该表所有采集列的列名和列中文名(结果集1)" +

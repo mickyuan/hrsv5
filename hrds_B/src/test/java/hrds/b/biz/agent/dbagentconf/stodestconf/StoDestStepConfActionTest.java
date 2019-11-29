@@ -1221,6 +1221,53 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 		}
 	}
 
+	/**
+	 * 测试根据存储目的地ID获取选择列画面需要的附加属性信息ID
+	 *
+	 * 正确数据访问1：测试获取存储目的地为<关系型数据库>的附加属性信息ID
+	 * 正确数据访问2：测试存储目的地为<SOLR>的附加属性信息ID
+	 * 错误的数据访问1：测试存储目的地为<MONGODB>的附加属性信息ID
+	 * 错误的测试用例未达到三组：以上所有测试用例已经足够覆盖所有可能出现的情况了
+	 * @Param: 无
+	 * @return: 无
+	 *
+	 * */
+	@Test
+	public void getDataStoreLayerAddedId(){
+		//正确数据访问1：测试获取存储目的地为<关系型数据库>的附加属性信息ID
+		String rightStringOne = new HttpClient()
+				.addData("dslId", 4400L)
+				.post(getActionUrl("getDataStoreLayerAddedId")).getBodyString();
+		ActionResult rightResultOne = JsonUtil.toObjectSafety(rightStringOne, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResultOne.isSuccess(), is(true));
+
+		Map<String, Long> oracleMap = rightResultOne.getDataForMap(String.class, Long.class);
+		assertThat(oracleMap.get(StoreLayerAdded.ZhuJian.getCode()), is(439999L));
+
+		//正确数据访问2：测试存储目的地为<SOLR>的附加属性信息ID
+		String rightStringTwo = new HttpClient()
+				.addData("dslId", 4399L)
+				.post(getActionUrl("getDataStoreLayerAddedId")).getBodyString();
+		ActionResult rightResultTwo = JsonUtil.toObjectSafety(rightStringTwo, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResultTwo.isSuccess(), is(true));
+
+		Map<String, Long> solrMap = rightResultTwo.getDataForMap(String.class, Long.class);
+		assertThat(solrMap.get(StoreLayerAdded.SuoYinLie.getCode()), is(440000L));
+
+		//错误的数据访问1：测试存储目的地为<MONGODB>的附加属性信息ID
+		String wrongString = new HttpClient()
+				.addData("dslId", 4403L)
+				.post(getActionUrl("getDataStoreLayerAddedId")).getBodyString();
+		ActionResult wrongResult = JsonUtil.toObjectSafety(wrongString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResult.isSuccess(), is(true));
+
+		Map<String, Long> mongoMap = wrongResult.getDataForMap(String.class, Long.class);
+		assertThat(mongoMap.isEmpty(), is(true));
+	}
+
 	@After
 	public void after(){
 		InitAndDestDataForStoDest.after();

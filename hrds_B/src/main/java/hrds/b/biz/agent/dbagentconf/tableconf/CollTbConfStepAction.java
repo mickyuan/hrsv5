@@ -366,7 +366,7 @@ public class CollTbConfStepAction extends BaseAction {
 			"           7-3-3、更新column_merge表对应条目的table_id字段" +
 			"           7-3-4、更新data_extraction_def表对应条目的table_id" +
 			"           7-3-5、编辑采集表，将该表要采集的列信息保存到相应的表里面" +
-			"8、不是新增采集表还是编辑采集表，都需要将该表要采集的列信息保存到相应的表里面")
+			"8、不管是新增采集表还是编辑采集表，都需要将该表要采集的列信息保存到相应的表里面")
 	@Param(name = "tableInfoString", desc = "如果是新增的采集表，table_id为空，如果是编辑修改采集表，table_id不能为空"
 			, range = "不为空，json格式，能够转为Table_info类的实体类对象")
 	@Param(name = "colSetId", desc = "数据库设置ID，源系统数据库设置表主键，数据库对应表外键", range = "不为空")
