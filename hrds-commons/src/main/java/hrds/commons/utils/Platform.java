@@ -2,11 +2,13 @@ package hrds.commons.utils;
 
 import fd.ng.core.utils.StringUtil;
 import hrds.commons.codes.DatabaseType;
+import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.xlstoxml.XmlCreater;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.yarn.webapp.hamlet2.Hamlet;
 import org.w3c.dom.Element;
 
 import java.io.File;
@@ -25,7 +27,13 @@ public class Platform {
 	public static Element column = null;
 
 	private static void createXml(String path, String name) {
-
+		//写文件之前先删除以前的文件
+		File file = new File(path);
+		if (file.exists()) {
+			if (!file.delete()) {
+				throw new AppSystemException("删除文件失败");
+			}
+		}
 		xmlCreater = new XmlCreater(path);
 		root = xmlCreater.createRootElement("database");
 		xmlCreater.createAttribute(root, "xmlns", "http://db.apache.org/ddlutils/schema/1.1");
