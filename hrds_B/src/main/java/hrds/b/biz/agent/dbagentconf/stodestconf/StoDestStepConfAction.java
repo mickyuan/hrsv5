@@ -291,6 +291,28 @@ public class StoDestStepConfAction extends BaseAction{
 		//如果反序列化得到的List集合为空，则说明页面上用户没有定义任何一个具有特殊存储属性的字段，于是不做任何处理
 	}
 
+	@Method(desc = "在配置字段存储信息时，更新字段中文名", logicStep = "" +
+			"1、将传过来的json串反序列化为List集合" +
+			"2、对集合的长度进行校验，如果集合为空，抛出异常" +
+			"3、遍历集合，更新每个字段的中文名")
+	@Param(name = "columnString", desc = "待更新的字段信息，json数组", range = "不为空，每个json数组中的json对象的key为" +
+			"column_id：字段ID；colume_ch_name：字段中文名")
+	public void updateColumnZhName(String columnString){
+		List<Table_column> tableColumns = JSONArray.parseArray(columnString, Table_column.class);
+		if(tableColumns.isEmpty()){
+			throw new BusinessSystemException("获取字段信息失败");
+		}
+		for(int i = 0; i < tableColumns.size(); i++){
+			Table_column tableColumn = tableColumns.get(i);
+			if(tableColumn.getColumn_id() == null){
+				throw new BusinessSystemException("保存第" + i + "个字段的中文名必须关联字段ID");
+			}
+			DboExecute.updatesOrThrow("保存第" + i + "个字段的中文名失败", "update " +
+					Table_column.TableName + " set colume_ch_name = ? where column_id = ?",
+					tableColumn.getColume_ch_name(), tableColumn.getColumn_id());
+		}
+	}
+
 	/*
 	 * 保存表存储属性配置，仅保存抽取方式为<抽取并入库>的表
 	 * */
