@@ -1,4 +1,4 @@
-package hrds.agent.trans.biz.agentServer;
+package hrds.agent.trans.biz.agentserver;
 
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;

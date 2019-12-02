@@ -336,11 +336,11 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 
 	/**
 	 * 测试并行采集SQL测试功能
-	 * TODO 被测方法未完成
 	 * 正确数据访问1：构建正确的colSetId和SQL语句
 	 * 错误的数据访问1：构建错误的colSetId和正确的SQL语句
 	 * 错误的数据访问2：构建正确的colSetId和错误SQL语句
-	 * 错误的测试用例未达到三组:testParallelExtraction只有两个参数
+	 * 错误的数据访问3：构建正确的colSetId和正确的SQL语句，但是SQL语句查不到数据
+	 *
 	 * @Param: 无
 	 * @return: 无
 	 *
@@ -348,10 +348,10 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 	@Test
 	public void testParallelExtraction(){
 		//正确数据访问1：构建正确的colSetId和SQL语句
-		String pageSQL = "select * from sys_user limit 2 offset 1";
+		String pageSQL = "select * from sys_user limit 2 offset 0";
 		String rightString = new HttpClient()
 				.addData("colSetId", FIRST_DATABASESET_ID)
-				.addData("sql", pageSQL)
+				.addData("pageSql", pageSQL)
 				.post(getActionUrl("testParallelExtraction")).getBodyString();
 		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
@@ -361,7 +361,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		long wrongColSetId = 1003L;
 		String wrongColSetIdString = new HttpClient()
 				.addData("colSetId", wrongColSetId)
-				.addData("sql", pageSQL)
+				.addData("pageSql", pageSQL)
 				.post(getActionUrl("testParallelExtraction")).getBodyString();
 		ActionResult wrongColSetIdResult = JsonUtil.toObjectSafety(wrongColSetIdString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
@@ -371,11 +371,21 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		String wrongSQL = "select * from sys_user limit 10,20";
 		String wrongSQLString = new HttpClient()
 				.addData("colSetId", FIRST_DATABASESET_ID)
-				.addData("sql", wrongSQL)
+				.addData("pageSql", wrongSQL)
 				.post(getActionUrl("testParallelExtraction")).getBodyString();
 		ActionResult wrongSQLResult = JsonUtil.toObjectSafety(wrongSQLString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(wrongSQLResult.isSuccess(), is(false));
+
+		//错误的数据访问3：构建正确的colSetId和正确的SQL语句，但是SQL语句查不到数据
+		String wrongSQLTwo = "select * from collect_case";
+		String wrongSQLStringTwo = new HttpClient()
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.addData("pageSql", wrongSQLTwo)
+				.post(getActionUrl("testParallelExtraction")).getBodyString();
+		ActionResult wrongSQLResultTwo = JsonUtil.toObjectSafety(wrongSQLStringTwo, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongSQLResultTwo.isSuccess(), is(false));
 	}
 
 	/**

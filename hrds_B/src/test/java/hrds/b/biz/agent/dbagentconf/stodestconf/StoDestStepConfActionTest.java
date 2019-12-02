@@ -760,6 +760,109 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 	}
 
 	/**
+	 * 测试在配置字段存储信息时，更新字段中文名
+	 *
+	 * 正确数据访问1：更新data_source表在table_column表中的数据，并断言是否修改成功
+	 * 错误的数据访问1：更新agent_info表在table_column表中的数据，但是传错一个column_id，使其故意更新不成功
+	 * 错误的场景未满三种：updateColumnZhName方法只有一个参数
+	 * @Param: 无
+	 * @return: 无
+	 *
+	 * */
+	@Test
+	public void updateColumnZhName(){
+		//正确数据访问1：更新data_source表在table_column表中的数据，并断言是否修改成功
+		List<Table_column> dataSources = new ArrayList<>();
+		for(int i = 0; i < 3; i++){
+			long columnId;
+			String columnZhName;
+			switch (i){
+				case 0 :
+					columnId = 5112L;
+					columnZhName = "数据源ID_update";
+					break;
+				case 1 :
+					columnId = 5113L;
+					columnZhName = "数据源编号_update";
+					break;
+				case 2 :
+					columnId = 5114L;
+					columnZhName = "数据源名称_update";
+					break;
+				default:
+					columnId = UNEXPECTED_ID;
+					columnZhName = "unexpected_columnZhName";
+			}
+			Table_column tableColumn = new Table_column();
+			tableColumn.setColumn_id(columnId);
+			tableColumn.setColume_ch_name(columnZhName);
+
+			dataSources.add(tableColumn);
+		}
+
+		String rightString = new HttpClient()
+				.addData("columnString", JSON.toJSONString(dataSources))
+				.post(getActionUrl("updateColumnZhName")).getBodyString();
+		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResult.isSuccess(), is(true));
+
+		try (DatabaseWrapper db = new DatabaseWrapper()) {
+			List<Object> list = SqlOperator.queryOneColumnList(db, "select colume_ch_name from " + Table_column.TableName + " where table_id = ?", DATA_SOURCE_TABLE_ID);
+			assertThat("查询到的数据有3条", list.size(), is(3));
+			for(Object obj : list){
+				String str = (String) obj;
+				if(str.equalsIgnoreCase("数据源ID_update")){
+					assertThat(true, is(true));
+				}else if(str.equalsIgnoreCase("数据源编号_update")){
+					assertThat(true, is(true));
+				}else if(str.equalsIgnoreCase("数据源名称_update")){
+					assertThat(true, is(true));
+				}else{
+					assertThat("出现了不符合期望的情况，列中文名为:" + str, false, is(true));
+				}
+			}
+		}
+
+		//错误的数据访问1：更新agent_info表在table_column表中的数据，但是传错一个column_id，使其故意更新不成功
+		List<Table_column> agentInfos = new ArrayList<>();
+		for(int i = 0; i < 3; i++){
+			long columnId;
+			String columnZhName;
+			switch (i){
+				case 0 :
+					columnId = 3112L;
+					columnZhName = "agent_id_update";
+					break;
+				case 1 :
+					columnId = 3113L;
+					columnZhName = "Agent名称_update";
+					break;
+				case 2 :
+					//故意构造错误一条数据的column_id，让校验程序报错
+					columnId = UNEXPECTED_ID;
+					columnZhName = "agent类别_update";
+					break;
+				default:
+					columnId = UNEXPECTED_ID;
+					columnZhName = "unexpected_columnZhName";
+			}
+			Table_column tableColumn = new Table_column();
+			tableColumn.setColumn_id(columnId);
+			tableColumn.setColume_ch_name(columnZhName);
+
+			agentInfos.add(tableColumn);
+		}
+
+		String wrongString = new HttpClient()
+				.addData("columnString", JSON.toJSONString(agentInfos))
+				.post(getActionUrl("updateColumnZhName")).getBodyString();
+		ActionResult wrongResult = JsonUtil.toObjectSafety(wrongString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResult.isSuccess(), is(false));
+	}
+
+	/**
 	 * 测试保存表存储属性配置
 	 *
 	 * 正确数据访问1：修改agent_info表的保存目的地，由关系型数据库和hbase修改为仅保存到关系型数据库,进数方式为替换，不进行拉链存储，只保存一天
