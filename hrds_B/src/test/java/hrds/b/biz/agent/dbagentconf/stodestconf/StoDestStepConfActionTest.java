@@ -1095,7 +1095,8 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 
 			//删除新增的测试数据
 			int countOne = SqlOperator.execute(db, "delete from " + Data_extraction_def.TableName + " where table_id = ?", TABLE_INFO_TABLE_ID);
-			int countTwo = SqlOperator.execute(db, "delete from " + Data_relation_table.TableName + " where storage_id in (select storage_id from " + Table_storage_info.TableName + " where table_id = ?)", TABLE_INFO_TABLE_ID);
+			int countTwo = SqlOperator.execute(db, "delete from " + Data_relation_table.TableName +
+					" where storage_id in (select storage_id from " + Table_storage_info.TableName + " where table_id = ?)", TABLE_INFO_TABLE_ID);
 			int countThree = SqlOperator.execute(db, "delete from " + Table_storage_info.TableName + " where table_id = ?", TABLE_INFO_TABLE_ID);
 
 			assertThat("saveTbStoInfo<正确的数据访问3>执行完毕后，删除新增的数据成功", countOne, is(1));

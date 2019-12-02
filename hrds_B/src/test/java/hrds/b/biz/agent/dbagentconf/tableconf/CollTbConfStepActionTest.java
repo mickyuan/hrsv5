@@ -139,7 +139,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 
 	/**
 	 * 测试根据数据库设置id得到所有表相关信息功能
-	 * TODO 目前测试用例只判断和agent能够调通，并且获取到的list有值，因为目前我们自己的测试用数据库是处于变化当中的
+	 * TODO 目前测试用例只判断和agent能够调通，并且获取到的list有值，因为目前我们自己的测试用数据库是处于变化当中的,不能准确确定值的数量
 	 * 正确数据访问1：构造colSetId为1002，inputString为code的测试数据
 	 * 正确数据访问2：构造colSetId为1002，inputString为sys的测试数据
 	 * 正确数据访问3：构造colSetId为1001，inputString为sys|code的测试数据

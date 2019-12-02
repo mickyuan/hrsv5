@@ -72,7 +72,8 @@ public class FileConfStepAction extends BaseAction{
 	@Return(desc = "返回数据库设置ID，方便下一个页面能够通过这个参数加载初始化设置", range = "不为空")
 	public long saveFileConf(String extractionDefString, long colSetId){
 		//1、将传入的json格式的字符串转换为List<Data_extraction_def>集合
-		List<Data_extraction_def> dataExtractionDefs = JSONArray.parseArray(extractionDefString, Data_extraction_def.class);
+		List<Data_extraction_def> dataExtractionDefs = JSONArray.parseArray(extractionDefString,
+				Data_extraction_def.class);
 		//2、遍历集合，对集合中的内容调用方法进行校验
 		verifySeqConf(dataExtractionDefs);
 		for(Data_extraction_def def : dataExtractionDefs){
@@ -110,7 +111,8 @@ public class FileConfStepAction extends BaseAction{
 			FileFormat fileFormat = FileFormat.ofEnumByCode(def.getDbfile_format());
 			if(extractType == DataExtractType.JinShuJuChouQu){
 				//如果数据抽取方式是仅抽取，那么校验存储方式不能是ORC，PARQUET，SEQUENCEFILE
-				if(fileFormat == FileFormat.ORC || fileFormat == FileFormat.PARQUET || fileFormat == FileFormat.SEQUENCEFILE){
+				if(fileFormat == FileFormat.ORC || fileFormat == FileFormat.PARQUET ||
+						fileFormat == FileFormat.SEQUENCEFILE){
 					throw new BusinessSystemException("仅抽取操作，只能指定非定长|定长|CSV三种存储格式");
 				}
 				//2-1、文件格式如果是非定长，用户必须填写行分隔符和列分隔符
@@ -131,12 +133,15 @@ public class FileConfStepAction extends BaseAction{
 					throw new BusinessSystemException("抽取并入库操作，不能保存为定长文件");
 				}
 				//3-1、如果是ORC/PARQUET/SEQUENCEFILE，不允许用户填写行分隔符和列分隔符
-				if(fileFormat == FileFormat.ORC || fileFormat == FileFormat.PARQUET || fileFormat == FileFormat.SEQUENCEFILE){
+				if(fileFormat == FileFormat.ORC || fileFormat == FileFormat.PARQUET ||
+						fileFormat == FileFormat.SEQUENCEFILE){
 					if(StringUtil.isNotEmpty(def.getRow_separator())){
-						throw new BusinessSystemException("数据抽取并入库，保存格式为ORC/PARQUET/SEQUENCEFILE，不能指定行分隔符");
+						throw new BusinessSystemException("数据抽取并入库，保存格式为ORC/PARQUET/SEQUENCEFILE，" +
+								"不能指定行分隔符");
 					}
 					if(StringUtil.isNotEmpty(def.getDatabase_separatorr())){
-						throw new BusinessSystemException("数据抽取并入库，保存格式为ORC/PARQUET/SEQUENCEFILE，不能指定列分隔符");
+						throw new BusinessSystemException("数据抽取并入库，保存格式为ORC/PARQUET/SEQUENCEFILE，" +
+								"不能指定列分隔符");
 					}
 				}
 				//3-2、如果是非定长，则校验，用户必须填写行分隔符和列分隔符

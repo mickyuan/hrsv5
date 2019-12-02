@@ -71,7 +71,7 @@ public class CollTbConfStepAction extends BaseAction {
 		//以上table_info表中都没有user_id字段，解决方式待讨论
 	}
 
-	@Method(desc = "根据模糊表名和数据库设置id得到表相关信息", logicStep = "" +
+	@Method(desc = "根据模糊表名和数据库设置id得到表相关信息，如果搜索框中用户输入了内容，就直接调用该接口", logicStep = "" +
 			"1、根据colSetId去数据库中获取数据库设置相关信息" +
 			"2、和Agent端进行交互，得到Agent返回的数据" +
 			"3、对获取到的数据进行处理，获得模糊查询到的表名" +
@@ -98,13 +98,12 @@ public class CollTbConfStepAction extends BaseAction {
 		return getTableInfoByTableName(rightTables, colSetId);
 	}
 
-	@Method(desc = "根据数据库设置id得到所有表相关信息", logicStep = "" +
+	@Method(desc = "根据数据库设置id得到所有表相关信息，如果用户没有输入内容就点击查询，那么就调用该接口获取所有表", logicStep = "" +
 			"1、根据colSetId去数据库中获取数据库设置相关信息" +
 			"2、和Agent端进行交互，得到Agent返回的数据" +
 			"3、对获取到的数据进行处理，根据表名和colSetId获取界面需要显示的信息并返回")
 	@Param(name = "colSetId", desc = "数据库设置ID,源系统数据库设置表主键,数据库对应表外键", range = "不为空")
 	@Return(desc = "查询结果集", range = "不为空")
-	//TODO 查看所有表，目前原型页面中，如果搜索框中用户输入了内容，就直接调用getTableInfo接口，如果用户没有输入内容就点击查询，那么就调用getAllTableInfo获取所有表
 	public List<Map<String, Object>> getAllTableInfo(long colSetId){
 		//1、根据colSetId去数据库中获取数据库设置相关信息
 		Map<String, Object> databaseInfo = getDatabaseSetInfo(colSetId, getUserId());
@@ -143,8 +142,8 @@ public class CollTbConfStepAction extends BaseAction {
 	@Param(name = "pageSql", desc = "用户设置的并行采集SQL", range = "不为空")
 	public void testParallelExtraction(long colSetId, String pageSql){
 		//1、根据colSetId在database_set表中获得数据库设置信息
-		Map<String, Object> resultMap = Dbo.queryOneObject("select agent_id, user_name, database_pad, database_drive, " +
-				"database_type, jdbc_url from " + Database_set.TableName + " where database_id = ?", colSetId);
+		Map<String, Object> resultMap = Dbo.queryOneObject("select agent_id, user_name, database_pad, database_drive," +
+				" database_type, jdbc_url from " + Database_set.TableName + " where database_id = ?", colSetId);
 		if(resultMap.isEmpty()){
 			throw new BusinessException("未找到数据库采集任务");
 		}
@@ -240,7 +239,9 @@ public class CollTbConfStepAction extends BaseAction {
 					tableColumn.setIs_primary_key(IsFlag.Fou.getCode());
 					tableColumn.setColume_name(metaData.getColumnName(j + 1));
 					//对列类型做特殊处理，处理成varchar(512), numeric(10,4)
-					String colTypeAndPreci = getColTypeAndPreci(metaData.getColumnType(j + 1), metaData.getColumnTypeName(j + 1), metaData.getPrecision(j + 1), metaData.getScale(j + 1));
+					String colTypeAndPreci = getColTypeAndPreci(metaData.getColumnType(j + 1),
+							metaData.getColumnTypeName(j + 1), metaData.getPrecision(j + 1),
+							metaData.getScale(j + 1));
 					tableColumn.setColumn_type(colTypeAndPreci);
 					//列中文名默认设置为列英文名
 					tableColumn.setColume_ch_name(metaData.getColumnName(j + 1));
@@ -376,8 +377,10 @@ public class CollTbConfStepAction extends BaseAction {
 	@Param(name = "colSetId", desc = "数据库设置ID，源系统数据库设置表主键，数据库对应表外键", range = "不为空")
 	@Param(name = "collTbConfParamString", desc = "采集表对应采集字段配置参数", range = "" +
 			"包含两部分：" +
-			"1、collColumnString：一张表对应的所有要被采集的列组成的json格式的字符串，一个json对象中应该包括列名(colume_name)、字段类型(column_type)、列中文名(colume_ch_name)" +
-			"2、columnSortString：一张表所有要被采集的列的采集顺序，一个json对象中，key为columnName，value为列名，key为sort，value为顺序(1,2,3)" +
+			"1、collColumnString：一张表对应的所有要被采集的列组成的json格式的字符串，一个json对象中应该包括列名(colume_name)、" +
+			"字段类型(column_type)、列中文名(colume_ch_name)" +
+			"2、columnSortString：一张表所有要被采集的列的采集顺序，一个json对象中，key为columnName，value为列名，" +
+			"key为sort，value为顺序(1,2,3)" +
 			"注意：tableInfoString和collTbConfParamString中，对象的顺序和数目要保持一致，比如：" +
 			"tableInfoString：[{A表表信息},{B表表信息}]" +
 			"collTbConfParamString：[{A表字段配置参数},{B表字段配置参数}]")
@@ -468,8 +471,8 @@ public class CollTbConfStepAction extends BaseAction {
 				}
 
 				//7-3-2、更新table_clean表对应条目的table_id字段，一个table_id在table_clean中可能有0-N条数据
-				List<Object> tableCleanIdList = Dbo.queryOneColumnList(" select table_clean_id from "+ Table_clean.TableName
-						+ " where table_id = ? ", oldID);
+				List<Object> tableCleanIdList = Dbo.queryOneColumnList(" select table_clean_id from "
+						+ Table_clean.TableName + " where table_id = ? ", oldID);
 				if(!tableCleanIdList.isEmpty()){
 					StringBuilder tableCleanBuilder = new StringBuilder("update "+ Table_clean.TableName
 							+" set table_id = ? where table_clean_id in ( ");
@@ -685,7 +688,8 @@ public class CollTbConfStepAction extends BaseAction {
 		//2-1、根据String的自然顺序(字母a-z)对表名进行升序排序
 		Collections.sort(tableNames);
 		for(String tableName : tableNames){
-			Map<String, Object> tableResult = Dbo.queryOneObject(" select ti.table_id,ti.table_name,ti.table_ch_name, ti.is_parallel" +
+			Map<String, Object> tableResult = Dbo.queryOneObject(" select ti.table_id,ti.table_name," +
+					" ti.table_ch_name, ti.is_parallel" +
 					" FROM " + Table_info.TableName + " ti " +
 					" WHERE ti.database_id = ? AND ti.table_name = ? " +
 					" AND ti.is_user_defined = ? ", colSetId, tableName, IsFlag.Fou.getCode());
@@ -724,7 +728,10 @@ public class CollTbConfStepAction extends BaseAction {
 			"2、对包含长度和精度的数据类型进行处理，返回数据类型(长度,精度)" +
 			"3、对只包含长度的数据类型进行处理，返回数据类型(长度)")
 	private String getColTypeAndPreci(int columnType, String columnTypeName, int precision, int scale) {
-		//1、考虑到有些类型在数据库中在获取数据类型的时候就会带有(),同时还能获取到数据的长度和精度，因此我们要对所有数据库进行统一处理，去掉()中的内容，使用JDBC提供的方法读取的长度/精度进行拼接
+		/*
+		* 1、考虑到有些类型在数据库中在获取数据类型的时候就会带有(),同时还能获取到数据的长度和精度，
+		* 因此我们要对所有数据库进行统一处理，去掉()中的内容，使用JDBC提供的方法读取的长度/精度进行拼接
+		* */
 		if (precision != 0) {
 			int index = columnTypeName.indexOf("(");
 			if (index != -1) {

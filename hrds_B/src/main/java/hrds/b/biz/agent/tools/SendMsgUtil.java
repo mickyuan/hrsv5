@@ -17,7 +17,8 @@ import org.apache.commons.logging.LogFactory;
 
 import java.util.Map;
 
-@DocClass(desc = "海云应用管理端向Agent端发送消息的工具类", author = "WangZhengcheng")
+@DocClass(desc = "海云应用管理端向Agent端发送消息的工具类，该类的职责是配合CollTbConfStepAction完成访问Agent的工作，" +
+		"其测试用例在CollTbConfStepActionTest中，没有对它单独定义测试用例", author = "WangZhengcheng")
 public class SendMsgUtil {
 
 	private static final Log logger = LogFactory.getLog(SendMsgUtil.class);
@@ -101,7 +102,8 @@ public class SendMsgUtil {
 	@Param(name = "methodName", desc = "Agent端的提供服务的方法的方法名", range = "AgentActionUtil类中的静态常量")
 	@Return(desc = "Agent端通过本地http交互得到的响应数据的msg部分，内容是目标数据库所有表的表名"
 			, range = "json格式的字符串")
-	public static String getAllTableName(Long agentId, Long userId, Map<String, Object> databaseInfo, String methodName){
+	public static String getAllTableName(Long agentId, Long userId, Map<String, Object> databaseInfo,
+	                                     String methodName){
 		//1、对参数合法性进行校验
 		if(agentId == null){
 			throw new BusinessException("向Agent发送信息，获取目标数据库所有表时，agentId不能为空");
@@ -224,17 +226,28 @@ public class SendMsgUtil {
 		//1、判断获取到的数据库连接信息是否有null值，如果有，将null值替换为空字符串然后封装到Database_set对象中
 		Database_set databaseSet = new Database_set();
 
-		databaseSet.setDatabase_name(databaseInfo.get("database_name") == null ? "" : (String) databaseInfo.get("database_name"));
-		databaseSet.setDatabase_pad(databaseInfo.get("database_pad") == null ? "" : (String) databaseInfo.get("database_pad"));
-		databaseSet.setDatabase_ip(databaseInfo.get("database_ip") == null ? "" : (String) databaseInfo.get("database_ip"));
-		databaseSet.setDatabase_port(databaseInfo.get("database_port") == null ? "" : (String) databaseInfo.get("database_port"));
-		databaseSet.setUser_name(databaseInfo.get("user_name") == null ? "" : (String) databaseInfo.get("user_name"));
-		databaseSet.setDatabase_drive(databaseInfo.get("database_drive") == null ? "" : (String) databaseInfo.get("database_drive"));
-		databaseSet.setJdbc_url(databaseInfo.get("jdbc_url") == null ? "" : (String) databaseInfo.get("jdbc_url"));
-		databaseSet.setDatabase_type(databaseInfo.get("database_type") == null ? "" : (String) databaseInfo.get("database_type"));
-		databaseSet.setDb_agent(databaseInfo.get("db_agent") == null ? "" : (String) databaseInfo.get("db_agent"));
-		databaseSet.setPlane_url(databaseInfo.get("plane_url") == null ? "" : (String) databaseInfo.get("plane_url"));
-		databaseSet.setPlane_url(databaseInfo.get("plane_url") == null ? "" : (String) databaseInfo.get("plane_url"));
+		databaseSet.setDatabase_name(databaseInfo.get("database_name") == null ? "" :
+				(String) databaseInfo.get("database_name"));
+		databaseSet.setDatabase_pad(databaseInfo.get("database_pad") == null ? "" :
+				(String) databaseInfo.get("database_pad"));
+		databaseSet.setDatabase_ip(databaseInfo.get("database_ip") == null ? "" :
+				(String) databaseInfo.get("database_ip"));
+		databaseSet.setDatabase_port(databaseInfo.get("database_port") == null ? "" :
+				(String) databaseInfo.get("database_port"));
+		databaseSet.setUser_name(databaseInfo.get("user_name") == null ? "" :
+				(String) databaseInfo.get("user_name"));
+		databaseSet.setDatabase_drive(databaseInfo.get("database_drive") == null ? "" :
+				(String) databaseInfo.get("database_drive"));
+		databaseSet.setJdbc_url(databaseInfo.get("jdbc_url") == null ? "" :
+				(String) databaseInfo.get("jdbc_url"));
+		databaseSet.setDatabase_type(databaseInfo.get("database_type") == null ? "" :
+				(String) databaseInfo.get("database_type"));
+		databaseSet.setDb_agent(databaseInfo.get("db_agent") == null ? "" :
+				(String) databaseInfo.get("db_agent"));
+		databaseSet.setPlane_url(databaseInfo.get("plane_url") == null ? "" :
+				(String) databaseInfo.get("plane_url"));
+		databaseSet.setPlane_url(databaseInfo.get("plane_url") == null ? "" :
+				(String) databaseInfo.get("plane_url"));
 
 		return databaseSet;
 	}

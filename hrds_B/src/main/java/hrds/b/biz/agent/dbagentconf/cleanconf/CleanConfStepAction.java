@@ -165,7 +165,7 @@ public class CleanConfStepAction extends BaseAction{
 	public Map<String, Object> getColCompletionInfo(long columnId){
 		//1、根据columnId在column_clean中查询该表的字符补齐信息
 		Map<String, Object> compMap = Dbo.queryOneObject("select col_clean_id, filling_type, character_filling, " +
-						" filling_length, column_id from " + Column_clean.TableName + " where column_id = ? and clean_type = ?"
+				" filling_length, column_id from " + Column_clean.TableName + " where column_id = ? and clean_type = ?"
 				, columnId, CleanType.ZiFuBuQi.getCode());
 		//2、如果查询到，则将补齐字符解码后返回前端
 		if(!compMap.isEmpty()){
@@ -173,8 +173,8 @@ public class CleanConfStepAction extends BaseAction{
 			return compMap;
 		}
 		//3、如果没有列字符补齐信息，则根据columnId查其所在表是否配置了整表字符补齐，如果查询到，则将补齐字符解码后返回前端
-		Map<String, Object> tbCompMap = Dbo.queryOneObject("SELECT tc.table_clean_id, tc.filling_type, tc.character_filling," +
-				" tc.filling_length FROM " + Table_clean.TableName + " tc" +
+		Map<String, Object> tbCompMap = Dbo.queryOneObject("SELECT tc.table_clean_id, tc.filling_type, " +
+				" tc.character_filling, tc.filling_length FROM " + Table_clean.TableName + " tc" +
 				" WHERE tc.table_id = (SELECT table_id FROM "+ Table_column.TableName +" WHERE column_id = ?)" +
 				" AND tc.clean_type = ?", columnId, CleanType.ZiFuBuQi.getCode());
 		//4、如果整表字符补齐信息也没有，返回空的map
@@ -723,7 +723,8 @@ public class CleanConfStepAction extends BaseAction{
 	@Return(desc = "查询结果", range = "不为空，条数根据实际情况决定")
 	public Result getCVConversionInfo(long columnId){
 		//1、直接拼接SQL语句去数据中进行查询并返回
-		return Dbo.queryResult("select osi.orig_sys_code, osi.orig_sys_name ||'('||osi.orig_sys_code||')' as orig_sys_name, cc.codename as code_classify " +
+		return Dbo.queryResult("select osi.orig_sys_code, osi.orig_sys_name ||'('||osi.orig_sys_code||')' " +
+				" as orig_sys_name, cc.codename as code_classify " +
 				" from " + Column_clean.TableName + " cc left join " + Orig_syso_info.TableName + " osi" +
 				" on cc.codesys = osi.orig_sys_code where cc.column_id = ? and clean_type = ?"
 				, columnId, CleanType.MaZhiZhuanHuan.getCode());
@@ -961,7 +962,8 @@ public class CleanConfStepAction extends BaseAction{
 	public Result getSingleTbCleanOrder(long tableId, long colSetId){
 		//1、在数据库设置表中，根据tableId和colSetId查找该采集任务中是否存在该表
 		long count = Dbo.queryNumber("select count(1) from " + Table_info.TableName + " where table_id = ? and " +
-				"database_id = ?", tableId, colSetId).orElseThrow(() -> new BusinessSystemException("查询结果必须有且只有一条"));
+				"database_id = ?", tableId, colSetId).orElseThrow(() ->
+				new BusinessSystemException("查询结果必须有且只有一条"));
 		//2、如果不存在，直接抛异常
 		if(count != 1){
 			throw new BusinessSystemException("在当前数据库采集任务中未找到该采集表");
@@ -998,7 +1000,8 @@ public class CleanConfStepAction extends BaseAction{
 	public Result getColCleanOrder(long columnId, long tableId){
 		//1、在table_column表中，判断列是否存在
 		long count = Dbo.queryNumber("select count(1) from " + Table_column.TableName + " where column_id = ? " +
-				"and table_id = ?", columnId, tableId).orElseThrow(() -> new BusinessSystemException("查询结果必须有且只有一条数据"));
+				"and table_id = ?", columnId, tableId).orElseThrow(() ->
+				new BusinessSystemException("查询结果必须有且只有一条数据"));
 		//2、不存在，直接抛异常
 		if(count != 1){
 			throw new BusinessSystemException("未找到字段");
@@ -1086,7 +1089,8 @@ public class CleanConfStepAction extends BaseAction{
 			"2-3、判断最终保存时，是否选择了列首尾去空，进行首尾去空的保存处理")
 	@Param(name = "colSetId", desc = "数据库设置ID，源系统数据库设置表主键，数据库对应表外键", range = "不为空")
 	@Param(name = "tbCleanString", desc = "所有表的清洗参数信息,JSON格式", range = "不为空，" +
-			"如：[{\"tableId\":1001,\"tableName\":\"table_info\",\"complementFlag\":true,\"replaceFlag\":true,trimFlag:true},{\"tableId\":1002,\"tableName\":\"table_column\",\"complementFlag\":true,\"replaceFlag\":true,trimFlag:true}]" +
+			"如：[{\"tableId\":1001,\"tableName\":\"table_info\",\"complementFlag\":true,\"replaceFlag\":true,trimFlag:true}," +
+			"{\"tableId\":1002,\"tableName\":\"table_column\",\"complementFlag\":true,\"replaceFlag\":true,trimFlag:true}]" +
 			"注意：请务必按照示例中给出的方式命名")
 	@Return(desc = "数据库设置ID", range = "便于下一个页面通过传递这个值，查询到之前设置的信息")
 	public long saveDataCleanConfig(long colSetId, String tbCleanString){
