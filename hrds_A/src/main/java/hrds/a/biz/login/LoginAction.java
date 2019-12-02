@@ -8,6 +8,7 @@ import fd.ng.core.utils.StringUtil;
 import fd.ng.web.action.ActionResult;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
+import hrds.commons.codes.UserType;
 import hrds.commons.entity.Component_menu;
 import hrds.commons.entity.Department_info;
 import hrds.commons.entity.Sys_user;
@@ -127,6 +128,9 @@ public class LoginAction extends BaseAction {
 	@Return(desc = "返回获取的菜单信息", range = "有可能为空")
 	public String getDefaultPage() {
 		String userType = this.getUser().getUserType();
+		if (UserType.XiTongGuanLiYuan == UserType.ofEnumByCode(userType)) {
+			userType = UserType.YongHuGuanLi.getCode();
+		}
 		return Dbo.queryOneObject(Component_menu.class, "select * from component_menu where user_type = ?", userType)
 				.orElseThrow(() -> new BusinessException("sql查询错误")).getMenu_path();
 	}
