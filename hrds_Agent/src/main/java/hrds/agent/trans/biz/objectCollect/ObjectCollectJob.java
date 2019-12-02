@@ -1,4 +1,4 @@
-package hrds.agent.trans.biz.objectCollect;
+package hrds.agent.trans.biz.objectcollect;
 
 import com.alibaba.fastjson.JSONArray;
 import fd.ng.core.annotation.DocClass;
@@ -8,7 +8,6 @@ import hrds.agent.job.biz.bean.JobParamBean;
 import hrds.agent.job.biz.bean.ObjectCollectParamBean;
 import hrds.agent.job.biz.core.JobFactory;
 import hrds.commons.base.AgentBaseAction;
-import hrds.commons.base.BaseAction;
 import hrds.commons.entity.*;
 
 import java.util.List;

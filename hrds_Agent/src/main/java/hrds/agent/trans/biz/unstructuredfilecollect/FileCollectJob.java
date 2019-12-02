@@ -1,4 +1,4 @@
-package hrds.agent.trans.biz.unstructuredFileCollect;
+package hrds.agent.trans.biz.unstructuredfilecollect;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
