@@ -143,23 +143,22 @@ public class CollTbConfStepAction extends BaseAction {
 	@Param(name = "pageSql", desc = "用户设置的并行采集SQL", range = "不为空")
 	public void testParallelExtraction(long colSetId, String pageSql){
 		//1、根据colSetId在database_set表中获得数据库设置信息
-		Map<String, Object> resultMap = Dbo.queryOneObject("select database_name, database_pad, database_drive, " +
-				"database_type, jdbc_url from " + Database_set.TableName + "where database_id = ?", colSetId);
+		Map<String, Object> resultMap = Dbo.queryOneObject("select agent_id, user_name, database_pad, database_drive, " +
+				"database_type, jdbc_url from " + Database_set.TableName + " where database_id = ?", colSetId);
 		if(resultMap.isEmpty()){
 			throw new BusinessException("未找到数据库采集任务");
 		}
 		//2、调用AgentActionUtil工具类获取访问Agent端服务的url
-		//TODO 因为Agent端还没有用于测试并行抽取SQL的方法，所以这边暂时命名为fakemethodname，后面会取AgentActionUtil中定义的静态常量
 		String url = AgentActionUtil.getUrl((Long) resultMap.get("agent_id"), getUserId(),
-				"FAKEMETHODNAME");
+				AgentActionUtil.TESTPARALLELSQL);
 		//3、构建http请求访问Agent端服务
-		//TODO 注意addData()的最后一个参数的名字，目前暂定为sql
+		//TODO 注意addData()的最后一个参数的名字，目前暂定为pageSql
 		HttpClient.ResponseValue resVal = new HttpClient()
-				.addData("driver", (String) resultMap.get("database_drive"))
-				.addData("url", (String) resultMap.get("jdbc_url"))
-				.addData("username", (String) resultMap.get("user_name"))
-				.addData("password", (String) resultMap.get("database_pad"))
-				.addData("dbtype", (String) resultMap.get("database_type"))
+				.addData("database_drive", (String) resultMap.get("database_drive"))
+				.addData("jdbc_url", (String) resultMap.get("jdbc_url"))
+				.addData("user_name", (String) resultMap.get("user_name"))
+				.addData("database_pad", (String) resultMap.get("database_pad"))
+				.addData("database_type", (String) resultMap.get("database_type"))
 				.addData("pageSql", pageSql)
 				.post(url);
 		ActionResult actionResult = JsonUtil.toObjectSafety(resVal.getBodyString(), ActionResult.class).
@@ -167,6 +166,11 @@ public class CollTbConfStepAction extends BaseAction {
 		//4、如果响应失败，则抛出异常
 		if(!actionResult.isSuccess()){
 			throw new BusinessException("并行抽取SQL测试失败");
+		}
+		boolean resultData = (boolean) actionResult.getData();
+		//5、如果返回false，表示根据分页SQL没有取到数据，抛出异常给前端
+		if(!resultData){
+			throw new BusinessException("根据并行抽取SQL未能获取到数据");
 		}
 	}
 

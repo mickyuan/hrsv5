@@ -243,39 +243,6 @@ public class StoDestStepConfAction extends BaseAction{
 	}
 
 	/*
-	 * 保存字段存储信息
-
-	@Method(desc = "保存表的字段存储信息", logicStep = "" +
-			"1、将colStoInfoString解析为List集合" +
-			"2、在每保存一个字段的存储目的地前，先尝试在column_storage_info表中删除该表所有列的信息，不关心删除的数据" +
-			"3、如果反序列得到的List集合不为空，则遍历集合" +
-			"4、保存")
-	@Param(name = "colStoInfoString", desc = "存放待保存字段存储配置信息的json串", range = "不为空", nullable = true, valueIfNull = "")
-	@Param(name = "tableId", desc = "字段所在表ID,table_info表主键，table_column表外键", range = "不为空")
-	public void saveColStoInfo(String colStoInfoString, long tableId){
-		//1、将colStoInfoString解析为List集合
-		List<Column_storage_info> storageInfos = JSONArray.parseArray(colStoInfoString, Column_storage_info.class);
-		//2、在每保存一个字段的存储目的地前，先尝试在column_storage_info表中删除该表所有列的信息，不关心删除的数据
-		Dbo.execute("delete from " + Column_storage_info.TableName + " where column_id in (select column_id " +
-						" from " + Table_column.TableName + " where table_id = ?)", tableId);
-		if(storageInfos != null){
-			//3、如果反序列得到的List集合不为空，则遍历集合
-			for(Column_storage_info storageInfo : storageInfos){
-				if(storageInfo.getColumn_id() == null){
-					throw new BusinessSystemException("保存字段存储信息时，必须关联字段");
-				}
-				if(storageInfo.getDslad_id() == null){
-					throw new BusinessSystemException("保存字段存储信息时，必须关联字段的特殊属性");
-				}
-
-				//4、保存
-				storageInfo.add(Dbo.db());
-			}
-		}
-	}
-	 * */
-
-	/*
 	* 保存字段存储信息
 	* */
 	@Method(desc = "保存表的字段存储信息", logicStep = "" +
@@ -283,7 +250,8 @@ public class StoDestStepConfAction extends BaseAction{
 			"2、在每保存一个字段的存储目的地前，先尝试在column_storage_info表中删除该表所有列的信息，不关心删除的数据" +
 			"3、如果反序列化得到的List集合不为空，则遍历集合" +
 			"4、保存")
-	@Param(name = "colStoInfoString", desc = "存放待保存字段存储配置信息的json串", range = "不为空", nullable = true, valueIfNull = "")
+	@Param(name = "colStoInfoString", desc = "存放待保存字段存储配置信息的json串", range = "如果在一张表中没有任何一个需要配置特殊存储属性的列，这个字段传空字符串"
+			, nullable = true, valueIfNull = "")
 	@Param(name = "tableId", desc = "字段所在表ID,table_info表主键，table_column表外键", range = "不为空")
 	public void saveColStoInfo(String colStoInfoString, long tableId){
 		//1、将colStoInfoString解析为List集合
