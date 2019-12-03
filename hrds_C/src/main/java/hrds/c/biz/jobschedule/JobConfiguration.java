@@ -459,9 +459,11 @@ public class JobConfiguration extends BaseAction {
         // 5.判断如果作业程序类型是  Thrift 或者 Yarn.则默认分配一条资源使用信息
         isThriftOrYarnProType(etl_job_def.getEtl_sys_cd(), etl_job_def.getEtl_job(),
                 etl_job_def.getPro_type());
-        // 6.如果是依赖作业则保存作业依赖信息
-        if (Dispatch_Type.DEPENDENCE == Dispatch_Type.ofEnumByCode(etl_job_def.getDisp_type())) {
-            dependToEtlJob(etl_dependency);
+        // 6.如果是依赖作业则保存作业依赖信息,调度频率为频率时不会有调度类型
+        if (StringUtil.isNotBlank(etl_job_def.getDisp_type())) {
+            if (Dispatch_Type.DEPENDENCE == Dispatch_Type.ofEnumByCode(etl_job_def.getDisp_type())) {
+                dependToEtlJob(etl_dependency);
+            }
         }
         // 7.判断调度频率是否为频率，根据调度频率不同封装作业定义实体对象的不同属性
         isDispatchFrequency(etl_job_def);
@@ -499,7 +501,9 @@ public class JobConfiguration extends BaseAction {
         // 6.验证调度频率是否合法
         Dispatch_Frequency.ofEnumByCode(etl_job_def.getDisp_freq());
         // 7.验证调度触发方式是否合法
-        Dispatch_Type.ofEnumByCode(etl_job_def.getDisp_type());
+        if (Dispatch_Frequency.ofEnumByCode(etl_job_def.getDisp_freq()) != Dispatch_Frequency.PinLv) {
+            Dispatch_Type.ofEnumByCode(etl_job_def.getDisp_type());
+        }
         // 8.验证作业有效标志是否合法
         Job_Effective_Flag.ofEnumByCode(etl_job_def.getJob_eff_flag());
         // 9.验证当天是否调度是否合法,可为空
@@ -732,20 +736,21 @@ public class JobConfiguration extends BaseAction {
     @Method(desc = "更新作业定义信息并返回更新后的最新的作业信息",
             logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制" +
                     "2.验证当前用户下的工程是否存在" +
-                    "3.判断调度触发方式改变时，修改前的调度触发方式是依赖还是定时" +
-                    "3.1修改前的调度触发方式是依赖，判断调度触发方式改变时，修改后的调度触发方式是依赖还是定时" +
-                    "3.1.1调度触发方式改变时，修改后的调度触发方式是依赖，依赖关系发生变化，现在只是更改依赖（依赖-依赖）" +
-                    "3.1.2调度触发方式改变时，修改后的调度方式是定时（依赖-定时），直接删除原依赖关系" +
-                    "3.2调度触发方式改变时，修改前的调度触发方式是定时,判断修改后的调度方式为依赖还是定时" +
-                    "3.2.1调度触发方式改变时，修改后的调度触发方式定时  将定时更改为依赖,则新增，（定时---->依赖）" +
-                    "4.判断作业程序类型是否为yarn或者thrift类型，如果是，进行资源分配处理" +
-                    "5.根据调度频率不同封装作业定义实体对象的不同属性" +
-                    "6.保存更新的作业信息")
+                    "3.判断调度频率是否为频率，如果是频率没有依赖，也没有调度触发方式" +
+                    "4.判断调度触发方式改变时，修改前的调度触发方式是依赖还是定时" +
+                    "4.1修改前的调度触发方式是依赖，判断调度触发方式改变时，修改后的调度触发方式是依赖还是定时" +
+                    "4.1.1调度触发方式改变时，修改后的调度触发方式是依赖，依赖关系发生变化，现在只是更改依赖（依赖-依赖）" +
+                    "4.1.2调度触发方式改变时，修改后的调度方式是定时（依赖-定时），直接删除原依赖关系" +
+                    "4.2调度触发方式改变时，修改前的调度触发方式是定时,判断修改后的调度方式为依赖还是定时" +
+                    "4.2.1调度触发方式改变时，修改后的调度触发方式定时  将定时更改为依赖,则新增，（定时---->依赖）" +
+                    "5.判断作业程序类型是否为yarn或者thrift类型，如果是，进行资源分配处理" +
+                    "6.根据调度频率不同封装作业定义实体对象的不同属性" +
+                    "7.保存更新的作业信息")
     @Param(name = "etl_job_def", desc = "作业定义实体对象", range = "与数据库对应表字段规则一致", isBean = true)
     @Param(name = "etl_dependency", desc = "作业依赖实体对象", range = "与数据库对应表字段规则一致", isBean = true)
-    @Param(name = "old_pre_etl_job", desc = "作业依赖变动时,修改前的上游作业名称", range = "无限制")
+    @Param(name = "old_pre_etl_job", desc = "作业依赖变动时,修改前的上游作业名称", range = "无限制", nullable = true)
     @Param(name = "old_dispatch_type", desc = "调度触发方式改变时，修改前的调度触发方式",
-            range = "使用调度触发方式代码项（DispatchType）")
+            range = "使用调度触发方式代码项（DispatchType）", nullable = true)
     public void updateEtlJobDef(Etl_job_def etl_job_def, Etl_dependency etl_dependency,
                                 String old_pre_etl_job, String old_dispatch_type) {
         // 1.数据可访问权限处理方式，通过user_id进行权限控制
@@ -753,40 +758,43 @@ public class JobConfiguration extends BaseAction {
         if (!ETLJobUtil.isEtlSysExist(etl_job_def.getEtl_sys_cd(), getUserId())) {
             throw new BusinessException("当前工程已不存在！");
         }
-        // 3.判断调度触发方式改变时，修改前的调度触发方式是依赖还是定时
-        if (Dispatch_Type.DEPENDENCE == Dispatch_Type.ofEnumByCode(old_dispatch_type)) {
-            // 3.1修改前的调度触发方式是依赖，判断调度触发方式改变时，修改后的调度触发方式是依赖还是定时
-            if (Dispatch_Type.DEPENDENCE == Dispatch_Type.ofEnumByCode(etl_job_def.getDisp_type())) {
-                // 3.1.1调度触发方式改变时，修改后的调度触发方式是依赖，依赖关系发生变化，现在只是更改依赖（依赖-依赖）
-                if (!old_pre_etl_job.equals(etl_dependency.getPre_etl_job())) {
-                    DboExecute.updatesOrThrow("更新作业时更新依赖失败！", "update "
-                                    + Etl_dependency.TableName + " set etl_job=?,pre_etl_sys_cd=?," +
-                                    " pre_etl_job=?,status=? where etl_job=? AND etl_sys_cd=? and " +
-                                    " pre_etl_job=?", etl_dependency.getEtl_job(),
-                            etl_dependency.getPre_etl_sys_cd(), etl_dependency.getPre_etl_job(),
-                            etl_dependency.getStatus(), etl_dependency.getEtl_job(),
-                            etl_dependency.getEtl_sys_cd(), old_pre_etl_job);
+        // 3.判断调度频率是否为频率，如果是频率没有依赖，也没有调度触发方式
+        if (Dispatch_Frequency.ofEnumByCode(etl_job_def.getDisp_freq())!=Dispatch_Frequency.PinLv) {
+            // 4.判断调度触发方式改变时，修改前的调度触发方式是依赖还是定时
+            if (Dispatch_Type.DEPENDENCE == Dispatch_Type.ofEnumByCode(old_dispatch_type)) {
+                // 4.1修改前的调度触发方式是依赖，判断调度触发方式改变时，修改后的调度触发方式是依赖还是定时
+                if (Dispatch_Type.DEPENDENCE == Dispatch_Type.ofEnumByCode(etl_job_def.getDisp_type())) {
+                    // 4.1.1调度触发方式改变时，修改后的调度触发方式是依赖，依赖关系发生变化，现在只是更改依赖（依赖-依赖）
+                    if (!old_pre_etl_job.equals(etl_dependency.getPre_etl_job())) {
+                        DboExecute.updatesOrThrow("更新作业时更新依赖失败！", "update "
+                                        + Etl_dependency.TableName + " set etl_job=?,pre_etl_sys_cd=?," +
+                                        " pre_etl_job=?,status=? where etl_job=? AND etl_sys_cd=? and " +
+                                        " pre_etl_job=?", etl_dependency.getEtl_job(),
+                                etl_dependency.getPre_etl_sys_cd(), etl_dependency.getPre_etl_job(),
+                                etl_dependency.getStatus(), etl_dependency.getEtl_job(),
+                                etl_dependency.getEtl_sys_cd(), old_pre_etl_job);
+                    }
+                } else {
+                    // 4.1.2调度触发方式改变时，修改后的调度方式是定时（依赖-定时），直接删除原依赖关系
+                    DboExecute.deletesOrThrow("作业编辑为定时，删除依赖失败!", "DELETE FROM "
+                                    + Etl_dependency.TableName + " WHERE etl_sys_cd = ? AND etl_job = ? " +
+                                    "AND pre_etl_job = ?", etl_dependency.getEtl_sys_cd(),
+                            etl_dependency.getEtl_job(), old_pre_etl_job);
                 }
             } else {
-                // 3.1.2调度触发方式改变时，修改后的调度方式是定时（依赖-定时），直接删除原依赖关系
-                DboExecute.deletesOrThrow("作业编辑为定时，删除依赖失败!", "DELETE FROM "
-                                + Etl_dependency.TableName + " WHERE etl_sys_cd = ? AND etl_job = ? " +
-                                "AND pre_etl_job = ?", etl_dependency.getEtl_sys_cd(),
-                        etl_dependency.getEtl_job(), old_pre_etl_job);
-            }
-        } else {
-            // 3.2调度触发方式改变时，修改前的调度触发方式是定时,判断修改后的调度方式为依赖还是定时
-            if (Dispatch_Type.DEPENDENCE == Dispatch_Type.ofEnumByCode(etl_job_def.getDisp_type())) {
-                // 3.2.1调度触发方式改变时，修改后的调度触发方式定时  将定时更改为依赖,则新增，（定时---->依赖）
-                dependToEtlJob(etl_dependency);
+                // 4.2调度触发方式改变时，修改前的调度触发方式是定时,判断修改后的调度方式为依赖还是定时
+                if (Dispatch_Type.DEPENDENCE == Dispatch_Type.ofEnumByCode(etl_job_def.getDisp_type())) {
+                    // 4.2.1调度触发方式改变时，修改后的调度触发方式定时  将定时更改为依赖,则新增，（定时---->依赖）
+                    dependToEtlJob(etl_dependency);
+                }
             }
         }
-        // 4.判断作业程序类型是否为yarn或者thrift类型，如果是，进行资源分配处理
+        // 5.判断作业程序类型是否为yarn或者thrift类型，如果是，进行资源分配处理
         isThriftOrYarnProType(etl_job_def.getEtl_sys_cd(), etl_job_def.getEtl_job(),
                 etl_job_def.getPro_type());
-        // 5.根据调度频率不同封装作业定义实体对象的不同属性
+        // 6.根据调度频率不同封装作业定义实体对象的不同属性
         isDispatchFrequency(etl_job_def);
-        // 6.保存更新的作业信息
+        // 7.保存更新的作业信息
         etl_job_def.setUpd_time(DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate()) + " " +
                 DateUtil.parseStr2TimeWith6Char(DateUtil.getSysTime()));
         etl_job_def.update(Dbo.db());
