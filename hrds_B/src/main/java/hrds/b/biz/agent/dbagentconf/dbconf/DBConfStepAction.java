@@ -241,7 +241,18 @@ public class DBConfStepAction extends BaseAction{
 			"2、获取实体中的database_id" +
 			"3、如果存在，则更新信息" +
 			"4、如果不存在，则新增信息")
-	@Param(name = "databaseSet", desc = "Database_set实体对象", range = "不为空", isBean = true)
+	@Param(name = "databaseSet", desc = "Database_set实体对象", range = "不为空,必须传递的有" +
+			"数据采集任务名：task_name" +
+			"作业编号：database_number" +
+			"分类ID：classify_id" +
+			"数据库类型：database_type" +
+			"数据库驱动：database_drive" +
+			"数据库名称：database_name" +
+			"IP：database_ip" +
+			"端口号：database_port" +
+			"用户名：user_name" +
+			"密码：database_pad" +
+			"jdbcurl: jdbc_url", isBean = true)
 	@Return(desc = "保存成功后返回当前采集任务ID", range = "不为空")
 	public long saveDbConf(Database_set databaseSet) {
 		//1、调用方法对传入数据的合法性进行校验
