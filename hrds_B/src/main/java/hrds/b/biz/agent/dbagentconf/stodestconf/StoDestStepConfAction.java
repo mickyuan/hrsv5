@@ -306,16 +306,19 @@ public class StoDestStepConfAction extends BaseAction{
 	@Param(name = "columnString", desc = "待更新的字段信息，json数组", range = "不为空，每个json数组中的json对象的key为" +
 			"column_id：字段ID；colume_ch_name：字段中文名")
 	public void updateColumnZhName(String columnString){
+		//1、将传过来的json串反序列化为List集合
 		List<Table_column> tableColumns = JSONArray.parseArray(columnString, Table_column.class);
+		//2、对集合的长度进行校验，如果集合为空，抛出异常
 		if(tableColumns.isEmpty()){
 			throw new BusinessSystemException("获取字段信息失败");
 		}
+		//3、遍历集合，更新每个字段的中文名
 		for(int i = 0; i < tableColumns.size(); i++){
 			Table_column tableColumn = tableColumns.get(i);
 			if(tableColumn.getColumn_id() == null){
-				throw new BusinessSystemException("保存第" + i + "个字段的中文名必须关联字段ID");
+				throw new BusinessSystemException("保存第" + i + 1 + "个字段的中文名必须关联字段ID");
 			}
-			DboExecute.updatesOrThrow("保存第" + i + "个字段的中文名失败", "update " +
+			DboExecute.updatesOrThrow("保存第" + i + 1 + "个字段的中文名失败", "update " +
 					Table_column.TableName + " set colume_ch_name = ? where column_id = ?",
 					tableColumn.getColume_ch_name(), tableColumn.getColumn_id());
 		}
@@ -416,6 +419,37 @@ public class StoDestStepConfAction extends BaseAction{
 		return colSetId;
 	}
 
+	@Method(desc = "在配置表存储信息时，更新表中文名和表名", logicStep = "" +
+			"1、将传过来的json串反序列化为List集合" +
+			"2、对集合的长度进行校验，如果集合为空，抛出异常" +
+			"3、遍历集合，更新每张表的中文名和表名")
+	@Param(name = "tableString", desc = "待更新的字段信息，json数组", range = "不为空，每个json数组中的json对象的key为" +
+			"table_id：表ID；table_ch_name：表中文名；table_name：表名")
+	public void updateTableName(String tableString){
+		//1、将传过来的json串反序列化为List集合
+		List<Table_info> tableInfos = JSONArray.parseArray(tableString, Table_info.class);
+		//2、对集合的长度进行校验，如果集合为空，抛出异常
+		if(tableInfos.isEmpty()){
+			throw new BusinessSystemException("获取表信息失败");
+		}
+		//3、遍历集合，更新每张表的中文名和表名
+		for(int i = 0; i < tableInfos.size(); i++){
+			Table_info tableInfo = tableInfos.get(i);
+			if(tableInfo.getTable_id() == null){
+				throw new BusinessSystemException("保存第" + i + 1 + "张表的名称信息必须关联字段ID");
+			}
+			if(StringUtil.isBlank(tableInfo.getTable_name())){
+				throw new BusinessSystemException("第" + i + 1 + "张表的表名必须填写");
+			}
+			if(StringUtil.isBlank(tableInfo.getTable_ch_name())){
+				throw new BusinessSystemException("第" + i + 1 + "张表的表中文名必须填写");
+			}
+			DboExecute.updatesOrThrow("保存第" + i + "张表名称信息失败", "update " +
+							Table_info.TableName + " set table_name = ?, table_ch_name = ? where table_id = ?",
+					tableInfo.getTable_name(), tableInfo.getTable_ch_name(), tableInfo.getTable_id());
+		}
+	}
+
 	@Method(desc = "校验保存表存储配置信息时各个字段的合法性", logicStep = "" +
 			"1、校验保存表存储配置信息时，必须关联表" +
 			"2、校验保存表存储配置信息时，必须选择进数方式" +
@@ -426,18 +460,18 @@ public class StoDestStepConfAction extends BaseAction{
 		for(int i = 0; i < tableStorageInfos.size(); i++){
 			Table_storage_info storageInfo = tableStorageInfos.get(i);
 			if(storageInfo.getTable_id() == null){
-				throw new BusinessSystemException("第" + i + "条数据保存表存储配置时，请关联表");
+				throw new BusinessSystemException("第" + i + 1 + "条数据保存表存储配置时，请关联表");
 			}
 			if(StringUtil.isBlank(storageInfo.getStorage_type())){
-				throw new BusinessSystemException("第" + i + "条数据保存表存储配置时，请选择进数方式");
+				throw new BusinessSystemException("第" + i + 1 + "条数据保存表存储配置时，请选择进数方式");
 			}
 			StorageType.ofEnumByCode(storageInfo.getStorage_type());
 			if(StringUtil.isBlank(storageInfo.getIs_zipper())){
-				throw new BusinessSystemException("第" + i + "条数据保存表存储配置时，请选择是否拉链存储");
+				throw new BusinessSystemException("第" + i + 1 + "条数据保存表存储配置时，请选择是否拉链存储");
 			}
 			IsFlag.ofEnumByCode(storageInfo.getIs_zipper());
 			if(storageInfo.getStorage_time() == null){
-				throw new BusinessSystemException("第" + i + "条数据保存表存储配置时，请填写存储期限");
+				throw new BusinessSystemException("第" + i + 1 + "条数据保存表存储配置时，请填写存储期限");
 			}
 		}
 	}

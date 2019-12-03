@@ -50,6 +50,8 @@ public class CollTbConfStepAction extends BaseAction {
 		DEFAULT_TABLE_CLEAN_ORDER.put(CleanType.ZiFuHeBing.getCode(), 3);
 		DEFAULT_TABLE_CLEAN_ORDER.put(CleanType.ZiFuTrim.getCode(), 4);
 
+		//TODO 按照目前agent程序的逻辑是，列合并永远是排在清洗顺序的最后一个去做，因此这边定义默认的清洗顺序的时候，只定义了6种，而没有定义列合并
+		//TODO 所以是否前端需要把列合并去掉
 		DEFAULT_COLUMN_CLEAN_ORDER = new JSONObject();
 		DEFAULT_COLUMN_CLEAN_ORDER.put(CleanType.ZiFuBuQi.getCode(), 1);
 		DEFAULT_COLUMN_CLEAN_ORDER.put(CleanType.ZiFuTiHuan.getCode(), 2);
@@ -151,7 +153,6 @@ public class CollTbConfStepAction extends BaseAction {
 		String url = AgentActionUtil.getUrl((Long) resultMap.get("agent_id"), getUserId(),
 				AgentActionUtil.TESTPARALLELSQL);
 		//3、构建http请求访问Agent端服务
-		//TODO 注意addData()的最后一个参数的名字，目前暂定为pageSql
 		HttpClient.ResponseValue resVal = new HttpClient()
 				.addData("database_drive", (String) resultMap.get("database_drive"))
 				.addData("jdbc_url", (String) resultMap.get("jdbc_url"))

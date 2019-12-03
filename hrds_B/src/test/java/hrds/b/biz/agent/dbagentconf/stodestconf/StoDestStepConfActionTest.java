@@ -36,6 +36,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 	private static final long AGENT_INFO_TABLE_ID = 7003L;
 	private static final long DATA_SOURCE_TABLE_ID = 7004L;
 	private static final long TABLE_INFO_TABLE_ID = 7009L;
+	private static final long CODE_INFO_TABLE_ID = 7002L;
 	private static final long TABLE_COLUMN_TABLE_ID = 7100L;
 	private static final long UNEXPECTED_ID = 999999999L;
 
@@ -764,6 +765,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 	 *
 	 * 正确数据访问1：更新data_source表在table_column表中的数据，并断言是否修改成功
 	 * 错误的数据访问1：更新agent_info表在table_column表中的数据，但是传错一个column_id，使其故意更新不成功
+	 * 错误的数据访问2：更新agent_info表在table_column表中的数据，但是故意不关联某个字段的ID
 	 * 错误的场景未满三种：updateColumnZhName方法只有一个参数
 	 * @Param: 无
 	 * @return: 无
@@ -860,6 +862,20 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 		ActionResult wrongResult = JsonUtil.toObjectSafety(wrongString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(wrongResult.isSuccess(), is(false));
+
+		agentInfos.clear();
+
+		//错误的数据访问2：更新agent_info表在table_column表中的数据，但是故意不关联某个字段的ID
+		Table_column wrongTableColumn = new Table_column();
+		wrongTableColumn.setColume_ch_name("Agent名称_update");
+		agentInfos.add(wrongTableColumn);
+
+		String wrongStringTwo = new HttpClient()
+				.addData("columnString", JSON.toJSONString(agentInfos))
+				.post(getActionUrl("updateColumnZhName")).getBodyString();
+		ActionResult wrongResultTwo = JsonUtil.toObjectSafety(wrongStringTwo, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultTwo.isSuccess(), is(false));
 	}
 
 	/**
@@ -1462,6 +1478,153 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 
 		Map<String, Long> mongoMap = wrongResult.getDataForMap(String.class, Long.class);
 		assertThat(mongoMap.isEmpty(), is(true));
+	}
+
+	/**
+	 * 测试根据在配置表存储信息时，更新表中文名和表名
+	 *
+	 * 正确数据访问1：模拟保存sys_user和code_info的表名和表中文名
+	 * 错误的数据访问1：在模拟保存sys_user和code_info的表名和表中文名时，传入错的sys_user表ID
+	 * 错误的数据访问2：在模拟保存sys_user和code_info的表名和表中文名时，未传入sys_user表的表ID
+	 * 错误的数据访问3：在模拟保存sys_user和code_info的表名和表中文名时，未传入sys_user表的表名
+	 * 错误的数据访问4：在模拟保存sys_user和code_info的表名和表中文名时，未传入sys_user表的表中文名
+	 * @Param: 无
+	 * @return: 无
+	 *
+	 * */
+	@Test
+	public void updateTableName(){
+		//正确数据访问1：模拟保存sys_user和code_info的表名和表中文名
+		List<Table_info> tableInfos = new ArrayList<>();
+		for(int i = 0; i < 2; i++){
+			long tableId = i % 2 == 0 ? SYS_USER_TABLE_ID : CODE_INFO_TABLE_ID;
+			String tableName = i % 2 == 0 ? "sys_user_update" : "code_info_update";
+			String tableZhName = i % 2 == 0 ? "用户表_update" : "代码信息表_update";
+
+			Table_info tableInfo = new Table_info();
+			tableInfo.setTable_id(tableId);
+			tableInfo.setTable_name(tableName);
+			tableInfo.setTable_ch_name(tableZhName);
+
+			tableInfos.add(tableInfo);
+		}
+
+		String rightString = new HttpClient()
+				.addData("tableString", JSON.toJSONString(tableInfos))
+				.post(getActionUrl("updateTableName")).getBodyString();
+		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResult.isSuccess(), is(true));
+
+		try (DatabaseWrapper db = new DatabaseWrapper()) {
+			Result result = SqlOperator.queryResult(db, "select table_name, table_ch_name from " + Table_info.TableName + " where database_id = ?", FIRST_DATABASESET_ID);
+			assertThat("查询获得的结果一共有四条", result.getRowCount(), is(4));
+			for(int i = 0; i < result.getRowCount(); i++){
+				if(result.getString(i ,"table_name").equalsIgnoreCase("sys_user_update")){
+					assertThat("表名被更新为<sys_user_update>，表中文名被更新为<用户表_update>", result.getString(i ,"table_ch_name").equalsIgnoreCase("用户表_update"), is(true));
+				}else if(result.getString(i ,"table_name").equalsIgnoreCase("code_info_update")){
+					assertThat("表名被更新为<code_info_update>，表中文名被更新为<代码信息表_update>", result.getString(i ,"table_ch_name").equalsIgnoreCase("代码信息表_update"), is(true));
+				}else if(result.getString(i ,"table_name").equalsIgnoreCase("agent_info")){
+					assertThat("agent_info表和data_source表不受影响", result.getString(i ,"table_ch_name").equalsIgnoreCase("Agent信息表"), is(true));
+				}else if(result.getString(i ,"table_name").equalsIgnoreCase("data_source")){
+					assertThat("agent_info表和data_source表不受影响", result.getString(i ,"table_ch_name").equalsIgnoreCase("数据源表"), is(true));
+				}else{
+					assertThat("更新表的中文名和表名，出现了不符合预期的情况", true, is(false));
+				}
+			}
+		}
+
+		tableInfos.clear();
+
+		//错误的数据访问1：在模拟保存sys_user和code_info的表名和表中文名时，传入错的sys_user表ID
+		for(int i = 0; i < 2; i++){
+			//这里故意构造错误的sys_user表的ID
+			long tableId = i % 2 == 0 ? UNEXPECTED_ID : CODE_INFO_TABLE_ID;
+			String tableName = i % 2 == 0 ? "sys_user_update" : "code_info_update";
+			String tableZhName = i % 2 == 0 ? "用户表_update" : "代码信息表_update";
+
+			Table_info tableInfo = new Table_info();
+			tableInfo.setTable_id(tableId);
+			tableInfo.setTable_name(tableName);
+			tableInfo.setTable_ch_name(tableZhName);
+
+			tableInfos.add(tableInfo);
+		}
+
+		String wrongString = new HttpClient()
+				.addData("tableString", JSON.toJSONString(tableInfos))
+				.post(getActionUrl("updateTableName")).getBodyString();
+		ActionResult wrongResult = JsonUtil.toObjectSafety(wrongString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResult.isSuccess(), is(false));
+
+		tableInfos.clear();
+
+		//错误的数据访问2：在模拟保存sys_user和code_info的表名和表中文名时，未传入sys_user表的表ID
+		Table_info tableInfoOne = new Table_info();
+		tableInfoOne.setTable_name("sys_user_update");
+		tableInfoOne.setTable_ch_name("用户表_update");
+
+		Table_info tableInfoTwo = new Table_info();
+		tableInfoTwo.setTable_id(CODE_INFO_TABLE_ID);
+		tableInfoTwo.setTable_name("code_info_update");
+		tableInfoTwo.setTable_ch_name("代码信息表_update");
+
+		tableInfos.add(tableInfoOne);
+		tableInfos.add(tableInfoTwo);
+
+		String wrongStringTwo = new HttpClient()
+				.addData("tableString", JSON.toJSONString(tableInfos))
+				.post(getActionUrl("updateTableName")).getBodyString();
+		ActionResult wrongResultTwo = JsonUtil.toObjectSafety(wrongStringTwo, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultTwo.isSuccess(), is(false));
+
+		tableInfos.clear();
+
+		//错误的数据访问3：在模拟保存sys_user和code_info的表名和表中文名时，未传入sys_user表的表名
+		for(int i = 0; i < 2; i++){
+			long tableId = i % 2 == 0 ? SYS_USER_TABLE_ID : CODE_INFO_TABLE_ID;
+			String tableName = i % 2 == 0 ? "" : "code_info_update";
+			String tableZhName = i % 2 == 0 ? "用户表_update" : "代码信息表_update";
+
+			Table_info tableInfo = new Table_info();
+			tableInfo.setTable_id(tableId);
+			tableInfo.setTable_name(tableName);
+			tableInfo.setTable_ch_name(tableZhName);
+
+			tableInfos.add(tableInfo);
+		}
+
+		String wrongStringThree = new HttpClient()
+				.addData("tableString", JSON.toJSONString(tableInfos))
+				.post(getActionUrl("updateTableName")).getBodyString();
+		ActionResult wrongResultThree = JsonUtil.toObjectSafety(wrongStringThree, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultThree.isSuccess(), is(false));
+
+		tableInfos.clear();
+
+		//错误的数据访问4：在模拟保存sys_user和code_info的表名和表中文名时，未传入sys_user表的表中文名
+		for(int i = 0; i < 2; i++){
+			long tableId = i % 2 == 0 ? SYS_USER_TABLE_ID : CODE_INFO_TABLE_ID;
+			String tableName = i % 2 == 0 ? "sys_user_update" : "code_info_update";
+			String tableZhName = i % 2 == 0 ? "" : "代码信息表_update";
+
+			Table_info tableInfo = new Table_info();
+			tableInfo.setTable_id(tableId);
+			tableInfo.setTable_name(tableName);
+			tableInfo.setTable_ch_name(tableZhName);
+
+			tableInfos.add(tableInfo);
+		}
+
+		String wrongStringFour = new HttpClient()
+				.addData("tableString", JSON.toJSONString(tableInfos))
+				.post(getActionUrl("updateTableName")).getBodyString();
+		ActionResult wrongResultFour = JsonUtil.toObjectSafety(wrongStringFour, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultFour.isSuccess(), is(false));
 	}
 
 	@After
