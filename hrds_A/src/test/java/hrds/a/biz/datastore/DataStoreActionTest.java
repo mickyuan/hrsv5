@@ -5,6 +5,7 @@ import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
+import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import hrds.commons.codes.*;
@@ -28,6 +29,7 @@ public class DataStoreActionTest extends WebBaseTestCase {
     private static final long dsl_id3 = 100003;
     private static final long dsl_id4 = 100004;
     private static final long dsl_id5 = 100005;
+    private static final long dsl_id6 = 100006;
     // 初始化附加信息ID
     private static final long dslad_id1 = 200001;
     private static final long dslad_id2 = 200002;
@@ -35,13 +37,14 @@ public class DataStoreActionTest extends WebBaseTestCase {
     private static final long dslad_id4 = 200004;
     private static final long dslad_id5 = 200005;
     private static final long dslad_id6 = 200006;
-    // 初始化存储配置主键信息
+    // 初始化存储层配置属性信息
     private static final long dsla_id1 = 300001;
     private static final long dsla_id2 = 300002;
     private static final long dsla_id3 = 300003;
     private static final long dsla_id4 = 300004;
     private static final long dsla_id5 = 300005;
     private static final long dsla_id6 = 300006;
+    private static final long dsla_id7 = 300007;
     // 初始化登录用户ID
     private static final long UserId = 6666L;
     // 初始化创建用户ID
@@ -93,7 +96,7 @@ public class DataStoreActionTest extends WebBaseTestCase {
             assertThat("测试数据department_info初始化", num, is(1));
             // 3.初始化数据存储层配置表数据
             Data_store_layer dataStoreLayer = new Data_store_layer();
-            for (int i = 1; i <= 5; i++) {
+            for (int i = 1; i <= 6; i++) {
                 if (i == 1) {
                     dataStoreLayer.setDsl_id(dsl_id1);
                     dataStoreLayer.setStore_type(store_type.DATABASE.getCode());
@@ -109,6 +112,9 @@ public class DataStoreActionTest extends WebBaseTestCase {
                 } else if (i == 5) {
                     dataStoreLayer.setDsl_id(dsl_id5);
                     dataStoreLayer.setStore_type(store_type.MONGODB.getCode());
+                } else if (i == 6) {
+                    dataStoreLayer.setDsl_id(dsl_id6);
+                    dataStoreLayer.setStore_type(store_type.DATABASE.getCode());
                 }
                 dataStoreLayer.setDsl_name("数据存储层配置测试名称" + i);
                 dataStoreLayer.setDsl_remark("数据存储层配置测试" + i);
@@ -147,7 +153,7 @@ public class DataStoreActionTest extends WebBaseTestCase {
             }
             // 5.初始化数据存储层配置属性表数据
             Data_store_layer_attr dataStoreLayerAttr = new Data_store_layer_attr();
-            for (int i = 1; i <= 6; i++) {
+            for (int i = 1; i <= 7; i++) {
                 if (i == 1) {
                     dataStoreLayerAttr.setDsla_id(dsla_id1);
                     dataStoreLayerAttr.setDsl_id(dsl_id1);
@@ -178,6 +184,11 @@ public class DataStoreActionTest extends WebBaseTestCase {
                     dataStoreLayerAttr.setDsl_id(dsl_id5);
                     dataStoreLayerAttr.setStorage_property_key("密码");
                     dataStoreLayerAttr.setStorage_property_val("hrsdxg");
+                } else if (i == 7) {
+                    dataStoreLayerAttr.setDsla_id(dsla_id7);
+                    dataStoreLayerAttr.setDsl_id(dsl_id6);
+                    dataStoreLayerAttr.setStorage_property_key("数据库服务器IP");
+                    dataStoreLayerAttr.setStorage_property_val("10.71.4.51");
                 }
                 dataStoreLayerAttr.setDsla_remark("数据存储层配置属性测试" + i);
                 dataStoreLayerAttr.add(db);
@@ -249,6 +260,11 @@ public class DataStoreActionTest extends WebBaseTestCase {
             num = SqlOperator.queryNumber(db, "select count(1) from " + Data_store_layer.TableName +
                     "  where dsl_id=?", dsl_id5).orElseThrow(() -> new RuntimeException("count fail!"));
             assertThat("此条数据删除后，记录数应该为0", num, is(0L));
+            SqlOperator.execute(db, "delete from " + Data_store_layer.TableName + " where dsl_id=?",
+                    dsl_id6);
+            num = SqlOperator.queryNumber(db, "select count(1) from " + Data_store_layer.TableName +
+                    "  where dsl_id=?", dsl_id6).orElseThrow(() -> new RuntimeException("count fail!"));
+            assertThat("此条数据删除后，记录数应该为0", num, is(0L));
             // 4.测试完删除Data_store_layer_added表测试数据
             SqlOperator.execute(db, "delete from " + Data_store_layer_added.TableName + " where dsl_id=?",
                     dsl_id1);
@@ -302,6 +318,11 @@ public class DataStoreActionTest extends WebBaseTestCase {
             num = SqlOperator.queryNumber(db, "select count(1) from " + Data_store_layer_attr.TableName +
                     "  where dsl_id=?", dsl_id5).orElseThrow(() -> new RuntimeException("count fail!"));
             assertThat("此条数据删除后，记录数应该为0", num, is(0L));
+            SqlOperator.execute(db, "delete from " + Data_store_layer_attr.TableName + " where dsl_id=?",
+                    dsl_id6);
+            num = SqlOperator.queryNumber(db, "select count(1) from " + Data_store_layer_attr.TableName +
+                    "  where dsl_id=?", dsl_id6).orElseThrow(() -> new RuntimeException("count fail!"));
+            assertThat("此条数据删除后，记录数应该为0", num, is(0L));
             // 6.测试完删除新增数据存储层配置数据
             SqlOperator.execute(db, "delete from " + Data_store_layer.TableName + " where dsl_name=?",
                     "addDataStore1");
@@ -335,6 +356,15 @@ public class DataStoreActionTest extends WebBaseTestCase {
 
     }
 
+    @Method(desc = "新增数据存储层、数据存储附加、数据存储层配置属性信息",
+            logicStep = "1.正常的数据访问1，数据都正常" +
+                    "2.错误的数据访问1，dsl_name为空" +
+                    "3.错误的数据访问2，dsl_name为空格" +
+                    "4.错误的数据访问3，store_type为空" +
+                    "5.错误的数据访问4，store_type为空格" +
+                    "6.错误的数据访问5，store_type为不存在" +
+                    "7.错误的数据访问6，dataStoreLayerAttr为空" +
+                    "8.错误的数据访问7，dataStoreLayerAttr为空格")
     @Test
     public void addDataStore() {
         // 1.正常的数据访问1，数据都正常
@@ -364,7 +394,7 @@ public class DataStoreActionTest extends WebBaseTestCase {
                 .post(getActionUrl("addDataStore"))
                 .getBodyString();
         ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
-                .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
         assertThat(ar.isSuccess(), is(true));
         try (DatabaseWrapper db = new DatabaseWrapper()) {
             Map<String, Object> layer = SqlOperator.queryOneObject(db, "select * from "
@@ -395,43 +425,138 @@ public class DataStoreActionTest extends WebBaseTestCase {
 
                 }
             }
+            // 2.错误的数据访问1，dsl_name为空
+            bodyString = new HttpClient()
+                    .addData("dsl_name", "")
+                    .addData("store_type", store_type.HBASE.getCode())
+                    .addData("dsl_remark", "新增数据存储层配置信息")
+                    .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
+                    .post(getActionUrl("addDataStore"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 3.错误的数据访问2，dsl_name为空格
+            bodyString = new HttpClient()
+                    .addData("dsl_name", " ")
+                    .addData("store_type", store_type.HBASE.getCode())
+                    .addData("dsl_remark", "新增数据存储层配置信息")
+                    .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
+                    .post(getActionUrl("addDataStore"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 4.错误的数据访问3，store_type为空
+            bodyString = new HttpClient()
+                    .addData("dsl_name", "addDataStore13")
+                    .addData("store_type", "")
+                    .addData("dsl_remark", "新增数据存储层配置信息")
+                    .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
+                    .post(getActionUrl("addDataStore"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 5.错误的数据访问4，store_type为空格
+            bodyString = new HttpClient()
+                    .addData("dsl_name", "addDataStore14")
+                    .addData("store_type", " ")
+                    .addData("dsl_remark", "新增数据存储层配置信息")
+                    .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
+                    .post(getActionUrl("addDataStore"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 6.错误的数据访问5，store_type为不存在
+            bodyString = new HttpClient()
+                    .addData("dsl_name", "addDataStore15")
+                    .addData("store_type", 6)
+                    .addData("dsl_remark", "新增数据存储层配置信息")
+                    .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
+                    .post(getActionUrl("addDataStore"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 7.错误的数据访问6，dataStoreLayerAttr为空
+            bodyString = new HttpClient()
+                    .addData("dsl_name", "addDataStore13")
+                    .addData("store_type", store_type.HBASE.getCode())
+                    .addData("dsl_remark", "新增数据存储层配置信息")
+                    .addData("dataStoreLayerAttr", "")
+                    .post(getActionUrl("addDataStore"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 8.错误的数据访问7，dataStoreLayerAttr为空格
+            bodyString = new HttpClient()
+                    .addData("dsl_name", "addDataStore14")
+                    .addData("store_type", store_type.DATABASE.getCode())
+                    .addData("dsl_remark", "新增数据存储层配置信息")
+                    .addData("dataStoreLayerAttr", " ")
+                    .post(getActionUrl("addDataStore"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
         }
     }
 
+    @Method(desc = "更新保存数据存储层信息",
+            logicStep = "1.正常的数据访问1，数据都正常" +
+                    "2.错误的数据访问1，dsl_id为空" +
+                    "3.错误的数据访问2，dsl_id为空格" +
+                    "4.错误的数据访问3，dsl_id不存在" +
+                    "5.错误的数据访问4，dslad_id为空" +
+                    "6.错误的数据访问5，dslad_id为空格" +
+                    "7.错误的数据访问6，dslad_id不存在" +
+                    "8.错误的数据访问7，dsla_id为空" +
+                    "9.错误的数据访问8，dsla_id为空格" +
+                    "10.错误的数据访问9，dsla_id不存在" +
+                    "11.错误的数据访问10，dsl_name为空" +
+                    "12.错误的数据访问11，dsl_name为空格" +
+                    "13.错误的数据访问12,store_type为空" +
+                    "14.错误的数据访问13,store_type为空格" +
+                    "15.错误的数据访问14，store_type不存在" +
+                    "16.错误的数据访问15，dataStoreLayerAttr为空" +
+                    "17.错误的数据访问16，dataStoreLayerAttr为空格")
     @Test
     public void updateDataStore() {
-        // 1.正常的数据访问1，数据都正常
-        List<Map<String, String>> list = new ArrayList<>();
-        for (int i = 0; i < 2; i++) {
-            Map<String, String> map = new HashMap<>();
-            if (i == 0) {
-                map.put("storage_property_key", "数据库");
-                map.put("storage_property_val", DatabaseType.MYSQL.getCode());
-                map.put("dsla_remark", "更新数据存储层配置属性信息1");
-            } else {
-                map.put("storage_property_key", "数据库驱动");
-                map.put("storage_property_val", "com.mysql.jdbc.Driver");
-                map.put("dsla_remark", "更新数据存储层配置属性信息2");
-            }
-            list.add(map);
-        }
-        String bodyString = new HttpClient()
-                .addData("dsl_id", dsl_id1)
-                .addData("dslad_id", dslad_id1)
-                .addData("dsla_id", dsla_id1)
-                .addData("dsl_name", "upDataStore1")
-                .addData("store_type", store_type.HBASE.getCode())
-                .addData("dsl_remark", "更新数据存储层配置信息")
-                .addData("dsla_storelayer", new String[]{StoreLayerAdded.FenQuLie.getCode(),
-                        StoreLayerAdded.PaiXuLie.getCode()})
-                .addData("dslad_remark", "更新数据存储附加信息")
-                .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
-                .post(getActionUrl("updateDataStore"))
-                .getBodyString();
-        ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
-                .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
-        assertThat(ar.isSuccess(), is(true));
         try (DatabaseWrapper db = new DatabaseWrapper()) {
+            // 1.正常的数据访问1，数据都正常
+            List<Map<String, String>> list = new ArrayList<>();
+            for (int i = 0; i < 2; i++) {
+                Map<String, String> map = new HashMap<>();
+                if (i == 0) {
+                    map.put("storage_property_key", "数据库");
+                    map.put("storage_property_val", DatabaseType.MYSQL.getCode());
+                    map.put("dsla_remark", "更新数据存储层配置属性信息1");
+                } else {
+                    map.put("storage_property_key", "数据库驱动");
+                    map.put("storage_property_val", "com.mysql.jdbc.Driver");
+                    map.put("dsla_remark", "更新数据存储层配置属性信息2");
+                }
+                list.add(map);
+            }
+            String bodyString = new HttpClient()
+                    .addData("dsl_id", dsl_id1)
+                    .addData("dslad_id", dslad_id1)
+                    .addData("dsla_id", dsla_id1)
+                    .addData("dsl_name", "upDataStore1")
+                    .addData("store_type", store_type.HBASE.getCode())
+                    .addData("dsl_remark", "更新数据存储层配置信息")
+                    .addData("dsla_storelayer", new String[]{StoreLayerAdded.FenQuLie.getCode(),
+                            StoreLayerAdded.PaiXuLie.getCode()})
+                    .addData("dslad_remark", "更新数据存储附加信息")
+                    .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
+                    .post(getActionUrl("updateDataStore"))
+                    .getBodyString();
+            ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(true));
             Map<String, Object> layer = SqlOperator.queryOneObject(db, "select * from "
                     + Data_store_layer.TableName + " where dsl_id=?", dsl_id1);
             assertThat(store_type.HBASE.getCode(), is(layer.get("store_type")));
@@ -467,9 +592,236 @@ public class DataStoreActionTest extends WebBaseTestCase {
 
                 }
             }
+            // 2.错误的数据访问1，dsl_id为空
+            bodyString = new HttpClient()
+                    .addData("dsl_id", "")
+                    .addData("dslad_id", dslad_id2)
+                    .addData("dsla_id", dsla_id2)
+                    .addData("dsl_name", "upDataStore2")
+                    .addData("store_type", store_type.HBASE.getCode())
+                    .addData("dsl_remark", "更新数据存储层配置信息")
+                    .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
+                    .post(getActionUrl("updateDataStore"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 3.错误的数据访问2，dsl_id为空格
+            bodyString = new HttpClient()
+                    .addData("dsl_id", " ")
+                    .addData("dslad_id", dslad_id2)
+                    .addData("dsla_id", dsla_id2)
+                    .addData("dsl_name", "upDataStore3")
+                    .addData("store_type", store_type.HBASE.getCode())
+                    .addData("dsl_remark", "更新数据存储层配置信息")
+                    .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
+                    .post(getActionUrl("updateDataStore"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 4.错误的数据访问3，dsl_id不存在
+            bodyString = new HttpClient()
+                    .addData("dsl_id", 1)
+                    .addData("dslad_id", dslad_id1)
+                    .addData("dsla_id", dsla_id1)
+                    .addData("dsl_name", "upDataStore4")
+                    .addData("store_type", store_type.HBASE.getCode())
+                    .addData("dsl_remark", "更新数据存储层配置信息")
+                    .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
+                    .post(getActionUrl("updateDataStore"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 5.错误的数据访问4，dslad_id为空
+            bodyString = new HttpClient()
+                    .addData("dsl_id", dsl_id1)
+                    .addData("dslad_id", "")
+                    .addData("dsla_id", dsla_id1)
+                    .addData("dsl_name", "upDataStore5")
+                    .addData("store_type", store_type.HBASE.getCode())
+                    .addData("dsl_remark", "更新数据存储层配置信息")
+                    .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
+                    .post(getActionUrl("updateDataStore"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 6.错误的数据访问5，dslad_id为空格
+            bodyString = new HttpClient()
+                    .addData("dsl_id", dsl_id1)
+                    .addData("dslad_id", " ")
+                    .addData("dsla_id", dsla_id1)
+                    .addData("dsl_name", "upDataStore6")
+                    .addData("store_type", store_type.HBASE.getCode())
+                    .addData("dsl_remark", "更新数据存储层配置信息")
+                    .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
+                    .post(getActionUrl("updateDataStore"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 7.错误的数据访问6，dslad_id为不存在
+            bodyString = new HttpClient()
+                    .addData("dsl_id", dsl_id1)
+                    .addData("dslad_id", 1)
+                    .addData("dsla_id", dsla_id1)
+                    .addData("dsl_name", "upDataStore7")
+                    .addData("store_type", store_type.HBASE.getCode())
+                    .addData("dsl_remark", "更新数据存储层配置信息")
+                    .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
+                    .post(getActionUrl("updateDataStore"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 8.错误的数据访问7，dsla_id为空
+            bodyString = new HttpClient()
+                    .addData("dsl_id", dsl_id1)
+                    .addData("dslad_id", dslad_id1)
+                    .addData("dsla_id", "")
+                    .addData("dsl_name", "upDataStore8")
+                    .addData("store_type", store_type.HBASE.getCode())
+                    .addData("dsl_remark", "更新数据存储层配置信息")
+                    .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
+                    .post(getActionUrl("updateDataStore"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 9.错误的数据访问8，dslad_id为空格
+            bodyString = new HttpClient()
+                    .addData("dsl_id", dsl_id1)
+                    .addData("dslad_id", dslad_id1)
+                    .addData("dsla_id", " ")
+                    .addData("dsl_name", "upDataStore9")
+                    .addData("store_type", store_type.HBASE.getCode())
+                    .addData("dsl_remark", "更新数据存储层配置信息")
+                    .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
+                    .post(getActionUrl("updateDataStore"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 10.错误的数据访问9，dslad_id为不存在
+            bodyString = new HttpClient()
+                    .addData("dsl_id", dsl_id1)
+                    .addData("dslad_id", dslad_id1)
+                    .addData("dsla_id", 1)
+                    .addData("dsl_name", "upDataStore10")
+                    .addData("store_type", store_type.HBASE.getCode())
+                    .addData("dsl_remark", "更新数据存储层配置信息")
+                    .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
+                    .post(getActionUrl("updateDataStore"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 11.错误的数据访问10，dsl_name为空
+            bodyString = new HttpClient()
+                    .addData("dsl_id", dsl_id1)
+                    .addData("dslad_id", dslad_id1)
+                    .addData("dsla_id", dsla_id1)
+                    .addData("dsl_name", "")
+                    .addData("store_type", store_type.HBASE.getCode())
+                    .addData("dsl_remark", "更新数据存储层配置信息")
+                    .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
+                    .post(getActionUrl("updateDataStore"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 12.错误的数据访问11，dsl_name为空格
+            bodyString = new HttpClient()
+                    .addData("dsl_id", dsl_id1)
+                    .addData("dslad_id", dslad_id1)
+                    .addData("dsla_id", dsla_id1)
+                    .addData("dsl_name", " ")
+                    .addData("store_type", store_type.HBASE.getCode())
+                    .addData("dsl_remark", "更新数据存储层配置信息")
+                    .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
+                    .post(getActionUrl("updateDataStore"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 13.错误的数据访问12，store_type为空
+            bodyString = new HttpClient()
+                    .addData("dsl_id", dsl_id1)
+                    .addData("dslad_id", dslad_id1)
+                    .addData("dsla_id", dsla_id1)
+                    .addData("dsl_name", "upDataStore13")
+                    .addData("store_type", "")
+                    .addData("dsl_remark", "更新数据存储层配置信息")
+                    .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
+                    .post(getActionUrl("updateDataStore"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 14.错误的数据访问13，store_type为空格
+            bodyString = new HttpClient()
+                    .addData("dsl_id", dsl_id1)
+                    .addData("dslad_id", dslad_id1)
+                    .addData("dsla_id", dsla_id1)
+                    .addData("dsl_name", "upDataStore14")
+                    .addData("store_type", " ")
+                    .addData("dsl_remark", "更新数据存储层配置信息")
+                    .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
+                    .post(getActionUrl("updateDataStore"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 15.错误的数据访问14，store_type为不存在
+            bodyString = new HttpClient()
+                    .addData("dsl_id", dsl_id1)
+                    .addData("dslad_id", dslad_id1)
+                    .addData("dsla_id", dsla_id1)
+                    .addData("dsl_name", "upDataStore15")
+                    .addData("store_type", 6)
+                    .addData("dsl_remark", "更新数据存储层配置信息")
+                    .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
+                    .post(getActionUrl("updateDataStore"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 16.错误的数据访问15，dataStoreLayerAttr为空
+            bodyString = new HttpClient()
+                    .addData("dsl_id", dsl_id1)
+                    .addData("dslad_id", dslad_id1)
+                    .addData("dsla_id", dsla_id1)
+                    .addData("dsl_name", "upDataStore13")
+                    .addData("store_type", store_type.DATABASE.getCode())
+                    .addData("dsl_remark", "更新数据存储层配置信息")
+                    .addData("dataStoreLayerAttr", "")
+                    .post(getActionUrl("updateDataStore"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 17.错误的数据访问16，dataStoreLayerAttr为空格
+            bodyString = new HttpClient()
+                    .addData("dsl_id", dsl_id1)
+                    .addData("dslad_id", dslad_id1)
+                    .addData("dsla_id", dsla_id1)
+                    .addData("dsl_name", "upDataStore14")
+                    .addData("store_type", store_type.HBASE.getCode())
+                    .addData("dsl_remark", "更新数据存储层配置信息")
+                    .addData("dataStoreLayerAttr", " ")
+                    .post(getActionUrl("updateDataStore"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
         }
     }
 
+    @Method(desc = "删除数据存储层信息",
+            logicStep = "1.正常的数据访问1，数据都正常" +
+                    "2.错误的数据访问1，dsl_id不存在")
     @Test
     public void deleteDataStore() {
         try (DatabaseWrapper db = new DatabaseWrapper()) {
@@ -484,16 +836,26 @@ public class DataStoreActionTest extends WebBaseTestCase {
                     .post(getActionUrl("deleteDataStore"))
                     .getBodyString();
             ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
-                    .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
             assertThat(ar.isSuccess(), is(true));
             // 删除后查询数据库，确认预期删除的数据存在
             optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
                     Data_store_layer.TableName + " where dsl_id = ?", dsl_id5);
             assertThat("删除操作后，确认该条数据被删除", optionalLong.orElse(Long.MIN_VALUE),
                     is(0L));
+            // 2.错误的数据访问1，dsl_id不存在
+            bodyString = new HttpClient()
+                    .addData("dsl_id", 1)
+                    .post(getActionUrl("deleteDataStore"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+
         }
     }
 
+    @Method(desc = "查询数据存储层配置信息", logicStep = "1.正常的数据访问1，数据都正常,该方法只有一种情况")
     @Test
     public void searchDataStore() {
         // 1.正常的数据访问1，数据都正常
@@ -501,100 +863,43 @@ public class DataStoreActionTest extends WebBaseTestCase {
                 .post(getActionUrl("searchDataStore"))
                 .getBodyString();
         ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
-                .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
         assertThat(ar.isSuccess(), is(true));
-        Map<Object, Object> dataForMap = ar.getDataForMap();
-        List<Map<String, Object>> storeLayer = (List<Map<String, Object>>) dataForMap.get("storeLayer");
-        List<Map<String, Object>> layerAndAdded = (List<Map<String, Object>>) dataForMap.get("layerAndAdded");
-        List<Map<String, Object>> layerAndAttr = (List<Map<String, Object>>) dataForMap.get("layerAndAttr");
-        for (Map<String, Object> map : storeLayer) {
-            String dsl_id = map.get("dsl_id").toString();
-            if (dsl_id.equals(String.valueOf(dsl_id1))) {
-                assertThat(store_type.DATABASE.getCode(), is(map.get("store_type")));
-                assertThat("数据存储层配置测试名称1", is(map.get("dsl_name")));
-                assertThat("数据存储层配置测试1", is(map.get("dsl_remark")));
-            } else if (dsl_id.equals(String.valueOf(dsl_id2))) {
-                assertThat(store_type.HBASE.getCode(), is(map.get("store_type")));
-                assertThat("数据存储层配置测试名称2", is(map.get("dsl_name")));
-                assertThat("数据存储层配置测试2", is(map.get("dsl_remark")));
-            } else if (dsl_id.equals(String.valueOf(dsl_id3))) {
-                assertThat(store_type.SOLR.getCode(), is(map.get("store_type")));
-                assertThat("数据存储层配置测试名称3", is(map.get("dsl_name")));
-                assertThat("数据存储层配置测试3", is(map.get("dsl_remark")));
-            } else if (dsl_id.equals(String.valueOf(dsl_id4))) {
-                assertThat(store_type.ElasticSearch.getCode(), is(map.get("store_type")));
-                assertThat("数据存储层配置测试名称4", is(map.get("dsl_name")));
-                assertThat("数据存储层配置测试4", is(map.get("dsl_remark")));
-            } else if (dsl_id.equals(String.valueOf(dsl_id5))) {
-                assertThat(store_type.MONGODB.getCode(), is(map.get("store_type")));
-                assertThat("数据存储层配置测试名称5", is(map.get("dsl_name")));
-                assertThat("数据存储层配置测试5", is(map.get("dsl_remark")));
-            }
-        }
-        for (Map<String, Object> map : layerAndAdded) {
-            String dslad_id = map.get("dslad_id").toString();
-            if (dslad_id.equals(String.valueOf(dslad_id1))) {
-                assertThat(String.valueOf(dsl_id1), is(map.get("dsl_id").toString()));
-                assertThat(StoreLayerAdded.ZhuJian.getCode(), is(map.get("dsla_storelayer")));
-                assertThat("数据存储附加信息测试1", is(map.get("dslad_remark")));
-            } else if (dslad_id.equals(String.valueOf(dslad_id2))) {
-                assertThat(String.valueOf(dsl_id1), is(map.get("dsl_id").toString()));
-                assertThat(StoreLayerAdded.RowKey.getCode(), is(map.get("dsla_storelayer")));
-                assertThat("数据存储附加信息测试2", is(map.get("dslad_remark")));
-            } else if (dslad_id.equals(String.valueOf(dslad_id3))) {
-                assertThat(String.valueOf(dsl_id3), is(map.get("dsl_id").toString()));
-                assertThat(StoreLayerAdded.SuoYinLie.getCode(), is(map.get("dsla_storelayer")));
-                assertThat("数据存储附加信息测试3", is(map.get("dslad_remark")));
-            } else if (dslad_id.equals(String.valueOf(dslad_id4))) {
-                assertThat(String.valueOf(dsl_id4), is(map.get("dsl_id").toString()));
-                assertThat(StoreLayerAdded.YuJuHe.getCode(), is(map.get("dsla_storelayer")));
-                assertThat("数据存储附加信息测试4", is(map.get("dslad_remark")));
-            } else if (dslad_id.equals(String.valueOf(dslad_id5))) {
-                assertThat(String.valueOf(dsl_id5), is(map.get("dsl_id").toString()));
-                assertThat(StoreLayerAdded.PaiXuLie.getCode(), is(map.get("dsla_storelayer")));
-                assertThat("数据存储附加信息测试5", is(map.get("dslad_remark")));
-            } else if (dslad_id.equals(String.valueOf(dslad_id6))) {
-                assertThat(String.valueOf(dsl_id2), is(map.get("dsl_id").toString()));
-                assertThat(StoreLayerAdded.FenQuLie.getCode(), is(map.get("dsla_storelayer")));
-                assertThat("数据存储附加信息测试6", is(map.get("dslad_remark")));
-            }
-        }
-        for (Map<String, Object> map : layerAndAttr) {
-            String dsla_id = map.get("dsla_id").toString();
-            if (dsla_id.equals(String.valueOf(dsla_id1))) {
-                assertThat(map.get("dsl_id").toString(), is(String.valueOf(dsl_id1)));
-                assertThat(map.get("storage_property_key"), is("数据库"));
-                assertThat(map.get("storage_property_val"), is(DatabaseType.Postgresql.getCode()));
-                assertThat(map.get("dsla_remark"), is("数据存储层配置属性测试1"));
-            } else if (dsla_id.equals(String.valueOf(dsla_id2))) {
-                assertThat(map.get("dsl_id").toString(), is(String.valueOf(dsl_id1)));
-                assertThat(map.get("storage_property_key"), is("数据库驱动"));
-                assertThat(map.get("storage_property_val"), is("org.postgresql.Driver"));
-                assertThat(map.get("dsla_remark"), is("数据存储层配置属性测试2"));
-            } else if (dsla_id.equals(String.valueOf(dsla_id3))) {
-                assertThat(map.get("dsl_id").toString(), is(String.valueOf(dsl_id2)));
-                assertThat(map.get("storage_property_key"), is("数据库服务器IP"));
-                assertThat(map.get("storage_property_val"), is("127.0.0.1"));
-                assertThat(map.get("dsla_remark"), is("数据存储层配置属性测试3"));
-            } else if (dsla_id.equals(String.valueOf(dsla_id3))) {
-                assertThat(map.get("dsl_id").toString(), is(String.valueOf(dsl_id3)));
-                assertThat(map.get("storage_property_key"), is("数据库端口"));
-                assertThat(map.get("storage_property_val"), is("5432"));
-                assertThat(map.get("dsla_remark"), is("数据存储层配置属性测试4"));
-            } else if (dsla_id.equals(String.valueOf(dsla_id5))) {
-                assertThat(map.get("dsl_id").toString(), is(String.valueOf(dsl_id4)));
-                assertThat(map.get("storage_property_key"), is("用户名"));
-                assertThat(map.get("storage_property_val"), is("hrsdxg"));
-                assertThat(map.get("dsla_remark"), is("数据存储层配置属性测试5"));
-            } else if (dsla_id.equals(String.valueOf(dsla_id6))) {
-                assertThat(map.get("dsl_id").toString(), is(String.valueOf(dsl_id5)));
-                assertThat(map.get("storage_property_key"), is("密码"));
-                assertThat(map.get("storage_property_val"), is("hrsdxg"));
-                assertThat(map.get("dsla_remark"), is("数据存储层配置属性测试6"));
+        Result storeLayer = ar.getDataForResult();
+        for (int i = 0; i < storeLayer.getRowCount(); i++) {
+            long dsl_id = storeLayer.getLong(i, "dsl_id");
+            if (dsl_id == dsl_id1) {
+                assertThat(store_type.DATABASE.getCode(), is(storeLayer.getString(i, "store_type")));
+                assertThat("数据存储层配置测试名称1", is(storeLayer.getString(i, "dsl_name")));
+                assertThat("数据存储层配置测试1", is(storeLayer.getString(i, "dsl_remark")));
+            } else if (dsl_id == dsl_id2) {
+                assertThat(store_type.HBASE.getCode(), is(storeLayer.getString(i, "store_type")));
+                assertThat("数据存储层配置测试名称2", is(storeLayer.getString(i, "dsl_name")));
+                assertThat("数据存储层配置测试2", is(storeLayer.getString(i, "dsl_remark")));
+            } else if (dsl_id == dsl_id3) {
+                assertThat(store_type.SOLR.getCode(), is(storeLayer.getString(i, "store_type")));
+                assertThat("数据存储层配置测试名称3", is(storeLayer.getString(i, "dsl_name")));
+                assertThat("数据存储层配置测试3", is(storeLayer.getString(i, "dsl_remark")));
+            } else if (dsl_id == dsl_id4) {
+                assertThat(store_type.ElasticSearch.getCode(), is(storeLayer.getString(i, "store_type")));
+                assertThat("数据存储层配置测试名称4", is(storeLayer.getString(i, "dsl_name")));
+                assertThat("数据存储层配置测试4", is(storeLayer.getString(i, "dsl_remark")));
+            } else if (dsl_id == dsl_id5) {
+                assertThat(store_type.MONGODB.getCode(), is(storeLayer.getString(i, "store_type")));
+                assertThat("数据存储层配置测试名称5", is(storeLayer.getString(i, "dsl_name")));
+                assertThat("数据存储层配置测试5", is(storeLayer.getString(i, "dsl_remark")));
+            } else if (dsl_id == dsl_id6) {
+                assertThat(store_type.DATABASE.getCode(), is(storeLayer.getString(i, "store_type")));
+                assertThat("数据存储层配置测试名称6", is(storeLayer.getString(i, "dsl_name")));
+                assertThat("数据存储层配置测试6", is(storeLayer.getString(i, "dsl_remark")));
             }
         }
     }
 
+    @Method(desc = "根据权限数据存储层配置ID关联查询数据存储层信息",
+            logicStep = "1.正常的数据访问1，数据都正常" +
+                    "2.正确的数据访问2，数据存储属性信息不存在" +
+                    "3.错误的数据访问1，dsl_id不存在")
     @Test
     public void searchDataStoreById() {
         // 1.正常的数据访问1，数据都正常
@@ -603,7 +908,7 @@ public class DataStoreActionTest extends WebBaseTestCase {
                 .post(getActionUrl("searchDataStoreById"))
                 .getBodyString();
         ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
-                .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
         assertThat(ar.isSuccess(), is(true));
         Map<Object, Object> dataForMap = ar.getDataForMap();
         List<Map<String, Object>> layerAndAdded = (List<Map<String, Object>>) dataForMap.get("layerAndAdded");
@@ -637,5 +942,40 @@ public class DataStoreActionTest extends WebBaseTestCase {
                 assertThat(map.get("dsla_remark"), is("数据存储层配置属性测试2"));
             }
         }
+        // 2.正确的数据访问2，数据存储属性信息不存在
+        bodyString = new HttpClient()
+                .addData("dsl_id", dsl_id6)
+                .post(getActionUrl("searchDataStoreById"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(true));
+        dataForMap = ar.getDataForMap();
+        layerAndAdded = (List<Map<String, Object>>) dataForMap.get("layerAndAdded");
+        layerAndAttr = (List<Map<String, Object>>) dataForMap.get("layerAndAttr");
+        assertThat(dataForMap.get("store_type"), is(store_type.DATABASE.getCode()));
+        assertThat("数据存储层配置测试名称6", is(dataForMap.get("dsl_name")));
+        assertThat("数据存储层配置测试6", is(dataForMap.get("dsl_remark")));
+        assertThat(layerAndAdded.isEmpty(), is(true));
+        for (Map<String, Object> map : layerAndAttr) {
+            assertThat(map.get("dsla_id").toString(), is(String.valueOf(dsla_id7)));
+            assertThat(map.get("dsl_id").toString(), is(String.valueOf(dsl_id6)));
+            assertThat(map.get("storage_property_key"), is("数据库服务器IP"));
+            assertThat(map.get("storage_property_val"), is("10.71.4.51"));
+            assertThat(map.get("dsla_remark"), is("数据存储层配置属性测试7"));
+        }
+        // 3.错误的数据访问1，dsl_id不存在
+        bodyString = new HttpClient()
+                .addData("dsl_id", 1)
+                .post(getActionUrl("searchDataStoreById"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(true));
+        dataForMap = ar.getDataForMap();
+        layerAndAdded = (List<Map<String, Object>>) dataForMap.get("layerAndAdded");
+        layerAndAttr = (List<Map<String, Object>>) dataForMap.get("layerAndAttr");
+        assertThat(layerAndAdded.isEmpty(), is(true));
+        assertThat(layerAndAttr.isEmpty(), is(true));
     }
 }
