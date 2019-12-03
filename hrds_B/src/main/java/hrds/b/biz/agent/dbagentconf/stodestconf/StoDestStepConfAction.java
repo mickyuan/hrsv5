@@ -29,18 +29,45 @@ public class StoDestStepConfAction extends BaseAction{
 	* * */
 	@Method(desc = "根据数据库设置ID获得定义存储目的地页面初始化信息", logicStep = "" +
 			"1、根据colSetId进行查询，查询出前端需要展示的数据" +
-			"2、将查询到的信息返回前端")
+			"2、根据colSetId在table_info中获取该采集任务所有的采集表id集合" +
+			"3、遍历这个集合，根据table_id在表存储信息表中查看该表是否定义了存储目的地" +
+			"4、如果定义了，将destflag字段设为1" +
+			"5、将查询到的信息返回前端")
 	@Param(name = "colSetId", desc = "数据库设置ID，源系统数据库设置表主键，数据库对应表外键", range = "不为空")
 	@Return(desc = "查询结果集", range = "不为空" +
 			"注意data_extract_type字段，表示数据抽取方式，需要根据这个字段在选择目的地的时候展示不同的弹框" +
 			"1：仅数据抽取，则选择目的地需要让用户填写数据文件的存放路径" +
 			"2：数据抽取及入库，则选择目的地需要让用户选择存储的数据库，并配置列存储信息")
 	public Result getInitInfo(long colSetId){
-		return Dbo.queryResult(" select ti.table_id, ti.table_name, ti.table_ch_name, tsi.is_zipper, " +
-				" tsi.storage_type, tsi.storage_time, ded.data_extract_type from " + Table_info.TableName + " ti" +
+		//1、根据colSetId进行查询，查询出前端需要展示的数据
+		Result result = Dbo.queryResult(" select ti.table_id, ti.table_name, ti.table_ch_name, tsi.is_zipper, " +
+				" tsi.storage_type, tsi.storage_time, ded.data_extract_type, '0' as destflag " +
+				" from " + Table_info.TableName + " ti" +
 				" left join " + Table_storage_info.TableName + " tsi on ti.table_id = tsi.table_id" +
 				" left join " + Data_extraction_def.TableName + " ded on ti.table_id = ded.table_id" +
 				" where ti.database_id = ?", colSetId);
+		//2、根据colSetId在table_info中获取该采集任务所有的采集表id集合
+		List<Object> list = Dbo.queryOneColumnList("select table_id from " + Table_info.TableName + " where database_id = ?", colSetId);
+		if(list.isEmpty()){
+			throw new BusinessSystemException("未获取到当前数据库采集表");
+		}
+		//3、遍历这个集合，根据table_id在表存储信息表中查看该表是否定义了存储目的地
+		for(int i = 0; i < list.size(); i++){
+			Long tableIdFromTI = (Long) list.get(i);
+			for(int j = 0; j < result.getRowCount(); j++){
+				long tableIdFromResult = result.getLong(j, "table_id");
+				if(tableIdFromTI.equals(tableIdFromResult)){
+					long count = Dbo.queryNumber("select count(1) from " + Table_storage_info.TableName +
+							" where table_id = ?", tableIdFromTI).orElseThrow(() -> new BusinessSystemException("SQL查询错误"));
+					if(count > 0){
+						//4、如果定义了，将destflag字段设为1
+						result.setObject(j, "destflag", IsFlag.Shi.getCode());
+					}
+				}
+			}
+		}
+		//5、将查询到的信息返回前端
+		return result;
 	}
 
 	/*

@@ -166,18 +166,22 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 				assertThat("获取到表名为agent_info，存储方式为<增量>", rightData.getString(i, "storage_type"), is(StorageType.ZengLiang.getCode()));
 				assertThat("获取到表名为agent_info，数据保存时间为<7天>", rightData.getLong(i, "storage_time"), is(7L));
 				assertThat("获取到表名为agent_info，数据抽取方式为<抽取并入库>", rightData.getString(i, "data_extract_type"), is(DataExtractType.ShuJuChouQuJiRuKu.getCode()));
+				assertThat("获取到表名为agent_info，destflag标识位为<是>", rightData.getString(i, "destflag"), is(IsFlag.Shi.getCode()));
 			}else if(rightData.getString(i, "table_name").equalsIgnoreCase("data_source")){
 				assertThat("获取到表名为data_source，表中文名为<数据源表>", rightData.getString(i, "table_ch_name").equalsIgnoreCase("数据源表"), is(true));
 				assertThat("获取到表名为data_source，不做拉链存储", rightData.getString(i, "is_zipper"), is(IsFlag.Fou.getCode()));
 				assertThat("获取到表名为data_source，存储方式为<追加>", rightData.getString(i, "storage_type"), is(StorageType.ZhuiJia.getCode()));
 				assertThat("获取到表名为data_source，数据保存时间为<1天>", rightData.getLong(i, "storage_time"), is(1L));
 				assertThat("获取到表名为data_source，数据抽取方式为<抽取并入库>", rightData.getString(i, "data_extract_type"), is(DataExtractType.ShuJuChouQuJiRuKu.getCode()));
+				assertThat("获取到表名为data_source，destflag标识位为<是>", rightData.getString(i, "destflag"), is(IsFlag.Shi.getCode()));
 			}else if(rightData.getString(i, "table_name").equalsIgnoreCase("sys_user")){
 				assertThat("获取到表名为sys_user，表中文名为<用户表>", rightData.getString(i, "table_ch_name").equalsIgnoreCase("用户表"), is(true));
 				assertThat("获取到表名为sys_user，数据抽取方式为<仅抽取>", rightData.getString(i, "data_extract_type"), is(DataExtractType.JinShuJuChouQu.getCode()));
+				assertThat("获取到表名为sys_user，destflag标识位为<否>", rightData.getString(i, "destflag"), is(IsFlag.Fou.getCode()));
 			}else if(rightData.getString(i, "table_name").equalsIgnoreCase("code_info")){
 				assertThat("获取到表名为code_info，表中文名为<代码信息表>", rightData.getString(i, "table_ch_name").equalsIgnoreCase("代码信息表"), is(true));
 				assertThat("获取到表名为code_info，数据抽取方式为<仅抽取>", rightData.getString(i, "data_extract_type"), is(DataExtractType.JinShuJuChouQu.getCode()));
+				assertThat("获取到表名为code_info，destflag标识位为<否>", rightData.getString(i, "destflag"), is(IsFlag.Fou.getCode()));
 			}else{
 				assertThat("获取到了不符合期望的结果，表名为：" + rightData.getString(i, "table_name"), false, is(true));
 			}
@@ -189,10 +193,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 				.post(getActionUrl("getInitInfo")).getBodyString();
 		ActionResult wrongResult = JsonUtil.toObjectSafety(wrongString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
-		assertThat(wrongResult.isSuccess(), is(true));
-
-		Result wrongData = wrongResult.getDataForResult();
-		assertThat("使用数据库设置ID为1002进行查询，未能找到数据", wrongData.isEmpty(), is(true));
+		assertThat(wrongResult.isSuccess(), is(false));
 	}
 
 	/**
