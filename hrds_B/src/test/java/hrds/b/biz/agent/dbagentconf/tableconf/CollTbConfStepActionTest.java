@@ -16,7 +16,6 @@ import hrds.b.biz.agent.dbagentconf.BaseInitData;
 import hrds.commons.codes.*;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
-import hrds.commons.utils.Constant;
 import hrds.testbase.WebBaseTestCase;
 import org.junit.After;
 import org.junit.Before;
@@ -392,6 +391,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 	 * 测试SQL查询设置页面，保存按钮后台方法功能
 	 *
 	 * 正确数据访问1：构造两条自定义SQL查询设置数据，测试保存功能
+	 * 正确数据访问2：模拟修改agent_info和data_source表的自定义SQL查询
 	 * 错误的数据访问1：构造两条自定义SQL查询设置数据，第一条数据的表名为空
 	 * 错误的数据访问2：构造两条自定义SQL查询设置数据，第二条数据的中文名为空
 	 * 错误的数据访问3：构造两条自定义SQL查询设置数据，第一条数据的sql为空
@@ -435,11 +435,13 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		JSONArray array= JSONArray.parseArray(JSON.toJSONString(tableInfos));
 		String rightString = new HttpClient()
 				.addData("tableInfoArray", array.toJSONString())
-				.addData("databaseId", FIRST_DATABASESET_ID)
+				.addData("colSetId", FIRST_DATABASESET_ID)
 				.post(getActionUrl("saveAllSQL")).getBodyString();
 		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(rightResult.isSuccess(), is(true));
+		Integer returnValue = (Integer) rightResult.getData();
+		assertThat(returnValue == FIRST_DATABASESET_ID, is(true));
 
 		List<Table_info> expectedList;
 
@@ -571,7 +573,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		JSONArray errorArrayOne= JSONArray.parseArray(JSON.toJSONString(errorTableInfosOne));
 		String errorStringOne = new HttpClient()
 				.addData("tableInfoArray", errorArrayOne.toJSONString())
-				.addData("databaseId", FIRST_DATABASESET_ID)
+				.addData("colSetId", FIRST_DATABASESET_ID)
 				.post(getActionUrl("saveAllSQL")).getBodyString();
 		ActionResult errorResultOne = JsonUtil.toObjectSafety(errorStringOne, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
@@ -617,7 +619,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		JSONArray errorArrayTwo= JSONArray.parseArray(JSON.toJSONString(errorTableInfosTwo));
 		String errorStringTwo = new HttpClient()
 				.addData("tableInfoArray", errorArrayTwo.toJSONString())
-				.addData("databaseId", FIRST_DATABASESET_ID)
+				.addData("colSetId", FIRST_DATABASESET_ID)
 				.post(getActionUrl("saveAllSQL")).getBodyString();
 		ActionResult errorResultTwo = JsonUtil.toObjectSafety(errorStringTwo, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
@@ -659,7 +661,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		JSONArray errorArrayThree= JSONArray.parseArray(JSON.toJSONString(errortableInfoThree));
 		String errorStringThree = new HttpClient()
 				.addData("tableInfoArray", errorArrayThree.toJSONString())
-				.addData("databaseId", FIRST_DATABASESET_ID)
+				.addData("colSetId", FIRST_DATABASESET_ID)
 				.post(getActionUrl("saveAllSQL")).getBodyString();
 		ActionResult errorResultThree = JsonUtil.toObjectSafety(errorStringThree, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
@@ -669,7 +671,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		long wrongDatabaseId = 8888888L;
 		String errorDatabaseId = new HttpClient()
 				.addData("tableInfoArray", array.toJSONString())
-				.addData("databaseId", wrongDatabaseId)
+				.addData("colSetId", wrongDatabaseId)
 				.post(getActionUrl("saveAllSQL")).getBodyString();
 		ActionResult errorDatabaseIdResult = JsonUtil.toObjectSafety(errorDatabaseId, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
@@ -677,49 +679,153 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 	}
 
 	/**
-	 * 测试SQL查询设置页面操作栏，删除按钮后台方法功能
+	 * 测试SQL查询设置页面，保存按钮后台方法功能
 	 *
-	 * 正确数据访问1：模拟删除table_id为7003的自定义SQL采集数据
-	 * 错误的数据访问1：模拟删除一个不存在的table_id的自定义SQL采集数据
-	 * 错误的测试用例未达到三组: deleteSQLConf()方法只有一个参数
+	 * 正确数据访问2：模拟修改agent_info和data_source表的自定义SQL查询
 	 *
 	 * @Param: 无
 	 * @return: 无
 	 *
 	 * */
 	@Test
-	public void deleteSQLConf(){
-		//正确数据访问1：模拟删除table_id为7003的自定义SQL采集数据
-		//删除前，确认待删除数据是否存在
-		try(DatabaseWrapper db = new DatabaseWrapper()){
-			long beforeCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_id = ?", AGENT_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("必须有且只有一条数据"));
-			assertThat("删除前，table_id为" + AGENT_INFO_TABLE_ID + "的数据在table_info表中确实存在", beforeCount, is(1L));
-			long beforeAgentInfoCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " where table_id = ?", AGENT_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("必须有且只有一条数据"));
-			assertThat("删除前，table_id为" + AGENT_INFO_TABLE_ID + "的数据在table_column表中确实存在", beforeAgentInfoCount, is(3L));
+	public void saveAllSQLTwo(){
+		List<Table_info> tableInfos = new ArrayList<>();
+		for(int i = 1; i <= 2; i++){
+			String tableName;
+			String tableChName;
+			String customizeSQL;
+			switch (i) {
+				case 1 :
+					tableName = "agent_info_customize";
+					tableChName = "agent信息表自定义";
+					customizeSQL = "SELECT agent_ip, agent_port, agent_status FROM "+ Agent_info.TableName;
+					break;
+				case 2 :
+					tableName = "data_source_customize";
+					tableChName = "数据源表自定义";
+					customizeSQL = "SELECT source_remark, create_date, create_time FROM "+ Data_source.TableName;
+					break;
+				default:
+					tableName = "unexpected_tableName";
+					tableChName = "unexpected_tableChName";
+					customizeSQL = "unexpected_customizeSQL";
+			}
+			Table_info tableInfo = new Table_info();
+			tableInfo.setTable_name(tableName);
+			tableInfo.setTable_ch_name(tableChName);
+			tableInfo.setSql(customizeSQL);
+
+			tableInfos.add(tableInfo);
 		}
-		//构造正确的数据进行删除
+
 		String rightString = new HttpClient()
-				.addData("tableId", AGENT_INFO_TABLE_ID)
-				.post(getActionUrl("deleteSQLConf")).getBodyString();
+				.addData("tableInfoArray", JSON.toJSONString(tableInfos))
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.post(getActionUrl("saveAllSQL")).getBodyString();
 		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(rightResult.isSuccess(), is(true));
-		//删除后，确认数据是否真的被删除了
-		try(DatabaseWrapper db = new DatabaseWrapper()){
-			long afterCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_id = ?", AGENT_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("必须有且只有一条数据"));
-			assertThat("删除后，table_id为" + AGENT_INFO_TABLE_ID + "的数据不存在了", afterCount, is(0L));
-			long afterAgentInfoCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " where table_id = ?", AGENT_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("必须有且只有一条数据"));
-			assertThat("删除前，table_id为" + AGENT_INFO_TABLE_ID + "的数据在table_column表中确实存在", afterAgentInfoCount, is(0L));
+		Integer returnValue = (Integer) rightResult.getData();
+		assertThat(returnValue == FIRST_DATABASESET_ID, is(true));
+
+		List<Table_info> expectedList;
+		try (DatabaseWrapper db = new DatabaseWrapper()) {
+			expectedList = SqlOperator.queryList(db, Table_info.class, "select * from " + Table_info.TableName + " where database_id = ? AND is_user_defined = ?", FIRST_DATABASESET_ID, IsFlag.Shi.getCode());
+			assertThat("保存成功后，table_info表中的用户自定义SQL查询数目应该有2条", expectedList.size(), is(2));
+			for(Table_info tableInfo : expectedList){
+				if(tableInfo.getTable_name().equalsIgnoreCase("agent_info_customize")){
+					assertThat("保存成功后，自定义SQL查询agent_info_customize的中文名应该是<agent信息表自定义>", tableInfo.getTable_ch_name(), is("agent信息表自定义"));
+					Result resultOne = SqlOperator.queryResult(db, "select is_get, is_primary_key, colume_name, column_type, colume_ch_name, is_alive, is_new, tc_or from " + Table_column.TableName + " where table_id = ?", tableInfo.getTable_id());
+					assertThat("保存成功后，自定义SQL采集的三列数据被保存到了table_column表中", resultOne.getRowCount(), is(3));
+					for(int i = 0; i < resultOne.getRowCount(); i++){
+						if(resultOne.getString(i, "colume_name").equalsIgnoreCase("agent_ip")){
+							assertThat("采集列名为agent_ip，is_get字段符合预期", resultOne.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
+							assertThat("采集列名为agent_ip，is_primary_key字段符合预期", resultOne.getString(i, "is_primary_key"), is(IsFlag.Fou.getCode()));
+							assertThat("采集列名为agent_ip，column_type字段符合预期", resultOne.getString(i, "column_type").equalsIgnoreCase("varchar(50)"), is(true));
+							assertThat("采集列名为agent_ip，colume_ch_name字段符合预期", resultOne.getString(i, "colume_ch_name"), is("agent_ip"));
+							assertThat("采集列名为agent_ip，is_alive字段符合预期", resultOne.getString(i, "is_alive"), is(IsFlag.Shi.getCode()));
+							assertThat("采集列名为agent_ip，is_new字段符合预期", resultOne.getString(i, "is_new"), is(IsFlag.Fou.getCode()));
+							assertThat("采集列名为agent_ip，tc_or字段符合预期", resultOne.getString(i, "tc_or"), is(columnCleanOrder.toJSONString()));
+						}else if(resultOne.getString(i, "colume_name").equalsIgnoreCase("agent_port")){
+							assertThat("采集列名为agent_port，is_get字段符合预期", resultOne.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
+							assertThat("采集列名为agent_port，is_primary_key字段符合预期", resultOne.getString(i, "is_primary_key"), is(IsFlag.Fou.getCode()));
+							assertThat("采集列名为agent_port，column_type字段符合预期", resultOne.getString(i, "column_type").equalsIgnoreCase("varchar(10)"), is(true));
+							assertThat("采集列名为agent_port，colume_ch_name字段符合预期", resultOne.getString(i, "colume_ch_name"), is("agent_port"));
+							assertThat("采集列名为agent_port，is_alive字段符合预期", resultOne.getString(i, "is_alive"), is(IsFlag.Shi.getCode()));
+							assertThat("采集列名为agent_port，is_new字段符合预期", resultOne.getString(i, "is_new"), is(IsFlag.Fou.getCode()));
+							assertThat("采集列名为agent_port，tc_or字段符合预期", resultOne.getString(i, "tc_or"), is(columnCleanOrder.toJSONString()));
+						}else if(resultOne.getString(i, "colume_name").equalsIgnoreCase("agent_status")){
+							assertThat("采集列名为agent_status，is_get字段符合预期", resultOne.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
+							assertThat("采集列名为agent_status，is_primary_key字段符合预期", resultOne.getString(i, "is_primary_key"), is(IsFlag.Fou.getCode()));
+							assertThat("采集列名为agent_status，column_type字段符合预期", resultOne.getString(i, "column_type").equalsIgnoreCase("bpchar(1)"), is(true));
+							assertThat("采集列名为agent_status，colume_ch_name字段符合预期", resultOne.getString(i, "colume_ch_name"), is("agent_status"));
+							assertThat("采集列名为agent_status，is_alive字段符合预期", resultOne.getString(i, "is_alive"), is(IsFlag.Shi.getCode()));
+							assertThat("采集列名为agent_status，is_new字段符合预期", resultOne.getString(i, "is_new"), is(IsFlag.Fou.getCode()));
+							assertThat("采集列名为agent_status，tc_or字段符合预期", resultOne.getString(i, "tc_or"), is(columnCleanOrder.toJSONString()));
+						}else{
+							assertThat("出现了不符合预期的情况，采集列名为：" + resultOne.getString(i, "colume_name"), true, is(false));
+						}
+					}
+				}else if(tableInfo.getTable_name().equalsIgnoreCase("data_source_customize")){
+					assertThat("保存成功后，自定义SQL查询data_source_customize的中文名应该是<数据源表自定义>", tableInfo.getTable_ch_name(), is("数据源表自定义"));
+					Result resultTwo = SqlOperator.queryResult(db, "select is_get, is_primary_key, colume_name, column_type, colume_ch_name, is_alive, is_new, tc_or from " + Table_column.TableName + " where table_id = ?", tableInfo.getTable_id());
+					assertThat("保存成功后，自定义SQL采集的三列数据被保存到了table_column表中", resultTwo.getRowCount(), is(3));
+					for(int i = 0; i < resultTwo.getRowCount(); i++){
+						if(resultTwo.getString(i, "colume_name").equalsIgnoreCase("source_remark")){
+							assertThat("采集列名为source_remark，is_get字段符合预期", resultTwo.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
+							assertThat("采集列名为source_remark，is_primary_key字段符合预期", resultTwo.getString(i, "is_primary_key"), is(IsFlag.Fou.getCode()));
+							assertThat("采集列名为source_remark，column_type字段符合预期", resultTwo.getString(i, "column_type").equalsIgnoreCase("varchar(512)"), is(true));
+							assertThat("采集列名为source_remark，colume_ch_name字段符合预期", resultTwo.getString(i, "colume_ch_name"), is("source_remark"));
+							assertThat("采集列名为source_remark，is_alive字段符合预期", resultTwo.getString(i, "is_alive"), is(IsFlag.Shi.getCode()));
+							assertThat("采集列名为source_remark，is_new字段符合预期", resultTwo.getString(i, "is_new"), is(IsFlag.Fou.getCode()));
+							assertThat("采集列名为source_remark，tc_or字段符合预期", resultTwo.getString(i, "tc_or"), is(columnCleanOrder.toJSONString()));
+						}else if(resultTwo.getString(i, "colume_name").equalsIgnoreCase("create_date")){
+							assertThat("采集列名为create_date，is_get字段符合预期", resultTwo.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
+							assertThat("采集列名为create_date，is_primary_key字段符合预期", resultTwo.getString(i, "is_primary_key"), is(IsFlag.Fou.getCode()));
+							assertThat("采集列名为create_date，column_type字段符合预期", resultTwo.getString(i, "column_type").equalsIgnoreCase("bpchar(8)"), is(true));
+							assertThat("采集列名为create_date，colume_ch_name字段符合预期", resultTwo.getString(i, "colume_ch_name"), is("create_date"));
+							assertThat("采集列名为create_date，is_alive字段符合预期", resultTwo.getString(i, "is_alive"), is(IsFlag.Shi.getCode()));
+							assertThat("采集列名为create_date，is_new字段符合预期", resultTwo.getString(i, "is_new"), is(IsFlag.Fou.getCode()));
+							assertThat("采集列名为create_date，tc_or字段符合预期", resultTwo.getString(i, "tc_or"), is(columnCleanOrder.toJSONString()));
+						}else if(resultTwo.getString(i, "colume_name").equalsIgnoreCase("create_time")){
+							assertThat("采集列名为create_time，is_get字段符合预期", resultTwo.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
+							assertThat("采集列名为create_time，is_primary_key字段符合预期", resultTwo.getString(i, "is_primary_key"), is(IsFlag.Fou.getCode()));
+							assertThat("采集列名为create_time，column_type字段符合预期", resultTwo.getString(i, "column_type").equalsIgnoreCase("bpchar(6)"), is(true));
+							assertThat("采集列名为create_time，colume_ch_name字段符合预期", resultTwo.getString(i, "colume_ch_name"), is("create_time"));
+							assertThat("采集列名为create_time，is_alive字段符合预期", resultTwo.getString(i, "is_alive"), is(IsFlag.Shi.getCode()));
+							assertThat("采集列名为create_time，is_new字段符合预期", resultTwo.getString(i, "is_new"), is(IsFlag.Fou.getCode()));
+							assertThat("采集列名为create_time，tc_or字段符合预期", resultTwo.getString(i, "tc_or"), is(columnCleanOrder.toJSONString()));
+						}else{
+							assertThat("出现了不符合预期的情况，采集列名为：" + resultTwo.getString(i, "colume_name"), true, is(false));
+						}
+					}
+				}else{
+					assertThat("保存出错，出现了不希望出现的数据，表id为" + tableInfo.getTable_id(), true, is(false));
+				}
+			}
+
+			long countOne = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_id = ?", AGENT_INFO_TABLE_ID).orElseThrow(() -> new BusinessSystemException("查询结果必须有且只有一条"));
+			assertThat("使用老的table_id在table_info表中查不到数据", countOne, is(0L));
+			long countTwo = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_id = ?", DATA_SOURCE_TABLE_ID).orElseThrow(() -> new BusinessSystemException("查询结果必须有且只有一条"));
+			assertThat("使用老的table_id在table_info表中查不到数据", countTwo, is(0L));
+			long countThree = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " where table_id = ?", DATA_SOURCE_TABLE_ID).orElseThrow(() -> new BusinessSystemException("查询结果必须有且只有一条"));
+			assertThat("使用老的table_id在table_column表中查不到数据", countThree, is(0L));
+			long countFour = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " where table_id = ?", AGENT_INFO_TABLE_ID).orElseThrow(() -> new BusinessSystemException("查询结果必须有且只有一条"));
+			assertThat("使用老的table_id在table_column表中查不到数据", countFour, is(0L));
+
+			//验证完毕后，将自己在本方法中构造的数据删除掉(table_info表)
+			int firCount = SqlOperator.execute(db, "delete from " + Table_info.TableName + " WHERE table_name = ?", "agent_info_customize");
+			assertThat("测试完成后，table_name为agent_info_customize的测试数据被删除了", firCount, is(1));
+			int secCount = SqlOperator.execute(db, "delete from " + Table_info.TableName + " WHERE table_name = ?", "data_source_customize");
+			assertThat("测试完成后，table_name为data_source_customize的测试数据被删除了", secCount, is(1));
+
+			//验证完毕后，将自己在本方法中构造的数据删除掉(table_column表)
+			for(Table_info tableInfo : expectedList){
+				SqlOperator.execute(db, "delete from " + Table_column.TableName + " where table_id = ?", tableInfo.getTable_id());
+			}
+			SqlOperator.commitTransaction(db);
 		}
 
-		//错误的数据访问1：模拟删除一个不存在的table_id的自定义SQL采集数据
-		long errorTableId = 88888L;
-		String wrongString = new HttpClient()
-				.addData("tableId", errorTableId)
-				.post(getActionUrl("deleteSQLConf")).getBodyString();
-		ActionResult wrongResult = JsonUtil.toObjectSafety(wrongString, ActionResult.class).orElseThrow(()
-				-> new BusinessException("连接失败!"));
-		assertThat(wrongResult.isSuccess(), is(false));
 	}
 
 	/**
@@ -1715,41 +1821,6 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 				-> new BusinessException("连接失败!"));
 		assertThat(wrongResultSeven.isSuccess(), is(false));
 
-	}
-
-	/**
-	 * 测试如果页面只有自定义SQL查询采集，保存该界面配置的所有信息功能
-	 *
-	 * 正确的数据访问1：模拟这样一种情况，在构造的测试数据的基础上，不采集页面上配置的两张表，然后点击下一步，也就是说现在datavase_id为FIRST_DATABASESET_ID的数据库采集任务全部是采集自定义SQL
-	 * 错误的测试用例未达到三组:因为自定义表已经入库了，所以要在table_info表中删除不是自定义SQL的表信息，删除的条数可能为0-N，不关注是否删除了数据和删除的数目
-	 * @Param: 无
-	 * @return: 无
-	 *
-	 * */
-	@Test
-	public void saveCustomizeCollTbInfo(){
-		//正确的数据访问1：模拟这样一种情况，在构造的测试数据的基础上，不采集页面上配置的两张表，然后点击下一步，也就是说现在datavase_id为FIRST_DATABASESET_ID的数据库采集任务全部是采集自定义SQL
-		//删除前，确认待删除数据是否存在
-		try(DatabaseWrapper db = new DatabaseWrapper()){
-			long beforeCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " WHERE database_id = ? AND valid_e_date = ? AND is_user_defined = ?", FIRST_DATABASESET_ID, Constant.MAXDATE, IsFlag.Fou.getCode()).orElseThrow(() -> new BusinessException("必须有且只有一条数据"));
-			assertThat("方法调用前，table_info表中的非用户自定义采集有2条", beforeCount, is(2L));
-		}
-
-		//构造正确的数据访问
-		String rightString = new HttpClient()
-				.addData("colSetId", FIRST_DATABASESET_ID)
-				.post(getActionUrl("saveCustomizeCollTbInfo")).getBodyString();
-		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
-				-> new BusinessException("连接失败!"));
-		assertThat(rightResult.isSuccess(), is(true));
-		Integer returnValue = (Integer) rightResult.getData();
-		assertThat(returnValue == FIRST_DATABASESET_ID, is(true));
-
-		//删除后，确认数据是否真的被删除了
-		try(DatabaseWrapper db = new DatabaseWrapper()){
-			long afterCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " WHERE database_id = ? AND valid_e_date = ? AND is_user_defined = ?", FIRST_DATABASESET_ID, Constant.MAXDATE, IsFlag.Fou.getCode()).orElseThrow(() -> new BusinessException("必须有且只有一条数据"));
-			assertThat("方法调用后，table_info表中的非用户自定义采集有0条", afterCount, is(0L));
-		}
 	}
 
 	/**

@@ -100,7 +100,7 @@ public class CollTbConfStepAction extends BaseAction {
 		return getTableInfoByTableName(rightTables, colSetId);
 	}
 
-	@Method(desc = "根据数据库设置id得到所有表相关信息，如果用户没有输入内容就点击查询，那么就调用该接口获取所有表", logicStep = "" +
+	@Method(desc = "根据数据库设置id得到目标数据库中所有表相关信息，如果用户没有输入内容就点击查询，那么就调用该接口获取所有表", logicStep = "" +
 			"1、根据colSetId去数据库中获取数据库设置相关信息" +
 			"2、和Agent端进行交互，得到Agent返回的数据" +
 			"3、对获取到的数据进行处理，根据表名和colSetId获取界面需要显示的信息并返回")
@@ -175,29 +175,33 @@ public class CollTbConfStepAction extends BaseAction {
 	}
 
 	@Method(desc = "保存自定义抽取数据SQL", logicStep = "" +
-			"1、根据databaseId去数据库中查询该数据库采集任务是否存在" +
+			"1、根据colSetId去数据库中查询该数据库采集任务是否存在" +
 			"2、将前端传过来的参数(JSON)转为List<Table_info>集合" +
-			"3、使用databaseId在table_info表中删除所有自定义SQL采集的记录" +
+			"3、使用colSetId在table_info表中删除所有自定义SQL采集的记录，不关注删除的数目，结果可以是0-N" +
+			"   使用colSetId在table_info表中找到当前采集任务中，自定义SQL采集的所有table_id，然后在table_column表中进行删除，不关注删除的数目" +
 			"4、遍历list,给每条记录生成ID，设置有效开始日期、有效结束日期、是否自定义SQL采集(是)、是否使用MD5(是)、" +
 			"   是否仅登记(是)" +
 			"5、保存数据进库" +
 			"6、保存数据自定义采集列相关信息进入table_column表")
 	@Param(name = "tableInfoArray", desc = "List<Table_info>的JSONArray格式的字符串，" +
 			"每一个Table_info对象必须包含table_name,table_ch_name,sql", range = "不为空")
-	@Param(name = "databaseId", desc = "数据库设置ID,源系统数据库设置表主键,数据库对应表外键", range = "不为空")
+	@Param(name = "colSetId", desc = "数据库设置ID,源系统数据库设置表主键,数据库对应表外键", range = "不为空")
 	//使用SQL抽取数据页面，保存按钮后台方法
-	public void saveAllSQL(String tableInfoArray, long databaseId){
+	public long saveAllSQL(String tableInfoArray, long colSetId){
 		//1、根据databaseId去数据库中查询该数据库采集任务是否存在
 		long dbSetCount = Dbo.queryNumber("select count(1) from database_set where database_id = ?"
-				, databaseId).orElseThrow(() -> new BusinessException("必须有且只有一条数据"));
+				, colSetId).orElseThrow(() -> new BusinessException("必须有且只有一条数据"));
 		if(dbSetCount != 1){
 			throw new BusinessException("数据库采集任务未找到");
 		}
 		//2、将前端传过来的参数转为List<Table_info>集合
 		List<Table_info> tableInfos = JSONArray.parseArray(tableInfoArray, Table_info.class);
-		//3、使用databaseId在table_info表中删除所有自定义SQL采集的记录，不关注是否删除成功，结果可以是0-N
+		//3、使用colSetId在table_info表中删除所有自定义SQL采集的记录，不关注删除的数目，结果可以是0-N
+		//使用colSetId在table_info表中找到当前采集任务中，自定义SQL采集的所有table_id，然后在table_column表中进行删除，不关注删除的数目
+		Dbo.execute("delete from " + Table_column.TableName + " where table_id in " +
+				"( select table_id from " + Table_info.TableName + " where database_id = ? AND is_user_defined = ? )", colSetId, IsFlag.Shi.getCode());
 		Dbo.execute("delete from " + Table_info.TableName + " where database_id = ? AND is_user_defined = ? ",
-				databaseId, IsFlag.Shi.getCode());
+				colSetId, IsFlag.Shi.getCode());
 		//4、遍历list,给每条记录生成ID，设置有效开始日期、有效结束日期、是否自定义SQL采集(是)、是否使用MD5(是)、
 		// 是否仅登记(这个字段的值，要根据配置源DB属性来决定，贴源登记就是IsFlag.Shi,数据采集就是IsFlag.Fou)
 		for(int i = 0; i < tableInfos.size(); i++){
@@ -212,10 +216,12 @@ public class CollTbConfStepAction extends BaseAction {
 				throw new BusinessException("第" + (i + 1) + "条数据自定义SQL语句不能为空");
 			}
 			tableInfo.setTable_id(PrimayKeyGener.getNextId());
+			//TODO 表的数据量没有页面上没有配置的地方，所以给一个默认值为一万
 			tableInfo.setTable_count(CountNum.YiWan.getCode());
-			tableInfo.setDatabase_id(databaseId);
+			tableInfo.setDatabase_id(colSetId);
 			tableInfo.setValid_s_date(DateUtil.getSysDate());
 			tableInfo.setValid_e_date(Constant.MAXDATE);
+			//是否自定义采集为是
 			tableInfo.setIs_user_defined(IsFlag.Shi.getCode());
 			tableInfo.setIs_md5(IsFlag.Shi.getCode());
 			tableInfo.setIs_register(IsFlag.Fou.getCode());
@@ -257,33 +263,8 @@ public class CollTbConfStepAction extends BaseAction {
 			} catch (SQLException e) {
 				throw new AppSystemException(e);
 			}
-
 		}
-	}
-
-	@Method(desc = "根据数据库对应表ID删除自定义抽取SQL", logicStep = "" +
-			"1、根据tableId在table_info表中找到该条记录" +
-			"2、根据tableId在table_info表中删除该条记录" +
-			"3、根据tableId在table_cloumn表中删除自定义采集列信息")
-	@Param(name = "tableId", desc = "数据库对应表主键", range = "不为空")
-	//使用SQL抽取数据页面操作栏，删除按钮后台方法
-	public void deleteSQLConf(long tableId){
-		//1、根据tableId在table_info表中找到该条记录
-		long count = Dbo.queryNumber(" select count(1) from " + Table_info.TableName + " where table_id = ? " +
-						"and is_user_defined = ?", tableId, IsFlag.Shi.getCode())
-				.orElseThrow(() -> new BusinessException("查询结果必须有且仅有一条"));
-		if(count != 1){
-			throw new BusinessException("待删除的自定义SQL设置不存在");
-		}
-		//2、根据tableId在table_info表中删除该条记录
-		DboExecute.deletesOrThrow("删除自定义SQL数据失败",
-				" delete from "+ Table_info.TableName +" where table_id = ? and is_user_defined = ?"
-				, tableId, IsFlag.Shi.getCode());
-
-		//3、根据tableId在table_cloumn表中删除自定义采集列信息，不关心删除的数目
-		Dbo.execute("delete from " + Table_column.TableName + " where table_id = ?", tableId);
-		//数据可访问权限处理方式
-		//以上table_info表中都没有user_id字段，解决方式待讨论
+		return colSetId;
 	}
 
 	@Method(desc = "根据数据库设置ID获得用户自定义抽取SQL", logicStep = "" +
@@ -292,7 +273,8 @@ public class CollTbConfStepAction extends BaseAction {
 	@Return(desc = "查询结果集", range = "不为空，是否有数据视查询结果而定")
 	//配置采集表页面，使用SQL抽取数据Tab页后台方法，用于回显已经设置的SQL
 	public List<Table_info> getAllSQLs(long colSetId){
-		return Dbo.queryList(Table_info.class, " SELECT * FROM "+ Table_info.TableName +
+		return Dbo.queryList(Table_info.class, " SELECT table_id, table_name, table_ch_name, sql " +
+				" FROM "+ Table_info.TableName +
 				" WHERE database_id = ? " + "AND is_user_defined = ? order by table_id", colSetId, IsFlag.Shi.getCode());
 		//数据可访问权限处理方式
 		//以上table_info表中都没有user_id字段，解决方式待讨论
@@ -379,7 +361,8 @@ public class CollTbConfStepAction extends BaseAction {
 	@Param(name = "collTbConfParamString", desc = "采集表对应采集字段配置参数", range = "" +
 			"包含两部分：" +
 			"1、collColumnString：一张表对应的所有要被采集的列组成的json格式的字符串，一个json对象中应该包括列名(colume_name)、" +
-			"字段类型(column_type)、列中文名(colume_ch_name)" +
+			"字段类型(column_type)、列中文名(colume_ch_name)、如果用户定义了并行抽取，那么应该还有is_parallel和page_sql" +
+			"如果用户定义了SQL过滤，那么还应该有sql" +
 			"2、columnSortString：一张表所有要被采集的列的采集顺序，一个json对象中，key为columnName，value为列名，" +
 			"key为sort，value为顺序(1,2,3)" +
 			"注意：tableInfoString和collTbConfParamString中，对象的顺序和数目要保持一致，比如：" +
@@ -427,6 +410,7 @@ public class CollTbConfStepAction extends BaseAction {
 			//3、给Table_info对象设置基本信息(valid_s_date,valid_e_date,is_user_defined,is_register)
 			tableInfo.setValid_s_date(DateUtil.getSysDate());
 			tableInfo.setValid_e_date(Constant.MAXDATE);
+			//是否自定义采集为否
 			tableInfo.setIs_user_defined(IsFlag.Fou.getCode());
 			//数据采集，该字段就是否
 			tableInfo.setIs_register(IsFlag.Fou.getCode());
@@ -518,17 +502,6 @@ public class CollTbConfStepAction extends BaseAction {
 						DEFAULT_COLUMN_CLEAN_ORDER.toJSONString());
 			}
 		}
-		return colSetId;
-	}
-
-	@Method(desc = "如果页面只有使用SQL抽取数据，因为自定义SQL已经入库了，点击下一步保存该界面配置的所有信息", logicStep = "" +
-			"1、因为自定义SQL已经入库了，所以要在table_info表中删除不是非自定义SQL的记录，删除的条数可能为0-N")
-	@Param(name = "colSetId", desc = "数据库设置ID，源系统数据库设置表主键，数据库对应表外键", range = "不为空")
-	@Return(desc = "保存成功后返回database_id，用于下一个页面能够拿到上一个页面的信息", range = "不为空")
-	public long saveCustomizeCollTbInfo(long colSetId){
-		//1、因为自定义表已经入库了，所以要在table_info表中删除不是自定义SQL的表信息，删除的条数可能为0-N
-		Dbo.execute(" DELETE FROM "+ Table_info.TableName +" WHERE database_id = ? AND valid_e_date = ? " +
-						"AND is_user_defined = ? ", colSetId, Constant.MAXDATE, IsFlag.Fou.getCode());
 		return colSetId;
 	}
 
