@@ -7,6 +7,7 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DefaultPageImpl;
 import fd.ng.db.jdbc.Page;
+import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.entity.Sys_para;
@@ -22,16 +23,25 @@ import java.util.Map;
 @DocClass(desc = "系统参数", author = "Mr.Lee")
 public class SysParaAction extends BaseAction {
 
+	private static final SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
+
 	@Method(desc = "模糊查询获取系统参数信息",
-			logicStep = "获取系统参数信息")
+			logicStep = "分页获取系统参数信息,查询参数名称为空则查询所有参数")
 	@Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数", valueIfNull = "1")
 	@Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", valueIfNull = "10")
+	@Param(name = "paraName", desc = "系统参数名称", range = "无限制", nullable = true)
 	@Return(desc = "返回系统参数的集合信息", range = "不为null")
-	public Map<String, Object> getSysPara(int currPage, int pageSize) {
+	public Map<String, Object> getSysPara(int currPage, int pageSize, String paraName) {
 		Map<String, Object> sysParaMap = new HashMap<>();
 		//数据权限校验：不做权限检查
 		Page page = new DefaultPageImpl(currPage, pageSize);
-		List<Sys_para> sysParas = Dbo.queryPagedList(Sys_para.class, page, "SELECT * FROM " + Sys_para.TableName);
+		asmSql.clean();
+		asmSql.addSql("SELECT * FROM " + Sys_para.TableName);
+		if (!StringUtil.isBlank(paraName)) {
+			asmSql.addSql(" where para_name =?");
+			asmSql.addParam(paraName);
+		}
+		List<Sys_para> sysParas = Dbo.queryPagedList(Sys_para.class, page, asmSql.sql(), asmSql.params());
 		sysParaMap.put("sysParas", sysParas);
 		sysParaMap.put("totalSize", page.getTotalSize());
 		return sysParaMap;
