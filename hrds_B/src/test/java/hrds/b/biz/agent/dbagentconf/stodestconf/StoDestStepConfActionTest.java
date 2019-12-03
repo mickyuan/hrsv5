@@ -954,14 +954,14 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 		assertThat(returnValue == FIRST_DATABASESET_ID, is(true));
 
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			//在保存前，确认Table_storage_info表中的数据符合期望
+			//在保存后，确认Table_storage_info表中的数据符合期望
 			Result afterStorageInfo = SqlOperator.queryResult(db, "select * from " + Table_storage_info.TableName + " where table_id = ?", AGENT_INFO_TABLE_ID);
 			assertThat("查询到的agent_info表在table_storage_info中的数据有一条，符合期望", afterStorageInfo.getRowCount(), is(1));
 			assertThat("查询到的agent_info表在table_storage_info中的数据有一条，并且<文件格式>符合期望", afterStorageInfo.getString(0, "file_format"), is(FileFormat.ORC.getCode()));
 			assertThat("查询到的agent_info表在table_storage_info中的数据有一条，并且<进数方式>符合期望", afterStorageInfo.getString(0, "storage_type"), is(StorageType.TiHuan.getCode()));
 			assertThat("查询到的agent_info表在table_storage_info中的数据有一条，并且<是否拉链存储>符合期望", afterStorageInfo.getString(0, "is_zipper"), is(IsFlag.Fou.getCode()));
 			assertThat("查询到的agent_info表在table_storage_info中的数据有一条，并且<存储期限>符合期望", afterStorageInfo.getLong(0, "storage_time"), is(1L));
-			//在保存前，确认Data_relation_table表中的数据符合期望
+			//在保存后，确认Data_relation_table表中的数据符合期望
 			Result afterRelationTable = SqlOperator.queryResult(db, "select dsl_id from " + Data_relation_table.TableName + " where storage_id in ( select storage_id from " + Table_storage_info.TableName + " where table_id = ?)", AGENT_INFO_TABLE_ID);
 			assertThat("查询到的agent_info表在data_relation_table中的数据有一条，符合期望", afterRelationTable.getRowCount(), is(1));
 			assertThat("查询到的agent_info表在data_relation_table中的数据有一条，存储目的地为关系型数据库", afterRelationTable.getLong(0, "dsl_id"), is(4400L));
@@ -1036,9 +1036,9 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 				}
 			}
 
-			//在保存后，将因执行saveTbStoInfo<正确的数据访问3>而新增的测试数据删除掉
+			//在保存后，将因执行saveTbStoInfo<正确的数据访问2>而新增的测试数据删除掉
 			int count = SqlOperator.execute(db, "delete from " + Data_relation_table.TableName + " where dsl_id = ?", 4403L);
-			assertThat("将因执行saveTbStoInfo<正确的数据访问3>而新增的测试数据删除掉", count, is(1));
+			assertThat("将因执行saveTbStoInfo<正确的数据访问2>而新增的测试数据删除掉", count, is(1));
 
 			SqlOperator.commitTransaction(db);
 		}
@@ -1096,7 +1096,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 			assertThat("查询到的table_info表在table_storage_info中的数据有一条，并且<进数方式>符合期望", beforeStorageInfo.getString(0, "storage_type"), is(StorageType.ZhuiJia.getCode()));
 			assertThat("查询到的table_info表在table_storage_info中的数据有一条，并且<是否拉链存储>符合期望", beforeStorageInfo.getString(0, "is_zipper"), is(IsFlag.Shi.getCode()));
 			assertThat("查询到的table_info表在table_storage_info中的数据有一条，并且<存储期限>符合期望", beforeStorageInfo.getLong(0, "storage_time"), is(14L));
-			//在保存前，确认Data_relation_table表中的数据符合期望
+			//在保存后，确认Data_relation_table表中的数据符合期望
 			Result relationTable = SqlOperator.queryResult(db, "select dsl_id from " + Data_relation_table.TableName + " where storage_id in ( select storage_id from " + Table_storage_info.TableName + " where table_id = ?)", TABLE_INFO_TABLE_ID);
 			assertThat("查询到的table_info表在data_relation_table中的数据有两条，符合期望", relationTable.getRowCount(), is(2));
 			for(int i = 0; i < relationTable.getRowCount(); i++){
@@ -1354,6 +1354,107 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			int countOne = SqlOperator.execute(db, "delete from " + Data_extraction_def.TableName + " where table_id = ?", TABLE_COLUMN_TABLE_ID);
 			assertThat("saveTbStoInfo<错误的数据访问6>执行完毕后，删除新增的数据成功", countOne, is(1));
+			SqlOperator.commitTransaction(db);
+		}
+	}
+
+	/**
+	 * 测试保存表存储属性配置
+	 *
+	 * 正确数据访问4: 修改agent_info表的保存目的地，修改data_source表的存储目的地，新增采集table_info表的存储目的地
+	 * @Param: 无
+	 * @return: 无
+	 *
+	 * */
+	@Test
+	public void saveTbStoInfoTwo(){
+		try (DatabaseWrapper db = new DatabaseWrapper()) {
+			//由于这是模拟新增table_info表采集，保存存储目的地，所以table_storage_info表和data_relation_table表肯定没有相关数据，但是需要构造table_info表在data_extraction_def中的数据
+			Data_extraction_def tableInfoDef = new Data_extraction_def();
+			tableInfoDef.setDed_id(TABLE_INFO_TABLE_ID * 2);
+			tableInfoDef.setTable_id(TABLE_INFO_TABLE_ID);
+			tableInfoDef.setData_extract_type(DataExtractType.ShuJuChouQuJiRuKu.getCode());
+			tableInfoDef.setIs_header(IsFlag.Shi.getCode());
+			tableInfoDef.setDatabase_code(DataBaseCode.UTF_8.getCode());
+			tableInfoDef.setDbfile_format(FileFormat.PARQUET.getCode());
+
+			int count = tableInfoDef.add(db);
+			assertThat("为saveTbStoInfo<正确的数据访问3>而插入data_extraction_def表中的数据成功", count, is(1));
+			SqlOperator.commitTransaction(db);
+		}
+		//构造访问被测方法的参数
+		List<Table_storage_info> tableStorageInfos = new ArrayList<>();
+		List<DataStoRelaParam> dataStoRelaParams = new ArrayList<>();
+
+		Table_storage_info storageInfo = new Table_storage_info();
+		storageInfo.setTable_id(AGENT_INFO_TABLE_ID);
+		storageInfo.setStorage_type(StorageType.TiHuan.getCode());
+		storageInfo.setStorage_time(1L);
+		storageInfo.setIs_zipper(IsFlag.Fou.getCode());
+
+		tableStorageInfos.add(storageInfo);
+
+		DataStoRelaParam paramOne = new DataStoRelaParam();
+		paramOne.setTableId(AGENT_INFO_TABLE_ID);
+		long[] dslIds = {4400L};
+		paramOne.setDslIds(dslIds);
+
+		dataStoRelaParams.add(paramOne);
+
+		Table_storage_info storageInfoTwo = new Table_storage_info();
+		storageInfoTwo.setTable_id(DATA_SOURCE_TABLE_ID);
+		storageInfoTwo.setStorage_type(StorageType.ZengLiang.getCode());
+		storageInfoTwo.setStorage_time(7L);
+		storageInfoTwo.setIs_zipper(IsFlag.Shi.getCode());
+
+		tableStorageInfos.add(storageInfoTwo);
+
+		DataStoRelaParam paramTwo = new DataStoRelaParam();
+		paramTwo.setTableId(DATA_SOURCE_TABLE_ID);
+		long[] dslIdsTwo = {4400L, 4403L};
+		paramTwo.setDslIds(dslIdsTwo);
+
+		dataStoRelaParams.add(paramTwo);
+
+		Table_storage_info storageInfoThree = new Table_storage_info();
+		storageInfoThree.setTable_id(TABLE_INFO_TABLE_ID);
+		storageInfoThree.setStorage_type(StorageType.ZhuiJia.getCode());
+		storageInfoThree.setStorage_time(14L);
+		storageInfoThree.setIs_zipper(IsFlag.Shi.getCode());
+
+		tableStorageInfos.add(storageInfoThree);
+
+		DataStoRelaParam paramThree = new DataStoRelaParam();
+		paramThree.setTableId(TABLE_INFO_TABLE_ID);
+		long[] dslIdsThree = {4400L, 4399L};
+		paramThree.setDslIds(dslIdsThree);
+
+		dataStoRelaParams.add(paramThree);
+
+		String rightStringOne = new HttpClient()
+				.addData("tbStoInfoString", JSON.toJSONString(tableStorageInfos))
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.addData("dslIdString", JSON.toJSONString(dataStoRelaParams))
+				.post(getActionUrl("saveTbStoInfo")).getBodyString();
+		ActionResult rightResultOne = JsonUtil.toObjectSafety(rightStringOne, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResultOne.isSuccess(), is(true));
+		Integer returnValue = (Integer) rightResultOne.getData();
+		assertThat(returnValue == FIRST_DATABASESET_ID, is(true));
+
+		try (DatabaseWrapper db = new DatabaseWrapper()) {
+			int count = SqlOperator.execute(db, "delete from " + Data_relation_table.TableName + " where dsl_id = ?", 4403L);
+			assertThat("将因执行saveTbStoInfoTwo新增的测试数据删除掉", count, is(1));
+
+			int countOne = SqlOperator.execute(db, "delete from " + Data_extraction_def.TableName + " where table_id = ?", TABLE_INFO_TABLE_ID);
+			int countTwo = SqlOperator.execute(db, "delete from " + Data_relation_table.TableName +
+					" where storage_id in (select storage_id from " + Table_storage_info.TableName + " where table_id = ?)", TABLE_INFO_TABLE_ID);
+			int countThree = SqlOperator.execute(db, "delete from " + Table_storage_info.TableName + " where table_id = ?", TABLE_INFO_TABLE_ID);
+
+			assertThat("saveTbStoInfoTwo执行完毕后，删除新增的数据成功", countOne, is(1));
+			assertThat("saveTbStoInfoTwo执行完毕后，删除新增的数据成功", countTwo, is(2));
+			assertThat("saveTbStoInfoTwo执行完毕后，删除新增的数据成功", countThree, is(1));
+
 			SqlOperator.commitTransaction(db);
 		}
 	}

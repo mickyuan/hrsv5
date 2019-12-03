@@ -365,18 +365,18 @@ public class StoDestStepConfAction extends BaseAction{
 			if(count == 1){
 				//在table_storage_info表中查询到了数据，表示修改该表的存储信息
 				/*
+				 * 在每保存一张表的数据存储关系前，先尝试在data_relation_table表中使用storage_id删除记录，
+				 * 由于一张表可以选择多个目的地进行存储，所以不关心删除的数目
+				 * */
+				Dbo.execute("delete from " + Data_relation_table.TableName + " where storage_id in " +
+								"(select storage_id from " + Table_storage_info.TableName + " where table_id = ?)"
+						, storageInfo.getTable_id());
+				/*
 				* 在每保存一张表的存储目的地前，先尝试在table_storage_info表中使用table_id删除记录，
 				* 因为一张需要入库的表在table_storage_info表中只保存一条记录，所以只能删除掉一条
 				* */
 				DboExecute.deletesOrThrow("删除表存储信息异常，一张表入库信息只能在表存储信息表中出现一条记录",
 						"delete from " + Table_storage_info.TableName + " where table_id = ?"
-						, storageInfo.getTable_id());
-				/*
-				* 在每保存一张表的数据存储关系前，先尝试在data_relation_table表中使用storage_id删除记录，
-				* 由于一张表可以选择多个目的地进行存储，所以不关心删除的数目
-				* */
-				Dbo.execute("delete from " + Data_relation_table.TableName + " where storage_id in " +
-						"(select storage_id from " + Table_storage_info.TableName + " where table_id = ?)"
 						, storageInfo.getTable_id());
 			}
 			//4-2、对待保存的数据设置主键等信息
