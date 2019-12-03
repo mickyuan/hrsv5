@@ -327,21 +327,23 @@ public class MarketInfoImportAndExportImpl implements ImportAndExport {
 
 	@Method(desc = "导入数据表已选数据源信息同时导入结果映射信息表信息",
 			logicStep = "1.导入数据表已选数据源信息" +
-					"1-1.导入结果映射信息表信息")
+					"2.导入结果映射信息表信息")
 	@Param(name = "datatableOwnSourceInfos", desc = "数据表已选数据源信息对象的List", range = "List集合,不为null")
 	@Param(name = "etlMapInfos", desc = "结果映射信息对象的List", range = "List集合,不为null")
 	@Param(name = "datatableId", desc = "数据表id", range = "String类型,长度最长限制19,该id唯一")
 	private void setDatatableOwnSourceInfo(List<Datatable_own_source_info> datatableOwnSourceInfos,
 	                                       List<Etlmap_info> etlMapInfos, String datatableId) {
+		Map<String, String> datatableOwnSourceIdMap = new HashMap();
 		//1.导入数据表已选数据源信息
 		for (Datatable_own_source_info datatableOwnSourceInfo : datatableOwnSourceInfos) {
-			datatableOwnSourceInfo.setOwn_dource_table_id(PrimayKeyGener.getNextId());
+			String newDatatableOwnSourceId = PrimayKeyGener.getNextId();
+			datatableOwnSourceIdMap.put(datatableOwnSourceInfo.getOwn_dource_table_id().toString(), newDatatableOwnSourceId);
+			datatableOwnSourceInfo.setOwn_dource_table_id(newDatatableOwnSourceId);
 			datatableOwnSourceInfo.setDatatable_id(datatableId);
 			datatableOwnSourceInfo.add(Dbo.db());
-			//1-1.导入结果映射信息表信息
-			//TODO 这里重复导入了结果映射信息表数据
-			setEtlMapInfo(etlMapInfos, datatableId, datatableOwnSourceInfo);
 		}
+		//2.导入结果映射信息表信息
+		setEtlMapInfo(etlMapInfos, datatableId, datatableOwnSourceIdMap);
 	}
 
 	@Method(desc = "导入集市数据表外部存储信息",
@@ -357,18 +359,24 @@ public class MarketInfoImportAndExportImpl implements ImportAndExport {
 	}
 
 	@Method(desc = "导入结果映射信息表信息",
-			logicStep = "1.导入结果映射信息表信息")
+			logicStep = "1.导入结果映射信息表信息" +
+					"1-1.用新的源数据对应ID替换旧的源数据对应ID")
 	@Param(name = "etlMapInfos", desc = "结果映射信息表信息对象的List", range = "List集合,不为null")
 	@Param(name = "datatableId", desc = "数据表id", range = "String类型,长度最长限制19,该id唯一")
 	@Param(name = "datatableOwnSourceInfo", desc = "数据表已选数据源信息对象", range = "不为null")
 	private void setEtlMapInfo(List<Etlmap_info> etlMapInfos, String datatableId,
-	                           Datatable_own_source_info datatableOwnSourceInfo) {
+	                           Map<String, String> datatableOwnSourceIdMap) {
 		//1.导入结果映射信息表信息
 		for (Etlmap_info etlMapInfo : etlMapInfos) {
-			etlMapInfo.setEtl_id(PrimayKeyGener.getNextId());
-			etlMapInfo.setDatatable_id(datatableId);
-			etlMapInfo.setOwn_dource_table_id(datatableOwnSourceInfo.getOwn_dource_table_id());
-			etlMapInfo.add(Dbo.db());
+			for (Map.Entry<String, String> datatableOwnSourceIdEntry : datatableOwnSourceIdMap.entrySet()) {
+				//1-1.用新的源数据对应ID替换旧的源数据对应ID
+				if (datatableOwnSourceIdEntry.getKey().equals(etlMapInfo.getOwn_dource_table_id().toString())) {
+					etlMapInfo.setEtl_id(PrimayKeyGener.getNextId());
+					etlMapInfo.setDatatable_id(datatableId);
+					etlMapInfo.setOwn_dource_table_id(datatableOwnSourceIdEntry.getValue());
+					etlMapInfo.add(Dbo.db());
+				}
+			}
 		}
 	}
 
