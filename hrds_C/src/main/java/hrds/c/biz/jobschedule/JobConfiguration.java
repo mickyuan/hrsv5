@@ -248,8 +248,12 @@ public class JobConfiguration extends BaseAction {
     public Map<String, Object> searchEtlJobTemplateById(long etl_temp_id) {
         // 1.数据可访问权限处理方式，此方法不需要用户权限控制
         // 2.根据模板ID查询模板信息
-        return Dbo.queryOneObject("select * from " + Etl_job_temp.TableName + " where etl_temp_id=?",
-                etl_temp_id);
+        Map<String, Object> etlJobTemp = Dbo.queryOneObject("select * from " + Etl_job_temp.TableName +
+                " where etl_temp_id=?", etl_temp_id);
+        if (etlJobTemp.isEmpty()) {
+            throw new BusinessException("通过模板ID没有获取到获取模板信息！");
+        }
+        return etlJobTemp;
     }
 
     @Method(desc = "关联查询作业模板表和作业模板参数表获取作业模板信息",
@@ -268,12 +272,13 @@ public class JobConfiguration extends BaseAction {
     @Method(desc = "保存作业模板信息",
             logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制" +
                     "2.验证当前用户下的工程是否存在" +
-                    "3.获取并拼接作业程序参数" +
-                    "4.拼接作业程序参数" +
-                    "5.封装作业实体" +
-                    "6.获取作业模板信息封装作业实体对象" +
-                    "7.判断作业名称是否已存在，存在不能新增" +
-                    "8.保存模板作业")
+                    "3.验证当前用户下的工程对应任务是否存在" +
+                    "4.获取并拼接作业程序参数" +
+                    "5.拼接作业程序参数" +
+                    "6.封装作业实体" +
+                    "7.获取作业模板信息封装作业实体对象" +
+                    "8.判断作业名称是否已存在，存在不能新增" +
+                    "9.保存模板作业")
     @Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
     @Param(name = "sub_sys_cd", desc = "任务编号", range = "新增任务时生成")
     @Param(name = "etl_job", desc = "作业名称", range = "不能重复，新增作业时生成")
@@ -286,10 +291,15 @@ public class JobConfiguration extends BaseAction {
         if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
             throw new BusinessException("当前工程已不存在！");
         }
-        // 3.获取并拼接作业程序参数
+        // 3.验证当前用户下的工程对应任务是否存在
+        if (!ETLJobUtil.isEtlSubSysExist(etl_sys_cd, sub_sys_cd)) {
+            throw new BusinessException("当前工程对应任务已不存在！");
+        }
+        // 4.验证
+        // 4.获取并拼接作业程序参数
         String[] parameterValues = etl_job_temp_para.split(",");
         StringBuilder sb = new StringBuilder();
-        // 4.拼接作业程序参数
+        // 5.拼接作业程序参数
         for (int i = 0; i < parameterValues.length; i++) {
             String value = parameterValues[i];
             if (i != parameterValues.length - 1) {
@@ -298,7 +308,7 @@ public class JobConfiguration extends BaseAction {
                 sb.append(value);
             }
         }
-        // 5.封装作业实体
+        // 6.封装作业实体
         Etl_job_def etl_job_def = new Etl_job_def();
         etl_job_def.setEtl_job(etl_job);
         etl_job_def.setEtl_sys_cd(etl_sys_cd);
@@ -313,18 +323,18 @@ public class JobConfiguration extends BaseAction {
         etl_job_def.setUpd_time(DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate())
                 + " " + DateUtil.parseStr2TimeWith6Char(DateUtil.getSysTime()));
         etl_job_def.setMain_serv_sync(Main_Server_Sync.YES.getCode());
-        // 6.获取作业模板信息封装作业实体对象
+        // 7.获取作业模板信息封装作业实体对象
         Map<String, Object> jobTemplate = searchEtlJobTemplateById(etl_temp_id);
         if (!jobTemplate.isEmpty()) {
             etl_job_def.setPro_dic(jobTemplate.get("pro_dic").toString());
             etl_job_def.setPro_name(jobTemplate.get("pro_name").toString());
             etl_job_def.setLog_dic(jobTemplate.get("pro_dic").toString());
         }
-        // 7.判断作业名称是否已存在，存在不能新增
+        // 8.判断作业名称是否已存在，存在不能新增
         if (ETLJobUtil.isEtlJobDefExist(etl_sys_cd, etl_job)) {
             throw new BusinessException("作业名称已存在不能新增!");
         }
-        // 8.保存模板作业
+        // 9.保存模板作业
         Etl_dependency etlDependency = new Etl_dependency();
         etlDependency.setEtl_sys_cd(etl_sys_cd);
         etlDependency.setPre_etl_sys_cd(etl_sys_cd);
@@ -363,9 +373,10 @@ public class JobConfiguration extends BaseAction {
         String etl_sys_name = getEtlSysName(etl_sys_cd, getUserId());
         // 3.每次拼接新sql之前清理原sql以及参数
         asmSql.clean();
-        asmSql.addSql("select distinct t1.*,t2.etl_sys_name from " + Etl_job_def.TableName + " t1 left join "
-                + Etl_sys.TableName + " t2 on t1.etl_sys_cd=t2.etl_sys_cd where t1.etl_sys_cd=? " +
-                " and t2.user_id=?");
+        asmSql.addSql("select distinct t1.etl_sys_cd,t1.etl_job,t1.etl_job_desc,t1.pro_name,t1.disp_freq," +
+                "t1.disp_type,t1.job_eff_flag,t1.upd_time,t1.today_disp,t1.sub_sys_cd,t1.pro_type," +
+                "t2.etl_sys_name FROM " + Etl_job_def.TableName + " t1 left join " + Etl_sys.TableName +
+                " t2 on t1.etl_sys_cd=t2.etl_sys_cd where t1.etl_sys_cd=? and t2.user_id=?");
         asmSql.addParam(etl_sys_cd);
         asmSql.addParam(getUserId());
         // 4.判断作业程序类型是否为空，不为空，加条件查询
@@ -414,45 +425,87 @@ public class JobConfiguration extends BaseAction {
         }
         // 3.判断当前工程下作业是否存在
         if (!ETLJobUtil.isEtlJobDefExist(etl_sys_cd, etl_job)) {
-            throw new BusinessException("当前工程下作业已不存在,可能被删除！");
+            throw new BusinessException("当前工程下作业已不存在！");
         }
         // 4.返回根据工程编号、作业名称查询作业定义信息，实体字段基本都需要所以查询所有字段
         return Dbo.queryOneObject("select * from " + Etl_job_def.TableName + " where etl_sys_cd=?" +
                 " AND etl_job=?", etl_sys_cd, etl_job);
     }
 
-    @Method(desc = "新增保存作业信息并返回新增后新的作业信息",
+    @Method(desc = "新增保存作业信息",
             logicStep = "1.数据可访问权限处理方式，该方法不需要权限验证" +
-                    "2.验证当前用户下的工程是否存在" +
-                    "3.判断作业名称是否已存在，存在，不能新增" +
-                    "4.判断如果作业程序类型是  Thrift 或者 Yarn.则默认分配一条资源使用信息" +
-                    "5.判断调度频率是否为频率，根据调度频率不同封装不同属性" +
-                    "6.保存资源分配信息" +
-                    "7.如果是依赖作业则保存作业依赖信息")
+                    "2.验证作业定义字段合法性" +
+                    "3.验证当前用户下的工程是否存在" +
+                    "4.判断作业名称是否已存在，存在，不能新增" +
+                    "5.判断如果作业程序类型是  Thrift 或者 Yarn.则默认分配一条资源使用信息" +
+                    "6.判断调度频率是否为频率，根据调度频率不同封装不同属性" +
+                    "7.保存资源分配信息" +
+                    "8.如果是依赖作业则保存作业依赖信息")
     @Param(name = "etl_job_def", desc = "作业定义实体对象", range = "与数据库对应表字段规则一致", isBean = true)
     @Param(name = "etl_dependency", desc = "作业依赖实体对象", range = "与数据库对应表字段规则一致", isBean = true)
     public void saveEtlJobDef(Etl_job_def etl_job_def,
                               Etl_dependency etl_dependency) {
         // 1.数据可访问权限处理方式，通过user_id进行权限控制
-        // 2.验证当前用户下的工程是否存在
+        // 2.验证作业定义字段合法性
+        checkEtlJobDefField(etl_job_def);
+        // 3.验证当前用户下的工程是否存在
         if (!ETLJobUtil.isEtlSysExist(etl_job_def.getEtl_sys_cd(), getUserId())) {
             throw new BusinessException("当前工程已不存在！");
         }
-        // 3.判断作业名称是否已存在，存在，不能新增
+        // 4.判断作业名称是否已存在，存在，不能新增
         if (ETLJobUtil.isEtlJobDefExist(etl_job_def.getEtl_sys_cd(), etl_job_def.getEtl_job())) {
             throw new BusinessException("作业名称已存在不能新增!");
         }
-        // 4.判断如果作业程序类型是  Thrift 或者 Yarn.则默认分配一条资源使用信息
+        // 5.判断如果作业程序类型是  Thrift 或者 Yarn.则默认分配一条资源使用信息
         isThriftOrYarnProType(etl_job_def.getEtl_sys_cd(), etl_job_def.getEtl_job(),
                 etl_job_def.getPro_type());
-        // 5.如果是依赖作业则保存作业依赖信息
+        // 6.如果是依赖作业则保存作业依赖信息
         if (Dispatch_Type.DEPENDENCE == Dispatch_Type.ofEnumByCode(etl_job_def.getDisp_type())) {
             dependToEtlJob(etl_dependency);
         }
-        // 6.判断调度频率是否为频率，根据调度频率不同封装作业定义实体对象的不同属性
+        // 7.判断调度频率是否为频率，根据调度频率不同封装作业定义实体对象的不同属性
         isDispatchFrequency(etl_job_def);
-        // 7.新增作业
+        // 8.新增作业
         etl_job_def.add(Dbo.db());
+    }
+
+    @Method(desc = "验证作业定义字段合法性",
+            logicStep = "1.数据可访问权限处理方式，该方法不需要权限控制" +
+                    "2.验证作业名称是否合法" +
+                    "3.验证任务编号是否合法" +
+                    "4.验证工程编号是否合法" +
+                    "5.验证作业程序类型是否合法" +
+                    "6.验证调度频率是否合法" +
+                    "7.验证调度触发方式是否合法" +
+                    "8.验证作业有效标志是否合法" +
+                    "9.验证当天是否调度是否合法,可为空")
+    @Param(name = "etl_job_def", desc = "作业定义实体对象", range = "与数据库对应表字段规则一致", isBean = true)
+    private void checkEtlJobDefField(Etl_job_def etl_job_def) {
+        // 1.数据可访问权限处理方式，该方法不需要权限控制
+        // 2.验证作业名称是否合法
+        if (StringUtil.isBlank(etl_job_def.getEtl_job())) {
+            throw new BusinessException("作业名称不能为空以及不能为空格！");
+        }
+        // 3.验证任务编号是否合法
+        if (StringUtil.isBlank(etl_job_def.getSub_sys_cd())) {
+            throw new BusinessException("任务编号不能为空以及不能为空格！");
+        }
+        // 4.验证工程编号是否合法
+        if (StringUtil.isBlank(etl_job_def.getEtl_sys_cd())) {
+            throw new BusinessException("工程编号不能为空以及不能为空格！");
+        }
+        // 5.验证作业程序类型是否合法
+        Pro_Type.ofEnumByCode(etl_job_def.getPro_type());
+        // 6.验证调度频率是否合法
+        Dispatch_Frequency.ofEnumByCode(etl_job_def.getDisp_freq());
+        // 7.验证调度触发方式是否合法
+        Dispatch_Type.ofEnumByCode(etl_job_def.getDisp_type());
+        // 8.验证作业有效标志是否合法
+        Job_Effective_Flag.ofEnumByCode(etl_job_def.getJob_eff_flag());
+        // 9.验证当天是否调度是否合法,可为空
+        if (StringUtil.isNotBlank(etl_job_def.getToday_disp())) {
+            Today_Dispatch_Flag.ofEnumByCode(etl_job_def.getToday_disp());
+        }
     }
 
     @Method(desc = "根据调度频率不同封装作业定义实体对象的不同属性",
