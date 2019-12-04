@@ -251,20 +251,43 @@ public class JobConfigurationTest extends WebBaseTestCase {
             }
             // 6.构造etl_resource表测试数据
             Etl_resource etl_resource = new Etl_resource();
-            etl_resource.setEtl_sys_cd(EtlSysCd);
-            etl_resource.setResource_type("resource");
-            etl_resource.setMain_serv_sync(Main_Server_Sync.YES.getCode());
-            etl_resource.setResource_max(5);
-            num = etl_resource.add(db);
-            assertThat("测试数据etl_resource初始化", num, is(1));
+            for (int i = 0; i < 3; i++) {
+                etl_resource.setEtl_sys_cd(EtlSysCd);
+                if (i == 0) {
+                    etl_resource.setResource_type("resource");
+                    etl_resource.setResource_max(5);
+                    etl_resource.setResource_used(1);
+                } else if (i == 1) {
+                    etl_resource.setResource_type("resource2");
+                    etl_resource.setResource_max(10);
+                    etl_resource.setResource_used(2);
+                } else {
+                    etl_resource.setResource_type("resource3");
+                    etl_resource.setResource_max(15);
+                    etl_resource.setResource_used(3);
+                }
+                etl_resource.setMain_serv_sync(Main_Server_Sync.YES.getCode());
+                num = etl_resource.add(db);
+                assertThat("测试数据etl_resource初始化", num, is(1));
+            }
             // 7.构造Etl_job_resource_rela表测试数据
             Etl_job_resource_rela resourceRelation = new Etl_job_resource_rela();
-            resourceRelation.setEtl_sys_cd(EtlSysCd);
-            resourceRelation.setResource_req(1);
-            resourceRelation.setResource_type("resource");
-            resourceRelation.setEtl_job("测试作业3");
-            num = resourceRelation.add(db);
-            assertThat("测试数据Etl_job_resource_rela初始化", num, is(1));
+            for (int i = 0; i < 3; i++) {
+                resourceRelation.setEtl_sys_cd(EtlSysCd);
+                if (i == 0) {
+                    resourceRelation.setResource_type("resource");
+                    resourceRelation.setEtl_job("测试作业3");
+                } else if (i == 1) {
+                    resourceRelation.setResource_type("resource1");
+                    resourceRelation.setEtl_job("测试作业4");
+                } else {
+                    resourceRelation.setResource_type("resource2");
+                    resourceRelation.setEtl_job("测试作业5");
+                }
+                resourceRelation.setResource_req(1);
+                num = resourceRelation.add(db);
+                assertThat("测试数据Etl_job_resource_rela初始化", num, is(1));
+            }
             // 8.构造etl_job_temp表测试数据
             Etl_job_temp etl_job_temp = new Etl_job_temp();
             for (int i = 1; i <= 2; i++) {
@@ -1908,7 +1931,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
             assertThat("删除操作后，确认这条数据已删除", optionalLong.orElse(Long.MIN_VALUE), is(0L));
             // 2.错误的数据访问1，etl_sys_cd不存在
             bodyString = new HttpClient().addData("etl_sys_cd", "sccs1")
-                    .addData("etl_job", new String[]{"测试作业3","测试作业4"})
+                    .addData("etl_job", new String[]{"测试作业3", "测试作业4"})
                     .post(getActionUrl("batchDeleteEtlJobDef"))
                     .getBodyString();
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -1916,13 +1939,129 @@ public class JobConfigurationTest extends WebBaseTestCase {
             assertThat(ar.isSuccess(), is(false));
             // 3.错误的数据访问2，etl_job不存在
             bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
-                    .addData("etl_job", new String[]{"cssczy","测试作业5"})
+                    .addData("etl_job", new String[]{"cssczy", "测试作业5"})
                     .post(getActionUrl("batchDeleteEtlJobDef"))
                     .getBodyString();
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                     .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
             assertThat(ar.isSuccess(), is(false));
         }
+    }
+
+    @Method(desc = "分页查询etl资源定义信息，此方法只有三种情况",
+            logicStep = "1.正常的数据访问1，数据都正常,para_cd 为空" +
+                    "2.正常的数据访问2，数据都正常,resource_type不为空" +
+                    "3.错误的数据访问1，etl_sys_cd不存在")
+    @Test
+    public void searchEtlResourceByPage() {
+        // 1.正常的数据访问1，数据都正常
+        String bodyString = new HttpClient()
+                .addData("etl_sys_cd", EtlSysCd)
+                .addData("currPage", 1)
+                .addData("pageSize", 5)
+                .post(getActionUrl("searchEtlResourceByPage"))
+                .getBodyString();
+        ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(true));
+        Map<Object, Object> resourceMap = ar.getDataForMap();
+        // 验证查询数据的正确性
+        assertThat(resourceMap.get("etl_sys_name"), is("dhwcs"));
+        assertThat(resourceMap.get("etl_sys_cd"), is(EtlSysCd));
+        List<Map<String, Object>> etlResource = (List<Map<String, Object>>) resourceMap.get("etlResourceList");
+        for (Map<String, Object> map : etlResource) {
+            String resource_type = map.get("resource_type").toString();
+            if ("resource".equals(resource_type)) {
+                assertThat(map.get("etl_sys_cd"), is(EtlSysCd));
+                assertThat(map.get("resource_used").toString(), is(String.valueOf(1)));
+                assertThat(map.get("main_serv_sync"), is(Main_Server_Sync.YES.getCode()));
+                assertThat(map.get("resource_max").toString(), is(String.valueOf(5)));
+            } else if ("resource2".equals(resource_type)) {
+                assertThat(map.get("etl_sys_cd"), is(EtlSysCd));
+                assertThat(map.get("resource_used").toString(), is(String.valueOf(2)));
+                assertThat(map.get("main_serv_sync"), is(Main_Server_Sync.YES.getCode()));
+                assertThat(map.get("resource_max").toString(), is(String.valueOf(10)));
+            } else if ("resource3".equals(resource_type)) {
+                assertThat(map.get("etl_sys_cd"), is(EtlSysCd));
+                assertThat(map.get("resource_used").toString(), is(String.valueOf(3)));
+                assertThat(map.get("main_serv_sync"), is(Main_Server_Sync.YES.getCode()));
+                assertThat(map.get("resource_max").toString(), is(String.valueOf(15)));
+            }
+        }
+        // 2.正常的数据访问2，数据都正常,resource_type不为空
+        bodyString = new HttpClient()
+                .addData("etl_sys_cd", EtlSysCd)
+                .addData("resource_type", "2")
+                .addData("currPage", 1)
+                .addData("pageSize", 5)
+                .post(getActionUrl("searchEtlResourceByPage"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(true));
+        resourceMap = ar.getDataForMap();
+        // 验证查询数据的正确性
+        assertThat(resourceMap.get("etl_sys_name"), is("dhwcs"));
+        assertThat(resourceMap.get("etl_sys_cd"), is(EtlSysCd));
+        etlResource = (List<Map<String, Object>>) resourceMap.get("etlResourceList");
+        for (Map<String, Object> map : etlResource) {
+            assertThat(map.get("etl_sys_cd"), is(EtlSysCd));
+            assertThat(map.get("resource_type").toString(), is("resource2"));
+            assertThat(map.get("resource_used").toString(), is(String.valueOf(2)));
+            assertThat(map.get("main_serv_sync"), is(Main_Server_Sync.YES.getCode()));
+            assertThat(map.get("resource_max").toString(), is(String.valueOf(10)));
+        }
+        // 3.错误的数据访问1，etl_sys_cd不存在
+        bodyString = new HttpClient()
+                .addData("etl_sys_cd", "zydycs")
+                .addData("currPage", 1)
+                .addData("pageSize", 5)
+                .post(getActionUrl("searchEtlResourceByPage"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(false));
+    }
+
+    @Method(desc = "根据工程编号、变量名称查询作业系统参数，此方法只有三种情况",
+            logicStep = "1.正常的数据访问1" +
+                    "2.错误的数据访问1，etl_sys_cd不存在" +
+                    "3.错误的数据访问1，resource_type不存在")
+    @Test
+    public void searchEtlResource() {
+        // 1.正常的数据访问1，数据都正常
+        String bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                .addData("resource_type", "resource")
+                .post(getActionUrl("searchEtlResource"))
+                .getBodyString();
+        ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(true));
+        // 验证查询数据的正确性
+        Map<String, Object> dataForMap = ar.getDataForMap();
+        assertThat(dataForMap.get("etl_sys_cd"), is(EtlSysCd));
+        assertThat(dataForMap.get("resource_type"), is("resource"));
+        assertThat(dataForMap.get("resource_used").toString(), is(String.valueOf(1)));
+        assertThat(dataForMap.get("main_serv_sync"), is(Main_Server_Sync.YES.getCode()));
+        assertThat(dataForMap.get("resource_max").toString(), is(String.valueOf(5)));
+        // 2.错误的数据访问1，etl_sys_cd不存在
+        bodyString = new HttpClient()
+                .addData("etl_sys_cd", "searchEtlResource")
+                .addData("resource_type", "resource")
+                .post(getActionUrl("searchEtlResource"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(false));
+        // 3.错误的数据访问2，para_cd不存在
+        bodyString = new HttpClient()
+                .addData("etl_sys_cd", EtlSysCd)
+                .addData("resource_type", "zydycs")
+                .post(getActionUrl("searchEtlResource"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(false));
     }
 
     @Method(desc = "分页查询作业系统参数，此方法只有三种情况",
@@ -1975,8 +2114,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
     @Method(desc = "根据工程编号、变量名称查询作业系统参数，此方法只有三种情况",
             logicStep = "1.正常的数据访问1" +
                     "2.错误的数据访问1，etl_sys_cd不存在" +
-                    "3.错误的数据访问1，工程编号不存在" +
-                    "3.错误的数据访问2，para_cd不存在")
+                    "3.错误的数据访问1，para_cd不存在")
     @Test
     public void searchEtlPara() {
         // 1.正常的数据访问1，数据都正常

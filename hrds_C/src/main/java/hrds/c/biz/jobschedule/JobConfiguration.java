@@ -759,7 +759,7 @@ public class JobConfiguration extends BaseAction {
             throw new BusinessException("当前工程已不存在！");
         }
         // 3.判断调度频率是否为频率，如果是频率没有依赖，也没有调度触发方式
-        if (Dispatch_Frequency.ofEnumByCode(etl_job_def.getDisp_freq())!=Dispatch_Frequency.PinLv) {
+        if (Dispatch_Frequency.ofEnumByCode(etl_job_def.getDisp_freq()) != Dispatch_Frequency.PinLv) {
             // 4.判断调度触发方式改变时，修改前的调度触发方式是依赖还是定时
             if (Dispatch_Type.DEPENDENCE == Dispatch_Type.ofEnumByCode(old_dispatch_type)) {
                 // 4.1修改前的调度触发方式是依赖，判断调度触发方式改变时，修改后的调度触发方式是依赖还是定时
@@ -952,6 +952,7 @@ public class JobConfiguration extends BaseAction {
         }
         // 3.根据工程编号查询工程名称
         String etl_sys_name = getEtlSysName(etl_sys_cd, getUserId());
+        asmSql.clean();
         asmSql.addSql("select distinct * from " + Etl_resource.TableName + " where etl_sys_cd = ?");
         asmSql.addParam(etl_sys_cd);
         // 4.判断资源类型是否存在，存在加条件查询
@@ -988,7 +989,7 @@ public class JobConfiguration extends BaseAction {
             throw new BusinessException("当前工程已不存在！");
         }
         // 3.判断当前工程下资源定义信息是否存在
-        if (ETLJobUtil.isEtlResourceExist(etl_sys_cd, resource_type)) {
+        if (!ETLJobUtil.isEtlResourceExist(etl_sys_cd, resource_type)) {
             throw new BusinessException("当前工程对应的资源已不存在！");
         }
         // 4.返回根据工程编号、资源类型查询资源定义信息,实体字段基本都需要所以查询所有字段
