@@ -360,11 +360,16 @@ public class CollTbConfStepAction extends BaseAction {
 	@Param(name = "colSetId", desc = "数据库设置ID，源系统数据库设置表主键，数据库对应表外键", range = "不为空")
 	@Param(name = "collTbConfParamString", desc = "采集表对应采集字段配置参数", range = "" +
 			"包含两部分：" +
-			"1、collColumnString：一张表对应的所有要被采集的列组成的json格式的字符串，一个json对象中应该包括列名(colume_name)、" +
+			"1、tableInfoString：一张表对应的所有要被采集的列组成的json格式的字符串，一个json对象中应该包括列名(colume_name)、" +
 			"字段类型(column_type)、列中文名(colume_ch_name)、如果用户定义了并行抽取，那么应该还有is_parallel和page_sql" +
 			"如果用户定义了SQL过滤，那么还应该有sql" +
-			"2、columnSortString：一张表所有要被采集的列的采集顺序，一个json对象中，key为columnName，value为列名，" +
-			"key为sort，value为顺序(1,2,3)" +
+			"2、collTbConfParamString：一张表所有要被采集的列和列采集顺序，" +
+			"key为collColumnString，表示被采集的列，json数组格式的字符串" +
+			" 一个json对象中应该包括列名(colume_name)、字段类型(column_type)、列中文名(colume_ch_name)、是否采集(is_get)" +
+			"如果用户没有选择采集列，则传空字符串，系统默认采集该张表所有列" +
+			"key为columnSortString，表示列的采集顺序，json数组格式的字符串" +
+			"一个json对象中，key为columnName，value为列名" +
+			"key为sort，value为顺序" +
 			"注意：tableInfoString和collTbConfParamString中，对象的顺序和数目要保持一致，比如：" +
 			"tableInfoString：[{A表表信息},{B表表信息}]" +
 			"collTbConfParamString：[{A表字段配置参数},{B表字段配置参数}]")

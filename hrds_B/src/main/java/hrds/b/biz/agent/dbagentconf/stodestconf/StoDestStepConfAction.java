@@ -261,7 +261,7 @@ public class StoDestStepConfAction extends BaseAction{
 	public Result getColumnStoInfo(long tableId, long dslId){
 		//1、根据表ID查询出该表所有采集列的列名和列中文名(结果集1)
 		Result resultOne = Dbo.queryResult("select tc.column_id, tc.colume_name, tc.colume_ch_name from "
-				+ Table_column.TableName + " tc where tc.table_id = ?", tableId);
+				+ Table_column.TableName + " tc where tc.table_id = ? and tc.is_get = ?", tableId, IsFlag.Shi.getCode());
 		if(resultOne.isEmpty()){
 			throw new BusinessSystemException("未找到属于该表的字段");
 		}
