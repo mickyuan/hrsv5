@@ -33,8 +33,8 @@ public class DBConfStepAction extends BaseAction{
 
 	private static final JSONObject CLEANOBJ;
 
-	static {
-		CLEANOBJ = new JSONObject();
+	static{
+		CLEANOBJ = new JSONObject(true);
 		CLEANOBJ.put(CleanType.ZiFuBuQi.getCode(), 1);
 		CLEANOBJ.put(CleanType.ZiFuTiHuan.getCode(), 2);
 		CLEANOBJ.put(CleanType.ShiJianZhuanHuan.getCode(), 3);
@@ -272,24 +272,26 @@ public class DBConfStepAction extends BaseAction{
 		verifyDatabaseSetEntity(databaseSet);
 		//2、获取实体中的database_id
 		if(databaseSet.getDatabase_id() != null){
-			//3、如果database_id存在，表示当前是更新操作，则在database_set表中根据database_id删除一条数据，将修改后的信息当做新的信息进行保存
-			DboExecute.deletesOrThrow("当前数据库连接配置不存在", "delete from "
-					+ Database_set.TableName + " where database_id = ?", databaseSet.getDatabase_id());
+			//3、如果存在，则更新信息
+			long val = Dbo.queryNumber("select count(1) from " + Database_set.TableName +
+					" where database_id = ?", databaseSet.getDatabase_id()).orElseThrow(
+					() -> new BusinessException("查询得到的数据必须有且只有一条"));
+			if(val != 1){
+				throw new BusinessException("待更新的数据不存在");
+			}
 
-			String id = PrimayKeyGener.getNextId();
-			databaseSet.setDatabase_number(id);
-			databaseSet.setDatabase_id(id);
 			databaseSet.setDb_agent(IsFlag.Fou.getCode());
 			databaseSet.setIs_sendok(IsFlag.Fou.getCode());
 			databaseSet.setCp_or(CLEANOBJ.toJSONString());
 
-			databaseSet.add(Dbo.db());
-		}else {
+			databaseSet.update(Dbo.db());
+		}
+		else {
 			//4、如果不存在，则新增信息
 			//任务级别的清洗规则，在这里新增时定义一个默认顺序，后面的页面可能改动这个顺序,
 			// 后面在取这个清洗顺序的时候，用枚举==的方式
+
 			String id = PrimayKeyGener.getNextId();
-			databaseSet.setDatabase_number(id);
 			databaseSet.setDatabase_id(id);
 			databaseSet.setDb_agent(IsFlag.Fou.getCode());
 			databaseSet.setIs_sendok(IsFlag.Fou.getCode());
@@ -379,6 +381,38 @@ public class DBConfStepAction extends BaseAction{
 		//2、校验classify_id不能为空
 		if(databaseSet.getClassify_id() == null){
 			throw new BusinessException("保存数据库配置信息时分类信息不能为空");
+		}
+		//3、校验作业编号不为能空，并且长度不能超过10
+		if(StringUtil.isBlank(databaseSet.getDatabase_number()) || databaseSet.getDatabase_number().length() > 10){
+			throw new BusinessException("保存数据库配置信息时作业编号不为能空，并且长度不能超过10");
+		}
+		//4、校验数据库驱动不能为空
+		if(StringUtil.isBlank(databaseSet.getDatabase_drive())){
+			throw new BusinessException("保存数据库配置信息时数据库驱动不能为空");
+		}
+		//5、校验数据库名称不能为空
+		if(StringUtil.isBlank(databaseSet.getDatabase_name())){
+			throw new BusinessException("保存数据库配置信息时数据库名称不能为空");
+		}
+		//6、校验数据库IP不能为空
+		if(StringUtil.isBlank(databaseSet.getDatabase_ip())){
+			throw new BusinessException("保存数据库配置信息时数据库IP地址不能为空");
+		}
+		//7、校验数据库端口号不能为空
+		if(StringUtil.isBlank(databaseSet.getDatabase_port())){
+			throw new BusinessException("保存数据库配置信息时数据库端口号不能为空");
+		}
+		//8、校验用户名不能为空
+		if(StringUtil.isBlank(databaseSet.getUser_name())){
+			throw new BusinessException("保存数据库配置信息时数据库用户名不能为空");
+		}
+		//9、校验数据库密码不能为空
+		if(StringUtil.isBlank(databaseSet.getDatabase_pad())){
+			throw new BusinessException("保存数据库配置信息时数据库密码不能为空");
+		}
+		//10、校验JDBCURL不能为空
+		if(StringUtil.isBlank(databaseSet.getJdbc_url())){
+			throw new BusinessException("保存数据库配置信息时数据库连接URL不能为空");
 		}
 	}
 

@@ -2,7 +2,6 @@ package hrds.b.biz.agent.dbagentconf.dbconf;
 
 import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.DocClass;
-import fd.ng.core.exception.BusinessSystemException;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
@@ -649,6 +648,13 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 	 * 错误的数据访问1：新增数据时，缺少classfy_id
 	 * 错误的数据访问2：新增数据时，缺少database_type
 	 * 错误的数据访问3：新增数据时，输入了取值范围异常的database_type
+	 * 错误的数据访问4：新增数据时，缺少数据库驱动
+	 * 错误的数据访问5：新增数据时，缺少数据库名称
+	 * 错误的数据访问6：新增数据时，缺少数据库IP
+	 * 错误的数据访问7：新增数据时，缺少数据库端口号
+	 * 错误的数据访问8：新增数据时，缺少用户名
+	 * 错误的数据访问9：新增数据时，缺少数据库密码
+	 * 错误的数据访问10：新增数据时，缺少JDBCURL
 	 *
 	 * @Param: 无
 	 * @return: 无
@@ -663,6 +669,7 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 				.addData("agent_id", FIRST_DB_AGENT_ID)
 				.addData("task_name", "wzc_test_saveDbConf_task_name")
 				.addData("database_name", "wzc_test_saveDbConf_database_name")
+				.addData("database_number", "1001")
 				.addData("database_pad", "wzc_test_saveDbConf_database_pad")
 				.addData("database_drive", "org.postgresql.Driver")
 				.addData("database_type", DatabaseType.ApacheDerby.getCode())
@@ -706,6 +713,7 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 				.addData("database_id", 1001L)
 				.addData("agent_id", FIRST_DB_AGENT_ID)
 				.addData("task_name", "wzc_test_saveDbConf_update_task_name")
+				.addData("database_number", "1001")
 				.addData("database_name", "wzc_test_saveDbConf_update_database_name")
 				.addData("database_pad", "wzc_test_saveDbConf_update_database_pad")
 				.addData("database_drive", "org.postgresql.Driver")
@@ -722,14 +730,11 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 
 		//验证DB里面的数据是否正确
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			long count = SqlOperator.queryNumber(db, "select count(1) from " + Database_set.TableName + " where database_id = ?", 1001L).orElseThrow(() -> new BusinessSystemException("SQL查询错误"));
-			assertThat("使用原有的database_id获取不到数据", count, is(0L));
-			Result result = SqlOperator.queryResult(db, "select * from " + Database_set.TableName + " where task_name = ?", "wzc_test_saveDbConf_update_task_name");
-			assertThat("获取到的数据有一条", result.getRowCount(), is(1));
-			assertThat(result.getString(0 ,"database_name"), is("wzc_test_saveDbConf_update_database_name"));
-			assertThat(result.getString(0, "task_name"), is("wzc_test_saveDbConf_update_task_name"));
-			assertThat(result.getString(0, "user_name"), is("wzc_test_saveDbConf_update_user_name"));
-			assertThat(result.getString(0, "database_pad"), is("wzc_test_saveDbConf_update_database_pad"));
+			Database_set classify = SqlOperator.queryOneObject(db, Database_set.class, "select * from " + Database_set.TableName + " where database_id = ?", 1001L).orElseThrow(() -> new BusinessException("必须有且只有一条数据"));
+			assertThat(classify.getDatabase_name(), is("wzc_test_saveDbConf_update_database_name"));
+			assertThat(classify.getTask_name(), is("wzc_test_saveDbConf_update_task_name"));
+			assertThat(classify.getUser_name(), is("wzc_test_saveDbConf_update_user_name"));
+			assertThat(classify.getDatabase_pad(), is("wzc_test_saveDbConf_update_database_pad"));
 		}
 
 		//错误的数据访问1：新增数据时，缺少classfy_id
@@ -784,6 +789,139 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 		ActionResult wrongoutDatabaseTypeRuselt = JsonUtil.toObjectSafety(wrongDatabaseTypeString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(wrongoutDatabaseTypeRuselt.isSuccess(), is(false));
+
+		//错误的数据访问4：新增数据时，缺少数据库驱动
+		String updateStringOne = new HttpClient()
+				.addData("database_id", 1001L)
+				.addData("agent_id", FIRST_DB_AGENT_ID)
+				.addData("task_name", "wzc_test_saveDbConf_update_task_name")
+				.addData("database_number", "1001")
+				.addData("database_name", "wzc_test_saveDbConf_update_database_name")
+				.addData("database_pad", "wzc_test_saveDbConf_update_database_pad")
+				.addData("database_type", DatabaseType.ApacheDerby.getCode())
+				.addData("user_name", "wzc_test_saveDbConf_update_user_name")
+				.addData("database_ip", "127.0.0.1")
+				.addData("database_port", "31001")
+				.addData("classify_id", FIRST_CLASSIFY_ID)
+				.addData("jdbc_url", updateJDBCURL)
+				.post(getActionUrl("saveDbConf")).getBodyString();
+		ActionResult wrongRuseltOne = JsonUtil.toObjectSafety(updateStringOne, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongRuseltOne.isSuccess(), is(false));
+
+		//错误的数据访问5：新增数据时，缺少数据库名称
+		String updateStringTwo = new HttpClient()
+				.addData("database_id", 1001L)
+				.addData("agent_id", FIRST_DB_AGENT_ID)
+				.addData("task_name", "wzc_test_saveDbConf_update_task_name")
+				.addData("database_number", "1001")
+				.addData("database_pad", "wzc_test_saveDbConf_update_database_pad")
+				.addData("database_drive", "org.postgresql.Driver")
+				.addData("database_type", DatabaseType.ApacheDerby.getCode())
+				.addData("user_name", "wzc_test_saveDbConf_update_user_name")
+				.addData("database_ip", "127.0.0.1")
+				.addData("database_port", "31001")
+				.addData("classify_id", FIRST_CLASSIFY_ID)
+				.addData("jdbc_url", updateJDBCURL)
+				.post(getActionUrl("saveDbConf")).getBodyString();
+		ActionResult wrongRuseltTwo = JsonUtil.toObjectSafety(updateStringTwo, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongRuseltTwo.isSuccess(), is(false));
+
+		//错误的数据访问6：新增数据时，缺少数据库IP
+		String wrongStringThree = new HttpClient()
+				.addData("database_id", 1001L)
+				.addData("agent_id", FIRST_DB_AGENT_ID)
+				.addData("task_name", "wzc_test_saveDbConf_update_task_name")
+				.addData("database_number", "1001")
+				.addData("database_name", "wzc_test_saveDbConf_update_database_name")
+				.addData("database_pad", "wzc_test_saveDbConf_update_database_pad")
+				.addData("database_drive", "org.postgresql.Driver")
+				.addData("database_type", DatabaseType.ApacheDerby.getCode())
+				.addData("user_name", "wzc_test_saveDbConf_update_user_name")
+				.addData("database_port", "31001")
+				.addData("classify_id", FIRST_CLASSIFY_ID)
+				.addData("jdbc_url", updateJDBCURL)
+				.post(getActionUrl("saveDbConf")).getBodyString();
+		ActionResult wrongRuseltThree = JsonUtil.toObjectSafety(wrongStringThree, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongRuseltThree.isSuccess(), is(false));
+
+		//错误的数据访问7：新增数据时，缺少数据库端口号
+		String wrongStringFour = new HttpClient()
+				.addData("database_id", 1001L)
+				.addData("agent_id", FIRST_DB_AGENT_ID)
+				.addData("task_name", "wzc_test_saveDbConf_update_task_name")
+				.addData("database_number", "1001")
+				.addData("database_name", "wzc_test_saveDbConf_update_database_name")
+				.addData("database_pad", "wzc_test_saveDbConf_update_database_pad")
+				.addData("database_drive", "org.postgresql.Driver")
+				.addData("database_type", DatabaseType.ApacheDerby.getCode())
+				.addData("user_name", "wzc_test_saveDbConf_update_user_name")
+				.addData("database_ip", "127.0.0.1")
+				.addData("classify_id", FIRST_CLASSIFY_ID)
+				.addData("jdbc_url", updateJDBCURL)
+				.post(getActionUrl("saveDbConf")).getBodyString();
+		ActionResult wrongRuseltFour = JsonUtil.toObjectSafety(wrongStringFour, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongRuseltFour.isSuccess(), is(false));
+
+		//错误的数据访问8：新增数据时，缺少用户名
+		String wrongStringFive = new HttpClient()
+				.addData("database_id", 1001L)
+				.addData("agent_id", FIRST_DB_AGENT_ID)
+				.addData("task_name", "wzc_test_saveDbConf_update_task_name")
+				.addData("database_number", "1001")
+				.addData("database_name", "wzc_test_saveDbConf_update_database_name")
+				.addData("database_pad", "wzc_test_saveDbConf_update_database_pad")
+				.addData("database_drive", "org.postgresql.Driver")
+				.addData("database_type", DatabaseType.ApacheDerby.getCode())
+				.addData("database_ip", "127.0.0.1")
+				.addData("database_port", "31001")
+				.addData("classify_id", FIRST_CLASSIFY_ID)
+				.addData("jdbc_url", updateJDBCURL)
+				.post(getActionUrl("saveDbConf")).getBodyString();
+		ActionResult wrongRuseltFive = JsonUtil.toObjectSafety(wrongStringFive, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongRuseltFive.isSuccess(), is(false));
+
+		//错误的数据访问9：新增数据时，缺少数据库密码
+		String wrongStringSix = new HttpClient()
+				.addData("database_id", 1001L)
+				.addData("agent_id", FIRST_DB_AGENT_ID)
+				.addData("task_name", "wzc_test_saveDbConf_update_task_name")
+				.addData("database_number", "1001")
+				.addData("database_name", "wzc_test_saveDbConf_update_database_name")
+				.addData("database_drive", "org.postgresql.Driver")
+				.addData("database_type", DatabaseType.ApacheDerby.getCode())
+				.addData("user_name", "wzc_test_saveDbConf_update_user_name")
+				.addData("database_ip", "127.0.0.1")
+				.addData("database_port", "31001")
+				.addData("classify_id", FIRST_CLASSIFY_ID)
+				.addData("jdbc_url", updateJDBCURL)
+				.post(getActionUrl("saveDbConf")).getBodyString();
+		ActionResult wrongRuseltSix = JsonUtil.toObjectSafety(wrongStringSix, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongRuseltSix.isSuccess(), is(false));
+
+		//错误的数据访问10：新增数据时，缺少JDBCURL
+		String wrongStringSeven = new HttpClient()
+				.addData("database_id", 1001L)
+				.addData("agent_id", FIRST_DB_AGENT_ID)
+				.addData("task_name", "wzc_test_saveDbConf_update_task_name")
+				.addData("database_number", "1001")
+				.addData("database_name", "wzc_test_saveDbConf_update_database_name")
+				.addData("database_pad", "wzc_test_saveDbConf_update_database_pad")
+				.addData("database_drive", "org.postgresql.Driver")
+				.addData("database_type", DatabaseType.ApacheDerby.getCode())
+				.addData("user_name", "wzc_test_saveDbConf_update_user_name")
+				.addData("database_ip", "127.0.0.1")
+				.addData("database_port", "31001")
+				.addData("classify_id", FIRST_CLASSIFY_ID)
+				.post(getActionUrl("saveDbConf")).getBodyString();
+		ActionResult wrongRuseltSeven = JsonUtil.toObjectSafety(wrongStringSeven, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongRuseltSeven.isSuccess(), is(false));
 	}
 
 	/**
