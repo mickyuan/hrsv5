@@ -2,6 +2,7 @@ package hrds.b.biz.agent.dbagentconf.dbconf;
 
 import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.DocClass;
+import fd.ng.core.exception.BusinessSystemException;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
@@ -721,11 +722,14 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 
 		//验证DB里面的数据是否正确
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			Database_set classify = SqlOperator.queryOneObject(db, Database_set.class, "select * from " + Database_set.TableName + " where database_id = ?", 1001L).orElseThrow(() -> new BusinessException("必须有且只有一条数据"));
-			assertThat(classify.getDatabase_name(), is("wzc_test_saveDbConf_update_database_name"));
-			assertThat(classify.getTask_name(), is("wzc_test_saveDbConf_update_task_name"));
-			assertThat(classify.getUser_name(), is("wzc_test_saveDbConf_update_user_name"));
-			assertThat(classify.getDatabase_pad(), is("wzc_test_saveDbConf_update_database_pad"));
+			long count = SqlOperator.queryNumber(db, "select count(1) from " + Database_set.TableName + " where database_id = ?", 1001L).orElseThrow(() -> new BusinessSystemException("SQL查询错误"));
+			assertThat("使用原有的database_id获取不到数据", count, is(0L));
+			Result result = SqlOperator.queryResult(db, "select * from " + Database_set.TableName + " where task_name = ?", "wzc_test_saveDbConf_update_task_name");
+			assertThat("获取到的数据有一条", result.getRowCount(), is(1));
+			assertThat(result.getString(0 ,"database_name"), is("wzc_test_saveDbConf_update_database_name"));
+			assertThat(result.getString(0, "task_name"), is("wzc_test_saveDbConf_update_task_name"));
+			assertThat(result.getString(0, "user_name"), is("wzc_test_saveDbConf_update_user_name"));
+			assertThat(result.getString(0, "database_pad"), is("wzc_test_saveDbConf_update_database_pad"));
 		}
 
 		//错误的数据访问1：新增数据时，缺少classfy_id

@@ -31,6 +31,19 @@ import java.util.List;
 @DocClass(desc = "配置源DB属性", author = "WangZhengcheng")
 public class DBConfStepAction extends BaseAction{
 
+	private static final JSONObject CLEANOBJ;
+
+	static {
+		CLEANOBJ = new JSONObject();
+		CLEANOBJ.put(CleanType.ZiFuBuQi.getCode(), 1);
+		CLEANOBJ.put(CleanType.ZiFuTiHuan.getCode(), 2);
+		CLEANOBJ.put(CleanType.ShiJianZhuanHuan.getCode(), 3);
+		CLEANOBJ.put(CleanType.MaZhiZhuanHuan.getCode(), 4);
+		CLEANOBJ.put(CleanType.ZiFuHeBing.getCode(), 5);
+		CLEANOBJ.put(CleanType.ZiFuChaiFen.getCode(), 6);
+		CLEANOBJ.put(CleanType.ZiFuTrim.getCode(), 7);
+	}
+
 	@Method(desc = "根据数据库采集任务ID进行查询并在页面上回显数据源配置信息", logicStep = "" +
 			"1、在数据库设置表(database_set)中，根据databaseId判断是否查询到数据，如果查询不到，抛异常给前端" +
 			"2、如果任务已经设置完成并发送成功，则不允许编辑" +
@@ -259,37 +272,28 @@ public class DBConfStepAction extends BaseAction{
 		verifyDatabaseSetEntity(databaseSet);
 		//2、获取实体中的database_id
 		if(databaseSet.getDatabase_id() != null){
-			//3、如果存在，则更新信息
-			long val = Dbo.queryNumber("SELECT count(1)" +
-					" FROM "+ Data_source.TableName +" ds " +
-					" JOIN "+ Agent_info.TableName +" ai ON ds.source_id = ai.source_id " +
-					" JOIN "+ Database_set.TableName +" das ON ai.agent_id = das.agent_id " +
-					" WHERE das.database_id = ? AND ds.create_user_id = ?",
-					databaseSet.getDatabase_id(), getUserId()).orElseThrow(
-					() -> new BusinessException("查询得到的数据必须有且只有一条"));
-			if(val != 1){
-				throw new BusinessException("待更新的数据不存在");
-			}
-			databaseSet.update(Dbo.db());
-		}
-		else {
-			//4、如果不存在，则新增信息
-			//任务级别的清洗规则，在这里新增时定义一个默认顺序，后面的页面可能改动这个顺序,
-			// 后面在取这个清洗顺序的时候，用枚举==的方式
-			JSONObject cleanObj = new JSONObject(true);
-			cleanObj.put(CleanType.ZiFuBuQi.getCode(), 1);
-			cleanObj.put(CleanType.ZiFuTiHuan.getCode(), 2);
-			cleanObj.put(CleanType.ShiJianZhuanHuan.getCode(), 3);
-			cleanObj.put(CleanType.MaZhiZhuanHuan.getCode(), 4);
-			cleanObj.put(CleanType.ZiFuHeBing.getCode(), 5);
-			cleanObj.put(CleanType.ZiFuChaiFen.getCode(), 6);
-			cleanObj.put(CleanType.ZiFuTrim.getCode(), 7);
+			//3、如果database_id存在，表示当前是更新操作，则在database_set表中根据database_id删除一条数据，将修改后的信息当做新的信息进行保存
+			DboExecute.deletesOrThrow("当前数据库连接配置不存在", "delete from "
+					+ Database_set.TableName + " where database_id = ?", databaseSet.getDatabase_id());
+
 			String id = PrimayKeyGener.getNextId();
 			databaseSet.setDatabase_number(id);
 			databaseSet.setDatabase_id(id);
 			databaseSet.setDb_agent(IsFlag.Fou.getCode());
 			databaseSet.setIs_sendok(IsFlag.Fou.getCode());
-			databaseSet.setCp_or(cleanObj.toJSONString());
+			databaseSet.setCp_or(CLEANOBJ.toJSONString());
+
+			databaseSet.add(Dbo.db());
+		}else {
+			//4、如果不存在，则新增信息
+			//任务级别的清洗规则，在这里新增时定义一个默认顺序，后面的页面可能改动这个顺序,
+			// 后面在取这个清洗顺序的时候，用枚举==的方式
+			String id = PrimayKeyGener.getNextId();
+			databaseSet.setDatabase_number(id);
+			databaseSet.setDatabase_id(id);
+			databaseSet.setDb_agent(IsFlag.Fou.getCode());
+			databaseSet.setIs_sendok(IsFlag.Fou.getCode());
+			databaseSet.setCp_or(CLEANOBJ.toJSONString());
 
 			databaseSet.add(Dbo.db());
 		}
@@ -371,9 +375,7 @@ public class DBConfStepAction extends BaseAction{
 		if(StringUtil.isBlank(databaseSet.getDatabase_type())){
 			throw new BusinessException("保存数据库配置信息时数据库类型不能为空");
 		}
-		if(DatabaseType.ofEnumByCode(databaseSet.getDatabase_type()) == null){
-			throw new BusinessException("系统不支持的数据库类型，请重新选择");
-		}
+		DatabaseType.ofEnumByCode(databaseSet.getDatabase_type());
 		//2、校验classify_id不能为空
 		if(databaseSet.getClassify_id() == null){
 			throw new BusinessException("保存数据库配置信息时分类信息不能为空");
