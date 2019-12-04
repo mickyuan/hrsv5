@@ -820,7 +820,7 @@ public class JobConfiguration extends BaseAction {
             // 4.循环删除作业
             DboExecute.deletesOrThrow("删除作业信息失败，etl_sys_cd=" + etl_sys_cd + ",etl_job="
                     + etlJob, "delete from " + Etl_job_def.TableName + " where etl_sys_cd=?" +
-                    " and etl_job=?", etl_sys_cd, etl_job);
+                    " and etl_job=?", etl_sys_cd, etlJob);
             // 5.作业被删除的同时删除作业的资源分配情况,只有有资源分配才需要删除
             deleteJobResourceRelationIfExist(etl_sys_cd, etlJob);
             // 6.作业被删除的同时删除依赖作业，只有有作业依赖关系才需要删除
@@ -836,7 +836,6 @@ public class JobConfiguration extends BaseAction {
                     "5.作业被删除的同时删除依赖作业，只有有依赖关系的作业才需要删除")
     @Param(name = "etl_sys_cd", desc = "工程代码", range = "新增工程时生成")
     @Param(name = "etl_job", desc = "作业名称", range = "新增作业时生成")
-    @Param(name = "batchEtlJob", desc = "批量作业编号", range = "无限制", nullable = true)
     public void deleteEtlJobDef(String etl_sys_cd, String etl_job) {
         // 1.数据可访问权限处理方式，通过user_id进行权限控制
         // 2.验证当前用户下的工程是否存在
