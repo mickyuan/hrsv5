@@ -49,7 +49,7 @@ public class StoDestStepConfAction extends BaseAction{
 		//2、根据colSetId在table_info中获取该采集任务所有的采集表id集合
 		List<Object> list = Dbo.queryOneColumnList("select table_id from " + Table_info.TableName + " where database_id = ?", colSetId);
 		if(list.isEmpty()){
-			throw new BusinessSystemException("未获取到当前数据库采集表");
+			throw new BusinessSystemException("未获取到数据库采集表");
 		}
 		//3、遍历这个集合，根据table_id在表存储信息表中查看该表是否定义了存储目的地
 		for(int i = 0; i < list.size(); i++){
@@ -68,6 +68,33 @@ public class StoDestStepConfAction extends BaseAction{
 		}
 		//5、将查询到的信息返回前端
 		return result;
+	}
+
+	@Method(desc = "根据数据库设置ID获取当前数据库直连采集任务下所有抽取及入库的表ID", logicStep = "" +
+			"1、根据数据库设置ID获取当前数据库采集任务所有抽取并入库的表ID" +
+			"2、遍历结果集，根据表ID获取该表定义的存储目的地" +
+			"3、以table_id为key，以存储目的地IDList集合为value，返回给前端，之所以value是List集合，是因为入库的表可以定义多个存储目的地")
+	@Param(name = "colSetId", desc = "数据库设置ID，源系统数据库设置表主键，数据库对应表外键", range = "不为空")
+	@Return(desc = "查询结果集", range = "不为空，key为table_id(抽取及入库的表),value为存储目的地IDList集合")
+	public Map<Long, List<Object>> getTbStoDestByColSetId(long colSetId){
+		//1、根据数据库设置ID获取当前数据库采集任务所有抽取并入库的表ID
+		List<Object> tableIds = Dbo.queryOneColumnList("select ti.table_id from " + Table_info.TableName + " ti" +
+				" join " + Data_extraction_def.TableName + " ded" +
+				" on ti.table_id = ded.table_id" +
+				" where ti.database_id = ? and ded.data_extract_type = ?", colSetId, DataExtractType.ShuJuChouQuJiRuKu.getCode());
+		if(tableIds.isEmpty()){
+			throw new BusinessSystemException("未获取到数据库采集表");
+		}
+		Map<Long, List<Object>> returnMap = new HashMap<>();
+		//2、遍历结果集，根据表ID获取该表定义的存储目的地
+		for(Object tableId : tableIds){
+			List<Object> dslIds = Dbo.queryOneColumnList("select drt.dsl_id from " + Data_relation_table.TableName + " drt" +
+					" where drt.storage_id = (select storage_id from " + Table_storage_info.TableName +
+					" where table_id = ?)", (long)tableId);
+			returnMap.put((Long)tableId, dslIds);
+		}
+		//3、以table_id为key，以存储目的地IDList集合为value，返回给前端，之所以value是List集合，是因为入库的表可以定义多个存储目的地
+		return returnMap;
 	}
 
 	/*

@@ -141,7 +141,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 	 * 测试根据数据库设置ID获得定义存储目的地页面初始化信息
 	 *
 	 * 正确数据访问1：使用正确的colSetId访问，应该可以拿到4条数据，表名分别是agent_info、data_source、sys_user、code_info
-	 * 错误的数据访问1：使用错误的colSetId访问，应该拿不到任何数据，但是不会报错，访问正常返回
+	 * 错误的数据访问1：使用错误的colSetId访问，访问会失败
 	 * 错误的测试用例未达到三组:
 	 * @Param: 无
 	 * @return: 无
@@ -187,10 +187,64 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 			}
 		}
 
-		//错误的数据访问1：使用错误的colSetId访问，应该拿不到任何数据，但是不会报错，访问正常返回
+		//错误的数据访问1：使用错误的colSetId访问，访问会失败
 		String wrongString = new HttpClient()
 				.addData("colSetId", SECOND_DATABASESET_ID)
 				.post(getActionUrl("getInitInfo")).getBodyString();
+		ActionResult wrongResult = JsonUtil.toObjectSafety(wrongString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResult.isSuccess(), is(false));
+	}
+
+	/**
+	 * 测试根据数据库设置ID获取当前数据库直连采集任务下所有抽取及入库的表ID
+	 *
+	 * 正确数据访问1：使用正确的colSetId访问，应该可以拿到2条数据，表ID分别是agent_info、data_source两张表的ID
+	 * 错误的数据访问1：使用错误的colSetId访问，访问会失败
+	 * 错误的测试用例未达到三组: 以上所有测试用例已经可以满足要求
+	 * @Param: 无
+	 * @return: 无
+	 *
+	 * */
+	@Test
+	public void getTbStoDestByColSetId(){
+		//正确数据访问1：使用正确的colSetId访问，应该可以拿到2条数据，表ID分别是agent_info、data_source两张表的ID
+		String rightString = new HttpClient()
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.post(getActionUrl("getTbStoDestByColSetId")).getBodyString();
+		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResult.isSuccess(), is(true));
+
+		Map<Long, List> dataForMap = rightResult.getDataForMap(Long.class, List.class);
+		for(long key : dataForMap.keySet()){
+			if(key == AGENT_INFO_TABLE_ID){
+				List list = dataForMap.get(key);
+				assertThat("给agent_info表定义的存储目的地有两个", list.size(), is(2));
+				for(Object obj : list){
+					Integer dslId = (Integer) obj;
+					if(dslId == 4400){
+						assertThat("agent_info保存进入关系型数据库", true, is(true));
+					}else if(dslId == 4402){
+						assertThat("agent_info保存进入HBASE", true, is(true));
+					}else {
+						assertThat("出现了不符合期望的情况,dslId为 : " + dslId, true, is(false));
+					}
+				}
+			}else if(key == DATA_SOURCE_TABLE_ID){
+				List list = dataForMap.get(key);
+				assertThat("给data_source表定义的存储目的地有1个", list.size(), is(1));
+				Integer dslId = (Integer) list.get(0);
+				assertThat("data_source保存进入SOLR", dslId, is(4399));
+			}else{
+				assertThat("出现了不符合期望的情况,key为 : " + key, false, is(true));
+			}
+		}
+
+		//错误的数据访问1：使用错误的colSetId访问，访问会失败
+		String wrongString = new HttpClient()
+				.addData("colSetId", UNEXPECTED_ID)
+				.post(getActionUrl("getTbStoDestByColSetId")).getBodyString();
 		ActionResult wrongResult = JsonUtil.toObjectSafety(wrongString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(wrongResult.isSuccess(), is(false));
