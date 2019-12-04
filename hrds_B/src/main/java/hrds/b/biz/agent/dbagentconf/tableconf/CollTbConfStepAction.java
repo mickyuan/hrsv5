@@ -275,7 +275,7 @@ public class CollTbConfStepAction extends BaseAction {
 	public List<Table_info> getAllSQLs(long colSetId){
 		return Dbo.queryList(Table_info.class, " SELECT table_id, table_name, table_ch_name, sql " +
 				" FROM "+ Table_info.TableName +
-				" WHERE database_id = ? " + "AND is_user_defined = ? order by table_id", colSetId, IsFlag.Shi.getCode());
+				" WHERE database_id = ? AND is_user_defined = ? order by table_id", colSetId, IsFlag.Shi.getCode());
 		//数据可访问权限处理方式
 		//以上table_info表中都没有user_id字段，解决方式待讨论
 	}
@@ -288,8 +288,8 @@ public class CollTbConfStepAction extends BaseAction {
 	//配置采集表页面,定义过滤按钮后台方法，用于回显已经对单表定义好的SQL
 	public Result getSingleTableSQL(long colSetId, String tableName){
 		return Dbo.queryResult("SELECT table_id,table_name,table_ch_name,table_count,sql " +
-				" FROM "+ Table_info.TableName +" WHERE database_id = ? AND valid_e_date = ? AND table_name = ? ",
-				colSetId, Constant.MAXDATE, tableName);
+				" FROM "+ Table_info.TableName +" WHERE database_id = ? AND table_name = ? ",
+				colSetId, tableName);
 		//数据可访问权限处理方式
 		//以上table_info表中都没有user_id字段，解决方式待讨论
 	}
@@ -537,40 +537,56 @@ public class CollTbConfStepAction extends BaseAction {
 		if(StringUtil.isBlank(collColumn)){
 			//2-1、是，表示用户没有选择采集列，则应用管理端同Agent端交互,获取该表所有列进行采集
 			tableColumns = getColumnInfoByTableName(colSetId, getUserId(), tableInfo.getTable_name());
+			//同agent交互得到的数据，is_get字段默认都设置为是,如果没有取到
+			if(!tableColumns.isEmpty()){
+				for(Table_column tableColumn : tableColumns){
+					tableColumn.setIs_get(IsFlag.Shi.getCode());
+				}
+			}
 		}else{
 			//1-2、否，表示用户自定义采集列，则解析collColumn为List集合
 			tableColumns = JSON.parseArray(collColumn, Table_column.class);
 		}
 		//3、设置主键，外键等信息，如果columnSort不为空，则将Table_column对象的remark属性设置为该列的采集顺序
-		for(int i = 0; i < tableColumns.size(); i++){
-			Table_column tableColumn = tableColumns.get(i);
-			//设置主键
-			tableColumn.setColumn_id(PrimayKeyGener.getNextId());
-			//设置外键
-			tableColumn.setTable_id(tableInfo.getTable_id());
-			//默认所有采集列都不是主键
-			tableColumn.setIs_primary_key(IsFlag.Fou.getCode());
-			//设置有效开始时间和有效结束时间
-			tableColumn.setValid_s_date(DateUtil.getSysDate());
-			tableColumn.setValid_e_date(Constant.MAXDATE);
-			//设置清洗列默认优先级
-			tableColumn.setTc_or(columnCleanOrder);
-			//设置是否保留原字段为是
-			tableColumn.setIs_alive(IsFlag.Shi.getCode());
-			//是否为变化生成设为否
-			tableColumn.setIs_new(IsFlag.Fou.getCode());
-			//是否采集设置为是
-			tableColumn.setIs_get(IsFlag.Shi.getCode());
-			if(sortArr != null){
-				for(int j = 0; j < sortArr.size(); j++){
-					JSONObject jsonObject = sortArr.getJSONObject(j);
-					if(jsonObject.getString("columnName").equalsIgnoreCase(tableColumn.getColume_name())){
-						tableColumn.setRemark(String.valueOf(jsonObject.get("sort")));
+		if(!tableColumns.isEmpty()){
+			for(Table_column tableColumn : tableColumns){
+				if(StringUtil.isBlank(tableColumn.getColume_name())){
+					throw new BusinessSystemException("保存" + tableInfo.getTable_name() + "采集列时，字段名不能为空");
+				}
+				if(StringUtil.isBlank(tableColumn.getColumn_type())){
+					throw new BusinessSystemException("保存" + tableInfo.getTable_name() + "采集列时，字段类型不能为空");
+				}
+				if(StringUtil.isBlank(tableColumn.getIs_get())){
+					throw new BusinessSystemException("保存" + tableInfo.getTable_name() + "采集列时，是否采集标识位不能为空");
+				}
+				//设置主键
+				tableColumn.setColumn_id(PrimayKeyGener.getNextId());
+				//设置外键
+				tableColumn.setTable_id(tableInfo.getTable_id());
+				//默认所有采集列都不是主键
+				tableColumn.setIs_primary_key(IsFlag.Fou.getCode());
+				//设置有效开始时间和有效结束时间
+				tableColumn.setValid_s_date(DateUtil.getSysDate());
+				tableColumn.setValid_e_date(Constant.MAXDATE);
+				//设置清洗列默认优先级
+				tableColumn.setTc_or(columnCleanOrder);
+				//设置是否保留原字段为是
+				tableColumn.setIs_alive(IsFlag.Shi.getCode());
+				//是否为变化生成设为否
+				tableColumn.setIs_new(IsFlag.Fou.getCode());
+				if(sortArr != null){
+					for(int j = 0; j < sortArr.size(); j++){
+						JSONObject jsonObject = sortArr.getJSONObject(j);
+						if(jsonObject.getString("columnName").equalsIgnoreCase(tableColumn.getColume_name())){
+							tableColumn.setRemark(String.valueOf(jsonObject.get("sort")));
+						}
 					}
 				}
+				//4、保存这部分数据
+				tableColumn.add(Dbo.db());
 			}
-			//4、保存这部分数据
-			tableColumn.add(Dbo.db());
+		}else{
+			throw new BusinessSystemException("保存" + tableInfo.getTable_name() + "的采集字段失败");
 		}
 	}
 

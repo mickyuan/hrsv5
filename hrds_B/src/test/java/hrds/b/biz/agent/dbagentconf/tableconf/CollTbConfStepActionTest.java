@@ -1208,6 +1208,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			tableColumn.setColume_name(columnName);
 			tableColumn.setColume_ch_name(columnChName);
 			tableColumn.setColumn_type(columnType);
+			tableColumn.setIs_get(IsFlag.Shi.getCode());
 
 			objColumn.add(tableColumn);
 		}
@@ -1342,6 +1343,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			tableColumn.setColume_name(columnName);
 			tableColumn.setColume_ch_name(columnChName);
 			tableColumn.setColumn_type(columnType);
+			tableColumn.setIs_get(IsFlag.Shi.getCode());
 
 			codeColumn.add(tableColumn);
 		}
