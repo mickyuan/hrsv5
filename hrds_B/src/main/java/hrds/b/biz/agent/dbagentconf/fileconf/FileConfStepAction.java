@@ -5,7 +5,6 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
-import fd.ng.core.exception.BusinessSystemException;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
@@ -15,6 +14,7 @@ import hrds.commons.codes.FileFormat;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Data_extraction_def;
 import hrds.commons.entity.Table_info;
+import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.key.PrimayKeyGener;
 
 import java.util.HashMap;
@@ -104,7 +104,7 @@ public class FileConfStepAction extends BaseAction{
 			Data_extraction_def def = dataExtractionDefs.get(i);
 			//1、校验保存数据必须关联表
 			if(def.getTable_id() == null){
-				throw new BusinessSystemException("保存卸数文件配置，第"+ (i + 1) +"数据必须关联表ID");
+				throw new BusinessException("保存卸数文件配置，第"+ (i + 1) +"数据必须关联表ID");
 			}
 			//2、校验采集的方式如果是仅抽取
 			DataExtractType extractType = DataExtractType.ofEnumByCode(def.getData_extract_type());
@@ -113,15 +113,15 @@ public class FileConfStepAction extends BaseAction{
 				//如果数据抽取方式是仅抽取，那么校验存储方式不能是ORC，PARQUET，SEQUENCEFILE
 				if(fileFormat == FileFormat.ORC || fileFormat == FileFormat.PARQUET ||
 						fileFormat == FileFormat.SEQUENCEFILE){
-					throw new BusinessSystemException("仅抽取操作，只能指定非定长|定长|CSV三种存储格式");
+					throw new BusinessException("仅抽取操作，只能指定非定长|定长|CSV三种存储格式");
 				}
 				//2-1、文件格式如果是非定长，用户必须填写行分隔符和列分隔符
 				if(fileFormat == FileFormat.FeiDingChang){
 					if(StringUtil.isEmpty(def.getRow_separator())){
-						throw new BusinessSystemException("数据抽取保存为非定长文件，请填写行分隔符");
+						throw new BusinessException("数据抽取保存为非定长文件，请填写行分隔符");
 					}
 					if(StringUtil.isEmpty(def.getDatabase_separatorr())){
-						throw new BusinessSystemException("数据抽取保存为非定长文件，请填写列分隔符");
+						throw new BusinessException("数据抽取保存为非定长文件，请填写列分隔符");
 					}
 				}
 				//2-2、文件格式如果是定长/CSV，那么行分隔符和列分隔符，用户可以填，可以不填
@@ -130,27 +130,27 @@ public class FileConfStepAction extends BaseAction{
 			if(extractType == DataExtractType.ShuJuChouQuJiRuKu){
 				//如果数据抽取方式是抽取及入库，那么校验存储方式不能是定长
 				if(fileFormat == FileFormat.DingChang){
-					throw new BusinessSystemException("抽取并入库操作，不能保存为定长文件");
+					throw new BusinessException("抽取并入库操作，不能保存为定长文件");
 				}
 				//3-1、如果是ORC/PARQUET/SEQUENCEFILE，不允许用户填写行分隔符和列分隔符
 				if(fileFormat == FileFormat.ORC || fileFormat == FileFormat.PARQUET ||
 						fileFormat == FileFormat.SEQUENCEFILE){
 					if(StringUtil.isNotEmpty(def.getRow_separator())){
-						throw new BusinessSystemException("数据抽取并入库，保存格式为ORC/PARQUET/SEQUENCEFILE，" +
+						throw new BusinessException("数据抽取并入库，保存格式为ORC/PARQUET/SEQUENCEFILE，" +
 								"不能指定行分隔符");
 					}
 					if(StringUtil.isNotEmpty(def.getDatabase_separatorr())){
-						throw new BusinessSystemException("数据抽取并入库，保存格式为ORC/PARQUET/SEQUENCEFILE，" +
+						throw new BusinessException("数据抽取并入库，保存格式为ORC/PARQUET/SEQUENCEFILE，" +
 								"不能指定列分隔符");
 					}
 				}
 				//3-2、如果是非定长，则校验，用户必须填写行分隔符和列分隔符
 				if(fileFormat == FileFormat.FeiDingChang){
 					if(StringUtil.isEmpty(def.getRow_separator())){
-						throw new BusinessSystemException("数据抽取并入库，保存格式为非定长，请指定行分隔符");
+						throw new BusinessException("数据抽取并入库，保存格式为非定长，请指定行分隔符");
 					}
 					if(StringUtil.isEmpty(def.getDatabase_separatorr())){
-						throw new BusinessSystemException("数据抽取并入库，保存格式为非定长，请指定列分隔符");
+						throw new BusinessException("数据抽取并入库，保存格式为非定长，请指定列分隔符");
 					}
 				}
 				//3-3、如果是CSV，则不进行校验，即如果用户不填写，就卸成标准CSV，否则，按照用户指定的列分隔符写文件

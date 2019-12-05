@@ -5,7 +5,6 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
-import fd.ng.core.exception.BusinessSystemException;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
@@ -14,6 +13,7 @@ import hrds.b.biz.agent.bean.DataStoRelaParam;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.*;
 import hrds.commons.entity.*;
+import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.key.PrimayKeyGener;
 
@@ -49,7 +49,7 @@ public class StoDestStepConfAction extends BaseAction{
 		//2、根据colSetId在table_info中获取该采集任务所有的采集表id集合
 		List<Object> list = Dbo.queryOneColumnList("select table_id from " + Table_info.TableName + " where database_id = ?", colSetId);
 		if(list.isEmpty()){
-			throw new BusinessSystemException("未获取到数据库采集表");
+			throw new BusinessException("未获取到数据库采集表");
 		}
 		//3、遍历这个集合，根据table_id在表存储信息表中查看该表是否定义了存储目的地
 		for(int i = 0; i < list.size(); i++){
@@ -58,7 +58,7 @@ public class StoDestStepConfAction extends BaseAction{
 				long tableIdFromResult = result.getLong(j, "table_id");
 				if(tableIdFromTI.equals(tableIdFromResult)){
 					long count = Dbo.queryNumber("select count(1) from " + Table_storage_info.TableName +
-							" where table_id = ?", tableIdFromTI).orElseThrow(() -> new BusinessSystemException("SQL查询错误"));
+							" where table_id = ?", tableIdFromTI).orElseThrow(() -> new BusinessException("SQL查询错误"));
 					if(count > 0){
 						//4、如果定义了，将destflag字段设为1
 						result.setObject(j, "destflag", IsFlag.Shi.getCode());
@@ -83,7 +83,7 @@ public class StoDestStepConfAction extends BaseAction{
 				" on ti.table_id = ded.table_id" +
 				" where ti.database_id = ? and ded.data_extract_type = ?", colSetId, DataExtractType.ShuJuChouQuJiRuKu.getCode());
 		if(tableIds.isEmpty()){
-			throw new BusinessSystemException("未获取到数据库采集表");
+			throw new BusinessException("未获取到数据库采集表");
 		}
 		Map<Long, List<Object>> returnMap = new HashMap<>();
 		//2、遍历结果集，根据表ID获取该表定义的存储目的地
@@ -126,9 +126,9 @@ public class StoDestStepConfAction extends BaseAction{
 		//1、校验该表定义的数据抽取信息是否存在
 		long count = Dbo.queryNumber("select count(1) from " + Data_extraction_def.TableName +
 				" where table_id = ? and data_extract_type = ?", tableId, DataExtractType.JinShuJuChouQu.getCode())
-				.orElseThrow(() -> new BusinessSystemException("查询结果必须有且只有一条"));
+				.orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
 		if(count != 1){
-			throw new BusinessSystemException("获取该表数据抽取信息异常");
+			throw new BusinessException("获取该表数据抽取信息异常");
 		}
 		//2、查询数据抽取定义表，获取数据落地目录并返回
 		return Dbo.queryResult("select plane_url from " + Data_extraction_def.TableName + " where table_id = ? " +
@@ -148,10 +148,10 @@ public class StoDestStepConfAction extends BaseAction{
 		//1、使用tableId进行校验，判断该表是否定义过数据抽取信息，且数据抽取方式为仅抽取
 		long count = Dbo.queryNumber("select count(1) from " + Data_extraction_def.TableName +
 				" where table_id = ? and data_extract_type = ?", tableId, DataExtractType.JinShuJuChouQu.getCode())
-				.orElseThrow(() -> new BusinessSystemException("查询结果必须有且只有一条"));
+				.orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
 		//2、若不存在，向前端抛异常
 		if(count != 1){
-			throw new BusinessSystemException("获取该表数据抽取信息异常");
+			throw new BusinessException("获取该表数据抽取信息异常");
 		}
 		//3、若存在，则将存储目的地更新到对应的字段中，必须更新一条数据，否则抛出异常
 		DboExecute.updatesOrThrow("保存存储目的地失败", "update " + Data_extraction_def.TableName
@@ -177,7 +177,7 @@ public class StoDestStepConfAction extends BaseAction{
 				+ Data_store_layer.TableName);
 		//2、如果结果集为空，表示系统中没有定义存储目的地
 		if(result.isEmpty()){
-			throw new BusinessSystemException("系统中未定义存储目的地信息，请联系管理员");
+			throw new BusinessException("系统中未定义存储目的地信息，请联系管理员");
 		}
 		//3、尝试获取该表定义好的存储目的地，如果之前定义过，那么就能获取到数据，否则就获取不到
 		Result tbStoRela = Dbo.queryResult("select drt.dsl_id from " + Data_relation_table.TableName + " drt" +
@@ -263,7 +263,7 @@ public class StoDestStepConfAction extends BaseAction{
 		Result resultOne = Dbo.queryResult("select tc.column_id, tc.colume_name, tc.colume_ch_name from "
 				+ Table_column.TableName + " tc where tc.table_id = ? and tc.is_get = ?", tableId, IsFlag.Shi.getCode());
 		if(resultOne.isEmpty()){
-			throw new BusinessSystemException("未找到属于该表的字段");
+			throw new BusinessException("未找到属于该表的字段");
 		}
 		//2、根据存储目的地ID获取附加信息(结果集2)
 		Result resultTwo = Dbo.queryResult("select dsla.dsla_storelayer from " +
@@ -327,7 +327,7 @@ public class StoDestStepConfAction extends BaseAction{
 				Long columnId = param.getColumnId();
 				long[] dsladIds = param.getDsladIds();
 				if(dsladIds == null || !(dsladIds.length > 0)){
-					throw new BusinessSystemException("请检查配置信息，并为待保存的字段选择其是否具有特殊性质");
+					throw new BusinessException("请检查配置信息，并为待保存的字段选择其是否具有特殊性质");
 				}
 				for(long dsladId : dsladIds){
 					Column_storage_info columnStorageInfo = new Column_storage_info();
@@ -339,7 +339,7 @@ public class StoDestStepConfAction extends BaseAction{
 							" dsla where dsl.dsl_id = dsla.dsl_id and dsla.dslad_id = ?", dsladId);
 					//如果获取不到或者获取到的值有多个，则抛出异常
 					if(list.isEmpty() || list.size() > 1){
-						throw new BusinessSystemException("通过字段存储附加信息获得存储目的地信息出错");
+						throw new BusinessException("通过字段存储附加信息获得存储目的地信息出错");
 					}
 					//如果获取到的存储目的地为HBASE并且csiNumber不为空，则说明该列是作为hbase的rowkey
 					if(param.getCsiNumber() != null && store_type.HBASE.getCode().equalsIgnoreCase((String) list.get(0))){
@@ -364,13 +364,13 @@ public class StoDestStepConfAction extends BaseAction{
 		List<Table_column> tableColumns = JSONArray.parseArray(columnString, Table_column.class);
 		//2、对集合的长度进行校验，如果集合为空，抛出异常
 		if(tableColumns.isEmpty()){
-			throw new BusinessSystemException("获取字段信息失败");
+			throw new BusinessException("获取字段信息失败");
 		}
 		//3、遍历集合，更新每个字段的中文名
 		for(int i = 0; i < tableColumns.size(); i++){
 			Table_column tableColumn = tableColumns.get(i);
 			if(tableColumn.getColumn_id() == null){
-				throw new BusinessSystemException("保存第" + i + 1 + "个字段的中文名必须关联字段ID");
+				throw new BusinessException("保存第" + i + 1 + "个字段的中文名必须关联字段ID");
 			}
 			DboExecute.updatesOrThrow("保存第" + i + 1 + "个字段的中文名失败", "update " +
 					Table_column.TableName + " set colume_ch_name = ? where column_id = ?",
@@ -407,7 +407,7 @@ public class StoDestStepConfAction extends BaseAction{
 
 		//3、校验，每张入库的表都必须有其对应的存储目的地
 		if(tableStorageInfos.size() != dataStoRelaParams.size()){
-			throw new BusinessSystemException("保存表存储信息失败，请确保入库的表都选择了存储目的地");
+			throw new BusinessException("保存表存储信息失败，请确保入库的表都选择了存储目的地");
 		}
 
 		//4、开始执行保存操作
@@ -415,7 +415,7 @@ public class StoDestStepConfAction extends BaseAction{
 			//4-1、删除该表原有的存储配置，重新插入新的数据
 			long count = Dbo.queryNumber("select count(1) from " + Table_storage_info.TableName +
 					" where table_id = ?", storageInfo.getTable_id()).orElseThrow(() ->
-					new BusinessSystemException("查询结果必须有且只有一条"));
+					new BusinessException("查询结果必须有且只有一条"));
 			if(count == 1){
 				//在table_storage_info表中查询到了数据，表示修改该表的存储信息
 				/*
@@ -440,10 +440,10 @@ public class StoDestStepConfAction extends BaseAction{
 			List<Object> list = Dbo.queryOneColumnList("select dbfile_format from " +
 					Data_extraction_def.TableName + " where table_id = ?", storageInfo.getTable_id());
 			if(list.isEmpty()){
-				throw new BusinessSystemException("获取采集表卸数文件格式失败");
+				throw new BusinessException("获取采集表卸数文件格式失败");
 			}
 			if(list.size() > 1){
-				throw new BusinessSystemException("获取采集表卸数文件格式失败");
+				throw new BusinessException("获取采集表卸数文件格式失败");
 			}
 			storageInfo.setFile_format((String) list.get(0));
 			//4-4、获取当前保存表的ID
@@ -455,7 +455,7 @@ public class StoDestStepConfAction extends BaseAction{
 					//将该张表的存储目的地保存到数据存储关系表中，有几个目的地，就保存几条
 					long[] dslIds = param.getDslIds();
 					if(dslIds == null || !(dslIds.length > 0)){
-						throw new BusinessSystemException("请检查配置信息，并为每张入库的表选择至少一个存储目的地");
+						throw new BusinessException("请检查配置信息，并为每张入库的表选择至少一个存储目的地");
 					}
 					for(long dslId : dslIds){
 						Data_relation_table relationTable = new Data_relation_table();
@@ -484,19 +484,19 @@ public class StoDestStepConfAction extends BaseAction{
 		List<Table_info> tableInfos = JSONArray.parseArray(tableString, Table_info.class);
 		//2、对集合的长度进行校验，如果集合为空，抛出异常
 		if(tableInfos.isEmpty()){
-			throw new BusinessSystemException("获取表信息失败");
+			throw new BusinessException("获取表信息失败");
 		}
 		//3、遍历集合，更新每张表的中文名和表名
 		for(int i = 0; i < tableInfos.size(); i++){
 			Table_info tableInfo = tableInfos.get(i);
 			if(tableInfo.getTable_id() == null){
-				throw new BusinessSystemException("保存第" + i + 1 + "张表的名称信息必须关联字段ID");
+				throw new BusinessException("保存第" + i + 1 + "张表的名称信息必须关联字段ID");
 			}
 			if(StringUtil.isBlank(tableInfo.getTable_name())){
-				throw new BusinessSystemException("第" + i + 1 + "张表的表名必须填写");
+				throw new BusinessException("第" + i + 1 + "张表的表名必须填写");
 			}
 			if(StringUtil.isBlank(tableInfo.getTable_ch_name())){
-				throw new BusinessSystemException("第" + i + 1 + "张表的表中文名必须填写");
+				throw new BusinessException("第" + i + 1 + "张表的表中文名必须填写");
 			}
 			DboExecute.updatesOrThrow("保存第" + i + "张表名称信息失败", "update " +
 							Table_info.TableName + " set table_name = ?, table_ch_name = ? where table_id = ?",
@@ -514,18 +514,18 @@ public class StoDestStepConfAction extends BaseAction{
 		for(int i = 0; i < tableStorageInfos.size(); i++){
 			Table_storage_info storageInfo = tableStorageInfos.get(i);
 			if(storageInfo.getTable_id() == null){
-				throw new BusinessSystemException("第" + i + 1 + "条数据保存表存储配置时，请关联表");
+				throw new BusinessException("第" + i + 1 + "条数据保存表存储配置时，请关联表");
 			}
 			if(StringUtil.isBlank(storageInfo.getStorage_type())){
-				throw new BusinessSystemException("第" + i + 1 + "条数据保存表存储配置时，请选择进数方式");
+				throw new BusinessException("第" + i + 1 + "条数据保存表存储配置时，请选择进数方式");
 			}
 			StorageType.ofEnumByCode(storageInfo.getStorage_type());
 			if(StringUtil.isBlank(storageInfo.getIs_zipper())){
-				throw new BusinessSystemException("第" + i + 1 + "条数据保存表存储配置时，请选择是否拉链存储");
+				throw new BusinessException("第" + i + 1 + "条数据保存表存储配置时，请选择是否拉链存储");
 			}
 			IsFlag.ofEnumByCode(storageInfo.getIs_zipper());
 			if(storageInfo.getStorage_time() == null){
-				throw new BusinessSystemException("第" + i + 1 + "条数据保存表存储配置时，请填写存储期限");
+				throw new BusinessException("第" + i + 1 + "条数据保存表存储配置时，请填写存储期限");
 			}
 		}
 	}

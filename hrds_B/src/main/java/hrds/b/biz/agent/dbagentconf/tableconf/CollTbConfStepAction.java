@@ -8,7 +8,6 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
-import fd.ng.core.exception.BusinessSystemException;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
@@ -378,13 +377,13 @@ public class CollTbConfStepAction extends BaseAction {
 		List<Table_info> tableInfos = JSONArray.parseArray(tableInfoString, Table_info.class);
 		List<CollTbConfParam> tbConfParams = JSONArray.parseArray(collTbConfParamString, CollTbConfParam.class);
 		if(tableInfos.isEmpty()){
-			throw new BusinessSystemException("请配置采集表信息");
+			throw new BusinessException("请配置采集表信息");
 		}
 		if(tbConfParams.isEmpty()){
-			throw new BusinessSystemException("请配置采集字段参数");
+			throw new BusinessException("请配置采集字段参数");
 		}
 		if(tableInfos.size() != tbConfParams.size()){
-			throw new BusinessSystemException("请在传参时确保采集表数组和配置采集字段信息一一对应");
+			throw new BusinessException("请在传参时确保采集表数组和配置采集字段信息一一对应");
 		}
 		//1、不论新增采集表还是编辑采集表，页面上所有的内容都可能被修改，所以直接执行SQL，按database_id删除table_info表
 		// 中,所有非自定义采集SQL的数据，不关心删除数据的条数
@@ -451,7 +450,7 @@ public class CollTbConfStepAction extends BaseAction {
 				List<Object> storageIdList = Dbo.queryOneColumnList(" select storage_id from "+
 						Table_storage_info.TableName + " where table_id = ? ", oldID);
 				if(storageIdList.size() > 1){
-					throw new BusinessSystemException("第" + i + "张表的表存储信息不唯一");
+					throw new BusinessException("第" + i + "张表的表存储信息不唯一");
 				}
 				if(!storageIdList.isEmpty()){
 					long storageId = (long)storageIdList.get(0);
@@ -494,7 +493,7 @@ public class CollTbConfStepAction extends BaseAction {
 				List<Object> extractDefIdList = Dbo.queryOneColumnList(" select ded_id from "
 						+ Data_extraction_def.TableName + " where table_id = ? ", oldID);
 				if(extractDefIdList.size() > 1){
-					throw new BusinessSystemException("第" + i + "张表的数据抽取定义信息不唯一");
+					throw new BusinessException("第" + i + "张表的数据抽取定义信息不唯一");
 				}
 				if(!extractDefIdList.isEmpty()){
 					long dedId = (long)extractDefIdList.get(0);
@@ -556,13 +555,13 @@ public class CollTbConfStepAction extends BaseAction {
 		if(!tableColumns.isEmpty()){
 			for(Table_column tableColumn : tableColumns){
 				if(StringUtil.isBlank(tableColumn.getColume_name())){
-					throw new BusinessSystemException("保存" + tableInfo.getTable_name() + "采集列时，字段名不能为空");
+					throw new BusinessException("保存" + tableInfo.getTable_name() + "采集列时，字段名不能为空");
 				}
 				if(StringUtil.isBlank(tableColumn.getColumn_type())){
-					throw new BusinessSystemException("保存" + tableInfo.getTable_name() + "采集列时，字段类型不能为空");
+					throw new BusinessException("保存" + tableInfo.getTable_name() + "采集列时，字段类型不能为空");
 				}
 				if(StringUtil.isBlank(tableColumn.getIs_get())){
-					throw new BusinessSystemException("保存" + tableInfo.getTable_name() + "采集列时，是否采集标识位不能为空");
+					throw new BusinessException("保存" + tableInfo.getTable_name() + "采集列时，是否采集标识位不能为空");
 				}
 				//设置主键
 				tableColumn.setColumn_id(PrimayKeyGener.getNextId());
@@ -591,7 +590,7 @@ public class CollTbConfStepAction extends BaseAction {
 				tableColumn.add(Dbo.db());
 			}
 		}else{
-			throw new BusinessSystemException("保存" + tableInfo.getTable_name() + "的采集字段失败");
+			throw new BusinessException("保存" + tableInfo.getTable_name() + "的采集字段失败");
 		}
 	}
 

@@ -5,7 +5,6 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
-import fd.ng.core.exception.BusinessSystemException;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.resultset.Result;
@@ -442,20 +441,20 @@ public class CleanConfStepAction extends BaseAction{
 		//3、如果配置了字符替换
 		if(IsFlag.ofEnumByCode(replaceFlag) == IsFlag.Shi){
 			if(!(oriFieldArr.length > 0)){
-				throw new BusinessSystemException("保存所有表字符替换清洗设置时，缺失原字符");
+				throw new BusinessException("保存所有表字符替换清洗设置时，缺失原字符");
 			}
 			if(!(replaceFeildArr.length > 0)){
-				throw new BusinessSystemException("保存所有表字符替换清洗设置时，缺失替换字符");
+				throw new BusinessException("保存所有表字符替换清洗设置时，缺失替换字符");
 			}
 			for(int i = 0; i < oriFieldArr.length; i++){
 				String oriField = oriFieldArr[i];
 				String replaceFeild = replaceFeildArr[i];
 				//这里使用isEmpty的原因是，在保存字符替换的时候，原字符和替换字符都可能是空格
 				if(StringUtil.isEmpty(oriField)){
-					throw new BusinessSystemException("保存所有表字符替换清洗时，请填写第"+ (i + 1) +"条数据的原字符");
+					throw new BusinessException("保存所有表字符替换清洗时，请填写第"+ (i + 1) +"条数据的原字符");
 				}
 				if(StringUtil.isEmpty(replaceFeild)){
-					throw new BusinessSystemException("保存所有表字符替换清洗时，请填写第"+ (i + 1) +"条数据的替换字符");
+					throw new BusinessException("保存所有表字符替换清洗时，请填写第"+ (i + 1) +"条数据的替换字符");
 				}
 				//3-1、构建Clean_parameter对象，设置原字段，替换后字段
 				Clean_parameter allTbClean = new Clean_parameter();
@@ -666,22 +665,22 @@ public class CleanConfStepAction extends BaseAction{
 		for(int i = 0; i < columnSplits.size(); i++){
 			Column_split columnSplit = columnSplits.get(i);
 			if(StringUtil.isBlank(columnSplit.getSplit_type())){
-				throw new BusinessSystemException("保存字符拆分信息时，第"+ (i + 1) +"条数据拆分方式不能为空");
+				throw new BusinessException("保存字符拆分信息时，第"+ (i + 1) +"条数据拆分方式不能为空");
 			}
 			CharSplitType charSplitType = CharSplitType.ofEnumByCode(columnSplit.getSplit_type());
 			if(charSplitType == CharSplitType.ZhiDingFuHao){
 				if(StringUtil.isBlank(columnSplit.getSplit_sep())){
-					throw new BusinessSystemException("按照自定符号进行拆分，第"+ (i + 1) +"条数据必须填写自定义符号");
+					throw new BusinessException("按照自定符号进行拆分，第"+ (i + 1) +"条数据必须填写自定义符号");
 				}
 				if(columnSplit.getSeq() == null){
-					throw new BusinessSystemException("按照自定符号进行拆分，第"+ (i + 1) +"条数据必须填写值位置");
+					throw new BusinessException("按照自定符号进行拆分，第"+ (i + 1) +"条数据必须填写值位置");
 				}
 			}else if(charSplitType == CharSplitType.PianYiLiang){
 				if(StringUtil.isBlank(columnSplit.getCol_offset())){
-					throw new BusinessSystemException("按照偏移量进行拆分，第"+ (i + 1) +"条数据必须填写字段偏移量");
+					throw new BusinessException("按照偏移量进行拆分，第"+ (i + 1) +"条数据必须填写字段偏移量");
 				}
 			}else{
-				throw new BusinessSystemException("第"+ (i + 1) +"条数据拆分方式错误");
+				throw new BusinessException("第"+ (i + 1) +"条数据拆分方式错误");
 			}
 			//4、为Column_split实体类对象中必须有值的属性设置值
 			columnSplit.setCol_split_id(PrimayKeyGener.getNextId());
@@ -835,13 +834,13 @@ public class CleanConfStepAction extends BaseAction{
 		for(int i = 0; i < columnMerges.size(); i++){
 			Column_merge columnMerge = columnMerges.get(i);
 			if(StringUtil.isBlank(columnMerge.getOld_name())){
-				throw new BusinessSystemException("保存列合并时，第" + (i + 1) + "条数据必须选择要合并的字段");
+				throw new BusinessException("保存列合并时，第" + (i + 1) + "条数据必须选择要合并的字段");
 			}
 			if(StringUtil.isBlank(columnMerge.getCol_name())){
-				throw new BusinessSystemException("保存列合并时，第" + (i + 1) + "条数据必须填写合并后字段名称");
+				throw new BusinessException("保存列合并时，第" + (i + 1) + "条数据必须填写合并后字段名称");
 			}
 			if(StringUtil.isBlank(columnMerge.getCol_type())){
-				throw new BusinessSystemException("保存列合并时，第" + (i + 1) + "条数据必须填写字段类型");
+				throw new BusinessException("保存列合并时，第" + (i + 1) + "条数据必须填写字段类型");
 			}
 			//4、保存Column_merge实体类对象
 			columnMerge.setTable_id(tableId);
@@ -903,10 +902,10 @@ public class CleanConfStepAction extends BaseAction{
 	public void saveAllTbCleanOrder(long colSetId, String sort){
 		//1、使用colSetId在database_set表中查找，看是否能找到对应的记录
 		long count = Dbo.queryNumber("select count(1) from " + Database_set.TableName + " where database_id = ?"
-				, colSetId).orElseThrow(() -> new BusinessSystemException("查询出的数据必须有且只有一条"));
+				, colSetId).orElseThrow(() -> new BusinessException("查询出的数据必须有且只有一条"));
 		//2、如果没有找到，直接抛异常
 		if(count != 1){
-			throw new BusinessSystemException("未能找到数据库采集任务");
+			throw new BusinessException("未能找到数据库采集任务");
 		}
 		//3、如果找到了，根据table_id,在table_info表中找到对应的记录，将sort更新进去
 		DboExecute.updatesOrThrow("保存全表清洗优先级失败", "update " +
@@ -925,10 +924,10 @@ public class CleanConfStepAction extends BaseAction{
 	public Result getAllTbCleanOrder(long colSetId){
 		//1、使用colSetId在database_set表中查找，看是否能找到对应的记录
 		long count = Dbo.queryNumber("select count(1) from " + Database_set.TableName + " where database_id = ?"
-				, colSetId).orElseThrow(() -> new BusinessSystemException("查询出的数据必须有且只有一条"));
+				, colSetId).orElseThrow(() -> new BusinessException("查询出的数据必须有且只有一条"));
 		//2、如果没有找到，直接抛异常
 		if(count != 1){
-			throw new BusinessSystemException("未能找到数据库采集任务");
+			throw new BusinessException("未能找到数据库采集任务");
 		}
 		//3、如果找到了，根据colSetId,在database_set表中找到对应的记录，并返回
 		return Dbo.queryResult("select cp_or from " + Database_set.TableName + " where database_id = ?", colSetId);
@@ -963,10 +962,10 @@ public class CleanConfStepAction extends BaseAction{
 		//1、在数据库设置表中，根据tableId和colSetId查找该采集任务中是否存在该表
 		long count = Dbo.queryNumber("select count(1) from " + Table_info.TableName + " where table_id = ? and " +
 				"database_id = ?", tableId, colSetId).orElseThrow(() ->
-				new BusinessSystemException("查询结果必须有且只有一条"));
+				new BusinessException("查询结果必须有且只有一条"));
 		//2、如果不存在，直接抛异常
 		if(count != 1){
-			throw new BusinessSystemException("在当前数据库采集任务中未找到该采集表");
+			throw new BusinessException("在当前数据库采集任务中未找到该采集表");
 		}
 		//3、如果存在，查询整表清洗优先级并返回
 		return Dbo.queryResult("select ti_or from " + Table_info.TableName + " where table_id = ?", tableId);
@@ -1001,10 +1000,10 @@ public class CleanConfStepAction extends BaseAction{
 		//1、在table_column表中，判断列是否存在
 		long count = Dbo.queryNumber("select count(1) from " + Table_column.TableName + " where column_id = ? " +
 				"and table_id = ?", columnId, tableId).orElseThrow(() ->
-				new BusinessSystemException("查询结果必须有且只有一条数据"));
+				new BusinessException("查询结果必须有且只有一条数据"));
 		//2、不存在，直接抛异常
 		if(count != 1){
-			throw new BusinessSystemException("未找到字段");
+			throw new BusinessException("未找到字段");
 		}
 		//3、若存在，查询出该列的清洗优先级返回给前端
 		return Dbo.queryResult("select tc_or from " + Table_column.TableName + " where column_id = ?", columnId);

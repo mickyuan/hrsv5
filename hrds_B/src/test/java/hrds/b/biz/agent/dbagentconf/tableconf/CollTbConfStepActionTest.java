@@ -4,7 +4,6 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.DocClass;
-import fd.ng.core.exception.BusinessSystemException;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
@@ -804,13 +803,13 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 				}
 			}
 
-			long countOne = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_id = ?", AGENT_INFO_TABLE_ID).orElseThrow(() -> new BusinessSystemException("查询结果必须有且只有一条"));
+			long countOne = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_id = ?", AGENT_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
 			assertThat("使用老的table_id在table_info表中查不到数据", countOne, is(0L));
-			long countTwo = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_id = ?", DATA_SOURCE_TABLE_ID).orElseThrow(() -> new BusinessSystemException("查询结果必须有且只有一条"));
+			long countTwo = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_id = ?", DATA_SOURCE_TABLE_ID).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
 			assertThat("使用老的table_id在table_info表中查不到数据", countTwo, is(0L));
-			long countThree = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " where table_id = ?", DATA_SOURCE_TABLE_ID).orElseThrow(() -> new BusinessSystemException("查询结果必须有且只有一条"));
+			long countThree = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " where table_id = ?", DATA_SOURCE_TABLE_ID).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
 			assertThat("使用老的table_id在table_column表中查不到数据", countThree, is(0L));
-			long countFour = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " where table_id = ?", AGENT_INFO_TABLE_ID).orElseThrow(() -> new BusinessSystemException("查询结果必须有且只有一条"));
+			long countFour = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " where table_id = ?", AGENT_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
 			assertThat("使用老的table_id在table_column表中查不到数据", countFour, is(0L));
 
 			//验证完毕后，将自己在本方法中构造的数据删除掉(table_info表)
@@ -1049,7 +1048,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		//正确数据访问1：在database_id为1001的数据库采集任务下构造新增采集ftp_collect表的数据，不选择采集列和列排序，设置并行抽取SQL为select * from ftp_collect limit 10;(需要和agent进行交互获取该表的字段)
 		try(DatabaseWrapper db = new DatabaseWrapper()){
 			//在新增前，查询数据库，table_info表中应该没有采集ftp_collect表的信息
-			long count = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_name = ?", "ftp_collect").orElseThrow(() -> new BusinessSystemException("查询结果必须有且只有一条"));
+			long count = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_name = ?", "ftp_collect").orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
 			assertThat("在新增前，查询数据库，table_info表中应该没有采集ftp_collect表的信息", count, is(0L));
 		}
 
@@ -1167,7 +1166,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 
 		try(DatabaseWrapper db = new DatabaseWrapper()){
 			//在新增前，查询数据库，table_info表中应该没有采集object_collect表的信息
-			long count = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_name = ?", "object_collect").orElseThrow(() -> new BusinessSystemException("查询结果必须有且只有一条"));
+			long count = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_name = ?", "object_collect").orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
 			assertThat("在新增前，查询数据库，table_info表中应该没有采集object_collect表的信息", count, is(0L));
 		}
 		Table_info objInfo = new Table_info();
@@ -1395,7 +1394,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 
 		try(DatabaseWrapper db = new DatabaseWrapper()){
 			//断言table_info表中的内容是否符合期望
-			long count = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_id = ?", CODE_INFO_TABLE_ID).orElseThrow(() -> new BusinessSystemException("查询结果必须有且只有一条"));
+			long count = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_id = ?", CODE_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
 			Result tableInfo = SqlOperator.queryResult(db, "select * from " + Table_info.TableName + " where table_name = ?", "code_info");
 			assertThat("code_info表在table_info表中有且只有一条数据，但是该条数据的id和构造初始化数据时不一致，导致这个事情的原因是保存操作全部都是按照先删除后新增的逻辑执行的", count, is(0L));
 			assertThat("code_info表在table_info表中有且只有一条数据，但是该条数据的id和构造初始化数据时不一致，导致这个事情的原因是保存操作全部都是按照先删除后新增的逻辑执行的", tableInfo.getRowCount(), is(1));
@@ -1403,7 +1402,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			long tableId = tableInfo.getLong(0, "table_id");
 
 			//断言table_column表中的内容是否符合期望
-			long tbColCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " where table_id = ?", CODE_INFO_TABLE_ID).orElseThrow(() -> new BusinessSystemException("查询结果必须有且只有一条"));
+			long tbColCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " where table_id = ?", CODE_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
 			Result tableColumn = SqlOperator.queryResult(db, "select * from " + Table_column.TableName + " where table_id = ?", tableId);
 			assertThat("code_info表的采集列在table_column表中有数据，数据有三条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在table_column表中已经查不到数据了", tbColCount, is(0L));
 			assertThat("code_info表的采集列在table_column表中有数据，数据有三条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在table_column表中已经查不到数据了", tableColumn.getRowCount(), is(3));
@@ -1419,7 +1418,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 				}
 			}
 			//断言data_extraction_def表中的内容是否符合期望
-			long defCount = SqlOperator.queryNumber(db, "select count(1) from " + Data_extraction_def.TableName + " where table_id = ?", CODE_INFO_TABLE_ID).orElseThrow(() -> new BusinessSystemException("查询结果必须有且只有一条"));
+			long defCount = SqlOperator.queryNumber(db, "select count(1) from " + Data_extraction_def.TableName + " where table_id = ?", CODE_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
 			Result dataExtractionDef = SqlOperator.queryResult(db, "select * from " + Data_extraction_def.TableName + " where table_id = ?", tableId);
 			assertThat("code_info表的数据抽取定义信息在Data_extraction_def表中有数据，数据有1条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在data_extraction_def表中已经查不到数据了", defCount, is(0L));
 			assertThat("code_info表的数据抽取定义信息在Data_extraction_def表中有数据，数据有1条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在data_extraction_def表中已经查不到数据了", dataExtractionDef.getRowCount(), is(1));
@@ -1430,7 +1429,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			assertThat("code_info表的数据抽取定义信息在Data_extraction_def表中有数据，<落地存储目录>符合预期", dataExtractionDef.getString(0, "plane_url"), is("/home/hyshf"));
 
 			//断言table_clean表中的内容是否符合期望
-			long cleanCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_clean.TableName + " where table_id = ?", CODE_INFO_TABLE_ID).orElseThrow(() -> new BusinessSystemException("查询结果必须有且只有一条"));
+			long cleanCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_clean.TableName + " where table_id = ?", CODE_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
 			Result tableClean = SqlOperator.queryResult(db, "select * from " + Table_clean.TableName + " where table_id = ?", tableId);
 			assertThat("code_info表的表清洗信息在Table_clean表中有数据，数据有2条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在Table_clean表中已经查不到数据了", cleanCount, is(0L));
 			assertThat("code_info表的表清洗信息在Table_clean表中有数据，数据有2条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在Table_clean表中已经查不到数据了", tableClean.getRowCount(), is(2));
@@ -1447,7 +1446,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			}
 
 			//断言table_srorage_info表中的内容是否符合期望
-			long storageCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_storage_info.TableName + " where table_id = ?", CODE_INFO_TABLE_ID).orElseThrow(() -> new BusinessSystemException("查询结果必须有且只有一条"));
+			long storageCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_storage_info.TableName + " where table_id = ?", CODE_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
 			Result tableStorage = SqlOperator.queryResult(db, "select * from " + Table_storage_info.TableName + " where table_id = ?", tableId);
 			assertThat("code_info表的表存储信息在Table_storage_info表中有数据，数据有1条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在Table_storage_info表中已经查不到数据了", storageCount, is(0L));
 			assertThat("code_info表的表存储信息在Table_storage_info表中有数据，数据有1条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在Table_storage_info表中已经查不到数据了", tableStorage.getRowCount(), is(1));
@@ -1456,7 +1455,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 
 
 			//断言column_merge表中的内容是否符合期望
-			long mergeCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_merge.TableName + " where table_id = ?", CODE_INFO_TABLE_ID).orElseThrow(() -> new BusinessSystemException("查询结果必须有且只有一条"));
+			long mergeCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_merge.TableName + " where table_id = ?", CODE_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
 			Result columnMerge = SqlOperator.queryResult(db, "select * from " + Column_merge.TableName + " where table_id = ?", tableId);
 			assertThat("code_info表的列合并信息在column_merge表中有数据，数据有1条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在column_merge表中已经查不到数据了", mergeCount, is(0L));
 			assertThat("code_info表的列合并信息在column_merge表中有数据，数据有1条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在column_merge表中已经查不到数据了", columnMerge.getRowCount(), is(1));
@@ -1485,10 +1484,10 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 
 		try(DatabaseWrapper db = new DatabaseWrapper()){
 			//在新增前，查询数据库，table_info表中应该没有采集ftp_collect表的信息
-			long count = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_name = ?", "ftp_collect").orElseThrow(() -> new BusinessSystemException("查询结果必须有且只有一条"));
+			long count = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_name = ?", "ftp_collect").orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
 			assertThat("在新增前，查询数据库，table_info表中应该没有采集ftp_collect表的信息", count, is(0L));
 			//在新增前，查询数据库，table_info表中应该没有采集object_collect表的信息
-			long countTwo = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_name = ?", "object_collect").orElseThrow(() -> new BusinessSystemException("查询结果必须有且只有一条"));
+			long countTwo = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_name = ?", "object_collect").orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
 			assertThat("在新增前，查询数据库，table_info表中应该没有采集object_collect表的信息", countTwo, is(0L));
 		}
 
