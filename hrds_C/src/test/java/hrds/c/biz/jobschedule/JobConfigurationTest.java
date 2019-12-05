@@ -20,10 +20,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.lang.reflect.Type;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.OptionalLong;
+import java.util.*;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -278,10 +275,10 @@ public class JobConfigurationTest extends WebBaseTestCase {
                     resourceRelation.setResource_type("resource");
                     resourceRelation.setEtl_job("测试作业3");
                 } else if (i == 1) {
-                    resourceRelation.setResource_type("resource1");
+                    resourceRelation.setResource_type("resource2");
                     resourceRelation.setEtl_job("测试作业4");
                 } else {
-                    resourceRelation.setResource_type("resource2");
+                    resourceRelation.setResource_type("resource3");
                     resourceRelation.setEtl_job("测试作业5");
                 }
                 resourceRelation.setResource_req(1);
@@ -340,7 +337,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
             }
             // 11.构造Etl_dependency表测试数据
             Etl_dependency etlDependency = new Etl_dependency();
-            for (int i = 0; i < 2; i++) {
+            for (int i = 0; i < 4; i++) {
                 etlDependency.setEtl_sys_cd(EtlSysCd);
                 etlDependency.setPre_etl_sys_cd(EtlSysCd);
                 if (i == 0) {
@@ -349,9 +346,15 @@ public class JobConfigurationTest extends WebBaseTestCase {
                 } else if (i == 1) {
                     etlDependency.setEtl_job("测试作业5");
                     etlDependency.setPre_etl_job("测试作业7");
+                } else if (i == 2) {
+                    etlDependency.setEtl_job("测试作业5");
+                    etlDependency.setPre_etl_job("测试作业8");
+                } else if (i == 3) {
+                    etlDependency.setEtl_job("测试作业8");
+                    etlDependency.setPre_etl_job("测试作业1");
                 }
                 etlDependency.setMain_serv_sync(Main_Server_Sync.YES.getCode());
-                etlDependency.setStatus(IsFlag.Shi.getCode());
+                etlDependency.setStatus(Status.TRUE.getCode());
                 num = etlDependency.add(db);
                 assertThat("测试数据etl_job_temp_para初始化", num, is(1));
             }
@@ -561,11 +564,11 @@ public class JobConfigurationTest extends WebBaseTestCase {
                     "2.错误的数据访问1，etl_sys_cd不存在" +
                     "3.错误的数据访问2，sub_sys_cd不存在")
     @Test
-    public void searchEtlSubSys() {
+    public void searchEtlSubSysById() {
         // 1.正常的数据访问1，数据都正常
         String bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
                 .addData("sub_sys_cd", SubSysCd)
-                .post(getActionUrl("searchEtlSubSys"))
+                .post(getActionUrl("searchEtlSubSysById"))
                 .getBodyString();
         ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                 .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
@@ -578,7 +581,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
         // 2.错误的数据访问1，etl_sys_cd不存在
         bodyString = new HttpClient().addData("etl_sys_cd", "etlSysCd")
                 .addData("sub_sys_cd", SubSysCd)
-                .post(getActionUrl("searchEtlSubSys"))
+                .post(getActionUrl("searchEtlSubSysById"))
                 .getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                 .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
@@ -586,7 +589,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
         // 3.错误的数据访问2，sub_sys_cd不存在
         bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
                 .addData("sub_sys_cd", "subSysCd1")
-                .post(getActionUrl("searchEtlSubSys"))
+                .post(getActionUrl("searchEtlSubSysById"))
                 .getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                 .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
@@ -886,7 +889,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
             OptionalLong optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
                             Etl_sub_sys_list.TableName + " where etl_sys_cd=? and sub_sys_cd in (?,?)",
                     EtlSysCd, SubSysCd5, SubSysCd4);
-            assertThat("删除操作前，data_source表中的确存在这样一条数据", optionalLong.
+            assertThat("删除操作前，Etl_sub_sys_list表中的确存在这样一条数据", optionalLong.
                     orElse(Long.MIN_VALUE), is(2L));
             String bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
                     .addData("sub_sys_cd", new String[]{SubSysCd5, SubSysCd4})
@@ -1516,28 +1519,23 @@ public class JobConfigurationTest extends WebBaseTestCase {
         // 1.正确的数据访问1，数据都正确
         String bodyString = new HttpClient()
                 .addData("etl_sys_cd", EtlSysCd)
-                .addData("etl_job", "测试作业8")
                 .post(getActionUrl("searchEtlJobDef"))
                 .getBodyString();
         ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
         assertThat(ar.isSuccess(), is(true));
-        Map<Object, Object> etlJobDef = ar.getDataForMap();
-        assertThat(etlJobDef.get("disp_type"), is(Dispatch_Type.DEPENDENCE.getCode()));
-        assertThat(etlJobDef.get("pro_name"), is("zy.perl"));
-        assertThat(etlJobDef.get("disp_freq"), is(Dispatch_Frequency.YEARLY.getCode()));
-        assertThat(etlJobDef.get("etl_job_desc"), is("测试作业定义8"));
-        assertThat(etlJobDef.get("job_eff_flag"), is(Job_Effective_Flag.YES.getCode()));
-        assertThat(etlJobDef.get("today_disp"), is(Today_Dispatch_Flag.YES.getCode()));
-        assertThat(etlJobDef.get("pro_type"), is(Pro_Type.PERL.getCode()));
-        assertThat(etlJobDef.get("sub_sys_cd"), is(SubSysCd2));
-        assertThat(etlJobDef.get("com_exe_num").toString(), is(String.valueOf(0)));
-        assertThat(etlJobDef.get("disp_offset").toString(), is(String.valueOf(0)));
-        assertThat(etlJobDef.get("exe_num").toString(), is(String.valueOf(0)));
-        assertThat(etlJobDef.get("pro_para").toString(), is("1"));
-        assertThat(etlJobDef.get("overtime_val").toString(), is(String.valueOf(0)));
-        assertThat(etlJobDef.get("job_disp_status"), is(Job_Status.ERROR.getCode()));
-        assertThat(etlJobDef.get("pro_dic"), is("/home/hyshf/dhw"));
+        List<String> etlJobList = (List<String>) ar.getData();
+        assertThat(etlJobList.contains("测试作业0"), is(true));
+        assertThat(etlJobList.contains("测试作业1"), is(true));
+        assertThat(etlJobList.contains("测试作业2"), is(true));
+        assertThat(etlJobList.contains("测试作业3"), is(true));
+        assertThat(etlJobList.contains("测试作业4"), is(true));
+        assertThat(etlJobList.contains("测试作业5"), is(true));
+        assertThat(etlJobList.contains("测试作业6"), is(true));
+        assertThat(etlJobList.contains("测试作业7"), is(true));
+        assertThat(etlJobList.contains("测试作业8"), is(true));
+        assertThat(etlJobList.contains("测试作业9"), is(true));
+        assertThat(etlJobList.contains("测试作业10"), is(true));
         // 2.错误的数据访问1，etl_sys_cd不存在
         bodyString = new HttpClient()
                 .addData("etl_sys_cd", "zycxcs")
@@ -1549,8 +1547,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
         assertThat(ar.isSuccess(), is(false));
         // 3.错误的数据访问1，etl_job不存在
         bodyString = new HttpClient()
-                .addData("etl_sys_cd", EtlSysCd)
-                .addData("etl_job", "测试作业")
+                .addData("etl_sys_cd", "cxzymc")
                 .post(getActionUrl("searchEtlJobDef"))
                 .getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -2064,6 +2061,809 @@ public class JobConfigurationTest extends WebBaseTestCase {
         assertThat(ar.isSuccess(), is(false));
     }
 
+    @Method(desc = "新增保存etl资源定义信息",
+            logicStep = "1.正常的数据访问1，数据都正常" +
+                    "2.错误的数据访问1，etl_sys_cd为空" +
+                    "3.错误的数据访问2，etl_sys_cd为空格" +
+                    "4.错误的数据访问3，etl_sys_cd不存在" +
+                    "5.错误的数据访问4，resource_type为空" +
+                    "6.错误的数据访问5，resource_type为空格" +
+                    "7.错误的数据访问6，resource_type已存在" +
+                    "8.错误的数据访问7，resource_max为空" +
+                    "9.错误的数据访问8，resource_max为空格")
+    @Test
+    public void saveEtlResource() {
+        try (DatabaseWrapper db = new DatabaseWrapper()) {
+            // 1.正常的数据访问1，数据都正常
+            String bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("resource_type", "addResourceType1")
+                    .addData("resource_max", 10)
+                    .post(getActionUrl("saveEtlResource"))
+                    .getBodyString();
+            ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(true));
+            Etl_resource etl_resource = SqlOperator.queryOneObject(db, Etl_resource.class,
+                    "select * from " + Etl_resource.TableName + " where etl_sys_cd=? and resource_type=?"
+                    , EtlSysCd, "addResourceType1").orElseThrow(() ->
+                    new BusinessException("sql查询错误或映射错误！"));
+            assertThat(EtlSysCd, is(etl_resource.getEtl_sys_cd()));
+            assertThat("addResourceType1", is(etl_resource.getResource_type()));
+            assertThat(10, is(etl_resource.getResource_max()));
+            // 2.错误的数据访问1，etl_sys_cd为空
+            bodyString = new HttpClient().addData("etl_sys_cd", "")
+                    .addData("resource_type", "addResourceType1")
+                    .addData("resource_max", 10)
+                    .post(getActionUrl("saveEtlResource"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 3.错误的数据访问2，etl_sys_cd为空格
+            bodyString = new HttpClient().addData("etl_sys_cd", "")
+                    .addData("resource_type", "addResourceType1")
+                    .addData("resource_max", 10)
+                    .post(getActionUrl("saveEtlResource"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 4.错误的数据访问3，etl_sys_cd不存在
+            bodyString = new HttpClient().addData("etl_sys_cd", "bczydy")
+                    .addData("resource_type", "addResourceType1")
+                    .addData("resource_max", 10)
+                    .post(getActionUrl("saveEtlResource"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 5.错误的数据访问4，resource_type为空
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("resource_type", "")
+                    .addData("resource_max", 10)
+                    .post(getActionUrl("saveEtlResource"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 6.错误的数据访问5，resource_type为空格
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("resource_type", " ")
+                    .addData("resource_max", 10)
+                    .post(getActionUrl("saveEtlResource"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 7.错误的数据访问6，resource_type已存在
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("resource_type", "resource")
+                    .addData("resource_max", 10)
+                    .post(getActionUrl("saveEtlResource"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 8.错误的数据访问7，resource_max为空
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("resource_type", "addResource2")
+                    .addData("resource_max", "")
+                    .post(getActionUrl("saveEtlResource"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 9.错误的数据访问8，resource_max为空格
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("resource_type", "addResource3")
+                    .addData("resource_max", " ")
+                    .post(getActionUrl("saveEtlResource"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+        }
+
+    }
+
+    @Method(desc = "新增保存etl资源定义信息",
+            logicStep = "1.正常的数据访问1，数据都正常" +
+                    "2.错误的数据访问1，etl_sys_cd为空" +
+                    "3.错误的数据访问2，etl_sys_cd为空格" +
+                    "4.错误的数据访问3，etl_sys_cd不存在" +
+                    "5.错误的数据访问4，resource_type为空" +
+                    "6.错误的数据访问5，resource_type为空格" +
+                    "7.错误的数据访问6，resource_type已存在" +
+                    "8.错误的数据访问7，resource_max为空" +
+                    "9.错误的数据访问8，resource_max为空格")
+    @Test
+    public void updateEtlResource() {
+        try (DatabaseWrapper db = new DatabaseWrapper()) {
+            // 1.正常的数据访问1，数据都正常
+            String bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("resource_type", "resource")
+                    .addData("resource_max", 20)
+                    .post(getActionUrl("updateEtlResource"))
+                    .getBodyString();
+            ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(true));
+            Etl_resource etl_resource = SqlOperator.queryOneObject(db, Etl_resource.class,
+                    "select * from " + Etl_resource.TableName + " where etl_sys_cd=? and resource_type=?"
+                    , EtlSysCd, "resource").orElseThrow(() ->
+                    new BusinessException("sql查询错误或映射错误！"));
+            assertThat(EtlSysCd, is(etl_resource.getEtl_sys_cd()));
+            assertThat("resource", is(etl_resource.getResource_type()));
+            assertThat(20, is(etl_resource.getResource_max()));
+            // 2.错误的数据访问1，etl_sys_cd为空
+            bodyString = new HttpClient().addData("etl_sys_cd", "")
+                    .addData("resource_type", "upResourceType1")
+                    .addData("resource_max", 10)
+                    .post(getActionUrl("updateEtlResource"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 3.错误的数据访问2，etl_sys_cd为空格
+            bodyString = new HttpClient().addData("etl_sys_cd", "")
+                    .addData("resource_type", "upResourceType1")
+                    .addData("resource_max", 10)
+                    .post(getActionUrl("updateEtlResource"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 4.错误的数据访问3，etl_sys_cd不存在
+            bodyString = new HttpClient().addData("etl_sys_cd", "bczydy")
+                    .addData("resource_type", "upResourceType1")
+                    .addData("resource_max", 10)
+                    .post(getActionUrl("updateEtlResource"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 5.错误的数据访问4，resource_type为空
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("resource_type", "")
+                    .addData("resource_max", 10)
+                    .post(getActionUrl("updateEtlResource"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 6.错误的数据访问5，resource_type为空格
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("resource_type", " ")
+                    .addData("resource_max", 10)
+                    .post(getActionUrl("updateEtlResource"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 7.错误的数据访问6，resource_type不存在
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("resource_type", "resourceType")
+                    .addData("resource_max", 10)
+                    .post(getActionUrl("updateEtlResource"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 8.错误的数据访问7，resource_max为空
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("resource_type", "upResource2")
+                    .addData("resource_max", "")
+                    .post(getActionUrl("updateEtlResource"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 9.错误的数据访问8，resource_max为空格
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("resource_type", "upResource3")
+                    .addData("resource_max", " ")
+                    .post(getActionUrl("updateEtlResource"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+        }
+
+    }
+
+    @Method(desc = "删除作业资源定义",
+            logicStep = "1.正常的数据访问1，数据都正常" +
+                    "2.错误的数据访问1，etl_sys_cd不存在" +
+                    "3.错误的数据访问2，resource_type不存在")
+    @Test
+    public void deleteEtlResource() {
+        try (DatabaseWrapper db = new DatabaseWrapper()) {
+            // 1.正常的数据访问1，数据都正常
+            // 删除前查询数据库，确认预期删除的数据存在
+            OptionalLong optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
+                    Etl_resource.TableName + " where etl_sys_cd=? and resource_type=?", EtlSysCd, "resource");
+            assertThat("删除操作前，Etl_resource表中的确存在这样一条数据", optionalLong.
+                    orElse(Long.MIN_VALUE), is(1L));
+            String bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("resource_type", "resource")
+                    .post(getActionUrl("deleteEtlResource"))
+                    .getBodyString();
+            ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(true));
+            // 删除后查询数据库，确认预期数据已删除
+            optionalLong = SqlOperator.queryNumber(db, "select count(1) from " + Etl_resource.TableName
+                    + " where etl_sys_cd=? and resource_type=?", EtlSysCd, "resource");
+            assertThat("删除操作后，确认这条数据已删除", optionalLong.
+                    orElse(Long.MIN_VALUE), is(0L));
+            // 2.错误的数据访问1，etl_sys_cd不存在
+            bodyString = new HttpClient().addData("etl_sys_cd", "sccs1")
+                    .addData("resource_type", "resource")
+                    .post(getActionUrl("deleteEtlResource"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 3.错误的数据访问2，resource_type不存在
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("resource_type", "resourceType")
+                    .post(getActionUrl("deleteEtlResource"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+            assertThat(ar.isSuccess(), is(false));
+        }
+    }
+
+    @Method(desc = "批量删除作业资源定义",
+            logicStep = "1.正常的数据访问1，数据都正常" +
+                    "2.错误的数据访问1，etl_sys_cd不存在" +
+                    "3.错误的数据访问2，resource_type不存在")
+    @Test
+    public void batchDeleteEtlResource() {
+        try (DatabaseWrapper db = new DatabaseWrapper()) {
+            // 1.正常的数据访问1，数据都正常
+            // 删除前查询数据库，确认预期删除的数据存在
+            OptionalLong optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
+                            Etl_resource.TableName + " where etl_sys_cd=? and resource_type in (?,?)",
+                    EtlSysCd, "resource", "resource2");
+            assertThat("删除操作前，Etl_resource表中的确存在这样一条数据", optionalLong.
+                    orElse(Long.MIN_VALUE), is(2L));
+            String bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("resource_type", new String[]{"resource", "resource2"})
+                    .post(getActionUrl("batchDeleteEtlResource"))
+                    .getBodyString();
+            ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(true));
+            // 删除后查询数据库，确认预期数据已删除
+            optionalLong = SqlOperator.queryNumber(db, "select count(1) from " + Etl_resource.TableName
+                    + " where etl_sys_cd=? and resource_type in (?,?)", EtlSysCd, "resource", "resource2");
+            assertThat("删除操作后，确认这条数据已删除", optionalLong.
+                    orElse(Long.MIN_VALUE), is(0L));
+            // 2.错误的数据访问1，etl_sys_cd不存在
+            bodyString = new HttpClient().addData("etl_sys_cd", "sccs1")
+                    .addData("resource_type", "resource")
+                    .post(getActionUrl("batchDeleteEtlResource"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 3.错误的数据访问2，resource_type不存在
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("resource_type", new String[]{"resourceType", "resource3"})
+                    .post(getActionUrl("batchDeleteEtlResource"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+            assertThat(ar.isSuccess(), is(false));
+        }
+    }
+
+    @Method(desc = "分页查询作业资源分配信息",
+            logicStep = "1.正常的数据访问1，数据都正常" +
+                    "2.正确的数据访问2，etl_job不为空" +
+                    "3.正确的数据访问3，etl_job不为空" +
+                    "4.错误的数据访问1，etl_sys_cd不存在")
+    @Test
+    public void searchEtlJobResourceRelaByPage() {
+        // 1.正常的数据访问1，数据都正常
+        String bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                .addData("currPage", 1)
+                .addData("pageSize", 5)
+                .post(getActionUrl("searchEtlJobResourceRelaByPage"))
+                .getBodyString();
+        ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(true));
+        // 验证查询数据的正确性
+        Map<String, Object> dataForMap = ar.getDataForMap();
+        assertThat(dataForMap.get("etl_sys_name"), is("dhwcs"));
+        List<Map<String, Object>> jobResourceRelation = (List<Map<String, Object>>) dataForMap.
+                get("jobResourceRelation");
+        for (Map<String, Object> map : jobResourceRelation) {
+            String etl_job = map.get("etl_job").toString();
+            if ("测试作业3".equals(etl_job)) {
+                assertThat(map.get("etl_sys_cd"), is(EtlSysCd));
+                assertThat(map.get("resource_type"), is("resource"));
+                assertThat(map.get("resource_req").toString(), is(String.valueOf(1)));
+            } else if ("测试作业4".equals(etl_job)) {
+                assertThat(map.get("etl_sys_cd"), is(EtlSysCd));
+                assertThat(map.get("resource_type"), is("resource2"));
+                assertThat(map.get("resource_req").toString(), is(String.valueOf(1)));
+            }
+            if ("测试作业5".equals(etl_job)) {
+                assertThat(map.get("etl_sys_cd"), is(EtlSysCd));
+                assertThat(map.get("resource_type"), is("resource3"));
+                assertThat(map.get("resource_req").toString(), is(String.valueOf(1)));
+            }
+        }
+        // 2.正确的数据访问2，etl_job不为空
+        bodyString = new HttpClient()
+                .addData("etl_sys_cd", EtlSysCd)
+                .addData("etl_job", "3")
+                .addData("currPage", 1)
+                .addData("pageSize", 5)
+                .post(getActionUrl("searchEtlJobResourceRelaByPage"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(true));
+        dataForMap = ar.getDataForMap();
+        assertThat(dataForMap.get("etl_sys_name"), is("dhwcs"));
+        jobResourceRelation = (List<Map<String, Object>>) dataForMap.
+                get("jobResourceRelation");
+        for (Map<String, Object> map : jobResourceRelation) {
+            if ("测试作业3".equals(map.get("etl_job").toString())) {
+                assertThat(map.get("etl_sys_cd"), is(EtlSysCd));
+                assertThat(map.get("resource_type"), is("resource"));
+                assertThat(map.get("resource_req").toString(), is(String.valueOf(1)));
+            }
+        }
+        // 3.正确的数据访问3，etl_job不为空
+        bodyString = new HttpClient()
+                .addData("etl_sys_cd", EtlSysCd)
+                .addData("resource_type", "2")
+                .addData("currPage", 1)
+                .addData("pageSize", 5)
+                .post(getActionUrl("searchEtlJobResourceRelaByPage"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(true));
+        dataForMap = ar.getDataForMap();
+        assertThat(dataForMap.get("etl_sys_name"), is("dhwcs"));
+        jobResourceRelation = (List<Map<String, Object>>) dataForMap.
+                get("jobResourceRelation");
+        for (Map<String, Object> map : jobResourceRelation) {
+            if ("resource2".equals(map.get("resource_type").toString())) {
+                assertThat(map.get("etl_sys_cd"), is(EtlSysCd));
+                assertThat(map.get("etl_job"), is("测试作业4"));
+                assertThat(map.get("resource_req").toString(), is(String.valueOf(1)));
+            }
+        }
+        // 4.错误的数据访问1，etl_sys_cd不存在
+        bodyString = new HttpClient().addData("etl_sys_cd", "zysycs")
+                .addData("currPage", 1)
+                .addData("pageSize", 5)
+                .post(getActionUrl("searchEtlJobResourceRelaByPage"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(false));
+    }
+
+    @Method(desc = "根据工程编号、作业名称查询作业资源分配情况",
+            logicStep = "1.正常的数据访问1，数据都正常" +
+                    "2.正确的数据访问1，etl_sys_cd不存在" +
+                    "3.正确的数据访问2，etl_job不存在")
+    @Test
+    public void searchEtlJobResourceRela() {
+        // 1.正常的数据访问1，数据都正常
+        String bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                .addData("etl_job", "测试作业3")
+                .post(getActionUrl("searchEtlJobResourceRela"))
+                .getBodyString();
+        ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(true));
+        // 验证查询数据的正确性
+        Map<String, Object> dataForMap = ar.getDataForMap();
+        assertThat(dataForMap.get("etl_sys_cd"), is(EtlSysCd));
+        assertThat(dataForMap.get("etl_job"), is("测试作业3"));
+        assertThat(dataForMap.get("resource_type"), is("resource"));
+        assertThat(dataForMap.get("resource_req").toString(), is(String.valueOf(1)));
+        // 2.错误的数据访问1，etl_sys_cd不存在
+        bodyString = new HttpClient().addData("etl_sys_cd", "zysycs")
+                .addData("etl_job", "测试作业3")
+                .post(getActionUrl("searchEtlJobResourceRela"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(false));
+        // 3.错误的数据访问2，etl_job不存在
+        bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                .addData("etl_job", "测试作业")
+                .post(getActionUrl("searchEtlJobResourceRela"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(false));
+    }
+
+    @Method(desc = "新增保存资源分配信息",
+            logicStep = "1.正常的数据访问1，数据都正常" +
+                    "2.错误的数据访问1，etl_sys_cd为空" +
+                    "3.错误的数据访问2，etl_sys_cd为空格" +
+                    "4.错误的数据访问3，etl_sys_cd不存在" +
+                    "5.错误的数据访问4，etl_job为空" +
+                    "6.错误的数据访问5，etl_job为空格" +
+                    "7.错误的数据访问6，etl_job已经分配过资源" +
+                    "8.错误的数据访问7，resource_type为空" +
+                    "9.错误的数据访问8，resource_type为空格" +
+                    "10.错误的数据访问9，resource_req为空" +
+                    "11.错误的数据访问10，resource_req为空格" +
+                    "12.错误的数据访问11，resource_req大于资源阈值")
+    @Test
+    public void saveEtlJobResourceRela() {
+        try (DatabaseWrapper db = new DatabaseWrapper()) {
+            // 1.正常的数据访问1，数据都正常
+            String bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("etl_job", "测试作业0")
+                    .addData("resource_type", "resource")
+                    .addData("resource_req", 1)
+                    .post(getActionUrl("saveEtlJobResourceRela"))
+                    .getBodyString();
+            ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(true));
+            Etl_job_resource_rela resourceRela = SqlOperator.queryOneObject(db, Etl_job_resource_rela.class,
+                    "select * from " + Etl_job_resource_rela.TableName + " where etl_sys_cd=? and etl_job=?"
+                    , EtlSysCd, "测试作业0").orElseThrow(() ->
+                    new BusinessException("sql查询错误或映射错误！"));
+            assertThat(EtlSysCd, is(resourceRela.getEtl_sys_cd()));
+            assertThat("测试作业0", is(resourceRela.getEtl_job()));
+            assertThat("resource", is(resourceRela.getResource_type()));
+            assertThat(1, is(resourceRela.getResource_req()));
+            // 2.错误的数据访问1，etl_sys_cd为空
+            bodyString = new HttpClient().addData("etl_sys_cd", "")
+                    .addData("etl_job", "测试作业1")
+                    .addData("resource_type", "resource")
+                    .addData("resource_req", 2)
+                    .post(getActionUrl("saveEtlJobResourceRela"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 3.错误的数据访问2，etl_sys_cd为空格
+            bodyString = new HttpClient().addData("etl_sys_cd", " ")
+                    .addData("etl_job", "测试作业2")
+                    .addData("resource_type", "resource2")
+                    .addData("resource_req", 3)
+                    .post(getActionUrl("saveEtlJobResourceRela"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 4.错误的数据访问3，etl_sys_cd为不存在的数据
+            bodyString = new HttpClient().addData("etl_sys_cd", "xtcscs1")
+                    .addData("etl_job", "测试作业3")
+                    .addData("resource_type", "resource3")
+                    .addData("resource_req", 4)
+                    .post(getActionUrl("saveEtlJobResourceRela"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 5.错误的数据访问4，etl_job为空
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("etl_job", "")
+                    .addData("resource_type", "resource")
+                    .addData("resource_req", 2)
+                    .post(getActionUrl("saveEtlJobResourceRela"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 6.错误的数据访问5，etl_job为空格
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("etl_job", " ")
+                    .addData("resource_type", "resource2")
+                    .addData("resource_req", 3)
+                    .post(getActionUrl("saveEtlJobResourceRela"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 7.错误的数据访问6，etl_job已经分配过资源
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("etl_job", "测试作业3")
+                    .addData("resource_type", "resource3")
+                    .addData("resource_req", 4)
+                    .post(getActionUrl("saveEtlJobResourceRela"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 8.错误的数据访问7，resource_type为空
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("etl_job", "测试作业2")
+                    .addData("resource_type", "")
+                    .addData("resource_req", 2)
+                    .post(getActionUrl("saveEtlJobResourceRela"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 9.错误的数据访问8，resource_type为空格
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("etl_job", "测试作业2")
+                    .addData("resource_type", " ")
+                    .addData("resource_req", 3)
+                    .post(getActionUrl("saveEtlJobResourceRela"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 10.错误的数据访问7，resource_req为空
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("etl_job", "测试作业2")
+                    .addData("resource_type", "resource")
+                    .addData("resource_req", "")
+                    .post(getActionUrl("saveEtlJobResourceRela"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 11.错误的数据访问10，resource_req为空格
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("etl_job", "测试作业2")
+                    .addData("resource_type", "resource")
+                    .addData("resource_req", " ")
+                    .post(getActionUrl("saveEtlJobResourceRela"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 12.错误的数据访问11，resource_req大于资源阈值
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("etl_job", "测试作业2")
+                    .addData("resource_type", "resource")
+                    .addData("resource_req", 20)
+                    .post(getActionUrl("saveEtlJobResourceRela"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+        }
+    }
+
+    @Method(desc = "新增保存资源分配信息",
+            logicStep = "1.正常的数据访问1，数据都正常" +
+                    "2.错误的数据访问1，etl_sys_cd为空" +
+                    "3.错误的数据访问2，etl_sys_cd为空格" +
+                    "4.错误的数据访问3，etl_sys_cd不存在" +
+                    "5.错误的数据访问4，etl_job为空" +
+                    "6.错误的数据访问5，etl_job为空格" +
+                    "7.错误的数据访问6，resource_type为空" +
+                    "8.错误的数据访问7，resource_type为空格" +
+                    "9.错误的数据访问8，resource_req为空" +
+                    "10.错误的数据访问9，resource_req为空格" +
+                    "11.错误的数据访问10，resource_req大于资源阈值")
+    @Test
+    public void updateEtlJobResourceRela() {
+        try (DatabaseWrapper db = new DatabaseWrapper()) {
+            // 1.正常的数据访问1，数据都正常
+            String bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("etl_job", "测试作业3")
+                    .addData("resource_type", "resource")
+                    .addData("resource_req", 2)
+                    .post(getActionUrl("updateEtlJobResourceRela"))
+                    .getBodyString();
+            ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(true));
+            Etl_job_resource_rela resourceRela = SqlOperator.queryOneObject(db, Etl_job_resource_rela.class,
+                    "select * from " + Etl_job_resource_rela.TableName + " where etl_sys_cd=? and etl_job=?"
+                    , EtlSysCd, "测试作业3").orElseThrow(() ->
+                    new BusinessException("sql查询错误或映射错误！"));
+            assertThat(EtlSysCd, is(resourceRela.getEtl_sys_cd()));
+            assertThat("测试作业3", is(resourceRela.getEtl_job()));
+            assertThat("resource", is(resourceRela.getResource_type()));
+            assertThat(2, is(resourceRela.getResource_req()));
+            // 2.错误的数据访问1，etl_sys_cd为空
+            bodyString = new HttpClient().addData("etl_sys_cd", "")
+                    .addData("etl_job", "测试作业4")
+                    .addData("resource_type", "resource")
+                    .addData("resource_req", 2)
+                    .post(getActionUrl("updateEtlJobResourceRela"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 3.错误的数据访问2，etl_sys_cd为空格
+            bodyString = new HttpClient().addData("etl_sys_cd", " ")
+                    .addData("etl_job", "测试作业4")
+                    .addData("resource_type", "resource2")
+                    .addData("resource_req", 3)
+                    .post(getActionUrl("updateEtlJobResourceRela"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 4.错误的数据访问3，etl_sys_cd为不存在的数据
+            bodyString = new HttpClient().addData("etl_sys_cd", "xtcscs1")
+                    .addData("etl_job", "测试作业4")
+                    .addData("resource_type", "resource3")
+                    .addData("resource_req", 4)
+                    .post(getActionUrl("updateEtlJobResourceRela"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 5.错误的数据访问4，etl_job为空
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("etl_job", "")
+                    .addData("resource_type", "resource")
+                    .addData("resource_req", 2)
+                    .post(getActionUrl("updateEtlJobResourceRela"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 6.错误的数据访问5，etl_job为空格
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("etl_job", " ")
+                    .addData("resource_type", "resource2")
+                    .addData("resource_req", 3)
+                    .post(getActionUrl("updateEtlJobResourceRela"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 7.错误的数据访问6，resource_type为空
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("etl_job", "测试作业4")
+                    .addData("resource_type", "")
+                    .addData("resource_req", 2)
+                    .post(getActionUrl("updateEtlJobResourceRela"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 8.错误的数据访问7，resource_type为空格
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("etl_job", "测试作业4")
+                    .addData("resource_type", " ")
+                    .addData("resource_req", 3)
+                    .post(getActionUrl("updateEtlJobResourceRela"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 9.错误的数据访问8，resource_req为空
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("etl_job", "测试作业5")
+                    .addData("resource_type", "resource")
+                    .addData("resource_req", "")
+                    .post(getActionUrl("updateEtlJobResourceRela"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 10.错误的数据访问9，resource_req为空格
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("etl_job", "测试作业5")
+                    .addData("resource_type", "resource")
+                    .addData("resource_req", " ")
+                    .post(getActionUrl("updateEtlJobResourceRela"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 11.错误的数据访问10，resource_req大于资源阈值
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("etl_job", "测试作业5")
+                    .addData("resource_type", "resource")
+                    .addData("resource_req", 20)
+                    .post(getActionUrl("updateEtlJobResourceRela"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+        }
+    }
+
+    @Method(desc = "删除Etl作业资源关系",
+            logicStep = "1.正常的数据访问1，数据都正常" +
+                    "2.错误的数据访问1，etl_sys_cd不存在" +
+                    "3.错误的数据访问2，etl_job不存在")
+    @Test
+    public void deleteEtlJobResourceRela() {
+        try (DatabaseWrapper db = new DatabaseWrapper()) {
+            // 1.正常的数据访问1，数据都正常
+            // 删除前查询数据库，确认预期删除的数据存在
+            OptionalLong optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
+                            Etl_job_resource_rela.TableName + " where etl_sys_cd=? and etl_job=?",
+                    EtlSysCd, "测试作业3");
+            assertThat("删除操作前，Etl_job_resource_rela表中的确存在这样一条数据", optionalLong.
+                    orElse(Long.MIN_VALUE), is(1L));
+            String bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("etl_job", "测试作业3")
+                    .post(getActionUrl("deleteEtlJobResourceRela"))
+                    .getBodyString();
+            ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(true));
+            // 删除后查询数据库，确认预期数据已删除
+            optionalLong = SqlOperator.queryNumber(db, "select count(1) from " + Etl_job_resource_rela.TableName
+                    + " where etl_sys_cd=? and etl_job=?", EtlSysCd, "测试作业3");
+            assertThat("删除操作后，确认这条数据已删除", optionalLong.
+                    orElse(Long.MIN_VALUE), is(0L));
+            // 2.错误的数据访问1，etl_sys_cd不存在
+            bodyString = new HttpClient().addData("etl_sys_cd", "sccs1")
+                    .addData("etl_job", "测试作业3")
+                    .post(getActionUrl("deleteEtlJobResourceRela"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 3.错误的数据访问2，etl_job不存在
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("etl_job", "测试作业")
+                    .post(getActionUrl("deleteEtlJobResourceRela"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+            assertThat(ar.isSuccess(), is(false));
+        }
+    }
+
+    @Method(desc = "批量删除Etl作业资源关系",
+            logicStep = "1.正常的数据访问1，数据都正常" +
+                    "2.错误的数据访问1，etl_sys_cd不存在" +
+                    "3.错误的数据访问2，etl_job不存在")
+    @Test
+    public void batchDeleteEtlJobResourceRela() {
+        try (DatabaseWrapper db = new DatabaseWrapper()) {
+            // 1.正常的数据访问1，数据都正常
+            // 删除前查询数据库，确认预期删除的数据存在
+            OptionalLong optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
+                            Etl_job_resource_rela.TableName + " where etl_sys_cd=? and etl_job in(?,?)",
+                    EtlSysCd, "测试作业3", "测试作业4");
+            assertThat("删除操作前，Etl_job_resource_rela表中的确存在这样一条数据", optionalLong.
+                    orElse(Long.MIN_VALUE), is(2L));
+            String bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("etl_job", new String[]{"测试作业3", "测试作业4"})
+                    .post(getActionUrl("batchDeleteEtlJobResourceRela"))
+                    .getBodyString();
+            ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(true));
+            // 删除后查询数据库，确认预期数据已删除
+            optionalLong = SqlOperator.queryNumber(db, "select count(1) from " + Etl_job_resource_rela.TableName
+                    + " where etl_sys_cd=? and etl_job in(?,?)", EtlSysCd, "测试作业3", "测试作业4");
+            assertThat("删除操作后，确认这条数据已删除", optionalLong.
+                    orElse(Long.MIN_VALUE), is(0L));
+            // 2.错误的数据访问1，etl_sys_cd不存在
+            bodyString = new HttpClient().addData("etl_sys_cd", "sccs1")
+                    .addData("etl_job", new String[]{"测试作业3", "测试作业4"})
+                    .post(getActionUrl("batchDeleteEtlJobResourceRela"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 3.错误的数据访问2，etl_job不存在
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("etl_job", new String[]{"测试作业3", "测试作业"})
+                    .post(getActionUrl("batchDeleteEtlJobResourceRela"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+            assertThat(ar.isSuccess(), is(false));
+        }
+    }
+
     @Method(desc = "分页查询作业系统参数，此方法只有三种情况",
             logicStep = "1.正常的数据访问1，数据都正常,para_cd 为空" +
                     "2.正常的数据访问2，数据都正常，para_cd不为空" +
@@ -2481,7 +3281,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
             OptionalLong optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
                             Etl_para.TableName + " where etl_sys_cd=? and para_cd in (?,?)",
                     EtlSysCd, ParaCd3, ParaCd4);
-            assertThat("删除操作前，data_source表中的确存在这样一条数据", optionalLong.
+            assertThat("删除操作前，Etl_para表中的确存在这样一条数据", optionalLong.
                     orElse(Long.MIN_VALUE), is(2L));
             String bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
                     .addData("para_cd", new String[]{ParaCd3, ParaCd4})
@@ -2526,7 +3326,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
             // 删除前查询数据库，确认预期删除的数据存在
             OptionalLong optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
                     Etl_para.TableName + " where etl_sys_cd=? and para_cd=?", EtlSysCd, ParaCd5);
-            assertThat("删除操作前，data_source表中的确存在这样一条数据", optionalLong.
+            assertThat("删除操作前，Etl_para表中的确存在这样一条数据", optionalLong.
                     orElse(Long.MIN_VALUE), is(1L));
             String bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
                     .addData("para_cd", ParaCd5)
@@ -2576,5 +3376,952 @@ public class JobConfigurationTest extends WebBaseTestCase {
         }
     }
 
+    @Method(desc = "分页查询作业依赖信息",
+            logicStep = "1.正常的数据访问1，数据都正常" +
+                    "2.正常的数据访问1，数据都正常,pre_etl_job不为空" +
+                    "3.正常的数据访问3，数据都正常,etl_job不为空" +
+                    "4.错误的数据访问1，etl_sys_cd不存在")
+    @Test
+    public void searchEtlDependencyByPage() {
+        // 1.正常的数据访问1，数据都正常
+        String bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                .addData("currPage", 1)
+                .addData("pageSize", 5)
+                .post(getActionUrl("searchEtlDependencyByPage"))
+                .getBodyString();
+        ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(true));
+        // 验证查询数据的正确性
+        Map<String, Object> dataForMap = ar.getDataForMap();
+        assertThat(dataForMap.get("etl_sys_name"), is("dhwcs"));
+        assertThat(dataForMap.get("etl_sys_cd"), is(EtlSysCd));
+        List<Map<String, Object>> dependencyList = (List<Map<String, Object>>) dataForMap.get("etlDependencyList");
+        for (Map<String, Object> map : dependencyList) {
+            String etl_job = map.get("etl_job").toString();
+            String pre_etl_job = map.get("pre_etl_job").toString();
+            if (etl_job.equals("测试作业6") && pre_etl_job.equals("测试作业10")) {
+                assertThat(map.get("etl_sys_cd"), is(EtlSysCd));
+                assertThat(map.get("pre_etl_sys_cd"), is(EtlSysCd));
+                assertThat(map.get("status"), is(Status.TRUE.getCode()));
+            } else if (etl_job.equals("测试作业5") && pre_etl_job.equals("测试作业7")) {
+                assertThat(map.get("etl_sys_cd"), is(EtlSysCd));
+                assertThat(map.get("pre_etl_sys_cd"), is(EtlSysCd));
+                assertThat(map.get("status"), is(Status.TRUE.getCode()));
+            } else if (etl_job.equals("测试作业5") && pre_etl_job.equals("测试作业8")) {
+                assertThat(map.get("etl_sys_cd"), is(EtlSysCd));
+                assertThat(map.get("pre_etl_sys_cd"), is(EtlSysCd));
+                assertThat(map.get("status"), is(Status.TRUE.getCode()));
+            } else if (etl_job.equals("测试作业8") && pre_etl_job.equals("测试作业1")) {
+                assertThat(map.get("etl_sys_cd"), is(EtlSysCd));
+                assertThat(map.get("pre_etl_sys_cd"), is(EtlSysCd));
+                assertThat(map.get("status"), is(Status.TRUE.getCode()));
+            }
+        }
+        // 2.正常的数据访问1，数据都正常,pre_etl_job不为空
+        bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                .addData("pre_etl_job", "测试作业7")
+                .addData("currPage", 1)
+                .addData("pageSize", 5)
+                .post(getActionUrl("searchEtlDependencyByPage"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(true));
+        // 验证查询数据的正确性
+        dataForMap = ar.getDataForMap();
+        assertThat(dataForMap.get("etl_sys_name"), is("dhwcs"));
+        assertThat(dataForMap.get("etl_sys_cd"), is(EtlSysCd));
+        dependencyList = (List<Map<String, Object>>) dataForMap.get("etlDependencyList");
+        for (Map<String, Object> map : dependencyList) {
+            assertThat(map.get("etl_job"), is("测试作业5"));
+            assertThat(map.get("pre_etl_job"), is("测试作业7"));
+            assertThat(map.get("etl_sys_cd"), is(EtlSysCd));
+            assertThat(map.get("pre_etl_sys_cd"), is(EtlSysCd));
+            assertThat(map.get("status"), is(Status.TRUE.getCode()));
+        }
+        // 3.正常的数据访问3，数据都正常,etl_job不为空
+        bodyString = new HttpClient()
+                .addData("etl_sys_cd", EtlSysCd)
+                .addData("etl_job", "测试作业6")
+                .addData("currPage", 1)
+                .addData("pageSize", 5)
+                .post(getActionUrl("searchEtlDependencyByPage"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(true));
+        // 验证查询数据的正确性
+        dataForMap = ar.getDataForMap();
+        assertThat(dataForMap.get("etl_sys_name"), is("dhwcs"));
+        assertThat(dataForMap.get("etl_sys_cd"), is(EtlSysCd));
+        dependencyList = (List<Map<String, Object>>) dataForMap.get("etlDependencyList");
+        for (Map<String, Object> map : dependencyList) {
+            assertThat(map.get("etl_job"), is("测试作业6"));
+            assertThat(map.get("pre_etl_job"), is("测试作业10"));
+            assertThat(map.get("etl_sys_cd"), is(EtlSysCd));
+            assertThat(map.get("pre_etl_sys_cd"), is(EtlSysCd));
+            assertThat(map.get("status"), is(Status.TRUE.getCode()));
+        }
+        // 4.错误的数据访问1，etl_sys_cd不存在
+        bodyString = new HttpClient()
+                .addData("etl_sys_cd", "ylcs")
+                .addData("currPage", 1)
+                .addData("pageSize", 5)
+                .post(getActionUrl("searchEtlDependencyByPage"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(false));
+    }
+
+    @Method(desc = "根据工程编号查询作业依赖信息",
+            logicStep = "1.正常的数据访问1，数据都正常" +
+                    "2.错误的数据访问1，etl_sys_cd不存在" +
+                    "3.错误的数据访问1，etl_job不存在" +
+                    "4.错误的数据访问3，pre_etl_job不存在")
+    @Test
+    public void searchEtlDependency() {
+        // 1.正常的数据访问1，数据都正常
+        String bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                .addData("etl_job", "测试作业6")
+                .addData("pre_etl_job", "测试作业10")
+                .post(getActionUrl("searchEtlDependency"))
+                .getBodyString();
+        ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(true));
+        // 验证查询数据的正确性
+        Map<String, Object> etlDependency = ar.getDataForMap();
+        assertThat(etlDependency.get("etl_sys_cd"), is(EtlSysCd));
+        assertThat(etlDependency.get("pre_etl_sys_cd"), is(EtlSysCd));
+        assertThat(etlDependency.get("etl_job"), is("测试作业6"));
+        assertThat(etlDependency.get("pre_etl_job"), is("测试作业10"));
+        assertThat(etlDependency.get("status"), is(Status.TRUE.getCode()));
+        // 2.错误的数据访问1，etl_sys_cd不存在
+        bodyString = new HttpClient().addData("etl_sys_cd", "ylzycs")
+                .addData("etl_job", "测试作业6")
+                .addData("pre_etl_job", "测试作业10")
+                .post(getActionUrl("searchEtlDependency"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(false));
+        // 3.错误的数据访问1，etl_job不存在
+        bodyString = new HttpClient().addData("etl_sys_cd", "ylzycs")
+                .addData("etl_job", "测试作业")
+                .addData("pre_etl_job", "测试作业10")
+                .post(getActionUrl("searchEtlDependency"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(false));
+        // 4.错误的数据访问3，pre_etl_job不存在
+        bodyString = new HttpClient().addData("etl_sys_cd", "ylzycs")
+                .addData("etl_job", "测试作业6")
+                .addData("pre_etl_job", "测试作业")
+                .post(getActionUrl("searchEtlDependency"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(false));
+    }
+
+    @Method(desc = "新增保存作业依赖",
+            logicStep = "1.正常的数据访问1，数据都正常" +
+                    "2.错误的数据访问1，etl_sys_cd为空" +
+                    "3.错误的数据访问2，etl_sys_cd为空格" +
+                    "4.错误的数据访问3，etl_sys_cd不存在" +
+                    "5.错误的数据访问4，pre_etl_sys_cd为空" +
+                    "6.错误的数据访问5，pre_etl_sys_cd为空格" +
+                    "7.错误的数据访问6，pre_etl_sys_cd不存在" +
+                    "8.错误的数据访问7，etl_job为空" +
+                    "9.错误的数据访问8，etl_job为空格" +
+                    "10.错误的数据访问9，pre_etl_job为空" +
+                    "11.错误的数据访问10，etl_job为空格" +
+                    "12.错误的数据访问11，status为空" +
+                    "13.错误的数据访问12，status为空格" +
+                    "14.错误的数据访问13，status不存在" +
+                    "15.错误的数据访问14，作业依赖已存在")
+    @Test
+    public void saveEtlDependency() {
+        try (DatabaseWrapper db = new DatabaseWrapper()) {
+            // 1.正常的数据访问1，数据都正常
+            String bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("pre_etl_sys_cd", EtlSysCd)
+                    .addData("etl_job", "测试作业1")
+                    .addData("pre_etl_job", "测试作业0")
+                    .addData("status", Status.TRUE.getCode())
+                    .post(getActionUrl("saveEtlDependency"))
+                    .getBodyString();
+            ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(true));
+            Etl_dependency etlDependency = SqlOperator.queryOneObject(db, Etl_dependency.class,
+                    "select * from " + Etl_dependency.TableName + " where etl_sys_cd=? and etl_job=? " +
+                            " and pre_etl_job=?", EtlSysCd, "测试作业1", "测试作业0").orElseThrow(() ->
+                    new BusinessException("sql查询错误或映射错误！"));
+            assertThat(EtlSysCd, is(etlDependency.getEtl_sys_cd()));
+            assertThat(EtlSysCd, is(etlDependency.getPre_etl_sys_cd()));
+            assertThat("测试作业1", is(etlDependency.getEtl_job()));
+            assertThat("测试作业0", is(etlDependency.getPre_etl_job()));
+            assertThat(Status.TRUE.getCode(), is(etlDependency.getStatus()));
+            // 2.错误的数据访问1，etl_sys_cd为空
+            bodyString = new HttpClient().addData("etl_sys_cd", "")
+                    .addData("pre_etl_sys_cd", EtlSysCd)
+                    .addData("etl_job", "测试作业1")
+                    .addData("pre_etl_job", "测试作业0")
+                    .addData("status", Status.TRUE.getCode())
+                    .post(getActionUrl("saveEtlDependency"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 3.错误的数据访问2，etl_sys_cd为空格
+            bodyString = new HttpClient().addData("etl_sys_cd", " ")
+                    .addData("pre_etl_sys_cd", EtlSysCd)
+                    .addData("etl_job", "测试作业1")
+                    .addData("pre_etl_job", "测试作业0")
+                    .addData("status", Status.TRUE.getCode())
+                    .post(getActionUrl("saveEtlDependency"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 4.错误的数据访问3，etl_sys_cd不存在
+            bodyString = new HttpClient().addData("etl_sys_cd", "xzylcs")
+                    .addData("pre_etl_sys_cd", EtlSysCd)
+                    .addData("etl_job", "测试作业1")
+                    .addData("pre_etl_job", "测试作业0")
+                    .addData("status", Status.TRUE.getCode())
+                    .post(getActionUrl("saveEtlDependency"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 5.错误的数据访问4，pre_etl_sys_cd为空
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("pre_etl_sys_cd", "")
+                    .addData("etl_job", "测试作业1")
+                    .addData("pre_etl_job", "测试作业0")
+                    .addData("status", Status.TRUE.getCode())
+                    .post(getActionUrl("saveEtlDependency"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 6.错误的数据访问5，pre_etl_sys_cd为空格
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("pre_etl_sys_cd", " ")
+                    .addData("etl_job", "测试作业1")
+                    .addData("pre_etl_job", "测试作业0")
+                    .addData("status", Status.TRUE.getCode())
+                    .post(getActionUrl("saveEtlDependency"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 7.错误的数据访问1，pre_etl_sys_cd不存在
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("pre_etl_sys_cd", "sycgbh")
+                    .addData("etl_job", "测试作业1")
+                    .addData("pre_etl_job", "测试作业0")
+                    .addData("status", Status.TRUE.getCode())
+                    .post(getActionUrl("saveEtlDependency"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 8.错误的数据访问7，etl_job为空
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("pre_etl_sys_cd", EtlSysCd)
+                    .addData("etl_job", "")
+                    .addData("pre_etl_job", "测试作业0")
+                    .addData("status", Status.TRUE.getCode())
+                    .post(getActionUrl("saveEtlDependency"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 9.错误的数据访问8，etl_job为空格
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("pre_etl_sys_cd", EtlSysCd)
+                    .addData("etl_job", " ")
+                    .addData("pre_etl_job", "测试作业0")
+                    .addData("status", Status.TRUE.getCode())
+                    .post(getActionUrl("saveEtlDependency"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 10.错误的数据访问9，pre_etl_job为空
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("pre_etl_sys_cd", EtlSysCd)
+                    .addData("etl_job", "测试作业1")
+                    .addData("pre_etl_job", "")
+                    .addData("status", Status.TRUE.getCode())
+                    .post(getActionUrl("saveEtlDependency"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 11.错误的数据访问10，pre_etl_job为空格
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("pre_etl_sys_cd", EtlSysCd)
+                    .addData("etl_job", "测试作业1")
+                    .addData("pre_etl_job", " ")
+                    .addData("status", Status.TRUE.getCode())
+                    .post(getActionUrl("saveEtlDependency"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 12.错误的数据访问11，status为空
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("pre_etl_sys_cd", EtlSysCd)
+                    .addData("etl_job", "测试作业1")
+                    .addData("pre_etl_job", "测试作业0")
+                    .addData("status", "")
+                    .post(getActionUrl("saveEtlDependency"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 13.错误的数据访问12，status为空格
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("pre_etl_sys_cd", EtlSysCd)
+                    .addData("etl_job", "测试作业1")
+                    .addData("pre_etl_job", "测试作业0")
+                    .addData("status", "")
+                    .post(getActionUrl("saveEtlDependency"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 14.错误的数据访问13，status不合法
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("pre_etl_sys_cd", EtlSysCd)
+                    .addData("etl_job", "测试作业1")
+                    .addData("pre_etl_job", "测试作业0")
+                    .addData("status", 2)
+                    .post(getActionUrl("saveEtlDependency"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 15.错误的数据访问14，作业依赖已存在
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("pre_etl_sys_cd", EtlSysCd)
+                    .addData("etl_job", "测试作业6")
+                    .addData("pre_etl_job", "测试作业10")
+                    .addData("status", Status.TRUE.getCode())
+                    .post(getActionUrl("saveEtlDependency"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+        }
+    }
+
+    @Method(desc = "更新保存作业依赖",
+            logicStep = "1.正常的数据访问1，数据都正常" +
+                    "2.正常的数据访问2，数据都正常,作业名称未改变，上游作业名称改变" +
+                    "3.正常的数据访问3，数据都正常,作业名称改变，上游作业名称未改变" +
+                    "4.错误的数据访问1，etl_sys_cd为空" +
+                    "5.错误的数据访问2，etl_sys_cd为空格" +
+                    "6.错误的数据访问3，etl_sys_cd不存在" +
+                    "7.错误的数据访问4，pre_etl_sys_cd为空" +
+                    "8.错误的数据访问5，pre_etl_sys_cd为空格" +
+                    "9.错误的数据访问6，pre_etl_sys_cd不存在" +
+                    "10.错误的数据访问7，etl_job为空" +
+                    "11.错误的数据访问8，etl_job为空格" +
+                    "12.错误的数据访问9，pre_etl_job为空" +
+                    "13.错误的数据访问10，etl_job为空格" +
+                    "14.错误的数据访问11，status为空" +
+                    "15.错误的数据访问12，status为空格" +
+                    "16.错误的数据访问13，status不存在" +
+                    "17.错误的数据访问14，作业依赖已存在")
+    @Test
+    public void updateEtlDependency() {
+        try (DatabaseWrapper db = new DatabaseWrapper()) {
+            // 1.正常的数据访问1，数据都正常,作业名称与上游作业名称都发生改变
+            String bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("pre_etl_sys_cd", EtlSysCd)
+                    .addData("etl_job", "测试作业1")
+                    .addData("pre_etl_job", "测试作业0")
+                    .addData("status", Status.TRUE.getCode())
+                    .addData("oldEtlJob", "测试作业6")
+                    .addData("oldPreEtlJob", "测试作业10")
+                    .post(getActionUrl("updateEtlDependency"))
+                    .getBodyString();
+            ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(true));
+            Etl_dependency etlDependency = SqlOperator.queryOneObject(db, Etl_dependency.class,
+                    "select * from " + Etl_dependency.TableName + " where etl_sys_cd=? and etl_job=? " +
+                            " and pre_etl_job=?", EtlSysCd, "测试作业1", "测试作业0").orElseThrow(() ->
+                    new BusinessException("sql查询错误或映射错误！"));
+            assertThat(EtlSysCd, is(etlDependency.getEtl_sys_cd()));
+            assertThat(EtlSysCd, is(etlDependency.getPre_etl_sys_cd()));
+            assertThat("测试作业1", is(etlDependency.getEtl_job()));
+            assertThat("测试作业0", is(etlDependency.getPre_etl_job()));
+            assertThat(Status.TRUE.getCode(), is(etlDependency.getStatus()));
+            // 2.正常的数据访问2，数据都正常,作业名称未改变，上游作业名称改变
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("pre_etl_sys_cd", EtlSysCd)
+                    .addData("etl_job", "测试作业5")
+                    .addData("pre_etl_job", "测试作业2")
+                    .addData("status", Status.TRUE.getCode())
+                    .addData("oldEtlJob", "测试作业5")
+                    .addData("oldPreEtlJob", "测试作业8")
+                    .post(getActionUrl("updateEtlDependency"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(true));
+            etlDependency = SqlOperator.queryOneObject(db, Etl_dependency.class,
+                    "select * from " + Etl_dependency.TableName + " where etl_sys_cd=? and etl_job=? " +
+                            " and pre_etl_job=?", EtlSysCd, "测试作业5", "测试作业2").orElseThrow(() ->
+                    new BusinessException("sql查询错误或映射错误！"));
+            assertThat(EtlSysCd, is(etlDependency.getEtl_sys_cd()));
+            assertThat(EtlSysCd, is(etlDependency.getPre_etl_sys_cd()));
+            assertThat("测试作业5", is(etlDependency.getEtl_job()));
+            assertThat("测试作业2", is(etlDependency.getPre_etl_job()));
+            assertThat(Status.TRUE.getCode(), is(etlDependency.getStatus()));
+            // 3.正常的数据访问3，数据都正常,作业名称改变，上游作业名称未改变
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("pre_etl_sys_cd", EtlSysCd)
+                    .addData("etl_job", "测试作业1")
+                    .addData("pre_etl_job", "测试作业7")
+                    .addData("status", Status.TRUE.getCode())
+                    .addData("oldEtlJob", "测试作业5")
+                    .addData("oldPreEtlJob", "测试作业7")
+                    .post(getActionUrl("updateEtlDependency"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(true));
+            etlDependency = SqlOperator.queryOneObject(db, Etl_dependency.class,
+                    "select * from " + Etl_dependency.TableName + " where etl_sys_cd=? and etl_job=? " +
+                            " and pre_etl_job=?", EtlSysCd, "测试作业1", "测试作业7").orElseThrow(() ->
+                    new BusinessException("sql查询错误或映射错误！"));
+            assertThat(EtlSysCd, is(etlDependency.getEtl_sys_cd()));
+            assertThat(EtlSysCd, is(etlDependency.getPre_etl_sys_cd()));
+            assertThat("测试作业1", is(etlDependency.getEtl_job()));
+            assertThat("测试作业7", is(etlDependency.getPre_etl_job()));
+            assertThat(Status.TRUE.getCode(), is(etlDependency.getStatus()));
+            // 4.错误的数据访问1，etl_sys_cd为空
+            bodyString = new HttpClient().addData("etl_sys_cd", "")
+                    .addData("pre_etl_sys_cd", EtlSysCd)
+                    .addData("etl_job", "测试作业1")
+                    .addData("pre_etl_job", "测试作业0")
+                    .addData("status", Status.TRUE.getCode())
+                    .addData("oldEtlJob", "测试作业6")
+                    .addData("oldPreEtlJob", "测试作业10")
+                    .post(getActionUrl("updateEtlDependency"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 5.错误的数据访问2，etl_sys_cd为空格
+            bodyString = new HttpClient().addData("etl_sys_cd", " ")
+                    .addData("pre_etl_sys_cd", EtlSysCd)
+                    .addData("etl_job", "测试作业1")
+                    .addData("pre_etl_job", "测试作业0")
+                    .addData("status", Status.TRUE.getCode())
+                    .addData("oldEtlJob", "测试作业6")
+                    .addData("oldPreEtlJob", "测试作业10")
+                    .post(getActionUrl("updateEtlDependency"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 6.错误的数据访问3，etl_sys_cd不存在
+            bodyString = new HttpClient().addData("etl_sys_cd", "xzylcs")
+                    .addData("pre_etl_sys_cd", EtlSysCd)
+                    .addData("etl_job", "测试作业1")
+                    .addData("pre_etl_job", "测试作业0")
+                    .addData("status", Status.TRUE.getCode())
+                    .addData("oldEtlJob", "测试作业6")
+                    .addData("oldPreEtlJob", "测试作业10")
+                    .post(getActionUrl("updateEtlDependency"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 7.错误的数据访问4，pre_etl_sys_cd为空
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("pre_etl_sys_cd", "")
+                    .addData("etl_job", "测试作业1")
+                    .addData("pre_etl_job", "测试作业0")
+                    .addData("status", Status.TRUE.getCode())
+                    .addData("oldEtlJob", "测试作业6")
+                    .addData("oldPreEtlJob", "测试作业10")
+                    .post(getActionUrl("updateEtlDependency"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 8.错误的数据访问5，pre_etl_sys_cd为空格
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("pre_etl_sys_cd", " ")
+                    .addData("etl_job", "测试作业1")
+                    .addData("pre_etl_job", "测试作业0")
+                    .addData("status", Status.TRUE.getCode())
+                    .addData("oldEtlJob", "测试作业6")
+                    .addData("oldPreEtlJob", "测试作业10")
+                    .post(getActionUrl("updateEtlDependency"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 9.错误的数据访问1，pre_etl_sys_cd不存在
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("pre_etl_sys_cd", "sycgbh")
+                    .addData("etl_job", "测试作业1")
+                    .addData("pre_etl_job", "测试作业0")
+                    .addData("status", Status.TRUE.getCode())
+                    .addData("oldEtlJob", "测试作业6")
+                    .addData("oldPreEtlJob", "测试作业10")
+                    .post(getActionUrl("updateEtlDependency"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 10.错误的数据访问7，etl_job为空
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("pre_etl_sys_cd", EtlSysCd)
+                    .addData("etl_job", "")
+                    .addData("pre_etl_job", "测试作业0")
+                    .addData("status", Status.TRUE.getCode())
+                    .addData("oldEtlJob", "测试作业6")
+                    .addData("oldPreEtlJob", "测试作业10")
+                    .post(getActionUrl("updateEtlDependency"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 11.错误的数据访问8，etl_job为空格
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("pre_etl_sys_cd", EtlSysCd)
+                    .addData("etl_job", " ")
+                    .addData("pre_etl_job", "测试作业0")
+                    .addData("status", Status.TRUE.getCode())
+                    .addData("oldEtlJob", "测试作业6")
+                    .addData("oldPreEtlJob", "测试作业10")
+                    .post(getActionUrl("updateEtlDependency"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 12.错误的数据访问9，pre_etl_job为空
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("pre_etl_sys_cd", EtlSysCd)
+                    .addData("etl_job", "测试作业1")
+                    .addData("pre_etl_job", "")
+                    .addData("status", Status.TRUE.getCode())
+                    .addData("oldEtlJob", "测试作业6")
+                    .addData("oldPreEtlJob", "测试作业10")
+                    .post(getActionUrl("updateEtlDependency"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 13.错误的数据访问10，pre_etl_job为空格
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("pre_etl_sys_cd", EtlSysCd)
+                    .addData("etl_job", "测试作业1")
+                    .addData("pre_etl_job", " ")
+                    .addData("status", Status.TRUE.getCode())
+                    .addData("oldEtlJob", "测试作业6")
+                    .addData("oldPreEtlJob", "测试作业10")
+                    .post(getActionUrl("updateEtlDependency"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 14.错误的数据访问11，status为空
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("pre_etl_sys_cd", EtlSysCd)
+                    .addData("etl_job", "测试作业1")
+                    .addData("pre_etl_job", "测试作业0")
+                    .addData("status", "")
+                    .addData("oldEtlJob", "测试作业6")
+                    .addData("oldPreEtlJob", "测试作业10")
+                    .post(getActionUrl("updateEtlDependency"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 15.错误的数据访问12，status为空格
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("pre_etl_sys_cd", EtlSysCd)
+                    .addData("etl_job", "测试作业1")
+                    .addData("pre_etl_job", "测试作业0")
+                    .addData("status", "")
+                    .addData("oldEtlJob", "测试作业6")
+                    .addData("oldPreEtlJob", "测试作业10")
+                    .post(getActionUrl("updateEtlDependency"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 16.错误的数据访问13，status不合法
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("pre_etl_sys_cd", EtlSysCd)
+                    .addData("etl_job", "测试作业1")
+                    .addData("pre_etl_job", "测试作业0")
+                    .addData("status", 2)
+                    .addData("oldEtlJob", "测试作业6")
+                    .addData("oldPreEtlJob", "测试作业10")
+                    .post(getActionUrl("updateEtlDependency"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 17.错误的数据访问14，作业依赖已存在
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("pre_etl_sys_cd", EtlSysCd)
+                    .addData("etl_job", "测试作业6")
+                    .addData("pre_etl_job", "测试作业10")
+                    .addData("status", Status.TRUE.getCode())
+                    .addData("oldEtlJob", "测试作业6")
+                    .addData("oldPreEtlJob", "测试作业10")
+                    .post(getActionUrl("updateEtlDependency"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+        }
+    }
+
+    @Method(desc = "批量新增保存作业依赖",
+            logicStep = "1.正常的数据访问1，数据都正常" +
+                    "2.错误的数据访问1，etl_sys_cd为空" +
+                    "3.错误的数据访问2，etl_sys_cd为空格" +
+                    "4.错误的数据访问3，etl_sys_cd不存在" +
+                    "5.错误的数据访问4，pre_etl_sys_cd为空" +
+                    "6.错误的数据访问5，pre_etl_sys_cd为空格" +
+                    "7.错误的数据访问6，pre_etl_sys_cd不存在" +
+                    "8.错误的数据访问7，status为空" +
+                    "9.错误的数据访问8，status为空格" +
+                    "10.错误的数据访问9，status不存在" +
+                    "11.错误的数据访问10，sub_sys_cd为空" +
+                    "12.错误的数据访问11，sub_sys_cd为空格" +
+                    "13.错误的数据访问12，sub_sys_cd不存在" +
+                    "14.错误的数据访问13，pre_sub_sys_cd为空" +
+                    "15.错误的数据访问14，pre_sub_sys_cd为空格" +
+                    "16.错误的数据访问15，pre_sub_sys_cd不存在")
+    @Test
+    public void batchSaveEtlDependency() {
+        try (DatabaseWrapper db = new DatabaseWrapper()) {
+            // 1.正常的数据访问1，数据都正常
+            String bodyString = new HttpClient()
+                    .addData("etl_sys_cd", EtlSysCd)
+                    .addData("pre_etl_sys_cd", EtlSysCd)
+                    .addData("status", Status.TRUE.getCode())
+                    .addData("sub_sys_cd", SubSysCd)
+                    .addData("pre_sub_sys_cd", SubSysCd2)
+                    .post(getActionUrl("batchSaveEtlDependency"))
+                    .getBodyString();
+            ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(true));
+            List<Etl_dependency> dependencyList = SqlOperator.queryList(db, Etl_dependency.class,
+                    "select * from " + Etl_dependency.TableName + " where etl_sys_cd=? and etl_job=?" +
+                            " order by etl_job", EtlSysCd, "测试作业2");
+            // SubSysCd下有3个作业，两个定时，一个依赖，SubSysCd2下有8个作业全都是依赖，所以如果依赖成功应该会有8个
+            assertThat(dependencyList.size(), is(8));
+            // 2.错误的数据访问1，etl_sys_cd为空
+            bodyString = new HttpClient().addData("etl_sys_cd", "")
+                    .addData("pre_etl_sys_cd", EtlSysCd)
+                    .addData("status", Status.TRUE.getCode())
+                    .addData("sub_sys_cd", SubSysCd)
+                    .addData("pre_sub_sys_cd", SubSysCd2)
+                    .post(getActionUrl("batchSaveEtlDependency"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 3.错误的数据访问2，etl_sys_cd为空格
+            bodyString = new HttpClient().addData("etl_sys_cd", " ")
+                    .addData("pre_etl_sys_cd", EtlSysCd)
+                    .addData("status", Status.TRUE.getCode())
+                    .addData("sub_sys_cd", SubSysCd)
+                    .addData("pre_sub_sys_cd", SubSysCd2)
+                    .post(getActionUrl("batchSaveEtlDependency"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 4.错误的数据访问3，etl_sys_cd不存在
+            bodyString = new HttpClient().addData("etl_sys_cd", "plbcylcs")
+                    .addData("pre_etl_sys_cd", EtlSysCd)
+                    .addData("status", Status.TRUE.getCode())
+                    .addData("sub_sys_cd", SubSysCd)
+                    .addData("pre_sub_sys_cd", SubSysCd2)
+                    .post(getActionUrl("batchSaveEtlDependency"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 5.错误的数据访问4，pre_etl_sys_cd为空
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("pre_etl_sys_cd", "")
+                    .addData("status", Status.TRUE.getCode())
+                    .addData("sub_sys_cd", SubSysCd)
+                    .addData("pre_sub_sys_cd", SubSysCd2)
+                    .post(getActionUrl("batchSaveEtlDependency"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 6.错误的数据访问5，pre_etl_sys_cd为空格
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("pre_etl_sys_cd", " ")
+                    .addData("status", Status.TRUE.getCode())
+                    .addData("sub_sys_cd", SubSysCd)
+                    .addData("pre_sub_sys_cd", SubSysCd2)
+                    .post(getActionUrl("batchSaveEtlDependency"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 7.错误的数据访问6，pre_etl_sys_cd不存在
+            bodyString = new HttpClient()
+                    .addData("etl_sys_cd", EtlSysCd)
+                    .addData("pre_etl_sys_cd", "plbcylcs")
+                    .addData("status", Status.TRUE.getCode())
+                    .addData("sub_sys_cd", SubSysCd)
+                    .addData("pre_sub_sys_cd", SubSysCd2)
+                    .post(getActionUrl("batchSaveEtlDependency"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 8.错误的数据访问7，status为空
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("pre_etl_sys_cd", EtlSysCd)
+                    .addData("status", "")
+                    .addData("sub_sys_cd", SubSysCd)
+                    .addData("pre_sub_sys_cd", SubSysCd2)
+                    .post(getActionUrl("batchSaveEtlDependency"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 9.错误的数据访问8，status为空格
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("pre_etl_sys_cd", EtlSysCd)
+                    .addData("status", " ")
+                    .addData("sub_sys_cd", SubSysCd)
+                    .addData("pre_sub_sys_cd", SubSysCd2)
+                    .post(getActionUrl("batchSaveEtlDependency"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 10.错误的数据访问9，status不存在
+            bodyString = new HttpClient()
+                    .addData("etl_sys_cd", EtlSysCd)
+                    .addData("pre_etl_sys_cd", EtlSysCd)
+                    .addData("status", 5)
+                    .addData("sub_sys_cd", SubSysCd)
+                    .addData("pre_sub_sys_cd", SubSysCd2)
+                    .post(getActionUrl("batchSaveEtlDependency"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 11.错误的数据访问10，sub_sys_cd为空
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("pre_etl_sys_cd", EtlSysCd)
+                    .addData("status", Status.TRUE.getCode())
+                    .addData("sub_sys_cd", "")
+                    .addData("pre_sub_sys_cd", SubSysCd2)
+                    .post(getActionUrl("batchSaveEtlDependency"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 12.错误的数据访问11，sub_sys_cd为空格
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("pre_etl_sys_cd", EtlSysCd)
+                    .addData("status", Status.TRUE.getCode())
+                    .addData("sub_sys_cd", " ")
+                    .addData("pre_sub_sys_cd", SubSysCd2)
+                    .post(getActionUrl("batchSaveEtlDependency"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 13.错误的数据访问12，sub_sys_cd为不存在
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("pre_etl_sys_cd", EtlSysCd)
+                    .addData("status", Status.TRUE.getCode())
+                    .addData("sub_sys_cd", "rw")
+                    .addData("pre_sub_sys_cd", SubSysCd2)
+                    .post(getActionUrl("batchSaveEtlDependency"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 14.错误的数据访问13，pre_sub_sys_cd为空
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("pre_etl_sys_cd", EtlSysCd)
+                    .addData("status", Status.TRUE.getCode())
+                    .addData("sub_sys_cd", "")
+                    .addData("pre_sub_sys_cd", SubSysCd2)
+                    .post(getActionUrl("batchSaveEtlDependency"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 15.错误的数据访问14，pre_sub_sys_cd为空格
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("pre_etl_sys_cd", EtlSysCd)
+                    .addData("status", Status.TRUE.getCode())
+                    .addData("sub_sys_cd", SubSysCd)
+                    .addData("pre_sub_sys_cd", " ")
+                    .post(getActionUrl("batchSaveEtlDependency"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 15.错误的数据访问14，pre_sub_sys_cd不存在
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("pre_etl_sys_cd", EtlSysCd)
+                    .addData("status", Status.TRUE.getCode())
+                    .addData("sub_sys_cd", SubSysCd)
+                    .addData("pre_sub_sys_cd", "syrw")
+                    .post(getActionUrl("batchSaveEtlDependency"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+        }
+    }
+
+    @Method(desc = "删除作业依赖",
+            logicStep = "1.正常的数据访问1，数据都正常" +
+                    "2.错误的数据访问1，etl_sys_cd不存在" +
+                    "3.错误的数据访问2，etl_job不存在" +
+                    "4.错误的数据访问3，pre_etl_job不存在")
+    @Test
+    public void deleteEtlDependency() {
+        try (DatabaseWrapper db = new DatabaseWrapper()) {
+            // 1.正常的数据访问1，数据都正常
+            // 删除前查询数据库，确认预期删除的数据存在
+            OptionalLong optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
+                            Etl_dependency.TableName + " where etl_sys_cd=? and etl_job=? and pre_etl_job=?",
+                    EtlSysCd, "测试作业6", "测试作业10");
+            assertThat("删除操作前，data_source表中的确存在这样一条数据", optionalLong.
+                    orElse(Long.MIN_VALUE), is(1L));
+            String bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("etl_job", "测试作业6")
+                    .addData("pre_etl_job", "测试作业10")
+                    .post(getActionUrl("deleteEtlDependency"))
+                    .getBodyString();
+            ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(true));
+            // 删除后查询数据库，确认预期数据已删除
+            optionalLong = SqlOperator.queryNumber(db, "select count(1) from " + Etl_dependency.TableName
+                    + " where etl_sys_cd=? and etl_job=? and pre_etl_job=?", EtlSysCd, "测试作业6", "测试作业10");
+            assertThat("删除操作后，确认这条数据已删除", optionalLong.
+                    orElse(Long.MIN_VALUE), is(0L));
+            // 2.错误的数据访问1，etl_sys_cd不存在
+            bodyString = new HttpClient().addData("etl_sys_cd", "sccs1")
+                    .addData("etl_job", "测试作业6")
+                    .addData("pre_etl_job", "测试作业10")
+                    .post(getActionUrl("deleteEtlDependency"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 3.错误的数据访问2，etl_job不存在
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("etl_job", "测试作业")
+                    .addData("pre_etl_job", "测试作业10")
+                    .post(getActionUrl("deleteEtlDependency"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 4.错误的数据访问3，pre_etl_job不存在
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("etl_job", "测试作业5")
+                    .addData("pre_etl_job", "测试作业")
+                    .post(getActionUrl("deleteEtlDependency"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+            assertThat(ar.isSuccess(), is(false));
+        }
+    }
+
+    @Method(desc = "批量删除作业依赖",
+            logicStep = "1.正常的数据访问1，数据都正常" +
+                    "2.错误的数据访问1，etl_sys_cd不存在" +
+                    "3.错误的数据访问2，etl_job不存在" +
+                    "4.错误的数据访问3，pre_etl_job不存在")
+    @Test
+    public void batchDeleteEtlDependency() {
+        try (DatabaseWrapper db = new DatabaseWrapper()) {
+            // 存在的依赖
+            Map<String, String> jobMap = new HashMap<>();
+            jobMap.put("测试作业6", "测试作业10");
+            jobMap.put("测试作业5", "测试作业7");
+            // 不存在的依赖
+            Map<String, String> jobMap2 = new HashMap<>();
+            jobMap2.put("测试作业6", "测试作业1");
+            jobMap2.put("测试作业5", "测试作业2");
+            // 1.正常的数据访问1，数据都正常
+            // 删除前查询数据库，确认预期删除的数据存在
+            OptionalLong optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
+                            Etl_dependency.TableName + " where etl_sys_cd=? and etl_job=? and pre_etl_job=?",
+                    EtlSysCd, "测试作业6", "测试作业10");
+            assertThat("删除操作前，Etl_dependency表中的确存在这样一条数据", optionalLong.
+                    orElse(Long.MIN_VALUE), is(1L));
+            optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
+                            Etl_dependency.TableName + " where etl_sys_cd=? and etl_job=? and pre_etl_job=?",
+                    EtlSysCd, "测试作业5", "测试作业7");
+            assertThat("删除操作前，Etl_dependency表中的确存在这样一条数据", optionalLong.
+                    orElse(Long.MIN_VALUE), is(1L));
+            String bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("batchEtlJob", JsonUtil.toJson(jobMap))
+                    .post(getActionUrl("batchDeleteEtlDependency"))
+                    .getBodyString();
+            ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(true));
+            // 删除后查询数据库，确认预期数据已删除
+            optionalLong = SqlOperator.queryNumber(db, "select count(1) from " + Etl_dependency.TableName
+                    + " where etl_sys_cd=? and etl_job=? and pre_etl_job=?", EtlSysCd, "测试作业6", "测试作业10");
+            assertThat("删除操作后，确认这条数据已删除", optionalLong.
+                    orElse(Long.MIN_VALUE), is(0L));
+            optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
+                            Etl_dependency.TableName + " where etl_sys_cd=? and etl_job=? and pre_etl_job=?",
+                    EtlSysCd, "测试作业5", "测试作业7");
+            assertThat("删除操作后，确认这条数据已删除", optionalLong.
+                    orElse(Long.MIN_VALUE), is(0L));
+            // 2.错误的数据访问1，etl_sys_cd不存在
+            bodyString = new HttpClient().addData("etl_sys_cd", "sccs1")
+                    .addData("batchEtlJob", jobMap.toString())
+                    .post(getActionUrl("batchDeleteEtlDependency"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 3.错误的数据访问2，batchEtlJob不存在
+            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+                    .addData("batchEtlJob", jobMap2.toString())
+                    .post(getActionUrl("batchDeleteEtlDependency"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+            assertThat(ar.isSuccess(), is(false));
+        }
+    }
 }
 

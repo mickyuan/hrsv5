@@ -120,7 +120,7 @@ public class ETLJobUtil {
     @Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
     @Param(name = "etl_job", desc = "作业名称", range = "新增作业时生成")
     @Return(desc = "当前工程对应作业资源分配信息是否存在标志", range = "true代表存在，false代表不存在")
-    public static boolean isEtlJobResourceRelationExist(String etl_sys_cd, String etl_job) {
+    public static boolean isEtlJobResourceRelaExist(String etl_sys_cd, String etl_job) {
         // 1.数据可访问权限处理方式，该方法不需要权限验证
         // 2.判断当前工程对应作业资源分配信息是否存在
         if (Dbo.queryNumber("select count(*) from " + Etl_job_resource_rela.TableName +
