@@ -44,41 +44,36 @@ public class AgentInfoAction extends BaseAction {
         asmSql.addSql("select ai.agent_id,ai.source_id,ai.agent_name,ai.agent_ip,ai.agent_port,su.user_name," +
                 "su.user_id,adi.deploy,(case adi.deploy when ? then 'yes' else 'no' end) agentStatus from "
                 + Agent_info.TableName + " ai LEFT JOIN " + Agent_down_info.TableName +
-                " adi ON ai.agent_ip = adi.agent_ip AND ai.agent_port = adi.agent_port " +
+                " adi ON ai.agent_ip=adi.agent_ip AND ai.agent_port=adi.agent_port " +
                 " AND ai.agent_id=adi.agent_id left join " + Sys_user.TableName + " su on ai.user_id=su.user_id"
-                + " where ai.source_id = ? and ai.agent_type = ? and ai.user_id=? order by ai.agent_id");
+                + " where ai.source_id = ? and ai.agent_type = ? order by ai.agent_id");
         asmSql.addParam(IsFlag.Shi.getCode());
         asmSql.addParam(source_id);
         asmSql.addParam(AgentType.ShuJuKu.getCode());
-        asmSql.addParam(getUserId());
         List<Map<String, Object>> sjkAgentList = Dbo.queryList(asmSql.sql(), asmSql.params());
         asmSql.cleanParams();
         // 文件系统Agent
         asmSql.addParam(IsFlag.Shi.getCode());
         asmSql.addParam(source_id);
         asmSql.addParam(AgentType.WenJianXiTong.getCode());
-        asmSql.addParam(getUserId());
         List<Map<String, Object>> fileSystemAgentList = Dbo.queryList(asmSql.sql(), asmSql.params());
         asmSql.cleanParams();
         // DB文件Agent
         asmSql.addParam(IsFlag.Shi.getCode());
         asmSql.addParam(source_id);
         asmSql.addParam(AgentType.DBWenJian.getCode());
-        asmSql.addParam(getUserId());
         List<Map<String, Object>> dbWjAgentList = Dbo.queryList(asmSql.sql(), asmSql.params());
         asmSql.cleanParams();
         // 对象Agent
         asmSql.addParam(IsFlag.Shi.getCode());
         asmSql.addParam(source_id);
         asmSql.addParam(AgentType.DuiXiang.getCode());
-        asmSql.addParam(getUserId());
         List<Map<String, Object>> dxAgentList = Dbo.queryList(asmSql.sql(), asmSql.params());
         asmSql.cleanParams();
         // FTP Agent
         asmSql.addParam(IsFlag.Shi.getCode());
         asmSql.addParam(source_id);
         asmSql.addParam(AgentType.FTP.getCode());
-        asmSql.addParam(getUserId());
         List<Map<String, Object>> ftpAgentList = Dbo.queryList(asmSql.sql(), asmSql.params());
         // 4.创建存放agent信息的集合并封装不同类型agent信息
         Map<String, Object> map = new HashMap<>();

@@ -1526,8 +1526,15 @@ public class DataSourceActionTest extends WebBaseTestCase {
         assertThat("dsName0", is(dataResource.get("datasource_name").toString()));
         assertThat("ds01", is(dataResource.get("datasource_number").toString()));
         assertThat("数据源详细描述0", is(dataResource.get("source_remark")));
-        assertThat("测试第1部门,测试第2部门", is(dataResource.get("dep_name")));
-
+        List<Map<String, Object>> depNameAndId = (List<Map<String, Object>>) dataResource.get("depNameAndId");
+        for (Map<String, Object> map : depNameAndId) {
+            String dep_id = map.get("dep_id").toString();
+            if (dep_id.equals(String.valueOf(DepId1))) {
+                assertThat("测试第1部门", is(map.get("dep_name")));
+            } else if (dep_id.equals(String.valueOf(DepId2))) {
+                assertThat("测试第2部门", is(map.get("dep_name")));
+            }
+        }
         // 2.错误的数据访问1，查询数据源信息，此数据源下没有数据
         bodyString = new HttpClient().addData("source_id", 1000009L)
                 .post(getActionUrl("searchDataSourceById")).getBodyString();
@@ -1540,7 +1547,8 @@ public class DataSourceActionTest extends WebBaseTestCase {
         assertThat(dataResource.get("datasource_name"), nullValue());
         assertThat(dataResource.get("datasource_number"), nullValue());
         assertThat(dataResource.get("source_remark"), nullValue());
-        assertThat(dataResource.get("dep_name"), nullValue());
+        depNameAndId = (List<Map<String, Object>>) dataResource.get("depNameAndId");
+        assertThat(depNameAndId.isEmpty(), is(true));
     }
 
     @Method(desc = "更新数据源data_source,source_relation_dep表信息",
@@ -1763,7 +1771,9 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .addData("source_id", 100L)
                 .post(getActionUrl("downloadFile"))
                 .getBodyString();
-        assertThat(bodyString, is(""));
+        ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+        assertThat(ar.isSuccess(), is(false));
     }
 
     @Method(desc = "导入数据源",

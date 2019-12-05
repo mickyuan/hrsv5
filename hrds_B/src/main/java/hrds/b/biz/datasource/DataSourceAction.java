@@ -26,9 +26,7 @@ import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.key.PrimayKeyGener;
 
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.util.*;
@@ -119,8 +117,14 @@ public class DataSourceAction extends BaseAction {
             // 4.循环数据源
             for (int i = 0; i < dsResult.getRowCount(); i++) {
                 // 5.获取数据源对应部门名称所有值,不需要权限控制
-                String dep_name = getDepNameById(dsResult.getLong(i, "source_id"));
-                dsResult.setObject(i, "dep_name", dep_name);
+                Result depNameAndId = getDepNameAndId(dsResult.getLong(i, "source_id"));
+                if (!depNameAndId.isEmpty()) {
+                    StringBuilder sb = new StringBuilder();
+                    for (int j = 0; j < depNameAndId.getRowCount(); j++) {
+                        sb.append(depNameAndId.getString(i, "dep_name")).append(",");
+                    }
+                    dsResult.setObject(i, "dep_name", sb.deleteCharAt(sb.length() - 1).toString());
+                }
             }
         }
         // 8.封装分页查询数据源与部门关系信息以及总数
@@ -362,15 +366,15 @@ public class DataSourceAction extends BaseAction {
                     "4.返回数据源以及对应部门名称信息")
     @Param(name = "source_id", desc = "data_source表主键ID，source_relation_dep表外键ID", range = "新增数据源时生成")
     @Return(desc = "返回关联查询data_source表与source_relation_dep表信息结果以及部门信息",
-            range = "部门信息集合：departmentInfo,source_id为空，查询的是部门信息，不为空查询的是数据源以及部门信息")
+            range = "无限制")
     public Map<String, Object> searchDataSourceById(long source_id) {
         // 1.数据可访问权限处理方式，以下SQL关联sourceId与user_id检查
         // 2.关联查询data_source表信息
         Map<String, Object> datasourceMap = Dbo.queryOneObject("select * from " + Data_source.TableName +
                 " where source_id=? and create_user_id=?", source_id, getUserId());
         // 3.获取数据源对应部门名称所有值,不需要权限控制
-        String depName = getDepNameById(source_id);
-        datasourceMap.put("dep_name", depName);
+        Result depNameAndId = getDepNameAndId(source_id);
+        datasourceMap.put("depNameAndId", depNameAndId.toList());
         // 4.返回数据源以及对应部门名称信息
         return datasourceMap;
     }
@@ -392,22 +396,12 @@ public class DataSourceAction extends BaseAction {
                     "4.为空，返回null")
     @Param(name = "参数名称", desc = "参数描述", range = "取值范围")
     @Return(desc = "返回内容描述", range = "取值范围")
-    private String getDepNameById(long source_id) {
+    private Result getDepNameAndId(long source_id) {
         // 1.数据可访问权限处理方式，该方法不需要权限控制
         // 2.根据数据源ID获取部门名称
-        List<String> depNameList = Dbo.queryOneColumnList("select dep_name from "
+        return Dbo.queryResult("select t1.dep_id,t2.dep_name from "
                 + Source_relation_dep.TableName + " t1 left join " + Department_info.TableName +
-                " t2 on t1.dep_id=t2.dep_id where t1.source_id=?", source_id);
-        // 3.判断部门名称集合是否为空，不为空返回部门信息
-        StringBuilder sb = new StringBuilder();
-        if (!depNameList.isEmpty()) {
-            for (int i = 0; i < depNameList.size(); i++) {
-                sb.append(depNameList.get(i)).append(",");
-            }
-            return sb.deleteCharAt(sb.length() - 1).toString();
-        }
-        // 4.为空，返回null
-        return null;
+                " t2 on t1.dep_id=t2.dep_id where t1.source_id=? order by dep_name", source_id);
     }
 
     @Method(desc = "删除数据源信息",
@@ -492,6 +486,38 @@ public class DataSourceAction extends BaseAction {
         } catch (Exception e) {
             throw new AppSystemException(e);
         }
+    }
+
+    /**
+     * 创建一个本地临时文件
+     *
+     * @param path : 文件储存的路径
+     */
+    private void saveStreamToFile(InputStream in, String path) {
+
+        FileOutputStream out = null;
+        try {
+            out = new FileOutputStream(path);
+            //创建一个缓冲区
+            byte buffer[] = new byte[1024 * 4];
+            //判断输入流中的数据是否已经读完的标识
+            int len = 0;
+            //循环将输入流读入到缓冲区当中，(len=in.read(buffer))>0就表示in里面还有数据
+            while ((len = in.read(buffer)) > 0) {
+                //使用FileOutputStream输出流将缓冲区的数据写入到指定的目录(savePath + "\\" + filename)当中
+                out.write(buffer, 0, len);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                //关闭输出流
+                out.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
     }
 
     @Method(desc = "导入数据源数据，将涉及到的所有表的数据导入数据库中对应的表中",
@@ -1661,7 +1687,7 @@ public class DataSourceAction extends BaseAction {
     public void downloadFile(long source_id) {
         // 1.数据可访问权限处理方式，这里是下载数据源，所以不需要数据权限验证
         HttpServletResponse response = ResponseUtil.getResponse();
-        try (OutputStream out = response.getOutputStream()) {
+        try {
             // 2.创建存放所有数据源下载，所有相关表数据库查询获取数据的map集合
             Map<String, Object> collectionMap = new HashMap<>();
             // 3.获取data_source表信息集合，将data_source表信息封装入map
@@ -1720,13 +1746,15 @@ public class DataSourceAction extends BaseAction {
             if (bytes == null) {
                 throw new BusinessException("此文件不存在");
             }
+            OutputStream outputStream = response.getOutputStream();
             // 29.清空response，设置响应编码格式,响应头，控制浏览器下载该文件
             response.reset();
             response.setCharacterEncoding(CodecUtil.UTF8_STRING);
             response.setContentType("APPLICATION/OCTET-STREAM");
             // 30.通过流的方式写入文件
-            out.write(bytes);
-            out.flush();
+            outputStream.write(bytes);
+            outputStream.flush();
+            outputStream.close();
         } catch (IOException e) {
             throw new AppSystemException(e);
         }
