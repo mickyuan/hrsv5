@@ -359,8 +359,8 @@ public class CollTbConfStepAction extends BaseAction {
 	@Param(name = "colSetId", desc = "数据库设置ID，源系统数据库设置表主键，数据库对应表外键", range = "不为空")
 	@Param(name = "collTbConfParamString", desc = "采集表对应采集字段配置参数", range = "" +
 			"包含两部分：" +
-			"1、tableInfoString：一张表对应的所有要被采集的列组成的json格式的字符串，一个json对象中应该包括列名(colume_name)、" +
-			"字段类型(column_type)、列中文名(colume_ch_name)、如果用户定义了并行抽取，那么应该还有is_parallel和page_sql" +
+			"1、tableInfoString：当前数据库采集任务要采集的所有的表信息组成的json格式的字符串，一个json对象中应该包括表名(table_name)、" +
+			"是否并行抽取(is_parallel)、表中文名(table_ch_name)、如果用户定义了并行抽取，那么应该还有page_sql" +
 			"如果用户定义了SQL过滤，那么还应该有sql" +
 			"2、collTbConfParamString：一张表所有要被采集的列和列采集顺序，" +
 			"key为collColumnString，表示被采集的列，json数组格式的字符串" +
