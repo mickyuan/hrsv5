@@ -30,9 +30,8 @@ public class DataQueryAction extends BaseAction {
 			logicStep = "数据可访问权限处理方式: 根据登录用户的 user_id 进行权限检查" +
 					"1.根据部门id获取该部门下所有包含文件采集任务的数据源信息的list"
 	)
-	@Param(name = "depId", desc = "部门id", range = "long类型值，不为空的数字，通过生成规则自动生成")
 	@Return(desc = "存放包含文件采集任务的数据源的集合", range = "无限制")
-	public List<Map<String, Object>> getFileDataSource(long depId) {
+	public List<Map<String, Object>> getFileDataSource() {
 		//数据可访问权限处理方式: 根据 Agent_info 的 user_id 进行权限检查
 		//1.根据部门id获取该部门下所有包含文件采集任务的数据源信息的list
 		return Dbo.queryList(
@@ -42,7 +41,7 @@ public class DataQueryAction extends BaseAction {
 						" join " + Agent_info.TableName + " ai on ds.source_id = ai.source_id" +
 						" where srd.dep_id = ? AND ai.agent_type = ? AND ai.user_id = ?" +
 						" GROUP BY ds.source_id,ds.datasource_name",
-				depId, AgentType.WenJianXiTong.getCode(), getUserId()
+				getUser().getDepId(), AgentType.WenJianXiTong.getCode(), getUserId()
 		);
 	}
 
@@ -346,7 +345,7 @@ public class DataQueryAction extends BaseAction {
 		//1.获取文件的申请和审核信息
 		Result fileRs = conditionalQuery(sourceId, fcsId, fileType, startDate, endDate);
 		Map<String, Object> conditionalQueryMap = new HashMap<>();
-		conditionalQueryMap.put("fileRs", fileRs);
+		conditionalQueryMap.put("fileRs", fileRs.toList());
 		//2.设置下载和认证信息
 		//setDownloadAndAuth(conditionalQueryMap);
 		Map<String, Object> fadMap = getFileApplicationDetails();
