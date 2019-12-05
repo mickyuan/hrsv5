@@ -19,8 +19,8 @@ public class ConnetionTool {
 			"1、将DBConfigBean对象中的内容封装到dbInfo中" +
 			"2、获取数据库类型" +
 			"3、根据数据库类型获取对应数据库的数据库连接")
-	@Param(name = "", desc = "", range = "")
-	@Return(desc = "", range = "")
+	@Param(name = "dbConfigBean", desc = "该对象封装了海云应用服务端发过来的数据库采集连接数据库的信息", range = "DBConfigBean类型对象")
+	@Return(desc = "项目中常用的DatabaseWrapper对象", range = "DatabaseWrapper类型对象")
 	public static DatabaseWrapper getDBWrapper(DBConfigBean dbConfigBean) {
 		//1、将DBConfigBean对象中的内容封装到dbInfo中
 		DbinfosConf.Dbinfo dbInfo = new DbinfosConf.Dbinfo();
