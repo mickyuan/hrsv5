@@ -1,5 +1,9 @@
 package hrds.agent.trans.biz;
 
+import fd.ng.core.annotation.DocClass;
+import fd.ng.core.annotation.Method;
+import fd.ng.core.annotation.Param;
+import fd.ng.core.annotation.Return;
 import fd.ng.db.conf.ConnWay;
 import fd.ng.db.conf.DbinfosConf;
 import fd.ng.db.conf.Dbtype;
@@ -8,26 +12,17 @@ import hrds.agent.job.biz.bean.DBConfigBean;
 import hrds.commons.codes.DatabaseType;
 import hrds.commons.exception.AppSystemException;
 
-/**
- * ClassName: ConnetionTool <br/>
- * Function: 数据库直连采集获取数据库连接 <br/>
- * Reason: 这个类还可以用于测试数据库连接
- * Date: 2019/8/1 15:24 <br/>
- * <p>
- * Author WangZhengcheng
- * Version 1.0
- * Since JDK 1.8
- **/
+@DocClass(desc = "数据库直连采集获取数据库连接", author = "WangZhengcheng", createdate = "2019/10/28 14:26")
 public class ConnetionTool {
 
-	/**
-	 * @Description: 根据数据库配置信息获取数据库连接
-	 * @Param: dbConfigBean：数据库连接配置信息，取值范围 : DBConfigBean类型对象
-	 * @return: DatabaseWrapper
-	 * @Author: WangZhengcheng
-	 * @Date: 2019/8/13
-	 */
+	@Method(desc = "根据数据库配置信息获取数据库连接", logicStep = "" +
+			"1、将DBConfigBean对象中的内容封装到dbInfo中" +
+			"2、获取数据库类型" +
+			"3、根据数据库类型获取对应数据库的数据库连接")
+	@Param(name = "", desc = "", range = "")
+	@Return(desc = "", range = "")
 	public static DatabaseWrapper getDBWrapper(DBConfigBean dbConfigBean) {
+		//1、将DBConfigBean对象中的内容封装到dbInfo中
 		DbinfosConf.Dbinfo dbInfo = new DbinfosConf.Dbinfo();
 		dbInfo.setName(DbinfosConf.DEFAULT_DBNAME);
 		dbInfo.setDriver(dbConfigBean.getDatabase_drive());
@@ -35,6 +30,7 @@ public class ConnetionTool {
 		dbInfo.setUsername(dbConfigBean.getUser_name());
 		dbInfo.setPassword(dbConfigBean.getDatabase_pad());
 		dbInfo.setWay(ConnWay.JDBC);
+		//2、获取数据库类型
 		DatabaseType typeConstant = DatabaseType.ofEnumByCode(dbConfigBean.getDatabase_type());
 		if (typeConstant == DatabaseType.MYSQL) {
 			dbInfo.setDbtype(Dbtype.MYSQL);
@@ -67,6 +63,7 @@ public class ConnetionTool {
 		}
 		dbInfo.setShow_conn_time(true);
 		dbInfo.setShow_sql(true);
+		//3、根据数据库类型获取对应数据库的数据库连接
 		return new DatabaseWrapper.Builder().dbconf(dbInfo).create();
 	}
 }

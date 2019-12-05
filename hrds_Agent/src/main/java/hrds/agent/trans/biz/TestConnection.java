@@ -1,5 +1,6 @@
 package hrds.agent.trans.biz;
 
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
@@ -12,11 +13,7 @@ import hrds.commons.exception.AppSystemException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-/**
- * description: 测试连接
- * author: xchao
- * create: 2019-09-05 11:18
- */
+@DocClass(desc = "测试连接相关接口", author = "xchao", createdate = "2019-09-05 11:18")
 public class TestConnection extends AgentBaseAction {
 
 	@Method(desc = "测试连接的方法",
