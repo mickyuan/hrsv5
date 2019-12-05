@@ -121,7 +121,7 @@ public class DataSourceAction extends BaseAction {
                 if (!depNameAndId.isEmpty()) {
                     StringBuilder sb = new StringBuilder();
                     for (int j = 0; j < depNameAndId.getRowCount(); j++) {
-                        sb.append(depNameAndId.getString(i, "dep_name")).append(",");
+                        sb.append(depNameAndId.getString(j, "dep_name")).append(",");
                     }
                     dsResult.setObject(i, "dep_name", sb.deleteCharAt(sb.length() - 1).toString());
                 }
