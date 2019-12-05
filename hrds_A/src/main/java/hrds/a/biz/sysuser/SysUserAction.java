@@ -7,6 +7,7 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DefaultPageImpl;
+import fd.ng.db.jdbc.Page;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
@@ -105,8 +106,10 @@ public class SysUserAction extends BaseAction {
 
 	@Method(desc = "获取所有系统用户列表（不包含超级管理员）",
 			logicStep = "1.查询管理员用户")
-	@Return(desc = "用户列表", range = "不包含超级管理员的系统用户列表,类型(UserType)")
-	public Result getSysUserInfo() {
+	@Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数", valueIfNull = "1")
+	@Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", valueIfNull = "10")
+	@Return(desc = "返回用户列表的集合信息", range = "不包含超级管理员的系统用户列表,类型(UserType)")
+	public Map<String, Object> getSysUserInfo(int currPage, int pageSize) {
 		//1.查询管理员用户
 		String[] str = new String[]{
 				UserType.CaijiGuanLiYuan.getCode(), UserType.ZuoYeGuanLiYuan.getCode(),
@@ -128,7 +131,12 @@ public class SysUserAction extends BaseAction {
 		asmSql.addParam(getUserId());
 		asmSql.addORParam("user_type", str);
 		asmSql.addSql(" order by user_id,create_date asc,create_time asc");
-		return Dbo.queryResult(asmSql.sql(), asmSql.params());
+		Page page = new DefaultPageImpl(currPage, pageSize);
+		List<Sys_user> sysUsers = Dbo.queryPagedList(Sys_user.class, page, asmSql.sql(), asmSql.params());
+		Map<String, Object> sysUserMap = new HashMap<>();
+		sysUserMap.put("sysUsers", sysUsers);
+		sysUserMap.put("totalSize", page.getTotalSize());
+		return sysUserMap;
 	}
 
 	@Method(desc = "删除系统用户", logicStep = "1.检查待删除的系统用户是否存在，存在则根据 user_id 删除")
