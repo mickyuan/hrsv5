@@ -610,7 +610,7 @@ public class CleanConfStepAction extends BaseAction{
 				"delete from "+ Column_split.TableName +" where col_split_id = ?", colSplitId);
 		//3、如果该列在列拆分表中已经没有数据，则在column_clean表中根据colCleanId删除类型为列拆分的数据，如果删除，应该删除一条数据
 		long splitCount = Dbo.queryNumber("select count(1) from column_split where col_clean_id = ?",
-				colCleanId).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+				colCleanId).orElseThrow(() -> new BusinessException("SQL查询错误"));
 		if(splitCount == 0){
 			DboExecute.deletesOrThrow("列拆分规则删除失败", "delete from "+ Column_clean.TableName +
 					" where col_clean_id = ? and clean_type = ?", colCleanId, CleanType.ZiFuChaiFen.getCode());
@@ -902,7 +902,7 @@ public class CleanConfStepAction extends BaseAction{
 	public void saveAllTbCleanOrder(long colSetId, String sort){
 		//1、使用colSetId在database_set表中查找，看是否能找到对应的记录
 		long count = Dbo.queryNumber("select count(1) from " + Database_set.TableName + " where database_id = ?"
-				, colSetId).orElseThrow(() -> new BusinessException("查询出的数据必须有且只有一条"));
+				, colSetId).orElseThrow(() -> new BusinessException("SQL查询错误"));
 		//2、如果没有找到，直接抛异常
 		if(count != 1){
 			throw new BusinessException("未能找到数据库采集任务");
@@ -924,7 +924,7 @@ public class CleanConfStepAction extends BaseAction{
 	public Result getAllTbCleanOrder(long colSetId){
 		//1、使用colSetId在database_set表中查找，看是否能找到对应的记录
 		long count = Dbo.queryNumber("select count(1) from " + Database_set.TableName + " where database_id = ?"
-				, colSetId).orElseThrow(() -> new BusinessException("查询出的数据必须有且只有一条"));
+				, colSetId).orElseThrow(() -> new BusinessException("SQL查询错误"));
 		//2、如果没有找到，直接抛异常
 		if(count != 1){
 			throw new BusinessException("未能找到数据库采集任务");
@@ -961,8 +961,7 @@ public class CleanConfStepAction extends BaseAction{
 	public Result getSingleTbCleanOrder(long tableId, long colSetId){
 		//1、在数据库设置表中，根据tableId和colSetId查找该采集任务中是否存在该表
 		long count = Dbo.queryNumber("select count(1) from " + Table_info.TableName + " where table_id = ? and " +
-				"database_id = ?", tableId, colSetId).orElseThrow(() ->
-				new BusinessException("查询结果必须有且只有一条"));
+				"database_id = ?", tableId, colSetId).orElseThrow(() -> new BusinessException("SQL查询错误"));
 		//2、如果不存在，直接抛异常
 		if(count != 1){
 			throw new BusinessException("在当前数据库采集任务中未找到该采集表");
@@ -999,8 +998,7 @@ public class CleanConfStepAction extends BaseAction{
 	public Result getColCleanOrder(long columnId, long tableId){
 		//1、在table_column表中，判断列是否存在
 		long count = Dbo.queryNumber("select count(1) from " + Table_column.TableName + " where column_id = ? " +
-				"and table_id = ?", columnId, tableId).orElseThrow(() ->
-				new BusinessException("查询结果必须有且只有一条数据"));
+				"and table_id = ?", columnId, tableId).orElseThrow(() -> new BusinessException("SQL查询错误"));
 		//2、不存在，直接抛异常
 		if(count != 1){
 			throw new BusinessException("未找到字段");

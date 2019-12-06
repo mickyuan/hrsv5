@@ -125,7 +125,7 @@ public class DBConfStepAction extends BaseAction{
 		//1、在collect_job_classify表中查询传入的classifyId是否存在
 		long count = Dbo.queryNumber(" SELECT count(1) FROM " + Collect_job_classify.TableName +
 				" WHERE classify_id = ? AND user_id = ? ", classifyId, getUserId()).orElseThrow(
-						() -> new BusinessException("查询结果必须有且只有一条"));
+						() -> new BusinessException("SQL查询错误"));
 		if(count != 1){
 			throw new BusinessException("采集作业分类信息不存在");
 		}
@@ -134,7 +134,7 @@ public class DBConfStepAction extends BaseAction{
 				" JOIN " + Agent_info.TableName + " ai ON ds.source_id = ai.source_id " +
 				" JOIN " + Database_set.TableName + " das ON ai.agent_id = das.agent_id " +
 				" WHERE das.classify_id = ? AND ds.create_user_id = ? ", classifyId, getUserId())
-				.orElseThrow(() -> new BusinessException("查询得到的数据必须有且只有一条"));
+				.orElseThrow(() -> new BusinessException("SQL查询错误"));
 		//数据可访问权限处理方式
 		//以上SQL中，通过当前用户ID进行关联查询，达到了数据权限的限制
 
@@ -177,7 +177,7 @@ public class DBConfStepAction extends BaseAction{
 						" LEFT JOIN "+ Data_source.TableName +" ds ON ds.source_id=ai.source_id" +
 						" WHERE cjc.classify_num=? AND ds.source_id=? AND ds.create_user_id = ? ",
 				classify.getClassify_num(), sourceId, getUserId()).orElseThrow(
-				() -> new BusinessException("查询得到的数据必须有且只有一条"));
+				() -> new BusinessException("SQL查询错误"));
 		//数据可访问权限处理方式
 		//以上SQL中，通过当前用户ID进行关联查询，达到了数据权限的限制
 		//3、分类编号重复抛异常给前台
@@ -210,7 +210,7 @@ public class DBConfStepAction extends BaseAction{
 						" LEFT JOIN "+ Data_source.TableName +" ds ON ds.source_id=ai.source_id" +
 						" WHERE cjc.classify_id=? AND ds.source_id=? AND ds.create_user_id = ? ",
 				classify.getClassify_id(), sourceId, getUserId()).orElseThrow(
-				() -> new BusinessException("查询得到的数据必须有且只有一条"));
+				() -> new BusinessException("SQL查询错误"));
 		//数据可访问权限处理方式
 		//以上SQL中，通过当前用户ID进行关联查询，达到了数据权限的限制
 		//3、不存在抛异常给前台
@@ -223,7 +223,7 @@ public class DBConfStepAction extends BaseAction{
 						" LEFT JOIN "+ Data_source.TableName +" ds ON ds.source_id=ai.source_id" +
 						" WHERE cjc.classify_num=? AND ds.source_id=? AND ds.create_user_id = ? ",
 				classify.getClassify_num(), sourceId, getUserId()).orElseThrow(
-				() -> new BusinessException("查询得到的数据必须有且只有一条"));
+				() -> new BusinessException("SQL查询错误"));
 		if(count != 0){
 			throw new BusinessException("分类编号重复，请重新输入");
 		}
@@ -275,7 +275,7 @@ public class DBConfStepAction extends BaseAction{
 			//3、如果存在，则更新信息
 			long val = Dbo.queryNumber("select count(1) from " + Database_set.TableName +
 					" where database_id = ?", databaseSet.getDatabase_id()).orElseThrow(
-					() -> new BusinessException("查询得到的数据必须有且只有一条"));
+					() -> new BusinessException("SQL查询错误"));
 			if(val != 1){
 				throw new BusinessException("待更新的数据不存在");
 			}

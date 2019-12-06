@@ -633,7 +633,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 					" on dsld.dslad_id = csi.dslad_id" +
 					" left join " + Data_store_layer.TableName + " dsl" +
 					" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 3112L, store_type.DATABASE.getCode())
-					.orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+					.orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("agent_info表中的agent_id字段保存进入到关系型数据库做主键", countOne, is(1L));
 
 			long countTwo = SqlOperator.queryNumber(db, "select count(1) from " + Column_storage_info.TableName + " csi" +
@@ -641,7 +641,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 					" on dsld.dslad_id = csi.dslad_id" +
 					" left join " + Data_store_layer.TableName + " dsl" +
 					" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 3113L, store_type.DATABASE.getCode())
-					.orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+					.orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("agent_info表中的agent_name字段没有保存进入到关系型数据库做主键", countTwo, is(0L));
 		}
 
@@ -675,7 +675,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 					" on dsld.dslad_id = csi.dslad_id" +
 					" left join " + Data_store_layer.TableName + " dsl" +
 					" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 3112L, store_type.DATABASE.getCode())
-					.orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+					.orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("agent_info表中的agent_id字段没有保存进入到关系型数据库做主键", countOne, is(0L));
 
 			long countTwo = SqlOperator.queryNumber(db, "select count(1) from " + Column_storage_info.TableName + " csi" +
@@ -683,7 +683,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 					" on dsld.dslad_id = csi.dslad_id" +
 					" left join " + Data_store_layer.TableName + " dsl" +
 					" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 3113L, store_type.DATABASE.getCode())
-					.orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+					.orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("agent_info表中的agent_name字段保存进入到关系型数据库做主键", countTwo, is(1L));
 
 			Result result = SqlOperator.queryResult(db, "select csi.csi_number from " + Column_storage_info.TableName + " csi" +
@@ -711,7 +711,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 					" on dsld.dslad_id = csi.dslad_id" +
 					" left join " + Data_store_layer.TableName + " dsl" +
 					" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 3112L, store_type.HBASE.getCode())
-					.orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+					.orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("agent_info表中的agent_id字段保存进入到HBASE做rowkey", countOne, is(1L));
 		}
 
@@ -730,7 +730,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 					" on dsld.dslad_id = csi.dslad_id" +
 					" left join " + Data_store_layer.TableName + " dsl" +
 					" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 3112L, store_type.HBASE.getCode())
-					.orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+					.orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("agent_info表中的agent_id字段没有保存进入到HBASE做rowkey", countOne, is(0L));
 		}
 
@@ -744,7 +744,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 					" on dsld.dslad_id = csi.dslad_id" +
 					" left join " + Data_store_layer.TableName + " dsl" +
 					" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 5112L, store_type.SOLR.getCode())
-					.orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+					.orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("data_source表中的source_id字段保存进入到solr做索引列", countOne, is(1L));
 		}
 		ColStoParam sourceIdParam = new ColStoParam();
@@ -770,7 +770,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 					" on dsld.dslad_id = csi.dslad_id" +
 					" left join " + Data_store_layer.TableName + " dsl" +
 					" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 5112L, store_type.SOLR.getCode())
-					.orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+					.orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("<正确的数据访问3>执行成功后，data_source表中的source_id字段不再进入到solr做索引列", countOne, is(0L));
 
 			long countTwo = SqlOperator.queryNumber(db, "select count(1) from " + Column_storage_info.TableName + " csi" +
@@ -778,7 +778,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 					" on dsld.dslad_id = csi.dslad_id" +
 					" left join " + Data_store_layer.TableName + " dsl" +
 					" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 5112L, store_type.DATABASE.getCode())
-					.orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+					.orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("<正确的数据访问3>执行成功后，data_source表中的source_id字段保存进入到关系型数据库做主键", countTwo, is(1L));
 
 			Result result = SqlOperator.queryResult(db, "select csi.csi_number from " + Column_storage_info.TableName + " csi" +

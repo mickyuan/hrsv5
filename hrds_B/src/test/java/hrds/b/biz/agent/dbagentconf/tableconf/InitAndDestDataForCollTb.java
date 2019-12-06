@@ -110,7 +110,7 @@ public class InitAndDestDataForCollTb {
 					customizeSQL = "";
 					customizFlag = IsFlag.Fou.getCode();
 					parallelFlag = IsFlag.Shi.getCode();
-					//自定义过滤
+					//分页抽取
 					pageSql = "select * from code_info limit 10";
 					break;
 				case 3:

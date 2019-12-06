@@ -126,7 +126,7 @@ public class StoDestStepConfAction extends BaseAction{
 		//1、校验该表定义的数据抽取信息是否存在
 		long count = Dbo.queryNumber("select count(1) from " + Data_extraction_def.TableName +
 				" where table_id = ? and data_extract_type = ?", tableId, DataExtractType.JinShuJuChouQu.getCode())
-				.orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+				.orElseThrow(() -> new BusinessException("SQL查询错误"));
 		if(count != 1){
 			throw new BusinessException("获取该表数据抽取信息异常");
 		}
@@ -148,7 +148,7 @@ public class StoDestStepConfAction extends BaseAction{
 		//1、使用tableId进行校验，判断该表是否定义过数据抽取信息，且数据抽取方式为仅抽取
 		long count = Dbo.queryNumber("select count(1) from " + Data_extraction_def.TableName +
 				" where table_id = ? and data_extract_type = ?", tableId, DataExtractType.JinShuJuChouQu.getCode())
-				.orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+				.orElseThrow(() -> new BusinessException("SQL查询错误"));
 		//2、若不存在，向前端抛异常
 		if(count != 1){
 			throw new BusinessException("获取该表数据抽取信息异常");
@@ -415,7 +415,7 @@ public class StoDestStepConfAction extends BaseAction{
 			//4-1、删除该表原有的存储配置，重新插入新的数据
 			long count = Dbo.queryNumber("select count(1) from " + Table_storage_info.TableName +
 					" where table_id = ?", storageInfo.getTable_id()).orElseThrow(() ->
-					new BusinessException("查询结果必须有且只有一条"));
+					new BusinessException("SQL查询错误"));
 			if(count == 1){
 				//在table_storage_info表中查询到了数据，表示修改该表的存储信息
 				/*

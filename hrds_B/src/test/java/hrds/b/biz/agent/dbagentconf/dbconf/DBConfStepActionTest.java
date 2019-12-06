@@ -21,7 +21,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
-import java.util.OptionalLong;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -405,7 +404,7 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 
 		//验证DB里面的数据是否正确
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			Collect_job_classify classify = SqlOperator.queryOneObject(db, Collect_job_classify.class, "select * from " + Collect_job_classify.TableName + " where classify_num = ? ", classifyNum).orElseThrow(() -> new BusinessException("必须有且只有一条数据"));
+			Collect_job_classify classify = SqlOperator.queryOneObject(db, Collect_job_classify.class, "select * from " + Collect_job_classify.TableName + " where classify_num = ? ", classifyNum).orElseThrow(() -> new BusinessException("未能找到分类对象"));
 			assertThat(classify.getClassify_name(), is(classifyName));
 		}
 
@@ -500,7 +499,7 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 
 		//验证DB里面的数据是否正确
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			Collect_job_classify classify = SqlOperator.queryOneObject(db, Collect_job_classify.class, "select * from " + Collect_job_classify.TableName + " where classify_num = ? ", classifyNum).orElseThrow(() -> new BusinessException("必须有且只有一条数据"));
+			Collect_job_classify classify = SqlOperator.queryOneObject(db, Collect_job_classify.class, "select * from " + Collect_job_classify.TableName + " where classify_num = ? ", classifyNum).orElseThrow(() -> new BusinessException("未能找到分类对象"));
 			assertThat(classify.getClassify_name(), is(classifyName));
 		}
 
@@ -590,8 +589,8 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 		try(DatabaseWrapper db = new DatabaseWrapper()){
 			//正确数据访问1：
 			//删除前，确认待删除数据是否存在
-			OptionalLong before = SqlOperator.queryNumber(db, "select count(1) from collect_job_classify where classify_id = ?", FIRST_CLASSIFY_ID);
-			assertThat("删除操作前，collect_job_classify表中的确存在这样一条数据", before.orElse(Long.MIN_VALUE), is(1L));
+			long before = SqlOperator.queryNumber(db, "select count(1) from collect_job_classify where classify_id = ?", FIRST_CLASSIFY_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("删除操作前，collect_job_classify表中的确存在这样一条数据", before, is(1L));
 
 			//构建正确的但是被databse_set表使用过的classify_id，执行删除操作，操作应该失败
 			String bodyString = new HttpClient()
@@ -602,15 +601,15 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 			assertThat(ar.isSuccess(), is(false));
 
 			//删除后，确认数据是否被删除
-			OptionalLong after = SqlOperator.queryNumber(db, "select count(1) from collect_job_classify where classify_id = ?", FIRST_CLASSIFY_ID);
-			assertThat("因classify_id被databse_set表使用过，删除操作没有执行成功", after.orElse(Long.MIN_VALUE), is(1L));
+			long after = SqlOperator.queryNumber(db, "select count(1) from collect_job_classify where classify_id = ?", FIRST_CLASSIFY_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("因classify_id被databse_set表使用过，删除操作没有执行成功", after, is(1L));
 		}
 
 		try(DatabaseWrapper db = new DatabaseWrapper()){
 			//正确数据访问1：
 			//删除前，确认待删除数据是否存在
-			OptionalLong before = SqlOperator.queryNumber(db, "select count(1) from collect_job_classify where classify_id = ?", THIRD_CLASSIFY_ID);
-			assertThat("删除操作前，collect_job_classify表中的确存在这样一条数据", before.orElse(Long.MIN_VALUE), is(1L));
+			long before = SqlOperator.queryNumber(db, "select count(1) from collect_job_classify where classify_id = ?", THIRD_CLASSIFY_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("删除操作前，collect_job_classify表中的确存在这样一条数据", before, is(1L));
 
 			//构建正确的但是未被databse_set表使用过的classify_id，执行删除操作，操作应该成功
 			String bodyString = new HttpClient()
@@ -621,8 +620,8 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 			assertThat(ar.isSuccess(), is(true));
 
 			//删除后，确认数据是否被删除
-			OptionalLong after = SqlOperator.queryNumber(db, "select count(1) from collect_job_classify where classify_id = ?", THIRD_CLASSIFY_ID);
-			assertThat("删除操作后，collect_job_classify表中这样一条数据没有了", after.orElse(Long.MIN_VALUE), is(0L));
+			long after = SqlOperator.queryNumber(db, "select count(1) from collect_job_classify where classify_id = ?", THIRD_CLASSIFY_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("删除操作后，collect_job_classify表中这样一条数据没有了", after, is(0L));
 		}
 
 		//错误的数据访问1：传入错误的classifyId
@@ -687,7 +686,7 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 
 		//验证DB里面的数据是否正确
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			Database_set classify = SqlOperator.queryOneObject(db, Database_set.class, "select * from " + Database_set.TableName + " where agent_id = ? and database_type = ?", FIRST_DB_AGENT_ID, DatabaseType.ApacheDerby.getCode()).orElseThrow(() -> new BusinessException("必须有且只有一条数据"));
+			Database_set classify = SqlOperator.queryOneObject(db, Database_set.class, "select * from " + Database_set.TableName + " where agent_id = ? and database_type = ?", FIRST_DB_AGENT_ID, DatabaseType.ApacheDerby.getCode()).orElseThrow(() -> new BusinessException("未获取到数据库采集任务"));
 			assertThat(classify.getDatabase_name(), is("wzc_test_saveDbConf_database_name"));
 			assertThat(classify.getTask_name(), is("wzc_test_saveDbConf_task_name"));
 			assertThat(classify.getUser_name(), is("wzc_test_saveDbConf_user_name"));
@@ -730,7 +729,7 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 
 		//验证DB里面的数据是否正确
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			Database_set classify = SqlOperator.queryOneObject(db, Database_set.class, "select * from " + Database_set.TableName + " where database_id = ?", 1001L).orElseThrow(() -> new BusinessException("必须有且只有一条数据"));
+			Database_set classify = SqlOperator.queryOneObject(db, Database_set.class, "select * from " + Database_set.TableName + " where database_id = ?", 1001L).orElseThrow(() -> new BusinessException("未获取到数据库采集任务"));
 			assertThat(classify.getDatabase_name(), is("wzc_test_saveDbConf_update_database_name"));
 			assertThat(classify.getTask_name(), is("wzc_test_saveDbConf_update_task_name"));
 			assertThat(classify.getUser_name(), is("wzc_test_saveDbConf_update_user_name"));

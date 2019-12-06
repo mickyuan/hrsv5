@@ -231,7 +231,7 @@ public class AgentListAction extends BaseAction {
 				" join " + Agent_info.TableName + " ai on ai.source_id = ds.source_id " +
 				" join " + Object_collect.TableName + " oc on ai.Agent_id = oc.Agent_id " +
 				" where ds.create_user_id = ? and oc.odc_id = ?", getUserId(),
-				collectSetId).orElseThrow(() -> new BusinessException("查询得到的数据必须有且只有一条"));
+				collectSetId).orElseThrow(() -> new BusinessException("SQL查询错误"));
 		if(val != 1){
 			throw new BusinessException("要删除的半结构化文件采集任务不存在");
 		}
@@ -266,7 +266,7 @@ public class AgentListAction extends BaseAction {
 				" join " + Agent_info.TableName + " ai on ai.source_id = ds.source_id " +
 				" join " + Ftp_collect.TableName + " fc on ai.Agent_id = fc.Agent_id " +
 				" where ds.create_user_id = ? and fc.ftp_id = ?", getUserId(), collectSetId)
-				.orElseThrow(() -> new BusinessException("查询得到的数据必须有且只有一条"));
+				.orElseThrow(() -> new BusinessException("SQL查询错误"));
 		if(val != 1){
 			throw new BusinessException("要删除的FTP采集任务不存在");
 		}
@@ -291,7 +291,7 @@ public class AgentListAction extends BaseAction {
 				" join " + Agent_info.TableName + " ai on ai.source_id = ds.source_id " +
 				" join " + Database_set.TableName + " dbs on ai.Agent_id = dbs.Agent_id " +
 				" where ds.create_user_id = ? and dbs.database_id = ?", getUserId(),
-				collectSetId).orElseThrow(() -> new BusinessException("查询得到的数据必须有且只有一条"));
+				collectSetId).orElseThrow(() -> new BusinessException("SQL查询错误"));
 		if(val != 1){
 			throw new BusinessException("要删除的数据库直连采集任务不存在");
 		}
@@ -327,7 +327,7 @@ public class AgentListAction extends BaseAction {
 				" join " + Agent_info.TableName + " ai on ai.source_id = ds.source_id " +
 				" join " + Database_set.TableName + " dbs on ai.Agent_id = dbs.Agent_id " +
 				" where ds.create_user_id = ? and dbs.database_id = ?", getUserId(),
-				collectSetId).orElseThrow(() -> new BusinessException("查询得到的数据必须有且只有一条"));
+				collectSetId).orElseThrow(() -> new BusinessException("SQL查询错误"));
 		if(val != 1){
 			throw new BusinessException("要删除的数据文件采集任务不存在");
 		}
@@ -350,7 +350,7 @@ public class AgentListAction extends BaseAction {
 				" join " + Agent_info.TableName + " ai on ai.source_id = ds.source_id " +
 				" join " + File_collect_set.TableName + " fcs on ai.Agent_id = fcs.Agent_id " +
 				" where ds.create_user_id = ? and fcs.fcs_id = ?", getUserId(),
-				collectSetId).orElseThrow(() -> new BusinessException("查询得到的数据必须有且只有一条"));
+				collectSetId).orElseThrow(() -> new BusinessException("SQL查询错误"));
 		if(val != 1){
 			throw new BusinessException("要删除的非结构化文件采集任务不存在");
 		}

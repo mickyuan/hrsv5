@@ -160,7 +160,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	public void saveSingleTbCompletionInfo(){
 		//正确数据访问1：构造合法的修改数据进行访问，应该可以正确保存(对该表之前设置过字符补齐)
 		try(DatabaseWrapper db = new DatabaseWrapper()){
-			long oldCount = SqlOperator.queryNumber(db, "select count(1) from "+ Table_clean.TableName +" where table_id = ? and clean_type = ? and character_filling = ?", SYS_USER_TABLE_ID, CleanType.ZiFuBuQi.getCode(), StringUtil.string2Unicode("wzc")).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long oldCount = SqlOperator.queryNumber(db, "select count(1) from "+ Table_clean.TableName +" where table_id = ? and clean_type = ? and character_filling = ?", SYS_USER_TABLE_ID, CleanType.ZiFuBuQi.getCode(), StringUtil.string2Unicode("wzc")).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("新增之前为sys_user表构造的字符补齐测试数据是存在的", oldCount == 1, is(true));
 		}
 
@@ -176,9 +176,9 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		assertThat(rightResultOne.isSuccess(), is(true));
 
 		try(DatabaseWrapper db = new DatabaseWrapper()){
-			long count = SqlOperator.queryNumber(db, "select count(1) from "+ Table_clean.TableName +" where table_id = ? and clean_type = ?", SYS_USER_TABLE_ID, CleanType.ZiFuBuQi.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long count = SqlOperator.queryNumber(db, "select count(1) from "+ Table_clean.TableName +" where table_id = ? and clean_type = ?", SYS_USER_TABLE_ID, CleanType.ZiFuBuQi.getCode()).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("新增成功，构造的整表字符补齐测试数据被成功保存", count == 1L, is(true));
-			long oldCount = SqlOperator.queryNumber(db, "select count(1) from "+ Table_clean.TableName +" where table_id = ? and clean_type = ? and character_filling = ?", SYS_USER_TABLE_ID, CleanType.ZiFuBuQi.getCode(), "wzc").orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long oldCount = SqlOperator.queryNumber(db, "select count(1) from "+ Table_clean.TableName +" where table_id = ? and clean_type = ? and character_filling = ?", SYS_USER_TABLE_ID, CleanType.ZiFuBuQi.getCode(), "wzc").orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("新增成功，之前为sys_user表构造的字符补齐测试数据已经被删除了", oldCount == 0, is(true));
 			int deleteCount = SqlOperator.execute(db, "delete from " + Table_clean.TableName + " where table_id = ? and clean_type = ? and character_filling = ?", SYS_USER_TABLE_ID, CleanType.ZiFuBuQi.getCode(), StringUtil.string2Unicode("beyond"));
 			assertThat("测试完成后，删除新增成功的整表字符补齐测试数据", deleteCount == 1, is(true));
@@ -247,7 +247,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	public void saveColCompletionInfo(){
 		//正确数据访问1：构造合法的新增数据进行访问，应该可以正确保存(对该列之前没有设置过字符补齐)
 		try(DatabaseWrapper db = new DatabaseWrapper()){
-			long oldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where column_id = ? and clean_type = ? and character_filling = ?", 2002L, CleanType.ZiFuBuQi.getCode(), StringUtil.string2Unicode("wzc")).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long oldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where column_id = ? and clean_type = ? and character_filling = ?", 2002L, CleanType.ZiFuBuQi.getCode(), StringUtil.string2Unicode("wzc")).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("新增列字符补齐之前为sys_user表的create_id列构造的字符补齐测试数据是存在的", oldCount == 1, is(true));
 		}
 
@@ -263,9 +263,9 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		assertThat(rightResult.isSuccess(), is(true));
 
 		try(DatabaseWrapper db = new DatabaseWrapper()){
-			long count = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where column_id = ? and clean_type = ? and character_filling = ?", 2002L, CleanType.ZiFuBuQi.getCode(), StringUtil.string2Unicode("beyond")).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long count = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where column_id = ? and clean_type = ? and character_filling = ?", 2002L, CleanType.ZiFuBuQi.getCode(), StringUtil.string2Unicode("beyond")).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("新增列字符补齐成功，构造的测试数据被成功保存", count == 1, is(true));
-			long oldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where column_id = ? and clean_type = ? and character_filling = ?", 2002L, CleanType.ZiFuBuQi.getCode(), StringUtil.string2Unicode("wzc")).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long oldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where column_id = ? and clean_type = ? and character_filling = ?", 2002L, CleanType.ZiFuBuQi.getCode(), StringUtil.string2Unicode("wzc")).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("新增列字符补齐成功，之前为sys_user表的create_id列构造的字符补齐测试数据已经被删除了", oldCount == 0, is(true));
 			int deleteCount = SqlOperator.execute(db, "delete from " + Column_clean.TableName + " where column_id = ? and clean_type = ? and character_filling = ?", 2002L, CleanType.ZiFuBuQi.getCode(), StringUtil.string2Unicode("beyond"));
 			assertThat("测试完成后，删除新增成功的列字符补齐测试数据", deleteCount == 1, is(true));
@@ -424,7 +424,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	public void saveSingleTbReplaceInfo(){
 		//正确数据访问1：构造正常的字符替换规则进行保存
 		try(DatabaseWrapper db = new DatabaseWrapper()){
-			long oldCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_clean.TableName + " where table_id = ? and clean_type = ? and field = ? and replace_feild = ?", SYS_USER_TABLE_ID, CleanType.ZiFuTiHuan.getCode(), StringUtil.string2Unicode("wzc"), StringUtil.string2Unicode("wqp")).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long oldCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_clean.TableName + " where table_id = ? and clean_type = ? and field = ? and replace_feild = ?", SYS_USER_TABLE_ID, CleanType.ZiFuTiHuan.getCode(), StringUtil.string2Unicode("wzc"), StringUtil.string2Unicode("wqp")).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("新增整表字符替换之前为sys_user表构造的字符替换测试数据是存在的", oldCount == 1, is(true));
 		}
 		List<Table_clean> replaceList = new ArrayList<>();
@@ -466,9 +466,9 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		assertThat(rightResultOne.isSuccess(), is(true));
 
 		try(DatabaseWrapper db = new DatabaseWrapper()){
-			long count = SqlOperator.queryNumber(db, "select count(1) from " + Table_clean.TableName + " where table_id = ? and clean_type = ?", SYS_USER_TABLE_ID, CleanType.ZiFuTiHuan.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long count = SqlOperator.queryNumber(db, "select count(1) from " + Table_clean.TableName + " where table_id = ? and clean_type = ?", SYS_USER_TABLE_ID, CleanType.ZiFuTiHuan.getCode()).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("新增整表字符替换成功，构造的测试数据被成功保存", count == 2, is(true));
-			long oldCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_clean.TableName + " where table_id = ? and field = ? and replace_feild = ?", SYS_USER_TABLE_ID, StringUtil.string2Unicode("wzc"), StringUtil.string2Unicode("wqp")).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long oldCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_clean.TableName + " where table_id = ? and field = ? and replace_feild = ?", SYS_USER_TABLE_ID, StringUtil.string2Unicode("wzc"), StringUtil.string2Unicode("wqp")).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("新增整表字符替换成功，之前为sys_user表构造的字符替换测试数据已经被删除了", oldCount == 0, is(true));
 			int deleteCount = SqlOperator.execute(db, "delete from " + Table_clean.TableName + " where table_id = ? and clean_type = ?", SYS_USER_TABLE_ID, CleanType.ZiFuTiHuan.getCode());
 			assertThat("测试完成后，删除新增成功的整表字符替换测试数据", deleteCount == 2, is(true));
@@ -494,7 +494,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		assertThat(rightResultTwo.isSuccess(), is(true));
 
 		try(DatabaseWrapper db = new DatabaseWrapper()){
-			long count = SqlOperator.queryNumber(db, "select count(1) from " + Table_clean.TableName + " where table_id = ? and clean_type = ?", SYS_USER_TABLE_ID, CleanType.ZiFuTiHuan.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long count = SqlOperator.queryNumber(db, "select count(1) from " + Table_clean.TableName + " where table_id = ? and clean_type = ?", SYS_USER_TABLE_ID, CleanType.ZiFuTiHuan.getCode()).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("新增整表字符替换成功，构造的测试数据被成功保存", count == 1, is(true));
 			Result result = SqlOperator.queryResult(db, "select clean_type, field, replace_feild, table_id from " + Table_clean.TableName + " where table_id = ? and clean_type = ?", SYS_USER_TABLE_ID, CleanType.ZiFuTiHuan.getCode());
 			assertThat(result.getRowCount() == 1, is(true));
@@ -555,7 +555,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	public void saveColReplaceInfo(){
 		//正确数据访问1：构造正确的列字符替换规则进行保存
 		try(DatabaseWrapper db = new DatabaseWrapper()){
-			long oldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where column_id = ? and clean_type = ? and field = ? and replace_feild = ?", 2005L, CleanType.ZiFuTiHuan.getCode(), StringUtil.string2Unicode("ceshi"), StringUtil.string2Unicode("test")).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long oldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where column_id = ? and clean_type = ? and field = ? and replace_feild = ?", 2005L, CleanType.ZiFuTiHuan.getCode(), StringUtil.string2Unicode("ceshi"), StringUtil.string2Unicode("test")).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("新增列字符补齐之前为sys_user表的user_name列构造的字符替换测试数据是存在的", oldCount == 1, is(true));
 		}
 
@@ -598,9 +598,9 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		assertThat(rightResultOne.isSuccess(), is(true));
 
 		try(DatabaseWrapper db = new DatabaseWrapper()){
-			long count = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where column_id = ? and clean_type = ?", 2005L, CleanType.ZiFuTiHuan.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long count = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where column_id = ? and clean_type = ?", 2005L, CleanType.ZiFuTiHuan.getCode()).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("新增列字符替换成功，构造的测试数据被成功保存", count == 2, is(true));
-			long oldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where column_id = ? and clean_type = ? and field = ? and replace_feild = ?", 2005L, CleanType.ZiFuTiHuan.getCode(), StringUtil.string2Unicode("ceshi"), StringUtil.string2Unicode("test")).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long oldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where column_id = ? and clean_type = ? and field = ? and replace_feild = ?", 2005L, CleanType.ZiFuTiHuan.getCode(), StringUtil.string2Unicode("ceshi"), StringUtil.string2Unicode("test")).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("新增列字符补齐成功之后，为sys_user表的user_name列构造的字符替换测试数据被删除了", oldCount == 0, is(true));
 			Result result = SqlOperator.queryResult(db, "select clean_type, replace_feild from " + Column_clean.TableName + " where column_id = ? and field = ?", 2005L, StringUtil.string2Unicode("alibaba"));
 			assertThat(result.getRowCount() == 1, is(true));
@@ -794,7 +794,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	public void saveAllTbCleanConfigInfo(){
 		//正确数据访问1：模拟只设置全表字符补齐
 		try(DatabaseWrapper db = new DatabaseWrapper()){
-			long oldCount = SqlOperator.queryNumber(db, "select count(1) from " + Clean_parameter.TableName + " where database_id = ?", FIRST_DATABASESET_ID).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long oldCount = SqlOperator.queryNumber(db, "select count(1) from " + Clean_parameter.TableName + " where database_id = ?", FIRST_DATABASESET_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("新增全表字符补齐之前为database_id为" + FIRST_DATABASESET_ID + "数据库直连采集作业构造的全表清洗测试数据是存在的", oldCount == 2, is(true));
 		}
 
@@ -811,7 +811,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		assertThat(rightResult.isSuccess(), is(true));
 
 		try(DatabaseWrapper db = new DatabaseWrapper()){
-			long oldCount = SqlOperator.queryNumber(db, "select count(1) from " + Clean_parameter.TableName + " where c_id in(666666, 777777)").orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long oldCount = SqlOperator.queryNumber(db, "select count(1) from " + Clean_parameter.TableName + " where c_id in(666666, 777777)").orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("新增全表字符补齐成功后，为database_id为" + FIRST_DATABASESET_ID + "数据库直连采集作业构造的全表清洗测试数据没有了", oldCount == 0, is(true));
 
 			Result compResult = SqlOperator.queryResult(db, "select filling_type, character_filling, filling_length from " + Clean_parameter.TableName + " where database_id = ? and clean_type = ?", FIRST_DATABASESET_ID, CleanType.ZiFuBuQi.getCode());
@@ -840,7 +840,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		assertThat(rightResultTwo.isSuccess(), is(true));
 
 		try(DatabaseWrapper db = new DatabaseWrapper()){
-			long oldCount = SqlOperator.queryNumber(db, "select count(1) from " + Clean_parameter.TableName + " where c_id in(666666, 777777)").orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long oldCount = SqlOperator.queryNumber(db, "select count(1) from " + Clean_parameter.TableName + " where c_id in(666666, 777777)").orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("新增全表字符替换成功后，为database_id为" + FIRST_DATABASESET_ID + "数据库直连采集作业构造的全表清洗测试数据没有了", oldCount == 0, is(true));
 
 			Result replaceResult = SqlOperator.queryResult(db, "select field, replace_feild from " + Clean_parameter.TableName + " where database_id = ? and clean_type = ?", FIRST_DATABASESET_ID, CleanType.ZiFuTiHuan.getCode());
@@ -871,7 +871,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		assertThat(rightResultThree.isSuccess(), is(true));
 
 		try(DatabaseWrapper db = new DatabaseWrapper()){
-			long oldCount = SqlOperator.queryNumber(db, "select count(1) from " + Clean_parameter.TableName + " where c_id in(666666, 777777)").orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long oldCount = SqlOperator.queryNumber(db, "select count(1) from " + Clean_parameter.TableName + " where c_id in(666666, 777777)").orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("新增全表字符替换成功后，为database_id为" + FIRST_DATABASESET_ID + "数据库直连采集作业构造的全表清洗测试数据没有了", oldCount == 0, is(true));
 
 			Result result = SqlOperator.queryResult(db, "select * from " + Clean_parameter.TableName + " where database_id = ?", FIRST_DATABASESET_ID);
@@ -1063,7 +1063,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	public void saveDateFormatInfo(){
 		//正确数据访问1：模拟修改对sys_user表的login_date字段设置日期格式化
 		try(DatabaseWrapper db = new DatabaseWrapper()){
-			long oldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where column_id = ? and old_format = ? and convert_format = ?", 2011L, "YYYY-MM-DD", "YYYY-MM").orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long oldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where column_id = ? and old_format = ? and convert_format = ?", 2011L, "YYYY-MM-DD", "YYYY-MM").orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("模拟修改对sys_user表的login_date字段设置日期格式化之前，原数据存在", oldCount == 1, is(true));
 		}
 
@@ -1078,7 +1078,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		assertThat(rightResultOne.isSuccess(), is(true));
 
 		try(DatabaseWrapper db = new DatabaseWrapper()){
-			long oldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where column_id = ? and old_format = ? and convert_format = ?", 2011L, "YYYY-MM-DD", "YYYY-MM").orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long oldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where column_id = ? and old_format = ? and convert_format = ?", 2011L, "YYYY-MM-DD", "YYYY-MM").orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("模拟修改对sys_user表的login_date字段设置日期格式化之后，原数据被删除了", oldCount == 0, is(true));
 			Result result = SqlOperator.queryResult(db, "select convert_format, old_format from " + Column_clean.TableName + " where column_id = ?", 2011L);
 			assertThat("模拟修改对sys_user表的login_date字段设置日期格式化之后，转换日期格式被改为yyyy年MM月dd日 HH:mm:ss", result.getString(0, "convert_format").equalsIgnoreCase("yyyy年MM月dd日 HH:mm:ss"), is(true));
@@ -1182,11 +1182,11 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	public void deleteColSplitInfo(){
 		//正确数据访问1：由于columnId为3003的列被拆分成了三列，所以进行三次删除，最后一次删除之后，由于该列已经在column_split表中已经没有数据了，所以应该在column_clean表中，把这一列的字段拆分清洗规则删除掉
 		try(DatabaseWrapper db = new DatabaseWrapper()){
-			long columnOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " where column_id = ?", 141414L).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long columnOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " where column_id = ?", 141414L).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("进行第一次删除前，拆分为ci的列在table_column表中存在", columnOldCount == 1, is(true));
-			long splitOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_split.TableName + " where col_split_id = ?", 101010103L).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long splitOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_split.TableName + " where col_split_id = ?", 101010103L).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("进行第一次删除前，拆分为ci的列在column_split表中存在", splitOldCount == 1, is(true));
-			long cleanOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where col_clean_id = ? and clean_type = ?", 101010102L, CleanType.ZiFuChaiFen.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long cleanOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where col_clean_id = ? and clean_type = ?", 101010102L, CleanType.ZiFuChaiFen.getCode()).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("进行第一次删除前，列ci_sp_classname的列拆分配置在column_clean表中存在", cleanOldCount == 1, is(true));
 		}
 
@@ -1199,20 +1199,20 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		assertThat(rightResultOne.isSuccess(), is(true));
 
 		try(DatabaseWrapper db = new DatabaseWrapper()){
-			long columnOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " where column_id = ?", 141414L).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long columnOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " where column_id = ?", 141414L).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("进行第一次删除后，拆分为ci的列在table_column表中被删除了", columnOldCount == 0, is(true));
-			long splitOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_split.TableName + " where col_split_id = ?", 101010103L).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long splitOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_split.TableName + " where col_split_id = ?", 101010103L).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("进行第一次删除后，拆分为ci的列在column_split表中被删除了", splitOldCount == 0, is(true));
-			long cleanOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where col_clean_id = ? and clean_type = ?", 101010102L, CleanType.ZiFuChaiFen.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long cleanOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where col_clean_id = ? and clean_type = ?", 101010102L, CleanType.ZiFuChaiFen.getCode()).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("进行第一次删除后，列ci_sp_classname的列拆分配置在column_clean表中存在", cleanOldCount == 1, is(true));
 		}
 
 		try(DatabaseWrapper db = new DatabaseWrapper()){
-			long columnOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " where column_id = ?", 151515L).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long columnOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " where column_id = ?", 151515L).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("进行第二次删除前，拆分为sp的列在table_column表中存在", columnOldCount == 1, is(true));
-			long splitOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_split.TableName + " where col_split_id = ?", 101010104L).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long splitOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_split.TableName + " where col_split_id = ?", 101010104L).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("进行第二次删除前，拆分为sp的列在column_split表中存在", splitOldCount == 1, is(true));
-			long cleanOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where col_clean_id = ? and clean_type = ?", 101010102L, CleanType.ZiFuChaiFen.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long cleanOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where col_clean_id = ? and clean_type = ?", 101010102L, CleanType.ZiFuChaiFen.getCode()).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("进行第二次删除前，列ci_sp_classname的列拆分配置在column_clean表中存在", cleanOldCount == 1, is(true));
 		}
 
@@ -1225,20 +1225,20 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		assertThat(rightResultTwo.isSuccess(), is(true));
 
 		try(DatabaseWrapper db = new DatabaseWrapper()){
-			long columnOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " where column_id = ?", 151515L).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long columnOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " where column_id = ?", 151515L).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("进行第二次删除后，拆分为sp的列在table_column表中被删除了", columnOldCount == 0, is(true));
-			long splitOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_split.TableName + " where col_split_id = ?", 101010104L).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long splitOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_split.TableName + " where col_split_id = ?", 101010104L).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("进行第二次删除后，拆分为sp的列在column_split表中被删除了", splitOldCount == 0, is(true));
-			long cleanOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where col_clean_id = ? and clean_type = ?", 101010102L, CleanType.ZiFuChaiFen.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long cleanOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where col_clean_id = ? and clean_type = ?", 101010102L, CleanType.ZiFuChaiFen.getCode()).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("进行第二次删除后，列ci_sp_classname的列拆分配置在column_clean表中存在", cleanOldCount == 1, is(true));
 		}
 
 		try(DatabaseWrapper db = new DatabaseWrapper()){
-			long columnOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " where column_id = ?", 161616L).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long columnOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " where column_id = ?", 161616L).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("进行第三次删除前，拆分为classname的列在table_column表中存在", columnOldCount == 1, is(true));
-			long splitOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_split.TableName + " where col_split_id = ?", 101010105L).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long splitOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_split.TableName + " where col_split_id = ?", 101010105L).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("进行第三次删除前，拆分为classname的列在column_split表中存在", splitOldCount == 1, is(true));
-			long cleanOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where col_clean_id = ? and clean_type = ?", 101010102L, CleanType.ZiFuChaiFen.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long cleanOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where col_clean_id = ? and clean_type = ?", 101010102L, CleanType.ZiFuChaiFen.getCode()).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("进行第三次删除前，列ci_sp_classname的列拆分配置在column_clean表中存在", cleanOldCount == 1, is(true));
 		}
 
@@ -1251,11 +1251,11 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		assertThat(rightResultThree.isSuccess(), is(true));
 
 		try(DatabaseWrapper db = new DatabaseWrapper()){
-			long columnOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " where column_id = ?", 161616L).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long columnOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " where column_id = ?", 161616L).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("进行第三次删除后，拆分为classname的列在table_column表中被删除了", columnOldCount == 0, is(true));
-			long splitOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_split.TableName + " where col_split_id = ?", 101010105L).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long splitOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_split.TableName + " where col_split_id = ?", 101010105L).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("进行第三次删除后，拆分为classname的列在column_split表中被删除了", splitOldCount == 0, is(true));
-			long cleanOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where col_clean_id = ? and clean_type = ?", 101010102L, CleanType.ZiFuChaiFen.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long cleanOldCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where col_clean_id = ? and clean_type = ?", 101010102L, CleanType.ZiFuChaiFen.getCode()).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("进行第三次删除后，列ci_sp_classname的列拆分配置在column_clean表中被删除了", cleanOldCount == 0, is(true));
 		}
 
@@ -1367,7 +1367,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 					assertThat("进行code_info表的ci_cp_classname列拆分修改保存前，在table_column表中查询到了不符合预期的列" + tableColumn.getColume_name(), false, is(true));
 				}
 			}
-			long beforeDelSpCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_split.TableName + " where col_split_id in (101010103, 101010104, 101010105) ").orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long beforeDelSpCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_split.TableName + " where col_split_id in (101010103, 101010104, 101010105) ").orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("进行code_info表的ci_cp_classname列拆分修改保存前，列拆分信息在column_split表中存在", beforeDelSpCount == 3, is(true));
 		}
 
@@ -1401,7 +1401,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 					assertThat("进行code_info表的ci_cp_classname列拆分修改保存后，在table_column表中查询到了不符合预期的列" + tableColumn.getColume_name(), false, is(true));
 				}
 			}
-			long afterDelSpCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_split.TableName + " where col_split_id in (101010103, 101010104, 101010105) ").orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long afterDelSpCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_split.TableName + " where col_split_id in (101010103, 101010104, 101010105) ").orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("进行code_info表的ci_cp_classname列拆分修改保存后，原来对该列定义的列拆分信息在column_split表中不存在", afterDelSpCount == 0, is(true));
 
 			Result result = SqlOperator.queryResult(db, "select * from " + Column_split.TableName + " where column_id = ?", 3003L);
@@ -1502,7 +1502,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 				}
 			}
 
-			long afterSplitCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_split.TableName + " where column_id = ?", 3001L).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long afterSplitCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_split.TableName + " where column_id = ?", 3001L).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("模拟新增对code_info表的ci_sp_code设置字段拆分规则，column_split表中按照下划线分拆分为ci、sp、code三列成功", afterSplitCount == 3, is(true));
 
 			//删除新增时带来的数据
@@ -1982,8 +1982,8 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	public void saveColMergeInfo(){
 		//正确数据访问1：模拟对sys_user表设置好的列合并进行修改
 		try(DatabaseWrapper db = new DatabaseWrapper()){
-			long beforeColumnCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " where column_id = ?", 1717171717L).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
-			long beforeMergeCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_merge.TableName + " where col_merge_id = ?", 16161616L).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long beforeColumnCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " where column_id = ?", 1717171717L).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			long beforeMergeCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_merge.TableName + " where col_merge_id = ?", 16161616L).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("模拟对sys_user表设置好的列合并进行修改前，构造的初始化数据在table_column表中存在", beforeColumnCount == 1, is(true));
 			assertThat("模拟对sys_user表设置好的列合并进行修改前，构造的初始化数据在column_merge表中存在", beforeMergeCount == 1, is(true));
 		}
@@ -2011,8 +2011,8 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 					+ " where colume_name in (select t1.colume_name from " + Table_column.TableName + " t1 " +
 					" JOIN " + Column_merge.TableName + " t2 ON t1.table_id=t2.table_id " +
 					" where t2.table_id = ? and t1.is_new = ? )", SYS_USER_TABLE_ID, IsFlag.Shi.getCode());
-			long afterColumnCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " where column_id = ?", 1717171717L).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
-			long afterMergeCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_merge.TableName + " where col_merge_id = ?", 16161616L).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long afterColumnCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " where column_id = ?", 1717171717L).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			long afterMergeCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_merge.TableName + " where col_merge_id = ?", 16161616L).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("模拟对sys_user表设置好的列合并进行修改成功", tableColumns.size() == 1, is(true));
 			assertThat("模拟对sys_user表设置好的列合并进行修改成功", afterColumnCount == 0, is(true));
 			assertThat("模拟对sys_user表设置好的列合并进行修改成功", afterMergeCount == 0, is(true));
@@ -2052,7 +2052,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 					" JOIN " + Column_merge.TableName + " t2 ON t1.table_id = t2.table_id " +
 					" and t1.colume_name = t2.col_name " +
 					" where t2.table_id = ? and t1.is_new = ? )", CODE_INFO_TABLE_ID, IsFlag.Shi.getCode());
-			long afterMergeCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_merge.TableName + " where table_id = ?", CODE_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long afterMergeCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_merge.TableName + " where table_id = ?", CODE_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("模拟对code_info表设置列合并成功", tableColumns.size(), is(1));
 			assertThat("模拟对code_info表设置列合并成功", tableColumns.get(0).getColume_name().equalsIgnoreCase("ci_sp_name_remark"), is(true));
 			assertThat("模拟对code_info表设置列合并成功", afterMergeCount == 1, is(true));
@@ -2140,8 +2140,8 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 					" from " + Table_column.TableName + " t1 " +
 					" JOIN " + Column_merge.TableName + " t2 ON t1.table_id = t2.table_id " +
 					" and t1.colume_name = t2.col_name " +
-					" where t2.col_merge_id = ?) ", 16161616L).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
-			long beforeMergeCount = SqlOperator.queryNumber(db, " select count(1) from " + Column_merge.TableName + " where col_merge_id = ? ", 16161616L).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+					" where t2.col_merge_id = ?) ", 16161616L).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			long beforeMergeCount = SqlOperator.queryNumber(db, " select count(1) from " + Column_merge.TableName + " where col_merge_id = ? ", 16161616L).orElseThrow(() -> new BusinessException("SQL查询错误"));
 
 			assertThat("模拟删除对sys_user表设置的列合并规则之前，table_column表中的测试数据存在", beforeColumnCount == 1, is(true));
 			assertThat("模拟删除对sys_user表设置的列合并规则之前，column_merge表中的测试数据存在", beforeMergeCount == 1, is(true));
@@ -2161,8 +2161,8 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 					" from " + Table_column.TableName + " t1 " +
 					" JOIN " + Column_merge.TableName + " t2 ON t1.table_id = t2.table_id " +
 					" and t1.colume_name = t2.col_name " +
-					" where t2.col_merge_id = ?) ", 16161616L).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
-			long beforeMergeCount = SqlOperator.queryNumber(db, " select count(1) from " + Column_merge.TableName + " where col_merge_id = ? ", 16161616L).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+					" where t2.col_merge_id = ?) ", 16161616L).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			long beforeMergeCount = SqlOperator.queryNumber(db, " select count(1) from " + Column_merge.TableName + " where col_merge_id = ? ", 16161616L).orElseThrow(() -> new BusinessException("SQL查询错误"));
 
 			assertThat("模拟删除对sys_user表设置的列合并规则之前，table_column表中的测试数据被删除了", beforeColumnCount == 0, is(true));
 			assertThat("模拟删除对sys_user表设置的列合并规则之前，column_merge表中的测试数据被删除了", beforeMergeCount == 0, is(true));
@@ -2487,8 +2487,8 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		List<ColumnCleanParam> columnCleanParams = new ArrayList<>();
 		//正确数据访问1：columnId为2002L，之前设置了字符补齐，但是保存的时候取消了字符补齐的勾选，同时做首尾去空
 		try(DatabaseWrapper db = new DatabaseWrapper()){
-			long beforeCompCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ? ", 2002L, CleanType.ZiFuBuQi.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
-			long beforeTrimCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ? ", 2002L, CleanType.ZiFuTrim.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long beforeCompCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ? ", 2002L, CleanType.ZiFuBuQi.getCode()).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			long beforeTrimCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ? ", 2002L, CleanType.ZiFuTrim.getCode()).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("在执行测试用例<正确数据访问1>之前，数据库中的数据符合预期", beforeCompCount == 1 && beforeTrimCount == 0, is(true));
 		}
 
@@ -2512,15 +2512,15 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		assertThat(rightResultOne.isSuccess(), is(true));
 
 		try(DatabaseWrapper db = new DatabaseWrapper()){
-			long afterCompCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ? ", 2002L, CleanType.ZiFuBuQi.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
-			long afterTrimCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ? ", 2002L, CleanType.ZiFuTrim.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long afterCompCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ? ", 2002L, CleanType.ZiFuBuQi.getCode()).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			long afterTrimCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ? ", 2002L, CleanType.ZiFuTrim.getCode()).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("在执行测试用例<正确数据访问1>之后，数据库中的数据符合预期", afterCompCount == 0 && afterTrimCount == 1, is(true));
 		}
 
 		//正确数据访问2：columnId为2005L，之前设置了字符替换，但是保存的时候取消了字符替换的勾选，同时做首尾去空
 		try(DatabaseWrapper db = new DatabaseWrapper()){
-			long beforeReplaceCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ? ", 2005L, CleanType.ZiFuTiHuan.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
-			long beforeTrimCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ? ", 2005L, CleanType.ZiFuTrim.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long beforeReplaceCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ? ", 2005L, CleanType.ZiFuTiHuan.getCode()).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			long beforeTrimCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ? ", 2005L, CleanType.ZiFuTrim.getCode()).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("在执行测试用例<正确数据访问2>之前，数据库中的数据符合预期", beforeReplaceCount == 1 && beforeTrimCount == 0, is(true));
 		}
 
@@ -2546,15 +2546,15 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		assertThat(rightResultTwo.isSuccess(), is(true));
 
 		try(DatabaseWrapper db = new DatabaseWrapper()){
-			long afterReplaceCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ? ", 2005L, CleanType.ZiFuTiHuan.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
-			long afterTrimCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ? ", 2005L, CleanType.ZiFuTrim.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long afterReplaceCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ? ", 2005L, CleanType.ZiFuTiHuan.getCode()).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			long afterTrimCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ? ", 2005L, CleanType.ZiFuTrim.getCode()).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("在执行测试用例<正确数据访问2>之后，数据库中的数据符合预期", afterReplaceCount == 0 && afterTrimCount == 1, is(true));
 		}
 
 		//正确数据访问3：columnId为2011L，之前设置了日期格式化，但是保存的时候取消了日期格式化的勾选，同时做首尾去空
 		try(DatabaseWrapper db = new DatabaseWrapper()){
-			long beforeFormatCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ? ", 2011L, CleanType.ShiJianZhuanHuan.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
-			long beforeTrimCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ? ", 2011L, CleanType.ZiFuTrim.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long beforeFormatCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ? ", 2011L, CleanType.ShiJianZhuanHuan.getCode()).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			long beforeTrimCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ? ", 2011L, CleanType.ZiFuTrim.getCode()).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("在执行测试用例<正确数据访问3>之前，数据库中的数据符合预期", beforeFormatCount == 1 && beforeTrimCount == 0, is(true));
 		}
 
@@ -2580,8 +2580,8 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		assertThat(rightResultThree.isSuccess(), is(true));
 
 		try(DatabaseWrapper db = new DatabaseWrapper()){
-			long afterFormatCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ? ", 2011L, CleanType.ShiJianZhuanHuan.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
-			long afterTrimCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ? ", 2011L, CleanType.ZiFuTrim.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long afterFormatCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ? ", 2011L, CleanType.ShiJianZhuanHuan.getCode()).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			long afterTrimCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ? ", 2011L, CleanType.ZiFuTrim.getCode()).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("在执行测试用例<正确数据访问3>之后，数据库中的数据符合预期", afterFormatCount == 0 && afterTrimCount == 1, is(true));
 		}
 
@@ -2605,12 +2605,12 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 					assertThat("在执行测试用例<正确数据访问4>之前，在table_column表中查询到了不符合预期的列" + tableColumn.getColume_name(), false, is(true));
 				}
 			}
-			long beforeDelSpCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_split.TableName + " where col_split_id in (101010103, 101010104, 101010105) ").orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long beforeDelSpCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_split.TableName + " where col_split_id in (101010103, 101010104, 101010105) ").orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("在执行测试用例<正确数据访问4>之前，列拆分信息在column_split表中存在", beforeDelSpCount == 3, is(true));
 
-			long beforeDelColCleanCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where column_id = ? and clean_type = ?", 3003L, CleanType.ZiFuChaiFen.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long beforeDelColCleanCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where column_id = ? and clean_type = ?", 3003L, CleanType.ZiFuChaiFen.getCode()).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("在执行测试用例<正确数据访问4>之前，列拆分信息在column_clean表中不存在", beforeDelColCleanCount == 1, is(true));
-			long beforeTrimCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ? ", 3003L, CleanType.ZiFuTrim.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long beforeTrimCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ? ", 3003L, CleanType.ZiFuTrim.getCode()).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("在执行测试用例<正确数据访问4>之前，列首尾去空存在", beforeTrimCount == 0, is(true));
 		}
 
@@ -2643,19 +2643,19 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 							" WHERE t2.col_clean_id = ? and t2.column_id = ? and t1.table_id = ? and t1.is_new = ?) ",
 					101010102L, 3003L, CODE_INFO_TABLE_ID, IsFlag.Shi.getCode());
 			assertThat("在执行测试用例<正确数据访问4>之后，拆分为ci、sp、classname的列在table_column表中不存在", tableColumns.size() == 0, is(true));
-			long afterDelSpCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_split.TableName + " where col_split_id in (101010103, 101010104, 101010105) ").orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long afterDelSpCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_split.TableName + " where col_split_id in (101010103, 101010104, 101010105) ").orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("在执行测试用例<正确数据访问4>之后，列拆分信息在column_split表中不存在", afterDelSpCount == 0, is(true));
 
-			long afterDelColCleanCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where column_id = ? and clean_type = ?", 3003L, CleanType.ZiFuChaiFen.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long afterDelColCleanCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where column_id = ? and clean_type = ?", 3003L, CleanType.ZiFuChaiFen.getCode()).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("在执行测试用例<正确数据访问4>之后，列拆分信息在column_clean表中不存在", afterDelColCleanCount == 0, is(true));
-			long afterTrimCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ? ", 3003L, CleanType.ZiFuTrim.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long afterTrimCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ? ", 3003L, CleanType.ZiFuTrim.getCode()).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("在执行测试用例<正确数据访问4>之后，列首尾去空存在", afterTrimCount == 1, is(true));
 		}
 
 		//正确数据访问5：columnId为2010L，之前设置了码值转换，但是保存的时候取消了码值转换的勾选，同时做首尾去空
 		try(DatabaseWrapper db = new DatabaseWrapper()){
-			long beforeCVCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ? ", 2010L, CleanType.MaZhiZhuanHuan.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
-			long beforeTrimCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ? ", 2010L, CleanType.ZiFuTrim.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long beforeCVCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ? ", 2010L, CleanType.MaZhiZhuanHuan.getCode()).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			long beforeTrimCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ? ", 2010L, CleanType.ZiFuTrim.getCode()).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("在执行测试用例<正确数据访问5>之前，数据库中的数据符合预期", beforeCVCount == 1 && beforeTrimCount == 0, is(true));
 		}
 
@@ -2681,8 +2681,8 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		assertThat(rightResultFive.isSuccess(), is(true));
 
 		try(DatabaseWrapper db = new DatabaseWrapper()){
-			long afterCVCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ? ", 2010L, CleanType.MaZhiZhuanHuan.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
-			long afterTrimCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ? ", 2010L, CleanType.ZiFuTrim.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long afterCVCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ? ", 2010L, CleanType.MaZhiZhuanHuan.getCode()).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			long afterTrimCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " WHERE column_id = ? AND clean_type = ? ", 2010L, CleanType.ZiFuTrim.getCode()).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("在执行测试用例<正确数据访问5>之后，数据库中的数据符合预期", afterCVCount == 0 && afterTrimCount == 1, is(true));
 		}
 	}
@@ -2703,8 +2703,8 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		List<TableCleanParam> tableCleanParams = new ArrayList<>();
 
 		try(DatabaseWrapper db = new DatabaseWrapper()){
-			long beforeCompCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_clean.TableName + " WHERE table_id = ? AND clean_type = ? ", SYS_USER_TABLE_ID, CleanType.ZiFuBuQi.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
-			long beforeTrimCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_clean.TableName + " WHERE table_id = ? AND clean_type = ? ", SYS_USER_TABLE_ID, CleanType.ZiFuTrim.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long beforeCompCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_clean.TableName + " WHERE table_id = ? AND clean_type = ? ", SYS_USER_TABLE_ID, CleanType.ZiFuBuQi.getCode()).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			long beforeTrimCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_clean.TableName + " WHERE table_id = ? AND clean_type = ? ", SYS_USER_TABLE_ID, CleanType.ZiFuTrim.getCode()).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("在执行测试用例<正确数据访问1>之前，数据库中的数据符合预期", beforeCompCount == 1 && beforeTrimCount == 0, is(true));
 		}
 
@@ -2728,8 +2728,8 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		assertThat(returnValueOne == FIRST_DATABASESET_ID, is(true));
 
 		try(DatabaseWrapper db = new DatabaseWrapper()){
-			long afterCompCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_clean.TableName + " WHERE table_id = ? AND clean_type = ? ", SYS_USER_TABLE_ID, CleanType.ZiFuBuQi.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
-			long afterTrimCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_clean.TableName + " WHERE table_id = ? AND clean_type = ? ", SYS_USER_TABLE_ID, CleanType.ZiFuTrim.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long afterCompCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_clean.TableName + " WHERE table_id = ? AND clean_type = ? ", SYS_USER_TABLE_ID, CleanType.ZiFuBuQi.getCode()).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			long afterTrimCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_clean.TableName + " WHERE table_id = ? AND clean_type = ? ", SYS_USER_TABLE_ID, CleanType.ZiFuTrim.getCode()).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("在执行测试用例<正确数据访问1>之后，数据库中的数据符合预期", afterCompCount == 0 && afterTrimCount == 1, is(true));
 
 			int execute = SqlOperator.execute(db, "delete from " + Table_clean.TableName + " where table_id = ? AND clean_type = ? ", SYS_USER_TABLE_ID, CleanType.ZiFuTrim.getCode());
@@ -2740,8 +2740,8 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 
 		//正确数据访问2：colSetId为1001L，tableId为7001L，之前设置了字符替换，但是保存的时候取消了字符替换的勾选，同时做首尾去空
 		try(DatabaseWrapper db = new DatabaseWrapper()){
-			long beforeReplaceCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_clean.TableName + " WHERE table_id = ? AND clean_type = ? ", SYS_USER_TABLE_ID, CleanType.ZiFuTiHuan.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
-			long beforeTrimCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_clean.TableName + " WHERE table_id = ? AND clean_type = ? ", SYS_USER_TABLE_ID, CleanType.ZiFuTrim.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long beforeReplaceCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_clean.TableName + " WHERE table_id = ? AND clean_type = ? ", SYS_USER_TABLE_ID, CleanType.ZiFuTiHuan.getCode()).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			long beforeTrimCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_clean.TableName + " WHERE table_id = ? AND clean_type = ? ", SYS_USER_TABLE_ID, CleanType.ZiFuTrim.getCode()).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("在执行测试用例<正确数据访问2>之前，数据库中的数据符合预期", beforeReplaceCount == 1 && beforeTrimCount == 0, is(true));
 		}
 
@@ -2767,8 +2767,8 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		assertThat(returnValueTwo == FIRST_DATABASESET_ID, is(true));
 
 		try(DatabaseWrapper db = new DatabaseWrapper()){
-			long afterReplaceCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_clean.TableName + " WHERE table_id = ? AND clean_type = ? ", SYS_USER_TABLE_ID, CleanType.ZiFuTiHuan.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
-			long afterTrimCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_clean.TableName + " WHERE table_id = ? AND clean_type = ? ", SYS_USER_TABLE_ID, CleanType.ZiFuTrim.getCode()).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long afterReplaceCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_clean.TableName + " WHERE table_id = ? AND clean_type = ? ", SYS_USER_TABLE_ID, CleanType.ZiFuTiHuan.getCode()).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			long afterTrimCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_clean.TableName + " WHERE table_id = ? AND clean_type = ? ", SYS_USER_TABLE_ID, CleanType.ZiFuTrim.getCode()).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("在执行测试用例<正确数据访问2>之后，数据库中的数据符合预期", afterReplaceCount == 0 && afterTrimCount == 1, is(true));
 
 			int execute = SqlOperator.execute(db, "delete from " + Table_clean.TableName + " where table_id = ? AND clean_type = ? ", SYS_USER_TABLE_ID, CleanType.ZiFuTrim.getCode());

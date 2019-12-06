@@ -188,8 +188,8 @@ public class CollTbConfStepAction extends BaseAction {
 	//使用SQL抽取数据页面，保存按钮后台方法
 	public long saveAllSQL(String tableInfoArray, long colSetId){
 		//1、根据databaseId去数据库中查询该数据库采集任务是否存在
-		long dbSetCount = Dbo.queryNumber("select count(1) from database_set where database_id = ?"
-				, colSetId).orElseThrow(() -> new BusinessException("必须有且只有一条数据"));
+		long dbSetCount = Dbo.queryNumber("select count(1) from " + Database_set.TableName + " where database_id = ?"
+				, colSetId).orElseThrow(() -> new BusinessException("SQL查询错误"));
 		if(dbSetCount != 1){
 			throw new BusinessException("数据库采集任务未找到");
 		}
@@ -354,15 +354,13 @@ public class CollTbConfStepAction extends BaseAction {
 			"           7-3-4、更新data_extraction_def表对应条目的table_id" +
 			"           7-3-5、编辑采集表，将该表要采集的列信息保存到相应的表里面" +
 			"8、不管是新增采集表还是编辑采集表，都需要将该表要采集的列信息保存到相应的表里面")
-	@Param(name = "tableInfoString", desc = "如果是新增的采集表，table_id为空，如果是编辑修改采集表，table_id不能为空"
-			, range = "不为空，json格式，能够转为Table_info类的实体类对象")
+	@Param(name = "tableInfoString", desc = "当前数据库采集任务要采集的所有的表信息组成的json格式的字符串"
+			, range = "不为空，json数组格式字符串" +
+			"如果是新增的采集表，table_id为空，如果是编辑修改采集表，table_id不能为空，一个json对象中还应该包括表名(table_name)、" +
+			"是否并行抽取(is_parallel)、表中文名(table_ch_name)、如果用户定义了并行抽取，那么应该还有page_sql，" +
+			"如果用户定义了SQL过滤，那么还应该有sql")
 	@Param(name = "colSetId", desc = "数据库设置ID，源系统数据库设置表主键，数据库对应表外键", range = "不为空")
 	@Param(name = "collTbConfParamString", desc = "采集表对应采集字段配置参数", range = "" +
-			"包含两部分：" +
-			"1、tableInfoString：当前数据库采集任务要采集的所有的表信息组成的json格式的字符串，一个json对象中应该包括表名(table_name)、" +
-			"是否并行抽取(is_parallel)、表中文名(table_ch_name)、如果用户定义了并行抽取，那么应该还有page_sql" +
-			"如果用户定义了SQL过滤，那么还应该有sql" +
-			"2、collTbConfParamString：一张表所有要被采集的列和列采集顺序，" +
 			"key为collColumnString，表示被采集的列，json数组格式的字符串" +
 			" 一个json对象中应该包括列名(colume_name)、字段类型(column_type)、列中文名(colume_ch_name)、是否采集(is_get)" +
 			"如果用户没有选择采集列，则传空字符串，系统默认采集该张表所有列" +
@@ -507,6 +505,64 @@ public class CollTbConfStepAction extends BaseAction {
 			}
 		}
 		return colSetId;
+	}
+
+	@Method(desc = "根据数据库设置ID获取对采集表配置的SQL过滤，分页SQL", logicStep = "" +
+			"1、根据数据库设置ID在数据库设置表中查询是否有这样一个数据库采集任务" +
+			"2、如果没有，或者查询结果大于1，抛出异常给前端" +
+			"3、根据数据库设置ID在数据库采集对应表中获取SQL过滤，分页SQL，返回给前端")
+	@Param(name = "colSetId", desc = "数据库设置ID，源系统数据库设置表主键，数据库对应表外键", range = "不为空")
+	@Return(desc = "查询结果集", range = "不为空，其中sql字段表示过滤SQL，page_sql字段表示分页SQL，" +
+			"is_parallel字段表示是否并行抽取")
+	public Result getSQLInfoByColSetId(long colSetId){
+		//1、根据数据库设置ID在数据库设置表中查询是否有这样一个数据库采集任务
+		long count = Dbo.queryNumber("select count(1) from " + Database_set.TableName + " where database_id = ?"
+				, colSetId).orElseThrow(() -> new BusinessException("SQL查询错误"));
+		//2、如果没有，或者查询结果大于1，抛出异常给前端
+		if(count != 1){
+			throw new BusinessException("未找到数据库采集任务");
+		}
+		//3、根据数据库设置ID在数据库采集对应表中获取SQL过滤，分页SQL，返回给前端
+		return Dbo.queryResult("select table_id, sql, is_parallel, page_sql from " + Table_info.TableName
+				+ " where database_id = ? and is_user_defined = ?", colSetId, IsFlag.Fou.getCode());
+	}
+
+	@Method(desc = "根据数据库设置ID获取表的字段信息", logicStep = "" +
+			"1、根据数据库设置ID在数据库设置表中查询是否有这样一个数据库采集任务" +
+			"2、如果没有，或者查询结果大于1，抛出异常给前端" +
+			"3、根据数据库设置ID查询当前数据库采集任务中所有非自定义采集的table_id<结果集1>" +
+			"4、如果<结果集1>为空，则返回空的集合给前端" +
+			"5、如果<结果集1>不为空，则遍历<结果集1>，用每一个table_id得到列的相关信息<结果集2>" +
+			"6、以table_id为key，以<结果集2>为value，将数据封装起来返回给前端")
+	@Param(name = "colSetId", desc = "数据库设置ID，源系统数据库设置表主键，数据库对应表外键", range = "不为空")
+	@Return(desc = "查询结果集", range = "不为空，key为table_id，value为该表下所有字段的信息")
+	public Map<Long, List<Map<String, Object>>> getColumnInfoByColSetId(long colSetId){
+		//1、根据数据库设置ID在数据库设置表中查询是否有这样一个数据库采集任务
+		long count = Dbo.queryNumber("select count(1) from " + Database_set.TableName + " where database_id = ?"
+				, colSetId).orElseThrow(() -> new BusinessException("SQL查询错误"));
+		//2、如果没有，或者查询结果大于1，抛出异常给前端
+		if(count != 1){
+			throw new BusinessException("未找到数据库采集任务");
+		}
+		//3、根据数据库设置ID查询当前数据库采集任务中所有非自定义采集的table_id<结果集1>
+		List<Object> tableIds = Dbo.queryOneColumnList("select table_id from " + Table_info.TableName
+				+ " where database_id = ? and is_user_defined = ?", colSetId, IsFlag.Fou.getCode());
+		//4、如果<结果集1>为空，则返回空的集合给前端
+		if(tableIds.isEmpty()){
+			return Collections.emptyMap();
+		}
+		//5、如果<结果集1>不为空，则遍历<结果集1>，用每一个table_id得到列的相关信息<结果集2>
+		Map<Long, List<Map<String, Object>>> returnMap = new HashMap<>();
+		//6、以table_id为key，以<结果集2>为value，将数据封装起来返回给前端
+		for(Object obj : tableIds){
+			Result result = Dbo.queryResult("select colume_name, column_type, colume_ch_name, is_get from "
+					+ Table_column.TableName + " where table_id = ?", (long) obj);
+			if(result.isEmpty()){
+				throw new BusinessException("获取表字段信息失败");
+			}
+			returnMap.put((Long)obj, result.toList());
+		}
+		return returnMap;
 	}
 
 	@Method(desc = "处理新增采集表信息时表中列信息的保存", logicStep = "" +

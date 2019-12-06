@@ -803,13 +803,13 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 				}
 			}
 
-			long countOne = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_id = ?", AGENT_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long countOne = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_id = ?", AGENT_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("使用老的table_id在table_info表中查不到数据", countOne, is(0L));
-			long countTwo = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_id = ?", DATA_SOURCE_TABLE_ID).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long countTwo = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_id = ?", DATA_SOURCE_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("使用老的table_id在table_info表中查不到数据", countTwo, is(0L));
-			long countThree = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " where table_id = ?", DATA_SOURCE_TABLE_ID).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long countThree = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " where table_id = ?", DATA_SOURCE_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("使用老的table_id在table_column表中查不到数据", countThree, is(0L));
-			long countFour = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " where table_id = ?", AGENT_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long countFour = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " where table_id = ?", AGENT_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("使用老的table_id在table_column表中查不到数据", countFour, is(0L));
 
 			//验证完毕后，将自己在本方法中构造的数据删除掉(table_info表)
@@ -1048,7 +1048,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		//正确数据访问1：在database_id为1001的数据库采集任务下构造新增采集ftp_collect表的数据，不选择采集列和列排序，设置并行抽取SQL为select * from ftp_collect limit 10;(需要和agent进行交互获取该表的字段)
 		try(DatabaseWrapper db = new DatabaseWrapper()){
 			//在新增前，查询数据库，table_info表中应该没有采集ftp_collect表的信息
-			long count = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_name = ?", "ftp_collect").orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long count = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_name = ?", "ftp_collect").orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("在新增前，查询数据库，table_info表中应该没有采集ftp_collect表的信息", count, is(0L));
 		}
 
@@ -1166,7 +1166,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 
 		try(DatabaseWrapper db = new DatabaseWrapper()){
 			//在新增前，查询数据库，table_info表中应该没有采集object_collect表的信息
-			long count = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_name = ?", "object_collect").orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long count = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_name = ?", "object_collect").orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("在新增前，查询数据库，table_info表中应该没有采集object_collect表的信息", count, is(0L));
 		}
 		Table_info objInfo = new Table_info();
@@ -1394,7 +1394,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 
 		try(DatabaseWrapper db = new DatabaseWrapper()){
 			//断言table_info表中的内容是否符合期望
-			long count = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_id = ?", CODE_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long count = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_id = ?", CODE_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			Result tableInfo = SqlOperator.queryResult(db, "select * from " + Table_info.TableName + " where table_name = ?", "code_info");
 			assertThat("code_info表在table_info表中有且只有一条数据，但是该条数据的id和构造初始化数据时不一致，导致这个事情的原因是保存操作全部都是按照先删除后新增的逻辑执行的", count, is(0L));
 			assertThat("code_info表在table_info表中有且只有一条数据，但是该条数据的id和构造初始化数据时不一致，导致这个事情的原因是保存操作全部都是按照先删除后新增的逻辑执行的", tableInfo.getRowCount(), is(1));
@@ -1418,7 +1418,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 				}
 			}
 			//断言data_extraction_def表中的内容是否符合期望
-			long defCount = SqlOperator.queryNumber(db, "select count(1) from " + Data_extraction_def.TableName + " where table_id = ?", CODE_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long defCount = SqlOperator.queryNumber(db, "select count(1) from " + Data_extraction_def.TableName + " where table_id = ?", CODE_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			Result dataExtractionDef = SqlOperator.queryResult(db, "select * from " + Data_extraction_def.TableName + " where table_id = ?", tableId);
 			assertThat("code_info表的数据抽取定义信息在Data_extraction_def表中有数据，数据有1条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在data_extraction_def表中已经查不到数据了", defCount, is(0L));
 			assertThat("code_info表的数据抽取定义信息在Data_extraction_def表中有数据，数据有1条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在data_extraction_def表中已经查不到数据了", dataExtractionDef.getRowCount(), is(1));
@@ -1429,7 +1429,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			assertThat("code_info表的数据抽取定义信息在Data_extraction_def表中有数据，<落地存储目录>符合预期", dataExtractionDef.getString(0, "plane_url"), is("/home/hyshf"));
 
 			//断言table_clean表中的内容是否符合期望
-			long cleanCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_clean.TableName + " where table_id = ?", CODE_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long cleanCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_clean.TableName + " where table_id = ?", CODE_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			Result tableClean = SqlOperator.queryResult(db, "select * from " + Table_clean.TableName + " where table_id = ?", tableId);
 			assertThat("code_info表的表清洗信息在Table_clean表中有数据，数据有2条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在Table_clean表中已经查不到数据了", cleanCount, is(0L));
 			assertThat("code_info表的表清洗信息在Table_clean表中有数据，数据有2条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在Table_clean表中已经查不到数据了", tableClean.getRowCount(), is(2));
@@ -1446,7 +1446,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			}
 
 			//断言table_srorage_info表中的内容是否符合期望
-			long storageCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_storage_info.TableName + " where table_id = ?", CODE_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long storageCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_storage_info.TableName + " where table_id = ?", CODE_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			Result tableStorage = SqlOperator.queryResult(db, "select * from " + Table_storage_info.TableName + " where table_id = ?", tableId);
 			assertThat("code_info表的表存储信息在Table_storage_info表中有数据，数据有1条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在Table_storage_info表中已经查不到数据了", storageCount, is(0L));
 			assertThat("code_info表的表存储信息在Table_storage_info表中有数据，数据有1条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在Table_storage_info表中已经查不到数据了", tableStorage.getRowCount(), is(1));
@@ -1455,7 +1455,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 
 
 			//断言column_merge表中的内容是否符合期望
-			long mergeCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_merge.TableName + " where table_id = ?", CODE_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long mergeCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_merge.TableName + " where table_id = ?", CODE_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			Result columnMerge = SqlOperator.queryResult(db, "select * from " + Column_merge.TableName + " where table_id = ?", tableId);
 			assertThat("code_info表的列合并信息在column_merge表中有数据，数据有1条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在column_merge表中已经查不到数据了", mergeCount, is(0L));
 			assertThat("code_info表的列合并信息在column_merge表中有数据，数据有1条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在column_merge表中已经查不到数据了", columnMerge.getRowCount(), is(1));
@@ -1484,10 +1484,10 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 
 		try(DatabaseWrapper db = new DatabaseWrapper()){
 			//在新增前，查询数据库，table_info表中应该没有采集ftp_collect表的信息
-			long count = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_name = ?", "ftp_collect").orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long count = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_name = ?", "ftp_collect").orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("在新增前，查询数据库，table_info表中应该没有采集ftp_collect表的信息", count, is(0L));
 			//在新增前，查询数据库，table_info表中应该没有采集object_collect表的信息
-			long countTwo = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_name = ?", "object_collect").orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
+			long countTwo = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_name = ?", "object_collect").orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("在新增前，查询数据库，table_info表中应该没有采集object_collect表的信息", countTwo, is(0L));
 		}
 
@@ -1661,6 +1661,15 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		}
 	}
 
+	/*
+	 * 错误的数据访问1：构造缺少表名的采集数据
+	 * 错误的数据访问2：构造缺少表中文名的采集数据
+	 * 错误的数据访问3：构造设置了并行抽取，但没有设置并行抽取SQL的访问方式
+	 * 错误的数据访问4：构造在不存在的数据库采集任务中保存采集ftp_collect表数据
+	 * 错误的数据访问5：构造tableInfoString参数是空字符串的情况
+	 * 错误的数据访问6：构造collTbConfParamString参数是空字符串的情况
+	 * 错误的数据访问7：构造tableInfoString和collTbConfParamString解析成的list集合大小不同的情况
+	 * */
 	@Test
 	public void saveCollTbInfoFive(){
 		List<Table_info> tableInfos = new ArrayList<>();
@@ -1822,6 +1831,159 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 				-> new BusinessException("连接失败!"));
 		assertThat(wrongResultSeven.isSuccess(), is(false));
 
+	}
+
+	/*
+	 * 测试根据数据库设置ID获取对采集表配置的SQL过滤，分页SQL
+	 *
+	 * 正确的数据访问1：传入正确的数据库设置ID，获取数据并断言数据是否正确
+	 * 错误的数据访问1：传入错误的数据库设置ID，应该导致访问失败
+	 *
+	 * */
+	@Test
+	public void getSQLInfoByColSetId(){
+		//正确的数据访问1：传入正确的数据库设置ID，获取数据并断言数据是否正确
+		String rightStringOne = new HttpClient()
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.post(getActionUrl("getSQLInfoByColSetId")).getBodyString();
+		ActionResult rightResultOne = JsonUtil.toObjectSafety(rightStringOne, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResultOne.isSuccess(), is(true));
+
+		Result rightData = rightResultOne.getDataForResult();
+		assertThat("获取到了两条数据", rightData.getRowCount(), is(2));
+		for(int i = 0; i < rightData.getRowCount(); i++){
+			if(rightData.getLong(i, "table_id") == SYS_USER_TABLE_ID){
+				assertThat("sys_user表定义了过滤SQL，过滤SQL为<select * from sys_user where user_id = 9997>", rightData.getString(i, "sql"), is("select * from sys_user where user_id = 9997"));
+				assertThat("sys_user表没有定义分页抽取SQL", rightData.getString(i ,"is_parallel"), is(IsFlag.Fou.getCode()));
+				assertThat("sys_user表没有定义分页抽取SQL", rightData.getString(i ,"page_sql"), is(""));
+			}else if(rightData.getLong(i, "table_id") == CODE_INFO_TABLE_ID){
+				assertThat("code_info表没有设置过滤SQL", rightData.getString(i, "sql"), is(""));
+				assertThat("code_info表设置了并行抽取，并且分页抽取SQL为<select * from code_info limit 10>", rightData.getString(i, "is_parallel"), is(IsFlag.Shi.getCode()));
+				assertThat("code_info表设置了并行抽取，并且分页抽取SQL为<select * from code_info limit 10>", rightData.getString(i, "page_sql"), is("select * from code_info limit 10"));
+			}else{
+				assertThat("获取到了不符合期望的数据,table_id为：" + rightData.getLong(i, "table_id"), true, is(false));
+			}
+		}
+
+		//错误的数据访问1：传入错误的数据库设置ID，应该导致访问失败
+		String wrongStringOne = new HttpClient()
+				.addData("colSetId", UNEXPECTED_ID)
+				.post(getActionUrl("getSQLInfoByColSetId")).getBodyString();
+		ActionResult wrongResultOne = JsonUtil.toObjectSafety(wrongStringOne, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultOne.isSuccess(), is(false));
+	}
+
+	/*
+	 * 测试根据数据库设置ID获取表的字段信息
+	 *
+	 * 正确的数据访问1：传入正确的数据库设置ID，获取数据并断言数据是否正确
+	 * 错误的数据访问1：传入错误的数据库设置ID，应该导致访问失败
+	 *
+	 * */
+	@Test
+	public void getColumnInfoByColSetId(){
+		//正确的数据访问1：传入正确的数据库设置ID，获取数据并断言数据是否正确
+		String rightStringOne = new HttpClient()
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.post(getActionUrl("getColumnInfoByColSetId")).getBodyString();
+		ActionResult rightResultOne = JsonUtil.toObjectSafety(rightStringOne, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResultOne.isSuccess(), is(true));
+
+		Map<Long, List> dataForMap = rightResultOne.getDataForMap(Long.class, List.class);
+		for(long key : dataForMap.keySet()){
+			if(key == SYS_USER_TABLE_ID){
+				List list = dataForMap.get(key);
+				Result result = new Result((List<Map<String, Object>>)list);
+				assertThat("采集sys_user的10个列", result.getRowCount(), is(10));
+				for(int i = 0; i < result.getRowCount(); i++){
+					if(result.getString(i, "colume_name").equalsIgnoreCase("user_id")){
+						assertThat("<user_id>列中文名为<主键>", result.getString(i, "colume_ch_name"), is("主键"));
+						assertThat("<user_id>列类型为<int8>", result.getString(i, "column_type"), is("int8"));
+						assertThat("<user_id>是否采集为<是>", result.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
+					}else if(result.getString(i, "colume_name").equalsIgnoreCase("create_id")){
+						assertThat("<create_id>列中文名为<创建用户者ID>", result.getString(i, "colume_ch_name"), is("创建用户者ID"));
+						assertThat("<create_id>列类型为<int8>", result.getString(i, "column_type"), is("int8"));
+						assertThat("<create_id>是否采集为<是>", result.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
+					}else if(result.getString(i, "colume_name").equalsIgnoreCase("dep_id")){
+						assertThat("<dep_id>列中文名为<部门ID>", result.getString(i, "colume_ch_name"), is("部门ID"));
+						assertThat("<dep_id>列类型为<int8>", result.getString(i, "column_type"), is("int8"));
+						assertThat("<dep_id>是否采集为<是>", result.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
+					}else if(result.getString(i, "colume_name").equalsIgnoreCase("role_id")){
+						assertThat("<role_id>列中文名为<角色ID>", result.getString(i, "colume_ch_name"), is("角色ID"));
+						assertThat("<role_id>列类型为<int8>", result.getString(i, "column_type"), is("int8"));
+						assertThat("<role_id>是否采集为<是>", result.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
+					}else if(result.getString(i, "colume_name").equalsIgnoreCase("user_name")){
+						assertThat("<user_name>列中文名为<用户名>", result.getString(i, "colume_ch_name"), is("用户名"));
+						assertThat("<user_name>列类型为<varchar>", result.getString(i, "column_type"), is("varchar"));
+						assertThat("<user_name>是否采集为<是>", result.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
+					}else if(result.getString(i, "colume_name").equalsIgnoreCase("user_password")){
+						assertThat("<user_password>列中文名为<密码>", result.getString(i, "colume_ch_name"), is("密码"));
+						assertThat("<user_password>列类型为<varchar>", result.getString(i, "column_type"), is("varchar"));
+						assertThat("<user_password>是否采集为<是>", result.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
+					}else if(result.getString(i, "colume_name").equalsIgnoreCase("user_email")){
+						assertThat("<user_email>列中文名为<邮箱>", result.getString(i, "colume_ch_name"), is("邮箱"));
+						assertThat("<user_email>列类型为<varchar>", result.getString(i, "column_type"), is("varchar"));
+						assertThat("<user_email>是否采集为<是>", result.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
+					}else if(result.getString(i, "colume_name").equalsIgnoreCase("user_mobile")){
+						assertThat("<user_mobile>列中文名为<电话>", result.getString(i, "colume_ch_name"), is("电话"));
+						assertThat("<user_mobile>列类型为<varchar>", result.getString(i, "column_type"), is("varchar"));
+						assertThat("<user_mobile>是否采集为<是>", result.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
+					}else if(result.getString(i, "colume_name").equalsIgnoreCase("useris_admin")){
+						assertThat("<useris_admin>列中文名为<是否管理员>", result.getString(i, "colume_ch_name"), is("是否管理员"));
+						assertThat("<useris_admin>列类型为<char>", result.getString(i, "column_type"), is("char"));
+						assertThat("<useris_admin>是否采集为<是>", result.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
+					}else if(result.getString(i, "colume_name").equalsIgnoreCase("user_type")){
+						assertThat("<user_type>列中文名为<用户类型>", result.getString(i, "colume_ch_name"), is("用户类型"));
+						assertThat("<user_type>列类型为<char>", result.getString(i, "column_type"), is("char"));
+						assertThat("<user_type>是否采集为<是>", result.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
+					}else{
+						assertThat("sys_user获取到了不符合期望的采集列,column_name为：" + result.getString(i, "colume_name"), true, is(false));
+					}
+				}
+			}else if(key == CODE_INFO_TABLE_ID){
+				List list = dataForMap.get(key);
+				Result result = new Result((List<Map<String, Object>>)list);
+				assertThat("采集code_info的5个列", result.getRowCount(), is(5));
+				for(int i = 0; i < result.getRowCount(); i++){
+					if(result.getString(i, "colume_name").equalsIgnoreCase("ci_sp_code")){
+						assertThat("<ci_sp_code>列中文名为<ci_sp_code>", result.getString(i, "colume_ch_name"), is("ci_sp_code"));
+						assertThat("<ci_sp_code>列类型为<varchar>", result.getString(i, "column_type"), is("varchar"));
+						assertThat("<ci_sp_code>是否采集为<是>", result.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
+					}else if(result.getString(i, "colume_name").equalsIgnoreCase("ci_sp_class")){
+						assertThat("<ci_sp_class>列中文名为<ci_sp_class>", result.getString(i, "colume_ch_name"), is("ci_sp_class"));
+						assertThat("<ci_sp_class>列类型为<varchar>", result.getString(i, "column_type"), is("varchar"));
+						assertThat("<ci_sp_class>是否采集为<是>", result.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
+					}else if(result.getString(i, "colume_name").equalsIgnoreCase("ci_sp_classname")){
+						assertThat("<ci_sp_classname>列中文名为<ci_sp_classname>", result.getString(i, "colume_ch_name"), is("ci_sp_classname"));
+						assertThat("<ci_sp_classname>列类型为<varchar>", result.getString(i, "column_type"), is("varchar"));
+						assertThat("<ci_sp_classname>是否采集为<是>", result.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
+					}else if(result.getString(i, "colume_name").equalsIgnoreCase("ci_sp_name")){
+						assertThat("<ci_sp_name>列中文名为<ci_sp_name>", result.getString(i, "colume_ch_name"), is("ci_sp_name"));
+						assertThat("<ci_sp_name>列类型为<varchar>", result.getString(i, "column_type"), is("varchar"));
+						assertThat("<ci_sp_name>是否采集为<是>", result.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
+					}else if(result.getString(i, "colume_name").equalsIgnoreCase("ci_sp_remark")){
+						assertThat("<ci_sp_remark>列中文名为<ci_sp_remark>", result.getString(i, "colume_ch_name"), is("ci_sp_remark"));
+						assertThat("<ci_sp_remark>列类型为<varchar>", result.getString(i, "column_type"), is("varchar"));
+						assertThat("<ci_sp_remark>是否采集为<是>", result.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
+					}else{
+						assertThat("code_info获取到了不符合期望的采集列,列名为：" + result.getString(i, "colume_name"), true, is(false));
+					}
+				}
+			}else{
+				assertThat("获取到了不符合期望的数据,table_id为：" + key, true, is(false));
+			}
+		}
+
+		//错误的数据访问1：传入错误的数据库设置ID，应该导致访问失败
+		String wrongStringOne = new HttpClient()
+				.addData("colSetId", UNEXPECTED_ID)
+				.post(getActionUrl("getColumnInfoByColSetId")).getBodyString();
+		ActionResult wrongResultOne = JsonUtil.toObjectSafety(wrongStringOne, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultOne.isSuccess(), is(false));
 	}
 
 	/**
