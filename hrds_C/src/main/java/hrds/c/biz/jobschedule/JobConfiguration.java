@@ -829,11 +829,11 @@ public class JobConfiguration extends BaseAction {
             throw new BusinessException("当前工程已不存在！");
         }
         // 4.如果更新前调度频率为频率时old_pre_etl_job,old_dispatch_type可以为空，否则不能为空！
-        if (Dispatch_Frequency.ofEnumByCode(old_disp_freq) == Dispatch_Frequency.PinLv) {
-            if (StringUtil.isBlank(old_pre_etl_job) || StringUtil.isBlank(old_dispatch_type)) {
-                throw new BusinessException("更新前调度频率为频率时old_pre_etl_job,old_dispatch_type可以为空，" +
-                        "否则不能为空！");
+        if (Dispatch_Frequency.ofEnumByCode(old_disp_freq) != Dispatch_Frequency.PinLv) {
+            if (StringUtil.isBlank(old_dispatch_type)) {
+                throw new BusinessException("更新前调度频率不是频率时old_dispatch_type不可以为空！");
             }
+            Dispatch_Frequency.ofEnumByCode(old_dispatch_type);
         }
         // 5.判断调度频率是否为频率，如果是频率没有依赖，也没有调度触发方式
         if (Dispatch_Frequency.ofEnumByCode(etl_job_def.getDisp_freq()) != Dispatch_Frequency.PinLv) {
