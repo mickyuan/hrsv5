@@ -1892,9 +1892,9 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 				-> new BusinessException("连接失败!"));
 		assertThat(rightResultOne.isSuccess(), is(true));
 
-		Map<Long, List> dataForMap = rightResultOne.getDataForMap(Long.class, List.class);
-		for(long key : dataForMap.keySet()){
-			if(key == SYS_USER_TABLE_ID){
+		Map<String, List> dataForMap = rightResultOne.getDataForMap(String.class, List.class);
+		for(String key : dataForMap.keySet()){
+			if(key.equalsIgnoreCase("sys_user")){
 				List list = dataForMap.get(key);
 				Result result = new Result((List<Map<String, Object>>)list);
 				assertThat("采集sys_user的10个列", result.getRowCount(), is(10));
@@ -1943,7 +1943,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 						assertThat("sys_user获取到了不符合期望的采集列,column_name为：" + result.getString(i, "colume_name"), true, is(false));
 					}
 				}
-			}else if(key == CODE_INFO_TABLE_ID){
+			}else if(key.equalsIgnoreCase("code_info")){
 				List list = dataForMap.get(key);
 				Result result = new Result((List<Map<String, Object>>)list);
 				assertThat("采集code_info的5个列", result.getRowCount(), is(5));
@@ -1973,7 +1973,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 					}
 				}
 			}else{
-				assertThat("获取到了不符合期望的数据,table_id为：" + key, true, is(false));
+				assertThat("获取到了不符合期望的数据,table_name为：" + key, true, is(false));
 			}
 		}
 

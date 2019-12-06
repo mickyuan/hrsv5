@@ -523,7 +523,7 @@ public class CollTbConfStepAction extends BaseAction {
 			throw new BusinessException("未找到数据库采集任务");
 		}
 		//3、根据数据库设置ID在数据库采集对应表中获取SQL过滤，分页SQL，返回给前端
-		return Dbo.queryResult("select table_id, sql, is_parallel, page_sql from " + Table_info.TableName
+		return Dbo.queryResult("select table_id, table_name, sql, is_parallel, page_sql from " + Table_info.TableName
 				+ " where database_id = ? and is_user_defined = ?", colSetId, IsFlag.Fou.getCode());
 	}
 
@@ -533,10 +533,10 @@ public class CollTbConfStepAction extends BaseAction {
 			"3、根据数据库设置ID查询当前数据库采集任务中所有非自定义采集的table_id<结果集1>" +
 			"4、如果<结果集1>为空，则返回空的集合给前端" +
 			"5、如果<结果集1>不为空，则遍历<结果集1>，用每一个table_id得到列的相关信息<结果集2>" +
-			"6、以table_id为key，以<结果集2>为value，将数据封装起来返回给前端")
+			"6、以table_name为key，以<结果集2>为value，将数据封装起来返回给前端")
 	@Param(name = "colSetId", desc = "数据库设置ID，源系统数据库设置表主键，数据库对应表外键", range = "不为空")
 	@Return(desc = "查询结果集", range = "不为空，key为table_id，value为该表下所有字段的信息")
-	public Map<Long, List<Map<String, Object>>> getColumnInfoByColSetId(long colSetId){
+	public Map<String, List<Map<String, Object>>> getColumnInfoByColSetId(long colSetId){
 		//1、根据数据库设置ID在数据库设置表中查询是否有这样一个数据库采集任务
 		long count = Dbo.queryNumber("select count(1) from " + Database_set.TableName + " where database_id = ?"
 				, colSetId).orElseThrow(() -> new BusinessException("SQL查询错误"));
@@ -545,22 +545,22 @@ public class CollTbConfStepAction extends BaseAction {
 			throw new BusinessException("未找到数据库采集任务");
 		}
 		//3、根据数据库设置ID查询当前数据库采集任务中所有非自定义采集的table_id<结果集1>
-		List<Object> tableIds = Dbo.queryOneColumnList("select table_id from " + Table_info.TableName
+		Result tableInfos = Dbo.queryResult("select table_id, table_name from " + Table_info.TableName
 				+ " where database_id = ? and is_user_defined = ?", colSetId, IsFlag.Fou.getCode());
 		//4、如果<结果集1>为空，则返回空的集合给前端
-		if(tableIds.isEmpty()){
+		if(tableInfos.isEmpty()){
 			return Collections.emptyMap();
 		}
 		//5、如果<结果集1>不为空，则遍历<结果集1>，用每一个table_id得到列的相关信息<结果集2>
-		Map<Long, List<Map<String, Object>>> returnMap = new HashMap<>();
-		//6、以table_id为key，以<结果集2>为value，将数据封装起来返回给前端
-		for(Object obj : tableIds){
+		Map<String, List<Map<String, Object>>> returnMap = new HashMap<>();
+		//6、以table_name为key，以<结果集2>为value，将数据封装起来返回给前端
+		for(int i = 0; i < tableInfos.getRowCount(); i++){
 			Result result = Dbo.queryResult("select colume_name, column_type, colume_ch_name, is_get from "
-					+ Table_column.TableName + " where table_id = ?", (long) obj);
+					+ Table_column.TableName + " where table_id = ?", tableInfos.getLong(i, "table_id"));
 			if(result.isEmpty()){
 				throw new BusinessException("获取表字段信息失败");
 			}
-			returnMap.put((Long)obj, result.toList());
+			returnMap.put(tableInfos.getString(i, "table_name"), result.toList());
 		}
 		return returnMap;
 	}
