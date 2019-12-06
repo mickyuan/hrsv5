@@ -358,16 +358,11 @@ public class DataQueryActionTest extends WebBaseTestCase {
 	}
 
 	@Method(desc = "获取部门的包含文件采集任务的数据源信息的测试方法",
-			logicStep = "正确数据访问：" +
-					"1.部门id存在,有返回结果 检查返回结果是否是预期值" +
-					"错误数据访问：" +
-					"2.部门id不存在，无返回结果，检查返回结果集条数为0")
+			logicStep = "1.获取登录用户所在部门包含文件采集任务的数据源信息,有返回结果 检查返回结果是否是预期值")
 	@Test
 	public void getFileDataSource() {
-
-		//1.部门id存在,有返回结果 检查返回结果是否是预期值
+		//1.获取登录用户所在部门包含文件采集任务的数据源信息,有返回结果 检查返回结果是否是预期值
 		bodyString = new HttpClient()
-				.addData("depId", DEP_ID)
 				.post(getActionUrl("getFileDataSource")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
 		assertThat(ar.isSuccess(), is(true));
@@ -375,13 +370,6 @@ public class DataQueryActionTest extends WebBaseTestCase {
 			assertThat(ar.getDataForResult().getString(i, "datasource_name"), is("init-hll"));
 			assertThat(ar.getDataForResult().getLong(i, "source_id"), is(5000000000L));
 		}
-		//2.部门id不存在，无返回结果，检查返回结果集条数为0
-		bodyString = new HttpClient()
-				.addData("depId", -5000000000L)
-				.post(getActionUrl("getFileDataSource")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
-		assertThat(ar.isSuccess(), is(true));
-		assertThat(ar.getDataForResult().getRowCount(), is(0));
 	}
 
 	@Method(desc = "根据数据源id获取数据源下所有文件采集任务测试方法",
