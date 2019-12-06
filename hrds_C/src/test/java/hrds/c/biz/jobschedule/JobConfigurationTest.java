@@ -1555,8 +1555,23 @@ public class JobConfigurationTest extends WebBaseTestCase {
         assertThat(ar.isSuccess(), is(false));
     }
 
+    @Test
+    public void searchEtlJobDefById() {
+        // 1.正确的数据访问1，数据都正确
+        String bodyString = new HttpClient()
+                .addData("etl_sys_cd", EtlSysCd)
+                .addData("etl_job", "测试作业0")
+                .post(getActionUrl("searchEtlJobDefById"))
+                .getBodyString();
+        ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(true));
+        Map<Object, Object> etlJobDef = ar.getDataForMap();
+        assertThat(etlJobDef.get("etl_sys_cd"),is(EtlSysCd));
+    }
+
     @Method(desc = "新增保存作业信息",
-            logicStep = "方法步骤")
+            logicStep = "1.正确的数据访问1，数据都正确，调度频率为频率")
     @Test
     public void saveEtlJobDef() {
         try (DatabaseWrapper db = new DatabaseWrapper()) {
