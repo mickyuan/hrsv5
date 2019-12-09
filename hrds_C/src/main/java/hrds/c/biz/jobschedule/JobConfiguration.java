@@ -828,7 +828,7 @@ public class JobConfiguration extends BaseAction {
         if (!ETLJobUtil.isEtlSysExist(etl_job_def.getEtl_sys_cd(), getUserId())) {
             throw new BusinessException("当前工程已不存在！");
         }
-        // 4.如果更新前调度频率为频率时old_pre_etl_job,old_dispatch_type可以为空，否则不能为空！
+        // 4.如果更新前调度频率为频率时old_dispatch_type可以为空，否则不能为空！
         if (Dispatch_Frequency.ofEnumByCode(old_disp_freq) != Dispatch_Frequency.PinLv) {
             if (StringUtil.isBlank(old_dispatch_type)) {
                 throw new BusinessException("更新前调度频率不是频率时old_dispatch_type不可以为空！");
