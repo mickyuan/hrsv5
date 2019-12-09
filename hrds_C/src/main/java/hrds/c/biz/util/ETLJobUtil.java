@@ -190,4 +190,20 @@ public class ETLJobUtil {
         return false;
     }
 
+    @Method(desc = "根据工程编号查询工程名称",
+            logicStep = "1.数据可访问权限处理方式，根据user_id进行权限验证" +
+                    "2.根据工程编号查询工程名称")
+    @Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
+    @Param(name = "user_id", desc = "创建工程用户ID", range = "新增用户时生成")
+    @Return(desc = "返回工程名称", range = "不能为空")
+    public static String getEtlSysName(String etl_sys_cd, long user_id) {
+        // 1.数据可访问权限处理方式，根据user_id进行权限验证
+        // 2.判断当前工程是否还存在
+        if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, user_id)) {
+            throw new BusinessException("当前工程已不存在！");
+        }
+        // 3.根据工程编号查询工程名称,工程存在，工程名称肯定存在，所以不需要判断结果集是否为空
+        return Dbo.queryOneColumnList("select etl_sys_name from " + Etl_sys.TableName +
+                " where etl_sys_cd=? and user_id=?", etl_sys_cd, user_id).get(0).toString();
+    }
 }

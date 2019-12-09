@@ -1018,7 +1018,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
                 .addData("sub_sys_cd", SubSysCd)
                 .addData("etl_job", "模板作业")
                 .addData("etl_temp_id", EtlTempId)
-                .addData("etl_job_temp_para", "0,1")
+                .addData("etl_job_temp_para", new String[]{"0,1"})
                 .post(getActionUrl("saveEtlJobTemp"))
                 .getBodyString();
         ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -1046,7 +1046,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
                 .addData("sub_sys_cd", SubSysCd)
                 .addData("etl_job", "模板作业")
                 .addData("etl_temp_id", EtlTempId)
-                .addData("etl_job_temp_para", "0,1")
+                .addData("etl_job_temp_para", new String[]{"0,1"})
                 .post(getActionUrl("saveEtlJobTemp"))
                 .getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -1058,7 +1058,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
                 .addData("sub_sys_cd", SubSysCd)
                 .addData("etl_job", "模板作业")
                 .addData("etl_temp_id", EtlTempId)
-                .addData("etl_job_temp_para", "0,1")
+                .addData("etl_job_temp_para", new String[]{"0,1"})
                 .post(getActionUrl("saveEtlJobTemp"))
                 .getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -1070,7 +1070,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
                 .addData("sub_sys_cd", SubSysCd)
                 .addData("etl_job", "模板作业")
                 .addData("etl_temp_id", EtlTempId)
-                .addData("etl_job_temp_para", "0,1")
+                .addData("etl_job_temp_para", new String[]{"0,1"})
                 .post(getActionUrl("saveEtlJobTemp"))
                 .getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -1082,7 +1082,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
                 .addData("sub_sys_cd", "")
                 .addData("etl_job", "模板作业")
                 .addData("etl_temp_id", EtlTempId)
-                .addData("etl_job_temp_para", "0,1")
+                .addData("etl_job_temp_para", new String[]{"0,1"})
                 .post(getActionUrl("saveEtlJobTemp"))
                 .getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -1094,7 +1094,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
                 .addData("sub_sys_cd", " ")
                 .addData("etl_job", "模板作业")
                 .addData("etl_temp_id", EtlTempId)
-                .addData("etl_job_temp_para", "0,1")
+                .addData("etl_job_temp_para", new String[]{"0,1"})
                 .post(getActionUrl("saveEtlJobTemp"))
                 .getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -1106,7 +1106,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
                 .addData("sub_sys_cd", "mozycsrw")
                 .addData("etl_job", "模板作业")
                 .addData("etl_temp_id", EtlTempId)
-                .addData("etl_job_temp_para", "0,1")
+                .addData("etl_job_temp_para", new String[]{"0,1"})
                 .post(getActionUrl("saveEtlJobTemp"))
                 .getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -1118,7 +1118,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
                 .addData("sub_sys_cd", SubSysCd)
                 .addData("etl_job", "")
                 .addData("etl_temp_id", EtlTempId)
-                .addData("etl_job_temp_para", "0,1")
+                .addData("etl_job_temp_para", new String[]{"0,1"})
                 .post(getActionUrl("saveEtlJobTemp"))
                 .getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -1130,7 +1130,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
                 .addData("sub_sys_cd", SubSysCd)
                 .addData("etl_job", " ")
                 .addData("etl_temp_id", EtlTempId)
-                .addData("etl_job_temp_para", "0,1")
+                .addData("etl_job_temp_para", new String[]{"0,1"})
                 .post(getActionUrl("saveEtlJobTemp"))
                 .getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -1142,7 +1142,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
                 .addData("sub_sys_cd", SubSysCd)
                 .addData("etl_job", "测试作业1")
                 .addData("etl_temp_id", EtlTempId)
-                .addData("etl_job_temp_para", "0,1")
+                .addData("etl_job_temp_para", new String[]{"0,1"})
                 .post(getActionUrl("saveEtlJobTemp"))
                 .getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -1154,7 +1154,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
                 .addData("sub_sys_cd", SubSysCd)
                 .addData("etl_job", "模板作业测试")
                 .addData("etl_temp_id", "")
-                .addData("etl_job_temp_para", "0,1")
+                .addData("etl_job_temp_para", new String[]{"0,1"})
                 .post(getActionUrl("saveEtlJobTemp"))
                 .getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -1166,7 +1166,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
                 .addData("sub_sys_cd", SubSysCd)
                 .addData("etl_job", "模板作业测试")
                 .addData("etl_temp_id", " ")
-                .addData("etl_job_temp_para", "0,1")
+                .addData("etl_job_temp_para", new String[]{"0,1"})
                 .post(getActionUrl("saveEtlJobTemp"))
                 .getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -1178,7 +1178,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
                 .addData("sub_sys_cd", SubSysCd)
                 .addData("etl_job", "模板作业测试")
                 .addData("etl_temp_id", 1)
-                .addData("etl_job_temp_para", "0,1")
+                .addData("etl_job_temp_para", new String[]{"0,1"})
                 .post(getActionUrl("saveEtlJobTemp"))
                 .getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)

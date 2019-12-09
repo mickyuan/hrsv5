@@ -53,7 +53,7 @@ public class JobConfiguration extends BaseAction {
             throw new BusinessException("当前工程已不存在！");
         }
         // 3.获取工程名称
-        String etl_sys_name = getEtlSysName(etl_sys_cd, getUserId());
+        String etl_sys_name = ETLJobUtil.getEtlSysName(etl_sys_cd, getUserId());
         // 4.获取某个工程下任务信息,每次拼接新sql之前清空原来的sql以及参数
         asmSql.clean();
         asmSql.addSql("select distinct * from " + Etl_sub_sys_list.TableName + " where etl_sys_cd = ?");
@@ -116,23 +116,6 @@ public class JobConfiguration extends BaseAction {
         return Dbo.queryOneObject("select distinct * from "
                 + Etl_sub_sys_list.TableName + " where etl_sys_cd=? and sub_sys_cd=? " +
                 "order by etl_sys_cd, sub_sys_cd", etl_sys_cd, sub_sys_cd);
-    }
-
-    @Method(desc = "根据工程编号查询工程名称",
-            logicStep = "1.数据可访问权限处理方式，根据user_id进行权限验证" +
-                    "2.根据工程编号查询工程名称")
-    @Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
-    @Param(name = "user_id", desc = "创建工程用户ID", range = "新增用户时生成")
-    @Return(desc = "返回工程名称", range = "不能为空")
-    private String getEtlSysName(String etl_sys_cd, long user_id) {
-        // 1.数据可访问权限处理方式，根据user_id进行权限验证
-        // 2.判断当前工程是否还存在
-        if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
-            throw new BusinessException("当前工程已不存在！");
-        }
-        // 3.根据工程编号查询工程名称,工程存在，工程名称肯定存在，所以不需要判断结果集是否为空
-        return Dbo.queryOneColumnList("select etl_sys_name from " + Etl_sys.TableName +
-                " where etl_sys_cd=? and user_id=?", etl_sys_cd, user_id).get(0).toString();
     }
 
     @Method(desc = "作业调度任务表字段合法性验证",
@@ -290,19 +273,18 @@ public class JobConfiguration extends BaseAction {
             logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制" +
                     "2.验证当前用户下的工程是否存在" +
                     "3.验证当前用户下的工程对应任务是否存在" +
-                    "4.获取并拼接作业程序参数" +
-                    "5.拼接作业程序参数" +
-                    "6.封装作业实体" +
-                    "7.获取作业模板信息封装作业实体对象" +
-                    "8.判断作业名称是否已存在，存在不能新增" +
-                    "9.保存模板作业")
+                    "4.拼接作业程序参数" +
+                    "5.封装作业实体" +
+                    "6.获取作业模板信息封装作业实体对象" +
+                    "7.判断作业名称是否已存在，存在不能新增" +
+                    "8.保存模板作业")
     @Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
     @Param(name = "sub_sys_cd", desc = "任务编号", range = "新增任务时生成")
     @Param(name = "etl_job", desc = "作业名称", range = "不能重复，新增作业时生成")
     @Param(name = "etl_temp_id", desc = "作业模板ID", range = "无限制")
-    @Param(name = "etl_job_temp_para", desc = "作业模板参数", range = "无限制")
+    @Param(name = "etl_job_temp_para", desc = "作业模板参数的数组", range = "无限制")
     public void saveEtlJobTemp(String etl_sys_cd, String sub_sys_cd, String etl_job, long etl_temp_id,
-                               String etl_job_temp_para) {
+                               String[] etl_job_temp_para) {
         // 1.数据可访问权限处理方式，通过user_id进行权限控制
         // 2.验证当前用户下的工程是否存在
         if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
@@ -312,20 +294,17 @@ public class JobConfiguration extends BaseAction {
         if (!ETLJobUtil.isEtlSubSysExist(etl_sys_cd, sub_sys_cd)) {
             throw new BusinessException("当前工程对应任务已不存在！");
         }
-        // 4.验证
-        // 4.获取并拼接作业程序参数
-        String[] parameterValues = etl_job_temp_para.split(",");
+        // 4.拼接作业程序参数
         StringBuilder sb = new StringBuilder();
-        // 5.拼接作业程序参数
-        for (int i = 0; i < parameterValues.length; i++) {
-            String value = parameterValues[i];
-            if (i != parameterValues.length - 1) {
+        for (int i = 0; i < etl_job_temp_para.length; i++) {
+            String value = etl_job_temp_para[i];
+            if (i != etl_job_temp_para.length - 1) {
                 sb.append(value).append("@");
             } else {
                 sb.append(value);
             }
         }
-        // 6.封装作业实体
+        // 5.封装作业实体
         Etl_job_def etl_job_def = new Etl_job_def();
         etl_job_def.setEtl_job(etl_job);
         etl_job_def.setEtl_sys_cd(etl_sys_cd);
@@ -340,18 +319,18 @@ public class JobConfiguration extends BaseAction {
         etl_job_def.setUpd_time(DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate())
                 + " " + DateUtil.parseStr2TimeWith6Char(DateUtil.getSysTime()));
         etl_job_def.setMain_serv_sync(Main_Server_Sync.YES.getCode());
-        // 7.获取作业模板信息封装作业实体对象
+        // 6.获取作业模板信息封装作业实体对象
         Map<String, Object> jobTemplate = searchEtlJobTemplateById(etl_temp_id);
         if (!jobTemplate.isEmpty()) {
             etl_job_def.setPro_dic(jobTemplate.get("pro_dic").toString());
             etl_job_def.setPro_name(jobTemplate.get("pro_name").toString());
             etl_job_def.setLog_dic(jobTemplate.get("pro_dic").toString());
         }
-        // 8.判断作业名称是否已存在，存在不能新增
+        // 7.判断作业名称是否已存在，存在不能新增
         if (ETLJobUtil.isEtlJobDefExist(etl_sys_cd, etl_job)) {
             throw new BusinessException("作业名称已存在不能新增!");
         }
-        // 9.保存模板作业
+        // 8.保存模板作业
         Etl_dependency etlDependency = new Etl_dependency();
         etlDependency.setEtl_sys_cd(etl_sys_cd);
         etlDependency.setPre_etl_sys_cd(etl_sys_cd);
@@ -387,7 +366,7 @@ public class JobConfiguration extends BaseAction {
             throw new BusinessException("当前工程已不存在！");
         }
         // 3.获取工程名称
-        String etl_sys_name = getEtlSysName(etl_sys_cd, getUserId());
+        String etl_sys_name = ETLJobUtil.getEtlSysName(etl_sys_cd, getUserId());
         // 3.每次拼接新sql之前清理原sql以及参数
         asmSql.clean();
         asmSql.addSql("select distinct t1.etl_sys_cd,t1.etl_job,t1.etl_job_desc,t1.pro_name,t1.disp_freq," +
@@ -732,7 +711,7 @@ public class JobConfiguration extends BaseAction {
             throw new BusinessException("当前工程已不存在！");
         }
         // 3.获取工程名称
-        String etl_sys_name = getEtlSysName(etl_sys_cd, getUserId());
+        String etl_sys_name = ETLJobUtil.getEtlSysName(etl_sys_cd, getUserId());
         asmSql.clean();
         asmSql.addSql("select distinct * from " + Etl_job_resource_rela.TableName + " where etl_sys_cd=? ");
         asmSql.addParam(etl_sys_cd);
@@ -1026,7 +1005,7 @@ public class JobConfiguration extends BaseAction {
             throw new BusinessException("当前工程已不存在！");
         }
         // 3.根据工程编号查询工程名称
-        String etl_sys_name = getEtlSysName(etl_sys_cd, getUserId());
+        String etl_sys_name = ETLJobUtil.getEtlSysName(etl_sys_cd, getUserId());
         asmSql.clean();
         asmSql.addSql("select distinct * from " + Etl_resource.TableName + " where etl_sys_cd = ?");
         asmSql.addParam(etl_sys_cd);
@@ -1207,7 +1186,7 @@ public class JobConfiguration extends BaseAction {
             throw new BusinessException("当前工程已不存在！");
         }
         // 3.根据工程编号查询工程名称
-        String etl_sys_name = getEtlSysName(etl_sys_cd, getUserId());
+        String etl_sys_name = ETLJobUtil.getEtlSysName(etl_sys_cd, getUserId());
         asmSql.clean();
         asmSql.addSql("select distinct * from " + Etl_para.TableName + " where etl_sys_cd IN (?,?)");
         asmSql.addParam(etl_sys_cd);
@@ -1387,7 +1366,7 @@ public class JobConfiguration extends BaseAction {
             throw new BusinessException("当前工程已不存在！");
         }
         // 3.获取工程名称
-        String etl_sys_name = getEtlSysName(etl_sys_cd, getUserId());
+        String etl_sys_name = ETLJobUtil.getEtlSysName(etl_sys_cd, getUserId());
         asmSql.clean();
         asmSql.addSql("select distinct * from etl_dependency where etl_sys_cd = ? ");
         asmSql.addParam(etl_sys_cd);
