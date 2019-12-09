@@ -737,6 +737,23 @@ public class JobConfiguration extends BaseAction {
         return resourceRelationMap;
     }
 
+    @Method(desc = "查询资源类型",
+            logicStep = "1.数据可访问权限处理方式，通过user_id进行权限验证" +
+                    "2.判断工程是否存在" +
+                    "3.查询资源类型")
+    @Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
+    @Return(desc = "返回资源类型", range = "无限制")
+    public List<String> searchEtlResourceType(String etl_sys_cd) {
+        // 1.数据可访问权限处理方式，通过user_id进行权限验证
+        // 2.判断工程是否存在
+        if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
+            throw new BusinessException("当前工程已不存在！");
+        }
+        // 3.查询资源类型
+        return Dbo.queryOneColumnList("select resource_type from " + Etl_resource.TableName +
+                " where etl_sys_cd=?", etl_sys_cd);
+    }
+
     @Method(desc = "根据工程编号、作业名称查询作业资源分配情况",
             logicStep = "1.数据可访问权限处理方式，通过user_id进行权限验证" +
                     "2.判断工程是否存在" +

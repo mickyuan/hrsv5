@@ -1539,7 +1539,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
         assertThat(ar.isSuccess(), is(true));
         Map<Object, Object> etlJobDef = ar.getDataForMap();
-        assertThat(etlJobDef.get("etl_sys_cd"),is(EtlSysCd));
+        assertThat(etlJobDef.get("etl_sys_cd"), is(EtlSysCd));
     }
 
     @Method(desc = "新增保存作业信息",
@@ -2047,6 +2047,33 @@ public class JobConfigurationTest extends WebBaseTestCase {
                 .addData("etl_sys_cd", EtlSysCd)
                 .addData("resource_type", "zydycs")
                 .post(getActionUrl("searchEtlResource"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(false));
+    }
+
+    @Method(desc = "查询资源类型",
+            logicStep = "1.正确的数据访问1，数据都正确" +
+                    "2.错误的数据访问1，etl_sys_cd不存在,该方法只有两种情况")
+    @Test
+    public void searchEtlResourceType() {
+        // 1.正确的数据访问1，数据都正确
+        String bodyString = new HttpClient()
+                .addData("etl_sys_cd", EtlSysCd)
+                .post(getActionUrl("searchEtlResourceType"))
+                .getBodyString();
+        ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(true));
+        List<String> resourceTypeList = (List<String>) ar.getData();
+        assertThat(resourceTypeList.contains("resource"), is(true));
+        assertThat(resourceTypeList.contains("resource2"), is(true));
+        assertThat(resourceTypeList.contains("resource3"), is(true));
+        // 2.错误的数据访问1，etl_sys_cd不存在
+        bodyString = new HttpClient()
+                .addData("etl_sys_cd", "zycxcs")
+                .post(getActionUrl("searchEtlResourceType"))
                 .getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
