@@ -29,7 +29,7 @@ public class SysParaAction extends BaseAction {
 			logicStep = "分页获取系统参数信息,查询参数名称为空则查询所有参数")
 	@Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数", valueIfNull = "1")
 	@Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", valueIfNull = "10")
-	@Param(name = "paraName", desc = "系统参数名称", range = "无限制", nullable = true)
+	@Param(name = "paraName", desc = "系统参数名称", range = "无限制,参数可为空,为空则查询所有参数信息", nullable = true)
 	@Return(desc = "返回系统参数的集合信息", range = "不为null")
 	public Map<String, Object> getSysPara(int currPage, int pageSize, String paraName) {
 		Map<String, Object> sysParaMap = new HashMap<>();
@@ -38,8 +38,8 @@ public class SysParaAction extends BaseAction {
 		asmSql.clean();
 		asmSql.addSql("SELECT * FROM " + Sys_para.TableName);
 		if (!StringUtil.isBlank(paraName)) {
-			asmSql.addSql(" where para_name =?");
-			asmSql.addParam(paraName);
+			asmSql.addSql(" where para_name like ?");
+			asmSql.addParam("%" + paraName + "%");
 		}
 		List<Sys_para> sysParas = Dbo.queryPagedList(Sys_para.class, page, asmSql.sql(), asmSql.params());
 		sysParaMap.put("sysParas", sysParas);

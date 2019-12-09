@@ -50,7 +50,7 @@ public class SysParaActionTest extends WebBaseTestCase {
 	@BeforeClass
 	public static void before() {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-//1.初始化数据
+			//1.初始化数据
 			//1-1.初始化 Sys_user 表数据 (初始化一个超级管理员)
 			Sys_user sys_user = new Sys_user();
 			sys_user.setUser_id(USER_ID);
@@ -172,6 +172,12 @@ public class SysParaActionTest extends WebBaseTestCase {
 		//1.正确数据访问
 		//1-1.查询所有配置参数
 		bodyString = new HttpClient()
+				.post(getActionUrl("getSysPara")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
+		assertThat(ar.isSuccess(), is(true));
+		//1-2.模糊查询
+		bodyString = new HttpClient()
+				.addData("paraName", "测试查询配置参数")
 				.post(getActionUrl("getSysPara")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
 		assertThat(ar.isSuccess(), is(true));
