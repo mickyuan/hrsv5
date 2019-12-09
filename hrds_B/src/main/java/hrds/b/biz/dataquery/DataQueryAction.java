@@ -347,23 +347,48 @@ public class DataQueryAction extends BaseAction {
 		Map<String, Object> conditionalQueryMap = new HashMap<>();
 		conditionalQueryMap.put("fileRs", fileRs.toList());
 		//2.设置下载和认证信息
-		//setDownloadAndAuth(conditionalQueryMap);
+		setDownloadAndAuth(conditionalQueryMap);
 		Map<String, Object> fadMap = getFileApplicationDetails();
 		//3.设置文件各类申请详情汇总
+		int myDownloadRequest = 0;
+		int myPostApplication = 0;
+		int myApplicationRecord = 0;
+		int myRenameRequest = 0;
+		int myViewRequest = 0;
 		Result applyRequestRs = (Result) fadMap.get("applyRequestRs");
 		if (!applyRequestRs.isEmpty()) {
 			for (int i = 0; i < applyRequestRs.getRowCount(); i++) {
-				conditionalQueryMap.put(ApplyType.ofValueByCode(applyRequestRs.getString(i, "apply_type")),
-						applyRequestRs.getInt(i, "count"));
+				ApplyType applyType = ApplyType.ofEnumByCode(applyRequestRs.getString(i, "apply_type"));
+				// 我的下载申请
+				if (ApplyType.XiaZai == applyType) {
+					myDownloadRequest = applyRequestRs.getIntDefaultZero(i, "apply_type");
+				}
+				// 我的发布申请
+				else if (ApplyType.FaBu == applyType) {
+					myPostApplication = applyRequestRs.getIntDefaultZero(i, "apply_type");
+				}
+				// 我的查看申请
+				else if (ApplyType.ChaKan == applyType) {
+					myViewRequest = applyRequestRs.getIntDefaultZero(i, "apply_type");
+				}
+				// 重命名申请
+				else if (ApplyType.ChongMingMing == applyType) {
+					myRenameRequest = applyRequestRs.getIntDefaultZero(i, "apply_type");
+				}
 			}
 		}
 		//4.设置文件申请统计汇总
 		Result countRs = (Result) fadMap.get("countRs");
 		if (!countRs.isEmpty()) {
-			conditionalQueryMap.put("sum", countRs.getRowCount());
+			myApplicationRecord = countRs.getRowCount();
 		}
+		conditionalQueryMap.put("myDownloadRequest", myDownloadRequest);
+		conditionalQueryMap.put("myPostApplication", myPostApplication);
+		conditionalQueryMap.put("myApplicationRecord", myApplicationRecord);
+		conditionalQueryMap.put("myViewRequest", myViewRequest);
+		conditionalQueryMap.put("myRenameRequest", myRenameRequest);
 		//5.设置文件属性信息
-		//setFileAttribute(conditionalQueryMap);
+		setFileAttribute(conditionalQueryMap);
 		return conditionalQueryMap;
 	}
 
@@ -467,6 +492,7 @@ public class DataQueryAction extends BaseAction {
 						applyType.delete(applyType.length() - 1, applyType.length());
 						searchResult.setObject(i, "auth_type", authType.toString());
 						searchResult.setObject(i, "apply_type", applyType.toString());
+						searchResult.setObject(i, "is_others_apply", IsFlag.Fou.getCode());
 					}
 				}
 			}
@@ -520,7 +546,7 @@ public class DataQueryAction extends BaseAction {
 									sfaRsAll.getLongDefaultZero(i, "file_size")));
 							daResult.setObject(j, "file_suffix",
 									sfaRsAll.getString(i, "file_suffix"));
-							daResult.setObject(j, "is_others_apply", "9999");
+							daResult.setObject(j, "is_others_apply", IsFlag.Shi.getCode());
 							searchResult.add(daResult);
 						}
 					}
