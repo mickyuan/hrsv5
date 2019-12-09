@@ -262,7 +262,7 @@ public class JobConfiguration extends BaseAction {
                     "2.根据模板ID查询模板信息")
     @Param(name = "etl_temp_id", desc = "模板作业ID", range = "无限制")
     @Return(desc = "返回根据模板ID查询模板信息", range = "无限制")
-    public Map<String, Object> searchEtlJobTemplateById(long etl_temp_id) {
+    private Map<String, Object> searchEtlJobTemplateById(long etl_temp_id) {
         // 1.数据可访问权限处理方式，此方法不需要用户权限控制
         // 2.根据模板ID查询模板信息
         Map<String, Object> etlJobTemp = Dbo.queryOneObject("select * from " + Etl_job_temp.TableName +
@@ -833,7 +833,7 @@ public class JobConfiguration extends BaseAction {
             if (StringUtil.isBlank(old_dispatch_type)) {
                 throw new BusinessException("更新前调度频率不是频率时old_dispatch_type不可以为空！");
             }
-            Dispatch_Frequency.ofEnumByCode(old_dispatch_type);
+            Dispatch_Type.ofEnumByCode(old_dispatch_type);
         }
         // 5.判断调度频率是否为频率，如果是频率没有依赖，也没有调度触发方式
         if (Dispatch_Frequency.ofEnumByCode(etl_job_def.getDisp_freq()) != Dispatch_Frequency.PinLv) {

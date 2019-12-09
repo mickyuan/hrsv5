@@ -955,34 +955,6 @@ public class JobConfigurationTest extends WebBaseTestCase {
         }
     }
 
-    @Method(desc = "根据模板ID查询作业模板信息",
-            logicStep = "1.正常的数据访问1，数据都正常" +
-                    "2.错误的数据访问1，etl_temp_id不存在，该方法只有两种情况")
-    @Test
-    public void searchEtlJobTemplateById() {
-        // 1.正常的数据访问1，数据都正常
-        String bodyString = new HttpClient()
-                .addData("etl_temp_id", EtlTempId)
-                .post(getActionUrl("searchEtlJobTemplateById"))
-                .getBodyString();
-        ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
-                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
-        assertThat(ar.isSuccess(), is(true));
-        Map<Object, Object> etlJobTemplate = ar.getDataForMap();
-        assertThat(etlJobTemplate.get("etl_temp_id").toString(), is(String.valueOf(EtlTempId)));
-        assertThat(etlJobTemplate.get("etl_temp_type"), is("作业模板1"));
-        assertThat(etlJobTemplate.get("pro_dic"), is("/home/hyshf/zymb"));
-        assertThat(etlJobTemplate.get("pro_name"), is("upload.shell"));
-        // 2.错误的数据访问1，etl_temp_id不存在
-        bodyString = new HttpClient()
-                .addData("etl_temp_id", 1)
-                .post(getActionUrl("searchEtlJobTemplateById"))
-                .getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
-                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
-        assertThat(ar.isSuccess(), is(false));
-    }
-
     @Method(desc = "关联查询作业模板表和作业模板参数表获取作业模板信息",
             logicStep = "1.正常的数据访问1，数据都正常" +
                     "2.错误的数据访问1，etl_temp_id不存在")
@@ -1688,6 +1660,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
                     .addData("log_dic", "/home/hyshf/etl/log")
                     .addData("disp_freq", Dispatch_Frequency.PinLv.getCode())
                     .addData("old_disp_freq", Dispatch_Frequency.MONTHLY.getCode())
+                    .addData("old_dispatch_type", Dispatch_Type.DEPENDENCE.getCode())
                     .addData("exe_frequency", 1)
                     .addData("exe_num", 1)
                     .addData("star_time", dateTime)
