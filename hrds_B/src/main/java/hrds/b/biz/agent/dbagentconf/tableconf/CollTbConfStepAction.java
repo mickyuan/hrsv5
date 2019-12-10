@@ -154,6 +154,9 @@ public class CollTbConfStepAction extends BaseAction {
 			throw new BusinessException("数据库采集任务未找到");
 		}
 
+		List<Object> tableIds = Dbo.queryOneColumnList("select table_id from " + Table_info.TableName +
+				" where database_id = ? and is_user_defined = ?", colSetId, IsFlag.Shi.getCode());
+
 		//2、使用colSetId在table_info表中删除所有自定义SQL采集的记录，不关注删除的数目，结果可以是0-N
 		Dbo.execute("delete from " + Table_info.TableName + " where database_id = ? AND is_user_defined = ? ",
 				colSetId, IsFlag.Shi.getCode());
@@ -210,8 +213,6 @@ public class CollTbConfStepAction extends BaseAction {
 		}
 		//如果List集合为空，表示使用SQL抽取没有设置，那么就要把当前数据库采集任务中所有的自定义抽取设置作为脏数据全部删除
 		else{
-			List<Object> tableIds = Dbo.queryOneColumnList("select table_id from " + Table_info.TableName +
-					" where database_id = ? and is_user_defined = ?", colSetId, IsFlag.Shi.getCode());
 			if(!tableIds.isEmpty()){
 				for(Object tableId : tableIds){
 					deleteDirtyDataOfTb((long) tableId);
@@ -372,6 +373,7 @@ public class CollTbConfStepAction extends BaseAction {
 		if(resultMap.isEmpty()){
 			throw new BusinessException("未找到数据库采集任务");
 		}
+
 		//1、不论新增采集表还是编辑采集表，页面上所有的内容都可能被修改，所以直接执行SQL，按database_id删除table_info表
 		// 中,所有非自定义采集SQL的数据，不关心删除数据的条数
 		Dbo.execute(" DELETE FROM "+ Table_info.TableName +" WHERE database_id = ? AND is_user_defined = ? ",
@@ -502,7 +504,7 @@ public class CollTbConfStepAction extends BaseAction {
 		Map<String, List<Map<String, Object>>> returnMap = new HashMap<>();
 		//6、以table_name为key，以<结果集2>为value，将数据封装起来返回给前端
 		for(int i = 0; i < tableInfos.getRowCount(); i++){
-			Result result = Dbo.queryResult("select colume_name, column_type, colume_ch_name, is_get from "
+			Result result = Dbo.queryResult("select * from "
 					+ Table_column.TableName + " where table_id = ?", tableInfos.getLong(i, "table_id"));
 			if(result.isEmpty()){
 				throw new BusinessException("获取表字段信息失败");
