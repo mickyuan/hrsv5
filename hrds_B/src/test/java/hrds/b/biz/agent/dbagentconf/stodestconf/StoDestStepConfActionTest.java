@@ -215,30 +215,37 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 				-> new BusinessException("连接失败!"));
 		assertThat(rightResult.isSuccess(), is(true));
 
-		Map<Long, List> dataForMap = rightResult.getDataForMap(Long.class, List.class);
-		for(long key : dataForMap.keySet()){
-			if(key == AGENT_INFO_TABLE_ID){
-				List list = dataForMap.get(key);
-				assertThat("给agent_info表定义的存储目的地有两个", list.size(), is(2));
-				for(Object obj : list){
-					Integer dslId = (Integer) obj;
-					if(dslId == 4400){
-						assertThat("agent_info保存进入关系型数据库", true, is(true));
-					}else if(dslId == 4402){
-						assertThat("agent_info保存进入HBASE", true, is(true));
-					}else {
-						assertThat("出现了不符合期望的情况,dslId为 : " + dslId, true, is(false));
+		/*
+		List<Map> dataForEntityList = rightResult.getDataForEntityList(Map.class);
+		assertThat("获得的数据有两条", dataForEntityList.size(), is(2));
+		for(Map tableMap : dataForEntityList){
+			for(Object key : tableMap.keySet()){
+				if(key == AGENT_INFO_TABLE_ID){
+					List list = dataForMap.get(key);
+					Result result = new Result(list);
+					assertThat("给agent_info表定义的存储目的地有两个", result.getRowCount(), is(2));
+					for(int i = 0; i < result.getRowCount(); i++){
+						long dslId = result.getLong(i, "dsl_id");
+						if(dslId == 4400){
+							assertThat("agent_info保存进入关系型数据库", true, is(true));
+						}else if(dslId == 4402){
+							assertThat("agent_info保存进入HBASE", true, is(true));
+						}else {
+							assertThat("出现了不符合期望的情况,dslId为 : " + dslId, true, is(false));
+						}
 					}
+				}else if(key == DATA_SOURCE_TABLE_ID){
+					List list = dataForMap.get(key);
+					Result result = new Result(list);
+					assertThat("给data_source表定义的存储目的地有1个", result.getRowCount(), is(1));
+					long dslId = result.getLong(0, "dsl_id");
+					assertThat("data_source保存进入SOLR", dslId, is(4399L));
+				}else{
+					assertThat("出现了不符合期望的情况,key为 : " + key, false, is(true));
 				}
-			}else if(key == DATA_SOURCE_TABLE_ID){
-				List list = dataForMap.get(key);
-				assertThat("给data_source表定义的存储目的地有1个", list.size(), is(1));
-				Integer dslId = (Integer) list.get(0);
-				assertThat("data_source保存进入SOLR", dslId, is(4399));
-			}else{
-				assertThat("出现了不符合期望的情况,key为 : " + key, false, is(true));
 			}
 		}
+		*/
 
 		//错误的数据访问1：使用错误的colSetId访问，访问会失败
 		String wrongString = new HttpClient()

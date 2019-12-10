@@ -17,6 +17,7 @@ import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.key.PrimayKeyGener;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -73,10 +74,11 @@ public class StoDestStepConfAction extends BaseAction{
 	@Method(desc = "根据数据库设置ID获取当前数据库直连采集任务下所有抽取及入库的表的存储目的地ID", logicStep = "" +
 			"1、根据数据库设置ID获取当前数据库采集任务所有抽取并入库的表ID" +
 			"2、遍历结果集，根据表ID获取该表定义的存储目的地" +
-			"3、以table_id为key，以存储目的地IDList集合为value，返回给前端，之所以value是List集合，是因为入库的表可以定义多个存储目的地")
+			"3、key为tableId,value为抽取及入库的表ID，key为dslIds,value为该表定义的存储目的地")
 	@Param(name = "colSetId", desc = "数据库设置ID，源系统数据库设置表主键，数据库对应表外键", range = "不为空")
-	@Return(desc = "查询结果集", range = "不为空，key为table_id(抽取及入库的表),value为存储目的地IDList集合")
-	public Map<Long, List<Object>> getTbStoDestByColSetId(long colSetId){
+	@Return(desc = "查询结果集", range = "不为空，key为tableId,value为抽取及入库的表ID，" +
+			"key为dslIds,value为该表定义的存储目的地,之所以value是List集合，是因为入库的表可以定义多个存储目的地")
+	public List<Map<String, Object>> getTbStoDestByColSetId(long colSetId){
 		//1、根据数据库设置ID获取当前数据库采集任务所有抽取并入库的表ID
 		List<Object> tableIds = Dbo.queryOneColumnList("select ti.table_id from " + Table_info.TableName + " ti" +
 				" join " + Data_extraction_def.TableName + " ded" +
@@ -85,16 +87,19 @@ public class StoDestStepConfAction extends BaseAction{
 		if(tableIds.isEmpty()){
 			throw new BusinessException("未获取到数据库采集表");
 		}
-		Map<Long, List<Object>> returnMap = new HashMap<>();
+		List<Map<String, Object>> returnList = new ArrayList<>();
 		//2、遍历结果集，根据表ID获取该表定义的存储目的地
 		for(Object tableId : tableIds){
-			List<Object> dslIds = Dbo.queryOneColumnList("select drt.dsl_id from " + Data_relation_table.TableName + " drt" +
+			Map<String, Object> returnMap = new HashMap<>();
+			List<Object> list = Dbo.queryOneColumnList("select drt.dsl_id from " + Data_relation_table.TableName + " drt" +
 					" where drt.storage_id = (select storage_id from " + Table_storage_info.TableName +
-					" where table_id = ?)", (long)tableId);
-			returnMap.put((Long)tableId, dslIds);
+					" where table_id = ?)", (long) tableId);
+			returnMap.put("tableId", tableId);
+			returnMap.put("dslIds", list);
+			returnList.add(returnMap);
 		}
-		//3、以table_id为key，以存储目的地IDList集合为value，返回给前端，之所以value是List集合，是因为入库的表可以定义多个存储目的地
-		return returnMap;
+		//3、key为tableId,value为抽取及入库的表ID，key为dslIds,value为该表定义的存储目的地,之所以value是List集合，是因为入库的表可以定义多个存储目的地
+		return returnList;
 	}
 
 	/*

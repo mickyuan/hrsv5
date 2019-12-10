@@ -690,21 +690,25 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 	public void saveAllSQLTwo(){
 		List<Table_info> tableInfos = new ArrayList<>();
 		for(int i = 1; i <= 2; i++){
+			long tableId;
 			String tableName;
 			String tableChName;
 			String customizeSQL;
 			switch (i) {
 				case 1 :
+					tableId = AGENT_INFO_TABLE_ID;
 					tableName = "agent_info_customize";
 					tableChName = "agent信息表自定义";
 					customizeSQL = "SELECT agent_ip, agent_port, agent_status FROM "+ Agent_info.TableName;
 					break;
 				case 2 :
+					tableId = DATA_SOURCE_TABLE_ID;
 					tableName = "data_source_customize";
 					tableChName = "数据源表自定义";
 					customizeSQL = "SELECT source_remark, create_date, create_time FROM "+ Data_source.TableName;
 					break;
 				default:
+					tableId = UNEXPECTED_ID;
 					tableName = "unexpected_tableName";
 					tableChName = "unexpected_tableChName";
 					customizeSQL = "unexpected_customizeSQL";
@@ -713,6 +717,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			tableInfo.setTable_name(tableName);
 			tableInfo.setTable_ch_name(tableChName);
 			tableInfo.setSql(customizeSQL);
+			tableInfo.setTable_id(tableId);
 
 			tableInfos.add(tableInfo);
 		}
