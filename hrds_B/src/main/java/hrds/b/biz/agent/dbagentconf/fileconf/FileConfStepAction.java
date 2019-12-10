@@ -74,6 +74,11 @@ public class FileConfStepAction extends BaseAction{
 		//1、将传入的json格式的字符串转换为List<Data_extraction_def>集合
 		List<Data_extraction_def> dataExtractionDefs = JSONArray.parseArray(extractionDefString,
 				Data_extraction_def.class);
+
+		if(dataExtractionDefs == null || dataExtractionDefs.isEmpty()){
+			throw new BusinessException("未获取到卸数文件信息");
+		}
+
 		//2、遍历集合，对集合中的内容调用方法进行校验
 		verifySeqConf(dataExtractionDefs);
 		for(Data_extraction_def def : dataExtractionDefs){

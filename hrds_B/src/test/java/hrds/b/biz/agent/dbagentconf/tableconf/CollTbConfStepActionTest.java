@@ -1475,7 +1475,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 
 	/*
 	* 正确数据访问4：在database_id为1001的数据库采集任务下构造新增采集ftp_collect表和object_collect表的数据，
-	* ftp_collect表不选择采集列和列排序，object_collect表选择采集列和列排序,都不设置并行抽取(需要和agent交互)
+	* 两张表都不选择采集列和列排序，都不设置并行抽取(需要和agent交互)
 	* */
 	@Test
 	public void saveCollTbInfoFour(){

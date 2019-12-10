@@ -224,24 +224,26 @@ public class CleanConfStepAction extends BaseAction{
 		Dbo.execute("DELETE FROM "+ Table_clean.TableName +" WHERE table_id = ? AND clean_type = ?", tableId,
 				CleanType.ZiFuTiHuan.getCode());
 		//2、遍历replaceList
-		for(int i = 0; i < replaceList.size(); i++){
-			Table_clean tableClean = replaceList.get(i);
-			//这里用isEmpty的目的是，有可能原字符串和替换字符串都是空格或者特殊字符
-			if(StringUtil.isEmpty(tableClean.getField())){
-				throw new BusinessException("保存表字符替换规则时，第"+ (i + 1) +"条数据缺少源字符串");
+		if(replaceList != null && !replaceList.isEmpty()){
+			for(int i = 0; i < replaceList.size(); i++){
+				Table_clean tableClean = replaceList.get(i);
+				//这里用isEmpty的目的是，有可能原字符串和替换字符串都是空格或者特殊字符
+				if(StringUtil.isEmpty(tableClean.getField())){
+					throw new BusinessException("保存表字符替换规则时，第"+ (i + 1) +"条数据缺少源字符串");
+				}
+				if(StringUtil.isEmpty(tableClean.getReplace_feild())){
+					throw new BusinessException("保存表字符替换规则时，第"+ (i + 1) +"条数据缺少替换字符串");
+				}
+				//2-1、为每一个Table_clean对象设置主键
+				tableClean.setTable_clean_id(PrimayKeyGener.getNextId());
+				tableClean.setClean_type(CleanType.ZiFuTiHuan.getCode());
+				tableClean.setTable_id(tableId);
+				//2-2、原字符串和替换字符串转为Unicode码
+				tableClean.setField(StringUtil.string2Unicode(tableClean.getField()));
+				tableClean.setReplace_feild(StringUtil.string2Unicode(tableClean.getReplace_feild()));
+				//2-3、保存
+				tableClean.add(Dbo.db());
 			}
-			if(StringUtil.isEmpty(tableClean.getReplace_feild())){
-				throw new BusinessException("保存表字符替换规则时，第"+ (i + 1) +"条数据缺少替换字符串");
-			}
-			//2-1、为每一个Table_clean对象设置主键
-			tableClean.setTable_clean_id(PrimayKeyGener.getNextId());
-			tableClean.setClean_type(CleanType.ZiFuTiHuan.getCode());
-			tableClean.setTable_id(tableId);
-			//2-2、原字符串和替换字符串转为Unicode码
-			tableClean.setField(StringUtil.string2Unicode(tableClean.getField()));
-			tableClean.setReplace_feild(StringUtil.string2Unicode(tableClean.getReplace_feild()));
-			//2-3、保存
-			tableClean.add(Dbo.db());
 		}
 	}
 
@@ -262,24 +264,26 @@ public class CleanConfStepAction extends BaseAction{
 		Dbo.execute("DELETE FROM "+ Column_clean.TableName +" WHERE column_id = ? AND clean_type = ?", columnId,
 				CleanType.ZiFuTiHuan.getCode());
 		//2、遍历replaceList
-		for(int i = 0; i < replaceList.size(); i++){
-			Column_clean columnClean = replaceList.get(i);
-			//这里使用isEmpty的目的是，在保存字符替换规则的时候，源字符串和替换字符串可能都是空格
-			if(StringUtil.isEmpty(columnClean.getField())){
-				throw new BusinessException("保存列字符替换规则时，第"+ (i + 1) +"条数据缺少源字符串");
+		if(replaceList != null && !replaceList.isEmpty()){
+			for(int i = 0; i < replaceList.size(); i++){
+				Column_clean columnClean = replaceList.get(i);
+				//这里使用isEmpty的目的是，在保存字符替换规则的时候，源字符串和替换字符串可能都是空格
+				if(StringUtil.isEmpty(columnClean.getField())){
+					throw new BusinessException("保存列字符替换规则时，第"+ (i + 1) +"条数据缺少源字符串");
+				}
+				if(StringUtil.isEmpty(columnClean.getReplace_feild())){
+					throw new BusinessException("保存列字符替换规则时，第"+ (i + 1) +"条数据缺少替换字符串");
+				}
+				//2-1、为每一个Column_clean对象设置主键
+				columnClean.setCol_clean_id(PrimayKeyGener.getNextId());
+				columnClean.setClean_type(CleanType.ZiFuTiHuan.getCode());
+				columnClean.setColumn_id(columnId);
+				//2-2、原字符串和替换字符串转为Unicode码
+				columnClean.setField(StringUtil.string2Unicode(columnClean.getField()));
+				columnClean.setReplace_feild(StringUtil.string2Unicode(columnClean.getReplace_feild()));
+				//2-3、保存
+				columnClean.add(Dbo.db());
 			}
-			if(StringUtil.isEmpty(columnClean.getReplace_feild())){
-				throw new BusinessException("保存列字符替换规则时，第"+ (i + 1) +"条数据缺少替换字符串");
-			}
-			//2-1、为每一个Column_clean对象设置主键
-			columnClean.setCol_clean_id(PrimayKeyGener.getNextId());
-			columnClean.setClean_type(CleanType.ZiFuTiHuan.getCode());
-			columnClean.setColumn_id(columnId);
-			//2-2、原字符串和替换字符串转为Unicode码
-			columnClean.setField(StringUtil.string2Unicode(columnClean.getField()));
-			columnClean.setReplace_feild(StringUtil.string2Unicode(columnClean.getReplace_feild()));
-			//2-3、保存
-			columnClean.add(Dbo.db());
 		}
 	}
 
@@ -662,54 +666,56 @@ public class CleanConfStepAction extends BaseAction{
 			columnClean.add(Dbo.db());
 		}
 		List<Column_split> columnSplits = JSONArray.parseArray(columnSplitString, Column_split.class);
-		for(int i = 0; i < columnSplits.size(); i++){
-			Column_split columnSplit = columnSplits.get(i);
-			if(StringUtil.isBlank(columnSplit.getSplit_type())){
-				throw new BusinessException("保存字符拆分信息时，第"+ (i + 1) +"条数据拆分方式不能为空");
-			}
-			CharSplitType charSplitType = CharSplitType.ofEnumByCode(columnSplit.getSplit_type());
-			if(charSplitType == CharSplitType.ZhiDingFuHao){
-				if(StringUtil.isBlank(columnSplit.getSplit_sep())){
-					throw new BusinessException("按照自定符号进行拆分，第"+ (i + 1) +"条数据必须填写自定义符号");
+		if(columnSplits != null && !columnSplits.isEmpty()){
+			for(int i = 0; i < columnSplits.size(); i++){
+				Column_split columnSplit = columnSplits.get(i);
+				if(StringUtil.isBlank(columnSplit.getSplit_type())){
+					throw new BusinessException("保存字符拆分信息时，第"+ (i + 1) +"条数据拆分方式不能为空");
 				}
-				if(columnSplit.getSeq() == null){
-					throw new BusinessException("按照自定符号进行拆分，第"+ (i + 1) +"条数据必须填写值位置");
+				CharSplitType charSplitType = CharSplitType.ofEnumByCode(columnSplit.getSplit_type());
+				if(charSplitType == CharSplitType.ZhiDingFuHao){
+					if(StringUtil.isBlank(columnSplit.getSplit_sep())){
+						throw new BusinessException("按照自定符号进行拆分，第"+ (i + 1) +"条数据必须填写自定义符号");
+					}
+					if(columnSplit.getSeq() == null){
+						throw new BusinessException("按照自定符号进行拆分，第"+ (i + 1) +"条数据必须填写值位置");
+					}
+				}else if(charSplitType == CharSplitType.PianYiLiang){
+					if(StringUtil.isBlank(columnSplit.getCol_offset())){
+						throw new BusinessException("按照偏移量进行拆分，第"+ (i + 1) +"条数据必须填写字段偏移量");
+					}
+				}else{
+					throw new BusinessException("第"+ (i + 1) +"条数据拆分方式错误");
 				}
-			}else if(charSplitType == CharSplitType.PianYiLiang){
-				if(StringUtil.isBlank(columnSplit.getCol_offset())){
-					throw new BusinessException("按照偏移量进行拆分，第"+ (i + 1) +"条数据必须填写字段偏移量");
-				}
-			}else{
-				throw new BusinessException("第"+ (i + 1) +"条数据拆分方式错误");
-			}
-			//4、为Column_split实体类对象中必须有值的属性设置值
-			columnSplit.setCol_split_id(PrimayKeyGener.getNextId());
-			columnSplit.setColumn_id(columnClean.getColumn_id());
-			columnSplit.setCol_clean_id(columnClean.getCol_clean_id());
-			columnSplit.setValid_s_date(DateUtil.getSysDate());
-			columnSplit.setValid_e_date(Constant.MAXDATE);
+				//4、为Column_split实体类对象中必须有值的属性设置值
+				columnSplit.setCol_split_id(PrimayKeyGener.getNextId());
+				columnSplit.setColumn_id(columnClean.getColumn_id());
+				columnSplit.setCol_clean_id(columnClean.getCol_clean_id());
+				columnSplit.setValid_s_date(DateUtil.getSysDate());
+				columnSplit.setValid_e_date(Constant.MAXDATE);
 
-			if(charSplitType == CharSplitType.ZhiDingFuHao){
-				columnSplit.setSplit_sep(StringUtil.string2Unicode(columnSplit.getSplit_sep()));
-			}
-			//5、保存Column_split实体类对象
-			columnSplit.add(Dbo.db());
-			//6、将本次拆分生成的新列保存到table_column表中
-			Table_column tableColumn = new Table_column();
-			tableColumn.setTable_id(tableId);
-			//是否为变化生成，设置为是
-			tableColumn.setIs_new(IsFlag.Shi.getCode());
-			//保存原字段
-			tableColumn.setIs_alive(IsFlag.Shi.getCode());
-			tableColumn.setColumn_id(PrimayKeyGener.getNextId());
-			tableColumn.setIs_primary_key(IsFlag.Fou.getCode());
-			tableColumn.setColume_name(columnSplit.getCol_name());
-			tableColumn.setColumn_type(columnSplit.getCol_type());
-			tableColumn.setColume_ch_name(columnSplit.getCol_zhname());
-			tableColumn.setValid_s_date(DateUtil.getSysDate());
-			tableColumn.setValid_e_date(Constant.MAXDATE);
+				if(charSplitType == CharSplitType.ZhiDingFuHao){
+					columnSplit.setSplit_sep(StringUtil.string2Unicode(columnSplit.getSplit_sep()));
+				}
+				//5、保存Column_split实体类对象
+				columnSplit.add(Dbo.db());
+				//6、将本次拆分生成的新列保存到table_column表中
+				Table_column tableColumn = new Table_column();
+				tableColumn.setTable_id(tableId);
+				//是否为变化生成，设置为是
+				tableColumn.setIs_new(IsFlag.Shi.getCode());
+				//保存原字段
+				tableColumn.setIs_alive(IsFlag.Shi.getCode());
+				tableColumn.setColumn_id(PrimayKeyGener.getNextId());
+				tableColumn.setIs_primary_key(IsFlag.Fou.getCode());
+				tableColumn.setColume_name(columnSplit.getCol_name());
+				tableColumn.setColumn_type(columnSplit.getCol_type());
+				tableColumn.setColume_ch_name(columnSplit.getCol_zhname());
+				tableColumn.setValid_s_date(DateUtil.getSysDate());
+				tableColumn.setValid_e_date(Constant.MAXDATE);
 
-			tableColumn.add(Dbo.db());
+				tableColumn.add(Dbo.db());
+			}
 		}
 	}
 
@@ -831,39 +837,41 @@ public class CleanConfStepAction extends BaseAction{
 		Dbo.execute("delete from "+ Column_merge.TableName +" where table_id = ?", tableId);
 		//3、为Column_merge实体类对象属性中设置必填的值
 		List<Column_merge> columnMerges = JSONArray.parseArray(columnMergeString, Column_merge.class);
-		for(int i = 0; i < columnMerges.size(); i++){
-			Column_merge columnMerge = columnMerges.get(i);
-			if(StringUtil.isBlank(columnMerge.getOld_name())){
-				throw new BusinessException("保存列合并时，第" + (i + 1) + "条数据必须选择要合并的字段");
-			}
-			if(StringUtil.isBlank(columnMerge.getCol_name())){
-				throw new BusinessException("保存列合并时，第" + (i + 1) + "条数据必须填写合并后字段名称");
-			}
-			if(StringUtil.isBlank(columnMerge.getCol_type())){
-				throw new BusinessException("保存列合并时，第" + (i + 1) + "条数据必须填写字段类型");
-			}
-			//4、保存Column_merge实体类对象
-			columnMerge.setTable_id(tableId);
-			columnMerge.setCol_merge_id(PrimayKeyGener.getNextId());
-			columnMerge.setValid_s_date(DateUtil.getSysDate());
-			columnMerge.setValid_e_date(Constant.MAXDATE);
+		if(columnMerges != null && !columnMerges.isEmpty()){
+			for(int i = 0; i < columnMerges.size(); i++){
+				Column_merge columnMerge = columnMerges.get(i);
+				if(StringUtil.isBlank(columnMerge.getOld_name())){
+					throw new BusinessException("保存列合并时，第" + (i + 1) + "条数据必须选择要合并的字段");
+				}
+				if(StringUtil.isBlank(columnMerge.getCol_name())){
+					throw new BusinessException("保存列合并时，第" + (i + 1) + "条数据必须填写合并后字段名称");
+				}
+				if(StringUtil.isBlank(columnMerge.getCol_type())){
+					throw new BusinessException("保存列合并时，第" + (i + 1) + "条数据必须填写字段类型");
+				}
+				//4、保存Column_merge实体类对象
+				columnMerge.setTable_id(tableId);
+				columnMerge.setCol_merge_id(PrimayKeyGener.getNextId());
+				columnMerge.setValid_s_date(DateUtil.getSysDate());
+				columnMerge.setValid_e_date(Constant.MAXDATE);
 
-			columnMerge.add(Dbo.db());
+				columnMerge.add(Dbo.db());
 
-			//5、将合并出来的列保存到table_column表中
-			Table_column tableColumn = new Table_column();
-			tableColumn.setTable_id(tableId);
-			tableColumn.setIs_new(IsFlag.Shi.getCode());
-			tableColumn.setIs_alive(IsFlag.Shi.getCode());
-			tableColumn.setColumn_id(PrimayKeyGener.getNextId());
-			tableColumn.setIs_primary_key(IsFlag.Fou.getCode());
-			tableColumn.setColume_name(columnMerge.getCol_name());
-			tableColumn.setColumn_type(columnMerge.getCol_type());
-			tableColumn.setColume_ch_name(columnMerge.getCol_zhname());
-			tableColumn.setValid_s_date(DateUtil.getSysDate());
-			tableColumn.setValid_e_date(Constant.MAXDATE);
+				//5、将合并出来的列保存到table_column表中
+				Table_column tableColumn = new Table_column();
+				tableColumn.setTable_id(tableId);
+				tableColumn.setIs_new(IsFlag.Shi.getCode());
+				tableColumn.setIs_alive(IsFlag.Shi.getCode());
+				tableColumn.setColumn_id(PrimayKeyGener.getNextId());
+				tableColumn.setIs_primary_key(IsFlag.Fou.getCode());
+				tableColumn.setColume_name(columnMerge.getCol_name());
+				tableColumn.setColumn_type(columnMerge.getCol_type());
+				tableColumn.setColume_ch_name(columnMerge.getCol_zhname());
+				tableColumn.setValid_s_date(DateUtil.getSysDate());
+				tableColumn.setValid_e_date(Constant.MAXDATE);
 
-			tableColumn.add(Dbo.db());
+				tableColumn.add(Dbo.db());
+			}
 		}
 	}
 
@@ -1027,6 +1035,11 @@ public class CleanConfStepAction extends BaseAction{
 	public void saveColCleanConfig(String colCleanString){
 		//1、将colCleanString反序列化为List<ColumnCleanParam>
 		List<ColumnCleanParam> columnCleanParams = JSONArray.parseArray(colCleanString, ColumnCleanParam.class);
+
+		if(columnCleanParams == null || columnCleanParams.isEmpty()){
+			throw new BusinessException("未获取到列清洗信息");
+		}
+
 		//2、遍历List集合
 		for(ColumnCleanParam param : columnCleanParams){
 			//2-1、判断最终保存时，是否选择了字符补齐，否，则根据columnId去column_clean表中尝试删除记录，不关心具体的数目
@@ -1093,6 +1106,11 @@ public class CleanConfStepAction extends BaseAction{
 	public long saveDataCleanConfig(long colSetId, String tbCleanString){
 		//1、将tbCleanString反序列化为List<TableCleanParam>
 		List<TableCleanParam> tableCleanParams = JSONArray.parseArray(tbCleanString, TableCleanParam.class);
+
+		if(tableCleanParams == null || tableCleanParams.isEmpty()){
+			throw new BusinessException("未获取到表清洗信息");
+		}
+
 		//2、遍历List集合
 		for(TableCleanParam param : tableCleanParams){
 			//2-1、判断最终保存时，是否选择了字符补齐，否，则根据tableId去table_clean表中尝试删除记录，不关心删除的数目

@@ -203,64 +203,66 @@ public class CollTbConfStepAction extends BaseAction {
 				colSetId, IsFlag.Shi.getCode());
 		//4、遍历list,给每条记录生成ID，设置有效开始日期、有效结束日期、是否自定义SQL采集(是)、是否使用MD5(是)、
 		// 是否仅登记(这个字段的值，要根据配置源DB属性来决定，贴源登记就是IsFlag.Shi,数据采集就是IsFlag.Fou)
-		for(int i = 0; i < tableInfos.size(); i++){
-			Table_info tableInfo = tableInfos.get(i);
-			if(StringUtil.isBlank(tableInfo.getTable_name())){
-				throw new BusinessException("第" + (i + 1) + "条数据表名不能为空");
-			}
-			if(StringUtil.isBlank(tableInfo.getTable_ch_name())){
-				throw new BusinessException("第" + (i + 1) + "条数据表中文名不能为空");
-			}
-			if(StringUtil.isBlank(tableInfo.getSql())){
-				throw new BusinessException("第" + (i + 1) + "条数据自定义SQL语句不能为空");
-			}
-			tableInfo.setTable_id(PrimayKeyGener.getNextId());
-			//TODO 表的数据量没有页面上没有配置的地方，所以给一个默认值为一万
-			tableInfo.setTable_count(CountNum.YiWan.getCode());
-			tableInfo.setDatabase_id(colSetId);
-			tableInfo.setValid_s_date(DateUtil.getSysDate());
-			tableInfo.setValid_e_date(Constant.MAXDATE);
-			//是否自定义采集为是
-			tableInfo.setIs_user_defined(IsFlag.Shi.getCode());
-			tableInfo.setIs_md5(IsFlag.Shi.getCode());
-			tableInfo.setIs_register(IsFlag.Fou.getCode());
-			//是否并行抽取设置为否
-			tableInfo.setIs_parallel(IsFlag.Fou.getCode());
-			//5、保存数据进库
-			tableInfo.add(Dbo.db());
-			//数据可访问权限处理方式
-			//以上table_info表中都没有user_id字段，解决方式待讨论
-
-			//6、保存数据自定义采集列相关信息进入table_column表
-			try {
-				ResultSet rs = Dbo.db().queryGetResultSet(tableInfo.getSql());
-				ResultSetMetaData metaData = rs.getMetaData();
-				for(int j = 0; j < metaData.getColumnCount(); j++){
-					Table_column tableColumn = new Table_column();
-					tableColumn.setColumn_id(PrimayKeyGener.getNextId());
-					tableColumn.setTable_id(tableInfo.getTable_id());
-					//是否采集设置为是
-					tableColumn.setIs_get(IsFlag.Shi.getCode());
-					//是否是主键，默认设置为否
-					tableColumn.setIs_primary_key(IsFlag.Fou.getCode());
-					tableColumn.setColume_name(metaData.getColumnName(j + 1));
-					//对列类型做特殊处理，处理成varchar(512), numeric(10,4)
-					String colTypeAndPreci = getColTypeAndPreci(metaData.getColumnType(j + 1),
-							metaData.getColumnTypeName(j + 1), metaData.getPrecision(j + 1),
-							metaData.getScale(j + 1));
-					tableColumn.setColumn_type(colTypeAndPreci);
-					//列中文名默认设置为列英文名
-					tableColumn.setColume_ch_name(metaData.getColumnName(j + 1));
-					tableColumn.setValid_s_date(DateUtil.getSysDate());
-					tableColumn.setValid_e_date(Constant.MAXDATE);
-					tableColumn.setIs_alive(IsFlag.Shi.getCode());
-					tableColumn.setIs_new(IsFlag.Fou.getCode());
-					tableColumn.setTc_or(DEFAULT_COLUMN_CLEAN_ORDER.toJSONString());
-
-					tableColumn.add(Dbo.db());
+		if(tableInfos != null && !tableInfos.isEmpty()){
+			for(int i = 0; i < tableInfos.size(); i++){
+				Table_info tableInfo = tableInfos.get(i);
+				if(StringUtil.isBlank(tableInfo.getTable_name())){
+					throw new BusinessException("第" + (i + 1) + "条数据表名不能为空");
 				}
-			} catch (SQLException e) {
-				throw new AppSystemException(e);
+				if(StringUtil.isBlank(tableInfo.getTable_ch_name())){
+					throw new BusinessException("第" + (i + 1) + "条数据表中文名不能为空");
+				}
+				if(StringUtil.isBlank(tableInfo.getSql())){
+					throw new BusinessException("第" + (i + 1) + "条数据自定义SQL语句不能为空");
+				}
+				tableInfo.setTable_id(PrimayKeyGener.getNextId());
+				//TODO 表的数据量没有页面上没有配置的地方，所以给一个默认值为一万
+				tableInfo.setTable_count(CountNum.YiWan.getCode());
+				tableInfo.setDatabase_id(colSetId);
+				tableInfo.setValid_s_date(DateUtil.getSysDate());
+				tableInfo.setValid_e_date(Constant.MAXDATE);
+				//是否自定义采集为是
+				tableInfo.setIs_user_defined(IsFlag.Shi.getCode());
+				tableInfo.setIs_md5(IsFlag.Shi.getCode());
+				tableInfo.setIs_register(IsFlag.Fou.getCode());
+				//是否并行抽取设置为否
+				tableInfo.setIs_parallel(IsFlag.Fou.getCode());
+				//5、保存数据进库
+				tableInfo.add(Dbo.db());
+				//数据可访问权限处理方式
+				//以上table_info表中都没有user_id字段，解决方式待讨论
+
+				//6、保存数据自定义采集列相关信息进入table_column表
+				try {
+					ResultSet rs = Dbo.db().queryGetResultSet(tableInfo.getSql());
+					ResultSetMetaData metaData = rs.getMetaData();
+					for(int j = 0; j < metaData.getColumnCount(); j++){
+						Table_column tableColumn = new Table_column();
+						tableColumn.setColumn_id(PrimayKeyGener.getNextId());
+						tableColumn.setTable_id(tableInfo.getTable_id());
+						//是否采集设置为是
+						tableColumn.setIs_get(IsFlag.Shi.getCode());
+						//是否是主键，默认设置为否
+						tableColumn.setIs_primary_key(IsFlag.Fou.getCode());
+						tableColumn.setColume_name(metaData.getColumnName(j + 1));
+						//对列类型做特殊处理，处理成varchar(512), numeric(10,4)
+						String colTypeAndPreci = getColTypeAndPreci(metaData.getColumnType(j + 1),
+								metaData.getColumnTypeName(j + 1), metaData.getPrecision(j + 1),
+								metaData.getScale(j + 1));
+						tableColumn.setColumn_type(colTypeAndPreci);
+						//列中文名默认设置为列英文名
+						tableColumn.setColume_ch_name(metaData.getColumnName(j + 1));
+						tableColumn.setValid_s_date(DateUtil.getSysDate());
+						tableColumn.setValid_e_date(Constant.MAXDATE);
+						tableColumn.setIs_alive(IsFlag.Shi.getCode());
+						tableColumn.setIs_new(IsFlag.Fou.getCode());
+						tableColumn.setTc_or(DEFAULT_COLUMN_CLEAN_ORDER.toJSONString());
+
+						tableColumn.add(Dbo.db());
+					}
+				} catch (SQLException e) {
+					throw new AppSystemException(e);
+				}
 			}
 		}
 		return colSetId;
@@ -374,10 +376,10 @@ public class CollTbConfStepAction extends BaseAction {
 	public long saveCollTbInfo(String tableInfoString, long colSetId, String collTbConfParamString){
 		List<Table_info> tableInfos = JSONArray.parseArray(tableInfoString, Table_info.class);
 		List<CollTbConfParam> tbConfParams = JSONArray.parseArray(collTbConfParamString, CollTbConfParam.class);
-		if(tableInfos.isEmpty()){
+		if(tableInfos == null || tableInfos.isEmpty()){
 			throw new BusinessException("请配置采集表信息");
 		}
-		if(tbConfParams.isEmpty()){
+		if(tbConfParams == null ||tbConfParams.isEmpty()){
 			throw new BusinessException("请配置采集字段参数");
 		}
 		if(tableInfos.size() != tbConfParams.size()){
@@ -655,7 +657,7 @@ public class CollTbConfStepAction extends BaseAction {
 			"2、按照新增的逻辑，重新插入table_column本次修改的数据")
 	@Param(name = "tableInfo", desc = "一个Table_info对象必须包含table_name,table_ch_name和是否并行抽取" +
 			"如果并行抽取，那么并行抽取SQL也要有,如果是新增的采集表，table_id为空，如果是编辑修改采集表，table_id不能为空" +
-			"用于过滤的sql页面没定义就是空，页面定义了就不为空", range = "不为空，Table_info类的实体类对象")
+			"用于过滤的sql页面没定义就是空，页面定义了就不为空", range = "不为空，Table_info类的实体类对象", isBean = true)
 	@Param(name = "oldTableID", desc = "修改前的table_info表ID", range = "不为空")
 	@Param(name = "collColumn", desc = "该表要采集的字段信息", range = "如果用户没有选择采集列，这个参数可以不传，" +
 			"表示采集这张表的所有字段;" +

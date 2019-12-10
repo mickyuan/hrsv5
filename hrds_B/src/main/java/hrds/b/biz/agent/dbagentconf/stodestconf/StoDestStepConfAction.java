@@ -363,7 +363,7 @@ public class StoDestStepConfAction extends BaseAction{
 		//1、将传过来的json串反序列化为List集合
 		List<Table_column> tableColumns = JSONArray.parseArray(columnString, Table_column.class);
 		//2、对集合的长度进行校验，如果集合为空，抛出异常
-		if(tableColumns.isEmpty()){
+		if(tableColumns == null || tableColumns.isEmpty()){
 			throw new BusinessException("获取字段信息失败");
 		}
 		//3、遍历集合，更新每个字段的中文名
@@ -401,10 +401,15 @@ public class StoDestStepConfAction extends BaseAction{
 	public long saveTbStoInfo(String tbStoInfoString, long colSetId, String dslIdString){
 		//1、将tbStoInfoString反序列化为List集合，这个集合中的内容是用来保存进入表存储信息表
 		List<Table_storage_info> tableStorageInfos = JSONArray.parseArray(tbStoInfoString, Table_storage_info.class);
+		if(tableStorageInfos == null || tableStorageInfos.isEmpty()){
+			throw new BusinessException("未获取到表存储信息");
+		}
 		verifyTbStoConf(tableStorageInfos);
 		//2、将dslIdString反序列化为List集合，这个集合中的内容是用来保存进入数据存储关系表
 		List<DataStoRelaParam> dataStoRelaParams = JSONArray.parseArray(dslIdString, DataStoRelaParam.class);
-
+		if(dataStoRelaParams == null || dataStoRelaParams.isEmpty()){
+			throw new BusinessException("未获取到表存储目的地信息");
+		}
 		//3、校验，每张入库的表都必须有其对应的存储目的地
 		if(tableStorageInfos.size() != dataStoRelaParams.size()){
 			throw new BusinessException("保存表存储信息失败，请确保入库的表都选择了存储目的地");
@@ -483,7 +488,7 @@ public class StoDestStepConfAction extends BaseAction{
 		//1、将传过来的json串反序列化为List集合
 		List<Table_info> tableInfos = JSONArray.parseArray(tableString, Table_info.class);
 		//2、对集合的长度进行校验，如果集合为空，抛出异常
-		if(tableInfos.isEmpty()){
+		if(tableInfos == null || tableInfos.isEmpty()){
 			throw new BusinessException("获取表信息失败");
 		}
 		//3、遍历集合，更新每张表的中文名和表名
