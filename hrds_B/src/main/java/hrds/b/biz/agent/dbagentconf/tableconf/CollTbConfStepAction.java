@@ -203,9 +203,18 @@ public class CollTbConfStepAction extends BaseAction {
 					tableInfo.setTi_or(DEFAULT_TABLE_CLEAN_ORDER.toJSONString());
 					//5、保存数据进库
 					tableInfo.add(Dbo.db());
-					updateTableId(Long.parseLong(newID), oldID);
 					//6、保存数据自定义采集列相关信息进入table_column表
 					saveCustomSQLColumnInfoForUpdate(tableInfo, oldID);
+				}
+			}
+		}
+		//如果List集合为空，表示使用SQL抽取没有设置，那么就要把当前数据库采集任务中所有的自定义抽取设置作为脏数据全部删除
+		else{
+			List<Object> tableIds = Dbo.queryOneColumnList("select table_id from " + Table_info.TableName +
+					" where database_id = ? and is_user_defined = ?", colSetId, IsFlag.Shi.getCode());
+			if(!tableIds.isEmpty()){
+				for(Object tableId : tableIds){
+					deleteDirtyDataOfTb((long) tableId);
 				}
 			}
 		}
@@ -428,8 +437,17 @@ public class CollTbConfStepAction extends BaseAction {
 					//7-3、所有关联了原table_id的表，找到对应的字段，为这些字段设置新的table_id
 					updateTableId(Long.parseLong(newID), oldID);
 					//7-3-5、编辑采集表，将该表要采集的列信息保存到相应的表里面
-					saveTableColumnInfoForUpdate(tableInfo, oldID, collColumn, columnSort, colSetId,
-							DEFAULT_COLUMN_CLEAN_ORDER.toJSONString());
+					saveTableColumnInfoForUpdate(tableInfo, collColumn);
+				}
+			}
+		}
+		//如果List集合为空，表示单表采集没有设置，那么就要把当前数据库采集任务中所有的单表采集设置作为脏数据全部删除
+		else{
+			List<Object> tableIds = Dbo.queryOneColumnList("select table_id from " + Table_info.TableName +
+					" where database_id = ? and is_user_defined = ?", colSetId, IsFlag.Fou.getCode());
+			if(!tableIds.isEmpty()){
+				for(Object tableId : tableIds){
+					deleteDirtyDataOfTb((long) tableId);
 				}
 			}
 		}
@@ -580,30 +598,41 @@ public class CollTbConfStepAction extends BaseAction {
 	}
 
 	@Method(desc = "处理修改采集表信息时表中列信息的保存和更新", logicStep = "" +
-			"1、在修改采集表信息时，由于table_column表中之前已经保存过这张表之前的列信息，所以要使用oldTableID进行一次删除" +
-			"2、按照新增的逻辑，重新插入table_column本次修改的数据")
-	@Param(name = "tableInfo", desc = "一个Table_info对象必须包含table_name,table_ch_name和是否并行抽取" +
-			"如果并行抽取，那么并行抽取SQL也要有,如果是新增的采集表，table_id为空，如果是编辑修改采集表，table_id不能为空" +
-			"用于过滤的sql页面没定义就是空，页面定义了就不为空", range = "不为空，Table_info类的实体类对象", isBean = true)
-	@Param(name = "oldTableID", desc = "修改前的table_info表ID", range = "不为空")
+			"1、将collColumn反序列化为Table_column的List集合" +
+			"2、如果List集合为空，抛出异常" +
+			"3、否则，遍历集合，获取每一个Table_column对象，设置新的table_id，并更新到数据库中" +
+			"4、这样做的目的是为了保证清洗页面配置的字段清洗和存储目的地页面定义的特殊用途字段(主键，索引列)不会丢失")
+	@Param(name = "tableInfo", desc = "封装有新的表ID和表名等信息", range = "不为空，Table_info类的实体类对象", isBean = true)
 	@Param(name = "collColumn", desc = "该表要采集的字段信息", range = "如果用户没有选择采集列，这个参数可以不传，" +
 			"表示采集这张表的所有字段;" +
 			"参数格式：json" +
 			"内容：是否主键(is_primary_key)" +
 			"      列名(colume_name)" +
 			"      字段类型(column_type)" +
-			"      列中文名(colume_ch_name)")
-	@Param(name = "columnSort", desc = "该表要采集的字段的排序", range = "如果用户没有自定义采集字段排序，该参数可以不传")
-	@Param(name = "colSetId", desc = "数据库设置ID，源系统数据库设置表主键，数据库对应表外键", range = "不为空")
-	@Param(name = "columnCleanOrder", desc = "默认的表清洗优先级", range = "不为空，JSON字符串")
-	private void saveTableColumnInfoForUpdate(Table_info tableInfo, long oldTableID, String collColumn,
-	                                          String columnSort, long colSetId,
-	                                          String columnCleanOrder){
-		//1、在修改采集表信息时，由于table_column表中之前已经保存过这张表之前的列信息，所以要使用oldTableID进行一次删除，
-		// 不关注删除的数目
-		Dbo.execute(" DELETE FROM "+ Table_column.TableName +" WHERE table_id = ? ", oldTableID);
-		//2、按照新增的逻辑，重新插入table_column本次修改的数据
-		saveTableColumnInfoForAdd(tableInfo, collColumn, columnSort, colSetId, columnCleanOrder);
+			"      列中文名(colume_ch_name)" +
+			"      是否采集(is_get)" +
+			"      表ID(table_id)" +
+			"      有效开始日期(valid_s_date)" +
+			"      有效结束日期(valid_e_date)" +
+			"      是否保留原字段(is_alive)" +
+			"      是否为变化生成(is_new)" +
+			"      清洗顺序(tc_or)" +
+			"      备注(remark)")
+	private void saveTableColumnInfoForUpdate(Table_info tableInfo, String collColumn){
+		//1、将collColumn反序列化为Table_column的List集合
+		List<Table_column> tableColumns = JSONArray.parseArray(collColumn, Table_column.class);
+		//2、如果List集合为空，抛出异常
+		if(tableColumns == null || tableColumns.isEmpty()){
+			throw new BusinessException("未获取到" + tableInfo.getTable_name() +"表的字段信息");
+		}
+		//3、否则，遍历集合，获取每一个Table_column对象，设置新的table_id，并更新到数据库中
+		for(Table_column tableColumn : tableColumns){
+			tableColumn.setTable_id(tableInfo.getTable_id());
+			int count = tableColumn.update(Dbo.db());
+			if(count != 1){
+				throw new BusinessException("更新" + tableInfo.getTable_name() + "表的" + tableColumn.getColume_name() + "字段失败");
+			}
+		}
 	}
 
 	@Method(desc = "根据colSetId, userId和表名与Agent端交互得到该表的列信息", logicStep = "" +
@@ -747,11 +776,12 @@ public class CollTbConfStepAction extends BaseAction {
 	@Method(desc = "在修改采集表的时候，用新的tableId更新其他表中的旧的tableId", logicStep = "" +
 			"1、更新table_storage_info表对应条目的table_id字段,一个table_id在该表中的数据存在情况为0-1" +
 			"2、更新table_clean表对应条目的table_id字段，一个table_id在table_clean中可能有0-N条数据" +
-			"3、更新data_extraction_def表对应条目的table_id，一个table_id在该表中的数据存在情况为0-1")
+			"3、更新data_extraction_def表对应条目的table_id，一个table_id在该表中的数据存在情况为0-1" +
+			"4、更新column_merge表对应条目的table_id字段，一个table_id在该表中的数据存在情况为0-N")
 	@Param(name = "newID", desc = "新的tableId", range = "不为空")
 	@Param(name = "oldID", desc = "旧的tableId", range = "不为空")
 	private void updateTableId(long newID, long oldID){
-		//7-3-1、更新table_storage_info表对应条目的table_id字段,一个table_id在该表中的数据存在情况为0-1
+		//1、更新table_storage_info表对应条目的table_id字段,一个table_id在该表中的数据存在情况为0-1
 		List<Object> storageIdList = Dbo.queryOneColumnList(" select storage_id from "+
 				Table_storage_info.TableName + " where table_id = ? ", oldID);
 		if(storageIdList.size() > 1){
@@ -764,7 +794,7 @@ public class CollTbConfStepAction extends BaseAction {
 					newID, storageId);
 		}
 
-		//7-3-2、更新table_clean表对应条目的table_id字段，一个table_id在table_clean中可能有0-N条数据
+		//2、更新table_clean表对应条目的table_id字段，一个table_id在table_clean中可能有0-N条数据
 		List<Object> tableCleanIdList = Dbo.queryOneColumnList(" select table_clean_id from "
 				+ Table_clean.TableName + " where table_id = ? ", oldID);
 		if(!tableCleanIdList.isEmpty()){
@@ -779,7 +809,7 @@ public class CollTbConfStepAction extends BaseAction {
 			Dbo.execute(tableCleanBuilder.toString(), newID);
 		}
 
-		//7-3-3、更新data_extraction_def表对应条目的table_id，一个table_id在该表中的数据存在情况为0-1
+		//3、更新data_extraction_def表对应条目的table_id，一个table_id在该表中的数据存在情况为0-1
 		List<Object> extractDefIdList = Dbo.queryOneColumnList(" select ded_id from "
 				+ Data_extraction_def.TableName + " where table_id = ? ", oldID);
 		if(extractDefIdList.size() > 1){
@@ -790,6 +820,21 @@ public class CollTbConfStepAction extends BaseAction {
 			DboExecute.updatesOrThrow("更新数据抽取定义信息失败",
 					"update "+ Data_extraction_def.TableName +" set table_id = ? where ded_id = ?",
 					newID, dedId);
+		}
+
+		//4、更新column_merge表对应条目的table_id字段，一个table_id在该表中的数据存在情况为0-N
+		List<Object> colMergeIdList = Dbo.queryOneColumnList(" select col_merge_id from "
+				+ Column_merge.TableName + " where table_id = ? ", oldID);
+		if(!colMergeIdList.isEmpty()){
+			StringBuilder colMergeBuilder = new StringBuilder("update "+ Column_merge.TableName +
+					" set table_id = ? where col_merge_id in ( ");
+			for(int j = 0; j < colMergeIdList.size(); j++){
+				colMergeBuilder.append((long)colMergeIdList.get(j));
+				if (j != colMergeIdList.size() - 1)
+					colMergeBuilder.append(",");
+			}
+			colMergeBuilder.append(" )");
+			Dbo.execute(colMergeBuilder.toString(), newID);
 		}
 	}
 
@@ -838,18 +883,62 @@ public class CollTbConfStepAction extends BaseAction {
 	}
 
 	@Method(desc = "保存修改自定义SQL采集字段信息", logicStep = "" +
-			"1、在修改采集表信息时，由于table_column表中之前已经保存过这张表之前的列信息，所以要使用oldTableID进行一次删除" +
-			"2、调用saveCustomSQLColumnInfoForAdd方法，按照新增的逻辑来保存自定义SQL采集字段信息")
+			"1、调用方法删除脏数据" +
+			"2、调用saveCustomSQLColumnInfoForAdd方法，按照新增的逻辑来保存自定义SQL采集字段信息" +
+			"3、这样做的目的是把用户修改的自定义SQL当做全新的表进行采集")
 	@Param(name = "tableInfo", desc = "存有table_id和自定义采集SQL的实体类对象", range = "Table_info实体类对象，" +
 			"其中table_id和sql两个属性不能为空", isBean = true)
 	@Param(name = "oldTableId", desc = "修改前的table_id", range = "不为空")
 	private void saveCustomSQLColumnInfoForUpdate(Table_info tableInfo, long oldTableId){
-		/*
-		* 1、在修改采集表信息时，由于table_column表中之前已经保存过这张表之前的列信息，所以要使用oldTableID进行一次删除，
-		* 不关注删除的数目
-		* */
-		Dbo.execute(" DELETE FROM "+ Table_column.TableName +" WHERE table_id = ? ", oldTableId);
+		//1、调用方法删除脏数据
+		deleteDirtyDataOfTb(oldTableId);
 		//2、调用saveCustomSQLColumnInfoForAdd方法，按照新增的逻辑来保存自定义SQL采集字段信息
 		saveCustomSQLColumnInfoForAdd(tableInfo);
+	}
+
+	@Method(desc = "删除tableId为外键的表脏数据", logicStep = "" +
+			"1、删除的同时，删除column_id做外键的的表脏数据" +
+			"2、删除旧的tableId在采集字段表中做外键的数据，不关注删除的数目" +
+			"3、删除旧的tableId在数据抽取定义表做外键的数据，不关注删除的数目" +
+			"4、删除旧的tableId在存储信息表做外键的数据，不关注删除的数目，同时，其对应的存储目的地关联关系也要删除" +
+			"5、删除旧的tableId在列合并表做外键的数据，不关注删除的数目" +
+			"6、删除旧的tableId在表清洗规则表做外键的数据，不关注删除的数目")
+	@Param(name = "tableId", desc = "数据库对应表ID，" +
+			"数据抽取定义表、表存储信息表、列合并表、表清洗规则表、表对应字段表表外键", range = "不为空")
+	private void deleteDirtyDataOfTb(long tableId){
+		//1、删除的同时，删除column_id做外键的的表脏数据
+		List<Object> columnIds = Dbo.queryOneColumnList("select column_id from " + Table_column.TableName + " WHERE table_id = ?", tableId);
+		if(!columnIds.isEmpty()){
+			for(Object columnId : columnIds){
+				deleteDirtyDataOfCol((long) columnId);
+			}
+		}
+		//2、删除旧的tableId在采集字段表中做外键的数据，不关注删除的数目
+		Dbo.execute(" DELETE FROM "+ Table_column.TableName +" WHERE table_id = ? ", tableId);
+		//3、删除旧的tableId在数据抽取定义表做外键的数据，不关注删除的数目
+		Dbo.execute(" DELETE FROM "+ Data_extraction_def.TableName +" WHERE table_id = ? ", tableId);
+		//4、删除旧的tableId在存储信息表做外键的数据，不关注删除的数目，同时，其对应的存储目的地关联关系也要删除
+		Dbo.execute(" DELETE FROM " + Data_relation_table.TableName + " WHERE storage_id = " +
+				"(SELECT storage_id FROM " + Table_storage_info.TableName + " WHERE table_id = ?) ", tableId);
+		Dbo.execute(" DELETE FROM "+ Table_storage_info.TableName +" WHERE table_id = ? ", tableId);
+		//5、删除旧的tableId在列合并表做外键的数据，不关注删除的数目
+		Dbo.execute(" DELETE FROM "+ Column_merge.TableName +" WHERE table_id = ? ", tableId);
+		//6、删除旧的tableId在表清洗规则表做外键的数据，不关注删除的数目
+		Dbo.execute(" DELETE FROM "+ Table_clean.TableName +" WHERE table_id = ? ", tableId);
+	}
+
+	@Method(desc = "删除columnId为外键的表脏数据", logicStep = "" +
+			"1、删除旧的columnId在字段存储信息表中做外键的数据，不关注删除的数目" +
+			"2、删除旧的columnId在列清洗信息表做外键的数据，不关注删除的数目" +
+			"3、删除旧的columnId在列拆分信息表做外键的数据，不关注删除的数目")
+	@Param(name = "columnId", desc = "表对应字段表ID，" +
+			"字段存储信息表、列清洗信息表、列拆分信息表外键", range = "不为空")
+	private void deleteDirtyDataOfCol(long columnId){
+		//1、删除旧的columnId在字段存储信息表中做外键的数据，不关注删除的数目
+		Dbo.execute("delete from " + Column_storage_info.TableName + " where column_id = ?", columnId);
+		//2、删除旧的columnId在列清洗信息表做外键的数据，不关注删除的数目
+		Dbo.execute("delete from " + Column_clean.TableName + " where column_id = ?", columnId);
+		//3、删除旧的columnId在列拆分信息表做外键的数据，不关注删除的数目
+		Dbo.execute("delete from " + Column_split.TableName + " where column_id = ?", columnId);
 	}
 }
