@@ -812,6 +812,12 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			long countFour = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " where table_id = ?", AGENT_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("使用老的table_id在table_column表中查不到数据", countFour, is(0L));
 
+			//TODO 验证在table_storage_info中，原有的table_id已经被替换为了新的table_id
+
+			//TODO 验证在table_clean中，原有的table_id已经被替换为了新的table_id
+
+			//TODO 验证在data_extraction_def中，原有的table_id已经被替换为了新的table_id
+
 			//验证完毕后，将自己在本方法中构造的数据删除掉(table_info表)
 			int firCount = SqlOperator.execute(db, "delete from " + Table_info.TableName + " WHERE table_name = ?", "agent_info_customize");
 			assertThat("测试完成后，table_name为agent_info_customize的测试数据被删除了", firCount, is(1));

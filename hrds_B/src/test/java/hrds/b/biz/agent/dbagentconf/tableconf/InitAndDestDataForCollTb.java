@@ -290,6 +290,40 @@ public class InitAndDestDataForCollTb {
 
 			tableStorageInfos.add(tableStorageInfo);
 		}
+
+		//9-1、构造agent_info和data_source表在table_storage_info表中的数据
+		List<Table_storage_info> tableStorageInfosTwo = new ArrayList<>();
+		for(int i = 1; i<= 2; i++){
+			String fileFormat;
+			String storageType;
+			long tableId;
+			long storageId = i % 2 == 0 ? FIRST_STORAGE_ID : SECOND_STORAGE_ID;
+			switch (i){
+				case 1 :
+					fileFormat = FileFormat.CSV.getCode();
+					storageType = StorageType.TiHuan.getCode();
+					tableId = DATA_SOURCE_TABLE_ID;
+					break;
+				case 2 :
+					fileFormat = FileFormat.DingChang.getCode();
+					storageType = StorageType.ZhuiJia.getCode();
+					tableId = AGENT_INFO_TABLE_ID;
+					break;
+				default:
+					fileFormat = "unexpected_fileFormat";
+					storageType = "unexpected_storageType";
+					tableId = 100000000000000000L;
+			}
+			Table_storage_info tableStorageInfo = new Table_storage_info();
+			tableStorageInfo.setStorage_id(storageId);
+			tableStorageInfo.setFile_format(fileFormat);
+			tableStorageInfo.setStorage_type(storageType);
+			tableStorageInfo.setIs_zipper(IsFlag.Shi.getCode());
+			tableStorageInfo.setTable_id(tableId);
+
+			tableStorageInfosTwo.add(tableStorageInfo);
+		}
+
 		//10、构造table_clean表测试数据
 		List<Table_clean> sysUserCleans = new ArrayList<>();
 		for(int i = 1; i <= 2; i++){

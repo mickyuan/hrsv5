@@ -134,6 +134,84 @@ public class CollTbConfStepAction extends BaseAction {
 		return result;
 	}
 
+	@Method(desc = "保存自定义抽取数据SQL，如果页面上没有数据，则tableInfoArray参数传空字符串", logicStep = "" +
+			"1、根据colSetId去数据库中查询该数据库采集任务是否存在" +
+			"2、使用colSetId在table_info表中删除所有自定义SQL采集的记录，不关注删除的数目，结果可以是0-N" +
+			"3、将前端传过来的参数(JSON)转为List<Table_info>集合" +
+			"4、如果List集合不为空，遍历list,给每条记录生成ID，设置有效开始日期、有效结束日期、是否自定义SQL采集(是)、是否使用MD5(是)、" +
+			"   是否仅登记(是)" +
+			"5、保存数据进库" +
+			"6、保存数据自定义采集列相关信息进入table_column表")
+	@Param(name = "tableInfoArray", desc = "List<Table_info>的JSONArray格式的字符串，" +
+			"每一个Table_info对象必须包含table_name,table_ch_name,sql", range = "不为空")
+	@Param(name = "colSetId", desc = "数据库设置ID,源系统数据库设置表主键,数据库对应表外键", range = "不为空")
+	//使用SQL抽取数据页面，保存按钮后台方法
+	public long saveAllSQL(String tableInfoArray, long colSetId){
+		//1、根据databaseId去数据库中查询该数据库采集任务是否存在
+		long dbSetCount = Dbo.queryNumber("select count(1) from " + Database_set.TableName + " where database_id = ?"
+				, colSetId).orElseThrow(() -> new BusinessException("SQL查询错误"));
+		if(dbSetCount != 1){
+			throw new BusinessException("数据库采集任务未找到");
+		}
+
+		//2、使用colSetId在table_info表中删除所有自定义SQL采集的记录，不关注删除的数目，结果可以是0-N
+		Dbo.execute("delete from " + Table_info.TableName + " where database_id = ? AND is_user_defined = ? ",
+				colSetId, IsFlag.Shi.getCode());
+
+		//3、将前端传过来的参数转为List<Table_info>集合
+		List<Table_info> tableInfos = JSONArray.parseArray(tableInfoArray, Table_info.class);
+		/*
+		* 4、如果List集合不为空，遍历list,给每条记录生成ID，设置有效开始日期、有效结束日期、是否自定义SQL采集(是)、是否使用MD5(是)、
+		* 是否仅登记(是)
+		* */
+		if(tableInfos != null && !tableInfos.isEmpty()){
+			for(int i = 0; i < tableInfos.size(); i++){
+				Table_info tableInfo = tableInfos.get(i);
+				if(StringUtil.isBlank(tableInfo.getTable_name())){
+					throw new BusinessException("保存SQL抽取数据配置，第"+ (i + 1) +"条数据表名不能为空!");
+				}
+				if(StringUtil.isBlank(tableInfo.getTable_ch_name())){
+					throw new BusinessException("保存SQL抽取数据配置，第"+ (i + 1) +"条数据表中文名不能为空!");
+				}
+				if(StringUtil.isBlank(tableInfo.getSql())){
+					throw new BusinessException("保存SQL抽取数据配置，第"+ (i + 1) +"条数据查询SQL语句不能为空!");
+				}
+				tableInfo.setTable_count(CountNum.YiWan.getCode());
+				tableInfo.setDatabase_id(colSetId);
+				tableInfo.setValid_s_date(DateUtil.getSysDate());
+				tableInfo.setValid_e_date(Constant.MAXDATE);
+				//是否自定义采集为是
+				tableInfo.setIs_user_defined(IsFlag.Shi.getCode());
+				tableInfo.setIs_md5(IsFlag.Shi.getCode());
+				tableInfo.setIs_register(IsFlag.Fou.getCode());
+				//是否并行抽取设置为否
+				tableInfo.setIs_parallel(IsFlag.Fou.getCode());
+				//如果是新增采集表
+				if(tableInfo.getTable_id() == null){
+					tableInfo.setTable_id(PrimayKeyGener.getNextId());
+					tableInfo.setTi_or(DEFAULT_TABLE_CLEAN_ORDER.toJSONString());
+					//5、保存数据进库
+					tableInfo.add(Dbo.db());
+					//6、保存数据自定义采集列相关信息进入table_column表
+					saveCustomSQLColumnInfoForAdd(tableInfo);
+				}
+				//如果是修改采集表
+				else{
+					long oldID = tableInfo.getTable_id();
+					String newID = PrimayKeyGener.getNextId();
+					tableInfo.setTable_id(newID);
+					tableInfo.setTi_or(DEFAULT_TABLE_CLEAN_ORDER.toJSONString());
+					//5、保存数据进库
+					tableInfo.add(Dbo.db());
+					updateTableId(Long.parseLong(newID), oldID);
+					//6、保存数据自定义采集列相关信息进入table_column表
+					saveCustomSQLColumnInfoForUpdate(tableInfo, oldID);
+				}
+			}
+		}
+		return colSetId;
+	}
+
 	@Method(desc = "测试并行抽取SQL", logicStep = "" +
 			"1、根据colSetId在database_set表中获得数据库设置信息" +
 			"2、调用AgentActionUtil工具类获取访问Agent端服务的url" +
@@ -171,101 +249,6 @@ public class CollTbConfStepAction extends BaseAction {
 		if(!resultData){
 			throw new BusinessException("根据并行抽取SQL未能获取到数据");
 		}
-	}
-
-	@Method(desc = "保存自定义抽取数据SQL", logicStep = "" +
-			"1、根据colSetId去数据库中查询该数据库采集任务是否存在" +
-			"2、将前端传过来的参数(JSON)转为List<Table_info>集合" +
-			"3、使用colSetId在table_info表中删除所有自定义SQL采集的记录，不关注删除的数目，结果可以是0-N" +
-			"   使用colSetId在table_info表中找到当前采集任务中，自定义SQL采集的所有table_id，然后在table_column表中进行删除，不关注删除的数目" +
-			"4、遍历list,给每条记录生成ID，设置有效开始日期、有效结束日期、是否自定义SQL采集(是)、是否使用MD5(是)、" +
-			"   是否仅登记(是)" +
-			"5、保存数据进库" +
-			"6、保存数据自定义采集列相关信息进入table_column表")
-	@Param(name = "tableInfoArray", desc = "List<Table_info>的JSONArray格式的字符串，" +
-			"每一个Table_info对象必须包含table_name,table_ch_name,sql", range = "不为空")
-	@Param(name = "colSetId", desc = "数据库设置ID,源系统数据库设置表主键,数据库对应表外键", range = "不为空")
-	//使用SQL抽取数据页面，保存按钮后台方法
-	public long saveAllSQL(String tableInfoArray, long colSetId){
-		//1、根据databaseId去数据库中查询该数据库采集任务是否存在
-		long dbSetCount = Dbo.queryNumber("select count(1) from " + Database_set.TableName + " where database_id = ?"
-				, colSetId).orElseThrow(() -> new BusinessException("SQL查询错误"));
-		if(dbSetCount != 1){
-			throw new BusinessException("数据库采集任务未找到");
-		}
-		//2、将前端传过来的参数转为List<Table_info>集合
-		List<Table_info> tableInfos = JSONArray.parseArray(tableInfoArray, Table_info.class);
-		//3、使用colSetId在table_info表中删除所有自定义SQL采集的记录，不关注删除的数目，结果可以是0-N
-		//使用colSetId在table_info表中找到当前采集任务中，自定义SQL采集的所有table_id，然后在table_column表中进行删除，不关注删除的数目
-		Dbo.execute("delete from " + Table_column.TableName + " where table_id in " +
-				"( select table_id from " + Table_info.TableName + " where database_id = ? AND is_user_defined = ? )", colSetId, IsFlag.Shi.getCode());
-		Dbo.execute("delete from " + Table_info.TableName + " where database_id = ? AND is_user_defined = ? ",
-				colSetId, IsFlag.Shi.getCode());
-		//4、遍历list,给每条记录生成ID，设置有效开始日期、有效结束日期、是否自定义SQL采集(是)、是否使用MD5(是)、
-		// 是否仅登记(这个字段的值，要根据配置源DB属性来决定，贴源登记就是IsFlag.Shi,数据采集就是IsFlag.Fou)
-		if(tableInfos != null && !tableInfos.isEmpty()){
-			for(int i = 0; i < tableInfos.size(); i++){
-				Table_info tableInfo = tableInfos.get(i);
-				if(StringUtil.isBlank(tableInfo.getTable_name())){
-					throw new BusinessException("第" + (i + 1) + "条数据表名不能为空");
-				}
-				if(StringUtil.isBlank(tableInfo.getTable_ch_name())){
-					throw new BusinessException("第" + (i + 1) + "条数据表中文名不能为空");
-				}
-				if(StringUtil.isBlank(tableInfo.getSql())){
-					throw new BusinessException("第" + (i + 1) + "条数据自定义SQL语句不能为空");
-				}
-				tableInfo.setTable_id(PrimayKeyGener.getNextId());
-				//TODO 表的数据量没有页面上没有配置的地方，所以给一个默认值为一万
-				tableInfo.setTable_count(CountNum.YiWan.getCode());
-				tableInfo.setDatabase_id(colSetId);
-				tableInfo.setValid_s_date(DateUtil.getSysDate());
-				tableInfo.setValid_e_date(Constant.MAXDATE);
-				//是否自定义采集为是
-				tableInfo.setIs_user_defined(IsFlag.Shi.getCode());
-				tableInfo.setIs_md5(IsFlag.Shi.getCode());
-				tableInfo.setIs_register(IsFlag.Fou.getCode());
-				//是否并行抽取设置为否
-				tableInfo.setIs_parallel(IsFlag.Fou.getCode());
-				//5、保存数据进库
-				tableInfo.add(Dbo.db());
-				//数据可访问权限处理方式
-				//以上table_info表中都没有user_id字段，解决方式待讨论
-
-				//6、保存数据自定义采集列相关信息进入table_column表
-				try {
-					ResultSet rs = Dbo.db().queryGetResultSet(tableInfo.getSql());
-					ResultSetMetaData metaData = rs.getMetaData();
-					for(int j = 0; j < metaData.getColumnCount(); j++){
-						Table_column tableColumn = new Table_column();
-						tableColumn.setColumn_id(PrimayKeyGener.getNextId());
-						tableColumn.setTable_id(tableInfo.getTable_id());
-						//是否采集设置为是
-						tableColumn.setIs_get(IsFlag.Shi.getCode());
-						//是否是主键，默认设置为否
-						tableColumn.setIs_primary_key(IsFlag.Fou.getCode());
-						tableColumn.setColume_name(metaData.getColumnName(j + 1));
-						//对列类型做特殊处理，处理成varchar(512), numeric(10,4)
-						String colTypeAndPreci = getColTypeAndPreci(metaData.getColumnType(j + 1),
-								metaData.getColumnTypeName(j + 1), metaData.getPrecision(j + 1),
-								metaData.getScale(j + 1));
-						tableColumn.setColumn_type(colTypeAndPreci);
-						//列中文名默认设置为列英文名
-						tableColumn.setColume_ch_name(metaData.getColumnName(j + 1));
-						tableColumn.setValid_s_date(DateUtil.getSysDate());
-						tableColumn.setValid_e_date(Constant.MAXDATE);
-						tableColumn.setIs_alive(IsFlag.Shi.getCode());
-						tableColumn.setIs_new(IsFlag.Fou.getCode());
-						tableColumn.setTc_or(DEFAULT_COLUMN_CLEAN_ORDER.toJSONString());
-
-						tableColumn.add(Dbo.db());
-					}
-				} catch (SQLException e) {
-					throw new AppSystemException(e);
-				}
-			}
-		}
-		return colSetId;
 	}
 
 	@Method(desc = "根据数据库设置ID获得用户自定义抽取SQL", logicStep = "" +
@@ -333,7 +316,8 @@ public class CollTbConfStepAction extends BaseAction {
 		return returnMap;
 	}
 
-	@Method(desc = "保存单表查询画面配置的所有表采集信息", logicStep = "" +
+	@Method(desc = "保存单表查询画面配置的所有表采集信息，如果页面上没有数据，则tableInfoString和collTbConfParamString" +
+			"参数传空字符串", logicStep = "" +
 			"所有表信息放在一起是为了本次保存在一个事务中，同时成功或同时失败" +
 			"1、不论新增采集表还是编辑采集表，页面上所有的内容都可能被修改，所以直接执行SQL，" +
 			"按database_id删除table_info表中所有非自定义采集SQL的数据" +
@@ -374,136 +358,79 @@ public class CollTbConfStepAction extends BaseAction {
 			"collTbConfParamString：[{A表字段配置参数},{B表字段配置参数}]")
 	@Return(desc = "保存成功后返回当前采集任务ID", range = "不为空")
 	public long saveCollTbInfo(String tableInfoString, long colSetId, String collTbConfParamString){
-		List<Table_info> tableInfos = JSONArray.parseArray(tableInfoString, Table_info.class);
-		List<CollTbConfParam> tbConfParams = JSONArray.parseArray(collTbConfParamString, CollTbConfParam.class);
-		if(tableInfos == null || tableInfos.isEmpty()){
-			throw new BusinessException("请配置采集表信息");
-		}
-		if(tbConfParams == null ||tbConfParams.isEmpty()){
-			throw new BusinessException("请配置采集字段参数");
-		}
-		if(tableInfos.size() != tbConfParams.size()){
-			throw new BusinessException("请在传参时确保采集表数组和配置采集字段信息一一对应");
+		Map<String, Object> resultMap = Dbo.queryOneObject("select * from " + Database_set.TableName
+				+ " where database_id = ?", colSetId);
+		if(resultMap.isEmpty()){
+			throw new BusinessException("未找到数据库采集任务");
 		}
 		//1、不论新增采集表还是编辑采集表，页面上所有的内容都可能被修改，所以直接执行SQL，按database_id删除table_info表
 		// 中,所有非自定义采集SQL的数据，不关心删除数据的条数
 		Dbo.execute(" DELETE FROM "+ Table_info.TableName +" WHERE database_id = ? AND is_user_defined = ? ",
 				colSetId, IsFlag.Fou.getCode());
-		for(int i = 0; i < tableInfos.size(); i++){
-			Table_info tableInfo = tableInfos.get(i);
-			String collColumn = tbConfParams.get(i).getCollColumnString();
-			String columnSort = tbConfParams.get(i).getColumnSortString();
-			//2、校验Table_info对象中的信息是否合法
-			if(StringUtil.isBlank(tableInfo.getTable_name())){
-				throw new BusinessException("保存采集表配置，第"+ (i + 1) +"条数据表名不能为空!");
-			}
-			if(StringUtil.isBlank(tableInfo.getTable_ch_name())){
-				throw new BusinessException("保存采集表配置，第"+ (i + 1) +"条数据表中文名不能为空!");
-			}
-			IsFlag isFlag = IsFlag.ofEnumByCode(tableInfo.getIs_parallel());
-			if(isFlag == IsFlag.Shi){
-				if(StringUtil.isBlank(tableInfo.getPage_sql())){
-					throw new BusinessException("保存采集表配置，第"+ (i + 1) +"条数据分页抽取SQL不能为空!");
-				}
-			}
-			Map<String, Object> resultMap = Dbo.queryOneObject("select * from " + Database_set.TableName
-					+ " where database_id = ?", colSetId);
-			if(resultMap.isEmpty()){
-				throw new BusinessException("未找到数据库采集任务");
-			}
-			//3、给Table_info对象设置基本信息(valid_s_date,valid_e_date,is_user_defined,is_register)
-			tableInfo.setValid_s_date(DateUtil.getSysDate());
-			tableInfo.setValid_e_date(Constant.MAXDATE);
-			//是否自定义采集为否
-			tableInfo.setIs_user_defined(IsFlag.Fou.getCode());
-			//数据采集，该字段就是否
-			tableInfo.setIs_register(IsFlag.Fou.getCode());
-			//TODO 是否使用MD5，目前页面没有供用户配置的选项，所以在保存是，后台给一个默认值为是
-			tableInfo.setIs_md5(IsFlag.Shi.getCode());
 
-			//4、获取Table_info对象的table_id属性，如果该属性没有值，说明这张采集表是新增的，否则这张采集表在当前采集任务中
-			//已经存在，且有可能经过了修改
-			//5、不论新增还是修改，使用默认的表清洗优先级和列清洗优先级(JSON格式的字符串，保存进入数据库)
-			//6、如果是新增采集表
-			if(tableInfo.getTable_id() == null){
-				//6-1、生成table_id，并存入Table_info对象中
-				tableInfo.setTable_id(PrimayKeyGener.getNextId());
-				tableInfo.setTi_or(DEFAULT_TABLE_CLEAN_ORDER.toJSONString());
-				//6-2、保存Table_info对象
-				tableInfo.add(Dbo.db());
-				//6-3、新增采集表，将该表要采集的列信息保存到相应的表里面
-				saveTableColumnInfoForAdd(tableInfo, collColumn, columnSort, colSetId,
-						DEFAULT_COLUMN_CLEAN_ORDER.toJSONString());
+		List<Table_info> tableInfos = JSONArray.parseArray(tableInfoString, Table_info.class);
+		List<CollTbConfParam> tbConfParams = JSONArray.parseArray(collTbConfParamString, CollTbConfParam.class);
+
+		if(tableInfos != null && tbConfParams != null){
+			if(tableInfos.size() != tbConfParams.size()){
+				throw new BusinessException("请在传参时确保采集表数组和配置采集字段信息一一对应");
 			}
-			//7、如果是修改采集表
-			else{
-				//7-1、保留原有的table_id，为当前数据设置新的table_id
-				long oldID = tableInfo.getTable_id();
-				String newID = PrimayKeyGener.getNextId();
-				tableInfo.setTable_id(newID);
-				tableInfo.setTi_or(DEFAULT_TABLE_CLEAN_ORDER.toJSONString());
-				//7-2、保存Table_info对象
-				tableInfo.add(Dbo.db());
-
-				//7-3、所有关联了原table_id的表，找到对应的字段，为这些字段设置新的table_id
-				//7-3-1、更新table_storage_info表对应条目的table_id字段,一个table_id在该表中的数据存在情况为0-1
-				List<Object> storageIdList = Dbo.queryOneColumnList(" select storage_id from "+
-						Table_storage_info.TableName + " where table_id = ? ", oldID);
-				if(storageIdList.size() > 1){
-					throw new BusinessException("第" + i + "张表的表存储信息不唯一");
+			for(int i = 0; i < tableInfos.size(); i++){
+				Table_info tableInfo = tableInfos.get(i);
+				String collColumn = tbConfParams.get(i).getCollColumnString();
+				String columnSort = tbConfParams.get(i).getColumnSortString();
+				//2、校验Table_info对象中的信息是否合法
+				if(StringUtil.isBlank(tableInfo.getTable_name())){
+					throw new BusinessException("保存采集表配置，第"+ (i + 1) +"条数据表名不能为空!");
 				}
-				if(!storageIdList.isEmpty()){
-					long storageId = (long)storageIdList.get(0);
-					DboExecute.updatesOrThrow("更新第"+ i + "条数据的表存储信息失败",
-							"update "+ Table_storage_info.TableName +" set table_id = ? where storage_id = ?",
-							Long.parseLong(newID), storageId);
+				if(StringUtil.isBlank(tableInfo.getTable_ch_name())){
+					throw new BusinessException("保存采集表配置，第"+ (i + 1) +"条数据表中文名不能为空!");
 				}
-
-				//7-3-2、更新table_clean表对应条目的table_id字段，一个table_id在table_clean中可能有0-N条数据
-				List<Object> tableCleanIdList = Dbo.queryOneColumnList(" select table_clean_id from "
-						+ Table_clean.TableName + " where table_id = ? ", oldID);
-				if(!tableCleanIdList.isEmpty()){
-					StringBuilder tableCleanBuilder = new StringBuilder("update "+ Table_clean.TableName
-							+" set table_id = ? where table_clean_id in ( ");
-					for(int j = 0; j < tableCleanIdList.size(); j++){
-						tableCleanBuilder.append((long)tableCleanIdList.get(j));
-						if (j != tableCleanIdList.size() - 1)
-							tableCleanBuilder.append(",");
+				IsFlag isFlag = IsFlag.ofEnumByCode(tableInfo.getIs_parallel());
+				if(isFlag == IsFlag.Shi){
+					if(StringUtil.isBlank(tableInfo.getPage_sql())){
+						throw new BusinessException("保存采集表配置，第"+ (i + 1) +"条数据分页抽取SQL不能为空!");
 					}
-					tableCleanBuilder.append(" )");
-					Dbo.execute(tableCleanBuilder.toString(), Long.parseLong(newID));
 				}
+				//3、给Table_info对象设置基本信息(valid_s_date,valid_e_date,is_user_defined,is_register)
+				tableInfo.setValid_s_date(DateUtil.getSysDate());
+				tableInfo.setValid_e_date(Constant.MAXDATE);
+				//是否自定义采集为否
+				tableInfo.setIs_user_defined(IsFlag.Fou.getCode());
+				//数据采集，该字段就是否
+				tableInfo.setIs_register(IsFlag.Fou.getCode());
+				//TODO 是否使用MD5，目前页面没有供用户配置的选项，所以在保存是，后台给一个默认值为是
+				tableInfo.setIs_md5(IsFlag.Shi.getCode());
 
-				//7-3-3、更新column_merge表对应条目的table_id字段，一个table_id在该表中的数据存在情况为0-N
-				List<Object> colMergeIdList = Dbo.queryOneColumnList(" select col_merge_id from "
-						+ Column_merge.TableName + " where table_id = ? ", oldID);
-				if(!colMergeIdList.isEmpty()){
-					StringBuilder colMergeBuilder = new StringBuilder("update "+ Column_merge.TableName +
-							" set table_id = ? where col_merge_id in ( ");
-					for(int j = 0; j < colMergeIdList.size(); j++){
-						colMergeBuilder.append((long)colMergeIdList.get(j));
-						if (j != colMergeIdList.size() - 1)
-							colMergeBuilder.append(",");
-					}
-					colMergeBuilder.append(" )");
-					Dbo.execute(colMergeBuilder.toString(), Long.parseLong(newID));
+				//4、获取Table_info对象的table_id属性，如果该属性没有值，说明这张采集表是新增的，否则这张采集表在当前采集任务中
+				//已经存在，且有可能经过了修改
+				//5、不论新增还是修改，使用默认的表清洗优先级和列清洗优先级(JSON格式的字符串，保存进入数据库)
+				//6、如果是新增采集表
+				if(tableInfo.getTable_id() == null){
+					//6-1、生成table_id，并存入Table_info对象中
+					tableInfo.setTable_id(PrimayKeyGener.getNextId());
+					tableInfo.setTi_or(DEFAULT_TABLE_CLEAN_ORDER.toJSONString());
+					//6-2、保存Table_info对象
+					tableInfo.add(Dbo.db());
+					//6-3、新增采集表，将该表要采集的列信息保存到相应的表里面
+					saveTableColumnInfoForAdd(tableInfo, collColumn, columnSort, colSetId,
+							DEFAULT_COLUMN_CLEAN_ORDER.toJSONString());
 				}
-
-				//7-3-4、更新data_extraction_def表对应条目的table_id，一个table_id在该表中的数据存在情况为0-1
-				List<Object> extractDefIdList = Dbo.queryOneColumnList(" select ded_id from "
-						+ Data_extraction_def.TableName + " where table_id = ? ", oldID);
-				if(extractDefIdList.size() > 1){
-					throw new BusinessException("第" + i + "张表的数据抽取定义信息不唯一");
+				//7、如果是修改采集表
+				else{
+					//7-1、保留原有的table_id，为当前数据设置新的table_id
+					long oldID = tableInfo.getTable_id();
+					String newID = PrimayKeyGener.getNextId();
+					tableInfo.setTable_id(newID);
+					tableInfo.setTi_or(DEFAULT_TABLE_CLEAN_ORDER.toJSONString());
+					//7-2、保存Table_info对象
+					tableInfo.add(Dbo.db());
+					//7-3、所有关联了原table_id的表，找到对应的字段，为这些字段设置新的table_id
+					updateTableId(Long.parseLong(newID), oldID);
+					//7-3-5、编辑采集表，将该表要采集的列信息保存到相应的表里面
+					saveTableColumnInfoForUpdate(tableInfo, oldID, collColumn, columnSort, colSetId,
+							DEFAULT_COLUMN_CLEAN_ORDER.toJSONString());
 				}
-				if(!extractDefIdList.isEmpty()){
-					long dedId = (long)extractDefIdList.get(0);
-					DboExecute.updatesOrThrow("更新第"+ i + "条数据的数据抽取定义信息失败",
-							"update "+ Data_extraction_def.TableName +" set table_id = ? where ded_id = ?",
-							Long.parseLong(newID), dedId);
-				}
-				//7-3-5、编辑采集表，将该表要采集的列信息保存到相应的表里面
-				saveTableColumnInfoForUpdate(tableInfo, oldID, collColumn, columnSort, colSetId,
-						DEFAULT_COLUMN_CLEAN_ORDER.toJSONString());
 			}
 		}
 		return colSetId;
@@ -815,5 +742,114 @@ public class CollTbConfStepAction extends BaseAction {
 			colTypeAndPreci = columnTypeName + "(" + precision + ")";
 		}
 		return colTypeAndPreci;
+	}
+
+	@Method(desc = "在修改采集表的时候，用新的tableId更新其他表中的旧的tableId", logicStep = "" +
+			"1、更新table_storage_info表对应条目的table_id字段,一个table_id在该表中的数据存在情况为0-1" +
+			"2、更新table_clean表对应条目的table_id字段，一个table_id在table_clean中可能有0-N条数据" +
+			"3、更新data_extraction_def表对应条目的table_id，一个table_id在该表中的数据存在情况为0-1")
+	@Param(name = "newID", desc = "新的tableId", range = "不为空")
+	@Param(name = "oldID", desc = "旧的tableId", range = "不为空")
+	private void updateTableId(long newID, long oldID){
+		//7-3-1、更新table_storage_info表对应条目的table_id字段,一个table_id在该表中的数据存在情况为0-1
+		List<Object> storageIdList = Dbo.queryOneColumnList(" select storage_id from "+
+				Table_storage_info.TableName + " where table_id = ? ", oldID);
+		if(storageIdList.size() > 1){
+			throw new BusinessException("表存储信息不唯一");
+		}
+		if(!storageIdList.isEmpty()){
+			long storageId = (long)storageIdList.get(0);
+			DboExecute.updatesOrThrow("更新表存储信息失败",
+					"update "+ Table_storage_info.TableName +" set table_id = ? where storage_id = ?",
+					newID, storageId);
+		}
+
+		//7-3-2、更新table_clean表对应条目的table_id字段，一个table_id在table_clean中可能有0-N条数据
+		List<Object> tableCleanIdList = Dbo.queryOneColumnList(" select table_clean_id from "
+				+ Table_clean.TableName + " where table_id = ? ", oldID);
+		if(!tableCleanIdList.isEmpty()){
+			StringBuilder tableCleanBuilder = new StringBuilder("update "+ Table_clean.TableName
+					+" set table_id = ? where table_clean_id in ( ");
+			for(int j = 0; j < tableCleanIdList.size(); j++){
+				tableCleanBuilder.append((long)tableCleanIdList.get(j));
+				if (j != tableCleanIdList.size() - 1)
+					tableCleanBuilder.append(",");
+			}
+			tableCleanBuilder.append(" )");
+			Dbo.execute(tableCleanBuilder.toString(), newID);
+		}
+
+		//7-3-3、更新data_extraction_def表对应条目的table_id，一个table_id在该表中的数据存在情况为0-1
+		List<Object> extractDefIdList = Dbo.queryOneColumnList(" select ded_id from "
+				+ Data_extraction_def.TableName + " where table_id = ? ", oldID);
+		if(extractDefIdList.size() > 1){
+			throw new BusinessException("数据抽取定义信息不唯一");
+		}
+		if(!extractDefIdList.isEmpty()){
+			long dedId = (long)extractDefIdList.get(0);
+			DboExecute.updatesOrThrow("更新数据抽取定义信息失败",
+					"update "+ Data_extraction_def.TableName +" set table_id = ? where ded_id = ?",
+					newID, dedId);
+		}
+	}
+
+	@Method(desc = "保存新增自定义SQL采集字段信息", logicStep = "" +
+			"1、执行自定义SQL，获取执行结果集" +
+			"2、根据结果集拿到该结果集的meta信息" +
+			"3、遍历meta信息，封装成Table_column类型对象" +
+			"4、保存")
+	@Param(name = "tableInfo", desc = "存有table_id和自定义采集SQL的实体类对象", range = "Table_info实体类对象，" +
+			"其中table_id和sql两个属性不能为空", isBean = true)
+	private void saveCustomSQLColumnInfoForAdd(Table_info tableInfo){
+		try {
+			//1、执行自定义SQL，获取执行结果集
+			ResultSet rs = Dbo.db().queryGetResultSet(tableInfo.getSql());
+			//2、根据结果集拿到该结果集的meta信息
+			ResultSetMetaData metaData = rs.getMetaData();
+			//3、遍历meta信息，封装成Table_column类型对象
+			for(int j = 0; j < metaData.getColumnCount(); j++){
+				Table_column tableColumn = new Table_column();
+				tableColumn.setColumn_id(PrimayKeyGener.getNextId());
+				tableColumn.setTable_id(tableInfo.getTable_id());
+				//是否采集设置为是
+				tableColumn.setIs_get(IsFlag.Shi.getCode());
+				//是否是主键，默认设置为否
+				tableColumn.setIs_primary_key(IsFlag.Fou.getCode());
+				tableColumn.setColume_name(metaData.getColumnName(j + 1));
+				//对列类型做特殊处理，处理成varchar(512), numeric(10,4)
+				String colTypeAndPreci = getColTypeAndPreci(metaData.getColumnType(j + 1),
+						metaData.getColumnTypeName(j + 1), metaData.getPrecision(j + 1),
+						metaData.getScale(j + 1));
+				tableColumn.setColumn_type(colTypeAndPreci);
+				//列中文名默认设置为列英文名
+				tableColumn.setColume_ch_name(metaData.getColumnName(j + 1));
+				tableColumn.setValid_s_date(DateUtil.getSysDate());
+				tableColumn.setValid_e_date(Constant.MAXDATE);
+				tableColumn.setIs_alive(IsFlag.Shi.getCode());
+				tableColumn.setIs_new(IsFlag.Fou.getCode());
+				tableColumn.setTc_or(DEFAULT_COLUMN_CLEAN_ORDER.toJSONString());
+
+				//4、保存
+				tableColumn.add(Dbo.db());
+			}
+		} catch (SQLException e) {
+			throw new AppSystemException(e);
+		}
+	}
+
+	@Method(desc = "保存修改自定义SQL采集字段信息", logicStep = "" +
+			"1、在修改采集表信息时，由于table_column表中之前已经保存过这张表之前的列信息，所以要使用oldTableID进行一次删除" +
+			"2、调用saveCustomSQLColumnInfoForAdd方法，按照新增的逻辑来保存自定义SQL采集字段信息")
+	@Param(name = "tableInfo", desc = "存有table_id和自定义采集SQL的实体类对象", range = "Table_info实体类对象，" +
+			"其中table_id和sql两个属性不能为空", isBean = true)
+	@Param(name = "oldTableId", desc = "修改前的table_id", range = "不为空")
+	private void saveCustomSQLColumnInfoForUpdate(Table_info tableInfo, long oldTableId){
+		/*
+		* 1、在修改采集表信息时，由于table_column表中之前已经保存过这张表之前的列信息，所以要使用oldTableID进行一次删除，
+		* 不关注删除的数目
+		* */
+		Dbo.execute(" DELETE FROM "+ Table_column.TableName +" WHERE table_id = ? ", oldTableId);
+		//2、调用saveCustomSQLColumnInfoForAdd方法，按照新增的逻辑来保存自定义SQL采集字段信息
+		saveCustomSQLColumnInfoForAdd(tableInfo);
 	}
 }
