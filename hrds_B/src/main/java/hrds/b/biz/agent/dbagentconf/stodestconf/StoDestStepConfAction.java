@@ -70,7 +70,7 @@ public class StoDestStepConfAction extends BaseAction{
 		return result;
 	}
 
-	@Method(desc = "根据数据库设置ID获取当前数据库直连采集任务下所有抽取及入库的表ID", logicStep = "" +
+	@Method(desc = "根据数据库设置ID获取当前数据库直连采集任务下所有抽取及入库的表的存储目的地ID", logicStep = "" +
 			"1、根据数据库设置ID获取当前数据库采集任务所有抽取并入库的表ID" +
 			"2、遍历结果集，根据表ID获取该表定义的存储目的地" +
 			"3、以table_id为key，以存储目的地IDList集合为value，返回给前端，之所以value是List集合，是因为入库的表可以定义多个存储目的地")

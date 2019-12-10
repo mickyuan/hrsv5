@@ -14,7 +14,7 @@ import hrds.agent.job.biz.bean.JobStatusInfo;
 import hrds.agent.job.biz.bean.MetaInfoBean;
 import hrds.agent.job.biz.core.filecollectstage.FileCollectUnloadDataStageImpl;
 import hrds.agent.job.biz.utils.FileUtil;
-import hrds.agent.trans.biz.unstructuredFileCollect.FileCollectJob;
+import hrds.agent.trans.biz.unstructuredfilecollect.FileCollectJob;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.File_source;
 import hrds.commons.exception.AppSystemException;

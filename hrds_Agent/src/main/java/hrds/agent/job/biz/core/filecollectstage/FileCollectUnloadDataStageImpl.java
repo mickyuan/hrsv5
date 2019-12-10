@@ -10,7 +10,7 @@ import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
 import hrds.agent.job.biz.core.filecollectstage.methods.AvroOper;
 import hrds.agent.job.biz.core.filecollectstage.methods.CollectionWatcher;
-import hrds.agent.trans.biz.unstructuredFileCollect.FileCollectJob;
+import hrds.agent.trans.biz.unstructuredfilecollect.FileCollectJob;
 import hrds.commons.utils.MapDBHelper;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

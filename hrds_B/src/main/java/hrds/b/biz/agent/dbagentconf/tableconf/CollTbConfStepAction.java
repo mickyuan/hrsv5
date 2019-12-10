@@ -610,7 +610,7 @@ public class CollTbConfStepAction extends BaseAction {
 			tableColumns = JSON.parseArray(collColumn, Table_column.class);
 		}
 		//3、设置主键，外键等信息，如果columnSort不为空，则将Table_column对象的remark属性设置为该列的采集顺序
-		if(!tableColumns.isEmpty()){
+		if(tableColumns != null && !tableColumns.isEmpty()){
 			for(Table_column tableColumn : tableColumns){
 				if(StringUtil.isBlank(tableColumn.getColume_name())){
 					throw new BusinessException("保存" + tableInfo.getTable_name() + "采集列时，字段名不能为空");
