@@ -4,6 +4,7 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
+import fd.ng.core.utils.DateUtil;
 import fd.ng.db.jdbc.DefaultPageImpl;
 import fd.ng.db.jdbc.Page;
 import fd.ng.db.jdbc.SqlOperator;
@@ -11,6 +12,9 @@ import fd.ng.web.util.Dbo;
 import hrds.c.biz.util.ETLJobUtil;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.Job_Status;
+import hrds.commons.codes.Main_Server_Sync;
+import hrds.commons.codes.Meddle_status;
+import hrds.commons.codes.Meddle_type;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 
@@ -116,5 +120,87 @@ public class SysLevelInterventionAction extends BaseAction {
         handHisMap.put("handHisList", handHisList);
         handHisMap.put("totalSize", page.getTotalSize());
         return handHisMap;
+    }
+
+    @Method(desc = "系统级干预操作",
+            logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制" +
+                    "2.判断工程是否存在" +
+                    "3.封装实体字段属性值" +
+                    "4.判断工程下有作业是否正在干预" +
+                    "5.检查etl_hand_type是否合法" +
+                    "6.判断干预类型进行不同情况操作" +
+                    "6.1 重跑或续跑，查询该工程为传入的几种状态的个数" +
+                    "6.1.1 个数大于0，数据回滚" +
+                    "6.1.2 正常干预将数据插入作业干预表中" +
+                    "6.2 非重跑或续跑，正常干预将数据插入作业干预表中")
+    @Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
+    @Param(name = "etl_hand_type", desc = "干预类型", range = "使用（Meddle_type）代码项")
+    @Param(name = "curr_bath_date", desc = "当前批量日期", range = "无限制")
+    public void SysLevelInterventionOperation(String etl_sys_cd, String etl_hand_type, String curr_bath_date) {
+        // 1.数据可访问权限处理方式，通过user_id进行权限控制
+        // 2.判断工程是否存在
+        if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
+            throw new BusinessException("当前工程已不存在！");
+        }
+        // 3.封装实体字段属性值
+        Etl_job_hand etl_job_hand = new Etl_job_hand();
+        etl_job_hand.setEtl_sys_cd(etl_sys_cd);
+        etl_job_hand.setEtl_hand_type(etl_hand_type);
+        etl_job_hand.setHand_status(Meddle_status.TRUE.getCode());
+        etl_job_hand.setMain_serv_sync(Main_Server_Sync.YES.getCode());
+        etl_job_hand.setEtl_job("[NOTHING]");
+        etl_job_hand.setEvent_id(DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate()) + " " +
+                DateUtil.parseStr2TimeWith6Char(DateUtil.getSysTime()));
+        etl_job_hand.setSt_time(DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate()) + " " +
+                DateUtil.parseStr2TimeWith6Char(DateUtil.getSysTime()));
+        etl_job_hand.setPro_para(etl_sys_cd + "," + curr_bath_date);
+        // 4.判断工程下有作业是否正在干预
+        if (Dbo.queryNumber("select count(*) from " + Etl_job_hand.TableName + " where etl_sys_cd=?",
+                etl_sys_cd).orElseThrow(() -> new BusinessException("sql查询错误！")) > 0) {
+            throw new BusinessException("工程下有作业正在干预！");
+        }
+        // 5.检查etl_hand_type是否合法
+        Meddle_type.ofEnumByCode(etl_hand_type);
+        // FIXME 工程状态为错误,挂起,运行或等待的都不可以重跑与续跑？
+        // 6.判断干预类型进行不同情况操作
+        if (Meddle_type.SYS_ORIGINAL == (Meddle_type.ofEnumByCode(etl_hand_type)) ||
+                Meddle_type.SYS_RESUME == (Meddle_type.ofEnumByCode(etl_hand_type))) {
+            // 6.1 重跑或续跑，查询该工程为传入的几种状态的个数
+            String[] jobStatus = {Job_Status.PENDING.getCode(), Job_Status.RUNNING.getCode(),
+                    Job_Status.WAITING.getCode(), Job_Status.ERROR.getCode()};
+            long count = getEtlSysStatus(etl_sys_cd, jobStatus);
+            if (count > 0) {
+                // 6.1.1 个数大于0，数据回滚
+                Dbo.rollbackTransaction();
+                throw new BusinessException("工程状态为错误,挂起,运行或等待的不可以重跑!");
+            } else {
+                // 6.1.2 正常干预将数据插入作业干预表中
+                etl_job_hand.add(Dbo.db());
+            }
+        } else {
+            // 6.2 非重跑或续跑，正常干预将数据插入作业干预表中
+            etl_job_hand.add(Dbo.db());
+        }
+    }
+
+    @Method(desc = "查询该工程为传入的几种状态的个数",
+            logicStep = "1.数据可访问权限处理方式，该方法不需要权限控制" +
+                    "2.判断传入状态的数组是否为空" +
+                    "3.查询运行状态是否在指定状态数组中")
+    @Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
+    @Param(name = "jobStatus", desc = "传入的状态的数组", range = "使用（Job_Status）代码项")
+    @Return(desc = "返回查询该工程为传入的几种状态的个数", range = "无限制")
+    private long getEtlSysStatus(String etl_sys_cd, String[] jobStatus) {
+        // 1.数据可访问权限处理方式，该方法不需要权限控制
+        asmSql.clean();
+        asmSql.addSql("SELECT count(1) from " + Etl_sys.TableName + " where etl_sys_cd=?");
+        asmSql.addParam(etl_sys_cd);
+        // 2.判断传入状态的数组是否为空
+        if (jobStatus.length > 0) {
+            asmSql.addORParam("sys_run_status", jobStatus);
+        }
+        // 3.查询该工程为传入的几种状态的个数
+        return Dbo.queryNumber(asmSql.sql(), asmSql.params()).orElseThrow(() ->
+                new BusinessException("sql查询错误！"));
     }
 }

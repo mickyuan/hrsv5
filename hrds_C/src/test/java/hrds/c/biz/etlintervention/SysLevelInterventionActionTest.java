@@ -32,6 +32,8 @@ public class SysLevelInterventionActionTest extends WebBaseTestCase {
     private static final long DepId = 1000011L;
     // 初始化工程编号
     private static final String EtlSysCd = "zygyglcs";
+    private static final String EtlSysCd2 = "zygyglcs2";
+    private static final String EtlSysCd3 = "zygyglcs3";
     // 初始化任务编号
     private static final String SubSysCd = "zygyrwcs";
     private static final String SubSysCd2 = "zygyrwcs2";
@@ -77,12 +79,22 @@ public class SysLevelInterventionActionTest extends WebBaseTestCase {
             assertThat("测试数据department_info初始化", num, is(1));
             // 3.构造etl_sys表测试数据
             Etl_sys etl_sys = new Etl_sys();
-            etl_sys.setEtl_sys_cd(EtlSysCd);
-            etl_sys.setEtl_sys_name("dhwcs");
-            etl_sys.setUser_id(UserId);
-            etl_sys.setCurr_bath_date(DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate()).toString());
-            num = etl_sys.add(db);
-            assertThat("测试数据etl_sys初始化", num, is(1));
+            for (int i = 0; i < 3; i++) {
+                if (i == 0) {
+                    etl_sys.setEtl_sys_cd(EtlSysCd);
+                    etl_sys.setEtl_sys_name("dhwcs");
+                } else if (i==1){
+                    etl_sys.setEtl_sys_cd(EtlSysCd2);
+                    etl_sys.setEtl_sys_name("dhwcs2");
+                }else {
+                    etl_sys.setEtl_sys_cd(EtlSysCd3);
+                    etl_sys.setEtl_sys_name("dhwcs3");
+                }
+                etl_sys.setUser_id(UserId);
+                etl_sys.setCurr_bath_date(DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate()).toString());
+                num = etl_sys.add(db);
+                assertThat("测试数据etl_sys初始化", num, is(1));
+            }
             // 4.构造etl_sub_sys_list表测试数据
             Etl_sub_sys_list etl_sub_sys_list = new Etl_sub_sys_list();
             for (int i = 1; i <= 5; i++) {
@@ -180,8 +192,8 @@ public class SysLevelInterventionActionTest extends WebBaseTestCase {
             }
             // 6.构造etl_job_hand表测试数据
             Etl_job_hand etl_job_hand = new Etl_job_hand();
-            for (int i = 1; i < 6; i++) {
-                etl_job_hand.setEtl_sys_cd(etl_sys.getEtl_sys_cd());
+            for (int i = 1; i < 7; i++) {
+                etl_job_hand.setEtl_sys_cd(EtlSysCd);
                 etl_job_hand.setEtl_job("测试作业" + i);
                 etl_job_hand.setMain_serv_sync(Main_Server_Sync.YES.getCode());
                 switch (i) {
@@ -222,7 +234,7 @@ public class SysLevelInterventionActionTest extends WebBaseTestCase {
             // 7.构造etl_job_hand_his表测试数据
             Etl_job_hand_his etl_job_hand_his = new Etl_job_hand_his();
             for (int i = 1; i < 6; i++) {
-                etl_job_hand_his.setEtl_sys_cd(etl_sys.getEtl_sys_cd());
+                etl_job_hand_his.setEtl_sys_cd(EtlSysCd);
                 etl_job_hand_his.setEtl_job("测试作业" + i);
                 etl_job_hand_his.setMain_serv_sync(Main_Server_Sync.YES.getCode());
                 switch (i) {
@@ -291,6 +303,16 @@ public class SysLevelInterventionActionTest extends WebBaseTestCase {
             num = SqlOperator.queryNumber(db, "select count(1) from " + Etl_sys.TableName +
                     "  where etl_sys_cd=?", EtlSysCd).orElseThrow(() -> new RuntimeException("count fail!"));
             assertThat("此条数据删除后，记录数应该为0", num, is(0L));
+            SqlOperator.execute(db, "delete from " + Etl_sys.TableName + " where etl_sys_cd=?", EtlSysCd2);
+            // 判断etl_sys数据是否被删除
+            num = SqlOperator.queryNumber(db, "select count(1) from " + Etl_sys.TableName +
+                    "  where etl_sys_cd=?", EtlSysCd2).orElseThrow(() -> new RuntimeException("count fail!"));
+            assertThat("此条数据删除后，记录数应该为0", num, is(0L));
+            SqlOperator.execute(db, "delete from " + Etl_sys.TableName + " where etl_sys_cd=?", EtlSysCd3);
+            // 判断etl_sys数据是否被删除
+            num = SqlOperator.queryNumber(db, "select count(1) from " + Etl_sys.TableName +
+                    "  where etl_sys_cd=?", EtlSysCd3).orElseThrow(() -> new RuntimeException("count fail!"));
+            assertThat("此条数据删除后，记录数应该为0", num, is(0L));
             // 4.测试完删除department_info表测试数据
             SqlOperator.execute(db, "delete from " + Department_info.TableName + " where dep_id=?",
                     DepId);
@@ -305,12 +327,36 @@ public class SysLevelInterventionActionTest extends WebBaseTestCase {
             num = SqlOperator.queryNumber(db, "select count(1) from " + Etl_job_hand.TableName +
                     "  where etl_sys_cd=?", EtlSysCd).orElseThrow(() -> new RuntimeException("count fail!"));
             assertThat("此条数据删除后，记录数应该为0", num, is(0L));
+            SqlOperator.execute(db, "delete from " + Etl_job_hand.TableName + " where etl_sys_cd=?",
+                    EtlSysCd2);
+            // 判断Etl_job_hand数据是否被删除
+            num = SqlOperator.queryNumber(db, "select count(1) from " + Etl_job_hand.TableName +
+                    "  where etl_sys_cd=?", EtlSysCd2).orElseThrow(() -> new RuntimeException("count fail!"));
+            assertThat("此条数据删除后，记录数应该为0", num, is(0L));
+            SqlOperator.execute(db, "delete from " + Etl_job_hand.TableName + " where etl_sys_cd=?",
+                    EtlSysCd3);
+            // 判断Etl_job_hand数据是否被删除
+            num = SqlOperator.queryNumber(db, "select count(1) from " + Etl_job_hand.TableName +
+                    "  where etl_sys_cd=?", EtlSysCd3).orElseThrow(() -> new RuntimeException("count fail!"));
+            assertThat("此条数据删除后，记录数应该为0", num, is(0L));
             // 6.测试完删除Etl_job_hand_his表测试数据
             SqlOperator.execute(db, "delete from " + Etl_job_hand_his.TableName + " where etl_sys_cd=?",
                     EtlSysCd);
             // 判断Etl_job_hand_his数据是否被删除
             num = SqlOperator.queryNumber(db, "select count(1) from " + Etl_job_hand_his.TableName +
                     "  where etl_sys_cd=?", EtlSysCd).orElseThrow(() -> new RuntimeException("count fail!"));
+            assertThat("此条数据删除后，记录数应该为0", num, is(0L));
+            SqlOperator.execute(db, "delete from " + Etl_job_hand_his.TableName + " where etl_sys_cd=?",
+                    EtlSysCd2);
+            // 判断Etl_job_hand_his数据是否被删除
+            num = SqlOperator.queryNumber(db, "select count(1) from " + Etl_job_hand_his.TableName +
+                    "  where etl_sys_cd=?", EtlSysCd2).orElseThrow(() -> new RuntimeException("count fail!"));
+            assertThat("此条数据删除后，记录数应该为0", num, is(0L));
+            SqlOperator.execute(db, "delete from " + Etl_job_hand_his.TableName + " where etl_sys_cd=?",
+                    EtlSysCd3);
+            // 判断Etl_job_hand_his数据是否被删除
+            num = SqlOperator.queryNumber(db, "select count(1) from " + Etl_job_hand_his.TableName +
+                    "  where etl_sys_cd=?", EtlSysCd3).orElseThrow(() -> new RuntimeException("count fail!"));
             assertThat("此条数据删除后，记录数应该为0", num, is(0L));
             // 7.测试完删除Etl_job_cur表测试数据
             SqlOperator.execute(db, "delete from " + Etl_job_cur.TableName + " where etl_sys_cd=?",
@@ -335,7 +381,7 @@ public class SysLevelInterventionActionTest extends WebBaseTestCase {
                 .post(getActionUrl("searchSysLevelInterventionInfo"))
                 .getBodyString();
         ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
-                .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
         assertThat(ar.isSuccess(), is(true));
         Map<Object, Object> etlJobCurr = ar.getDataForMap();
         assertThat(EtlSysCd, is(etlJobCurr.get("etl_sys_cd")));
@@ -355,7 +401,7 @@ public class SysLevelInterventionActionTest extends WebBaseTestCase {
                 .post(getActionUrl("searchSysLevelInterventionInfo"))
                 .getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
-                .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
         assertThat(ar.isSuccess(), is(false));
     }
 
@@ -370,7 +416,7 @@ public class SysLevelInterventionActionTest extends WebBaseTestCase {
                 .post(getActionUrl("searchSysLevelCurrInterventionInfo"))
                 .getBodyString();
         ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
-                .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
         assertThat(ar.isSuccess(), is(true));
         List<Map<String, Object>> currInterventionList = (List<Map<String, Object>>) ar.getData();
         for (Map<String, Object> map : currInterventionList) {
@@ -405,6 +451,12 @@ public class SysLevelInterventionActionTest extends WebBaseTestCase {
                 assertThat(Meddle_type.SYS_STOP.getCode(), is(map.get("etl_hand_type")));
                 assertThat("任务测试2(zygyrwcs2)", is(map.get("subsysname")));
                 assertThat("测试作业5", is(map.get("etl_job")));
+            }else if (event_id.equals(EventId6)) {
+                assertThat(EtlSysCd, is(map.get("etl_sys_cd")));
+                assertThat(Meddle_status.RUNNING.getCode(), is(map.get("hand_status")));
+                assertThat(Meddle_type.SYS_STOP.getCode(), is(map.get("etl_hand_type")));
+                assertThat("任务测试2(zygyrwcs2)", is(map.get("subsysname")));
+                assertThat("测试作业6", is(map.get("etl_job")));
             }
         }
         // 2.错误的数据访问1，etl_sys_cd不存在
@@ -413,7 +465,7 @@ public class SysLevelInterventionActionTest extends WebBaseTestCase {
                 .post(getActionUrl("searchSysLevelCurrInterventionInfo"))
                 .getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
-                .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
         assertThat(ar.isSuccess(), is(false));
     }
 
@@ -430,7 +482,7 @@ public class SysLevelInterventionActionTest extends WebBaseTestCase {
                 .post(getActionUrl("searchSysLeverHisInterventionByPage"))
                 .getBodyString();
         ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
-                .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
         assertThat(ar.isSuccess(), is(true));
         Map<Object, Object> hisIntervention = ar.getDataForMap();
         List<Map<String, Object>> handHisList = (List<Map<String, Object>>) hisIntervention.get("handHisList");
@@ -465,7 +517,91 @@ public class SysLevelInterventionActionTest extends WebBaseTestCase {
                 .post(getActionUrl("searchSysLeverHisInterventionByPage"))
                 .getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
-                .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
         assertThat(ar.isSuccess(), is(true));
+    }
+
+    @Method(desc = "系统级干预操作",
+            logicStep = "1.正常的数据访问1，数据都正常" +
+                    "2.正常的数据访问2，数据都正常，非重跑或续跑" +
+                    "3.错误的数据访问1，etl_sys_cd不存在" +
+                    "4.错误的数据访问2，etl_hand_type不存在" +
+                    "5.错误的数据访问3，工程下有作业正在干预")
+    @Test
+    public void SysLevelInterventionOperation() {
+        try (DatabaseWrapper db = new DatabaseWrapper()) {
+            // 1.正常的数据访问1，数据都正常，重跑或续跑
+            String bodyString = new HttpClient()
+                    .addData("etl_sys_cd", EtlSysCd2)
+                    .addData("etl_hand_type", Meddle_type.SYS_ORIGINAL.getCode())
+                    .addData("curr_bath_date", DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate()).toString())
+                    .post(getActionUrl("SysLevelInterventionOperation"))
+                    .getBodyString();
+            ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(true));
+            // 验证数据的正确性
+            Map<String, Object> etlJobHand = SqlOperator.queryOneObject(db, "select * from "
+                            + Etl_job_hand.TableName + " where etl_sys_cd=? and etl_hand_type=? ", EtlSysCd2,
+                    Meddle_type.SYS_ORIGINAL.getCode());
+            assertThat(EtlSysCd2, is(etlJobHand.get("etl_sys_cd")));
+            assertThat(Meddle_status.TRUE.getCode(), is(etlJobHand.get("hand_status")));
+            assertThat(Meddle_type.SYS_ORIGINAL.getCode(), is(etlJobHand.get("etl_hand_type")));
+            assertThat(Main_Server_Sync.YES.getCode(), is(etlJobHand.get("main_serv_sync")));
+            assertThat("[NOTHING]", is(etlJobHand.get("etl_job")));
+            assertThat(EtlSysCd2 + "," + DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate()),
+                    is(etlJobHand.get("pro_para")));
+            // 2.正常的数据访问2，数据都正常，非重跑或续跑
+            bodyString = new HttpClient()
+                    .addData("etl_sys_cd", EtlSysCd3)
+                    .addData("etl_hand_type", Meddle_type.SYS_STOP.getCode())
+                    .addData("curr_bath_date", DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate()).toString())
+                    .post(getActionUrl("SysLevelInterventionOperation"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(true));
+            // 验证数据的正确性
+            etlJobHand = SqlOperator.queryOneObject(db, "select * from "
+                            + Etl_job_hand.TableName + " where etl_sys_cd=? and etl_hand_type=? ", EtlSysCd3,
+                    Meddle_type.SYS_STOP.getCode());
+            assertThat(EtlSysCd3, is(etlJobHand.get("etl_sys_cd")));
+            assertThat(Meddle_status.TRUE.getCode(), is(etlJobHand.get("hand_status")));
+            assertThat(Meddle_type.SYS_STOP.getCode(), is(etlJobHand.get("etl_hand_type")));
+            assertThat(Main_Server_Sync.YES.getCode(), is(etlJobHand.get("main_serv_sync")));
+            assertThat("[NOTHING]", is(etlJobHand.get("etl_job")));
+            assertThat(EtlSysCd3 + "," + DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate()),
+                    is(etlJobHand.get("pro_para")));
+            // 3.错误的数据访问1，etl_sys_cd不存在
+            bodyString = new HttpClient()
+                    .addData("etl_sys_cd", "xtjgycs")
+                    .addData("etl_hand_type", Meddle_type.SYS_ORIGINAL.getCode())
+                    .addData("curr_bath_date", DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate()).toString())
+                    .post(getActionUrl("SysLevelInterventionOperation"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 4.错误的数据访问2，etl_hand_type不存在
+            bodyString = new HttpClient()
+                    .addData("etl_sys_cd", EtlSysCd)
+                    .addData("etl_hand_type", "abc")
+                    .addData("curr_bath_date", DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate()).toString())
+                    .post(getActionUrl("SysLevelInterventionOperation"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 5.错误的数据访问3，工程下有作业正在干预
+            bodyString = new HttpClient()
+                    .addData("etl_sys_cd", EtlSysCd)
+                    .addData("etl_hand_type", Meddle_type.SYS_RESUME.getCode())
+                    .addData("curr_bath_date", DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate()).toString())
+                    .post(getActionUrl("SysLevelInterventionOperation"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+        }
     }
 }
