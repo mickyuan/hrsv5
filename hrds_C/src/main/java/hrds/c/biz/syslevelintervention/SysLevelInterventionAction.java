@@ -1,4 +1,4 @@
-package hrds.c.biz.etlintervention;
+package hrds.c.biz.syslevelintervention;
 
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
@@ -28,7 +28,7 @@ public class SysLevelInterventionAction extends BaseAction {
     // 拼接sql对象
     private static final SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 
-    @Method(desc = "查询系统级干预作业信息",
+    @Method(desc = "查询系统级干预系统批量情况",
             logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制" +
                     "2.判断工程是否存在" +
                     "3.获取工程名称" +
@@ -38,7 +38,7 @@ public class SysLevelInterventionAction extends BaseAction {
                     "7.返回存放系统批量情况相关信息的集合")
     @Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
     @Return(desc = "返回内容描述", range = "取值范围")
-    public Map<String, Object> searchSysLevelInterventionInfo(String etl_sys_cd) {
+    public Map<String, Object> searchSystemBatchConditions(String etl_sys_cd) {
         // 1.数据可访问权限处理方式，通过user_id进行权限控制
         // 2.判断工程是否存在
         if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
@@ -76,19 +76,20 @@ public class SysLevelInterventionAction extends BaseAction {
                     "3.查询系统级当前干预情况")
     @Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
     @Return(desc = "返回查询系统级当前干预情况", range = "无限制")
-    public List<Map<String, Object>> searchSysLevelCurrInterventionInfo(String etl_sys_cd) {
+    public Map<String, Object> searchSysLevelCurrInterventionInfo(String etl_sys_cd) {
         // 1.数据可访问权限处理方式，通过user_id进行权限控制
         // 2.判断工程是否存在
         if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
             throw new BusinessException("当前工程已不存在！");
         }
         // 3.查询系统级当前干预情况
-        return Dbo.queryList("SELECT t1.event_id,t1.etl_sys_cd,t1.etl_job,t1.etl_hand_type," +
-                "t1.pro_para,hand_status,st_time,warning,CONCAT(t3.sub_sys_desc,'(',t3.sub_sys_cd,')') " +
-                " AS subSysName FROM " + Etl_job_hand.TableName + " t1 left join " + Etl_job_cur.TableName +
-                " t2 on t1.etl_job=t2.etl_job and t1.etl_sys_cd=t2.etl_sys_cd left join "
-                + Etl_sub_sys_list.TableName + " t3 on t2.sub_sys_cd=t3.sub_sys_cd " +
-                " and t2.etl_sys_cd=t3.etl_sys_cd WHERE t1.etl_sys_cd=?", etl_sys_cd);
+        return Dbo.queryOneObject("SELECT t1.event_id,t1.etl_sys_cd,t1.etl_job,t1.etl_hand_type," +
+                        "t1.pro_para,hand_status,st_time,warning,CONCAT(t3.sub_sys_desc,'(',t3.sub_sys_cd,')') " +
+                        " AS subSysName FROM " + Etl_job_hand.TableName + " t1 left join " + Etl_job_cur.TableName +
+                        " t2 on t1.etl_job=t2.etl_job and t1.etl_sys_cd=t2.etl_sys_cd left join "
+                        + Etl_sub_sys_list.TableName + " t3 on t2.sub_sys_cd=t3.sub_sys_cd " +
+                        " and t2.etl_sys_cd=t3.etl_sys_cd WHERE t1.etl_sys_cd=? AND t1.etl_job=?",
+                etl_sys_cd, "[NOTHING]");
     }
 
     @Method(desc = "分页查询系统级历史干预情况",
@@ -98,7 +99,7 @@ public class SysLevelInterventionAction extends BaseAction {
                     "4.创建存放分页查询系统干预历史干预情况以及总记录数的集合并返回")
     @Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
     @Param(name = "currPage", desc = "分页查询当前页", range = "大于0的正整数", valueIfNull = "1")
-    @Param(name = "pageSize", desc = "分页查询每页显示记录数", range = "大于0的正整数", valueIfNull = "5")
+    @Param(name = "pageSize", desc = "分页查询每页显示记录数", range = "大于0的正整数", valueIfNull = "10")
     @Return(desc = "返回存放分页查询系统干预历史干预情况以及总记录数的集合", range = "无限制")
     public Map<String, Object> searchSysLeverHisInterventionByPage(String etl_sys_cd, int currPage,
                                                                    int pageSize) {
@@ -114,7 +115,8 @@ public class SysLevelInterventionAction extends BaseAction {
                 "CONCAT(t3.sub_sys_desc,'(',t3.sub_sys_cd,')') AS subSysName FROM " + Etl_job_hand_his.TableName
                 + " t1 left join " + Etl_job_cur.TableName + " t2 on t1.etl_job=t2.etl_job " +
                 " and t1.etl_sys_cd=t2.etl_sys_cd left join " + Etl_sub_sys_list.TableName + " t3 " +
-                "on t2.sub_sys_cd=t3.sub_sys_cd and t2.etl_sys_cd=t3.etl_sys_cd WHERE t1.etl_sys_cd=?", etl_sys_cd);
+                "on t2.sub_sys_cd=t3.sub_sys_cd and t2.etl_sys_cd=t3.etl_sys_cd WHERE t1.etl_sys_cd=?" +
+                " AND t1.etl_job=?", etl_sys_cd, "[NOTHING]");
         // 4.创建存放分页查询系统干预历史干预情况以及总记录数的集合并返回
         Map<String, Object> handHisMap = new HashMap<>();
         handHisMap.put("handHisList", handHisList);
@@ -136,7 +138,7 @@ public class SysLevelInterventionAction extends BaseAction {
     @Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
     @Param(name = "etl_hand_type", desc = "干预类型", range = "使用（Meddle_type）代码项")
     @Param(name = "curr_bath_date", desc = "当前批量日期", range = "无限制")
-    public void SysLevelInterventionOperation(String etl_sys_cd, String etl_hand_type, String curr_bath_date) {
+    public void SysLevelInterventionOperate(String etl_sys_cd, String etl_hand_type, String curr_bath_date) {
         // 1.数据可访问权限处理方式，通过user_id进行权限控制
         // 2.判断工程是否存在
         if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {

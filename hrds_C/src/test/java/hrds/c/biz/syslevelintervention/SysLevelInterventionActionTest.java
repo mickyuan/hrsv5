@@ -1,4 +1,4 @@
-package hrds.c.biz.etlintervention;
+package hrds.c.biz.syslevelintervention;
 
 import fd.ng.core.annotation.Method;
 import fd.ng.core.utils.DateUtil;
@@ -36,17 +36,10 @@ public class SysLevelInterventionActionTest extends WebBaseTestCase {
     private static final String EtlSysCd3 = "zygyglcs3";
     // 初始化任务编号
     private static final String SubSysCd = "zygyrwcs";
-    private static final String SubSysCd2 = "zygyrwcs2";
-    private static final String SubSysCd3 = "myrwcs";
-    private static final String SubSysCd4 = "myrwcs2";
-    private static final String SubSysCd5 = "myrwcs3";
 
     private static final String EventId = "xtgysjh";
-    private static final String EventId2 = "xtgysjh2";
-    private static final String EventId3 = "xtgysjh3";
-    private static final String EventId4 = "xtgysjh4";
-    private static final String EventId5 = "xtgysjh5";
-    private static final String EventId6 = "xtgysjh6";
+    private static final String HisEventId = "xtlsgysjh";
+    private static final String HisEventId2 = "xtlsgysjh2";
 
     @Before
     public void before() {
@@ -83,10 +76,10 @@ public class SysLevelInterventionActionTest extends WebBaseTestCase {
                 if (i == 0) {
                     etl_sys.setEtl_sys_cd(EtlSysCd);
                     etl_sys.setEtl_sys_name("dhwcs");
-                } else if (i==1){
+                } else if (i == 1) {
                     etl_sys.setEtl_sys_cd(EtlSysCd2);
                     etl_sys.setEtl_sys_name("dhwcs2");
-                }else {
+                } else {
                     etl_sys.setEtl_sys_cd(EtlSysCd3);
                     etl_sys.setEtl_sys_name("dhwcs3");
                 }
@@ -97,172 +90,62 @@ public class SysLevelInterventionActionTest extends WebBaseTestCase {
             }
             // 4.构造etl_sub_sys_list表测试数据
             Etl_sub_sys_list etl_sub_sys_list = new Etl_sub_sys_list();
-            for (int i = 1; i <= 5; i++) {
-                switch (i) {
-                    case 1:
-                        etl_sub_sys_list.setSub_sys_cd(SubSysCd);
-                        break;
-                    case 2:
-                        etl_sub_sys_list.setSub_sys_cd(SubSysCd2);
-                        break;
-                    case 3:
-                        etl_sub_sys_list.setSub_sys_cd(SubSysCd3);
-                        break;
-                    case 4:
-                        etl_sub_sys_list.setSub_sys_cd(SubSysCd4);
-                        break;
-                    case 5:
-                        etl_sub_sys_list.setSub_sys_cd(SubSysCd5);
-                        break;
-                }
-                etl_sub_sys_list.setEtl_sys_cd(EtlSysCd);
-                etl_sub_sys_list.setSub_sys_desc("任务测试" + i);
-                etl_sub_sys_list.setComments("测试" + i);
-                num = etl_sub_sys_list.add(db);
-                assertThat("测试数据data_source初始化", num, is(1));
-            }
+            etl_sub_sys_list.setSub_sys_cd(SubSysCd);
+            etl_sub_sys_list.setEtl_sys_cd(EtlSysCd);
+            etl_sub_sys_list.setSub_sys_desc("任务测试");
+            etl_sub_sys_list.setComments("测试");
+            num = etl_sub_sys_list.add(db);
+            assertThat("测试数据data_source初始化", num, is(1));
             // 5.构造etl_job_curr表测试数据
-            for (int i = 1; i < 7; i++) {
-                Etl_job_cur etl_job_cur = new Etl_job_cur();
-                etl_job_cur.setEtl_sys_cd(EtlSysCd);
-                etl_job_cur.setEtl_job("测试作业" + i);
-                etl_job_cur.setPro_dic("/home/hyshf/dhw");
-                etl_job_cur.setEtl_job_desc("测试作业定义" + i);
-                etl_job_cur.setPro_para("1");
-                etl_job_cur.setJob_eff_flag(Job_Effective_Flag.YES.getCode());
-                etl_job_cur.setToday_disp(Today_Dispatch_Flag.YES.getCode());
-                etl_job_cur.setCurr_bath_date(DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate()).toString());
-                switch (i) {
-                    case 1:
-                        etl_job_cur.setPro_name("zy.shell");
-                        etl_job_cur.setPro_type(Pro_Type.SHELL.getCode());
-                        etl_job_cur.setSub_sys_cd(SubSysCd);
-                        etl_job_cur.setDisp_type(Dispatch_Type.TPLUS0.getCode());
-                        etl_job_cur.setDisp_freq(Dispatch_Frequency.PinLv.getCode());
-                        etl_job_cur.setExe_frequency(1L);
-                        etl_job_cur.setExe_num(1);
-                        etl_job_cur.setStar_time(DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate())
-                                + " " + DateUtil.parseStr2TimeWith6Char(DateUtil.getSysTime()));
-                        etl_job_cur.setEnd_time("2020-12-31 10:30:30");
-                        etl_job_cur.setJob_disp_status(Job_Status.ERROR.getCode());
-                        break;
-                    case 2:
-                        etl_job_cur.setPro_name("zy.class");
-                        etl_job_cur.setPro_type(Pro_Type.JAVA.getCode());
-                        etl_job_cur.setSub_sys_cd(SubSysCd);
-                        etl_job_cur.setDisp_type(Dispatch_Type.TPLUS1.getCode());
-                        etl_job_cur.setDisp_freq(Dispatch_Frequency.MONTHLY.getCode());
-                        etl_job_cur.setJob_disp_status(Job_Status.DONE.getCode());
-                        break;
-                    case 3:
-                        etl_job_cur.setPro_name("zy.shell");
-                        etl_job_cur.setPro_type(Pro_Type.SHELL.getCode());
-                        etl_job_cur.setSub_sys_cd(SubSysCd);
-                        etl_job_cur.setDisp_type(Dispatch_Type.DEPENDENCE.getCode());
-                        etl_job_cur.setDisp_freq(Dispatch_Frequency.DAILY.getCode());
-                        etl_job_cur.setJob_disp_status(Job_Status.RUNNING.getCode());
-                        break;
-                    case 4:
-                        etl_job_cur.setPro_name("zy.py");
-                        etl_job_cur.setPro_type(Pro_Type.PYTHON.getCode());
-                        etl_job_cur.setSub_sys_cd(SubSysCd2);
-                        etl_job_cur.setDisp_type(Dispatch_Type.DEPENDENCE.getCode());
-                        etl_job_cur.setDisp_freq(Dispatch_Frequency.WEEKLY.getCode());
-                        etl_job_cur.setJob_disp_status(Job_Status.WAITING.getCode());
-                        break;
-                    case 5:
-                        etl_job_cur.setPro_name("zy.bat");
-                        etl_job_cur.setPro_type(Pro_Type.BAT.getCode());
-                        etl_job_cur.setSub_sys_cd(SubSysCd2);
-                        etl_job_cur.setDisp_type(Dispatch_Type.DEPENDENCE.getCode());
-                        etl_job_cur.setDisp_freq(Dispatch_Frequency.MONTHLY.getCode());
-                        etl_job_cur.setJob_disp_status(Job_Status.PENDING.getCode());
-                        break;
-                    case 6:
-                        etl_job_cur.setPro_name("zy.bat");
-                        etl_job_cur.setPro_type(Pro_Type.BAT.getCode());
-                        etl_job_cur.setSub_sys_cd(SubSysCd2);
-                        etl_job_cur.setDisp_type(Dispatch_Type.DEPENDENCE.getCode());
-                        etl_job_cur.setDisp_freq(Dispatch_Frequency.DAILY.getCode());
-                        etl_job_cur.setJob_disp_status(Job_Status.STOP.getCode());
-                        break;
-                }
-                num = etl_job_cur.add(db);
-                assertThat("测试数据etl_job_cur初始化", num, is(1));
-            }
+            Etl_job_cur etl_job_cur = new Etl_job_cur();
+            etl_job_cur.setEtl_sys_cd(EtlSysCd);
+            etl_job_cur.setEtl_job("[NOTHING]");
+            etl_job_cur.setPro_dic("/home/hyshf/dhw");
+            etl_job_cur.setEtl_job_desc("测试作业定义");
+            etl_job_cur.setPro_para("1");
+            etl_job_cur.setJob_eff_flag(Job_Effective_Flag.YES.getCode());
+            etl_job_cur.setToday_disp(Today_Dispatch_Flag.YES.getCode());
+            etl_job_cur.setCurr_bath_date(DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate()).toString());
+            etl_job_cur.setPro_name("zy.shell");
+            etl_job_cur.setPro_type(Pro_Type.SHELL.getCode());
+            etl_job_cur.setSub_sys_cd(SubSysCd);
+            etl_job_cur.setDisp_type(Dispatch_Type.TPLUS0.getCode());
+            etl_job_cur.setDisp_freq(Dispatch_Frequency.PinLv.getCode());
+            etl_job_cur.setExe_frequency(1L);
+            etl_job_cur.setExe_num(1);
+            etl_job_cur.setStar_time(DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate())
+                    + " " + DateUtil.parseStr2TimeWith6Char(DateUtil.getSysTime()));
+            etl_job_cur.setEnd_time("2020-12-31 10:30:30");
+            etl_job_cur.setJob_disp_status(Job_Status.ERROR.getCode());
+            num = etl_job_cur.add(db);
+            assertThat("测试数据etl_job_cur初始化", num, is(1));
             // 6.构造etl_job_hand表测试数据
             Etl_job_hand etl_job_hand = new Etl_job_hand();
-            for (int i = 1; i < 7; i++) {
-                etl_job_hand.setEtl_sys_cd(EtlSysCd);
-                etl_job_hand.setEtl_job("测试作业" + i);
-                etl_job_hand.setMain_serv_sync(Main_Server_Sync.YES.getCode());
-                switch (i) {
-                    case 1:
-                        etl_job_hand.setHand_status(Meddle_status.FALSE.getCode());
-                        etl_job_hand.setEvent_id(EventId);
-                        etl_job_hand.setEtl_hand_type(Meddle_type.SYS_ORIGINAL.getCode());
-                        break;
-                    case 2:
-                        etl_job_hand.setEvent_id(EventId2);
-                        etl_job_hand.setHand_status(Meddle_status.TRUE.getCode());
-                        etl_job_hand.setEtl_hand_type(Meddle_type.SYS_PAUSE.getCode());
-                        break;
-                    case 3:
-                        etl_job_hand.setHand_status(Meddle_status.DONE.getCode());
-                        etl_job_hand.setEvent_id(EventId3);
-                        etl_job_hand.setEtl_hand_type(Meddle_type.SYS_RESUME.getCode());
-                        break;
-                    case 4:
-                        etl_job_hand.setHand_status(Meddle_status.RUNNING.getCode());
-                        etl_job_hand.setEvent_id(EventId4);
-                        etl_job_hand.setEtl_hand_type(Meddle_type.SYS_SHIFT.getCode());
-                        break;
-                    case 5:
-                        etl_job_hand.setHand_status(Meddle_status.ERROR.getCode());
-                        etl_job_hand.setEvent_id(EventId5);
-                        etl_job_hand.setEtl_hand_type(Meddle_type.SYS_STOP.getCode());
-                        break;
-                    case 6:
-                        etl_job_hand.setHand_status(Meddle_status.RUNNING.getCode());
-                        etl_job_hand.setEvent_id(EventId6);
-                        etl_job_hand.setEtl_hand_type(Meddle_type.SYS_STOP.getCode());
-                        break;
-                }
-                num = etl_job_hand.add(db);
-                assertThat("测试数据etl_job_hand初始化", num, is(1));
-            }
+            etl_job_hand.setEtl_sys_cd(EtlSysCd);
+            etl_job_hand.setEtl_job("[NOTHING]");
+            etl_job_hand.setMain_serv_sync(Main_Server_Sync.YES.getCode());
+            etl_job_hand.setHand_status(Meddle_status.FALSE.getCode());
+            etl_job_hand.setEvent_id(EventId);
+            etl_job_hand.setEtl_hand_type(Meddle_type.SYS_ORIGINAL.getCode());
+            num = etl_job_hand.add(db);
+            assertThat("测试数据etl_job_hand初始化", num, is(1));
             // 7.构造etl_job_hand_his表测试数据
             Etl_job_hand_his etl_job_hand_his = new Etl_job_hand_his();
-            for (int i = 1; i < 6; i++) {
-                etl_job_hand_his.setEtl_sys_cd(EtlSysCd);
-                etl_job_hand_his.setEtl_job("测试作业" + i);
-                etl_job_hand_his.setMain_serv_sync(Main_Server_Sync.YES.getCode());
-                switch (i) {
-                    case 1:
-                        etl_job_hand_his.setHand_status(Meddle_status.FALSE.getCode());
-                        etl_job_hand_his.setEvent_id(EventId);
-                        etl_job_hand_his.setEtl_hand_type(Meddle_type.SYS_ORIGINAL.getCode());
-                        break;
-                    case 2:
-                        etl_job_hand_his.setEvent_id(EventId2);
-                        etl_job_hand_his.setHand_status(Meddle_status.TRUE.getCode());
-                        etl_job_hand_his.setEtl_hand_type(Meddle_type.SYS_PAUSE.getCode());
-                        break;
-                    case 3:
-                        etl_job_hand_his.setHand_status(Meddle_status.DONE.getCode());
-                        etl_job_hand_his.setEvent_id(EventId3);
-                        etl_job_hand_his.setEtl_hand_type(Meddle_type.SYS_RESUME.getCode());
-                        break;
-                    case 4:
-                        etl_job_hand_his.setHand_status(Meddle_status.RUNNING.getCode());
-                        etl_job_hand_his.setEvent_id(EventId4);
-                        etl_job_hand_his.setEtl_hand_type(Meddle_type.SYS_SHIFT.getCode());
-                        break;
-                    case 5:
-                        etl_job_hand_his.setHand_status(Meddle_status.ERROR.getCode());
-                        etl_job_hand_his.setEvent_id(EventId5);
-                        etl_job_hand_his.setEtl_hand_type(Meddle_type.SYS_STOP.getCode());
-                        break;
+            for (int i = 0; i < 2; i++) {
+                if (i == 0) {
+                    etl_job_hand_his.setEtl_sys_cd(EtlSysCd);
+                    etl_job_hand_his.setEtl_job("[NOTHING]");
+                    etl_job_hand_his.setMain_serv_sync(Main_Server_Sync.YES.getCode());
+                    etl_job_hand_his.setHand_status(Meddle_status.ERROR.getCode());
+                    etl_job_hand_his.setEvent_id(HisEventId);
+                    etl_job_hand_his.setEtl_hand_type(Meddle_type.SYS_ORIGINAL.getCode());
+                } else {
+                    etl_job_hand_his.setEtl_sys_cd(EtlSysCd);
+                    etl_job_hand_his.setEtl_job("[NOTHING]");
+                    etl_job_hand_his.setMain_serv_sync(Main_Server_Sync.YES.getCode());
+                    etl_job_hand_his.setHand_status(Meddle_status.DONE.getCode());
+                    etl_job_hand_his.setEvent_id(HisEventId2);
+                    etl_job_hand_his.setEtl_hand_type(Meddle_type.SYS_SHIFT.getCode());
                 }
                 num = etl_job_hand_his.add(db);
                 assertThat("测试数据etl_job_hand_his初始化", num, is(1));
@@ -374,11 +257,11 @@ public class SysLevelInterventionActionTest extends WebBaseTestCase {
             logicStep = "1.正常的数据访问1，数据都正常" +
                     "2.错误的数据访问1，etl_sys_cd不存在")
     @Test
-    public void searchSysLevelInterventionInfo() {
+    public void searchSystemBatchConditions() {
         // 1.正常的数据访问1，数据都正常
         String bodyString = new HttpClient()
                 .addData("etl_sys_cd", EtlSysCd)
-                .post(getActionUrl("searchSysLevelInterventionInfo"))
+                .post(getActionUrl("searchSystemBatchConditions"))
                 .getBodyString();
         ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
@@ -388,17 +271,17 @@ public class SysLevelInterventionActionTest extends WebBaseTestCase {
         assertThat("dhwcs", is(etlJobCurr.get("etl_sys_name")));
         assertThat(DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate()).toString(),
                 is(etlJobCurr.get("curr_bath_date")));
-        assertThat(String.valueOf(1), is(etlJobCurr.get("stop_num").toString()));
-        assertThat(String.valueOf(1), is(etlJobCurr.get("done_num").toString()));
+        assertThat(String.valueOf(0), is(etlJobCurr.get("stop_num").toString()));
+        assertThat(String.valueOf(0), is(etlJobCurr.get("done_num").toString()));
         assertThat(String.valueOf(0), is(etlJobCurr.get("alarm_num").toString()));
         assertThat(String.valueOf(1), is(etlJobCurr.get("error_num").toString()));
-        assertThat(String.valueOf(1), is(etlJobCurr.get("running_num").toString()));
-        assertThat(String.valueOf(1), is(etlJobCurr.get("waiting_num").toString()));
-        assertThat(String.valueOf(1), is(etlJobCurr.get("pending_num").toString()));
+        assertThat(String.valueOf(0), is(etlJobCurr.get("running_num").toString()));
+        assertThat(String.valueOf(0), is(etlJobCurr.get("waiting_num").toString()));
+        assertThat(String.valueOf(0), is(etlJobCurr.get("pending_num").toString()));
         // 2.错误的数据访问1，etl_sys_cd不存在
         bodyString = new HttpClient()
                 .addData("etl_sys_cd", "zygycs")
-                .post(getActionUrl("searchSysLevelInterventionInfo"))
+                .post(getActionUrl("searchSystemBatchConditions"))
                 .getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
@@ -418,47 +301,13 @@ public class SysLevelInterventionActionTest extends WebBaseTestCase {
         ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
         assertThat(ar.isSuccess(), is(true));
-        List<Map<String, Object>> currInterventionList = (List<Map<String, Object>>) ar.getData();
-        for (Map<String, Object> map : currInterventionList) {
-            String event_id = map.get("event_id").toString();
-            if (event_id.equals(EventId)) {
-                assertThat(EtlSysCd, is(map.get("etl_sys_cd")));
-                assertThat(Meddle_status.FALSE.getCode(), is(map.get("hand_status")));
-                assertThat(Meddle_type.SYS_ORIGINAL.getCode(), is(map.get("etl_hand_type")));
-                assertThat("任务测试1(zygyrwcs)", is(map.get("subsysname")));
-                assertThat("测试作业1", is(map.get("etl_job")));
-            } else if (event_id.equals(EventId2)) {
-                assertThat(EtlSysCd, is(map.get("etl_sys_cd")));
-                assertThat(Meddle_status.TRUE.getCode(), is(map.get("hand_status")));
-                assertThat(Meddle_type.SYS_PAUSE.getCode(), is(map.get("etl_hand_type")));
-                assertThat("任务测试1(zygyrwcs)", is(map.get("subsysname")));
-                assertThat("测试作业2", is(map.get("etl_job")));
-            } else if (event_id.equals(EventId3)) {
-                assertThat(EtlSysCd, is(map.get("etl_sys_cd")));
-                assertThat(Meddle_status.DONE.getCode(), is(map.get("hand_status")));
-                assertThat(Meddle_type.SYS_RESUME.getCode(), is(map.get("etl_hand_type")));
-                assertThat("任务测试1(zygyrwcs)", is(map.get("subsysname")));
-                assertThat("测试作业3", is(map.get("etl_job")));
-            } else if (event_id.equals(EventId4)) {
-                assertThat(EtlSysCd, is(map.get("etl_sys_cd")));
-                assertThat(Meddle_status.RUNNING.getCode(), is(map.get("hand_status")));
-                assertThat(Meddle_type.SYS_SHIFT.getCode(), is(map.get("etl_hand_type")));
-                assertThat("任务测试2(zygyrwcs2)", is(map.get("subsysname")));
-                assertThat("测试作业4", is(map.get("etl_job")));
-            } else if (event_id.equals(EventId5)) {
-                assertThat(EtlSysCd, is(map.get("etl_sys_cd")));
-                assertThat(Meddle_status.ERROR.getCode(), is(map.get("hand_status")));
-                assertThat(Meddle_type.SYS_STOP.getCode(), is(map.get("etl_hand_type")));
-                assertThat("任务测试2(zygyrwcs2)", is(map.get("subsysname")));
-                assertThat("测试作业5", is(map.get("etl_job")));
-            }else if (event_id.equals(EventId6)) {
-                assertThat(EtlSysCd, is(map.get("etl_sys_cd")));
-                assertThat(Meddle_status.RUNNING.getCode(), is(map.get("hand_status")));
-                assertThat(Meddle_type.SYS_STOP.getCode(), is(map.get("etl_hand_type")));
-                assertThat("任务测试2(zygyrwcs2)", is(map.get("subsysname")));
-                assertThat("测试作业6", is(map.get("etl_job")));
-            }
-        }
+        Map<String, Object> currInterventionMap = ar.getDataForMap();
+        assertThat(EtlSysCd, is(currInterventionMap.get("etl_sys_cd")));
+        assertThat(EventId, is(currInterventionMap.get("event_id")));
+        assertThat(Meddle_status.FALSE.getCode(), is(currInterventionMap.get("hand_status")));
+        assertThat(Meddle_type.SYS_ORIGINAL.getCode(), is(currInterventionMap.get("etl_hand_type")));
+        assertThat("任务测试(zygyrwcs)", is(currInterventionMap.get("subsysname")));
+        assertThat("[NOTHING]", is(currInterventionMap.get("etl_job")));
         // 2.错误的数据访问1，etl_sys_cd不存在
         bodyString = new HttpClient()
                 .addData("etl_sys_cd", "zygycs")
@@ -486,27 +335,21 @@ public class SysLevelInterventionActionTest extends WebBaseTestCase {
         assertThat(ar.isSuccess(), is(true));
         Map<Object, Object> hisIntervention = ar.getDataForMap();
         List<Map<String, Object>> handHisList = (List<Map<String, Object>>) hisIntervention.get("handHisList");
-        assertThat(handHisList.size(), is(3));
+        assertThat(handHisList.size(), is(2));
         for (Map<String, Object> map : handHisList) {
-            String event_id = map.get("event_id").toString();
-            if (event_id.equals(EventId)) {
+            String his_event_id = map.get("event_id").toString();
+            if (his_event_id.equals(HisEventId)) {
                 assertThat(EtlSysCd, is(map.get("etl_sys_cd")));
-                assertThat(Meddle_status.FALSE.getCode(), is(map.get("hand_status")));
+                assertThat(Meddle_status.ERROR.getCode(), is(map.get("hand_status")));
                 assertThat(Meddle_type.SYS_ORIGINAL.getCode(), is(map.get("etl_hand_type")));
-                assertThat("任务测试1(zygyrwcs)", is(map.get("subsysname")));
-                assertThat("测试作业1", is(map.get("etl_job")));
-            } else if (event_id.equals(EventId2)) {
-                assertThat(EtlSysCd, is(map.get("etl_sys_cd")));
-                assertThat(Meddle_status.TRUE.getCode(), is(map.get("hand_status")));
-                assertThat(Meddle_type.SYS_PAUSE.getCode(), is(map.get("etl_hand_type")));
-                assertThat("任务测试1(zygyrwcs)", is(map.get("subsysname")));
-                assertThat("测试作业2", is(map.get("etl_job")));
-            } else if (event_id.equals(EventId3)) {
+                assertThat("任务测试(zygyrwcs)", is(map.get("subsysname")));
+                assertThat("[NOTHING]", is(map.get("etl_job")));
+            } else if (his_event_id.equals(HisEventId2)) {
                 assertThat(EtlSysCd, is(map.get("etl_sys_cd")));
                 assertThat(Meddle_status.DONE.getCode(), is(map.get("hand_status")));
-                assertThat(Meddle_type.SYS_RESUME.getCode(), is(map.get("etl_hand_type")));
-                assertThat("任务测试1(zygyrwcs)", is(map.get("subsysname")));
-                assertThat("测试作业3", is(map.get("etl_job")));
+                assertThat(Meddle_type.SYS_SHIFT.getCode(), is(map.get("etl_hand_type")));
+                assertThat("任务测试(zygyrwcs)", is(map.get("subsysname")));
+                assertThat("[NOTHING]", is(map.get("etl_job")));
             }
         }
         // 2.错误的数据访问1，etl_sys_cd不存在
@@ -528,14 +371,14 @@ public class SysLevelInterventionActionTest extends WebBaseTestCase {
                     "4.错误的数据访问2，etl_hand_type不存在" +
                     "5.错误的数据访问3，工程下有作业正在干预")
     @Test
-    public void SysLevelInterventionOperation() {
+    public void SysLevelInterventionOperate() {
         try (DatabaseWrapper db = new DatabaseWrapper()) {
             // 1.正常的数据访问1，数据都正常，重跑或续跑
             String bodyString = new HttpClient()
                     .addData("etl_sys_cd", EtlSysCd2)
                     .addData("etl_hand_type", Meddle_type.SYS_ORIGINAL.getCode())
                     .addData("curr_bath_date", DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate()).toString())
-                    .post(getActionUrl("SysLevelInterventionOperation"))
+                    .post(getActionUrl("SysLevelInterventionOperate"))
                     .getBodyString();
             ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                     .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
@@ -556,7 +399,7 @@ public class SysLevelInterventionActionTest extends WebBaseTestCase {
                     .addData("etl_sys_cd", EtlSysCd3)
                     .addData("etl_hand_type", Meddle_type.SYS_STOP.getCode())
                     .addData("curr_bath_date", DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate()).toString())
-                    .post(getActionUrl("SysLevelInterventionOperation"))
+                    .post(getActionUrl("SysLevelInterventionOperate"))
                     .getBodyString();
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                     .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
@@ -577,7 +420,7 @@ public class SysLevelInterventionActionTest extends WebBaseTestCase {
                     .addData("etl_sys_cd", "xtjgycs")
                     .addData("etl_hand_type", Meddle_type.SYS_ORIGINAL.getCode())
                     .addData("curr_bath_date", DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate()).toString())
-                    .post(getActionUrl("SysLevelInterventionOperation"))
+                    .post(getActionUrl("SysLevelInterventionOperate"))
                     .getBodyString();
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                     .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
@@ -587,7 +430,7 @@ public class SysLevelInterventionActionTest extends WebBaseTestCase {
                     .addData("etl_sys_cd", EtlSysCd)
                     .addData("etl_hand_type", "abc")
                     .addData("curr_bath_date", DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate()).toString())
-                    .post(getActionUrl("SysLevelInterventionOperation"))
+                    .post(getActionUrl("SysLevelInterventionOperate"))
                     .getBodyString();
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                     .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
@@ -597,7 +440,7 @@ public class SysLevelInterventionActionTest extends WebBaseTestCase {
                     .addData("etl_sys_cd", EtlSysCd)
                     .addData("etl_hand_type", Meddle_type.SYS_RESUME.getCode())
                     .addData("curr_bath_date", DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate()).toString())
-                    .post(getActionUrl("SysLevelInterventionOperation"))
+                    .post(getActionUrl("SysLevelInterventionOperate"))
                     .getBodyString();
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                     .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));

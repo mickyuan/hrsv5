@@ -27,6 +27,7 @@ import java.util.Map;
 
 @DocClass(desc = "作业调度配置管理", author = "dhw", createdate = "2019/10/28 11:36")
 public class JobConfiguration extends BaseAction {
+    // 拼接sql对象
     private static final SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
     // 作业系统参数变量名称前缀
     private static final String PREFIX = "!";
@@ -799,15 +800,16 @@ public class JobConfiguration extends BaseAction {
                     "3.验证当前用户下的工程是否存在" +
                     "4.如果更新前调度频率为频率时old_pre_etl_job,old_dispatch_type可以为空，否则不能为空！" +
                     "5.判断调度频率是否为频率，如果是频率没有依赖，也没有调度触发方式" +
-                    "6.判断调度触发方式改变时，修改前的调度触发方式是依赖还是定时" +
-                    "6.1修改前的调度触发方式是依赖，判断调度触发方式改变时，修改后的调度触发方式是依赖还是定时" +
-                    "6.1.1调度触发方式改变时，修改后的调度触发方式是依赖，依赖关系发生变化，现在只是更改依赖（依赖-依赖）" +
-                    "6.1.2调度触发方式改变时，修改后的调度方式是定时（依赖-定时），直接删除原依赖关系" +
-                    "6.2调度触发方式改变时，修改前的调度触发方式是定时,判断修改后的调度方式为依赖还是定时" +
-                    "6.2.1调度触发方式改变时，修改后的调度触发方式定时  将定时更改为依赖,则新增，（定时---->依赖）" +
-                    "7.判断作业程序类型是否为yarn或者thrift类型，如果是，进行资源分配处理" +
-                    "8.根据调度频率不同封装作业定义实体对象的不同属性" +
-                    "9.保存更新的作业信息")
+                    "5.1判断修改前的调度触发方式是依赖还是定时" +
+                    "5.1.1修改前的调度触发方式是依赖，判断修改后的调度触发方式是依赖还是定时" +
+                    "5.1.1.2修改前上游作业名称不为空，修改后的上游作业名称为空，删除依赖" +
+                    "5.1.1.3修改前上游作业名称为空，修改后的上游作业名称不为空，新增依赖" +
+                    "5.1.2调度触发方式改变时，修改后的调度方式是定时（依赖-定时），直接删除原依赖关系" +
+                    "5.2修改前的调度触发方式是定时,判断修改后的调度方式为依赖还是定时" +
+                    "5.2.1修改后的调度触发方式定时  将定时更改为依赖,则新增，（定时---->依赖）" +
+                    "6.判断作业程序类型是否为yarn或者thrift类型，如果是，进行资源分配处理" +
+                    "7.根据调度频率不同封装作业定义实体对象的不同属性" +
+                    "8.保存更新的作业信息")
     @Param(name = "etl_job_def", desc = "作业定义实体对象", range = "与数据库对应表字段规则一致", isBean = true)
     @Param(name = "etl_dependency", desc = "作业依赖实体对象", range = "与数据库对应表字段规则一致", isBean = true)
     @Param(name = "old_disp_freq", desc = "修改前的调度频率（使用Dispatch_Frequency）代码项", range = "无限制")
@@ -833,41 +835,51 @@ public class JobConfiguration extends BaseAction {
         }
         // 5.判断调度频率是否为频率，如果是频率没有依赖，也没有调度触发方式
         if (Dispatch_Frequency.ofEnumByCode(etl_job_def.getDisp_freq()) != Dispatch_Frequency.PinLv) {
-            // 6.判断调度触发方式改变时，修改前的调度触发方式是依赖还是定时
+            // 5.1判断修改前的调度触发方式是依赖还是定时
             if (Dispatch_Type.DEPENDENCE == Dispatch_Type.ofEnumByCode(old_dispatch_type)) {
-                // 6.1修改前的调度触发方式是依赖，判断调度触发方式改变时，修改后的调度触发方式是依赖还是定时
+                // 5.1.1修改前的调度触发方式是依赖，判断修改后的调度触发方式是依赖还是定时
                 if (Dispatch_Type.DEPENDENCE == Dispatch_Type.ofEnumByCode(etl_job_def.getDisp_type())) {
-                    // 6.1.1调度触发方式改变时，修改后的调度触发方式是依赖，依赖关系发生变化，现在只是更改依赖（依赖-依赖）
-                    if (!old_pre_etl_job.equals(etl_dependency.getPre_etl_job())) {
-                        DboExecute.updatesOrThrow("更新作业时更新依赖失败！", "update "
-                                        + Etl_dependency.TableName + " set etl_job=?,pre_etl_sys_cd=?," +
-                                        " pre_etl_job=?,status=? where etl_job=? AND etl_sys_cd=? and " +
-                                        " pre_etl_job=?", etl_dependency.getEtl_job(),
-                                etl_dependency.getPre_etl_sys_cd(), etl_dependency.getPre_etl_job(),
-                                etl_dependency.getStatus(), etl_dependency.getEtl_job(),
-                                etl_dependency.getEtl_sys_cd(), old_pre_etl_job);
+                    if (StringUtil.isNotBlank(old_pre_etl_job) &&
+                            StringUtil.isNotBlank(etl_dependency.getPre_etl_job())) {
+                        // 5.1.1.1修改前上游作业名称不为空，修改后上游作业不为空，更改依赖（依赖-依赖）
+                        if (!old_pre_etl_job.equals(etl_dependency.getPre_etl_job())) {
+                            DboExecute.updatesOrThrow("更新作业时更新依赖失败！", "update "
+                                            + Etl_dependency.TableName + " set etl_job=?,pre_etl_sys_cd=?," +
+                                            " pre_etl_job=?,status=? where etl_job=? AND etl_sys_cd=? and " +
+                                            " pre_etl_job=?", etl_dependency.getEtl_job(),
+                                    etl_dependency.getPre_etl_sys_cd(), etl_dependency.getPre_etl_job(),
+                                    etl_dependency.getStatus(), etl_dependency.getEtl_job(),
+                                    etl_dependency.getEtl_sys_cd(), old_pre_etl_job);
+                        }
+                    } else if (StringUtil.isNotBlank(old_pre_etl_job) &&
+                            StringUtil.isBlank(etl_dependency.getPre_etl_job())) {
+                        // 5.1.1.2修改前上游作业名称不为空，修改后的上游作业名称为空，删除依赖
+                        deleteEtlDependency(etl_dependency.getEtl_sys_cd(), etl_dependency.getPre_etl_sys_cd(),
+                                etl_dependency.getEtl_job(), etl_dependency.getPre_etl_job());
+                    } else if (StringUtil.isBlank(old_pre_etl_job) &&
+                            StringUtil.isNotBlank(etl_dependency.getPre_etl_job())) {
+                        // 5.1.1.3修改前上游作业名称为空，修改后的上游作业名称不为空，新增依赖
+                        dependToEtlJob(etl_dependency);
                     }
                 } else {
-                    // 6.1.2调度触发方式改变时，修改后的调度方式是定时（依赖-定时），直接删除原依赖关系
-                    DboExecute.deletesOrThrow("作业编辑为定时，删除依赖失败!", "DELETE FROM "
-                                    + Etl_dependency.TableName + " WHERE etl_sys_cd = ? AND etl_job = ? " +
-                                    "AND pre_etl_job = ?", etl_dependency.getEtl_sys_cd(),
-                            etl_dependency.getEtl_job(), old_pre_etl_job);
+                    // 5.1.2调度触发方式改变时，修改后的调度方式是定时（依赖-定时），直接删除原依赖关系
+                    deleteEtlDependency(etl_dependency.getEtl_sys_cd(), etl_dependency.getPre_etl_sys_cd(),
+                            etl_dependency.getEtl_job(), etl_dependency.getPre_etl_job());
                 }
             } else {
-                // 6.2调度触发方式改变时，修改前的调度触发方式是定时,判断修改后的调度方式为依赖还是定时
+                // 5.2修改前的调度触发方式是定时,判断修改后的调度方式为依赖还是定时
                 if (Dispatch_Type.DEPENDENCE == Dispatch_Type.ofEnumByCode(etl_job_def.getDisp_type())) {
-                    // 6.2.1调度触发方式改变时，修改后的调度触发方式定时  将定时更改为依赖,则新增，（定时---->依赖）
+                    // 5.2.1修改后的调度触发方式定时  将定时更改为依赖,则新增，（定时---->依赖）
                     dependToEtlJob(etl_dependency);
                 }
             }
         }
-        // 7.判断作业程序类型是否为yarn或者thrift类型，如果是，进行资源分配处理
+        // 6.判断作业程序类型是否为yarn或者thrift类型，如果是，进行资源分配处理
         isThriftOrYarnProType(etl_job_def.getEtl_sys_cd(), etl_job_def.getEtl_job(),
                 etl_job_def.getPro_type());
-        // 8.根据调度频率不同封装作业定义实体对象的不同属性
+        // 7.根据调度频率不同封装作业定义实体对象的不同属性
         isDispatchFrequency(etl_job_def);
-        // 9.保存更新的作业信息
+        // 8.保存更新的作业信息
         etl_job_def.setUpd_time(DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate()) + " " +
                 DateUtil.parseStr2TimeWith6Char(DateUtil.getSysTime()));
         etl_job_def.update(Dbo.db());
@@ -1578,12 +1590,49 @@ public class JobConfiguration extends BaseAction {
         }
     }
 
+    @Method(desc = "批量删除作业依赖",
+            logicStep = "1.数据可访问权限处理方式，该方法不需要权限验证" +
+                    "2.验证当前用户下的工程是否存在" +
+                    "3.验证当前用户下的上游工程是否存在" +
+                    "4.获取存放作业依赖关系的集合" +
+                    "5.遍历获取所有的依赖作业名称" +
+                    "6.循环删除作业依赖关系")
+    @Param(name = "etl_sys_cd", desc = "工程代码", range = "新增工程时生成")
+    @Param(name = "pre_etl_sys_cd", desc = "上游工程代码", range = "新增工程时生成")
+    @Param(name = "batchEtlJob", desc = "批量作业编号（以作业名称etl_job,pre_etl_job为key,对应的值为value格式的json字符串）",
+            range = "无限制")
+    public void batchDeleteEtlDependency(String etl_sys_cd, String pre_etl_sys_cd, String batchEtlJob) {
+        // 1.数据可访问权限处理方式，该方法不需要权限验证
+        // 2.验证当前用户下的工程是否存在
+        if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
+            throw new BusinessException("当前工程已不存在！");
+        }
+        // 3.验证当前用户下的上游工程是否存在
+        if (!ETLJobUtil.isEtlSysExist(pre_etl_sys_cd, getUserId())) {
+            throw new BusinessException("当前上游工程已不存在！");
+        }
+        Type type = new TypeReference<List<Map<String, String>>>() {
+        }.getType();
+        // 4.获取存放作业依赖关系的集合
+        List<Map<String, String>> etlJobList = JsonUtil.toObject(batchEtlJob, type);
+        // 5.遍历所有的依赖作业名称
+        for (Map<String, String> map : etlJobList) {
+            // 6.循环删除作业依赖关系
+            DboExecute.deletesOrThrow("删除作业依赖失败，etl_sys_cd=" + etl_sys_cd + ",etl_job="
+                            + map.get("etl_job") + ",pre_etl_job=" + map.get("pre_etl_job"), "delete from "
+                            + Etl_dependency.TableName + " where etl_sys_cd=? AND pre_etl_sys_cd=?" +
+                            " AND etl_job=? and pre_etl_job=?",
+                    etl_sys_cd, pre_etl_sys_cd, map.get("etl_job"), map.get("pre_etl_job"));
+        }
+    }
+
     @Method(desc = "更新保存作业依赖",
             logicStep = "1.数据可访问权限处理方式，通过user_id进行权限验证" +
                     "2.验证作业依赖实体字段的合法性" +
                     "3.验证当前用户下的工程是否存在" +
-                    "4.判断作业依赖是否存在，存在就不需要更新" +
-                    "5.更新作业依赖")
+                    "4.判断更改依赖前后作业名称是否相同，依赖作业名称不能修改" +
+                    "5.判断作业依赖是否存在，存在就不需要更新" +
+                    "6.更新作业依赖")
     @Param(name = "etlDependency", desc = "作业依赖实体对象", range = "与数据库对应表字段规则一致", isBean = true)
     @Param(name = "oldEtlJob", desc = "更新前作业名称", range = "新增作业时生成")
     @Param(name = "oldPreEtlJob", desc = "更新前上游作业名称", range = "新增作业时生成")
@@ -1595,12 +1644,16 @@ public class JobConfiguration extends BaseAction {
         if (!ETLJobUtil.isEtlSysExist(etlDependency.getEtl_sys_cd(), getUserId())) {
             throw new BusinessException("当前工程已不存在！");
         }
-        // 4.判断作业依赖是否存在，存在就不需要更新
+        // 4.判断更改依赖前后作业名称是否相同，依赖作业名称不能修改
+        if (!etlDependency.getEtl_job().equals(oldEtlJob)) {
+            throw new BusinessException("更改依赖时作业名称不能修改！");
+        }
+        // 5.判断作业依赖是否存在，存在就不需要更新
         if (ETLJobUtil.isEtlDependencyExist(etlDependency.getEtl_sys_cd(), etlDependency.getPre_etl_sys_cd(),
                 etlDependency.getEtl_job(), etlDependency.getPre_etl_job())) {
             throw new BusinessException("当前工程对应作业的依赖已存在！");
         }
-        // 5.更新作业依赖
+        // 6.更新作业依赖
         DboExecute.updatesOrThrow("更新作业依赖失败，etl_sys_cd=" + etlDependency.getEtl_sys_cd()
                         + ",pre_etl_sys_cd=" + etlDependency.getPre_etl_sys_cd() +
                         ",etl_job=" + etlDependency.getEtl_job() + ",pre_etl_job=" + etlDependency.getPre_etl_job(),
@@ -1613,49 +1666,27 @@ public class JobConfiguration extends BaseAction {
     @Method(desc = "删除作业依赖",
             logicStep = "1.数据可访问权限处理方式，该方法不需要权限验证" +
                     "2.验证当前用户下的工程是否存在" +
-                    "3.删除作业依赖")
+                    "3.验证当前用户下的工程是否存在" +
+                    "4.删除作业依赖")
     @Param(name = "etl_sys_cd", desc = "工程代码", range = "新增工程时生成")
+    @Param(name = "pre_etl_sys_cd", desc = "上游工程代码", range = "新增工程时生成")
     @Param(name = "etl_job", desc = "作业名称", range = "新增作业时生成")
     @Param(name = "pre_etl_job", desc = "上游作业名称", range = "新增作业时生成")
-    public void deleteEtlDependency(String etl_sys_cd, String etl_job, String pre_etl_job) {
+    public void deleteEtlDependency(String etl_sys_cd, String pre_etl_sys_cd, String etl_job, String pre_etl_job) {
         // 1.数据可访问权限处理方式，该方法不需要权限验证
         // 2.验证当前用户下的工程是否存在
         if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
             throw new BusinessException("当前工程已不存在！");
         }
-        // 3.删除作业依赖
+        // 3.验证当前用户下的工程是否存在
+        if (!ETLJobUtil.isEtlSysExist(pre_etl_sys_cd, getUserId())) {
+            throw new BusinessException("当前上游工程已不存在！");
+        }
+        // 4.删除作业依赖
         DboExecute.deletesOrThrow("删除作业依赖失败，etl_sys_cd=" + etl_sys_cd +
-                ",etl_job=" + etl_job, "delete from " + Etl_dependency.TableName +
-                " where etl_sys_cd=? AND etl_job=? AND pre_etl_job=?", etl_sys_cd, etl_job, pre_etl_job);
-    }
-
-    @Method(desc = "批量删除作业依赖",
-            logicStep = "1.数据可访问权限处理方式，该方法不需要权限验证" +
-                    "2.验证当前用户下的工程是否存在" +
-                    "3.获取所有要删除的依赖作业名称" +
-                    "4.遍历所有的依赖作业名称" +
-                    "5.循环删除作业依赖关系")
-    @Param(name = "etl_sys_cd", desc = "工程代码", range = "新增工程时生成")
-    @Param(name = "batchEtlJob", desc = "批量作业编号（以作业名称为key,上游作业名称为value格式的json字符串）",
-            range = "无限制")
-    public void batchDeleteEtlDependency(String etl_sys_cd, String batchEtlJob) {
-        // 1.数据可访问权限处理方式，该方法不需要权限验证
-        // 2.验证当前用户下的工程是否存在
-        if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
-            throw new BusinessException("当前工程已不存在！");
-        }
-        Type type = new TypeReference<Map<String, String>>() {
-        }.getType();
-        // 获取存放作业依赖关系的集合
-        Map<String, String> etlJobMap = JsonUtil.toObject(batchEtlJob, type);
-        // 4.遍历所有的依赖作业名称,key为作业名称，value为上游作业名称
-        for (Map.Entry<String, String> entry : etlJobMap.entrySet()) {
-            // 5.循环删除作业依赖关系
-            DboExecute.deletesOrThrow("删除作业依赖失败，etl_sys_cd=" + etl_sys_cd + ",etl_job="
-                            + entry.getKey() + ",pre_etl_job=" + entry.getValue(), "delete from "
-                            + Etl_dependency.TableName + " where etl_sys_cd=? AND etl_job=? and pre_etl_job=?",
-                    etl_sys_cd, entry.getKey(), entry.getValue());
-        }
+                        ",etl_job=" + etl_job, "delete from " + Etl_dependency.TableName +
+                        " where etl_sys_cd=? AND pre_etl_sys_cd=? AND etl_job=? AND pre_etl_job=?",
+                etl_sys_cd, pre_etl_sys_cd, etl_job, pre_etl_job);
     }
 
     public void uploadFile() {
