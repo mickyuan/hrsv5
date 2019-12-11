@@ -81,16 +81,37 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 	 *      9、table_storage_info表测试数据：
 	 *          9-1、storage_id为1234，文件格式为CSV，存储方式为替换，table_id为sys_user表的ID
 	 *          9-2、storage_id为5678，文件格式为定长文件，存储方式为追加，table_id为code_info表的ID
+	 *          9-3、storage_id为1273，文件格式为CSV，存储方式为替换，table_id为data_source表的ID
+	 *          9-4、storage_id为4288，文件格式为定长文件，存储方式为追加，table_id为agent_info表的ID
 	 *      10、table_clean表测试数据：
 	 *          10-1、模拟数据对sys_user表进行整表清洗，分别做了列合并和首尾去空
 	 *          10-2、模拟数据对code_info表进行了整表清洗，分别做了字符替换字符补齐，将所有列值的abc全部替换为def，将所有列值的前面补上beyond字符串
+	 *          10-3、模拟数据对agent_info表进行了整表清洗，分别做了字符替换字符补齐，将所有列值的qwe全部替换为asd，将所有列值的前面补上hongzhi字符串
+	 *          10-4、模拟数据对data_source表进行了整表清洗，分别做了字符替换字符补齐，将所有列值的uio全部替换为jkl，将所有列值的前面补上beyond_hongzhi字符串
 	 *      11、column_merge表测试数据：对sys_user设置了两个列合并，对code_info表设置了一个列合并
 	 *          11-1、模拟数据将sys_user表的user_id和create_id两列合并为user_create_id
 	 *          11-2、模拟数据将sys_user表的user_name和user_password两列合并为user_name_password
 	 *          11-3、模拟数据将code_info表的ci_sp_classname和ci_sp_name两列合并为ci_sp_classname_name
 	 *      12、data_extraction_def表测试数据：
-	 *          12-1、sys_user:抽取并入库，需要表头，落地编码为UTF-8，数据落地格式为ORC，数据落地目录为/root
-	 *          12-2、code_info:抽取并入库，不需要表头，落地编码为UTF-8，数据落地格式为PARQUET，数据落地目录为/home/hyshf
+	 *          12-1、sys_user:仅抽取，需要表头，落地编码为UTF-8，数据落地格式为ORC，数据落地目录为/root
+	 *          12-2、code_info:仅抽取，不需要表头，落地编码为UTF-8，数据落地格式为PARQUET，数据落地目录为/home/hyshf
+	 *          12-3、data_source:抽取并入库，不需要表头，落地编码为UTF-8，数据落地格式为CSV
+	 *          12-4、agent_info:抽取并入库，不需要表头，落地编码为UTF-8，数据落地格式为非定长，列分隔符为"\r"，行分隔符为"|"
+	 *      13、data_relation_table表测试数据：
+	 *          13-1、sys_user表保存进入关系型数据库
+	 *          13-2、code_info表保存进入关系型数据库
+	 *          13-3、data_source表保存进入关系型数据库
+	 *          13-4、agent_info表保存进入关系型数据库
+	 *      14、由于该Action类的测试连接功能需要与agent端交互，所以需要配置一条agent_down_info表的记录，用于找到http访问的完整url
+	 *      15、column_merge表测试数据:
+	 *          15-1、给datasource_number设置字符前补齐，补齐字符为wzc
+	 *          15-2、给agent_name设置字符后补齐，补齐字符为空格
+	 *          15-3、给user_mobile设置字符前补齐，补齐字符为wzc
+	 *          15-4、给ci_sp_code设置字符后补齐，补齐字符为空格
+	 *      16、column_storage_info表测试数据:
+	 *          16-1、data_source表中的source_id字段作为关系型数据库主键
+	 *          16-2、sys_user表中的user_id字段作为关系型数据库主键
+	 *
 	 * @Param: 无
 	 * @return: 无
 	 *
@@ -1143,6 +1164,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 	 * 注意，由于给code_info表构造了data_extraction_def表、table_clean表、table_srorage_info表、column_merge表、table_column表信息
 	 * 因此对这个表的采集数据进行修改，要断言修改成功后这5张表的数据是否都被修改了。(不需要和agent进行交互)
 	 * 正确数据访问4：在database_id为1001的数据库采集任务下构造新增采集ftp_collect表和object_collect表的数据，不选择采集列和列排序，不设置并行抽取(需要和agent交互)
+	 * 正确数据访问5：在database_id为1001的数据库采集任务,不传tableInfoString和collTbConfParamString
 	 * 错误的数据访问1：构造缺少表名的采集数据
 	 * 错误的数据访问2：构造缺少表中文名的采集数据
 	 * 错误的数据访问3：构造设置了并行抽取，但没有设置并行抽取SQL的访问方式
@@ -1825,6 +1847,68 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 	}
 
 	/*
+	 * 正确数据访问5：在database_id为1001的数据库采集任务,不传tableInfoString和collTbConfParamString
+	 * 模拟修改采集表，取消所有采集表的情况
+	 * */
+	@Test
+	public void saveCollTbInfoFive(){
+		String rightStringFive = new HttpClient()
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.post(getActionUrl("saveCollTbInfo")).getBodyString();
+		ActionResult rightResultFive = JsonUtil.toObjectSafety(rightStringFive, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResultFive.isSuccess(), is(true));
+		Integer returnValue = (Integer) rightResultFive.getData();
+		assertThat(returnValue == FIRST_DATABASESET_ID, is(true));
+
+		//断言由于取消所有已经存在的采集表，脏数据是否被删除了
+		try(DatabaseWrapper db = new DatabaseWrapper()){
+			//断言table_info表是否还存在脏数据
+			long countOne = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_id = ?", SYS_USER_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("<sys_user表>在table_info表中已经不存在数据了", countOne, is(0L));
+			long countTwo = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_id = ?", CODE_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("<code_info表>在table_info表中已经不存在数据了", countTwo, is(0L));
+			//断言table_column表是否还存在脏数据
+			long countThree = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " where table_id = ?", SYS_USER_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("<sys_user表>在table_column表中已经不存在数据了", countThree, is(0L));
+			long countFour = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " where table_id = ?", CODE_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("<code_info表>在table_column表中已经不存在数据了", countFour, is(0L));
+			//断言table_storage_info表是否还存在脏数据，并且数据存储关系也应该相应的删除
+			long countFive = SqlOperator.queryNumber(db, "select count(1) from " + Table_storage_info.TableName + " where table_id = ?", SYS_USER_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("<sys_user表>在table_storage_info表中已经不存在数据了", countFive, is(0L));
+			long countSix = SqlOperator.queryNumber(db, "select count(1) from " + Table_storage_info.TableName + " where table_id = ?", CODE_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("<code_info表>在table_storage_info表中已经不存在数据了", countSix, is(0L));
+			long countThi = SqlOperator.queryNumber(db, "select count(1) from " + Data_relation_table.TableName + " where storage_id = ( select storage_id from " + Table_storage_info.TableName + " where table_id = ?)", CODE_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("<code_info表>的数据存储关系已经不存在数据了", countThi, is(0L));
+			long countFou = SqlOperator.queryNumber(db, "select count(1) from " + Data_relation_table.TableName + " where storage_id = ( select storage_id from " + Table_storage_info.TableName + " where table_id = ?)", SYS_USER_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("<sys_user表>的数据存储关系已经不存在数据了", countFou, is(0L));
+			//断言table_clean表是否还存在脏数据
+			long countSeven = SqlOperator.queryNumber(db, "select count(1) from " + Table_clean.TableName + " where table_id = ?", SYS_USER_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("<sys_user表>在table_clean表中已经不存在数据了", countSeven, is(0L));
+			long countEight = SqlOperator.queryNumber(db, "select count(1) from " + Table_clean.TableName + " where table_id = ?", CODE_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("<code_info表>在table_clean表中已经不存在数据了", countEight, is(0L));
+			//断言column_merge表是否还存在脏数据
+			long countNine = SqlOperator.queryNumber(db, "select count(1) from " + Column_merge.TableName + " where table_id = ?", SYS_USER_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("<sys_user表>在column_merge表中已经不存在数据了", countNine, is(0L));
+			long countTen = SqlOperator.queryNumber(db, "select count(1) from " + Column_merge.TableName + " where table_id = ?", CODE_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("<code_info表>在column_merge表中已经不存在数据了", countTen, is(0L));
+			//断言data_extraction_def表是否还存在脏数据
+			long countEle = SqlOperator.queryNumber(db, "select count(1) from " + Data_extraction_def.TableName + " where table_id = ?", SYS_USER_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("<sys_user表>在column_merge表中已经不存在数据了", countEle, is(0L));
+			long countTwe = SqlOperator.queryNumber(db, "select count(1) from " + Data_extraction_def.TableName + " where table_id = ?", CODE_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("<code_info表>在column_merge表中已经不存在数据了", countTwe, is(0L));
+			//断言column_clean表中是否还存在脏数据
+			long countFif = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where column_id = ?", 2008).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("<sys_user表中的字段>在column_clean表中已经不存在数据了", countFif, is(0L));
+			long countSixt = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where column_id = ?", 3001).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("<code_info表中的字段>在column_clean表中已经不存在数据了", countSixt, is(0L));
+			//断言column_storage_info表中是否还存在脏数据
+			long countSet = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where column_id = ?", 2001).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("<sys_user表中的字段>在column_storage_info表中已经不存在数据了", countSet, is(0L));
+		}
+	}
+
+	/*
 	 * 错误的数据访问1：构造缺少表名的采集数据
 	 * 错误的数据访问2：构造缺少表中文名的采集数据
 	 * 错误的数据访问3：构造设置了并行抽取，但没有设置并行抽取SQL的访问方式
@@ -1834,7 +1918,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 	 * 错误的数据访问7：构造tableInfoString和collTbConfParamString解析成的list集合大小不同的情况
 	 * */
 	@Test
-	public void saveCollTbInfoFive(){
+	public void saveCollTbInfoSix(){
 		List<Table_info> tableInfos = new ArrayList<>();
 		List<CollTbConfParam> tbConfParams = new ArrayList<>();
 		//错误的数据访问1：构造缺少表名的采集数据

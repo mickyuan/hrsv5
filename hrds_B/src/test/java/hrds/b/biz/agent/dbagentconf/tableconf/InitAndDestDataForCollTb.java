@@ -47,8 +47,6 @@ public class InitAndDestDataForCollTb {
 
 	private static final long AGENT_DOWN_INFO_ID = 12581L;
 
-	private static final long UNEXPECTED_ID = 999999999L;
-
 	private static final long PRIMARY_KEY_DSLAD_ID = 85151L;
 
 	private static final long DATABASE_DSL_ID = 97281L;
@@ -91,7 +89,11 @@ public class InitAndDestDataForCollTb {
 		//6、构造Collect_job_classify表测试数据
 		List<Collect_job_classify> classifies = BaseInitData.buildClassifyData();
 
-		//7、构建table_info测试数据
+		/*
+		* 7、构建table_info测试数据
+		*   7-1、sys_user、code_info表是单表配置采集
+		*   7-2、agent_info、data_source是自定义SQL采集
+		* */
 		List<Table_info> tableInfos = new ArrayList<>();
 		for(int i = 1; i <= 4; i++){
 			long tableId;
@@ -300,6 +302,16 @@ public class InitAndDestDataForCollTb {
 			tableStorageInfos.add(tableStorageInfo);
 		}
 
+		//sys_user和code_info两者同时保存进入关系型数据库，假设dslId为97281表示关系型数据库
+		List<Data_relation_table> relationTablesOfUserAndCode = new ArrayList<>();
+		for(int i = 0; i < 2; i++){
+			Data_relation_table relationTable = new Data_relation_table();
+			relationTable.setStorage_id(i % 2 == 0 ? FIRST_STORAGE_ID : SECOND_STORAGE_ID);
+			relationTable.setDsl_id(DATABASE_DSL_ID);
+
+			relationTablesOfUserAndCode.add(relationTable);
+		}
+
 		//9-1、构造agent_info和data_source表在table_storage_info表中的数据，两者同时保存进入关系型数据库
 		List<Table_storage_info> tableStorageInfosTwo = new ArrayList<>();
 		for(int i = 1; i<= 2; i++){
@@ -333,11 +345,11 @@ public class InitAndDestDataForCollTb {
 			tableStorageInfosTwo.add(tableStorageInfo);
 		}
 
-		//agent_info和data_source两者同时保存进入关系型数据库，假设dslId为4400表示关系型数据库
+		//agent_info和data_source两者同时保存进入关系型数据库，假设dslId为97281表示关系型数据库
 		List<Data_relation_table> relationTables = new ArrayList<>();
 		for(int i = 0; i < 2; i++){
 			Data_relation_table relationTable = new Data_relation_table();
-			relationTable.setStorage_id(i % 2 == 0 ? 45732L : 15875L);
+			relationTable.setStorage_id(i % 2 == 0 ? THIRD_STORAGE_ID : FOUTH_STORAGE_ID);
 			relationTable.setDsl_id(DATABASE_DSL_ID);
 
 			relationTables.add(relationTable);
@@ -606,11 +618,36 @@ public class InitAndDestDataForCollTb {
 			colCleans.add(colComple);
 		}
 
-		//15、构造列存储信息表数据，构造data_source表中的source_id字段作为关系型数据库主键，假设
-		Column_storage_info sourceIdstorageInfo = new Column_storage_info();
-		sourceIdstorageInfo.setColumn_id(5112L);
-		sourceIdstorageInfo.setDslad_id(PRIMARY_KEY_DSLAD_ID);
+		//14-2、构造列清洗参数表数据,给user_mobile和ci_sp_code设置字符补齐
+		List<Column_clean> colCleansOfUserAndCode = new ArrayList<>();
+		for(int i = 0; i < 2; i++){
+			long colCleanId = i % 2 == 0 ? 7426L : 3749L;
+			String cleanType = CleanType.ZiFuBuQi.getCode();
+			String compleType = i % 2 == 0 ? FillingType.QianBuQi.getCode() : FillingType.HouBuQi.getCode();
+			String compleChar = i % 2 == 0 ? StringUtil.string2Unicode("wzc") : StringUtil.string2Unicode(" ");
+			long length = i % 2 == 0 ? 3 : 1;
+			long columnId = i % 2 == 0 ? 2008L : 3001L;
 
+			Column_clean colComple = new Column_clean();
+			colComple.setCol_clean_id(colCleanId);
+			colComple.setClean_type(cleanType);
+			colComple.setFilling_type(compleType);
+			colComple.setCharacter_filling(compleChar);
+			colComple.setFilling_length(length);
+			colComple.setColumn_id(columnId);
+
+			colCleansOfUserAndCode.add(colComple);
+		}
+
+		//15、构造列存储信息表数据，构造data_source表中的source_id字段、sys_user表的user_id字段作为关系型数据库主键，假设85151L
+		List<Column_storage_info> columnStorageInfos = new ArrayList<>();
+		for(int i = 0; i < 2; i++){
+			Column_storage_info storageInfo = new Column_storage_info();
+			storageInfo.setColumn_id(i % 2 == 0 ? 5112L : 2001L);
+			storageInfo.setDslad_id(PRIMARY_KEY_DSLAD_ID);
+
+			columnStorageInfos.add(storageInfo);
+		}
 
 		//插入数据
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
@@ -758,7 +795,14 @@ public class InitAndDestDataForCollTb {
 				int count = columnClean.add(db);
 				colCleanCount += count;
 			}
-			assertThat("列清洗参数表测试数据初始化", colCleanCount, is(2));
+			assertThat("<agent_info表和data_source表>列清洗参数表测试数据初始化", colCleanCount, is(2));
+
+			int colCleanTwoCount = 0;
+			for(Column_clean columnClean : colCleansOfUserAndCode){
+				int count = columnClean.add(db);
+				colCleanTwoCount += count;
+			}
+			assertThat("<sys_user表和code_info表>列清洗参数表测试数据初始化", colCleanTwoCount, is(2));
 
 			//插入data_relation_table表数据
 			int relationTablesCount = 0;
@@ -766,11 +810,23 @@ public class InitAndDestDataForCollTb {
 				int count = relationTable.add(db);
 				relationTablesCount += count;
 			}
-			assertThat("数据存储关系表测试数据初始化", relationTablesCount, is(2));
+			assertThat("<agent_info表和data_source表>数据存储关系表测试数据初始化", relationTablesCount, is(2));
+
+			int relationTablesTwoCount = 0;
+			for(Data_relation_table relationTable : relationTablesOfUserAndCode){
+				int count = relationTable.add(db);
+				relationTablesTwoCount += count;
+			}
+			assertThat("<code_info表和sys_user表>数据存储关系表测试数据初始化", relationTablesTwoCount, is(2));
 
 			//插入column_storage_info表数据
-			int sourceIdstorageCount = sourceIdstorageInfo.add(db);
-			assertThat("<data_source表的source_id>字段存储信息表测试数据初始化", sourceIdstorageCount, is(1));
+			int storageCount = 0;
+			for(Column_storage_info storageInfo : columnStorageInfos){
+				int count = storageInfo.add(db);
+				storageCount += count;
+			}
+			assertThat("<data_source表的source_id>字段存储信息表测试数据初始化", storageCount, is(2));
+			assertThat("<sys_user表的user_id>字段存储信息表测试数据初始化", storageCount, is(2));
 
 			SqlOperator.commitTransaction(db);
 		}
@@ -820,11 +876,16 @@ public class InitAndDestDataForCollTb {
 			//12、删除column_clean表测试数据
 			SqlOperator.execute(db, "delete from " + Column_clean.TableName + " where column_id = ? ", 3113);
 			SqlOperator.execute(db, "delete from " + Column_clean.TableName + " where column_id = ? ", 5113);
+			SqlOperator.execute(db, "delete from " + Column_clean.TableName + " where column_id = ? ", 2008);
+			SqlOperator.execute(db, "delete from " + Column_clean.TableName + " where column_id = ? ", 3001);
 			//13、删除data_relation_table表数据
-			SqlOperator.execute(db, "delete from " + Data_relation_table.TableName + " where storage_id = ? ", 45732);
-			SqlOperator.execute(db, "delete from " + Data_relation_table.TableName + " where storage_id = ? ", 15875);
+			SqlOperator.execute(db, "delete from " + Data_relation_table.TableName + " where storage_id = ? ", THIRD_STORAGE_ID);
+			SqlOperator.execute(db, "delete from " + Data_relation_table.TableName + " where storage_id = ? ", FOUTH_STORAGE_ID);
+			SqlOperator.execute(db, "delete from " + Data_relation_table.TableName + " where storage_id = ? ", FIRST_STORAGE_ID);
+			SqlOperator.execute(db, "delete from " + Data_relation_table.TableName + " where storage_id = ? ", SECOND_STORAGE_ID);
 			//14、删除column_storage_info表数据
 			SqlOperator.execute(db, "delete from " + Column_storage_info.TableName + " where column_id = ? ", 5112);
+			SqlOperator.execute(db, "delete from " + Column_storage_info.TableName + " where column_id = ? ", 2001);
 			//提交事务
 			SqlOperator.commitTransaction(db);
 		}
