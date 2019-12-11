@@ -53,8 +53,8 @@ public class StoDestStepConfAction extends BaseAction{
 			throw new BusinessException("未获取到数据库采集表");
 		}
 		//3、遍历这个集合，根据table_id在表存储信息表中查看该表是否定义了存储目的地
-		for(int i = 0; i < list.size(); i++){
-			Long tableIdFromTI = (Long) list.get(i);
+		for(Object obj : list){
+			Long tableIdFromTI = (Long) obj;
 			for(int j = 0; j < result.getRowCount(); j++){
 				long tableIdFromResult = result.getLong(j, "table_id");
 				if(tableIdFromTI.equals(tableIdFromResult)){
@@ -114,12 +114,15 @@ public class StoDestStepConfAction extends BaseAction{
 			"如：数据库名称:PGSQL" +
 			"    数据库用户名:test")
 	public Result getStoDestDetail(long dslId){
+		//1、根据存储配置主键去数据库中查询存储目的地详细信息
 		return Dbo.queryResult(" select storage_property_key, storage_property_val from "
 				+ Data_store_layer_attr.TableName + " where dsl_id = ?", dslId);
 	}
 
 	/*
 	 * 对仅做数据抽取的表回显定义好的存储目的地
+	 * TODO 目前这个接口前端没有调用，因为超哥说维护仅数据抽取表的存储目的地暂时不做到该页面上，考虑换一种方式维护
+	 * TODO 在没有完全确定之前，这个接口暂时保留
 	 * */
 	@Method(desc = "对仅做数据抽取的表回显定义好的存储目的地", logicStep = "" +
 			"1、校验该表定义的数据抽取信息是否存在，之所以这样校验是因为配置抽取属性是上一个页面的职责，" +
@@ -142,6 +145,8 @@ public class StoDestStepConfAction extends BaseAction{
 
 	/*
 	 * 对仅做数据抽取的表保存定义好的存储目的地
+	 * TODO 目前这个接口前端没有调用，因为超哥说维护仅数据抽取表的存储目的地暂时不做到该页面上，考虑换一种方式维护
+	 * TODO 在没有完全确定之前，这个接口暂时保留
 	 * */
 	@Method(desc = "对仅做数据抽取的表保存定义好的存储目的地", logicStep = "" +
 			"1、使用tableId进行校验，判断该表是否定义过数据抽取信息，且数据抽取方式为仅抽取" +
@@ -167,7 +172,7 @@ public class StoDestStepConfAction extends BaseAction{
 	* 根据tableId获取该表选择的存储目的地和系统中配置的所有存储目的地
 	* */
 	@Method(desc = "根据tableId回显该表选择的存储目的地和系统中配置的所有存储目的地", logicStep = "" +
-			"1、获取所有存储目的地信息，并且追加一列usedflag，固定值为0，表示默认所有存储目的地没有被这个当前表所使用" +
+			"1、获取所有存储目的地信息，并且追加一列usedflag，固定值为'0'，表示默认所有存储目的地没有被这个当前表所使用" +
 			"2、如果结果集为空，表示系统中没有定义存储目的地" +
 			"3、尝试获取该表定义好的存储目的地，如果之前定义过，那么就能获取到数据，否则就获取不到" +
 			"4、如果获取不到，说明之前该表未定义过存储目的地，则直接返回结果集" +
@@ -175,7 +180,7 @@ public class StoDestStepConfAction extends BaseAction{
 			"6、返回")
 	@Param(name = "tableId", desc = "采集表ID，表存储信息表外键", range = "不为空")
 	@Return(desc = "查询结果集", range = "不为空，注意每条数据的usedFlag字段，true表示该表配置了该存储目的地，" +
-			"在页面上根据单选框请勾选，false表示该表没有配置这个存储目的地，在页面上单选框不要勾选")
+			"在页面上根据单选框请勾选，'0'表示该表没有配置这个存储目的地，在页面上单选框不要勾选")
 	public Result getStoDestByTableId(long tableId){
 		//1、获取所有存储目的地信息，并且追加一列usedflag，固定值为0，表示默认所有存储目的地没有被这个当前表所使用
 		Result result = Dbo.queryResult("select dsl_id, dsl_name, store_type, '0' as usedflag from "
