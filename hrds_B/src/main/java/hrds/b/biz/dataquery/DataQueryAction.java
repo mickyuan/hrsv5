@@ -16,6 +16,7 @@ import hrds.commons.codes.*;
 import hrds.commons.entity.*;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.key.PrimayKeyGener;
 import org.apache.commons.lang.StringUtils;
 
@@ -25,6 +26,8 @@ import java.util.*;
 
 @DocClass(desc = "Web服务查询数据界面后台处理类", author = "BY-HLL", createdate = "2019/9/3 0003 下午 03:26")
 public class DataQueryAction extends BaseAction {
+
+	private static final SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 
 	@Method(desc = "获取部门的包含文件采集任务的数据源信息",
 			logicStep = "数据可访问权限处理方式: 根据登录用户的 user_id 进行权限检查" +
@@ -104,7 +107,7 @@ public class DataQueryAction extends BaseAction {
 	)
 	@Param(name = "fileId", desc = "文件id", range = "String类型值的唯一id（32位），不包含特殊字符")
 	@Param(name = "fileName", desc = "文件名", range = "String类型值，无输入限制")
-	@Param(name = "queryKeyword", desc = "文件查询关键字", range = "String类型值，无输入限制")
+	@Param(name = "queryKeyword", desc = "文件查询关键字", range = "String类型值，无输入限制", nullable = true)
 	public void downloadFile(String fileId, String fileName, String queryKeyword) {
 		//数据可访问权限处理方式: 无数据库操作不需要权限检查
 		//1.根据文件id检查文件是否有下载权限
@@ -392,6 +395,39 @@ public class DataQueryAction extends BaseAction {
 		return conditionalQueryMap;
 	}
 
+	@Method(desc = "申请信息处理",
+			logicStep = "1.根据文件id获取该文件信息" +
+					"2.根据文件id先清除该文件的数据权限信息,然后保存改文件的认证信息")
+	@Param(name = "fileId", desc = "文件id", range = "String类型字符,长度最长40,该值唯一",
+			example = "12f48c4f-bebd-4f19-b38d-a161929fb350")
+	@Param(name = "applyType", desc = "申请类型", range = "1:查看,2:下载,3,发布,4:重命名")
+	public String applicationProcessing(String fileId, String applyType) {
+		String apply_state = "0";
+		//1.根据文件id获取该文件信息
+		Optional<Source_file_attribute> fileRs = Dbo.queryOneObject(Source_file_attribute.class,
+				"SELECT * FROM source_file_attribute WHERE file_id=?", fileId);
+		if (!fileRs.isPresent()) {
+			throw new BusinessException("申请的文件不存在！fileId=" + fileId);
+		}
+		//2.根据文件id先清除该文件的数据权限信息,然后保存改文件的认证信息
+		DboExecute.deletesOrThrow("删除文件权限信息失败!",
+				"DELETE FROM DATA_AUTH WHERE file_id = ? AND apply_type = ? AND user_id = ? AND dep_id = ?",
+				fileId, applyType, getUserId(), getUser().getDepId());
+		Data_auth dataAuth = new Data_auth();
+		dataAuth.setDa_id(PrimayKeyGener.getNextId());
+		dataAuth.setApply_date(DateUtil.getSysDate());
+		dataAuth.setApply_time(DateUtil.getSysTime());
+		dataAuth.setAuth_type(AuthType.ShenQing.toString());
+		dataAuth.setAgent_id(fileRs.get().getAgent_id());
+		dataAuth.setSource_id(fileRs.get().getSource_id());
+		dataAuth.setCollect_set_id(fileRs.get().getCollect_set_id());
+		if ((dataAuth.add(Dbo.db()) != 1)) {
+			apply_state = "1";
+			throw new BusinessException("申请文件失败！fileId=" + fileId);
+		}
+		return apply_state;
+	}
+
 	@Method(desc = "自定义查询条件获取采集文件的信息",
 			logicStep = "数据可访问权限处理方式: 根据表的 user_id 做权限校验" +
 					"1.查看待查询的数据源是否属于登录用户所在部门" +
@@ -413,7 +449,6 @@ public class DataQueryAction extends BaseAction {
 	@Param(name = "endDate", desc = "查询结束日期", range = "日期格式 yyyy-mm-dd")
 	@Return(desc = "存放自定义查询结果的Result", range = "无限制")
 	private Result conditionalQuery(String sourceId, String fcsId, String fileType, String startDate, String endDate) {
-		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		//1.查看待查询的数据源是否属于登录用户所在部门
 		Source_file_attribute sourceFileAttribute = new Source_file_attribute();
 		asmSql.clean();
@@ -477,6 +512,7 @@ public class DataQueryAction extends BaseAction {
 							searchResult.getString(i, "original_name"));
 					searchResult.setObject(i, "original_name",
 							searchResult.getString(i, "original_name"));
+					searchResult.setObject(i, "is_others_apply", IsFlag.Fou.getCode());
 					Result daResult = Dbo.queryResult(
 							"select * from data_auth WHERE file_id = ? and user_id = ? and " +
 									" auth_type != ?", searchResult.getString(i, "file_id"), getUserId(),
@@ -492,7 +528,6 @@ public class DataQueryAction extends BaseAction {
 						applyType.delete(applyType.length() - 1, applyType.length());
 						searchResult.setObject(i, "auth_type", authType.toString());
 						searchResult.setObject(i, "apply_type", applyType.toString());
-						searchResult.setObject(i, "is_others_apply", IsFlag.Fou.getCode());
 					}
 				}
 			}
@@ -592,7 +627,6 @@ public class DataQueryAction extends BaseAction {
 		//1.初始化待返回数据的Map
 		Map<String, Object> fileApplicationDetails = new HashMap<>();
 		Object[] sourceIdsObj = Dbo.queryOneColumnList("select source_id from data_source").toArray();
-		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		//2.各类型文件的申请汇总
 		asmSql.clean();
 		asmSql.addSql("SELECT apply_type,count(apply_type) count from data_auth da JOIN source_file_attribute sfa" +

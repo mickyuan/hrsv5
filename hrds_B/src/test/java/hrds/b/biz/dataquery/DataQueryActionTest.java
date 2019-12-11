@@ -675,4 +675,28 @@ public class DataQueryActionTest extends WebBaseTestCase {
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
 		assertThat(ar.isSuccess(), is(true));
 	}
+
+
+	@Method(desc = "申请信息处理测试类",
+			logicStep = "正确数据访问：" +
+					"1.已经收藏的文件id存在" +
+					"错误数据访问：" +
+					"2.已经收藏的文件id不存在")
+	@Test
+	public void applicationProcessing() {
+		//1-1.已经收藏的收藏id存在
+		bodyString = new HttpClient()
+				.addData("fileId", FILE_ID + "0")
+				.addData("applyType", "1")
+				.post(getActionUrl("applicationProcessing")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
+		assertThat(ar.isSuccess(), is(true));
+		//2-1.已经收藏的收藏id不存在
+		bodyString = new HttpClient()
+				.addData("fileId", "-" + FILE_ID)
+				.addData("applyType", "1")
+				.post(getActionUrl("applicationProcessing")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
+		assertThat(ar.isSuccess(), is(false));
+	}
 }
