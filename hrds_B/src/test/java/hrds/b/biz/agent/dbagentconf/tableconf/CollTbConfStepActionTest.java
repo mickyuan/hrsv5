@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.DocClass;
+import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
@@ -15,6 +16,7 @@ import hrds.b.biz.agent.dbagentconf.BaseInitData;
 import hrds.commons.codes.*;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.utils.Constant;
 import hrds.testbase.WebBaseTestCase;
 import org.junit.After;
 import org.junit.Before;
@@ -390,11 +392,13 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 	 * 测试SQL查询设置页面，保存按钮后台方法功能
 	 *
 	 * 正确数据访问1：构造两条自定义SQL查询设置数据，测试保存功能
-	 * 正确数据访问2：模拟修改agent_info和data_source表的自定义SQL查询
+	 * 正确数据访问2：模拟修改agent_info和data_source表的自定义SQL查询,则之前为agent_info和data_source表定义的脏数据都会被删除
+	 * 正确数据访问3：初始化数据中已经存在agent_info表和data_source表的自定义查询SQL，构造什么都不传的一次数据访问，
+	 * 应该把和agent_ifno、data_source的相关脏数据在其他表中删除
 	 * 错误的数据访问1：构造两条自定义SQL查询设置数据，第一条数据的表名为空
 	 * 错误的数据访问2：构造两条自定义SQL查询设置数据，第二条数据的中文名为空
 	 * 错误的数据访问3：构造两条自定义SQL查询设置数据，第一条数据的sql为空
-	 * 错误的数据访问4：构造不存在与测试用例模拟数据中的databaseId
+	 * 错误的数据访问4：构造不存在于测试用例模拟数据中的databaseId
 	 *
 	 * @Param: 无
 	 * @return: 无
@@ -519,6 +523,9 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 					assertThat("保存出错，出现了不希望出现的数据，表id为" + tableInfo.getTable_id(), true, is(false));
 				}
 			}
+
+
+
 			//验证完毕后，将自己在本方法中构造的数据删除掉(table_info表)
 			int firCount = SqlOperator.execute(db, "delete from " + Table_info.TableName + " WHERE table_name = ?", "getHalfStructTask");
 			assertThat("测试完成后，table_name为getHalfStructTask的测试数据被删除了", firCount, is(1));
@@ -808,20 +815,49 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 				}
 			}
 
+			//验证在table_info中，原有的table_id做主键的数据已经不存在了
 			long countOne = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_id = ?", AGENT_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("使用老的table_id在table_info表中查不到数据", countOne, is(0L));
+			//验证在table_info中，原有的table_id做主键的数据已经不存在了
 			long countTwo = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_id = ?", DATA_SOURCE_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("使用老的table_id在table_info表中查不到数据", countTwo, is(0L));
+			//验证在table_column中，原有的table_id做外键的数据已经不存在了
 			long countThree = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " where table_id = ?", DATA_SOURCE_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("使用老的table_id在table_column表中查不到数据", countThree, is(0L));
+			//验证在table_column中，原有的table_id做外键的数据已经不存在了
 			long countFour = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " where table_id = ?", AGENT_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("使用老的table_id在table_column表中查不到数据", countFour, is(0L));
 
-			//TODO 验证在table_storage_info中，原有的table_id已经被替换为了新的table_id
+			//验证在table_storage_info中，原有的table_id做外键的数据已经不存在了
+			long countFive = SqlOperator.queryNumber(db, "select count(1) from " + Table_storage_info.TableName + " where table_id = ?", AGENT_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("使用老的table_id在table_storage_info表中查不到数据", countFive, is(0L));
+			long countSix = SqlOperator.queryNumber(db, "select count(1) from " + Table_storage_info.TableName + " where table_id = ?", DATA_SOURCE_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("使用老的table_id在table_storage_info表中查不到数据", countSix, is(0L));
+			//验证在data_relation_table中，已经没有data_source表定义的数据存储关系信息了
+			long countEle = SqlOperator.queryNumber(db, "select count(1) from " + Data_relation_table.TableName + " where storage_id = ( select storage_id from " + Table_storage_info.TableName + " where table_id = ?)", DATA_SOURCE_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("在data_relation_table中，已经没有<data_source>表定义的数据存储关系信息了", countEle, is(0L));
+			//验证在data_relation_table中，已经没有agent_info表定义的数据存储关系信息了
+			long countTwe = SqlOperator.queryNumber(db, "select count(1) from " + Data_relation_table.TableName + " where storage_id = ( select storage_id from " + Table_storage_info.TableName + " where table_id = ?)", AGENT_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("在data_relation_table中，已经没有<data_source>表定义的数据存储关系信息了", countTwe, is(0L));
+			//验证在table_clean中，原有的table_id做外键的数据已经不存在了
+			long countSeven = SqlOperator.queryNumber(db, "select count(1) from " + Table_clean.TableName + " where table_id = ?", AGENT_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("使用老的table_id在table_clean表中查不到数据", countSeven, is(0L));
+			long countEight = SqlOperator.queryNumber(db, "select count(1) from " + Table_clean.TableName + " where table_id = ?", DATA_SOURCE_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("使用老的table_id在table_clean表中查不到数据", countEight, is(0L));
+			//验证在data_extraction_def中，原有的table_id做外键的数据已经不存在了
+			long countNine = SqlOperator.queryNumber(db, "select count(1) from " + Data_extraction_def.TableName + " where table_id = ?", AGENT_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("使用老的table_id在data_extraction_def表中查不到数据", countNine, is(0L));
+			long countTen = SqlOperator.queryNumber(db, "select count(1) from " + Data_extraction_def.TableName + " where table_id = ?", DATA_SOURCE_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("使用老的table_id在data_extraction_def表中查不到数据", countTen, is(0L));
 
-			//TODO 验证在table_clean中，原有的table_id已经被替换为了新的table_id
-
-			//TODO 验证在data_extraction_def中，原有的table_id已经被替换为了新的table_id
+			//验证在column_storage_info表中，被修改的字段的column_id做外键的数据已经不存在了
+			long countThi = SqlOperator.queryNumber(db, "select count(1) from " + Column_storage_info.TableName + " where column_id = ?", 5112L).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("在column_storage_info表中，<source_id>字段的column_id做外键的数据已经不存在了", countThi, is(0L));
+			//验证在column_clean表中，被修改的字段的column_id做外键的数据已经不存在了
+			long countFou = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where column_id = ?", 5113L).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("在column_clean表中，<datasource_number>字段的column_id做外键的数据已经不存在了", countFou, is(0L));
+			long countFif = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where column_id = ?", 3113L).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("在column_clean表中，<agent_name>字段的column_id做外键的数据已经不存在了", countFif, is(0L));
 
 			//验证完毕后，将自己在本方法中构造的数据删除掉(table_info表)
 			int firCount = SqlOperator.execute(db, "delete from " + Table_info.TableName + " WHERE table_name = ?", "agent_info_customize");
@@ -836,6 +872,74 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			SqlOperator.commitTransaction(db);
 		}
 
+	}
+
+	/**
+	 * 测试SQL查询设置页面，保存按钮后台方法功能
+	 *
+	 * 正确数据访问3：正确数据访问3：初始化数据中已经存在agent_info表和data_source表的自定义查询SQL，构造什么都不传的一次数据访问，
+	 * 应该把和agent_ifno、data_source的相关脏数据在其他表中删除
+	 *
+	 * @Param: 无
+	 * @return: 无
+	 *
+	 * */
+	@Test
+	public void saveAllSQLThree(){
+		String rightString = new HttpClient()
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.post(getActionUrl("saveAllSQL")).getBodyString();
+		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResult.isSuccess(), is(true));
+		Integer returnValue = (Integer) rightResult.getData();
+		assertThat(returnValue == FIRST_DATABASESET_ID, is(true));
+
+		try (DatabaseWrapper db = new DatabaseWrapper()) {
+			//验证在table_info中，原有的table_id做主键的数据已经不存在了
+			long countOne = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_id = ?", AGENT_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("使用老的table_id在table_info表中查不到数据", countOne, is(0L));
+			//验证在table_info中，原有的table_id做主键的数据已经不存在了
+			long countTwo = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_id = ?", DATA_SOURCE_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("使用老的table_id在table_info表中查不到数据", countTwo, is(0L));
+			//验证在table_column中，原有的table_id做外键的数据已经不存在了
+			long countThree = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " where table_id = ?", DATA_SOURCE_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("使用老的table_id在table_column表中查不到数据", countThree, is(0L));
+			//验证在table_column中，原有的table_id做外键的数据已经不存在了
+			long countFour = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " where table_id = ?", AGENT_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("使用老的table_id在table_column表中查不到数据", countFour, is(0L));
+
+			//验证在table_storage_info中，原有的table_id做外键的数据已经不存在了
+			long countFive = SqlOperator.queryNumber(db, "select count(1) from " + Table_storage_info.TableName + " where table_id = ?", AGENT_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("使用老的table_id在table_storage_info表中查不到数据", countFive, is(0L));
+			long countSix = SqlOperator.queryNumber(db, "select count(1) from " + Table_storage_info.TableName + " where table_id = ?", DATA_SOURCE_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("使用老的table_id在table_storage_info表中查不到数据", countSix, is(0L));
+			//验证在data_relation_table中，已经没有data_source表定义的数据存储关系信息了
+			long countEle = SqlOperator.queryNumber(db, "select count(1) from " + Data_relation_table.TableName + " where storage_id = ( select storage_id from " + Table_storage_info.TableName + " where table_id = ?)", DATA_SOURCE_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("在data_relation_table中，已经没有<data_source>表定义的数据存储关系信息了", countEle, is(0L));
+			//验证在data_relation_table中，已经没有agent_info表定义的数据存储关系信息了
+			long countTwe = SqlOperator.queryNumber(db, "select count(1) from " + Data_relation_table.TableName + " where storage_id = ( select storage_id from " + Table_storage_info.TableName + " where table_id = ?)", AGENT_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("在data_relation_table中，已经没有<data_source>表定义的数据存储关系信息了", countTwe, is(0L));
+			//验证在table_clean中，原有的table_id做外键的数据已经不存在了
+			long countSeven = SqlOperator.queryNumber(db, "select count(1) from " + Table_clean.TableName + " where table_id = ?", AGENT_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("使用老的table_id在table_clean表中查不到数据", countSeven, is(0L));
+			long countEight = SqlOperator.queryNumber(db, "select count(1) from " + Table_clean.TableName + " where table_id = ?", DATA_SOURCE_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("使用老的table_id在table_clean表中查不到数据", countEight, is(0L));
+			//验证在data_extraction_def中，原有的table_id做外键的数据已经不存在了
+			long countNine = SqlOperator.queryNumber(db, "select count(1) from " + Data_extraction_def.TableName + " where table_id = ?", AGENT_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("使用老的table_id在data_extraction_def表中查不到数据", countNine, is(0L));
+			long countTen = SqlOperator.queryNumber(db, "select count(1) from " + Data_extraction_def.TableName + " where table_id = ?", DATA_SOURCE_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("使用老的table_id在data_extraction_def表中查不到数据", countTen, is(0L));
+
+			//验证在column_storage_info表中，被修改的字段的column_id做外键的数据已经不存在了
+			long countThi = SqlOperator.queryNumber(db, "select count(1) from " + Column_storage_info.TableName + " where column_id = ?", 5112L).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("在column_storage_info表中，<source_id>字段的column_id做外键的数据已经不存在了", countThi, is(0L));
+			//验证在column_clean表中，被修改的字段的column_id做外键的数据已经不存在了
+			long countFou = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where column_id = ?", 5113L).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("在column_clean表中，<datasource_number>字段的column_id做外键的数据已经不存在了", countFou, is(0L));
+			long countFif = SqlOperator.queryNumber(db, "select count(1) from " + Column_clean.TableName + " where column_id = ?", 3113L).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("在column_clean表中，<ci_sp_code>字段的column_id做外键的数据已经不存在了", countFif, is(0L));
+		}
 	}
 
 	/**
@@ -1277,7 +1381,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			assertThat("<正确的测试用例2>执行成功后，采集object_collect表配置，<是否并行抽取>符合期望", afterTableInfo.getString(0, "is_parallel"), is(IsFlag.Fou.getCode()));
 
 			Result afterTableColumn = SqlOperator.queryResult(db, "select * from " + Table_column.TableName + " where table_id = ?", afterTableInfo.getLong(0, "table_id"));
-			assertThat("<正确的测试用例2>执行成功后，table_column表中有关object_collect表的列应该有<24>列", afterTableColumn.getRowCount(), is(3));
+			assertThat("<正确的测试用例2>执行成功后，table_column表中有关object_collect表的列应该有<3>列", afterTableColumn.getRowCount(), is(3));
 			for(int i = 0; i < afterTableColumn.getRowCount(); i++){
 				if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("odc_id")){
 					assertThat("<正确的测试用例2>执行成功后, <odc_id>字段的类型为<int8>", afterTableColumn.getString(i, "column_type"), is("int8"));
@@ -1324,42 +1428,68 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		tableInfos.add(codeInfo);
 
 		List<Table_column> codeColumn = new ArrayList<>();
-		for(int i = 0; i < 3; i++){
+		for(int i = 0; i < 5; i++){
+			long columnId;
 			String columnName;
 			String columnChName;
 			String columnType;
 			switch (i) {
 				case 0 :
+					columnId = 3001L;
 					columnName = "ci_sp_code";
-					columnType = "varchar(200)";
-					columnChName = "ci_sp_code";
+					columnType = "varchar(20)";
+					columnChName = "ci_sp_code_ch";
 					break;
 				case 1 :
+					columnId = 3002L;
 					columnName = "ci_sp_class";
-					columnType = "varchar(200)";
-					columnChName = "ci_sp_class";
+					columnType = "varchar(20)";
+					columnChName = "ci_sp_class_ch";
 					break;
 				case 2 :
+					columnId = 3003L;
 					columnName = "ci_sp_classname";
-					columnType = "varchar(100)";
-					columnChName = "ci_sp_classname";
+					columnType = "varchar(80)";
+					columnChName = "ci_sp_classname_ch";
+					break;
+				case 3 :
+					columnId = 3004L;
+					columnName = "ci_sp_name";
+					columnType = "varchar(255)";
+					columnChName = "ci_sp_name_ch";
+					break;
+				case 4 :
+					columnId = 3005L;
+					columnName = "ci_sp_remark";
+					columnType = "varchar(512)";
+					columnChName = "ci_sp_remark_ch";
 					break;
 				default:
+					columnId = UNEXPECTED_ID;
 					columnName = "unexpected_columnName";
 					columnChName = "unexpected_columnChName";
 					columnType = "unexpected_columnType";
 			}
 			Table_column tableColumn = new Table_column();
+			tableColumn.setColumn_id(columnId);
+			tableColumn.setTable_id(CODE_INFO_TABLE_ID);
 			tableColumn.setColume_name(columnName);
 			tableColumn.setColume_ch_name(columnChName);
 			tableColumn.setColumn_type(columnType);
 			tableColumn.setIs_get(IsFlag.Shi.getCode());
+			tableColumn.setIs_primary_key(IsFlag.Fou.getCode());
+			tableColumn.setTable_id(CODE_INFO_TABLE_ID);
+			tableColumn.setValid_s_date(DateUtil.getSysDate());
+			tableColumn.setValid_e_date(Constant.MAXDATE);
+			tableColumn.setIs_alive(IsFlag.Shi.getCode());
+			tableColumn.setIs_new(IsFlag.Fou.getCode());
+			tableColumn.setTc_or(columnCleanOrder.toJSONString());
 
 			codeColumn.add(tableColumn);
 		}
 
 		JSONArray codeSort = new JSONArray();
-		for(int i = 0; i < 3; i++){
+		for(int i = 0; i < 5; i++){
 			String columnName;
 			int sort;
 			switch (i) {
@@ -1374,6 +1504,14 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 				case 2 :
 					columnName = "ci_sp_classname";
 					sort = 3;
+					break;
+				case 3 :
+					columnName = "ci_sp_name";
+					sort = 4;
+					break;
+				case 4 :
+					columnName = "ci_sp_remark";
+					sort = 5;
 					break;
 				default:
 					columnName = "unexpected_columnName";
@@ -1415,17 +1553,31 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			//断言table_column表中的内容是否符合期望
 			long tbColCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " where table_id = ?", CODE_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("查询结果必须有且只有一条"));
 			Result tableColumn = SqlOperator.queryResult(db, "select * from " + Table_column.TableName + " where table_id = ?", tableId);
-			assertThat("code_info表的采集列在table_column表中有数据，数据有三条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在table_column表中已经查不到数据了", tbColCount, is(0L));
-			assertThat("code_info表的采集列在table_column表中有数据，数据有三条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在table_column表中已经查不到数据了", tableColumn.getRowCount(), is(3));
+			assertThat("code_info表的采集列在table_column表中有数据，数据有5条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在table_column表中已经查不到数据了", tbColCount, is(0L));
+			assertThat("code_info表的采集列在table_column表中有数据，数据有5条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在table_column表中已经查不到数据了", tableColumn.getRowCount(), is(5));
 			for(int i = 0; i < tableColumn.getRowCount(); i++){
 				if(tableColumn.getString(i, "colume_name").equalsIgnoreCase("ci_sp_code")){
-					assertThat("采集列名为<ci_sp_code>,该列的数据类型为<varchar(200)>", tableColumn.getString(i, "column_type"), is("varchar(200)"));
+					assertThat("采集列名为<ci_sp_code>,该列的数据类型为<varchar(20)>", tableColumn.getString(i, "column_type"), is("varchar(20)"));
+					assertThat("采集列名为<ci_sp_code>,该列的ID为<3001>", tableColumn.getLong(i, "column_id"), is(3001L));
+					assertThat("采集列名为<ci_sp_code>,该列的中文名为<ci_sp_code_ch>", tableColumn.getString(i, "colume_ch_name"), is("ci_sp_code_ch"));
 				}else if(tableColumn.getString(i, "colume_name").equalsIgnoreCase("ci_sp_class")){
-					assertThat("采集列名为<ci_sp_class>,该列的数据类型为<varchar(200)>", tableColumn.getString(i, "column_type"), is("varchar(200)"));
+					assertThat("采集列名为<ci_sp_class>,该列的数据类型为<varchar(20)>", tableColumn.getString(i, "column_type"), is("varchar(20)"));
+					assertThat("采集列名为<ci_sp_class>,该列的ID为<3002>", tableColumn.getLong(i, "column_id"), is(3002L));
+					assertThat("采集列名为<ci_sp_class>,该列的中文名为<ci_sp_class_ch>", tableColumn.getString(i, "colume_ch_name"), is("ci_sp_class_ch"));
 				}else if(tableColumn.getString(i, "colume_name").equalsIgnoreCase("ci_sp_classname")){
-					assertThat("采集列名为<ci_sp_classname>,该列的数据类型为<varchar(100)>", tableColumn.getString(i, "column_type"), is("varchar(100)"));
+					assertThat("采集列名为<ci_sp_classname>,该列的数据类型为<varchar(80)>", tableColumn.getString(i, "column_type"), is("varchar(80)"));
+					assertThat("采集列名为<ci_sp_classname>,该列的ID为<3003>", tableColumn.getLong(i, "column_id"), is(3003L));
+					assertThat("采集列名为<ci_sp_classname>,该列的中文名为<ci_sp_classname_ch>", tableColumn.getString(i, "colume_ch_name"), is("ci_sp_classname_ch"));
+				}else if(tableColumn.getString(i, "colume_name").equalsIgnoreCase("ci_sp_name")){
+					assertThat("采集列名为<ci_sp_name>,该列的数据类型为<varchar(255)>", tableColumn.getString(i, "column_type"), is("varchar(255)"));
+					assertThat("采集列名为<ci_sp_name>,该列的ID为<3004>", tableColumn.getLong(i, "column_id"), is(3004L));
+					assertThat("采集列名为<ci_sp_name>,该列的中文名为<ci_sp_name_ch>", tableColumn.getString(i, "colume_ch_name"), is("ci_sp_name_ch"));
+				}else if(tableColumn.getString(i, "colume_name").equalsIgnoreCase("ci_sp_remark")){
+					assertThat("采集列名为<ci_sp_remark>,该列的数据类型为<varchar(512)>", tableColumn.getString(i, "column_type"), is("varchar(512)"));
+					assertThat("采集列名为<ci_sp_remark>,该列的ID为<3005>", tableColumn.getLong(i, "column_id"), is(3005L));
+					assertThat("采集列名为<ci_sp_remark>,该列的中文名为<ci_sp_remark_ch>", tableColumn.getString(i, "colume_ch_name"), is("ci_sp_remark_ch"));
 				}else {
-					assertThat("设置采集code_info表的前三列，但是出现了不符合期望的列，列名为 : " + tableColumn.getString(i, "colume_name"), true, is(false));
+					assertThat("设置采集code_info表的所有列，但是出现了不符合期望的列，列名为 : " + tableColumn.getString(i, "colume_name"), true, is(false));
 				}
 			}
 			//断言data_extraction_def表中的内容是否符合期望
@@ -1433,7 +1585,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			Result dataExtractionDef = SqlOperator.queryResult(db, "select * from " + Data_extraction_def.TableName + " where table_id = ?", tableId);
 			assertThat("code_info表的数据抽取定义信息在Data_extraction_def表中有数据，数据有1条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在data_extraction_def表中已经查不到数据了", defCount, is(0L));
 			assertThat("code_info表的数据抽取定义信息在Data_extraction_def表中有数据，数据有1条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在data_extraction_def表中已经查不到数据了", dataExtractionDef.getRowCount(), is(1));
-			assertThat("code_info表的数据抽取定义信息在Data_extraction_def表中有数据，<数据抽取方式>符合预期", dataExtractionDef.getString(0, "data_extract_type"), is(DataExtractType.ShuJuChouQuJiRuKu.getCode()));
+			assertThat("code_info表的数据抽取定义信息在Data_extraction_def表中有数据，<数据抽取方式>符合预期", dataExtractionDef.getString(0, "data_extract_type"), is(DataExtractType.JinShuJuChouQu.getCode()));
 			assertThat("code_info表的数据抽取定义信息在Data_extraction_def表中有数据，<是否表头>符合预期", dataExtractionDef.getString(0, "is_header"), is(IsFlag.Fou.getCode()));
 			assertThat("code_info表的数据抽取定义信息在Data_extraction_def表中有数据，<落地文件编码>符合预期", dataExtractionDef.getString(0, "database_code"), is(DataBaseCode.UTF_8.getCode()));
 			assertThat("code_info表的数据抽取定义信息在Data_extraction_def表中有数据，<落地文件格式>符合预期", dataExtractionDef.getString(0, "dbfile_format"), is(FileFormat.PARQUET.getCode()));

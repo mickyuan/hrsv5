@@ -141,9 +141,11 @@ public class CollTbConfStepAction extends BaseAction {
 			"4、如果List集合不为空，遍历list,给每条记录生成ID，设置有效开始日期、有效结束日期、是否自定义SQL采集(是)、是否使用MD5(是)、" +
 			"   是否仅登记(是)" +
 			"5、保存数据进库" +
-			"6、保存数据自定义采集列相关信息进入table_column表")
+			"6、保存数据自定义采集列相关信息进入table_column表" +
+			"7、如果List集合为空，表示使用SQL抽取没有设置，那么就要把当前数据库采集任务中所有的自定义抽取设置作为脏数据全部删除")
 	@Param(name = "tableInfoArray", desc = "List<Table_info>的JSONArray格式的字符串，" +
-			"每一个Table_info对象必须包含table_name,table_ch_name,sql", range = "不为空")
+			"每一个Table_info对象必须包含table_name,table_ch_name,sql，如果是修改，则需要传table_id，如果是新增，则不传table_id"
+			, range = "如果页面上没有数据，则该参数可以不传", nullable = true, valueIfNull = "")
 	@Param(name = "colSetId", desc = "数据库设置ID,源系统数据库设置表主键,数据库对应表外键", range = "不为空")
 	//使用SQL抽取数据页面，保存按钮后台方法
 	public long saveAllSQL(String tableInfoArray, long colSetId){
@@ -206,12 +208,14 @@ public class CollTbConfStepAction extends BaseAction {
 					tableInfo.setTi_or(DEFAULT_TABLE_CLEAN_ORDER.toJSONString());
 					//5、保存数据进库
 					tableInfo.add(Dbo.db());
+					//调用方法删除脏数据
+					deleteDirtyDataOfTb(oldID);
 					//6、保存数据自定义采集列相关信息进入table_column表
-					saveCustomSQLColumnInfoForUpdate(tableInfo, oldID);
+					saveCustomSQLColumnInfoForAdd(tableInfo);
 				}
 			}
 		}
-		//如果List集合为空，表示使用SQL抽取没有设置，那么就要把当前数据库采集任务中所有的自定义抽取设置作为脏数据全部删除
+		//7、如果List集合为空，表示使用SQL抽取没有设置，那么就要把当前数据库采集任务中所有的自定义抽取设置作为脏数据全部删除
 		else{
 			if(!tableIds.isEmpty()){
 				for(Object tableId : tableIds){
@@ -349,12 +353,12 @@ public class CollTbConfStepAction extends BaseAction {
 			"           7-3-3、更新column_merge表对应条目的table_id字段" +
 			"           7-3-4、更新data_extraction_def表对应条目的table_id" +
 			"           7-3-5、编辑采集表，将该表要采集的列信息保存到相应的表里面" +
-			"8、不管是新增采集表还是编辑采集表，都需要将该表要采集的列信息保存到相应的表里面")
+			"8、如果List集合为空，表示单表采集没有设置，那么就要把当前数据库采集任务中所有的单表采集设置作为脏数据全部删除")
 	@Param(name = "tableInfoString", desc = "当前数据库采集任务要采集的所有的表信息组成的json格式的字符串"
-			, range = "不为空，json数组格式字符串" +
+			, range = "json数组格式字符串" +
 			"如果是新增的采集表，table_id为空，如果是编辑修改采集表，table_id不能为空，一个json对象中还应该包括表名(table_name)、" +
 			"是否并行抽取(is_parallel)、表中文名(table_ch_name)、如果用户定义了并行抽取，那么应该还有page_sql，" +
-			"如果用户定义了SQL过滤，那么还应该有sql")
+			"如果用户定义了SQL过滤，那么还应该有sql，如果页面上不选择采集表，那么这个参数可以不传", nullable = true, valueIfNull = "")
 	@Param(name = "colSetId", desc = "数据库设置ID，源系统数据库设置表主键，数据库对应表外键", range = "不为空")
 	@Param(name = "collTbConfParamString", desc = "采集表对应采集字段配置参数", range = "" +
 			"key为collColumnString，表示被采集的列，json数组格式的字符串" +
@@ -365,7 +369,8 @@ public class CollTbConfStepAction extends BaseAction {
 			"key为sort，value为顺序" +
 			"注意：tableInfoString和collTbConfParamString中，对象的顺序和数目要保持一致，比如：" +
 			"tableInfoString：[{A表表信息},{B表表信息}]" +
-			"collTbConfParamString：[{A表字段配置参数},{B表字段配置参数}]")
+			"collTbConfParamString：[{A表字段配置参数},{B表字段配置参数}]" +
+			"如果页面上不选择采集表，那么这个参数可以不传", nullable = true, valueIfNull = "")
 	@Return(desc = "保存成功后返回当前采集任务ID", range = "不为空")
 	public long saveCollTbInfo(String tableInfoString, long colSetId, String collTbConfParamString){
 		Map<String, Object> resultMap = Dbo.queryOneObject("select * from " + Database_set.TableName
@@ -443,7 +448,7 @@ public class CollTbConfStepAction extends BaseAction {
 				}
 			}
 		}
-		//如果List集合为空，表示单表采集没有设置，那么就要把当前数据库采集任务中所有的单表采集设置作为脏数据全部删除
+		//8、如果List集合为空，表示单表采集没有设置，那么就要把当前数据库采集任务中所有的单表采集设置作为脏数据全部删除
 		else{
 			List<Object> tableIds = Dbo.queryOneColumnList("select table_id from " + Table_info.TableName +
 					" where database_id = ? and is_user_defined = ?", colSetId, IsFlag.Fou.getCode());
@@ -882,20 +887,6 @@ public class CollTbConfStepAction extends BaseAction {
 		} catch (SQLException e) {
 			throw new AppSystemException(e);
 		}
-	}
-
-	@Method(desc = "保存修改自定义SQL采集字段信息", logicStep = "" +
-			"1、调用方法删除脏数据" +
-			"2、调用saveCustomSQLColumnInfoForAdd方法，按照新增的逻辑来保存自定义SQL采集字段信息" +
-			"3、这样做的目的是把用户修改的自定义SQL当做全新的表进行采集")
-	@Param(name = "tableInfo", desc = "存有table_id和自定义采集SQL的实体类对象", range = "Table_info实体类对象，" +
-			"其中table_id和sql两个属性不能为空", isBean = true)
-	@Param(name = "oldTableId", desc = "修改前的table_id", range = "不为空")
-	private void saveCustomSQLColumnInfoForUpdate(Table_info tableInfo, long oldTableId){
-		//1、调用方法删除脏数据
-		deleteDirtyDataOfTb(oldTableId);
-		//2、调用saveCustomSQLColumnInfoForAdd方法，按照新增的逻辑来保存自定义SQL采集字段信息
-		saveCustomSQLColumnInfoForAdd(tableInfo);
 	}
 
 	@Method(desc = "删除tableId为外键的表脏数据", logicStep = "" +

@@ -3,6 +3,7 @@ package hrds.b.biz.agent.dbagentconf.tableconf;
 import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.utils.DateUtil;
+import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
 import hrds.b.biz.agent.dbagentconf.BaseInitData;
@@ -38,11 +39,19 @@ public class InitAndDestDataForCollTb {
 
 	private static final long FIRST_STORAGE_ID = 1234L;
 	private static final long SECOND_STORAGE_ID = 5678L;
+	private static final long THIRD_STORAGE_ID = 1273L;
+	private static final long FOUTH_STORAGE_ID = 4288L;
 
 	private static final JSONObject tableCleanOrder = BaseInitData.initTableCleanOrder();
 	private static final JSONObject columnCleanOrder = BaseInitData.initColumnCleanOrder();
 
 	private static final long AGENT_DOWN_INFO_ID = 12581L;
+
+	private static final long UNEXPECTED_ID = 999999999L;
+
+	private static final long PRIMARY_KEY_DSLAD_ID = 85151L;
+
+	private static final long DATABASE_DSL_ID = 97281L;
 
 	public static void before(){
 		//1、构造sys_user表测试数据
@@ -258,7 +267,7 @@ public class InitAndDestDataForCollTb {
 
 		List<Table_column> agentInfos = BaseInitData.buildAgentInfoTbColData();
 
-		//9、构造table_storage_info表测试数据
+		//9-1、构造sys_user表和code_info表在table_storage_info表测试数据
 		List<Table_storage_info> tableStorageInfos = new ArrayList<>();
 		for(int i = 1; i<= 2; i++){
 			String fileFormat;
@@ -291,13 +300,13 @@ public class InitAndDestDataForCollTb {
 			tableStorageInfos.add(tableStorageInfo);
 		}
 
-		//9-1、构造agent_info和data_source表在table_storage_info表中的数据
+		//9-1、构造agent_info和data_source表在table_storage_info表中的数据，两者同时保存进入关系型数据库
 		List<Table_storage_info> tableStorageInfosTwo = new ArrayList<>();
 		for(int i = 1; i<= 2; i++){
 			String fileFormat;
 			String storageType;
 			long tableId;
-			long storageId = i % 2 == 0 ? FIRST_STORAGE_ID : SECOND_STORAGE_ID;
+			long storageId = i % 2 == 0 ? THIRD_STORAGE_ID : FOUTH_STORAGE_ID;
 			switch (i){
 				case 1 :
 					fileFormat = FileFormat.CSV.getCode();
@@ -324,7 +333,17 @@ public class InitAndDestDataForCollTb {
 			tableStorageInfosTwo.add(tableStorageInfo);
 		}
 
-		//10、构造table_clean表测试数据
+		//agent_info和data_source两者同时保存进入关系型数据库，假设dslId为4400表示关系型数据库
+		List<Data_relation_table> relationTables = new ArrayList<>();
+		for(int i = 0; i < 2; i++){
+			Data_relation_table relationTable = new Data_relation_table();
+			relationTable.setStorage_id(i % 2 == 0 ? 45732L : 15875L);
+			relationTable.setDsl_id(DATABASE_DSL_ID);
+
+			relationTables.add(relationTable);
+		}
+
+		//10-1、构造采集sys_user表在table_clean表测试数据
 		List<Table_clean> sysUserCleans = new ArrayList<>();
 		for(int i = 1; i <= 2; i++){
 			long id = i % 2 == 0 ? 1357L : 2468L;
@@ -347,6 +366,7 @@ public class InitAndDestDataForCollTb {
 			sysUserCleans.add(sysUserClean);
 		}
 
+		//10-2、构造采集code_info表在table_clean表测试数据
 		List<Table_clean> codeInfoCleans = new ArrayList<>();
 		for(int i = 1; i <= 2; i++){
 			long id = i % 2 == 0 ? 1470L : 2581L;
@@ -388,6 +408,94 @@ public class InitAndDestDataForCollTb {
 			codeInfoClean.setTable_id(CODE_INFO_TABLE_ID);
 
 			codeInfoCleans.add(codeInfoClean);
+		}
+
+		//10-3、构造采集agent_info表在table_clean表测试数据
+		List<Table_clean> agentInfoCleans = new ArrayList<>();
+		for(int i = 1; i <= 2; i++){
+			long id = i % 2 == 0 ? 3915L : 8547L;
+			String cleanType;
+			String completeType;
+			String completeChar;
+			long completeLength = 0L;
+			String oldField = null;
+			String newField = null;
+			switch (i){
+				case 1 :
+					cleanType = CleanType.ZiFuTiHuan.getCode();
+					completeType = "";
+					completeChar = "";
+					oldField = "qwe";
+					newField = "asd";
+					break;
+				case 2 :
+					cleanType = CleanType.ZiFuBuQi.getCode();
+					completeType = FillingType.QianBuQi.getCode();
+					completeChar = "hongzhi";
+					completeLength = 7;
+					break;
+				default:
+					cleanType = "unexpected_cleanType";
+					completeType = "unexpected_completeType";
+					completeChar = "unexpected_completeChar";
+					oldField = "unexpected_oldField";
+					newField = "unexpected_newField";
+			}
+			Table_clean agentInfoClean = new Table_clean();
+			agentInfoClean.setTable_clean_id(id);
+			agentInfoClean.setClean_type(cleanType);
+			agentInfoClean.setFilling_type(completeType);
+			agentInfoClean.setCharacter_filling(completeChar);
+			agentInfoClean.setFilling_length(completeLength);
+			agentInfoClean.setField(oldField);
+			agentInfoClean.setReplace_feild(newField);
+			agentInfoClean.setTable_id(AGENT_INFO_TABLE_ID);
+
+			agentInfoCleans.add(agentInfoClean);
+		}
+
+		//10-4、构造采集data_source表在table_clean表测试数据
+		List<Table_clean> dataSourceCleans = new ArrayList<>();
+		for(int i = 1; i <= 2; i++){
+			long id = i % 2 == 0 ? 1695L : 1659L;
+			String cleanType;
+			String completeType;
+			String completeChar;
+			long completeLength = 0L;
+			String oldField = null;
+			String newField = null;
+			switch (i){
+				case 1 :
+					cleanType = CleanType.ZiFuTiHuan.getCode();
+					completeType = "";
+					completeChar = "";
+					oldField = "uio";
+					newField = "jkl";
+					break;
+				case 2 :
+					cleanType = CleanType.ZiFuBuQi.getCode();
+					completeType = FillingType.QianBuQi.getCode();
+					completeChar = "beyond_hongzhi";
+					completeLength = 14;
+					break;
+				default:
+					cleanType = "unexpected_cleanType";
+					completeType = "unexpected_completeType";
+					completeChar = "unexpected_completeChar";
+					oldField = "unexpected_oldField";
+					newField = "unexpected_newField";
+			}
+			Table_clean dataSourceClean = new Table_clean();
+			dataSourceClean.setTable_clean_id(id);
+			dataSourceClean.setClean_type(cleanType);
+			dataSourceClean.setFilling_type(completeType);
+			dataSourceClean.setCharacter_filling(completeChar);
+			dataSourceClean.setFilling_length(completeLength);
+			dataSourceClean.setField(oldField);
+			dataSourceClean.setReplace_feild(newField);
+			dataSourceClean.setTable_id(DATA_SOURCE_TABLE_ID);
+
+			dataSourceCleans.add(dataSourceClean);
 		}
 
 		//11、构造column_merge表测试数据
@@ -443,13 +551,13 @@ public class InitAndDestDataForCollTb {
 
 		codeInfoMerge.add(codeInfo);
 
-		//12、构造data_extraction_def表数据
+		//12-1、构造sys_user和code_info表data_extraction_def表数据
 		List<Data_extraction_def> extractionDefs = new ArrayList<>();
 		for(int i = 0; i < 2; i++){
 			Data_extraction_def def = new Data_extraction_def();
 			def.setDed_id(i % 2 == 0 ? BASE_DATA_EXTRACTION_DEF : BASE_DATA_EXTRACTION_DEF + 1);
 			def.setTable_id(i % 2 == 0 ? SYS_USER_TABLE_ID : CODE_INFO_TABLE_ID);
-			def.setData_extract_type(DataExtractType.ShuJuChouQuJiRuKu.getCode());
+			def.setData_extract_type(DataExtractType.JinShuJuChouQu.getCode());
 			def.setIs_header(i % 2 == 0 ? IsFlag.Shi.getCode() : IsFlag.Fou.getCode());
 			def.setDatabase_code(DataBaseCode.UTF_8.getCode());
 			def.setDbfile_format(i % 2 == 0 ? FileFormat.ORC.getCode() : FileFormat.PARQUET.getCode());
@@ -458,10 +566,53 @@ public class InitAndDestDataForCollTb {
 			extractionDefs.add(def);
 		}
 
+		//12-2、构造data_source表和agent_info表data_extraction_def表数据
+		List<Data_extraction_def> extractionDefsTwo = new ArrayList<>();
+		for(int i = 0; i < 2; i++){
+			Data_extraction_def def = new Data_extraction_def();
+			def.setDed_id(i % 2 == 0 ? BASE_DATA_EXTRACTION_DEF + 3963 : BASE_DATA_EXTRACTION_DEF + 9086);
+			def.setTable_id(i % 2 == 0 ? DATA_SOURCE_TABLE_ID : AGENT_INFO_TABLE_ID);
+			def.setData_extract_type(DataExtractType.ShuJuChouQuJiRuKu.getCode());
+			def.setIs_header(i % 2 == 0 ? IsFlag.Shi.getCode() : IsFlag.Fou.getCode());
+			def.setDatabase_code(DataBaseCode.UTF_8.getCode());
+			def.setDbfile_format(i % 2 == 0 ? FileFormat.CSV.getCode() : FileFormat.FeiDingChang.getCode());
+			def.setRow_separator(i % 2 == 0 ? "" : "|");
+			def.setDatabase_separatorr(i % 2 == 0 ? "" : "\r");
+
+			extractionDefsTwo.add(def);
+		}
+
 		//13、由于该Action类的测试连接功能需要与agent端交互，所以需要配置一条agent_down_info表的记录，用于找到http访问的完整url
 		Agent_down_info agentDownInfo = BaseInitData.initAgentDownInfoTwo();
 
-		//14、插入数据
+		//14-1、构造列清洗参数表数据,给datasource_number和agent_name设置字符补齐
+		List<Column_clean> colCleans = new ArrayList<>();
+		for(int i = 0; i < 2; i++){
+			long colCleanId = i % 2 == 0 ? 2197L : 2804L;
+			String cleanType = CleanType.ZiFuBuQi.getCode();
+			String compleType = i % 2 == 0 ? FillingType.QianBuQi.getCode() : FillingType.HouBuQi.getCode();
+			String compleChar = i % 2 == 0 ? StringUtil.string2Unicode("wzc") : StringUtil.string2Unicode(" ");
+			long length = i % 2 == 0 ? 3 : 1;
+			long columnId = i % 2 == 0 ? 5113L : 3113L;
+
+			Column_clean colComple = new Column_clean();
+			colComple.setCol_clean_id(colCleanId);
+			colComple.setClean_type(cleanType);
+			colComple.setFilling_type(compleType);
+			colComple.setCharacter_filling(compleChar);
+			colComple.setFilling_length(length);
+			colComple.setColumn_id(columnId);
+
+			colCleans.add(colComple);
+		}
+
+		//15、构造列存储信息表数据，构造data_source表中的source_id字段作为关系型数据库主键，假设
+		Column_storage_info sourceIdstorageInfo = new Column_storage_info();
+		sourceIdstorageInfo.setColumn_id(5112L);
+		sourceIdstorageInfo.setDslad_id(PRIMARY_KEY_DSLAD_ID);
+
+
+		//插入数据
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			//插入用户表(sys_user)测试数据
 			int userCount = user.add(db);
@@ -530,28 +681,58 @@ public class InitAndDestDataForCollTb {
 			assertThat("data_source表对应字段表测试数据初始化", dataSourcesCount, is(3));
 
 			//插入table_storage_info测试数据
+			int tableStorageInfoCount = 0;
 			for(Table_storage_info storageInfo : tableStorageInfos){
-				storageInfo.add(db);
+				int count = storageInfo.add(db);
+				tableStorageInfoCount += count;
 			}
-			assertThat("表存储信息表测试数据初始化", tableStorageInfos.size(), is(2));
+			assertThat("<sys_user和code_info>表存储信息表测试数据初始化", tableStorageInfoCount, is(2));
+			int tableStorageInfosTwoCount = 0;
+			for(Table_storage_info storageInfo : tableStorageInfosTwo){
+				int count = storageInfo.add(db);
+				tableStorageInfosTwoCount += count;
+			}
+			assertThat("<data_source和agent_info>表存储信息表测试数据初始化", tableStorageInfosTwoCount, is(2));
 
 			//插入table_clean测试数据
+			int sysUserCleansCount = 0;
 			for(Table_clean tableClean : sysUserCleans){
-				tableClean.add(db);
+				int count = tableClean.add(db);
+				sysUserCleansCount += count;
 			}
+			assertThat("<sys_user>表清洗参数信息表测试数据初始化", sysUserCleansCount, is(2));
+			int codeInfoCleansCount = 0;
 			for(Table_clean tableClean : codeInfoCleans){
-				tableClean.add(db);
+				int count = tableClean.add(db);
+				codeInfoCleansCount += count;
 			}
-			assertThat("表清洗参数信息表测试数据初始化", sysUserCleans.size() + codeInfoCleans.size(), is(4));
+			assertThat("<code_info>表清洗参数信息表测试数据初始化", codeInfoCleansCount, is(2));
+			int agentInfoCleansCount = 0;
+			for(Table_clean tableClean : agentInfoCleans){
+				int count = tableClean.add(db);
+				agentInfoCleansCount += count;
+			}
+			assertThat("<agent_info>表清洗参数信息表测试数据初始化", agentInfoCleansCount, is(2));
+			int dataSourceCleansCount = 0;
+			for(Table_clean tableClean : dataSourceCleans){
+				int count = tableClean.add(db);
+				dataSourceCleansCount += count;
+			}
+			assertThat("<data_source>表清洗参数信息表测试数据初始化", dataSourceCleansCount, is(2));
 
 			//插入column_merge测试数据
+			int sysUserMergeCount = 0;
 			for(Column_merge columnMerge : sysUserMerge){
-				columnMerge.add(db);
+				int count = columnMerge.add(db);
+				sysUserMergeCount += count;
 			}
+			assertThat("<sys_user>列合并信息表测试数据初始化", sysUserMergeCount, is(2));
+			int codeInfoMergeCount = 0;
 			for(Column_merge columnMerge : codeInfoMerge){
-				columnMerge.add(db);
+				int count = columnMerge.add(db);
+				codeInfoMergeCount += count;
 			}
-			assertThat("列合并信息表测试数据初始化", sysUserMerge.size() + codeInfoMerge.size(), is(3));
+			assertThat("<code_info>列合并信息表测试数据初始化", codeInfoMergeCount, is(1));
 
 			//插入agent_down_info表测试数据
 			int agentDownInfoCount = agentDownInfo.add(db);
@@ -563,7 +744,33 @@ public class InitAndDestDataForCollTb {
 				int count = def.add(db);
 				extractionDefCount += count;
 			}
-			assertThat("数据抽取定义表测试数据初始化", extractionDefCount, is(2));
+			assertThat("<sys_user和code_info>数据抽取定义表测试数据初始化", extractionDefCount, is(2));
+			int extractionDefTwoCount = 0;
+			for(Data_extraction_def def : extractionDefsTwo){
+				int count = def.add(db);
+				extractionDefTwoCount += count;
+			}
+			assertThat("<agent_info和data_source>数据抽取定义表测试数据初始化", extractionDefTwoCount, is(2));
+
+			//插入column_clean表测试数据
+			int colCleanCount = 0;
+			for(Column_clean columnClean : colCleans){
+				int count = columnClean.add(db);
+				colCleanCount += count;
+			}
+			assertThat("列清洗参数表测试数据初始化", colCleanCount, is(2));
+
+			//插入data_relation_table表数据
+			int relationTablesCount = 0;
+			for(Data_relation_table relationTable : relationTables){
+				int count = relationTable.add(db);
+				relationTablesCount += count;
+			}
+			assertThat("数据存储关系表测试数据初始化", relationTablesCount, is(2));
+
+			//插入column_storage_info表数据
+			int sourceIdstorageCount = sourceIdstorageInfo.add(db);
+			assertThat("<data_source表的source_id>字段存储信息表测试数据初始化", sourceIdstorageCount, is(1));
 
 			SqlOperator.commitTransaction(db);
 		}
@@ -593,9 +800,13 @@ public class InitAndDestDataForCollTb {
 			//7、删除table_storage_info表测试数据
 			SqlOperator.execute(db, "delete from " + Table_storage_info.TableName + " where table_id = ? ", SYS_USER_TABLE_ID);
 			SqlOperator.execute(db, "delete from " + Table_storage_info.TableName + " where table_id = ? ", CODE_INFO_TABLE_ID);
+			SqlOperator.execute(db, "delete from " + Table_storage_info.TableName + " where table_id = ? ", AGENT_INFO_TABLE_ID);
+			SqlOperator.execute(db, "delete from " + Table_storage_info.TableName + " where table_id = ? ", DATA_SOURCE_TABLE_ID);
 			//8、删除table_clean表测试数据
 			SqlOperator.execute(db, "delete from " + Table_clean.TableName + " where table_id = ? ", SYS_USER_TABLE_ID);
 			SqlOperator.execute(db, "delete from " + Table_clean.TableName + " where table_id = ? ", CODE_INFO_TABLE_ID);
+			SqlOperator.execute(db, "delete from " + Table_clean.TableName + " where table_id = ? ", AGENT_INFO_TABLE_ID);
+			SqlOperator.execute(db, "delete from " + Table_clean.TableName + " where table_id = ? ", DATA_SOURCE_TABLE_ID);
 			//9、删除column_merge表测试数据
 			SqlOperator.execute(db, "delete from " + Column_merge.TableName + " where table_id = ? ", SYS_USER_TABLE_ID);
 			SqlOperator.execute(db, "delete from " + Column_merge.TableName + " where table_id = ? ", CODE_INFO_TABLE_ID);
@@ -604,8 +815,17 @@ public class InitAndDestDataForCollTb {
 			//11、删除data_extraction_def表测试数据
 			SqlOperator.execute(db, "delete from " + Data_extraction_def.TableName + " where table_id = ? ", SYS_USER_TABLE_ID);
 			SqlOperator.execute(db, "delete from " + Data_extraction_def.TableName + " where table_id = ? ", CODE_INFO_TABLE_ID);
-
-			//12、提交事务
+			SqlOperator.execute(db, "delete from " + Data_extraction_def.TableName + " where table_id = ? ", AGENT_INFO_TABLE_ID);
+			SqlOperator.execute(db, "delete from " + Data_extraction_def.TableName + " where table_id = ? ", DATA_SOURCE_TABLE_ID);
+			//12、删除column_clean表测试数据
+			SqlOperator.execute(db, "delete from " + Column_clean.TableName + " where column_id = ? ", 3113);
+			SqlOperator.execute(db, "delete from " + Column_clean.TableName + " where column_id = ? ", 5113);
+			//13、删除data_relation_table表数据
+			SqlOperator.execute(db, "delete from " + Data_relation_table.TableName + " where storage_id = ? ", 45732);
+			SqlOperator.execute(db, "delete from " + Data_relation_table.TableName + " where storage_id = ? ", 15875);
+			//14、删除column_storage_info表数据
+			SqlOperator.execute(db, "delete from " + Column_storage_info.TableName + " where column_id = ? ", 5112);
+			//提交事务
 			SqlOperator.commitTransaction(db);
 		}
 	}
