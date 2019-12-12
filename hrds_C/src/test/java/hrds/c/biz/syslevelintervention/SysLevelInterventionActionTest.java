@@ -36,10 +36,9 @@ public class SysLevelInterventionActionTest extends WebBaseTestCase {
     private static final String EtlSysCd3 = "zygyglcs3";
     // 初始化任务编号
     private static final String SubSysCd = "zygyrwcs";
-
-    private static final String EventId = "xtgysjh";
-    private static final String HisEventId = "xtlsgysjh";
-    private static final String HisEventId2 = "xtlsgysjh2";
+    private static final String EventId = "2019-17-04 17:04:03";
+    private static final String HisEventId = "2019-17-04 17:04:04";
+    private static final String HisEventId2 = "2019-17-04 17:04:05";
 
     @Before
     public void before() {
@@ -267,17 +266,16 @@ public class SysLevelInterventionActionTest extends WebBaseTestCase {
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
         assertThat(ar.isSuccess(), is(true));
         Map<Object, Object> etlJobCurr = ar.getDataForMap();
-        assertThat(EtlSysCd, is(etlJobCurr.get("etl_sys_cd")));
-        assertThat("dhwcs", is(etlJobCurr.get("etl_sys_name")));
         assertThat(DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate()).toString(),
                 is(etlJobCurr.get("curr_bath_date")));
-        assertThat(String.valueOf(0), is(etlJobCurr.get("stop_num").toString()));
-        assertThat(String.valueOf(0), is(etlJobCurr.get("done_num").toString()));
-        assertThat(String.valueOf(0), is(etlJobCurr.get("alarm_num").toString()));
-        assertThat(String.valueOf(1), is(etlJobCurr.get("error_num").toString()));
-        assertThat(String.valueOf(0), is(etlJobCurr.get("running_num").toString()));
-        assertThat(String.valueOf(0), is(etlJobCurr.get("waiting_num").toString()));
-        assertThat(String.valueOf(0), is(etlJobCurr.get("pending_num").toString()));
+        List<Map<String, Object>> etlJobCurrList = (List<Map<String, Object>>) etlJobCurr.get("etlJobCurrList");
+        assertThat(String.valueOf(0), is(etlJobCurrList.get(0).get("stop_num").toString()));
+        assertThat(String.valueOf(0), is(etlJobCurrList.get(0).get("done_num").toString()));
+        assertThat(String.valueOf(0), is(etlJobCurrList.get(0).get("alarm_num").toString()));
+        assertThat(String.valueOf(1), is(etlJobCurrList.get(0).get("error_num").toString()));
+        assertThat(String.valueOf(0), is(etlJobCurrList.get(0).get("running_num").toString()));
+        assertThat(String.valueOf(0), is(etlJobCurrList.get(0).get("waiting_num").toString()));
+        assertThat(String.valueOf(0), is(etlJobCurrList.get(0).get("pending_num").toString()));
         // 2.错误的数据访问1，etl_sys_cd不存在
         bodyString = new HttpClient()
                 .addData("etl_sys_cd", "zygycs")
@@ -301,13 +299,12 @@ public class SysLevelInterventionActionTest extends WebBaseTestCase {
         ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
         assertThat(ar.isSuccess(), is(true));
-        Map<String, Object> currInterventionMap = ar.getDataForMap();
-        assertThat(EtlSysCd, is(currInterventionMap.get("etl_sys_cd")));
-        assertThat(EventId, is(currInterventionMap.get("event_id")));
-        assertThat(Meddle_status.FALSE.getCode(), is(currInterventionMap.get("hand_status")));
-        assertThat(Meddle_type.SYS_ORIGINAL.getCode(), is(currInterventionMap.get("etl_hand_type")));
-        assertThat("任务测试(zygyrwcs)", is(currInterventionMap.get("subsysname")));
-        assertThat("[NOTHING]", is(currInterventionMap.get("etl_job")));
+        List<Map<String, Object>> currInterventionMap = (List<Map<String, Object>>) ar.getData();
+        assertThat(EtlSysCd, is(currInterventionMap.get(0).get("etl_sys_cd")));
+        assertThat(EventId, is(currInterventionMap.get(0).get("event_id")));
+        assertThat(Meddle_status.FALSE.getCode(), is(currInterventionMap.get(0).get("hand_status")));
+        assertThat(Meddle_type.SYS_ORIGINAL.getCode(), is(currInterventionMap.get(0).get("etl_hand_type")));
+        assertThat("[NOTHING]", is(currInterventionMap.get(0).get("etl_job")));
         // 2.错误的数据访问1，etl_sys_cd不存在
         bodyString = new HttpClient()
                 .addData("etl_sys_cd", "zygycs")
@@ -342,13 +339,11 @@ public class SysLevelInterventionActionTest extends WebBaseTestCase {
                 assertThat(EtlSysCd, is(map.get("etl_sys_cd")));
                 assertThat(Meddle_status.ERROR.getCode(), is(map.get("hand_status")));
                 assertThat(Meddle_type.SYS_ORIGINAL.getCode(), is(map.get("etl_hand_type")));
-                assertThat("任务测试(zygyrwcs)", is(map.get("subsysname")));
                 assertThat("[NOTHING]", is(map.get("etl_job")));
             } else if (his_event_id.equals(HisEventId2)) {
                 assertThat(EtlSysCd, is(map.get("etl_sys_cd")));
                 assertThat(Meddle_status.DONE.getCode(), is(map.get("hand_status")));
                 assertThat(Meddle_type.SYS_SHIFT.getCode(), is(map.get("etl_hand_type")));
-                assertThat("任务测试(zygyrwcs)", is(map.get("subsysname")));
                 assertThat("[NOTHING]", is(map.get("etl_job")));
             }
         }

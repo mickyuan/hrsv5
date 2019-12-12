@@ -35,12 +35,11 @@ public class JobConfiguration extends BaseAction {
     @Method(desc = "分页查询作业调度某工程任务信息",
             logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制" +
                     "2.判断工程是否存在" +
-                    "3.获取工程名称" +
-                    "4.获取某个工程下任务信息" +
-                    "5.判断任务编号是否为空，如果为空则查询所有任务信息，如果不为空则模糊查询任务信息（搜索）" +
-                    "6.分页查询任务信息，实体字段基本都需要所以查询所有字段" +
-                    "7.创建存放分页查询任务信息、分页查询总记录数、工程编号、工程名称的集合并封装数据" +
-                    "8.返回存放分页查询任务信息、分页查询总记录数、工程编号、工程名称的集合")
+                    "3.获取某个工程下任务信息" +
+                    "4.判断任务编号是否为空，如果为空则查询所有任务信息，如果不为空则模糊查询任务信息（搜索）" +
+                    "5.分页查询任务信息，实体字段基本都需要所以查询所有字段" +
+                    "6.创建存放分页查询任务信息、分页查询总记录数、工程编号、工程名称的集合并封装数据" +
+                    "7.返回存放分页查询任务信息、分页查询总记录数、工程编号、工程名称的集合")
     @Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
     @Param(name = "sub_sys_cd", desc = "任务编号", range = "新增任务时生成", nullable = true)
     @Param(name = "currPage", desc = "分页查询当前页", range = "大于0的正整数", valueIfNull = "1")
@@ -53,28 +52,24 @@ public class JobConfiguration extends BaseAction {
         if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
             throw new BusinessException("当前工程已不存在！");
         }
-        // 3.获取工程名称
-        String etl_sys_name = ETLJobUtil.getEtlSysName(etl_sys_cd, getUserId());
-        // 4.获取某个工程下任务信息,每次拼接新sql之前清空原来的sql以及参数
+        // 3.获取某个工程下任务信息,每次拼接新sql之前清空原来的sql以及参数
         asmSql.clean();
         asmSql.addSql("select distinct * from " + Etl_sub_sys_list.TableName + " where etl_sys_cd = ?");
         asmSql.addParam(etl_sys_cd);
-        // 5.判断任务编号是否为空，如果为空则查询所有任务信息，如果不为空则模糊查询任务信息（搜索）
+        // 4.判断任务编号是否为空，如果为空则查询所有任务信息，如果不为空则模糊查询任务信息（搜索）
         if (StringUtil.isNotBlank(sub_sys_cd)) {
             asmSql.addLikeParam("sub_sys_cd", "%" + sub_sys_cd + "%");
         }
         asmSql.addSql(" order by etl_sys_cd,sub_sys_cd");
         Page page = new DefaultPageImpl(currPage, pageSize);
-        // 6.分页查询任务信息，实体字段基本都需要所以查询所有字段
+        // 5.分页查询任务信息，实体字段基本都需要所以查询所有字段
         List<Map<String, Object>> etlSubSysList = Dbo.queryPagedList(page, asmSql.sql(),
                 asmSql.params());
-        // 7.创建存放分页查询任务信息、分页查询总记录数、工程编号、工程名称的集合并封装数据
+        // 6.创建存放分页查询任务信息、分页查询总记录数、工程编号、工程名称的集合并封装数据
         Map<String, Object> etlSubSysMap = new HashMap<>();
-        etlSubSysMap.put("etl_sys_cd", etl_sys_cd);
-        etlSubSysMap.put("etl_sys_name", etl_sys_name);
         etlSubSysMap.put("etlSubSysList", etlSubSysList);
         etlSubSysMap.put("totalSize", page.getTotalSize());
-        // 8.返回存放分页查询任务信息、分页查询总记录数、工程编号、工程名称的集合
+        // 7.返回存放分页查询任务信息、分页查询总记录数、工程编号、工程名称的集合
         return etlSubSysMap;
     }
 
@@ -336,7 +331,7 @@ public class JobConfiguration extends BaseAction {
         etlDependency.setEtl_sys_cd(etl_sys_cd);
         etlDependency.setPre_etl_sys_cd(etl_sys_cd);
         etlDependency.setEtl_job(etl_job);
-        saveEtlJobDef(etl_job_def, etlDependency);
+        saveEtlJobDef(etl_job_def, etlDependency, new String[]{});
     }
 
     @Method(desc = "分页查询作业定义信息",
@@ -366,8 +361,6 @@ public class JobConfiguration extends BaseAction {
         if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
             throw new BusinessException("当前工程已不存在！");
         }
-        // 3.获取工程名称
-        String etl_sys_name = ETLJobUtil.getEtlSysName(etl_sys_cd, getUserId());
         // 3.每次拼接新sql之前清理原sql以及参数
         asmSql.clean();
         asmSql.addSql("select distinct t1.etl_sys_cd,t1.etl_job,t1.etl_job_desc,t1.pro_name,t1.disp_freq," +
@@ -400,8 +393,6 @@ public class JobConfiguration extends BaseAction {
         Map<String, Object> etlJobDefMap = new HashMap<>();
         etlJobDefMap.put("etlJobDefList", etlJobDefList);
         etlJobDefMap.put("totalSize", page.getTotalSize());
-        etlJobDefMap.put("etl_sys_name", etl_sys_name);
-        etlJobDefMap.put("etl_sys_cd", etl_sys_cd);
         // 10.返回分页查询作业定义信息、分页查询总记录数、工程编号、工程名称
         return etlJobDefMap;
     }
@@ -425,10 +416,13 @@ public class JobConfiguration extends BaseAction {
             throw new BusinessException("当前工程下作业已不存在！");
         }
         // 4.返回根据工程编号、作业名称查询作业定义信息，实体字段基本都需要所以查询所有字段
-        return Dbo.queryOneObject("select t1.*,t2.status,t2.pre_etl_job,t2.pre_etl_sys_cd from " +
-                Etl_job_def.TableName + " t1 left join " + Etl_dependency.TableName +
-                " t2 on t1.etl_sys_cd=t2.etl_sys_cd and t1.etl_job=t2.etl_job where t1.etl_sys_cd=?" +
-                " AND t1.etl_job=?", etl_sys_cd, etl_job);
+        Map<String, Object> etlJobDef = Dbo.queryOneObject("select * FROM " + Etl_job_def.TableName +
+                " where etl_sys_cd=? AND etl_job=?", etl_sys_cd, etl_job);
+        List<Etl_dependency> dependencyList = Dbo.queryList(Etl_dependency.class, "select pre_etl_sys_cd" +
+                ",pre_etl_job,status FROM " + Etl_dependency.TableName +
+                " WHERE etl_sys_cd=? AND etl_job=?", etl_sys_cd, etl_job);
+        etlJobDef.put("dependencyList", dependencyList);
+        return etlJobDef;
     }
 
     @Method(desc = "查询作业名称信息",
@@ -437,7 +431,7 @@ public class JobConfiguration extends BaseAction {
                     "3.返回查询作业定义信息，实体字段基本都需要所以查询所有字段")
     @Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
     @Return(desc = "返回查询作业名称信息", range = "取值范围")
-    public List<String> searchEtlJobDef(String etl_sys_cd) {
+    public List<String> searchEtlJob(String etl_sys_cd) {
         // 1.数据可访问权限处理方式，通过user_id进行权限验证
         // 2.验证当前用户下的工程是否存在
         if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
@@ -454,13 +448,16 @@ public class JobConfiguration extends BaseAction {
                     "3.验证当前用户下的工程是否存在" +
                     "4.判断作业名称是否已存在，存在，不能新增" +
                     "5.判断如果作业程序类型是  Thrift 或者 Yarn.则默认分配一条资源使用信息" +
-                    "6.判断调度频率是否为频率，根据调度频率不同封装不同属性" +
+                    "6.如果是依赖作业则保存作业依赖信息,调度频率为频率时不会有调度类型" +
+                    "6.1判断调度触发方式是否为依赖触发" +
+                    "6.2判断上游作业名称是否为空，如果不为空判断上游作业名称是否合法" +
+                    "6.3循环保存作业依赖" +
                     "7.保存资源分配信息" +
                     "8.如果是依赖作业则保存作业依赖信息")
     @Param(name = "etl_job_def", desc = "作业定义实体对象", range = "与数据库对应表字段规则一致", isBean = true)
     @Param(name = "etl_dependency", desc = "作业依赖实体对象", range = "与数据库对应表字段规则一致", isBean = true)
-    public void saveEtlJobDef(Etl_job_def etl_job_def,
-                              Etl_dependency etl_dependency) {
+    @Param(name = "pre_etl_job", desc = "上游作业名称的数组", range = "已存在的作业名称", nullable = true)
+    public void saveEtlJobDef(Etl_job_def etl_job_def, Etl_dependency etl_dependency, String[] pre_etl_job) {
         // 1.数据可访问权限处理方式，通过user_id进行权限控制
         // 2.验证作业定义字段合法性
         checkEtlJobDefField(etl_job_def);
@@ -477,8 +474,10 @@ public class JobConfiguration extends BaseAction {
                 etl_job_def.getPro_type());
         // 6.如果是依赖作业则保存作业依赖信息,调度频率为频率时不会有调度类型
         if (StringUtil.isNotBlank(etl_job_def.getDisp_type())) {
+            // 6.1判断调度触发方式是否为依赖触发
             if (Dispatch_Type.DEPENDENCE == Dispatch_Type.ofEnumByCode(etl_job_def.getDisp_type())) {
-                dependToEtlJob(etl_dependency);
+                // 6.2判断上游作业名称是否为空，如果不为空判断上游作业名称是否合法
+                saveEtlDependencyFromEtlJobDef(etl_dependency, pre_etl_job);
             }
         }
         // 7.判断调度频率是否为频率，根据调度频率不同封装作业定义实体对象的不同属性
@@ -489,40 +488,48 @@ public class JobConfiguration extends BaseAction {
 
     @Method(desc = "验证作业定义字段合法性",
             logicStep = "1.数据可访问权限处理方式，该方法不需要权限控制" +
-                    "2.验证作业名称是否合法" +
-                    "3.验证任务编号是否合法" +
-                    "4.验证工程编号是否合法" +
-                    "5.验证作业程序类型是否合法" +
-                    "6.验证调度频率是否合法" +
-                    "7.验证调度触发方式是否合法" +
-                    "8.验证作业有效标志是否合法" +
-                    "9.验证当天是否调度是否合法,可为空")
+                    "2.验证工程编号是否合法" +
+                    "3.验证作业名称是否合法" +
+                    "4.验证任务编号是否合法" +
+                    "5.验证工程编号是否合法" +
+                    "6.验证作业程序类型是否合法" +
+                    "7.验证调度频率是否合法" +
+                    "8.验证调度触发方式是否合法" +
+                    "9.验证作业有效标志是否合法" +
+                    "10.验证当天是否调度是否合法,可为空")
     @Param(name = "etl_job_def", desc = "作业定义实体对象", range = "与数据库对应表字段规则一致", isBean = true)
     private void checkEtlJobDefField(Etl_job_def etl_job_def) {
         // 1.数据可访问权限处理方式，该方法不需要权限控制
-        // 2.验证作业名称是否合法
-        if (StringUtil.isBlank(etl_job_def.getEtl_job())) {
-            throw new BusinessException("作业名称不能为空以及不能为空格！");
-        }
-        // 3.验证任务编号是否合法
-        if (StringUtil.isBlank(etl_job_def.getSub_sys_cd())) {
-            throw new BusinessException("任务编号不能为空以及不能为空格！");
-        }
-        // 4.验证工程编号是否合法
+        // 2.验证工程编号是否合法
         if (StringUtil.isBlank(etl_job_def.getEtl_sys_cd())) {
             throw new BusinessException("工程编号不能为空以及不能为空格！");
         }
-        // 5.验证作业程序类型是否合法
+        // 3.验证作业名称是否合法
+        if (StringUtil.isBlank(etl_job_def.getEtl_job())) {
+            throw new BusinessException("作业名称不能为空以及不能为空格！");
+        }
+        // 4.验证任务编号是否合法
+        if (StringUtil.isBlank(etl_job_def.getSub_sys_cd())) {
+            throw new BusinessException("任务编号不能为空以及不能为空格！");
+        }
+        if (!ETLJobUtil.isEtlSubSysExist(etl_job_def.getEtl_sys_cd(), etl_job_def.getSub_sys_cd())) {
+            throw new BusinessException("任务编号不存在！");
+        }
+        // 5.验证工程编号是否合法
+        if (StringUtil.isBlank(etl_job_def.getEtl_sys_cd())) {
+            throw new BusinessException("工程编号不能为空以及不能为空格！");
+        }
+        // 6.验证作业程序类型是否合法
         Pro_Type.ofEnumByCode(etl_job_def.getPro_type());
-        // 6.验证调度频率是否合法
+        // 7.验证调度频率是否合法
         Dispatch_Frequency.ofEnumByCode(etl_job_def.getDisp_freq());
-        // 7.验证调度触发方式是否合法
+        // 8.验证调度触发方式是否合法
         if (Dispatch_Frequency.ofEnumByCode(etl_job_def.getDisp_freq()) != Dispatch_Frequency.PinLv) {
             Dispatch_Type.ofEnumByCode(etl_job_def.getDisp_type());
         }
-        // 8.验证作业有效标志是否合法
+        // 9.验证作业有效标志是否合法
         Job_Effective_Flag.ofEnumByCode(etl_job_def.getJob_eff_flag());
-        // 9.验证当天是否调度是否合法,可为空
+        // 10.验证当天是否调度是否合法,可为空
         if (StringUtil.isNotBlank(etl_job_def.getToday_disp())) {
             Today_Dispatch_Flag.ofEnumByCode(etl_job_def.getToday_disp());
         }
@@ -691,18 +698,18 @@ public class JobConfiguration extends BaseAction {
     @Method(desc = "分页查询作业资源分配信息",
             logicStep = "1.数据可访问权限处理方式，通过user_id进行权限验证" +
                     "2.判断工程是否存在" +
-                    "3.获取工程名称" +
+                    "3.每次拼接sql前清理原sql" +
                     "4.判断作业名称是否为空，不为空加条件查询" +
                     "5.判断参数类型是否为空，不为空加条件查询" +
                     "6.分页查询作业资源分配信息" +
-                    "7.创建存放分页查询资源分配信息、分页查询总记录数、工程名称的集合并封装数据" +
-                    "8.返回分页查询资源分配信息、分页查询总记录数、工程名称")
+                    "7.创建存放分页查询资源分配信息、分页查询总记录数的集合并封装数据" +
+                    "8.返回分页查询资源分配信息、分页查询总记录数")
     @Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
     @Param(name = "etl_job", desc = "作业名称", range = "新增作业时生成", nullable = true)
     @Param(name = "resource_type", desc = "参数类型", range = "新增参数时生成", nullable = true)
     @Param(name = "currPage", desc = "分页查询当前页", range = "大于0的正整数", valueIfNull = "1")
     @Param(name = "pageSize", desc = "分页查询每页显示记录数", range = "大于0的正整数", valueIfNull = "10")
-    @Return(desc = "返回存放分页查询资源分配信息、分页查询总记录数、工程编号、工程名称的集合", range = "无限制")
+    @Return(desc = "返回存放分页查询资源分配信息、分页查询总记录数的集合", range = "无限制")
     public Map<String, Object> searchEtlJobResourceRelaByPage(String etl_sys_cd, String etl_job,
                                                               String resource_type, int currPage,
                                                               int pageSize) {
@@ -711,8 +718,7 @@ public class JobConfiguration extends BaseAction {
         if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
             throw new BusinessException("当前工程已不存在！");
         }
-        // 3.获取工程名称
-        String etl_sys_name = ETLJobUtil.getEtlSysName(etl_sys_cd, getUserId());
+        // 3.每次拼接sql前清理原sql
         asmSql.clean();
         asmSql.addSql("select distinct * from " + Etl_job_resource_rela.TableName + " where etl_sys_cd=? ");
         asmSql.addParam(etl_sys_cd);
@@ -728,13 +734,11 @@ public class JobConfiguration extends BaseAction {
         Page page = new DefaultPageImpl(currPage, pageSize);
         // 6.分页查询作业资源分配信息
         List<Map<String, Object>> resourceRelation = Dbo.queryPagedList(page, asmSql.sql(), asmSql.params());
-        // 7.创建存放分页查询资源分配信息、分页查询总记录数、工程编号、工程名称的集合并封装数据
+        // 7.创建存放分页查询资源分配信息、分页查询总记录数的集合并封装数据
         Map<String, Object> resourceRelationMap = new HashMap<>();
         resourceRelationMap.put("jobResourceRelation", resourceRelation);
         resourceRelationMap.put("totalSize", page.getTotalSize());
-        resourceRelationMap.put("etl_sys_name", etl_sys_name);
-        resourceRelationMap.put("etl_sys_cd", etl_sys_cd);
-        // 8.返回分页查询资源分配信息、分页查询总记录数、工程编号、工程名称
+        // 8.返回分页查询资源分配信息、分页查询总记录数
         return resourceRelationMap;
     }
 
@@ -778,22 +782,6 @@ public class JobConfiguration extends BaseAction {
                 " where etl_sys_cd=? AND etl_job=?", etl_sys_cd, etl_job);
     }
 
-    @Method(desc = "保存作业添加时的作业依赖",
-            logicStep = "1.数据可访问权限处理方式，该方法不需要权限验证" +
-                    "2.判断依赖作业是否存在，存在不能新增，不存在则新增")
-    @Param(name = "etl_dependency", desc = "作业依赖实体对象", range = "与数据库对应表字段规则一致", isBean = true)
-    private void dependToEtlJob(Etl_dependency etl_dependency) {
-        // 1.数据可访问权限处理方式，该方法不需要权限验证
-        // 2.判断依赖作业是否存在，存在不能新增，不存在则新增
-        if (StringUtil.isNotBlank(etl_dependency.getPre_etl_job())) {
-            if (ETLJobUtil.isEtlDependencyExist(etl_dependency.getEtl_sys_cd(), etl_dependency.getEtl_job(),
-                    etl_dependency.getPre_etl_sys_cd(), etl_dependency.getPre_etl_job())) {
-                throw new BusinessException("该工程下该作业对应的依赖作业已存在，不能再次依赖!");
-            }
-            etl_dependency.add(Dbo.db());
-        }
-    }
-
     @Method(desc = "更新作业定义信息并返回更新后的最新的作业信息",
             logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制" +
                     "2.检查作业定义字段的合法性" +
@@ -813,12 +801,13 @@ public class JobConfiguration extends BaseAction {
     @Param(name = "etl_job_def", desc = "作业定义实体对象", range = "与数据库对应表字段规则一致", isBean = true)
     @Param(name = "etl_dependency", desc = "作业依赖实体对象", range = "与数据库对应表字段规则一致", isBean = true)
     @Param(name = "old_disp_freq", desc = "修改前的调度频率（使用Dispatch_Frequency）代码项", range = "无限制")
-    @Param(name = "old_pre_etl_job", desc = "作业依赖变动时,修改前的上游作业名称", range = "修改前的调度频率为频率时为空",
+    @Param(name = "old_pre_etl_job", desc = "修改前的上游作业名称的数组", range = "修改前的调度频率为频率时为空",
             nullable = true)
     @Param(name = "old_dispatch_type", desc = "调度触发方式改变时，修改前的调度触发方式",
             range = "使用调度触发方式代码项（DispatchType），修改前的调度频率为频率时为空", nullable = true)
+    @Param(name = "pre_etl_job", desc = "修改后上游作业名称的数组", range = "已存在的作业名称", nullable = true)
     public void updateEtlJobDef(Etl_job_def etl_job_def, Etl_dependency etl_dependency, String old_disp_freq,
-                                String old_pre_etl_job, String old_dispatch_type) {
+                                String[] old_pre_etl_job, String old_dispatch_type, String[] pre_etl_job) {
         // 1.数据可访问权限处理方式，通过user_id进行权限控制
         // 2.检查作业定义字段的合法性
         checkEtlJobDefField(etl_job_def);
@@ -835,42 +824,21 @@ public class JobConfiguration extends BaseAction {
         }
         // 5.判断调度频率是否为频率，如果是频率没有依赖，也没有调度触发方式
         if (Dispatch_Frequency.ofEnumByCode(etl_job_def.getDisp_freq()) != Dispatch_Frequency.PinLv) {
-            // 5.1判断修改前的调度触发方式是依赖还是定时
+            // 5.1修改前的调度触发方式是依赖
             if (Dispatch_Type.DEPENDENCE == Dispatch_Type.ofEnumByCode(old_dispatch_type)) {
-                // 5.1.1修改前的调度触发方式是依赖，判断修改后的调度触发方式是依赖还是定时
                 if (Dispatch_Type.DEPENDENCE == Dispatch_Type.ofEnumByCode(etl_job_def.getDisp_type())) {
-                    if (StringUtil.isNotBlank(old_pre_etl_job) &&
-                            StringUtil.isNotBlank(etl_dependency.getPre_etl_job())) {
-                        // 5.1.1.1修改前上游作业名称不为空，修改后上游作业不为空，更改依赖（依赖-依赖）
-                        if (!old_pre_etl_job.equals(etl_dependency.getPre_etl_job())) {
-                            DboExecute.updatesOrThrow("更新作业时更新依赖失败！", "update "
-                                            + Etl_dependency.TableName + " set etl_job=?,pre_etl_sys_cd=?," +
-                                            " pre_etl_job=?,status=? where etl_job=? AND etl_sys_cd=? and " +
-                                            " pre_etl_job=?", etl_dependency.getEtl_job(),
-                                    etl_dependency.getPre_etl_sys_cd(), etl_dependency.getPre_etl_job(),
-                                    etl_dependency.getStatus(), etl_dependency.getEtl_job(),
-                                    etl_dependency.getEtl_sys_cd(), old_pre_etl_job);
-                        }
-                    } else if (StringUtil.isNotBlank(old_pre_etl_job) &&
-                            StringUtil.isBlank(etl_dependency.getPre_etl_job())) {
-                        // 5.1.1.2修改前上游作业名称不为空，修改后的上游作业名称为空，删除依赖
-                        deleteEtlDependency(etl_dependency.getEtl_sys_cd(), etl_dependency.getPre_etl_sys_cd(),
-                                etl_dependency.getEtl_job(), etl_dependency.getPre_etl_job());
-                    } else if (StringUtil.isBlank(old_pre_etl_job) &&
-                            StringUtil.isNotBlank(etl_dependency.getPre_etl_job())) {
-                        // 5.1.1.3修改前上游作业名称为空，修改后的上游作业名称不为空，新增依赖
-                        dependToEtlJob(etl_dependency);
-                    }
+                    // 5.1.1修改前后的调度触发方式都是依赖,先删除原依赖关系，再新增依赖
+                    updateDependencyFromEtlJobDef(etl_dependency, old_pre_etl_job, pre_etl_job);
                 } else {
-                    // 5.1.2调度触发方式改变时，修改后的调度方式是定时（依赖-定时），直接删除原依赖关系
-                    deleteEtlDependency(etl_dependency.getEtl_sys_cd(), etl_dependency.getPre_etl_sys_cd(),
-                            etl_dependency.getEtl_job(), etl_dependency.getPre_etl_job());
+                    // 5.1.2修改前的调度触发方式是依赖,修改后的调度方式是定时（依赖-定时），直接删除原依赖关系
+                    if (old_pre_etl_job.length != 0) {
+                        deleteOldDependency(etl_dependency, old_pre_etl_job);
+                    }
                 }
             } else {
-                // 5.2修改前的调度触发方式是定时,判断修改后的调度方式为依赖还是定时
+                // 5.2修改前的调度触发方式是定时,修改后的调度触发方式为依赖,则新增依赖（定时---->依赖）
                 if (Dispatch_Type.DEPENDENCE == Dispatch_Type.ofEnumByCode(etl_job_def.getDisp_type())) {
-                    // 5.2.1修改后的调度触发方式定时  将定时更改为依赖,则新增，（定时---->依赖）
-                    dependToEtlJob(etl_dependency);
+                    updateDependencyFromEtlJobDef(etl_dependency, old_pre_etl_job, pre_etl_job);
                 }
             }
         }
@@ -883,6 +851,71 @@ public class JobConfiguration extends BaseAction {
         etl_job_def.setUpd_time(DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate()) + " " +
                 DateUtil.parseStr2TimeWith6Char(DateUtil.getSysTime()));
         etl_job_def.update(Dbo.db());
+    }
+
+    @Method(desc = "更新作业时保存所有依赖",
+            logicStep = "1.数据可访问权限处理方式，该方法不需要权限控制" +
+                    "2.判断修改前的上游作业名称的数组是否为空" +
+                    "3.先删除原依赖关系" +
+                    "4.循环保存依赖")
+    @Param(name = "etl_job_def", desc = "作业定义实体对象", range = "与数据库对应表字段规则一致", isBean = true)
+    @Param(name = "etl_dependency", desc = "作业依赖实体对象", range = "与数据库对应表字段规则一致", isBean = true)
+    @Param(name = "old_pre_etl_job", desc = "修改前的上游作业名称的数组", range = "修改前的调度频率为频率时为空",
+            nullable = true)
+    @Param(name = "pre_etl_job", desc = "修改后上游作业名称的数组", range = "已存在的作业名称", nullable = true)
+    private void updateDependencyFromEtlJobDef(Etl_dependency etl_dependency,
+                                               String[] old_pre_etl_job, String[] pre_etl_job) {
+        // 1.数据可访问权限处理方式，该方法不需要权限控制
+        // 2.判断修改前的上游作业名称的数组是否为空
+        if (old_pre_etl_job.length != 0) {
+            // 3.先删除原依赖关系
+            deleteOldDependency(etl_dependency, old_pre_etl_job);
+            // 4.循环保存依赖
+            saveEtlDependencyFromEtlJobDef(etl_dependency, pre_etl_job);
+        }
+    }
+
+    @Method(desc = "新增或修改作业时保存作业依赖",
+            logicStep = "1.数据可访问权限处理方式，该方法不需要权限控制" +
+                    "2.判断修改后的上游作业名称的数组是否为空" +
+                    "3.循环判断修改后的上游作业名称是否已不存在" +
+                    "4.循环保存作业依赖")
+    @Param(name = "etl_dependency", desc = "作业依赖实体对象", range = "与数据库对应表字段规则一致", isBean = true)
+    @Param(name = "pre_etl_job", desc = "修改后上游作业名称的数组", range = "已存在的作业名称", nullable = true)
+    private void saveEtlDependencyFromEtlJobDef(Etl_dependency etl_dependency, String[] pre_etl_job) {
+        // 1.数据可访问权限处理方式，该方法不需要权限控制
+        // 2.判断修改后的上游作业名称的数组是否为空
+        if (pre_etl_job.length != 0) {
+            for (String preEtlJob : pre_etl_job) {
+                // 3.循环判断修改后的上游作业名称是否已不存在
+                if (!ETLJobUtil.isEtlJobDefExist(etl_dependency.getEtl_sys_cd(), preEtlJob)) {
+                    throw new BusinessException("修改后的上游作业名称已不存在!");
+                }
+                // 4.循环保存作业依赖
+                etl_dependency.setPre_etl_job(preEtlJob);
+                etl_dependency.add(Dbo.db());
+            }
+        }
+    }
+
+    @Method(desc = "更新作业依赖时删除旧的依赖关系",
+            logicStep = "1.数据可访问权限处理方式，该方法不需要权限控制" +
+                    "2.判断修改前的上游作业名称是否已不存在" +
+                    "3.循环删除旧依赖关系")
+    @Param(name = "etl_dependency", desc = "作业依赖实体对象", range = "与数据库对应表字段规则一致", isBean = true)
+    @Param(name = "old_pre_etl_job", desc = "修改前的上游作业名称的数组", range = "修改前的调度频率为频率时为空",
+            nullable = true)
+    private void deleteOldDependency(Etl_dependency etl_dependency, String[] old_pre_etl_job) {
+        // 1.数据可访问权限处理方式，该方法不需要权限控制
+        for (String oldPreEtlJob : old_pre_etl_job) {
+            // 2.判断修改前的上游作业名称是否已不存在
+            if (!ETLJobUtil.isEtlJobDefExist(etl_dependency.getEtl_sys_cd(), oldPreEtlJob)) {
+                throw new BusinessException("修改前的上游作业名称已不存在，pre_etl_job=" + oldPreEtlJob);
+            }
+            // 3.循环删除旧依赖关系
+            deleteEtlDependency(etl_dependency.getEtl_sys_cd(), etl_dependency.getPre_etl_sys_cd(),
+                    etl_dependency.getEtl_job(), oldPreEtlJob);
+        }
     }
 
     @Method(desc = "批量删除Etl作业定义信息",
@@ -1016,16 +1049,16 @@ public class JobConfiguration extends BaseAction {
     @Method(desc = "分页查询etl资源定义信息",
             logicStep = "1.数据可访问权限处理方式，通过user_id进行权限验证" +
                     "2.验证当前用户下的工程是否存在" +
-                    "3.根据工程编号查询工程名称" +
+                    "3.拼接sql前清理原sql" +
                     "4.判断资源类型是否存在，存在加条件查询" +
                     "5.分页查询资源信息" +
-                    "6.创建存放分页查询资源信息、分页查询总记录数、工程编号、工程名称的集合并封装数据" +
-                    "7.返回分页查询资源信息、分页查询总记录数、工程编号、工程名称")
+                    "6.创建存放分页查询资源信息、分页查询总记录数的集合并封装数据" +
+                    "7.返回分页查询资源信息、分页查询总记录数")
     @Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
     @Param(name = "resource_type", desc = "资源类型", range = "无限制", nullable = true)
     @Param(name = "currPage", desc = "分页查询当前页", range = "大于0的正整数", valueIfNull = "1")
     @Param(name = "pageSize", desc = "分页查询每页显示记录数", range = "大于0的正整数", valueIfNull = "10")
-    @Return(desc = "分页查询资源信息、分页查询总记录数、工程编号、工程名称", range = "无限制")
+    @Return(desc = "分页查询资源信息、分页查询总记录数", range = "无限制")
     public Map<String, Object> searchEtlResourceByPage(String etl_sys_cd, String resource_type,
                                                        int currPage, int pageSize) {
         // 1.数据可访问权限处理方式，通过user_id进行权限验证
@@ -1033,8 +1066,7 @@ public class JobConfiguration extends BaseAction {
         if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
             throw new BusinessException("当前工程已不存在！");
         }
-        // 3.根据工程编号查询工程名称
-        String etl_sys_name = ETLJobUtil.getEtlSysName(etl_sys_cd, getUserId());
+        // 3.拼接sql前清理原sql
         asmSql.clean();
         asmSql.addSql("select distinct * from " + Etl_resource.TableName + " where etl_sys_cd = ?");
         asmSql.addParam(etl_sys_cd);
@@ -1051,9 +1083,7 @@ public class JobConfiguration extends BaseAction {
         Map<String, Object> etlResourceMap = new HashMap<>();
         etlResourceMap.put("etlResourceList", etlResourceList);
         etlResourceMap.put("totalSize", page.getTotalSize());
-        etlResourceMap.put("etl_sys_name", etl_sys_name);
-        etlResourceMap.put("etl_sys_cd", etl_sys_cd);
-        // 7.返回分页查询资源信息、分页查询总记录数，工程编号、工程名称
+        // 7.返回分页查询资源信息、分页查询总记录数
         return etlResourceMap;
     }
 
@@ -1198,7 +1228,7 @@ public class JobConfiguration extends BaseAction {
     @Method(desc = "分页查询作业调度系统参数信息",
             logicStep = "1.数据可访问权限处理方式，通过user_id进行权限验证" +
                     "2.验证当前用户下的工程是否存在" +
-                    "3.根据工程编号查询工程名称" +
+                    "3.拼接sql前清理原sql" +
                     "4.判断变量名称是否存在，存在加条件查询" +
                     "5.分页查询系统参数信息" +
                     "6.创建存放分页查询系统参数信息、分页查询总记录数、工程编号、工程名称的集合并封装数据" +
@@ -1214,8 +1244,7 @@ public class JobConfiguration extends BaseAction {
         if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
             throw new BusinessException("当前工程已不存在！");
         }
-        // 3.根据工程编号查询工程名称
-        String etl_sys_name = ETLJobUtil.getEtlSysName(etl_sys_cd, getUserId());
+        // 3.拼接sql前清理原sql
         asmSql.clean();
         asmSql.addSql("select distinct * from " + Etl_para.TableName + " where etl_sys_cd IN (?,?)");
         asmSql.addParam(etl_sys_cd);
@@ -1234,8 +1263,6 @@ public class JobConfiguration extends BaseAction {
         Map<String, Object> etlParaMap = new HashMap<>();
         etlParaMap.put("etlParaList", etlParaList);
         etlParaMap.put("totalSize", page.getTotalSize());
-        etlParaMap.put("etl_sys_name", etl_sys_name);
-        etlParaMap.put("etl_sys_cd", etl_sys_cd);
         // 7.返回分页查询系统参数信息、分页查询总记录数、工程编号、工程名称
         return etlParaMap;
     }
@@ -1375,18 +1402,17 @@ public class JobConfiguration extends BaseAction {
     @Method(desc = "分页查询作业依赖信息",
             logicStep = "1.数据可访问权限处理方式，通过user_id进行权限验证" +
                     "2.验证当前用户下的工程是否存在" +
-                    "3.获取工程名称" +
-                    "4.判断作业名称是否为空，不为空加条件查询" +
-                    "5.判断上游作业名称是否为空，不为空加条件查询" +
-                    "6.分页查询作业依赖信息" +
-                    "7.创建存放分页查询作业依赖信息、分页查询总记录数、工程名称的集合并封装数据" +
-                    "8.返回分页查询作业依赖信息、分页查询总记录数、工程编号、工程名称")
+                    "3.判断作业名称是否为空，不为空加条件查询" +
+                    "4.判断上游作业名称是否为空，不为空加条件查询" +
+                    "5.分页查询作业依赖信息" +
+                    "6.创建存放分页查询作业依赖信息、分页查询总记录数的集合并封装数据" +
+                    "7.返回分页查询作业依赖信息、分页查询总记录数")
     @Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
     @Param(name = "etl_job", desc = "作业名称", range = "新增作业时生成", nullable = true)
     @Param(name = "pre_etl_job", desc = "上游作业名称", range = "新增作业依赖时生成", nullable = true)
     @Param(name = "currPage", desc = "分页查询当前页", range = "大于0的正整数", valueIfNull = "1")
     @Param(name = "pageSize", desc = "分页查询每页显示记录数", range = "大于0的正整数", valueIfNull = "10")
-    @Return(desc = "存放分页查询作业依赖信息、分页查询总记录数、工程编号、工程名称的集合", range = "无限制")
+    @Return(desc = "存放分页查询作业依赖信息、分页查询总记录数的集合", range = "无限制")
     public Map<String, Object> searchEtlDependencyByPage(String etl_sys_cd, String etl_job, String pre_etl_job,
                                                          int currPage, int pageSize) {
         // 1.数据可访问权限处理方式，通过user_id进行权限验证
@@ -1394,30 +1420,26 @@ public class JobConfiguration extends BaseAction {
         if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
             throw new BusinessException("当前工程已不存在！");
         }
-        // 3.获取工程名称
-        String etl_sys_name = ETLJobUtil.getEtlSysName(etl_sys_cd, getUserId());
         asmSql.clean();
         asmSql.addSql("select distinct * from etl_dependency where etl_sys_cd = ? ");
         asmSql.addParam(etl_sys_cd);
-        // 4.判断作业名称是否为空，不为空加条件查询
+        // 3.判断作业名称是否为空，不为空加条件查询
         if (StringUtil.isNotBlank(etl_job)) {
             asmSql.addLikeParam("etl_job", "%" + etl_job + "%");
         }
-        // 5.判断上游作业名称是否为空，不为空加条件查询
+        // 4.判断上游作业名称是否为空，不为空加条件查询
         if (StringUtil.isNotBlank(pre_etl_job)) {
             asmSql.addLikeParam("pre_etl_job", "%" + pre_etl_job + "%");
         }
         asmSql.addSql(" order by etl_sys_cd,etl_job");
         Page page = new DefaultPageImpl(currPage, pageSize);
-        // 6.分页查询作业依赖信息
+        // 5.分页查询作业依赖信息
         List<Map<String, Object>> etlDependencyList = Dbo.queryPagedList(page, asmSql.sql(), asmSql.params());
-        // 7.创建存放分页查询作业依赖信息、分页查询总记录数、工程编号、工程名称的集合并封装数据
+        // 6.创建存放分页查询作业依赖信息、分页查询总记录数的集合并封装数据
         Map<String, Object> etlDependencyMap = new HashMap<>();
         etlDependencyMap.put("etlDependencyList", etlDependencyList);
         etlDependencyMap.put("totalSize", page.getTotalSize());
-        etlDependencyMap.put("etl_sys_name", etl_sys_name);
-        etlDependencyMap.put("etl_sys_cd", etl_sys_cd);
-        // 8.返回分页查询作业依赖信息、分页查询总记录数、工程编号、工程名称
+        // 7.返回分页查询作业依赖信息、分页查询总记录数
         return etlDependencyMap;
     }
 
