@@ -335,7 +335,7 @@ public class AvroOper {
 		InputStream is = null;
 		DataFileStream<Object> reader = null;
 		try {
-			if (Constant.hasHadoopEnv) {
+			if (Constant.HAS_HADOOP_ENV) {
 				fs = FileSystem.get(ConfigReader.getConfiguration());
 				is = fs.open(avroFilePath);
 			} else {

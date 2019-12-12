@@ -46,7 +46,7 @@ public class FileCollectLoadingDataStageImpl implements Callable<String> {
 		String fileCollectHdfsPath = FileNameUtils.normalize(PropertyParaUtil.getString("pathprefix",
 				"/hrds") + File.separator + PathUtil.DCL + File.separator + paramBean.getFcs_id()
 				+ File.separator + paramBean.getFile_source_id() + File.separator + BIGFILENAME, true);
-		if (Constant.hasHadoopEnv) {
+		if (Constant.HAS_HADOOP_ENV) {
 			//创建hdfs文件夹
 			try (HdfsOperator operator = new HdfsOperator()) {
 				Path path = new Path(fileCollectHdfsPath);
@@ -91,7 +91,7 @@ public class FileCollectLoadingDataStageImpl implements Callable<String> {
 				//传输文件并入库，入hbase
 				log.info("处理  -->" + avroPath.getName());
 				//不是hadoop版获取本地的卸数的Avro文件
-				if (!Constant.hasHadoopEnv) {
+				if (!Constant.HAS_HADOOP_ENV) {
 					avroPath = new Path(avroFileAbsolutionPath);
 				}
 				//获取AvroBeans
@@ -103,7 +103,7 @@ public class FileCollectLoadingDataStageImpl implements Callable<String> {
 				}
 				//存入Mysql和solr
 				List<String[]> hbaseList = abp.saveMetaData(avroBeans, fileNameHTreeMap);
-				if (!Constant.hasHadoopEnv) {
+				if (!Constant.HAS_HADOOP_ENV) {
 					abp.saveInPostgreSupersedeHbase(hbaseList);
 				} else {
 					//存入HBase

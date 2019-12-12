@@ -291,7 +291,7 @@ public class CollTbConfStepAction extends BaseAction {
 	//配置采集表页面,定义过滤按钮后台方法，用于回显已经对单表定义好的SQL
 	public Result getSingleTableSQL(long colSetId, String tableName){
 		//1、根据colSetId和tableName在table_info表中获取数据并返回
-		return Dbo.queryResult("SELECT table_id,table_name,table_ch_name,table_count,sql " +
+		return Dbo.queryResult("SELECT table_id,table_name,table_ch_name,sql " +
 				" FROM "+ Table_info.TableName +" WHERE database_id = ? AND table_name = ? ",
 				colSetId, tableName);
 		//数据可访问权限处理方式
@@ -468,7 +468,7 @@ public class CollTbConfStepAction extends BaseAction {
 	@Method(desc = "根据数据库设置ID获取单表采集配置的SQL过滤，分页SQL", logicStep = "" +
 			"1、根据数据库设置ID在数据库设置表中查询是否有这样一个数据库采集任务" +
 			"2、如果没有，或者查询结果大于1，抛出异常给前端" +
-			"3、根据数据库设置ID在数据库采集对应表中获取SQL过滤，分页SQL，返回给前端")
+			"3、根据数据库设置ID在数据库采集对应表中获取SQL过滤，是否并行抽取，分页SQL，数据总量，分页并行数，每天数据增量返回给前端")
 	@Param(name = "colSetId", desc = "数据库设置ID，源系统数据库设置表主键，数据库对应表外键", range = "不为空")
 	@Return(desc = "查询结果集", range = "不为空，其中sql字段表示过滤SQL，page_sql字段表示分页SQL，" +
 			"is_parallel字段表示是否并行抽取")
@@ -480,8 +480,9 @@ public class CollTbConfStepAction extends BaseAction {
 		if(count != 1){
 			throw new BusinessException("未找到数据库采集任务");
 		}
-		//3、根据数据库设置ID在数据库采集对应表中获取SQL过滤，分页SQL，返回给前端
-		return Dbo.queryResult("select table_id, table_name, sql, is_parallel, page_sql from " + Table_info.TableName
+		//3、根据数据库设置ID在数据库采集对应表中获取SQL过滤，是否并行抽取，分页SQL，数据总量，分页并行数，每天数据增量返回给前端
+		return Dbo.queryResult("select table_id, table_name, sql, is_parallel, page_sql, table_count, pageparallels, dataincrement " +
+				" from " + Table_info.TableName
 				+ " where database_id = ? and is_user_defined = ?", colSetId, IsFlag.Fou.getCode());
 	}
 

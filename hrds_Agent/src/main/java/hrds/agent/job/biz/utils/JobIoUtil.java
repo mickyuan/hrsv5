@@ -120,7 +120,7 @@ public class JobIoUtil {
 	 * @return
 	 */
 //	public static boolean isBigFile(File realCsvFile) {
-//		return Constant.hasHadoopEnv && realCsvFile.length() > Constant.MRSIZE;
+//		return Constant.HAS_HADOOP_ENV && realCsvFile.length() > Constant.MRSIZE;
 //	}
 
 	/**

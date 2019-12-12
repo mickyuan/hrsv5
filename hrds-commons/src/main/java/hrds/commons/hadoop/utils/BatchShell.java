@@ -8,7 +8,6 @@ import fd.ng.core.annotation.Param;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.hadoop.hadoop_helper.HdfsOperator;
-import hrds.commons.hadoop.readconfig.ConfigReader;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.PropertyParaUtil;
 import hrds.commons.utils.PropertyParaValue;
@@ -17,8 +16,6 @@ import hrds.commons.utils.jsch.SCPFileSender;
 import hrds.commons.utils.jsch.SFTPChannel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
 import java.io.File;
@@ -36,7 +33,7 @@ public class BatchShell {
 	public static void execStationaryHDFSShell(String localPath, String hdfsPath) {
 		//TODO 这里上传到本地还是HDFS是页面上选的吗？
 		//1.判断是否有hadoop环境，调用对应的方法
-		if (Constant.hasHadoopEnv) {
+		if (Constant.HAS_HADOOP_ENV) {
 			copyFileToHDFS(localPath, hdfsPath);
 		} else {
 			copyFileToRemote(localPath, hdfsPath);
