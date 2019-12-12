@@ -269,6 +269,46 @@ public class CollTbConfStepAction extends BaseAction {
 		}
 	}
 
+	@Method(desc = "根据表名和agent端交互，获取该表的数据总条数", logicStep = "" +
+			"1、根据colSetId在database_set表中获得数据库设置信息" +
+			"2、调用AgentActionUtil工具类获取访问Agent端服务的url" +
+			"3、构建http请求访问Agent端服务,Agent端拿到用户定义的并行抽取SQL会尝试直接在目标数据库中执行该SQL，看是否能获取到数据" +
+			"4、如果响应失败，则抛出异常(和agent交互不成功)" +
+			"5、和agent交互成功，但是根据并行抽取SQL没有查到数据,agent返回false，表示根据分页SQL没有取到数据，抛出异常给前端")
+	@Param(name = "colSetId", desc = "数据库设置ID,源系统数据库设置表主键,数据库对应表外键", range = "不为空")
+	@Param(name = "tableName", desc = "表名", range = "不为空")
+	@Return(desc = "数据量", range = "如果和agent端交互正常，并且的确查询到了该表，则返回的就是该表的数据条数")
+	public long getTableDataCount(long colSetId, String tableName){
+		//1、根据colSetId在database_set表中获得数据库设置信息
+		Map<String, Object> resultMap = Dbo.queryOneObject("select agent_id, user_name, database_pad, database_drive," +
+				" database_type, jdbc_url from " + Database_set.TableName + " where database_id = ?", colSetId);
+		if(resultMap.isEmpty()){
+			throw new BusinessException("未找到数据库采集任务");
+		}
+		//2、调用AgentActionUtil工具类获取访问Agent端服务的url
+		String url = AgentActionUtil.getUrl((Long) resultMap.get("agent_id"), getUserId(),
+				AgentActionUtil.GETTABLECOUNT);
+		//3、构建http请求访问Agent端服务,Agent端拿到用户定义的并行抽取SQL会尝试直接在目标数据库中执行该SQL，看是否能获取到数据
+		HttpClient.ResponseValue resVal = new HttpClient()
+				.addData("database_drive", (String) resultMap.get("database_drive"))
+				.addData("jdbc_url", (String) resultMap.get("jdbc_url"))
+				.addData("user_name", (String) resultMap.get("user_name"))
+				.addData("database_pad", (String) resultMap.get("database_pad"))
+				.addData("database_type", (String) resultMap.get("database_type"))
+				.addData("tableName", tableName)
+				.post(url);
+		ActionResult actionResult = JsonUtil.toObjectSafety(resVal.getBodyString(), ActionResult.class).
+				orElseThrow(() -> new BusinessException("应用管理端与" + url + "服务交互异常"));
+		//4、如果响应失败，则抛出异常(和agent交互不成功)
+		if(!actionResult.isSuccess()){
+			throw new BusinessException("获取" + tableName + "表数据量失败");
+		}
+
+		//5、和agent交互成功，返回前端查询数据，进行以下处理的原因是如果直接返回整数类型，getData()方法会报错
+		String count = (String) actionResult.getData();
+		return Long.parseLong(count);
+	}
+
 	@Method(desc = "根据数据库设置ID获得用户自定义抽取SQL", logicStep = "" +
 			"1、根据colSetId在table_info表中查询数据并返回")
 	@Param(name = "colSetId", desc = "数据库设置ID,源系统数据库设置表主键，数据库对应表外键", range = "不为空")
@@ -359,7 +399,7 @@ public class CollTbConfStepAction extends BaseAction {
 	@Param(name = "tableInfoString", desc = "当前数据库采集任务要采集的所有的表信息组成的json格式的字符串"
 			, range = "json数组格式字符串" +
 			"如果是新增的采集表，table_id为空，如果是编辑修改采集表，table_id不能为空，一个json对象中还应该包括表名(table_name)、" +
-			"是否并行抽取(is_parallel)、表中文名(table_ch_name)、如果用户定义了并行抽取，那么应该还有page_sql，" +
+			"是否并行抽取(is_parallel)、表中文名(table_ch_name)、如果用户定义了并行抽取，那么应该还有page_sql，table_count, pageparallels, dataincrement" +
 			"如果用户定义了SQL过滤，那么还应该有sql，如果页面上不选择采集表，那么这个参数可以不传", nullable = true, valueIfNull = "")
 	@Param(name = "colSetId", desc = "数据库设置ID，源系统数据库设置表主键，数据库对应表外键", range = "不为空")
 	@Param(name = "collTbConfParamString", desc = "采集表对应采集字段配置参数", range = "" +
@@ -413,6 +453,15 @@ public class CollTbConfStepAction extends BaseAction {
 				if(isFlag == IsFlag.Shi){
 					if(StringUtil.isBlank(tableInfo.getPage_sql())){
 						throw new BusinessException("保存采集表配置，第"+ (i + 1) +"条数据分页抽取SQL不能为空!");
+					}
+					if(tableInfo.getPageparallels() == null){
+						throw new BusinessException("保存采集表配置，第"+ (i + 1) +"条数据分页并行数不能为空!");
+					}
+					if(tableInfo.getDataincrement() == null){
+						throw new BusinessException("保存采集表配置，第"+ (i + 1) +"条每日数据增量不能为空!");
+					}
+					if(StringUtil.isBlank(tableInfo.getTable_count())){
+						throw new BusinessException("保存采集表配置，第"+ (i + 1) +"条每日数据增量不能为空!");
 					}
 				}
 				//3、给Table_info对象设置基本信息(valid_s_date,valid_e_date,is_user_defined,is_register)

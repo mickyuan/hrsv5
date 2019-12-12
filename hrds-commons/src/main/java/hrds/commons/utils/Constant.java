@@ -46,7 +46,7 @@ public class Constant {
 			"yyyyMMdd");
 	//是否写多文件
 	public static boolean WriteMultipleFiles = IsFlag.Shi.getCode().equals(PropertyParaUtil.getString(
-			"writemultiplefiles", IsFlag.Fou.toString()));
+			"writemultiplefiles", IsFlag.Fou.getCode()));
 
 	//定义并行抽取SQL开始条数占位符
 	public static final String PARALLEL_SQL_START = "#{hy_start}";

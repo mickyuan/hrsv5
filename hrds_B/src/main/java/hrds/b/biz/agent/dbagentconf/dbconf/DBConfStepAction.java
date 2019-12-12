@@ -221,8 +221,8 @@ public class DBConfStepAction extends BaseAction{
 		long count = Dbo.queryNumber("SELECT count(1) FROM "+Collect_job_classify.TableName+" cjc"+
 						" LEFT JOIN "+ Agent_info.TableName +" ai ON cjc.agent_id=ai.agent_id" +
 						" LEFT JOIN "+ Data_source.TableName +" ds ON ds.source_id=ai.source_id" +
-						" WHERE cjc.classify_num=? AND ds.source_id=? AND ds.create_user_id = ? ",
-				classify.getClassify_num(), sourceId, getUserId()).orElseThrow(
+						" WHERE cjc.classify_num = ? AND ds.source_id=? AND ds.create_user_id = ? and cjc.classify_id != ?",
+				classify.getClassify_num(), sourceId, getUserId(), classify.getClassify_id()).orElseThrow(
 				() -> new BusinessException("SQL查询错误"));
 		if(count != 0){
 			throw new BusinessException("分类编号重复，请重新输入");

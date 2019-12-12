@@ -504,7 +504,7 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 		}
 
 		//错误的数据访问1：构造的数据中，分类编号重复
-		String repeatClassifyNum = "wzc_test_classify_num1";
+		String repeatClassifyNum = "wzc_test_update_classify_num";
 		String repeatClassifyNumString = new HttpClient()
 				.addData("classify_id", SECOND_CLASSIFY_ID)
 				.addData("classify_num", repeatClassifyNum)

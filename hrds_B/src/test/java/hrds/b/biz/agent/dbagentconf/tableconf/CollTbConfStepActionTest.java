@@ -68,7 +68,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 	 *      6、collect_job_classify表：有2条数据，classify_id为10086L、10010L，agent_id分别为7001L、7002L,user_id为9997L
 	 *      7、table_info表测试数据共4条，databaseset_id为1001
 	 *          7-1、table_id:7001,table_name:sys_user,按照画面配置信息进行采集，并且配置了单表过滤SQL,select * from sys_user where user_id = 2001，不进行并行抽取
-	 *          7-2、table_id:7002,table_name:code_info,按照画面配置信息进行采集,进行并行抽取，分页SQL为select * from code_info limit 10
+	 *          7-2、table_id:7002,table_name:code_info,按照画面配置信息进行采集,进行并行抽取，分页SQL为select * from code_info limit 10,设置数据量为10万，并行抽取线程数为6，每日增量数据为1000条
 	 *          7-3、table_id:7003,table_name:agent_info,按照自定义SQL进行采集，不进行并行抽取
 	 *          7-4、table_id:7004,table_name:data_source,按照自定义SQL进行采集，不进行并行抽取
 	 *      8、table_column表测试数据：只有在画面上进行配置的采集表才会向table_column表中保存数据
@@ -407,6 +407,48 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		ActionResult wrongSQLResultTwo = JsonUtil.toObjectSafety(wrongSQLStringTwo, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(wrongSQLResultTwo.isSuccess(), is(false));
+	}
+
+	/**
+	 * 根据表名和agent端交互，获取该表的数据总条数
+	 * 正确数据访问1：构建正确的colSetId和表名，表中有数据
+	 * 错误的数据访问1：构建错误的colSetId和正确的表名
+	 * 错误的数据访问2：构建正确的colSetId和错误的表名
+	 * 错误的测试用例不足三条：以上场景足以覆盖代码中所有的分支
+	 * @Param: 无
+	 * @return: 无
+	 *
+	 * */
+	@Test
+	public void getTableDataCount(){
+		//正确数据访问1：构建正确的colSetId和表名，表中有数据
+		String rightString = new HttpClient()
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.addData("tableName", "table_info")
+				.post(getActionUrl("getTableDataCount")).getBodyString();
+		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResult.isSuccess(), is(true));
+		Integer tableInfoCount = (Integer) rightResult.getData();
+		assertThat("table_info表的数据有" + tableInfoCount.toString() + "条", true , is(true));
+
+		//错误的数据访问1：构建错误的colSetId和正确的表名
+		String wrongStringOne = new HttpClient()
+				.addData("colSetId", UNEXPECTED_ID)
+				.addData("tableName", "table_info")
+				.post(getActionUrl("getTableDataCount")).getBodyString();
+		ActionResult wrongResultOne = JsonUtil.toObjectSafety(wrongStringOne, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultOne.isSuccess(), is(false));
+
+		//错误的数据访问2：构建正确的colSetId和错误的表名
+		String wrongStringTwo = new HttpClient()
+				.addData("colSetId", UNEXPECTED_ID)
+				.addData("tableName", "wzc")
+				.post(getActionUrl("getTableDataCount")).getBodyString();
+		ActionResult wrongResultTwo = JsonUtil.toObjectSafety(wrongStringTwo, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultTwo.isSuccess(), is(false));
 	}
 
 	/**
@@ -2108,6 +2150,9 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 				assertThat("code_info表没有设置过滤SQL", rightData.getString(i, "sql"), is(""));
 				assertThat("code_info表设置了并行抽取，并且分页抽取SQL为<select * from code_info limit 10>", rightData.getString(i, "is_parallel"), is(IsFlag.Shi.getCode()));
 				assertThat("code_info表设置了并行抽取，并且分页抽取SQL为<select * from code_info limit 10>", rightData.getString(i, "page_sql"), is("select * from code_info limit 10"));
+				assertThat("code_info表设置了并行抽取，并且数据量为100000", rightData.getString(i, "table_count"), is("100000"));
+				assertThat("code_info表设置了并行抽取，并且并行采集线程数为6", rightData.getInt(i, "pageparallels"), is(6));
+				assertThat("code_info表设置了并行抽取，并且每日数据增量为1000条", rightData.getInt(i, "dataincrement"), is(1000));
 			}else{
 				assertThat("获取到了不符合期望的数据,table_id为：" + rightData.getLong(i, "table_id"), true, is(false));
 			}

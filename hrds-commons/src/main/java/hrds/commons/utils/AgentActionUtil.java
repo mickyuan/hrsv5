@@ -38,6 +38,8 @@ public class AgentActionUtil {
 	public static final String EXECUTEFILECOLLECT = "/hrds/agent/trans/biz/unstructuredFileCollect/execute";
 	//测试并行抽取SQL
 	public static final String TESTPARALLELSQL = "/hrds/agent/trans/biz/testParallelSQL";
+	//获取单表数据总量
+	public static final String GETTABLECOUNT = "/hrds/agent/trans/biz/getTableCount";
 
 	static {
 		list = new ArrayList<>();
@@ -52,6 +54,7 @@ public class AgentActionUtil {
 		list.add(SAVECOLLECTCASE);
 		list.add(EXECUTEFILECOLLECT);
 		list.add(TESTPARALLELSQL);
+		list.add(GETTABLECOUNT);
 	}
 
 	private AgentActionUtil() {

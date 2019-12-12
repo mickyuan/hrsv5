@@ -29,9 +29,9 @@ public class JdbcCollectJob extends AgentBaseAction {
 			logicStep = "1.获取json数组转成File_source的集合" +
 					"2.校验对象的值是否正确" +
 					"3.使用JobFactory工厂类调用后台方法")
-	@Param(name = "fileCollectParamBean", desc = "文件采集需要的参数实体bean",
+	@Param(name = "sourceDataConfBean", desc = "数据库采集需要的参数实体bean",
 			isBean = true, range = "所有这张表不能为空的字段的值必须有，为空则会抛异常，" +
-			"file_source_array对应的表File_source这个实体不能为空的字段的值必须有，为空则会抛异常")
+			"collectTableBeanArray对应的表CollectTableBean这个实体不能为空的字段的值必须有，为空则会抛异常")
 	public void execute(SourceDataConfBean sourceDataConfBean) {
 		//TODO 这里或许要压缩配置信息
 		ExecutorService executor = null;
