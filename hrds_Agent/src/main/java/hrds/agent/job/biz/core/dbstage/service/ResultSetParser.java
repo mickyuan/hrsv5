@@ -4,30 +4,15 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
-import hrds.agent.job.biz.bean.*;
-import hrds.agent.job.biz.constant.FileFormatConstant;
-import hrds.agent.job.biz.constant.JobConstant;
-import hrds.agent.job.biz.core.dbstage.writer.DBCollCSVWriter;
-import hrds.agent.job.biz.core.dbstage.writer.DBCollParquetWriter;
+import hrds.agent.job.biz.bean.CollectTableBean;
+import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.core.dbstage.writer.FileWriterFactory;
-import hrds.agent.job.biz.core.dbstage.writer.FileWriterInterface;
-import hrds.agent.job.biz.utils.ColumnTool;
-import hrds.agent.job.biz.utils.ParquetUtil;
-import hrds.commons.codes.IsFlag;
 import hrds.commons.exception.AppSystemException;
-import org.apache.parquet.example.data.GroupFactory;
-import org.apache.parquet.example.data.simple.SimpleGroupFactory;
-import org.apache.parquet.schema.MessageType;
 
 import java.io.IOException;
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 
 @DocClass(desc = "每个采集线程分别调用，用于解析当前线程采集到的ResultSet,并根据卸数的数据文件类型，" +
 		"调用相应的方法写数据文件", author = "WangZhengcheng")
@@ -114,23 +99,4 @@ public class ResultSetParser {
 		}
 		return colTypeAndPreci;
 	}
-
-//	@Method(desc = "获取数据库表中每一列的长度", logicStep = "" +
-//			"1、通过列索引在数据集元信息中获取列长度" +
-//			"2、通过列索引在数据集元信息中获取列数据类型" +
-//			"3.如果列数据类型是DECIMAL/NUMERIC，则进行特殊处理")
-//	@Param(name = "rsMetaData", desc = "当前线程查询到的数据集的Meta信息", range = "不为空")
-//	@Param(name = "index", desc = "要获取长度的列的下标", range = "[0, ResultSetMetaData.getColumnCount() - 1]")
-//	@Return(desc = "获得到的列的长度", range = "不会为null")
-//	private int getColumnLength(ResultSetMetaData rsMetaData, int index) throws SQLException {
-//		//1、通过列索引在数据集元信息中获取列长度
-//		int columnLength = rsMetaData.getPrecision(index);
-//		//2、通过列索引在数据集元信息中获取列数据类型
-//		String columnType = rsMetaData.getColumnTypeName(index).toUpperCase();
-//		//3.如果列数据类型是DECIMAL/NUMERIC，则进行特殊处理
-//		if (columnType.equals("DECIMAL") || columnType.equals("NUMERIC")) {
-//			columnLength = columnLength + 2;
-//		}
-//		return columnLength;
-//	}
 }

@@ -57,7 +57,7 @@ public class DBConfStepAction extends BaseAction{
 						" FROM "+ Data_source.TableName +" ds " +
 						" JOIN "+ Agent_info.TableName +" ai ON ds.source_id = ai.source_id " +
 						" JOIN "+ Database_set.TableName +" das ON ai.agent_id = das.agent_id " +
-						" WHERE das.database_id = ? AND ds.create_user_id = ? "
+						" WHERE das.database_id=? AND ds.create_user_id = ? "
 				, databaseId, getUserId())
 				.orElseThrow(() -> new BusinessException("未能找到该任务"));
 		//数据可访问权限处理方式
@@ -221,8 +221,8 @@ public class DBConfStepAction extends BaseAction{
 		long count = Dbo.queryNumber("SELECT count(1) FROM "+Collect_job_classify.TableName+" cjc"+
 						" LEFT JOIN "+ Agent_info.TableName +" ai ON cjc.agent_id=ai.agent_id" +
 						" LEFT JOIN "+ Data_source.TableName +" ds ON ds.source_id=ai.source_id" +
-						" WHERE cjc.classify_num = ? AND ds.source_id=? AND ds.create_user_id = ? and cjc.classify_id != ?",
-				classify.getClassify_num(), sourceId, getUserId(), classify.getClassify_id()).orElseThrow(
+						" WHERE cjc.classify_num = ? AND ds.source_id=? AND ds.create_user_id = ? and cjc.",
+				classify.getClassify_num(), sourceId, getUserId()).orElseThrow(
 				() -> new BusinessException("SQL查询错误"));
 		if(count != 0){
 			throw new BusinessException("分类编号重复，请重新输入");
