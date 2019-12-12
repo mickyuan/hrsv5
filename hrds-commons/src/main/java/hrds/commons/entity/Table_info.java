@@ -62,6 +62,10 @@ public class Table_info extends ProjectTableEntity
 	private String is_parallel;
 	@DocBean(name ="page_sql",value="分页sql:",dataType = String.class,required = false)
 	private String page_sql;
+	@DocBean(name ="pageparallels",value="分页并行数:",dataType = Integer.class,required = false)
+	private Integer pageparallels;
+	@DocBean(name ="dataincrement",value="每天数据增量:",dataType = Integer.class,required = false)
+	private Integer dataincrement;
 
 	/** 取得：表名ID */
 	public Long getTable_id(){
@@ -202,5 +206,33 @@ public class Table_info extends ProjectTableEntity
 	/** 设置：分页sql */
 	public void setPage_sql(String page_sql){
 		this.page_sql=page_sql;
+	}
+	/** 取得：分页并行数 */
+	public Integer getPageparallels(){
+		return pageparallels;
+	}
+	/** 设置：分页并行数 */
+	public void setPageparallels(Integer pageparallels){
+		this.pageparallels=pageparallels;
+	}
+	/** 设置：分页并行数 */
+	public void setPageparallels(String pageparallels){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(pageparallels)){
+			this.pageparallels=new Integer(pageparallels);
+		}
+	}
+	/** 取得：每天数据增量 */
+	public Integer getDataincrement(){
+		return dataincrement;
+	}
+	/** 设置：每天数据增量 */
+	public void setDataincrement(Integer dataincrement){
+		this.dataincrement=dataincrement;
+	}
+	/** 设置：每天数据增量 */
+	public void setDataincrement(String dataincrement){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(dataincrement)){
+			this.dataincrement=new Integer(dataincrement);
+		}
 	}
 }
