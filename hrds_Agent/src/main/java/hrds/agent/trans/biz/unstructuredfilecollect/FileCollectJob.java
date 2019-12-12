@@ -8,32 +8,22 @@ import fd.ng.core.annotation.Param;
 import hrds.agent.job.biz.bean.FileCollectParamBean;
 import hrds.agent.job.biz.bean.JobStatusInfo;
 import hrds.agent.job.biz.core.FileCollectJobImpl;
-import hrds.agent.job.biz.core.FtpCollectJobImpl;
+import hrds.agent.job.biz.utils.FileUtil;
+import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.commons.base.AgentBaseAction;
 import hrds.commons.entity.File_source;
 import hrds.commons.exception.AppSystemException;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import hrds.commons.utils.Constant;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
 
 @DocClass(desc = "接收页面参数，执行非结构化文件采集作业", author = "zxz", createdate = "2019/10/28 14:26")
 public class FileCollectJob extends AgentBaseAction {
-	//打印日志
-	private static final Log log = LogFactory.getLog(FtpCollectJobImpl.class);
 	//每个文件采集，存放队列的集合
 	public static final ConcurrentMap<String, ArrayBlockingQueue<String>> mapQueue = new ConcurrentHashMap<>();
-	//当前程序运行的目录
-	private static final String USER_DIR = System.getProperty("user.dir");
-	//mapDB文件存放的顶层目录
-	public static final String MAPDBPATH = USER_DIR + File.separator + "mapDB" + File.separator;
-	//jobInfo文件存放的顶层目录
-	public static final String JOBINFOPATH = USER_DIR + File.separator + "jobInfo" + File.separator;
-	//卸数文件存放的顶层目录
-	public static final String UNLOADFOLDER = USER_DIR + File.separator + "dirFile" + File.separator;
+
 
 	@Method(desc = "文件采集和前端交互的接口",
 			logicStep = "1.获取json数组转成File_source的集合" +
@@ -47,7 +37,8 @@ public class FileCollectJob extends AgentBaseAction {
 		ThreadPoolExecutor executor = null;
 		try {
 			//初始化当前任务需要保存的文件的根目录
-			initPath(fileCollectParamBean.getFcs_id());
+			String[] paths = {Constant.MAPDBPATH, Constant.JOBINFOPATH, Constant.FILEUNLOADFOLDER};
+			FileUtil.initPath(fileCollectParamBean.getFcs_id(), paths);
 			//1.获取json数组转成File_source的集合
 			List<File_source> fileSourceList = JSONArray.parseArray(fileCollectParamBean.getFile_source_array(),
 					File_source.class);
@@ -70,31 +61,12 @@ public class FileCollectJob extends AgentBaseAction {
 				list.add(submit);
 			}
 			//3.打印每个线程执行情况
-			for (Future<JobStatusInfo> statusInfoFuture : list) {
-				try {
-					JobStatusInfo jobStatusInfo = statusInfoFuture.get();
-					log.info("作业执行情况：" + jobStatusInfo.toString());
-				} catch (Exception e) {
-					log.error(e);
-				}
-			}
+			JobStatusInfoUtil.printJobStatusInfo(list);
 		} catch (RejectedExecutionException e) {
 			throw new AppSystemException("采集选择文件夹个数大于最大线程个数和队列个数的和!");
 		} finally {
 			if (executor != null)
 				executor.shutdown();
-		}
-	}
-
-	private void initPath(String fcs_id) {
-		String[] paths = {MAPDBPATH, JOBINFOPATH, UNLOADFOLDER};
-		for (String path : paths) {
-			File file = new File(path + fcs_id);
-			if (!file.exists()) {
-				if (!file.mkdirs()) {
-					throw new AppSystemException("创建文件夹" + file.getAbsolutePath() + "失败！");
-				}
-			}
 		}
 	}
 

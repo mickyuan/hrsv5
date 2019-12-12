@@ -5,7 +5,7 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.db.jdbc.DatabaseWrapper;
-import hrds.agent.job.biz.bean.DBConfigBean;
+import hrds.agent.job.biz.bean.SourceDataConfBean;
 import hrds.commons.base.AgentBaseAction;
 import hrds.commons.entity.Database_set;
 import hrds.commons.exception.AppSystemException;
@@ -24,7 +24,7 @@ public class TestConnection extends AgentBaseAction {
 	@Return(desc = "是否连接成功的判断", range = "不会为空")
 	public boolean testConn(Database_set dbSet) {
 		//1、使用dbinfo将需要测试连接的内容填充
-		DBConfigBean dbInfo = new DBConfigBean();
+		SourceDataConfBean dbInfo = new SourceDataConfBean();
 		dbInfo.setDatabase_drive(dbSet.getDatabase_drive());
 		dbInfo.setJdbc_url(dbSet.getJdbc_url());
 		dbInfo.setUser_name(dbSet.getUser_name());
@@ -45,7 +45,7 @@ public class TestConnection extends AgentBaseAction {
 	@Return(desc = "根据并行抽取是否成功获取数据的判断", range = "不会为空")
 	public boolean testParallelSQL(Database_set dbSet, String pageSql){
 		//1、使用dbinfo将需要测试并行抽取的数据库连接内容填充
-		DBConfigBean dbInfo = new DBConfigBean();
+		SourceDataConfBean dbInfo = new SourceDataConfBean();
 		dbInfo.setDatabase_drive(dbSet.getDatabase_drive());
 		dbInfo.setJdbc_url(dbSet.getJdbc_url());
 		dbInfo.setUser_name(dbSet.getUser_name());

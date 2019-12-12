@@ -18,12 +18,12 @@ import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.TimeType;
 import hrds.commons.entity.Ftp_collect;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.utils.Constant;
 import hrds.commons.utils.DeCompressionUtil;
 import hrds.commons.utils.MapDBHelper;
 import hrds.commons.utils.jsch.SftpOperate;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.poi.ss.formula.functions.T;
 
 import java.io.File;
 import java.util.List;
@@ -38,8 +38,6 @@ public class FtpCollectJobImpl implements JobInterface {
 	private static final Log log = LogFactory.getLog(FtpCollectJobImpl.class);
 	//存放每次启动任务时候的线程的集合
 	private static ConcurrentMap<String, Thread> mapJob = new ConcurrentHashMap<>();
-	//当前程序运行的目录
-	private static final String USER_DIR = System.getProperty("user.dir");
 	//是否实时读取，默认为true，保证程序最少进一次循环
 	private volatile boolean is_real_time = true;
 	//Ftp采集设置表对象
@@ -122,7 +120,7 @@ public class FtpCollectJobImpl implements JobInterface {
 				}
 				//6.判断是推送还是拉取，根据不同的模式建立目录，并推送或拉取文件
 				//根据ftpId获取MapDB操作类的对象
-				try (MapDBHelper mapDBHelper = new MapDBHelper(USER_DIR + File.separator + ftpId,
+				try (MapDBHelper mapDBHelper = new MapDBHelper(Constant.MAPDBPATH + ftpId,
 						ftpId + ".db")) {
 					ConcurrentMap<String, String> fileNameHTreeMap = mapDBHelper.htMap(ftpId, 25 * 12);
 					if (IsFlag.Shi.getCode().equals(ftp_collect.getFtp_model())) {

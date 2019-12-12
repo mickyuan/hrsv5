@@ -5,8 +5,10 @@ import fd.ng.core.annotation.DocClass;
 import hrds.commons.utils.Constant;
 import org.apache.hadoop.hbase.util.Bytes;
 
+import java.io.Serializable;
+
 @DocClass(desc = "文件采集需要的参数实体bean", author = "zxz", createdate = "2019/10/31 9:41")
-public class FileCollectParamBean {
+public class FileCollectParamBean implements Serializable {
 	public static final String E_MAXDATE = Constant.MAXDATE;
 
 	public static final byte[] MAXDATE = Bytes.toBytes(E_MAXDATE);

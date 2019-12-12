@@ -96,6 +96,7 @@ subprojects {
         compile group: 'org.apache.solr', name: 'solr-solrj', version: '5.3.1'
         compile group: 'net.sf.supercsv', name: 'super-csv', version: '2.4.0'
         compile group: 'net.sourceforge.jchardet', name: 'jchardet', version: '1.0'
+        compile group: 'mysql', name: 'mysql-connector-java', version: '5.1.31'
 
         testCompile fileTree(dir: "$rootDir/libs/testcase", include: ['*.jar'])
         testCompile group: 'junit', name: 'junit', version: '4.12'

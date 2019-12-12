@@ -12,7 +12,7 @@ public class TaskInfo implements Serializable {
 	private String taskId;
 	private String taskPath;
 	private List<JobInfo> groupcontent;
-	private DBConfigBean database_param;
+	private SourceDataConfBean sourceDataConfBean;
 	private String crontime;
 	private String jobstartdate;
 	private String jobstarttime;
@@ -53,12 +53,12 @@ public class TaskInfo implements Serializable {
 		this.groupcontent = groupcontent;
 	}
 
-	public DBConfigBean getDatabase_param() {
-		return database_param;
+	public SourceDataConfBean getDatabase_param() {
+		return sourceDataConfBean;
 	}
 
-	public void setDatabase_param(DBConfigBean database_param) {
-		this.database_param = database_param;
+	public void setDatabase_param(SourceDataConfBean sourceDataConfBean) {
+		this.sourceDataConfBean = sourceDataConfBean;
 	}
 
 	public String getCrontime() {
@@ -135,7 +135,7 @@ public class TaskInfo implements Serializable {
 
 	@Override
 	public String toString() {
-		return "TaskBean [groupcontent=" + groupcontent + ", database_param=" + database_param + ", crontime="
+		return "TaskBean [groupcontent=" + groupcontent + ", sourceDataConfBean=" + sourceDataConfBean + ", crontime="
 				+ crontime + ", jobstartdate=" + jobstartdate + ", job_param=" + job_param + ", is_parser=" + is_parser
 				+ ", groupcount=" + groupcount + ", all_clean_result=" + all_clean_result + ", signal_file="
 				+ signal_file + ", jobenddate=" + jobenddate + "]";

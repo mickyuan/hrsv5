@@ -4,6 +4,8 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
+import hrds.agent.job.biz.bean.CollectTableBean;
+import hrds.agent.job.biz.bean.TableBean;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -27,17 +29,17 @@ public interface FileWriterInterface {
 	@Param(name = "rs", desc = "当前线程执行分页SQL得到的结果集", range = "不为空")
 	@Param(name = "tableName", desc = "表名, 用于大字段数据写avro", range = "不为空")
 	@Return(desc = "生成的数据文件的路径", range = "不会为null")
-	String writeDataAsSpecifieFormat(Map<String, Object> metaDataMap, ResultSet rs, String tableName)
-			throws IOException, SQLException;
+	String writeFiles(ResultSet rs, CollectTableBean collectTableBean, long pageNum,
+	                  long pageRow, TableBean tableBean);
 
-	@Method(desc = "将LONGVARCHAR和CLOB类型转换为字节数组，用于写Avro", logicStep = "")
-	@Param(name = "characterStream", desc = "java.io.Reader形式得到此ResultSet结果集中当前行中指定列的值"
-			, range = "不为空")
-	@Return(desc = "此ResultSet结果集中当前行中指定列的值转换得到的字节数组", range = "不会为null")
-	byte[] longvarcharToByte(Reader characterStream);
-
-	@Method(desc = "把Blob类型转换为byte字节数组, 用于写Avro", logicStep = "")
-	@Param(name = "blob", desc = "采集得到的Blob类型的列的值", range = "不为空")
-	@Return(desc = "采集得到的Blob类型的列的值转换得到的字节数组", range = "不会为null")
-	byte[] blobToBytes(Blob blob);
+//	@Method(desc = "将LONGVARCHAR和CLOB类型转换为字节数组，用于写Avro", logicStep = "")
+//	@Param(name = "characterStream", desc = "java.io.Reader形式得到此ResultSet结果集中当前行中指定列的值"
+//			, range = "不为空")
+//	@Return(desc = "此ResultSet结果集中当前行中指定列的值转换得到的字节数组", range = "不会为null")
+//	byte[] longVarcharToByte(Reader characterStream);
+//
+//	@Method(desc = "把Blob类型转换为byte字节数组, 用于写Avro", logicStep = "")
+//	@Param(name = "blob", desc = "采集得到的Blob类型的列的值", range = "不为空")
+//	@Return(desc = "采集得到的Blob类型的列的值转换得到的字节数组", range = "不会为null")
+//	byte[] blobToBytes(Blob blob);
 }

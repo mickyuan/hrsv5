@@ -10,7 +10,7 @@ import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
 import hrds.agent.job.biz.core.filecollectstage.methods.AvroOper;
 import hrds.agent.job.biz.core.filecollectstage.methods.CollectionWatcher;
-import hrds.agent.trans.biz.unstructuredfilecollect.FileCollectJob;
+import hrds.commons.utils.Constant;
 import hrds.commons.utils.MapDBHelper;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -81,7 +81,7 @@ public class FileCollectUnloadDataStageImpl extends AbstractJobStage {
 			ExecutorService executorService = null;
 			try {
 				//2.文件临时存放目录,卸数到本地的目录
-				String unLoadPath = FileCollectJob.UNLOADFOLDER + fileCollectParamBean.getFcs_id() +
+				String unLoadPath = Constant.FILEUNLOADFOLDER + fileCollectParamBean.getFcs_id() +
 						File.separator + fileCollectParamBean.getFile_source_id() + File.separator;
 				//将要存入数据库的路径都要改成一致的Unix分隔符
 				unLoadPath = FileNameUtils.normalize(unLoadPath, true);

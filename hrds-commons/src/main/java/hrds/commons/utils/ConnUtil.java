@@ -1,12 +1,11 @@
 package hrds.commons.utils;
 
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import hrds.commons.codes.DatabaseType;
+import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.poi.ss.formula.functions.T;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -148,18 +147,15 @@ public class ConnUtil {
 	 * @throws Exception
 	 */
 	public static Connection getConnection(String database_drive, String jdbc_url, String user_name, String database_pad) throws Exception {
-
-		Connection conn = null;
+		Connection conn;
 		try {
-			//			String conn_url = getConn_url(type, database_ip, database_port, database_name);
 			logger.info("the connection url :" + jdbc_url);
 			Class.forName(database_drive);
 			conn = DriverManager.getConnection(jdbc_url, user_name, database_pad);
 		} catch (Exception e) {
 			logger.debug(e.getMessage());
-			throw new Exception(e.getMessage());
+			throw new AppSystemException("创建数据库连接失败", e);
 		}
-
 		return conn;
 	}
 

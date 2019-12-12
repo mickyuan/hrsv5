@@ -192,4 +192,15 @@ public class FileUtil {
 		return new File(filePath).length();
 	}
 
+	public static void initPath(String task_id, String[] paths) {
+		for (String path : paths) {
+			File file = new File(path + task_id);
+			if (!file.exists()) {
+				if (!file.mkdirs()) {
+					throw new AppSystemException("创建文件夹" + file.getAbsolutePath() + "失败！");
+				}
+			}
+		}
+	}
+
 }

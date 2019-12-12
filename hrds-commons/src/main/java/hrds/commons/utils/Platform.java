@@ -280,7 +280,7 @@ public class Platform {
 	 * @param precision {@link String} 数据长度
 	 * @param scale     {@link String} 数据精度
 	 */
-	private static String getColType(int dataType, String typeName, int precision, int scale) {
+	public static String getColType(int dataType, String typeName, int precision, int scale) {
 
 		//TODO 各数据库不同遇到在修改
 		typeName = StringUtil.replace(typeName, "UNSIGNED", "");

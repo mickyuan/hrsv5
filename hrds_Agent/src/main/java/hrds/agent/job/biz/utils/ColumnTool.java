@@ -1,23 +1,36 @@
 package hrds.agent.job.biz.utils;
 
+import com.alibaba.fastjson.JSONObject;
+import com.nimbusds.jose.util.StandardCharset;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
-import hrds.agent.job.biz.bean.ColumnCleanResult;
+import hrds.agent.job.biz.bean.CollectTableColumnBean;
 import hrds.agent.job.biz.bean.ColumnSplitBean;
 import hrds.agent.job.biz.constant.JobConstant;
+import hrds.agent.job.biz.core.dbstage.service.CollectTableHandleParse;
+import hrds.commons.codes.IsFlag;
 import hrds.commons.exception.AppSystemException;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.hive.common.type.HiveDecimal;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
+import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
+import org.apache.parquet.example.data.Group;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.io.*;
+import java.math.BigDecimal;
+import java.util.*;
 
 @DocClass(desc = "用于对需要进行列合并(表清洗)、列拆分(列清洗)清洗的列，获取采集列列名，更新列信息的工具类",
 		author = "WangZhengcheng")
 public class ColumnTool {
+	private static final Log logger = LogFactory.getLog(ColumnTool.class);
 
 	@Method(desc = "列拆分", logicStep = "" +
 			"")
@@ -53,16 +66,16 @@ public class ColumnTool {
 			//找到该列在原columns中的位置
 			int findColIndex = findColIndex(columnsName, colName, JobConstant.COLUMN_NAME_SEPARATOR);
 			//将该字段拆分后的内容追加到三个变量上
-			for(ColumnSplitBean splitBean : splitListByColName){
+			for (ColumnSplitBean splitBean : splitListByColName) {
 				appendColName.append(splitBean.getColName()).append(JobConstant.COLUMN_NAME_SEPARATOR);
 				appendColType.append(splitBean.getColType()).append(JobConstant.COLUMN_TYPE_SEPARATOR);
 				appendColLen.append(getLength(splitBean.getColType()))
 						.append(JobConstant.COLUMN_TYPE_SEPARATOR);
 			}
 			//去掉最后一位分隔符
-			appendColName = appendColName.deleteCharAt(appendColName.length() - 1);
-			appendColType = appendColType.deleteCharAt(appendColType.length() - 1);
-			appendColLen = appendColLen.deleteCharAt(appendColLen.length() - 1);
+			appendColName.deleteCharAt(appendColName.length() - 1);
+			appendColType.deleteCharAt(appendColType.length() - 1);
+			appendColLen.deleteCharAt(appendColLen.length() - 1);
 			//获取对应列类型的位置，插入拆分后的列类型
 			int typeIndex = searchIndex(columnsTypeAndPreci.toString(), findColIndex,
 					JobConstant.COLUMN_TYPE_SEPARATOR);
@@ -138,16 +151,19 @@ public class ColumnTool {
 			"3、将得到的columnName放入Set集合并返回")
 	@Param(name = "list", desc = "装有所有采集列的列清洗规则的List集合", range = "不为空")
 	@Return(desc = "装有所有采集列列名的Set集合", range = "不为空")
-	public static Set<String> getCollectColumnName(List<ColumnCleanResult> list) {
+	public static Set<String> getCollectColumnName(List<CollectTableColumnBean> columnList) {
 		//1、验证入参是否为空，如果为空，则抛出异常
-		if (list == null || list.isEmpty()) {
+		if (columnList == null || columnList.isEmpty()) {
 			throw new AppSystemException("采集作业信息不能为空");
 		}
 		//2、遍历list集合，获取每一个ColumnCleanResult对象的columnName
 		Set<String> columnNames = new HashSet<>();
-		for (ColumnCleanResult column : list) {
-			String columnName = column.getColumnName();
-			columnNames.add(columnName);
+		for (CollectTableColumnBean column : columnList) {
+			//不是新列则放到set
+			if (IsFlag.Fou.getCode().equals(column.getIs_new())) {
+				String columnName = column.getColumn_name();
+				columnNames.add(columnName);
+			}
 		}
 		//3、将得到的columnName放入Set集合并返回
 		return columnNames;
@@ -158,7 +174,7 @@ public class ColumnTool {
 	@Param(name = "colName", desc = "要寻找的列名", range = "不为空")
 	@Param(name = "separator", desc = "分隔符", range = "不为空")
 	@Return(desc = "查找到的列的位置", range = "不会为null")
-	private static int findColIndex(String columnsName, String colName, String separator) {
+	public static int findColIndex(String columnsName, String colName, String separator) {
 		List<String> column = StringUtil.split(columnsName, separator);
 		int index = 0;
 		for (int j = 0; j < column.size(); j++) {
@@ -173,7 +189,7 @@ public class ColumnTool {
 	@Method(desc = "获取每个数据类型的长度", logicStep = "")
 	@Param(name = "columnType", desc = "列类型", range = "不为空")
 	@Return(desc = "数据类型的长度", range = "不会为null")
-	private static int getLength(String columnType) {
+	public static int getLength(String columnType) {
 		columnType = columnType.trim();
 		int length;
 		if (columnType.equalsIgnoreCase("INTEGER")) {
@@ -198,8 +214,6 @@ public class ColumnTool {
 			length = 4000;
 		} else if (columnType.equalsIgnoreCase("DECFLOAT")) {
 			length = 34;
-		} else if (columnType.equalsIgnoreCase("DECFLOAT")) {
-			length = 34;
 		} else {
 			int start = columnType.indexOf("(");
 			int end = columnType.indexOf(")");
@@ -218,7 +232,7 @@ public class ColumnTool {
 	@Param(name = "index", desc = "该列在原字符串中出现的位置", range = "不为空")
 	@Param(name = "separator", desc = "分隔符", range = "不为空")
 	@Return(desc = "对应列类型的位置", range = "不会为null")
-	private static int searchIndex(String columnsTypeAndPreci, int index, String separator) {
+	public static int searchIndex(String columnsTypeAndPreci, int index, String separator) {
 		int temp = 0;//第一个出现的索引位置
 		int num = 0;
 		while (temp != -1) {
@@ -229,5 +243,124 @@ public class ColumnTool {
 			}
 		}
 		return temp;
+	}
+
+	/**
+	 * 写表的字段信息及生成文件信息
+	 */
+	public static void writeFileMeta(String tableName, File file, String columns, long liner, StringBuilder list, StringBuilder lengths, long meta_filesize, String mr) {
+
+		BufferedWriter bw = null;
+		String metaFile = file.getAbsolutePath() + "tabledata.meta";
+		metaFile = FilenameUtils.normalize(metaFile);
+		try {
+			bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(metaFile, true),
+					StandardCharset.UTF_8));
+			JSONObject jsonSon = new JSONObject();
+			jsonSon.put("tablename", tableName);
+			jsonSon.put("column", columns.toUpperCase());
+			jsonSon.put("length", lengths.toString());
+			jsonSon.put("records", String.valueOf(liner));
+			jsonSon.put("filesize", meta_filesize);
+			jsonSon.put("type", list.toString());
+			jsonSon.put("mr", mr);
+			bw.write(jsonSon + "\n");
+			bw.flush();
+
+		} catch (Exception e) {
+			throw new AppSystemException("写表的字段信息及生成文件信息失败", e);
+		} finally {
+			try {
+				if (bw != null)
+					bw.close();
+			} catch (IOException e) {
+				logger.error(e.getMessage(), e);
+			}
+		}
+	}
+
+	public static StructObjectInspector schemaInfo(String columns, String types) {
+
+		List<ObjectInspector> listType = new ArrayList<>();
+		List<String> listColumn = new ArrayList<>();
+		List<String> columnAll = StringUtil.split(columns, CollectTableHandleParse.STRSPLIT);
+		List<String> split = StringUtil.split(types, CollectTableHandleParse.STRSPLIT);//字段类型
+		for (int i = 0; i < columnAll.size(); i++) {
+			//TODO 类型转换这个类是否需要修改
+//			String columns_type = DataTypeTransformHive.tansform(split.get(i).toUpperCase());
+			String columns_type = split.get(i).toUpperCase();
+			if (columns_type.contains("BOOLEAN")) {
+				listType.add(PrimitiveObjectInspectorFactory.javaBooleanObjectInspector);//orc文件字段类型
+			} else if (columns_type.contains("INT")) {
+				listType.add(PrimitiveObjectInspectorFactory.javaIntObjectInspector);//orc文件字段类型
+			} else if (columns_type.contains("CHAR")) {
+				listType.add(PrimitiveObjectInspectorFactory.javaStringObjectInspector);//orc文件字段类型
+			} else if (columns_type.contains("DECIMAL")) {
+				listType.add(PrimitiveObjectInspectorFactory.javaHiveDecimalObjectInspector);//orc文件字段类型
+			} else if (columns_type.contains("FLOAT")) {
+				listType.add(PrimitiveObjectInspectorFactory.javaFloatObjectInspector);//orc文件字段类型
+			} else if (columns_type.contains("DOUBLE")) {
+				listType.add(PrimitiveObjectInspectorFactory.javaDoubleObjectInspector);//orc文件字段类型
+			} else {
+				listType.add(PrimitiveObjectInspectorFactory.javaStringObjectInspector);//orc文件字段类型
+			}
+			listColumn.add(columnAll.get(i));//列名称
+
+		}
+		//Orc文件的列信息
+		return (StructObjectInspector) ObjectInspectorFactory.getStandardStructObjectInspector(listColumn, listType);
+	}
+
+	public static void addData2Group(Group group, String columnType, String columname, String data) {
+		//TODO 字段类型转换，这里要设计表
+//		columnType = DataTypeTransformHive.tansform(columnType.toUpperCase());
+		columnType = columnType.toUpperCase();
+		data = data.trim();
+		if (columnType.contains("BOOLEAN")) {
+			boolean dataResult = Boolean.valueOf(data);
+			group.add(columname, dataResult);
+		} else if (columnType.contains("INT")) {
+			int dataResult = StringUtil.isEmpty(data) ? 0 : Integer.valueOf(data);
+			group.add(columname, dataResult);
+		} else if (columnType.contains("FLOAT")) {
+			float dataResult = StringUtil.isEmpty(data) ? 0 : Float.valueOf(data);
+			group.add(columname, dataResult);
+		} else if (columnType.contains("DOUBLE") || columnType.contains("DECIMAL")) {
+			double dataResult = StringUtil.isEmpty(data) ? 0 : Double.valueOf(data);
+			group.add(columname, dataResult);
+		}
+		else {
+			//char与varchar都为string
+			data = StringUtil.isEmpty(data) ? "" : data;
+			group.add(columname, data);
+		}
+	}
+
+	public static void addData2Inspector(List<Object> lineData, String columnType, String data) {
+		//TODO 字段类型转换，这里要设计表
+//		columnType = DataTypeTransformHive.tansform(columnType.toUpperCase());
+		columnType = columnType.toUpperCase();
+		data = data.trim();
+		if (columnType.contains("BOOLEAN")) {
+			boolean dataResult = Boolean.valueOf(data);
+			lineData.add(dataResult);
+		} else if (columnType.contains("INT")) {
+			int dataResult = StringUtil.isEmpty(data) ? 0 : Integer.valueOf(data);
+			lineData.add(dataResult);
+		} else if (columnType.contains("FLOAT")) {
+			float dataResult = StringUtil.isEmpty(data) ? 0 : Float.valueOf(data);
+			lineData.add(dataResult);
+		} else if (columnType.contains("DOUBLE")) {
+			double dataResult = StringUtil.isEmpty(data) ? 0 : Double.valueOf(data);
+			lineData.add(dataResult);
+		} else if (columnType.contains("DECIMAL")) {
+			BigDecimal dataResult = StringUtil.isEmpty(data) ? new BigDecimal("0") : new BigDecimal(data);
+			HiveDecimal create = HiveDecimal.create(dataResult);
+			lineData.add(create);
+		} else {
+			//char与varchar都为string
+			data = StringUtil.isEmpty(data) ? "" : data;
+			lineData.add(data);
+		}
 	}
 }

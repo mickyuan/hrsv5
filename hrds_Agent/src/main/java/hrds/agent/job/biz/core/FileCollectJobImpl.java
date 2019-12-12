@@ -1,11 +1,9 @@
 package hrds.agent.job.biz.core;
 
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
-import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.FileNameUtils;
 import fd.ng.core.utils.MD5Util;
 import fd.ng.core.utils.StringUtil;
@@ -13,18 +11,17 @@ import hrds.agent.job.biz.bean.FileCollectParamBean;
 import hrds.agent.job.biz.bean.JobStatusInfo;
 import hrds.agent.job.biz.bean.MetaInfoBean;
 import hrds.agent.job.biz.core.filecollectstage.FileCollectUnloadDataStageImpl;
-import hrds.agent.job.biz.utils.FileUtil;
+import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.agent.trans.biz.unstructuredfilecollect.FileCollectJob;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.File_source;
-import hrds.commons.exception.AppSystemException;
+import hrds.commons.utils.Constant;
 import hrds.commons.utils.FileTypeUtil;
 import hrds.commons.utils.MapDBHelper;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -40,8 +37,6 @@ public class FileCollectJobImpl implements JobInterface {
 	private FileCollectParamBean fileCollectParamBean;
 	//源文件设置表
 	private File_source file_source;
-	//job运行程序信息存储文件名称
-	private static final String JOBFILENAME = "jobInfo.json";
 
 
 	/**
@@ -81,36 +76,12 @@ public class FileCollectJobImpl implements JobInterface {
 			ArrayBlockingQueue<String> queue = new ArrayBlockingQueue<>(10);
 			FileCollectJob.mapQueue.put(file_source_id, queue);
 		}
-		String statusFilePath = FileCollectJob.JOBINFOPATH + fcs_id
-				+ File.separator + file_source_id + File.separator + JOBFILENAME;
-		File file = new File(statusFilePath);
+		String statusFilePath = Constant.JOBINFOPATH + fcs_id
+				+ File.separator + file_source_id + File.separator + Constant.JOBFILENAME;
 		//JobStatusInfo对象，表示一个作业的状态
-		JobStatusInfo jobStatus;
-		if (file.exists()) {
-			String jobInfo;
-			try {
-				jobInfo = FileUtil.readFile2String(file);
-			} catch (IOException e) {
-				throw new AppSystemException("读取文件失败！" + e.getMessage());
-			}
-			jobStatus = JSONArray.parseObject(jobInfo, JobStatusInfo.class);
-		} else {
-			//不存在创建文件夹
-			String parent = file.getParent();
-			File parentPath = new File(parent);
-			if (!parentPath.exists()) {
-				if (!parentPath.mkdirs()) {
-					throw new AppSystemException("创建文件夹" + parentPath + "失败！");
-				}
-			}
-			//2.设置作业ID、开始日期和开始时间
-			jobStatus = new JobStatusInfo();
-			jobStatus.setJobId(file_source_id);
-			jobStatus.setStartDate(DateUtil.getSysDate());
-			jobStatus.setStartTime(DateUtil.getSysTime());
-		}
+		JobStatusInfo jobStatus = JobStatusInfoUtil.getStartJobStatusInfo(statusFilePath, file_source_id);
 		//3.创建mapDB对象，用于检测文件夹下文件是否被采集过
-		try (MapDBHelper mapDBHelper = new MapDBHelper(FileCollectJob.MAPDBPATH + fcs_id + File.separator
+		try (MapDBHelper mapDBHelper = new MapDBHelper(Constant.MAPDBPATH + fcs_id + File.separator
 				+ file_source_id, file_source_id + ".db")) {
 			ConcurrentMap<String, String> fileNameHTreeMap = mapDBHelper.htMap(file_source_id, 25 * 12);
 			List<String> newFile = new ArrayList<>();
@@ -280,6 +251,9 @@ public class FileCollectJobImpl implements JobInterface {
 		return fileSuffixList;
 	}
 
+	@Method(desc = "获取文本类型的文件后缀名放到集合", logicStep = "")
+	@Param(name = "fileSuffixList", desc = "文件后缀名的集合", range = "可以为空集合")
+	@Param(name = "fileTypeMap", desc = "文件类型及其类型对应后缀名集合的列表", range = "不可为空")
 	private static void addTextType(List<String> fileSuffixList, Map<String, String[]> fileTypeMap) {
 		fileSuffixList.addAll(Arrays.asList(fileTypeMap.get(FileTypeUtil.WenBenWenJian)));
 		fileSuffixList.addAll(Arrays.asList(fileTypeMap.get(FileTypeUtil.RiZhiWenJian)));

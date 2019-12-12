@@ -48,8 +48,8 @@ public class DataFileJobImpl implements JobInterface {
 		LOGGER.info("作业正在运行中，作业编号为{}", jobId);
 		String inputFile = jobParam.getFile_path();
 		List<String> columns = new ArrayList<>();
-		for (ColumnCleanResult column : job.getColumnList()) {
-			columns.add(column.getColumnName());
+		for (ColumnCleanBean column : job.getColumnList()) {
+//			columns.add(column.getColumnName());
 		}
 		//TODO 此处肯定要改，所以先写死
 		String tableName = job.getTable_name();

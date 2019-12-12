@@ -44,6 +44,8 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 	private static final long AGENT_ID = 10000001L;
 	// 文件采集设置表id
 	private static final long FCS_ID = 20000001L;
+	// 数据源id
+//	private static final long SOURCE_ID = 30000001L;
 	//用户id
 	private static final long USER_ID = 9001L;
 	//部门ID
@@ -102,6 +104,19 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 				agent_info.setAgent_pattern("/receive/*");
 				agent_info.setRemark("测试用例清除数据专用列");
 				assertThat("初始化数据成功", agent_info.add(db), is(1));
+//				Agent_info agent_info2 = new Agent_info();
+//				agent_info2.setUser_id(USER_ID);
+//				agent_info2.setAgent_id(AGENT_ID + i);
+//				agent_info2.setAgent_ip("127.0.0.1");
+//				agent_info2.setAgent_port(String.valueOf(56000 + i));
+//				agent_info2.setAgent_type(AgentType.ShuJuKu.getCode());
+//				agent_info2.setAgent_name("非结构化采集Agent" + i);
+//				agent_info2.setAgent_type(AgentType.WenJianXiTong.getCode());
+//				agent_info2.setAgent_status(AgentStatus.YiLianJie.getCode());
+//				agent_info2.setSource_id(SOURCE_ID);
+//				agent_info2.setCreate_date(DateUtil.getSysDate());
+//				agent_info2.setCreate_time(DateUtil.getSysTime());
+//				assertThat("初始化数据成功", agent_info2.add(db), is(1));
 			}
 			//4.造file_collect_set表数据，初始化条数可调整，默认为2条，fcs_id为20000001和20000002
 			for (int i = 0; i < FILE_COLLECT_SET_ROWS; i++) {
@@ -129,9 +144,19 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 				file_source.setIs_pdf(IsFlag.Shi.getCode());
 				file_source.setIs_text(IsFlag.Shi.getCode());
 				file_source.setIs_video(IsFlag.Shi.getCode());
+				file_source.setIs_compress(IsFlag.Shi.getCode());
 				assertThat("初始化数据成功", file_source.add(db), is(1));
 			}
-			SqlOperator.commitTransaction(db);
+			//造data_source表数据，默认为1条
+//			Data_source data_source = new Data_source();
+//			data_source.setSource_id(SOURCE_ID);
+//			data_source.setCreate_user_id(USER_ID);
+//			data_source.setDatasource_number("zz11");
+//			data_source.setDatasource_name("zxz测试");
+//			data_source.setCreate_date(DateUtil.getSysDate());
+//			data_source.setCreate_time(DateUtil.getSysTime());
+//			assertThat("初始化data_source数据成功", data_source.add(db), is(1));
+//			SqlOperator.commitTransaction(db);
 		}
 		//6.模拟用户登录
 		String responseValue = new HttpClient().buildSession()
@@ -574,6 +599,21 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(false));
 	}
+
+//	/**
+//	 * 测试执行文件采集
+//	 */
+//	@Test
+//	public void executeJobTest() {
+//		//1.使用FCS_ID的测试
+//		bodyString = new HttpClient()
+//				.addData("fcs_id", FCS_ID)
+//				.post(getActionUrl("executeJob")).getBodyString();
+//		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+//				-> new BusinessException("连接失败！"));
+//		assertThat(ar.isSuccess(), is(true));
+//	}
+
 
 	/**
 	 * 测试用例清理数据

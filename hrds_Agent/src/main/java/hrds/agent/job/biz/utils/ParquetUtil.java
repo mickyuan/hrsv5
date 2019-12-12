@@ -4,6 +4,7 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.constant.DataTypeConstant;
 import hrds.agent.job.biz.constant.JobConstant;
+import hrds.agent.job.biz.core.dbstage.service.CollectTableHandleParse;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -34,10 +35,10 @@ public class ParquetUtil {
 	 */
 	public static MessageType getSchema(String columns, String types) {
 		//列数组
-		String[] colArray = columns.toUpperCase().split(JobConstant.COLUMN_SEPARATOR);
+		String[] colArray = columns.toUpperCase().split(CollectTableHandleParse.STRSPLIT);
 		//字段类型
 		List<String> typeArray = StringUtil.split(types.toLowerCase(),
-				JobConstant.COLUMN_TYPE_SEPARATOR);
+				CollectTableHandleParse.STRSPLIT);
 		StringBuilder sb = new StringBuilder(170);
 		sb.append("message Pair {\n");
 
@@ -105,14 +106,14 @@ public class ParquetUtil {
 	 */
 	public static void addData2Group(Group group, String columname, String columnType, String data) {
 
-		if (columnType.indexOf(DataTypeConstant.BOOLEAN.getMessage()) > -1) {
+		if (columnType.contains(DataTypeConstant.BOOLEAN.getMessage())) {
 			group.add(columname, Boolean.valueOf(data));
-		} else if (columnType.indexOf(DataTypeConstant.INT.getMessage()) > -1) {
+		} else if (columnType.contains(DataTypeConstant.INT.getMessage())) {
 			group.add(columname, null == data ? 0 : Integer.valueOf(data));
-		} else if (columnType.indexOf(DataTypeConstant.FLOAT.getMessage()) > -1) {
+		} else if (columnType.contains(DataTypeConstant.FLOAT.getMessage())) {
 			group.add(columname, null == data ? 0 : Float.valueOf(data));
-		} else if (columnType.indexOf(DataTypeConstant.DOUBLE.getMessage()) > -1 ||
-				columnType.indexOf(DataTypeConstant.DECIMAL.getMessage()) > -1) {
+		} else if (columnType.contains(DataTypeConstant.DOUBLE.getMessage()) ||
+				columnType.contains(DataTypeConstant.DECIMAL.getMessage())) {
 			group.add(columname, null == data ? 0 : Double.valueOf(data));
 		} else {
 			//char与varchar都为string
@@ -127,8 +128,8 @@ public class ParquetUtil {
 	 * @param Path    本地或hdfs文件地址
 	 * @param conf    Configuration对象
 	 * @param isLocal 是否为本地文件流
-	 * @throws IOException 无法对指定文件写入数据时抛出该异常
 	 * @return ParquetWriter<Group>
+	 * @throws IOException 无法对指定文件写入数据时抛出该异常
 	 */
 	public static ParquetWriter<Group> getParquetWriter(MessageType schema, String Path,
 	                                                    Configuration conf,
@@ -149,7 +150,6 @@ public class ParquetUtil {
 	 */
 	public static ParquetWriter<Group> getParquetWriter(MessageType schema, String Path)
 			throws IOException {
-
 		Configuration conf = new Configuration();
 		return getParquetWriter(schema, Path, conf, true);
 
@@ -162,8 +162,8 @@ public class ParquetUtil {
 	 * @param path
 	 * @param conf
 	 * @param isLocal 是否为本地文件流
-	 * @throws IOException 无法对指定文件写入数据时抛出该异常
 	 * @return ParquetWriter<Group>
+	 * @throws IOException 无法对指定文件写入数据时抛出该异常
 	 */
 	public static ParquetWriter<Group> getParquetWriter(MessageType schema, Path path,
 	                                                    Configuration conf, boolean isLocal)

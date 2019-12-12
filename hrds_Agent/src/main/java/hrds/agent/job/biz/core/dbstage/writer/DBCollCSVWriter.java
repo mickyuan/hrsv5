@@ -7,7 +7,9 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
+import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.JobInfo;
+import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.bean.TaskInfo;
 import hrds.agent.job.biz.constant.FileFormatConstant;
 import hrds.agent.job.biz.constant.JobConstant;
@@ -84,7 +86,6 @@ public class DBCollCSVWriter extends AbstractFileWriter {
 	@Param(name = "rs", desc = "当前线程执行分页SQL得到的结果集", range = "不为空")
 	@Param(name = "tableName", desc = "表名, 用于大字段数据写avro", range = "不为空")
 	@Return(desc = "生成的数据文件的路径", range = "不会为null")
-	@Override
 	public String writeDataAsSpecifieFormat(Map<String, Object> metaDataMap, ResultSet rs, String tableName)
 			throws IOException, SQLException {
 		//1、校验方法入参合法性
@@ -310,5 +311,10 @@ public class DBCollCSVWriter extends AbstractFileWriter {
 		writer.close();
 		LOGGER.info("线程" + Thread.currentThread().getId() + "写CSV文件结束");
 		return path;
+	}
+
+	@Override
+	public String writeFiles(ResultSet rs, CollectTableBean collectTableBean, long pageNum, long pageRow, TableBean tableBean) {
+		return null;
 	}
 }

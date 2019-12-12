@@ -18,7 +18,7 @@ public class JobInfo implements Serializable {
 	private String up_source_name;
 	private String indexinfo;
 	private String is_md5;
-	private List<ColumnCleanResult> columnList;
+	private List<ColumnCleanBean> columnList;
 	private String pageColumn;
 	private String table_name;
 	private String is_solr_hbase;
@@ -99,11 +99,11 @@ public class JobInfo implements Serializable {
 		this.is_md5 = is_md5;
 	}
 
-	public List<ColumnCleanResult> getColumnList() {
+	public List<ColumnCleanBean> getColumnList() {
 		return columnList;
 	}
 
-	public void setColumnList(List<ColumnCleanResult> columnList) {
+	public void setColumnList(List<ColumnCleanBean> columnList) {
 		this.columnList = columnList;
 	}
 

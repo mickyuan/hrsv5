@@ -3,6 +3,7 @@ package hrds.agent.job.biz.core.dfstage;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Return;
+import fd.ng.core.utils.DateUtil;
 import hrds.agent.job.biz.bean.StageStatusInfo;
 import hrds.agent.job.biz.constant.FileFormatConstant;
 import hrds.agent.job.biz.constant.JobConstant;
@@ -10,7 +11,6 @@ import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
 import hrds.agent.job.biz.core.dfstage.fileparser.CsvFile2Parquet;
-import hrds.agent.job.biz.utils.DateUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,8 +67,8 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 		StageStatusInfo status = new StageStatusInfo();
 		status.setJobId(jobId);
 		status.setStageNameCode(StageConstant.UNLOADDATA.getCode());
-		status.setStartDate(DateUtil.getLocalDateByChar8());
-		status.setStartTime(DateUtil.getLocalTimeByChar6());
+		status.setStartDate(DateUtil.getSysDate());
+		status.setStartTime(DateUtil.getSysTime());
 
 		CsvFile2Parquet csvFile2Parquet = new CsvFile2Parquet.Builder(tableName, StringUtils.join(columns,
 				JobConstant.COLUMN_SEPARATOR), StringUtils.join(columnTypes, JobConstant.COLUMN_TYPE_SEPARATOR),
@@ -77,8 +77,8 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 		rowCount = csvFile2Parquet.handle();
 
 		LOGGER.info("------------------数据文件卸数阶段结束------------------");
-		status.setEndDate(DateUtil.getLocalDateByChar8());
-		status.setEndTime(DateUtil.getLocalTimeByChar6());
+		status.setEndDate(DateUtil.getSysDate());
+		status.setEndTime(DateUtil.getSysTime());
 		status.setStatusCode(RunStatusConstant.SUCCEED.getCode());
 
 		return status;

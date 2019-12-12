@@ -3,11 +3,11 @@ package hrds.agent.job.biz.core.dfstage;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Return;
+import fd.ng.core.utils.DateUtil;
 import hrds.agent.job.biz.bean.StageStatusInfo;
 import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
-import hrds.agent.job.biz.utils.DateUtil;
 import hrds.agent.job.biz.utils.ScriptExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,8 +44,8 @@ public class DFUploadStageImpl extends AbstractJobStage {
 		StageStatusInfo statusInfo = new StageStatusInfo();
 		statusInfo.setStageNameCode(StageConstant.UPLOAD.getCode());
 		statusInfo.setJobId(jobId);
-		statusInfo.setStartDate(DateUtil.getLocalDateByChar8());
-		statusInfo.setStartTime(DateUtil.getLocalTimeByChar6());
+		statusInfo.setStartDate(DateUtil.getSysDate());
+		statusInfo.setStartTime(DateUtil.getSysTime());
 		RunStatusConstant status = RunStatusConstant.SUCCEED;
 		ScriptExecutor executor = new ScriptExecutor();
 		try {
@@ -57,8 +57,8 @@ public class DFUploadStageImpl extends AbstractJobStage {
 		}
 
 		statusInfo.setStatusCode(status.getCode());
-		statusInfo.setEndDate(DateUtil.getLocalDateByChar8());
-		statusInfo.setEndTime(DateUtil.getLocalTimeByChar6());
+		statusInfo.setEndDate(DateUtil.getSysDate());
+		statusInfo.setEndTime(DateUtil.getSysTime());
 		return statusInfo;
 	}
 }
