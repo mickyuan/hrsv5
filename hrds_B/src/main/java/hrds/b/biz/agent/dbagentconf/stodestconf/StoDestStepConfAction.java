@@ -380,9 +380,9 @@ public class StoDestStepConfAction extends BaseAction{
 		for(int i = 0; i < tableColumns.size(); i++){
 			Table_column tableColumn = tableColumns.get(i);
 			if(tableColumn.getColumn_id() == null){
-				throw new BusinessException("保存第" + i + 1 + "个字段的中文名必须关联字段ID");
+				throw new BusinessException("保存第" + (i + 1) + "个字段的中文名必须关联字段ID");
 			}
-			DboExecute.updatesOrThrow("保存第" + i + 1 + "个字段的中文名失败", "update " +
+			DboExecute.updatesOrThrow("保存第" + (i + 1) + "个字段的中文名失败", "update " +
 					Table_column.TableName + " set colume_ch_name = ? where column_id = ?",
 					tableColumn.getColume_ch_name(), tableColumn.getColumn_id());
 		}
@@ -505,13 +505,13 @@ public class StoDestStepConfAction extends BaseAction{
 		for(int i = 0; i < tableInfos.size(); i++){
 			Table_info tableInfo = tableInfos.get(i);
 			if(tableInfo.getTable_id() == null){
-				throw new BusinessException("保存第" + i + 1 + "张表的名称信息必须关联字段ID");
+				throw new BusinessException("保存第" + (i + 1) + "张表的名称信息必须关联字段ID");
 			}
 			if(StringUtil.isBlank(tableInfo.getTable_name())){
-				throw new BusinessException("第" + i + 1 + "张表的表名必须填写");
+				throw new BusinessException("第" + (i + 1) + "张表的表名必须填写");
 			}
 			if(StringUtil.isBlank(tableInfo.getTable_ch_name())){
-				throw new BusinessException("第" + i + 1 + "张表的表中文名必须填写");
+				throw new BusinessException("第" + (i + 1) + "张表的表中文名必须填写");
 			}
 			DboExecute.updatesOrThrow("保存第" + i + "张表名称信息失败", "update " +
 							Table_info.TableName + " set table_name = ?, table_ch_name = ? where table_id = ?",
@@ -521,26 +521,38 @@ public class StoDestStepConfAction extends BaseAction{
 
 	@Method(desc = "校验保存表存储配置信息时各个字段的合法性", logicStep = "" +
 			"1、校验保存表存储配置信息时，必须关联表" +
-			"2、校验保存表存储配置信息时，必须选择进数方式" +
-			"3、校验保存表存储配置信息时，必须选择是否拉链存储" +
-			"4、校验保存表存储配置信息时，必须填写存储期限")
+			"2、校验保存表存储配置信息时，必须选择是否拉链存储" +
+			"   2-1、如果选择拉链存储，那么必须选择进数方式" +
+			"   2-2、如果不做拉链存储，那么进数方式默认是替换" +
+			"3、校验保存表存储配置信息时，必须填写存储期限")
 	@Param(name = "tableStorageInfos", desc = "待保存的表存储配置信息", range = "不为空")
 	private void verifyTbStoConf(List<Table_storage_info> tableStorageInfos){
 		for(int i = 0; i < tableStorageInfos.size(); i++){
 			Table_storage_info storageInfo = tableStorageInfos.get(i);
+			//1、校验保存表存储配置信息时，必须关联表
 			if(storageInfo.getTable_id() == null){
-				throw new BusinessException("第" + i + 1 + "条数据保存表存储配置时，请关联表");
+				throw new BusinessException("第" + (i + 1) + "条数据保存表存储配置时，请关联表");
 			}
-			if(StringUtil.isBlank(storageInfo.getStorage_type())){
-				throw new BusinessException("第" + i + 1 + "条数据保存表存储配置时，请选择进数方式");
+			//2、校验保存表存储配置信息时，必须选择是否拉链存储
+			if(StringUtil.isNotBlank(storageInfo.getIs_zipper())){
+				IsFlag isFlag = IsFlag.ofEnumByCode(storageInfo.getIs_zipper());
+				//2-1、如果选择拉链存储，那么必须选择进数方式
+				if(IsFlag.Shi == isFlag){
+					if(StringUtil.isBlank(storageInfo.getStorage_type())){
+						throw new BusinessException("第" + (i + 1) + "条数据保存表存储配置时，请选择进数方式");
+					}
+					StorageType.ofEnumByCode(storageInfo.getStorage_type());
+				}
+				//2-2、如果不做拉链存储，那么进数方式默认是替换
+				if(IsFlag.Fou == isFlag){
+					storageInfo.setStorage_type(StorageType.TiHuan.getCode());
+				}
+			}else{
+				throw new BusinessException("第" + (i + 1) + "条数据保存表存储配置时，请选择是否拉链存储");
 			}
-			StorageType.ofEnumByCode(storageInfo.getStorage_type());
-			if(StringUtil.isBlank(storageInfo.getIs_zipper())){
-				throw new BusinessException("第" + i + 1 + "条数据保存表存储配置时，请选择是否拉链存储");
-			}
-			IsFlag.ofEnumByCode(storageInfo.getIs_zipper());
+			//3、校验保存表存储配置信息时，必须填写存储期限
 			if(storageInfo.getStorage_time() == null){
-				throw new BusinessException("第" + i + 1 + "条数据保存表存储配置时，请填写存储期限");
+				throw new BusinessException("第" + (i + 1) + "条数据保存表存储配置时，请填写存储期限");
 			}
 		}
 	}

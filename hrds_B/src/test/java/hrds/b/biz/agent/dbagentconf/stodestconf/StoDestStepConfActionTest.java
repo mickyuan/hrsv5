@@ -945,12 +945,13 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 	 * 正确数据访问1：修改agent_info表的保存目的地，由关系型数据库和hbase修改为仅保存到关系型数据库,进数方式为替换，不进行拉链存储，只保存一天
 	 * 正确数据访问2：修改data_source表的存储目的地，由SOLR变为进入MongoDB和关系型数据库
 	 * 正确数据访问3：新增采集table_info表的存储目的地，目的地为关系型数据库和SOLR(注意构造数据抽取定义表中table_info表的相关数据，测试通过后，将新增进入的相关数据全部删除)
+	 * 正确数据访问4：新增采集table_column表的存储目的地，目的地为关系型数据库和SOLR，不做拉链存储(注意构造数据抽取定义表中table_column表的相关数据，测试通过后，将新增进入的相关数据全部删除)
 	 * 错误的数据访问1：新增采集table_column表的存储目的地，但是没有传入任何一个目的地
 	 * 错误的数据访问2：新增采集table_column表的存储目的地，但是在数据抽取定义表中没有构造table_column表的抽取信息
 	 * 错误的数据访问3：新增采集table_column表的存储目的地，但是未关联表
-	 * 错误的数据访问4：新增采集table_column表的存储目的地，但是未选择进数方式
-	 * 错误的数据访问5：新增采集table_column表的存储目的地，但是未选择是否拉链存储
-	 * 错误的数据访问6：新增采集table_column表的存储目的地，但是未填写存储期限
+	 * 错误的数据访问4：新增采集table_column表的存储目的地，但是未选择是否拉链存储
+	 * 错误的数据访问5：新增采集table_column表的存储目的地，但是未填写存储期限
+	 * 错误的数据访问6：新增采集table_column表的存储目的地，选择了拉链存储但是没有选择存储方式
 	 * @Param: 无
 	 * @return: 无
 	 *
@@ -1185,6 +1186,83 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 		tableStorageInfos.clear();
 		dataStoRelaParams.clear();
 
+		//正确数据访问4：新增采集table_column表的存储目的地，目的地为关系型数据库和SOLR，不做拉链存储(注意构造数据抽取定义表中table_column表的相关数据，测试通过后，将新增进入的相关数据全部删除)
+		try (DatabaseWrapper db = new DatabaseWrapper()) {
+			//由于这是模拟新增table_column表采集，保存存储目的地，所以table_storage_info表和data_relation_table表肯定没有相关数据，但是需要构造table_column表在data_extraction_def中的数据
+			Data_extraction_def tableInfoDef = new Data_extraction_def();
+			tableInfoDef.setDed_id(TABLE_COLUMN_TABLE_ID * 2);
+			tableInfoDef.setTable_id(TABLE_COLUMN_TABLE_ID);
+			tableInfoDef.setData_extract_type(DataExtractType.ShuJuChouQuJiRuKu.getCode());
+			tableInfoDef.setIs_header(IsFlag.Shi.getCode());
+			tableInfoDef.setDatabase_code(DataBaseCode.UTF_8.getCode());
+			tableInfoDef.setDbfile_format(FileFormat.PARQUET.getCode());
+
+			int count = tableInfoDef.add(db);
+			assertThat("为saveTbStoInfo<正确数据访问4>而插入data_extraction_def表中的数据成功", count, is(1));
+			SqlOperator.commitTransaction(db);
+		}
+
+		Table_storage_info storageInfoFour = new Table_storage_info();
+		storageInfoFour.setTable_id(TABLE_COLUMN_TABLE_ID);
+		storageInfoFour.setStorage_time(14L);
+		storageInfoFour.setIs_zipper(IsFlag.Fou.getCode());
+
+		tableStorageInfos.add(storageInfoFour);
+
+		DataStoRelaParam paramFour = new DataStoRelaParam();
+		paramFour.setTableId(TABLE_COLUMN_TABLE_ID);
+		long[] dslIdsFour = {4400L, 4399L};
+		paramFour.setDslIds(dslIdsFour);
+
+		dataStoRelaParams.add(paramFour);
+
+		String rightStringFour = new HttpClient()
+				.addData("tbStoInfoString", JSON.toJSONString(tableStorageInfos))
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.addData("dslIdString", JSON.toJSONString(dataStoRelaParams))
+				.post(getActionUrl("saveTbStoInfo")).getBodyString();
+		ActionResult rightResultFour = JsonUtil.toObjectSafety(rightStringFour, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResultFour.isSuccess(), is(true));
+		Integer returnValueFour = (Integer) rightResultFour.getData();
+		assertThat(returnValueFour == FIRST_DATABASESET_ID, is(true));
+
+		try (DatabaseWrapper db = new DatabaseWrapper()) {
+			//在保存后，确认Table_storage_info表中的数据符合期望
+			Result beforeStorageInfo = SqlOperator.queryResult(db, "select * from " + Table_storage_info.TableName + " where table_id = ?", TABLE_COLUMN_TABLE_ID);
+			assertThat("查询到的table_column表在table_storage_info中的数据有一条，符合期望", beforeStorageInfo.getRowCount(), is(1));
+			assertThat("查询到的table_column表在table_storage_info中的数据有一条，并且<文件格式>符合期望", beforeStorageInfo.getString(0, "file_format"), is(FileFormat.PARQUET.getCode()));
+			assertThat("查询到的table_column表在table_storage_info中的数据有一条，并且<进数方式>符合期望", beforeStorageInfo.getString(0, "storage_type"), is(StorageType.TiHuan.getCode()));
+			assertThat("查询到的table_column表在table_storage_info中的数据有一条，并且<是否拉链存储>符合期望", beforeStorageInfo.getString(0, "is_zipper"), is(IsFlag.Fou.getCode()));
+			assertThat("查询到的table_column表在table_storage_info中的数据有一条，并且<存储期限>符合期望", beforeStorageInfo.getLong(0, "storage_time"), is(14L));
+			//在保存后，确认Data_relation_table表中的数据符合期望
+			Result relationTable = SqlOperator.queryResult(db, "select dsl_id from " + Data_relation_table.TableName + " where storage_id in ( select storage_id from " + Table_storage_info.TableName + " where table_id = ?)", TABLE_COLUMN_TABLE_ID);
+			assertThat("查询到的table_info表在data_relation_table中的数据有两条，符合期望", relationTable.getRowCount(), is(2));
+			for(int i = 0; i < relationTable.getRowCount(); i++){
+				if(relationTable.getLong(i, "dsl_id") == 4400L){
+					assertThat("查询到的table_column表在data_relation_table中的数据有两条，符合期望", true, is(true));
+				}else if(relationTable.getLong(i, "dsl_id") == 4399L){
+					assertThat("查询到的table_column表在data_relation_table中的数据有两条，符合期望", true, is(true));
+				}else{
+					assertThat("查询到的table_column表在data_relation_table表中出现了不符合期望的数据", true, is(false));
+				}
+			}
+
+			//删除新增的测试数据
+			int countOne = SqlOperator.execute(db, "delete from " + Data_extraction_def.TableName + " where table_id = ?", TABLE_COLUMN_TABLE_ID);
+			int countTwo = SqlOperator.execute(db, "delete from " + Data_relation_table.TableName +
+					" where storage_id in (select storage_id from " + Table_storage_info.TableName + " where table_id = ?)", TABLE_COLUMN_TABLE_ID);
+			int countThree = SqlOperator.execute(db, "delete from " + Table_storage_info.TableName + " where table_id = ?", TABLE_COLUMN_TABLE_ID);
+
+			assertThat("saveTbStoInfo<正确的数据访问4>执行完毕后，删除新增的数据成功", countOne, is(1));
+			assertThat("saveTbStoInfo<正确的数据访问4>执行完毕后，删除新增的数据成功", countTwo, is(2));
+			assertThat("saveTbStoInfo<正确的数据访问4>执行完毕后，删除新增的数据成功", countThree, is(1));
+			SqlOperator.commitTransaction(db);
+		}
+
+		tableStorageInfos.clear();
+		dataStoRelaParams.clear();
+
 		//错误的数据访问1：新增采集table_column表的存储目的地，但是没有传入任何一个目的地
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			//由于这是模拟新增table_column表采集，保存存储目的地，所以table_storage_info表和data_relation_table表肯定没有相关数据，但是需要构造table_column表在data_extraction_def中的数据
@@ -1201,20 +1279,20 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 			SqlOperator.commitTransaction(db);
 		}
 
-		Table_storage_info storageInfoFour = new Table_storage_info();
-		storageInfoFour.setTable_id(TABLE_COLUMN_TABLE_ID);
-		storageInfoFour.setStorage_type(StorageType.ZhuiJia.getCode());
-		storageInfoFour.setStorage_time(14L);
-		storageInfoFour.setIs_zipper(IsFlag.Shi.getCode());
+		Table_storage_info storageInfoSeven = new Table_storage_info();
+		storageInfoSeven.setTable_id(TABLE_COLUMN_TABLE_ID);
+		storageInfoSeven.setStorage_type(StorageType.ZhuiJia.getCode());
+		storageInfoSeven.setStorage_time(14L);
+		storageInfoSeven.setIs_zipper(IsFlag.Shi.getCode());
 
-		tableStorageInfos.add(storageInfoFour);
+		tableStorageInfos.add(storageInfoSeven);
 
-		DataStoRelaParam paramFour = new DataStoRelaParam();
-		paramFour.setTableId(TABLE_COLUMN_TABLE_ID);
-		long[] dslIdsFour = {};
-		paramFour.setDslIds(dslIdsFour);
+		DataStoRelaParam paramSeven = new DataStoRelaParam();
+		paramSeven.setTableId(TABLE_COLUMN_TABLE_ID);
+		long[] dslIdsSeven = {};
+		paramSeven.setDslIds(dslIdsSeven);
 
-		dataStoRelaParams.add(paramFour);
+		dataStoRelaParams.add(paramSeven);
 
 		String wrongStringOne = new HttpClient()
 				.addData("tbStoInfoString", JSON.toJSONString(tableStorageInfos))
@@ -1300,7 +1378,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 
 		tableStorageInfos.clear();
 
-		//错误的数据访问4：新增采集table_column表的存储目的地，但是未选择进数方式
+		//错误的数据访问4：新增采集table_column表的存储目的地，但是未选择是否拉链存储
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			//由于这是模拟新增table_column表采集，保存存储目的地，所以table_storage_info表和data_relation_table表肯定没有相关数据，但是需要构造table_column表在data_extraction_def中的数据
 			Data_extraction_def tableInfoDef = new Data_extraction_def();
@@ -1313,46 +1391,6 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 
 			int count = tableInfoDef.add(db);
 			assertThat("为saveTbStoInfo<错误的数据访问4>而插入data_extraction_def表中的数据成功", count, is(1));
-			SqlOperator.commitTransaction(db);
-		}
-
-		Table_storage_info storageInfoSix = new Table_storage_info();
-		storageInfoSix.setTable_id(TABLE_COLUMN_TABLE_ID);
-		storageInfoSix.setStorage_time(14L);
-		storageInfoSix.setIs_zipper(IsFlag.Shi.getCode());
-
-		tableStorageInfos.add(storageInfoSix);
-
-		String wrongStringFour = new HttpClient()
-				.addData("tbStoInfoString", JSON.toJSONString(tableStorageInfos))
-				.addData("colSetId", FIRST_DATABASESET_ID)
-				.addData("dslIdString", JSON.toJSONString(dataStoRelaParams))
-				.post(getActionUrl("saveTbStoInfo")).getBodyString();
-		ActionResult wrongResultFour = JsonUtil.toObjectSafety(wrongStringFour, ActionResult.class).orElseThrow(()
-				-> new BusinessException("连接失败!"));
-		assertThat(wrongResultFour.isSuccess(), is(false));
-
-		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			int countOne = SqlOperator.execute(db, "delete from " + Data_extraction_def.TableName + " where table_id = ?", TABLE_COLUMN_TABLE_ID);
-			assertThat("saveTbStoInfo<错误的数据访问4>执行完毕后，删除新增的数据成功", countOne, is(1));
-			SqlOperator.commitTransaction(db);
-		}
-
-		tableStorageInfos.clear();
-
-		//错误的数据访问5：新增采集table_column表的存储目的地，但是未选择是否拉链存储
-		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			//由于这是模拟新增table_column表采集，保存存储目的地，所以table_storage_info表和data_relation_table表肯定没有相关数据，但是需要构造table_column表在data_extraction_def中的数据
-			Data_extraction_def tableInfoDef = new Data_extraction_def();
-			tableInfoDef.setDed_id(TABLE_COLUMN_TABLE_ID * 2);
-			tableInfoDef.setTable_id(TABLE_COLUMN_TABLE_ID);
-			tableInfoDef.setData_extract_type(DataExtractType.ShuJuChouQuJiRuKu.getCode());
-			tableInfoDef.setIs_header(IsFlag.Shi.getCode());
-			tableInfoDef.setDatabase_code(DataBaseCode.UTF_8.getCode());
-			tableInfoDef.setDbfile_format(FileFormat.PARQUET.getCode());
-
-			int count = tableInfoDef.add(db);
-			assertThat("为saveTbStoInfo<错误的数据访问5>而插入data_extraction_def表中的数据成功", count, is(1));
 			SqlOperator.commitTransaction(db);
 		}
 
@@ -1374,13 +1412,13 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			int countOne = SqlOperator.execute(db, "delete from " + Data_extraction_def.TableName + " where table_id = ?", TABLE_COLUMN_TABLE_ID);
-			assertThat("saveTbStoInfo<错误的数据访问5>执行完毕后，删除新增的数据成功", countOne, is(1));
+			assertThat("saveTbStoInfo<错误的数据访问4>执行完毕后，删除新增的数据成功", countOne, is(1));
 			SqlOperator.commitTransaction(db);
 		}
 
 		tableStorageInfos.clear();
 
-		//错误的数据访问6：新增采集table_column表的存储目的地，但是未填写存储期限
+		//错误的数据访问5：新增采集table_column表的存储目的地，但是未填写存储期限
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			//由于这是模拟新增table_column表采集，保存存储目的地，所以table_storage_info表和data_relation_table表肯定没有相关数据，但是需要构造table_column表在data_extraction_def中的数据
 			Data_extraction_def tableInfoDef = new Data_extraction_def();
@@ -1392,7 +1430,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 			tableInfoDef.setDbfile_format(FileFormat.PARQUET.getCode());
 
 			int count = tableInfoDef.add(db);
-			assertThat("为saveTbStoInfo<错误的数据访问6>而插入data_extraction_def表中的数据成功", count, is(1));
+			assertThat("为saveTbStoInfo<错误的数据访问5>而插入data_extraction_def表中的数据成功", count, is(1));
 			SqlOperator.commitTransaction(db);
 		}
 
@@ -1411,6 +1449,44 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 		ActionResult wrongResultSix = JsonUtil.toObjectSafety(wrongStringSix, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(wrongResultSix.isSuccess(), is(false));
+
+		try (DatabaseWrapper db = new DatabaseWrapper()) {
+			int countOne = SqlOperator.execute(db, "delete from " + Data_extraction_def.TableName + " where table_id = ?", TABLE_COLUMN_TABLE_ID);
+			assertThat("saveTbStoInfo<错误的数据访问5>执行完毕后，删除新增的数据成功", countOne, is(1));
+			SqlOperator.commitTransaction(db);
+		}
+
+		//错误的数据访问6：新增采集table_column表的存储目的地，选择了拉链存储但是没有选择存储方式
+		try (DatabaseWrapper db = new DatabaseWrapper()) {
+			//由于这是模拟新增table_column表采集，保存存储目的地，所以table_storage_info表和data_relation_table表肯定没有相关数据，但是需要构造table_column表在data_extraction_def中的数据
+			Data_extraction_def tableInfoDef = new Data_extraction_def();
+			tableInfoDef.setDed_id(TABLE_COLUMN_TABLE_ID * 2);
+			tableInfoDef.setTable_id(TABLE_COLUMN_TABLE_ID);
+			tableInfoDef.setData_extract_type(DataExtractType.ShuJuChouQuJiRuKu.getCode());
+			tableInfoDef.setIs_header(IsFlag.Shi.getCode());
+			tableInfoDef.setDatabase_code(DataBaseCode.UTF_8.getCode());
+			tableInfoDef.setDbfile_format(FileFormat.PARQUET.getCode());
+
+			int count = tableInfoDef.add(db);
+			assertThat("为saveTbStoInfo<错误的数据访问6>而插入data_extraction_def表中的数据成功", count, is(1));
+			SqlOperator.commitTransaction(db);
+		}
+
+		Table_storage_info storageInfoNine = new Table_storage_info();
+		storageInfoNine.setTable_id(TABLE_COLUMN_TABLE_ID);
+		storageInfoNine.setIs_zipper(IsFlag.Shi.getCode());
+		storageInfoNine.setStorage_time(14L);
+
+		tableStorageInfos.add(storageInfoNine);
+
+		String wrongStringEight = new HttpClient()
+				.addData("tbStoInfoString", JSON.toJSONString(tableStorageInfos))
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.addData("dslIdString", JSON.toJSONString(dataStoRelaParams))
+				.post(getActionUrl("saveTbStoInfo")).getBodyString();
+		ActionResult wrongResultEight = JsonUtil.toObjectSafety(wrongStringEight, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultEight.isSuccess(), is(false));
 
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			int countOne = SqlOperator.execute(db, "delete from " + Data_extraction_def.TableName + " where table_id = ?", TABLE_COLUMN_TABLE_ID);
