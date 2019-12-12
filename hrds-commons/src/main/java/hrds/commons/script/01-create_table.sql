@@ -971,6 +971,8 @@ IS_MD5                                            CHAR(1) NOT NULL, --是否使�
 IS_REGISTER                                       CHAR(1) NOT NULL, --是否仅登记
 IS_PARALLEL                                       CHAR(1) NOT NULL, --是否并行抽取
 PAGE_SQL                                          VARCHAR(6000) NULL, --分页sql
+PAGEPARALLELS                                     INTEGER default 0 NULL, --分页并行数
+DATAINCREMENT                                     INTEGER default 0 NULL, --每天数据增量
 REMARK                                            VARCHAR(512) NULL, --备注
 CONSTRAINT TABLE_INFO_PK PRIMARY KEY(TABLE_ID)   );
 
