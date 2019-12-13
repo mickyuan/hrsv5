@@ -1,19 +1,6 @@
-package hrds.agent;
+package hrds.agent.job.biz;
 
-import fd.ng.core.utils.JsonUtil;
-import fd.ng.netclient.http.HttpClient;
-import fd.ng.netclient.http.SubmitMediaType;
-import fd.ng.netserver.conf.HttpServerConf;
-import fd.ng.netserver.conf.HttpServerConfBean;
-import fd.ng.web.action.ActionResult;
-import hrds.commons.codes.DatabaseType;
 import org.junit.Test;
-
-import java.util.HashMap;
-import java.util.Map;
-
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * @program: hrsv5
