@@ -876,7 +876,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
         }
     }
 
-    @Method(desc = "方法描述",
+    @Method(desc = "批量删除任务信息",
             logicStep = "1.正常的数据访问1，数据都正常" +
                     "2.错误的数据访问1，etl_sys_cd不存在" +
                     "3.错误的数据访问2，sub_sys_cd不存在" +
@@ -2363,7 +2363,37 @@ public class JobConfigurationTest extends WebBaseTestCase {
     }
 
     @Method(desc = "更新保存作业信息",
-            logicStep = "方法步骤")
+            logicStep = "1.正确的数据访问1，数据都正确，调度频率改变为频率" +
+                    "2.正确的数据访问2，数据都正确，调度频率不为频率,依赖-->依赖" +
+                    "3.正确的数据访问3，数据都正确，调度频率不为频率,依赖-->定时" +
+                    "4.正确的数据访问4，数据都正确，调度频率不为频率,定时-->依赖" +
+                    "5.错误的数据访问1，etl_sys_cd为空" +
+                    "6.错误的数据访问2，etl_sys_cd为空格" +
+                    "7.错误的数据访问3，etl_sys_cd不存在" +
+                    "8.错误的数据访问4，sub_sys_cd为空" +
+                    "9.错误的数据访问5，sub_sys_cd为空格" +
+                    "10.错误的数据访问6，sub_sys_cd不存在" +
+                    "11.错误的数据访问7，etl_job为空" +
+                    "12.错误的数据访问8，etl_job为空" +
+                    "13.错误的数据访问9，etl_job不存在" +
+                    "14.错误的数据访问10，pro_type为空" +
+                    "15.错误的数据访问11，pro_type为空格" +
+                    "16.错误的数据访问12，pro_type不存在" +
+                    "17.错误的数据访问13，pro_name为空" +
+                    "18.错误的数据访问14，pro_name为空格" +
+                    "19.错误的数据访问15，etl_job_desc为空" +
+                    "20.错误的数据访问16，etl_job_desc为空格" +
+                    "21.错误的数据访问17，pro_dic为空" +
+                    "22.错误的数据访问18，pro_dic为空格" +
+                    "23.错误的数据访问19，log_dic为空" +
+                    "24.错误的数据访问20，log_dic为空格" +
+                    "25.错误的数据访问21，disp_freq为空" +
+                    "26.错误的数据访问22，disp_freq为空格" +
+                    "27.错误的数据访问23，disp_freq不存在" +
+                    "28.错误的数据访问24，job_eff_flag为空" +
+                    "29.错误的数据访问25，job_eff_flag为空格" +
+                    "30.错误的数据访问26，job_eff_flag不存在" +
+                    "31.错误的数据访问27，today_disp不存在")
     @Test
     public void updateEtlJobDef() {
         try (DatabaseWrapper db = new DatabaseWrapper()) {
@@ -2461,6 +2491,10 @@ public class JobConfigurationTest extends WebBaseTestCase {
                     + Etl_dependency.TableName + " where etl_sys_cd=? and etl_job=? " +
                     "and pre_etl_job in(?,?)", EtlSysCd, "测试作业6", "测试作业0", "测试作业3");
             assertThat(upEtlDepJobList.size(), is(2));
+            List<Map<String, Object>> upEtlDepJobList2 = SqlOperator.queryList(db, "select * from "
+                    + Etl_dependency.TableName + " where etl_sys_cd=? and etl_job=? " +
+                    "and pre_etl_job in(?)", EtlSysCd, "测试作业6", "测试作业10");
+            assertThat(upEtlDepJobList2.size(), is(0));
             // 3.正确的数据访问3，数据都正确，调度频率不为频率,依赖-->定时
             bodyString = new HttpClient()
                     .addData("etl_sys_cd", EtlSysCd)
@@ -2559,6 +2593,653 @@ public class JobConfigurationTest extends WebBaseTestCase {
                     "测试作业10", "测试作业9", "测试作业8");
             assertThat(upEtlDepJobList.size(), is(2));
             // 5.错误的数据访问1，etl_sys_cd为空
+            bodyString = new HttpClient()
+                    .addData("etl_sys_cd", "")
+                    .addData("sub_sys_cd", SubSysCd)
+                    .addData("etl_job", "addEtlJob4")
+                    .addData("etl_job_desc", "更新作业测试")
+                    .addData("pro_type", Pro_Type.SHELL.getCode())
+                    .addData("pro_name", "add.shell")
+                    .addData("pro_para", "0@1")
+                    .addData("pro_dic", "/home/hyshf/etl/")
+                    .addData("log_dic", "/home/hyshf/etl/log")
+                    .addData("disp_freq", Dispatch_Frequency.PinLv.getCode())
+                    .addData("exe_frequency", 1)
+                    .addData("exe_num", 1)
+                    .addData("star_time", dateTime)
+                    .addData("end_time", "2099-12-31 17:39:20")
+                    .addData("job_eff_flag", Job_Effective_Flag.YES.getCode())
+                    .addData("today_disp", Today_Dispatch_Flag.YES.getCode())
+                    .addData("comments", "频率作业测试")
+                    .post(getActionUrl("updateEtlJobDef"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 6.错误的数据访问2，etl_sys_cd为空格
+            bodyString = new HttpClient()
+                    .addData("etl_sys_cd", " ")
+                    .addData("sub_sys_cd", SubSysCd)
+                    .addData("etl_job", "addEtlJob5")
+                    .addData("etl_job_desc", "更新作业测试")
+                    .addData("pro_type", Pro_Type.SHELL.getCode())
+                    .addData("pro_name", "add.shell")
+                    .addData("pro_para", "0@1")
+                    .addData("pro_dic", "/home/hyshf/etl/")
+                    .addData("log_dic", "/home/hyshf/etl/log")
+                    .addData("disp_freq", Dispatch_Frequency.PinLv.getCode())
+                    .addData("exe_frequency", 1)
+                    .addData("exe_num", 1)
+                    .addData("star_time", dateTime)
+                    .addData("end_time", "2099-12-31 17:39:20")
+                    .addData("job_eff_flag", Job_Effective_Flag.YES.getCode())
+                    .addData("today_disp", Today_Dispatch_Flag.YES.getCode())
+                    .addData("comments", "频率作业测试")
+                    .post(getActionUrl("updateEtlJobDef"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 7.错误的数据访问3，etl_sys_cd不存在
+            bodyString = new HttpClient()
+                    .addData("etl_sys_cd", "zybccs")
+                    .addData("sub_sys_cd", SubSysCd)
+                    .addData("etl_job", "addEtlJob6")
+                    .addData("etl_job_desc", "更新作业测试")
+                    .addData("pro_type", Pro_Type.SHELL.getCode())
+                    .addData("pro_name", "add.shell")
+                    .addData("pro_para", "0@1")
+                    .addData("pro_dic", "/home/hyshf/etl/")
+                    .addData("log_dic", "/home/hyshf/etl/log")
+                    .addData("disp_freq", Dispatch_Frequency.PinLv.getCode())
+                    .addData("exe_frequency", 1)
+                    .addData("exe_num", 1)
+                    .addData("star_time", dateTime)
+                    .addData("end_time", "2099-12-31 17:39:20")
+                    .addData("job_eff_flag", Job_Effective_Flag.YES.getCode())
+                    .addData("today_disp", Today_Dispatch_Flag.YES.getCode())
+                    .addData("comments", "频率作业测试")
+                    .post(getActionUrl("updateEtlJobDef"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 8.错误的数据访问4，sub_sys_cd为空
+            bodyString = new HttpClient()
+                    .addData("etl_sys_cd", EtlSysCd)
+                    .addData("sub_sys_cd", "")
+                    .addData("etl_job", "addEtlJob7")
+                    .addData("etl_job_desc", "更新作业测试")
+                    .addData("pro_type", Pro_Type.SHELL.getCode())
+                    .addData("pro_name", "add.shell")
+                    .addData("pro_para", "0@1")
+                    .addData("pro_dic", "/home/hyshf/etl/")
+                    .addData("log_dic", "/home/hyshf/etl/log")
+                    .addData("disp_freq", Dispatch_Frequency.PinLv.getCode())
+                    .addData("exe_frequency", 1)
+                    .addData("exe_num", 1)
+                    .addData("star_time", dateTime)
+                    .addData("end_time", "2099-12-31 17:39:20")
+                    .addData("job_eff_flag", Job_Effective_Flag.YES.getCode())
+                    .addData("today_disp", Today_Dispatch_Flag.YES.getCode())
+                    .addData("comments", "频率作业测试")
+                    .post(getActionUrl("updateEtlJobDef"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 9.错误的数据访问5，sub_sys_cd为空格
+            bodyString = new HttpClient()
+                    .addData("etl_sys_cd", EtlSysCd)
+                    .addData("sub_sys_cd", " ")
+                    .addData("etl_job", "addEtlJob8")
+                    .addData("etl_job_desc", "更新作业测试")
+                    .addData("pro_type", Pro_Type.SHELL.getCode())
+                    .addData("pro_name", "add.shell")
+                    .addData("pro_para", "0@1")
+                    .addData("pro_dic", "/home/hyshf/etl/")
+                    .addData("log_dic", "/home/hyshf/etl/log")
+                    .addData("disp_freq", Dispatch_Frequency.PinLv.getCode())
+                    .addData("exe_frequency", 1)
+                    .addData("exe_num", 1)
+                    .addData("star_time", dateTime)
+                    .addData("end_time", "2099-12-31 17:39:20")
+                    .addData("job_eff_flag", Job_Effective_Flag.YES.getCode())
+                    .addData("today_disp", Today_Dispatch_Flag.YES.getCode())
+                    .addData("comments", "频率作业测试")
+                    .post(getActionUrl("updateEtlJobDef"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 10.错误的数据访问6，sub_sys_cd不存在
+            bodyString = new HttpClient()
+                    .addData("etl_sys_cd", EtlSysCd)
+                    .addData("sub_sys_cd", "xzzyrwcs")
+                    .addData("etl_job", "addEtlJob9")
+                    .addData("etl_job_desc", "更新作业测试")
+                    .addData("pro_type", Pro_Type.SHELL.getCode())
+                    .addData("pro_name", "add.shell")
+                    .addData("pro_para", "0@1")
+                    .addData("pro_dic", "/home/hyshf/etl/")
+                    .addData("log_dic", "/home/hyshf/etl/log")
+                    .addData("disp_freq", Dispatch_Frequency.PinLv.getCode())
+                    .addData("exe_frequency", 1)
+                    .addData("exe_num", 1)
+                    .addData("star_time", dateTime)
+                    .addData("end_time", "2099-12-31 17:39:20")
+                    .addData("job_eff_flag", Job_Effective_Flag.YES.getCode())
+                    .addData("today_disp", Today_Dispatch_Flag.YES.getCode())
+                    .addData("comments", "频率作业测试")
+                    .post(getActionUrl("updateEtlJobDef"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 11.错误的数据访问7，etl_job为空
+            bodyString = new HttpClient()
+                    .addData("etl_sys_cd", EtlSysCd)
+                    .addData("sub_sys_cd", "")
+                    .addData("etl_job", " ")
+                    .addData("etl_job_desc", "更新作业测试10")
+                    .addData("pro_type", Pro_Type.SHELL.getCode())
+                    .addData("pro_name", "add.shell")
+                    .addData("pro_para", "0@1")
+                    .addData("pro_dic", "/home/hyshf/etl/")
+                    .addData("log_dic", "/home/hyshf/etl/log")
+                    .addData("disp_freq", Dispatch_Frequency.PinLv.getCode())
+                    .addData("exe_frequency", 1)
+                    .addData("exe_num", 1)
+                    .addData("star_time", dateTime)
+                    .addData("end_time", "2099-12-31 17:39:20")
+                    .addData("job_eff_flag", Job_Effective_Flag.YES.getCode())
+                    .addData("today_disp", Today_Dispatch_Flag.YES.getCode())
+                    .addData("comments", "频率作业测试")
+                    .post(getActionUrl("updateEtlJobDef"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 12.错误的数据访问8，etl_job为空格
+            bodyString = new HttpClient()
+                    .addData("etl_sys_cd", EtlSysCd)
+                    .addData("sub_sys_cd", SubSysCd)
+                    .addData("etl_job", " ")
+                    .addData("etl_job_desc", "更新作业测试")
+                    .addData("pro_type", Pro_Type.SHELL.getCode())
+                    .addData("pro_name", "add.shell")
+                    .addData("pro_para", "0@1")
+                    .addData("pro_dic", "/home/hyshf/etl/")
+                    .addData("log_dic", "/home/hyshf/etl/log")
+                    .addData("disp_freq", Dispatch_Frequency.PinLv.getCode())
+                    .addData("exe_frequency", 1)
+                    .addData("exe_num", 1)
+                    .addData("star_time", dateTime)
+                    .addData("end_time", "2099-12-31 17:39:20")
+                    .addData("job_eff_flag", Job_Effective_Flag.YES.getCode())
+                    .addData("today_disp", Today_Dispatch_Flag.YES.getCode())
+                    .addData("comments", "频率作业测试")
+                    .post(getActionUrl("updateEtlJobDef"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 13.错误的数据访问9，etl_job不存在
+            bodyString = new HttpClient()
+                    .addData("etl_sys_cd", EtlSysCd)
+                    .addData("sub_sys_cd", SubSysCd)
+                    .addData("etl_job", "测试作业abc")
+                    .addData("etl_job_desc", "更新作业测试")
+                    .addData("pro_type", Pro_Type.SHELL.getCode())
+                    .addData("pro_name", "add.shell")
+                    .addData("pro_para", "0@1")
+                    .addData("pro_dic", "/home/hyshf/etl/")
+                    .addData("log_dic", "/home/hyshf/etl/log")
+                    .addData("disp_freq", Dispatch_Frequency.PinLv.getCode())
+                    .addData("exe_frequency", 1)
+                    .addData("exe_num", 1)
+                    .addData("star_time", dateTime)
+                    .addData("end_time", "2099-12-31 17:39:20")
+                    .addData("job_eff_flag", Job_Effective_Flag.YES.getCode())
+                    .addData("today_disp", Today_Dispatch_Flag.YES.getCode())
+                    .addData("comments", "频率作业测试")
+                    .post(getActionUrl("updateEtlJobDef"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 14.错误的数据访问10，pro_type为空
+            bodyString = new HttpClient()
+                    .addData("etl_sys_cd", EtlSysCd)
+                    .addData("sub_sys_cd", SubSysCd)
+                    .addData("etl_job", "addJob13")
+                    .addData("etl_job_desc", "更新作业测试")
+                    .addData("pro_type", "")
+                    .addData("pro_name", "add.shell")
+                    .addData("pro_para", "0@1")
+                    .addData("pro_dic", "/home/hyshf/etl/")
+                    .addData("log_dic", "/home/hyshf/etl/log")
+                    .addData("disp_freq", Dispatch_Frequency.PinLv.getCode())
+                    .addData("exe_frequency", 1)
+                    .addData("exe_num", 1)
+                    .addData("star_time", dateTime)
+                    .addData("end_time", "2099-12-31 17:39:20")
+                    .addData("job_eff_flag", Job_Effective_Flag.YES.getCode())
+                    .addData("today_disp", Today_Dispatch_Flag.YES.getCode())
+                    .addData("comments", "频率作业测试")
+                    .post(getActionUrl("updateEtlJobDef"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 15.错误的数据访问11，pro_type为空格
+            bodyString = new HttpClient()
+                    .addData("etl_sys_cd", EtlSysCd)
+                    .addData("sub_sys_cd", SubSysCd)
+                    .addData("etl_job", "addJob14")
+                    .addData("etl_job_desc", "更新作业测试")
+                    .addData("pro_type", " ")
+                    .addData("pro_name", "add.shell")
+                    .addData("pro_para", "0@1")
+                    .addData("pro_dic", "/home/hyshf/etl/")
+                    .addData("log_dic", "/home/hyshf/etl/log")
+                    .addData("disp_freq", Dispatch_Frequency.PinLv.getCode())
+                    .addData("exe_frequency", 1)
+                    .addData("exe_num", 1)
+                    .addData("star_time", dateTime)
+                    .addData("end_time", "2099-12-31 17:39:20")
+                    .addData("job_eff_flag", Job_Effective_Flag.YES.getCode())
+                    .addData("today_disp", Today_Dispatch_Flag.YES.getCode())
+                    .addData("comments", "频率作业测试")
+                    .post(getActionUrl("updateEtlJobDef"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 16.错误的数据访问12，pro_type不存在
+            bodyString = new HttpClient()
+                    .addData("etl_sys_cd", EtlSysCd)
+                    .addData("sub_sys_cd", SubSysCd)
+                    .addData("etl_job", "addJob15")
+                    .addData("etl_job_desc", "更新作业测试")
+                    .addData("pro_type", "abc")
+                    .addData("pro_name", "add.shell")
+                    .addData("pro_para", "0@1")
+                    .addData("pro_dic", "/home/hyshf/etl/")
+                    .addData("log_dic", "/home/hyshf/etl/log")
+                    .addData("disp_freq", Dispatch_Frequency.PinLv.getCode())
+                    .addData("exe_frequency", 1)
+                    .addData("exe_num", 1)
+                    .addData("star_time", dateTime)
+                    .addData("end_time", "2099-12-31 17:39:20")
+                    .addData("job_eff_flag", Job_Effective_Flag.YES.getCode())
+                    .addData("today_disp", Today_Dispatch_Flag.YES.getCode())
+                    .addData("comments", "频率作业测试")
+                    .post(getActionUrl("updateEtlJobDef"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 17.错误的数据访问13，pro_name为空
+            bodyString = new HttpClient()
+                    .addData("etl_sys_cd", EtlSysCd)
+                    .addData("sub_sys_cd", SubSysCd)
+                    .addData("etl_job", "addJob16")
+                    .addData("etl_job_desc", "更新作业测试")
+                    .addData("pro_type", Pro_Type.SHELL.getCode())
+                    .addData("pro_name", "")
+                    .addData("pro_para", "0@1")
+                    .addData("pro_dic", "/home/hyshf/etl/")
+                    .addData("log_dic", "/home/hyshf/etl/log")
+                    .addData("disp_freq", Dispatch_Frequency.PinLv.getCode())
+                    .addData("exe_frequency", 1)
+                    .addData("exe_num", 1)
+                    .addData("star_time", dateTime)
+                    .addData("end_time", "2099-12-31 17:39:20")
+                    .addData("job_eff_flag", Job_Effective_Flag.YES.getCode())
+                    .addData("today_disp", Today_Dispatch_Flag.YES.getCode())
+                    .addData("comments", "频率作业测试")
+                    .post(getActionUrl("updateEtlJobDef"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 18.错误的数据访问14，pro_name为空格
+            bodyString = new HttpClient()
+                    .addData("etl_sys_cd", EtlSysCd)
+                    .addData("sub_sys_cd", SubSysCd)
+                    .addData("etl_job", "addJob17")
+                    .addData("etl_job_desc", "更新作业测试")
+                    .addData("pro_type", Pro_Type.SHELL.getCode())
+                    .addData("pro_name", " ")
+                    .addData("pro_para", "0@1")
+                    .addData("pro_dic", "/home/hyshf/etl/")
+                    .addData("log_dic", "/home/hyshf/etl/log")
+                    .addData("disp_freq", Dispatch_Frequency.PinLv.getCode())
+                    .addData("exe_frequency", 1)
+                    .addData("exe_num", 1)
+                    .addData("star_time", dateTime)
+                    .addData("end_time", "2099-12-31 17:39:20")
+                    .addData("job_eff_flag", Job_Effective_Flag.YES.getCode())
+                    .addData("today_disp", Today_Dispatch_Flag.YES.getCode())
+                    .addData("comments", "频率作业测试")
+                    .post(getActionUrl("updateEtlJobDef"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 19.错误的数据访问15，etl_job_desc为空
+            bodyString = new HttpClient()
+                    .addData("etl_sys_cd", EtlSysCd)
+                    .addData("sub_sys_cd", SubSysCd)
+                    .addData("etl_job", "addJob18")
+                    .addData("etl_job_desc", "")
+                    .addData("pro_type", Pro_Type.SHELL.getCode())
+                    .addData("pro_name", "add.shell")
+                    .addData("pro_para", "0@1")
+                    .addData("pro_dic", "/home/hyshf/etl/")
+                    .addData("log_dic", "/home/hyshf/etl/log")
+                    .addData("disp_freq", Dispatch_Frequency.PinLv.getCode())
+                    .addData("exe_frequency", 1)
+                    .addData("exe_num", 1)
+                    .addData("star_time", dateTime)
+                    .addData("end_time", "2099-12-31 17:39:20")
+                    .addData("job_eff_flag", Job_Effective_Flag.YES.getCode())
+                    .addData("today_disp", Today_Dispatch_Flag.YES.getCode())
+                    .addData("comments", "频率作业测试")
+                    .post(getActionUrl("updateEtlJobDef"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 20.错误的数据访问16，etl_job_desc为空格
+            bodyString = new HttpClient()
+                    .addData("etl_sys_cd", EtlSysCd)
+                    .addData("sub_sys_cd", SubSysCd)
+                    .addData("etl_job", "addJob18")
+                    .addData("etl_job_desc", " ")
+                    .addData("pro_type", Pro_Type.SHELL.getCode())
+                    .addData("pro_name", "add.shell")
+                    .addData("pro_para", "0@1")
+                    .addData("pro_dic", "/home/hyshf/etl/")
+                    .addData("log_dic", "/home/hyshf/etl/log")
+                    .addData("disp_freq", Dispatch_Frequency.PinLv.getCode())
+                    .addData("exe_frequency", 1)
+                    .addData("exe_num", 1)
+                    .addData("star_time", dateTime)
+                    .addData("end_time", "2099-12-31 17:39:20")
+                    .addData("job_eff_flag", Job_Effective_Flag.YES.getCode())
+                    .addData("today_disp", Today_Dispatch_Flag.YES.getCode())
+                    .addData("comments", "频率作业测试")
+                    .post(getActionUrl("updateEtlJobDef"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 21.错误的数据访问17，pro_dic为空
+            bodyString = new HttpClient()
+                    .addData("etl_sys_cd", EtlSysCd)
+                    .addData("sub_sys_cd", SubSysCd)
+                    .addData("etl_job", "addJob20")
+                    .addData("etl_job_desc", "更新作业测试")
+                    .addData("pro_type", Pro_Type.SHELL.getCode())
+                    .addData("pro_name", "add.shell")
+                    .addData("pro_para", "0@1")
+                    .addData("pro_dic", "")
+                    .addData("log_dic", "/home/hyshf/etl/log")
+                    .addData("disp_freq", Dispatch_Frequency.PinLv.getCode())
+                    .addData("exe_frequency", 1)
+                    .addData("exe_num", 1)
+                    .addData("star_time", dateTime)
+                    .addData("end_time", "2099-12-31 17:39:20")
+                    .addData("job_eff_flag", Job_Effective_Flag.YES.getCode())
+                    .addData("today_disp", Today_Dispatch_Flag.YES.getCode())
+                    .addData("comments", "频率作业测试")
+                    .post(getActionUrl("updateEtlJobDef"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 22.错误的数据访问18，pro_dic为空格
+            bodyString = new HttpClient()
+                    .addData("etl_sys_cd", EtlSysCd)
+                    .addData("sub_sys_cd", SubSysCd)
+                    .addData("etl_job", "addJob21")
+                    .addData("etl_job_desc", "更新作业测试")
+                    .addData("pro_type", Pro_Type.SHELL.getCode())
+                    .addData("pro_name", "add.shell")
+                    .addData("pro_para", "0@1")
+                    .addData("pro_dic", " ")
+                    .addData("log_dic", "/home/hyshf/etl/log")
+                    .addData("disp_freq", Dispatch_Frequency.PinLv.getCode())
+                    .addData("exe_frequency", 1)
+                    .addData("exe_num", 1)
+                    .addData("star_time", dateTime)
+                    .addData("end_time", "2099-12-31 17:39:20")
+                    .addData("job_eff_flag", Job_Effective_Flag.YES.getCode())
+                    .addData("today_disp", Today_Dispatch_Flag.YES.getCode())
+                    .addData("comments", "频率作业测试")
+                    .post(getActionUrl("updateEtlJobDef"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 23.错误的数据访问19，log_dic为空
+            bodyString = new HttpClient()
+                    .addData("etl_sys_cd", EtlSysCd)
+                    .addData("sub_sys_cd", SubSysCd)
+                    .addData("etl_job", "addJob20")
+                    .addData("etl_job_desc", "更新作业测试")
+                    .addData("pro_type", Pro_Type.SHELL.getCode())
+                    .addData("pro_name", "add.shell")
+                    .addData("pro_para", "0@1")
+                    .addData("pro_dic", "/home/hyshf/etl/")
+                    .addData("log_dic", "")
+                    .addData("disp_freq", Dispatch_Frequency.PinLv.getCode())
+                    .addData("exe_frequency", 1)
+                    .addData("exe_num", 1)
+                    .addData("star_time", dateTime)
+                    .addData("end_time", "2099-12-31 17:39:20")
+                    .addData("job_eff_flag", Job_Effective_Flag.YES.getCode())
+                    .addData("today_disp", Today_Dispatch_Flag.YES.getCode())
+                    .addData("comments", "频率作业测试")
+                    .post(getActionUrl("updateEtlJobDef"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 24.错误的数据访问20，log_dic为空格
+            bodyString = new HttpClient()
+                    .addData("etl_sys_cd", EtlSysCd)
+                    .addData("sub_sys_cd", SubSysCd)
+                    .addData("etl_job", "addJob21")
+                    .addData("etl_job_desc", "更新作业测试")
+                    .addData("pro_type", Pro_Type.SHELL.getCode())
+                    .addData("pro_name", "add.shell")
+                    .addData("pro_para", "0@1")
+                    .addData("pro_dic", "/home/hyshf/etl/")
+                    .addData("log_dic", " ")
+                    .addData("disp_freq", Dispatch_Frequency.PinLv.getCode())
+                    .addData("exe_frequency", 1)
+                    .addData("exe_num", 1)
+                    .addData("star_time", dateTime)
+                    .addData("end_time", "2099-12-31 17:39:20")
+                    .addData("job_eff_flag", Job_Effective_Flag.YES.getCode())
+                    .addData("today_disp", Today_Dispatch_Flag.YES.getCode())
+                    .addData("comments", "频率作业测试")
+                    .post(getActionUrl("updateEtlJobDef"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 25.错误的数据访问21，disp_freq为空
+            bodyString = new HttpClient()
+                    .addData("etl_sys_cd", EtlSysCd)
+                    .addData("sub_sys_cd", SubSysCd)
+                    .addData("etl_job", "addJob26")
+                    .addData("etl_job_desc", "更新作业测试")
+                    .addData("pro_type", Pro_Type.SHELL.getCode())
+                    .addData("pro_name", "add.shell")
+                    .addData("pro_para", "0@1")
+                    .addData("pro_dic", "/home/hyshf/etl/")
+                    .addData("log_dic", "/home/hyshf/etl/log/")
+                    .addData("disp_freq", "")
+                    .addData("exe_frequency", 1)
+                    .addData("exe_num", 1)
+                    .addData("star_time", dateTime)
+                    .addData("end_time", "2099-12-31 17:39:20")
+                    .addData("job_eff_flag", Job_Effective_Flag.YES.getCode())
+                    .addData("today_disp", Today_Dispatch_Flag.YES.getCode())
+                    .addData("comments", "频率作业测试")
+                    .post(getActionUrl("updateEtlJobDef"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 26.错误的数据访问22，disp_freq为空格
+            bodyString = new HttpClient()
+                    .addData("etl_sys_cd", EtlSysCd)
+                    .addData("sub_sys_cd", SubSysCd)
+                    .addData("etl_job", "addJob21")
+                    .addData("etl_job_desc", "更新作业测试")
+                    .addData("pro_type", Pro_Type.SHELL.getCode())
+                    .addData("pro_name", "add.shell")
+                    .addData("pro_para", "0@1")
+                    .addData("pro_dic", "/home/hyshf/etl/")
+                    .addData("log_dic", "/home/hyshf/etl/log/")
+                    .addData("disp_freq", " ")
+                    .addData("exe_frequency", 1)
+                    .addData("exe_num", 1)
+                    .addData("star_time", dateTime)
+                    .addData("end_time", "2099-12-31 17:39:20")
+                    .addData("job_eff_flag", Job_Effective_Flag.YES.getCode())
+                    .addData("today_disp", Today_Dispatch_Flag.YES.getCode())
+                    .addData("comments", "频率作业测试")
+                    .post(getActionUrl("updateEtlJobDef"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 27.错误的数据访问23，disp_freq不存在
+            bodyString = new HttpClient()
+                    .addData("etl_sys_cd", EtlSysCd)
+                    .addData("sub_sys_cd", SubSysCd)
+                    .addData("etl_job", "addJob21")
+                    .addData("etl_job_desc", "更新作业测试")
+                    .addData("pro_type", Pro_Type.SHELL.getCode())
+                    .addData("pro_name", "add.shell")
+                    .addData("pro_para", "0@1")
+                    .addData("pro_dic", "/home/hyshf/etl/")
+                    .addData("log_dic", "/home/hyshf/etl/log/")
+                    .addData("disp_freq", "a")
+                    .addData("exe_frequency", 1)
+                    .addData("exe_num", 1)
+                    .addData("star_time", dateTime)
+                    .addData("end_time", "2099-12-31 17:39:20")
+                    .addData("job_eff_flag", Job_Effective_Flag.YES.getCode())
+                    .addData("today_disp", Today_Dispatch_Flag.YES.getCode())
+                    .addData("comments", "频率作业测试")
+                    .post(getActionUrl("updateEtlJobDef"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 28.错误的数据访问24，job_eff_flag为空
+            bodyString = new HttpClient()
+                    .addData("etl_sys_cd", EtlSysCd)
+                    .addData("sub_sys_cd", SubSysCd)
+                    .addData("etl_job", "addJob26")
+                    .addData("etl_job_desc", "更新作业测试")
+                    .addData("pro_type", Pro_Type.SHELL.getCode())
+                    .addData("pro_name", "add.shell")
+                    .addData("pro_para", "0@1")
+                    .addData("pro_dic", "/home/hyshf/etl/")
+                    .addData("log_dic", "/home/hyshf/etl/log/")
+                    .addData("disp_freq", Dispatch_Frequency.PinLv.getCode())
+                    .addData("exe_frequency", 1)
+                    .addData("exe_num", 1)
+                    .addData("star_time", dateTime)
+                    .addData("end_time", "2099-12-31 17:39:20")
+                    .addData("job_eff_flag", "")
+                    .addData("today_disp", Today_Dispatch_Flag.YES.getCode())
+                    .addData("comments", "频率作业测试")
+                    .post(getActionUrl("updateEtlJobDef"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 29.错误的数据访问25，job_eff_flag为空格
+            bodyString = new HttpClient()
+                    .addData("etl_sys_cd", EtlSysCd)
+                    .addData("sub_sys_cd", SubSysCd)
+                    .addData("etl_job", "addJob21")
+                    .addData("etl_job_desc", "更新作业测试")
+                    .addData("pro_type", Pro_Type.SHELL.getCode())
+                    .addData("pro_name", "add.shell")
+                    .addData("pro_para", "0@1")
+                    .addData("pro_dic", "/home/hyshf/etl/")
+                    .addData("log_dic", "/home/hyshf/etl/log/")
+                    .addData("disp_freq", Dispatch_Frequency.PinLv.getCode())
+                    .addData("exe_frequency", 1)
+                    .addData("exe_num", 1)
+                    .addData("star_time", dateTime)
+                    .addData("end_time", "2099-12-31 17:39:20")
+                    .addData("job_eff_flag", " ")
+                    .addData("today_disp", Today_Dispatch_Flag.YES.getCode())
+                    .addData("comments", "频率作业测试")
+                    .post(getActionUrl("updateEtlJobDef"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 30.错误的数据访问26，job_eff_flag不存在
+            bodyString = new HttpClient()
+                    .addData("etl_sys_cd", EtlSysCd)
+                    .addData("sub_sys_cd", SubSysCd)
+                    .addData("etl_job", "addJob21")
+                    .addData("etl_job_desc", "更新作业测试")
+                    .addData("pro_type", Pro_Type.SHELL.getCode())
+                    .addData("pro_name", "add.shell")
+                    .addData("pro_para", "0@1")
+                    .addData("pro_dic", "/home/hyshf/etl/")
+                    .addData("log_dic", "/home/hyshf/etl/log/")
+                    .addData("disp_freq", Dispatch_Frequency.PinLv.getCode())
+                    .addData("exe_frequency", 1)
+                    .addData("exe_num", 1)
+                    .addData("star_time", dateTime)
+                    .addData("end_time", "2099-12-31 17:39:20")
+                    .addData("job_eff_flag", "a")
+                    .addData("today_disp", Today_Dispatch_Flag.YES.getCode())
+                    .addData("comments", "频率作业测试")
+                    .post(getActionUrl("updateEtlJobDef"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 31.错误的数据访问27，today_disp不存在
+            bodyString = new HttpClient()
+                    .addData("etl_sys_cd", EtlSysCd)
+                    .addData("sub_sys_cd", SubSysCd)
+                    .addData("etl_job", "addJob21")
+                    .addData("etl_job_desc", "更新作业测试")
+                    .addData("pro_type", Pro_Type.SHELL.getCode())
+                    .addData("pro_name", "add.shell")
+                    .addData("pro_para", "0@1")
+                    .addData("pro_dic", "/home/hyshf/etl/")
+                    .addData("log_dic", "/home/hyshf/etl/log/")
+                    .addData("disp_freq", Dispatch_Frequency.PinLv.getCode())
+                    .addData("exe_frequency", 1)
+                    .addData("exe_num", 1)
+                    .addData("star_time", dateTime)
+                    .addData("end_time", "2099-12-31 17:39:20")
+                    .addData("job_eff_flag", Job_Effective_Flag.YES.getCode())
+                    .addData("today_disp", "a")
+                    .addData("comments", "频率作业测试")
+                    .post(getActionUrl("updateEtlJobDef"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
         }
     }
 
