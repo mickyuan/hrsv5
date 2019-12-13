@@ -6,10 +6,7 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
-import fd.ng.core.utils.DateUtil;
-import fd.ng.core.utils.FileNameUtils;
-import fd.ng.core.utils.NumberUtil;
-import fd.ng.core.utils.StringUtil;
+import fd.ng.core.utils.*;
 import hrds.agent.job.biz.bean.JobStatusInfo;
 import hrds.agent.job.biz.bean.MetaInfoBean;
 import hrds.agent.job.biz.constant.RunStatusConstant;
@@ -21,6 +18,7 @@ import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.DeCompressionUtil;
 import hrds.commons.utils.MapDBHelper;
+import hrds.commons.utils.PropertyParaUtil;
 import hrds.commons.utils.jsch.SftpOperate;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -319,10 +317,19 @@ public class FtpCollectJobImpl implements JobInterface {
 			//1.创建远程需要ftp的目录
 			sftp.scpMkdir(ftpDir);
 			//2.根据mapDB的记录和该目录下文件属性过滤文件
-			File[] files = new File(localPath).listFiles((file) -> (!fileNameHTreeMap.containsKey(
-					file.getAbsolutePath()) || file.isDirectory() || (fileNameHTreeMap.containsKey(
-					file.getAbsolutePath()) && !fileNameHTreeMap.get(file.getAbsolutePath()).
-					equals(String.valueOf(file.lastModified())))));
+			File[] files;
+			//如果系统配置的是以MD5计算增量
+			if (Constant.FILECHANGESTYPEMD5) {
+				files = new File(localPath).listFiles((file) -> (!fileNameHTreeMap.containsKey(
+						file.getAbsolutePath()) || file.isDirectory() || (fileNameHTreeMap.containsKey(
+						file.getAbsolutePath()) && !fileNameHTreeMap.get(file.getAbsolutePath()).
+						equals(MD5Util.md5File(file)))));
+			} else {
+				files = new File(localPath).listFiles((file) -> (!fileNameHTreeMap.containsKey(
+						file.getAbsolutePath()) || file.isDirectory() || (fileNameHTreeMap.containsKey(
+						file.getAbsolutePath()) && !fileNameHTreeMap.get(file.getAbsolutePath()).
+						equals(String.valueOf(file.lastModified())))));
+			}
 			if (files != null && files.length > 0) {
 				for (File file : files) {
 					String fileName = file.getName();
@@ -341,7 +348,12 @@ public class FtpCollectJobImpl implements JobInterface {
 						//5.是文件则调用sftp，推送文件到远程服务器，存到mapDB，提交mapDB
 						if (StringUtil.isBlank(fileSuffix) || fileName.endsWith(fileSuffix)) {
 							sftp.transferPutFile(file.getAbsolutePath(), tmpFtpDir);
-							fileNameHTreeMap.put(file.getAbsolutePath(), String.valueOf(file.lastModified()));
+							//使用MD5算增量
+							if (Constant.FILECHANGESTYPEMD5) {
+								fileNameHTreeMap.put(file.getAbsolutePath(), MD5Util.md5File(file));
+							} else {
+								fileNameHTreeMap.put(file.getAbsolutePath(), String.valueOf(file.lastModified()));
+							}
 							mapDBHelper.commit();
 						}
 					}

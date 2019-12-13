@@ -163,18 +163,34 @@ public class FileCollectJobImpl implements JobInterface {
 		//如果选择了其他，则fileTypeList里面的文件类型不采集
 		if (IsFlag.Shi.getCode().equals(is_other)) {
 			//1.获取文件夹下被采集过的但又被编辑过的文件或者文件夹
-			files = new File(path).listFiles((file) -> file.isDirectory()
-					|| (fileNameHTreeMap.containsKey(file.getAbsolutePath())
-					&& !fileTypeList.contains(FileNameUtils.getExtension(file.getName()))
-					&& (!JSONObject.parseObject(fileNameHTreeMap.get(file.getAbsolutePath())).getString("file_md5")
-					.equals(MD5Util.md5File(file)))));
+			if (Constant.FILECHANGESTYPEMD5) {
+				files = new File(path).listFiles((file) -> file.isDirectory()
+						|| (fileNameHTreeMap.containsKey(file.getAbsolutePath())
+						&& !fileTypeList.contains(FileNameUtils.getExtension(file.getName()))
+						&& (!JSONObject.parseObject(fileNameHTreeMap.get(file.getAbsolutePath()))
+						.getString("file_md5").equals(MD5Util.md5File(file)))));
+			} else {
+				files = new File(path).listFiles((file) -> file.isDirectory()
+						|| (fileNameHTreeMap.containsKey(file.getAbsolutePath())
+						&& !fileTypeList.contains(FileNameUtils.getExtension(file.getName()))
+						&& (!JSONObject.parseObject(fileNameHTreeMap.get(file.getAbsolutePath()))
+						.getString("file_md5").equals(String.valueOf(file.lastModified())))));
+			}
 		} else {//如果没有选择其他，则只采集fileTypeList里面的文件类型
 			//1.获取文件夹下被采集过的但又被编辑过的文件或者文件夹
-			files = new File(path).listFiles((file) -> file.isDirectory()
-					|| (fileNameHTreeMap.containsKey(file.getAbsolutePath())
-					&& fileTypeList.contains(FileNameUtils.getExtension(file.getName()))
-					&& (!JSONObject.parseObject(fileNameHTreeMap.get(file.getAbsolutePath())).getString("file_md5")
-					.equals(MD5Util.md5File(file)))));
+			if (Constant.FILECHANGESTYPEMD5) {
+				files = new File(path).listFiles((file) -> file.isDirectory()
+						|| (fileNameHTreeMap.containsKey(file.getAbsolutePath())
+						&& fileTypeList.contains(FileNameUtils.getExtension(file.getName()))
+						&& (!JSONObject.parseObject(fileNameHTreeMap.get(file.getAbsolutePath()))
+						.getString("file_md5").equals(MD5Util.md5File(file)))));
+			} else {
+				files = new File(path).listFiles((file) -> file.isDirectory()
+						|| (fileNameHTreeMap.containsKey(file.getAbsolutePath())
+						&& fileTypeList.contains(FileNameUtils.getExtension(file.getName()))
+						&& (!JSONObject.parseObject(fileNameHTreeMap.get(file.getAbsolutePath()))
+						.getString("file_md5").equals(String.valueOf(file.lastModified())))));
+			}
 		}
 		if (files != null && files.length > 0) {
 			//2.文件夹则递归调用本方法，文件则放到改变过的文件List中

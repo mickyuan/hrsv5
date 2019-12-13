@@ -107,7 +107,6 @@ public class AvroOper {
 	                             DataFileWriter<Object> writer, boolean isSelect) throws IOException {
 		GenericRecord record = new GenericData.Record(SCHEMA);
 		try {
-			String currentFileMd5 = MD5Util.md5File(filePath);
 			long syncBlock = writer.sync();
 			File file = new File(filePath);
 			String fileName = file.getName();
@@ -126,7 +125,11 @@ public class AvroOper {
 			record.put("file_scr_path", filePath);
 			record.put("file_size", String.valueOf(file.length()));
 			record.put("file_time", String.valueOf(file.lastModified()));
-			record.put("file_md5", currentFileMd5);
+			if (Constant.FILECHANGESTYPEMD5) {
+				record.put("file_md5", MD5Util.md5File(filePath));
+			} else {
+				record.put("file_md5", String.valueOf(new File(filePath).lastModified()));
+			}
 			//记录该文件在Avro中的块号，为今后方便查找该文件
 			record.put("file_avro_block", syncBlock);
 			if (file.length() > THRESHOLD_FILE_SIZE) {
