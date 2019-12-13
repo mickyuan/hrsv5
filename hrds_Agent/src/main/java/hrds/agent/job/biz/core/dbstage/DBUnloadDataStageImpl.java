@@ -2,7 +2,6 @@ package hrds.agent.job.biz.core.dbstage;
 
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
-import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
 import hrds.agent.job.biz.bean.CollectTableBean;
@@ -77,25 +76,13 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 		tableBean = CollectTableHandleParse.generateTableInfo(sourceDataConfBean, collectTableBean);
 		//2、解析作业信息，得到表名和表数据量
 		String tableCount = collectTableBean.getTable_count();
-		//获得用户提供的用于分页的列
-		//TODO 这里分页需要用到的字段目前没用
-//		String pageColumn = jobInfo.getPageColumn();
-		//4、使用工厂模式获得数据库方言策略
-//		DialectStrategyFactory factory = DialectStrategyFactory.getInstance();
-//		DataBaseDialectStrategy strategy =
-//				factory.createDialectStrategy(dbConfigBean.getDatabase_type());
 		//fileResult中是生成的所有数据文件的路径，用于判断卸数阶段结果
 		List<String> fileResult = new ArrayList<>();
-		//RSResult中是所有分页查询得到的ResultSet，用于写meta文件
-//		List<ResultSet> RSResult = new ArrayList<>();
 		//pageCountResult是本次采集作业每个线程采集到的数据量，用于写meta文件
 		List<Long> pageCountResult = new ArrayList<>();
 		//5、16+1个线程采集。计算每个任务的采集数量,得到start,end,然后封装成CollectTask对象,目前写死，后期可以放在yml文件中,根据服务器实际情况，修改配置
-		//TODO 讨论如何配置线程，海云现在是根据页面预估数+后台配置每个线程数据量，算出来需要多少个线程。也可以改成页面配置线程数，后台分配每个线程的数据量
+		//TODO 目前是在配置文件中配置线程数
 		int threadCount = Integer.parseInt(PropertyParaUtil.getString("threadCount", "15"));
-//		if (pageColumn == null || pageColumn.trim().isEmpty()) {
-//			//TODO 用户若未提供该张表用于分页的数据列，后续操作待讨论
-//		} else {
 		//用户提供了该张表用于分页的数据列
 		long totalCount = Long.parseLong(tableCount);
 		long pageRow = totalCount / threadCount;
@@ -127,10 +114,8 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 		//7、获得结果,用于校验多线程采集的结果和写Meta文件
 		for (Future<Map<String, Object>> future : futures) {
 			fileResult.addAll((List<String>) future.get().get("filePathList"));
-//			RSResult.add((ResultSet) future.get().get("pageData"));
 			pageCountResult.add((Long) future.get().get("pageCount"));
 		}
-//		}
 
 		//获得列类型
 		columnTypes.addAll(Arrays.asList(tableBean.getAllType().toString().split(CollectTableHandleParse.STRSPLIT)));
@@ -219,24 +204,4 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 	public String[] getFileArr() {
 		return fileArr;
 	}
-
-	@Method(desc = "获得列类型，对于像varchar这种有列长度的类型，只保留类型，不保留长度/精度", logicStep = "" +
-			"1、如果长度为0，则不做任何处理" +
-			"2、如果长度不为0，则只保留数据类型，不保留长度")
-	@Param(name = "columnTypeName", desc = "列类型", range = "不为空，格式：列类型(长度)/列类型")
-	@Param(name = "precision", desc = "对于数字类型，precision表示的是数字的精度，对于字符类型，这里表示的是长度"
-			, range = "不限")
-	@Return(desc = "只保留类型，不保留长度/精度", range = "不会为null")
-	private String getColumnType(String columnTypeName, int precision) {
-		//1、如果长度为0，则不做任何处理
-		//2、如果长度不为0，则只保留数据类型，不保留长度
-		if (precision != 0) {
-			int index = columnTypeName.indexOf("(");
-			if (index != -1) {
-				columnTypeName = columnTypeName.substring(0, index);
-			}
-		}
-		return columnTypeName;
-	}
-
 }

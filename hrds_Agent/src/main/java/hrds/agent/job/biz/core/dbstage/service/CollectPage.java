@@ -70,13 +70,6 @@ public class CollectPage implements Callable<Map<String, Object>> {
 				String unLoadInfo = parser.parseResultSet(resultSet, collectTableBean, pageNum, pageRow, tableBean);
 				if (!StringUtil.isEmpty(unLoadInfo) && unLoadInfo.contains(CollectTableHandleParse.STRSPLIT)) {
 					List<String> unLoadInfoList = StringUtil.split(unLoadInfo, CollectTableHandleParse.STRSPLIT);
-					//用于统计当前线程采集到的数据量
-//				int columnCount = resultSet.getMetaData().getColumnCount();
-					//3、多线程采集阶段，线程执行完毕后的返回内容，用于写作业meta文件和验证本次采集任务的结果
-					//采集生成的文件路径
-//				map.put("filePath", filePath);
-					//当前线程采集到的数据量
-//				map.put("pageCount", columnCount);
 					map.put("pageCount", unLoadInfoList.get(unLoadInfoList.size() - 2));
 					map.put("fileSize", unLoadInfoList.get(unLoadInfoList.size() - 1));
 					unLoadInfoList.remove(unLoadInfoList.size() - 2);
@@ -99,7 +92,6 @@ public class CollectPage implements Callable<Map<String, Object>> {
 
 	}
 
-
 	@Method(desc = "根据分页SQL获取ResultSet", logicStep = "" +
 			"1、将DBConfigBean对象传入工具类ConnectionTool，得到DatabaseWrapper" +
 			"2、将采集SQL，当前页的start，end转换通过strategy转为分页SQL" +
@@ -110,8 +102,7 @@ public class CollectPage implements Callable<Map<String, Object>> {
 	@Param(name = "end", desc = "当前分页结束条数", range = "不限")
 	@Return(desc = "当前线程执行分页SQL查询得到的结果集", range = "不会为null")
 	private ResultSet getPageData(Connection conn) throws Exception {
-		//TODO pageColumn是海云应用管理端传过来的，画面上由用户提供的用于分页的列名，
-		// 目前前端没有准备这个值，默认使用主键，没有主键默认使用第一个字段
+		// TODO 默认使用主键做分页，没有主键默认使用第一个字段
 		DatabaseMetaData databaseMetaData = conn.getMetaData();
 		ResultSet rs = databaseMetaData.getPrimaryKeys(null, null,
 				collectTableBean.getTable_name().toUpperCase());
@@ -127,8 +118,7 @@ public class CollectPage implements Callable<Map<String, Object>> {
 		//拼分页的sql
 		sql = pageForSql(database_type, primaryKey);
 		Statement statement = conn.createStatement();
-		//不同数据库的set fetchSize 实现方式不同，暂时设置Oracle 的参数 其他的目前不予处理
-		//TODO
+		//TODO 不同数据库的set fetchSize 实现方式不同，暂时设置Oracle 的参数 其他的目前不予处理
 		if (DatabaseType.Oracle10g.getCode().equals(database_type) ||
 				DatabaseType.Oracle9i.getCode().equals(database_type)) {
 			statement.setFetchSize(400);
