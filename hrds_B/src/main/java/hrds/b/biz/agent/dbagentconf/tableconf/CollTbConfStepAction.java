@@ -22,16 +22,12 @@ import hrds.commons.codes.CleanType;
 import hrds.commons.codes.CountNum;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.*;
-import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.AgentActionUtil;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.key.PrimayKeyGener;
 
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
 import java.sql.Types;
 import java.util.*;
 
@@ -200,8 +196,6 @@ public class CollTbConfStepAction extends BaseAction {
 					tableInfo.setTi_or(DEFAULT_TABLE_CLEAN_ORDER.toJSONString());
 					//5、保存数据进库
 					tableInfo.add(Dbo.db());
-					//6、保存数据自定义采集列相关信息进入table_column表
-					saveCustomSQLColumnInfoForAdd(tableInfo);
 				}
 				//如果是修改采集表
 				else{
@@ -213,9 +207,9 @@ public class CollTbConfStepAction extends BaseAction {
 					tableInfo.add(Dbo.db());
 					//调用方法删除脏数据
 					deleteDirtyDataOfTb(oldID);
-					//6、保存数据自定义采集列相关信息进入table_column表
-					saveCustomSQLColumnInfoForAdd(tableInfo);
 				}
+				//6、保存数据自定义采集列相关信息进入table_column表
+				saveCustomSQLColumnInfoForAdd(tableInfo, colSetId, getUserId());
 			}
 		}
 		//7、如果List集合为空，表示使用SQL抽取没有设置，那么就要把当前数据库采集任务中所有的自定义抽取设置作为脏数据全部删除
@@ -914,46 +908,43 @@ public class CollTbConfStepAction extends BaseAction {
 	}
 
 	@Method(desc = "保存新增自定义SQL采集字段信息", logicStep = "" +
-			"1、执行自定义SQL，获取执行结果集" +
-			"2、根据结果集拿到该结果集的meta信息" +
-			"3、遍历meta信息，封装成Table_column类型对象" +
-			"4、保存")
+			"1、根据colSetId和userId去数据库中查出DB连接信息" +
+			"2、封装数据，调用方法和agent交互，获取列信息" +
+			"3、将列信息反序列化为List集合" +
+			"4、遍历List集合，给每个Table_column对象设置主键等信息" +
+			"5、保存")
 	@Param(name = "tableInfo", desc = "存有table_id和自定义采集SQL的实体类对象", range = "Table_info实体类对象，" +
 			"其中table_id和sql两个属性不能为空", isBean = true)
-	private void saveCustomSQLColumnInfoForAdd(Table_info tableInfo){
-		try {
-			//1、执行自定义SQL，获取执行结果集
-			ResultSet rs = Dbo.db().queryGetResultSet(tableInfo.getSql());
-			//2、根据结果集拿到该结果集的meta信息
-			ResultSetMetaData metaData = rs.getMetaData();
-			//3、遍历meta信息，封装成Table_column类型对象
-			for(int j = 0; j < metaData.getColumnCount(); j++){
-				Table_column tableColumn = new Table_column();
-				tableColumn.setColumn_id(PrimayKeyGener.getNextId());
-				tableColumn.setTable_id(tableInfo.getTable_id());
-				//是否采集设置为是
-				tableColumn.setIs_get(IsFlag.Shi.getCode());
-				//是否是主键，默认设置为否
-				tableColumn.setIs_primary_key(IsFlag.Fou.getCode());
-				tableColumn.setColume_name(metaData.getColumnName(j + 1));
-				//对列类型做特殊处理，处理成varchar(512), numeric(10,4)
-				String colTypeAndPreci = getColTypeAndPreci(metaData.getColumnType(j + 1),
-						metaData.getColumnTypeName(j + 1), metaData.getPrecision(j + 1),
-						metaData.getScale(j + 1));
-				tableColumn.setColumn_type(colTypeAndPreci);
-				//列中文名默认设置为列英文名
-				tableColumn.setColume_ch_name(metaData.getColumnName(j + 1));
-				tableColumn.setValid_s_date(DateUtil.getSysDate());
-				tableColumn.setValid_e_date(Constant.MAXDATE);
-				tableColumn.setIs_alive(IsFlag.Shi.getCode());
-				tableColumn.setIs_new(IsFlag.Fou.getCode());
-				tableColumn.setTc_or(DEFAULT_COLUMN_CLEAN_ORDER.toJSONString());
+	@Param(name = "colSetId", desc = "数据库设置ID，源系统数据库设置表主键，数据库对应表外键", range = "不为空")
+	@Param(name = "userId", desc = "当前登录用户ID，sys_user表主键", range = "不为空")
+	private void saveCustomSQLColumnInfoForAdd(Table_info tableInfo, long colSetId, long userId){
+		//1、根据colSetId和userId去数据库中查出DB连接信息
+		Map<String, Object> databaseInfo = getDatabaseSetInfo(colSetId, userId);
+		if(databaseInfo.isEmpty()){
+			throw new BusinessException("未找到数据库采集任务");
+		}
+		String methodName = AgentActionUtil.GETCUSTCOLUMN;
+		long agentId = (long) databaseInfo.get("agent_id");
+		//2、封装数据，调用方法和agent交互，获取列信息
+		String respMsg = SendMsgUtil.getCustColumn(agentId, getUserId(), databaseInfo, tableInfo.getSql(), methodName);
+		//3、将列信息反序列化为List集合
+		List<Table_column> tableColumns = JSONArray.parseArray(respMsg, Table_column.class);
+		//4、遍历List集合，给每个Table_column对象设置主键等信息
+		for(Table_column tableColumn : tableColumns){
+			tableColumn.setColumn_id(PrimayKeyGener.getNextId());
+			tableColumn.setTable_id(tableInfo.getTable_id());
+			//是否采集设置为是
+			tableColumn.setIs_get(IsFlag.Shi.getCode());
+			//是否是主键，默认设置为否
+			tableColumn.setIs_primary_key(IsFlag.Fou.getCode());
+			tableColumn.setValid_s_date(DateUtil.getSysDate());
+			tableColumn.setValid_e_date(Constant.MAXDATE);
+			tableColumn.setIs_alive(IsFlag.Shi.getCode());
+			tableColumn.setIs_new(IsFlag.Fou.getCode());
+			tableColumn.setTc_or(DEFAULT_COLUMN_CLEAN_ORDER.toJSONString());
 
-				//4、保存
-				tableColumn.add(Dbo.db());
-			}
-		} catch (SQLException e) {
-			throw new AppSystemException(e);
+			//5、保存
+			tableColumn.add(Dbo.db());
 		}
 	}
 

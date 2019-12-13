@@ -217,6 +217,73 @@ public class SendMsgUtil {
 		throw new BusinessException("根据表名获取该表的字段信息失败，详情请查看日志");
 	}
 
+	@Method(desc = "海云应用管理端向Agent端发送消息，根据自定义抽取SQL获取该表的字段信息", logicStep = "" +
+			"1、对参数合法性进行校验" +
+			"2、由于向Agent请求的数据量较小，所以不需要压缩" +
+			"3、httpClient发送请求并接收响应" +
+			"4、根据响应状态码判断响应是否成功" +
+			"5、若响应成功，调用方法解析响应报文，并返回响应数据" +
+			"6、若响应不成功，记录日志，并抛出异常告知操作失败")
+	@Param(name = "agentId", desc = "agentId，agent_info表主键，agent_down_info表外键", range = "不为空")
+	@Param(name = "userId", desc = "当前登录用户Id，sys_user表主键，agent_down_info表外键", range = "不为空")
+	@Param(name = "databaseInfo", desc = "目标数据库相关信息", range = "map集合")
+	@Param(name = "custSQL", desc = "自定义抽取SQL", range = "不为空")
+	@Param(name = "methodName", desc = "Agent端的提供服务的方法的方法名", range = "AgentActionUtil类中的静态常量")
+	@Return(desc = "Agent端通过本地http交互得到的响应数据的msg部分，内容是按照自定义抽取SQL得到的该表的字段信息"
+			, range = "json格式的字符串")
+	public static String getCustColumn(Long agentId, Long userId, Map<String, Object> databaseInfo,
+	                                        String custSQL, String methodName){
+		//1、对参数合法性进行校验
+		if(agentId == null){
+			throw new BusinessException("向Agent发送信息，根据自定义抽取SQL获取该表的字段信息，agentId不能为空");
+		}
+		if(userId == null){
+			throw new BusinessException("向Agent发送信息，根据自定义抽取SQL获取该表的字段信息，userId不能为空");
+		}
+		if(databaseInfo.isEmpty()){
+			throw new BusinessException("向Agent发送信息，根据自定义抽取SQL获取该表的字段信息，请指定数据库连接信息");
+		}
+		Database_set legalParam = getLegalParam(databaseInfo);
+		if(StringUtil.isBlank(custSQL)){
+			throw new BusinessException("向Agent发送信息，根据自定义抽取SQL获取该表的字段信息，自定义抽取SQL不能为空");
+		}
+		if(StringUtil.isBlank(methodName)){
+			throw new BusinessException("向Agent发送信息时methodName不能为空");
+		}
+
+		//2、由于向Agent请求的数据量较小，所以不需要压缩
+		String url = AgentActionUtil.getUrl(agentId, userId, methodName);
+		logger.debug("准备建立连接，请求的URL为" + url);
+
+		//3、httpClient发送请求并接收响应
+		HttpClient.ResponseValue resVal = new HttpClient()
+				.addData("database_name", legalParam.getDatabase_name())
+				.addData("database_pad", legalParam.getDatabase_pad())
+				.addData("database_ip", legalParam.getDatabase_ip())
+				.addData("database_port", legalParam.getDatabase_port())
+				.addData("user_name", legalParam.getUser_name())
+				.addData("database_drive", legalParam.getDatabase_drive())
+				.addData("jdbc_url", legalParam.getJdbc_url())
+				.addData("database_type", legalParam.getDatabase_type())
+				.addData("db_agent", legalParam.getDb_agent())
+				.addData("plane_url", legalParam.getPlane_url())
+				.addData("custSQL", custSQL)
+				.post(url);
+
+		ActionResult ar = JsonUtil.toObjectSafety(resVal.getBodyString(), ActionResult.class)
+				.orElseThrow(() -> new BusinessException("连接" + url + "服务异常"));
+		if (ar.isSuccess()) {
+			//5、若响应成功，调用方法解析响应报文，并返回响应数据
+			String msg = PackUtil.unpackMsg((String) ar.getData()).get("msg");
+			logger.debug(">>>>>>>>>>>>>>>>>>>>>>>>返回消息为：" + msg);
+			return msg;
+		}
+
+		//6、若响应不成功，记录日志，并抛出异常告知操作失败
+		logger.error(">>>>>>>>>>>>>>>>>>>>>>>>错误信息为：" + ar.getMessage());
+		throw new BusinessException("根据自定义抽取SQL获取该表的字段信息，详情请查看日志");
+	}
+
 	@Method(desc = "由于源数据库设置表中会保存数据库直连采集和DB文件采集的信息，所以查询得到的某些字段可能为null，" +
 			"为了保证传参时合法，不会出现空指针的情况，用该方法对查询得到的数据库设置信息进行重新封装", logicStep = "" +
 			"1、判断获取到的数据库连接信息是否有null值，如果有，将null值替换为空字符串然后封装到Database_set对象中")

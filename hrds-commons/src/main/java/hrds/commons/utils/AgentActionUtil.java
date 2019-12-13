@@ -40,6 +40,8 @@ public class AgentActionUtil {
 	public static final String TESTPARALLELSQL = "/hrds/agent/trans/biz/testParallelSQL";
 	//获取单表数据总量
 	public static final String GETTABLECOUNT = "/hrds/agent/trans/biz/getTableCount";
+	//获取自定义SQL抽取的采集列
+	public static final String GETCUSTCOLUMN = "/hrds/agent/trans/biz/database/getCustColumn";
 
 	static {
 		list = new ArrayList<>();
@@ -55,6 +57,7 @@ public class AgentActionUtil {
 		list.add(EXECUTEFILECOLLECT);
 		list.add(TESTPARALLELSQL);
 		list.add(GETTABLECOUNT);
+		list.add(GETCUSTCOLUMN);
 	}
 
 	private AgentActionUtil() {
