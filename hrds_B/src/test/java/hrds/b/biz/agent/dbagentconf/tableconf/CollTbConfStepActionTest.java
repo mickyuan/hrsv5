@@ -332,7 +332,10 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		assertThat(rightResult.isSuccess(), is(true));
 		Result rightData = rightResult.getDataForResult();
 		assertThat("获得了一条数据", rightData.getRowCount(), is(1));
-		assertThat("获得的分页抽取SQL是select * from code_info limit 10", rightData.getString(0, "page_sql"), is("select * from code_info limit 10"));
+		assertThat("获得的<分页抽取SQL>是select * from code_info limit 10", rightData.getString(0, "page_sql"), is("select * from code_info limit 10"));
+		assertThat("获得的<数据量>是100000", rightData.getString(0, "table_count"), is("100000"));
+		assertThat("获得的<并行抽取线程数>是6", rightData.getInt(0, "pageparallels"), is(6));
+		assertThat("获得的<每日数据增量>是1000", rightData.getInt(0, "dataincrement"), is(1000));
 
 		//错误的数据访问1：使用未设置分页SQL的tableId进行查询
 		String wrongStringOne = new HttpClient()

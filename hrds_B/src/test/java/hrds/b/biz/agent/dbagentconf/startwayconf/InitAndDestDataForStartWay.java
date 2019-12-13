@@ -80,6 +80,9 @@ public class InitAndDestDataForStartWay {
 			String customizFlag;
 			String parallelFlag;
 			String pageSql;
+			String tableCount;
+			int dataIncrement = 0;
+			int pageParallels = 5;
 			switch (i) {
 				case 1:
 					tableId = SYS_USER_TABLE_ID;
@@ -90,6 +93,7 @@ public class InitAndDestDataForStartWay {
 					customizFlag = IsFlag.Fou.getCode();
 					parallelFlag = IsFlag.Fou.getCode();
 					pageSql = "";
+					tableCount = "100000";
 					break;
 				case 2:
 					tableId = CODE_INFO_TABLE_ID;
@@ -99,6 +103,9 @@ public class InitAndDestDataForStartWay {
 					customizFlag = IsFlag.Fou.getCode();
 					parallelFlag = IsFlag.Shi.getCode();
 					pageSql = "select * from code_info limit 10";
+					tableCount = "100000";
+					dataIncrement = 1000;
+					pageParallels = 6;
 					break;
 				case 3:
 					tableId = AGENT_INFO_TABLE_ID;
@@ -109,6 +116,7 @@ public class InitAndDestDataForStartWay {
 					customizFlag = IsFlag.Shi.getCode();
 					parallelFlag = IsFlag.Fou.getCode();
 					pageSql = "";
+					tableCount = "100000";
 					break;
 				case 4:
 					tableId = DATA_SOURCE_TABLE_ID;
@@ -119,6 +127,7 @@ public class InitAndDestDataForStartWay {
 					customizFlag = IsFlag.Shi.getCode();
 					parallelFlag = IsFlag.Fou.getCode();
 					pageSql = "";
+					tableCount = "100000";
 					break;
 				default:
 					tableId = 0L;
@@ -128,6 +137,7 @@ public class InitAndDestDataForStartWay {
 					customizFlag = "error_customizFlag";
 					parallelFlag = "error_parallelFlag";
 					pageSql = "unexpected_pageSql";
+					tableCount = "unexpected_tableCount";
 			}
 			Table_info tableInfo = new Table_info();
 			tableInfo.setTable_id(tableId);
@@ -144,6 +154,9 @@ public class InitAndDestDataForStartWay {
 			tableInfo.setIs_register(IsFlag.Fou.getCode());
 			tableInfo.setIs_parallel(parallelFlag);
 			tableInfo.setPage_sql(pageSql);
+			tableInfo.setTable_count(tableCount);
+			tableInfo.setDataincrement(dataIncrement);
+			tableInfo.setPageparallels(pageParallels);
 
 			tableInfos.add(tableInfo);
 		}

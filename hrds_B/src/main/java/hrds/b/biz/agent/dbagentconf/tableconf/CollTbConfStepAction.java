@@ -127,10 +127,11 @@ public class CollTbConfStepAction extends BaseAction {
 	@Return(desc = "分页SQL", range = "只要正常返回肯定不是空字符串")
 	public Result getPageSQL(long tableId){
 		//1、去数据库中根据table_id查出该表定义的分页抽取SQL
-		Result result = Dbo.queryResult("select ti.table_id, ti.page_sql from " + Table_info.TableName +
+		Result result = Dbo.queryResult("select ti.table_id, ti.page_sql, ti.table_count, ti.pageparallels, ti.dataincrement " +
+				" from " + Table_info.TableName +
 				" ti where ti.table_id = ?", tableId);
 		if(result.isEmpty()){
-			throw new BusinessException("获取分页抽取SQL失败");
+			throw new BusinessException("未获取到分页抽取SQL");
 		}
 		//2、返回
 		return result;
