@@ -16,7 +16,7 @@ public class Constant {
 	public static final String SDATENAME = "HYREN_S_DATE";
 	public static final String EDATENAME = "HYREN_E_DATE";
 	public static final String MD5NAME = "HYREN_MD5_VAL";
-	public static char DATADELIMITER = '\001';//此分隔符为hive的默认分隔符
+	public static final char DATADELIMITER = '\001';//此分隔符为hive的默认分隔符
 	public static final String HD = "HD";
 	public static final String DB = "DB";
 	public static final String MAXDATE = "99991231";
@@ -45,9 +45,11 @@ public class Constant {
 	public static final String SYS_DATEFORMAT = PropertyParaUtil.getString("SYS_DATEFORMAT",
 			"yyyyMMdd");
 	//是否写多文件
-	public static boolean WriteMultipleFiles = IsFlag.Shi.getCode().equals(PropertyParaUtil.getString(
+	public static final boolean WriteMultipleFiles = IsFlag.Shi.getCode().equals(PropertyParaUtil.getString(
 			"writemultiplefiles", IsFlag.Fou.getCode()));
-
+	//判断文件变化的类型是否是MD5
+	public static final boolean FILECHANGESTYPEMD5 = "md5".equals(PropertyParaUtil.getString(
+			"determineFileChangesType", ""));
 	//定义并行抽取SQL开始条数占位符
 	public static final String PARALLEL_SQL_START = "#{hy_start}";
 	//定义并行抽取SQL结束条数占位符
