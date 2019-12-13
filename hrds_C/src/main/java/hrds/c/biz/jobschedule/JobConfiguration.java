@@ -496,7 +496,12 @@ public class JobConfiguration extends BaseAction {
                     "7.验证调度频率是否合法" +
                     "8.验证调度触发方式是否合法" +
                     "9.验证作业有效标志是否合法" +
-                    "10.验证当天是否调度是否合法,可为空")
+                    "10.验证当天是否调度是否合法,可为空" +
+                    "11.验证作业程序名称是否合法" +
+                    "12.验证作业程序目录是否合法" +
+                    "13.验证作业程序名称是否合法" +
+                    "14.日志目录是否合法" +
+                    "15.作业描述是否合法")
     @Param(name = "etl_job_def", desc = "作业定义实体对象", range = "与数据库对应表字段规则一致", isBean = true)
     private void checkEtlJobDefField(Etl_job_def etl_job_def) {
         // 1.数据可访问权限处理方式，该方法不需要权限控制
@@ -532,6 +537,22 @@ public class JobConfiguration extends BaseAction {
         // 10.验证当天是否调度是否合法,可为空
         if (StringUtil.isNotBlank(etl_job_def.getToday_disp())) {
             Today_Dispatch_Flag.ofEnumByCode(etl_job_def.getToday_disp());
+        }
+        // 11.验证作业程序名称是否合法
+        if (StringUtil.isBlank(etl_job_def.getPro_name())) {
+            throw new BusinessException("作业程序名称不能为空或空格！");
+        }
+        // 12.验证作业程序目录是否合法
+        if (StringUtil.isBlank(etl_job_def.getPro_dic())) {
+            throw new BusinessException("验证作业程序目录不能为空或空格！");
+        }
+        // 13.日志目录是否合法
+        if (StringUtil.isBlank(etl_job_def.getLog_dic())) {
+            throw new BusinessException("日志目录不能为空或空格！");
+        }
+        // 14.作业描述是否合法
+        if (StringUtil.isBlank(etl_job_def.getEtl_job_desc())) {
+            throw new BusinessException("作业描述不能为空或空格！");
         }
     }
 
@@ -838,7 +859,7 @@ public class JobConfiguration extends BaseAction {
             } else {
                 // 5.2修改前的调度触发方式是定时,修改后的调度触发方式为依赖,则新增依赖（定时---->依赖）
                 if (Dispatch_Type.DEPENDENCE == Dispatch_Type.ofEnumByCode(etl_job_def.getDisp_type())) {
-                    updateDependencyFromEtlJobDef(etl_dependency, old_pre_etl_job, pre_etl_job);
+                    saveEtlDependencyFromEtlJobDef(etl_dependency, pre_etl_job);
                 }
             }
         }
@@ -867,7 +888,7 @@ public class JobConfiguration extends BaseAction {
                                                String[] old_pre_etl_job, String[] pre_etl_job) {
         // 1.数据可访问权限处理方式，该方法不需要权限控制
         // 2.判断修改前的上游作业名称的数组是否为空
-        if (old_pre_etl_job.length != 0) {
+        if (old_pre_etl_job != null && old_pre_etl_job.length != 0) {
             // 3.先删除原依赖关系
             deleteOldDependency(etl_dependency, old_pre_etl_job);
             // 4.循环保存依赖
@@ -885,7 +906,7 @@ public class JobConfiguration extends BaseAction {
     private void saveEtlDependencyFromEtlJobDef(Etl_dependency etl_dependency, String[] pre_etl_job) {
         // 1.数据可访问权限处理方式，该方法不需要权限控制
         // 2.判断修改后的上游作业名称的数组是否为空
-        if (pre_etl_job.length != 0) {
+        if (pre_etl_job != null && pre_etl_job.length != 0) {
             for (String preEtlJob : pre_etl_job) {
                 // 3.循环判断修改后的上游作业名称是否已不存在
                 if (!ETLJobUtil.isEtlJobDefExist(etl_dependency.getEtl_sys_cd(), preEtlJob)) {
