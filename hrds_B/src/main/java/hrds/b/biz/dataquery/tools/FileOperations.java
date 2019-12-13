@@ -1,0 +1,220 @@
+package hrds.b.biz.dataquery.tools;
+
+import fd.ng.core.annotation.Method;
+import fd.ng.core.annotation.Param;
+import fd.ng.core.annotation.Return;
+import fd.ng.core.utils.CodecUtil;
+import fd.ng.core.utils.JsonUtil;
+import fd.ng.core.utils.StringUtil;
+import fd.ng.db.resultset.Result;
+import fd.ng.web.util.Dbo;
+import hrds.commons.codes.ApplyType;
+import hrds.commons.codes.AuthType;
+import hrds.commons.codes.IsFlag;
+import hrds.commons.entity.Source_file_attribute;
+import hrds.commons.exception.BusinessException;
+import hrds.commons.hadoop.hadoop_helper.HdfsOperator;
+import hrds.commons.hadoop.readconfig.ConfigReader;
+import hrds.commons.utils.DboExecute;
+import hrds.commons.utils.FileTypeUtil;
+import hrds.commons.utils.PathUtil;
+import org.apache.avro.file.DataFileReader;
+import org.apache.avro.file.SeekableInput;
+import org.apache.avro.generic.GenericData;
+import org.apache.avro.generic.GenericDatumReader;
+import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.io.DatumReader;
+import org.apache.avro.mapred.FsInput;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.util.*;
+
+public class FileOperations {
+
+	/**
+	 * <p>方法名: getFileBytesFromAvro</p>
+	 * <p>方法说明: 在hdfs上获取文件信息； 占位方法，方法写完后删除</p>
+	 */
+	@Method(desc = "根据文件id获取文件信息",
+			logicStep = "1.检查文件是否存在" +
+					"2.文件不在avro文件中，还在服务器本地,获取文件的byte并返回" +
+					"3.已经采集到avro并上传到hdfs上，需要查看是大文件还是小文件" +
+					"4.是否为大文件：1是 2否" +
+					"4-1.是大文件file_contents存储文件的实际存储路径,然后根据从hdfs获取的文件路径获取文件二进制流" +
+					"4-2.不是大文件file_contents存储的是文件数据,直接获取文件二进制流")
+	@Param(name = "fileId", desc = "文件id", range = "自动生成的id")
+	@Return(desc = "返回值说明", range = "返回值取值范围")
+	public static byte[] getFileBytesFromAvro(String fileId) {
+		//1.检查文件是否存在
+		Optional<Source_file_attribute> sourceFileAttribute = Dbo.queryOneObject(Source_file_attribute.class,
+				"SELECT * FROM source_file_attribute WHERE file_id=?", fileId);
+		if (!sourceFileAttribute.isPresent()) {
+			throw new BusinessException("申请的文件不存在！fileId=" + fileId);
+		}
+		//如果is_cache为是，则表示这个文件是单文件上传接口上传的文件，且还缓存在服务器本地
+		String isCache = sourceFileAttribute.get().getIs_cache();
+		if (StringUtil.isNotBlank(isCache) && IsFlag.Shi.getValue().equals(isCache)) {
+			//2.文件不在avro文件中，还在服务器本地,获取文件的byte并返回
+			try {
+				String sourcePath = sourceFileAttribute.get().getSource_path();
+				return FileUtils.readFileToByteArray(new File(sourcePath));
+			} catch (IOException e) {
+				e.printStackTrace();
+				throw new BusinessException("Failed to get the byte of the local file!" + fileId);
+			}
+		}
+		//3.已经采集到avro并上传到hdfs上，需要查看是大文件还是小文件
+		Long fileAvroBlock = sourceFileAttribute.get().getFile_avro_block();
+		String fileAvroPath = sourceFileAttribute.get().getFile_avro_path();
+		GenericRecord avroRecord = getAvroRecord(fileAvroBlock, fileAvroPath);
+		//4.是否为大文件：1是 2否
+		String isBigFile = avroRecord.get("is_big_file").toString();
+		if (IsFlag.Shi.toString().equals(isBigFile)) {
+			//4-1.是大文件file_contents存储文件的实际存储路径,然后根据从hdfs获取的文件路径获取文件二进制流
+			String filePath = new String(((ByteBuffer) avroRecord.get("file_contents")).array(), CodecUtil.UTF8_CHARSET);
+			String fileHdfsPath = PathUtil.convertLocalPathToHDFSPath(filePath);
+			try (HdfsOperator operator = new HdfsOperator()) {
+				if (!operator.exists(fileHdfsPath)) {
+					throw new BusinessException("大文件 " + fileHdfsPath + " 不存在");
+				}
+				return IOUtils.toByteArray(operator.open(fileHdfsPath));
+			} catch (IOException e) {
+				e.printStackTrace();
+				throw new BusinessException("Failed to get the byte of the hdfs file!" + fileId);
+			}
+		} else {
+			//4-2.不是大文件file_contents存储的是文件数据,直接获取文件二进制流
+			return ((ByteBuffer) avroRecord.get("file_contents")).array();
+		}
+	}
+
+	@Method(desc = "根据文件id获取文件信息",
+			logicStep = "1.检查文件是否存在" +
+					"2.获取文件属性信息" +
+					"3.设置返回数据信息")
+	@Param(name = "fileId", desc = "文件id", range = "自动生成的id")
+	@Return(desc = "返回值说明", range = "返回值取值范围")
+	public static String getFileInfoByFileId(String fileId) {
+		return getFileInfoByFileId(fileId, false);
+	}
+
+	@Method(desc = "根据文件id获取文件信息",
+			logicStep = "1.检查文件是否存在" +
+					"2.获取文件属性信息" +
+					"3.设置返回数据信息")
+	@Param(name = "fileId", desc = "文件id", range = "自动生成的id")
+	@Param(name = "ocrText", desc = "是否需要ocr识别", range = "自动生成的id")
+	@Return(desc = "返回值说明", range = "返回值取值范围")
+	public static String getFileInfoByFileId(String fileId, boolean ocrText) {
+		//1.检查文件是否存在
+		Optional<Source_file_attribute> fileRs = Dbo.queryOneObject(Source_file_attribute.class,
+				"SELECT * FROM source_file_attribute WHERE file_id=?", fileId);
+		if (!fileRs.isPresent()) {
+			throw new BusinessException("申请的文件不存在！fileId=" + fileId);
+		}
+		//2.获取文件属性信息
+		Long fileAvroBlock = fileRs.get().getFile_avro_block();
+		String fileAvroPath = fileRs.get().getFile_avro_path();
+		String originalName = fileRs.get().getOriginal_name();
+		String storageDate = fileRs.get().getStorage_date();
+		String storageTime = fileRs.get().getStorage_time();
+		String originalUpdateDate = fileRs.get().getOriginal_update_date();
+		String originalUpdateTime = fileRs.get().getOriginal_update_time();
+		String fileSuffix = fileRs.get().getFile_suffix();
+		GenericRecord avroRecord = getAvroRecord(fileAvroBlock, fileAvroPath);
+		//3.设置返回数据信息
+		Map<String, String> fileInfoMap = new HashMap<>();
+		fileInfoMap.put("original_name", originalName);
+		fileInfoMap.put("storage_time", storageDate + storageTime);
+		fileInfoMap.put("original_update_time", originalUpdateDate + originalUpdateTime);
+		String fileText = avroRecord.get("file_text").toString();
+		List<String> list = FileTypeUtil.getTypeFileList(FileTypeUtil.TuPian);
+		//如果是图片，就将图片流转换成base64，以便传输到页面展示
+		assert list != null;
+		if (list.contains(fileSuffix)) {
+			ByteBuffer bb = (ByteBuffer) avroRecord.get("file_contents");
+			fileText = Base64.getEncoder().encode(bb).toString();
+			//如果是ture的话，就是只要文本，如果是fase的话就要图片的二进制流，其他情况用的时候在使用
+			if (ocrText) {
+				fileText = getOcrText(fileAvroPath, originalName, fileId);
+			}
+		}
+		fileInfoMap.put("file_content", fileText);
+		fileInfoMap.put("file_id", fileId);
+		fileInfoMap.put("file_suffix", fileSuffix);
+		return JsonUtil.toJson(fileInfoMap);
+	}
+
+	private static String getOcrText(String file_avro_path, String name, String uuid) {
+		return "getOcrText";
+	}
+
+	@Method(desc = "根据文件id检查文件是否已经存在",
+			logicStep = "1.根据文件id检查文件是否存在")
+	@Param(name = "fileId", desc = "文件id", range = "自动生成的id")
+	@Return(desc = "文件是否已经存在", range = "true: 存在, false: 不存在")
+	private static boolean checkFileIsExist(String fileId) {
+		if (StringUtil.isBlank(fileId)) {
+			throw new BusinessException("待检查文件id为空！fileId=" + fileId);
+		}
+		//1.根据文件id检查文件是否存在
+		return Dbo.queryNumber("SELECT COUNT(1) FROM " + Source_file_attribute.TableName + " WHERE file_id=?",
+				fileId).orElseThrow(() -> new BusinessException("检查文件是否存在的SQL编写错误")) == 1;
+	}
+
+	@Method(desc = "更新文件查看权限",
+			logicStep = "1.更新文件查看权限,如果查看的权限是一次" +
+					"2.查看后，删除这次申请")
+	@Param(name = "fileId", desc = "文件id", range = "自动生成的id")
+	public static void updateViewFilePermissions(String fileId) {
+		//1.更新文件查看权限,如果查看的权限是一次
+		Result dataAuthRs = Dbo.queryResult(
+				"select * from data_auth where file_id=? and apply_type = ? and auth_type = ?",
+				fileId, ApplyType.ChaKan.getCode(), AuthType.YiCi.getCode());
+		//2.查看后，删除这次申请
+		if (!dataAuthRs.isEmpty()) {
+			DboExecute.deletesOrThrow(1, "权限更新失败!",
+					"delete from data_auth where file_id=? and apply_type = ? and auth_type = ?",
+					fileId, ApplyType.ChaKan.getCode(), AuthType.YiCi.getCode());
+		}
+	}
+
+	@Method(desc = "获取文件所在Avro记录",
+			logicStep = "1.根据文件所在的block块id和文件Avro地址获取Avro记录")
+	@Param(name = "file_avro_block", desc = "文件block块id", range = "自动生成的id")
+	@Param(name = "file_avro_path", desc = "文件Avro地址", range = "自动生成的地址")
+	private static GenericRecord getAvroRecord(Long file_avro_block, String file_avro_path) {
+		DataFileReader<GenericRecord> fileReader = null;
+		Configuration conf = ConfigReader.getConfiguration();
+		Path path = new Path(file_avro_path);
+		try (SeekableInput in = new FsInput(path, conf)) {
+			DatumReader<GenericRecord> reader = new GenericDatumReader<>();
+			fileReader = new DataFileReader<>(in, reader);
+			GenericRecord record = new GenericData.Record(fileReader.getSchema());
+			//指定block号
+			fileReader.seek(file_avro_block);
+			if (fileReader.hasNext()) {
+				return fileReader.next(record);
+			} else {
+				throw new BusinessException("This block has no record in avro");
+			}
+		} catch (Exception e) {
+			throw new BusinessException("FsInput data failure!");
+		} finally {
+			try {
+				if (fileReader != null) {
+					fileReader.close();
+				}
+			} catch (IOException ioe) {
+				throw new BusinessException("DataFileReader close exception!");
+			}
+		}
+	}
+}

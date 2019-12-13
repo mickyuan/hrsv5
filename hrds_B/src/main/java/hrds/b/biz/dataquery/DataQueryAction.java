@@ -11,6 +11,7 @@ import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
 import fd.ng.web.util.ResponseUtil;
+import hrds.b.biz.dataquery.tools.FileOperations;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.*;
 import hrds.commons.entity.*;
@@ -116,7 +117,7 @@ public class DataQueryAction extends BaseAction {
 		}
 		try (OutputStream out = ResponseUtil.getResponse().getOutputStream()) {
 			//2.通过文件id获取文件的 byte
-			byte[] bye = getFileBytesFromAvro(fileId);
+			byte[] bye = FileOperations.getFileBytesFromAvro(fileId);
 			if (bye == null) {
 				throw new BusinessException("文件已不存在! fileName=" + fileName);
 			}
@@ -128,15 +129,6 @@ public class DataQueryAction extends BaseAction {
 		} catch (IOException e) {
 			throw new AppSystemException("文件下载失败! fileName=" + fileName);
 		}
-	}
-
-	/**
-	 * <p>方法名: getFileBytesFromAvro</p>
-	 * <p>方法说明: 在hdfs上获取文件信息； 占位方法，方法写完后删除</p>
-	 */
-	private byte[] getFileBytesFromAvro(String fileId) {
-		byte[] bye = fileId.getBytes();
-		return bye;
 	}
 
 	@Method(desc = "修改文件计数",
@@ -231,9 +223,8 @@ public class DataQueryAction extends BaseAction {
 		//数据可访问权限处理方式: 根据表的 user_id做权限校验
 		//1.根据登录用户的id获取用户文件采集统计的结果
 		List<Map<String, Object>> fcsList = Dbo.queryList("select count(1) sum_num,file_type" +
-						" from " + Source_file_attribute.TableName + " sfa join" +
-						" " + Agent_info.TableName + " ai on sfa.agent_id = ai.agent_id" +
-						" where sfa.collect_type = ? AND ai.user_id = ?" +
+						" from " + Source_file_attribute.TableName + " sfa join " + Agent_info.TableName + " ai" +
+						" on sfa.agent_id = ai.agent_id where sfa.collect_type = ? AND ai.user_id = ?" +
 						" GROUP BY file_type ORDER BY file_type",
 				CollectType.WenJianCaiJi.getCode(), getUserId()
 		);
@@ -401,8 +392,9 @@ public class DataQueryAction extends BaseAction {
 	@Param(name = "fileId", desc = "文件id", range = "String类型字符,长度最长40,该值唯一",
 			example = "12f48c4f-bebd-4f19-b38d-a161929fb350")
 	@Param(name = "applyType", desc = "申请类型", range = "1:查看,2:下载,3,发布,4:重命名")
-	public String applicationProcessing(String fileId, String applyType) {
-		String apply_state = "0";
+	@Return(desc = "申请是否成功", range = "boolean类型")
+	public boolean applicationProcessing(String fileId, String applyType) {
+		boolean applyState = true;
 		//1.根据文件id获取该文件信息
 		Optional<Source_file_attribute> fileRs = Dbo.queryOneObject(Source_file_attribute.class,
 				"SELECT * FROM source_file_attribute WHERE file_id=?", fileId);
@@ -422,10 +414,27 @@ public class DataQueryAction extends BaseAction {
 		dataAuth.setSource_id(fileRs.get().getSource_id());
 		dataAuth.setCollect_set_id(fileRs.get().getCollect_set_id());
 		if ((dataAuth.add(Dbo.db()) != 1)) {
-			apply_state = "1";
+			applyState = false;
 			throw new BusinessException("申请文件失败！fileId=" + fileId);
 		}
-		return apply_state;
+		return applyState;
+	}
+
+	@Method(desc = "查看文件",
+			logicStep = "1.根据文件id获取该文件信息" +
+					"2.如果文件查看权限是一次,看过之后取消权限")
+	@Param(name = "fileId", desc = "文件id", range = "String类型字符,长度最长40,该值唯一",
+			example = "12f48c4f-bebd-4f19-b38d-a161929fb350")
+	@Param(name = "fileType", desc = "文件类型", range = "1:查看,2:下载,3,发布,4:重命名")
+	@Return(desc = "文件信息集合", range = "无限制")
+	public Map<String, Object> viewFile(String fileId, String fileType) {
+		//1.根据文件id获取该文件信息
+		Map<String, Object> viewFileMap = new HashMap<>();
+		viewFileMap.put("viewFileMap", FileOperations.getFileInfoByFileId(fileId));
+		viewFileMap.put("fileType", fileType);
+		//2.如果文件查看权限是一次,看过之后取消权限
+		FileOperations.updateViewFilePermissions(fileId);
+		return viewFileMap;
 	}
 
 	@Method(desc = "自定义查询条件获取采集文件的信息",
@@ -562,7 +571,7 @@ public class DataQueryAction extends BaseAction {
 							authType.delete(authType.length() - 1, authType.length());
 							applyType.delete(applyType.length() - 1, applyType.length());
 							daResult.setObject(j, "auth_type", authType.toString());
-							daResult.setObject(j, "apply_type", authType.toString());
+							daResult.setObject(j, "apply_type", applyType.toString());
 							daResult.setObject(j, "file_id",
 									sfaRsAll.getString(i, "file_id"));
 							daResult.setObject(j, "collect_type",
