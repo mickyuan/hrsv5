@@ -208,6 +208,7 @@ public class DatabaseInfo extends AgentBaseAction {
 			"1、对不包含长度和精度的数据类型进行处理，返回数据类型" +
 			"2、对包含长度和精度的数据类型进行处理，返回数据类型(长度,精度)" +
 			"3、对只包含长度的数据类型进行处理，返回数据类型(长度)")
+	//TODO 该方法在两个地方用到过，讨论迁移到哪里作为一个公共的方法
 	private String getColTypeAndPreci(int columnType, String columnTypeName, int precision, int scale) {
 		/*
 		 * 1、考虑到有些类型在数据库中在获取数据类型的时候就会带有(),同时还能获取到数据的长度和精度，

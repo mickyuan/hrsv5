@@ -561,7 +561,7 @@ public class CollTbConfStepAction extends BaseAction {
 		* 对于没有修改过的字段，在保存时做的是update操作，所以要返回前端全部数据，前端进行修改后再传给后台全部数据，这样更新字段时才不会丢失数据
 		* */
 		for(int i = 0; i < tableInfos.getRowCount(); i++){
-			Result result = Dbo.queryResult("select * from "
+			Result result = Dbo.queryResult("select column_id, colume_name, colume_ch_name from "
 					+ Table_column.TableName + " where table_id = ?", tableInfos.getLong(i, "table_id"));
 			if(result.isEmpty()){
 				throw new BusinessException("获取表字段信息失败");
@@ -603,10 +603,11 @@ public class CollTbConfStepAction extends BaseAction {
 		if(StringUtil.isBlank(collColumn)){
 			//2-1、是，表示用户没有选择采集列，则应用管理端同Agent端交互,获取该表所有列进行采集
 			tableColumns = getColumnInfoByTableName(colSetId, getUserId(), tableInfo.getTable_name());
-			//同agent交互得到的数据，is_get字段默认都设置为是,如果没有取到
+			//同agent交互得到的数据，is_get字段默认都设置为是,is_primay_key默认设置为否
 			if(!tableColumns.isEmpty()){
 				for(Table_column tableColumn : tableColumns){
 					tableColumn.setIs_get(IsFlag.Shi.getCode());
+					tableColumn.setIs_primary_key(IsFlag.Fou.getCode());
 				}
 			}
 		}else{
@@ -625,12 +626,15 @@ public class CollTbConfStepAction extends BaseAction {
 				if(StringUtil.isBlank(tableColumn.getIs_get())){
 					throw new BusinessException("保存" + tableInfo.getTable_name() + "采集列时，是否采集标识位不能为空");
 				}
+				IsFlag.ofEnumByCode(tableColumn.getIs_get());
+				if(StringUtil.isBlank(tableColumn.getIs_primary_key())){
+					throw new BusinessException("保存" + tableInfo.getTable_name() + "采集列时，是否主键标识位不能为空");
+				}
+				IsFlag.ofEnumByCode(tableColumn.getIs_primary_key());
 				//设置主键
 				tableColumn.setColumn_id(PrimayKeyGener.getNextId());
 				//设置外键
 				tableColumn.setTable_id(tableInfo.getTable_id());
-				//TODO 默认所有采集列都不是主键，是由于目前原型页面没有定义主键列的区域，所以在这里设置一个默认值，后期这个字段的值应该由页面传过来
-				tableColumn.setIs_primary_key(IsFlag.Fou.getCode());
 				//设置有效开始时间和有效结束时间
 				tableColumn.setValid_s_date(DateUtil.getSysDate());
 				tableColumn.setValid_e_date(Constant.MAXDATE);
