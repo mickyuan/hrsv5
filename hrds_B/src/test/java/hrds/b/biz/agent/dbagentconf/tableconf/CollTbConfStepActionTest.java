@@ -1362,26 +1362,31 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 
 		List<Table_column> objColumn = new ArrayList<>();
 		for(int i = 0; i < 3; i++){
+			String primayKeyFlag;
 			String columnName;
 			String columnChName;
 			String columnType;
 			switch (i) {
 				case 0 :
+					primayKeyFlag = IsFlag.Shi.getCode();
 					columnName = "odc_id";
 					columnChName = "对象采集id";
 					columnType = "int8";
 					break;
 				case 1 :
+					primayKeyFlag = IsFlag.Fou.getCode();
 					columnName = "object_collect_type";
 					columnChName = "对象采集方式";
 					columnType = "bpchar(1)";
 					break;
 				case 2 :
+					primayKeyFlag = IsFlag.Fou.getCode();
 					columnName = "obj_number";
 					columnChName = "对象采集设置编号";
 					columnType = "varchar(200)";
 					break;
 				default:
+					primayKeyFlag = "unexpected_primayKeyFlag";
 					columnName = "unexpected_columnName";
 					columnChName = "unexpected_columnChName";
 					columnType = "unexpected_columnType";
@@ -1391,6 +1396,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			tableColumn.setColume_ch_name(columnChName);
 			tableColumn.setColumn_type(columnType);
 			tableColumn.setIs_get(IsFlag.Shi.getCode());
+			tableColumn.setIs_primary_key(primayKeyFlag);
 
 			objColumn.add(tableColumn);
 		}
@@ -1937,6 +1943,15 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 	 * 错误的数据访问5：构造tableInfoString参数是空字符串的情况
 	 * 错误的数据访问6：构造collTbConfParamString参数是空字符串的情况
 	 * 错误的数据访问7：构造tableInfoString和collTbConfParamString解析成的list集合大小不同的情况
+	 * 错误的数据访问8：构造设置了并行抽取，但没有设置并行抽取数的访问方式
+	 * 错误的数据访问9：构造设置了并行抽取，但没有设置每日数据增量的访问方式
+	 * 错误的数据访问10：构造设置了并行抽取，但没有设置数据总量的访问方式
+	 * 错误的数据访问11：新增采集表，选择采集字段，但是缺少字段名
+	 * 错误的数据访问12：新增采集表，选择采集字段，但是缺少字段类型
+	 * 错误的数据访问13：新增采集表，选择采集字段，但是缺少是否采集标识位
+	 * 错误的数据访问14：新增采集表，选择采集字段，但是缺少是否主键标识位
+	 * 错误的数据访问15：新增采集表，选择采集字段，但是是否主键标识位取值错误
+	 * 错误的数据访问16：新增采集表，选择采集字段，但是是否采集标识位取值错误
 	 * */
 	@Test
 	public void saveCollTbInfoSix(){
@@ -2099,6 +2114,254 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 				-> new BusinessException("连接失败!"));
 		assertThat(wrongResultSeven.isSuccess(), is(false));
 
+		tableInfos.clear();
+		tbConfParams.clear();
+
+		//错误的数据访问8：构造设置了并行抽取，但没有设置并行抽取数的访问方式
+		Table_info FTPInfoEight = new Table_info();
+		FTPInfoEight.setTable_name("ftp_collect");
+		FTPInfoEight.setTable_ch_name("ftp采集设置表");
+		FTPInfoEight.setDatabase_id(FIRST_DATABASESET_ID);
+		FTPInfoEight.setIs_parallel(IsFlag.Shi.getCode());
+		FTPInfoEight.setPage_sql("select * from ftp_collect limit 1");
+		FTPInfoEight.setTable_count("100000000");
+		FTPInfoEight.setDataincrement(10);
+
+		tableInfos.add(FTPInfoEight);
+
+		CollTbConfParam FTPParamEight = new CollTbConfParam();
+		FTPParamEight.setColumnSortString("");
+		FTPParamEight.setColumnSortString("");
+
+		tbConfParams.add(FTPParamEight);
+
+		String wrongStringEight = new HttpClient()
+				.addData("tableInfoString", JSON.toJSONString(tableInfos))
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.addData("collTbConfParamString", JSON.toJSONString(tbConfParams))
+				.post(getActionUrl("saveCollTbInfo")).getBodyString();
+		ActionResult wrongResultEight = JsonUtil.toObjectSafety(wrongStringEight, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultEight.isSuccess(), is(false));
+
+		tableInfos.clear();
+		tbConfParams.clear();
+
+		//错误的数据访问9：构造设置了并行抽取，但没有设置每日数据增量的访问方式
+		Table_info FTPInfoNine = new Table_info();
+		FTPInfoNine.setTable_name("ftp_collect");
+		FTPInfoNine.setTable_ch_name("ftp采集设置表");
+		FTPInfoNine.setDatabase_id(FIRST_DATABASESET_ID);
+		FTPInfoNine.setIs_parallel(IsFlag.Shi.getCode());
+		FTPInfoNine.setPage_sql("select * from ftp_collect limit 1");
+		FTPInfoNine.setTable_count("100000000");
+		FTPInfoNine.setPageparallels(6);
+
+		tableInfos.add(FTPInfoNine);
+
+		CollTbConfParam FTPParamNine = new CollTbConfParam();
+		FTPParamNine.setColumnSortString("");
+		FTPParamNine.setColumnSortString("");
+
+		tbConfParams.add(FTPParamNine);
+
+		String wrongStringNine = new HttpClient()
+				.addData("tableInfoString", JSON.toJSONString(tableInfos))
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.addData("collTbConfParamString", JSON.toJSONString(tbConfParams))
+				.post(getActionUrl("saveCollTbInfo")).getBodyString();
+		ActionResult wrongResultNine = JsonUtil.toObjectSafety(wrongStringNine, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultNine.isSuccess(), is(false));
+
+		tableInfos.clear();
+		tbConfParams.clear();
+
+		//错误的数据访问10：构造设置了并行抽取，但没有设置数据总量的访问方式
+		Table_info FTPInfoTen = new Table_info();
+		FTPInfoTen.setTable_name("ftp_collect");
+		FTPInfoTen.setTable_ch_name("ftp采集设置表");
+		FTPInfoTen.setDatabase_id(FIRST_DATABASESET_ID);
+		FTPInfoTen.setIs_parallel(IsFlag.Shi.getCode());
+		FTPInfoTen.setPage_sql("select * from ftp_collect limit 1");
+		FTPInfoTen.setTable_count("100000000");
+		FTPInfoTen.setPageparallels(6);
+
+		tableInfos.add(FTPInfoTen);
+
+		CollTbConfParam FTPParamTen = new CollTbConfParam();
+		FTPParamTen.setColumnSortString("");
+		FTPParamTen.setColumnSortString("");
+
+		tbConfParams.add(FTPParamTen);
+
+		String wrongStringTen = new HttpClient()
+				.addData("tableInfoString", JSON.toJSONString(tableInfos))
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.addData("collTbConfParamString", JSON.toJSONString(tbConfParams))
+				.post(getActionUrl("saveCollTbInfo")).getBodyString();
+		ActionResult wrongResultTen = JsonUtil.toObjectSafety(wrongStringTen, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultTen.isSuccess(), is(false));
+
+		tableInfos.clear();
+		tbConfParams.clear();
+
+		//错误的数据访问11：新增采集表，选择采集字段，但是缺少字段名
+		Table_info objInfo = new Table_info();
+		objInfo.setTable_name("object_collect");
+		objInfo.setTable_ch_name("半结构化文件采集设置表");
+		objInfo.setDatabase_id(FIRST_DATABASESET_ID);
+		objInfo.setIs_parallel(IsFlag.Fou.getCode());
+
+		tableInfos.add(objInfo);
+
+		List<Table_column> objColumn = new ArrayList<>();
+		for(int i = 0; i < 3; i++){
+			String primayKeyFlag;
+			String columnName;
+			String columnChName;
+			String columnType;
+			switch (i) {
+				case 0 :
+					primayKeyFlag = IsFlag.Shi.getCode();
+					columnName = "odc_id";
+					columnChName = "对象采集id";
+					columnType = "int8";
+					break;
+				case 1 :
+					primayKeyFlag = IsFlag.Fou.getCode();
+					columnName = "object_collect_type";
+					columnChName = "对象采集方式";
+					columnType = "bpchar(1)";
+					break;
+				case 2 :
+					primayKeyFlag = IsFlag.Fou.getCode();
+					columnName = "obj_number";
+					columnChName = "对象采集设置编号";
+					columnType = "varchar(200)";
+					break;
+				default:
+					primayKeyFlag = "unexpected_primayKeyFlag";
+					columnName = "unexpected_columnName";
+					columnChName = "unexpected_columnChName";
+					columnType = "unexpected_columnType";
+			}
+			Table_column tableColumn = new Table_column();
+			tableColumn.setColume_name(columnName);
+			tableColumn.setColume_ch_name(columnChName);
+			tableColumn.setColumn_type(columnType);
+			tableColumn.setIs_get(IsFlag.Shi.getCode());
+			tableColumn.setIs_primary_key(primayKeyFlag);
+
+			objColumn.add(tableColumn);
+		}
+
+		JSONArray objSort = new JSONArray();
+		for(int i = 0; i < 3; i++){
+			String columnName;
+			int sort;
+			switch (i) {
+				case 0 :
+					columnName = "odc_id";
+					sort = 1;
+					break;
+				case 1 :
+					columnName = "object_collect_type";
+					sort = 2;
+					break;
+				case 2 :
+					columnName = "obj_number";
+					sort = 3;
+					break;
+				default:
+					columnName = "unexpected_columnName";
+					sort = (int)UNEXPECTED_ID;
+			}
+			JSONObject object = new JSONObject();
+			object.put("columnName", columnName);
+			object.put("sort", sort);
+			objSort.add(object);
+		}
+
+		CollTbConfParam objParam = new CollTbConfParam();
+		//缺少采集字段名
+		objColumn.get(0).setColume_name("");
+		objParam.setCollColumnString(JSON.toJSONString(objColumn));
+		objParam.setColumnSortString(objSort.toJSONString());
+
+		tbConfParams.add(objParam);
+
+		String wrongStringEle = new HttpClient()
+				.addData("tableInfoString", JSON.toJSONString(tableInfos))
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.addData("collTbConfParamString", JSON.toJSONString(tbConfParams))
+				.post(getActionUrl("saveCollTbInfo")).getBodyString();
+		ActionResult wrongResultEle = JsonUtil.toObjectSafety(wrongStringEle, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultEle.isSuccess(), is(false));
+
+		//错误的数据访问12：新增采集表，选择采集字段，但是缺少字段类型
+		objColumn.get(0).setColume_name("odc_id");
+		objColumn.get(0).setColumn_type("");
+
+		String wrongStringTwe = new HttpClient()
+				.addData("tableInfoString", JSON.toJSONString(tableInfos))
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.addData("collTbConfParamString", JSON.toJSONString(tbConfParams))
+				.post(getActionUrl("saveCollTbInfo")).getBodyString();
+		ActionResult wrongResultTwe = JsonUtil.toObjectSafety(wrongStringTwe, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultTwe.isSuccess(), is(false));
+
+		//错误的数据访问13：新增采集表，选择采集字段，但是缺少是否采集标识位
+		objColumn.get(0).setColumn_type("int8");
+		objColumn.get(0).setIs_get("");
+
+		String wrongStringThi = new HttpClient()
+				.addData("tableInfoString", JSON.toJSONString(tableInfos))
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.addData("collTbConfParamString", JSON.toJSONString(tbConfParams))
+				.post(getActionUrl("saveCollTbInfo")).getBodyString();
+		ActionResult wrongResultThi = JsonUtil.toObjectSafety(wrongStringThi, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultThi.isSuccess(), is(false));
+
+		//错误的数据访问14：新增采集表，选择采集字段，但是缺少是否主键标识位
+		objColumn.get(0).setIs_get(IsFlag.Shi.getCode());
+		objColumn.get(0).setIs_primary_key("");
+
+		String wrongStringFou = new HttpClient()
+				.addData("tableInfoString", JSON.toJSONString(tableInfos))
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.addData("collTbConfParamString", JSON.toJSONString(tbConfParams))
+				.post(getActionUrl("saveCollTbInfo")).getBodyString();
+		ActionResult wrongResultFou = JsonUtil.toObjectSafety(wrongStringFou, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultFou.isSuccess(), is(false));
+
+		//错误的数据访问15：新增采集表，选择采集字段，但是是否主键标识位取值错误
+		objColumn.get(0).setIs_primary_key("3");
+		String wrongStringFif = new HttpClient()
+				.addData("tableInfoString", JSON.toJSONString(tableInfos))
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.addData("collTbConfParamString", JSON.toJSONString(tbConfParams))
+				.post(getActionUrl("saveCollTbInfo")).getBodyString();
+		ActionResult wrongResultFif = JsonUtil.toObjectSafety(wrongStringFif, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultFif.isSuccess(), is(false));
+
+		//错误的数据访问16：新增采集表，选择采集字段，但是是否采集标识位取值错误
+		objColumn.get(0).setIs_primary_key(IsFlag.Shi.getCode());
+		objColumn.get(0).setIs_get("3");
+		String wrongStringSixt = new HttpClient()
+				.addData("tableInfoString", JSON.toJSONString(tableInfos))
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.addData("collTbConfParamString", JSON.toJSONString(tbConfParams))
+				.post(getActionUrl("saveCollTbInfo")).getBodyString();
+		ActionResult wrongResultSixt = JsonUtil.toObjectSafety(wrongStringSixt, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongResultSixt.isSuccess(), is(false));
 	}
 
 	/*
@@ -2172,44 +2435,24 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 				for(int i = 0; i < result.getRowCount(); i++){
 					if(result.getString(i, "colume_name").equalsIgnoreCase("user_id")){
 						assertThat("<user_id>列中文名为<主键>", result.getString(i, "colume_ch_name"), is("主键"));
-						assertThat("<user_id>列类型为<int8>", result.getString(i, "column_type"), is("int8"));
-						assertThat("<user_id>是否采集为<是>", result.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
 					}else if(result.getString(i, "colume_name").equalsIgnoreCase("create_id")){
 						assertThat("<create_id>列中文名为<创建用户者ID>", result.getString(i, "colume_ch_name"), is("创建用户者ID"));
-						assertThat("<create_id>列类型为<int8>", result.getString(i, "column_type"), is("int8"));
-						assertThat("<create_id>是否采集为<是>", result.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
 					}else if(result.getString(i, "colume_name").equalsIgnoreCase("dep_id")){
 						assertThat("<dep_id>列中文名为<部门ID>", result.getString(i, "colume_ch_name"), is("部门ID"));
-						assertThat("<dep_id>列类型为<int8>", result.getString(i, "column_type"), is("int8"));
-						assertThat("<dep_id>是否采集为<是>", result.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
 					}else if(result.getString(i, "colume_name").equalsIgnoreCase("role_id")){
 						assertThat("<role_id>列中文名为<角色ID>", result.getString(i, "colume_ch_name"), is("角色ID"));
-						assertThat("<role_id>列类型为<int8>", result.getString(i, "column_type"), is("int8"));
-						assertThat("<role_id>是否采集为<是>", result.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
 					}else if(result.getString(i, "colume_name").equalsIgnoreCase("user_name")){
 						assertThat("<user_name>列中文名为<用户名>", result.getString(i, "colume_ch_name"), is("用户名"));
-						assertThat("<user_name>列类型为<varchar>", result.getString(i, "column_type"), is("varchar"));
-						assertThat("<user_name>是否采集为<是>", result.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
 					}else if(result.getString(i, "colume_name").equalsIgnoreCase("user_password")){
 						assertThat("<user_password>列中文名为<密码>", result.getString(i, "colume_ch_name"), is("密码"));
-						assertThat("<user_password>列类型为<varchar>", result.getString(i, "column_type"), is("varchar"));
-						assertThat("<user_password>是否采集为<是>", result.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
 					}else if(result.getString(i, "colume_name").equalsIgnoreCase("user_email")){
 						assertThat("<user_email>列中文名为<邮箱>", result.getString(i, "colume_ch_name"), is("邮箱"));
-						assertThat("<user_email>列类型为<varchar>", result.getString(i, "column_type"), is("varchar"));
-						assertThat("<user_email>是否采集为<是>", result.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
 					}else if(result.getString(i, "colume_name").equalsIgnoreCase("user_mobile")){
 						assertThat("<user_mobile>列中文名为<电话>", result.getString(i, "colume_ch_name"), is("电话"));
-						assertThat("<user_mobile>列类型为<varchar>", result.getString(i, "column_type"), is("varchar"));
-						assertThat("<user_mobile>是否采集为<是>", result.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
 					}else if(result.getString(i, "colume_name").equalsIgnoreCase("useris_admin")){
 						assertThat("<useris_admin>列中文名为<是否管理员>", result.getString(i, "colume_ch_name"), is("是否管理员"));
-						assertThat("<useris_admin>列类型为<char>", result.getString(i, "column_type"), is("char"));
-						assertThat("<useris_admin>是否采集为<是>", result.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
 					}else if(result.getString(i, "colume_name").equalsIgnoreCase("user_type")){
 						assertThat("<user_type>列中文名为<用户类型>", result.getString(i, "colume_ch_name"), is("用户类型"));
-						assertThat("<user_type>列类型为<char>", result.getString(i, "column_type"), is("char"));
-						assertThat("<user_type>是否采集为<是>", result.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
 					}else{
 						assertThat("sys_user获取到了不符合期望的采集列,column_name为：" + result.getString(i, "colume_name"), true, is(false));
 					}
@@ -2221,24 +2464,14 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 				for(int i = 0; i < result.getRowCount(); i++){
 					if(result.getString(i, "colume_name").equalsIgnoreCase("ci_sp_code")){
 						assertThat("<ci_sp_code>列中文名为<ci_sp_code>", result.getString(i, "colume_ch_name"), is("ci_sp_code"));
-						assertThat("<ci_sp_code>列类型为<varchar>", result.getString(i, "column_type"), is("varchar"));
-						assertThat("<ci_sp_code>是否采集为<是>", result.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
 					}else if(result.getString(i, "colume_name").equalsIgnoreCase("ci_sp_class")){
 						assertThat("<ci_sp_class>列中文名为<ci_sp_class>", result.getString(i, "colume_ch_name"), is("ci_sp_class"));
-						assertThat("<ci_sp_class>列类型为<varchar>", result.getString(i, "column_type"), is("varchar"));
-						assertThat("<ci_sp_class>是否采集为<是>", result.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
 					}else if(result.getString(i, "colume_name").equalsIgnoreCase("ci_sp_classname")){
 						assertThat("<ci_sp_classname>列中文名为<ci_sp_classname>", result.getString(i, "colume_ch_name"), is("ci_sp_classname"));
-						assertThat("<ci_sp_classname>列类型为<varchar>", result.getString(i, "column_type"), is("varchar"));
-						assertThat("<ci_sp_classname>是否采集为<是>", result.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
 					}else if(result.getString(i, "colume_name").equalsIgnoreCase("ci_sp_name")){
 						assertThat("<ci_sp_name>列中文名为<ci_sp_name>", result.getString(i, "colume_ch_name"), is("ci_sp_name"));
-						assertThat("<ci_sp_name>列类型为<varchar>", result.getString(i, "column_type"), is("varchar"));
-						assertThat("<ci_sp_name>是否采集为<是>", result.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
 					}else if(result.getString(i, "colume_name").equalsIgnoreCase("ci_sp_remark")){
 						assertThat("<ci_sp_remark>列中文名为<ci_sp_remark>", result.getString(i, "colume_ch_name"), is("ci_sp_remark"));
-						assertThat("<ci_sp_remark>列类型为<varchar>", result.getString(i, "column_type"), is("varchar"));
-						assertThat("<ci_sp_remark>是否采集为<是>", result.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
 					}else{
 						assertThat("code_info获取到了不符合期望的采集列,列名为：" + result.getString(i, "colume_name"), true, is(false));
 					}
