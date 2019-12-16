@@ -69,13 +69,14 @@ public class JobLevelInterventionAction extends BaseAction {
         }
         // 4.判断任务名称是否为空，不为空加条件查询
         if (StringUtil.isNotBlank(sub_sys_desc)) {
-            asmSql.addLikeParam("t2.sub_sys_desc", sub_sys_desc);
+            asmSql.addLikeParam("t2.sub_sys_desc", "%" + sub_sys_desc + "%");
         }
         // 5.判断作业调度状态是否为空，不为空加条件查询
         if (StringUtil.isNotBlank(job_status)) {
-            asmSql.addSql(" AND t1.job_disp_status = ?");
+            asmSql.addSql(" AND t1.job_disp_status=?");
             asmSql.addParam(job_status);
         }
+        asmSql.addSql(" order by etl_job");
         // 6.分页查询作业级干预作业情况
         Page page = new DefaultPageImpl(currPage, pageSize);
         List<Map<String, Object>> etlJobInfoList = Dbo.queryPagedList(page, asmSql.sql(), asmSql.params());
@@ -166,9 +167,9 @@ public class JobLevelInterventionAction extends BaseAction {
     @Param(name = "etl_job", desc = "作业名称", range = "新增作业时生成")
     @Param(name = "etl_hand_type", desc = "干预类型", range = "使用（Meddle_type）代码项")
     @Param(name = "curr_bath_date", desc = "当前批量日期", range = "yyyy-MM-dd格式")
-    @Param(name = "job_priority", desc = "作业优先级", range = "取值范围",nullable = true)
+    @Param(name = "job_priority", desc = "作业优先级", range = "取值范围", nullable = true)
     public void jobLevelInterventionOperate(String etl_sys_cd, String etl_job, String etl_hand_type,
-                                            String curr_bath_date, int job_priority) {
+                                            String curr_bath_date, Integer job_priority) {
         // 1.数据可访问权限处理方式，通过user_id进行权限控制
         // 2.判断工程是否存在
         if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
@@ -200,7 +201,7 @@ public class JobLevelInterventionAction extends BaseAction {
             if (count > 0) {
                 // 数据回滚
                 Dbo.rollbackTransaction();
-                throw new BusinessException("作业状态为完成或错误或停止的不可以停止！");
+                throw new BusinessException("作业状态为完成或错误或停止的不可以停止，etl_job=" + etl_job);
             } else {
                 // 正常干预
                 etl_job_hand.add(Dbo.db());
@@ -214,7 +215,7 @@ public class JobLevelInterventionAction extends BaseAction {
             if (count > 0) {
                 // 数据回滚
                 Dbo.rollbackTransaction();
-                throw new BusinessException("作业状态为运行或完成的不可以跳过！");
+                throw new BusinessException("作业状态为运行或完成的不可以跳过，etl_job=" + etl_job);
             } else {
                 // 正常干预
                 etl_job_hand.add(Dbo.db());
@@ -229,7 +230,7 @@ public class JobLevelInterventionAction extends BaseAction {
             if (count > 0) {
                 // 数据回滚
                 Dbo.rollbackTransaction();
-                throw new BusinessException("作业状态为挂起或运行或等待的不可以重跑！");
+                throw new BusinessException("作业状态为挂起或运行或等待的不可以重跑，etl_job=" + etl_job);
             } else {
                 // 正常干预
                 etl_job_hand.add(Dbo.db());
@@ -244,7 +245,7 @@ public class JobLevelInterventionAction extends BaseAction {
             if (count > 0) {
                 // 数据回滚
                 Dbo.rollbackTransaction();
-                throw new BusinessException("作业状态为完成、错误、运行、停止不可以强制执行！");
+                throw new BusinessException("作业状态为完成、错误、运行、停止不可以强制执行，etl_job=" + etl_job);
             } else {
                 // 正常干预
                 etl_job_hand.add(Dbo.db());
@@ -258,7 +259,7 @@ public class JobLevelInterventionAction extends BaseAction {
             if (count > 0) {
                 // 数据回滚
                 Dbo.rollbackTransaction();
-                throw new BusinessException("作业状态为运行不可以临时调整优先级！");
+                throw new BusinessException("作业状态为运行不可以临时调整优先级，etl_job=" + etl_job);
             } else {
                 // 如果作业优先级不为空则设置作业程序参数
                 if (StringUtil.isNotBlank(String.valueOf(job_priority))) {
@@ -283,9 +284,9 @@ public class JobLevelInterventionAction extends BaseAction {
             range = "格式[{etl_job:job1,curr_bath_date:2019-12-12}," +
                     "{etl_job:job2,curr_bath_date:2019-12-11}]")
     @Param(name = "etl_hand_type", desc = "干预类型", range = "使用（Meddle_type）代码项")
-    @Param(name = "job_priority", desc = "作业优先级", range = "无限制",nullable = true)
+    @Param(name = "job_priority", desc = "作业优先级", range = "无限制", nullable = true)
     public void batchJobLevelInterventionOperate(String etl_sys_cd, String batchEtlJob, String etl_hand_type,
-                                                 int job_priority) {
+                                                 Integer job_priority) {
         // 1.数据可访问权限处理方式，通过user_id进行权限控制
         // 2.判断工程是否存在
         if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
