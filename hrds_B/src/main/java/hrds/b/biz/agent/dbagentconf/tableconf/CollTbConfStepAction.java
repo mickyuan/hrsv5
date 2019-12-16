@@ -456,7 +456,7 @@ public class CollTbConfStepAction extends BaseAction {
 						throw new BusinessException("保存采集表配置，第"+ (i + 1) +"条每日数据增量不能为空!");
 					}
 					if(StringUtil.isBlank(tableInfo.getTable_count())){
-						throw new BusinessException("保存采集表配置，第"+ (i + 1) +"条每日数据增量不能为空!");
+						throw new BusinessException("保存采集表配置，第"+ (i + 1) +"条数据总量不能为空!");
 					}
 				}
 				//3、给Table_info对象设置基本信息(valid_s_date,valid_e_date,is_user_defined,is_register)
