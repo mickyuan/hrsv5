@@ -686,11 +686,9 @@ public class CollTbConfStepAction extends BaseAction {
 		}
 		//3、否则，遍历集合，获取每一个Table_column对象，设置新的table_id，并更新到数据库中
 		for(Table_column tableColumn : tableColumns){
-			tableColumn.setTable_id(tableInfo.getTable_id());
-			int count = tableColumn.update(Dbo.db());
-			if(count != 1){
-				throw new BusinessException("更新" + tableInfo.getTable_name() + "表的" + tableColumn.getColume_name() + "字段失败");
-			}
+			DboExecute.updatesOrThrow("更新" + tableInfo.getTable_name() + "表的字段信息失败",
+					"update " + Table_column.TableName + " set colume_ch_name = ?, table_id = ? where column_id = ?",
+					tableColumn.getColume_ch_name(), tableInfo.getTable_id(), tableColumn.getColumn_id());
 		}
 	}
 

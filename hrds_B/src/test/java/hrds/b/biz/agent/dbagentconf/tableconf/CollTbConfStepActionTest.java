@@ -4,7 +4,6 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.DocClass;
-import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
@@ -16,7 +15,6 @@ import hrds.b.biz.agent.dbagentconf.BaseInitData;
 import hrds.commons.codes.*;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
-import hrds.commons.utils.Constant;
 import hrds.testbase.WebBaseTestCase;
 import org.junit.After;
 import org.junit.Before;
@@ -1240,6 +1238,9 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		FTPInfo.setDatabase_id(FIRST_DATABASESET_ID);
 		FTPInfo.setIs_parallel(IsFlag.Shi.getCode());
 		FTPInfo.setPage_sql("select * from ftp_collect limit 10;");
+		FTPInfo.setPageparallels(6);
+		FTPInfo.setDataincrement(100000);
+		FTPInfo.setTable_count("1000000000");
 
 		tableInfos.add(FTPInfo);
 
@@ -1497,60 +1498,35 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		List<Table_column> codeColumn = new ArrayList<>();
 		for(int i = 0; i < 5; i++){
 			long columnId;
-			String columnName;
 			String columnChName;
-			String columnType;
 			switch (i) {
 				case 0 :
 					columnId = 3001L;
-					columnName = "ci_sp_code";
-					columnType = "varchar(20)";
 					columnChName = "ci_sp_code_ch";
 					break;
 				case 1 :
 					columnId = 3002L;
-					columnName = "ci_sp_class";
-					columnType = "varchar(20)";
 					columnChName = "ci_sp_class_ch";
 					break;
 				case 2 :
 					columnId = 3003L;
-					columnName = "ci_sp_classname";
-					columnType = "varchar(80)";
 					columnChName = "ci_sp_classname_ch";
 					break;
 				case 3 :
 					columnId = 3004L;
-					columnName = "ci_sp_name";
-					columnType = "varchar(255)";
 					columnChName = "ci_sp_name_ch";
 					break;
 				case 4 :
 					columnId = 3005L;
-					columnName = "ci_sp_remark";
-					columnType = "varchar(512)";
 					columnChName = "ci_sp_remark_ch";
 					break;
 				default:
 					columnId = UNEXPECTED_ID;
-					columnName = "unexpected_columnName";
 					columnChName = "unexpected_columnChName";
-					columnType = "unexpected_columnType";
 			}
 			Table_column tableColumn = new Table_column();
 			tableColumn.setColumn_id(columnId);
-			tableColumn.setTable_id(CODE_INFO_TABLE_ID);
-			tableColumn.setColume_name(columnName);
 			tableColumn.setColume_ch_name(columnChName);
-			tableColumn.setColumn_type(columnType);
-			tableColumn.setIs_get(IsFlag.Shi.getCode());
-			tableColumn.setIs_primary_key(IsFlag.Fou.getCode());
-			tableColumn.setTable_id(CODE_INFO_TABLE_ID);
-			tableColumn.setValid_s_date(DateUtil.getSysDate());
-			tableColumn.setValid_e_date(Constant.MAXDATE);
-			tableColumn.setIs_alive(IsFlag.Shi.getCode());
-			tableColumn.setIs_new(IsFlag.Fou.getCode());
-			tableColumn.setTc_or(columnCleanOrder.toJSONString());
 
 			codeColumn.add(tableColumn);
 		}
@@ -1624,23 +1600,23 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			assertThat("code_info表的采集列在table_column表中有数据，数据有5条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在table_column表中已经查不到数据了", tableColumn.getRowCount(), is(5));
 			for(int i = 0; i < tableColumn.getRowCount(); i++){
 				if(tableColumn.getString(i, "colume_name").equalsIgnoreCase("ci_sp_code")){
-					assertThat("采集列名为<ci_sp_code>,该列的数据类型为<varchar(20)>", tableColumn.getString(i, "column_type"), is("varchar(20)"));
+					assertThat("采集列名为<ci_sp_code>,该列的数据类型为<varchar>", tableColumn.getString(i, "column_type"), is("varchar"));
 					assertThat("采集列名为<ci_sp_code>,该列的ID为<3001>", tableColumn.getLong(i, "column_id"), is(3001L));
 					assertThat("采集列名为<ci_sp_code>,该列的中文名为<ci_sp_code_ch>", tableColumn.getString(i, "colume_ch_name"), is("ci_sp_code_ch"));
 				}else if(tableColumn.getString(i, "colume_name").equalsIgnoreCase("ci_sp_class")){
-					assertThat("采集列名为<ci_sp_class>,该列的数据类型为<varchar(20)>", tableColumn.getString(i, "column_type"), is("varchar(20)"));
+					assertThat("采集列名为<ci_sp_class>,该列的数据类型为<varchar>", tableColumn.getString(i, "column_type"), is("varchar"));
 					assertThat("采集列名为<ci_sp_class>,该列的ID为<3002>", tableColumn.getLong(i, "column_id"), is(3002L));
 					assertThat("采集列名为<ci_sp_class>,该列的中文名为<ci_sp_class_ch>", tableColumn.getString(i, "colume_ch_name"), is("ci_sp_class_ch"));
 				}else if(tableColumn.getString(i, "colume_name").equalsIgnoreCase("ci_sp_classname")){
-					assertThat("采集列名为<ci_sp_classname>,该列的数据类型为<varchar(80)>", tableColumn.getString(i, "column_type"), is("varchar(80)"));
+					assertThat("采集列名为<ci_sp_classname>,该列的数据类型为<varchar>", tableColumn.getString(i, "column_type"), is("varchar"));
 					assertThat("采集列名为<ci_sp_classname>,该列的ID为<3003>", tableColumn.getLong(i, "column_id"), is(3003L));
 					assertThat("采集列名为<ci_sp_classname>,该列的中文名为<ci_sp_classname_ch>", tableColumn.getString(i, "colume_ch_name"), is("ci_sp_classname_ch"));
 				}else if(tableColumn.getString(i, "colume_name").equalsIgnoreCase("ci_sp_name")){
-					assertThat("采集列名为<ci_sp_name>,该列的数据类型为<varchar(255)>", tableColumn.getString(i, "column_type"), is("varchar(255)"));
+					assertThat("采集列名为<ci_sp_name>,该列的数据类型为<varchar>", tableColumn.getString(i, "column_type"), is("varchar"));
 					assertThat("采集列名为<ci_sp_name>,该列的ID为<3004>", tableColumn.getLong(i, "column_id"), is(3004L));
 					assertThat("采集列名为<ci_sp_name>,该列的中文名为<ci_sp_name_ch>", tableColumn.getString(i, "colume_ch_name"), is("ci_sp_name_ch"));
 				}else if(tableColumn.getString(i, "colume_name").equalsIgnoreCase("ci_sp_remark")){
-					assertThat("采集列名为<ci_sp_remark>,该列的数据类型为<varchar(512)>", tableColumn.getString(i, "column_type"), is("varchar(512)"));
+					assertThat("采集列名为<ci_sp_remark>,该列的数据类型为<varchar>", tableColumn.getString(i, "column_type"), is("varchar"));
 					assertThat("采集列名为<ci_sp_remark>,该列的ID为<3005>", tableColumn.getLong(i, "column_id"), is(3005L));
 					assertThat("采集列名为<ci_sp_remark>,该列的中文名为<ci_sp_remark_ch>", tableColumn.getString(i, "colume_ch_name"), is("ci_sp_remark_ch"));
 				}else {
