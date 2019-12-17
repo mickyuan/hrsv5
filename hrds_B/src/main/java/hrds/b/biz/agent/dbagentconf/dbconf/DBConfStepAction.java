@@ -288,13 +288,19 @@ public class DBConfStepAction extends BaseAction{
 		}
 		else {
 			//4、如果不存在，则新增信息
-			//任务级别的清洗规则，在这里新增时定义一个默认顺序，后面的页面可能改动这个顺序,
-			// 后面在取这个清洗顺序的时候，用枚举==的方式
+			//校验作业编号是否唯一
+			long val = Dbo.queryNumber("select count(1) from " + Database_set.TableName +
+					" where database_number = ?", databaseSet.getDatabase_number()).orElseThrow(
+					() -> new BusinessException("SQL查询错误"));
+			if(val != 0){
+				throw new BusinessException("作业编号重复，请重新定义作业编号");
+			}
 
 			String id = PrimayKeyGener.getNextId();
 			databaseSet.setDatabase_id(id);
 			databaseSet.setDb_agent(IsFlag.Fou.getCode());
 			databaseSet.setIs_sendok(IsFlag.Fou.getCode());
+			//任务级别的清洗规则，在这里新增时定义一个默认顺序，后面的页面可能改动这个顺序,
 			databaseSet.setCp_or(CLEANOBJ.toJSONString());
 
 			databaseSet.add(Dbo.db());

@@ -655,6 +655,7 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 	 * 错误的数据访问9：新增数据时，缺少数据库密码
 	 * 错误的数据访问10：新增数据时，缺少JDBCURL
 	 * 错误的数据访问10：新增数据时，缺少agent_id
+	 * 错误的数据访问11：新增数据时，作业编号重复
 	 *
 	 * @Param: 无
 	 * @return: 无
@@ -940,7 +941,27 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 		ActionResult wrongRuseltEight = JsonUtil.toObjectSafety(wrongStringEight, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(wrongRuseltEight.isSuccess(), is(false));
+
+		//12、错误的数据访问11：新增数据时，作业编号重复
+		String wrongStringNine = new HttpClient()
+				.addData("agent_id", FIRST_DB_AGENT_ID)
+				.addData("task_name", "wzc_test_saveDbConf_task_name")
+				.addData("database_name", "wzc_test_saveDbConf_database_name")
+				.addData("database_number", "dbtest1")
+				.addData("database_pad", "wzc_test_saveDbConf_database_pad")
+				.addData("database_drive", "org.postgresql.Driver")
+				.addData("database_type", DatabaseType.ApacheDerby.getCode())
+				.addData("user_name", "wzc_test_saveDbConf_user_name")
+				.addData("database_ip", "127.0.0.1")
+				.addData("database_port", "31001")
+				.addData("classify_id", FIRST_CLASSIFY_ID)
+				.addData("jdbc_url", jdbcURL)
+				.post(getActionUrl("saveDbConf")).getBodyString();
+		ActionResult wrongRuseltNine = JsonUtil.toObjectSafety(wrongStringNine, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongRuseltNine.isSuccess(), is(false));
 	}
+
 
 	/**
 	 * 测试测试连接功能

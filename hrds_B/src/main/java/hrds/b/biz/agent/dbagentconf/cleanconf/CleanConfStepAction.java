@@ -1,7 +1,9 @@
 package hrds.b.biz.agent.dbagentconf.cleanconf;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.parser.Feature;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
@@ -1165,9 +1167,10 @@ public class CleanConfStepAction extends BaseAction{
 	private List<Map<String, Object>> cleanOrderFormat(String order){
 		//1、创建用于返回的List集合
 		List<Map<String, Object>> returnList = new ArrayList<>();
-		//2、将json字符串转为json对象
+		//2、将json字符串转为json对象，并保持顺序不变
+		LinkedHashMap<String, Object> json = (LinkedHashMap<String, Object>) JSON.parseObject(order,LinkedHashMap.class, Feature.OrderedField);
 		JSONObject sort = new JSONObject(true);
-		sort = JSONObject.parseObject(order);
+		sort.putAll(json);
 		Set<String> keys = sort.keySet();
 		//3、遍历json对象的key，获取清洗顺序
 		for(String key : keys){
