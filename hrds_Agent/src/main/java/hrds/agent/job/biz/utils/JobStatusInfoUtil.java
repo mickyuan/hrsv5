@@ -7,6 +7,7 @@ import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
 import hrds.agent.job.biz.bean.JobStatusInfo;
+import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.core.FtpCollectJobImpl;
 import hrds.commons.exception.AppSystemException;
 import org.apache.commons.logging.Log;
@@ -49,6 +50,7 @@ public class JobStatusInfoUtil {
 			//2.设置作业ID、开始日期和开始时间
 			jobStatus = new JobStatusInfo();
 			jobStatus.setJobId(job_id);
+			jobStatus.setRunStatus(RunStatusConstant.RUNNING.getCode());
 			jobStatus.setStartDate(DateUtil.getSysDate());
 			jobStatus.setStartTime(DateUtil.getSysTime());
 		}
