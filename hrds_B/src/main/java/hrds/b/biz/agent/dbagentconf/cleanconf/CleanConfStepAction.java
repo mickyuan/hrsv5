@@ -905,7 +905,7 @@ public class CleanConfStepAction extends BaseAction{
 			"3、如果找到了，根据colSetId,在database_set表中找到对应的记录，将sort更新进去")
 	@Param(name = "colSetId", desc = "数据库采集设置ID", range = "不为空")
 	@Param(name = "sort", desc = "所有表清洗优先级，JSON格式", range = "不为空，" +
-			"如：{\"complement\":1,\"replacement\":2,\"formatting\":3,\"conversion\":4,\"merge\":5,\"split\":6,\"trim\":7}" +
+			"如：{\"1\":1,\"2\":2,\"3\":3,\"4\":4,\"5\":5,\"6\":6,\"7\":7}" +
 			"注意：json的key请务必按照示例中给出的写")
 	public void saveAllTbCleanOrder(long colSetId, String sort){
 		//1、使用colSetId在database_set表中查找，看是否能找到对应的记录
@@ -948,7 +948,7 @@ public class CleanConfStepAction extends BaseAction{
 			"1、根据table_id,在table_info表中找到对应的表，将sort更新进去")
 	@Param(name = "tableId", desc = "数据库对应表主键", range = "不为空")
 	@Param(name = "sort", desc = "所有表清洗优先级，JSON格式", range = "不为空，" +
-			"如：{\"complement\":1,\"replacement\":2,\"formatting\":3,\"conversion\":4,\"merge\":5,\"split\":6,\"trim\":7}" +
+			"如：{\"1\":1,\"2\":2,\"3\":3,\"4\":4,\"5\":5,\"6\":6,\"7\":7}" +
 			"注意：json的key请务必按照示例中给出的写")
 	public void saveSingleTbCleanOrder(long tableId, String sort){
 		//1、根据table_id,在table_info表中找到对应的表，将sort更新进去
@@ -985,7 +985,7 @@ public class CleanConfStepAction extends BaseAction{
 			"1、根据columnId,在table_column表中找到对应的字段，将清洗顺序设置进去")
 	@Param(name = "columnId", desc = "表对应字段表主键", range = "不为空")
 	@Param(name = "sort", desc = "字段清洗优先级，JSON格式", range = "不为空，" +
-			"如：{\"complement\":1,\"replacement\":2,\"formatting\":3,\"conversion\":4,\"merge\":5,\"split\":6,\"trim\":7}" +
+			"如：{\"1\":1,\"2\":2,\"3\":3,\"4\":4,\"5\":5,\"6\":6,\"7\":7}" +
 			"注意：json的key请务必按照示例中给出的来命名")
 	public void saveColCleanOrder(long columnId, String sort){
 		//1、根据columnId,在table_column表中找到对应的字段，将清洗顺序设置进去
