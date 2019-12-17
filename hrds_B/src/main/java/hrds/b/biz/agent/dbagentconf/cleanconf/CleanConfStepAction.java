@@ -1,6 +1,7 @@
 package hrds.b.biz.agent.dbagentconf.cleanconf;
 
 import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
@@ -22,8 +23,7 @@ import hrds.commons.utils.Constant;
 import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.key.PrimayKeyGener;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @DocClass(desc = "配置清洗规则", author = "WangZhengcheng")
 public class CleanConfStepAction extends BaseAction{
@@ -926,10 +926,11 @@ public class CleanConfStepAction extends BaseAction{
 	@Method(desc = "根据数据库设置ID回显全表清洗优先级", logicStep = "" +
 			"1、使用colSetId在database_set表中查找，看是否能找到对应的记录" +
 			"2、如果没有找到，直接抛异常" +
-			"3、如果找到了，根据colSetId,在database_set表中找到对应的记录，并返回")
+			"3、如果找到了，根据colSetId,在database_set表中找到对应的记录，并解析为k-v形式，返回给前端" +
+			"4、如果没找到，给前端返回空的集合")
 	@Param(name = "colSetId", desc = "数据库采集设置ID", range = "不为空")
 	@Return(desc = "查询结果集", range = "不为空")
-	public Result getAllTbCleanOrder(long colSetId){
+	public List<Map<String, Object>> getAllTbCleanOrder(long colSetId){
 		//1、使用colSetId在database_set表中查找，看是否能找到对应的记录
 		long count = Dbo.queryNumber("select count(1) from " + Database_set.TableName + " where database_id = ?"
 				, colSetId).orElseThrow(() -> new BusinessException("SQL查询错误"));
@@ -937,8 +938,13 @@ public class CleanConfStepAction extends BaseAction{
 		if(count != 1){
 			throw new BusinessException("未能找到数据库采集任务");
 		}
-		//3、如果找到了，根据colSetId,在database_set表中找到对应的记录，并返回
-		return Dbo.queryResult("select cp_or from " + Database_set.TableName + " where database_id = ?", colSetId);
+		//3、如果找到了，根据colSetId,在database_set表中找到对应的记录，并解析为k-v形式，返回给前端
+		List<Object> list = Dbo.queryOneColumnList("select cp_or from " + Database_set.TableName + " where database_id = ?", colSetId);
+		//4、如果没找到，给前端返回空的集合
+		if(list.isEmpty()){
+			return Collections.emptyList();
+		}
+		return cleanOrderFormat((String) list.get(0));
 	}
 
 	/*
@@ -962,11 +968,12 @@ public class CleanConfStepAction extends BaseAction{
 	@Method(desc = "根据表ID回显整表清洗优先级", logicStep = "" +
 			"1、在数据库设置表中，根据tableId和colSetId查找该采集任务中是否存在该表" +
 			"2、如果不存在，直接抛异常" +
-			"3、如果存在，查询正表清洗优先级并返回")
+			"3、如果存在，查询正表清洗优先级，并解析为k-v形式，返回给前端" +
+			"4、如果没找到，给前端返回空的集合")
 	@Param(name = "tableId", desc = "表ID", range = "不为空")
 	@Param(name = "colSetId", desc = "数据库设置ID", range = "不为空")
 	@Return(desc = "查询结果集", range = "不为空")
-	public Result getSingleTbCleanOrder(long tableId, long colSetId){
+	public List<Map<String, Object>> getSingleTbCleanOrder(long tableId, long colSetId){
 		//1、在数据库设置表中，根据tableId和colSetId查找该采集任务中是否存在该表
 		long count = Dbo.queryNumber("select count(1) from " + Table_info.TableName + " where table_id = ? and " +
 				"database_id = ?", tableId, colSetId).orElseThrow(() -> new BusinessException("SQL查询错误"));
@@ -974,8 +981,13 @@ public class CleanConfStepAction extends BaseAction{
 		if(count != 1){
 			throw new BusinessException("在当前数据库采集任务中未找到该采集表");
 		}
-		//3、如果存在，查询整表清洗优先级并返回
-		return Dbo.queryResult("select ti_or from " + Table_info.TableName + " where table_id = ?", tableId);
+		//3、如果存在，查询整表清洗优先级，并解析为k-v形式，返回给前端
+		List<Object> list = Dbo.queryOneColumnList("select ti_or from " + Table_info.TableName + " where table_id = ?", tableId);
+		//4、如果没找到，给前端返回空的集合
+		if(list.isEmpty()){
+			return Collections.emptyList();
+		}
+		return cleanOrderFormat((String) list.get(0));
 	}
 
 	/*
@@ -999,11 +1011,12 @@ public class CleanConfStepAction extends BaseAction{
 	@Method(desc = "根据列ID回显列清洗优先级", logicStep = "" +
 			"1、在table_column表中，判断列是否存在" +
 			"2、不存在，直接抛异常" +
-			"3、若存在，查询出该列的清洗优先级返回给前端")
+			"3、若存在，查询出该列的清洗优先级，并解析为k-v形式，返回给前端" +
+			"4、如果没找到，给前端返回空的集合")
 	@Param(name = "columnId", desc = "列ID", range = "不为空")
 	@Param(name = "tableId", desc = "表ID", range = "不为空")
 	@Return(desc = "查询结果集", range = "不为空")
-	public Result getColCleanOrder(long columnId, long tableId){
+	public List<Map<String, Object>> getColCleanOrder(long columnId, long tableId){
 		//1、在table_column表中，判断列是否存在
 		long count = Dbo.queryNumber("select count(1) from " + Table_column.TableName + " where column_id = ? " +
 				"and table_id = ?", columnId, tableId).orElseThrow(() -> new BusinessException("SQL查询错误"));
@@ -1011,8 +1024,13 @@ public class CleanConfStepAction extends BaseAction{
 		if(count != 1){
 			throw new BusinessException("未找到字段");
 		}
-		//3、若存在，查询出该列的清洗优先级返回给前端
-		return Dbo.queryResult("select tc_or from " + Table_column.TableName + " where column_id = ?", columnId);
+		//3、若存在，查询出该列的清洗优先级，并解析为k-v形式，返回给前端
+		List<Object> list = Dbo.queryOneColumnList("select tc_or from " + Table_column.TableName + " where column_id = ?", columnId);
+		//4、如果没找到，给前端返回空的集合
+		if(list.isEmpty()){
+			return Collections.emptyList();
+		}
+		return cleanOrderFormat((String) list.get(0));
 	}
 
 	/*
@@ -1136,5 +1154,55 @@ public class CleanConfStepAction extends BaseAction{
 			}
 		}
 		return colSetId;
+	}
+
+	@Method(desc = "将查询出的json对象格式的清洗顺序格式化为K-V键值对形式", logicStep = "" +
+			"1、创建用于返回的List集合" +
+			"2、将json字符串转为json对象" +
+			"3、遍历json对象的key，获取清洗顺序")
+	@Param(name = "order", desc = "json字符串格式的清洗顺序", range = "不为空")
+	@Return(desc = "键值对形式的清洗顺序，如果有多个，那么封装在List集合中", range = "不为空")
+	private List<Map<String, Object>> cleanOrderFormat(String order){
+		//1、创建用于返回的List集合
+		List<Map<String, Object>> returnList = new ArrayList<>();
+		//2、将json字符串转为json对象
+		JSONObject sort = JSONObject.parseObject(order);
+		Set<String> keys = sort.keySet();
+		//3、遍历json对象的key，获取清洗顺序
+		for(String key : keys){
+			Map<String, Object> map = new HashMap<>();
+			if(key.equals(CleanType.ZiFuBuQi.getCode())){
+				map.put("code", CleanType.ZiFuBuQi.getCode());
+				map.put("order", sort.getInteger(CleanType.ZiFuBuQi.getCode()));
+				returnList.add(map);
+			}else if(key.equals(CleanType.ZiFuTiHuan.getCode())){
+				map.put("code", CleanType.ZiFuTiHuan.getCode());
+				map.put("order", sort.getInteger(CleanType.ZiFuTiHuan.getCode()));
+				returnList.add(map);
+			}else if(key.equals(CleanType.ShiJianZhuanHuan.getCode())){
+				map.put("code", CleanType.ShiJianZhuanHuan.getCode());
+				map.put("order", sort.getInteger(CleanType.ShiJianZhuanHuan.getCode()));
+				returnList.add(map);
+			}else if(key.equals(CleanType.MaZhiZhuanHuan.getCode())){
+				map.put("code", CleanType.MaZhiZhuanHuan.getCode());
+				map.put("order", sort.getInteger(CleanType.MaZhiZhuanHuan.getCode()));
+				returnList.add(map);
+			}else if(key.equals(CleanType.ZiFuHeBing.getCode())){
+				map.put("code", CleanType.ZiFuHeBing.getCode());
+				map.put("order", sort.getInteger(CleanType.ZiFuHeBing.getCode()));
+				returnList.add(map);
+			}else if(key.equals(CleanType.ZiFuChaiFen.getCode())){
+				map.put("code", CleanType.ZiFuChaiFen.getCode());
+				map.put("order", sort.getInteger(CleanType.ZiFuChaiFen.getCode()));
+				returnList.add(map);
+			}else if(key.equals(CleanType.ZiFuTrim.getCode())){
+				map.put("code", CleanType.ZiFuTrim.getCode());
+				map.put("order", sort.getInteger(CleanType.ZiFuTrim.getCode()));
+				returnList.add(map);
+			}else{
+				throw new BusinessException("系统不支持的清洗类型，清洗编码为:" + key);
+			}
+		}
+		return returnList;
 	}
 }

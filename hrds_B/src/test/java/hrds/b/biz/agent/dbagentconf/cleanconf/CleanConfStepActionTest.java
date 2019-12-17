@@ -2263,9 +2263,21 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 				-> new BusinessException("连接失败!"));
 		assertThat(rightResultOne.isSuccess(), is(true));
 
-		Result rightData = rightResultOne.getDataForResult();
-		assertThat("共获得了1条数据", rightData.getRowCount(), is(1));
-		assertThat("定义全表清洗优先级,结果符合期望", rightData.getString(0, "cp_or"), is(newSort.toJSONString()));
+		List<Map> mapList = rightResultOne.getDataForEntityList(Map.class);
+		assertThat("共获得了4条数据", mapList.size(), is(4));
+		for(Map map : mapList){
+			if(map.get("code").equals(CleanType.ZiFuTiHuan.getCode())){
+				assertThat("字符替换的顺序为1", map.get("order").equals(1), is(true));
+			}else if(map.get("code").equals(CleanType.ZiFuBuQi.getCode())){
+				assertThat("字符补齐的顺序为2", map.get("order").equals(2), is(true));
+			}else if(map.get("code").equals(CleanType.ZiFuTrim.getCode())){
+				assertThat("首尾去空的顺序为3", map.get("order").equals(3), is(true));
+			}else if(map.get("code").equals(CleanType.ZiFuHeBing.getCode())){
+				assertThat("字符合并的顺序为1", map.get("order").equals(4), is(true));
+			}else{
+				assertThat("出现了不符合期望的情况，code为 : " + map.get("code"), true, is(false));
+			}
+		}
 
 		//错误的数据访问1：获取任务级别清洗优先级时，传递错误的colSetId
 		String wrongStringOne = new HttpClient()
@@ -2352,9 +2364,21 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 				-> new BusinessException("连接失败!"));
 		assertThat(rightResultOne.isSuccess(), is(true));
 
-		Result rightData = rightResultOne.getDataForResult();
-		assertThat("获取到了一条数据", rightData.getRowCount(), is(1));
-		assertThat("对sys_user表设置的整表清洗优先级符合期望", rightData.getString(0, "ti_or"), is(tableCleanOrder.toJSONString()));
+		List<Map> mapList = rightResultOne.getDataForEntityList(Map.class);
+		assertThat("获取到了4条数据", mapList.size(), is(4));
+		for(Map map : mapList){
+			if(map.get("code").equals(CleanType.ZiFuBuQi.getCode())){
+				assertThat("字符补齐的顺序为1", map.get("order").equals(1), is(true));
+			}else if(map.get("code").equals(CleanType.ZiFuTiHuan.getCode())){
+				assertThat("字符替换的顺序为2", map.get("order").equals(2), is(true));
+			}else if(map.get("code").equals(CleanType.ZiFuHeBing.getCode())){
+				assertThat("字符合并的顺序为3", map.get("order").equals(3), is(true));
+			}else if(map.get("code").equals(CleanType.ZiFuTrim.getCode())){
+				assertThat("首尾去空的顺序为1", map.get("order").equals(4), is(true));
+			}else{
+				assertThat("出现了不符合期望的情况，code为 : " + map.get("code"), true, is(false));
+			}
+		}
 
 		//错误的数据访问1：传入错误的colSetId
 		String wrongStringOne = new HttpClient()
@@ -2454,9 +2478,25 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 				-> new BusinessException("连接失败!"));
 		assertThat(rightResultOne.isSuccess(), is(true));
 
-		Result rightData = rightResultOne.getDataForResult();
-		assertThat("获取到一条数据", rightData.getRowCount(), is(1));
-		assertThat("获取到的对sys_user表的role_id字段定义的清洗优先级符合期望", rightData.getString(0, "tc_or"), is(columnCleanOrder.toJSONString()));
+		List<Map> mapList = rightResultOne.getDataForEntityList(Map.class);
+		assertThat("获取到6条数据", mapList.size(), is(6));
+		for(Map map : mapList){
+			if(map.get("code").equals(CleanType.ZiFuTiHuan.getCode())){
+				assertThat("字符替换的顺序为2", map.get("order").equals(2), is(true));
+			}else if(map.get("code").equals(CleanType.ZiFuBuQi.getCode())){
+				assertThat("字符补齐的顺序为1", map.get("order").equals(1), is(true));
+			}else if(map.get("code").equals(CleanType.ZiFuTrim.getCode())){
+				assertThat("首尾去空的顺序为6", map.get("order").equals(6), is(true));
+			}else if(map.get("code").equals(CleanType.ZiFuChaiFen.getCode())){
+				assertThat("字符拆分的顺序为5", map.get("order").equals(5), is(true));
+			}else if(map.get("code").equals(CleanType.ShiJianZhuanHuan.getCode())){
+				assertThat("日期格式化的顺序为3", map.get("order").equals(3), is(true));
+			}else if(map.get("code").equals(CleanType.MaZhiZhuanHuan.getCode())){
+				assertThat("码值转换的顺序为4", map.get("order").equals(4), is(true));
+			}else{
+				assertThat("出现了不符合期望的情况，code为 : " + map.get("code"), true, is(false));
+			}
+		}
 
 		//错误的数据访问1：尝试对一个不存在于sys_user表中的字段获取列清洗优先级
 		String wrongStringOne = new HttpClient()
