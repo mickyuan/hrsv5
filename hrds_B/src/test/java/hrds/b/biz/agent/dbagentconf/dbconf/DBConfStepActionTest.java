@@ -654,6 +654,7 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 	 * 错误的数据访问8：新增数据时，缺少用户名
 	 * 错误的数据访问9：新增数据时，缺少数据库密码
 	 * 错误的数据访问10：新增数据时，缺少JDBCURL
+	 * 错误的数据访问10：新增数据时，缺少agent_id
 	 *
 	 * @Param: 无
 	 * @return: 无
@@ -921,6 +922,24 @@ public class DBConfStepActionTest extends WebBaseTestCase{
 		ActionResult wrongRuseltSeven = JsonUtil.toObjectSafety(wrongStringSeven, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(wrongRuseltSeven.isSuccess(), is(false));
+
+		//11、错误的数据访问10：新增数据时，缺少agent_id
+		String wrongStringEight = new HttpClient()
+				.addData("task_name", "wzc_test_saveDbConf_task_name")
+				.addData("database_name", "wzc_test_saveDbConf_database_name")
+				.addData("database_number", "1001")
+				.addData("database_pad", "wzc_test_saveDbConf_database_pad")
+				.addData("database_drive", "org.postgresql.Driver")
+				.addData("database_type", DatabaseType.ApacheDerby.getCode())
+				.addData("user_name", "wzc_test_saveDbConf_user_name")
+				.addData("database_ip", "127.0.0.1")
+				.addData("database_port", "31001")
+				.addData("classify_id", FIRST_CLASSIFY_ID)
+				.addData("jdbc_url", jdbcURL)
+				.post(getActionUrl("saveDbConf")).getBodyString();
+		ActionResult wrongRuseltEight = JsonUtil.toObjectSafety(wrongStringEight, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(wrongRuseltEight.isSuccess(), is(false));
 	}
 
 	/**

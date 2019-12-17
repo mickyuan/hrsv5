@@ -370,7 +370,16 @@ public class DBConfStepAction extends BaseAction{
 	@Method(desc = "保存数据库配置页面时，校验Database_set中数据的合法性，对数据库中不能为空的字段，校验合法性，若不合法" +
 			"提供明确的提示信息", logicStep = "" +
 			"1、校验database_type不能为空，并且取值范围必须在DatabaseType代码项中" +
-			"2、校验classify_id不能为空")
+			"2、校验classify_id不能为空" +
+			"3、校验作业编号不为能空，并且长度不能超过10" +
+			"4、校验数据库驱动不能为空" +
+			"5、校验数据库名称不能为空" +
+			"6、校验数据库IP不能为空" +
+			"7、校验数据库端口号不能为空" +
+			"8、校验用户名不能为空" +
+			"9、校验数据库密码不能为空" +
+			"10、校验JDBCURL不能为空" +
+			"11、校验agent_id不能为空")
 	@Param(name = "databaseSet", desc = "Database_set实体类对象", range = "不为空")
 	private void verifyDatabaseSetEntity(Database_set databaseSet){
 		//1、校验database_type不能为空，并且取值范围必须在DatabaseType代码项中
@@ -413,6 +422,10 @@ public class DBConfStepAction extends BaseAction{
 		//10、校验JDBCURL不能为空
 		if(StringUtil.isBlank(databaseSet.getJdbc_url())){
 			throw new BusinessException("保存数据库配置信息时数据库连接URL不能为空");
+		}
+		//11、校验agent_id不能为空
+		if(databaseSet.getAgent_id() == null){
+			throw new BusinessException("保存数据库配置信息时必须关联Agent信息不能为空");
 		}
 	}
 

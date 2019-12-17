@@ -1166,7 +1166,8 @@ public class CleanConfStepAction extends BaseAction{
 		//1、创建用于返回的List集合
 		List<Map<String, Object>> returnList = new ArrayList<>();
 		//2、将json字符串转为json对象
-		JSONObject sort = JSONObject.parseObject(order);
+		JSONObject sort = new JSONObject(true);
+		sort = JSONObject.parseObject(order);
 		Set<String> keys = sort.keySet();
 		//3、遍历json对象的key，获取清洗顺序
 		for(String key : keys){

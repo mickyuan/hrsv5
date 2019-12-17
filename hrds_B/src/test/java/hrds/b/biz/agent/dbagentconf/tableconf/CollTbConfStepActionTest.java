@@ -298,7 +298,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 				-> new BusinessException("连接失败!"));
 		assertThat(rightResult.isSuccess(), is(true));
 		Result rightData = rightResult.getDataForResult();
-		assertThat("截止2019.11.27，IP为47.103.83.1的测试库上有74张表",rightData.getRowCount(), is(74));
+		assertThat("截止2019.11.27，IP为47.103.83.1的测试库上有72张表",rightData.getRowCount(), is(72));
 
 		//错误的数据访问1：构造错误的colSetId进行测试
 		long wrongColSetId = 1003L;
