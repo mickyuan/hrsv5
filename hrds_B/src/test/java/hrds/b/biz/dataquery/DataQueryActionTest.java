@@ -699,4 +699,23 @@ public class DataQueryActionTest extends WebBaseTestCase {
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
 		assertThat(ar.isSuccess(), is(false));
 	}
+
+	@Test
+	public void viewFile() {
+
+	}
+
+	@Test
+	public void getApplyData() {
+
+	}
+
+	@Test
+	public void cancelApply() {
+
+	}
+	@Test
+	public void myApplyRecord() {
+
+	}
 }

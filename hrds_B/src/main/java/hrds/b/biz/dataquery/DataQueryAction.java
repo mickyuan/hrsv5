@@ -7,6 +7,8 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.FileUtil;
 import fd.ng.core.utils.StringUtil;
+import fd.ng.db.jdbc.DefaultPageImpl;
+import fd.ng.db.jdbc.Page;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
@@ -85,7 +87,7 @@ public class DataQueryAction extends BaseAction {
 				getUserId(), fileId, ApplyType.XiaZai.getCode()
 		);
 		if (authResult.isEmpty()) {
-			throw new BusinessException("下载文件的文件不存在! fileId=" + fileId);
+			throw new BusinessException("下载文件不存在! fileId=" + fileId);
 		}
 		//2.检查申请的操作是否是下载
 		ApplyType applyType = ApplyType.ofEnumByCode(authResult.getString(0, "apply_type"));
@@ -425,7 +427,7 @@ public class DataQueryAction extends BaseAction {
 					"2.如果文件查看权限是一次,看过之后取消权限")
 	@Param(name = "fileId", desc = "文件id", range = "String类型字符,长度最长40,该值唯一",
 			example = "12f48c4f-bebd-4f19-b38d-a161929fb350")
-	@Param(name = "fileType", desc = "文件类型", range = "1:查看,2:下载,3,发布,4:重命名")
+	@Param(name = "fileType", desc = "文件类型", range = "查看的文件类型,FileType")
 	@Return(desc = "文件信息集合", range = "无限制")
 	public Map<String, Object> viewFile(String fileId, String fileType) {
 		//1.根据文件id获取该文件信息
@@ -435,6 +437,82 @@ public class DataQueryAction extends BaseAction {
 		//2.如果文件查看权限是一次,看过之后取消权限
 		FileOperations.updateViewFilePermissions(fileId);
 		return viewFileMap;
+	}
+
+	@Method(desc = "获取用户申请文件信息",
+			logicStep = "1.根据申请类型获取用户申请文件的详细信息")
+	@Param(name = "apply_type", desc = "申请类型", range = "1:查看,2:下载,3,发布,4:重命名")
+	@Return(desc = "申请文件信息的Map数组", range = "无限制")
+	public Map<String, Object> getApplyData(String apply_type) {
+		//1.根据申请类型获取用户申请文件的详细信息
+		Map<String, Object> applyDataMap = new HashMap<>();
+		Object[] sourceIdsObj = Dbo.queryOneColumnList("select source_id from data_source").toArray();
+		asmSql.clean();
+		asmSql.addSql("select da.*,sfa.original_name,sfa.file_size,sfa.file_type,sfa.file_suffix from data_auth da" +
+				" left join source_file_attribute sfa on da.file_id = sfa.file_id where da.user_id = ? and" +
+				" da.auth_type=? and da.apply_type = ?");
+		asmSql.addParam(getUserId());
+		asmSql.addParam(AuthType.ShenQing.getCode());
+		asmSql.addParam(apply_type);
+		asmSql.addORParam("sfa.source_id", sourceIdsObj);
+		List<Map<String, Object>> apply_rs = Dbo.queryList(asmSql.sql(), asmSql.params());
+		applyDataMap.put("apply_rs", apply_rs);
+		applyDataMap.put("apply_type", apply_type);
+		return applyDataMap;
+	}
+
+	@Method(desc = "取消用户申请文件",
+			logicStep = "1.根据申请id获取用户申请文件的详细信息" +
+					"2.根据申请id删除数据申请信息")
+	@Param(name = "da_id", desc = "文件申请信息id", range = "long,主键唯一")
+	public void cancelApply(long da_id) {
+		//1.根据申请id获取用户申请文件的详细信息
+		Optional<Data_auth> daRs = Dbo.queryOneObject(Data_auth.class,
+				"select * from " + Data_auth.TableName + " where da_id = ? and auth_type = ?",
+				da_id, AuthType.ShenQing.getCode());
+		if (!daRs.isPresent()) {
+			throw new BusinessException("取消申请的文件已不存在！da_id=" + da_id);
+		}
+		//2.根据申请id删除数据申请信息
+		DboExecute.deletesOrThrow("取消申请的文件失败!",
+				"DELETE from " + Data_auth.TableName + " where da_id = ?", da_id);
+	}
+
+	@Method(desc = "获取用户申请记录数据",
+			logicStep = "1.自定义条件获取用户申请记录" +
+					"2.根据申请id删除数据申请信息")
+	@Param(name = "original_name", desc = "文件名", range = "String字符串,无限制", nullable = true)
+	@Param(name = "apply_date", desc = "文件申请日期", range = "日期格式 yyyyMMdd", nullable = true)
+	@Param(name = "apply_type", desc = "文件申请类型", range = "1:查看,2:下载,3,发布,4:重命名", nullable = true)
+	@Param(name = "auth_type", desc = "文件申请状态", range = "1:允许,2不允许,3:一次,0:不允许", nullable = true)
+	@Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数", valueIfNull = "1")
+	@Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", valueIfNull = "10")
+	@Return(desc = "用户申请记录Map", range = "无限制")
+	public Map<String, Object> myApplyRecord(String original_name, String apply_date, String apply_type,
+	                                         String auth_type, int currPage, int pageSize) {
+		//1.获取用户申请记录信息
+		Map<String, Object> myApplyRecordMap = new HashMap<>();
+		asmSql.clean();
+		asmSql.addSql(" select da.*,sfa.* from source_file_attribute sfa LEFT JOIN (" +
+				" select MAX(concat(apply_date,apply_time)) applytime,file_id,apply_type" +
+				" from data_auth where user_id=?");
+		asmSql.addParam(getUserId());
+		asmSql.addLikeParam("apply_date", apply_date);
+		if (StringUtil.isNotBlank(apply_type)) {
+			asmSql.addSql(" and apply_type = ?").addParam(apply_type);
+		}
+		if (StringUtil.isNotBlank(auth_type)) {
+			asmSql.addSql(" and auth_type = ?").addParam(auth_type);
+		}
+		asmSql.addSql(" GROUP BY file_id,apply_type) a JOIN data_auth da on a.applytime = concat(da.apply_date," +
+				" da.apply_time) ON da.file_id = sfa.file_id where da.apply_type !=''");
+		asmSql.addLikeParam("original_name", original_name);
+		asmSql.addSql(" ORDER BY da.apply_date DESC,da.apply_time DESC");
+		Page page = new DefaultPageImpl(currPage, pageSize);
+		List<Map<String, Object>> myApplyRecordRs = Dbo.queryPagedList(page, asmSql.sql(), asmSql.params());
+		myApplyRecordMap.put("myApplyRecordRs", myApplyRecordRs);
+		myApplyRecordMap.put("totalSize", page.getTotalSize());
+		return myApplyRecordMap;
 	}
 
 	@Method(desc = "自定义查询条件获取采集文件的信息",
@@ -454,8 +532,8 @@ public class DataQueryAction extends BaseAction {
 	@Param(name = "sourceId", desc = "数据源id", range = "long类型值，10位长度")
 	@Param(name = "fcsId", desc = "采集任务id", range = "long类型值，10位长度")
 	@Param(name = "fileType", desc = "文件采集类型", range = "文件类型代码值")
-	@Param(name = "startDate", desc = "查询开始日期", range = "日期格式 yyyy-mm-dd")
-	@Param(name = "endDate", desc = "查询结束日期", range = "日期格式 yyyy-mm-dd")
+	@Param(name = "startDate", desc = "查询开始日期", range = "日期格式 yyyyMMdd")
+	@Param(name = "endDate", desc = "查询结束日期", range = "日期格式 yyyyMMdd")
 	@Return(desc = "存放自定义查询结果的Result", range = "无限制")
 	private Result conditionalQuery(String sourceId, String fcsId, String fileType, String startDate, String endDate) {
 		//1.查看待查询的数据源是否属于登录用户所在部门
