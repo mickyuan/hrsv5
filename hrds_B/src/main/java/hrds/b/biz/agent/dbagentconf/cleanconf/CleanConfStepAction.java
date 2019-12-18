@@ -1160,7 +1160,7 @@ public class CleanConfStepAction extends BaseAction{
 
 	@Method(desc = "将查询出的json对象格式的清洗顺序格式化为K-V键值对形式", logicStep = "" +
 			"1、创建用于返回的List集合" +
-			"2、将json字符串转为json对象" +
+			"2、将json字符串转为json对象，并保持顺序不变" +
 			"3、遍历json对象的key，获取清洗顺序")
 	@Param(name = "order", desc = "json字符串格式的清洗顺序", range = "不为空")
 	@Return(desc = "键值对形式的清洗顺序，如果有多个，那么封装在List集合中", range = "不为空")
@@ -1168,7 +1168,7 @@ public class CleanConfStepAction extends BaseAction{
 		//1、创建用于返回的List集合
 		List<Map<String, Object>> returnList = new ArrayList<>();
 		//2、将json字符串转为json对象，并保持顺序不变
-		LinkedHashMap<String, Object> json = (LinkedHashMap<String, Object>) JSON.parseObject(order,LinkedHashMap.class, Feature.OrderedField);
+		LinkedHashMap<String, Object> json = (LinkedHashMap<String, Object>) JSON.parseObject(order, LinkedHashMap.class, Feature.OrderedField);
 		JSONObject sort = new JSONObject(true);
 		sort.putAll(json);
 		Set<String> keys = sort.keySet();
