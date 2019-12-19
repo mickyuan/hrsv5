@@ -153,7 +153,6 @@ public class JobConfigurationTest extends WebBaseTestCase {
                         etl_job_def.setPro_name("zy.shell");
                         etl_job_def.setPro_type(Pro_Type.SHELL.getCode());
                         etl_job_def.setSub_sys_cd(SubSysCd);
-                        etl_job_def.setDisp_type(Dispatch_Type.TPLUS0.getCode());
                         etl_job_def.setDisp_freq(Dispatch_Frequency.PinLv.getCode());
                         etl_job_def.setExe_frequency(1);
                         etl_job_def.setExe_num(1);

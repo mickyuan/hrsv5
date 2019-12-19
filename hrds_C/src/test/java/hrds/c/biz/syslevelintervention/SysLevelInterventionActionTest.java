@@ -366,14 +366,14 @@ public class SysLevelInterventionActionTest extends WebBaseTestCase {
                     "4.错误的数据访问2，etl_hand_type不存在" +
                     "5.错误的数据访问3，工程下有作业正在干预")
     @Test
-    public void SysLevelInterventionOperate() {
+    public void sysLevelInterventionOperate() {
         try (DatabaseWrapper db = new DatabaseWrapper()) {
             // 1.正常的数据访问1，数据都正常，重跑或续跑
             String bodyString = new HttpClient()
                     .addData("etl_sys_cd", EtlSysCd2)
                     .addData("etl_hand_type", Meddle_type.SYS_ORIGINAL.getCode())
                     .addData("curr_bath_date", DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate()).toString())
-                    .post(getActionUrl("SysLevelInterventionOperate"))
+                    .post(getActionUrl("sysLevelInterventionOperate"))
                     .getBodyString();
             ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                     .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
@@ -394,7 +394,7 @@ public class SysLevelInterventionActionTest extends WebBaseTestCase {
                     .addData("etl_sys_cd", EtlSysCd3)
                     .addData("etl_hand_type", Meddle_type.SYS_STOP.getCode())
                     .addData("curr_bath_date", DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate()).toString())
-                    .post(getActionUrl("SysLevelInterventionOperate"))
+                    .post(getActionUrl("sysLevelInterventionOperate"))
                     .getBodyString();
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                     .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
@@ -415,7 +415,7 @@ public class SysLevelInterventionActionTest extends WebBaseTestCase {
                     .addData("etl_sys_cd", "xtjgycs")
                     .addData("etl_hand_type", Meddle_type.SYS_ORIGINAL.getCode())
                     .addData("curr_bath_date", DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate()).toString())
-                    .post(getActionUrl("SysLevelInterventionOperate"))
+                    .post(getActionUrl("sysLevelInterventionOperate"))
                     .getBodyString();
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                     .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
@@ -425,7 +425,7 @@ public class SysLevelInterventionActionTest extends WebBaseTestCase {
                     .addData("etl_sys_cd", EtlSysCd)
                     .addData("etl_hand_type", "abc")
                     .addData("curr_bath_date", DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate()).toString())
-                    .post(getActionUrl("SysLevelInterventionOperate"))
+                    .post(getActionUrl("sysLevelInterventionOperate"))
                     .getBodyString();
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                     .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
@@ -435,7 +435,7 @@ public class SysLevelInterventionActionTest extends WebBaseTestCase {
                     .addData("etl_sys_cd", EtlSysCd)
                     .addData("etl_hand_type", Meddle_type.SYS_RESUME.getCode())
                     .addData("curr_bath_date", DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate()).toString())
-                    .post(getActionUrl("SysLevelInterventionOperate"))
+                    .post(getActionUrl("sysLevelInterventionOperate"))
                     .getBodyString();
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                     .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));

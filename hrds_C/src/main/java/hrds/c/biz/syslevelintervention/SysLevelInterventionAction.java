@@ -134,7 +134,7 @@ public class SysLevelInterventionAction extends BaseAction {
     @Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
     @Param(name = "etl_hand_type", desc = "干预类型", range = "使用（Meddle_type）代码项")
     @Param(name = "curr_bath_date", desc = "当前批量日期", range = "无限制")
-    public void SysLevelInterventionOperate(String etl_sys_cd, String etl_hand_type, String curr_bath_date) {
+    public void sysLevelInterventionOperate(String etl_sys_cd, String etl_hand_type, String curr_bath_date) {
         // 1.数据可访问权限处理方式，通过user_id进行权限控制
         // 2.判断工程是否存在
         if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
@@ -153,8 +153,7 @@ public class SysLevelInterventionAction extends BaseAction {
                 DateUtil.parseStr2TimeWith6Char(DateUtil.getSysTime()));
         etl_job_hand.setPro_para(etl_sys_cd + "," + curr_bath_date);
         // 4.判断工程下有作业是否正在干预
-        if (Dbo.queryNumber("select count(*) from " + Etl_job_hand.TableName + " where etl_sys_cd=?",
-                etl_sys_cd).orElseThrow(() -> new BusinessException("sql查询错误！")) > 0) {
+        if (ETLJobUtil.isEtlJobHandExist(etl_sys_cd, "")) {
             throw new BusinessException("工程下有作业正在干预！");
         }
         // 5.检查etl_hand_type是否合法
@@ -194,7 +193,7 @@ public class SysLevelInterventionAction extends BaseAction {
         asmSql.addSql("SELECT count(1) from " + Etl_sys.TableName + " where etl_sys_cd=?");
         asmSql.addParam(etl_sys_cd);
         // 2.判断传入状态的数组是否为空
-        if (jobStatus.length > 0) {
+        if (jobStatus != null && jobStatus.length > 0) {
             asmSql.addORParam("sys_run_status", jobStatus);
         }
         // 3.查询该工程为传入的几种状态的个数

@@ -4,6 +4,7 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
+import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.web.util.Dbo;
 import hrds.commons.entity.*;
@@ -190,6 +191,29 @@ public class ETLJobUtil {
         return false;
     }
 
+    @Method(desc = "判断工程下是否有作业正在干预",
+            logicStep = "1.数据可访问权限处理方式，此方法不需要权限认证" +
+                    "2.判断工程下是否有作业正在干预")
+    @Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
+    @Param(name = "etl_job", desc = "作业名称", range = "新增作业时生成", nullable = true)
+    @Return(desc = "工程下是否有作业正在干预标志", range = "true代表存在，false代表不存在")
+    public static boolean isEtlJobHandExist(String etl_sys_cd, String etl_job) {
+        // 1.数据可访问权限处理方式，此方法不需要权限认证
+        // 2.判断工程下是否有作业正在干预
+        asmSql.clean();
+        asmSql.addSql("select count(*) from " + Etl_job_hand.TableName + " where etl_sys_cd=?");
+        asmSql.addParam(etl_sys_cd);
+        if (StringUtil.isNotBlank(etl_job)) {
+            asmSql.addSql(" and etl_job=?");
+            asmSql.addParam(etl_job);
+        }
+        if (Dbo.queryNumber(asmSql.sql(), asmSql.params()).orElseThrow(() ->
+                new BusinessException("sql查询错误！")) > 0) {
+            return true;
+        }
+        return false;
+    }
+
     @Method(desc = "根据工程编号查询工程名称",
             logicStep = "1.数据可访问权限处理方式，根据user_id进行权限验证" +
                     "2.根据工程编号查询工程名称")
@@ -206,4 +230,5 @@ public class ETLJobUtil {
         return Dbo.queryOneColumnList("select etl_sys_name from " + Etl_sys.TableName +
                 " where etl_sys_cd=? and user_id=?", etl_sys_cd, user_id).get(0).toString();
     }
+
 }

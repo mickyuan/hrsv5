@@ -136,7 +136,6 @@ public class JobIevelInterventionActionTest extends WebBaseTestCase {
                         etl_job_cur.setPro_name("zy.shell");
                         etl_job_cur.setPro_type(Pro_Type.SHELL.getCode());
                         etl_job_cur.setSub_sys_cd(SubSysCd);
-                        etl_job_cur.setDisp_type(Dispatch_Type.TPLUS0.getCode());
                         etl_job_cur.setDisp_freq(Dispatch_Frequency.PinLv.getCode());
                         etl_job_cur.setExe_frequency(1L);
                         etl_job_cur.setExe_num(1);
@@ -147,7 +146,7 @@ public class JobIevelInterventionActionTest extends WebBaseTestCase {
                         break;
                     case 2:
                         etl_job_cur.setEtl_sys_cd(EtlSysCd);
-                        etl_job_cur.setPro_name("zy.class");
+                        etl_job_cur.setPro_name("zy.jar");
                         etl_job_cur.setPro_type(Pro_Type.JAVA.getCode());
                         etl_job_cur.setSub_sys_cd(SubSysCd);
                         etl_job_cur.setDisp_type(Dispatch_Type.TPLUS1.getCode());
