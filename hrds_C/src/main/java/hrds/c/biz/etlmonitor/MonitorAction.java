@@ -620,40 +620,65 @@ public class MonitorAction extends BaseAction {
 
     }
 
-    @Method(desc = "建立依赖关系",
-            logicStep = "1.数据可访问权限处理方式，该方法不需要权限控制")
+    @Method(desc = "根据上下游作业结果集处理不同情况建立依赖关系",
+            logicStep = "1.数据可访问权限处理方式，该方法不需要权限控制" +
+                    "2.判断上游作业结果集是否为空，不为空建立依赖关系" +
+                    "2.1获取上游作业" +
+                    "2.2建立依赖关系" +
+                    "3.判断下游作业结果集是否为空，不为空建立依赖关系" +
+                    "3.1获取上游作业" +
+                    "3.2建立依赖关系")
     @Param(name = "nodeMap", desc = "存放node节点信息的集合", range = "取值范围")
-    @Param(name = "list_Edge", desc = "参数描述", range = "取值范围")
+    @Param(name = "list_Edge", desc = "依赖关系集合", range = "无限制")
     @Param(name = "etl_job", desc = "作业名称", range = "新增作业时生成")
     @Param(name = "topResult", desc = "依赖上游作业关系结果集", range = "无限制")
     @Param(name = "downResult", desc = "依赖下游作业关系结果集", range = "无限制")
     private void buildDependencies(Map<String, Node> nodeMap, List<String> list_Edge, String etl_job,
                                    Result topResult, Result downResult) {
         // 1.数据可访问权限处理方式，该方法不需要权限控制
+        // 2.判断上游作业结果集是否为空，不为空建立依赖关系
         if (!topResult.isEmpty()) {
             for (int i = 0; i < topResult.getRowCount(); i++) {
+                // 2.1获取上游作业
                 String pre_etl_job = topResult.getString(i, "pre_etl_job");
-                if (!etl_job.equals(pre_etl_job)) {
-                    Node re = nodeMap.get(etl_job);
-                    Node por = nodeMap.get(pre_etl_job);
-                    if (!list_Edge.contains(etl_job + "-" + pre_etl_job)) {
-                        por.connectTo(re);
-                        list_Edge.add(etl_job + "-" + pre_etl_job);
-                    }
-                }
+                // 2.2建立依赖关系
+                topNodeConnectToNode(nodeMap, list_Edge, etl_job, pre_etl_job);
             }
         }
+        // 3.判断下游作业结果集是否为空，不为空建立依赖关系
         if (!downResult.isEmpty()) {
             for (int i = 0; i < downResult.getRowCount(); i++) {
+                // 3.1获取上游作业
                 String pre_etl_job = downResult.getString(i, "etl_job");
-                if (!etl_job.equals(pre_etl_job)) {
-                    Node re = nodeMap.get(etl_job);
-                    Node por = nodeMap.get(pre_etl_job);
-                    if (!list_Edge.contains(etl_job + "-" + pre_etl_job)) {
-                        por.connectTo(re);
-                        list_Edge.add(etl_job + "-" + pre_etl_job);
-                    }
-                }
+                // 3.2建立依赖关系
+                topNodeConnectToNode(nodeMap, list_Edge, etl_job, pre_etl_job);
+            }
+        }
+    }
+
+    @Method(desc = "建立依赖关系",
+            logicStep = "1.数据可访问权限处理方式，该方法不需要权限控制" +
+                    "2.判断当前作业是否与上游作业相同，相同跳过不相同建立依赖关系" +
+                    "3.获取当前作业节点信息" +
+                    "4.获取上游作业节点信息" +
+                    "5.判断依赖关系是否已存在，如果存在则跳过，不存在建立依赖关系")
+    @Param(name = "nodeMap", desc = "存放node节点信息的集合", range = "取值范围")
+    @Param(name = "list_Edge", desc = "依赖关系集合", range = "无限制")
+    @Param(name = "etl_job", desc = "作业名称", range = "新增作业时生成")
+    @Param(name = "pre_etl_job", desc = "上游作业名称", range = "新增作业时生成")
+    private void topNodeConnectToNode(Map<String, Node> nodeMap, List<String> list_Edge, String etl_job,
+                                      String pre_etl_job) {
+        // 1.数据可访问权限处理方式，该方法不需要权限控制
+        // 2.判断当前作业是否与上游作业相同，相同跳过不相同建立依赖关系
+        if (!etl_job.equals(pre_etl_job)) {
+            // 3.获取当前作业节点信息
+            Node node = nodeMap.get(etl_job);
+            // 4.获取上游作业节点信息
+            Node topNode = nodeMap.get(pre_etl_job);
+            // 5.判断依赖关系是否已存在，如果存在则跳过，不存在建立依赖关系
+            if (!list_Edge.contains(etl_job + "-" + pre_etl_job)) {
+                topNode.connectTo(node);
+                list_Edge.add(etl_job + "-" + pre_etl_job);
             }
         }
     }

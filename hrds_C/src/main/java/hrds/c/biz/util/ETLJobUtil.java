@@ -79,8 +79,8 @@ public class ETLJobUtil {
     @Method(desc = "新增作业判断作业名称是否已存在，存在不能新增",
             logicStep = "1.数据可访问权限处理方式，该方法不需要权限验证" +
                     "2.新增作业判断作业名称是否已存在，存在不能新增")
-    @Param(name = "etl_job_def", desc = "作业定义实体对象", range = "与etl_job_def数据库表定义规则一致",
-            isBean = true)
+    @Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
+    @Param(name = "etl_job", desc = "作业名称", range = "新增作业时生成")
     @Return(desc = "作业名称是否已存在标志", range = "true代表已存在，false代表不存在")
     public static boolean isEtlJobDefExist(String etl_sys_cd, String etl_job) {
         // 1.数据可访问权限处理方式，该方法不需要权限验证
@@ -91,6 +91,17 @@ public class ETLJobUtil {
             return true;
         }
         return false;
+    }
+
+    @Method(desc = "判断当前工程下是否有作业",
+            logicStep = "方法步骤")
+    @Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
+    public static boolean isEtlJObDefExistBySysCd(String etl_sys_cd) {
+        if (Dbo.queryNumber("SELECT count(1) FROM " + Etl_job_def.TableName + " WHERE etl_sys_cd=?",
+                etl_sys_cd).orElseThrow(() -> new BusinessException("sql查询错误")) == 0) {
+            return false;
+        }
+        return true;
     }
 
     @Method(desc = "判断是否资源需求过大",
