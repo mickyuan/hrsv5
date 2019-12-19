@@ -30,8 +30,6 @@ import java.util.*;
 @DocClass(desc = "配置清洗规则", author = "WangZhengcheng")
 public class CleanConfStepAction extends BaseAction{
 
-	private static final int EMPTY_RESULT_COUNT = 0;
-
 	/*
 	 * 从上一个页面跳转过来，拿到在配置数据清洗页面显示信息(agentStep2&agentStep2SDO)
 	 * */
