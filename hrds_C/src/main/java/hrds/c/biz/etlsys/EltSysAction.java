@@ -21,8 +21,10 @@ import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.PropertyParaValue;
+import hrds.commons.utils.ReadLog;
 import org.apache.commons.lang.StringUtils;
 
+import java.io.File;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -177,9 +179,8 @@ public class EltSysAction extends BaseAction {
         String redisPort = PropertyParaValue.getString("redis_port", "56379");
         String etl_serv_port = Constant.SFTP_PORT;
         // 4.部署ETL
-        ETLAgentDeployment.scpETLAgent(etl_sys_cd, etl_serv_ip, etl_serv_port, redisIP,
-                redisPort, user_name, user_pwd,
-                serv_file_path);
+        ETLAgentDeployment.scpETLAgent(etl_sys_cd, etl_serv_ip, etl_serv_port, redisIP, redisPort, user_name,
+                user_pwd, serv_file_path);
         // 5.部署成功，更新用户信息
         Etl_sys etl_sys = new Etl_sys();
         etl_sys.setEtl_serv_ip(etl_serv_ip);
@@ -194,10 +195,12 @@ public class EltSysAction extends BaseAction {
 
     @Method(desc = "启动CONTROL",
             logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制" +
+                    "2.验证当前用户对应的工程是否已不存在" +
                     "3.根据工程编号获取工程信息" +
-                    "4.如果日切方式不是自动日切且工程下作业列表为空，则不能启动" +
-                    "5.获取系统状态,如果不是停止说明系统不是停止状态,不是停止状态不能启动control" +
-                    "6.调用脚本启动启动Control")
+                    "4.判断工程是否已部署" +
+                    "5.如果日切方式不是自动日切且工程下作业列表为空，则不能启动" +
+                    "6.获取系统状态,如果不是停止说明系统不是停止状态,不是停止状态不能启动control" +
+                    "7.调用脚本启动启动Control")
     @Param(name = "etl_sys_cd", desc = "作业调度工程登记表主键ID", range = "新增工程时生成")
     @Param(name = "isResumeRun", desc = "是否续跑", range = "使用（IsFlag）代码项，1代表是，0代表否")
     @Param(name = "isAutoShift", desc = "是否自动日切", range = "使用（IsFlag）代码项，1代表是，0代表否")
@@ -210,21 +213,56 @@ public class EltSysAction extends BaseAction {
         }
         // 3.根据工程编号获取工程信息
         Map<String, Object> etlSys = searchEtlSysById(etl_sys_cd);
-        // 4.如果日切方式不是自动日切且工程下作业列表为空，则不能启动
+        // 4.判断工程是否已部署
+        isETLDeploy(etlSys);
+        // 5.如果日切方式不是自动日切且工程下作业列表为空，则不能启动
         if (IsFlag.Fou == IsFlag.ofEnumByCode(isAutoShift)) {
             if (!ETLJobUtil.isEtlJObDefExistBySysCd(etl_sys_cd)) {
                 throw new BusinessException("如果日切方式不是自动日切且工程下作业列表为空，则不能启动!");
             }
         }
-        // 5.获取系统状态,如果不是停止说明系统不是停止状态,不是停止状态不能启动control
+        // 6.获取系统状态,如果不是停止说明系统不是停止状态,不是停止状态不能启动control
         if (Job_Status.STOP != (Job_Status.ofEnumByCode(etlSys.get("sys_run_status").toString()))) {
             throw new BusinessException("系统不是停止状态不能启动control");
         }
-        // 6.调用脚本启动启动Control
+        // 7.调用脚本启动启动Control
         ETLAgentDeployment.startEngineBatchControl(curr_bath_date, etl_sys_cd, isResumeRun, isAutoShift,
                 etlSys.get("etl_serv_ip").toString(), etlSys.get("etl_serv_port").toString(),
                 etlSys.get("user_name").toString(), etlSys.get("user_pwd").toString(),
                 etlSys.get("serv_file_path").toString());
+    }
+
+    @Method(desc = "判断作业调度工程是否已部署",
+            logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制" +
+                    " 2.验证服务器IP是否为空" +
+                    "3.服务器端口是否为空" +
+                    "4.服务器端口是否为空" +
+                    "5.服务器端口是否为空" +
+                    "6.服务器部署目录是否为空")
+    @Param(name = "参数名称", desc = "参数描述", range = "取值范围")
+    @Return(desc = "返回内容描述", range = "取值范围")
+    private void isETLDeploy(Map<String, Object> etlSys) {
+        // 1.数据可访问权限处理方式，通过user_id进行权限控制
+        // 2.验证服务器IP是否为空
+        if (StringUtil.isBlank(etlSys.get("etl_serv_ip").toString())) {
+            throw new BusinessException("服务器IP为空，请检查工程是否已部署！");
+        }
+        // 3.服务器端口是否为空
+        if (StringUtil.isBlank(etlSys.get("etl_serv_port").toString())) {
+            throw new BusinessException("服务器端口为空，请检查工程是否已部署！");
+        }
+        // 4.服务器端口是否为空
+        if (StringUtil.isBlank(etlSys.get("user_name").toString())) {
+            throw new BusinessException("服务器用户名为空，请检查工程是否已部署！");
+        }
+        // 5.服务器端口是否为空
+        if (StringUtil.isBlank(etlSys.get("user_pwd").toString())) {
+            throw new BusinessException("服务器密码为空，请检查工程是否已部署！");
+        }
+        // 6.服务器部署目录是否为空
+        if (StringUtil.isBlank(etlSys.get("serv_file_path").toString())) {
+            throw new BusinessException("服务器部署目录为空，请检查工程是否已部署！");
+        }
     }
 
     @Method(desc = "启动TRIGGER",
@@ -252,5 +290,51 @@ public class EltSysAction extends BaseAction {
 
     }
 
+    @Method(desc = "读取Control或Trigger日志信息",
+            logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制" +
+                    "2.验证当前用户对应的工程是否已不存在" +
+                    "3.根据工程编号获取工程信息" +
+                    "4.判断工程是否已部署" +
+                    "5.获取当前日期" +
+                    "6.获取control或trigger日志路径" +
+                    "7.日志读取行数最大为1000行" +
+                    "8.读取control或trigger日志信息")
+    @Param(name = "etl_sys_cd", desc = "作业调度工程登记表主键ID", range = "新增工程时生成")
+    @Param(name = "readNum", desc = "查看日志行数", range = "最多显示1000行,大于0的正整数", valueIfNull = "100")
+    @Param(name = "isControl", desc = "是否读取Control日志", range = "使用（IsFlag代码项），0代表不是，1代表是")
+    @Return(desc = "返回内容描述", range = "取值范围")
+    public String readControlOrTriggerLog(String etl_sys_cd, Integer readNum, String isControl) {
+        // 1.数据可访问权限处理方式，通过user_id进行权限控制
+        // 2.验证当前用户对应的工程是否已不存在
+        if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
+            throw new BusinessException("当前用户对应的工程是否已不存在！");
+        }
+        // 3.根据工程编号获取工程信息
+        Map<String, Object> etlSys = searchEtlSysById(etl_sys_cd);
+        // 4.判断工程是否已部署
+        isETLDeploy(etlSys);
+        // 5.获取当前日期
+        String sysDate = DateUtil.getSysDate();
+        // 6.获取control或trigger日志路径
+        String logDir = etlSys.get("serv_file_path") + File.separator + etl_sys_cd + File.separator;
+        if (IsFlag.Shi == IsFlag.ofEnumByCode(isControl)) {
+            // CONTROL日志目录
+            logDir = logDir + "control" + File.separator + sysDate.substring(0, 4) + File.separator +
+                    sysDate.substring(4, 6) + File.separator + sysDate.substring(6, 8) + "controlOut.log";
+        } else {
+            // TRIGGER日志目录
+            logDir = logDir + "trigger" + File.separator + sysDate.substring(0, 4) + File.separator +
+                    sysDate.substring(4, 6) + File.separator + sysDate.substring(6, 8) + "triggerOut.log";
+        }
+        // 7.日志读取行数最大为1000行
+        if (readNum > 1000) {
+            readNum = 1000;
+        }
+        // 8.读取control或trigger日志信息
+        String readETLLog = ReadLog.readAgentLog(logDir, etlSys.get("serv_file_path").toString(),
+                etlSys.get("etl_serv_port").toString(), etlSys.get("user_name").toString(),
+                etlSys.get("user_pwd").toString(), readNum);
+        return readETLLog;
+    }
 
 }
