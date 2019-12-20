@@ -10,7 +10,6 @@ import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
 import fd.ng.web.util.RequestUtil;
 import fd.ng.web.util.ResponseUtil;
-import hrds.b.biz.agent.tools.LogReader;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.AgentType;
 import hrds.commons.codes.IsFlag;
@@ -18,6 +17,7 @@ import hrds.commons.entity.*;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.DboExecute;
+import hrds.commons.utils.ReadLog;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -554,7 +554,7 @@ public class AgentListAction extends BaseAction {
 		}
 
 		//3、调用方法获取日志,目前工具类不存在
-		String taskLog = LogReader.readAgentLog(logDir, agentIP, agentPort, userName,
+		String taskLog = ReadLog.readAgentLog(logDir, agentIP, agentPort, userName,
 				passWord, readNum);
 		if (StringUtil.isBlank(taskLog)) {
 			taskLog = "未获取到日志";
