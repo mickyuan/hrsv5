@@ -18,7 +18,6 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.OptionalLong;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -270,6 +269,8 @@ public class AgentListActionTest extends WebBaseTestCase {
 			ftpCollect.setIs_sendok(IsFlag.Shi.getCode());
 			ftpCollect.setIs_unzip(IsFlag.Shi.getCode());
 			ftpCollect.setAgent_id(FTP_AGENT_ID);
+			ftpCollect.setIs_read_realtime(IsFlag.Shi.getCode());
+			ftpCollect.setRealtime_interval(10L);
 
 			ftps.add(ftpCollect);
 		}
@@ -301,6 +302,7 @@ public class AgentListActionTest extends WebBaseTestCase {
 		tableInfo.setIs_md5(IsFlag.Shi.getCode());
 		tableInfo.setIs_register(IsFlag.Shi.getCode());
 		tableInfo.setTable_id(TABLE_ID);
+		tableInfo.setIs_parallel(IsFlag.Fou.getCode());
 		//3-1-2、构建table_column(表对应字段)测试数据
 		List<Table_column> tableColumns = new ArrayList<>();
 		for(int i = 0; i < 10; i++){
@@ -333,6 +335,7 @@ public class AgentListActionTest extends WebBaseTestCase {
 			fileSource.setIs_other(IsFlag.Fou.getCode());
 			fileSource.setIs_text(IsFlag.Fou.getCode());
 			fileSource.setIs_video(IsFlag.Fou.getCode());
+			fileSource.setIs_compress(IsFlag.Fou.getCode());
 
 			fileSources.add(fileSource);
 		}
@@ -676,8 +679,8 @@ public class AgentListActionTest extends WebBaseTestCase {
 		try(DatabaseWrapper db = new DatabaseWrapper()){
 			//正确数据访问1：
 			//1、删除前查询数据库，确认预期删除的数据存在
-			OptionalLong before = SqlOperator.queryNumber(db, "select count(1) from object_collect where odc_id = ?", 2001L);
-			assertThat("删除操作前，object_collect表中的确存在这样一条数据", before.orElse(Long.MIN_VALUE), is(1L));
+			long before = SqlOperator.queryNumber(db, "select count(1) from object_collect where odc_id = ?", 2001L).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("删除操作前，object_collect表中的确存在这样一条数据", before, is(1L));
 
 			//2、构造正确的collectSetId，http请求逻辑处理方法，删除数据,得到响应，判断删除是否成功
 			String rightString = new HttpClient()
@@ -688,8 +691,8 @@ public class AgentListActionTest extends WebBaseTestCase {
 			assertThat(rightResult.isSuccess(), is(true));
 
 			//3、删除后，确认数据是否被真正删除
-			OptionalLong after = SqlOperator.queryNumber(db, "select count(1) from object_collect where odc_id = ?", 2001L);
-			assertThat("删除操作后，object_collect表中这样一条数据没有了", after.orElse(Long.MIN_VALUE), is(0L));
+			long after = SqlOperator.queryNumber(db, "select count(1) from object_collect where odc_id = ?", 2001L).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("删除操作后，object_collect表中这样一条数据没有了", after, is(0L));
 
 			//错误的数据访问1：构造错误的collectSetId，断言响应是否失败
 			long wrongCollectSetId = 2003L;
@@ -721,8 +724,8 @@ public class AgentListActionTest extends WebBaseTestCase {
 		try(DatabaseWrapper db = new DatabaseWrapper()){
 			//正确数据访问1
 			//1、删除前查询数据库，确认预期删除的数据存在
-			OptionalLong before = SqlOperator.queryNumber(db, "select count(1) from ftp_collect where ftp_id = ?", 3001L);
-			assertThat("删除操作前，ftp_collect表中的确存在这样一条数据", before.orElse(Long.MIN_VALUE), is(1L));
+			long before = SqlOperator.queryNumber(db, "select count(1) from ftp_collect where ftp_id = ?", 3001L).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("删除操作前，ftp_collect表中的确存在这样一条数据", before, is(1L));
 
 			//2、构造正确的collectSetId，http请求逻辑处理方法，删除数据,得到响应，判断删除是否成功
 			String bodyString = new HttpClient()
@@ -733,8 +736,8 @@ public class AgentListActionTest extends WebBaseTestCase {
 			assertThat(ar.isSuccess(), is(true));
 
 			//3、删除后，确认数据是否被真正删除
-			OptionalLong after = SqlOperator.queryNumber(db, "select count(1) from ftp_collect where ftp_id = ?", 3001L);
-			assertThat("删除操作后，ftp_collect表中这样一条数据没有了", after.orElse(Long.MIN_VALUE), is(0L));
+			long after = SqlOperator.queryNumber(db, "select count(1) from ftp_collect where ftp_id = ?", 3001L).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("删除操作后，ftp_collect表中这样一条数据没有了", after, is(0L));
 
 			//错误数据访问1：构造错误的collectSetId，断言响应是否失败
 			long wrongCollectSetId = 2003L;
@@ -784,14 +787,14 @@ public class AgentListActionTest extends WebBaseTestCase {
 			assertThat(ar.isSuccess(), is(true));
 
 			//3、删除后，确认数据是否被真正删除
-			OptionalLong firAfter = SqlOperator.queryNumber(db, "select count(1) from database_set where database_id = ?", 1002L);
-			assertThat("删除操作后，database_set表中指定数据没有了", firAfter.orElse(Long.MIN_VALUE), is(0L));
+			long firAfter = SqlOperator.queryNumber(db, "select count(1) from database_set where database_id = ?", 1002L).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("删除操作后，database_set表中指定数据没有了", firAfter, is(0L));
 
-			OptionalLong secAfter = SqlOperator.queryNumber(db, "select count(1) from table_column where table_id = ?", TABLE_ID);
-			assertThat("删除操作后，table_column表中指定数据没有了", secAfter.orElse(Long.MIN_VALUE), is(0L));
+			long secAfter = SqlOperator.queryNumber(db, "select count(1) from table_column where table_id = ?", TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("删除操作后，table_column表中指定数据没有了", secAfter, is(0L));
 
-			OptionalLong thiAfter = SqlOperator.queryNumber(db, "select count(1) from table_info where table_id = ?", TABLE_ID);
-			assertThat("删除操作后，table_info表中指定数据没有了", thiAfter.orElse(Long.MIN_VALUE), is(0L));
+			long thiAfter = SqlOperator.queryNumber(db, "select count(1) from table_info where table_id = ?", TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("删除操作后，table_info表中指定数据没有了", thiAfter, is(0L));
 
 			//错误数据访问1：构造错误的collectSetId，断言响应是否失败
 			long wrongCollectSetId = 2003L;
@@ -916,6 +919,10 @@ public class AgentListActionTest extends WebBaseTestCase {
 	 * */
 	@Test
 	public void getDBAndDFTaskBySourceId() {
+		try (DatabaseWrapper db = new DatabaseWrapper()) {
+			SqlOperator.execute(db, "update " + Database_set.TableName + " set is_sendok = ?", IsFlag.Shi.getCode());
+			SqlOperator.commitTransaction(db);
+		}
 		//正确的数据访问1：使用正确的sourceId,http请求访问被测试方法,得到响应，判断结果是否正确
 		String databaseSetString = new HttpClient()
 				.addData("sourceId", SOURCE_ID)

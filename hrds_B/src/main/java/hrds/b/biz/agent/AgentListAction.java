@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URLEncoder;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @DocClass(desc = "获取数据源Agent列表", author = "WangZhengcheng")
@@ -281,8 +282,8 @@ public class AgentListAction extends BaseAction {
 	@Method(desc = "根据ID删除数据库直连采集任务", logicStep = "" +
 			"1、根据collectSetId和user_id判断是否有这样一条数据" +
 			"2、在数据库设置表中删除对应的记录" +
-			"3、在表对应字段表中找到对应的记录并删除" +
-			"4、在数据库对应表删除对应的记录")
+			"3、删除该数据库采集任务中所有的表信息和列信息(table_id做外键和column_id做外键的相关表的记录全部作为脏数据删除)" +
+			"4、在数据库采集对应表中删除相应的数据")
 	@Param(name = "collectSetId", desc = "源系统数据库设置表ID", range = "不为空")
 	//TODO IOnWayCtrl.checkExistsTask()暂时先不管
 	public void deleteDBTask(long collectSetId){
@@ -301,19 +302,16 @@ public class AgentListAction extends BaseAction {
 		//2、在数据库设置表中删除对应的记录，有且只有一条
 		DboExecute.deletesOrThrow("删除数据库直连采集任务异常!", "delete from "+
 				Database_set.TableName +" where database_id = ? ", collectSetId);
-		//3、在表对应字段表中找到对应的记录并删除，可能会有多条
-		int secNum = Dbo.execute("delete from "+ Table_column.TableName +" tc where EXISTS" +
-				"(select 1 from "+ Table_info.TableName +" ti where database_id = ? " +
-				"and tc.table_id = ti.table_id)", collectSetId);
-		if (secNum == 0) {
-			throw new BusinessException("删除数据库直连采集任务异常!");
+		//3、删除该数据库采集任务中所有的表信息和列信息(table_id做外键和column_id做外键的相关表的记录全部作为脏数据删除)
+		List<Object> tableIds = Dbo.queryOneColumnList("select table_id from " + Table_info.TableName +
+				" where database_id = ?", collectSetId);
+		if(!tableIds.isEmpty()){
+			for(Object tableId : tableIds){
+				deleteDirtyDataOfTb((long) tableId);
+			}
 		}
-		//4、在数据库对应表删除对应的记录,可能会有多条
-		int thiExecute = Dbo.execute("delete from "+ Table_info.TableName +
-						" where database_id = ?", collectSetId);
-		if (thiExecute == 0) {
-			throw new BusinessException("删除数据库直连采集任务异常!");
-		}
+		//4、在数据库采集对应表中删除相应的数据，删除的数据可能是1-N
+		Dbo.execute("delete from " + Table_info.TableName + " where database_id = ? ", collectSetId);
 	}
 
 	@Method(desc = "根据ID删除DB文件采集任务数据", logicStep = "" +
@@ -567,6 +565,52 @@ public class AgentListAction extends BaseAction {
 		map.put("filePath", logDir);
 		//5、返回map
 		return map;
+	}
+
+	@Method(desc = "删除tableId为外键的表脏数据", logicStep = "" +
+			"1、删除column_id做外键的的表脏数据" +
+			"2、删除旧的tableId在采集字段表中做外键的数据，不关注删除的数目" +
+			"3、删除旧的tableId在数据抽取定义表做外键的数据，不关注删除的数目" +
+			"4、删除旧的tableId在存储信息表做外键的数据，不关注删除的数目，同时，其对应的存储目的地关联关系也要删除" +
+			"5、删除旧的tableId在列合并表做外键的数据，不关注删除的数目" +
+			"6、删除旧的tableId在表清洗规则表做外键的数据，不关注删除的数目")
+	@Param(name = "tableId", desc = "数据库对应表ID，" +
+			"数据抽取定义表、表存储信息表、列合并表、表清洗规则表、表对应字段表表外键", range = "不为空")
+	private void deleteDirtyDataOfTb(long tableId){
+		//1、删除column_id做外键的的表脏数据
+		List<Object> columnIds = Dbo.queryOneColumnList("select column_id from " + Table_column.TableName + " WHERE table_id = ?", tableId);
+		if(!columnIds.isEmpty()){
+			for(Object columnId : columnIds){
+				deleteDirtyDataOfCol((long) columnId);
+			}
+		}
+		//2、删除旧的tableId在采集字段表中做外键的数据，不关注删除的数目
+		Dbo.execute(" DELETE FROM "+ Table_column.TableName +" WHERE table_id = ? ", tableId);
+		//3、删除旧的tableId在数据抽取定义表做外键的数据，不关注删除的数目
+		Dbo.execute(" DELETE FROM "+ Data_extraction_def.TableName +" WHERE table_id = ? ", tableId);
+		//4、删除旧的tableId在存储信息表做外键的数据，不关注删除的数目，同时，其对应的存储目的地关联关系也要删除
+		Dbo.execute(" DELETE FROM " + Data_relation_table.TableName + " WHERE storage_id = " +
+				"(SELECT storage_id FROM " + Table_storage_info.TableName + " WHERE table_id = ?) ", tableId);
+		Dbo.execute(" DELETE FROM "+ Table_storage_info.TableName +" WHERE table_id = ? ", tableId);
+		//5、删除旧的tableId在列合并表做外键的数据，不关注删除的数目
+		Dbo.execute(" DELETE FROM "+ Column_merge.TableName +" WHERE table_id = ? ", tableId);
+		//6、删除旧的tableId在表清洗规则表做外键的数据，不关注删除的数目
+		Dbo.execute(" DELETE FROM "+ Table_clean.TableName +" WHERE table_id = ? ", tableId);
+	}
+
+	@Method(desc = "删除columnId为外键的表脏数据", logicStep = "" +
+			"1、删除旧的columnId在字段存储信息表中做外键的数据，不关注删除的数目" +
+			"2、删除旧的columnId在列清洗信息表做外键的数据，不关注删除的数目" +
+			"3、删除旧的columnId在列拆分信息表做外键的数据，不关注删除的数目")
+	@Param(name = "columnId", desc = "表对应字段表ID，" +
+			"字段存储信息表、列清洗信息表、列拆分信息表外键", range = "不为空")
+	private void deleteDirtyDataOfCol(long columnId){
+		//1、删除旧的columnId在字段存储信息表中做外键的数据，不关注删除的数目
+		Dbo.execute("delete from " + Column_storage_info.TableName + " where column_id = ?", columnId);
+		//2、删除旧的columnId在列清洗信息表做外键的数据，不关注删除的数目
+		Dbo.execute("delete from " + Column_clean.TableName + " where column_id = ?", columnId);
+		//3、删除旧的columnId在列拆分信息表做外键的数据，不关注删除的数目
+		Dbo.execute("delete from " + Column_split.TableName + " where column_id = ?", columnId);
 	}
 
 }
