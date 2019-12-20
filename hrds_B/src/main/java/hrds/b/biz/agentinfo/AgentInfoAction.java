@@ -157,7 +157,7 @@ public class AgentInfoAction extends BaseAction {
     }
 
     @Method(desc = "更新agent信息并返回更新后的最新agent类型对应agent信息",
-            logicStep = "1.数据可访问权限处理方式，通过关联agent_id与user_id检查" +
+            logicStep = "1.数据可访问权限处理方式，该方法不需要权限控制" +
                     "2.字段合法性验证" +
                     "3.检查数据源是否还存在以及判断数据源下相同的IP地址中是否包含相同的端口" +
                     "4.创建agent_info实体对象，同时封装值" +
@@ -173,12 +173,7 @@ public class AgentInfoAction extends BaseAction {
     public void updateAgent(Long agent_id, String agent_name, String agent_type,
                             String agent_ip, String agent_port, long source_id,
                             long user_id) {
-        // 1.数据可访问权限处理方式，通过关联agent_id与user_id检查
-        if (Dbo.queryNumber("select count(1) from " + Agent_info.TableName + " where agent_id=?" +
-                " and user_id=?", agent_id, getUserId()).orElseThrow(() ->
-                new BusinessException("sql查询错误")) == 0) {
-            throw new BusinessException("数据权限校验失败，数据不可访问！");
-        }
+        // 1.数据可访问权限处理方式,该方法不需要权限控制
         // 2.字段合法性验证
         fieldLegalityValidation(agent_name, agent_type, agent_ip, agent_port);
         // 3.检查数据源是否还存在以及判断数据源下相同的IP地址中是否包含相同的端口
