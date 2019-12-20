@@ -7,7 +7,7 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.agent.job.biz.bean.SourceDataConfBean;
-import hrds.agent.trans.biz.ConnetionTool;
+import hrds.agent.trans.biz.ConnectionTool;
 import hrds.commons.base.AgentBaseAction;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Database_set;
@@ -161,7 +161,7 @@ public class DatabaseInfo extends AgentBaseAction {
 		dbInfo.setUser_name(dbSet.getUser_name());
 		dbInfo.setDatabase_pad(dbSet.getDatabase_pad());
 		dbInfo.setDatabase_type(dbSet.getDatabase_type());
-		try (DatabaseWrapper db = ConnetionTool.getDBWrapper(dbInfo)) {
+		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(dbInfo)) {
 			//2、执行自定义抽取SQL，获取执行结果集
 			ResultSet rs = db.queryGetResultSet(custSQL);
 			List<Table_column> tableColumns = new ArrayList<>();

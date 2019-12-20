@@ -15,7 +15,7 @@ import hrds.commons.exception.AppSystemException;
 import java.util.Map;
 
 @DocClass(desc = "数据库直连采集获取数据库连接", author = "WangZhengcheng", createdate = "2019/10/28 14:26")
-public class ConnetionTool {
+public class ConnectionTool {
 
 	@Method(desc = "根据数据库配置信息获取数据库连接", logicStep = "" +
 			"1、将SourceDataConfBean对象中的内容封装到dbInfo中" +

@@ -32,7 +32,7 @@ public class TestConnection extends AgentBaseAction {
 		dbInfo.setDatabase_pad(dbSet.getDatabase_pad());
 		dbInfo.setDatabase_type(dbSet.getDatabase_type());
 		//2、测试连接
-		try (DatabaseWrapper db = ConnetionTool.getDBWrapper(dbInfo)) {
+		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(dbInfo)) {
 			return db.isConnected();
 		}
 	}
@@ -54,7 +54,7 @@ public class TestConnection extends AgentBaseAction {
 		dbInfo.setDatabase_pad(dbSet.getDatabase_pad());
 		dbInfo.setDatabase_type(dbSet.getDatabase_type());
 		//2、创建DatabaseWrapper，并执行SQL语句
-		try (DatabaseWrapper db = ConnetionTool.getDBWrapper(dbInfo)) {
+		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(dbInfo)) {
 			//3、将并行抽取SQL中的占位符替换为0和1，类似于select * from XXX limit 0 offset 1
 			pageSql = pageSql.replace(Constant.PARALLEL_SQL_START, "0").replace(Constant.PARALLEL_SQL_END, "1");
 			//4、如果根据SQL获取到了数据，返回true,否则返回false
@@ -86,7 +86,7 @@ public class TestConnection extends AgentBaseAction {
 		dbInfo.setDatabase_pad(dbSet.getDatabase_pad());
 		dbInfo.setDatabase_type(dbSet.getDatabase_type());
 		//2、创建DatabaseWrapper，并执行SQL语句
-		try (DatabaseWrapper db = ConnetionTool.getDBWrapper(dbInfo)) {
+		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(dbInfo)) {
 			//3、如果根据SQL获取到了数据，返回获取到的数据量
 			String countSQL = "select count(1) as count from " + tableName;
 			ResultSet resultSet = db.queryGetResultSet(countSQL);
