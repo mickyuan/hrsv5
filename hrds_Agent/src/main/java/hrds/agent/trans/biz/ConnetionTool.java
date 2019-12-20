@@ -12,6 +12,8 @@ import hrds.agent.job.biz.bean.SourceDataConfBean;
 import hrds.commons.codes.DatabaseType;
 import hrds.commons.exception.AppSystemException;
 
+import java.util.Map;
+
 @DocClass(desc = "数据库直连采集获取数据库连接", author = "WangZhengcheng", createdate = "2019/10/28 14:26")
 public class ConnetionTool {
 
@@ -31,39 +33,65 @@ public class ConnetionTool {
 		dbInfo.setPassword(dbConfigBean.getDatabase_pad());
 		dbInfo.setWay(ConnWay.JDBC);
 		//2、获取数据库类型
-		DatabaseType typeConstant = DatabaseType.ofEnumByCode(dbConfigBean.getDatabase_type());
-		if (typeConstant == DatabaseType.MYSQL) {
-			dbInfo.setDbtype(Dbtype.MYSQL);
-		} else if (typeConstant == DatabaseType.Oracle9i) {
-			throw new AppSystemException("系统不支持Oracle9i及以下");
-		} else if (typeConstant == DatabaseType.Oracle10g) {
-			dbInfo.setDbtype(Dbtype.ORACLE);
-		} else if (typeConstant == DatabaseType.SqlServer2000) {
-			dbInfo.setDbtype(Dbtype.SQLSERVER);
-		} else if (typeConstant == DatabaseType.SqlServer2005) {
-			dbInfo.setDbtype(Dbtype.SQLSERVER);
-		} else if (typeConstant == DatabaseType.DB2) {
-			//TODO 使用db2v1还是db2v2
-		} else if (typeConstant == DatabaseType.SybaseASE125) {
-			dbInfo.setDbtype(Dbtype.SYBASE);
-		} else if (typeConstant == DatabaseType.Informatic) {
-			//Informatic
-		} else if (typeConstant == DatabaseType.H2) {
-			//H2
-		} else if (typeConstant == DatabaseType.ApacheDerby) {
-			//ApacheDerBy
-		} else if (typeConstant == DatabaseType.Postgresql) {
-			dbInfo.setDbtype(Dbtype.POSTGRESQL);
-		} else if (typeConstant == DatabaseType.GBase) {
-			dbInfo.setDbtype(Dbtype.GBASE);
-		} else if (typeConstant == DatabaseType.TeraData) {
-			dbInfo.setDbtype(Dbtype.TERADATA);
-		} else {
-			throw new AppSystemException("系统不支持该数据库类型");
-		}
+		dbInfo.setDbtype(getDbType(dbConfigBean.getDatabase_type()));
 		dbInfo.setShow_conn_time(true);
 		dbInfo.setShow_sql(true);
 		//3、根据数据库类型获取对应数据库的数据库连接
 		return new DatabaseWrapper.Builder().dbconf(dbInfo).create();
+	}
+
+	public static DatabaseWrapper getDBWrapper(Map<String, String> dbConfig) {
+		//1、将SourceDataConfBean对象中的内容封装到dbInfo中
+		DbinfosConf.Dbinfo dbInfo = new DbinfosConf.Dbinfo();
+		dbInfo.setName(DbinfosConf.DEFAULT_DBNAME);
+		dbInfo.setDriver(dbConfig.get("database_drive"));
+		dbInfo.setUrl(dbConfig.get("jdbc_url"));
+		dbInfo.setUsername(dbConfig.get("user_name"));
+		dbInfo.setPassword(dbConfig.get("database_pad"));
+		dbInfo.setWay(ConnWay.JDBC);
+		//2、获取数据库类型
+		dbInfo.setDbtype(getDbType(dbConfig.get("database_type")));
+		dbInfo.setShow_conn_time(true);
+		dbInfo.setShow_sql(true);
+		//3、根据数据库类型获取对应数据库的数据库连接
+		return new DatabaseWrapper.Builder().dbconf(dbInfo).create();
+	}
+
+	private static Dbtype getDbType(String database_type) {
+		//获取数据库类型
+		DatabaseType typeConstant = DatabaseType.ofEnumByCode(database_type);
+		if (typeConstant == DatabaseType.MYSQL) {
+			return Dbtype.MYSQL;
+		} else if (typeConstant == DatabaseType.Oracle9i) {
+			throw new AppSystemException("系统不支持Oracle9i及以下");
+		} else if (typeConstant == DatabaseType.Oracle10g) {
+			return Dbtype.ORACLE;
+		} else if (typeConstant == DatabaseType.SqlServer2000) {
+			return Dbtype.SQLSERVER;
+		} else if (typeConstant == DatabaseType.SqlServer2005) {
+			return Dbtype.SQLSERVER;
+		} else if (typeConstant == DatabaseType.DB2) {
+			//TODO 使用db2v1还是db2v2
+			return Dbtype.DB2V1;
+		} else if (typeConstant == DatabaseType.SybaseASE125) {
+			return Dbtype.SYBASE;
+		} else if (typeConstant == DatabaseType.Informatic) {
+			//Informatic
+			throw new AppSystemException("系统不支持该数据库类型");
+		} else if (typeConstant == DatabaseType.H2) {
+			//H2
+			throw new AppSystemException("系统不支持该数据库类型");
+		} else if (typeConstant == DatabaseType.ApacheDerby) {
+			//ApacheDerBy
+			throw new AppSystemException("系统不支持该数据库类型");
+		} else if (typeConstant == DatabaseType.Postgresql) {
+			return Dbtype.POSTGRESQL;
+		} else if (typeConstant == DatabaseType.GBase) {
+			return Dbtype.GBASE;
+		} else if (typeConstant == DatabaseType.TeraData) {
+			return Dbtype.TERADATA;
+		} else {
+			throw new AppSystemException("系统不支持该数据库类型");
+		}
 	}
 }
