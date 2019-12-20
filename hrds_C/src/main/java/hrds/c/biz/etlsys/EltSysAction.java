@@ -1,5 +1,7 @@
 package hrds.c.biz.etlsys;
 
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.Session;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
@@ -8,6 +10,8 @@ import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
+import fd.ng.web.util.RequestUtil;
+import hrds.c.biz.util.DownloadLogUtil;
 import hrds.c.biz.util.ETLAgentDeployment;
 import hrds.c.biz.util.ETLJobUtil;
 import hrds.commons.base.BaseAction;
@@ -17,14 +21,18 @@ import hrds.commons.codes.Main_Server_Sync;
 import hrds.commons.codes.Pro_Type;
 import hrds.commons.entity.Etl_resource;
 import hrds.commons.entity.Etl_sys;
+import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.PropertyParaValue;
 import hrds.commons.utils.ReadLog;
+import hrds.commons.utils.jsch.SCPFileSender;
+import hrds.commons.utils.jsch.SFTPChannel;
 import org.apache.commons.lang.StringUtils;
 
-import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -58,8 +66,8 @@ public class EltSysAction extends BaseAction {
         }
         // 3.根据工程编号查询工程信息
         Map<String, Object> etlSys = Dbo.queryOneObject("select etl_sys_cd,etl_sys_name,comments," +
-                "etl_serv_ip,user_name,user_pwd,serv_file_path,remarks from " + Etl_sys.TableName +
-                " where user_id=? and etl_sys_cd=? order by etl_sys_cd", getUserId(), etl_sys_cd);
+                "etl_serv_ip,etl_serv_port,user_name,user_pwd,serv_file_path,remarks from " + Etl_sys.TableName
+                + " where user_id=? and etl_sys_cd=? order by etl_sys_cd", getUserId(), etl_sys_cd);
         // 4.判断remarks是否为空，不为空则分割获取部署工程的redis ip与port并封装数据返回
         String remarks = String.valueOf(etlSys.get("remarks"));
         if (StringUtils.isNotBlank(remarks)) {
@@ -146,7 +154,7 @@ public class EltSysAction extends BaseAction {
         // 1.数据可访问权限处理方式，该方法不需要权限控制
         // 2.验证当前用户对应的工程是否已不存在
         if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
-            throw new BusinessException("当前用户对应的工程是否已不存在！");
+            throw new BusinessException("当前用户对应的工程已不存在！");
         }
         // 3.更新保存工程
         DboExecute.updatesOrThrow("更新保存失败!", "update " + Etl_sys.TableName +
@@ -172,7 +180,7 @@ public class EltSysAction extends BaseAction {
         // 1.数据可访问权限处理方式，通过user_id进行权限控制
         // 2.验证当前用户对应的工程是否已不存在
         if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
-            throw new BusinessException("当前用户对应的工程是否已不存在！");
+            throw new BusinessException("当前用户对应的工程已不存在！");
         }
         // 3.获取系统参数
         String redisIP = PropertyParaValue.getString("redis_ip", "172.168.0.61");
@@ -209,7 +217,7 @@ public class EltSysAction extends BaseAction {
         // 1.数据可访问权限处理方式，通过user_id进行权限控制
         // 2.验证当前用户对应的工程是否已不存在
         if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
-            throw new BusinessException("当前用户对应的工程是否已不存在！");
+            throw new BusinessException("当前用户对应的工程已不存在！");
         }
         // 3.根据工程编号获取工程信息
         Map<String, Object> etlSys = searchEtlSysById(etl_sys_cd);
@@ -275,7 +283,7 @@ public class EltSysAction extends BaseAction {
         // 1.数据可访问权限处理方式，通过user_id进行权限控制
         // 2.验证当前用户对应的工程是否已不存在
         if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
-            throw new BusinessException("当前用户对应的工程是否已不存在！");
+            throw new BusinessException("当前用户对应的工程已不存在！");
         }
         // 3.根据工程编号获取工程信息
         Map<String, Object> etlSys = searchEtlSysById(etl_sys_cd);
@@ -307,7 +315,7 @@ public class EltSysAction extends BaseAction {
         // 1.数据可访问权限处理方式，通过user_id进行权限控制
         // 2.验证当前用户对应的工程是否已不存在
         if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
-            throw new BusinessException("当前用户对应的工程是否已不存在！");
+            throw new BusinessException("当前用户对应的工程已不存在！");
         }
         // 3.根据工程编号获取工程信息
         Map<String, Object> etlSys = searchEtlSysById(etl_sys_cd);
@@ -316,25 +324,95 @@ public class EltSysAction extends BaseAction {
         // 5.获取当前日期
         String sysDate = DateUtil.getSysDate();
         // 6.获取control或trigger日志路径
-        String logDir = etlSys.get("serv_file_path") + File.separator + etl_sys_cd + File.separator;
+        String logDir = etlSys.get("serv_file_path") + "/" + etl_sys_cd + "/";
         if (IsFlag.Shi == IsFlag.ofEnumByCode(isControl)) {
             // CONTROL日志目录
-            logDir = logDir + "control" + File.separator + sysDate.substring(0, 4) + File.separator +
-                    sysDate.substring(4, 6) + File.separator + sysDate.substring(6, 8) + "controlOut.log";
+            logDir = logDir + "control" + "/" + sysDate.substring(0, 4) + "/" +
+                    sysDate.substring(0, 6) + "/" + sysDate + "controlOut.log";
         } else {
             // TRIGGER日志目录
-            logDir = logDir + "trigger" + File.separator + sysDate.substring(0, 4) + File.separator +
-                    sysDate.substring(4, 6) + File.separator + sysDate.substring(6, 8) + "triggerOut.log";
+            logDir = logDir + "trigger" + "/" + sysDate.substring(0, 4) + "/" +
+                    sysDate.substring(0, 6) + "/" + sysDate + "triggerOut.log";
         }
         // 7.日志读取行数最大为1000行
         if (readNum > 1000) {
             readNum = 1000;
         }
         // 8.读取control或trigger日志信息
-        String readETLLog = ReadLog.readAgentLog(logDir, etlSys.get("serv_file_path").toString(),
+        return ReadLog.readAgentLog(logDir, etlSys.get("serv_file_path").toString(),
                 etlSys.get("etl_serv_port").toString(), etlSys.get("user_name").toString(),
                 etlSys.get("user_pwd").toString(), readNum);
-        return readETLLog;
+    }
+
+    @Method(desc = "下载Control或Trigger日志", logicStep = "方法步骤")
+    @Param(name = "etl_sys_cd", desc = "作业调度工程登记表主键ID", range = "新增工程时生成")
+    @Param(name = "curr_bath_date", desc = "批量日期", range = "yyyy-MM-dd格式的年月日，如：2019-12-19")
+    @Param(name = "isControl", desc = "是否读取Control日志", range = "使用（IsFlag代码项），0代表不是，1代表是")
+    public String downloadControlOrTriggerLog(String etl_sys_cd, String curr_bath_date, String isControl) {
+       // fixme 未完成，上传下载默认目录不清楚，原来是在WEB-INF下建一个upload目录
+        try {
+            // 1.数据可访问权限处理方式，通过user_id进行权限控制
+            // 2.验证当前用户对应的工程是否已不存在
+            if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
+                throw new BusinessException("当前用户对应的工程已不存在！");
+            }
+            // 3.根据工程编号获取工程信息
+            Map<String, Object> etlSys = searchEtlSysById(etl_sys_cd);
+            // 4.判断工程是否已部署
+            isETLDeploy(etlSys);
+            // 5.修改批量日期格式
+            curr_bath_date = curr_bath_date.replaceAll("-", "");
+            // 6.获取control或trigger日志路径
+            String logDir = etlSys.get("serv_file_path") + "/" + etl_sys_cd + "/";
+            // 7.获取压缩日志命令
+            String compressCommand = "tar -zvcPf " + logDir + curr_bath_date;
+            // 8.判断是control日志还是trigger日志,获取日志目录以及压缩日志目录命令
+            if (IsFlag.Shi == IsFlag.ofEnumByCode(isControl)) {
+                // CONTROL日志目录
+                logDir = logDir + "control" + "/" + curr_bath_date.substring(0, 4) + "/" +
+                        curr_bath_date.substring(0, 6) + "/" + curr_bath_date + "_ControlLog.tar.gz";
+                // 压缩CONTROL日志命令
+                compressCommand = compressCommand + "_ControlLog.tar.gz" + " " + logDir +
+                        curr_bath_date + "*.log";
+            } else {
+                // TRIGGER日志目录
+                logDir = logDir + "trigger" + "/" + curr_bath_date.substring(0, 4) + "/" +
+                        curr_bath_date.substring(0, 6) + "/" + curr_bath_date + "_TriggerLog.tar.gz";
+                // 压缩TRIGGER日志命令
+                compressCommand = compressCommand + "_TriggerLog.tar.gz" + " " + logDir + curr_bath_date + "*.log";
+            }
+            // 9.获取CONTROL或TRIGGER日志名称
+            String fileName = curr_bath_date.replaceAll("-", "");
+            if (IsFlag.Shi == IsFlag.ofEnumByCode(isControl)) {
+                // CONTROL日志文件名称
+                fileName = fileName + "_ControlLog.tar.gz";
+            } else {
+                // TRIGGER日志文件名称
+                fileName = fileName + "_TriggerLog.tar.gz";
+            }
+            Map<String, String> sftpDetails = new HashMap<>();
+            // 10.设置主机ip，端口，用户名，密码
+            sftpDetails.put(SCPFileSender.HOST, etlSys.get("etl_serv_ip").toString());
+            sftpDetails.put(SCPFileSender.USERNAME, etlSys.get("user_name").toString());
+            sftpDetails.put(SCPFileSender.PASSWORD, etlSys.get("user_pwd").toString());
+            sftpDetails.put(SCPFileSender.PORT, etlSys.get("etl_serv_port").toString());
+            // 11.与远端服务器进行交互，建立连接，发送数据到远端并且接收远端发来的数据
+            Session shellSession = SFTPChannel.getJSchSession(sftpDetails, 0);
+            // 12.执行压缩日志命令
+            SFTPChannel.execCommandByJSch(shellSession, compressCommand);
+            // 13.获取文件下载路径
+            String localPath = RequestUtil.getRequest().getSession().getServletContext().getRealPath("download");
+            // 14.从服务器下载文件到本地
+            DownloadLogUtil.downloadLogFile(logDir, localPath, sftpDetails);
+            // 15.下载完删除压缩包
+            DownloadLogUtil.deleteLogFileBySFTP(logDir, sftpDetails);
+            // 16.返回下载文件名
+            return fileName;
+        } catch (JSchException e) {
+            throw new BusinessException("与远端服务器进行交互，建立连接失败！");
+        } catch (IOException e) {
+            throw new AppSystemException(e);
+        }
     }
 
 }
