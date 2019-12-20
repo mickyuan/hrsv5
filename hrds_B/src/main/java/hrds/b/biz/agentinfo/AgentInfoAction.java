@@ -268,7 +268,7 @@ public class AgentInfoAction extends BaseAction {
     }
 
     @Method(desc = "删除agent",
-            logicStep = "1.数据可访问权限处理方式，以下SQL关联user_id检查" +
+            logicStep = "1.数据可访问权限处理方式，该方法不需要权限控制" +
                     "2.删除前查询此agent是否已部署，已部署不能删除" +
                     "3.判断此数据源与agent下是否有任务，有任务不能删除" +
                     "4.删除agent")
@@ -276,9 +276,10 @@ public class AgentInfoAction extends BaseAction {
     @Param(name = "agent_id", desc = "agent_info表主键", range = "10位数字，新增agent时生成")
     @Param(name = "agent_type", desc = "agent类型", range = "使用agent类别（AgentType）")
     public void deleteAgent(long source_id, long agent_id, String agent_type) {
-        // 1.数据可访问权限处理方式，通过agent_id,agent_type,user_id关联检查
-        if (Dbo.queryNumber("select count(*) from " + Agent_info.TableName + " where agent_id=? " +
-                "and user_id=? and agent_type=?", agent_id, getUserId(), agent_type)
+        // 1.数据可访问权限处理方式，该方法不需要权限控制
+        if (Dbo.queryNumber("select count(*) from " + Agent_info.TableName + " t1 left join " +
+                Data_source.TableName + " t2 on t1.source_id=t2.source_id where t1.agent_id=? " +
+                " and t1.agent_type=? and t2.source_id=?", agent_id, agent_type, source_id)
                 .orElseThrow(() -> new BusinessException("sql查询错误！")) == 0) {
             throw new BusinessException("数据可访问权限校验失败，数据不可访问");
         }
