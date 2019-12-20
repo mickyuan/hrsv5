@@ -33,9 +33,8 @@ public class AgentInfoAction extends BaseAction {
                     "5.将封装不同类型agent信息的集合返回")
     @Param(name = "source_id", desc = "data_source表主键，source_relation_dep表外键",
             range = "10位数字，新增时自动生成")
-    @Param(name = "datasource_name", desc = "数据源名称", range = "不为空")
     @Return(desc = "存放封装不同类型agent信息的集合", range = "无限制")
-    public Map<String, Object> searchDatasourceAndAgentInfo(long source_id, String datasource_name) {
+    public Map<String, Object> searchDatasourceAndAgentInfo(long source_id) {
         // 1.数据可访问权限处理方式，通过user_id关联进行权限控制
         // 2.验证此数据源是否还存在
         isDatasourceExist(source_id);
@@ -75,6 +74,10 @@ public class AgentInfoAction extends BaseAction {
         asmSql.addParam(source_id);
         asmSql.addParam(AgentType.FTP.getCode());
         List<Map<String, Object>> ftpAgentList = Dbo.queryList(asmSql.sql(), asmSql.params());
+        //
+        Data_source data_source = Dbo.queryOneObject(Data_source.class, "select * from "
+                + Data_source.TableName + " where source_id=?", source_id).orElseThrow(() ->
+                new BusinessException("sql查询错误！"));
         // 4.创建存放agent信息的集合并封装不同类型agent信息
         Map<String, Object> map = new HashMap<>();
         map.put("sjkAgent", sjkAgentList);
@@ -82,7 +85,7 @@ public class AgentInfoAction extends BaseAction {
         map.put("fileSystemAgent", fileSystemAgentList);
         map.put("dxAgent", dxAgentList);
         map.put("ftpAgent", ftpAgentList);
-        map.put("datasource_name", datasource_name);
+        map.put("datasource_name", data_source.getDatasource_name());
         map.put("source_id", source_id);
         // 5.将封装不同类型agent信息的集合返回
         return map;
