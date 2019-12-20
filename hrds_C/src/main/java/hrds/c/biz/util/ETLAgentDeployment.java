@@ -121,12 +121,13 @@ public class ETLAgentDeployment {
         }
     }
 
-    @Method(desc = "启动Control", logicStep = "1.数据可访问权限处理方式，该方法不需要权限控制" +
-            "2.设置连接服务器属性信息" +
-            "3.与远端服务器进行交互，建立连接，发送数据到远端并且接收远端发来的数据" +
-            "4.启动CONTROL脚本命令" +
-            "5.执行命令启动CONTROL" +
-            "6.断开连接")
+    @Method(desc = "启动Control",
+            logicStep = "1.数据可访问权限处理方式，该方法不需要权限控制" +
+                    "2.设置连接服务器属性信息" +
+                    "3.与远端服务器进行交互，建立连接，发送数据到远端并且接收远端发来的数据" +
+                    "4.启动CONTROL脚本命令" +
+                    "5.执行命令启动CONTROL" +
+                    "6.断开连接")
     @Param(name = "batch_date", desc = "跑批日期", range = "yyyy-MM-dd格式的年月日")
     @Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
     @Param(name = "isResumeRun", desc = "是否续跑", range = "使用（IsFlag）代码项，1代表是，0代表否")
