@@ -93,6 +93,8 @@ public class CodesItem{
 	protected static final String dataExtractType=new String("DataExtractType");
 	/**清洗方式   */
 	protected static final String cleanType=new String("CleanType");
+	/**数据源类型   */
+	protected static final String dataSourceType=new String("DataSourceType");
 
 
 	public static final Map<String,Class> mapCat= new HashMap<String,Class>(100);
@@ -140,6 +142,7 @@ public class CodesItem{
 		mapCat.put(charSplitType,CharSplitType.class);
 		mapCat.put(dataExtractType,DataExtractType.class);
 		mapCat.put(cleanType,CleanType.class);
+		mapCat.put(dataSourceType,DataSourceType.class);
 	}
 
 

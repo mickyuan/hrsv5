@@ -1,4 +1,4 @@
---　系统的引用值个数:43
+--　系统的引用值个数:44
 --　本引用值的代码个数:2 -------i==1
 delete from code_info where ci_sp_class='55';
 INSERT INTO CODE_INFO  VALUES ('1', '55', '补齐方式', '前补齐', 'FillingType');
@@ -306,3 +306,13 @@ INSERT INTO CODE_INFO  VALUES ('4', '54', '清洗方式', '码值转换', 'Clean
 INSERT INTO CODE_INFO  VALUES ('5', '54', '清洗方式', '字符合并', 'CleanType');
 INSERT INTO CODE_INFO  VALUES ('6', '54', '清洗方式', '字符拆分', 'CleanType');
 INSERT INTO CODE_INFO  VALUES ('7', '54', '清洗方式', '字符trim', 'CleanType');
+--　本引用值的代码个数:8 -------i==44
+delete from code_info where ci_sp_class='63';
+INSERT INTO CODE_INFO  VALUES ('ISL', '63', '数据源类型', '贴源层_01', 'DataSourceType');
+INSERT INTO CODE_INFO  VALUES ('DCL', '63', '数据源类型', '贴源层', 'DataSourceType');
+INSERT INTO CODE_INFO  VALUES ('DPL', '63', '数据源类型', '加工层', 'DataSourceType');
+INSERT INTO CODE_INFO  VALUES ('DML', '63', '数据源类型', '集市层', 'DataSourceType');
+INSERT INTO CODE_INFO  VALUES ('SFL', '63', '数据源类型', '系统层', 'DataSourceType');
+INSERT INTO CODE_INFO  VALUES ('AML', '63', '数据源类型', 'AI模型层', 'DataSourceType');
+INSERT INTO CODE_INFO  VALUES ('DQC', '63', '数据源类型', '管控层', 'DataSourceType');
+INSERT INTO CODE_INFO  VALUES ('UDL', '63', '数据源类型', '自定义层', 'DataSourceType');
