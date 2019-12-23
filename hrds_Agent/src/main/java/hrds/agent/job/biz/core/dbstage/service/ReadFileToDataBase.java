@@ -1,7 +1,5 @@
-package hrds.agent.job.biz.utils;
+package hrds.agent.job.biz.core.dbstage.service;
 
-import com.opencsv.CSVParser;
-import com.opencsv.CSVParserBuilder;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.utils.StringUtil;
@@ -9,7 +7,7 @@ import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.DataStoreConfBean;
 import hrds.agent.job.biz.bean.TableBean;
-import hrds.agent.job.biz.core.dbstage.service.CollectTableHandleParse;
+import hrds.agent.job.biz.utils.ColumnTool;
 import hrds.agent.trans.biz.ConnectionTool;
 import hrds.commons.codes.FileFormat;
 import hrds.commons.exception.AppSystemException;
@@ -30,11 +28,14 @@ import org.apache.parquet.hadoop.ParquetReader;
 import org.apache.parquet.hadoop.example.GroupReadSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.supercsv.io.CsvListReader;
+import org.supercsv.prefs.CsvPreference;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -311,18 +312,19 @@ public class ReadFileToDataBase implements Callable<Long> {
 	private long readCsvToDataBase(DatabaseWrapper db, List<String> columnList, List<String> typeList,
 	                               String batchSql) {
 		//TODO 分隔符应该使用传进来的，懒得找了，测试的时候一起改吧
-		CSVParser parser = new CSVParserBuilder().withSeparator(Constant.DATADELIMITER).build();
 		long num = 0;
-		try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(fileAbsolutePath)))) {
+		try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(fileAbsolutePath),
+				StandardCharsets.UTF_8)); CsvListReader csvReader = new CsvListReader(reader,
+				CsvPreference.EXCEL_PREFERENCE)) {
 			List<Object[]> pool = new ArrayList<>();// 存储全量插入信息的list
 			int limit = 50000;
-			String line;
+			List<String> lineList;
 			Object[] objs;
-			while ((line = reader.readLine()) != null) {
+			csvReader.read();
+			while ((lineList = csvReader.read()) != null) {
 				objs = new Object[columnList.size()];// 存储全量插入信息的list
-				String[] split = parser.parseLine(line);//使用openCsv解析文件
 				for (int j = 0; j < columnList.size(); j++) {
-					objs[j] = getValue(typeList.get(j), split[j]);
+					objs[j] = getValue(typeList.get(j), lineList.get(j));
 				}
 				num++;
 				pool.add(objs);

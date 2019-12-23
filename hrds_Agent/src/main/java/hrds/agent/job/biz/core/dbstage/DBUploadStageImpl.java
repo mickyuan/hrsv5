@@ -8,7 +8,7 @@ import hrds.agent.job.biz.bean.*;
 import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
-import hrds.agent.job.biz.utils.ReadFileToDataBase;
+import hrds.agent.job.biz.core.dbstage.service.ReadFileToDataBase;
 import hrds.commons.codes.store_type;
 import hrds.commons.exception.AppSystemException;
 import org.slf4j.Logger;
