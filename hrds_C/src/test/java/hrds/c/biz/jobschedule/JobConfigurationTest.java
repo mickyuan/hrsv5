@@ -154,6 +154,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
                         etl_job_def.setPro_type(Pro_Type.SHELL.getCode());
                         etl_job_def.setSub_sys_cd(SubSysCd);
                         etl_job_def.setDisp_freq(Dispatch_Frequency.PinLv.getCode());
+                        etl_job_def.setDisp_type(Dispatch_Frequency.PinLv.getCode());
                         etl_job_def.setExe_frequency(1);
                         etl_job_def.setExe_num(1);
                         etl_job_def.setStar_time(DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate())
@@ -478,7 +479,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
     @Method(desc = "分页查询作业调度某工程任务信息",
             logicStep = "1.正常的数据访问1，数据都正常" +
                     "2.正确的数据访问2，sub_sys_cd为空" +
-                    "3.正确的数据访问1，etl_sys_cd不合法，currPage,pageSize（为空有默认值），" +
+                    "3.错误的数据访问1，etl_sys_cd不合法，currPage,pageSize（为空有默认值），" +
                     "sub_sys_cd可为空所以错误数据只有一种情况")
     @Test
     public void searchEtlSubSysByPage() {
@@ -493,9 +494,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
                 .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
         assertThat(ar.isSuccess(), is(true));
         Map<String, Object> dataForMap = ar.getDataForMap();
-        assertThat(dataForMap.get("etl_sys_cd"), is(EtlSysCd));
         assertThat(dataForMap.get("totalSize"), is(2));
-        assertThat(dataForMap.get("etl_sys_name"), is("dhwcs"));
         List<Map<String, Object>> etlSubSysList = (List<Map<String, Object>>) dataForMap.get("etlSubSysList");
         for (Map<String, Object> etlSubSys : etlSubSysList) {
             if (etlSubSys.get("sub_sys_cd").equals(SubSysCd)) {
@@ -519,9 +518,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
                 .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
         assertThat(ar.isSuccess(), is(true));
         dataForMap = ar.getDataForMap();
-        assertThat(dataForMap.get("etl_sys_cd"), is(EtlSysCd));
         assertThat(dataForMap.get("totalSize"), is(5));
-        assertThat(dataForMap.get("etl_sys_name"), is("dhwcs"));
         etlSubSysList = (List<Map<String, Object>>) dataForMap.get("etlSubSysList");
         for (Map<String, Object> etlSubSys : etlSubSysList) {
             if (etlSubSys.get("sub_sys_cd").equals(SubSysCd)) {
@@ -547,7 +544,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
                 assertThat(etlSubSys.get("sub_sys_desc"), is("任务测试5"));
             }
         }
-        // 3.正确的数据访问1，etl_sys_cd不合法，currPage,pageSize（为空有默认值），sub_sys_cd可为空所以错误数据只有一种情况
+        // 3.错误的数据访问1，etl_sys_cd不合法，currPage,pageSize（为空有默认值），sub_sys_cd可为空所以错误数据只有一种情况
         bodyString = new HttpClient().addData("etl_sys_cd", "cs01")
                 .addData("currPage", 1)
                 .addData("pageSize", 2)
@@ -1029,7 +1026,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
             assertThat(etlJobDef.get("etl_sys_cd"), is(EtlSysCd));
             assertThat(etlJobDef.get("sub_sys_cd"), is(SubSysCd));
             assertThat(etlJobDef.get("etl_job"), is("模板作业"));
-            assertThat(etlJobDef.get("pro_para"), is("0@1"));
+            assertThat(etlJobDef.get("pro_para"), is("0,1"));
             assertThat(etlJobDef.get("pro_type"), is(Pro_Type.SHELL.getCode()));
             assertThat(etlJobDef.get("disp_type"), is(Dispatch_Type.DEPENDENCE.getCode()));
             assertThat(etlJobDef.get("job_eff_flag"), is(Job_Effective_Flag.YES.getCode()));
@@ -1241,8 +1238,6 @@ public class JobConfigurationTest extends WebBaseTestCase {
             assertThat(map.get("pro_name"), is("zy.shell"));
             assertThat(map.get("sub_sys_cd"), is(SubSysCd));
         }
-        assertThat(etlJobDef.get("etl_sys_name"), is("dhwcs"));
-        assertThat(etlJobDef.get("etl_sys_cd"), is(EtlSysCd));
         // 2.正确的数据访问2，etl_job、pro_type、pro_name、sub_sys_cd为空
         bodyString = new HttpClient()
                 .addData("etl_sys_cd", EtlSysCd)
@@ -1254,14 +1249,12 @@ public class JobConfigurationTest extends WebBaseTestCase {
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
         assertThat(ar.isSuccess(), is(true));
         etlJobDef = ar.getDataForMap();
-        assertThat(etlJobDef.get("etl_sys_name"), is("dhwcs"));
-        assertThat(etlJobDef.get("etl_sys_cd"), is(EtlSysCd));
         etlJobDefList = (List<Map<String, Object>>) etlJobDef.get("etlJobDefList");
         for (Map<String, Object> map : etlJobDefList) {
             String etl_job = map.get("etl_job").toString();
             if (etl_job.equals("测试作业0")) {
                 assertThat(map.get("etl_sys_cd"), is(EtlSysCd));
-                assertThat(map.get("disp_type"), is(Dispatch_Type.TPLUS0.getCode()));
+                assertThat(map.get("disp_type"), is(Dispatch_Frequency.PinLv.getCode()));
                 assertThat(map.get("pro_name"), is("zy.shell"));
                 assertThat(map.get("disp_freq"), is(Dispatch_Frequency.PinLv.getCode()));
                 assertThat(map.get("etl_job_desc"), is("测试作业定义0"));
@@ -1318,14 +1311,12 @@ public class JobConfigurationTest extends WebBaseTestCase {
                 .orElseThrow(() -> new BusinessException("son对象转换成实体对象失败！！"));
         assertThat(ar.isSuccess(), is(true));
         etlJobDef = ar.getDataForMap();
-        assertThat(etlJobDef.get("etl_sys_name"), is("dhwcs"));
-        assertThat(etlJobDef.get("etl_sys_cd"), is(EtlSysCd));
         etlJobDefList = (List<Map<String, Object>>) etlJobDef.get("etlJobDefList");
         for (Map<String, Object> map : etlJobDefList) {
             String etl_job = map.get("etl_job").toString();
             if (etl_job.equals("测试作业0")) {
                 assertThat(map.get("etl_sys_cd"), is(EtlSysCd));
-                assertThat(map.get("disp_type"), is(Dispatch_Type.TPLUS0.getCode()));
+                assertThat(map.get("disp_type"), is(Dispatch_Frequency.PinLv.getCode()));
                 assertThat(map.get("pro_name"), is("zy.shell"));
                 assertThat(map.get("disp_freq"), is(Dispatch_Frequency.PinLv.getCode()));
                 assertThat(map.get("etl_job_desc"), is("测试作业定义0"));
@@ -1357,8 +1348,6 @@ public class JobConfigurationTest extends WebBaseTestCase {
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
         assertThat(ar.isSuccess(), is(true));
         etlJobDef = ar.getDataForMap();
-        assertThat(etlJobDef.get("etl_sys_name"), is("dhwcs"));
-        assertThat(etlJobDef.get("etl_sys_cd"), is(EtlSysCd));
         etlJobDefList = (List<Map<String, Object>>) etlJobDef.get("etlJobDefList");
         for (Map<String, Object> map : etlJobDefList) {
             assertThat(map.get("etl_sys_cd"), is(EtlSysCd));
@@ -1384,8 +1373,6 @@ public class JobConfigurationTest extends WebBaseTestCase {
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
         assertThat(ar.isSuccess(), is(true));
         etlJobDef = ar.getDataForMap();
-        assertThat(etlJobDef.get("etl_sys_name"), is("dhwcs"));
-        assertThat(etlJobDef.get("etl_sys_cd"), is(EtlSysCd));
         etlJobDefList = (List<Map<String, Object>>) etlJobDef.get("etlJobDefList");
         for (Map<String, Object> map : etlJobDefList) {
             assertThat(map.get("etl_sys_cd"), is(EtlSysCd));
@@ -1411,8 +1398,6 @@ public class JobConfigurationTest extends WebBaseTestCase {
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
         assertThat(ar.isSuccess(), is(true));
         etlJobDef = ar.getDataForMap();
-        assertThat(etlJobDef.get("etl_sys_name"), is("dhwcs"));
-        assertThat(etlJobDef.get("etl_sys_cd"), is(EtlSysCd));
         etlJobDefList = (List<Map<String, Object>>) etlJobDef.get("etlJobDefList");
         for (Map<String, Object> map : etlJobDefList) {
             assertThat(map.get("etl_sys_cd"), is(EtlSysCd));
@@ -1481,16 +1466,15 @@ public class JobConfigurationTest extends WebBaseTestCase {
         assertThat(ar.isSuccess(), is(false));
     }
 
-    @Method(desc = "根据工程编号、作业名称查询作业定义信息",
+    @Method(desc = "查询作业名称信息",
             logicStep = "1.正确的数据访问1，数据都正确" +
-                    "2.错误的数据访问1，etl_sys_cd不存在" +
-                    "3.错误的数据访问1，etl_job不存在")
+                    "2.错误的数据访问1，etl_sys_cd不存在")
     @Test
-    public void searchEtlJobDef() {
+    public void searchEtlJob() {
         // 1.正确的数据访问1，数据都正确
         String bodyString = new HttpClient()
                 .addData("etl_sys_cd", EtlSysCd)
-                .post(getActionUrl("searchEtlJobDef"))
+                .post(getActionUrl("searchEtlJob"))
                 .getBodyString();
         ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
@@ -1510,15 +1494,6 @@ public class JobConfigurationTest extends WebBaseTestCase {
         // 2.错误的数据访问1，etl_sys_cd不存在
         bodyString = new HttpClient()
                 .addData("etl_sys_cd", "zycxcs")
-                .addData("etl_job", "测试作业8")
-                .post(getActionUrl("searchEtlJobDef"))
-                .getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
-                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
-        assertThat(ar.isSuccess(), is(false));
-        // 3.错误的数据访问1，etl_job不存在
-        bodyString = new HttpClient()
-                .addData("etl_sys_cd", "cxzymc")
                 .post(getActionUrl("searchEtlJobDef"))
                 .getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -1550,7 +1525,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
         assertThat(etlJobDef.get("pro_para"), is("1"));
         assertThat(etlJobDef.get("overtime_val").toString(), is(String.valueOf(0)));
         assertThat(etlJobDef.get("job_disp_status"), is(Job_Status.RUNNING.getCode()));
-        assertThat(etlJobDef.get("disp_type"), is(Dispatch_Type.TPLUS0.getCode()));
+        assertThat(etlJobDef.get("disp_type"), is(Dispatch_Frequency.PinLv.getCode()));
         assertThat(etlJobDef.get("job_priority").toString(), is(String.valueOf(0)));
         assertThat(etlJobDef.get("pro_dic"), is("/home/hyshf/dhw"));
         assertThat(etlJobDef.get("overlength_val").toString(), is(String.valueOf(0)));
@@ -3350,8 +3325,6 @@ public class JobConfigurationTest extends WebBaseTestCase {
         assertThat(ar.isSuccess(), is(true));
         Map<Object, Object> resourceMap = ar.getDataForMap();
         // 验证查询数据的正确性
-        assertThat(resourceMap.get("etl_sys_name"), is("dhwcs"));
-        assertThat(resourceMap.get("etl_sys_cd"), is(EtlSysCd));
         List<Map<String, Object>> etlResource = (List<Map<String, Object>>) resourceMap.get("etlResourceList");
         for (Map<String, Object> map : etlResource) {
             String resource_type = map.get("resource_type").toString();
@@ -3385,8 +3358,6 @@ public class JobConfigurationTest extends WebBaseTestCase {
         assertThat(ar.isSuccess(), is(true));
         resourceMap = ar.getDataForMap();
         // 验证查询数据的正确性
-        assertThat(resourceMap.get("etl_sys_name"), is("dhwcs"));
-        assertThat(resourceMap.get("etl_sys_cd"), is(EtlSysCd));
         etlResource = (List<Map<String, Object>>) resourceMap.get("etlResourceList");
         for (Map<String, Object> map : etlResource) {
             assertThat(map.get("etl_sys_cd"), is(EtlSysCd));
@@ -3792,7 +3763,6 @@ public class JobConfigurationTest extends WebBaseTestCase {
         assertThat(ar.isSuccess(), is(true));
         // 验证查询数据的正确性
         Map<String, Object> dataForMap = ar.getDataForMap();
-        assertThat(dataForMap.get("etl_sys_name"), is("dhwcs"));
         List<Map<String, Object>> jobResourceRelation = (List<Map<String, Object>>) dataForMap.
                 get("jobResourceRelation");
         for (Map<String, Object> map : jobResourceRelation) {
@@ -3824,7 +3794,6 @@ public class JobConfigurationTest extends WebBaseTestCase {
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
         assertThat(ar.isSuccess(), is(true));
         dataForMap = ar.getDataForMap();
-        assertThat(dataForMap.get("etl_sys_name"), is("dhwcs"));
         jobResourceRelation = (List<Map<String, Object>>) dataForMap.
                 get("jobResourceRelation");
         for (Map<String, Object> map : jobResourceRelation) {
@@ -3846,7 +3815,6 @@ public class JobConfigurationTest extends WebBaseTestCase {
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
         assertThat(ar.isSuccess(), is(true));
         dataForMap = ar.getDataForMap();
-        assertThat(dataForMap.get("etl_sys_name"), is("dhwcs"));
         jobResourceRelation = (List<Map<String, Object>>) dataForMap.
                 get("jobResourceRelation");
         for (Map<String, Object> map : jobResourceRelation) {
@@ -4295,7 +4263,6 @@ public class JobConfigurationTest extends WebBaseTestCase {
         assertThat(ar.isSuccess(), is(true));
         // 验证查询数据的正确性
         Map<String, Object> dataForMap = ar.getDataForMap();
-        assertThat(dataForMap.get("etl_sys_name"), is("dhwcs"));
         List<Map<String, Object>> etlParaList = (List<Map<String, Object>>) dataForMap.get("etlParaList");
         checkEtlParaData(etlParaList);
         // 2.正常的数据访问2，数据都正常，para_cd不为空
@@ -4310,7 +4277,6 @@ public class JobConfigurationTest extends WebBaseTestCase {
         assertThat(ar.isSuccess(), is(true));
         // 验证查询数据的正确性
         dataForMap = ar.getDataForMap();
-        assertThat(dataForMap.get("etl_sys_name"), is("dhwcs"));
         etlParaList = (List<Map<String, Object>>) dataForMap.get("etlParaList");
         checkEtlParaData(etlParaList);
         // 3.错误的数据访问1，工程编号不存在
@@ -4808,8 +4774,6 @@ public class JobConfigurationTest extends WebBaseTestCase {
         assertThat(ar.isSuccess(), is(true));
         // 验证查询数据的正确性
         Map<String, Object> dataForMap = ar.getDataForMap();
-        assertThat(dataForMap.get("etl_sys_name"), is("dhwcs"));
-        assertThat(dataForMap.get("etl_sys_cd"), is(EtlSysCd));
         List<Map<String, Object>> dependencyList = (List<Map<String, Object>>) dataForMap.get("etlDependencyList");
         for (Map<String, Object> map : dependencyList) {
             String etl_job = map.get("etl_job").toString();
@@ -4844,8 +4808,6 @@ public class JobConfigurationTest extends WebBaseTestCase {
         assertThat(ar.isSuccess(), is(true));
         // 验证查询数据的正确性
         dataForMap = ar.getDataForMap();
-        assertThat(dataForMap.get("etl_sys_name"), is("dhwcs"));
-        assertThat(dataForMap.get("etl_sys_cd"), is(EtlSysCd));
         dependencyList = (List<Map<String, Object>>) dataForMap.get("etlDependencyList");
         for (Map<String, Object> map : dependencyList) {
             assertThat(map.get("etl_job"), is("测试作业5"));
@@ -4867,8 +4829,6 @@ public class JobConfigurationTest extends WebBaseTestCase {
         assertThat(ar.isSuccess(), is(true));
         // 验证查询数据的正确性
         dataForMap = ar.getDataForMap();
-        assertThat(dataForMap.get("etl_sys_name"), is("dhwcs"));
-        assertThat(dataForMap.get("etl_sys_cd"), is(EtlSysCd));
         dependencyList = (List<Map<String, Object>>) dataForMap.get("etlDependencyList");
         for (Map<String, Object> map : dependencyList) {
             assertThat(map.get("etl_job"), is("测试作业6"));
@@ -5139,49 +5099,26 @@ public class JobConfigurationTest extends WebBaseTestCase {
 
     @Method(desc = "更新保存作业依赖",
             logicStep = "1.正常的数据访问1，数据都正常" +
-                    "2.正常的数据访问2，数据都正常,作业名称未改变，上游作业名称改变" +
-                    "3.正常的数据访问3，数据都正常,作业名称改变，上游作业名称未改变" +
-                    "4.错误的数据访问1，etl_sys_cd为空" +
-                    "5.错误的数据访问2，etl_sys_cd为空格" +
-                    "6.错误的数据访问3，etl_sys_cd不存在" +
-                    "7.错误的数据访问4，pre_etl_sys_cd为空" +
-                    "8.错误的数据访问5，pre_etl_sys_cd为空格" +
-                    "9.错误的数据访问6，pre_etl_sys_cd不存在" +
-                    "10.错误的数据访问7，etl_job为空" +
-                    "11.错误的数据访问8，etl_job为空格" +
-                    "12.错误的数据访问9，pre_etl_job为空" +
-                    "13.错误的数据访问10，etl_job为空格" +
-                    "14.错误的数据访问11，status为空" +
-                    "15.错误的数据访问12，status为空格" +
-                    "16.错误的数据访问13，status不存在" +
-                    "17.错误的数据访问14，作业依赖已存在")
+                    "2.错误的数据访问1，作业名称改变" +
+                    "3.错误的数据访问2，etl_sys_cd为空" +
+                    "4.错误的数据访问3，etl_sys_cd为空格" +
+                    "5.错误的数据访问4，etl_sys_cd不存在" +
+                    "6.错误的数据访问5，pre_etl_sys_cd为空" +
+                    "7.错误的数据访问6，pre_etl_sys_cd为空格" +
+                    "8.错误的数据访问7，pre_etl_sys_cd不存在" +
+                    "9.错误的数据访问8，etl_job为空" +
+                    "10.错误的数据访问9，etl_job为空格" +
+                    "11.错误的数据访问10，pre_etl_job为空" +
+                    "12.错误的数据访问11，etl_job为空格" +
+                    "13.错误的数据访问12，status为空" +
+                    "14.错误的数据访问13，status为空格" +
+                    "15.错误的数据访问14，status不存在" +
+                    "16.错误的数据访问15，作业依赖已存在")
     @Test
     public void updateEtlDependency() {
         try (DatabaseWrapper db = new DatabaseWrapper()) {
-            // 1.正常的数据访问1，数据都正常,作业名称与上游作业名称都发生改变
+            // 1.正常的数据访问2，数据都正常,作业名称未改变，上游作业名称改变
             String bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
-                    .addData("pre_etl_sys_cd", EtlSysCd)
-                    .addData("etl_job", "测试作业1")
-                    .addData("pre_etl_job", "测试作业0")
-                    .addData("status", Status.TRUE.getCode())
-                    .addData("oldEtlJob", "测试作业6")
-                    .addData("oldPreEtlJob", "测试作业10")
-                    .post(getActionUrl("updateEtlDependency"))
-                    .getBodyString();
-            ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
-                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
-            assertThat(ar.isSuccess(), is(true));
-            Etl_dependency etlDependency = SqlOperator.queryOneObject(db, Etl_dependency.class,
-                    "select * from " + Etl_dependency.TableName + " where etl_sys_cd=? and etl_job=? " +
-                            " and pre_etl_job=?", EtlSysCd, "测试作业1", "测试作业0").orElseThrow(() ->
-                    new BusinessException("sql查询错误或映射错误！"));
-            assertThat(EtlSysCd, is(etlDependency.getEtl_sys_cd()));
-            assertThat(EtlSysCd, is(etlDependency.getPre_etl_sys_cd()));
-            assertThat("测试作业1", is(etlDependency.getEtl_job()));
-            assertThat("测试作业0", is(etlDependency.getPre_etl_job()));
-            assertThat(Status.TRUE.getCode(), is(etlDependency.getStatus()));
-            // 2.正常的数据访问2，数据都正常,作业名称未改变，上游作业名称改变
-            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
                     .addData("pre_etl_sys_cd", EtlSysCd)
                     .addData("etl_job", "测试作业5")
                     .addData("pre_etl_job", "测试作业2")
@@ -5190,10 +5127,10 @@ public class JobConfigurationTest extends WebBaseTestCase {
                     .addData("oldPreEtlJob", "测试作业8")
                     .post(getActionUrl("updateEtlDependency"))
                     .getBodyString();
-            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+            ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                     .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
             assertThat(ar.isSuccess(), is(true));
-            etlDependency = SqlOperator.queryOneObject(db, Etl_dependency.class,
+            Etl_dependency etlDependency = SqlOperator.queryOneObject(db, Etl_dependency.class,
                     "select * from " + Etl_dependency.TableName + " where etl_sys_cd=? and etl_job=? " +
                             " and pre_etl_job=?", EtlSysCd, "测试作业5", "测试作业2").orElseThrow(() ->
                     new BusinessException("sql查询错误或映射错误！"));
@@ -5202,7 +5139,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
             assertThat("测试作业5", is(etlDependency.getEtl_job()));
             assertThat("测试作业2", is(etlDependency.getPre_etl_job()));
             assertThat(Status.TRUE.getCode(), is(etlDependency.getStatus()));
-            // 3.正常的数据访问3，数据都正常,作业名称改变，上游作业名称未改变
+            // 2.错误的数据访问1，作业名称改变
             bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
                     .addData("pre_etl_sys_cd", EtlSysCd)
                     .addData("etl_job", "测试作业1")
@@ -5214,17 +5151,8 @@ public class JobConfigurationTest extends WebBaseTestCase {
                     .getBodyString();
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                     .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
-            assertThat(ar.isSuccess(), is(true));
-            etlDependency = SqlOperator.queryOneObject(db, Etl_dependency.class,
-                    "select * from " + Etl_dependency.TableName + " where etl_sys_cd=? and etl_job=? " +
-                            " and pre_etl_job=?", EtlSysCd, "测试作业1", "测试作业7").orElseThrow(() ->
-                    new BusinessException("sql查询错误或映射错误！"));
-            assertThat(EtlSysCd, is(etlDependency.getEtl_sys_cd()));
-            assertThat(EtlSysCd, is(etlDependency.getPre_etl_sys_cd()));
-            assertThat("测试作业1", is(etlDependency.getEtl_job()));
-            assertThat("测试作业7", is(etlDependency.getPre_etl_job()));
-            assertThat(Status.TRUE.getCode(), is(etlDependency.getStatus()));
-            // 4.错误的数据访问1，etl_sys_cd为空
+            assertThat(ar.isSuccess(), is(false));
+            // 3.错误的数据访问2，etl_sys_cd为空
             bodyString = new HttpClient().addData("etl_sys_cd", "")
                     .addData("pre_etl_sys_cd", EtlSysCd)
                     .addData("etl_job", "测试作业1")
@@ -5237,7 +5165,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                     .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
             assertThat(ar.isSuccess(), is(false));
-            // 5.错误的数据访问2，etl_sys_cd为空格
+            // 4.错误的数据访问3，etl_sys_cd为空格
             bodyString = new HttpClient().addData("etl_sys_cd", " ")
                     .addData("pre_etl_sys_cd", EtlSysCd)
                     .addData("etl_job", "测试作业1")
@@ -5250,7 +5178,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                     .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
             assertThat(ar.isSuccess(), is(false));
-            // 6.错误的数据访问3，etl_sys_cd不存在
+            // 5.错误的数据访问4，etl_sys_cd不存在
             bodyString = new HttpClient().addData("etl_sys_cd", "xzylcs")
                     .addData("pre_etl_sys_cd", EtlSysCd)
                     .addData("etl_job", "测试作业1")
@@ -5263,7 +5191,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                     .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
             assertThat(ar.isSuccess(), is(false));
-            // 7.错误的数据访问4，pre_etl_sys_cd为空
+            // 6.错误的数据访问5，pre_etl_sys_cd为空
             bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
                     .addData("pre_etl_sys_cd", "")
                     .addData("etl_job", "测试作业1")
@@ -5276,7 +5204,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                     .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
             assertThat(ar.isSuccess(), is(false));
-            // 8.错误的数据访问5，pre_etl_sys_cd为空格
+            // 7.错误的数据访问6，pre_etl_sys_cd为空格
             bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
                     .addData("pre_etl_sys_cd", " ")
                     .addData("etl_job", "测试作业1")
@@ -5289,7 +5217,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                     .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
             assertThat(ar.isSuccess(), is(false));
-            // 9.错误的数据访问1，pre_etl_sys_cd不存在
+            // 8.错误的数据访问7，pre_etl_sys_cd不存在
             bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
                     .addData("pre_etl_sys_cd", "sycgbh")
                     .addData("etl_job", "测试作业1")
@@ -5302,7 +5230,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                     .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
             assertThat(ar.isSuccess(), is(false));
-            // 10.错误的数据访问7，etl_job为空
+            // 9.错误的数据访问8，etl_job为空
             bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
                     .addData("pre_etl_sys_cd", EtlSysCd)
                     .addData("etl_job", "")
@@ -5315,7 +5243,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                     .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
             assertThat(ar.isSuccess(), is(false));
-            // 11.错误的数据访问8，etl_job为空格
+            // 10.错误的数据访问9，etl_job为空格
             bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
                     .addData("pre_etl_sys_cd", EtlSysCd)
                     .addData("etl_job", " ")
@@ -5328,7 +5256,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                     .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
             assertThat(ar.isSuccess(), is(false));
-            // 12.错误的数据访问9，pre_etl_job为空
+            // 11.错误的数据访问10，pre_etl_job为空
             bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
                     .addData("pre_etl_sys_cd", EtlSysCd)
                     .addData("etl_job", "测试作业1")
@@ -5341,7 +5269,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                     .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
             assertThat(ar.isSuccess(), is(false));
-            // 13.错误的数据访问10，pre_etl_job为空格
+            // 12.错误的数据访问11，pre_etl_job为空格
             bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
                     .addData("pre_etl_sys_cd", EtlSysCd)
                     .addData("etl_job", "测试作业1")
@@ -5354,7 +5282,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                     .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
             assertThat(ar.isSuccess(), is(false));
-            // 14.错误的数据访问11，status为空
+            // 13.错误的数据访问12，status为空
             bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
                     .addData("pre_etl_sys_cd", EtlSysCd)
                     .addData("etl_job", "测试作业1")
@@ -5367,7 +5295,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                     .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
             assertThat(ar.isSuccess(), is(false));
-            // 15.错误的数据访问12，status为空格
+            // 14.错误的数据访问123，status为空格
             bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
                     .addData("pre_etl_sys_cd", EtlSysCd)
                     .addData("etl_job", "测试作业1")
@@ -5380,7 +5308,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                     .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
             assertThat(ar.isSuccess(), is(false));
-            // 16.错误的数据访问13，status不合法
+            // 15.错误的数据访问14，status不合法
             bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
                     .addData("pre_etl_sys_cd", EtlSysCd)
                     .addData("etl_job", "测试作业1")
@@ -5393,7 +5321,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                     .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
             assertThat(ar.isSuccess(), is(false));
-            // 17.错误的数据访问14，作业依赖已存在
+            // 16.错误的数据访问15，作业依赖已存在
             bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
                     .addData("pre_etl_sys_cd", EtlSysCd)
                     .addData("etl_job", "测试作业6")
@@ -5631,7 +5559,9 @@ public class JobConfigurationTest extends WebBaseTestCase {
                     EtlSysCd, "测试作业6", "测试作业10");
             assertThat("删除操作前，data_source表中的确存在这样一条数据", optionalLong.
                     orElse(Long.MIN_VALUE), is(1L));
-            String bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+            String bodyString = new HttpClient()
+                    .addData("etl_sys_cd", EtlSysCd)
+                    .addData("pre_etl_sys_cd", EtlSysCd)
                     .addData("etl_job", "测试作业6")
                     .addData("pre_etl_job", "测试作业10")
                     .post(getActionUrl("deleteEtlDependency"))
@@ -5645,7 +5575,9 @@ public class JobConfigurationTest extends WebBaseTestCase {
             assertThat("删除操作后，确认这条数据已删除", optionalLong.
                     orElse(Long.MIN_VALUE), is(0L));
             // 2.错误的数据访问1，etl_sys_cd不存在
-            bodyString = new HttpClient().addData("etl_sys_cd", "sccs1")
+            bodyString = new HttpClient()
+                    .addData("etl_sys_cd", "sccs1")
+                    .addData("pre_etl_sys_cd", EtlSysCd)
                     .addData("etl_job", "测试作业6")
                     .addData("pre_etl_job", "测试作业10")
                     .post(getActionUrl("deleteEtlDependency"))
@@ -5654,7 +5586,9 @@ public class JobConfigurationTest extends WebBaseTestCase {
                     .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
             assertThat(ar.isSuccess(), is(false));
             // 3.错误的数据访问2，etl_job不存在
-            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+            bodyString = new HttpClient()
+                    .addData("etl_sys_cd", EtlSysCd)
+                    .addData("pre_etl_sys_cd", EtlSysCd)
                     .addData("etl_job", "测试作业")
                     .addData("pre_etl_job", "测试作业10")
                     .post(getActionUrl("deleteEtlDependency"))
@@ -5663,7 +5597,9 @@ public class JobConfigurationTest extends WebBaseTestCase {
                     .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
             assertThat(ar.isSuccess(), is(false));
             // 4.错误的数据访问3，pre_etl_job不存在
-            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+            bodyString = new HttpClient()
+                    .addData("etl_sys_cd", EtlSysCd)
+                    .addData("pre_etl_sys_cd", EtlSysCd)
                     .addData("etl_job", "测试作业5")
                     .addData("pre_etl_job", "测试作业")
                     .post(getActionUrl("deleteEtlDependency"))
@@ -5720,7 +5656,9 @@ public class JobConfigurationTest extends WebBaseTestCase {
                     EtlSysCd, "测试作业5", "测试作业7");
             assertThat("删除操作前，Etl_dependency表中的确存在这样一条数据", optionalLong.
                     orElse(Long.MIN_VALUE), is(1L));
-            String bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+            String bodyString = new HttpClient()
+                    .addData("etl_sys_cd", EtlSysCd)
+                    .addData("pre_etl_sys_cd", EtlSysCd)
                     .addData("batchEtlJob", JsonUtil.toJson(list))
                     .post(getActionUrl("batchDeleteEtlDependency"))
                     .getBodyString();
@@ -5738,7 +5676,9 @@ public class JobConfigurationTest extends WebBaseTestCase {
             assertThat("删除操作后，确认这条数据已删除", optionalLong.
                     orElse(Long.MIN_VALUE), is(0L));
             // 2.错误的数据访问1，etl_sys_cd不存在
-            bodyString = new HttpClient().addData("etl_sys_cd", "sccs1")
+            bodyString = new HttpClient()
+                    .addData("etl_sys_cd", "sccs1")
+                    .addData("pre_etl_sys_cd", EtlSysCd)
                     .addData("batchEtlJob", JsonUtil.toJson(list))
                     .post(getActionUrl("batchDeleteEtlDependency"))
                     .getBodyString();
@@ -5746,7 +5686,9 @@ public class JobConfigurationTest extends WebBaseTestCase {
                     .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
             assertThat(ar.isSuccess(), is(false));
             // 3.错误的数据访问2，batchEtlJob不存在
-            bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+            bodyString = new HttpClient()
+                    .addData("etl_sys_cd", EtlSysCd)
+                    .addData("pre_etl_sys_cd", EtlSysCd)
                     .addData("batchEtlJob", JsonUtil.toJson(list2))
                     .post(getActionUrl("batchDeleteEtlDependency"))
                     .getBodyString();
