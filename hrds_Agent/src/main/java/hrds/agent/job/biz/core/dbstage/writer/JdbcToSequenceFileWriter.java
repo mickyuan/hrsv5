@@ -63,7 +63,7 @@ public class JdbcToSequenceFileWriter extends AbstractFileWriter {
 			writer = writerFile.getSequenceWrite();
 			//清洗配置
 			final DataCleanInterface allclean = CleanFactory.getInstance().getObjectClean("clean_database");
-			String[] colName = StringUtils.splitByWholeSeparatorPreserveAllTokens(tableBean.getAllColumns().toString(),
+			String[] colName = StringUtils.splitByWholeSeparatorPreserveAllTokens(tableBean.getAllColumns(),
 					CollectTableHandleParse.STRSPLIT);
 			Map<String, Object> parseJson = tableBean.getParseJson();
 			Map<String, String> mergeIng = (Map<String, String>) parseJson.get("mergeIng");//字符合并
@@ -76,7 +76,7 @@ public class JdbcToSequenceFileWriter extends AbstractFileWriter {
 			int numberOfColumns = colName.length;
 			int[] typeArray = tableBean.getTypeArray();
 
-			String[] type = StringUtils.split(tableBean.getAllType().toString(), CollectTableHandleParse.STRSPLIT);
+			String[] type = StringUtils.split(tableBean.getAllType(), CollectTableHandleParse.STRSPLIT);
 			while (resultSet.next()) {
 				// Count it
 				lineCounter++;
@@ -140,7 +140,7 @@ public class JdbcToSequenceFileWriter extends AbstractFileWriter {
 			writer.hflush();
 			//写meta数据开始
 			fileSize = JobIoUtil.getFileSize(midName);
-			ColumnTool.writeFileMeta(hbase_name, new File(midName), tableBean.getColumnMetaInfo().toString(),
+			ColumnTool.writeFileMeta(hbase_name, new File(midName), tableBean.getColumnMetaInfo(),
 					lineCounter, tableBean.getColTypeMetaInfo(), tableBean.getColLengthInfo(), fileSize, "n");
 		} catch (Exception e) {
 			log.error("卸数失败", e);

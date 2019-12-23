@@ -67,9 +67,13 @@ public class WriterFile implements Closeable {
 
 	public Writer getSequenceWrite() {
 		try {
+			SequenceFile.Writer.Option optionFile = Writer.file(new Path(filePath));
+			SequenceFile.Writer.Option optionKey = Writer.keyClass(NullWritable.class);
+			SequenceFile.Writer.Option optionValue = Writer.valueClass(Text.class);
 			//HDFS配置
-			fs = FileSystem.get(conf);
-			sequenceWriter = SequenceFile.createWriter(fs, conf, new Path(filePath), NullWritable.class, Text.class);
+			sequenceWriter = SequenceFile.createWriter(conf, optionFile, optionKey, optionValue);
+//			fs = FileSystem.get(conf);
+//			sequenceWriter = SequenceFile.createWriter(fs, conf, new Path(filePath), NullWritable.class, Text.class);
 		} catch (IOException e) {
 			logger.error(e);
 		}

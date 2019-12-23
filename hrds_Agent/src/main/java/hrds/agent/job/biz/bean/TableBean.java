@@ -3,11 +3,11 @@ package hrds.agent.job.biz.bean;
 import java.util.Map;
 
 public class TableBean {
-	private StringBuilder columnMetaInfo = new StringBuilder();//生成的元信息列名
-	private StringBuilder allColumns = new StringBuilder();//要采集的列名
-	private StringBuilder colTypeMetaInfo = new StringBuilder();//生成的元信息列类型
-	private StringBuilder allType = new StringBuilder();//要采集的列类型
-	private StringBuilder colLengthInfo = new StringBuilder();//生成的元信息列长度
+	private String columnMetaInfo;//生成的元信息列名
+	private String allColumns;//要采集的列名
+	private String colTypeMetaInfo;//生成的元信息列类型
+	private String allType;//要采集的列类型
+	private String colLengthInfo;//生成的元信息列长度
 	private Map<String, Object> parseJson; //清洗配置
 	private String collectSQL;//最后拼接的执行sql
 	private int[] typeArray;
@@ -42,53 +42,43 @@ public class TableBean {
 		this.typeArray = typeArray;
 	}
 
-	public StringBuilder getColumnMetaInfo() {
-
+	public String getColumnMetaInfo() {
 		return columnMetaInfo;
 	}
 
-	public void setColumnMetaInfo(StringBuilder columnMetaInfo) {
-
+	public void setColumnMetaInfo(String columnMetaInfo) {
 		this.columnMetaInfo = columnMetaInfo;
 	}
 
-	public StringBuilder getAllColumns() {
-
+	public String getAllColumns() {
 		return allColumns;
 	}
 
-	public void setAllColumns(StringBuilder allColumns) {
-
+	public void setAllColumns(String allColumns) {
 		this.allColumns = allColumns;
 	}
 
-	public StringBuilder getColTypeMetaInfo() {
-
+	public String getColTypeMetaInfo() {
 		return colTypeMetaInfo;
 	}
 
-	public void setColTypeMetaInfo(StringBuilder colTypeMetaInfo) {
-
+	public void setColTypeMetaInfo(String colTypeMetaInfo) {
 		this.colTypeMetaInfo = colTypeMetaInfo;
 	}
 
-	public StringBuilder getAllType() {
-
+	public String getAllType() {
 		return allType;
 	}
 
-	public void setAllType(StringBuilder allType) {
-
+	public void setAllType(String allType) {
 		this.allType = allType;
 	}
 
-	public StringBuilder getColLengthInfo() {
-
+	public String getColLengthInfo() {
 		return colLengthInfo;
 	}
 
-	public void setColLengthInfo(StringBuilder colLengthInfo) {
-
+	public void setColLengthInfo(String colLengthInfo) {
 		this.colLengthInfo = colLengthInfo;
 	}
 }

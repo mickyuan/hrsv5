@@ -19,6 +19,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
+import org.apache.orc.TypeDescription;
 import org.apache.parquet.example.data.Group;
 
 import java.io.*;
@@ -96,21 +97,21 @@ public class ColumnTool {
 	/**
 	 * 写表的字段信息及生成文件信息
 	 */
-	public static void writeFileMeta(String tableName, File file, String columns, long liner, StringBuilder list, StringBuilder lengths, long meta_filesize, String mr) {
+	public static void writeFileMeta(String tableName, File file, String columns, long liner, String list, String lengths, long meta_filesize, String mr) {
 
 		BufferedWriter bw = null;
-		String metaFile = file.getAbsolutePath() + "tabledata.meta";
+		String metaFile = file.getAbsolutePath() + "tableData.meta";
 		metaFile = FilenameUtils.normalize(metaFile);
 		try {
 			bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(metaFile, true),
 					StandardCharset.UTF_8));
 			JSONObject jsonSon = new JSONObject();
-			jsonSon.put("tablename", tableName);
+			jsonSon.put("tableName", tableName);
 			jsonSon.put("column", columns.toUpperCase());
-			jsonSon.put("length", lengths.toString());
+			jsonSon.put("length", lengths);
 			jsonSon.put("records", String.valueOf(liner));
-			jsonSon.put("filesize", meta_filesize);
-			jsonSon.put("type", list.toString());
+			jsonSon.put("fileSize", meta_filesize);
+			jsonSon.put("type", list);
 			jsonSon.put("mr", mr);
 			bw.write(jsonSon + "\n");
 			bw.flush();
@@ -156,7 +157,41 @@ public class ColumnTool {
 
 		}
 		//Orc文件的列信息
-		return (StructObjectInspector) ObjectInspectorFactory.getStandardStructObjectInspector(listColumn, listType);
+		return ObjectInspectorFactory.getStandardStructObjectInspector(listColumn, listType);
+	}
+
+	public static TypeDescription getTypeDescription(String columns, String types) {
+		TypeDescription readSchema = TypeDescription.createStruct();
+		List<String> columnAll = StringUtil.split(columns, CollectTableHandleParse.STRSPLIT);
+		List<String> typeList = StringUtil.split(types, CollectTableHandleParse.STRSPLIT);//字段类型
+		for (int i = 0; i < columnAll.size(); i++) {
+			//TODO 类型转换这个类是否需要修改
+//			String columns_type = DataTypeTransformHive.tansform(split.get(i).toUpperCase());
+			String columns_type = typeList.get(i).toUpperCase();
+			if (columns_type.contains("BOOLEAN")) {
+				readSchema.addField(columnAll.get(i), TypeDescription.createBoolean());
+			} else if (columns_type.contains("INT")) {
+				readSchema.addField(columnAll.get(i), TypeDescription.createInt());
+			} else if (columns_type.contains("CHAR")) {
+				readSchema.addField(columnAll.get(i), TypeDescription.createChar());
+			} else if (columns_type.contains("DECIMAL")) {
+				readSchema.addField(columnAll.get(i), TypeDescription.createDecimal());
+			} else if (columns_type.contains("FLOAT")) {
+				readSchema.addField(columnAll.get(i), TypeDescription.createFloat());
+			} else if (columns_type.contains("DOUBLE")) {
+				readSchema.addField(columnAll.get(i), TypeDescription.createDouble());
+			} else if (columns_type.contains("BYTE")) {
+				readSchema.addField(columnAll.get(i), TypeDescription.createByte());
+			} else if (columns_type.contains("TIMESTAMP")) {
+				readSchema.addField(columnAll.get(i), TypeDescription.createTimestamp());
+			} else if (columns_type.contains("DATE")) {
+				readSchema.addField(columnAll.get(i), TypeDescription.createDate());
+			} else {
+				readSchema.addField(columnAll.get(i), TypeDescription.createString());
+			}
+		}
+		//Orc文件的列信息
+		return readSchema;
 	}
 
 	public static void addData2Group(Group group, String columnType, String columname, String data) {
@@ -176,8 +211,7 @@ public class ColumnTool {
 		} else if (columnType.contains("DOUBLE") || columnType.contains("DECIMAL")) {
 			double dataResult = StringUtil.isEmpty(data) ? 0 : Double.valueOf(data);
 			group.add(columname, dataResult);
-		}
-		else {
+		} else {
 			//char与varchar都为string
 			data = StringUtil.isEmpty(data) ? "" : data;
 			group.add(columname, data);

@@ -43,7 +43,7 @@ public class JdbcCollectJob extends AgentBaseAction {
 			List<CollectTableBean> collectTableBeanList = JSONArray.parseArray(sourceDataConfBean.getCollectTableBeanArray(),
 					CollectTableBean.class);
 			//此处不会有海量的任务需要执行，不会出现队列中等待的任务对象过多的OOM事件。
-			//TODO Runtime.getRuntime().availableProcessors()此处不能用这个
+			//TODO Runtime.getRuntime().availableProcessors()此处不能用这个,因为可能同时又多个数据库采集同时进行
 			executor = Executors.newFixedThreadPool(5);
 			List<Future<JobStatusInfo>> list = new ArrayList<>();
 			//2.校验对象的值是否正确

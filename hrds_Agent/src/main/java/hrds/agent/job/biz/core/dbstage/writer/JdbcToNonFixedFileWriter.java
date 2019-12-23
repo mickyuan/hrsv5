@@ -63,7 +63,7 @@ public class JdbcToNonFixedFileWriter extends AbstractFileWriter {
 			writer = writerFile.getBufferedWriter();
 			//清洗配置
 			final DataCleanInterface allclean = CleanFactory.getInstance().getObjectClean("clean_database");
-			String[] colName = StringUtils.splitByWholeSeparatorPreserveAllTokens(tableBean.getAllColumns().toString(),
+			String[] colName = StringUtils.splitByWholeSeparatorPreserveAllTokens(tableBean.getAllColumns(),
 					CollectTableHandleParse.STRSPLIT);
 			Map<String, Object> parseJson = tableBean.getParseJson();
 			Map<String, String> mergeIng = (Map<String, String>) parseJson.get("mergeIng");//字符合并
@@ -72,7 +72,7 @@ public class JdbcToNonFixedFileWriter extends AbstractFileWriter {
 			StringBuilder sb = new StringBuilder();//用来写一行数据
 			StringBuilder sb_ = new StringBuilder();//用来写临时数据
 
-			List<String> typeList = StringUtil.split(tableBean.getAllType().toString(),
+			List<String> typeList = StringUtil.split(tableBean.getAllType(),
 					CollectTableHandleParse.STRSPLIT);
 			log.info("type : " + typeList.size() + "  colName " + colName.length);
 			String currValue;
@@ -139,7 +139,7 @@ public class JdbcToNonFixedFileWriter extends AbstractFileWriter {
 			writer.flush();
 			//写meta数据开始
 			fileSize = JobIoUtil.getFileSize(midName);
-			ColumnTool.writeFileMeta(hbase_name, new File(midName), tableBean.getColumnMetaInfo().toString(),
+			ColumnTool.writeFileMeta(hbase_name, new File(midName), tableBean.getColumnMetaInfo(),
 					lineCounter, tableBean.getColTypeMetaInfo(), tableBean.getColLengthInfo(), fileSize, "n");
 		} catch (Exception e) {
 			log.error("卸数失败", e);

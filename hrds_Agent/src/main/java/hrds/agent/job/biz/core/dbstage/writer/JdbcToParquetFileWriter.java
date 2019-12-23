@@ -62,7 +62,7 @@ public class JdbcToParquetFileWriter extends AbstractFileWriter {
 			avroWriter = getAvroWriter(tableBean.getTypeArray(), hbase_name, midName, pageNum);
 			//清洗配置
 			final DataCleanInterface allClean = CleanFactory.getInstance().getObjectClean("clean_database");
-			String[] colName = StringUtils.splitByWholeSeparatorPreserveAllTokens(tableBean.getAllColumns().toString(),
+			String[] colName = StringUtils.splitByWholeSeparatorPreserveAllTokens(tableBean.getAllColumns(),
 					CollectTableHandleParse.STRSPLIT);
 			Map<String, Object> parseJson = tableBean.getParseJson();
 			//字符合并
@@ -77,13 +77,13 @@ public class JdbcToParquetFileWriter extends AbstractFileWriter {
 			String currValue;
 			int numberOfColumns = colName.length;
 			int[] typeArray = tableBean.getTypeArray();
-			MessageType parquetSchema = ParquetUtil.getSchema(tableBean.getColumnMetaInfo().toString(),
-					tableBean.getColTypeMetaInfo().toString());
+			MessageType parquetSchema = ParquetUtil.getSchema(tableBean.getColumnMetaInfo(),
+					tableBean.getColTypeMetaInfo());
 			factory = new SimpleGroupFactory(parquetSchema);
 			String fileName = midName + hbase_name + pageNum + index + ".part";
 			parquetWriter = ParquetUtil.getParquetWriter(parquetSchema, fileName);
 			fileInfo.append(fileName).append(CollectTableHandleParse.STRSPLIT);
-			List<String> type = StringUtil.split(tableBean.getAllType().toString(), CollectTableHandleParse.STRSPLIT);
+			List<String> type = StringUtil.split(tableBean.getAllType(), CollectTableHandleParse.STRSPLIT);
 			while (resultSet.next()) {
 				lineCounter++;
 				counter++;
@@ -137,7 +137,7 @@ public class JdbcToParquetFileWriter extends AbstractFileWriter {
 			}
 			//写meta数据开始
 			fileSize = JobIoUtil.getFileSize(midName);
-			ColumnTool.writeFileMeta(hbase_name, new File(midName), tableBean.getColumnMetaInfo().toString(),
+			ColumnTool.writeFileMeta(hbase_name, new File(midName), tableBean.getColumnMetaInfo(),
 					lineCounter, tableBean.getColTypeMetaInfo(), tableBean.getColLengthInfo(), fileSize, "n");
 		} catch (Exception e) {
 			log.error("卸数失败", e);

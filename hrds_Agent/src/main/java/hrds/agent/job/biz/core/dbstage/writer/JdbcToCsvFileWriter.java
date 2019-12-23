@@ -64,7 +64,7 @@ public class JdbcToCsvFileWriter extends AbstractFileWriter {
 			writer = writerFile.getCsvWriter();
 			//清洗配置
 			final DataCleanInterface allclean = CleanFactory.getInstance().getObjectClean("clean_database");
-			String[] colName = StringUtils.splitByWholeSeparatorPreserveAllTokens(tableBean.getAllColumns().toString(),
+			String[] colName = StringUtils.splitByWholeSeparatorPreserveAllTokens(tableBean.getAllColumns(),
 					CollectTableHandleParse.STRSPLIT);
 			Map<String, Object> parseJson = tableBean.getParseJson();
 			//字符合并
@@ -75,9 +75,9 @@ public class JdbcToCsvFileWriter extends AbstractFileWriter {
 			Clean cl = new Clean(parseJson, allclean);
 			StringBuilder midStringOther = new StringBuilder(1024 * 1024);//获取所有列的值用来生成MD5值
 			List<Object> sb = new ArrayList<>(StringUtils.splitByWholeSeparatorPreserveAllTokens(tableBean.getColLengthInfo()
-					.toString(), CollectTableHandleParse.STRSPLIT).length);//用来写一行数据
+					, CollectTableHandleParse.STRSPLIT).length);//用来写一行数据
 			StringBuilder sb_ = new StringBuilder();//用来写临时数据
-			List<String> typeList = StringUtil.split(tableBean.getAllType().toString(),
+			List<String> typeList = StringUtil.split(tableBean.getAllType(),
 					CollectTableHandleParse.STRSPLIT);
 			log.info("type : " + typeList.size() + "  colName " + colName.length);
 			String currValue;
@@ -140,9 +140,9 @@ public class JdbcToCsvFileWriter extends AbstractFileWriter {
 				sb.clear();
 			}
 			writer.flush();
-			//写meta数据开始
+			//写meta数据开始  TODO 这里这个meta信息应该是只有数据抽取才需要写，5.0版本的meta信息直接通过tableBean传递
 			fileSize = JobIoUtil.getFileSize(midName);
-			ColumnTool.writeFileMeta(hbase_name, new File(midName), tableBean.getColumnMetaInfo().toString(),
+			ColumnTool.writeFileMeta(hbase_name, new File(midName), tableBean.getColumnMetaInfo(),
 					lineCounter, tableBean.getColTypeMetaInfo(), tableBean.getColLengthInfo(), fileSize, "n");
 		} catch (Exception e) {
 			log.error("卸数失败", e);

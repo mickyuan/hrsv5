@@ -8,12 +8,17 @@ import hrds.agent.job.biz.bean.*;
 import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
-import hrds.agent.job.biz.core.dbstage.service.TableUpload;
-import hrds.agent.job.biz.utils.ScriptExecutor;
+import hrds.agent.job.biz.utils.ReadFileToDataBase;
+import hrds.commons.codes.store_type;
+import hrds.commons.exception.AppSystemException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 @DocClass(desc = "数据库直连采集数据上传阶段", author = "WangZhengcheng")
 public class DBUploadStageImpl extends AbstractJobStage {
@@ -45,13 +50,42 @@ public class DBUploadStageImpl extends AbstractJobStage {
 		statusInfo.setJobId(collectTableBean.getTable_id());
 		statusInfo.setStartDate(DateUtil.getSysDate());
 		statusInfo.setStartTime(DateUtil.getSysTime());
-//		ScriptExecutor executor = new ScriptExecutor();
 		try {
-			//TODO 文件上传现在要针对数据存储类型来了...
 			List<DataStoreConfBean> dataStoreConfBeanList = collectTableBean.getDataStoreConfBean();
-			for(DataStoreConfBean dataStoreConfBean : dataStoreConfBeanList){
-				//TODO 这里考虑用多线程
-				TableUpload.uploadData(dataStoreConfBean,localFiles,tableBean,collectTableBean);
+			for (DataStoreConfBean dataStoreConfBean : dataStoreConfBeanList) {
+				//此处不会有海量的任务需要执行，不会出现队列中等待的任务对象过多的OOM事件。
+				//TODO Runtime.getRuntime().availableProcessors()此处不能用这个,因为可能同时又多个数据库采集同时进行
+				//这里多个文件，使用多线程读取，进外部数据库。
+				ExecutorService executor = Executors.newFixedThreadPool(5);
+				long count = 0;
+				List<Future<Long>> list = new ArrayList<>();
+				//根据存储类型上传到目的地
+				if (store_type.DATABASE.getCode().equals(dataStoreConfBean.getStore_type())) {
+					//数据库类型
+					for (String fileAbsolutePath : localFiles) {
+						ReadFileToDataBase readFileToDataBase = new ReadFileToDataBase(fileAbsolutePath, tableBean,
+								collectTableBean, dataStoreConfBean);
+						//TODO 这个状态是不是可以在这里
+						Future<Long> submit = executor.submit(readFileToDataBase);
+						list.add(submit);
+					}
+				} else if (store_type.HBASE.getCode().equals(dataStoreConfBean.getStore_type())) {
+
+				} else if (store_type.SOLR.getCode().equals(dataStoreConfBean.getStore_type())) {
+
+				} else if (store_type.ElasticSearch.getCode().equals(dataStoreConfBean.getStore_type())) {
+
+				} else if (store_type.MONGODB.getCode().equals(dataStoreConfBean.getStore_type())) {
+
+				}else{
+					//TODO 上面的待补充。
+					throw new AppSystemException("不支持的存储类型");
+				}
+				for (Future<Long> future : list) {
+					count += future.get();
+				}
+				LOGGER.info("数据成功进入库" + dataStoreConfBean.getDsl_name() + "下的表" + collectTableBean.getHbase_name()
+						+ ",总计进数" + count + "条");
 			}
 			//2、调用方法，进行文件上传，文件数组和上传目录由构造器传入
 //			executor.executeUpload2Hdfs(localFiles, remoteDir);

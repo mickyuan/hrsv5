@@ -69,7 +69,7 @@ public class JdbcToOrcFileWriter extends AbstractFileWriter {
 			/* Get result set metadata */
 			//清洗配置
 			final DataCleanInterface allClean = CleanFactory.getInstance().getObjectClean("clean_database");
-			String[] colName = StringUtils.splitByWholeSeparatorPreserveAllTokens(tableBean.getAllColumns().toString()
+			String[] colName = StringUtils.splitByWholeSeparatorPreserveAllTokens(tableBean.getAllColumns()
 					, CollectTableHandleParse.STRSPLIT);
 			Map<String, Object> parseJson = tableBean.getParseJson();
 			//字符合并
@@ -81,13 +81,14 @@ public class JdbcToOrcFileWriter extends AbstractFileWriter {
 			StringBuilder midStringOther = new StringBuilder(1024 * 1024);//获取所有列的值用来生成MD5值
 			StringBuilder sb_ = new StringBuilder();//用来写临时数据
 
-			List<String> typeList = StringUtil.split(tableBean.getAllType().toString(),
+			List<String> typeList = StringUtil.split(tableBean.getAllType(),
 					CollectTableHandleParse.STRSPLIT);
 			String currValue;
 			int numberOfColumns = colName.length;
 			int[] typeArray = tableBean.getTypeArray();
 
-			StructObjectInspector inspector = ColumnTool.schemaInfo(tableBean.getColumnMetaInfo().toString(), tableBean.getColTypeMetaInfo().toString());//Orc文件的列头信息
+			StructObjectInspector inspector = ColumnTool.schemaInfo(tableBean.getColumnMetaInfo(),
+					tableBean.getColTypeMetaInfo());//Orc文件的列头信息
 			List<Object> lineData;
 			while (resultSet.next()) {
 				// Count it
@@ -147,7 +148,7 @@ public class JdbcToOrcFileWriter extends AbstractFileWriter {
 			//写meta数据开始
 			//写meta数据开始
 			fileSize = JobIoUtil.getFileSize(midName);
-			ColumnTool.writeFileMeta(hbase_name, new File(midName), tableBean.getColumnMetaInfo().toString(),
+			ColumnTool.writeFileMeta(hbase_name, new File(midName), tableBean.getColumnMetaInfo(),
 					lineCounter, tableBean.getColTypeMetaInfo(), tableBean.getColLengthInfo(), fileSize, "n");
 		} catch (Exception e) {
 			log.error("卸数失败", e);

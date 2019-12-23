@@ -7,12 +7,7 @@ import fd.ng.core.annotation.Return;
 import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.TableBean;
 
-import java.io.IOException;
-import java.io.Reader;
-import java.sql.Blob;
 import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Map;
 
 @DocClass(desc = "数据库直连采集以指定的格式将数据卸到指定的数据文件的接口", author = "WangZhengcheng")
 public interface FileWriterInterface {

@@ -87,20 +87,21 @@ public class CollectTableHandleParse {
 		String colMeta = updateColumn(mergeIng, splitIng, columnMetaInfo, colTypeMetaInfo, colLengthInfo);
 		columnMetaInfo.delete(0, columnMetaInfo.length()).append(colMeta);
 		//这里是根据不同存储目的地会有相同的拉链方式，则这新增拉链字段在这里增加
-		//TODO 这里没有拼colLengthInfo,待测试
 		columnMetaInfo.append(STRSPLIT).append(Constant.SDATENAME);
 		colTypeMetaInfo.append(STRSPLIT).append("char(8)");
+		colLengthInfo.append(STRSPLIT).append("8");
 		//增量进数方式
 		if (StorageType.ZengLiang.getCode().equals(collectTableBean.getStorage_type())) {
 			columnMetaInfo.append(STRSPLIT).append(Constant.EDATENAME).append(STRSPLIT).append(Constant.MD5NAME);
 			colTypeMetaInfo.append(STRSPLIT).append("char(8)").append(STRSPLIT).append("char(32)");
+			colLengthInfo.append(STRSPLIT).append("8").append("32");
 		}
 		// 页面定义的清洗格式进行卸数
-		tableBean.setAllColumns(allColumns);
-		tableBean.setAllType(allType);
-		tableBean.setColLengthInfo(colLengthInfo);
-		tableBean.setColTypeMetaInfo(colTypeMetaInfo);
-		tableBean.setColumnMetaInfo(columnMetaInfo);
+		tableBean.setAllColumns(allColumns.toString());
+		tableBean.setAllType(allType.toString());
+		tableBean.setColLengthInfo(colLengthInfo.toString());
+		tableBean.setColTypeMetaInfo(colTypeMetaInfo.toString());
+		tableBean.setColumnMetaInfo(columnMetaInfo.toString());
 		tableBean.setTypeArray(typeArray);
 		tableBean.setParseJson(parseJson);
 		return tableBean;
