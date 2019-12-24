@@ -3,7 +3,7 @@ package hrds.commons.codes;
 import hrds.commons.exception.AppSystemException;
 /**Created by automatic  */
 /**代码类型名：存储层类型  */
-public enum store_type {
+public enum Store_type {
 	/**关系型数据库<DATABASE>  */
 	DATABASE("1","关系型数据库","59","存储层类型"),
 	/**Hbase<HBASE>  */
@@ -20,7 +20,7 @@ public enum store_type {
 	private final String catCode;
 	private final String catValue;
 
-	store_type(String code,String value,String catCode,String catValue){
+	Store_type(String code,String value,String catCode,String catValue){
 		this.code = code;
 		this.value = value;
 		this.catCode = catCode;
@@ -36,7 +36,7 @@ public enum store_type {
 	* @return
 	*/
 	public static String ofValueByCode(String code) {
-		for (store_type typeCode : store_type.values()) {
+		for (Store_type typeCode : Store_type.values()) {
 			if (typeCode.getCode().equals(code)) {
 				return typeCode.value;
 			}
@@ -48,8 +48,8 @@ public enum store_type {
 	* @param code   本代码的代码值
 	* @return
 	*/
-	public static store_type ofEnumByCode(String code) {
-		for (store_type typeCode : store_type.values()) {
+	public static Store_type ofEnumByCode(String code) {
+		for (Store_type typeCode : Store_type.values()) {
 			if (typeCode.getCode().equals(code)) {
 				return typeCode;
 			}
@@ -62,7 +62,7 @@ public enum store_type {
 	* @return
 	*/
 	public static String ofCatValue(){
-		return store_type.values()[0].getCatValue();
+		return Store_type.values()[0].getCatValue();
 	}
 
 	/**
@@ -70,7 +70,7 @@ public enum store_type {
 	* @return
 	*/
 	public static String ofCatCode(){
-		return store_type.values()[0].getCatCode();
+		return Store_type.values()[0].getCatCode();
 	}
 
 	/**

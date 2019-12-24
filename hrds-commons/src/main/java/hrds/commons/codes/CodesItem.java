@@ -7,18 +7,18 @@ import java.util.*;
                                                                                        
 public class CodesItem{                        
 	private static final Log logger = LogFactory.getLog(CodesItem.class);                                                      
-	/**补齐方式   */
-	protected static final String fillingType=new String("FillingType");
 	/**数据申请类型   */
 	protected static final String applyType=new String("ApplyType");
 	/**权限类型   */
 	protected static final String authType=new String("AuthType");
 	/**存储层类型   */
-	protected static final String store_type=new String("store_type");
+	protected static final String store_type=new String("Store_type");
 	/**文件类型   */
 	protected static final String fileType=new String("FileType");
 	/**存储层附件属性   */
 	protected static final String storeLayerAdded=new String("StoreLayerAdded");
+	/**数据源类型   */
+	protected static final String dataSourceType=new String("DataSourceType");
 	/**用户类型   */
 	protected static final String userType=new String("UserType");
 	/**是否标识   */
@@ -93,18 +93,18 @@ public class CodesItem{
 	protected static final String dataExtractType=new String("DataExtractType");
 	/**清洗方式   */
 	protected static final String cleanType=new String("CleanType");
-	/**数据源类型   */
-	protected static final String dataSourceType=new String("DataSourceType");
+	/**补齐方式   */
+	protected static final String fillingType=new String("FillingType");
 
 
 	public static final Map<String,Class> mapCat= new HashMap<String,Class>(100);
 	static{
-		mapCat.put(fillingType,FillingType.class);
 		mapCat.put(applyType,ApplyType.class);
 		mapCat.put(authType,AuthType.class);
-		mapCat.put(store_type,store_type.class);
+		mapCat.put(store_type,Store_type.class);
 		mapCat.put(fileType,FileType.class);
 		mapCat.put(storeLayerAdded,StoreLayerAdded.class);
+		mapCat.put(dataSourceType,DataSourceType.class);
 		mapCat.put(userType,UserType.class);
 		mapCat.put(isFlag,IsFlag.class);
 		mapCat.put(userState,UserState.class);
@@ -142,7 +142,7 @@ public class CodesItem{
 		mapCat.put(charSplitType,CharSplitType.class);
 		mapCat.put(dataExtractType,DataExtractType.class);
 		mapCat.put(cleanType,CleanType.class);
-		mapCat.put(dataSourceType,DataSourceType.class);
+		mapCat.put(fillingType,FillingType.class);
 	}
 
 

@@ -1,28 +1,24 @@
 --　系统的引用值个数:44
---　本引用值的代码个数:2 -------i==1
-delete from code_info where ci_sp_class='55';
-INSERT INTO CODE_INFO  VALUES ('1', '55', '补齐方式', '前补齐', 'FillingType');
-INSERT INTO CODE_INFO  VALUES ('2', '55', '补齐方式', '后补齐', 'FillingType');
---　本引用值的代码个数:4 -------i==2
+--　本引用值的代码个数:4 -------i==1
 delete from code_info where ci_sp_class='57';
 INSERT INTO CODE_INFO  VALUES ('1', '57', '数据申请类型', '查看', 'ApplyType');
 INSERT INTO CODE_INFO  VALUES ('2', '57', '数据申请类型', '下载', 'ApplyType');
 INSERT INTO CODE_INFO  VALUES ('3', '57', '数据申请类型', '发布', 'ApplyType');
 INSERT INTO CODE_INFO  VALUES ('4', '57', '数据申请类型', '重命名', 'ApplyType');
---　本引用值的代码个数:4 -------i==3
+--　本引用值的代码个数:4 -------i==2
 delete from code_info where ci_sp_class='58';
 INSERT INTO CODE_INFO  VALUES ('1', '58', '权限类型', '允许', 'AuthType');
 INSERT INTO CODE_INFO  VALUES ('2', '58', '权限类型', '不允许', 'AuthType');
 INSERT INTO CODE_INFO  VALUES ('3', '58', '权限类型', '一次', 'AuthType');
 INSERT INTO CODE_INFO  VALUES ('0', '58', '权限类型', '申请', 'AuthType');
---　本引用值的代码个数:5 -------i==4
+--　本引用值的代码个数:5 -------i==3
 delete from code_info where ci_sp_class='59';
-INSERT INTO CODE_INFO  VALUES ('1', '59', '存储层类型', '关系型数据库', 'store_type');
-INSERT INTO CODE_INFO  VALUES ('2', '59', '存储层类型', 'Hbase', 'store_type');
-INSERT INTO CODE_INFO  VALUES ('3', '59', '存储层类型', 'solr', 'store_type');
-INSERT INTO CODE_INFO  VALUES ('4', '59', '存储层类型', 'ElasticSearch', 'store_type');
-INSERT INTO CODE_INFO  VALUES ('5', '59', '存储层类型', 'mongodb', 'store_type');
---　本引用值的代码个数:12 -------i==5
+INSERT INTO CODE_INFO  VALUES ('1', '59', '存储层类型', '关系型数据库', 'Store_type');
+INSERT INTO CODE_INFO  VALUES ('2', '59', '存储层类型', 'Hbase', 'Store_type');
+INSERT INTO CODE_INFO  VALUES ('3', '59', '存储层类型', 'solr', 'Store_type');
+INSERT INTO CODE_INFO  VALUES ('4', '59', '存储层类型', 'ElasticSearch', 'Store_type');
+INSERT INTO CODE_INFO  VALUES ('5', '59', '存储层类型', 'mongodb', 'Store_type');
+--　本引用值的代码个数:12 -------i==4
 delete from code_info where ci_sp_class='60';
 INSERT INTO CODE_INFO  VALUES ('1001', '60', '文件类型', '全部文件', 'FileType');
 INSERT INTO CODE_INFO  VALUES ('1002', '60', '文件类型', '图片', 'FileType');
@@ -36,7 +32,7 @@ INSERT INTO CODE_INFO  VALUES ('1063', '60', '文件类型', '表数据文件', 
 INSERT INTO CODE_INFO  VALUES ('1004', '60', '文件类型', '视频', 'FileType');
 INSERT INTO CODE_INFO  VALUES ('1005', '60', '文件类型', '音频', 'FileType');
 INSERT INTO CODE_INFO  VALUES ('1006', '60', '文件类型', '其它', 'FileType');
---　本引用值的代码个数:6 -------i==6
+--　本引用值的代码个数:6 -------i==5
 delete from code_info where ci_sp_class='62';
 INSERT INTO CODE_INFO  VALUES ('01', '62', '存储层附件属性', '主键', 'StoreLayerAdded');
 INSERT INTO CODE_INFO  VALUES ('02', '62', '存储层附件属性', 'rowkey', 'StoreLayerAdded');
@@ -44,6 +40,16 @@ INSERT INTO CODE_INFO  VALUES ('03', '62', '存储层附件属性', '索引列',
 INSERT INTO CODE_INFO  VALUES ('04', '62', '存储层附件属性', '预聚合列', 'StoreLayerAdded');
 INSERT INTO CODE_INFO  VALUES ('05', '62', '存储层附件属性', '排序列', 'StoreLayerAdded');
 INSERT INTO CODE_INFO  VALUES ('06', '62', '存储层附件属性', '分区列', 'StoreLayerAdded');
+--　本引用值的代码个数:8 -------i==6
+delete from code_info where ci_sp_class='63';
+INSERT INTO CODE_INFO  VALUES ('ISL', '63', '数据源类型', '贴源层_01', 'DataSourceType');
+INSERT INTO CODE_INFO  VALUES ('DCL', '63', '数据源类型', '贴源层', 'DataSourceType');
+INSERT INTO CODE_INFO  VALUES ('DPL', '63', '数据源类型', '加工层', 'DataSourceType');
+INSERT INTO CODE_INFO  VALUES ('DML', '63', '数据源类型', '集市层', 'DataSourceType');
+INSERT INTO CODE_INFO  VALUES ('SFL', '63', '数据源类型', '系统层', 'DataSourceType');
+INSERT INTO CODE_INFO  VALUES ('AML', '63', '数据源类型', 'AI模型层', 'DataSourceType');
+INSERT INTO CODE_INFO  VALUES ('DQC', '63', '数据源类型', '管控层', 'DataSourceType');
+INSERT INTO CODE_INFO  VALUES ('UDL', '63', '数据源类型', '自定义层', 'DataSourceType');
 --　本引用值的代码个数:32 -------i==7
 delete from code_info where ci_sp_class='17';
 INSERT INTO CODE_INFO  VALUES ('00', '17', '用户类型', '系统管理员', 'UserType');
@@ -306,13 +312,7 @@ INSERT INTO CODE_INFO  VALUES ('4', '54', '清洗方式', '码值转换', 'Clean
 INSERT INTO CODE_INFO  VALUES ('5', '54', '清洗方式', '字符合并', 'CleanType');
 INSERT INTO CODE_INFO  VALUES ('6', '54', '清洗方式', '字符拆分', 'CleanType');
 INSERT INTO CODE_INFO  VALUES ('7', '54', '清洗方式', '字符trim', 'CleanType');
---　本引用值的代码个数:8 -------i==44
-delete from code_info where ci_sp_class='63';
-INSERT INTO CODE_INFO  VALUES ('ISL', '63', '数据源类型', '贴源层_01', 'DataSourceType');
-INSERT INTO CODE_INFO  VALUES ('DCL', '63', '数据源类型', '贴源层', 'DataSourceType');
-INSERT INTO CODE_INFO  VALUES ('DPL', '63', '数据源类型', '加工层', 'DataSourceType');
-INSERT INTO CODE_INFO  VALUES ('DML', '63', '数据源类型', '集市层', 'DataSourceType');
-INSERT INTO CODE_INFO  VALUES ('SFL', '63', '数据源类型', '系统层', 'DataSourceType');
-INSERT INTO CODE_INFO  VALUES ('AML', '63', '数据源类型', 'AI模型层', 'DataSourceType');
-INSERT INTO CODE_INFO  VALUES ('DQC', '63', '数据源类型', '管控层', 'DataSourceType');
-INSERT INTO CODE_INFO  VALUES ('UDL', '63', '数据源类型', '自定义层', 'DataSourceType');
+--　本引用值的代码个数:2 -------i==44
+delete from code_info where ci_sp_class='55';
+INSERT INTO CODE_INFO  VALUES ('1', '55', '补齐方式', '前补齐', 'FillingType');
+INSERT INTO CODE_INFO  VALUES ('2', '55', '补齐方式', '后补齐', 'FillingType');
