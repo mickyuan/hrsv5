@@ -5,6 +5,7 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.FileNameUtils;
+import hrds.commons.codes.DataSourceType;
 import hrds.commons.exception.BusinessException;
 
 import java.io.File;
@@ -14,15 +15,22 @@ public class PathUtil {
 
 	private static final String PREFIX = PropertyParaValue.getString("pathprefix", "/hrds");
 
-	public static final String DCL = "DCL";//贴源区
-	public static final String DPL = "DPL";//加工区
-	public static final String DML = "DML";//集市区
-	public static final String DQC = "DQC";//数据质量层
-	public static final String UDL = "UDL";//用户自定义层
 
+	public static final String ISL = DataSourceType.ISL.getValue();//贴源区
+	public static final String DCL = DataSourceType.DCL.getValue();//增量区
+	public static final String DPL = DataSourceType.DPL.getValue();//加工区
+	public static final String DML = DataSourceType.DML.getValue();//集市区
+	public static final String SFL = DataSourceType.SFL.getValue();//系统区
+	public static final String AML = DataSourceType.AML.getValue();//AI模型层
+	public static final String DQC = DataSourceType.DQC.getValue();//数据质量层
+	public static final String UDL = DataSourceType.UDL.getValue();//用户自定义层
+
+	public static final String ISLRELEASE = PREFIX + File.separator + ISL + File.separator;//贴源区
 	public static final String DCLRELEASE = PREFIX + File.separator + DCL + File.separator;//增量区
 	public static final String DPLRELEASE = PREFIX + File.separator + DPL + File.separator;//加工区
 	public static final String DMLRELEASE = PREFIX + File.separator + DML + File.separator;//集市区
+	public static final String SFLRELEASE = PREFIX + File.separator + SFL + File.separator;//系统区
+	public static final String AMLRELEASE = PREFIX + File.separator + AML + File.separator;//AI模型层
 	public static final String DQCRELEASE = PREFIX + File.separator + DQC + File.separator;//数据质量层
 	public static final String UDLRELEASE = PREFIX + File.separator + UDL + File.separator;//用户自定义层
 
