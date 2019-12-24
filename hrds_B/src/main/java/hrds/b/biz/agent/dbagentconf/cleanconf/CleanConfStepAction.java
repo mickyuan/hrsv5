@@ -713,7 +713,6 @@ public class CleanConfStepAction extends BaseAction{
 				tableColumn.setColumn_ch_name(columnSplit.getCol_zhname());
 				tableColumn.setValid_s_date(DateUtil.getSysDate());
 				tableColumn.setValid_e_date(Constant.MAXDATE);
-
 				tableColumn.add(Dbo.db());
 			}
 		}
