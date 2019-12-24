@@ -902,14 +902,14 @@ IS_GET                                            CHAR(1) default '0' NULL, --�
 IS_PRIMARY_KEY                                    CHAR(1) NOT NULL, --是否为主键
 COLUMN_NAME                                       VARCHAR(512) NOT NULL, --列名
 COLUMN_TYPE                                       VARCHAR(512) NULL, --列字段类型
-COLUME_CH_NAME                                    VARCHAR(512) NULL, --列中文名称
+COLUMN_CH_NAME                                    VARCHAR(512) NULL, --列中文名称
 TABLE_ID                                          BIGINT default 0 NOT NULL, --表名ID
 VALID_S_DATE                                      CHAR(8) NOT NULL, --有效开始日期
 VALID_E_DATE                                      CHAR(8) NOT NULL, --有效结束日期
 IS_ALIVE                                          CHAR(1) default '0' NOT NULL, --是否保留原字段
 IS_NEW                                            CHAR(1) default '1' NOT NULL, --是否为变化生成
 TC_OR                                             VARCHAR(512) NULL, --清洗顺序
-REMARK                                            VARCHAR(512) NULL, --备注
+TC_REMARK                                         VARCHAR(512) NULL, --备注
 CONSTRAINT TABLE_COLUMN_PK PRIMARY KEY(COLUMN_ID)   );
 
 --采集任务分类表

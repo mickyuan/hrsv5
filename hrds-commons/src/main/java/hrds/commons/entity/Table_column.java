@@ -36,8 +36,8 @@ public class Table_column extends ProjectTableEntity
 	private String is_primary_key;
 	@DocBean(name ="column_name",value="列名:",dataType = String.class,required = true)
 	private String column_name;
-	@DocBean(name ="colume_ch_name",value="列中文名称:",dataType = String.class,required = false)
-	private String colume_ch_name;
+	@DocBean(name ="column_ch_name",value="列中文名称:",dataType = String.class,required = false)
+	private String column_ch_name;
 	@DocBean(name ="valid_s_date",value="有效开始日期:",dataType = String.class,required = true)
 	private String valid_s_date;
 	@DocBean(name ="valid_e_date",value="有效结束日期:",dataType = String.class,required = true)
@@ -48,8 +48,8 @@ public class Table_column extends ProjectTableEntity
 	private String column_type;
 	@DocBean(name ="table_id",value="表名ID:",dataType = Long.class,required = true)
 	private Long table_id;
-	@DocBean(name ="remark",value="备注:",dataType = String.class,required = false)
-	private String remark;
+	@DocBean(name ="tc_remark",value="备注:",dataType = String.class,required = false)
+	private String tc_remark;
 	@DocBean(name ="is_alive",value="是否保留原字段(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_alive;
 	@DocBean(name ="is_new",value="是否为变化生成(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
@@ -88,12 +88,12 @@ public class Table_column extends ProjectTableEntity
 		this.column_name=column_name;
 	}
 	/** 取得：列中文名称 */
-	public String getColume_ch_name(){
-		return colume_ch_name;
+	public String getColumn_ch_name(){
+		return column_ch_name;
 	}
 	/** 设置：列中文名称 */
-	public void setColume_ch_name(String colume_ch_name){
-		this.colume_ch_name=colume_ch_name;
+	public void setColumn_ch_name(String column_ch_name){
+		this.column_ch_name=column_ch_name;
 	}
 	/** 取得：有效开始日期 */
 	public String getValid_s_date(){
@@ -142,12 +142,12 @@ public class Table_column extends ProjectTableEntity
 		}
 	}
 	/** 取得：备注 */
-	public String getRemark(){
-		return remark;
+	public String getTc_remark(){
+		return tc_remark;
 	}
 	/** 设置：备注 */
-	public void setRemark(String remark){
-		this.remark=remark;
+	public void setTc_remark(String tc_remark){
+		this.tc_remark=tc_remark;
 	}
 	/** 取得：是否保留原字段 */
 	public String getIs_alive(){
