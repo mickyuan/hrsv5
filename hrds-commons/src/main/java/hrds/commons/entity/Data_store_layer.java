@@ -34,7 +34,7 @@ public class Data_store_layer extends ProjectTableEntity
 	private Long dsl_id;
 	@DocBean(name ="dsl_name",value="配置属性名称:",dataType = String.class,required = true)
 	private String dsl_name;
-	@DocBean(name ="store_type",value="存储类型(store_type):1-关系型数据库<DATABASE> 2-Hbase<HBASE> 3-solr<SOLR> 4-ElasticSearch<ElasticSearch> 5-mongodb<MONGODB> ",dataType = String.class,required = true)
+	@DocBean(name ="store_type",value="存储类型(Store_type):1-关系型数据库<DATABASE> 2-Hbase<HBASE> 3-solr<SOLR> 4-ElasticSearch<ElasticSearch> 5-mongodb<MONGODB> ",dataType = String.class,required = true)
 	private String store_type;
 	@DocBean(name ="dsl_remark",value="备注:",dataType = String.class,required = false)
 	private String dsl_remark;

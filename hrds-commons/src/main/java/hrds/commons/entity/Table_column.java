@@ -34,8 +34,8 @@ public class Table_column extends ProjectTableEntity
 	private Long column_id;
 	@DocBean(name ="is_primary_key",value="是否为主键(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_primary_key;
-	@DocBean(name ="colume_name",value="列名:",dataType = String.class,required = true)
-	private String colume_name;
+	@DocBean(name ="column_name",value="列名:",dataType = String.class,required = true)
+	private String column_name;
 	@DocBean(name ="colume_ch_name",value="列中文名称:",dataType = String.class,required = false)
 	private String colume_ch_name;
 	@DocBean(name ="valid_s_date",value="有效开始日期:",dataType = String.class,required = true)
@@ -80,12 +80,12 @@ public class Table_column extends ProjectTableEntity
 		this.is_primary_key=is_primary_key;
 	}
 	/** 取得：列名 */
-	public String getColume_name(){
-		return colume_name;
+	public String getColumn_name(){
+		return column_name;
 	}
 	/** 设置：列名 */
-	public void setColume_name(String colume_name){
-		this.colume_name=colume_name;
+	public void setColumn_name(String column_name){
+		this.column_name=column_name;
 	}
 	/** 取得：列中文名称 */
 	public String getColume_ch_name(){
