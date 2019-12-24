@@ -310,7 +310,7 @@ public class AgentListActionTest extends WebBaseTestCase {
 			column.setColumn_id(100200L + i);
 			String isPK = i == 0 ? IsFlag.Shi.getCode() : IsFlag.Fou.getCode();
 			column.setIs_primary_key(isPK);
-			column.setColume_name("wzcTestColumnName" + i);
+			column.setColumn_name("wzcTestColumnName" + i);
 			column.setTable_id(TABLE_ID);
 			column.setValid_s_date("20190918");
 			column.setValid_e_date("20190918");

@@ -7,7 +7,7 @@ public class CollTbConfParam {
 
 	/*
 	* 一张表对应的所有要被采集的列组成的json格式的字符串
-	* 一个json对象中应该包括列名(colume_name)、字段类型(column_type)、列中文名(colume_ch_name)、是否采集(is_get)
+	* 一个json对象中应该包括列名(column_name)、字段类型(column_type)、列中文名(column_ch_name)、是否采集(is_get)
 	* 如果用户没有选择采集列，则传空字符串，系统默认采集该张表所有列
 	* */
 	private String collColumnString;

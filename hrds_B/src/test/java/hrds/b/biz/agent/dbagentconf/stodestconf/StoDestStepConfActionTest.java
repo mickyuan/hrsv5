@@ -446,19 +446,19 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 		assertThat("由于在构造初始化数据的时候配置了5个存储目的地，所以获取到的数据有5条", rightDataOne.getRowCount(), is(5));
 		for(int i = 0; i < rightDataOne.getRowCount(); i++){
 			if(rightDataOne.getString(i, "dsl_name").equalsIgnoreCase("SOLR")){
-				assertThat("<data_source>数据存储层配置属性名称为<SOLR>, 存储类型为<SOLR>", rightDataOne.getString(i, "store_type"), is(store_type.SOLR.getCode()));
+				assertThat("<data_source>数据存储层配置属性名称为<SOLR>, 存储类型为<SOLR>", rightDataOne.getString(i, "store_type"), is(Store_type.SOLR.getCode()));
 				assertThat("<data_source>数据存储层配置属性名称为<SOLR>, usedflag标识位为<1>", rightDataOne.getString(i, "usedflag"), is(IsFlag.Shi.getCode()));
 			}else if(rightDataOne.getString(i, "dsl_name").equalsIgnoreCase("Oralce")){
-				assertThat("<data_source>数据存储层配置属性名称为<Oralce>, 存储类型为<关系型数据库>", rightDataOne.getString(i, "store_type"), is(store_type.DATABASE.getCode()));
+				assertThat("<data_source>数据存储层配置属性名称为<Oralce>, 存储类型为<关系型数据库>", rightDataOne.getString(i, "store_type"), is(Store_type.DATABASE.getCode()));
 				assertThat("<data_source>数据存储层配置属性名称为<Oralce>, usedflag标识位为<0>", rightDataOne.getString(i, "usedflag"), is(IsFlag.Fou.getCode()));
 			}else if(rightDataOne.getString(i, "dsl_name").equalsIgnoreCase("ElasticSearch")){
-				assertThat("<data_source>数据存储层配置属性名称为<ElasticSearch>, 存储类型为<ElasticSearch>", rightDataOne.getString(i, "store_type"), is(store_type.ElasticSearch.getCode()));
+				assertThat("<data_source>数据存储层配置属性名称为<ElasticSearch>, 存储类型为<ElasticSearch>", rightDataOne.getString(i, "store_type"), is(Store_type.ElasticSearch.getCode()));
 				assertThat("<data_source>数据存储层配置属性名称为<ElasticSearch>, usedflag标识位为<0>", rightDataOne.getString(i, "usedflag"), is(IsFlag.Fou.getCode()));
 			}else if(rightDataOne.getString(i, "dsl_name").equalsIgnoreCase("HBASE")){
-				assertThat("<data_source>数据存储层配置属性名称为<HBASE>, 存储类型为<HBASE>", rightDataOne.getString(i, "store_type"), is(store_type.HBASE.getCode()));
+				assertThat("<data_source>数据存储层配置属性名称为<HBASE>, 存储类型为<HBASE>", rightDataOne.getString(i, "store_type"), is(Store_type.HBASE.getCode()));
 				assertThat("<data_source>数据存储层配置属性名称为<HBASE>, usedflag标识位为<0>", rightDataOne.getString(i, "usedflag"), is(IsFlag.Fou.getCode()));
 			}else if(rightDataOne.getString(i, "dsl_name").equalsIgnoreCase("MONGODB")){
-				assertThat("<data_source>数据存储层配置属性名称为<MONGODB>, 存储类型为<MONGODB>", rightDataOne.getString(i, "store_type"), is(store_type.MONGODB.getCode()));
+				assertThat("<data_source>数据存储层配置属性名称为<MONGODB>, 存储类型为<MONGODB>", rightDataOne.getString(i, "store_type"), is(Store_type.MONGODB.getCode()));
 				assertThat("<data_source>数据存储层配置属性名称为<MONGODB>, usedflag标识位为<0>", rightDataOne.getString(i, "usedflag"), is(IsFlag.Fou.getCode()));
 			}else{
 				assertThat("<data_source>获取数据存储层配置出现了不符合期望的情况，数据存储层配置属性名称为：" + rightDataOne.getString(i, "dsl_name"), true, is(false));
@@ -477,19 +477,19 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 		assertThat("由于在构造初始化数据的时候配置了5个存储目的地，所以获取到的数据有5条", rightDataTwo.getRowCount(), is(5));
 		for(int i = 0; i < rightDataTwo.getRowCount(); i++){
 			if(rightDataTwo.getString(i, "dsl_name").equalsIgnoreCase("SOLR")){
-				assertThat("<agent_info>数据存储层配置属性名称为<SOLR>, 存储类型为<SOLR>", rightDataTwo.getString(i, "store_type"), is(store_type.SOLR.getCode()));
+				assertThat("<agent_info>数据存储层配置属性名称为<SOLR>, 存储类型为<SOLR>", rightDataTwo.getString(i, "store_type"), is(Store_type.SOLR.getCode()));
 				assertThat("<agent_info>数据存储层配置属性名称为<SOLR>, usedflag标识位为<0>", rightDataTwo.getString(i, "usedflag"), is(IsFlag.Fou.getCode()));
 			}else if(rightDataTwo.getString(i, "dsl_name").equalsIgnoreCase("Oralce")){
-				assertThat("<agent_info>数据存储层配置属性名称为<Oralce>, 存储类型为<关系型数据库>", rightDataTwo.getString(i, "store_type"), is(store_type.DATABASE.getCode()));
+				assertThat("<agent_info>数据存储层配置属性名称为<Oralce>, 存储类型为<关系型数据库>", rightDataTwo.getString(i, "store_type"), is(Store_type.DATABASE.getCode()));
 				assertThat("<agent_info>数据存储层配置属性名称为<Oralce>, usedflag标识位为<1>", rightDataTwo.getString(i, "usedflag"), is(IsFlag.Shi.getCode()));
 			}else if(rightDataTwo.getString(i, "dsl_name").equalsIgnoreCase("ElasticSearch")){
-				assertThat("<agent_info>数据存储层配置属性名称为<ElasticSearch>, 存储类型为<ElasticSearch>", rightDataTwo.getString(i, "store_type"), is(store_type.ElasticSearch.getCode()));
+				assertThat("<agent_info>数据存储层配置属性名称为<ElasticSearch>, 存储类型为<ElasticSearch>", rightDataTwo.getString(i, "store_type"), is(Store_type.ElasticSearch.getCode()));
 				assertThat("<agent_info>数据存储层配置属性名称为<ElasticSearch>, usedflag标识位为<0>", rightDataTwo.getString(i, "usedflag"), is(IsFlag.Fou.getCode()));
 			}else if(rightDataTwo.getString(i, "dsl_name").equalsIgnoreCase("HBASE")){
-				assertThat("<agent_info>数据存储层配置属性名称为<HBASE>, 存储类型为<HBASE>", rightDataTwo.getString(i, "store_type"), is(store_type.HBASE.getCode()));
+				assertThat("<agent_info>数据存储层配置属性名称为<HBASE>, 存储类型为<HBASE>", rightDataTwo.getString(i, "store_type"), is(Store_type.HBASE.getCode()));
 				assertThat("<agent_info>数据存储层配置属性名称为<HBASE>, usedflag标识位为<1>", rightDataTwo.getString(i, "usedflag"), is(IsFlag.Shi.getCode()));
 			}else if(rightDataTwo.getString(i, "dsl_name").equalsIgnoreCase("MONGODB")){
-				assertThat("<agent_info>数据存储层配置属性名称为<MONGODB>, 存储类型为<MONGODB>", rightDataTwo.getString(i, "store_type"), is(store_type.MONGODB.getCode()));
+				assertThat("<agent_info>数据存储层配置属性名称为<MONGODB>, 存储类型为<MONGODB>", rightDataTwo.getString(i, "store_type"), is(Store_type.MONGODB.getCode()));
 				assertThat("<agent_info>数据存储层配置属性名称为<MONGODB>, usedflag标识位为<0>", rightDataTwo.getString(i, "usedflag"), is(IsFlag.Fou.getCode()));
 			}else{
 				assertThat("<agent_info>获取数据存储层配置出现了不符合期望的情况，数据存储层配置属性名称为：" + rightDataTwo.getString(i, "dsl_name"), true, is(false));
@@ -523,17 +523,17 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 		Result rightDataOne = rightResultOne.getDataForResult();
 		assertThat("该方法测试用例1获取到了3条数据", rightDataOne.getRowCount(), is(3));
 		for(int i = 0; i < rightDataOne.getRowCount(); i++){
-			if(rightDataOne.getString(i, "colume_name").equalsIgnoreCase("agent_id")){
-				assertThat("获取到的列中文名为agent_id", rightDataOne.getString(i, "colume_ch_name"), is("agent_id"));
+			if(rightDataOne.getString(i, "column_name").equalsIgnoreCase("agent_id")){
+				assertThat("获取到的列中文名为agent_id", rightDataOne.getString(i, "column_ch_name"), is("agent_id"));
 				assertThat("agent_id是主键", rightDataOne.getString(i, "主键"), is(IsFlag.Shi.getCode()));
-			}else if(rightDataOne.getString(i, "colume_name").equalsIgnoreCase("agent_name")){
-				assertThat("获取到的列中文名为Agent名称", rightDataOne.getString(i, "colume_ch_name"), is("Agent名称"));
+			}else if(rightDataOne.getString(i, "column_name").equalsIgnoreCase("agent_name")){
+				assertThat("获取到的列中文名为Agent名称", rightDataOne.getString(i, "column_ch_name"), is("Agent名称"));
 				assertThat("agent_name不是主键", rightDataOne.getString(i, "主键"), is(IsFlag.Fou.getCode()));
-			}else if(rightDataOne.getString(i, "colume_name").equalsIgnoreCase("agent_type")){
-				assertThat("获取到的列中文名为agent类别", rightDataOne.getString(i, "colume_ch_name"), is("agent类别"));
+			}else if(rightDataOne.getString(i, "column_name").equalsIgnoreCase("agent_type")){
+				assertThat("获取到的列中文名为agent类别", rightDataOne.getString(i, "column_ch_name"), is("agent类别"));
 				assertThat("agent_type不是主键", rightDataOne.getString(i, "主键"), is(IsFlag.Fou.getCode()));
 			}else {
-				assertThat("获取到了不符合期望的数据，列名为" + rightDataOne.getString(i, "colume_name"), false, is(true));
+				assertThat("获取到了不符合期望的数据，列名为" + rightDataOne.getString(i, "column_name"), false, is(true));
 			}
 		}
 
@@ -549,17 +549,17 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 		Result rightDataTwo = rightResultTwo.getDataForResult();
 		assertThat("该方法测试用例2获取到了3条数据", rightDataTwo.getRowCount(), is(3));
 		for(int i = 0; i < rightDataTwo.getRowCount(); i++){
-			if(rightDataTwo.getString(i, "colume_name").equalsIgnoreCase("agent_id")){
-				assertThat("获取到的列中文名为agent_id", rightDataTwo.getString(i, "colume_ch_name"), is("agent_id"));
+			if(rightDataTwo.getString(i, "column_name").equalsIgnoreCase("agent_id")){
+				assertThat("获取到的列中文名为agent_id", rightDataTwo.getString(i, "column_ch_name"), is("agent_id"));
 				assertThat("agent_id是rowkey", rightDataTwo.getString(i, "rowkey"), is(IsFlag.Shi.getCode()));
-			}else if(rightDataTwo.getString(i, "colume_name").equalsIgnoreCase("agent_name")){
-				assertThat("获取到的列中文名为Agent名称", rightDataTwo.getString(i, "colume_ch_name"), is("Agent名称"));
+			}else if(rightDataTwo.getString(i, "column_name").equalsIgnoreCase("agent_name")){
+				assertThat("获取到的列中文名为Agent名称", rightDataTwo.getString(i, "column_ch_name"), is("Agent名称"));
 				assertThat("agent_name不是rowkey", rightDataTwo.getString(i, "rowkey"), is(IsFlag.Fou.getCode()));
-			}else if(rightDataTwo.getString(i, "colume_name").equalsIgnoreCase("agent_type")){
-				assertThat("获取到的列中文名为agent类别", rightDataTwo.getString(i, "colume_ch_name"), is("agent类别"));
+			}else if(rightDataTwo.getString(i, "column_name").equalsIgnoreCase("agent_type")){
+				assertThat("获取到的列中文名为agent类别", rightDataTwo.getString(i, "column_ch_name"), is("agent类别"));
 				assertThat("agent_type不是rowkey", rightDataTwo.getString(i, "rowkey"), is(IsFlag.Fou.getCode()));
 			}else {
-				assertThat("获取到了不符合期望的数据，列名为" + rightDataTwo.getString(i, "colume_name"), false, is(true));
+				assertThat("获取到了不符合期望的数据，列名为" + rightDataTwo.getString(i, "column_name"), false, is(true));
 			}
 		}
 
@@ -575,17 +575,17 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 		Result rightDataThree = rightResultThree.getDataForResult();
 		assertThat("该方法测试用例3获取到了3条数据", rightDataThree.getRowCount(), is(3));
 		for(int i = 0; i < rightDataThree.getRowCount(); i++){
-			if(rightDataThree.getString(i, "colume_name").equalsIgnoreCase("source_id")){
-				assertThat("获取到的列中文名为数据源ID", rightDataThree.getString(i, "colume_ch_name"), is("数据源ID"));
+			if(rightDataThree.getString(i, "column_name").equalsIgnoreCase("source_id")){
+				assertThat("获取到的列中文名为数据源ID", rightDataThree.getString(i, "column_ch_name"), is("数据源ID"));
 				assertThat("source_id是索引列", rightDataThree.getString(i, "索引列"), is(IsFlag.Shi.getCode()));
-			}else if(rightDataThree.getString(i, "colume_name").equalsIgnoreCase("datasource_number")){
-				assertThat("获取到的列中文名为数据源编号", rightDataThree.getString(i, "colume_ch_name"), is("数据源编号"));
+			}else if(rightDataThree.getString(i, "column_name").equalsIgnoreCase("datasource_number")){
+				assertThat("获取到的列中文名为数据源编号", rightDataThree.getString(i, "column_ch_name"), is("数据源编号"));
 				assertThat("datasource_number不是索引列", rightDataThree.getString(i, "索引列"), is(IsFlag.Fou.getCode()));
-			}else if(rightDataThree.getString(i, "colume_name").equalsIgnoreCase("datasource_name")){
-				assertThat("获取到的列中文名为数据源名称", rightDataThree.getString(i, "colume_ch_name"), is("数据源名称"));
+			}else if(rightDataThree.getString(i, "column_name").equalsIgnoreCase("datasource_name")){
+				assertThat("获取到的列中文名为数据源名称", rightDataThree.getString(i, "column_ch_name"), is("数据源名称"));
 				assertThat("datasource_name不是索引列", rightDataThree.getString(i, "索引列"), is(IsFlag.Fou.getCode()));
 			}else {
-				assertThat("获取到了不符合期望的数据，列名为" + rightDataThree.getString(i, "colume_name"), false, is(true));
+				assertThat("获取到了不符合期望的数据，列名为" + rightDataThree.getString(i, "column_name"), false, is(true));
 			}
 		}
 
@@ -602,17 +602,17 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 		assertThat("该方法测试用例4获取到了3条数据", rightDataFour.getRowCount(), is(3));
 
 		for(int i = 0; i < rightDataFour.getRowCount(); i++){
-			if(rightDataFour.getString(i, "colume_name").equalsIgnoreCase("agent_id")){
-				assertThat("获取到的列中文名为agent_id", rightDataFour.getString(i, "colume_ch_name"), is("agent_id"));
+			if(rightDataFour.getString(i, "column_name").equalsIgnoreCase("agent_id")){
+				assertThat("获取到的列中文名为agent_id", rightDataFour.getString(i, "column_ch_name"), is("agent_id"));
 				assertThat("agent_id不是索引列", rightDataFour.getString(i, "索引列"), is(IsFlag.Fou.getCode()));
-			}else if(rightDataFour.getString(i, "colume_name").equalsIgnoreCase("agent_name")){
-				assertThat("获取到的列中文名为Agent名称", rightDataFour.getString(i, "colume_ch_name"), is("Agent名称"));
+			}else if(rightDataFour.getString(i, "column_name").equalsIgnoreCase("agent_name")){
+				assertThat("获取到的列中文名为Agent名称", rightDataFour.getString(i, "column_ch_name"), is("Agent名称"));
 				assertThat("agent_name不是索引列", rightDataFour.getString(i, "索引列"), is(IsFlag.Fou.getCode()));
-			}else if(rightDataFour.getString(i, "colume_name").equalsIgnoreCase("agent_type")){
-				assertThat("获取到的列中文名为agent类别", rightDataFour.getString(i, "colume_ch_name"), is("agent类别"));
+			}else if(rightDataFour.getString(i, "column_name").equalsIgnoreCase("agent_type")){
+				assertThat("获取到的列中文名为agent类别", rightDataFour.getString(i, "column_ch_name"), is("agent类别"));
 				assertThat("agent_type不是索引列", rightDataFour.getString(i, "索引列"), is(IsFlag.Fou.getCode()));
 			}else {
-				assertThat("获取到了不符合期望的数据，列名为" + rightDataFour.getString(i, "colume_name"), false, is(true));
+				assertThat("获取到了不符合期望的数据，列名为" + rightDataFour.getString(i, "column_name"), false, is(true));
 			}
 		}
 	}
@@ -639,7 +639,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 					" left join " + Data_store_layer_added.TableName + " dsld" +
 					" on dsld.dslad_id = csi.dslad_id" +
 					" left join " + Data_store_layer.TableName + " dsl" +
-					" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 3112L, store_type.DATABASE.getCode())
+					" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 3112L, Store_type.DATABASE.getCode())
 					.orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("agent_info表中的agent_id字段保存进入到关系型数据库做主键", countOne, is(1L));
 
@@ -647,7 +647,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 					" left join " + Data_store_layer_added.TableName + " dsld" +
 					" on dsld.dslad_id = csi.dslad_id" +
 					" left join " + Data_store_layer.TableName + " dsl" +
-					" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 3113L, store_type.DATABASE.getCode())
+					" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 3113L, Store_type.DATABASE.getCode())
 					.orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("agent_info表中的agent_name字段没有保存进入到关系型数据库做主键", countTwo, is(0L));
 		}
@@ -681,7 +681,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 					" left join " + Data_store_layer_added.TableName + " dsld" +
 					" on dsld.dslad_id = csi.dslad_id" +
 					" left join " + Data_store_layer.TableName + " dsl" +
-					" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 3112L, store_type.DATABASE.getCode())
+					" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 3112L, Store_type.DATABASE.getCode())
 					.orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("agent_info表中的agent_id字段没有保存进入到关系型数据库做主键", countOne, is(0L));
 
@@ -689,7 +689,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 					" left join " + Data_store_layer_added.TableName + " dsld" +
 					" on dsld.dslad_id = csi.dslad_id" +
 					" left join " + Data_store_layer.TableName + " dsl" +
-					" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 3113L, store_type.DATABASE.getCode())
+					" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 3113L, Store_type.DATABASE.getCode())
 					.orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("agent_info表中的agent_name字段保存进入到关系型数据库做主键", countTwo, is(1L));
 
@@ -697,7 +697,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 					" left join " + Data_store_layer_added.TableName + " dsld" +
 					" on dsld.dslad_id = csi.dslad_id" +
 					" left join " + Data_store_layer.TableName + " dsl" +
-					" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 3112L, store_type.HBASE.getCode());
+					" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 3112L, Store_type.HBASE.getCode());
 			assertThat("agent_info表中的agent_id字段保存进入到HBASE做主键rowkey", result.getRowCount(), is(1));
 			assertThat("agent_info表中的agent_id字段保存进入到HBASE做主键rowkey，序号为1", result.getLong(0, "csi_number"), is(1L));
 
@@ -717,7 +717,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 					" left join " + Data_store_layer_added.TableName + " dsld" +
 					" on dsld.dslad_id = csi.dslad_id" +
 					" left join " + Data_store_layer.TableName + " dsl" +
-					" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 3112L, store_type.HBASE.getCode())
+					" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 3112L, Store_type.HBASE.getCode())
 					.orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("agent_info表中的agent_id字段保存进入到HBASE做rowkey", countOne, is(1L));
 		}
@@ -736,7 +736,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 					" left join " + Data_store_layer_added.TableName + " dsld" +
 					" on dsld.dslad_id = csi.dslad_id" +
 					" left join " + Data_store_layer.TableName + " dsl" +
-					" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 3112L, store_type.HBASE.getCode())
+					" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 3112L, Store_type.HBASE.getCode())
 					.orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("agent_info表中的agent_id字段没有保存进入到HBASE做rowkey", countOne, is(0L));
 		}
@@ -750,7 +750,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 					" left join " + Data_store_layer_added.TableName + " dsld" +
 					" on dsld.dslad_id = csi.dslad_id" +
 					" left join " + Data_store_layer.TableName + " dsl" +
-					" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 5112L, store_type.SOLR.getCode())
+					" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 5112L, Store_type.SOLR.getCode())
 					.orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("data_source表中的source_id字段保存进入到solr做索引列", countOne, is(1L));
 		}
@@ -776,7 +776,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 					" left join " + Data_store_layer_added.TableName + " dsld" +
 					" on dsld.dslad_id = csi.dslad_id" +
 					" left join " + Data_store_layer.TableName + " dsl" +
-					" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 5112L, store_type.SOLR.getCode())
+					" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 5112L, Store_type.SOLR.getCode())
 					.orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("<正确的数据访问3>执行成功后，data_source表中的source_id字段不再进入到solr做索引列", countOne, is(0L));
 
@@ -784,7 +784,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 					" left join " + Data_store_layer_added.TableName + " dsld" +
 					" on dsld.dslad_id = csi.dslad_id" +
 					" left join " + Data_store_layer.TableName + " dsl" +
-					" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 5112L, store_type.DATABASE.getCode())
+					" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 5112L, Store_type.DATABASE.getCode())
 					.orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("<正确的数据访问3>执行成功后，data_source表中的source_id字段保存进入到关系型数据库做主键", countTwo, is(1L));
 
@@ -792,7 +792,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 					" left join " + Data_store_layer_added.TableName + " dsld" +
 					" on dsld.dslad_id = csi.dslad_id" +
 					" left join " + Data_store_layer.TableName + " dsl" +
-					" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 5112L, store_type.HBASE.getCode());
+					" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 5112L, Store_type.HBASE.getCode());
 			assertThat("<正确的数据访问3>执行成功后，data_source表中的source_id字段保存进入到Hbase做rowkey", result.getRowCount(), is(1));
 			assertThat("<正确的数据访问3>执行成功后，data_source表中的source_id字段保存进入到Hbase做rowkey，序号为3", result.getLong(0, "csi_number"), is(3L));
 
@@ -858,7 +858,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 			}
 			Table_column tableColumn = new Table_column();
 			tableColumn.setColumn_id(columnId);
-			tableColumn.setColume_ch_name(columnZhName);
+			tableColumn.setColumn_ch_name(columnZhName);
 
 			dataSources.add(tableColumn);
 		}
@@ -871,7 +871,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 		assertThat(rightResult.isSuccess(), is(true));
 
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			List<Object> list = SqlOperator.queryOneColumnList(db, "select colume_ch_name from " + Table_column.TableName + " where table_id = ?", DATA_SOURCE_TABLE_ID);
+			List<Object> list = SqlOperator.queryOneColumnList(db, "select column_ch_name from " + Table_column.TableName + " where table_id = ?", DATA_SOURCE_TABLE_ID);
 			assertThat("查询到的数据有3条", list.size(), is(3));
 			for(Object obj : list){
 				String str = (String) obj;
@@ -912,7 +912,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 			}
 			Table_column tableColumn = new Table_column();
 			tableColumn.setColumn_id(columnId);
-			tableColumn.setColume_ch_name(columnZhName);
+			tableColumn.setColumn_ch_name(columnZhName);
 
 			agentInfos.add(tableColumn);
 		}
@@ -928,7 +928,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 
 		//错误的数据访问2：更新agent_info表在table_column表中的数据，但是故意不关联某个字段的ID
 		Table_column wrongTableColumn = new Table_column();
-		wrongTableColumn.setColume_ch_name("Agent名称_update");
+		wrongTableColumn.setColumn_ch_name("Agent名称_update");
 		agentInfos.add(wrongTableColumn);
 
 		String wrongStringTwo = new HttpClient()
@@ -1619,9 +1619,9 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 
 		Map<String, String> oracleMap = rightResultOne.getDataForMap(String.class, String.class);
 		for(String key : oracleMap.keySet()){
-			if(key.equalsIgnoreCase("colume_name")){
+			if(key.equalsIgnoreCase("column_name")){
 				assertThat(oracleMap.get(key).equalsIgnoreCase("列名"), is(true));
-			}else if(key.equalsIgnoreCase("colume_ch_name")){
+			}else if(key.equalsIgnoreCase("column_ch_name")){
 				assertThat(oracleMap.get(key).equalsIgnoreCase("列中文名"), is(true));
 			}else if(key.equalsIgnoreCase("主键")){
 				assertThat(oracleMap.get(key).equalsIgnoreCase("主键"), is(true));
@@ -1640,9 +1640,9 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 
 		Map<String, String> solrMap = rightResultTwo.getDataForMap(String.class, String.class);
 		for(String key : solrMap.keySet()){
-			if(key.equalsIgnoreCase("colume_name")){
+			if(key.equalsIgnoreCase("column_name")){
 				assertThat(solrMap.get(key).equalsIgnoreCase("列名"), is(true));
-			}else if(key.equalsIgnoreCase("colume_ch_name")){
+			}else if(key.equalsIgnoreCase("column_ch_name")){
 				assertThat(solrMap.get(key).equalsIgnoreCase("列中文名"), is(true));
 			}else if(key.equalsIgnoreCase("索引列")){
 				assertThat(solrMap.get(key).equalsIgnoreCase("索引列"), is(true));
@@ -1661,9 +1661,9 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 
 		Map<String, String> mongoMap = wrongResult.getDataForMap(String.class, String.class);
 		for(String key : mongoMap.keySet()){
-			if(key.equalsIgnoreCase("colume_name")){
+			if(key.equalsIgnoreCase("column_name")){
 				assertThat(mongoMap.get(key).equalsIgnoreCase("列名"), is(true));
-			}else if(key.equalsIgnoreCase("colume_ch_name")){
+			}else if(key.equalsIgnoreCase("column_ch_name")){
 				assertThat(mongoMap.get(key).equalsIgnoreCase("列中文名"), is(true));
 			}else{
 				assertThat("出现了不符合期望的情况,key为" + key, true, is(false));

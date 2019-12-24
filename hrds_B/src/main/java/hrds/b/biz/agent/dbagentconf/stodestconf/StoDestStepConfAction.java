@@ -221,8 +221,8 @@ public class StoDestStepConfAction extends BaseAction{
 	public Map<String, String> getColumnHeader(long dslId){
 		Map<String, String> header = new HashMap<>();
 		//1、无论是选择什么存储目的地，都需要展示列名和列中文名这两列
-		header.put("colume_name", "列名");
-		header.put("colume_ch_name", "列中文名");
+		header.put("column_name", "列名");
+		header.put("column_ch_name", "列中文名");
 		//2、根据存储目的地ID去数据存储附加信息表中获取需要额外展示的列
 		List<Object> list = Dbo.queryOneColumnList("select dsla_storelayer from " +
 				Data_store_layer_added.TableName + " where dsl_id = ?", dslId);
@@ -270,7 +270,7 @@ public class StoDestStepConfAction extends BaseAction{
 	@Return(desc = "查询结果集", range = "不为空")
 	public Result getColumnStoInfo(long tableId, long dslId){
 		//1、根据表ID查询出该表所有采集列的列名和列中文名(结果集1)
-		Result resultOne = Dbo.queryResult("select tc.column_id, tc.colume_name, tc.colume_ch_name from "
+		Result resultOne = Dbo.queryResult("select tc.column_id, tc.column_name, tc.column_ch_name from "
 				+ Table_column.TableName + " tc where tc.table_id = ? and tc.is_get = ?", tableId, IsFlag.Shi.getCode());
 		if(resultOne.isEmpty()){
 			throw new BusinessException("未找到属于该表的字段");
@@ -352,7 +352,7 @@ public class StoDestStepConfAction extends BaseAction{
 						throw new BusinessException("通过字段存储附加信息获得存储目的地信息出错");
 					}
 					//如果获取到的存储目的地为HBASE并且csiNumber不为空，则说明该列是作为hbase的rowkey
-					if(param.getCsiNumber() != null && store_type.HBASE.getCode().equalsIgnoreCase((String) list.get(0))){
+					if(param.getCsiNumber() != null && Store_type.HBASE.getCode().equalsIgnoreCase((String) list.get(0))){
 						//保存rowkey的顺序
 						columnStorageInfo.setCsi_number(param.getCsiNumber());
 					}
@@ -368,7 +368,7 @@ public class StoDestStepConfAction extends BaseAction{
 			"2、对集合的长度进行校验，如果集合为空，抛出异常" +
 			"3、遍历集合，更新每个字段的中文名")
 	@Param(name = "columnString", desc = "待更新的字段信息，json数组", range = "不为空，每个json数组中的json对象的key为" +
-			"column_id：字段ID；colume_ch_name：字段中文名")
+			"column_id：字段ID；column_ch_name：字段中文名")
 	public void updateColumnZhName(String columnString){
 		//1、将传过来的json串反序列化为List集合
 		List<Table_column> tableColumns = JSONArray.parseArray(columnString, Table_column.class);
@@ -383,8 +383,8 @@ public class StoDestStepConfAction extends BaseAction{
 				throw new BusinessException("保存第" + (i + 1) + "个字段的中文名必须关联字段ID");
 			}
 			DboExecute.updatesOrThrow("保存第" + (i + 1) + "个字段的中文名失败", "update " +
-					Table_column.TableName + " set colume_ch_name = ? where column_id = ?",
-					tableColumn.getColume_ch_name(), tableColumn.getColumn_id());
+					Table_column.TableName + " set column_ch_name = ? where column_id = ?",
+					tableColumn.getColumn_ch_name(), tableColumn.getColumn_id());
 		}
 	}
 

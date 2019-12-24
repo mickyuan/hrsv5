@@ -266,9 +266,9 @@ public class BaseInitData {
 			agentInfoColumn.setColumn_id(BASE_AGENT_INFO_PRIMAY + i);
 			agentInfoColumn.setIs_get(IsFlag.Shi.getCode());
 			agentInfoColumn.setIs_primary_key(IsFlag.Fou.getCode());
-			agentInfoColumn.setColume_name(columnName);
+			agentInfoColumn.setColumn_name(columnName);
 			agentInfoColumn.setColumn_type(columnType);
-			agentInfoColumn.setColume_ch_name(columnChName);
+			agentInfoColumn.setColumn_ch_name(columnChName);
 			agentInfoColumn.setTable_id(AGENT_INFO_TABLE_ID);
 			agentInfoColumn.setValid_s_date(DateUtil.getSysDate());
 			agentInfoColumn.setValid_e_date(Constant.MAXDATE);
@@ -314,9 +314,9 @@ public class BaseInitData {
 			dataSourceColumn.setColumn_id(BASE_DATA_SOURCE_PRIMAY + i);
 			dataSourceColumn.setIs_get(IsFlag.Shi.getCode());
 			dataSourceColumn.setIs_primary_key(IsFlag.Fou.getCode());
-			dataSourceColumn.setColume_name(columnName);
+			dataSourceColumn.setColumn_name(columnName);
 			dataSourceColumn.setColumn_type(columnType);
-			dataSourceColumn.setColume_ch_name(columnChName);
+			dataSourceColumn.setColumn_ch_name(columnChName);
 			dataSourceColumn.setTable_id(DATA_SOURCE_TABLE_ID);
 			dataSourceColumn.setValid_s_date(DateUtil.getSysDate());
 			dataSourceColumn.setValid_e_date(Constant.MAXDATE);
@@ -379,9 +379,9 @@ public class BaseInitData {
 			codeInfoColumn.setColumn_id(BASE_CODE_INFO_PRIMARY + i);
 			codeInfoColumn.setIs_get(IsFlag.Shi.getCode());
 			codeInfoColumn.setIs_primary_key(primaryKeyFlag);
-			codeInfoColumn.setColume_name(columnName);
+			codeInfoColumn.setColumn_name(columnName);
 			codeInfoColumn.setColumn_type(columnType);
-			codeInfoColumn.setColume_ch_name(columnChName);
+			codeInfoColumn.setColumn_ch_name(columnChName);
 			codeInfoColumn.setTable_id(CODE_INFO_TABLE_ID);
 			codeInfoColumn.setValid_s_date(DateUtil.getSysDate());
 			codeInfoColumn.setValid_e_date(Constant.MAXDATE);

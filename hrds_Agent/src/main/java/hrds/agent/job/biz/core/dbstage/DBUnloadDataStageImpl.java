@@ -55,11 +55,10 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 			"将相关状态信息封装到StageStatusInfo对象中返回", logicStep = "" +
 			"1、创建卸数阶段状态信息，更新作业ID,阶段名，阶段开始时间" +
 			"2、解析作业信息，得到表名和表数据量" +
-			"3、根据列名和表名获得采集SQL" +
-			"4、使用工厂模式获得数据库方言策略" +
-			"5、根据采集线程数，计算每个任务的采集数量" +
-			"6、构建线程对象CollectPage，放入线程池执行" +
-			"7、获得结果,用于校验多线程采集的结果和写Meta文件")
+			"3、根据采集线程数，计算每个任务的采集数量" +
+			"4、构建线程对象CollectPage，放入线程池执行" +
+			"5、获得结果,用于校验多线程采集的结果和写Meta文件" +
+			"6、判断本次卸数阶段是否成功，设置成功或者错误信息")
 	@Return(desc = "StageStatusInfo是保存每个阶段状态信息的实体类", range = "不会为null，StageStatusInfo实体类对象")
 	@SuppressWarnings("unchecked")
 	@Override
@@ -80,13 +79,12 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 		List<String> fileResult = new ArrayList<>();
 		//pageCountResult是本次采集作业每个线程采集到的数据量，用于写meta文件
 		List<Long> pageCountResult = new ArrayList<>();
-		//5、16+1个线程采集。计算每个任务的采集数量,得到start,end,然后封装成CollectTask对象,目前写死，后期可以放在yml文件中,根据服务器实际情况，修改配置
-		//TODO 目前是在配置文件中配置线程数
+		//3、从配置文件中读取并行抽取线程数
+		//TODO 目前是在配置文件中配置线程数，后期，如果用户在页面上设置了并行抽取，那么应该使用用户配置的线程数
 		int threadCount = Integer.parseInt(PropertyParaUtil.getString("threadCount", "15"));
-		//用户提供了该张表用于分页的数据列
 		long totalCount = Long.parseLong(tableCount);
 		long pageRow = totalCount / threadCount;
-		//6、创建固定大小的线程池，执行分页查询(线程池类型和线程数可以后续改造)
+		//4、创建固定大小的线程池，执行分页查询(线程池类型和线程数可以后续改造)
 		// 此处不会有海量的任务需要执行，不会出现队列中等待的任务对象过多的OOM事件。
 		ExecutorService executorService = Executors.newFixedThreadPool(threadCount + 1);
 		List<Future<Map<String, Object>>> futures = new ArrayList<>();
@@ -100,7 +98,7 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 			futures.add(future);
 		}
 		long lastPageStart = pageRow * threadCount;
-		//最后一个线程的最大条数设为Integer.MAX_VALUE
+		//最后一个线程的最大条数设为Long.MAX_VALUE
 		long lastPageEnd = Long.MAX_VALUE;
 		CollectPage lastPage = new CollectPage(sourceDataConfBean, collectTableBean, tableBean,
 				lastPageStart, lastPageEnd, threadCount + 1, pageRow);
@@ -111,7 +109,7 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 		while (!executorService.awaitTermination(100, TimeUnit.MILLISECONDS)) {
 			System.out.println("线程池正在关闭");
 		}
-		//7、获得结果,用于校验多线程采集的结果和写Meta文件
+		//5、获得结果,用于校验多线程采集的结果和写Meta文件
 		for (Future<Map<String, Object>> future : futures) {
 			fileResult.addAll((List<String>) future.get().get("filePathList"));
 			pageCountResult.add((Long) future.get().get("pageCount"));
@@ -134,7 +132,7 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 			}
 		}
 
-		//判断本次卸数阶段是否成功
+		//6、判断本次卸数阶段是否成功，设置成功或者错误信息
 		if (!(fileResult.isEmpty())) {
 			for (String filePath : fileResult) {
 				if (!FileUtil.decideFileExist(filePath)) {

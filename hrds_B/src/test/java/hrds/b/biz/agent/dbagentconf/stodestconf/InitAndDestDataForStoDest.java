@@ -259,16 +259,16 @@ public class InitAndDestDataForStoDest {
 			sysUserColumn.setColumn_id(BASE_SYS_USER_PRIMARY + i);
 			sysUserColumn.setIs_get(IsFlag.Shi.getCode());
 			sysUserColumn.setIs_primary_key(primaryKeyFlag);
-			sysUserColumn.setColume_name(columnName);
+			sysUserColumn.setColumn_name(columnName);
 			sysUserColumn.setColumn_type(columnType);
-			sysUserColumn.setColume_ch_name(columnChName);
+			sysUserColumn.setColumn_ch_name(columnChName);
 			sysUserColumn.setTable_id(SYS_USER_TABLE_ID);
 			sysUserColumn.setValid_s_date(DateUtil.getSysDate());
 			sysUserColumn.setValid_e_date(Constant.MAXDATE);
 			sysUserColumn.setIs_alive(IsFlag.Shi.getCode());
 			sysUserColumn.setIs_new(IsFlag.Fou.getCode());
 			sysUserColumn.setTc_or(columnCleanOrder.toJSONString());
-			sysUserColumn.setRemark(remark);
+			sysUserColumn.setTc_remark(remark);
 
 			sysUsers.add(sysUserColumn);
 		}
@@ -522,9 +522,9 @@ public class InitAndDestDataForStoDest {
 			tableColumn.setIs_new(IsFlag.Shi.getCode());
 			tableColumn.setColumn_id(columnId);
 			tableColumn.setIs_primary_key(IsFlag.Fou.getCode());
-			tableColumn.setColume_name(columnName);
+			tableColumn.setColumn_name(columnName);
 			tableColumn.setColumn_type("varchar(512)");
-			tableColumn.setColume_ch_name(columnChName);
+			tableColumn.setColumn_ch_name(columnChName);
 			tableColumn.setValid_s_date(DateUtil.getSysDate());
 			tableColumn.setValid_e_date(Constant.MAXDATE);
 
@@ -560,9 +560,9 @@ public class InitAndDestDataForStoDest {
 			tableColumn.setIs_new(IsFlag.Shi.getCode());
 			tableColumn.setColumn_id(columnId);
 			tableColumn.setIs_primary_key(IsFlag.Fou.getCode());
-			tableColumn.setColume_name(columnName);
+			tableColumn.setColumn_name(columnName);
 			tableColumn.setColumn_type("varchar(512)");
-			tableColumn.setColume_ch_name(columnChName);
+			tableColumn.setColumn_ch_name(columnChName);
 			tableColumn.setValid_s_date(DateUtil.getSysDate());
 			tableColumn.setValid_e_date(Constant.MAXDATE);
 
@@ -586,9 +586,9 @@ public class InitAndDestDataForStoDest {
 		mergeColumn.setTable_id(SYS_USER_TABLE_ID);
 		mergeColumn.setIs_new(IsFlag.Shi.getCode());
 		mergeColumn.setIs_primary_key(IsFlag.Fou.getCode());
-		mergeColumn.setColume_name("user_mobile_admin");
+		mergeColumn.setColumn_name("user_mobile_admin");
 		mergeColumn.setColumn_type("varchar(512)");
-		mergeColumn.setColume_ch_name("user_mobile_admin_ch");
+		mergeColumn.setColumn_ch_name("user_mobile_admin_ch");
 		mergeColumn.setValid_s_date(DateUtil.getSysDate());
 		mergeColumn.setValid_e_date(Constant.MAXDATE);
 
@@ -690,23 +690,23 @@ public class InitAndDestDataForStoDest {
 			switch (i){
 				case 0 :
 					dslName = "SOLR";
-					storeType = store_type.SOLR.getCode();
+					storeType = Store_type.SOLR.getCode();
 					break;
 				case 1 :
 					dslName = "Oralce";
-					storeType = store_type.DATABASE.getCode();
+					storeType = Store_type.DATABASE.getCode();
 					break;
 				case 2 :
 					dslName = "ElasticSearch";
-					storeType = store_type.ElasticSearch.getCode();
+					storeType = Store_type.ElasticSearch.getCode();
 					break;
 				case 3 :
 					dslName = "HBASE";
-					storeType = store_type.HBASE.getCode();
+					storeType = Store_type.HBASE.getCode();
 					break;
 				case 4 :
 					dslName = "MONGODB";
-					storeType = store_type.MONGODB.getCode();
+					storeType = Store_type.MONGODB.getCode();
 					break;
 				default:
 					dslName = "unexpected_dslName";

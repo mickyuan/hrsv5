@@ -366,7 +366,7 @@ public class CollTbConfStepAction extends BaseAction {
 		else{
 			//3-1、根据tableId在table_column表中获取列信息
 			List<Table_column> tableColumns = Dbo.queryList(Table_column.class, " SELECT * FROM "+
-					Table_column.TableName + " WHERE table_id = ? order by cast(remark as integer)", tableId);
+					Table_column.TableName + " WHERE table_id = ? order by cast(tc_remark as integer)", tableId);
 			returnMap.put("columnInfo", tableColumns);
 		}
 		//4、返回
@@ -399,7 +399,7 @@ public class CollTbConfStepAction extends BaseAction {
 	@Param(name = "colSetId", desc = "数据库设置ID，源系统数据库设置表主键，数据库对应表外键", range = "不为空")
 	@Param(name = "collTbConfParamString", desc = "采集表对应采集字段配置参数", range = "" +
 			"key为collColumnString，表示被采集的列，json数组格式的字符串" +
-			" 一个json对象中应该包括列名(colume_name)、字段类型(column_type)、列中文名(colume_ch_name)、是否采集(is_get)" +
+			" 一个json对象中应该包括列名(column_name)、字段类型(column_type)、列中文名(column_ch_name)、是否采集(is_get)" +
 			"如果用户没有选择采集列，则传空字符串，系统默认采集该张表所有列" +
 			"key为columnSortString，表示列的采集顺序，json数组格式的字符串" +
 			"一个json对象中，key为columnName，value为列名" +
@@ -561,7 +561,7 @@ public class CollTbConfStepAction extends BaseAction {
 		* 对于没有修改过的字段，在保存时做的是update操作，所以要返回前端全部数据，前端进行修改后再传给后台全部数据，这样更新字段时才不会丢失数据
 		* */
 		for(int i = 0; i < tableInfos.getRowCount(); i++){
-			Result result = Dbo.queryResult("select column_id, colume_name, colume_ch_name from "
+			Result result = Dbo.queryResult("select column_id, column_name, column_ch_name from "
 					+ Table_column.TableName + " where table_id = ?", tableInfos.getLong(i, "table_id"));
 			if(result.isEmpty()){
 				throw new BusinessException("获取表字段信息失败");
@@ -585,9 +585,9 @@ public class CollTbConfStepAction extends BaseAction {
 			"表示采集这张表的所有字段;" +
 			"参数格式：json" +
 			"内容：是否主键(is_primary_key)" +
-			"      列名(colume_name)" +
+			"      列名(column_name)" +
 			"      字段类型(column_type)" +
-			"      列中文名(colume_ch_name)")
+			"      列中文名(column_ch_name)")
 	@Param(name = "columnSort", desc = "该表要采集的字段的排序", range = "如果用户没有自定义采集字段排序，该参数可以不传")
 	@Param(name = "colSetId", desc = "数据库设置ID，源系统数据库设置表主键，数据库对应表外键", range = "不为空")
 	@Param(name = "columnCleanOrder", desc = "列清洗默认优先级", range = "不为空，json格式的字符串")
@@ -617,7 +617,7 @@ public class CollTbConfStepAction extends BaseAction {
 		//3、设置主键，外键等信息，如果columnSort不为空，则将Table_column对象的remark属性设置为该列的采集顺序
 		if(tableColumns != null && !tableColumns.isEmpty()){
 			for(Table_column tableColumn : tableColumns){
-				if(StringUtil.isBlank(tableColumn.getColume_name())){
+				if(StringUtil.isBlank(tableColumn.getColumn_name())){
 					throw new BusinessException("保存" + tableInfo.getTable_name() + "采集列时，字段名不能为空");
 				}
 				if(StringUtil.isBlank(tableColumn.getColumn_type())){
@@ -647,8 +647,8 @@ public class CollTbConfStepAction extends BaseAction {
 				if(sortArr != null){
 					for(int j = 0; j < sortArr.size(); j++){
 						JSONObject jsonObject = sortArr.getJSONObject(j);
-						if(jsonObject.getString("columnName").equalsIgnoreCase(tableColumn.getColume_name())){
-							tableColumn.setRemark(String.valueOf(jsonObject.get("sort")));
+						if(jsonObject.getString("columnName").equalsIgnoreCase(tableColumn.getColumn_name())){
+							tableColumn.setTc_remark(String.valueOf(jsonObject.get("sort")));
 						}
 					}
 				}
@@ -670,9 +670,9 @@ public class CollTbConfStepAction extends BaseAction {
 			"表示采集这张表的所有字段;" +
 			"参数格式：json" +
 			"内容：是否主键(is_primary_key)" +
-			"      列名(colume_name)" +
+			"      列名(column_name)" +
 			"      字段类型(column_type)" +
-			"      列中文名(colume_ch_name)" +
+			"      列中文名(column_ch_name)" +
 			"      是否采集(is_get)" +
 			"      表ID(table_id)" +
 			"      有效开始日期(valid_s_date)" +
@@ -691,8 +691,8 @@ public class CollTbConfStepAction extends BaseAction {
 		//3、否则，遍历集合，获取每一个Table_column对象，设置新的table_id，并更新到数据库中
 		for(Table_column tableColumn : tableColumns){
 			DboExecute.updatesOrThrow("更新" + tableInfo.getTable_name() + "表的字段信息失败",
-					"update " + Table_column.TableName + " set colume_ch_name = ?, table_id = ? where column_id = ?",
-					tableColumn.getColume_ch_name(), tableInfo.getTable_id(), tableColumn.getColumn_id());
+					"update " + Table_column.TableName + " set column_ch_name = ?, table_id = ? where column_id = ?",
+					tableColumn.getColumn_ch_name(), tableInfo.getTable_id(), tableColumn.getColumn_id());
 		}
 	}
 
@@ -706,7 +706,7 @@ public class CollTbConfStepAction extends BaseAction {
 	@Param(name = "userId", desc = "当前登录用户ID，sys_user表主键", range = "不为空")
 	@Param(name = "tableName", desc = "要获取列的表名", range = "不为空")
 	@Return(desc = "在Agent端获取到的该表的列信息", range = "不为空，" +
-			"一个在Agent端封装好的Table_column对象的is_primary_key,colume_name,column_type属性必须有值")
+			"一个在Agent端封装好的Table_column对象的is_primary_key,column_name,column_type属性必须有值")
 	private List<Table_column> getColumnInfoByTableName(long colSetId, long userId, String tableName){
 		//1、根据colSetId和userId去数据库中查出DB连接信息
 		Map<String, Object> databaseInfo = getDatabaseSetInfo(colSetId, userId);
@@ -724,8 +724,8 @@ public class CollTbConfStepAction extends BaseAction {
 		for(int i = 0; i < columnInfos.size(); i++){
 			JSONObject columnInfo = columnInfos.getJSONObject(i);
 			Table_column tableColumn = new Table_column();
-			tableColumn.setColume_name(columnInfo.getString("column_name"));
-			tableColumn.setColume_ch_name(columnInfo.getString("column_ch_name"));
+			tableColumn.setColumn_name(columnInfo.getString("column_name"));
+			tableColumn.setColumn_ch_name(columnInfo.getString("column_ch_name"));
 			tableColumn.setColumn_type(columnInfo.getString("type"));
 
 			tableColumns.add(tableColumn);

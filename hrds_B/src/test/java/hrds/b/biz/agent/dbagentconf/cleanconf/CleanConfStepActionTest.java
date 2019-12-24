@@ -1349,22 +1349,22 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		}
 
 		try(DatabaseWrapper db = new DatabaseWrapper()){
-			List<Table_column> tableColumns = SqlOperator.queryList(db, Table_column.class, "select * from " + Table_column.TableName + " where colume_name in" +
-							" (select t1.colume_name from "+ Table_column.TableName +" t1" +
-							" JOIN " + Column_split.TableName + " t2 ON t1.colume_name = t2.col_name " +
+			List<Table_column> tableColumns = SqlOperator.queryList(db, Table_column.class, "select * from " + Table_column.TableName + " where column_name in" +
+							" (select t1.column_name from "+ Table_column.TableName +" t1" +
+							" JOIN " + Column_split.TableName + " t2 ON t1.column_name = t2.col_name " +
 							" JOIN " + Column_clean.TableName + " t3 ON t2.col_clean_id = t3.col_clean_id " +
 							" WHERE t2.col_clean_id = ? and t2.column_id = ? and t1.table_id = ? and t1.is_new = ?) ",
 					101010102L, 3003L, CODE_INFO_TABLE_ID, IsFlag.Shi.getCode());
 			assertThat("进行code_info表的ci_cp_classname列拆分修改保存前，拆分为ci、sp、classname的列在table_column表中存在", tableColumns.size() == 3, is(true));
 			for(Table_column tableColumn : tableColumns){
 				if(tableColumn.getColumn_id() == 141414L){
-					assertThat("进行code_info表的ci_cp_classname列拆分修改保存前，拆分为ci的列在table_column表中存在", tableColumn.getColume_name().equalsIgnoreCase("ci"), is(true));
+					assertThat("进行code_info表的ci_cp_classname列拆分修改保存前，拆分为ci的列在table_column表中存在", tableColumn.getColumn_name().equalsIgnoreCase("ci"), is(true));
 				}else if(tableColumn.getColumn_id() == 151515L){
-					assertThat("进行code_info表的ci_cp_classname列拆分修改保存前，拆分为sp的列在table_column表中存在", tableColumn.getColume_name().equalsIgnoreCase("sp"), is(true));
+					assertThat("进行code_info表的ci_cp_classname列拆分修改保存前，拆分为sp的列在table_column表中存在", tableColumn.getColumn_name().equalsIgnoreCase("sp"), is(true));
 				}else if(tableColumn.getColumn_id() == 161616L){
-					assertThat("进行code_info表的ci_cp_classname列拆分修改保存前，拆分为classname的列在table_column表中存在", tableColumn.getColume_name().equalsIgnoreCase("classname"), is(true));
+					assertThat("进行code_info表的ci_cp_classname列拆分修改保存前，拆分为classname的列在table_column表中存在", tableColumn.getColumn_name().equalsIgnoreCase("classname"), is(true));
 				}else{
-					assertThat("进行code_info表的ci_cp_classname列拆分修改保存前，在table_column表中查询到了不符合预期的列" + tableColumn.getColume_name(), false, is(true));
+					assertThat("进行code_info表的ci_cp_classname列拆分修改保存前，在table_column表中查询到了不符合预期的列" + tableColumn.getColumn_name(), false, is(true));
 				}
 			}
 			long beforeDelSpCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_split.TableName + " where col_split_id in (101010103, 101010104, 101010105) ").orElseThrow(() -> new BusinessException("SQL查询错误"));
@@ -1383,22 +1383,22 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		assertThat(rightResultOne.isSuccess(), is(true));
 
 		try(DatabaseWrapper db = new DatabaseWrapper()){
-			List<Table_column> tableColumns = SqlOperator.queryList(db, Table_column.class, "select * from " + Table_column.TableName + " where colume_name in" +
-							" (select t1.colume_name from "+ Table_column.TableName +" t1" +
-							" JOIN " + Column_split.TableName + " t2 ON t1.colume_name = t2.col_name " +
+			List<Table_column> tableColumns = SqlOperator.queryList(db, Table_column.class, "select * from " + Table_column.TableName + " where column_name in" +
+							" (select t1.column_name from "+ Table_column.TableName +" t1" +
+							" JOIN " + Column_split.TableName + " t2 ON t1.column_name = t2.col_name " +
 							" JOIN " + Column_clean.TableName + " t3 ON t2.col_clean_id = t3.col_clean_id " +
 							" WHERE t2.col_clean_id = ? and t2.column_id = ? and t1.table_id = ? and t1.is_new = ?) ",
 					101010102L, 3003L, CODE_INFO_TABLE_ID, IsFlag.Shi.getCode());
 			assertThat("进行code_info表的ci_cp_classname列拆分修改保存后，拆分为ci_s、p_class、name的列在table_column表中存在", tableColumns.size() == 3, is(true));
 			for(Table_column tableColumn : tableColumns){
-				if(tableColumn.getColume_name().equalsIgnoreCase("ci_s")){
-					assertThat("进行code_info表的ci_cp_classname列拆分修改保存后，拆分为ci_s的列在table_column表中存在", tableColumn.getColume_name().equalsIgnoreCase("ci_s"), is(true));
-				}else if(tableColumn.getColume_name().equalsIgnoreCase("p_class")){
-					assertThat("进行code_info表的ci_cp_classname列拆分修改保存后，拆分为p_class的列在table_column表中存在", tableColumn.getColume_name().equalsIgnoreCase("p_class"), is(true));
-				}else if(tableColumn.getColume_name().equalsIgnoreCase("name")){
-					assertThat("进行code_info表的ci_cp_classname列拆分修改保存后，拆分为name的列在table_column表中存在", tableColumn.getColume_name().equalsIgnoreCase("name"), is(true));
+				if(tableColumn.getColumn_name().equalsIgnoreCase("ci_s")){
+					assertThat("进行code_info表的ci_cp_classname列拆分修改保存后，拆分为ci_s的列在table_column表中存在", tableColumn.getColumn_name().equalsIgnoreCase("ci_s"), is(true));
+				}else if(tableColumn.getColumn_name().equalsIgnoreCase("p_class")){
+					assertThat("进行code_info表的ci_cp_classname列拆分修改保存后，拆分为p_class的列在table_column表中存在", tableColumn.getColumn_name().equalsIgnoreCase("p_class"), is(true));
+				}else if(tableColumn.getColumn_name().equalsIgnoreCase("name")){
+					assertThat("进行code_info表的ci_cp_classname列拆分修改保存后，拆分为name的列在table_column表中存在", tableColumn.getColumn_name().equalsIgnoreCase("name"), is(true));
 				}else{
-					assertThat("进行code_info表的ci_cp_classname列拆分修改保存后，在table_column表中查询到了不符合预期的列" + tableColumn.getColume_name(), false, is(true));
+					assertThat("进行code_info表的ci_cp_classname列拆分修改保存后，在table_column表中查询到了不符合预期的列" + tableColumn.getColumn_name(), false, is(true));
 				}
 			}
 			long afterDelSpCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_split.TableName + " where col_split_id in (101010103, 101010104, 101010105) ").orElseThrow(() -> new BusinessException("SQL查询错误"));
@@ -1420,9 +1420,9 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 			}
 
 			//删除新增时带来的数据
-			int execute1 = SqlOperator.execute(db, "delete from " + Table_column.TableName + " where colume_name in " +
-							" (select t1.colume_name from table_column t1 " +
-							" JOIN " + Column_split.TableName + " t2 ON t1.colume_name = t2.col_name " +
+			int execute1 = SqlOperator.execute(db, "delete from " + Table_column.TableName + " where column_name in " +
+							" (select t1.column_name from table_column t1 " +
+							" JOIN " + Column_split.TableName + " t2 ON t1.column_name = t2.col_name " +
 							" JOIN " + Column_clean.TableName + " t3 ON t2.col_clean_id = t3.col_clean_id " +
 							" WHERE t2.col_clean_id = ? and t2.column_id = ? and t1.table_id = ? and t1.is_new = ?)",
 					101010102, 3003, CODE_INFO_TABLE_ID, IsFlag.Shi.getCode());
@@ -1484,21 +1484,21 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 
 		try(DatabaseWrapper db = new DatabaseWrapper()){
 			List<Table_column> tableColumns = SqlOperator.queryList(db, Table_column.class, "select * from " + Table_column.TableName +
-					" where colume_name in " +
-					" (select t1.colume_name from table_column t1" +
-					" JOIN " + Column_split.TableName + " t2 ON t1.colume_name = t2.col_name " +
+					" where column_name in " +
+					" (select t1.column_name from table_column t1" +
+					" JOIN " + Column_split.TableName + " t2 ON t1.column_name = t2.col_name " +
 					" JOIN " + Column_clean.TableName + " t3 ON t2.col_clean_id = t3.col_clean_id " +
 					" WHERE t2.column_id = ? and t1.table_id = ? and t1.is_new = ?) ", 3001L, CODE_INFO_TABLE_ID, IsFlag.Shi.getCode());
 			assertThat("模拟新增对code_info表的ci_sp_code设置字段拆分规则，table_column表中按照下划线分拆分为ci、sp、code三列成功", tableColumns.size() == 3, is(true));
 			for(Table_column tableColumn : tableColumns){
-				if(tableColumn.getColume_name().equalsIgnoreCase("ci")){
+				if(tableColumn.getColumn_name().equalsIgnoreCase("ci")){
 					assertThat("模拟新增对code_info表的ci_sp_code设置字段拆分规则，table_column表中按照下划线分拆分为ci", true, is(true));
-				}else if(tableColumn.getColume_name().equalsIgnoreCase("sp")){
+				}else if(tableColumn.getColumn_name().equalsIgnoreCase("sp")){
 					assertThat("模拟新增对code_info表的ci_sp_code设置字段拆分规则，table_column表中按照下划线分拆分为sp", true, is(true));
-				}else if(tableColumn.getColume_name().equalsIgnoreCase("code")){
+				}else if(tableColumn.getColumn_name().equalsIgnoreCase("code")){
 					assertThat("模拟新增对code_info表的ci_sp_code设置字段拆分规则，table_column表中按照下划线分拆分为code", true, is(true));
 				}else{
-					assertThat("模拟新增对code_info表的ci_sp_code设置字段拆分规则，table_column表中出现了不期望出现的数据, 列名为" + tableColumn.getColume_name(), false, is(true));
+					assertThat("模拟新增对code_info表的ci_sp_code设置字段拆分规则，table_column表中出现了不期望出现的数据, 列名为" + tableColumn.getColumn_name(), false, is(true));
 				}
 			}
 
@@ -1506,9 +1506,9 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 			assertThat("模拟新增对code_info表的ci_sp_code设置字段拆分规则，column_split表中按照下划线分拆分为ci、sp、code三列成功", afterSplitCount == 3, is(true));
 
 			//删除新增时带来的数据
-			int execute1 = SqlOperator.execute(db, "delete from " + Table_column.TableName + " where colume_name in " +
-							" (select t1.colume_name from table_column t1 " +
-							" JOIN " + Column_split.TableName + " t2 ON t1.colume_name = t2.col_name " +
+			int execute1 = SqlOperator.execute(db, "delete from " + Table_column.TableName + " where column_name in " +
+							" (select t1.column_name from table_column t1 " +
+							" JOIN " + Column_split.TableName + " t2 ON t1.column_name = t2.col_name " +
 							" JOIN " + Column_clean.TableName + " t3 ON t2.col_clean_id = t3.col_clean_id " +
 							" WHERE t2.column_id = ? and t1.table_id = ? and t1.is_new = ?)",
 					3001L, CODE_INFO_TABLE_ID, IsFlag.Shi.getCode());
@@ -2008,7 +2008,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 
 		try(DatabaseWrapper db = new DatabaseWrapper()){
 			List<Table_column> tableColumns = SqlOperator.queryList(db, Table_column.class, "select * from " + Table_column.TableName
-					+ " where colume_name in (select t1.colume_name from " + Table_column.TableName + " t1 " +
+					+ " where column_name in (select t1.column_name from " + Table_column.TableName + " t1 " +
 					" JOIN " + Column_merge.TableName + " t2 ON t1.table_id=t2.table_id " +
 					" where t2.table_id = ? and t1.is_new = ? )", SYS_USER_TABLE_ID, IsFlag.Shi.getCode());
 			long afterColumnCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " where column_id = ?", 1717171717L).orElseThrow(() -> new BusinessException("SQL查询错误"));
@@ -2017,7 +2017,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 			assertThat("模拟对sys_user表设置好的列合并进行修改成功", afterColumnCount == 0, is(true));
 			assertThat("模拟对sys_user表设置好的列合并进行修改成功", afterMergeCount == 0, is(true));
 
-			int execute = SqlOperator.execute(db, "delete from " + Table_column.TableName + " where colume_name in (select t1.colume_name from " + Table_column.TableName + " t1 " +
+			int execute = SqlOperator.execute(db, "delete from " + Table_column.TableName + " where column_name in (select t1.column_name from " + Table_column.TableName + " t1 " +
 					" JOIN " + Column_merge.TableName + " t2 ON t1.table_id=t2.table_id " +
 					" where t2.table_id = ? and t1.is_new = ? ) ", SYS_USER_TABLE_ID, IsFlag.Shi.getCode());
 
@@ -2048,18 +2048,18 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 
 		try(DatabaseWrapper db = new DatabaseWrapper()){
 			List<Table_column> tableColumns = SqlOperator.queryList(db, Table_column.class, "select * from " + Table_column.TableName
-					+ " where colume_name in (select t1.colume_name from " + Table_column.TableName + " t1 " +
+					+ " where column_name in (select t1.column_name from " + Table_column.TableName + " t1 " +
 					" JOIN " + Column_merge.TableName + " t2 ON t1.table_id = t2.table_id " +
-					" and t1.colume_name = t2.col_name " +
+					" and t1.column_name = t2.col_name " +
 					" where t2.table_id = ? and t1.is_new = ? )", CODE_INFO_TABLE_ID, IsFlag.Shi.getCode());
 			long afterMergeCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_merge.TableName + " where table_id = ?", CODE_INFO_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("模拟对code_info表设置列合并成功", tableColumns.size(), is(1));
-			assertThat("模拟对code_info表设置列合并成功", tableColumns.get(0).getColume_name().equalsIgnoreCase("ci_sp_name_remark"), is(true));
+			assertThat("模拟对code_info表设置列合并成功", tableColumns.get(0).getColumn_name().equalsIgnoreCase("ci_sp_name_remark"), is(true));
 			assertThat("模拟对code_info表设置列合并成功", afterMergeCount == 1, is(true));
 
-			int execute = SqlOperator.execute(db, "delete from " + Table_column.TableName + " where colume_name in (select t1.colume_name from " + Table_column.TableName + " t1 " +
+			int execute = SqlOperator.execute(db, "delete from " + Table_column.TableName + " where column_name in (select t1.column_name from " + Table_column.TableName + " t1 " +
 					" JOIN " + Column_merge.TableName + " t2 ON t1.table_id=t2.table_id " +
-					" and t1.colume_name = t2.col_name " +
+					" and t1.column_name = t2.col_name " +
 					" where t2.table_id = ? and t1.is_new = ? ) ", CODE_INFO_TABLE_ID, IsFlag.Shi.getCode());
 			assertThat("模拟对code_info表设置列合并成功，删除table_column表中新增的数据", execute == 1 ,is(true));
 
@@ -2135,11 +2135,11 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		//模拟删除对sys_user表设置的列合并规则
 		try(DatabaseWrapper db = new DatabaseWrapper()){
 			long beforeColumnCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName +
-					" where colume_name = " +
-					" (select t1.colume_name " +
+					" where column_name = " +
+					" (select t1.column_name " +
 					" from " + Table_column.TableName + " t1 " +
 					" JOIN " + Column_merge.TableName + " t2 ON t1.table_id = t2.table_id " +
-					" and t1.colume_name = t2.col_name " +
+					" and t1.column_name = t2.col_name " +
 					" where t2.col_merge_id = ?) ", 16161616L).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			long beforeMergeCount = SqlOperator.queryNumber(db, " select count(1) from " + Column_merge.TableName + " where col_merge_id = ? ", 16161616L).orElseThrow(() -> new BusinessException("SQL查询错误"));
 
@@ -2156,11 +2156,11 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 
 		try(DatabaseWrapper db = new DatabaseWrapper()){
 			long beforeColumnCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName +
-					" where colume_name =" +
-					" (select t1.colume_name " +
+					" where column_name =" +
+					" (select t1.column_name " +
 					" from " + Table_column.TableName + " t1 " +
 					" JOIN " + Column_merge.TableName + " t2 ON t1.table_id = t2.table_id " +
-					" and t1.colume_name = t2.col_name " +
+					" and t1.column_name = t2.col_name " +
 					" where t2.col_merge_id = ?) ", 16161616L).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			long beforeMergeCount = SqlOperator.queryNumber(db, " select count(1) from " + Column_merge.TableName + " where col_merge_id = ? ", 16161616L).orElseThrow(() -> new BusinessException("SQL查询错误"));
 
@@ -2627,22 +2627,22 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 
 		//正确数据访问4：columnId为3003L，之前设置了列拆分，但是保存的时候取消了列拆分的勾选，同时做首尾去空
 		try(DatabaseWrapper db = new DatabaseWrapper()){
-			List<Table_column> tableColumns = SqlOperator.queryList(db, Table_column.class, "select * from " + Table_column.TableName + " where colume_name in" +
-							" (select t1.colume_name from "+ Table_column.TableName +" t1" +
-							" JOIN " + Column_split.TableName + " t2 ON t1.colume_name = t2.col_name " +
+			List<Table_column> tableColumns = SqlOperator.queryList(db, Table_column.class, "select * from " + Table_column.TableName + " where column_name in" +
+							" (select t1.column_name from "+ Table_column.TableName +" t1" +
+							" JOIN " + Column_split.TableName + " t2 ON t1.column_name = t2.col_name " +
 							" JOIN " + Column_clean.TableName + " t3 ON t2.col_clean_id = t3.col_clean_id " +
 							" WHERE t2.col_clean_id = ? and t2.column_id = ? and t1.table_id = ? and t1.is_new = ?) ",
 					101010102L, 3003L, CODE_INFO_TABLE_ID, IsFlag.Shi.getCode());
 			assertThat("在执行测试用例<正确数据访问4>之前，拆分为ci、sp、classname的列在table_column表中存在", tableColumns.size() == 3, is(true));
 			for(Table_column tableColumn : tableColumns){
 				if(tableColumn.getColumn_id() == 141414L){
-					assertThat("在执行测试用例<正确数据访问4>之前，拆分为ci的列在table_column表中存在", tableColumn.getColume_name().equalsIgnoreCase("ci"), is(true));
+					assertThat("在执行测试用例<正确数据访问4>之前，拆分为ci的列在table_column表中存在", tableColumn.getColumn_name().equalsIgnoreCase("ci"), is(true));
 				}else if(tableColumn.getColumn_id() == 151515L){
-					assertThat("在执行测试用例<正确数据访问4>之前，拆分为sp的列在table_column表中存在", tableColumn.getColume_name().equalsIgnoreCase("sp"), is(true));
+					assertThat("在执行测试用例<正确数据访问4>之前，拆分为sp的列在table_column表中存在", tableColumn.getColumn_name().equalsIgnoreCase("sp"), is(true));
 				}else if(tableColumn.getColumn_id() == 161616L){
-					assertThat("在执行测试用例<正确数据访问4>之前，拆分为classname的列在table_column表中存在", tableColumn.getColume_name().equalsIgnoreCase("classname"), is(true));
+					assertThat("在执行测试用例<正确数据访问4>之前，拆分为classname的列在table_column表中存在", tableColumn.getColumn_name().equalsIgnoreCase("classname"), is(true));
 				}else{
-					assertThat("在执行测试用例<正确数据访问4>之前，在table_column表中查询到了不符合预期的列" + tableColumn.getColume_name(), false, is(true));
+					assertThat("在执行测试用例<正确数据访问4>之前，在table_column表中查询到了不符合预期的列" + tableColumn.getColumn_name(), false, is(true));
 				}
 			}
 			long beforeDelSpCount = SqlOperator.queryNumber(db, "select count(1) from " + Column_split.TableName + " where col_split_id in (101010103, 101010104, 101010105) ").orElseThrow(() -> new BusinessException("SQL查询错误"));
@@ -2676,9 +2676,9 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 		assertThat(rightResultFour.isSuccess(), is(true));
 
 		try(DatabaseWrapper db = new DatabaseWrapper()){
-			List<Table_column> tableColumns = SqlOperator.queryList(db, Table_column.class, "select * from " + Table_column.TableName + " where colume_name in" +
-							" (select t1.colume_name from "+ Table_column.TableName +" t1" +
-							" JOIN " + Column_split.TableName + " t2 ON t1.colume_name = t2.col_name " +
+			List<Table_column> tableColumns = SqlOperator.queryList(db, Table_column.class, "select * from " + Table_column.TableName + " where column_name in" +
+							" (select t1.column_name from "+ Table_column.TableName +" t1" +
+							" JOIN " + Column_split.TableName + " t2 ON t1.column_name = t2.col_name " +
 							" JOIN " + Column_clean.TableName + " t3 ON t2.col_clean_id = t3.col_clean_id " +
 							" WHERE t2.col_clean_id = ? and t2.column_id = ? and t1.table_id = ? and t1.is_new = ?) ",
 					101010102L, 3003L, CODE_INFO_TABLE_ID, IsFlag.Shi.getCode());

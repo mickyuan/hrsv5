@@ -519,68 +519,68 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			for(Table_info tableInfo : expectedList){
 				if(tableInfo.getTable_name().equalsIgnoreCase("getHalfStructTask")){
 					assertThat("保存成功后，自定义SQL查询getHalfStructTask的中文名应该是<获得半结构化采集任务>", tableInfo.getTable_ch_name(), is("获得半结构化采集任务"));
-					Result resultOne = SqlOperator.queryResult(db, "select is_get, is_primary_key, colume_name, column_type, colume_ch_name, is_alive, is_new, tc_or from " + Table_column.TableName + " where table_id = ?", tableInfo.getTable_id());
+					Result resultOne = SqlOperator.queryResult(db, "select is_get, is_primary_key, column_name, column_type, column_ch_name, is_alive, is_new, tc_or from " + Table_column.TableName + " where table_id = ?", tableInfo.getTable_id());
 					assertThat("保存成功后，自定义SQL采集的三列数据被保存到了table_column表中", resultOne.getRowCount(), is(3));
 					for(int i = 0; i < resultOne.getRowCount(); i++){
-						if(resultOne.getString(i, "colume_name").equalsIgnoreCase("odc_id")){
+						if(resultOne.getString(i, "column_name").equalsIgnoreCase("odc_id")){
 							assertThat("采集列名为odc_id，is_get字段符合预期", resultOne.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
 							assertThat("采集列名为odc_id，is_primary_key字段符合预期", resultOne.getString(i, "is_primary_key"), is(IsFlag.Fou.getCode()));
 							assertThat("采集列名为odc_id，column_type字段符合预期", resultOne.getString(i, "column_type").equalsIgnoreCase("int8"), is(true));
-							assertThat("采集列名为odc_id，colume_ch_name字段符合预期", resultOne.getString(i, "colume_ch_name"), is("odc_id"));
+							assertThat("采集列名为odc_id，column_ch_name字段符合预期", resultOne.getString(i, "column_ch_name"), is("odc_id"));
 							assertThat("采集列名为odc_id，is_alive字段符合预期", resultOne.getString(i, "is_alive"), is(IsFlag.Shi.getCode()));
 							assertThat("采集列名为odc_id，is_new字段符合预期", resultOne.getString(i, "is_new"), is(IsFlag.Fou.getCode()));
 							assertThat("采集列名为odc_id，tc_or字段符合预期", resultOne.getString(i, "tc_or"), is(columnCleanOrder.toJSONString()));
-						}else if(resultOne.getString(i, "colume_name").equalsIgnoreCase("object_collect_type")){
+						}else if(resultOne.getString(i, "column_name").equalsIgnoreCase("object_collect_type")){
 							assertThat("采集列名为object_collect_type，is_get字段符合预期", resultOne.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
 							assertThat("采集列名为object_collect_type，is_primary_key字段符合预期", resultOne.getString(i, "is_primary_key"), is(IsFlag.Fou.getCode()));
 							assertThat("采集列名为object_collect_type，column_type字段符合预期", resultOne.getString(i, "column_type").equalsIgnoreCase("bpchar(1)"), is(true));
-							assertThat("采集列名为object_collect_type，colume_ch_name字段符合预期", resultOne.getString(i, "colume_ch_name"), is("object_collect_type"));
+							assertThat("采集列名为object_collect_type，column_ch_name字段符合预期", resultOne.getString(i, "column_ch_name"), is("object_collect_type"));
 							assertThat("采集列名为object_collect_type，is_alive字段符合预期", resultOne.getString(i, "is_alive"), is(IsFlag.Shi.getCode()));
 							assertThat("采集列名为object_collect_type，is_new字段符合预期", resultOne.getString(i, "is_new"), is(IsFlag.Fou.getCode()));
 							assertThat("采集列名为object_collect_type，tc_or字段符合预期", resultOne.getString(i, "tc_or"), is(columnCleanOrder.toJSONString()));
-						}else if(resultOne.getString(i, "colume_name").equalsIgnoreCase("obj_number")){
+						}else if(resultOne.getString(i, "column_name").equalsIgnoreCase("obj_number")){
 							assertThat("采集列名为obj_number，is_get字段符合预期", resultOne.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
 							assertThat("采集列名为obj_number，is_primary_key字段符合预期", resultOne.getString(i, "is_primary_key"), is(IsFlag.Fou.getCode()));
 							assertThat("采集列名为obj_number，column_type字段符合预期", resultOne.getString(i, "column_type").equalsIgnoreCase("varchar(200)"), is(true));
-							assertThat("采集列名为obj_number，colume_ch_name字段符合预期", resultOne.getString(i, "colume_ch_name"), is("obj_number"));
+							assertThat("采集列名为obj_number，column_ch_name字段符合预期", resultOne.getString(i, "column_ch_name"), is("obj_number"));
 							assertThat("采集列名为obj_number，is_alive字段符合预期", resultOne.getString(i, "is_alive"), is(IsFlag.Shi.getCode()));
 							assertThat("采集列名为obj_number，is_new字段符合预期", resultOne.getString(i, "is_new"), is(IsFlag.Fou.getCode()));
 							assertThat("采集列名为obj_number，tc_or字段符合预期", resultOne.getString(i, "tc_or"), is(columnCleanOrder.toJSONString()));
 						}else{
-							assertThat("出现了不符合预期的情况，采集列名为：" + resultOne.getString(i, "colume_name"), true, is(false));
+							assertThat("出现了不符合预期的情况，采集列名为：" + resultOne.getString(i, "column_name"), true, is(false));
 						}
 					}
 				}else if(tableInfo.getTable_name().equalsIgnoreCase("getFTPTask")){
 					assertThat("保存成功后，自定义SQL查询getFTPTask的中文名应该是<获得FTP采集任务>", tableInfo.getTable_ch_name(), is("获得FTP采集任务"));
-					Result resultTwo = SqlOperator.queryResult(db, "select is_get, is_primary_key, colume_name, column_type, colume_ch_name, is_alive, is_new, tc_or from " + Table_column.TableName + " where table_id = ?", tableInfo.getTable_id());
+					Result resultTwo = SqlOperator.queryResult(db, "select is_get, is_primary_key, column_name, column_type, column_ch_name, is_alive, is_new, tc_or from " + Table_column.TableName + " where table_id = ?", tableInfo.getTable_id());
 					assertThat("保存成功后，自定义SQL采集的三列数据被保存到了table_column表中", resultTwo.getRowCount(), is(3));
 					for(int i = 0; i < resultTwo.getRowCount(); i++){
-						if(resultTwo.getString(i, "colume_name").equalsIgnoreCase("ftp_id")){
+						if(resultTwo.getString(i, "column_name").equalsIgnoreCase("ftp_id")){
 							assertThat("采集列名为ftp_id，is_get字段符合预期", resultTwo.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
 							assertThat("采集列名为ftp_id，is_primary_key字段符合预期", resultTwo.getString(i, "is_primary_key"), is(IsFlag.Fou.getCode()));
 							assertThat("采集列名为ftp_id，column_type字段符合预期", resultTwo.getString(i, "column_type").equalsIgnoreCase("int8"), is(true));
-							assertThat("采集列名为ftp_id，colume_ch_name字段符合预期", resultTwo.getString(i, "colume_ch_name"), is("ftp_id"));
+							assertThat("采集列名为ftp_id，column_ch_name字段符合预期", resultTwo.getString(i, "column_ch_name"), is("ftp_id"));
 							assertThat("采集列名为ftp_id，is_alive字段符合预期", resultTwo.getString(i, "is_alive"), is(IsFlag.Shi.getCode()));
 							assertThat("采集列名为ftp_id，is_new字段符合预期", resultTwo.getString(i, "is_new"), is(IsFlag.Fou.getCode()));
 							assertThat("采集列名为ftp_id，tc_or字段符合预期", resultTwo.getString(i, "tc_or"), is(columnCleanOrder.toJSONString()));
-						}else if(resultTwo.getString(i, "colume_name").equalsIgnoreCase("ftp_number")){
+						}else if(resultTwo.getString(i, "column_name").equalsIgnoreCase("ftp_number")){
 							assertThat("采集列名为ftp_number，is_get字段符合预期", resultTwo.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
 							assertThat("采集列名为ftp_number，is_primary_key字段符合预期", resultTwo.getString(i, "is_primary_key"), is(IsFlag.Fou.getCode()));
 							assertThat("采集列名为ftp_number，column_type字段符合预期", resultTwo.getString(i, "column_type").equalsIgnoreCase("varchar(200)"), is(true));
-							assertThat("采集列名为ftp_number，colume_ch_name字段符合预期", resultTwo.getString(i, "colume_ch_name"), is("ftp_number"));
+							assertThat("采集列名为ftp_number，column_ch_name字段符合预期", resultTwo.getString(i, "column_ch_name"), is("ftp_number"));
 							assertThat("采集列名为ftp_number，is_alive字段符合预期", resultTwo.getString(i, "is_alive"), is(IsFlag.Shi.getCode()));
 							assertThat("采集列名为ftp_number，is_new字段符合预期", resultTwo.getString(i, "is_new"), is(IsFlag.Fou.getCode()));
 							assertThat("采集列名为ftp_number，tc_or字段符合预期", resultTwo.getString(i, "tc_or"), is(columnCleanOrder.toJSONString()));
-						}else if(resultTwo.getString(i, "colume_name").equalsIgnoreCase("ftp_name")){
+						}else if(resultTwo.getString(i, "column_name").equalsIgnoreCase("ftp_name")){
 							assertThat("采集列名为ftp_name，is_get字段符合预期", resultTwo.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
 							assertThat("采集列名为ftp_name，is_primary_key字段符合预期", resultTwo.getString(i, "is_primary_key"), is(IsFlag.Fou.getCode()));
 							assertThat("采集列名为ftp_name，column_type字段符合预期", resultTwo.getString(i, "column_type").equalsIgnoreCase("varchar(512)"), is(true));
-							assertThat("采集列名为ftp_name，colume_ch_name字段符合预期", resultTwo.getString(i, "colume_ch_name"), is("ftp_name"));
+							assertThat("采集列名为ftp_name，column_ch_name字段符合预期", resultTwo.getString(i, "column_ch_name"), is("ftp_name"));
 							assertThat("采集列名为ftp_name，is_alive字段符合预期", resultTwo.getString(i, "is_alive"), is(IsFlag.Shi.getCode()));
 							assertThat("采集列名为ftp_name，is_new字段符合预期", resultTwo.getString(i, "is_new"), is(IsFlag.Fou.getCode()));
 							assertThat("采集列名为ftp_name，tc_or字段符合预期", resultTwo.getString(i, "tc_or"), is(columnCleanOrder.toJSONString()));
 						}else{
-							assertThat("出现了不符合预期的情况，采集列名为：" + resultTwo.getString(i, "colume_name"), true, is(false));
+							assertThat("出现了不符合预期的情况，采集列名为：" + resultTwo.getString(i, "column_name"), true, is(false));
 						}
 					}
 				}else{
@@ -810,68 +810,68 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			for(Table_info tableInfo : expectedList){
 				if(tableInfo.getTable_name().equalsIgnoreCase("agent_info_customize")){
 					assertThat("保存成功后，自定义SQL查询agent_info_customize的中文名应该是<agent信息表自定义>", tableInfo.getTable_ch_name(), is("agent信息表自定义"));
-					Result resultOne = SqlOperator.queryResult(db, "select is_get, is_primary_key, colume_name, column_type, colume_ch_name, is_alive, is_new, tc_or from " + Table_column.TableName + " where table_id = ?", tableInfo.getTable_id());
+					Result resultOne = SqlOperator.queryResult(db, "select is_get, is_primary_key, column_name, column_type, column_ch_name, is_alive, is_new, tc_or from " + Table_column.TableName + " where table_id = ?", tableInfo.getTable_id());
 					assertThat("保存成功后，自定义SQL采集的三列数据被保存到了table_column表中", resultOne.getRowCount(), is(3));
 					for(int i = 0; i < resultOne.getRowCount(); i++){
-						if(resultOne.getString(i, "colume_name").equalsIgnoreCase("agent_ip")){
+						if(resultOne.getString(i, "column_name").equalsIgnoreCase("agent_ip")){
 							assertThat("采集列名为agent_ip，is_get字段符合预期", resultOne.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
 							assertThat("采集列名为agent_ip，is_primary_key字段符合预期", resultOne.getString(i, "is_primary_key"), is(IsFlag.Fou.getCode()));
 							assertThat("采集列名为agent_ip，column_type字段符合预期", resultOne.getString(i, "column_type").equalsIgnoreCase("varchar(50)"), is(true));
-							assertThat("采集列名为agent_ip，colume_ch_name字段符合预期", resultOne.getString(i, "colume_ch_name"), is("agent_ip"));
+							assertThat("采集列名为agent_ip，column_ch_name字段符合预期", resultOne.getString(i, "column_ch_name"), is("agent_ip"));
 							assertThat("采集列名为agent_ip，is_alive字段符合预期", resultOne.getString(i, "is_alive"), is(IsFlag.Shi.getCode()));
 							assertThat("采集列名为agent_ip，is_new字段符合预期", resultOne.getString(i, "is_new"), is(IsFlag.Fou.getCode()));
 							assertThat("采集列名为agent_ip，tc_or字段符合预期", resultOne.getString(i, "tc_or"), is(columnCleanOrder.toJSONString()));
-						}else if(resultOne.getString(i, "colume_name").equalsIgnoreCase("agent_port")){
+						}else if(resultOne.getString(i, "column_name").equalsIgnoreCase("agent_port")){
 							assertThat("采集列名为agent_port，is_get字段符合预期", resultOne.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
 							assertThat("采集列名为agent_port，is_primary_key字段符合预期", resultOne.getString(i, "is_primary_key"), is(IsFlag.Fou.getCode()));
 							assertThat("采集列名为agent_port，column_type字段符合预期", resultOne.getString(i, "column_type").equalsIgnoreCase("varchar(10)"), is(true));
-							assertThat("采集列名为agent_port，colume_ch_name字段符合预期", resultOne.getString(i, "colume_ch_name"), is("agent_port"));
+							assertThat("采集列名为agent_port，column_ch_name字段符合预期", resultOne.getString(i, "column_ch_name"), is("agent_port"));
 							assertThat("采集列名为agent_port，is_alive字段符合预期", resultOne.getString(i, "is_alive"), is(IsFlag.Shi.getCode()));
 							assertThat("采集列名为agent_port，is_new字段符合预期", resultOne.getString(i, "is_new"), is(IsFlag.Fou.getCode()));
 							assertThat("采集列名为agent_port，tc_or字段符合预期", resultOne.getString(i, "tc_or"), is(columnCleanOrder.toJSONString()));
-						}else if(resultOne.getString(i, "colume_name").equalsIgnoreCase("agent_status")){
+						}else if(resultOne.getString(i, "column_name").equalsIgnoreCase("agent_status")){
 							assertThat("采集列名为agent_status，is_get字段符合预期", resultOne.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
 							assertThat("采集列名为agent_status，is_primary_key字段符合预期", resultOne.getString(i, "is_primary_key"), is(IsFlag.Fou.getCode()));
 							assertThat("采集列名为agent_status，column_type字段符合预期", resultOne.getString(i, "column_type").equalsIgnoreCase("bpchar(1)"), is(true));
-							assertThat("采集列名为agent_status，colume_ch_name字段符合预期", resultOne.getString(i, "colume_ch_name"), is("agent_status"));
+							assertThat("采集列名为agent_status，column_ch_name字段符合预期", resultOne.getString(i, "column_ch_name"), is("agent_status"));
 							assertThat("采集列名为agent_status，is_alive字段符合预期", resultOne.getString(i, "is_alive"), is(IsFlag.Shi.getCode()));
 							assertThat("采集列名为agent_status，is_new字段符合预期", resultOne.getString(i, "is_new"), is(IsFlag.Fou.getCode()));
 							assertThat("采集列名为agent_status，tc_or字段符合预期", resultOne.getString(i, "tc_or"), is(columnCleanOrder.toJSONString()));
 						}else{
-							assertThat("出现了不符合预期的情况，采集列名为：" + resultOne.getString(i, "colume_name"), true, is(false));
+							assertThat("出现了不符合预期的情况，采集列名为：" + resultOne.getString(i, "column_name"), true, is(false));
 						}
 					}
 				}else if(tableInfo.getTable_name().equalsIgnoreCase("data_source_customize")){
 					assertThat("保存成功后，自定义SQL查询data_source_customize的中文名应该是<数据源表自定义>", tableInfo.getTable_ch_name(), is("数据源表自定义"));
-					Result resultTwo = SqlOperator.queryResult(db, "select is_get, is_primary_key, colume_name, column_type, colume_ch_name, is_alive, is_new, tc_or from " + Table_column.TableName + " where table_id = ?", tableInfo.getTable_id());
+					Result resultTwo = SqlOperator.queryResult(db, "select is_get, is_primary_key, column_name, column_type, column_ch_name, is_alive, is_new, tc_or from " + Table_column.TableName + " where table_id = ?", tableInfo.getTable_id());
 					assertThat("保存成功后，自定义SQL采集的三列数据被保存到了table_column表中", resultTwo.getRowCount(), is(3));
 					for(int i = 0; i < resultTwo.getRowCount(); i++){
-						if(resultTwo.getString(i, "colume_name").equalsIgnoreCase("source_remark")){
+						if(resultTwo.getString(i, "column_name").equalsIgnoreCase("source_remark")){
 							assertThat("采集列名为source_remark，is_get字段符合预期", resultTwo.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
 							assertThat("采集列名为source_remark，is_primary_key字段符合预期", resultTwo.getString(i, "is_primary_key"), is(IsFlag.Fou.getCode()));
 							assertThat("采集列名为source_remark，column_type字段符合预期", resultTwo.getString(i, "column_type").equalsIgnoreCase("varchar(512)"), is(true));
-							assertThat("采集列名为source_remark，colume_ch_name字段符合预期", resultTwo.getString(i, "colume_ch_name"), is("source_remark"));
+							assertThat("采集列名为source_remark，column_ch_name字段符合预期", resultTwo.getString(i, "column_ch_name"), is("source_remark"));
 							assertThat("采集列名为source_remark，is_alive字段符合预期", resultTwo.getString(i, "is_alive"), is(IsFlag.Shi.getCode()));
 							assertThat("采集列名为source_remark，is_new字段符合预期", resultTwo.getString(i, "is_new"), is(IsFlag.Fou.getCode()));
 							assertThat("采集列名为source_remark，tc_or字段符合预期", resultTwo.getString(i, "tc_or"), is(columnCleanOrder.toJSONString()));
-						}else if(resultTwo.getString(i, "colume_name").equalsIgnoreCase("create_date")){
+						}else if(resultTwo.getString(i, "column_name").equalsIgnoreCase("create_date")){
 							assertThat("采集列名为create_date，is_get字段符合预期", resultTwo.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
 							assertThat("采集列名为create_date，is_primary_key字段符合预期", resultTwo.getString(i, "is_primary_key"), is(IsFlag.Fou.getCode()));
 							assertThat("采集列名为create_date，column_type字段符合预期", resultTwo.getString(i, "column_type").equalsIgnoreCase("bpchar(8)"), is(true));
-							assertThat("采集列名为create_date，colume_ch_name字段符合预期", resultTwo.getString(i, "colume_ch_name"), is("create_date"));
+							assertThat("采集列名为create_date，column_ch_name字段符合预期", resultTwo.getString(i, "column_ch_name"), is("create_date"));
 							assertThat("采集列名为create_date，is_alive字段符合预期", resultTwo.getString(i, "is_alive"), is(IsFlag.Shi.getCode()));
 							assertThat("采集列名为create_date，is_new字段符合预期", resultTwo.getString(i, "is_new"), is(IsFlag.Fou.getCode()));
 							assertThat("采集列名为create_date，tc_or字段符合预期", resultTwo.getString(i, "tc_or"), is(columnCleanOrder.toJSONString()));
-						}else if(resultTwo.getString(i, "colume_name").equalsIgnoreCase("create_time")){
+						}else if(resultTwo.getString(i, "column_name").equalsIgnoreCase("create_time")){
 							assertThat("采集列名为create_time，is_get字段符合预期", resultTwo.getString(i, "is_get"), is(IsFlag.Shi.getCode()));
 							assertThat("采集列名为create_time，is_primary_key字段符合预期", resultTwo.getString(i, "is_primary_key"), is(IsFlag.Fou.getCode()));
 							assertThat("采集列名为create_time，column_type字段符合预期", resultTwo.getString(i, "column_type").equalsIgnoreCase("bpchar(6)"), is(true));
-							assertThat("采集列名为create_time，colume_ch_name字段符合预期", resultTwo.getString(i, "colume_ch_name"), is("create_time"));
+							assertThat("采集列名为create_time，column_ch_name字段符合预期", resultTwo.getString(i, "column_ch_name"), is("create_time"));
 							assertThat("采集列名为create_time，is_alive字段符合预期", resultTwo.getString(i, "is_alive"), is(IsFlag.Shi.getCode()));
 							assertThat("采集列名为create_time，is_new字段符合预期", resultTwo.getString(i, "is_new"), is(IsFlag.Fou.getCode()));
 							assertThat("采集列名为create_time，tc_or字段符合预期", resultTwo.getString(i, "tc_or"), is(columnCleanOrder.toJSONString()));
 						}else{
-							assertThat("出现了不符合预期的情况，采集列名为：" + resultTwo.getString(i, "colume_name"), true, is(false));
+							assertThat("出现了不符合预期的情况，采集列名为：" + resultTwo.getString(i, "column_name"), true, is(false));
 						}
 					}
 				}else{
@@ -1274,56 +1274,56 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			Result afterTableColumn = SqlOperator.queryResult(db, "select * from " + Table_column.TableName + " where table_id = ?", afterTableInfo.getLong(0, "table_id"));
 			assertThat("<正确的测试用例1>执行成功后，table_column表中有关ftp_collect表的列应该有<24>列", afterTableColumn.getRowCount(), is(24));
 			for(int i = 0; i < afterTableColumn.getRowCount(); i++){
-				if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("ftp_id")){
+				if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("ftp_id")){
 					assertThat("<正确的测试用例1>执行成功后, <ftp_id>字段的类型为<int8>", afterTableColumn.getString(i, "column_type"), is("int8"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("ftp_number")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("ftp_number")){
 					assertThat("<正确的测试用例1>执行成功后, <ftp_number>字段的类型为<varchar(200)>", afterTableColumn.getString(i, "column_type"), is("varchar(200)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("ftp_name")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("ftp_name")){
 					assertThat("<正确的测试用例1>执行成功后, <ftp_name>字段的类型为<varchar(512)>", afterTableColumn.getString(i, "column_type"), is("varchar(512)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("start_date")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("start_date")){
 					assertThat("<正确的测试用例1>执行成功后, <start_date>字段的类型为<bpchar(8)>", afterTableColumn.getString(i, "column_type"), is("bpchar(8)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("end_date")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("end_date")){
 					assertThat("<正确的测试用例1>执行成功后, <end_date>字段的类型为<bpchar(8)>", afterTableColumn.getString(i, "column_type"), is("bpchar(8)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("ftp_ip")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("ftp_ip")){
 					assertThat("<正确的测试用例1>执行成功后, <ftp_ip>字段的类型为<varchar(50)>", afterTableColumn.getString(i, "column_type"), is("varchar(50)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("ftp_port")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("ftp_port")){
 					assertThat("<正确的测试用例1>执行成功后, <ftp_port>字段的类型为<varchar(10)>", afterTableColumn.getString(i, "column_type"), is("varchar(10)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("ftp_username")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("ftp_username")){
 					assertThat("<正确的测试用例1>执行成功后, <ftp_username>字段的类型为<varchar(512)>", afterTableColumn.getString(i, "column_type"), is("varchar(512)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("ftp_password")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("ftp_password")){
 					assertThat("<正确的测试用例1>执行成功后, <ftp_password>字段的类型为<varchar(100)>", afterTableColumn.getString(i, "column_type"), is("varchar(100)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("ftp_dir")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("ftp_dir")){
 					assertThat("<正确的测试用例1>执行成功后, <ftp_dir>字段的类型为<varchar(512)>", afterTableColumn.getString(i, "column_type"), is("varchar(512)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("local_path")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("local_path")){
 					assertThat("<正确的测试用例1>执行成功后, <local_path>字段的类型为<varchar(512)>", afterTableColumn.getString(i, "column_type"), is("varchar(512)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("ftp_rule_path")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("ftp_rule_path")){
 					assertThat("<正确的测试用例1>执行成功后, <ftp_rule_path>字段的类型为<bpchar(1)>", afterTableColumn.getString(i, "column_type"), is("bpchar(1)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("child_file_path")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("child_file_path")){
 					assertThat("<正确的测试用例1>执行成功后, <child_file_path>字段的类型为<varchar(512)>", afterTableColumn.getString(i, "column_type"), is("varchar(512)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("child_time")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("child_time")){
 					assertThat("<正确的测试用例1>执行成功后, <child_time>字段的类型为<bpchar(1)>", afterTableColumn.getString(i, "column_type"), is("bpchar(1)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("file_suffix")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("file_suffix")){
 					assertThat("<正确的测试用例1>执行成功后, <file_suffix>字段的类型为<varchar(200)>", afterTableColumn.getString(i, "column_type"), is("varchar(200)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("ftp_model")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("ftp_model")){
 					assertThat("<正确的测试用例1>执行成功后, <ftp_model>字段的类型为<bpchar(1)>", afterTableColumn.getString(i, "column_type"), is("bpchar(1)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("run_way")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("run_way")){
 					assertThat("<正确的测试用例1>执行成功后, <run_way>字段的类型为<bpchar(1)>", afterTableColumn.getString(i, "column_type"), is("bpchar(1)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("remark")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("remark")){
 					assertThat("<正确的测试用例1>执行成功后, <remark>字段的类型为<varchar(512)>", afterTableColumn.getString(i, "column_type"), is("varchar(512)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("is_sendok")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("is_sendok")){
 					assertThat("<正确的测试用例1>执行成功后, <is_sendok>字段的类型为<bpchar(1)>", afterTableColumn.getString(i, "column_type"), is("bpchar(1)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("is_unzip")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("is_unzip")){
 					assertThat("<正确的测试用例1>执行成功后, <is_unzip>字段的类型为<bpchar(1)>", afterTableColumn.getString(i, "column_type"), is("bpchar(1)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("reduce_type")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("reduce_type")){
 					assertThat("<正确的测试用例1>执行成功后, <reduce_type>字段的类型为<bpchar(1)>", afterTableColumn.getString(i, "column_type"), is("bpchar(1)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("is_read_realtime")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("is_read_realtime")){
 					assertThat("<正确的测试用例1>执行成功后, <is_read_realtime>字段的类型为<bpchar(1)>", afterTableColumn.getString(i, "column_type"), is("bpchar(1)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("realtime_interval")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("realtime_interval")){
 					assertThat("<正确的测试用例1>执行成功后, <realtime_interval>字段的类型为<int8>", afterTableColumn.getString(i, "column_type"), is("int8"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("agent_id")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("agent_id")){
 					assertThat("<正确的测试用例1>执行成功后, <agent_id>字段的类型为<int8>", afterTableColumn.getString(i, "column_type"), is("int8"));
 				}else{
-					assertThat("<正确的测试用例1>执行完成之后，采集ftp_collect表的所有字段，出现了不符合期望的字段，字段名为 : " + afterTableColumn.getString(i, "colume_name"), true, is(false));
+					assertThat("<正确的测试用例1>执行完成之后，采集ftp_collect表的所有字段，出现了不符合期望的字段，字段名为 : " + afterTableColumn.getString(i, "column_name"), true, is(false));
 				}
 			}
 
@@ -1392,8 +1392,8 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 					columnType = "unexpected_columnType";
 			}
 			Table_column tableColumn = new Table_column();
-			tableColumn.setColume_name(columnName);
-			tableColumn.setColume_ch_name(columnChName);
+			tableColumn.setColumn_name(columnName);
+			tableColumn.setColumn_ch_name(columnChName);
 			tableColumn.setColumn_type(columnType);
 			tableColumn.setIs_get(IsFlag.Shi.getCode());
 			tableColumn.setIs_primary_key(primayKeyFlag);
@@ -1457,17 +1457,17 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			Result afterTableColumn = SqlOperator.queryResult(db, "select * from " + Table_column.TableName + " where table_id = ?", afterTableInfo.getLong(0, "table_id"));
 			assertThat("<正确的测试用例2>执行成功后，table_column表中有关object_collect表的列应该有<3>列", afterTableColumn.getRowCount(), is(3));
 			for(int i = 0; i < afterTableColumn.getRowCount(); i++){
-				if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("odc_id")){
+				if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("odc_id")){
 					assertThat("<正确的测试用例2>执行成功后, <odc_id>字段的类型为<int8>", afterTableColumn.getString(i, "column_type"), is("int8"));
-					assertThat("<正确的测试用例2>执行成功后, <odc_id>字段的采集顺序为<1>", afterTableColumn.getString(i, "remark"), is("1"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("object_collect_type")){
+					assertThat("<正确的测试用例2>执行成功后, <odc_id>字段的采集顺序为<1>", afterTableColumn.getString(i, "tc_remark"), is("1"));
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("object_collect_type")){
 					assertThat("<正确的测试用例2>执行成功后, <object_collect_type>字段的类型为<int8>", afterTableColumn.getString(i, "column_type"), is("bpchar(1)"));
-					assertThat("<正确的测试用例2>执行成功后, <object_collect_type>字段的采集顺序为<2>", afterTableColumn.getString(i, "remark"), is("2"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("obj_number")){
+					assertThat("<正确的测试用例2>执行成功后, <object_collect_type>字段的采集顺序为<2>", afterTableColumn.getString(i, "tc_remark"), is("2"));
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("obj_number")){
 					assertThat("<正确的测试用例2>执行成功后, <obj_number>字段的类型为<int8>", afterTableColumn.getString(i, "column_type"), is("varchar(200)"));
-					assertThat("<正确的测试用例2>执行成功后, <obj_number>字段的采集顺序为<3>", afterTableColumn.getString(i, "remark"), is("3"));
+					assertThat("<正确的测试用例2>执行成功后, <obj_number>字段的采集顺序为<3>", afterTableColumn.getString(i, "tc_remark"), is("3"));
 				}else{
-					assertThat("<正确的测试用例2>执行成功后, 再次查询table_column表，出现了不符合期望的情况，表名为：" + afterTableColumn.getString(i, "colume_name"), true, is(false));
+					assertThat("<正确的测试用例2>执行成功后, 再次查询table_column表，出现了不符合期望的情况，表名为：" + afterTableColumn.getString(i, "column_name"), true, is(false));
 				}
 			}
 
@@ -1532,7 +1532,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			}
 			Table_column tableColumn = new Table_column();
 			tableColumn.setColumn_id(columnId);
-			tableColumn.setColume_ch_name(columnChName);
+			tableColumn.setColumn_ch_name(columnChName);
 
 			codeColumn.add(tableColumn);
 		}
@@ -1605,28 +1605,28 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			assertThat("code_info表的采集列在table_column表中有数据，数据有5条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在table_column表中已经查不到数据了", tbColCount, is(0L));
 			assertThat("code_info表的采集列在table_column表中有数据，数据有5条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在table_column表中已经查不到数据了", tableColumn.getRowCount(), is(5));
 			for(int i = 0; i < tableColumn.getRowCount(); i++){
-				if(tableColumn.getString(i, "colume_name").equalsIgnoreCase("ci_sp_code")){
+				if(tableColumn.getString(i, "column_name").equalsIgnoreCase("ci_sp_code")){
 					assertThat("采集列名为<ci_sp_code>,该列的数据类型为<varchar>", tableColumn.getString(i, "column_type"), is("varchar"));
 					assertThat("采集列名为<ci_sp_code>,该列的ID为<3001>", tableColumn.getLong(i, "column_id"), is(3001L));
-					assertThat("采集列名为<ci_sp_code>,该列的中文名为<ci_sp_code_ch>", tableColumn.getString(i, "colume_ch_name"), is("ci_sp_code_ch"));
-				}else if(tableColumn.getString(i, "colume_name").equalsIgnoreCase("ci_sp_class")){
+					assertThat("采集列名为<ci_sp_code>,该列的中文名为<ci_sp_code_ch>", tableColumn.getString(i, "column_ch_name"), is("ci_sp_code_ch"));
+				}else if(tableColumn.getString(i, "column_name").equalsIgnoreCase("ci_sp_class")){
 					assertThat("采集列名为<ci_sp_class>,该列的数据类型为<varchar>", tableColumn.getString(i, "column_type"), is("varchar"));
 					assertThat("采集列名为<ci_sp_class>,该列的ID为<3002>", tableColumn.getLong(i, "column_id"), is(3002L));
-					assertThat("采集列名为<ci_sp_class>,该列的中文名为<ci_sp_class_ch>", tableColumn.getString(i, "colume_ch_name"), is("ci_sp_class_ch"));
-				}else if(tableColumn.getString(i, "colume_name").equalsIgnoreCase("ci_sp_classname")){
+					assertThat("采集列名为<ci_sp_class>,该列的中文名为<ci_sp_class_ch>", tableColumn.getString(i, "column_ch_name"), is("ci_sp_class_ch"));
+				}else if(tableColumn.getString(i, "column_name").equalsIgnoreCase("ci_sp_classname")){
 					assertThat("采集列名为<ci_sp_classname>,该列的数据类型为<varchar>", tableColumn.getString(i, "column_type"), is("varchar"));
 					assertThat("采集列名为<ci_sp_classname>,该列的ID为<3003>", tableColumn.getLong(i, "column_id"), is(3003L));
-					assertThat("采集列名为<ci_sp_classname>,该列的中文名为<ci_sp_classname_ch>", tableColumn.getString(i, "colume_ch_name"), is("ci_sp_classname_ch"));
-				}else if(tableColumn.getString(i, "colume_name").equalsIgnoreCase("ci_sp_name")){
+					assertThat("采集列名为<ci_sp_classname>,该列的中文名为<ci_sp_classname_ch>", tableColumn.getString(i, "column_ch_name"), is("ci_sp_classname_ch"));
+				}else if(tableColumn.getString(i, "column_name").equalsIgnoreCase("ci_sp_name")){
 					assertThat("采集列名为<ci_sp_name>,该列的数据类型为<varchar>", tableColumn.getString(i, "column_type"), is("varchar"));
 					assertThat("采集列名为<ci_sp_name>,该列的ID为<3004>", tableColumn.getLong(i, "column_id"), is(3004L));
-					assertThat("采集列名为<ci_sp_name>,该列的中文名为<ci_sp_name_ch>", tableColumn.getString(i, "colume_ch_name"), is("ci_sp_name_ch"));
-				}else if(tableColumn.getString(i, "colume_name").equalsIgnoreCase("ci_sp_remark")){
+					assertThat("采集列名为<ci_sp_name>,该列的中文名为<ci_sp_name_ch>", tableColumn.getString(i, "column_ch_name"), is("ci_sp_name_ch"));
+				}else if(tableColumn.getString(i, "column_name").equalsIgnoreCase("ci_sp_remark")){
 					assertThat("采集列名为<ci_sp_remark>,该列的数据类型为<varchar>", tableColumn.getString(i, "column_type"), is("varchar"));
 					assertThat("采集列名为<ci_sp_remark>,该列的ID为<3005>", tableColumn.getLong(i, "column_id"), is(3005L));
-					assertThat("采集列名为<ci_sp_remark>,该列的中文名为<ci_sp_remark_ch>", tableColumn.getString(i, "colume_ch_name"), is("ci_sp_remark_ch"));
+					assertThat("采集列名为<ci_sp_remark>,该列的中文名为<ci_sp_remark_ch>", tableColumn.getString(i, "column_ch_name"), is("ci_sp_remark_ch"));
 				}else {
-					assertThat("设置采集code_info表的所有列，但是出现了不符合期望的列，列名为 : " + tableColumn.getString(i, "colume_name"), true, is(false));
+					assertThat("设置采集code_info表的所有列，但是出现了不符合期望的列，列名为 : " + tableColumn.getString(i, "column_name"), true, is(false));
 				}
 			}
 			//断言data_extraction_def表中的内容是否符合期望
@@ -1752,56 +1752,56 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			Result afterTableColumn = SqlOperator.queryResult(db, "select * from " + Table_column.TableName + " where table_id = ?", afterTableInfo.getLong(0, "table_id"));
 			assertThat("<正确的测试用例4>执行成功后，table_column表中有关ftp_collect表的列应该有<24>列", afterTableColumn.getRowCount(), is(24));
 			for(int i = 0; i < afterTableColumn.getRowCount(); i++){
-				if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("ftp_id")){
+				if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("ftp_id")){
 					assertThat("<正确的测试用例4>执行成功后, <ftp_id>字段的类型为<int8>", afterTableColumn.getString(i, "column_type"), is("int8"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("ftp_number")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("ftp_number")){
 					assertThat("<正确的测试用例4>执行成功后, <ftp_number>字段的类型为<varchar(200)>", afterTableColumn.getString(i, "column_type"), is("varchar(200)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("ftp_name")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("ftp_name")){
 					assertThat("<正确的测试用例4>执行成功后, <ftp_name>字段的类型为<varchar(512)>", afterTableColumn.getString(i, "column_type"), is("varchar(512)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("start_date")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("start_date")){
 					assertThat("<正确的测试用例4>执行成功后, <start_date>字段的类型为<bpchar(8)>", afterTableColumn.getString(i, "column_type"), is("bpchar(8)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("end_date")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("end_date")){
 					assertThat("<正确的测试用例4>执行成功后, <end_date>字段的类型为<bpchar(8)>", afterTableColumn.getString(i, "column_type"), is("bpchar(8)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("ftp_ip")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("ftp_ip")){
 					assertThat("<正确的测试用例4>执行成功后, <ftp_ip>字段的类型为<varchar(50)>", afterTableColumn.getString(i, "column_type"), is("varchar(50)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("ftp_port")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("ftp_port")){
 					assertThat("<正确的测试用例4>执行成功后, <ftp_port>字段的类型为<varchar(10)>", afterTableColumn.getString(i, "column_type"), is("varchar(10)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("ftp_username")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("ftp_username")){
 					assertThat("<正确的测试用例4>执行成功后, <ftp_username>字段的类型为<varchar(512)>", afterTableColumn.getString(i, "column_type"), is("varchar(512)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("ftp_password")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("ftp_password")){
 					assertThat("<正确的测试用例4>执行成功后, <ftp_password>字段的类型为<varchar(100)>", afterTableColumn.getString(i, "column_type"), is("varchar(100)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("ftp_dir")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("ftp_dir")){
 					assertThat("<正确的测试用例4>执行成功后, <ftp_dir>字段的类型为<varchar(512)>", afterTableColumn.getString(i, "column_type"), is("varchar(512)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("local_path")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("local_path")){
 					assertThat("<正确的测试用例4>执行成功后, <local_path>字段的类型为<varchar(512)>", afterTableColumn.getString(i, "column_type"), is("varchar(512)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("ftp_rule_path")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("ftp_rule_path")){
 					assertThat("<正确的测试用例4>执行成功后, <ftp_rule_path>字段的类型为<bpchar(1)>", afterTableColumn.getString(i, "column_type"), is("bpchar(1)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("child_file_path")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("child_file_path")){
 					assertThat("<正确的测试用例4>执行成功后, <child_file_path>字段的类型为<varchar(512)>", afterTableColumn.getString(i, "column_type"), is("varchar(512)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("child_time")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("child_time")){
 					assertThat("<正确的测试用例4>执行成功后, <child_time>字段的类型为<bpchar(1)>", afterTableColumn.getString(i, "column_type"), is("bpchar(1)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("file_suffix")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("file_suffix")){
 					assertThat("<正确的测试用例4>执行成功后, <file_suffix>字段的类型为<varchar(200)>", afterTableColumn.getString(i, "column_type"), is("varchar(200)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("ftp_model")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("ftp_model")){
 					assertThat("<正确的测试用例4>执行成功后, <ftp_model>字段的类型为<bpchar(1)>", afterTableColumn.getString(i, "column_type"), is("bpchar(1)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("run_way")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("run_way")){
 					assertThat("<正确的测试用例4>执行成功后, <run_way>字段的类型为<bpchar(1)>", afterTableColumn.getString(i, "column_type"), is("bpchar(1)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("remark")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("remark")){
 					assertThat("<正确的测试用例4>执行成功后, <remark>字段的类型为<varchar(512)>", afterTableColumn.getString(i, "column_type"), is("varchar(512)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("is_sendok")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("is_sendok")){
 					assertThat("<正确的测试用例4>执行成功后, <is_sendok>字段的类型为<bpchar(1)>", afterTableColumn.getString(i, "column_type"), is("bpchar(1)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("is_unzip")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("is_unzip")){
 					assertThat("<正确的测试用例4>执行成功后, <is_unzip>字段的类型为<bpchar(1)>", afterTableColumn.getString(i, "column_type"), is("bpchar(1)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("reduce_type")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("reduce_type")){
 					assertThat("<正确的测试用例4>执行成功后, <reduce_type>字段的类型为<bpchar(1)>", afterTableColumn.getString(i, "column_type"), is("bpchar(1)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("is_read_realtime")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("is_read_realtime")){
 					assertThat("<正确的测试用例4>执行成功后, <is_read_realtime>字段的类型为<bpchar(1)>", afterTableColumn.getString(i, "column_type"), is("bpchar(1)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("realtime_interval")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("realtime_interval")){
 					assertThat("<正确的测试用例4>执行成功后, <realtime_interval>字段的类型为<int8>", afterTableColumn.getString(i, "column_type"), is("int8"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("agent_id")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("agent_id")){
 					assertThat("<正确的测试用例4>执行成功后, <agent_id>字段的类型为<int8>", afterTableColumn.getString(i, "column_type"), is("int8"));
 				}else{
-					assertThat("<正确的测试用例4>执行完成之后，采集ftp_collect表的所有字段，出现了不符合期望的字段，字段名为 : " + afterTableColumn.getString(i, "colume_name"), true, is(false));
+					assertThat("<正确的测试用例4>执行完成之后，采集ftp_collect表的所有字段，出现了不符合期望的字段，字段名为 : " + afterTableColumn.getString(i, "column_name"), true, is(false));
 				}
 			}
 
@@ -1826,40 +1826,40 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			Result afterTableColumn = SqlOperator.queryResult(db, "select * from " + Table_column.TableName + " where table_id = ?", afterTableInfo.getLong(0, "table_id"));
 			assertThat("<正确的测试用例4>执行成功后，table_column表中有关object_collect表的列应该有<16>列", afterTableColumn.getRowCount(), is(16));
 			for(int i = 0; i < afterTableColumn.getRowCount(); i++){
-				if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("odc_id")){
+				if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("odc_id")){
 					assertThat("<正确的测试用例4>执行成功后, <odc_id>字段的类型为<int8>", afterTableColumn.getString(i, "column_type"), is("int8"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("object_collect_type")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("object_collect_type")){
 					assertThat("<正确的测试用例4>执行成功后, <object_collect_type>字段的类型为<bpchar(1)>", afterTableColumn.getString(i, "column_type"), is("bpchar(1)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("obj_number")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("obj_number")){
 					assertThat("<正确的测试用例4>执行成功后, <obj_number>字段的类型为<varchar(200)>", afterTableColumn.getString(i, "column_type"), is("varchar(200)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("obj_collect_name")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("obj_collect_name")){
 					assertThat("<正确的测试用例4>执行成功后, <obj_collect_name>字段的类型为<varchar(512)>", afterTableColumn.getString(i, "column_type"), is("varchar(512)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("system_name")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("system_name")){
 					assertThat("<正确的测试用例4>执行成功后, <system_name>字段的类型为<varchar(512)>", afterTableColumn.getString(i, "column_type"), is("varchar(512)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("host_name")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("host_name")){
 					assertThat("<正确的测试用例4>执行成功后, <host_name>字段的类型为<varchar(512)>", afterTableColumn.getString(i, "column_type"), is("varchar(512)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("local_time")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("local_time")){
 					assertThat("<正确的测试用例4>执行成功后, <local_time>字段的类型为<bpchar(20)>", afterTableColumn.getString(i, "column_type"), is("bpchar(20)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("server_date")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("server_date")){
 					assertThat("<正确的测试用例4>执行成功后, <server_date>字段的类型为<bpchar(20)>", afterTableColumn.getString(i, "column_type"), is("bpchar(20)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("s_date")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("s_date")){
 					assertThat("<正确的测试用例4>执行成功后, <s_date>字段的类型为<bpchar(8)>", afterTableColumn.getString(i, "column_type"), is("bpchar(8)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("e_date")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("e_date")){
 					assertThat("<正确的测试用例4>执行成功后, <e_date>字段的类型为<bpchar(8)>", afterTableColumn.getString(i, "column_type"), is("bpchar(8)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("database_code")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("database_code")){
 					assertThat("<正确的测试用例4>执行成功后, <database_code>字段的类型为<bpchar(1)>", afterTableColumn.getString(i, "column_type"), is("bpchar(1)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("run_way")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("run_way")){
 					assertThat("<正确的测试用例4>执行成功后, <run_way>字段的类型为<bpchar(1)>", afterTableColumn.getString(i, "column_type"), is("bpchar(1)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("file_path")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("file_path")){
 					assertThat("<正确的测试用例4>执行成功后, <file_path>字段的类型为<varchar(512)>", afterTableColumn.getString(i, "column_type"), is("varchar(512)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("is_sendok")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("is_sendok")){
 					assertThat("<正确的测试用例4>执行成功后, <is_sendok>字段的类型为<bpchar(1)>", afterTableColumn.getString(i, "column_type"), is("bpchar(1)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("remark")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("remark")){
 					assertThat("<正确的测试用例4>执行成功后, <remark>字段的类型为<varchar(512)>", afterTableColumn.getString(i, "column_type"), is("varchar(512)"));
-				}else if(afterTableColumn.getString(i, "colume_name").equalsIgnoreCase("agent_id")){
+				}else if(afterTableColumn.getString(i, "column_name").equalsIgnoreCase("agent_id")){
 					assertThat("<正确的测试用例4>执行成功后, <agent_id>字段的类型为<int8>", afterTableColumn.getString(i, "column_type"), is("int8"));
 				}else{
-					assertThat("<正确的测试用例4>执行成功后, 再次查询table_column表，出现了不符合期望的情况，表名为：" + afterTableColumn.getString(i, "colume_name"), true, is(false));
+					assertThat("<正确的测试用例4>执行成功后, 再次查询table_column表，出现了不符合期望的情况，表名为：" + afterTableColumn.getString(i, "column_name"), true, is(false));
 				}
 			}
 
@@ -2248,8 +2248,8 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 					columnType = "unexpected_columnType";
 			}
 			Table_column tableColumn = new Table_column();
-			tableColumn.setColume_name(columnName);
-			tableColumn.setColume_ch_name(columnChName);
+			tableColumn.setColumn_name(columnName);
+			tableColumn.setColumn_ch_name(columnChName);
 			tableColumn.setColumn_type(columnType);
 			tableColumn.setIs_get(IsFlag.Shi.getCode());
 			tableColumn.setIs_primary_key(primayKeyFlag);
@@ -2286,7 +2286,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 
 		CollTbConfParam objParam = new CollTbConfParam();
 		//缺少采集字段名
-		objColumn.get(0).setColume_name("");
+		objColumn.get(0).setColumn_name("");
 		objParam.setCollColumnString(JSON.toJSONString(objColumn));
 		objParam.setColumnSortString(objSort.toJSONString());
 
@@ -2302,7 +2302,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		assertThat(wrongResultEle.isSuccess(), is(false));
 
 		//错误的数据访问12：新增采集表，选择采集字段，但是缺少字段类型
-		objColumn.get(0).setColume_name("odc_id");
+		objColumn.get(0).setColumn_name("odc_id");
 		objColumn.get(0).setColumn_type("");
 
 		String wrongStringTwe = new HttpClient()
@@ -2433,28 +2433,28 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 				Result result = new Result((List<Map<String, Object>>)list);
 				assertThat("采集sys_user的10个列", result.getRowCount(), is(10));
 				for(int i = 0; i < result.getRowCount(); i++){
-					if(result.getString(i, "colume_name").equalsIgnoreCase("user_id")){
-						assertThat("<user_id>列中文名为<主键>", result.getString(i, "colume_ch_name"), is("主键"));
-					}else if(result.getString(i, "colume_name").equalsIgnoreCase("create_id")){
-						assertThat("<create_id>列中文名为<创建用户者ID>", result.getString(i, "colume_ch_name"), is("创建用户者ID"));
-					}else if(result.getString(i, "colume_name").equalsIgnoreCase("dep_id")){
-						assertThat("<dep_id>列中文名为<部门ID>", result.getString(i, "colume_ch_name"), is("部门ID"));
-					}else if(result.getString(i, "colume_name").equalsIgnoreCase("role_id")){
-						assertThat("<role_id>列中文名为<角色ID>", result.getString(i, "colume_ch_name"), is("角色ID"));
-					}else if(result.getString(i, "colume_name").equalsIgnoreCase("user_name")){
-						assertThat("<user_name>列中文名为<用户名>", result.getString(i, "colume_ch_name"), is("用户名"));
-					}else if(result.getString(i, "colume_name").equalsIgnoreCase("user_password")){
-						assertThat("<user_password>列中文名为<密码>", result.getString(i, "colume_ch_name"), is("密码"));
-					}else if(result.getString(i, "colume_name").equalsIgnoreCase("user_email")){
-						assertThat("<user_email>列中文名为<邮箱>", result.getString(i, "colume_ch_name"), is("邮箱"));
-					}else if(result.getString(i, "colume_name").equalsIgnoreCase("user_mobile")){
-						assertThat("<user_mobile>列中文名为<电话>", result.getString(i, "colume_ch_name"), is("电话"));
-					}else if(result.getString(i, "colume_name").equalsIgnoreCase("useris_admin")){
-						assertThat("<useris_admin>列中文名为<是否管理员>", result.getString(i, "colume_ch_name"), is("是否管理员"));
-					}else if(result.getString(i, "colume_name").equalsIgnoreCase("user_type")){
-						assertThat("<user_type>列中文名为<用户类型>", result.getString(i, "colume_ch_name"), is("用户类型"));
+					if(result.getString(i, "column_name").equalsIgnoreCase("user_id")){
+						assertThat("<user_id>列中文名为<主键>", result.getString(i, "column_ch_name"), is("主键"));
+					}else if(result.getString(i, "column_name").equalsIgnoreCase("create_id")){
+						assertThat("<create_id>列中文名为<创建用户者ID>", result.getString(i, "column_ch_name"), is("创建用户者ID"));
+					}else if(result.getString(i, "column_name").equalsIgnoreCase("dep_id")){
+						assertThat("<dep_id>列中文名为<部门ID>", result.getString(i, "column_ch_name"), is("部门ID"));
+					}else if(result.getString(i, "column_name").equalsIgnoreCase("role_id")){
+						assertThat("<role_id>列中文名为<角色ID>", result.getString(i, "column_ch_name"), is("角色ID"));
+					}else if(result.getString(i, "column_name").equalsIgnoreCase("user_name")){
+						assertThat("<user_name>列中文名为<用户名>", result.getString(i, "column_ch_name"), is("用户名"));
+					}else if(result.getString(i, "column_name").equalsIgnoreCase("user_password")){
+						assertThat("<user_password>列中文名为<密码>", result.getString(i, "column_ch_name"), is("密码"));
+					}else if(result.getString(i, "column_name").equalsIgnoreCase("user_email")){
+						assertThat("<user_email>列中文名为<邮箱>", result.getString(i, "column_ch_name"), is("邮箱"));
+					}else if(result.getString(i, "column_name").equalsIgnoreCase("user_mobile")){
+						assertThat("<user_mobile>列中文名为<电话>", result.getString(i, "column_ch_name"), is("电话"));
+					}else if(result.getString(i, "column_name").equalsIgnoreCase("useris_admin")){
+						assertThat("<useris_admin>列中文名为<是否管理员>", result.getString(i, "column_ch_name"), is("是否管理员"));
+					}else if(result.getString(i, "column_name").equalsIgnoreCase("user_type")){
+						assertThat("<user_type>列中文名为<用户类型>", result.getString(i, "column_ch_name"), is("用户类型"));
 					}else{
-						assertThat("sys_user获取到了不符合期望的采集列,column_name为：" + result.getString(i, "colume_name"), true, is(false));
+						assertThat("sys_user获取到了不符合期望的采集列,column_name为：" + result.getString(i, "column_name"), true, is(false));
 					}
 				}
 			}else if(key.equalsIgnoreCase("code_info")){
@@ -2462,18 +2462,18 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 				Result result = new Result((List<Map<String, Object>>)list);
 				assertThat("采集code_info的5个列", result.getRowCount(), is(5));
 				for(int i = 0; i < result.getRowCount(); i++){
-					if(result.getString(i, "colume_name").equalsIgnoreCase("ci_sp_code")){
-						assertThat("<ci_sp_code>列中文名为<ci_sp_code>", result.getString(i, "colume_ch_name"), is("ci_sp_code"));
-					}else if(result.getString(i, "colume_name").equalsIgnoreCase("ci_sp_class")){
-						assertThat("<ci_sp_class>列中文名为<ci_sp_class>", result.getString(i, "colume_ch_name"), is("ci_sp_class"));
-					}else if(result.getString(i, "colume_name").equalsIgnoreCase("ci_sp_classname")){
-						assertThat("<ci_sp_classname>列中文名为<ci_sp_classname>", result.getString(i, "colume_ch_name"), is("ci_sp_classname"));
-					}else if(result.getString(i, "colume_name").equalsIgnoreCase("ci_sp_name")){
-						assertThat("<ci_sp_name>列中文名为<ci_sp_name>", result.getString(i, "colume_ch_name"), is("ci_sp_name"));
-					}else if(result.getString(i, "colume_name").equalsIgnoreCase("ci_sp_remark")){
-						assertThat("<ci_sp_remark>列中文名为<ci_sp_remark>", result.getString(i, "colume_ch_name"), is("ci_sp_remark"));
+					if(result.getString(i, "column_name").equalsIgnoreCase("ci_sp_code")){
+						assertThat("<ci_sp_code>列中文名为<ci_sp_code>", result.getString(i, "column_ch_name"), is("ci_sp_code"));
+					}else if(result.getString(i, "column_name").equalsIgnoreCase("ci_sp_class")){
+						assertThat("<ci_sp_class>列中文名为<ci_sp_class>", result.getString(i, "column_ch_name"), is("ci_sp_class"));
+					}else if(result.getString(i, "column_name").equalsIgnoreCase("ci_sp_classname")){
+						assertThat("<ci_sp_classname>列中文名为<ci_sp_classname>", result.getString(i, "column_ch_name"), is("ci_sp_classname"));
+					}else if(result.getString(i, "column_name").equalsIgnoreCase("ci_sp_name")){
+						assertThat("<ci_sp_name>列中文名为<ci_sp_name>", result.getString(i, "column_ch_name"), is("ci_sp_name"));
+					}else if(result.getString(i, "column_name").equalsIgnoreCase("ci_sp_remark")){
+						assertThat("<ci_sp_remark>列中文名为<ci_sp_remark>", result.getString(i, "column_ch_name"), is("ci_sp_remark"));
 					}else{
-						assertThat("code_info获取到了不符合期望的采集列,列名为：" + result.getString(i, "colume_name"), true, is(false));
+						assertThat("code_info获取到了不符合期望的采集列,列名为：" + result.getString(i, "column_name"), true, is(false));
 					}
 				}
 			}else{
