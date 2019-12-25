@@ -537,8 +537,8 @@ public class DataSourceActionTest extends WebBaseTestCase {
             Table_column tableColumn = new Table_column();
             tableColumn.setColumn_id(ColumnId);
             tableColumn.setTable_id(TableId);
-            tableColumn.setColume_name("create_date");
-            tableColumn.setColume_ch_name("create_date");
+            tableColumn.setColumn_name("create_date");
+            tableColumn.setColumn_ch_name("create_date");
             tableColumn.setIs_primary_key(IsFlag.Fou.getCode());
             tableColumn.setValid_s_date(SysDate);
             tableColumn.setValid_e_date("99991231");
@@ -2002,7 +2002,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
             Table_column tableColumn = SqlOperator.queryOneObject(db, Table_column.class,
                     "select * from " + Table_column.TableName + " where table_id=?",
                     tableInfo.getTable_id()).orElseThrow(() -> new RuntimeException("sql执行错误!"));
-            assertThat(tableColumn.getColume_name(), is("create_date"));
+            assertThat(tableColumn.getColumn_name(), is("create_date"));
             assertThat(tableColumn.getTable_id(), is(tableInfo.getTable_id()));
             assertThat(tableColumn.getIs_alive(), is(IsFlag.Shi.getCode()));
             assertThat(tableColumn.getIs_primary_key(), is(IsFlag.Fou.getCode()));

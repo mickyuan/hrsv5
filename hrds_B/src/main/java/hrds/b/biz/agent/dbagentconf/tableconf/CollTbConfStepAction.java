@@ -390,7 +390,7 @@ public class CollTbConfStepAction extends BaseAction {
 			"       6-2、保存Table_info对象" +
 			"       6-3、所有关联了原table_id的表，找到对应的字段，为这些字段设置新的table_id" +
 			"       6-4、编辑采集表，将该表要采集的列信息保存到相应的表里面" +
-			"7、如果List集合为空，表示单表采集没有设置，那么就要把当前数据库采集任务中所有的单表采集设置作为脏数据全部删除")
+			"7、如果本次接口访问有被删除的表，则调用方法删除该表的脏数据")
 	@Param(name = "tableInfoString", desc = "当前数据库采集任务要采集的所有的表信息组成的json格式的字符串"
 			, range = "json数组格式字符串" +
 			"如果是新增的采集表，table_id为空，如果是编辑修改采集表，table_id不能为空，一个json对象中还应该包括表名(table_name)、" +
@@ -401,23 +401,18 @@ public class CollTbConfStepAction extends BaseAction {
 			"key为collColumnString，表示被采集的列，json数组格式的字符串" +
 			" 一个json对象中应该包括列名(column_name)、字段类型(column_type)、列中文名(column_ch_name)、是否采集(is_get)" +
 			"如果用户没有选择采集列，则传空字符串，系统默认采集该张表所有列" +
-			"key为columnSortString，表示列的采集顺序，json数组格式的字符串" +
-			"一个json对象中，key为columnName，value为列名" +
-			"key为sort，value为顺序" +
 			"注意：tableInfoString和collTbConfParamString中，对象的顺序和数目要保持一致，比如：" +
 			"tableInfoString：[{A表表信息},{B表表信息}]" +
 			"collTbConfParamString：[{A表字段配置参数},{B表字段配置参数}]" +
 			"如果页面上不选择采集表，那么这个参数可以不传", nullable = true, valueIfNull = "")
+	@Param(name = "delTbString", desc = "本次接口访问被删除的表ID组成的json字符串", range = "如果本次访问没有被删除的接口，该参数可以不传", nullable = true, valueIfNull = "")
 	@Return(desc = "保存成功后返回当前采集任务ID", range = "不为空")
-	public long saveCollTbInfo(String tableInfoString, long colSetId, String collTbConfParamString){
+	public long saveCollTbInfo(String tableInfoString, long colSetId, String collTbConfParamString, String delTbString){
 		Map<String, Object> resultMap = Dbo.queryOneObject("select * from " + Database_set.TableName
 				+ " where database_id = ?", colSetId);
 		if(resultMap.isEmpty()){
 			throw new BusinessException("未找到数据库采集任务");
 		}
-
-		List<Object> tableIds = Dbo.queryOneColumnList("select table_id from " + Table_info.TableName +
-				" where database_id = ? and is_user_defined = ?", colSetId, IsFlag.Fou.getCode());
 
 		/*
 		* 1、不论新增采集表还是编辑采集表，页面上所有的内容都可能被修改，所以直接执行SQL，
@@ -431,12 +426,11 @@ public class CollTbConfStepAction extends BaseAction {
 
 		if(tableInfos != null && tbConfParams != null){
 			if(tableInfos.size() != tbConfParams.size()){
-				throw new BusinessException("请在传参时确保采集表数组和配置采集字段信息一一对应");
+				throw new BusinessException("请在传参时确保采集表数据和配置采集字段信息一一对应");
 			}
 			for(int i = 0; i < tableInfos.size(); i++){
 				Table_info tableInfo = tableInfos.get(i);
 				String collColumn = tbConfParams.get(i).getCollColumnString();
-				String columnSort = tbConfParams.get(i).getColumnSortString();
 				//2、校验Table_info对象中的信息是否合法
 				if(StringUtil.isBlank(tableInfo.getTable_name())){
 					throw new BusinessException("保存采集表配置，第"+ (i + 1) +"条数据表名不能为空!");
@@ -479,7 +473,7 @@ public class CollTbConfStepAction extends BaseAction {
 					//5-2、保存Table_info对象
 					tableInfo.add(Dbo.db());
 					//5-3、新增采集表，将该表要采集的列信息保存到相应的表里面
-					saveTableColumnInfoForAdd(tableInfo, collColumn, columnSort, colSetId,
+					saveTableColumnInfoForAdd(tableInfo, collColumn, colSetId,
 							DEFAULT_COLUMN_CLEAN_ORDER.toJSONString());
 				}
 				//6、如果是修改采集表
@@ -498,12 +492,11 @@ public class CollTbConfStepAction extends BaseAction {
 				}
 			}
 		}
-		//7、如果List集合为空，表示单表采集没有设置，那么就要把当前数据库采集任务中所有的单表采集设置作为脏数据全部删除
-		else{
-			if(!tableIds.isEmpty()){
-				for(Object tableId : tableIds){
-					deleteDirtyDataOfTb((long) tableId);
-				}
+		//7、如果本次接口访问有被删除的表，则调用方法删除该表的脏数据
+		List<Table_info> delTables = JSONArray.parseArray(delTbString, Table_info.class);
+		if(delTables != null && !delTables.isEmpty()){
+			for(Table_info tableInfo : delTables){
+				deleteDirtyDataOfTb(tableInfo.getTable_id());
 			}
 		}
 		return colSetId;
@@ -561,7 +554,7 @@ public class CollTbConfStepAction extends BaseAction {
 		* 对于没有修改过的字段，在保存时做的是update操作，所以要返回前端全部数据，前端进行修改后再传给后台全部数据，这样更新字段时才不会丢失数据
 		* */
 		for(int i = 0; i < tableInfos.getRowCount(); i++){
-			Result result = Dbo.queryResult("select column_id, column_name, column_ch_name from "
+			Result result = Dbo.queryResult("select * from "
 					+ Table_column.TableName + " where table_id = ?", tableInfos.getLong(i, "table_id"));
 			if(result.isEmpty()){
 				throw new BusinessException("获取表字段信息失败");
@@ -572,12 +565,11 @@ public class CollTbConfStepAction extends BaseAction {
 	}
 
 	@Method(desc = "处理新增采集表信息时表中列信息的保存", logicStep = "" +
-			"1、判断columnSort是否为空字符串，如果不是空字符串，解析columnSort为json对象" +
-			"2、判断collColumn参数是否为空字符串" +
+			"1、判断collColumn参数是否为空字符串" +
 			"   1-1、是，表示用户没有选择采集列，则应用管理端同Agent端交互，获取该表的列信息" +
 			"   1-2、否，表示用户自定义采集列，则解析collColumn为List集合" +
-			"3、设置主键，外键等信息，如果columnSort不为空，则将Table_column对象的remark属性设置为该列的采集顺序" +
-			"4、保存这部分数据")
+			"2、设置主键，外键等信息，如果columnSort不为空，则将Table_column对象的remark属性设置为该列的采集顺序" +
+			"3、保存这部分数据")
 	@Param(name = "tableInfo", desc = "一个Table_info对象必须包含table_name,table_ch_name和是否并行抽取，" +
 			"如果并行抽取，那么并行抽取SQL也要有；如果是新增的采集表，table_id为空，如果是编辑修改采集表，table_id不能为空" +
 			"过滤的sql页面没定义就是空，页面定义了就不为空", range = "不为空，Table_info类的实体类对象")
@@ -588,20 +580,14 @@ public class CollTbConfStepAction extends BaseAction {
 			"      列名(column_name)" +
 			"      字段类型(column_type)" +
 			"      列中文名(column_ch_name)")
-	@Param(name = "columnSort", desc = "该表要采集的字段的排序", range = "如果用户没有自定义采集字段排序，该参数可以不传")
 	@Param(name = "colSetId", desc = "数据库设置ID，源系统数据库设置表主键，数据库对应表外键", range = "不为空")
 	@Param(name = "columnCleanOrder", desc = "列清洗默认优先级", range = "不为空，json格式的字符串")
-	private void saveTableColumnInfoForAdd(Table_info tableInfo, String collColumn, String columnSort,
+	private void saveTableColumnInfoForAdd(Table_info tableInfo, String collColumn,
 	                                       long colSetId, String columnCleanOrder){
-		//1、判断columnSort是否为空字符串，如果不是空字符串，解析columnSort为json对象
-		JSONArray sortArr = null;
-		if(StringUtil.isNotBlank(columnSort)){
-			sortArr = JSON.parseArray(columnSort);
-		}
-		//2、判断collColumn参数是否为空字符串
+		//1、判断collColumn参数是否为空字符串
 		List<Table_column> tableColumns;
 		if(StringUtil.isBlank(collColumn)){
-			//2-1、是，表示用户没有选择采集列，则应用管理端同Agent端交互,获取该表所有列进行采集
+			//1-1、是，表示用户没有选择采集列，则应用管理端同Agent端交互,获取该表所有列进行采集
 			tableColumns = getColumnInfoByTableName(colSetId, getUserId(), tableInfo.getTable_name());
 			//同agent交互得到的数据，is_get字段默认都设置为是,is_primay_key默认设置为否
 			if(!tableColumns.isEmpty()){
@@ -614,7 +600,7 @@ public class CollTbConfStepAction extends BaseAction {
 			//1-2、否，表示用户自定义采集列，则解析collColumn为List集合
 			tableColumns = JSON.parseArray(collColumn, Table_column.class);
 		}
-		//3、设置主键，外键等信息，如果columnSort不为空，则将Table_column对象的remark属性设置为该列的采集顺序
+		//2、设置主键，外键等信息，如果columnSort不为空，则将Table_column对象的remark属性设置为该列的采集顺序
 		if(tableColumns != null && !tableColumns.isEmpty()){
 			for(Table_column tableColumn : tableColumns){
 				if(StringUtil.isBlank(tableColumn.getColumn_name())){
@@ -644,15 +630,7 @@ public class CollTbConfStepAction extends BaseAction {
 				tableColumn.setIs_alive(IsFlag.Shi.getCode());
 				//是否为变化生成设为否
 				tableColumn.setIs_new(IsFlag.Fou.getCode());
-				if(sortArr != null){
-					for(int j = 0; j < sortArr.size(); j++){
-						JSONObject jsonObject = sortArr.getJSONObject(j);
-						if(jsonObject.getString("columnName").equalsIgnoreCase(tableColumn.getColumn_name())){
-							tableColumn.setTc_remark(String.valueOf(jsonObject.get("sort")));
-						}
-					}
-				}
-				//4、保存这部分数据
+				//3、保存这部分数据
 				tableColumn.add(Dbo.db());
 			}
 		}else{
@@ -690,9 +668,8 @@ public class CollTbConfStepAction extends BaseAction {
 		}
 		//3、否则，遍历集合，获取每一个Table_column对象，设置新的table_id，并更新到数据库中
 		for(Table_column tableColumn : tableColumns){
-			DboExecute.updatesOrThrow("更新" + tableInfo.getTable_name() + "表的字段信息失败",
-					"update " + Table_column.TableName + " set column_ch_name = ?, table_id = ? where column_id = ?",
-					tableColumn.getColumn_ch_name(), tableInfo.getTable_id(), tableColumn.getColumn_id());
+			tableColumn.setTable_id(tableInfo.getTable_id());
+			tableColumn.update(Dbo.db());
 		}
 	}
 

@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.DocClass;
+import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
@@ -15,6 +16,7 @@ import hrds.b.biz.agent.dbagentconf.BaseInitData;
 import hrds.commons.codes.*;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.utils.Constant;
 import hrds.testbase.WebBaseTestCase;
 import org.junit.After;
 import org.junit.Before;
@@ -1246,7 +1248,6 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 
 		CollTbConfParam FTPParam = new CollTbConfParam();
 		FTPParam.setCollColumnString("");
-		FTPParam.setColumnSortString("");
 
 		tbConfParams.add(FTPParam);
 
@@ -1366,30 +1367,35 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			String columnName;
 			String columnChName;
 			String columnType;
+			String sort;
 			switch (i) {
 				case 0 :
 					primayKeyFlag = IsFlag.Shi.getCode();
 					columnName = "odc_id";
 					columnChName = "对象采集id";
 					columnType = "int8";
+					sort = "1";
 					break;
 				case 1 :
 					primayKeyFlag = IsFlag.Fou.getCode();
 					columnName = "object_collect_type";
 					columnChName = "对象采集方式";
 					columnType = "bpchar(1)";
+					sort = "2";
 					break;
 				case 2 :
 					primayKeyFlag = IsFlag.Fou.getCode();
 					columnName = "obj_number";
 					columnChName = "对象采集设置编号";
 					columnType = "varchar(200)";
+					sort = "3";
 					break;
 				default:
 					primayKeyFlag = "unexpected_primayKeyFlag";
 					columnName = "unexpected_columnName";
 					columnChName = "unexpected_columnChName";
 					columnType = "unexpected_columnType";
+					sort = "unexpected_sort";
 			}
 			Table_column tableColumn = new Table_column();
 			tableColumn.setColumn_name(columnName);
@@ -1397,40 +1403,14 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			tableColumn.setColumn_type(columnType);
 			tableColumn.setIs_get(IsFlag.Shi.getCode());
 			tableColumn.setIs_primary_key(primayKeyFlag);
+			tableColumn.setTc_remark(sort);
 
 			objColumn.add(tableColumn);
 		}
 
-		JSONArray objSort = new JSONArray();
-		for(int i = 0; i < 3; i++){
-			String columnName;
-			int sort;
-			switch (i) {
-				case 0 :
-					columnName = "odc_id";
-					sort = 1;
-					break;
-				case 1 :
-					columnName = "object_collect_type";
-					sort = 2;
-					break;
-				case 2 :
-					columnName = "obj_number";
-					sort = 3;
-					break;
-				default:
-					columnName = "unexpected_columnName";
-					sort = (int)UNEXPECTED_ID;
-			}
-			JSONObject object = new JSONObject();
-			object.put("columnName", columnName);
-			object.put("sort", sort);
-			objSort.add(object);
-		}
 
 		CollTbConfParam objParam = new CollTbConfParam();
 		objParam.setCollColumnString(JSON.toJSONString(objColumn));
-		objParam.setColumnSortString(objSort.toJSONString());
 
 		tbConfParams.add(objParam);
 
@@ -1505,77 +1485,79 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		for(int i = 0; i < 5; i++){
 			long columnId;
 			String columnChName;
+			String primaryKeyFlag;
+			String columnName;
+			String columnType;
+			String sort;
 			switch (i) {
 				case 0 :
 					columnId = 3001L;
 					columnChName = "ci_sp_code_ch";
+					primaryKeyFlag = IsFlag.Shi.getCode();
+					columnName = "ci_sp_code";
+					columnType = "varchar";
+					sort = "1";
 					break;
 				case 1 :
 					columnId = 3002L;
 					columnChName = "ci_sp_class_ch";
+					primaryKeyFlag = IsFlag.Shi.getCode();
+					columnName = "ci_sp_class";
+					columnType = "varchar";
+					sort = "2";
 					break;
 				case 2 :
 					columnId = 3003L;
 					columnChName = "ci_sp_classname_ch";
+					primaryKeyFlag = IsFlag.Fou.getCode();
+					columnName = "ci_sp_classname";
+					columnType = "varchar";
+					sort = "3";
 					break;
 				case 3 :
 					columnId = 3004L;
 					columnChName = "ci_sp_name_ch";
+					primaryKeyFlag = IsFlag.Fou.getCode();
+					columnName = "ci_sp_name";
+					columnType = "varchar";
+					sort = "4";
 					break;
 				case 4 :
 					columnId = 3005L;
 					columnChName = "ci_sp_remark_ch";
+					primaryKeyFlag = IsFlag.Fou.getCode();
+					columnName = "ci_sp_remark";
+					columnType = "varchar";
+					sort = "5";
 					break;
 				default:
 					columnId = UNEXPECTED_ID;
 					columnChName = "unexpected_columnChName";
+					primaryKeyFlag = "unexpected_primaryKeyFlag";
+					columnName = "unexpected_columnName";
+					columnType = "unexpected_columnType";
+					sort = "unexpected_sort";
 			}
 			Table_column tableColumn = new Table_column();
 			tableColumn.setColumn_id(columnId);
 			tableColumn.setColumn_ch_name(columnChName);
+			tableColumn.setColumn_name(columnName);
+			tableColumn.setColumn_type(columnType);
+			tableColumn.setIs_primary_key(primaryKeyFlag);
+			tableColumn.setTc_remark(sort);
+
+			tableColumn.setTable_id(CODE_INFO_TABLE_ID);
+			tableColumn.setValid_s_date(DateUtil.getSysDate());
+			tableColumn.setValid_e_date(Constant.MAXDATE);
+			tableColumn.setIs_alive(IsFlag.Shi.getCode());
+			tableColumn.setIs_new(IsFlag.Fou.getCode());
+			tableColumn.setTc_or(columnCleanOrder.toJSONString());
 
 			codeColumn.add(tableColumn);
 		}
 
-		JSONArray codeSort = new JSONArray();
-		for(int i = 0; i < 5; i++){
-			String columnName;
-			int sort;
-			switch (i) {
-				case 0 :
-					columnName = "ci_sp_code";
-					sort = 1;
-					break;
-				case 1 :
-					columnName = "ci_sp_class";
-					sort = 2;
-					break;
-				case 2 :
-					columnName = "ci_sp_classname";
-					sort = 3;
-					break;
-				case 3 :
-					columnName = "ci_sp_name";
-					sort = 4;
-					break;
-				case 4 :
-					columnName = "ci_sp_remark";
-					sort = 5;
-					break;
-				default:
-					columnName = "unexpected_columnName";
-					sort = (int)UNEXPECTED_ID;
-			}
-			JSONObject object = new JSONObject();
-			object.put("columnName", columnName);
-			object.put("sort", sort);
-
-			codeSort.add(object);
-		}
-
 		CollTbConfParam codeParam = new CollTbConfParam();
 		codeParam.setCollColumnString(JSON.toJSONString(codeColumn));
-		codeParam.setColumnSortString(codeSort.toJSONString());
 
 		tbConfParams.add(codeParam);
 
@@ -1719,12 +1701,10 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		tableInfos.add(objInfo);
 
 		CollTbConfParam FTPParam = new CollTbConfParam();
-		FTPParam.setColumnSortString("");
-		FTPParam.setColumnSortString("");
+		FTPParam.setCollColumnString("");
 
 		CollTbConfParam objParam = new CollTbConfParam();
-		objParam.setColumnSortString("");
-		objParam.setColumnSortString("");
+		objParam.setCollColumnString("");
 
 		tbConfParams.add(FTPParam);
 		tbConfParams.add(objParam);
@@ -1874,13 +1854,24 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 	}
 
 	/*
-	 * 正确数据访问5：在database_id为1001的数据库采集任务,不传tableInfoString和collTbConfParamString
-	 * 模拟修改采集表，取消所有采集表的情况
+	 * 正确数据访问5：在database_id为1001的数据库采集任务中，模拟取消所有采集表的情况
 	 * */
 	@Test
 	public void saveCollTbInfoFive(){
+		List<Table_info> tableInfos = new ArrayList<>();
+
+		Table_info tableInfo = new Table_info();
+		tableInfo.setTable_id(SYS_USER_TABLE_ID);
+
+		Table_info tableInfoTwo = new Table_info();
+		tableInfoTwo.setTable_id(CODE_INFO_TABLE_ID);
+
+		tableInfos.add(tableInfo);
+		tableInfos.add(tableInfoTwo);
+
 		String rightStringFive = new HttpClient()
 				.addData("colSetId", FIRST_DATABASESET_ID)
+				.addData("delTbString", JSON.toJSONString(tableInfos))
 				.post(getActionUrl("saveCollTbInfo")).getBodyString();
 		ActionResult rightResultFive = JsonUtil.toObjectSafety(rightStringFive, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
@@ -1966,8 +1957,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		tableInfos.add(FTPInfo);
 
 		CollTbConfParam FTPParam = new CollTbConfParam();
-		FTPParam.setColumnSortString("");
-		FTPParam.setColumnSortString("");
+		FTPParam.setCollColumnString("");
 
 		tbConfParams.add(FTPParam);
 
@@ -1992,8 +1982,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		tableInfos.add(FTPInfoTwo);
 
 		CollTbConfParam FTPParamTwo = new CollTbConfParam();
-		FTPParamTwo.setColumnSortString("");
-		FTPParamTwo.setColumnSortString("");
+		FTPParamTwo.setCollColumnString("");
 
 		tbConfParams.add(FTPParamTwo);
 
@@ -2019,8 +2008,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		tableInfos.add(FTPInfoThree);
 
 		CollTbConfParam FTPParamThree = new CollTbConfParam();
-		FTPParamThree.setColumnSortString("");
-		FTPParamThree.setColumnSortString("");
+		FTPParamThree.setCollColumnString("");
 
 		tbConfParams.add(FTPParamThree);
 
@@ -2046,8 +2034,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		tableInfos.add(FTPInfoFour);
 
 		CollTbConfParam FTPParamFour = new CollTbConfParam();
-		FTPParamFour.setColumnSortString("");
-		FTPParamFour.setColumnSortString("");
+		FTPParamFour.setCollColumnString("");
 
 		tbConfParams.add(FTPParamFour);
 
@@ -2061,12 +2048,14 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		assertThat(wrongResultFour.isSuccess(), is(false));
 
 		tableInfos.clear();
+		FTPInfoFour.setDatabase_id(FIRST_DATABASESET_ID);
+		tableInfos.add(FTPInfoFour);
 		tbConfParams.clear();
 
 		//错误的数据访问5：构造tableInfoString参数是空字符串的情况
 		String wrongStringFive = new HttpClient()
 				.addData("tableInfoString", "")
-				.addData("colSetId", UNEXPECTED_ID)
+				.addData("colSetId", FIRST_DATABASESET_ID)
 				.addData("collTbConfParamString", JSON.toJSONString(tbConfParams))
 				.post(getActionUrl("saveCollTbInfo")).getBodyString();
 		ActionResult wrongResultFive = JsonUtil.toObjectSafety(wrongStringFive, ActionResult.class).orElseThrow(()
@@ -2076,12 +2065,15 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		//错误的数据访问6：构造collTbConfParamString参数是空字符串的情况
 		String wrongStringSix = new HttpClient()
 				.addData("tableInfoString", JSON.toJSONString(tableInfos))
-				.addData("colSetId", UNEXPECTED_ID)
+				.addData("colSetId", FIRST_DATABASESET_ID)
 				.addData("collTbConfParamString", "")
 				.post(getActionUrl("saveCollTbInfo")).getBodyString();
 		ActionResult wrongResultSix = JsonUtil.toObjectSafety(wrongStringSix, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(wrongResultSix.isSuccess(), is(false));
+
+		tableInfos.clear();
+		tbConfParams.clear();
 
 		//错误的数据访问7：构造tableInfoString和collTbConfParamString解析成的list集合大小不同的情况
 		Table_info FTPInfoSeven = new Table_info();
@@ -2100,8 +2092,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		tableInfos.add(objInfoSeven);
 
 		CollTbConfParam FTPParamSeven = new CollTbConfParam();
-		FTPParamSeven.setColumnSortString("");
-		FTPParamSeven.setColumnSortString("");
+		FTPParamSeven.setCollColumnString("");
 
 		tbConfParams.add(FTPParamSeven);
 
@@ -2130,8 +2121,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		tableInfos.add(FTPInfoEight);
 
 		CollTbConfParam FTPParamEight = new CollTbConfParam();
-		FTPParamEight.setColumnSortString("");
-		FTPParamEight.setColumnSortString("");
+		FTPParamEight.setCollColumnString("");
 
 		tbConfParams.add(FTPParamEight);
 
@@ -2160,8 +2150,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		tableInfos.add(FTPInfoNine);
 
 		CollTbConfParam FTPParamNine = new CollTbConfParam();
-		FTPParamNine.setColumnSortString("");
-		FTPParamNine.setColumnSortString("");
+		FTPParamNine.setCollColumnString("");
 
 		tbConfParams.add(FTPParamNine);
 
@@ -2190,8 +2179,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 		tableInfos.add(FTPInfoTen);
 
 		CollTbConfParam FTPParamTen = new CollTbConfParam();
-		FTPParamTen.setColumnSortString("");
-		FTPParamTen.setColumnSortString("");
+		FTPParamTen.setCollColumnString("");
 
 		tbConfParams.add(FTPParamTen);
 
@@ -2257,38 +2245,10 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			objColumn.add(tableColumn);
 		}
 
-		JSONArray objSort = new JSONArray();
-		for(int i = 0; i < 3; i++){
-			String columnName;
-			int sort;
-			switch (i) {
-				case 0 :
-					columnName = "odc_id";
-					sort = 1;
-					break;
-				case 1 :
-					columnName = "object_collect_type";
-					sort = 2;
-					break;
-				case 2 :
-					columnName = "obj_number";
-					sort = 3;
-					break;
-				default:
-					columnName = "unexpected_columnName";
-					sort = (int)UNEXPECTED_ID;
-			}
-			JSONObject object = new JSONObject();
-			object.put("columnName", columnName);
-			object.put("sort", sort);
-			objSort.add(object);
-		}
-
 		CollTbConfParam objParam = new CollTbConfParam();
 		//缺少采集字段名
 		objColumn.get(0).setColumn_name("");
 		objParam.setCollColumnString(JSON.toJSONString(objColumn));
-		objParam.setColumnSortString(objSort.toJSONString());
 
 		tbConfParams.add(objParam);
 
