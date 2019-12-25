@@ -5,25 +5,39 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
-import fd.ng.core.utils.DateUtil;
-import fd.ng.core.utils.JsonUtil;
-import fd.ng.core.utils.StringUtil;
+import fd.ng.core.utils.*;
 import fd.ng.db.jdbc.DefaultPageImpl;
 import fd.ng.db.jdbc.Page;
 import fd.ng.db.jdbc.SqlOperator;
+import fd.ng.db.meta.MetaOperator;
+import fd.ng.db.meta.TableMeta;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
+import fd.ng.web.util.FileUploadUtil;
+import fd.ng.web.util.RequestUtil;
+import fd.ng.web.util.ResponseUtil;
+import hrds.c.biz.util.ConvertColumnNameToChinese;
 import hrds.c.biz.util.ETLJobUtil;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.*;
 import hrds.commons.entity.*;
+import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.DboExecute;
+import org.apache.commons.lang.StringUtils;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.*;
 
+import java.io.*;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.math.BigDecimal;
+import java.util.*;
 
 @DocClass(desc = "作业调度配置管理", author = "dhw", createdate = "2019/10/28 11:36")
 public class JobConfiguration extends BaseAction {
@@ -31,6 +45,28 @@ public class JobConfiguration extends BaseAction {
     private static final SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
     // 作业系统参数变量名称前缀
     private static final String PREFIX = "!";
+    // 作业调度默认系统参数对应的工程编号
+    private static final String EtlSysCd = "SYS";
+    // 系统默认系统参数
+    private static final String txDate = "#txdate";
+    private static final String txDateNext = "#dtxdate_next";
+    private static final String txDatePre = "#txdate_pre";
+    // 系统默认资源类型
+    private static final String thrift = "Thrift";
+    private static final String yarn = "Yarn";
+    // excel文件后缀名
+    private static final String xlsxSuffix = ".xlsx";
+    private static final String xlsSuffix = ".xlsx";
+    // 代码项类型
+    private static final String pro_type = "pro_type";
+    private static final String disp_freq = "disp_freq";
+    private static final String disp_type = "disp_type";
+    private static final String job_eff_flag = "job_eff_flag";
+    private static final String job_disp_status = "job_disp_status";
+    private static final String today_disp = "today_disp";
+    private static final String main_serv_sync = "main_serv_sync";
+    private static final String status = "status";
+    private static final String para_type = "para_type";
 
     @Method(desc = "分页查询作业调度某工程任务信息",
             logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制" +
@@ -1270,7 +1306,7 @@ public class JobConfiguration extends BaseAction {
         asmSql.addSql("select distinct * from " + Etl_para.TableName + " where etl_sys_cd IN (?,?)");
         asmSql.addParam(etl_sys_cd);
         // 默认系统参数，目前写死
-        asmSql.addParam("SYS");
+        asmSql.addParam(EtlSysCd);
         // 4.判断变量名称是否存在，存在加条件查询
         if (StringUtil.isNotBlank(para_cd)) {
             asmSql.addLikeParam("para_cd", "%" + para_cd + "%");
@@ -1598,7 +1634,7 @@ public class JobConfiguration extends BaseAction {
         }
         // 7.获取当前任务下的所有作业
         List<Etl_job_def> etlJobList = Dbo.queryList(Etl_job_def.class, "select DISTINCT etl_job,disp_type"
-                        + " from " + Etl_job_def.TableName + " where sub_sys_cd=? and etl_sys_cd=?",
+                        + " ,disp_freq from " + Etl_job_def.TableName + " where sub_sys_cd=? and etl_sys_cd=?",
                 sub_sys_cd, etl_sys_cd);
         // 8.获取上游任务下的所有作业即上游作业
         List<String> preEtlJobList = Dbo.queryOneColumnList("select DISTINCT etl_job from "
@@ -1613,8 +1649,9 @@ public class JobConfiguration extends BaseAction {
                         etl_job_def.getEtl_job(), pre_etl_job)) {
                     continue;
                 }
-                // 11.如果当前作业为定时作业则跳过
-                if (Dispatch_Type.DEPENDENCE != Dispatch_Type.ofEnumByCode(etl_job_def.getDisp_type())) {
+                // 11.如果当前作业为定时作业或频率作业则跳过
+                if (Dispatch_Frequency.PinLv == Dispatch_Frequency.ofEnumByCode(etl_job_def.getDisp_freq()) ||
+                        Dispatch_Type.DEPENDENCE != Dispatch_Type.ofEnumByCode(etl_job_def.getDisp_type())) {
                     continue;
                 }
                 // 12.将当前作业与上游作业交换，看是否已经存在依赖关系,存在则跳过
@@ -1732,8 +1769,496 @@ public class JobConfiguration extends BaseAction {
                 etl_sys_cd, pre_etl_sys_cd, etl_job, pre_etl_job);
     }
 
-    public void uploadFile() {
+    @Method(desc = "上传Excel文件",
+            logicStep = "1.数据可访问权限处理方式，该方法不需要权限验证" +
+                    "2.通过文件名称获取文件" +
+                    "3.从xlsx/xls文件创建的输入流" +
+                    "4.根据文件后缀名创建不同的工作薄Workbook" +
+                    "4.1读取2007版，以.xlsx结尾" +
+                    "4.2读取2003版，以.xls结尾" +
+                    "5.获取页数" +
+                    "6.循环页数" +
+                    "7.得到工作薄的第N个sheet表" +
+                    "8.获取不包括那些空行（隔行）的情况的行数" +
+                    "9.循环行数" +
+                    "10.存放列数据的集合" +
+                    "11.获取不为空的列个数" +
+                    "12.如果获取的列数是-1则表示为无效行的单元格,直接跳过" +
+                    "13.获取单元格信息，如果为null则设置为空字符串" +
+                    "14.循环列数" +
+                    "14.1第一行是表头，获取列名称" +
+                    "14.2.第二行之后是表的值，如果第二行的列值不存在,则不添加" +
+                    "15.不为空时放入List" +
+                    "16.将excel数据导入数据库")
+    @Param(name = "file", desc = "上传文件", range = "以每个模块对应表名为文件名")
+    public void uploadExcelFile(String file) {
+        // 1.数据可访问权限处理方式，该方法不需要权限验证
+        FileInputStream fis = null;
+        Workbook workBook = null;
+        try {
+            // 2.通过文件名称获取文件
+            File uploadedFile = FileUploadUtil.getUploadedFile(file);
+            if (!uploadedFile.exists()) {
+                throw new BusinessException("文件不存在！");
+            }
+            // 3.从xlsx/xls文件创建的输入流
+            String path = uploadedFile.toPath().toString();
+            fis = new FileInputStream(path);
+            // 4.根据文件后缀名创建不同的工作薄Workbook
+            if (path.toLowerCase().endsWith(xlsxSuffix)) {
+                // 4.1读取2007版，以.xlsx结尾
+                try {
+                    workBook = new XSSFWorkbook(fis);
+                } catch (IOException e) {
+                    throw new BusinessException("定义XSSFWorkbook失败");
+                }
+            } else if (path.toLowerCase().endsWith(xlsSuffix)) {
+                // 4.2读取2003版，以.xls结尾
+                try {
+                    workBook = new HSSFWorkbook(fis);
+                } catch (IOException e) {
+                    throw new BusinessException("定义HSSFWorkbook失败");
+                }
+            } else {
+                throw new BusinessException("文件格式不正确，不是excel文件");
+            }
+            // 5.获取页数
+            int numberOfSheets = Objects.requireNonNull(workBook).getNumberOfSheets();
+            List<Map<String, String>> listMap = new ArrayList<>();
+            // 6.循环页数
+            for (int sheetNum = 0; sheetNum < numberOfSheets; sheetNum++) {
+                // 7.得到工作薄的第N个sheet表
+                Sheet sheet = workBook.getSheetAt(sheetNum);
+                Row row;
+                String cellVal = null;
+                List<String> columnList = new ArrayList<>();
+                // 8.获取不包括那些空行（隔行）的情况的行数
+                int physicalNumberOfRows = sheet.getPhysicalNumberOfRows();
+                for (int i = sheet.getFirstRowNum(); i < physicalNumberOfRows; i++) {
+                    // 9.循环行数
+                    row = sheet.getRow(i);
+                    // 10.存放列数据的集合
+                    Map<String, String> map = new HashMap<>();
+                    // 11.获取不为空的列个数
+                    int physicalNumberOfCells = row.getPhysicalNumberOfCells();
+                    for (int j = row.getFirstCellNum(); j < physicalNumberOfCells; j++) {
+                        // 12.如果获取的列数是-1则表示为无效行的单元格,直接跳过
+                        if (j == -1) {
+                            continue;
+                        }
+                        // 13.获取单元格信息，如果为null则设置为空字符串
+                        Cell cell = row.getCell(j);
+                        if (null == cell) {
+                            cellVal = "";
+                        } else {
+                            cellVal = cell.toString();
+                        }
+                        // 14.循环列数
+                        if (i == 0) {
+                            // 14.1第一行是表头，获取列名称
+                            String[] columnArray = StringUtils.split(cellVal, "-");
+                            columnList.add(columnArray[0]);
+                        } else {
+                            // 14.2.第二行之后是表的值，如果第二行的列值不存在,则不添加
+                            map.put(columnList.get(j), cellVal);
+                        }
+                    }
+                    // 15.不为空时放入List
+                    if (!map.isEmpty()) {
+                        listMap.add(map);
+                    }
+                }
+            }
+            // 16.将excel数据导入数据库
+            String substring = file.substring(file.lastIndexOf(File.separator) + 1, file.indexOf("."));
+            insertData(listMap, substring);
+        } catch (FileNotFoundException e) {
+            throw new AppSystemException(e);
+        }
+    }
 
+    @Method(desc = "将excel表数据导入数据库",
+            logicStep = "1.数据可访问权限处理方式，该方法不需要权限验证" +
+                    "2.根据不同的表处理不同的表数据，循环入库")
+    @Param(name = "listMap", desc = "当前表对应的所有列数据", range = "无限制")
+    @Param(name = "tableName", desc = "表名称", range = "无限制")
+    private void insertData(List<Map<String, String>> listMap, String tableName) {
+        // 1.数据可访问权限处理方式，该方法不需要权限验证
+        try {
+            // 2.根据不同的表处理不同的表数据，循环入库
+            for (Map<String, String> mapInfo : listMap) {
+                if (mapInfo != null && !mapInfo.isEmpty()) {
+                    switch (tableName.toLowerCase()) {
+                        // 作业表
+                        case Etl_job_def.TableName:
+                            Etl_job_def etlJobDef = new Etl_job_def();
+                            etlJobDef = (Etl_job_def) setFields(mapInfo, etlJobDef);
+                            etlJobDef.add(Dbo.db());
+                            break;
+                        // 任务表
+                        case Etl_sub_sys_list.TableName:
+                            Etl_sub_sys_list etlSubSysList = new Etl_sub_sys_list();
+                            etlSubSysList = (Etl_sub_sys_list) setFields(mapInfo, etlSubSysList);
+                            etlSubSysList.add(Dbo.db());
+                            break;
+                        // 资源定义表
+                        case Etl_resource.TableName:
+                            Etl_resource etlResource = new Etl_resource();
+                            etlResource = (Etl_resource) setFields(mapInfo, etlResource);
+                            String resource_type = etlResource.getResource_type();
+                            if (!thrift.equals(resource_type) && !yarn.equals(resource_type)) {
+                                etlResource.add(Dbo.db());
+                            }
+                            break;
+                        // 资源分配表
+                        case Etl_job_resource_rela.TableName:
+                            Etl_job_resource_rela etlJobResourceRela = new Etl_job_resource_rela();
+                            etlJobResourceRela = (Etl_job_resource_rela) setFields(mapInfo, etlJobResourceRela);
+                            etlJobResourceRela.add(Dbo.db());
+                            break;
+                        // 系统参数表
+                        case Etl_para.TableName:
+                            Etl_para etlPara = new Etl_para();
+                            etlPara = (Etl_para) setFields(mapInfo, etlPara);
+                            if (!txDate.equals(etlPara.getPara_cd()) && !txDateNext.equals(etlPara.getPara_cd())
+                                    && !txDatePre.equals(etlPara.getPara_cd())) {
+                                etlPara.add(Dbo.db());
+                            }
+                            break;
+                        // 作业依赖表
+                        case Etl_dependency.TableName:
+                            Etl_dependency etlDependency = new Etl_dependency();
+                            etlDependency = (Etl_dependency) setFields(mapInfo, etlDependency);
+                            etlDependency.add(Dbo.db());
+                            break;
+                        default:
+                            throw new BusinessException("导入的数据不知道是什么表的信息!");
+                    }
+                }
+            }
+        } catch (IllegalAccessException e) {
+            throw new AppSystemException(e);
+        } catch (InstantiationException e) {
+            throw new BusinessException("获取实例对象失败！");
+        }
+    }
+
+    @Method(desc = "封装实体字段属性（map转实体）",
+            logicStep = "1.数据可访问权限处理方式，该方法不需要权限验证" +
+                    "2.获取当前对象的实例" +
+                    "3.获取所有列字段信息" +
+                    "4.遍历列字段信息" +
+                    "5.获取字段对象" +
+                    "6.获取修饰符，是java.lang.reflect.Modifier的静态属性" +
+                    "7.判断修饰符是否包含static与final，包含则跳过" +
+                    "8.使反射时可以访问私有变量" +
+                    "9.获取字段类型" +
+                    "10.根据字段不同类型处理不同情况")
+    @Param(name = "mapInfo", desc = "当前表对应每列数据", range = "无限制")
+    @Param(name = "obj", desc = "表实体对象", range = "无限制")
+    private Object setFields(Map<String, String> mapInfo, Object obj) throws IllegalAccessException,
+            InstantiationException {
+        // 1.数据可访问权限处理方式，该方法不需要权限验证
+        // 2.获取当前对象的实例
+        obj = obj.getClass().newInstance();
+        // 3.获取所有列字段信息
+        Map<String, Field> fields = BeanUtil.getDeclaredFields(obj.getClass());
+        // 4.遍历列字段信息
+        for (Map.Entry<String, Field> fieldEntry : fields.entrySet()) {
+            // 5.获取字段对象
+            Field field = fieldEntry.getValue();
+            // 6.获取修饰符，是java.lang.reflect.Modifier的静态属性
+            int mod = field.getModifiers();
+            // 7.判断修饰符是否包含static与final，包含则跳过
+            if (Modifier.isStatic(mod) || Modifier.isFinal(mod)) {
+                continue;
+            }
+            // 8.使反射时可以访问私有变量
+            field.setAccessible(true);
+            // 9.获取字段类型
+            String filedTypeName = field.getType().getName();
+            // 10.根据字段不同类型处理不同情况
+            if (filedTypeName.endsWith("Integer")) {
+                field.set(obj, Integer.valueOf(mapInfo.get(fieldEntry.getKey())));
+            } else if (filedTypeName.endsWith("Long")) {
+                field.set(obj, Long.valueOf(mapInfo.get(fieldEntry.getKey())));
+            } else if (filedTypeName.endsWith("BigDecimal")) {
+                field.set(obj, new BigDecimal(mapInfo.get(fieldEntry.getKey())));
+            } else if (filedTypeName.endsWith("String")) {
+                field.set(obj, mapInfo.get(fieldEntry.getKey()));
+            } else {
+                throw new BusinessException("不支持的数据类型转化！" + filedTypeName);
+            }
+        }
+        return obj;
+    }
+
+    @Method(desc = "下载excel文件",
+            logicStep = "1.数据可访问权限处理方式，该方法不需要权限验证" +
+                    "2.获取本地文件路径" +
+                    "3.清空response" +
+                    "4.设置响应头，控制浏览器下载该文件" +
+                    "4.1firefox浏览器" +
+                    "4.2其它浏览器" +
+                    "5.读取要下载的文件，保存到文件输入流" +
+                    "6.创建输出流" +
+                    "7.将输入流写入到浏览器中" +
+                    "8.下载完删除下载文件")
+    @Param(name = "excelName", desc = "生成excel文件名", range = "对应模块数据库表名称，如：Etl_sub_sys_list")
+    public void downloadExcelFile(String excelName) {
+        // 1.数据可访问权限处理方式，该方法不需要权限验证
+        OutputStream out = null;
+        InputStream in = null;
+        try {
+            // 2.获取本地文件路径
+            String filePath = RequestUtil.getRequest().getServletContext().getRealPath("/upload") + excelName;
+            // 3.清空response
+            ResponseUtil.getResponse().reset();
+            // 4.设置响应头，控制浏览器下载该文件
+            if (RequestUtil.getRequest().getHeader("User-Agent").toLowerCase().indexOf("firefox") > 0) {
+                // 4.1firefox浏览器
+                ResponseUtil.getResponse().setHeader("content-disposition", "attachment;filename="
+                        + new String(excelName.getBytes(CodecUtil.UTF8_CHARSET), DataBaseCode.ISO_8859_1.getCode()));
+            } else {
+                // 4.2其它浏览器
+                ResponseUtil.getResponse().setHeader("content-disposition", "attachment;filename="
+                        + Base64.getEncoder().encodeToString(excelName.getBytes(CodecUtil.UTF8_CHARSET)));
+            }
+            ResponseUtil.getResponse().setContentType("APPLICATION/OCTET-STREAM");
+            // 5.读取要下载的文件，保存到文件输入流
+            in = new FileInputStream(filePath);
+            // 6.创建输出流
+            out = ResponseUtil.getResponse().getOutputStream();
+            // 7.将输入流写入到浏览器中
+            byte[] bytes = new byte[1024];
+            int len;
+            while ((len = in.read(bytes)) > 0) {
+                out.write(bytes, 0, len);
+            }
+            out.flush();
+            out.close();
+            in.close();
+            // 8.下载完删除下载文件
+            FileUtil.deleteDirectoryFiles(filePath);
+        } catch (UnsupportedEncodingException e) {
+            throw new BusinessException("不支持的编码异常");
+        } catch (FileNotFoundException e) {
+            throw new BusinessException("文件不存在，可能目录不存在！");
+        } catch (IOException e) {
+            throw new AppSystemException(e);
+        }
+    }
+
+    @Method(desc = "生成Excel表",
+            logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制" +
+                    "2.验证当前用户下的工程是否存在" +
+                    "3.创建工作簿对象" +
+                    "4.创建工作表对象" +
+                    "5.创建单元格对象,批注插入到一行" +
+                    "6.得到上传文件的保存目录" +
+                    "7.判断文件是否存在" +
+                    "8.创建输出流" +
+                    "9.获取Excel的头列信息" +
+                    "10.创建绘图对象" +
+                    "11.遍历列名设置头信息" +
+                    "12.设置头单元格信息" +
+                    "13.根据列名判断是否获取备注信息" +
+                    "14.表对应所有列的值信息" +
+                    "15.获取对应表数据" +
+                    "16.存放表每列信息" +
+                    "17.设置每列信息" +
+                    "18.封装每列信息" +
+                    "19.循环出需要的数据,并添加到excel头下方" +
+                    "20.写进Excel表格")
+    @Param(name = "etl_sys_cd", desc = "工程代码", range = "新增工程时生成")
+    @Param(name = "tableName", desc = "表名称", range = "下载模块对应的表名称")
+    public String generateExcel(String etl_sys_cd, String tableName) {
+        // 1.数据可访问权限处理方式，通过user_id进行权限控制
+        FileOutputStream out = null;
+        XSSFWorkbook workbook = null;
+        try {
+            // 2.验证当前用户下的工程是否存在
+            if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
+                throw new BusinessException("当前工程已不存在！");
+            }
+            // 3.创建工作簿对象
+            workbook = new XSSFWorkbook();
+            // 4.创建工作表对象
+            XSSFSheet sheet = workbook.createSheet("sheet1");
+            // 5.创建单元格对象,批注插入到一行
+            XSSFRow headRow = sheet.createRow(0);
+            // 6.得到上传文件的保存目录
+            String savePath = RequestUtil.getRequest().getSession().getServletContext()
+                    .getRealPath(File.separator + "upload") + File.separator + tableName + xlsxSuffix;
+            File file = new File(savePath);
+            // 7.判断文件是否存在
+            if (!file.exists()) {
+                if (file.createNewFile()) {
+                    throw new BusinessException("创建文件失败，文件目录可能不存在！");
+                }
+            }
+            // 8.创建输出流
+            out = new FileOutputStream(file);
+            // 9.获取Excel的头列信息
+            List<TableMeta> tableMetas = MetaOperator.getTablesWithColumns(Dbo.db(), Etl_sub_sys_list.TableName);
+            Set<String> columnNames = tableMetas.get(0).getColumnNames();
+            // 10.创建绘图对象
+            XSSFDrawing xssfDrawing = sheet.createDrawingPatriarch();
+            int cellNum = 0;
+            // 11.遍历列名设置头信息
+            for (String columnName : columnNames) {
+                XSSFCell createCell = headRow.createCell(cellNum);
+                cellNum++;
+                // 12.设置头单元格信息
+                createCell.setCellValue(columnName + "-(" + ConvertColumnNameToChinese.getZh_name(columnName)
+                        + ")");
+                // 13.根据列名判断是否获取备注信息
+                String comments = getCodeValueByColumn(columnName);
+                if (StringUtils.isNotBlank(comments)) {
+                    // 前四个参数是坐标点,后四个参数是编辑和显示批注时的大小.
+                    XSSFComment comment = xssfDrawing.createCellComment(new XSSFClientAnchor
+                            (0, 0, 0, 0, (short) 0, 0, (short) 3, 11));
+                    comment.setString(new XSSFRichTextString(comments));
+                    createCell.setCellComment(comment);
+                }
+            }
+            // 14.表对应所有列的值信息
+            List<List<String>> columnValList = new ArrayList<>();
+            // 15.获取对应表数据
+            List<Map<String, Object>> tableInfoList = getTableInfo(etl_sys_cd, tableName);
+            if (!tableInfoList.isEmpty()) {
+                for (Map<String, Object> tableInfo : tableInfoList) {
+                    // 16.存放表每列信息
+                    List<String> columnInfoList = new ArrayList<>();
+                    for (String columnName : columnNames) {
+                        // 17.设置每列信息
+                        columnInfoList.add(tableInfo.get(columnName).toString());
+                    }
+                    // 18.封装每列信息
+                    columnValList.add(columnInfoList);
+                }
+            }
+            // 19.循环出需要的数据,并添加到excel头下方
+            if (!columnValList.isEmpty()) {
+                for (int i = 0; i < columnValList.size(); i++) {
+                    headRow = sheet.createRow(i + 1);
+                    List<String> valueList = columnValList.get(i);
+                    for (int j = 0; j < valueList.size(); j++) {
+                        headRow.createCell(j).setCellValue(valueList.get(j));
+                    }
+                }
+            }
+            // 20.写进Excel表格
+            workbook.write(out);
+            out.close();
+            workbook.close();
+            return tableName + xlsxSuffix;
+        } catch (FileNotFoundException e) {
+            throw new BusinessException("文件不存在！");
+        } catch (IOException e) {
+            throw new AppSystemException(e);
+        }
+    }
+
+    @Method(desc = "获取表信息",
+            logicStep = "1.数据可访问权限处理方式，该方法不需要权限控制" +
+                    "2.判断是否为作业调度系统参数表，根据不同情况获取表信息" +
+                    "2.1查询系统参数表信息" +
+                    "2.2查询表信息")
+    @Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
+    @Param(name = "tableName", desc = "表名称", range = "对应数据库表名称")
+    @Return(desc = "返回表信息", range = "无限制")
+    private List<Map<String, Object>> getTableInfo(String etl_sys_cd, String tableName) {
+        // 1.数据可访问权限处理方式，该方法不需要权限控制
+        // 2.判断是否为作业调度系统参数表，根据不同情况获取表信息
+        if (Etl_para.TableName.equalsIgnoreCase(tableName)) {
+            // 2.1查询系统参数表信息
+            return Dbo.queryList("select * from " + tableName + " where 1=1 and etl_sys_cd in(?,?)",
+                    etl_sys_cd, EtlSysCd);
+        } else {
+            // 2.2查询表信息
+            return Dbo.queryList("select * from " + tableName + " where etl_sys_cd = ?", etl_sys_cd);
+        }
+    }
+
+    @Method(desc = "根据不同的类型获取代码项的说明信息",
+            logicStep = "1.数据可访问权限处理方式，该方法不需要权限控制" +
+                    "2.根据不同的类型获取代码项的说明信息" +
+                    "3.返回代码项说明信息")
+    @Param(name = "type", desc = "代码项类型", range = "无限制")
+    @Return(desc = "返回代码项说明信息", range = "无限制")
+    private String getCodeValueByColumn(String type) {
+        // 1.数据可访问权限处理方式，该方法不需要权限控制
+        StringBuilder sb = new StringBuilder();
+        // 2.根据不同的类型获取代码项的说明信息
+        sb = sb.append("详细信息：").append("\r\n");
+        switch (type.toLowerCase()) {
+            // 作业程序类型
+            case pro_type:
+                Pro_Type[] proTypes = Pro_Type.values();
+                for (Pro_Type proType : proTypes) {
+                    sb.append(proType.getCode()).append(" ：").append(proType.getValue());
+                }
+                break;
+            // 调度频率
+            case disp_freq:
+                Dispatch_Frequency[] dispatchFrequencies = Dispatch_Frequency.values();
+                for (Dispatch_Frequency frequency : dispatchFrequencies) {
+                    sb.append(frequency.getCode()).append(" ：").append(frequency.getValue());
+                }
+                break;
+            // 触发方式
+            case disp_type:
+                Dispatch_Type[] dispatchTypes = Dispatch_Type.values();
+                for (Dispatch_Type dispatchType : dispatchTypes) {
+                    sb.append(dispatchType.getCode()).append(" ：").append(dispatchType.getValue());
+                }
+                break;
+            // 作业有效标志
+            case job_eff_flag:
+                Job_Effective_Flag[] effectiveFlags = Job_Effective_Flag.values();
+                for (Job_Effective_Flag effectiveFlag : effectiveFlags) {
+                    sb.append(effectiveFlag.getCode()).append(" ：").append(effectiveFlag.getValue());
+                }
+                break;
+            // 作业调度状态
+            case job_disp_status:
+                Job_Status[] jobStatuses = Job_Status.values();
+                for (Job_Status jobStatus : jobStatuses) {
+                    sb.append(jobStatus.getCode()).append(" ：").append(jobStatus.getValue());
+                }
+                break;
+            // 当天是否调度
+            case today_disp:
+                Today_Dispatch_Flag[] todayDispatchFlags = Today_Dispatch_Flag.values();
+                for (Today_Dispatch_Flag todayDispatchFlag : todayDispatchFlags) {
+                    sb.append(todayDispatchFlag.getCode()).append(" ：").append(todayDispatchFlag.getValue());
+                }
+                break;
+            // 主服务器同步标志
+            case main_serv_sync:
+                Main_Server_Sync[] mainServerSyncs = Main_Server_Sync.values();
+                for (Main_Server_Sync mainServerSync : mainServerSyncs) {
+                    sb.append(mainServerSync.getCode()).append(" ：").append(mainServerSync.getValue());
+                }
+                break;
+            // 状态
+            case status:
+                Status[] statuses = Status.values();
+                for (Status status : statuses) {
+                    sb.append(status.getCode()).append(" ：").append(status.getValue());
+                }
+                break;
+            // 变量类型
+            case para_type:
+                ParamType[] paramTypes = ParamType.values();
+                for (ParamType paramType : paramTypes) {
+                    sb.append(paramType.getCode()).append(" ：").append(paramType.getValue());
+                }
+                break;
+        }
+        // 3.返回代码项说明信息
+        return sb.toString();
     }
 }
 

@@ -26,7 +26,9 @@ import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.key.PrimayKeyGener;
 
 import javax.servlet.http.HttpServletResponse;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.util.*;
@@ -451,11 +453,10 @@ public class DataSourceAction extends BaseAction {
 
     @Method(desc = "导入数据源，数据源下载文件提供的文件中涉及到的所有表的数据导入数据库中对应的表中",
             logicStep = "1.数据可访问权限处理方式，此方法不需要权限验证，不涉及用户权限" +
-                    "2.判断agent_ip是否是一个合法的ip" +
-                    "3.判断agent_port是否是一个有效的端口" +
-                    "4.通过文件名称获取文件" +
-                    "5.使用base64对数据进行解码" +
-                    "6.导入数据源数据，将涉及到的所有表的数据导入数据库中对应的表中")
+                    "2.验证agent_ip,agent_port是否有效" +
+                    "3.通过文件名称获取文件" +
+                    "4.使用base64对数据进行解码" +
+                    "5.导入数据源数据，将涉及到的所有表的数据导入数据库中对应的表中")
     @Param(name = "agent_ip", desc = "agent地址", range = "不能为空，服务器ip地址", example = "127.0.0.1")
     @Param(name = "agent_port", desc = "agent端口", range = "1024-65535")
     @Param(name = "user_id", desc = "数据采集用户ID，指定谁可以查看该用户对应表信息", range = "不能为空以及空格，页面传值")
@@ -463,61 +464,41 @@ public class DataSourceAction extends BaseAction {
     public void uploadFile(String agent_ip, String agent_port, Long user_id, String file) {
         try {
             // 1.数据可访问权限处理方式，此方法不需要权限验证，不涉及用户权限
-            // 2.判断agent_ip是否是一个合法的ip
-            String[] split = agent_ip.split("\\.");
-            for (String agentPort : split) {
-                if (Integer.parseInt(agentPort) < 0 || Integer.parseInt(agentPort) > 255) {
-                    throw new BusinessException("agent_ip不是一个为空或空格的ip地址," +
-                            "agent_ip=" + agent_ip);
-                }
-            }
-            // 3.判断agent_port是否是一个有效的端口
-            if (Integer.parseInt(agent_port) < 1024 || Integer.parseInt(agent_port) > 65535) {
-                throw new BusinessException("agent_port端口不是有效的端口，不在取值范围内，" +
-                        "agent_port=" + agent_port);
-            }
-            // 4.通过文件名称获取文件
+            // 2.验证agent_ip,agent_port是否有效
+            checkAgentField(agent_ip, agent_port);
+            // 3.通过文件名称获取文件
             File uploadedFile = FileUploadUtil.getUploadedFile(file);
-            // 5.使用base64解码
+            // 4.使用base64解码
             String strTemp = new String(Base64.getDecoder().decode(Files.readAllBytes(
                     uploadedFile.toPath())));
-            // 6.导入数据源数据，将涉及到的所有表的数据导入数据库中对应的表中
+            // 5.导入数据源数据，将涉及到的所有表的数据导入数据库中对应的表中
             importDataSource(strTemp, agent_ip, agent_port, user_id, getUserId());
         } catch (Exception e) {
             throw new AppSystemException(e);
         }
     }
 
-    /**
-     * 创建一个本地临时文件
-     *
-     * @param path : 文件储存的路径
-     */
-    private void saveStreamToFile(InputStream in, String path) {
-
-        FileOutputStream out = null;
-        try {
-            out = new FileOutputStream(path);
-            //创建一个缓冲区
-            byte buffer[] = new byte[1024 * 4];
-            //判断输入流中的数据是否已经读完的标识
-            int len = 0;
-            //循环将输入流读入到缓冲区当中，(len=in.read(buffer))>0就表示in里面还有数据
-            while ((len = in.read(buffer)) > 0) {
-                //使用FileOutputStream输出流将缓冲区的数据写入到指定的目录(savePath + "\\" + filename)当中
-                out.write(buffer, 0, len);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                //关闭输出流
-                out.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+    @Method(desc = "校验字段agent_ip,agent_port是否合法",
+            logicStep = "1.数据可访问权限处理方式，此方法不需要权限验证" +
+                    "2.判断agent_ip是否是一个合法的ip" +
+                    "3.判断agent_port是否是一个有效的端口")
+    @Param(name = "agent_ip", desc = "agent地址", range = "不能为空，服务器ip地址", example = "127.0.0.1")
+    @Param(name = "agent_port", desc = "agent端口", range = "1024-65535")
+    @Return(desc = "返回内容描述", range = "取值范围")
+    private void checkAgentField(String agent_ip, String agent_port) {
+        // 1.数据可访问权限处理方式，此方法不需要权限验证
+        // 2.判断agent_ip是否是一个合法的ip
+        Pattern pattern = Pattern.compile("^(\\d|[1-9]\\d|1\\d{2}|2[0-5][0-5])\\.(\\d|[1-9]\\d|1\\d{2}" +
+                "|2[0-5][0-5])\\.(\\d|[1-9]\\d|1\\d{2}|2[0-5][0-5])\\.(\\d|[1-9]\\d|1\\d{2}|2[0-5][0-5])$");
+        Matcher matcher = pattern.matcher(agent_ip);
+        if (!matcher.matches()) {
+            throw new BusinessException("agent_ip不是一个有效的ip地址,agent_ip=" + agent_ip);
         }
-
+        // 3.判断agent_port是否是一个有效的端口
+        if (Integer.parseInt(agent_port) < 1024 || Integer.parseInt(agent_port) > 65535) {
+            throw new BusinessException("agent_port端口不是有效的端口，不在取值范围内，" +
+                    "agent_port=" + agent_port);
+        }
     }
 
     @Method(desc = "导入数据源数据，将涉及到的所有表的数据导入数据库中对应的表中",
