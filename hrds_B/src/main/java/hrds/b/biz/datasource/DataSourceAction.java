@@ -13,6 +13,7 @@ import fd.ng.db.jdbc.DefaultPageImpl;
 import fd.ng.db.jdbc.Page;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.db.resultset.Result;
+import fd.ng.web.annotation.UploadFile;
 import fd.ng.web.util.Dbo;
 import fd.ng.web.util.FileUploadUtil;
 import fd.ng.web.util.ResponseUtil;
@@ -461,6 +462,7 @@ public class DataSourceAction extends BaseAction {
     @Param(name = "agent_port", desc = "agent端口", range = "1024-65535")
     @Param(name = "user_id", desc = "数据采集用户ID，指定谁可以查看该用户对应表信息", range = "不能为空以及空格，页面传值")
     @Param(name = "file", desc = "上传文件名称（全路径），上传要导入的数据源", range = "不能为空以及空格")
+    @UploadFile(savedDir = "D:\\Develop\\githup\\hrsv5\\hrds_B\\src\\main\\java\\upload")
     public void uploadFile(String agent_ip, String agent_port, Long user_id, String file) {
         try {
             // 1.数据可访问权限处理方式，此方法不需要权限验证，不涉及用户权限
@@ -606,8 +608,7 @@ public class DataSourceAction extends BaseAction {
         for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
             // 2.判断map中的key值是否为table_storage_info对应表数据
             // map中key的值，也是下载数据源时对应表信息封装入map的key值
-            String tsi = "tableStorageInfo";
-            if (tsi.equals(entry.getKey())) {
+            if (Table_storage_info.TableName.equals(entry.getKey())) {
                 Type tsiType = new TypeReference<List<Table_storage_info>>() {
                 }.getType();
                 // 3.获取表存储信息table_storage_info信息
@@ -644,8 +645,7 @@ public class DataSourceAction extends BaseAction {
         for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
             // 2.判断map中的key值是否为column_merge对应表数据
             // map中key的值，也是下载数据源时对应表信息封装入map的key值
-            String cm = "columnMerge";
-            if (cm.equals(entry.getKey())) {
+            if (Column_merge.TableName.equals(entry.getKey())) {
                 Type cmType = new TypeReference<List<Column_merge>>() {
                 }.getType();
                 // 3.获取列合并信息column_merge信息
@@ -684,8 +684,7 @@ public class DataSourceAction extends BaseAction {
         for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
             // 2.判断map中的key值是否为column_split对应表数据
             // map中key的值，也是下载数据源时对应表信息封装入map的key值
-            String cs = "columnSplit";
-            if (cs.equals(entry.getKey())) {
+            if (Column_split.TableName.equals(entry.getKey())) {
                 Type csType = new TypeReference<List<Column_split>>() {
                 }.getType();
                 // 3.获取列拆分信息表column_split信息
@@ -730,8 +729,7 @@ public class DataSourceAction extends BaseAction {
         for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
             // 2.判断map中的key值是否为column_clean对应表数据
             // map中key的值，也是下载数据源时对应表信息封装入map的key值
-            String cc = "columnClean";
-            if (cc.equals(entry.getKey())) {
+            if (Column_clean.TableName.equals(entry.getKey())) {
                 Type ccType = new TypeReference<List<Column_clean>>() {
                 }.getType();
                 // 3.获取列清洗参数信息column_clean信息
@@ -777,8 +775,7 @@ public class DataSourceAction extends BaseAction {
         for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
             // 2.判断map中的key值是否为table_column对应表数据
             // map中key的值，也是下载数据源时对应表信息封装入map的key值
-            String tc = "tableColumn";
-            if (tc.equals(entry.getKey())) {
+            if (Table_column.TableName.equals(entry.getKey())) {
                 Type tcnType = new TypeReference<List<Table_column>>() {
                 }.getType();
                 // 3.获取表对应的字段table_column信息
@@ -820,8 +817,7 @@ public class DataSourceAction extends BaseAction {
         for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
             // 2.判断map中的key值是否为table_clean对应表数据
             // map中key的值，也是下载数据源时对应表信息封装入map的key值
-            String tc = "tableClean";
-            if (tc.equals(entry.getKey())) {
+            if (Table_clean.TableName.equals(entry.getKey())) {
                 Type tcType = new TypeReference<List<Table_clean>>() {
                 }.getType();
                 // 3.获取表清洗参数信息table_clean信息
@@ -861,8 +857,7 @@ public class DataSourceAction extends BaseAction {
         for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
             // 2.判断map中的key值是否为table_info对应表数据
             // map中key的值，也是下载数据源时对应表信息封装入map的key值
-            String ti = "tableInfo";
-            if (ti.equals(entry.getKey())) {
+            if (Table_info.TableName.equals(entry.getKey())) {
                 Type tiType = new TypeReference<List<Table_info>>() {
                 }.getType();
                 // 3.获取数据库对应的表table_info信息
@@ -904,8 +899,7 @@ public class DataSourceAction extends BaseAction {
         for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
             // 2.判断map中的key值是否为signal_file对应表数据
             // map中key的值，也是下载数据源时对应表信息封装入map的key值
-            String sf = "signalFile";
-            if (sf.equals(entry.getKey())) {
+            if (Signal_file.TableName.equals(entry.getKey())) {
                 Type sfType = new TypeReference<List<Signal_file>>() {
                 }.getType();
                 // 3.获取信号文件入库信息signal_file信息
@@ -944,8 +938,7 @@ public class DataSourceAction extends BaseAction {
         for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
             // 2.判断map中的key值是否为file_source对应表数据
             // map中key的值，也是下载数据源时对应表信息封装入map的key值
-            String fs = "fileSource";
-            if (fs.equals(entry.getKey())) {
+            if (File_source.TableName.equals(entry.getKey())) {
                 Type fsType = new TypeReference<List<File_source>>() {
                 }.getType();
                 // 3.获取文件源设置file_source信息
@@ -990,26 +983,25 @@ public class DataSourceAction extends BaseAction {
         for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
             // 2.判断map中的key值是否为file_collect_set对应表数据
             // map中key的值，也是下载数据源时对应表信息封装入map的key值
-            String fcs = "fileCollectSet";
-            if (fcs.equals(entry.getKey())) {
+            if (File_collect_set.TableName.equals(entry.getKey())) {
                 Type fcsType = new TypeReference<List<File_collect_set>>() {
                 }.getType();
                 // 3.获取文件系统设置file_collect_set信息
                 List<File_collect_set> fcsList = JsonUtil.toObject(entry.getValue().toString(), fcsType);
                 if (!fcsList.isEmpty()) {
                     // 4.遍历file_collect_set表数据
-                    for (File_collect_set fileCollectSet : fcsList) {
+                    for (File_collect_set file_collect_set : fcsList) {
                         for (Map.Entry<Long, String> agentIdEntry : agentIdMap.entrySet()) {
                             // 5.用新的agent ID替换旧的agent ID，保证关联关系不变
-                            if (agentIdEntry.getKey().longValue() == fileCollectSet.getAgent_id().longValue()) {
+                            if (agentIdEntry.getKey().longValue() == file_collect_set.getAgent_id().longValue()) {
                                 String fcs_id = PrimayKeyGener.getNextId();
                                 // 6.将新旧agent与文件采集系统ID（key为agent与文件采集系统旧ID，value为新ID）保存
-                                agentAndFcsIdMap.put(agentIdEntry.getKey() + "," + fileCollectSet.getFcs_id(),
+                                agentAndFcsIdMap.put(agentIdEntry.getKey() + "," + file_collect_set.getFcs_id(),
                                         agentIdEntry.getValue() + "," + fcs_id);
-                                fileCollectSet.setFcs_id(fcs_id);
-                                fileCollectSet.setAgent_id(agentIdEntry.getValue());
+                                file_collect_set.setFcs_id(fcs_id);
+                                file_collect_set.setAgent_id(agentIdEntry.getValue());
                                 // 7.循环保存文件系统设置表信息入数据库
-                                fileCollectSet.add(Dbo.db());
+                                file_collect_set.add(Dbo.db());
                             }
                         }
                     }
@@ -1041,30 +1033,29 @@ public class DataSourceAction extends BaseAction {
         for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
             // 2.判断map中的key值是否为database_set对应表数据
             // map中key的值，也是下载数据源时对应表信息封装入map的key值
-            String ds = "databaseSet";
-            if (ds.equals(entry.getKey())) {
+            if (Database_set.TableName.equals(entry.getKey())) {
                 Type dsType = new TypeReference<List<Database_set>>() {
                 }.getType();
                 // 3.获取数据库设置database_set信息
                 List<Database_set> databaseSetList = JsonUtil.toObject(entry.getValue().toString(), dsType);
                 if (!databaseSetList.isEmpty()) {
                     // 4.遍历database_set表数据
-                    for (Database_set databaseSet : databaseSetList) {
+                    for (Database_set database_set : databaseSetList) {
                         for (Map.Entry<String, String> idEntry : classifyAndAgentId.entrySet()) {
                             // 5.获取存放新旧agent与分类ID的数组，第一个值是agent与分类旧值，第二个值是agent与分类新值
                             String[] oldId = idEntry.getKey().split(",");
                             String[] newId = idEntry.getValue().split(",");
                             // 6.用新agent与分类ID替换旧agent与分类ID
-                            if (oldId[0].equals(String.valueOf(databaseSet.getAgent_id()))
-                                    && oldId[1].equals(String.valueOf(databaseSet.getClassify_id()))) {
-                                databaseSet.setAgent_id(newId[0]);
-                                databaseSet.setClassify_id(newId[1]);
+                            if (oldId[0].equals(String.valueOf(database_set.getAgent_id()))
+                                    && oldId[1].equals(String.valueOf(database_set.getClassify_id()))) {
+                                database_set.setAgent_id(newId[0]);
+                                database_set.setClassify_id(newId[1]);
                                 String database_id = PrimayKeyGener.getNextId();
                                 // 7.将新旧数据库设置ID（key为旧值，value为新值）保存
-                                databaseIdMap.put(databaseSet.getDatabase_id(), database_id);
-                                databaseSet.setDatabase_id(database_id);
+                                databaseIdMap.put(database_set.getDatabase_id(), database_id);
+                                database_set.setDatabase_id(database_id);
                                 // 8.循环保存数据库设置表信息
-                                databaseSet.add(Dbo.db());
+                                database_set.add(Dbo.db());
                             }
                         }
                     }
@@ -1089,22 +1080,21 @@ public class DataSourceAction extends BaseAction {
         for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
             // 2.判断map中的key值是否为object_collect_struct对应表数据
             // map中key的值，也是下载数据源时对应表信息封装入map的key值
-            String ocs = "objectCollectStruct";
-            if (ocs.equals(entry.getKey())) {
+            if (Object_collect_struct.TableName.equals(entry.getKey())) {
                 Type ocsType = new TypeReference<List<Object_collect_struct>>() {
                 }.getType();
                 // 3.获取对象采集结构信息object_collect_struct信息
                 List<Object_collect_struct> ocsList = JsonUtil.toObject(entry.getValue().toString(), ocsType);
                 if (!ocsList.isEmpty()) {
                     // 4.遍历object_collect_struct表数据
-                    for (Object_collect_struct objectCollectStruct : ocsList) {
+                    for (Object_collect_struct object_collect_struct : ocsList) {
                         for (Map.Entry<Long, String> ocsIdEntry : ocsIdMap.entrySet()) {
                             // 5.用新的对象采集任务编号替换新的对象采集任务编号,保证关联关系不变
-                            if (ocsIdEntry.getKey().longValue() == objectCollectStruct.getOcs_id().longValue()) {
-                                objectCollectStruct.setStruct_id(PrimayKeyGener.getNextId());
-                                objectCollectStruct.setOcs_id(ocsIdEntry.getValue());
+                            if (ocsIdEntry.getKey().longValue() == object_collect_struct.getOcs_id().longValue()) {
+                                object_collect_struct.setStruct_id(PrimayKeyGener.getNextId());
+                                object_collect_struct.setOcs_id(ocsIdEntry.getValue());
                                 // 6.将object_collect_struct表数据循环入数据库
-                                objectCollectStruct.add(Dbo.db());
+                                object_collect_struct.add(Dbo.db());
                             }
                         }
                     }
@@ -1127,22 +1117,21 @@ public class DataSourceAction extends BaseAction {
         for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
             // 2.判断map中的key值是否为object_storage对应表数据
             // map中key的值，也是下载数据源时对应表信息封装入map的key值
-            String os = "objectStorage";
-            if (os.equals(entry.getKey())) {
+            if (Object_storage.TableName.equals(entry.getKey())) {
                 Type osType = new TypeReference<List<Object_storage>>() {
                 }.getType();
                 // 3.获取对象采集存储设置object_storage信息
                 List<Object_storage> objStorageList = JsonUtil.toObject(entry.getValue().toString(), osType);
                 if (!objStorageList.isEmpty()) {
                     // 4.遍历object_storage表数据
-                    for (Object_storage objectStorage : objStorageList) {
+                    for (Object_storage object_storage : objStorageList) {
                         for (Map.Entry<Long, String> ocsIdEntry : ocsIdMap.entrySet()) {
                             // 5.用新的对象采集任务编号替换新的对象采集任务编号
-                            if (ocsIdEntry.getKey().longValue() == objectStorage.getOcs_id().longValue()) {
-                                objectStorage.setObj_stid(PrimayKeyGener.getNextId());
-                                objectStorage.setOcs_id(ocsIdEntry.getValue());
+                            if (ocsIdEntry.getKey().longValue() == object_storage.getOcs_id().longValue()) {
+                                object_storage.setObj_stid(PrimayKeyGener.getNextId());
+                                object_storage.setOcs_id(ocsIdEntry.getValue());
                                 // 6.将object_storage表数据循环入数据库
-                                objectStorage.add(Dbo.db());
+                                object_storage.add(Dbo.db());
                             }
                         }
                     }
@@ -1170,8 +1159,7 @@ public class DataSourceAction extends BaseAction {
         for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
             // 2.判断map中的key值是否为object_collect_task对应表数据
             // map中key的值，也是下载数据源时对应表信息封装入map的key值
-            String oct = "objectCollectTask";
-            if (oct.equals(entry.getKey())) {
+            if (Object_collect_task.TableName.equals(entry.getKey())) {
                 Type octType = new TypeReference<List<Object_collect_task>>() {
                 }.getType();
                 // 3.获取对象采集对应信息object_collect_task信息
@@ -1223,8 +1211,7 @@ public class DataSourceAction extends BaseAction {
         for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
             // 2.判断map中的key值是否为object_collect对应表数据
             // map中key的值，也是下载数据源时对应表信息封装入map的key值
-            String oc = "objectCollect";
-            if (oc.equals(entry.getKey())) {
+            if (Object_collect.TableName.equals(entry.getKey())) {
                 Type ocType = new TypeReference<List<Object_collect>>() {
                 }.getType();
                 // 3.获取对象采集设置object_collect信息
@@ -1268,22 +1255,21 @@ public class DataSourceAction extends BaseAction {
         for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
             // 2.判断map中的key值是否为ftp_folder对应表数据
             // map中key的值，也是下载数据源时对应表信息封装入map的key值
-            String ff = "ftpFolder";
-            if (ff.equals(entry.getKey())) {
+            if (Ftp_folder.TableName.equals(entry.getKey())) {
                 Type ffType = new TypeReference<List<Ftp_folder>>() {
                 }.getType();
                 // 3.获取ftp目录表ftp_folder信息
                 List<Ftp_folder> ftpFolderList = JsonUtil.toObject(entry.getValue().toString(), ffType);
                 if (!ftpFolderList.isEmpty()) {
                     // 4.遍历ftp_folder表数据集合
-                    for (Ftp_folder ftpFolder : ftpFolderList) {
+                    for (Ftp_folder ftp_folder : ftpFolderList) {
                         for (Map.Entry<Long, String> ftpIdEntry : ftpIdMap.entrySet()) {
                             // 5.用重新生成的ftp_id替换旧的ftp_id,保证关联关系不变
-                            if (ftpIdEntry.getKey().longValue() == ftpFolder.getFtp_id().longValue()) {
-                                ftpFolder.setFtp_folder_id(PrimayKeyGener.getNextId());
-                                ftpFolder.setFtp_id(ftpIdEntry.getValue());
+                            if (ftpIdEntry.getKey().longValue() == ftp_folder.getFtp_id().longValue()) {
+                                ftp_folder.setFtp_folder_id(PrimayKeyGener.getNextId());
+                                ftp_folder.setFtp_id(ftpIdEntry.getValue());
                                 // 6.将ftp_folder表数据循环入数据库
-                                ftpFolder.add(Dbo.db());
+                                ftp_folder.add(Dbo.db());
                             }
                         }
                     }
@@ -1307,22 +1293,21 @@ public class DataSourceAction extends BaseAction {
         for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
             // 2.判断map中的key值是否为ftp_transfered对应表数据
             // map中key的值，也是下载数据源时对应表信息封装入map的key值
-            String ft = "ftpTransfered";
-            if (ft.equals(entry.getKey())) {
+            if (Ftp_transfered.TableName.equals(entry.getKey())) {
                 Type ftType = new TypeReference<List<Ftp_transfered>>() {
                 }.getType();
                 // 3.获取ftp已传输表ftp_transfered信息
                 List<Ftp_transfered> transferList = JsonUtil.toObject(entry.getValue().toString(), ftType);
                 // 4.遍历ftp_transfered表数据
                 if (!transferList.isEmpty()) {
-                    for (Ftp_transfered ftpTransfered : transferList) {
+                    for (Ftp_transfered ftp_transfered : transferList) {
                         for (Map.Entry<Long, String> ftpIdEntry : ftpIdMap.entrySet()) {
                             // 5.用重新生成的ftp_id替换旧的ftp_id,保证关联关系不变
-                            if (ftpIdEntry.getKey().longValue() == ftpTransfered.getFtp_id().longValue()) {
-                                ftpTransfered.setFtp_transfered_id(PrimayKeyGener.getNextId());
-                                ftpTransfered.setFtp_id(ftpIdEntry.getValue());
+                            if (ftpIdEntry.getKey().longValue() == ftp_transfered.getFtp_id().longValue()) {
+                                ftp_transfered.setFtp_transfered_id(PrimayKeyGener.getNextId());
+                                ftp_transfered.setFtp_id(ftpIdEntry.getValue());
                                 // 6.将ftp_transfered表数据循环入数据库
-                                ftpTransfered.add(Dbo.db());
+                                ftp_transfered.add(Dbo.db());
                             }
                         }
                     }
@@ -1350,25 +1335,24 @@ public class DataSourceAction extends BaseAction {
         for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
             // 2.判断map中的key值是否为ftp_collect对应表数据
             // map中key的值，也是下载数据源时对应表信息封装入map的key值
-            String fc = "ftpCollect";
-            if (fc.equals(entry.getKey())) {
+            if (Ftp_collect.TableName.equals(entry.getKey())) {
                 Type fcType = new TypeReference<List<Ftp_collect>>() {
                 }.getType();
                 // 3.获取tp采集设置ftp_collect信息集合
                 List<Ftp_collect> ftpCollectList = JsonUtil.toObject(entry.getValue().toString(), fcType);
                 if (!ftpCollectList.isEmpty()) {
                     // 4.遍历ftp_collect表数据
-                    for (Ftp_collect ftpCollect : ftpCollectList) {
+                    for (Ftp_collect ftp_collect : ftpCollectList) {
                         // 5.用重新生成的agent ID替换旧的agent ID
                         for (Map.Entry<Long, String> agentIdEntry : agentIdMap.entrySet()) {
-                            if (agentIdEntry.getKey().longValue() == ftpCollect.getAgent_id().longValue()) {
+                            if (agentIdEntry.getKey().longValue() == ftp_collect.getAgent_id().longValue()) {
                                 String ftp_id = PrimayKeyGener.getNextId();
                                 // 6.将重新生成的ftp采集ID作为value,旧的ftp采集ID作为key保存
-                                ftpIdMap.put(ftpCollect.getFtp_id(), ftp_id);
-                                ftpCollect.setFtp_id(ftp_id);
-                                ftpCollect.setAgent_id(agentIdEntry.getValue());
+                                ftpIdMap.put(ftp_collect.getFtp_id(), ftp_id);
+                                ftp_collect.setFtp_id(ftp_id);
+                                ftp_collect.setAgent_id(agentIdEntry.getValue());
                                 // 7.ftp_collect表数据循环入数据库
-                                ftpCollect.add(Dbo.db());
+                                ftp_collect.add(Dbo.db());
                             }
                         }
                     }
@@ -1398,25 +1382,24 @@ public class DataSourceAction extends BaseAction {
         for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
             // 2.判断map中的key值是否为agent_down_info对应表数据
             // map中key的值，也是下载数据源时对应表信息封装入map的key值
-            String adi = "agentDownInfo";
-            if (adi.equals(entry.getKey())) {
+            if (Agent_down_info.TableName.equals(entry.getKey())) {
                 Type adiType = new TypeReference<List<Agent_down_info>>() {
                 }.getType();
                 // 3.获取agent_down_info表数据
                 List<Agent_down_info> adiList = JsonUtil.toObject(entry.getValue().toString(), adiType);
                 if (!adiList.isEmpty()) {
                     // 4.遍历agent_down_info表数据集合
-                    for (Agent_down_info agentDownInfo : adiList) {
+                    for (Agent_down_info agent_down_info : adiList) {
                         // 5.用重新生成的agent ID替换旧的agent ID
                         for (Map.Entry<Long, String> agentIdEntry : agentIdMap.entrySet()) {
-                            if (agentDownInfo.getAgent_id().longValue() == agentIdEntry.getKey().longValue()) {
-                                agentDownInfo.setDown_id(PrimayKeyGener.getNextId());
-                                agentDownInfo.setUser_id(userCollectId);
-                                agentDownInfo.setAgent_ip(agent_ip);
-                                agentDownInfo.setAgent_port(agent_port);
-                                agentDownInfo.setAgent_id(agentIdEntry.getValue());
+                            if (agent_down_info.getAgent_id().longValue() == agentIdEntry.getKey().longValue()) {
+                                agent_down_info.setDown_id(PrimayKeyGener.getNextId());
+                                agent_down_info.setUser_id(userCollectId);
+                                agent_down_info.setAgent_ip(agent_ip);
+                                agent_down_info.setAgent_port(agent_port);
+                                agent_down_info.setAgent_id(agentIdEntry.getValue());
                                 // 6.将agent_down_info表数据循环入数据库
-                                agentDownInfo.add(Dbo.db());
+                                agent_down_info.add(Dbo.db());
                             }
                         }
                     }
@@ -1444,8 +1427,7 @@ public class DataSourceAction extends BaseAction {
         for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
             // 2.判断map中的key值是否为collect_job_classify对应表数据
             // map中key的值，也是下载数据源时对应表信息封装入map的key值
-            String cjc = "collectJobClassify";
-            if (cjc.equals(entry.getKey())) {
+            if (Collect_job_classify.TableName.equals(entry.getKey())) {
                 Type cjcType = new TypeReference<List<Collect_job_classify>>() {
                 }.getType();
                 // 3.获取采集任务分类表collect_job_classify信息
@@ -1493,20 +1475,19 @@ public class DataSourceAction extends BaseAction {
         for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
             // 3.判断map中的key值是否为对应department_info表数据
             // map中key的值，也是下载数据源时对应表信息封装入map的key值
-            String di = "departmentInfo";
-            if (di.equals(entry.getKey())) {
+            if (Department_info.TableName.equals(entry.getKey())) {
                 Type srdType = new TypeReference<List<Department_info>>() {
                 }.getType();
                 // 4.获取部门表department_info表数据
                 List<Department_info> depInfoList = JsonUtil.toObject(entry.getValue().toString(), srdType);
                 if (!depInfoList.isEmpty()) {
-                    for (Department_info departmentInfo : depInfoList) {
+                    for (Department_info department_info : depInfoList) {
                         String dep_id = PrimayKeyGener.getNextId();
                         // 5.将新旧主键ID保存
-                        depMap.put(departmentInfo.getDep_id(), dep_id);
-                        departmentInfo.setDep_id(dep_id);
+                        depMap.put(department_info.getDep_id(), dep_id);
+                        department_info.setDep_id(dep_id);
                         // 6.将department_info表数据循环插入数据库
-                        departmentInfo.add(Dbo.db());
+                        department_info.add(Dbo.db());
                     }
                 }
             }
@@ -1530,21 +1511,20 @@ public class DataSourceAction extends BaseAction {
         for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
             // 2.判断map中的key值是否为对应source_relation_dep表数据
             // map中key的值，也是下载数据源时对应表信息封装入map的key值
-            String srd = "sourceRelationDep";
-            if (srd.equals(entry.getKey())) {
+            if (Source_relation_dep.TableName.equals(entry.getKey())) {
                 Type srdType = new TypeReference<List<Source_relation_dep>>() {
                 }.getType();
                 // 3.获取数据源和部门关系表source_relation_dep表数据
                 List<Source_relation_dep> srdList = JsonUtil.toObject(entry.getValue().toString(), srdType);
                 if (!srdList.isEmpty()) {
-                    for (Source_relation_dep sourceRelationDep : srdList) {
-                        sourceRelationDep.setSource_id(source_id);
+                    for (Source_relation_dep source_relation_dep : srdList) {
+                        source_relation_dep.setSource_id(source_id);
                         // 4.遍历department_info表新旧ID，用重新生成的部门ID替换旧的部门ID
                         for (Map.Entry<Long, String> depIdEntry : departmentInfo.entrySet()) {
-                            if (depIdEntry.getKey().longValue() == sourceRelationDep.getDep_id().longValue()) {
-                                sourceRelationDep.setDep_id(depIdEntry.getValue());
+                            if (depIdEntry.getKey().longValue() == source_relation_dep.getDep_id().longValue()) {
+                                source_relation_dep.setDep_id(depIdEntry.getValue());
                                 // 5.保存source_relation_dep表数据
-                                sourceRelationDep.add(Dbo.db());
+                                source_relation_dep.add(Dbo.db());
                             }
                         }
                     }
@@ -1570,15 +1550,14 @@ public class DataSourceAction extends BaseAction {
         for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
             // 3.判断map中的key值是否为对应data_source表数据
             // map中key的值，也是下载数据源时对应表信息封装入map的key值
-            String ds = "dataSource";
-            if (ds.equals(entry.getKey())) {
+            if (Data_source.TableName.equals(entry.getKey())) {
                 // 4.获取数据源data_source表信息
-                Data_source dataSource = JsonUtil.toObjectSafety(entry.getValue().toString(),
+                Data_source data_source = JsonUtil.toObjectSafety(entry.getValue().toString(),
                         Data_source.class).orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
                 // 5.将data_source表数据插入数据库
-                dataSource.setSource_id(source_id);
-                dataSource.setCreate_user_id(userId);
-                dataSource.add(Dbo.db());
+                data_source.setSource_id(source_id);
+                data_source.setCreate_user_id(userId);
+                data_source.add(Dbo.db());
             }
         }
         // 6.返回存放新旧数据源ID的集合
@@ -1605,8 +1584,7 @@ public class DataSourceAction extends BaseAction {
         for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
             // 2.判断map中的key值是否为对应agent_info表数据
             // map中key的值，也是下载数据源时对应表信息封装入map的key值
-            String ai = "agentInfo";
-            if (ai.equals(entry.getKey())) {
+            if (Agent_info.TableName.equals(entry.getKey())) {
                 // 获取agent信息表信息
                 Type aiType = new TypeReference<List<Agent_info>>() {
                 }.getType();
@@ -1614,17 +1592,17 @@ public class DataSourceAction extends BaseAction {
                 List<Agent_info> agentInfoList = JsonUtil.toObject(entry.getValue().toString(), aiType);
                 // 4.判断结果集是否为空，不为空循环入库agent_info
                 if (!agentInfoList.isEmpty()) {
-                    for (Agent_info agentInfo : agentInfoList) {
+                    for (Agent_info agent_info : agentInfoList) {
                         String agent_id = PrimayKeyGener.getNextId();
                         // 5.保存新旧agent ID（key为旧的agent ID，value为新值）
-                        agentIdMap.put(agentInfo.getAgent_id(), agent_id);
-                        agentInfo.setAgent_id(agent_id);
-                        agentInfo.setSource_id(source_id);
-                        agentInfo.setUser_id(userCollectId);
-                        agentInfo.setAgent_ip(agent_ip);
-                        agentInfo.setAgent_port(agent_port);
+                        agentIdMap.put(agent_info.getAgent_id(), agent_id);
+                        agent_info.setAgent_id(agent_id);
+                        agent_info.setSource_id(source_id);
+                        agent_info.setUser_id(userCollectId);
+                        agent_info.setAgent_ip(agent_ip);
+                        agent_info.setAgent_port(agent_port);
                         // 6.循环入库agent信息
-                        agentInfo.add(Dbo.db());
+                        agent_info.add(Dbo.db());
                     }
                 }
             }
@@ -1755,7 +1733,7 @@ public class DataSourceAction extends BaseAction {
         List<Agent_info> agentInfoList = Dbo.queryList(Agent_info.class, "select * from "
                 + Agent_info.TableName + " where  source_id = ?", source_id);
         // 2.将agent_info表数据集合存入map
-        collectionMap.put("agentInfo", agentInfoList);
+        collectionMap.put(Agent_info.TableName, agentInfoList);
         // 3.将agent_info表数据集合返回
         return agentInfoList;
     }
@@ -1782,7 +1760,7 @@ public class DataSourceAction extends BaseAction {
             departmentInfoList.add(departmentInfo);
         }
         // 5.将department_info表数据集合入map
-        collectionMap.put("departmentInfo", departmentInfoList);
+        collectionMap.put(Department_info.TableName, departmentInfoList);
     }
 
     @Method(desc = "将source_relation_dep表数据入map",
@@ -1802,7 +1780,7 @@ public class DataSourceAction extends BaseAction {
         List<Source_relation_dep> sourceRelationDepList = Dbo.queryList(Source_relation_dep.class,
                 "select * from " + Source_relation_dep.TableName + " where source_id=?", source_id);
         // 3.将source_relation_dep表数据入map
-        collectionMap.put("sourceRelationDep", sourceRelationDepList);
+        collectionMap.put(Source_relation_dep.TableName, sourceRelationDepList);
         // 4.返回source_relation_dep表数据集合
         return sourceRelationDepList;
     }
@@ -1828,7 +1806,7 @@ public class DataSourceAction extends BaseAction {
             columnSplitResult.add(result);
         }
         // 5.将column_split表集合信息存入map
-        collectionMap.put("columnSplit", columnSplitResult.toList());
+        collectionMap.put(Column_split.TableName, columnSplitResult.toList());
     }
 
     @Method(desc = "将column_clean表数据集合存入map",
@@ -1852,7 +1830,7 @@ public class DataSourceAction extends BaseAction {
             columnCleanResult.add(result);
         }
         // 5.将column_clean表集合信息存入map
-        collectionMap.put("columnClean", columnCleanResult.toList());
+        collectionMap.put(Column_clean.TableName, columnCleanResult.toList());
     }
 
     @Method(desc = "将table_column表数据集合存入map",
@@ -1878,7 +1856,7 @@ public class DataSourceAction extends BaseAction {
             tableColumnResult.add(result);
         }
         // 5.将table_column表集合信息存入map
-        collectionMap.put("tableColumn", tableColumnResult.toList());
+        collectionMap.put(Table_column.TableName, tableColumnResult.toList());
         // 6.将table_column表结果集返回
         return tableColumnResult;
     }
@@ -1904,7 +1882,7 @@ public class DataSourceAction extends BaseAction {
             tableCleanResult.add(result);
         }
         // 5.将table_clean表集合信息存入map
-        collectionMap.put("tableClean", tableCleanResult.toList());
+        collectionMap.put(Table_clean.TableName, tableCleanResult.toList());
     }
 
     @Method(desc = "将object_collect_struct表数据集合存入map",
@@ -1923,7 +1901,7 @@ public class DataSourceAction extends BaseAction {
                     " where table_id = ?", tableInfoResult.getLong(i, "table_id"));
             tableStorageInfoResult.add(result);
         }
-        collectionMap.put("tableStorageInfo", tableStorageInfoResult.toList());
+        collectionMap.put(Table_storage_info.TableName, tableStorageInfoResult.toList());
     }
 
     @Method(desc = "将column_merge表数据集合存入map",
@@ -1942,7 +1920,7 @@ public class DataSourceAction extends BaseAction {
                     " where table_id = ?", tableInfoResult.getLong(i, "table_id"));
             columnMergeResult.add(result);
         }
-        collectionMap.put("columnMerge", columnMergeResult.toList());
+        collectionMap.put(Column_merge.TableName, columnMergeResult.toList());
     }
 
     @Method(desc = "将table_info表数据集合存入map",
@@ -1965,7 +1943,7 @@ public class DataSourceAction extends BaseAction {
             tableInfoResult.add(result);
         }
         // 4.将查询到的信息封装入集合
-        collectionMap.put("tableInfo", tableInfoResult.toList());
+        collectionMap.put(Table_info.TableName, tableInfoResult.toList());
         // 5.将table_info表集合信息存入map
         return tableInfoResult;
     }
@@ -1991,7 +1969,7 @@ public class DataSourceAction extends BaseAction {
             signalFileResult.add(result);
         }
         // 5.将signal_file表集合信息存入map
-        collectionMap.put("signalFile", signalFileResult.toList());
+        collectionMap.put(Signal_file.TableName, signalFileResult.toList());
     }
 
     @Method(desc = "将file_source表数据集合存入map",
@@ -2015,7 +1993,7 @@ public class DataSourceAction extends BaseAction {
             fileSourceResult.add(result);
         }
         // 5.将file_source表集合信息存入map
-        collectionMap.put("fileSource", fileSourceResult.toList());
+        collectionMap.put(File_source.TableName, fileSourceResult.toList());
     }
 
     @Method(desc = "将file_collect_set表数据集合存入map",
@@ -2041,7 +2019,7 @@ public class DataSourceAction extends BaseAction {
             fileCollectSetResult.add(result);
         }
         // 5.将file_collect_set表集合信息存入map
-        collectionMap.put("fileCollectSet", fileCollectSetResult.toList());
+        collectionMap.put(File_collect_set.TableName, fileCollectSetResult.toList());
         // 6.返回file_collect_set数据结果集
         return fileCollectSetResult;
     }
@@ -2069,7 +2047,7 @@ public class DataSourceAction extends BaseAction {
             databaseSetResult.add(result);
         }
         //5.将database_set表集合信息存入map
-        collectionMap.put("databaseSet", databaseSetResult.toList());
+        collectionMap.put(Database_set.TableName, databaseSetResult.toList());
         // 6.返回database_result表数据结果集
         return databaseSetResult;
     }
@@ -2095,7 +2073,7 @@ public class DataSourceAction extends BaseAction {
             ftpFolderResult.add(result);
         }
         // 5.将ftp_folder表集合信息存入map
-        collectionMap.put("ftpFolder", ftpFolderResult.toList());
+        collectionMap.put(Ftp_folder.TableName, ftpFolderResult.toList());
     }
 
     @Method(desc = "将object_collect_struct表数据集合存入map",
@@ -2121,7 +2099,7 @@ public class DataSourceAction extends BaseAction {
             objectCollectStructResult.add(result);
         }
         // 5.将object_collect_struct表集合信息存入map
-        collectionMap.put("objectCollectStruct", objectCollectStructResult.toList());
+        collectionMap.put(Object_collect_struct.TableName, objectCollectStructResult.toList());
     }
 
     @Method(desc = "将object_storage表数据集合存入map",
@@ -2146,7 +2124,7 @@ public class DataSourceAction extends BaseAction {
             objectStorageResult.add(result);
         }
         // 5.将object_storage集合信息存入map
-        collectionMap.put("objectStorage", objectStorageResult.toList());
+        collectionMap.put(Object_storage.TableName, objectStorageResult.toList());
     }
 
     @Method(desc = "封装object_collect_task表信息入map并返回object_collect_task表信息",
@@ -2171,7 +2149,7 @@ public class DataSourceAction extends BaseAction {
             objectCollectTaskResult.add(result);
         }
         // 4.将object_collect_task表结果集封装入map
-        collectionMap.put("objectCollectTask", objectCollectTaskResult.toList());
+        collectionMap.put(Object_collect_task.TableName, objectCollectTaskResult.toList());
         // 5.返回object_collect_task表结果集
         return objectCollectTaskResult;
     }
@@ -2199,7 +2177,7 @@ public class DataSourceAction extends BaseAction {
             objectCollectResult.add(object_collect);
         }
         // 5.将object_collect结果集封装入map
-        collectionMap.put("objectCollect", objectCollectResult.toList());
+        collectionMap.put(Object_collect.TableName, objectCollectResult.toList());
         // 6.返回object_collect结果集
         return objectCollectResult;
     }
@@ -2232,7 +2210,7 @@ public class DataSourceAction extends BaseAction {
             }
         }
         // 6.将agent_down_info表信息入map
-        collectionMap.put("agentDownInfo", agentDownInfoList);
+        collectionMap.put(Agent_down_info.TableName, agentDownInfoList);
     }
 
     @Method(desc = "封装data_source表数据集合到map",
@@ -2253,7 +2231,7 @@ public class DataSourceAction extends BaseAction {
             throw new BusinessException("此数据源下没有数据，sourceId = ?" + source_id);
         }
         // 4.将data_source数据入map
-        collectionMap.put("dataSource", dataSource);
+        collectionMap.put(Data_source.TableName, dataSource);
     }
 
     @Method(desc = "封装ftp_transfered表数据集合到map",
@@ -2277,7 +2255,7 @@ public class DataSourceAction extends BaseAction {
             ftpTransferedResult.add(result);
         }
         // 5.将ftp_transfered表数据结果集信息入map
-        collectionMap.put("ftpTransfered", ftpTransferedResult.toList());
+        collectionMap.put(Ftp_transfered.TableName, ftpTransferedResult.toList());
     }
 
     @Method(desc = "将ftp_collect表信息封装入map",
@@ -2304,7 +2282,7 @@ public class DataSourceAction extends BaseAction {
             ftpCollectResult.add(result);
         }
         // 5.将ftp_collect表信息入map
-        collectionMap.put("ftpCollect", ftpCollectResult.toList());
+        collectionMap.put(Ftp_collect.TableName, ftpCollectResult.toList());
         // 6.返回ftp_collect表结果集信息
         return ftpCollectResult;
     }
@@ -2331,7 +2309,7 @@ public class DataSourceAction extends BaseAction {
             collectJobClassifyResult.add(result);
         }
         // 5.将collect_job_classify表数据结果集入map
-        collectionMap.put("collectJobClassify", collectJobClassifyResult.toList());
+        collectionMap.put(Collect_job_classify.TableName, collectJobClassifyResult.toList());
     }
 
 }
