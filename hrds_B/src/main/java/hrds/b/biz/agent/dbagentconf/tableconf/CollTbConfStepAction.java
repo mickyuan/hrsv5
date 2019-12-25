@@ -340,7 +340,8 @@ public class CollTbConfStepAction extends BaseAction {
 			"      2-2、和Agent交互，获取表中的列信息" +
 			"3、若tableId不为999999，表示要获取当前采集任务中存在的表的所有列，直接在table_column表中查询即可" +
 			"      3-1、根据tableId在table_column表中获取列信息" +
-			"4、返回")
+			"4、根据数据库设置ID，查询当前数据库采集任务是否被agent执行完了，如果执行完成了，则前端只允许修改列中文名" +
+			"5、返回")
 	@Param(name = "tableName", desc = "表名", range = "不为空")
 	@Param(name = "colSetId", desc = "数据库设置ID，源系统数据库设置表主键，数据库对应表外键", range = "不为空")
 	@Param(name = "tableId", desc = "数据库对应表主键,表对应的字段表外键",
@@ -369,7 +370,14 @@ public class CollTbConfStepAction extends BaseAction {
 					Table_column.TableName + " WHERE table_id = ? order by cast(tc_remark as integer)", tableId);
 			returnMap.put("columnInfo", tableColumns);
 		}
-		//4、返回
+		//4、根据数据库设置ID，查询当前数据库采集任务是否被agent执行完了，如果执行完成了，则前端只允许修改列中文名
+		long editCount = Dbo.queryNumber("select count(1) from " + Source_file_attribute.TableName + " where collect_set_id = ?", colSetId).orElseThrow(() -> new BusinessException("SQL查询错误"));
+		if(editCount > 0){
+			returnMap.put("editFlag", IsFlag.Fou.getCode());
+		}else{
+			returnMap.put("editFlag", IsFlag.Shi.getCode());
+		}
+		//5、返回
 		return returnMap;
 	}
 

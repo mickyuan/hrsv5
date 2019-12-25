@@ -1135,6 +1135,9 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 				assertThat("返回的结果中，有一对Entry的key为columnInfo", key, is("columnInfo"));
 				List<Table_column> tableColumns = (List<Table_column>) entry.getValue();
 				assertThat("返回的结果中，key为columnInfo的Entry，value为List<Table_column>,code_info表中有5列", tableColumns.size(), is(5));
+			}else if(key.equalsIgnoreCase("editFlag")){
+				assertThat("返回的结果中，有一对Entry的key为editFlag", key, is("editFlag"));
+				assertThat("返回的结果中，key为editFlag的Entry，value为1", entry.getValue(), is(IsFlag.Shi.getCode()));
 			}else{
 				assertThat("返回的结果中，出现了不期望出现的内容", true, is(false));
 			}
@@ -1159,6 +1162,9 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 				assertThat("返回的结果中，有一对Entry的key为columnInfo", key, is("columnInfo"));
 				List<Table_column> tableColumns = (List<Table_column>) entry.getValue();
 				assertThat("返回的结果中，key为columnInfo的Entry，value为List<Table_column>,ftp_collect表中有24列", tableColumns.size(), is(24));
+			}else if(key.equalsIgnoreCase("editFlag")){
+				assertThat("返回的结果中，有一对Entry的key为editFlag", key, is("editFlag"));
+				assertThat("返回的结果中，key为editFlag的Entry，value为1", entry.getValue(), is(IsFlag.Shi.getCode()));
 			}else{
 				assertThat("返回的结果中，出现了不期望出现的内容", true, is(false));
 			}
@@ -1195,6 +1201,9 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 				assertThat("返回的结果中，有一对Entry的key为columnInfo", key, is("columnInfo"));
 				List<Table_column> tableColumns = (List<Table_column>) entry.getValue();
 				assertThat("返回的结果中，key为columnInfo的Entry，value为List<Table_column>,没有wzc_collect这张表", tableColumns.isEmpty(), is(true));
+			}else if(key.equalsIgnoreCase("editFlag")){
+				assertThat("返回的结果中，有一对Entry的key为editFlag", key, is("editFlag"));
+				assertThat("返回的结果中，key为editFlag的Entry，value为1", entry.getValue(), is(IsFlag.Shi.getCode()));
 			}else{
 				assertThat("返回的结果中，出现了不期望出现的内容", true, is(false));
 			}
