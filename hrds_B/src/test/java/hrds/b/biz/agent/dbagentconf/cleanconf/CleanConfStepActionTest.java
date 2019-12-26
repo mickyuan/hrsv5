@@ -21,6 +21,7 @@ import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.Constant;
+import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.testbase.WebBaseTestCase;
 import org.junit.After;
 import org.junit.Before;
@@ -180,8 +181,33 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 			assertThat("新增成功，构造的整表字符补齐测试数据被成功保存", count == 1L, is(true));
 			long oldCount = SqlOperator.queryNumber(db, "select count(1) from "+ Table_clean.TableName +" where table_id = ? and clean_type = ? and character_filling = ?", SYS_USER_TABLE_ID, CleanType.ZiFuBuQi.getCode(), "wzc").orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("新增成功，之前为sys_user表构造的字符补齐测试数据已经被删除了", oldCount == 0, is(true));
+
+			//断言该表下所有的字段全部设置了字符补齐
+			Result colCompResult = SqlOperator.queryResult(db, "select cc.filling_type, cc.character_filling, cc.filling_length from " +
+					Column_clean.TableName + " cc join " + Table_column.TableName + " tc on cc.column_id = tc.column_id " +
+					" where tc.table_id = ? and cc.filling_length = ? and cc.clean_type = ?", SYS_USER_TABLE_ID, 6, CleanType.ZiFuBuQi.getCode());
+
+			List<Object> columnIds = SqlOperator.queryOneColumnList(db, "select column_id from " + Table_column.TableName + " tc" +
+					" where tc.table_id = ?", SYS_USER_TABLE_ID);
+
+			assertThat("sys_user表下的字段共有" + columnIds.size() + "条", colCompResult.getRowCount() == columnIds.size(), is(true));
+			for(int i = 0; i < colCompResult.getRowCount(); i++){
+				assertThat("新增单表字符补齐成功后，sys_user表下所有的字段补齐方式为后补齐", colCompResult.getString(i, "filling_type"), is(FillingType.HouBuQi.getCode()));
+				assertThat("新增单表字符补齐成功后，sys_user表下所有的字段补齐字符为beyond", colCompResult.getString(i, "character_filling"), is(StringUtil.string2Unicode("beyond")));
+			}
+
 			int deleteCount = SqlOperator.execute(db, "delete from " + Table_clean.TableName + " where table_id = ? and clean_type = ? and character_filling = ?", SYS_USER_TABLE_ID, CleanType.ZiFuBuQi.getCode(), StringUtil.string2Unicode("beyond"));
 			assertThat("测试完成后，删除新增成功的整表字符补齐测试数据", deleteCount == 1, is(true));
+
+			StringBuilder strSB = new StringBuilder("delete from " + Column_clean.TableName + " where column_id in ( ");
+			for(int j = 0; j < columnIds.size(); j++){
+				strSB.append((long)columnIds.get(j));
+				if (j != columnIds.size() - 1)
+					strSB.append(",");
+			}
+			strSB.append(" ) and clean_type = ?");
+
+			SqlOperator.execute(db, strSB.toString(), CleanType.ZiFuBuQi.getCode());
 
 			SqlOperator.commitTransaction(db);
 		}
@@ -470,6 +496,36 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 			assertThat("新增整表字符替换成功，构造的测试数据被成功保存", count == 2, is(true));
 			long oldCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_clean.TableName + " where table_id = ? and field = ? and replace_feild = ?", SYS_USER_TABLE_ID, StringUtil.string2Unicode("wzc"), StringUtil.string2Unicode("wqp")).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("新增整表字符替换成功，之前为sys_user表构造的字符替换测试数据已经被删除了", oldCount == 0, is(true));
+
+			//断言该表下所有的字段全部设置了字符替换
+			Result colReplaResultOne = SqlOperator.queryResult(db, "select cc.field, cc.replace_feild from " + Column_clean.TableName + " cc join " + Table_column.TableName
+					+ " tc on cc.column_id = tc.column_id where tc.table_id = ? and clean_type = ? and cc.field = ?", SYS_USER_TABLE_ID, CleanType.ZiFuTiHuan.getCode(), StringUtil.string2Unicode("beyond"));
+
+			Result colReplaResultTwo = SqlOperator.queryResult(db, "select cc.field, cc.replace_feild from " + Column_clean.TableName + " cc join " + Table_column.TableName
+					+ " tc on cc.column_id = tc.column_id where tc.table_id = ? and clean_type = ? and cc.field = ?", SYS_USER_TABLE_ID, CleanType.ZiFuTiHuan.getCode(), StringUtil.string2Unicode("alibaba"));
+
+			List<Object> columnIds = SqlOperator.queryOneColumnList(db, "select column_id from " + Table_column.TableName + " where table_id = ?", SYS_USER_TABLE_ID);
+			assertThat("该表下所有的字段全部设置了字符替换", colReplaResultOne.getRowCount() == columnIds.size(), is(true));
+			assertThat("该表下所有的字段全部设置了字符替换", colReplaResultTwo.getRowCount() == columnIds.size(), is(true));
+
+			for(int i = 0; i < colReplaResultOne.getRowCount(); i++){
+				assertThat("该表下所有的字段全部设置了字符替换", colReplaResultOne.getString(i, "replace_feild"), is(StringUtil.string2Unicode("hongzhi")));
+			}
+
+			for(int i = 0; i < colReplaResultTwo.getRowCount(); i++){
+				assertThat("该表下所有的字段全部设置了字符替换", colReplaResultTwo.getString(i, "replace_feild"), is(StringUtil.string2Unicode("tencent")));
+			}
+
+			StringBuilder strSBCol = new StringBuilder("delete from " + Column_clean.TableName + " where column_id in ( ");
+			for(int j = 0; j < columnIds.size(); j++){
+				strSBCol.append((long)columnIds.get(j));
+				if (j != columnIds.size() - 1)
+					strSBCol.append(",");
+			}
+			strSBCol.append(" ) and clean_type = ?");
+
+			SqlOperator.execute(db, strSBCol.toString(), CleanType.ZiFuTiHuan.getCode());
+
 			int deleteCount = SqlOperator.execute(db, "delete from " + Table_clean.TableName + " where table_id = ? and clean_type = ?", SYS_USER_TABLE_ID, CleanType.ZiFuTiHuan.getCode());
 			assertThat("测试完成后，删除新增成功的整表字符替换测试数据", deleteCount == 2, is(true));
 
@@ -501,6 +557,28 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 			assertThat(CleanType.ofEnumByCode(result.getString(0, "clean_type")) == CleanType.ZiFuTiHuan, is(true));
 			assertThat(result.getString(0, "field").equals(StringUtil.string2Unicode("\n")), is(true));
 			assertThat(result.getString(0, "replace_feild").equals(StringUtil.string2Unicode("|")), is(true));
+
+			//断言该表下所有的字段全部设置了字符替换
+			Result colReplaResult = SqlOperator.queryResult(db, "select cc.field, cc.replace_feild from " + Column_clean.TableName + " cc join " + Table_column.TableName
+					+ " tc on cc.column_id = tc.column_id where tc.table_id = ? and clean_type = ? and cc.replace_feild = ?", SYS_USER_TABLE_ID, CleanType.ZiFuTiHuan.getCode(), StringUtil.string2Unicode("|"));
+
+			List<Object> columnIds = SqlOperator.queryOneColumnList(db, "select column_id from " + Table_column.TableName + " where table_id = ?", SYS_USER_TABLE_ID);
+			assertThat("该表下所有的字段全部设置了字符替换", colReplaResult.getRowCount() == columnIds.size(), is(true));
+
+			for(int i = 0; i < colReplaResult.getRowCount(); i++){
+				assertThat("该表下所有的字段全部设置了字符替换", colReplaResult.getString(i, "field"), is(StringUtil.string2Unicode("\n")));
+			}
+
+			StringBuilder strSBCol = new StringBuilder("delete from " + Column_clean.TableName + " where column_id in ( ");
+			for(int j = 0; j < columnIds.size(); j++){
+				strSBCol.append((long)columnIds.get(j));
+				if (j != columnIds.size() - 1)
+					strSBCol.append(",");
+			}
+			strSBCol.append(" ) and clean_type = ?");
+
+			SqlOperator.execute(db, strSBCol.toString(), CleanType.ZiFuTiHuan.getCode());
+
 			int deleteCount = SqlOperator.execute(db, "delete from " + Table_clean.TableName + " where table_id = ? and clean_type = ?", SYS_USER_TABLE_ID, CleanType.ZiFuTiHuan.getCode());
 			assertThat("测试完成后，删除新增成功的整表字符替换测试数据", deleteCount == 1, is(true));
 
@@ -820,7 +898,56 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 			assertThat("新增全表字符补齐成功后，database_id为" + FIRST_DATABASESET_ID + "数据库直连采集作业设置的补齐字符为test_saveAllTbCleanConfigInfo", compResult.getString(0, "character_filling"), is(StringUtil.string2Unicode("test_saveAllTbCleanConfigInfo")));
 			assertThat("新增全表字符补齐成功后，database_id为" + FIRST_DATABASESET_ID + "数据库直连采集作业设置的补齐长度为29", compResult.getLong(0, "filling_length"), is(29L));
 
+			//断言该数据库采集任务下所有的表全部设置了字符补齐
+			Result tbCompResult = SqlOperator.queryResult(db, "select tc.filling_type, tc.character_filling, tc.filling_length from "
+							+ Table_clean.TableName + " tc join " + Table_info.TableName + " ti on ti.table_id = tc.table_id where ti.database_id = ? and tc.character_filling = ? and clean_type = ?"
+					, FIRST_DATABASESET_ID, StringUtil.string2Unicode("test_saveAllTbCleanConfigInfo"), CleanType.ZiFuBuQi.getCode());
+
+			List<Object> tableIds = SqlOperator.queryOneColumnList(db, "select table_id from " + Table_info.TableName + " where database_id = ?", FIRST_DATABASESET_ID);
+			assertThat("该数据库采集任务下的表共有" + tableIds.size() + "张", tbCompResult.getRowCount() == tableIds.size(), is(true));
+			for(int i = 0; i < tbCompResult.getRowCount(); i++){
+				assertThat("新增全表字符补齐成功后，database_id为" + FIRST_DATABASESET_ID + "数据库直连采集作业下所有的表补齐方式为前补齐", tbCompResult.getString(i, "filling_type"), is("1"));
+				assertThat("新增全表字符补齐成功后，database_id为" + FIRST_DATABASESET_ID + "数据库直连采集作业下所有的表补齐长度为29", tbCompResult.getLong(i, "filling_length"), is(29L));
+			}
+
+			//断言该数据库采集任务下所有的字段全部设置了字符补齐
+			Result colCompResult = SqlOperator.queryResult(db, "select cc.filling_type, cc.character_filling, cc.filling_length from "
+					+ Column_clean.TableName + " cc join " + Table_column.TableName + " tc on cc.column_id = tc.column_id " +
+					" join " + Table_info.TableName + " ti on ti.table_id = tc.table_id where ti.database_id = ? and cc.character_filling = ? and clean_type = ?"
+					, FIRST_DATABASESET_ID, StringUtil.string2Unicode("test_saveAllTbCleanConfigInfo"), CleanType.ZiFuBuQi.getCode());
+
+			List<Object> columnIds = SqlOperator.queryOneColumnList(db, "select column_id from " + Table_column.TableName + " tc" +
+					" join " + Table_info.TableName + " ti on ti.table_id = tc.table_id " +
+					" where ti.database_id = ?", FIRST_DATABASESET_ID);
+
+			assertThat("该数据库采集任务下的字段共有" + columnIds.size() + "条", colCompResult.getRowCount() == columnIds.size(), is(true));
+			for(int i = 0; i < colCompResult.getRowCount(); i++){
+				assertThat("新增全表字符补齐成功后，database_id为" + FIRST_DATABASESET_ID + "数据库直连采集作业下所有的字段补齐方式为前补齐", colCompResult.getString(i, "filling_type"), is("1"));
+				assertThat("新增全表字符补齐成功后，database_id为" + FIRST_DATABASESET_ID + "数据库直连采集作业下所有的字段补齐长度为29", colCompResult.getLong(i, "filling_length"), is(29L));
+			}
+
+			//断言完成后，删除本次新增的数据
 			SqlOperator.execute(db, "delete from " + Clean_parameter.TableName + " where database_id = ? and clean_type = ?", FIRST_DATABASESET_ID, CleanType.ZiFuBuQi.getCode());
+
+			StringBuilder strSBTb = new StringBuilder("delete from " + Table_clean.TableName + " where table_id in ( ");
+			for(int j = 0; j < columnIds.size(); j++){
+				strSBTb.append((long)columnIds.get(j));
+				if (j != columnIds.size() - 1)
+					strSBTb.append(",");
+			}
+			strSBTb.append(" ) and clean_type = ?");
+
+			StringBuilder strSBCol = new StringBuilder("delete from " + Column_clean.TableName + " where column_id in ( ");
+			for(int j = 0; j < columnIds.size(); j++){
+				strSBCol.append((long)columnIds.get(j));
+				if (j != columnIds.size() - 1)
+					strSBCol.append(",");
+			}
+			strSBCol.append(" ) and clean_type = ?");
+
+			SqlOperator.execute(db, strSBTb.toString(), CleanType.ZiFuBuQi.getCode());
+
+			SqlOperator.execute(db, strSBCol.toString(), CleanType.ZiFuBuQi.getCode());
 
 			SqlOperator.commitTransaction(db);
 		}
@@ -850,7 +977,68 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 			assertThat("新增全表字符替换成功后，database_id为" + FIRST_DATABASESET_ID + "数据库直连采集作业设置的原字符为hx", replaceResult.getString(1, "field"), is(StringUtil.string2Unicode("hx")));
 			assertThat("新增全表字符替换成功后，database_id为" + FIRST_DATABASESET_ID + "数据库直连采集作业设置的替换后字符为zq", replaceResult.getString(1, "replace_feild"), is(StringUtil.string2Unicode("zq")));
 
+			//断言该数据库采集任务下所有的表全部设置了字符替换
+			Result tbReplaResultOne = SqlOperator.queryResult(db, "select tc.field, tc.replace_feild from " + Table_clean.TableName + " tc join "
+					+ Table_info.TableName + "  ti on ti.table_id = tc.table_id where ti.database_id = ? and tc.field = ?", FIRST_DATABASESET_ID, StringUtil.string2Unicode("zxz"));
+
+			Result tbReplaResultTwo = SqlOperator.queryResult(db, "select tc.field, tc.replace_feild from " + Table_clean.TableName + " tc join "
+					+ Table_info.TableName + "  ti on ti.table_id = tc.table_id where ti.database_id = ? and tc.field = ?", FIRST_DATABASESET_ID, StringUtil.string2Unicode("hx"));
+
+			List<Object> tableIds = SqlOperator.queryOneColumnList(db, "select table_id from " + Table_info.TableName + " where database_id = ?", FIRST_DATABASESET_ID);
+			assertThat("该数据库采集任务下的表共有" + tableIds.size() + "条设置的字符替换原字符为zxz", tbReplaResultOne.getRowCount() == tableIds.size(), is(true));
+			assertThat("该数据库采集任务下的表共有" + tableIds.size() + "条设置的字符替换原字符为hx", tbReplaResultTwo.getRowCount() == tableIds.size(), is(true));
+
+			for(int i = 0; i < tbReplaResultOne.getRowCount(); i++){
+				assertThat("新增全表字符替换成功后，database_id为" + FIRST_DATABASESET_ID + "数据库直连采集作业下所有的表设置的替换后字符为shl", tbReplaResultOne.getString(i, "replace_feild"), is(StringUtil.string2Unicode("shl")));
+			}
+			for(int i = 0; i < tbReplaResultTwo.getRowCount(); i++){
+				assertThat("新增全表字符替换成功后，database_id为" + FIRST_DATABASESET_ID + "数据库直连采集作业下所有的表设置的替换后字符为zq", tbReplaResultTwo.getString(i, "replace_feild"), is(StringUtil.string2Unicode("zq")));
+			}
+
+			//断言该数据库采集任务下所有的字段全部设置了字符替换
+			Result colReplaResultOne = SqlOperator.queryResult(db, "select cc.field, cc.replace_feild from "
+					+ Column_clean.TableName + " cc join " + Table_column.TableName + " tc on cc.column_id = tc.column_id " +
+					" join " + Table_info.TableName + " ti on ti.table_id = tc.table_id where ti.database_id = ? and cc.field = ?", FIRST_DATABASESET_ID, StringUtil.string2Unicode("zxz"));
+
+			Result colReplaResultTwo = SqlOperator.queryResult(db, "select cc.field, cc.replace_feild from "
+					+ Column_clean.TableName + " cc join " + Table_column.TableName + " tc on cc.column_id = tc.column_id " +
+					" join " + Table_info.TableName + " ti on ti.table_id = tc.table_id where ti.database_id = ? and cc.field = ?", FIRST_DATABASESET_ID, StringUtil.string2Unicode("hx"));
+
+			List<Object> columnIds = SqlOperator.queryOneColumnList(db, "select column_id from " + Table_column.TableName + " tc" +
+					" join " + Table_info.TableName + " ti on ti.table_id = tc.table_id " +
+					" where ti.database_id = ?", FIRST_DATABASESET_ID);
+
+			assertThat("该数据库采集任务下的字段共有" + columnIds.size() + "条设置的字符替换原字符为zxz", colReplaResultOne.getRowCount() == columnIds.size(), is(true));
+			assertThat("该数据库采集任务下的字段共有" + columnIds.size() + "条设置的字符替换原字符为hx", colReplaResultTwo.getRowCount() == columnIds.size(), is(true));
+			for(int i = 0; i < colReplaResultOne.getRowCount(); i++){
+				assertThat("新增全表字符替换成功后，database_id为" + FIRST_DATABASESET_ID + "数据库直连采集作业下所有的字段设置的替换后字符为shl", colReplaResultOne.getString(i, "replace_feild"), is(StringUtil.string2Unicode("shl")));
+			}
+			for(int i = 0; i < colReplaResultTwo.getRowCount(); i++){
+				assertThat("新增全表字符替换成功后，database_id为" + FIRST_DATABASESET_ID + "数据库直连采集作业下所有的字段设置的替换后字符为zq", colReplaResultTwo.getString(i, "replace_feild"), is(StringUtil.string2Unicode("zq")));
+			}
+
+			//断言成功后，删除本次访问接口新增的数据
 			SqlOperator.execute(db, "delete from " + Clean_parameter.TableName + " where database_id = ? and clean_type = ?", FIRST_DATABASESET_ID, CleanType.ZiFuTiHuan.getCode());
+
+			StringBuilder strSBTb = new StringBuilder("delete from " + Table_clean.TableName + " where table_id in ( ");
+			for(int j = 0; j < columnIds.size(); j++){
+				strSBTb.append((long)columnIds.get(j));
+				if (j != columnIds.size() - 1)
+					strSBTb.append(",");
+			}
+			strSBTb.append(" ) and clean_type = ?");
+
+			StringBuilder strSBCol = new StringBuilder("delete from " + Column_clean.TableName + " where column_id in ( ");
+			for(int j = 0; j < columnIds.size(); j++){
+				strSBCol.append((long)columnIds.get(j));
+				if (j != columnIds.size() - 1)
+					strSBCol.append(",");
+			}
+			strSBCol.append(" ) and clean_type = ?");
+
+			SqlOperator.execute(db, strSBTb.toString(), CleanType.ZiFuTiHuan.getCode());
+
+			SqlOperator.execute(db, strSBCol.toString(), CleanType.ZiFuTiHuan.getCode());
 
 			SqlOperator.commitTransaction(db);
 		}
@@ -890,8 +1078,70 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 				}
 			}
 
+			//断言该数据库采集任务下所有的表全部设置了字符补齐和字符替换
+			Result tbCompResult = SqlOperator.queryResult(db, "select tc.filling_type, tc.character_filling, tc.filling_length from "
+							+ Table_clean.TableName + " tc join " + Table_info.TableName + " ti on ti.table_id = tc.table_id where ti.database_id = ? and tc.character_filling = ? and clean_type = ?"
+					, FIRST_DATABASESET_ID, StringUtil.string2Unicode("test_saveAllTbCleanConfigInfo"), CleanType.ZiFuBuQi.getCode());
+
+			List<Object> tableIds = SqlOperator.queryOneColumnList(db, "select table_id from " + Table_info.TableName + " where database_id = ?", FIRST_DATABASESET_ID);
+			assertThat("该数据库采集任务下的表共有" + tableIds.size() + "张", tbCompResult.getRowCount() == tableIds.size(), is(true));
+			for(int i = 0; i < tbCompResult.getRowCount(); i++){
+				assertThat("新增全表字符补齐成功后，database_id为" + FIRST_DATABASESET_ID + "数据库直连采集作业下所有的表补齐方式为前补齐", tbCompResult.getString(i, "filling_type"), is("1"));
+				assertThat("新增全表字符补齐成功后，database_id为" + FIRST_DATABASESET_ID + "数据库直连采集作业下所有的表补齐长度为29", tbCompResult.getLong(i, "filling_length"), is(29L));
+			}
+
+			Result tbReplaResultOne = SqlOperator.queryResult(db, "select tc.field, tc.replace_feild from " + Table_clean.TableName + " tc join "
+					+ Table_info.TableName + "  ti on ti.table_id = tc.table_id where ti.database_id = ? and tc.field = ?", FIRST_DATABASESET_ID, StringUtil.string2Unicode("zxz"));
+
+			Result tbReplaResultTwo = SqlOperator.queryResult(db, "select tc.field, tc.replace_feild from " + Table_clean.TableName + " tc join "
+					+ Table_info.TableName + "  ti on ti.table_id = tc.table_id where ti.database_id = ? and tc.field = ?", FIRST_DATABASESET_ID, StringUtil.string2Unicode("hx"));
+
+			assertThat("该数据库采集任务下的表共有" + tableIds.size() + "条设置的字符替换原字符为zxz", tbReplaResultOne.getRowCount() == tableIds.size(), is(true));
+			assertThat("该数据库采集任务下的表共有" + tableIds.size() + "条设置的字符替换原字符为hx", tbReplaResultTwo.getRowCount() == tableIds.size(), is(true));
+
+			for(int i = 0; i < tbReplaResultOne.getRowCount(); i++){
+				assertThat("新增全表字符替换成功后，database_id为" + FIRST_DATABASESET_ID + "数据库直连采集作业下所有的表设置的替换后字符为shl", tbReplaResultOne.getString(i, "replace_feild"), is(StringUtil.string2Unicode("shl")));
+			}
+			for(int i = 0; i < tbReplaResultTwo.getRowCount(); i++){
+				assertThat("新增全表字符替换成功后，database_id为" + FIRST_DATABASESET_ID + "数据库直连采集作业下所有的表设置的替换后字符为zq", tbReplaResultTwo.getString(i, "replace_feild"), is(StringUtil.string2Unicode("zq")));
+			}
+
+			//断言该数据库采集任务下所有的字段全部设置了字符补齐和字符替换
+			Result colCompResult = SqlOperator.queryResult(db, "select cc.filling_type, cc.character_filling, cc.filling_length from "
+					+ Column_clean.TableName + " cc join " + Table_column.TableName + " tc on cc.column_id = tc.column_id " +
+					" join " + Table_info.TableName + " ti on ti.table_id = tc.table_id where ti.database_id = ? and cc.character_filling = ? and clean_type = ?", FIRST_DATABASESET_ID, StringUtil.string2Unicode("test_saveAllTbCleanConfigInfo"), CleanType.ZiFuBuQi.getCode());
+
+			List<Object> columnIds = SqlOperator.queryOneColumnList(db, "select column_id from " + Table_column.TableName + " tc" +
+					" join " + Table_info.TableName + " ti on ti.table_id = tc.table_id " +
+					" where ti.database_id = ?", FIRST_DATABASESET_ID);
+
+			assertThat("该数据库采集任务下的字段共有" + columnIds.size() + "条", colCompResult.getRowCount() == columnIds.size(), is(true));
+			for(int i = 0; i < colCompResult.getRowCount(); i++){
+				assertThat("新增全表字符补齐成功后，database_id为" + FIRST_DATABASESET_ID + "数据库直连采集作业下所有的字段补齐方式为前补齐", colCompResult.getString(i, "filling_type"), is("1"));
+				assertThat("新增全表字符补齐成功后，database_id为" + FIRST_DATABASESET_ID + "数据库直连采集作业下所有的字段补齐长度为29", colCompResult.getLong(i, "filling_length"), is(29L));
+			}
+
+			Result colReplaResultOne = SqlOperator.queryResult(db, "select cc.field, cc.replace_feild from "
+					+ Column_clean.TableName + " cc join " + Table_column.TableName + " tc on cc.column_id = tc.column_id " +
+					" join " + Table_info.TableName + " ti on ti.table_id = tc.table_id where ti.database_id = ? and cc.field = ?", FIRST_DATABASESET_ID, StringUtil.string2Unicode("zxz"));
+
+			Result colReplaResultTwo = SqlOperator.queryResult(db, "select cc.field, cc.replace_feild from "
+					+ Column_clean.TableName + " cc join " + Table_column.TableName + " tc on cc.column_id = tc.column_id " +
+					" join " + Table_info.TableName + " ti on ti.table_id = tc.table_id where ti.database_id = ? and cc.field = ?", FIRST_DATABASESET_ID, StringUtil.string2Unicode("hx"));
+
+			for(int i = 0; i < colReplaResultOne.getRowCount(); i++){
+				assertThat("新增全表字符替换成功后，database_id为" + FIRST_DATABASESET_ID + "数据库直连采集作业下所有的字段设置的替换后字符为shl", colReplaResultOne.getString(i, "replace_feild"), is(StringUtil.string2Unicode("shl")));
+			}
+			for(int i = 0; i < colReplaResultTwo.getRowCount(); i++){
+				assertThat("新增全表字符替换成功后，database_id为" + FIRST_DATABASESET_ID + "数据库直连采集作业下所有的字段设置的替换后字符为zq", colReplaResultTwo.getString(i, "replace_feild"), is(StringUtil.string2Unicode("zq")));
+			}
+
+			//断言成功后，删除本次接口访问新增的数据
 			SqlOperator.execute(db, "delete from " + Clean_parameter.TableName + " where database_id = ? and clean_type = ?", FIRST_DATABASESET_ID, CleanType.ZiFuTiHuan.getCode());
 			SqlOperator.execute(db, "delete from " + Clean_parameter.TableName + " where database_id = ? and clean_type = ?", FIRST_DATABASESET_ID, CleanType.ZiFuBuQi.getCode());
+
+			SqlOperator.execute(db, "delete from " + Column_clean.TableName + " where clean_type in (?, ?) ", CleanType.ZiFuBuQi.getCode(), CleanType.ZiFuTiHuan.getCode());
+			SqlOperator.execute(db, "delete from " + Table_clean.TableName + " where clean_type in (?, ?) ", CleanType.ZiFuBuQi.getCode(), CleanType.ZiFuTiHuan.getCode());
 
 			SqlOperator.commitTransaction(db);
 		}
@@ -2210,6 +2460,19 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 			Result result = SqlOperator.queryResult(db, "select cp_or from " + Database_set.TableName + " where database_id = ?", FIRST_DATABASESET_ID);
 			assertThat("共获得了1条数据", result.getRowCount(), is(1));
 			assertThat("定义全表清洗优先级,结果符合期望", result.getString(0, "cp_or"), is(newSort.toJSONString()));
+
+			//断言ID为1001的数据库采集任务下所有的表的清洗顺序是否全部被更新为了所有表清洗优先级
+			List<Object> tbOrders = SqlOperator.queryOneColumnList(db, "select ti_or from " + Table_info.TableName + " where database_id = ?", FIRST_DATABASESET_ID);
+			for(Object order : tbOrders){
+				assertThat("ID为1001的数据库采集任务下所有的表的清洗顺序全部被更新为了所有表清洗优先级", (String)order, is(newSort.toJSONString()));
+			}
+
+			//断言ID为1001的数据库采集任务下所有的字段清洗顺序是否全部被更新为了所有表清洗优先级
+			List<Object> colOrders = SqlOperator.queryOneColumnList(db, "select tc_or from " + Table_column.TableName + " tc join "
+					+ Table_info.TableName + " ti on ti.table_id = tc.table_id where ti.database_id = ?", FIRST_DATABASESET_ID);
+			for(Object order : colOrders){
+				assertThat("ID为1001的数据库采集任务下所有的字段清洗顺序全部被更新为了所有表清洗优先级", (String)order, is(newSort.toJSONString()));
+			}
 		}
 
 		//错误的数据访问1：设置任务级别清洗优先级时，传递的tableId数组为空
@@ -2331,6 +2594,12 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 			List<Object> list = SqlOperator.queryOneColumnList(db, "select ti_or from " + Table_info.TableName + " where table_id = ?", SYS_USER_TABLE_ID);
 			assertThat("查询获得了一条数据", list.size() == 1, is(true));
 			assertThat("第一条数据获取的是sys_user表的默认表清洗规则，结果符合预期", list.get(0).toString().equalsIgnoreCase(newSort.toJSONString()), is(true));
+
+			//断言该张表下的所有字段的清洗优先级都被更新了
+			List<Object> orders = SqlOperator.queryOneColumnList(db, "select tc_or from " + Table_column.TableName + " where table_id = ?", SYS_USER_TABLE_ID);
+			for(Object order : orders){
+				assertThat("该表下的所有字段的清洗优先级都被更新了", (String)order, is(newSort.toJSONString()));
+			}
 		}
 
 		//错误的数据访问1：尝试保存agent_info表的全表清洗规则，但是本次采集作业并没有配置采集agent_info表
@@ -2748,6 +3017,35 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 			assertThat("在执行测试用例<正确数据访问1>之前，数据库中的数据符合预期", beforeCompCount == 1 && beforeTrimCount == 0, is(true));
 		}
 
+		//因为所有表的清洗最后都落实到了字段上，所以下面给tableId为7001的表的每个字段设置字符补齐，并且在里面掺杂一个和表定义的补齐规则不同的，模拟字段本身自己定义的字符补齐规则
+		try(DatabaseWrapper db = new DatabaseWrapper()){
+			List<Object> columnIds = SqlOperator.queryOneColumnList(db, "select column_id from " + Table_column.TableName + " where table_id = ?", SYS_USER_TABLE_ID);
+			for(Object columnId : columnIds){
+				Column_clean columnClean = new Column_clean();
+				if((long)columnId == 2002L){
+					columnClean.setCol_clean_id(PrimayKeyGener.getNextId());
+					columnClean.setColumn_id((long)columnId);
+					columnClean.setClean_type(CleanType.ZiFuBuQi.getCode());
+					columnClean.setFilling_type(FillingType.HouBuQi.getCode());
+					columnClean.setCharacter_filling(StringUtil.string2Unicode("beyond"));
+					columnClean.setFilling_length(6L);
+
+					columnClean.add(db);
+					break;
+				}
+
+				columnClean.setCol_clean_id(PrimayKeyGener.getNextId());
+				columnClean.setColumn_id((long)columnId);
+				columnClean.setClean_type(CleanType.ZiFuBuQi.getCode());
+				columnClean.setFilling_type(FillingType.QianBuQi.getCode());
+				columnClean.setCharacter_filling(StringUtil.string2Unicode("wzc"));
+				columnClean.setFilling_length(3L);
+
+				columnClean.add(db);
+			}
+			SqlOperator.commitTransaction(db);
+		}
+
 		TableCleanParam cleanParamOne = new TableCleanParam();
 		cleanParamOne.setTableId(SYS_USER_TABLE_ID);
 		cleanParamOne.setComplementFlag(false);
@@ -2772,8 +3070,27 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 			long afterTrimCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_clean.TableName + " WHERE table_id = ? AND clean_type = ? ", SYS_USER_TABLE_ID, CleanType.ZiFuTrim.getCode()).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("在执行测试用例<正确数据访问1>之后，数据库中的数据符合预期", afterCompCount == 0 && afterTrimCount == 1, is(true));
 
+			long count = SqlOperator.queryNumber(db, "select count(cc.col_clean_id) from " + Column_clean.TableName + " cc join "
+							+ Table_column.TableName + " tc on cc.column_id = tc.column_id where tc.table_id = ? and clean_type = ?",
+					SYS_USER_TABLE_ID, CleanType.ZiFuTrim.getCode()).orElseThrow(() -> new BusinessException("SQL查询错误"));
+
+			long countCol = SqlOperator.queryNumber(db, "select count(column_id) from " + Table_column.TableName + " where table_id = ?", SYS_USER_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("字符首尾去空保存落实到了列清洗上", count == countCol, is(true));
+
+
+			//sys_user表的字符补齐内容应该只剩下了column_id为2002的列
+			Result result = SqlOperator.queryResult(db, "select filling_type, character_filling, filling_length from " + Column_clean.TableName
+					+ " cc join " + Table_column.TableName + " tc on cc.column_id = tc.column_id where tc.table_id = ? and clean_type = ? and character_filling = ?", SYS_USER_TABLE_ID, CleanType.ZiFuBuQi.getCode(), StringUtil.string2Unicode("beyond"));
+			assertThat("sys_user表的字符补齐内容应该只剩下了column_id为2002的列", result.getRowCount(), is(1));
+			assertThat("sys_user表的字符补齐内容应该只剩下了column_id为2002的列,补齐方式符合期望", result.getString(0, "filling_type"), is(FillingType.HouBuQi.getCode()));
+			assertThat("sys_user表的字符补齐内容应该只剩下了column_id为2002的列,补齐长度符合期望", result.getLong(0, "filling_length"), is(6L));
+
+			SqlOperator.execute(db, "delete from " + Column_clean.TableName + " where column_id = ? and clean_type = ?", 2002L, CleanType.ZiFuBuQi.getCode());
+
 			int execute = SqlOperator.execute(db, "delete from " + Table_clean.TableName + " where table_id = ? AND clean_type = ? ", SYS_USER_TABLE_ID, CleanType.ZiFuTrim.getCode());
 			assertThat("在执行测试用例<正确数据访问1>之后，删除新增的对sys_user表的首尾去空操作", execute == 1, is(true));
+
+			SqlOperator.execute(db, "delete from " + Column_clean.TableName + " where column_id in (select column_id from " + Table_column.TableName + " where table_id = ?) and clean_type = ?", SYS_USER_TABLE_ID, CleanType.ZiFuTrim.getCode());
 
 			SqlOperator.commitTransaction(db);
 		}
@@ -2783,6 +3100,33 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 			long beforeReplaceCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_clean.TableName + " WHERE table_id = ? AND clean_type = ? ", SYS_USER_TABLE_ID, CleanType.ZiFuTiHuan.getCode()).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			long beforeTrimCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_clean.TableName + " WHERE table_id = ? AND clean_type = ? ", SYS_USER_TABLE_ID, CleanType.ZiFuTrim.getCode()).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("在执行测试用例<正确数据访问2>之前，数据库中的数据符合预期", beforeReplaceCount == 1 && beforeTrimCount == 0, is(true));
+		}
+
+		//因为所有表的清洗最后都落实到了字段上，所以下面给tableId为7001的表的每个字段设置字符替换，并且在里面掺杂一个和表定义的替换规则不同的，模拟字段本身自己定义的字符替换规则
+		try(DatabaseWrapper db = new DatabaseWrapper()){
+			List<Object> columnIds = SqlOperator.queryOneColumnList(db, "select column_id from " + Table_column.TableName + " where table_id = ?", SYS_USER_TABLE_ID);
+			for(Object columnId : columnIds){
+				Column_clean columnClean = new Column_clean();
+				if((long)columnId == 2003L){
+					columnClean.setCol_clean_id(PrimayKeyGener.getNextId());
+					columnClean.setColumn_id((long)columnId);
+					columnClean.setClean_type(CleanType.ZiFuTiHuan.getCode());
+					columnClean.setField(StringUtil.string2Unicode("shl"));
+					columnClean.setReplace_feild(StringUtil.string2Unicode("sw"));
+
+					columnClean.add(db);
+					break;
+				}
+
+				columnClean.setCol_clean_id(PrimayKeyGener.getNextId());
+				columnClean.setColumn_id((long)columnId);
+				columnClean.setClean_type(CleanType.ZiFuTiHuan.getCode());
+				columnClean.setField(StringUtil.string2Unicode("wzc"));
+				columnClean.setReplace_feild(StringUtil.string2Unicode("wqp"));
+
+				columnClean.add(db);
+			}
+			SqlOperator.commitTransaction(db);
 		}
 
 		tableCleanParams.clear();
@@ -2810,6 +3154,23 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 			long afterReplaceCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_clean.TableName + " WHERE table_id = ? AND clean_type = ? ", SYS_USER_TABLE_ID, CleanType.ZiFuTiHuan.getCode()).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			long afterTrimCount = SqlOperator.queryNumber(db, "select count(1) from " + Table_clean.TableName + " WHERE table_id = ? AND clean_type = ? ", SYS_USER_TABLE_ID, CleanType.ZiFuTrim.getCode()).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("在执行测试用例<正确数据访问2>之后，数据库中的数据符合预期", afterReplaceCount == 0 && afterTrimCount == 1, is(true));
+
+			long count = SqlOperator.queryNumber(db, "select count(cc.col_clean_id) from " + Column_clean.TableName + " cc join "
+							+ Table_column.TableName + " tc on cc.column_id = tc.column_id where tc.table_id = ? and clean_type = ?",
+					SYS_USER_TABLE_ID, CleanType.ZiFuTrim.getCode()).orElseThrow(() -> new BusinessException("SQL查询错误"));
+
+			long countCol = SqlOperator.queryNumber(db, "select count(column_id) from " + Table_column.TableName + " where table_id = ?", SYS_USER_TABLE_ID).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			assertThat("字符首尾去空保存落实到了列清洗上", count == countCol, is(true));
+
+			//sys_user表的字符替换内容应该只剩下了column_id为2003的列
+			Result result = SqlOperator.queryResult(db, "select field, replace_feild from " + Column_clean.TableName
+					+ " cc join " + Table_column.TableName + " tc on cc.column_id = tc.column_id where tc.table_id = ? and clean_type = ? and field = ?", SYS_USER_TABLE_ID, CleanType.ZiFuTiHuan.getCode(), StringUtil.string2Unicode("shl"));
+			assertThat("sys_user表的字符替换内容应该只剩下了column_id为2003的列", result.getRowCount(), is(1));
+			assertThat("sys_user表的字符替换内容应该只剩下了column_id为2003的列,替换后字段符合期望", result.getString(0, "replace_feild"), is(StringUtil.string2Unicode("sw")));
+
+			SqlOperator.execute(db, "delete from " + Column_clean.TableName + " where column_id = ? and clean_type = ?", 2003L, CleanType.ZiFuTiHuan.getCode());
+
+			SqlOperator.execute(db, "delete from " + Column_clean.TableName + " where column_id in (select column_id from " + Table_column.TableName + " where table_id = ?) and clean_type = ?", SYS_USER_TABLE_ID, CleanType.ZiFuTrim.getCode());
 
 			int execute = SqlOperator.execute(db, "delete from " + Table_clean.TableName + " where table_id = ? AND clean_type = ? ", SYS_USER_TABLE_ID, CleanType.ZiFuTrim.getCode());
 			assertThat("在执行测试用例<正确数据访问2>之后，删除新增的对sys_user表的首尾去空操作", execute == 1, is(true));
