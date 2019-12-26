@@ -416,7 +416,7 @@ public class DataQueryAction extends BaseAction {
 		dataAuth.setSource_id(fileRs.get().getSource_id());
 		dataAuth.setCollect_set_id(fileRs.get().getCollect_set_id());
 		if ((dataAuth.add(Dbo.db()) != 1)) {
-			applyState = false;
+			applyState = Boolean.FALSE;
 			throw new BusinessException("申请文件失败！fileId=" + fileId);
 		}
 		return applyState;
