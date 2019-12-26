@@ -27,7 +27,9 @@ import hrds.commons.utils.PropertyParaValue;
 import hrds.commons.utils.ReadLog;
 import hrds.commons.utils.jsch.SCPFileSender;
 import hrds.commons.utils.jsch.SFTPChannel;
+import org.apache.commons.io.FilenameUtils;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -36,6 +38,8 @@ import java.util.regex.Pattern;
 
 @DocClass(desc = "作业调度工程", author = "dhw", createdate = "2019/11/25 15:48")
 public class EltSysAction extends BaseAction {
+
+    private static final String separator = File.separator;
 
     @Method(desc = "查询作业调度工程信息",
             logicStep = "1.数据可访问权限处理方式，根据user_id进行权限控制" +
@@ -305,21 +309,22 @@ public class EltSysAction extends BaseAction {
             throw new BusinessException("当前用户对应的工程已不存在！");
         }
         // 3.根据工程编号获取工程信息
-        Map<String, Object> etlSys = ETLJobUtil.getEtlSysByCd(etl_sys_cd,getUserId());
+        Map<String, Object> etlSys = ETLJobUtil.getEtlSysByCd(etl_sys_cd, getUserId());
         // 4.判断工程是否已部署
         isETLDeploy(etlSys);
         // 5.获取当前日期
         String sysDate = DateUtil.getSysDate();
         // 6.获取control或trigger日志路径
-        String logDir = etlSys.get("serv_file_path") + "/" + etl_sys_cd + "/";
+        String logDir = FilenameUtils.normalize(etlSys.get("serv_file_path").toString())
+                + separator + etl_sys_cd + separator;
         if (IsFlag.Shi == IsFlag.ofEnumByCode(isControl)) {
             // CONTROL日志目录
-            logDir = logDir + "control" + "/" + sysDate.substring(0, 4) + "/" +
-                    sysDate.substring(0, 6) + "/" + sysDate + "controlOut.log";
+            logDir = logDir + "control" + separator + sysDate.substring(0, 4) + separator +
+                    sysDate.substring(0, 6) + separator + sysDate + "controlOut.log";
         } else {
             // TRIGGER日志目录
-            logDir = logDir + "trigger" + "/" + sysDate.substring(0, 4) + "/" +
-                    sysDate.substring(0, 6) + "/" + sysDate + "triggerOut.log";
+            logDir = logDir + "trigger" + separator + sysDate.substring(0, 4) + separator +
+                    sysDate.substring(0, 6) + separator + sysDate + "triggerOut.log";
         }
         // 7.日志读取行数最大为1000行
         if (readNum > 1000) {
@@ -358,27 +363,28 @@ public class EltSysAction extends BaseAction {
                 throw new BusinessException("当前用户对应的工程已不存在！");
             }
             // 3.根据工程编号获取工程信息
-            Map<String, Object> etlSys = ETLJobUtil.getEtlSysByCd(etl_sys_cd,getUserId());
+            Map<String, Object> etlSys = ETLJobUtil.getEtlSysByCd(etl_sys_cd, getUserId());
             // 4.判断工程是否已部署
             isETLDeploy(etlSys);
             // 5.修改批量日期格式
             curr_bath_date = curr_bath_date.replaceAll("-", "");
             // 6.获取control或trigger日志路径
-            String logDir = etlSys.get("serv_file_path") + "/" + etl_sys_cd + "/";
+            String logDir = FilenameUtils.normalize(etlSys.get("serv_file_path").toString()) + separator
+                    + etl_sys_cd + separator;
             // 7.获取压缩日志命令
             String compressCommand = "tar -zvcPf " + logDir + curr_bath_date;
             // 8.判断是control日志还是trigger日志,获取日志目录以及压缩日志目录命令
             if (IsFlag.Shi == IsFlag.ofEnumByCode(isControl)) {
                 // CONTROL日志目录
-                logDir = logDir + "control" + "/" + curr_bath_date.substring(0, 4) + "/" +
-                        curr_bath_date.substring(0, 6) + "/" + curr_bath_date + "_ControlLog.tar.gz";
+                logDir = logDir + "control" + separator + curr_bath_date.substring(0, 4) + separator +
+                        curr_bath_date.substring(0, 6) + separator + curr_bath_date + "_ControlLog.tar.gz";
                 // 压缩CONTROL日志命令
                 compressCommand = compressCommand + "_ControlLog.tar.gz" + " " + logDir +
                         curr_bath_date + "*.log";
             } else {
                 // TRIGGER日志目录
-                logDir = logDir + "trigger" + "/" + curr_bath_date.substring(0, 4) + "/" +
-                        curr_bath_date.substring(0, 6) + "/" + curr_bath_date + "_TriggerLog.tar.gz";
+                logDir = logDir + "trigger" + separator + curr_bath_date.substring(0, 4) + separator +
+                        curr_bath_date.substring(0, 6) + separator + curr_bath_date + "_TriggerLog.tar.gz";
                 // 压缩TRIGGER日志命令
                 compressCommand = compressCommand + "_TriggerLog.tar.gz" + " " + logDir + curr_bath_date + "*.log";
             }
