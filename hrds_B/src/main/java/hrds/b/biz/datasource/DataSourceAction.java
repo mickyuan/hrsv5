@@ -244,7 +244,7 @@ public class DataSourceAction extends BaseAction {
                     "6.保存source_relation_dep表信息")
     @Param(name = "source_id", desc = "data_source表主键，source_relation_dep表外键",
             range = "10位数字,新增时生成")
-    @Param(name = "source_remark", desc = "备注，source_relation_dep表外键", range = "无限制",nullable = true)
+    @Param(name = "source_remark", desc = "备注，source_relation_dep表外键", range = "无限制", nullable = true)
     @Param(name = "datasource_name", desc = "数据源名称", range = "不为空且不为空格")
     @Param(name = "datasource_number", desc = "数据源编号", range = "以字母开头的不超过四位数的字母数字组合")
     @Param(name = "dep_id", desc = "source_relation_dep表主键ID的数组", range = "不为空以及不为空格")
@@ -1537,8 +1537,9 @@ public class DataSourceAction extends BaseAction {
                     "2.导入数据源需要重新生成主键ID，获取新的数据源ID" +
                     "3.判断map中的key值是否为对应data_source表数据" +
                     "4.获取数据源data_source表信息" +
-                    "5.将data_source表数据插入数据库" +
-                    "6.返回data_source表数据对应实体对象")
+                    "5.判断数据源编号是否已存在" +
+                    "6.将data_source表数据插入数据库" +
+                    "7.返回data_source表数据对应实体对象")
     @Param(name = "userId", desc = "创建用户ID，代表此数据源由哪个用户创建", range = "不为空，创建用户时自动生成")
     @Param(name = "collectMap", desc = "所有表数据的map的实体", range = "无限制")
     @Return(desc = "返回重新生成的数据源ID", range = "无限制", isBean = true)
@@ -1553,13 +1554,15 @@ public class DataSourceAction extends BaseAction {
                 // 4.获取数据源data_source表信息
                 Data_source data_source = JsonUtil.toObjectSafety(entry.getValue().toString(),
                         Data_source.class).orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
-                // 5.将data_source表数据插入数据库
+                // 5.判断数据源编号是否已存在
+                isExistDataSourceNumber(data_source.getDatasource_number());
+                // 6.将data_source表数据插入数据库
                 data_source.setSource_id(source_id);
                 data_source.setCreate_user_id(userId);
                 data_source.add(Dbo.db());
             }
         }
-        // 6.返回存放新旧数据源ID的集合
+        // 7.返回存放新旧数据源ID的集合
         return source_id;
     }
 

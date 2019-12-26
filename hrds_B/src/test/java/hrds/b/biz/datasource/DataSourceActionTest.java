@@ -19,7 +19,6 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -606,7 +605,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
             sourceFileAttribute.setMeta_info("init-dhw");
             sourceFileAttribute.setStorage_date(SysDate);
             sourceFileAttribute.setStorage_time(SysTime);
-            sourceFileAttribute.setFile_size(BigDecimal.valueOf(1024));
+            sourceFileAttribute.setFile_size(1024L);
             sourceFileAttribute.setSource_path("/home/hyshf/dhw");
             sourceFileAttribute.setFile_md5("fsfsdfsfsf");
             sourceFileAttribute.setFile_avro_path("/home/hyshf/dhw");
