@@ -21,6 +21,8 @@ import hrds.commons.utils.key.PrimayKeyGener;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @DocClass(desc = "agent增删改查类", author = "dhw", createdate = "2019-9-23 10:32:16")
 public class AgentInfoAction extends BaseAction {
@@ -214,12 +216,11 @@ public class AgentInfoAction extends BaseAction {
             throw new BusinessException("agent_name不为空且不为空格，agent_name=" + agent_name);
         }
         // 4.判断agent_ip是否是一个合法的ip
-        String[] split = agent_ip.split("\\.");
-        for (String agentIp : split) {
-            if (Integer.parseInt(agentIp) < 0 || Integer.parseInt(agentIp) > 255) {
-                throw new BusinessException("agent_ip不是一个为空或空格的ip地址," +
-                        "agent_ip=" + agent_ip);
-            }
+        Pattern pattern = Pattern.compile("^(\\d|[1-9]\\d|1\\d{2}|2[0-5][0-5])\\.(\\d|[1-9]\\d|1\\d{2}" +
+                "|2[0-5][0-5])\\.(\\d|[1-9]\\d|1\\d{2}|2[0-5][0-5])\\.(\\d|[1-9]\\d|1\\d{2}|2[0-5][0-5])$");
+        Matcher matcher = pattern.matcher(agent_ip);
+        if (!matcher.matches()) {
+            throw new BusinessException("agent_ip不是一个有效的ip地址,agent_ip=" + agent_ip);
         }
         // 5.判断agent_port是否是一个有效的端口
         if (StringUtil.isBlank(agent_port) || Integer.parseInt(agent_port) < 1024 ||
@@ -263,11 +264,10 @@ public class AgentInfoAction extends BaseAction {
         // 2.验证代码项是否存在
         AgentType.ofEnumByCode(agent_type);
         // 3.根据agent_id与agent_type查询该agent信息
-        Map<String, Object> agentInfo = Dbo.queryOneObject("select ai.user_id,ai.agent_id,ai.source_id,"
+        return Dbo.queryOneObject("select ai.user_id,ai.agent_id,ai.source_id,"
                 + " ai.agent_name,ai.agent_ip,ai.agent_port,su.user_name from " + Agent_info.TableName
                 + " ai left join " + Sys_user.TableName + " su on ai.user_id=su.user_id where ai.agent_id=?"
                 + " and ai.agent_type=? and ai.user_id=? order by ai.agent_id", agent_id, agent_type, getUserId());
-        return agentInfo;
     }
 
     @Method(desc = "删除agent",

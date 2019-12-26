@@ -807,8 +807,8 @@ public class AgentInfoActionTest extends WebBaseTestCase {
         bodyString = new HttpClient()
                 .addData("agent_name", "sjkAgent")
                 .addData("agent_type", AgentType.ShuJuKu.getCode())
-                .addData("agent_ip", "10.71.4.52")
-                .addData("agent_port", "3456")
+                .addData("agent_ip", "10.71.4.51")
+                .addData("agent_port", "3451")
                 .addData("source_id", SourceId)
                 .addData("user_id", UserId)
                 .post(getActionUrl("saveAgent")).getBodyString();
@@ -1199,11 +1199,11 @@ public class AgentInfoActionTest extends WebBaseTestCase {
         assertThat(ar.isSuccess(), is(false));
         // 20.错误的数据访问15，更新agent信息,端口被占用
         bodyString = new HttpClient()
-                .addData("agent_id", DBAgentId)
-                .addData("agent_name", "sjkAgent")
+                .addData("agent_id", DBAgentId5)
+                .addData("agent_name", "sjkAgent5")
                 .addData("agent_type", AgentType.ShuJuKu.getCode())
-                .addData("agent_ip", "10.71.4.51")
-                .addData("agent_port", "34567")
+                .addData("agent_ip", "10.71.4.55")
+                .addData("agent_port", "3459")
                 .addData("source_id", SourceId)
                 .addData("user_id", UserId)
                 .post(getActionUrl("updateAgent")).getBodyString();

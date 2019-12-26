@@ -11,7 +11,7 @@ import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
-import hrds.commons.codes.store_type;
+import hrds.commons.codes.Store_type;
 import hrds.commons.entity.Data_store_layer;
 import hrds.commons.entity.Data_store_layer_added;
 import hrds.commons.entity.Data_store_layer_attr;
@@ -68,7 +68,7 @@ public class DataStoreAction extends BaseAction {
             throw new BusinessException("配置属性名称不能为空！");
         }
         // 3.检查存储类型是否合法
-        store_type.ofEnumByCode(dataStoreLayer.getStore_type());
+        Store_type.ofEnumByCode(dataStoreLayer.getStore_type());
     }
 
     @Method(desc = "新增保存数据存储附加信息",

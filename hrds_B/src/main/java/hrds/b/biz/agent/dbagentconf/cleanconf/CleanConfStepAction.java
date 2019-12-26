@@ -375,7 +375,7 @@ public class CleanConfStepAction extends BaseAction{
 			return new Result();
 		}
 		//3、如果找到了，再进行关联查询，查询出页面需要显示的信息
-		StringBuilder sqlSB = new StringBuilder("SELECT t1.column_id,t1.colume_name,t1.colume_ch_name," +
+		StringBuilder sqlSB = new StringBuilder("SELECT t1.column_id,t1.column_name,t1.column_ch_name," +
 				" t2.table_name," +
 				" sum(case t3.clean_type when ? then 1 else 0 end) as compflag, " +
 				" sum(case t3.clean_type when ? then 1 else 0 end) as replaceflag, " +
@@ -392,7 +392,7 @@ public class CleanConfStepAction extends BaseAction{
 			if (i != columnIds.size() - 1)
 				sqlSB.append(",");
 		}
-		sqlSB.append(" ) GROUP BY t1.column_id, t2.table_name order by cast(t1.remark as integer) asc ");
+		sqlSB.append(" ) GROUP BY t1.column_id, t2.table_name order by cast(t1.tc_remark as integer) asc ");
 		//4、返回
 		return Dbo.queryResult(sqlSB.toString(), CleanType.ZiFuBuQi.getCode(), CleanType.ZiFuTiHuan.getCode(),
 				CleanType.ShiJianZhuanHuan.getCode(), CleanType.ZiFuChaiFen.getCode(),
@@ -604,8 +604,8 @@ public class CleanConfStepAction extends BaseAction{
 	public void deleteColSplitInfo(long colSplitId, long colCleanId){
 		//1、在table_column表中找到拆分生成的新列，并删除,应该删除一条数据
 		DboExecute.deletesOrThrow("列拆分规则删除失败", "delete from "+ Table_column.TableName  +
-				" where colume_name = (select t1.colume_name from "+ Table_column.TableName +" t1 " +
-				" JOIN "+ Column_split.TableName +" t2 ON t1.colume_name = t2.col_name " +
+				" where column_name = (select t1.column_name from "+ Table_column.TableName +" t1 " +
+				" JOIN "+ Column_split.TableName +" t2 ON t1.column_name = t2.col_name " +
 				" JOIN "+ Column_clean.TableName +" t3 ON t2.col_clean_id = t3.col_clean_id " +
 				" WHERE t2.col_clean_id = ? and  t2.col_split_id = ? and t1.is_new = ?)",
 				colCleanId, colSplitId, IsFlag.Shi.getCode());
@@ -649,9 +649,9 @@ public class CleanConfStepAction extends BaseAction{
 			columnClean.update(Dbo.db());
 
 			//2、如果之前这个字段做过列拆分，需要在table_column表中找到拆分生成的新列，并删除,不关心删除的数目
-			Dbo.execute("delete from "+ Table_column.TableName +" where colume_name in " +
-					" (select t1.colume_name from "+ Table_column.TableName +" t1 " +
-					" JOIN "+ Column_split.TableName +" t2 ON t1.colume_name = t2.col_name " +
+			Dbo.execute("delete from "+ Table_column.TableName +" where column_name in " +
+					" (select t1.column_name from "+ Table_column.TableName +" t1 " +
+					" JOIN "+ Column_split.TableName +" t2 ON t1.column_name = t2.col_name " +
 					" JOIN "+ Column_clean.TableName +" t3 ON t2.col_clean_id = t3.col_clean_id " +
 					" WHERE t2.col_clean_id = ? and t2.column_id = ? and t1.table_id = ? and t1.is_new = ?)",
 					columnClean.getCol_clean_id(), columnClean.getColumn_id(), tableId, IsFlag.Shi.getCode());
@@ -708,12 +708,11 @@ public class CleanConfStepAction extends BaseAction{
 				tableColumn.setIs_alive(IsFlag.Shi.getCode());
 				tableColumn.setColumn_id(PrimayKeyGener.getNextId());
 				tableColumn.setIs_primary_key(IsFlag.Fou.getCode());
-				tableColumn.setColume_name(columnSplit.getCol_name());
+				tableColumn.setColumn_name(columnSplit.getCol_name());
 				tableColumn.setColumn_type(columnSplit.getCol_type());
-				tableColumn.setColume_ch_name(columnSplit.getCol_zhname());
+				tableColumn.setColumn_ch_name(columnSplit.getCol_zhname());
 				tableColumn.setValid_s_date(DateUtil.getSysDate());
 				tableColumn.setValid_e_date(Constant.MAXDATE);
-
 				tableColumn.add(Dbo.db());
 			}
 		}
@@ -828,10 +827,10 @@ public class CleanConfStepAction extends BaseAction{
 	@Param(name = "tableId", desc = "数据库对应表主键，列合并表外键", range = "不为空")
 	public void saveColMergeInfo(String columnMergeString, long tableId){
 		//1、在table_column表中找到因配置过列合并而生成的列并删除，不关注删除的数目
-		Dbo.execute("delete from "+ Table_column.TableName +" where colume_name in " +
-				" (select t1.colume_name from "+ Table_column.TableName +" t1 " +
+		Dbo.execute("delete from "+ Table_column.TableName +" where column_name in " +
+				" (select t1.column_name from "+ Table_column.TableName +" t1 " +
 				" JOIN "+ Column_merge.TableName +" t2 ON t1.table_id=t2.table_id " +
-				" and t1.colume_name = t2.col_name " +
+				" and t1.column_name = t2.col_name " +
 				" where t2.table_id = ? and t1.is_new = ? )", tableId, IsFlag.Shi.getCode());
 		//2、在column_merge表中，按照table_id删除该表配置的所有列合并信息
 		Dbo.execute("delete from "+ Column_merge.TableName +" where table_id = ?", tableId);
@@ -864,9 +863,9 @@ public class CleanConfStepAction extends BaseAction{
 				tableColumn.setIs_alive(IsFlag.Shi.getCode());
 				tableColumn.setColumn_id(PrimayKeyGener.getNextId());
 				tableColumn.setIs_primary_key(IsFlag.Fou.getCode());
-				tableColumn.setColume_name(columnMerge.getCol_name());
+				tableColumn.setColumn_name(columnMerge.getCol_name());
 				tableColumn.setColumn_type(columnMerge.getCol_type());
-				tableColumn.setColume_ch_name(columnMerge.getCol_zhname());
+				tableColumn.setColumn_ch_name(columnMerge.getCol_zhname());
 				tableColumn.setValid_s_date(DateUtil.getSysDate());
 				tableColumn.setValid_e_date(Constant.MAXDATE);
 
@@ -885,11 +884,11 @@ public class CleanConfStepAction extends BaseAction{
 	public void deleteColMergeInfo(long colMergeId){
 		//1、在table_column表中删除因合并生成的新列，删除的应该有且只有一条
 		DboExecute.deletesOrThrow("删除列合并失败", "delete from "+ Table_column.TableName +
-				" where colume_name = " +
-				" (select t1.colume_name " +
+				" where column_name = " +
+				" (select t1.column_name " +
 				" from "+ Table_column.TableName +" t1 " +
 				" JOIN "+ Column_merge.TableName +" t2 ON t1.table_id = t2.table_id " +
-				" and t1.colume_name = t2.col_name " +
+				" and t1.column_name = t2.col_name " +
 				" where t2.col_merge_id = ?)", colMergeId);
 		//2、在column_merge表中按ID删除一条列合并信息
 		DboExecute.deletesOrThrow("删除列合并失败", "delete from "+ Column_merge.TableName +

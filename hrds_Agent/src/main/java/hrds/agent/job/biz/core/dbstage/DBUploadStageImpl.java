@@ -9,7 +9,7 @@ import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
 import hrds.agent.job.biz.core.dbstage.service.ReadFileToDataBase;
-import hrds.commons.codes.store_type;
+import hrds.commons.codes.Store_type;
 import hrds.commons.exception.AppSystemException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,7 +60,7 @@ public class DBUploadStageImpl extends AbstractJobStage {
 				long count = 0;
 				List<Future<Long>> list = new ArrayList<>();
 				//根据存储类型上传到目的地
-				if (store_type.DATABASE.getCode().equals(dataStoreConfBean.getStore_type())) {
+				if (Store_type.DATABASE.getCode().equals(dataStoreConfBean.getStore_type())) {
 					//数据库类型
 					for (String fileAbsolutePath : localFiles) {
 						ReadFileToDataBase readFileToDataBase = new ReadFileToDataBase(fileAbsolutePath, tableBean,
@@ -69,13 +69,13 @@ public class DBUploadStageImpl extends AbstractJobStage {
 						Future<Long> submit = executor.submit(readFileToDataBase);
 						list.add(submit);
 					}
-				} else if (store_type.HBASE.getCode().equals(dataStoreConfBean.getStore_type())) {
+				} else if (Store_type.HBASE.getCode().equals(dataStoreConfBean.getStore_type())) {
 
-				} else if (store_type.SOLR.getCode().equals(dataStoreConfBean.getStore_type())) {
+				} else if (Store_type.SOLR.getCode().equals(dataStoreConfBean.getStore_type())) {
 
-				} else if (store_type.ElasticSearch.getCode().equals(dataStoreConfBean.getStore_type())) {
+				} else if (Store_type.ElasticSearch.getCode().equals(dataStoreConfBean.getStore_type())) {
 
-				} else if (store_type.MONGODB.getCode().equals(dataStoreConfBean.getStore_type())) {
+				} else if (Store_type.MONGODB.getCode().equals(dataStoreConfBean.getStore_type())) {
 
 				}else{
 					//TODO 上面的待补充。

@@ -15,6 +15,7 @@ import hrds.commons.entity.Etl_resource;
 import hrds.commons.entity.Etl_sys;
 import hrds.commons.entity.Sys_user;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.utils.Constant;
 import hrds.testbase.WebBaseTestCase;
 import org.junit.After;
 import org.junit.Before;
@@ -69,8 +70,7 @@ public class EtlSysActionTest extends WebBaseTestCase {
             Etl_sys etl_sys = new Etl_sys();
             for (int i = 0; i < 2; i++) {
                 etl_sys.setEtl_sys_cd(EtlSysCd + i);
-                etl_sys.setEtl_sys_name("dhwcs" + i);
-                etl_sys.setComments("工程测试" + i);
+                etl_sys.setEtl_sys_name("gccs" + i);
                 etl_sys.setComments("工程测试" + i);
                 etl_sys.setEtl_sys_cd(EtlSysCd + i);
                 etl_sys.setEtl_sys_name("dhwcs" + i);
@@ -78,7 +78,7 @@ public class EtlSysActionTest extends WebBaseTestCase {
                 etl_sys.setSys_run_status(Job_Status.STOP.getCode());
                 etl_sys.setComments("作业调度工程测试" + i);
                 etl_sys.setEtl_serv_ip("10.71.4.51");
-                etl_sys.setEtl_serv_port("22");
+                etl_sys.setEtl_serv_port(Constant.SFTP_PORT);
                 etl_sys.setUser_name("hyshf");
                 etl_sys.setUser_pwd("hyshf");
                 etl_sys.setServ_file_path("/home/hyshf/etl/");
@@ -366,5 +366,34 @@ public class EtlSysActionTest extends WebBaseTestCase {
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
         assertThat(ar.isSuccess(), is(false));
+    }
+
+    @Test
+    public void downloadControlOrTriggerLog() {
+        // 1.正常的数据访问1，数据都正常
+        String bodyString = new HttpClient()
+                .addData("etl_sys_cd", EtlSysCd+0)
+                .addData("curr_bath_date", DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate())
+                        .toString())
+                .addData("isControl", IsFlag.Shi.getCode())
+                .post(getActionUrl("downloadControlOrTriggerLog"))
+                .getBodyString();
+        ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(true));
+    }
+
+    @Test
+    public void readControlOrTriggerLog() {
+        // 1.正常的数据访问1，数据都正常
+        String bodyString = new HttpClient()
+                .addData("etl_sys_cd", EtlSysCd+0)
+                .addData("readNum", 100)
+                .addData("isControl", IsFlag.Shi.getCode())
+                .post(getActionUrl("readControlOrTriggerLog"))
+                .getBodyString();
+        ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(true));
     }
 }

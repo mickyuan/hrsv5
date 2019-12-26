@@ -170,14 +170,14 @@ public class DatabaseInfo extends AgentBaseAction {
 				ResultSetMetaData metaData = rs.getMetaData();
 				for(int j = 0; j < metaData.getColumnCount(); j++){
 					Table_column tableColumn = new Table_column();
-					tableColumn.setColume_name(metaData.getColumnName(j + 1));
+					tableColumn.setColumn_name(metaData.getColumnName(j + 1));
 					//对列类型做特殊处理，处理成varchar(512), numeric(10,4)
 					String colTypeAndPreci = getColTypeAndPreci(metaData.getColumnType(j + 1),
 							metaData.getColumnTypeName(j + 1), metaData.getPrecision(j + 1),
 							metaData.getScale(j + 1));
 					tableColumn.setColumn_type(colTypeAndPreci);
 					//列中文名默认设置为列英文名
-					tableColumn.setColume_ch_name(metaData.getColumnName(j + 1));
+					tableColumn.setColumn_ch_name(metaData.getColumnName(j + 1));
 
 					//4、将每一个采集列加入到List集合中
 					tableColumns.add(tableColumn);

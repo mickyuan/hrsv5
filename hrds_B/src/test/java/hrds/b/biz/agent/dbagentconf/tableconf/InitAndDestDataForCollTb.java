@@ -263,9 +263,9 @@ public class InitAndDestDataForCollTb {
 			sysUserColumn.setColumn_id(BASE_SYS_USER_PRIMARY + i);
 			sysUserColumn.setIs_get(IsFlag.Shi.getCode());
 			sysUserColumn.setIs_primary_key(primaryKeyFlag);
-			sysUserColumn.setColume_name(columnName);
+			sysUserColumn.setColumn_name(columnName);
 			sysUserColumn.setColumn_type(columnType);
-			sysUserColumn.setColume_ch_name(columnChName);
+			sysUserColumn.setColumn_ch_name(columnChName);
 			sysUserColumn.setTable_id(SYS_USER_TABLE_ID);
 			sysUserColumn.setValid_s_date(DateUtil.getSysDate());
 			sysUserColumn.setValid_e_date(Constant.MAXDATE);

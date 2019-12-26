@@ -2,6 +2,7 @@ package hrds.agent.job.biz.core;
 
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
+import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
 import hrds.agent.job.biz.bean.JobStatusInfo;
 import hrds.agent.job.biz.bean.MetaInfoBean;
@@ -55,6 +56,7 @@ public class ObjectCollectJobImpl implements JobInterface {
 					"2、构建每个阶段具体的实现类，按照顺序执行(卸数,数据加载,数据登记)" +
 					"3、构建责任链，串起每个阶段" +
 					"4、按照顺序从第一个阶段开始执行作业")
+	@Return(desc = "封装有作业状态信息的实体类对象", range = "JobStatusInfo类对象，不会为null")
 	@Override
 	public JobStatusInfo runJob() {
 		//1、设置作业ID

@@ -99,22 +99,22 @@ public class DataStoreActionTest extends WebBaseTestCase {
             for (int i = 1; i <= 6; i++) {
                 if (i == 1) {
                     dataStoreLayer.setDsl_id(dsl_id1);
-                    dataStoreLayer.setStore_type(store_type.DATABASE.getCode());
+                    dataStoreLayer.setStore_type(Store_type.DATABASE.getCode());
                 } else if (i == 2) {
                     dataStoreLayer.setDsl_id(dsl_id2);
-                    dataStoreLayer.setStore_type(store_type.HBASE.getCode());
+                    dataStoreLayer.setStore_type(Store_type.HBASE.getCode());
                 } else if (i == 3) {
                     dataStoreLayer.setDsl_id(dsl_id3);
-                    dataStoreLayer.setStore_type(store_type.SOLR.getCode());
+                    dataStoreLayer.setStore_type(Store_type.SOLR.getCode());
                 } else if (i == 4) {
                     dataStoreLayer.setDsl_id(dsl_id4);
-                    dataStoreLayer.setStore_type(store_type.ElasticSearch.getCode());
+                    dataStoreLayer.setStore_type(Store_type.ElasticSearch.getCode());
                 } else if (i == 5) {
                     dataStoreLayer.setDsl_id(dsl_id5);
-                    dataStoreLayer.setStore_type(store_type.MONGODB.getCode());
+                    dataStoreLayer.setStore_type(Store_type.MONGODB.getCode());
                 } else if (i == 6) {
                     dataStoreLayer.setDsl_id(dsl_id6);
-                    dataStoreLayer.setStore_type(store_type.DATABASE.getCode());
+                    dataStoreLayer.setStore_type(Store_type.DATABASE.getCode());
                 }
                 dataStoreLayer.setDsl_name("数据存储层配置测试名称" + i);
                 dataStoreLayer.setDsl_remark("数据存储层配置测试" + i);
@@ -384,7 +384,7 @@ public class DataStoreActionTest extends WebBaseTestCase {
         }
         String bodyString = new HttpClient()
                 .addData("dsl_name", "addDataStore1")
-                .addData("store_type", store_type.DATABASE.getCode())
+                .addData("store_type", Store_type.DATABASE.getCode())
                 .addData("dsl_remark", "新增数据存储层配置信息")
                 .addData("dsla_storelayer", new String[]{StoreLayerAdded.ZhuJian.getCode(),
                         StoreLayerAdded.SuoYinLie.getCode()})
@@ -399,7 +399,7 @@ public class DataStoreActionTest extends WebBaseTestCase {
         try (DatabaseWrapper db = new DatabaseWrapper()) {
             Map<String, Object> layer = SqlOperator.queryOneObject(db, "select * from "
                     + Data_store_layer.TableName + " where dsl_name=?", "addDataStore1");
-            assertThat(store_type.DATABASE.getCode(), is(layer.get("store_type")));
+            assertThat(Store_type.DATABASE.getCode(), is(layer.get("store_type")));
             assertThat("新增数据存储层配置信息", is(layer.get("dsl_remark")));
             List<Data_store_layer_added> layerAddeds = SqlOperator.queryList(db, Data_store_layer_added.class,
                     "select * from " + Data_store_layer_added.TableName + " where dsl_id=? " +
@@ -428,7 +428,7 @@ public class DataStoreActionTest extends WebBaseTestCase {
             // 2.错误的数据访问1，dsl_name为空
             bodyString = new HttpClient()
                     .addData("dsl_name", "")
-                    .addData("store_type", store_type.HBASE.getCode())
+                    .addData("store_type", Store_type.HBASE.getCode())
                     .addData("dsl_remark", "新增数据存储层配置信息")
                     .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
                     .post(getActionUrl("addDataStore"))
@@ -439,7 +439,7 @@ public class DataStoreActionTest extends WebBaseTestCase {
             // 3.错误的数据访问2，dsl_name为空格
             bodyString = new HttpClient()
                     .addData("dsl_name", " ")
-                    .addData("store_type", store_type.HBASE.getCode())
+                    .addData("store_type", Store_type.HBASE.getCode())
                     .addData("dsl_remark", "新增数据存储层配置信息")
                     .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
                     .post(getActionUrl("addDataStore"))
@@ -483,7 +483,7 @@ public class DataStoreActionTest extends WebBaseTestCase {
             // 7.错误的数据访问6，dataStoreLayerAttr为空
             bodyString = new HttpClient()
                     .addData("dsl_name", "addDataStore13")
-                    .addData("store_type", store_type.HBASE.getCode())
+                    .addData("store_type", Store_type.HBASE.getCode())
                     .addData("dsl_remark", "新增数据存储层配置信息")
                     .addData("dataStoreLayerAttr", "")
                     .post(getActionUrl("addDataStore"))
@@ -494,7 +494,7 @@ public class DataStoreActionTest extends WebBaseTestCase {
             // 8.错误的数据访问7，dataStoreLayerAttr为空格
             bodyString = new HttpClient()
                     .addData("dsl_name", "addDataStore14")
-                    .addData("store_type", store_type.DATABASE.getCode())
+                    .addData("store_type", Store_type.DATABASE.getCode())
                     .addData("dsl_remark", "新增数据存储层配置信息")
                     .addData("dataStoreLayerAttr", " ")
                     .post(getActionUrl("addDataStore"))
@@ -546,7 +546,7 @@ public class DataStoreActionTest extends WebBaseTestCase {
                     .addData("dslad_id", dslad_id1)
                     .addData("dsla_id", dsla_id1)
                     .addData("dsl_name", "upDataStore1")
-                    .addData("store_type", store_type.HBASE.getCode())
+                    .addData("store_type", Store_type.HBASE.getCode())
                     .addData("dsl_remark", "更新数据存储层配置信息")
                     .addData("dsla_storelayer", new String[]{StoreLayerAdded.FenQuLie.getCode(),
                             StoreLayerAdded.PaiXuLie.getCode()})
@@ -559,7 +559,7 @@ public class DataStoreActionTest extends WebBaseTestCase {
             assertThat(ar.isSuccess(), is(true));
             Map<String, Object> layer = SqlOperator.queryOneObject(db, "select * from "
                     + Data_store_layer.TableName + " where dsl_id=?", dsl_id1);
-            assertThat(store_type.HBASE.getCode(), is(layer.get("store_type")));
+            assertThat(Store_type.HBASE.getCode(), is(layer.get("store_type")));
             assertThat("更新数据存储层配置信息", is(layer.get("dsl_remark")));
             List<Data_store_layer_added> layerAddeds = SqlOperator.queryList(db, Data_store_layer_added.class,
                     "select * from " + Data_store_layer_added.TableName + " where dsl_id=? " +
@@ -598,7 +598,7 @@ public class DataStoreActionTest extends WebBaseTestCase {
                     .addData("dslad_id", dslad_id2)
                     .addData("dsla_id", dsla_id2)
                     .addData("dsl_name", "upDataStore2")
-                    .addData("store_type", store_type.HBASE.getCode())
+                    .addData("store_type", Store_type.HBASE.getCode())
                     .addData("dsl_remark", "更新数据存储层配置信息")
                     .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
                     .post(getActionUrl("updateDataStore"))
@@ -612,7 +612,7 @@ public class DataStoreActionTest extends WebBaseTestCase {
                     .addData("dslad_id", dslad_id2)
                     .addData("dsla_id", dsla_id2)
                     .addData("dsl_name", "upDataStore3")
-                    .addData("store_type", store_type.HBASE.getCode())
+                    .addData("store_type", Store_type.HBASE.getCode())
                     .addData("dsl_remark", "更新数据存储层配置信息")
                     .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
                     .post(getActionUrl("updateDataStore"))
@@ -626,7 +626,7 @@ public class DataStoreActionTest extends WebBaseTestCase {
                     .addData("dslad_id", dslad_id1)
                     .addData("dsla_id", dsla_id1)
                     .addData("dsl_name", "upDataStore4")
-                    .addData("store_type", store_type.HBASE.getCode())
+                    .addData("store_type", Store_type.HBASE.getCode())
                     .addData("dsl_remark", "更新数据存储层配置信息")
                     .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
                     .post(getActionUrl("updateDataStore"))
@@ -640,7 +640,7 @@ public class DataStoreActionTest extends WebBaseTestCase {
                     .addData("dslad_id", "")
                     .addData("dsla_id", dsla_id1)
                     .addData("dsl_name", "upDataStore5")
-                    .addData("store_type", store_type.HBASE.getCode())
+                    .addData("store_type", Store_type.HBASE.getCode())
                     .addData("dsl_remark", "更新数据存储层配置信息")
                     .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
                     .post(getActionUrl("updateDataStore"))
@@ -654,7 +654,7 @@ public class DataStoreActionTest extends WebBaseTestCase {
                     .addData("dslad_id", " ")
                     .addData("dsla_id", dsla_id1)
                     .addData("dsl_name", "upDataStore6")
-                    .addData("store_type", store_type.HBASE.getCode())
+                    .addData("store_type", Store_type.HBASE.getCode())
                     .addData("dsl_remark", "更新数据存储层配置信息")
                     .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
                     .post(getActionUrl("updateDataStore"))
@@ -668,7 +668,7 @@ public class DataStoreActionTest extends WebBaseTestCase {
                     .addData("dslad_id", 1)
                     .addData("dsla_id", dsla_id1)
                     .addData("dsl_name", "upDataStore7")
-                    .addData("store_type", store_type.HBASE.getCode())
+                    .addData("store_type", Store_type.HBASE.getCode())
                     .addData("dsl_remark", "更新数据存储层配置信息")
                     .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
                     .post(getActionUrl("updateDataStore"))
@@ -682,7 +682,7 @@ public class DataStoreActionTest extends WebBaseTestCase {
                     .addData("dslad_id", dslad_id1)
                     .addData("dsla_id", "")
                     .addData("dsl_name", "upDataStore8")
-                    .addData("store_type", store_type.HBASE.getCode())
+                    .addData("store_type", Store_type.HBASE.getCode())
                     .addData("dsl_remark", "更新数据存储层配置信息")
                     .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
                     .post(getActionUrl("updateDataStore"))
@@ -696,7 +696,7 @@ public class DataStoreActionTest extends WebBaseTestCase {
                     .addData("dslad_id", dslad_id1)
                     .addData("dsla_id", " ")
                     .addData("dsl_name", "upDataStore9")
-                    .addData("store_type", store_type.HBASE.getCode())
+                    .addData("store_type", Store_type.HBASE.getCode())
                     .addData("dsl_remark", "更新数据存储层配置信息")
                     .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
                     .post(getActionUrl("updateDataStore"))
@@ -710,7 +710,7 @@ public class DataStoreActionTest extends WebBaseTestCase {
                     .addData("dslad_id", dslad_id1)
                     .addData("dsla_id", 1)
                     .addData("dsl_name", "upDataStore10")
-                    .addData("store_type", store_type.HBASE.getCode())
+                    .addData("store_type", Store_type.HBASE.getCode())
                     .addData("dsl_remark", "更新数据存储层配置信息")
                     .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
                     .post(getActionUrl("updateDataStore"))
@@ -724,7 +724,7 @@ public class DataStoreActionTest extends WebBaseTestCase {
                     .addData("dslad_id", dslad_id1)
                     .addData("dsla_id", dsla_id1)
                     .addData("dsl_name", "")
-                    .addData("store_type", store_type.HBASE.getCode())
+                    .addData("store_type", Store_type.HBASE.getCode())
                     .addData("dsl_remark", "更新数据存储层配置信息")
                     .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
                     .post(getActionUrl("updateDataStore"))
@@ -738,7 +738,7 @@ public class DataStoreActionTest extends WebBaseTestCase {
                     .addData("dslad_id", dslad_id1)
                     .addData("dsla_id", dsla_id1)
                     .addData("dsl_name", " ")
-                    .addData("store_type", store_type.HBASE.getCode())
+                    .addData("store_type", Store_type.HBASE.getCode())
                     .addData("dsl_remark", "更新数据存储层配置信息")
                     .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
                     .post(getActionUrl("updateDataStore"))
@@ -794,7 +794,7 @@ public class DataStoreActionTest extends WebBaseTestCase {
                     .addData("dslad_id", dslad_id1)
                     .addData("dsla_id", dsla_id1)
                     .addData("dsl_name", "upDataStore13")
-                    .addData("store_type", store_type.DATABASE.getCode())
+                    .addData("store_type", Store_type.DATABASE.getCode())
                     .addData("dsl_remark", "更新数据存储层配置信息")
                     .addData("dataStoreLayerAttr", "")
                     .post(getActionUrl("updateDataStore"))
@@ -808,7 +808,7 @@ public class DataStoreActionTest extends WebBaseTestCase {
                     .addData("dslad_id", dslad_id1)
                     .addData("dsla_id", dsla_id1)
                     .addData("dsl_name", "upDataStore14")
-                    .addData("store_type", store_type.HBASE.getCode())
+                    .addData("store_type", Store_type.HBASE.getCode())
                     .addData("dsl_remark", "更新数据存储层配置信息")
                     .addData("dataStoreLayerAttr", " ")
                     .post(getActionUrl("updateDataStore"))
@@ -869,27 +869,27 @@ public class DataStoreActionTest extends WebBaseTestCase {
         for (int i = 0; i < storeLayer.getRowCount(); i++) {
             long dsl_id = storeLayer.getLong(i, "dsl_id");
             if (dsl_id == dsl_id1) {
-                assertThat(store_type.DATABASE.getCode(), is(storeLayer.getString(i, "store_type")));
+                assertThat(Store_type.DATABASE.getCode(), is(storeLayer.getString(i, "store_type")));
                 assertThat("数据存储层配置测试名称1", is(storeLayer.getString(i, "dsl_name")));
                 assertThat("数据存储层配置测试1", is(storeLayer.getString(i, "dsl_remark")));
             } else if (dsl_id == dsl_id2) {
-                assertThat(store_type.HBASE.getCode(), is(storeLayer.getString(i, "store_type")));
+                assertThat(Store_type.HBASE.getCode(), is(storeLayer.getString(i, "store_type")));
                 assertThat("数据存储层配置测试名称2", is(storeLayer.getString(i, "dsl_name")));
                 assertThat("数据存储层配置测试2", is(storeLayer.getString(i, "dsl_remark")));
             } else if (dsl_id == dsl_id3) {
-                assertThat(store_type.SOLR.getCode(), is(storeLayer.getString(i, "store_type")));
+                assertThat(Store_type.SOLR.getCode(), is(storeLayer.getString(i, "store_type")));
                 assertThat("数据存储层配置测试名称3", is(storeLayer.getString(i, "dsl_name")));
                 assertThat("数据存储层配置测试3", is(storeLayer.getString(i, "dsl_remark")));
             } else if (dsl_id == dsl_id4) {
-                assertThat(store_type.ElasticSearch.getCode(), is(storeLayer.getString(i, "store_type")));
+                assertThat(Store_type.ElasticSearch.getCode(), is(storeLayer.getString(i, "store_type")));
                 assertThat("数据存储层配置测试名称4", is(storeLayer.getString(i, "dsl_name")));
                 assertThat("数据存储层配置测试4", is(storeLayer.getString(i, "dsl_remark")));
             } else if (dsl_id == dsl_id5) {
-                assertThat(store_type.MONGODB.getCode(), is(storeLayer.getString(i, "store_type")));
+                assertThat(Store_type.MONGODB.getCode(), is(storeLayer.getString(i, "store_type")));
                 assertThat("数据存储层配置测试名称5", is(storeLayer.getString(i, "dsl_name")));
                 assertThat("数据存储层配置测试5", is(storeLayer.getString(i, "dsl_remark")));
             } else if (dsl_id == dsl_id6) {
-                assertThat(store_type.DATABASE.getCode(), is(storeLayer.getString(i, "store_type")));
+                assertThat(Store_type.DATABASE.getCode(), is(storeLayer.getString(i, "store_type")));
                 assertThat("数据存储层配置测试名称6", is(storeLayer.getString(i, "dsl_name")));
                 assertThat("数据存储层配置测试6", is(storeLayer.getString(i, "dsl_remark")));
             }
@@ -913,7 +913,7 @@ public class DataStoreActionTest extends WebBaseTestCase {
         Map<Object, Object> dataForMap = ar.getDataForMap();
         List<Map<String, Object>> layerAndAdded = (List<Map<String, Object>>) dataForMap.get("layerAndAdded");
         List<Map<String, Object>> layerAndAttr = (List<Map<String, Object>>) dataForMap.get("layerAndAttr");
-        assertThat(dataForMap.get("store_type"), is(store_type.DATABASE.getCode()));
+        assertThat(dataForMap.get("store_type"), is(Store_type.DATABASE.getCode()));
         assertThat("数据存储层配置测试名称1", is(dataForMap.get("dsl_name")));
         assertThat("数据存储层配置测试1", is(dataForMap.get("dsl_remark")));
         for (Map<String, Object> map : layerAndAdded) {
@@ -953,7 +953,7 @@ public class DataStoreActionTest extends WebBaseTestCase {
         dataForMap = ar.getDataForMap();
         layerAndAdded = (List<Map<String, Object>>) dataForMap.get("layerAndAdded");
         layerAndAttr = (List<Map<String, Object>>) dataForMap.get("layerAndAttr");
-        assertThat(dataForMap.get("store_type"), is(store_type.DATABASE.getCode()));
+        assertThat(dataForMap.get("store_type"), is(Store_type.DATABASE.getCode()));
         assertThat("数据存储层配置测试名称6", is(dataForMap.get("dsl_name")));
         assertThat("数据存储层配置测试6", is(dataForMap.get("dsl_remark")));
         assertThat(layerAndAdded.isEmpty(), is(true));

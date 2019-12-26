@@ -2,6 +2,9 @@ package hrds.agent.job.biz.core.dbstage.service;
 
 import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.DocClass;
+import fd.ng.core.annotation.Method;
+import fd.ng.core.annotation.Param;
+import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.*;
 import hrds.agent.job.biz.utils.ColumnTool;
@@ -22,8 +25,8 @@ import org.slf4j.LoggerFactory;
 import java.sql.*;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.*;
+import java.util.Date;
 
 @DocClass(desc = "根据页面所选的表和字段对jdbc所返回的meta信息进行解析", author = "zxz", createdate = "2019/12/4 11:17")
 public class CollectTableHandleParse {
@@ -32,9 +35,16 @@ public class CollectTableHandleParse {
 	public static final String STRSPLIT = "^";
 
 	@SuppressWarnings("unchecked")
+	@Method(desc = "根据数据源信息和采集表信息得到卸数元信息", logicStep = "" +
+			"1、根据数据源信息和采集表信息抽取SQL" +
+			"2、根据数据源信息和抽取SQL，执行SQL，获取")
+	@Param(name = "sourceDataConfBean", desc = "数据库采集,DB文件采集数据源配置信息", range = "不为空")
+	@Param(name = "collectTableBean", desc = "数据库采集表配置信息", range = "不为空")
+	@Return(desc = "卸数阶段元信息", range = "不为空")
 	public static TableBean generateTableInfo(SourceDataConfBean sourceDataConfBean,
 	                                          CollectTableBean collectTableBean) throws Exception {
 		TableBean tableBean = new TableBean();
+		//1、根据数据源信息和采集表信息抽取SQL
 		String collectSQL = getCollectSQL(sourceDataConfBean, collectTableBean);
 		tableBean.setCollectSQL(collectSQL);
 		ResultSet resultSet = getResultSet(sourceDataConfBean, collectSQL);

@@ -443,6 +443,12 @@ public class JobConfigurationTest extends WebBaseTestCase {
             num = SqlOperator.queryNumber(db, "select count(1) from " + Etl_resource.TableName +
                     "  where etl_sys_cd=?", EtlSysCd).orElseThrow(() -> new RuntimeException("count fail!"));
             assertThat("此条数据删除后，记录数应该为0", num, is(0L));
+            SqlOperator.execute(db, "delete from " + Etl_resource.TableName + " where resource_type=?",
+                    "resource");
+            // 判断Etl_resource数据是否被删除
+            num = SqlOperator.queryNumber(db, "select count(1) from " + Etl_resource.TableName +
+                    "  where resource_type=?", "resource").orElseThrow(() -> new RuntimeException("count fail!"));
+            assertThat("此条数据删除后，记录数应该为0", num, is(0L));
             // 8.测试完成后删除Etl_job_resource_rela表测试数据
             SqlOperator.execute(db, "delete from " + Etl_job_resource_rela.TableName +
                     " where etl_sys_cd=?", EtlSysCd);
@@ -5697,5 +5703,31 @@ public class JobConfigurationTest extends WebBaseTestCase {
             assertThat(ar.isSuccess(), is(false));
         }
     }
+
+    @Method(desc = "上传Excel文件",
+            logicStep = "1.正常的数据访问1，数据都正常" +
+                    "2.错误的数据访问1，文件不存在")
+    @Test
+    public void uploadExcelFile() {
+        // 1.正常的数据访问1，数据都正常
+        String bodyString = new HttpClient()
+                .addData("file", "D:\\Develop\\githup\\hrsv5\\hrds_C\\src\\main\\java\\upload\\" +
+                        "Etl_resource.xlsx")
+                .post(getActionUrl("uploadExcelFile"))
+                .getBodyString();
+        ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(true));
+        // 2.错误的数据访问1，文件不存在
+        bodyString = new HttpClient()
+                .addData("file", "c:\\Develop\\githup\\hrsv5\\hrds_C\\src\\main\\java\\upload\\" +
+                        "Etl_resources.xlsx")
+                .post(getActionUrl("uploadExcelFile"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(false));
+    }
+
 }
 

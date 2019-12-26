@@ -30,6 +30,7 @@ import it.uniroma1.dis.wsngroup.gexf4j.core.impl.data.AttributeListImpl;
 import it.uniroma1.dis.wsngroup.gexf4j.core.impl.viz.PositionImpl;
 import org.apache.commons.lang.StringUtils;
 
+import java.io.IOException;
 import java.io.StringWriter;
 import java.util.*;
 
@@ -333,7 +334,7 @@ public class MonitorAction extends BaseAction {
         }
     }
 
-    @Method(desc = "监控作业依赖信息（单作业依赖）",
+    @Method(desc = "监控作业依赖信息（单作业搜索）",
             logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制" +
                     "2.判断工程是否存在" +
                     "3.判断当前工程下作业是否存在" +
@@ -440,7 +441,7 @@ public class MonitorAction extends BaseAction {
         return topJob;
     }
 
-    @Method(desc = "监控依赖作业全作业搜索",
+    @Method(desc = "监控依赖作业(全作业搜索)",
             logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制" +
                     "2.判断工程是否存在" +
                     "3.设置gexf头信息" +
@@ -610,12 +611,8 @@ public class MonitorAction extends BaseAction {
             outputXml = outputXml.replaceAll(head_1, head).replace("\n", "");
             // 19.返回gexf格式的数据
             return outputXml;
-        } catch (
-                Exception e) {
-            if (e instanceof BusinessException)
-                throw (BusinessException) e;
-            else
-                throw new AppSystemException(e);
+        } catch (IOException e) {
+            throw new AppSystemException(e);
         }
 
     }
