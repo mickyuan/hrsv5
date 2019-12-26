@@ -160,7 +160,7 @@ public class DataQueryActionTest extends WebBaseTestCase {
 				sourceFileAttribute.setMeta_info("init-hll");
 				sourceFileAttribute.setStorage_date(String.valueOf(20190901 + i));
 				sourceFileAttribute.setStorage_time(DateUtil.getSysTime());
-				sourceFileAttribute.setFile_size(BigDecimal.valueOf(1024));
+				sourceFileAttribute.setFile_size(1024L);
 				sourceFileAttribute.setFile_type(FileType.WenDang.getCode());
 				sourceFileAttribute.setFile_suffix("init-hll");
 				sourceFileAttribute.setSource_path("init-hll");
@@ -714,6 +714,7 @@ public class DataQueryActionTest extends WebBaseTestCase {
 	public void cancelApply() {
 
 	}
+
 	@Test
 	public void myApplyRecord() {
 
