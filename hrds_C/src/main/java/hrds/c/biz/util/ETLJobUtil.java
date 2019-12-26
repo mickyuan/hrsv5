@@ -6,11 +6,15 @@ import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.SqlOperator;
+import fd.ng.web.conf.WebinfoConf;
 import fd.ng.web.util.Dbo;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
+import org.apache.commons.lang.StringUtils;
 
+import java.io.File;
 import java.util.List;
+import java.util.Map;
 
 @DocClass(desc = "作业调度工程工具类", author = "dhw", createdate = "2019/11/26 11:11")
 public class ETLJobUtil {
@@ -240,6 +244,65 @@ public class ETLJobUtil {
         // 3.根据工程编号查询工程名称,工程存在，工程名称肯定存在，所以不需要判断结果集是否为空
         return Dbo.queryOneColumnList("select etl_sys_name from " + Etl_sys.TableName +
                 " where etl_sys_cd=? and user_id=?", etl_sys_cd, user_id).get(0).toString();
+    }
+
+    @Method(desc = "获取文件全路径",
+            logicStep = "1.数据可访问权限处理方式，该方法不需要权限验证" +
+                    "2.获取文件默认上传路径" +
+                    "3.判断文件是否以文件分隔符结尾，不是则拼接分隔符" +
+                    "4.如果文件名为空则返回文件默认路径")
+    @Param(name = "excelName", desc = "文件名", range = "无限制", nullable = true)
+    @Return(desc = "返回文件全路径", range = "无限制")
+    public static String getFilePath(String fileName) {
+        // 1.数据可访问权限处理方式，该方法不需要权限验证
+        // 2.获取文件默认上传路径
+        String savedDir = WebinfoConf.FileUpload_SavedDirName;
+        // 3.判断文件是否以文件分隔符结尾,不是则拼接分隔符
+        if (!savedDir.endsWith(File.separator)) {
+            savedDir = savedDir + File.separator;
+        }
+        // 4.如果文件名为空则返回文件默认路径
+        if (StringUtil.isBlank(fileName)) {
+            return savedDir + "download" + File.separator;
+        } else {
+            return savedDir + fileName;
+        }
+    }
+
+    @Method(desc = "查询当前用户对应工程信息",
+            logicStep = "1.数据可访问权限处理方式，根据user_id进行权限验证" +
+                    "2.判断remarks是否为空，不为空则分割获取部署工程的redis ip与port并封装数据返回" +
+                    "3.返回当前用户对应工程信息")
+    @Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
+    @Param(name = "user_id", desc = "创建工程用户ID", range = "新增用户时生成")
+    @Return(desc = "返回当前用户对应工程信息", range = "不能为空")
+    public static Map<String, Object> getEtlSysByCd(String etl_sys_cd, long user_id) {
+        // 1.数据可访问权限处理方式，根据user_id进行权限验证
+        Map<String, Object> etlSys = Dbo.queryOneObject("select etl_sys_cd,etl_sys_name,comments," +
+                "etl_serv_ip,etl_serv_port,user_name,user_pwd,serv_file_path,remarks from " + Etl_sys.TableName
+                + " where user_id=? and etl_sys_cd=? order by etl_sys_cd", user_id, etl_sys_cd);
+        // 2.判断remarks是否为空，不为空则分割获取部署工程的redis ip与port并封装数据返回
+        String remarks = String.valueOf(etlSys.get("remarks"));
+        if (StringUtils.isNotBlank(remarks)) {
+            String[] ip_port = remarks.split(":");
+            etlSys.put("redisIp", ip_port[0]);
+            etlSys.put("redisPort", ip_port[1]);
+        }
+        // 3.返回当前用户对应工程信息
+        return etlSys;
+    }
+
+    @Method(desc = "根据工程编号作业名称获取作业信息",
+            logicStep = "1.数据可访问权限处理方式，该方法不需要权限验证" +
+                    "2.获取作业信息")
+    @Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
+    @Param(name = "etl_job", desc = "作业名称", range = "新增作业时生成")
+    @Return(desc = "返回作业信息", range = "无限制")
+    public static Map<String, Object> getEtlJobByJob(String etl_sys_cd, String etl_job) {
+        // 1.数据可访问权限处理方式，该方法不需要权限验证
+        // 2.获取作业信息
+        return Dbo.queryOneObject("select * FROM " + Etl_job_def.TableName +
+                " where etl_sys_cd=? AND etl_job=?", etl_sys_cd, etl_job);
     }
 
 }

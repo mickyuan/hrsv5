@@ -469,6 +469,9 @@ public class DataSourceAction extends BaseAction {
             checkAgentField(agent_ip, agent_port);
             // 3.通过文件名称获取文件
             File uploadedFile = FileUploadUtil.getUploadedFile(file);
+            if (!uploadedFile.exists()) {
+                throw new BusinessException("上传文件不存在！");
+            }
             // 4.使用base64解码
             String strTemp = new String(Base64.getDecoder().decode(Files.readAllBytes(
                     uploadedFile.toPath())));

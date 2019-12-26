@@ -12,6 +12,7 @@ import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.db.meta.MetaOperator;
 import fd.ng.db.meta.TableMeta;
 import fd.ng.db.resultset.Result;
+import fd.ng.web.annotation.UploadFile;
 import fd.ng.web.util.Dbo;
 import fd.ng.web.util.FileUploadUtil;
 import fd.ng.web.util.RequestUtil;
@@ -21,7 +22,6 @@ import hrds.c.biz.util.ETLJobUtil;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.*;
 import hrds.commons.entity.*;
-import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.DboExecute;
 import org.apache.commons.lang.StringUtils;
@@ -452,8 +452,7 @@ public class JobConfiguration extends BaseAction {
             throw new BusinessException("当前工程下作业已不存在！");
         }
         // 4.返回根据工程编号、作业名称查询作业定义信息，实体字段基本都需要所以查询所有字段
-        Map<String, Object> etlJobDef = Dbo.queryOneObject("select * FROM " + Etl_job_def.TableName +
-                " where etl_sys_cd=? AND etl_job=?", etl_sys_cd, etl_job);
+        Map<String, Object> etlJobDef = ETLJobUtil.getEtlJobByJob(etl_sys_cd, etl_job);
         List<Etl_dependency> dependencyList = Dbo.queryList(Etl_dependency.class, "select pre_etl_sys_cd" +
                 ",pre_etl_job,status FROM " + Etl_dependency.TableName +
                 " WHERE etl_sys_cd=? AND etl_job=?", etl_sys_cd, etl_job);
@@ -1224,8 +1223,7 @@ public class JobConfiguration extends BaseAction {
     @Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
     @Param(name = "resource_type", desc = "资源类型", range = "新增资源时生成")
     @Param(name = "resource_max", desc = "资源阀值", range = "大于0的正整数")
-    public void updateEtlResource(String etl_sys_cd, String resource_type,
-                                  long resource_max) {
+    public void updateEtlResource(String etl_sys_cd, String resource_type, long resource_max) {
         // 1.数据可访问权限处理方式，通过user_id进行权限控制
         // 2.判断当前工程是否还存在
         if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
@@ -1771,7 +1769,7 @@ public class JobConfiguration extends BaseAction {
 
     @Method(desc = "上传Excel文件",
             logicStep = "1.数据可访问权限处理方式，该方法不需要权限验证" +
-                    "2.通过文件名称获取文件" +
+                    "2.获取文件" +
                     "3.从xlsx/xls文件创建的输入流" +
                     "4.根据文件后缀名创建不同的工作薄Workbook" +
                     "4.1读取2007版，以.xlsx结尾" +
@@ -1791,15 +1789,16 @@ public class JobConfiguration extends BaseAction {
                     "15.不为空时放入List" +
                     "16.将excel数据导入数据库")
     @Param(name = "file", desc = "上传文件", range = "以每个模块对应表名为文件名")
+    @UploadFile
     public void uploadExcelFile(String file) {
         // 1.数据可访问权限处理方式，该方法不需要权限验证
         FileInputStream fis = null;
         Workbook workBook = null;
         try {
-            // 2.通过文件名称获取文件
+            // 2.获取文件
             File uploadedFile = FileUploadUtil.getUploadedFile(file);
             if (!uploadedFile.exists()) {
-                throw new BusinessException("文件不存在！");
+                throw new BusinessException("上传文件不存在！");
             }
             // 3.从xlsx/xls文件创建的输入流
             String path = uploadedFile.toPath().toString();
@@ -1870,10 +1869,9 @@ public class JobConfiguration extends BaseAction {
                 }
             }
             // 16.将excel数据导入数据库
-            String substring = file.substring(file.lastIndexOf(File.separator) + 1, file.indexOf("."));
-            insertData(listMap, substring);
+            insertData(listMap, FileUploadUtil.getOriginalFileName(file));
         } catch (FileNotFoundException e) {
-            throw new AppSystemException(e);
+            throw new BusinessException("导入excel文件数据失败！");
         }
     }
 
@@ -1884,63 +1882,58 @@ public class JobConfiguration extends BaseAction {
     @Param(name = "tableName", desc = "表名称", range = "无限制")
     private void insertData(List<Map<String, String>> listMap, String tableName) {
         // 1.数据可访问权限处理方式，该方法不需要权限验证
-        try {
-            // 2.根据不同的表处理不同的表数据，循环入库
-            for (Map<String, String> mapInfo : listMap) {
-                if (mapInfo != null && !mapInfo.isEmpty()) {
-                    switch (tableName.toLowerCase()) {
-                        // 作业表
-                        case Etl_job_def.TableName:
-                            Etl_job_def etlJobDef = new Etl_job_def();
-                            etlJobDef = (Etl_job_def) setFields(mapInfo, etlJobDef);
-                            etlJobDef.add(Dbo.db());
-                            break;
-                        // 任务表
-                        case Etl_sub_sys_list.TableName:
-                            Etl_sub_sys_list etlSubSysList = new Etl_sub_sys_list();
-                            etlSubSysList = (Etl_sub_sys_list) setFields(mapInfo, etlSubSysList);
-                            etlSubSysList.add(Dbo.db());
-                            break;
-                        // 资源定义表
-                        case Etl_resource.TableName:
-                            Etl_resource etlResource = new Etl_resource();
-                            etlResource = (Etl_resource) setFields(mapInfo, etlResource);
-                            String resource_type = etlResource.getResource_type();
-                            if (!thrift.equals(resource_type) && !yarn.equals(resource_type)) {
-                                etlResource.add(Dbo.db());
-                            }
-                            break;
-                        // 资源分配表
-                        case Etl_job_resource_rela.TableName:
-                            Etl_job_resource_rela etlJobResourceRela = new Etl_job_resource_rela();
-                            etlJobResourceRela = (Etl_job_resource_rela) setFields(mapInfo, etlJobResourceRela);
-                            etlJobResourceRela.add(Dbo.db());
-                            break;
-                        // 系统参数表
-                        case Etl_para.TableName:
-                            Etl_para etlPara = new Etl_para();
-                            etlPara = (Etl_para) setFields(mapInfo, etlPara);
-                            if (!txDate.equals(etlPara.getPara_cd()) && !txDateNext.equals(etlPara.getPara_cd())
-                                    && !txDatePre.equals(etlPara.getPara_cd())) {
-                                etlPara.add(Dbo.db());
-                            }
-                            break;
-                        // 作业依赖表
-                        case Etl_dependency.TableName:
-                            Etl_dependency etlDependency = new Etl_dependency();
-                            etlDependency = (Etl_dependency) setFields(mapInfo, etlDependency);
-                            etlDependency.add(Dbo.db());
-                            break;
-                        default:
-                            throw new BusinessException("导入的数据不知道是什么表的信息!");
-                    }
+        // 2.根据不同的表处理不同的表数据，循环入库
+        for (Map<String, String> mapInfo : listMap) {
+            if (mapInfo != null && !mapInfo.isEmpty()) {
+                switch (tableName.toLowerCase()) {
+                    // 作业表
+                    case Etl_job_def.TableName:
+                        Etl_job_def etlJobDef = new Etl_job_def();
+                        etlJobDef = (Etl_job_def) setFields(mapInfo, etlJobDef);
+                        etlJobDef.add(Dbo.db());
+                        break;
+                    // 任务表
+                    case Etl_sub_sys_list.TableName:
+                        Etl_sub_sys_list etlSubSysList = new Etl_sub_sys_list();
+                        etlSubSysList = (Etl_sub_sys_list) setFields(mapInfo, etlSubSysList);
+                        etlSubSysList.add(Dbo.db());
+                        break;
+                    // 资源定义表
+                    case Etl_resource.TableName:
+                        Etl_resource etlResource = new Etl_resource();
+                        etlResource = (Etl_resource) setFields(mapInfo, etlResource);
+                        String resource_type = etlResource.getResource_type();
+                        if (!thrift.equals(resource_type) && !yarn.equals(resource_type)) {
+                            etlResource.add(Dbo.db());
+                        }
+                        break;
+                    // 资源分配表
+                    case Etl_job_resource_rela.TableName:
+                        Etl_job_resource_rela etlJobResourceRela = new Etl_job_resource_rela();
+                        etlJobResourceRela = (Etl_job_resource_rela) setFields(mapInfo, etlJobResourceRela);
+                        etlJobResourceRela.add(Dbo.db());
+                        break;
+                    // 系统参数表
+                    case Etl_para.TableName:
+                        Etl_para etlPara = new Etl_para();
+                        etlPara = (Etl_para) setFields(mapInfo, etlPara);
+                        if (!txDate.equals(etlPara.getPara_cd()) && !txDateNext.equals(etlPara.getPara_cd())
+                                && !txDatePre.equals(etlPara.getPara_cd())) {
+                            etlPara.add(Dbo.db());
+                        }
+                        break;
+                    // 作业依赖表
+                    case Etl_dependency.TableName:
+                        Etl_dependency etlDependency = new Etl_dependency();
+                        etlDependency = (Etl_dependency) setFields(mapInfo, etlDependency);
+                        etlDependency.add(Dbo.db());
+                        break;
+                    default:
+                        throw new BusinessException("导入的数据不知道是什么表的信息!");
                 }
             }
-        } catch (IllegalAccessException e) {
-            throw new AppSystemException(e);
-        } catch (InstantiationException e) {
-            throw new BusinessException("获取实例对象失败！");
         }
+
     }
 
     @Method(desc = "封装实体字段属性（map转实体）",
@@ -1956,44 +1949,49 @@ public class JobConfiguration extends BaseAction {
                     "10.根据字段不同类型处理不同情况")
     @Param(name = "mapInfo", desc = "当前表对应每列数据", range = "无限制")
     @Param(name = "obj", desc = "表实体对象", range = "无限制")
-    private Object setFields(Map<String, String> mapInfo, Object obj) throws IllegalAccessException,
-            InstantiationException {
-        // 1.数据可访问权限处理方式，该方法不需要权限验证
-        // 2.获取当前对象的实例
-        obj = obj.getClass().newInstance();
-        // 3.获取所有列字段信息
-        Map<String, Field> fields = BeanUtil.getDeclaredFields(obj.getClass());
-        // 4.遍历列字段信息
-        for (Map.Entry<String, Field> fieldEntry : fields.entrySet()) {
-            // 5.获取字段对象
-            Field field = fieldEntry.getValue();
-            // 6.获取修饰符，是java.lang.reflect.Modifier的静态属性
-            int mod = field.getModifiers();
-            // 7.判断修饰符是否包含static与final，包含则跳过
-            if (Modifier.isStatic(mod) || Modifier.isFinal(mod)) {
-                continue;
+    private Object setFields(Map<String, String> mapInfo, Object obj) {
+        try {
+            // 1.数据可访问权限处理方式，该方法不需要权限验证
+            // 2.获取当前对象的实例
+            obj = obj.getClass().newInstance();
+            // 3.获取所有列字段信息
+            Map<String, Field> fields = BeanUtil.getDeclaredFields(obj.getClass());
+            // 4.遍历列字段信息
+            for (Map.Entry<String, Field> fieldEntry : fields.entrySet()) {
+                // 5.获取字段对象
+                Field field = fieldEntry.getValue();
+                // 6.获取修饰符，是java.lang.reflect.Modifier的静态属性
+                int mod = field.getModifiers();
+                // 7.判断修饰符是否包含static与final，包含则跳过
+                if (Modifier.isStatic(mod) || Modifier.isFinal(mod)) {
+                    continue;
+                }
+                // 8.使反射时可以访问私有变量
+                field.setAccessible(true);
+                // 9.获取字段类型
+                String filedTypeName = field.getType().getName();
+                // 10.根据字段不同类型处理不同情况
+                if (filedTypeName.endsWith("Integer")) {
+                    field.set(obj, Integer.valueOf(mapInfo.get(fieldEntry.getKey())));
+                } else if (filedTypeName.endsWith("Long")) {
+                    field.set(obj, Long.valueOf(mapInfo.get(fieldEntry.getKey())));
+                } else if (filedTypeName.endsWith("BigDecimal")) {
+                    field.set(obj, new BigDecimal(mapInfo.get(fieldEntry.getKey())));
+                } else if (filedTypeName.endsWith("String")) {
+                    field.set(obj, mapInfo.get(fieldEntry.getKey()));
+                } else {
+                    throw new BusinessException("不支持的数据类型转化！" + filedTypeName);
+                }
             }
-            // 8.使反射时可以访问私有变量
-            field.setAccessible(true);
-            // 9.获取字段类型
-            String filedTypeName = field.getType().getName();
-            // 10.根据字段不同类型处理不同情况
-            if (filedTypeName.endsWith("Integer")) {
-                field.set(obj, Integer.valueOf(mapInfo.get(fieldEntry.getKey())));
-            } else if (filedTypeName.endsWith("Long")) {
-                field.set(obj, Long.valueOf(mapInfo.get(fieldEntry.getKey())));
-            } else if (filedTypeName.endsWith("BigDecimal")) {
-                field.set(obj, new BigDecimal(mapInfo.get(fieldEntry.getKey())));
-            } else if (filedTypeName.endsWith("String")) {
-                field.set(obj, mapInfo.get(fieldEntry.getKey()));
-            } else {
-                throw new BusinessException("不支持的数据类型转化！" + filedTypeName);
-            }
+            return obj;
+        } catch (IllegalAccessException e) {
+            throw new BusinessException("非法访问，设置字段信息失败，有可能是类型转换错误！");
+        } catch (InstantiationException e) {
+            throw new BusinessException("实例化对象失败,obj=" + obj);
         }
-        return obj;
     }
 
-    @Method(desc = "下载excel文件",
+    @Method(desc = "下载文件",
             logicStep = "1.数据可访问权限处理方式，该方法不需要权限验证" +
                     "2.获取本地文件路径" +
                     "3.清空response" +
@@ -2004,25 +2002,26 @@ public class JobConfiguration extends BaseAction {
                     "6.创建输出流" +
                     "7.将输入流写入到浏览器中" +
                     "8.下载完删除下载文件")
-    @Param(name = "excelName", desc = "生成excel文件名", range = "对应模块数据库表名称，如：Etl_sub_sys_list")
-    public void downloadExcelFile(String excelName) {
+    @Param(name = "fileName", desc = "下载文件名", range = "无限制")
+    public void downloadFile(String fileName) {
         // 1.数据可访问权限处理方式，该方法不需要权限验证
         OutputStream out = null;
         InputStream in = null;
+        String filePath = null;
         try {
             // 2.获取本地文件路径
-            String filePath = RequestUtil.getRequest().getServletContext().getRealPath("/upload") + excelName;
+            filePath = ETLJobUtil.getFilePath(fileName);
             // 3.清空response
             ResponseUtil.getResponse().reset();
             // 4.设置响应头，控制浏览器下载该文件
             if (RequestUtil.getRequest().getHeader("User-Agent").toLowerCase().indexOf("firefox") > 0) {
                 // 4.1firefox浏览器
                 ResponseUtil.getResponse().setHeader("content-disposition", "attachment;filename="
-                        + new String(excelName.getBytes(CodecUtil.UTF8_CHARSET), DataBaseCode.ISO_8859_1.getCode()));
+                        + new String(fileName.getBytes(CodecUtil.UTF8_CHARSET), DataBaseCode.ISO_8859_1.getCode()));
             } else {
                 // 4.2其它浏览器
                 ResponseUtil.getResponse().setHeader("content-disposition", "attachment;filename="
-                        + Base64.getEncoder().encodeToString(excelName.getBytes(CodecUtil.UTF8_CHARSET)));
+                        + Base64.getEncoder().encodeToString(fileName.getBytes(CodecUtil.UTF8_CHARSET)));
             }
             ResponseUtil.getResponse().setContentType("APPLICATION/OCTET-STREAM");
             // 5.读取要下载的文件，保存到文件输入流
@@ -2045,7 +2044,7 @@ public class JobConfiguration extends BaseAction {
         } catch (FileNotFoundException e) {
             throw new BusinessException("文件不存在，可能目录不存在！");
         } catch (IOException e) {
-            throw new AppSystemException(e);
+            throw new BusinessException("下载文件失败！");
         }
     }
 
@@ -2088,8 +2087,7 @@ public class JobConfiguration extends BaseAction {
             // 5.创建单元格对象,批注插入到一行
             XSSFRow headRow = sheet.createRow(0);
             // 6.得到上传文件的保存目录
-            String savePath = RequestUtil.getRequest().getSession().getServletContext()
-                    .getRealPath(File.separator + "upload") + File.separator + tableName + xlsxSuffix;
+            String savePath = ETLJobUtil.getFilePath(tableName) + xlsxSuffix;
             File file = new File(savePath);
             // 7.判断文件是否存在
             if (!file.exists()) {
@@ -2156,7 +2154,7 @@ public class JobConfiguration extends BaseAction {
         } catch (FileNotFoundException e) {
             throw new BusinessException("文件不存在！");
         } catch (IOException e) {
-            throw new AppSystemException(e);
+            throw new BusinessException("生成excel文件失败！");
         }
     }
 

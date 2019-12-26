@@ -10,7 +10,6 @@ import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
-import fd.ng.web.util.RequestUtil;
 import hrds.c.biz.util.DownloadLogUtil;
 import hrds.c.biz.util.ETLAgentDeployment;
 import hrds.c.biz.util.ETLJobUtil;
@@ -21,7 +20,6 @@ import hrds.commons.codes.Main_Server_Sync;
 import hrds.commons.codes.Pro_Type;
 import hrds.commons.entity.Etl_resource;
 import hrds.commons.entity.Etl_sys;
-import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.DboExecute;
@@ -29,7 +27,6 @@ import hrds.commons.utils.PropertyParaValue;
 import hrds.commons.utils.ReadLog;
 import hrds.commons.utils.jsch.SCPFileSender;
 import hrds.commons.utils.jsch.SFTPChannel;
-import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -65,17 +62,7 @@ public class EltSysAction extends BaseAction {
             throw new BusinessException("当前工程已不存在，可能被删除！");
         }
         // 3.根据工程编号查询工程信息
-        Map<String, Object> etlSys = Dbo.queryOneObject("select etl_sys_cd,etl_sys_name,comments," +
-                "etl_serv_ip,etl_serv_port,user_name,user_pwd,serv_file_path,remarks from " + Etl_sys.TableName
-                + " where user_id=? and etl_sys_cd=? order by etl_sys_cd", getUserId(), etl_sys_cd);
-        // 4.判断remarks是否为空，不为空则分割获取部署工程的redis ip与port并封装数据返回
-        String remarks = String.valueOf(etlSys.get("remarks"));
-        if (StringUtils.isNotBlank(remarks)) {
-            String[] ip_port = remarks.split(":");
-            etlSys.put("redisIp", ip_port[0]);
-            etlSys.put("redisPort", ip_port[1]);
-        }
-        return etlSys;
+        return ETLJobUtil.getEtlSysByCd(etl_sys_cd, getUserId());
     }
 
     @Method(desc = "新增保存作业调度工程信息",
@@ -220,7 +207,7 @@ public class EltSysAction extends BaseAction {
             throw new BusinessException("当前用户对应的工程已不存在！");
         }
         // 3.根据工程编号获取工程信息
-        Map<String, Object> etlSys = searchEtlSysById(etl_sys_cd);
+        Map<String, Object> etlSys = ETLJobUtil.getEtlSysByCd(etl_sys_cd, getUserId());
         // 4.判断工程是否已部署
         isETLDeploy(etlSys);
         // 5.如果日切方式不是自动日切且工程下作业列表为空，则不能启动
@@ -286,7 +273,7 @@ public class EltSysAction extends BaseAction {
             throw new BusinessException("当前用户对应的工程已不存在！");
         }
         // 3.根据工程编号获取工程信息
-        Map<String, Object> etlSys = searchEtlSysById(etl_sys_cd);
+        Map<String, Object> etlSys = ETLJobUtil.getEtlSysByCd(etl_sys_cd, getUserId());
         // 4.获取系统状态,如果不是运行说明CONTROL还未启动，不能启动TRIGGER
         if (Job_Status.RUNNING != Job_Status.ofEnumByCode(etlSys.get("sys_run_status").toString())) {
             throw new BusinessException("CONTROL还未启动，不能启动TRIGGER");
@@ -318,7 +305,7 @@ public class EltSysAction extends BaseAction {
             throw new BusinessException("当前用户对应的工程已不存在！");
         }
         // 3.根据工程编号获取工程信息
-        Map<String, Object> etlSys = searchEtlSysById(etl_sys_cd);
+        Map<String, Object> etlSys = ETLJobUtil.getEtlSysByCd(etl_sys_cd,getUserId());
         // 4.判断工程是否已部署
         isETLDeploy(etlSys);
         // 5.获取当前日期
@@ -364,7 +351,6 @@ public class EltSysAction extends BaseAction {
     @Param(name = "curr_bath_date", desc = "批量日期", range = "yyyy-MM-dd格式的年月日，如：2019-12-19")
     @Param(name = "isControl", desc = "是否读取Control日志", range = "使用（IsFlag代码项），0代表不是，1代表是")
     public String downloadControlOrTriggerLog(String etl_sys_cd, String curr_bath_date, String isControl) {
-        // fixme 未完成，上传下载默认目录不清楚，原来是在WEB-INF下建一个upload目录
         try {
             // 1.数据可访问权限处理方式，通过user_id进行权限控制
             // 2.验证当前用户对应的工程是否已不存在
@@ -372,7 +358,7 @@ public class EltSysAction extends BaseAction {
                 throw new BusinessException("当前用户对应的工程已不存在！");
             }
             // 3.根据工程编号获取工程信息
-            Map<String, Object> etlSys = searchEtlSysById(etl_sys_cd);
+            Map<String, Object> etlSys = ETLJobUtil.getEtlSysByCd(etl_sys_cd,getUserId());
             // 4.判断工程是否已部署
             isETLDeploy(etlSys);
             // 5.修改批量日期格式
@@ -407,7 +393,7 @@ public class EltSysAction extends BaseAction {
             // 11.执行压缩日志命令
             SFTPChannel.execCommandByJSch(shellSession, compressCommand);
             // 12.获取文件下载路径
-            String localPath = RequestUtil.getRequest().getSession().getServletContext().getRealPath("download");
+            String localPath = ETLJobUtil.getFilePath(null);
             // 13.从服务器下载文件到本地
             DownloadLogUtil.downloadLogFile(logDir, localPath, sftpDetails);
             // 14.下载完删除压缩包
@@ -423,7 +409,7 @@ public class EltSysAction extends BaseAction {
         } catch (JSchException e) {
             throw new BusinessException("与远端服务器进行交互，建立连接失败！");
         } catch (IOException e) {
-            throw new AppSystemException(e);
+            throw new BusinessException("下载日志文件失败！");
         }
     }
 

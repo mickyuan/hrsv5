@@ -67,8 +67,8 @@ public class DownloadLogUtil {
         OutputStream outputStream = null;
         try {
             // 2.通过本地路径以获取本地文件
-            File file = new File(localPath);
-            outputStream = new FileOutputStream(file);
+            File localFile = new File(localPath);
+            outputStream = new FileOutputStream(localFile);
             SCPFileSender scpFileSender = new SCPFileSender();
             // 3.获取连接到sftp服务器的Channel
             SFTPChannel sftpChannel = scpFileSender.getSFTPChannel();

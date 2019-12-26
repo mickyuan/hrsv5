@@ -1,5 +1,7 @@
 package hrds.c.biz.etlmonitor;
 
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.Session;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
@@ -10,15 +12,17 @@ import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
+import hrds.c.biz.util.DownloadLogUtil;
 import hrds.c.biz.util.ETLJobUtil;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.Dispatch_Frequency;
 import hrds.commons.codes.Dispatch_Type;
 import hrds.commons.codes.Job_Status;
 import hrds.commons.entity.*;
-import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.ReadLog;
+import hrds.commons.utils.jsch.SCPFileSender;
+import hrds.commons.utils.jsch.SFTPChannel;
 import it.uniroma1.dis.wsngroup.gexf4j.core.*;
 import it.uniroma1.dis.wsngroup.gexf4j.core.data.Attribute;
 import it.uniroma1.dis.wsngroup.gexf4j.core.data.AttributeClass;
@@ -30,6 +34,7 @@ import it.uniroma1.dis.wsngroup.gexf4j.core.impl.data.AttributeListImpl;
 import it.uniroma1.dis.wsngroup.gexf4j.core.impl.viz.PositionImpl;
 import org.apache.commons.lang.StringUtils;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.*;
@@ -612,7 +617,7 @@ public class MonitorAction extends BaseAction {
             // 19.返回gexf格式的数据
             return outputXml;
         } catch (IOException e) {
-            throw new AppSystemException(e);
+            throw new BusinessException("查看全作业依赖时写gexf格式的文件失败！");
         }
 
     }
@@ -758,4 +763,74 @@ public class MonitorAction extends BaseAction {
         return ReadLog.readAgentLog(logDir, etl_sys.getEtl_serv_ip(), etl_sys.getEtl_serv_port(),
                 etl_sys.getUser_name(), etl_sys.getUser_pwd(), readNum);
     }
+
+    @Method(desc = "下载日志文件到本地",
+            logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制" +
+                    "2.验证当前用户对应的工程是否已不存在" +
+                    "3.获取作业信息" +
+                    "4.获取日志目录" +
+                    "5.打包指令" +
+                    "6.根据工程编号获取工程信息" +
+                    "7.设置主机ip，端口，用户名，密码" +
+                    "8.与远端服务器进行交互，建立连接，发送数据到远端并且接收远端发来的数据" +
+                    "9.执行压缩日志命令" +
+                    "10.远程文件名" +
+                    "11.本地下载路径" +
+                    "12.判断路径是否以分隔符结尾，如果不是加分隔符拼接文件名" +
+                    "13.从服务器下载文件" +
+                    "14.下载完删除压缩包" +
+                    "15.返回文件名")
+    @Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
+    @Param(name = "etl_job", desc = "作业名称", range = "新增作业时生成")
+    @Param(name = "curr_bath_date", desc = "批量日期", range = "yyyy-MM-dd格式的年月日，如：2019-12-19")
+    public String downHistoryJobLog(String etl_sys_cd, String etl_job, String curr_bath_date) {
+        try {
+            // 1.数据可访问权限处理方式，通过user_id进行权限控制
+            // 2.验证当前用户对应的工程是否已不存在
+            if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
+                throw new BusinessException("当前用户对应的工程已不存在！");
+            }
+            // 3.获取作业信息
+            Map<String, Object> etlJobByJob = ETLJobUtil.getEtlJobByJob(etl_sys_cd, etl_job);
+            // 4.获取日志目录
+            String logDir = etlJobByJob.get("log_dic").toString();
+            // 5.打包指令
+            String date = curr_bath_date.replaceAll("-", "");
+            String compressCommand = "tar -zvcPf " + logDir + date + "_" + etl_job + ".tar.gz" + " " + logDir
+                    + etl_job + "_" + date + ".log " + logDir + etl_job + date + "000000error.log ";
+            // 6.根据工程编号获取工程信息
+            Map<String, Object> etlSysInfo = ETLJobUtil.getEtlSysByCd(etl_sys_cd, getUserId());
+            Map<String, String> sftpDetails = new HashMap<>();
+            // 7.设置主机ip，端口，用户名，密码
+            sftpDetails.put(SCPFileSender.HOST, etlSysInfo.get("etl_serv_ip").toString());
+            sftpDetails.put(SCPFileSender.USERNAME, etlSysInfo.get("user_name").toString());
+            sftpDetails.put(SCPFileSender.PASSWORD, etlSysInfo.get("user_pwd").toString());
+            sftpDetails.put(SCPFileSender.PORT, etlSysInfo.get("etl_serv_port").toString());
+            // 8.与远端服务器进行交互，建立连接，发送数据到远端并且接收远端发来的数据
+            Session shellSession = SFTPChannel.getJSchSession(sftpDetails, 0);
+            // 9.执行压缩日志命令
+            SFTPChannel.execCommandByJSch(shellSession, compressCommand);
+            // 10.远程文件名
+            String remoteFileName = date + "_" + etl_job + ".tar.gz";
+            // 11.本地下载路径
+            String localPath = ETLJobUtil.getFilePath(null) + remoteFileName;
+            // 12.判断路径是否以分隔符结尾，如果不是加分隔符拼接文件名
+            if (logDir.endsWith(File.separator)) {
+                logDir = logDir + File.separator + remoteFileName;
+            } else {
+                logDir = logDir + remoteFileName;
+            }
+            // 13.从服务器下载文件
+            DownloadLogUtil.downloadLogFile(logDir, localPath, sftpDetails);
+            // 14.下载完删除压缩包
+            DownloadLogUtil.deleteLogFileBySFTP(logDir, sftpDetails);
+            // 15.返回文件名
+            return remoteFileName;
+        } catch (JSchException e) {
+            throw new BusinessException("与远端服务器进行交互，建立连接失败！");
+        } catch (IOException e) {
+            throw new BusinessException("下载日志文件失败！");
+        }
+    }
+
 }
