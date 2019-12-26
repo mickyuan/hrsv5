@@ -49,7 +49,7 @@ META_INFO                                         VARCHAR(6000) NULL, --META元�
 HBASE_NAME                                        VARCHAR(512) NOT NULL, --HBase对应表名
 STORAGE_DATE                                      CHAR(8) NOT NULL, --入库日期
 STORAGE_TIME                                      CHAR(6) NOT NULL, --入库时间
-FILE_SIZE                                         DECIMAL(16,2) default 0 NOT NULL, --文件大小
+FILE_SIZE                                         BIGINT default 0 NOT NULL, --文件大小
 FILE_TYPE                                         VARCHAR(512) NOT NULL, --文件类型
 FILE_SUFFIX                                       VARCHAR(512) NOT NULL, --文件后缀
 HDFS_STORAGE_PATH                                 VARCHAR(512) NULL, --hdfs储路径
@@ -79,7 +79,7 @@ HBASE_NAME                                        VARCHAR(512) NOT NULL, --系�
 META_INFO                                         VARCHAR(6000) NULL, --META元信息
 STORAGE_DATE                                      CHAR(8) NOT NULL, --入库日期
 STORAGE_TIME                                      CHAR(6) NOT NULL, --入库时间
-FILE_SIZE                                         DECIMAL(16,2) default 0 NOT NULL, --文件大小
+FILE_SIZE                                         BIGINT default 0 NOT NULL, --文件大小
 FILE_TYPE                                         VARCHAR(512) NOT NULL, --文件类型
 FILE_SUFFIX                                       VARCHAR(512) NOT NULL, --文件后缀
 SOURCE_PATH                                       VARCHAR(512) NULL, --文件路径
@@ -666,22 +666,12 @@ CREATE TABLE FTP_TRANSFERED(
 FTP_TRANSFERED_ID                                 BIGINT default 0 NOT NULL, --已传输表id
 FTP_ID                                            BIGINT default 0 NOT NULL, --ftp采集id
 TRANSFERED_NAME                                   VARCHAR(512) NOT NULL, --已传输文件名称
+FILE_PATH                                         VARCHAR(512) NOT NULL, --文件绝对路径
+FTP_FILEMD5                                       VARCHAR(40) NULL, --文件MD5
 FTP_DATE                                          CHAR(8) NOT NULL, --ftp日期
 FTP_TIME                                          CHAR(6) NOT NULL, --ftp时间
 REMARK                                            VARCHAR(512) NULL, --备注
 CONSTRAINT FTP_TRANSFERED_PK PRIMARY KEY(FTP_TRANSFERED_ID)   );
-
---ftp目录表
-DROP TABLE IF EXISTS FTP_FOLDER ;
-CREATE TABLE FTP_FOLDER(
-FTP_FOLDER_ID                                     BIGINT default 0 NOT NULL, --目录表id
-FTP_ID                                            BIGINT default 0 NOT NULL, --ftp采集id
-FTP_FOLDER_NAME                                   VARCHAR(512) NOT NULL, --ftp目录名称
-IS_PROCESSED                                      CHAR(1) NOT NULL, --是否处理过
-FTP_DATE                                          CHAR(8) NOT NULL, --ftp日期
-FTP_TIME                                          CHAR(6) NOT NULL, --ftp时间
-REMARK                                            VARCHAR(512) NULL, --备注
-CONSTRAINT FTP_FOLDER_PK PRIMARY KEY(FTP_FOLDER_ID)   );
 
 --数据存储层配置属性表
 DROP TABLE IF EXISTS DATA_STORE_LAYER_ATTR ;
@@ -767,7 +757,7 @@ CONSTRAINT AGENT_INFO_PK PRIMARY KEY(AGENT_ID)   );
 DROP TABLE IF EXISTS DATASTAGE ;
 CREATE TABLE DATASTAGE(
 JOBKEY                                            BIGINT default 0 NOT NULL, --数据库设置id
-TABLENAME                                         VARCHAR(512) NOT NULL, --表名字
+TABLENAME                                         VARCHAR(512) NOT NULL, --表名
 STAGE                                             VARCHAR(512) NOT NULL, --采集阶段
 STATE                                             VARCHAR(2) NOT NULL, --所处状态
 PREVIOUSSTAGE                                     VARCHAR(512) NULL, --上一阶段

@@ -38,8 +38,8 @@ public class Source_file_detailed extends ProjectTableEntity
 	private String hbase_name;
 	@DocBean(name ="storage_date",value="入库日期:",dataType = String.class,required = true)
 	private String storage_date;
-	@DocBean(name ="file_size",value="文件大小:",dataType = BigDecimal.class,required = true)
-	private BigDecimal file_size;
+	@DocBean(name ="file_size",value="文件大小:",dataType = Long.class,required = true)
+	private Long file_size;
 	@DocBean(name ="file_type",value="文件类型:",dataType = String.class,required = true)
 	private String file_type;
 	@DocBean(name ="hdfs_storage_path",value="hdfs储路径:",dataType = String.class,required = false)
@@ -110,17 +110,17 @@ public class Source_file_detailed extends ProjectTableEntity
 		this.storage_date=storage_date;
 	}
 	/** 取得：文件大小 */
-	public BigDecimal getFile_size(){
+	public Long getFile_size(){
 		return file_size;
 	}
 	/** 设置：文件大小 */
-	public void setFile_size(BigDecimal file_size){
+	public void setFile_size(Long file_size){
 		this.file_size=file_size;
 	}
 	/** 设置：文件大小 */
 	public void setFile_size(String file_size){
 		if(!fd.ng.core.utils.StringUtil.isEmpty(file_size)){
-			this.file_size=new BigDecimal(file_size);
+			this.file_size=new Long(file_size);
 		}
 	}
 	/** 取得：文件类型 */

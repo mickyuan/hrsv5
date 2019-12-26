@@ -42,6 +42,10 @@ public class Ftp_transfered extends ProjectTableEntity
 	private String remark;
 	@DocBean(name ="ftp_id",value="ftp采集id:",dataType = Long.class,required = true)
 	private Long ftp_id;
+	@DocBean(name ="ftp_filemd5",value="文件MD5:",dataType = String.class,required = false)
+	private String ftp_filemd5;
+	@DocBean(name ="file_path",value="文件绝对路径:",dataType = String.class,required = true)
+	private String file_path;
 
 	/** 取得：已传输表id */
 	public Long getFtp_transfered_id(){
@@ -102,5 +106,21 @@ public class Ftp_transfered extends ProjectTableEntity
 		if(!fd.ng.core.utils.StringUtil.isEmpty(ftp_id)){
 			this.ftp_id=new Long(ftp_id);
 		}
+	}
+	/** 取得：文件MD5 */
+	public String getFtp_filemd5(){
+		return ftp_filemd5;
+	}
+	/** 设置：文件MD5 */
+	public void setFtp_filemd5(String ftp_filemd5){
+		this.ftp_filemd5=ftp_filemd5;
+	}
+	/** 取得：文件绝对路径 */
+	public String getFile_path(){
+		return file_path;
+	}
+	/** 设置：文件绝对路径 */
+	public void setFile_path(String file_path){
+		this.file_path=file_path;
 	}
 }

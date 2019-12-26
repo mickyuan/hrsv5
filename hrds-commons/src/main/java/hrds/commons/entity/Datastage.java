@@ -34,7 +34,7 @@ public class Datastage extends ProjectTableEntity
 	}
 	@DocBean(name ="jobkey",value="数据库设置id:",dataType = Long.class,required = true)
 	private Long jobkey;
-	@DocBean(name ="tablename",value="表名字:",dataType = String.class,required = true)
+	@DocBean(name ="tablename",value="表名:",dataType = String.class,required = true)
 	private String tablename;
 	@DocBean(name ="stage",value="采集阶段:",dataType = String.class,required = true)
 	private String stage;
@@ -61,11 +61,11 @@ public class Datastage extends ProjectTableEntity
 			this.jobkey=new Long(jobkey);
 		}
 	}
-	/** 取得：表名字 */
+	/** 取得：表名 */
 	public String getTablename(){
 		return tablename;
 	}
-	/** 设置：表名字 */
+	/** 设置：表名 */
 	public void setTablename(String tablename){
 		this.tablename=tablename;
 	}
