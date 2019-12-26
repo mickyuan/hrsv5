@@ -207,17 +207,20 @@ public class DataSourceAction extends BaseAction {
     @Method(desc = "新增数据源",
             logicStep = "1.数据可访问权限处理方式，新增时会设置创建用户ID，会获取当前用户ID，所以不需要权限验证" +
                     "2.字段合法性检查" +
-                    "3.对data_source初始化一些非页面传值" +
-                    "4.保存data_source信息")
+                    "3.新增前查询数据源编号是否已存在" +
+                    "4.对data_source初始化一些非页面传值" +
+                    "5.保存data_source信息" +
+                    "6.保存source_relation_dep信息")
     @Param(name = "dataSource", desc = "data_source表实体对象", range = "与data_source表字段规则一致",
             isBean = true)
     @Param(name = "dep_id", desc = "存储source_relation_dep表主键ID的数组", range = "不为空以及不为空格")
     public void saveDataSource(Data_source dataSource, long[] dep_id) {
         // 1.数据可访问权限处理方式，新增时会设置创建用户ID，会获取当前用户ID，所以不需要权限验证
         // 2.字段做合法性检查
-        fieldLegalityValidation(dataSource.getDatasource_name(), dataSource.getDatasource_number(),
-                dep_id);
-        // 3.对data_source初始化一些非页面传值
+        fieldLegalityValidation(dataSource.getDatasource_name(), dataSource.getDatasource_number(), dep_id);
+        // 3.新增前查询数据源编号是否已存在
+        isExistDataSourceNumber(dataSource.getDatasource_number());
+        // 4.对data_source初始化一些非页面传值
         // 数据源主键ID
         dataSource.setSource_id(PrimayKeyGener.getNextId());
         // 数据源创建用户
@@ -226,9 +229,9 @@ public class DataSourceAction extends BaseAction {
         dataSource.setCreate_date(DateUtil.getSysDate());
         // 数据源创建时间
         dataSource.setCreate_time(DateUtil.getSysTime());
-        // 4.保存data_source信息
+        // 5.保存data_source信息
         dataSource.add(Dbo.db());
-        // 5.保存source_relation_dep信息
+        // 6.保存source_relation_dep信息
         saveSourceRelationDep(dataSource.getSource_id(), dep_id);
     }
 
@@ -241,11 +244,11 @@ public class DataSourceAction extends BaseAction {
                     "6.保存source_relation_dep表信息")
     @Param(name = "source_id", desc = "data_source表主键，source_relation_dep表外键",
             range = "10位数字,新增时生成")
-    @Param(name = "source_remark", desc = "备注，source_relation_dep表外键", range = "无限制")
+    @Param(name = "source_remark", desc = "备注，source_relation_dep表外键", range = "无限制",nullable = true)
     @Param(name = "datasource_name", desc = "数据源名称", range = "不为空且不为空格")
     @Param(name = "datasource_number", desc = "数据源编号", range = "以字母开头的不超过四位数的字母数字组合")
     @Param(name = "dep_id", desc = "source_relation_dep表主键ID的数组", range = "不为空以及不为空格")
-    public void updateDataSource(long source_id, String source_remark, String datasource_name,
+    public void updateDataSource(Long source_id, String source_remark, String datasource_name,
                                  String datasource_number, long[] dep_id) {
         // 1.数据可访问权限处理方式，通过source_id与user_id关联检查
         if (Dbo.queryNumber("select count(1) from " + Data_source.TableName +
@@ -280,9 +283,7 @@ public class DataSourceAction extends BaseAction {
                     "2.1判断部门ID是否为空或者空格" +
                     "2.2判断部门是否存在" +
                     "3.验证datasource_name是否合法" +
-                    "4.datasource_number是否合法" +
-                    "5.更新前查询数据源编号是否已存在" +
-                    "6.保存source_relation_dep表信息")
+                    "4.datasource_number是否合法")
     @Param(name = "datasource_name", desc = "数据源名称", range = "不为空且不为空格")
     @Param(name = "datasource_umber", desc = "数据源编号", range = "不为空且不为空格，长度不超过四位")
     @Param(name = "dep_id", desc = "source_relation_dep表主键ID的数组", range = "不为空以及不为空格")
@@ -307,8 +308,6 @@ public class DataSourceAction extends BaseAction {
             throw new BusinessException("数据源编号只能是以字母开头的不超过四位数的字母数字组合，"
                     + "datasource_number=" + datasource_umber);
         }
-        // 5.更新前查询数据源编号是否已存在
-        isExistDataSourceNumber(datasource_umber);
     }
 
     @Method(desc = "判断数据源编号是否已存在",
