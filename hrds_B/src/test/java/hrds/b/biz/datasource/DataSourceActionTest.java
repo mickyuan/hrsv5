@@ -394,6 +394,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
             ftpTransfered.setFtp_date(SysDate);
             ftpTransfered.setFtp_time(SysTime);
             ftpTransfered.setTransfered_name("ftp传输测试");
+            ftpTransfered.setFile_path("/home/hyshf/ftp");
             ftpTransfered.add(db);
             // 11.构造ftp_folder表测试数据
             Ftp_folder ftpFolder = new Ftp_folder();

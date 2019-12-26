@@ -736,7 +736,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                 .addData("agent_name", "sjkAgent")
                 .addData("agent_type", AgentType.ShuJuKu.getCode())
                 .addData("agent_ip", "10.71.4.51")
-                .addData("agent_port", "1000")
+                .addData("agent_port", "65536")
                 .addData("source_id", SourceId)
                 .addData("user_id", UserId)
                 .post(getActionUrl("saveAgent")).getBodyString();
@@ -1138,7 +1138,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
                 .addData("agent_name", "sjkAgent")
                 .addData("agent_type", AgentType.ShuJuKu.getCode())
                 .addData("agent_ip", "10.71.4.51")
-                .addData("agent_port", "1000")
+                .addData("agent_port", "65536")
                 .addData("source_id", SourceId)
                 .addData("user_id", UserId)
                 .post(getActionUrl("updateAgent")).getBodyString();

@@ -223,9 +223,11 @@ public class AgentInfoAction extends BaseAction {
             throw new BusinessException("agent_ip不是一个有效的ip地址,agent_ip=" + agent_ip);
         }
         // 5.判断agent_port是否是一个有效的端口
-        if (StringUtil.isBlank(agent_port) || Integer.parseInt(agent_port) < 1024 ||
-                Integer.parseInt(agent_port) > 65535) {
-            throw new BusinessException("agent_port端口不是有效的端口，不在取值范围内，agent_port=" + agent_port);
+        pattern = Pattern.compile("^([0-9]|[1-9]\\d{1,3}|[1-5]\\d{4}|6[0-4]\\d{4}|65[0-4]\\d{2}|655[0-2]" +
+                "\\d|6553[0-5])$");
+        matcher = pattern.matcher(agent_port);
+        if (!matcher.matches()) {
+            throw new BusinessException("agent_port端口不是有效的端口,agent_port=" + agent_port);
         }
     }
 

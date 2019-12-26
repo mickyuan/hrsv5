@@ -461,7 +461,7 @@ public class DataSourceAction extends BaseAction {
     @Param(name = "agent_port", desc = "agent端口", range = "1024-65535")
     @Param(name = "user_id", desc = "数据采集用户ID，指定谁可以查看该用户对应表信息", range = "不能为空以及空格，页面传值")
     @Param(name = "file", desc = "上传文件名称（全路径），上传要导入的数据源", range = "不能为空以及空格")
-    @UploadFile(savedDir = "D:\\Develop\\githup\\hrsv5\\hrds_B\\src\\main\\java\\upload")
+    @UploadFile
     public void uploadFile(String agent_ip, String agent_port, Long user_id, String file) {
         try {
             // 1.数据可访问权限处理方式，此方法不需要权限验证，不涉及用户权限
@@ -474,8 +474,8 @@ public class DataSourceAction extends BaseAction {
                     uploadedFile.toPath())));
             // 5.导入数据源数据，将涉及到的所有表的数据导入数据库中对应的表中
             importDataSource(strTemp, agent_ip, agent_port, user_id, getUserId());
-        } catch (Exception e) {
-            throw new AppSystemException(e);
+        } catch (IOException e) {
+            throw new BusinessException("上传文件失败！");
         }
     }
 
@@ -496,9 +496,11 @@ public class DataSourceAction extends BaseAction {
             throw new BusinessException("agent_ip不是一个有效的ip地址,agent_ip=" + agent_ip);
         }
         // 3.判断agent_port是否是一个有效的端口
-        if (Integer.parseInt(agent_port) < 1024 || Integer.parseInt(agent_port) > 65535) {
-            throw new BusinessException("agent_port端口不是有效的端口，不在取值范围内，" +
-                    "agent_port=" + agent_port);
+        pattern = Pattern.compile("^([0-9]|[1-9]\\d{1,3}|[1-5]\\d{4}|6[0-4]\\d{4}|65[0-4]\\d{2}|655[0-2]" +
+                "\\d|6553[0-5])$");
+        matcher = pattern.matcher(agent_port);
+        if (!matcher.matches()) {
+            throw new BusinessException("agent_port端口不是有效的端口,agent_port=" + agent_port);
         }
     }
 
