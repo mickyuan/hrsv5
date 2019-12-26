@@ -8,7 +8,6 @@ import hrds.commons.utils.xlstoxml.XmlCreater;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.yarn.webapp.hamlet2.Hamlet;
 import org.w3c.dom.Element;
 
 import java.io.File;

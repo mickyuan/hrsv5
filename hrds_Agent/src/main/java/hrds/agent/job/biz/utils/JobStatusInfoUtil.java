@@ -7,6 +7,7 @@ import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
 import hrds.agent.job.biz.bean.JobStatusInfo;
+import hrds.agent.job.biz.bean.StageStatusInfo;
 import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.core.FtpCollectJobImpl;
 import hrds.commons.exception.AppSystemException;
@@ -68,5 +69,20 @@ public class JobStatusInfoUtil {
 				log.error(e);
 			}
 		}
+	}
+
+	public static void startStageStatusInfo(StageStatusInfo stageStatusInfo, String job_id,
+	                                        int stageNameCode) {
+		stageStatusInfo.setStageNameCode(stageNameCode);
+		stageStatusInfo.setJobId(job_id);
+		stageStatusInfo.setStartDate(DateUtil.getSysDate());
+		stageStatusInfo.setStartTime(DateUtil.getSysTime());
+	}
+
+	public static void endStageStatusInfo(StageStatusInfo stageStatusInfo, int statusCode, String message) {
+		stageStatusInfo.setMessage(message);
+		stageStatusInfo.setStatusCode(statusCode);
+		stageStatusInfo.setEndDate(DateUtil.getSysDate());
+		stageStatusInfo.setStartTime(DateUtil.getSysTime());
 	}
 }

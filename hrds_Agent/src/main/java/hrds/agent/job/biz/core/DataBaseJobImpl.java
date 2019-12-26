@@ -41,26 +41,27 @@ public class DataBaseJobImpl implements JobInterface {
 				collectTableBean.getTable_id());
 		//2、构建每个阶段具体的实现类，目前先按照完整顺序执行(卸数,上传,数据加载,计算增量,数据登记)，后期可改造为按照配置构建采集阶段
 		DBUnloadDataStageImpl unloadData = new DBUnloadDataStageImpl(sourceDataConfBean, collectTableBean);
-		//TODO 数据库直连采集，多文件上传，remoteDir参数待确定，暂时传null
+		//上传
 		JobStageInterface upload = new DBUploadStageImpl(unloadData.getTableBean(), collectTableBean,
 				unloadData.getFileArr());
-		//空实现
-		JobStageInterface dataLoading = new DBDataLoadingStageImpl();
-		//空实现
-		JobStageInterface calIncrement = new DBCalIncrementStageImpl();
-		//空实现
-		JobStageInterface dataRegistration = new DBDataRegistrationStageImpl();
+		//加载
+		JobStageInterface dataLoading = new DBDataLoadingStageImpl(unloadData.getTableBean(), collectTableBean);
+		//增量
+		JobStageInterface calIncrement = new DBCalIncrementStageImpl(unloadData.getTableBean(), collectTableBean);
+		//登记
+		JobStageInterface dataRegistration = new DBDataRegistrationStageImpl(collectTableBean,unloadData.getFileSize(),
+				unloadData.getTableBean(),unloadData.getRowCount());
 		//利用JobStageController构建本次数据库直连采集作业流程
 		JobStageController controller = new JobStageController();
 		//TODO 永远保证五个阶段，在每个阶段内部设置更合理的状态，比如直接加载时，unloadData和upload阶段的状态设置为跳过
 		//3、构建责任链，串起每个阶段
 		controller.registerJobStage(unloadData, upload, dataLoading, calIncrement, dataRegistration);
-
 		//4、按照顺序从第一个阶段开始执行作业
 		try {
 			jobStatusInfo = controller.handleStageByOrder(statusFilePath, jobStatusInfo);
 		} catch (Exception e) {
-			//TODO 是否记录日志待讨论,因为目前的处理逻辑是数据库直连采集发生的所有checked类型异常全部向上抛，抛到这里统一处理
+			//TODO 是否记录日志待讨论,因为目前的处理逻辑是数据库直连采集发生的所有checked
+			// 类型异常全部向上抛，抛到这里统一处理
 			e.printStackTrace();
 		}
 		List<String> columns = new ArrayList<>();

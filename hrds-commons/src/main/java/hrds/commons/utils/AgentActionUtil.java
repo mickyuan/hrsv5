@@ -42,6 +42,8 @@ public class AgentActionUtil {
 	public static final String GETTABLECOUNT = "/hrds/agent/trans/biz/getTableCount";
 	//获取自定义SQL抽取的采集列
 	public static final String GETCUSTCOLUMN = "/hrds/agent/trans/biz/database/getCustColumn";
+	//单表保存或者更新source_file_attribute
+	public static final String ADDSOURCEFILEATTRIBUTE = "/hrds/agent/trans/biz/database/addSourceFileAttribute";
 
 	static {
 		list = new ArrayList<>();
@@ -58,6 +60,7 @@ public class AgentActionUtil {
 		list.add(TESTPARALLELSQL);
 		list.add(GETTABLECOUNT);
 		list.add(GETCUSTCOLUMN);
+		list.add(ADDSOURCEFILEATTRIBUTE);
 	}
 
 	private AgentActionUtil() {

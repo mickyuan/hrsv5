@@ -14,6 +14,7 @@ import hrds.agent.job.biz.core.AbstractJobStage;
 import hrds.agent.job.biz.core.dbstage.service.CollectPage;
 import hrds.agent.job.biz.core.dbstage.service.CollectTableHandleParse;
 import hrds.agent.job.biz.utils.FileUtil;
+import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.commons.utils.PropertyParaUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,10 +68,8 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 		LOGGER.info("------------------数据库直连采集卸数阶段开始------------------");
 		//1、创建卸数阶段状态信息，更新作业ID,阶段名，阶段开始时间
 		StageStatusInfo statusInfo = new StageStatusInfo();
-		statusInfo.setJobId(collectTableBean.getTable_id());
-		statusInfo.setStageNameCode(StageConstant.UNLOADDATA.getCode());
-		statusInfo.setStartDate(DateUtil.getSysDate());
-		statusInfo.setStartTime(DateUtil.getSysTime());
+		JobStatusInfoUtil.startStageStatusInfo(statusInfo, collectTableBean.getTable_id(),
+				StageConstant.UNLOADDATA.getCode());
 		//TODO 目前对于同一张表的清洗规则和查询出来的表结构是一样的，未来可能根据不同目的地去实现不同的清洗
 		tableBean = CollectTableHandleParse.generateTableInfo(sourceDataConfBean, collectTableBean);
 		//2、解析作业信息，得到表名和表数据量
@@ -116,7 +115,7 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 		}
 
 		//获得列类型
-		columnTypes.addAll(Arrays.asList(tableBean.getAllType().toString().split(CollectTableHandleParse.STRSPLIT)));
+		columnTypes.addAll(Arrays.asList(tableBean.getAllType().split(CollectTableHandleParse.STRSPLIT)));
 		//获得本次采集总数据量
 		for (Long pageCount : pageCountResult) {
 			rowCount += pageCount;
@@ -148,19 +147,16 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 					return statusInfo;
 				}
 			}
-			statusInfo.setStatusCode(RunStatusConstant.SUCCEED.getCode());
-			statusInfo.setEndDate(DateUtil.getSysDate());
-			statusInfo.setEndTime(DateUtil.getSysTime());
+			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.SUCCEED.getCode(),
+					"执行成功");
 			fileArr = new String[fileResult.size()];
 			fileResult.toArray(fileArr);
 			//记录日志
 			LOGGER.info("------------------数据库直连采集卸数阶段成功------------------");
 			return statusInfo;
 		} else {
-			statusInfo.setStatusCode(RunStatusConstant.FAILED.getCode());
-			statusInfo.setMessage("数据文件全部缺失");
-			statusInfo.setEndDate(DateUtil.getSysDate());
-			statusInfo.setEndTime(DateUtil.getSysTime());
+			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.FAILED.getCode(),
+					"数据文件缺失");
 			//记录日志
 			LOGGER.info("------------------数据库直连采集卸数阶段失败------------------");
 			return statusInfo;

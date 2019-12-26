@@ -70,6 +70,29 @@ public class ReadFileToDataBase implements Callable<Long> {
 		this.collectTableBean = collectTableBean;
 		this.dataStoreConfBean = dataStoreConfBean;
 		this.tableBean = tableBean;
+		createTodayTable(tableBean, collectTableBean.getHbase_name() + "_"
+				+ collectTableBean.getEltDate(), dataStoreConfBean);
+	}
+
+	private void createTodayTable(TableBean tableBean, String todayTableName, DataStoreConfBean dataStoreConfBean) {
+		List<String> columns = StringUtil.split(tableBean.getColumnMetaInfo(), CollectTableHandleParse.STRSPLIT);
+		List<String> types = StringUtil.split(tableBean.getColTypeMetaInfo(), CollectTableHandleParse.STRSPLIT);
+		//获取连接
+		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(dataStoreConfBean.getData_store_layer_attr())) {
+			//拼接建表语句
+			StringBuilder sql = new StringBuilder(120); //拼接创表sql语句
+			sql.append("CREATE TABLE ");
+			sql.append(todayTableName);
+			sql.append("(");
+			for (int i = 0; i < columns.size(); i++) {
+				sql.append(columns.get(i)).append(" ").append(types.get(i)).append(",");
+			}
+			//将最后的逗号删除
+			sql.deleteCharAt(sql.length() - 1);
+			sql.append(")");
+			//执行建表语句
+			db.execute(sql.toString());
+		}
 	}
 
 	@Method(desc = "执行读取文件batch提交到数据库的方法", logicStep = "")

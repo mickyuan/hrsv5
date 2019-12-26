@@ -84,6 +84,14 @@ public class CollectTableBean implements Serializable {
 	private String hbase_name;
 	@DocBean(name = "eltDate", value = "数据采集的跑批日期", dataType = String.class, required = true)
 	private String eltDate;
+	@DocBean(name = "datasource_name", value = "数据源名称", dataType = String.class, required = true)
+	private String datasource_name;
+	@DocBean(name = "agent_name", value = "agent名称", dataType = String.class, required = true)
+	private String agent_name;
+	@DocBean(name = "agent_id", value = "Agent_id", dataType = Long.class, required = true)
+	private Long agent_id;
+	@DocBean(name = "source_id", value = "数据源ID", dataType = Long.class, required = true)
+	private Long source_id;
 
 	public Column_merge getColumn_merge() {
 		return column_merge;
@@ -339,5 +347,37 @@ public class CollectTableBean implements Serializable {
 
 	public void setEltDate(String eltDate) {
 		this.eltDate = eltDate;
+	}
+
+	public String getDatasource_name() {
+		return datasource_name;
+	}
+
+	public void setDatasource_name(String datasource_name) {
+		this.datasource_name = datasource_name;
+	}
+
+	public String getAgent_name() {
+		return agent_name;
+	}
+
+	public void setAgent_name(String agent_name) {
+		this.agent_name = agent_name;
+	}
+
+	public Long getAgent_id() {
+		return agent_id;
+	}
+
+	public void setAgent_id(Long agent_id) {
+		this.agent_id = agent_id;
+	}
+
+	public Long getSource_id() {
+		return source_id;
+	}
+
+	public void setSource_id(Long source_id) {
+		this.source_id = source_id;
 	}
 }

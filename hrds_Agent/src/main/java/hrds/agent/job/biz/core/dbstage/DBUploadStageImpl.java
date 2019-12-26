@@ -3,12 +3,15 @@ package hrds.agent.job.biz.core.dbstage;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Return;
-import fd.ng.core.utils.DateUtil;
-import hrds.agent.job.biz.bean.*;
+import hrds.agent.job.biz.bean.CollectTableBean;
+import hrds.agent.job.biz.bean.DataStoreConfBean;
+import hrds.agent.job.biz.bean.StageStatusInfo;
+import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
 import hrds.agent.job.biz.core.dbstage.service.ReadFileToDataBase;
+import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.commons.codes.Store_type;
 import hrds.commons.exception.AppSystemException;
 import org.slf4j.Logger;
@@ -46,15 +49,13 @@ public class DBUploadStageImpl extends AbstractJobStage {
 		LOGGER.info("------------------数据库直连采集上传阶段开始------------------");
 		//1、创建卸数阶段状态信息，更新作业ID,阶段名，阶段开始时间
 		StageStatusInfo statusInfo = new StageStatusInfo();
-		statusInfo.setStageNameCode(StageConstant.UPLOAD.getCode());
-		statusInfo.setJobId(collectTableBean.getTable_id());
-		statusInfo.setStartDate(DateUtil.getSysDate());
-		statusInfo.setStartTime(DateUtil.getSysTime());
+		JobStatusInfoUtil.startStageStatusInfo(statusInfo, collectTableBean.getTable_id(),
+				StageConstant.UPLOAD.getCode());
 		try {
 			List<DataStoreConfBean> dataStoreConfBeanList = collectTableBean.getDataStoreConfBean();
 			for (DataStoreConfBean dataStoreConfBean : dataStoreConfBeanList) {
 				//此处不会有海量的任务需要执行，不会出现队列中等待的任务对象过多的OOM事件。
-				//TODO Runtime.getRuntime().availableProcessors()此处不能用这个,因为可能同时又多个数据库采集同时进行
+				//TODO Runtime.getRuntime().availableProcessors()此处不能用这个,因为可能同时有多个数据库采集同时进行
 				//这里多个文件，使用多线程读取，进外部数据库。
 				ExecutorService executor = Executors.newFixedThreadPool(5);
 				long count = 0;
@@ -77,7 +78,7 @@ public class DBUploadStageImpl extends AbstractJobStage {
 
 				} else if (Store_type.MONGODB.getCode().equals(dataStoreConfBean.getStore_type())) {
 
-				}else{
+				} else {
 					//TODO 上面的待补充。
 					throw new AppSystemException("不支持的存储类型");
 				}
@@ -88,16 +89,11 @@ public class DBUploadStageImpl extends AbstractJobStage {
 						+ ",总计进数" + count + "条");
 			}
 			//2、调用方法，进行文件上传，文件数组和上传目录由构造器传入
-//			executor.executeUpload2Hdfs(localFiles, remoteDir);
 		} catch (Exception e) {
-			statusInfo.setStatusCode(RunStatusConstant.FAILED.getCode());
-			statusInfo.setMessage(FAILD_MSG + "：" + e.getMessage());
-			LOGGER.info("------------------数据库直连采集上传阶段失败------------------");
-			LOGGER.error(FAILD_MSG + "：{}", e.getMessage());
+			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.FAILED.getCode(), e.getMessage());
+			LOGGER.error("数据库直连采集上传阶段失败：", e.getMessage());
 		}
-		statusInfo.setStatusCode(RunStatusConstant.SUCCEED.getCode());
-		statusInfo.setEndDate(DateUtil.getSysDate());
-		statusInfo.setStartTime(DateUtil.getSysTime());
+		JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.SUCCEED.getCode(), "执行成功");
 		LOGGER.info("------------------数据库直连采集上传阶段成功------------------");
 		return statusInfo;
 	}
