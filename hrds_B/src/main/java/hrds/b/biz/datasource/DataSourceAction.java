@@ -406,6 +406,9 @@ public class DataSourceAction extends BaseAction {
         // 2.根据数据源ID获取部门名称
         List<String> depIdList = Dbo.queryOneColumnList("select dep_id from " + Source_relation_dep.TableName
                 + " where source_id=?", source_id);
+        if (depIdList.isEmpty()) {
+            throw new BusinessException("当前数据源对应部门不存在！");
+        }
         asmSql.clean();
         asmSql.addSql("select * from " + Department_info.TableName + " where ");
         asmSql.addORParam("dep_id", depIdList.toArray());
