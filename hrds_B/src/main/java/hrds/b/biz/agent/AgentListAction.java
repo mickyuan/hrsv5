@@ -63,7 +63,7 @@ public class AgentListAction extends BaseAction {
 		return Dbo.queryResult("select ai.*, ds.datasource_name FROM "+ Agent_info.TableName + " ai " +
 						" join " + Data_source.TableName + " ds " +
 						" on ai.source_id = ds.source_id " +
-						" WHERE ds.source_id = ? " + "AND ai.agent_type = ? AND ds.create_user_id = ?"
+						" WHERE ds.source_id = ? " + "AND ai.agent_type = ? AND ai.user_id = ?"
 				, sourceId, agentType, getUserId());
 		//数据可访问权限处理方式
 		//以上SQL中，通过当前用户ID进行关联查询，达到了数据权限的限制
@@ -231,7 +231,7 @@ public class AgentListAction extends BaseAction {
 		long val = Dbo.queryNumber("select count(1) from " + Data_source.TableName + " ds " +
 				" join " + Agent_info.TableName + " ai on ai.source_id = ds.source_id " +
 				" join " + Object_collect.TableName + " oc on ai.Agent_id = oc.Agent_id " +
-				" where ds.create_user_id = ? and oc.odc_id = ?", getUserId(),
+				" where ai.user_id = ? and oc.odc_id = ?", getUserId(),
 				collectSetId).orElseThrow(() -> new BusinessException("SQL查询错误"));
 		if(val != 1){
 			throw new BusinessException("要删除的半结构化文件采集任务不存在");
@@ -266,7 +266,7 @@ public class AgentListAction extends BaseAction {
 		long val = Dbo.queryNumber("select count(1) from " + Data_source.TableName + " ds " +
 				" join " + Agent_info.TableName + " ai on ai.source_id = ds.source_id " +
 				" join " + Ftp_collect.TableName + " fc on ai.Agent_id = fc.Agent_id " +
-				" where ds.create_user_id = ? and fc.ftp_id = ?", getUserId(), collectSetId)
+				" where ai.user_id = ? and fc.ftp_id = ?", getUserId(), collectSetId)
 				.orElseThrow(() -> new BusinessException("SQL查询错误"));
 		if(val != 1){
 			throw new BusinessException("要删除的FTP采集任务不存在");
@@ -291,7 +291,7 @@ public class AgentListAction extends BaseAction {
 		long val = Dbo.queryNumber("select count(1) from " + Data_source.TableName + " ds " +
 				" join " + Agent_info.TableName + " ai on ai.source_id = ds.source_id " +
 				" join " + Database_set.TableName + " dbs on ai.Agent_id = dbs.Agent_id " +
-				" where ds.create_user_id = ? and dbs.database_id = ?", getUserId(),
+				" where ai.user_id = ? and dbs.database_id = ?", getUserId(),
 				collectSetId).orElseThrow(() -> new BusinessException("SQL查询错误"));
 		if(val != 1){
 			throw new BusinessException("要删除的数据库直连采集任务不存在");
@@ -324,7 +324,7 @@ public class AgentListAction extends BaseAction {
 		long val = Dbo.queryNumber("select count(1) from " + Data_source.TableName + " ds " +
 				" join " + Agent_info.TableName + " ai on ai.source_id = ds.source_id " +
 				" join " + Database_set.TableName + " dbs on ai.Agent_id = dbs.Agent_id " +
-				" where ds.create_user_id = ? and dbs.database_id = ?", getUserId(),
+				" where ai.user_id = ? and dbs.database_id = ?", getUserId(),
 				collectSetId).orElseThrow(() -> new BusinessException("SQL查询错误"));
 		if(val != 1){
 			throw new BusinessException("要删除的数据文件采集任务不存在");
@@ -347,7 +347,7 @@ public class AgentListAction extends BaseAction {
 		long val = Dbo.queryNumber("select count(1) from " + Data_source.TableName + " ds " +
 				" join " + Agent_info.TableName + " ai on ai.source_id = ds.source_id " +
 				" join " + File_collect_set.TableName + " fcs on ai.Agent_id = fcs.Agent_id " +
-				" where ds.create_user_id = ? and fcs.fcs_id = ?", getUserId(),
+				" where ai.user_id = ? and fcs.fcs_id = ?", getUserId(),
 				collectSetId).orElseThrow(() -> new BusinessException("SQL查询错误"));
 		if(val != 1){
 			throw new BusinessException("要删除的非结构化文件采集任务不存在");
@@ -465,7 +465,7 @@ public class AgentListAction extends BaseAction {
 				"FROM "+ Data_source.TableName +" ds " +
 				"JOIN "+ Agent_info.TableName +" ai ON ds.source_id = ai.source_id " +
 				"JOIN "+ Database_set.TableName +" das ON ai.agent_id = das.agent_id " +
-				"WHERE ds.source_id = ? AND das.is_sendok = ? AND ds.create_user_id = ?"
+				"WHERE ds.source_id = ? AND das.is_sendok = ? AND ai.user_id = ?"
 				, sourceId, IsFlag.Shi.getCode(), getUserId());
 		//数据可访问权限处理方式
 		//以上SQL中，通过当前用户ID进行关联查询，达到了数据权限的限制
@@ -482,7 +482,7 @@ public class AgentListAction extends BaseAction {
 				"FROM "+ Data_source.TableName +" ds " +
 				"JOIN "+ Agent_info.TableName +" ai ON ds.source_id = ai.source_id " +
 				"JOIN "+ File_collect_set.TableName +" fcs ON ai.agent_id = fcs.agent_id " +
-				"WHERE ds.source_id = ? AND fcs.is_sendok = ? AND ds.create_user_id = ?"
+				"WHERE ds.source_id = ? AND fcs.is_sendok = ? AND ai.user_id = ?"
 				, sourceId, IsFlag.Shi.getCode(), getUserId());
 		//数据可访问权限处理方式
 		//以上SQL中，通过当前用户ID进行关联查询，达到了数据权限的限制
@@ -499,7 +499,7 @@ public class AgentListAction extends BaseAction {
 				"FROM "+ Data_source.TableName +" ds " +
 				"JOIN "+ Agent_info.TableName +" ai ON ds.source_id = ai.source_id " +
 				"JOIN "+ Object_collect.TableName +" fcs ON ai.agent_id = fcs.agent_id " +
-				"WHERE ds.source_id = ? AND fcs.is_sendok = ? AND ds.create_user_id = ?"
+				"WHERE ds.source_id = ? AND fcs.is_sendok = ? AND ai.user_id = ?"
 				, sourceId, IsFlag.Shi.getCode(), getUserId());
 		//数据可访问权限处理方式
 		//以上SQL中，通过当前用户ID进行关联查询，达到了数据权限的限制
@@ -516,7 +516,7 @@ public class AgentListAction extends BaseAction {
 				"FROM "+ Data_source.TableName +" ds " +
 				"JOIN "+ Agent_info.TableName +" ai ON ds.source_id = ai.source_id " +
 				"JOIN "+ Ftp_collect.TableName +" fcs ON ai.agent_id = fcs.agent_id " +
-				"WHERE ds.source_id = ? AND fcs.is_sendok = ? AND ds.create_user_id = ? ",
+				"WHERE ds.source_id = ? AND fcs.is_sendok = ? AND ai.user_id = ? ",
 				sourceId, IsFlag.Shi.getCode(), getUserId());
 		//数据可访问权限处理方式
 		//以上SQL中，通过当前用户ID进行关联查询，达到了数据权限的限制

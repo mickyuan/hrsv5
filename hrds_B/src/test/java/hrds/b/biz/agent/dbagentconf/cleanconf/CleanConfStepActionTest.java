@@ -42,8 +42,6 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	private static final long FIRST_DATABASESET_ID = 1001L;
 	private static final long SECOND_DATABASESET_ID = 1002L;
 	private static final long UNEXPECTED_ID = 999999999L;
-	private static final JSONObject tableCleanOrder = BaseInitData.initTableCleanOrder();
-	private static final JSONObject columnCleanOrder = BaseInitData.initColumnCleanOrder();
 
 	/**
 	 * 为每个方法的单元测试初始化测试数据
@@ -3001,7 +2999,8 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 *
 	 * 正确数据访问1：colSetId为1001L，tableId为7001L，之前设置了字符补齐，但是保存的时候取消了字符补齐的勾选，同时做首尾去空
 	 * 正确数据访问2：colSetId为1001L，tableId为7001L，之前设置了字符替换，但是保存的时候取消了字符替换的勾选，同时做首尾去空
-	 * 错误的测试用例未达到三组: 上面两组测试用例是结合初始化数据进行的，比较有代表性的。
+	 * 正确数据访问3：colSetId为1001L，tableId为7001L，之前设置了字符替换和字符补齐，同时做了表首尾去空，但是在保存的时候，去掉了首尾去空的勾选
+	 * 错误的测试用例未达到三组: 上面三组测试用例是结合初始化数据进行的，比较有代表性的。
 	 * @Param: 无
 	 * @return: 无
 	 *
@@ -3176,6 +3175,65 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 			assertThat("在执行测试用例<正确数据访问2>之后，删除新增的对sys_user表的首尾去空操作", execute == 1, is(true));
 
 			SqlOperator.commitTransaction(db);
+		}
+	}
+
+	@Test
+	public void saveDataCleanConfigTwo(){
+		//正确数据访问3：colSetId为1001L，tableId为7001L，之前设置了字符替换和字符补齐，同时做了表首尾去空，但是在保存的时候，去掉了首尾去空的勾选
+		List<TableCleanParam> tableCleanParams = new ArrayList<>();
+		//构造表清洗首尾去空的数据和列清洗首尾去空的数据
+		try(DatabaseWrapper db = new DatabaseWrapper()){
+			Table_clean tableClean = new Table_clean();
+			tableClean.setClean_type(CleanType.ZiFuTrim.getCode());
+			tableClean.setTable_id(SYS_USER_TABLE_ID);
+			tableClean.setTable_clean_id(PrimayKeyGener.getNextId());
+
+			tableClean.add(db);
+
+			List<Object> columnIds = SqlOperator.queryOneColumnList(db, "select column_id from " + Table_column.TableName + " where table_id = ?", SYS_USER_TABLE_ID);
+			for(Object columnId : columnIds){
+				Column_clean columnClean = new Column_clean();
+				columnClean.setColumn_id((long) columnId);
+				columnClean.setCol_clean_id(PrimayKeyGener.getNextId());
+				columnClean.setClean_type(CleanType.ZiFuTrim.getCode());
+
+				columnClean.add(db);
+			}
+
+			SqlOperator.commitTransaction(db);
+		}
+
+		TableCleanParam cleanParamThree = new TableCleanParam();
+		cleanParamThree.setTableId(SYS_USER_TABLE_ID);
+		cleanParamThree.setComplementFlag(true);
+		cleanParamThree.setReplaceFlag(true);
+		cleanParamThree.setTableName("sys_user");
+		cleanParamThree.setTrimFlag(false);
+
+		tableCleanParams.add(cleanParamThree);
+
+		String rightStringThree = new HttpClient()
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.addData("tbCleanString", JSON.toJSONString(tableCleanParams))
+				.post(getActionUrl("saveDataCleanConfig")).getBodyString();
+		ActionResult rightResultThree = JsonUtil.toObjectSafety(rightStringThree, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResultThree.isSuccess(), is(true));
+		Integer returnValueThree = (Integer) rightResultThree.getData();
+		assertThat(returnValueThree == FIRST_DATABASESET_ID, is(true));
+
+		//断言删除表清洗首尾去空和字段清洗首尾去空是否成功
+		try(DatabaseWrapper db = new DatabaseWrapper()){
+			long count = SqlOperator.queryNumber(db, "select count(1) from " + Table_clean.TableName
+					+ " where table_id = ? and clean_type = ?", SYS_USER_TABLE_ID, CleanType.ZiFuTrim.getCode()).orElseThrow(() -> new BusinessException("SQL查询错误"));
+
+			long countTwo = SqlOperator.queryNumber(db, "select count(cc.col_clean_id) from " + Column_clean.TableName
+					+ " cc join " + Table_column.TableName + " tc on cc.column_id = tc.column_id " +
+					" where tc.table_id = ? and cc.clean_type = ?", SYS_USER_TABLE_ID, CleanType.ZiFuTrim.getCode()).orElseThrow(() -> new BusinessException("SQL查询错误"));
+
+			assertThat("删除表清洗首尾去空和字段清洗首尾去空成功", count, is(0L));
+			assertThat("删除表清洗首尾去空和字段清洗首尾去空成功", countTwo, is(0L));
 		}
 	}
 

@@ -85,7 +85,7 @@ public class CleanConfStepAction extends BaseAction{
 			"1、前补齐" +
 			"2、后补齐", isBean = true)
 	public void saveSingleTbCompletionInfo(Table_clean charCompletion){
-		//1、校验入参合法性，补齐字符应该不能为Null
+		//1、校验入参合法性，补齐字符应该不能为Null，这是考虑到补齐字符可能是空格符这样的特殊字符
 		if(StringUtil.isEmpty(charCompletion.getCharacter_filling())){
 			throw new BusinessException("保存整表字符补齐规则时，补齐字符不能为空");
 		}
@@ -95,10 +95,10 @@ public class CleanConfStepAction extends BaseAction{
 		if(StringUtil.isBlank(charCompletion.getFilling_type())){
 			throw new BusinessException("保存整表字符补齐规则时，必须选择补齐方式");
 		}
+		FillingType.ofEnumByCode(charCompletion.getFilling_type());
 		if(charCompletion.getTable_id() == null){
 			throw new BusinessException("保存整表字符补齐规则是，必须关联表信息");
 		}
-		FillingType.ofEnumByCode(charCompletion.getFilling_type());
 		//2、在table_clean表中根据table_id删除该表原有的字符补齐设置，不关注删除数据的数目
 		Dbo.execute("DELETE FROM "+ Table_clean.TableName +" WHERE table_id = ? AND clean_type = ?",
 				charCompletion.getTable_id(), CleanType.ZiFuBuQi.getCode());
@@ -122,6 +122,7 @@ public class CleanConfStepAction extends BaseAction{
 			columnClean.setFilling_type(charCompletion.getFilling_type());
 			columnClean.setClean_type(CleanType.ZiFuBuQi.getCode());
 			columnClean.setCol_clean_id(PrimayKeyGener.getNextId());
+
 			columnClean.add(Dbo.db());
 		}
 	}
@@ -440,17 +441,17 @@ public class CleanConfStepAction extends BaseAction{
 	@Method(desc = "保存所有表清洗设置字符补齐和字符替换", logicStep = "" +
 			"1、根据colSetId在清洗参数属性表中删除记录，不关心是否删除到相应的数据" +
 			"2、根据数据库设置ID找到当前采集任务中的所有表ID和字段ID" +
-			"3、对该数据库采集任务下所有表的所有字段和表清洗规则进行删除" +
+			"3、对该数据库采集任务下所有表的所有字段和表清洗字符补齐和字符替换规则进行删除" +
 			"4、如果配置了字符补齐" +
 			"   4-1、构建Clean_parameter对象，设置主键，存储字符补齐信息，将补齐字符转为unicode编码" +
 			"   4-2、保存字符补齐信息" +
 			"   4-3、根据数据库设置ID找到当前采集任务中的所有字段ID" +
-			"   4-4、将对全表定义的字符补齐信息落实到每张表和每个字段，采取的方式是找到字段ID，在列清洗信息表里面按照类型，先删除再新增" +
+			"   4-4、将对全表定义的字符补齐信息落实到每张表和每个字段，采取的方式是找到表ID和字段ID，在表清洗和列清洗信息表里面按照类型，先删除再新增" +
 			"5、如果配置了字符替换" +
-			"   5-1、删除当前数据库采集任务中所有字段的字符替换配置" +
+			"   5-1、由于字符替换可以设置多个，因此遍历字符替换数据，并保存" +
 			"   5-2、构建Clean_parameter对象，设置原字段，替换后字段" +
 			"   5-3、保存字符替换信息" +
-			"   5-4、将对全表定义的字符替换信息落实到每张表和每个字段，采取的方式是找到字段ID，在列清洗信息表里面按照类型，先删除再新增")
+			"   5-4、将对全表定义的字符替换信息落实到每张表和每个字段，采取的方式是找到表ID和字段ID，在表清洗和列清洗信息表里面按照类型，先删除再新增")
 	@Param(name = "colSetId", desc = "数据库设置ID，源系统数据库设置表主键，清洗参数属性表外键", range = "不为空")
 	@Param(name = "compFlag", desc = "是否设置字符补齐标识位", range = "1：是，0：否")
 	@Param(name = "replaceFlag", desc = "是否设置字符替换标识位", range = "1：是，0：否")
@@ -471,7 +472,7 @@ public class CleanConfStepAction extends BaseAction{
 		//2、根据数据库设置ID找到当前采集任务中的所有表ID和字段ID
 		List<Object> tableIds = getTableIdByColSetId(colSetId);
 		List<Object> columnIds = getColumnIdByColSetId(colSetId);
-		//3、对该数据库采集任务下所有表的所有字段和表清洗规则进行删除
+		//3、对该数据库采集任务下所有表的所有字段和表清洗字符补齐和字符替换规则进行删除
 		delTbCleanByTbIdAndType(tableIds, CleanType.ZiFuBuQi.getCode());
 		delColCleanByColIdAndType(columnIds, CleanType.ZiFuBuQi.getCode());
 		delTbCleanByTbIdAndType(tableIds, CleanType.ZiFuTiHuan.getCode());
@@ -492,7 +493,7 @@ public class CleanConfStepAction extends BaseAction{
 			//4-2、保存字符补齐信息
 			allTbClean.add(Dbo.db());
 			//4-3、根据数据库设置ID找到当前采集任务中的所有字段ID
-			//4-4、将对全表定义的字符补齐信息落实到每张表和每个字段，采取的方式是找到字段ID，在列清洗信息表里面按照类型，先删除再新增
+			//4-4、将对全表定义的字符补齐信息落实到每张表和每个字段，采取的方式是找到表ID和字段ID，在表清洗和列清洗信息表里面按照类型，先删除再新增
 			for(Object tableId : tableIds){
 				Table_clean tableClean = new Table_clean();
 				tableClean.setTable_clean_id(PrimayKeyGener.getNextId());
@@ -525,11 +526,11 @@ public class CleanConfStepAction extends BaseAction{
 			if(!(replaceFeildArr.length > 0)){
 				throw new BusinessException("保存所有表字符替换清洗设置时，缺失替换字符");
 			}
-			//5-1、删除当前数据库采集任务中所有字段的字符替换配置
+			//5-1、由于字符替换可以设置多个，因此遍历字符替换数据，并保存
 			for(int i = 0; i < oriFieldArr.length; i++){
 				String oriField = oriFieldArr[i];
 				String replaceFeild = replaceFeildArr[i];
-				//这里使用isEmpty的原因是，在保存字符替换的时候，原字符和替换字符都可能是空格
+				//这里使用isEmpty的原因是，在保存字符替换的时候，原字符和替换字符都可能是空格等特殊字符
 				if(StringUtil.isEmpty(oriField)){
 					throw new BusinessException("保存所有表字符替换清洗时，请填写第"+ (i + 1) +"条数据的原字符");
 				}
@@ -1042,7 +1043,8 @@ public class CleanConfStepAction extends BaseAction{
 			throw new BusinessException("未能找到数据库采集任务");
 		}
 		//3、如果找到了，根据colSetId,在database_set表中找到对应的记录，并解析为k-v形式，返回给前端
-		List<Object> list = Dbo.queryOneColumnList("select cp_or from " + Database_set.TableName + " where database_id = ?", colSetId);
+		List<Object> list = Dbo.queryOneColumnList("select cp_or from "
+				+ Database_set.TableName + " where database_id = ?", colSetId);
 		//4、如果没找到，给前端返回空的集合
 		if(list.isEmpty()){
 			return Collections.emptyList();
@@ -1088,7 +1090,8 @@ public class CleanConfStepAction extends BaseAction{
 			throw new BusinessException("在当前数据库采集任务中未找到该采集表");
 		}
 		//3、如果存在，查询整表清洗优先级，并解析为k-v形式，返回给前端
-		List<Object> list = Dbo.queryOneColumnList("select ti_or from " + Table_info.TableName + " where table_id = ?", tableId);
+		List<Object> list = Dbo.queryOneColumnList("select ti_or from "
+				+ Table_info.TableName + " where table_id = ?", tableId);
 		//4、如果没找到，给前端返回空的集合
 		if(list.isEmpty()){
 			return Collections.emptyList();
@@ -1131,7 +1134,8 @@ public class CleanConfStepAction extends BaseAction{
 			throw new BusinessException("未找到字段");
 		}
 		//3、若存在，查询出该列的清洗优先级，并解析为k-v形式，返回给前端
-		List<Object> list = Dbo.queryOneColumnList("select tc_or from " + Table_column.TableName + " where column_id = ?", columnId);
+		List<Object> list = Dbo.queryOneColumnList("select tc_or from "
+				+ Table_column.TableName + " where column_id = ?", columnId);
 		//4、如果没找到，给前端返回空的集合
 		if(list.isEmpty()){
 			return Collections.emptyList();
@@ -1247,7 +1251,7 @@ public class CleanConfStepAction extends BaseAction{
 				Result tbCompResult = Dbo.queryResult("select filling_type, character_filling, filling_length from "
 						+ Table_clean.TableName + " where table_id = ? and clean_type = ?", param.getTableId(), CleanType.ZiFuBuQi.getCode());
 				//获取该表下所有的字段
-				List<Object> columnIds = Dbo.queryOneColumnList("select column_id from " + Table_column.TableName + " where table_id = ?", param.getTableId());
+				List<Object> columnIds = getColumnIdByTableId(param.getTableId());
 				//尝试删除给表定义的表清洗字符补齐规则
 				Dbo.execute("DELETE FROM "+ Table_clean.TableName +" WHERE table_id = ? AND clean_type = ?"
 						, param.getTableId(), CleanType.ZiFuBuQi.getCode());
@@ -1275,22 +1279,24 @@ public class CleanConfStepAction extends BaseAction{
 				Result tbReplResult = Dbo.queryResult("select field, replace_feild from "
 						+ Table_clean.TableName + " where table_id = ? and clean_type = ?", param.getTableId(), CleanType.ZiFuTiHuan.getCode());
 				//获取该表下所有的字段
-				List<Object> columnIds = Dbo.queryOneColumnList("select column_id from " + Table_column.TableName + " where table_id = ?", param.getTableId());
+				List<Object> columnIds = getColumnIdByTableId(param.getTableId());
 				//尝试删除给表定义的表清洗字符替换规则
 				Dbo.execute("DELETE FROM "+ Table_clean.TableName +" WHERE table_id = ? AND clean_type = ?"
 						, param.getTableId(), CleanType.ZiFuTiHuan.getCode());
 				//如果获取到了给表定义的表清洗字符替换规则，根据原字符串和替换字符串去删除给列定义的字符替换清洗规则，这样就不会删除到列自己定义的字符替换规则
-				if(tbReplResult.getRowCount() == 1){
-					StringBuilder strSBCol = new StringBuilder("delete from " + Column_clean.TableName + " where column_id in ( ");
-					for(int j = 0; j < columnIds.size(); j++){
-						strSBCol.append((long)columnIds.get(j));
-						if (j != columnIds.size() - 1)
-							strSBCol.append(",");
+				if(tbReplResult.getRowCount() > 0){
+					for(int i = 0; i < tbReplResult.getRowCount(); i++){
+						StringBuilder strSBCol = new StringBuilder("delete from " + Column_clean.TableName + " where column_id in ( ");
+						for(int j = 0; j < columnIds.size(); j++){
+							strSBCol.append((long)columnIds.get(j));
+							if (j != columnIds.size() - 1)
+								strSBCol.append(",");
+						}
+						strSBCol.append(" ) and clean_type = ? and field = ? and replace_feild = ?");
+						Dbo.execute(strSBCol.toString(), CleanType.ZiFuTiHuan.getCode(),
+								tbReplResult.getString(i, "field"),
+								tbReplResult.getString(i, "replace_feild"));
 					}
-					strSBCol.append(" ) and clean_type = ? and field = ? and replace_feild = ?");
-					Dbo.execute(strSBCol.toString(), CleanType.ZiFuTiHuan.getCode(),
-							tbReplResult.getString(0, "field"),
-							tbReplResult.getString(0, "replace_feild"));
 				}
 			}
 			//2-3、判断最终保存时，如果选择了表首尾去空，进行首尾去空的保存处理，注意要将表的首尾去空清洗最终落实到列清洗上
@@ -1321,7 +1327,7 @@ public class CleanConfStepAction extends BaseAction{
 			* */
 			if(!param.isTrimFlag()){
 				//获取该表下所有的字段
-				List<Object> columnIds = Dbo.queryOneColumnList("select column_id from " + Table_column.TableName + " where table_id = ?", param.getTableId());
+				List<Object> columnIds = getColumnIdByTableId(param.getTableId());
 				//尝试删除给表定义的表清洗字符首尾去空规则
 				Dbo.execute("delete from "+ Table_clean.TableName +" where table_id = ? and clean_type = ?",
 						param.getTableId(), CleanType.ZiFuTrim.getCode());
@@ -1398,7 +1404,8 @@ public class CleanConfStepAction extends BaseAction{
 	@Return(desc = "数据库采集任务下所有字段的ID集合", range = "不为空")
 	private List<Object> getColumnIdByColSetId(long colSetId){
 		//1、根据数据库设置ID，校验该数据库采集任务是否存在
-		long count = Dbo.queryNumber("select count(1) from " + Database_set.TableName + " where database_id = ?", colSetId).orElseThrow(() -> new BusinessException("SQL查询错误"));
+		long count = Dbo.queryNumber("select count(1) from " + Database_set.TableName + " where database_id = ?", colSetId)
+				.orElseThrow(() -> new BusinessException("SQL查询错误"));
 		if(count != 1){
 			throw new BusinessException("未找到数据库采集任务");
 		}
@@ -1496,7 +1503,8 @@ public class CleanConfStepAction extends BaseAction{
 	@Return(desc = "数据库采集任务下所有表的ID集合", range = "不为空")
 	private List<Object> getTableIdByColSetId(long colSetId){
 		//1、根据数据库设置ID，校验该数据库采集任务是否存在
-		long count = Dbo.queryNumber("select count(1) from " + Database_set.TableName + " where database_id = ?", colSetId).orElseThrow(() -> new BusinessException("SQL查询错误"));
+		long count = Dbo.queryNumber("select count(1) from " + Database_set.TableName + " where database_id = ?", colSetId)
+				.orElseThrow(() -> new BusinessException("SQL查询错误"));
 		if(count != 1){
 			throw new BusinessException("未找到数据库采集任务");
 		}
