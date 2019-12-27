@@ -1,16 +1,12 @@
 package hrds.commons.utils;
 
+import fd.ng.core.annotation.DocClass;
+import hrds.commons.codes.DataSourceType;
 import hrds.commons.codes.IsFlag;
 
 import java.io.File;
 
-/**
- * @Description: 项目中经常用到的常量值
- * @Author: wangz
- * @CreateTime: 2019-09-19-10:13
- * @BelongsProject: hrsv5
- * @BelongsPackage: hrds.commons.utils
- **/
+@DocClass(desc = "项目中经常用到的常量值", author = "", createdate = "2019/12/25 0025 下午 04:28")
 public class Constant {
 
 	public static final String SDATENAME = "HYREN_S_DATE";
@@ -41,4 +37,15 @@ public class Constant {
 	public static final String PARALLEL_SQL_START = "#{hy_start}";
 	//定义并行抽取SQL结束条数占位符
 	public static final String PARALLEL_SQL_END = "#{hy_end}";
+
+	//贴源层下实时数据
+	public static final String DCLKFK = DataSourceType.DCL.toString() + "_REALTIME";
+	//贴源层下实时数据类型
+	public static final String REALTIME_TYPE = "kafka";
+	//贴源层下批量采集数据
+	public static final String DCLBATCH = DataSourceType.DCL.toString() + "_BATCH";
+	//系统数据表
+	public static final String SYSDATATABLE = "sysDataTable";
+	//系统数据备份
+	public static final String SYSDATABAK = "sysDataBak";
 }
