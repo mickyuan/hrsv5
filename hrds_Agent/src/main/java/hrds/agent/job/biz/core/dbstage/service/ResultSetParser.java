@@ -31,7 +31,7 @@ public class ResultSetParser {
 			, range = "不为空")
 	@Return(desc = "当前线程生成数据文件的路径", range = "不会为null")
 	//TODO pageNum和pageRow一起，在写文件的时候，用于判断文件是否过大，如果文件过大，可以对单个数据文件进行拆分
-	public String parseResultSet(ResultSet rs, CollectTableBean collectTableBean, long pageNum,
+	String parseResultSet(ResultSet rs, CollectTableBean collectTableBean, long pageNum,
 	                             long pageRow, TableBean tableBean){
 		//获得数据文件格式
 		String format = collectTableBean.getDbfile_format();

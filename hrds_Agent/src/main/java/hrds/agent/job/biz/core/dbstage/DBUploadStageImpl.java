@@ -88,13 +88,12 @@ public class DBUploadStageImpl extends AbstractJobStage {
 				LOGGER.info("数据成功进入库" + dataStoreConfBean.getDsl_name() + "下的表" + collectTableBean.getHbase_name()
 						+ ",总计进数" + count + "条");
 			}
-			//2、调用方法，进行文件上传，文件数组和上传目录由构造器传入
+			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.SUCCEED.getCode(), "执行成功");
+			LOGGER.info("------------------数据库直连采集上传阶段成功------------------");
 		} catch (Exception e) {
 			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.FAILED.getCode(), e.getMessage());
 			LOGGER.error("数据库直连采集上传阶段失败：", e.getMessage());
 		}
-		JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.SUCCEED.getCode(), "执行成功");
-		LOGGER.info("------------------数据库直连采集上传阶段成功------------------");
 		return statusInfo;
 	}
 }

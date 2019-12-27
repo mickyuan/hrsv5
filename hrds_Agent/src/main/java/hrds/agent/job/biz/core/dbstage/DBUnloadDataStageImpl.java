@@ -3,7 +3,6 @@ package hrds.agent.job.biz.core.dbstage;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Return;
-import fd.ng.core.utils.DateUtil;
 import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.SourceDataConfBean;
 import hrds.agent.job.biz.bean.StageStatusInfo;
@@ -15,6 +14,7 @@ import hrds.agent.job.biz.core.dbstage.service.CollectPage;
 import hrds.agent.job.biz.core.dbstage.service.CollectTableHandleParse;
 import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
+import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.PropertyParaUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,104 +63,80 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 	@Return(desc = "StageStatusInfo是保存每个阶段状态信息的实体类", range = "不会为null，StageStatusInfo实体类对象")
 	@SuppressWarnings("unchecked")
 	@Override
-	public StageStatusInfo handleStage()
-			throws Exception {
+	public StageStatusInfo handleStage() {
 		LOGGER.info("------------------数据库直连采集卸数阶段开始------------------");
 		//1、创建卸数阶段状态信息，更新作业ID,阶段名，阶段开始时间
 		StageStatusInfo statusInfo = new StageStatusInfo();
 		JobStatusInfoUtil.startStageStatusInfo(statusInfo, collectTableBean.getTable_id(),
 				StageConstant.UNLOADDATA.getCode());
-		//TODO 目前对于同一张表的清洗规则和查询出来的表结构是一样的，未来可能根据不同目的地去实现不同的清洗
-		tableBean = CollectTableHandleParse.generateTableInfo(sourceDataConfBean, collectTableBean);
-		//2、解析作业信息，得到表名和表数据量
-		String tableCount = collectTableBean.getTable_count();
-		//fileResult中是生成的所有数据文件的路径，用于判断卸数阶段结果
-		List<String> fileResult = new ArrayList<>();
-		//pageCountResult是本次采集作业每个线程采集到的数据量，用于写meta文件
-		List<Long> pageCountResult = new ArrayList<>();
-		//3、从配置文件中读取并行抽取线程数
-		//TODO 目前是在配置文件中配置线程数，后期，如果用户在页面上设置了并行抽取，那么应该使用用户配置的线程数
-		int threadCount = Integer.parseInt(PropertyParaUtil.getString("threadCount", "15"));
-		long totalCount = Long.parseLong(tableCount);
-		long pageRow = totalCount / threadCount;
-		//4、创建固定大小的线程池，执行分页查询(线程池类型和线程数可以后续改造)
-		// 此处不会有海量的任务需要执行，不会出现队列中等待的任务对象过多的OOM事件。
-		ExecutorService executorService = Executors.newFixedThreadPool(threadCount + 1);
-		List<Future<Map<String, Object>>> futures = new ArrayList<>();
-		for (int i = 0; i < threadCount; i++) {
-			long start = (i * pageRow);
-			long end = (i + 1) * pageRow;
-			//传入i(分页页码)，pageRow(每页的数据量)，用于写avro时的行号
-			CollectPage page = new CollectPage(sourceDataConfBean, collectTableBean, tableBean
-					, start, end, i, pageRow);
-			Future<Map<String, Object>> future = executorService.submit(page);
-			futures.add(future);
-		}
-		long lastPageStart = pageRow * threadCount;
-		//最后一个线程的最大条数设为Long.MAX_VALUE
-		long lastPageEnd = Long.MAX_VALUE;
-		CollectPage lastPage = new CollectPage(sourceDataConfBean, collectTableBean, tableBean,
-				lastPageStart, lastPageEnd, threadCount + 1, pageRow);
-		Future<Map<String, Object>> lastFuture = executorService.submit(lastPage);
-		futures.add(lastFuture);
-		//关闭线程池
-		executorService.shutdown();
-		while (!executorService.awaitTermination(100, TimeUnit.MILLISECONDS)) {
-			System.out.println("线程池正在关闭");
-		}
-		//5、获得结果,用于校验多线程采集的结果和写Meta文件
-		for (Future<Map<String, Object>> future : futures) {
-			fileResult.addAll((List<String>) future.get().get("filePathList"));
-			pageCountResult.add((Long) future.get().get("pageCount"));
-		}
-
-		//获得列类型
-		columnTypes.addAll(Arrays.asList(tableBean.getAllType().split(CollectTableHandleParse.STRSPLIT)));
-		//获得本次采集总数据量
-		for (Long pageCount : pageCountResult) {
-			rowCount += pageCount;
-		}
-		//获得本次采集生成的数据文件的总大小
-		for (String filePath : fileResult) {
-			//判断文件是否存在，如果某个文件存在，则计算大小，若不存在，记录日志并继续运行
-			if (FileUtil.decideFileExist(filePath)) {
-				long singleFileSize = FileUtil.getFileSize(filePath);
-				fileSize += singleFileSize;
-			} else {
-				LOGGER.error("数据库直连采集" + filePath + "文件不存在");
+		try {
+			//TODO 目前对于同一张表的清洗规则和查询出来的表结构是一样的，未来可能根据不同目的地去实现不同的清洗
+			tableBean = CollectTableHandleParse.generateTableInfo(sourceDataConfBean, collectTableBean);
+			//2、解析作业信息，得到表名和表数据量
+			String tableCount = collectTableBean.getTable_count();
+			//fileResult中是生成的所有数据文件的路径，用于判断卸数阶段结果
+			List<String> fileResult = new ArrayList<>();
+			//pageCountResult是本次采集作业每个线程采集到的数据量，用于写meta文件
+			List<Long> pageCountResult = new ArrayList<>();
+			//3、从配置文件中读取并行抽取线程数
+			//TODO 目前是在配置文件中配置线程数，后期，如果用户在页面上设置了并行抽取，那么应该使用用户配置的线程数
+			int threadCount = Integer.parseInt(PropertyParaUtil.getString("threadCount", "15"));
+			long totalCount = Long.parseLong(tableCount);
+			long pageRow = totalCount / threadCount;
+			//4、创建固定大小的线程池，执行分页查询(线程池类型和线程数可以后续改造)
+			// 此处不会有海量的任务需要执行，不会出现队列中等待的任务对象过多的OOM事件。
+			ExecutorService executorService = Executors.newFixedThreadPool(threadCount + 1);
+			List<Future<Map<String, Object>>> futures = new ArrayList<>();
+			for (int i = 0; i < threadCount; i++) {
+				long start = (i * pageRow);
+				long end = (i + 1) * pageRow;
+				//传入i(分页页码)，pageRow(每页的数据量)，用于写avro时的行号
+				CollectPage page = new CollectPage(sourceDataConfBean, collectTableBean, tableBean
+						, start, end, i, pageRow);
+				Future<Map<String, Object>> future = executorService.submit(page);
+				futures.add(future);
 			}
-		}
-
-		//6、判断本次卸数阶段是否成功，设置成功或者错误信息
-		if (!(fileResult.isEmpty())) {
+			long lastPageStart = pageRow * threadCount;
+			//最后一个线程的最大条数设为Long.MAX_VALUE
+			long lastPageEnd = Long.MAX_VALUE;
+			CollectPage lastPage = new CollectPage(sourceDataConfBean, collectTableBean, tableBean,
+					lastPageStart, lastPageEnd, threadCount + 1, pageRow);
+			Future<Map<String, Object>> lastFuture = executorService.submit(lastPage);
+			futures.add(lastFuture);
+			//关闭线程池
+			executorService.shutdown();
+			while (!executorService.awaitTermination(100, TimeUnit.MILLISECONDS)) {
+				LOGGER.info("线程池正在关闭");
+			}
+			//5、获得结果,用于校验多线程采集的结果和写Meta文件
+			for (Future<Map<String, Object>> future : futures) {
+				fileResult.addAll((List<String>) future.get().get("filePathList"));
+				pageCountResult.add((Long) future.get().get("pageCount"));
+			}
+			fileArr = (String[]) fileResult.toArray();
+			//获得列类型
+			columnTypes.addAll(Arrays.asList(tableBean.getAllType().split(CollectTableHandleParse.STRSPLIT)));
+			//获得本次采集总数据量
+			for (Long pageCount : pageCountResult) {
+				rowCount += pageCount;
+			}
+			//获得本次采集生成的数据文件的总大小
 			for (String filePath : fileResult) {
-				if (!FileUtil.decideFileExist(filePath)) {
-					//如果某个数据文件在指定的目录下不存在，则卸数阶段失败
-					statusInfo.setStatusCode(RunStatusConstant.FAILED.getCode());
-					//设置错误信息
-					statusInfo.setMessage("路径为 : " + filePath + "的数据文件不存在");
-					//设置结束时间
-					statusInfo.setEndDate(DateUtil.getSysDate());
-					statusInfo.setEndTime(DateUtil.getSysTime());
-					//记录日志
-					LOGGER.info("------------------数据库直连采集卸数阶段失败------------------");
-					return statusInfo;
+				//判断文件是否存在，如果某个文件存在，则计算大小，若不存在，记录日志并继续运行
+				if (FileUtil.decideFileExist(filePath)) {
+					long singleFileSize = FileUtil.getFileSize(filePath);
+					fileSize += singleFileSize;
+				} else {
+					throw new AppSystemException("数据库直连采集" + filePath + "文件不存在");
 				}
 			}
-			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.SUCCEED.getCode(),
-					"执行成功");
-			fileArr = new String[fileResult.size()];
-			fileResult.toArray(fileArr);
-			//记录日志
+			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.SUCCEED.getCode(), "执行成功");
 			LOGGER.info("------------------数据库直连采集卸数阶段成功------------------");
-			return statusInfo;
-		} else {
-			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.FAILED.getCode(),
-					"数据文件缺失");
-			//记录日志
-			LOGGER.info("------------------数据库直连采集卸数阶段失败------------------");
-			return statusInfo;
+		} catch (Exception e) {
+			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.FAILED.getCode(), e.getMessage());
+			LOGGER.error("数据库直连采集卸数阶段失败：", e.getMessage());
 		}
+		return statusInfo;
 	}
 
 	@Method(desc = "获取本次数据库采集单张表的mate信息",

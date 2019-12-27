@@ -42,78 +42,75 @@ public class CollectTableHandleParse {
 	@Param(name = "collectTableBean", desc = "数据库采集表配置信息", range = "不为空")
 	@Return(desc = "卸数阶段元信息", range = "不为空")
 	public static TableBean generateTableInfo(SourceDataConfBean sourceDataConfBean,
-	                                          CollectTableBean collectTableBean) throws Exception {
+	                                          CollectTableBean collectTableBean) {
 		TableBean tableBean = new TableBean();
-		//1、根据数据源信息和采集表信息抽取SQL
-		String collectSQL = getCollectSQL(sourceDataConfBean, collectTableBean);
-		tableBean.setCollectSQL(collectSQL);
-		ResultSet resultSet = getResultSet(sourceDataConfBean, collectSQL);
-		StringBuilder columnMetaInfo = new StringBuilder();//生成的元信息列名
-		StringBuilder allColumns = new StringBuilder();//要采集的列名
-		StringBuilder colTypeMetaInfo = new StringBuilder();//生成的元信息列类型
-		StringBuilder allType = new StringBuilder();//要采集的列类型
-		StringBuilder colLengthInfo = new StringBuilder();//生成的元信息列长度
-		/* Get result set metadata */
-		ResultSetMetaData rsMetaData = resultSet.getMetaData();
-		int numberOfColumns = rsMetaData.getColumnCount();//获得列的数量
-		int[] typeArray = new int[numberOfColumns];//列类型数组
-		// Write header
-		for (int i = 1; i <= numberOfColumns; i++) {
-			String columnTmp = rsMetaData.getColumnName(i);
-			int columnType = rsMetaData.getColumnType(i);
-			//TODO 下一行未知
-			if (!columnTmp.equalsIgnoreCase("hyren_rn")) {
-				columnMetaInfo.append(columnTmp).append(STRSPLIT);
-				allColumns.append(columnTmp.toUpperCase()).append(STRSPLIT);
+		try {
+			//1、根据数据源信息和采集表信息抽取SQL
+			String collectSQL = getCollectSQL(sourceDataConfBean, collectTableBean);
+			tableBean.setCollectSQL(collectSQL);
+			ResultSet resultSet = getResultSet(sourceDataConfBean, collectSQL);
+			StringBuilder columnMetaInfo = new StringBuilder();//生成的元信息列名
+			StringBuilder allColumns = new StringBuilder();//要采集的列名
+			StringBuilder colTypeMetaInfo = new StringBuilder();//生成的元信息列类型
+			StringBuilder allType = new StringBuilder();//要采集的列类型
+			StringBuilder colLengthInfo = new StringBuilder();//生成的元信息列长度
+			/* Get result set metadata */
+			ResultSetMetaData rsMetaData = resultSet.getMetaData();
+			int numberOfColumns = rsMetaData.getColumnCount();//获得列的数量
+			int[] typeArray = new int[numberOfColumns];//列类型数组
+			// Write header
+			for (int i = 1; i <= numberOfColumns; i++) {
+				String columnTmp = rsMetaData.getColumnName(i);
+				int columnType = rsMetaData.getColumnType(i);
+				//TODO 下一行未知
+				if (!columnTmp.equalsIgnoreCase("hyren_rn")) {
+					columnMetaInfo.append(columnTmp).append(STRSPLIT);
+					allColumns.append(columnTmp.toUpperCase()).append(STRSPLIT);
+				}
+				typeArray[i - 1] = columnType;
 			}
-			typeArray[i - 1] = columnType;
-		}
-		//判断使用最后采集的sql去进行处理
-		Map<String, String> tableColTypeAndLength = getTableColTypeAndLengthSql(resultSet);
-		//直接遍历
-		for (String key : tableColTypeAndLength.keySet()) {
-			String str = tableColTypeAndLength.get(key);
-			List<String> split;
-			try {
-				split = StringUtil.split(str, "::");
+			//判断使用最后采集的sql去进行处理
+			Map<String, String> tableColTypeAndLength = getTableColTypeAndLengthSql(resultSet);
+			//直接遍历
+			for (String key : tableColTypeAndLength.keySet()) {
+				List<String> split = StringUtil.split(tableColTypeAndLength.get(key), "::");
 				colTypeMetaInfo.append(split.get(0)).append(STRSPLIT);
 				allType.append(split.get(0)).append(STRSPLIT);
 				colLengthInfo.append(split.get(1)).append(STRSPLIT);
-			} catch (Exception e) {
-				throw new Exception("获取表" + collectTableBean.getTable_name()
-						+ "的表结构信息失败，请校验字段信息是否正确");
 			}
+			columnMetaInfo.deleteCharAt(columnMetaInfo.length() - 1);//元信息列名
+			allColumns.deleteCharAt(allColumns.length() - 1);//列名
+			colLengthInfo.deleteCharAt(colLengthInfo.length() - 1);//列长度
+			colTypeMetaInfo.deleteCharAt(colTypeMetaInfo.length() - 1);//列类型
+			allType.deleteCharAt(allType.length() - 1);//列类型
+			//清洗配置
+			Map<String, Object> parseJson = parseJson(collectTableBean);
+			Map<String, Map<String, Column_split>> splitIng = (Map<String, Map<String, Column_split>>) parseJson.get("splitIng");//字符拆分
+			Map<String, String> mergeIng = (Map<String, String>) parseJson.get("mergeIng");//字符合并
+			//更新拆分和合并的列信息
+			String colMeta = updateColumn(mergeIng, splitIng, columnMetaInfo, colTypeMetaInfo, colLengthInfo);
+			columnMetaInfo.delete(0, columnMetaInfo.length()).append(colMeta);
+			//这里是根据不同存储目的地会有相同的拉链方式，则这新增拉链字段在这里增加
+			columnMetaInfo.append(STRSPLIT).append(Constant.SDATENAME);
+			colTypeMetaInfo.append(STRSPLIT).append("char(8)");
+			colLengthInfo.append(STRSPLIT).append("8");
+			//增量进数方式
+			if (StorageType.ZengLiang.getCode().equals(collectTableBean.getStorage_type())) {
+				columnMetaInfo.append(STRSPLIT).append(Constant.EDATENAME).append(STRSPLIT).append(Constant.MD5NAME);
+				colTypeMetaInfo.append(STRSPLIT).append("char(8)").append(STRSPLIT).append("char(32)");
+				colLengthInfo.append(STRSPLIT).append("8").append("32");
+			}
+			// 页面定义的清洗格式进行卸数
+			tableBean.setAllColumns(allColumns.toString());
+			tableBean.setAllType(allType.toString());
+			tableBean.setColLengthInfo(colLengthInfo.toString());
+			tableBean.setColTypeMetaInfo(colTypeMetaInfo.toString());
+			tableBean.setColumnMetaInfo(columnMetaInfo.toString());
+			tableBean.setTypeArray(typeArray);
+			tableBean.setParseJson(parseJson);
+		} catch (Exception e) {
+			throw new AppSystemException("根据数据源信息和采集表信息得到卸数元信息失败！", e);
 		}
-		columnMetaInfo.deleteCharAt(columnMetaInfo.length() - 1);//元信息列名
-		allColumns.deleteCharAt(allColumns.length() - 1);//列名
-		colLengthInfo.deleteCharAt(colLengthInfo.length() - 1);//列长度
-		colTypeMetaInfo.deleteCharAt(colTypeMetaInfo.length() - 1);//列类型
-		allType.deleteCharAt(allType.length() - 1);//列类型
-		//清洗配置
-		Map<String, Object> parseJson = parseJson(collectTableBean);
-		Map<String, Map<String, Column_split>> splitIng = (Map<String, Map<String, Column_split>>) parseJson.get("splitIng");//字符拆分
-		Map<String, String> mergeIng = (Map<String, String>) parseJson.get("mergeIng");//字符合并
-		//更新拆分和合并的列信息
-		String colMeta = updateColumn(mergeIng, splitIng, columnMetaInfo, colTypeMetaInfo, colLengthInfo);
-		columnMetaInfo.delete(0, columnMetaInfo.length()).append(colMeta);
-		//这里是根据不同存储目的地会有相同的拉链方式，则这新增拉链字段在这里增加
-		columnMetaInfo.append(STRSPLIT).append(Constant.SDATENAME);
-		colTypeMetaInfo.append(STRSPLIT).append("char(8)");
-		colLengthInfo.append(STRSPLIT).append("8");
-		//增量进数方式
-		if (StorageType.ZengLiang.getCode().equals(collectTableBean.getStorage_type())) {
-			columnMetaInfo.append(STRSPLIT).append(Constant.EDATENAME).append(STRSPLIT).append(Constant.MD5NAME);
-			colTypeMetaInfo.append(STRSPLIT).append("char(8)").append(STRSPLIT).append("char(32)");
-			colLengthInfo.append(STRSPLIT).append("8").append("32");
-		}
-		// 页面定义的清洗格式进行卸数
-		tableBean.setAllColumns(allColumns.toString());
-		tableBean.setAllType(allType.toString());
-		tableBean.setColLengthInfo(colLengthInfo.toString());
-		tableBean.setColTypeMetaInfo(colTypeMetaInfo.toString());
-		tableBean.setColumnMetaInfo(columnMetaInfo.toString());
-		tableBean.setTypeArray(typeArray);
-		tableBean.setParseJson(parseJson);
 		return tableBean;
 	}
 

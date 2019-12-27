@@ -82,12 +82,12 @@ public class DBDataRegistrationStageImpl extends AbstractJobStage {
 			metaInfoObj.put("type", tableBean.getColTypeMetaInfo());
 			file_attribute.setMeta_info(metaInfoObj.toJSONString());
 			CommunicationUtil.addSourceFileAttribute(file_attribute,collectTableBean.getDatabase_id());
+			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.SUCCEED.getCode(), "执行成功");
+			LOGGER.info("------------------数据库直连采集数据登记阶段成功------------------");
 		} catch (Exception e) {
 			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.FAILED.getCode(), e.getMessage());
 			LOGGER.error("数据库直连采集数据登记阶段失败：", e.getMessage());
 		}
-		JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.SUCCEED.getCode(), "执行成功");
-		LOGGER.info("------------------数据库直连采集数据登记阶段成功------------------");
 		return statusInfo;
 	}
 }
