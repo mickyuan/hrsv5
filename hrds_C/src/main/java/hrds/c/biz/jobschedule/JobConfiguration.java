@@ -1869,7 +1869,8 @@ public class JobConfiguration extends BaseAction {
                 }
             }
             // 16.将excel数据导入数据库
-            insertData(listMap, FileUploadUtil.getOriginalFileName(file));
+            String fileName = FileUploadUtil.getOriginalFileName(file);
+            insertData(listMap, fileName.substring(0, fileName.indexOf(".")));
         } catch (FileNotFoundException e) {
             throw new BusinessException("导入excel文件数据失败！");
         }

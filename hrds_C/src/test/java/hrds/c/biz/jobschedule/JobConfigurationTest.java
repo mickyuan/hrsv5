@@ -10,6 +10,7 @@ import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
+import fd.ng.netclient.http.SubmitMediaType;
 import fd.ng.web.action.ActionResult;
 import hrds.commons.codes.*;
 import hrds.commons.entity.*;
@@ -19,6 +20,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.File;
 import java.lang.reflect.Type;
 import java.util.*;
 
@@ -5711,23 +5713,34 @@ public class JobConfigurationTest extends WebBaseTestCase {
     public void uploadExcelFile() {
         // fixme 上传文件暂时不知道如何写测试用例
         // 1.正常的数据访问1，数据都正常
-//        String bodyString = new HttpClient()
-//                .addData("file", "D:\\Develop\\githup\\hrsv5\\hrds_C\\src\\main\\java\\upload\\" +
-//                        "Etl_resource.xlsx")
-//                .post(getActionUrl("uploadExcelFile"))
-//                .getBodyString();
-//        ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
-//                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
-//        assertThat(ar.isSuccess(), is(true));
-//        // 2.错误的数据访问1，文件不存在
-//        bodyString = new HttpClient()
-//                .addData("file", "c:\\Develop\\githup\\hrsv5\\hrds_C\\src\\main\\java\\upload\\" +
-//                        "Etl_resources.xlsx")
-//                .post(getActionUrl("uploadExcelFile"))
-//                .getBodyString();
-//        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
-//                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
-//        assertThat(ar.isSuccess(), is(false));
+        String bodyString = new HttpClient()
+                .reset(SubmitMediaType.MULTIPART)
+                .addFile("file", new File("D:\\Develop\\githup\\hrsv5\\hrds_C\\src\\test\\java" +
+                        "\\hrds\\c\\biz\\jobschedule\\upload\\Etl_resource.xlsx"))
+                .post(getActionUrl("uploadExcelFile"))
+                .getBodyString();
+        ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(true));
+        // 校验数据正确性
+        try (DatabaseWrapper db = new DatabaseWrapper()) {
+            List<Etl_resource> etlResourceList = SqlOperator.queryList(db, Etl_resource.class,
+                    "select * from " + Etl_resource.TableName + " where etl_sys_cd=?", "drcs");
+            for (Etl_resource etl_resource : etlResourceList) {
+                assertThat(etl_resource.getResource_used(), is(3));
+                assertThat(etl_resource.getResource_max(), is(10));
+                assertThat(etl_resource.getResource_type(), is("resource"));
+                assertThat(etl_resource.getMain_serv_sync(), is(Main_Server_Sync.YES.getCode()));
+            }
+        }
+        // 2.错误的数据访问1，文件不存在
+        bodyString = new HttpClient()
+                .addData("file", "c:\\Etl_resources.xlsx")
+                .post(getActionUrl("uploadExcelFile"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(false));
     }
 
 }
