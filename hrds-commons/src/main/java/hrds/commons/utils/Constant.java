@@ -25,13 +25,13 @@ public class Constant {
 	public static final String JOBINFOPATH = USER_DIR + File.separator + "jobInfo" + File.separator;
 	//job运行程序信息存储文件名称
 	public static final String JOBFILENAME = "jobInfo.json";
-	//TODO 卸数文件存放的顶层目录,这里应该是根据系统参数来的
+	//TODO 数据库采集卸数文件存放的顶层目录,这里应该是根据系统参数来的
 	public static final String JDBCUNLOADFOLDER = USER_DIR + File.separator + "JDBC" + File.separator;
 	//mapDB文件存放的顶层目录
 	public static final String MAPDBPATH = USER_DIR + File.separator + "mapDB" + File.separator;
 	//TODO 文件采集卸数文件存放的顶层目录,这里应该是根据系统参数来的
 	public static final String FILEUNLOADFOLDER = USER_DIR + File.separator + "dirFile" + File.separator;
-	//TODO 数据库采集卸数文件存放的顶层目录,这里应该是根据系统参数来的
+	//TODO DB文件采集卸数文件存放的顶层目录,这里应该是根据系统参数来的
 	public static final String DBFILEUNLOADFOLDER = USER_DIR + File.separator + "DbFile" + File.separator;
 	//定义并行抽取SQL开始条数占位符
 	public static final String PARALLEL_SQL_START = "#{hy_start}";
