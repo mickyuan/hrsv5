@@ -38,6 +38,8 @@ public class Constant {
 	//定义并行抽取SQL结束条数占位符
 	public static final String PARALLEL_SQL_END = "#{hy_end}";
 
+	//是否有大数据环境
+	public static final boolean HAS_HADOOP_ENV = HD.equalsIgnoreCase(PropertyParaValue.getString("ver_type", HD));
 	//贴源层下实时数据
 	public static final String DCL_REALTIME = DataSourceType.DCL.getCode() + "_REALTIME";
 	//贴源层下实时数据类型
