@@ -39,13 +39,13 @@ public class Constant {
 	public static final String PARALLEL_SQL_END = "#{hy_end}";
 
 	//贴源层下实时数据
-	public static final String DCLKFK = DataSourceType.DCL.toString() + "_REALTIME";
+	public static final String DCL_REALTIME = DataSourceType.DCL.getCode() + "_REALTIME";
 	//贴源层下实时数据类型
 	public static final String REALTIME_TYPE = "kafka";
 	//贴源层下批量采集数据
-	public static final String DCLBATCH = DataSourceType.DCL.toString() + "_BATCH";
+	public static final String DCL_BATCH = DataSourceType.DCL.getCode() + "_BATCH";
 	//系统数据表
-	public static final String SYSDATATABLE = "sysDataTable";
+	public static final String SYS_DATA_TABLE = "sysDataTable";
 	//系统数据备份
-	public static final String SYSDATABAK = "sysDataBak";
+	public static final String SYS_DATA_BAK = "sysDataBak";
 }
