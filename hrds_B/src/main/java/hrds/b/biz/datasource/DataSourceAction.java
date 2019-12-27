@@ -39,6 +39,9 @@ import java.util.regex.Pattern;
 @DocClass(desc = "数据源增删改查，导入、下载类", author = "dhw", createdate = "2019-9-20 09:23:06")
 public class DataSourceAction extends BaseAction {
 
+    // 拼接sql对象
+    private static final SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
+
     @Method(desc = "查询数据源，部门、agent,申请审批,业务用户和采集用户,部门与数据源关系表信息，首页展示",
             logicStep = "1.数据可访问权限处理方式，以下sql通过user_id关联进行权限检查" +
                     "2.查询当前用户下的所有数据源信息" +
@@ -401,9 +404,12 @@ public class DataSourceAction extends BaseAction {
     private Result getDepNameAndId(long source_id) {
         // 1.数据可访问权限处理方式，该方法不需要权限控制
         // 2.根据数据源ID获取部门名称
-        return Dbo.queryResult("select t1.dep_id,t2.dep_name from "
-                + Source_relation_dep.TableName + " t1 left join " + Department_info.TableName +
-                " t2 on t1.dep_id=t2.dep_id where t1.source_id=? order by dep_name", source_id);
+        List<String> depIdList = Dbo.queryOneColumnList("select dep_id from " + Source_relation_dep.TableName
+                + " where source_id=?", source_id);
+        asmSql.clean();
+        asmSql.addSql("select * from " + Department_info.TableName + " where ");
+        asmSql.addORParam("dep_id", depIdList.toArray());
+        return Dbo.queryResult(asmSql.sql().replace("and", " "), asmSql.params());
     }
 
     @Method(desc = "删除数据源信息",
@@ -475,7 +481,7 @@ public class DataSourceAction extends BaseAction {
             // 4.使用base64解码
             String strTemp = new String(Base64.getDecoder().decode(Files.readAllBytes(
                     uploadedFile.toPath())));
-            // 5.导入数据源数据，将涉及到的所有表的数据导入数据库中对应的表中
+            // 5.导入数据源数据，将涉及到的所有表的数据导入数据库对应的表中
             importDataSource(strTemp, agent_ip, agent_port, user_id, getUserId());
         } catch (IOException e) {
             throw new BusinessException("上传文件失败！");
@@ -1467,8 +1473,10 @@ public class DataSourceAction extends BaseAction {
                     "2.创建新的department_info表数据集合" +
                     "3.判断map中的key值是否为对应department_info表数据" +
                     "4.获取部门表department_info表数据" +
-                    "5.将新旧主键ID保存" +
-                    "6.将department_info表数据循环插入数据库" +
+                    "5.获取部门信息" +
+                    "6.判断部门是否已存在，如果不存在则添加部门，存在就获取部门ID作业新的部门ID" +
+                    "6.1相同，获取现在的dep_id作为新的部门ID,保存新旧部门主键ID" +
+                    "6.2.不相同，将新旧主键ID保存，新增department_info表数据入数据库" +
                     "7.返回新的新旧部门主键ID集合")
     @Param(name = "collectMap", desc = "所有表数据的map的实体", range = "无限制")
     @Return(desc = "返回新的新旧部门主键ID集合", range = "不为空")
@@ -1486,12 +1494,20 @@ public class DataSourceAction extends BaseAction {
                 List<Department_info> depInfoList = JsonUtil.toObject(entry.getValue().toString(), srdType);
                 if (!depInfoList.isEmpty()) {
                     for (Department_info department_info : depInfoList) {
-                        String dep_id = PrimayKeyGener.getNextId();
-                        // 5.将新旧主键ID保存
-                        depMap.put(department_info.getDep_id(), dep_id);
-                        department_info.setDep_id(dep_id);
-                        // 6.将department_info表数据循环插入数据库
-                        department_info.add(Dbo.db());
+                        // 5.获取部门信息
+                        Map<String, Object> depInfo = Dbo.queryOneObject("select dep_id,dep_name from "
+                                + Department_info.TableName + " where dep_name=?", department_info.getDep_name());
+                        // 6.判断部门是否已存在，如果不存在则添加部门，存在就获取部门ID作业新的部门ID
+                        if (depInfo != null && !depInfo.isEmpty()) {
+                            // 6.1相同，获取现在的dep_id作为新的部门ID,保存新旧部门主键ID
+                            depMap.put(department_info.getDep_id(), depInfo.get("dep_id").toString());
+                        } else {
+                            String dep_id = PrimayKeyGener.getNextId();
+                            // 6.2.不相同，将新旧主键ID保存，新增department_info表数据入数据库
+                            depMap.put(department_info.getDep_id(), dep_id);
+                            department_info.setDep_id(dep_id);
+                            department_info.add(Dbo.db());
+                        }
                     }
                 }
             }
@@ -1504,8 +1520,10 @@ public class DataSourceAction extends BaseAction {
             logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
                     "2.判断map中的key值是否为对应source_relation_dep表数据" +
                     "3.获取数据源和部门关系表source_relation_dep表数据" +
-                    "4.遍历department_info表新旧ID，用重新生成的部门ID替换旧的部门ID，保证关联关系不变" +
-                    "5.保存source_relation_dep表数据")
+                    "4.遍历department_info表新旧ID" +
+                    "5.判断部门是否已存在" +
+                    "5.1部门不存，用重新生成的部门ID替换旧的部门ID，新增source_relation_dep表数据" +
+                    "5.2部门已存在，因为数据源ID发生了编号，所以替换数据源ID，新增数据源与部门关系")
     @Param(name = "collectMap", desc = "所有表数据的map的实体", range = "无限制")
     @Param(name = "source_id", desc = "导入数据源重新生成的数据源ID", range = "无限制")
     @Param(name = "departmentInfo", desc = "存放department_info表新旧部门ID数据的集合", range = "无限制")
@@ -1523,11 +1541,12 @@ public class DataSourceAction extends BaseAction {
                 if (!srdList.isEmpty()) {
                     for (Source_relation_dep source_relation_dep : srdList) {
                         source_relation_dep.setSource_id(source_id);
-                        // 4.遍历department_info表新旧ID，用重新生成的部门ID替换旧的部门ID
+                        // 4.遍历department_info表新旧ID
                         for (Map.Entry<Long, String> depIdEntry : departmentInfo.entrySet()) {
+                            // 5.判断部门是否已存在，如果
                             if (depIdEntry.getKey().longValue() == source_relation_dep.getDep_id().longValue()) {
                                 source_relation_dep.setDep_id(depIdEntry.getValue());
-                                // 5.保存source_relation_dep表数据
+                                // 5.1部门不存，用重新生成的部门ID替换旧的部门ID，新增source_relation_dep表数据
                                 source_relation_dep.add(Dbo.db());
                             }
                         }
