@@ -7,6 +7,7 @@ import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.*;
+import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.utils.ColumnTool;
 import hrds.agent.job.biz.utils.SQLUtil;
 import hrds.commons.codes.CleanType;
@@ -157,7 +158,7 @@ public class CollectTableHandleParse {
 			String selfSql = collectTableBean.getSql();
 			//获取系统的所有日期参数格式定义
 			if (!StringUtil.isEmpty(selfSql)) {
-				SimpleDateFormat sysDatef = new SimpleDateFormat(Constant.SYS_DATEFORMAT);
+				SimpleDateFormat sysDatef = new SimpleDateFormat(JobConstant.SYS_DATEFORMAT);
 				String eltDate = sourceDataConfBean.getCollectDir();
 				//输入的日期肯定是yyyyMMdd格式
 				if (selfSql.contains("#{txdate}")) {

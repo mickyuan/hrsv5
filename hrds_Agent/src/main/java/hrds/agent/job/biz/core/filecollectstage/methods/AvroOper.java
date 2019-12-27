@@ -8,11 +8,11 @@ import fd.ng.core.utils.MD5Util;
 import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.AvroBean;
 import hrds.agent.job.biz.bean.FileCollectParamBean;
+import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.trans.biz.unstructuredfilecollect.FileCollectJob;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.hadoop.readconfig.ConfigReader;
-import hrds.commons.utils.Constant;
 import hrds.commons.utils.PathUtil;
 import hrds.commons.utils.PropertyParaUtil;
 import hrds.commons.utils.ReadFileUtil;
@@ -125,7 +125,7 @@ public class AvroOper {
 			record.put("file_scr_path", filePath);
 			record.put("file_size", String.valueOf(file.length()));
 			record.put("file_time", String.valueOf(file.lastModified()));
-			if (Constant.FILECHANGESTYPEMD5) {
+			if (JobConstant.FILECHANGESTYPEMD5) {
 				record.put("file_md5", MD5Util.md5File(filePath));
 			} else {
 				record.put("file_md5", String.valueOf(new File(filePath).lastModified()));
@@ -338,7 +338,7 @@ public class AvroOper {
 		InputStream is = null;
 		DataFileStream<Object> reader = null;
 		try {
-			if (Constant.HAS_HADOOP_ENV) {
+			if (JobConstant.HAS_HADOOP_ENV) {
 				fs = FileSystem.get(ConfigReader.getConfiguration());
 				is = fs.open(avroFilePath);
 			} else {

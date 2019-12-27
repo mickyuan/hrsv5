@@ -10,6 +10,7 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.*;
 import hrds.agent.job.biz.bean.JobStatusInfo;
 import hrds.agent.job.biz.bean.MetaInfoBean;
+import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.agent.job.biz.utils.ProductFileUtil;
@@ -324,7 +325,7 @@ public class FtpCollectJobImpl implements JobInterface {
 			//2.根据mapDB的记录和该目录下文件属性过滤文件
 			File[] files;
 			//如果系统配置的是以MD5计算增量
-			if (Constant.FILECHANGESTYPEMD5) {
+			if (JobConstant.FILECHANGESTYPEMD5) {
 				files = new File(localPath).listFiles((file) -> (!fileNameHTreeMap.containsKey(
 						file.getAbsolutePath()) || file.isDirectory() || (fileNameHTreeMap.containsKey(
 						file.getAbsolutePath()) && !fileNameHTreeMap.get(file.getAbsolutePath()).
@@ -354,7 +355,7 @@ public class FtpCollectJobImpl implements JobInterface {
 						if (StringUtil.isBlank(fileSuffix) || fileName.endsWith(fileSuffix)) {
 							sftp.transferPutFile(file.getAbsolutePath(), tmpFtpDir);
 							//使用MD5算增量
-							if (Constant.FILECHANGESTYPEMD5) {
+							if (JobConstant.FILECHANGESTYPEMD5) {
 								fileNameHTreeMap.put(file.getAbsolutePath(), MD5Util.md5File(file));
 							} else {
 								fileNameHTreeMap.put(file.getAbsolutePath(), String.valueOf(file.lastModified()));

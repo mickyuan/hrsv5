@@ -10,6 +10,7 @@ import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.FileCollectParamBean;
 import hrds.agent.job.biz.bean.JobStatusInfo;
 import hrds.agent.job.biz.bean.MetaInfoBean;
+import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.core.filecollectstage.FileCollectUnloadDataStageImpl;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.agent.trans.biz.unstructuredfilecollect.FileCollectJob;
@@ -163,7 +164,7 @@ public class FileCollectJobImpl implements JobInterface {
 		//如果选择了其他，则fileTypeList里面的文件类型不采集
 		if (IsFlag.Shi.getCode().equals(is_other)) {
 			//1.获取文件夹下被采集过的但又被编辑过的文件或者文件夹
-			if (Constant.FILECHANGESTYPEMD5) {
+			if (JobConstant.FILECHANGESTYPEMD5) {
 				files = new File(path).listFiles((file) -> file.isDirectory()
 						|| (fileNameHTreeMap.containsKey(file.getAbsolutePath())
 						&& !fileTypeList.contains(FileNameUtils.getExtension(file.getName()))
@@ -178,7 +179,7 @@ public class FileCollectJobImpl implements JobInterface {
 			}
 		} else {//如果没有选择其他，则只采集fileTypeList里面的文件类型
 			//1.获取文件夹下被采集过的但又被编辑过的文件或者文件夹
-			if (Constant.FILECHANGESTYPEMD5) {
+			if (JobConstant.FILECHANGESTYPEMD5) {
 				files = new File(path).listFiles((file) -> file.isDirectory()
 						|| (fileNameHTreeMap.containsKey(file.getAbsolutePath())
 						&& fileTypeList.contains(FileNameUtils.getExtension(file.getName()))

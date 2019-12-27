@@ -30,10 +30,10 @@ public class BatchShell {
 	@Method(desc = "执行上传文件到远程服务器或者hdfs", logicStep = "1.判断是否有hadoop环境，调用对应的方法")
 	@Param(name = "localPath", desc = "本地文件路径", range = "不可为空")
 	@Param(name = "hdfsPath", desc = "hdfs文件路径", range = "不可为空")
-	public static void execStationaryHDFSShell(String localPath, String hdfsPath) {
+	public static void execStationaryHDFSShell(String localPath, String hdfsPath, Boolean has_hadoop_env) {
 		//TODO 这里上传到本地还是HDFS是页面上选的吗？
 		//1.判断是否有hadoop环境，调用对应的方法
-		if (Constant.HAS_HADOOP_ENV) {
+		if (has_hadoop_env) {
 			copyFileToHDFS(localPath, hdfsPath);
 		} else {
 			copyFileToRemote(localPath, hdfsPath);

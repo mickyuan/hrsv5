@@ -5,6 +5,7 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.utils.FileNameUtils;
 import hrds.agent.job.biz.bean.AvroBean;
 import hrds.agent.job.biz.bean.FileCollectParamBean;
+import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.core.filecollectstage.methods.AvroBeanProcess;
 import hrds.agent.job.biz.core.filecollectstage.methods.AvroOper;
 import hrds.agent.trans.biz.unstructuredfilecollect.FileCollectJob;
@@ -12,7 +13,6 @@ import hrds.commons.codes.IsFlag;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.hadoop.hadoop_helper.HdfsOperator;
 import hrds.commons.hadoop.utils.BatchShell;
-import hrds.commons.utils.Constant;
 import hrds.commons.utils.MapDBHelper;
 import hrds.commons.utils.PathUtil;
 import hrds.commons.utils.PropertyParaUtil;
@@ -46,7 +46,7 @@ public class FileCollectLoadingDataStageImpl implements Callable<String> {
 		String fileCollectHdfsPath = FileNameUtils.normalize(PropertyParaUtil.getString("pathprefix",
 				"/hrds") + File.separator + PathUtil.DCL + File.separator + paramBean.getFcs_id()
 				+ File.separator + paramBean.getFile_source_id() + File.separator + BIGFILENAME, true);
-		if (Constant.HAS_HADOOP_ENV) {
+		if (JobConstant.HAS_HADOOP_ENV) {
 			//创建hdfs文件夹
 			try (HdfsOperator operator = new HdfsOperator()) {
 				Path path = new Path(fileCollectHdfsPath);
@@ -80,7 +80,8 @@ public class FileCollectLoadingDataStageImpl implements Callable<String> {
 				/*
 				 * 对其做处理（上传hdfs，删除本地，入mysql，solr，hbase）
 				 */
-				BatchShell.execStationaryHDFSShell(avroFileAbsolutionPath, fileCollectHdfsPath);
+				BatchShell.execStationaryHDFSShell(avroFileAbsolutionPath, fileCollectHdfsPath,
+						JobConstant.HAS_HADOOP_ENV);
 				//判断如果是大文件，则只做文件上传处理，大文件的信息记录在其他队列中，这里直接取下一个队列的数据
 				if (IsFlag.Shi.getCode().equals(queueJb.getString("isBigFile"))) {
 					continue;
@@ -91,7 +92,7 @@ public class FileCollectLoadingDataStageImpl implements Callable<String> {
 				//传输文件并入库，入hbase
 				log.info("处理  -->" + avroPath.getName());
 				//不是hadoop版获取本地的卸数的Avro文件
-				if (!Constant.HAS_HADOOP_ENV) {
+				if (!JobConstant.HAS_HADOOP_ENV) {
 					avroPath = new Path(avroFileAbsolutionPath);
 				}
 				//获取AvroBeans
@@ -103,7 +104,7 @@ public class FileCollectLoadingDataStageImpl implements Callable<String> {
 				}
 				//存入Mysql和solr
 				List<String[]> hbaseList = abp.saveMetaData(avroBeans, fileNameHTreeMap);
-				if (!Constant.HAS_HADOOP_ENV) {
+				if (!JobConstant.HAS_HADOOP_ENV) {
 					abp.saveInPostgreSupersedeHbase(hbaseList);
 				} else {
 					//存入HBase

@@ -4,6 +4,7 @@ import fd.ng.core.utils.FileNameUtils;
 import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.TableBean;
+import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.core.dbstage.service.CollectTableHandleParse;
 import hrds.agent.job.biz.dataclean.Clean;
 import hrds.agent.job.biz.dataclean.CleanFactory;
@@ -120,11 +121,11 @@ public class JdbcToParquetFileWriter extends AbstractFileWriter {
 					String md5 = toMD5(midStringOther.toString());
 					group.append(Constant.EDATENAME, Constant.MAXDATE).append(Constant.MD5NAME, md5);
 				}
-				if (Constant.WriteMultipleFiles) {
+				if (JobConstant.WriteMultipleFiles) {
 					//获取文件大小和当前读到的内容大小
 					long messageSize = group.toString().length();
 					long singleFileSize = new File(fileName).length();
-					if (singleFileSize + messageSize > Constant.FILE_BLOCKSIZE) {
+					if (singleFileSize + messageSize > JobConstant.FILE_BLOCKSIZE) {
 						//当文件满足阈值时 ，然后关闭当前流，并创建新的数据流
 						parquetWriter.close();
 						index++;
