@@ -22,10 +22,10 @@ public class DataStoreConfBean implements Serializable {
 	private Map<String, Map<Integer, String>> additInfoFieldMap;
 	@DocBean(name ="is_hadoopclient",value="是否有hadoop客户端(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_hadoopclient;
-	@DocBean(name ="dtcs_id",value="类型对照ID:",dataType = Long.class,required = false)
-	private Long dtcs_id;
-	@DocBean(name ="dlcs_id",value="长度对照表ID:",dataType = Long.class,required = false)
-	private Long dlcs_id;
+	@DocBean(name ="dtcs_name",value="类型对照名称:",dataType = String.class,required = true)
+	private String dtcs_name;
+	@DocBean(name ="dlcs_name",value="长度对照名称:",dataType = String.class,required = true)
+	private String dlcs_name;
 	@DocBean(name = "data_store_layer_file", value = "数据存储层配置文件属性:", dataType = Map.class, required = true)
 	private Map<String, String> data_store_layer_file;
 
@@ -61,20 +61,20 @@ public class DataStoreConfBean implements Serializable {
 		this.is_hadoopclient = is_hadoopclient;
 	}
 
-	public Long getDtcs_id() {
-		return dtcs_id;
+	public String getDtcs_name() {
+		return dtcs_name;
 	}
 
-	public void setDtcs_id(Long dtcs_id) {
-		this.dtcs_id = dtcs_id;
+	public void setDtcs_name(String dtcs_name) {
+		this.dtcs_name = dtcs_name;
 	}
 
-	public Long getDlcs_id() {
-		return dlcs_id;
+	public String getDlcs_name() {
+		return dlcs_name;
 	}
 
-	public void setDlcs_id(Long dlcs_id) {
-		this.dlcs_id = dlcs_id;
+	public void setDlcs_name(String dlcs_name) {
+		this.dlcs_name = dlcs_name;
 	}
 
 	public Map<String, String> getData_store_layer_file() {
