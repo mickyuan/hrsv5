@@ -3,8 +3,8 @@ package hrds.agent.job.biz.core.dfstage.fileparser.service;
 import com.univocity.parsers.csv.CsvParser;
 import com.univocity.parsers.csv.CsvParserSettings;
 import fd.ng.core.annotation.DocClass;
-import hrds.agent.job.biz.constant.CharSetConstant;
 import hrds.agent.job.biz.constant.JobConstant;
+import hrds.commons.codes.DataBaseCode;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +26,7 @@ public abstract class AbstractFileParser implements FileParserInterface {
 	private final String[] columns;
 	private final String[] columnType;
 	//以下为可选参数
-	private CharSetConstant chartset;
+	private DataBaseCode chartset;
 	//是否有特殊字符，用于特殊字符处理，TODO 此处还应该包括特殊字符的处理字段
 	private boolean hasSpecicalChar;
 	private String[] header;

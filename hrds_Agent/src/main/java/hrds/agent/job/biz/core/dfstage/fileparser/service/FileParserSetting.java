@@ -1,7 +1,7 @@
 package hrds.agent.job.biz.core.dfstage.fileparser.service;
 
 import fd.ng.core.annotation.DocClass;
-import hrds.agent.job.biz.constant.CharSetConstant;
+import hrds.commons.codes.DataBaseCode;
 
 @DocClass(desc = "用于文件分析处理的设置类", author = "WangZhengcheng")
 public class FileParserSetting {
@@ -15,7 +15,7 @@ public class FileParserSetting {
 	private String addColumns;
 	private String addColumnType;
 	//以下为可选参数
-	private CharSetConstant chartset = CharSetConstant.UTF8;
+	private DataBaseCode chartset = DataBaseCode.UTF_8;
 	//是否有特殊字符，用于特殊字符处理，TODO 此处还应该包括特殊字符的处理字段
 	private boolean specialChar = false;
 	private String[] header = null;
@@ -48,7 +48,7 @@ public class FileParserSetting {
 	 * @author 13616
 	 * @date 2019/8/7 12:06
 	 */
-	public void setCharset(CharSetConstant chartset, boolean specialChar) {
+	public void setCharset(DataBaseCode chartset, boolean specialChar) {
 		this.chartset = chartset;
 		this.specialChar = specialChar;
 	}
@@ -124,7 +124,7 @@ public class FileParserSetting {
 		return specialChar;
 	}
 
-	public CharSetConstant getChartset() {
+	public DataBaseCode getChartset() {
 		return chartset;
 	}
 

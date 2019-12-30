@@ -13,14 +13,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-@DocClass(desc = "完成数据文件采集的作业实现", author = "WangZhengcheng")
+@DocClass(desc = "完成数据文件采集的作业实现")
 public class DataFileJobImpl implements JobInterface {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(DataFileJobImpl.class);
 
 	private MetaInfoBean mateInfo = new MetaInfoBean();
 	private final JobInfo job;
-	private final JobParamBean jobParam;
+	//TODO DB文件采集的作业参数bean还没有，后期需要加上
+	//private final JobParamBean jobParam;
 	private final String statusFilePath;
 	private final JobStatusInfo jobStatus;
 
@@ -28,16 +29,14 @@ public class DataFileJobImpl implements JobInterface {
 	 * 完成数据文件采集的作业实现.
 	 *
 	 * @param job            JobInfo对象，表示一个作业
-	 * @param jobParam       JobParamBean对象，表示作业参数
 	 * @param statusFilePath 作业状态文件地址，用于更新运行时状态
 	 * @param jobStatus      JobStatusInfo对象，表示一个作业的状态
 	 * @author 13616
 	 * @date 2019/8/7 11:52
 	 */
-	DataFileJobImpl(JobInfo job, JobParamBean jobParam, String statusFilePath, JobStatusInfo jobStatus) {
+	DataFileJobImpl(JobInfo job, String statusFilePath, JobStatusInfo jobStatus) {
 
 		this.job = job;
-		this.jobParam = jobParam;
 		this.statusFilePath = statusFilePath;
 		this.jobStatus = jobStatus;
 	}
@@ -46,7 +45,8 @@ public class DataFileJobImpl implements JobInterface {
 	public JobStatusInfo runJob() {
 		String jobId = job.getJobId();
 		LOGGER.info("作业正在运行中，作业编号为{}", jobId);
-		String inputFile = jobParam.getFile_path();
+		//TODO inputFile暂时赋值为TODO_INPUT_FILE，后面需要改动
+		String inputFile = "TODO_INPUT_FILE";
 		List<String> columns = new ArrayList<>();
 		for (ColumnCleanBean column : job.getColumnList()) {
 //			columns.add(column.getColumnName());
@@ -60,7 +60,8 @@ public class DataFileJobImpl implements JobInterface {
 			columnTypes.add(StringUtils.splitByWholeSeparatorPreserveAllTokens(colAndType,
 					JobConstant.COLUMN_TYPE_SEPARATOR)[1]);
 		}
-		String startDate = jobParam.getStart_date();
+		//TODO 开始时间暂时写为TODO_START_DATE，后面需要改
+		String startDate = "TODO_START_DATE";
 		//目前先按照完整顺序执行，后期可改造为按照配置构建采集阶段
 		DFUnloadDataStageImpl unloadData = new DFUnloadDataStageImpl(jobId, inputFile,
 				tableName, columns, columnTypes, startDate);

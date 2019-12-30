@@ -5,12 +5,12 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
 import hrds.agent.job.biz.bean.StageStatusInfo;
-import hrds.agent.job.biz.constant.FileFormatConstant;
 import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
 import hrds.agent.job.biz.core.dfstage.fileparser.CsvFile2Parquet;
+import hrds.commons.codes.FileFormat;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,7 +55,7 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 		this.startDate = startDate;
 		//TODO 输出文件待定
 		this.outputFile = new File(inputFile).getParent() + File.separatorChar + tableName + "." +
-				FileFormatConstant.PARQUET.getMessage();
+				FileFormat.PARQUET.getValue();
 	}
 
 	@Method(desc = "数据文件采集，数据卸数阶段实现，处理完成后，无论成功还是失败，" +
