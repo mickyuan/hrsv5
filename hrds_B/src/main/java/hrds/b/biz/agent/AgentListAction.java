@@ -390,70 +390,6 @@ public class AgentListAction extends BaseAction {
 		//该方法首先使用user_id去数据库中查询相应的数据
 	}
 
-	/*
-	@Method(desc = "保存FTP采集工程信息", logicStep = "")
-	@Param(name = "ftpId", desc = "ftp_collect表主键", range = "不为空")
-	@Param(name = "projectCode", desc = "工程编码，etl_sub_sys_list表主键", range = "不为空")
-	@Param(name = "subSysCd", desc = "子系统代码，etl_sub_sys_list表主键，etl_job_def表外键", range = "不为空")
-	public void saveFTPProjectInfo(String ftpId, String projectCode, String subSysCd) {
-
-		StringBuilder sql = new StringBuilder();
-		sql.append(" select datasource_number,datasource_name, ")
-				.append(" agent_name,ftp_number,ftp_name,c.ftp_id ")
-				.append(" from data_source a join agent_info b on a.source_id = b.source_id ")
-				.append(" join ftp_collect c on b.agent_id = c.agent_id ")
-				.append(" where c.is_sendok = ? and c.ftp_id = ? and a.create_user_id = ?");
-
-		Map<String, Object> result = Dbo.queryOneObject(sql.toString(), IsFlag.Shi.getCode()
-				, ftpId, getUserId());
-		if(result.isEmpty()){
-			throw new BusinessException("根据ID未能找到对应的FTP采集信息");
-		}
-		//数据可访问权限处理方式
-		//以上SQL中，通过当前用户ID进行关联查询，达到了数据权限的限制
-		String dsName = (String)result.get("datasource_name");
-		String dsNumber = (String)result.get("datasource_number");
-		String ftpNumber = (String)result.get("ftp_number");
-		String ftpName = (String)result.get("ftp_name");
-
-		String subSysCode = dsNumber + "_" + ftpNumber;
-		String subSysDesc = dsName + "_" + ftpName;
-		String etlJob = subSysCode + "_" + "etljob";
-		String etlJobDesc = subSysDesc + "_" + "etljob";
-		String proParam = "etljob" + "@" + "B301@2008";
-	}
-	*/
-
-	/*
-	@Method(desc = "保存半结构化(对象)采集工程信息", logicStep = "不为空")
-	@Param(name = "objCollId", desc = "object_collect表主键", range = "")
-	@Param(name = "projectCode", desc = "工程编码，etl_sub_sys_list表主键", range = "不为空")
-	@Param(name = "subSysCode", desc = "子系统代码，etl_sub_sys_list表主键，etl_job_def表外键", range = "不为空")
-	public void saveHalfStructProjectInfo(String objCollId, String projectCode, String subSysCode){
-
-	}
-	*/
-
-	/*
-	@Method(desc = "保存非结构化(文件系统)采集工程信息", logicStep = "")
-	@Param(name = "fileCollId", desc = "file_collect_set表主键", range = "不为空")
-	@Param(name = "projectCode", desc = "工程编码，etl_sub_sys_list表主键", range = "不为空")
-	@Param(name = "subSysCode", desc = "子系统代码，etl_sub_sys_list表主键，etl_job_def表外键", range = "不为空")
-	public void saveNonStructProjectInfo(String fileCollId, String projectCode, String subSysCode){
-
-	}
-	*/
-
-	/*
-	@Method(desc = "保存数据文件采集和数据库采集采集工程信息", logicStep = "")
-	@Param(name = "dataSourceId", desc = "datasource_set表主键", range = "不为空")
-	@Param(name = "projectCode", desc = "工程编码，etl_sub_sys_list表主键", range = "不为空")
-	@Param(name = "subSysCode", desc = "子系统代码，etl_sub_sys_list表主键，etl_job_def表外键", range = "不为空")
-	public void saveDBAndDFProjectInfo(String dataSourceId, String projectCode, String subSysCode){
-
-	}
-	*/
-
 	@Method(desc = "根据数据源ID查询出设置完成的数据库采集任务和DB文件采集任务的任务ID", logicStep = "" +
 			"1、根据数据源ID和用户ID查询出设置完成的数据库采集任务和DB文件采集任务的任务ID并返回")
 	@Param(name = "sourceId", desc = "数据源表主键, agent信息表外键", range = "不为空")
@@ -521,6 +457,8 @@ public class AgentListAction extends BaseAction {
 		//数据可访问权限处理方式
 		//以上SQL中，通过当前用户ID进行关联查询，达到了数据权限的限制
 	}
+
+
 
 	@Method(desc = "根据参数获得任务日志信息", logicStep = "" +
 			"1、根据agent_id和user_id获取agent信息" +
