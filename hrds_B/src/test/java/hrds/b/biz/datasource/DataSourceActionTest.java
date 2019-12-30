@@ -398,16 +398,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
             ftpTransfered.setTransfered_name("ftp传输测试");
             ftpTransfered.setFile_path("/home/hyshf/ftp");
             ftpTransfered.add(db);
-            // 11.构造ftp_folder表测试数据
-            Ftp_folder ftpFolder = new Ftp_folder();
-            ftpFolder.setFtp_folder_id(FtpFolderId);
-            ftpFolder.setFtp_id(FtpId);
-            ftpFolder.setFtp_date(SysDate);
-            ftpFolder.setFtp_time(SysTime);
-            ftpFolder.setFtp_folder_name("ftp采集目录");
-            ftpFolder.setIs_processed(IsFlag.Shi.getCode());
-            ftpFolder.add(db);
-            // 12.构造object_collect表测试数据
+            // 11.构造object_collect表测试数据
             Object_collect objectCollect = new Object_collect();
             objectCollect.setOdc_id(OdcId);
             objectCollect.setAgent_id(DBAgentId);
@@ -427,7 +418,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
             objectCollect.setSystem_name("windows");
             objectCollect.setObject_collect_type(ObjectCollectType.DuiXiangCaiJi.getCode());
             objectCollect.add(db);
-            // 13.构造object_collect_task表测试数据
+            // 12.构造object_collect_task表测试数据
             Object_collect_task objectCollectTask = new Object_collect_task();
             objectCollectTask.setOcs_id(OcsId);
             objectCollectTask.setAgent_id(DBAgentId);
@@ -437,14 +428,14 @@ public class DataSourceActionTest extends WebBaseTestCase {
             objectCollectTask.setDatabase_code(DataBaseCode.UTF_8.getCode());
             objectCollectTask.setOdc_id(OdcId);
             objectCollectTask.add(db);
-            // 14.构造object_storage表测试数据
+            // 13.构造object_storage表测试数据
             Object_storage objectStorage = new Object_storage();
             objectStorage.setObj_stid(ObjStid);
             objectStorage.setOcs_id(OcsId);
             objectStorage.setIs_hbase(IsFlag.Shi.getCode());
             objectStorage.setIs_hdfs(IsFlag.Fou.getCode());
             objectStorage.add(db);
-            // 15.构造object_collect_struct表测试数据
+            // 14.构造object_collect_struct表测试数据
             Object_collect_struct objectCollectStruct = new Object_collect_struct();
             objectCollectStruct.setStruct_id(StructId);
             objectCollectStruct.setOcs_id(OcsId);
@@ -452,7 +443,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
             objectCollectStruct.setStruct_type(ObjectDataType.ZiFuChuan.getCode());
             objectCollectStruct.setData_desc("测试");
             objectCollectStruct.add(db);
-            // 16.构造file_collect_set表测试数据
+            // 15.构造file_collect_set表测试数据
             File_collect_set fileCollectSet = new File_collect_set();
             fileCollectSet.setFcs_id(FcsId);
             fileCollectSet.setAgent_id(DBAgentId);
@@ -462,7 +453,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
             fileCollectSet.setHost_name(SystemUtil.getHostName());
             fileCollectSet.setSystem_type("windows");
             fileCollectSet.add(db);
-            // 17.构造file_source表测试数据
+            // 16.构造file_source表测试数据
             File_source fileSource = new File_source();
             fileSource.setFile_source_id(FileSourceId);
             fileSource.setAgent_id(DBAgentId);
@@ -477,7 +468,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
             fileSource.setIs_video(IsFlag.Fou.getCode());
             fileSource.setIs_compress(IsFlag.Shi.getCode());
             fileSource.add(db);
-            // 18.构造signal_file表测试数据
+            // 17.构造signal_file表测试数据
             Signal_file signalFile = new Signal_file();
             signalFile.setSignal_id(SignalId);
             signalFile.setDatabase_id(DatabaseId);
@@ -491,7 +482,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
             signalFile.setIs_solr_hbase(IsFlag.Fou.getCode());
             signalFile.setTable_type(IsFlag.Shi.getCode());
             signalFile.add(db);
-            // 19.构造table_info表测试数据
+            // 18.构造table_info表测试数据
             Table_info tableInfo = new Table_info();
             tableInfo.setTable_id(TableId);
             tableInfo.setDatabase_id(DatabaseId);
@@ -504,7 +495,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
             tableInfo.setValid_e_date("99991231");
             tableInfo.setIs_parallel(IsFlag.Shi.getCode());
             tableInfo.add(db);
-            // 20.构造column_merge表测试数据
+            // 19.构造column_merge表测试数据
             Column_merge columnMerge = new Column_merge();
             columnMerge.setCol_merge_id(ColumnMergeId);
             columnMerge.setTable_id(TableId);
@@ -515,7 +506,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
             columnMerge.setValid_s_date(SysDate);
             columnMerge.setValid_e_date("99991231");
             columnMerge.add(db);
-            // 21.构造table_storage_info表测试数据
+            // 20.构造table_storage_info表测试数据
             Table_storage_info tableStorageInfo = new Table_storage_info();
             tableStorageInfo.setStorage_id(StorageId);
             tableStorageInfo.setStorage_time(1L);
@@ -524,7 +515,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
             tableStorageInfo.setIs_zipper(IsFlag.Fou.getCode());
             tableStorageInfo.setStorage_type(StorageType.TiHuan.getCode());
             tableStorageInfo.add(db);
-            // 22.构造table_clean表测试数据
+            // 21.构造table_clean表测试数据
             Table_clean tableClean = new Table_clean();
             tableClean.setTable_clean_id(TableCleanId);
             tableClean.setTable_id(TableId);
@@ -535,7 +526,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
             tableClean.setFilling_type(FillingType.HouBuQi.getCode());
             tableClean.setReplace_feild("agent_ip");
             tableClean.add(db);
-            // 23.构造table_column表测试数据
+            // 22.构造table_column表测试数据
             Table_column tableColumn = new Table_column();
             tableColumn.setColumn_id(ColumnId);
             tableColumn.setTable_id(TableId);
@@ -547,7 +538,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
             tableColumn.setIs_alive(IsFlag.Shi.getCode());
             tableColumn.setIs_new(IsFlag.Fou.getCode());
             tableColumn.add(db);
-            // 24.构造column_clean表测试数据
+            // 23.构造column_clean表测试数据
             Column_clean columnClean = new Column_clean();
             columnClean.setCol_clean_id(ColumnCleanId);
             columnClean.setColumn_id(ColumnId);
@@ -557,7 +548,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
             columnClean.setCodename("是");
             columnClean.setCodesys("1");
             columnClean.add(db);
-            // 25.构造column_split表测试数据
+            // 24.构造column_split表测试数据
             Column_split columnSplit = new Column_split();
             columnSplit.setCol_split_id(ColSplitId);
             columnSplit.setCol_name("agent_ip");
@@ -568,7 +559,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
             columnSplit.setValid_e_date("99991231");
             columnSplit.setColumn_id(ColumnId);
             columnSplit.add(db);
-            // 26.初始化 Source_file_attribute 数据
+            // 25.初始化 Source_file_attribute 数据
             Source_file_attribute sourceFileAttribute = new Source_file_attribute();
             for (int i = 0; i < 4; i++) {
                 switch (i) {
@@ -620,7 +611,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
             sourceFileAttribute.setSource_id(SourceId);
             sourceFileAttribute.setCollect_set_id(DatabaseId);
             sourceFileAttribute.add(db);
-            // 27.初始化 data_auth 数据
+            // 26.初始化 data_auth 数据
             for (int i = 0; i < 4; i++) {
                 Data_auth dataAuth = new Data_auth();
                 dataAuth.setDa_id(DaId + i);
@@ -653,10 +644,10 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 dataAuth.setCollect_set_id(DatabaseId);
                 dataAuth.add(db);
             }
-            // 28.提交事务
+            // 27.提交事务
             SqlOperator.commitTransaction(db);
         }
-        // 29.模拟用户登录
+        // 28.模拟用户登录
         String responseValue = new HttpClient()
                 .buildSession()
                 .addData("user_id", UserId)
@@ -1898,11 +1889,6 @@ public class DataSourceActionTest extends WebBaseTestCase {
                     "select * from " + Ftp_transfered.TableName + " where ftp_id=?",
                     ftpCollect.get("ftp_id")).orElseThrow(() -> new RuntimeException("sql执行错误!"));
             assertThat(ftpTransfered.getTransfered_name(), is("ftp传输测试"));
-            Ftp_folder ftpFolder = SqlOperator.queryOneObject(db, Ftp_folder.class,
-                    "select * from " + Ftp_folder.TableName + " where ftp_id=?", ftpCollect.get("ftp_id"))
-                    .orElseThrow(() -> new RuntimeException("sql执行错误!"));
-            assertThat(ftpFolder.getFtp_folder_name(), is("ftp采集目录"));
-            assertThat(ftpFolder.getIs_processed(), is(IsFlag.Shi.getCode()));
             Object_collect objectCollect = SqlOperator.queryOneObject(db, Object_collect.class,
                     "select * from " + Object_collect.TableName + " where agent_id=?", dbAgentId)
                     .orElseThrow(() -> new RuntimeException("sql执行错误!"));

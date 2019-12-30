@@ -21,7 +21,6 @@ import hrds.commons.base.BaseAction;
 import hrds.commons.codes.AuthType;
 import hrds.commons.codes.UserType;
 import hrds.commons.entity.*;
-import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.key.PrimayKeyGener;
@@ -527,22 +526,21 @@ public class DataSourceAction extends BaseAction {
                     "8.将collect_job_classify表数据插入数据库" +
                     "9.将ftp采集设置ftp_collect表数据插入数据库" +
                     "10.将ftp已传输表ftp_transfered表数据插入数据库" +
-                    "11.将ftp目录表ftp_folder表数据插入数据库" +
-                    "12.将对象采集设置object_collect表数据插入数据库" +
-                    "13.将对象采集对应信息object_collect_task表数据插入数据库" +
-                    "14.将对象采集存储设置object_storage表数据插入数据库" +
-                    "15.将对象采集结构信息object_collect_struct表数据插入数据库" +
-                    "16.将数据库设置database_set表数据插入数据库" +
-                    "17.将文件系统设置file_collect_set表数据插入数据库" +
-                    "18.将文件源设置file_source表数据插入数据库" +
-                    "19.将信号文件入库信息signal_file表数据插入数据库" +
-                    "20.将数据库对应的表table_info表数据插入数据库" +
-                    "21.将列合并信息column_merge表数据插入数据库" +
-                    "22.将表存储信息table_storage_info表数据插入数据库" +
-                    "23.将表清洗参数信息table_clean表数据插入数据库" +
-                    "24.将表对应的字段table_column表数据插入数据库" +
-                    "25.将列清洗参数信息column_clean表数据插入数据库" +
-                    "26.将列拆分信息表column_split表数据插入数据库")
+                    "11.将对象采集设置object_collect表数据插入数据库" +
+                    "12.将对象采集对应信息object_collect_task表数据插入数据库" +
+                    "13.将对象采集存储设置object_storage表数据插入数据库" +
+                    "14.将对象采集结构信息object_collect_struct表数据插入数据库" +
+                    "15.将数据库设置database_set表数据插入数据库" +
+                    "16.将文件系统设置file_collect_set表数据插入数据库" +
+                    "17.将文件源设置file_source表数据插入数据库" +
+                    "18.将信号文件入库信息signal_file表数据插入数据库" +
+                    "19.将数据库对应的表table_info表数据插入数据库" +
+                    "20.将列合并信息column_merge表数据插入数据库" +
+                    "21.将表存储信息table_storage_info表数据插入数据库" +
+                    "22.将表清洗参数信息table_clean表数据插入数据库" +
+                    "23.将表对应的字段table_column表数据插入数据库" +
+                    "24.将列清洗参数信息column_clean表数据插入数据库" +
+                    "25.将列拆分信息表column_split表数据插入数据库")
     @Param(name = "strTemp", desc = "涉及数据源文件下载相关的所有表进行base64编码后的信息", range = "不能为空")
     @Param(name = "agent_ip", desc = "agent地址", range = "不能为空，服务器ip地址", example = "127.0.0.1")
     @Param(name = "agent_port", desc = "agent端口", range = "1024-65535")
@@ -573,37 +571,35 @@ public class DataSourceAction extends BaseAction {
         Map<Long, String> ftpIdMap = addFtpCollect(collectMap, agentIdMap);
         // 10.将ftp已传输表ftp_transfered表数据插入数据库
         addFtpTransfered(collectMap, ftpIdMap);
-        // 11.将ftp目录表ftp_folder表数据插入数据库
-        addFtpFolder(collectMap, ftpIdMap);
-        // 12.将对象采集设置object_collect表数据插入数据库并返回agent ID以及对象采集ID的集合
+        // 11.将对象采集设置object_collect表数据插入数据库并返回agent ID以及对象采集ID的集合
         Map<String, String> odcMap = addObjectCollect(collectMap, agentIdMap);
-        // 13.将对象采集对应信息object_collect_task表数据插入数据库并返回新旧对象采集任务编号的集合
+        // 12.将对象采集对应信息object_collect_task表数据插入数据库并返回新旧对象采集任务编号的集合
         Map<Long, String> ocsIdMap = addObjectCollectTask(collectMap, odcMap);
-        // 14.将对象采集存储设置object_storage表数据插入数据库
+        // 13.将对象采集存储设置object_storage表数据插入数据库
         addObjectStorage(collectMap, ocsIdMap);
-        // 15.将对象采集结构信息object_collect_struct表数据插入数据库
+        // 14.将对象采集结构信息object_collect_struct表数据插入数据库
         addObjectCollectStruct(collectMap, ocsIdMap);
-        // 16.将数据库设置database_set表数据插入数据库
+        // 15.将数据库设置database_set表数据插入数据库
         Map<Long, String> databaseIdMap = addDatabaseSet(collectMap, classifyAndAgentId);
-        // 17.将文件系统设置file_collect_set表数据插入数据库
+        // 16.将文件系统设置file_collect_set表数据插入数据库
         Map<String, String> agentAndFcsIdMap = addFileCollectSet(collectMap, agentIdMap);
-        // 18.将文件源设置file_source表数据插入数据库
+        // 17.将文件源设置file_source表数据插入数据库
         addFileSource(collectMap, agentAndFcsIdMap);
-        // 19.将信号文件入库信息signal_file表数据插入数据库
+        // 18.将信号文件入库信息signal_file表数据插入数据库
         addSignalFile(collectMap, databaseIdMap);
-        // 20.将数据库对应的表table_info表数据插入数据库
+        // 19.将数据库对应的表table_info表数据插入数据库
         Map<Long, String> tableIdMap = addTableInfo(collectMap, databaseIdMap);
-        // 21.将列合并信息column_merge表数据插入数据库
+        // 20.将列合并信息column_merge表数据插入数据库
         addColumnMerge(collectMap, tableIdMap);
-        // 22.将表存储信息table_storage_info表数据插入数据库
+        // 21.将表存储信息table_storage_info表数据插入数据库
         addTableStorageInfo(collectMap, tableIdMap);
-        // 23.将表清洗参数信息table_clean表数据插入数据库
+        // 22.将表清洗参数信息table_clean表数据插入数据库
         addTableClean(collectMap, tableIdMap);
-        // 24.将表对应的字段table_column表数据插入数据库
+        // 23.将表对应的字段table_column表数据插入数据库
         Map<Long, String> columnIdMap = addTableColumn(collectMap, tableIdMap);
-        // 25.将列清洗参数信息column_clean表数据插入数据库
+        // 24.将列清洗参数信息column_clean表数据插入数据库
         Map<String, String> columnAndColIdMap = addColumnClean(collectMap, columnIdMap);
-        // 26.将列拆分信息表column_split表数据插入数据库
+        // 25.将列拆分信息表column_split表数据插入数据库
         addColumnSplit(collectMap, columnAndColIdMap);
     }
 
@@ -1253,44 +1249,6 @@ public class DataSourceAction extends BaseAction {
         return odcMap;
     }
 
-    @Method(desc = "将ftp_folder表数据插入数据库",
-            logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
-                    "2.判断map中的key值是否为ftp_folder对应表数据" +
-                    "3.获取ftp目录表ftp_folder信息" +
-                    "4.遍历ftp_folder表数据集合" +
-                    "5.用重新生成的ftp_id替换旧的ftp_id,保证关联关系不变" +
-                    "6.将ftp_folder表数据循环入数据库")
-    @Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
-    @Param(name = "ftpIdMap", desc = "存放重新生成的ftp采集ID（作为value）,旧的ftp采集ID（作为key）的集合",
-            range = "不能为空")
-    private void addFtpFolder(Map<String, Object> collectMap, Map<Long, String> ftpIdMap) {
-        // 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-        for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
-            // 2.判断map中的key值是否为ftp_folder对应表数据
-            // map中key的值，也是下载数据源时对应表信息封装入map的key值
-            if (Ftp_folder.TableName.equals(entry.getKey())) {
-                Type ffType = new TypeReference<List<Ftp_folder>>() {
-                }.getType();
-                // 3.获取ftp目录表ftp_folder信息
-                List<Ftp_folder> ftpFolderList = JsonUtil.toObject(entry.getValue().toString(), ffType);
-                if (!ftpFolderList.isEmpty()) {
-                    // 4.遍历ftp_folder表数据集合
-                    for (Ftp_folder ftp_folder : ftpFolderList) {
-                        for (Map.Entry<Long, String> ftpIdEntry : ftpIdMap.entrySet()) {
-                            // 5.用重新生成的ftp_id替换旧的ftp_id,保证关联关系不变
-                            if (ftpIdEntry.getKey().longValue() == ftp_folder.getFtp_id().longValue()) {
-                                ftp_folder.setFtp_folder_id(PrimayKeyGener.getNextId());
-                                ftp_folder.setFtp_id(ftpIdEntry.getValue());
-                                // 6.将ftp_folder表数据循环入数据库
-                                ftp_folder.add(Dbo.db());
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     @Method(desc = "将ftp_transfered表数据插入数据库",
             logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
                     "2.判断map中的key值是否为ftp_transfered对应表数据" +
@@ -1651,26 +1609,25 @@ public class DataSourceAction extends BaseAction {
                     "8.采集任务分类表collect_job_classify，获取collect_job_classify表信息集合入map" +
                     "9.ftp采集设置ftp_collect,获取ftp_collect表信息集合" +
                     "10.ftp已传输表ftp_transfered,获取ftp_transfered表信息集合入map" +
-                    "11.ftp目录表ftp_folder,获取ftp_folder表信息集合入map" +
-                    "12.对象采集设置object_collect,获取object_collect表信息集合入map" +
-                    "13.对象采集对应信息object_collect_task,获取object_collect_task表信息集合入map" +
-                    "14.对象采集存储设置object_storage,获取object_storage表信息集合入map" +
-                    "15.对象采集结构信息object_collect_struct,获取object_collect_struct表信息集合入map" +
-                    "16.数据库设置database_set,获取database_set表信息集合入map" +
-                    "17.文件系统设置file_collect_set,获取file_collect_set表信息集合入map" +
-                    "18.文件源设置file_source,获取file_source表信息集合入map" +
-                    "19.信号文件入库信息signal_file,获取signal_file表信息集合入map" +
-                    "20.数据库对应的表table_info,获取table_info表信息集合入map" +
-                    "21.列合并信息表column_merge,获取column_merge表信息集合入map" +
-                    "22.表存储信息table_storage_info,获取table_storage_info表信息集合入map" +
-                    "23.表清洗参数信息table_clean,获取table_clean表信息集合入map" +
-                    "24.表对应的字段table_column,获取table_column表信息集合入map" +
-                    "25.列清洗参数信息column_clean,获取column_clean表信息集合入map" +
-                    "26.列拆分信息表column_split,获取column_split表信息集合入map" +
-                    "27.使用base64编码" +
-                    "28.判断文件是否存在" +
-                    "29.清空response，设置响应头，响应编码格式，控制浏览器下载该文件" +
-                    "30.通过流的方式写入文件")
+                    "11.对象采集设置object_collect,获取object_collect表信息集合入map" +
+                    "12.对象采集对应信息object_collect_task,获取object_collect_task表信息集合入map" +
+                    "13.对象采集存储设置object_storage,获取object_storage表信息集合入map" +
+                    "14.对象采集结构信息object_collect_struct,获取object_collect_struct表信息集合入map" +
+                    "15.数据库设置database_set,获取database_set表信息集合入map" +
+                    "16.文件系统设置file_collect_set,获取file_collect_set表信息集合入map" +
+                    "17.文件源设置file_source,获取file_source表信息集合入map" +
+                    "18.信号文件入库信息signal_file,获取signal_file表信息集合入map" +
+                    "19.数据库对应的表table_info,获取table_info表信息集合入map" +
+                    "20.列合并信息表column_merge,获取column_merge表信息集合入map" +
+                    "21.表存储信息table_storage_info,获取table_storage_info表信息集合入map" +
+                    "22.表清洗参数信息table_clean,获取table_clean表信息集合入map" +
+                    "23.表对应的字段table_column,获取table_column表信息集合入map" +
+                    "24.列清洗参数信息column_clean,获取column_clean表信息集合入map" +
+                    "25.列拆分信息表column_split,获取column_split表信息集合入map" +
+                    "26.使用base64编码" +
+                    "27.判断文件是否存在" +
+                    "28.清空response，设置响应头，响应编码格式，控制浏览器下载该文件" +
+                    "29.通过流的方式写入文件")
     @Param(name = "source_id", desc = "data_source表主键", range = "不为空以及不为空格，10位数字，新增数据源时生成")
     public void downloadFile(long source_id) {
         // 1.数据可访问权限处理方式，这里是下载数据源，所以不需要数据权限验证
@@ -1695,39 +1652,37 @@ public class DataSourceAction extends BaseAction {
             Result ftpCollectResult = getFtpCollectResult(collectionMap, agentInfoList);
             // 10.ftp已传输表ftp_transfered,获取ftp_transfered表信息集合入map
             addFtpTransferedToMap(collectionMap, ftpCollectResult);
-            // 11.ftp目录表ftp_folder,获取ftp_folder表信息集合入map
-            addFtpFolderToMap(collectionMap, ftpCollectResult);
-            // 12.对象采集设置object_collect,获取object_collect表信息集合入map
+            // 11.对象采集设置object_collect,获取object_collect表信息集合入map
             Result objectCollectResult = getObjectCollectResult(collectionMap, agentInfoList);
-            // 13.对象采集对应信息object_collect_task,获取object_collect_task表信息集合入map
+            // 12.对象采集对应信息object_collect_task,获取object_collect_task表信息集合入map
             Result objectCollectTaskResult = getObjectCollectTaskResult(collectionMap, objectCollectResult);
-            // 14.对象采集存储设置object_storage,获取object_storage表信息集合入map
+            // 13.对象采集存储设置object_storage,获取object_storage表信息集合入map
             addObjectStorageToMap(collectionMap, objectCollectTaskResult);
-            // 15.对象采集结构信息object_collect_struct,获取object_collect_struct表信息集合入map
+            // 14.对象采集结构信息object_collect_struct,获取object_collect_struct表信息集合入map
             addObjectCollectStructResultToMap(collectionMap, objectCollectTaskResult);
-            // 16.数据库设置database_set,获取database_set表信息集合入map
+            // 15.数据库设置database_set,获取database_set表信息集合入map
             Result databaseSetResult = getDatabaseSetResult(collectionMap, agentInfoList);
-            // 17.文件系统设置file_collect_set,获取file_collect_set表信息集合入map
+            // 16.文件系统设置file_collect_set,获取file_collect_set表信息集合入map
             Result fileCollectSetResult = getFileCollectSetResult(collectionMap, agentInfoList);
-            // 18.文件源设置file_source,获取file_source表信息集合入map
+            // 17.文件源设置file_source,获取file_source表信息集合入map
             addFileSourceToMap(collectionMap, fileCollectSetResult);
-            // 19.信号文件入库信息signal_file,获取signal_file表信息集合入map
+            // 18.信号文件入库信息signal_file,获取signal_file表信息集合入map
             addSignalFileToMap(collectionMap, databaseSetResult);
-            // 20.数据库对应的表table_info,获取table_info表信息集合入map
+            // 19.数据库对应的表table_info,获取table_info表信息集合入map
             Result tableInfoResult = getTableInfoResult(collectionMap, databaseSetResult);
-            // 21.列合并信息表column_merge,获取column_merge表信息集合入map
+            // 20.列合并信息表column_merge,获取column_merge表信息集合入map
             addColumnMergeToMap(collectionMap, tableInfoResult);
-            // 22.表存储信息table_storage_info,获取table_storage_info表信息集合入map
+            // 21.表存储信息table_storage_info,获取table_storage_info表信息集合入map
             addTableStorageInfoToMap(collectionMap, tableInfoResult);
-            // 23.表清洗参数信息table_clean,获取table_clean表信息集合入map
+            // 22.表清洗参数信息table_clean,获取table_clean表信息集合入map
             addTableCleanToMap(collectionMap, tableInfoResult);
-            // 24.表对应的字段table_column,获取table_column表信息集合入map
+            // 23.表对应的字段table_column,获取table_column表信息集合入map
             Result tableColumnResult = getTableColumnResult(collectionMap, tableInfoResult);
-            // 25.列清洗参数信息 column_clean,获取column_clean表信息集合入map
+            // 24.列清洗参数信息 column_clean,获取column_clean表信息集合入map
             addColumnCleanToMap(collectionMap, tableColumnResult);
-            // 26.列拆分信息表column_split,获取column_split表信息集合入map
+            // 25.列拆分信息表column_split,获取column_split表信息集合入map
             addColumnSplitToMap(collectionMap, tableColumnResult);
-            // 27.使用base64编码
+            // 26.使用base64编码
             byte[] bytes = Base64.getEncoder().encode(JsonUtil.toJson(collectionMap).
                     getBytes(CodecUtil.UTF8_CHARSET));
             // 28.判断文件是否存在
@@ -1744,7 +1699,7 @@ public class DataSourceAction extends BaseAction {
             outputStream.flush();
             outputStream.close();
         } catch (IOException e) {
-            throw new AppSystemException(e);
+            throw new BusinessException("下载文件失败");
         }
     }
 
@@ -2079,30 +2034,6 @@ public class DataSourceAction extends BaseAction {
         collectionMap.put(Database_set.TableName, databaseSetResult.toList());
         // 6.返回database_result表数据结果集
         return databaseSetResult;
-    }
-
-    @Method(desc = "将ftp_folder表数据集合存入map",
-            logicStep = "1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证" +
-                    "2.创建存放ftp_folder表信息的集合" +
-                    "3.遍历ftp_collect结果集获取ftp_id(ftp采集任务编号),通过ftp_id查询ftp_folder表信息" +
-                    "4.将查询到的信息封装入集合" +
-                    "5.将ftp_folder表集合信息存入map")
-    @Param(name = "collectionMap", desc = "封装数据源下载信息（这里封装的是ftp_folder表数据结果集）",
-            range = "不能为空,key唯一")
-    @Param(name = "ftpCollectResult", desc = "ftp_collect表数据结果集", range = "不为空")
-    private void addFtpFolderToMap(Map<String, Object> collectionMap, Result ftpCollectResult) {
-        // 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
-        // 2.创建存放ftp_folder表信息的集合
-        Result ftpFolderResult = new Result();
-        // 3.遍历ftp_collect结果集获取ftp_id(ftp采集任务编号),通过ftp_id查询ftp_folder表信息
-        for (int i = 0; i < ftpCollectResult.getRowCount(); i++) {
-            Result result = Dbo.queryResult("select * from " + Ftp_folder.TableName +
-                    " where ftp_id = ?", ftpCollectResult.getLong(i, "ftp_id"));
-            // 4.将查询到的信息封装入集合
-            ftpFolderResult.add(result);
-        }
-        // 5.将ftp_folder表集合信息存入map
-        collectionMap.put(Ftp_folder.TableName, ftpFolderResult.toList());
     }
 
     @Method(desc = "将object_collect_struct表数据集合存入map",
