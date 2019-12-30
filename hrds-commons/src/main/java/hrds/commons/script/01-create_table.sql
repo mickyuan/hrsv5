@@ -184,8 +184,8 @@ DSL_NAME                                          VARCHAR(512) NOT NULL, --配�
 STORE_TYPE                                        CHAR(1) NOT NULL, --存储类型
 IS_HADOOPCLIENT                                   CHAR(1) NOT NULL, --是否有hadoop客户端
 DSL_REMARK                                        VARCHAR(512) NULL, --备注
-DTC_ID                                            BIGINT default 0 NULL, --类型对照主键
-DLC_ID                                            BIGINT default 0 NULL, --存储层类型长度ID
+DTCS_ID                                           BIGINT default 0 NULL, --类型对照ID
+DLCS_ID                                           BIGINT default 0 NULL, --长度对照表ID
 CONSTRAINT DATA_STORE_LAYER_PK PRIMARY KEY(DSL_ID)   );
 
 --数据存储附加信息表
@@ -198,24 +198,24 @@ DSL_ID                                            BIGINT default 0 NOT NULL, --�
 CONSTRAINT DATA_STORE_LAYER_ADDED_PK PRIMARY KEY(DSLAD_ID)   );
 
 --存储层数据类型对照表
-DROP TABLE IF EXISTS DATA_TYPE_CONTRAST ;
-CREATE TABLE DATA_TYPE_CONTRAST(
+DROP TABLE IF EXISTS TYPE_CONTRAST ;
+CREATE TABLE TYPE_CONTRAST(
 DTC_ID                                            BIGINT default 0 NOT NULL, --类型对照主键
-DTC_NAME                                          VARCHAR(512) NOT NULL, --类型对照名称
 SOURCE_TYPE                                       VARCHAR(512) NOT NULL, --源表数据类型
 TARGET_TYPE                                       VARCHAR(512) NOT NULL, --目标表数据类型
 DTC_REMARK                                        VARCHAR(512) NULL, --备注
-CONSTRAINT DATA_TYPE_CONTRAST_PK PRIMARY KEY(DTC_ID)   );
+DTCS_ID                                           BIGINT default 0 NOT NULL, --类型对照ID
+CONSTRAINT TYPE_CONTRAST_PK PRIMARY KEY(DTC_ID)   );
 
 --存储层数据类型长度对照表
-DROP TABLE IF EXISTS DATA_LENGTH_CONTRAST ;
-CREATE TABLE DATA_LENGTH_CONTRAST(
+DROP TABLE IF EXISTS LENGTH_CONTRAST ;
+CREATE TABLE LENGTH_CONTRAST(
 DLC_ID                                            BIGINT default 0 NOT NULL, --存储层类型长度ID
-DLC_NAME                                          VARCHAR(512) NOT NULL, --对照类型名称
 DLC_TYPE                                          VARCHAR(512) NOT NULL, --字段类型
 DLC_LENGTH                                        INTEGER default 0 NOT NULL, --字段长度
 DLC_REMARK                                        VARCHAR(512) NULL, --备注
-CONSTRAINT DATA_LENGTH_CONTRAST_PK PRIMARY KEY(DLC_ID)   );
+DLCS_ID                                           BIGINT default 0 NOT NULL, --长度对照表ID
+CONSTRAINT LENGTH_CONTRAST_PK PRIMARY KEY(DLC_ID)   );
 
 --作业Agent下载信息
 DROP TABLE IF EXISTS ETL_AGENT_DOWNINFO ;
@@ -1037,4 +1037,20 @@ DSLAD_ID                                          BIGINT default 0 NOT NULL, --�
 COLUMN_ID                                         BIGINT default 0 NOT NULL, --字段ID
 CSI_NUMBER                                        BIGINT default 0 NOT NULL, --序号位置
 CONSTRAINT COLUMN_STORAGE_INFO_PK PRIMARY KEY(DSLAD_ID,COLUMN_ID)   );
+
+--数据类型对照主表
+DROP TABLE IF EXISTS TYPE_CONTRAST_SUM ;
+CREATE TABLE TYPE_CONTRAST_SUM(
+DTCS_ID                                           BIGINT default 0 NOT NULL, --类型对照ID
+DTCS_NAME                                         VARCHAR(512) NOT NULL, --类型对照名称
+DTCS_REMARK                                       VARCHAR(512) NULL, --备注
+CONSTRAINT TYPE_CONTRAST_SUM_PK PRIMARY KEY(DTCS_ID)   );
+
+--存储层数据类型长度对照主表
+DROP TABLE IF EXISTS LENGTH_CONTRAST_SUM ;
+CREATE TABLE LENGTH_CONTRAST_SUM(
+DLCS_ID                                           BIGINT default 0 NOT NULL, --长度对照表ID
+DLCS_NAME                                         VARCHAR(512) NOT NULL, --长度对照名称
+DLCS_REMARK                                       VARCHAR(512) NULL, --备注
+CONSTRAINT LENGTH_CONTRAST_SUM_PK PRIMARY KEY(DLCS_ID)   );
 
