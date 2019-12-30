@@ -71,7 +71,7 @@ public class CollectTableBean implements Serializable {
 	@DocBean(name = "collectTableColumnBeanList", value = "表采集字段集合:", dataType = String.class, required = false)
 	private List<CollectTableColumnBean> collectTableColumnBeanList;
 	@DocBean(name = "column_merge", value = "列合并参数信息:", dataType = Column_merge.class, required = false)
-	private Column_merge column_merge;
+	private List<Column_merge> column_merge_list;
 	@DocBean(name = "storage_type", value = "进数方式(StorageType):1-增量<ZengLiang> 2-追加<ZhuiJia> 3-替换<TiHuan> ", dataType = String.class, required = true)
 	private String storage_type;
 	@DocBean(name = "storage_time", value = "存储期限（以天为单位）:", dataType = Long.class, required = true)
@@ -93,12 +93,12 @@ public class CollectTableBean implements Serializable {
 	@DocBean(name = "source_id", value = "数据源ID", dataType = Long.class, required = true)
 	private Long source_id;
 
-	public Column_merge getColumn_merge() {
-		return column_merge;
+	public List<Column_merge> getColumn_merge_list() {
+		return column_merge_list;
 	}
 
-	public void setColumn_merge(Column_merge column_merge) {
-		this.column_merge = column_merge;
+	public void setColumn_merge_list(List<Column_merge> column_merge_list) {
+		this.column_merge_list = column_merge_list;
 	}
 
 	public String getTable_id() {

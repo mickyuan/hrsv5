@@ -284,8 +284,10 @@ public class CollectTableHandleParse {
 							codeIng.put(column_name_up, columnCleanBean.getCodeTransform());
 						} else if (CleanType.ZiFuChaiFen.getCode().equals(columnCleanBean.getClean_type())) {
 							Map<String, Column_split> map = new HashMap<>();
-							Column_split column_split = columnCleanBean.getColumn_split();
-							map.put(column_split.getCol_name(), column_split);
+							List<Column_split> column_split_list = columnCleanBean.getColumn_split_list();
+							for (Column_split column_split : column_split_list) {
+								map.put(column_split.getCol_name(), column_split);
+							}
 							splitIng.put(column_name_up, map);
 						} else {
 							throw new AppSystemException("请选择正确的清洗方式");
@@ -295,10 +297,12 @@ public class CollectTableHandleParse {
 			}
 		}
 		//列合并
-		Column_merge column_merge = collectTableBean.getColumn_merge();
-		if (column_merge != null) {
-			mergeIng.put(column_merge.getCol_name() + STRSPLIT + column_merge.getCol_type(),
-					column_merge.getOld_name());
+		List<Column_merge> column_merge_list = collectTableBean.getColumn_merge_list();
+		if (column_merge_list != null && column_merge_list.size() > 0) {
+			for (Column_merge column_merge : column_merge_list) {
+				mergeIng.put(column_merge.getCol_name() + STRSPLIT + column_merge.getCol_type(),
+						column_merge.getOld_name());
+			}
 		}
 		all.put("deleSpecialSpace", deleSpecialSpace);
 		all.put("strFilling", strFilling);

@@ -21,6 +21,7 @@ public class DataStoreConfBean implements Serializable {
 	@DocBean(name = "additInfoField", value = "附加信息字段:", dataType = Map.class, required = true)
 	private Map<String, Map<Integer, String>> additInfoFieldMap;
 
+
 	public String getDsl_name() {
 		return dsl_name;
 	}
