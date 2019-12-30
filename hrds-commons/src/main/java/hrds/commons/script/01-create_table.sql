@@ -183,6 +183,8 @@ DSL_ID                                            BIGINT default 0 NOT NULL, --�
 DSL_NAME                                          VARCHAR(512) NOT NULL, --配置属性名称
 STORE_TYPE                                        CHAR(1) NOT NULL, --存储类型
 DSL_REMARK                                        VARCHAR(512) NULL, --备注
+DTC_ID                                            BIGINT default 0 NULL, --类型对照主键
+DLC_ID                                            BIGINT default 0 NULL, --存储层类型长度ID
 CONSTRAINT DATA_STORE_LAYER_PK PRIMARY KEY(DSL_ID)   );
 
 --数据存储附加信息表
@@ -193,6 +195,26 @@ DSLA_STORELAYER                                   CHAR(2) NOT NULL, --配置附�
 DSLAD_REMARK                                      VARCHAR(512) NULL, --备注
 DSL_ID                                            BIGINT default 0 NOT NULL, --存储层配置ID
 CONSTRAINT DATA_STORE_LAYER_ADDED_PK PRIMARY KEY(DSLAD_ID)   );
+
+--存储层数据类型对照表
+DROP TABLE IF EXISTS DATA_TYPE_CONTRAST ;
+CREATE TABLE DATA_TYPE_CONTRAST(
+DTC_ID                                            BIGINT default 0 NOT NULL, --类型对照主键
+SOURCE_TYPE                                       VARCHAR(512) NOT NULL, --源表数据类型
+DTC_NAME                                          VARCHAR(512) NOT NULL, --类型对照名称
+TARGET_TYPE                                       VARCHAR(512) NOT NULL, --目标表数据类型
+DTC_REMARK                                        VARCHAR(512) NULL, --备注
+CONSTRAINT DATA_TYPE_CONTRAST_PK PRIMARY KEY(DTC_ID)   );
+
+--存储层数据类型长度对照表
+DROP TABLE IF EXISTS DATA_LENGTH_CONTRAST ;
+CREATE TABLE DATA_LENGTH_CONTRAST(
+DLC_ID                                            BIGINT default 0 NOT NULL, --存储层类型长度ID
+DLC_NAME                                          VARCHAR(512) NOT NULL, --对照类型名称
+DLC_TYPE                                          VARCHAR(512) NOT NULL, --字段类型
+DLC_LENGTH                                        INTEGER default 0 NOT NULL, --字段长度
+DLC_REMARK                                        VARCHAR(512) NULL, --备注
+CONSTRAINT DATA_LENGTH_CONTRAST_PK PRIMARY KEY(DLC_ID)   );
 
 --作业Agent下载信息
 DROP TABLE IF EXISTS ETL_AGENT_DOWNINFO ;
@@ -679,6 +701,7 @@ CREATE TABLE DATA_STORE_LAYER_ATTR(
 DSLA_ID                                           BIGINT default 0 NOT NULL, --存储配置主键信息
 STORAGE_PROPERTY_KEY                              VARCHAR(512) NOT NULL, --属性key
 STORAGE_PROPERTY_VAL                              VARCHAR(512) NOT NULL, --属性value
+IS_FILE                                           CHAR(1) NOT NULL, --是否为配置文件
 DSLA_REMARK                                       VARCHAR(512) NULL, --备注
 DSL_ID                                            BIGINT default 0 NOT NULL, --存储层配置ID
 CONSTRAINT DATA_STORE_LAYER_ATTR_PK PRIMARY KEY(DSLA_ID)   );
@@ -752,18 +775,6 @@ CREATE_TIME                                       CHAR(6) NOT NULL, --创建时�
 SOURCE_ID                                         BIGINT default 0 NOT NULL, --数据源ID
 USER_ID                                           BIGINT default 0 NULL, --用户ID
 CONSTRAINT AGENT_INFO_PK PRIMARY KEY(AGENT_ID)   );
-
---数据采集阶段表
-DROP TABLE IF EXISTS DATASTAGE ;
-CREATE TABLE DATASTAGE(
-JOBKEY                                            BIGINT default 0 NOT NULL, --数据库设置id
-TABLENAME                                         VARCHAR(512) NOT NULL, --表名
-STAGE                                             VARCHAR(512) NOT NULL, --采集阶段
-STATE                                             VARCHAR(2) NOT NULL, --所处状态
-PREVIOUSSTAGE                                     VARCHAR(512) NULL, --上一阶段
-NEXTSTAGE                                         VARCHAR(512) NULL, --下一阶段
-REMARK                                            VARCHAR(512) NULL, --备注
-CONSTRAINT DATASTAGE_PK PRIMARY KEY(JOBKEY,TABLENAME,STAGE)   );
 
 --源系统数据库设置
 DROP TABLE IF EXISTS DATABASE_SET ;

@@ -40,6 +40,8 @@ public class Data_store_layer_attr extends ProjectTableEntity
 	private String storage_property_val;
 	@DocBean(name ="dsl_id",value="存储层配置ID:",dataType = Long.class,required = true)
 	private Long dsl_id;
+	@DocBean(name ="is_file",value="是否为配置文件(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
+	private String is_file;
 
 	/** 取得：存储配置主键信息 */
 	public Long getDsla_id(){
@@ -92,5 +94,13 @@ public class Data_store_layer_attr extends ProjectTableEntity
 		if(!fd.ng.core.utils.StringUtil.isEmpty(dsl_id)){
 			this.dsl_id=new Long(dsl_id);
 		}
+	}
+	/** 取得：是否为配置文件 */
+	public String getIs_file(){
+		return is_file;
+	}
+	/** 设置：是否为配置文件 */
+	public void setIs_file(String is_file){
+		this.is_file=is_file;
 	}
 }

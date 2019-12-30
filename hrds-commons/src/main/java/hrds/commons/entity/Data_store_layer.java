@@ -38,6 +38,10 @@ public class Data_store_layer extends ProjectTableEntity
 	private String store_type;
 	@DocBean(name ="dsl_remark",value="备注:",dataType = String.class,required = false)
 	private String dsl_remark;
+	@DocBean(name ="dtc_id",value="类型对照主键:",dataType = Long.class,required = false)
+	private Long dtc_id;
+	@DocBean(name ="dlc_id",value="存储层类型长度ID:",dataType = Long.class,required = false)
+	private Long dlc_id;
 
 	/** 取得：存储层配置ID */
 	public Long getDsl_id(){
@@ -76,5 +80,33 @@ public class Data_store_layer extends ProjectTableEntity
 	/** 设置：备注 */
 	public void setDsl_remark(String dsl_remark){
 		this.dsl_remark=dsl_remark;
+	}
+	/** 取得：类型对照主键 */
+	public Long getDtc_id(){
+		return dtc_id;
+	}
+	/** 设置：类型对照主键 */
+	public void setDtc_id(Long dtc_id){
+		this.dtc_id=dtc_id;
+	}
+	/** 设置：类型对照主键 */
+	public void setDtc_id(String dtc_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(dtc_id)){
+			this.dtc_id=new Long(dtc_id);
+		}
+	}
+	/** 取得：存储层类型长度ID */
+	public Long getDlc_id(){
+		return dlc_id;
+	}
+	/** 设置：存储层类型长度ID */
+	public void setDlc_id(Long dlc_id){
+		this.dlc_id=dlc_id;
+	}
+	/** 设置：存储层类型长度ID */
+	public void setDlc_id(String dlc_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(dlc_id)){
+			this.dlc_id=new Long(dlc_id);
+		}
 	}
 }
