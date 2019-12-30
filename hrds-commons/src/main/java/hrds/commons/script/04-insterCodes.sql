@@ -11,13 +11,14 @@ INSERT INTO CODE_INFO  VALUES ('1', '58', '权限类型', '允许', 'AuthType');
 INSERT INTO CODE_INFO  VALUES ('2', '58', '权限类型', '不允许', 'AuthType');
 INSERT INTO CODE_INFO  VALUES ('3', '58', '权限类型', '一次', 'AuthType');
 INSERT INTO CODE_INFO  VALUES ('0', '58', '权限类型', '申请', 'AuthType');
---　本引用值的代码个数:5 -------i==3
+--　本引用值的代码个数:6 -------i==3
 delete from code_info where ci_sp_class='59';
 INSERT INTO CODE_INFO  VALUES ('1', '59', '存储层类型', '关系型数据库', 'Store_type');
-INSERT INTO CODE_INFO  VALUES ('2', '59', '存储层类型', 'Hbase', 'Store_type');
-INSERT INTO CODE_INFO  VALUES ('3', '59', '存储层类型', 'solr', 'Store_type');
-INSERT INTO CODE_INFO  VALUES ('4', '59', '存储层类型', 'ElasticSearch', 'Store_type');
-INSERT INTO CODE_INFO  VALUES ('5', '59', '存储层类型', 'mongodb', 'Store_type');
+INSERT INTO CODE_INFO  VALUES ('2', '59', '存储层类型', 'hive', 'Store_type');
+INSERT INTO CODE_INFO  VALUES ('3', '59', '存储层类型', 'Hbase', 'Store_type');
+INSERT INTO CODE_INFO  VALUES ('4', '59', '存储层类型', 'solr', 'Store_type');
+INSERT INTO CODE_INFO  VALUES ('5', '59', '存储层类型', 'ElasticSearch', 'Store_type');
+INSERT INTO CODE_INFO  VALUES ('6', '59', '存储层类型', 'mongodb', 'Store_type');
 --　本引用值的代码个数:12 -------i==4
 delete from code_info where ci_sp_class='60';
 INSERT INTO CODE_INFO  VALUES ('1001', '60', '文件类型', '全部文件', 'FileType');

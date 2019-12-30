@@ -182,6 +182,7 @@ CREATE TABLE DATA_STORE_LAYER(
 DSL_ID                                            BIGINT default 0 NOT NULL, --存储层配置ID
 DSL_NAME                                          VARCHAR(512) NOT NULL, --配置属性名称
 STORE_TYPE                                        CHAR(1) NOT NULL, --存储类型
+IS_HADOOPCLIENT                                   CHAR(1) NOT NULL, --是否有hadoop客户端
 DSL_REMARK                                        VARCHAR(512) NULL, --备注
 DTC_ID                                            BIGINT default 0 NULL, --类型对照主键
 DLC_ID                                            BIGINT default 0 NULL, --存储层类型长度ID
@@ -200,8 +201,8 @@ CONSTRAINT DATA_STORE_LAYER_ADDED_PK PRIMARY KEY(DSLAD_ID)   );
 DROP TABLE IF EXISTS DATA_TYPE_CONTRAST ;
 CREATE TABLE DATA_TYPE_CONTRAST(
 DTC_ID                                            BIGINT default 0 NOT NULL, --类型对照主键
-SOURCE_TYPE                                       VARCHAR(512) NOT NULL, --源表数据类型
 DTC_NAME                                          VARCHAR(512) NOT NULL, --类型对照名称
+SOURCE_TYPE                                       VARCHAR(512) NOT NULL, --源表数据类型
 TARGET_TYPE                                       VARCHAR(512) NOT NULL, --目标表数据类型
 DTC_REMARK                                        VARCHAR(512) NULL, --备注
 CONSTRAINT DATA_TYPE_CONTRAST_PK PRIMARY KEY(DTC_ID)   );

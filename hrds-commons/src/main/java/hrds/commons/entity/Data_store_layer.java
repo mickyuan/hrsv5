@@ -34,7 +34,7 @@ public class Data_store_layer extends ProjectTableEntity
 	private Long dsl_id;
 	@DocBean(name ="dsl_name",value="配置属性名称:",dataType = String.class,required = true)
 	private String dsl_name;
-	@DocBean(name ="store_type",value="存储类型(Store_type):1-关系型数据库<DATABASE> 2-Hbase<HBASE> 3-solr<SOLR> 4-ElasticSearch<ElasticSearch> 5-mongodb<MONGODB> ",dataType = String.class,required = true)
+	@DocBean(name ="store_type",value="存储类型(Store_type):1-关系型数据库<DATABASE> 2-hive<HIVE> 3-Hbase<HBASE> 4-solr<SOLR> 5-ElasticSearch<ElasticSearch> 6-mongodb<MONGODB> ",dataType = String.class,required = true)
 	private String store_type;
 	@DocBean(name ="dsl_remark",value="备注:",dataType = String.class,required = false)
 	private String dsl_remark;
@@ -42,6 +42,8 @@ public class Data_store_layer extends ProjectTableEntity
 	private Long dtc_id;
 	@DocBean(name ="dlc_id",value="存储层类型长度ID:",dataType = Long.class,required = false)
 	private Long dlc_id;
+	@DocBean(name ="is_hadoopclient",value="是否有hadoop客户端(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
+	private String is_hadoopclient;
 
 	/** 取得：存储层配置ID */
 	public Long getDsl_id(){
@@ -108,5 +110,13 @@ public class Data_store_layer extends ProjectTableEntity
 		if(!fd.ng.core.utils.StringUtil.isEmpty(dlc_id)){
 			this.dlc_id=new Long(dlc_id);
 		}
+	}
+	/** 取得：是否有hadoop客户端 */
+	public String getIs_hadoopclient(){
+		return is_hadoopclient;
+	}
+	/** 设置：是否有hadoop客户端 */
+	public void setIs_hadoopclient(String is_hadoopclient){
+		this.is_hadoopclient=is_hadoopclient;
 	}
 }
