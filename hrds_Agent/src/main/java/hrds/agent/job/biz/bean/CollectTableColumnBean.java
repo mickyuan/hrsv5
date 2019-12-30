@@ -26,8 +26,8 @@ public class CollectTableColumnBean implements Serializable {
 	private String is_get;
 	@DocBean(name = "column_type", value = "列字段类型:", dataType = String.class, required = false)
 	private String column_type;
-	@DocBean(name = "remark", value = "备注:", dataType = String.class, required = false)
-	private String remark;
+	@DocBean(name = "tc_remark", value = "备注:", dataType = String.class, required = false)
+	private String tc_remark;
 	@DocBean(name = "is_alive", value = "是否保留原字段(IsFlag):1-是<Shi> 0-否<Fou> ",
 			dataType = String.class, required = true)
 	private String is_alive;
@@ -103,12 +103,12 @@ public class CollectTableColumnBean implements Serializable {
 		this.column_type = column_type;
 	}
 
-	public String getRemark() {
-		return remark;
+	public String getTc_remark() {
+		return tc_remark;
 	}
 
-	public void setRemark(String remark) {
-		this.remark = remark;
+	public void setTc_remark(String tc_remark) {
+		this.tc_remark = tc_remark;
 	}
 
 	public String getIs_alive() {
