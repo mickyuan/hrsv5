@@ -159,7 +159,7 @@ public class CollectTableHandleParse {
 			//获取系统的所有日期参数格式定义
 			if (!StringUtil.isEmpty(selfSql)) {
 				SimpleDateFormat sysDatef = new SimpleDateFormat(JobConstant.SYS_DATEFORMAT);
-				String eltDate = sourceDataConfBean.getCollectDir();
+				String eltDate = collectTableBean.getEltDate();
 				//输入的日期肯定是yyyyMMdd格式
 				if (selfSql.contains("#{txdate}")) {
 					Date dateByString = getDateByString(eltDate, "yyyyMMdd");

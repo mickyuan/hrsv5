@@ -40,8 +40,7 @@ public class JdbcCollectJob extends AgentBaseAction {
 			String[] paths = {Constant.JOBINFOPATH, Constant.JDBCUNLOADFOLDER};
 			FileUtil.initPath(sourceDataConfBean.getDatabase_id(), paths);
 			//1.获取json数组转成File_source的集合
-			List<CollectTableBean> collectTableBeanList = JSONArray.parseArray(sourceDataConfBean.getCollectTableBeanArray(),
-					CollectTableBean.class);
+			List<CollectTableBean> collectTableBeanList = sourceDataConfBean.getCollectTableBeanArray();
 			//此处不会有海量的任务需要执行，不会出现队列中等待的任务对象过多的OOM事件。
 			//TODO Runtime.getRuntime().availableProcessors()此处不能用这个,因为可能同时又多个数据库采集同时进行
 			executor = Executors.newFixedThreadPool(5);
