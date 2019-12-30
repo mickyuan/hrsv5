@@ -1,8 +1,5 @@
 package hrds.agent.job.biz.utils;
 
-import com.alibaba.fastjson.JSONObject;
-import hrds.agent.job.biz.bean.JobInfo;
-import hrds.agent.job.biz.bean.TaskInfo;
 import hrds.commons.exception.AppSystemException;
 import org.apache.commons.io.FileUtils;
 
@@ -129,51 +126,6 @@ public class FileUtil {
 		} else {
 			throw new IllegalArgumentException(file.getName() + "：不是一个可读的文件");
 		}
-	}
-
-	/**
-	 * @Description: 根据任务ID获取任务信息
-	 * @Param: [taskID]
-	 * @return: com.beyondsoft.agent.beans.TaskInfo
-	 * @Author: WangZhengcheng
-	 * @Date: 2019/8/27
-	 */
-	public static TaskInfo getTaskInfoByTaskID(String taskID) throws IOException {
-		if (taskID == null) {
-			return null;
-		}
-		List<File> files = getAllFilesByFileSuffix(ProductFileUtil.TASKCONF_ROOT_PATH,
-				ProductFileUtil.TASK_FILE_SUFFIX);
-		for (File file : files) {
-			String taskStr = FileUtil.readFile2String(file);
-			TaskInfo task = JSONObject.parseObject(taskStr, TaskInfo.class);
-			if (taskID.equals(task.getTaskId())) {
-				return task;
-			}
-		}
-		return null;
-	}
-
-	/**
-	 * @Description: 在具体的作业目录下创建用于存放卸数生成的数据文件的目录
-	 * @Param: [jobInfo]
-	 * @return: boolean
-	 * @Author: WangZhengcheng
-	 * @Date: 2019/8/27
-	 */
-	public static boolean createDataFileDirByJob(JobInfo jobInfo) {
-		String jobFilePath = jobInfo.getJobFilePath();
-		File file = new File(jobFilePath);
-		if (!file.getParentFile().exists()) {
-			throw new AppSystemException("作业配置文件路径不存在");
-		} else {
-			String dataFilePath = file.getParent() + File.separator + "datafile";
-			File dataFlie = new File(dataFilePath);
-			if (!dataFlie.exists()) {
-				return dataFlie.mkdirs();
-			}
-		}
-		return true;
 	}
 
 	/**

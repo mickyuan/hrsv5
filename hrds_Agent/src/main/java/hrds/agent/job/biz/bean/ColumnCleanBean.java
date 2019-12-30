@@ -1,21 +1,12 @@
 package hrds.agent.job.biz.bean;
 
 import fd.ng.core.annotation.DocBean;
+import fd.ng.core.annotation.DocClass;
 import hrds.commons.entity.Column_split;
 
 import java.io.Serializable;
-import java.util.List;
-import java.util.Map;
 
-/**
- * ClassName: ColumnCleanBean <br/>
- * Function: 列清洗规则实体 <br/>
- * Date: 2019/8/1 15:24 <br/>
- * <p>
- * Author WangZhengcheng
- * Version 1.0
- * Since JDK 1.8
- **/
+@DocClass(desc = "列清洗参数bean", author = "zxz")
 public class ColumnCleanBean implements Serializable {
 
 	private static final long serialVersionUID = 1L;
