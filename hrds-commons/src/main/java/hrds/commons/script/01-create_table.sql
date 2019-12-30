@@ -774,7 +774,7 @@ AGENT_STATUS                                      CHAR(1) NOT NULL, --agent状�
 CREATE_DATE                                       CHAR(8) NOT NULL, --创建日期
 CREATE_TIME                                       CHAR(6) NOT NULL, --创建时间
 SOURCE_ID                                         BIGINT default 0 NOT NULL, --数据源ID
-USER_ID                                           BIGINT default 0 NULL, --用户ID
+USER_ID                                           BIGINT default 0 NOT NULL, --用户ID
 CONSTRAINT AGENT_INFO_PK PRIMARY KEY(AGENT_ID)   );
 
 --源系统数据库设置

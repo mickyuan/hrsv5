@@ -48,7 +48,7 @@ public class Agent_info extends ProjectTableEntity
 	private String create_date;
 	@DocBean(name ="create_time",value="创建时间:",dataType = String.class,required = true)
 	private String create_time;
-	@DocBean(name ="user_id",value="用户ID:",dataType = Long.class,required = false)
+	@DocBean(name ="user_id",value="用户ID:",dataType = Long.class,required = true)
 	private Long user_id;
 
 	/** 取得：数据源ID */
