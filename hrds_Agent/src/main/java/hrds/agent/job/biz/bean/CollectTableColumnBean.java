@@ -2,9 +2,6 @@ package hrds.agent.job.biz.bean;
 
 import fd.ng.core.annotation.DocBean;
 import fd.ng.core.annotation.DocClass;
-import hrds.commons.entity.Column_clean;
-import hrds.commons.entity.Column_merge;
-import hrds.commons.entity.Column_split;
 
 import java.io.Serializable;
 import java.util.List;

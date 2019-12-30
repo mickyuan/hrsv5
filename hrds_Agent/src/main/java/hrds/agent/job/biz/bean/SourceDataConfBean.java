@@ -80,7 +80,7 @@ public class SourceDataConfBean implements Serializable {
 	@DocBean(name = "collectDir", value = "采集日期", dataType = String.class, required = true)
 	private String collectDir;
 	@DocBean(name = "collectTableBeanArray", value = "采集表配置信息数组", dataType = String.class, required = true)
-	private String collectTableBeanArray;;
+	private List<CollectTableBean> collectTableBeanArray;
 	@DocBean(name = "signal_file_list", value = "信号文件入库信息集合", dataType = List.class, required = false)
 	private List<Signal_file> signal_file_list;
 
@@ -116,11 +116,11 @@ public class SourceDataConfBean implements Serializable {
 		this.collectDir = collectDir;
 	}
 
-	public String getCollectTableBeanArray() {
+	public List<CollectTableBean> getCollectTableBeanArray() {
 		return collectTableBeanArray;
 	}
 
-	public void setCollectTableBeanArray(String collectTableBeanArray) {
+	public void setCollectTableBeanArray(List<CollectTableBean> collectTableBeanArray) {
 		this.collectTableBeanArray = collectTableBeanArray;
 	}
 

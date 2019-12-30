@@ -5,6 +5,7 @@ import fd.ng.core.annotation.DocClass;
 import hrds.commons.entity.Column_split;
 
 import java.io.Serializable;
+import java.util.List;
 
 @DocClass(desc = "列清洗参数bean", author = "zxz")
 public class ColumnCleanBean implements Serializable {
