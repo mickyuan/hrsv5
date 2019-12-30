@@ -43,8 +43,12 @@ public class CollectTableBean implements Serializable {
 	@DocBean(name = "is_parallel", value = "是否并行抽取(IsFlag):1-是<Shi> 0-否<Fou> ",
 			dataType = String.class, required = true)
 	private String is_parallel;
-	@DocBean(name = "page_sql", value = "分页sql:", dataType = String.class, required = false)
+	@DocBean(name ="page_sql",value="分页sql:",dataType = String.class,required = false)
 	private String page_sql;
+	@DocBean(name ="pageparallels",value="分页并行数:",dataType = Integer.class,required = false)
+	private Integer pageparallels;
+	@DocBean(name ="dataincrement",value="每天数据增量:",dataType = Integer.class,required = false)
+	private Integer dataincrement;
 	@DocBean(name = "is_header", value = "是否需要表头(IsFlag):1-是<Shi> 0-否<Fou> ",
 			dataType = String.class, required = true)
 	private String is_header;
@@ -379,5 +383,21 @@ public class CollectTableBean implements Serializable {
 
 	public void setSource_id(Long source_id) {
 		this.source_id = source_id;
+	}
+
+	public Integer getPageparallels() {
+		return pageparallels;
+	}
+
+	public void setPageparallels(Integer pageparallels) {
+		this.pageparallels = pageparallels;
+	}
+
+	public Integer getDataincrement() {
+		return dataincrement;
+	}
+
+	public void setDataincrement(Integer dataincrement) {
+		this.dataincrement = dataincrement;
 	}
 }
