@@ -78,7 +78,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 		List<String> columns = StringUtil.split(tableBean.getColumnMetaInfo(), CollectTableHandleParse.STRSPLIT);
 		List<String> types = StringUtil.split(tableBean.getColTypeMetaInfo(), CollectTableHandleParse.STRSPLIT);
 		//获取连接
-		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(dataStoreConfBean.getData_store_layer_attr())) {
+		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(dataStoreConfBean.getData_store_connect_attr())) {
 			//拼接建表语句
 			StringBuilder sql = new StringBuilder(120); //拼接创表sql语句
 			sql.append("CREATE TABLE ");
@@ -102,7 +102,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 		DatabaseWrapper db = null;
 		try {
 			//1.获取数据库的连接
-			db = ConnectionTool.getDBWrapper(dataStoreConfBean.getData_store_layer_attr());
+			db = ConnectionTool.getDBWrapper(dataStoreConfBean.getData_store_connect_attr());
 			//2.开启事务
 			db.beginTrans();
 			List<String> columnList = StringUtil.split(tableBean.getColumnMetaInfo(), CollectTableHandleParse.STRSPLIT);

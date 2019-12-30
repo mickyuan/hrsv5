@@ -55,7 +55,7 @@ public class DBCalIncrementStageImpl extends AbstractJobStage {
 				if (Store_type.DATABASE.getCode().equals(dataStoreConfBean.getStore_type())) {
 					JDBCIncreasement increasement;
 					try (DatabaseWrapper db = ConnectionTool.getDBWrapper(
-							dataStoreConfBean.getData_store_layer_attr())) {
+							dataStoreConfBean.getData_store_connect_attr())) {
 						if (StorageType.ZengLiang.getCode().equals(collectTableBean.getStorage_type())) {
 							//数据库类型的做增量目前分为两种，一种是传统数据库，另一种是hive库（hive库不支持update）
 							if (Dbtype.HIVE.equals(db.getDbtype())) {
