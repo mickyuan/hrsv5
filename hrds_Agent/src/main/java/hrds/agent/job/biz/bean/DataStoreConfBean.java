@@ -4,10 +4,7 @@ import fd.ng.core.annotation.DocBean;
 import fd.ng.core.annotation.DocClass;
 
 import java.io.Serializable;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 @DocClass(desc = "表存储配置信息", author = "zxz", createdate = "2019/11/29 21:15")
 public class DataStoreConfBean implements Serializable {
@@ -19,7 +16,7 @@ public class DataStoreConfBean implements Serializable {
 	@DocBean(name = "data_store_connect_attr", value = "数据存储层连接配置属性:", dataType = Map.class, required = true)
 	private Map<String, String> data_store_connect_attr;
 	@DocBean(name = "additInfoField", value = "附加信息字段:", dataType = Map.class, required = true)
-	private Map<String, Map<Integer, String>> additInfoFieldMap;
+	private Map<String, Map<String, Integer>> additInfoFieldMap;
 	@DocBean(name = "is_hadoopclient", value = "是否有hadoop客户端(IsFlag):1-是<Shi> 0-否<Fou> ",
 			dataType = String.class, required = true)
 	private String is_hadoopclient;
@@ -86,20 +83,25 @@ public class DataStoreConfBean implements Serializable {
 		this.data_store_layer_file = data_store_layer_file;
 	}
 
-	public Map<String, Map<Integer, String>> getAdditInfoFieldMap() {
+	public Map<String, Map<String, Integer>> getAdditInfoFieldMap() {
 		return additInfoFieldMap;
 	}
 
-	public void setAdditInfoFieldMap(Map<String, Map<Integer, String>> additInfoFieldMap) {
-		Map<String, Map<Integer, String>> sortAdditInfoFieldMap = new HashMap<>();
+	public void setAdditInfoFieldMap(Map<String, Map<String, Integer>> additInfoFieldMap) {
+		Map<String, Map<String, Integer>> sortAdditInfoFieldMap = new HashMap<>();
 		for (String key : additInfoFieldMap.keySet()) {
-			Map<Integer, String> sortMap = new TreeMap<>(new Comparator<Integer>() {
+			List<Map.Entry<String, Integer>> list = new ArrayList<>(additInfoFieldMap.get(key).entrySet());
+			Collections.sort(list, new Comparator<Map.Entry<String, Integer>>() {
 				@Override
-				public int compare(Integer o1, Integer o2) {
-					return o1 - o2;
+				public int compare(Map.Entry<String, Integer> o1, Map.Entry<String, Integer> o2) {
+					//升序
+					return o1.getValue().compareTo(o2.getValue());
 				}
 			});
-			sortMap.putAll(additInfoFieldMap.get(key));
+			Map<String, Integer> sortMap = new TreeMap<>();
+			for (Map.Entry<String, Integer> map : list) {
+				sortMap.put(map.getKey(), map.getValue());
+			}
 			sortAdditInfoFieldMap.put(key, sortMap);
 		}
 		this.additInfoFieldMap = sortAdditInfoFieldMap;
@@ -107,17 +109,17 @@ public class DataStoreConfBean implements Serializable {
 
 	public static void main(String[] args) {
 		DataStoreConfBean dataStoreConfBean = new DataStoreConfBean();
-		Map<String, Map<Integer, String>> sortAdditInfoFieldMap = new HashMap<>();
-		Map<Integer, String> aaa = new HashMap<>();
-		aaa.put(9, "aaa9");
-		aaa.put(7, "aaa7");
-		aaa.put(5, "aaa5");
-		aaa.put(1, "aaa1");
-		aaa.put(2, "aaa2");
-		aaa.put(3, "aaa3");
+		Map<String, Map<String, Integer>> sortAdditInfoFieldMap = new HashMap<>();
+		Map<String, Integer> aaa = new HashMap<>();
+		aaa.put("aaa9", 9);
+		aaa.put("aaa7", 7);
+		aaa.put("aaa5", 5);
+		aaa.put("aaa1", 1);
+		aaa.put("aaa2", 2);
+		aaa.put("aaa3", 3);
 		sortAdditInfoFieldMap.put("aaa", aaa);
 		dataStoreConfBean.setAdditInfoFieldMap(sortAdditInfoFieldMap);
-		for (Integer key : dataStoreConfBean.getAdditInfoFieldMap().get("aaa").keySet()) {
+		for (String key : dataStoreConfBean.getAdditInfoFieldMap().get("aaa").keySet()) {
 			System.out.println(dataStoreConfBean.getAdditInfoFieldMap().get("aaa").get(key));
 		}
 	}
