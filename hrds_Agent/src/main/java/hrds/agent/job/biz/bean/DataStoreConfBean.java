@@ -91,13 +91,21 @@ public class DataStoreConfBean implements Serializable {
 		Map<String, Map<String, Integer>> sortAdditInfoFieldMap = new HashMap<>();
 		for (String key : additInfoFieldMap.keySet()) {
 			List<Map.Entry<String, Integer>> list = new ArrayList<>(additInfoFieldMap.get(key).entrySet());
-			Collections.sort(list, new Comparator<Map.Entry<String, Integer>>() {
-				@Override
-				public int compare(Map.Entry<String, Integer> o1, Map.Entry<String, Integer> o2) {
-					//升序
-					return o1.getValue().compareTo(o2.getValue());
-				}
-			});
+
+			//比较器排序
+//			list.sort(new Comparator<Map.Entry<String, Integer>>() {
+//				@Override
+//				public int compare(Map.Entry<String, Integer> o1, Map.Entry<String, Integer> o2) {
+//					//升序
+//					return o1.getValue().compareTo(o2.getValue());
+//				}
+//			});
+			//lambda表达式
+//			list.sort((Map.Entry<String, Integer> o1, Map.Entry<String, Integer> o2)
+//					-> o1.getValue().compareTo(o2.getValue()));
+			//lambda表达式简化写法
+			list.sort(Comparator.comparing(Map.Entry<String, Integer>::getValue));
+
 			Map<String, Integer> sortMap = new TreeMap<>();
 			for (Map.Entry<String, Integer> map : list) {
 				sortMap.put(map.getKey(), map.getValue());
