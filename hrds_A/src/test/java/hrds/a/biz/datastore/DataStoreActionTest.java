@@ -1,5 +1,6 @@
 package hrds.a.biz.datastore;
 
+import com.alibaba.fastjson.TypeReference;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
@@ -16,6 +17,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.lang.reflect.Type;
 import java.util.*;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -45,6 +47,18 @@ public class DataStoreActionTest extends WebBaseTestCase {
     private static final long dsla_id5 = 300005;
     private static final long dsla_id6 = 300006;
     private static final long dsla_id7 = 300007;
+    // 初始化存储层数据类型对照主表ID
+    private static final long dtcs_id = 400001;
+    private static final long dtcs_id2 = 400002;
+    // 初始化存储层数据类型长度对照主表ID
+    private static final long dlcs_id = 500001;
+    private static final long dlcs_id2 = 500002;
+    // 初始化存储层数据类型对照表ID
+    private static final long dtc_id = 600001;
+    private static final long dtc_id2 = 600002;
+    // 初始化存储层数据类型长度对照表ID
+    private static final long dlc_id = 700001;
+    private static final long dlc_id2 = 700002;
     // 初始化登录用户ID
     private static final long UserId = 6666L;
     // 初始化创建用户ID
@@ -100,24 +114,32 @@ public class DataStoreActionTest extends WebBaseTestCase {
                 if (i == 1) {
                     dataStoreLayer.setDsl_id(dsl_id1);
                     dataStoreLayer.setStore_type(Store_type.DATABASE.getCode());
+                    dataStoreLayer.setIs_hadoopclient(IsFlag.Fou.getCode());
                 } else if (i == 2) {
                     dataStoreLayer.setDsl_id(dsl_id2);
                     dataStoreLayer.setStore_type(Store_type.HBASE.getCode());
+                    dataStoreLayer.setIs_hadoopclient(IsFlag.Shi.getCode());
                 } else if (i == 3) {
                     dataStoreLayer.setDsl_id(dsl_id3);
                     dataStoreLayer.setStore_type(Store_type.SOLR.getCode());
+                    dataStoreLayer.setIs_hadoopclient(IsFlag.Shi.getCode());
                 } else if (i == 4) {
                     dataStoreLayer.setDsl_id(dsl_id4);
                     dataStoreLayer.setStore_type(Store_type.ElasticSearch.getCode());
+                    dataStoreLayer.setIs_hadoopclient(IsFlag.Shi.getCode());
                 } else if (i == 5) {
                     dataStoreLayer.setDsl_id(dsl_id5);
                     dataStoreLayer.setStore_type(Store_type.MONGODB.getCode());
+                    dataStoreLayer.setIs_hadoopclient(IsFlag.Shi.getCode());
                 } else if (i == 6) {
                     dataStoreLayer.setDsl_id(dsl_id6);
                     dataStoreLayer.setStore_type(Store_type.DATABASE.getCode());
+                    dataStoreLayer.setIs_hadoopclient(IsFlag.Shi.getCode());
                 }
                 dataStoreLayer.setDsl_name("数据存储层配置测试名称" + i);
                 dataStoreLayer.setDsl_remark("数据存储层配置测试" + i);
+                dataStoreLayer.setDtcs_id(dtcs_id);
+                dataStoreLayer.setDlcs_id(dlcs_id);
                 dataStoreLayer.add(db);
             }
             // 4.初始化数据存储附加信息表数据
@@ -191,11 +213,70 @@ public class DataStoreActionTest extends WebBaseTestCase {
                     dataStoreLayerAttr.setStorage_property_val("10.71.4.51");
                 }
                 dataStoreLayerAttr.setDsla_remark("数据存储层配置属性测试" + i);
+                dataStoreLayerAttr.setIs_file(IsFlag.Fou.getCode());
                 dataStoreLayerAttr.add(db);
             }
-            // 6.提交事务
+            // 6.初始化类型对照主表信息
+            Type_contrast_sum type_contrast_sum = new Type_contrast_sum();
+            for (int i = 1; i < 3; i++) {
+                if (i == 1) {
+                    type_contrast_sum.setDtcs_id(dtcs_id);
+                    type_contrast_sum.setDtcs_name("MYSQL");
+                } else {
+                    type_contrast_sum.setDtcs_id(dtcs_id2);
+                    type_contrast_sum.setDtcs_name("ORACLE");
+                }
+                type_contrast_sum.setDtcs_remark("类型对照主表测试");
+                type_contrast_sum.add(db);
+            }
+            // 7.初始化类型长度对照主表信息
+            Length_contrast_sum length_contrast_sum = new Length_contrast_sum();
+            for (int i = 1; i < 3; i++) {
+                if (i == 1) {
+                    length_contrast_sum.setDlcs_id(dlcs_id);
+                    length_contrast_sum.setDlcs_name("length_contrast_sum");
+                } else {
+                    length_contrast_sum.setDlcs_id(dlcs_id2);
+                    length_contrast_sum.setDlcs_name("length_contrast");
+                }
+                length_contrast_sum.setDlcs_remark("类型长度对照主表测试");
+                length_contrast_sum.add(db);
+            }
+            // 8.初始化类型对照表信息
+            Type_contrast type_contrast = new Type_contrast();
+            for (int i = 0; i < 2; i++) {
+                if (i == 0) {
+                    type_contrast.setDtc_id(dtc_id);
+                    type_contrast.setSource_type("number");
+                    type_contrast.setTarget_type("decimal");
+                } else {
+                    type_contrast.setDtc_id(dtc_id2);
+                    type_contrast.setSource_type("timestamp ");
+                    type_contrast.setTarget_type("datetime");
+                }
+                type_contrast.setDtcs_id(dtcs_id);
+                type_contrast.setDtc_remark("类型对照表测试");
+                type_contrast.add(db);
+            }
+            // 8.初始化类型长度对照表信息
+            Length_contrast length_contrast = new Length_contrast();
+            for (int i = 0; i < 2; i++) {
+                if (i == 0) {
+                    length_contrast.setDlc_id(dlc_id);
+                    length_contrast.setDlc_type("string");
+                    length_contrast.setDlc_length("100");
+                } else {
+                    length_contrast.setDlc_id(dlc_id2);
+                    length_contrast.setDlc_type("number");
+                    length_contrast.setDlc_length("20");
+                }
+                length_contrast.setDlcs_id(dlcs_id);
+                length_contrast.setDlc_remark("类型长度对照表测试");
+                length_contrast.add(db);
+            }
+            // 9.提交事务
             SqlOperator.commitTransaction(db);
-            // 7.模拟用户登录
+            // 10.模拟用户登录
             String responseValue = new HttpClient()
                     .buildSession()
                     .addData("user_id", UserId)
@@ -350,7 +431,72 @@ public class DataStoreActionTest extends WebBaseTestCase {
                     "  where dsla_remark=?", "新增数据存储层配置属性信息2").orElseThrow(() ->
                     new RuntimeException("count fail!"));
             assertThat("此条数据删除后，记录数应该为0", num, is(0L));
-            // 9.提交事务
+            // 9.测试完删除类型对照主表信息
+            SqlOperator.execute(db, "delete from " + Type_contrast_sum.TableName +
+                    " where dtcs_id=?", dtcs_id);
+            num = SqlOperator.queryNumber(db, "select count(1) from " + Type_contrast_sum.TableName +
+                    "  where dtcs_id=?", dtcs_id).orElseThrow(() ->
+                    new RuntimeException("count fail!"));
+            assertThat("此条数据删除后，记录数应该为0", num, is(0L));
+            SqlOperator.execute(db, "delete from " + Type_contrast_sum.TableName +
+                    " where dtcs_id=?", dtcs_id2);
+            num = SqlOperator.queryNumber(db, "select count(1) from " + Type_contrast_sum.TableName +
+                    "  where dtcs_id=?", dtcs_id2).orElseThrow(() ->
+                    new RuntimeException("count fail!"));
+            assertThat("此条数据删除后，记录数应该为0", num, is(0L));
+            // 10.测试完删除类型对照表信息
+            SqlOperator.execute(db, "delete from " + Type_contrast.TableName +
+                    " where dtcs_id=?", dtcs_id);
+            num = SqlOperator.queryNumber(db, "select count(1) from " + Type_contrast.TableName +
+                    "  where dtcs_id=?", dtcs_id).orElseThrow(() ->
+                    new RuntimeException("count fail!"));
+            assertThat("此条数据删除后，记录数应该为0", num, is(0L));
+            // 11.测试完删除类型长度对照主表信息
+            SqlOperator.execute(db, "delete from " + Length_contrast_sum.TableName +
+                    " where dlcs_id=?", dlcs_id);
+            num = SqlOperator.queryNumber(db, "select count(1) from " + Length_contrast_sum.TableName +
+                    "  where dlcs_id=?", dlcs_id).orElseThrow(() ->
+                    new RuntimeException("count fail!"));
+            assertThat("此条数据删除后，记录数应该为0", num, is(0L));
+            SqlOperator.execute(db, "delete from " + Length_contrast_sum.TableName +
+                    " where dlcs_id=?", dlcs_id2);
+            num = SqlOperator.queryNumber(db, "select count(1) from " + Length_contrast_sum.TableName +
+                    "  where dlcs_id=?", dlcs_id2).orElseThrow(() ->
+                    new RuntimeException("count fail!"));
+            assertThat("此条数据删除后，记录数应该为0", num, is(0L));
+            // 12.测试完删除类型长度对照表信息
+            SqlOperator.execute(db, "delete from " + Length_contrast.TableName +
+                    " where dlcs_id=?", dlcs_id);
+            num = SqlOperator.queryNumber(db, "select count(1) from " + Length_contrast.TableName +
+                    "  where dlcs_id=?", dlcs_id).orElseThrow(() ->
+                    new RuntimeException("count fail!"));
+            assertThat("此条数据删除后，记录数应该为0", num, is(0L));
+            // 13.删除新增类型对照以及长度对照表信息
+            SqlOperator.execute(db, "delete from " + Length_contrast.TableName +
+                    " where dlc_remark=?", "类型长度对照表备注");
+            num = SqlOperator.queryNumber(db, "select count(1) from " + Length_contrast.TableName +
+                    "  where dlc_remark=?", "类型长度对照表备注").orElseThrow(() ->
+                    new RuntimeException("count fail!"));
+            assertThat("此条数据删除后，记录数应该为0", num, is(0L));
+            SqlOperator.execute(db, "delete from " + Length_contrast_sum.TableName +
+                    " where dlcs_remark=?", "类型长度对照主表备注");
+            num = SqlOperator.queryNumber(db, "select count(1) from " + Length_contrast_sum.TableName +
+                    "  where dlcs_remark=?", "类型长度对照主表备注").orElseThrow(() ->
+                    new RuntimeException("count fail!"));
+            assertThat("此条数据删除后，记录数应该为0", num, is(0L));
+            SqlOperator.execute(db, "delete from " + Type_contrast_sum.TableName +
+                    " where dtcs_remark=?", "类型对照主表备注");
+            num = SqlOperator.queryNumber(db, "select count(1) from " + Type_contrast_sum.TableName +
+                    "  where dtcs_remark=?", "类型对照主表测试").orElseThrow(() ->
+                    new RuntimeException("count fail!"));
+            assertThat("此条数据删除后，记录数应该为0", num, is(0L));
+            SqlOperator.execute(db, "delete from " + Type_contrast.TableName +
+                    " where dtc_remark=?", "类型对照表备注");
+            num = SqlOperator.queryNumber(db, "select count(1) from " + Type_contrast.TableName +
+                    "  where dtc_remark=?", "类型对照表备注").orElseThrow(() ->
+                    new RuntimeException("count fail!"));
+            assertThat("此条数据删除后，记录数应该为0", num, is(0L));
+            // 13.提交事务
             SqlOperator.commitTransaction(db);
         }
 
@@ -391,6 +537,10 @@ public class DataStoreActionTest extends WebBaseTestCase {
                 .addData("dslad_remark", "新增数据存储附加信息")
                 .addData("dsla_remark", "新增数据存储层配置属性信息")
                 .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
+                .addData("is_hadoopclient", IsFlag.Shi.getCode())
+                .addData("is_file", IsFlag.Fou.getCode())
+                .addData("dtcs_id", dtcs_id)
+                .addData("dlcs_id", dlcs_id)
                 .post(getActionUrl("addDataStore"))
                 .getBodyString();
         ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -401,6 +551,7 @@ public class DataStoreActionTest extends WebBaseTestCase {
                     + Data_store_layer.TableName + " where dsl_name=?", "addDataStore1");
             assertThat(Store_type.DATABASE.getCode(), is(layer.get("store_type")));
             assertThat("新增数据存储层配置信息", is(layer.get("dsl_remark")));
+            assertThat(IsFlag.Shi.getCode(), is(layer.get("is_hadoopclient")));
             List<Data_store_layer_added> layerAddeds = SqlOperator.queryList(db, Data_store_layer_added.class,
                     "select * from " + Data_store_layer_added.TableName + " where dsl_id=? " +
                             "order by dsla_storelayer", layer.get("dsl_id"));
@@ -416,13 +567,13 @@ public class DataStoreActionTest extends WebBaseTestCase {
                     "select * from " + Data_store_layer_attr.TableName + " where dsl_id=?",
                     layer.get("dsl_id"));
             for (Data_store_layer_attr layerAttr : layerAttrs) {
+                assertThat(IsFlag.Fou.getCode(), is(layerAttr.getIs_file()));
                 if (layerAttr.getStorage_property_key().equals("数据库")) {
                     assertThat("新增数据存储层配置属性信息1", is(layerAttr.getDsla_remark()));
                     assertThat(DatabaseType.Postgresql.getCode(), is(layerAttr.getStorage_property_val()));
                 } else {
                     assertThat("新增数据存储层配置属性信息2", is(layerAttr.getDsla_remark()));
                     assertThat("org.postgresql.Driver", is(layerAttr.getStorage_property_val()));
-
                 }
             }
             // 2.错误的数据访问1，dsl_name为空
@@ -431,6 +582,10 @@ public class DataStoreActionTest extends WebBaseTestCase {
                     .addData("store_type", Store_type.HBASE.getCode())
                     .addData("dsl_remark", "新增数据存储层配置信息")
                     .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
+                    .addData("is_hadoopclient", IsFlag.Shi.getCode())
+                    .addData("is_file", IsFlag.Fou.getCode())
+                    .addData("dtcs_id", dtcs_id)
+                    .addData("dlcs_id", dlcs_id)
                     .post(getActionUrl("addDataStore"))
                     .getBodyString();
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -442,6 +597,10 @@ public class DataStoreActionTest extends WebBaseTestCase {
                     .addData("store_type", Store_type.HBASE.getCode())
                     .addData("dsl_remark", "新增数据存储层配置信息")
                     .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
+                    .addData("is_hadoopclient", IsFlag.Shi.getCode())
+                    .addData("is_file", IsFlag.Fou.getCode())
+                    .addData("dtcs_id", dtcs_id)
+                    .addData("dlcs_id", dlcs_id)
                     .post(getActionUrl("addDataStore"))
                     .getBodyString();
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -453,6 +612,10 @@ public class DataStoreActionTest extends WebBaseTestCase {
                     .addData("store_type", "")
                     .addData("dsl_remark", "新增数据存储层配置信息")
                     .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
+                    .addData("is_hadoopclient", IsFlag.Shi.getCode())
+                    .addData("is_file", IsFlag.Fou.getCode())
+                    .addData("dtcs_id", dtcs_id)
+                    .addData("dlcs_id", dlcs_id)
                     .post(getActionUrl("addDataStore"))
                     .getBodyString();
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -464,6 +627,10 @@ public class DataStoreActionTest extends WebBaseTestCase {
                     .addData("store_type", " ")
                     .addData("dsl_remark", "新增数据存储层配置信息")
                     .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
+                    .addData("is_hadoopclient", IsFlag.Shi.getCode())
+                    .addData("is_file", IsFlag.Fou.getCode())
+                    .addData("dtcs_id", dtcs_id)
+                    .addData("dlcs_id", dlcs_id)
                     .post(getActionUrl("addDataStore"))
                     .getBodyString();
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -472,9 +639,13 @@ public class DataStoreActionTest extends WebBaseTestCase {
             // 6.错误的数据访问5，store_type为不存在
             bodyString = new HttpClient()
                     .addData("dsl_name", "addDataStore15")
-                    .addData("store_type", 6)
+                    .addData("store_type", 100)
                     .addData("dsl_remark", "新增数据存储层配置信息")
                     .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
+                    .addData("is_hadoopclient", IsFlag.Shi.getCode())
+                    .addData("is_file", IsFlag.Fou.getCode())
+                    .addData("dtcs_id", dtcs_id)
+                    .addData("dlcs_id", dlcs_id)
                     .post(getActionUrl("addDataStore"))
                     .getBodyString();
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -486,6 +657,10 @@ public class DataStoreActionTest extends WebBaseTestCase {
                     .addData("store_type", Store_type.HBASE.getCode())
                     .addData("dsl_remark", "新增数据存储层配置信息")
                     .addData("dataStoreLayerAttr", "")
+                    .addData("is_hadoopclient", IsFlag.Shi.getCode())
+                    .addData("is_file", IsFlag.Fou.getCode())
+                    .addData("dtcs_id", dtcs_id)
+                    .addData("dlcs_id", dlcs_id)
                     .post(getActionUrl("addDataStore"))
                     .getBodyString();
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -497,6 +672,10 @@ public class DataStoreActionTest extends WebBaseTestCase {
                     .addData("store_type", Store_type.DATABASE.getCode())
                     .addData("dsl_remark", "新增数据存储层配置信息")
                     .addData("dataStoreLayerAttr", " ")
+                    .addData("is_hadoopclient", IsFlag.Shi.getCode())
+                    .addData("is_file", IsFlag.Fou.getCode())
+                    .addData("dtcs_id", dtcs_id)
+                    .addData("dlcs_id", dlcs_id)
                     .post(getActionUrl("addDataStore"))
                     .getBodyString();
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -552,6 +731,10 @@ public class DataStoreActionTest extends WebBaseTestCase {
                             StoreLayerAdded.PaiXuLie.getCode()})
                     .addData("dslad_remark", "更新数据存储附加信息")
                     .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
+                    .addData("is_hadoopclient", IsFlag.Shi.getCode())
+                    .addData("is_file", IsFlag.Fou.getCode())
+                    .addData("dtcs_id", dtcs_id)
+                    .addData("dlcs_id", dlcs_id)
                     .post(getActionUrl("updateDataStore"))
                     .getBodyString();
             ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -561,6 +744,7 @@ public class DataStoreActionTest extends WebBaseTestCase {
                     + Data_store_layer.TableName + " where dsl_id=?", dsl_id1);
             assertThat(Store_type.HBASE.getCode(), is(layer.get("store_type")));
             assertThat("更新数据存储层配置信息", is(layer.get("dsl_remark")));
+            assertThat(IsFlag.Shi.getCode(), is(layer.get("is_hadoopclient")));
             List<Data_store_layer_added> layerAddeds = SqlOperator.queryList(db, Data_store_layer_added.class,
                     "select * from " + Data_store_layer_added.TableName + " where dsl_id=? " +
                             "order by dsla_storelayer", dsl_id1);
@@ -578,6 +762,7 @@ public class DataStoreActionTest extends WebBaseTestCase {
                     "select * from " + Data_store_layer_attr.TableName + " where dsl_id=? " +
                             " order by storage_property_key", layer.get("dsl_id"));
             for (int i = 0; i < layerAttrs.size(); i++) {
+                assertThat(IsFlag.Fou.getCode(), is(layerAttrs.get(i).getIs_file()));
                 if (i == 0) {
                     assertThat("更新数据存储层配置属性信息1", is(layerAttrs.get(i).getDsla_remark()));
                     assertThat(DatabaseType.MYSQL.getCode(), is(layerAttrs.get(i).
@@ -601,6 +786,10 @@ public class DataStoreActionTest extends WebBaseTestCase {
                     .addData("store_type", Store_type.HBASE.getCode())
                     .addData("dsl_remark", "更新数据存储层配置信息")
                     .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
+                    .addData("is_hadoopclient", IsFlag.Shi.getCode())
+                    .addData("is_file", IsFlag.Fou.getCode())
+                    .addData("dtcs_id", dtcs_id)
+                    .addData("dlcs_id", dlcs_id)
                     .post(getActionUrl("updateDataStore"))
                     .getBodyString();
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -615,6 +804,10 @@ public class DataStoreActionTest extends WebBaseTestCase {
                     .addData("store_type", Store_type.HBASE.getCode())
                     .addData("dsl_remark", "更新数据存储层配置信息")
                     .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
+                    .addData("is_hadoopclient", IsFlag.Shi.getCode())
+                    .addData("is_file", IsFlag.Fou.getCode())
+                    .addData("dtcs_id", dtcs_id)
+                    .addData("dlcs_id", dlcs_id)
                     .post(getActionUrl("updateDataStore"))
                     .getBodyString();
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -629,6 +822,10 @@ public class DataStoreActionTest extends WebBaseTestCase {
                     .addData("store_type", Store_type.HBASE.getCode())
                     .addData("dsl_remark", "更新数据存储层配置信息")
                     .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
+                    .addData("is_hadoopclient", IsFlag.Shi.getCode())
+                    .addData("is_file", IsFlag.Fou.getCode())
+                    .addData("dtcs_id", dtcs_id)
+                    .addData("dlcs_id", dlcs_id)
                     .post(getActionUrl("updateDataStore"))
                     .getBodyString();
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -643,6 +840,10 @@ public class DataStoreActionTest extends WebBaseTestCase {
                     .addData("store_type", Store_type.HBASE.getCode())
                     .addData("dsl_remark", "更新数据存储层配置信息")
                     .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
+                    .addData("is_hadoopclient", IsFlag.Shi.getCode())
+                    .addData("is_file", IsFlag.Fou.getCode())
+                    .addData("dtcs_id", dtcs_id)
+                    .addData("dlcs_id", dlcs_id)
                     .post(getActionUrl("updateDataStore"))
                     .getBodyString();
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -657,6 +858,10 @@ public class DataStoreActionTest extends WebBaseTestCase {
                     .addData("store_type", Store_type.HBASE.getCode())
                     .addData("dsl_remark", "更新数据存储层配置信息")
                     .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
+                    .addData("is_hadoopclient", IsFlag.Shi.getCode())
+                    .addData("is_file", IsFlag.Fou.getCode())
+                    .addData("dtcs_id", dtcs_id)
+                    .addData("dlcs_id", dlcs_id)
                     .post(getActionUrl("updateDataStore"))
                     .getBodyString();
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -671,6 +876,10 @@ public class DataStoreActionTest extends WebBaseTestCase {
                     .addData("store_type", Store_type.HBASE.getCode())
                     .addData("dsl_remark", "更新数据存储层配置信息")
                     .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
+                    .addData("is_hadoopclient", IsFlag.Shi.getCode())
+                    .addData("is_file", IsFlag.Fou.getCode())
+                    .addData("dtcs_id", dtcs_id)
+                    .addData("dlcs_id", dlcs_id)
                     .post(getActionUrl("updateDataStore"))
                     .getBodyString();
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -685,6 +894,10 @@ public class DataStoreActionTest extends WebBaseTestCase {
                     .addData("store_type", Store_type.HBASE.getCode())
                     .addData("dsl_remark", "更新数据存储层配置信息")
                     .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
+                    .addData("is_hadoopclient", IsFlag.Shi.getCode())
+                    .addData("is_file", IsFlag.Fou.getCode())
+                    .addData("dtcs_id", dtcs_id)
+                    .addData("dlcs_id", dlcs_id)
                     .post(getActionUrl("updateDataStore"))
                     .getBodyString();
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -699,6 +912,10 @@ public class DataStoreActionTest extends WebBaseTestCase {
                     .addData("store_type", Store_type.HBASE.getCode())
                     .addData("dsl_remark", "更新数据存储层配置信息")
                     .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
+                    .addData("is_hadoopclient", IsFlag.Shi.getCode())
+                    .addData("is_file", IsFlag.Fou.getCode())
+                    .addData("dtcs_id", dtcs_id)
+                    .addData("dlcs_id", dlcs_id)
                     .post(getActionUrl("updateDataStore"))
                     .getBodyString();
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -713,6 +930,10 @@ public class DataStoreActionTest extends WebBaseTestCase {
                     .addData("store_type", Store_type.HBASE.getCode())
                     .addData("dsl_remark", "更新数据存储层配置信息")
                     .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
+                    .addData("is_hadoopclient", IsFlag.Shi.getCode())
+                    .addData("is_file", IsFlag.Fou.getCode())
+                    .addData("dtcs_id", dtcs_id)
+                    .addData("dlcs_id", dlcs_id)
                     .post(getActionUrl("updateDataStore"))
                     .getBodyString();
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -727,6 +948,10 @@ public class DataStoreActionTest extends WebBaseTestCase {
                     .addData("store_type", Store_type.HBASE.getCode())
                     .addData("dsl_remark", "更新数据存储层配置信息")
                     .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
+                    .addData("is_hadoopclient", IsFlag.Shi.getCode())
+                    .addData("is_file", IsFlag.Fou.getCode())
+                    .addData("dtcs_id", dtcs_id)
+                    .addData("dlcs_id", dlcs_id)
                     .post(getActionUrl("updateDataStore"))
                     .getBodyString();
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -741,6 +966,10 @@ public class DataStoreActionTest extends WebBaseTestCase {
                     .addData("store_type", Store_type.HBASE.getCode())
                     .addData("dsl_remark", "更新数据存储层配置信息")
                     .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
+                    .addData("is_hadoopclient", IsFlag.Shi.getCode())
+                    .addData("is_file", IsFlag.Fou.getCode())
+                    .addData("dtcs_id", dtcs_id)
+                    .addData("dlcs_id", dlcs_id)
                     .post(getActionUrl("updateDataStore"))
                     .getBodyString();
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -755,6 +984,10 @@ public class DataStoreActionTest extends WebBaseTestCase {
                     .addData("store_type", "")
                     .addData("dsl_remark", "更新数据存储层配置信息")
                     .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
+                    .addData("is_hadoopclient", IsFlag.Shi.getCode())
+                    .addData("is_file", IsFlag.Fou.getCode())
+                    .addData("dtcs_id", dtcs_id)
+                    .addData("dlcs_id", dlcs_id)
                     .post(getActionUrl("updateDataStore"))
                     .getBodyString();
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -769,6 +1002,10 @@ public class DataStoreActionTest extends WebBaseTestCase {
                     .addData("store_type", " ")
                     .addData("dsl_remark", "更新数据存储层配置信息")
                     .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
+                    .addData("is_hadoopclient", IsFlag.Shi.getCode())
+                    .addData("is_file", IsFlag.Fou.getCode())
+                    .addData("dtcs_id", dtcs_id)
+                    .addData("dlcs_id", dlcs_id)
                     .post(getActionUrl("updateDataStore"))
                     .getBodyString();
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -783,6 +1020,10 @@ public class DataStoreActionTest extends WebBaseTestCase {
                     .addData("store_type", 6)
                     .addData("dsl_remark", "更新数据存储层配置信息")
                     .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
+                    .addData("is_hadoopclient", IsFlag.Shi.getCode())
+                    .addData("is_file", IsFlag.Fou.getCode())
+                    .addData("dtcs_id", dtcs_id)
+                    .addData("dlcs_id", dlcs_id)
                     .post(getActionUrl("updateDataStore"))
                     .getBodyString();
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -797,6 +1038,10 @@ public class DataStoreActionTest extends WebBaseTestCase {
                     .addData("store_type", Store_type.DATABASE.getCode())
                     .addData("dsl_remark", "更新数据存储层配置信息")
                     .addData("dataStoreLayerAttr", "")
+                    .addData("is_hadoopclient", IsFlag.Shi.getCode())
+                    .addData("is_file", IsFlag.Fou.getCode())
+                    .addData("dtcs_id", dtcs_id)
+                    .addData("dlcs_id", dlcs_id)
                     .post(getActionUrl("updateDataStore"))
                     .getBodyString();
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -811,6 +1056,10 @@ public class DataStoreActionTest extends WebBaseTestCase {
                     .addData("store_type", Store_type.HBASE.getCode())
                     .addData("dsl_remark", "更新数据存储层配置信息")
                     .addData("dataStoreLayerAttr", " ")
+                    .addData("is_hadoopclient", IsFlag.Shi.getCode())
+                    .addData("is_file", IsFlag.Fou.getCode())
+                    .addData("dtcs_id", dtcs_id)
+                    .addData("dlcs_id", dlcs_id)
                     .post(getActionUrl("updateDataStore"))
                     .getBodyString();
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -977,5 +1226,646 @@ public class DataStoreActionTest extends WebBaseTestCase {
         layerAndAttr = (List<Map<String, Object>>) dataForMap.get("layerAndAttr");
         assertThat(layerAndAdded.isEmpty(), is(true));
         assertThat(layerAndAttr.isEmpty(), is(true));
+    }
+
+    @Method(desc = "新增存储层数据类型对比信息",
+            logicStep = "1.正常的数据访问1，数据都正常" +
+                    "2.错误的数据访问1，dtcs_name为空" +
+                    "3.错误的数据访问2，dtcs_name为空格" +
+                    "4.错误的数据访问3，dtcs_name已存在" +
+                    "5.错误的数据访问4，typeContrast为空" +
+                    "6.错误的数据访问5，typeContrast为空格")
+    @Test
+    public void addDataTypeContrastInfo() {
+        try (DatabaseWrapper db = new DatabaseWrapper()) {
+            List<Map<String, String>> list = new ArrayList<>();
+            for (int i = 0; i < 2; i++) {
+                Map<String, String> map = new HashMap<>();
+                if (i == 0) {
+                    map.put("source_type", "varchar");
+                    map.put("target_type", "varchar2");
+                    list.add(map);
+                } else {
+                    map.put("source_type", "text");
+                    map.put("target_type", "CLOB");
+                    list.add(map);
+                }
+            }
+            // 1.正常的数据访问1，数据都正常
+            String bodyString = new HttpClient()
+                    .addData("typeContrast", JsonUtil.toJson(list))
+                    .addData("dtcs_name", "oracle")
+                    .addData("dtcs_remark", "类型对照主表备注")
+                    .addData("dtc_remark", "类型对照表备注")
+                    .post(getActionUrl("addDataTypeContrastInfo"))
+                    .getBodyString();
+            ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(true));
+            // 验证数据正确性
+            Type_contrast_sum typeContrastSum = SqlOperator.queryOneObject(db, Type_contrast_sum.class,
+                    "select * from " + Type_contrast_sum.TableName + " where dtcs_name=?", "oracle")
+                    .orElseThrow(() -> new BusinessException("sql查询错误！"));
+            assertThat(typeContrastSum.getDtcs_name(), is("oracle"));
+            assertThat(typeContrastSum.getDtcs_remark(), is("类型对照主表备注"));
+            List<Type_contrast> typeContrastList = SqlOperator.queryList(db, Type_contrast.class,
+                    "select * from " + Type_contrast.TableName + " where dtcs_id=?",
+                    typeContrastSum.getDtcs_id());
+            for (Type_contrast type_contrast : typeContrastList) {
+                if (type_contrast.getTarget_type().equals("varchar2")) {
+                    assertThat(type_contrast.getSource_type(), is("varchar"));
+                    assertThat(type_contrast.getDtc_remark(), is("类型对照表备注"));
+                } else if (type_contrast.getTarget_type().equals("CLOB")) {
+                    assertThat(type_contrast.getSource_type(), is("text"));
+                    assertThat(type_contrast.getDtc_remark(), is("类型对照表备注"));
+                }
+                assertThat(type_contrast.getDtcs_id(), is(typeContrastSum.getDtcs_id()));
+            }
+            // 2.错误的数据访问1，dtcs_name为空
+            bodyString = new HttpClient()
+                    .addData("typeContrast", JsonUtil.toJson(list))
+                    .addData("dtcs_name", "")
+                    .addData("dtcs_remark", "类型对照主表备注")
+                    .addData("dtc_remark", "类型对照表备注")
+                    .post(getActionUrl("addDataTypeContrastInfo"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 3.错误的数据访问2，dtcs_name为空格
+            bodyString = new HttpClient()
+                    .addData("typeContrast", JsonUtil.toJson(list))
+                    .addData("dtcs_name", " ")
+                    .addData("dtcs_remark", "类型对照主表备注")
+                    .addData("dtc_remark", "类型对照表备注")
+                    .post(getActionUrl("addDataTypeContrastInfo"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 4.错误的数据访问3，dtcs_name已存在
+            bodyString = new HttpClient()
+                    .addData("typeContrast", JsonUtil.toJson(list))
+                    .addData("dtcs_name", "oracle")
+                    .addData("dtcs_remark", "类型对照主表备注")
+                    .addData("dtc_remark", "类型对照表备注")
+                    .post(getActionUrl("addDataTypeContrastInfo"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 5.错误的数据访问4，typeContrast为空
+            bodyString = new HttpClient()
+                    .addData("typeContrast", "")
+                    .addData("dtcs_name", "MYSQL")
+                    .addData("dtcs_remark", "类型对照主表备注")
+                    .addData("dtc_remark", "类型对照表备注")
+                    .post(getActionUrl("addDataTypeContrastInfo"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 6.错误的数据访问5，typeContrast为空格
+            bodyString = new HttpClient()
+                    .addData("typeContrast", " ")
+                    .addData("dtcs_name", "MYSQL")
+                    .addData("dtcs_remark", "类型对照主表备注")
+                    .addData("dtc_remark", "类型对照表备注")
+                    .post(getActionUrl("addDataTypeContrastInfo"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+        }
+    }
+
+    @Method(desc = "更新存储层数据类型对比信息",
+            logicStep = "1.正常的数据访问1，数据都正常" +
+                    "2.错误的数据访问1，dtcs_name为空" +
+                    "3.错误的数据访问2，dtcs_name为空格" +
+                    "4.错误的数据访问4，typeContrast为空" +
+                    "5.错误的数据访问5，typeContrast为空格")
+    @Test
+    public void updateDataTypeContrastInfo() {
+        try (DatabaseWrapper db = new DatabaseWrapper()) {
+            List<Map<String, String>> list = new ArrayList<>();
+            for (int i = 0; i < 3; i++) {
+                Map<String, String> map = new HashMap<>();
+                if (i == 0) {
+                    map.put("source_type", "number");
+                    map.put("target_type", "int");
+                    list.add(map);
+                } else if (i == 1) {
+                    map.put("source_type", "text");
+                    map.put("target_type", "varchar");
+                    list.add(map);
+                } else {
+                    map.put("source_type", "CHAR");
+                    map.put("target_type", "NCHAR");
+                    list.add(map);
+                }
+            }
+            // 1.正常的数据访问1，数据都正常
+            String bodyString = new HttpClient()
+                    .addData("dtcs_id", dtcs_id)
+                    .addData("typeContrast", JsonUtil.toJson(list))
+                    .addData("dtcs_name", "MYSQL")
+                    .addData("dtcs_remark", "更新类型对照主表备注")
+                    .addData("dtc_remark", "更新类型对照表备注")
+                    .post(getActionUrl("updateDataTypeContrastInfo"))
+                    .getBodyString();
+            ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(true));
+            // 验证数据正确性
+            Type_contrast_sum typeContrastSum = SqlOperator.queryOneObject(db, Type_contrast_sum.class,
+                    "select * from " + Type_contrast_sum.TableName + " where dtcs_id=?", dtcs_id)
+                    .orElseThrow(() -> new BusinessException("sql查询错误！"));
+            assertThat(typeContrastSum.getDtcs_name(), is("MYSQL"));
+            assertThat(typeContrastSum.getDtcs_remark(), is("更新类型对照主表备注"));
+            List<Type_contrast> typeContrastList = SqlOperator.queryList(db, Type_contrast.class,
+                    "select * from " + Type_contrast.TableName + " where dtcs_id=?", dtcs_id);
+            for (Type_contrast type_contrast : typeContrastList) {
+                if (type_contrast.getTarget_type().equals("int")) {
+                    assertThat(type_contrast.getSource_type(), is("number"));
+                } else if (type_contrast.getTarget_type().equals("varchar")) {
+                    assertThat(type_contrast.getSource_type(), is("text"));
+                } else {
+                    assertThat(type_contrast.getSource_type(), is("CHAR"));
+                }
+                assertThat(type_contrast.getDtcs_id(), is(dtcs_id));
+                assertThat(type_contrast.getDtc_remark(), is("更新类型对照表备注"));
+            }
+            // 2.错误的数据访问1，dtcs_name为空
+            bodyString = new HttpClient()
+                    .addData("dtcs_id", dtcs_id)
+                    .addData("typeContrast", JsonUtil.toJson(list))
+                    .addData("dtcs_name", "")
+                    .addData("dtcs_remark", "类型对照主表备注")
+                    .addData("dtc_remark", "类型对照表备注")
+                    .post(getActionUrl("updateDataTypeContrastInfo"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 3.错误的数据访问2，dtcs_name为空格
+            bodyString = new HttpClient()
+                    .addData("dtcs_id", dtcs_id)
+                    .addData("typeContrast", JsonUtil.toJson(list))
+                    .addData("dtcs_name", " ")
+                    .addData("dtcs_remark", "类型对照主表备注")
+                    .addData("dtc_remark", "类型对照表备注")
+                    .post(getActionUrl("updateDataTypeContrastInfo"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 4.错误的数据访问3，typeContrast为空
+            bodyString = new HttpClient()
+                    .addData("dtcs_id", dtcs_id)
+                    .addData("typeContrast", "")
+                    .addData("dtcs_name", "MYSQL")
+                    .addData("dtcs_remark", "类型对照主表备注")
+                    .addData("dtc_remark", "类型对照表备注")
+                    .post(getActionUrl("updateDataTypeContrastInfo"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 5.错误的数据访问4，typeContrast为空格
+            bodyString = new HttpClient()
+                    .addData("dtcs_id", dtcs_id)
+                    .addData("typeContrast", " ")
+                    .addData("dtcs_name", "MYSQL")
+                    .addData("dtcs_remark", "类型对照主表备注")
+                    .addData("dtc_remark", "类型对照表备注")
+                    .post(getActionUrl("updateDataTypeContrastInfo"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+        }
+    }
+
+    @Method(desc = "删除数据类型对照信息",
+            logicStep = "1.正常的数据访问1，数据都正常" +
+                    "2.错误的数据访问1，dtcs_id不存在")
+    @Test
+    public void deleteDataTypeContrastInfo() {
+        try (DatabaseWrapper db = new DatabaseWrapper()) {
+            // 1.正常的数据访问1，数据都正常
+            // 删除前查询数据库，确认预期删除的数据存在
+            OptionalLong optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
+                    Type_contrast_sum.TableName + " where dtcs_id = ?", dtcs_id);
+            assertThat("删除操作前，保证Data_store_layer表中的确存在这样一条数据", optionalLong.
+                    orElse(Long.MIN_VALUE), is(1L));
+            optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
+                    Type_contrast.TableName + " where dtcs_id = ?", dtcs_id);
+            assertThat("删除操作前，保证Data_store_layer表中的确存在这样一条数据", optionalLong.
+                    orElse(Long.MIN_VALUE), is(2L));
+            String bodyString = new HttpClient()
+                    .addData("dtcs_id", dtcs_id)
+                    .post(getActionUrl("deleteDataTypeContrastInfo"))
+                    .getBodyString();
+            ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(true));
+            // 删除后查询数据库，确认预期删除的数据存在
+            optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
+                    Type_contrast_sum.TableName + " where dtcs_id = ?", dtcs_id);
+            assertThat("删除操作后，确认该条数据被删除", optionalLong.orElse(Long.MIN_VALUE),
+                    is(0L));
+            optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
+                    Type_contrast.TableName + " where dtcs_id = ?", dtcs_id);
+            assertThat("删除操作后，确认该条数据被删除", optionalLong.orElse(Long.MIN_VALUE),
+                    is(0L));
+            // 2.错误的数据访问1，dtcs_id不存在
+            bodyString = new HttpClient()
+                    .addData("dtcs_id", 100)
+                    .post(getActionUrl("deleteDataTypeContrastInfo"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+        }
+    }
+
+    @Method(desc = "新增存储层数据类型对比信息",
+            logicStep = "1.正常的数据访问1，数据都正常" +
+                    "2.错6误的数据访问1，lengthInfo为空" +
+                    "3.错误的数据访问2，lengthInfo为空格" +
+                    "4.错误的数据访问4，dlcs_name为空" +
+                    "5.错误的数据访问5，dlcs_name为空格" +
+                    "6.错误的数据访问3，dlcs_name已存在")
+    @Test
+    public void addTypeLengthContrastInfo() {
+        try (DatabaseWrapper db = new DatabaseWrapper()) {
+            List<Map<String, String>> list = new ArrayList<>();
+            for (int i = 0; i < 2; i++) {
+                Map<String, String> map = new HashMap<>();
+                if (i == 0) {
+                    map.put("dlc_type", "varchar");
+                    map.put("dlc_length", "256");
+                    list.add(map);
+                } else {
+                    map.put("dlc_type", "int");
+                    map.put("dlc_length", "10");
+                    list.add(map);
+                }
+            }
+            // 1.正确的数据访问1，数据都正确
+            String bodyString = new HttpClient()
+                    .addData("lengthInfo", JsonUtil.toJson(list))
+                    .addData("dlc_remark", "类型长度对照表备注")
+                    .addData("dlcs_name", "type_contrast")
+                    .addData("dlcs_remark", "类型长度对照主表备注")
+                    .post(getActionUrl("addTypeLengthContrastInfo"))
+                    .getBodyString();
+            ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(true));
+            Length_contrast_sum lengthContrastSum = SqlOperator.queryOneObject(db, Length_contrast_sum.class,
+                    "select * from " + Length_contrast_sum.TableName + " where dlcs_name=?",
+                    "type_contrast").orElseThrow(() -> new BusinessException("sql查询错误！"));
+            assertThat(lengthContrastSum.getDlcs_name(), is("type_contrast"));
+            assertThat(lengthContrastSum.getDlcs_remark(), is("类型长度对照主表备注"));
+            List<Length_contrast> lengthContrastList = SqlOperator.queryList(db, Length_contrast.class,
+                    "select * from " + Length_contrast.TableName + " where dlcs_id=?",
+                    lengthContrastSum.getDlcs_id());
+            for (Length_contrast length_contrast : lengthContrastList) {
+                assertThat(length_contrast.getDlc_remark(), is("类型长度对照表备注"));
+                if (length_contrast.getDlc_type().equals("varchar")) {
+                    assertThat(length_contrast.getDlc_length(), is(256));
+                } else if (length_contrast.getDlc_type().equals("int")) {
+                    assertThat(length_contrast.getDlc_length(), is(10));
+                }
+            }
+            // 2.错误的数据访问1，lengthInfo为空
+            bodyString = new HttpClient()
+                    .addData("lengthInfo", "")
+                    .addData("dlc_remark", "类型长度对照表备注")
+                    .addData("dlcs_name", "type_contrast")
+                    .addData("dlcs_remark", "类型长度对照主表备注")
+                    .post(getActionUrl("addTypeLengthContrastInfo"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 3.错误的数据访问2，lengthInfo为空格
+            bodyString = new HttpClient()
+                    .addData("lengthInfo", " ")
+                    .addData("dlc_remark", "类型长度对照表备注")
+                    .addData("dlcs_name", "type_contrast_sum")
+                    .addData("dlcs_remark", "类型长度对照主表备注")
+                    .post(getActionUrl("addTypeLengthContrastInfo"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 4.错误的数据访问3，dlcs_name为空
+            bodyString = new HttpClient()
+                    .addData("lengthInfo", JsonUtil.toJson(list))
+                    .addData("dlc_remark", "类型长度对照表备注")
+                    .addData("dlcs_name", "")
+                    .addData("dlcs_remark", "类型长度对照主表备注")
+                    .post(getActionUrl("addTypeLengthContrastInfo"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 5.错误的数据访问4，dlcs_name为空格
+            bodyString = new HttpClient()
+                    .addData("lengthInfo", JsonUtil.toJson(list))
+                    .addData("dlc_remark", "类型长度对照表备注")
+                    .addData("dlcs_name", " ")
+                    .addData("dlcs_remark", "类型长度对照主表备注")
+                    .post(getActionUrl("addTypeLengthContrastInfo"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 6.错误的数据访问5，dlcs_name已存在
+            bodyString = new HttpClient()
+                    .addData("lengthInfo", JsonUtil.toJson(list))
+                    .addData("dlc_remark", "类型长度对照表备注")
+                    .addData("dlcs_name", "type_contrast")
+                    .addData("dlcs_remark", "类型长度对照主表备注")
+                    .post(getActionUrl("addTypeLengthContrastInfo"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+        }
+    }
+
+    @Method(desc = "新增存储层数据类型对比信息",
+            logicStep = "1.正常的数据访问1，数据都正常" +
+                    "2.错6误的数据访问1，lengthInfo为空" +
+                    "3.错误的数据访问2，lengthInfo为空格" +
+                    "4.错误的数据访问4，dlcs_name为空" +
+                    "5.错误的数据访问5，dlcs_name为空格")
+    @Test
+    public void updateTypeLengthContrastInfo() {
+        try (DatabaseWrapper db = new DatabaseWrapper()) {
+            List<Map<String, String>> list = new ArrayList<>();
+            for (int i = 0; i < 2; i++) {
+                Map<String, String> map = new HashMap<>();
+                if (i == 0) {
+                    map.put("dlc_type", "varchar2");
+                    map.put("dlc_length", "512");
+                    list.add(map);
+                } else {
+                    map.put("dlc_type", "long");
+                    map.put("dlc_length", "20");
+                    list.add(map);
+                }
+            }
+            // 1.正确的数据访问1，数据都正确
+            String bodyString = new HttpClient()
+                    .addData("dlcs_id", dlcs_id)
+                    .addData("lengthInfo", JsonUtil.toJson(list))
+                    .addData("dlc_remark", "更新类型长度对照表备注")
+                    .addData("dlcs_name", "dlcs_name")
+                    .addData("dlcs_remark", "更新类型长度对照主表备注")
+                    .post(getActionUrl("updateTypeLengthContrastInfo"))
+                    .getBodyString();
+            ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(true));
+            Length_contrast_sum lengthContrastSum = SqlOperator.queryOneObject(db, Length_contrast_sum.class,
+                    "select * from " + Length_contrast_sum.TableName + " where dlcs_id=?",
+                    dlcs_id).orElseThrow(() -> new BusinessException("sql查询错误！"));
+            assertThat(lengthContrastSum.getDlcs_name(), is("dlcs_name"));
+            assertThat(lengthContrastSum.getDlcs_remark(), is("更新类型长度对照主表备注"));
+            List<Length_contrast> lengthContrastList = SqlOperator.queryList(db, Length_contrast.class,
+                    "select * from " + Length_contrast.TableName + " where dlcs_id=?",
+                    lengthContrastSum.getDlcs_id());
+            for (Length_contrast length_contrast : lengthContrastList) {
+                assertThat(length_contrast.getDlc_remark(), is("更新类型长度对照表备注"));
+                if (length_contrast.getDlc_type().equals("varchar2")) {
+                    assertThat(length_contrast.getDlc_length(), is(512));
+                } else if (length_contrast.getDlc_type().equals("long")) {
+                    assertThat(length_contrast.getDlc_length(), is(20));
+                }
+            }
+            // 2.错误的数据访问1，lengthInfo为空
+            bodyString = new HttpClient()
+                    .addData("dlcs_id", dlcs_id)
+                    .addData("lengthInfo", "")
+                    .addData("dlc_remark", "类型长度对照表备注")
+                    .addData("dlcs_name", "type_contrast")
+                    .addData("dlcs_remark", "类型长度对照主表备注")
+                    .post(getActionUrl("updateTypeLengthContrastInfo"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 3.错误的数据访问2，lengthInfo为空格
+            bodyString = new HttpClient()
+                    .addData("dlcs_id", dlcs_id)
+                    .addData("lengthInfo", " ")
+                    .addData("dlc_remark", "类型长度对照表备注")
+                    .addData("dlcs_name", "type_contrast_sum")
+                    .addData("dlcs_remark", "类型长度对照主表备注")
+                    .post(getActionUrl("updateTypeLengthContrastInfo"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 4.错误的数据访问3，dlcs_name为空
+            bodyString = new HttpClient()
+                    .addData("dlcs_id", dlcs_id)
+                    .addData("lengthInfo", JsonUtil.toJson(list))
+                    .addData("dlc_remark", "类型长度对照表备注")
+                    .addData("dlcs_name", "")
+                    .addData("dlcs_remark", "类型长度对照主表备注")
+                    .post(getActionUrl("updateTypeLengthContrastInfo"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+            // 5.错误的数据访问4，dlcs_name为空格
+            bodyString = new HttpClient()
+                    .addData("dlcs_id", dlcs_id)
+                    .addData("lengthInfo", JsonUtil.toJson(list))
+                    .addData("dlc_remark", "类型长度对照表备注")
+                    .addData("dlcs_name", " ")
+                    .addData("dlcs_remark", "类型长度对照主表备注")
+                    .post(getActionUrl("updateTypeLengthContrastInfo"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+        }
+    }
+
+    @Method(desc = "删除数据类型长度对照信息",
+            logicStep = "1.正常的数据访问1，数据都正常" +
+                    "2.错误的数据访问1，dtcs_id不存在")
+    @Test
+    public void deleteTypeLengthContrastInfo() {
+        try (DatabaseWrapper db = new DatabaseWrapper()) {
+            // 1.正常的数据访问1，数据都正常
+            // 删除前查询数据库，确认预期删除的数据存在
+            OptionalLong optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
+                    Length_contrast_sum.TableName + " where dlcs_id = ?", dlcs_id);
+            assertThat("删除操作前，保证Data_store_layer表中的确存在这样一条数据", optionalLong.
+                    orElse(Long.MIN_VALUE), is(1L));
+            optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
+                    Length_contrast.TableName + " where dlcs_id = ?", dlcs_id);
+            assertThat("删除操作前，保证Data_store_layer表中的确存在这样一条数据", optionalLong.
+                    orElse(Long.MIN_VALUE), is(2L));
+            String bodyString = new HttpClient()
+                    .addData("dlcs_id", dlcs_id)
+                    .post(getActionUrl("deleteTypeLengthContrastInfo"))
+                    .getBodyString();
+            ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(true));
+            // 删除后查询数据库，确认预期删除的数据存在
+            optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
+                    Length_contrast_sum.TableName + " where dlcs_id = ?", dlcs_id);
+            assertThat("删除操作后，确认该条数据被删除", optionalLong.orElse(Long.MIN_VALUE),
+                    is(0L));
+            optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
+                    Length_contrast.TableName + " where dlcs_id = ?", dlcs_id);
+            assertThat("删除操作后，确认该条数据被删除", optionalLong.orElse(Long.MIN_VALUE),
+                    is(0L));
+            // 2.错误的数据访问1，dtcs_id不存在
+            bodyString = new HttpClient()
+                    .addData("dlcs_id", 100)
+                    .post(getActionUrl("deleteTypeLengthContrastInfo"))
+                    .getBodyString();
+            ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                    .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+            assertThat(ar.isSuccess(), is(false));
+        }
+    }
+
+    @Method(desc = "查询数据存储层数据类型对照以及长度对照主表信息",
+            logicStep = "1.正常的数据访问1，数据都正常,该方法只有一种情况")
+    @Test
+    public void searchDataTypeMasterTableInfo() {
+        String bodyString = new HttpClient()
+                .post(getActionUrl("searchDataTypeMasterTableInfo"))
+                .getBodyString();
+        ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(true));
+        Map<Object, Object> map = ar.getDataForMap();
+        Type type = new TypeReference<List<Map<String, Object>>>() {
+        }.getType();
+        List<Map<String, Object>> lengthContrastList = JsonUtil.toObject(map.get("lengthContrastSumList").toString(),
+                type);
+        for (Map<String, Object> lengthContrast : lengthContrastList) {
+            if (String.valueOf(dlcs_id).equals(lengthContrast.get("dlcs_id").toString())) {
+                assertThat(lengthContrast.get("dlcs_remark"), is("类型长度对照主表测试"));
+                assertThat(lengthContrast.get("dlcs_name"), is("length_contrast_sum"));
+            } else if (String.valueOf(dlcs_id2).equals(lengthContrast.get("dlcs_id").toString())) {
+                assertThat(lengthContrast.get("dlcs_name"), is("length_contrast"));
+                assertThat(lengthContrast.get("dlcs_remark"), is("类型长度对照主表测试"));
+            }
+        }
+        List<Map<String, Object>> typeContrastList = JsonUtil.toObject(map.get("typeContrastSumList").toString(),
+                type);
+        for (Map<String, Object> typeContrast : typeContrastList) {
+            if (String.valueOf(dtcs_id).equals(typeContrast.get("dtcs_id").toString())) {
+                assertThat(typeContrast.get("dtcs_remark"), is("类型对照主表测试"));
+                assertThat(typeContrast.get("dtcs_name"), is("MYSQL"));
+            } else if (String.valueOf(dtcs_id2).equals(typeContrast.get("dtcs_id").toString())) {
+                assertThat(typeContrast.get("dtcs_name"), is("ORACLE"));
+                assertThat(typeContrast.get("dtcs_remark"), is("类型对照主表测试"));
+            }
+        }
+    }
+
+    @Method(desc = "查询数据存储层数据类型对照以及长度对照表信息",
+            logicStep = "1.正常的数据访问1，数据都正常,该方法只有一种情况")
+    @Test
+    public void searchDataLayerDataTypeInfo() {
+        String bodyString = new HttpClient()
+                .post(getActionUrl("searchDataLayerDataTypeInfo"))
+                .getBodyString();
+        ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(true));
+        Result result = ar.getDataForResult();
+        checkTypeContrastData(result);
+        // 2.正确的数据访问2，dtcs_id不为空
+        bodyString = new HttpClient()
+                .addData("dtcs_id", dtcs_id)
+                .post(getActionUrl("searchDataLayerDataTypeInfo"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(true));
+        result = ar.getDataForResult();
+        checkTypeContrastData(result);
+    }
+
+    @Method(desc = "校验类型对照数据正确性", logicStep = "1.循环遍历结果集校验数据")
+    private void checkTypeContrastData(Result result) {
+        // 1.循环遍历结果集校验数据
+        for (int i = 0; i < result.getRowCount(); i++) {
+            if (dtc_id == result.getLong(i, "dtc_id")) {
+                assertThat(result.getString(i, "dtc_remark"), is("类型对照表测试"));
+                assertThat(result.getString(i, "dtcs_id"), is(String.valueOf(dtcs_id)));
+                assertThat(result.getString(i, "dtcs_name"), is("MYSQL"));
+                assertThat(result.getString(i, "source_type"), is("number"));
+                assertThat(result.getString(i, "target_type"), is("decimal"));
+            } else if (dtc_id2 == result.getLong(i, "dtc_id")) {
+                assertThat(result.getString(i, "dtc_remark"), is("类型对照表测试"));
+                assertThat(result.getString(i, "dtcs_id"), is(String.valueOf(dtcs_id)));
+                assertThat(result.getString(i, "dtcs_name"), is("MYSQL"));
+                assertThat(result.getString(i, "source_type"), is("timestamp "));
+                assertThat(result.getString(i, "target_type"), is("datetime"));
+            }
+        }
+    }
+
+    @Method(desc = "查询数据存储层数据类型对照以及长度对照表信息",
+            logicStep = "1.正常的数据访问1，数据都正常,该方法只有一种情况")
+    @Test
+    public void searchDataLayerDataTypeLengthInfo() {
+        // 1.正常的数据访问1，数据都正常
+        String bodyString = new HttpClient()
+                .post(getActionUrl("searchDataLayerDataTypeLengthInfo"))
+                .getBodyString();
+        ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(true));
+        Result result = ar.getDataForResult();
+        checkLengthContrastData(result);
+        // 2.正确的数据访问2，dlcs_id
+        bodyString = new HttpClient()
+                .addData("dlcs_id", dlcs_id)
+                .post(getActionUrl("searchDataLayerDataTypeLengthInfo"))
+                .getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(true));
+        result = ar.getDataForResult();
+        checkLengthContrastData(result);
+
+    }
+
+    @Method(desc = "校验长度类型对照数据正确性", logicStep = "1.循环遍历结果集校验数据")
+    private void checkLengthContrastData(Result result) {
+        // 1.循环遍历结果集校验数据
+        for (int i = 0; i < result.getRowCount(); i++) {
+            if (dlc_id == result.getLong(i, "dlc_id")) {
+                assertThat(result.getString(i, "dlc_remark"), is("类型长度对照表测试"));
+                assertThat(result.getLong(i, "dlcs_id"), is(dlcs_id));
+                assertThat(result.getString(i, "dlcs_name"), is("length_contrast_sum"));
+                assertThat(result.getString(i, "dlc_type"), is("string"));
+                assertThat(result.getInt(i, "dlc_length"), is(100));
+            } else if (dlc_id2 == result.getLong(i, "dlc_id")) {
+                assertThat(result.getString(i, "dlc_remark"), is("类型长度对照表测试"));
+                assertThat(result.getLong(i, "dlcs_id"), is(dlcs_id));
+                assertThat(result.getString(i, "dlcs_name"), is("length_contrast_sum"));
+                assertThat(result.getString(i, "dlc_type"), is("number"));
+                assertThat(result.getInt(i, "dlc_length"), is(20));
+            }
+        }
     }
 }
