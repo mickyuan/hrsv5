@@ -54,7 +54,7 @@ public class SendMsgUtil {
 			throw new BusinessException("向Agent发送信息，模糊查询表信息时，请指定模糊查询字段");
 		}
 		if(StringUtil.isBlank(methodName)){
-			throw new BusinessException("向Agent发送信息时methodName不能为空");
+			throw new BusinessException("向Agent发送信息，模糊查询表信息时，methodName不能为空");
 		}
 
 		//2、由于向Agent请求的数据量较小，所以不需要压缩
@@ -116,7 +116,7 @@ public class SendMsgUtil {
 		}
 		Database_set legalParam = getLegalParam(databaseInfo);
 		if(StringUtil.isBlank(methodName)){
-			throw new BusinessException("向Agent发送信息时methodName不能为空");
+			throw new BusinessException("向Agent发送信息，获取目标数据库所有表时，methodName不能为空");
 		}
 
 		//2、由于向Agent请求的数据量较小，所以不需要压缩
@@ -181,7 +181,7 @@ public class SendMsgUtil {
 			throw new BusinessException("向Agent发送信息，根据表名查询表字段信息时，请填写表名");
 		}
 		if(StringUtil.isBlank(methodName)){
-			throw new BusinessException("向Agent发送信息时methodName不能为空");
+			throw new BusinessException("向Agent发送信息，根据表名查询表字段信息时，methodName不能为空");
 		}
 
 		//2、由于向Agent请求的数据量较小，所以不需要压缩
@@ -248,7 +248,7 @@ public class SendMsgUtil {
 			throw new BusinessException("向Agent发送信息，根据自定义抽取SQL获取该表的字段信息，自定义抽取SQL不能为空");
 		}
 		if(StringUtil.isBlank(methodName)){
-			throw new BusinessException("向Agent发送信息时methodName不能为空");
+			throw new BusinessException("向Agent发送信息，根据自定义抽取SQL获取该表的字段信息，methodName不能为空");
 		}
 
 		//2、由于向Agent请求的数据量较小，所以不需要压缩
@@ -282,6 +282,50 @@ public class SendMsgUtil {
 		//6、若响应不成功，记录日志，并抛出异常告知操作失败
 		logger.error(">>>>>>>>>>>>>>>>>>>>>>>>错误信息为：" + ar.getMessage());
 		throw new BusinessException("根据自定义抽取SQL获取该表的字段信息，详情请查看日志");
+	}
+
+	@Method(desc = "海云应用管理端向Agent端发送数据库采集任务信息", logicStep = "" +
+			"1、对参数合法性进行校验" +
+			"2、由于向Agent请求的数据量较小，所以不需要压缩" +
+			"3、httpClient发送请求并接收响应" +
+			"4、根据响应状态码判断响应是否成功" +
+			"5、若响应不成功，记录日志，并抛出异常告知操作失败")
+	@Param(name = "colSetId", desc = "源系统数据库设置表ID", range = "不为空")
+	@Param(name = "agentId", desc = "agentId，agent_info表主键，agent_down_info表外键", range = "不为空")
+	@Param(name = "userId", desc = "当前登录用户Id，sys_user表主键，agent_down_info表外键", range = "不为空")
+	@Param(name = "taskInfo", desc = "数据库采集任务信息", range = "SourceDataConfBean对象json格式字符串")
+	@Param(name = "methodName", desc = "Agent端的提供服务的方法的方法名", range = "AgentActionUtil类中的静态常量")
+	public static void sendDBCollectTaskInfo(Long colSetId, Long agentId, Long userId, String taskInfo, String methodName){
+		//1、对参数合法性进行校验
+		if(agentId == null){
+			throw new BusinessException("向Agent发送数据库采集任务信息，agentId不能为空");
+		}
+		if(userId == null){
+			throw new BusinessException("向Agent发送数据库采集任务信息，userId不能为空");
+		}
+		if(StringUtil.isBlank(taskInfo)){
+			throw new BusinessException("向Agent发送数据库采集任务信息，任务信息不能为空");
+		}
+		if(StringUtil.isBlank(methodName)){
+			throw new BusinessException("向Agent发送数据库采集任务信息时，methodName不能为空");
+		}
+		//2、使用数据压缩工具类，酌情对发送的信息进行压缩
+		String url = AgentActionUtil.getUrl(agentId, userId, methodName);
+		logger.debug("准备建立连接，请求的URL为" + url);
+
+		//3、httpClient发送请求并接收响应
+		HttpClient.ResponseValue resVal = new HttpClient()
+				.addData("taskInfo", PackUtil.packMsg(taskInfo))
+				.post(url);
+		//4、根据响应状态码判断响应是否成功
+		ActionResult ar = JsonUtil.toObjectSafety(resVal.getBodyString(), ActionResult.class)
+				.orElseThrow(() -> new BusinessException("连接" + url + "服务异常"));
+		//5、若响应不成功，记录日志，并抛出异常告知操作失败
+		if (!ar.isSuccess()) {
+			logger.error(">>>>>>>>>>>>>>>>>>>>>>>>错误信息为：" + ar.getMessage());
+			throw new BusinessException("应用管理端向Agent端发送数据库采集任务信息失败，任务ID为"
+					+ colSetId + "详情请查看日志");
+		}
 	}
 
 	@Method(desc = "由于源数据库设置表中会保存数据库直连采集和DB文件采集的信息，所以查询得到的某些字段可能为null，" +

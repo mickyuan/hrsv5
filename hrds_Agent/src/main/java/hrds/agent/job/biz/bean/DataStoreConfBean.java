@@ -15,7 +15,8 @@ public class DataStoreConfBean implements Serializable {
 	private String store_type;
 	@DocBean(name = "data_store_connect_attr", value = "数据存储层连接配置属性:", dataType = Map.class, required = true)
 	private Map<String, String> data_store_connect_attr;
-	@DocBean(name = "additInfoField", value = "附加信息字段:", dataType = Map.class, required = true)
+	@DocBean(name = "additInfoField", value = "附加信息字段，外层的Map集合,key为dsla_storelayer，内层的Map合集，key为字段名，value为csi_number"
+			, dataType = Map.class, required = true)
 	private Map<String, Map<String, Integer>> additInfoFieldMap;
 	@DocBean(name = "is_hadoopclient", value = "是否有hadoop客户端(IsFlag):1-是<Shi> 0-否<Fou> ",
 			dataType = String.class, required = true)

@@ -1,6 +1,5 @@
 package hrds.agent.trans.biz.jdbccollect;
 
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
@@ -14,6 +13,7 @@ import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.commons.base.AgentBaseAction;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
+import hrds.commons.utils.PackUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,11 +29,13 @@ public class JdbcCollectJob extends AgentBaseAction {
 			logicStep = "1.获取json数组转成File_source的集合" +
 					"2.校验对象的值是否正确" +
 					"3.使用JobFactory工厂类调用后台方法")
-	@Param(name = "sourceDataConfBean", desc = "数据库采集需要的参数实体bean",
-			isBean = true, range = "所有这张表不能为空的字段的值必须有，为空则会抛异常，" +
+	@Param(name = "taskInfo", desc = "数据库采集需要的参数实体bean的json对象字符串",
+			range = "所有这张表不能为空的字段的值必须有，为空则会抛异常，" +
 			"collectTableBeanArray对应的表CollectTableBean这个实体不能为空的字段的值必须有，为空则会抛异常")
-	public void execute(SourceDataConfBean sourceDataConfBean) {
-		//TODO 这里或许要压缩配置信息
+	public void execute(String taskInfo) {
+		//对配置信息解压缩并反序列化为SourceDataConfBean对象
+		SourceDataConfBean sourceDataConfBean =
+				JSONObject.parseObject(PackUtil.unpackMsg(taskInfo).get("msg"), SourceDataConfBean.class);
 		ExecutorService executor = null;
 		try {
 			//初始化当前任务需要保存的文件的根目录

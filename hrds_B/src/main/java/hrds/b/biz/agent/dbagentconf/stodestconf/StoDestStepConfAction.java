@@ -296,7 +296,7 @@ public class StoDestStepConfAction extends BaseAction{
 		Result resultThree = Dbo.queryResult("select csi.column_id, dsla.dsla_storelayer, csi_number from " +
 				Column_storage_info.TableName + " csi left join " + Data_store_layer_added.TableName + " dsla" +
 				" on dsla.dslad_id = csi.dslad_id" +
-				" where csi.column_id in (select column_id from table_column where table_id = ?) and dsla.dsl_id = ?"
+				" where csi.column_id in (select column_id from " + Table_column.TableName + " where table_id = ?) and dsla.dsl_id = ?"
 				, tableId, dslId);
 		for(int i = 0; i < resultThree.getRowCount(); i++){
 			long columnIdFromCSI = resultThree.getLong(i, "column_id");
