@@ -39,7 +39,8 @@ public class DataBaseJobImpl implements JobInterface {
 		//JobStatusInfo对象，表示一个作业的状态
 		JobStatusInfo jobStatusInfo = JobStatusInfoUtil.getStartJobStatusInfo(statusFilePath,
 				collectTableBean.getTable_id());
-		//2、构建每个阶段具体的实现类，目前先按照完整顺序执行(卸数,上传,数据加载,计算增量,数据登记)，后期可改造为按照配置构建采集阶段
+		//2、构建每个阶段具体的实现类，目前先按照完整顺序执行(卸数,上传,数据加载,计算增量,数据登记)，
+		// 后期可改造为按照配置构建采集阶段
 		DBUnloadDataStageImpl unloadData = new DBUnloadDataStageImpl(sourceDataConfBean, collectTableBean);
 		//上传
 		JobStageInterface upload = new DBUploadStageImpl(unloadData.getTableBean(), collectTableBean,

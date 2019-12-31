@@ -212,7 +212,7 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 			if (type == java.sql.Types.BLOB || type == java.sql.Types.LONGVARCHAR) {
 				// 生成Avro文件到local
 				OutputStream outputStream = new FileOutputStream(midName + "avro_" + hbase_name + pageNum);
-				avroWriter = new DataFileWriter<Object>(new GenericDatumWriter<Object>()).setSyncInterval(100);
+				avroWriter = new DataFileWriter<>(new GenericDatumWriter<>()).setSyncInterval(100);
 				avroWriter.setCodec(CodecFactory.snappyCodec());
 				avroWriter.create(SCHEMA, outputStream);
 				break;

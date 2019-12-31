@@ -15,7 +15,7 @@ public class JobConstant {
 	public static final String COLUMN_TYPE_SEPARATOR = "|";
 	public static final String COLUMN_NAME_SEPARATOR = "\001";
 	public static final String CLEAN_SEPARATOR = "`";
-	public static final String HD = "HD";
+	private static final String HD = "HD";
 
 	//TODO 下面这些是从配置文件取，需要放到agent下面
 	//XXX 这里文件采集上传到本地还是HDFS如果是页面上选的，下面这个参数就不需要了
@@ -31,5 +31,7 @@ public class JobConstant {
 	//判断文件变化的类型是否是MD5
 	public static final boolean FILECHANGESTYPEMD5 = "md5".equals(PropertyParaUtil.getString(
 			"determineFileChangesType", ""));
+	//文件上传到hdfs的顶层目录
+	public static final String PREFIX = PropertyParaUtil.getString("pathprefix", "/hrds");
 }
 
