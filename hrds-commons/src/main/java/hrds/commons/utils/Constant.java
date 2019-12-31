@@ -26,13 +26,17 @@ public class Constant {
 	//job运行程序信息存储文件名称
 	public static final String JOBFILENAME = "jobInfo.json";
 	//TODO 数据库采集卸数文件存放的顶层目录,这里应该是根据系统参数来的
-	public static final String JDBCUNLOADFOLDER = USER_DIR + File.separator + "JDBC" + File.separator;
+	public static final String JDBCUNLOADFOLDER = USER_DIR + File.separator + "jdbc" + File.separator;
 	//mapDB文件存放的顶层目录
-	public static final String MAPDBPATH = USER_DIR + File.separator + "mapDB" + File.separator;
+	public static final String MAPDBPATH = USER_DIR + File.separator + "mapDb" + File.separator;
 	//TODO 文件采集卸数文件存放的顶层目录,这里应该是根据系统参数来的
 	public static final String FILEUNLOADFOLDER = USER_DIR + File.separator + "dirFile" + File.separator;
 	//TODO DB文件采集卸数文件存放的顶层目录,这里应该是根据系统参数来的
-	public static final String DBFILEUNLOADFOLDER = USER_DIR + File.separator + "DbFile" + File.separator;
+	public static final String DBFILEUNLOADFOLDER = USER_DIR + File.separator + "dbFile" + File.separator;
+	//TODO 存储层上传的配置文件存放的顶层目录
+	public static final String STORECONFIGPATH = USER_DIR + File.separator + "storeConfigPath" + File.separator;
+	//TODO 存储文件上传脚本的顶层目录
+	public static final String HDFSSHELLFILE = USER_DIR + File.separator + "hdfsShellFile" + File.separator;
 	//定义并行抽取SQL开始条数占位符
 	public static final String PARALLEL_SQL_START = "#{hy_start}";
 	//定义并行抽取SQL结束条数占位符
