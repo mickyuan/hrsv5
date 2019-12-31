@@ -20,11 +20,12 @@ public class DataStoreConfBean implements Serializable {
 	private Map<String, String> data_store_connect_attr;
 	@DocBean(name = "additInfoField", value = "附加信息字段:", dataType = Map.class, required = true)
 	private Map<String, Map<Integer, String>> additInfoFieldMap;
-	@DocBean(name ="is_hadoopclient",value="是否有hadoop客户端(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
+	@DocBean(name = "is_hadoopclient", value = "是否有hadoop客户端(IsFlag):1-是<Shi> 0-否<Fou> ",
+			dataType = String.class, required = true)
 	private String is_hadoopclient;
-	@DocBean(name ="dtcs_name",value="类型对照名称:",dataType = String.class,required = true)
+	@DocBean(name = "dtcs_name", value = "类型对照名称:", dataType = String.class, required = true)
 	private String dtcs_name;
-	@DocBean(name ="dlcs_name",value="长度对照名称:",dataType = String.class,required = true)
+	@DocBean(name = "dlcs_name", value = "长度对照名称:", dataType = String.class, required = true)
 	private String dlcs_name;
 	@DocBean(name = "data_store_layer_file", value = "数据存储层配置文件属性:", dataType = Map.class, required = true)
 	private Map<String, String> data_store_layer_file;

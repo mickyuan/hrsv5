@@ -16,8 +16,9 @@ import java.util.List;
 public class IncreasementByMpp extends JDBCIncreasement {
 	private static final Log logger = LogFactory.getLog(IncreasementByMpp.class);
 
-	public IncreasementByMpp(TableBean tableBean, String hbase_name, String sysDate, DatabaseWrapper db) {
-		super(tableBean, hbase_name, sysDate, db);
+	public IncreasementByMpp(TableBean tableBean, String hbase_name, String sysDate, DatabaseWrapper db,
+	                         String dtcs_name) {
+		super(tableBean, hbase_name, sysDate, db, dtcs_name);
 	}
 
 	/**
@@ -25,7 +26,7 @@ public class IncreasementByMpp extends JDBCIncreasement {
 	 */
 	public void calculateIncrement() {
 		//1.为了防止第一次执行，yesterdayTableName表不存在，创建空表
-		createTableIfNotExists(yesterdayTableName,db,columns,types,sqlList);
+		createTableIfNotExists(yesterdayTableName, db, columns, types, sqlList);
 		//2、创建增量临时表
 		getCreateDeltaSql();
 		//3、把今天的卸载数据映射成一个表，这里在上传数据的时候加载到了todayTableName这张表。

@@ -15,8 +15,9 @@ import java.util.List;
  */
 public class IncreasementBySpark extends JDBCIncreasement {
 
-	public IncreasementBySpark(TableBean tableBean, String hbase_name, String sysDate, DatabaseWrapper db) {
-		super(tableBean, hbase_name, sysDate, db);
+	public IncreasementBySpark(TableBean tableBean, String hbase_name, String sysDate, DatabaseWrapper db,
+	                           String dtcs_name) {
+		super(tableBean, hbase_name, sysDate, db, dtcs_name);
 	}
 
 	/*

@@ -14,6 +14,10 @@ import java.util.Map;
 public class DataTypeTransform {
 
 	private static final Map<String, YamlMap> map = new HashMap<>();
+	/* 这里是为了让某些转换的类型直接返回，不要长度，比如说date类型，有些数据库取出来的date类型长度只有8，但是转为
+	 * 字符串类型取出来是很长的一串字符串，varchar(8)不够用，所以要直接返回varchar(32),所以这里有一个list,list包含
+	 * 的值直接返回
+	 */
 	private static final List<String> list = new ArrayList<>();
 	private static final String LKH = "(";
 	private static final String RKH = ")";
