@@ -44,6 +44,8 @@ public class AgentActionUtil {
 	public static final String GETCUSTCOLUMN = "/hrds/agent/trans/biz/database/getCustColumn";
 	//单表保存或者更新source_file_attribute
 	public static final String ADDSOURCEFILEATTRIBUTE = "/hrds/agent/trans/biz/database/addSourceFileAttribute";
+	//向agent端发送一个数据库直连采集任务
+	public static final String SENDDBCOLLCTTASKINFO = "/hrds/agent/trans/biz/jdbccollect/execute";
 
 	static {
 		list = new ArrayList<>();
@@ -61,6 +63,7 @@ public class AgentActionUtil {
 		list.add(GETTABLECOUNT);
 		list.add(GETCUSTCOLUMN);
 		list.add(ADDSOURCEFILEATTRIBUTE);
+		list.add(SENDDBCOLLCTTASKINFO);
 	}
 
 	private AgentActionUtil() {
