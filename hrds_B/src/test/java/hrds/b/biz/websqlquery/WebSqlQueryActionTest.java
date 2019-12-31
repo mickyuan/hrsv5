@@ -158,57 +158,57 @@ public class WebSqlQueryActionTest extends WebBaseTestCase {
 			databaseSet.setClassify_id("9999");
 			databaseSet.add(db);
 			//1-5.初始化 Data_mart_info 数据
-			Data_mart_info dataMartInfo = new Data_mart_info();
-			dataMartInfo.setData_mart_id(DATA_MART_ID);
-			dataMartInfo.setMart_name("测试集市名称init-hll");
-			dataMartInfo.setMart_number("测试集市编号init-hll");
-			dataMartInfo.setMart_desc("测试集市说明init-hll");
-			dataMartInfo.setMart_storage_path("数据集市存储路径");
-			dataMartInfo.setCreate_date(DateUtil.getSysDate());
-			dataMartInfo.setCreate_time(DateUtil.getSysTime());
-			dataMartInfo.setCreate_id(USER_ID);
-			dataMartInfo.setRemark("测试集市备注init-hll");
-			dataMartInfo.add(db);
-			//1-6.初始化 Datatable_info 数据
-			Datatable_info datatableInfo = new Datatable_info();
-			datatableInfo.setDatatable_id(DATATABLE_ID);
-			datatableInfo.setData_mart_id(DATA_MART_ID);
-			datatableInfo.setDatatable_cn_name("数据表中文名称");
-			datatableInfo.setDatatable_en_name("sjb_init_hll");
-			datatableInfo.setDatatable_desc("数据表描述");
-			datatableInfo.setDatatable_create_date(DateUtil.getSysDate());
-			datatableInfo.setDatatable_create_time(DateUtil.getSysTime());
-			datatableInfo.setDatatable_due_date(DateUtil.getSysDate());
-			datatableInfo.setDdlc_date(DateUtil.getSysDate());
-			datatableInfo.setDdlc_time(DateUtil.getSysTime());
-			datatableInfo.setDatac_date(DateUtil.getSysDate());
-			datatableInfo.setDatac_time(DateUtil.getSysTime());
-			datatableInfo.setDatatable_lifecycle("0");
-			datatableInfo.setIs_partition("0");
-			datatableInfo.setSoruce_size("1");
-			datatableInfo.setIs_hyren_db("0");
-			datatableInfo.setHy_success("0");
-			datatableInfo.setIs_kv_db("0");
-			datatableInfo.setKv_success("0");
-			datatableInfo.setIs_solr_db("0");
-			datatableInfo.setSolr_success("0");
-			datatableInfo.setIs_elk_db("0");
-			datatableInfo.setElk_success("0");
-			datatableInfo.setIs_solr_hbase("0");
-			datatableInfo.setSolrbase_success("0");
-			datatableInfo.setIs_carbondata_db("0");
-			datatableInfo.setCarbondata_success("0");
-			datatableInfo.setRowkey_separator("_");
-			datatableInfo.setPre_partition("col1");
-			datatableInfo.setEtl_date(DateUtil.getSysDate());
-			datatableInfo.setSql_engine("0");
-			datatableInfo.setDatatype("0");
-			datatableInfo.setIs_append("0");
-			datatableInfo.setIs_current_cluster("0");
-			datatableInfo.setIs_data_file("0");
-			datatableInfo.setExfile_success("0");
-			datatableInfo.setRemark("0");
-			datatableInfo.add(db);
+//			Data_mart_info dataMartInfo = new Data_mart_info();
+//			dataMartInfo.setData_mart_id(DATA_MART_ID);
+//			dataMartInfo.setMart_name("测试集市名称init-hll");
+//			dataMartInfo.setMart_number("测试集市编号init-hll");
+//			dataMartInfo.setMart_desc("测试集市说明init-hll");
+//			dataMartInfo.setMart_storage_path("数据集市存储路径");
+//			dataMartInfo.setCreate_date(DateUtil.getSysDate());
+//			dataMartInfo.setCreate_time(DateUtil.getSysTime());
+//			dataMartInfo.setCreate_id(USER_ID);
+//			dataMartInfo.setRemark("测试集市备注init-hll");
+//			dataMartInfo.add(db);
+//			//1-6.初始化 Datatable_info 数据
+//			Datatable_info datatableInfo = new Datatable_info();
+//			datatableInfo.setDatatable_id(DATATABLE_ID);
+//			datatableInfo.setData_mart_id(DATA_MART_ID);
+//			datatableInfo.setDatatable_cn_name("数据表中文名称");
+//			datatableInfo.setDatatable_en_name("sjb_init_hll");
+//			datatableInfo.setDatatable_desc("数据表描述");
+//			datatableInfo.setDatatable_create_date(DateUtil.getSysDate());
+//			datatableInfo.setDatatable_create_time(DateUtil.getSysTime());
+//			datatableInfo.setDatatable_due_date(DateUtil.getSysDate());
+//			datatableInfo.setDdlc_date(DateUtil.getSysDate());
+//			datatableInfo.setDdlc_time(DateUtil.getSysTime());
+//			datatableInfo.setDatac_date(DateUtil.getSysDate());
+//			datatableInfo.setDatac_time(DateUtil.getSysTime());
+//			datatableInfo.setDatatable_lifecycle("0");
+//			datatableInfo.setIs_partition("0");
+//			datatableInfo.setSoruce_size("1");
+//			datatableInfo.setIs_hyren_db("0");
+//			datatableInfo.setHy_success("0");
+//			datatableInfo.setIs_kv_db("0");
+//			datatableInfo.setKv_success("0");
+//			datatableInfo.setIs_solr_db("0");
+//			datatableInfo.setSolr_success("0");
+//			datatableInfo.setIs_elk_db("0");
+//			datatableInfo.setElk_success("0");
+//			datatableInfo.setIs_solr_hbase("0");
+//			datatableInfo.setSolrbase_success("0");
+//			datatableInfo.setIs_carbondata_db("0");
+//			datatableInfo.setCarbondata_success("0");
+//			datatableInfo.setRowkey_separator("_");
+//			datatableInfo.setPre_partition("col1");
+//			datatableInfo.setEtl_date(DateUtil.getSysDate());
+//			datatableInfo.setSql_engine("0");
+//			datatableInfo.setDatatype("0");
+//			datatableInfo.setIs_append("0");
+//			datatableInfo.setIs_current_cluster("0");
+//			datatableInfo.setIs_data_file("0");
+//			datatableInfo.setExfile_success("0");
+//			datatableInfo.setRemark("0");
+//			datatableInfo.add(db);
 			//1-7.初始化 Source_file_attribute 数据
 			Source_file_attribute sourceFileAttribute = new Source_file_attribute();
 			sourceFileAttribute.setFile_id(FILE_ID);
@@ -351,23 +351,23 @@ public class WebSqlQueryActionTest extends WebBaseTestCase {
 			).orElseThrow(() -> new RuntimeException("count fail!"));
 			assertThat("Database_set 表此条数据删除后,记录数应该为0", dsNum, is(0L));
 			//1-7.删除 Data_mart_info 数据
-			SqlOperator.execute(db,
-					"delete from " + Data_mart_info.TableName + " where data_mart_id=?", DATA_MART_ID);
-			SqlOperator.commitTransaction(db);
-			long dmiNum = SqlOperator.queryNumber(db,
-					"select count(1) from " + Data_mart_info.TableName + " where data_mart_id =?",
-					DATA_MART_ID
-			).orElseThrow(() -> new RuntimeException("count fail!"));
-			assertThat("Data_mart_info 表此条数据删除后,记录数应该为0", dmiNum, is(0L));
-			//1-8.删除 Datatable_info 数据
-			SqlOperator.execute(db,
-					"delete from " + Datatable_info.TableName + " where datatable_id=?", DATATABLE_ID);
-			SqlOperator.commitTransaction(db);
-			long dtNum = SqlOperator.queryNumber(db,
-					"select count(1) from " + Datatable_info.TableName + " where datatable_id =?",
-					DATATABLE_ID
-			).orElseThrow(() -> new RuntimeException("count fail!"));
-			assertThat("Datatable_info 表此条数据删除后,记录数应该为0", dtNum, is(0L));
+//			SqlOperator.execute(db,
+//					"delete from " + Data_mart_info.TableName + " where data_mart_id=?", DATA_MART_ID);
+//			SqlOperator.commitTransaction(db);
+//			long dmiNum = SqlOperator.queryNumber(db,
+//					"select count(1) from " + Data_mart_info.TableName + " where data_mart_id =?",
+//					DATA_MART_ID
+//			).orElseThrow(() -> new RuntimeException("count fail!"));
+//			assertThat("Data_mart_info 表此条数据删除后,记录数应该为0", dmiNum, is(0L));
+//			//1-8.删除 Datatable_info 数据
+//			SqlOperator.execute(db,
+//					"delete from " + Datatable_info.TableName + " where datatable_id=?", DATATABLE_ID);
+//			SqlOperator.commitTransaction(db);
+//			long dtNum = SqlOperator.queryNumber(db,
+//					"select count(1) from " + Datatable_info.TableName + " where datatable_id =?",
+//					DATATABLE_ID
+//			).orElseThrow(() -> new RuntimeException("count fail!"));
+//			assertThat("Datatable_info 表此条数据删除后,记录数应该为0", dtNum, is(0L));
 			//1-9.删除 Source_file_attribute 数据
 			SqlOperator.execute(db,
 					"delete from " + Source_file_attribute.TableName + " where file_id=?", FILE_ID);
@@ -376,7 +376,7 @@ public class WebSqlQueryActionTest extends WebBaseTestCase {
 					"select count(1) from " + Source_file_attribute.TableName + " where file_id =?",
 					FILE_ID
 			).orElseThrow(() -> new RuntimeException("count fail!"));
-			assertThat("Source_file_attribute 表此条数据删除后,记录数应该为0", dtNum, is(0L));
+			assertThat("Source_file_attribute 表此条数据删除后,记录数应该为0", sfaNum, is(0L));
 		}
 	}
 
