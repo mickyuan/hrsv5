@@ -2,21 +2,13 @@ package hrds.h.biz.market;
 
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
-import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
-import fd.ng.core.utils.DateUtil;
-import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.IsFlag;
-import hrds.commons.exception.BusinessException;
-import hrds.commons.utils.DboExecute;
-import hrds.commons.utils.PathUtil;
-import hrds.commons.utils.key.PrimayKeyGener;
-import hrds.h.biz.util.ImportAndExport;
-import hrds.h.biz.util.MarketInfoImportAndExportImpl;
+//import hrds.h.biz.util.MarketInfoImportAndExportImpl;
 
 @DocClass(desc = "集市信息查询类", author = "BY-HLL", createdate = "2019/10/31 0031 下午 04:17")
 public class MarketInfoAction extends BaseAction {
