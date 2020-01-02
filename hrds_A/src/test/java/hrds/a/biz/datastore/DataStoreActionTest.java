@@ -8,6 +8,7 @@ import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
+import fd.ng.netclient.http.SubmitMediaType;
 import fd.ng.web.action.ActionResult;
 import hrds.commons.codes.*;
 import hrds.commons.entity.*;
@@ -17,7 +18,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Type;
+import java.nio.file.Files;
 import java.util.*;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -496,7 +500,26 @@ public class DataStoreActionTest extends WebBaseTestCase {
                     "  where dtc_remark=?", "类型对照表备注").orElseThrow(() ->
                     new RuntimeException("count fail!"));
             assertThat("此条数据删除后，记录数应该为0", num, is(0L));
-            // 13.提交事务
+            // 13.删除上传配置文件
+            SqlOperator.execute(db, "delete from " + Data_store_layer_attr.TableName +
+                    " where storage_property_key=?", "hdfs-site.xml");
+            num = SqlOperator.queryNumber(db, "select count(1) from " + Data_store_layer_attr.TableName +
+                    "  where storage_property_key=?", "hdfs-site.xml").orElseThrow(() ->
+                    new RuntimeException("count fail!"));
+            assertThat("此条数据删除后，记录数应该为0", num, is(0L));
+            SqlOperator.execute(db, "delete from " + Data_store_layer_attr.TableName +
+                    " where storage_property_key=?", "hbase-site.xml");
+            num = SqlOperator.queryNumber(db, "select count(1) from " + Data_store_layer_attr.TableName +
+                    "  where storage_property_key=?", "hbase-site.xml").orElseThrow(() ->
+                    new RuntimeException("count fail!"));
+            assertThat("此条数据删除后，记录数应该为0", num, is(0L));
+            SqlOperator.execute(db, "delete from " + Data_store_layer_attr.TableName +
+                    " where storage_property_key=?", "core-site.xml");
+            num = SqlOperator.queryNumber(db, "select count(1) from " + Data_store_layer_attr.TableName +
+                    "  where storage_property_key=?", "core-site.xml").orElseThrow(() ->
+                    new RuntimeException("count fail!"));
+            assertThat("此条数据删除后，记录数应该为0", num, is(0L));
+            // 14.提交事务
             SqlOperator.commitTransaction(db);
         }
 
@@ -514,47 +537,53 @@ public class DataStoreActionTest extends WebBaseTestCase {
     @Test
     public void addDataStore() {
         // 1.正常的数据访问1，数据都正常
-        List<Map<String, String>> list = new ArrayList<>();
+        List<Map<String, Object>> list = new ArrayList<>();
+        File file = new File("D:\\Develop\\githup\\hrsv5\\hrds_A\\src\\test\\java\\hrds\\a\\biz" +
+                "\\datastore\\upload");
         for (int i = 0; i < 2; i++) {
-            Map<String, String> map = new HashMap<>();
+            Map<String, Object> map = new HashMap<>();
             if (i == 0) {
                 map.put("storage_property_key", "数据库");
                 map.put("storage_property_val", DatabaseType.Postgresql.getCode());
                 map.put("dsla_remark", "新增数据存储层配置属性信息1");
+                map.put("is_file", IsFlag.Fou.getCode());
             } else {
                 map.put("storage_property_key", "数据库驱动");
                 map.put("storage_property_val", "org.postgresql.Driver");
                 map.put("dsla_remark", "新增数据存储层配置属性信息2");
+                map.put("is_file", IsFlag.Fou.getCode());
             }
             list.add(map);
         }
         String bodyString = new HttpClient()
+                .reset(SubmitMediaType.MULTIPART)
                 .addData("dsl_name", "addDataStore1")
-                .addData("store_type", Store_type.DATABASE.getCode())
+                .addData("store_type", Store_type.HIVE.getCode())
                 .addData("dsl_remark", "新增数据存储层配置信息")
                 .addData("dsla_storelayer", new String[]{StoreLayerAdded.ZhuJian.getCode(),
                         StoreLayerAdded.SuoYinLie.getCode()})
                 .addData("dslad_remark", "新增数据存储附加信息")
-                .addData("dsla_remark", "新增数据存储层配置属性信息")
                 .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
                 .addData("is_hadoopclient", IsFlag.Shi.getCode())
-                .addData("is_file", IsFlag.Fou.getCode())
                 .addData("dtcs_id", dtcs_id)
                 .addData("dlcs_id", dlcs_id)
+                .addFile("files", file.listFiles())
+                .addData("dsla_remark", "上传hive配置文件")
                 .post(getActionUrl("addDataStore"))
                 .getBodyString();
         ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
         assertThat(ar.isSuccess(), is(true));
         try (DatabaseWrapper db = new DatabaseWrapper()) {
-            Map<String, Object> layer = SqlOperator.queryOneObject(db, "select * from "
-                    + Data_store_layer.TableName + " where dsl_name=?", "addDataStore1");
-            assertThat(Store_type.DATABASE.getCode(), is(layer.get("store_type")));
-            assertThat("新增数据存储层配置信息", is(layer.get("dsl_remark")));
-            assertThat(IsFlag.Shi.getCode(), is(layer.get("is_hadoopclient")));
+            Data_store_layer dataStoreLayer = SqlOperator.queryOneObject(db, Data_store_layer.class,
+                    "select * from " + Data_store_layer.TableName + " where dsl_name=?",
+                    "addDataStore1").orElseThrow(() -> new BusinessException("sql查询错误"));
+            assertThat(Store_type.HIVE.getCode(), is(dataStoreLayer.getStore_type()));
+            assertThat("新增数据存储层配置信息", is(dataStoreLayer.getDsl_remark()));
+            assertThat(IsFlag.Shi.getCode(), is(dataStoreLayer.getIs_hadoopclient()));
             List<Data_store_layer_added> layerAddeds = SqlOperator.queryList(db, Data_store_layer_added.class,
                     "select * from " + Data_store_layer_added.TableName + " where dsl_id=? " +
-                            "order by dsla_storelayer", layer.get("dsl_id"));
+                            "order by dsla_storelayer", dataStoreLayer.getDsl_id());
             for (Data_store_layer_added layerAdded : layerAddeds) {
                 if (StoreLayerAdded.ZhuJian == StoreLayerAdded.ofEnumByCode(layerAdded.getDsla_storelayer())) {
                     assertThat("新增数据存储附加信息", is(layerAdded.getDslad_remark()));
@@ -565,15 +594,28 @@ public class DataStoreActionTest extends WebBaseTestCase {
             }
             List<Data_store_layer_attr> layerAttrs = SqlOperator.queryList(db, Data_store_layer_attr.class,
                     "select * from " + Data_store_layer_attr.TableName + " where dsl_id=?",
-                    layer.get("dsl_id"));
+                    dataStoreLayer.getDsl_id());
             for (Data_store_layer_attr layerAttr : layerAttrs) {
-                assertThat(IsFlag.Fou.getCode(), is(layerAttr.getIs_file()));
                 if (layerAttr.getStorage_property_key().equals("数据库")) {
+                    assertThat(IsFlag.Fou.getCode(), is(layerAttr.getIs_file()));
                     assertThat("新增数据存储层配置属性信息1", is(layerAttr.getDsla_remark()));
                     assertThat(DatabaseType.Postgresql.getCode(), is(layerAttr.getStorage_property_val()));
-                } else {
+                } else if (layerAttr.getStorage_property_key().equals("数据库驱动")) {
+                    assertThat(IsFlag.Fou.getCode(), is(layerAttr.getIs_file()));
                     assertThat("新增数据存储层配置属性信息2", is(layerAttr.getDsla_remark()));
                     assertThat("org.postgresql.Driver", is(layerAttr.getStorage_property_val()));
+                } else if (layerAttr.getStorage_property_key().equals("core-site.xml")) {
+                    assertThat(IsFlag.Shi.getCode(), is(layerAttr.getIs_file()));
+                    assertThat("上传hive配置文件", is(layerAttr.getDsla_remark()));
+                    Files.delete(new File(layerAttr.getStorage_property_val()).toPath());
+                } else if (layerAttr.getStorage_property_key().equals("hbase-site.xml")) {
+                    assertThat(IsFlag.Shi.getCode(), is(layerAttr.getIs_file()));
+                    assertThat("上传hive配置文件", is(layerAttr.getDsla_remark()));
+                    Files.delete(new File(layerAttr.getStorage_property_val()).toPath());
+                } else if (layerAttr.getStorage_property_key().equals("hdfs-site.xml")) {
+                    assertThat(IsFlag.Shi.getCode(), is(layerAttr.getIs_file()));
+                    assertThat("上传hive配置文件", is(layerAttr.getDsla_remark()));
+                    Files.delete(new File(layerAttr.getStorage_property_val()).toPath());
                 }
             }
             // 2.错误的数据访问1，dsl_name为空
@@ -681,6 +723,8 @@ public class DataStoreActionTest extends WebBaseTestCase {
             ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                     .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
             assertThat(ar.isSuccess(), is(false));
+        } catch (IOException e) {
+            throw new BusinessException("删除文件失败");
         }
     }
 
@@ -718,9 +762,13 @@ public class DataStoreActionTest extends WebBaseTestCase {
                     map.put("storage_property_val", "com.mysql.jdbc.Driver");
                     map.put("dsla_remark", "更新数据存储层配置属性信息2");
                 }
+                map.put("is_file", IsFlag.Fou.getCode());
                 list.add(map);
             }
+            File file = new File("D:\\Develop\\githup\\hrsv5\\hrds_A\\src\\test\\java\\hrds\\a\\biz" +
+                    "\\datastore\\upload");
             String bodyString = new HttpClient()
+                    .reset(SubmitMediaType.MULTIPART)
                     .addData("dsl_id", dsl_id1)
                     .addData("dslad_id", dslad_id1)
                     .addData("dsla_id", dsla_id1)
@@ -732,49 +780,51 @@ public class DataStoreActionTest extends WebBaseTestCase {
                     .addData("dslad_remark", "更新数据存储附加信息")
                     .addData("dataStoreLayerAttr", JsonUtil.toJson(list))
                     .addData("is_hadoopclient", IsFlag.Shi.getCode())
-                    .addData("is_file", IsFlag.Fou.getCode())
+                    .addFile("files", file.listFiles())
                     .addData("dtcs_id", dtcs_id)
                     .addData("dlcs_id", dlcs_id)
+                    .addData("dsla_remark", "hbase配置文件上传")
                     .post(getActionUrl("updateDataStore"))
                     .getBodyString();
             ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                     .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
             assertThat(ar.isSuccess(), is(true));
-            Map<String, Object> layer = SqlOperator.queryOneObject(db, "select * from "
-                    + Data_store_layer.TableName + " where dsl_id=?", dsl_id1);
-            assertThat(Store_type.HBASE.getCode(), is(layer.get("store_type")));
-            assertThat("更新数据存储层配置信息", is(layer.get("dsl_remark")));
-            assertThat(IsFlag.Shi.getCode(), is(layer.get("is_hadoopclient")));
+            Data_store_layer layer = SqlOperator.queryOneObject(db, Data_store_layer.class,
+                    "select * from " + Data_store_layer.TableName + " where dsl_id=?", dsl_id1)
+                    .orElseThrow(() -> new BusinessException("sql查询错误"));
+            assertThat(Store_type.HBASE.getCode(), is(layer.getStore_type()));
+            assertThat("更新数据存储层配置信息", is(layer.getDsl_remark()));
+            assertThat(IsFlag.Shi.getCode(), is(layer.getIs_hadoopclient()));
             List<Data_store_layer_added> layerAddeds = SqlOperator.queryList(db, Data_store_layer_added.class,
                     "select * from " + Data_store_layer_added.TableName + " where dsl_id=? " +
                             "order by dsla_storelayer", dsl_id1);
-            for (int i = 0; i < layerAddeds.size(); i++) {
-                if (i == 0) {
-                    assertThat("更新数据存储附加信息", is(layerAddeds.get(i).getDslad_remark()));
-                    assertThat(StoreLayerAdded.PaiXuLie.getCode(), is(layerAddeds.get(i).getDsla_storelayer()));
+            for (Data_store_layer_added layerAdded : layerAddeds) {
+                if (StoreLayerAdded.PaiXuLie == StoreLayerAdded.ofEnumByCode(layerAdded.getDsla_storelayer())) {
+                    assertThat("更新数据存储附加信息", is(layerAdded.getDslad_remark()));
                 } else {
-                    assertThat("更新数据存储附加信息", is(layerAddeds.get(i).getDslad_remark()));
-                    assertThat(StoreLayerAdded.FenQuLie.getCode(), is(layerAddeds.get(i).getDsla_storelayer()));
-
+                    assertThat("更新数据存储附加信息", is(layerAdded.getDslad_remark()));
                 }
             }
             List<Data_store_layer_attr> layerAttrs = SqlOperator.queryList(db, Data_store_layer_attr.class,
                     "select * from " + Data_store_layer_attr.TableName + " where dsl_id=? " +
-                            " order by storage_property_key", layer.get("dsl_id"));
-            for (int i = 0; i < layerAttrs.size(); i++) {
-                assertThat(IsFlag.Fou.getCode(), is(layerAttrs.get(i).getIs_file()));
-                if (i == 0) {
-                    assertThat("更新数据存储层配置属性信息1", is(layerAttrs.get(i).getDsla_remark()));
-                    assertThat(DatabaseType.MYSQL.getCode(), is(layerAttrs.get(i).
-                            getStorage_property_val()));
-                    assertThat("数据库", is(layerAttrs.get(i).
-                            getStorage_property_key()));
-                } else {
-                    assertThat("更新数据存储层配置属性信息2", is(layerAttrs.get(i).getDsla_remark()));
-                    assertThat("com.mysql.jdbc.Driver", is(layerAttrs.get(i).
-                            getStorage_property_val()));
-                    assertThat("数据库驱动", is(layerAttrs.get(i).getStorage_property_key()));
-
+                            " order by storage_property_key", layer.getDsl_id());
+            for (Data_store_layer_attr layerAttr : layerAttrs) {
+                if (layerAttr.getStorage_property_key().equals("数据库")) {
+                    assertThat(IsFlag.Fou.getCode(), is(layerAttr.getIs_file()));
+                    assertThat("更新数据存储层配置属性信息1", is(layerAttr.getDsla_remark()));
+                    assertThat(DatabaseType.MYSQL.getCode(), is(layerAttr.getStorage_property_val()));
+                } else if (layerAttr.getStorage_property_key().equals("数据库驱动")) {
+                    assertThat(IsFlag.Fou.getCode(), is(layerAttr.getIs_file()));
+                    assertThat("更新数据存储层配置属性信息2", is(layerAttr.getDsla_remark()));
+                }else if (layerAttr.getStorage_property_key().equals("core-site.xml")) {
+                    assertThat(IsFlag.Shi.getCode(), is(layerAttr.getIs_file()));
+                    assertThat("hbase配置文件上传", is(layerAttr.getDsla_remark()));
+                }else if (layerAttr.getStorage_property_key().equals("hdfs-site.xml")) {
+                    assertThat(IsFlag.Shi.getCode(), is(layerAttr.getIs_file()));
+                    assertThat("hbase配置文件上传", is(layerAttr.getDsla_remark()));
+                }else if (layerAttr.getStorage_property_key().equals("hbase-site.xml")) {
+                    assertThat(IsFlag.Shi.getCode(), is(layerAttr.getIs_file()));
+                    assertThat("hbase配置文件上传", is(layerAttr.getDsla_remark()));
                 }
             }
             // 2.错误的数据访问1，dsl_id为空
@@ -1868,4 +1918,5 @@ public class DataStoreActionTest extends WebBaseTestCase {
             }
         }
     }
+
 }
