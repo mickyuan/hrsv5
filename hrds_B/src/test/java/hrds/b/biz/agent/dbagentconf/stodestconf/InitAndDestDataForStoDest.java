@@ -716,6 +716,7 @@ public class InitAndDestDataForStoDest {
 			layer.setDsl_id(BASE_LAYER_ID + i);
 			layer.setDsl_name(dslName);
 			layer.setStore_type(storeType);
+			layer.setIs_hadoopclient(IsFlag.Shi.getCode());
 
 			storeLayers.add(layer);
 		}
@@ -792,6 +793,7 @@ public class InitAndDestDataForStoDest {
 			layerAttr.setDsl_id(dslId);
 			layerAttr.setStorage_property_key(propertyKey);
 			layerAttr.setStorage_property_val(propertyVal);
+			layerAttr.setIs_file(IsFlag.Fou.getCode());
 
 			layerAttrs.add(layerAttr);
 		}

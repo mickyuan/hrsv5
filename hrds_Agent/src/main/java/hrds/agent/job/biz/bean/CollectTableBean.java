@@ -74,7 +74,7 @@ public class CollectTableBean implements Serializable {
 	private String file_suffix;
 	@DocBean(name = "collectTableColumnBeanList", value = "表采集字段集合:", dataType = String.class, required = false)
 	private List<CollectTableColumnBean> collectTableColumnBeanList;
-	@DocBean(name = "column_merge", value = "列合并参数信息:", dataType = Column_merge.class, required = false)
+	@DocBean(name = "column_merge_list", value = "列合并参数信息:", dataType = Column_merge.class, required = false)
 	private List<Column_merge> column_merge_list;
 	@DocBean(name = "storage_type", value = "进数方式(StorageType):1-增量<ZengLiang> 2-追加<ZhuiJia> 3-替换<TiHuan> ", dataType = String.class, required = true)
 	private String storage_type;

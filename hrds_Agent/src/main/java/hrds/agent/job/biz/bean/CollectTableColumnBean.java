@@ -36,7 +36,7 @@ public class CollectTableColumnBean implements Serializable {
 	private String is_new;
 	@DocBean(name = "tc_or", value = "清洗顺序:", dataType = String.class, required = false)
 	private String tc_or;
-	@DocBean(name = "column_clean_list", value = "列清洗参数信息:", dataType = List.class, required = false)
+	@DocBean(name = "columnCleanBeanList", value = "列清洗参数信息:", dataType = List.class, required = false)
 	private List<ColumnCleanBean> columnCleanBeanList;
 
 	public Long getColumn_id() {
