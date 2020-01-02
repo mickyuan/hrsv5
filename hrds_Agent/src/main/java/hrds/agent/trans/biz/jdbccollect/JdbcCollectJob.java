@@ -31,11 +31,13 @@ public class JdbcCollectJob extends AgentBaseAction {
 					"3.使用JobFactory工厂类调用后台方法")
 	@Param(name = "taskInfo", desc = "数据库采集需要的参数实体bean的json对象字符串",
 			range = "所有这张表不能为空的字段的值必须有，为空则会抛异常，" +
-			"collectTableBeanArray对应的表CollectTableBean这个实体不能为空的字段的值必须有，为空则会抛异常")
+					"collectTableBeanArray对应的表CollectTableBean这个实体不能为空的字段的值必须有，为空则会抛异常")
 	public void execute(String taskInfo) {
 		//对配置信息解压缩并反序列化为SourceDataConfBean对象
 		SourceDataConfBean sourceDataConfBean =
 				JSONObject.parseObject(PackUtil.unpackMsg(taskInfo).get("msg"), SourceDataConfBean.class);
+		//将页面传递过来的压缩信息写文件
+		FileUtil.createFile(Constant.MESSAGEFILE + sourceDataConfBean.getDatabase_id(), taskInfo);
 		ExecutorService executor = null;
 		try {
 			//初始化当前任务需要保存的文件的根目录

@@ -116,7 +116,7 @@ public abstract class JDBCIncreasement implements Closeable {
 	/**
 	 * 执行sql
 	 */
-	void executeSql(List<String> sqlList, DatabaseWrapper db) {
+	public static void executeSql(List<String> sqlList, DatabaseWrapper db) {
 		for (String sql : sqlList) {
 			logger.info("执行的sql为： " + sql);
 			db.execute(sql);

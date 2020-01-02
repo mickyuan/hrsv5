@@ -37,6 +37,8 @@ public class Constant {
 	public static final String STORECONFIGPATH = USER_DIR + File.separator + "storeConfigPath" + File.separator;
 	//TODO 存储文件上传脚本的顶层目录
 	public static final String HDFSSHELLFILE = USER_DIR + File.separator + "hdfsShellFile" + File.separator;
+	//TODO 存放采集页面配置的数据文件
+	public static final String MESSAGEFILE = USER_DIR + File.separator + "messageFile" + File.separator;
 	//定义并行抽取SQL开始条数占位符
 	public static final String PARALLEL_SQL_START = "#{hy_start}";
 	//定义并行抽取SQL结束条数占位符

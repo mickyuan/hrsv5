@@ -5,10 +5,12 @@ import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
+import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.AgentBaseAction;
 import hrds.commons.entity.Collect_case;
 import hrds.commons.entity.Error_info;
+import hrds.commons.entity.Source_file_attribute;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.key.PrimayKeyGener;
 
@@ -76,6 +78,32 @@ public class HrdsReceiveAction extends AgentBaseAction {
 		collect.add(Dbo.db());
 	}
 
+	@Method(desc = "保存source_file_attribute表",
+			logicStep = "1.解析source_file_attribute" +
+					"2.查询source_file_attribute" +
+					"3.更新或者新增source_file_attribute表")
+	@Param(name = "source_file_attribute", desc = "source_file_attribute表json类型的数据", range = "不可为空")
+	public void addSourceFileAttribute(String source_file_attribute) {
+		//1.解析source_file_attribute
+		Source_file_attribute attribute = JSONObject.parseObject(source_file_attribute,
+				Source_file_attribute.class);
+		//2.查询source_file_attribute
+		Result result = Dbo.queryResult("select * from source_file_attribute where agent_id =? and source_id = ? " +
+						"and collect_set_id =? and lower(hbase_name) = lower(?)", attribute.getAgent_id(),
+				attribute.getSource_id(), attribute.getCollect_set_id(), attribute.getHbase_name());
+		//3.更新或者新增source_file_attribute表
+		if (result.isEmpty()) {
+			//新增source_file_attribute表
+			attribute.add(Dbo.db());
+		} else {
+			//更新source_file_attribute表
+			attribute.update(Dbo.db());
+		}
+	}
+
+	@Method(desc = "解析需要batch提交的参数，为可以直接batch提交的类型",
+			logicStep = "解析需要batch提交的参数，为可以直接batch提交的类型")
+	@Param(name = "paramPool", desc = "需要batch提交的json数组字符串", range = "不可为空")
 	private List<Object[]> parseListArray(String paramPool) {
 		List<Object[]> arrayList = new ArrayList<>();
 		for (Object aaa : JSONArray.parseArray(paramPool)) {
