@@ -541,6 +541,8 @@ public class AgentListAction extends BaseAction {
 			List<Column_merge> columnMerges = Dbo.queryList(Column_merge.class, "select * from " + Column_merge.TableName + " where table_id = ?", tableId);
 			if(!columnMerges.isEmpty()){
 				collectTable.put("column_merge_list", columnMerges);
+			}else{
+				collectTable.put("column_merge_list", new ArrayList<>());
 			}
 			//2-4-2、查询表采集字段集合，放入对应表的JSONObject中，并且只查询采集的列
 			Result tableColResult = Dbo.queryResult("select tc.column_id, tc.is_primary_key, tc.column_name, tc.column_ch_name, " +
@@ -575,6 +577,8 @@ public class AgentListAction extends BaseAction {
 									CVCResult.getString(0, "codesys"));
 							JSONArray CVArray = JSONArray.parseArray(CVResult.toJSON());
 							columnCleanObj.put("codeTransform", CVArray);
+						}else{
+							columnCleanObj.put("codeTransform", "");
 						}
 					}
 				}
@@ -590,6 +594,8 @@ public class AgentListAction extends BaseAction {
 						List<Column_split> columnSplits = Dbo.queryList(Column_split.class, "select * from " + Column_split.TableName + " where col_clean_id = ?", colCleanId);
 						if(!columnSplits.isEmpty()){
 							columnCleanObj.put("column_split_list", columnSplits);
+						}else{
+							columnCleanObj.put("column_split_list", new ArrayList<>());
 						}
 					}
 				}
@@ -613,7 +619,7 @@ public class AgentListAction extends BaseAction {
 				JSONObject dataStore = dataStoreArray.getJSONObject(m);
 				Long dslId = dataStore.getLong("dsl_id");
 				Result result = Dbo.queryResult("select storage_property_key, storage_property_val, is_file from "
-						+ Data_store_layer_attr.TableName + " where dsl_id = ", dslId);
+						+ Data_store_layer_attr.TableName + " where dsl_id = ?", dslId);
 				if(result.isEmpty()){
 					throw new BusinessException("根据存储层配置ID" + dslId + "未获取到存储层配置属性信息");
 				}
@@ -652,16 +658,16 @@ public class AgentListAction extends BaseAction {
 				Map<String, Map<String, Integer>> additInfoFieldMap = new HashMap<>();
 				if(!columnResult.isEmpty() && !storeLayers.isEmpty()){
 					for(Object obj : storeLayers){
+						Map<String, Integer> fieldMap = new HashMap<>();
 						String storeLayer = (String) obj;
 						for(int h = 0; h < columnResult.getRowCount(); h++){
 							String dslaStoreLayer = columnResult.getString(h, "dsla_storelayer");
 							if(storeLayer.equals(dslaStoreLayer)){
-								Map<String, Integer> fieldMap = new HashMap<>();
 								fieldMap.put(columnResult.getString(h, "column_name"),
 										columnResult.getInteger(h, "csi_number"));
-								additInfoFieldMap.put(storeLayer, fieldMap);
 							}
 						}
+						additInfoFieldMap.put(storeLayer, fieldMap);
 					}
 				}
 				dataStore.put("additInfoFieldMap", additInfoFieldMap);
@@ -671,6 +677,7 @@ public class AgentListAction extends BaseAction {
 		//到此为止，向agent发送的数据全部组装完毕
 		sourceDBConfObj.put("collectTableBeanArray", collectTables);
 
+		//return sourceDBConfObj.toJSONString();
 		//3、调用工具类，发送信息，接收agent端响应状态码，如果发送失败，则抛出异常给前端
 		String methodName = AgentActionUtil.SENDDBCOLLCTTASKINFO;
 		SendMsgUtil.sendDBCollectTaskInfo(sourceDBConfObj.getLong("database_id"),

@@ -1,16 +1,21 @@
 package hrds.b.biz.agent;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
+import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
+import hrds.b.biz.agent.dbagentconf.BaseInitData;
 import hrds.commons.codes.*;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.utils.Constant;
 import hrds.testbase.WebBaseTestCase;
 import org.junit.After;
 import org.junit.Before;
@@ -18,6 +23,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -49,6 +55,26 @@ public class AgentListActionTest extends WebBaseTestCase {
 	private static final long TABLE_ID = 100201L;
 	private static final long FIRST_CLASSIFY_ID = 10086L;
 	private static final long SECOND_CLASSIFY_ID = 10010L;
+
+	private static final long SYS_USER_TABLE_ID = 7001L;
+	private static final long CODE_INFO_TABLE_ID = 7002L;
+
+	private static final JSONObject tableCleanOrder = BaseInitData.initTableCleanOrder();
+	private static final JSONObject columnCleanOrder = BaseInitData.initColumnCleanOrder();
+
+	private static final long BASE_SYS_USER_PRIMARY = 2000L;
+
+	private static final long BASE_EXTRACTION_DEF_ID = 7788L;
+
+	private static final long BASE_TB_STORAGE_ID = 10669588L;
+
+	private static final long BASE_LAYER_ID = 4399L;
+
+	private static final long UNEXPECTED_ID = 999999999L;
+
+	private static final long BASE_LAYER_ARR_ID = 43999L;
+
+	private static final long DATA_STORE_LAYER_ADDED_ID = 439999L;
 
 
 	/**
@@ -1054,6 +1080,1293 @@ public class AgentListActionTest extends WebBaseTestCase {
 		assertThat(wrongDatabaseSetResult.isSuccess(), is(true));
 		Result wrongDatabaseSetData = wrongDatabaseSetResult.getDataForResult();
 		assertThat("根据测试数据，使用错误的sourceId查询得到的FTP采集任务有" + wrongDatabaseSetData.getRowCount() + "项", wrongDatabaseSetData.getRowCount(), is(0));
+	}
+
+	/**
+	 * 测试根据数据库设置ID查询数据，向agent端发送任务信息
+	 *
+	 * 正确的数据访问1：构造测试数据，在1002的数据库采集任务中配置采集sys_user表和code_info表的配置信息，测试完成后删除信息
+	 * 错误的测试用例未达到三组: 自行在数据库中构造数据，测试完成后删除
+	 * @Param: 无
+	 * @return: 无
+	 *
+	 * */
+	@Test
+	public void sendDBCollctTaskById(){
+		//正确的数据访问1：构造测试数据，在1002的数据库采集任务中配置采集sys_user表和code_info表的配置信息，测试完成后删除信息
+		buildTestDataForSendTask();
+		/*
+		 * 调用方法进行测试，执行本测试用例的方式是，修改被测方法，改为返回发送到agent端的json串，
+		 * 本类拿到数据之后，反序列化为JSONObject,断言里面每一部分的内容是否符合期望
+		 */
+		long databaseSetId = 1002L;
+		String rightString = new HttpClient()
+				.addData("colSetId", databaseSetId)
+				.post(getActionUrl("sendDBCollctTaskById")).getBodyString();
+		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResult.isSuccess(), is(true));
+
+		String resultData = (String) rightResult.getData();
+
+		JSONObject resultObj = JSONObject.parseObject(resultData);
+		assertThat("获得到了数据，并且不为空", resultObj.isEmpty(), is(false));
+
+		//获取数据库设置基本信息，并断言是否符合期望
+		assertThat("agent_id为<7001>", resultObj.getLong("agent_id"), is(DB_AGENT_ID));
+		assertThat("database_id为<1002>", resultObj.getLong("database_id"), is(1002L));
+		assertThat("task_name为<wzcTaskName1>", resultObj.getString("task_name"), is("wzcTaskName1"));
+		assertThat("database_name为<postgresql>", resultObj.getString("database_name"), is("postgresql"));
+		assertThat("database_pad为<postgresql>", resultObj.getString("database_pad"), is("postgresql"));
+		assertThat("database_drive为<org.postgresql.Driver>", resultObj.getString("database_drive"), is("org.postgresql.Driver"));
+		assertThat("database_type为<Postgresql>", resultObj.getString("database_type"), is(DatabaseType.Postgresql.getCode()));
+		assertThat("user_name为<hrsdxg>", resultObj.getString("user_name"), is("hrsdxg"));
+		assertThat("database_ip为<127.0.0.1>", resultObj.getString("database_ip"), is("127.0.0.1"));
+		assertThat("database_port为<8888>", resultObj.getString("database_port"), is("8888"));
+		assertThat("host_name为空", resultObj.getString("host_name") == null, is(true));
+		assertThat("system_type为空", resultObj.getString("system_type") == null, is(true));
+		assertThat("is_sendok为<否>", resultObj.getString("is_sendok"), is(IsFlag.Fou.getCode()));
+		assertThat("db_agent为<否>", resultObj.getString("db_agent"), is(IsFlag.Fou.getCode()));
+		assertThat("plane_url为空", resultObj.getString("plane_url"), is(""));
+		assertThat("database_separatorr为空", resultObj.getString("database_separatorr") == null, is(true));
+		assertThat("database_code为UTF-8", resultObj.getString("database_code"), is(DataBaseCode.UTF_8.getCode()));
+		assertThat("dbfile_format为空", StringUtil.isBlank(resultObj.getString("dbfile_format")), is(true));
+		assertThat("is_hidden为是", resultObj.getString("is_hidden"), is(IsFlag.Shi.getCode()));
+		assertThat("file_suffix为空", resultObj.getString("file_suffix"), is(""));
+		assertThat("is_load为<是>", resultObj.getString("is_load"), is(IsFlag.Shi.getCode()));
+		assertThat("row_separator为空", resultObj.getString("row_separator"), is(""));
+		assertThat("classify_id为<10010>", resultObj.getLong("classify_id"), is(SECOND_CLASSIFY_ID));
+		assertThat("is_header为<是>", resultObj.getString("is_header"), is(IsFlag.Shi.getCode()));
+		assertThat("jdbc_url为<jdbc:postgresql://127.0.0.1:8888/postgresql>", resultObj.getString("jdbc_url"), is("jdbc:postgresql://127.0.0.1:8888/postgresql"));
+		assertThat("datasource_number为<ds_>", resultObj.getString("datasource_number"), is("ds_"));
+		assertThat("classify_num为<wzc_test_classify_num1>", resultObj.getString("classify_num"), is("wzc_test_classify_num1"));
+
+		//获取信号文件信息，并断言是否符合期望
+		JSONArray collectTableBeanArray = resultObj.getJSONArray("collectTableBeanArray");
+		assertThat("采集表配置信息数组长度为<2>", collectTableBeanArray.size(), is(2));
+		for(int i = 0; i < collectTableBeanArray.size(); i++){
+			JSONObject collectTableBean = collectTableBeanArray.getJSONObject(i);
+			Long tableId = collectTableBean.getLong("table_id");
+			if(tableId == SYS_USER_TABLE_ID){
+				assertThat("<sys_user表>database_id为<1002>", collectTableBean.getLong("database_id"), is(1002L));
+				assertThat("<sys_user表>table_name为<sys_user>", collectTableBean.getString("table_name"), is("sys_user"));
+				assertThat("<sys_user表>table_ch_name为<用户表>", collectTableBean.getString("table_ch_name"), is("用户表"));
+				assertThat("<sys_user表>table_count为空", collectTableBean.getString("table_count"), is(""));
+				assertThat("<sys_user表>source_tableid为空", collectTableBean.getString("source_tableid") == null, is(true));
+				assertThat("<sys_user表>sql为<select * from sys_user where user_id = 9991>", collectTableBean.getString("sql"), is("select * from sys_user where user_id = 9991"));
+				assertThat("<sys_user表>remark为空", collectTableBean.getString("remark") == null, is(true));
+				assertThat("<sys_user表>is_user_defined为<否>", collectTableBean.getString("is_user_defined"), is(IsFlag.Fou.getCode()));
+				assertThat("<sys_user表>is_md5为<是>", collectTableBean.getString("is_md5"), is(IsFlag.Shi.getCode()));
+				assertThat("<sys_user表>is_register为<否>", collectTableBean.getString("is_register"), is(IsFlag.Fou.getCode()));
+				assertThat("<sys_user表>is_parallel为<否>", collectTableBean.getString("is_parallel"), is(IsFlag.Fou.getCode()));
+				assertThat("<sys_user表>page_sql为<空>", collectTableBean.getString("page_sql"), is(""));
+				assertThat("<sys_user表>pageparallels为<5>", collectTableBean.getInteger("pageparallels"), is(5));
+				assertThat("<sys_user表>dataincrement为<0>", collectTableBean.getInteger("dataincrement"), is(0));
+				assertThat("<sys_user表>is_header为<是>", collectTableBean.getString("is_header"), is(IsFlag.Shi.getCode()));
+				assertThat("<sys_user表>data_extract_type为<数据抽取及入库>", collectTableBean.getString("data_extract_type"), is(DataExtractType.ShuJuChouQuJiRuKu.getCode()));
+				assertThat("<sys_user表>database_code为<UTF-8>", collectTableBean.getString("database_code"), is(DataBaseCode.UTF_8.getCode()));
+				assertThat("<sys_user表>row_separator为<空>", collectTableBean.getString("row_separator"), is(""));
+				assertThat("<sys_user表>database_separatorr为<空>", collectTableBean.getString("database_separatorr"), is(""));
+				assertThat("<sys_user表>ded_remark为<空>", collectTableBean.getString("ded_remark") == null, is(true));
+				assertThat("<sys_user表>dbfile_format为<>", collectTableBean.getString("dbfile_format"), is(FileFormat.ORC.getCode()));
+				assertThat("<sys_user表>plane_url为<空>", collectTableBean.getString("plane_url") == null, is(true));
+				assertThat("<sys_user表>file_suffix为<空>", collectTableBean.getString("file_suffix") == null, is(true));
+				assertThat("<sys_user表>storage_type为<增量>", collectTableBean.getString("storage_type"), is(StorageType.ZengLiang.getCode()));
+				assertThat("<sys_user表>storage_time为<7>", collectTableBean.getLong("storage_time"), is(7L));
+				assertThat("<sys_user表>is_zipper为<是>", collectTableBean.getString("is_zipper"), is(IsFlag.Shi.getCode()));
+				//注意：hbase_name是多个字段拼接而成的
+				assertThat("<sys_user表>hbase_name为<ds__wzc_test_classify_num1_sys_user>", collectTableBean.getString("hbase_name"), is("ds__wzc_test_classify_num1_sys_user"));
+				//eltDate是获取的系统当前时间，没法断言
+				assertThat("<sys_user表>datasource_name为<wzctest_>", collectTableBean.getString("datasource_name"), is("wzctest_"));
+				assertThat("<sys_user表>agent_name为<agent_1>", collectTableBean.getString("agent_name"), is("agent_1"));
+				assertThat("<sys_user表>agent_id为<7001>", collectTableBean.getLong("agent_id"), is(DB_AGENT_ID));
+				assertThat("<sys_user表>source_id为<1>", collectTableBean.getLong("source_id"), is(SOURCE_ID));
+
+				//获取表采集字段集合
+				JSONArray collectTableColumnBeanList = collectTableBean.getJSONArray("collectTableColumnBeanList");
+				assertThat("<sys_user表>采集的字段共有<11>个", collectTableColumnBeanList.size(), is(11));
+				for(int j = 0; j < collectTableColumnBeanList.size(); j++){
+					JSONObject collectTableColumn = collectTableColumnBeanList.getJSONObject(j);
+					Long columnId = collectTableColumn.getLong("column_id");
+					if(columnId == 2001L){
+						assertThat("<sys_user表>采集的字段为<user_id>", collectTableColumn.getString("column_name"), is("user_id"));
+						assertThat("<sys_user表>采集的字段为<user_id>，是<主键>", collectTableColumn.getString("is_primary_key"), is(IsFlag.Shi.getCode()));
+						assertThat("<sys_user表>采集的字段为<user_id>，<字段中文名>为主键", collectTableColumn.getString("column_ch_name"), is("主键"));
+						assertThat("<sys_user表>采集的字段为<user_id>，<字段类型>为int8", collectTableColumn.getString("column_type"), is("int8"));
+						assertThat("<sys_user表>采集的字段为<user_id>，<是否采集>为是", collectTableColumn.getString("is_get"), is(IsFlag.Shi.getCode()));
+						assertThat("<sys_user表>采集的字段为<user_id>，<是否保留原字段>为是", collectTableColumn.getString("is_alive"), is(IsFlag.Shi.getCode()));
+						assertThat("<sys_user表>采集的字段为<user_id>，<清洗顺序>符合期望", collectTableColumn.getString("tc_or"), is(columnCleanOrder.toJSONString()));
+
+						//获取字段清洗信息
+						JSONArray columnCleanBeanList = collectTableColumn.getJSONArray("columnCleanBeanList");
+						assertThat("<sys_user表>采集的字段为<user_id>，没有设置字段清洗", columnCleanBeanList.size() ,is(0));
+					}else if(columnId == 2002L){
+						assertThat("<sys_user表>采集的字段为<create_id>", collectTableColumn.getString("column_name"), is("create_id"));
+						assertThat("<sys_user表>采集的字段为<create_id>，不是<主键>", collectTableColumn.getString("is_primary_key"), is(IsFlag.Fou.getCode()));
+						assertThat("<sys_user表>采集的字段为<create_id>，<字段中文名>为创建用户者ID", collectTableColumn.getString("column_ch_name"), is("创建用户者ID"));
+						assertThat("<sys_user表>采集的字段为<create_id>，<字段类型>为int8", collectTableColumn.getString("column_type"), is("int8"));
+						assertThat("<sys_user表>采集的字段为<create_id>，<是否采集>为是", collectTableColumn.getString("is_get"), is(IsFlag.Shi.getCode()));
+						assertThat("<sys_user表>采集的字段为<create_id>，<是否保留原字段>为是", collectTableColumn.getString("is_alive"), is(IsFlag.Shi.getCode()));
+						assertThat("<sys_user表>采集的字段为<create_id>，<清洗顺序>符合期望", collectTableColumn.getString("tc_or"), is(columnCleanOrder.toJSONString()));
+
+						//获取字段清洗信息
+						JSONArray columnCleanBeanList = collectTableColumn.getJSONArray("columnCleanBeanList");
+						assertThat("<sys_user表>采集的字段为<create_id>，设置了一个字段清洗", columnCleanBeanList.size() ,is(1));
+						JSONObject compObject = columnCleanBeanList.getJSONObject(0);
+						assertThat("<sys_user表>采集的字段为<create_id>，设置了一个字段清洗，是字符补齐", compObject.getString("clean_type") ,is(CleanType.ZiFuBuQi.getCode()));
+						assertThat("<sys_user表>采集的字段为<create_id>，设置了一个字段清洗，补齐方式为<前补齐>", compObject.getString("filling_type") ,is(FillingType.QianBuQi.getCode()));
+						assertThat("<sys_user表>采集的字段为<create_id>，设置了一个字段清洗，补齐字符为<wzc>", compObject.getString("character_filling") ,is(StringUtil.string2Unicode("wzc")));
+						assertThat("<sys_user表>采集的字段为<create_id>，设置了一个字段清洗，补齐长度为<3>", compObject.getString("filling_length") ,is("3"));
+
+					}else if(columnId == 2003L){
+						assertThat("<sys_user表>采集的字段为<dep_id>", collectTableColumn.getString("column_name"), is("dep_id"));
+						assertThat("<sys_user表>采集的字段为<dep_id>，不是<主键>", collectTableColumn.getString("is_primary_key"), is(IsFlag.Fou.getCode()));
+						assertThat("<sys_user表>采集的字段为<dep_id>，<字段中文名>为部门ID", collectTableColumn.getString("column_ch_name"), is("部门ID"));
+						assertThat("<sys_user表>采集的字段为<dep_id>，<字段类型>为int8", collectTableColumn.getString("column_type"), is("int8"));
+						assertThat("<sys_user表>采集的字段为<dep_id>，<是否采集>为是", collectTableColumn.getString("is_get"), is(IsFlag.Shi.getCode()));
+						assertThat("<sys_user表>采集的字段为<dep_id>，<是否保留原字段>为是", collectTableColumn.getString("is_alive"), is(IsFlag.Shi.getCode()));
+						assertThat("<sys_user表>采集的字段为<dep_id>，<清洗顺序>符合期望", collectTableColumn.getString("tc_or"), is(columnCleanOrder.toJSONString()));
+
+						//获取字段清洗信息
+						JSONArray columnCleanBeanList = collectTableColumn.getJSONArray("columnCleanBeanList");
+						assertThat("<sys_user表>采集的字段为<dep_id>，设置了一个字段清洗", columnCleanBeanList.size() ,is(1));
+						JSONObject compObject = columnCleanBeanList.getJSONObject(0);
+						assertThat("<sys_user表>采集的字段为<dep_id>，设置了一个字段清洗，是字符补齐", compObject.getString("clean_type") ,is(CleanType.ZiFuBuQi.getCode()));
+						assertThat("<sys_user表>采集的字段为<dep_id>，设置了一个字段清洗，补齐方式为<后补齐>", compObject.getString("filling_type") ,is(FillingType.HouBuQi.getCode()));
+						assertThat("<sys_user表>采集的字段为<dep_id>，设置了一个字段清洗，补齐字符为<空格>", compObject.getString("character_filling") ,is(StringUtil.string2Unicode(" ")));
+						assertThat("<sys_user表>采集的字段为<dep_id>，设置了一个字段清洗，补齐长度为<1>", compObject.getString("filling_length") ,is("1"));
+
+					}else if(columnId == 2004L){
+						assertThat("<sys_user表>采集的字段为<role_id>", collectTableColumn.getString("column_name"), is("role_id"));
+						assertThat("<sys_user表>采集的字段为<role_id>，不是<主键>", collectTableColumn.getString("is_primary_key"), is(IsFlag.Fou.getCode()));
+						assertThat("<sys_user表>采集的字段为<role_id>，<字段中文名>为角色ID", collectTableColumn.getString("column_ch_name"), is("角色ID"));
+						assertThat("<sys_user表>采集的字段为<role_id>，<字段类型>为int8", collectTableColumn.getString("column_type"), is("int8"));
+						assertThat("<sys_user表>采集的字段为<role_id>，<是否采集>为是", collectTableColumn.getString("is_get"), is(IsFlag.Shi.getCode()));
+						assertThat("<sys_user表>采集的字段为<role_id>，<是否保留原字段>为是", collectTableColumn.getString("is_alive"), is(IsFlag.Shi.getCode()));
+						assertThat("<sys_user表>采集的字段为<role_id>，<清洗顺序>符合期望", collectTableColumn.getString("tc_or"), is(columnCleanOrder.toJSONString()));
+
+						//获取字段清洗信息
+						JSONArray columnCleanBeanList = collectTableColumn.getJSONArray("columnCleanBeanList");
+						assertThat("<sys_user表>采集的字段为<role_id>，没有设置字段清洗", columnCleanBeanList.size() ,is(0));
+					}else if(columnId == 2005L){
+						assertThat("<sys_user表>采集的字段为<user_name>", collectTableColumn.getString("column_name"), is("user_name"));
+						assertThat("<sys_user表>采集的字段为<user_name>，不是<主键>", collectTableColumn.getString("is_primary_key"), is(IsFlag.Fou.getCode()));
+						assertThat("<sys_user表>采集的字段为<user_name>，<字段中文名>为用户名", collectTableColumn.getString("column_ch_name"), is("用户名"));
+						assertThat("<sys_user表>采集的字段为<user_name>，<字段类型>为varchar", collectTableColumn.getString("column_type"), is("varchar"));
+						assertThat("<sys_user表>采集的字段为<user_name>，<是否采集>为是", collectTableColumn.getString("is_get"), is(IsFlag.Shi.getCode()));
+						assertThat("<sys_user表>采集的字段为<user_name>，<是否保留原字段>为是", collectTableColumn.getString("is_alive"), is(IsFlag.Shi.getCode()));
+						assertThat("<sys_user表>采集的字段为<user_name>，<清洗顺序>符合期望", collectTableColumn.getString("tc_or"), is(columnCleanOrder.toJSONString()));
+
+						//获取字段清洗信息
+						JSONArray columnCleanBeanList = collectTableColumn.getJSONArray("columnCleanBeanList");
+						assertThat("<sys_user表>采集的字段为<user_name>，设置了一个字段清洗", columnCleanBeanList.size() ,is(1));
+						JSONObject compObject = columnCleanBeanList.getJSONObject(0);
+						assertThat("<sys_user表>采集的字段为<user_name>，设置了一个字段替换，是字符补齐", compObject.getString("clean_type") ,is(CleanType.ZiFuTiHuan.getCode()));
+						assertThat("<sys_user表>采集的字段为<user_name>，设置了一个字段清洗，原字符为<ceshi>", compObject.getString("field") ,is(StringUtil.string2Unicode("ceshi")));
+						assertThat("<sys_user表>采集的字段为<user_name>，设置了一个字段清洗，替换字符为<test>", compObject.getString("replace_feild") ,is(StringUtil.string2Unicode("test")));
+					}else if(columnId == 2006L){
+						assertThat("<sys_user表>采集的字段为<user_password>", collectTableColumn.getString("column_name"), is("user_password"));
+						assertThat("<sys_user表>采集的字段为<user_password>，不是<主键>", collectTableColumn.getString("is_primary_key"), is(IsFlag.Fou.getCode()));
+						assertThat("<sys_user表>采集的字段为<user_password>，<字段中文名>为密码", collectTableColumn.getString("column_ch_name"), is("密码"));
+						assertThat("<sys_user表>采集的字段为<user_password>，<字段类型>为varchar", collectTableColumn.getString("column_type"), is("varchar"));
+						assertThat("<sys_user表>采集的字段为<user_password>，<是否采集>为是", collectTableColumn.getString("is_get"), is(IsFlag.Shi.getCode()));
+						assertThat("<sys_user表>采集的字段为<user_password>，<是否保留原字段>为是", collectTableColumn.getString("is_alive"), is(IsFlag.Shi.getCode()));
+						assertThat("<sys_user表>采集的字段为<user_password>，<清洗顺序>符合期望", collectTableColumn.getString("tc_or"), is(columnCleanOrder.toJSONString()));
+
+						//获取字段清洗信息
+						JSONArray columnCleanBeanList = collectTableColumn.getJSONArray("columnCleanBeanList");
+						assertThat("<sys_user表>采集的字段为<user_password>，没有设置字段清洗", columnCleanBeanList.size() ,is(0));
+					}else if(columnId == 2007L){
+						assertThat("<sys_user表>采集的字段为<user_email>", collectTableColumn.getString("column_name"), is("user_email"));
+						assertThat("<sys_user表>采集的字段为<user_email>，不是<主键>", collectTableColumn.getString("is_primary_key"), is(IsFlag.Fou.getCode()));
+						assertThat("<sys_user表>采集的字段为<user_email>，<字段中文名>为邮箱", collectTableColumn.getString("column_ch_name"), is("邮箱"));
+						assertThat("<sys_user表>采集的字段为<user_email>，<字段类型>为varchar", collectTableColumn.getString("column_type"), is("varchar"));
+						assertThat("<sys_user表>采集的字段为<user_email>，<是否采集>为是", collectTableColumn.getString("is_get"), is(IsFlag.Shi.getCode()));
+						assertThat("<sys_user表>采集的字段为<user_email>，<是否保留原字段>为是", collectTableColumn.getString("is_alive"), is(IsFlag.Shi.getCode()));
+						assertThat("<sys_user表>采集的字段为<user_email>，<清洗顺序>符合期望", collectTableColumn.getString("tc_or"), is(columnCleanOrder.toJSONString()));
+
+						//获取字段清洗信息
+						JSONArray columnCleanBeanList = collectTableColumn.getJSONArray("columnCleanBeanList");
+						assertThat("<sys_user表>采集的字段为<user_email>，没有设置字段清洗", columnCleanBeanList.size() ,is(0));
+					}else if(columnId == 2008L){
+						assertThat("<sys_user表>采集的字段为<user_mobile>", collectTableColumn.getString("column_name"), is("user_mobile"));
+						assertThat("<sys_user表>采集的字段为<user_mobile>，不是<主键>", collectTableColumn.getString("is_primary_key"), is(IsFlag.Fou.getCode()));
+						assertThat("<sys_user表>采集的字段为<user_mobile>，<字段中文名>为电话", collectTableColumn.getString("column_ch_name"), is("电话"));
+						assertThat("<sys_user表>采集的字段为<user_mobile>，<字段类型>为varchar", collectTableColumn.getString("column_type"), is("varchar"));
+						assertThat("<sys_user表>采集的字段为<user_mobile>，<是否采集>为是", collectTableColumn.getString("is_get"), is(IsFlag.Shi.getCode()));
+						assertThat("<sys_user表>采集的字段为<user_mobile>，<是否保留原字段>为是", collectTableColumn.getString("is_alive"), is(IsFlag.Shi.getCode()));
+						assertThat("<sys_user表>采集的字段为<user_mobile>，<清洗顺序>符合期望", collectTableColumn.getString("tc_or"), is(columnCleanOrder.toJSONString()));
+
+						//获取字段清洗信息
+						JSONArray columnCleanBeanList = collectTableColumn.getJSONArray("columnCleanBeanList");
+						assertThat("<sys_user表>采集的字段为<user_mobile>，没有设置字段清洗", columnCleanBeanList.size() ,is(0));
+					}else if(columnId == 2009L){
+						assertThat("<sys_user表>采集的字段为<useris_admin>", collectTableColumn.getString("column_name"), is("useris_admin"));
+						assertThat("<sys_user表>采集的字段为<useris_admin>，不是<主键>", collectTableColumn.getString("is_primary_key"), is(IsFlag.Fou.getCode()));
+						assertThat("<sys_user表>采集的字段为<useris_admin>，<字段中文名>为是否管理员", collectTableColumn.getString("column_ch_name"), is("是否管理员"));
+						assertThat("<sys_user表>采集的字段为<useris_admin>，<字段类型>为char", collectTableColumn.getString("column_type"), is("char"));
+						assertThat("<sys_user表>采集的字段为<useris_admin>，<是否采集>为是", collectTableColumn.getString("is_get"), is(IsFlag.Shi.getCode()));
+						assertThat("<sys_user表>采集的字段为<useris_admin>，<是否保留原字段>为是", collectTableColumn.getString("is_alive"), is(IsFlag.Shi.getCode()));
+						assertThat("<sys_user表>采集的字段为<useris_admin>，<清洗顺序>符合期望", collectTableColumn.getString("tc_or"), is(columnCleanOrder.toJSONString()));
+
+						//获取字段清洗信息
+						JSONArray columnCleanBeanList = collectTableColumn.getJSONArray("columnCleanBeanList");
+						assertThat("<sys_user表>采集的字段为<useris_admin>，没有设置字段清洗", columnCleanBeanList.size() ,is(0));
+					}else if(columnId == 2010L){
+						assertThat("<sys_user表>采集的字段为<user_type>", collectTableColumn.getString("column_name"), is("user_type"));
+						assertThat("<sys_user表>采集的字段为<user_type>，不是<主键>", collectTableColumn.getString("is_primary_key"), is(IsFlag.Fou.getCode()));
+						assertThat("<sys_user表>采集的字段为<user_type>，<字段中文名>为用户类型", collectTableColumn.getString("column_ch_name"), is("用户类型"));
+						assertThat("<sys_user表>采集的字段为<user_type>，<字段类型>为char", collectTableColumn.getString("column_type"), is("char"));
+						assertThat("<sys_user表>采集的字段为<user_type>，<是否采集>为是", collectTableColumn.getString("is_get"), is(IsFlag.Shi.getCode()));
+						assertThat("<sys_user表>采集的字段为<user_type>，<是否保留原字段>为是", collectTableColumn.getString("is_alive"), is(IsFlag.Shi.getCode()));
+						assertThat("<sys_user表>采集的字段为<user_type>，<清洗顺序>符合期望", collectTableColumn.getString("tc_or"), is(columnCleanOrder.toJSONString()));
+
+						//获取字段清洗信息
+						JSONArray columnCleanBeanList = collectTableColumn.getJSONArray("columnCleanBeanList");
+						assertThat("<sys_user表>采集的字段为<user_type>，设置了一个字段清洗", columnCleanBeanList.size() ,is(1));
+						JSONObject CVCObject = columnCleanBeanList.getJSONObject(0);
+						assertThat("<sys_user表>采集的字段为<user_type>，设置了一个字段清洗，是码值转换", CVCObject.getString("clean_type") ,is(CleanType.MaZhiZhuanHuan.getCode()));
+						JSONArray array = new JSONArray();
+						JSONObject expectedCV = new JSONObject();
+						expectedCV.put("code_value", "newValue_one");
+						expectedCV.put("orig_value", "oriValue_one");
+						array.add(expectedCV);
+						assertThat("<sys_user表>采集的字段为<user_type>，设置了一个字段清洗，原码值和新码值符合期望", CVCObject.getString("codeTransform") ,is(array.toJSONString()));
+
+					}else if(columnId == 2011L){
+						assertThat("<sys_user表>采集的字段为<login_date>", collectTableColumn.getString("column_name"), is("login_date"));
+						assertThat("<sys_user表>采集的字段为<login_date>，不是<主键>", collectTableColumn.getString("is_primary_key"), is(IsFlag.Fou.getCode()));
+						assertThat("<sys_user表>采集的字段为<login_date>，<字段中文名>为登录日期", collectTableColumn.getString("column_ch_name"), is("登录日期"));
+						assertThat("<sys_user表>采集的字段为<login_date>，<字段类型>为char", collectTableColumn.getString("column_type"), is("char"));
+						assertThat("<sys_user表>采集的字段为<login_date>，<是否采集>为是", collectTableColumn.getString("is_get"), is(IsFlag.Shi.getCode()));
+						assertThat("<sys_user表>采集的字段为<login_date>，<是否保留原字段>为是", collectTableColumn.getString("is_alive"), is(IsFlag.Shi.getCode()));
+						assertThat("<sys_user表>采集的字段为<login_date>，<清洗顺序>符合期望", collectTableColumn.getString("tc_or"), is(columnCleanOrder.toJSONString()));
+
+						//获取字段清洗信息
+						JSONArray columnCleanBeanList = collectTableColumn.getJSONArray("columnCleanBeanList");
+						assertThat("<sys_user表>采集的字段为<login_date>，设置了一个字段清洗", columnCleanBeanList.size() ,is(1));
+						JSONObject dateObject = columnCleanBeanList.getJSONObject(0);
+						assertThat("<sys_user表>采集的字段为<login_date>，设置了一个字段清洗，是日期格式化", dateObject.getString("clean_type") ,is(CleanType.ShiJianZhuanHuan.getCode()));
+						assertThat("<sys_user表>采集的字段为<login_date>，设置了一个字段清洗，是日期格式化，<原始格式为>", dateObject.getString("old_format") ,is("YYYY-MM-DD"));
+						assertThat("<sys_user表>采集的字段为<login_date>，设置了一个字段清洗，是日期格式化, <转换格式为>", dateObject.getString("convert_format") ,is("YYYY-MM"));
+					}else{
+						assertThat("sys_user的采集字段中出现了不符合期望的字段，字段ID为 : " + columnId, true, is(false));
+					}
+				}
+				//获取列合并参数信息
+				JSONArray columnMergeList = collectTableBean.getJSONArray("column_merge_list");
+				assertThat("给sys_user的采集配置了一条列合并设置", columnMergeList.size(), is(1));
+				JSONObject columnMerge = columnMergeList.getJSONObject(0);
+				assertThat("给sys_user的采集配置了一条列合并设置, 合并后字段名称为<user_mobile_admin>", columnMerge.getString("col_name"), is("user_mobile_admin"));
+				assertThat("给sys_user的采集配置了一条列合并设置, 要合并的字段为<user_mobile和useris_admin>", columnMerge.getString("old_name"), is("user_mobile和useris_admin"));
+				assertThat("给sys_user的采集配置了一条列合并设置, 中文名称为<user_mobile_admin_ch>", columnMerge.getString("col_zhname"), is("user_mobile_admin_ch"));
+				assertThat("给sys_user的采集配置了一条列合并设置, 备注为空", columnMerge.getString("remark") == null, is(true));
+				assertThat("给sys_user的采集配置了一条列合并设置, 字段类型为<varchar(512)>", columnMerge.getString("col_type"), is("varchar(512)"));
+				assertThat("给sys_user的采集配置了一条列合并设置, 表ID为<7001>", columnMerge.getLong("table_id"), is(SYS_USER_TABLE_ID));
+
+				//获取表存储配置信息
+				JSONArray dataStoreConfBeanArray = collectTableBean.getJSONArray("dataStoreConfBean");
+				assertThat("sys_user表只有一个存储目的地", dataStoreConfBeanArray.size(), is(1));
+				JSONObject dataStoreConfBean = dataStoreConfBeanArray.getJSONObject(0);
+				assertThat("sys_user表只有一个存储目的地, <配置属性名称>为PgSQL", dataStoreConfBean.getString("dsl_name"), is("PgSQL"));
+				assertThat("sys_user表只有一个存储目的地, <存储类型>为关系型数据库", dataStoreConfBean.getString("store_type"), is(Store_type.DATABASE.getCode()));
+				assertThat("sys_user表只有一个存储目的地, <类型对照名称>为空", dataStoreConfBean.getString("dtcs_name") == null, is(true));
+				assertThat("sys_user表只有一个存储目的地, <长度对照名称>为空", dataStoreConfBean.getString("dlcs_name") == null, is(true));
+
+				//获取json对象中的map
+				Map<String, Object> innerMap = dataStoreConfBean.getInnerMap();
+
+				//获取data_store_connect_attr，最终获取到的是json格式字符串
+				Map<String, String> dataStoreConnectAttr = (Map) innerMap.get("data_store_connect_attr");
+				assertThat("由于构造的初始化数据，没有配置文件，所以该集合不为空", dataStoreConnectAttr.size(), is(7));
+				for(String key : dataStoreConnectAttr.keySet()){
+					if(key.equals("database_name")){
+						assertThat("database_name为", dataStoreConnectAttr.get(key), is("hrsdxg"));
+					}else if(key.equals("database_pwd")){
+						assertThat("database_pwd为", dataStoreConnectAttr.get(key), is("hrsdxg"));
+					}else if(key.equals("database_drive")){
+						assertThat("database_drive为", dataStoreConnectAttr.get(key), is("org.postgresql.Driver"));
+					}else if(key.equals("user_name")){
+						assertThat("user_name为", dataStoreConnectAttr.get(key), is("hrsdxg"));
+					}else if(key.equals("database_ip")){
+						assertThat("database_ip为", dataStoreConnectAttr.get(key), is("47.103.83.1"));
+					}else if(key.equals("database_port")){
+						assertThat("database_port为", dataStoreConnectAttr.get(key), is("32001"));
+					}else if(key.equals("jdbc_url")){
+						assertThat("jdbc_url为", dataStoreConnectAttr.get(key), is("jdbc:postgresql://47.103.83.1:32001/hrsdxgtest"));
+					}else{
+						assertThat("配置关系型数据库配置属性信息出现了不符合期望的情况,key为 : " + key, true, is(false));
+					}
+				}
+				//获取additInfoFieldMap，最终获取到的是json格式字符串
+				Map<String, Map<String, Integer>> additInfoFieldMap = (Map) innerMap.get("additInfoFieldMap");
+				assertThat("关系型数据库附加信息为主键", additInfoFieldMap.size(), is(1));
+				Map<String, Integer> map = additInfoFieldMap.get(StoreLayerAdded.ZhuJian.getCode());
+				assertThat("关系型数据库附加信息为主键", map.size(), is(1));
+				Integer integer = map.get("user_id");
+				assertThat("关系型数据库附加信息为主键, user_id为主键，序号为0", integer, is(0));
+				//获取data_store_layer_file，最终获取到的是json格式字符串
+				Map<String, String> dataStoreLayerFile = (Map) innerMap.get("data_store_layer_file");
+				assertThat("由于构造的初始化数据，没有配置文件，所以该集合为空", dataStoreLayerFile.isEmpty(), is(true));
+			}else if(tableId == CODE_INFO_TABLE_ID){
+				assertThat("<code_info表>database_id为<1002>", collectTableBean.getLong("database_id"), is(1002L));
+				assertThat("<code_info表>table_name为<code_info>", collectTableBean.getString("table_name"), is("code_info"));
+				assertThat("<code_info表>table_ch_name为<代码信息表>", collectTableBean.getString("table_ch_name"), is("代码信息表"));
+				assertThat("<code_info表>table_count为<100000>", collectTableBean.getString("table_count"), is("100000"));
+				assertThat("<code_info表>source_tableid为空", collectTableBean.getString("source_tableid") == null, is(true));
+				assertThat("<code_info表>sql为空", collectTableBean.getString("sql"), is(""));
+				assertThat("<code_info表>remark为空", collectTableBean.getString("remark") == null, is(true));
+				assertThat("<code_info表>is_user_defined为<否>", collectTableBean.getString("is_user_defined"), is(IsFlag.Fou.getCode()));
+				assertThat("<code_info表>is_md5为<是>", collectTableBean.getString("is_md5"), is(IsFlag.Shi.getCode()));
+				assertThat("<code_info表>is_register为<否>", collectTableBean.getString("is_register"), is(IsFlag.Fou.getCode()));
+				assertThat("<code_info表>is_parallel为<是>", collectTableBean.getString("is_parallel"), is(IsFlag.Shi.getCode()));
+				assertThat("<code_info表>page_sql为<select * from code_info limit 10>", collectTableBean.getString("page_sql"), is("select * from code_info limit 10"));
+				assertThat("<code_info表>pageparallels为<6>", collectTableBean.getInteger("pageparallels"), is(6));
+				assertThat("<code_info表>dataincrement为<1000>", collectTableBean.getInteger("dataincrement"), is(1000));
+				assertThat("<code_info表>is_header为<是>", collectTableBean.getString("is_header"), is(IsFlag.Shi.getCode()));
+				assertThat("<code_info表>data_extract_type为<数据抽取及入库>", collectTableBean.getString("data_extract_type"), is(DataExtractType.ShuJuChouQuJiRuKu.getCode()));
+				assertThat("<code_info表>database_code为<UTF-8>", collectTableBean.getString("database_code"), is(DataBaseCode.UTF_8.getCode()));
+				assertThat("<code_info表>row_separator为<空>", collectTableBean.getString("row_separator"), is(""));
+				assertThat("<code_info表>database_separatorr为<空>", collectTableBean.getString("database_separatorr"), is(""));
+				assertThat("<code_info表>ded_remark为<空>", collectTableBean.getString("ded_remark") == null, is(true));
+				assertThat("<code_info表>dbfile_format为<>", collectTableBean.getString("dbfile_format"), is(FileFormat.PARQUET.getCode()));
+				assertThat("<code_info表>plane_url为<空>", collectTableBean.getString("plane_url") == null, is(true));
+				assertThat("<code_info表>file_suffix为<空>", collectTableBean.getString("file_suffix") == null, is(true));
+				assertThat("<code_info表>storage_type为<追加>", collectTableBean.getString("storage_type"), is(StorageType.ZhuiJia.getCode()));
+				assertThat("<code_info表>storage_time为<1>", collectTableBean.getLong("storage_time"), is(1L));
+				assertThat("<code_info表>is_zipper为<否>", collectTableBean.getString("is_zipper"), is(IsFlag.Fou.getCode()));
+				//注意：hbase_name是多个字段拼接而成的
+				assertThat("<code_info表>hbase_name为<ds__wzc_test_classify_num1_code_info>", collectTableBean.getString("hbase_name"), is("ds__wzc_test_classify_num1_code_info"));
+				//eltDate是获取的系统当前时间，没法断言
+				assertThat("<code_info表>datasource_name为<wzctest_>", collectTableBean.getString("datasource_name"), is("wzctest_"));
+				assertThat("<code_info表>agent_name为<agent_1>", collectTableBean.getString("agent_name"), is("agent_1"));
+				assertThat("<code_info表>agent_id为<7001>", collectTableBean.getLong("agent_id"), is(DB_AGENT_ID));
+				assertThat("<code_info表>source_id为<1>", collectTableBean.getLong("source_id"), is(SOURCE_ID));
+
+				//获取表采集字段集合
+				JSONArray collectTableColumnBeanList = collectTableBean.getJSONArray("collectTableColumnBeanList");
+				assertThat("<sys_user表>采集的字段共有<11>个", collectTableColumnBeanList.size(), is(5));
+				for(int j = 0; j < collectTableColumnBeanList.size(); j++){
+					JSONObject collectTableColumn = collectTableColumnBeanList.getJSONObject(j);
+					Long columnId = collectTableColumn.getLong("column_id");
+
+					if(columnId == 3001L){
+						assertThat("<code_info表>采集的字段为<ci_sp_code>", collectTableColumn.getString("column_name"), is("ci_sp_code"));
+						assertThat("<code_info表>采集的字段为<ci_sp_code>，是<主键>", collectTableColumn.getString("is_primary_key"), is(IsFlag.Shi.getCode()));
+						assertThat("<code_info表>采集的字段为<ci_sp_code>，<字段中文名>为ci_sp_code", collectTableColumn.getString("column_ch_name"), is("ci_sp_code"));
+						assertThat("<code_info表>采集的字段为<ci_sp_code>，<字段类型>为varchar", collectTableColumn.getString("column_type"), is("varchar"));
+						assertThat("<code_info表>采集的字段为<ci_sp_code>，<是否采集>为是", collectTableColumn.getString("is_get"), is(IsFlag.Shi.getCode()));
+						assertThat("<code_info表>采集的字段为<ci_sp_code>，<是否保留原字段>为是", collectTableColumn.getString("is_alive"), is(IsFlag.Shi.getCode()));
+						assertThat("<code_info表>采集的字段为<ci_sp_code>，<清洗顺序>符合期望", collectTableColumn.getString("tc_or"), is(columnCleanOrder.toJSONString()));
+
+						//获取字段清洗信息
+						JSONArray columnCleanBeanList = collectTableColumn.getJSONArray("columnCleanBeanList");
+						assertThat("<code_info表>采集的字段为<ci_sp_code>，没有设置字段清洗", columnCleanBeanList.size() ,is(0));
+					}else if(columnId == 3002L){
+						assertThat("<code_info表>采集的字段为<ci_sp_class>", collectTableColumn.getString("column_name"), is("ci_sp_class"));
+						assertThat("<code_info表>采集的字段为<ci_sp_class>，是<主键>", collectTableColumn.getString("is_primary_key"), is(IsFlag.Shi.getCode()));
+						assertThat("<code_info表>采集的字段为<ci_sp_class>，<字段中文名>为ci_sp_class", collectTableColumn.getString("column_ch_name"), is("ci_sp_class"));
+						assertThat("<code_info表>采集的字段为<ci_sp_class>，<字段类型>为varchar", collectTableColumn.getString("column_type"), is("varchar"));
+						assertThat("<code_info表>采集的字段为<ci_sp_class>，<是否采集>为是", collectTableColumn.getString("is_get"), is(IsFlag.Shi.getCode()));
+						assertThat("<code_info表>采集的字段为<ci_sp_class>，<是否保留原字段>为是", collectTableColumn.getString("is_alive"), is(IsFlag.Shi.getCode()));
+						assertThat("<code_info表>采集的字段为<ci_sp_class>，<清洗顺序>符合期望", collectTableColumn.getString("tc_or"), is(columnCleanOrder.toJSONString()));
+
+						//获取字段清洗信息
+						JSONArray columnCleanBeanList = collectTableColumn.getJSONArray("columnCleanBeanList");
+						assertThat("<code_info表>采集的字段为<ci_sp_class>，没有设置字段清洗", columnCleanBeanList.size() ,is(0));
+					}else if(columnId == 3003L){
+						assertThat("<code_info表>采集的字段为<ci_sp_classname>", collectTableColumn.getString("column_name"), is("ci_sp_classname"));
+						assertThat("<code_info表>采集的字段为<ci_sp_classname>，不是<主键>", collectTableColumn.getString("is_primary_key"), is(IsFlag.Fou.getCode()));
+						assertThat("<code_info表>采集的字段为<ci_sp_classname>，<字段中文名>为ci_sp_classname", collectTableColumn.getString("column_ch_name"), is("ci_sp_classname"));
+						assertThat("<code_info表>采集的字段为<ci_sp_classname>，<字段类型>为varchar", collectTableColumn.getString("column_type"), is("varchar"));
+						assertThat("<code_info表>采集的字段为<ci_sp_classname>，<是否采集>为是", collectTableColumn.getString("is_get"), is(IsFlag.Shi.getCode()));
+						assertThat("<code_info表>采集的字段为<ci_sp_classname>，<是否保留原字段>为是", collectTableColumn.getString("is_alive"), is(IsFlag.Shi.getCode()));
+						assertThat("<code_info表>采集的字段为<ci_sp_classname>，<清洗顺序>符合期望", collectTableColumn.getString("tc_or"), is(columnCleanOrder.toJSONString()));
+
+						//获取字段清洗信息
+						JSONArray columnCleanBeanList = collectTableColumn.getJSONArray("columnCleanBeanList");
+						assertThat("<code_info表>采集的字段为<ci_sp_classname>，设置了一个列拆分", columnCleanBeanList.size() ,is(1));
+						JSONObject columnCleanBean = columnCleanBeanList.getJSONObject(0);
+						assertThat("<code_info表>采集的字段为<ci_sp_classname>，设置了一个列拆分", columnCleanBean.getString("clean_type") ,is(CleanType.ZiFuChaiFen.getCode()));
+						JSONArray columnSplitList = columnCleanBean.getJSONArray("column_split_list");
+						assertThat("给<ci_sp_classname>设置列拆分，按照下划线拆分为三个字段", columnSplitList.size(), is(3));
+					}else if(columnId == 3004L){
+						assertThat("<code_info表>采集的字段为<ci_sp_name>", collectTableColumn.getString("column_name"), is("ci_sp_name"));
+						assertThat("<code_info表>采集的字段为<ci_sp_name>，不是<主键>", collectTableColumn.getString("is_primary_key"), is(IsFlag.Fou.getCode()));
+						assertThat("<code_info表>采集的字段为<ci_sp_name>，<字段中文名>为ci_sp_name", collectTableColumn.getString("column_ch_name"), is("ci_sp_name"));
+						assertThat("<code_info表>采集的字段为<ci_sp_name>，<字段类型>为varchar", collectTableColumn.getString("column_type"), is("varchar"));
+						assertThat("<code_info表>采集的字段为<ci_sp_name>，<是否采集>为是", collectTableColumn.getString("is_get"), is(IsFlag.Shi.getCode()));
+						assertThat("<code_info表>采集的字段为<ci_sp_name>，<是否保留原字段>为是", collectTableColumn.getString("is_alive"), is(IsFlag.Shi.getCode()));
+						assertThat("<code_info表>采集的字段为<ci_sp_name>，<清洗顺序>符合期望", collectTableColumn.getString("tc_or"), is(columnCleanOrder.toJSONString()));
+
+						//获取字段清洗信息
+						JSONArray columnCleanBeanList = collectTableColumn.getJSONArray("columnCleanBeanList");
+						assertThat("<code_info表>采集的字段为<ci_sp_name>，设置字段清洗", columnCleanBeanList.size() ,is(1));
+						JSONObject columnCleanBean = columnCleanBeanList.getJSONObject(0);
+						assertThat("<code_info表>采集的字段为<ci_sp_name>，设置了一个列拆分", columnCleanBean.getString("clean_type") ,is(CleanType.ZiFuChaiFen.getCode()));
+						JSONArray columnSplitList = columnCleanBean.getJSONArray("column_split_list");
+						assertThat("给<ci_sp_name>设置列拆分，按照偏移量拆分为2个字段", columnSplitList.size(), is(2));
+					}else if(columnId == 3005L){
+						assertThat("<code_info表>采集的字段为<ci_sp_remark>", collectTableColumn.getString("column_name"), is("ci_sp_remark"));
+						assertThat("<code_info表>采集的字段为<ci_sp_remark>，不是<主键>", collectTableColumn.getString("is_primary_key"), is(IsFlag.Fou.getCode()));
+						assertThat("<code_info表>采集的字段为<ci_sp_remark>，<字段中文名>ci_sp_remark", collectTableColumn.getString("column_ch_name"), is("ci_sp_remark"));
+						assertThat("<code_info表>采集的字段为<ci_sp_remark>，<字段类型>为varchar", collectTableColumn.getString("column_type"), is("varchar"));
+						assertThat("<code_info表>采集的字段为<ci_sp_remark>，<是否采集>为是", collectTableColumn.getString("is_get"), is(IsFlag.Shi.getCode()));
+						assertThat("<code_info表>采集的字段为<ci_sp_remark>，<是否保留原字段>为是", collectTableColumn.getString("is_alive"), is(IsFlag.Shi.getCode()));
+						assertThat("<code_info表>采集的字段为<ci_sp_remark>，<清洗顺序>符合期望", collectTableColumn.getString("tc_or"), is(columnCleanOrder.toJSONString()));
+
+						//获取字段清洗信息
+						JSONArray columnCleanBeanList = collectTableColumn.getJSONArray("columnCleanBeanList");
+						assertThat("<code_info表>采集的字段为<ci_sp_remark>，设置了一个字段清洗", columnCleanBeanList.size() ,is(0));
+					}else{
+						assertThat("code_info的采集字段中出现了不符合期望的字段，字段ID为 : " + columnId, true, is(false));
+					}
+				}
+				//获取列合并参数信息
+				JSONArray columnMergeList = collectTableBean.getJSONArray("column_merge_list");
+				assertThat("给code_info的采集没有配置列合并设置", columnMergeList.size(), is(0));
+
+				//获取表存储配置信息
+				JSONArray dataStoreConfBeanArray = collectTableBean.getJSONArray("dataStoreConfBean");
+				assertThat("code_info表只有一个存储目的地", dataStoreConfBeanArray.size(), is(1));
+				JSONObject dataStoreConfBean = dataStoreConfBeanArray.getJSONObject(0);
+				assertThat("code_info表只有一个存储目的地, <配置属性名称>为PgSQL", dataStoreConfBean.getString("dsl_name"), is("PgSQL"));
+				assertThat("code_info表只有一个存储目的地, <存储类型>为关系型数据库", dataStoreConfBean.getString("store_type"), is(Store_type.DATABASE.getCode()));
+				assertThat("code_info表只有一个存储目的地, <类型对照名称>为空", dataStoreConfBean.getString("dtcs_name") == null, is(true));
+				assertThat("code_info表只有一个存储目的地, <长度对照名称>为空", dataStoreConfBean.getString("dlcs_name") == null, is(true));
+
+				//获取json对象中的map
+				Map<String, Object> innerMap = dataStoreConfBean.getInnerMap();
+
+				//获取data_store_connect_attr，最终获取到的是json格式字符串
+				Map<String, String> dataStoreConnectAttr = (Map) innerMap.get("data_store_connect_attr");
+				assertThat("由于构造的初始化数据，没有配置文件，所以该集合不为空", dataStoreConnectAttr.size(), is(7));
+				for(String key : dataStoreConnectAttr.keySet()){
+					if(key.equals("database_name")){
+						assertThat("database_name为", dataStoreConnectAttr.get(key), is("hrsdxg"));
+					}else if(key.equals("database_pwd")){
+						assertThat("database_pwd为", dataStoreConnectAttr.get(key), is("hrsdxg"));
+					}else if(key.equals("database_drive")){
+						assertThat("database_drive为", dataStoreConnectAttr.get(key), is("org.postgresql.Driver"));
+					}else if(key.equals("user_name")){
+						assertThat("user_name为", dataStoreConnectAttr.get(key), is("hrsdxg"));
+					}else if(key.equals("database_ip")){
+						assertThat("database_ip为", dataStoreConnectAttr.get(key), is("47.103.83.1"));
+					}else if(key.equals("database_port")){
+						assertThat("database_port为", dataStoreConnectAttr.get(key), is("32001"));
+					}else if(key.equals("jdbc_url")){
+						assertThat("jdbc_url为", dataStoreConnectAttr.get(key), is("jdbc:postgresql://47.103.83.1:32001/hrsdxgtest"));
+					}else{
+						assertThat("配置关系型数据库配置属性信息出现了不符合期望的情况,key为 : " + key, true, is(false));
+					}
+				}
+				//获取additInfoFieldMap，最终获取到的是json格式字符串
+				Map<String, Map<String, Integer>> additInfoFieldMap = (Map) innerMap.get("additInfoFieldMap");
+				assertThat("关系型数据库附加信息为主键", additInfoFieldMap.size(), is(1));
+				Map<String, Integer> map = additInfoFieldMap.get(StoreLayerAdded.ZhuJian.getCode());
+				assertThat("关系型数据库附加信息为主键", map.size(), is(2));
+				for(String key : map.keySet()){
+					if(key.equalsIgnoreCase("ci_sp_code")){
+						assertThat(map.get(key), is(0));
+					}else if(key.equalsIgnoreCase("ci_sp_class")){
+						assertThat(map.get(key), is(0));
+					}else{
+						assertThat("code_info表中只有两个字段做联合主键，但是出现了不符合期望的情况, 字段名为 ： " + key, true, is(false));
+					}
+				}
+				//获取data_store_layer_file，最终获取到的是json格式字符串
+				Map<String, String> dataStoreLayerFile = (Map) innerMap.get("data_store_layer_file");
+				assertThat("由于构造的初始化数据，没有配置文件，所以该集合为空", dataStoreLayerFile.isEmpty(), is(true));
+			}else{
+				assertThat("构造数据采集sys_user和code_info两张表，出现了不符合期望的情况，表ID为：" + tableId, true, is(false));
+			}
+		}
+
+		//获取采集表配置信息，并断言是否符合期望
+		JSONArray signalFileList = resultObj.getJSONArray("signal_file_list");
+		assertThat("由于编写该部分代码时还没有信号文件，所以信号文件数组为空", signalFileList.isEmpty(), is(true));
+
+		//测试完成后，删除测试数据
+		try (DatabaseWrapper db = new DatabaseWrapper()) {
+
+			SqlOperator.execute(db, "delete from " + Collect_job_classify.TableName + " where user_id = ?", TEST_USER_ID);
+			SqlOperator.execute(db, "delete from " + Table_info.TableName + " where database_id = ?", 1002L);
+			SqlOperator.execute(db, "delete from " + Table_column.TableName + " where table_id = ?", SYS_USER_TABLE_ID);
+			SqlOperator.execute(db, "delete from " + Table_column.TableName + " where table_id = ?", CODE_INFO_TABLE_ID);
+			SqlOperator.execute(db, "delete from " + Orig_code_info.TableName);
+			SqlOperator.execute(db, "delete from " + Column_clean.TableName);
+			SqlOperator.execute(db, "delete from " + Column_merge.TableName);
+			SqlOperator.execute(db, "delete from " + Column_split.TableName);
+			SqlOperator.execute(db, "delete from " + Data_extraction_def.TableName);
+			SqlOperator.execute(db, "delete from " + Table_storage_info.TableName);
+			SqlOperator.execute(db, "delete from " + Data_store_layer.TableName);
+			SqlOperator.execute(db, "delete from " + Data_store_layer_attr.TableName);
+			SqlOperator.execute(db, "delete from " + Data_store_layer_added.TableName);
+			SqlOperator.execute(db, "delete from " + Data_relation_table.TableName);
+			SqlOperator.execute(db, "delete from " + Column_storage_info.TableName);
+
+			SqlOperator.commitTransaction(db);
+		}
+	}
+
+	private void buildTestDataForSendTask(){
+		try (DatabaseWrapper db = new DatabaseWrapper()) {
+
+			SqlOperator.execute(db, "delete from " + Table_info.TableName + " where table_name = ?", "wzc_test_database_collect_table_name");
+
+			//构造Collect_job_classify表数据
+			List<Collect_job_classify> classifies = buildClassifyData();
+			//构造table_info表数据
+			List<Table_info> tableInfos = new ArrayList<>();
+			for(int i = 1; i <= 2; i++){
+				long tableId = i % 2 == 0 ? SYS_USER_TABLE_ID : CODE_INFO_TABLE_ID;
+				String tableName = i % 2 == 0 ? "sys_user" : "code_info";
+				String tableChName = i % 2 == 0 ? "用户表" : "代码信息表";
+				String customizeSQL = i % 2 == 0 ? "select * from sys_user where user_id = " + TEST_USER_ID : "";
+				String customizFlag = IsFlag.Fou.getCode();
+				String parallelFlag = i % 2 == 0 ? IsFlag.Fou.getCode() : IsFlag.Shi.getCode();
+				String pageSql = i % 2 == 0 ? "" : "select * from code_info limit 10";
+				String tableCount = i % 2 == 0 ? "" : "100000";
+				int dataIncrement = i % 2 == 0 ? 0 : 1000;
+				int pageParallels = i % 2 == 0 ? 5 : 6;
+
+				Table_info tableInfo = new Table_info();
+				tableInfo.setTable_id(tableId);
+				tableInfo.setTable_name(tableName);
+				tableInfo.setTable_ch_name(tableChName);
+				tableInfo.setTable_count(CountNum.ShiWan.getCode());
+				tableInfo.setDatabase_id(1002L);
+				tableInfo.setValid_s_date(DateUtil.getSysDate());
+				tableInfo.setValid_e_date(Constant.MAXDATE);
+				tableInfo.setSql(customizeSQL);
+				tableInfo.setIs_user_defined(customizFlag);
+				tableInfo.setTi_or(tableCleanOrder.toJSONString());
+				tableInfo.setIs_md5(IsFlag.Shi.getCode());
+				tableInfo.setIs_register(IsFlag.Fou.getCode());
+				tableInfo.setIs_parallel(parallelFlag);
+				tableInfo.setPage_sql(pageSql);
+				tableInfo.setTable_count(tableCount);
+				tableInfo.setDataincrement(dataIncrement);
+				tableInfo.setPageparallels(pageParallels);
+
+				tableInfos.add(tableInfo);
+			}
+			//构造table_column表数据
+			List<Table_column> sysUsers = new ArrayList<>();
+			for(int i = 1; i <= 11; i++){
+				String primaryKeyFlag;
+				String columnName;
+				String columnType;
+				String columnChName;
+				String remark;
+				switch (i){
+					case 1 :
+						primaryKeyFlag = IsFlag.Shi.getCode();
+						columnName = "user_id";
+						columnType = "int8";
+						columnChName = "主键";
+						remark = "1";
+						break;
+					case 2 :
+						primaryKeyFlag = IsFlag.Fou.getCode();
+						columnName = "create_id";
+						columnType = "int8";
+						columnChName = "创建用户者ID";
+						remark = "2";
+						break;
+					case 3 :
+						primaryKeyFlag = IsFlag.Fou.getCode();
+						columnName = "dep_id";
+						columnType = "int8";
+						columnChName = "部门ID";
+						remark = "3";
+						break;
+					case 4 :
+						primaryKeyFlag = IsFlag.Fou.getCode();
+						columnName = "role_id";
+						columnType = "int8";
+						columnChName = "角色ID";
+						remark = "4";
+						break;
+					case 5 :
+						primaryKeyFlag = IsFlag.Fou.getCode();
+						columnName = "user_name";
+						columnType = "varchar";
+						columnChName = "用户名";
+						remark = "5";
+						break;
+					case 6 :
+						primaryKeyFlag = IsFlag.Fou.getCode();
+						columnName = "user_password";
+						columnType = "varchar";
+						columnChName = "密码";
+						remark = "6";
+						break;
+					case 7 :
+						primaryKeyFlag = IsFlag.Fou.getCode();
+						columnName = "user_email";
+						columnType = "varchar";
+						columnChName = "邮箱";
+						remark = "7";
+						break;
+					case 8 :
+						primaryKeyFlag = IsFlag.Fou.getCode();
+						columnName = "user_mobile";
+						columnType = "varchar";
+						columnChName = "电话";
+						remark = "8";
+						break;
+					case 9 :
+						primaryKeyFlag = IsFlag.Fou.getCode();
+						columnName = "useris_admin";
+						columnType = "char";
+						columnChName = "是否管理员";
+						remark = "9";
+						break;
+					case 10 :
+						primaryKeyFlag = IsFlag.Fou.getCode();
+						columnName = "user_type";
+						columnType = "char";
+						columnChName = "用户类型";
+						remark = "10";
+						break;
+					case 11 :
+						primaryKeyFlag = IsFlag.Fou.getCode();
+						columnName = "login_date";
+						columnType = "char";
+						columnChName = "登录日期";
+						remark = "11";
+						break;
+					default:
+						primaryKeyFlag = "unexpected_primaryKeyFlag";
+						columnName = "unexpected_columnName";
+						columnType = "unexpected_columnType";
+						columnChName = "unexpected_columnChName";
+						remark = "unexpected_remark";
+				}
+				Table_column sysUserColumn = new Table_column();
+				sysUserColumn.setColumn_id(BASE_SYS_USER_PRIMARY + i);
+				sysUserColumn.setIs_get(IsFlag.Shi.getCode());
+				sysUserColumn.setIs_primary_key(primaryKeyFlag);
+				sysUserColumn.setColumn_name(columnName);
+				sysUserColumn.setColumn_type(columnType);
+				sysUserColumn.setColumn_ch_name(columnChName);
+				sysUserColumn.setTable_id(SYS_USER_TABLE_ID);
+				sysUserColumn.setValid_s_date(DateUtil.getSysDate());
+				sysUserColumn.setValid_e_date(Constant.MAXDATE);
+				sysUserColumn.setIs_alive(IsFlag.Shi.getCode());
+				sysUserColumn.setIs_new(IsFlag.Fou.getCode());
+				sysUserColumn.setTc_or(columnCleanOrder.toJSONString());
+				sysUserColumn.setTc_remark(remark);
+
+				sysUsers.add(sysUserColumn);
+			}
+
+			List<Table_column> codeInfos = BaseInitData.buildCodeInfoTbColData();
+
+			//构造Orig_code_info表数据
+			List<Orig_code_info> origCodeInfos = BaseInitData.buildOrigCodeInfo();
+
+			/*
+			 * 构造column_clean表数据
+			 * 1、给create_id和dep_id设置字符补齐
+			 * 2、给user_name设置字符替换
+			 * 3、给user_type设置码值转换
+			 * 4、给login_date设置日期格式化
+			 * 5、给ci_sp_name（3004L）设置列拆分
+			 * 6、给ci_sp_classname（3003L）设置列拆分
+			 * */
+			List<Column_clean> colComples = new ArrayList<>();
+			for(int i = 0; i < 2; i++){
+				long colCleanId = i % 2 == 0 ? 22222L : 33333L;
+				String cleanType = CleanType.ZiFuBuQi.getCode();
+				String compleType = i % 2 == 0 ? FillingType.QianBuQi.getCode() : FillingType.HouBuQi.getCode();
+				String compleChar = i % 2 == 0 ? StringUtil.string2Unicode("wzc") : StringUtil.string2Unicode(" ");
+				long length = i % 2 == 0 ? 3 : 1;
+				long columnId = i % 2 == 0 ? 2002L : 2003L;
+
+				Column_clean colComple = new Column_clean();
+				colComple.setCol_clean_id(colCleanId);
+				colComple.setClean_type(cleanType);
+				colComple.setFilling_type(compleType);
+				colComple.setCharacter_filling(compleChar);
+				colComple.setFilling_length(length);
+				colComple.setColumn_id(columnId);
+
+				colComples.add(colComple);
+			}
+
+			Column_clean replace = new Column_clean();
+			replace.setCol_clean_id(555555L);
+			replace.setColumn_id(2005L);
+			replace.setClean_type(CleanType.ZiFuTiHuan.getCode());
+			replace.setField(StringUtil.string2Unicode("ceshi"));
+			replace.setReplace_feild(StringUtil.string2Unicode("test"));
+
+			Column_clean dateFormat = new Column_clean();
+			dateFormat.setCol_clean_id(999999L);
+			dateFormat.setColumn_id(2011L);
+			dateFormat.setClean_type(CleanType.ShiJianZhuanHuan.getCode());
+			dateFormat.setOld_format("YYYY-MM-DD");
+			dateFormat.setConvert_format("YYYY-MM");
+
+			Column_clean codeValue = new Column_clean();
+			codeValue.setCol_clean_id(999989L);
+			codeValue.setColumn_id(2010L);
+			codeValue.setCodename("codeClassify_one");
+			codeValue.setCodesys("origSysCode_one");
+			codeValue.setClean_type(CleanType.MaZhiZhuanHuan.getCode());
+
+			Column_clean spilt = new Column_clean();
+			spilt.setCol_clean_id(101010101L);
+			spilt.setColumn_id(3004L);
+			spilt.setClean_type(CleanType.ZiFuChaiFen.getCode());
+
+			Column_clean spiltTwo = new Column_clean();
+			spiltTwo.setCol_clean_id(101010102L);
+			spiltTwo.setColumn_id(3003L);
+			spiltTwo.setClean_type(CleanType.ZiFuChaiFen.getCode());
+
+			/*
+			 * 构造column_merge表数据
+			 * 1、对sys_user表中的user_mobile和useris_admin合并成列，名叫user_mobile_admin
+			 * 2、由于配置了列合并，需要把合并后的列入到table_column表中
+			 * */
+			Column_merge columnMerge = new Column_merge();
+			columnMerge.setCol_merge_id(16161616L);
+			columnMerge.setTable_id(SYS_USER_TABLE_ID);
+			columnMerge.setCol_name("user_mobile_admin");
+			columnMerge.setOld_name("user_mobile和useris_admin");
+			columnMerge.setCol_zhname("user_mobile_admin_ch");
+			columnMerge.setCol_type("varchar(512)");
+			columnMerge.setValid_s_date(DateUtil.getSysDate());
+			columnMerge.setValid_e_date(Constant.MAXDATE);
+
+			Table_column mergeColumn = new Table_column();
+			mergeColumn.setColumn_id(1717171717L);
+			mergeColumn.setTable_id(SYS_USER_TABLE_ID);
+			mergeColumn.setIs_new(IsFlag.Shi.getCode());
+			mergeColumn.setIs_primary_key(IsFlag.Fou.getCode());
+			mergeColumn.setColumn_name("user_mobile_admin");
+			mergeColumn.setColumn_type("varchar(512)");
+			mergeColumn.setColumn_ch_name("user_mobile_admin_ch");
+			mergeColumn.setValid_s_date(DateUtil.getSysDate());
+			mergeColumn.setValid_e_date(Constant.MAXDATE);
+
+			/*
+			 * 构造column_split表数据
+			 * 1、按照偏移量拆分ci_sp_name
+			 * 2、按照下划线拆分ci_sp_classname
+			 * 3、由于配置了列拆分，所以要构造模拟数据将拆分后的列加入Table_column表中
+			 * */
+			List<Column_split> offsetSpilts = new ArrayList<>();
+			for(int i = 0; i < 2; i++){
+				long colSplitId = i % 2 == 0 ? 1111111L : 2222222L;
+				String offset = i % 2 == 0 ? "3" : "0";
+				String columnName = i % 2 == 0 ? "ci_sp" : "_name";
+				String spiltType = "1";
+				String columnChName = i % 2 == 0 ? "ci_sp_ch" : "_name_ch";
+				String columnType = "varchar(512)";
+				long colCleanId = 101010101L;
+				long columnId = 3004L;
+
+				Column_split columnSplit = new Column_split();
+				columnSplit.setCol_split_id(colSplitId);
+				columnSplit.setCol_offset(offset);
+				columnSplit.setCol_name(columnName);
+				columnSplit.setSplit_type(spiltType);
+				columnSplit.setCol_zhname(columnChName);
+				columnSplit.setCol_type(columnType);
+				columnSplit.setCol_clean_id(colCleanId);
+				columnSplit.setColumn_id(columnId);
+				columnSplit.setValid_e_date(Constant.MAXDATE);
+				columnSplit.setValid_s_date(DateUtil.getSysDate());
+
+				offsetSpilts.add(columnSplit);
+			}
+
+			List<Column_split> underLintSpilts = new ArrayList<>();
+			for(int i = 0; i < 3; i++){
+				long colSplitId = 0;
+				String columnName = null;
+				String spiltType = "2";
+				String columnChName = null;
+				String columnType = "varchar(512)";
+				long colCleanId = 101010102L;
+				long columnId = 3003L;
+				String splitSep = "_";
+				long seq = 0;
+				switch (i){
+					case 0 :
+						colSplitId = 101010103L;
+						columnName = "ci";
+						columnChName = "ci_ch";
+						seq = 1;
+						break;
+					case 1 :
+						colSplitId = 101010104L;
+						columnName = "sp";
+						columnChName = "sp_ch";
+						seq = 2;
+						break;
+					case 2 :
+						colSplitId = 101010105L;
+						columnName = "classname";
+						columnChName = "classname_ch";
+						seq = 3;
+						break;
+				}
+				Column_split columnSplit = new Column_split();
+				columnSplit.setCol_split_id(colSplitId);
+				columnSplit.setCol_name(columnName);
+				columnSplit.setSplit_type(spiltType);
+				columnSplit.setCol_zhname(columnChName);
+				columnSplit.setCol_type(columnType);
+				columnSplit.setCol_clean_id(colCleanId);
+				columnSplit.setColumn_id(columnId);
+				columnSplit.setValid_e_date(Constant.MAXDATE);
+				columnSplit.setValid_s_date(DateUtil.getSysDate());
+				columnSplit.setSeq(seq);
+				columnSplit.setSplit_sep(splitSep);
+
+				underLintSpilts.add(columnSplit);
+			}
+
+			List<Table_column> splitOne = new ArrayList<>();
+			for(int i = 0; i < 2; i++){
+				long columnId = i % 2 == 0 ? 121212L : 232323L;
+				String columnName = i % 2 == 0 ? "ci_sp" : "_name";
+				String columnChName = i % 2 == 0 ? "ci_sp_ch" : "_name_ch";
+
+				Table_column tableColumn = new Table_column();
+				tableColumn.setTable_id(CODE_INFO_TABLE_ID);
+				tableColumn.setIs_new(IsFlag.Shi.getCode());
+				tableColumn.setColumn_id(columnId);
+				tableColumn.setIs_primary_key(IsFlag.Fou.getCode());
+				tableColumn.setColumn_name(columnName);
+				tableColumn.setColumn_type("varchar(512)");
+				tableColumn.setColumn_ch_name(columnChName);
+				tableColumn.setValid_s_date(DateUtil.getSysDate());
+				tableColumn.setValid_e_date(Constant.MAXDATE);
+
+				splitOne.add(tableColumn);
+			}
+
+			List<Table_column> splitTwo = new ArrayList<>();
+			for(int i = 0; i < 3; i++){
+				long columnId = 0;
+				String columnName = null;
+				String columnChName = null;
+
+				switch (i){
+					case 0 :
+						columnId = 141414L;
+						columnName = "ci";
+						columnChName = "ci_ch";
+						break;
+					case 1 :
+						columnId = 151515L;
+						columnName = "sp";
+						columnChName = "sp_ch";
+						break;
+					case 2 :
+						columnId = 161616L;
+						columnName = "classname";
+						columnChName = "classname_ch";
+						break;
+				}
+
+				Table_column tableColumn = new Table_column();
+				tableColumn.setTable_id(CODE_INFO_TABLE_ID);
+				tableColumn.setIs_new(IsFlag.Shi.getCode());
+				tableColumn.setColumn_id(columnId);
+				tableColumn.setIs_primary_key(IsFlag.Fou.getCode());
+				tableColumn.setColumn_name(columnName);
+				tableColumn.setColumn_type("varchar(512)");
+				tableColumn.setColumn_ch_name(columnChName);
+				tableColumn.setValid_s_date(DateUtil.getSysDate());
+				tableColumn.setValid_e_date(Constant.MAXDATE);
+
+				splitTwo.add(tableColumn);
+			}
+
+			//构造Data_extraction_def表数据
+			List<Data_extraction_def> extractionDefs = new ArrayList<>();
+			for(int i = 0; i < 2; i++){
+				long tableId = i % 2 == 0 ? SYS_USER_TABLE_ID : CODE_INFO_TABLE_ID;
+				String extractType = DataExtractType.ShuJuChouQuJiRuKu.getCode();
+				String rowSeparator = i % 2 == 0 ? "" : "";
+				String databaseSeparatorr = i % 2 == 0 ? "" : "";
+				String fileFormat = i % 2 == 0 ? FileFormat.ORC.getCode() : FileFormat.PARQUET.getCode();
+				String planeUrl = i % 2 == 0 ? "" : "";
+
+				Data_extraction_def def = new Data_extraction_def();
+				def.setDed_id(BASE_EXTRACTION_DEF_ID + i);
+				def.setTable_id(tableId);
+				def.setData_extract_type(extractType);
+				def.setRow_separator(rowSeparator);
+				def.setDatabase_separatorr(databaseSeparatorr);
+				def.setDatabase_code(DataBaseCode.UTF_8.getCode());
+				def.setDbfile_format(fileFormat);
+				def.setPlane_url(planeUrl);
+				def.setIs_header(IsFlag.Shi.getCode());
+
+				extractionDefs.add(def);
+			}
+
+			//构造Table_storage_info表数据
+			List<Table_storage_info> tableStorageInfos = new ArrayList<>();
+			for(int i = 0; i < 2; i++){
+				long id = i % 2 == 0 ? BASE_TB_STORAGE_ID : BASE_TB_STORAGE_ID + 1;
+				String fileFormat = i % 2 == 0 ? FileFormat.ORC.getCode() : FileFormat.PARQUET.getCode();
+				String storageType = i % 2 == 0 ? StorageType.ZengLiang.getCode() : StorageType.ZhuiJia.getCode();
+				String zipperFlag = i % 2 == 0 ? IsFlag.Shi.getCode() : IsFlag.Fou.getCode();
+				long tableId = i % 2 == 0 ? SYS_USER_TABLE_ID : CODE_INFO_TABLE_ID;
+				long time = i % 2 == 0 ? 7L : 1L;
+
+				Table_storage_info storageInfo = new Table_storage_info();
+				storageInfo.setStorage_id(id);
+				storageInfo.setFile_format(fileFormat);
+				storageInfo.setStorage_type(storageType);
+				storageInfo.setIs_zipper(zipperFlag);
+				storageInfo.setStorage_time(time);
+				storageInfo.setTable_id(tableId);
+
+				tableStorageInfos.add(storageInfo);
+			}
+
+			//构造data_store_layer表数据
+			List<Data_store_layer> storeLayers = new ArrayList<>();
+			for(int i = 0; i < 5; i++){
+				String dslName;
+				String storeType;
+				switch (i){
+					case 0 :
+						dslName = "SOLR";
+						storeType = Store_type.SOLR.getCode();
+						break;
+					case 1 :
+						dslName = "PgSQL";
+						storeType = Store_type.DATABASE.getCode();
+						break;
+					case 2 :
+						dslName = "ElasticSearch";
+						storeType = Store_type.ElasticSearch.getCode();
+						break;
+					case 3 :
+						dslName = "HBASE";
+						storeType = Store_type.HBASE.getCode();
+						break;
+					case 4 :
+						dslName = "MONGODB";
+						storeType = Store_type.MONGODB.getCode();
+						break;
+					default:
+						dslName = "unexpected_dslName";
+						storeType = "unexpected_storeType";
+				}
+				Data_store_layer layer = new Data_store_layer();
+				layer.setDsl_id(BASE_LAYER_ID + i);
+				layer.setDsl_name(dslName);
+				layer.setStore_type(storeType);
+				layer.setIs_hadoopclient(IsFlag.Fou.getCode());
+
+				storeLayers.add(layer);
+			}
+
+			//构造data_store_layer_attr表数据
+			List<Data_store_layer_attr> layerAttrs = new ArrayList<>();
+			for(int i = 0; i < 7; i++){
+				String propertyKey;
+				String propertyVal;
+				long dslId;
+				switch (i){
+					case 0 :
+						propertyKey = "database_name";
+						propertyVal = "hrsdxg";
+						dslId = 4400L;
+						break;
+					case 1 :
+						propertyKey = "database_pwd";
+						propertyVal = "hrsdxg";
+						dslId = 4400L;
+						break;
+					case 2 :
+						propertyKey = "database_drive";
+						propertyVal = "org.postgresql.Driver";
+						dslId = 4400L;
+						break;
+					case 3 :
+						propertyKey = "user_name";
+						propertyVal = "hrsdxg";
+						dslId = 4400L;
+						break;
+					case 4 :
+						propertyKey = "database_ip";
+						propertyVal = "47.103.83.1";
+						dslId = 4400L;
+						break;
+					case 5 :
+						propertyKey = "database_port";
+						propertyVal = "32001";
+						dslId = 4400L;
+						break;
+					case 6 :
+						propertyKey = "jdbc_url";
+						propertyVal = "jdbc:postgresql://47.103.83.1:32001/hrsdxgtest";
+						dslId = 4400L;
+						break;
+					default:
+						propertyKey = "unexpected_propertyKey";
+						propertyVal = "unexpected_propertyVal";
+						dslId = UNEXPECTED_ID;
+				}
+				Data_store_layer_attr layerAttr = new Data_store_layer_attr();
+				layerAttr.setDsla_id(BASE_LAYER_ARR_ID + i);
+				layerAttr.setDsl_id(dslId);
+				layerAttr.setStorage_property_key(propertyKey);
+				layerAttr.setStorage_property_val(propertyVal);
+				layerAttr.setIs_file(IsFlag.Fou.getCode());
+
+				layerAttrs.add(layerAttr);
+			}
+
+			//构造data_store_layer_added表数据
+			List<Data_store_layer_added> layerAddeds = new ArrayList<>();
+			for(int i = 0; i < 3; i++){
+				long dslId;
+				String dslaStorelayer;
+				switch (i) {
+					case 0 :
+						dslId = 4400L;
+						dslaStorelayer = StoreLayerAdded.ZhuJian.getCode();
+						break;
+					case 1 :
+						dslId = 4399L;
+						dslaStorelayer = StoreLayerAdded.SuoYinLie.getCode();
+						break;
+					case 2 :
+						dslId = 4402L;
+						dslaStorelayer = StoreLayerAdded.RowKey.getCode();
+						break;
+					default:
+						dslId = UNEXPECTED_ID;
+						dslaStorelayer = "unexpected_dslaStorelayer";
+				}
+				Data_store_layer_added added = new Data_store_layer_added();
+				added.setDslad_id(DATA_STORE_LAYER_ADDED_ID + i);
+				added.setDsla_storelayer(dslaStorelayer);
+				added.setDsl_id(dslId);
+
+				layerAddeds.add(added);
+			}
+
+			//构造data_relation_table表数据，构造user_id、ci_sp_code、ci_sp_class为主键
+			List<Data_relation_table> relationTables = new ArrayList<>();
+			for(int i = 0; i < 2; i++){
+				long storageId;
+				long dslId;
+				switch (i) {
+					case 0 :
+						storageId = 10669588L;
+						dslId = 4400L;
+						break;
+					case 1 :
+						storageId = 10669589L;
+						dslId = 4400L;
+						break;
+					default:
+						storageId = UNEXPECTED_ID;
+						dslId = UNEXPECTED_ID;
+				}
+				Data_relation_table relationTable = new Data_relation_table();
+				relationTable.setStorage_id(storageId);
+				relationTable.setDsl_id(dslId);
+
+				relationTables.add(relationTable);
+			}
+
+			//构造column_storage_info表数据
+			List<Column_storage_info> columnStorageInfos = new ArrayList<>();
+			for(int i = 0; i < 3; i++){
+				long dsladId;
+				long columnId;
+				switch (i) {
+					case 0 :
+						dsladId = 439999L;
+						columnId = 2001L;
+						break;
+					case 1 :
+						dsladId = 439999L;
+						columnId = 3001L;
+						break;
+					case 2 :
+						dsladId = 439999L;
+						columnId = 3002L;
+						break;
+					default:
+						dsladId = UNEXPECTED_ID;
+						columnId = UNEXPECTED_ID;
+				}
+				Column_storage_info storageInfo = new Column_storage_info();
+				storageInfo.setColumn_id(columnId);
+				storageInfo.setDslad_id(dsladId);
+
+				columnStorageInfos.add(storageInfo);
+			}
+
+			int classifyCount = 0;
+			for(Collect_job_classify collectJobClassify : classifies){
+				int count = collectJobClassify.add(db);
+				classifyCount += count;
+			}
+			assertThat("采集任务分类表测试数据初始化", classifyCount, is(2));
+
+			int tableInfosCount = 0;
+			for(Table_info tableInfo : tableInfos){
+				int count = tableInfo.add(db);
+				tableInfosCount += count;
+			}
+			assertThat("数据库对应表测试数据初始化", tableInfosCount, is(2));
+
+			int sysUsersCount = 0;
+			for(Table_column tableColumn : sysUsers){
+				int count = tableColumn.add(db);
+				sysUsersCount += count;
+			}
+			assertThat("<sys_user>表对应的字段测试数据初始化", sysUsersCount, is(11));
+
+			int codeInfosCount = 0;
+			for(Table_column tableColumn : codeInfos){
+				int count = tableColumn.add(db);
+				codeInfosCount += count;
+			}
+			assertThat("<code_info>表对应的字段测试数据初始化", codeInfosCount, is(5));
+
+			int origCodeInfosCount = 0;
+			for(Orig_code_info origCodeInfo : origCodeInfos){
+				int count = origCodeInfo.add(db);
+				origCodeInfosCount += count;
+			}
+			assertThat("源系统编码信息测试数据初始化", origCodeInfosCount, is(3));
+
+			int columnCleanCount = 0;
+			for(Column_clean columnClean : colComples){
+				int count = columnClean.add(db);
+				columnCleanCount += count;
+			}
+			int countSeven = replace.add(db);
+			int countOne = dateFormat.add(db);
+			int countTwo = codeValue.add(db);
+			int countThree = spilt.add(db);
+			int countFour = spiltTwo.add(db);
+
+			int countFive = columnMerge.add(db);
+
+			int countSix = mergeColumn.add(db);
+
+			columnCleanCount = columnCleanCount + countSeven + countOne + countTwo + countThree + countFour + countFive + countSix;
+			assertThat("列清洗参数信息测试数据初始化", columnCleanCount, is(9));
+
+			int offsetSpiltsCount = 0;
+			for(Column_split columnSplit : offsetSpilts){
+				int count = columnSplit.add(db);
+				offsetSpiltsCount += count;
+			}
+			assertThat("<按照偏移量>列拆分信息表测试数据初始化", offsetSpiltsCount, is(2));
+
+			int underLintSpiltsCount = 0;
+			for(Column_split columnSplit : underLintSpilts){
+				int count = columnSplit.add(db);
+				underLintSpiltsCount += count;
+			}
+			assertThat("<按照下划线>列拆分信息表测试数据初始化", underLintSpiltsCount, is(3));
+
+			int splitOneCount = 0;
+			for(Table_column tableColumn : splitOne){
+				int count = tableColumn.add(db);
+				splitOneCount += count;
+			}
+			assertThat("<按照偏移量>表对应的字段测试数据初始化", splitOneCount, is(2));
+
+			int splitTwoCount = 0;
+			for(Table_column tableColumn : splitTwo){
+				int count = tableColumn.add(db);
+				splitTwoCount += count;
+			}
+			assertThat("<按照下划线>表对应的字段测试数据初始化", splitTwoCount, is(3));
+
+			int extractionDefsCount = 0;
+			for(Data_extraction_def def : extractionDefs){
+				int count = def.add(db);
+				extractionDefsCount += count;
+			}
+			assertThat("数据抽取定义测试数据初始化", extractionDefsCount, is(2));
+
+			int tableStorageInfosCount = 0;
+			for(Table_storage_info storageInfo : tableStorageInfos){
+				int count = storageInfo.add(db);
+				tableStorageInfosCount += count;
+			}
+			assertThat("表存储信息测试数据初始化", tableStorageInfosCount, is(2));
+
+			int storeLayersCount = 0;
+			for(Data_store_layer dataStoreLayer : storeLayers){
+				int count = dataStoreLayer.add(db);
+				storeLayersCount += count;
+			}
+			assertThat("数据存储层配置表测试数据初始化", storeLayersCount, is(5));
+
+			int layerAttrsCount = 0;
+			for(Data_store_layer_attr layerAttr : layerAttrs){
+				int count = layerAttr.add(db);
+				layerAttrsCount += count;
+			}
+			assertThat("数据存储层配置属性表测试数据初始化", layerAttrsCount, is(7));
+
+			int layerAddedsCount = 0;
+			for(Data_store_layer_added dataStoreLayerAdded : layerAddeds){
+				int count = dataStoreLayerAdded.add(db);
+				layerAddedsCount += count;
+			}
+			assertThat("数据存储附加信息表测试数据初始化", layerAddedsCount, is(3));
+
+			int relationTablesCount = 0;
+			for(Data_relation_table relationTable : relationTables){
+				int count = relationTable.add(db);
+				relationTablesCount += count;
+			}
+			assertThat("数据存储关系表测试数据初始化", relationTablesCount, is(2));
+
+			int columnStorageInfosCount = 0;
+			for(Column_storage_info storageInfo : columnStorageInfos){
+				int count = storageInfo.add(db);
+				columnStorageInfosCount += count;
+			}
+			assertThat("字段存储信息测试数据初始化", columnStorageInfosCount, is(3));
+
+			SqlOperator.commitTransaction(db);
+		}
+	}
+
+	private List<Collect_job_classify> buildClassifyData(){
+		List<Collect_job_classify> classifies = new ArrayList<>();
+		for(int i = 0; i < 2; i++){
+			Collect_job_classify classify = new Collect_job_classify();
+			long classifyId = i % 2 == 0 ? FIRST_CLASSIFY_ID : SECOND_CLASSIFY_ID;
+			long agentId = i % 2 == 0 ? DF_AGENT_ID : DB_AGENT_ID;
+			String remark = "remark" + String.valueOf(classifyId);
+			classify.setClassify_id(classifyId);
+			classify.setClassify_num("wzc_test_classify_num" + i);
+			classify.setClassify_name("wzc_test_classify_name" + i);
+			classify.setUser_id(TEST_USER_ID);
+			classify.setAgent_id(agentId);
+			classify.setRemark(remark);
+
+			classifies.add(classify);
+		}
+
+		return classifies;
 	}
 
 	/**
