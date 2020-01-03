@@ -25,6 +25,7 @@ import java.nio.file.Files;
 import java.util.*;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class DataStoreActionTest extends WebBaseTestCase {
@@ -816,13 +817,13 @@ public class DataStoreActionTest extends WebBaseTestCase {
                 } else if (layerAttr.getStorage_property_key().equals("数据库驱动")) {
                     assertThat(IsFlag.Fou.getCode(), is(layerAttr.getIs_file()));
                     assertThat("更新数据存储层配置属性信息2", is(layerAttr.getDsla_remark()));
-                }else if (layerAttr.getStorage_property_key().equals("core-site.xml")) {
+                } else if (layerAttr.getStorage_property_key().equals("core-site.xml")) {
                     assertThat(IsFlag.Shi.getCode(), is(layerAttr.getIs_file()));
                     assertThat("hbase配置文件上传", is(layerAttr.getDsla_remark()));
-                }else if (layerAttr.getStorage_property_key().equals("hdfs-site.xml")) {
+                } else if (layerAttr.getStorage_property_key().equals("hdfs-site.xml")) {
                     assertThat(IsFlag.Shi.getCode(), is(layerAttr.getIs_file()));
                     assertThat("hbase配置文件上传", is(layerAttr.getDsla_remark()));
-                }else if (layerAttr.getStorage_property_key().equals("hbase-site.xml")) {
+                } else if (layerAttr.getStorage_property_key().equals("hbase-site.xml")) {
                     assertThat(IsFlag.Shi.getCode(), is(layerAttr.getIs_file()));
                     assertThat("hbase配置文件上传", is(layerAttr.getDsla_remark()));
                 }
@@ -1917,6 +1918,17 @@ public class DataStoreActionTest extends WebBaseTestCase {
                 assertThat(result.getInt(i, "dlc_length"), is(20));
             }
         }
+    }
+
+    @Test
+    public void downloadConfFile() {
+        // 1.正常的数据访问1，数据都正常
+        String bodyString = new HttpClient()
+                .addData("fileName","hbase-site.xml")
+                .addData("filePath", "E:\\tmp\\upfiles\\temp\\fb642ed8095e4ea0be671c39aa074646.xml")
+                .post(getActionUrl("downloadConfFile"))
+                .getBodyString();
+        assertThat(bodyString, is(notNullValue()));
     }
 
 }

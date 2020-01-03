@@ -5,6 +5,7 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
+import fd.ng.core.utils.CodecUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.SqlOperator;
@@ -12,7 +13,10 @@ import fd.ng.db.resultset.Result;
 import fd.ng.web.annotation.UploadFile;
 import fd.ng.web.util.Dbo;
 import fd.ng.web.util.FileUploadUtil;
+import fd.ng.web.util.RequestUtil;
+import fd.ng.web.util.ResponseUtil;
 import hrds.commons.base.BaseAction;
+import hrds.commons.codes.DataBaseCode;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.Store_type;
 import hrds.commons.entity.*;
@@ -20,10 +24,10 @@ import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.key.PrimayKeyGener;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -657,4 +661,46 @@ public class DataStoreAction extends BaseAction {
         return Dbo.queryResult(asmSql.sql(), asmSql.params());
     }
 
+    @Method(desc = "下载配置文件", logicStep = "方法步骤")
+    @Param(name = "fileName", desc = "下载文件名称", range = "数据存储层配置属性key值，新增时生成")
+    @Param(name = "filePath", desc = "下载文件路径", range = "数据存储层配置属性value值，新增时生成")
+    public void downloadConfFile(String fileName, String filePath) {
+        // 1.数据可访问权限处理方式，该方法不需要权限验证
+        OutputStream out = null;
+        InputStream in = null;
+        try {
+            // 2.清空response
+            ResponseUtil.getResponse().reset();
+            // 3.设置响应头，控制浏览器下载该文件
+            if (RequestUtil.getRequest().getHeader("User-Agent").toLowerCase().indexOf("firefox") > 0) {
+                // 3.1firefox浏览器
+                ResponseUtil.getResponse().setHeader("content-disposition", "attachment;filename="
+                        + new String(fileName.getBytes(CodecUtil.UTF8_CHARSET), DataBaseCode.ISO_8859_1.getCode()));
+            } else {
+                // 3.2其它浏览器
+                ResponseUtil.getResponse().setHeader("content-disposition", "attachment;filename="
+                        + Base64.getEncoder().encodeToString(fileName.getBytes(CodecUtil.UTF8_CHARSET)));
+            }
+            ResponseUtil.getResponse().setContentType("APPLICATION/OCTET-STREAM");
+            // 4.读取要下载的文件，保存到文件输入流
+            in = new FileInputStream(filePath);
+            // 5.创建输出流
+            out = ResponseUtil.getResponse().getOutputStream();
+            // 6.将输入流写入到浏览器中
+            byte[] bytes = new byte[1024];
+            int len;
+            while ((len = in.read(bytes)) > 0) {
+                out.write(bytes, 0, len);
+            }
+            out.flush();
+            out.close();
+            in.close();
+        } catch (UnsupportedEncodingException e) {
+            throw new BusinessException("不支持的编码异常");
+        } catch (FileNotFoundException e) {
+            throw new BusinessException("文件不存在，可能目录不存在！");
+        } catch (IOException e) {
+            throw new BusinessException("下载文件失败！");
+        }
+    }
 }
