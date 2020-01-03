@@ -833,4 +833,26 @@ public class MonitorAction extends BaseAction {
         }
     }
 
+    @Method(desc = "监控所有项目图表数据",
+            logicStep = "数据可访问权限处理方式，通过user_id进行权限控制")
+    @Param(name = "参数名称", desc = "参数描述", range = "取值范围")
+    @Return(desc = "返回内容描述", range = "取值范围")
+    public Result monitorAllProjectChartsData() {
+        // 1.数据可访问权限处理方式，通过user_id进行权限控制
+        // 2.获取当前用户下所有工程调度监控运行状态
+        return Dbo.queryResult("SELECT "
+                        + " SUM(case when job_disp_status = ? then 1 else 0 end ) Pending,"
+                        + " SUM(case when job_disp_status = ? then 1 else 0 end ) Waiting,"
+                        + " SUM(case when job_disp_status = ? then 1 else 0 end ) Runing,"
+                        + " SUM(case when job_disp_status = ? then 1 else 0 end ) Done,"
+                        + " SUM(case when job_disp_status = ? then 1 else 0 end ) Suspension,"
+                        + " SUM(case when job_disp_status = ? then 1 else 0 end ) Error,"
+                        + " A.curr_bath_date AS bathDate,A.etl_sys_cd,B.etl_sys_name," +
+                        " CONCAT(A.etl_sys_cd,'(',B.etl_sys_name,')') sys_name FROM " + Etl_job_cur.TableName
+                        + " A," + Etl_sys.TableName + " B where A.etl_sys_cd=B.etl_sys_cd AND B.user_id=? " +
+                        " and A.curr_bath_date=B.curr_bath_date group by bathDate,A.etl_sys_cd,B.etl_sys_name" +
+                        " ORDER BY A.etl_sys_cd", Job_Status.PENDING.getCode(), Job_Status.WAITING.getCode(),
+                Job_Status.RUNNING.getCode(), Job_Status.DONE.getCode(), Job_Status.STOP.getCode(),
+                Job_Status.ERROR.getCode(), getUserId());
+    }
 }
