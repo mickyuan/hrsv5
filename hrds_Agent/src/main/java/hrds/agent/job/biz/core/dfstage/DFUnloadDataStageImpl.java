@@ -4,6 +4,7 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
+import hrds.agent.job.biz.bean.StageParamInfo;
 import hrds.agent.job.biz.bean.StageStatusInfo;
 import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.constant.RunStatusConstant;
@@ -62,7 +63,7 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 			"将相关状态信息封装到StageStatusInfo对象中返回", logicStep = "")
 	@Return(desc = "StageStatusInfo是保存每个阶段状态信息的实体类", range = "不会为null,StageStatusInfo实体类对象")
 	@Override
-	public StageStatusInfo handleStage() {
+	public StageParamInfo handleStage(StageParamInfo stageParamInfo) {
 
 		StageStatusInfo status = new StageStatusInfo();
 		status.setJobId(jobId);
@@ -81,7 +82,8 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 		status.setEndTime(DateUtil.getSysTime());
 		status.setStatusCode(RunStatusConstant.SUCCEED.getCode());
 
-		return status;
+		stageParamInfo.setStatusInfo(status);
+		return stageParamInfo;
 	}
 
 	public String getOutputFile() {

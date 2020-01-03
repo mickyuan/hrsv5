@@ -6,6 +6,7 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import hrds.agent.job.biz.bean.JobStatusInfo;
+import hrds.agent.job.biz.bean.StageParamInfo;
 import hrds.agent.job.biz.bean.StageStatusInfo;
 import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.constant.StageConstant;
@@ -58,24 +59,25 @@ public class JobStageController {
 
 		JobStatusInfo jobInfo = jobStatus;
 		//1、从第一个阶段开始执行
-		StageStatusInfo firstStageStatus = head.handleStage();
+		StageParamInfo stageParamInfo = new StageParamInfo();
+		StageParamInfo firstStageParamInfo = head.handleStage(stageParamInfo);
 		//判断第一阶段的执行结果
-		if (firstStageStatus.getStatusCode() == RunStatusConstant.SUCCEED.getCode()) {
+		if (firstStageParamInfo.getStatusInfo().getStatusCode() == RunStatusConstant.SUCCEED.getCode()) {
 			//2、若第一阶段执行成功，记录阶段执行状态，并继续向下执行
-			jobInfo = setStageStatus(firstStageStatus, jobInfo);
+			jobInfo = setStageStatus(firstStageParamInfo.getStatusInfo(), jobInfo);
 			//TODO 讨论，是否由该种方式来记录运行时状态
 			ProductFileUtil.createStatusFile(statusFilePath, JSONObject.toJSONString(jobInfo));
 			JobStageInterface stage = head;
 			while ((stage = stage.getNextStage()) != null) {
-				StageStatusInfo stageStatusInfo = stage.handleStage();
-				if (stageStatusInfo.getStatusCode() == RunStatusConstant.SUCCEED.getCode()) {
-					jobInfo = setStageStatus(stageStatusInfo, jobInfo);
+				StageParamInfo paramInfo = stage.handleStage(firstStageParamInfo);
+				if (paramInfo.getStatusInfo().getStatusCode() == RunStatusConstant.SUCCEED.getCode()) {
+					jobInfo = setStageStatus(paramInfo.getStatusInfo(), jobInfo);
 				} else {
 					//TODO 下面的处理方式待商榷
 					// 4、若除第一阶段外的其他阶段执行失败，记录错误信息，尚欠是否继续运行下一阶段的逻辑
-					jobInfo = setStageStatus(stageStatusInfo, jobInfo);
+					jobInfo = setStageStatus(paramInfo.getStatusInfo(), jobInfo);
 					StageConstant stageConstant = EnumUtil.getEnumByCode(StageConstant.class,
-							stageStatusInfo.getStageNameCode());
+							paramInfo.getStatusInfo().getStageNameCode());
 					if(stageConstant != null){
 						jobInfo.setExceptionInfo(stageConstant.getDesc() + "阶段执行失败");
 					}else{
@@ -88,9 +90,9 @@ public class JobStageController {
 		} else {
 			//TODO 下面的处理方式待商榷
 			//3、若第一阶段执行失败，目前的处理逻辑是直接记录错误信息，然后返回jobStatusInfo
-			jobInfo = setStageStatus(firstStageStatus, jobInfo);
+			jobInfo = setStageStatus(firstStageParamInfo.getStatusInfo(), jobInfo);
 			StageConstant stageConstant = EnumUtil.getEnumByCode(StageConstant.class,
-					firstStageStatus.getStageNameCode());
+					firstStageParamInfo.getStatusInfo().getStageNameCode());
 			if(stageConstant != null){
 				jobInfo.setExceptionInfo(stageConstant.getDesc() + "阶段执行失败");
 			}else{
