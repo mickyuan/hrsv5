@@ -48,7 +48,7 @@ public class JdbcToOrcFileWriter extends AbstractFileWriter {
 	@Override
 	public String writeFiles(ResultSet resultSet, CollectTableBean collectTableBean, long pageNum,
 	                         long pageRow, TableBean tableBean) {
-		String eltDate = collectTableBean.getEltDate();
+		String eltDate = collectTableBean.getEtlDate();
 		String midName = Constant.JDBCUNLOADFOLDER + collectTableBean.getDatabase_id() + File.separator
 				+ collectTableBean.getTable_id() + File.separator;
 		String hbase_name = collectTableBean.getHbase_name();

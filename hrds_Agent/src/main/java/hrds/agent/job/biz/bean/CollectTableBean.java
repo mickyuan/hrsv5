@@ -43,11 +43,11 @@ public class CollectTableBean implements Serializable {
 	@DocBean(name = "is_parallel", value = "是否并行抽取(IsFlag):1-是<Shi> 0-否<Fou> ",
 			dataType = String.class, required = true)
 	private String is_parallel;
-	@DocBean(name ="page_sql",value="分页sql:",dataType = String.class,required = false)
+	@DocBean(name = "page_sql", value = "分页sql:", dataType = String.class, required = false)
 	private String page_sql;
-	@DocBean(name ="pageparallels",value="分页并行数:",dataType = Integer.class,required = false)
+	@DocBean(name = "pageparallels", value = "分页并行数:", dataType = Integer.class, required = false)
 	private Integer pageparallels;
-	@DocBean(name ="dataincrement",value="每天数据增量:",dataType = Integer.class,required = false)
+	@DocBean(name = "dataincrement", value = "每天数据增量:", dataType = Integer.class, required = false)
 	private Integer dataincrement;
 	@DocBean(name = "is_header", value = "是否需要表头(IsFlag):1-是<Shi> 0-否<Fou> ",
 			dataType = String.class, required = true)
@@ -86,8 +86,8 @@ public class CollectTableBean implements Serializable {
 	private List<DataStoreConfBean> dataStoreConfBean;
 	@DocBean(name = "hbase_name", value = "数据采集之后的唯一表名", dataType = String.class, required = true)
 	private String hbase_name;
-	@DocBean(name = "eltDate", value = "数据采集的跑批日期", dataType = String.class, required = true)
-	private String eltDate;
+	@DocBean(name = "etlDate", value = "数据采集的跑批日期", dataType = String.class, required = true)
+	private String etlDate;
 	@DocBean(name = "datasource_name", value = "数据源名称", dataType = String.class, required = true)
 	private String datasource_name;
 	@DocBean(name = "agent_name", value = "agent名称", dataType = String.class, required = true)
@@ -345,12 +345,12 @@ public class CollectTableBean implements Serializable {
 		this.database_id = database_id;
 	}
 
-	public String getEltDate() {
-		return eltDate;
+	public String getEtlDate() {
+		return etlDate;
 	}
 
-	public void setEltDate(String eltDate) {
-		this.eltDate = eltDate;
+	public void setEtlDate(String etlDate) {
+		this.etlDate = etlDate;
 	}
 
 	public String getDatasource_name() {

@@ -62,7 +62,7 @@ public class DBDataLoadingStageImpl extends AbstractJobStage {
 					//hive库有两种情况，有客户端和没有客户端
 					if (IsFlag.Shi.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
 						//有客户端
-						String todayTableName = collectTableBean.getHbase_name() + "_" + collectTableBean.getEltDate();
+						String todayTableName = collectTableBean.getHbase_name() + "_" + collectTableBean.getEtlDate();
 						String hdfsFilePath = DBUploadStageImpl.getUploadHdfsPath(collectTableBean);
 						//通过load方式加载数据到hive
 						createTableLoadData(todayTableName, hdfsFilePath, dataStoreConfBean);

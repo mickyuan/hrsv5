@@ -46,7 +46,7 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 	@Override
 	public String writeFiles(ResultSet resultSet, CollectTableBean collectTableBean, long pageNum,
 	                         long pageRow, TableBean tableBean) {
-		String eltDate = collectTableBean.getEltDate();
+		String eltDate = collectTableBean.getEtlDate();
 		StringBuilder fileInfo = new StringBuilder(1024);
 		String hbase_name = collectTableBean.getHbase_name();
 		String midName = Constant.JDBCUNLOADFOLDER + collectTableBean.getDatabase_id() + File.separator

@@ -72,7 +72,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 		this.dataStoreConfBean = dataStoreConfBean;
 		this.tableBean = tableBean;
 		createTodayTable(tableBean, collectTableBean.getHbase_name() + "_"
-				+ collectTableBean.getEltDate(), dataStoreConfBean);
+				+ collectTableBean.getEtlDate(), dataStoreConfBean);
 	}
 
 	private void createTodayTable(TableBean tableBean, String todayTableName, DataStoreConfBean dataStoreConfBean) {
