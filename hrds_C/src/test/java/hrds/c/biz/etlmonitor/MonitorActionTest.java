@@ -5,6 +5,7 @@ import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
+import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import hrds.commons.codes.*;
@@ -1031,5 +1032,18 @@ public class MonitorActionTest extends WebBaseTestCase {
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
         assertThat(ar.isSuccess(), is(false));
+    }
+    @Method(desc = "监控所有项目图表数据",
+            logicStep = "1.正常的数据访问1，数据都正常,该方法只有一种情况")
+    @Test
+    public void monitorAllProjectChartsData() {
+        // 1.正常的数据访问1，数据都正常
+        String bodyString = new HttpClient()
+                .post(getActionUrl("monitorAllProjectChartsData"))
+                .getBodyString();
+        ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+                .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+        assertThat(ar.isSuccess(), is(true));
+        Result result = ar.getDataForResult();
     }
 }
