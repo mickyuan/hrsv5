@@ -834,9 +834,9 @@ public class MonitorAction extends BaseAction {
     }
 
     @Method(desc = "监控所有项目图表数据",
-            logicStep = "数据可访问权限处理方式，通过user_id进行权限控制")
-    @Param(name = "参数名称", desc = "参数描述", range = "取值范围")
-    @Return(desc = "返回内容描述", range = "取值范围")
+            logicStep = "数据可访问权限处理方式，通过user_id进行权限控制" +
+                    "2.获取当前用户下所有工程调度监控运行状态")
+    @Return(desc = "返回当前用户下所有工程调度监控运行状态",range = "无限制")
     public Result monitorAllProjectChartsData() {
         // 1.数据可访问权限处理方式，通过user_id进行权限控制
         // 2.获取当前用户下所有工程调度监控运行状态
