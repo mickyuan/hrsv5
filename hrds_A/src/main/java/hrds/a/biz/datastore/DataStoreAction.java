@@ -210,12 +210,10 @@ public class DataStoreAction extends BaseAction {
                     "4.获取源表数据类型，目标表数据类型信息" +
                     "5.新增数据类型对照主表信息" +
                     "6.循环新增存储层数据类型对照表信息")
-    @Param(name = "typeContrast", desc = "存放以源表数据类型source_type为key，目标数据类型target_type为value的json字符串",
+    @Param(name = "typeContrast", desc = "存放以source_type,target_type,dtc_remark为key，对应值为value的json字符串",
             range = "无限制")
     @Param(name = "type_contrast_sum", desc = "数据类型对照主表", range = "与数据库对应表字段一致", isBean = true)
-    @Param(name = "dtc_remark", desc = "数据类型对照表备注", range = "无限制", nullable = true)
-    public void addDataTypeContrastInfo(String typeContrast, Type_contrast_sum type_contrast_sum
-            , String dtc_remark) {
+    public void addDataTypeContrastInfo(String typeContrast, Type_contrast_sum type_contrast_sum) {
         // 1.数据可访问权限处理方式，该方法不需要权限控制
         // 2.检查数据类型对照主表字段信息是否合法
         checkTypeContrastField(type_contrast_sum);
@@ -239,7 +237,7 @@ public class DataStoreAction extends BaseAction {
                 type_contrast.setDtc_id(PrimayKeyGener.getNextId());
                 type_contrast.setSource_type(map.get("source_type"));
                 type_contrast.setTarget_type(map.get("target_type"));
-                type_contrast.setDtc_remark(dtc_remark);
+                type_contrast.setDtc_remark(map.get("dtc_remark"));
                 type_contrast.add(Dbo.db());
             }
         }
@@ -253,12 +251,10 @@ public class DataStoreAction extends BaseAction {
                     "5.新增存储层数据类型长度对照主表信息" +
                     "6.验证字段长度字段类型的合法性" +
                     "7.循环新增存储层数据类型长度对照表信息")
-    @Param(name = "lengthInfo", desc = "以字段类型dlc_type为key，字段长度dlc_length(int类型）为value的json字符串",
+    @Param(name = "lengthInfo", desc = "以dlc_type,dlc_length(int类型）,dlc_remark为key，对应值为为value的json字符串",
             range = "无限制")
-    @Param(name = "dlc_remark", desc = "长度对照表备注", range = "无限制", nullable = true)
     @Param(name = "length_contrast_sum", desc = "存储层数据类型长度对照表", range = "与数据库对应表字段一致", isBean = true)
-    public void addTypeLengthContrastInfo(String lengthInfo, String dlc_remark,
-                                          Length_contrast_sum length_contrast_sum) {
+    public void addTypeLengthContrastInfo(String lengthInfo, Length_contrast_sum length_contrast_sum) {
         // 1.数据可访问权限处理方式，该方法不需要权限控制
         // 2.检查存储层数据类型长度对照主表与存储层数据类型长度对照表字段信息是否合法
         checkLengthContrastSumField(length_contrast_sum);
@@ -283,7 +279,7 @@ public class DataStoreAction extends BaseAction {
             length_contrast.setDlc_id(PrimayKeyGener.getNextId());
             length_contrast.setDlc_type(map.get("dlc_type"));
             length_contrast.setDlc_length(map.get("dlc_length"));
-            length_contrast.setDlc_remark(dlc_remark);
+            length_contrast.setDlc_remark(map.get("dlc_remark"));
             length_contrast.add(Dbo.db());
         }
     }
@@ -313,15 +309,16 @@ public class DataStoreAction extends BaseAction {
                     "4.更新数据类型对照主表信息" +
                     "5.更新前先删除旧存储层数据类型对照表信息" +
                     "6.循环更新存储层数据类型对照表信息")
-    @Param(name = "typeContrast", desc = "存放以源表数据类型source_type为key，目标数据类型target_type为value的json字符串",
+    @Param(name = "typeContrast", desc = "存放以source_type,target_type,dtc_remark为key，对应值为value的json字符串",
             range = "无限制")
     @Param(name = "type_contrast_sum", desc = "数据类型对照主表", range = "与数据库对应表字段一致", isBean = true)
-    @Param(name = "dtc_remark", desc = "数据类型对照表备注", range = "无限制", nullable = true)
-    public void updateDataTypeContrastInfo(String typeContrast, Type_contrast_sum type_contrast_sum
-            , String dtc_remark) {
+    public void updateDataTypeContrastInfo(String typeContrast, Type_contrast_sum type_contrast_sum) {
         // 1.数据可访问权限处理方式，该方法不需要权限控制
         // 2.检查数据类型对照主表字段信息是否合法
         checkTypeContrastField(type_contrast_sum);
+        if (type_contrast_sum.getDtcs_id() == null) {
+            throw new BusinessException("更新时类型对照ID不能为空");
+        }
         // 3.获取源表数据类型，目标表数据类型信息
         Type type = new TypeReference<List<Map<String, String>>>() {
         }.getType();
@@ -338,7 +335,7 @@ public class DataStoreAction extends BaseAction {
                 type_contrast.setDtc_id(PrimayKeyGener.getNextId());
                 type_contrast.setSource_type(map.get("source_type"));
                 type_contrast.setTarget_type(map.get("target_type"));
-                type_contrast.setDtc_remark(dtc_remark);
+                type_contrast.setDtc_remark(map.get("dtc_remark"));
                 type_contrast.add(Dbo.db());
             }
         }
@@ -376,14 +373,16 @@ public class DataStoreAction extends BaseAction {
                     "5.新增前先删除原存储层数据类型长度对照表信息" +
                     "6.验证字段长度，字段类型的合法性" +
                     "7.循环新增存储层数据类型长度对照表信息")
-    @Param(name = "lengthInfo", desc = "以字段类型dlc_type为key，字段长度dlc_length为value的json字符串", range = "无限制")
-    @Param(name = "dlc_remark", desc = "长度对照表备注", range = "无限制", nullable = true)
+    @Param(name = "lengthInfo", desc = "以dlc_type,dlc_length,dlc_remark为key,对应值为value的json字符串",
+            range = "无限制")
     @Param(name = "length_contrast_sum", desc = "存储层数据类型长度对照表", range = "与数据库对应表字段一致", isBean = true)
-    public void updateTypeLengthContrastInfo(String lengthInfo, String dlc_remark,
-                                             Length_contrast_sum length_contrast_sum) {
+    public void updateTypeLengthContrastInfo(String lengthInfo, Length_contrast_sum length_contrast_sum) {
         // 1.数据可访问权限处理方式，该方法不需要权限控制
         // 2.检查存储层数据类型长度对照主表与存储层数据类型长度对照表字段信息是否合法
         checkLengthContrastSumField(length_contrast_sum);
+        if (length_contrast_sum.getDlcs_id() == null) {
+            throw new BusinessException("更新时长度对照表ID不能为空");
+        }
         // 3.获取字段类型，字段长度信息
         Type type = new TypeReference<List<Map<String, String>>>() {
         }.getType();
@@ -401,7 +400,7 @@ public class DataStoreAction extends BaseAction {
             length_contrast.setDlc_id(PrimayKeyGener.getNextId());
             length_contrast.setDlc_type(map.get("dlc_type"));
             length_contrast.setDlc_length(map.get("dlc_length"));
-            length_contrast.setDlc_remark(dlc_remark);
+            length_contrast.setDlc_remark(map.get("dlc_remark"));
             length_contrast.add(Dbo.db());
         }
     }
@@ -661,7 +660,7 @@ public class DataStoreAction extends BaseAction {
         // 1.数据可访问权限处理方式，该方法不需要权限控制
         // 2.查询数据存储层数据类型对照表信息
         asmSql.clean();
-        asmSql.addSql("select t1.*,t2.dtcs_name from " + Type_contrast.TableName +
+        asmSql.addSql("select * from " + Type_contrast.TableName +
                 " t1 left join " + Type_contrast_sum.TableName + " t2 on t1.dtcs_id=t2.dtcs_id");
         if (dtcs_id != null) {
             asmSql.addSql(" where t1.dtcs_id=?").addParam(dtcs_id);
@@ -680,7 +679,7 @@ public class DataStoreAction extends BaseAction {
         // 1.数据可访问权限处理方式，该方法不需要权限控制
         // 2.查询数据类型长度对照表信息
         asmSql.clean();
-        asmSql.addSql("select t1.*,t2.dlcs_name from " + Length_contrast.TableName +
+        asmSql.addSql("select * from " + Length_contrast.TableName +
                 " t1 left join " + Length_contrast_sum.TableName + " t2 on t1.dlcs_id=t2.dlcs_id");
         if (dlcs_id != null) {
             asmSql.addSql(" where t1.dlcs_id=?").addParam(dlcs_id);
