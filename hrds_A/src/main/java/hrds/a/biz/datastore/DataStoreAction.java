@@ -31,6 +31,8 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @DocClass(desc = "数据存储层配置管理", author = "dhw", createdate = "2019/11/22 11:25")
 public class DataStoreAction extends BaseAction {
@@ -249,15 +251,17 @@ public class DataStoreAction extends BaseAction {
                     "3.判断类型对照名称是否已存在" +
                     "4.获取字段类型，字段长度信息" +
                     "5.新增存储层数据类型长度对照主表信息" +
-                    "6.循环新增存储层数据类型长度对照表信息")
-    @Param(name = "lengthInfo", desc = "以字段类型dlc_type为key，字段长度dlc_length为value的json字符串", range = "无限制")
+                    "6.验证字段长度字段类型的合法性" +
+                    "7.循环新增存储层数据类型长度对照表信息")
+    @Param(name = "lengthInfo", desc = "以字段类型dlc_type为key，字段长度dlc_length(int类型）为value的json字符串",
+            range = "无限制")
     @Param(name = "dlc_remark", desc = "长度对照表备注", range = "无限制", nullable = true)
     @Param(name = "length_contrast_sum", desc = "存储层数据类型长度对照表", range = "与数据库对应表字段一致", isBean = true)
     public void addTypeLengthContrastInfo(String lengthInfo, String dlc_remark,
                                           Length_contrast_sum length_contrast_sum) {
         // 1.数据可访问权限处理方式，该方法不需要权限控制
         // 2.检查存储层数据类型长度对照主表与存储层数据类型长度对照表字段信息是否合法
-        checkTypeLengthContrastField(length_contrast_sum);
+        checkLengthContrastSumField(length_contrast_sum);
         // 3.判断类型对照名称是否已存在
         if (Dbo.queryNumber("select count(*) from " + Length_contrast_sum.TableName + " where dlcs_name=?",
                 length_contrast_sum.getDlcs_name()).orElseThrow(() -> new BusinessException("sql查询错误")) > 0) {
@@ -270,15 +274,35 @@ public class DataStoreAction extends BaseAction {
         // 5.新增存储层数据类型长度对照主表信息
         length_contrast_sum.setDlcs_id(PrimayKeyGener.getNextId());
         length_contrast_sum.add(Dbo.db());
-        // 6.循环新增存储层数据类型长度对照表信息
         Length_contrast length_contrast = new Length_contrast();
         for (Map<String, String> map : lengthContrastList) {
+            // 6.验证字段长度字段类型的合法性
+            checkLengthContrastField(map);
+            // 7.循环新增存储层数据类型长度对照表信息
             length_contrast.setDlcs_id(length_contrast_sum.getDlcs_id());
             length_contrast.setDlc_id(PrimayKeyGener.getNextId());
             length_contrast.setDlc_type(map.get("dlc_type"));
             length_contrast.setDlc_length(map.get("dlc_length"));
             length_contrast.setDlc_remark(dlc_remark);
             length_contrast.add(Dbo.db());
+        }
+    }
+
+    @Method(desc = "验证数据存储层数据类型长度表字段合法性",
+            logicStep = "1.数据可访问权限处理方式，该方法不需要权限控制" +
+                    "2.验证dlc_length为正整数" +
+                    "3.验证字段类型是否为空以及空格")
+    @Param(name = "map", desc = "存放字段长度，字段类型的集合", range = "无限制")
+    private void checkLengthContrastField(Map<String, String> map) {
+        // 1.数据可访问权限处理方式，该方法不需要权限控制
+        // 2.验证dlc_length为正整数
+        Matcher matcher = Pattern.compile("^[0-9]*[1-9][0-9]*$").matcher(map.get("dlc_length"));
+        if (StringUtil.isBlank(map.get("dlc_length")) || !matcher.matches()) {
+            throw new BusinessException("字段长度必须为正整数，dlc_length=" + map.get("dlc_length"));
+        }
+        // 3.验证字段类型是否为空以及空格
+        if (StringUtil.isBlank(map.get("dlc_type"))) {
+            throw new BusinessException("字段类型不能为空以及空格");
         }
     }
 
@@ -350,7 +374,8 @@ public class DataStoreAction extends BaseAction {
                     "3.获取字段类型，字段长度信息" +
                     "4.新增存储层数据类型长度对照主表信息" +
                     "5.新增前先删除原存储层数据类型长度对照表信息" +
-                    "6.循环新增存储层数据类型长度对照表信息")
+                    "6.验证字段长度，字段类型的合法性" +
+                    "7.循环新增存储层数据类型长度对照表信息")
     @Param(name = "lengthInfo", desc = "以字段类型dlc_type为key，字段长度dlc_length为value的json字符串", range = "无限制")
     @Param(name = "dlc_remark", desc = "长度对照表备注", range = "无限制", nullable = true)
     @Param(name = "length_contrast_sum", desc = "存储层数据类型长度对照表", range = "与数据库对应表字段一致", isBean = true)
@@ -358,7 +383,7 @@ public class DataStoreAction extends BaseAction {
                                              Length_contrast_sum length_contrast_sum) {
         // 1.数据可访问权限处理方式，该方法不需要权限控制
         // 2.检查存储层数据类型长度对照主表与存储层数据类型长度对照表字段信息是否合法
-        checkTypeLengthContrastField(length_contrast_sum);
+        checkLengthContrastSumField(length_contrast_sum);
         // 3.获取字段类型，字段长度信息
         Type type = new TypeReference<List<Map<String, String>>>() {
         }.getType();
@@ -370,7 +395,9 @@ public class DataStoreAction extends BaseAction {
         Length_contrast length_contrast = new Length_contrast();
         length_contrast.setDlcs_id(length_contrast_sum.getDlcs_id());
         for (Map<String, String> map : lengthContrastList) {
-            // 6.循环新增存储层数据类型长度对照表信息
+            // 6.验证字段长度，字段类型的合法性
+            checkLengthContrastField(map);
+            // 7.循环新增存储层数据类型长度对照表信息
             length_contrast.setDlc_id(PrimayKeyGener.getNextId());
             length_contrast.setDlc_type(map.get("dlc_type"));
             length_contrast.setDlc_length(map.get("dlc_length"));
@@ -409,7 +436,7 @@ public class DataStoreAction extends BaseAction {
     @Param(name = "length_contrast_sum", desc = "存储层数据类型长度对照主表", range = "与数据库对应表字段一致",
             isBean = true)
     @Param(name = "length_contrast", desc = "存储层数据类型长度对照表", range = "与数据库对应表字段一致", isBean = true)
-    private void checkTypeLengthContrastField(Length_contrast_sum length_contrast_sum) {
+    private void checkLengthContrastSumField(Length_contrast_sum length_contrast_sum) {
         // 1.数据可访问权限处理方式，该方法不需要权限控制
         // 2.判断长度对照名称是否为空
         if (StringUtil.isBlank(length_contrast_sum.getDlcs_name())) {
