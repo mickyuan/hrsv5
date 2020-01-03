@@ -6,10 +6,7 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.FileNameUtils;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.core.utils.SystemUtil;
-import hrds.agent.job.biz.bean.CollectTableBean;
-import hrds.agent.job.biz.bean.DataStoreConfBean;
-import hrds.agent.job.biz.bean.StageStatusInfo;
-import hrds.agent.job.biz.bean.TableBean;
+import hrds.agent.job.biz.bean.*;
 import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.constant.StageConstant;
@@ -39,16 +36,16 @@ import java.util.concurrent.Future;
 public class DBUploadStageImpl extends AbstractJobStage {
 	private final static Logger LOGGER = LoggerFactory.getLogger(DBUploadStageImpl.class);
 	//卸数到本地的文件绝对路径
-	private final String[] localFiles;
+//	private final String[] localFiles;
 	//数据采集表对应的存储的所有信息
 	private CollectTableBean collectTableBean;
 	//数据库采集表对应的meta信息
-	private TableBean tableBean;
+//	private TableBean tableBean;
 
-	public DBUploadStageImpl(TableBean tableBean, CollectTableBean collectTableBean, String[] localFiles) {
+	public DBUploadStageImpl(CollectTableBean collectTableBean) {
 		this.collectTableBean = collectTableBean;
-		this.localFiles = localFiles;
-		this.tableBean = tableBean;
+//		this.localFiles = localFiles;
+//		this.tableBean = tableBean;
 	}
 
 	@Method(desc = "数据库直连采集数据上传阶段处理逻辑，处理完成后，无论成功还是失败，" +
@@ -57,7 +54,7 @@ public class DBUploadStageImpl extends AbstractJobStage {
 			"2、调用方法，进行文件上传，文件数组和上传目录由构造器传入")
 	@Return(desc = "StageStatusInfo是保存每个阶段状态信息的实体类", range = "不会为null,StageStatusInfo实体类对象")
 	@Override
-	public StageStatusInfo handleStage() {
+	public StageParamInfo handleStage(StageParamInfo stageParamInfo) {
 		LOGGER.info("------------------数据库直连采集上传阶段开始------------------");
 		//1、创建卸数阶段状态信息，更新作业ID,阶段名，阶段开始时间
 		StageStatusInfo statusInfo = new StageStatusInfo();
@@ -75,15 +72,17 @@ public class DBUploadStageImpl extends AbstractJobStage {
 				if (Store_type.DATABASE.getCode().equals(dataStoreConfBean.getStore_type())) {
 					//数据库类型
 					executor = Executors.newFixedThreadPool(5);
-					exeBatch(dataStoreConfBean, executor, count);
+					exeBatch(dataStoreConfBean, executor, count, stageParamInfo.getFileArr(),
+							stageParamInfo.getTableBean());
 				} else if (Store_type.HIVE.getCode().equals(dataStoreConfBean.getStore_type())) {
 					if (IsFlag.Shi.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
 						//有hadoop客户端，通过直接上传hdfs，映射外部表的方式进hive
-						execHDFSShell(dataStoreConfBean);
+						execHDFSShell(dataStoreConfBean, stageParamInfo.getFileArr());
 					} else if (IsFlag.Fou.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
 						//没有hadoop客户端
 						executor = Executors.newFixedThreadPool(5);
-						exeBatch(dataStoreConfBean, executor, count);
+						exeBatch(dataStoreConfBean, executor, count, stageParamInfo.getFileArr(),
+								stageParamInfo.getTableBean());
 					} else {
 						throw new AppSystemException("错误的是否标识");
 					}
@@ -109,13 +108,14 @@ public class DBUploadStageImpl extends AbstractJobStage {
 			if (executor != null)
 				executor.shutdown();
 		}
-		return statusInfo;
+		stageParamInfo.setStatusInfo(statusInfo);
+		return stageParamInfo;
 	}
 
 	/**
 	 * 上传卸数的文件到hdfs
 	 */
-	private void execHDFSShell(DataStoreConfBean dataStoreConfBean) throws Exception {
+	private void execHDFSShell(DataStoreConfBean dataStoreConfBean, String[] localFiles) throws Exception {
 		//STORECONFIGPATH上传hdfs需要读取的配置文件顶层目录
 		String hdfsPath = getUploadHdfsPath(collectTableBean);
 		if (SystemUtil.OS_NAME.toLowerCase().contains("windows")) {
@@ -174,7 +174,8 @@ public class DBUploadStageImpl extends AbstractJobStage {
 	/**
 	 * 使用batch方式进数
 	 */
-	private void exeBatch(DataStoreConfBean dataStoreConfBean, ExecutorService executor, long count) throws Exception {
+	private void exeBatch(DataStoreConfBean dataStoreConfBean, ExecutorService executor, long count,
+	                      String[] localFiles, TableBean tableBean) throws Exception {
 		List<Future<Long>> list = new ArrayList<>();
 		for (String fileAbsolutePath : localFiles) {
 			ReadFileToDataBase readFileToDataBase = new ReadFileToDataBase(fileAbsolutePath, tableBean,

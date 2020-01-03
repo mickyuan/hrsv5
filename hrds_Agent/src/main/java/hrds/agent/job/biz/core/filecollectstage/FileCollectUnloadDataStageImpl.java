@@ -4,6 +4,7 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.FileNameUtils;
 import hrds.agent.job.biz.bean.FileCollectParamBean;
+import hrds.agent.job.biz.bean.StageParamInfo;
 import hrds.agent.job.biz.bean.StageStatusInfo;
 import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.constant.StageConstant;
@@ -62,7 +63,7 @@ public class FileCollectUnloadDataStageImpl extends AbstractJobStage {
 
 
 	@Override
-	public StageStatusInfo handleStage() {
+	public StageParamInfo handleStage(StageParamInfo stageParamInfo) {
 		//1.设置数据加载阶段的任务id,开始日期开始时间
 		long startTime = System.currentTimeMillis();
 		log.info("开始采集" + fileCollectParamBean.getFile_source_path() + "下文件");
@@ -123,6 +124,7 @@ public class FileCollectUnloadDataStageImpl extends AbstractJobStage {
 		statusInfo.setEndDate(DateUtil.getSysDate());
 		statusInfo.setEndTime(DateUtil.getSysTime());
 		statusInfo.setStatusCode(RunStatusConstant.SUCCEED.getCode());
-		return statusInfo;
+		stageParamInfo.setStatusInfo(statusInfo);
+		return stageParamInfo;
 	}
 }

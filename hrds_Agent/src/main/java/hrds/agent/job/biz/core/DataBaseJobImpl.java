@@ -3,20 +3,21 @@ package hrds.agent.job.biz.core;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Return;
-import hrds.agent.job.biz.bean.*;
+import hrds.agent.job.biz.bean.CollectTableBean;
+import hrds.agent.job.biz.bean.JobStatusInfo;
+import hrds.agent.job.biz.bean.MetaInfoBean;
+import hrds.agent.job.biz.bean.SourceDataConfBean;
 import hrds.agent.job.biz.core.dbstage.*;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.commons.utils.Constant;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 @DocClass(desc = "完成数据库直连采集的作业实现", author = "WangZhengcheng")
 public class DataBaseJobImpl implements JobInterface {
 
-	private MetaInfoBean mateInfo = new MetaInfoBean();
+	//	private MetaInfoBean mateInfo = new MetaInfoBean();
 	private CollectTableBean collectTableBean;
 	private SourceDataConfBean sourceDataConfBean;
 
@@ -43,15 +44,13 @@ public class DataBaseJobImpl implements JobInterface {
 		// 后期可改造为按照配置构建采集阶段
 		DBUnloadDataStageImpl unloadData = new DBUnloadDataStageImpl(sourceDataConfBean, collectTableBean);
 		//上传
-		JobStageInterface upload = new DBUploadStageImpl(unloadData.getTableBean(), collectTableBean,
-				unloadData.getFileArr());
+		JobStageInterface upload = new DBUploadStageImpl(collectTableBean);
 		//加载
-		JobStageInterface dataLoading = new DBDataLoadingStageImpl(unloadData.getTableBean(), collectTableBean);
+		JobStageInterface dataLoading = new DBDataLoadingStageImpl(collectTableBean);
 		//增量
-		JobStageInterface calIncrement = new DBCalIncrementStageImpl(unloadData.getTableBean(), collectTableBean);
+		JobStageInterface calIncrement = new DBCalIncrementStageImpl(collectTableBean);
 		//登记
-		JobStageInterface dataRegistration = new DBDataRegistrationStageImpl(collectTableBean,unloadData.getFileSize(),
-				unloadData.getTableBean(),unloadData.getRowCount());
+		JobStageInterface dataRegistration = new DBDataRegistrationStageImpl(collectTableBean);
 		//利用JobStageController构建本次数据库直连采集作业流程
 		JobStageController controller = new JobStageController();
 		//TODO 永远保证五个阶段，在每个阶段内部设置更合理的状态，比如直接加载时，unloadData和upload阶段的状态设置为跳过
@@ -65,18 +64,18 @@ public class DataBaseJobImpl implements JobInterface {
 			// 类型异常全部向上抛，抛到这里统一处理
 			e.printStackTrace();
 		}
-		List<String> columns = new ArrayList<>();
-		for (CollectTableColumnBean column : collectTableBean.getCollectTableColumnBeanList()) {
-			columns.add(column.getColumn_name());
-		}
+//		List<String> columns = new ArrayList<>();
+//		for (CollectTableColumnBean column : collectTableBean.getCollectTableColumnBeanList()) {
+//			columns.add(column.getColumn_name());
+//		}
 		//5、阶段执行完成后，写meta信息
-		mateInfo.setTableName(collectTableBean.getTable_name());
+//		mateInfo.setTableName(collectTableBean.getTable_name());
 		//TODO 下面这个顺序和ColumnTypes的顺序应该不一致，应该都从unloadData里面取
-		mateInfo.setColumnNames(columns);
-		mateInfo.setColumnTypes(unloadData.getColumnTypes());
-		mateInfo.setRowCount(unloadData.getRowCount());
-		//TODO 讨论:数据库多线程采集，每个线程写一个文件，设置文件大小这里应该如何处理，目前暂时得到的是所有文件的总大小
-		mateInfo.setFileSize(unloadData.getFileSize());
+//		mateInfo.setColumnNames(columns);
+//		mateInfo.setColumnTypes(unloadData.getColumnTypes());
+//		mateInfo.setRowCount(unloadData.getRowCount());
+//		//TODO 讨论:数据库多线程采集，每个线程写一个文件，设置文件大小这里应该如何处理，目前暂时得到的是所有文件的总大小
+//		mateInfo.setFileSize(unloadData.getFileSize());
 
 		return jobStatusInfo;
 	}
@@ -84,12 +83,12 @@ public class DataBaseJobImpl implements JobInterface {
 	//下面两个方法所有JobInterface接口实现类都应该是这么实现
 	@Override
 	public List<MetaInfoBean> getMetaInfoGroup() {
-		return Arrays.asList(mateInfo);
+		return /*Arrays.asList(mateInfo)*/null;
 	}
 
 	@Override
 	public MetaInfoBean getMetaInfo() {
-		return mateInfo;
+		return /*mateInfo*/null;
 	}
 
 	@Override

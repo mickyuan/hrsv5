@@ -149,7 +149,7 @@ public class ConnUtil {
 	public static Connection getConnection(String database_drive, String jdbc_url, String user_name, String database_pad) throws Exception {
 		Connection conn;
 		try {
-			logger.info("the connection url :" + jdbc_url);
+			logger.info("开始连接 :" + jdbc_url);
 			Class.forName(database_drive);
 			conn = DriverManager.getConnection(jdbc_url, user_name, database_pad);
 		} catch (Exception e) {

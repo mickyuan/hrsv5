@@ -5,10 +5,7 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
-import hrds.agent.job.biz.bean.CollectTableBean;
-import hrds.agent.job.biz.bean.DataStoreConfBean;
-import hrds.agent.job.biz.bean.StageStatusInfo;
-import hrds.agent.job.biz.bean.TableBean;
+import hrds.agent.job.biz.bean.*;
 import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
@@ -34,18 +31,18 @@ public class DBDataLoadingStageImpl extends AbstractJobStage {
 	//数据采集表对应的存储的所有信息
 	private CollectTableBean collectTableBean;
 	//数据库采集表对应的meta信息
-	private TableBean tableBean;
+//	private TableBean tableBean;
 
-	public DBDataLoadingStageImpl(TableBean tableBean, CollectTableBean collectTableBean) {
+	public DBDataLoadingStageImpl(CollectTableBean collectTableBean) {
 		this.collectTableBean = collectTableBean;
-		this.tableBean = tableBean;
+//		this.tableBean = tableBean;
 	}
 
 	@Method(desc = "数据库直连采集数据加载阶段处理逻辑，处理完成后，无论成功还是失败，" +
 			"将相关状态信息封装到StageStatusInfo对象中返回", logicStep = "")
 	@Return(desc = "StageStatusInfo是保存每个阶段状态信息的实体类", range = "不会为null，StageStatusInfo实体类对象")
 	@Override
-	public StageStatusInfo handleStage() {
+	public StageParamInfo handleStage(StageParamInfo stageParamInfo) {
 		LOGGER.info("------------------数据库直连采集数据加载阶段开始------------------");
 		//1、创建卸数阶段状态信息，更新作业ID,阶段名，阶段开始时间
 		StageStatusInfo statusInfo = new StageStatusInfo();
@@ -65,7 +62,8 @@ public class DBDataLoadingStageImpl extends AbstractJobStage {
 						String todayTableName = collectTableBean.getHbase_name() + "_" + collectTableBean.getEtlDate();
 						String hdfsFilePath = DBUploadStageImpl.getUploadHdfsPath(collectTableBean);
 						//通过load方式加载数据到hive
-						createTableLoadData(todayTableName, hdfsFilePath, dataStoreConfBean);
+						createTableLoadData(todayTableName, hdfsFilePath, dataStoreConfBean,
+								stageParamInfo.getTableBean());
 					} else if (IsFlag.Fou.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
 						//没有客户端，在upload时已经装载数据了，直接跳过
 						continue;
@@ -93,20 +91,23 @@ public class DBDataLoadingStageImpl extends AbstractJobStage {
 			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.FAILED.getCode(), e.getMessage());
 			LOGGER.error("数据库直连采集数据加载阶段失败：", e.getMessage());
 		}
-		return statusInfo;
+		stageParamInfo.setStatusInfo(statusInfo);
+		return stageParamInfo;
 	}
 
-	private void createTableLoadData(String todayTableName, String hdfsFilePath, DataStoreConfBean dataStoreConfBean) {
+	private void createTableLoadData(String todayTableName, String hdfsFilePath,
+	                                 DataStoreConfBean dataStoreConfBean, TableBean tableBean) {
 		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(dataStoreConfBean.getData_store_connect_attr())) {
 			List<String> sqlList = new ArrayList<>();
 			//1.创建表
 			String file_format = collectTableBean.getDbfile_format();
 			if (FileFormat.SEQUENCEFILE.getCode().equals(file_format) || FileFormat.PARQUET.getCode()
 					.equals(file_format) || FileFormat.ORC.getCode().equals(file_format)) {
-				sqlList.add(genHiveLoadColumnar(todayTableName, file_format, dataStoreConfBean.getDtcs_name()));
+				sqlList.add(genHiveLoadColumnar(todayTableName, file_format,
+						dataStoreConfBean.getDtcs_name(), tableBean));
 			} else if (FileFormat.FeiDingChang.getCode().equals(file_format) || FileFormat.CSV.getCode()
 					.equals(file_format)) {
-				sqlList.add(genHiveLoad(todayTableName));
+				sqlList.add(genHiveLoad(todayTableName, tableBean));
 			} else {
 				throw new AppSystemException("暂不支持定长或者其他类型加载到hive表");
 			}
@@ -132,7 +133,8 @@ public class DBDataLoadingStageImpl extends AbstractJobStage {
 	/**
 	 * 创建hive外部表加载列式存储文件
 	 */
-	private String genHiveLoadColumnar(String todayTableName, String file_format, String dtcs_name) {
+	private String genHiveLoadColumnar(String todayTableName, String file_format,
+	                                   String dtcs_name, TableBean tableBean) {
 		String hiveStored = getColumnarFileHiveStored(file_format);
 		String type;
 		StringBuilder sql = new StringBuilder(120);
@@ -157,7 +159,7 @@ public class DBDataLoadingStageImpl extends AbstractJobStage {
 	/**
 	 * 创建hive外部表加载行式存储文件
 	 */
-	private String genHiveLoad(String todayTableName) {
+	private String genHiveLoad(String todayTableName, TableBean tableBean) {
 		StringBuilder sql = new StringBuilder(120);
 		List<String> columnList = StringUtil.split(tableBean.getColumnMetaInfo(), CollectTableHandleParse.STRSPLIT);
 		sql.append("CREATE TABLE IF NOT EXISTS ").append(todayTableName).append(" (");

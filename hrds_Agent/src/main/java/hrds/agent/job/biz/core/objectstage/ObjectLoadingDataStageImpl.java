@@ -9,6 +9,7 @@ import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.FileNameUtils;
 import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.ObjectCollectParamBean;
+import hrds.agent.job.biz.bean.StageParamInfo;
 import hrds.agent.job.biz.bean.StageStatusInfo;
 import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.constant.StageConstant;
@@ -76,7 +77,7 @@ public class ObjectLoadingDataStageImpl extends AbstractJobStage {
 			"4.设置数据加载阶段结束日期结束时间并返回")
 	@Return(desc = "StageStatusInfo是保存每个阶段状态信息的实体类", range = "不会为null,StageStatusInfo实体类对象")
 	@Override
-	public StageStatusInfo handleStage() {
+	public StageParamInfo handleStage(StageParamInfo stageParamInfo) {
 		//1.设置数据加载阶段的任务id,开始日期开始时间
 		StageStatusInfo statusInfo = new StageStatusInfo();
 		statusInfo.setJobId(String.valueOf(object_collect.getOdc_id()));
@@ -103,7 +104,8 @@ public class ObjectLoadingDataStageImpl extends AbstractJobStage {
 		statusInfo.setEndDate(DateUtil.getSysDate());
 		statusInfo.setEndTime(DateUtil.getSysTime());
 		statusInfo.setStatusCode(RunStatusConstant.SUCCEED.getCode());
-		return statusInfo;
+		stageParamInfo.setStatusInfo(statusInfo);
+		return stageParamInfo;
 	}
 
 	@Method(desc = "处理文件夹下同类型的非结构化对象采集",

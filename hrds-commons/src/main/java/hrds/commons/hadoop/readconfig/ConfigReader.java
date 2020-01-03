@@ -2,6 +2,7 @@ package hrds.commons.hadoop.readconfig;
 
 import fd.ng.core.utils.StringUtil;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.utils.PropertyParaUtil;
 import hrds.commons.utils.PropertyParaValue;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -17,9 +18,9 @@ public class ConfigReader {
 
 	private static Configuration conf;
 
-	public static String platform = PropertyParaValue.getString("platform", "normal");
+	public static String platform = PropertyParaUtil.getString("platform", "normal");
 
-	public static final String external_cluster = PropertyParaValue.getString("external_cluster_platform", "normal");
+	public static final String external_cluster = PropertyParaUtil.getString("external_cluster_platform", "normal");
 
 	public static LoginUtil lg;
 
@@ -32,7 +33,7 @@ public class ConfigReader {
 	 */
 	public static Configuration getConfiguration() {
 
-		platform = PropertyParaValue.getString("platform", "normal");
+		platform = PropertyParaUtil.getString("platform", "normal");
 		//平台验证
 		return getConfiguration(null);
 	}

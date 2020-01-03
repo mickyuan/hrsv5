@@ -27,26 +27,26 @@ import java.util.Map;
  */
 public class CleanFactory {
 
-	private static Map<String, String> mpTypeClass = new HashMap<String, String>();
+	private static Map<String, String> mpTypeClass = new HashMap<>();
 	private static CleanFactory CF = new CleanFactory();//静态私有对象
 
 	/**
 	 * 构造函数，加载配置参数
-	 *
 	 */
 	private CleanFactory() {
 		//TODO 这个配置好需要吗？目前好像只有页面定义的清洗方式，而且不能通过sql去实现
-		File file = new File("FactoryConf.xml");
-		try {
-			if (file.exists()) {
-				loadCfgInfo(null, file);
-			} else {
-				InputStream is = XMLUtil.getInputStream("config/FactoryConf.xml");
-				loadCfgInfo(is, null);
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		mpTypeClass.put("clean_database", "hrds.agent.job.biz.dataclean.DataClean_Biz");
+//		File file = new File("FactoryConf.xml");
+//		try {
+//			if (file.exists()) {
+//				loadCfgInfo(null, file);
+//			} else {
+//				InputStream is = XMLUtil.getInputStream("config/FactoryConf.xml");
+//				loadCfgInfo(is, null);
+//			}
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//		}
 	}
 
 	/**

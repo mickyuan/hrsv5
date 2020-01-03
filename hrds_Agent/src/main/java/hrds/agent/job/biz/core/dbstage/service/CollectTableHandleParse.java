@@ -26,8 +26,8 @@ import org.slf4j.LoggerFactory;
 import java.sql.*;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
-import java.util.*;
 import java.util.Date;
+import java.util.*;
 
 @DocClass(desc = "根据页面所选的表和字段对jdbc所返回的meta信息进行解析", author = "zxz", createdate = "2019/12/4 11:17")
 public class CollectTableHandleParse {
@@ -45,11 +45,15 @@ public class CollectTableHandleParse {
 	public static TableBean generateTableInfo(SourceDataConfBean sourceDataConfBean,
 	                                          CollectTableBean collectTableBean) {
 		TableBean tableBean = new TableBean();
+		Connection conn = null;
 		try {
+			//获取jdbc连接
+			conn = ConnUtil.getConnection(sourceDataConfBean.getDatabase_drive(), sourceDataConfBean.getJdbc_url(),
+					sourceDataConfBean.getUser_name(), sourceDataConfBean.getDatabase_pad());
 			//1、根据数据源信息和采集表信息抽取SQL
 			String collectSQL = getCollectSQL(sourceDataConfBean, collectTableBean);
 			tableBean.setCollectSQL(collectSQL);
-			ResultSet resultSet = getResultSet(sourceDataConfBean, collectSQL);
+			ResultSet resultSet = getResultSet(collectSQL, conn);
 			StringBuilder columnMetaInfo = new StringBuilder();//生成的元信息列名
 			StringBuilder allColumns = new StringBuilder();//要采集的列名
 			StringBuilder colTypeMetaInfo = new StringBuilder();//生成的元信息列类型
@@ -111,22 +115,6 @@ public class CollectTableHandleParse {
 			tableBean.setParseJson(parseJson);
 		} catch (Exception e) {
 			throw new AppSystemException("根据数据源信息和采集表信息得到卸数元信息失败！", e);
-		}
-		return tableBean;
-	}
-
-	private static ResultSet getResultSet(SourceDataConfBean sourceDataConfBean, String collectSQL) {
-		//TODO 这里要不要加WHERE 1=2 处理，待定
-		Connection conn = null;
-		ResultSet columnSet;
-		try {
-			//获取jdbc连接
-			conn = ConnUtil.getConnection(sourceDataConfBean.getDatabase_drive(), sourceDataConfBean.getJdbc_url(),
-					sourceDataConfBean.getUser_name(), sourceDataConfBean.getDatabase_pad());
-			PreparedStatement statement = conn.prepareStatement(collectSQL);
-			columnSet = statement.executeQuery();
-		} catch (Exception e) {
-			throw new AppSystemException("获取ResultSet异常", e);
 		} finally {
 			if (conn != null) {
 				try {
@@ -135,6 +123,18 @@ public class CollectTableHandleParse {
 					e.printStackTrace();
 				}
 			}
+		}
+		return tableBean;
+	}
+
+	private static ResultSet getResultSet(String collectSQL, Connection conn) {
+		ResultSet columnSet;
+		try {
+			String exeSql = "SELECT * FROM ( " + collectSQL + ") AS HYREN_ALIAS WHERE 1 = 2";
+			PreparedStatement statement = conn.prepareStatement(exeSql);
+			columnSet = statement.executeQuery();
+		} catch (Exception e) {
+			throw new AppSystemException("获取ResultSet异常", e);
 		}
 		return columnSet;
 	}

@@ -1,14 +1,6 @@
 package hrds.commons.hadoop.readconfig;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.security.auth.login.AppConfigurationEntry;
-import javax.security.auth.login.AppConfigurationEntry.LoginModuleControlFlag;
-
-import hrds.commons.utils.PropertyParaValue;
+import hrds.commons.utils.PropertyParaUtil;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -17,11 +9,18 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.authentication.util.KerberosUtil;
 
+import javax.security.auth.login.AppConfigurationEntry;
+import javax.security.auth.login.AppConfigurationEntry.LoginModuleControlFlag;
+import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
 public class LoginUtil {
 
 	private static final Log log = LogFactory.getLog(LoginUtil.class);
 
-	private static final String PRNCIPAL_NAME = PropertyParaValue.getString("principle.name", "admin@HADOOP.COM");
+	private static final String PRNCIPAL_NAME = PropertyParaUtil.getString("principle.name", "admin@HADOOP.COM");
 	private String confDir;
 	public String PATH_TO_KEYTAB;
 	public String PATH_TO_KRB5_CONF;

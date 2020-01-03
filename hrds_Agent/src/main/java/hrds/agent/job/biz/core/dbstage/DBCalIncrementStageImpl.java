@@ -5,10 +5,7 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Return;
 import fd.ng.db.conf.Dbtype;
 import fd.ng.db.jdbc.DatabaseWrapper;
-import hrds.agent.job.biz.bean.CollectTableBean;
-import hrds.agent.job.biz.bean.DataStoreConfBean;
-import hrds.agent.job.biz.bean.StageStatusInfo;
-import hrds.agent.job.biz.bean.TableBean;
+import hrds.agent.job.biz.bean.*;
 import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
@@ -31,18 +28,18 @@ public class DBCalIncrementStageImpl extends AbstractJobStage {
 	//数据采集表对应的存储的所有信息
 	private CollectTableBean collectTableBean;
 	//数据库采集表对应的meta信息
-	private TableBean tableBean;
+//	private TableBean tableBean;
 
-	public DBCalIncrementStageImpl(TableBean tableBean, CollectTableBean collectTableBean) {
+	public DBCalIncrementStageImpl(CollectTableBean collectTableBean) {
 		this.collectTableBean = collectTableBean;
-		this.tableBean = tableBean;
+//		this.tableBean = tableBean;
 	}
 
 	@Method(desc = "数据库直连采集计算增量阶段处理逻辑，处理完成后，无论成功还是失败，" +
 			"将相关状态信息封装到StageStatusInfo对象中返回", logicStep = "")
 	@Return(desc = "StageStatusInfo是保存每个阶段状态信息的实体类", range = "不会为null,StageStatusInfo实体类对象")
 	@Override
-	public StageStatusInfo handleStage() {
+	public StageParamInfo handleStage(StageParamInfo stageParamInfo) {
 		LOGGER.info("------------------数据库直连采集增量计算阶段开始------------------");
 		//1、创建卸数阶段状态信息，更新作业ID,阶段名，阶段开始时间
 		StageStatusInfo statusInfo = new StageStatusInfo();
@@ -50,6 +47,7 @@ public class DBCalIncrementStageImpl extends AbstractJobStage {
 				StageConstant.DATALOADING.getCode());
 		try {
 			List<DataStoreConfBean> dataStoreConfBeanList = collectTableBean.getDataStoreConfBean();
+			TableBean tableBean = stageParamInfo.getTableBean();
 			for (DataStoreConfBean dataStoreConfBean : dataStoreConfBeanList) {
 				//根据存储类型上传到目的地
 				if (Store_type.DATABASE.getCode().equals(dataStoreConfBean.getStore_type())) {
@@ -102,6 +100,7 @@ public class DBCalIncrementStageImpl extends AbstractJobStage {
 			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.FAILED.getCode(), e.getMessage());
 			LOGGER.error("数据库直连采集增量阶段失败：", e.getMessage());
 		}
-		return statusInfo;
+		stageParamInfo.setStatusInfo(statusInfo);
+		return stageParamInfo;
 	}
 }
