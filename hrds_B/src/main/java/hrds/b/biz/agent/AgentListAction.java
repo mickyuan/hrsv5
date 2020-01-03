@@ -535,7 +535,7 @@ public class AgentListAction extends BaseAction {
 		for(int i = 0; i < collectTables.size(); i++){
 			JSONObject collectTable = collectTables.getJSONObject(i);
 			//TODO 由于目前定义作业还没有原型，因此暂时手动将跑批日期设为当前日期
-			collectTable.put("eltDate", DateUtil.getSysDate());
+			collectTable.put("etlDate", DateUtil.getSysDate());
 			//2-4-1、查询当前数据库采集任务下每张表的列合并信息，放入对应的表的JSONObject中
 			Long tableId = collectTable.getLong("table_id");
 			List<Column_merge> columnMerges = Dbo.queryList(Column_merge.class, "select * from " + Column_merge.TableName + " where table_id = ?", tableId);
