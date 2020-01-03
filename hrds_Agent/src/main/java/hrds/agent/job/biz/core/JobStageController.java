@@ -1,18 +1,23 @@
 package hrds.agent.job.biz.core;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
+import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.JobStatusInfo;
 import hrds.agent.job.biz.bean.StageParamInfo;
 import hrds.agent.job.biz.bean.StageStatusInfo;
 import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.utils.EnumUtil;
-import hrds.agent.job.biz.utils.ProductFileUtil;
+import hrds.agent.job.biz.utils.FileUtil;
+import hrds.commons.codes.DataBaseCode;
 import hrds.commons.exception.AppSystemException;
+
+import java.io.File;
 
 @DocClass(desc = "作业阶段控制器,用于注册各个阶段，形成一个采集作业阶段链条，从第一个阶段开始执行，" +
 		"并且根据上一阶段的执行状态判断下一阶段是否执行", author = "WangZhengcheng")
@@ -47,62 +52,98 @@ public class JobStageController {
 	}
 
 	@Method(desc = "按照顺序从采集作业的第一个阶段开始执行", logicStep = "" +
-			"1、从第一个阶段开始执行，并判断执行结果" +
-			"2、若第一阶段执行成功，记录阶段执行状态，并继续向下面的阶段执行" +
-			"3、若第一阶段执行失败，目前的处理逻辑是直接记录错误信息，然后返回jobStatusInfo" +
-			"4、若除第一阶段外的其他阶段执行失败，记录错误信息，尚欠是否继续运行下一阶段的逻辑")
+			"1、根据状态文件路径获取状态文件" +
+			"2、判断JobStatusInfo中的StageParamInfo是否为空，如果为空，说明卸数阶段还未执行，new一个新的StageParamInfo对象进行卸数" +
+			"   如果不为空，说明可能本次handleStageByOrder可能是断点续读，使用从文件中获取到的StageParamInfo对象执行责任链的头节点" +
+			"3、按照责任链依次执行每个节点，首先执行头节点" +
+			"   3-1、如果头节点执行成功" +
+			"       3-1-1、根据阶段设置阶段状态" +
+			"       3-1-2、将需要在各个阶段中传递的参数重新存到jobInfo中" +
+			"   3-2、如果头节点执行失败" +
+			"       3-2-1、根据阶段设置阶段状态" +
+			"       3-2-2、设置错误信息" +
+			"4、写文件" +
+			"5、执行除第一阶段外剩下的其他阶段，采取的方式仍然是先读取文件，然后执行，执行完之后写文件" +
+			"6、最终作业每个阶段全部执行完成，返回")
 	@Param(name = "statusFilePath", desc = "作业状态文件路径", range = "不为空")
-	@Param(name = "jobStatus", desc = "作业状态对象", range = "JobStatusInfo实体类对象")
-	@Return(desc = "查询结果集，查询出的结果可能有0-N条", range = "不会为null")
-	public JobStatusInfo handleStageByOrder(String statusFilePath, JobStatusInfo jobStatus)
-			throws Exception {
+	@Return(desc = "作业状态信息", range = "不会为null")
+	public JobStatusInfo handleStageByOrder(String statusFilePath, JobStatusInfo jobStatusInfo) throws Exception {
 
-		JobStatusInfo jobInfo = jobStatus;
-		//1、从第一个阶段开始执行
-		StageParamInfo stageParamInfo = new StageParamInfo();
+		if(StringUtil.isBlank(statusFilePath)){
+			throw new AppSystemException("状态文件路径不能为空");
+		}
+
+		if(jobStatusInfo == null){
+			throw new AppSystemException("作业状态对象不能为空");
+		}
+
+		//1、根据状态文件路径获取状态文件
+		File file = new File(statusFilePath);
+
+		/*
+		 * 2、判断JobStatusInfo中的StageParamInfo是否为空，如果为空，说明卸数阶段还未执行，new一个新的StageParamInfo对象进行卸数
+		 * 如果不为空，说明可能本次handleStageByOrder可能是断点续读，使用从文件中获取到的StageParamInfo对象执行责任链的头节点
+		 */
+		StageParamInfo stageParamInfo = jobStatusInfo.getStageParamInfo();
+		if(stageParamInfo == null){
+			stageParamInfo = new StageParamInfo();
+		}
+		//3、按照责任链依次执行每个节点，首先执行头节点
 		StageParamInfo firstStageParamInfo = head.handleStage(stageParamInfo);
-		//判断第一阶段的执行结果
+		jobStatusInfo = setStageStatus(firstStageParamInfo.getStatusInfo(), jobStatusInfo);
+		//3-1、如果头节点执行成功
 		if (firstStageParamInfo.getStatusInfo().getStatusCode() == RunStatusConstant.SUCCEED.getCode()) {
-			//2、若第一阶段执行成功，记录阶段执行状态，并继续向下执行
-			jobInfo = setStageStatus(firstStageParamInfo.getStatusInfo(), jobInfo);
-			//TODO 讨论，是否由该种方式来记录运行时状态
-			ProductFileUtil.createStatusFile(statusFilePath, JSONObject.toJSONString(jobInfo));
-			JobStageInterface stage = head;
-			while ((stage = stage.getNextStage()) != null) {
-				StageParamInfo paramInfo = stage.handleStage(firstStageParamInfo);
-				if (paramInfo.getStatusInfo().getStatusCode() == RunStatusConstant.SUCCEED.getCode()) {
-					jobInfo = setStageStatus(paramInfo.getStatusInfo(), jobInfo);
-				} else {
-					//TODO 下面的处理方式待商榷
-					// 4、若除第一阶段外的其他阶段执行失败，记录错误信息，尚欠是否继续运行下一阶段的逻辑
-					jobInfo = setStageStatus(paramInfo.getStatusInfo(), jobInfo);
-					StageConstant stageConstant = EnumUtil.getEnumByCode(StageConstant.class,
-							paramInfo.getStatusInfo().getStageNameCode());
-					if(stageConstant != null){
-						jobInfo.setExceptionInfo(stageConstant.getDesc() + "阶段执行失败");
-					}else{
-						throw new AppSystemException("系统不能识别该作业阶段");
-					}
-				}
-				//记录每个阶段的状态
-				ProductFileUtil.createStatusFile(statusFilePath, JSONObject.toJSONString(jobInfo));
-			}
-		} else {
-			//TODO 下面的处理方式待商榷
-			//3、若第一阶段执行失败，目前的处理逻辑是直接记录错误信息，然后返回jobStatusInfo
-			jobInfo = setStageStatus(firstStageParamInfo.getStatusInfo(), jobInfo);
+			//3-1-1、根据阶段设置阶段状态
+			//3-1-2、将需要在各个阶段中传递的参数重新存到jobInfo中
+			jobStatusInfo.setStageParamInfo(firstStageParamInfo);
+		}
+		//3-2、如果头节点执行失败
+		else if(firstStageParamInfo.getStatusInfo().getStatusCode() == RunStatusConstant.FAILED.getCode()){
+			//3-2-1、根据阶段设置阶段状态
 			StageConstant stageConstant = EnumUtil.getEnumByCode(StageConstant.class,
 					firstStageParamInfo.getStatusInfo().getStageNameCode());
+			//3-2-2、设置错误信息
 			if(stageConstant != null){
-				jobInfo.setExceptionInfo(stageConstant.getDesc() + "阶段执行失败");
+				jobStatusInfo.setExceptionInfo(stageConstant.getDesc() + "阶段执行失败");
 			}else{
 				throw new AppSystemException("系统不能识别该作业阶段");
 			}
+		}else{
+			throw new AppSystemException("除了成功和失败，其他状态目前暂时未做处理");
 		}
-		jobInfo.setRunStatus(1000);
-		ProductFileUtil.createStatusFile(statusFilePath, JSONObject.toJSONString(jobInfo));
-		//此时代表作业到达了终态，所以不记录作业状态，由控制整个作业的TaskControl来记录
-		return jobInfo;
+
+		//4、写文件
+		FileUtil.writeString2File(file, JSON.toJSONString(jobStatusInfo), DataBaseCode.UTF_8.getValue());
+
+		//5、执行除第一阶段外剩下的其他阶段，采取的方式仍然是先读取文件，然后执行，执行完之后写文件
+		JobStageInterface stage = head;
+		while ((stage = stage.getNextStage()) != null) {
+			//重新读文件，获取jobStatusInfo
+			jobStatusInfo = JSONObject.parseObject(FileUtil.readFile2String(file), JobStatusInfo.class);
+			//如果从文件中获取到的作业状态信息中异常信息不为空，说明当前作业执行失败，直接返回jobStatusInfo
+			if(StringUtil.isNotBlank(jobStatusInfo.getExceptionInfo())){
+				return jobStatusInfo;
+			}
+			StageParamInfo otherParamInfo = stage.handleStage(jobStatusInfo.getStageParamInfo());
+			jobStatusInfo = setStageStatus(otherParamInfo.getStatusInfo(), jobStatusInfo);
+			if (otherParamInfo.getStatusInfo().getStatusCode() == RunStatusConstant.SUCCEED.getCode()) {
+				jobStatusInfo.setStageParamInfo(otherParamInfo);
+			}else if(otherParamInfo.getStatusInfo().getStatusCode() == RunStatusConstant.FAILED.getCode()){
+				StageConstant stageConstant = EnumUtil.getEnumByCode(StageConstant.class,
+						firstStageParamInfo.getStatusInfo().getStageNameCode());
+				if(stageConstant != null){
+					jobStatusInfo.setExceptionInfo(stageConstant.getDesc() + "阶段执行失败");
+				}else{
+					throw new AppSystemException("系统不能识别该作业阶段" + otherParamInfo.getStatusInfo().getStatusCode());
+				}
+			}else{
+				throw new AppSystemException("除了成功和失败，其他状态目前暂时未做处理");
+			}
+			//写文件
+			FileUtil.writeString2File(file, JSON.toJSONString(jobStatusInfo), DataBaseCode.UTF_8.getValue());
+		}
+		//6、最终作业每个阶段全部执行完成，返回
+		return jobStatusInfo;
 	}
 
 	@Method(desc = "每个阶段执行完之后，无论成功还是失败，记录阶段执行状态", logicStep = "" +
@@ -127,8 +168,10 @@ public class JobStageController {
 			jobStatus.setDataLodingStatus(stageStatus);
 		} else if (stage == StageConstant.CALINCREMENT) {
 			jobStatus.setCalIncrementStatus(stageStatus);
-		} else {
+		} else if (stage == StageConstant.DATAREGISTRATION){
 			jobStatus.setDataRegistrationStatus(stageStatus);
+		} else{
+			throw new AppSystemException("系统不支持的采集阶段");
 		}
 		return jobStatus;
 	}

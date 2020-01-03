@@ -1,5 +1,7 @@
 package hrds.agent.job.biz.bean;
 
+import java.io.Serializable;
+
 /**
  * ClassName: StageStatusInfo <br/>
  * Function: 阶段状态信息实体 <br/>
@@ -10,7 +12,9 @@ package hrds.agent.job.biz.bean;
  * Version 1.0
  * Since JDK 1.8
  **/
-public class StageStatusInfo {
+public class StageStatusInfo implements Serializable {
+
+	private static final long serialVersionUID = 2931307277043396275L;
 
 	private String jobId;
 	private int stageNameCode;

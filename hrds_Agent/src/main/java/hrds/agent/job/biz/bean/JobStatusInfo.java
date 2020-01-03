@@ -29,6 +29,8 @@ public class JobStatusInfo implements Serializable {
 	private StageStatusInfo calIncrementStatus;
 	private StageStatusInfo dataRegistrationStatus;
 	private String exceptionInfo;
+	//主要用于存放当前数据库采集任务中，需要在各个阶段传递的参数
+	private StageParamInfo stageParamInfo;
 
 	public String getJobId() {
 		return jobId;
@@ -126,20 +128,12 @@ public class JobStatusInfo implements Serializable {
 		this.exceptionInfo = exceptionInfo;
 	}
 
-	@Override
-	public String toString() {
-		return "JobStatusInfo{" +
-				"jobId='" + jobId + '\'' +
-				", runStatus=" + runStatus +
-				", startDate='" + startDate + '\'' +
-				", startTime='" + startTime + '\'' +
-				", unloadDataStatus=" + unloadDataStatus +
-				", uploadStatus=" + uploadStatus +
-				", dataLodingStatus=" + dataLodingStatus +
-				", calIncrementStatus=" + calIncrementStatus +
-				", dataRegistrationStatus=" + dataRegistrationStatus +
-				", exceptionInfo='" + exceptionInfo + '\'' +
-				'}';
+	public StageParamInfo getStageParamInfo() {
+		return stageParamInfo;
+	}
+
+	public void setStageParamInfo(StageParamInfo stageParamInfo) {
+		this.stageParamInfo = stageParamInfo;
 	}
 }
 

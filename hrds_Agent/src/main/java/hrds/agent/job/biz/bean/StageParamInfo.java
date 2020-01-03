@@ -2,10 +2,13 @@ package hrds.agent.job.biz.bean;
 
 import fd.ng.core.annotation.DocClass;
 
+import java.io.Serializable;
 import java.util.List;
 
 @DocClass(desc = "采集阶段传参信息")
-public class StageParamInfo {
+public class StageParamInfo implements Serializable {
+
+	private static final long serialVersionUID = 7280781296966361533L;
 
 	//卸数完成后，列类型
 	private List<String> columnTypes;
