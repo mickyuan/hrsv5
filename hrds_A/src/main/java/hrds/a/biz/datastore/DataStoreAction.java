@@ -669,7 +669,7 @@ public class DataStoreAction extends BaseAction {
         return Dbo.queryResult(asmSql.sql(), asmSql.params());
     }
 
-    @Method(desc = "查询存储层数据类型对照信息",
+    @Method(desc = "查询存储层数据类型长度对照信息",
             logicStep = "1.数据可访问权限处理方式，该方法不需要权限控制" +
                     "2.查询数据存储层数据类型对照表信息" +
                     "3.查询数据类型长度对照表信息" +
@@ -688,7 +688,16 @@ public class DataStoreAction extends BaseAction {
         return Dbo.queryResult(asmSql.sql(), asmSql.params());
     }
 
-    @Method(desc = "下载配置文件", logicStep = "方法步骤")
+    @Method(desc = "下载配置文件",
+            logicStep = "1.数据可访问权限处理方式，该方法不需要权限验证" +
+                    "2.清空response" +
+                    "3.设置响应头，控制浏览器下载该文件" +
+                    "3.1firefox浏览器" +
+                    "3.2其它浏览器" +
+                    "4.读取要下载的文件，保存到文件输入流" +
+                    "5.创建输出流" +
+                    "6.将输入流写入到浏览器中" +
+                    "7.关闭流")
     @Param(name = "fileName", desc = "下载文件名称", range = "数据存储层配置属性key值，新增时生成")
     @Param(name = "filePath", desc = "下载文件路径", range = "数据存储层配置属性value值，新增时生成")
     public void downloadConfFile(String fileName, String filePath) {
@@ -719,6 +728,7 @@ public class DataStoreAction extends BaseAction {
             while ((len = in.read(bytes)) > 0) {
                 out.write(bytes, 0, len);
             }
+            // 7.关闭流
             out.flush();
             out.close();
             in.close();
