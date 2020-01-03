@@ -32,14 +32,14 @@ public class FullTextSearchAction extends BaseAction {
 
 	@Method(desc = "获取用户收藏的文件列表,返回结果默认显示最近9条收藏",
 			logicStep = "数据可访问权限处理方式: 根据 User_fav 表的 user_id做权限校验" +
-					"1.如果查询条数小于1条则显示默认9条，查询条数大于99条则显示99条，否则取传入的查询条数" +
+					"1.如果查询条数小于1条则显示默认9条,查询条数大于99条则显示99条,否则取传入的查询条数" +
 					"2.返回当前登录的用户已经收藏的文件列表的List结果集"
 	)
-	@Param(name = "queryNum", desc = "查询显示条数", range = "int类型值，1-99，默认为9", valueIfNull = "9")
+	@Param(name = "queryNum", desc = "查询显示条数", range = "int类型值,1-99,默认为9", valueIfNull = "9")
 	@Return(desc = "用户收藏文件列表的结果集List", range = "无限制")
-	public List<Map<String, Object>> getCollectFile(int queryNum) {
+	public List<Map<String, Object>> getCollectFiles(int queryNum) {
 		//数据可访问权限处理方式: 根据 User_fav 表的 user_id做权限校验
-		//1.如果查询条数小于1条则显示默认9条，查询条数大于99条则显示99条，否则取传入的查询条数
+		//1.如果查询条数小于1条则显示默认9条,查询条数大于99条则显示99条,否则取传入的查询条数
 		queryNum = Math.max(1, queryNum);
 		queryNum = Math.min(queryNum, 99);
 		//2.获取当前用户已经收藏的文件列表
@@ -60,18 +60,18 @@ public class FullTextSearchAction extends BaseAction {
 					"1-4.文件名搜索返回结果集" +
 					"2.结果集处理"
 	)
-	@Param(name = "queryKeyword", desc = "查询显示条数", range = "String类型值，无输入限制")
-	@Param(name = "searchType", desc = "检索类型", range = "String类型值，检索类型（全文检索：fullTextSearch，" +
-			"searchByMap：以图搜图，articleSimilarityQuery：文章相似度，fileNameSearch：文件名搜索）", valueIfNull =
+	@Param(name = "queryKeyword", desc = "查询内容", range = "String类型值,无输入限制", nullable = true)
+	@Param(name = "searchType", desc = "检索类型", range = "String类型值,检索类型（全文检索：fullTextSearch," +
+			"searchByMap：以图搜图,articleSimilarityQuery：文章相似度,fileNameSearch：文件名搜索）", valueIfNull =
 			"fullTextSearch")
-	@Param(name = "start", desc = "查询开始行", range = "int类型值，1-99，默认为9", valueIfNull = "9")
-	@Param(name = "currPage", desc = "分页", range = "int类型值，默认为1", valueIfNull = "1")
-	@Param(name = "pageSize", desc = "分页大小", range = "int类型值，默认为10", valueIfNull = "10")
-	@Param(name = "imageAddress", desc = "以图搜图上传文件路径", range = "String类型值，上传的文件全路径地址")
-	@Param(name = "docAddress", desc = "文章上传文件路径", range = "String类型值，上传的文件全路径地址")
-	@Param(name = "fileName", desc = "搜索文件名", range = "String类型值，待检索的文件名")
-	@Param(name = "similarityRate", desc = "相似度百分率", range = "String类型值，1%-100%")
-	@Param(name = "searchWay", desc = "是否返回文本信息", range = "String类型值，(1：是，0：否)")
+	@Param(name = "start", desc = "查询开始行", range = "int类型值,1-99,默认为9", valueIfNull = "1")
+	@Param(name = "currPage", desc = "分页", range = "int类型值,默认为1", valueIfNull = "1")
+	@Param(name = "pageSize", desc = "分页大小", range = "int类型值,默认为10", valueIfNull = "10")
+	@Param(name = "imageAddress", desc = "以图搜图上传文件路径", range = "String类型,上传的文件全路径地址", nullable = true)
+	@Param(name = "docAddress", desc = "文章上传文件路径", range = "String类型值,上传的文件全路径地址", nullable = true)
+	@Param(name = "fileName", desc = "搜索文件名", range = "String类型值,待检索的文件名", nullable = true)
+	@Param(name = "similarityRate", desc = "相似度百分率", range = "String类型值,1%-100%", nullable = true)
+	@Param(name = "searchWay", desc = "是否返回文本信息", range = "String类型值,(1：是,0：否)", valueIfNull = "0")
 	@Return(desc = "用户收藏文件列表的结果集List", range = "无限制")
 	public Map<String, Object> fullTextSearch(String queryKeyword, String searchType, int start, int currPage,
 	                                          int pageSize, String imageAddress, String docAddress, String fileName,
@@ -154,10 +154,10 @@ public class FullTextSearchAction extends BaseAction {
 					"4-2.获取查询sql返回结果" +
 					"5.设置返回结果集内容"
 	)
-	@Param(name = "queryConditions", desc = "查询条件", range = "String类型值，无输入限制")
-	@Param(name = "start", desc = "查询开始行", range = "int类型值，1-99，默认为9", valueIfNull = "9")
-	@Param(name = "currPage", desc = "分页", range = "int类型值，默认为1", valueIfNull = "1")
-	@Param(name = "pageSize", desc = "分页大小", range = "int类型值，默认为10", valueIfNull = "10")
+	@Param(name = "queryConditions", desc = "查询条件", range = "String类型值,无输入限制")
+	@Param(name = "start", desc = "查询开始行", range = "int类型值,1-99,默认为9", valueIfNull = "9")
+	@Param(name = "currPage", desc = "分页", range = "int类型值,默认为1", valueIfNull = "1")
+	@Param(name = "pageSize", desc = "分页大小", range = "int类型值,默认为10", valueIfNull = "10")
 	@Return(desc = "通过查询结果查出更多关联信息的结果集", range = "无限制")
 	private Result getFinalResult(String queryConditions, int start, int pageSize, int currPage, int totalSize) {
 		//1.初始化待返回的结果集
@@ -239,14 +239,14 @@ public class FullTextSearchAction extends BaseAction {
 	}
 
 	@Method(desc = "获取solr分词关键字",
-			logicStep = "数据可访问权限处理方式: 无数据库访问，不做权限校验" +
-					"1.如果查询条数小于1条则显示默认9条，查询条数大于99条则显示99条，否则取传入的查询条数" +
+			logicStep = "数据可访问权限处理方式: 无数据库访问,不做权限校验" +
+					"1.如果查询条数小于1条则显示默认9条,查询条数大于99条则显示99条,否则取传入的查询条数" +
 					"2.返回当前登录的用户已经收藏的文件列表的List结果集"
 	)
-	@Param(name = "queryKeyword", desc = "查询关键字", range = "String类型值，无限制条件")
+	@Param(name = "queryKeyword", desc = "查询关键字", range = "String类型值,无限制条件")
 	@Return(desc = "solr分词关键字", range = "无限制")
 	private String getParticipleQuery(String queryKeyword) {
-		//未实现，需要 SolrFactory
+		//未实现,需要 SolrFactory
 //		try (OperSolr os = SolrFactory.getInstance()) {
 //			List<String> participleList = os.getAnalysis(query);
 //			participleList.add(0, query);
@@ -273,25 +273,25 @@ public class FullTextSearchAction extends BaseAction {
 	}
 
 	@Method(desc = "查询结果集处理",
-			logicStep = "数据可访问权限处理方式:暂不做数据校验处理（该表存储数据量多的情况下，数据查询效率问题）" +
+			logicStep = "数据可访问权限处理方式:暂不做数据校验处理（该表存储数据量多的情况下,数据查询效率问题）" +
 					"1.获取solr返回结果" +
 					"2.返回两类数据 数据文件和文本文件" +
 					"2-1.存放文件卸数的 因为有摘要" +
 					"2-2.存放数据库卸数的 因为返回每一行数据量大" +
 					"2-3.记录文件的file_id" +
-					"2-3-1.通过file_id查询文件，不为空则继续往结果集添加新的列，否则传入空集,文件采集" +
-					"2-4.同样对表名进行处理，类似" +
+					"2-3-1.通过file_id查询文件,不为空则继续往结果集添加新的列,否则传入空集,文件采集" +
+					"2-4.同样对表名进行处理,类似" +
 					"2-5.把结果集放入一个新的结果集,然后返回"
 	)
-	@Param(name = "queryConditions", desc = "查询条件", range = "String类型值，符合solr查询规则")
-	@Param(name = "start", desc = "查询开始行", range = "int类型值，1-99，默认为9", valueIfNull = "9")
-	@Param(name = "pageSize", desc = "分页大小", range = "int类型值，默认为10", valueIfNull = "10")
-	@Param(name = "result", desc = "查询结果集", range = "result类型值，不为空", nullable = false)
-	@Param(name = "totalSize", desc = "查询结果行数统计", range = "long类型值，不为空", valueIfNull = "0")
+	@Param(name = "queryConditions", desc = "查询条件", range = "String类型值,符合solr查询规则")
+	@Param(name = "start", desc = "查询开始行", range = "int类型值,1-99,默认为9", valueIfNull = "9")
+	@Param(name = "pageSize", desc = "分页大小", range = "int类型值,默认为10", valueIfNull = "10")
+	@Param(name = "result", desc = "查询结果集", range = "result类型值,不为空", nullable = false)
+	@Param(name = "totalSize", desc = "查询结果行数统计", range = "long类型值,不为空", valueIfNull = "0")
 	@Return(desc = "solr分词关键字", range = "无限制")
 	private Result queryResultProcessing(String queryConditions, int start,
 	                                     int pageSize, Result result, int totalSize) {
-		//数据可访问权限处理方式: source_file_attribute 暂不做数据校验处理（该表存储数据量多的情况下，数据查询效率问题）
+		//数据可访问权限处理方式: source_file_attribute 暂不做数据校验处理（该表存储数据量多的情况下,数据查询效率问题）
 		//1.获取solr返回结果
 		List<Map<String, String>> querySolrRs = getQueryFromSolr(queryConditions, start, pageSize);
 		if (querySolrRs.size() == 0) {
@@ -313,7 +313,7 @@ public class FullTextSearchAction extends BaseAction {
 				//总行数
 				totalSize = Integer.parseInt(parseObject.get("sum"));
 			}
-			//数据库卸数(必须保证，db卸数的表中没有表的列名为is_big_file)
+			//数据库卸数(必须保证,db卸数的表中没有表的列名为is_big_file)
 			if (StringUtil.isEmpty(isBigFile)) {
 				//数据库表名
 				String tableName = parseObject.get("table-name");
@@ -333,7 +333,7 @@ public class FullTextSearchAction extends BaseAction {
 		asmSql.addSql("select * from source_file_attribute where");
 		asmSql.addORParam("file_id", idList.toArray());
 		asmSql.addSql(" ORDER BY file_id");
-		//2-3-1.通过file_id查询文件，不为空则继续往结果集添加新的列，否则传入空集,文件采集
+		//2-3-1.通过file_id查询文件,不为空则继续往结果集添加新的列,否则传入空集,文件采集
 		Result queryResultByFileId = new Result();
 		if (idList.size() != 0) {
 			queryResultByFileId = Dbo.queryResult(asmSql.sql(), asmSql.params());
@@ -347,7 +347,7 @@ public class FullTextSearchAction extends BaseAction {
 		}
 		//把结果集放入一个新的结果集
 		result.add(queryResultByFileId);
-		//2-4.同样对表名进行处理，类似
+		//2-4.同样对表名进行处理,类似
 		Result queryResultByTableName = new Result();
 		if (tableNameList.size() != 0) {
 			asmSql.clean();
@@ -366,13 +366,13 @@ public class FullTextSearchAction extends BaseAction {
 	}
 
 	@Method(desc = "根据查询条件在solr中检索出符合条件的结果",
-			logicStep = "数据可访问权限处理方式: 无数据库访问，不做权限校验" +
-					"1.如果查询条数小于1条则显示默认9条，查询条数大于99条则显示99条，否则取传入的查询条数" +
+			logicStep = "数据可访问权限处理方式: 无数据库访问,不做权限校验" +
+					"1.如果查询条数小于1条则显示默认9条,查询条数大于99条则显示99条,否则取传入的查询条数" +
 					"2.返回当前登录的用户已经收藏的文件列表的List结果集"
 	)
-	@Param(name = "queryKeyword", desc = "查询关键字", range = "String类型值，无限制条件,不为空", nullable = false)
-	@Param(name = "start", desc = "查询开始行数", range = "int类型值，正整数")
-	@Param(name = "rows", desc = "查询 行数", range = "int类型值，正整数")
+	@Param(name = "queryKeyword", desc = "查询关键字", range = "String类型值,无限制条件,不为空", nullable = false)
+	@Param(name = "start", desc = "查询开始行数", range = "int类型值,正整数")
+	@Param(name = "rows", desc = "查询 行数", range = "int类型值,正整数")
 	@Return(desc = "solr检索出的结果集", range = "无限制")
 	private List<Map<String, String>> getQueryFromSolr(String queryConditions, int start, int rows) {
 		List<Map<String, String>> resultMaps = new ArrayList<>();
@@ -380,7 +380,7 @@ public class FullTextSearchAction extends BaseAction {
 		if (StringUtil.isEmpty(queryConditions)) {
 			queryConditions = "*:*";
 		}
-		//未实现，需要 SolrFactory
+		//未实现,需要 SolrFactory
 //		try (OperSolr os = SolrFactory.getInstance()) {
 //			querySolr = (List<JSONObject>)os.QuerySolr(query, start, rows);
 //		}
@@ -439,7 +439,7 @@ public class FullTextSearchAction extends BaseAction {
 			logicStep = "获取文章相似度查询结果")
 	@Param(name = "docAddress", desc = "文章上传地址", range = "文章上传地址全路径")
 	@Param(name = "similarityRate", desc = "文章相似率", range = "1%-100%")
-	@Param(name = "searchWay", desc = "查询类型,是否返回文本信息", range = "1：是，0：否")
+	@Param(name = "searchWay", desc = "查询类型,是否返回文本信息", range = "1：是,0：否")
 	@Return(desc = "相似文件查询结果的Result", range = "无限制")
 	private Result getWZXSDResult(String docAddress, String similarityRate, String searchWay, int currPage,
 	                              int pageSize) {
@@ -457,7 +457,7 @@ public class FullTextSearchAction extends BaseAction {
 		} else if (searchWay.equals(IsFlag.Fou.getCode())) {
 			documentSimilar = es.getDocumentSimilarFromSolr(docAddress, similarityRate, false);
 		} else {
-			throw new BusinessException("查询类型错误，是否返回搜索文本，1：是；0：否！");
+			throw new BusinessException("查询类型错误,是否返回搜索文本,1：是；0：否！");
 		}
 		for (int i = 0; i < documentSimilar.getRowCount(); i++) {
 			String rowKey = documentSimilar.getString(i, "file_id");
@@ -490,9 +490,9 @@ public class FullTextSearchAction extends BaseAction {
 
 	@Method(desc = "获取文件名检索结果",
 			logicStep = "获取文件名检索结果")
-	@Param(name = "fileName", desc = "搜索文件名", range = "String类型字符串，没有输入限制")
+	@Param(name = "fileName", desc = "搜索文件名", range = "String类型字符串,没有输入限制")
 	@Param(name = "currPage", desc = "分页开始页面", range = "1%-100%", valueIfNull = "1")
-	@Param(name = "pageSize", desc = "分页大小", range = "1：是，0：否", valueIfNull = "10")
+	@Param(name = "pageSize", desc = "分页大小", range = "1：是,0：否", valueIfNull = "10")
 	@Return(desc = "文件名搜索查询结果的Result", range = "无限制")
 	private Result getWJMSSResult(String fileName, int currPage, int pageSize) {
 		Object[] sourceIdsObj = Dbo.queryOneColumnList("select source_id from data_source").toArray();
