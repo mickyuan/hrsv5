@@ -47,22 +47,22 @@ public class Clean {
 			Map<Integer, String> colMap = ordering.get(columnname);
 			for (int i = colMap.size(); i >= 1; i--) {
 				switch (colMap.get(i)) {
-					case "replacement":
+					case "2":
 						columndata = allclean.replace(deleSpecialSpace, columndata, columnname);//字符替换
 						break;
-					case "complement":
+					case "1":
 						columndata = allclean.filling(strFilling, columndata, columnname);//字符补齐
 						break;
-					case "conversion":
+					case "4":
 						columndata = allclean.codeTrans(codeIng, columndata, columnname);//码值转换
 						break;
-					case "split":
+					case "6":
 						columndata = allclean.split(splitIng, columndata, columnname, group, type, fileType, list);//字段拆分;
 						break;
-					case "trim":
+					case "7":
 						columndata = allclean.trim(Triming, columndata, columnname);//去空
 						break;
-					case "formatting":
+					case "3":
 						columndata = allclean.dateing(dating, columndata, columnname);//日期转换
 						break;
 				}

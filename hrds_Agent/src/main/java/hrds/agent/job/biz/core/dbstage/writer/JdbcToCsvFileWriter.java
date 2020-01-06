@@ -103,7 +103,8 @@ public class JdbcToCsvFileWriter extends AbstractFileWriter {
 					if (i < numberOfColumns) {
 						midStringOther.append(Constant.DATADELIMITER);
 					}
-					if (splitIng.isEmpty()) {
+					if (splitIng.get(colName[i - 1].toUpperCase()) == null
+							|| splitIng.get(colName[i - 1].toUpperCase()).size() == 0) {
 						sb.add(currValue);
 					}
 				}

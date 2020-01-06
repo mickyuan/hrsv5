@@ -120,7 +120,7 @@ public class DataClean_Biz implements DataCleanInterface {
 	 */
 	public String split(Map<String, Map<String, Column_split>> spliting, String columnData, String columnName, Group group, String type,
 	                    String fileType, List<Object> list) {
-		if (spliting.size() != 0) {
+		if (spliting.get(columnName) != null && spliting.get(columnName).size() > 0) {
 			StringBuilder sb = new StringBuilder(4096);
 			//TODO 保留原字段...这里是卸数的格式，定长的还没加，先待定
 			//csv给所有非数字类型前后加上""
