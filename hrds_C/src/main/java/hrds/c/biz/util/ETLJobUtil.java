@@ -30,21 +30,20 @@ public class ETLJobUtil {
     @Return(desc = "返回工程是否存在标志", range = "true代表存在，false代表不存在")
     public static boolean isEtlSysExist(String etl_sys_cd, Long user_id) {
         // 1.数据可访问权限处理方式，通过user_id进行权限控制
-        asmSql.clean();
-        asmSql.addSql("select count(*) from " + Etl_sys.TableName + " where etl_sys_cd=?");
-        asmSql.addParam(etl_sys_cd);
         // 2.判断user_id是否为空，为空添加条件
         if (user_id != null) {
-            asmSql.addSql(" and user_id=?");
-            asmSql.addParam(user_id);
+            if (Dbo.queryNumber("select count(*) from " + Etl_sys.TableName + " where etl_sys_cd=? " +
+                    " and user_id=?", etl_sys_cd, user_id).orElseThrow(() ->
+                    new BusinessException("sql查询错误")) > 0) {
+                return true;
+            }
+        } else {
+            if (Dbo.queryNumber("select count(*) from " + Etl_sys.TableName + " where etl_sys_cd=?",
+                    etl_sys_cd).orElseThrow(() -> new BusinessException("sql查询错误")) > 0) {
+                return true;
+            }
         }
         // 3.判断当前工程是否还存在，存在返回true,不存在返回false
-        if (Dbo.queryNumber(asmSql.sql(), asmSql.params()).orElseThrow(() ->
-                new BusinessException("sql查询错误")) > 0) {
-            // 存在
-            return true;
-        }
-        // 不存在
         return false;
     }
 
