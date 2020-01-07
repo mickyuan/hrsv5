@@ -108,12 +108,12 @@ public class TreeMenuInfo {
 //					.getDMLTableInfos(treeDataInfo.getData_mart_id(), treeDataInfo.getPage_from());
 //			treeMenuInfoMap.put("dmlTableInfos", dmlTableInfos);
 //		}
-		//14.如果模型id不为空的话，获取到模型下的分类信息
-		if (StringUtil.isNotBlank(treeDataInfo.getModal_pro_id())) {
-			List<Map<String, Object>> dplClassifyInfos = TreeDataQuery
-					.getDPLClassifyInfos(treeDataInfo.getModal_pro_id());
-			treeMenuInfoMap.put("dplClassifyInfos", dplClassifyInfos);
-		}
+//		//14.如果模型id不为空的话，获取到模型下的分类信息
+//		if (StringUtil.isNotBlank(treeDataInfo.getModal_pro_id())) {
+//			List<Map<String, Object>> dplClassifyInfos = TreeDataQuery
+//					.getDPLClassifyInfos(treeDataInfo.getModal_pro_id());
+//			treeMenuInfoMap.put("dplClassifyInfos", dplClassifyInfos);
+//		}
 		//15.如果category_id 不为空的话，获取到模型分类下子分类信息和表信息
 //		if (StringUtil.isNotBlank(treeDataInfo.getCategory_id())) {
 //			//获取分类下子分类信息
@@ -131,17 +131,17 @@ public class TreeMenuInfo {
 			treeMenuInfoMap.put("dclRealTimeDataInfos", dclRealTimeDataInfos);
 		}
 		//17.如果group_id不为空,获取kafka_topic信息
-		if (StringUtil.isNotBlank(treeDataInfo.getGroupid())) {
-			List<Map<String, Object>> dclRealTimeTopicInfos =
-					TreeDataQuery.getDCLRealTimeTopicInfos(treeDataInfo.getGroupid());
-			treeMenuInfoMap.put("dclRealTimeTopicInfos", dclRealTimeTopicInfos);
-		}
+//		if (StringUtil.isNotBlank(treeDataInfo.getGroupid())) {
+//			List<Map<String, Object>> dclRealTimeTopicInfos =
+//					TreeDataQuery.getDCLRealTimeTopicInfos(treeDataInfo.getGroupid());
+//			treeMenuInfoMap.put("dclRealTimeTopicInfos", dclRealTimeTopicInfos);
+//		}
 		//18.如果消费id不为空,获取流数据消费到海云内部的表的信息
-		if (StringUtil.isNotBlank(treeDataInfo.getSdm_consum_id())) {
-			List<Map<String, Object>> dclRealTimeInnerTableInfos = TreeDataQuery
-					.getDCLRealTimeInnerTableInfos(treeDataInfo.getSdm_consum_id());
-			treeMenuInfoMap.put("dclRealTimeInnerTableInfos", dclRealTimeInnerTableInfos);
-		}
+//		if (StringUtil.isNotBlank(treeDataInfo.getSdm_consum_id())) {
+//			List<Map<String, Object>> dclRealTimeInnerTableInfos = TreeDataQuery
+//					.getDCLRealTimeInnerTableInfos(treeDataInfo.getSdm_consum_id());
+//			treeMenuInfoMap.put("dclRealTimeInnerTableInfos", dclRealTimeInnerTableInfos);
+//		}
 		return treeMenuInfoMap;
 	}
 }
