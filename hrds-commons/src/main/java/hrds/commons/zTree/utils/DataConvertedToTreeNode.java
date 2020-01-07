@@ -18,22 +18,22 @@ import java.util.Map;
 @DocClass(desc = "数据转换为树节点", author = "BY-HLL", createdate = "2019/12/25 0025 下午 04:17")
 public class DataConvertedToTreeNode {
 
-	@Method(desc = "根据web类型获取源树菜单",
+	@Method(desc = "源树菜单数据转树数据列表",
 			logicStep = "逻辑说明")
-	@Param(name = "treeSource", desc = "树来源", range = "树来源页面TreePageSource.TREESOURCE")
-	@Param(name = "treeDataList", desc = "树菜单数据信息", range = "treeDataList")
+	@Param(name = "treeMenuInfos", desc = "树菜单数据", range = "treeMenuInfos")
+	@Param(name = "treeDataList", desc = "树数据信息", range = "treeDataList")
 	@Return(desc = "源树菜单数据的List", range = "无限制")
-	public static void ConversionSourceTreeInfos(String treeSource, List<Map<String, Object>> treeDataList) {
-		String[] layerName = TreePageSource.TREESOURCE.get(treeSource);
-		for (int i = 0; i < layerName.length; i++) {
+	public static void ConversionSourceTreeInfos(List<Map<String, Object>> treeMenuInfos,
+	                                             List<Map<String, Object>> treeDataList) {
+		for (Map<String, Object> treeMenuInfo : treeMenuInfos) {
 			Map<String, Object> map = new HashMap<>();
-			map.put("name", layerName[i]);
-			map.put("agent_layer", layerName[i]);
-			map.put("isParent", true);
-			map.put("rootName", layerName[i]);
-			map.put("id", layerName[i]);
-			map.put("pId", "~" + i);
-			map.put("description", layerName[i]);
+			map.put("name", treeMenuInfo.get("name"));
+			map.put("agent_layer", treeMenuInfo.get("agent_layer"));
+			map.put("isParent", treeMenuInfo.get("isParent"));
+			map.put("rootName", treeMenuInfo.get("rootName"));
+			map.put("id", treeMenuInfo.get("id"));
+			map.put("pId", treeMenuInfo.get("pId"));
+			map.put("description", treeMenuInfo.get("description"));
 			treeDataList.add(map);
 		}
 	}
@@ -41,32 +41,23 @@ public class DataConvertedToTreeNode {
 	@Method(desc = "贴源层下树菜单",
 			logicStep = "1.添加批量数据子级文件夹" +
 					"2.添加实时数据子级文件夹")
+	@Param(name = "dclDataInfos", desc = "DCL层下数据信息", range = "dclDataInfos")
 	@Param(name = "treeDataList", desc = "树菜单数据信息", range = "treeDataList")
 	@Return(desc = "返回值说明", range = "返回值取值范围")
-	public static void ConversionDCLDataInfos(List<Map<String, Object>> treeDataList) {
-		Map<String, Object> map;
-		map = new HashMap<>();
-		//1.添加批量数据子级文件夹
-		map.put("batch_id", Constant.DCL_BATCH);
-		map.put("name", "批量数据");
-		map.put("description", "批量数据管理");
-		map.put("rootName", PathUtil.DCL);
-		map.put("source", Constant.DCL_BATCH);
-		map.put("pId", DataSourceType.DCL.getCode());
-		map.put("id", Constant.DCL_BATCH);
-		map.put("isParent", true);
-		treeDataList.add(map);
-		//2.添加实时数据子级文件夹
-//		map = new HashMap<>();
-//		map.put("kafka_id", Constant.REALTIME_TYPE);
-//		map.put("name", "实时数据");
-//		map.put("description", "实时数据管理");
-//		map.put("rootName", PathUtil.DCL);
-//		map.put("source", Constant.DCL_REALTIME);
-//		map.put("pId", DataSourceType.DCL.getCode());
-//		map.put("id", Constant.REALTIME_TYPE);
-//		map.put("isParent", true);
-//		treeDataList.add(map);
+	public static void ConversionDCLDataInfos(List<Map<String, Object>> dclDataInfos,
+	                                          List<Map<String, Object>> treeDataList) {
+		for (Map<String, Object> dclDataInfo : dclDataInfos) {
+			Map<String, Object> map = new HashMap<>();
+			map.put("batch_id", dclDataInfo.get("batch_id"));
+			map.put("name", dclDataInfo.get("name"));
+			map.put("description", dclDataInfo.get("description"));
+			map.put("rootName", dclDataInfo.get("rootName"));
+			map.put("source", dclDataInfo.get("source"));
+			map.put("pId", dclDataInfo.get("pId"));
+			map.put("id", dclDataInfo.get("id"));
+			map.put("isParent", dclDataInfo.get("isParent"));
+			treeDataList.add(map);
+		}
 	}
 
 	@Method(desc = "贴源层批量数据下数据源信息转换",
