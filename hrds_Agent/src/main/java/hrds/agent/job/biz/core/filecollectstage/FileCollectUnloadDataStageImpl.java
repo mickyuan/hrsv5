@@ -127,4 +127,9 @@ public class FileCollectUnloadDataStageImpl extends AbstractJobStage {
 		stageParamInfo.setStatusInfo(statusInfo);
 		return stageParamInfo;
 	}
+
+	@Override
+	public int getStageCode(){
+		return StageConstant.UNLOADDATA.getCode();
+	}
 }

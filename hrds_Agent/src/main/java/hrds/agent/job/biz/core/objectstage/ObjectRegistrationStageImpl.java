@@ -4,7 +4,7 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Return;
 import hrds.agent.job.biz.bean.StageParamInfo;
-import hrds.agent.job.biz.bean.StageStatusInfo;
+import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
 
 @DocClass(desc = "半结构化对象采集登记是否成功实现类", author = "zxz", createdate = "2019/10/24 14:27")
@@ -16,5 +16,10 @@ public class ObjectRegistrationStageImpl extends AbstractJobStage {
 	@Override
 	public StageParamInfo handleStage(StageParamInfo stageParamInfo) {
 		return null;
+	}
+
+	@Override
+	public int getStageCode(){
+		return StageConstant.DATAREGISTRATION.getCode();
 	}
 }

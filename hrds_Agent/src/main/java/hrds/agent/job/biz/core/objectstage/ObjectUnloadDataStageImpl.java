@@ -4,7 +4,7 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Return;
 import hrds.agent.job.biz.bean.StageParamInfo;
-import hrds.agent.job.biz.bean.StageStatusInfo;
+import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
 
 //XXX 对象采集要不要加卸数，通过看代码，理解出来的以前的对象采集是没有卸数这一步
@@ -19,4 +19,8 @@ public class ObjectUnloadDataStageImpl extends AbstractJobStage {
 		return null;
 	}
 
+	@Override
+	public int getStageCode(){
+		return StageConstant.UNLOADDATA.getCode();
+	}
 }

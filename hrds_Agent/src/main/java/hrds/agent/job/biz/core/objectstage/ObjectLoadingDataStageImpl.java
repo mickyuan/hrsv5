@@ -108,6 +108,11 @@ public class ObjectLoadingDataStageImpl extends AbstractJobStage {
 		return stageParamInfo;
 	}
 
+	@Override
+	public int getStageCode(){
+		return StageConstant.DATALOADING.getCode();
+	}
+
 	@Method(desc = "处理文件夹下同类型的非结构化对象采集",
 			logicStep = "1.找到文件夹下符合规则的文件" +
 					"2.判断非结构化对象采集任务存储目的地，调用对应方法")
