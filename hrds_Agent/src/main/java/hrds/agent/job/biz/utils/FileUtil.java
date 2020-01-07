@@ -129,11 +129,7 @@ public class FileUtil {
 	}
 
 	public static void writeString2File(File file, String context, String encoding) throws IOException{
-		if (file.exists() && file.isFile()) {
-			FileUtils.write(file, context, encoding);
-		} else {
-			throw new IllegalArgumentException(file.getName() + "：不是一个可读的文件");
-		}
+		FileUtils.write(file, context, encoding);
 	}
 
 	/**
