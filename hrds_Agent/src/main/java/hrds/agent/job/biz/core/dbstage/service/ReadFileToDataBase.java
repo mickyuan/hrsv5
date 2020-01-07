@@ -349,7 +349,6 @@ public class ReadFileToDataBase implements Callable<Long> {
 			int limit = 50000;
 			List<String> lineList;
 			Object[] objs;
-			csvReader.read();
 			while ((lineList = csvReader.read()) != null) {
 				objs = new Object[columnList.size()];// 存储全量插入信息的list
 				for (int j = 0; j < columnList.size(); j++) {
@@ -372,17 +371,20 @@ public class ReadFileToDataBase implements Callable<Long> {
 
 	private Object getValue(String type, String tmpValue) {
 		Object str;
-		if ("BOOLEAN".equalsIgnoreCase(type)) {
+		if (type.contains("BOOLEAN")) {
 			// 如果取出的值为null则给空字符串
 			str = tmpValue == null ? null : Boolean.parseBoolean(tmpValue);
-		} else if ("CHAR".equalsIgnoreCase(type) || "VARCHAR".equalsIgnoreCase(type)
-				|| "CLOB".equalsIgnoreCase(type)) {
+		} else if (type.contains("CHAR") || type.contains("CLOB")) {
 			// 如果取出的值为null则给空字符串
 			str = tmpValue == null ? "" : tmpValue;
-			//TODO 这里还有好多类型需要支持
-		} else {
+		} else if (type.contains("BIGINT") || type.contains("DECIMAL") || type.contains("DOUBLE")
+				|| type.contains("NUMERIC")) {
 			// 如果取出的值为null则给空字符串
 			str = tmpValue == null ? null : new BigDecimal(tmpValue);
+		} else {
+			// 如果取出的值为null则给空字符串
+			str = tmpValue == null ? "" : tmpValue;
+			//TODO 这里应该有好多类型需要支持，然后在else里面报错
 		}
 		return str;
 	}

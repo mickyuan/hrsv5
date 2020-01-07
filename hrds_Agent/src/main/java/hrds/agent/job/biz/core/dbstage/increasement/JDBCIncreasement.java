@@ -163,7 +163,7 @@ public abstract class JDBCIncreasement implements Closeable {
 		insertDataSql.append(yesterdayTableName);
 		insertDataSql.append("(");
 		for (String col : columns) {
-			insertDataSql.append(col).append(", ");
+			insertDataSql.append(col).append(",");
 		}
 		insertDataSql.deleteCharAt(insertDataSql.length() - 1);
 		insertDataSql.append(" ) ");
