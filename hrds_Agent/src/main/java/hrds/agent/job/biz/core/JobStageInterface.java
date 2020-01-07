@@ -22,4 +22,8 @@ public interface JobStageInterface {
 	@Method(desc = "获得当前阶段的下一处理阶段，该方法在AbstractJobStage抽象类中做了默认实现", logicStep = "")
 	@Return(desc = "当前处理阶段的下一个阶段", range = "JobStageInterface的实例，也就是JobStageInterface的具体实现类对象")
 	JobStageInterface getNextStage();
+
+	@Method(desc = "获得当前阶段的阶段编号", logicStep = "")
+	@Return(desc = "当前阶段的阶段编号", range = "不为空")
+	int getStageCode();
 }

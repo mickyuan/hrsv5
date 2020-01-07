@@ -86,6 +86,11 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 		return stageParamInfo;
 	}
 
+	@Override
+	public int getStageCode(){
+		return StageConstant.UNLOADDATA.getCode();
+	}
+
 	public String getOutputFile() {
 
 		return outputFile;

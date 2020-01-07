@@ -103,4 +103,9 @@ public class DBCalIncrementStageImpl extends AbstractJobStage {
 		stageParamInfo.setStatusInfo(statusInfo);
 		return stageParamInfo;
 	}
+
+	@Override
+	public int getStageCode(){
+		return StageConstant.CALINCREMENT.getCode();
+	}
 }

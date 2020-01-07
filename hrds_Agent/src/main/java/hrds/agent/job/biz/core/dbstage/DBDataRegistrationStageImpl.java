@@ -92,4 +92,9 @@ public class DBDataRegistrationStageImpl extends AbstractJobStage {
 		stageParamInfo.setStatusInfo(statusInfo);
 		return stageParamInfo;
 	}
+
+	@Override
+	public int getStageCode(){
+		return StageConstant.DATAREGISTRATION.getCode();
+	}
 }

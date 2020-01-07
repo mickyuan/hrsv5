@@ -198,4 +198,9 @@ public class DBUploadStageImpl extends AbstractJobStage {
 		return FileNameUtils.normalize(JobConstant.PREFIX + File.separator + collectTableBean.getDatabase_id()
 				+ File.separator + collectTableBean.getHbase_name() + File.separator, true);
 	}
+
+	@Override
+	public int getStageCode(){
+		return StageConstant.UPLOAD.getCode();
+	}
 }

@@ -163,6 +163,11 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 		return stageParamInfo;
 	}
 
+	@Override
+	public int getStageCode(){
+		return StageConstant.UNLOADDATA.getCode();
+	}
+
 //	@Method(desc = "获取本次数据库采集单张表的mate信息",
 //			logicStep = "1、直接返回成员变量tableBean")
 //	@Return(desc = "数据库采集单张表的mate信息",

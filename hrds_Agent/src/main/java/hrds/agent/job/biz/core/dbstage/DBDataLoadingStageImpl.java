@@ -95,6 +95,11 @@ public class DBDataLoadingStageImpl extends AbstractJobStage {
 		return stageParamInfo;
 	}
 
+	@Override
+	public int getStageCode(){
+		return StageConstant.DATALOADING.getCode();
+	}
+
 	private void createTableLoadData(String todayTableName, String hdfsFilePath,
 	                                 DataStoreConfBean dataStoreConfBean, TableBean tableBean) {
 		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(dataStoreConfBean.getData_store_connect_attr())) {
