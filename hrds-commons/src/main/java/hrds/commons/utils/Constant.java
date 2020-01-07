@@ -2,7 +2,6 @@ package hrds.commons.utils;
 
 import fd.ng.core.annotation.DocClass;
 import hrds.commons.codes.DataSourceType;
-import hrds.commons.codes.IsFlag;
 
 import java.io.File;
 
@@ -13,8 +12,6 @@ public class Constant {
 	public static final String EDATENAME = "HYREN_E_DATE";
 	public static final String MD5NAME = "HYREN_MD5_VAL";
 	public static final char DATADELIMITER = '\001';//此分隔符为hive的默认分隔符
-	public static final String HD = "HD";
-	public static final String DB = "DB";
 	public static final String MAXDATE = "99991231";
 	public static final String SFTP_PORT = "22";
 	public static final byte[] HBASE_COLUMN_FAMILY = "F".getBytes();
@@ -44,9 +41,6 @@ public class Constant {
 	//定义并行抽取SQL结束条数占位符
 	public static final String PARALLEL_SQL_END = "#{hy_end}";
 
-	//是否有大数据环境
-	public static final boolean HAS_HADOOP_ENV = HD.equalsIgnoreCase
-			(PropertyParaValue.getString("ver_type", HD));//是否有大数据环境
 	//贴源层下实时数据
 	public static final String DCL_REALTIME = DataSourceType.DCL.getCode() + "_REALTIME";
 	//贴源层下实时数据类型

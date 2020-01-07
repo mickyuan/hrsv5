@@ -8,7 +8,7 @@ import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
-import hrds.commons.utils.Constant;
+import hrds.commons.utils.CommonVariables;
 import hrds.commons.utils.PathUtil;
 
 import java.util.ArrayList;
@@ -33,7 +33,7 @@ public class PublicLayer {
 	static List<Map<String, Object>> getDatabasesType() {
 
 		List<Map<String, Object>> dbObjMapList = new ArrayList<>();
-		if (Constant.HAS_HADOOP_ENV) {
+		if (CommonVariables.HAS_HADOOP_ENV) {
 			for (String s : databaseTy) {
 				Map<String, Object> dbObjMap = new HashMap<>();
 				dbObjMap.put("name", s);
