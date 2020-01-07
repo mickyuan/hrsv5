@@ -16,6 +16,7 @@ import hrds.commons.utils.key.PrimayKeyGener;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @DocClass(desc = "海云服务接收端", author = "zxz", createdate = "2019/11/19 11:17")
 public class HrdsReceiveAction extends AgentBaseAction {
@@ -93,9 +94,11 @@ public class HrdsReceiveAction extends AgentBaseAction {
 				attribute.getSource_id(), attribute.getCollect_set_id(), attribute.getHbase_name());
 		//3.更新或者新增source_file_attribute表
 		if (result.isEmpty()) {
+			attribute.setFile_id(UUID.randomUUID().toString());
 			//新增source_file_attribute表
 			attribute.add(Dbo.db());
 		} else {
+			attribute.setFile_id(result.getString(0, "file_id"));
 			//更新source_file_attribute表
 			attribute.update(Dbo.db());
 		}

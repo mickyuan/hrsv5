@@ -114,7 +114,8 @@ public class ReadFileToDataBase implements Callable<Long> {
 			List<String> columnList = StringUtil.split(tableBean.getColumnMetaInfo(), CollectTableHandleParse.STRSPLIT);
 			List<String> typeList = StringUtil.split(tableBean.getColTypeMetaInfo(), CollectTableHandleParse.STRSPLIT);
 			//3.拼接batch插入数据库的sql
-			String batchSql = getBatchSql(columnList, collectTableBean.getHbase_name());
+			String batchSql = getBatchSql(columnList, collectTableBean.getHbase_name() + "_"
+					+ collectTableBean.getEtlDate());
 			//TODO 根据存储期限去修改表名称
 			//4.根据卸数问价类型读取文件插入到数据库
 			if (FileFormat.CSV.getCode().equals(collectTableBean.getDbfile_format())) {
@@ -400,10 +401,10 @@ public class ReadFileToDataBase implements Callable<Long> {
 		pool.clear();// 插入成功，清空集合
 	}
 
-	private String getBatchSql(List<String> columns, String hbase_name) {
+	private String getBatchSql(List<String> columns, String todayTableName) {
 		//拼接插入的sql
 		StringBuilder sbAdd = new StringBuilder();
-		sbAdd.append("insert into ").append(hbase_name).append("(");
+		sbAdd.append("insert into ").append(todayTableName).append("(");
 		for (String column : columns) {
 			sbAdd.append(column).append(",");
 		}

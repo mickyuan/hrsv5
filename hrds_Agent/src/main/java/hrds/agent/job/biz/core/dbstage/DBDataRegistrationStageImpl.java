@@ -67,7 +67,6 @@ public class DBDataRegistrationStageImpl extends AbstractJobStage {
 			file_attribute.setFile_avro_path("");
 			file_attribute.setFile_avro_block("");
 			file_attribute.setIs_big_file("");
-			file_attribute.setFile_id(UUID.randomUUID().toString());
 			file_attribute.setFile_type("");
 			file_attribute.setStorage_date(DateUtil.getSysDate());
 			file_attribute.setStorage_time(DateUtil.getSysTime());
