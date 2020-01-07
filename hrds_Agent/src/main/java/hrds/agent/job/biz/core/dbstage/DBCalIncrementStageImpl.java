@@ -58,10 +58,10 @@ public class DBCalIncrementStageImpl extends AbstractJobStage {
 							//数据库类型的做增量目前分为两种，一种是传统数据库，另一种是hive库（hive库不支持update）
 							if (Dbtype.HIVE.equals(db.getDbtype())) {
 								increasement = new IncreasementBySpark(tableBean, collectTableBean.getHbase_name(),
-										collectTableBean.getEtlDate(), db, dataStoreConfBean.getDtcs_name());
+										collectTableBean.getEtlDate(), db, dataStoreConfBean.getDsl_name());
 							} else {
 								increasement = new IncreasementByMpp(tableBean, collectTableBean.getHbase_name(),
-										collectTableBean.getEtlDate(), db, dataStoreConfBean.getDtcs_name());
+										collectTableBean.getEtlDate(), db, dataStoreConfBean.getDsl_name());
 							}
 							//计算增量
 							increasement.calculateIncrement();
@@ -69,12 +69,12 @@ public class DBCalIncrementStageImpl extends AbstractJobStage {
 							increasement.mergeIncrement();
 						} else if (StorageType.ZhuiJia.getCode().equals(collectTableBean.getStorage_type())) {
 							increasement = new IncreasementByMpp(tableBean, collectTableBean.getHbase_name(),
-									collectTableBean.getEtlDate(), db, dataStoreConfBean.getDtcs_name());
+									collectTableBean.getEtlDate(), db, dataStoreConfBean.getDsl_name());
 							//追加
 							increasement.append();
 						} else if (StorageType.TiHuan.getCode().equals(collectTableBean.getStorage_type())) {
 							increasement = new IncreasementByMpp(tableBean, collectTableBean.getHbase_name(),
-									collectTableBean.getEtlDate(), db, dataStoreConfBean.getDtcs_name());
+									collectTableBean.getEtlDate(), db, dataStoreConfBean.getDsl_name());
 							//替换
 							increasement.replace();
 						} else {
@@ -98,7 +98,7 @@ public class DBCalIncrementStageImpl extends AbstractJobStage {
 			LOGGER.info("------------------数据库直连采集增量阶段成功------------------");
 		} catch (Exception e) {
 			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.FAILED.getCode(), e.getMessage());
-			LOGGER.error("数据库直连采集增量阶段失败：", e.getMessage());
+			LOGGER.error("数据库直连采集增量阶段失败：", e);
 		}
 		stageParamInfo.setStatusInfo(statusInfo);
 		return stageParamInfo;

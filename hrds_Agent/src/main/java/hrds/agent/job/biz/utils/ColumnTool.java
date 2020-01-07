@@ -103,7 +103,7 @@ public class ColumnTool {
 		String metaFile = file.getAbsolutePath() + "tableData.meta";
 		metaFile = FilenameUtils.normalize(metaFile);
 		try {
-			bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(metaFile, true),
+			bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(metaFile, false),
 					StandardCharset.UTF_8));
 			JSONObject jsonSon = new JSONObject();
 			jsonSon.put("tableName", tableName);

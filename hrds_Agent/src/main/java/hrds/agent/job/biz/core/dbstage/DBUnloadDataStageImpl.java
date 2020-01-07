@@ -9,13 +9,16 @@ import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
 import hrds.agent.job.biz.core.dbstage.service.CollectPage;
 import hrds.agent.job.biz.core.dbstage.service.CollectTableHandleParse;
+import hrds.agent.job.biz.utils.ColumnTool;
 import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.exception.AppSystemException;
+import hrds.commons.utils.Constant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -142,6 +145,11 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 			stageParamInfo.setFileArr(fileArr);
 			stageParamInfo.setFileSize(fileSize);
 			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.SUCCEED.getCode(), "执行成功");
+			String midName = Constant.JDBCUNLOADFOLDER + collectTableBean.getDatabase_id() + File.separator
+					+ collectTableBean.getTable_id() + File.separator;
+			//写meta数据开始  TODO 这里这个meta信息应该是只有数据抽取才需要写，5.0版本的meta信息直接通过tableBean传递
+			ColumnTool.writeFileMeta(collectTableBean.getHbase_name(), new File(midName), tableBean.getColumnMetaInfo(),
+					rowCount, tableBean.getColTypeMetaInfo(), tableBean.getColLengthInfo(), fileSize, "n");
 			LOGGER.info("------------------数据库直连采集卸数阶段成功------------------");
 		} catch (Exception e) {
 			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.FAILED.getCode(), e.getMessage());

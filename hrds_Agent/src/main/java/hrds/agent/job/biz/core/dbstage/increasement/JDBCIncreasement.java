@@ -31,10 +31,10 @@ public abstract class JDBCIncreasement implements Closeable {
 	DatabaseWrapper db;
 	String todayTableName;
 
-	JDBCIncreasement(TableBean tableBean, String hbase_name, String sysDate, DatabaseWrapper db, String dtcs_name) {
+	JDBCIncreasement(TableBean tableBean, String hbase_name, String sysDate, DatabaseWrapper db, String dsl_name) {
 		this.columns = StringUtil.split(tableBean.getColumnMetaInfo(), CollectTableHandleParse.STRSPLIT);
 		this.types = DataTypeTransform.tansform(StringUtil.split(tableBean.getColTypeMetaInfo(),
-				CollectTableHandleParse.STRSPLIT), dtcs_name);
+				CollectTableHandleParse.STRSPLIT), dsl_name);
 		this.sysDate = sysDate;
 		this.tableNameInHBase = hbase_name;
 		this.deltaTableName = hbase_name + "_tmp_hyren";
@@ -56,7 +56,7 @@ public abstract class JDBCIncreasement implements Closeable {
 	/**
 	 * 表存在先删除该表，这里因为Oracle不支持DROP TABLE IF EXISTS
 	 */
-	void dropTableIfExists(String tableName, DatabaseWrapper db, List<String> sqlList) {
+	public static void dropTableIfExists(String tableName, DatabaseWrapper db, List<String> sqlList) {
 		if (Dbtype.ORACLE.equals(db.getDbtype())) {
 			//如果有数据则表明该表存在，创建表
 			if (tableIsExistsOracle(tableName, db)) {
@@ -98,7 +98,7 @@ public abstract class JDBCIncreasement implements Closeable {
 	/**
 	 * 判断oracle数据库是否存在该表
 	 */
-	private boolean tableIsExistsOracle(String tableName, DatabaseWrapper db) {
+	private static boolean tableIsExistsOracle(String tableName, DatabaseWrapper db) {
 		ResultSet resultSet;
 		try {
 			resultSet = db.queryGetResultSet("SELECT * FROM user_objects where lower(object_name) = ? "

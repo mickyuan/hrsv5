@@ -87,7 +87,7 @@ public class DBDataRegistrationStageImpl extends AbstractJobStage {
 			LOGGER.info("------------------数据库直连采集数据登记阶段成功------------------");
 		} catch (Exception e) {
 			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.FAILED.getCode(), e.getMessage());
-			LOGGER.error("数据库直连采集数据登记阶段失败：", e.getMessage());
+			LOGGER.error("数据库直连采集数据登记阶段失败：", e);
 		}
 		stageParamInfo.setStatusInfo(statusInfo);
 		return stageParamInfo;

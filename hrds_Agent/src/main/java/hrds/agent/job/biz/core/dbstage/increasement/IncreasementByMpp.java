@@ -17,8 +17,8 @@ public class IncreasementByMpp extends JDBCIncreasement {
 	private static final Log logger = LogFactory.getLog(IncreasementByMpp.class);
 
 	public IncreasementByMpp(TableBean tableBean, String hbase_name, String sysDate, DatabaseWrapper db,
-	                         String dtcs_name) {
-		super(tableBean, hbase_name, sysDate, db, dtcs_name);
+	                         String dsl_name) {
+		super(tableBean, hbase_name, sysDate, db, dsl_name);
 	}
 
 	/**

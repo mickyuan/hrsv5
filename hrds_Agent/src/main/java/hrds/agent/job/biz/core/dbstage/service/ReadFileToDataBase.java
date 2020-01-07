@@ -7,6 +7,7 @@ import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.DataStoreConfBean;
 import hrds.agent.job.biz.bean.TableBean;
+import hrds.agent.job.biz.core.dbstage.increasement.JDBCIncreasement;
 import hrds.agent.job.biz.utils.ColumnTool;
 import hrds.agent.job.biz.utils.DataTypeTransform;
 import hrds.agent.trans.biz.ConnectionTool;
@@ -78,9 +79,10 @@ public class ReadFileToDataBase implements Callable<Long> {
 	private void createTodayTable(TableBean tableBean, String todayTableName, DataStoreConfBean dataStoreConfBean) {
 		List<String> columns = StringUtil.split(tableBean.getColumnMetaInfo(), CollectTableHandleParse.STRSPLIT);
 		List<String> types = DataTypeTransform.tansform(StringUtil.split(tableBean.getColTypeMetaInfo(),
-				CollectTableHandleParse.STRSPLIT), dataStoreConfBean.getDtcs_name());
+				CollectTableHandleParse.STRSPLIT), dataStoreConfBean.getDsl_name());
 		//获取连接
 		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(dataStoreConfBean.getData_store_connect_attr())) {
+			List<String> sqlList = new ArrayList<>();
 			//拼接建表语句
 			StringBuilder sql = new StringBuilder(120); //拼接创表sql语句
 			sql.append("CREATE TABLE ");
@@ -92,8 +94,10 @@ public class ReadFileToDataBase implements Callable<Long> {
 			//将最后的逗号删除
 			sql.deleteCharAt(sql.length() - 1);
 			sql.append(")");
+			JDBCIncreasement.dropTableIfExists(todayTableName, db, sqlList);
+			sqlList.add(sql.toString());
 			//执行建表语句
-			db.execute(sql.toString());
+			JDBCIncreasement.executeSql(sqlList, db);
 		}
 	}
 
