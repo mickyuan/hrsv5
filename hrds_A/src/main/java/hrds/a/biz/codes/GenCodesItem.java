@@ -73,6 +73,29 @@ public class GenCodesItem extends AbstractWebappBaseAction {
 		return rs;
 	}
 
+	@fd.ng.core.annotation.Method(desc = "根据代码项分组编号，获取代码项code值，key为枚举类名",
+			logicStep = "1、根据map获取代码项；2、反射调用调用枚举的4个方法，4、将数据放到result中返回")
+	@Param(name = "category", desc = "代码项分组编号", range = "代码项分组编号")
+	@Return(desc = "返回该代码项的所有信息", range = "返回该代码项的所有信息")
+	public Map<String,String> getCodeItems(String category) {
+		Class aClass = hrds.commons.codes.CodesItem.mapCat.get(category);
+		Enum[] aa = new Enum[]{};
+		Map<String, String> map = new HashMap<String, String>();
+		try {
+			Method values1 = aClass.getMethod("values", new Class[]{});
+			Object aNull = values1.invoke("null");
+			aa = (Enum[]) aNull;
+			for (Enum aClass1 : aa) {
+				Method getCode = aClass1.getClass().getMethod("getCode", new Class[]{});
+				String code = getCode.invoke(aClass1).toString();
+				map.put(aClass1.name(),code);
+			}
+		} catch (Exception e) {
+			throw new AppSystemException("根据" + category + "没有找到对应的代码项", e);
+		}
+		return map;
+	}
+
 	@fd.ng.core.annotation.Method(desc = "获取代码项信息，提供前端一一对应进行查看",
 			logicStep = "1、根据map获取代码项；2、反射调用调用枚举的4个方法，4、将数据放到result中返回")
 	@Return(desc = "返回系统中所有代码项信息", range = "返回系统中所有代码项信息")
