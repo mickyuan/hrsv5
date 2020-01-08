@@ -35,7 +35,7 @@ public class TreePageSource {
 	private static String[] DATA_MANAGEMENT_ARRAY = new String[]{PathUtil.DCL, PathUtil.DPL, PathUtil.DML,
 			PathUtil.DQC, PathUtil.UDL};
 	//webSQL树菜单列表
-	private static String[] WEB_SQL_ARRAY = new String[]{PathUtil.DCL, PathUtil.UDL};
+	private static String[] WEB_SQL_ARRAY = new String[]{PathUtil.DCL};
 	//数据进HBase,接口,报表,外部 树菜单列表
 	private static String[] HIRE_ARRAY = new String[]{PathUtil.DCL, PathUtil.DPL, PathUtil.DML, PathUtil.UDL};
 	//二级索引
