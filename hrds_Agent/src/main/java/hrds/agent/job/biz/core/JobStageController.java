@@ -112,6 +112,8 @@ public class JobStageController {
 				if(unloadStatusCode == succeedCode && uploadStatusCode == succeedCode && lodingStatusCode == succeedCode
 						&& incrementStatusCode == succeedCode && registStatusCode == succeedCode){
 					redoFlag = true;
+					//如果是重跑，则应该重新构建jobStatusInfo对象，否则就会使用到之前的jobStatusInfo对象
+					jobStatusInfo = new JobStatusInfo();
 				}
 			}
 		}
