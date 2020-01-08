@@ -281,7 +281,7 @@ public class SendMsgUtil {
 
 		//6、若响应不成功，记录日志，并抛出异常告知操作失败
 		logger.error(">>>>>>>>>>>>>>>>>>>>>>>>错误信息为：" + ar.getMessage());
-		throw new BusinessException("根据自定义抽取SQL获取该表的字段信息，详情请查看日志");
+		throw new BusinessException("根据自定义抽取SQL获取该表的字段信息失败，详情请查看日志");
 	}
 
 	@Method(desc = "海云应用管理端向Agent端发送数据库采集任务信息", logicStep = "" +
