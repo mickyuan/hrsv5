@@ -1,17 +1,10 @@
 package hrds.agent.job.biz.bean;
 
+import fd.ng.core.annotation.DocClass;
+
 import java.io.Serializable;
 
-/**
- * ClassName: StageStatusInfo <br/>
- * Function: 阶段状态信息实体 <br/>
- * Reason： 用于记录各阶段状态相关信息
- * Date: 2019/8/1 15:24 <br/>
- * <p>
- * Author WangZhengcheng
- * Version 1.0
- * Since JDK 1.8
- **/
+@DocClass(desc = "阶段状态信息实体,用于记录各阶段状态相关信息")
 public class StageStatusInfo implements Serializable {
 
 	private static final long serialVersionUID = 2931307277043396275L;

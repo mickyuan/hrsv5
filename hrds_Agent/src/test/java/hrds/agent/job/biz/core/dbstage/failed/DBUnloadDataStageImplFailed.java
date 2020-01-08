@@ -20,7 +20,7 @@ public class DBUnloadDataStageImplFailed extends AbstractJobStage{
 		//模拟执行过程
 		System.out.println("-------------------执行卸数阶段----------------------------");
 
-		//阶段结束，设置结束内容，执行成功
+		//阶段结束，设置结束内容，执行失败
 		JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.FAILED.getCode(), "卸数执行失败");
 		stageParamInfo.setStatusInfo(statusInfo);
 		return stageParamInfo;

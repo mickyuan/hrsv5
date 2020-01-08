@@ -52,9 +52,10 @@ public class DataFileJobImpl implements JobInterface {
 //			columns.add(column.getColumnName());
 		}
 		//TODO 此处肯定要改，所以先写死
-		String tableName = job.getTable_name();
-		String[] columnAndtypes = StringUtils.splitByWholeSeparatorPreserveAllTokens(
-				job.getTablename().getString(tableName), "#");
+		String tableName = "FAKETABLENAME";
+		String[] columnAndtypes = {};
+		/* = StringUtils.splitByWholeSeparatorPreserveAllTokens(
+				job.getTablename().getString(tableName), "#");*/
 		List<String> columnTypes = new ArrayList<>();
 		for (String colAndType : columnAndtypes) {
 			columnTypes.add(StringUtils.splitByWholeSeparatorPreserveAllTokens(colAndType,
@@ -81,7 +82,7 @@ public class DataFileJobImpl implements JobInterface {
 			jobStatusInfo.setExceptionInfo(e.getMessage());
 		}
 
-		mateInfo.setTableName(job.getTable_name());
+		mateInfo.setTableName(tableName);
 		mateInfo.setColumnNames(columns);
 		mateInfo.setColumnTypes(columnTypes);
 		mateInfo.setRowCount(unloadData.getRowCount());

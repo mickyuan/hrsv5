@@ -1,7 +1,5 @@
 package hrds.agent.job.biz.bean;
 
-import com.alibaba.fastjson.JSONObject;
-
 import java.io.Serializable;
 import java.util.List;
 
@@ -13,10 +11,6 @@ public class JobInfo implements Serializable {
 	//作业编号
 	private String jobId;
 	private List<ColumnCleanBean> columnList;
-	private String table_name;
-	private String sql;
-	//TODO 这个是海云用于记录字段顺序及字段类型
-	private JSONObject tablename;
 
 	public String getTaskId() {
 
@@ -44,43 +38,5 @@ public class JobInfo implements Serializable {
 
 	public void setColumnList(List<ColumnCleanBean> columnList) {
 		this.columnList = columnList;
-	}
-
-	public String getTable_name() {
-		return table_name;
-	}
-
-	public void setTable_name(String table_name) {
-		this.table_name = table_name;
-	}
-
-	public String getSql() {
-		return sql;
-	}
-
-	public void setSql(String sql) {
-		this.sql = sql;
-	}
-
-
-
-	public JSONObject getTablename() {
-		return tablename;
-	}
-
-	public void setTablename(JSONObject tablename) {
-		this.tablename = tablename;
-	}
-
-	@Override
-	public String toString() {
-		return "JobInfo{" +
-				"taskId='" + taskId + '\'' +
-				", jobId='" + jobId + '\'' +
-				", columnList=" + columnList +
-				", table_name='" + table_name + '\'' +
-				", sql='" + sql + '\'' +
-				", tablename=" + tablename +
-				'}';
 	}
 }

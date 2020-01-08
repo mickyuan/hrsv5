@@ -1,17 +1,10 @@
 package hrds.agent.job.biz.bean;
 
+import fd.ng.core.annotation.DocClass;
+
 import java.io.Serializable;
 
-/**
- * ClassName: JobStatusInfo <br/>
- * Function: 作业状态信息 <br/>
- * Reason： 用于记录作业的开始时间、结束时间以及每个步骤的执行状态
- * Date: 2019/8/1 15:24 <br/>
- * <p>
- * Author WangZhengcheng
- * Version 1.0
- * Since JDK 1.8
- **/
+@DocClass(desc = "作业状态信息,用于记录作业的开始时间、结束时间以及每个步骤的执行状态")
 public class JobStatusInfo implements Serializable {
 
 	private static final long serialVersionUID = 1L;

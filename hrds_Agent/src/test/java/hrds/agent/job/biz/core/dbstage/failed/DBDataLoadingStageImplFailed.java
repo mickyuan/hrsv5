@@ -20,7 +20,7 @@ public class DBDataLoadingStageImplFailed extends AbstractJobStage{
 		//模拟执行过程
 		System.out.println("-------------------执行数据加载阶段----------------------------");
 
-		//阶段结束，设置结束内容，执行成功
+		//阶段结束，设置结束内容，执行失败
 		JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.FAILED.getCode(), "数据加载执行失败");
 		stageParamInfo.setStatusInfo(statusInfo);
 		return stageParamInfo;
