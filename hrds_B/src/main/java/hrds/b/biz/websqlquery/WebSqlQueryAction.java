@@ -74,11 +74,10 @@ public class WebSqlQueryAction extends BaseAction {
 	@Param(name = "systemDataType", desc = "系统数据类型", range = "String类型", nullable = true)
 	@Param(name = "kafka_id", desc = "kafka数据id", range = "String类型", nullable = true)
 	@Param(name = "batch_id", desc = "批量数据id", range = "String类型", nullable = true)
-	@Param(name = "groupid", desc = "分组id", range = "String类型", nullable = true)
-	@Param(name = "sdm_consum_id", desc = "消费id", range = "String类型", nullable = true)
-	@Param(name = "type_id", desc = "类型id", range = "String类型", nullable = true)
+	@Param(name = "groupId", desc = "分组id", range = "String类型", nullable = true)
+	@Param(name = "sdm_consumer_id", desc = "消费id", range = "String类型", nullable = true)
 	@Param(name = "parent_id", desc = "父id", range = "String类型", nullable = true)
-	@Param(name = "spaceTable", desc = "表空间", range = "String类型", nullable = true)
+	@Param(name = "tableSpace", desc = "表空间", range = "String类型", nullable = true)
 	@Param(name = "database_type", desc = "数据库类型", range = "String类型", nullable = true)
 	@Param(name = "isFileCo", desc = "是否文件采集", range = "String类型", valueIfNull = "false")
 	@Param(name = "tree_menu_from", desc = "树菜单来源", range = "String类型", nullable = true)
@@ -87,10 +86,10 @@ public class WebSqlQueryAction extends BaseAction {
 	@Return(desc = "树数据Map信息", range = "无限制")
 	public Map<String, Object> getTreeDataInfo(String agent_layer, String source_id, String classify_id,
 	                                           String data_mart_id, String category_id, String systemDataType,
-	                                           String kafka_id, String batch_id, String groupid, String sdm_consum_id,
-	                                           String type_id, String parent_id, String spaceTable,
-	                                           String database_type, String isFileCo, String tree_menu_from,
-	                                           String isPublicLayer, String isRootNode) {
+	                                           String kafka_id, String batch_id, String groupId, String sdm_consumer_id,
+	                                           String parent_id, String tableSpace, String database_type,
+	                                           String isFileCo, String tree_menu_from, String isPublicLayer,
+	                                           String isRootNode) {
 		//1.声明获取到 zTreeUtil 的对象
 		TreeUtil treeUtil = new TreeUtil();
 		//2.设置树实体
@@ -103,12 +102,11 @@ public class WebSqlQueryAction extends BaseAction {
 		treeDataInfo.setSystemDataType(systemDataType);
 		treeDataInfo.setKafka_id(kafka_id);
 		treeDataInfo.setBatch_id(batch_id);
-		treeDataInfo.setGroupid(groupid);
-		treeDataInfo.setSdm_consum_id(sdm_consum_id);
-		treeDataInfo.setType_id(type_id);
+		treeDataInfo.setGroupId(groupId);
+		treeDataInfo.setSdm_consumer_id(sdm_consumer_id);
 		treeDataInfo.setParent_id(parent_id);
-		treeDataInfo.setSpaceTable(spaceTable);
-		treeDataInfo.setDatabase_type(database_type);
+		treeDataInfo.setTableSpace(tableSpace);
+		treeDataInfo.setDatabaseType(database_type);
 		treeDataInfo.setIsFileCo(isFileCo);
 		treeDataInfo.setPage_from(tree_menu_from);
 		treeDataInfo.setIsPublic(isPublicLayer);
