@@ -445,7 +445,7 @@ public class DataConvertedToTreeNode {
 			map.put("pId", category_id);
 			map.put("table_id", table_id);
 			map.put("show", Boolean.TRUE);
-			map.put("tablename", tabname);
+			map.put("tableName", tabname);
 			map.put("rootName", rootName);
 			map.put("description", ctname);
 			map.put("source", PathUtil.DPL);
@@ -587,42 +587,42 @@ public class DataConvertedToTreeNode {
 		}
 	}
 
-	@Method(desc = "自定义层数据库下表空间信息转换",
-			logicStep = "1.自定义层数据库下表空间信息转换")
-	@Param(name = "udlDatabaseTableSpaceInfos", desc = "自定义层数据库下表空间信息", range = "取值范围说明")
-	@Param(name = "treeDataList", desc = "转换后的树数据信息", range = "取值范围说明")
-	@Param(name = "rootName", desc = "父级菜单名称", range = "取值范围说明")
-	@Param(name = "parent_id", desc = "父级菜单id", range = "取值范围说明")
-	public static void ConversionUDLTableSpaceTableInfos(List<Map<String, Object>> udlTableSpaceTableInfos,
-	                                                     List<Map<String, Object>> treeDataList, String rootName,
-	                                                     String parent_id) {
-		udlTableSpaceTableInfos.forEach(udlTableSpaceTableInfo -> {
-			String table_name = udlTableSpaceTableInfo.get("table_name").toString();
-			String table_ch_name = udlTableSpaceTableInfo.get("table_ch_name").toString();
-			table_ch_name = StringUtil.isNotBlank(table_ch_name) ? table_ch_name : table_name;
-			String data_space = "";
-			if (UDLDataQuery.HIVE.equalsIgnoreCase(parent_id)) {
-				data_space = udlTableSpaceTableInfo.get("table_space").toString();
-			} else if (UDLDataQuery.HBASE.equalsIgnoreCase(parent_id)) {
-				data_space = udlTableSpaceTableInfo.get("table_space").toString();
-			} else if (UDLDataQuery.MPP.equalsIgnoreCase(parent_id)) {
-				data_space = "default";
-			} else {
-				data_space = StringUtil.isBlank(udlTableSpaceTableInfo.get("table_space").toString()) ?
-						UDLDataQuery.CARBON_DATA : udlTableSpaceTableInfo.get("table_space").toString();
-			}
-			String id = udlTableSpaceTableInfo.get("id").toString();
-			udlTableSpaceTableInfo.put("name", table_ch_name);
-			udlTableSpaceTableInfo.put("tableName", table_name);
-			udlTableSpaceTableInfo.put("description", table_name);
-			udlTableSpaceTableInfo.put("pId", parent_id.concat("_").concat(data_space));
-			udlTableSpaceTableInfo.put("file_id", id);
-			udlTableSpaceTableInfo.put("parent_id", parent_id);
-			udlTableSpaceTableInfo.put("rootName", rootName);
-			udlTableSpaceTableInfo.put("source", PathUtil.UDL);
-			udlTableSpaceTableInfo.put("isParent", false);
-			udlTableSpaceTableInfo.put("show", true);
-			treeDataList.add(udlTableSpaceTableInfo);
-		});
-	}
+//	@Method(desc = "自定义层数据库下表空间信息转换",
+//			logicStep = "1.自定义层数据库下表空间信息转换")
+//	@Param(name = "udlDatabaseTableSpaceInfos", desc = "自定义层数据库下表空间信息", range = "取值范围说明")
+//	@Param(name = "treeDataList", desc = "转换后的树数据信息", range = "取值范围说明")
+//	@Param(name = "rootName", desc = "父级菜单名称", range = "取值范围说明")
+//	@Param(name = "parent_id", desc = "父级菜单id", range = "取值范围说明")
+//	public static void ConversionUDLTableSpaceTableInfos(List<Map<String, Object>> udlTableSpaceTableInfos,
+//	                                                     List<Map<String, Object>> treeDataList, String rootName,
+//	                                                     String parent_id) {
+//		udlTableSpaceTableInfos.forEach(udlTableSpaceTableInfo -> {
+//			String table_name = udlTableSpaceTableInfo.get("table_name").toString();
+//			String table_ch_name = udlTableSpaceTableInfo.get("table_ch_name").toString();
+//			table_ch_name = StringUtil.isNotBlank(table_ch_name) ? table_ch_name : table_name;
+//			String data_space = "";
+//			if (UDLDataQuery.HIVE.equalsIgnoreCase(parent_id)) {
+//				data_space = udlTableSpaceTableInfo.get("table_space").toString();
+//			} else if (UDLDataQuery.HBASE.equalsIgnoreCase(parent_id)) {
+//				data_space = udlTableSpaceTableInfo.get("table_space").toString();
+//			} else if (UDLDataQuery.MPP.equalsIgnoreCase(parent_id)) {
+//				data_space = "default";
+//			} else {
+//				data_space = StringUtil.isBlank(udlTableSpaceTableInfo.get("table_space").toString()) ?
+//						UDLDataQuery.CARBON_DATA : udlTableSpaceTableInfo.get("table_space").toString();
+//			}
+//			String id = udlTableSpaceTableInfo.get("id").toString();
+//			udlTableSpaceTableInfo.put("name", table_ch_name);
+//			udlTableSpaceTableInfo.put("tableName", table_name);
+//			udlTableSpaceTableInfo.put("description", table_name);
+//			udlTableSpaceTableInfo.put("pId", parent_id.concat("_").concat(data_space));
+//			udlTableSpaceTableInfo.put("file_id", id);
+//			udlTableSpaceTableInfo.put("parent_id", parent_id);
+//			udlTableSpaceTableInfo.put("rootName", rootName);
+//			udlTableSpaceTableInfo.put("source", PathUtil.UDL);
+//			udlTableSpaceTableInfo.put("isParent", false);
+//			udlTableSpaceTableInfo.put("show", true);
+//			treeDataList.add(udlTableSpaceTableInfo);
+//		});
+//	}
 }

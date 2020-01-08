@@ -136,23 +136,23 @@ public class TreeMenuInfo {
 //		}
 		//TODO 自定义层管理功能添加后放开
 //		//6.UDL 自定义层
-		//6-1.获取自定义层下数据信息
-		if (DataSourceType.UDL.getValue().equals(treeDataInfo.getAgent_layer())) {
-			List<Map<String, Object>> udlDatabaseInfos = UDLDataQuery.getUDLDatabaseInfos();
-			treeMenuInfoMap.put("udlDatabaseInfos", udlDatabaseInfos);
-		}
-		//6-2.获取自定义层数据库下表空间信息
-		if (!StringUtil.isBlank(treeDataInfo.getParent_id()) && StringUtil.isNotBlank(treeDataInfo.getDatabaseType())) {
-			List<Map<String, Object>> udlDatabaseTableSpaceInfos = UDLDataQuery
-					.getUDLDatabaseTableSpaceInfos(treeDataInfo.getParent_id(), treeDataInfo.getDatabaseType());
-			treeMenuInfoMap.put("udlDatabaseTableSpaceInfos", udlDatabaseTableSpaceInfos);
-		}
-		//6-3.获取自定义层数据库表空间下表信息
-		if (!StringUtil.isBlank(treeDataInfo.getDatabaseType()) && StringUtil.isNotBlank(treeDataInfo.getTableSpace())) {
-			List<Map<String, Object>> udlTableSpaceTableInfos = UDLDataQuery
-					.getUDLTableSpaceTableInfos(treeDataInfo.getDatabaseType(), treeDataInfo.getTableSpace());
-			treeMenuInfoMap.put("udlTableSpaceTableInfos", udlTableSpaceTableInfos);
-		}
+//		//6-1.获取自定义层下数据信息
+//		if (DataSourceType.UDL.getValue().equals(treeDataInfo.getAgent_layer())) {
+//			List<Map<String, Object>> udlDatabaseInfos = UDLDataQuery.getUDLDatabaseInfos();
+//			treeMenuInfoMap.put("udlDatabaseInfos", udlDatabaseInfos);
+//		}
+//		//6-2.获取自定义层数据库下表空间信息
+//		if (!StringUtil.isBlank(treeDataInfo.getParent_id()) && StringUtil.isNotBlank(treeDataInfo.getDatabaseType())) {
+//			List<Map<String, Object>> udlDatabaseTableSpaceInfos = UDLDataQuery
+//					.getUDLDatabaseTableSpaceInfos(treeDataInfo.getParent_id(), treeDataInfo.getDatabaseType());
+//			treeMenuInfoMap.put("udlDatabaseTableSpaceInfos", udlDatabaseTableSpaceInfos);
+//		}
+//		//6-3.获取自定义层数据库表空间下表信息
+//		if (!StringUtil.isBlank(treeDataInfo.getDatabaseType()) && StringUtil.isNotBlank(treeDataInfo.getTableSpace())) {
+//			List<Map<String, Object>> udlTableSpaceTableInfos = UDLDataQuery
+//					.getUDLTableSpaceTableInfos(treeDataInfo.getDatabaseType(), treeDataInfo.getTableSpace());
+//			treeMenuInfoMap.put("udlTableSpaceTableInfos", udlTableSpaceTableInfos);
+//		}
 
 		//7.AML 模型层
 		//TODO 注释:不保留机器学习,删除
