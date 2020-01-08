@@ -136,7 +136,6 @@ public class ColumnTool {
 		List<String> split = StringUtil.split(types, CollectTableHandleParse.STRSPLIT);//字段类型
 		for (int i = 0; i < columnAll.size(); i++) {
 			//TODO 类型转换这个类是否需要修改
-//			String columns_type = DataTypeTransformHive.tansform(split.get(i).toUpperCase());
 			String columns_type = split.get(i).toUpperCase();
 			if (columns_type.contains("BOOLEAN")) {
 				listType.add(PrimitiveObjectInspectorFactory.javaBooleanObjectInspector);//orc文件字段类型

@@ -8,7 +8,6 @@ import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.DataStoreConfBean;
 import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.core.dbstage.increasement.JDBCIncreasement;
-import hrds.agent.job.biz.utils.ColumnTool;
 import hrds.agent.job.biz.utils.DataTypeTransform;
 import hrds.agent.trans.biz.ConnectionTool;
 import hrds.commons.codes.FileFormat;
@@ -17,7 +16,7 @@ import hrds.commons.hadoop.readconfig.ConfigReader;
 import hrds.commons.utils.Constant;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hive.ql.exec.vector.*;
+import org.apache.hadoop.hive.ql.exec.vector.VectorizedRowBatch;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Text;
@@ -25,6 +24,8 @@ import org.apache.orc.OrcFile;
 import org.apache.orc.Reader;
 import org.apache.orc.RecordReader;
 import org.apache.orc.TypeDescription;
+import org.apache.orc.mapred.OrcMapredRecordReader;
+import org.apache.orc.mapred.OrcStruct;
 import org.apache.parquet.example.data.Group;
 import org.apache.parquet.hadoop.ParquetReader;
 import org.apache.parquet.hadoop.example.GroupReadSupport;
@@ -123,7 +124,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 			} else if (FileFormat.PARQUET.getCode().equals(collectTableBean.getDbfile_format())) {
 				count = readParquetToDataBase(db, columnList, typeList, batchSql);
 			} else if (FileFormat.ORC.getCode().equals(collectTableBean.getDbfile_format())) {
-				count = readOrcToDataBase(db, columnList, typeList, batchSql);
+				count = readOrcToDataBase(db, typeList, batchSql);
 			} else if (FileFormat.SEQUENCEFILE.getCode().equals(collectTableBean.getDbfile_format())) {
 				count = readSequenceToDataBase(db, columnList, typeList, batchSql);
 			} else if (FileFormat.DingChang.getCode().equals(collectTableBean.getDbfile_format())) {
@@ -143,6 +144,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 		} catch (Exception e) {
 			if (db != null)
 				db.rollback();
+			LOGGER.error("数据库采集读文件上传到数据库异常", e);
 		} finally {
 			if (db != null)
 				db.close();
@@ -238,7 +240,8 @@ public class ReadFileToDataBase implements Callable<Long> {
 			int limit = 50000;
 			Object[] objs;
 			while (sfr.next(key, value)) {
-				List<String> valueList = StringUtil.split(value.toString(), String.valueOf(Constant.DATADELIMITER));
+				String str = value.toString();
+				List<String> valueList = StringUtil.split(str, String.valueOf(Constant.DATADELIMITER));
 				objs = new Object[columnList.size()];// 存储全量插入信息的list
 				for (int j = 0; j < columnList.size(); j++) {
 					objs[j] = getValue(typeList.get(j), valueList.get(j));
@@ -259,31 +262,37 @@ public class ReadFileToDataBase implements Callable<Long> {
 		return num;
 	}
 
-	private long readOrcToDataBase(DatabaseWrapper db, List<String> columnList, List<String> typeList,
+	private long readOrcToDataBase(DatabaseWrapper db, List<String> typeList,
 	                               String batchSql) throws Exception {
 		RecordReader rows = null;
 		long num = 0L;
 		try {
-			Path testFilePath = new Path(fileAbsolutePath);
-			Configuration configuration = new Configuration();
-			Reader reader = OrcFile.createReader(testFilePath, OrcFile.readerOptions(configuration));
-			TypeDescription readSchema = ColumnTool.getTypeDescription(tableBean.getColumnMetaInfo(), tableBean.getColTypeMetaInfo());
-			Reader.Options readerOptions = new Reader.Options(configuration).schema(readSchema);
-			//TODO 了解一下hadoop谓词下推
-			rows = reader.rows(readerOptions);
-			VectorizedRowBatch batch = readSchema.createRowBatch();
 			List<Object[]> pool = new ArrayList<>();// 存储全量插入信息的list
 			Object[] objs;
+			Reader reader = OrcFile.createReader(new Path(fileAbsolutePath), OrcFile.readerOptions(
+					ConfigReader.getConfiguration()));
+			rows = reader.rows();
+			TypeDescription schema = reader.getSchema();
+			List<TypeDescription> children = schema.getChildren();
+			VectorizedRowBatch batch = schema.createRowBatch();
+			int numberOfChildren = children.size();
 			while (rows.nextBatch(batch)) {
-				for (int i = 0; i < batch.size; i++) {
+				for (int r = 0; r < batch.size; r++) {
+					OrcStruct result = new OrcStruct(schema);
+					for (int i = 0; i < numberOfChildren; ++i) {
+						OrcMapredRecordReader.nextValue(batch.cols[i], r,
+								children.get(i), result.getFieldValue(i));
+						result.setFieldValue(i, OrcMapredRecordReader.nextValue(batch.cols[i], r,
+								children.get(i), result.getFieldValue(i)));
+					}
 					num++;
-					objs = new Object[columnList.size()];// 存储全量插入信息的list
-					for (int j = 0; j < columnList.size(); j++) {
-						objs[j] = getOrcValue(batch.cols[j], typeList.get(j), i);
+					objs = new Object[result.getNumFields()];// 存储全量插入信息的list
+					for (int i = 0; i < result.getNumFields(); i++) {
+						objs[i] = getValue(typeList.get(i), result.getFieldValue(i).toString());
 					}
 					pool.add(objs);
+					doBatch(batchSql, pool, num, db);
 				}
-				doBatch(batchSql, pool, num, db);
 			}
 			if (pool.size() != 0) {
 				doBatch(batchSql, pool, num, db);
@@ -293,23 +302,6 @@ public class ReadFileToDataBase implements Callable<Long> {
 				rows.close();
 		}
 		return num;
-	}
-
-	private Object getOrcValue(ColumnVector columnVector, String columns_type, int rowCount) {
-		if (columns_type.contains("INT")) {
-			LongColumnVector longColumnVector = (LongColumnVector) columnVector;
-			return longColumnVector.vector[rowCount];
-		} else if (columns_type.contains("DECIMAL")) {
-			DecimalColumnVector longColumnVector = (DecimalColumnVector) columnVector;
-			return longColumnVector.vector[rowCount];
-		} else if (columns_type.contains("DOUBLE")) {
-			DoubleColumnVector doubleColumnVector = (DoubleColumnVector) columnVector;
-			return doubleColumnVector.vector[rowCount];
-		} else {
-			BytesColumnVector structColumnVector = (BytesColumnVector) columnVector;
-			byte[] bytes = structColumnVector.vector[rowCount];
-			return new String(bytes);
-		}
 	}
 
 	private long readParquetToDataBase(DatabaseWrapper db, List<String> columnList, List<String> typeList,

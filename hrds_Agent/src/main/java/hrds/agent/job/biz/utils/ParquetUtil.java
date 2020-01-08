@@ -25,72 +25,32 @@ import java.util.List;
 public class ParquetUtil {
 
 	/**
-	 * 构建schema
-	 *
-	 * @param columns 字段名，","分割
-	 * @param types   字段类型，"|"分隔
-	 * @return org.apache.parquet.schema.MessageType
-	 * @author 13616
-	 * @date 2019/8/7 11:29
+	 * 用于数据库直连采集和DB文件采集根据列名和列类型生成Schema
 	 */
 	public static MessageType getSchema(String columns, String types) {
 		//列数组
-		String[] colArray = columns.toUpperCase().split(CollectTableHandleParse.STRSPLIT);
+		List<String> colList = StringUtil.split(columns.toUpperCase(), CollectTableHandleParse.STRSPLIT);
 		//字段类型
-		List<String> typeArray = StringUtil.split(types.toLowerCase(),
-				CollectTableHandleParse.STRSPLIT);
+		List<String> typeArray = StringUtil.split(types.toLowerCase(), CollectTableHandleParse.STRSPLIT);
 		StringBuilder sb = new StringBuilder(170);
 		sb.append("message Pair {\n");
-
-		for (int i = 0; i < colArray.length; i++) {
+		for (int i = 0; i < colList.size(); i++) {
 			String columns_type = typeArray.get(i);
 			if (columns_type.contains(DataTypeConstant.BOOLEAN.getMessage())) {
-				sb.append("required ").append("BOOLEAN ").append(colArray[i]).append(" ;");
+				sb.append("required ").append("BOOLEAN ").append(colList.get(i)).append(" ;");
 			} else if (columns_type.contains(DataTypeConstant.INT.getMessage())) {
-				sb.append("required ").append("INT32 ").append(colArray[i]).append(" ;");
+				sb.append("required ").append("INT32 ").append(colList.get(i)).append(" ;");
 			} else if (columns_type.contains(DataTypeConstant.DECIMAL.getMessage())) {
-				sb.append("required ").append("DOUBLE ").append(colArray[i]).append(" ;");
+				sb.append("required ").append("DOUBLE ").append(colList.get(i)).append(" ;");
 			} else if (columns_type.contains(DataTypeConstant.FLOAT.getMessage())) {
-				sb.append("required ").append("FLOAT ").append(colArray[i]).append(" ;");
+				sb.append("required ").append("FLOAT ").append(colList.get(i)).append(" ;");
 			} else if (columns_type.contains(DataTypeConstant.DOUBLE.getMessage())) {
-				sb.append("required ").append("DOUBLE ").append(colArray[i]).append(" ;");
+				sb.append("required ").append("DOUBLE ").append(colList.get(i)).append(" ;");
 			} else {
-				sb.append("required binary ").append(colArray[i]).append(" (UTF8);");
+				sb.append("required binary ").append(colList.get(i)).append(" (UTF8);");
 			}
 		}
 		sb.append(" }");
-
-		return MessageTypeParser.parseMessageType(sb.toString());
-	}
-
-	/*用于数据库直连采集根据列名和列类型生成Schema,数据库直连采集列名是根据\001分隔的*/
-	public static MessageType getSchemaAsDBColl(String columns, String types) {
-		//列数组
-		String[] colArray = columns.toUpperCase().split(JobConstant.COLUMN_NAME_SEPARATOR);
-		//字段类型
-		List<String> typeArray = StringUtil.split(types.toLowerCase(),
-				JobConstant.COLUMN_TYPE_SEPARATOR);
-		StringBuilder sb = new StringBuilder(170);
-		sb.append("message Pair {\n");
-
-		for (int i = 0; i < colArray.length; i++) {
-			String columns_type = typeArray.get(i);
-			if (columns_type.contains(DataTypeConstant.BOOLEAN.getMessage())) {
-				sb.append("required ").append("BOOLEAN ").append(colArray[i]).append(" ;");
-			} else if (columns_type.contains(DataTypeConstant.INT.getMessage())) {
-				sb.append("required ").append("INT32 ").append(colArray[i]).append(" ;");
-			} else if (columns_type.contains(DataTypeConstant.DECIMAL.getMessage())) {
-				sb.append("required ").append("DOUBLE ").append(colArray[i]).append(" ;");
-			} else if (columns_type.contains(DataTypeConstant.FLOAT.getMessage())) {
-				sb.append("required ").append("FLOAT ").append(colArray[i]).append(" ;");
-			} else if (columns_type.contains(DataTypeConstant.DOUBLE.getMessage())) {
-				sb.append("required ").append("DOUBLE ").append(colArray[i]).append(" ;");
-			} else {
-				sb.append("required binary ").append(colArray[i]).append(" (UTF8);");
-			}
-		}
-		sb.append(" }");
-
 		return MessageTypeParser.parseMessageType(sb.toString());
 	}
 

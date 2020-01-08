@@ -9,7 +9,6 @@ import hrds.agent.job.biz.core.dbstage.service.CollectTableHandleParse;
 import hrds.agent.job.biz.dataclean.Clean;
 import hrds.agent.job.biz.dataclean.CleanFactory;
 import hrds.agent.job.biz.dataclean.DataCleanInterface;
-import hrds.agent.job.biz.utils.ColumnTool;
 import hrds.agent.job.biz.utils.JobIoUtil;
 import hrds.agent.job.biz.utils.WriterFile;
 import hrds.commons.codes.FileFormat;
@@ -52,7 +51,6 @@ public class JdbcToNonFixedFileWriter extends AbstractFileWriter {
 		BufferedWriter writer;
 		long lineCounter = pageNum * pageRow;
 		long counter = 0;
-		long fileSize;
 		int index = 0;
 		WriterFile writerFile = null;
 		try {
@@ -90,18 +88,14 @@ public class JdbcToNonFixedFileWriter extends AbstractFileWriter {
 				for (int i = 1; i <= numberOfColumns; i++) {
 					//获取原始值来计算 MD5
 					sb_.delete(0, sb_.length());
-					midStringOther.append(getOneColumnValue(avroWriter, lineCounter, resultSet, typeArray[i - 1], sb_, i, hbase_name));
+					midStringOther.append(getOneColumnValue(avroWriter, lineCounter, resultSet, typeArray[i - 1],
+							sb_, i, hbase_name)).append(Constant.DATADELIMITER);
 					//清洗操作
 					currValue = sb_.toString();
 					currValue = cl.cleanColumn(currValue, colName[i - 1].toUpperCase(), null,
 							typeList.get(i - 1), FileFormat.FeiDingChang.getCode(), null);
 					// Write to output
-					sb.append(currValue);
-					// Add DELIMITER if not last value
-					if (i < numberOfColumns) {
-						sb.append(Constant.DATADELIMITER);
-						midStringOther.append(Constant.DATADELIMITER);
-					}
+					sb.append(currValue).append(Constant.DATADELIMITER);
 				}
 				//如果有列合并处理合并信息
 				if (!mergeIng.isEmpty()) {
@@ -139,9 +133,6 @@ public class JdbcToNonFixedFileWriter extends AbstractFileWriter {
 			}
 			writer.flush();
 			//写meta数据开始
-			fileSize = JobIoUtil.getFileSize(midName);
-			ColumnTool.writeFileMeta(hbase_name, new File(midName), tableBean.getColumnMetaInfo(),
-					lineCounter, tableBean.getColTypeMetaInfo(), tableBean.getColLengthInfo(), fileSize, "n");
 		} catch (Exception e) {
 			log.error("卸数失败", e);
 			throw new AppSystemException("数据库采集卸数非定长文件失败" + e.getMessage());
@@ -155,7 +146,7 @@ public class JdbcToNonFixedFileWriter extends AbstractFileWriter {
 				log.error(e);
 			}
 		}
-		fileInfo.append(counter).append(CollectTableHandleParse.STRSPLIT).append(fileSize);
+		fileInfo.append(counter).append(CollectTableHandleParse.STRSPLIT).append(JobIoUtil.getFileSize(midName));
 		//返回卸数一个或者多个文件名全路径和总的文件行数和文件大小
 		return fileInfo.toString();
 	}

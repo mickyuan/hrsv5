@@ -40,7 +40,7 @@ public class CommandJdbcTest {
 	 */
 	@Test
 	public void test2() {
-		assertThat("执行测试卸数csv文件成功", execute("1002234429"), is(true));
+		assertThat("执行测试卸数parquet文件成功", execute("1002234429"), is(true));
 	}
 
 	/**
@@ -48,7 +48,7 @@ public class CommandJdbcTest {
 	 */
 	@Test
 	public void test3() {
-		assertThat("执行测试卸数csv文件成功", execute("1002234430"), is(true));
+		assertThat("执行测试卸数Orc文件成功", execute("1002234430"), is(true));
 	}
 
 	/**
@@ -56,7 +56,7 @@ public class CommandJdbcTest {
 	 */
 	@Test
 	public void test4() {
-		assertThat("执行测试卸数csv文件成功", execute("1002234431"), is(true));
+		assertThat("执行测试卸数SequenceFile文件成功", execute("1002234431"), is(true));
 	}
 
 	/**

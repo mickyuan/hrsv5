@@ -9,7 +9,6 @@ import hrds.agent.job.biz.core.dbstage.service.CollectTableHandleParse;
 import hrds.agent.job.biz.dataclean.Clean;
 import hrds.agent.job.biz.dataclean.CleanFactory;
 import hrds.agent.job.biz.dataclean.DataCleanInterface;
-import hrds.agent.job.biz.utils.ColumnTool;
 import hrds.agent.job.biz.utils.JobIoUtil;
 import hrds.agent.job.biz.utils.WriterFile;
 import hrds.commons.codes.FileFormat;
@@ -53,7 +52,6 @@ public class JdbcToCsvFileWriter extends AbstractFileWriter {
 		CsvListWriter writer;
 		long lineCounter = pageNum * pageRow;
 		long counter = 0;
-		long fileSize;
 		int index = 0;
 		WriterFile writerFile = null;
 		try {

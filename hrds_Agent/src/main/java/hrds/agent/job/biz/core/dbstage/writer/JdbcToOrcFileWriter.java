@@ -57,7 +57,6 @@ public class JdbcToOrcFileWriter extends AbstractFileWriter {
 		long lineCounter = pageNum * pageRow;
 		long counter = 0;
 		int index = 0;
-		long fileSize;
 		WriterFile writerFile = null;
 		RecordWriter<NullWritable, Writable> writer;
 		StringBuilder fileInfo = new StringBuilder(1024);
@@ -147,11 +146,6 @@ public class JdbcToOrcFileWriter extends AbstractFileWriter {
 				}
 				writer.write(NullWritable.get(), serde.serialize(lineData, inspector));
 			}
-			//写meta数据开始
-			//写meta数据开始
-			fileSize = JobIoUtil.getFileSize(midName);
-			ColumnTool.writeFileMeta(hbase_name, new File(midName), tableBean.getColumnMetaInfo(),
-					lineCounter, tableBean.getColTypeMetaInfo(), tableBean.getColLengthInfo(), fileSize, "n");
 		} catch (Exception e) {
 			log.error("卸数失败", e);
 			throw new AppSystemException("数据库采集卸数Orc文件失败" + e.getMessage());
@@ -165,7 +159,7 @@ public class JdbcToOrcFileWriter extends AbstractFileWriter {
 				log.error(e);
 			}
 		}
-		fileInfo.append(counter).append(CollectTableHandleParse.STRSPLIT).append(fileSize);
+		fileInfo.append(counter).append(CollectTableHandleParse.STRSPLIT).append(JobIoUtil.getFileSize(midName));
 		//返回卸数一个或者多个文件名全路径和总的文件行数和文件大小
 		return fileInfo.toString();
 	}

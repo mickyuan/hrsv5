@@ -11,7 +11,6 @@ import hrds.agent.job.biz.core.dbstage.service.CollectTableHandleParse;
 import hrds.agent.job.biz.dataclean.Clean;
 import hrds.agent.job.biz.dataclean.CleanFactory;
 import hrds.agent.job.biz.dataclean.DataCleanInterface;
-import hrds.agent.job.biz.utils.ColumnTool;
 import hrds.agent.job.biz.utils.JobIoUtil;
 import hrds.agent.job.biz.utils.WriterFile;
 import hrds.commons.codes.FileFormat;
@@ -56,7 +55,6 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 		BufferedWriter writer;
 		long lineCounter = pageNum * pageRow;
 		long counter = 0;
-		long fileSize;
 		int index = 0;
 		WriterFile writerFile = null;
 		try {
@@ -96,18 +94,14 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 				for (int i = 1; i <= numberOfColumns; i++) {
 					//获取原始值来计算 MD5
 					sb_.delete(0, sb_.length());
-					midStringOther.append(getOneColumnValue(avroWriter, lineCounter, resultSet, typeArray[i - 1], sb_, i, hbase_name));
+					midStringOther.append(getOneColumnValue(avroWriter, lineCounter, resultSet, typeArray[i - 1]
+							, sb_, i, hbase_name)).append(Constant.DATADELIMITER);
 					//清洗操作
 					currValue = sb_.toString();
 					currValue = cl.cleanColumn(currValue, colName[i - 1].toUpperCase(), null,
 							typeList.get(i - 1), FileFormat.FeiDingChang.getCode(), null);
 					//TODO 目前这里如果直接加定长补齐方法则表示不支持字符拆分和字符合并，因为根本拿不到拆分和合并的长度
-					sb.append(columnToFixed(currValue, rsMetaData, i, database_code));
-					// Add DELIMITER if not last value
-					if (i < numberOfColumns) {
-						sb.append(Constant.DATADELIMITER);
-						midStringOther.append(Constant.DATADELIMITER);
-					}
+					sb.append(columnToFixed(currValue, rsMetaData, i, database_code)).append(Constant.DATADELIMITER);
 				}
 				//TODO 定长目前不支持列合并，原因同上
 //				if (!mergeIng.isEmpty()) {
@@ -144,10 +138,6 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 				sb.delete(0, sb.length());
 			}
 			writer.flush();
-			//写meta数据开始
-			fileSize = JobIoUtil.getFileSize(midName);
-			ColumnTool.writeFileMeta(hbase_name, new File(midName), tableBean.getColumnMetaInfo(),
-					lineCounter, tableBean.getColTypeMetaInfo(), tableBean.getColLengthInfo(), fileSize, "n");
 		} catch (Exception e) {
 			log.error("卸数失败", e);
 			throw new AppSystemException("数据库采集卸数定长文件失败" + e.getMessage());
@@ -161,7 +151,7 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 				log.error(e);
 			}
 		}
-		fileInfo.append(counter).append(CollectTableHandleParse.STRSPLIT).append(fileSize);
+		fileInfo.append(counter).append(CollectTableHandleParse.STRSPLIT).append(JobIoUtil.getFileSize(midName));
 		//返回卸数一个或者多个文件名全路径和总的文件行数和文件大小
 		return fileInfo.toString();
 	}
