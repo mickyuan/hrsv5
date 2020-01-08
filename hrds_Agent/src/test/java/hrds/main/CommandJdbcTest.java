@@ -60,6 +60,21 @@ public class CommandJdbcTest {
 	}
 
 	/**
+	 * 测试卸数定长文件
+	 */
+	@Test
+	public void test5() {
+		assertThat("执行测试卸数定长文件成功", execute("1002234432"), is(true));
+	}
+
+	/**
+	 * 测试卸数非定长文件
+	 */
+	@Test
+	public void test6() {
+		assertThat("执行测试卸数非定长文件成功", execute("1002234433"), is(true));
+	}
+	/**
 	 * 执行数据库采集的主程序
 	 *
 	 * @param database_id 任务id
