@@ -95,21 +95,21 @@ public class JobStageController {
 		if(fileFlag){
 			StageStatusInfo unloadStatus = jobStatusInfo.getUnloadDataStatus();
 			StageStatusInfo uploadStatus = jobStatusInfo.getUploadStatus();
-			StageStatusInfo lodingStatus = jobStatusInfo.getDataLodingStatus();
+			StageStatusInfo loadingStatus = jobStatusInfo.getDataLodingStatus();
 			StageStatusInfo calIncrementStatus = jobStatusInfo.getCalIncrementStatus();
 			StageStatusInfo registStatus = jobStatusInfo.getDataRegistrationStatus();
 
-			if(unloadStatus != null && uploadStatus != null && lodingStatus != null && calIncrementStatus != null
+			if(unloadStatus != null && uploadStatus != null && loadingStatus != null && calIncrementStatus != null
 					&& registStatus != null){
 				int unloadStatusCode = unloadStatus.getStatusCode();
 				int uploadStatusCode = uploadStatus.getStatusCode();
-				int lodingStatusCode = lodingStatus.getStatusCode();
+				int loadingStatusCode = loadingStatus.getStatusCode();
 				int incrementStatusCode = calIncrementStatus.getStatusCode();
 				int registStatusCode = registStatus.getStatusCode();
 
 				int succeedCode = RunStatusConstant.SUCCEED.getCode();
 
-				if(unloadStatusCode == succeedCode && uploadStatusCode == succeedCode && lodingStatusCode == succeedCode
+				if(unloadStatusCode == succeedCode && uploadStatusCode == succeedCode && loadingStatusCode == succeedCode
 						&& incrementStatusCode == succeedCode && registStatusCode == succeedCode){
 					redoFlag = true;
 					//如果是重跑，则应该重新构建jobStatusInfo对象，否则就会使用到之前的jobStatusInfo对象
