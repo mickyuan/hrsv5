@@ -51,4 +51,15 @@ public class Constant {
 	public static final String SYS_DATA_TABLE = "sysDataTable";
 	//系统数据备份
 	public static final String SYS_DATA_BAK = "sysDataBak";
+
+	//自定义层数据库类型列表
+	public static final String[] DATABASE_TYPE = {"Hive", "HBase", "Mpp", "Spark"};
+	//HIVE
+	public static final String HIVE = DATABASE_TYPE[0];
+	//HBASE
+	public static final String HBASE = DATABASE_TYPE[1];
+	//MPP
+	public static final String MPP = DATABASE_TYPE[2];
+	//CARBON_DATA
+	public static final String CARBON_DATA = DATABASE_TYPE[3];
 }
