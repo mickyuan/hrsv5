@@ -18,7 +18,12 @@ import java.util.Map;
 public class TreeMenuInfo {
 
 	@Method(desc = "获取树菜单信息",
-			logicStep = "0.获取源树信息")
+			logicStep = "1.DCL 贴源层" +
+					"2.DML 集市层" +
+					"3.DPL 加工层" +
+					"4.DQC 管控层" +
+					"5.SFL 系统层" +
+					"6.UDL 自定义层")
 	@Param(name = "user", desc = "User", range = "登录用户User的对象实例")
 	@Param(name = "treeDataInfo", desc = "TreeDataInfo", range = "TreeDataInfo的对象实例")
 	@Return(desc = "树菜单信息List", range = "无限制")
@@ -57,15 +62,15 @@ public class TreeMenuInfo {
 //			treeMenuInfoMap.put("dclRealTimeDataInfos", dclRealTimeDataInfos);
 //		}
 //		//1-6.获取贴源层实时数据组下数据信息(kafkaTopic)
-//		if (StringUtil.isNotBlank(treeDataInfo.getGroupid())) {
+//		if (StringUtil.isNotBlank(treeDataInfo.getGroupId())) {
 //			List<Map<String, Object>> dclRealTimeTopicInfos =
-//					DCLDataQuery.getDCLRealTimeTopicInfos(treeDataInfo.getGroupid());
+//					DCLDataQuery.getDCLRealTimeTopicInfos(treeDataInfo.getGroupId());
 //			treeMenuInfoMap.put("dclRealTimeTopicInfos", dclRealTimeTopicInfos);
 //		}
 //		//1-7.获取贴源层实时数据组下流数据消费到平台内部的表的信息
-//		if (StringUtil.isNotBlank(treeDataInfo.getSdm_consum_id())) {
+//		if (StringUtil.isNotBlank(treeDataInfo.getSdm_consumer_id())) {
 //			List<Map<String, Object>> dclRealTimeInnerTableInfos = DCLDataQuery
-//					.getDCLRealTimeInnerTableInfos(treeDataInfo.getSdm_consum_id());
+//					.getDCLRealTimeInnerTableInfos(treeDataInfo.getSdm_consumer_id());
 //			treeMenuInfoMap.put("dclRealTimeInnerTableInfos", dclRealTimeInnerTableInfos);
 //		}
 		//TODO 集市功能添加后放开
@@ -131,10 +136,24 @@ public class TreeMenuInfo {
 //		}
 		//TODO 自定义层管理功能添加后放开
 //		//6.UDL 自定义层
-//		//6-1.获取自定义层下数据信息
-//		if ("true".equalsIgnoreCase(treeDataInfo.getIsPublic())) {
-//			UDLDataQuery.getPublicAndCustomize(treeMenuInfoMap, treeDataInfo);
-//		}
+		//6-1.获取自定义层下数据信息
+		if (DataSourceType.UDL.getValue().equals(treeDataInfo.getAgent_layer())) {
+			List<Map<String, Object>> udlDatabaseInfos = UDLDataQuery.getUDLDatabaseInfos();
+			treeMenuInfoMap.put("udlDatabaseInfos", udlDatabaseInfos);
+		}
+		//6-2.获取自定义层数据库下表空间信息
+		if (!StringUtil.isBlank(treeDataInfo.getParent_id()) && StringUtil.isNotBlank(treeDataInfo.getDatabaseType())) {
+			List<Map<String, Object>> udlDatabaseTableSpaceInfos = UDLDataQuery
+					.getUDLDatabaseTableSpaceInfos(treeDataInfo.getParent_id(), treeDataInfo.getDatabaseType());
+			treeMenuInfoMap.put("udlDatabaseTableSpaceInfos", udlDatabaseTableSpaceInfos);
+		}
+		//6-3.获取自定义层数据库表空间下表信息
+		if (!StringUtil.isBlank(treeDataInfo.getDatabaseType()) && StringUtil.isNotBlank(treeDataInfo.getTableSpace())) {
+			List<Map<String, Object>> udlTableSpaceTableInfos = UDLDataQuery
+					.getUDLTableSpaceTableInfos(treeDataInfo.getDatabaseType(), treeDataInfo.getTableSpace());
+			treeMenuInfoMap.put("udlTableSpaceTableInfos", udlTableSpaceTableInfos);
+		}
+
 		//7.AML 模型层
 		//TODO 注释:不保留机器学习,删除
 		//8.无hadoop下的自定义层

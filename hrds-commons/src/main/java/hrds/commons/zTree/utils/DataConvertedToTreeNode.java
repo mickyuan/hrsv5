@@ -5,11 +5,10 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
-import hrds.commons.codes.DataSourceType;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.PathUtil;
-import hrds.commons.zTree.bean.TreePageSource;
+import hrds.commons.zTree.commons.UDLDataQuery;
 
 import java.util.HashMap;
 import java.util.List;
@@ -44,8 +43,8 @@ public class DataConvertedToTreeNode {
 	@Param(name = "dclDataInfos", desc = "DCL层下数据信息", range = "dclDataInfos")
 	@Param(name = "treeDataList", desc = "树菜单数据信息", range = "treeDataList")
 	@Return(desc = "返回值说明", range = "返回值取值范围")
-	public static void ConversionDCLDataInfos(List<Map<String, Object>> dclDataInfos,
-	                                          List<Map<String, Object>> treeDataList) {
+	public static void ConversionDCLSourceInfos(List<Map<String, Object>> dclDataInfos,
+	                                            List<Map<String, Object>> treeDataList) {
 		for (Map<String, Object> dclDataInfo : dclDataInfos) {
 			Map<String, Object> map = new HashMap<>();
 			map.put("batch_id", dclDataInfo.get("batch_id"));
@@ -84,99 +83,48 @@ public class DataConvertedToTreeNode {
 		}
 	}
 
-	@Method(desc = "集市层源信息转换",
-			logicStep = "1.集市层源信息转换")
-	@Param(name = "dmlDataRs", desc = "集市源信息", range = "取值范围说明")
+	@Method(desc = "贴源层实时数据信息转换",
+			logicStep = "1.贴源层实时数据信息转换")
+	@Param(name = "dclRealTimeDataRs", desc = "贴源层实时数据信息", range = "取值范围说明")
 	@Param(name = "treeDataList", desc = "转换后的树数据信息", range = "取值范围说明")
 	@Param(name = "rootName", desc = "父级菜单名称", range = "取值范围说明")
-	@Param(name = "isShTable", desc = "是否为树的根节点标志", range = "Boolean")
-	public static void ConversionDMLSourceInfos(List<Map<String, Object>> dmlDataInfos,
-	                                            List<Map<String, Object>> treeDataList, String rootName,
-	                                            String isShTable) {
-		for (Map<String, Object> dmlDataInfo : dmlDataInfos) {
+	public static void ConversionDCLRealTimeDataInfos(List<Map<String, Object>> dclRealTimeDataInfos,
+	                                                  List<Map<String, Object>> treeDataList, String rootName) {
+		for (Map<String, Object> dclRealTimeDataInfo : dclRealTimeDataInfos) {
 			Map<String, Object> map = new HashMap<>();
-			String mart_storage_path = dmlDataInfo.get("mart_storage_path").toString();
-			String create_date = dmlDataInfo.get("create_date").toString();
-			String create_id = dmlDataInfo.get("create_id").toString();
-			String remark = dmlDataInfo.get("remark").toString();
-			String create_time = dmlDataInfo.get("create_time").toString();
-			String mart_name = dmlDataInfo.get("mart_name").toString();
-			String data_mart_id = dmlDataInfo.get("data_mart_id").toString();
-			String mart_desc = dmlDataInfo.get("mart_desc").toString();
-			map.put("mart_storage_path", mart_storage_path);
-			map.put("create_id", create_id);
-			map.put("create_date", create_date);
-			map.put("create_time", create_time);
-			map.put("name", mart_name);
-			map.put("data_mart_id", data_mart_id);
-			map.put("mart_desc", mart_desc);
-			map.put("remark", remark);
+			String groupid = dclRealTimeDataInfo.get("groupid").toString();
+			map.put("groupid", groupid);
+			map.put("name", groupid);
+			map.put("description", groupid);
 			map.put("rootName", rootName);
-			map.put("pId", rootName);
-			map.put("id", data_mart_id);
-			map.put("show", Boolean.TRUE);
-			map.put("isParent", isShTable);
-			map.put("description", mart_desc);
-			map.put("source", PathUtil.DML);
-			treeDataList.add(map);
-		}
-	}
-
-	@Method(desc = "加工层源信息转换",
-			logicStep = "1.加工层源信息转换")
-	@Param(name = "dplDataRs", desc = "加工层源信息", range = "取值范围说明")
-	@Param(name = "treeDataList", desc = "转换后的树数据信息", range = "取值范围说明")
-	@Param(name = "rootName", desc = "父级菜单名称", range = "取值范围说明")
-	public static void ConversionDPLSourceInfos(List<Map<String, Object>> dplDataInfos,
-	                                            List<Map<String, Object>> treeDataList, String rootName) {
-		for (Map<String, Object> dplDataInfo : dplDataInfos) {
-			Map<String, Object> map = new HashMap<>();
-			String mart_storage_path = dplDataInfo.get("mart_storage_path").toString();
-			String create_date = dplDataInfo.get("create_date").toString();
-			String create_id = dplDataInfo.get("create_id").toString();
-			String pro_desc = dplDataInfo.get("pro_desc").toString();
-			String create_time = dplDataInfo.get("create_time").toString();
-			String pro_name = dplDataInfo.get("pro_name").toString();
-			String modal_pro_id = dplDataInfo.get("modal_pro_id").toString();
-			String mart_desc = dplDataInfo.get("mart_desc").toString();
-			map.put("mart_storage_path", mart_storage_path);
-			map.put("rootName", rootName);
-			map.put("create_id", create_id);
-			map.put("create_date", create_date);
-			map.put("create_time", create_time);
-			map.put("name", pro_name);
-			map.put("modal_pro_id", modal_pro_id);
-			map.put("mart_desc", mart_desc);
-			map.put("pId", rootName);
-			map.put("id", modal_pro_id);
-			map.put("remark", pro_desc);
+			map.put("pId", Constant.REALTIME_TYPE);
+			map.put("id", groupid);
+			map.put("source", Constant.DCL_REALTIME);
 			map.put("isParent", Boolean.TRUE);
-			map.put("description", mart_desc);
-			map.put("source", PathUtil.DPL);
 			treeDataList.add(map);
 		}
 	}
 
-	@Method(desc = "数据管控层源信息转换",
-			logicStep = "1.数据管控层源信息转换")
-	@Param(name = "dqcDataRs", desc = "数据管控层源信息", range = "取值范围说明")
+	@Method(desc = "贴源层实时数据下Topic信息转换",
+			logicStep = "1.贴源层实时数据下Topic信息转换")
+	@Param(name = "dclRealTimeTopicRs", desc = "贴源层实时数据下Topic信息", range = "取值范围说明")
 	@Param(name = "treeDataList", desc = "转换后的树数据信息", range = "取值范围说明")
 	@Param(name = "rootName", desc = "父级菜单名称", range = "取值范围说明")
-	public static void ConversionDQCSourceInfos(List<Map<String, Object>> dqcDataInfos,
-	                                            List<Map<String, Object>> treeDataList, String rootName) {
-		for (Map<String, Object> dqcDataInfo : dqcDataInfos) {
+	public static void ConversionDCLRealTimeTopicInfos(List<Map<String, Object>> dclRealTimeTopicInfos,
+	                                                   List<Map<String, Object>> treeDataList, String rootName) {
+		for (Map<String, Object> dclRealTimeTopicInfo : dclRealTimeTopicInfos) {
 			Map<String, Object> map = new HashMap<>();
-			String table_name = dqcDataInfo.get("table_name").toString();
-			String record_id = dqcDataInfo.get("record_id").toString();
-			map.put("name", table_name);
-			map.put("description", table_name);
+			String sdm_consum_id = dclRealTimeTopicInfo.get("sdm_consum_id").toString();
+			String topicName = dclRealTimeTopicInfo.get("sdm_cons_para_val").toString();
+			String groupid = dclRealTimeTopicInfo.get("groupid").toString();
+			map.put("sdm_consum_id", sdm_consum_id);
+			map.put("name", topicName);
+			map.put("description", topicName);
 			map.put("rootName", rootName);
-			map.put("tablename", table_name);
-			map.put("pId", rootName);
-			map.put("id", record_id);
-			map.put("table_id", record_id);
-			map.put("isParent", Boolean.FALSE);
-			map.put("source", PathUtil.DQC);
+			map.put("pId", groupid);
+			map.put("id", sdm_consum_id);
+			map.put("isParent", Boolean.TRUE);
+			map.put("source", Constant.DCL_REALTIME);
 			map.put("show", Boolean.TRUE);
 			treeDataList.add(map);
 		}
@@ -278,6 +226,75 @@ public class DataConvertedToTreeNode {
 		}
 	}
 
+	@Method(desc = "贴源层实时数据下内部表信息转换",
+			logicStep = "1.贴源层实时数据下内部表信息转换")
+	@Param(name = "dclRealTimeInnerTableRs", desc = "贴源层实时数据下内部表信息", range = "取值范围说明")
+	@Param(name = "treeDataList", desc = "转换后的树数据信息", range = "取值范围说明")
+	@Param(name = "rootName", desc = "父级菜单名称", range = "取值范围说明")
+	public static void ConversionDCLRealTimeInnerTableInfos(List<Map<String, Object>> dclRealTimeInnerTableInfos,
+	                                                        List<Map<String, Object>> treeDataList, String rootName) {
+		for (Map<String, Object> dclRealTimeInnerTableInfo : dclRealTimeInnerTableInfos) {
+			Map<String, Object> map = new HashMap<>();
+			String table_id = dclRealTimeInnerTableInfo.get("table_id").toString();
+			String table_en_name = dclRealTimeInnerTableInfo.get("table_en_name").toString();
+			String table_cn_name = dclRealTimeInnerTableInfo.get("table_cn_name").toString();
+			String sdm_con_sum_id = dclRealTimeInnerTableInfo.get("sdm_consum_id").toString();
+			map.put("table_id", table_id);
+			if (StringUtil.isEmpty(table_cn_name)) {
+				map.put("name", table_en_name);
+			} else {
+				map.put("name", table_cn_name);
+			}
+			map.put("description", table_en_name);
+			map.put("rootName", rootName);
+			map.put("tableName", table_en_name);
+			map.put("pId", sdm_con_sum_id);
+			map.put("id", table_id);
+			map.put("isParent", Boolean.FALSE);
+			map.put("source", Constant.DCL_REALTIME);
+			map.put("show", Boolean.TRUE);
+			treeDataList.add(map);
+		}
+	}
+
+	@Method(desc = "集市层源信息转换",
+			logicStep = "1.集市层源信息转换")
+	@Param(name = "dmlDataInfos", desc = "集市源信息", range = "取值范围说明")
+	@Param(name = "treeDataList", desc = "转换后的树数据信息", range = "取值范围说明")
+	@Param(name = "rootName", desc = "父级菜单名称", range = "取值范围说明")
+	@Param(name = "isShTable", desc = "是否为树的根节点标志", range = "Boolean")
+	public static void ConversionDMLSourceInfos(List<Map<String, Object>> dmlDataInfos,
+	                                            List<Map<String, Object>> treeDataList, String rootName,
+	                                            String isShTable) {
+		for (Map<String, Object> dmlDataInfo : dmlDataInfos) {
+			Map<String, Object> map = new HashMap<>();
+			String mart_storage_path = dmlDataInfo.get("mart_storage_path").toString();
+			String create_date = dmlDataInfo.get("create_date").toString();
+			String create_id = dmlDataInfo.get("create_id").toString();
+			String remark = dmlDataInfo.get("remark").toString();
+			String create_time = dmlDataInfo.get("create_time").toString();
+			String mart_name = dmlDataInfo.get("mart_name").toString();
+			String data_mart_id = dmlDataInfo.get("data_mart_id").toString();
+			String mart_desc = dmlDataInfo.get("mart_desc").toString();
+			map.put("mart_storage_path", mart_storage_path);
+			map.put("create_id", create_id);
+			map.put("create_date", create_date);
+			map.put("create_time", create_time);
+			map.put("name", mart_name);
+			map.put("data_mart_id", data_mart_id);
+			map.put("mart_desc", mart_desc);
+			map.put("remark", remark);
+			map.put("rootName", rootName);
+			map.put("pId", rootName);
+			map.put("id", data_mart_id);
+			map.put("show", Boolean.TRUE);
+			map.put("isParent", isShTable);
+			map.put("description", mart_desc);
+			map.put("source", PathUtil.DML);
+			treeDataList.add(map);
+		}
+	}
+
 	@Method(desc = "集市层下表信息转换",
 			logicStep = "1.集市层下表信息转换")
 	@Param(name = "dmlTableRs", desc = "集市层下表信息", range = "取值范围说明")
@@ -318,6 +335,41 @@ public class DataConvertedToTreeNode {
 			map.put("show", Boolean.TRUE);
 			map.put("datatable_id", datatable_id);
 			map.put("isParent", Boolean.FALSE);
+			treeDataList.add(map);
+		}
+	}
+
+	@Method(desc = "加工层源信息转换",
+			logicStep = "1.加工层源信息转换")
+	@Param(name = "dplDataRs", desc = "加工层源信息", range = "取值范围说明")
+	@Param(name = "treeDataList", desc = "转换后的树数据信息", range = "取值范围说明")
+	@Param(name = "rootName", desc = "父级菜单名称", range = "取值范围说明")
+	public static void ConversionDPLSourceInfos(List<Map<String, Object>> dplDataInfos,
+	                                            List<Map<String, Object>> treeDataList, String rootName) {
+		for (Map<String, Object> dplDataInfo : dplDataInfos) {
+			Map<String, Object> map = new HashMap<>();
+			String mart_storage_path = dplDataInfo.get("mart_storage_path").toString();
+			String create_date = dplDataInfo.get("create_date").toString();
+			String create_id = dplDataInfo.get("create_id").toString();
+			String pro_desc = dplDataInfo.get("pro_desc").toString();
+			String create_time = dplDataInfo.get("create_time").toString();
+			String pro_name = dplDataInfo.get("pro_name").toString();
+			String modal_pro_id = dplDataInfo.get("modal_pro_id").toString();
+			String mart_desc = dplDataInfo.get("mart_desc").toString();
+			map.put("mart_storage_path", mart_storage_path);
+			map.put("rootName", rootName);
+			map.put("create_id", create_id);
+			map.put("create_date", create_date);
+			map.put("create_time", create_time);
+			map.put("name", pro_name);
+			map.put("modal_pro_id", modal_pro_id);
+			map.put("mart_desc", mart_desc);
+			map.put("pId", rootName);
+			map.put("id", modal_pro_id);
+			map.put("remark", pro_desc);
+			map.put("isParent", Boolean.TRUE);
+			map.put("description", mart_desc);
+			map.put("source", PathUtil.DPL);
 			treeDataList.add(map);
 		}
 	}
@@ -402,6 +454,31 @@ public class DataConvertedToTreeNode {
 		}
 	}
 
+	@Method(desc = "数据管控层源信息转换",
+			logicStep = "1.数据管控层源信息转换")
+	@Param(name = "dqcDataRs", desc = "数据管控层源信息", range = "取值范围说明")
+	@Param(name = "treeDataList", desc = "转换后的树数据信息", range = "取值范围说明")
+	@Param(name = "rootName", desc = "父级菜单名称", range = "取值范围说明")
+	public static void ConversionDQCSourceInfos(List<Map<String, Object>> dqcDataInfos,
+	                                            List<Map<String, Object>> treeDataList, String rootName) {
+		for (Map<String, Object> dqcDataInfo : dqcDataInfos) {
+			Map<String, Object> map = new HashMap<>();
+			String table_name = dqcDataInfo.get("table_name").toString();
+			String record_id = dqcDataInfo.get("record_id").toString();
+			map.put("name", table_name);
+			map.put("description", table_name);
+			map.put("rootName", rootName);
+			map.put("tablename", table_name);
+			map.put("pId", rootName);
+			map.put("id", record_id);
+			map.put("table_id", record_id);
+			map.put("isParent", Boolean.FALSE);
+			map.put("source", PathUtil.DQC);
+			map.put("show", Boolean.TRUE);
+			treeDataList.add(map);
+		}
+	}
+
 	@Method(desc = "系统层源信息转换",
 			logicStep = "1.系统层源信息转换")
 	@Param(name = "sflDataRs", desc = "系统层源信息", range = "取值范围说明")
@@ -463,81 +540,89 @@ public class DataConvertedToTreeNode {
 		}
 	}
 
-	@Method(desc = "贴源层实时数据信息转换",
-			logicStep = "1.贴源层实时数据信息转换")
-	@Param(name = "dclRealTimeDataRs", desc = "贴源层实时数据信息", range = "取值范围说明")
+	@Method(desc = "自定义层下数据库信息转换",
+			logicStep = "1.自定义层下数据库信息转换")
+	@Param(name = "udlDatabaseInfos", desc = "自定义层下数据库信息", range = "取值范围说明")
 	@Param(name = "treeDataList", desc = "转换后的树数据信息", range = "取值范围说明")
-	@Param(name = "rootName", desc = "父级菜单名称", range = "取值范围说明")
-	public static void ConversionDCLRealTimeDataInfos(List<Map<String, Object>> dclRealTimeDataInfos,
-	                                                  List<Map<String, Object>> treeDataList, String rootName) {
-		for (Map<String, Object> dclRealTimeDataInfo : dclRealTimeDataInfos) {
+	public static void ConversionUDLDatabaseInfos(List<Map<String, Object>> udlDatabaseInfos,
+	                                              List<Map<String, Object>> treeDataList) {
+		for (Map<String, Object> udlDatabaseInfo : udlDatabaseInfos) {
 			Map<String, Object> map = new HashMap<>();
-			String groupid = dclRealTimeDataInfo.get("groupid").toString();
-			map.put("groupid", groupid);
-			map.put("name", groupid);
-			map.put("description", groupid);
-			map.put("rootName", rootName);
-			map.put("pId", Constant.REALTIME_TYPE);
-			map.put("id", groupid);
-			map.put("source", Constant.DCL_REALTIME);
-			map.put("isParent", Boolean.TRUE);
+			map.put("id", udlDatabaseInfo.get("id").toString());
+			map.put("name", udlDatabaseInfo.get("name").toString());
+			map.put("description", udlDatabaseInfo.get("description").toString());
+			map.put("rootName", udlDatabaseInfo.get("rootName").toString());
+			map.put("pId", udlDatabaseInfo.get("pId").toString());
+			map.put("isParent", udlDatabaseInfo.get("isParent").toString());
+			map.put("parent_id", udlDatabaseInfo.get("parent_id").toString());
 			treeDataList.add(map);
 		}
 	}
 
-	@Method(desc = "贴源层实时数据下Topic信息转换",
-			logicStep = "1.贴源层实时数据下Topic信息转换")
-	@Param(name = "dclRealTimeTopicRs", desc = "贴源层实时数据下Topic信息", range = "取值范围说明")
+	@Method(desc = "自定义层数据库下表空间信息转换",
+			logicStep = "1.自定义层数据库下表空间信息转换")
+	@Param(name = "udlDatabaseTableSpaceInfos", desc = "自定义层数据库下表空间信息", range = "取值范围说明")
 	@Param(name = "treeDataList", desc = "转换后的树数据信息", range = "取值范围说明")
 	@Param(name = "rootName", desc = "父级菜单名称", range = "取值范围说明")
-	public static void ConversionDCLRealTimeTopicInfos(List<Map<String, Object>> dclRealTimeTopicInfos,
-	                                                   List<Map<String, Object>> treeDataList, String rootName) {
-		for (Map<String, Object> dclRealTimeTopicInfo : dclRealTimeTopicInfos) {
-			Map<String, Object> map = new HashMap<>();
-			String sdm_consum_id = dclRealTimeTopicInfo.get("sdm_consum_id").toString();
-			String topicName = dclRealTimeTopicInfo.get("sdm_cons_para_val").toString();
-			String groupid = dclRealTimeTopicInfo.get("groupid").toString();
-			map.put("sdm_consum_id", sdm_consum_id);
-			map.put("name", topicName);
-			map.put("description", topicName);
-			map.put("rootName", rootName);
-			map.put("pId", groupid);
-			map.put("id", sdm_consum_id);
-			map.put("isParent", Boolean.TRUE);
-			map.put("source", Constant.DCL_REALTIME);
-			map.put("show", Boolean.TRUE);
-			treeDataList.add(map);
-		}
-	}
-
-	@Method(desc = "贴源层实时数据下内部表信息转换",
-			logicStep = "1.贴源层实时数据下内部表信息转换")
-	@Param(name = "dclRealTimeInnerTableRs", desc = "贴源层实时数据下内部表信息", range = "取值范围说明")
-	@Param(name = "treeDataList", desc = "转换后的树数据信息", range = "取值范围说明")
-	@Param(name = "rootName", desc = "父级菜单名称", range = "取值范围说明")
-	public static void ConversionDCLRealTimeInnerTableInfos(List<Map<String, Object>> dclRealTimeInnerTableInfos,
-	                                                        List<Map<String, Object>> treeDataList, String rootName) {
-		for (Map<String, Object> dclRealTimeInnerTableInfo : dclRealTimeInnerTableInfos) {
-			Map<String, Object> map = new HashMap<>();
-			String table_id = dclRealTimeInnerTableInfo.get("table_id").toString();
-			String table_en_name = dclRealTimeInnerTableInfo.get("table_en_name").toString();
-			String table_cn_name = dclRealTimeInnerTableInfo.get("table_cn_name").toString();
-			String sdm_consum_id = dclRealTimeInnerTableInfo.get("sdm_consum_id").toString();
-			map.put("table_id", table_id);
-			if (StringUtil.isEmpty(table_cn_name)) {
-				map.put("name", table_en_name);
-			} else {
-				map.put("name", table_cn_name);
+	@Param(name = "parent_id", desc = "父级菜单id", range = "树中唯一")
+	public static void ConversionUDLDatabaseTableSpaceInfos(List<Map<String, Object>> udlDatabaseTableSpaceInfos,
+	                                                        List<Map<String, Object>> treeDataList, String rootName,
+	                                                        String parent_id) {
+		Map<String, String> map = new HashMap<String, String>();
+		for (Map<String, Object> udlDatabaseTableSpaceInfo : udlDatabaseTableSpaceInfos) {
+			String tableSpace = udlDatabaseTableSpaceInfo.get("space").toString();
+			if (!map.containsKey(tableSpace)) {
+				udlDatabaseTableSpaceInfo.put("name", tableSpace);
+				udlDatabaseTableSpaceInfo.put("description", tableSpace);
+				udlDatabaseTableSpaceInfo.put("space_name", tableSpace);
+				udlDatabaseTableSpaceInfo.put("parent_id", parent_id);
+				udlDatabaseTableSpaceInfo.put("show", Boolean.TRUE);
+				udlDatabaseTableSpaceInfo.put("rootName", rootName);
+				udlDatabaseTableSpaceInfo.put("id", rootName.concat("_").concat(tableSpace));
+				udlDatabaseTableSpaceInfo.put("isParent", Boolean.TRUE);
+				udlDatabaseTableSpaceInfo.put("source", PathUtil.UDL);
+				map.put(tableSpace, tableSpace);
+				treeDataList.add(udlDatabaseTableSpaceInfo);
 			}
-			map.put("description", table_en_name);
-			map.put("rootName", rootName);
-			map.put("tablename", table_en_name);
-			map.put("pId", sdm_consum_id);
-			map.put("id", table_id);
-			map.put("isParent", Boolean.FALSE);
-			map.put("source", Constant.DCL_REALTIME);
-			map.put("show", Boolean.TRUE);
-			treeDataList.add(map);
 		}
+	}
+
+	@Method(desc = "自定义层数据库下表空间信息转换",
+			logicStep = "1.自定义层数据库下表空间信息转换")
+	@Param(name = "udlDatabaseTableSpaceInfos", desc = "自定义层数据库下表空间信息", range = "取值范围说明")
+	@Param(name = "treeDataList", desc = "转换后的树数据信息", range = "取值范围说明")
+	@Param(name = "rootName", desc = "父级菜单名称", range = "取值范围说明")
+	@Param(name = "parent_id", desc = "父级菜单id", range = "取值范围说明")
+	public static void ConversionUDLTableSpaceTableInfos(List<Map<String, Object>> udlTableSpaceTableInfos,
+	                                                     List<Map<String, Object>> treeDataList, String rootName,
+	                                                     String parent_id) {
+		udlTableSpaceTableInfos.forEach(udlTableSpaceTableInfo -> {
+			String table_name = udlTableSpaceTableInfo.get("table_name").toString();
+			String table_ch_name = udlTableSpaceTableInfo.get("table_ch_name").toString();
+			table_ch_name = StringUtil.isNotBlank(table_ch_name) ? table_ch_name : table_name;
+			String data_space = "";
+			if (UDLDataQuery.HIVE.equalsIgnoreCase(parent_id)) {
+				data_space = udlTableSpaceTableInfo.get("table_space").toString();
+			} else if (UDLDataQuery.HBASE.equalsIgnoreCase(parent_id)) {
+				data_space = udlTableSpaceTableInfo.get("table_space").toString();
+			} else if (UDLDataQuery.MPP.equalsIgnoreCase(parent_id)) {
+				data_space = "default";
+			} else {
+				data_space = StringUtil.isBlank(udlTableSpaceTableInfo.get("table_space").toString()) ?
+						UDLDataQuery.CARBON_DATA : udlTableSpaceTableInfo.get("table_space").toString();
+			}
+			String id = udlTableSpaceTableInfo.get("id").toString();
+			udlTableSpaceTableInfo.put("name", table_ch_name);
+			udlTableSpaceTableInfo.put("tableName", table_name);
+			udlTableSpaceTableInfo.put("description", table_name);
+			udlTableSpaceTableInfo.put("pId", parent_id.concat("_").concat(data_space));
+			udlTableSpaceTableInfo.put("file_id", id);
+			udlTableSpaceTableInfo.put("parent_id", parent_id);
+			udlTableSpaceTableInfo.put("rootName", rootName);
+			udlTableSpaceTableInfo.put("source", PathUtil.UDL);
+			udlTableSpaceTableInfo.put("isParent", false);
+			udlTableSpaceTableInfo.put("show", true);
+			treeDataList.add(udlTableSpaceTableInfo);
+		});
 	}
 }

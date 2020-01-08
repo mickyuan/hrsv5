@@ -5,7 +5,6 @@ import fd.ng.core.annotation.DocClass;
 @DocClass(desc = "WEB SQL 操作台树实体", author = "BY-HLL", createdate = "2019/12/20 0020 上午 10:02")
 public class TreeDataInfo {
 
-	private String type;
 	private String agent_layer;
 	private String source_id;
 	private String classify_id;
@@ -14,37 +13,21 @@ public class TreeDataInfo {
 	private String systemDataType;
 	private String kafka_id;
 	private String batch_id;
-	private String groupid;
-	private String sdm_consum_id;
-	private String type_id;
+	private String groupId;
+	private String sdm_consumer_id;
 	private String parent_id;
-	private String spaceTable;
-	private String database_type;
+	private String databaseType;
 	private String isFileCo;
 	private String page_from;
 	private String isPublic;
 	private String isShTable;
-	private String modal_pro_id;
-	private String ml_project_id;
-	private String dtable_info_id;
-	private String MLtype;
-	private String source;
-	private String tableTospace;
+	private String tableSpace;
 	private String show;
 	private String tableName;
 	private String rootName;
 	private String name;
 	private String description;
 	private String isIntoHBase;
-
-	/*  */
-	public String getType() {
-		return type;
-	}
-
-	public void setType(String type) {
-		this.type = type;
-	}
 
 	/* agent_layer 数据层类型, DCL/DML */
 	public String getAgent_layer() {
@@ -119,31 +102,23 @@ public class TreeDataInfo {
 	}
 
 	/* 分组id */
-	public String getGroupid() {
-		return groupid;
+	public String getGroupId() {
+		return groupId;
 	}
 
-	public void setGroupid(String groupid) {
-		this.groupid = groupid;
+	public void setGroupId(String groupId) {
+		this.groupId = groupId;
 	}
 
 	/* 消费id */
-	public String getSdm_consum_id() {
-		return sdm_consum_id;
+	public String getSdm_consumer_id() {
+		return sdm_consumer_id;
 	}
 
-	public void setSdm_consum_id(String sdm_consum_id) {
-		this.sdm_consum_id = sdm_consum_id;
+	public void setSdm_consumer_id(String sdm_consumer_id) {
+		this.sdm_consumer_id = sdm_consumer_id;
 	}
 
-	/* 类型id */
-	public String getType_id() {
-		return type_id;
-	}
-
-	public void setType_id(String type_id) {
-		this.type_id = type_id;
-	}
 
 	/* 父id */
 	public String getParent_id() {
@@ -155,21 +130,22 @@ public class TreeDataInfo {
 	}
 
 	/* 表空间 */
-	public String getSpaceTable() {
-		return spaceTable;
+	public String getTableSpace() {
+		return tableSpace;
 	}
 
-	public void setSpaceTable(String spaceTable) {
-		this.spaceTable = spaceTable;
+	public void setTableSpace(String tableSpace) {
+		this.tableSpace = tableSpace;
 	}
+
 
 	/* 数据库类型 */
-	public String getDatabase_type() {
-		return database_type;
+	public String getDatabaseType() {
+		return databaseType;
 	}
 
-	public void setDatabase_type(String database_type) {
-		this.database_type = database_type;
+	public void setDatabaseType(String databaseType) {
+		this.databaseType = databaseType;
 	}
 
 	/* 是否文件采集 */
@@ -206,60 +182,6 @@ public class TreeDataInfo {
 
 	public void setIsShTable(String isShTable) {
 		this.isShTable = isShTable;
-	}
-
-	/* 模型分类id */
-	public String getModal_pro_id() {
-		return modal_pro_id;
-	}
-
-	public void setModal_pro_id(String modal_pro_id) {
-		this.modal_pro_id = modal_pro_id;
-	}
-
-	/* 机器学习项目编号 */
-	public String getMl_project_id() {
-		return ml_project_id;
-	}
-
-	public void setMl_project_id(String ml_project_id) {
-		this.ml_project_id = ml_project_id;
-	}
-
-	/* 机器学习数据表编号 */
-	public String getDtable_info_id() {
-		return dtable_info_id;
-	}
-
-	public void setDtable_info_id(String dtable_info_id) {
-		this.dtable_info_id = dtable_info_id;
-	}
-
-	/* 机器学习文件夹类型，比如：'数据源聚焦'、'数据预处理' */
-	public String getMLtype() {
-		return MLtype;
-	}
-
-	public void setMLtype(String MLtype) {
-		this.MLtype = MLtype;
-	}
-
-	/* 来源 */
-	public String getSource() {
-		return source;
-	}
-
-	public void setSource(String source) {
-		this.source = source;
-	}
-
-	/* 表空间 */
-	public String getTableTospace() {
-		return tableTospace;
-	}
-
-	public void setTableTospace(String tableTospace) {
-		this.tableTospace = tableTospace;
 	}
 
 	/* 是否显示该分类下的表信息 */

@@ -48,7 +48,7 @@ public class TreeUtil {
 		//1-1.贴源层数据信息转树节点
 		if (DataSourceType.DCL.getValue().equals(treeDataInfo.getAgent_layer())) {
 			List<Map<String, Object>> dclDataInfos = (List<Map<String, Object>>) treeInfos.get("dclDataInfos");
-			DataConvertedToTreeNode.ConversionDCLDataInfos(dclDataInfos, treeDataList);
+			DataConvertedToTreeNode.ConversionDCLSourceInfos(dclDataInfos, treeDataList);
 		}
 		//1-2.贴源层下批量数据源信息转树节点
 		List<Map<String, Object>> dclBatchDataInfos = (List<Map<String, Object>>) treeInfos.get("dclBatchDataInfos");
@@ -150,6 +150,25 @@ public class TreeUtil {
 //			DataConvertedToTreeNode.ConversionSFLDataBakInfos(sflDataBakInfos, treeDataList);
 //		}
 		//6.自定义层(UDL)信息转树节点
+		//6-1.自定义层下数据库信息转树节点
+		List<Map<String, Object>> udlDatabaseInfos = (List<Map<String, Object>>) treeInfos.get("udlDatabaseInfos");
+		if (null != udlDatabaseInfos && !udlDatabaseInfos.isEmpty()) {
+			DataConvertedToTreeNode.ConversionUDLDatabaseInfos(udlDatabaseInfos, treeDataList);
+		}
+		//6-2.自定义层数据库下表空间信息转树节点
+		List<Map<String, Object>> udlDatabaseTableSpaceInfos =
+				(List<Map<String, Object>>) treeInfos.get("udlDatabaseTableSpaceInfos");
+		if (null != udlDatabaseTableSpaceInfos && !udlDatabaseTableSpaceInfos.isEmpty()) {
+			DataConvertedToTreeNode.ConversionUDLDatabaseTableSpaceInfos(udlDatabaseTableSpaceInfos, treeDataList,
+					treeDataInfo.getRootName(), treeDataInfo.getParent_id());
+		}
+		//6-3.自定义层数据库表空间下数据表信息转树节点
+		List<Map<String, Object>> udlTableSpaceTableInfos =
+				(List<Map<String, Object>>) treeInfos.get("udlTableSpaceTableInfos");
+		if (null != udlTableSpaceTableInfos && !udlTableSpaceTableInfos.isEmpty()) {
+			DataConvertedToTreeNode.ConversionUDLTableSpaceTableInfos(udlTableSpaceTableInfos, treeDataList,
+					treeDataInfo.getRootName(), treeDataInfo.getParent_id());
+		}
 		//7.模型层(AML)信息转树节点
 		//8.无大数据环境(NoHadoop)环境树信息转树节点
 		return treeDataList;
@@ -181,7 +200,7 @@ public class TreeUtil {
 					List<Map<String, Object>> dclDataInfos =
 							(List<Map<String, Object>>) searchDCLNodeDataMap.get("dclDataInfos");
 					if (null != dclDataInfos && !dclDataInfos.isEmpty()) {
-						DataConvertedToTreeNode.ConversionDCLDataInfos(dclDataInfos, treeNodeInfoList);
+						DataConvertedToTreeNode.ConversionDCLSourceInfos(dclDataInfos, treeNodeInfoList);
 					}
 					//获取DCL批量数据下数据源信息,转树节点
 					List<Map<String, Object>> dclBatchDataInfos =
