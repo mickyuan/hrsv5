@@ -4,6 +4,7 @@ import java.io.Closeable;
 import java.util.List;
 import java.util.Map;
 
+import fd.ng.core.annotation.DocClass;
 import hrds.commons.hadoop.hadoop_helper.HBaseHelper;
 import hrds.commons.hadoop.hadoop_helper.HdfsOperator;
 import org.apache.solr.client.solrj.SolrClient;
@@ -12,13 +13,7 @@ import org.apache.solr.common.SolrDocumentList;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 
-
-/**
- * Description: solr 类接口
- * Company: 博彦科技  
- * @author yuanqi
- * @date 2016年10月26日 下午3:12:04
- */
+@DocClass(desc = "solr服务接口类", author = "博彦科技", createdate = "2020/1/9 0009 上午 11:34")
 public interface OperSolr extends Closeable {
 
 	public abstract SolrClient getServer();
@@ -28,11 +23,10 @@ public interface OperSolr extends Closeable {
 	public abstract List<JSONObject> QuerySolr(String sql, int start, int num);
 
 	/**
-	 * 
 	 * @param params 检索内容
 	 * @param start
 	 * @param num
-	 * @param flag 是否返回文本内容true 不返回 ;FALSE 返回
+	 * @param flag   是否返回文本内容true 不返回 ;FALSE 返回
 	 * @return
 	 * @throws Exception
 	 */
@@ -52,10 +46,10 @@ public interface OperSolr extends Closeable {
 
 	public abstract void indexCreateAll4csv(String table_name, String hdfspath, HdfsOperator operater, String columnline);
 
-	public abstract void indexCreateAll4Parguet(String table_name, String hdfspath, HdfsOperator operater, String columnline);
+	public abstract void indexCreateAll4Parquet(String table_name, String hdfspath, HdfsOperator operater, String columnline);
 
 	public abstract void indexCreateAll4Orc(String table_name, String hdfspath, HdfsOperator operater, String columnline);
-	
+
 	public abstract void indexCreateAll4Sequence(String table_name, String hdfspath, HdfsOperator operater, String columnline);
 
 	public abstract JSONArray requestHandler(String... temp);

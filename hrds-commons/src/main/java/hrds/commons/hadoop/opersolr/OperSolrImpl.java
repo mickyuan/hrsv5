@@ -84,26 +84,6 @@ public abstract class OperSolrImpl implements OperSolr {
 		this.server = server;
 	}
 
-	public void add(HSolrInputDocument hsd) throws Exception {
-
-		try {
-			server.add(hsd.getSd());
-		} catch (Exception e) {
-			throw e;
-		}
-	}
-
-	public void add(List<HSolrInputDocument> sds) throws Exception {
-
-		List<SolrInputDocument> list = new ArrayList<SolrInputDocument>();
-		sds.forEach(sd -> list.add(sd.getSd()));
-		try {
-			server.add(list);
-		} catch (Exception e) {
-			throw e;
-		}
-	}
-
 	public void deleteById(List<String> list) throws Exception {
 
 		try {
@@ -607,20 +587,20 @@ public abstract class OperSolrImpl implements OperSolr {
 		}
 	}
 
-	public void indexCreateAll4Parguet(String table_name, String path, HdfsOperator operater, String columnline) {
+	public void indexCreateAll4Parquet(String table_name, String path, HdfsOperator operater, String columnline) {
 
-		indexCreateAll4Parguet(table_name, path, operater, columnline, table_name);
+		indexCreateAll4Parquet(table_name, path, operater, columnline, table_name);
 	}
 
-	public void indexCreateAll4Parguet(String table_name, String parguetPath, HdfsOperator operater, String columnline, String hbase_name) {
+	public void indexCreateAll4Parquet(String table_name, String parquetPath, HdfsOperator operater, String columnline, String hbase_name) {
 
-		logger.info("要读取得文件目录是: " + parguetPath);
-		Path path = new Path(parguetPath);
+		logger.info("要读取得文件目录是: " + parquetPath);
+		Path path = new Path(parquetPath);
 		try {
 			FileSystem fs = operater.getFileSystem();
 			Configuration conf = operater.getConfiguration();
 			if (fs.isFile(path)) {
-				procesSingleParquet(hbase_name.toUpperCase(), new Path(parguetPath), conf, columnline);
+				procesSingleParquet(hbase_name.toUpperCase(), new Path(parquetPath), conf, columnline);
 			} else {
 				FileStatus[] filesStatus = fs.listStatus(path, new PathFilter() {
 
@@ -660,7 +640,7 @@ public abstract class OperSolrImpl implements OperSolr {
 			logger.info("[开始读取文件 ] " + parguetPath);
 			List<SolrInputDocument> docs = new ArrayList<SolrInputDocument>();
 			while ((group = reader.read()) != null) {
-				//完成一条记录	
+				//完成一条记录
 				SolrInputDocument doc = new SolrInputDocument();
 				doc.addField("id", table_name + "_" + group.getString(Constant.MD5NAME, 0));
 				doc.addField("table-name", table_name);

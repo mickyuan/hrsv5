@@ -1,34 +1,33 @@
 package hrds.commons.hadoop.opersolr;
-/**
- *连接远程solr库使用的url需要的参数
- */
+
+import fd.ng.core.annotation.DocClass;
+
+@DocClass(desc = "solr库的参数配置类", author = "博彦科技", createdate = "2020/1/9 0009 上午 11:26")
 public class SolrParam {
-	
-	private String solrUrl ;	//使用CHD需要的url
-	
-	private String collection;  //使用需要的colletion's name
-	
+
+	//solr服务的url
+	private String solrUrl;
+	//使用需要的Connection
+	private String collection;
+
+	/* 获取solr服务的url */
 	public String getSolrUrl() {
 		return solrUrl;
 	}
-	
-	/**
-	 * 
-	 * @param solrUrl 使用CHD\FI需要的url
-	 */
+
+	/* 设置solr服务的url */
 	public void setSolrUrl(String solrUrl) {
 		this.solrUrl = solrUrl;
 	}
-	
-	/**
-	 * 
-	 * @return 使用需要的colletion's name
-	 */
+
+	/* 获取Connection */
 	public String getCollection() {
 		return collection;
 	}
+
+	/* 设置Connection */
 	public void setCollection(String collection) {
 		this.collection = collection;
 	}
-	
+
 }
