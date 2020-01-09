@@ -1,6 +1,7 @@
 package hrds.agent.job.biz.bean;
 
 import fd.ng.core.annotation.DocClass;
+import hrds.commons.codes.IsFlag;
 
 import java.io.Serializable;
 
@@ -10,6 +11,8 @@ public class StageStatusInfo implements Serializable {
 	private static final long serialVersionUID = 2931307277043396275L;
 
 	private String jobId;
+	//采集情况信息表ID
+	private String jobRsId;
 	private int stageNameCode;
 	private int statusCode;
 	private String startDate;
@@ -17,6 +20,16 @@ public class StageStatusInfo implements Serializable {
 	private String endDate;
 	private String endTime;
 	private String message;
+	//阶段是否重跑
+	private String isAgain;
+	//阶段重跑次数
+	private Integer againNum;
+
+	//new状态对象时，是否重跑设为否，重跑次数设为0
+	public StageStatusInfo() {
+		this.isAgain = IsFlag.Fou.getCode();
+		this.againNum = 0;
+	}
 
 	public String getJobId() {
 		return jobId;
@@ -82,12 +95,35 @@ public class StageStatusInfo implements Serializable {
 		this.message = message;
 	}
 
+	public String getJobRsId() {
+		return jobRsId;
+	}
 
+	public void setJobRsId(String jobRsId) {
+		this.jobRsId = jobRsId;
+	}
+
+	public String getIsAgain() {
+		return isAgain;
+	}
+
+	public void setIsAgain(String isAgain) {
+		this.isAgain = isAgain;
+	}
+
+	public Integer getAgainNum() {
+		return againNum;
+	}
+
+	public void setAgainNum(Integer againNum) {
+		this.againNum = againNum;
+	}
 
 	@Override
 	public String toString() {
 		return "StageStatusInfo{" +
 				"jobId='" + jobId + '\'' +
+				", jobRsId='" + jobRsId + '\'' +
 				", stageNameCode=" + stageNameCode +
 				", statusCode=" + statusCode +
 				", startDate='" + startDate + '\'' +
@@ -95,6 +131,8 @@ public class StageStatusInfo implements Serializable {
 				", endDate='" + endDate + '\'' +
 				", endTime='" + endTime + '\'' +
 				", message='" + message + '\'' +
+				", isAgain='" + isAgain + '\'' +
+				", againNum=" + againNum +
 				'}';
 	}
 }

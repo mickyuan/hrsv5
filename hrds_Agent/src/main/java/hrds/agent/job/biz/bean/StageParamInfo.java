@@ -30,6 +30,24 @@ public class StageParamInfo implements Serializable {
 	//本阶段执行状态信息
 	private StageStatusInfo statusInfo;
 
+	//任务分类（原子性）表名-顶级文件夹
+	private String taskClassify;
+
+	//跑批日期
+	private String etlDate;
+
+	//Agent_id
+	private Long agentId;
+
+	//数据库设置ID或文件设置id
+	private Long collectSetId;
+
+	//数据源ID
+	private Long sourceId;
+
+	//采集类型
+	private String collectType;
+
 	public List<String> getColumnTypes() {
 		return columnTypes;
 	}
@@ -76,5 +94,53 @@ public class StageParamInfo implements Serializable {
 
 	public void setStatusInfo(StageStatusInfo statusInfo) {
 		this.statusInfo = statusInfo;
+	}
+
+	public String getTaskClassify() {
+		return taskClassify;
+	}
+
+	public void setTaskClassify(String taskClassify) {
+		this.taskClassify = taskClassify;
+	}
+
+	public String getEtlDate() {
+		return etlDate;
+	}
+
+	public void setEtlDate(String etlDate) {
+		this.etlDate = etlDate;
+	}
+
+	public Long getAgentId() {
+		return agentId;
+	}
+
+	public void setAgentId(Long agentId) {
+		this.agentId = agentId;
+	}
+
+	public Long getCollectSetId() {
+		return collectSetId;
+	}
+
+	public void setCollectSetId(Long collectSetId) {
+		this.collectSetId = collectSetId;
+	}
+
+	public Long getSourceId() {
+		return sourceId;
+	}
+
+	public void setSourceId(Long sourceId) {
+		this.sourceId = sourceId;
+	}
+
+	public String getCollectType() {
+		return collectType;
+	}
+
+	public void setCollectType(String collectType) {
+		this.collectType = collectType;
 	}
 }
