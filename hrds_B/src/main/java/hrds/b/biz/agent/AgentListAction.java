@@ -696,7 +696,7 @@ public class AgentListAction extends BaseAction {
 	@Param(name = "logType", desc = "日志类型(完整日志、错误日志)", range = "All : 完整日志, Wrong : 错误日志")
 	@Param(name = "readNum", desc = "查看日志条数", range = "不为空")
 	@Return(desc = "存放文件内容和日志文件路径的map集合", range = "获取文件内容，key为log，" +
-			"获取文件路径的,key为filePath")
+			"获取文件路径,key为filePath")
 	private Map<String, String> getTaskLog(long agentId, long userId, String logType, int readNum){
 		//1、根据agent_id和user_id获取agent信息
 		Agent_down_info AgentDownInfo = Dbo.queryOneObject(

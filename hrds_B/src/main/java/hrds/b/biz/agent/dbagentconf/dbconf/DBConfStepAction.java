@@ -17,13 +17,11 @@ import hrds.commons.base.BaseAction;
 import hrds.commons.codes.CleanType;
 import hrds.commons.codes.DatabaseType;
 import hrds.commons.codes.IsFlag;
-import hrds.commons.entity.Agent_info;
-import hrds.commons.entity.Collect_job_classify;
-import hrds.commons.entity.Data_source;
-import hrds.commons.entity.Database_set;
+import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.AgentActionUtil;
 import hrds.commons.utils.DboExecute;
+import hrds.commons.utils.ReadLog;
 import hrds.commons.utils.key.PrimayKeyGener;
 
 import java.util.List;
@@ -338,6 +336,47 @@ public class DBConfStepAction extends BaseAction{
 		if(!connectFlag){
 			throw new BusinessException("连接失败");
 		}
+	}
+
+	@Method(desc = "查看日志", logicStep = "" +
+			"1、根据agent_id和user_id获取agent信息" +
+			"2、在agent信息中获取日志目录等信息" +
+			"3、调用读取日志的工具类读取日志" +
+			"4、如果读取到的日志为空，则返回未获取到日志" +
+			"5、否则，则返回日志信息")
+	@Param(name = "agentId", desc = "agent信息表主键，Agent下载信息表外键", range = "不为空")
+	@Param(name = "readNum", desc = "日志读取条数", range = "可以不传，默认显示100条", nullable = true, valueIfNull = "100")
+	@Return(desc = "日志信息", range = "根据实际情况而定")
+	public String viewLog(long agentId, int readNum){
+		//1、根据agent_id和user_id获取agent信息
+		Agent_down_info AgentDownInfo = Dbo.queryOneObject(
+				Agent_down_info.class, "select * from "+ Agent_down_info.TableName +
+						" where agent_id = ? and user_id = ?", agentId, getUserId()).orElseThrow(
+				() -> new BusinessException("根据AgentID和userID未能找到Agent下载信息"));
+
+		//2、在agent信息中获取日志目录等信息
+		String agentIP = AgentDownInfo.getAgent_ip();
+		String agentPort = AgentDownInfo.getAgent_port();
+		String logDir = AgentDownInfo.getLog_dir();
+		String userName = AgentDownInfo.getUser_name();
+		String passWord = AgentDownInfo.getPasswd();
+
+		//最多显示1000行
+		if (readNum > 1000) {
+			readNum = 1000;
+		}
+
+		//3、调用读取日志的工具类读取日志
+		String taskLog = ReadLog.readAgentLog(logDir, agentIP, agentPort, userName,
+				passWord, readNum);
+
+		//4、如果读取到的日志为空，则返回未获取到日志
+		if (StringUtil.isBlank(taskLog)) {
+			return  "未获取到日志";
+		}
+
+		//5、否则，则返回日志信息
+		return taskLog;
 	}
 
 	@Method(desc = "新增/更新操作校验Collect_job_classify中数据的合法性，对数据库中不能为空的字段，校验合法性，" +
