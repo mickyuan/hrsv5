@@ -11,8 +11,6 @@ public class StageStatusInfo implements Serializable {
 	private static final long serialVersionUID = 2931307277043396275L;
 
 	private String jobId;
-	//采集情况信息表ID
-	private String jobRsId;
 	private int stageNameCode;
 	private int statusCode;
 	private String startDate;
@@ -95,14 +93,6 @@ public class StageStatusInfo implements Serializable {
 		this.message = message;
 	}
 
-	public String getJobRsId() {
-		return jobRsId;
-	}
-
-	public void setJobRsId(String jobRsId) {
-		this.jobRsId = jobRsId;
-	}
-
 	public String getIsAgain() {
 		return isAgain;
 	}
@@ -119,20 +109,4 @@ public class StageStatusInfo implements Serializable {
 		this.againNum = againNum;
 	}
 
-	@Override
-	public String toString() {
-		return "StageStatusInfo{" +
-				"jobId='" + jobId + '\'' +
-				", jobRsId='" + jobRsId + '\'' +
-				", stageNameCode=" + stageNameCode +
-				", statusCode=" + statusCode +
-				", startDate='" + startDate + '\'' +
-				", startTime='" + startTime + '\'' +
-				", endDate='" + endDate + '\'' +
-				", endTime='" + endTime + '\'' +
-				", message='" + message + '\'' +
-				", isAgain='" + isAgain + '\'' +
-				", againNum=" + againNum +
-				'}';
-	}
 }

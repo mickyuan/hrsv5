@@ -15,6 +15,7 @@ import hrds.agent.job.biz.core.dbstage.succeed.*;
 import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.commons.codes.DataBaseCode;
+import hrds.commons.codes.IsFlag;
 import hrds.commons.utils.Constant;
 import org.apache.commons.io.FileUtils;
 import org.junit.Test;
@@ -43,6 +44,27 @@ public class JobStageControllerTest {
 	public void runJobTestOne(){
 		try {
 			buildChainForCollection();
+
+			JobStatusInfo afterJobStatus = JSONObject.parseObject(FileUtil.readFile2String(new File(STATUS_FILE_PATH)), JobStatusInfo.class);
+			assertThat("卸数阶段成功", afterJobStatus.getUnloadDataStatus().getStatusCode(), is(RunStatusConstant.SUCCEED.getCode()));
+			assertThat("卸数阶段成功，重跑次数为0", afterJobStatus.getUnloadDataStatus().getIsAgain(), is(IsFlag.Fou.getCode()));
+			assertThat("卸数阶段成功，重跑次数为0", afterJobStatus.getUnloadDataStatus().getAgainNum(), is(0));
+
+			assertThat("上传阶段成功", afterJobStatus.getUploadStatus().getStatusCode(), is(RunStatusConstant.SUCCEED.getCode()));
+			assertThat("上传阶段成功，重跑次数为0", afterJobStatus.getUploadStatus().getIsAgain(), is(IsFlag.Fou.getCode()));
+			assertThat("上传阶段成功，重跑次数为0", afterJobStatus.getUploadStatus().getAgainNum(), is(0));
+
+			assertThat("加载阶段成功", afterJobStatus.getDataLodingStatus().getStatusCode(), is(RunStatusConstant.SUCCEED.getCode()));
+			assertThat("加载阶段成功，重跑次数为0", afterJobStatus.getDataLodingStatus().getIsAgain(), is(IsFlag.Fou.getCode()));
+			assertThat("加载阶段成功，重跑次数为0", afterJobStatus.getDataLodingStatus().getAgainNum(), is(0));
+
+			assertThat("计算增量阶段成功", afterJobStatus.getCalIncrementStatus().getStatusCode(), is(RunStatusConstant.SUCCEED.getCode()));
+			assertThat("计算增量阶段成功，重跑次数为0", afterJobStatus.getCalIncrementStatus().getIsAgain(), is(IsFlag.Fou.getCode()));
+			assertThat("计算增量阶段成功，重跑次数为0", afterJobStatus.getCalIncrementStatus().getAgainNum(), is(0));
+
+			assertThat("数据登记阶段成功", afterJobStatus.getDataRegistrationStatus().getStatusCode(), is(RunStatusConstant.SUCCEED.getCode()));
+			assertThat("数据登记阶段成功，重跑次数为0", afterJobStatus.getDataRegistrationStatus().getIsAgain(), is(IsFlag.Fou.getCode()));
+			assertThat("数据登记阶段成功，重跑次数为0", afterJobStatus.getDataRegistrationStatus().getAgainNum(), is(0));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -94,6 +116,26 @@ public class JobStageControllerTest {
 		//重新读取文件，构建采集责任链，重跑卸数阶段和剩下的阶段
 		try {
 			buildChainForCollection();
+			JobStatusInfo afterJobStatus = JSONObject.parseObject(FileUtil.readFile2String(new File(STATUS_FILE_PATH)), JobStatusInfo.class);
+			assertThat("卸数阶段成功", afterJobStatus.getUnloadDataStatus().getStatusCode(), is(RunStatusConstant.SUCCEED.getCode()));
+			assertThat("卸数阶段成功，重跑次数为1", afterJobStatus.getUnloadDataStatus().getIsAgain(), is(IsFlag.Shi.getCode()));
+			assertThat("卸数阶段成功，重跑次数为1", afterJobStatus.getUnloadDataStatus().getAgainNum(), is(1));
+
+			assertThat("上传阶段成功", afterJobStatus.getUploadStatus().getStatusCode(), is(RunStatusConstant.SUCCEED.getCode()));
+			assertThat("上传阶段成功，重跑次数为0", afterJobStatus.getUploadStatus().getIsAgain(), is(IsFlag.Fou.getCode()));
+			assertThat("上传阶段成功，重跑次数为0", afterJobStatus.getUploadStatus().getAgainNum(), is(0));
+
+			assertThat("加载阶段成功", afterJobStatus.getDataLodingStatus().getStatusCode(), is(RunStatusConstant.SUCCEED.getCode()));
+			assertThat("加载阶段成功，重跑次数为0", afterJobStatus.getDataLodingStatus().getIsAgain(), is(IsFlag.Fou.getCode()));
+			assertThat("加载阶段成功，重跑次数为0", afterJobStatus.getDataLodingStatus().getAgainNum(), is(0));
+
+			assertThat("计算增量阶段成功", afterJobStatus.getCalIncrementStatus().getStatusCode(), is(RunStatusConstant.SUCCEED.getCode()));
+			assertThat("计算增量阶段成功，重跑次数为0", afterJobStatus.getCalIncrementStatus().getIsAgain(), is(IsFlag.Fou.getCode()));
+			assertThat("计算增量阶段成功，重跑次数为0", afterJobStatus.getCalIncrementStatus().getAgainNum(), is(0));
+
+			assertThat("数据登记阶段成功", afterJobStatus.getDataRegistrationStatus().getStatusCode(), is(RunStatusConstant.SUCCEED.getCode()));
+			assertThat("数据登记阶段成功，重跑次数为0", afterJobStatus.getDataRegistrationStatus().getIsAgain(), is(IsFlag.Fou.getCode()));
+			assertThat("数据登记阶段成功，重跑次数为0", afterJobStatus.getDataRegistrationStatus().getAgainNum(), is(0));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -149,6 +191,27 @@ public class JobStageControllerTest {
 		//重新读取文件，构建采集责任链，跳过卸数阶段，重跑上传阶段和剩下的阶段
 		try {
 			buildChainForCollection();
+
+			JobStatusInfo afterJobStatus = JSONObject.parseObject(FileUtil.readFile2String(new File(STATUS_FILE_PATH)), JobStatusInfo.class);
+			assertThat("卸数阶段成功", afterJobStatus.getUnloadDataStatus().getStatusCode(), is(RunStatusConstant.SUCCEED.getCode()));
+			assertThat("卸数阶段成功，重跑次数为0", afterJobStatus.getUnloadDataStatus().getIsAgain(), is(IsFlag.Fou.getCode()));
+			assertThat("卸数阶段成功，重跑次数为0", afterJobStatus.getUnloadDataStatus().getAgainNum(), is(0));
+
+			assertThat("上传阶段成功", afterJobStatus.getUploadStatus().getStatusCode(), is(RunStatusConstant.SUCCEED.getCode()));
+			assertThat("上传阶段成功，重跑次数为1", afterJobStatus.getUploadStatus().getIsAgain(), is(IsFlag.Shi.getCode()));
+			assertThat("上传阶段成功，重跑次数为1", afterJobStatus.getUploadStatus().getAgainNum(), is(1));
+
+			assertThat("加载阶段成功", afterJobStatus.getDataLodingStatus().getStatusCode(), is(RunStatusConstant.SUCCEED.getCode()));
+			assertThat("加载阶段成功，重跑次数为0", afterJobStatus.getDataLodingStatus().getIsAgain(), is(IsFlag.Fou.getCode()));
+			assertThat("加载阶段成功，重跑次数为0", afterJobStatus.getDataLodingStatus().getAgainNum(), is(0));
+
+			assertThat("计算增量阶段成功", afterJobStatus.getCalIncrementStatus().getStatusCode(), is(RunStatusConstant.SUCCEED.getCode()));
+			assertThat("计算增量阶段成功，重跑次数为0", afterJobStatus.getCalIncrementStatus().getIsAgain(), is(IsFlag.Fou.getCode()));
+			assertThat("计算增量阶段成功，重跑次数为0", afterJobStatus.getCalIncrementStatus().getAgainNum(), is(0));
+
+			assertThat("数据登记阶段成功", afterJobStatus.getDataRegistrationStatus().getStatusCode(), is(RunStatusConstant.SUCCEED.getCode()));
+			assertThat("数据登记阶段成功，重跑次数为0", afterJobStatus.getDataRegistrationStatus().getIsAgain(), is(IsFlag.Fou.getCode()));
+			assertThat("数据登记阶段成功，重跑次数为0", afterJobStatus.getDataRegistrationStatus().getAgainNum(), is(0));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -240,6 +303,27 @@ public class JobStageControllerTest {
 		//重新读取文件，构建采集责任链，跳过执行成功的阶段，重跑数据登记阶段
 		try {
 			buildChainForCollection();
+
+			JobStatusInfo afterJobStatus = JSONObject.parseObject(FileUtil.readFile2String(new File(STATUS_FILE_PATH)), JobStatusInfo.class);
+			assertThat("卸数阶段成功", afterJobStatus.getUnloadDataStatus().getStatusCode(), is(RunStatusConstant.SUCCEED.getCode()));
+			assertThat("卸数阶段成功，重跑次数为0", afterJobStatus.getUnloadDataStatus().getIsAgain(), is(IsFlag.Fou.getCode()));
+			assertThat("卸数阶段成功，重跑次数为0", afterJobStatus.getUnloadDataStatus().getAgainNum(), is(0));
+
+			assertThat("上传阶段成功", afterJobStatus.getUploadStatus().getStatusCode(), is(RunStatusConstant.SUCCEED.getCode()));
+			assertThat("上传阶段成功，重跑次数为0", afterJobStatus.getUploadStatus().getIsAgain(), is(IsFlag.Fou.getCode()));
+			assertThat("上传阶段成功，重跑次数为0", afterJobStatus.getUploadStatus().getAgainNum(), is(0));
+
+			assertThat("加载阶段成功", afterJobStatus.getDataLodingStatus().getStatusCode(), is(RunStatusConstant.SUCCEED.getCode()));
+			assertThat("加载阶段成功，重跑次数为0", afterJobStatus.getDataLodingStatus().getIsAgain(), is(IsFlag.Fou.getCode()));
+			assertThat("加载阶段成功，重跑次数为0", afterJobStatus.getDataLodingStatus().getAgainNum(), is(0));
+
+			assertThat("计算增量阶段成功", afterJobStatus.getCalIncrementStatus().getStatusCode(), is(RunStatusConstant.SUCCEED.getCode()));
+			assertThat("计算增量阶段成功，重跑次数为0", afterJobStatus.getCalIncrementStatus().getIsAgain(), is(IsFlag.Fou.getCode()));
+			assertThat("计算增量阶段成功，重跑次数为0", afterJobStatus.getCalIncrementStatus().getAgainNum(), is(0));
+
+			assertThat("数据登记阶段成功", afterJobStatus.getDataRegistrationStatus().getStatusCode(), is(RunStatusConstant.SUCCEED.getCode()));
+			assertThat("数据登记阶段成功，重跑次数为1", afterJobStatus.getDataRegistrationStatus().getIsAgain(), is(IsFlag.Shi.getCode()));
+			assertThat("数据登记阶段成功，重跑次数为1", afterJobStatus.getDataRegistrationStatus().getAgainNum(), is(1));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -258,13 +342,13 @@ public class JobStageControllerTest {
 		JobStatusInfo jobStatusInfo = JobStatusInfoUtil.getStartJobStatusInfo(STATUS_FILE_PATH, TABLE_ID);
 		//卸数失败
 		JobStageInterface unloadDataFailed = new DBUnloadDataStageImplFailed();
-		//上传
+		//上传成功
 		JobStageInterface upload = new DBUploadStageImplSucceed();
-		//加载
+		//加载成功
 		JobStageInterface dataLoading = new DBDataLoadingStageImplSucceed();
-		//增量
+		//增量成功
 		JobStageInterface calIncrement = new DBCalIncrementStageImplSucceed();
-		//登记
+		//登记成功
 		JobStageInterface dataRegistration = new DBDataRegistrationStageImplSucceed();
 		//利用JobStageController构建本次数据库直连采集作业流程
 		JobStageController controller = new JobStageController();
@@ -287,6 +371,27 @@ public class JobStageControllerTest {
 		//失败后，重新构建责任链，读取已生成的状态文件，从卸数阶段开始重跑采集任务
 		try {
 			buildChainForCollection();
+
+			JobStatusInfo afterJobStatus = JSONObject.parseObject(FileUtil.readFile2String(new File(STATUS_FILE_PATH)), JobStatusInfo.class);
+			assertThat("卸数阶段成功", afterJobStatus.getUnloadDataStatus().getStatusCode(), is(RunStatusConstant.SUCCEED.getCode()));
+			assertThat("卸数阶段成功，重跑次数为1", afterJobStatus.getUnloadDataStatus().getIsAgain(), is(IsFlag.Shi.getCode()));
+			assertThat("卸数阶段成功，重跑次数为1", afterJobStatus.getUnloadDataStatus().getAgainNum(), is(1));
+
+			assertThat("上传阶段成功", afterJobStatus.getUploadStatus().getStatusCode(), is(RunStatusConstant.SUCCEED.getCode()));
+			assertThat("上传阶段成功，重跑次数为0", afterJobStatus.getUploadStatus().getIsAgain(), is(IsFlag.Fou.getCode()));
+			assertThat("上传阶段成功，重跑次数为0", afterJobStatus.getUploadStatus().getAgainNum(), is(0));
+
+			assertThat("加载阶段成功", afterJobStatus.getDataLodingStatus().getStatusCode(), is(RunStatusConstant.SUCCEED.getCode()));
+			assertThat("加载阶段成功，重跑次数为0", afterJobStatus.getDataLodingStatus().getIsAgain(), is(IsFlag.Fou.getCode()));
+			assertThat("加载阶段成功，重跑次数为0", afterJobStatus.getDataLodingStatus().getAgainNum(), is(0));
+
+			assertThat("计算增量阶段成功", afterJobStatus.getCalIncrementStatus().getStatusCode(), is(RunStatusConstant.SUCCEED.getCode()));
+			assertThat("计算增量阶段成功，重跑次数为0", afterJobStatus.getCalIncrementStatus().getIsAgain(), is(IsFlag.Fou.getCode()));
+			assertThat("计算增量阶段成功，重跑次数为0", afterJobStatus.getCalIncrementStatus().getAgainNum(), is(0));
+
+			assertThat("数据登记阶段成功", afterJobStatus.getDataRegistrationStatus().getStatusCode(), is(RunStatusConstant.SUCCEED.getCode()));
+			assertThat("数据登记阶段成功，重跑次数为0", afterJobStatus.getDataRegistrationStatus().getIsAgain(), is(IsFlag.Fou.getCode()));
+			assertThat("数据登记阶段成功，重跑次数为0", afterJobStatus.getDataRegistrationStatus().getAgainNum(), is(0));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -303,15 +408,15 @@ public class JobStageControllerTest {
 	@Test
 	public void runJobTestSix(){
 		JobStatusInfo jobStatusInfo = JobStatusInfoUtil.getStartJobStatusInfo(STATUS_FILE_PATH, TABLE_ID);
-		//卸数失败
+		//卸数成功
 		JobStageInterface unloadData = new DBUnloadDataStageImplSucceed();
-		//上传
+		//上传成功
 		JobStageInterface upload = new DBUploadStageImplSucceed();
-		//加载
+		//加载失败
 		JobStageInterface dataLoadingFailed = new DBDataLoadingStageImplFailed();
-		//增量
+		//增量成功
 		JobStageInterface calIncrement = new DBCalIncrementStageImplSucceed();
-		//登记
+		//登记成功
 		JobStageInterface dataRegistration = new DBDataRegistrationStageImplSucceed();
 		//利用JobStageController构建本次数据库直连采集作业流程
 		JobStageController controller = new JobStageController();
@@ -334,12 +439,27 @@ public class JobStageControllerTest {
 		//失败后，重新构建责任链，读取已生成的状态文件，从加载阶段开始重跑采集任务
 		try {
 			buildChainForCollection();
+
 			JobStatusInfo afterJobStatus = JSONObject.parseObject(FileUtil.readFile2String(new File(STATUS_FILE_PATH)), JobStatusInfo.class);
 			assertThat("卸数阶段成功", afterJobStatus.getUnloadDataStatus().getStatusCode(), is(RunStatusConstant.SUCCEED.getCode()));
+			assertThat("卸数阶段成功，重跑次数为0", afterJobStatus.getUnloadDataStatus().getIsAgain(), is(IsFlag.Fou.getCode()));
+			assertThat("卸数阶段成功，重跑次数为0", afterJobStatus.getUnloadDataStatus().getAgainNum(), is(0));
+
 			assertThat("上传阶段成功", afterJobStatus.getUploadStatus().getStatusCode(), is(RunStatusConstant.SUCCEED.getCode()));
-			assertThat("加载阶段失败", afterJobStatus.getDataLodingStatus().getStatusCode(), is(RunStatusConstant.SUCCEED.getCode()));
+			assertThat("上传阶段成功，重跑次数为0", afterJobStatus.getUploadStatus().getIsAgain(), is(IsFlag.Fou.getCode()));
+			assertThat("上传阶段成功，重跑次数为0", afterJobStatus.getUploadStatus().getAgainNum(), is(0));
+
+			assertThat("加载阶段成功", afterJobStatus.getDataLodingStatus().getStatusCode(), is(RunStatusConstant.SUCCEED.getCode()));
+			assertThat("加载阶段成功，重跑次数为1", afterJobStatus.getDataLodingStatus().getIsAgain(), is(IsFlag.Shi.getCode()));
+			assertThat("加载阶段成功，重跑次数为1", afterJobStatus.getDataLodingStatus().getAgainNum(), is(1));
+
 			assertThat("计算增量阶段成功", afterJobStatus.getCalIncrementStatus().getStatusCode(), is(RunStatusConstant.SUCCEED.getCode()));
+			assertThat("计算增量阶段成功，重跑次数为0", afterJobStatus.getCalIncrementStatus().getIsAgain(), is(IsFlag.Fou.getCode()));
+			assertThat("计算增量阶段成功，重跑次数为0", afterJobStatus.getCalIncrementStatus().getAgainNum(), is(0));
+
 			assertThat("数据登记阶段成功", afterJobStatus.getDataRegistrationStatus().getStatusCode(), is(RunStatusConstant.SUCCEED.getCode()));
+			assertThat("数据登记阶段成功，重跑次数为0", afterJobStatus.getDataRegistrationStatus().getIsAgain(), is(IsFlag.Fou.getCode()));
+			assertThat("数据登记阶段成功，重跑次数为0", afterJobStatus.getDataRegistrationStatus().getAgainNum(), is(0));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -377,12 +497,5 @@ public class JobStageControllerTest {
 		controller.registerJobStage(unloadData, upload, dataLoading, calIncrement, dataRegistration);
 		//按顺序执行责任链
 		controller.handleStageByOrder(STATUS_FILE_PATH, jobStatusInfo);
-
-		JobStatusInfo afterJobStatus = JSONObject.parseObject(FileUtil.readFile2String(new File(STATUS_FILE_PATH)), JobStatusInfo.class);
-		assertThat("卸数阶段成功", afterJobStatus.getUnloadDataStatus().getStatusCode(), is(RunStatusConstant.SUCCEED.getCode()));
-		assertThat("上传阶段成功", afterJobStatus.getUploadStatus().getStatusCode(), is(RunStatusConstant.SUCCEED.getCode()));
-		assertThat("加载阶段失败", afterJobStatus.getDataLodingStatus().getStatusCode(), is(RunStatusConstant.SUCCEED.getCode()));
-		assertThat("计算增量阶段成功", afterJobStatus.getCalIncrementStatus().getStatusCode(), is(RunStatusConstant.SUCCEED.getCode()));
-		assertThat("数据登记阶段成功", afterJobStatus.getDataRegistrationStatus().getStatusCode(), is(RunStatusConstant.SUCCEED.getCode()));
 	}
 }

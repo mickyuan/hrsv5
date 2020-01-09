@@ -15,10 +15,14 @@ import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.utils.EnumUtil;
 import hrds.agent.job.biz.utils.FileUtil;
 import hrds.commons.codes.DataBaseCode;
+import hrds.commons.codes.ExecuteState;
+import hrds.commons.codes.IsFlag;
+import hrds.commons.entity.Collect_case;
 import hrds.commons.exception.AppSystemException;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.UUID;
 
 @DocClass(desc = "作业阶段控制器,用于注册各个阶段，形成一个采集作业阶段链条，从第一个阶段开始执行，" +
 		"并且根据上一阶段的执行状态判断下一阶段是否执行", author = "WangZhengcheng")
@@ -119,25 +123,36 @@ public class JobStageController {
 		}
 		//2-3、状态文件存在，且卸数阶段失败，表示卸数失败，重跑卸数阶段
 		int unloadStatusCode = RunStatusConstant.SUCCEED.getCode();
+		//获取卸数阶段重跑次数
+		int unloadStageRedoNum = 0;
 		if(fileFlag && jobStatusInfo.getUnloadDataStatus() != null){
 			unloadStatusCode = jobStatusInfo.getUnloadDataStatus().getStatusCode();
+			unloadStageRedoNum = jobStatusInfo.getUnloadDataStatus().getAgainNum();
 		}
 
 		if(!fileFlag || redoFlag || (unloadStatusCode == RunStatusConstant.FAILED.getCode())){
 			//2-4、执行头节点
 			StageParamInfo stageParamInfo = jobStatusInfo.getStageParamInfo();
+			//第一次跑任务或者任务全部成功后重跑，stageParamInfo为null
 			if(stageParamInfo == null){
 				stageParamInfo = new StageParamInfo();
 			}
 			StageParamInfo firstStageParamInfo = head.handleStage(stageParamInfo);
-			jobStatusInfo = setStageStatus(firstStageParamInfo.getStatusInfo(), jobStatusInfo);
+			StageStatusInfo firstStageStatus = firstStageParamInfo.getStatusInfo();
+			//如果卸数阶段是失败后重跑，将是否重跑改为是，重跑次数加1
+			if(unloadStatusCode == RunStatusConstant.FAILED.getCode()){
+				firstStageStatus.setIsAgain(IsFlag.Shi.getCode());
+				firstStageStatus.setAgainNum(unloadStageRedoNum + 1);
+				firstStageParamInfo.setStatusInfo(firstStageStatus);
+			}
+			jobStatusInfo = setStageStatus(firstStageStatus, jobStatusInfo);
 			//2-5、如果头节点执行成功，根据阶段设置阶段状态，将需要在各个阶段中传递的参数重新存到jobStatusInfo中，并写状态文件
 			if (firstStageParamInfo.getStatusInfo().getStatusCode() == RunStatusConstant.SUCCEED.getCode()) {
 				dealSucceedStage(file, jobStatusInfo, firstStageParamInfo);
 			}
 			//2-6、如果头节点执行失败，根据阶段设置阶段状态，将需要在各个阶段中传递的参数重新存到jobStatusInfo中，写状态文件，直接返回
 			else if(firstStageParamInfo.getStatusInfo().getStatusCode() == RunStatusConstant.FAILED.getCode()){
-				dealFailedStage(file, jobStatusInfo);
+				dealFailedStage(file, jobStatusInfo, firstStageParamInfo);
 				return jobStatusInfo;
 			}else{
 				throw new AppSystemException("除了成功和失败，其他状态目前暂时未做处理");
@@ -152,6 +167,7 @@ public class JobStageController {
 			StageStatusInfo currentStageStatus = getStageStatusByCode(stage.getStageCode(), jobStatusInfo);
 			//3-2、如果当前阶段执行状态不为空，表示采集曾经执行过该阶段
 			if(currentStageStatus != null){
+				Integer currentStageAgainNum = currentStageStatus.getAgainNum();
 				//3-3、如果该阶段执行成功，跳过本次循环，执行下一阶段
 				if(currentStageStatus.getStatusCode() == RunStatusConstant.SUCCEED.getCode()){
 					continue;
@@ -159,11 +175,14 @@ public class JobStageController {
 				//3-4、如果该阶段执行失败，则重跑当前阶段，当前阶段的处理逻辑和卸数阶段一致
 				else if(currentStageStatus.getStatusCode() == RunStatusConstant.FAILED.getCode()){
 					StageParamInfo otherParamInfo = stage.handleStage(jobStatusInfo.getStageParamInfo());
+					//设置阶段为重跑，重跑次数+1
+					otherParamInfo.getStatusInfo().setIsAgain(IsFlag.Shi.getCode());
+					otherParamInfo.getStatusInfo().setAgainNum(currentStageAgainNum + 1);
 					jobStatusInfo = setStageStatus(otherParamInfo.getStatusInfo(), jobStatusInfo);
 					if (otherParamInfo.getStatusInfo().getStatusCode() == RunStatusConstant.SUCCEED.getCode()) {
 						dealSucceedStage(file, jobStatusInfo, otherParamInfo);
 					}else if(otherParamInfo.getStatusInfo().getStatusCode() == RunStatusConstant.FAILED.getCode()){
-						dealFailedStage(file, jobStatusInfo);
+						dealFailedStage(file, jobStatusInfo, otherParamInfo);
 						return jobStatusInfo;
 					}else{
 						throw new AppSystemException("除了成功和失败，其他状态目前暂时未做处理");
@@ -179,7 +198,7 @@ public class JobStageController {
 				if (otherParamInfo.getStatusInfo().getStatusCode() == RunStatusConstant.SUCCEED.getCode()) {
 					dealSucceedStage(file, jobStatusInfo, otherParamInfo);
 				}else if(otherParamInfo.getStatusInfo().getStatusCode() == RunStatusConstant.FAILED.getCode()){
-					dealFailedStage(file, jobStatusInfo);
+					dealFailedStage(file, jobStatusInfo, otherParamInfo);
 					return jobStatusInfo;
 				}else{
 					throw new AppSystemException("除了成功和失败，其他状态目前暂时未做处理");
@@ -189,25 +208,42 @@ public class JobStageController {
 		return jobStatusInfo;
 	}
 
-	@Method(desc = "处理执行成功的阶段", logicStep = "" +
-			"1、将执行成功的阶段参数封装到作业状态中" +
+	@Method(desc = "处理执行失败的阶段", logicStep = "" +
+			"1、将阶段执行失败的信息保存到collect_case表中" +
 			"2、将作业状态写到状态文件中")
 	@Param(name = "statusFile", desc = "指向作业状态文件", range = "不为空")
 	@Param(name = "jobStatusInfo", desc = "作业状态对象", range = "JobStatusInfo实体类对象")
-	@Param(name = "stageParamInfo", desc = "stageParamInfo", range = "StageParamInfo实体类对象")
-	private void dealSucceedStage(File statusFile, JobStatusInfo jobStatusInfo, StageParamInfo stageParamInfo) throws IOException{
-		//1、将执行成功的阶段参数封装到作业状态中
-		jobStatusInfo.setStageParamInfo(stageParamInfo);
-		//2、将作业状态写到状态文件中
+	@Param(name = "stageParamInfo", desc = "阶段参数对象", range = "StageParamInfo实体类对象")
+	private void dealFailedStage(File statusFile, JobStatusInfo jobStatusInfo, StageParamInfo stageParamInfo) throws IOException{
+		//1、将阶段执行失败的信息保存到collect_case表中
+		Collect_case collectCaseForFailed = getCollectCaseForFailed(stageParamInfo);
+		//TODO 保存collect_case对象
+		//2、将将阶段执行失败的信息保存到error_info表中
+		/*
+		Error_info errorInfo = new Error_info();
+		errorInfo.setError_id(UUID.randomUUID().toString().replaceAll("-",""));
+		errorInfo.setJob_rs_id(collectCaseForFailed.getJob_rs_id());
+		errorInfo.setError_msg(stageParamInfo.getStatusInfo().getMessage());
+		*/
+		//TODO 保存errorInfo对象
+		//3、将作业状态写到状态文件中
 		FileUtil.writeString2File(statusFile, JSON.toJSONString(jobStatusInfo), DataBaseCode.UTF_8.getValue());
 	}
 
-	@Method(desc = "处理执行失败的阶段", logicStep = "" +
-			"1、将作业状态写到状态文件中")
+	@Method(desc = "处理执行成功的阶段", logicStep = "" +
+			"1、将阶段执行成功的信息保存到collect_case表中" +
+			"2、将执行成功的阶段参数封装到作业状态中" +
+			"3、将作业状态写到状态文件中")
 	@Param(name = "statusFile", desc = "指向作业状态文件", range = "不为空")
 	@Param(name = "jobStatusInfo", desc = "作业状态对象", range = "JobStatusInfo实体类对象")
-	private void dealFailedStage(File statusFile, JobStatusInfo jobStatusInfo) throws IOException{
-		//1、将作业状态写到状态文件中
+	@Param(name = "stageParamInfo", desc = "阶段参数对象", range = "StageParamInfo实体类对象")
+	private void dealSucceedStage(File statusFile, JobStatusInfo jobStatusInfo, StageParamInfo stageParamInfo) throws IOException{
+		//1、将阶段执行成功的信息保存到collect_case表中
+		Collect_case collectCaseForSuccess = getCollectCaseForSuccess(stageParamInfo);
+		//TODO 调用方法保存collectCase
+		//2、将执行成功的阶段参数封装到作业状态中
+		jobStatusInfo.setStageParamInfo(stageParamInfo);
+		//3、将作业状态写到状态文件中
 		FileUtil.writeString2File(statusFile, JSON.toJSONString(jobStatusInfo), DataBaseCode.UTF_8.getValue());
 	}
 
@@ -269,6 +305,66 @@ public class JobStageController {
 			throw new AppSystemException("系统不支持的采集阶段");
 		}
 		return stageStatus;
+	}
+
+	@Method(desc = "为执行成功的阶段构建Collect_case对象", logicStep = "" +
+			"1、创建Collect_case对象，给Collect_case对象赋值并返回")
+	@Param(name = "stageParamInfo", desc = "采集参数对象，存放有采集公共信息和当前阶段的状态", range = "不为空")
+	@Return(desc = "Collect_case对象", range = "不为空")
+	private Collect_case getCollectCaseForSuccess(StageParamInfo stageParamInfo){
+		Collect_case collectCase = new Collect_case();
+		collectCase.setJob_rs_id(UUID.randomUUID().toString().replaceAll("-",""));
+		collectCase.setCollect_type(stageParamInfo.getCollectType());
+		collectCase.setJob_type(String.valueOf(stageParamInfo.getStatusInfo().getStageNameCode()));
+		collectCase.setCollect_total(stageParamInfo.getFileArr() != null ? (long)stageParamInfo.getFileArr().length : 0);
+		collectCase.setColect_record(stageParamInfo.getRowCount());
+		collectCase.setCollet_database_size(String.valueOf(stageParamInfo.getFileSize()));
+		collectCase.setCollect_s_date(stageParamInfo.getStatusInfo().getStartDate());
+		collectCase.setCollect_e_date(stageParamInfo.getStatusInfo().getEndDate());
+		collectCase.setCollect_s_time(stageParamInfo.getStatusInfo().getStartTime());
+		collectCase.setCollect_e_time(stageParamInfo.getStatusInfo().getEndTime());
+		collectCase.setExecute_state(ExecuteState.YunXingWanCheng.getCode());
+		collectCase.setIs_again(stageParamInfo.getStatusInfo().getIsAgain());
+		collectCase.setAgain_num(Long.valueOf(stageParamInfo.getStatusInfo().getAgainNum()));
+		//TODO Job_group暂时设置为表ID
+		collectCase.setJob_group(stageParamInfo.getTaskClassify());
+		collectCase.setTask_classify(stageParamInfo.getTaskClassify());
+		collectCase.setEtl_date(stageParamInfo.getEtlDate());
+		collectCase.setAgent_id(stageParamInfo.getAgentId());
+		collectCase.setCollect_set_id(stageParamInfo.getCollectSetId());
+		collectCase.setSource_id(stageParamInfo.getSourceId());
+
+		return collectCase;
+	}
+
+	@Method(desc = "为执行失败的阶段构建Collect_case对象", logicStep = "" +
+			"1、创建Collect_case对象，给Collect_case对象赋值并返回")
+	@Param(name = "stageParamInfo", desc = "采集参数对象，存放有采集公共信息和当前阶段的状态", range = "不为空")
+	@Return(desc = "Collect_case对象", range = "不为空")
+	private Collect_case getCollectCaseForFailed(StageParamInfo stageParamInfo){
+		Collect_case collectCase = new Collect_case();
+		collectCase.setJob_rs_id(UUID.randomUUID().toString().replaceAll("-",""));
+		collectCase.setCollect_type(stageParamInfo.getCollectType());
+		collectCase.setJob_type(String.valueOf(stageParamInfo.getStatusInfo().getStageNameCode()));
+		collectCase.setCollect_total(stageParamInfo.getFileArr() != null ? (long)stageParamInfo.getFileArr().length : 0);
+		collectCase.setColect_record(stageParamInfo.getRowCount());
+		collectCase.setCollet_database_size(String.valueOf(stageParamInfo.getFileSize()));
+		collectCase.setCollect_s_date(stageParamInfo.getStatusInfo().getStartDate());
+		collectCase.setCollect_e_date(stageParamInfo.getStatusInfo().getEndDate());
+		collectCase.setCollect_s_time(stageParamInfo.getStatusInfo().getStartTime());
+		collectCase.setCollect_e_time(stageParamInfo.getStatusInfo().getEndTime());
+		collectCase.setExecute_state(ExecuteState.YunXingShiBai.getCode());
+		collectCase.setIs_again(stageParamInfo.getStatusInfo().getIsAgain());
+		collectCase.setAgain_num(Long.valueOf(stageParamInfo.getStatusInfo().getAgainNum()));
+		//TODO Job_group暂时设置为表ID
+		collectCase.setJob_group(stageParamInfo.getTaskClassify());
+		collectCase.setTask_classify(stageParamInfo.getTaskClassify());
+		collectCase.setEtl_date(stageParamInfo.getEtlDate());
+		collectCase.setAgent_id(stageParamInfo.getAgentId());
+		collectCase.setCollect_set_id(stageParamInfo.getCollectSetId());
+		collectCase.setSource_id(stageParamInfo.getSourceId());
+
+		return collectCase;
 	}
 
 	//成员变量的getter/seeter，由idea自动生成，没有处理逻辑
