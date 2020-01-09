@@ -2,6 +2,7 @@ package hrds.commons.hadoop.opersolr;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.utils.StringUtil;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.hadoop.readconfig.LoginUtil;
@@ -15,14 +16,7 @@ import org.apache.solr.client.solrj.response.QueryResponse;
 import java.io.File;
 import java.io.IOException;
 
-/**
- * @Description:
- * @author: jack zhou
- * @Date: 20160225 9:00:00
- * @version: 1.0
- * @Context: Solrj 5.3.1
- */
-
+@DocClass(desc = "操作solr实现类(5.3.1)", author = "BY-HLL", createdate = "2020/1/9 0009 下午 03:14")
 public class OperSolrImpl5_3_1 extends OperSolrImpl implements OperSolr {
 
 	private static final String ZKHOST = PropertyParaValue.getString("zkHost", "");
@@ -147,23 +141,6 @@ public class OperSolrImpl5_3_1 extends OperSolrImpl implements OperSolr {
 
 			logger.info("[INFO] Spend time on request to custom handler    " + handler + " : " + response.getQTime() + " ms");
 		}
-
 		return jsonArray;
 	}
-
-	public static void main(String[] args) {
-		try {
-			System.setProperty("HADOOP_USER_NAME", "hyrenserv");
-			OperSolr os = SolrFactory.getInstance();
-			SolrQuery query = new SolrQuery();
-			query.setQuery("*:*");
-			SolrClient server2 = os.getServer();
-			server2.query(query);
-
-			os.close();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
 }
