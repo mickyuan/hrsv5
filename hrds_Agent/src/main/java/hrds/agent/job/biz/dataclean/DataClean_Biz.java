@@ -1,5 +1,6 @@
 package hrds.agent.job.biz.dataclean;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.core.dbstage.service.CollectTableHandleParse;
@@ -47,7 +48,7 @@ public class DataClean_Biz implements DataCleanInterface {
 			if (null != colMap && colMap.size() != 0) {
 				for (String key : colMap.keySet()) {
 					String str2 = colMap.get(key);
-					columnData = StringUtils.replace(columnData, key, str2);
+					columnData = StringUtil.replace(columnData, key, str2);
 				}
 			}
 		}
@@ -61,16 +62,16 @@ public class DataClean_Biz implements DataCleanInterface {
 		if (strFilling.size() != 0) {
 			String str = strFilling.get(columnname);
 			if (!StringUtil.isEmpty(str)) {
-				String[] fi = StringUtils.splitByWholeSeparatorPreserveAllTokens(str, CollectTableHandleParse.STRSPLIT);
-				if (fi.length == 3) {
+				List<String> fi = StringUtil.split(str, CollectTableHandleParse.STRSPLIT);
+				if (fi.size() == 3) {
 					int file_length = 0;
 					try {
-						file_length = Integer.parseInt(fi[0]);//长度
+						file_length = Integer.parseInt(fi.get(0));//补齐长度
 					} catch (Exception e) {
 						log.error("字符补齐长度解析错误", e);
 					}
-					String filling_type = fi[1];//长度
-					String character_filling = fi[2];//长度
+					String filling_type = fi.get(1);//补齐类型
+					String character_filling = fi.get(2);//补齐字符
 					if (FillingType.QianBuQi.getCode().equals(filling_type)) {// 前对齐
 						columnData = StringUtils.leftPad(columnData, file_length, character_filling);
 					} else if (FillingType.HouBuQi.getCode().equals(filling_type)) {// 后补齐
@@ -251,11 +252,15 @@ public class DataClean_Biz implements DataCleanInterface {
 	 */
 	public String codeTrans(Map<String, String> coding, String columnData, String columnName) {
 		if (coding.size() != 0) {
-			JSONObject obj = JSONObject.parseObject(coding.get(columnName));
-			if (obj != null && !obj.isEmpty()) {
-				for (String key : obj.keySet()) {
-					if (columnData.equalsIgnoreCase(key)) {
-						columnData = obj.getString(key) == null ? columnData : obj.getString(key);
+			JSONArray jsonArray = JSONArray.parseArray(coding.get(columnName));
+			if (jsonArray != null && jsonArray.size() > 0) {
+				for (Object object : jsonArray) {
+					JSONObject obj = (JSONObject) object;
+					if (obj != null && !obj.isEmpty()) {
+						if (columnData.equalsIgnoreCase(obj.getString("orig_value"))) {
+							columnData = obj.getString("code_value") == null ?
+									columnData : obj.getString("code_value");
+						}
 					}
 				}
 			}
@@ -292,13 +297,13 @@ public class DataClean_Biz implements DataCleanInterface {
 				} else if (FileFormat.SEQUENCEFILE.getCode().equals(fileType)) {
 					return_sb.append(sb.toString()).append(Constant.DATADELIMITER);
 				} else if (FileFormat.DingChang.getCode().equals(fileType)) {
-					return_sb.append(sb.toString()).append(Constant.DATADELIMITER);
-				} else if (FileFormat.FeiDingChang.getCode().equals(fileType)) {
 					List<String> split = StringUtil.split(key, CollectTableHandleParse.STRSPLIT);
 					int length = TypeTransLength.getLength(split.get(1));
 					String fixedStr = JdbcToFixedFileWriter.columnToFixed(sb.toString(), length, database_code);
 					return_sb.append(fixedStr).append(database_separatorr);
 //					log.error("定长文件，是调用这个类吗？这里要补充");
+				} else if (FileFormat.FeiDingChang.getCode().equals(fileType)) {
+					return_sb.append(sb.toString()).append(Constant.DATADELIMITER);
 				} else {
 					throw new AppSystemException("不支持的文件格式");
 				}

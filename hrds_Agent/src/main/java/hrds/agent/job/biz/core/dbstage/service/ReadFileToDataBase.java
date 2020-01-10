@@ -114,7 +114,8 @@ public class ReadFileToDataBase implements Callable<Long> {
 			//2.开启事务
 			db.beginTrans();
 			List<String> columnList = StringUtil.split(tableBean.getColumnMetaInfo(), CollectTableHandleParse.STRSPLIT);
-			List<String> typeList = StringUtil.split(tableBean.getColTypeMetaInfo(), CollectTableHandleParse.STRSPLIT);
+			List<String> typeList = DataTypeTransform.tansform(StringUtil.split(tableBean.getColTypeMetaInfo(),
+					CollectTableHandleParse.STRSPLIT), dataStoreConfBean.getDsl_name());
 			//3.拼接batch插入数据库的sql
 			String batchSql = getBatchSql(columnList, collectTableBean.getHbase_name() + "_"
 					+ collectTableBean.getEtlDate());
@@ -380,7 +381,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 			// 如果取出的值为null则给空字符串
 			str = tmpValue == null ? "" : tmpValue;
 		} else if (type.contains("BIGINT") || type.contains("DECIMAL") || type.contains("DOUBLE")
-				|| type.contains("NUMERIC")) {
+				|| type.contains("NUMERIC") || type.contains("INT8") || type.contains("INT4")) {
 			// 如果取出的值为null则给空字符串
 			str = tmpValue == null ? null : new BigDecimal(tmpValue);
 		} else {

@@ -130,7 +130,7 @@ public class CollectTableHandleParse {
 	private static ResultSet getResultSet(String collectSQL, Connection conn) {
 		ResultSet columnSet;
 		try {
-			String exeSql = "SELECT * FROM ( " + collectSQL + ") AS HYREN_ALIAS WHERE 1 = 2";
+			String exeSql = String.format("SELECT * FROM ( %s ) AS HYREN_ALIAS WHERE 1 = 2", collectSQL);
 			PreparedStatement statement = conn.prepareStatement(exeSql);
 			columnSet = statement.executeQuery();
 		} catch (Exception e) {
@@ -162,15 +162,15 @@ public class CollectTableHandleParse {
 				String eltDate = collectTableBean.getEtlDate();
 				//输入的日期肯定是yyyyMMdd格式
 				if (selfSql.contains("#{txdate}")) {
-					Date dateByString = getDateByString(eltDate, "yyyyMMdd");
+					Date dateByString = getDateByString(eltDate);
 					selfSql = selfSql.replace("#{txdate}", SINGLEQUOTE + sysDatef.format(dateByString) + SINGLEQUOTE);
 				}
 				if (selfSql.contains("#{txdate_pre}")) {
-					Date dateByString = getDateByString(getNextDateByNum(eltDate, -1), "yyyyMMdd");
+					Date dateByString = getDateByString(getNextDateByNum(eltDate, -1));
 					selfSql = selfSql.replace("#{txdate_pre}", SINGLEQUOTE + sysDatef.format(dateByString) + SINGLEQUOTE);
 				}
 				if (selfSql.contains("#{txdate_next}")) {
-					Date dateByString = getDateByString(getNextDateByNum(eltDate, 1), "yyyyMMdd");
+					Date dateByString = getDateByString(getNextDateByNum(eltDate, 1));
 					selfSql = selfSql.replace("#{txdate_next}", SINGLEQUOTE + sysDatef.format(dateByString) + SINGLEQUOTE);
 				}
 				collectSQL = collectSQL + " where " + selfSql;
@@ -181,20 +181,19 @@ public class CollectTableHandleParse {
 	}
 
 	/**
-	 * TODO 这个方法和下面的方法要加到DateUtil里面
 	 * 根据指定格式将字符串转为日期
 	 */
-	private static Date getDateByString(String dateByString, String pattern) {
+	private static Date getDateByString(String dateByString) {
 		Date date;
 		//为空返回当前日期
 		if (dateByString == null || dateByString.trim().equals("")) {
 			date = new Date();
 		} else {
 			try {
-				SimpleDateFormat format = new SimpleDateFormat(pattern);
+				SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd");
 				date = format.parse(dateByString);
 			} catch (Exception e) {
-				throw new AppSystemException("输入的日期格式不正确，请输入" + pattern + "格式的日期", e);
+				throw new AppSystemException("输入的日期格式不正确，请输入yyyyMMdd格式的日期", e);
 			}
 		}
 		return date;
@@ -265,12 +264,14 @@ public class CollectTableHandleParse {
 					for (ColumnCleanBean columnCleanBean : column_clean_list) {
 						//字符替换
 						if (CleanType.ZiFuTiHuan.getCode().equals(columnCleanBean.getClean_type())) {
-							replaceMap.put(columnCleanBean.getField(), columnCleanBean.getReplace_feild());
+							replaceMap.put(StringUtil.unicode2String(columnCleanBean.getField()),
+									StringUtil.unicode2String(columnCleanBean.getReplace_feild()));
 							deleSpecialSpace.put(column_name_up, replaceMap);
 							//列补齐
 						} else if (CleanType.ZiFuBuQi.getCode().equals(columnCleanBean.getClean_type())) {
 							String filling = columnCleanBean.getFilling_length() + STRSPLIT + columnCleanBean.
-									getFilling_type() + STRSPLIT + columnCleanBean.getCharacter_filling();
+									getFilling_type() + STRSPLIT
+									+ StringUtil.unicode2String(columnCleanBean.getCharacter_filling());
 							strFilling.put(column_name_up, filling);
 							//日期转换
 						} else if (CleanType.ShiJianZhuanHuan.getCode().equals(columnCleanBean.getClean_type())) {
