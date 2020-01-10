@@ -10,6 +10,7 @@ import hrds.agent.job.biz.bean.*;
 import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.utils.ColumnTool;
 import hrds.agent.job.biz.utils.SQLUtil;
+import hrds.agent.job.biz.utils.TypeTransLength;
 import hrds.commons.codes.CleanType;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.StorageType;
@@ -19,7 +20,6 @@ import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.ConnUtil;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.Platform;
-import hrds.commons.utils.xlstoxml.Xls2xml;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -103,7 +103,7 @@ public class CollectTableHandleParse {
 			if (StorageType.ZengLiang.getCode().equals(collectTableBean.getStorage_type())) {
 				columnMetaInfo.append(STRSPLIT).append(Constant.EDATENAME).append(STRSPLIT).append(Constant.MD5NAME);
 				colTypeMetaInfo.append(STRSPLIT).append("char(8)").append(STRSPLIT).append("char(32)");
-				colLengthInfo.append(STRSPLIT).append("8").append("32");
+				colLengthInfo.append(STRSPLIT).append("8").append(STRSPLIT).append("32");
 			}
 			// 页面定义的清洗格式进行卸数
 			tableBean.setAllColumns(allColumns.toString());
@@ -347,7 +347,7 @@ public class CollectTableHandleParse {
 				List<String> split = StringUtil.split(key, STRSPLIT);
 				columns.append(CollectTableHandleParse.STRSPLIT).append(split.get(0));
 				colType.append(CollectTableHandleParse.STRSPLIT).append(split.get(1));
-				lengths.append(CollectTableHandleParse.STRSPLIT).append(Xls2xml.getLength(split.get(1)));
+				lengths.append(CollectTableHandleParse.STRSPLIT).append(TypeTransLength.getLength(split.get(1)));
 			}
 		}
 		String columnMate = columns.toString();
@@ -367,14 +367,17 @@ public class CollectTableHandleParse {
 						Column_split column_split = map.get(newName);
 						newColumn.append(newName).append(CollectTableHandleParse.STRSPLIT);
 						newColumnType.append(column_split.getCol_type()).append(CollectTableHandleParse.STRSPLIT);
-						newColumnLength.append(Xls2xml.getLength(column_split.getCol_type())).append(CollectTableHandleParse.STRSPLIT);
+						newColumnLength.append(TypeTransLength.getLength(column_split.getCol_type()))
+								.append(CollectTableHandleParse.STRSPLIT);
 					}
 					newColumn.deleteCharAt(newColumn.length() - 1);
 					newColumnType.deleteCharAt(newColumnType.length() - 1);
 					newColumnLength.deleteCharAt(newColumnLength.length() - 1);
 					//获取对应列类型的位置插入拆分后的列类型
-					int searchIndex = ColumnTool.searchIndex(colType.toString(), findColIndex, CollectTableHandleParse.STRSPLIT);
-					int lenIndex = ColumnTool.searchIndex(lengths.toString(), findColIndex, CollectTableHandleParse.STRSPLIT);
+					int searchIndex = ColumnTool.searchIndex(colType.toString(), findColIndex,
+							CollectTableHandleParse.STRSPLIT);
+					int lenIndex = ColumnTool.searchIndex(lengths.toString(), findColIndex,
+							CollectTableHandleParse.STRSPLIT);
 					//	Debug.info(logger, "searchIndex"+searchIndex);
 					//	Debug.info(logger, "colType"+colType.length());
 					//插入新加的类型
@@ -385,8 +388,10 @@ public class CollectTableHandleParse {
 						//	Debug.info(logger, "我是最后一个字段做拆分啊");
 						colType.append(CollectTableHandleParse.STRSPLIT).append(newColumnType.toString());
 					}
-					if (lenIndex > 0) {
+					if (lenIndex != -1) {
 						lengths.insert(lenIndex, CollectTableHandleParse.STRSPLIT + newColumnLength.toString());
+					} else {
+						lengths.append(CollectTableHandleParse.STRSPLIT).append(newColumnLength.toString());
 					}
 					columnMate = StringUtil.replace(columnMate.toUpperCase(), key.toUpperCase(),
 							newColumn.toString().toUpperCase());

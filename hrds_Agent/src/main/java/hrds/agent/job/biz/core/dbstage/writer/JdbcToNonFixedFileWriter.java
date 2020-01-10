@@ -62,8 +62,10 @@ public class JdbcToNonFixedFileWriter extends AbstractFileWriter {
 			writer = writerFile.getBufferedWriter();
 			//清洗配置
 			final DataCleanInterface allclean = CleanFactory.getInstance().getObjectClean("clean_database");
-			String[] colName = StringUtils.splitByWholeSeparatorPreserveAllTokens(tableBean.getAllColumns(),
-					CollectTableHandleParse.STRSPLIT);
+			//获取所有字段的名称，包括列分割和列合并出来的字段名称
+			List<String> allColumnList = StringUtil.split(tableBean.getColumnMetaInfo(), CollectTableHandleParse.STRSPLIT);
+			//获取所有查询的字段的名称，不包括列分割和列合并出来的字段名称
+			List<String> selectColumnList = StringUtil.split(tableBean.getAllColumns(), CollectTableHandleParse.STRSPLIT);
 			Map<String, Object> parseJson = tableBean.getParseJson();
 			Map<String, String> mergeIng = (Map<String, String>) parseJson.get("mergeIng");//字符合并
 			Clean cl = new Clean(parseJson, allclean);
@@ -71,11 +73,10 @@ public class JdbcToNonFixedFileWriter extends AbstractFileWriter {
 			StringBuilder sb = new StringBuilder();//用来写一行数据
 			StringBuilder sb_ = new StringBuilder();//用来写临时数据
 
-			List<String> typeList = StringUtil.split(tableBean.getAllType(),
-					CollectTableHandleParse.STRSPLIT);
-			log.info("type : " + typeList.size() + "  colName " + colName.length);
+			List<String> typeList = StringUtil.split(tableBean.getAllType(), CollectTableHandleParse.STRSPLIT);
+			int numberOfColumns = selectColumnList.size();
+			log.info("type : " + typeList.size() + "  colName " + numberOfColumns);
 			String currValue;
-			int numberOfColumns = colName.length;
 			int[] typeArray = tableBean.getTypeArray();
 			while (resultSet.next()) {
 				// Count it
@@ -92,8 +93,9 @@ public class JdbcToNonFixedFileWriter extends AbstractFileWriter {
 							sb_, i, hbase_name)).append(Constant.DATADELIMITER);
 					//清洗操作
 					currValue = sb_.toString();
-					currValue = cl.cleanColumn(currValue, colName[i - 1].toUpperCase(), null,
-							typeList.get(i - 1), FileFormat.FeiDingChang.getCode(), null);
+					currValue = cl.cleanColumn(currValue, selectColumnList.get(i - 1).toUpperCase(), null,
+							typeList.get(i - 1), FileFormat.FeiDingChang.getCode(), null,
+							null, null);
 					// Write to output
 					sb.append(currValue).append(Constant.DATADELIMITER);
 				}
@@ -101,8 +103,9 @@ public class JdbcToNonFixedFileWriter extends AbstractFileWriter {
 				if (!mergeIng.isEmpty()) {
 					String[] arrColString = StringUtils.split(midStringOther.toString(),
 							Constant.DATADELIMITER);
-					String merge = allclean.merge(mergeIng, arrColString, colName, null, null,
-							FileFormat.FeiDingChang.getCode());
+					String merge = allclean.merge(mergeIng, arrColString, allColumnList.toArray
+									(new String[0]), null, null,
+							FileFormat.FeiDingChang.getCode(), null, null);
 					sb.append(merge).append(Constant.DATADELIMITER);
 				}
 				sb.append(eltDate);

@@ -10,6 +10,7 @@ import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.core.dbstage.increasement.JDBCIncreasement;
 import hrds.agent.job.biz.utils.DataTypeTransform;
 import hrds.agent.trans.biz.ConnectionTool;
+import hrds.commons.codes.DataBaseCode;
 import hrds.commons.codes.FileFormat;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.hadoop.readconfig.ConfigReader;
@@ -105,7 +106,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 	@Method(desc = "执行读取文件batch提交到数据库的方法", logicStep = "")
 	@Override
 	public Long call() {
-		long count = 0L;
+		long count;
 		DatabaseWrapper db = null;
 		try {
 			//1.获取数据库的连接
@@ -130,7 +131,8 @@ public class ReadFileToDataBase implements Callable<Long> {
 			} else if (FileFormat.DingChang.getCode().equals(collectTableBean.getDbfile_format())) {
 				//分隔符为空
 				if (StringUtil.isEmpty(collectTableBean.getDatabase_separatorr())) {
-					count = readDingChangToDataBase(db, columnList, typeList, batchSql);
+					count = readDingChangToDataBase(db, columnList, typeList, batchSql,
+							collectTableBean.getDatabase_code());
 				} else {
 					count = readFeiDingChangToDataBase(db, columnList, typeList, batchSql);
 				}
@@ -142,6 +144,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 			//5.提交事务
 			db.commit();
 		} catch (Exception e) {
+			count = -1L;
 			if (db != null)
 				db.rollback();
 			LOGGER.error("数据库采集读文件上传到数据库异常", e);
@@ -164,7 +167,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 			while ((line = reader.readLine()) != null) {
 				num++;
 				objs = new Object[columnList.size()];// 存储全量插入信息的list
-				List<String> valueList = getDingChangValueList(line, tableBean.getColLengthInfo());
+				List<String> valueList = StringUtil.split(line, String.valueOf(Constant.DATADELIMITER));
 				for (int j = 0; j < columnList.size(); j++) {
 					objs[j] = getValue(typeList.get(j), valueList.get(j));
 				}
@@ -182,19 +185,25 @@ public class ReadFileToDataBase implements Callable<Long> {
 		return num;
 	}
 
-	private List<String> getDingChangValueList(String line, String colLengthInfo) {
+	private List<String> getDingChangValueList(String line, String colLengthInfo, String database_code)
+			throws Exception {
+		String code = DataBaseCode.ofValueByCode(database_code);
 		List<String> valueList = new ArrayList<>();
 		List<String> lengthList = StringUtil.split(colLengthInfo, CollectTableHandleParse.STRSPLIT);
+		byte[] bytes = line.getBytes(code);
+		int begin = 0;
 		for (String len : lengthList) {
 			int length = Integer.parseInt(len);
-			valueList.add(line.substring(0, length));
-			line = line.substring(length);
+			byte[] byteTmp = new byte[length];
+			System.arraycopy(bytes, begin, byteTmp, 0, length);
+			begin += length;
+			valueList.add(new String(byteTmp, code));
 		}
 		return valueList;
 	}
 
 	private long readDingChangToDataBase(DatabaseWrapper db, List<String> columnList, List<String> typeList,
-	                                     String batchSql) {
+	                                     String batchSql, String database_code) {
 		long num = 0;
 		try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(fileAbsolutePath)))) {
 			List<Object[]> pool = new ArrayList<>();// 存储全量插入信息的list
@@ -204,7 +213,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 			while ((line = reader.readLine()) != null) {
 				num++;
 				objs = new Object[columnList.size()];// 存储全量插入信息的list
-				List<String> valueList = StringUtil.split(line, String.valueOf(Constant.DATADELIMITER));
+				List<String> valueList = getDingChangValueList(line, tableBean.getColLengthInfo(), database_code);
 				for (int j = 0; j < columnList.size(); j++) {
 					objs[j] = getValue(typeList.get(j), valueList.get(j));
 				}

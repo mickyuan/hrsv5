@@ -14,29 +14,35 @@ import java.util.Map;
 public class DataTypeTransform {
 
 	private static final Map<String, YamlMap> map = new HashMap<>();
-	/* 这里是为了让某些转换的类型直接返回，不要长度，比如说date类型，有些数据库取出来的date类型长度只有8，但是转为
-	 * 字符串类型取出来是很长的一串字符串，varchar(8)不够用，所以要直接返回varchar(32),所以这里有一个list,list包含
-	 * 的值直接返回
+	/* 这里是为了让某些转换的类型直接返回，不要根据原来的长度拼接新的长度，比如说NVARCHAR(16)类型，从数据库取出来的
+	 * 类型长度只有16，但是转为普通数据库的varchar(16)长度不够用，所以要直接返回varchar(32),所以这里有一个list,
+	 * list包含的值直接返回
 	 */
 	private static final List<String> list = new ArrayList<>();
 	private static final String LKH = "(";
 	private static final String RKH = ")";
 
 	static {
-		YamlMap rootConfig = YamlFactory.load(ConfFileLoader.getConfFile("typecontrast")).asMap();
+		YamlMap rootConfig = YamlFactory.load(ConfFileLoader.getConfFile("contrast")).asMap();
 		YamlArray arrays = rootConfig.getArray("typecontrast");
 		for (int i = 0; i < arrays.size(); i++) {
 			YamlMap trans = arrays.getMap(i);
 			map.put(trans.getString("NAME"), trans);
 		}
 		list.add("VARCHAR(32)");
+		list.add("VARCHAR(64)");
+		list.add("VARCHAR(128)");
+		list.add("VARCHAR(256)");
+		list.add("VARCHAR(512)");
+		list.add("VARCHAR(1024)");
+		list.add("VARCHAR(2048)");
+		list.add("VARCHAR(4000)");
 	}
 
 	/**
 	 * 转换为对应的存储数据库支持类型
 	 */
-	public static String tansform(String type, String dtcs_name) {
-
+	public static String tansform(String type, String dsl_name) {
 		type = type.trim().toUpperCase();
 		//要转换的值带括号，则取出括号里面的值并拼接没有值得类型
 		if (type.contains(LKH) && type.contains(RKH)) {
@@ -44,28 +50,19 @@ public class DataTypeTransform {
 			String key_2 = key_1 + LKH + RKH;
 			//默认类型是规范的即一对括号
 			String length = type.substring(type.indexOf(LKH) + 1, type.length() - 1);
-			//String length = type.substring(type.indexOf(LKH));
 			//获取要替换的值
-			String val = map.get(dtcs_name).getString(key_2);
-			if (null == val) {
-				return type;
+			String val = map.get(dsl_name).getString(key_2, key_2);
+			if (list.contains(val)) {
+				return val;
+			}
+			//如果要替换的值有括号则在括号中拼接长度信息
+			if (val.contains(LKH) && val.contains(RKH)) {
+				return val.substring(0, val.indexOf(LKH) + 1) + length + RKH;
 			} else {
-				if (list.contains(val)) {
-					return val;
-				}
-				//如果要替换的值有括号则在括号中拼接长度信息
-				if (val.contains(LKH) && val.contains(RKH)) {
-					return val.substring(0, val.indexOf(LKH) + 1) + length + RKH;
-				} else {
-					return val;
-				}
+				return val;
 			}
 		} else {
-			if (null == map.get(dtcs_name).getString(type)) {
-				return type;
-			} else {
-				return map.get(dtcs_name).getString(type);
-			}
+			return map.get(dsl_name).getString(type, type);
 		}
 	}
 
@@ -97,11 +94,10 @@ public class DataTypeTransform {
 	/**
 	 * 源数据库的类型转换成对应的存储目的地支持的类型
 	 */
-	public static List<String> tansform(List<String> types, String dtcs_name) {
-
+	public static List<String> tansform(List<String> types, String dsl_name) {
 		List<String> transformedTypeList = new ArrayList<>();
 		for (String string : types) {
-			transformedTypeList.add(tansform(string, dtcs_name));
+			transformedTypeList.add(tansform(string, dsl_name));
 		}
 		return transformedTypeList;
 	}

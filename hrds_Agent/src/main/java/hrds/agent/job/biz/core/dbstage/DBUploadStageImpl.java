@@ -187,6 +187,9 @@ public class DBUploadStageImpl extends AbstractJobStage {
 		for (Future<Long> future : list) {
 			count += future.get();
 		}
+		if (count < 0) {
+			throw new AppSystemException("数据Batch提交到库" + dataStoreConfBean.getDsl_name() + "异常");
+		}
 		LOGGER.info("数据成功进入库" + dataStoreConfBean.getDsl_name() + "下的表" + collectTableBean.getHbase_name()
 				+ ",总计进数" + count + "条");
 	}
@@ -200,7 +203,7 @@ public class DBUploadStageImpl extends AbstractJobStage {
 	}
 
 	@Override
-	public int getStageCode(){
+	public int getStageCode() {
 		return StageConstant.UPLOAD.getCode();
 	}
 }

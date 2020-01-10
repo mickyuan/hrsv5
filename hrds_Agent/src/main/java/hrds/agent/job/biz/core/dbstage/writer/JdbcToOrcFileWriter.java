@@ -69,8 +69,10 @@ public class JdbcToOrcFileWriter extends AbstractFileWriter {
 			/* Get result set metadata */
 			//清洗配置
 			final DataCleanInterface allClean = CleanFactory.getInstance().getObjectClean("clean_database");
-			String[] colName = StringUtils.splitByWholeSeparatorPreserveAllTokens(tableBean.getAllColumns()
-					, CollectTableHandleParse.STRSPLIT);
+			//获取所有字段的名称，包括列分割和列合并出来的字段名称
+			List<String> allColumnList = StringUtil.split(tableBean.getColumnMetaInfo(), CollectTableHandleParse.STRSPLIT);
+			//获取所有查询的字段的名称，不包括列分割和列合并出来的字段名称
+			List<String> selectColumnList = StringUtil.split(tableBean.getAllColumns(), CollectTableHandleParse.STRSPLIT);
 			Map<String, Object> parseJson = tableBean.getParseJson();
 			//字符合并
 			Map<String, String> mergeIng = (Map<String, String>) parseJson.get("mergeIng");
@@ -84,7 +86,7 @@ public class JdbcToOrcFileWriter extends AbstractFileWriter {
 			List<String> typeList = StringUtil.split(tableBean.getAllType(),
 					CollectTableHandleParse.STRSPLIT);
 			String currValue;
-			int numberOfColumns = colName.length;
+			int numberOfColumns = selectColumnList.size();
 			int[] typeArray = tableBean.getTypeArray();
 
 			StructObjectInspector inspector = ColumnTool.schemaInfo(tableBean.getColumnMetaInfo(),
@@ -106,13 +108,13 @@ public class JdbcToOrcFileWriter extends AbstractFileWriter {
 							typeArray[i - 1], sb_, i, hbase_name));
 					//清洗操作
 					currValue = sb_.toString();
-					currValue = cl.cleanColumn(currValue, colName[i - 1].toUpperCase(), null,
-							typeList.get(i - 1), FileFormat.ORC.getCode(), lineData);
+					currValue = cl.cleanColumn(currValue, selectColumnList.get(i - 1).toUpperCase(), null,
+							typeList.get(i - 1), FileFormat.ORC.getCode(), lineData, null, null);
 					if (i < numberOfColumns) {
 						midStringOther.append(Constant.DATADELIMITER);
 					}
-					if (splitIng.get(colName[i - 1].toUpperCase()) == null
-							|| splitIng.get(colName[i - 1].toUpperCase()).size() == 0) {
+					if (splitIng.get(selectColumnList.get(i - 1).toUpperCase()) == null
+							|| splitIng.get(selectColumnList.get(i - 1).toUpperCase()).size() == 0) {
 						ColumnTool.addData2Inspector(lineData, typeList.get(i - 1), currValue);
 					}
 				}
@@ -121,7 +123,8 @@ public class JdbcToOrcFileWriter extends AbstractFileWriter {
 					String[] arrColString = StringUtils.split(midStringOther.toString(),
 							Constant.DATADELIMITER);
 					//字段合并
-					allClean.merge(mergeIng, arrColString, colName, null, lineData, FileFormat.ORC.getCode());
+					allClean.merge(mergeIng, arrColString, allColumnList.toArray(new String[0]), null, lineData,
+							FileFormat.ORC.getCode(), null, null);
 				}
 				lineData.add(eltDate);
 				//因为进数方式是表级别的，如果每张表选择了存储方式则不同目的地下的都是一样的，所以拼的字段加在卸数这里

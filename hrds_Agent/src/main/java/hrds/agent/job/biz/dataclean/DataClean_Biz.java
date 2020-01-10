@@ -3,7 +3,9 @@ package hrds.agent.job.biz.dataclean;
 import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.core.dbstage.service.CollectTableHandleParse;
+import hrds.agent.job.biz.core.dbstage.writer.JdbcToFixedFileWriter;
 import hrds.agent.job.biz.utils.ColUtil;
+import hrds.agent.job.biz.utils.TypeTransLength;
 import hrds.commons.codes.CharSplitType;
 import hrds.commons.codes.FileFormat;
 import hrds.commons.codes.FillingType;
@@ -119,19 +121,15 @@ public class DataClean_Biz implements DataCleanInterface {
 	 * 字符拆分
 	 */
 	public String split(Map<String, Map<String, Column_split>> spliting, String columnData, String columnName, Group group, String type,
-	                    String fileType, List<Object> list) {
+	                    String fileType, List<Object> list, String database_code, String database_separatorr) {
 		if (spliting.get(columnName) != null && spliting.get(columnName).size() > 0) {
 			StringBuilder sb = new StringBuilder(4096);
 			//TODO 保留原字段...这里是卸数的格式，定长的还没加，先待定
-			//csv给所有非数字类型前后加上""
 			if (FileFormat.CSV.getCode().equals(fileType)) {
-//				sb.append(columnData).append(Constant.DATADELIMITER);
-				//SEQUENCEFILE使用的是 '\001'作为分隔符
 				list.add(columnData);
 				sb.append(columnData);
 			} else if (FileFormat.SEQUENCEFILE.getCode().equals(fileType)) {
 				sb.append(columnData).append(Constant.DATADELIMITER);
-				//ORC
 			} else if (FileFormat.ORC.getCode().equals(fileType)) {
 				list.add(columnData);
 				sb.append(columnData);
@@ -143,7 +141,10 @@ public class DataClean_Biz implements DataCleanInterface {
 			} else if (FileFormat.FeiDingChang.getCode().equals(fileType)) {
 				sb.append(columnData).append(Constant.DATADELIMITER);
 			} else if (FileFormat.DingChang.getCode().equals(fileType)) {
-				log.error("定长文件，是调用这个类吗？这里要补充");
+				int length = TypeTransLength.getLength(type);
+				String fixedData = JdbcToFixedFileWriter.columnToFixed(columnData, length, database_code);
+				sb.append(fixedData).append(database_separatorr);
+//				log.error("定长文件，是调用这个类吗？这里要补充");
 			} else {
 				throw new AppSystemException("不支持的文件格式");
 			}
@@ -171,7 +172,11 @@ public class DataClean_Biz implements DataCleanInterface {
 						} else if (FileFormat.FeiDingChang.getCode().equals(fileType)) {
 							sb.append(Constant.DATADELIMITER);
 						} else if (FileFormat.DingChang.getCode().equals(fileType)) {
-							log.error("定长文件，是调用这个类吗？这里要补充");
+							int length = TypeTransLength.getLength(cp.getCol_type());
+							String fixedData = JdbcToFixedFileWriter.columnToFixed(columnData,
+									length, database_code);
+							sb.append(fixedData).append(database_separatorr);
+//							log.error("定长文件，是调用这个类吗？这里要补充");
 						} else {
 							throw new AppSystemException("不支持的文件格式");
 						}
@@ -187,9 +192,9 @@ public class DataClean_Biz implements DataCleanInterface {
 								substr = columnData.substring(start, end);
 							} else if (CharSplitType.ZhiDingFuHao.getCode().equals(cp.getSplit_type())) {
 								int num = cp.getSeq() == null ? 0 : Integer.parseInt(cp.getSeq().toString());
-								String[] splitInNull = StringUtils.splitByWholeSeparatorPreserveAllTokens(columnData,
+								List<String> splitInNull = StringUtil.split(columnData,
 										cp.getSplit_sep());
-								substr = splitInNull[num];
+								substr = splitInNull.get(num);
 							} else {
 								throw new AppSystemException("不支持的字符拆分方式");
 							}
@@ -211,7 +216,11 @@ public class DataClean_Biz implements DataCleanInterface {
 							} else if (FileFormat.FeiDingChang.getCode().equals(fileType)) {
 								sb.append(substr).append(Constant.DATADELIMITER);
 							} else if (FileFormat.DingChang.getCode().equals(fileType)) {
-								log.error("定长文件，是调用这个类吗？这里要补充");
+								int length = TypeTransLength.getLength(cp.getCol_type());
+								String fixedData = JdbcToFixedFileWriter.columnToFixed(substr,
+										length, database_code);
+								sb.append(fixedData).append(database_separatorr);
+//								log.error("定长文件，是调用这个类吗？这里要补充");
 							} else {
 								throw new AppSystemException("不支持的文件格式");
 							}
@@ -223,7 +232,14 @@ public class DataClean_Biz implements DataCleanInterface {
 				}
 			}
 			//删除逗号或者Constant.DATADELIMITER
-			sb.deleteCharAt(sb.length() - 1);
+			if (FileFormat.DingChang.getCode().equals(fileType)) {
+				//定长且有分隔符，则删除最后的分隔符，否则不处理
+				if (database_separatorr.length() > 0) {
+					sb.delete(sb.length() - database_separatorr.length(), sb.length());
+				}
+			} else {
+				sb.deleteCharAt(sb.length() - 1);
+			}
 			return sb.toString();
 		} else {
 			return columnData;
@@ -253,40 +269,51 @@ public class DataClean_Biz implements DataCleanInterface {
 	 * columns 列名
 	 * group 写Parquet文件时
 	 */
-	public String merge(Map<String, String> mergeing, String[] arrColString, String[] columns, Group group, List<Object> list, String fileType) {
+	public String merge(Map<String, String> mergeing, String[] arrColString, String[] columns, Group group,
+	                    List<Object> list, String fileType, String database_code, String database_separatorr) {
 
-		StringBuilder sb = new StringBuilder(4096);
+		StringBuilder return_sb = new StringBuilder(4096);
 		if (mergeing.size() != 0) {
 			for (String key : mergeing.keySet()) {
+				StringBuilder sb = new StringBuilder();
 				int[] index = findColIndex(columns, mergeing.get(key));
 				for (int i : index) {
 					sb.append(arrColString[i]);
 				}
 				if (FileFormat.PARQUET.getCode().equals(fileType)) {
-					String[] split = StringUtils.splitByWholeSeparatorPreserveAllTokens(key, CollectTableHandleParse.STRSPLIT);
+					List<String> split = StringUtil.split(key, CollectTableHandleParse.STRSPLIT);
 					//TODO 这里默认用varchar 待讨论
-					cutil.addData2Group(group, "varchar", split[0].toUpperCase(), sb.toString());
-					sb.delete(0, sb.length());
+					cutil.addData2Group(group, split.get(1).toUpperCase(), split.get(0).toUpperCase(), sb.toString());
 				} else if (FileFormat.ORC.getCode().equals(fileType)) {
-					cutil.addData2Inspector(list, "varchar", sb.toString());
-					sb.delete(0, sb.length());
+					List<String> split = StringUtil.split(key, CollectTableHandleParse.STRSPLIT);
+					cutil.addData2Inspector(list, split.get(1).toUpperCase(), sb.toString());
 				} else if (FileFormat.CSV.getCode().equals(fileType)) {
 					list.add(sb.toString());
-//					sb.append(Constant.DATADELIMITER);
 				} else if (FileFormat.SEQUENCEFILE.getCode().equals(fileType)) {
-					sb.append(Constant.DATADELIMITER);
+					return_sb.append(sb.toString()).append(Constant.DATADELIMITER);
 				} else if (FileFormat.DingChang.getCode().equals(fileType)) {
-					sb.append(Constant.DATADELIMITER);
+					return_sb.append(sb.toString()).append(Constant.DATADELIMITER);
 				} else if (FileFormat.FeiDingChang.getCode().equals(fileType)) {
-					log.error("定长文件，是调用这个类吗？这里要补充");
+					List<String> split = StringUtil.split(key, CollectTableHandleParse.STRSPLIT);
+					int length = TypeTransLength.getLength(split.get(1));
+					String fixedStr = JdbcToFixedFileWriter.columnToFixed(sb.toString(), length, database_code);
+					return_sb.append(fixedStr).append(database_separatorr);
+//					log.error("定长文件，是调用这个类吗？这里要补充");
 				} else {
 					throw new AppSystemException("不支持的文件格式");
 				}
 			}
-			//删除分隔符
-			sb.deleteCharAt(sb.length() - 1);
+			//删除逗号或者Constant.DATADELIMITER
+			if (FileFormat.DingChang.getCode().equals(fileType)) {
+				//定长且有分隔符，则删除最后的分隔符，否则不处理
+				if (database_separatorr.length() > 0) {
+					return_sb.delete(return_sb.length() - database_separatorr.length(), return_sb.length());
+				}
+			} else {
+				return_sb.deleteCharAt(return_sb.length() - 1);
+			}
 		}
-		return sb.toString();
+		return return_sb.toString();
 	}
 
 	public String trim(Map<String, String> Triming, String columnData, String columnName) {

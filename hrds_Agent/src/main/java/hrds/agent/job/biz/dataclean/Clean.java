@@ -41,7 +41,8 @@ public class Clean {
 	 * @param list
 	 * @return
 	 */
-	public String cleanColumn(String columndata, String columnname, Group group, String type, String fileType, List<Object> list) {
+	public String cleanColumn(String columndata, String columnname, Group group, String type, String fileType,
+	                          List<Object> list, String database_code, String database_separatorr) {
 
 		if (!ordering.isEmpty()) {
 			Map<Integer, String> colMap = ordering.get(columnname);
@@ -57,7 +58,8 @@ public class Clean {
 						columndata = allclean.codeTrans(codeIng, columndata, columnname);//码值转换
 						break;
 					case "6":
-						columndata = allclean.split(splitIng, columndata, columnname, group, type, fileType, list);//字段拆分;
+						columndata = allclean.split(splitIng, columndata, columnname, group, type, fileType,
+								list, database_code, database_separatorr);//字段拆分;
 						break;
 					case "7":
 						columndata = allclean.trim(Triming, columndata, columnname);//去空

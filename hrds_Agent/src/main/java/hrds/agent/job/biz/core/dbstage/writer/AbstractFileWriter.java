@@ -6,14 +6,12 @@ import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.MD5Util;
 import fd.ng.core.utils.StringUtil;
-import hrds.commons.utils.Constant;
 import org.apache.avro.Schema;
 import org.apache.avro.file.CodecFactory;
 import org.apache.avro.file.DataFileWriter;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.generic.GenericRecord;
-import org.apache.hadoop.hive.ql.io.orc.OrcSerde;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,12 +21,11 @@ import java.sql.Blob;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Date;
-import java.util.Map;
 
 @DocClass(desc = "数据库直连采集以指定的格式将数据卸到指定的数据文件，接口适配器，抽象类", author = "WangZhengcheng")
 public abstract class AbstractFileWriter implements FileWriterInterface {
 	private final static Logger LOGGER = LoggerFactory.getLogger(AbstractFileWriter.class);
-	protected static final String SCHEMA_JSON = "{\"type\": \"record\",\"name\": \"BigFilesTest\", " + "\"fields\": [" + "{\"name\":\"" + "currValue"
+	private static final String SCHEMA_JSON = "{\"type\": \"record\",\"name\": \"BigFilesTest\", " + "\"fields\": [" + "{\"name\":\"" + "currValue"
 			+ "\",\"type\":\"string\"}," + "{\"name\":\"" + "readerToByte" + "\", \"type\":\"bytes\"}" + "]}";//avro schema
 
 	private static final Schema SCHEMA = new Schema.Parser().parse(SCHEMA_JSON);
@@ -156,7 +153,9 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 	/**
 	 * 解析result一行的值
 	 */
-	protected String getOneColumnValue(DataFileWriter<Object> avroWriter, long lineCounter, ResultSet resultSet, int type, StringBuilder sb_, int i, String hbase_name) throws SQLException, IOException {
+	protected String getOneColumnValue(DataFileWriter<Object> avroWriter, long lineCounter, ResultSet resultSet,
+	                                   int type, StringBuilder sb_, int i, String hbase_name)
+			throws SQLException, IOException {
 
 		String reader2String = null;
 		byte[] readerToByte = null;
@@ -164,7 +163,8 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 			Blob blob = resultSet.getBlob(i);
 			if (null != blob) {
 				readerToByte = blobToBytes(blob);
-				sb_.append("LOBs_").append(hbase_name).append("_").append(i).append("_").append(lineCounter).append("_BLOB_").append(avroWriter.sync());
+				sb_.append("LOBs_").append(hbase_name).append("_").append(i).append("_").append(lineCounter)
+						.append("_BLOB_").append(avroWriter.sync());
 				reader2String = new String(readerToByte);
 			}
 		} else {
@@ -173,13 +173,15 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 				if (type == java.sql.Types.TIMESTAMP || type == java.sql.Types.DATE || type == java.sql.Types.TIME) {
 					Date date = resultSet.getTimestamp(i);
 					reader2String = date.toString();
-				} else if (type == java.sql.Types.CHAR || type == java.sql.Types.VARCHAR || type == java.sql.Types.NVARCHAR
-						|| type == java.sql.Types.BINARY || type == java.sql.Types.CLOB || type == java.sql.Types.LONGVARCHAR) {
+				} else if (type == java.sql.Types.CHAR || type == java.sql.Types.VARCHAR
+						|| type == java.sql.Types.NVARCHAR
+						|| type == java.sql.Types.BINARY || type == java.sql.Types.CLOB
+						|| type == java.sql.Types.LONGVARCHAR) {
 					reader2String = oj.toString();
-
-					if (reader2String.indexOf(Constant.DATADELIMITER) > -1) {
-						reader2String = reader2String.replace(Constant.DATADELIMITER, ' ');
-					}
+					//TODO 指定分隔符的情况下，这一行应该不用了，这里如果冲突，就让页面选择别的分隔符好了
+//					if (reader2String.indexOf(Constant.DATADELIMITER) > -1) {
+//						reader2String = reader2String.replace(Constant.DATADELIMITER, ' ');
+//					}
 					if (reader2String.contains("\r")) {
 						reader2String = reader2String.replace('\r', ' ');
 					}
@@ -222,16 +224,12 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 	}
 
 	/**
-	 *
 	 * toMD5:生成MD5值. <br/>
 	 *
 	 * @author Cool Yu
-	 * @param plainText
-	 * @return
 	 * @since JDK 1.6
 	 */
 	protected String toMD5(String plainText) {
-
 		return MD5Util.md5String(plainText);
 	}
 }

@@ -1,6 +1,7 @@
 package hrds.agent.job.biz.core.dbstage.writer;
 
 import fd.ng.core.utils.FileNameUtils;
+import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.constant.JobConstant;
@@ -25,6 +26,7 @@ import org.apache.hadoop.io.Text;
 import java.io.File;
 import java.io.IOException;
 import java.sql.ResultSet;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -62,8 +64,10 @@ public class JdbcToSequenceFileWriter extends AbstractFileWriter {
 			writer = writerFile.getSequenceWrite();
 			//清洗配置
 			final DataCleanInterface allclean = CleanFactory.getInstance().getObjectClean("clean_database");
-			String[] colName = StringUtils.splitByWholeSeparatorPreserveAllTokens(tableBean.getAllColumns(),
-					CollectTableHandleParse.STRSPLIT);
+			//获取所有字段的名称，包括列分割和列合并出来的字段名称
+			List<String> allColumnList = StringUtil.split(tableBean.getColumnMetaInfo(), CollectTableHandleParse.STRSPLIT);
+			//获取所有查询的字段的名称，不包括列分割和列合并出来的字段名称
+			List<String> selectColumnList = StringUtil.split(tableBean.getAllColumns(), CollectTableHandleParse.STRSPLIT);
 			Map<String, Object> parseJson = tableBean.getParseJson();
 			Map<String, String> mergeIng = (Map<String, String>) parseJson.get("mergeIng");//字符合并
 			Clean cl = new Clean(parseJson, allclean);
@@ -72,10 +76,9 @@ public class JdbcToSequenceFileWriter extends AbstractFileWriter {
 			StringBuilder sb_ = new StringBuilder();//用来写临时数据
 
 			String currValue;
-			int numberOfColumns = colName.length;
+			int numberOfColumns = selectColumnList.size();
 			int[] typeArray = tableBean.getTypeArray();
-
-			String[] type = StringUtils.split(tableBean.getAllType(), CollectTableHandleParse.STRSPLIT);
+			List<String> type = StringUtil.split(tableBean.getAllType(), CollectTableHandleParse.STRSPLIT);
 			while (resultSet.next()) {
 				// Count it
 				lineCounter++;
@@ -91,15 +94,16 @@ public class JdbcToSequenceFileWriter extends AbstractFileWriter {
 							typeArray[i - 1], sb_, i, hbase_name)).append(Constant.DATADELIMITER);
 					//清洗操作
 					currValue = sb_.toString();
-					currValue = cl.cleanColumn(currValue, colName[i - 1].toUpperCase(), null, type[i - 1],
-							FileFormat.SEQUENCEFILE.getCode(), null);
+					currValue = cl.cleanColumn(currValue, selectColumnList.get(i - 1).toUpperCase(), null,
+							type.get(i - 1), FileFormat.SEQUENCEFILE.getCode(), null, null, null);
 					sb.append(currValue).append(Constant.DATADELIMITER);
 				}
 				//如果有列合并处理合并信息
 				if (!mergeIng.isEmpty()) {
 					String[] arrColString = StringUtils.split(midStringOther.toString(), Constant.DATADELIMITER);
-					String mer = allclean.merge(mergeIng, arrColString, colName, null, null,
-							FileFormat.SEQUENCEFILE.getCode());
+					String mer = allclean.merge(mergeIng, arrColString, allColumnList.toArray(new String[0]),
+							null, null, FileFormat.SEQUENCEFILE.getCode(),
+							null, null);
 					//字段合并
 					midStringOther.append(mer).append(Constant.DATADELIMITER);
 					sb.append(mer).append(Constant.DATADELIMITER);

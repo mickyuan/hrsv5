@@ -61,7 +61,8 @@ public interface DataCleanInterface {
 	 * @param fileType
 	 * @return
 	 */
-	public String split(Map<String, Map<String, Column_split>> spliting, String columnData, String columnname, Group group, String type, String fileType, List<Object> list);
+	public String split(Map<String, Map<String, Column_split>> spliting, String columnData, String columnname,
+	                    Group group, String type, String fileType, List<Object> list, String database_code, String database_separatorr);
 
 	/**
 	 * 列合并
@@ -73,7 +74,8 @@ public interface DataCleanInterface {
 	 * @param filetype
 	 * @return
 	 */
-	public String merge(Map<String, String> mergeing, String[] arrColString, String[] columns, Group group, List<Object> lineData, String filetype);
+	public String merge(Map<String, String> mergeing, String[] arrColString, String[] columns, Group group,
+	                    List<Object> lineData, String filetype, String database_code, String database_separatorr);
 
 	/**
 	 * 码值转换
