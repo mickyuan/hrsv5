@@ -88,7 +88,7 @@ public class AgentActionUtil {
 	public static String getUrl(long agent_id, long user_id, String methodName) {
 		//1.判断方法名有没有被登记
 		if (!list.contains(methodName)) {
-			throw new BusinessException("被调用的agent接口没有登记");
+			throw new BusinessException("被调用的agent接口"+methodName+"没有登记");
 		}
 		//2.数据可访问权限处理方式，传入用户需要有Agent对应数据的访问权限，根据agent_id获取信息
 		Agent_down_info agent_info = Dbo.queryOneObject(Agent_down_info.class, "SELECT * FROM "
