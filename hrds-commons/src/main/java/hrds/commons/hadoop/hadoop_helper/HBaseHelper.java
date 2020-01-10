@@ -1,6 +1,5 @@
 package hrds.commons.hadoop.hadoop_helper;
 
-import hrds.commons.hadoop.hbase.HPut;
 import hrds.commons.hadoop.readconfig.ConfigReader;
 import hrds.commons.utils.PropertyParaValue;
 import org.apache.commons.lang.StringUtils;
@@ -107,18 +106,6 @@ public class HBaseHelper implements Closeable {
 	public Admin getAdmin() {
 
 		return admin;
-	}
-
-	public void put(HPut hput) throws IOException {
-
-		table.put(hput.getPut());
-	}
-
-	public void put(List<HPut> hputList) throws IOException {
-
-		List<Put> list = new ArrayList<Put>();
-		hputList.forEach(a -> list.add(a.getPut()));
-		table.put(list);
 	}
 
 	public void flush(TableName tableName) throws IOException {
