@@ -35,13 +35,14 @@ public class CommunicationUtil {
 	/**
 	 * 保存采集情况信息表
 	 */
-	public static void saveCollectCase(Collect_case collect_case) {
+	public static void saveCollectCase(Collect_case collect_case, String loadMessage) {
 		try {
 			HttpServerConfBean confBean = HttpServerConf.getHttpServer("hyren_main");
 			String url = AgentActionUtil.getServerUrl(confBean, AgentActionUtil.SAVECOLLECTCASE);
 			//调用工具类方法给agent发消息，并获取agent响应
 			HttpClient.ResponseValue resVal = new HttpClient()
 					.addData("collect_case", JSONArray.toJSONString(collect_case))
+					.addData("msg", StringUtil.isBlank(loadMessage) ? "excption is null " : loadMessage)
 					.post(url);
 			ActionResult ar = JsonUtil.toObjectSafety(resVal.getBodyString(), ActionResult.class)
 					.orElseThrow(() -> new AppSystemException("连接" + url + "服务异常"));
@@ -51,6 +52,7 @@ public class CommunicationUtil {
 		} catch (Exception e) {
 			JSONObject object = new JSONObject();
 			object.put("collect_case", JSONArray.toJSONString(collect_case));
+			object.put("msg", StringUtil.isBlank(loadMessage) ? "excption is null " : loadMessage);
 			//连接服务器报错则将信息存到文件
 			writeCommunicationErrorFile(AgentActionUtil.SAVECOLLECTCASE,
 					object.toString(), e.getMessage(), collect_case.getJob_rs_id());
@@ -61,30 +63,29 @@ public class CommunicationUtil {
 	/**
 	 * 保存错误信息
 	 */
-	public static void saveErrorInfo(String job_rs_id, String loadMessage) {
-		try {
-			HttpServerConfBean confBean = HttpServerConf.getHttpServer("hyren_main");
-			String url = AgentActionUtil.getServerUrl(confBean, AgentActionUtil.SAVEERRORINFO);
-			//调用工具类方法给agent发消息，并获取agent响应
-			HttpClient.ResponseValue resVal = new HttpClient()
-					.addData("job_rs_id", job_rs_id)
-					.addData("msg", StringUtil.isBlank(loadMessage) ? "excption is null " : loadMessage)
-					.post(url);
-			ActionResult ar = JsonUtil.toObjectSafety(resVal.getBodyString(), ActionResult.class)
-					.orElseThrow(() -> new AppSystemException("连接" + url + "服务异常"));
-			if (!ar.isSuccess()) {
-				throw new AppSystemException("连接远程服务器报错error_info表信息异常");
-			}
-		} catch (Exception e) {
-			JSONObject object = new JSONObject();
-			object.put("job_rs_id", job_rs_id);
-			object.put("msg", StringUtil.isBlank(loadMessage) ? "excption is null " : loadMessage);
-			//连接服务器报错则将信息存到文件
-			writeCommunicationErrorFile(AgentActionUtil.SAVEERRORINFO,
-					object.toString(), e.getMessage(), job_rs_id);
-		}
-	}
-
+//	public static void saveErrorInfo(String job_rs_id, String loadMessage) {
+//		try {
+//			HttpServerConfBean confBean = HttpServerConf.getHttpServer("hyren_main");
+//			String url = AgentActionUtil.getServerUrl(confBean, AgentActionUtil.SAVEERRORINFO);
+//			//调用工具类方法给agent发消息，并获取agent响应
+//			HttpClient.ResponseValue resVal = new HttpClient()
+//					.addData("job_rs_id", job_rs_id)
+//					.addData("msg", StringUtil.isBlank(loadMessage) ? "excption is null " : loadMessage)
+//					.post(url);
+//			ActionResult ar = JsonUtil.toObjectSafety(resVal.getBodyString(), ActionResult.class)
+//					.orElseThrow(() -> new AppSystemException("连接" + url + "服务异常"));
+//			if (!ar.isSuccess()) {
+//				throw new AppSystemException("连接远程服务器报错error_info表信息异常");
+//			}
+//		} catch (Exception e) {
+//			JSONObject object = new JSONObject();
+//			object.put("job_rs_id", job_rs_id);
+//			object.put("msg", StringUtil.isBlank(loadMessage) ? "excption is null " : loadMessage);
+//			//连接服务器报错则将信息存到文件
+//			writeCommunicationErrorFile(AgentActionUtil.SAVEERRORINFO,
+//					object.toString(), e.getMessage(), job_rs_id);
+//		}
+//	}
 	public static void batchAddSourceFileAttribute(List<Object[]> addParamsPool, String addSql,
 	                                               String job_rs_id) {
 		try {

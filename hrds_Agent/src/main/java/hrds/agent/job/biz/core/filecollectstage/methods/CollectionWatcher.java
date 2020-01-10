@@ -85,8 +85,8 @@ public class CollectionWatcher {
 		} else {
 			collectCase.setExecute_state(ExecuteState.TongZhiShiBai.getCode());
 		}
-		CommunicationUtil.saveCollectCase(collectCase);
-		CommunicationUtil.saveErrorInfo(job_rs_id, loadMessage);
+		CommunicationUtil.saveCollectCase(collectCase,loadMessage);
+//		CommunicationUtil.saveErrorInfo(job_rs_id, loadMessage);
 	}
 
 }

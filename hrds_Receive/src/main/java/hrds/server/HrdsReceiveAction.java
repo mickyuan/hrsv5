@@ -21,18 +21,18 @@ import java.util.UUID;
 @DocClass(desc = "海云服务接收端", author = "zxz", createdate = "2019/11/19 11:17")
 public class HrdsReceiveAction extends AgentBaseAction {
 
-	@Method(desc = "保存错误信息", logicStep = "1.获取错误信息，保存到系统")
-	@Param(name = "job_rs_id", desc = "作业执行结果id", range = "不能为空")
-	@Param(name = "msg", desc = "作业执行结果信息", range = "不能为空")
-	public void saveErrorInfo(String job_rs_id, String msg) {
-		//1.获取错误信息，保存到系统
-		Error_info error = new Error_info();
-		error.setError_id(PrimayKeyGener.getNextId());
-		error.setJob_rs_id(job_rs_id);
-		//这个长度之前的程序是做了控制的，这里没有做控制
-		error.setError_msg(msg);
-		error.add(Dbo.db());
-	}
+//	@Method(desc = "保存错误信息", logicStep = "1.获取错误信息，保存到系统")
+//	@Param(name = "job_rs_id", desc = "作业执行结果id", range = "不能为空")
+//	@Param(name = "msg", desc = "作业执行结果信息", range = "不能为空")
+//	public void saveErrorInfo(String job_rs_id, String msg) {
+//		//1.获取错误信息，保存到系统
+//		Error_info error = new Error_info();
+//		error.setError_id(PrimayKeyGener.getNextId());
+//		error.setJob_rs_id(job_rs_id);
+//		//这个长度之前的程序是做了控制的，这里没有做控制
+//		error.setError_msg(msg);
+//		error.add(Dbo.db());
+//	}
 
 	@Method(desc = "批量添加source_file_attribute",
 			logicStep = "1.解析addParamsPool为List集合" +
@@ -72,10 +72,40 @@ public class HrdsReceiveAction extends AgentBaseAction {
 			logicStep = "1.解析collect_case字符串为Collect_case对象" +
 					"2.保存Collect_case表")
 	@Param(name = "collect_case", desc = "collect_case表json类型的数据", range = "不可为空")
-	public void saveCollectCase(String collect_case) {
+	@Param(name = "msg", desc = "作业执行结果信息", range = "不能为空")
+	public void saveCollectCase(String collect_case, String msg) {
 		//1.解析collect_case字符串为Collect_case对象
 		Collect_case collect = JSONObject.parseObject(collect_case, Collect_case.class);
-		//2.保存Collect_case表
+		//2.查询collect_case表
+		Result result = Dbo.queryResult("select * from collect_case where agent_id = ? and source_id = ?" +
+						" and collect_set_id = ?  and job_type = ? and etl_date = ?  and task_classify = ? ",
+				collect.getAgent_id(), collect.getSource_id(), collect.getCollect_set_id(),
+				collect.getJob_type(), collect.getEtl_date(), collect.getTask_classify());
+		//3.更新或者新增Collect_case表
+		if (result.isEmpty()) {
+			String job_rs_id = UUID.randomUUID().toString();
+			collect.setJob_rs_id(job_rs_id);
+			//新增source_file_attribute表
+			collect.add(Dbo.db());
+			//新增错误信息表，保存到系统
+			Error_info error = new Error_info();
+			error.setError_id(PrimayKeyGener.getNextId());
+			error.setJob_rs_id(job_rs_id);
+			//这个长度之前的程序是做了控制的，这里没有做控制
+			error.setError_msg(msg);
+			error.add(Dbo.db());
+		} else {
+			String job_rs_id = result.getString(0, "job_rs_id");
+			collect.setJob_rs_id(job_rs_id);
+			//更新source_file_attribute表
+			collect.update(Dbo.db());
+			//更新error_info表
+			Error_info error_info = Dbo.queryOneObject(Error_info.class, "SELECT * FROM " + Error_info.TableName
+					+ " WHERE job_rs_id = ?", job_rs_id).orElseThrow(() ->
+					new BusinessException("查询不到error_info表的数据"));
+			error_info.setError_msg(msg);
+			error_info.update(Dbo.db());
+		}
 		collect.add(Dbo.db());
 	}
 

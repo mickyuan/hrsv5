@@ -76,11 +76,11 @@ public class JobStageController {
 	@Return(desc = "作业状态信息", range = "不会为null")
 	public JobStatusInfo handleStageByOrder(String statusFilePath, JobStatusInfo jobStatusInfo) throws Exception {
 
-		if(StringUtil.isBlank(statusFilePath)){
+		if (StringUtil.isBlank(statusFilePath)) {
 			throw new AppSystemException("状态文件路径不能为空");
 		}
 
-		if(jobStatusInfo == null){
+		if (jobStatusInfo == null) {
 			throw new AppSystemException("作业状态对象不能为空");
 		}
 
@@ -97,15 +97,15 @@ public class JobStageController {
 		boolean fileFlag = file.exists();
 		//2-2、状态文件存在，且五个阶段的状态都是成功，表示重跑该任务
 		boolean redoFlag = false;
-		if(fileFlag){
+		if (fileFlag) {
 			StageStatusInfo unloadStatus = jobStatusInfo.getUnloadDataStatus();
 			StageStatusInfo uploadStatus = jobStatusInfo.getUploadStatus();
 			StageStatusInfo loadingStatus = jobStatusInfo.getDataLodingStatus();
 			StageStatusInfo calIncrementStatus = jobStatusInfo.getCalIncrementStatus();
 			StageStatusInfo registStatus = jobStatusInfo.getDataRegistrationStatus();
 
-			if(unloadStatus != null && uploadStatus != null && loadingStatus != null && calIncrementStatus != null
-					&& registStatus != null){
+			if (unloadStatus != null && uploadStatus != null && loadingStatus != null && calIncrementStatus != null
+					&& registStatus != null) {
 				int unloadStatusCode = unloadStatus.getStatusCode();
 				int uploadStatusCode = uploadStatus.getStatusCode();
 				int loadingStatusCode = loadingStatus.getStatusCode();
@@ -114,8 +114,8 @@ public class JobStageController {
 
 				int succeedCode = RunStatusConstant.SUCCEED.getCode();
 
-				if(unloadStatusCode == succeedCode && uploadStatusCode == succeedCode && loadingStatusCode == succeedCode
-						&& incrementStatusCode == succeedCode && registStatusCode == succeedCode){
+				if (unloadStatusCode == succeedCode && uploadStatusCode == succeedCode && loadingStatusCode == succeedCode
+						&& incrementStatusCode == succeedCode && registStatusCode == succeedCode) {
 					redoFlag = true;
 					//如果是重跑，则应该重新构建jobStatusInfo对象，否则就会使用到之前的jobStatusInfo对象
 					jobStatusInfo = new JobStatusInfo();
@@ -126,22 +126,22 @@ public class JobStageController {
 		int unloadStatusCode = RunStatusConstant.SUCCEED.getCode();
 		//获取卸数阶段重跑次数
 		int unloadStageRedoNum = 0;
-		if(fileFlag && jobStatusInfo.getUnloadDataStatus() != null){
+		if (fileFlag && jobStatusInfo.getUnloadDataStatus() != null) {
 			unloadStatusCode = jobStatusInfo.getUnloadDataStatus().getStatusCode();
 			unloadStageRedoNum = jobStatusInfo.getUnloadDataStatus().getAgainNum();
 		}
 
-		if(!fileFlag || redoFlag || (unloadStatusCode == RunStatusConstant.FAILED.getCode())){
+		if (!fileFlag || redoFlag || (unloadStatusCode == RunStatusConstant.FAILED.getCode())) {
 			//2-4、执行头节点
 			StageParamInfo stageParamInfo = jobStatusInfo.getStageParamInfo();
 			//第一次跑任务或者任务全部成功后重跑，stageParamInfo为null
-			if(stageParamInfo == null){
+			if (stageParamInfo == null) {
 				stageParamInfo = new StageParamInfo();
 			}
 			StageParamInfo firstStageParamInfo = head.handleStage(stageParamInfo);
 			StageStatusInfo firstStageStatus = firstStageParamInfo.getStatusInfo();
 			//如果卸数阶段是失败后重跑，将是否重跑改为是，重跑次数加1
-			if(unloadStatusCode == RunStatusConstant.FAILED.getCode()){
+			if (unloadStatusCode == RunStatusConstant.FAILED.getCode()) {
 				firstStageStatus.setIsAgain(IsFlag.Shi.getCode());
 				firstStageStatus.setAgainNum(unloadStageRedoNum + 1);
 				firstStageParamInfo.setStatusInfo(firstStageStatus);
@@ -152,10 +152,10 @@ public class JobStageController {
 				dealSucceedStage(file, jobStatusInfo, firstStageParamInfo);
 			}
 			//2-6、如果头节点执行失败，根据阶段设置阶段状态，将需要在各个阶段中传递的参数重新存到jobStatusInfo中，写状态文件，直接返回
-			else if(firstStageParamInfo.getStatusInfo().getStatusCode() == RunStatusConstant.FAILED.getCode()){
+			else if (firstStageParamInfo.getStatusInfo().getStatusCode() == RunStatusConstant.FAILED.getCode()) {
 				dealFailedStage(file, jobStatusInfo, firstStageParamInfo);
 				return jobStatusInfo;
-			}else{
+			} else {
 				throw new AppSystemException("除了成功和失败，其他状态目前暂时未做处理");
 			}
 		}
@@ -167,14 +167,14 @@ public class JobStageController {
 			jobStatusInfo = JSONObject.parseObject(FileUtil.readFile2String(file), JobStatusInfo.class);
 			StageStatusInfo currentStageStatus = getStageStatusByCode(stage.getStageCode(), jobStatusInfo);
 			//3-2、如果当前阶段执行状态不为空，表示采集曾经执行过该阶段
-			if(currentStageStatus != null){
+			if (currentStageStatus != null) {
 				Integer currentStageAgainNum = currentStageStatus.getAgainNum();
 				//3-3、如果该阶段执行成功，跳过本次循环，执行下一阶段
-				if(currentStageStatus.getStatusCode() == RunStatusConstant.SUCCEED.getCode()){
+				if (currentStageStatus.getStatusCode() == RunStatusConstant.SUCCEED.getCode()) {
 					continue;
 				}
 				//3-4、如果该阶段执行失败，则重跑当前阶段，当前阶段的处理逻辑和卸数阶段一致
-				else if(currentStageStatus.getStatusCode() == RunStatusConstant.FAILED.getCode()){
+				else if (currentStageStatus.getStatusCode() == RunStatusConstant.FAILED.getCode()) {
 					StageParamInfo otherParamInfo = stage.handleStage(jobStatusInfo.getStageParamInfo());
 					//设置阶段为重跑，重跑次数+1
 					otherParamInfo.getStatusInfo().setIsAgain(IsFlag.Shi.getCode());
@@ -182,26 +182,26 @@ public class JobStageController {
 					jobStatusInfo = setStageStatus(otherParamInfo.getStatusInfo(), jobStatusInfo);
 					if (otherParamInfo.getStatusInfo().getStatusCode() == RunStatusConstant.SUCCEED.getCode()) {
 						dealSucceedStage(file, jobStatusInfo, otherParamInfo);
-					}else if(otherParamInfo.getStatusInfo().getStatusCode() == RunStatusConstant.FAILED.getCode()){
+					} else if (otherParamInfo.getStatusInfo().getStatusCode() == RunStatusConstant.FAILED.getCode()) {
 						dealFailedStage(file, jobStatusInfo, otherParamInfo);
 						return jobStatusInfo;
-					}else{
+					} else {
 						throw new AppSystemException("除了成功和失败，其他状态目前暂时未做处理");
 					}
-				}else{
+				} else {
 					throw new AppSystemException("除了成功和失败，其他状态目前暂时未做处理");
 				}
 			}
 			//3-5、如果当前阶段执行状态为空，表示采集还没有执行当前阶段，则执行当前阶段
-			else{
+			else {
 				StageParamInfo otherParamInfo = stage.handleStage(jobStatusInfo.getStageParamInfo());
 				jobStatusInfo = setStageStatus(otherParamInfo.getStatusInfo(), jobStatusInfo);
 				if (otherParamInfo.getStatusInfo().getStatusCode() == RunStatusConstant.SUCCEED.getCode()) {
 					dealSucceedStage(file, jobStatusInfo, otherParamInfo);
-				}else if(otherParamInfo.getStatusInfo().getStatusCode() == RunStatusConstant.FAILED.getCode()){
+				} else if (otherParamInfo.getStatusInfo().getStatusCode() == RunStatusConstant.FAILED.getCode()) {
 					dealFailedStage(file, jobStatusInfo, otherParamInfo);
 					return jobStatusInfo;
-				}else{
+				} else {
 					throw new AppSystemException("除了成功和失败，其他状态目前暂时未做处理");
 				}
 			}
@@ -216,12 +216,12 @@ public class JobStageController {
 	@Param(name = "statusFile", desc = "指向作业状态文件", range = "不为空")
 	@Param(name = "jobStatusInfo", desc = "作业状态对象", range = "JobStatusInfo实体类对象")
 	@Param(name = "stageParamInfo", desc = "阶段参数对象", range = "StageParamInfo实体类对象")
-	private void dealFailedStage(File statusFile, JobStatusInfo jobStatusInfo, StageParamInfo stageParamInfo) throws IOException{
+	private void dealFailedStage(File statusFile, JobStatusInfo jobStatusInfo, StageParamInfo stageParamInfo) throws IOException {
 		//1、将阶段执行失败的信息保存到collect_case表中
 		Collect_case collectCaseForFailed = getCollectCaseForFailed(stageParamInfo);
-		CommunicationUtil.saveCollectCase(collectCaseForFailed);
+		CommunicationUtil.saveCollectCase(collectCaseForFailed, stageParamInfo.getStatusInfo().getMessage());
 		//2、将阶段执行失败的信息保存到error_info表中
-		CommunicationUtil.saveErrorInfo(collectCaseForFailed.getJob_rs_id(), stageParamInfo.getStatusInfo().getMessage());
+//		CommunicationUtil.saveErrorInfo(collectCaseForFailed.getJob_rs_id(), stageParamInfo.getStatusInfo().getMessage());
 		//3、将作业状态写到状态文件中
 		FileUtil.writeString2File(statusFile, JSON.toJSONString(jobStatusInfo), DataBaseCode.UTF_8.getValue());
 	}
@@ -233,10 +233,10 @@ public class JobStageController {
 	@Param(name = "statusFile", desc = "指向作业状态文件", range = "不为空")
 	@Param(name = "jobStatusInfo", desc = "作业状态对象", range = "JobStatusInfo实体类对象")
 	@Param(name = "stageParamInfo", desc = "阶段参数对象", range = "StageParamInfo实体类对象")
-	private void dealSucceedStage(File statusFile, JobStatusInfo jobStatusInfo, StageParamInfo stageParamInfo) throws IOException{
+	private void dealSucceedStage(File statusFile, JobStatusInfo jobStatusInfo, StageParamInfo stageParamInfo) throws IOException {
 		//1、将阶段执行成功的信息保存到collect_case表中
 		Collect_case collectCaseForSuccess = getCollectCaseForSuccess(stageParamInfo);
-		CommunicationUtil.saveCollectCase(collectCaseForSuccess);
+		CommunicationUtil.saveCollectCase(collectCaseForSuccess, stageParamInfo.getStatusInfo().getMessage());
 		//2、将执行成功的阶段参数封装到作业状态中
 		jobStatusInfo.setStageParamInfo(stageParamInfo);
 		//3、将作业状态写到状态文件中
@@ -265,9 +265,9 @@ public class JobStageController {
 			jobStatus.setDataLodingStatus(stageStatus);
 		} else if (stage == StageConstant.CALINCREMENT) {
 			jobStatus.setCalIncrementStatus(stageStatus);
-		} else if (stage == StageConstant.DATAREGISTRATION){
+		} else if (stage == StageConstant.DATAREGISTRATION) {
 			jobStatus.setDataRegistrationStatus(stageStatus);
-		} else{
+		} else {
 			throw new AppSystemException("系统不支持的采集阶段");
 		}
 		return jobStatus;
@@ -279,7 +279,7 @@ public class JobStageController {
 	@Param(name = "stageCode", desc = "采集阶段编码", range = "不为空")
 	@Param(name = "jobStatus", desc = "采集任务状态对象", range = "不为空")
 	@Return(desc = "采集阶段状态", range = "StageStatusInfo类对象")
-	private StageStatusInfo getStageStatusByCode(int stageCode, JobStatusInfo jobStatus){
+	private StageStatusInfo getStageStatusByCode(int stageCode, JobStatusInfo jobStatus) {
 		//1、通过stageCode得到当前任务的阶段
 		StageConstant stage = EnumUtil.getEnumByCode(StageConstant.class, stageCode);
 		if (stage == null) {
@@ -295,9 +295,9 @@ public class JobStageController {
 			stageStatus = jobStatus.getDataLodingStatus();
 		} else if (stage == StageConstant.CALINCREMENT) {
 			stageStatus = jobStatus.getCalIncrementStatus();
-		} else if (stage == StageConstant.DATAREGISTRATION){
+		} else if (stage == StageConstant.DATAREGISTRATION) {
 			stageStatus = jobStatus.getDataRegistrationStatus();
-		} else{
+		} else {
 			throw new AppSystemException("系统不支持的采集阶段");
 		}
 		return stageStatus;
@@ -307,12 +307,12 @@ public class JobStageController {
 			"1、创建Collect_case对象，给Collect_case对象赋值并返回")
 	@Param(name = "stageParamInfo", desc = "采集参数对象，存放有采集公共信息和当前阶段的状态", range = "不为空")
 	@Return(desc = "Collect_case对象", range = "不为空")
-	private Collect_case getCollectCaseForSuccess(StageParamInfo stageParamInfo){
+	private Collect_case getCollectCaseForSuccess(StageParamInfo stageParamInfo) {
 		Collect_case collectCase = new Collect_case();
-		collectCase.setJob_rs_id(UUID.randomUUID().toString().replaceAll("-",""));
+		collectCase.setJob_rs_id(UUID.randomUUID().toString().replaceAll("-", ""));
 		collectCase.setCollect_type(stageParamInfo.getCollectType());
 		collectCase.setJob_type(String.valueOf(stageParamInfo.getStatusInfo().getStageNameCode()));
-		collectCase.setCollect_total(stageParamInfo.getFileArr() != null ? (long)stageParamInfo.getFileArr().length : 0);
+		collectCase.setCollect_total(stageParamInfo.getFileArr() != null ? (long) stageParamInfo.getFileArr().length : 0);
 		collectCase.setColect_record(stageParamInfo.getRowCount());
 		collectCase.setCollet_database_size(String.valueOf(stageParamInfo.getFileSize()));
 		collectCase.setCollect_s_date(stageParamInfo.getStatusInfo().getStartDate());
@@ -337,12 +337,12 @@ public class JobStageController {
 			"1、创建Collect_case对象，给Collect_case对象赋值并返回")
 	@Param(name = "stageParamInfo", desc = "采集参数对象，存放有采集公共信息和当前阶段的状态", range = "不为空")
 	@Return(desc = "Collect_case对象", range = "不为空")
-	private Collect_case getCollectCaseForFailed(StageParamInfo stageParamInfo){
+	private Collect_case getCollectCaseForFailed(StageParamInfo stageParamInfo) {
 		Collect_case collectCase = new Collect_case();
-		collectCase.setJob_rs_id(UUID.randomUUID().toString().replaceAll("-",""));
+		collectCase.setJob_rs_id(UUID.randomUUID().toString().replaceAll("-", ""));
 		collectCase.setCollect_type(stageParamInfo.getCollectType());
 		collectCase.setJob_type(String.valueOf(stageParamInfo.getStatusInfo().getStageNameCode()));
-		collectCase.setCollect_total(stageParamInfo.getFileArr() != null ? (long)stageParamInfo.getFileArr().length : 0);
+		collectCase.setCollect_total(stageParamInfo.getFileArr() != null ? (long) stageParamInfo.getFileArr().length : 0);
 		collectCase.setColect_record(stageParamInfo.getRowCount());
 		collectCase.setCollet_database_size(String.valueOf(stageParamInfo.getFileSize()));
 		collectCase.setCollect_s_date(stageParamInfo.getStatusInfo().getStartDate());
