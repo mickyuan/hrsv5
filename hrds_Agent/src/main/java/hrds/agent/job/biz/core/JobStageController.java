@@ -12,6 +12,7 @@ import hrds.agent.job.biz.bean.StageParamInfo;
 import hrds.agent.job.biz.bean.StageStatusInfo;
 import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.constant.StageConstant;
+import hrds.agent.job.biz.utils.CommunicationUtil;
 import hrds.agent.job.biz.utils.EnumUtil;
 import hrds.agent.job.biz.utils.FileUtil;
 import hrds.commons.codes.DataBaseCode;
@@ -210,22 +211,17 @@ public class JobStageController {
 
 	@Method(desc = "处理执行失败的阶段", logicStep = "" +
 			"1、将阶段执行失败的信息保存到collect_case表中" +
-			"2、将作业状态写到状态文件中")
+			"2、将阶段执行失败的信息保存到error_info表中" +
+			"3、将作业状态写到状态文件中")
 	@Param(name = "statusFile", desc = "指向作业状态文件", range = "不为空")
 	@Param(name = "jobStatusInfo", desc = "作业状态对象", range = "JobStatusInfo实体类对象")
 	@Param(name = "stageParamInfo", desc = "阶段参数对象", range = "StageParamInfo实体类对象")
 	private void dealFailedStage(File statusFile, JobStatusInfo jobStatusInfo, StageParamInfo stageParamInfo) throws IOException{
 		//1、将阶段执行失败的信息保存到collect_case表中
 		Collect_case collectCaseForFailed = getCollectCaseForFailed(stageParamInfo);
-		//TODO 保存collect_case对象
-		//2、将将阶段执行失败的信息保存到error_info表中
-		/*
-		Error_info errorInfo = new Error_info();
-		errorInfo.setError_id(UUID.randomUUID().toString().replaceAll("-",""));
-		errorInfo.setJob_rs_id(collectCaseForFailed.getJob_rs_id());
-		errorInfo.setError_msg(stageParamInfo.getStatusInfo().getMessage());
-		*/
-		//TODO 保存errorInfo对象
+		CommunicationUtil.saveCollectCase(collectCaseForFailed);
+		//2、将阶段执行失败的信息保存到error_info表中
+		CommunicationUtil.saveErrorInfo(collectCaseForFailed.getJob_rs_id(), stageParamInfo.getStatusInfo().getMessage());
 		//3、将作业状态写到状态文件中
 		FileUtil.writeString2File(statusFile, JSON.toJSONString(jobStatusInfo), DataBaseCode.UTF_8.getValue());
 	}
@@ -240,7 +236,7 @@ public class JobStageController {
 	private void dealSucceedStage(File statusFile, JobStatusInfo jobStatusInfo, StageParamInfo stageParamInfo) throws IOException{
 		//1、将阶段执行成功的信息保存到collect_case表中
 		Collect_case collectCaseForSuccess = getCollectCaseForSuccess(stageParamInfo);
-		//TODO 调用方法保存collectCase
+		CommunicationUtil.saveCollectCase(collectCaseForSuccess);
 		//2、将执行成功的阶段参数封装到作业状态中
 		jobStatusInfo.setStageParamInfo(stageParamInfo);
 		//3、将作业状态写到状态文件中
