@@ -682,7 +682,6 @@ public class DataQueryAction extends BaseAction {
 	)
 	@Param(name = "conditionalQueryMap", desc = "自定义条件查询结果map", range = "自定义条件查询结果的数据集合")
 	@Return(desc = "自定义查询结果的数据集合", range = "无限制")
-	@Deprecated
 	private void setDownloadAndAuth(Map<String, Object> conditionalQueryMap) {
 		//1.自定义条件查询结果设置下载和认证信息
 		conditionalQueryMap.put("view", ApplyType.ChaKan.getCode());
@@ -741,7 +740,6 @@ public class DataQueryAction extends BaseAction {
 	)
 	@Param(name = "conditionalQueryMap", desc = "自定义条件查询结果map", range = "自定义条件查询结果的数据集合")
 	@Return(desc = "自定义查询结果的数据集合", range = "无限制")
-	@Deprecated
 	private void setFileAttribute(Map<String, Object> conditionalQueryMap) {
 		//1.设置文件公共的属性信息"
 		conditionalQueryMap.put("all", FileType.All.getCode());
