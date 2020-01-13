@@ -49,8 +49,8 @@ public class DataStoreAction extends BaseAction {
     @Param(name = "is_hadoopclient", desc = "is_hadoopclient（使用IsFlag代码项）", range = "无限制")
     @Param(name = "dsl_remark", desc = "数据存储层配置表备注", range = "无限制", nullable = true)
     @Param(name = "dslad_remark", desc = "数据存储附加信息表备注", range = "无限制", nullable = true)
-    @Param(name = "dataStoreLayerAttr", desc = "数据存储层信息属性信息集合", range = "key,value类型的json字符串," +
-            "storage_property_key，storage_property_val,dsla_remark,is_file代表key，对应的值为value")
+    @Param(name = "dataStoreLayerAttr", desc = "数据存储层信息属性信息集合", range = "storage_property_key，" +
+            "storage_property_val,dsla_remark,is_file代表key，对应的值为value的json字符串(文件属性这里不需要）")
     @Param(name = "dsla_storelayer", desc = "配置附加属性信息数组", range = "使用代码项（StoreLayerAdded）", nullable = true)
     @Param(name = "dtcs_id", desc = "数据类型对照主表ID", range = "新增数据类型对照主表时生成")
     @Param(name = "dlcs_id", desc = "数据类型长度对照主表ID", range = "新增数据类型长度对照主表时生成")
@@ -490,8 +490,8 @@ public class DataStoreAction extends BaseAction {
     @Param(name = "dsl_remark", desc = "数据存储层配置表备注", range = "无限制", nullable = true)
     @Param(name = "dslad_remark", desc = "数据存储附加信息表备注", range = "无限制", nullable = true)
     @Param(name = "dsl_id", desc = "数据存储层配置表主键", range = "新增数据存储层时生成")
-    @Param(name = "dataStoreLayerAttr", desc = "数据存储层信息属性信息集合", range = "key,value类型的json字符串," +
-            "storage_property_key，storage_property_val,dsla_remark,is_file代表key，对应的值为value")
+    @Param(name = "dataStoreLayerAttr", desc = "数据存储层信息属性信息集合", range = "storage_property_key，" +
+            "storage_property_val,dsla_remark,is_file代表key，对应的值为value的json字符串(文件属性这里不需要）")
     @Param(name = "dsla_storelayer", desc = "配置附加属性信息数组", range = "使用代码项（StoreLayerAdded）", nullable = true)
     @Param(name = "dtcs_id", desc = "数据类型对照主表ID", range = "新增数据类型对照主表时生成")
     @Param(name = "dlcs_id", desc = "数据类型长度对照主表ID", range = "新增数据类型长度对照主表时生成")
