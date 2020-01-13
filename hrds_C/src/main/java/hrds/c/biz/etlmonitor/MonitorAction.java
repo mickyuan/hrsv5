@@ -41,9 +41,6 @@ import java.util.*;
 
 @DocClass(desc = "作业调度监控类", author = "dhw", createdate = "2019/12/12 14:37")
 public class MonitorAction extends BaseAction {
-    // 拼接sql对象
-    private static final SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
-
     @Method(desc = "监控当前批量情况",
             logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制" +
                     "2.判断工程是否存在" +
@@ -60,6 +57,7 @@ public class MonitorAction extends BaseAction {
             throw new BusinessException("当前工程已不存在！");
         }
         // 3.获取当前工程下的每个任务作业状态
+        SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
         asmSql.clean();
         asmSql.addSql("SELECT T1.sub_sys_cd,T1.etl_sys_cd,(CASE WHEN T1.sub_sys_cd = T2.sub_sys_cd THEN"
                 + " CONCAT(T2.sub_sys_desc,'(',T1.sub_sys_cd,')') ELSE T1.sub_sys_cd END) AS sub_sys_desc,"
@@ -277,6 +275,7 @@ public class MonitorAction extends BaseAction {
         }
         // 4.判断作业名称是否为空查询作业信息,不为空返回历史作业信息，为空返回null
         if (StringUtil.isNotBlank(etl_job)) {
+            SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
             asmSql.clean();
             asmSql.addSql("SELECT etl_job,curr_bath_date,curr_st_time,curr_end_time,(CASE WHEN job_disp_status=?"
                     + " THEN  '" + Job_Status.DONE.getValue() + "(" + Job_Status.DONE.getCode() + ")' else '' END)"
@@ -320,6 +319,7 @@ public class MonitorAction extends BaseAction {
     private void isHistoryBatch(String start_date, String end_date, String isHistoryBatch) {
         // 1.数据可访问权限处理方式，该方法不需要权限控制
         // 2.判断是否从历史批量的请求标志是否为空
+        SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
         if (StringUtil.isNotBlank(isHistoryBatch)) {
             // 2.1不为空则表示该请求数据的连接是历史批量过来的
             asmSql.addSql(" AND curr_bath_date=?");

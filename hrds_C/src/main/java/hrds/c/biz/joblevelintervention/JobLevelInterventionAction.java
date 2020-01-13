@@ -30,9 +30,6 @@ import java.util.Map;
 @DocClass(desc = "作业调度作业级干预", author = "dhw", createdate = "2019/12/10 11:56")
 public class JobLevelInterventionAction extends BaseAction {
 
-    // 拼接sql对象
-    private static final SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
-
     @Method(desc = "查询作业级干预作业情况",
             logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制" +
                     "2.判断工程是否存在" +
@@ -56,6 +53,7 @@ public class JobLevelInterventionAction extends BaseAction {
         if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
             throw new BusinessException("当前工程已不存在！");
         }
+        SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
         asmSql.clean();
         asmSql.addSql("SELECT t1.etl_sys_cd,t1.etl_job,");
         asmSql.addSql("CONCAT(t2.sub_sys_desc,'(',t2.sub_sys_cd,')') AS subSysName,");
@@ -316,6 +314,7 @@ public class JobLevelInterventionAction extends BaseAction {
     @Return(desc = "返回查询根据工程代码作业名获取作业状态", range = "取值范围")
     private long getEtlJobStatus(String etl_sys_cd, String etl_job, String[] jobStatus) {
         // 1.数据可访问权限处理方式，该方法不需要权限控制
+        SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
         asmSql.clean();
         asmSql.addSql("SELECT count(1) from " + Etl_job_cur.TableName + " where etl_job=? AND etl_sys_cd=?");
         asmSql.addParam(etl_job);

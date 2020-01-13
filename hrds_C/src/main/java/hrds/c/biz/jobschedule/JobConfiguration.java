@@ -2001,8 +2001,7 @@ public class JobConfiguration extends BaseAction {
                     "4.2其它浏览器" +
                     "5.读取要下载的文件，保存到文件输入流" +
                     "6.创建输出流" +
-                    "7.将输入流写入到浏览器中" +
-                    "8.下载完删除下载文件")
+                    "7.将输入流写入到浏览器中")
     @Param(name = "fileName", desc = "下载文件名", range = "无限制")
     public void downloadFile(String fileName) {
         // 1.数据可访问权限处理方式，该方法不需要权限验证
@@ -2038,8 +2037,6 @@ public class JobConfiguration extends BaseAction {
             out.flush();
             out.close();
             in.close();
-            // 8.下载完删除下载文件
-            FileUtil.deleteDirectoryFiles(filePath);
         } catch (UnsupportedEncodingException e) {
             throw new BusinessException("不支持的编码异常");
         } catch (FileNotFoundException e) {

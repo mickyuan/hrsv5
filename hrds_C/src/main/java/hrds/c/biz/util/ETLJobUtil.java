@@ -19,8 +19,6 @@ import java.util.Map;
 @DocClass(desc = "作业调度工程工具类", author = "dhw", createdate = "2019/11/26 11:11")
 public class ETLJobUtil {
 
-    private static final SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
-
     @Method(desc = "判断当前工程是否还存在",
             logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制" +
                     "2.判断user_id是否为空，为空添加条件" +
@@ -30,20 +28,21 @@ public class ETLJobUtil {
     @Return(desc = "返回工程是否存在标志", range = "true代表存在，false代表不存在")
     public static boolean isEtlSysExist(String etl_sys_cd, Long user_id) {
         // 1.数据可访问权限处理方式，通过user_id进行权限控制
+        SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
+        asmSql.clean();
+        asmSql.addSql("select count(*) from " + Etl_sys.TableName + " where etl_sys_cd=?");
+        asmSql.addParam(etl_sys_cd);
         // 2.判断user_id是否为空，为空添加条件
         if (user_id != null) {
-            if (Dbo.queryNumber("select count(*) from " + Etl_sys.TableName + " where etl_sys_cd=? " +
-                    " and user_id=?", etl_sys_cd, user_id).orElseThrow(() ->
-                    new BusinessException("sql查询错误")) > 0) {
-                return true;
-            }
-        } else {
-            if (Dbo.queryNumber("select count(*) from " + Etl_sys.TableName + " where etl_sys_cd=?",
-                    etl_sys_cd).orElseThrow(() -> new BusinessException("sql查询错误")) > 0) {
-                return true;
-            }
+            asmSql.addSql(" and user_id=?").addParam(user_id);
         }
         // 3.判断当前工程是否还存在，存在返回true,不存在返回false
+        if (Dbo.queryNumber(asmSql.sql(), asmSql.params()).orElseThrow(() ->
+                new BusinessException("sql查询错误")) > 0) {
+            // 存在
+            return true;
+        }
+        // 不存在
         return false;
     }
 
@@ -214,6 +213,7 @@ public class ETLJobUtil {
     public static boolean isEtlJobHandExist(String etl_sys_cd, String etl_job) {
         // 1.数据可访问权限处理方式，此方法不需要权限认证
         // 2.判断工程下是否有作业正在干预
+        SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
         asmSql.clean();
         asmSql.addSql("select count(*) from " + Etl_job_hand.TableName + " where etl_sys_cd=?");
         asmSql.addParam(etl_sys_cd);

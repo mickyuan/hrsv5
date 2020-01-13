@@ -25,9 +25,6 @@ import java.util.Map;
 @DocClass(desc = "作业调度系统干预处理类", author = "dhw", createdate = "2019/12/9 10:18")
 public class SysLevelInterventionAction extends BaseAction {
 
-    // 拼接sql对象
-    private static final SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
-
     @Method(desc = "查询系统级干预系统批量情况",
             logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制" +
                     "2.判断工程是否存在" +
@@ -189,6 +186,7 @@ public class SysLevelInterventionAction extends BaseAction {
     @Return(desc = "返回查询该工程为传入的几种状态的个数", range = "无限制")
     private long getEtlSysStatus(String etl_sys_cd, String[] jobStatus) {
         // 1.数据可访问权限处理方式，该方法不需要权限控制
+        SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
         asmSql.clean();
         asmSql.addSql("SELECT count(1) from " + Etl_sys.TableName + " where etl_sys_cd=?");
         asmSql.addParam(etl_sys_cd);
