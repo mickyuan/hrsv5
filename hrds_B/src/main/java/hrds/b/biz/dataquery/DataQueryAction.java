@@ -92,9 +92,7 @@ public class DataQueryAction extends BaseAction {
 		if (ApplyType.XiaZai == applyType) {
 			AuthType authType = AuthType.ofEnumByCode(authResult.getString(0, "auth_type"));
 			//2-1.类型是下载，检查是否具有下载权限
-			if (AuthType.YunXu == authType || AuthType.YiCi == authType) {
-				return true;
-			}
+			return AuthType.YunXu == authType || AuthType.YiCi == authType;
 		}
 		return false;
 	}
@@ -264,9 +262,9 @@ public class DataQueryAction extends BaseAction {
 		if (!scfList.isEmpty()) {
 			for (Map<String, Object> scfMap : scfList) {
 				String collectDate = (String) scfMap.get("storage_date");
-				Integer collectSum = Integer.valueOf(scfMap.get("count").toString());
+				int collectSum = Integer.parseInt(scfMap.get("count").toString());
 				if (sevenDayCollectFileSumMap.containsKey("collectDate")) {
-					sevenDayCollectFileSumMap.put(collectDate, collectSum += collectSum);
+					sevenDayCollectFileSumMap.put(collectDate, collectSum + collectSum);
 				} else {
 					sevenDayCollectFileSumMap.put(collectDate, collectSum);
 				}
@@ -414,7 +412,6 @@ public class DataQueryAction extends BaseAction {
 		dataAuth.setSource_id(fileRs.get().getSource_id());
 		dataAuth.setCollect_set_id(fileRs.get().getCollect_set_id());
 		if ((dataAuth.add(Dbo.db()) != 1)) {
-			applyState = Boolean.FALSE;
 			throw new BusinessException("申请文件失败！fileId=" + fileId);
 		}
 		return applyState;
@@ -694,11 +691,11 @@ public class DataQueryAction extends BaseAction {
 		conditionalQueryMap.put("download_zh", ApplyType.XiaZai.getValue());
 		conditionalQueryMap.put("release", ApplyType.FaBu.getCode());
 		conditionalQueryMap.put("release_zh", ApplyType.FaBu.getValue());
-		List<String> authType = new ArrayList<String>();
+		List<String> authType = new ArrayList<>();
 		authType.add(AuthType.YunXu.getCode());
 		authType.add(AuthType.YiCi.getCode());
 		conditionalQueryMap.put("auth", authType);
-		List<String> authTypeZh = new ArrayList<String>();
+		List<String> authTypeZh = new ArrayList<>();
 		authTypeZh.add(AuthType.YunXu.getValue());
 		authTypeZh.add(AuthType.YiCi.getValue());
 		conditionalQueryMap.put("auth_zh", authTypeZh);
