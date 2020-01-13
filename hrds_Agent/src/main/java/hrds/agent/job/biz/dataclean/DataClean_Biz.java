@@ -12,7 +12,6 @@ import hrds.commons.codes.FileFormat;
 import hrds.commons.codes.FillingType;
 import hrds.commons.entity.Column_split;
 import hrds.commons.exception.AppSystemException;
-import hrds.commons.utils.Constant;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -130,7 +129,7 @@ public class DataClean_Biz implements DataCleanInterface {
 				list.add(columnData);
 				sb.append(columnData);
 			} else if (FileFormat.SEQUENCEFILE.getCode().equals(fileType)) {
-				sb.append(columnData).append(Constant.DATADELIMITER);
+				sb.append(columnData).append(database_separatorr);
 			} else if (FileFormat.ORC.getCode().equals(fileType)) {
 				list.add(columnData);
 				sb.append(columnData);
@@ -140,7 +139,7 @@ public class DataClean_Biz implements DataCleanInterface {
 				}
 				sb.append(columnData);
 			} else if (FileFormat.FeiDingChang.getCode().equals(fileType)) {
-				sb.append(columnData).append(Constant.DATADELIMITER);
+				sb.append(columnData).append(database_separatorr);
 			} else if (FileFormat.DingChang.getCode().equals(fileType)) {
 				int length = TypeTransLength.getLength(type);
 				String fixedData = JdbcToFixedFileWriter.columnToFixed(columnData, length, database_code);
@@ -158,11 +157,11 @@ public class DataClean_Biz implements DataCleanInterface {
 					if (StringUtil.isEmpty(columnData)) {
 						//csv给所有非数字类型前后加上""
 						if (FileFormat.CSV.getCode().equals(fileType)) {
-//							sb.append(Constant.DATADELIMITER);
+//							sb.append(database_separatorr);
 							list.add("");
 							//SEQUENCEFILE使用的是 '\001'作为分隔符
 						} else if (FileFormat.SEQUENCEFILE.getCode().equals(fileType)) {
-							sb.append(Constant.DATADELIMITER);
+							sb.append(database_separatorr);
 							//ORC
 						} else if (FileFormat.ORC.getCode().equals(fileType)) {
 							list.add("");
@@ -171,7 +170,7 @@ public class DataClean_Biz implements DataCleanInterface {
 								cutil.addData2Group(group, cp.getCol_type(), colName.toUpperCase(), "");
 							}
 						} else if (FileFormat.FeiDingChang.getCode().equals(fileType)) {
-							sb.append(Constant.DATADELIMITER);
+							sb.append(database_separatorr);
 						} else if (FileFormat.DingChang.getCode().equals(fileType)) {
 							int length = TypeTransLength.getLength(cp.getCol_type());
 							String fixedData = JdbcToFixedFileWriter.columnToFixed(columnData,
@@ -202,11 +201,11 @@ public class DataClean_Biz implements DataCleanInterface {
 							//csv给所有非数字类型前后加上""
 							if (FileFormat.CSV.getCode().equals(fileType)) {
 								//TODO 这里值包含分隔符是否需要拼"
-//								sb.append(substr).append(Constant.DATADELIMITER);
+//								sb.append(substr).append(database_separatorr);
 								list.add(substr);
 								//SEQUENCEFILE使用的是 '\001'作为分隔符
 							} else if (FileFormat.SEQUENCEFILE.getCode().equals(fileType)) {
-								sb.append(substr).append(Constant.DATADELIMITER);
+								sb.append(substr).append(database_separatorr);
 								//ORC
 							} else if (FileFormat.ORC.getCode().equals(fileType)) {
 								list.add(substr);
@@ -215,7 +214,7 @@ public class DataClean_Biz implements DataCleanInterface {
 									cutil.addData2Group(group, cp.getCol_type(), colName.toUpperCase(), substr);
 								}
 							} else if (FileFormat.FeiDingChang.getCode().equals(fileType)) {
-								sb.append(substr).append(Constant.DATADELIMITER);
+								sb.append(substr).append(database_separatorr);
 							} else if (FileFormat.DingChang.getCode().equals(fileType)) {
 								int length = TypeTransLength.getLength(cp.getCol_type());
 								String fixedData = JdbcToFixedFileWriter.columnToFixed(substr,
@@ -232,14 +231,9 @@ public class DataClean_Biz implements DataCleanInterface {
 					}
 				}
 			}
-			//删除逗号或者Constant.DATADELIMITER
-			if (FileFormat.DingChang.getCode().equals(fileType)) {
-				//定长且有分隔符，则删除最后的分隔符，否则不处理
-				if (database_separatorr.length() > 0) {
-					sb.delete(sb.length() - database_separatorr.length(), sb.length());
-				}
-			} else {
-				sb.deleteCharAt(sb.length() - 1);
+			//有分隔符database_separatorr，则删除最后的分隔符，否则不处理
+			if (database_separatorr.length() > 0 && sb.length() > database_separatorr.length()) {
+				sb.delete(sb.length() - database_separatorr.length(), sb.length());
 			}
 			return sb.toString();
 		} else {
@@ -287,7 +281,7 @@ public class DataClean_Biz implements DataCleanInterface {
 				}
 				if (FileFormat.PARQUET.getCode().equals(fileType)) {
 					List<String> split = StringUtil.split(key, CollectTableHandleParse.STRSPLIT);
-					//TODO 这里默认用varchar 待讨论
+					//TODO 这里默认用varchar待讨论
 					cutil.addData2Group(group, split.get(1).toUpperCase(), split.get(0).toUpperCase(), sb.toString());
 				} else if (FileFormat.ORC.getCode().equals(fileType)) {
 					List<String> split = StringUtil.split(key, CollectTableHandleParse.STRSPLIT);
@@ -295,7 +289,7 @@ public class DataClean_Biz implements DataCleanInterface {
 				} else if (FileFormat.CSV.getCode().equals(fileType)) {
 					list.add(sb.toString());
 				} else if (FileFormat.SEQUENCEFILE.getCode().equals(fileType)) {
-					return_sb.append(sb.toString()).append(Constant.DATADELIMITER);
+					return_sb.append(sb.toString()).append(database_separatorr);
 				} else if (FileFormat.DingChang.getCode().equals(fileType)) {
 					List<String> split = StringUtil.split(key, CollectTableHandleParse.STRSPLIT);
 					int length = TypeTransLength.getLength(split.get(1));
@@ -303,19 +297,14 @@ public class DataClean_Biz implements DataCleanInterface {
 					return_sb.append(fixedStr).append(database_separatorr);
 //					log.error("定长文件，是调用这个类吗？这里要补充");
 				} else if (FileFormat.FeiDingChang.getCode().equals(fileType)) {
-					return_sb.append(sb.toString()).append(Constant.DATADELIMITER);
+					return_sb.append(sb.toString()).append(database_separatorr);
 				} else {
 					throw new AppSystemException("不支持的文件格式");
 				}
 			}
-			//删除逗号或者Constant.DATADELIMITER
-			if (FileFormat.DingChang.getCode().equals(fileType)) {
-				//定长且有分隔符，则删除最后的分隔符，否则不处理
-				if (database_separatorr.length() > 0) {
-					return_sb.delete(return_sb.length() - database_separatorr.length(), return_sb.length());
-				}
-			} else {
-				return_sb.deleteCharAt(return_sb.length() - 1);
+			//有分隔符database_separatorr，则删除最后的分隔符，否则不处理
+			if (database_separatorr.length() > 0 && return_sb.length() > database_separatorr.length()) {
+				return_sb.delete(return_sb.length() - database_separatorr.length(), return_sb.length());
 			}
 		}
 		return return_sb.toString();
@@ -340,11 +329,11 @@ public class DataClean_Biz implements DataCleanInterface {
 	 */
 	private int[] findColIndex(String[] column, String str) {
 
-		String[] split = StringUtils.splitByWholeSeparatorPreserveAllTokens(str, ",");
-		int[] index = new int[split.length];
-		for (int i = 0; i < split.length; i++) {
+		List<String> split = StringUtil.split(str, ",");
+		int[] index = new int[split.size()];
+		for (int i = 0; i < split.size(); i++) {
 			for (int j = 0; j < column.length; j++) {
-				if (split[i].equalsIgnoreCase(column[j])) {
+				if (split.get(i).equalsIgnoreCase(column[j])) {
 					index[i] = j;
 				}
 			}

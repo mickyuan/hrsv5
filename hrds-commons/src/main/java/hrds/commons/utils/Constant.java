@@ -11,7 +11,7 @@ public class Constant {
 	public static final String SDATENAME = "HYREN_S_DATE";
 	public static final String EDATENAME = "HYREN_E_DATE";
 	public static final String MD5NAME = "HYREN_MD5_VAL";
-	public static final char DATADELIMITER = '\001';//此分隔符为hive的默认分隔符
+	public static final String DATADELIMITER = "`@`";//此分隔符为hive的默认分隔符
 	public static final String MAXDATE = "99991231";
 	public static final String SFTP_PORT = "22";
 	public static final byte[] HBASE_COLUMN_FAMILY = "F".getBytes();

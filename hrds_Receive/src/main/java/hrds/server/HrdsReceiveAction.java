@@ -106,7 +106,6 @@ public class HrdsReceiveAction extends AgentBaseAction {
 			error_info.setError_msg(msg);
 			error_info.update(Dbo.db());
 		}
-		collect.add(Dbo.db());
 	}
 
 	@Method(desc = "保存source_file_attribute表",

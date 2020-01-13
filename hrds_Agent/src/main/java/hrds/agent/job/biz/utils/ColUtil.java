@@ -12,25 +12,19 @@ public class ColUtil {
 
 	public void addData2Group(Group group, String columnType, String columname, String data) {
 		//TODO 待讨论的，这里需要修改为非手动配置文件修改的，需要加字段映射关系表
-//		columnType = DataTypeTransformHive.tansform(columnType.toUpperCase());
-		data = data.trim();
 		if (columnType.contains("BOOLEAN")) {
-			boolean dataResult = Boolean.valueOf(data);
+			boolean dataResult = Boolean.valueOf(data.trim());
 			group.add(columname, dataResult);
 		} else if (columnType.contains("INT")) {
-			int dataResult = StringUtils.isEmpty(data) ? 0 : Integer.valueOf(data);
+			int dataResult = StringUtils.isEmpty(data) ? 0 : Integer.valueOf(data.trim());
 			group.add(columname, dataResult);
 		} else if (columnType.contains("FLOAT")) {
-			float dataResult = StringUtils.isEmpty(data) ? 0 : Float.valueOf(data);
+			float dataResult = StringUtils.isEmpty(data) ? 0 : Float.valueOf(data.trim());
 			group.add(columname, dataResult);
 		} else if (columnType.contains("DOUBLE") || columnType.contains("DECIMAL")) {
-			double dataResult = StringUtils.isEmpty(data) ? 0 : Double.valueOf(data);
+			double dataResult = StringUtils.isEmpty(data) ? 0 : Double.valueOf(data.trim());
 			group.add(columname, dataResult);
 		}
-		//		else if(columnType.indexOf("DECIMAL")){
-		//			data  = StringUtil.isEmpty(data) ? "0" : data;
-		//			group.add(columname, data);
-		//		}
 		else {
 			//char与varchar都为string
 			data = StringUtils.isEmpty(data) ? "" : data;

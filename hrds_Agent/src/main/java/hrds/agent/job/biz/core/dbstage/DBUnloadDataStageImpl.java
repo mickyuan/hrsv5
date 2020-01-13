@@ -12,6 +12,7 @@ import hrds.agent.job.biz.core.dbstage.service.CollectTableHandleParse;
 import hrds.agent.job.biz.utils.ColumnTool;
 import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
+import hrds.commons.codes.CollectType;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
@@ -159,12 +160,14 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 			if (executorService != null)
 				executorService.shutdown();
 		}
-		stageParamInfo.setStatusInfo(statusInfo);
+		//结束给stageParamInfo塞值
+		JobStatusInfoUtil.endStageParamInfo(stageParamInfo, statusInfo, collectTableBean
+				, CollectType.ShuJuKuCaiJi.getCode());
 		return stageParamInfo;
 	}
 
 	@Override
-	public int getStageCode(){
+	public int getStageCode() {
 		return StageConstant.UNLOADDATA.getCode();
 	}
 

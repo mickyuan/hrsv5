@@ -14,7 +14,6 @@ import hrds.commons.codes.DataBaseCode;
 import hrds.commons.codes.FileFormat;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.hadoop.readconfig.ConfigReader;
-import hrds.commons.utils.Constant;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.ql.exec.vector.VectorizedRowBatch;
@@ -128,17 +127,20 @@ public class ReadFileToDataBase implements Callable<Long> {
 			} else if (FileFormat.ORC.getCode().equals(collectTableBean.getDbfile_format())) {
 				count = readOrcToDataBase(db, typeList, batchSql);
 			} else if (FileFormat.SEQUENCEFILE.getCode().equals(collectTableBean.getDbfile_format())) {
-				count = readSequenceToDataBase(db, columnList, typeList, batchSql);
+				count = readSequenceToDataBase(db, columnList, typeList, batchSql,
+						collectTableBean.getDatabase_separatorr());
 			} else if (FileFormat.DingChang.getCode().equals(collectTableBean.getDbfile_format())) {
 				//分隔符为空
 				if (StringUtil.isEmpty(collectTableBean.getDatabase_separatorr())) {
 					count = readDingChangToDataBase(db, columnList, typeList, batchSql,
 							collectTableBean.getDatabase_code());
 				} else {
-					count = readFeiDingChangToDataBase(db, columnList, typeList, batchSql);
+					count = readFeiDingChangToDataBase(db, columnList, typeList, batchSql,
+							collectTableBean.getDatabase_separatorr());
 				}
 			} else if (FileFormat.FeiDingChang.getCode().equals(collectTableBean.getDbfile_format())) {
-				count = readFeiDingChangToDataBase(db, columnList, typeList, batchSql);
+				count = readFeiDingChangToDataBase(db, columnList, typeList, batchSql,
+						collectTableBean.getDatabase_separatorr());
 			} else {
 				throw new AppSystemException("不支持的卸数文件格式");
 			}
@@ -158,7 +160,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 	}
 
 	private long readFeiDingChangToDataBase(DatabaseWrapper db, List<String> columnList,
-	                                        List<String> typeList, String batchSql) {
+	                                        List<String> typeList, String batchSql, String dataDelimiter) {
 		long num = 0;
 		try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(fileAbsolutePath)))) {
 			List<Object[]> pool = new ArrayList<>();// 存储全量插入信息的list
@@ -168,7 +170,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 			while ((line = reader.readLine()) != null) {
 				num++;
 				objs = new Object[columnList.size()];// 存储全量插入信息的list
-				List<String> valueList = StringUtil.split(line, String.valueOf(Constant.DATADELIMITER));
+				List<String> valueList = StringUtil.split(line, String.valueOf(dataDelimiter));
 				for (int j = 0; j < columnList.size(); j++) {
 					objs[j] = getValue(typeList.get(j), valueList.get(j));
 				}
@@ -233,7 +235,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 	}
 
 	private long readSequenceToDataBase(DatabaseWrapper db, List<String> columnList, List<String> typeList,
-	                                    String batchSql) throws Exception {
+	                                    String batchSql, String database_separatorr) throws Exception {
 		Configuration conf = ConfigReader.getConfiguration();
 		conf.setBoolean("fs.hdfs.impl.disable.cache", true);
 		conf.set("dfs.client.block.write.replace-datanode-on-failure.policy", "NEVER");
@@ -251,7 +253,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 			Object[] objs;
 			while (sfr.next(key, value)) {
 				String str = value.toString();
-				List<String> valueList = StringUtil.split(str, String.valueOf(Constant.DATADELIMITER));
+				List<String> valueList = StringUtil.split(str, String.valueOf(database_separatorr));
 				objs = new Object[columnList.size()];// 存储全量插入信息的list
 				for (int j = 0; j < columnList.size(); j++) {
 					objs[j] = getValue(typeList.get(j), valueList.get(j));
@@ -327,7 +329,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 		while ((line = build.read()) != null) {
 			objs = new Object[columnList.size()];// 存储全量插入信息的list
 			for (int j = 0; j < columnList.size(); j++) {
-				objs[j] = getValue(typeList.get(j), line.getString(columnList.get(j), 0));
+				objs[j] = getParquetValue(typeList.get(j), line, columnList.get(j));
 			}
 			num++;
 			pool.add(objs);
@@ -339,6 +341,28 @@ public class ReadFileToDataBase implements Callable<Long> {
 			doBatch(batchSql, pool, num, db);
 		}
 		return num;
+	}
+
+	private Object getParquetValue(String type, Group line, String column) {
+		Object str;
+		if (type.contains("BOOLEAN")) {
+			// 如果取出的值为null则给空字符串
+			str = line.getBoolean(column, 0);
+		} else if (type.contains("CHAR") || type.contains("CLOB")) {
+			// 如果取出的值为null则给空字符串
+			str = line.getString(column, 0);
+		} else if (type.contains("INT")) {
+			str = line.getInteger(column, 0);
+		} else if (type.contains("FLOAT")) {
+			str = line.getFloat(column, 0);
+		} else if (type.contains("DOUBLE") || type.contains("DECIMAL") || type.contains("NUMERIC")) {
+			str = line.getDouble(column, 0);
+		} else {
+			// 如果取出的值为null则给空字符串
+			str = line.getString(column, 0);
+			//TODO 这里应该有好多类型需要支持，然后在else里面报错
+		}
+		return str;
 	}
 
 	private long readCsvToDataBase(DatabaseWrapper db, List<String> columnList, List<String> typeList,
@@ -376,14 +400,14 @@ public class ReadFileToDataBase implements Callable<Long> {
 		Object str;
 		if (type.contains("BOOLEAN")) {
 			// 如果取出的值为null则给空字符串
-			str = tmpValue == null ? null : Boolean.parseBoolean(tmpValue);
+			str = tmpValue == null ? null : Boolean.parseBoolean(tmpValue.trim());
 		} else if (type.contains("CHAR") || type.contains("CLOB")) {
 			// 如果取出的值为null则给空字符串
 			str = tmpValue == null ? "" : tmpValue;
 		} else if (type.contains("BIGINT") || type.contains("DECIMAL") || type.contains("DOUBLE")
 				|| type.contains("NUMERIC") || type.contains("INT8") || type.contains("INT4")) {
 			// 如果取出的值为null则给空字符串
-			str = tmpValue == null ? null : new BigDecimal(tmpValue);
+			str = tmpValue == null ? null : new BigDecimal(tmpValue.trim());
 		} else {
 			// 如果取出的值为null则给空字符串
 			str = tmpValue == null ? "" : tmpValue;

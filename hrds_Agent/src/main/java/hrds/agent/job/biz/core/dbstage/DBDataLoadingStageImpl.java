@@ -14,11 +14,11 @@ import hrds.agent.job.biz.core.dbstage.service.CollectTableHandleParse;
 import hrds.agent.job.biz.utils.DataTypeTransform;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.agent.trans.biz.ConnectionTool;
+import hrds.commons.codes.CollectType;
 import hrds.commons.codes.FileFormat;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.Store_type;
 import hrds.commons.exception.AppSystemException;
-import hrds.commons.utils.Constant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,7 +47,7 @@ public class DBDataLoadingStageImpl extends AbstractJobStage {
 		//1、创建卸数阶段状态信息，更新作业ID,阶段名，阶段开始时间
 		StageStatusInfo statusInfo = new StageStatusInfo();
 		JobStatusInfoUtil.startStageStatusInfo(statusInfo, collectTableBean.getTable_id(),
-				StageConstant.CALINCREMENT.getCode());
+				StageConstant.DATALOADING.getCode());
 		try {
 			List<DataStoreConfBean> dataStoreConfBeanList = collectTableBean.getDataStoreConfBean();
 			for (DataStoreConfBean dataStoreConfBean : dataStoreConfBeanList) {
@@ -91,12 +91,14 @@ public class DBDataLoadingStageImpl extends AbstractJobStage {
 			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.FAILED.getCode(), e.getMessage());
 			LOGGER.error("数据库直连采集数据加载阶段失败：", e);
 		}
-		stageParamInfo.setStatusInfo(statusInfo);
+		//结束给stageParamInfo塞值
+		JobStatusInfoUtil.endStageParamInfo(stageParamInfo, statusInfo, collectTableBean
+				, CollectType.ShuJuKuCaiJi.getCode());
 		return stageParamInfo;
 	}
 
 	@Override
-	public int getStageCode(){
+	public int getStageCode() {
 		return StageConstant.DATALOADING.getCode();
 	}
 
@@ -112,7 +114,7 @@ public class DBDataLoadingStageImpl extends AbstractJobStage {
 						dataStoreConfBean.getDtcs_name(), tableBean));
 			} else if (FileFormat.FeiDingChang.getCode().equals(file_format) || FileFormat.CSV.getCode()
 					.equals(file_format)) {
-				sqlList.add(genHiveLoad(todayTableName, tableBean));
+				sqlList.add(genHiveLoad(todayTableName, tableBean, collectTableBean.getDatabase_separatorr()));
 			} else {
 				throw new AppSystemException("暂不支持定长或者其他类型加载到hive表");
 			}
@@ -164,7 +166,7 @@ public class DBDataLoadingStageImpl extends AbstractJobStage {
 	/**
 	 * 创建hive外部表加载行式存储文件
 	 */
-	private String genHiveLoad(String todayTableName, TableBean tableBean) {
+	private String genHiveLoad(String todayTableName, TableBean tableBean, String database_separatorr) {
 		StringBuilder sql = new StringBuilder(120);
 		List<String> columnList = StringUtil.split(tableBean.getColumnMetaInfo(), CollectTableHandleParse.STRSPLIT);
 		sql.append("CREATE TABLE IF NOT EXISTS ").append(todayTableName).append(" (");
@@ -172,7 +174,8 @@ public class DBDataLoadingStageImpl extends AbstractJobStage {
 			sql.append("`").append(column).append("` ").append(" string,");
 		}
 		sql.deleteCharAt(sql.length() - 1);
-		sql.append(") ROW FORMAT DELIMITED FIELDS TERMINATED BY  '" + Constant.DATADELIMITER + "' stored as textfile ");
+		sql.append(") ROW FORMAT DELIMITED FIELDS TERMINATED BY  '").append(database_separatorr)
+				.append("' stored as textfile ");
 		return sql.toString();
 	}
 }

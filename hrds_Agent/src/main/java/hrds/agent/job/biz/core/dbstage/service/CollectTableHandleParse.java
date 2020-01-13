@@ -110,7 +110,7 @@ public class CollectTableHandleParse {
 			tableBean.setAllType(allType.toString());
 			tableBean.setColLengthInfo(colLengthInfo.toString());
 			tableBean.setColTypeMetaInfo(colTypeMetaInfo.toString());
-			tableBean.setColumnMetaInfo(columnMetaInfo.toString());
+			tableBean.setColumnMetaInfo(columnMetaInfo.toString().toUpperCase());
 			tableBean.setTypeArray(typeArray);
 			tableBean.setParseJson(parseJson);
 		} catch (Exception e) {
@@ -226,9 +226,10 @@ public class CollectTableHandleParse {
 			int numberOfColumns = rsMetaData.getColumnCount();//获得列的数量
 			// Write header
 			for (int i = 1; i <= numberOfColumns; i++) {
-				map.put(rsMetaData.getColumnName(i).toLowerCase(), Platform.getColType(rsMetaData.getColumnType(i),
-						rsMetaData.getColumnTypeName(i), rsMetaData.getPrecision(i), rsMetaData.getScale(i))
-						+ "::" + rsMetaData.getPrecision(i));
+				String colType = Platform.getColType(rsMetaData.getColumnType(i),
+						rsMetaData.getColumnTypeName(i), rsMetaData.getPrecision(i), rsMetaData.getScale(i));
+				map.put(rsMetaData.getColumnName(i).toLowerCase(),
+						colType + "::" + TypeTransLength.getLength(colType));
 			}
 		} catch (Exception e) {
 			throw new AppSystemException("使用sql获取每个字段的长度，类型，精度失败", e);

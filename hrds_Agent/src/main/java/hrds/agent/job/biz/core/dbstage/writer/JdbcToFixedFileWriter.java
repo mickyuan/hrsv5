@@ -96,8 +96,9 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 				for (int i = 1; i <= numberOfColumns; i++) {
 					//获取原始值来计算 MD5
 					sb_.delete(0, sb_.length());
+					//定长的分隔符可能为空，为了列合并取值，这里MD5值默认拼接commons里面的常量
 					midStringOther.append(getOneColumnValue(avroWriter, lineCounter, resultSet, typeArray[i - 1]
-							, sb_, i, hbase_name)).append(database_separatorr);
+							, sb_, i, hbase_name)).append(Constant.DATADELIMITER);
 					//清洗操作
 					currValue = sb_.toString();
 					currValue = cl.cleanColumn(currValue, selectColumnList.get(i - 1).toUpperCase(), null,
@@ -116,7 +117,7 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 				//TODO 定长目前不支持列合并，原因同上
 				if (!mergeIng.isEmpty()) {
 					List<String> arrColString = StringUtil.split(midStringOther.toString(),
-							database_separatorr);
+							Constant.DATADELIMITER);
 					String merge = allclean.merge(mergeIng, arrColString.toArray(new String[0]),
 							allColumnList.toArray(new String[0]), null, null,
 							FileFormat.DingChang.getCode(), database_code, database_separatorr);
@@ -177,7 +178,7 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 			int columnValueLength = bytes.length;
 			sb = new StringBuilder();
 			sb.append(columnValue);
-			if (length > columnValueLength) {
+			if (length >= columnValueLength) {
 				for (int j = 0; j < length - columnValueLength; j++) {
 					sb.append(" ");
 				}

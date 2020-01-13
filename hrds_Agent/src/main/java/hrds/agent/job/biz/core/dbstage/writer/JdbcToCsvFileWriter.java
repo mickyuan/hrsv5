@@ -58,6 +58,7 @@ public class JdbcToCsvFileWriter extends AbstractFileWriter {
 			avroWriter = getAvroWriter(tableBean.getTypeArray(), hbase_name, midName, pageNum);
 			//卸数文件名为hbase_name加线程唯一标识加此线程创建文件下标
 			String fileName = midName + hbase_name + pageNum + index + ".part";
+			String dataDelimiter = collectTableBean.getDatabase_separatorr();
 			fileInfo.append(fileName).append(CollectTableHandleParse.STRSPLIT);
 			writerFile = new WriterFile(fileName);
 			writer = writerFile.getCsvWriter();
@@ -99,7 +100,8 @@ public class JdbcToCsvFileWriter extends AbstractFileWriter {
 					//清洗操作
 					currValue = sb_.toString();
 					currValue = cl.cleanColumn(currValue, selectColumnList.get(i - 1).toUpperCase(), null,
-							typeList.get(i - 1), FileFormat.CSV.getCode(), sb, null, null);
+							typeList.get(i - 1), FileFormat.CSV.getCode(), sb,
+							collectTableBean.getDatabase_code(), dataDelimiter);
 					// Add DELIMITER if not last value
 					if (i < numberOfColumns) {
 						midStringOther.append(Constant.DATADELIMITER);
@@ -115,7 +117,7 @@ public class JdbcToCsvFileWriter extends AbstractFileWriter {
 							Constant.DATADELIMITER);
 					allclean.merge(mergeIng, arrColString, allColumnList.toArray
 									(new String[0]), null, sb,
-							FileFormat.CSV.getCode(), null, null);
+							FileFormat.CSV.getCode(), collectTableBean.getDatabase_code(), dataDelimiter);
 				}
 				sb.add(eltDate);
 				//因为进数方式是表级别的，如果每张表选择了存储方式则不同目的地下的都是一样的，所以拼的字段加在卸数这里

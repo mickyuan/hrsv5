@@ -46,6 +46,7 @@ public class JdbcToNonFixedFileWriter extends AbstractFileWriter {
 		String hbase_name = collectTableBean.getHbase_name();
 		String midName = Constant.JDBCUNLOADFOLDER + collectTableBean.getDatabase_id() + File.separator
 				+ collectTableBean.getTable_id() + File.separator;
+		String dataDelimiter = collectTableBean.getDatabase_separatorr();
 		midName = FileNameUtils.normalize(midName, true);
 		DataFileWriter<Object> avroWriter = null;
 		BufferedWriter writer;
@@ -95,9 +96,9 @@ public class JdbcToNonFixedFileWriter extends AbstractFileWriter {
 					currValue = sb_.toString();
 					currValue = cl.cleanColumn(currValue, selectColumnList.get(i - 1).toUpperCase(), null,
 							typeList.get(i - 1), FileFormat.FeiDingChang.getCode(), null,
-							null, null);
+							collectTableBean.getDatabase_code(), dataDelimiter);
 					// Write to output
-					sb.append(currValue).append(Constant.DATADELIMITER);
+					sb.append(currValue).append(dataDelimiter);
 				}
 				//如果有列合并处理合并信息
 				if (!mergeIng.isEmpty()) {
@@ -105,14 +106,14 @@ public class JdbcToNonFixedFileWriter extends AbstractFileWriter {
 							Constant.DATADELIMITER);
 					String merge = allclean.merge(mergeIng, arrColString, allColumnList.toArray
 									(new String[0]), null, null,
-							FileFormat.FeiDingChang.getCode(), null, null);
-					sb.append(merge).append(Constant.DATADELIMITER);
+							FileFormat.FeiDingChang.getCode(), collectTableBean.getDatabase_code(), dataDelimiter);
+					sb.append(merge).append(dataDelimiter);
 				}
 				sb.append(eltDate);
 				if (StorageType.ZengLiang.getCode().equals(collectTableBean.getStorage_type())) {
 					String md5 = toMD5(midStringOther.toString());
-					sb.append(Constant.DATADELIMITER).append(Constant.MAXDATE).
-							append(Constant.DATADELIMITER).append(md5);
+					sb.append(dataDelimiter).append(Constant.MAXDATE).
+							append(dataDelimiter).append(md5);
 				}
 				sb.append('\n');
 				if (JobConstant.WriteMultipleFiles) {

@@ -52,6 +52,7 @@ public class JdbcToParquetFileWriter extends AbstractFileWriter {
 		String midName = Constant.JDBCUNLOADFOLDER + collectTableBean.getDatabase_id() + File.separator
 				+ collectTableBean.getTable_id() + File.separator;
 		midName = FileNameUtils.normalize(midName, true);
+		String dataDelimiter = collectTableBean.getDatabase_separatorr();
 		DataFileWriter<Object> avroWriter = null;
 		ParquetWriter<Group> parquetWriter = null;
 		long lineCounter = pageNum * pageRow;
@@ -86,7 +87,7 @@ public class JdbcToParquetFileWriter extends AbstractFileWriter {
 			parquetWriter = ParquetUtil.getParquetWriter(parquetSchema, fileName);
 			fileInfo.append(fileName).append(CollectTableHandleParse.STRSPLIT);
 			//获取所有查询的字段的类型，不包括列分割和列合并出来的字段类型
-			List<String> type = StringUtil.split(tableBean.getAllColumns(), CollectTableHandleParse.STRSPLIT);
+			List<String> type = StringUtil.split(tableBean.getAllType(), CollectTableHandleParse.STRSPLIT);
 			while (resultSet.next()) {
 				lineCounter++;
 				counter++;
@@ -100,9 +101,9 @@ public class JdbcToParquetFileWriter extends AbstractFileWriter {
 							typeArray[i - 1], sb_, i, hbase_name));
 					//清洗操作
 					currValue = sb_.toString();
-					currValue = cl.cleanColumn(currValue, selectColumnList.get(i - 1).toUpperCase(), group, type.get(i - 1),
-							FileFormat.PARQUET.getCode(), null, null,
-							null);
+					currValue = cl.cleanColumn(currValue, selectColumnList.get(i - 1).toUpperCase(), group,
+							type.get(i - 1), FileFormat.PARQUET.getCode(), null,
+							collectTableBean.getDatabase_code(), dataDelimiter);
 					// Write to output
 					// Add DELIMITER if not last value
 					if (i < numberOfColumns) {
@@ -118,7 +119,7 @@ public class JdbcToParquetFileWriter extends AbstractFileWriter {
 					String[] arrColString = StringUtils.split(midStringOther.toString(), Constant.DATADELIMITER);
 					//字段合并
 					allClean.merge(mergeIng, arrColString, allColumnList.toArray(new String[0]), group, null,
-							FileFormat.PARQUET.getCode(), null, null);
+							FileFormat.PARQUET.getCode(), collectTableBean.getDatabase_code(), dataDelimiter);
 				}
 				group.append(Constant.SDATENAME, eltDate);
 				//因为进数方式是表级别的，如果每张表选择了存储方式则不同目的地下的都是一样的，所以拼的字段加在卸数这里

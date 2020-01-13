@@ -197,18 +197,17 @@ public class ColumnTool {
 		//TODO 字段类型转换，这里要设计表
 //		columnType = DataTypeTransformHive.tansform(columnType.toUpperCase());
 		columnType = columnType.toUpperCase();
-		data = data.trim();
 		if (columnType.contains("BOOLEAN")) {
-			boolean dataResult = Boolean.valueOf(data);
+			boolean dataResult = Boolean.valueOf(data.trim());
 			group.add(columname, dataResult);
 		} else if (columnType.contains("INT")) {
-			int dataResult = StringUtil.isEmpty(data) ? 0 : Integer.valueOf(data);
+			int dataResult = StringUtil.isEmpty(data) ? 0 : Integer.valueOf(data.trim());
 			group.add(columname, dataResult);
 		} else if (columnType.contains("FLOAT")) {
-			float dataResult = StringUtil.isEmpty(data) ? 0 : Float.valueOf(data);
+			float dataResult = StringUtil.isEmpty(data) ? 0 : Float.valueOf(data.trim());
 			group.add(columname, dataResult);
-		} else if (columnType.contains("DOUBLE") || columnType.contains("DECIMAL")) {
-			double dataResult = StringUtil.isEmpty(data) ? 0 : Double.valueOf(data);
+		} else if (columnType.contains("DOUBLE") || columnType.contains("DECIMAL") || columnType.contains("NUMERIC")) {
+			double dataResult = StringUtil.isEmpty(data) ? 0 : Double.valueOf(data.trim());
 			group.add(columname, dataResult);
 		} else {
 			//char与varchar都为string
@@ -221,21 +220,20 @@ public class ColumnTool {
 		//TODO 字段类型转换，这里要设计表
 //		columnType = DataTypeTransformHive.tansform(columnType.toUpperCase());
 		columnType = columnType.toUpperCase();
-		data = data.trim();
 		if (columnType.contains("BOOLEAN")) {
-			boolean dataResult = Boolean.valueOf(data);
+			boolean dataResult = Boolean.valueOf(data.trim());
 			lineData.add(dataResult);
 		} else if (columnType.contains("INT")) {
-			int dataResult = StringUtil.isEmpty(data) ? 0 : Integer.valueOf(data);
+			int dataResult = StringUtil.isEmpty(data) ? 0 : Integer.valueOf(data.trim());
 			lineData.add(dataResult);
 		} else if (columnType.contains("FLOAT")) {
-			float dataResult = StringUtil.isEmpty(data) ? 0 : Float.valueOf(data);
+			float dataResult = StringUtil.isEmpty(data) ? 0 : Float.valueOf(data.trim());
 			lineData.add(dataResult);
 		} else if (columnType.contains("DOUBLE")) {
-			double dataResult = StringUtil.isEmpty(data) ? 0 : Double.valueOf(data);
+			double dataResult = StringUtil.isEmpty(data) ? 0 : Double.valueOf(data.trim());
 			lineData.add(dataResult);
 		} else if (columnType.contains("DECIMAL")) {
-			BigDecimal dataResult = StringUtil.isEmpty(data) ? new BigDecimal("0") : new BigDecimal(data);
+			BigDecimal dataResult = StringUtil.isEmpty(data) ? new BigDecimal("0") : new BigDecimal(data.trim());
 			HiveDecimal create = HiveDecimal.create(dataResult);
 			lineData.add(create);
 		} else {

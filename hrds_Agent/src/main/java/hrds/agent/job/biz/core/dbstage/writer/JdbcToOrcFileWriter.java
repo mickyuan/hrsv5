@@ -53,6 +53,7 @@ public class JdbcToOrcFileWriter extends AbstractFileWriter {
 				+ collectTableBean.getTable_id() + File.separator;
 		String hbase_name = collectTableBean.getHbase_name();
 		midName = FileNameUtils.normalize(midName, true);
+		String dataDelimiter = collectTableBean.getDatabase_separatorr();
 		DataFileWriter<Object> avroWriter = null;
 		long lineCounter = pageNum * pageRow;
 		long counter = 0;
@@ -109,7 +110,8 @@ public class JdbcToOrcFileWriter extends AbstractFileWriter {
 					//清洗操作
 					currValue = sb_.toString();
 					currValue = cl.cleanColumn(currValue, selectColumnList.get(i - 1).toUpperCase(), null,
-							typeList.get(i - 1), FileFormat.ORC.getCode(), lineData, null, null);
+							typeList.get(i - 1), FileFormat.ORC.getCode(), lineData,
+							collectTableBean.getDatabase_code(), dataDelimiter);
 					if (i < numberOfColumns) {
 						midStringOther.append(Constant.DATADELIMITER);
 					}
@@ -124,7 +126,7 @@ public class JdbcToOrcFileWriter extends AbstractFileWriter {
 							Constant.DATADELIMITER);
 					//字段合并
 					allClean.merge(mergeIng, arrColString, allColumnList.toArray(new String[0]), null, lineData,
-							FileFormat.ORC.getCode(), null, null);
+							FileFormat.ORC.getCode(), collectTableBean.getDatabase_code(), dataDelimiter);
 				}
 				lineData.add(eltDate);
 				//因为进数方式是表级别的，如果每张表选择了存储方式则不同目的地下的都是一样的，所以拼的字段加在卸数这里

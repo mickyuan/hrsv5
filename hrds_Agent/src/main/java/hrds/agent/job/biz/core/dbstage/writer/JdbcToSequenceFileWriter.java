@@ -47,6 +47,7 @@ public class JdbcToSequenceFileWriter extends AbstractFileWriter {
 		String hbase_name = collectTableBean.getHbase_name();
 		String midName = Constant.JDBCUNLOADFOLDER + collectTableBean.getDatabase_id() + File.separator
 				+ collectTableBean.getTable_id() + File.separator;
+		String dataDelimiter = collectTableBean.getDatabase_separatorr();
 		midName = FileNameUtils.normalize(midName, true);
 		DataFileWriter<Object> avroWriter = null;
 		long lineCounter = pageNum * pageRow;
@@ -95,24 +96,24 @@ public class JdbcToSequenceFileWriter extends AbstractFileWriter {
 					//清洗操作
 					currValue = sb_.toString();
 					currValue = cl.cleanColumn(currValue, selectColumnList.get(i - 1).toUpperCase(), null,
-							type.get(i - 1), FileFormat.SEQUENCEFILE.getCode(), null, null, null);
-					sb.append(currValue).append(Constant.DATADELIMITER);
+							type.get(i - 1), FileFormat.SEQUENCEFILE.getCode(), null,
+							collectTableBean.getDatabase_code(), dataDelimiter);
+					sb.append(currValue).append(dataDelimiter);
 				}
 				//如果有列合并处理合并信息
 				if (!mergeIng.isEmpty()) {
 					String[] arrColString = StringUtils.split(midStringOther.toString(), Constant.DATADELIMITER);
 					String mer = allclean.merge(mergeIng, arrColString, allColumnList.toArray(new String[0]),
 							null, null, FileFormat.SEQUENCEFILE.getCode(),
-							null, null);
+							collectTableBean.getDatabase_code(), dataDelimiter);
 					//字段合并
-					midStringOther.append(mer).append(Constant.DATADELIMITER);
-					sb.append(mer).append(Constant.DATADELIMITER);
+					sb.append(mer).append(dataDelimiter);
 				}
 				sb.append(eltDate);
 				if (StorageType.ZengLiang.getCode().equals(collectTableBean.getStorage_type())) {
 					String md5 = toMD5(midStringOther.toString());
-					sb.append(Constant.DATADELIMITER).append(Constant.MAXDATE).
-							append(Constant.DATADELIMITER).append(md5);
+					sb.append(dataDelimiter).append(Constant.MAXDATE).
+							append(dataDelimiter).append(md5);
 				}
 				if (JobConstant.WriteMultipleFiles) {
 					//获取文件大小和当前读到的内容大小

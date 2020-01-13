@@ -14,6 +14,7 @@ import hrds.agent.job.biz.core.AbstractJobStage;
 import hrds.agent.job.biz.core.dbstage.service.ReadFileToDataBase;
 import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
+import hrds.commons.codes.CollectType;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.Store_type;
 import hrds.commons.exception.AppSystemException;
@@ -108,7 +109,9 @@ public class DBUploadStageImpl extends AbstractJobStage {
 			if (executor != null)
 				executor.shutdown();
 		}
-		stageParamInfo.setStatusInfo(statusInfo);
+		//结束给stageParamInfo塞值
+		JobStatusInfoUtil.endStageParamInfo(stageParamInfo, statusInfo, collectTableBean
+				, CollectType.ShuJuKuCaiJi.getCode());
 		return stageParamInfo;
 	}
 

@@ -6,10 +6,11 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
+import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.JobStatusInfo;
+import hrds.agent.job.biz.bean.StageParamInfo;
 import hrds.agent.job.biz.bean.StageStatusInfo;
 import hrds.agent.job.biz.constant.RunStatusConstant;
-import hrds.agent.job.biz.core.FtpCollectJobImpl;
 import hrds.commons.exception.AppSystemException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -84,5 +85,16 @@ public class JobStatusInfoUtil {
 		stageStatusInfo.setStatusCode(statusCode);
 		stageStatusInfo.setEndDate(DateUtil.getSysDate());
 		stageStatusInfo.setStartTime(DateUtil.getSysTime());
+	}
+
+	public static void endStageParamInfo(StageParamInfo stageParamInfo, StageStatusInfo stageStatusInfo,
+	                                     CollectTableBean collectTableBean, String collectType) {
+		stageParamInfo.setStatusInfo(stageStatusInfo);
+		stageParamInfo.setAgentId(collectTableBean.getAgent_id());
+		stageParamInfo.setSourceId(collectTableBean.getSource_id());
+		stageParamInfo.setCollectSetId(Long.parseLong(collectTableBean.getDatabase_id()));
+		stageParamInfo.setTaskClassify(collectTableBean.getTable_name());
+		stageParamInfo.setCollectType(collectType);
+		stageParamInfo.setEtlDate(collectTableBean.getEtlDate());
 	}
 }

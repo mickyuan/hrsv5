@@ -14,6 +14,7 @@ import hrds.agent.job.biz.core.dbstage.increasement.IncreasementBySpark;
 import hrds.agent.job.biz.core.dbstage.increasement.JDBCIncreasement;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.agent.trans.biz.ConnectionTool;
+import hrds.commons.codes.CollectType;
 import hrds.commons.codes.StorageType;
 import hrds.commons.codes.Store_type;
 import hrds.commons.exception.AppSystemException;
@@ -44,7 +45,7 @@ public class DBCalIncrementStageImpl extends AbstractJobStage {
 		//1、创建卸数阶段状态信息，更新作业ID,阶段名，阶段开始时间
 		StageStatusInfo statusInfo = new StageStatusInfo();
 		JobStatusInfoUtil.startStageStatusInfo(statusInfo, collectTableBean.getTable_id(),
-				StageConstant.DATALOADING.getCode());
+				StageConstant.CALINCREMENT.getCode());
 		try {
 			List<DataStoreConfBean> dataStoreConfBeanList = collectTableBean.getDataStoreConfBean();
 			TableBean tableBean = stageParamInfo.getTableBean();
@@ -100,7 +101,9 @@ public class DBCalIncrementStageImpl extends AbstractJobStage {
 			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.FAILED.getCode(), e.getMessage());
 			LOGGER.error("数据库直连采集增量阶段失败：", e);
 		}
-		stageParamInfo.setStatusInfo(statusInfo);
+		//结束给stageParamInfo塞值
+		JobStatusInfoUtil.endStageParamInfo(stageParamInfo, statusInfo, collectTableBean
+				, CollectType.ShuJuKuCaiJi.getCode());
 		return stageParamInfo;
 	}
 
