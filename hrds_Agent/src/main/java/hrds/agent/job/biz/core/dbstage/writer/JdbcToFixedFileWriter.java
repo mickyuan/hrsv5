@@ -98,7 +98,7 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 					sb_.delete(0, sb_.length());
 					//定长的分隔符可能为空，为了列合并取值，这里MD5值默认拼接commons里面的常量
 					midStringOther.append(getOneColumnValue(avroWriter, lineCounter, resultSet, typeArray[i - 1]
-							, sb_, i, hbase_name)).append(Constant.DATADELIMITER);
+							, sb_, i, hbase_name)).append(JobConstant.DATADELIMITER);
 					//清洗操作
 					currValue = sb_.toString();
 					currValue = cl.cleanColumn(currValue, selectColumnList.get(i - 1).toUpperCase(), null,
@@ -117,7 +117,7 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 				//TODO 定长目前不支持列合并，原因同上
 				if (!mergeIng.isEmpty()) {
 					List<String> arrColString = StringUtil.split(midStringOther.toString(),
-							Constant.DATADELIMITER);
+							JobConstant.DATADELIMITER);
 					String merge = allclean.merge(mergeIng, arrColString.toArray(new String[0]),
 							allColumnList.toArray(new String[0]), null, null,
 							FileFormat.DingChang.getCode(), database_code, database_separatorr);

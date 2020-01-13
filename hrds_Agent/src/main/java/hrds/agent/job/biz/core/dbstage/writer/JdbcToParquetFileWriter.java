@@ -107,7 +107,7 @@ public class JdbcToParquetFileWriter extends AbstractFileWriter {
 					// Write to output
 					// Add DELIMITER if not last value
 					if (i < numberOfColumns) {
-						midStringOther.append(Constant.DATADELIMITER);
+						midStringOther.append(JobConstant.DATADELIMITER);
 					}
 					if (splitIng.get(selectColumnList.get(i - 1).toUpperCase()) == null
 							|| splitIng.get(selectColumnList.get(i - 1).toUpperCase()).size() == 0) {
@@ -116,7 +116,7 @@ public class JdbcToParquetFileWriter extends AbstractFileWriter {
 				}
 				//如果有列合并处理合并信息
 				if (!mergeIng.isEmpty()) {
-					String[] arrColString = StringUtils.split(midStringOther.toString(), Constant.DATADELIMITER);
+					String[] arrColString = StringUtils.split(midStringOther.toString(), JobConstant.DATADELIMITER);
 					//字段合并
 					allClean.merge(mergeIng, arrColString, allColumnList.toArray(new String[0]), group, null,
 							FileFormat.PARQUET.getCode(), collectTableBean.getDatabase_code(), dataDelimiter);

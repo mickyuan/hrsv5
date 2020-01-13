@@ -113,7 +113,7 @@ public class JdbcToOrcFileWriter extends AbstractFileWriter {
 							typeList.get(i - 1), FileFormat.ORC.getCode(), lineData,
 							collectTableBean.getDatabase_code(), dataDelimiter);
 					if (i < numberOfColumns) {
-						midStringOther.append(Constant.DATADELIMITER);
+						midStringOther.append(JobConstant.DATADELIMITER);
 					}
 					if (splitIng.get(selectColumnList.get(i - 1).toUpperCase()) == null
 							|| splitIng.get(selectColumnList.get(i - 1).toUpperCase()).size() == 0) {
@@ -123,7 +123,7 @@ public class JdbcToOrcFileWriter extends AbstractFileWriter {
 				//如果有列合并处理合并信息
 				if (!mergeIng.isEmpty()) {
 					String[] arrColString = StringUtils.split(midStringOther.toString(),
-							Constant.DATADELIMITER);
+							JobConstant.DATADELIMITER);
 					//字段合并
 					allClean.merge(mergeIng, arrColString, allColumnList.toArray(new String[0]), null, lineData,
 							FileFormat.ORC.getCode(), collectTableBean.getDatabase_code(), dataDelimiter);

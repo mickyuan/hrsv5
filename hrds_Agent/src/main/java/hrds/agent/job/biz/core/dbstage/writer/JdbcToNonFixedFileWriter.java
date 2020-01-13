@@ -91,7 +91,7 @@ public class JdbcToNonFixedFileWriter extends AbstractFileWriter {
 					//获取原始值来计算 MD5
 					sb_.delete(0, sb_.length());
 					midStringOther.append(getOneColumnValue(avroWriter, lineCounter, resultSet, typeArray[i - 1],
-							sb_, i, hbase_name)).append(Constant.DATADELIMITER);
+							sb_, i, hbase_name)).append(JobConstant.DATADELIMITER);
 					//清洗操作
 					currValue = sb_.toString();
 					currValue = cl.cleanColumn(currValue, selectColumnList.get(i - 1).toUpperCase(), null,
@@ -103,7 +103,7 @@ public class JdbcToNonFixedFileWriter extends AbstractFileWriter {
 				//如果有列合并处理合并信息
 				if (!mergeIng.isEmpty()) {
 					String[] arrColString = StringUtils.split(midStringOther.toString(),
-							Constant.DATADELIMITER);
+							JobConstant.DATADELIMITER);
 					String merge = allclean.merge(mergeIng, arrColString, allColumnList.toArray
 									(new String[0]), null, null,
 							FileFormat.FeiDingChang.getCode(), collectTableBean.getDatabase_code(), dataDelimiter);

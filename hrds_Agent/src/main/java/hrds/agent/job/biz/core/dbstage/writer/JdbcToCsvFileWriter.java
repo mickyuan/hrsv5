@@ -104,7 +104,7 @@ public class JdbcToCsvFileWriter extends AbstractFileWriter {
 							collectTableBean.getDatabase_code(), dataDelimiter);
 					// Add DELIMITER if not last value
 					if (i < numberOfColumns) {
-						midStringOther.append(Constant.DATADELIMITER);
+						midStringOther.append(JobConstant.DATADELIMITER);
 					}
 					if (splitIng.get(selectColumnList.get(i - 1).toUpperCase()) == null
 							|| splitIng.get(selectColumnList.get(i - 1).toUpperCase()).size() == 0) {
@@ -114,7 +114,7 @@ public class JdbcToCsvFileWriter extends AbstractFileWriter {
 				//如果有列合并处理合并信息
 				if (!mergeIng.isEmpty()) {
 					String[] arrColString = StringUtils.split(midStringOther.toString(),
-							Constant.DATADELIMITER);
+							JobConstant.DATADELIMITER);
 					allclean.merge(mergeIng, arrColString, allColumnList.toArray
 									(new String[0]), null, sb,
 							FileFormat.CSV.getCode(), collectTableBean.getDatabase_code(), dataDelimiter);
