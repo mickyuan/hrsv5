@@ -30,8 +30,6 @@ import java.util.*;
 @DocClass(desc = "Web服务查询数据界面后台处理类", author = "BY-HLL", createdate = "2019/9/3 0003 下午 03:26")
 public class DataQueryAction extends BaseAction {
 
-	private static final SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
-
 	@Method(desc = "获取部门的包含文件采集任务的数据源信息",
 			logicStep = "数据可访问权限处理方式: 根据登录用户的 user_id 进行权限检查" +
 					"1.根据部门id获取该部门下所有包含文件采集任务的数据源信息的list"
@@ -447,6 +445,7 @@ public class DataQueryAction extends BaseAction {
 		//1.根据申请类型获取用户申请文件的详细信息
 		Map<String, Object> applyDataMap = new HashMap<>();
 		Object[] sourceIdsObj = Dbo.queryOneColumnList("select source_id from data_source").toArray();
+		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		asmSql.clean();
 		asmSql.addSql("select da.*,sfa.original_name,sfa.file_size,sfa.file_type,sfa.file_suffix from data_auth da" +
 				" left join source_file_attribute sfa on da.file_id = sfa.file_id where da.user_id = ? and" +
@@ -492,6 +491,7 @@ public class DataQueryAction extends BaseAction {
 	                                         String auth_type, int currPage, int pageSize) {
 		//1.获取用户申请记录信息
 		Map<String, Object> myApplyRecordMap = new HashMap<>();
+		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		asmSql.clean();
 		asmSql.addSql(" select da.*,sfa.* from source_file_attribute sfa LEFT JOIN (" +
 				" select MAX(concat(apply_date,apply_time)) applytime,file_id,apply_type" +
@@ -538,6 +538,7 @@ public class DataQueryAction extends BaseAction {
 	private Result conditionalQuery(String sourceId, String fcsId, String fileType, String startDate, String endDate) {
 		//1.查看待查询的数据源是否属于登录用户所在部门
 		Source_file_attribute sourceFileAttribute = new Source_file_attribute();
+		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		asmSql.clean();
 		asmSql.addSql("select dep_id from " + Source_relation_dep.TableName + " srd left join " +
 				Collect_case.TableName + " cc on srd.source_id = cc.source_id where srd.dep_id = ?")
@@ -715,6 +716,7 @@ public class DataQueryAction extends BaseAction {
 		Map<String, Object> fileApplicationDetails = new HashMap<>();
 		Object[] sourceIdsObj = Dbo.queryOneColumnList("select source_id from data_source").toArray();
 		//2.各类型文件的申请汇总
+		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		asmSql.clean();
 		asmSql.addSql("SELECT apply_type,count(apply_type) count from data_auth da JOIN source_file_attribute sfa" +
 				" ON da.file_id = sfa.file_id where USER_ID = ? and auth_type = ?");

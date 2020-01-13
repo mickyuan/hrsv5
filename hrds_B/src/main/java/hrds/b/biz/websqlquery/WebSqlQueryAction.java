@@ -18,8 +18,6 @@ import java.util.Map;
 @DocClass(desc = "WebSql查询处理类", author = "BY-HLL", createdate = "2019/10/25 0025 下午 05:51")
 public class WebSqlQueryAction extends BaseAction {
 
-	private static final SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
-
 	@Method(desc = "根据表名获取采集数据，默认显示10条",
 			logicStep = "1.初始化查询" +
 					"1-1.如果查询条数小于1条则显示默认10条，查询条数大于100条则显示100条，否则取传入的查询条数" +

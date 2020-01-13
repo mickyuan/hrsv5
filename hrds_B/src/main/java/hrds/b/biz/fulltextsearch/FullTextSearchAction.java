@@ -21,14 +21,14 @@ import hrds.commons.entity.Search_info;
 import hrds.commons.entity.Source_file_attribute;
 import hrds.commons.entity.User_fav;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.hadoop.opersolr.OperSolr;
+import hrds.commons.hadoop.opersolr.SolrFactory;
 import hrds.commons.utils.PathUtil;
 
 import java.util.*;
 
 @DocClass(desc = "全文检索数据查询", author = "BY-HLL", createdate = "2019/10/8 0008 下午 03:10")
 public class FullTextSearchAction extends BaseAction {
-
-	private static final SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 
 	@Method(desc = "获取用户收藏的文件列表,返回结果默认显示最近9条收藏",
 			logicStep = "数据可访问权限处理方式: 根据 User_fav 表的 user_id做权限校验" +
@@ -84,7 +84,9 @@ public class FullTextSearchAction extends BaseAction {
 			switch (searchType) {
 				//1-1.全文检索返回结果集
 				case "fullTextSearch":
-					//TODO 获取分词查询的方法未实现
+					if (StringUtil.isBlank(queryKeyword.trim())) {
+						throw new BusinessException("检索内容不能为空！");
+					}
 					queryKeyword = getParticipleQuery(queryKeyword.trim());
 					result = getFinalResult(queryKeyword, start, pageSize, currPage, totalSize);
 					List<String> analysis = Arrays.asList(queryKeyword.substring(1, queryKeyword.length() - 1)
@@ -185,6 +187,7 @@ public class FullTextSearchAction extends BaseAction {
 		Source_file_attribute sourceFileAttribute = new Source_file_attribute();
 		sourceFileAttribute.setCollect_type(CollectType.WenJianCaiJi.getCode());
 		//4-1.创建查询sql
+		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		asmSql.clean();
 		asmSql.addSql(" SELECT sfa.source_path,sfa.file_suffix,sfa.file_id,sfa.storage_time,sfa.storage_date," +
 				" sfa.original_update_date,sfa.hbase_name, sfa.original_update_time,sfa.file_md5,sfa.original_name," +
@@ -238,38 +241,28 @@ public class FullTextSearchAction extends BaseAction {
 		return resultSet;
 	}
 
-	@Method(desc = "获取solr分词关键字",
-			logicStep = "数据可访问权限处理方式: 无数据库访问,不做权限校验" +
-					"1.如果查询条数小于1条则显示默认9条,查询条数大于99条则显示99条,否则取传入的查询条数" +
-					"2.返回当前登录的用户已经收藏的文件列表的List结果集"
-	)
+	@Method(desc = "获取solr分词关键字", logicStep = "获取solr分词关键字")
 	@Param(name = "queryKeyword", desc = "查询关键字", range = "String类型值,无限制条件")
 	@Return(desc = "solr分词关键字", range = "无限制")
 	private String getParticipleQuery(String queryKeyword) {
-		//未实现,需要 SolrFactory
-//		try (OperSolr os = SolrFactory.getInstance()) {
-//			List<String> participleList = os.getAnalysis(query);
-//			participleList.add(0, query);
-//			StringBuilder queryPlus = new StringBuilder();
-//			queryPlus.append("\"");
-//			for(int i = 0; i < participleList.size(); i++) {
-//				queryPlus.append(participleList.get(i));
-//				if( i != participleList.size() - 1 ) {
-//					queryPlus.append("\" OR \"");
-//				}
-//				else {
-//					queryPlus.append("\"");
-//				}
-//			}
-//			return queryPlus.toString();
-//		}
-//		catch(Exception e) {
-//			return null;
-//		}
-		if (!StringUtil.isBlank(queryKeyword)) {
-			throw new BusinessException("获取分词查询的方法未实现！");
+		//获取solr分词关键字
+		try (OperSolr os = SolrFactory.getInstance()) {
+			List<String> participleList = os.getAnalysis(queryKeyword);
+			participleList.add(0, queryKeyword);
+			StringBuilder queryPlus = new StringBuilder();
+			queryPlus.append("\"");
+			for (int i = 0; i < participleList.size(); i++) {
+				queryPlus.append(participleList.get(i));
+				if (i != participleList.size() - 1) {
+					queryPlus.append("\" OR \"");
+				} else {
+					queryPlus.append("\"");
+				}
+			}
+			return queryPlus.toString();
+		} catch (Exception e) {
+			throw new BusinessException("获取分词关键字失败！");
 		}
-		return queryKeyword;
 	}
 
 	@Method(desc = "查询结果集处理",
@@ -329,6 +322,7 @@ public class FullTextSearchAction extends BaseAction {
 		}
 		//2-3.记录文件的file_id
 		HashSet<String> idList = new HashSet<>(map.keySet());
+		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		asmSql.clean();
 		asmSql.addSql("select * from source_file_attribute where");
 		asmSql.addORParam("file_id", idList.toArray());
@@ -461,6 +455,7 @@ public class FullTextSearchAction extends BaseAction {
 		}
 		for (int i = 0; i < documentSimilar.getRowCount(); i++) {
 			String rowKey = documentSimilar.getString(i, "file_id");
+			SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 			asmSql.clean();
 			asmSql.addSql(" SELECT sfa.*,ds.datasource_name,gi.agent_name,fcs.fcs_name,uf.fav_id,uf.fav_flag FROM");
 			asmSql.addSql(" data_source ds  JOIN agent_info gi ON ds.source_id = gi.source_id");
@@ -498,6 +493,7 @@ public class FullTextSearchAction extends BaseAction {
 		Object[] sourceIdsObj = Dbo.queryOneColumnList("select source_id from data_source").toArray();
 		//对搜索内容进行字段添加
 		fileName = fileName.trim();
+		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		asmSql.clean();
 		asmSql.addSql("SELECT sfa.*,ds.datasource_name,gi.agent_name,fcs.fcs_name,uf.fav_id,uf.fav_flag from (" +
 				" SELECT a.* FROM source_file_attribute a  WHERE collect_type = ? ");
