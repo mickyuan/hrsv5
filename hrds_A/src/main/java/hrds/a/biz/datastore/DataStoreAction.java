@@ -37,8 +37,6 @@ import java.util.regex.Pattern;
 @DocClass(desc = "数据存储层配置管理", author = "dhw", createdate = "2019/11/22 11:25")
 public class DataStoreAction extends BaseAction {
 
-    private static final SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
-
     @Method(desc = "新增数据存储层、数据存储附加、数据存储层配置属性信息",
             logicStep = "1.数据可访问权限处理方式，该方法不需要权限控制" +
                     "2.检查数据存储层配置字段合法性" +
@@ -52,7 +50,7 @@ public class DataStoreAction extends BaseAction {
     @Param(name = "dsl_remark", desc = "数据存储层配置表备注", range = "无限制", nullable = true)
     @Param(name = "dslad_remark", desc = "数据存储附加信息表备注", range = "无限制", nullable = true)
     @Param(name = "dataStoreLayerAttr", desc = "数据存储层信息属性信息集合", range = "key,value类型的json字符串," +
-            "storage_property_key，storage_property_val,dsla_remark,is_file,file(只有传文件时需要）代表key，对应的值为value")
+            "storage_property_key，storage_property_val,dsla_remark,is_file代表key，对应的值为value")
     @Param(name = "dsla_storelayer", desc = "配置附加属性信息数组", range = "使用代码项（StoreLayerAdded）", nullable = true)
     @Param(name = "dtcs_id", desc = "数据类型对照主表ID", range = "新增数据类型对照主表时生成")
     @Param(name = "dlcs_id", desc = "数据类型长度对照主表ID", range = "新增数据类型长度对照主表时生成")
@@ -492,7 +490,8 @@ public class DataStoreAction extends BaseAction {
     @Param(name = "dsl_remark", desc = "数据存储层配置表备注", range = "无限制", nullable = true)
     @Param(name = "dslad_remark", desc = "数据存储附加信息表备注", range = "无限制", nullable = true)
     @Param(name = "dsl_id", desc = "数据存储层配置表主键", range = "新增数据存储层时生成")
-    @Param(name = "dataStoreLayerAttr", desc = "数据存储层信息属性信息集合", range = "key,value类型的json字符串")
+    @Param(name = "dataStoreLayerAttr", desc = "数据存储层信息属性信息集合", range = "key,value类型的json字符串," +
+            "storage_property_key，storage_property_val,dsla_remark,is_file代表key，对应的值为value")
     @Param(name = "dsla_storelayer", desc = "配置附加属性信息数组", range = "使用代码项（StoreLayerAdded）", nullable = true)
     @Param(name = "dtcs_id", desc = "数据类型对照主表ID", range = "新增数据类型对照主表时生成")
     @Param(name = "dlcs_id", desc = "数据类型长度对照主表ID", range = "新增数据类型长度对照主表时生成")
@@ -516,10 +515,10 @@ public class DataStoreAction extends BaseAction {
         // 3.更新数据存储配置信息
         dataStoreLayer.update(Dbo.db());
         // 4.更新保存前先删除原来的数据存储附加信息
-        deleteDataStoreLayerAdded(dsl_id);
+        deleteDataStoreLayerAttr(dsl_id);
         // 5.更新数据存储附加信息
         addDataStoreLayerAdded(dsl_id, dslad_remark, dsla_storelayer);
-        // 6.判断文件是否存在，如果存在则先删除原配置文件,删除要放在删除数
+        // 6.判断文件是否存在，如果存在则先删除原配置文件,删除要放在删除
         if (files != null && files.length != 0) {
             deleteConfFile(dsl_id);
             uploadConfFile(files, dsla_remark, dsl_id);
@@ -659,6 +658,7 @@ public class DataStoreAction extends BaseAction {
     public Result searchDataLayerDataTypeInfo(Long dtcs_id) {
         // 1.数据可访问权限处理方式，该方法不需要权限控制
         // 2.查询数据存储层数据类型对照表信息
+        SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
         asmSql.clean();
         asmSql.addSql("select * from " + Type_contrast.TableName +
                 " t1 left join " + Type_contrast_sum.TableName + " t2 on t1.dtcs_id=t2.dtcs_id");
@@ -678,6 +678,7 @@ public class DataStoreAction extends BaseAction {
     public Result searchDataLayerDataTypeLengthInfo(Long dlcs_id) {
         // 1.数据可访问权限处理方式，该方法不需要权限控制
         // 2.查询数据类型长度对照表信息
+        SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
         asmSql.clean();
         asmSql.addSql("select * from " + Length_contrast.TableName +
                 " t1 left join " + Length_contrast_sum.TableName + " t2 on t1.dlcs_id=t2.dlcs_id");
