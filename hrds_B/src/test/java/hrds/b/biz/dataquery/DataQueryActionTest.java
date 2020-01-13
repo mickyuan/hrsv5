@@ -700,23 +700,81 @@ public class DataQueryActionTest extends WebBaseTestCase {
 		assertThat(ar.isSuccess(), is(false));
 	}
 
+	@Method(desc = "查看文件测试类",
+			logicStep = "正确数据访问：" +
+					"1.文件id存在" +
+					"错误数据访问：" +
+					"2.文件id不存在")
 	@Test
 	public void viewFile() {
-
+		//1-1.文件id存在
+		bodyString = new HttpClient()
+				.addData("fileId", FILE_ID + "0")
+				.addData("applyType", "1")
+				.post(getActionUrl("viewFile")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
+		assertThat(ar.isSuccess(), is(true));
+		//2-1.文件id不存在
+		bodyString = new HttpClient()
+				.addData("fileId", "-" + FILE_ID)
+				.addData("applyType", "1")
+				.post(getActionUrl("viewFile")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
+		assertThat(ar.isSuccess(), is(false));
 	}
 
+	@Method(desc = "获取用户申请文件信息测试类",
+			logicStep = "正确数据访问：" +
+					"1.已存在的申请类型" +
+					"错误数据访问：" +
+					"2.不存在的申请类型")
 	@Test
 	public void getApplyData() {
-
+		//1-1.已存在的申请类型
+		bodyString = new HttpClient()
+				.addData("apply_type", 1)
+				.post(getActionUrl("getApplyData")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
+		assertThat(ar.isSuccess(), is(true));
+		//2-1.不存在的申请类型
+		bodyString = new HttpClient()
+				.addData("apply_type", -1)
+				.post(getActionUrl("getApplyData")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
+		assertThat(ar.isSuccess(), is(false));
 	}
 
+	@Method(desc = "取消用户申请文件测试类",
+			logicStep = "正确数据访问：" +
+					"1.取消用户申请文件id存在" +
+					"错误数据访问：" +
+					"2.取消用户申请文件id不存在")
 	@Test
 	public void cancelApply() {
+		//1-1.取消用户申请文件id存在
+		bodyString = new HttpClient()
+				.addData("da_id", DA_ID)
+				.post(getActionUrl("cancelApply")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
+		assertThat(ar.isSuccess(), is(true));
+		//2-1.取消用户申请文件id不存在
+		bodyString = new HttpClient()
+				.addData("da_id", -DA_ID)
+				.post(getActionUrl("cancelApply")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
+		assertThat(ar.isSuccess(), is(false));
 
 	}
 
+	@Method(desc = "获取用户申请记录数据",
+			logicStep = "正确数据访问：" +
+					"1.查询登录用户下所有申请记录")
 	@Test
 	public void myApplyRecord() {
-
+		//1-1.查询登录用户下所有申请记录
+		bodyString = new HttpClient()
+				.post(getActionUrl("myApplyRecord")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
+		assertThat(ar.isSuccess(), is(true));
 	}
 }
