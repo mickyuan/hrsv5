@@ -85,8 +85,8 @@ INSERT INTO component_menu (menu_id,menu_path,user_type,menu_name,comp_id,menu_r
 INSERT INTO component_menu (menu_id,menu_path,user_type,menu_name,comp_id,menu_remark) VALUES ('1000000030', '/freeAnalysisM', '25', '自主分析管理', 'L000','el-icon-s-claim');
 INSERT INTO component_menu (menu_id,menu_path,user_type,menu_name,comp_id,menu_remark) VALUES ('1000000031', '/freeAnalysisU', '26', '自主分析操作', 'L001','el-icon-s-grid');
 
-INSERT INTO component_menu (menu_id,comp_id,menu_path,user_type,menu_name,menu_remark) VALUES ('1000000032','B000','/dataQuery','27','文件资源管理器','el-icon-files');
-INSERT INTO component_menu (menu_id,comp_id,menu_path,user_type,menu_name,menu_remark) VALUES ('1000000033','B000','/fullTextSearch','28','全文检索','el-icon-search');
+INSERT INTO component_menu (menu_id,comp_id,menu_path,user_type,menu_name,menu_remark) VALUES ('1000000032','A000','/dataQuery','27','文件资源管理器','el-icon-files');
+INSERT INTO component_menu (menu_id,comp_id,menu_path,user_type,menu_name,menu_remark) VALUES ('1000000033','A000','/fullTextSearch','28','全文检索','el-icon-search');
 INSERT INTO component_menu (menu_id,comp_id,menu_path,user_type,menu_name,menu_remark) VALUES ('1000000034','B000','/webSqlConsole','29','SQL控制台','el-icon-monitor');
 INSERT INTO component_menu (menu_id,comp_id,menu_path,user_type,menu_name,menu_remark) VALUES ('1000000035','B000','/typeLengthContrastInfo','94','类型长度对比信息','el-icon-search');
 INSERT INTO component_menu (menu_id,comp_id,menu_path,user_type,menu_name,menu_remark) VALUES ('1000000036','B000','/dataTypeContrastInfo','93','数据类型对比信息','el-icon-search');
