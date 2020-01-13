@@ -623,7 +623,7 @@ public class DataStoreAction extends BaseAction {
                 Data_store_layer_added.TableName + " where dsl_id=?", dsl_id);
         // 4.根据权限数据存储层配置ID关联查询获取数据存储层配置与数据存储层配置属性信息
         List<Map<String, Object>> layerAndAttr = Dbo.queryList("select * from "
-                + Data_store_layer_attr.TableName + " where dsl_id=?", dsl_id);
+                + Data_store_layer_attr.TableName + " where dsl_id=? order by is_file", dsl_id);
         // 5.封装数据存储层配置属性数据
         storeLayer.put("layerAndAdded", layerAndAdded);
         storeLayer.put("layerAndAttr", layerAndAttr);
