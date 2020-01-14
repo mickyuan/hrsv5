@@ -6,16 +6,14 @@ import hrds.commons.exception.AppSystemException;
 public enum Store_type {
 	/**关系型数据库<DATABASE>  */
 	DATABASE("1","关系型数据库","59","存储层类型"),
-	/**hive<HIVE>  */
-	HIVE("2","hive","59","存储层类型"),
 	/**Hbase<HBASE>  */
-	HBASE("3","Hbase","59","存储层类型"),
+	HBASE("2","Hbase","59","存储层类型"),
 	/**solr<SOLR>  */
-	SOLR("4","solr","59","存储层类型"),
+	SOLR("3","solr","59","存储层类型"),
 	/**ElasticSearch<ElasticSearch>  */
-	ElasticSearch("5","ElasticSearch","59","存储层类型"),
+	ElasticSearch("4","ElasticSearch","59","存储层类型"),
 	/**mongodb<MONGODB>  */
-	MONGODB("6","mongodb","59","存储层类型");
+	MONGODB("5","mongodb","59","存储层类型");
 
 	private final String code;
 	private final String value;

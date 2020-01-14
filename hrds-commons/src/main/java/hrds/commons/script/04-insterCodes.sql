@@ -11,14 +11,13 @@ INSERT INTO CODE_INFO  VALUES ('1', '58', '权限类型', '允许', 'AuthType');
 INSERT INTO CODE_INFO  VALUES ('2', '58', '权限类型', '不允许', 'AuthType');
 INSERT INTO CODE_INFO  VALUES ('3', '58', '权限类型', '一次', 'AuthType');
 INSERT INTO CODE_INFO  VALUES ('0', '58', '权限类型', '申请', 'AuthType');
---　本引用值的代码个数:6 -------i==3
+--　本引用值的代码个数:5 -------i==3
 delete from code_info where ci_sp_class='59';
 INSERT INTO CODE_INFO  VALUES ('1', '59', '存储层类型', '关系型数据库', 'Store_type');
-INSERT INTO CODE_INFO  VALUES ('2', '59', '存储层类型', 'hive', 'Store_type');
-INSERT INTO CODE_INFO  VALUES ('3', '59', '存储层类型', 'Hbase', 'Store_type');
-INSERT INTO CODE_INFO  VALUES ('4', '59', '存储层类型', 'solr', 'Store_type');
-INSERT INTO CODE_INFO  VALUES ('5', '59', '存储层类型', 'ElasticSearch', 'Store_type');
-INSERT INTO CODE_INFO  VALUES ('6', '59', '存储层类型', 'mongodb', 'Store_type');
+INSERT INTO CODE_INFO  VALUES ('2', '59', '存储层类型', 'Hbase', 'Store_type');
+INSERT INTO CODE_INFO  VALUES ('3', '59', '存储层类型', 'solr', 'Store_type');
+INSERT INTO CODE_INFO  VALUES ('4', '59', '存储层类型', 'ElasticSearch', 'Store_type');
+INSERT INTO CODE_INFO  VALUES ('5', '59', '存储层类型', 'mongodb', 'Store_type');
 --　本引用值的代码个数:12 -------i==4
 delete from code_info where ci_sp_class='60';
 INSERT INTO CODE_INFO  VALUES ('1001', '60', '文件类型', '全部文件', 'FileType');
@@ -200,7 +199,7 @@ INSERT INTO CODE_INFO  VALUES ('2', '35', 'Agent类别', '文件系统Agent', 'A
 INSERT INTO CODE_INFO  VALUES ('3', '35', 'Agent类别', 'FtpAgent', 'AgentType');
 INSERT INTO CODE_INFO  VALUES ('4', '35', 'Agent类别', '数据文件Agent', 'AgentType');
 INSERT INTO CODE_INFO  VALUES ('5', '35', 'Agent类别', '对象Agent', 'AgentType');
---　本引用值的代码个数:13 -------i==26
+--　本引用值的代码个数:14 -------i==26
 delete from code_info where ci_sp_class='36';
 INSERT INTO CODE_INFO  VALUES ('01', '36', '数据库类型', 'MYSQL', 'DatabaseType');
 INSERT INTO CODE_INFO  VALUES ('02', '36', '数据库类型', 'Oracle9i及一下', 'DatabaseType');
@@ -215,6 +214,7 @@ INSERT INTO CODE_INFO  VALUES ('10', '36', '数据库类型', 'ApacheDerby', 'Da
 INSERT INTO CODE_INFO  VALUES ('11', '36', '数据库类型', 'Postgresql', 'DatabaseType');
 INSERT INTO CODE_INFO  VALUES ('12', '36', '数据库类型', 'GBase', 'DatabaseType');
 INSERT INTO CODE_INFO  VALUES ('13', '36', '数据库类型', 'TeraData', 'DatabaseType');
+INSERT INTO CODE_INFO  VALUES ('14', '36', '数据库类型', 'hive', 'DatabaseType');
 --　本引用值的代码个数:3 -------i==27
 delete from code_info where ci_sp_class='37';
 INSERT INTO CODE_INFO  VALUES ('1', '37', '启动方式', '按时启动', 'ExecuteWay');
