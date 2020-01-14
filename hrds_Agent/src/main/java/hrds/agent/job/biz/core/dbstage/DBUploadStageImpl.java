@@ -72,10 +72,6 @@ public class DBUploadStageImpl extends AbstractJobStage {
 				//根据存储类型上传到目的地
 				if (Store_type.DATABASE.getCode().equals(dataStoreConfBean.getStore_type())) {
 					//数据库类型
-					executor = Executors.newFixedThreadPool(5);
-					exeBatch(dataStoreConfBean, executor, count, stageParamInfo.getFileArr(),
-							stageParamInfo.getTableBean());
-				} else if (Store_type.HIVE.getCode().equals(dataStoreConfBean.getStore_type())) {
 					if (IsFlag.Shi.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
 						//有hadoop客户端，通过直接上传hdfs，映射外部表的方式进hive
 						execHDFSShell(dataStoreConfBean, stageParamInfo.getFileArr());
@@ -87,7 +83,19 @@ public class DBUploadStageImpl extends AbstractJobStage {
 					} else {
 						throw new AppSystemException("错误的是否标识");
 					}
-				} else if (Store_type.HBASE.getCode().equals(dataStoreConfBean.getStore_type())) {
+				} /*else if (Store_type.HIVE.getCode().equals(dataStoreConfBean.getStore_type())) {
+					if (IsFlag.Shi.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
+						//有hadoop客户端，通过直接上传hdfs，映射外部表的方式进hive
+						execHDFSShell(dataStoreConfBean, stageParamInfo.getFileArr());
+					} else if (IsFlag.Fou.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
+						//没有hadoop客户端
+						executor = Executors.newFixedThreadPool(5);
+						exeBatch(dataStoreConfBean, executor, count, stageParamInfo.getFileArr(),
+								stageParamInfo.getTableBean());
+					} else {
+						throw new AppSystemException("错误的是否标识");
+					}
+				}*/ else if (Store_type.HBASE.getCode().equals(dataStoreConfBean.getStore_type())) {
 
 				} else if (Store_type.SOLR.getCode().equals(dataStoreConfBean.getStore_type())) {
 

@@ -90,7 +90,9 @@ public class ConnectionTool {
 			return Dbtype.GBASE;
 		} else if (typeConstant == DatabaseType.TeraData) {
 			return Dbtype.TERADATA;
-		} else {
+		} else if(typeConstant == DatabaseType.Hive){
+			return Dbtype.HIVE;
+		}else {
 			throw new AppSystemException("系统不支持该数据库类型");
 		}
 	}

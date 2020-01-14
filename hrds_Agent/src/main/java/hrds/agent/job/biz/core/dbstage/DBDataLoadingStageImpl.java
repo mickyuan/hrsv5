@@ -53,9 +53,21 @@ public class DBDataLoadingStageImpl extends AbstractJobStage {
 			for (DataStoreConfBean dataStoreConfBean : dataStoreConfBeanList) {
 				//根据存储类型上传到目的地
 				if (Store_type.DATABASE.getCode().equals(dataStoreConfBean.getStore_type())) {
-					//数据库类型在upload时已经装载数据了，直接跳过
-					continue;
-				} else if (Store_type.HIVE.getCode().equals(dataStoreConfBean.getStore_type())) {
+					//hive库有两种情况，有客户端和没有客户端
+					if (IsFlag.Shi.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
+						//有客户端
+						String todayTableName = collectTableBean.getHbase_name() + "_" + collectTableBean.getEtlDate();
+						String hdfsFilePath = DBUploadStageImpl.getUploadHdfsPath(collectTableBean);
+						//通过load方式加载数据到hive
+						createTableLoadData(todayTableName, hdfsFilePath, dataStoreConfBean,
+								stageParamInfo.getTableBean());
+					} else if (IsFlag.Fou.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
+						//没有客户端，则表示为数据库类型在upload时已经装载数据了，直接跳过
+						continue;
+					} else {
+						throw new AppSystemException("错误的是否标识");
+					}
+				} /*else if (Store_type.HIVE.getCode().equals(dataStoreConfBean.getStore_type())) {
 					//hive库有两种情况，有客户端和没有客户端
 					if (IsFlag.Shi.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
 						//有客户端
@@ -70,7 +82,7 @@ public class DBDataLoadingStageImpl extends AbstractJobStage {
 					} else {
 						throw new AppSystemException("错误的是否标识");
 					}
-				} else if (Store_type.HBASE.getCode().equals(dataStoreConfBean.getStore_type())) {
+				}*/ else if (Store_type.HBASE.getCode().equals(dataStoreConfBean.getStore_type())) {
 
 				} else if (Store_type.SOLR.getCode().equals(dataStoreConfBean.getStore_type())) {
 

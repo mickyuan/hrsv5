@@ -559,7 +559,7 @@ public class DataStoreActionTest extends WebBaseTestCase {
         String bodyString = new HttpClient()
                 .reset(SubmitMediaType.MULTIPART)
                 .addData("dsl_name", "addDataStore1")
-                .addData("store_type", Store_type.HIVE.getCode())
+                .addData("store_type", Store_type.DATABASE.getCode())
                 .addData("dsl_remark", "新增数据存储层配置信息")
                 .addData("dsla_storelayer", new String[]{StoreLayerAdded.ZhuJian.getCode(),
                         StoreLayerAdded.SuoYinLie.getCode()})
@@ -579,7 +579,7 @@ public class DataStoreActionTest extends WebBaseTestCase {
             Data_store_layer dataStoreLayer = SqlOperator.queryOneObject(db, Data_store_layer.class,
                     "select * from " + Data_store_layer.TableName + " where dsl_name=?",
                     "addDataStore1").orElseThrow(() -> new BusinessException("sql查询错误"));
-            assertThat(Store_type.HIVE.getCode(), is(dataStoreLayer.getStore_type()));
+            assertThat(Store_type.DATABASE.getCode(), is(dataStoreLayer.getStore_type()));
             assertThat("新增数据存储层配置信息", is(dataStoreLayer.getDsl_remark()));
             assertThat(IsFlag.Shi.getCode(), is(dataStoreLayer.getIs_hadoopclient()));
             List<Data_store_layer_added> layerAddeds = SqlOperator.queryList(db, Data_store_layer_added.class,
