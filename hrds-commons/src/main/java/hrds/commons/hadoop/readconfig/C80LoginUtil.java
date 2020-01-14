@@ -9,6 +9,7 @@ import java.util.Map;
 import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.AppConfigurationEntry.LoginModuleControlFlag;
 
+import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.PropertyParaValue;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -90,7 +91,9 @@ public class C80LoginUtil {
 	public static String PATH_TO_JAAS;
 
 	public synchronized static Configuration login(Configuration conf) throws IOException {
-
+		if (conf == null) {
+			throw new AppSystemException("初始化配置为空！");
+		}
 		confDir = System.getProperty("user.dir") + File.separator + "conf" + File.separator;
 		PATH_TO_KEYTAB = confDir + "user.keytab";
 		PATH_TO_KRB5_CONF = confDir + "krb5.conf";
@@ -111,19 +114,14 @@ public class C80LoginUtil {
 			throw new IOException("input userPrincipal is invalid.");
 		}
 
-		if ((userKeytabPath == null) || (userKeytabPath.length() <= 0)) {
+		if (userKeytabPath.length() <= 0) {
 			log.error("input userKeytabPath is invalid.");
 			throw new IOException("input userKeytabPath is invalid.");
 		}
 
-		if ((krb5ConfPath == null) || (krb5ConfPath.length() <= 0)) {
+		if (krb5ConfPath.length() <= 0) {
 			log.error("input krb5ConfPath is invalid.");
 			throw new IOException("input krb5ConfPath is invalid.");
-		}
-
-		if ((conf == null)) {
-			log.error("input conf is invalid.");
-			throw new IOException("input conf is invalid.");
 		}
 
 		// 2.check file exsits

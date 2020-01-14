@@ -149,13 +149,8 @@ public class LoginUtil {
 	 * username
 	 */
 	public Configuration authentication(Configuration conf) throws IOException {
-
-		// security mode
-		//		if( "kerberos".equalsIgnoreCase(conf.get("hadoop.security.authentication")) ) {
-		if (true) {
-			System.setProperty("java.security.krb5.conf", PATH_TO_KRB5_CONF);
-			login(PRNCIPAL_NAME, PATH_TO_KEYTAB, PATH_TO_KRB5_CONF, conf);
-		}
+		System.setProperty("java.security.krb5.conf", PATH_TO_KRB5_CONF);
+		login(PRNCIPAL_NAME, PATH_TO_KEYTAB, PATH_TO_KRB5_CONF, conf);
 		return conf;
 	}
 

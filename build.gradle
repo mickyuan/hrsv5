@@ -98,6 +98,7 @@ subprojects {
         compile group: 'net.sourceforge.jchardet', name: 'jchardet', version: '1.0'
         compile group: 'mysql', name: 'mysql-connector-java', version: '5.1.31'
         compile group: 'it.uniroma1.dis.wsngroup.gexf4j', name: 'gexf4j', version: '1.0.0'
+        compile group: 'org.apache.hive', name: 'hive-jdbc', version: '1.1.0'
 
 
         testCompile fileTree(dir: "$rootDir/libs/testcase", include: ['*.jar'])

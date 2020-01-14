@@ -33,7 +33,11 @@ public class ConnectionTool {
 		dbInfo.setPassword(dbConfigBean.getDatabase_pad());
 		dbInfo.setWay(ConnWay.JDBC);
 		//2、获取数据库类型
-		dbInfo.setDbtype(getDbType(dbConfigBean.getDatabase_type()));
+		Dbtype dbType = getDbType(dbConfigBean.getDatabase_type());
+		dbInfo.setDbtype(dbType);
+		if (dbType.equals(Dbtype.HIVE)) {
+			dbInfo.setAutoCommit(false);
+		}
 		dbInfo.setShow_conn_time(true);
 		dbInfo.setShow_sql(true);
 		//3、根据数据库类型获取对应数据库的数据库连接
@@ -50,7 +54,11 @@ public class ConnectionTool {
 		dbInfo.setPassword(dbConfig.get("database_pad"));
 		dbInfo.setWay(ConnWay.JDBC);
 		//2、获取数据库类型
-		dbInfo.setDbtype(getDbType(dbConfig.get("database_type")));
+		Dbtype dbType = getDbType(dbConfig.get("database_type"));
+		if (dbType.equals(Dbtype.HIVE)) {
+			dbInfo.setAutoCommit(false);
+		}
+		dbInfo.setDbtype(dbType);
 		dbInfo.setShow_conn_time(true);
 		dbInfo.setShow_sql(true);
 		//3、根据数据库类型获取对应数据库的数据库连接
@@ -90,9 +98,9 @@ public class ConnectionTool {
 			return Dbtype.GBASE;
 		} else if (typeConstant == DatabaseType.TeraData) {
 			return Dbtype.TERADATA;
-		} else if(typeConstant == DatabaseType.Hive){
+		} else if (typeConstant == DatabaseType.Hive) {
 			return Dbtype.HIVE;
-		}else {
+		} else {
 			throw new AppSystemException("系统不支持该数据库类型");
 		}
 	}

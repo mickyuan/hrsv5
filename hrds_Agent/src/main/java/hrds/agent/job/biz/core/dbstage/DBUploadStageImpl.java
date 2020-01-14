@@ -136,6 +136,8 @@ public class DBUploadStageImpl extends AbstractJobStage {
 			try (HdfsOperator operator = new HdfsOperator(FileNameUtils.normalize(Constant.STORECONFIGPATH
 					+ dataStoreConfBean.getDsl_name() + File.separator, true),
 					dataStoreConfBean.getData_store_connect_attr().get("hadoop_user_name"))) {
+//				System.setProperty("HADOOP_USER_NAME",dataStoreConfBean.getData_store_connect_attr().get("hadoop_user_name"));
+//				System.out.println(System.getProperty("HADOOP_USER_NAME"));
 				//创建hdfs表的文件夹
 				if (!operator.exists(hdfsPath)) {
 					if (!operator.mkdir(hdfsPath)) {
@@ -144,7 +146,7 @@ public class DBUploadStageImpl extends AbstractJobStage {
 				}
 				for (String localFilePath : localFiles) {
 					LOGGER.info("开始上传文件到hdfs");
-					if (!operator.copy(localFilePath, hdfsPath, true)) {
+					if (!operator.upLoad(localFilePath, hdfsPath, true)) {
 						throw new AppSystemException("上传文件" + localFilePath + "到hdfs文件夹" + hdfsPath + "失败");
 					}
 					LOGGER.info("上传文件" + localFilePath + "到hdfs文件夹" + hdfsPath + "结束");

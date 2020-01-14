@@ -6,6 +6,7 @@ import java.util.List;
 
 import hrds.commons.exception.BusinessException;
 import hrds.commons.hadoop.readconfig.ConfigReader;
+import hrds.commons.utils.PropertyParaUtil;
 import hrds.commons.utils.PropertyParaValue;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
@@ -61,19 +62,19 @@ public class ConfigurationUtil {
 	 */
 	public static String syncIndexerCommand(String indexerName, String xmlPath) {
 		// 当前平台 ：开源或FI
-
+		String platform = PropertyParaValue.getString("platform", "normal");
 		String command = "";
 		// FI
-		if (ConfigReader.platform.equals(ConfigReader.PlatformType.fic60.toString())
-				|| ConfigReader.platform.equals(ConfigReader.PlatformType.fic60.toString())) {
+		if (platform.equals(ConfigReader.PlatformType.fic60.toString())
+				|| platform.equals(ConfigReader.PlatformType.fic60.toString())) {
 
 			command = "bash hbase-indexer batch-indexer --hbase-indexer-zk %s --hbase-indexer-name %s "
 					+ "--hbase-indexer-file %s --output-dir hdfs://hacluster/tmp/solr --go-live "
 					+ "--overwrite-output-dir -v --reducers 3 --zk-host %s";
 			command = String.format(command, ZKHOST, indexerName, xmlPath, ZKHOST + "/solr");
 			// cdh
-		} else if (ConfigReader.platform.equals(ConfigReader.PlatformType.normal.toString())
-				|| ConfigReader.platform.equals(ConfigReader.PlatformType.cdh5_13.toString())) {
+		} else if (platform.equals(ConfigReader.PlatformType.normal.toString())
+				|| platform.equals(ConfigReader.PlatformType.cdh5_13.toString())) {
 
 			// 因为web这边和agent这边的lib包的相对路径不同，所以要找一下
 			String syncJarPath = "";

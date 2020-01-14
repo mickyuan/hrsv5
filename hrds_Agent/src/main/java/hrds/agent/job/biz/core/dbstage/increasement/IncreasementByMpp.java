@@ -26,7 +26,7 @@ public class IncreasementByMpp extends JDBCIncreasement {
 	 */
 	public void calculateIncrement() {
 		//1.为了防止第一次执行，yesterdayTableName表不存在，创建空表
-		createTableIfNotExists(yesterdayTableName, db, columns, types, sqlList);
+		sqlList.add(createTableIfNotExists(yesterdayTableName, db, columns, types));
 		//2、创建增量临时表
 		getCreateDeltaSql();
 		//3、把今天的卸载数据映射成一个表，这里在上传数据的时候加载到了todayTableName这张表。
@@ -105,6 +105,27 @@ public class IncreasementByMpp extends JDBCIncreasement {
 		sqlList.add(deleteDatasql.toString());
 	}
 
+	private void insertAppendData() {
+		StringBuilder insertDataSql = new StringBuilder(120);
+		//拼接查找增量并插入增量表
+		insertDataSql.append("INSERT INTO ");
+		insertDataSql.append(yesterdayTableName);
+		insertDataSql.append("(");
+		for (String col : columns) {
+			insertDataSql.append(col).append(",");
+		}
+		insertDataSql.deleteCharAt(insertDataSql.length() - 1);
+		insertDataSql.append(" ) ");
+		insertDataSql.append(" select ");
+		for (String col : columns) {
+			insertDataSql.append(todayTableName).append(".").append(col).append(",");
+		}
+		insertDataSql.deleteCharAt(insertDataSql.length() - 1);
+		insertDataSql.append(" from ");
+		insertDataSql.append(todayTableName);
+		sqlList.add(insertDataSql.toString());
+	}
+
 	/**
 	 * 调用insertData的sql，在增量表中插入增量数据
 	 */
@@ -162,6 +183,24 @@ public class IncreasementByMpp extends JDBCIncreasement {
 			logger.error("根据临时表对mpp表做增量操作时发生错误！！", e);
 			throw new AppSystemException("根据临时表对mpp表做增量操作时发生错误！！", e);
 		}
+	}
+
+	/**
+	 * 追加
+	 */
+	public void append() {
+		//1.为了防止第一次执行，yesterdayTableName表不存在，创建空表
+		createTableIfNotExists(yesterdayTableName, db, columns, types);
+		//2.恢复今天的数据，防止重跑
+		restoreAppendData();
+		//3.插入今天新增的数据
+		insertAppendData();
+		//4.执行sql
+		executeSql(sqlList, db);
+	}
+
+	private void restoreAppendData() {
+		sqlList.add("DELETE FROM " + yesterdayTableName + " WHERE " + Constant.SDATENAME + "='" + sysDate + "'");
 	}
 
 	private String insertInvalidDataSql(String tmpDelTa) {

@@ -57,24 +57,19 @@ public class DBCalIncrementStageImpl extends AbstractJobStage {
 							dataStoreConfBean.getData_store_connect_attr())) {
 						if (StorageType.ZengLiang.getCode().equals(collectTableBean.getStorage_type())) {
 							//数据库类型的做增量目前分为两种，一种是传统数据库，另一种是hive库（hive库不支持update）
-							if (Dbtype.HIVE.equals(db.getDbtype())) {
-								increasement = new IncreasementBySpark(tableBean, collectTableBean.getHbase_name(),
-										collectTableBean.getEtlDate(), db, dataStoreConfBean.getDsl_name());
-							} else {
-								increasement = new IncreasementByMpp(tableBean, collectTableBean.getHbase_name(),
-										collectTableBean.getEtlDate(), db, dataStoreConfBean.getDsl_name());
-							}
+							increasement = getJdbcIncreasement(tableBean, collectTableBean.getHbase_name(),
+									collectTableBean.getEtlDate(), db, dataStoreConfBean.getDsl_name());
 							//计算增量
 							increasement.calculateIncrement();
 							//合并增量表
 							increasement.mergeIncrement();
 						} else if (StorageType.ZhuiJia.getCode().equals(collectTableBean.getStorage_type())) {
-							increasement = new IncreasementByMpp(tableBean, collectTableBean.getHbase_name(),
+							increasement = getJdbcIncreasement(tableBean, collectTableBean.getHbase_name(),
 									collectTableBean.getEtlDate(), db, dataStoreConfBean.getDsl_name());
 							//追加
 							increasement.append();
 						} else if (StorageType.TiHuan.getCode().equals(collectTableBean.getStorage_type())) {
-							increasement = new IncreasementByMpp(tableBean, collectTableBean.getHbase_name(),
+							increasement = getJdbcIncreasement(tableBean, collectTableBean.getHbase_name(),
 									collectTableBean.getEtlDate(), db, dataStoreConfBean.getDsl_name());
 							//替换
 							increasement.replace();
@@ -107,8 +102,30 @@ public class DBCalIncrementStageImpl extends AbstractJobStage {
 		return stageParamInfo;
 	}
 
+	/**
+	 * 数据库类型的做增量目前分为两种，一种是传统数据库，另一种是hive库（hive库不支持update）
+	 * 根据数据库类型获取执行数据增量、追加、替换的程序
+	 *
+	 * @param tableBean  表结构
+	 * @param hbase_name 表名
+	 * @param etlDate    跑批日期
+	 * @param db         数据库连接
+	 * @param dsl_name   数据目的地名称
+	 * @return 增量算法接口
+	 */
+	private JDBCIncreasement getJdbcIncreasement(TableBean tableBean, String hbase_name, String etlDate,
+	                                             DatabaseWrapper db, String dsl_name) {
+		JDBCIncreasement increasement;
+		if (Dbtype.HIVE.equals(db.getDbtype())) {
+			increasement = new IncreasementBySpark(tableBean, hbase_name, etlDate, db, dsl_name);
+		} else {
+			increasement = new IncreasementByMpp(tableBean, hbase_name, etlDate, db, dsl_name);
+		}
+		return increasement;
+	}
+
 	@Override
-	public int getStageCode(){
+	public int getStageCode() {
 		return StageConstant.CALINCREMENT.getCode();
 	}
 }

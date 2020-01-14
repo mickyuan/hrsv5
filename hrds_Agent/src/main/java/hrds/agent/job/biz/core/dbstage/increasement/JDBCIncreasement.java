@@ -8,7 +8,6 @@ import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.core.dbstage.service.CollectTableHandleParse;
 import hrds.agent.job.biz.utils.DataTypeTransform;
 import hrds.commons.exception.AppSystemException;
-import hrds.commons.utils.Constant;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -70,8 +69,7 @@ public abstract class JDBCIncreasement implements Closeable {
 	/**
 	 * 创建表，如果表不存在
 	 */
-	void createTableIfNotExists(String tableName, DatabaseWrapper db, List<String> columns, List<String> types,
-	                            List<String> sqlList) {
+	String createTableIfNotExists(String tableName, DatabaseWrapper db, List<String> columns, List<String> types) {
 		StringBuilder create = new StringBuilder(1024);
 		if (Dbtype.ORACLE.equals(db.getDbtype())) {
 			//如果有数据则表明该表存在，创建表
@@ -91,7 +89,9 @@ public abstract class JDBCIncreasement implements Closeable {
 			//将最后的逗号删除
 			create.deleteCharAt(create.length() - 1);
 			create.append(")");
-			sqlList.add(create.toString());
+			return create.toString();
+		} else {
+			return "";
 		}
 	}
 
@@ -123,6 +123,14 @@ public abstract class JDBCIncreasement implements Closeable {
 		}
 	}
 
+	/**
+	 * 执行sql
+	 */
+	public static void executeSql(String sql, DatabaseWrapper db) {
+		logger.info("执行的sql为： " + sql);
+		db.execute(sql);
+	}
+
 	@Override
 	public void close() {
 		dropAllTmpTable();
@@ -145,41 +153,7 @@ public abstract class JDBCIncreasement implements Closeable {
 	/**
 	 * 追加
 	 */
-	public void append() {
-		//1.为了防止第一次执行，yesterdayTableName表不存在，创建空表
-		createTableIfNotExists(yesterdayTableName, db, columns, types, sqlList);
-		//2.恢复今天的数据，防止重跑
-		restoreAppendData();
-		//3.插入今天新增的数据
-		insertAppendData();
-		//4.执行sql
-		executeSql(sqlList, db);
-	}
-
-	private void insertAppendData() {
-		StringBuilder insertDataSql = new StringBuilder(120);
-		//拼接查找增量并插入增量表
-		insertDataSql.append("INSERT INTO ");
-		insertDataSql.append(yesterdayTableName);
-		insertDataSql.append("(");
-		for (String col : columns) {
-			insertDataSql.append(col).append(",");
-		}
-		insertDataSql.deleteCharAt(insertDataSql.length() - 1);
-		insertDataSql.append(" ) ");
-		insertDataSql.append(" select ");
-		for (String col : columns) {
-			insertDataSql.append(todayTableName).append(".").append(col).append(",");
-		}
-		insertDataSql.deleteCharAt(insertDataSql.length() - 1);
-		insertDataSql.append(" from ");
-		insertDataSql.append(todayTableName);
-		sqlList.add(insertDataSql.toString());
-	}
-
-	private void restoreAppendData() {
-		sqlList.add("DELETE FROM " + yesterdayTableName + " WHERE " + Constant.SDATENAME + "='" + sysDate + "'");
-	}
+	public abstract void append();
 
 	/**
 	 * 替换

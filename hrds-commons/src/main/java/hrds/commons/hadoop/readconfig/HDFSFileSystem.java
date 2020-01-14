@@ -3,7 +3,6 @@ package hrds.commons.hadoop.readconfig;
 
 import fd.ng.core.utils.StringUtil;
 import hrds.commons.exception.BusinessException;
-import hrds.commons.utils.PropertyParaValue;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -27,14 +26,16 @@ public class HDFSFileSystem {
 	}
 
 	public HDFSFileSystem(String configPath) {
+		this(configPath, ConfigReader.PlatformType.normal.toString());
+	}
 
+	public HDFSFileSystem(String configPath, String platform) {
 		try {
-			if (PropertyParaValue.getString("platform", "normal").equals(ConfigReader.PlatformType.normal.toString())) {
-
-				conf = ConfigReader.getConfiguration();
+			if (ConfigReader.PlatformType.normal.toString().equals(platform)) {
+				conf = ConfigReader.getConfiguration(configPath);
 				fileSystem = FileSystem.get(conf);
 				log.info("normal FileSystem inited ");
-			} else if (PropertyParaValue.getString("platform", "normal").equals(ConfigReader.PlatformType.cdh5_13.toString())) {
+			} else if (ConfigReader.PlatformType.cdh5_13.toString().equals(platform)) {
 				LoginUtil lg;
 				if (StringUtil.isEmpty(configPath)) {
 					lg = new LoginUtil();
@@ -45,12 +46,12 @@ public class HDFSFileSystem {
 				conf = lg.authentication(conf);
 				fileSystem = FileSystem.get(conf);
 				log.info("cdh5_13 FileSystem inited ");
-			} else if (PropertyParaValue.getString("platform", "normal").equals(ConfigReader.PlatformType.fic50.toString())) {
+			} else if (ConfigReader.PlatformType.fic50.toString().equals(platform)) {
 				conf = SecurityUtils.confLoad(conf);
 				conf = SecurityUtils.authentication(conf);
 				fileSystem = FileSystem.get(conf);
 				log.info("fi FileSystem inited ");
-			} else if (PropertyParaValue.getString("platform", "normal").equals(ConfigReader.PlatformType.fic80.toString())) {
+			} else if (ConfigReader.PlatformType.fic80.toString().equals(platform)) {
 				LoginUtil lg;
 				if (StringUtil.isEmpty(configPath)) {
 					lg = new LoginUtil();
@@ -61,7 +62,7 @@ public class HDFSFileSystem {
 				conf = lg.authentication(conf);
 				fileSystem = FileSystem.get(conf);
 				log.info("fic60 FileSystem inited ");
-			} else if (PropertyParaValue.getString("platform", "normal").equals(ConfigReader.PlatformType.fic60.toString())) {
+			} else if (ConfigReader.PlatformType.fic60.toString().equals(platform)) {
 				LoginUtil lg;
 				if (StringUtil.isEmpty(configPath)) {
 					lg = new LoginUtil();

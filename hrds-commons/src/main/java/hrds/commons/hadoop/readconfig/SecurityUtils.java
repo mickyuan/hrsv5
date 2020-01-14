@@ -1,5 +1,6 @@
 package hrds.commons.hadoop.readconfig;
 
+import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.PropertyParaValue;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -83,7 +84,9 @@ public class SecurityUtils {
 	 * @throws Exception
 	 */
 	public static Configuration HBaselogin(Configuration conf, String keytabFileName, String principalName) throws Exception {
-
+		if (conf == null) {
+			throw new AppSystemException("初始化配置为空！");
+		}
 		if (User.isHBaseSecurityEnabled(conf)) {
 			log.info("Start to login HBase...");
 			String confDirPath = System.getProperty("user.dir") + File.separator + "conf" + File.separator;
@@ -108,7 +111,9 @@ public class SecurityUtils {
 	 * kerberos security authentication
 	 */
 	public static Configuration authentication(Configuration conf) throws IOException {
-
+		if (conf == null) {
+			throw new AppSystemException("input conf is invalid.");
+		}
 		// security mode
 		if ("kerberos".equalsIgnoreCase(conf.get("hadoop.security.authentication"))) {
 

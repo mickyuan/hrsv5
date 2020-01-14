@@ -1,5 +1,6 @@
 package hrds.commons.hadoop.readconfig;
 
+import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.PropertyParaValue;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -11,8 +12,8 @@ import java.io.IOException;
 
 /**
  * CDH User Authentication
- * @author BY-HLL
  *
+ * @author BY-HLL
  */
 public class CDHLoginUtil {
 
@@ -36,25 +37,28 @@ public class CDHLoginUtil {
 	public static String PATH_TO_KEYTAB;
 	public static String PATH_TO_KRB5_CONF;
 	public static String PATH_TO_JAAS;
-	
+
 	public static void main(String[] args) {
 		try {
 			CDHLoginUtil.login(ConfigReader.getConfiguration());
-			
-		}
-		catch(IOException e) {
+
+		} catch (IOException e) {
 			log.info("Auth failed");
 			e.printStackTrace();
 		}
 	}
+
 	/**
 	 * 读取配置文件并认证
+	 *
 	 * @param conf 配置文件
-	 * @return 
+	 * @return
 	 * @throws IOException
 	 */
 	public synchronized static Configuration login(Configuration conf) throws IOException {
-
+		if (conf == null) {
+			throw new AppSystemException("初始化配置为空！");
+		}
 		confDir = System.getProperty("user.dir") + File.separator + "conf" + File.separator;
 		PATH_TO_KEYTAB = confDir + "user.keytab";
 		PATH_TO_KRB5_CONF = confDir + "krb5.conf";
@@ -65,39 +69,34 @@ public class CDHLoginUtil {
 		String krb5ConfPath = PATH_TO_KRB5_CONF;
 
 		// 1.check input parameters
-		if( (userPrincipal == null) || (userPrincipal.length() <= 0) ) {
+		if ((userPrincipal == null) || (userPrincipal.length() <= 0)) {
 			log.error("input userPrincipal is invalid.");
 			throw new IOException("input userPrincipal is invalid.");
 		}
-		if( (userKeytabPath == null) || (userKeytabPath.length() <= 0) ) {
+		if (userKeytabPath.length() <= 0) {
 			log.error("input userKeytabPath is invalid.");
 			throw new IOException("input userKeytabPath is invalid.");
 		}
-		if( (krb5ConfPath == null) || (krb5ConfPath.length() <= 0) ) {
+		if (krb5ConfPath.length() <= 0) {
 			log.error("input krb5ConfPath is invalid.");
 			throw new IOException("input krb5ConfPath is invalid.");
 		}
-		if( (conf == null) ) {
-			log.error("input conf is invalid.");
-			throw new IOException("input conf is invalid.");
-		}
-
 		// 2.check file exsits
 		File userKeytabFile = new File(userKeytabPath);
-		if( !userKeytabFile.exists() ) {
+		if (!userKeytabFile.exists()) {
 			log.error("userKeytabFile(" + userKeytabFile.getAbsolutePath() + ") does not exsit.");
 			throw new IOException("userKeytabFile(" + userKeytabFile.getAbsolutePath() + ") does not exsit.");
 		}
-		if( !userKeytabFile.isFile() ) {
+		if (!userKeytabFile.isFile()) {
 			log.error("userKeytabFile(" + userKeytabFile.getAbsolutePath() + ") is not a file.");
 			throw new IOException("userKeytabFile(" + userKeytabFile.getAbsolutePath() + ") is not a file.");
 		}
 		File krb5ConfFile = new File(krb5ConfPath);
-		if( !krb5ConfFile.exists() ) {
+		if (!krb5ConfFile.exists()) {
 			log.error("krb5ConfFile(" + krb5ConfFile.getAbsolutePath() + ") does not exsit.");
 			throw new IOException("krb5ConfFile(" + krb5ConfFile.getAbsolutePath() + ") does not exsit.");
 		}
-		if( !krb5ConfFile.isFile() ) {
+		if (!krb5ConfFile.isFile()) {
 			log.error("krb5ConfFile(" + krb5ConfFile.getAbsolutePath() + ") is not a file.");
 			throw new IOException("krb5ConfFile(" + krb5ConfFile.getAbsolutePath() + ") is not a file.");
 		}
@@ -113,34 +112,33 @@ public class CDHLoginUtil {
 
 		// 4.login and check for hadoop
 		loginHadoop(userPrincipal, userKeytabFile.getAbsolutePath());
-		log.info( "Login success!!!!!!!!!!!!!!");
+		log.info("Login success!!!!!!!!!!!!!!");
 		return conf;
 	}
-	
+
 	private static void setConfiguration(Configuration conf) throws IOException {
 		UserGroupInformation.setConfiguration(conf);
 	}
-	
+
 	public static void setKrb5Config(String krb5ConfFile) throws IOException {
 
 		System.setProperty(JAVA_SECURITY_KRB5_CONF_KEY, krb5ConfFile);
 		String ret = System.getProperty(JAVA_SECURITY_KRB5_CONF_KEY);
-		if( ret == null ) {
+		if (ret == null) {
 			log.error(JAVA_SECURITY_KRB5_CONF_KEY + " is null.");
 			throw new IOException(JAVA_SECURITY_KRB5_CONF_KEY + " is null.");
 		}
-		if( !ret.equals(krb5ConfFile) ) {
+		if (!ret.equals(krb5ConfFile)) {
 			log.error(JAVA_SECURITY_KRB5_CONF_KEY + " is " + ret + " is not " + krb5ConfFile + ".");
 			throw new IOException(JAVA_SECURITY_KRB5_CONF_KEY + " is " + ret + " is not " + krb5ConfFile + ".");
 		}
 	}
-	
+
 	private static void loginHadoop(String principal, String keytabFile) throws IOException {
 
 		try {
 			UserGroupInformation.loginUserFromKeytab(principal, keytabFile);
-		}
-		catch(IOException e) {
+		} catch (IOException e) {
 			log.error("login failed with " + principal + " and " + keytabFile + ".");
 			log.error("perhaps cause 1 is " + LOGIN_FAILED_CAUSE_PASSWORD_WRONG + ".");
 			log.error("perhaps cause 2 is " + LOGIN_FAILED_CAUSE_TIME_WRONG + ".");
@@ -151,5 +149,5 @@ public class CDHLoginUtil {
 			throw e;
 		}
 	}
-	
+
 }

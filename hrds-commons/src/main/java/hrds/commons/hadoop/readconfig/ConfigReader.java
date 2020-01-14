@@ -2,8 +2,6 @@ package hrds.commons.hadoop.readconfig;
 
 import fd.ng.core.utils.StringUtil;
 import hrds.commons.exception.BusinessException;
-import hrds.commons.utils.PropertyParaUtil;
-import hrds.commons.utils.PropertyParaValue;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -18,11 +16,7 @@ public class ConfigReader {
 
 	private static Configuration conf;
 
-	public static String platform = PropertyParaUtil.getString("platform", "normal");
-
-	public static final String external_cluster = PropertyParaUtil.getString("external_cluster_platform", "normal");
-
-	public static LoginUtil lg;
+	private static LoginUtil lg;
 
 	private ConfigReader() {
 
@@ -32,8 +26,6 @@ public class ConfigReader {
 	 * load HDFS_properties to HadoopConstant
 	 */
 	public static Configuration getConfiguration() {
-
-		platform = PropertyParaUtil.getString("platform", "normal");
 		//平台验证
 		return getConfiguration(null);
 	}
@@ -42,84 +34,81 @@ public class ConfigReader {
 	 * load HDFS_properties to HadoopConstant
 	 */
 	public static Configuration getConfiguration(String configPath) {
+		return getConfiguration(configPath, PlatformType.normal.toString());
+	}
+
+	/**
+	 * load HDFS_properties to HadoopConstant
+	 */
+	public static Configuration getConfiguration(String configPath, String platform) {
 
 		try {
 			log.info("configReader  " + configPath);
 			if (StringUtil.isEmpty(configPath)) {
 				lg = new LoginUtil();
-				conf = lg.confLoad(conf);
-				//平台验证
-				return initAuth(conf);
 			} else {
 				lg = new LoginUtil(configPath);
-				conf = lg.confLoad(conf);
-				//平台验证
-				return initAuthExternal(conf);
 			}
+			conf = lg.confLoad(conf);
+			//平台验证
+			return initAuth(conf, platform);
 		} catch (Exception e) {
 			log.error("Failed to verify the platform...", e);
 			return null;
 		}
 	}
 
-	public static Configuration initAuthExternal(Configuration conf) {
+//	public static Configuration initAuthExternal(Configuration conf, String platform) {
+//
+//		log.info("initAuth external_cluster: " + external_cluster);
+//
+//		try {
+//			if (external_cluster.equals(PlatformType.normal.toString())) {
+//
+//			} else if (external_cluster.equals(PlatformType.fic50.toString())) {
+//				conf = SecurityUtils.HBaselogin(conf, "user.keytab", "admin@Hadoop");
+//				if (!SecurityUtils.Maplogin(conf)) {// Security login
+//					log.error("Login system failed");
+//				}
+//			} else if (external_cluster.equals(PlatformType.fic60.toString())) {
+//				conf = lg.hbaseLogin(conf);
+//			} else {
+//				throw new BusinessException("The platform is a wrong type ,please check the syspara table for the argument <platform>...");
+//			}
+//			return conf;
+//		} catch (Exception e) {
+//			log.error("external_cluster Failed to initAuth...", e);
+//			return null;
+//		}
+//	}
 
-		log.info("initAuth external_cluster: " + external_cluster);
-
-		try {
-			if (external_cluster.equals(PlatformType.normal.toString())) {
-			} else if (external_cluster.equals(PlatformType.fic50.toString())) {
-				conf = SecurityUtils.HBaselogin(conf, "user.keytab", "admin@Hadoop");
-				if (!SecurityUtils.Maplogin(conf)) {// Security login
-					log.error("Login system failed");
-				}
-			} else if (external_cluster.equals(PlatformType.fic60.toString())) {
-				conf = lg.hbaseLogin(conf);
-			} else {
-				throw new BusinessException("The platform is a wrong type ,please check the syspara table for the argument <platform>...");
-			}
-			return conf;
-		} catch (Exception e) {
-			log.error("external_cluster Failed to initAuth...", e);
-			return null;
-		}
-	}
-
-	public static Configuration initAuth(Configuration conf) {
-
+	private static Configuration initAuth(Configuration conf, String platform) {
 		log.info("initAuth platform: " + platform);
 		if (null == lg) {
 			lg = new LoginUtil();
 		}
-
 		try {
-			if (platform.equals(PlatformType.normal.toString())) {
-
-			} else if (platform.equals(PlatformType.cdh5_13.toString())) {
+			if (PlatformType.normal.toString().equals(platform)) {
+				log.info("Do nothing");
+			} else if (PlatformType.cdh5_13.toString().equals(platform)) {
 				conf = CDHLoginUtil.login(conf);
-			} else if (platform.equals(PlatformType.fic50.toString())) {
+			} else if (PlatformType.fic50.toString().equals(platform)) {
 				conf = SecurityUtils.HBaselogin(conf, "user.keytab", "admin@Hadoop");
 				if (!SecurityUtils.Maplogin(conf)) {// Security login
 					log.error("Login system failed");
 				}
-			} else if (platform.equals(PlatformType.fic60.toString())) {
+			} else if (PlatformType.fic60.toString().equals(platform)) {
 				conf = lg.hbaseLogin(conf);
-			} else if (platform.equals(PlatformType.fic80.toString())) {
+			} else if (PlatformType.fic80.toString().equals(platform)) {
 				conf = C80LoginUtil.login(conf);
 			} else {
-				throw new BusinessException("The platform is a wrong type ,please check the syspara table for the argument <platform>...");
+				throw new BusinessException("The platform is a wrong type ,please check <platform>...");
 			}
 			return conf;
 		} catch (Exception e) {
 			log.error("Failed to initAuth...", e);
 			return null;
 		}
-	}
-
-	public static Configuration initAuth() {
-
-		//		return initAuth(new Configuration());
-		return null;
 	}
 
 	public static void main(String[] args) {

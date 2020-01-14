@@ -28,7 +28,7 @@ public class CommandJdbcTest {
 	//前提条件，前端配置信息生成的文件，清先检查当前程序运行的根目录下的messageFile是否有对应的配置文件
 
 	/**
-	 * 测试卸数csv文件
+	 * 测试卸数csv文件batch进数据库
 	 */
 	@Test
 	public void test1() {
@@ -36,7 +36,7 @@ public class CommandJdbcTest {
 	}
 
 	/**
-	 * 测试卸数parquet文件
+	 * 测试卸数parquet文件batch进数据库
 	 */
 	@Test
 	public void test2() {
@@ -44,7 +44,7 @@ public class CommandJdbcTest {
 	}
 
 	/**
-	 * 测试卸数Orc文件
+	 * 测试卸数Orc文件batch进数据库
 	 */
 	@Test
 	public void test3() {
@@ -52,7 +52,7 @@ public class CommandJdbcTest {
 	}
 
 	/**
-	 * 测试卸数SequenceFile文件
+	 * 测试卸数SequenceFile文件batch进数据库
 	 */
 	@Test
 	public void test4() {
@@ -60,7 +60,7 @@ public class CommandJdbcTest {
 	}
 
 	/**
-	 * 测试卸数定长文件
+	 * 测试卸数定长文件batch进数据库
 	 */
 	@Test
 	public void test5() {
@@ -68,12 +68,21 @@ public class CommandJdbcTest {
 	}
 
 	/**
-	 * 测试卸数非定长文件
+	 * 测试卸数非定长文件batch进数据库
 	 */
 	@Test
 	public void test6() {
 		assertThat("执行测试卸数非定长文件成功", execute("1002234433"), is(true));
 	}
+
+	/**
+	 * 测试卸数csv文件有部署客户端，进hive库
+	 */
+	@Test
+	public void test7() {
+		assertThat("执行测试卸数csv文件进数成功", execute("1002234438"), is(true));
+	}
+
 	/**
 	 * 执行数据库采集的主程序
 	 *
@@ -98,7 +107,7 @@ public class CommandJdbcTest {
 			List<CollectTableBean> collectTableBeanList = sourceDataConfBean.getCollectTableBeanArray();
 			//此处不会有海量的任务需要执行，不会出现队列中等待的任务对象过多的OOM事件。
 			//TODO Runtime.getRuntime().availableProcessors()此处不能用这个,因为可能同时又多个数据库采集同时进行
-			executor = Executors.newFixedThreadPool(5);
+			executor = Executors.newFixedThreadPool(1);
 			List<Future<JobStatusInfo>> list = new ArrayList<>();
 			//2.校验对象的值是否正确
 			for (CollectTableBean collectTableBean : collectTableBeanList) {

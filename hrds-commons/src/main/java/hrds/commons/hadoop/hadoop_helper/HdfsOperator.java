@@ -1,17 +1,5 @@
 package hrds.commons.hadoop.hadoop_helper;
 
-import java.io.BufferedReader;
-import java.io.Closeable;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.List;
-
 import fd.ng.core.utils.StringUtil;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.hadoop.readconfig.HDFSFileSystem;
@@ -21,13 +9,14 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FSDataInputStream;
-import org.apache.hadoop.fs.FSDataOutputStream;
-import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.FileUtil;
-import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.*;
 import org.apache.hadoop.io.IOUtils;
+
+import java.io.*;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class HdfsOperator implements Closeable {
@@ -39,17 +28,11 @@ public class HdfsOperator implements Closeable {
 	private HDFSFileSystem hdfsFileSystem;
 
 	public HdfsOperator() throws IOException {
-		System.setProperty("HADOOP_USER_NAME", PropertyParaValue.getString("HADOOP_USER_NAME",
-				"hyshf"));
-		hdfsFileSystem = new HDFSFileSystem();
-		fs = hdfsFileSystem.getFileSystem();
+		this(null);
 	}
 
 	public HdfsOperator(String configPath) throws IOException {
-		System.setProperty("HADOOP_USER_NAME", PropertyParaValue.getString("HADOOP_USER_NAME",
-				"hyshf"));
-		hdfsFileSystem = new HDFSFileSystem(configPath);
-		fs = hdfsFileSystem.getFileSystem();
+		this(configPath, null);
 	}
 
 	public HdfsOperator(String configPath, String hadoop_user_name) throws IOException {

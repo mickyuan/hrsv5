@@ -118,23 +118,41 @@ public class DBDataLoadingStageImpl extends AbstractJobStage {
 	                                 DataStoreConfBean dataStoreConfBean, TableBean tableBean) {
 		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(dataStoreConfBean.getData_store_connect_attr())) {
 			List<String> sqlList = new ArrayList<>();
-			//1.创建表
+			//1.如果表已存在则删除
+			sqlList.add("DROP TABLE IF EXISTS " + todayTableName);
+			//2.创建表
 			String file_format = collectTableBean.getDbfile_format();
 			if (FileFormat.SEQUENCEFILE.getCode().equals(file_format) || FileFormat.PARQUET.getCode()
 					.equals(file_format) || FileFormat.ORC.getCode().equals(file_format)) {
 				sqlList.add(genHiveLoadColumnar(todayTableName, file_format,
 						dataStoreConfBean.getDtcs_name(), tableBean));
-			} else if (FileFormat.FeiDingChang.getCode().equals(file_format) || FileFormat.CSV.getCode()
-					.equals(file_format)) {
+			} else if (FileFormat.FeiDingChang.getCode().equals(file_format)) {
 				sqlList.add(genHiveLoad(todayTableName, tableBean, collectTableBean.getDatabase_separatorr()));
+			} else if (FileFormat.CSV.getCode().equals(file_format)) {
+				sqlList.add(genHiveLoadCsv(todayTableName, tableBean));
 			} else {
 				throw new AppSystemException("暂不支持定长或者其他类型加载到hive表");
 			}
-			//2.加载数据
+			//3.加载数据
 			sqlList.add("load data inpath '" + hdfsFilePath + "' into table " + todayTableName);
-			//3.执行sql语句
+			//4.执行sql语句
 			JDBCIncreasement.executeSql(sqlList, db);
+//			db.commit();
+		} catch (Exception e) {
+			throw new AppSystemException("执行hive加载数据的sql报错", e);
 		}
+	}
+
+	private String genHiveLoadCsv(String todayTableName, TableBean tableBean) {
+		StringBuilder sql = new StringBuilder(120);
+		List<String> columnList = StringUtil.split(tableBean.getColumnMetaInfo(), CollectTableHandleParse.STRSPLIT);
+		sql.append("CREATE TABLE IF NOT EXISTS ").append(todayTableName).append(" (");
+		for (String column : columnList) {
+			sql.append("`").append(column).append("` ").append(" string,");
+		}
+		sql.deleteCharAt(sql.length() - 1);
+		sql.append(") ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde' stored as TEXTFILE");
+		return sql.toString();
 	}
 
 	private String getColumnarFileHiveStored(String fileExtension) {
