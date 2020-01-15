@@ -3,6 +3,7 @@ package hrds.agent.job.biz.core;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Return;
+import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.JobStatusInfo;
 import hrds.agent.job.biz.bean.MetaInfoBean;
@@ -37,6 +38,8 @@ public class DataBaseJobImpl implements JobInterface {
 	public JobStatusInfo runJob() {
 		String statusFilePath = Constant.JOBINFOPATH + sourceDataConfBean.getDatabase_id()
 				+ File.separator + collectTableBean.getTable_id() + File.separator + Constant.JOBFILENAME;
+		//一开始对文件卸数分割符做转码，页面传过来时应该是Unicode编码格式
+		collectTableBean.setDatabase_separatorr(StringUtil.unicode2String(collectTableBean.getDatabase_separatorr()));
 		//JobStatusInfo对象，表示一个作业的状态
 		JobStatusInfo jobStatusInfo = JobStatusInfoUtil.getStartJobStatusInfo(statusFilePath,
 				collectTableBean.getTable_id());
@@ -96,4 +99,5 @@ public class DataBaseJobImpl implements JobInterface {
 		//多线程执行作业
 		return runJob();
 	}
+
 }
