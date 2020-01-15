@@ -18,7 +18,6 @@ import hrds.commons.entity.Column_split;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
 import org.apache.avro.file.DataFileWriter;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.ql.io.orc.OrcSerde;
@@ -122,11 +121,12 @@ public class JdbcToOrcFileWriter extends AbstractFileWriter {
 				}
 				//如果有列合并处理合并信息
 				if (!mergeIng.isEmpty()) {
-					String[] arrColString = StringUtils.split(midStringOther.toString(),
+					List<String> arrColString = StringUtil.split(midStringOther.toString(),
 							JobConstant.DATADELIMITER);
 					//字段合并
-					allClean.merge(mergeIng, arrColString, allColumnList.toArray(new String[0]), null, lineData,
-							FileFormat.ORC.getCode(), collectTableBean.getDatabase_code(), dataDelimiter);
+					allClean.merge(mergeIng, arrColString.toArray(new String[0]), allColumnList.toArray(new String[0]),
+							null, lineData, FileFormat.ORC.getCode(),
+							collectTableBean.getDatabase_code(), dataDelimiter);
 				}
 				lineData.add(eltDate);
 				//因为进数方式是表级别的，如果每张表选择了存储方式则不同目的地下的都是一样的，所以拼的字段加在卸数这里

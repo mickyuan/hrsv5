@@ -17,7 +17,6 @@ import hrds.commons.entity.Column_split;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
 import org.apache.avro.file.DataFileWriter;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.supercsv.io.CsvListWriter;
@@ -76,8 +75,8 @@ public class JdbcToCsvFileWriter extends AbstractFileWriter {
 					parseJson.get("splitIng");
 			Clean cl = new Clean(parseJson, allclean);
 			StringBuilder midStringOther = new StringBuilder(1024 * 1024);//获取所有列的值用来生成MD5值
-			List<Object> sb = new ArrayList<>(StringUtils.splitByWholeSeparatorPreserveAllTokens(tableBean.getColLengthInfo()
-					, CollectTableHandleParse.STRSPLIT).length);//用来写一行数据
+			List<Object> sb = new ArrayList<>(StringUtil.split(tableBean.getColumnMetaInfo()
+					, CollectTableHandleParse.STRSPLIT).size());//用来写一行数据
 			StringBuilder sb_ = new StringBuilder();//用来写临时数据
 			List<String> typeList = StringUtil.split(tableBean.getAllType(),
 					CollectTableHandleParse.STRSPLIT);
@@ -113,9 +112,9 @@ public class JdbcToCsvFileWriter extends AbstractFileWriter {
 				}
 				//如果有列合并处理合并信息
 				if (!mergeIng.isEmpty()) {
-					String[] arrColString = StringUtils.split(midStringOther.toString(),
+					List<String> arrColString = StringUtil.split(midStringOther.toString(),
 							JobConstant.DATADELIMITER);
-					allclean.merge(mergeIng, arrColString, allColumnList.toArray
+					allclean.merge(mergeIng, arrColString.toArray(new String[0]), allColumnList.toArray
 									(new String[0]), null, sb,
 							FileFormat.CSV.getCode(), collectTableBean.getDatabase_code(), dataDelimiter);
 				}

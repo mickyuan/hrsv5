@@ -16,7 +16,6 @@ import hrds.commons.codes.StorageType;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
 import org.apache.avro.file.DataFileWriter;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.io.NullWritable;
@@ -102,10 +101,10 @@ public class JdbcToSequenceFileWriter extends AbstractFileWriter {
 				}
 				//如果有列合并处理合并信息
 				if (!mergeIng.isEmpty()) {
-					String[] arrColString = StringUtils.split(midStringOther.toString(), JobConstant.DATADELIMITER);
-					String mer = allclean.merge(mergeIng, arrColString, allColumnList.toArray(new String[0]),
-							null, null, FileFormat.SEQUENCEFILE.getCode(),
-							collectTableBean.getDatabase_code(), dataDelimiter);
+					List<String> arrColString = StringUtil.split(midStringOther.toString(), JobConstant.DATADELIMITER);
+					String mer = allclean.merge(mergeIng, arrColString.toArray(new String[0]),
+							allColumnList.toArray(new String[0]), null, null,
+							FileFormat.SEQUENCEFILE.getCode(), collectTableBean.getDatabase_code(), dataDelimiter);
 					//字段合并
 					sb.append(mer).append(dataDelimiter);
 				}

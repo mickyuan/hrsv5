@@ -16,7 +16,6 @@ import hrds.commons.codes.StorageType;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
 import org.apache.avro.file.DataFileWriter;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -102,9 +101,9 @@ public class JdbcToNonFixedFileWriter extends AbstractFileWriter {
 				}
 				//如果有列合并处理合并信息
 				if (!mergeIng.isEmpty()) {
-					String[] arrColString = StringUtils.split(midStringOther.toString(),
+					List<String> arrColString = StringUtil.split(midStringOther.toString(),
 							JobConstant.DATADELIMITER);
-					String merge = allclean.merge(mergeIng, arrColString, allColumnList.toArray
+					String merge = allclean.merge(mergeIng, arrColString.toArray(new String[0]), allColumnList.toArray
 									(new String[0]), null, null,
 							FileFormat.FeiDingChang.getCode(), collectTableBean.getDatabase_code(), dataDelimiter);
 					sb.append(merge).append(dataDelimiter);
