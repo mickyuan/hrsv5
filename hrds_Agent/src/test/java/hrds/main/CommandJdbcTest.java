@@ -84,6 +84,45 @@ public class CommandJdbcTest {
 	}
 
 	/**
+	 * 测试卸数parquet文件有部署客户端，进hive库
+	 */
+	@Test
+	public void test8() {
+		assertThat("执行测试卸数parquet文件成功", execute("1002234439"), is(true));
+	}
+
+	/**
+	 * 测试卸数Orc文件有部署客户端，进hive库
+	 */
+	@Test
+	public void test9() {
+		assertThat("执行测试卸数Orc文件成功", execute("1002234440"), is(true));
+	}
+
+	/**
+	 * 测试卸数SequenceFile文件有部署客户端，进hive库
+	 */
+	@Test
+	public void test10() {
+		assertThat("执行测试卸数SequenceFile文件成功", execute("1002234441"), is(true));
+	}
+
+	/**
+	 * 测试卸数定长文件有部署客户端，进hive库
+	 */
+	@Test
+	public void test11() {
+		assertThat("执行测试卸数定长文件成功", execute("1002234442"), is(true));
+	}
+
+	/**
+	 * 测试卸数非定长文件有部署客户端，进hive库
+	 */
+	@Test
+	public void test12() {
+		assertThat("执行测试卸数非定长文件成功", execute("1002234443"), is(true));
+	}
+	/**
 	 * 执行数据库采集的主程序
 	 *
 	 * @param database_id 任务id

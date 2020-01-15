@@ -3,7 +3,6 @@ package hrds.agent.job.biz.utils;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.constant.DataTypeConstant;
-import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.core.dbstage.service.CollectTableHandleParse;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -38,6 +37,10 @@ public class ParquetUtil {
 			String columns_type = typeArray.get(i);
 			if (columns_type.contains(DataTypeConstant.BOOLEAN.getMessage())) {
 				sb.append("required ").append("BOOLEAN ").append(colList.get(i)).append(" ;");
+			} else if (columns_type.contains(DataTypeConstant.INT8.getMessage())
+					|| columns_type.equals(DataTypeConstant.BIGINT.getMessage())
+					|| columns_type.equals(DataTypeConstant.LONG.getMessage())) {
+				sb.append("required ").append("INT64 ").append(colList.get(i)).append(" ;");
 			} else if (columns_type.contains(DataTypeConstant.INT.getMessage())) {
 				sb.append("required ").append("INT32 ").append(colList.get(i)).append(" ;");
 			} else if (columns_type.contains(DataTypeConstant.DECIMAL.getMessage())) {

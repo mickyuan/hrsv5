@@ -8,6 +8,7 @@ import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.CollectTableColumnBean;
+import hrds.agent.job.biz.constant.DataTypeConstant;
 import hrds.agent.job.biz.core.dbstage.service.CollectTableHandleParse;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.exception.AppSystemException;
@@ -195,18 +196,24 @@ public class ColumnTool {
 
 	public static void addData2Group(Group group, String columnType, String columname, String data) {
 		//TODO 字段类型转换，这里要设计表
-//		columnType = DataTypeTransformHive.tansform(columnType.toUpperCase());
-		columnType = columnType.toUpperCase();
-		if (columnType.contains("BOOLEAN")) {
+		columnType = columnType.toLowerCase();
+		if (columnType.contains(DataTypeConstant.BOOLEAN.getMessage())) {
 			boolean dataResult = Boolean.valueOf(data.trim());
 			group.add(columname, dataResult);
-		} else if (columnType.contains("INT")) {
+		} else if (columnType.contains(DataTypeConstant.INT8.getMessage())
+				|| columnType.equals(DataTypeConstant.BIGINT.getMessage())
+				|| columnType.equals(DataTypeConstant.LONG.getMessage())) {
+			long dataResult = StringUtil.isEmpty(data) ? 0L : Long.valueOf(data.trim());
+			group.add(columname, dataResult);
+		} else if (columnType.contains(DataTypeConstant.INT.getMessage())) {
 			int dataResult = StringUtil.isEmpty(data) ? 0 : Integer.valueOf(data.trim());
 			group.add(columname, dataResult);
-		} else if (columnType.contains("FLOAT")) {
+		} else if (columnType.contains(DataTypeConstant.FLOAT.getMessage())) {
 			float dataResult = StringUtil.isEmpty(data) ? 0 : Float.valueOf(data.trim());
 			group.add(columname, dataResult);
-		} else if (columnType.contains("DOUBLE") || columnType.contains("DECIMAL") || columnType.contains("NUMERIC")) {
+		} else if (columnType.contains(DataTypeConstant.DOUBLE.getMessage())
+				|| columnType.contains(DataTypeConstant.DECIMAL.getMessage())
+				|| columnType.contains(DataTypeConstant.NUMERIC.getMessage())) {
 			double dataResult = StringUtil.isEmpty(data) ? 0 : Double.valueOf(data.trim());
 			group.add(columname, dataResult);
 		} else {

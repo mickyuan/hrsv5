@@ -6,6 +6,7 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.agent.job.biz.bean.*;
+import hrds.agent.job.biz.constant.DataTypeConstant;
 import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
@@ -125,7 +126,7 @@ public class DBDataLoadingStageImpl extends AbstractJobStage {
 			if (FileFormat.SEQUENCEFILE.getCode().equals(file_format) || FileFormat.PARQUET.getCode()
 					.equals(file_format) || FileFormat.ORC.getCode().equals(file_format)) {
 				sqlList.add(genHiveLoadColumnar(todayTableName, file_format,
-						dataStoreConfBean.getDtcs_name(), tableBean));
+						dataStoreConfBean.getDsl_name(), tableBean));
 			} else if (FileFormat.FeiDingChang.getCode().equals(file_format)) {
 				sqlList.add(genHiveLoad(todayTableName, tableBean, collectTableBean.getDatabase_separatorr()));
 			} else if (FileFormat.CSV.getCode().equals(file_format)) {
@@ -171,18 +172,25 @@ public class DBDataLoadingStageImpl extends AbstractJobStage {
 	 * 创建hive外部表加载列式存储文件
 	 */
 	private String genHiveLoadColumnar(String todayTableName, String file_format,
-	                                   String dtcs_name, TableBean tableBean) {
+	                                   String dsl_name, TableBean tableBean) {
 		String hiveStored = getColumnarFileHiveStored(file_format);
 		String type;
 		StringBuilder sql = new StringBuilder(120);
 		sql.append("CREATE TABLE IF NOT EXISTS ").append(todayTableName).append(" (");
 		List<String> columnList = StringUtil.split(tableBean.getColumnMetaInfo(), CollectTableHandleParse.STRSPLIT);
 		List<String> typeList = DataTypeTransform.tansform(StringUtil.split(tableBean.getColTypeMetaInfo(),
-				CollectTableHandleParse.STRSPLIT), dtcs_name);
+				CollectTableHandleParse.STRSPLIT), dsl_name);
 		for (int i = 0; i < columnList.size(); i++) {
 			//Parquet  不支持decimal 类型
-			if (FileFormat.PARQUET.toString().equals(file_format)) {
-				type = (typeList.get(i).contains("DECIMAL")) ? "DOUBLE" : typeList.get(i);
+			if (FileFormat.PARQUET.getCode().equals(file_format)) {
+				String typeLower = typeList.get(i).toLowerCase();
+				if (typeLower.contains(DataTypeConstant.DECIMAL.getMessage())
+						|| typeLower.contains(DataTypeConstant.NUMERIC.getMessage())
+						|| typeLower.contains(DataTypeConstant.DOUBLE.getMessage())) {
+					type = DataTypeConstant.DOUBLE.getMessage().toUpperCase();
+				} else {
+					type = typeList.get(i);
+				}
 			} else {
 				type = typeList.get(i);
 			}
