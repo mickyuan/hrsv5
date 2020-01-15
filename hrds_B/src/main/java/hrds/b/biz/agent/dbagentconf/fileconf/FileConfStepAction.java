@@ -29,10 +29,23 @@ public class FileConfStepAction extends BaseAction{
 	@Param(name = "colSetId", desc = "数据库设置ID，源系统数据库设置表主键，数据库对应表外键", range = "不为空")
 	@Return(desc = "查询结果集", range = "不为空")
 	public Result getInitInfo(long colSetId){
-		return Dbo.queryResult(" select ti.table_id, ti.table_name, ti.table_ch_name, ded.dbfile_format, " +
+		Result result = Dbo.queryResult(" select ti.table_id, ti.table_name, ti.table_ch_name, ded.dbfile_format, " +
 				" ded.data_extract_type, ded.row_separator, ded.database_separatorr, ded.database_code " +
 				" from " + Table_info.TableName + " ti left join " + Data_extraction_def.TableName + " ded " +
 				" on ti.table_id = ded.table_id where ti.database_id = ?", colSetId);
+		if(!result.isEmpty()){
+			for(int i = 0; i < result.getRowCount(); i++){
+				if(StringUtil.isNotBlank(result.getString(i, "row_separator"))){
+					result.setValue(i, "row_separator",
+							StringUtil.unicode2String(result.getString(i, "row_separator")));
+				}
+				if(StringUtil.isNotBlank(result.getString(i, "database_separatorr"))){
+					result.setValue(i, "database_separatorr",
+							StringUtil.unicode2String(result.getString(i, "database_separatorr")));
+				}
+			}
+		}
+		return result;
 	}
 
 	@Method(desc = "根据数据抽取方式返回卸数文件格式", logicStep = "" +
@@ -85,6 +98,13 @@ public class FileConfStepAction extends BaseAction{
 			//3、根据table_id去data_extraction_def表中删除尝试删除该表曾经的卸数文件配置，不关心删除数目
 			Dbo.execute("delete from " + Data_extraction_def.TableName + " where table_id = ?", def.getTable_id());
 			def.setDed_id(PrimayKeyGener.getNextId());
+			//将卸数分隔符(行，列)转换为unicode码
+			if(StringUtil.isNotBlank(def.getRow_separator())){
+				def.setRow_separator(StringUtil.string2Unicode(def.getRow_separator()));
+			}
+			if(StringUtil.isNotBlank(def.getDatabase_separatorr())){
+				def.setDatabase_separatorr(StringUtil.string2Unicode(def.getDatabase_separatorr()));
+			}
 			//TODO data_extraction_def表is_header字段设置默认值为"是"，后期可能会修改
 			def.setIs_header(IsFlag.Shi.getCode());
 			def.add(Dbo.db());

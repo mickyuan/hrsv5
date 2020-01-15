@@ -605,10 +605,10 @@ public class InitAndDestDataForFileConf {
 					tableId = SYS_USER_TABLE_ID;
 					extractType = DataExtractType.JinShuJuChouQu.getCode();
 					fileFormat = FileFormat.FeiDingChang.getCode();
-					//rowSeparator = "\r";
-					rowSeparator = "\n";
-					//rowSeparator = "\r\n";
-					databaseSeparatorr = "|";
+					//rowSeparator = StringUtil.string2Unicode("\r");
+					rowSeparator = StringUtil.string2Unicode("\n");
+					//rowSeparator = StringUtil.string2Unicode("\r\n");
+					databaseSeparatorr = StringUtil.string2Unicode("|");
 					planeUrl = "/root";
 					break;
 				case 1 :
@@ -631,8 +631,8 @@ public class InitAndDestDataForFileConf {
 					tableId = DATA_SOURCE_TABLE_ID;
 					extractType = DataExtractType.ShuJuChouQuJiRuKu.getCode();
 					fileFormat = FileFormat.FeiDingChang.getCode();
-					rowSeparator = "|";
-					databaseSeparatorr = " ";
+					rowSeparator = StringUtil.string2Unicode("|");
+					databaseSeparatorr = StringUtil.string2Unicode(" ");
 					planeUrl = "";
 					break;
 				default:

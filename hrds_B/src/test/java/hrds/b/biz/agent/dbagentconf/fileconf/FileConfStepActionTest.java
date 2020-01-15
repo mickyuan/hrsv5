@@ -3,6 +3,7 @@ package hrds.b.biz.agent.dbagentconf.fileconf;
 import com.alibaba.fastjson.JSON;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.utils.JsonUtil;
+import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.db.resultset.Result;
@@ -301,7 +302,7 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 			assertThat("sys_user表配置的数据抽取定义中，抽取方式为<仅数据抽取>", result.getString(0, "data_extract_type"), is(DataExtractType.JinShuJuChouQu.getCode()));
 			assertThat("sys_user表配置的数据抽取定义中，卸数文件格式为<非定长>", result.getString(0, "dbfile_format"), is(FileFormat.FeiDingChang.getCode()));
 			assertThat("sys_user表配置的数据抽取定义中，行分隔符为<回车符>", result.getString(0, "row_separator"), is("\n"));
-			assertThat("sys_user表配置的数据抽取定义中，列分隔符为<|>", result.getString(0, "database_separatorr"), is("|"));
+			assertThat("sys_user表配置的数据抽取定义中，列分隔符为<|>", result.getString(0, "database_separatorr"), is(StringUtil.string2Unicode("|")));
 			assertThat("sys_user表配置的数据抽取定义中，数据落地目录为</home/wzc>", result.getString(0, "plane_url").equalsIgnoreCase("/home/wzc"), is(true));
 			assertThat("sys_user表配置的数据抽取定义中，数据落地编码为<UTF-8>", result.getString(0, "database_code"), is(DataBaseCode.UTF_8.getCode()));
 		}
