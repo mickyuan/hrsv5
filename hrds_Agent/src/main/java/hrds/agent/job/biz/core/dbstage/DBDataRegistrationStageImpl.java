@@ -19,21 +19,13 @@ import hrds.commons.entity.Source_file_attribute;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.UUID;
-
 @DocClass(desc = "数据库直连采集数据登记阶段", author = "WangZhengcheng")
 public class DBDataRegistrationStageImpl extends AbstractJobStage {
 	private final static Logger LOGGER = LoggerFactory.getLogger(DBUnloadDataStageImpl.class);
 	private CollectTableBean collectTableBean;
-//	private TableBean tableBean;
-//	private long fileSize;
-//	private long rowCount;
 
 	public DBDataRegistrationStageImpl(CollectTableBean collectTableBean) {
 		this.collectTableBean = collectTableBean;
-//		this.tableBean = tableBean;
-//		this.fileSize = fileSize;
-//		this.rowCount = rowCount;
 	}
 
 	@Method(desc = "数据库直连采集数据登记阶段处理逻辑，处理完成后，无论成功还是失败，" +
@@ -95,7 +87,7 @@ public class DBDataRegistrationStageImpl extends AbstractJobStage {
 	}
 
 	@Override
-	public int getStageCode(){
+	public int getStageCode() {
 		return StageConstant.DATAREGISTRATION.getCode();
 	}
 }
