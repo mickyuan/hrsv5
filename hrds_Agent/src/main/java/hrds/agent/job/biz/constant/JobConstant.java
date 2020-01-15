@@ -13,7 +13,10 @@ public class JobConstant {
 
 	public static final String COLUMN_SEPARATOR = ",";
 	public static final String COLUMN_TYPE_SEPARATOR = "|";
-	public static final String DATADELIMITER = "`@`";//此分隔符为拼接MD5的默认分隔符
+	//此分隔符为拼接MD5的默认分隔符
+	public static final String DATADELIMITER = "`@`";
+	//此分隔符为卸数成SequenceFile时的默认分隔符，SequenceFile不允许页面自定义
+	public static final String SEQUENCEDELIMITER = String.valueOf('\001');
 	public static final String CLEAN_SEPARATOR = "`";
 	private static final String HD = "HD";
 

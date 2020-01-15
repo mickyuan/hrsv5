@@ -8,7 +8,6 @@ import fd.ng.core.annotation.Param;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.hadoop.hadoop_helper.HdfsOperator;
-import hrds.commons.utils.Constant;
 import hrds.commons.utils.PropertyParaUtil;
 import hrds.commons.utils.PropertyParaValue;
 import hrds.commons.utils.jsch.FileProgressMonitor;

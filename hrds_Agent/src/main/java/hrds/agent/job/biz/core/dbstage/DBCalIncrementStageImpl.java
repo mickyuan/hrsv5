@@ -28,12 +28,9 @@ public class DBCalIncrementStageImpl extends AbstractJobStage {
 	private final static Logger LOGGER = LoggerFactory.getLogger(DBUploadStageImpl.class);
 	//数据采集表对应的存储的所有信息
 	private CollectTableBean collectTableBean;
-	//数据库采集表对应的meta信息
-//	private TableBean tableBean;
 
 	public DBCalIncrementStageImpl(CollectTableBean collectTableBean) {
 		this.collectTableBean = collectTableBean;
-//		this.tableBean = tableBean;
 	}
 
 	@Method(desc = "数据库直连采集计算增量阶段处理逻辑，处理完成后，无论成功还是失败，" +
@@ -49,41 +46,34 @@ public class DBCalIncrementStageImpl extends AbstractJobStage {
 		try {
 			List<DataStoreConfBean> dataStoreConfBeanList = collectTableBean.getDataStoreConfBean();
 			TableBean tableBean = stageParamInfo.getTableBean();
-			for (DataStoreConfBean dataStoreConfBean : dataStoreConfBeanList) {
+			for (DataStoreConfBean dataStoreConf : dataStoreConfBeanList) {
 				//根据存储类型上传到目的地
-				if (Store_type.DATABASE.getCode().equals(dataStoreConfBean.getStore_type())) {
-					JDBCIncreasement increasement;
-					try (DatabaseWrapper db = ConnectionTool.getDBWrapper(
-							dataStoreConfBean.getData_store_connect_attr())) {
+				if (Store_type.DATABASE.getCode().equals(dataStoreConf.getStore_type())) {
+					try (DatabaseWrapper db = ConnectionTool.getDBWrapper(dataStoreConf.getData_store_connect_attr());
+					     JDBCIncreasement increase = getJdbcIncreasement(tableBean, collectTableBean.getHbase_name(),
+							     collectTableBean.getEtlDate(), db, dataStoreConf.getDsl_name())) {
 						if (StorageType.ZengLiang.getCode().equals(collectTableBean.getStorage_type())) {
-							//数据库类型的做增量目前分为两种，一种是传统数据库，另一种是hive库（hive库不支持update）
-							increasement = getJdbcIncreasement(tableBean, collectTableBean.getHbase_name(),
-									collectTableBean.getEtlDate(), db, dataStoreConfBean.getDsl_name());
 							//计算增量
-							increasement.calculateIncrement();
+							increase.calculateIncrement();
 							//合并增量表
-							increasement.mergeIncrement();
+							increase.mergeIncrement();
 						} else if (StorageType.ZhuiJia.getCode().equals(collectTableBean.getStorage_type())) {
-							increasement = getJdbcIncreasement(tableBean, collectTableBean.getHbase_name(),
-									collectTableBean.getEtlDate(), db, dataStoreConfBean.getDsl_name());
 							//追加
-							increasement.append();
+							increase.append();
 						} else if (StorageType.TiHuan.getCode().equals(collectTableBean.getStorage_type())) {
-							increasement = getJdbcIncreasement(tableBean, collectTableBean.getHbase_name(),
-									collectTableBean.getEtlDate(), db, dataStoreConfBean.getDsl_name());
 							//替换
-							increasement.replace();
+							increase.replace();
 						} else {
 							throw new AppSystemException("请选择正确的存储方式！");
 						}
 					}
-				} else if (Store_type.HBASE.getCode().equals(dataStoreConfBean.getStore_type())) {
+				} else if (Store_type.HBASE.getCode().equals(dataStoreConf.getStore_type())) {
 
-				} else if (Store_type.SOLR.getCode().equals(dataStoreConfBean.getStore_type())) {
+				} else if (Store_type.SOLR.getCode().equals(dataStoreConf.getStore_type())) {
 
-				} else if (Store_type.ElasticSearch.getCode().equals(dataStoreConfBean.getStore_type())) {
+				} else if (Store_type.ElasticSearch.getCode().equals(dataStoreConf.getStore_type())) {
 
-				} else if (Store_type.MONGODB.getCode().equals(dataStoreConfBean.getStore_type())) {
+				} else if (Store_type.MONGODB.getCode().equals(dataStoreConf.getStore_type())) {
 
 				} else {
 					//TODO 上面的待补充。
@@ -116,6 +106,7 @@ public class DBCalIncrementStageImpl extends AbstractJobStage {
 	private JDBCIncreasement getJdbcIncreasement(TableBean tableBean, String hbase_name, String etlDate,
 	                                             DatabaseWrapper db, String dsl_name) {
 		JDBCIncreasement increasement;
+		//数据库类型的做增量目前分为两种，一种是传统数据库，另一种是hive库（hive库不支持update）
 		if (Dbtype.HIVE.equals(db.getDbtype())) {
 			increasement = new IncreasementBySpark(tableBean, hbase_name, etlDate, db, dsl_name);
 		} else {

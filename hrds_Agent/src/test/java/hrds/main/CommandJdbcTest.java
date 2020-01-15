@@ -26,7 +26,6 @@ import static org.hamcrest.core.Is.is;
 @DocClass(desc = "数据库采集测试用例", createdate = "2020/01/07 09:48", author = "zxz")
 public class CommandJdbcTest {
 	//前提条件，前端配置信息生成的文件，清先检查当前程序运行的根目录下的messageFile是否有对应的配置文件
-
 	/**
 	 * 测试卸数csv文件batch进数据库
 	 */
@@ -108,18 +107,10 @@ public class CommandJdbcTest {
 	}
 
 	/**
-	 * 测试卸数定长文件有部署客户端，进hive库
-	 */
-	@Test
-	public void test11() {
-		assertThat("执行测试卸数定长文件成功", execute("1002234442"), is(true));
-	}
-
-	/**
 	 * 测试卸数非定长文件有部署客户端，进hive库
 	 */
 	@Test
-	public void test12() {
+	public void test11() {
 		assertThat("执行测试卸数非定长文件成功", execute("1002234443"), is(true));
 	}
 	/**

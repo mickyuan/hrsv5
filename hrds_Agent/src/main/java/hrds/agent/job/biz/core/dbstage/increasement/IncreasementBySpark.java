@@ -3,6 +3,7 @@ package hrds.agent.job.biz.core.dbstage.increasement;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.agent.job.biz.bean.TableBean;
 import hrds.commons.exception.AppSystemException;
+import hrds.commons.hadoop.utils.HSqlExecute;
 import hrds.commons.utils.Constant;
 import org.apache.commons.lang.StringUtils;
 
@@ -48,7 +49,7 @@ public class IncreasementBySpark extends JDBCIncreasement {
 	public void calculateIncrement() {
 		//1.为了防止第一次执行，yesterdayTableName表不存在，创建空表
 		String tableIfNotExistsSql = createTableIfNotExists(yesterdayTableName, db, columns, types);
-		executeSql(tableIfNotExistsSql, db);
+		HSqlExecute.executeSql(tableIfNotExistsSql, db);
 		//2、创建增量表
 		getCreateDeltaSql();
 		//3、把今天的卸载数据映射成一个表，这里在上传数据的时候加载到了todayTableName这张表。
@@ -60,7 +61,7 @@ public class IncreasementBySpark extends JDBCIncreasement {
 		getDeleteDataSql();
 		//7、把全量数据中的除了有效数据且关链的数据以外的所有数据插入到临时表中
 		getdeltaDataSql();
-		executeSql(sqlList, db);
+		HSqlExecute.executeSql(sqlList, db);
 	}
 
 	/**
@@ -71,20 +72,20 @@ public class IncreasementBySpark extends JDBCIncreasement {
 		List<String> sqlList = new ArrayList<>();
 		dropTableIfExists(yesterdayTableName, db, sqlList);
 		sqlList.add("alter table " + deltaTableName + " rename to " + yesterdayTableName);
-		executeSql(sqlList, db);
+		HSqlExecute.executeSql(sqlList, db);
 	}
 
 	@Override
 	public void append() {
 		//1.为了防止第一次执行，yesterdayTableName表不存在，创建空表
 		String tableIfNotExistsSql = createTableIfNotExists(yesterdayTableName, db, columns, types);
-		executeSql(tableIfNotExistsSql, db);
+		HSqlExecute.executeSql(tableIfNotExistsSql, db);
 		//2、为了可以重跑，这边需要把今天（如果今天有进数的话）的数据清除
 		appendRestoreData();
 		//3.插入今天新增的数据
 		sqlList.add("INSERT INTO " + yesterdayTableName + " select * from " + todayTableName);
 		//4.执行sql
-		executeSql(sqlList, db);
+		HSqlExecute.executeSql(sqlList, db);
 	}
 
 	private void getdeltaDataSql() {

@@ -7,6 +7,7 @@ import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.DataStoreConfBean;
 import hrds.agent.job.biz.bean.TableBean;
+import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.core.dbstage.increasement.JDBCIncreasement;
 import hrds.agent.job.biz.utils.DataTypeTransform;
 import hrds.agent.trans.biz.ConnectionTool;
@@ -14,6 +15,7 @@ import hrds.commons.codes.DataBaseCode;
 import hrds.commons.codes.FileFormat;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.hadoop.readconfig.ConfigReader;
+import hrds.commons.hadoop.utils.HSqlExecute;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.ql.exec.vector.VectorizedRowBatch;
@@ -98,7 +100,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 			JDBCIncreasement.dropTableIfExists(todayTableName, db, sqlList);
 			sqlList.add(sql.toString());
 			//执行建表语句
-			JDBCIncreasement.executeSql(sqlList, db);
+			HSqlExecute.executeSql(sqlList, db);
 		}
 	}
 
@@ -127,8 +129,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 			} else if (FileFormat.ORC.getCode().equals(collectTableBean.getDbfile_format())) {
 				count = readOrcToDataBase(db, typeList, batchSql);
 			} else if (FileFormat.SEQUENCEFILE.getCode().equals(collectTableBean.getDbfile_format())) {
-				count = readSequenceToDataBase(db, columnList, typeList, batchSql,
-						collectTableBean.getDatabase_separatorr());
+				count = readSequenceToDataBase(db, columnList, typeList, batchSql);
 			} else if (FileFormat.DingChang.getCode().equals(collectTableBean.getDbfile_format())) {
 				//分隔符为空
 				if (StringUtil.isEmpty(collectTableBean.getDatabase_separatorr())) {
@@ -235,7 +236,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 	}
 
 	private long readSequenceToDataBase(DatabaseWrapper db, List<String> columnList, List<String> typeList,
-	                                    String batchSql, String database_separatorr) throws Exception {
+	                                    String batchSql) throws Exception {
 		Configuration conf = ConfigReader.getConfiguration();
 		conf.setBoolean("fs.hdfs.impl.disable.cache", true);
 		conf.set("dfs.client.block.write.replace-datanode-on-failure.policy", "NEVER");
@@ -253,7 +254,9 @@ public class ReadFileToDataBase implements Callable<Long> {
 			Object[] objs;
 			while (sfr.next(key, value)) {
 				String str = value.toString();
-				List<String> valueList = StringUtil.split(str, String.valueOf(database_separatorr));
+				//XXX SequenceFile不指定分隔符，页面也不允许其指定分隔符，使用hive默认的\001隐藏字符做分隔符
+				//XXX 这样只要创建hive映射外部表时使用store as sequencefile hive会自动解析。batch方式使用默认的去解析
+				List<String> valueList = StringUtil.split(str, JobConstant.SEQUENCEDELIMITER);
 				objs = new Object[columnList.size()];// 存储全量插入信息的list
 				for (int j = 0; j < columnList.size(); j++) {
 					objs[j] = getValue(typeList.get(j), valueList.get(j));

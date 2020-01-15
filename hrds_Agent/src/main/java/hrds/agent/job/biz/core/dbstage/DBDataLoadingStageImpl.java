@@ -10,7 +10,6 @@ import hrds.agent.job.biz.constant.DataTypeConstant;
 import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
-import hrds.agent.job.biz.core.dbstage.increasement.JDBCIncreasement;
 import hrds.agent.job.biz.core.dbstage.service.CollectTableHandleParse;
 import hrds.agent.job.biz.utils.DataTypeTransform;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
@@ -20,6 +19,7 @@ import hrds.commons.codes.FileFormat;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.Store_type;
 import hrds.commons.exception.AppSystemException;
+import hrds.commons.hadoop.utils.HSqlExecute;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -137,8 +137,7 @@ public class DBDataLoadingStageImpl extends AbstractJobStage {
 			//3.加载数据
 			sqlList.add("load data inpath '" + hdfsFilePath + "' into table " + todayTableName);
 			//4.执行sql语句
-			JDBCIncreasement.executeSql(sqlList, db);
-//			db.commit();
+			HSqlExecute.executeSql(sqlList, db);
 		} catch (Exception e) {
 			throw new AppSystemException("执行hive加载数据的sql报错", e);
 		}

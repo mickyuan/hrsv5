@@ -41,4 +41,24 @@ public class HSqlExecute {
 			}
 		}
 	}
+
+	@Method(desc = "使用传入的db执行sql",
+			logicStep = "1.使用传入的db执行sql")
+	@Param(name = "sql", desc = "需要执行的sql的", range = "不可为空")
+	@Param(name = "db", desc = "数据库db操作对象", range = "不可为空")
+	public static void executeSql(String sql, DatabaseWrapper db) {
+		logger.info("执行的sql为： " + sql);
+		db.execute(sql);
+	}
+
+	@Method(desc = "使用传入的db依次执行集合中sql",
+			logicStep = "1.使用传入的db依次执行集合中sql")
+	@Param(name = "sql", desc = "需要执行的sql的合集", range = "不可为空")
+	@Param(name = "db", desc = "数据库db操作对象", range = "不可为空")
+	public static void executeSql(List<String> sqlList, DatabaseWrapper db) {
+		for (String sql : sqlList) {
+			logger.info("执行的sql为： " + sql);
+			db.execute(sql);
+		}
+	}
 }

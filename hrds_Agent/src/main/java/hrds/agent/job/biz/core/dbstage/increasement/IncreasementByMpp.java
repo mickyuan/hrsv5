@@ -3,6 +3,7 @@ package hrds.agent.job.biz.core.dbstage.increasement;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.agent.job.biz.bean.TableBean;
 import hrds.commons.exception.AppSystemException;
+import hrds.commons.hadoop.utils.HSqlExecute;
 import hrds.commons.utils.Constant;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -37,7 +38,7 @@ public class IncreasementByMpp extends JDBCIncreasement {
 		//6.将比较之后的需要delete(拉链中的闭链)的结果插入到临时表中
 		getDeleteDataSql();
 		//7.执行所有sql语句
-		executeSql(sqlList, db);
+		HSqlExecute.executeSql(sqlList, db);
 
 	}
 
@@ -178,7 +179,7 @@ public class IncreasementByMpp extends JDBCIncreasement {
 			dropTableIfExists(tableNameInHBase, db, list);
 			//重命名
 			list.add("ALTER TABLE  " + tmpDelTa + " RENAME TO  " + tableNameInHBase);
-			executeSql(list, db);
+			HSqlExecute.executeSql(list, db);
 		} catch (Exception e) {
 			logger.error("根据临时表对mpp表做增量操作时发生错误！！", e);
 			throw new AppSystemException("根据临时表对mpp表做增量操作时发生错误！！", e);
@@ -196,7 +197,7 @@ public class IncreasementByMpp extends JDBCIncreasement {
 		//3.插入今天新增的数据
 		insertAppendData();
 		//4.执行sql
-		executeSql(sqlList, db);
+		HSqlExecute.executeSql(sqlList, db);
 	}
 
 	private void restoreAppendData() {

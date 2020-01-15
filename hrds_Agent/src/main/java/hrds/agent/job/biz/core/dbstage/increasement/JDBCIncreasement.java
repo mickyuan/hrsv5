@@ -8,8 +8,7 @@ import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.core.dbstage.service.CollectTableHandleParse;
 import hrds.agent.job.biz.utils.DataTypeTransform;
 import hrds.commons.exception.AppSystemException;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import hrds.commons.hadoop.utils.HSqlExecute;
 
 import java.io.Closeable;
 import java.sql.ResultSet;
@@ -18,7 +17,6 @@ import java.util.List;
 
 @DocClass(desc = "通过jdbc使用sql算增量", author = "zxz", createdate = "2019/12/24 09:41")
 public abstract class JDBCIncreasement implements Closeable {
-	private static final Log logger = LogFactory.getLog(JDBCIncreasement.class);
 
 	List<String> columns;// csv中存有的字段
 	List<String> types;// csv中存有的字段类型
@@ -113,24 +111,6 @@ public abstract class JDBCIncreasement implements Closeable {
 		return false;
 	}
 
-	/**
-	 * 执行sql
-	 */
-	public static void executeSql(List<String> sqlList, DatabaseWrapper db) {
-		for (String sql : sqlList) {
-			logger.info("执行的sql为： " + sql);
-			db.execute(sql);
-		}
-	}
-
-	/**
-	 * 执行sql
-	 */
-	public static void executeSql(String sql, DatabaseWrapper db) {
-		logger.info("执行的sql为： " + sql);
-		db.execute(sql);
-	}
-
 	@Override
 	public void close() {
 		dropAllTmpTable();
@@ -147,7 +127,7 @@ public abstract class JDBCIncreasement implements Closeable {
 		//删除临时增量表
 		dropTableIfExists(deltaTableName, db, deleteInfo);
 		//清空表数据
-		executeSql(deleteInfo, db);
+		HSqlExecute.executeSql(deleteInfo, db);
 	}
 
 	/**
@@ -162,6 +142,6 @@ public abstract class JDBCIncreasement implements Closeable {
 		dropTableIfExists(yesterdayTableName, db, sqlList);
 		sqlList.add("CREATE TABLE " + yesterdayTableName + "AS SELECT * FROM " + todayTableName);
 		//执行sql
-		executeSql(sqlList, db);
+		HSqlExecute.executeSql(sqlList, db);
 	}
 }

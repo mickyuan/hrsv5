@@ -46,7 +46,10 @@ public class JdbcToSequenceFileWriter extends AbstractFileWriter {
 		String hbase_name = collectTableBean.getHbase_name();
 		String midName = Constant.JDBCUNLOADFOLDER + collectTableBean.getDatabase_id() + File.separator
 				+ collectTableBean.getTable_id() + File.separator;
-		String dataDelimiter = collectTableBean.getDatabase_separatorr();
+		//XXX SequenceFile不指定分隔符，页面也不允许其指定分隔符，使用hive默认的\001隐藏字符做分隔符
+		//XXX 这样只要创建hive映射外部表时使用store as sequencefile hive会自动解析。
+		String dataDelimiter = JobConstant.SEQUENCEDELIMITER;
+		//String dataDelimiter = collectTableBean.getDatabase_separatorr();
 		midName = FileNameUtils.normalize(midName, true);
 		DataFileWriter<Object> avroWriter = null;
 		long lineCounter = pageNum * pageRow;
