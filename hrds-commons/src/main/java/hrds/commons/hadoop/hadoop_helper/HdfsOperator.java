@@ -1,10 +1,8 @@
 package hrds.commons.hadoop.hadoop_helper;
 
-import fd.ng.core.utils.StringUtil;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.hadoop.readconfig.ConfigReader;
 import hrds.commons.hadoop.readconfig.HDFSFileSystem;
-import hrds.commons.utils.PropertyParaUtil;
 import hrds.commons.utils.PropertyParaValue;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.logging.Log;
