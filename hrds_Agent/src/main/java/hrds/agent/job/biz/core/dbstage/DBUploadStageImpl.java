@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -129,15 +130,15 @@ public class DBUploadStageImpl extends AbstractJobStage {
 	private void execHDFSShell(DataStoreConfBean dataStoreConfBean, String[] localFiles) throws Exception {
 		//STORECONFIGPATH上传hdfs需要读取的配置文件顶层目录
 		String hdfsPath = getUploadHdfsPath(collectTableBean);
+		//TODO 需要加一个key为hadoop_user_name的键值对，作为普通属性
+		//TODO 需要加一个key为platform的键值对，作为普通属性
+		Map<String, String> data_store_connect_attr = dataStoreConfBean.getData_store_connect_attr();
 		if (SystemUtil.OS_NAME.toLowerCase().contains("windows")) {
 			//windows机器上使用api上传hdfs
 			//TODO 这里需要在部署agent的时候要将目的地属于配置文件的属性部署到这边指定的目录下。
-			// 需要加一个key为hadoop_user_name的键值对，作为普通属性
 			try (HdfsOperator operator = new HdfsOperator(FileNameUtils.normalize(Constant.STORECONFIGPATH
-					+ dataStoreConfBean.getDsl_name() + File.separator, true),
-					dataStoreConfBean.getData_store_connect_attr().get("hadoop_user_name"))) {
-//				System.setProperty("HADOOP_USER_NAME",dataStoreConfBean.getData_store_connect_attr().get("hadoop_user_name"));
-//				System.out.println(System.getProperty("HADOOP_USER_NAME"));
+					+ dataStoreConfBean.getDsl_name() + File.separator, true)
+					, data_store_connect_attr.get("platform"), data_store_connect_attr.get("hadoop_user_name"))) {
 				//创建hdfs表的文件夹
 				if (!operator.exists(hdfsPath)) {
 					if (!operator.mkdir(hdfsPath)) {
@@ -160,7 +161,7 @@ public class DBUploadStageImpl extends AbstractJobStage {
 			//TODO 有认证需要加认证文件key必须为keytab_file，需要加认证用户，key必须为keytab_user
 			if (!StringUtil.isEmpty(dataStoreConfBean.getData_store_layer_file().get("keytab_file"))) {
 				fsSql.append("kinit -k -t ").append(dataStoreConfBean.getData_store_layer_file().get("keytab_file"))
-						.append(" ").append(dataStoreConfBean.getData_store_connect_attr().get("keytab_user"))
+						.append(" ").append(data_store_connect_attr.get("keytab_user"))
 						.append(" ").append(System.lineSeparator());
 			}
 			//拼接上传hdfs命令

@@ -10,6 +10,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
+import java.io.File;
 import java.io.IOException;
 
 
@@ -22,26 +23,25 @@ public class HDFSFileSystem {
 	private FileSystem fileSystem;
 
 	public HDFSFileSystem() {
-		this(null);
+		this(System.getProperty("user.dir") + File.separator + "conf" + File.separator);
 	}
 
 	public HDFSFileSystem(String configPath) {
-		this(configPath, ConfigReader.PlatformType.normal.toString());
+		this(configPath, ConfigReader.PlatformType.normal.toString(), null);
 	}
 
-	public HDFSFileSystem(String configPath, String platform) {
+	public HDFSFileSystem(String configPath, String platform, String hadoop_user_name) {
 		try {
 			if (ConfigReader.PlatformType.normal.toString().equals(platform)) {
 				conf = ConfigReader.getConfiguration(configPath);
+				//XXX 在集群没有认证的情况下，agent在windows下测试可以通过，需要下面这一行代码，执行运行的hadoop用户
+				if (!StringUtil.isEmpty(hadoop_user_name)) {
+					conf.set("HADOOP_USER_NAME", "hyshf");
+				}
 				fileSystem = FileSystem.get(conf);
 				log.info("normal FileSystem inited ");
 			} else if (ConfigReader.PlatformType.cdh5_13.toString().equals(platform)) {
-				LoginUtil lg;
-				if (StringUtil.isEmpty(configPath)) {
-					lg = new LoginUtil();
-				} else {
-					lg = new LoginUtil(configPath);
-				}
+				LoginUtil lg = new LoginUtil(configPath);
 				conf = lg.confLoad(conf);
 				conf = lg.authentication(conf);
 				fileSystem = FileSystem.get(conf);
@@ -52,23 +52,13 @@ public class HDFSFileSystem {
 				fileSystem = FileSystem.get(conf);
 				log.info("fi FileSystem inited ");
 			} else if (ConfigReader.PlatformType.fic80.toString().equals(platform)) {
-				LoginUtil lg;
-				if (StringUtil.isEmpty(configPath)) {
-					lg = new LoginUtil();
-				} else {
-					lg = new LoginUtil(configPath);
-				}
+				LoginUtil lg = new LoginUtil(configPath);
 				conf = lg.confLoad(conf);
 				conf = lg.authentication(conf);
 				fileSystem = FileSystem.get(conf);
 				log.info("fic60 FileSystem inited ");
 			} else if (ConfigReader.PlatformType.fic60.toString().equals(platform)) {
-				LoginUtil lg;
-				if (StringUtil.isEmpty(configPath)) {
-					lg = new LoginUtil();
-				} else {
-					lg = new LoginUtil(configPath);
-				}
+				LoginUtil lg = new LoginUtil(configPath);
 				conf = lg.confLoad(conf);
 				conf = C80LoginUtil.login(conf);
 				fileSystem = FileSystem.get(conf);

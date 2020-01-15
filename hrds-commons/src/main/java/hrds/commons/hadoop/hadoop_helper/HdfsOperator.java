@@ -2,6 +2,7 @@ package hrds.commons.hadoop.hadoop_helper;
 
 import fd.ng.core.utils.StringUtil;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.hadoop.readconfig.ConfigReader;
 import hrds.commons.hadoop.readconfig.HDFSFileSystem;
 import hrds.commons.utils.PropertyParaUtil;
 import hrds.commons.utils.PropertyParaValue;
@@ -32,17 +33,11 @@ public class HdfsOperator implements Closeable {
 	}
 
 	public HdfsOperator(String configPath) throws IOException {
-		this(configPath, null);
+		this(configPath, ConfigReader.PlatformType.normal.toString(), null);
 	}
 
-	public HdfsOperator(String configPath, String hadoop_user_name) throws IOException {
-		if (StringUtil.isEmpty(hadoop_user_name)) {
-			System.setProperty("HADOOP_USER_NAME", PropertyParaUtil.getString("HADOOP_USER_NAME",
-					"hyshf"));
-		} else {
-			System.setProperty("HADOOP_USER_NAME", hadoop_user_name);
-		}
-		hdfsFileSystem = new HDFSFileSystem(configPath);
+	public HdfsOperator(String configPath, String platform, String hadoop_user_name) throws IOException {
+		hdfsFileSystem = new HDFSFileSystem(configPath, platform, hadoop_user_name);
 		fs = hdfsFileSystem.getFileSystem();
 	}
 
