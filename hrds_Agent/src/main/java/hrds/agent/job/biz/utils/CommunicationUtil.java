@@ -60,9 +60,9 @@ public class CommunicationUtil {
 
 	}
 
-	/**
-	 * 保存错误信息
-	 */
+//	/**
+//	 * 保存错误信息
+//	 */
 //	public static void saveErrorInfo(String job_rs_id, String loadMessage) {
 //		try {
 //			HttpServerConfBean confBean = HttpServerConf.getHttpServer("hyren_main");
@@ -86,6 +86,14 @@ public class CommunicationUtil {
 //					object.toString(), e.getMessage(), job_rs_id);
 //		}
 //	}
+
+	/**
+	 * 批量添加SourceFileAttribute表
+	 *
+	 * @param addParamsPool 批量添加的数据内容
+	 * @param addSql        批量添加的sql
+	 * @param job_rs_id     作业id
+	 */
 	public static void batchAddSourceFileAttribute(List<Object[]> addParamsPool, String addSql,
 	                                               String job_rs_id) {
 		try {
@@ -111,6 +119,45 @@ public class CommunicationUtil {
 		}
 	}
 
+	/**
+	 * 批量添加ftp_transfered(ftp已传输)表
+	 *
+	 * @param addParamsPool 批量添加的数据内容
+	 * @param addSql        批量添加的sql
+	 * @param job_rs_id     作业id
+	 */
+	public static void batchAddFtpTransfer(List<Object[]> addParamsPool, String addSql,
+	                                       String job_rs_id) {
+		try {
+			HttpServerConfBean confBean = HttpServerConf.getHttpServer("hyren_main");
+			String url = AgentActionUtil.getServerUrl(confBean, AgentActionUtil.BATCHADDFTPTRANSFER);
+			//调用工具类方法给agent发消息，并获取agent响应
+			HttpClient.ResponseValue resVal = new HttpClient()
+					.addData("addSql", addSql)
+					.addData("addParamsPool", JSONArray.toJSONString(addParamsPool))
+					.post(url);
+			ActionResult ar = JsonUtil.toObjectSafety(resVal.getBodyString(), ActionResult.class)
+					.orElseThrow(() -> new AppSystemException("连接" + url + "服务异常"));
+			if (!ar.isSuccess()) {
+				throw new AppSystemException("agent连接服务端批量添加ftp_transfered信息异常");
+			}
+		} catch (Exception e) {
+			JSONObject object = new JSONObject();
+			object.put("addSql", addSql);
+			object.put("addParamsPool", JSONArray.toJSONString(addParamsPool));
+			//连接服务器报错则将信息存到文件
+			writeCommunicationErrorFile(AgentActionUtil.BATCHADDFTPTRANSFER,
+					object.toString(), e.getMessage(), job_rs_id);
+		}
+	}
+
+	/**
+	 * 批量更新SourceFileAttribute表
+	 *
+	 * @param updateParamsPool 批量更新SourceFileAttribute表的内容
+	 * @param updateSql        更新sql
+	 * @param job_rs_id        作业id
+	 */
 	public static void batchUpdateSourceFileAttribute(List<Object[]> updateParamsPool, String updateSql,
 	                                                  String job_rs_id) {
 		try {

@@ -133,6 +133,23 @@ public class HrdsReceiveAction extends AgentBaseAction {
 		}
 	}
 
+	@Method(desc = "批量添加ftp已经传输的文件到ftp_transfered(ftp传输表)",
+			logicStep = "1.解析addParamsPool为List集合" +
+					"2.执行批量添加的方法")
+	@Param(name = "addSql", desc = "批量添加的sql", range = "不可为空")
+	@Param(name = "addParamsPool", desc = "批量导入的数据", range = "不可为空")
+	public void batchAddFtpTransfer(String addSql, String addParamsPool) {
+		//1.解析addParamsPool为List集合
+		List<Object[]> objects = parseListArray(addParamsPool);
+		//2.执行批量添加的方法
+		int[] adds = Dbo.executeBatch(addSql, objects);
+		for (int i : adds) {
+			if (i != 1) {
+				throw new BusinessException("批量添加ftp_transfered表失败");
+			}
+		}
+	}
+
 	@Method(desc = "解析需要batch提交的参数，为可以直接batch提交的类型",
 			logicStep = "解析需要batch提交的参数，为可以直接batch提交的类型")
 	@Param(name = "paramPool", desc = "需要batch提交的json数组字符串", range = "不可为空")

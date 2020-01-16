@@ -46,6 +46,8 @@ public class AgentActionUtil {
 	public static final String ADDSOURCEFILEATTRIBUTE = "/hrds/server/addSourceFileAttribute";
 	//向agent端发送一个数据库直连采集任务
 	public static final String SENDDBCOLLCTTASKINFO = "/hrds/agent/trans/biz/jdbccollect/execute";
+	//agent连接服务端批量添加ftp_transfered(ftp已传输表)
+	public static final String BATCHADDFTPTRANSFER = "/hrds/server/batchAddFtpTransfer";
 
 	static {
 		list = new ArrayList<>();
@@ -64,6 +66,7 @@ public class AgentActionUtil {
 		list.add(GETCUSTCOLUMN);
 		list.add(ADDSOURCEFILEATTRIBUTE);
 		list.add(SENDDBCOLLCTTASKINFO);
+		list.add(BATCHADDFTPTRANSFER);
 	}
 
 	private AgentActionUtil() {
@@ -88,7 +91,7 @@ public class AgentActionUtil {
 	public static String getUrl(long agent_id, long user_id, String methodName) {
 		//1.判断方法名有没有被登记
 		if (!list.contains(methodName)) {
-			throw new BusinessException("被调用的agent接口"+methodName+"没有登记");
+			throw new BusinessException("被调用的agent接口" + methodName + "没有登记");
 		}
 		//2.数据可访问权限处理方式，传入用户需要有Agent对应数据的访问权限，根据agent_id获取信息
 		Agent_down_info agent_info = Dbo.queryOneObject(Agent_down_info.class, "SELECT * FROM "
