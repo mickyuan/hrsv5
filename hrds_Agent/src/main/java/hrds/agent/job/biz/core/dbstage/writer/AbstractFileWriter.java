@@ -15,7 +15,10 @@ import org.apache.avro.generic.GenericRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.sql.Blob;
 import java.sql.ResultSet;
@@ -23,7 +26,7 @@ import java.sql.SQLException;
 import java.util.Date;
 
 @DocClass(desc = "数据库直连采集以指定的格式将数据卸到指定的数据文件，接口适配器，抽象类", author = "WangZhengcheng")
-public abstract class AbstractFileWriter implements FileWriterInterface {
+abstract class AbstractFileWriter implements FileWriterInterface {
 	private final static Logger LOGGER = LoggerFactory.getLogger(AbstractFileWriter.class);
 	private static final String SCHEMA_JSON = "{\"type\": \"record\",\"name\": \"BigFilesTest\", " + "\"fields\": [" + "{\"name\":\"" + "currValue"
 			+ "\",\"type\":\"string\"}," + "{\"name\":\"" + "readerToByte" + "\", \"type\":\"bytes\"}" + "]}";//avro schema
@@ -76,44 +79,44 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 //		throw new IllegalStateException("这是一个空实现");
 //	}
 
-	@Method(desc = "将LONGVARCHAR和CLOB类型转换为字节数组，用于写Avro，在抽象类中实现，请子类不要覆盖这个方法"
-			, logicStep = "1、将characterStream用BufferedReader进行读取" +
-			"              2、读取的结果存到ByteArrayOutputStream内置的字节数组中" +
-			"              3、获得字节数组并返回")
-	@Param(name = "characterStream", desc = "java.io.Reader形式得到此ResultSet结果集中当前行中指定列的值"
-			, range = "不为空")
-	@Return(desc = "此ResultSet结果集中当前行中指定列的值转换得到的字节数组", range = "不会为null")
-	public byte[] longvarcharToByte(Reader characterStream) {
-		ByteArrayOutputStream bytestream = null;
-		BufferedReader in = null;
-		byte[] imgData = null;
-		try {
-			bytestream = new ByteArrayOutputStream();
-			//1、将characterStream用BufferedReader进行读取
-			in = new BufferedReader(characterStream);
-			int ch;
-			//2、读取的结果存到ByteArrayOutputStream内置的字节数组中
-			while ((ch = in.read()) != -1) {
-				bytestream.write(ch);
-			}
-			//3、获得字节数组并返回
-			imgData = bytestream.toByteArray();
-		} catch (Exception e) {
-			LOGGER.error(e.getMessage());
-		} finally {
-			try {
-				if (bytestream != null) {
-					bytestream.close();
-				}
-				if (in != null) {
-					in.close();
-				}
-			} catch (Exception ex) {
-				LOGGER.error(ex.getMessage());
-			}
-		}
-		return imgData;
-	}
+//	@Method(desc = "将LONGVARCHAR和CLOB类型转换为字节数组，用于写Avro，在抽象类中实现，请子类不要覆盖这个方法"
+//			, logicStep = "1、将characterStream用BufferedReader进行读取" +
+//			"              2、读取的结果存到ByteArrayOutputStream内置的字节数组中" +
+//			"              3、获得字节数组并返回")
+//	@Param(name = "characterStream", desc = "java.io.Reader形式得到此ResultSet结果集中当前行中指定列的值"
+//			, range = "不为空")
+//	@Return(desc = "此ResultSet结果集中当前行中指定列的值转换得到的字节数组", range = "不会为null")
+//	public byte[] longvarcharToByte(Reader characterStream) {
+//		ByteArrayOutputStream bytestream = null;
+//		BufferedReader in = null;
+//		byte[] imgData = null;
+//		try {
+//			bytestream = new ByteArrayOutputStream();
+//			//1、将characterStream用BufferedReader进行读取
+//			in = new BufferedReader(characterStream);
+//			int ch;
+//			//2、读取的结果存到ByteArrayOutputStream内置的字节数组中
+//			while ((ch = in.read()) != -1) {
+//				bytestream.write(ch);
+//			}
+//			//3、获得字节数组并返回
+//			imgData = bytestream.toByteArray();
+//		} catch (Exception e) {
+//			LOGGER.error(e.getMessage());
+//		} finally {
+//			try {
+//				if (bytestream != null) {
+//					bytestream.close();
+//				}
+//				if (in != null) {
+//					in.close();
+//				}
+//			} catch (Exception ex) {
+//				LOGGER.error(ex.getMessage());
+//			}
+//		}
+//		return imgData;
+//	}
 
 	@Method(desc = "把Blob类型转换为byte字节数组, 用于写Avro，在抽象类中实现，请子类不要覆盖这个方法"
 			, logicStep = "1、以流的形式获取此Blob实例指定的BLOB值,并获取BufferedInputStream实例" +
@@ -121,7 +124,7 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 			"              3、从流中读数据并保存到字节数组中")
 	@Param(name = "blob", desc = "采集得到的Blob类型的列的值", range = "不为空")
 	@Return(desc = "采集得到的Blob类型的列的值转换得到的字节数组", range = "不会为null")
-	public byte[] blobToBytes(Blob blob) {
+	private byte[] blobToBytes(Blob blob) {
 		BufferedInputStream is = null;
 		try {
 			//1、以流的形式获取此Blob实例指定的BLOB值,并获取BufferedInputStream实例
@@ -153,8 +156,8 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 	/**
 	 * 解析result一行的值
 	 */
-	protected String getOneColumnValue(DataFileWriter<Object> avroWriter, long lineCounter, ResultSet resultSet,
-	                                   int type, StringBuilder sb_, int i, String hbase_name)
+	String getOneColumnValue(DataFileWriter<Object> avroWriter, long lineCounter, ResultSet resultSet,
+	                         int type, StringBuilder sb_, int i, String hbase_name)
 			throws SQLException, IOException {
 
 		String reader2String = null;
@@ -165,7 +168,11 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 				readerToByte = blobToBytes(blob);
 				sb_.append("LOBs_").append(hbase_name).append("_").append(i).append("_").append(lineCounter)
 						.append("_BLOB_").append(avroWriter.sync());
-				reader2String = new String(readerToByte);
+				if (readerToByte != null) {
+					reader2String = new String(readerToByte);
+				} else {
+					reader2String = "";
+				}
 			}
 		} else {
 			Object oj = resultSet.getObject(i);
@@ -182,6 +189,8 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 //					if (reader2String.indexOf(Constant.DATADELIMITER) > -1) {
 //						reader2String = reader2String.replace(Constant.DATADELIMITER, ' ');
 //					}
+					//TODO 目前针对换行符的没有测试，暂时没有修改，这里为什么要最后又替换\r\n不得而知，从前有人发现问题
+					//TODO 但后来并没有重现过
 					if (reader2String.contains("\r")) {
 						reader2String = reader2String.replace('\r', ' ');
 					}
@@ -207,8 +216,8 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 		return reader2String;
 	}
 
-	protected DataFileWriter<Object> getAvroWriter(int[] typeArray, String hbase_name,
-	                                               String midName, long pageNum) throws IOException {
+	DataFileWriter<Object> getAvroWriter(int[] typeArray, String hbase_name,
+	                                     String midName, long pageNum) throws IOException {
 		DataFileWriter<Object> avroWriter = null;
 		for (int type : typeArray) {
 			if (type == java.sql.Types.BLOB || type == java.sql.Types.LONGVARCHAR) {
@@ -229,7 +238,7 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 	 * @author Cool Yu
 	 * @since JDK 1.6
 	 */
-	protected String toMD5(String plainText) {
+	String toMD5(String plainText) {
 		return MD5Util.md5String(plainText);
 	}
 }

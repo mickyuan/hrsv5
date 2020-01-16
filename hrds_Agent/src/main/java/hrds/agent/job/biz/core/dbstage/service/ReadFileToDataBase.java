@@ -7,6 +7,7 @@ import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.DataStoreConfBean;
 import hrds.agent.job.biz.bean.TableBean;
+import hrds.agent.job.biz.constant.DataTypeConstant;
 import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.core.dbstage.increasement.JDBCIncreasement;
 import hrds.agent.job.biz.utils.DataTypeTransform;
@@ -348,21 +349,27 @@ public class ReadFileToDataBase implements Callable<Long> {
 
 	private Object getParquetValue(String type, Group line, String column) {
 		Object str;
-		if (type.contains("BOOLEAN")) {
+		type = type.toLowerCase();
+		if (type.contains(DataTypeConstant.BOOLEAN.getMessage())) {
 			// 如果取出的值为null则给空字符串
 			str = line.getBoolean(column, 0);
-		} else if (type.contains("CHAR") || type.contains("CLOB")) {
-			// 如果取出的值为null则给空字符串
-			str = line.getString(column, 0);
-		} else if (type.contains("INT")) {
+		} else if (type.contains(DataTypeConstant.INT8.getMessage())
+				|| type.equals(DataTypeConstant.BIGINT.getMessage())
+				|| type.equals(DataTypeConstant.LONG.getMessage())) {
+			str = line.getLong(column, 0);
+		} else if (type.contains(DataTypeConstant.INT.getMessage())) {
 			str = line.getInteger(column, 0);
-		} else if (type.contains("FLOAT")) {
+		} else if (type.contains(DataTypeConstant.FLOAT.getMessage())) {
 			str = line.getFloat(column, 0);
-		} else if (type.contains("DOUBLE") || type.contains("DECIMAL") || type.contains("NUMERIC")) {
+		} else if (type.contains(DataTypeConstant.DOUBLE.getMessage())
+				|| type.contains(DataTypeConstant.DECIMAL.getMessage())
+				|| type.contains(DataTypeConstant.NUMERIC.getMessage())) {
 			str = line.getDouble(column, 0);
 		} else {
 			// 如果取出的值为null则给空字符串
-			str = line.getString(column, 0);
+			if ((str = line.getString(column, 0)) == null) {
+				str = "";
+			}
 			//TODO 这里应该有好多类型需要支持，然后在else里面报错
 		}
 		return str;
@@ -401,14 +408,16 @@ public class ReadFileToDataBase implements Callable<Long> {
 
 	private Object getValue(String type, String tmpValue) {
 		Object str;
-		if (type.contains("BOOLEAN")) {
+		type = type.toLowerCase();
+		if (type.contains(DataTypeConstant.BOOLEAN.getMessage())) {
 			// 如果取出的值为null则给空字符串
 			str = tmpValue == null ? null : Boolean.parseBoolean(tmpValue.trim());
-		} else if (type.contains("CHAR") || type.contains("CLOB")) {
-			// 如果取出的值为null则给空字符串
-			str = tmpValue == null ? "" : tmpValue;
-		} else if (type.contains("BIGINT") || type.contains("DECIMAL") || type.contains("DOUBLE")
-				|| type.contains("NUMERIC") || type.contains("INT8") || type.contains("INT4")) {
+		} else if (type.equals(DataTypeConstant.LONG.getMessage())
+				|| type.contains(DataTypeConstant.INT.getMessage())
+				|| type.contains(DataTypeConstant.FLOAT.getMessage())
+				|| type.contains(DataTypeConstant.DOUBLE.getMessage())
+				|| type.contains(DataTypeConstant.DECIMAL.getMessage())
+				|| type.contains(DataTypeConstant.NUMERIC.getMessage())) {
 			// 如果取出的值为null则给空字符串
 			str = tmpValue == null ? null : new BigDecimal(tmpValue.trim());
 		} else {
