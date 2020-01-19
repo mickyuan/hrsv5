@@ -28,5 +28,10 @@ public class CommonVariables {
             50000);
 
     //solr的ZKHOST地址
-    public static final String ZK_HOST = PropertyParaValue.getString("zkHost", "");
+    public static final String ZK_HOST = PropertyParaValue.getString("zkHost",
+            "hdp001.beyondsoft.com:2181,hdp002.beyondsoft.com:2181,hdp003.beyondsoft.com:2181/solr");
+
+    //solr的URL地址
+    public static final String SOLR_URL = PropertyParaValue.getString("solrUrl",
+            "http://127.0.0.1:8983/solr/");
 }
