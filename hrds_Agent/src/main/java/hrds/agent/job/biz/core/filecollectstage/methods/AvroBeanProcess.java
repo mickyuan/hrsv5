@@ -11,8 +11,8 @@ import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Source_file_attribute;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.hadoop.hadoop_helper.HBaseHelper;
-import hrds.commons.hadoop.opersolr.OperSolr;
-import hrds.commons.hadoop.opersolr.SolrFactory;
+import hrds.commons.hadoop.solr.ISolrOperator;
+import hrds.commons.hadoop.solr.SolrFactory;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.FileTypeUtil;
 import org.apache.commons.io.FilenameUtils;
@@ -346,7 +346,7 @@ public class AvroBeanProcess {
 		//进入solr的记录数
 		int count = 0;
 		int commitNumber = 500;
-		try (OperSolr os = SolrFactory.getInstance()) {
+		try (ISolrOperator os = SolrFactory.getInstance()) {
 			SolrClient server = os.getServer();
 			List<SolrInputDocument> docs = new ArrayList<>();
 			SolrInputDocument doc;

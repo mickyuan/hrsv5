@@ -21,8 +21,8 @@ import hrds.commons.entity.Search_info;
 import hrds.commons.entity.Source_file_attribute;
 import hrds.commons.entity.User_fav;
 import hrds.commons.exception.BusinessException;
-import hrds.commons.hadoop.opersolr.OperSolr;
-import hrds.commons.hadoop.opersolr.SolrFactory;
+import hrds.commons.hadoop.solr.ISolrOperator;
+import hrds.commons.hadoop.solr.SolrFactory;
 import hrds.commons.utils.PathUtil;
 
 import java.util.*;
@@ -246,7 +246,7 @@ public class FullTextSearchAction extends BaseAction {
 	@Return(desc = "solr分词关键字", range = "无限制")
 	private String getParticipleQuery(String queryKeyword) {
 		//获取solr分词关键字
-		try (OperSolr os = SolrFactory.getInstance()) {
+		try (ISolrOperator os = SolrFactory.getInstance()) {
 			List<String> participleList = os.getAnalysis(queryKeyword);
 			participleList.add(0, queryKeyword);
 			StringBuilder queryPlus = new StringBuilder();
