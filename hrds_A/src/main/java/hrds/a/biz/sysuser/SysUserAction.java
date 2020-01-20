@@ -69,7 +69,7 @@ public class SysUserAction extends BaseAction {
     public void updateSysUser(Sys_user sys_user) {
         //数据权限校验：根据登录用户的 user_id 进行权限校验
         //1.检查待修改的的系统用户是否存在，存在则修改
-        if (checkSysUserIsExist(sys_user.getUser_id())) {
+        if (checkSysUserIsNotExist(sys_user.getUser_id())) {
             throw new BusinessException("修改不存在的用户id，user_id=" + sys_user.getUser_id());
         }
         sys_user.setRole_id(ROLE_ID);
@@ -96,7 +96,7 @@ public class SysUserAction extends BaseAction {
     @Return(desc = "单个用户的对象", range = "无限制")
     public Optional<Sys_user> getSysUserByUserId(long user_id) {
         //1.根据用户id查询，返回查询结果
-        if (checkSysUserIsExist(user_id)) {
+        if (checkSysUserIsNotExist(user_id)) {
             throw new BusinessException("查询不存在的用户id，user_id=" + user_id);
         }
         return Dbo.queryOneObject(Sys_user.class, "select * from " + Sys_user.TableName + " where user_id = ?",
@@ -145,7 +145,7 @@ public class SysUserAction extends BaseAction {
     public void deleteSysUser(long user_id) {
         //数据权限校验：根据登录用户的 user_id 进行权限校验
         //1.检查待删除的系统用户是否存在，存在则根据 user_id 删除
-        if (checkSysUserIsExist(user_id)) {
+        if (checkSysUserIsNotExist(user_id)) {
             throw new BusinessException("删除不存在的用户id，user_id=" + user_id);
         }
         DboExecute.deletesOrThrow("删除系统用户失败!，user_id=" + user_id,
@@ -226,7 +226,7 @@ public class SysUserAction extends BaseAction {
         if (StringUtil.isBlank(String.valueOf(userId))) {
             throw new BusinessException("编辑用户id为空!");
         }
-        if (checkSysUserIsExist(userId)) {
+        if (checkSysUserIsNotExist(userId)) {
             throw new BusinessException("编辑的用户id不存在!");
         }
         Optional<Sys_user> editSysUserInfoOptional = getSysUserByUserId(userId);
@@ -262,7 +262,7 @@ public class SysUserAction extends BaseAction {
             logicStep = "1.根据user_id检查用户是否存在(1:表示存在, 其他为异常情况,因为根据主键只能查出一条记录信息)")
     @Param(name = "user_id", desc = "用户登录id", range = "自动生成的id", example = "5000")
     @Return(desc = "用户id是否已经存在", range = "true:不存在 或者 false:存在")
-    private boolean checkSysUserIsExist(long user_id) {
+    private boolean checkSysUserIsNotExist(long user_id) {
         //1.根据user_id检查用户是否存在(查询结果为1:表示存在, 其他为异常情况,因为根据主键只能查出一条记录信息)
         return Dbo.queryNumber("SELECT COUNT(1) FROM " + Sys_user.TableName + " WHERE user_id = ?", user_id)
                 .orElseThrow(() -> new BusinessException("检查系统用户否存在的SQL编写错误")) != 1;
