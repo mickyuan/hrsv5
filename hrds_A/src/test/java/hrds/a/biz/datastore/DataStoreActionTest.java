@@ -4,6 +4,7 @@ import com.alibaba.fastjson.TypeReference;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.conf.AppinfoConf;
 import fd.ng.core.utils.DateUtil;
+import fd.ng.core.utils.FileUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
@@ -541,9 +542,7 @@ public class DataStoreActionTest extends WebBaseTestCase {
 	public void addDataStore() {
 		// 1.正常的数据访问1，数据都正常
 		List<Map<String, Object>> list = new ArrayList<>();
-		String path = System.getProperty("user.dir") + "//src//test//java//" + AppinfoConf.AppBasePackage
-				+ "//a//biz//datastore//upload";
-		File[] files = new File(path).listFiles();
+		File file = FileUtil.getFile("src//test//java//hrds//a//biz//datastore//upload");
 		for (int i = 0; i < 2; i++) {
 			Map<String, Object> map = new HashMap<>();
 			if (i == 0) {
@@ -571,7 +570,7 @@ public class DataStoreActionTest extends WebBaseTestCase {
 				.addData("is_hadoopclient", IsFlag.Shi.getCode())
 				.addData("dtcs_id", dtcs_id)
 				.addData("dlcs_id", dlcs_id)
-				.addFile("files", Objects.requireNonNull(files))
+				.addFile("files", Objects.requireNonNull(file.listFiles()))
 				.addData("dsla_remark", "上传hive配置文件")
 				.post(getActionUrl("addDataStore"))
 				.getBodyString();
@@ -769,9 +768,7 @@ public class DataStoreActionTest extends WebBaseTestCase {
 				map.put("is_file", IsFlag.Fou.getCode());
 				list.add(map);
 			}
-			String path = System.getProperty("user.dir") + "//src//test//java//" + AppinfoConf.AppBasePackage
-					+ "//a//biz//datastore//upload";
-			File[] files = new File(path).listFiles();
+			File file = FileUtil.getFile("src//test//java//hrds//a//biz//datastore//upload");
 			String bodyString = new HttpClient()
 					.reset(SubmitMediaType.MULTIPART)
 					.addData("dsl_id", dsl_id1)
@@ -785,7 +782,7 @@ public class DataStoreActionTest extends WebBaseTestCase {
 					.addData("dslad_remark", "更新数据存储附加信息")
 					.addData("dataStoreLayerAttr", JsonUtil.toJson(list))
 					.addData("is_hadoopclient", IsFlag.Shi.getCode())
-					.addFile("files", files)
+					.addFile("files", Objects.requireNonNull(file.listFiles()))
 					.addData("dtcs_id", dtcs_id)
 					.addData("dlcs_id", dlcs_id)
 					.addData("dsla_remark", "hbase配置文件上传")
