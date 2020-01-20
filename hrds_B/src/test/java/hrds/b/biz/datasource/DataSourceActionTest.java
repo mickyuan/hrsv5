@@ -652,7 +652,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
                 .buildSession()
                 .addData("user_id", UserId)
                 .addData("password", "1")
-                .post("http://127.0.0.1:8099/A/action/hrds/a/biz/login/login")
+                .post("http://127.0.0.1:8088/A/action/hrds/a/biz/login/login")
                 .getBodyString();
         ActionResult ar = JsonUtil.toObjectSafety(responseValue, ActionResult.class)
                 .orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -832,16 +832,6 @@ public class DataSourceActionTest extends WebBaseTestCase {
             long ftrNum2 = SqlOperator.queryNumber(db, "select count(1) from ftp_transfered where " +
                     "ftp_id=?", FtpId).orElseThrow(() -> new RuntimeException("count fail!"));
             assertThat("此条数据删除后，记录数应该为0", ftrNum2, is(0L));
-            // 11.测试完成后删除ftp_folder表测试数据
-            SqlOperator.execute(db, "delete from ftp_folder where ftp_folder_id=?", FtpFolderId);
-            SqlOperator.execute(db, "delete from ftp_folder where ftp_id=?", FtpId);
-            // 判断ftp_folder表数据是否被删除
-            long ffNum = SqlOperator.queryNumber(db, "select count(1) from ftp_folder where " +
-                    "ftp_folder_id=?", FtpFolderId).orElseThrow(() -> new RuntimeException("count fail!"));
-            assertThat("此条数据删除后，记录数应该为0", ffNum, is(0L));
-            long ffNum2 = SqlOperator.queryNumber(db, "select count(1) from ftp_folder where " +
-                    "ftp_id=?", FtpId).orElseThrow(() -> new RuntimeException("count fail!"));
-            assertThat("此条数据删除后，记录数应该为0", ffNum2, is(0L));
             // 12.测试完成后删除object_collect表测试数据
             SqlOperator.execute(db, "delete from object_collect where odc_id=?", OdcId);
             SqlOperator.execute(db, "delete from object_collect where agent_id=?", DBAgentId);
