@@ -1,25 +1,25 @@
 // make jar
-task makeHrdsCommonsJar (type: Jar) {
-    archivesBaseName = "hrds-commons"
-    from("$buildDir/classes/java/main")
-    manifest(){
-        attributes(
-                "Implementation-Title": archivesBaseName,
-                "Implementation-Version": project.version,
-                'Built-By': System.getProperty('user.name'),
-                'Built-JDK': System.getProperty('java.version'),
-                'Source-Compatibility': project.sourceCompatibility,
-                'Target-Compatibility': project.targetCompatibility,
-                "Build-Time": rootProject.ext.currentDateTime
-        )
-    }
-}
-// copy jar
-task copyHrdsCommonsJar (type: Copy, dependsOn: ['makeHrdsCommonsJar']) {
-    from('build/libs')
-    into("$rootDir/libs/runtime/")
-}
-// jar plugin
-jar.dependsOn([
-        'copyHrdsCommonsJar',
-])
+//task makeHrdsCommonsJar (type: Jar) {
+//    archivesBaseName = "hrds-commons"
+//    from("$buildDir/classes/java/main")
+//    manifest(){
+//        attributes(
+//                "Implementation-Title": archivesBaseName,
+//                "Implementation-Version": project.version,
+//                'Built-By': System.getProperty('user.name'),
+//                'Built-JDK': System.getProperty('java.version'),
+//                'Source-Compatibility': project.sourceCompatibility,
+//                'Target-Compatibility': project.targetCompatibility,
+//                "Build-Time": rootProject.ext.currentDateTime
+//        )
+//    }
+//}
+//// copy jar
+//task copyHrdsCommonsJar (type: Copy, dependsOn: ['makeHrdsCommonsJar']) {
+//    from('build/libs')
+//    into("$rootDir/libs/runtime/")
+//}
+//// jar plugin
+//jar.dependsOn([
+//        'copyHrdsCommonsJar',
+//])
