@@ -90,6 +90,7 @@ INSERT INTO component_menu (menu_id,comp_id,menu_path,user_type,menu_name,menu_r
 INSERT INTO component_menu (menu_id,comp_id,menu_path,user_type,menu_name,menu_remark) VALUES ('1000000034','B000','/webSqlConsole','29','SQL控制台','el-icon-monitor');
 INSERT INTO component_menu (menu_id,comp_id,menu_path,user_type,menu_name,menu_remark) VALUES ('1000000035','B000','/typeLengthContrastInfo','94','类型长度对比信息','el-icon-search');
 INSERT INTO component_menu (menu_id,comp_id,menu_path,user_type,menu_name,menu_remark) VALUES ('1000000036','B000','/dataTypeContrastInfo','93','数据类型对比信息','el-icon-search');
+INSERT INTO component_menu (menu_id,menu_path,user_type,menu_name,comp_id,menu_remark) VALUES ('1000000037', '/databenchmarking', '37', '数据对标', 'K001','el-icon-s-finance');
 
 delete from department_info;
 INSERT INTO department_info (dep_id,dep_name,create_date,create_time,dep_remark) VALUES ('1000000001','第一部门','20160101','120500','');
@@ -97,7 +98,7 @@ INSERT INTO department_info (dep_id,dep_name,create_date,create_time,dep_remark)
 delete from sys_user;
 INSERT INTO sys_user(USER_ID, CREATE_ID, DEP_ID, ROLE_ID, USER_NAME, USER_PASSWORD, USER_EMAIL, USER_MOBILE, useris_admin,USER_TYPE, usertype_group,LOGIN_IP, LOGIN_DATE, USER_STATE, CREATE_DATE, CREATE_TIME, UPDATE_DATE, UPDATE_TIME, USER_REMARK, TOKEN, VALID_TIME) VALUES ('1000','1000','1000000001','1001','超级管理员', '1', 'ccc@vv.com', '1234567890', '0','00', '99,98,97,96,95,94,93','11', '11', '1', '88888888', '111111', '88888888', '111111', '888','0', '0');
 INSERT INTO sys_user(user_id, create_id, dep_id, role_id, user_name, user_password, user_email, user_mobile, useris_admin,user_type, usertype_group, login_ip, login_date, user_state, create_date, create_time, update_date, update_time, user_remark, token, valid_time) VALUES (1001, 1000, 1000000001, '1001', '全功能管理员', '1', 'ccc@vv.com', '1234567890','0','01', '01,04,07,10,11,13,16,18,25', null, null, '1', '20181015', '145752', '20181015', '145752', '','0', '0');
-INSERT INTO sys_user(user_id, create_id, dep_id, role_id, user_name, user_password, user_email, user_mobile, useris_admin,user_type, usertype_group, login_ip, login_date, user_state, create_date, create_time, update_date, update_time, user_remark, token, valid_time) VALUES (2001, 1000, 1000000001, '1001', '全功能操作员', '1', 'ccc@vv.com', '1234567890','0','02', '02,04,08,09,12,14,15,17,19,23,24,26,27,28,29', null, null, '1', '20181015', '145752', '20181015', '145752', '', '0', '0');
+INSERT INTO sys_user(user_id, create_id, dep_id, role_id, user_name, user_password, user_email, user_mobile, useris_admin,user_type, usertype_group, login_ip, login_date, user_state, create_date, create_time, update_date, update_time, user_remark, token, valid_time) VALUES (2001, 1000, 1000000001, '1001', '全功能操作员', '1', 'ccc@vv.com', '1234567890','0','02', '02,04,08,09,12,14,15,17,19,23,24,26,27,28,29,37', null, null, '1', '20181015', '145752', '20181015', '145752', '', '0', '0');
 
 delete from edw_job_alg;
 INSERT INTO edw_job_alg VALUES ('F1', 'F1:Delete/Insert');
