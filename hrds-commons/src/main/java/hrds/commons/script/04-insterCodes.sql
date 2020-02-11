@@ -1,4 +1,4 @@
---　系统的引用值个数:44
+--　系统的引用值个数:45
 --　本引用值的代码个数:4 -------i==1
 delete from code_info where ci_sp_class='57';
 INSERT INTO CODE_INFO  VALUES ('1', '57', '数据申请类型', '查看', 'ApplyType');
@@ -317,3 +317,14 @@ INSERT INTO CODE_INFO  VALUES ('7', '54', '清洗方式', '字符trim', 'CleanTy
 delete from code_info where ci_sp_class='55';
 INSERT INTO CODE_INFO  VALUES ('1', '55', '补齐方式', '前补齐', 'FillingType');
 INSERT INTO CODE_INFO  VALUES ('2', '55', '补齐方式', '后补齐', 'FillingType');
+--　本引用值的代码个数:9 -------i==45
+delete from code_info where ci_sp_class='64';
+INSERT INTO CODE_INFO  VALUES ('101', '64', '对标-数据类别', '编码类', 'DbmDataType');
+INSERT INTO CODE_INFO  VALUES ('102', '64', '对标-数据类别', '标识类', 'DbmDataType');
+INSERT INTO CODE_INFO  VALUES ('103', '64', '对标-数据类别', '代码类', 'DbmDataType');
+INSERT INTO CODE_INFO  VALUES ('104', '64', '对标-数据类别', '金额类', 'DbmDataType');
+INSERT INTO CODE_INFO  VALUES ('105', '64', '对标-数据类别', '日期类', 'DbmDataType');
+INSERT INTO CODE_INFO  VALUES ('106', '64', '对标-数据类别', '日期时间类', 'DbmDataType');
+INSERT INTO CODE_INFO  VALUES ('107', '64', '对标-数据类别', '时间类', 'DbmDataType');
+INSERT INTO CODE_INFO  VALUES ('108', '64', '对标-数据类别', '数值类', 'DbmDataType');
+INSERT INTO CODE_INFO  VALUES ('109', '64', '对标-数据类别', '文本类', 'DbmDataType');
