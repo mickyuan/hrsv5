@@ -95,6 +95,8 @@ public class CodesItem{
 	protected static final String cleanType=new String("CleanType");
 	/**补齐方式   */
 	protected static final String fillingType=new String("FillingType");
+	/**对标-数据类别   */
+	protected static final String dbmDataType=new String("DbmDataType");
 
 
 	public static final Map<String,Class> mapCat= new HashMap<String,Class>(100);
@@ -143,6 +145,7 @@ public class CodesItem{
 		mapCat.put(dataExtractType,DataExtractType.class);
 		mapCat.put(cleanType,CleanType.class);
 		mapCat.put(fillingType,FillingType.class);
+		mapCat.put(dbmDataType,DbmDataType.class);
 	}
 
 
