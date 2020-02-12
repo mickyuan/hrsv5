@@ -36,14 +36,14 @@ public class Dbm_normbmd_result extends ProjectTableEntity
 	private BigDecimal col_similarity;
 	@DocBean(name ="remark_similarity",value="描述相似度:",dataType = BigDecimal.class,required = true)
 	private BigDecimal remark_similarity;
-	@DocBean(name ="detect_id",value="检测主键:",dataType = String.class,required = false)
-	private String detect_id;
 	@DocBean(name ="col_id",value="字段主键:",dataType = Long.class,required = true)
 	private Long col_id;
 	@DocBean(name ="basic_id",value="标准元主键:",dataType = Long.class,required = true)
 	private Long basic_id;
 	@DocBean(name ="is_artificial",value="是否为人工对标结果(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_artificial;
+	@DocBean(name ="detect_id",value="检测主键:",dataType = String.class,required = true)
+	private String detect_id;
 
 	/** 取得：结果主键 */
 	public String getResult_id(){
@@ -81,14 +81,6 @@ public class Dbm_normbmd_result extends ProjectTableEntity
 			this.remark_similarity=new BigDecimal(remark_similarity);
 		}
 	}
-	/** 取得：检测主键 */
-	public String getDetect_id(){
-		return detect_id;
-	}
-	/** 设置：检测主键 */
-	public void setDetect_id(String detect_id){
-		this.detect_id=detect_id;
-	}
 	/** 取得：字段主键 */
 	public Long getCol_id(){
 		return col_id;
@@ -124,5 +116,13 @@ public class Dbm_normbmd_result extends ProjectTableEntity
 	/** 设置：是否为人工对标结果 */
 	public void setIs_artificial(String is_artificial){
 		this.is_artificial=is_artificial;
+	}
+	/** 取得：检测主键 */
+	public String getDetect_id(){
+		return detect_id;
+	}
+	/** 设置：检测主键 */
+	public void setDetect_id(String detect_id){
+		this.detect_id=detect_id;
 	}
 }

@@ -74,7 +74,7 @@ public class Dbm_normbasic extends ProjectTableEntity
 	private Long code_type_id;
 	@DocBean(name ="dbm_domain",value="值域:",dataType = String.class,required = true)
 	private String dbm_domain;
-	@DocBean(name ="data_type",value="数据类别(DbmDataType):101-编码类 102-标识类 103-代码类 104-金额类 105-日期类 106-日期时间类 107-时间类 108-数值类 109-文本类 ",dataType = String.class,required = false)
+	@DocBean(name ="data_type",value="数据类别(DbmDataType):101-编码类<BianMaLei> 102-标识类<BiaoShiLei> 103-代码类<DaiMaLei> 104-金额类<JinELei> 105-日期类<RiQiLei> 106-日期时间类<RiQiShiJianLei> 107-时间类<ShiJianLei> 108-数值类<ShuZhiLei> 109-文本类<WenBenLei> ",dataType = String.class,required = false)
 	private String data_type;
 
 	/** 取得：标准元主键 */

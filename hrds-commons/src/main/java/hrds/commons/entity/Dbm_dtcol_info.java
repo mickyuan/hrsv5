@@ -30,14 +30,6 @@ public class Dbm_dtcol_info extends ProjectTableEntity
 		__tmpPKS.add("col_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="is_null",value="是否可为空(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
-	private String is_null;
-	@DocBean(name ="default_value",value="默认值:",dataType = String.class,required = false)
-	private String default_value;
-	@DocBean(name ="table_id",value="检测表主键:",dataType = Long.class,required = true)
-	private Long table_id;
-	@DocBean(name ="col_remark",value="字段描述:",dataType = String.class,required = false)
-	private String col_remark;
 	@DocBean(name ="col_id",value="字段主键:",dataType = Long.class,required = true)
 	private Long col_id;
 	@DocBean(name ="col_cname",value="字段中文名:",dataType = String.class,required = true)
@@ -52,45 +44,25 @@ public class Dbm_dtcol_info extends ProjectTableEntity
 	private Long decimal_point;
 	@DocBean(name ="is_key",value="是否作为主键(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_key;
+	@DocBean(name ="is_null",value="是否可为空(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
+	private String is_null;
+	@DocBean(name ="default_value",value="默认值:",dataType = String.class,required = false)
+	private String default_value;
+	@DocBean(name ="table_id",value="检测表主键:",dataType = Long.class,required = true)
+	private Long table_id;
+	@DocBean(name ="col_remark",value="字段描述:",dataType = String.class,required = false)
+	private String col_remark;
+	@DocBean(name ="detect_id",value="检测主键:",dataType = String.class,required = true)
+	private String detect_id;
+	@DocBean(name ="column_id",value="字段ID:",dataType = Long.class,required = false)
+	private Long column_id;
+	@DocBean(name ="database_id",value="数据库设置id:",dataType = Long.class,required = false)
+	private Long database_id;
+	@DocBean(name ="agent_id",value="Agent_id:",dataType = Long.class,required = false)
+	private Long agent_id;
+	@DocBean(name ="source_id",value="数据源ID:",dataType = Long.class,required = false)
+	private Long source_id;
 
-	/** 取得：是否可为空 */
-	public String getIs_null(){
-		return is_null;
-	}
-	/** 设置：是否可为空 */
-	public void setIs_null(String is_null){
-		this.is_null=is_null;
-	}
-	/** 取得：默认值 */
-	public String getDefault_value(){
-		return default_value;
-	}
-	/** 设置：默认值 */
-	public void setDefault_value(String default_value){
-		this.default_value=default_value;
-	}
-	/** 取得：检测表主键 */
-	public Long getTable_id(){
-		return table_id;
-	}
-	/** 设置：检测表主键 */
-	public void setTable_id(Long table_id){
-		this.table_id=table_id;
-	}
-	/** 设置：检测表主键 */
-	public void setTable_id(String table_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(table_id)){
-			this.table_id=new Long(table_id);
-		}
-	}
-	/** 取得：字段描述 */
-	public String getCol_remark(){
-		return col_remark;
-	}
-	/** 设置：字段描述 */
-	public void setCol_remark(String col_remark){
-		this.col_remark=col_remark;
-	}
 	/** 取得：字段主键 */
 	public Long getCol_id(){
 		return col_id;
@@ -164,5 +136,107 @@ public class Dbm_dtcol_info extends ProjectTableEntity
 	/** 设置：是否作为主键 */
 	public void setIs_key(String is_key){
 		this.is_key=is_key;
+	}
+	/** 取得：是否可为空 */
+	public String getIs_null(){
+		return is_null;
+	}
+	/** 设置：是否可为空 */
+	public void setIs_null(String is_null){
+		this.is_null=is_null;
+	}
+	/** 取得：默认值 */
+	public String getDefault_value(){
+		return default_value;
+	}
+	/** 设置：默认值 */
+	public void setDefault_value(String default_value){
+		this.default_value=default_value;
+	}
+	/** 取得：检测表主键 */
+	public Long getTable_id(){
+		return table_id;
+	}
+	/** 设置：检测表主键 */
+	public void setTable_id(Long table_id){
+		this.table_id=table_id;
+	}
+	/** 设置：检测表主键 */
+	public void setTable_id(String table_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(table_id)){
+			this.table_id=new Long(table_id);
+		}
+	}
+	/** 取得：字段描述 */
+	public String getCol_remark(){
+		return col_remark;
+	}
+	/** 设置：字段描述 */
+	public void setCol_remark(String col_remark){
+		this.col_remark=col_remark;
+	}
+	/** 取得：检测主键 */
+	public String getDetect_id(){
+		return detect_id;
+	}
+	/** 设置：检测主键 */
+	public void setDetect_id(String detect_id){
+		this.detect_id=detect_id;
+	}
+	/** 取得：字段ID */
+	public Long getColumn_id(){
+		return column_id;
+	}
+	/** 设置：字段ID */
+	public void setColumn_id(Long column_id){
+		this.column_id=column_id;
+	}
+	/** 设置：字段ID */
+	public void setColumn_id(String column_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(column_id)){
+			this.column_id=new Long(column_id);
+		}
+	}
+	/** 取得：数据库设置id */
+	public Long getDatabase_id(){
+		return database_id;
+	}
+	/** 设置：数据库设置id */
+	public void setDatabase_id(Long database_id){
+		this.database_id=database_id;
+	}
+	/** 设置：数据库设置id */
+	public void setDatabase_id(String database_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(database_id)){
+			this.database_id=new Long(database_id);
+		}
+	}
+	/** 取得：Agent_id */
+	public Long getAgent_id(){
+		return agent_id;
+	}
+	/** 设置：Agent_id */
+	public void setAgent_id(Long agent_id){
+		this.agent_id=agent_id;
+	}
+	/** 设置：Agent_id */
+	public void setAgent_id(String agent_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(agent_id)){
+			this.agent_id=new Long(agent_id);
+		}
+	}
+	/** 取得：数据源ID */
+	public Long getSource_id(){
+		return source_id;
+	}
+	/** 设置：数据源ID */
+	public void setSource_id(Long source_id){
+		this.source_id=source_id;
+	}
+	/** 设置：数据源ID */
+	public void setSource_id(String source_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(source_id)){
+			this.source_id=new Long(source_id);
+		}
 	}
 }

@@ -2,33 +2,19 @@ package hrds.commons.codes;
 
 import hrds.commons.exception.AppSystemException;
 /**Created by automatic  */
-/**代码类型名：对标-数据类别  */
-public enum DbmDataType {
-	/**编码类<BianMaLei>  */
-	BianMaLei("101","编码类","64","对标-数据类别"),
-	/**标识类<BiaoShiLei>  */
-	BiaoShiLei("102","标识类","64","对标-数据类别"),
-	/**代码类<DaiMaLei>  */
-	DaiMaLei("103","代码类","64","对标-数据类别"),
-	/**金额类<JinELei>  */
-	JinELei("104","金额类","64","对标-数据类别"),
-	/**日期类<RiQiLei>  */
-	RiQiLei("105","日期类","64","对标-数据类别"),
-	/**日期时间类<RiQiShiJianLei>  */
-	RiQiShiJianLei("106","日期时间类","64","对标-数据类别"),
-	/**时间类<ShiJianLei>  */
-	ShiJianLei("107","时间类","64","对标-数据类别"),
-	/**数值类<ShuZhiLei>  */
-	ShuZhiLei("108","数值类","64","对标-数据类别"),
-	/**文本类<WenBenLei>  */
-	WenBenLei("109","文本类","64","对标-数据类别");
+/**代码类型名：对标-对标方式  */
+public enum DbmMode {
+	/**数据对标<ShuJuDuiBiao>  */
+	ShuJuDuiBiao("1","数据对标","65","对标-对标方式"),
+	/**表结构对标<BiaoJieGouDuiBiao>  */
+	BiaoJieGouDuiBiao("2","表结构对标","65","对标-对标方式");
 
 	private final String code;
 	private final String value;
 	private final String catCode;
 	private final String catValue;
 
-	DbmDataType(String code,String value,String catCode,String catValue){
+	DbmMode(String code,String value,String catCode,String catValue){
 		this.code = code;
 		this.value = value;
 		this.catCode = catCode;
@@ -44,7 +30,7 @@ public enum DbmDataType {
 	* @return
 	*/
 	public static String ofValueByCode(String code) {
-		for (DbmDataType typeCode : DbmDataType.values()) {
+		for (DbmMode typeCode : DbmMode.values()) {
 			if (typeCode.getCode().equals(code)) {
 				return typeCode.value;
 			}
@@ -56,8 +42,8 @@ public enum DbmDataType {
 	* @param code   本代码的代码值
 	* @return
 	*/
-	public static DbmDataType ofEnumByCode(String code) {
-		for (DbmDataType typeCode : DbmDataType.values()) {
+	public static DbmMode ofEnumByCode(String code) {
+		for (DbmMode typeCode : DbmMode.values()) {
 			if (typeCode.getCode().equals(code)) {
 				return typeCode;
 			}
@@ -70,7 +56,7 @@ public enum DbmDataType {
 	* @return
 	*/
 	public static String ofCatValue(){
-		return DbmDataType.values()[0].getCatValue();
+		return DbmMode.values()[0].getCatValue();
 	}
 
 	/**
@@ -78,7 +64,7 @@ public enum DbmDataType {
 	* @return
 	*/
 	public static String ofCatCode(){
-		return DbmDataType.values()[0].getCatCode();
+		return DbmMode.values()[0].getCatCode();
 	}
 
 	/**

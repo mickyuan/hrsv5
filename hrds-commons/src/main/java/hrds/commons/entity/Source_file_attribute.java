@@ -30,6 +30,24 @@ public class Source_file_attribute extends ProjectTableEntity
 		__tmpPKS.add("file_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
+	@DocBean(name ="file_md5",value="文件MD5值:",dataType = String.class,required = false)
+	private String file_md5;
+	@DocBean(name ="file_avro_path",value="所在avro文件地址:",dataType = String.class,required = false)
+	private String file_avro_path;
+	@DocBean(name ="file_avro_block",value="所存avro文件block号:",dataType = Long.class,required = false)
+	private Long file_avro_block;
+	@DocBean(name ="is_big_file",value="是否为大文件(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = false)
+	private String is_big_file;
+	@DocBean(name ="is_cache",value="是否本地缓存(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = false)
+	private String is_cache;
+	@DocBean(name ="agent_id",value="Agent_id:",dataType = Long.class,required = true)
+	private Long agent_id;
+	@DocBean(name ="source_id",value="数据源ID:",dataType = Long.class,required = true)
+	private Long source_id;
+	@DocBean(name ="collect_set_id",value="数据库设置id:",dataType = Long.class,required = true)
+	private Long collect_set_id;
+	@DocBean(name ="folder_id",value="文件夹编号:",dataType = Long.class,required = true)
+	private Long folder_id;
 	@DocBean(name ="file_id",value="文件编号:",dataType = String.class,required = true)
 	private String file_id;
 	@DocBean(name ="original_name",value="原始文件名或表中文名称:",dataType = String.class,required = true)
@@ -62,25 +80,109 @@ public class Source_file_attribute extends ProjectTableEntity
 	private Long seqencing;
 	@DocBean(name ="is_in_hbase",value="是否已进入HBASE(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_in_hbase;
-	@DocBean(name ="file_md5",value="文件MD5值:",dataType = String.class,required = false)
-	private String file_md5;
-	@DocBean(name ="file_avro_path",value="所在avro文件地址:",dataType = String.class,required = false)
-	private String file_avro_path;
-	@DocBean(name ="file_avro_block",value="所存avro文件block号:",dataType = Long.class,required = false)
-	private Long file_avro_block;
-	@DocBean(name ="is_big_file",value="是否为大文件(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = false)
-	private String is_big_file;
-	@DocBean(name ="is_cache",value="是否本地缓存(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = false)
-	private String is_cache;
-	@DocBean(name ="agent_id",value="Agent_id:",dataType = Long.class,required = true)
-	private Long agent_id;
-	@DocBean(name ="source_id",value="数据源ID:",dataType = Long.class,required = true)
-	private Long source_id;
-	@DocBean(name ="collect_set_id",value="数据库设置id:",dataType = Long.class,required = true)
-	private Long collect_set_id;
-	@DocBean(name ="folder_id",value="文件夹编号:",dataType = Long.class,required = true)
-	private Long folder_id;
 
+	/** 取得：文件MD5值 */
+	public String getFile_md5(){
+		return file_md5;
+	}
+	/** 设置：文件MD5值 */
+	public void setFile_md5(String file_md5){
+		this.file_md5=file_md5;
+	}
+	/** 取得：所在avro文件地址 */
+	public String getFile_avro_path(){
+		return file_avro_path;
+	}
+	/** 设置：所在avro文件地址 */
+	public void setFile_avro_path(String file_avro_path){
+		this.file_avro_path=file_avro_path;
+	}
+	/** 取得：所存avro文件block号 */
+	public Long getFile_avro_block(){
+		return file_avro_block;
+	}
+	/** 设置：所存avro文件block号 */
+	public void setFile_avro_block(Long file_avro_block){
+		this.file_avro_block=file_avro_block;
+	}
+	/** 设置：所存avro文件block号 */
+	public void setFile_avro_block(String file_avro_block){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(file_avro_block)){
+			this.file_avro_block=new Long(file_avro_block);
+		}
+	}
+	/** 取得：是否为大文件 */
+	public String getIs_big_file(){
+		return is_big_file;
+	}
+	/** 设置：是否为大文件 */
+	public void setIs_big_file(String is_big_file){
+		this.is_big_file=is_big_file;
+	}
+	/** 取得：是否本地缓存 */
+	public String getIs_cache(){
+		return is_cache;
+	}
+	/** 设置：是否本地缓存 */
+	public void setIs_cache(String is_cache){
+		this.is_cache=is_cache;
+	}
+	/** 取得：Agent_id */
+	public Long getAgent_id(){
+		return agent_id;
+	}
+	/** 设置：Agent_id */
+	public void setAgent_id(Long agent_id){
+		this.agent_id=agent_id;
+	}
+	/** 设置：Agent_id */
+	public void setAgent_id(String agent_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(agent_id)){
+			this.agent_id=new Long(agent_id);
+		}
+	}
+	/** 取得：数据源ID */
+	public Long getSource_id(){
+		return source_id;
+	}
+	/** 设置：数据源ID */
+	public void setSource_id(Long source_id){
+		this.source_id=source_id;
+	}
+	/** 设置：数据源ID */
+	public void setSource_id(String source_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(source_id)){
+			this.source_id=new Long(source_id);
+		}
+	}
+	/** 取得：数据库设置id */
+	public Long getCollect_set_id(){
+		return collect_set_id;
+	}
+	/** 设置：数据库设置id */
+	public void setCollect_set_id(Long collect_set_id){
+		this.collect_set_id=collect_set_id;
+	}
+	/** 设置：数据库设置id */
+	public void setCollect_set_id(String collect_set_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(collect_set_id)){
+			this.collect_set_id=new Long(collect_set_id);
+		}
+	}
+	/** 取得：文件夹编号 */
+	public Long getFolder_id(){
+		return folder_id;
+	}
+	/** 设置：文件夹编号 */
+	public void setFolder_id(Long folder_id){
+		this.folder_id=folder_id;
+	}
+	/** 设置：文件夹编号 */
+	public void setFolder_id(String folder_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(folder_id)){
+			this.folder_id=new Long(folder_id);
+		}
+	}
 	/** 取得：文件编号 */
 	public String getFile_id(){
 		return file_id;
@@ -220,107 +322,5 @@ public class Source_file_attribute extends ProjectTableEntity
 	/** 设置：是否已进入HBASE */
 	public void setIs_in_hbase(String is_in_hbase){
 		this.is_in_hbase=is_in_hbase;
-	}
-	/** 取得：文件MD5值 */
-	public String getFile_md5(){
-		return file_md5;
-	}
-	/** 设置：文件MD5值 */
-	public void setFile_md5(String file_md5){
-		this.file_md5=file_md5;
-	}
-	/** 取得：所在avro文件地址 */
-	public String getFile_avro_path(){
-		return file_avro_path;
-	}
-	/** 设置：所在avro文件地址 */
-	public void setFile_avro_path(String file_avro_path){
-		this.file_avro_path=file_avro_path;
-	}
-	/** 取得：所存avro文件block号 */
-	public Long getFile_avro_block(){
-		return file_avro_block;
-	}
-	/** 设置：所存avro文件block号 */
-	public void setFile_avro_block(Long file_avro_block){
-		this.file_avro_block=file_avro_block;
-	}
-	/** 设置：所存avro文件block号 */
-	public void setFile_avro_block(String file_avro_block){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(file_avro_block)){
-			this.file_avro_block=new Long(file_avro_block);
-		}
-	}
-	/** 取得：是否为大文件 */
-	public String getIs_big_file(){
-		return is_big_file;
-	}
-	/** 设置：是否为大文件 */
-	public void setIs_big_file(String is_big_file){
-		this.is_big_file=is_big_file;
-	}
-	/** 取得：是否本地缓存 */
-	public String getIs_cache(){
-		return is_cache;
-	}
-	/** 设置：是否本地缓存 */
-	public void setIs_cache(String is_cache){
-		this.is_cache=is_cache;
-	}
-	/** 取得：Agent_id */
-	public Long getAgent_id(){
-		return agent_id;
-	}
-	/** 设置：Agent_id */
-	public void setAgent_id(Long agent_id){
-		this.agent_id=agent_id;
-	}
-	/** 设置：Agent_id */
-	public void setAgent_id(String agent_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(agent_id)){
-			this.agent_id=new Long(agent_id);
-		}
-	}
-	/** 取得：数据源ID */
-	public Long getSource_id(){
-		return source_id;
-	}
-	/** 设置：数据源ID */
-	public void setSource_id(Long source_id){
-		this.source_id=source_id;
-	}
-	/** 设置：数据源ID */
-	public void setSource_id(String source_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(source_id)){
-			this.source_id=new Long(source_id);
-		}
-	}
-	/** 取得：数据库设置id */
-	public Long getCollect_set_id(){
-		return collect_set_id;
-	}
-	/** 设置：数据库设置id */
-	public void setCollect_set_id(Long collect_set_id){
-		this.collect_set_id=collect_set_id;
-	}
-	/** 设置：数据库设置id */
-	public void setCollect_set_id(String collect_set_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(collect_set_id)){
-			this.collect_set_id=new Long(collect_set_id);
-		}
-	}
-	/** 取得：文件夹编号 */
-	public Long getFolder_id(){
-		return folder_id;
-	}
-	/** 设置：文件夹编号 */
-	public void setFolder_id(Long folder_id){
-		this.folder_id=folder_id;
-	}
-	/** 设置：文件夹编号 */
-	public void setFolder_id(String folder_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(folder_id)){
-			this.folder_id=new Long(folder_id);
-		}
 	}
 }
