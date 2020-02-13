@@ -479,7 +479,7 @@ CONSTRAINT DBM_CODE_ITEM_INFO_PK PRIMARY KEY(CODE_ITEM_ID)   );
 --数据对标标准对标检测表信息表
 DROP TABLE IF EXISTS DBM_DTABLE_INFO ;
 CREATE TABLE DBM_DTABLE_INFO(
-TABLE_ID                                          BIGINT default 0 NOT NULL, --检测表主键
+DBM_TABLEID                                       BIGINT default 0 NOT NULL, --检测表主键
 TABLE_CNAME                                       VARCHAR(100) NOT NULL, --表中文名称
 TABLE_ENAME                                       VARCHAR(512) NOT NULL, --表英文名称
 IS_EXTERNAL                                       CHAR(1) NOT NULL, --是否为外部数据源
@@ -489,7 +489,7 @@ TABLE_ID                                          BIGINT default 0 NULL, --表�
 SOURCE_ID                                         BIGINT default 0 NULL, --数据源ID
 AGENT_ID                                          BIGINT default 0 NULL, --Agent_id
 DATABASE_ID                                       BIGINT default 0 NULL, --数据库设置id
-CONSTRAINT DBM_DTABLE_INFO_PK PRIMARY KEY(TABLE_ID)   );
+CONSTRAINT DBM_DTABLE_INFO_PK PRIMARY KEY(DBM_TABLEID)   );
 
 --数据对标标准对标检测字段信息表
 DROP TABLE IF EXISTS DBM_DTCOL_INFO ;
@@ -504,7 +504,7 @@ DECIMAL_POINT                                     BIGINT default 0 NOT NULL, --�
 IS_KEY                                            CHAR(1) NOT NULL, --是否作为主键
 IS_NULL                                           CHAR(1) NOT NULL, --是否可为空
 DEFAULT_VALUE                                     VARCHAR(80) NULL, --默认值
-TABLE_ID                                          BIGINT default 0 NOT NULL, --检测表主键
+DBM_TABLEID                                       BIGINT default 0 NOT NULL, --检测表主键
 DETECT_ID                                         VARCHAR(32) NOT NULL, --检测主键
 COLUMN_ID                                         BIGINT default 0 NULL, --字段ID
 DATABASE_ID                                       BIGINT default 0 NULL, --数据库设置id
@@ -558,7 +558,7 @@ CREATE TABLE DBM_SORT_COLUMN(
 DSC_ID                                            BIGINT default 0 NOT NULL, --分类对应主键ID
 DDS_ID                                            BIGINT default 0 NOT NULL, --对标分类结构ID
 COL_ID                                            BIGINT default 0 NOT NULL, --字段主键
-TABLE_ID                                          BIGINT default 0 NOT NULL, --检测表主键
+DBM_TABLEID                                       BIGINT default 0 NOT NULL, --检测表主键
 DSC_REMARK                                        VARCHAR(80) NULL, --备注
 CONSTRAINT DBM_SORT_COLUMN_PK PRIMARY KEY(DSC_ID)   );
 

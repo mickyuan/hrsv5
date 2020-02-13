@@ -27,11 +27,11 @@ public class Dbm_dtable_info extends ProjectTableEntity
 	/** 数据对标标准对标检测表信息表 */
 	static {
 		Set<String> __tmpPKS = new HashSet<>();
-		__tmpPKS.add("table_id");
+		__tmpPKS.add("dbm_tableid");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="table_id",value="检测表主键:",dataType = Long.class,required = true)
-	private Long table_id;
+	@DocBean(name ="dbm_tableid",value="检测表主键:",dataType = Long.class,required = true)
+	private Long dbm_tableid;
 	@DocBean(name ="table_cname",value="表中文名称:",dataType = String.class,required = true)
 	private String table_cname;
 	@DocBean(name ="table_ename",value="表英文名称:",dataType = String.class,required = true)
@@ -52,17 +52,17 @@ public class Dbm_dtable_info extends ProjectTableEntity
 	private Long database_id;
 
 	/** 取得：检测表主键 */
-	public Long getTable_id(){
-		return table_id;
+	public Long getDbm_tableid(){
+		return dbm_tableid;
 	}
 	/** 设置：检测表主键 */
-	public void setTable_id(Long table_id){
-		this.table_id=table_id;
+	public void setDbm_tableid(Long dbm_tableid){
+		this.dbm_tableid=dbm_tableid;
 	}
 	/** 设置：检测表主键 */
-	public void setTable_id(String table_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(table_id)){
-			this.table_id=new Long(table_id);
+	public void setDbm_tableid(String dbm_tableid){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(dbm_tableid)){
+			this.dbm_tableid=new Long(dbm_tableid);
 		}
 	}
 	/** 取得：表中文名称 */

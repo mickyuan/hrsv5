@@ -38,8 +38,8 @@ public class Dbm_sort_column extends ProjectTableEntity
 	private Long dsc_id;
 	@DocBean(name ="dsc_remark",value="备注:",dataType = String.class,required = false)
 	private String dsc_remark;
-	@DocBean(name ="table_id",value="检测表主键:",dataType = Long.class,required = true)
-	private Long table_id;
+	@DocBean(name ="dbm_tableid",value="检测表主键:",dataType = Long.class,required = true)
+	private Long dbm_tableid;
 
 	/** 取得：对标分类结构ID */
 	public Long getDds_id(){
@@ -92,17 +92,17 @@ public class Dbm_sort_column extends ProjectTableEntity
 		this.dsc_remark=dsc_remark;
 	}
 	/** 取得：检测表主键 */
-	public Long getTable_id(){
-		return table_id;
+	public Long getDbm_tableid(){
+		return dbm_tableid;
 	}
 	/** 设置：检测表主键 */
-	public void setTable_id(Long table_id){
-		this.table_id=table_id;
+	public void setDbm_tableid(Long dbm_tableid){
+		this.dbm_tableid=dbm_tableid;
 	}
 	/** 设置：检测表主键 */
-	public void setTable_id(String table_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(table_id)){
-			this.table_id=new Long(table_id);
+	public void setDbm_tableid(String dbm_tableid){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(dbm_tableid)){
+			this.dbm_tableid=new Long(dbm_tableid);
 		}
 	}
 }

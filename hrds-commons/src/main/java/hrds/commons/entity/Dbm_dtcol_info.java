@@ -48,8 +48,8 @@ public class Dbm_dtcol_info extends ProjectTableEntity
 	private String is_null;
 	@DocBean(name ="default_value",value="默认值:",dataType = String.class,required = false)
 	private String default_value;
-	@DocBean(name ="table_id",value="检测表主键:",dataType = Long.class,required = true)
-	private Long table_id;
+	@DocBean(name ="dbm_tableid",value="检测表主键:",dataType = Long.class,required = true)
+	private Long dbm_tableid;
 	@DocBean(name ="col_remark",value="字段描述:",dataType = String.class,required = false)
 	private String col_remark;
 	@DocBean(name ="detect_id",value="检测主键:",dataType = String.class,required = true)
@@ -154,17 +154,17 @@ public class Dbm_dtcol_info extends ProjectTableEntity
 		this.default_value=default_value;
 	}
 	/** 取得：检测表主键 */
-	public Long getTable_id(){
-		return table_id;
+	public Long getDbm_tableid(){
+		return dbm_tableid;
 	}
 	/** 设置：检测表主键 */
-	public void setTable_id(Long table_id){
-		this.table_id=table_id;
+	public void setDbm_tableid(Long dbm_tableid){
+		this.dbm_tableid=dbm_tableid;
 	}
 	/** 设置：检测表主键 */
-	public void setTable_id(String table_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(table_id)){
-			this.table_id=new Long(table_id);
+	public void setDbm_tableid(String dbm_tableid){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(dbm_tableid)){
+			this.dbm_tableid=new Long(dbm_tableid);
 		}
 	}
 	/** 取得：字段描述 */
