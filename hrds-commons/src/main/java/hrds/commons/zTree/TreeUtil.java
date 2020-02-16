@@ -34,7 +34,7 @@ public class TreeUtil {
 					"8.无大数据环境(NoHadoop)环境树信息转树节点")
 	@Param(name = "treeDataInfo", desc = "TreeDataInfo", range = "TreeDataInfo的对象实例")
 	@Param(name = "user", desc = "User", range = "登录用户User的对象实例")
-	@Return(desc = "蔬菜单信息", range = "返回值取值范围")
+	@Return(desc = "树菜单信息", range = "返回值取值范围")
 	public List<Map<String, Object>> getTreeDataInfo(User user, TreeDataInfo treeDataInfo) {
 		List<Map<String, Object>> treeDataList = new ArrayList<>();
 		//获取各层树数据信息
