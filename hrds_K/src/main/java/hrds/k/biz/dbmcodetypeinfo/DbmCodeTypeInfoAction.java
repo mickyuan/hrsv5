@@ -60,7 +60,7 @@ public class DbmCodeTypeInfoAction extends BaseAction {
             logicStep = "1.检查待删除的代码类是否存在" +
                     "2.检查代码分类id是否存在" +
                     "3.根据代码分类id删除分类")
-    @Param(name = "code_item_id", desc = "代码项id", range = "Int类型")
+    @Param(name = "code_type_id", desc = "代码项id", range = "Int类型")
     public void deleteDbmCodeTypeInfo(long code_type_id) {
         //1.检查待删除的代码项是否存在
         if (checkCodeTypeIdIsNotExist(code_type_id)) {
