@@ -32,7 +32,7 @@ public class DbmNormbasicAction extends BaseAction {
                     "1-3.父分类不为空的情况下,检查上级分类是否存在" +
                     "2.设置标准分类信息" +
                     "3.添加标准分类信息")
-    @Param(name = "standardClassifyInfo", desc = "标准分类的实体对象", range = "标准分类的实体对象", isBean = true)
+    @Param(name = "dbm_normbasic", desc = "标准分类的实体对象", range = "标准分类的实体对象", isBean = true)
     public void addDbmNormbasicInfo(Dbm_normbasic dbm_normbasic) {
         //1.数据校验
         if (checkNormCodeIsRepeat(dbm_normbasic.getNorm_code())) {
@@ -98,7 +98,7 @@ public class DbmNormbasicAction extends BaseAction {
             logicStep = "1.数据校验" +
                     "2.设置标准信息" +
                     "3.修改数据")
-    @Param(name = "dbm_sort_info", desc = "标准信息的实体对象", range = "标准信息的实体对象", isBean = true)
+    @Param(name = "dbm_normbasic", desc = "标准信息的实体对象", range = "标准信息的实体对象", isBean = true)
     public void updateDbmNormbasicInfo(Dbm_normbasic dbm_normbasic) {
         if (checkBasicIdIsNotExist(dbm_normbasic.getBasic_id())) {
             throw new BusinessException("修改的分类已经不存在! basic_id=" + dbm_normbasic.getBasic_id());

@@ -32,7 +32,7 @@ public class DbmSortInfoAction extends BaseAction {
                     "1-3.父分类不为空的情况下,检查上级分类是否存在" +
                     "2.设置标准分类信息" +
                     "3.添加标准分类信息")
-    @Param(name = "standardClassifyInfo", desc = "标准分类的实体对象", range = "标准分类的实体对象", isBean = true)
+    @Param(name = "dbm_sort_info", desc = "标准分类的实体对象", range = "标准分类的实体对象", isBean = true)
     public void addDbmSortInfo(Dbm_sort_info dbm_sort_info) {
         //1.数据校验
         //1-1.分类名不能为空
