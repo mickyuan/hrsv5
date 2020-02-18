@@ -56,12 +56,12 @@ public class Dbm_dtcol_info extends ProjectTableEntity
 	private String detect_id;
 	@DocBean(name ="column_id",value="字段ID:",dataType = Long.class,required = false)
 	private Long column_id;
-	@DocBean(name ="database_id",value="数据库设置id:",dataType = Long.class,required = false)
-	private Long database_id;
-	@DocBean(name ="agent_id",value="Agent_id:",dataType = Long.class,required = false)
-	private Long agent_id;
 	@DocBean(name ="source_id",value="数据源ID:",dataType = Long.class,required = false)
 	private Long source_id;
+	@DocBean(name ="agent_id",value="Agent_id:",dataType = Long.class,required = false)
+	private Long agent_id;
+	@DocBean(name ="database_id",value="数据库设置id:",dataType = Long.class,required = false)
+	private Long database_id;
 
 	/** 取得：字段主键 */
 	public Long getCol_id(){
@@ -197,18 +197,18 @@ public class Dbm_dtcol_info extends ProjectTableEntity
 			this.column_id=new Long(column_id);
 		}
 	}
-	/** 取得：数据库设置id */
-	public Long getDatabase_id(){
-		return database_id;
+	/** 取得：数据源ID */
+	public Long getSource_id(){
+		return source_id;
 	}
-	/** 设置：数据库设置id */
-	public void setDatabase_id(Long database_id){
-		this.database_id=database_id;
+	/** 设置：数据源ID */
+	public void setSource_id(Long source_id){
+		this.source_id=source_id;
 	}
-	/** 设置：数据库设置id */
-	public void setDatabase_id(String database_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(database_id)){
-			this.database_id=new Long(database_id);
+	/** 设置：数据源ID */
+	public void setSource_id(String source_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(source_id)){
+			this.source_id=new Long(source_id);
 		}
 	}
 	/** 取得：Agent_id */
@@ -225,18 +225,18 @@ public class Dbm_dtcol_info extends ProjectTableEntity
 			this.agent_id=new Long(agent_id);
 		}
 	}
-	/** 取得：数据源ID */
-	public Long getSource_id(){
-		return source_id;
+	/** 取得：数据库设置id */
+	public Long getDatabase_id(){
+		return database_id;
 	}
-	/** 设置：数据源ID */
-	public void setSource_id(Long source_id){
-		this.source_id=source_id;
+	/** 设置：数据库设置id */
+	public void setDatabase_id(Long database_id){
+		this.database_id=database_id;
 	}
-	/** 设置：数据源ID */
-	public void setSource_id(String source_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(source_id)){
-			this.source_id=new Long(source_id);
+	/** 设置：数据库设置id */
+	public void setDatabase_id(String database_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(database_id)){
+			this.database_id=new Long(database_id);
 		}
 	}
 }

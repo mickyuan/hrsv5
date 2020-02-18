@@ -5,23 +5,23 @@ import hrds.commons.exception.AppSystemException;
 /**代码类型名：对标-数据类别  */
 public enum DbmDataType {
 	/**编码类<BianMaLei>  */
-	BianMaLei("101","编码类","64","对标-数据类别"),
+	BianMaLei("101","编码类","67","对标-数据类别"),
 	/**标识类<BiaoShiLei>  */
-	BiaoShiLei("102","标识类","64","对标-数据类别"),
+	BiaoShiLei("102","标识类","67","对标-数据类别"),
 	/**代码类<DaiMaLei>  */
-	DaiMaLei("103","代码类","64","对标-数据类别"),
+	DaiMaLei("103","代码类","67","对标-数据类别"),
 	/**金额类<JinELei>  */
-	JinELei("104","金额类","64","对标-数据类别"),
+	JinELei("104","金额类","67","对标-数据类别"),
 	/**日期类<RiQiLei>  */
-	RiQiLei("105","日期类","64","对标-数据类别"),
+	RiQiLei("105","日期类","67","对标-数据类别"),
 	/**日期时间类<RiQiShiJianLei>  */
-	RiQiShiJianLei("106","日期时间类","64","对标-数据类别"),
+	RiQiShiJianLei("106","日期时间类","67","对标-数据类别"),
 	/**时间类<ShiJianLei>  */
-	ShiJianLei("107","时间类","64","对标-数据类别"),
+	ShiJianLei("107","时间类","67","对标-数据类别"),
 	/**数值类<ShuZhiLei>  */
-	ShuZhiLei("108","数值类","64","对标-数据类别"),
+	ShuZhiLei("108","数值类","67","对标-数据类别"),
 	/**文本类<WenBenLei>  */
-	WenBenLei("109","文本类","64","对标-数据类别");
+	WenBenLei("109","文本类","67","对标-数据类别");
 
 	private final String code;
 	private final String value;

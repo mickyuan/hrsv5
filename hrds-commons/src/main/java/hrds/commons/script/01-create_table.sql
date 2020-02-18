@@ -1,310 +1,4 @@
-﻿--表清洗参数信息
-DROP TABLE IF EXISTS TABLE_CLEAN ;
-CREATE TABLE TABLE_CLEAN(
-TABLE_CLEAN_ID                                    BIGINT default 0 NOT NULL, --清洗参数编号
-CLEAN_TYPE                                        CHAR(1) NOT NULL, --清洗方式
-FILLING_TYPE                                      CHAR(1) NULL, --补齐方式
-CHARACTER_FILLING                                 VARCHAR(512) NULL, --补齐字符
-FILLING_LENGTH                                    BIGINT default 0 NULL, --补齐长度
-FIELD                                             VARCHAR(512) NULL, --原字段
-REPLACE_FEILD                                     VARCHAR(512) NULL, --替换字段
-TABLE_ID                                          BIGINT default 0 NOT NULL, --表名ID
-CONSTRAINT TABLE_CLEAN_PK PRIMARY KEY(TABLE_CLEAN_ID)   );
-
---列清洗参数信息
-DROP TABLE IF EXISTS COLUMN_CLEAN ;
-CREATE TABLE COLUMN_CLEAN(
-COL_CLEAN_ID                                      BIGINT default 0 NOT NULL, --清洗参数编号
-CONVERT_FORMAT                                    VARCHAR(512) NULL, --转换格式
-OLD_FORMAT                                        VARCHAR(512) NULL, --原始格式
-CLEAN_TYPE                                        CHAR(1) NOT NULL, --清洗方式
-FILLING_TYPE                                      CHAR(1) NULL, --补齐方式
-CHARACTER_FILLING                                 VARCHAR(512) NULL, --补齐字符
-FILLING_LENGTH                                    BIGINT default 0 NULL, --补齐长度
-CODENAME                                          VARCHAR(512) NULL, --码值名称
-CODESYS                                           VARCHAR(512) NULL, --码值所属系统
-FIELD                                             VARCHAR(512) NULL, --原字段
-REPLACE_FEILD                                     VARCHAR(512) NULL, --替换字段
-COLUMN_ID                                         BIGINT default 0 NOT NULL, --字段ID
-CONSTRAINT COLUMN_CLEAN_PK PRIMARY KEY(COL_CLEAN_ID)   );
-
---Agent下载信息
-DROP TABLE IF EXISTS AGENT_DOWN_INFO ;
-CREATE TABLE AGENT_DOWN_INFO(
-DOWN_ID                                           BIGINT default 0 NOT NULL, --下载编号(primary)
-AGENT_NAME                                        VARCHAR(512) NOT NULL, --Agent名称
-AGENT_IP                                          VARCHAR(50) NOT NULL, --Agent IP
-AGENT_PORT                                        VARCHAR(10) NOT NULL, --Agent端口
-USER_NAME                                         VARCHAR(10) NULL, --用户名
-PASSWD                                            VARCHAR(10) NULL, --密码
-SAVE_DIR                                          VARCHAR(512) NOT NULL, --存放目录
-LOG_DIR                                           VARCHAR(512) NOT NULL, --日志目录
-DEPLOY                                            CHAR(1) NOT NULL, --是否部署
-AI_DESC                                           VARCHAR(200) NULL, --描述
-AGENT_CONTEXT                                     VARCHAR(200) NOT NULL, --agent的context
-AGENT_PATTERN                                     VARCHAR(200) NOT NULL, --agent的访问路径
-AGENT_TYPE                                        CHAR(1) NOT NULL, --agent类别
-AGENT_ID                                          BIGINT default 0 NULL, --Agent_id
-USER_ID                                           BIGINT default 0 NOT NULL, --用户ID
-REMARK                                            VARCHAR(512) NULL, --备注
-CONSTRAINT AGENT_DOWN_INFO_PK PRIMARY KEY(DOWN_ID)   );
-
---表对应的字段
-DROP TABLE IF EXISTS TABLE_COLUMN ;
-CREATE TABLE TABLE_COLUMN(
-COLUMN_ID                                         BIGINT default 0 NOT NULL, --字段ID
-IS_GET                                            CHAR(1) default '0' NULL, --是否采集
-IS_PRIMARY_KEY                                    CHAR(1) NOT NULL, --是否为主键
-COLUMN_NAME                                       VARCHAR(512) NOT NULL, --列名
-COLUMN_TYPE                                       VARCHAR(512) NULL, --列字段类型
-COLUMN_CH_NAME                                    VARCHAR(512) NULL, --列中文名称
-TABLE_ID                                          BIGINT default 0 NOT NULL, --表名ID
-VALID_S_DATE                                      CHAR(8) NOT NULL, --有效开始日期
-VALID_E_DATE                                      CHAR(8) NOT NULL, --有效结束日期
-IS_ALIVE                                          CHAR(1) default '0' NOT NULL, --是否保留原字段
-IS_NEW                                            CHAR(1) default '1' NOT NULL, --是否为变化生成
-TC_OR                                             VARCHAR(512) NULL, --清洗顺序
-TC_REMARK                                         VARCHAR(512) NULL, --备注
-CONSTRAINT TABLE_COLUMN_PK PRIMARY KEY(COLUMN_ID)   );
-
---采集任务分类表
-DROP TABLE IF EXISTS COLLECT_JOB_CLASSIFY ;
-CREATE TABLE COLLECT_JOB_CLASSIFY(
-CLASSIFY_ID                                       BIGINT default 0 NOT NULL, --分类id
-CLASSIFY_NUM                                      VARCHAR(512) NOT NULL, --分类编号
-CLASSIFY_NAME                                     VARCHAR(512) NOT NULL, --分类名称
-REMARK                                            VARCHAR(512) NULL, --备注
-USER_ID                                           BIGINT default 0 NOT NULL, --用户ID
-AGENT_ID                                          BIGINT default 0 NOT NULL, --Agent_id
-CONSTRAINT COLLECT_JOB_CLASSIFY_PK PRIMARY KEY(CLASSIFY_ID)   );
-
---文件源设置
-DROP TABLE IF EXISTS FILE_SOURCE ;
-CREATE TABLE FILE_SOURCE(
-FILE_SOURCE_ID                                    BIGINT default 0 NOT NULL, --文件源ID
-FILE_SOURCE_PATH                                  VARCHAR(512) NOT NULL, --文件源路径
-IS_PDF                                            CHAR(1) NOT NULL, --PDF文件
-IS_OFFICE                                         CHAR(1) NOT NULL, --office文件
-IS_TEXT                                           CHAR(1) NOT NULL, --文本文件
-IS_VIDEO                                          CHAR(1) NOT NULL, --视频文件
-IS_AUDIO                                          CHAR(1) NOT NULL, --音频文件
-IS_IMAGE                                          CHAR(1) NOT NULL, --图片文件
-IS_COMPRESS                                       CHAR(1) NOT NULL, --压缩文件
-CUSTOM_SUFFIX                                     VARCHAR(80) NULL, --自定义后缀
-IS_OTHER                                          CHAR(1) NOT NULL, --其他
-FILE_REMARK                                       VARCHAR(512) NULL, --备注
-FCS_ID                                            BIGINT default 0 NOT NULL, --文件系统采集ID
-AGENT_ID                                          BIGINT default 0 NOT NULL, --Agent_id
-CONSTRAINT FILE_SOURCE_PK PRIMARY KEY(FILE_SOURCE_ID)   );
-
---列拆分信息表
-DROP TABLE IF EXISTS COLUMN_SPLIT ;
-CREATE TABLE COLUMN_SPLIT(
-COL_SPLIT_ID                                      BIGINT default 0 NOT NULL, --字段编号
-COL_NAME                                          VARCHAR(512) NOT NULL, --字段名称
-COL_OFFSET                                        VARCHAR(512) NULL, --字段偏移量
-SPLIT_SEP                                         VARCHAR(512) NULL, --拆分分隔符
-SEQ                                               BIGINT default 0 NULL, --拆分对应序号
-SPLIT_TYPE                                        CHAR(1) NOT NULL, --拆分方式
-COL_ZHNAME                                        VARCHAR(512) NULL, --中文名称
-REMARK                                            VARCHAR(512) NULL, --备注
-COL_TYPE                                          VARCHAR(512) NOT NULL, --字段类型
-VALID_S_DATE                                      CHAR(8) NOT NULL, --有效开始日期
-VALID_E_DATE                                      CHAR(8) NOT NULL, --有效结束日期
-COL_CLEAN_ID                                      BIGINT default 0 NOT NULL, --清洗参数编号
-COLUMN_ID                                         BIGINT default 0 NOT NULL, --字段ID
-CONSTRAINT COLUMN_SPLIT_PK PRIMARY KEY(COL_SPLIT_ID)   );
-
---列合并信息表
-DROP TABLE IF EXISTS COLUMN_MERGE ;
-CREATE TABLE COLUMN_MERGE(
-COL_MERGE_ID                                      BIGINT default 0 NOT NULL, --字段编号
-COL_NAME                                          VARCHAR(512) NOT NULL, --合并后字段名称
-OLD_NAME                                          VARCHAR(512) NOT NULL, --要合并的字段
-COL_ZHNAME                                        VARCHAR(512) NULL, --中文名称
-REMARK                                            VARCHAR(512) NULL, --备注
-COL_TYPE                                          VARCHAR(512) NOT NULL, --字段类型
-VALID_S_DATE                                      CHAR(8) NOT NULL, --有效开始日期
-VALID_E_DATE                                      CHAR(8) NOT NULL, --有效结束日期
-TABLE_ID                                          BIGINT default 0 NOT NULL, --表名ID
-CONSTRAINT COLUMN_MERGE_PK PRIMARY KEY(COL_MERGE_ID)   );
-
---对象采集对应信息
-DROP TABLE IF EXISTS OBJECT_COLLECT_TASK ;
-CREATE TABLE OBJECT_COLLECT_TASK(
-OCS_ID                                            BIGINT default 0 NOT NULL, --对象采集任务编号
-AGENT_ID                                          BIGINT default 0 NOT NULL, --Agent_id
-EN_NAME                                           VARCHAR(512) NOT NULL, --英文名称
-ZH_NAME                                           VARCHAR(512) NOT NULL, --中文名称
-COLLECT_DATA_TYPE                                 CHAR(1) NOT NULL, --数据类型
-REMARK                                            VARCHAR(512) NULL, --备注
-DATABASE_CODE                                     CHAR(1) NOT NULL, --采集编码
-ODC_ID                                            BIGINT default 0 NOT NULL, --对象采集id
-CONSTRAINT OBJECT_COLLECT_TASK_PK PRIMARY KEY(OCS_ID)   );
-
---文件系统设置
-DROP TABLE IF EXISTS FILE_COLLECT_SET ;
-CREATE TABLE FILE_COLLECT_SET(
-FCS_ID                                            BIGINT default 0 NOT NULL, --文件系统采集ID
-AGENT_ID                                          BIGINT default 0 NULL, --Agent_id
-FCS_NAME                                          VARCHAR(512) NOT NULL, --文件系统采集任务名称
-HOST_NAME                                         VARCHAR(512) NULL, --主机名称
-SYSTEM_TYPE                                       VARCHAR(512) NULL, --操作系统类型
-IS_SENDOK                                         CHAR(1) NOT NULL, --是否设置完成并发送成功
-IS_SOLR                                           CHAR(1) NOT NULL, --是否入solr
-REMARK                                            VARCHAR(512) NULL, --备注
-CONSTRAINT FILE_COLLECT_SET_PK PRIMARY KEY(FCS_ID)   );
-
---对象采集设置
-DROP TABLE IF EXISTS OBJECT_COLLECT ;
-CREATE TABLE OBJECT_COLLECT(
-ODC_ID                                            BIGINT default 0 NOT NULL, --对象采集id
-OBJECT_COLLECT_TYPE                               CHAR(1) NOT NULL, --对象采集方式
-OBJ_NUMBER                                        VARCHAR(200) NOT NULL, --对象采集设置编号
-OBJ_COLLECT_NAME                                  VARCHAR(512) NOT NULL, --对象采集任务名称
-SYSTEM_NAME                                       VARCHAR(512) NOT NULL, --操作系统类型
-HOST_NAME                                         VARCHAR(512) NOT NULL, --主机名称
-LOCAL_TIME                                        CHAR(20) NOT NULL, --本地系统时间
-SERVER_DATE                                       CHAR(20) NOT NULL, --服务器日期
-S_DATE                                            CHAR(8) NOT NULL, --开始日期
-E_DATE                                            CHAR(8) NOT NULL, --结束日期
-DATABASE_CODE                                     CHAR(1) NOT NULL, --采集编码
-RUN_WAY                                           CHAR(1) NOT NULL, --启动方式
-FILE_PATH                                         VARCHAR(512) NOT NULL, --采集文件路径
-IS_SENDOK                                         CHAR(1) NOT NULL, --是否设置完成并发送成功
-REMARK                                            VARCHAR(512) NULL, --备注
-AGENT_ID                                          BIGINT default 0 NOT NULL, --Agent_id
-CONSTRAINT OBJECT_COLLECT_PK PRIMARY KEY(ODC_ID)   );
-
---数据存储关系表
-DROP TABLE IF EXISTS DATA_RELATION_TABLE ;
-CREATE TABLE DATA_RELATION_TABLE(
-STORAGE_ID                                        BIGINT default 0 NOT NULL, --储存编号
-DSL_ID                                            BIGINT default 0 NOT NULL, --存储层配置ID
-CONSTRAINT DATA_RELATION_TABLE_PK PRIMARY KEY(STORAGE_ID,DSL_ID)   );
-
---字段存储信息
-DROP TABLE IF EXISTS COLUMN_STORAGE_INFO ;
-CREATE TABLE COLUMN_STORAGE_INFO(
-DSLAD_ID                                          BIGINT default 0 NOT NULL, --附加信息ID
-COLUMN_ID                                         BIGINT default 0 NOT NULL, --字段ID
-CSI_NUMBER                                        BIGINT default 0 NOT NULL, --序号位置
-CONSTRAINT COLUMN_STORAGE_INFO_PK PRIMARY KEY(DSLAD_ID,COLUMN_ID)   );
-
---数据权限设置表
-DROP TABLE IF EXISTS DATA_AUTH ;
-CREATE TABLE DATA_AUTH(
-DA_ID                                             BIGINT default 0 NOT NULL, --数据权限设置ID
-APPLY_DATE                                        CHAR(8) NOT NULL, --申请日期
-APPLY_TIME                                        CHAR(6) NOT NULL, --申请时间
-APPLY_TYPE                                        CHAR(1) NOT NULL, --申请类型
-AUTH_TYPE                                         CHAR(1) NOT NULL, --权限类型
-AUDIT_DATE                                        CHAR(8) NULL, --审核日期
-AUDIT_TIME                                        CHAR(6) NULL, --审核时间
-AUDIT_USERID                                      BIGINT default 0 NULL, --审核人ID
-AUDIT_NAME                                        VARCHAR(512) NULL, --审核人名称
-FILE_ID                                           VARCHAR(40) NOT NULL, --文件编号
-USER_ID                                           BIGINT default 0 NOT NULL, --用户ID
-DEP_ID                                            BIGINT default 0 NOT NULL, --部门ID
-AGENT_ID                                          BIGINT default 0 NOT NULL, --Agent_id
-SOURCE_ID                                         BIGINT default 0 NOT NULL, --数据源ID
-COLLECT_SET_ID                                    BIGINT default 0 NOT NULL, --数据库设置id
-CONSTRAINT DATA_AUTH_PK PRIMARY KEY(DA_ID)   );
-
---系统采集作业结果表
-DROP TABLE IF EXISTS SYS_EXEINFO ;
-CREATE TABLE SYS_EXEINFO(
-EXE_ID                                            BIGINT default 0 NOT NULL, --执行id
-JOB_NAME                                          VARCHAR(512) NOT NULL, --作业名称名称
-JOB_TABLENAME                                     VARCHAR(512) NULL, --作业表名
-ETL_DATE                                          CHAR(8) NOT NULL, --执行日期
-EXECUTE_STATE                                     CHAR(2) NOT NULL, --运行状态
-EXE_PARAMETER                                     VARCHAR(512) NOT NULL, --参数
-ERR_INFO                                          VARCHAR(512) NOT NULL, --错误信息
-IS_VALID                                          CHAR(1) NOT NULL, --作业是否有效
-ST_DATE                                           CHAR(14) NOT NULL, --开始日期
-ED_DATE                                           CHAR(14) NOT NULL, --结束日期
-DATABASE_ID                                       BIGINT default 0 NOT NULL, --数据库设置id
-AGENT_ID                                          BIGINT default 0 NOT NULL, --Agent_id
-SOURCE_ID                                         BIGINT default 0 NOT NULL, --数据源ID
-CONSTRAINT SYS_EXEINFO_PK PRIMARY KEY(EXE_ID)   );
-
---源文件属性清册
-DROP TABLE IF EXISTS SOURCE_FILE_DETAILED ;
-CREATE TABLE SOURCE_FILE_DETAILED(
-SFD_ID                                            VARCHAR(40) NOT NULL, --源文件属性清册ID
-FILE_ID                                           VARCHAR(40) NOT NULL, --文件编号
-ORIGINAL_NAME                                     VARCHAR(512) NOT NULL, --原始文件名或表中文名称
-ORIGINAL_UPDATE_DATE                              CHAR(8) NOT NULL, --原文件最后修改日期
-ORIGINAL_UPDATE_TIME                              CHAR(6) NOT NULL, --原文件最后修改时间
-TABLE_NAME                                        VARCHAR(512) NULL, --表名
-META_INFO                                         VARCHAR(6000) NULL, --META元信息
-HBASE_NAME                                        VARCHAR(512) NOT NULL, --HBase对应表名
-STORAGE_DATE                                      CHAR(8) NOT NULL, --入库日期
-STORAGE_TIME                                      CHAR(6) NOT NULL, --入库时间
-FILE_SIZE                                         BIGINT default 0 NOT NULL, --文件大小
-FILE_TYPE                                         VARCHAR(512) NOT NULL, --文件类型
-FILE_SUFFIX                                       VARCHAR(512) NOT NULL, --文件后缀
-HDFS_STORAGE_PATH                                 VARCHAR(512) NULL, --hdfs储路径
-SOURCE_PATH                                       VARCHAR(512) NOT NULL, --文件路径
-FILE_MD5                                          VARCHAR(40) NULL, --文件MD5值
-FILE_AVRO_PATH                                    VARCHAR(500) NULL, --所在avro文件地址
-FILE_AVRO_BLOCK                                   DECIMAL(15) NULL, --所存avro文件block号
-IS_BIG_FILE                                       CHAR(1) default '1' NULL, --是否为大文件
-FOLDER_ID                                         BIGINT default 0 NOT NULL, --文件夹编号
-AGENT_ID                                          BIGINT default 0 NOT NULL, --Agent_id
-SOURCE_ID                                         BIGINT default 0 NOT NULL, --数据源ID
-COLLECT_SET_ID                                    BIGINT default 0 NOT NULL, --数据库设置id
-CONSTRAINT SOURCE_FILE_DETAILED_PK PRIMARY KEY(SFD_ID)   );
-
---源文件属性
-DROP TABLE IF EXISTS SOURCE_FILE_ATTRIBUTE ;
-CREATE TABLE SOURCE_FILE_ATTRIBUTE(
-FILE_ID                                           VARCHAR(40) NOT NULL, --文件编号
-IS_IN_HBASE                                       CHAR(1) default '1' NOT NULL, --是否已进入HBASE
-SEQENCING                                         BIGINT default 0 NOT NULL, --排序计数
-COLLECT_TYPE                                      CHAR(1) NOT NULL, --采集类型
-ORIGINAL_NAME                                     VARCHAR(512) NOT NULL, --原始文件名或表中文名称
-ORIGINAL_UPDATE_DATE                              CHAR(8) NOT NULL, --原文件最后修改日期
-ORIGINAL_UPDATE_TIME                              CHAR(6) NOT NULL, --原文件最后修改时间
-TABLE_NAME                                        VARCHAR(512) NULL, --采集的原始表名
-HBASE_NAME                                        VARCHAR(512) NOT NULL, --系统内对应表名
-META_INFO                                         VARCHAR(6000) NULL, --META元信息
-STORAGE_DATE                                      CHAR(8) NOT NULL, --入库日期
-STORAGE_TIME                                      CHAR(6) NOT NULL, --入库时间
-FILE_SIZE                                         BIGINT default 0 NOT NULL, --文件大小
-FILE_TYPE                                         VARCHAR(512) NOT NULL, --文件类型
-FILE_SUFFIX                                       VARCHAR(512) NOT NULL, --文件后缀
-SOURCE_PATH                                       VARCHAR(512) NULL, --文件路径
-FILE_MD5                                          VARCHAR(40) NULL, --文件MD5值
-FILE_AVRO_PATH                                    VARCHAR(500) NULL, --所在avro文件地址
-FILE_AVRO_BLOCK                                   DECIMAL(15) NULL, --所存avro文件block号
-IS_BIG_FILE                                       CHAR(1) default '1' NULL, --是否为大文件
-IS_CACHE                                          CHAR(1) NULL, --是否本地缓存
-FOLDER_ID                                         BIGINT default 0 NOT NULL, --文件夹编号
-AGENT_ID                                          BIGINT default 0 NOT NULL, --Agent_id
-SOURCE_ID                                         BIGINT default 0 NOT NULL, --数据源ID
-COLLECT_SET_ID                                    BIGINT default 0 NOT NULL, --数据库设置id
-CONSTRAINT SOURCE_FILE_ATTRIBUTE_PK PRIMARY KEY(FILE_ID)   );
-
---源文件夹属性表
-DROP TABLE IF EXISTS SOURCE_FOLDER_ATTRIBUTE ;
-CREATE TABLE SOURCE_FOLDER_ATTRIBUTE(
-FOLDER_ID                                         BIGINT default 0 NOT NULL, --文件夹编号
-SUPER_ID                                          BIGINT default 0 NULL, --文件夹编号
-FOLDER_NAME                                       VARCHAR(512) NOT NULL, --文件夹名
-ORIGINAL_CREATE_DATE                              CHAR(8) NOT NULL, --文件夹生产日期
-ORIGINAL_CREATE_TIME                              CHAR(6) NOT NULL, --文件夹生成时间
-FOLDER_SIZE                                       DECIMAL(16,2) default 0 NOT NULL, --文件夹大小
-STORAGE_DATE                                      CHAR(8) NOT NULL, --文件夹入库日期
-STORAGE_TIME                                      CHAR(6) NOT NULL, --文件夹入库时间
-FOLDERS_IN_NO                                     BIGINT default 0 NOT NULL, --文件夹内文件夹数量
-LOCATION_IN_HDFS                                  VARCHAR(512) NOT NULL, --hdfs中存储位置
-AGENT_ID                                          BIGINT default 0 NOT NULL, --Agent_id
-SOURCE_ID                                         BIGINT default 0 NOT NULL, --数据源ID
-CONSTRAINT SOURCE_FOLDER_ATTRIBUTE_PK PRIMARY KEY(FOLDER_ID)   );
-
---全文检索排序表
+﻿--全文检索排序表
 DROP TABLE IF EXISTS SEARCH_INFO ;
 CREATE TABLE SEARCH_INFO(
 SI_ID                                             BIGINT default 0 NOT NULL, --si_id
@@ -375,9 +69,10 @@ CREATE TABLE DATA_STORE_LAYER(
 DSL_ID                                            BIGINT default 0 NOT NULL, --存储层配置ID
 DSL_NAME                                          VARCHAR(512) NOT NULL, --配置属性名称
 STORE_TYPE                                        CHAR(1) NOT NULL, --存储类型
+IS_HADOOPCLIENT                                   CHAR(1) NOT NULL, --是否有hadoop客户端
 DSL_REMARK                                        VARCHAR(512) NULL, --备注
-DTC_ID                                            BIGINT default 0 NULL, --类型对照主键
-DLC_ID                                            BIGINT default 0 NULL, --存储层类型长度ID
+DTCS_ID                                           BIGINT default 0 NULL, --类型对照ID
+DLCS_ID                                           BIGINT default 0 NULL, --长度对照表ID
 CONSTRAINT DATA_STORE_LAYER_PK PRIMARY KEY(DSL_ID)   );
 
 --数据存储附加信息表
@@ -390,24 +85,40 @@ DSL_ID                                            BIGINT default 0 NOT NULL, --�
 CONSTRAINT DATA_STORE_LAYER_ADDED_PK PRIMARY KEY(DSLAD_ID)   );
 
 --存储层数据类型对照表
-DROP TABLE IF EXISTS DATA_TYPE_CONTRAST ;
-CREATE TABLE DATA_TYPE_CONTRAST(
+DROP TABLE IF EXISTS TYPE_CONTRAST ;
+CREATE TABLE TYPE_CONTRAST(
 DTC_ID                                            BIGINT default 0 NOT NULL, --类型对照主键
 SOURCE_TYPE                                       VARCHAR(512) NOT NULL, --源表数据类型
-DTC_NAME                                          VARCHAR(512) NOT NULL, --类型对照名称
 TARGET_TYPE                                       VARCHAR(512) NOT NULL, --目标表数据类型
 DTC_REMARK                                        VARCHAR(512) NULL, --备注
-CONSTRAINT DATA_TYPE_CONTRAST_PK PRIMARY KEY(DTC_ID)   );
+DTCS_ID                                           BIGINT default 0 NOT NULL, --类型对照ID
+CONSTRAINT TYPE_CONTRAST_PK PRIMARY KEY(DTC_ID)   );
 
 --存储层数据类型长度对照表
-DROP TABLE IF EXISTS DATA_LENGTH_CONTRAST ;
-CREATE TABLE DATA_LENGTH_CONTRAST(
+DROP TABLE IF EXISTS LENGTH_CONTRAST ;
+CREATE TABLE LENGTH_CONTRAST(
 DLC_ID                                            BIGINT default 0 NOT NULL, --存储层类型长度ID
-DLC_NAME                                          VARCHAR(512) NOT NULL, --对照类型名称
 DLC_TYPE                                          VARCHAR(512) NOT NULL, --字段类型
 DLC_LENGTH                                        INTEGER default 0 NOT NULL, --字段长度
 DLC_REMARK                                        VARCHAR(512) NULL, --备注
-CONSTRAINT DATA_LENGTH_CONTRAST_PK PRIMARY KEY(DLC_ID)   );
+DLCS_ID                                           BIGINT default 0 NOT NULL, --长度对照表ID
+CONSTRAINT LENGTH_CONTRAST_PK PRIMARY KEY(DLC_ID)   );
+
+--数据类型对照主表
+DROP TABLE IF EXISTS TYPE_CONTRAST_SUM ;
+CREATE TABLE TYPE_CONTRAST_SUM(
+DTCS_ID                                           BIGINT default 0 NOT NULL, --类型对照ID
+DTCS_NAME                                         VARCHAR(512) NOT NULL, --类型对照名称
+DTCS_REMARK                                       VARCHAR(512) NULL, --备注
+CONSTRAINT TYPE_CONTRAST_SUM_PK PRIMARY KEY(DTCS_ID)   );
+
+--存储层数据类型长度对照主表
+DROP TABLE IF EXISTS LENGTH_CONTRAST_SUM ;
+CREATE TABLE LENGTH_CONTRAST_SUM(
+DLCS_ID                                           BIGINT default 0 NOT NULL, --长度对照表ID
+DLCS_NAME                                         VARCHAR(512) NOT NULL, --长度对照名称
+DLCS_REMARK                                       VARCHAR(512) NULL, --备注
+CONSTRAINT LENGTH_CONTRAST_SUM_PK PRIMARY KEY(DLCS_ID)   );
 
 --数据对标元管理标准元表
 DROP TABLE IF EXISTS DBM_NORMBASIC ;
@@ -476,92 +187,6 @@ CODE_REMARK                                       VARCHAR(200) NOT NULL, --代�
 CODE_TYPE_ID                                      BIGINT default 0 NOT NULL, --代码类主键
 CONSTRAINT DBM_CODE_ITEM_INFO_PK PRIMARY KEY(CODE_ITEM_ID)   );
 
---数据对标标准对标检测表信息表
-DROP TABLE IF EXISTS DBM_DTABLE_INFO ;
-CREATE TABLE DBM_DTABLE_INFO(
-DBM_TABLEID                                       BIGINT default 0 NOT NULL, --检测表主键
-TABLE_CNAME                                       VARCHAR(100) NOT NULL, --表中文名称
-TABLE_ENAME                                       VARCHAR(512) NOT NULL, --表英文名称
-IS_EXTERNAL                                       CHAR(1) NOT NULL, --是否为外部数据源
-TABLE_REMARK                                      VARCHAR(512) NULL, --表描述信息
-DETECT_ID                                         VARCHAR(32) NOT NULL, --检测主键
-TABLE_ID                                          BIGINT default 0 NULL, --表名ID
-SOURCE_ID                                         BIGINT default 0 NULL, --数据源ID
-AGENT_ID                                          BIGINT default 0 NULL, --Agent_id
-DATABASE_ID                                       BIGINT default 0 NULL, --数据库设置id
-CONSTRAINT DBM_DTABLE_INFO_PK PRIMARY KEY(DBM_TABLEID)   );
-
---数据对标标准对标检测字段信息表
-DROP TABLE IF EXISTS DBM_DTCOL_INFO ;
-CREATE TABLE DBM_DTCOL_INFO(
-COL_ID                                            BIGINT default 0 NOT NULL, --字段主键
-COL_CNAME                                         VARCHAR(100) NOT NULL, --字段中文名
-COL_ENAME                                         VARCHAR(512) NOT NULL, --字段英文名
-COL_REMARK                                        VARCHAR(512) NULL, --字段描述
-DATA_TYPE                                         VARCHAR(100) NOT NULL, --数据类型
-DATA_LEN                                          BIGINT default 0 NOT NULL, --数据长度
-DECIMAL_POINT                                     BIGINT default 0 NOT NULL, --小数长度
-IS_KEY                                            CHAR(1) NOT NULL, --是否作为主键
-IS_NULL                                           CHAR(1) NOT NULL, --是否可为空
-DEFAULT_VALUE                                     VARCHAR(80) NULL, --默认值
-DBM_TABLEID                                       BIGINT default 0 NOT NULL, --检测表主键
-DETECT_ID                                         VARCHAR(32) NOT NULL, --检测主键
-COLUMN_ID                                         BIGINT default 0 NULL, --字段ID
-DATABASE_ID                                       BIGINT default 0 NULL, --数据库设置id
-AGENT_ID                                          BIGINT default 0 NULL, --Agent_id
-SOURCE_ID                                         BIGINT default 0 NULL, --数据源ID
-CONSTRAINT DBM_DTCOL_INFO_PK PRIMARY KEY(COL_ID)   );
-
---数据对标标准对标检测结果表
-DROP TABLE IF EXISTS DBM_NORMBMD_RESULT ;
-CREATE TABLE DBM_NORMBMD_RESULT(
-RESULT_ID                                         VARCHAR(32) NOT NULL, --结果主键
-COL_SIMILARITY                                    DECIMAL(16,2) default 0 NOT NULL, --字段相似度
-REMARK_SIMILARITY                                 DECIMAL(16,2) default 0 NOT NULL, --描述相似度
-DETECT_ID                                         VARCHAR(32) NOT NULL, --检测主键
-COL_ID                                            BIGINT default 0 NOT NULL, --字段主键
-BASIC_ID                                          BIGINT default 0 NOT NULL, --标准元主键
-IS_ARTIFICIAL                                     CHAR(1) NOT NULL, --是否为人工对标结果
-CONSTRAINT DBM_NORMBMD_RESULT_PK PRIMARY KEY(RESULT_ID)   );
-
---数据对标标准对标检测记录表
-DROP TABLE IF EXISTS DBM_NORMBM_DETECT ;
-CREATE TABLE DBM_NORMBM_DETECT(
-DETECT_ID                                         VARCHAR(32) NOT NULL, --检测主键
-DETECT_NAME                                       VARCHAR(512) NOT NULL, --检测记名
-SOURCE_TYPE                                       CHAR(3) NOT NULL, --数据来源类型
-IS_IMPORT                                         CHAR(1) NOT NULL, --是否为外部导入数据
-DETECT_STATUS                                     CHAR(1) NOT NULL, --检测状态(是否发布)
-DBM_MODE                                          CHAR(1) NULL, --对标方式
-CREATE_USER                                       VARCHAR(100) NOT NULL, --创建人
-DETECT_SDATE                                      CHAR(8) NOT NULL, --检测开始日期
-DETECT_STIME                                      CHAR(6) NOT NULL, --检测开始时间
-DETECT_EDATE                                      CHAR(8) NOT NULL, --检测结束日期
-DETECT_ETIME                                      CHAR(6) NOT NULL, --检测结束时间
-DND_REMARK                                        VARCHAR(512) NULL, --备注
-CONSTRAINT DBM_NORMBM_DETECT_PK PRIMARY KEY(DETECT_ID)   );
-
---数据对标结果分类表
-DROP TABLE IF EXISTS DBM_DATA_SORT ;
-CREATE TABLE DBM_DATA_SORT(
-DDS_ID                                            BIGINT default 0 NOT NULL, --对标分类结构ID
-DDS_NAME                                          VARCHAR(512) NOT NULL, --分类名称
-DDS_NUMBER                                        VARCHAR(100) NOT NULL, --分类编号
-DDS_REMARK                                        VARCHAR(512) NULL, --分类备注
-BASIC_ID                                          BIGINT default 0 NOT NULL, --标准元主键
-DETECT_ID                                         VARCHAR(32) NULL, --检测主键
-CONSTRAINT DBM_DATA_SORT_PK PRIMARY KEY(DDS_ID)   );
-
---分类对应的表字段
-DROP TABLE IF EXISTS DBM_SORT_COLUMN ;
-CREATE TABLE DBM_SORT_COLUMN(
-DSC_ID                                            BIGINT default 0 NOT NULL, --分类对应主键ID
-DDS_ID                                            BIGINT default 0 NOT NULL, --对标分类结构ID
-COL_ID                                            BIGINT default 0 NOT NULL, --字段主键
-DBM_TABLEID                                       BIGINT default 0 NOT NULL, --检测表主键
-DSC_REMARK                                        VARCHAR(80) NULL, --备注
-CONSTRAINT DBM_SORT_COLUMN_PK PRIMARY KEY(DSC_ID)   );
-
 --作业Agent下载信息
 DROP TABLE IF EXISTS ETL_AGENT_DOWNINFO ;
 CREATE TABLE ETL_AGENT_DOWNINFO(
@@ -576,6 +201,21 @@ USER_ID                                           DECIMAL(10) NOT NULL, --用户
 AI_DESC                                           VARCHAR(200) NULL, --描述
 REMARK                                            VARCHAR(512) NULL, --备注
 CONSTRAINT ETL_AGENT_DOWNINFO_PK PRIMARY KEY(DOWN_ID)   );
+
+--数据对标标准对标检测表信息表
+DROP TABLE IF EXISTS DBM_DTABLE_INFO ;
+CREATE TABLE DBM_DTABLE_INFO(
+DBM_TABLEID                                       BIGINT default 0 NOT NULL, --检测表主键
+TABLE_CNAME                                       VARCHAR(100) NOT NULL, --表中文名称
+TABLE_ENAME                                       VARCHAR(512) NOT NULL, --表英文名称
+IS_EXTERNAL                                       CHAR(1) NOT NULL, --是否为外部数据源
+TABLE_REMARK                                      VARCHAR(512) NULL, --表描述信息
+DETECT_ID                                         VARCHAR(32) NOT NULL, --检测主键
+TABLE_ID                                          BIGINT default 0 NULL, --表名ID
+SOURCE_ID                                         BIGINT default 0 NULL, --数据源ID
+AGENT_ID                                          BIGINT default 0 NULL, --Agent_id
+DATABASE_ID                                       BIGINT default 0 NULL, --数据库设置id
+CONSTRAINT DBM_DTABLE_INFO_PK PRIMARY KEY(DBM_TABLEID)   );
 
 --作业定义表
 DROP TABLE IF EXISTS ETL_JOB_DEF ;
@@ -616,6 +256,27 @@ STAR_TIME                                         VARCHAR(20) NULL, --开始执�
 END_TIME                                          VARCHAR(20) NULL, --结束执行时间
 CONSTRAINT ETL_JOB_DEF_PK PRIMARY KEY(ETL_JOB)   );
 
+--数据对标标准对标检测字段信息表
+DROP TABLE IF EXISTS DBM_DTCOL_INFO ;
+CREATE TABLE DBM_DTCOL_INFO(
+COL_ID                                            BIGINT default 0 NOT NULL, --字段主键
+COL_CNAME                                         VARCHAR(100) NOT NULL, --字段中文名
+COL_ENAME                                         VARCHAR(512) NOT NULL, --字段英文名
+COL_REMARK                                        VARCHAR(512) NULL, --字段描述
+DATA_TYPE                                         VARCHAR(100) NOT NULL, --数据类型
+DATA_LEN                                          BIGINT default 0 NOT NULL, --数据长度
+DECIMAL_POINT                                     BIGINT default 0 NOT NULL, --小数长度
+IS_KEY                                            CHAR(1) NOT NULL, --是否作为主键
+IS_NULL                                           CHAR(1) NOT NULL, --是否可为空
+DEFAULT_VALUE                                     VARCHAR(80) NULL, --默认值
+DBM_TABLEID                                       BIGINT default 0 NOT NULL, --检测表主键
+DETECT_ID                                         VARCHAR(32) NOT NULL, --检测主键
+COLUMN_ID                                         BIGINT default 0 NULL, --字段ID
+DATABASE_ID                                       BIGINT default 0 NULL, --数据库设置id
+AGENT_ID                                          BIGINT default 0 NULL, --Agent_id
+SOURCE_ID                                         BIGINT default 0 NULL, --数据源ID
+CONSTRAINT DBM_DTCOL_INFO_PK PRIMARY KEY(COL_ID)   );
+
 --作业调度表
 DROP TABLE IF EXISTS ETL_JOB_CUR ;
 CREATE TABLE ETL_JOB_CUR(
@@ -654,6 +315,18 @@ STAR_TIME                                         VARCHAR(20) NULL, --开始执�
 END_TIME                                          VARCHAR(20) NULL, --结束执行时间
 CONSTRAINT ETL_JOB_CUR_PK PRIMARY KEY(ETL_SYS_CD,ETL_JOB)   );
 
+--数据对标标准对标检测结果表
+DROP TABLE IF EXISTS DBM_NORMBMD_RESULT ;
+CREATE TABLE DBM_NORMBMD_RESULT(
+RESULT_ID                                         VARCHAR(32) NOT NULL, --结果主键
+COL_SIMILARITY                                    DECIMAL(16,2) default 0 NOT NULL, --字段相似度
+REMARK_SIMILARITY                                 DECIMAL(16,2) default 0 NOT NULL, --描述相似度
+DETECT_ID                                         VARCHAR(32) NOT NULL, --检测主键
+COL_ID                                            BIGINT default 0 NOT NULL, --字段主键
+BASIC_ID                                          BIGINT default 0 NOT NULL, --标准元主键
+IS_ARTIFICIAL                                     CHAR(1) NOT NULL, --是否为人工对标结果
+CONSTRAINT DBM_NORMBMD_RESULT_PK PRIMARY KEY(RESULT_ID)   );
+
 --用户信息表
 DROP TABLE IF EXISTS SYS_USER ;
 CREATE TABLE SYS_USER(
@@ -679,6 +352,23 @@ USER_REMARK                                       VARCHAR(512) NULL, --备注
 TOKEN                                             VARCHAR(40) default '0' NOT NULL, --token
 VALID_TIME                                        VARCHAR(40) default '0' NOT NULL, --token有效时间
 CONSTRAINT SYS_USER_PK PRIMARY KEY(USER_ID)   );
+
+--数据对标标准对标检测记录表
+DROP TABLE IF EXISTS DBM_NORMBM_DETECT ;
+CREATE TABLE DBM_NORMBM_DETECT(
+DETECT_ID                                         VARCHAR(32) NOT NULL, --检测主键
+DETECT_NAME                                       VARCHAR(512) NOT NULL, --检测记名
+SOURCE_TYPE                                       CHAR(3) NOT NULL, --数据来源类型
+IS_IMPORT                                         CHAR(1) NOT NULL, --是否为外部导入数据
+DETECT_STATUS                                     CHAR(1) NOT NULL, --检测状态(是否发布)
+DBM_MODE                                          CHAR(1) NULL, --对标方式
+CREATE_USER                                       VARCHAR(100) NOT NULL, --创建人
+DETECT_SDATE                                      CHAR(8) NOT NULL, --检测开始日期
+DETECT_STIME                                      CHAR(6) NOT NULL, --检测开始时间
+DETECT_EDATE                                      CHAR(8) NOT NULL, --检测结束日期
+DETECT_ETIME                                      CHAR(6) NOT NULL, --检测结束时间
+DND_REMARK                                        VARCHAR(512) NULL, --备注
+CONSTRAINT DBM_NORMBM_DETECT_PK PRIMARY KEY(DETECT_ID)   );
 
 --作业历史表
 DROP TABLE IF EXISTS ETL_JOB_DISP_HIS ;
@@ -729,6 +419,17 @@ STATUS                                            CHAR(1) NULL, --状态
 MAIN_SERV_SYNC                                    CHAR(1) NULL, --主服务器同步标志
 CONSTRAINT ETL_DEPENDENCY_PK PRIMARY KEY(ETL_SYS_CD,ETL_JOB,PRE_ETL_SYS_CD,PRE_ETL_JOB)   );
 
+--数据对标结果分类表
+DROP TABLE IF EXISTS DBM_DATA_SORT ;
+CREATE TABLE DBM_DATA_SORT(
+DDS_ID                                            BIGINT default 0 NOT NULL, --对标分类结构ID
+DDS_NAME                                          VARCHAR(512) NOT NULL, --分类名称
+DDS_NUMBER                                        VARCHAR(100) NOT NULL, --分类编号
+DDS_REMARK                                        VARCHAR(512) NULL, --分类备注
+BASIC_ID                                          BIGINT default 0 NOT NULL, --标准元主键
+DETECT_ID                                         VARCHAR(32) NULL, --检测主键
+CONSTRAINT DBM_DATA_SORT_PK PRIMARY KEY(DDS_ID)   );
+
 --作业资源关系表
 DROP TABLE IF EXISTS ETL_JOB_RESOURCE_RELA ;
 CREATE TABLE ETL_JOB_RESOURCE_RELA(
@@ -737,6 +438,16 @@ ETL_JOB                                           VARCHAR(512) NOT NULL, --作�
 RESOURCE_TYPE                                     VARCHAR(100) NULL, --资源使用类型
 RESOURCE_REQ                                      INTEGER default 0 NULL, --资源需求数
 CONSTRAINT ETL_JOB_RESOURCE_RELA_PK PRIMARY KEY(ETL_SYS_CD,ETL_JOB)   );
+
+--分类对应的表字段
+DROP TABLE IF EXISTS DBM_SORT_COLUMN ;
+CREATE TABLE DBM_SORT_COLUMN(
+DSC_ID                                            BIGINT default 0 NOT NULL, --分类对应主键ID
+DDS_ID                                            BIGINT default 0 NOT NULL, --对标分类结构ID
+COL_ID                                            BIGINT default 0 NOT NULL, --字段主键
+DBM_TABLEID                                       BIGINT default 0 NOT NULL, --检测表主键
+DSC_REMARK                                        VARCHAR(80) NULL, --备注
+CONSTRAINT DBM_SORT_COLUMN_PK PRIMARY KEY(DSC_ID)   );
 
 --作业模版参数表
 DROP TABLE IF EXISTS ETL_JOB_TEMP_PARA ;
@@ -1119,7 +830,7 @@ AGENT_STATUS                                      CHAR(1) NOT NULL, --agent状�
 CREATE_DATE                                       CHAR(8) NOT NULL, --创建日期
 CREATE_TIME                                       CHAR(6) NOT NULL, --创建时间
 SOURCE_ID                                         BIGINT default 0 NOT NULL, --数据源ID
-USER_ID                                           BIGINT default 0 NULL, --用户ID
+USER_ID                                           BIGINT default 0 NOT NULL, --用户ID
 CONSTRAINT AGENT_INFO_PK PRIMARY KEY(AGENT_ID)   );
 
 --源系统数据库设置
@@ -1189,4 +900,310 @@ PAGEPARALLELS                                     INTEGER default 0 NULL, --分�
 DATAINCREMENT                                     INTEGER default 0 NULL, --每天数据增量
 REMARK                                            VARCHAR(512) NULL, --备注
 CONSTRAINT TABLE_INFO_PK PRIMARY KEY(TABLE_ID)   );
+
+--表清洗参数信息
+DROP TABLE IF EXISTS TABLE_CLEAN ;
+CREATE TABLE TABLE_CLEAN(
+TABLE_CLEAN_ID                                    BIGINT default 0 NOT NULL, --清洗参数编号
+CLEAN_TYPE                                        CHAR(1) NOT NULL, --清洗方式
+FILLING_TYPE                                      CHAR(1) NULL, --补齐方式
+CHARACTER_FILLING                                 VARCHAR(512) NULL, --补齐字符
+FILLING_LENGTH                                    BIGINT default 0 NULL, --补齐长度
+FIELD                                             VARCHAR(512) NULL, --原字段
+REPLACE_FEILD                                     VARCHAR(512) NULL, --替换字段
+TABLE_ID                                          BIGINT default 0 NOT NULL, --表名ID
+CONSTRAINT TABLE_CLEAN_PK PRIMARY KEY(TABLE_CLEAN_ID)   );
+
+--列清洗参数信息
+DROP TABLE IF EXISTS COLUMN_CLEAN ;
+CREATE TABLE COLUMN_CLEAN(
+COL_CLEAN_ID                                      BIGINT default 0 NOT NULL, --清洗参数编号
+CONVERT_FORMAT                                    VARCHAR(512) NULL, --转换格式
+OLD_FORMAT                                        VARCHAR(512) NULL, --原始格式
+CLEAN_TYPE                                        CHAR(1) NOT NULL, --清洗方式
+FILLING_TYPE                                      CHAR(1) NULL, --补齐方式
+CHARACTER_FILLING                                 VARCHAR(512) NULL, --补齐字符
+FILLING_LENGTH                                    BIGINT default 0 NULL, --补齐长度
+CODENAME                                          VARCHAR(512) NULL, --码值名称
+CODESYS                                           VARCHAR(512) NULL, --码值所属系统
+FIELD                                             VARCHAR(512) NULL, --原字段
+REPLACE_FEILD                                     VARCHAR(512) NULL, --替换字段
+COLUMN_ID                                         BIGINT default 0 NOT NULL, --字段ID
+CONSTRAINT COLUMN_CLEAN_PK PRIMARY KEY(COL_CLEAN_ID)   );
+
+--Agent下载信息
+DROP TABLE IF EXISTS AGENT_DOWN_INFO ;
+CREATE TABLE AGENT_DOWN_INFO(
+DOWN_ID                                           BIGINT default 0 NOT NULL, --下载编号(primary)
+AGENT_NAME                                        VARCHAR(512) NOT NULL, --Agent名称
+AGENT_IP                                          VARCHAR(50) NOT NULL, --Agent IP
+AGENT_PORT                                        VARCHAR(10) NOT NULL, --Agent端口
+USER_NAME                                         VARCHAR(10) NULL, --用户名
+PASSWD                                            VARCHAR(10) NULL, --密码
+SAVE_DIR                                          VARCHAR(512) NOT NULL, --存放目录
+LOG_DIR                                           VARCHAR(512) NOT NULL, --日志目录
+DEPLOY                                            CHAR(1) NOT NULL, --是否部署
+AI_DESC                                           VARCHAR(200) NULL, --描述
+AGENT_CONTEXT                                     VARCHAR(200) NOT NULL, --agent的context
+AGENT_PATTERN                                     VARCHAR(200) NOT NULL, --agent的访问路径
+AGENT_TYPE                                        CHAR(1) NOT NULL, --agent类别
+AGENT_ID                                          BIGINT default 0 NULL, --Agent_id
+USER_ID                                           BIGINT default 0 NOT NULL, --用户ID
+REMARK                                            VARCHAR(512) NULL, --备注
+CONSTRAINT AGENT_DOWN_INFO_PK PRIMARY KEY(DOWN_ID)   );
+
+--表对应的字段
+DROP TABLE IF EXISTS TABLE_COLUMN ;
+CREATE TABLE TABLE_COLUMN(
+COLUMN_ID                                         BIGINT default 0 NOT NULL, --字段ID
+IS_GET                                            CHAR(1) default '0' NULL, --是否采集
+IS_PRIMARY_KEY                                    CHAR(1) NOT NULL, --是否为主键
+COLUMN_NAME                                       VARCHAR(512) NOT NULL, --列名
+COLUMN_TYPE                                       VARCHAR(512) NULL, --列字段类型
+COLUMN_CH_NAME                                    VARCHAR(512) NULL, --列中文名称
+TABLE_ID                                          BIGINT default 0 NOT NULL, --表名ID
+VALID_S_DATE                                      CHAR(8) NOT NULL, --有效开始日期
+VALID_E_DATE                                      CHAR(8) NOT NULL, --有效结束日期
+IS_ALIVE                                          CHAR(1) default '0' NOT NULL, --是否保留原字段
+IS_NEW                                            CHAR(1) default '1' NOT NULL, --是否为变化生成
+TC_OR                                             VARCHAR(512) NULL, --清洗顺序
+TC_REMARK                                         VARCHAR(512) NULL, --备注
+CONSTRAINT TABLE_COLUMN_PK PRIMARY KEY(COLUMN_ID)   );
+
+--采集任务分类表
+DROP TABLE IF EXISTS COLLECT_JOB_CLASSIFY ;
+CREATE TABLE COLLECT_JOB_CLASSIFY(
+CLASSIFY_ID                                       BIGINT default 0 NOT NULL, --分类id
+CLASSIFY_NUM                                      VARCHAR(512) NOT NULL, --分类编号
+CLASSIFY_NAME                                     VARCHAR(512) NOT NULL, --分类名称
+REMARK                                            VARCHAR(512) NULL, --备注
+USER_ID                                           BIGINT default 0 NOT NULL, --用户ID
+AGENT_ID                                          BIGINT default 0 NOT NULL, --Agent_id
+CONSTRAINT COLLECT_JOB_CLASSIFY_PK PRIMARY KEY(CLASSIFY_ID)   );
+
+--文件源设置
+DROP TABLE IF EXISTS FILE_SOURCE ;
+CREATE TABLE FILE_SOURCE(
+FILE_SOURCE_ID                                    BIGINT default 0 NOT NULL, --文件源ID
+FILE_SOURCE_PATH                                  VARCHAR(512) NOT NULL, --文件源路径
+IS_PDF                                            CHAR(1) NOT NULL, --PDF文件
+IS_OFFICE                                         CHAR(1) NOT NULL, --office文件
+IS_TEXT                                           CHAR(1) NOT NULL, --文本文件
+IS_VIDEO                                          CHAR(1) NOT NULL, --视频文件
+IS_AUDIO                                          CHAR(1) NOT NULL, --音频文件
+IS_IMAGE                                          CHAR(1) NOT NULL, --图片文件
+IS_COMPRESS                                       CHAR(1) NOT NULL, --压缩文件
+CUSTOM_SUFFIX                                     VARCHAR(80) NULL, --自定义后缀
+IS_OTHER                                          CHAR(1) NOT NULL, --其他
+FILE_REMARK                                       VARCHAR(512) NULL, --备注
+FCS_ID                                            BIGINT default 0 NOT NULL, --文件系统采集ID
+AGENT_ID                                          BIGINT default 0 NOT NULL, --Agent_id
+CONSTRAINT FILE_SOURCE_PK PRIMARY KEY(FILE_SOURCE_ID)   );
+
+--列拆分信息表
+DROP TABLE IF EXISTS COLUMN_SPLIT ;
+CREATE TABLE COLUMN_SPLIT(
+COL_SPLIT_ID                                      BIGINT default 0 NOT NULL, --字段编号
+COL_NAME                                          VARCHAR(512) NOT NULL, --字段名称
+COL_OFFSET                                        VARCHAR(512) NULL, --字段偏移量
+SPLIT_SEP                                         VARCHAR(512) NULL, --拆分分隔符
+SEQ                                               BIGINT default 0 NULL, --拆分对应序号
+SPLIT_TYPE                                        CHAR(1) NOT NULL, --拆分方式
+COL_ZHNAME                                        VARCHAR(512) NULL, --中文名称
+REMARK                                            VARCHAR(512) NULL, --备注
+COL_TYPE                                          VARCHAR(512) NOT NULL, --字段类型
+VALID_S_DATE                                      CHAR(8) NOT NULL, --有效开始日期
+VALID_E_DATE                                      CHAR(8) NOT NULL, --有效结束日期
+COL_CLEAN_ID                                      BIGINT default 0 NOT NULL, --清洗参数编号
+COLUMN_ID                                         BIGINT default 0 NOT NULL, --字段ID
+CONSTRAINT COLUMN_SPLIT_PK PRIMARY KEY(COL_SPLIT_ID)   );
+
+--列合并信息表
+DROP TABLE IF EXISTS COLUMN_MERGE ;
+CREATE TABLE COLUMN_MERGE(
+COL_MERGE_ID                                      BIGINT default 0 NOT NULL, --字段编号
+COL_NAME                                          VARCHAR(512) NOT NULL, --合并后字段名称
+OLD_NAME                                          VARCHAR(512) NOT NULL, --要合并的字段
+COL_ZHNAME                                        VARCHAR(512) NULL, --中文名称
+REMARK                                            VARCHAR(512) NULL, --备注
+COL_TYPE                                          VARCHAR(512) NOT NULL, --字段类型
+VALID_S_DATE                                      CHAR(8) NOT NULL, --有效开始日期
+VALID_E_DATE                                      CHAR(8) NOT NULL, --有效结束日期
+TABLE_ID                                          BIGINT default 0 NOT NULL, --表名ID
+CONSTRAINT COLUMN_MERGE_PK PRIMARY KEY(COL_MERGE_ID)   );
+
+--对象采集对应信息
+DROP TABLE IF EXISTS OBJECT_COLLECT_TASK ;
+CREATE TABLE OBJECT_COLLECT_TASK(
+OCS_ID                                            BIGINT default 0 NOT NULL, --对象采集任务编号
+AGENT_ID                                          BIGINT default 0 NOT NULL, --Agent_id
+EN_NAME                                           VARCHAR(512) NOT NULL, --英文名称
+ZH_NAME                                           VARCHAR(512) NOT NULL, --中文名称
+COLLECT_DATA_TYPE                                 CHAR(1) NOT NULL, --数据类型
+REMARK                                            VARCHAR(512) NULL, --备注
+DATABASE_CODE                                     CHAR(1) NOT NULL, --采集编码
+ODC_ID                                            BIGINT default 0 NOT NULL, --对象采集id
+CONSTRAINT OBJECT_COLLECT_TASK_PK PRIMARY KEY(OCS_ID)   );
+
+--文件系统设置
+DROP TABLE IF EXISTS FILE_COLLECT_SET ;
+CREATE TABLE FILE_COLLECT_SET(
+FCS_ID                                            BIGINT default 0 NOT NULL, --文件系统采集ID
+AGENT_ID                                          BIGINT default 0 NULL, --Agent_id
+FCS_NAME                                          VARCHAR(512) NOT NULL, --文件系统采集任务名称
+HOST_NAME                                         VARCHAR(512) NULL, --主机名称
+SYSTEM_TYPE                                       VARCHAR(512) NULL, --操作系统类型
+IS_SENDOK                                         CHAR(1) NOT NULL, --是否设置完成并发送成功
+IS_SOLR                                           CHAR(1) NOT NULL, --是否入solr
+REMARK                                            VARCHAR(512) NULL, --备注
+CONSTRAINT FILE_COLLECT_SET_PK PRIMARY KEY(FCS_ID)   );
+
+--对象采集设置
+DROP TABLE IF EXISTS OBJECT_COLLECT ;
+CREATE TABLE OBJECT_COLLECT(
+ODC_ID                                            BIGINT default 0 NOT NULL, --对象采集id
+OBJECT_COLLECT_TYPE                               CHAR(1) NOT NULL, --对象采集方式
+OBJ_NUMBER                                        VARCHAR(200) NOT NULL, --对象采集设置编号
+OBJ_COLLECT_NAME                                  VARCHAR(512) NOT NULL, --对象采集任务名称
+SYSTEM_NAME                                       VARCHAR(512) NOT NULL, --操作系统类型
+HOST_NAME                                         VARCHAR(512) NOT NULL, --主机名称
+LOCAL_TIME                                        CHAR(20) NOT NULL, --本地系统时间
+SERVER_DATE                                       CHAR(20) NOT NULL, --服务器日期
+S_DATE                                            CHAR(8) NOT NULL, --开始日期
+E_DATE                                            CHAR(8) NOT NULL, --结束日期
+DATABASE_CODE                                     CHAR(1) NOT NULL, --采集编码
+RUN_WAY                                           CHAR(1) NOT NULL, --启动方式
+FILE_PATH                                         VARCHAR(512) NOT NULL, --采集文件路径
+IS_SENDOK                                         CHAR(1) NOT NULL, --是否设置完成并发送成功
+REMARK                                            VARCHAR(512) NULL, --备注
+AGENT_ID                                          BIGINT default 0 NOT NULL, --Agent_id
+CONSTRAINT OBJECT_COLLECT_PK PRIMARY KEY(ODC_ID)   );
+
+--数据存储关系表
+DROP TABLE IF EXISTS DATA_RELATION_TABLE ;
+CREATE TABLE DATA_RELATION_TABLE(
+STORAGE_ID                                        BIGINT default 0 NOT NULL, --储存编号
+DSL_ID                                            BIGINT default 0 NOT NULL, --存储层配置ID
+CONSTRAINT DATA_RELATION_TABLE_PK PRIMARY KEY(STORAGE_ID,DSL_ID)   );
+
+--字段存储信息
+DROP TABLE IF EXISTS COLUMN_STORAGE_INFO ;
+CREATE TABLE COLUMN_STORAGE_INFO(
+DSLAD_ID                                          BIGINT default 0 NOT NULL, --附加信息ID
+COLUMN_ID                                         BIGINT default 0 NOT NULL, --字段ID
+CSI_NUMBER                                        BIGINT default 0 NOT NULL, --序号位置
+CONSTRAINT COLUMN_STORAGE_INFO_PK PRIMARY KEY(DSLAD_ID,COLUMN_ID)   );
+
+--数据权限设置表
+DROP TABLE IF EXISTS DATA_AUTH ;
+CREATE TABLE DATA_AUTH(
+DA_ID                                             BIGINT default 0 NOT NULL, --数据权限设置ID
+APPLY_DATE                                        CHAR(8) NOT NULL, --申请日期
+APPLY_TIME                                        CHAR(6) NOT NULL, --申请时间
+APPLY_TYPE                                        CHAR(1) NOT NULL, --申请类型
+AUTH_TYPE                                         CHAR(1) NOT NULL, --权限类型
+AUDIT_DATE                                        CHAR(8) NULL, --审核日期
+AUDIT_TIME                                        CHAR(6) NULL, --审核时间
+AUDIT_USERID                                      BIGINT default 0 NULL, --审核人ID
+AUDIT_NAME                                        VARCHAR(512) NULL, --审核人名称
+FILE_ID                                           VARCHAR(40) NOT NULL, --文件编号
+USER_ID                                           BIGINT default 0 NOT NULL, --用户ID
+DEP_ID                                            BIGINT default 0 NOT NULL, --部门ID
+AGENT_ID                                          BIGINT default 0 NOT NULL, --Agent_id
+SOURCE_ID                                         BIGINT default 0 NOT NULL, --数据源ID
+COLLECT_SET_ID                                    BIGINT default 0 NOT NULL, --数据库设置id
+CONSTRAINT DATA_AUTH_PK PRIMARY KEY(DA_ID)   );
+
+--系统采集作业结果表
+DROP TABLE IF EXISTS SYS_EXEINFO ;
+CREATE TABLE SYS_EXEINFO(
+EXE_ID                                            BIGINT default 0 NOT NULL, --执行id
+JOB_NAME                                          VARCHAR(512) NOT NULL, --作业名称名称
+JOB_TABLENAME                                     VARCHAR(512) NULL, --作业表名
+ETL_DATE                                          CHAR(8) NOT NULL, --执行日期
+EXECUTE_STATE                                     CHAR(2) NOT NULL, --运行状态
+EXE_PARAMETER                                     VARCHAR(512) NOT NULL, --参数
+ERR_INFO                                          VARCHAR(512) NOT NULL, --错误信息
+IS_VALID                                          CHAR(1) NOT NULL, --作业是否有效
+ST_DATE                                           CHAR(14) NOT NULL, --开始日期
+ED_DATE                                           CHAR(14) NOT NULL, --结束日期
+DATABASE_ID                                       BIGINT default 0 NOT NULL, --数据库设置id
+AGENT_ID                                          BIGINT default 0 NOT NULL, --Agent_id
+SOURCE_ID                                         BIGINT default 0 NOT NULL, --数据源ID
+CONSTRAINT SYS_EXEINFO_PK PRIMARY KEY(EXE_ID)   );
+
+--源文件属性清册
+DROP TABLE IF EXISTS SOURCE_FILE_DETAILED ;
+CREATE TABLE SOURCE_FILE_DETAILED(
+SFD_ID                                            VARCHAR(40) NOT NULL, --源文件属性清册ID
+FILE_ID                                           VARCHAR(40) NOT NULL, --文件编号
+ORIGINAL_NAME                                     VARCHAR(512) NOT NULL, --原始文件名或表中文名称
+ORIGINAL_UPDATE_DATE                              CHAR(8) NOT NULL, --原文件最后修改日期
+ORIGINAL_UPDATE_TIME                              CHAR(6) NOT NULL, --原文件最后修改时间
+TABLE_NAME                                        VARCHAR(512) NULL, --表名
+META_INFO                                         VARCHAR(6000) NULL, --META元信息
+HBASE_NAME                                        VARCHAR(512) NOT NULL, --HBase对应表名
+STORAGE_DATE                                      CHAR(8) NOT NULL, --入库日期
+STORAGE_TIME                                      CHAR(6) NOT NULL, --入库时间
+FILE_SIZE                                         BIGINT default 0 NOT NULL, --文件大小
+FILE_TYPE                                         VARCHAR(512) NOT NULL, --文件类型
+FILE_SUFFIX                                       VARCHAR(512) NOT NULL, --文件后缀
+HDFS_STORAGE_PATH                                 VARCHAR(512) NULL, --hdfs储路径
+SOURCE_PATH                                       VARCHAR(512) NOT NULL, --文件路径
+FILE_MD5                                          VARCHAR(40) NULL, --文件MD5值
+FILE_AVRO_PATH                                    VARCHAR(500) NULL, --所在avro文件地址
+FILE_AVRO_BLOCK                                   DECIMAL(15) NULL, --所存avro文件block号
+IS_BIG_FILE                                       CHAR(1) default '1' NULL, --是否为大文件
+FOLDER_ID                                         BIGINT default 0 NOT NULL, --文件夹编号
+AGENT_ID                                          BIGINT default 0 NOT NULL, --Agent_id
+SOURCE_ID                                         BIGINT default 0 NOT NULL, --数据源ID
+COLLECT_SET_ID                                    BIGINT default 0 NOT NULL, --数据库设置id
+CONSTRAINT SOURCE_FILE_DETAILED_PK PRIMARY KEY(SFD_ID)   );
+
+--源文件属性
+DROP TABLE IF EXISTS SOURCE_FILE_ATTRIBUTE ;
+CREATE TABLE SOURCE_FILE_ATTRIBUTE(
+FILE_ID                                           VARCHAR(40) NOT NULL, --文件编号
+IS_IN_HBASE                                       CHAR(1) default '1' NOT NULL, --是否已进入HBASE
+SEQENCING                                         BIGINT default 0 NOT NULL, --排序计数
+COLLECT_TYPE                                      CHAR(1) NOT NULL, --采集类型
+ORIGINAL_NAME                                     VARCHAR(512) NOT NULL, --原始文件名或表中文名称
+ORIGINAL_UPDATE_DATE                              CHAR(8) NOT NULL, --原文件最后修改日期
+ORIGINAL_UPDATE_TIME                              CHAR(6) NOT NULL, --原文件最后修改时间
+TABLE_NAME                                        VARCHAR(512) NULL, --采集的原始表名
+HBASE_NAME                                        VARCHAR(512) NOT NULL, --系统内对应表名
+META_INFO                                         VARCHAR(6000) NULL, --META元信息
+STORAGE_DATE                                      CHAR(8) NOT NULL, --入库日期
+STORAGE_TIME                                      CHAR(6) NOT NULL, --入库时间
+FILE_SIZE                                         BIGINT default 0 NOT NULL, --文件大小
+FILE_TYPE                                         VARCHAR(512) NOT NULL, --文件类型
+FILE_SUFFIX                                       VARCHAR(512) NOT NULL, --文件后缀
+SOURCE_PATH                                       VARCHAR(512) NULL, --文件路径
+FILE_MD5                                          VARCHAR(40) NULL, --文件MD5值
+FILE_AVRO_PATH                                    VARCHAR(500) NULL, --所在avro文件地址
+FILE_AVRO_BLOCK                                   DECIMAL(15) NULL, --所存avro文件block号
+IS_BIG_FILE                                       CHAR(1) default '1' NULL, --是否为大文件
+IS_CACHE                                          CHAR(1) NULL, --是否本地缓存
+FOLDER_ID                                         BIGINT default 0 NOT NULL, --文件夹编号
+AGENT_ID                                          BIGINT default 0 NOT NULL, --Agent_id
+SOURCE_ID                                         BIGINT default 0 NOT NULL, --数据源ID
+COLLECT_SET_ID                                    BIGINT default 0 NOT NULL, --数据库设置id
+CONSTRAINT SOURCE_FILE_ATTRIBUTE_PK PRIMARY KEY(FILE_ID)   );
+
+--源文件夹属性表
+DROP TABLE IF EXISTS SOURCE_FOLDER_ATTRIBUTE ;
+CREATE TABLE SOURCE_FOLDER_ATTRIBUTE(
+FOLDER_ID                                         BIGINT default 0 NOT NULL, --文件夹编号
+SUPER_ID                                          BIGINT default 0 NULL, --文件夹编号
+FOLDER_NAME                                       VARCHAR(512) NOT NULL, --文件夹名
+ORIGINAL_CREATE_DATE                              CHAR(8) NOT NULL, --文件夹生产日期
+ORIGINAL_CREATE_TIME                              CHAR(6) NOT NULL, --文件夹生成时间
+FOLDER_SIZE                                       DECIMAL(16,2) default 0 NOT NULL, --文件夹大小
+STORAGE_DATE                                      CHAR(8) NOT NULL, --文件夹入库日期
+STORAGE_TIME                                      CHAR(6) NOT NULL, --文件夹入库时间
+FOLDERS_IN_NO                                     BIGINT default 0 NOT NULL, --文件夹内文件夹数量
+LOCATION_IN_HDFS                                  VARCHAR(512) NOT NULL, --hdfs中存储位置
+AGENT_ID                                          BIGINT default 0 NOT NULL, --Agent_id
+SOURCE_ID                                         BIGINT default 0 NOT NULL, --数据源ID
+CONSTRAINT SOURCE_FOLDER_ATTRIBUTE_PK PRIMARY KEY(FOLDER_ID)   );
 

@@ -5,9 +5,9 @@ import hrds.commons.exception.AppSystemException;
 /**代码类型名：对标-对标方式  */
 public enum DbmMode {
 	/**数据对标<ShuJuDuiBiao>  */
-	ShuJuDuiBiao("1","数据对标","65","对标-对标方式"),
+	ShuJuDuiBiao("1","数据对标","68","对标-对标方式"),
 	/**表结构对标<BiaoJieGouDuiBiao>  */
-	BiaoJieGouDuiBiao("2","表结构对标","65","对标-对标方式");
+	BiaoJieGouDuiBiao("2","表结构对标","68","对标-对标方式");
 
 	private final String code;
 	private final String value;
