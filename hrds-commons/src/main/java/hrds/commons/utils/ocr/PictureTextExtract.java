@@ -1,6 +1,6 @@
 package hrds.commons.utils.ocr;
 
-import hrds.commons.utils.PropertyParaValue;
+import hrds.commons.utils.CommonVariables;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -13,10 +13,9 @@ import java.io.IOException;
 public class PictureTextExtract extends PictureServer implements PictureTextInterface {
 
 	private static final Log logger = LogFactory.getLog(PictureTextExtract.class);
-	private final static String OCR_SERVER_ADDRESS = PropertyParaValue.getString("ocr_rpc_cpu", "");
 
 	public PictureTextExtract() {
-		super(OCR_SERVER_ADDRESS);
+		super(CommonVariables.OCR_SERVER_ADDRESS);
 	}
 
 	public String extractText(String filePath) {

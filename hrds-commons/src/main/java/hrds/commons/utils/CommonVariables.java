@@ -34,4 +34,7 @@ public class CommonVariables {
     //solr的URL地址
     public static final String SOLR_URL = PropertyParaValue.getString("solrUrl",
             "http://127.0.0.1:8983/solr/");
+
+
+    public static final String OCR_SERVER_ADDRESS = PropertyParaValue.getString("ocr_rpc_cpu", "");
 }
