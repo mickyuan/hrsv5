@@ -30,6 +30,32 @@ public class Database_set extends ProjectTableEntity
 		__tmpPKS.add("database_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
+	@DocBean(name ="db_agent",value="是否为平面DB数据采集(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
+	private String db_agent;
+	@DocBean(name ="plane_url",value="DB文件源数据路径:",dataType = String.class,required = false)
+	private String plane_url;
+	@DocBean(name ="database_separatorr",value="数据采用分隔符:",dataType = String.class,required = false)
+	private String database_separatorr;
+	@DocBean(name ="database_code",value="数据使用编码格式(DataBaseCode):1-UTF-8<UTF_8> 2-GBK<GBK> 3-UTF-16<UTF_16> 4-GB2312<GB2312> 5-ISO-8859-1<ISO_8859_1> ",dataType = String.class,required = false)
+	private String database_code;
+	@DocBean(name ="dbfile_format",value="DB文件格式(FileFormat):0-定长<DingChang> 1-非定长<FeiDingChang> 2-CSV<CSV> 3-SEQUENCEFILE<SEQUENCEFILE> 4-PARQUET<PARQUET> 5-ORC<ORC> ",dataType = String.class,required = false)
+	private String dbfile_format;
+	@DocBean(name ="is_hidden",value="分隔符是否为ASCII隐藏字符(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
+	private String is_hidden;
+	@DocBean(name ="file_suffix",value="采集文件名后缀:",dataType = String.class,required = false)
+	private String file_suffix;
+	@DocBean(name ="is_load",value="是否直接加载数据(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
+	private String is_load;
+	@DocBean(name ="row_separator",value="数据行分隔符:",dataType = String.class,required = false)
+	private String row_separator;
+	@DocBean(name ="classify_id",value="分类id:",dataType = Long.class,required = true)
+	private Long classify_id;
+	@DocBean(name ="is_header",value="是否有表头(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
+	private String is_header;
+	@DocBean(name ="cp_or",value="清洗顺序:",dataType = String.class,required = false)
+	private String cp_or;
+	@DocBean(name ="jdbc_url",value="数据库连接地址:",dataType = String.class,required = false)
+	private String jdbc_url;
 	@DocBean(name ="agent_id",value="Agent_id:",dataType = Long.class,required = false)
 	private Long agent_id;
 	@DocBean(name ="database_id",value="数据库设置id:",dataType = Long.class,required = true)
@@ -58,33 +84,117 @@ public class Database_set extends ProjectTableEntity
 	private String is_sendok;
 	@DocBean(name ="database_number",value="数据库设置编号:",dataType = String.class,required = true)
 	private String database_number;
-	@DocBean(name ="db_agent",value="是否为平面DB数据采集(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
-	private String db_agent;
-	@DocBean(name ="plane_url",value="DB文件源数据路径:",dataType = String.class,required = false)
-	private String plane_url;
-	@DocBean(name ="database_separatorr",value="数据采用分隔符:",dataType = String.class,required = false)
-	private String database_separatorr;
-	@DocBean(name ="database_code",value="数据使用编码格式(DataBaseCode):1-UTF-8<UTF_8> 2-GBK<GBK> 3-UTF-16<UTF_16> 4-GB2312<GB2312> 5-ISO-8859-1<ISO_8859_1> ",dataType = String.class,required = false)
-	private String database_code;
-	@DocBean(name ="dbfile_format",value="DB文件格式(FileFormat):0-定长<DingChang> 1-非定长<FeiDingChang> 2-CSV<CSV> 3-SEQUENCEFILE<SEQUENCEFILE> 4-PARQUET<PARQUET> 5-ORC<ORC> ",dataType = String.class,required = false)
-	private String dbfile_format;
-	@DocBean(name ="is_hidden",value="分隔符是否为ASCII隐藏字符(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
-	private String is_hidden;
-	@DocBean(name ="file_suffix",value="采集文件名后缀:",dataType = String.class,required = false)
-	private String file_suffix;
-	@DocBean(name ="is_load",value="是否直接加载数据(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
-	private String is_load;
-	@DocBean(name ="row_separator",value="数据行分隔符:",dataType = String.class,required = false)
-	private String row_separator;
-	@DocBean(name ="classify_id",value="分类id:",dataType = Long.class,required = true)
-	private Long classify_id;
-	@DocBean(name ="is_header",value="是否有表头(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
-	private String is_header;
-	@DocBean(name ="cp_or",value="清洗顺序:",dataType = String.class,required = false)
-	private String cp_or;
-	@DocBean(name ="jdbc_url",value="数据库连接地址:",dataType = String.class,required = false)
-	private String jdbc_url;
 
+	/** 取得：是否为平面DB数据采集 */
+	public String getDb_agent(){
+		return db_agent;
+	}
+	/** 设置：是否为平面DB数据采集 */
+	public void setDb_agent(String db_agent){
+		this.db_agent=db_agent;
+	}
+	/** 取得：DB文件源数据路径 */
+	public String getPlane_url(){
+		return plane_url;
+	}
+	/** 设置：DB文件源数据路径 */
+	public void setPlane_url(String plane_url){
+		this.plane_url=plane_url;
+	}
+	/** 取得：数据采用分隔符 */
+	public String getDatabase_separatorr(){
+		return database_separatorr;
+	}
+	/** 设置：数据采用分隔符 */
+	public void setDatabase_separatorr(String database_separatorr){
+		this.database_separatorr=database_separatorr;
+	}
+	/** 取得：数据使用编码格式 */
+	public String getDatabase_code(){
+		return database_code;
+	}
+	/** 设置：数据使用编码格式 */
+	public void setDatabase_code(String database_code){
+		this.database_code=database_code;
+	}
+	/** 取得：DB文件格式 */
+	public String getDbfile_format(){
+		return dbfile_format;
+	}
+	/** 设置：DB文件格式 */
+	public void setDbfile_format(String dbfile_format){
+		this.dbfile_format=dbfile_format;
+	}
+	/** 取得：分隔符是否为ASCII隐藏字符 */
+	public String getIs_hidden(){
+		return is_hidden;
+	}
+	/** 设置：分隔符是否为ASCII隐藏字符 */
+	public void setIs_hidden(String is_hidden){
+		this.is_hidden=is_hidden;
+	}
+	/** 取得：采集文件名后缀 */
+	public String getFile_suffix(){
+		return file_suffix;
+	}
+	/** 设置：采集文件名后缀 */
+	public void setFile_suffix(String file_suffix){
+		this.file_suffix=file_suffix;
+	}
+	/** 取得：是否直接加载数据 */
+	public String getIs_load(){
+		return is_load;
+	}
+	/** 设置：是否直接加载数据 */
+	public void setIs_load(String is_load){
+		this.is_load=is_load;
+	}
+	/** 取得：数据行分隔符 */
+	public String getRow_separator(){
+		return row_separator;
+	}
+	/** 设置：数据行分隔符 */
+	public void setRow_separator(String row_separator){
+		this.row_separator=row_separator;
+	}
+	/** 取得：分类id */
+	public Long getClassify_id(){
+		return classify_id;
+	}
+	/** 设置：分类id */
+	public void setClassify_id(Long classify_id){
+		this.classify_id=classify_id;
+	}
+	/** 设置：分类id */
+	public void setClassify_id(String classify_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(classify_id)){
+			this.classify_id=new Long(classify_id);
+		}
+	}
+	/** 取得：是否有表头 */
+	public String getIs_header(){
+		return is_header;
+	}
+	/** 设置：是否有表头 */
+	public void setIs_header(String is_header){
+		this.is_header=is_header;
+	}
+	/** 取得：清洗顺序 */
+	public String getCp_or(){
+		return cp_or;
+	}
+	/** 设置：清洗顺序 */
+	public void setCp_or(String cp_or){
+		this.cp_or=cp_or;
+	}
+	/** 取得：数据库连接地址 */
+	public String getJdbc_url(){
+		return jdbc_url;
+	}
+	/** 设置：数据库连接地址 */
+	public void setJdbc_url(String jdbc_url){
+		this.jdbc_url=jdbc_url;
+	}
 	/** 取得：Agent_id */
 	public Long getAgent_id(){
 		return agent_id;
@@ -208,115 +318,5 @@ public class Database_set extends ProjectTableEntity
 	/** 设置：数据库设置编号 */
 	public void setDatabase_number(String database_number){
 		this.database_number=database_number;
-	}
-	/** 取得：是否为平面DB数据采集 */
-	public String getDb_agent(){
-		return db_agent;
-	}
-	/** 设置：是否为平面DB数据采集 */
-	public void setDb_agent(String db_agent){
-		this.db_agent=db_agent;
-	}
-	/** 取得：DB文件源数据路径 */
-	public String getPlane_url(){
-		return plane_url;
-	}
-	/** 设置：DB文件源数据路径 */
-	public void setPlane_url(String plane_url){
-		this.plane_url=plane_url;
-	}
-	/** 取得：数据采用分隔符 */
-	public String getDatabase_separatorr(){
-		return database_separatorr;
-	}
-	/** 设置：数据采用分隔符 */
-	public void setDatabase_separatorr(String database_separatorr){
-		this.database_separatorr=database_separatorr;
-	}
-	/** 取得：数据使用编码格式 */
-	public String getDatabase_code(){
-		return database_code;
-	}
-	/** 设置：数据使用编码格式 */
-	public void setDatabase_code(String database_code){
-		this.database_code=database_code;
-	}
-	/** 取得：DB文件格式 */
-	public String getDbfile_format(){
-		return dbfile_format;
-	}
-	/** 设置：DB文件格式 */
-	public void setDbfile_format(String dbfile_format){
-		this.dbfile_format=dbfile_format;
-	}
-	/** 取得：分隔符是否为ASCII隐藏字符 */
-	public String getIs_hidden(){
-		return is_hidden;
-	}
-	/** 设置：分隔符是否为ASCII隐藏字符 */
-	public void setIs_hidden(String is_hidden){
-		this.is_hidden=is_hidden;
-	}
-	/** 取得：采集文件名后缀 */
-	public String getFile_suffix(){
-		return file_suffix;
-	}
-	/** 设置：采集文件名后缀 */
-	public void setFile_suffix(String file_suffix){
-		this.file_suffix=file_suffix;
-	}
-	/** 取得：是否直接加载数据 */
-	public String getIs_load(){
-		return is_load;
-	}
-	/** 设置：是否直接加载数据 */
-	public void setIs_load(String is_load){
-		this.is_load=is_load;
-	}
-	/** 取得：数据行分隔符 */
-	public String getRow_separator(){
-		return row_separator;
-	}
-	/** 设置：数据行分隔符 */
-	public void setRow_separator(String row_separator){
-		this.row_separator=row_separator;
-	}
-	/** 取得：分类id */
-	public Long getClassify_id(){
-		return classify_id;
-	}
-	/** 设置：分类id */
-	public void setClassify_id(Long classify_id){
-		this.classify_id=classify_id;
-	}
-	/** 设置：分类id */
-	public void setClassify_id(String classify_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(classify_id)){
-			this.classify_id=new Long(classify_id);
-		}
-	}
-	/** 取得：是否有表头 */
-	public String getIs_header(){
-		return is_header;
-	}
-	/** 设置：是否有表头 */
-	public void setIs_header(String is_header){
-		this.is_header=is_header;
-	}
-	/** 取得：清洗顺序 */
-	public String getCp_or(){
-		return cp_or;
-	}
-	/** 设置：清洗顺序 */
-	public void setCp_or(String cp_or){
-		this.cp_or=cp_or;
-	}
-	/** 取得：数据库连接地址 */
-	public String getJdbc_url(){
-		return jdbc_url;
-	}
-	/** 设置：数据库连接地址 */
-	public void setJdbc_url(String jdbc_url){
-		this.jdbc_url=jdbc_url;
 	}
 }

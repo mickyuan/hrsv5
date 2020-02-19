@@ -50,14 +50,14 @@ public class File_source extends ProjectTableEntity
 	private String is_other;
 	@DocBean(name ="file_remark",value="备注:",dataType = String.class,required = false)
 	private String file_remark;
-	@DocBean(name ="fcs_id",value="文件系统采集ID:",dataType = Long.class,required = true)
-	private Long fcs_id;
 	@DocBean(name ="agent_id",value="Agent_id:",dataType = Long.class,required = true)
 	private Long agent_id;
 	@DocBean(name ="is_compress",value="压缩文件(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_compress;
 	@DocBean(name ="custom_suffix",value="自定义后缀:",dataType = String.class,required = false)
 	private String custom_suffix;
+	@DocBean(name ="fcs_id",value="文件系统采集ID:",dataType = Long.class,required = true)
+	private Long fcs_id;
 
 	/** 取得：文件源ID */
 	public Long getFile_source_id(){
@@ -145,20 +145,6 @@ public class File_source extends ProjectTableEntity
 	public void setFile_remark(String file_remark){
 		this.file_remark=file_remark;
 	}
-	/** 取得：文件系统采集ID */
-	public Long getFcs_id(){
-		return fcs_id;
-	}
-	/** 设置：文件系统采集ID */
-	public void setFcs_id(Long fcs_id){
-		this.fcs_id=fcs_id;
-	}
-	/** 设置：文件系统采集ID */
-	public void setFcs_id(String fcs_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(fcs_id)){
-			this.fcs_id=new Long(fcs_id);
-		}
-	}
 	/** 取得：Agent_id */
 	public Long getAgent_id(){
 		return agent_id;
@@ -188,5 +174,19 @@ public class File_source extends ProjectTableEntity
 	/** 设置：自定义后缀 */
 	public void setCustom_suffix(String custom_suffix){
 		this.custom_suffix=custom_suffix;
+	}
+	/** 取得：文件系统采集ID */
+	public Long getFcs_id(){
+		return fcs_id;
+	}
+	/** 设置：文件系统采集ID */
+	public void setFcs_id(Long fcs_id){
+		this.fcs_id=fcs_id;
+	}
+	/** 设置：文件系统采集ID */
+	public void setFcs_id(String fcs_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(fcs_id)){
+			this.fcs_id=new Long(fcs_id);
+		}
 	}
 }

@@ -56,12 +56,18 @@ public class Object_collect extends ProjectTableEntity
 	private String file_path;
 	@DocBean(name ="remark",value="备注:",dataType = String.class,required = false)
 	private String remark;
-	@DocBean(name ="agent_id",value="Agent_id:",dataType = Long.class,required = true)
-	private Long agent_id;
 	@DocBean(name ="is_sendok",value="是否设置完成并发送成功(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_sendok;
 	@DocBean(name ="object_collect_type",value="对象采集方式(ObjectCollectType):1-行采集<HangCaiJi> 2-对象采集<DuiXiangCaiJi> ",dataType = String.class,required = true)
 	private String object_collect_type;
+	@DocBean(name ="is_dictionary",value="是否存在数据字典:",dataType = String.class,required = true)
+	private String is_dictionary;
+	@DocBean(name ="data_date",value="数据日期:",dataType = String.class,required = true)
+	private String data_date;
+	@DocBean(name ="file_suffix",value="文件后缀名:",dataType = String.class,required = true)
+	private String file_suffix;
+	@DocBean(name ="agent_id",value="Agent_id:",dataType = Long.class,required = true)
+	private Long agent_id;
 
 	/** 取得：对象采集id */
 	public Long getOdc_id(){
@@ -173,20 +179,6 @@ public class Object_collect extends ProjectTableEntity
 	public void setRemark(String remark){
 		this.remark=remark;
 	}
-	/** 取得：Agent_id */
-	public Long getAgent_id(){
-		return agent_id;
-	}
-	/** 设置：Agent_id */
-	public void setAgent_id(Long agent_id){
-		this.agent_id=agent_id;
-	}
-	/** 设置：Agent_id */
-	public void setAgent_id(String agent_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(agent_id)){
-			this.agent_id=new Long(agent_id);
-		}
-	}
 	/** 取得：是否设置完成并发送成功 */
 	public String getIs_sendok(){
 		return is_sendok;
@@ -202,5 +194,43 @@ public class Object_collect extends ProjectTableEntity
 	/** 设置：对象采集方式 */
 	public void setObject_collect_type(String object_collect_type){
 		this.object_collect_type=object_collect_type;
+	}
+	/** 取得：是否存在数据字典 */
+	public String getIs_dictionary(){
+		return is_dictionary;
+	}
+	/** 设置：是否存在数据字典 */
+	public void setIs_dictionary(String is_dictionary){
+		this.is_dictionary=is_dictionary;
+	}
+	/** 取得：数据日期 */
+	public String getData_date(){
+		return data_date;
+	}
+	/** 设置：数据日期 */
+	public void setData_date(String data_date){
+		this.data_date=data_date;
+	}
+	/** 取得：文件后缀名 */
+	public String getFile_suffix(){
+		return file_suffix;
+	}
+	/** 设置：文件后缀名 */
+	public void setFile_suffix(String file_suffix){
+		this.file_suffix=file_suffix;
+	}
+	/** 取得：Agent_id */
+	public Long getAgent_id(){
+		return agent_id;
+	}
+	/** 设置：Agent_id */
+	public void setAgent_id(Long agent_id){
+		this.agent_id=agent_id;
+	}
+	/** 设置：Agent_id */
+	public void setAgent_id(String agent_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(agent_id)){
+			this.agent_id=new Long(agent_id);
+		}
 	}
 }

@@ -30,8 +30,6 @@ public class Agent_info extends ProjectTableEntity
 		__tmpPKS.add("agent_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="source_id",value="数据源ID:",dataType = Long.class,required = true)
-	private Long source_id;
 	@DocBean(name ="agent_id",value="Agent_id:",dataType = Long.class,required = true)
 	private Long agent_id;
 	@DocBean(name ="agent_name",value="Agent名称:",dataType = String.class,required = true)
@@ -50,21 +48,9 @@ public class Agent_info extends ProjectTableEntity
 	private String create_time;
 	@DocBean(name ="user_id",value="用户ID:",dataType = Long.class,required = true)
 	private Long user_id;
+	@DocBean(name ="source_id",value="数据源ID:",dataType = Long.class,required = true)
+	private Long source_id;
 
-	/** 取得：数据源ID */
-	public Long getSource_id(){
-		return source_id;
-	}
-	/** 设置：数据源ID */
-	public void setSource_id(Long source_id){
-		this.source_id=source_id;
-	}
-	/** 设置：数据源ID */
-	public void setSource_id(String source_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(source_id)){
-			this.source_id=new Long(source_id);
-		}
-	}
 	/** 取得：Agent_id */
 	public Long getAgent_id(){
 		return agent_id;
@@ -147,6 +133,20 @@ public class Agent_info extends ProjectTableEntity
 	public void setUser_id(String user_id){
 		if(!fd.ng.core.utils.StringUtil.isEmpty(user_id)){
 			this.user_id=new Long(user_id);
+		}
+	}
+	/** 取得：数据源ID */
+	public Long getSource_id(){
+		return source_id;
+	}
+	/** 设置：数据源ID */
+	public void setSource_id(Long source_id){
+		this.source_id=source_id;
+	}
+	/** 设置：数据源ID */
+	public void setSource_id(String source_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(source_id)){
+			this.source_id=new Long(source_id);
 		}
 	}
 }

@@ -40,14 +40,14 @@ public class Object_collect_task extends ProjectTableEntity
 	private String remark;
 	@DocBean(name ="collect_data_type",value="数据类型(CollectDataType):1-xml<XML> 2-json<JSON> ",dataType = String.class,required = true)
 	private String collect_data_type;
-	@DocBean(name ="odc_id",value="对象采集id:",dataType = Long.class,required = true)
-	private Long odc_id;
 	@DocBean(name ="database_code",value="采集编码(DataBaseCode):1-UTF-8<UTF_8> 2-GBK<GBK> 3-UTF-16<UTF_16> 4-GB2312<GB2312> 5-ISO-8859-1<ISO_8859_1> ",dataType = String.class,required = true)
 	private String database_code;
 	@DocBean(name ="agent_id",value="Agent_id:",dataType = Long.class,required = true)
 	private Long agent_id;
 	@DocBean(name ="firstline",value="第一行数据:",dataType = String.class,required = false)
 	private String firstline;
+	@DocBean(name ="odc_id",value="对象采集id:",dataType = Long.class,required = false)
+	private Long odc_id;
 
 	/** 取得：对象采集任务编号 */
 	public Long getOcs_id(){
@@ -95,20 +95,6 @@ public class Object_collect_task extends ProjectTableEntity
 	public void setCollect_data_type(String collect_data_type){
 		this.collect_data_type=collect_data_type;
 	}
-	/** 取得：对象采集id */
-	public Long getOdc_id(){
-		return odc_id;
-	}
-	/** 设置：对象采集id */
-	public void setOdc_id(Long odc_id){
-		this.odc_id=odc_id;
-	}
-	/** 设置：对象采集id */
-	public void setOdc_id(String odc_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(odc_id)){
-			this.odc_id=new Long(odc_id);
-		}
-	}
 	/** 取得：采集编码 */
 	public String getDatabase_code(){
 		return database_code;
@@ -138,5 +124,19 @@ public class Object_collect_task extends ProjectTableEntity
 	/** 设置：第一行数据 */
 	public void setFirstline(String firstline){
 		this.firstline=firstline;
+	}
+	/** 取得：对象采集id */
+	public Long getOdc_id(){
+		return odc_id;
+	}
+	/** 设置：对象采集id */
+	public void setOdc_id(Long odc_id){
+		this.odc_id=odc_id;
+	}
+	/** 设置：对象采集id */
+	public void setOdc_id(String odc_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(odc_id)){
+			this.odc_id=new Long(odc_id);
+		}
 	}
 }
