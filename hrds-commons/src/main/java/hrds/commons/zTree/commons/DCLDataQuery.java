@@ -26,8 +26,6 @@ import java.util.Map;
 @DocClass(desc = "贴源层(DCL)层数据信息查询类", author = "BY-HLL", createdate = "2020/1/7 0007 上午 11:10")
 public class DCLDataQuery {
 
-	private static final SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
-
 	@Method(desc = "获取登录用户的批量数据的数据源列表(未使用)",
 			logicStep = "1.获取登录用户的数据源列表")
 	@Return(desc = "数据源列表", range = "无限制")
@@ -76,6 +74,7 @@ public class DCLDataQuery {
 	@Param(name = "dataSourceName", desc = "查询数据源的名称", range = "String类型字符,512长度", nullable = true)
 	@Return(desc = "数据源列表", range = "无限制")
 	public static List<Map<String, Object>> getDCLBatchDataInfos(User user, String dataSourceName) {
+		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		asmSql.clean();
 		asmSql.addSql("SELECT distinct ds.source_id, ds.datasource_name from source_relation_dep srd JOIN " +
 				"data_source ds on srd.SOURCE_ID = ds.SOURCE_ID");
@@ -113,6 +112,7 @@ public class DCLDataQuery {
 	@Return(desc = "加工信息列表", range = "无限制")
 	public static List<Map<String, Object>> getDCLBatchClassifyInfos(String source_id, Boolean isFileCollection, User user,
 	                                                                 String searchName) {
+		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		asmSql.clean();
 		UserType userType = UserType.ofEnumByCode(user.getUserType());
 		Agent_info agent_info = new Agent_info();
@@ -149,6 +149,7 @@ public class DCLDataQuery {
 	@Return(desc = "分类下表信息", range = "无限制")
 	public static List<Map<String, Object>> getDCLBatchTableInfos(String classify_id, String classify_name,
 	                                                              User user, String isIntoHBase) {
+		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		//1.获取分类id获取分类下表信息
 		asmSql.clean();
 		UserType userType = UserType.ofEnumByCode(user.getUserType());
