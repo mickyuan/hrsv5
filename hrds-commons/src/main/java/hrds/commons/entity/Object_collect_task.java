@@ -46,6 +46,8 @@ public class Object_collect_task extends ProjectTableEntity
 	private String database_code;
 	@DocBean(name ="agent_id",value="Agent_id:",dataType = Long.class,required = true)
 	private Long agent_id;
+	@DocBean(name ="firstline",value="第一行数据:",dataType = String.class,required = false)
+	private String firstline;
 
 	/** 取得：对象采集任务编号 */
 	public Long getOcs_id(){
@@ -128,5 +130,13 @@ public class Object_collect_task extends ProjectTableEntity
 		if(!fd.ng.core.utils.StringUtil.isEmpty(agent_id)){
 			this.agent_id=new Long(agent_id);
 		}
+	}
+	/** 取得：第一行数据 */
+	public String getFirstline(){
+		return firstline;
+	}
+	/** 设置：第一行数据 */
+	public void setFirstline(String firstline){
+		this.firstline=firstline;
 	}
 }

@@ -699,17 +699,6 @@ SOURCE_ID                                         BIGINT default 0 NOT NULL, --�
 CC_REMARK                                         VARCHAR(512) NULL, --备注
 CONSTRAINT COLLECT_CASE_PK PRIMARY KEY(JOB_RS_ID)   );
 
---对象采集结构信息
-DROP TABLE IF EXISTS OBJECT_COLLECT_STRUCT ;
-CREATE TABLE OBJECT_COLLECT_STRUCT(
-STRUCT_ID                                         BIGINT default 0 NOT NULL, --结构信息id
-OCS_ID                                            BIGINT default 0 NOT NULL, --对象采集任务编号
-COLL_NAME                                         VARCHAR(512) NOT NULL, --采集结构名称
-STRUCT_TYPE                                       CHAR(1) NOT NULL, --对象数据类型
-DATA_DESC                                         VARCHAR(200) NULL, --中文描述信息
-REMARK                                            VARCHAR(512) NULL, --备注
-CONSTRAINT OBJECT_COLLECT_STRUCT_PK PRIMARY KEY(STRUCT_ID)   );
-
 --Ftp采集设置
 DROP TABLE IF EXISTS FTP_COLLECT ;
 CREATE TABLE FTP_COLLECT(
@@ -1040,6 +1029,7 @@ AGENT_ID                                          BIGINT default 0 NOT NULL, --A
 EN_NAME                                           VARCHAR(512) NOT NULL, --英文名称
 ZH_NAME                                           VARCHAR(512) NOT NULL, --中文名称
 COLLECT_DATA_TYPE                                 CHAR(1) NOT NULL, --数据类型
+FIRSTLINE                                         VARCHAR(2048) NULL, --第一行数据
 REMARK                                            VARCHAR(512) NULL, --备注
 DATABASE_CODE                                     CHAR(1) NOT NULL, --采集编码
 ODC_ID                                            BIGINT default 0 NOT NULL, --对象采集id
@@ -1206,4 +1196,31 @@ LOCATION_IN_HDFS                                  VARCHAR(512) NOT NULL, --hdfs�
 AGENT_ID                                          BIGINT default 0 NOT NULL, --Agent_id
 SOURCE_ID                                         BIGINT default 0 NOT NULL, --数据源ID
 CONSTRAINT SOURCE_FOLDER_ATTRIBUTE_PK PRIMARY KEY(FOLDER_ID)   );
+
+--对象采集数据处理类型对应表
+DROP TABLE IF EXISTS OBJECT_HANDLE_TYPE ;
+CREATE TABLE OBJECT_HANDLE_TYPE(
+OBJECT_HANDLE_ID                                  BIGINT default 0 NOT NULL, --处理编号
+OCS_ID                                            BIGINT default 0 NOT NULL, --对象采集任务编号
+HANDLE_TYPE                                       CHAR(1) NOT NULL, --处理类型
+HANDLE_VALUE                                      VARCHAR(100) NOT NULL, --处理值
+CONSTRAINT OBJECT_HANDLE_TYPE_PK PRIMARY KEY(OBJECT_HANDLE_ID,OCS_ID)   );
+
+--对象采集结构信息
+DROP TABLE IF EXISTS OBJECT_COLLECT_STRUCT ;
+CREATE TABLE OBJECT_COLLECT_STRUCT(
+STRUCT_ID                                         DECIMAL(10) NOT NULL, --结构信息id
+OCS_ID                                            BIGINT default 0 NOT NULL, --对象采集任务编号
+COLUMN_NAME                                       VARCHAR(512) NOT NULL, --字段名称
+IS_ROWKEY                                         CHAR(1) NOT NULL, --是否rowkey
+IS_KEY                                            CHAR(1) NOT NULL, --是否主键
+IS_SOLR                                           CHAR(1) NOT NULL, --是否solr
+IS_HBASE                                          CHAR(1) NOT NULL, --是否hbase
+IS_OPERATE                                        CHAR(1) NOT NULL, --是否操作标识字段
+COL_SEQ                                           DECIMAL(16) default 0 NOT NULL, --字段序号
+COLUMNPOSITION                                    VARCHAR(100) NOT NULL, --字段位置
+COLUMN_TYPE                                       VARCHAR(32) NOT NULL, --字段类型
+DATA_DESC                                         VARCHAR(200) NULL, --中文描述信息
+REMARK                                            VARCHAR(512) NULL, --备注
+CONSTRAINT OBJECT_COLLECT_STRUCT_PK PRIMARY KEY(STRUCT_ID)   );
 
