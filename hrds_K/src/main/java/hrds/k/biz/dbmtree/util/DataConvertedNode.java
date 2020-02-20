@@ -31,7 +31,7 @@ public class DataConvertedNode {
         // 构造无序的多叉树
         for (Map.Entry<String, Node> nodeEntry : nodeMap.entrySet()) {
             Node node = (Node) ((Map.Entry) nodeEntry).getValue();
-            if (node.parent_id == null || node.parent_id.equals("")) {
+            if (node.parent_id == null || node.parent_id.equals("0")) {
                 treeNodeData = node;
             } else {
                 nodeMap.get(node.parent_id).addChild(node);
