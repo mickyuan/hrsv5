@@ -124,12 +124,6 @@ public class DbmNormbasicAction extends BaseAction {
         if (StringUtil.isBlank(dbm_normbasic.getFormulator())) {
             throw new BusinessException("制定人为空!" + dbm_normbasic.getFormulator());
         }
-        if (StringUtil.isBlank(dbm_normbasic.getNorm_status())) {
-            throw new BusinessException("发布状态为空!" + dbm_normbasic.getNorm_status());
-        }
-        if (StringUtil.isBlank(dbm_normbasic.getCreate_user())) {
-            throw new BusinessException("创建人为空!" + dbm_normbasic.getCreate_user());
-        }
         dbm_normbasic.update(Dbo.db());
     }
 
@@ -144,6 +138,16 @@ public class DbmNormbasicAction extends BaseAction {
                 "select * from " + Dbm_normbasic.TableName);
         dbmNormbasicInfoMap.put("dbmNormbasicInfos", dbmNormbasicInfos);
         dbmNormbasicInfoMap.put("totalSize", page.getTotalSize());
+        return dbmNormbasicInfoMap;
+    }
+
+    @Method(desc = "获取所有标准信息(只获取basic_id,norm_cname)", logicStep = "获取所有标准信息")
+    @Return(desc = "所有分类信息(只获取basic_id,norm_cname)", range = "所有分类信息")
+    public Map<String, Object> getDbmNormbasicIdAndNameInfo() {
+        Map<String, Object> dbmNormbasicInfoMap = new HashMap<>();
+        List dbmNormbasicInfos = Dbo.queryList("select basic_id,norm_cname from " + Dbm_normbasic.TableName);
+        dbmNormbasicInfoMap.put("dbmNormbasicInfos", dbmNormbasicInfos);
+        dbmNormbasicInfoMap.put("totalSize", dbmNormbasicInfos.size());
         return dbmNormbasicInfoMap;
     }
 
