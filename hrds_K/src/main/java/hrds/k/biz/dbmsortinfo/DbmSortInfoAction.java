@@ -45,16 +45,21 @@ public class DbmSortInfoAction extends BaseAction {
         }
         //1-3.父分类不为空的情况下,检查上级分类是否存在
         if (StringUtil.isNotBlank(dbm_sort_info.getParent_id().toString())) {
-            if (!checkParentIdIsRepeat(dbm_sort_info.getParent_id())) {
-                throw new BusinessException("选择父分类名称不存在!" + dbm_sort_info.getParent_id());
+            // 顶级分类不为'0',则判断分类是否存在
+            if (0 != dbm_sort_info.getParent_id()) {
+                if (!checkParentIdIsRepeat(dbm_sort_info.getParent_id())) {
+                    throw new BusinessException("选择父分类名称不存在!" + dbm_sort_info.getParent_id());
+                }
             }
+        }
+        if (StringUtil.isBlank(dbm_sort_info.getSort_status())) {
+            throw new BusinessException("分类状态为空!" + dbm_sort_info.getSort_status());
         }
         //2.设置标准分类信息
         dbm_sort_info.setSort_id(PrimayKeyGener.getNextId());
         dbm_sort_info.setCreate_user(getUserName());
         dbm_sort_info.setCreate_date(DateUtil.getSysDate());
         dbm_sort_info.setCreate_time(DateUtil.getSysTime());
-        dbm_sort_info.setSort_status(IsFlag.Fou.getCode());
         //3.添加标准分类信息
         dbm_sort_info.add(Dbo.db());
     }
@@ -80,35 +85,20 @@ public class DbmSortInfoAction extends BaseAction {
 
     @Method(desc = "修改分类信息",
             logicStep = "1.数据校验" +
-                    "1-1.检查分类id是否存在" +
-                    "1-2.检查分类名称是否为空" +
-                    "1-3.检查分类名称是否重复" +
                     "2.设置分类信息" +
                     "3.修改数据")
     @Param(name = "dbm_sort_info", desc = "标准分类信息的实体对象", range = "标准分类信息的实体对象", isBean = true)
     public void updateDbmSortInfo(Dbm_sort_info dbm_sort_info) {
         //1.数据校验
-        //1-1.检查分类id是否存在
         if (checkSortIdIsNotExist(dbm_sort_info.getSort_id())) {
             throw new BusinessException("修改的分类已经不存在!");
         }
-        //1-2.检查分类名称是否为空
         if (StringUtil.isBlank(dbm_sort_info.getSort_name())) {
             throw new BusinessException("分类名称不能为空!" + dbm_sort_info.getSort_name());
         }
-        //1-3.检查分类名称是否重复
-        if (checkSortNameIsRepeat(dbm_sort_info.getSort_name())) {
-            throw new BusinessException("分类名称已经存在!" + dbm_sort_info.getSort_name());
-        }
-        //1-4.分类创建人不能为空
-        if (StringUtil.isBlank(dbm_sort_info.getCreate_user())) {
-            throw new BusinessException("分类创建人不能为空!" + dbm_sort_info.getCreate_user());
-        }
-        //1-5.发布状态不能为空
         if (StringUtil.isBlank(dbm_sort_info.getSort_status())) {
             throw new BusinessException("分类发布状态不能为空!" + dbm_sort_info.getSort_status());
         }
-        //1-6.分类等级不能为空
         if (StringUtil.isBlank(dbm_sort_info.getSort_level_num().toString())) {
             throw new BusinessException("分类等级不能为空!" + dbm_sort_info.getSort_level_num());
         }
@@ -144,6 +134,29 @@ public class DbmSortInfoAction extends BaseAction {
                 " where sort_id = ?", sort_id);
     }
 
+    @Method(desc = "获取所有根分类信息", logicStep = "获取所有根分类信息")
+    @Return(desc = "所有根分类信息", range = "所有根分类信息")
+    public Map<String, Object> getDbmRootSortInfo() {
+        Map<String, Object> dbmSortInfoMap = new HashMap<>();
+        List<Dbm_sort_info> dbmSortInfos = Dbo.queryList(Dbm_sort_info.class,
+                "select * from " + Dbm_sort_info.TableName + " where parent_id=?", '0');
+        dbmSortInfoMap.put("dbmSortInfos", dbmSortInfos);
+        dbmSortInfoMap.put("totalSize", dbmSortInfos.size());
+        return dbmSortInfoMap;
+    }
+
+    @Method(desc = "根据分类id获取所有子分类信息", logicStep = "根据分类id获取所有子分类信息")
+    @Param(name = "sort_id", desc = "分类Id", range = "long类型")
+    @Return(desc = "指定分类下的子分类信息", range = "指定分类下的子分类信息")
+    public Map<String, Object> getDbmSubSortInfo(long sort_id) {
+        Map<String, Object> dbmSortInfoMap = new HashMap<>();
+        List<Dbm_sort_info> dbmSortInfos = Dbo.queryList(Dbm_sort_info.class,
+                "select * from " + Dbm_sort_info.TableName + " where parent_id=?", sort_id);
+        dbmSortInfoMap.put("dbmSortInfos", dbmSortInfos);
+        return dbmSortInfoMap;
+    }
+
+
     @Method(desc = "检查分类名称是否存在", logicStep = "1.根据 sort_name 检查名称是否存在")
     @Param(name = "sort_name", desc = "分类名称", range = "String类型，长度为10，该值唯一", example = "国籍")
     @Return(desc = "分类名称是否存在", range = "true：存在，false：不存在")
@@ -154,13 +167,13 @@ public class DbmSortInfoAction extends BaseAction {
                 sort_name).orElseThrow(() -> new BusinessException("检查分类名称否重复的SQL编写错误")) != 0;
     }
 
-    @Method(desc = "检查父分类是否存在", logicStep = "1.根据 parentCategory 检查父分类是否存在")
+    @Method(desc = "检查父分类是否存在", logicStep = "1.根据 parent_id 检查父分类是否存在")
     @Param(name = "parent_id", desc = "分类名称", range = "Integer类型")
     @Return(desc = "父分类是否存在", range = "true：存在，false：不存在")
     private boolean checkParentIdIsRepeat(long parent_id) {
         //1.根据 categoryName 检查名称是否重复
         return Dbo.queryNumber("select count(parent_id) count from " + Dbm_sort_info.TableName +
-                        " WHERE parentCategory =?",
+                        " WHERE parent_id =?",
                 parent_id).orElseThrow(() -> new BusinessException("检查分类名称否重复的SQL编写错误")) != 0;
     }
 

@@ -118,6 +118,17 @@ public class DbmCodeTypeInfoAction extends BaseAction {
         return dbmDbmCodeTypeInfoMap;
     }
 
+    @Method(desc = "获取所有代码类信息(只获取code_type_id和code_type_name)", logicStep = "获取所有代码类信息")
+    @Return(desc = "所有分类信息(只获取code_type_id和code_type_name)", range = "所有分类信息")
+    public Map<String, Object> getDbmCodeTypeIdAndNameInfo() {
+        Map<String, Object> dbmDbmCodeTypeInfoMap = new HashMap<>();
+        List<Map<String, Object>> dbmCodeTypeInfos =
+                Dbo.queryList("select code_type_id,code_type_name from " + Dbm_code_type_info.TableName);
+        dbmDbmCodeTypeInfoMap.put("dbmCodeTypeInfos", dbmCodeTypeInfos);
+        dbmDbmCodeTypeInfoMap.put("totalSize", dbmCodeTypeInfos.size());
+        return dbmDbmCodeTypeInfoMap;
+    }
+
     @Method(desc = "根据Id获取代码分类信息",
             logicStep = "根据Id获取分类信息")
     @Param(name = "code_type_id", desc = "分类Id", range = "long类型")

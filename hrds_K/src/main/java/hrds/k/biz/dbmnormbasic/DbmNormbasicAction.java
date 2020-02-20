@@ -67,9 +67,6 @@ public class DbmNormbasicAction extends BaseAction {
         if (StringUtil.isBlank(dbm_normbasic.getNorm_status())) {
             throw new BusinessException("标准发布状态为空!" + dbm_normbasic.getNorm_status());
         }
-        if (StringUtil.isBlank(dbm_normbasic.getCreate_user())) {
-            throw new BusinessException("标准创建人为空!" + dbm_normbasic.getCreate_user());
-        }
         //2.设置标准分类信息
         dbm_normbasic.setBasic_id(PrimayKeyGener.getNextId());
         dbm_normbasic.setNorm_status(IsFlag.Fou.getCode());
