@@ -15,7 +15,7 @@ public class DataConvertedNode {
     @Param(name = "dataList", desc = "数据列表", range = "dataList")
     @Return(desc = "转化成分叉树的树菜单数据字符串", range = "转化成分叉树的树菜单数据字符串")
     @Deprecated
-    public static String DataConversionTreeInfo(List<Map<String, Object>> dataList) {
+    public static String dataConversionTreeInfo(List<Map<String, Object>> dataList) {
         // 节点列表（散列表，用于临时存储节点对象）
         Map<String, Node> nodeMap = new HashMap<>();
         // 根据结果集构造节点列表（存入散列表）
@@ -48,7 +48,7 @@ public class DataConvertedNode {
     @Method(desc = "树数据转分叉树菜单数据", logicStep = "标准分类树数据转分叉树菜单数据")
     @Param(name = "dataList", desc = "数据列表", range = "dataList")
     @Return(desc = "转化成分叉树的树菜单数据List", range = "转化成分叉树的树菜单数据List")
-    public static List<Map<String, Object>> DataConversionTreeInfoList(
+    public static List<Map<String, Object>> dataConversionTreeInfoList(
             List<Map<String, Object>> dataList) {
         Map<String, List<Map<String, Object>>> childrenMap = new LinkedHashMap<>();
         // 根据结果集构造节点列表（存入散列表）
