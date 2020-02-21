@@ -63,7 +63,7 @@ public class DbmCodeItemInfoAction extends BaseAction {
                 Dbm_code_item_info.TableName + " WHERE code_item_id = ? ", code_item_id);
     }
 
-    @Method(desc = "修改分类信息",
+    @Method(desc = "修改代码项信息",
             logicStep = "1.数据校验" +
                     "2.设置分类信息" +
                     "3.修改数据")

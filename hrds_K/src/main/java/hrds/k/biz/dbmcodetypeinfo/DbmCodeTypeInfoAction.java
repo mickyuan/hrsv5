@@ -85,7 +85,6 @@ public class DbmCodeTypeInfoAction extends BaseAction {
         if (StringUtil.isBlank(dbm_code_type_info.getCode_encode())) {
             throw new BusinessException("代码类编码不能为空!");
         }
-
         if (StringUtil.isBlank(dbm_code_type_info.getCode_type_name())) {
             throw new BusinessException("代码类名称不能为空!");
         }
@@ -94,9 +93,6 @@ public class DbmCodeTypeInfoAction extends BaseAction {
         }
         if (StringUtil.isBlank(dbm_code_type_info.getCode_status())) {
             throw new BusinessException("代码类发布状态不能为空!");
-        }
-        if (StringUtil.isBlank(dbm_code_type_info.getCreate_user())) {
-            throw new BusinessException("代码类创建人不能为空!");
         }
         //2.设置分类信息
         //3.修改分类信息
