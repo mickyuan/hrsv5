@@ -30,7 +30,7 @@ public class DataConvertedNode {
         List<Node> treeNodeDataList = new ArrayList<>();
         for (Map.Entry<String, Node> nodeEntry : nodeMap.entrySet()) {
             Node treeNodeData;
-            Node node = (Node) ((Map.Entry) nodeEntry).getValue();
+            Node node = nodeEntry.getValue();
             if (node.parent_id == null || "0".equals(node.parent_id)) {
                 treeNodeData = node;
                 treeNodeDataList.add(treeNodeData);

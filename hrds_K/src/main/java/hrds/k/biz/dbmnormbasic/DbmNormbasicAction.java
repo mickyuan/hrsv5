@@ -39,7 +39,7 @@ public class DbmNormbasicAction extends BaseAction {
             throw new BusinessException("分类编码已经存在!" + dbm_normbasic.getNorm_code());
         }
         if (StringUtil.isNotBlank(dbm_normbasic.getSort_id().toString())) {
-            if (!checkSortIdIsNotExist(dbm_normbasic.getSort_id())) {
+            if (checkSortIdIsNotExist(dbm_normbasic.getSort_id())) {
                 throw new BusinessException("选择分类不存在!" + dbm_normbasic.getSort_id());
             }
         }
