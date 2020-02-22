@@ -145,7 +145,8 @@ public class DbmNormbasicAction extends BaseAction {
     @Return(desc = "所有分类信息(只获取basic_id,norm_cname)", range = "所有分类信息")
     public Map<String, Object> getDbmNormbasicIdAndNameInfo() {
         Map<String, Object> dbmNormbasicInfoMap = new HashMap<>();
-        List dbmNormbasicInfos = Dbo.queryList("select basic_id,norm_cname from " + Dbm_normbasic.TableName);
+        List<Map<String, Object>> dbmNormbasicInfos =
+                Dbo.queryList("select basic_id,norm_cname from " + Dbm_normbasic.TableName);
         dbmNormbasicInfoMap.put("dbmNormbasicInfos", dbmNormbasicInfos);
         dbmNormbasicInfoMap.put("totalSize", dbmNormbasicInfos.size());
         return dbmNormbasicInfoMap;
