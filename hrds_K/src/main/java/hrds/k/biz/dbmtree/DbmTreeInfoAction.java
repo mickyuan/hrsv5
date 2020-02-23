@@ -23,8 +23,9 @@ public class DbmTreeInfoAction extends BaseAction {
         //获取数据对标-标准分类信息的所有分类信息
         List<Map<String, Object>> dbmSortInfos = DbmDataQuery.getDbmSortInfos();
         //转换所有标准分类信息数据为树节点信息数据
-        List<Map<String, Object>> dbmSortInfoTreeDataList = DataConvertedNode.dataConversionTreeInfoList(dbmSortInfos);
-        dbmSortInfoTreeDataMap.put("dbmSortInfoTreeDataList", dbmSortInfoTreeDataList);
+        List<Node> dbmSortInfoTreeDataList = DataConvertedNode.dataConversionTreeInfo(dbmSortInfos);
+        dbmSortInfoTreeDataMap.put("dbmSortInfoTreeDataList",
+                JsonUtil.toObjectSafety(dbmSortInfoTreeDataList.toString(), List.class));
         return dbmSortInfoTreeDataMap;
     }
 }

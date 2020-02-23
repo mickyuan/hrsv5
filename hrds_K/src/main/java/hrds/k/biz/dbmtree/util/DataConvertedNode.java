@@ -4,7 +4,6 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
-import fd.ng.core.utils.JsonUtil;
 
 import java.util.*;
 
@@ -14,8 +13,7 @@ public class DataConvertedNode {
     @Method(desc = "树数据转分叉树菜单数据", logicStep = "标准分类树数据转分叉树菜单数据")
     @Param(name = "dataList", desc = "数据列表", range = "dataList")
     @Return(desc = "转化成分叉树的树菜单数据字符串", range = "转化成分叉树的树菜单数据字符串")
-    @Deprecated
-    public static String dataConversionTreeInfo(List<Map<String, Object>> dataList) {
+    public static List<Node> dataConversionTreeInfo(List<Map<String, Object>> dataList) {
         // 节点列表（散列表，用于临时存储节点对象）
         Map<String, Node> nodeMap = new HashMap<>();
         // 根据结果集构造节点列表（存入散列表）
@@ -42,12 +40,13 @@ public class DataConvertedNode {
         for (Node node : treeNodeDataList) {
             node.sortChildren();
         }
-        return JsonUtil.toJson(treeNodeDataList.toString());
+        return treeNodeDataList;
     }
 
     @Method(desc = "树数据转分叉树菜单数据", logicStep = "标准分类树数据转分叉树菜单数据")
     @Param(name = "dataList", desc = "数据列表", range = "dataList")
     @Return(desc = "转化成分叉树的树菜单数据List", range = "转化成分叉树的树菜单数据List")
+    @Deprecated
     public static List<Map<String, Object>> dataConversionTreeInfoList(
             List<Map<String, Object>> dataList) {
         Map<String, List<Map<String, Object>>> childrenMap = new LinkedHashMap<>();
@@ -69,10 +68,41 @@ public class DataConvertedNode {
                 String id = (String) itemMap.get("id");
                 if (childrenMap.containsKey(id)) {
                     itemMap.put("children", childrenMap.get(id));
+                    System.out.println(itemMap);
                     treeList.add(itemMap);
                 }
             });
         });
         return treeList;
+    }
+
+    private List<Map<String, Object>> findChild(Map<String, List<Map<String, Object>>> childrenMap,
+                                                List<Map<String, Object>> childrenList) {
+        List<Map<String, Object>> treeList = new ArrayList<>();
+
+        childrenMap.forEach((key, item) -> {
+            item.forEach(itemMap -> {
+                String id = (String) itemMap.get("id");
+                if (childrenMap.containsKey(id)) {
+                    findChild(childrenMap, childrenMap.get(id));
+                } else {
+                    itemMap.put("children", childrenMap.get(id));
+                    treeList.add(itemMap);
+                }
+            });
+        });
+
+//        childrenList.forEach(itme -> {
+//            String id = (String) itme.get("id");
+//            if (childrenMap.containsKey(id)) {
+//                findChild(childrenMap, childrenMap.get(id));
+//            } else {
+//                itme.put("children", childrenMap.get(id));
+//                treeList.add(itme);
+//            }
+//        });
+
+        return treeList;
+
     }
 }
