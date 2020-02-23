@@ -26,9 +26,9 @@ public class ImportData {
         //1.获取标准分类信息列表
         //sheetIndex为1代表第二个sheet页面或者sheetName为sheet页名称 ExcelUtil.readExcel(workbook, "基础标准分类体系");
         List<List<Object>> lists = ExcelUtil.readExcel(workbook, "基础标准分类体系");
-        String categoryTopic = "";
-        String rootClassify = "";
-        String subClassify = "";
+        String categoryTopic;
+        String rootClassify;
+        String subClassify;
         long categoryTopicId = 0L;
         long rootClassifyId = 0L;
         for (int i = 1; i < lists.size(); i++) {
