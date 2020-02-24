@@ -34,6 +34,11 @@ public class ImportData {
         for (int i = 1; i < lists.size(); i++) {
             Dbm_sort_info dbm_sort_info = new Dbm_sort_info();
             dbm_sort_info.setSort_id(PrimayKeyGener.getNextId());
+            dbm_sort_info.setSort_remark(lists.get(i).get(3).toString());
+            dbm_sort_info.setSort_status("0");
+            dbm_sort_info.setCreate_user(user.getUserName());
+            dbm_sort_info.setCreate_date(DateUtil.getSysDate());
+            dbm_sort_info.setCreate_time(DateUtil.getSysTime());
             //分类主题
             if (StringUtil.isNotBlank(lists.get(i).get(0).toString())) {
                 categoryTopic = lists.get(i).get(0).toString();
@@ -41,6 +46,7 @@ public class ImportData {
                 dbm_sort_info.setSort_level_num(0L);
                 dbm_sort_info.setSort_name(categoryTopic);
                 categoryTopicId = dbm_sort_info.getSort_id();
+                dbm_sort_info.add(Dbo.db());
             }
             //分类大类
             if (StringUtil.isNotBlank(lists.get(i).get(1).toString())) {
@@ -49,20 +55,28 @@ public class ImportData {
                 dbm_sort_info.setSort_level_num(1L);
                 dbm_sort_info.setSort_name(rootClassify);
                 rootClassifyId = dbm_sort_info.getSort_id();
+                dbm_sort_info.add(Dbo.db());
+                // 如果大类一条数据包含子类同时添加子类信息
+                if (StringUtil.isNotBlank(lists.get(i).get(2).toString())
+                        && !"/".equals(lists.get(i).get(2).toString())) {
+                    subClassify = lists.get(i).get(2).toString();
+                    dbm_sort_info.setSort_id(PrimayKeyGener.getNextId());
+                    dbm_sort_info.setParent_id(rootClassifyId);
+                    dbm_sort_info.setSort_level_num(2L);
+                    dbm_sort_info.setSort_name(subClassify);
+                    dbm_sort_info.add(Dbo.db());
+                }
             }
             //分类子类
-            if (StringUtil.isNotBlank(lists.get(i).get(2).toString()) && !"/".equals(lists.get(i).get(2).toString())) {
+            if (StringUtil.isBlank(lists.get(i).get(1).toString())
+                    && StringUtil.isNotBlank(lists.get(i).get(2).toString())
+                    && !"/".equals(lists.get(i).get(2).toString())) {
                 subClassify = lists.get(i).get(2).toString();
                 dbm_sort_info.setParent_id(rootClassifyId);
                 dbm_sort_info.setSort_level_num(2L);
                 dbm_sort_info.setSort_name(subClassify);
+                dbm_sort_info.add(Dbo.db());
             }
-            dbm_sort_info.setSort_remark(lists.get(i).get(3).toString());
-            dbm_sort_info.setSort_status("0");
-            dbm_sort_info.setCreate_user(user.getUserName());
-            dbm_sort_info.setCreate_date(DateUtil.getSysDate());
-            dbm_sort_info.setCreate_time(DateUtil.getSysTime());
-            dbm_sort_info.add(Dbo.db());
 
         }
     }
