@@ -29,7 +29,9 @@ public enum DatabaseType {
 	/**GBase<GBase>  */
 	GBase("12","GBase","36","数据库类型"),
 	/**TeraData<TeraData>  */
-	TeraData("13","TeraData","36","数据库类型");
+	TeraData("13","TeraData","36","数据库类型"),
+	/**Hive<Hive>  */
+	Hive("14","Hive","36","数据库类型");
 
 	private final String code;
 	private final String value;

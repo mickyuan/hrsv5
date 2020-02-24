@@ -17,6 +17,8 @@ public class CodesItem{
 	protected static final String dbmMode=new String("DbmMode");
 	/**Operation类型   */
 	protected static final String operationType=new String("OperationType");
+	/**更新方式   */
+	protected static final String updateType=new String("UpdateType");
 	/**用户类型   */
 	protected static final String userType=new String("UserType");
 	/**是否标识   */
@@ -101,8 +103,6 @@ public class CodesItem{
 	protected static final String store_type=new String("Store_type");
 	/**文件类型   */
 	protected static final String fileType=new String("FileType");
-	/**更新方式   */
-	protected static final String updateType=new String("UpdateType");
 
 
 	public static final Map<String,Class> mapCat= new HashMap<String,Class>(100);
@@ -112,6 +112,7 @@ public class CodesItem{
 		mapCat.put(dbmDataType,DbmDataType.class);
 		mapCat.put(dbmMode,DbmMode.class);
 		mapCat.put(operationType,OperationType.class);
+		mapCat.put(updateType,UpdateType.class);
 		mapCat.put(userType,UserType.class);
 		mapCat.put(isFlag,IsFlag.class);
 		mapCat.put(userState,UserState.class);
@@ -154,7 +155,6 @@ public class CodesItem{
 		mapCat.put(authType,AuthType.class);
 		mapCat.put(store_type,Store_type.class);
 		mapCat.put(fileType,FileType.class);
-		mapCat.put(updateType,UpdateType.class);
 	}
 
 
