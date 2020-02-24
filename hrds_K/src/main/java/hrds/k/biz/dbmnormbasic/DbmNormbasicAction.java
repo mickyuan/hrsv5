@@ -39,7 +39,7 @@ public class DbmNormbasicAction extends BaseAction {
             throw new BusinessException("分类编码已经存在!" + dbm_normbasic.getNorm_code());
         }
         if (StringUtil.isNotBlank(dbm_normbasic.getSort_id().toString())) {
-            if (!checkBasicIdIsNotExist(dbm_normbasic.getSort_id())) {
+            if (checkSortIdIsNotExist(dbm_normbasic.getSort_id())) {
                 throw new BusinessException("选择分类不存在!" + dbm_normbasic.getSort_id());
             }
         }
@@ -145,7 +145,8 @@ public class DbmNormbasicAction extends BaseAction {
     @Return(desc = "所有分类信息(只获取basic_id,norm_cname)", range = "所有分类信息")
     public Map<String, Object> getDbmNormbasicIdAndNameInfo() {
         Map<String, Object> dbmNormbasicInfoMap = new HashMap<>();
-        List dbmNormbasicInfos = Dbo.queryList("select basic_id,norm_cname from " + Dbm_normbasic.TableName);
+        List<Map<String, Object>> dbmNormbasicInfos =
+                Dbo.queryList("select basic_id,norm_cname from " + Dbm_normbasic.TableName);
         dbmNormbasicInfoMap.put("dbmNormbasicInfos", dbmNormbasicInfos);
         dbmNormbasicInfoMap.put("totalSize", dbmNormbasicInfos.size());
         return dbmNormbasicInfoMap;
@@ -156,12 +157,17 @@ public class DbmNormbasicAction extends BaseAction {
     @Param(name = "basic_id", desc = "标准Id", range = "long类型")
     @Return(desc = "返回值说明", range = "返回值取值范围")
     public Optional<Dbm_normbasic> getDbmNormbasicInfoById(long basic_id) {
-        //1.检查分类是否存在
-        if (checkBasicIdIsNotExist(basic_id)) {
-            throw new BusinessException("查询的分类已经不存在! basic_id=" + basic_id);
-        }
         return Dbo.queryOneObject(Dbm_normbasic.class, "select * from " + Dbm_normbasic.TableName +
                 " where basic_id = ?", basic_id);
+    }
+
+    @Method(desc = "根据sort_id获取标准信息",
+            logicStep = "根据sort_id获取标准信息")
+    @Param(name = "sort_id", desc = "分类id", range = "long类型")
+    @Return(desc = "返回值说明", range = "返回值取值范围")
+    public Optional<Dbm_normbasic> getDbmNormbasicInfoBySortId(long sort_id) {
+        return Dbo.queryOneObject(Dbm_normbasic.class, "select * from " + Dbm_normbasic.TableName +
+                " where sort_id = ?", sort_id);
     }
 
     @Method(desc = "检查标准编号是否存在", logicStep = "检查标准编号是否存在")
@@ -177,10 +183,20 @@ public class DbmNormbasicAction extends BaseAction {
     @Method(desc = "检查分类id是否存在", logicStep = "检查分类id是否存在")
     @Param(name = "sort_id", desc = "分类id", range = "long类型")
     @Return(desc = "分类否存在", range = "true：不存在，false：存在")
-    private boolean checkBasicIdIsNotExist(long sort_id) {
+    private boolean checkSortIdIsNotExist(long sort_id) {
         //1.根据 sort_id 检查分类是否存在(1 : 表示存在, 其他为异常情况,因为根据主键只能查出一条记录信息)
         return Dbo.queryNumber("SELECT COUNT(sort_id) FROM " + Dbm_sort_info.TableName +
                 " WHERE sort_id = ?", sort_id).orElseThrow(() ->
+                new BusinessException("检查分类id否存在的SQL编写错误")) != 1;
+    }
+
+    @Method(desc = "检查标准id是否存在", logicStep = "检查标准id是否存在")
+    @Param(name = "basic_id", desc = "标准id", range = "long类型")
+    @Return(desc = "标准是否存在", range = "true：不存在，false：存在")
+    private boolean checkBasicIdIsNotExist(long basic_id) {
+        //1.根据 sort_id 检查分类是否存在(1 : 表示存在, 其他为异常情况,因为根据主键只能查出一条记录信息)
+        return Dbo.queryNumber("SELECT COUNT(basic_id) FROM " + Dbm_normbasic.TableName +
+                " WHERE basic_id = ?", basic_id).orElseThrow(() ->
                 new BusinessException("检查分类id否存在的SQL编写错误")) != 1;
     }
 }

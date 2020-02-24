@@ -63,7 +63,7 @@ public class DbmCodeItemInfoAction extends BaseAction {
                 Dbm_code_item_info.TableName + " WHERE code_item_id = ? ", code_item_id);
     }
 
-    @Method(desc = "修改分类信息",
+    @Method(desc = "修改代码项信息",
             logicStep = "1.数据校验" +
                     "2.设置分类信息" +
                     "3.修改数据")
@@ -97,7 +97,7 @@ public class DbmCodeItemInfoAction extends BaseAction {
     @Method(desc = "根据代码分类id获取所有代码项信息", logicStep = "根据代码分类id获取所有代码项信息")
     @Param(name = "code_type_id", desc = "代码项分类id", range = "Long类型值")
     @Return(desc = "分类下所有代码项信息", range = "分类下所有代码项信息")
-    public Map<String, Object> getDbmCodeItemInfoByCodeTypeId(String code_type_id) {
+    public Map<String, Object> getDbmCodeItemInfoByCodeTypeId(long code_type_id) {
         Map<String, Object> dbmCodeItemInfoMap = new HashMap<>();
         List<Dbm_code_item_info> dbmCodeItemInfos = Dbo.queryList(Dbm_code_item_info.class,
                 "select * from " + Dbm_code_item_info.TableName + " where code_type_id=?", code_type_id);

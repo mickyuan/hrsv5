@@ -3,9 +3,11 @@ package hrds.k.biz.dbmtree;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Return;
+import fd.ng.core.utils.JsonUtil;
 import hrds.commons.base.BaseAction;
 import hrds.k.biz.dbmtree.commons.DbmDataQuery;
 import hrds.k.biz.dbmtree.util.DataConvertedNode;
+import hrds.k.biz.dbmtree.util.Node;
 
 import java.util.HashMap;
 import java.util.List;
@@ -21,8 +23,9 @@ public class DbmTreeInfoAction extends BaseAction {
         //获取数据对标-标准分类信息的所有分类信息
         List<Map<String, Object>> dbmSortInfos = DbmDataQuery.getDbmSortInfos();
         //转换所有标准分类信息数据为树节点信息数据
-        String dbmSortInfoTreeData = DataConvertedNode.DataConversionTreeInfo(dbmSortInfos);
-        dbmSortInfoTreeDataMap.put("dbmSortInfoTreeData", dbmSortInfoTreeData);
+        List<Node> dbmSortInfoTreeDataList = DataConvertedNode.dataConversionTreeInfo(dbmSortInfos);
+        dbmSortInfoTreeDataMap.put("dbmSortInfoTreeDataList",
+                JsonUtil.toObjectSafety(dbmSortInfoTreeDataList.toString(), List.class));
         return dbmSortInfoTreeDataMap;
     }
 }

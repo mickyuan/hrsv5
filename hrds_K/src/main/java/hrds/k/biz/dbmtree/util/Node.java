@@ -8,15 +8,15 @@ public class Node {
     /**
      * 节点编号
      */
-    public String id;
+    String id;
     /**
      * 节点内容
      */
-    public String label;
+    String label;
     /**
      * 父节点编号
      */
-    public String parent_id;
+    String parent_id;
     /**
      * 孩子节点列表
      */
@@ -24,26 +24,26 @@ public class Node {
 
     // 先序遍历，拼接JSON字符串
     public String toString() {
-        String result = "{"
+        String str = "{"
                 + "id : '" + id + "'"
                 + ", label : '" + label + "'";
         if (children != null && children.getSize() != 0) {
-            result += ", children : " + children.toString();
+            str += ", children : " + children.toString();
         } else {
-            result += ", leaf : true";
+            str += ", leaf : false";
         }
-        return result + "}";
+        return str + "}";
     }
 
     // 兄弟节点横向排序
-    public void sortChildren() {
+    void sortChildren() {
         if (children != null && children.getSize() != 0) {
             children.sortChildren();
         }
     }
 
     // 添加孩子节点
-    public void addChild(Node node) {
+    void addChild(Node node) {
         this.children.addChild(node);
     }
 }
