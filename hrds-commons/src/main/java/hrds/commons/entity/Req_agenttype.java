@@ -30,8 +30,6 @@ public class Req_agenttype extends ProjectTableEntity
 		__tmpPKS.add("req_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="comp_id",value="组件编号:",dataType = String.class,required = true)
-	private String comp_id;
 	@DocBean(name ="req_name",value="中文名称:",dataType = String.class,required = true)
 	private String req_name;
 	@DocBean(name ="req_no",value="请求编号:",dataType = String.class,required = false)
@@ -40,15 +38,9 @@ public class Req_agenttype extends ProjectTableEntity
 	private String req_remark;
 	@DocBean(name ="req_id",value="请求ID:",dataType = Long.class,required = true)
 	private Long req_id;
+	@DocBean(name ="comp_id",value="组件编号:",dataType = String.class,required = true)
+	private String comp_id;
 
-	/** 取得：组件编号 */
-	public String getComp_id(){
-		return comp_id;
-	}
-	/** 设置：组件编号 */
-	public void setComp_id(String comp_id){
-		this.comp_id=comp_id;
-	}
 	/** 取得：中文名称 */
 	public String getReq_name(){
 		return req_name;
@@ -86,5 +78,13 @@ public class Req_agenttype extends ProjectTableEntity
 		if(!fd.ng.core.utils.StringUtil.isEmpty(req_id)){
 			this.req_id=new Long(req_id);
 		}
+	}
+	/** 取得：组件编号 */
+	public String getComp_id(){
+		return comp_id;
+	}
+	/** 设置：组件编号 */
+	public void setComp_id(String comp_id){
+		this.comp_id=comp_id;
 	}
 }

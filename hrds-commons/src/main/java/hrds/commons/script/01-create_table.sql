@@ -582,6 +582,7 @@ CREATE TABLE OBJECT_STORAGE(
 OBJ_STID                                          BIGINT default 0 NOT NULL, --存储编号
 IS_HBASE                                          CHAR(1) NOT NULL, --是否进hbase
 IS_HDFS                                           CHAR(1) NOT NULL, --是否进hdfs
+IS_SOLR                                           CHAR(1) NOT NULL, --是否进solr
 REMARK                                            VARCHAR(512) NULL, --备注
 OCS_ID                                            BIGINT default 0 NULL, --对象采集任务编号
 CONSTRAINT OBJECT_STORAGE_PK PRIMARY KEY(OBJ_STID)   );
