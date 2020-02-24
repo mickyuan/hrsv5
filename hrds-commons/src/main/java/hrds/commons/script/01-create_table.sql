@@ -347,7 +347,7 @@ CONSTRAINT ETL_JOB_RESOURCE_RELA_PK PRIMARY KEY(ETL_SYS_CD,ETL_JOB)   );
 --对象采集结构信息
 DROP TABLE IF EXISTS OBJECT_COLLECT_STRUCT ;
 CREATE TABLE OBJECT_COLLECT_STRUCT(
-STRUCT_ID                                         DECIMAL(10) NOT NULL, --结构信息id
+STRUCT_ID                                         BIGINT default 0 NOT NULL, --结构信息id
 OCS_ID                                            BIGINT default 0 NOT NULL, --对象采集任务编号
 COLUMN_NAME                                       VARCHAR(512) NOT NULL, --字段名称
 IS_ROWKEY                                         CHAR(1) NOT NULL, --是否rowkey
@@ -355,9 +355,9 @@ IS_KEY                                            CHAR(1) NOT NULL, --是否主�
 IS_SOLR                                           CHAR(1) NOT NULL, --是否solr
 IS_HBASE                                          CHAR(1) NOT NULL, --是否hbase
 IS_OPERATE                                        CHAR(1) NOT NULL, --是否操作标识字段
-COL_SEQ                                           DECIMAL(16) default 0 NOT NULL, --字段序号
+COL_SEQ                                           BIGINT default 0 NOT NULL, --字段序号
 COLUMNPOSITION                                    VARCHAR(100) NOT NULL, --字段位置
-COLUMN_TYPE                                       VARCHAR(32) NOT NULL, --字段类型
+COLUMN_TYPE                                       VARCHAR(100) NOT NULL, --字段类型
 DATA_DESC                                         VARCHAR(200) NULL, --中文描述信息
 REMARK                                            VARCHAR(512) NULL, --备注
 CONSTRAINT OBJECT_COLLECT_STRUCT_PK PRIMARY KEY(STRUCT_ID)   );
@@ -945,6 +945,7 @@ COLLECT_DATA_TYPE                                 CHAR(1) NOT NULL, --数据类�
 FIRSTLINE                                         VARCHAR(2048) NULL, --第一行数据
 REMARK                                            VARCHAR(512) NULL, --备注
 DATABASE_CODE                                     CHAR(1) NOT NULL, --采集编码
+UPDATETYPE                                        CHAR(1) NOT NULL, --更新方式
 ODC_ID                                            BIGINT default 0 NULL, --对象采集id
 CONSTRAINT OBJECT_COLLECT_TASK_PK PRIMARY KEY(OCS_ID)   );
 

@@ -27,33 +27,19 @@ public class Object_handle_type extends ProjectTableEntity
 	/** 对象采集数据处理类型对应表 */
 	static {
 		Set<String> __tmpPKS = new HashSet<>();
-		__tmpPKS.add("ocs_id");
 		__tmpPKS.add("object_handle_id");
+		__tmpPKS.add("ocs_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="ocs_id",value="对象采集任务编号:",dataType = Long.class,required = true)
-	private Long ocs_id;
 	@DocBean(name ="object_handle_id",value="处理编号:",dataType = Long.class,required = true)
 	private Long object_handle_id;
 	@DocBean(name ="handle_type",value="处理类型(OperationType):0-INSERT 1-UPDATE 2-DELETE ",dataType = String.class,required = true)
 	private String handle_type;
 	@DocBean(name ="handle_value",value="处理值:",dataType = String.class,required = true)
 	private String handle_value;
+	@DocBean(name ="ocs_id",value="对象采集任务编号:",dataType = Long.class,required = true)
+	private Long ocs_id;
 
-	/** 取得：对象采集任务编号 */
-	public Long getOcs_id(){
-		return ocs_id;
-	}
-	/** 设置：对象采集任务编号 */
-	public void setOcs_id(Long ocs_id){
-		this.ocs_id=ocs_id;
-	}
-	/** 设置：对象采集任务编号 */
-	public void setOcs_id(String ocs_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(ocs_id)){
-			this.ocs_id=new Long(ocs_id);
-		}
-	}
 	/** 取得：处理编号 */
 	public Long getObject_handle_id(){
 		return object_handle_id;
@@ -83,5 +69,19 @@ public class Object_handle_type extends ProjectTableEntity
 	/** 设置：处理值 */
 	public void setHandle_value(String handle_value){
 		this.handle_value=handle_value;
+	}
+	/** 取得：对象采集任务编号 */
+	public Long getOcs_id(){
+		return ocs_id;
+	}
+	/** 设置：对象采集任务编号 */
+	public void setOcs_id(Long ocs_id){
+		this.ocs_id=ocs_id;
+	}
+	/** 设置：对象采集任务编号 */
+	public void setOcs_id(String ocs_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(ocs_id)){
+			this.ocs_id=new Long(ocs_id);
+		}
 	}
 }

@@ -48,6 +48,8 @@ public class Object_collect_task extends ProjectTableEntity
 	private String firstline;
 	@DocBean(name ="odc_id",value="对象采集id:",dataType = Long.class,required = false)
 	private Long odc_id;
+	@DocBean(name ="updatetype",value="更新方式(UpdateType):0-直接更新<DirectUpdate> 1-拉链更新<IncrementUpdate> ",dataType = String.class,required = true)
+	private String updatetype;
 
 	/** 取得：对象采集任务编号 */
 	public Long getOcs_id(){
@@ -138,5 +140,13 @@ public class Object_collect_task extends ProjectTableEntity
 		if(!fd.ng.core.utils.StringUtil.isEmpty(odc_id)){
 			this.odc_id=new Long(odc_id);
 		}
+	}
+	/** 取得：更新方式 */
+	public String getUpdatetype(){
+		return updatetype;
+	}
+	/** 设置：更新方式 */
+	public void setUpdatetype(String updatetype){
+		this.updatetype=updatetype;
 	}
 }
