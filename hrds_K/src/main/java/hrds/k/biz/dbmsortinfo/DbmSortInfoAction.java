@@ -10,6 +10,7 @@ import fd.ng.db.jdbc.DefaultPageImpl;
 import fd.ng.db.jdbc.Page;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
+import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Dbm_normbasic;
 import hrds.commons.entity.Dbm_sort_info;
 import hrds.commons.exception.BusinessException;
@@ -155,6 +156,17 @@ public class DbmSortInfoAction extends BaseAction {
         return dbmSortInfoMap;
     }
 
+    @Method(desc = "根据标准分类id发布标准分类",
+            logicStep = "根据标准分类id发布标准分类")
+    @Param(name = "sort_id", desc = "标准分类id", range = "long类型")
+    public void releaseDbmSortInfoById(long sort_id) {
+        int execute = Dbo.execute("update " + Dbm_sort_info.TableName + " set sort_status = ? where" +
+                        " sort_id = ? ",
+                IsFlag.Shi.getCode(), sort_id);
+        if (execute != 1) {
+            throw new BusinessException("标准分类发布失败！sort_id" + sort_id);
+        }
+    }
 
     @Method(desc = "检查分类名称是否存在", logicStep = "1.根据 sort_name 检查名称是否存在")
     @Param(name = "sort_name", desc = "分类名称", range = "String类型，长度为10，该值唯一", example = "国籍")

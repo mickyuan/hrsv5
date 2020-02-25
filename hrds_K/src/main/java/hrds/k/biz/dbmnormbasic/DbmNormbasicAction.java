@@ -170,6 +170,18 @@ public class DbmNormbasicAction extends BaseAction {
                 " where sort_id = ?", sort_id);
     }
 
+    @Method(desc = "根据标准id发布标准",
+            logicStep = "根据标准id发布标准")
+    @Param(name = "basic_id", desc = "标准id", range = "long类型")
+    public void releaseDbmNormbasicById(long basic_id) {
+        int execute = Dbo.execute("update " + Dbm_normbasic.TableName + " set norm_status = ? where" +
+                        " basic_id = ? ",
+                IsFlag.Shi.getCode(), basic_id);
+        if (execute != 1) {
+            throw new BusinessException("标准发布失败！basic_id" + basic_id);
+        }
+    }
+
     @Method(desc = "检查标准编号是否存在", logicStep = "检查标准编号是否存在")
     @Param(name = "norm_code", desc = "分类名称", range = "String类型，长度为10，该值唯一", example = "国籍")
     @Return(desc = "分类名称是否存在", range = "true：存在，false：不存在")
