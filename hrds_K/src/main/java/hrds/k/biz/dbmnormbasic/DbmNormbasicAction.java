@@ -70,7 +70,7 @@ public class DbmNormbasicAction extends BaseAction {
         //2.设置标准分类信息
         dbm_normbasic.setBasic_id(PrimayKeyGener.getNextId());
         dbm_normbasic.setNorm_status(IsFlag.Fou.getCode());
-        dbm_normbasic.setCreate_user(getUserName());
+        dbm_normbasic.setCreate_user(getUserId().toString());
         dbm_normbasic.setCreate_date(DateUtil.getSysDate());
         dbm_normbasic.setCreate_time(DateUtil.getSysTime());
         //3.添加标准分类信息

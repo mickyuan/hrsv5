@@ -49,7 +49,7 @@ public class DbmCodeTypeInfoAction extends BaseAction {
         //2.设置代码项信息
         dbm_code_type_info.setCode_type_id(PrimayKeyGener.getNextId());
         dbm_code_type_info.setCode_status(IsFlag.Fou.getCode());
-        dbm_code_type_info.setCreate_user(getUserName());
+        dbm_code_type_info.setCreate_user(getUserId().toString());
         dbm_code_type_info.setCreate_date(DateUtil.getSysDate());
         dbm_code_type_info.setCreate_time(DateUtil.getSysTime());
         //3.添加代码项信息

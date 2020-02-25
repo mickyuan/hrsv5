@@ -56,7 +56,7 @@ public class DbmSortInfoAction extends BaseAction {
         }
         //2.设置标准分类信息
         dbm_sort_info.setSort_id(PrimayKeyGener.getNextId());
-        dbm_sort_info.setCreate_user(getUserName());
+        dbm_sort_info.setCreate_user(getUserId().toString());
         dbm_sort_info.setCreate_date(DateUtil.getSysDate());
         dbm_sort_info.setCreate_time(DateUtil.getSysTime());
         //3.添加标准分类信息
