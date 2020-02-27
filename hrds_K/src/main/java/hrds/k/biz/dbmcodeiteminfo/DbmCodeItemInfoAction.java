@@ -27,9 +27,6 @@ public class DbmCodeItemInfoAction extends BaseAction {
     @Param(name = "dbm_code_item_info", desc = "代码项的实体对象", range = "代码项的实体对象", isBean = true)
     public void addDbmCodeItemInfo(Dbm_code_item_info dbm_code_item_info) {
         //1.数据校验
-        if (StringUtil.isBlank(dbm_code_item_info.getCode_encode())) {
-            throw new BusinessException("代码项编码为空!" + dbm_code_item_info.getCode_encode());
-        }
         if (StringUtil.isBlank(dbm_code_item_info.getCode_item_name())) {
             throw new BusinessException("代码项名称为空!" + dbm_code_item_info.getCode_item_name());
         }
@@ -73,9 +70,6 @@ public class DbmCodeItemInfoAction extends BaseAction {
         //1-1.检查分类id是否存在
         if (checkCodeItemIdIsNotExist(dbm_code_item_info.getCode_item_id())) {
             throw new BusinessException("修改的代码项已经不存在!");
-        }
-        if (StringUtil.isBlank(dbm_code_item_info.getCode_encode())) {
-            throw new BusinessException("代码项编码不能为空!");
         }
         if (StringUtil.isBlank(dbm_code_item_info.getCode_item_name())) {
             throw new BusinessException("代码项名称不能为空!");
