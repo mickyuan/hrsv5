@@ -34,15 +34,11 @@ public class DbmCodeTypeInfoAction extends BaseAction {
         if (StringUtil.isBlank(dbm_code_type_info.getCode_type_name())) {
             throw new BusinessException("代码类名称为空!" + dbm_code_type_info.getCode_type_name());
         }
-        if (StringUtil.isBlank(dbm_code_type_info.getCode_remark())) {
-            throw new BusinessException("代码类描述为空!" + dbm_code_type_info.getCode_remark());
-        }
         if (StringUtil.isBlank(dbm_code_type_info.getCode_status())) {
             throw new BusinessException("代码类发布状态为空!" + dbm_code_type_info.getCode_status());
         }
         //2.设置代码项信息
         dbm_code_type_info.setCode_type_id(PrimayKeyGener.getNextId());
-        dbm_code_type_info.setCode_status(IsFlag.Fou.getCode());
         dbm_code_type_info.setCreate_user(getUserId().toString());
         dbm_code_type_info.setCreate_date(DateUtil.getSysDate());
         dbm_code_type_info.setCreate_time(DateUtil.getSysTime());
@@ -78,9 +74,6 @@ public class DbmCodeTypeInfoAction extends BaseAction {
         }
         if (StringUtil.isBlank(dbm_code_type_info.getCode_type_name())) {
             throw new BusinessException("代码类名称不能为空!");
-        }
-        if (StringUtil.isBlank(dbm_code_type_info.getCode_remark())) {
-            throw new BusinessException("代码类描述不能为空!");
         }
         if (StringUtil.isBlank(dbm_code_type_info.getCode_status())) {
             throw new BusinessException("代码类发布状态不能为空!");

@@ -33,9 +33,6 @@ public class DbmCodeItemInfoAction extends BaseAction {
         if (StringUtil.isBlank(dbm_code_item_info.getDbm_level())) {
             throw new BusinessException("代码项层级为空!" + dbm_code_item_info.getCode_item_name());
         }
-        if (StringUtil.isBlank(dbm_code_item_info.getCode_remark())) {
-            throw new BusinessException("代码项描述为空!" + dbm_code_item_info.getCode_item_name());
-        }
         if (StringUtil.isBlank(dbm_code_item_info.getCode_type_id().toString())) {
             throw new BusinessException("代码项分类为空!" + dbm_code_item_info.getCode_type_id());
         }
@@ -76,9 +73,6 @@ public class DbmCodeItemInfoAction extends BaseAction {
         }
         if (StringUtil.isBlank(dbm_code_item_info.getDbm_level())) {
             throw new BusinessException("代码项层级不能为空!");
-        }
-        if (StringUtil.isBlank(dbm_code_item_info.getCode_remark())) {
-            throw new BusinessException("代码项备注不能为空!");
         }
         if (StringUtil.isBlank(dbm_code_item_info.getCode_type_id().toString())) {
             throw new BusinessException("代码项所属代码类不能为空!");
