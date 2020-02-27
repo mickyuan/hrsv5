@@ -153,9 +153,9 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 				Object_collect_struct object_collect_struct = new Object_collect_struct();
 				object_collect_struct.setStruct_id(STRUCT_ID + i);
 				object_collect_struct.setOcs_id(OCS_ID);
-				object_collect_struct.setColl_name("testcol" + i);
+				object_collect_struct.setColumn_name("testcol" + i);
 				object_collect_struct.setData_desc("测试对象中文描述" + i);
-				object_collect_struct.setStruct_type(ObjectDataType.ZiFuChuan.getCode());
+				object_collect_struct.setColumn_type(ObjectDataType.ZiFuChuan.getCode());
 				assertThat("初始化数据成功", object_collect_struct.add(db), is(1));
 			}
 			SqlOperator.commitTransaction(db);

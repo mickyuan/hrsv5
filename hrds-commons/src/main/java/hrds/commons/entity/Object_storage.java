@@ -40,6 +40,8 @@ public class Object_storage extends ProjectTableEntity
 	private String remark;
 	@DocBean(name ="ocs_id",value="对象采集任务编号:",dataType = Long.class,required = false)
 	private Long ocs_id;
+	@DocBean(name ="is_solr",value="是否进solr(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
+	private String is_solr;
 
 	/** 取得：存储编号 */
 	public Long getObj_stid(){
@@ -92,5 +94,13 @@ public class Object_storage extends ProjectTableEntity
 		if(!fd.ng.core.utils.StringUtil.isEmpty(ocs_id)){
 			this.ocs_id=new Long(ocs_id);
 		}
+	}
+	/** 取得：是否进solr */
+	public String getIs_solr(){
+		return is_solr;
+	}
+	/** 设置：是否进solr */
+	public void setIs_solr(String is_solr){
+		this.is_solr=is_solr;
 	}
 }

@@ -70,7 +70,7 @@ public class DbmNormbasicAction extends BaseAction {
         //2.设置标准分类信息
         dbm_normbasic.setBasic_id(PrimayKeyGener.getNextId());
         dbm_normbasic.setNorm_status(IsFlag.Fou.getCode());
-        dbm_normbasic.setCreate_user(getUserName());
+        dbm_normbasic.setCreate_user(getUserId().toString());
         dbm_normbasic.setCreate_date(DateUtil.getSysDate());
         dbm_normbasic.setCreate_time(DateUtil.getSysTime());
         //3.添加标准分类信息
@@ -168,6 +168,18 @@ public class DbmNormbasicAction extends BaseAction {
     public Optional<Dbm_normbasic> getDbmNormbasicInfoBySortId(long sort_id) {
         return Dbo.queryOneObject(Dbm_normbasic.class, "select * from " + Dbm_normbasic.TableName +
                 " where sort_id = ?", sort_id);
+    }
+
+    @Method(desc = "根据标准id发布标准",
+            logicStep = "根据标准id发布标准")
+    @Param(name = "basic_id", desc = "标准id", range = "long类型")
+    public void releaseDbmNormbasicById(long basic_id) {
+        int execute = Dbo.execute("update " + Dbm_normbasic.TableName + " set norm_status = ? where" +
+                        " basic_id = ? ",
+                IsFlag.Shi.getCode(), basic_id);
+        if (execute != 1) {
+            throw new BusinessException("标准发布失败！basic_id" + basic_id);
+        }
     }
 
     @Method(desc = "检查标准编号是否存在", logicStep = "检查标准编号是否存在")

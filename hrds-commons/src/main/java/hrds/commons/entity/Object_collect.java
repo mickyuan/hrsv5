@@ -60,7 +60,7 @@ public class Object_collect extends ProjectTableEntity
 	private String is_sendok;
 	@DocBean(name ="object_collect_type",value="对象采集方式(ObjectCollectType):1-行采集<HangCaiJi> 2-对象采集<DuiXiangCaiJi> ",dataType = String.class,required = true)
 	private String object_collect_type;
-	@DocBean(name ="is_dictionary",value="是否存在数据字典:",dataType = String.class,required = true)
+	@DocBean(name ="is_dictionary",value="是否存在数据字典(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_dictionary;
 	@DocBean(name ="data_date",value="数据日期:",dataType = String.class,required = true)
 	private String data_date;

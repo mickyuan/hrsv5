@@ -42,17 +42,17 @@ public class Object_collect_struct extends ProjectTableEntity
 	private String data_desc;
 	@DocBean(name ="col_seq",value="字段序号:",dataType = Long.class,required = true)
 	private Long col_seq;
-	@DocBean(name ="is_rowkey",value="是否rowkey(IsFlag):0-是<Shi> 1-否<Fou> ",dataType = String.class,required = true)
+	@DocBean(name ="is_rowkey",value="是否rowkey(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_rowkey;
 	@DocBean(name ="columnposition",value="字段位置:",dataType = String.class,required = true)
 	private String columnposition;
-	@DocBean(name ="is_key",value="是否主键(IsFlag):0-是<Shi> 1-否<Fou> ",dataType = String.class,required = true)
+	@DocBean(name ="is_key",value="是否主键(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_key;
-	@DocBean(name ="is_solr",value="是否solr(IsFlag):0-是<Shi> 1-否<Fou> ",dataType = String.class,required = true)
+	@DocBean(name ="is_solr",value="是否solr(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_solr;
-	@DocBean(name ="is_operate",value="是否操作标识字段(IsFlag):0-是<Shi> 1-否<Fou> ",dataType = String.class,required = true)
+	@DocBean(name ="is_operate",value="是否操作标识字段(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_operate;
-	@DocBean(name ="is_hbase",value="是否hbase(IsFlag):0-是<Shi> 1-否<Fou> ",dataType = String.class,required = true)
+	@DocBean(name ="is_hbase",value="是否hbase(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_hbase;
 	@DocBean(name ="ocs_id",value="对象采集任务编号:",dataType = Long.class,required = true)
 	private Long ocs_id;

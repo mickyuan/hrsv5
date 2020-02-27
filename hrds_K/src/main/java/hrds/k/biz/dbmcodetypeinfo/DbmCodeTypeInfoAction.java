@@ -49,7 +49,7 @@ public class DbmCodeTypeInfoAction extends BaseAction {
         //2.设置代码项信息
         dbm_code_type_info.setCode_type_id(PrimayKeyGener.getNextId());
         dbm_code_type_info.setCode_status(IsFlag.Fou.getCode());
-        dbm_code_type_info.setCreate_user(getUserName());
+        dbm_code_type_info.setCreate_user(getUserId().toString());
         dbm_code_type_info.setCreate_date(DateUtil.getSysDate());
         dbm_code_type_info.setCreate_time(DateUtil.getSysTime());
         //3.添加代码项信息
@@ -146,6 +146,18 @@ public class DbmCodeTypeInfoAction extends BaseAction {
         return Dbo.queryNumber("SELECT COUNT(code_type_id) FROM " + Dbm_code_type_info.TableName +
                 " WHERE code_type_id = ?", code_type_id).orElseThrow(() ->
                 new BusinessException("检查分类id否存在的SQL编写错误")) != 1;
+    }
+
+    @Method(desc = "根据代码分类id发布代码分类",
+            logicStep = "根据代码分类id发布代码分类")
+    @Param(name = "code_type_id", desc = "代码分类id", range = "long类型")
+    public void releaseDbmSortInfoById(long code_type_id) {
+        int execute = Dbo.execute("update " + Dbm_code_type_info.TableName + " set code_status = ? where" +
+                        " code_type_id = ? ",
+                IsFlag.Shi.getCode(), code_type_id);
+        if (execute != 1) {
+            throw new BusinessException("标准分类发布失败！code_type_id" + code_type_id);
+        }
     }
 
     @Method(desc = "检查代码分类是否存在", logicStep = "检查代码分类是否存在")

@@ -30,12 +30,6 @@ public class Object_collect_task extends ProjectTableEntity
 		__tmpPKS.add("ocs_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="ocs_id",value="对象采集任务编号:",dataType = Long.class,required = true)
-	private Long ocs_id;
-	@DocBean(name ="en_name",value="英文名称:",dataType = String.class,required = true)
-	private String en_name;
-	@DocBean(name ="zh_name",value="中文名称:",dataType = String.class,required = true)
-	private String zh_name;
 	@DocBean(name ="remark",value="备注:",dataType = String.class,required = false)
 	private String remark;
 	@DocBean(name ="collect_data_type",value="数据类型(CollectDataType):1-xml<XML> 2-json<JSON> ",dataType = String.class,required = true)
@@ -48,37 +42,15 @@ public class Object_collect_task extends ProjectTableEntity
 	private String firstline;
 	@DocBean(name ="odc_id",value="对象采集id:",dataType = Long.class,required = false)
 	private Long odc_id;
+	@DocBean(name ="updatetype",value="更新方式(UpdateType):0-直接更新<DirectUpdate> 1-拉链更新<IncrementUpdate> ",dataType = String.class,required = true)
+	private String updatetype;
+	@DocBean(name ="ocs_id",value="对象采集任务编号:",dataType = Long.class,required = true)
+	private Long ocs_id;
+	@DocBean(name ="en_name",value="英文名称:",dataType = String.class,required = true)
+	private String en_name;
+	@DocBean(name ="zh_name",value="中文名称:",dataType = String.class,required = true)
+	private String zh_name;
 
-	/** 取得：对象采集任务编号 */
-	public Long getOcs_id(){
-		return ocs_id;
-	}
-	/** 设置：对象采集任务编号 */
-	public void setOcs_id(Long ocs_id){
-		this.ocs_id=ocs_id;
-	}
-	/** 设置：对象采集任务编号 */
-	public void setOcs_id(String ocs_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(ocs_id)){
-			this.ocs_id=new Long(ocs_id);
-		}
-	}
-	/** 取得：英文名称 */
-	public String getEn_name(){
-		return en_name;
-	}
-	/** 设置：英文名称 */
-	public void setEn_name(String en_name){
-		this.en_name=en_name;
-	}
-	/** 取得：中文名称 */
-	public String getZh_name(){
-		return zh_name;
-	}
-	/** 设置：中文名称 */
-	public void setZh_name(String zh_name){
-		this.zh_name=zh_name;
-	}
 	/** 取得：备注 */
 	public String getRemark(){
 		return remark;
@@ -138,5 +110,43 @@ public class Object_collect_task extends ProjectTableEntity
 		if(!fd.ng.core.utils.StringUtil.isEmpty(odc_id)){
 			this.odc_id=new Long(odc_id);
 		}
+	}
+	/** 取得：更新方式 */
+	public String getUpdatetype(){
+		return updatetype;
+	}
+	/** 设置：更新方式 */
+	public void setUpdatetype(String updatetype){
+		this.updatetype=updatetype;
+	}
+	/** 取得：对象采集任务编号 */
+	public Long getOcs_id(){
+		return ocs_id;
+	}
+	/** 设置：对象采集任务编号 */
+	public void setOcs_id(Long ocs_id){
+		this.ocs_id=ocs_id;
+	}
+	/** 设置：对象采集任务编号 */
+	public void setOcs_id(String ocs_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(ocs_id)){
+			this.ocs_id=new Long(ocs_id);
+		}
+	}
+	/** 取得：英文名称 */
+	public String getEn_name(){
+		return en_name;
+	}
+	/** 设置：英文名称 */
+	public void setEn_name(String en_name){
+		this.en_name=en_name;
+	}
+	/** 取得：中文名称 */
+	public String getZh_name(){
+		return zh_name;
+	}
+	/** 设置：中文名称 */
+	public void setZh_name(String zh_name){
+		this.zh_name=zh_name;
 	}
 }

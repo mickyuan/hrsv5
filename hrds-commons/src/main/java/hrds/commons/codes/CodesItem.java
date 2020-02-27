@@ -7,12 +7,6 @@ import java.util.*;
                                                                                        
 public class CodesItem{                        
 	private static final Log logger = LogFactory.getLog(CodesItem.class);                                                      
-	/**权限类型   */
-	protected static final String authType=new String("AuthType");
-	/**存储层类型   */
-	protected static final String store_type=new String("Store_type");
-	/**文件类型   */
-	protected static final String fileType=new String("FileType");
 	/**存储层附件属性   */
 	protected static final String storeLayerAdded=new String("StoreLayerAdded");
 	/**数据源类型   */
@@ -21,6 +15,10 @@ public class CodesItem{
 	protected static final String dbmDataType=new String("DbmDataType");
 	/**对标-对标方式   */
 	protected static final String dbmMode=new String("DbmMode");
+	/**Operation类型   */
+	protected static final String operationType=new String("OperationType");
+	/**更新方式   */
+	protected static final String updateType=new String("UpdateType");
 	/**用户类型   */
 	protected static final String userType=new String("UserType");
 	/**是否标识   */
@@ -99,17 +97,22 @@ public class CodesItem{
 	protected static final String fillingType=new String("FillingType");
 	/**数据申请类型   */
 	protected static final String applyType=new String("ApplyType");
+	/**权限类型   */
+	protected static final String authType=new String("AuthType");
+	/**存储层类型   */
+	protected static final String store_type=new String("Store_type");
+	/**文件类型   */
+	protected static final String fileType=new String("FileType");
 
 
 	public static final Map<String,Class> mapCat= new HashMap<String,Class>(100);
 	static{
-		mapCat.put(authType,AuthType.class);
-		mapCat.put(store_type,Store_type.class);
-		mapCat.put(fileType,FileType.class);
 		mapCat.put(storeLayerAdded,StoreLayerAdded.class);
 		mapCat.put(dataSourceType,DataSourceType.class);
 		mapCat.put(dbmDataType,DbmDataType.class);
 		mapCat.put(dbmMode,DbmMode.class);
+		mapCat.put(operationType,OperationType.class);
+		mapCat.put(updateType,UpdateType.class);
 		mapCat.put(userType,UserType.class);
 		mapCat.put(isFlag,IsFlag.class);
 		mapCat.put(userState,UserState.class);
@@ -149,6 +152,9 @@ public class CodesItem{
 		mapCat.put(cleanType,CleanType.class);
 		mapCat.put(fillingType,FillingType.class);
 		mapCat.put(applyType,ApplyType.class);
+		mapCat.put(authType,AuthType.class);
+		mapCat.put(store_type,Store_type.class);
+		mapCat.put(fileType,FileType.class);
 	}
 
 

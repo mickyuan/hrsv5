@@ -27,10 +27,12 @@ public class Etl_para extends ProjectTableEntity
 	/** 参数登记 */
 	static {
 		Set<String> __tmpPKS = new HashSet<>();
-		__tmpPKS.add("etl_sys_cd");
 		__tmpPKS.add("para_cd");
+		__tmpPKS.add("etl_sys_cd");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
+	@DocBean(name ="para_cd",value="变量代码:",dataType = String.class,required = true)
+	private String para_cd;
 	@DocBean(name ="para_val",value="变量值:",dataType = String.class,required = false)
 	private String para_val;
 	@DocBean(name ="para_type",value="变量类型(ParamType):url-路径<LuJing> param-参数<CanShu> ",dataType = String.class,required = false)
@@ -39,9 +41,15 @@ public class Etl_para extends ProjectTableEntity
 	private String etl_sys_cd;
 	@DocBean(name ="para_desc",value="作业描述:",dataType = String.class,required = false)
 	private String para_desc;
-	@DocBean(name ="para_cd",value="变量代码:",dataType = String.class,required = true)
-	private String para_cd;
 
+	/** 取得：变量代码 */
+	public String getPara_cd(){
+		return para_cd;
+	}
+	/** 设置：变量代码 */
+	public void setPara_cd(String para_cd){
+		this.para_cd=para_cd;
+	}
 	/** 取得：变量值 */
 	public String getPara_val(){
 		return para_val;
@@ -73,13 +81,5 @@ public class Etl_para extends ProjectTableEntity
 	/** 设置：作业描述 */
 	public void setPara_desc(String para_desc){
 		this.para_desc=para_desc;
-	}
-	/** 取得：变量代码 */
-	public String getPara_cd(){
-		return para_cd;
-	}
-	/** 设置：变量代码 */
-	public void setPara_cd(String para_cd){
-		this.para_cd=para_cd;
 	}
 }

@@ -30,6 +30,34 @@ public class Database_set extends ProjectTableEntity
 		__tmpPKS.add("database_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
+	@DocBean(name ="agent_id",value="Agent_id:",dataType = Long.class,required = false)
+	private Long agent_id;
+	@DocBean(name ="database_id",value="数据库设置id:",dataType = Long.class,required = true)
+	private Long database_id;
+	@DocBean(name ="task_name",value="数据库采集任务名称:",dataType = String.class,required = false)
+	private String task_name;
+	@DocBean(name ="database_name",value="数据库名称:",dataType = String.class,required = false)
+	private String database_name;
+	@DocBean(name ="database_pad",value="数据库密码:",dataType = String.class,required = false)
+	private String database_pad;
+	@DocBean(name ="database_drive",value="数据库驱动:",dataType = String.class,required = false)
+	private String database_drive;
+	@DocBean(name ="database_type",value="数据库类型(DatabaseType):01-MYSQL<MYSQL> 02-Oracle9i及一下<Oracle9i> 03-Oracle10g及以上<Oracle10g> 04-SQLSERVER2000<SqlServer2000> 05-SQLSERVER2005<SqlServer2005> 06-DB2<DB2> 07-SybaseASE12.5及以上<SybaseASE125> 08-Informatic<Informatic> 09-H2<H2> 10-ApacheDerby<ApacheDerby> 11-Postgresql<Postgresql> 12-GBase<GBase> 13-TeraData<TeraData> 14-Hive<Hive> ",dataType = String.class,required = true)
+	private String database_type;
+	@DocBean(name ="user_name",value="用户名称:",dataType = String.class,required = false)
+	private String user_name;
+	@DocBean(name ="database_ip",value="数据库服务器IP:",dataType = String.class,required = false)
+	private String database_ip;
+	@DocBean(name ="database_port",value="数据库端口:",dataType = String.class,required = false)
+	private String database_port;
+	@DocBean(name ="host_name",value="主机名:",dataType = String.class,required = false)
+	private String host_name;
+	@DocBean(name ="system_type",value="操作系统类型:",dataType = String.class,required = false)
+	private String system_type;
+	@DocBean(name ="is_sendok",value="是否设置完成并发送成功(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
+	private String is_sendok;
+	@DocBean(name ="database_number",value="数据库设置编号:",dataType = String.class,required = true)
+	private String database_number;
 	@DocBean(name ="db_agent",value="是否为平面DB数据采集(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String db_agent;
 	@DocBean(name ="plane_url",value="DB文件源数据路径:",dataType = String.class,required = false)
@@ -56,145 +84,7 @@ public class Database_set extends ProjectTableEntity
 	private String cp_or;
 	@DocBean(name ="jdbc_url",value="数据库连接地址:",dataType = String.class,required = false)
 	private String jdbc_url;
-	@DocBean(name ="agent_id",value="Agent_id:",dataType = Long.class,required = false)
-	private Long agent_id;
-	@DocBean(name ="database_id",value="数据库设置id:",dataType = Long.class,required = true)
-	private Long database_id;
-	@DocBean(name ="task_name",value="数据库采集任务名称:",dataType = String.class,required = false)
-	private String task_name;
-	@DocBean(name ="database_name",value="数据库名称:",dataType = String.class,required = false)
-	private String database_name;
-	@DocBean(name ="database_pad",value="数据库密码:",dataType = String.class,required = false)
-	private String database_pad;
-	@DocBean(name ="database_drive",value="数据库驱动:",dataType = String.class,required = false)
-	private String database_drive;
-	@DocBean(name ="database_type",value="数据库类型(DatabaseType):01-MYSQL<MYSQL> 02-Oracle9i及一下<Oracle9i> 03-Oracle10g及以上<Oracle10g> 04-SQLSERVER2000<SqlServer2000> 05-SQLSERVER2005<SqlServer2005> 06-DB2<DB2> 07-SybaseASE12.5及以上<SybaseASE125> 08-Informatic<Informatic> 09-H2<H2> 10-ApacheDerby<ApacheDerby> 11-Postgresql<Postgresql> 12-GBase<GBase> 13-TeraData<TeraData> ",dataType = String.class,required = true)
-	private String database_type;
-	@DocBean(name ="user_name",value="用户名称:",dataType = String.class,required = false)
-	private String user_name;
-	@DocBean(name ="database_ip",value="数据库服务器IP:",dataType = String.class,required = false)
-	private String database_ip;
-	@DocBean(name ="database_port",value="数据库端口:",dataType = String.class,required = false)
-	private String database_port;
-	@DocBean(name ="host_name",value="主机名:",dataType = String.class,required = false)
-	private String host_name;
-	@DocBean(name ="system_type",value="操作系统类型:",dataType = String.class,required = false)
-	private String system_type;
-	@DocBean(name ="is_sendok",value="是否设置完成并发送成功(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
-	private String is_sendok;
-	@DocBean(name ="database_number",value="数据库设置编号:",dataType = String.class,required = true)
-	private String database_number;
 
-	/** 取得：是否为平面DB数据采集 */
-	public String getDb_agent(){
-		return db_agent;
-	}
-	/** 设置：是否为平面DB数据采集 */
-	public void setDb_agent(String db_agent){
-		this.db_agent=db_agent;
-	}
-	/** 取得：DB文件源数据路径 */
-	public String getPlane_url(){
-		return plane_url;
-	}
-	/** 设置：DB文件源数据路径 */
-	public void setPlane_url(String plane_url){
-		this.plane_url=plane_url;
-	}
-	/** 取得：数据采用分隔符 */
-	public String getDatabase_separatorr(){
-		return database_separatorr;
-	}
-	/** 设置：数据采用分隔符 */
-	public void setDatabase_separatorr(String database_separatorr){
-		this.database_separatorr=database_separatorr;
-	}
-	/** 取得：数据使用编码格式 */
-	public String getDatabase_code(){
-		return database_code;
-	}
-	/** 设置：数据使用编码格式 */
-	public void setDatabase_code(String database_code){
-		this.database_code=database_code;
-	}
-	/** 取得：DB文件格式 */
-	public String getDbfile_format(){
-		return dbfile_format;
-	}
-	/** 设置：DB文件格式 */
-	public void setDbfile_format(String dbfile_format){
-		this.dbfile_format=dbfile_format;
-	}
-	/** 取得：分隔符是否为ASCII隐藏字符 */
-	public String getIs_hidden(){
-		return is_hidden;
-	}
-	/** 设置：分隔符是否为ASCII隐藏字符 */
-	public void setIs_hidden(String is_hidden){
-		this.is_hidden=is_hidden;
-	}
-	/** 取得：采集文件名后缀 */
-	public String getFile_suffix(){
-		return file_suffix;
-	}
-	/** 设置：采集文件名后缀 */
-	public void setFile_suffix(String file_suffix){
-		this.file_suffix=file_suffix;
-	}
-	/** 取得：是否直接加载数据 */
-	public String getIs_load(){
-		return is_load;
-	}
-	/** 设置：是否直接加载数据 */
-	public void setIs_load(String is_load){
-		this.is_load=is_load;
-	}
-	/** 取得：数据行分隔符 */
-	public String getRow_separator(){
-		return row_separator;
-	}
-	/** 设置：数据行分隔符 */
-	public void setRow_separator(String row_separator){
-		this.row_separator=row_separator;
-	}
-	/** 取得：分类id */
-	public Long getClassify_id(){
-		return classify_id;
-	}
-	/** 设置：分类id */
-	public void setClassify_id(Long classify_id){
-		this.classify_id=classify_id;
-	}
-	/** 设置：分类id */
-	public void setClassify_id(String classify_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(classify_id)){
-			this.classify_id=new Long(classify_id);
-		}
-	}
-	/** 取得：是否有表头 */
-	public String getIs_header(){
-		return is_header;
-	}
-	/** 设置：是否有表头 */
-	public void setIs_header(String is_header){
-		this.is_header=is_header;
-	}
-	/** 取得：清洗顺序 */
-	public String getCp_or(){
-		return cp_or;
-	}
-	/** 设置：清洗顺序 */
-	public void setCp_or(String cp_or){
-		this.cp_or=cp_or;
-	}
-	/** 取得：数据库连接地址 */
-	public String getJdbc_url(){
-		return jdbc_url;
-	}
-	/** 设置：数据库连接地址 */
-	public void setJdbc_url(String jdbc_url){
-		this.jdbc_url=jdbc_url;
-	}
 	/** 取得：Agent_id */
 	public Long getAgent_id(){
 		return agent_id;
@@ -318,5 +208,115 @@ public class Database_set extends ProjectTableEntity
 	/** 设置：数据库设置编号 */
 	public void setDatabase_number(String database_number){
 		this.database_number=database_number;
+	}
+	/** 取得：是否为平面DB数据采集 */
+	public String getDb_agent(){
+		return db_agent;
+	}
+	/** 设置：是否为平面DB数据采集 */
+	public void setDb_agent(String db_agent){
+		this.db_agent=db_agent;
+	}
+	/** 取得：DB文件源数据路径 */
+	public String getPlane_url(){
+		return plane_url;
+	}
+	/** 设置：DB文件源数据路径 */
+	public void setPlane_url(String plane_url){
+		this.plane_url=plane_url;
+	}
+	/** 取得：数据采用分隔符 */
+	public String getDatabase_separatorr(){
+		return database_separatorr;
+	}
+	/** 设置：数据采用分隔符 */
+	public void setDatabase_separatorr(String database_separatorr){
+		this.database_separatorr=database_separatorr;
+	}
+	/** 取得：数据使用编码格式 */
+	public String getDatabase_code(){
+		return database_code;
+	}
+	/** 设置：数据使用编码格式 */
+	public void setDatabase_code(String database_code){
+		this.database_code=database_code;
+	}
+	/** 取得：DB文件格式 */
+	public String getDbfile_format(){
+		return dbfile_format;
+	}
+	/** 设置：DB文件格式 */
+	public void setDbfile_format(String dbfile_format){
+		this.dbfile_format=dbfile_format;
+	}
+	/** 取得：分隔符是否为ASCII隐藏字符 */
+	public String getIs_hidden(){
+		return is_hidden;
+	}
+	/** 设置：分隔符是否为ASCII隐藏字符 */
+	public void setIs_hidden(String is_hidden){
+		this.is_hidden=is_hidden;
+	}
+	/** 取得：采集文件名后缀 */
+	public String getFile_suffix(){
+		return file_suffix;
+	}
+	/** 设置：采集文件名后缀 */
+	public void setFile_suffix(String file_suffix){
+		this.file_suffix=file_suffix;
+	}
+	/** 取得：是否直接加载数据 */
+	public String getIs_load(){
+		return is_load;
+	}
+	/** 设置：是否直接加载数据 */
+	public void setIs_load(String is_load){
+		this.is_load=is_load;
+	}
+	/** 取得：数据行分隔符 */
+	public String getRow_separator(){
+		return row_separator;
+	}
+	/** 设置：数据行分隔符 */
+	public void setRow_separator(String row_separator){
+		this.row_separator=row_separator;
+	}
+	/** 取得：分类id */
+	public Long getClassify_id(){
+		return classify_id;
+	}
+	/** 设置：分类id */
+	public void setClassify_id(Long classify_id){
+		this.classify_id=classify_id;
+	}
+	/** 设置：分类id */
+	public void setClassify_id(String classify_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(classify_id)){
+			this.classify_id=new Long(classify_id);
+		}
+	}
+	/** 取得：是否有表头 */
+	public String getIs_header(){
+		return is_header;
+	}
+	/** 设置：是否有表头 */
+	public void setIs_header(String is_header){
+		this.is_header=is_header;
+	}
+	/** 取得：清洗顺序 */
+	public String getCp_or(){
+		return cp_or;
+	}
+	/** 设置：清洗顺序 */
+	public void setCp_or(String cp_or){
+		this.cp_or=cp_or;
+	}
+	/** 取得：数据库连接地址 */
+	public String getJdbc_url(){
+		return jdbc_url;
+	}
+	/** 设置：数据库连接地址 */
+	public void setJdbc_url(String jdbc_url){
+		this.jdbc_url=jdbc_url;
 	}
 }

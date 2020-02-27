@@ -268,7 +268,7 @@ public class CollectMonitorActionTest extends WebBaseTestCase {
       /* 2 : 删除 sys_user 的数据信息,并验证删除的条数是否符合...并使用初始化用户(user_id)进行条件删除 */
       assertThat(
           "删除测试数据表 Sys_user",
-          存储层数据类型对照表.execute(
+              SqlOperator.execute(
               db, "DELETE FROM " + Sys_user.TableName + " WHERE user_id = ?", user_id),
           is(1));
 

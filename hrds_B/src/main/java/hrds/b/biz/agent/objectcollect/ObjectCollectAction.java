@@ -242,8 +242,8 @@ public class ObjectCollectAction extends BaseAction {
 			if (object_collect_struct.getStruct_id() == null) {
 				//4.判断同一个对象采集任务下，对象采集结构信息表的coll_name有没有重复
 				long count = Dbo.queryNumber("SELECT count(1) count FROM "
-								+ Object_collect_struct.TableName + " WHERE coll_name = ? AND ocs_id = ?"
-						, object_collect_struct.getColl_name(), object_collect_struct.getOcs_id())
+								+ Object_collect_struct.TableName + " WHERE column_name = ? AND ocs_id = ?"
+						, object_collect_struct.getColumn_name(), object_collect_struct.getOcs_id())
 						.orElseThrow(() -> new BusinessException("有且只有一个返回值"));
 				if (count > 0) {
 					throw new BusinessException("同一个对象采集任务下，对象采集结构信息表的coll_name不能重复");
@@ -254,8 +254,8 @@ public class ObjectCollectAction extends BaseAction {
 				object_collect_struct.add(Dbo.db());
 			} else {
 				long count = Dbo.queryNumber("SELECT count(1) count FROM "
-								+ Object_collect_struct.TableName + " WHERE coll_name = ? AND ocs_id = ? " +
-								" AND struct_id != ?", object_collect_struct.getColl_name()
+								+ Object_collect_struct.TableName + " WHERE column_name = ? AND ocs_id = ? " +
+								" AND struct_id != ?", object_collect_struct.getColumn_name()
 						, object_collect_struct.getOcs_id(), object_collect_struct.getStruct_id())
 						.orElseThrow(() -> new BusinessException("有且只有一个返回值"));
 				if (count > 0) {

@@ -439,8 +439,8 @@ public class DataSourceActionTest extends WebBaseTestCase {
             Object_collect_struct objectCollectStruct = new Object_collect_struct();
             objectCollectStruct.setStruct_id(StructId);
             objectCollectStruct.setOcs_id(OcsId);
-            objectCollectStruct.setColl_name("对象采集结构");
-            objectCollectStruct.setStruct_type(ObjectDataType.ZiFuChuan.getCode());
+            objectCollectStruct.setColumn_name("对象采集结构");
+            objectCollectStruct.setColumn_type(ObjectDataType.ZiFuChuan.getCode());
             objectCollectStruct.setData_desc("测试");
             objectCollectStruct.add(db);
             // 15.构造file_collect_set表测试数据
@@ -1907,9 +1907,9 @@ public class DataSourceActionTest extends WebBaseTestCase {
             Object_collect_struct collectStruct = SqlOperator.queryOneObject(db, Object_collect_struct.class,
                     "select * from " + Object_collect_struct.TableName + " where ocs_id=?",
                     collectTask.getOcs_id()).orElseThrow(() -> new RuntimeException("sql执行错误!"));
-            assertThat(collectStruct.getColl_name(), is("对象采集结构"));
+            assertThat(collectStruct.getColumn_name(), is("对象采集结构"));
             assertThat(collectStruct.getData_desc(), is("测试"));
-            assertThat(collectStruct.getStruct_type(), is(ObjectDataType.ZiFuChuan.getCode()));
+            assertThat(collectStruct.getColumn_type(), is(ObjectDataType.ZiFuChuan.getCode()));
             File_collect_set collectSet = SqlOperator.queryOneObject(db, File_collect_set.class,
                     "select * from " + File_collect_set.TableName + " where agent_id=?", dbAgentId)
                     .orElseThrow(() -> new RuntimeException("sql执行错误!"));
