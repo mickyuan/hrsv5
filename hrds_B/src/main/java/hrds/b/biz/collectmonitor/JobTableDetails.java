@@ -5,6 +5,7 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
+import hrds.commons.codes.ExecuteState;
 import hrds.commons.entity.Collect_case;
 
 import java.time.LocalDate;
@@ -19,12 +20,12 @@ public class JobTableDetails {
       logicStep = "1: 将集合中,每个表的N中采集状态剥离出来．因为每个表的采集步骤有很多布，如：(卸数,上传,数据加载,计算增量,数据登记) ")
   @Param(name = "collectJobList", desc = "任务采集表信息的集合", range = "可以为空,如果为空表示当前做任务下没有采集表信息存在")
   @Return(desc = "返回处理后的数据信息", range = "可以为空,如果为空表示没有采集表信息存在")
-  public static List<Map<String, String>> getTableDetails(List<Collect_case> collectJobList) {
+  static List<Map<String, Object>> getTableDetails(List<Collect_case> collectJobList) {
 
     // 存放处理后的数据信息
-    Map<String, Map<String, String>> detailsMap = new LinkedHashMap<String, Map<String, String>>();
+    Map<String, Map<String, Object>> detailsMap = new LinkedHashMap<String, Map<String, Object>>();
 
-    //      1: 将集合中,每个表的N中采集状态剥离出来．因为每个表的采集步骤有很多布，如：(卸数,上传,数据加载,计算增量,数据登记) ")
+    //      1: 将集合中,每个表的N中采集状态剥离出来．因为每个表的采集步骤，如：(卸数,上传,数据加载,计算增量,数据登记) ")
     collectJobList.forEach(
         collect_case -> {
 
@@ -52,24 +53,35 @@ public class JobTableDetails {
           String job_type = collect_case.getJob_type();
           // 如果前表已经存在了
           if (detailsMap.containsKey(table_name)) {
-            Map<String, String> map = detailsMap.get(table_name);
+            Map<String, Object> map = detailsMap.get(table_name);
             map.put(job_type + "_S_TITLE", collect_s_date);
             map.put(job_type + "_E_TITLE", collect_e_date);
             map.put(collect_case.getJob_type(), collect_case.getExecute_state());
+
+            // 这里只考虑采集错误的信息...因为最终要把含有错误的作业信息优先显示在最前面
+            if (ExecuteState.YunXingShiBai.getCode().equals(collect_case.getExecute_state())) {
+              map.put("errorNum", (int) map.get("errorNum") + 1);
+            }
           } else {
-            Map<String, String> map = new HashMap<>();
+            Map<String, Object> map = new HashMap<>();
             map.put("table_name", table_name);
             map.put(job_type + "_S_TITLE", collect_s_date);
             map.put(job_type + "_E_TITLE", collect_e_date);
             map.put(collect_case.getJob_type(), collect_case.getExecute_state());
+
+            // 这里只考虑采集错误的信息...因为最终要把含有错误的作业信息优先显示在最前面
+            if (ExecuteState.YunXingShiBai.getCode().equals(collect_case.getExecute_state())) {
+              map.put("errorNum", 1);
+            }
+
             detailsMap.put(table_name, map);
           }
         });
 
     // 存放处理后的数据结果集信息
-    List<Map<String, String>> collectTableResult = new ArrayList<Map<String, String>>();
+    List<Map<String, Object>> collectTableResult = new ArrayList<Map<String, Object>>();
     detailsMap.forEach(
-        ($KeyFactory, v) -> {
+        (table_name, v) -> {
           collectTableResult.add(v);
         });
 
