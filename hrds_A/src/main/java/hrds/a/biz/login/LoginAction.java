@@ -38,12 +38,12 @@ public class LoginAction extends BaseAction {
 		//1 : 获取并检查,用户名是否为空
 		String user_id = request.getParameter("user_id");
 		if (StringUtil.isBlank(user_id)) {
-			throw new BusinessException(ExceptionEnum.USER_NOT_EMPTY);
+			throw new BusinessException(ExceptionEnum.USER_NOT_EMPTY.getMessage());
 		}
 		//2 : 获取并检查,密码是否做为空
 		String password = request.getParameter("password");
 		if (StringUtil.isBlank(password)) {
-			throw new BusinessException(ExceptionEnum.USER_PWD_EMPTY);
+			throw new BusinessException(ExceptionEnum.USER_PWD_EMPTY.getMessage());
 		}
 
 		//3 : 检查当前用户的登陆是否正确,并返回cookie数据信息
@@ -74,7 +74,7 @@ public class LoginAction extends BaseAction {
 		//1 : 查询当前用户的记录信息
 		Sys_user logInUser = Dbo.queryOneObject(Sys_user.class, "SELECT * FROM " +
 				Sys_user.TableName + " WHERE user_id = ?", user_id)
-				.orElseThrow(() -> new BusinessException(ExceptionEnum.USER_NOT_EXISTS));
+				.orElseThrow(() -> new BusinessException(ExceptionEnum.USER_NOT_EXISTS.getMessage()));
 
 		//3 : 如果为获取到信息,则判断用户密码是否正确
 		String user_password = logInUser.getUser_password();
