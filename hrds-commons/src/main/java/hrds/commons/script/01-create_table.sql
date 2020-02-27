@@ -65,7 +65,7 @@ CONSTRAINT DBM_CODE_TYPE_INFO_PK PRIMARY KEY(CODE_TYPE_ID)   );
 DROP TABLE IF EXISTS DBM_CODE_ITEM_INFO ;
 CREATE TABLE DBM_CODE_ITEM_INFO(
 CODE_ITEM_ID                                      BIGINT default 0 NOT NULL, --代码项主键
-CODE_ENCODE                                       VARCHAR(100) NOT NULL, --代码编码
+CODE_ENCODE                                       VARCHAR(100) NULL, --代码编码
 CODE_ITEM_NAME                                    VARCHAR(512) NOT NULL, --代码项名
 CODE_VALUE                                        VARCHAR(80) NULL, --代码值
 DBM_LEVEL                                         VARCHAR(100) NOT NULL, --层级
