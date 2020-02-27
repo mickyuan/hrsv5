@@ -3,6 +3,8 @@ package hrds.commons.utils.datastorage.dcl;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
+import hrds.commons.entity.Length_contrast;
+import hrds.commons.entity.Length_contrast_sum;
 import hrds.commons.utils.datastorage.yamldata.YamlDataFormat;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -53,8 +55,11 @@ public class LengthContrast implements YamlDataFormat {
     try (DatabaseWrapper db = new DatabaseWrapper()) {
       return SqlOperator.queryList(
           db,
-          "SELECT t2.dlcs_name,t1.dlc_type,t1.dlc_length FROM length_contrast t1 LEFT JOIN "
-              + "length_contrast_sum t2 ON t1.dlcs_id = t2.dlcs_id");
+          "SELECT t2.dlcs_name,t1.dlc_type,t1.dlc_length FROM "
+              + Length_contrast.TableName
+              + " t1 LEFT JOIN "
+              + Length_contrast_sum.TableName
+              + " t2 ON t1.dlcs_id = t2.dlcs_id");
     }
   }
 }

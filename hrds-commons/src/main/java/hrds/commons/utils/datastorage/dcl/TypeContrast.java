@@ -3,6 +3,8 @@ package hrds.commons.utils.datastorage.dcl;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
+import hrds.commons.entity.Type_contrast;
+import hrds.commons.entity.Type_contrast_sum;
 import hrds.commons.utils.datastorage.yamldata.YamlDataFormat;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -54,8 +56,12 @@ public class TypeContrast implements YamlDataFormat {
     try (DatabaseWrapper db = new DatabaseWrapper()) {
       return SqlOperator.queryList(
           db,
-          "SELECT t2.dtcs_name,t1.source_type,t1.target_type FROM type_contrast t1 "
-              + "LEFT JOIN type_contrast_sum t2 ON t1.dtcs_id = t2.dtcs_id");
+          "SELECT t2.dtcs_name,t1.source_type,t1.target_type FROM "
+              + Type_contrast.TableName
+              + " t1 "
+              + "LEFT JOIN "
+              + Type_contrast_sum.TableName
+              + " t2 ON t1.dtcs_id = t2.dtcs_id");
     }
   }
 }

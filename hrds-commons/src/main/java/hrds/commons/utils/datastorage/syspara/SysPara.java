@@ -1,8 +1,9 @@
-package hrds.commons.utils.syspara;
+package hrds.commons.utils.datastorage.syspara;
 
 import fd.ng.core.annotation.DocClass;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
+import hrds.commons.entity.Sys_para;
 import hrds.commons.utils.datastorage.yamldata.YamlDataFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,6 +14,7 @@ import java.util.Map;
 @DocClass(desc = "系统参数Yaml数据", author = "Mr.Lee", createdate = "2020-01-15 11:22")
 public class SysPara implements YamlDataFormat {
   private static final String PREFIX = "param";
+  public static final String CONF_FILE_NAME = "sysparam.conf";
 
   @Override
   public Map<String, List<Map<String, Object>>> yamlDataFormat() {
@@ -34,7 +36,7 @@ public class SysPara implements YamlDataFormat {
   private List<Map<String, Object>> getSysPara() {
 
     try (DatabaseWrapper db = new DatabaseWrapper()) {
-      return SqlOperator.queryList(db, "SELECT * FROM sys_para");
+      return SqlOperator.queryList(db, "SELECT * FROM " + Sys_para.TableName);
     }
   }
 }
