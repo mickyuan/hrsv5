@@ -52,10 +52,9 @@ public class DBConfStepAction extends BaseAction{
 		//1、在数据库设置表(database_set)中，根据databaseId判断是否查询到数据，如果查询不到，抛异常给前端
 		Database_set dbSet = Dbo.queryOneObject(Database_set.class,
 				"SELECT das.* " +
-						" FROM "+ Data_source.TableName +" ds " +
-						" JOIN "+ Agent_info.TableName +" ai ON ds.source_id = ai.source_id " +
-						" JOIN "+ Database_set.TableName +" das ON ai.agent_id = das.agent_id " +
-						" WHERE das.database_id=? AND ds.create_user_id = ? "
+						" FROM "+ Database_set.TableName +" das " +
+						" JOIN "+ Agent_info.TableName +" ai ON ai.agent_id = das.agent_id " +
+						" WHERE das.database_id=? AND ai.user_id = ? "
 				, databaseId, getUserId())
 				.orElseThrow(() -> new BusinessException("未能找到该任务"));
 		//数据可访问权限处理方式
