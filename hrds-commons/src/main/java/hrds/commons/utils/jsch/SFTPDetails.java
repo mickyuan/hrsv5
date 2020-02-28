@@ -6,10 +6,22 @@ public class SFTPDetails {
   private String pwd;
   /** 登陆地址IP */
   private String host;
-  /**  登陆用户 */
-  private int port;
-  /**  登陆端口 */
+  /** 登陆用户 */
   private String user_name;
+  /** 登陆端口 */
+  private int port;
+  /** 本地文件路径 */
+  private String source_path;
+  /** 本地文件名称 */
+  private String agent_gz;
+  /** 集群conf配置文件 */
+  private String HADOOP_CONF;
+  /** 目标路径 */
+  private String target＿dir;
+  /** redis配置文件 */
+  private String redis_info;
+  /** 数据库配置文件 */
+  private String db_info;
 
   public String getUser_name() {
     return user_name;
@@ -41,5 +53,53 @@ public class SFTPDetails {
 
   public void setPort(int port) {
     this.port = port;
+  }
+
+  public String getAgent_gz() {
+    return agent_gz;
+  }
+
+  public String getHADOOP_CONF() {
+    return HADOOP_CONF;
+  }
+
+  public String getRedis_info() {
+    return redis_info;
+  }
+
+  public String getSource_path() {
+    return source_path;
+  }
+
+  public String getTarget＿dir() {
+    return target＿dir;
+  }
+
+  public void setTarget＿dir(String target＿dir) {
+    this.target＿dir = target＿dir;
+  }
+
+  public void setAgent_gz(String agent_gz) {
+    this.agent_gz = agent_gz;
+  }
+
+  public void setHADOOP_CONF(String HADOOP_CONF) {
+    this.HADOOP_CONF = HADOOP_CONF;
+  }
+
+  public void setRedis_info(String redis_info) {
+    this.redis_info = redis_info;
+  }
+
+  public void setSource_path(String source_path) {
+    this.source_path = source_path;
+  }
+
+  public String getDb_info() {
+    return db_info;
+  }
+
+  public void setDb_info(String db_info) {
+    this.db_info = db_info;
   }
 }
