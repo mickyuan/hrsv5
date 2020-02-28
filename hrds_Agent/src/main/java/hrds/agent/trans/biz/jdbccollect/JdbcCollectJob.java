@@ -29,15 +29,17 @@ public class JdbcCollectJob extends AgentBaseAction {
 			logicStep = "1.获取json数组转成File_source的集合" +
 					"2.校验对象的值是否正确" +
 					"3.使用JobFactory工厂类调用后台方法")
+	@Param(name = "etlDate", desc = "跑批日期", range = "不能为空")
 	@Param(name = "taskInfo", desc = "数据库采集需要的参数实体bean的json对象字符串",
 			range = "所有这张表不能为空的字段的值必须有，为空则会抛异常，" +
 					"collectTableBeanArray对应的表CollectTableBean这个实体不能为空的字段的值必须有，为空则会抛异常")
-	public void execute(String taskInfo) {
+	public void execute(String etlDate, String taskInfo) {
 		//对配置信息解压缩并反序列化为SourceDataConfBean对象
 		SourceDataConfBean sourceDataConfBean =
 				JSONObject.parseObject(PackUtil.unpackMsg(taskInfo).get("msg"), SourceDataConfBean.class);
 		//将页面传递过来的压缩信息写文件
-		FileUtil.createFile(Constant.MESSAGEFILE + sourceDataConfBean.getDatabase_id(), taskInfo);
+		FileUtil.createFile(Constant.MESSAGEFILE + sourceDataConfBean.getDatabase_id(),
+				PackUtil.unpackMsg(taskInfo).get("msg"));
 		ExecutorService executor = null;
 		try {
 			//初始化当前任务需要保存的文件的根目录
@@ -51,6 +53,8 @@ public class JdbcCollectJob extends AgentBaseAction {
 			List<Future<JobStatusInfo>> list = new ArrayList<>();
 			//2.校验对象的值是否正确
 			for (CollectTableBean collectTableBean : collectTableBeanList) {
+				//设置跑批日期
+				collectTableBean.setEtlDate(etlDate);
 				//为了确保多个线程之间的值不互相干涉，复制对象的值。
 				SourceDataConfBean sourceDataConfBean1 = JSONObject.parseObject(
 						JSONObject.toJSONString(sourceDataConfBean), SourceDataConfBean.class);
