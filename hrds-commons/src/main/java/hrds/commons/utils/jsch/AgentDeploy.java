@@ -165,8 +165,7 @@ public class AgentDeploy {
       mkdirToTarget(shellSession, down_info.getSave_dir() + SEPARATOR + agentDirName);
 
       // 开始传输的Agent包
-      SCPFileSender scpSender = new SCPFileSender();
-      channel = scpSender.getSFTPChannel();
+      channel = new SFTPChannel();
       chSftp = channel.getChannel(shellSession, 60000);
       File file = new File(PropertyParaValue.getString("agentpath", ""));
       logger.info("本地Agent路径地址 : " + file.getAbsolutePath());
@@ -288,10 +287,10 @@ public class AgentDeploy {
      * fdconfig : 配置信息文件 i18n : 翻译的配置文件
      */
     String[] targetch_machine = {".bin", "storeConfigPath", "lib", "resources", "fdconfig", "i18n"};
+    String rootDir = targetDir + SEPARATOR + targetch_machine[0];
     // 建立  .bin 隐藏目录
-    logger.info("创建远程目录 .bin  : " + targetDir + SEPARATOR + targetch_machine[0]);
-    SFTPChannel.execCommandByJSch(
-        shellSession, "mkdir -p " + targetDir + SEPARATOR + targetch_machine[0]);
+    logger.info("创建远程目录 .bin  : " + rootDir);
+    SFTPChannel.execCommandByJSch(shellSession, "mkdir -p " + rootDir);
 
     // 建立  lib 目录
     logger.info("创建远程目录 lib  : " + targetDir + SEPARATOR + targetch_machine[2]);
@@ -299,62 +298,25 @@ public class AgentDeploy {
         shellSession, "mkdir -p " + targetDir + SEPARATOR + targetch_machine[2]);
 
     // 建立storeConfigPath目录
-    logger.info(
-        "创建远程目录 storeConfigPath : "
-            + targetDir
-            + SEPARATOR
-            + targetch_machine[0]
-            + SEPARATOR
-            + targetch_machine[1]);
+    logger.info("创建远程目录 建立storeConfigPath目录  : " + rootDir + SEPARATOR + targetch_machine[1]);
     SFTPChannel.execCommandByJSch(
-        shellSession,
-        "mkdir -p "
-            + targetDir
-            + SEPARATOR
-            + targetch_machine[0]
-            + SEPARATOR
-            + targetch_machine[1]);
+        shellSession, "mkdir -p " + rootDir + SEPARATOR + targetch_machine[1]);
 
     // 建立 resource/fdconfig 目录
     logger.info(
-        "创建远程目录 resource/fdconfig : "
-            + targetDir
-            + SEPARATOR
-            + targetch_machine[0]
+        "创建远程目录storeConfigPath目录  : "
+            + rootDir
             + SEPARATOR
             + targetch_machine[3]
             + SEPARATOR
             + targetch_machine[4]);
     SFTPChannel.execCommandByJSch(
         shellSession,
-        "mkdir -p "
-            + targetDir
-            + SEPARATOR
-            + targetch_machine[0]
-            + SEPARATOR
-            + targetch_machine[3]
-            + SEPARATOR
-            + targetch_machine[4]);
+        "mkdir -p " + rootDir + SEPARATOR + targetch_machine[3] + SEPARATOR + targetch_machine[4]);
 
     // 建立 resource/i18n 目录
-    logger.info(
-        "创建远程目录 resource/i18n : "
-            + targetDir
-            + SEPARATOR
-            + targetch_machine[0]
-            + SEPARATOR
-            + targetch_machine[3]
-            + SEPARATOR
-            + targetch_machine[5]);
     SFTPChannel.execCommandByJSch(
         shellSession,
-        "mkdir -p "
-            + targetDir
-            + SEPARATOR
-            + targetch_machine[0]
-            + SEPARATOR
-            + targetch_machine[3]
-            + SEPARATOR
-            + targetch_machine[5]);
+        "mkdir -p " + rootDir + SEPARATOR + targetch_machine[3] + SEPARATOR + targetch_machine[5]);
   }
 }

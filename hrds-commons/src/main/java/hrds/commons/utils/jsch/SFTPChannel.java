@@ -86,7 +86,6 @@ public class SFTPChannel {
     return session;
   }
 
-
   public static void execCommandByJSchNoRs(Session session, String command) throws Exception {
 
     logger.info("执行命令为 : ", command);
