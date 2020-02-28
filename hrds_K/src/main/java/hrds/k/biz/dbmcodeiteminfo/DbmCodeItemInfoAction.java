@@ -27,17 +27,11 @@ public class DbmCodeItemInfoAction extends BaseAction {
     @Param(name = "dbm_code_item_info", desc = "代码项的实体对象", range = "代码项的实体对象", isBean = true)
     public void addDbmCodeItemInfo(Dbm_code_item_info dbm_code_item_info) {
         //1.数据校验
-        if (StringUtil.isBlank(dbm_code_item_info.getCode_encode())) {
-            throw new BusinessException("代码项编码为空!" + dbm_code_item_info.getCode_encode());
-        }
         if (StringUtil.isBlank(dbm_code_item_info.getCode_item_name())) {
             throw new BusinessException("代码项名称为空!" + dbm_code_item_info.getCode_item_name());
         }
         if (StringUtil.isBlank(dbm_code_item_info.getDbm_level())) {
             throw new BusinessException("代码项层级为空!" + dbm_code_item_info.getCode_item_name());
-        }
-        if (StringUtil.isBlank(dbm_code_item_info.getCode_remark())) {
-            throw new BusinessException("代码项描述为空!" + dbm_code_item_info.getCode_item_name());
         }
         if (StringUtil.isBlank(dbm_code_item_info.getCode_type_id().toString())) {
             throw new BusinessException("代码项分类为空!" + dbm_code_item_info.getCode_type_id());
@@ -74,17 +68,11 @@ public class DbmCodeItemInfoAction extends BaseAction {
         if (checkCodeItemIdIsNotExist(dbm_code_item_info.getCode_item_id())) {
             throw new BusinessException("修改的代码项已经不存在!");
         }
-        if (StringUtil.isBlank(dbm_code_item_info.getCode_encode())) {
-            throw new BusinessException("代码项编码不能为空!");
-        }
         if (StringUtil.isBlank(dbm_code_item_info.getCode_item_name())) {
             throw new BusinessException("代码项名称不能为空!");
         }
         if (StringUtil.isBlank(dbm_code_item_info.getDbm_level())) {
             throw new BusinessException("代码项层级不能为空!");
-        }
-        if (StringUtil.isBlank(dbm_code_item_info.getCode_remark())) {
-            throw new BusinessException("代码项备注不能为空!");
         }
         if (StringUtil.isBlank(dbm_code_item_info.getCode_type_id().toString())) {
             throw new BusinessException("代码项所属代码类不能为空!");

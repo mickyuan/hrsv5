@@ -31,24 +31,14 @@ public class DbmCodeTypeInfoAction extends BaseAction {
     @Param(name = "dbm_code_type_info", desc = "代码类信息的实体对象", range = "代码类信息的实体对象", isBean = true)
     public void addDbmCodeTypeInfo(Dbm_code_type_info dbm_code_type_info) {
         //1.数据校验
-        if (StringUtil.isBlank(dbm_code_type_info.getCode_encode())) {
-            throw new BusinessException("代码类编码为空!" + dbm_code_type_info.getCode_encode());
-        }
-        if (checkCodeEncodeIsRepeat(dbm_code_type_info.getCode_encode())) {
-            throw new BusinessException("代码名称已经存在!" + dbm_code_type_info.getCode_encode());
-        }
         if (StringUtil.isBlank(dbm_code_type_info.getCode_type_name())) {
             throw new BusinessException("代码类名称为空!" + dbm_code_type_info.getCode_type_name());
-        }
-        if (StringUtil.isBlank(dbm_code_type_info.getCode_remark())) {
-            throw new BusinessException("代码类描述为空!" + dbm_code_type_info.getCode_remark());
         }
         if (StringUtil.isBlank(dbm_code_type_info.getCode_status())) {
             throw new BusinessException("代码类发布状态为空!" + dbm_code_type_info.getCode_status());
         }
         //2.设置代码项信息
         dbm_code_type_info.setCode_type_id(PrimayKeyGener.getNextId());
-        dbm_code_type_info.setCode_status(IsFlag.Fou.getCode());
         dbm_code_type_info.setCreate_user(getUserId().toString());
         dbm_code_type_info.setCreate_date(DateUtil.getSysDate());
         dbm_code_type_info.setCreate_time(DateUtil.getSysTime());
@@ -82,14 +72,8 @@ public class DbmCodeTypeInfoAction extends BaseAction {
         if (checkCodeTypeIdIsNotExist(dbm_code_type_info.getCode_type_id())) {
             throw new BusinessException("修改的代码类已经不存在!");
         }
-        if (StringUtil.isBlank(dbm_code_type_info.getCode_encode())) {
-            throw new BusinessException("代码类编码不能为空!");
-        }
         if (StringUtil.isBlank(dbm_code_type_info.getCode_type_name())) {
             throw new BusinessException("代码类名称不能为空!");
-        }
-        if (StringUtil.isBlank(dbm_code_type_info.getCode_remark())) {
-            throw new BusinessException("代码类描述不能为空!");
         }
         if (StringUtil.isBlank(dbm_code_type_info.getCode_status())) {
             throw new BusinessException("代码类发布状态不能为空!");
