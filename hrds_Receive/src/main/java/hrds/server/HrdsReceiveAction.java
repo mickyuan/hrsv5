@@ -12,6 +12,7 @@ import hrds.commons.entity.Collect_case;
 import hrds.commons.entity.Error_info;
 import hrds.commons.entity.Source_file_attribute;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.utils.PackUtil;
 import hrds.commons.utils.key.PrimayKeyGener;
 
 import java.util.ArrayList;
@@ -40,6 +41,7 @@ public class HrdsReceiveAction extends AgentBaseAction {
 	@Param(name = "addSql", desc = "批量添加的sql", range = "不可为空")
 	@Param(name = "addParamsPool", desc = "批量导入的数据", range = "不可为空")
 	public void batchAddSourceFileAttribute(String addSql, String addParamsPool) {
+		addParamsPool = PackUtil.unpackMsg(addParamsPool).get("msg");
 		//1.解析addParamsPool为List集合
 		List<Object[]> objects = parseListArray(addParamsPool);
 		//2.执行批量添加的方法
@@ -57,6 +59,7 @@ public class HrdsReceiveAction extends AgentBaseAction {
 	@Param(name = "updateSql", desc = "批量更新的sql", range = "不可为空")
 	@Param(name = "updateParamsPool", desc = "批量更新的数据", range = "不可为空")
 	public void batchUpdateSourceFileAttribute(String updateSql, String updateParamsPool) {
+		updateParamsPool = PackUtil.unpackMsg(updateParamsPool).get("msg");
 		//1.解析updateParamsPool为List集合
 		List<Object[]> objects = parseListArray(updateParamsPool);
 		//2.执行批量更新的方法
@@ -74,6 +77,7 @@ public class HrdsReceiveAction extends AgentBaseAction {
 	@Param(name = "collect_case", desc = "collect_case表json类型的数据", range = "不可为空")
 	@Param(name = "msg", desc = "作业执行结果信息", range = "不能为空")
 	public void saveCollectCase(String collect_case, String msg) {
+		collect_case = PackUtil.unpackMsg(collect_case).get("msg");
 		//1.解析collect_case字符串为Collect_case对象
 		Collect_case collect = JSONObject.parseObject(collect_case, Collect_case.class);
 		//2.查询collect_case表
@@ -114,6 +118,7 @@ public class HrdsReceiveAction extends AgentBaseAction {
 					"3.更新或者新增source_file_attribute表")
 	@Param(name = "source_file_attribute", desc = "source_file_attribute表json类型的数据", range = "不可为空")
 	public void addSourceFileAttribute(String source_file_attribute) {
+		source_file_attribute = PackUtil.unpackMsg(source_file_attribute).get("msg");
 		//1.解析source_file_attribute
 		Source_file_attribute attribute = JSONObject.parseObject(source_file_attribute,
 				Source_file_attribute.class);
@@ -139,6 +144,7 @@ public class HrdsReceiveAction extends AgentBaseAction {
 	@Param(name = "addSql", desc = "批量添加的sql", range = "不可为空")
 	@Param(name = "addParamsPool", desc = "批量导入的数据", range = "不可为空")
 	public void batchAddFtpTransfer(String addSql, String addParamsPool) {
+		addParamsPool = PackUtil.unpackMsg(addParamsPool).get("msg");
 		//1.解析addParamsPool为List集合
 		List<Object[]> objects = parseListArray(addParamsPool);
 		//2.执行批量添加的方法
