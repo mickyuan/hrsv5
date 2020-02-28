@@ -7,6 +7,7 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import hrds.commons.utils.jsch.SFTPChannel;
+import hrds.commons.utils.jsch.SFTPDetails;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -40,12 +41,13 @@ public class ReadLog {
         try {
             //1、构建使用jsch访问日志的Map集合
             Map<String, String> serverInfo = new HashMap<>();
-            serverInfo.put("HOST", ip);
-            serverInfo.put("PORT", port);
-            serverInfo.put("USERNAME", userName);
-            serverInfo.put("PASSWORD", password);
+            SFTPDetails sftpDetails = new SFTPDetails();
+            sftpDetails.setHost( ip);
+            sftpDetails.setPort(Integer.parseInt(port));
+            sftpDetails.setUser_name(userName);
+            sftpDetails.setPwd(password);
             //2、调用方法获取jSchSession
-            jSchSession = SFTPChannel.getJSchSession(serverInfo, 0);
+            jSchSession = SFTPChannel.getJSchSession(sftpDetails, 0);
             //3、拼接读取日志的linux命令
             String readShell = "cat " + logPath + " |tail -n " + readNum;
             //4、读取日志
