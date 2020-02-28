@@ -308,8 +308,10 @@ public class ReadFileToDataBase implements Callable<Long> {
 						objs[i] = getValue(typeList.get(i), result.getFieldValue(i));
 					}
 					pool.add(objs);
-					doBatch(batchSql, pool, num, db);
+//					LOGGER.info(objs.toString());
+//					LOGGER.info(batchSql);
 				}
+				doBatch(batchSql, pool, num, db);
 			}
 			if (pool.size() != 0) {
 				doBatch(batchSql, pool, num, db);
