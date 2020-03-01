@@ -98,6 +98,54 @@ public class ImportData {
         }
     }
 
+    @Method(desc = "导入标准代码类信息",
+            logicStep = "1.标准代码类信息" +
+                    "2.导入标准代码类信息")
+    @Param(name = "workbook", desc = "Workbook对象", range = "Workbook")
+    @Param(name = "user", desc = "User对象", range = "User")
+    public static void importDbmCodeTypeInfoData(Workbook workbook, User user) {
+        //1.获取标准分类信息列表
+        List<List<Object>> lists = ExcelUtil.readExcel(workbook, "代码扩展定义");
+        //初始化代码类信息Map (去重)
+        for (int i = 1; i < lists.size(); i++) {
+            codeTypeInfoIdAndNameMap.put(lists.get(i).get(2).toString(), "");
+        }
+        //设置代码类的id
+        codeTypeInfoIdAndNameMap.forEach((code_type_name, code_type_id) ->
+                codeTypeInfoIdAndNameMap.put(code_type_name, PrimayKeyGener.getNextId()));
+        Dbm_code_type_info dbm_code_type_info = new Dbm_code_type_info();
+        codeTypeInfoIdAndNameMap.forEach((code_type_name, code_type_id) -> {
+            dbm_code_type_info.setCode_type_id(code_type_id);
+            dbm_code_type_info.setCode_type_name(code_type_name);
+            dbm_code_type_info.setCode_status(IsFlag.Fou.getCode());
+            dbm_code_type_info.setCreate_user(user.getUserId().toString());
+            dbm_code_type_info.setCreate_date(DateUtil.getSysDate());
+            dbm_code_type_info.setCreate_time(DateUtil.getSysTime());
+            dbm_code_type_info.add(Dbo.db());
+            System.out.println(dbm_code_type_info);
+        });
+    }
+
+    @Method(desc = "导入标准代码项信息",
+            logicStep = "1.标准代码项信息" +
+                    "2.导入标准代码项信息")
+    @Param(name = "workbook", desc = "Workbook对象", range = "Workbook")
+    public static void importDbmCodeItemInfoData(Workbook workbook) {
+        //1.获取标准分类信息列表
+        List<List<Object>> lists = ExcelUtil.readExcel(workbook, "代码扩展定义");
+        Dbm_code_item_info dbm_code_item_info = new Dbm_code_item_info();
+        for (int i = 1; i < lists.size(); i++) {
+            dbm_code_item_info.setCode_item_id(PrimayKeyGener.getNextId());
+            dbm_code_item_info.setCode_encode(lists.get(i).get(1).toString());
+            dbm_code_item_info.setCode_value(lists.get(i).get(3).toString());
+            dbm_code_item_info.setCode_item_name(lists.get(i).get(4).toString());
+            dbm_code_item_info.setCode_remark(lists.get(i).get(5).toString());
+            dbm_code_item_info.setDbm_level(lists.get(i).get(8).toString());
+            dbm_code_item_info.setCode_type_id(codeTypeInfoIdAndNameMap.get(lists.get(i).get(2).toString()));
+            dbm_code_item_info.add(Dbo.db());
+        }
+    }
+
     @Method(desc = "导入标准信息",
             logicStep = "1.获取标准信息列表" +
                     "2.导入标准信息")
@@ -171,7 +219,7 @@ public class ImportData {
                 dbm_normbasic.setDecimal_point(lists.get(i).get(13).toString());
             }
             // 如果是代码类,添加代码类id作为标准外键
-//            dbm_normbasic.setCode_type_id(lists.get(i).get(14).toString());
+            dbm_normbasic.setCode_type_id(codeTypeInfoIdAndNameMap.get(lists.get(i).get(4).toString()));
             dbm_normbasic.setManage_department(lists.get(i).get(15).toString());
             dbm_normbasic.setRelevant_department(lists.get(i).get(16).toString());
             dbm_normbasic.setOrigin_system(lists.get(i).get(17).toString());
@@ -183,54 +231,6 @@ public class ImportData {
             dbm_normbasic.setCreate_date(DateUtil.getSysDate());
             dbm_normbasic.setCreate_time(DateUtil.getSysTime());
             dbm_normbasic.add(Dbo.db());
-        }
-    }
-
-    @Method(desc = "导入标准代码类信息",
-            logicStep = "1.标准代码类信息" +
-                    "2.导入标准代码类信息")
-    @Param(name = "workbook", desc = "Workbook对象", range = "Workbook")
-    @Param(name = "user", desc = "User对象", range = "User")
-    public static void importDbmCodeTypeInfoData(Workbook workbook, User user) {
-        //1.获取标准分类信息列表
-        List<List<Object>> lists = ExcelUtil.readExcel(workbook, "代码扩展定义");
-        //初始化代码类信息Map (去重)
-        for (int i = 1; i < lists.size(); i++) {
-            codeTypeInfoIdAndNameMap.put(lists.get(i).get(2).toString(), "");
-        }
-        //设置代码类的id
-        codeTypeInfoIdAndNameMap.forEach((name, id) ->
-                codeTypeInfoIdAndNameMap.put(name, PrimayKeyGener.getNextId()));
-        Dbm_code_type_info dbm_code_type_info = new Dbm_code_type_info();
-        codeTypeInfoIdAndNameMap.forEach((k, v) -> {
-            dbm_code_type_info.setCode_type_id(v);
-            dbm_code_type_info.setCode_type_name(k);
-            dbm_code_type_info.setCode_status(IsFlag.Fou.getCode());
-            dbm_code_type_info.setCreate_user(user.getUserId().toString());
-            dbm_code_type_info.setCreate_date(DateUtil.getSysDate());
-            dbm_code_type_info.setCreate_time(DateUtil.getSysTime());
-            dbm_code_type_info.add(Dbo.db());
-            System.out.println(dbm_code_type_info);
-        });
-    }
-
-    @Method(desc = "导入标准代码项信息",
-            logicStep = "1.标准代码项信息" +
-                    "2.导入标准代码项信息")
-    @Param(name = "workbook", desc = "Workbook对象", range = "Workbook")
-    public static void importDbmCodeItemInfoData(Workbook workbook) {
-        //1.获取标准分类信息列表
-        List<List<Object>> lists = ExcelUtil.readExcel(workbook, "代码扩展定义");
-        Dbm_code_item_info dbm_code_item_info = new Dbm_code_item_info();
-        for (int i = 1; i < lists.size(); i++) {
-            dbm_code_item_info.setCode_item_id(PrimayKeyGener.getNextId());
-            dbm_code_item_info.setCode_encode(lists.get(i).get(1).toString());
-            dbm_code_item_info.setCode_value(lists.get(i).get(3).toString());
-            dbm_code_item_info.setCode_item_name(lists.get(i).get(4).toString());
-            dbm_code_item_info.setCode_remark(lists.get(i).get(5).toString());
-            dbm_code_item_info.setDbm_level(lists.get(i).get(8).toString());
-            dbm_code_item_info.setCode_type_id(codeTypeInfoIdAndNameMap.get(lists.get(i).get(2).toString()));
-            dbm_code_item_info.add(Dbo.db());
         }
     }
 }

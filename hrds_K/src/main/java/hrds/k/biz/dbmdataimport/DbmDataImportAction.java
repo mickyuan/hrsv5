@@ -38,11 +38,11 @@ public class DbmDataImportAction extends BaseAction {
         }
         //导入标准分类信息
         ImportData.importDbmSortInfoData(workbook, getUser());
-        //导入标准信息
-        ImportData.importDbmNormbasicData(workbook, getUser());
         //导入代码类信息
         ImportData.importDbmCodeTypeInfoData(workbook, getUser());
         //导入代码项信息
         ImportData.importDbmCodeItemInfoData(workbook);
+        //导入标准信息
+        ImportData.importDbmNormbasicData(workbook, getUser());
     }
 }
