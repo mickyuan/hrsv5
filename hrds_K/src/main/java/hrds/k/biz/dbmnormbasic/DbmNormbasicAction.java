@@ -165,9 +165,13 @@ public class DbmNormbasicAction extends BaseAction {
             logicStep = "根据sort_id获取标准信息")
     @Param(name = "sort_id", desc = "分类id", range = "long类型")
     @Return(desc = "返回值说明", range = "返回值取值范围")
-    public Optional<Dbm_normbasic> getDbmNormbasicInfoBySortId(long sort_id) {
-        return Dbo.queryOneObject(Dbm_normbasic.class, "select * from " + Dbm_normbasic.TableName +
+    public Map<String, Object> getDbmNormbasicInfoBySortId(long sort_id) {
+        Map<String, Object> dbmNormbasicInfoMap = new HashMap<>();
+        List<Dbm_normbasic> dbmNormbasicInfos = Dbo.queryList(Dbm_normbasic.class, "select * from " + Dbm_normbasic.TableName +
                 " where sort_id = ?", sort_id);
+        dbmNormbasicInfoMap.put("dbmNormbasicInfos", dbmNormbasicInfos);
+        dbmNormbasicInfoMap.put("totalSize", dbmNormbasicInfos.size());
+        return dbmNormbasicInfoMap;
     }
 
     @Method(desc = "根据标准id发布标准",
