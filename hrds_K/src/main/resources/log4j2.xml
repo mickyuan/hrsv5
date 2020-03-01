@@ -41,7 +41,7 @@
     <Loggers>
         <!--过滤掉其他软件包中的无用的DEBUG信息-->
         <Logger name="org.apache" level="WARN"></Logger>
-        <Root level="debug">
+        <Root level="info">
             <AppenderRef ref="Console"/>
         </Root>
     </Loggers>
