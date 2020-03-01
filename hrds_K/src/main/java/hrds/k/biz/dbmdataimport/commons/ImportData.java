@@ -199,9 +199,8 @@ public class ImportData {
             codeTypeInfoIdAndNameMap.put(lists.get(i).get(2).toString(), "");
         }
         //设置代码类的id
-        codeTypeInfoIdAndNameMap.forEach((name, id) -> {
-            codeTypeInfoIdAndNameMap.put(name, PrimayKeyGener.getNextId());
-        });
+        codeTypeInfoIdAndNameMap.forEach((name, id) ->
+                codeTypeInfoIdAndNameMap.put(name, PrimayKeyGener.getNextId()));
         Dbm_code_type_info dbm_code_type_info = new Dbm_code_type_info();
         codeTypeInfoIdAndNameMap.forEach((k, v) -> {
             dbm_code_type_info.setCode_type_id(v);
