@@ -3,12 +3,13 @@ package hrds.k.biz.dbmdataimport.commons;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
-import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.web.util.Dbo;
 import hrds.commons.codes.DbmDataType;
 import hrds.commons.codes.IsFlag;
+import hrds.commons.entity.Dbm_code_item_info;
+import hrds.commons.entity.Dbm_code_type_info;
 import hrds.commons.entity.Dbm_normbasic;
 import hrds.commons.entity.Dbm_sort_info;
 import hrds.commons.exception.BusinessException;
@@ -17,17 +18,17 @@ import hrds.commons.utils.User;
 import hrds.commons.utils.key.PrimayKeyGener;
 import org.apache.poi.ss.usermodel.Workbook;
 
-import java.sql.SQLOutput;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @DocClass(desc = "导入数据", author = "BY-HLL", createdate = "2020/2/23 0023 上午 11:13")
 public class ImportData {
 
     //标准分类名和分类id的Map列表
     private static Map<String, Long> sortInfoIdAndNameMap = new HashMap<>();
+    //代码分类名和分类id的Map列表
+    private static Map<String, String> codeTypeInfoIdAndNameMap = new HashMap<>();
 
     @Method(desc = "导入标准分类信息",
             logicStep = "1.获取标准分类信息列表" +
@@ -105,6 +106,7 @@ public class ImportData {
     public static void importDbmNormbasicData(Workbook workbook, User user) {
         //1.获取标准分类信息列表
         List<List<Object>> lists = ExcelUtil.readExcel(workbook, "数据标准");
+        Dbm_normbasic dbm_normbasic = new Dbm_normbasic();
         for (int i = 2; i < lists.size(); i++) {
             // 获取标准归属分类的id
             String key = lists.get(i).get(1).toString() + lists.get(i).get(2).toString();
@@ -114,7 +116,6 @@ public class ImportData {
             }
             long sort_id = sortInfoIdAndNameMap.get(key);
             // 设置标准信息对象
-            Dbm_normbasic dbm_normbasic = new Dbm_normbasic();
             dbm_normbasic.setBasic_id(PrimayKeyGener.getNextId());
             dbm_normbasic.setNorm_code(lists.get(i).get(0).toString());
             dbm_normbasic.setSort_id(sort_id);
@@ -189,12 +190,29 @@ public class ImportData {
             logicStep = "1.标准代码类信息" +
                     "2.导入标准代码类信息")
     @Param(name = "workbook", desc = "Workbook对象", range = "Workbook")
-    public static void importDbmCodeTypeInfoData(Workbook workbook) {
+    @Param(name = "user", desc = "User对象", range = "User")
+    public static void importDbmCodeTypeInfoData(Workbook workbook, User user) {
         //1.获取标准分类信息列表
         List<List<Object>> lists = ExcelUtil.readExcel(workbook, "代码扩展定义");
+        //初始化代码类信息Map (去重)
         for (int i = 1; i < lists.size(); i++) {
-            System.out.println(i + "\t" + lists.get(i));
+            codeTypeInfoIdAndNameMap.put(lists.get(i).get(2).toString(), "");
         }
+        //设置代码类的id
+        codeTypeInfoIdAndNameMap.forEach((name, id) -> {
+            codeTypeInfoIdAndNameMap.put(name, PrimayKeyGener.getNextId());
+        });
+        Dbm_code_type_info dbm_code_type_info = new Dbm_code_type_info();
+        codeTypeInfoIdAndNameMap.forEach((k, v) -> {
+            dbm_code_type_info.setCode_type_id(v);
+            dbm_code_type_info.setCode_type_name(k);
+            dbm_code_type_info.setCode_status(IsFlag.Fou.getCode());
+            dbm_code_type_info.setCreate_user(user.getUserId().toString());
+            dbm_code_type_info.setCreate_date(DateUtil.getSysDate());
+            dbm_code_type_info.setCreate_time(DateUtil.getSysTime());
+            dbm_code_type_info.add(Dbo.db());
+            System.out.println(dbm_code_type_info);
+        });
     }
 
     @Method(desc = "导入标准代码项信息",
@@ -204,8 +222,16 @@ public class ImportData {
     public static void importDbmCodeItemInfoData(Workbook workbook) {
         //1.获取标准分类信息列表
         List<List<Object>> lists = ExcelUtil.readExcel(workbook, "代码扩展定义");
+        Dbm_code_item_info dbm_code_item_info = new Dbm_code_item_info();
         for (int i = 1; i < lists.size(); i++) {
-            System.out.println(i + "\t" + lists.get(i));
+            dbm_code_item_info.setCode_item_id(PrimayKeyGener.getNextId());
+            dbm_code_item_info.setCode_encode(lists.get(i).get(1).toString());
+            dbm_code_item_info.setCode_value(lists.get(i).get(3).toString());
+            dbm_code_item_info.setCode_item_name(lists.get(i).get(4).toString());
+            dbm_code_item_info.setCode_remark(lists.get(i).get(5).toString());
+            dbm_code_item_info.setDbm_level(lists.get(i).get(8).toString());
+            dbm_code_item_info.setCode_type_id(codeTypeInfoIdAndNameMap.get(lists.get(i).get(2).toString()));
+            dbm_code_item_info.add(Dbo.db());
         }
     }
 }

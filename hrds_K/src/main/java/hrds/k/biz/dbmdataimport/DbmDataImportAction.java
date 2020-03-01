@@ -25,7 +25,7 @@ public class DbmDataImportAction extends BaseAction {
     @UploadFile
     public void importExcelData(String pathName) {
         //获取excel的Workbook对象
-//        pathName = "E:\\hyren\\hyrenserv\\hrsv5\\hrds_K\\src\\test\\java\\hrds\\k\\biz\\dbmdataimport\\upload\\dbm_import_test.xlsx";
+//        pathName = "E:\\hyren\\hyrenserv\\hrsv5\\hrds_K\\src\\test\\java\\hrds\\k\\biz\\dbmdataimport\\upload\\基础数据标准_V2.1.xlsx";
         File excelFile = FileUploadUtil.getUploadedFile(pathName);
         if (!excelFile.exists()) {
             throw new BusinessException("excel文件不存在!");
@@ -38,10 +38,11 @@ public class DbmDataImportAction extends BaseAction {
         }
         //导入标准分类信息
         ImportData.importDbmSortInfoData(workbook, getUser());
-        //导入代码类信息
-//        importDbmCodeTypeInfoData(workbook);
-        //导入代码项信息
         //导入标准信息
-//        importDbmNormbasicData(workbook);
+        ImportData.importDbmNormbasicData(workbook, getUser());
+        //导入代码类信息
+        ImportData.importDbmCodeTypeInfoData(workbook, getUser());
+        //导入代码项信息
+        ImportData.importDbmCodeItemInfoData(workbook);
     }
 }
