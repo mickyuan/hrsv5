@@ -122,7 +122,6 @@ public class ImportData {
             dbm_code_type_info.setCreate_date(DateUtil.getSysDate());
             dbm_code_type_info.setCreate_time(DateUtil.getSysTime());
             dbm_code_type_info.add(Dbo.db());
-            System.out.println(dbm_code_type_info);
         });
     }
 
