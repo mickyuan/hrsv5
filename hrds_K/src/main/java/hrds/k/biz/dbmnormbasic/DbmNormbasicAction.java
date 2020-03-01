@@ -167,8 +167,8 @@ public class DbmNormbasicAction extends BaseAction {
     @Return(desc = "返回值说明", range = "返回值取值范围")
     public Map<String, Object> getDbmNormbasicInfoBySortId(long sort_id) {
         Map<String, Object> dbmNormbasicInfoMap = new HashMap<>();
-        List<Dbm_normbasic> dbmNormbasicInfos = Dbo.queryList(Dbm_normbasic.class, "select * from " + Dbm_normbasic.TableName +
-                " where sort_id = ?", sort_id);
+        List<Dbm_normbasic> dbmNormbasicInfos = Dbo.queryList(Dbm_normbasic.class, "select * from "
+                + Dbm_normbasic.TableName + " where sort_id = ?", sort_id);
         dbmNormbasicInfoMap.put("dbmNormbasicInfos", dbmNormbasicInfos);
         dbmNormbasicInfoMap.put("totalSize", dbmNormbasicInfos.size());
         return dbmNormbasicInfoMap;
