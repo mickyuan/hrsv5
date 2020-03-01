@@ -117,7 +117,7 @@ public class CommandJdbcTest {
 
 	@Test
 	public void test12() {
-		assertThat("执行测试卸数非定长文件成功", execute("1000003652"), is(true));
+		assertThat("执行测试卸数非定长文件成功", execute("1000003846"), is(true));
 	}
 
 
