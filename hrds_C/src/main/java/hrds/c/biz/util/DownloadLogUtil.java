@@ -7,13 +7,14 @@ import fd.ng.core.annotation.Param;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.jsch.FileProgressMonitor;
-import hrds.commons.utils.jsch.SCPFileSender;
 import hrds.commons.utils.jsch.SFTPChannel;
+import hrds.commons.utils.jsch.SFTPDetails;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import java.io.*;
-import java.util.Map;
 
 @DocClass(desc = "下载日志工具类", author = "dhw", createdate = "2019/12/19 16:50")
 public class DownloadLogUtil {
@@ -29,12 +30,12 @@ public class DownloadLogUtil {
                     "6.关闭Channel连接")
     @Param(name = "directory", desc = "需要删除的文件目录", range = "取值范围")
     @Param(name = "sftpDetails", desc = "连接服务器配置信息", range = "无限制")
-    public static void deleteLogFileBySFTP(String directory, Map<String, String> sftpDetails) {
+    public static void deleteLogFileBySFTP(String directory,SFTPDetails sftpDetails) {
         try {
             // 1.数据可访问权限处理方式，该方法不需要权限控制
-            SCPFileSender scpFileSender = new SCPFileSender();
+//            SCPFileSender scpFileSender = new SCPFileSender();
             // 2.获取连接到sftp服务器的Channel
-            SFTPChannel sftpChannel = scpFileSender.getSFTPChannel();
+            SFTPChannel sftpChannel = new SFTPChannel();
             // 3.使用sftp连接服务器
             ChannelSftp channelSftp = sftpChannel.getChannel(sftpDetails, 60000);
             // 4.通过SFTP删除日志文件
@@ -62,16 +63,17 @@ public class DownloadLogUtil {
     @Param(name = "remotePath", desc = "远程路径", range = "无限制")
     @Param(name = "localPath", desc = "本地路径", range = "无限制")
     @Param(name = "sftpDetails", desc = "连接服务器配置信息", range = "无限制")
-    public static void downloadLogFile(String remotePath, String localPath, Map<String, String> sftpDetails) {
+    public static void downloadLogFile(String remotePath, String localPath, SFTPDetails sftpDetails) {
         // 1.数据可访问权限处理方式，该方法不需要权限控制
         OutputStream outputStream = null;
         try {
             // 2.通过本地路径以获取本地文件
             File localFile = new File(localPath);
             outputStream = new FileOutputStream(localFile);
-            SCPFileSender scpFileSender = new SCPFileSender();
-            // 3.获取连接到sftp服务器的Channel
-            SFTPChannel sftpChannel = scpFileSender.getSFTPChannel();
+//            SCPFileSender scpFileSender = new SCPFileSender();
+//            // 3.获取连接到sftp服务器的Channel
+//            SFTPChannel sftpChannel = scpFileSender.getSFTPChannel();
+            SFTPChannel sftpChannel = new SFTPChannel();
             // 4.通过sftp连接服务器
             ChannelSftp channelSftp = sftpChannel.getChannel(sftpDetails, 60000);
             // 5.通过远程路径获取远程文件

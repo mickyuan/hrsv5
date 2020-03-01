@@ -133,18 +133,25 @@ public class DBUploadStageImpl extends AbstractJobStage {
 		//TODO 需要加一个key为hadoop_user_name的键值对，作为普通属性
 		//TODO 需要加一个key为platform的键值对，作为普通属性
 		Map<String, String> data_store_connect_attr = dataStoreConfBean.getData_store_connect_attr();
-		if (SystemUtil.OS_NAME.toLowerCase().contains("windows")) {
-			//windows机器上使用api上传hdfs
-			//TODO 这里需要在部署agent的时候要将目的地属于配置文件的属性部署到这边指定的目录下。
-			try (HdfsOperator operator = new HdfsOperator(FileNameUtils.normalize(Constant.STORECONFIGPATH
-					+ dataStoreConfBean.getDsl_name() + File.separator, true)
-					, data_store_connect_attr.get("platform"), data_store_connect_attr.get("hadoop_user_name"))) {
-				//创建hdfs表的文件夹
-				if (!operator.exists(hdfsPath)) {
-					if (!operator.mkdir(hdfsPath)) {
-						throw new AppSystemException("创建hdfs文件夹" + hdfsPath + "失败");
-					}
+		//TODO 这里需要在部署agent的时候要将目的地属于配置文件的属性部署到这边指定的目录下。
+		try (HdfsOperator operator = new HdfsOperator(FileNameUtils.normalize(Constant.STORECONFIGPATH
+				+ dataStoreConfBean.getDsl_name() + File.separator, true)
+				, data_store_connect_attr.get("platform"), data_store_connect_attr.get("hadoop_user_name"))) {
+			//创建hdfs表的文件夹
+			if (!operator.exists(hdfsPath)) {
+				if (!operator.mkdir(hdfsPath)) {
+					throw new AppSystemException("创建hdfs文件夹" + hdfsPath + "失败");
 				}
+			} else {
+				if (!operator.deletePath(hdfsPath)) {
+					throw new AppSystemException("删除hdfs文件夹" + hdfsPath + "失败");
+				}
+				if (!operator.mkdir(hdfsPath)) {
+					throw new AppSystemException("创建hdfs文件夹" + hdfsPath + "失败");
+				}
+			}
+			if (SystemUtil.OS_NAME.toLowerCase().contains("windows")) {
+				//windows机器上使用api上传hdfs
 				for (String localFilePath : localFiles) {
 					LOGGER.info("开始上传文件到hdfs");
 					if (!operator.upLoad(localFilePath, hdfsPath, true)) {
@@ -152,36 +159,35 @@ public class DBUploadStageImpl extends AbstractJobStage {
 					}
 					LOGGER.info("上传文件" + localFilePath + "到hdfs文件夹" + hdfsPath + "结束");
 				}
+			} else {
+				//这里只支持windows和linux，其他机器不支持，linux下使用命令上传hdfs
+				StringBuilder fsSql = new StringBuilder();
+				//拼接认证
+				//TODO 有认证需要加认证文件key必须为keytab_file，需要加认证用户，key必须为keytab_user
+				if (!StringUtil.isEmpty(dataStoreConfBean.getData_store_layer_file().get("keytab_file"))) {
+					fsSql.append("kinit -k -t ").append(dataStoreConfBean.getData_store_layer_file().get("keytab_file"))
+							.append(" ").append(data_store_connect_attr.get("keytab_user"))
+							.append(" ").append(System.lineSeparator());
+				}
+				//拼接上传hdfs命令
+				for (String localFilePath : localFiles) {
+					fsSql.append("hadoop fs -put -f ").append(localFilePath).append(" ").append(hdfsPath)
+							.append(" ").append(System.lineSeparator());
+				}
+				String hdfsShellFile = FileNameUtils.normalize(Constant.HDFSSHELLFILE + collectTableBean
+						.getHbase_name() + ".sh", true);
+				//写脚本文件
+				FileUtil.createFile(hdfsShellFile, fsSql.toString());
+				String command = "sh " + hdfsShellFile;
+				LOGGER.info("开始运行(HDFS上传)>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" + command);
+				final CommandLine cmdLine = new CommandLine("sh");
+				cmdLine.addArgument(hdfsShellFile);
+				DefaultExecutor executor = new DefaultExecutor();
+				ExecuteWatchdog watchdog = new ExecuteWatchdog(Integer.MAX_VALUE);
+				executor.setWatchdog(watchdog);
+				executor.execute(cmdLine);
+				LOGGER.info("上传文件到" + hdfsPath + "结束");
 			}
-
-		} else {
-			//这里只支持windows和linux，其他机器不支持，linux下使用命令上传hdfs
-			StringBuilder fsSql = new StringBuilder();
-			//拼接认证
-			//TODO 有认证需要加认证文件key必须为keytab_file，需要加认证用户，key必须为keytab_user
-			if (!StringUtil.isEmpty(dataStoreConfBean.getData_store_layer_file().get("keytab_file"))) {
-				fsSql.append("kinit -k -t ").append(dataStoreConfBean.getData_store_layer_file().get("keytab_file"))
-						.append(" ").append(data_store_connect_attr.get("keytab_user"))
-						.append(" ").append(System.lineSeparator());
-			}
-			//拼接上传hdfs命令
-			for (String localFilePath : localFiles) {
-				fsSql.append("hadoop fs -put -f ").append(localFilePath).append(" ").append(hdfsPath)
-						.append(" ").append(System.lineSeparator());
-			}
-			String hdfsShellFile = FileNameUtils.normalize(Constant.HDFSSHELLFILE + collectTableBean
-					.getHbase_name() + ".sh", true);
-			//写脚本文件
-			FileUtil.createFile(hdfsShellFile, fsSql.toString());
-			String command = "sh " + hdfsShellFile;
-			LOGGER.info("开始运行(HDFS上传)>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" + command);
-			final CommandLine cmdLine = new CommandLine("sh");
-			cmdLine.addArgument(hdfsShellFile);
-			DefaultExecutor executor = new DefaultExecutor();
-			ExecuteWatchdog watchdog = new ExecuteWatchdog(Integer.MAX_VALUE);
-			executor.setWatchdog(watchdog);
-			executor.execute(cmdLine);
-			LOGGER.info("上传文件到" + hdfsPath + "结束");
 		}
 	}
 

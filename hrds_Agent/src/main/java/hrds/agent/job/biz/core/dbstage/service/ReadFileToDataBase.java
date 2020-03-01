@@ -23,6 +23,7 @@ import org.apache.hadoop.hive.ql.exec.vector.VectorizedRowBatch;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.WritableComparable;
 import org.apache.orc.OrcFile;
 import org.apache.orc.Reader;
 import org.apache.orc.RecordReader;
@@ -304,11 +305,13 @@ public class ReadFileToDataBase implements Callable<Long> {
 					num++;
 					objs = new Object[result.getNumFields()];// 存储全量插入信息的list
 					for (int i = 0; i < result.getNumFields(); i++) {
-						objs[i] = getValue(typeList.get(i), result.getFieldValue(i).toString());
+						objs[i] = getValue(typeList.get(i), result.getFieldValue(i));
 					}
 					pool.add(objs);
-					doBatch(batchSql, pool, num, db);
+//					LOGGER.info(objs.toString());
+//					LOGGER.info(batchSql);
 				}
+				doBatch(batchSql, pool, num, db);
 			}
 			if (pool.size() != 0) {
 				doBatch(batchSql, pool, num, db);
@@ -404,6 +407,28 @@ public class ReadFileToDataBase implements Callable<Long> {
 			throw new AppSystemException("bash插入数据库失败", e);
 		}
 		return num;
+	}
+
+	private Object getValue(String type, WritableComparable tmpValue) {
+		Object str;
+		type = type.toLowerCase();
+		if (type.contains(DataTypeConstant.BOOLEAN.getMessage())) {
+			// 如果取出的值为null则给空字符串
+			str = tmpValue == null ? null : Boolean.parseBoolean(tmpValue.toString().trim());
+		} else if (type.equals(DataTypeConstant.LONG.getMessage())
+				|| type.contains(DataTypeConstant.INT.getMessage())
+				|| type.contains(DataTypeConstant.FLOAT.getMessage())
+				|| type.contains(DataTypeConstant.DOUBLE.getMessage())
+				|| type.contains(DataTypeConstant.DECIMAL.getMessage())
+				|| type.contains(DataTypeConstant.NUMERIC.getMessage())) {
+			// 如果取出的值为null则给空字符串
+			str = tmpValue == null ? null : new BigDecimal(tmpValue.toString().trim());
+		} else {
+			// 如果取出的值为null则给空字符串
+			str = tmpValue == null ? "" : tmpValue.toString();
+			//TODO 这里应该有好多类型需要支持，然后在else里面报错
+		}
+		return str;
 	}
 
 	private Object getValue(String type, String tmpValue) {

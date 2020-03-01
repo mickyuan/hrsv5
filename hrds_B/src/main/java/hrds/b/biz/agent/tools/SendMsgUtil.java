@@ -295,7 +295,8 @@ public class SendMsgUtil {
 	@Param(name = "userId", desc = "当前登录用户Id，sys_user表主键，agent_down_info表外键", range = "不为空")
 	@Param(name = "taskInfo", desc = "数据库采集任务信息", range = "SourceDataConfBean对象json格式字符串")
 	@Param(name = "methodName", desc = "Agent端的提供服务的方法的方法名", range = "AgentActionUtil类中的静态常量")
-	public static void sendDBCollectTaskInfo(Long colSetId, Long agentId, Long userId, String taskInfo, String methodName){
+	public static void sendDBCollectTaskInfo(Long colSetId, Long agentId, Long userId, String taskInfo,
+	                                         String methodName,String etlDate){
 		//1、对参数合法性进行校验
 		if(agentId == null){
 			throw new BusinessException("向Agent发送数据库采集任务信息，agentId不能为空");
@@ -309,12 +310,16 @@ public class SendMsgUtil {
 		if(StringUtil.isBlank(methodName)){
 			throw new BusinessException("向Agent发送数据库采集任务信息时，methodName不能为空");
 		}
+		if(StringUtil.isBlank(etlDate)){
+			throw new BusinessException("向Agent发送数据库采集任务信息时，跑批日期不能为空");
+		}
 		//2、使用数据压缩工具类，酌情对发送的信息进行压缩
 		String url = AgentActionUtil.getUrl(agentId, userId, methodName);
 		logger.debug("准备建立连接，请求的URL为" + url);
 
 		//3、httpClient发送请求并接收响应
 		HttpClient.ResponseValue resVal = new HttpClient()
+				.addData("etlDate",etlDate)
 				.addData("taskInfo", PackUtil.packMsg(taskInfo))
 				.post(url);
 		//4、根据响应状态码判断响应是否成功

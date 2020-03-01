@@ -103,7 +103,7 @@ public class CollectMonitorActionTest extends WebBaseTestCase {
       Sys_user user = new Sys_user();
       user.setUser_id(user_id);
       user.setCreate_id("-11111");
-      user.setDep_id("1000000001");
+      user.setDep_id(dep_id);
       user.setRole_id("1001");
       user.setUser_name("lqcs_init");
       user.setUser_password(password);
@@ -237,7 +237,7 @@ public class CollectMonitorActionTest extends WebBaseTestCase {
               .buildSession()
               .addData("user_id", user_id)
               .addData("password", password)
-              .post("http://127.0.0.1:8888/A/action/hrds/a/biz/login/login")
+              .post("http://127.0.0.1:8099/A/action/hrds/a/biz/login/login")
               .getBodyString();
       ActionResult ar =
           JsonUtil.toObjectSafety(bodyString, ActionResult.class)

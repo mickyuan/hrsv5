@@ -140,7 +140,7 @@ public abstract class JDBCIncreasement implements Closeable {
 	 */
 	public void replace() {
 		dropTableIfExists(yesterdayTableName, db, sqlList);
-		sqlList.add("CREATE TABLE " + yesterdayTableName + "AS SELECT * FROM " + todayTableName);
+		sqlList.add("CREATE TABLE " + yesterdayTableName + " AS SELECT * FROM " + todayTableName);
 		//执行sql
 		HSqlExecute.executeSql(sqlList, db);
 	}

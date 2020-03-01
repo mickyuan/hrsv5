@@ -13,6 +13,8 @@ import hrds.commons.entity.Collect_case;
 import hrds.commons.entity.Source_file_attribute;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.AgentActionUtil;
+import hrds.commons.utils.PackUtil;
+import hrds.commons.utils.PackageUtil;
 
 import java.io.*;
 import java.util.List;
@@ -41,7 +43,7 @@ public class CommunicationUtil {
 			String url = AgentActionUtil.getServerUrl(confBean, AgentActionUtil.SAVECOLLECTCASE);
 			//调用工具类方法给agent发消息，并获取agent响应
 			HttpClient.ResponseValue resVal = new HttpClient()
-					.addData("collect_case", JSONArray.toJSONString(collect_case))
+					.addData("collect_case", PackUtil.packMsg(JSONArray.toJSONString(collect_case)))
 					.addData("msg", StringUtil.isBlank(loadMessage) ? "excption is null " : loadMessage)
 					.post(url);
 			ActionResult ar = JsonUtil.toObjectSafety(resVal.getBodyString(), ActionResult.class)
@@ -102,7 +104,7 @@ public class CommunicationUtil {
 			//调用工具类方法给agent发消息，并获取agent响应
 			HttpClient.ResponseValue resVal = new HttpClient()
 					.addData("addSql", addSql)
-					.addData("addParamsPool", JSONArray.toJSONString(addParamsPool))
+					.addData("addParamsPool", PackUtil.packMsg(JSONArray.toJSONString(addParamsPool)))
 					.post(url);
 			ActionResult ar = JsonUtil.toObjectSafety(resVal.getBodyString(), ActionResult.class)
 					.orElseThrow(() -> new AppSystemException("连接" + url + "服务异常"));
@@ -134,7 +136,7 @@ public class CommunicationUtil {
 			//调用工具类方法给agent发消息，并获取agent响应
 			HttpClient.ResponseValue resVal = new HttpClient()
 					.addData("addSql", addSql)
-					.addData("addParamsPool", JSONArray.toJSONString(addParamsPool))
+					.addData("addParamsPool", PackUtil.packMsg(JSONArray.toJSONString(addParamsPool)))
 					.post(url);
 			ActionResult ar = JsonUtil.toObjectSafety(resVal.getBodyString(), ActionResult.class)
 					.orElseThrow(() -> new AppSystemException("连接" + url + "服务异常"));
@@ -166,7 +168,7 @@ public class CommunicationUtil {
 			//调用工具类方法给agent发消息，并获取agent响应
 			HttpClient.ResponseValue resVal = new HttpClient()
 					.addData("updateSql", updateSql)
-					.addData("updateParamsPool", JSONArray.toJSONString(updateParamsPool))
+					.addData("updateParamsPool", PackUtil.packMsg(JSONArray.toJSONString(updateParamsPool)))
 					.post(url);
 			ActionResult ar = JsonUtil.toObjectSafety(resVal.getBodyString(), ActionResult.class)
 					.orElseThrow(() -> new AppSystemException("连接" + url + "服务异常"));
@@ -214,7 +216,7 @@ public class CommunicationUtil {
 			String url = AgentActionUtil.getServerUrl(confBean, AgentActionUtil.ADDSOURCEFILEATTRIBUTE);
 			//调用工具类方法给agent发消息，并获取agent响应
 			HttpClient.ResponseValue resVal = new HttpClient()
-					.addData("source_file_attribute", JSONObject.toJSONString(file_attribute))
+					.addData("source_file_attribute", PackUtil.packMsg(JSONObject.toJSONString(file_attribute)))
 					.post(url);
 			ActionResult ar = JsonUtil.toObjectSafety(resVal.getBodyString(), ActionResult.class)
 					.orElseThrow(() -> new AppSystemException("连接" + url + "服务异常"));

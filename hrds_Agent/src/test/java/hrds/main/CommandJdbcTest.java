@@ -2,6 +2,7 @@ package hrds.main;
 
 import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.DocClass;
+import fd.ng.core.utils.DateUtil;
 import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.JobStatusInfo;
 import hrds.agent.job.biz.bean.SourceDataConfBean;
@@ -113,6 +114,13 @@ public class CommandJdbcTest {
 	public void test11() {
 		assertThat("执行测试卸数非定长文件成功", execute("1002234443"), is(true));
 	}
+
+	@Test
+	public void test12() {
+		assertThat("执行测试卸数非定长文件成功", execute("1000003846"), is(true));
+	}
+
+
 	/**
 	 * 执行数据库采集的主程序
 	 *
@@ -141,6 +149,7 @@ public class CommandJdbcTest {
 			List<Future<JobStatusInfo>> list = new ArrayList<>();
 			//2.校验对象的值是否正确
 			for (CollectTableBean collectTableBean : collectTableBeanList) {
+				collectTableBean.setEtlDate(DateUtil.getSysDate());
 				//为了确保多个线程之间的值不互相干涉，复制对象的值。
 				SourceDataConfBean sourceDataConfBean1 = JSONObject.parseObject(
 						JSONObject.toJSONString(sourceDataConfBean), SourceDataConfBean.class);

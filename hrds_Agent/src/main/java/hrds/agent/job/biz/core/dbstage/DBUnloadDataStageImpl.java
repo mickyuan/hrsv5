@@ -16,6 +16,7 @@ import hrds.commons.codes.CollectType;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
+import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -147,7 +148,8 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 			stageParamInfo.setFileSize(fileSize);
 			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.SUCCEED.getCode(), "执行成功");
 			String midName = Constant.JDBCUNLOADFOLDER + collectTableBean.getDatabase_id() + File.separator
-					+ collectTableBean.getTable_id() + File.separator;
+					+ collectTableBean.getTable_id() + File.separator + "tableData.meta";
+			midName = FilenameUtils.normalize(midName);
 			//写meta数据开始  TODO 这里这个meta信息应该是只有数据抽取才需要写，5.0版本的meta信息直接通过tableBean传递
 			ColumnTool.writeFileMeta(collectTableBean.getHbase_name(), new File(midName), tableBean.getColumnMetaInfo(),
 					rowCount, tableBean.getColTypeMetaInfo(), tableBean.getColLengthInfo(), fileSize, "n");

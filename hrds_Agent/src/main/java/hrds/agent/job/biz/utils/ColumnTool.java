@@ -101,10 +101,10 @@ public class ColumnTool {
 	public static void writeFileMeta(String tableName, File file, String columns, long liner, String list, String lengths, long meta_filesize, String mr) {
 
 		BufferedWriter bw = null;
-		String metaFile = file.getAbsolutePath() + "tableData.meta";
-		metaFile = FilenameUtils.normalize(metaFile);
+//		String metaFile = file.getAbsolutePath() + "tableData.meta";
+//		metaFile = FilenameUtils.normalize(metaFile);
 		try {
-			bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(metaFile, false),
+			bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file, false),
 					StandardCharset.UTF_8));
 			JSONObject jsonSon = new JSONObject();
 			jsonSon.put("tableName", tableName);
