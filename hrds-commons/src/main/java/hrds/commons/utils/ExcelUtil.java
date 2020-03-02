@@ -298,9 +298,10 @@ public class ExcelUtil {
                 break;
             case Cell.CELL_TYPE_FORMULA:
                 try {
-                    value = String.valueOf(cell.getNumericCellValue());
-                } catch (IllegalStateException e) {
                     value = String.valueOf(cell.getRichStringCellValue());
+                } catch (IllegalStateException e) {
+                    throw new BusinessException("获取单元格数据失败! sheet页面:" + cell.getSheet() +
+                            "行:" + cell.getRow());
                 }
                 break;
             case Cell.CELL_TYPE_BLANK:
