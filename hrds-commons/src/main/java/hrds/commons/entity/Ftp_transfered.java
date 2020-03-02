@@ -30,8 +30,8 @@ public class Ftp_transfered extends ProjectTableEntity
 		__tmpPKS.add("ftp_transfered_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="ftp_transfered_id",value="已传输表id:",dataType = Long.class,required = true)
-	private Long ftp_transfered_id;
+	@DocBean(name ="ftp_transfered_id",value="已传输表id-UUID:",dataType = String.class,required = true)
+	private String ftp_transfered_id;
 	@DocBean(name ="transfered_name",value="已传输文件名称:",dataType = String.class,required = true)
 	private String transfered_name;
 	@DocBean(name ="ftp_date",value="ftp日期:",dataType = String.class,required = true)
@@ -47,19 +47,13 @@ public class Ftp_transfered extends ProjectTableEntity
 	@DocBean(name ="file_path",value="文件绝对路径:",dataType = String.class,required = true)
 	private String file_path;
 
-	/** 取得：已传输表id */
-	public Long getFtp_transfered_id(){
+	/** 取得：已传输表id-UUID */
+	public String getFtp_transfered_id(){
 		return ftp_transfered_id;
 	}
-	/** 设置：已传输表id */
-	public void setFtp_transfered_id(Long ftp_transfered_id){
-		this.ftp_transfered_id=ftp_transfered_id;
-	}
-	/** 设置：已传输表id */
+	/** 设置：已传输表id-UUID */
 	public void setFtp_transfered_id(String ftp_transfered_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(ftp_transfered_id)){
-			this.ftp_transfered_id=new Long(ftp_transfered_id);
-		}
+		this.ftp_transfered_id=ftp_transfered_id;
 	}
 	/** 取得：已传输文件名称 */
 	public String getTransfered_name(){
