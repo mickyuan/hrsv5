@@ -8,6 +8,7 @@ import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DefaultPageImpl;
 import fd.ng.db.jdbc.Page;
+import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.IsFlag;
@@ -115,7 +116,7 @@ public class DbmSortInfoAction extends BaseAction {
         Map<String, Object> dbmSortInfoMap = new HashMap<>();
         Page page = new DefaultPageImpl(currPage, pageSize);
         List<Dbm_sort_info> dbmSortInfos = Dbo.queryPagedList(Dbm_sort_info.class, page,
-                "select * from " + Dbm_sort_info.TableName);
+                "select * from " + Dbm_sort_info.TableName + " where create_user=?", getUserId().toString());
         dbmSortInfoMap.put("dbmSortInfos", dbmSortInfos);
         dbmSortInfoMap.put("totalSize", page.getTotalSize());
         return dbmSortInfoMap;
@@ -131,7 +132,7 @@ public class DbmSortInfoAction extends BaseAction {
             throw new BusinessException("查询的分类已经不存在! sort_id=" + sort_id);
         }
         return Dbo.queryOneObject(Dbm_sort_info.class, "select * from " + Dbm_sort_info.TableName +
-                " where sort_id = ?", sort_id);
+                " where sort_id = ? and create_user = ?", sort_id, getUserId().toString());
     }
 
     @Method(desc = "获取所有根分类信息", logicStep = "获取所有根分类信息")
@@ -139,7 +140,8 @@ public class DbmSortInfoAction extends BaseAction {
     public Map<String, Object> getDbmRootSortInfo() {
         Map<String, Object> dbmSortInfoMap = new HashMap<>();
         List<Dbm_sort_info> dbmSortInfos = Dbo.queryList(Dbm_sort_info.class,
-                "select * from " + Dbm_sort_info.TableName + " where parent_id=?", '0');
+                "select * from " + Dbm_sort_info.TableName + " where parent_id=? and create_user=?",
+                '0', getUserId().toString());
         dbmSortInfoMap.put("dbmSortInfos", dbmSortInfos);
         dbmSortInfoMap.put("totalSize", dbmSortInfos.size());
         return dbmSortInfoMap;
@@ -151,7 +153,8 @@ public class DbmSortInfoAction extends BaseAction {
     public Map<String, Object> getDbmSubSortInfo(long sort_id) {
         Map<String, Object> dbmSortInfoMap = new HashMap<>();
         List<Dbm_sort_info> dbmSortInfos = Dbo.queryList(Dbm_sort_info.class,
-                "select * from " + Dbm_sort_info.TableName + " where parent_id=?", sort_id);
+                "select * from " + Dbm_sort_info.TableName + " where parent_id=? and create_user=?",
+                sort_id, getUserId().toString());
         dbmSortInfoMap.put("dbmSortInfos", dbmSortInfos);
         return dbmSortInfoMap;
     }
@@ -161,11 +164,24 @@ public class DbmSortInfoAction extends BaseAction {
     @Param(name = "sort_id", desc = "标准分类id", range = "long类型")
     public void releaseDbmSortInfoById(long sort_id) {
         int execute = Dbo.execute("update " + Dbm_sort_info.TableName + " set sort_status = ? where" +
-                        " sort_id = ? ",
-                IsFlag.Shi.getCode(), sort_id);
+                        " sort_id = ? and create_user=?",
+                IsFlag.Shi.getCode(), sort_id, getUserId().toString());
         if (execute != 1) {
             throw new BusinessException("标准分类发布失败！sort_id" + sort_id);
         }
+    }
+
+    @Method(desc = "根据标准分类id数组批量发布标准分类",
+            logicStep = "根据标准分类id数组批量发布标准分类")
+    @Param(name = "sort_id_s", desc = "标准分类id", range = "long类型")
+    public void batchReleaseDbmSortInfo(Long[] sort_id_s) {
+        SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
+        asmSql.clean();
+        asmSql.addSql("update " + Dbm_sort_info.TableName + " set sort_status = ? where create_user=?");
+        asmSql.addParam(IsFlag.Shi.getCode());
+        asmSql.addParam(getUserId().toString());
+        asmSql.addORParam("sort_id ", sort_id_s);
+        Dbo.execute(asmSql.sql(), asmSql.params());
     }
 
     @Method(desc = "检查分类名称是否存在", logicStep = "1.根据 sort_name 检查名称是否存在")
