@@ -21,10 +21,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.OptionalLong;
+import java.util.*;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -69,7 +66,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
     // 测试 ftp_collect表ID，ftp_id
     private static final long FtpId = 50000011L;
     // 测试 ftp_collect表ID，ftp_transfered_id
-    private static final long FtpTransferedId = 50000012L;
+    private static final String FtpTransferedId = UUID.randomUUID().toString();
     // 测试 ftp_folder表ID，ftp_folder_id
     private static final long FtpFolderId = 50000091L;
     // 测试 object_collect表ID，odc_id

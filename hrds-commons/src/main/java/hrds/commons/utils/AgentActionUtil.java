@@ -45,9 +45,11 @@ public class AgentActionUtil {
 	//单表保存或者更新source_file_attribute
 	public static final String ADDSOURCEFILEATTRIBUTE = "/hrds/server/addSourceFileAttribute";
 	//向agent端发送一个数据库直连采集任务
-	public static final String SENDDBCOLLCTTASKINFO = "/hrds/agent/trans/biz/jdbccollect/execute";
+	public static final String SENDJDBCOLLECTTASKINFO = "/hrds/agent/trans/biz/jdbccollect/execute";
 	//agent连接服务端批量添加ftp_transfered(ftp已传输表)
 	public static final String BATCHADDFTPTRANSFER = "/hrds/server/batchAddFtpTransfer";
+	//向agent端发送一个ftp采集的任务
+	public static final String SENDFTPCOLLECTTASKINFO = "/hrds/agent/trans/biz/ftpcollect/execute";
 
 	static {
 		list = new ArrayList<>();
@@ -65,8 +67,9 @@ public class AgentActionUtil {
 		list.add(GETTABLECOUNT);
 		list.add(GETCUSTCOLUMN);
 		list.add(ADDSOURCEFILEATTRIBUTE);
-		list.add(SENDDBCOLLCTTASKINFO);
+		list.add(SENDJDBCOLLECTTASKINFO);
 		list.add(BATCHADDFTPTRANSFER);
+		list.add(SENDFTPCOLLECTTASKINFO);
 	}
 
 	private AgentActionUtil() {
