@@ -32,11 +32,11 @@ public class Dbm_code_type_info extends ProjectTableEntity
 	}
 	@DocBean(name ="code_type_id",value="代码类主键:",dataType = Long.class,required = true)
 	private Long code_type_id;
-	@DocBean(name ="code_encode",value="代码编码:",dataType = String.class,required = true)
+	@DocBean(name ="code_encode",value="代码编码:",dataType = String.class,required = false)
 	private String code_encode;
 	@DocBean(name ="code_type_name",value="代码类名:",dataType = String.class,required = true)
 	private String code_type_name;
-	@DocBean(name ="code_remark",value="代码描述:",dataType = String.class,required = true)
+	@DocBean(name ="code_remark",value="代码描述:",dataType = String.class,required = false)
 	private String code_remark;
 	@DocBean(name ="code_status",value="代码状态（是否发布）(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String code_status;

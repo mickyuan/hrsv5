@@ -38,7 +38,7 @@ public class Dbm_sort_info extends ProjectTableEntity
 	private Long sort_level_num;
 	@DocBean(name ="sort_name",value="分类名称:",dataType = String.class,required = true)
 	private String sort_name;
-	@DocBean(name ="sort_remark",value="分类描述:",dataType = String.class,required = true)
+	@DocBean(name ="sort_remark",value="分类描述:",dataType = String.class,required = false)
 	private String sort_remark;
 	@DocBean(name ="sort_status",value="分类状态（是否发布）(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String sort_status;

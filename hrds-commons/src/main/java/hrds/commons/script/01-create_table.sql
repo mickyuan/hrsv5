@@ -41,7 +41,7 @@ SORT_ID                                           BIGINT default 0 NOT NULL, --�
 PARENT_ID                                         BIGINT default 0 NOT NULL, --父级分类主键
 SORT_LEVEL_NUM                                    BIGINT default 0 NOT NULL, --分类层级数
 SORT_NAME                                         VARCHAR(512) NOT NULL, --分类名称
-SORT_REMARK                                       VARCHAR(200) NULL, --分类描述
+SORT_REMARK                                       VARCHAR(512) NULL, --分类描述
 SORT_STATUS                                       CHAR(1) NOT NULL, --分类状态（是否发布）
 CREATE_USER                                       VARCHAR(100) NOT NULL, --创建人
 CREATE_DATE                                       CHAR(8) NOT NULL, --创建日期
@@ -52,8 +52,8 @@ CONSTRAINT DBM_SORT_INFO_PK PRIMARY KEY(SORT_ID)   );
 DROP TABLE IF EXISTS DBM_CODE_TYPE_INFO ;
 CREATE TABLE DBM_CODE_TYPE_INFO(
 CODE_TYPE_ID                                      BIGINT default 0 NOT NULL, --代码类主键
-CODE_ENCODE                                       VARCHAR(100) NOT NULL, --代码编码
 CODE_TYPE_NAME                                    VARCHAR(512) NOT NULL, --代码类名
+CODE_ENCODE                                       VARCHAR(100) NULL, --代码编码
 CODE_REMARK                                       VARCHAR(512) NULL, --代码描述
 CODE_STATUS                                       CHAR(1) NOT NULL, --代码状态（是否发布）
 CREATE_USER                                       VARCHAR(100) NOT NULL, --创建人
@@ -65,11 +65,11 @@ CONSTRAINT DBM_CODE_TYPE_INFO_PK PRIMARY KEY(CODE_TYPE_ID)   );
 DROP TABLE IF EXISTS DBM_CODE_ITEM_INFO ;
 CREATE TABLE DBM_CODE_ITEM_INFO(
 CODE_ITEM_ID                                      BIGINT default 0 NOT NULL, --代码项主键
-CODE_ENCODE                                       VARCHAR(100) NOT NULL, --代码编码
+CODE_ENCODE                                       VARCHAR(100) NULL, --代码编码
 CODE_ITEM_NAME                                    VARCHAR(512) NOT NULL, --代码项名
 CODE_VALUE                                        VARCHAR(80) NULL, --代码值
 DBM_LEVEL                                         VARCHAR(100) NOT NULL, --层级
-CODE_REMARK                                       VARCHAR(512) NULL, --代码描述
+CODE_REMARK                                       VARCHAR(200) NULL, --代码描述
 CODE_TYPE_ID                                      BIGINT default 0 NOT NULL, --代码类主键
 CONSTRAINT DBM_CODE_ITEM_INFO_PK PRIMARY KEY(CODE_ITEM_ID)   );
 

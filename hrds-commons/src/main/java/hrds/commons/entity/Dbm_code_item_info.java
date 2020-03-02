@@ -32,7 +32,7 @@ public class Dbm_code_item_info extends ProjectTableEntity
 	}
 	@DocBean(name ="code_item_id",value="代码项主键:",dataType = Long.class,required = true)
 	private Long code_item_id;
-	@DocBean(name ="code_encode",value="代码编码:",dataType = String.class,required = true)
+	@DocBean(name ="code_encode",value="代码编码:",dataType = String.class,required = false)
 	private String code_encode;
 	@DocBean(name ="code_item_name",value="代码项名:",dataType = String.class,required = true)
 	private String code_item_name;
@@ -40,7 +40,7 @@ public class Dbm_code_item_info extends ProjectTableEntity
 	private String code_value;
 	@DocBean(name ="dbm_level",value="层级:",dataType = String.class,required = true)
 	private String dbm_level;
-	@DocBean(name ="code_remark",value="代码描述:",dataType = String.class,required = true)
+	@DocBean(name ="code_remark",value="代码描述:",dataType = String.class,required = false)
 	private String code_remark;
 	@DocBean(name ="code_type_id",value="代码类主键:",dataType = Long.class,required = true)
 	private Long code_type_id;
