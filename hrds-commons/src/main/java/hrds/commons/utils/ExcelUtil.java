@@ -274,7 +274,7 @@ public class ExcelUtil {
     private static Object getValue(Cell cell) {
         //如果当前单元格为空，则加入""，保持列号一致
         if (null == cell) {
-            return null;
+            return "";
         }
         Object value;
         switch (cell.getCellType()) {
