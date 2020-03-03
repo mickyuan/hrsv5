@@ -1,16 +1,28 @@
-package hrds.agent.trans.biz.objectcollect;
+package hrds.agent.trans.biz.objectCollect;
 
 import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.TypeReference;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
+import fd.ng.core.annotation.Return;
+import fd.ng.core.utils.JsonUtil;
+import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.JobParamBean;
 import hrds.agent.job.biz.bean.ObjectCollectParamBean;
 import hrds.agent.job.biz.core.JobFactory;
 import hrds.commons.base.AgentBaseAction;
-import hrds.commons.entity.*;
+import hrds.commons.codes.IsFlag;
+import hrds.commons.entity.Object_collect;
+import hrds.commons.exception.BusinessException;
+import hrds.commons.utils.ConnUtil;
+import hrds.commons.utils.PackUtil;
+import hrds.commons.utils.xlstoxml.Xls2xml;
 
+import java.lang.reflect.Type;
 import java.util.List;
+import java.util.Map;
 
 @DocClass(desc = "接收页面定义的参数执行object采集", author = "zxz", createdate = "2019/10/23 16:29")
 public class ObjectCollectJob extends AgentBaseAction {
@@ -33,5 +45,30 @@ public class ObjectCollectJob extends AgentBaseAction {
 		//3.使用JobFactory工厂类调用后台方法
 		JobFactory.newInstance(null, null, new JobParamBean(),
 				"", null).runJob();
+	}
+
+	@Method(desc = "解析半结构化采集数据字典", logicStep = "")
+	@Param(name = "objectCollectParam", desc = "半结构化采集参数", range = "不为空")
+	@Return(desc = "", range = "")
+	public String parseObjectCollectDataDictionary(String objectCollectParam) throws Exception {
+		Type type = new TypeReference<Map<String, String>>() {
+		}.getType();
+		Map<String, String> objectCollectMap = JsonUtil.toObject(objectCollectParam, type);
+		String xmlName = ConnUtil.getDataBaseFile("", "",
+				objectCollectMap.get("file_path"), "");
+		JSONObject jsonData = new JSONObject();
+		if (StringUtil.isNotBlank(objectCollectMap.get("is_dictionary"))) {
+			if (IsFlag.Shi == (IsFlag.ofEnumByCode(objectCollectMap.get("is_dictionary")))) {
+				Xls2xml.toXml(objectCollectMap.get("file_path"), xmlName);
+				jsonData = ConnUtil.getTableToXML2(xmlName);
+			} else if (IsFlag.Fou == (IsFlag.ofEnumByCode(objectCollectMap.get("is_dictionary")))) {
+				jsonData = ConnUtil.getTableFromJson(objectCollectMap.get("file_path"),
+						objectCollectMap.get("data_date"), objectCollectMap.get("file_suffix"));
+			} else {
+				throw new BusinessException("字段is_dictionary不为是否标志，请检查：is_dictionary:"
+						+ objectCollectMap.get("is_dictionary"));
+			}
+		}
+		return PackUtil.packMsg(jsonData.toString());
 	}
 }
