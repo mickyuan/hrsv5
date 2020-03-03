@@ -252,7 +252,13 @@ public class ExcelUtil {
             List<Object> columns = new ArrayList<>();
             for (int j = 0; j < row.getLastCellNum(); j++) {
                 Cell cell = row.getCell(j);
-                columns.add(getValue(cell));
+                try {
+                    columns.add(getValue(cell));
+                } catch (IllegalStateException e) {
+                    //下表从0开始,行和列提示需要+1
+                    throw new BusinessException("获取excel单元格数据失败!" +
+                            " sheet:" + sheet.getSheetName() + "行:" + ++i + "列:" + ++j);
+                }
             }
             list.add(columns);
         }
@@ -271,7 +277,7 @@ public class ExcelUtil {
     @Method(desc = "解析单元格中的值", logicStep = "解析单元格中的值")
     @Param(name = "cell", desc = "单元格", range = "Cell")
     @Return(desc = "单元格内的值", range = "单元格内的值")
-    private static Object getValue(Cell cell) {
+    private static Object getValue(Cell cell) throws IllegalStateException {
         //如果当前单元格为空，则加入""，保持列号一致
         if (null == cell) {
             return "";
@@ -297,12 +303,7 @@ public class ExcelUtil {
                 value = cell.getRichStringCellValue().getString();
                 break;
             case Cell.CELL_TYPE_FORMULA:
-                try {
-                    value = String.valueOf(cell.getRichStringCellValue());
-                } catch (IllegalStateException e) {
-                    throw new BusinessException("获取单元格数据失败! sheet页面:" + cell.getSheet() +
-                            "行:" + cell.getRow());
-                }
+                value = String.valueOf(cell.getRichStringCellValue());
                 break;
             case Cell.CELL_TYPE_BLANK:
                 value = "";
