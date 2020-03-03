@@ -677,7 +677,7 @@ public class AgentListAction extends BaseAction {
 
 		//return sourceDBConfObj.toJSONString();
 		//3、调用工具类，发送信息，接收agent端响应状态码，如果发送失败，则抛出异常给前端
-		String methodName = AgentActionUtil.SENDDBCOLLCTTASKINFO;
+		String methodName = AgentActionUtil.SENDJDBCOLLECTTASKINFO;
 		//TODO 前端调用这个方法应该传入跑批日期，作业调度同样
 		//TODO 由于目前定义作业还没有原型，因此暂时手动将跑批日期设为当前日期
 		SendMsgUtil.sendDBCollectTaskInfo(sourceDBConfObj.getLong("database_id"),

@@ -12,6 +12,7 @@ import hrds.agent.job.biz.bean.JobStatusInfo;
 import hrds.agent.job.biz.bean.MetaInfoBean;
 import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.constant.RunStatusConstant;
+import hrds.agent.job.biz.core.ftpConsumer.FtpConsumerThread;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.agent.job.biz.utils.ProductFileUtil;
 import hrds.commons.codes.FtpRule;
@@ -29,6 +30,7 @@ import org.apache.commons.logging.LogFactory;
 import java.io.File;
 import java.util.List;
 import java.util.Vector;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
@@ -91,6 +93,16 @@ public class FtpCollectJobImpl implements JobInterface {
 		log.info("开始执行ftp采集，根据当前任务id放入线程");
 		mapJob.put(ftpId, Thread.currentThread());
 		try {
+			//如果消费线程不存在或者不存活，重新开启消费线程
+			if (mapJob.get(ftpId + "_ftpConsumerThread") == null || !mapJob.get(ftpId + "_ftpConsumerThread").isAlive()) {
+				log.info("启动实时消费进行，将数据batch进ftp已传输表数据库");
+				ArrayBlockingQueue<String> queue = new ArrayBlockingQueue<>(50000);
+				FtpConsumerThread.queueMap.put(ftpId, queue);
+				//启动avro消费线程
+				Thread consumerThread = new FtpConsumerThread(ftpId);
+				consumerThread.start();
+				mapJob.put(ftpId + "_ftpConsumerThread", consumerThread);
+			}
 			while (is_real_time) {
 				//3.判断是否是实时读取，如果不是实时读取，只进一次此循环就会退出
 				if (IsFlag.Fou.getCode().equals(is_read_realtime)) {
@@ -153,7 +165,7 @@ public class FtpCollectJobImpl implements JobInterface {
 				try {
 					TimeUnit.SECONDS.sleep(realtime_interval);
 				} catch (InterruptedException e) {
-					log.error("线程休眠异常", e);
+					log.error("线程休眠异常，请检查是否是重复发送实时ftp采集任务", e);
 				}
 			}
 			jobStatus.setRunStatus(RunStatusConstant.SUCCEED.getCode());
@@ -166,6 +178,14 @@ public class FtpCollectJobImpl implements JobInterface {
 		jobStatus.setEndDate(DateUtil.getSysDate());
 		//8.任务结束，根据当前任务id移除线程
 		mapJob.remove(ftpId);
+		//告诉消费端，当前任务结束了
+		try {
+			JSONObject object = new JSONObject();
+			object.put("end", true);
+			FtpConsumerThread.queueMap.get(ftpId).put(object.toJSONString());
+		} catch (InterruptedException e) {
+			log.info("告诉同步程序，当前任务结束被重新发送过来的任务打断",e);
+		}
 		//记录作业的状态
 		ProductFileUtil.createStatusFile(statusFilePath, JSONObject.toJSONString(jobStatus));
 		log.info("任务结束，根据当前任务id移除线程");
@@ -234,6 +254,7 @@ public class FtpCollectJobImpl implements JobInterface {
 	@Param(name = "fileNameHTreeMap", desc = "mapDB数据库表的操作类", range = "不可为空")
 	private void transferGet(String ftpDir, String destDir, SftpOperate sftp, String isUnzip, String deCompressWay,
 	                         String fileSuffix, MapDBHelper mapDBHelper, ConcurrentMap<String, String> fileNameHTreeMap) {
+		JSONObject object = new JSONObject();
 		//1.验证本地需要传输的目录文件是否存在，不存在则创建
 		boolean flag = validateDirectory(destDir);
 		if (!flag) {
@@ -292,6 +313,15 @@ public class FtpCollectJobImpl implements JobInterface {
 						if (isSuccessful) {
 							fileNameHTreeMap.put(tmpFtpDir, lsEntry.getAttrs().getMtimeString());
 							mapDBHelper.commit();
+							object.put("fileName", lsEntry.getFilename());
+							object.put("absolutePath", tmpDestDir);
+							object.put("md5", lsEntry.getAttrs().getMtimeString());
+							object.put("ftpDate", DateUtil.getSysDate());
+							object.put("ftpTime", DateUtil.getSysTime());
+							object.put("end",false);
+							FtpConsumerThread.queueMap.get(ftp_collect.getFtp_id()
+									.toString()).put(object.toJSONString());
+							object.clear();
 						} else {
 							throw new BusinessException("解压文件失败！！！");
 						}
@@ -318,6 +348,7 @@ public class FtpCollectJobImpl implements JobInterface {
 	@Param(name = "fileNameHTreeMap", desc = "mapDB数据库表的操作类", range = "不可为空")
 	private void transferPut(String ftpDir, String localPath, SftpOperate sftp, String fileSuffix,
 	                         MapDBHelper mapDBHelper, ConcurrentMap<String, String> fileNameHTreeMap) {
+		JSONObject object = new JSONObject();
 		//数据可访问权限处理方式：此方法不需要对数据可访问权限处理
 		try {
 			//1.创建远程需要ftp的目录
@@ -353,14 +384,28 @@ public class FtpCollectJobImpl implements JobInterface {
 					} else {
 						//5.是文件则调用sftp，推送文件到远程服务器，存到mapDB，提交mapDB
 						if (StringUtil.isBlank(fileSuffix) || fileName.endsWith(fileSuffix)) {
-							sftp.transferPutFile(file.getAbsolutePath(), tmpFtpDir);
+							String absolutePath = file.getAbsolutePath();
+							sftp.transferPutFile(absolutePath, tmpFtpDir);
 							//使用MD5算增量
 							if (JobConstant.FILECHANGESTYPEMD5) {
-								fileNameHTreeMap.put(file.getAbsolutePath(), MD5Util.md5File(file));
+								String md5 = MD5Util.md5File(file);
+								fileNameHTreeMap.put(absolutePath, md5);
+								object.put("md5", md5);
 							} else {
-								fileNameHTreeMap.put(file.getAbsolutePath(), String.valueOf(file.lastModified()));
+								String lastModified = String.valueOf(file.lastModified());
+								fileNameHTreeMap.put(absolutePath, lastModified);
+								//这个值是存ftp传输表，为了统一取值，这里的key使用md5
+								object.put("md5", lastModified);
 							}
 							mapDBHelper.commit();
+							object.put("fileName", file.getName());
+							object.put("absolutePath", absolutePath);
+							object.put("ftpDate", DateUtil.getSysDate());
+							object.put("ftpTime", DateUtil.getSysTime());
+							object.put("end",false);
+							FtpConsumerThread.queueMap.get(ftp_collect.getFtp_id()
+									.toString()).put(object.toJSONString());
+							object.clear();
 						}
 					}
 				}

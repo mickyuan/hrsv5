@@ -73,7 +73,7 @@ public class AgentServerInfo extends AgentBaseAction {
 		List<Map<String,String>> list = new ArrayList<>();
 		//获取操作系统的名称
 		String osName = SystemUtil.OS_NAME;
-		log.info("获取到了操作系统的名称============" + osName);
+//		log.info("获取到了操作系统的名称============" + osName);
 		//2.取到文件和文件夹则进行遍历
 		if (file_array != null && file_array.length > 0) {
 			for (File file : file_array) {
