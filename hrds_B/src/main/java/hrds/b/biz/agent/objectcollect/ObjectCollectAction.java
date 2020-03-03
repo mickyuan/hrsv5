@@ -18,7 +18,6 @@ import hrds.commons.codes.CollectDataType;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.ObjectCollectType;
 import hrds.commons.codes.OperationType;
-import hrds.commons.communication.HrdsSendMsg;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.AgentActionUtil;
@@ -631,7 +630,6 @@ public class ObjectCollectAction extends BaseAction {
 					dictionaryList.add(tableMap);
 				}
 				dictionaryMap.put("jsonarray", JsonUtil.toJson(dictionaryList));
-				HrdsSendMsg agent = new HrdsSendMsg();
 				// 2.调用工具类获取本次访问的agentserver端url
 				String url = AgentActionUtil.getUrl(agent_id, getUserId(),
 						AgentActionUtil.WRITEDICTIONARY);
@@ -836,7 +834,7 @@ public class ObjectCollectAction extends BaseAction {
 					"4.根据en_name查询对象采集对应信息表的英文名称是否重复")
 	@Param(name = "object_collect_task_array", desc = "多条对象采集对应信息表的JSONArray格式的字符串，" +
 			"其中object_collect_task表不能为空的列所对应的值不能为空", range = "不能为空")
-	public void saveObjectCollectTask(String object_collect_task_array) {
+	public void saveObjectCollectTaskInfo(String object_collect_task_array) {
 		//数据可访问权限处理方式：该表没有对应的用户访问权限限制
 		//1.获取json数组转成对象采集对应信息表的集合
 		List<Object_collect_task> object_collect_tasks = JSONArray
@@ -961,7 +959,7 @@ public class ObjectCollectAction extends BaseAction {
 
 	@Method(desc = "查询solr配置信息", logicStep = "1.数据可访问权限处理方式：该表没有对应的用户访问权限限制" +
 			"2.查询solr配置信息")
-	@Param(name = "odc_id", desc = "对象采集id", range = "不可为空")
+	@Param(name = "ocs_id", desc = "对象采集任务编号", range = "新增对象采集任务时生成")
 	@Return(desc = "返回solr配置信息", range = "无限制")
 	public List<Map<String, Object>> searchSolrConfInfo(long ocs_id) {
 		// 1.数据可访问权限处理方式：该表没有对应的用户访问权限限制
