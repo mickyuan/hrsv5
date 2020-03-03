@@ -69,7 +69,7 @@ CODE_ENCODE                                       VARCHAR(100) NULL, --代码编
 CODE_ITEM_NAME                                    VARCHAR(512) NOT NULL, --代码项名
 CODE_VALUE                                        VARCHAR(80) NULL, --代码值
 DBM_LEVEL                                         VARCHAR(100) NOT NULL, --层级
-CODE_REMARK                                       VARCHAR(200) NULL, --代码描述
+CODE_REMARK                                       VARCHAR(512) NULL, --代码描述
 CODE_TYPE_ID                                      BIGINT default 0 NOT NULL, --代码类主键
 CONSTRAINT DBM_CODE_ITEM_INFO_PK PRIMARY KEY(CODE_ITEM_ID)   );
 
