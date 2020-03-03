@@ -1,6 +1,5 @@
 package hrds.agent.trans.biz.unstructuredfilecollect;
 
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
@@ -14,6 +13,7 @@ import hrds.commons.base.AgentBaseAction;
 import hrds.commons.entity.File_source;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
+import hrds.commons.utils.PackUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,19 +29,22 @@ public class FileCollectJob extends AgentBaseAction {
 			logicStep = "1.获取json数组转成File_source的集合" +
 					"2.校验对象的值是否正确" +
 					"3.使用JobFactory工厂类调用后台方法")
-	@Param(name = "fileCollectParamBean", desc = "文件采集需要的参数实体bean",
-			isBean = true, range = "所有这张表不能为空的字段的值必须有，为空则会抛异常，" +
-			"file_source_array对应的表File_source这个实体不能为空的字段的值必须有，为空则会抛异常")
-
-	public void execute(FileCollectParamBean fileCollectParamBean) {
+	@Param(name = "fileCollectTaskInfo", desc = "文件采集需要的参数实体bean的json对象字符串",
+			range = "所有这张表不能为空的字段的值必须有，为空则会抛异常，" +
+					"file_sourceList对应的表File_source这个实体不能为空的字段的值必须有，为空则会抛异常")
+	public void execute(String fileCollectTaskInfo) {
+		FileCollectParamBean fileCollectParamBean = JSONObject.parseObject(
+				PackUtil.unpackMsg(fileCollectTaskInfo).get("msg"), FileCollectParamBean.class);
+		//将页面传递过来的压缩信息解压写文件
+		FileUtil.createFile(Constant.MESSAGEFILE + fileCollectParamBean.getFcs_id(),
+				PackUtil.unpackMsg(fileCollectTaskInfo).get("msg"));
 		ThreadPoolExecutor executor = null;
 		try {
 			//初始化当前任务需要保存的文件的根目录
 			String[] paths = {Constant.MAPDBPATH, Constant.JOBINFOPATH, Constant.FILEUNLOADFOLDER};
 			FileUtil.initPath(fileCollectParamBean.getFcs_id(), paths);
 			//1.获取json数组转成File_source的集合
-			List<File_source> fileSourceList = JSONArray.parseArray(fileCollectParamBean.getFile_source_array(),
-					File_source.class);
+			List<File_source> fileSourceList = fileCollectParamBean.getFile_sourceList();
 			//使用多线程按照文件夹采集，核心线程5个，最大线程10个，队列里面50个，超出会报错
 			executor = new ThreadPoolExecutor(5, 10,
 					5L, TimeUnit.MINUTES, new LinkedBlockingQueue<>(50));

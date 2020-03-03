@@ -1,6 +1,7 @@
 package hrds.b.biz.agent.unstructuredfilecollect;
 
 import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
@@ -18,12 +19,15 @@ import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.AgentActionUtil;
 import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.key.PrimayKeyGener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
 
 @DocClass(desc = "非结构化文件采集接口类，处理非机构化采集的增改查", author = "zxz", createdate = "2019/9/11 14:47")
 public class UnstructuredFileCollectAction extends BaseAction {
+	private static final Logger LOGGER = LoggerFactory.getLogger(UnstructuredFileCollectAction.class);
 
 	@Method(desc = "该方法在页面点击添加非结构化文件采集时调用，获取非结构化采集配置页面初始化的值" +
 			",当为编辑时，则同时返回回显的值",
@@ -199,6 +203,8 @@ public class UnstructuredFileCollectAction extends BaseAction {
 		DboExecute.updatesOrThrow("更新表" + File_collect_set.TableName + "失败",
 				"UPDATE " + File_collect_set.TableName + " SET is_sendok = ?"
 						+ " WHERE fcs_id = ? ", IsFlag.Shi.getCode(), fcs_id);
+		//发送数据到agent进行执行
+		executeJob(fcs_id);
 	}
 
 	@Method(desc = "执行文件采集", logicStep = "")
@@ -225,26 +231,32 @@ public class UnstructuredFileCollectAction extends BaseAction {
 		if (result.isEmpty()) {
 			throw new BusinessException("查询不到数据，请检查传入的id是否正确");
 		}
+//		LOGGER.info("打印数据 " + result.toJSON());
+		JSONObject object = JSONArray.parseArray(result.toJSON()).getJSONObject(0);
 		//获取需要采集的文件源列表
 		Result source = Dbo.queryResult("SELECT * FROM " + File_source.TableName + " where fcs_id = ?", fcs_id);
+		if (source.isEmpty()) {
+			throw new BusinessException("查询不到文件源设置表数据，请检查传入的id是否正确");
+		}
+		object.put("file_sourceList", source.toJSON());
 		long agent_id = result.getLong(0, "agent_id");
 		//1.根据前端传过来的agent_id获取需要访问的url
 		String url = AgentActionUtil.getUrl(agent_id, getUserId(), AgentActionUtil.EXECUTEFILECOLLECT);
 		//调用工具类方法给agent发消息，并获取agent响应
 		//2.调用远程Agent后端代码获取Agent服务器上文件夹路径
 		HttpClient.ResponseValue resVal = new HttpClient()
-				.addData("fcs_id", result.getString(0, "fcs_id"))
-				.addData("agent_id", result.getString(0, "agent_id"))
-				.addData("fcs_name", result.getString(0, "fcs_name"))
-				.addData("host_name", result.getString(0, "host_name"))
-				.addData("system_type", result.getString(0, "system_type"))
-				.addData("is_sendok", result.getString(0, "is_sendok"))
-				.addData("is_solr", result.getString(0, "is_solr"))
-				.addData("agent_name", result.getString(0, "agent_name"))
-				.addData("source_id", result.getString(0, "source_id"))
-				.addData("datasource_name", result.getString(0, "datasource_name"))
-				.addData("dep_id", result.getString(0, "dep_id"))
-				.addData("file_source_array", source.toJSON())
+//				.addData("fcs_id", result.getString(0, "fcs_id"))
+//				.addData("agent_id", result.getString(0, "agent_id"))
+//				.addData("fcs_name", result.getString(0, "fcs_name"))
+//				.addData("host_name", result.getString(0, "host_name"))
+//				.addData("system_type", result.getString(0, "system_type"))
+//				.addData("is_sendok", result.getString(0, "is_sendok"))
+//				.addData("is_solr", result.getString(0, "is_solr"))
+//				.addData("agent_name", result.getString(0, "agent_name"))
+//				.addData("source_id", result.getString(0, "source_id"))
+//				.addData("datasource_name", result.getString(0, "datasource_name"))
+//				.addData("dep_id", result.getString(0, "dep_id"))
+				.addData("fileCollectTaskInfo", object.toJSONString())
 				.post(url);
 		ActionResult ar = JsonUtil.toObjectSafety(resVal.getBodyString(), ActionResult.class)
 				.orElseThrow(() -> new BusinessException("连接" + url + "服务异常"));

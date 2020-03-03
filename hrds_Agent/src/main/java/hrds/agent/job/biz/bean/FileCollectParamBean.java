@@ -2,10 +2,12 @@ package hrds.agent.job.biz.bean;
 
 import fd.ng.core.annotation.DocBean;
 import fd.ng.core.annotation.DocClass;
+import hrds.commons.entity.File_source;
 import hrds.commons.utils.Constant;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.Serializable;
+import java.util.List;
 
 @DocClass(desc = "文件采集需要的参数实体bean", author = "zxz", createdate = "2019/10/31 9:41")
 public class FileCollectParamBean implements Serializable {
@@ -49,9 +51,8 @@ public class FileCollectParamBean implements Serializable {
 	private String fcs_name;
 	@DocBean(name = "dep_id", value = "部门id", dataType = String.class, required = true)
 	private String dep_id;
-	@DocBean(name = "file_source_array", value = "多条非结构化文件采集文件源设置表实体合集的json数组字符串",
-			dataType = String.class, required = true)
-	private String file_source_array;
+	@DocBean(name = "file_sourceList", value = "文件源设置表的集合", dataType = List.class, required = true)
+	private List<File_source> file_sourceList;
 
 	public String getSysTime() {
 		return sysTime;
@@ -173,11 +174,11 @@ public class FileCollectParamBean implements Serializable {
 		this.dep_id = dep_id;
 	}
 
-	public String getFile_source_array() {
-		return file_source_array;
+	public List<File_source> getFile_sourceList() {
+		return file_sourceList;
 	}
 
-	public void setFile_source_array(String file_source_array) {
-		this.file_source_array = file_source_array;
+	public void setFile_sourceList(List<File_source> file_sourceList) {
+		this.file_sourceList = file_sourceList;
 	}
 }

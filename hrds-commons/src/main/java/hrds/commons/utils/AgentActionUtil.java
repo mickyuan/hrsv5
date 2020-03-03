@@ -35,7 +35,7 @@ public class AgentActionUtil {
 	//agent调用海云服务端保存采集情况信息表
 	public static final String SAVECOLLECTCASE = "/hrds/server/saveCollectCase";
 	//调用agent端执行文件采集
-	public static final String EXECUTEFILECOLLECT = "/hrds/agent/trans/biz/unstructuredFileCollect/execute";
+	public static final String EXECUTEFILECOLLECT = "/hrds/agent/trans/biz/unstructuredfilecollect/execute";
 	//测试并行抽取SQL
 	public static final String TESTPARALLELSQL = "/hrds/agent/trans/biz/testParallelSQL";
 	//获取单表数据总量
