@@ -2,7 +2,6 @@ package hrds.commons.utils;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.sun.xml.internal.ws.util.UtilException;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import hrds.commons.codes.DatabaseType;
@@ -375,7 +374,7 @@ public class ConnUtil {
 		return uri.getHost();
 	}
 
-	public static JSONObject getTableToXML2(String filename) throws UtilException {
+	public static JSONObject getTableToXML2(String filename) {
 
 		return loadStoreInfoXML2(filename);
 	}
@@ -390,7 +389,7 @@ public class ConnUtil {
 			try {
 				db = dbf.newDocumentBuilder();
 			} catch (ParserConfigurationException e) {
-				throw new UtilException("创建文档管理器失败", e);
+				throw new BusinessException("创建文档管理器失败");
 			}
 			Document doc = db.parse(f);
 			Element root = (Element) doc.getElementsByTagName("database").item(0);
@@ -443,10 +442,8 @@ public class ConnUtil {
 			}
 			jsonTable.put("tablename", jsonArray);
 			return jsonTable;
-		} catch (UtilException ex) {
-			throw ex;
 		} catch (Exception ex) {
-			throw new UtilException("加载信息异常！ ", ex);
+			throw new BusinessException("加载信息异常！ ");
 		}
 	}
 
