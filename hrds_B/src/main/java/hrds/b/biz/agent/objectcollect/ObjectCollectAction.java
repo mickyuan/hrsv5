@@ -563,9 +563,6 @@ public class ObjectCollectAction extends BaseAction {
 				collect_task.add(Dbo.db());
 			} else {
 				collect_task.setOcs_id(collect_task.getOcs_id());
-				if (StringUtil.isBlank(collect_task.getUpdatetype())) {
-					collect_task.setCollect_data_type("VARCHAR(255)");
-				}
 				collect_task.update(Dbo.db());
 			}
 		}
