@@ -19,7 +19,7 @@ BUSINESS_DEF                                      VARCHAR(2048) NULL, --业务�
 BUSINESS_RULE                                     VARCHAR(2048) NULL, --业务规则
 DBM_DOMAIN                                        VARCHAR(200) NOT NULL, --值域
 NORM_BASIS                                        VARCHAR(2048) NULL, --标准依据
-DATA_TYPE                                         CHAR(10) NULL, --数据类别
+DATA_TYPE                                         CHAR(3) NULL, --数据类别
 CODE_TYPE_ID                                      BIGINT default 0 NULL, --代码类主键
 COL_LEN                                           BIGINT default 0 NOT NULL, --字段长度
 DECIMAL_POINT                                     BIGINT default 0 NOT NULL, --小数长度
