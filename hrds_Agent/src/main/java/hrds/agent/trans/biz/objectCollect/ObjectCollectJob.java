@@ -51,16 +51,17 @@ public class ObjectCollectJob extends AgentBaseAction {
 	@Param(name = "objectCollectParam", desc = "半结构化采集参数", range = "不为空")
 	@Return(desc = "", range = "")
 	public String parseObjectCollectDataDictionary(String objectCollectParam) throws Exception {
+		Map<String, String> unpackMsg = PackUtil.unpackMsg(objectCollectParam);
 		Type type = new TypeReference<Map<String, String>>() {
 		}.getType();
-		Map<String, String> objectCollectMap = JsonUtil.toObject(objectCollectParam, type);
+		Map<String, String> objectCollectMap = JsonUtil.toObject(unpackMsg.get("msg"), type);
 		String xmlName = ConnUtil.getDataBaseFile("", "",
 				objectCollectMap.get("file_path"), "");
 		JSONObject jsonData = new JSONObject();
 		if (StringUtil.isNotBlank(objectCollectMap.get("is_dictionary"))) {
 			if (IsFlag.Shi == (IsFlag.ofEnumByCode(objectCollectMap.get("is_dictionary")))) {
 				Xls2xml.toXml(objectCollectMap.get("file_path"), xmlName);
-				jsonData = ConnUtil .getTableToXML2(xmlName);
+				jsonData = ConnUtil.getTableToXML2(xmlName);
 			} else if (IsFlag.Fou == (IsFlag.ofEnumByCode(objectCollectMap.get("is_dictionary")))) {
 				jsonData = ConnUtil.getTableFromJson(objectCollectMap.get("file_path"),
 						objectCollectMap.get("data_date"), objectCollectMap.get("file_suffix"));
@@ -69,6 +70,6 @@ public class ObjectCollectJob extends AgentBaseAction {
 						+ objectCollectMap.get("is_dictionary"));
 			}
 		}
-		return PackUtil.packMsg(jsonData.toString());
+		return PackUtil.packMsg(JsonUtil.toJson(jsonData));
 	}
 }
