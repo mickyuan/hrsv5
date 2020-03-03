@@ -135,6 +135,21 @@ public class DbmSortInfoAction extends BaseAction {
                 " where sort_id = ? and create_user = ?", sort_id, getUserId().toString());
     }
 
+    @Method(desc = "根据发布状态获取分类信息",
+            logicStep = "根据发布状态获取分类信息")
+    @Param(name = "sort_status", desc = "发布状态", range = "IsFlag 0:未发布,1:已发布")
+    @Return(desc = "返回值说明", range = "返回值取值范围")
+    public Map<String, Object> getDbmSortInfoByStatus(String sort_status) {
+        Map<String, Object> dbmSortInfoMap = new HashMap<>();
+        //1.检查分类是否存在
+        List<Dbm_sort_info> dbmSortInfos = Dbo.queryList(Dbm_sort_info.class,
+                "select * from " + Dbm_sort_info.TableName + " where sort_status = ? and create_user = ?",
+                sort_status, getUserId().toString());
+        dbmSortInfoMap.put("dbmSortInfos", dbmSortInfos);
+        dbmSortInfoMap.put("totalSize", dbmSortInfos.size());
+        return dbmSortInfoMap;
+    }
+
     @Method(desc = "获取所有根分类信息", logicStep = "获取所有根分类信息")
     @Return(desc = "所有根分类信息", range = "所有根分类信息")
     public Map<String, Object> getDbmRootSortInfo() {
@@ -173,7 +188,7 @@ public class DbmSortInfoAction extends BaseAction {
 
     @Method(desc = "根据标准分类id数组批量发布标准分类",
             logicStep = "根据标准分类id数组批量发布标准分类")
-    @Param(name = "sort_id_s", desc = "标准分类id", range = "long类型数组")
+    @Param(name = "sort_id_s", desc = "标准分类id数组", range = "long类型数组")
     public void batchReleaseDbmSortInfo(Long[] sort_id_s) {
         SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
         asmSql.clean();

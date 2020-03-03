@@ -8,10 +8,12 @@ import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DefaultPageImpl;
 import fd.ng.db.jdbc.Page;
+import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Dbm_code_type_info;
+import hrds.commons.entity.Dbm_normbasic;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.key.PrimayKeyGener;
@@ -113,13 +115,65 @@ public class DbmCodeTypeInfoAction extends BaseAction {
             logicStep = "根据Id获取分类信息")
     @Param(name = "code_type_id", desc = "分类Id", range = "long类型")
     @Return(desc = "返回值说明", range = "返回值取值范围")
-    public Optional<Dbm_code_type_info> getDbmSortInfoById(long code_type_id) {
+    public Optional<Dbm_code_type_info> getDbmCodeTypeInfoById(long code_type_id) {
         //1.检查分类是否存在
         if (checkCodeTypeIdIsNotExist(code_type_id)) {
             throw new BusinessException("查询的分类已经不存在! code_type_id=" + code_type_id);
         }
         return Dbo.queryOneObject(Dbm_code_type_info.class, "select * from " + Dbm_code_type_info.TableName +
                 " where code_type_id = ?", code_type_id);
+    }
+
+    @Method(desc = "根据发布状态获取代码分类信息",
+            logicStep = "根据发布状态获取代码分类信息")
+    @Param(name = "code_status", desc = "发布状态", range = "IsFlag 0:未发布,1:已发布")
+    @Return(desc = "返回值说明", range = "返回值取值范围")
+    public Map<String, Object> getDbmCodeTypeInfoByStatus(String code_status) {
+        Map<String, Object> dbmDbmCodeTypeInfoMap = new HashMap<>();
+        List<Dbm_code_type_info> dbmCodeTypeInfos = Dbo.queryList(Dbm_code_type_info.class,
+                "select * from " + Dbm_code_type_info.TableName +
+                        " where code_status = ? and create_user = ?", code_status, getUserId().toString());
+        dbmDbmCodeTypeInfoMap.put("dbmCodeTypeInfos", dbmCodeTypeInfos);
+        dbmDbmCodeTypeInfoMap.put("totalSize", dbmCodeTypeInfos.size());
+        return dbmDbmCodeTypeInfoMap;
+    }
+
+    @Method(desc = "根据代码分类id发布代码分类",
+            logicStep = "根据代码分类id发布代码分类")
+    @Param(name = "code_type_id", desc = "代码分类id", range = "long类型")
+    public void releaseDbmCodeTypeInfoById(long code_type_id) {
+        int execute = Dbo.execute("update " + Dbm_code_type_info.TableName + " set code_status = ? where" +
+                        " code_type_id = ? ",
+                IsFlag.Shi.getCode(), code_type_id);
+        if (execute != 1) {
+            throw new BusinessException("标准分类发布失败！code_type_id" + code_type_id);
+        }
+    }
+
+    @Method(desc = "根据代码分类id数组批量发布代码分类",
+            logicStep = "根据代码分类id数组批量发布代码分类")
+    @Param(name = "code_type_id_s", desc = "代码分类id数组", range = "long类型数组")
+    public void batchReleaseDbmCodeTypeInfo(Long[] code_type_id_s) {
+        SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
+        asmSql.clean();
+        asmSql.addSql("update " + Dbm_code_type_info.TableName + " set code_status = ? where create_user=?");
+        asmSql.addParam(IsFlag.Shi.getCode());
+        asmSql.addParam(getUserId().toString());
+        asmSql.addORParam("code_type_id ", code_type_id_s);
+        Dbo.execute(asmSql.sql(), asmSql.params());
+    }
+
+    @Method(desc = "根据标准id数组批量删除标准",
+            logicStep = "根据标准id数组批量删除标准")
+    @Param(name = "sort_id_s", desc = "标准分类id", range = "long类型数组")
+    public void batchDeleteDbmCodeTypeInfo(Long[] code_type_id_s) {
+        SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
+        asmSql.clean();
+        asmSql.addSql("delete from " + Dbm_code_type_info.TableName + " where create_user=?");
+        asmSql.addParam(IsFlag.Shi.getCode());
+        asmSql.addParam(getUserId().toString());
+        asmSql.addORParam("code_type_id ", code_type_id_s);
+        Dbo.execute(asmSql.sql(), asmSql.params());
     }
 
     @Method(desc = "检查代码分类id是否存在", logicStep = "检查代码分类id是否存在")
@@ -130,18 +184,6 @@ public class DbmCodeTypeInfoAction extends BaseAction {
         return Dbo.queryNumber("SELECT COUNT(code_type_id) FROM " + Dbm_code_type_info.TableName +
                 " WHERE code_type_id = ?", code_type_id).orElseThrow(() ->
                 new BusinessException("检查分类id否存在的SQL编写错误")) != 1;
-    }
-
-    @Method(desc = "根据代码分类id发布代码分类",
-            logicStep = "根据代码分类id发布代码分类")
-    @Param(name = "code_type_id", desc = "代码分类id", range = "long类型")
-    public void releaseDbmSortInfoById(long code_type_id) {
-        int execute = Dbo.execute("update " + Dbm_code_type_info.TableName + " set code_status = ? where" +
-                        " code_type_id = ? ",
-                IsFlag.Shi.getCode(), code_type_id);
-        if (execute != 1) {
-            throw new BusinessException("标准分类发布失败！code_type_id" + code_type_id);
-        }
     }
 
     @Method(desc = "检查代码分类是否存在", logicStep = "检查代码分类是否存在")

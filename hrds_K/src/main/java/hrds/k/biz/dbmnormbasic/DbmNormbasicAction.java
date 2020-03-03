@@ -8,6 +8,7 @@ import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DefaultPageImpl;
 import fd.ng.db.jdbc.Page;
+import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.IsFlag;
@@ -174,6 +175,21 @@ public class DbmNormbasicAction extends BaseAction {
         return dbmNormbasicInfoMap;
     }
 
+    @Method(desc = "根据发布状态获取标准信息",
+            logicStep = "根据发布状态获取标准信息")
+    @Param(name = "norm_status", desc = "发布状态", range = "IsFlag 0:未发布,1:已发布")
+    @Return(desc = "返回值说明", range = "返回值取值范围")
+    public Map<String, Object> getDbmNormbasicByStatus(String norm_status) {
+        Map<String, Object> dbmNormbasicInfoMap = new HashMap<>();
+        //1.检查分类是否存在
+        List<Dbm_normbasic> dbmNormbasicInfos = Dbo.queryList(Dbm_normbasic.class,
+                "select * from " + Dbm_normbasic.TableName +
+                        " where norm_status = ? and create_user = ?", norm_status, getUserId().toString());
+        dbmNormbasicInfoMap.put("dbmNormbasicInfos", dbmNormbasicInfos);
+        dbmNormbasicInfoMap.put("totalSize", dbmNormbasicInfos.size());
+        return dbmNormbasicInfoMap;
+    }
+
     @Method(desc = "根据标准id发布标准",
             logicStep = "根据标准id发布标准")
     @Param(name = "basic_id", desc = "标准id", range = "long类型")
@@ -184,6 +200,32 @@ public class DbmNormbasicAction extends BaseAction {
         if (execute != 1) {
             throw new BusinessException("标准发布失败！basic_id" + basic_id);
         }
+    }
+
+    @Method(desc = "根据标准id数组批量发布标准",
+            logicStep = "根据标准id数组批量发布标准")
+    @Param(name = "basic_id_s", desc = "标准id数组", range = "long类型数组")
+    public void batchReleaseDbmNormbasic(Long[] basic_id_s) {
+        SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
+        asmSql.clean();
+        asmSql.addSql("update " + Dbm_normbasic.TableName + " set norm_status = ? where create_user=?");
+        asmSql.addParam(IsFlag.Shi.getCode());
+        asmSql.addParam(getUserId().toString());
+        asmSql.addORParam("basic_id ", basic_id_s);
+        Dbo.execute(asmSql.sql(), asmSql.params());
+    }
+
+    @Method(desc = "根据标准id数组批量删除标准",
+            logicStep = "根据标准id数组批量删除标准")
+    @Param(name = "sort_id_s", desc = "标准分类id", range = "long类型数组")
+    public void batchDeleteDbmNormbasic(Long[] basic_id_s) {
+        SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
+        asmSql.clean();
+        asmSql.addSql("delete from " + Dbm_normbasic.TableName + " where create_user=?");
+        asmSql.addParam(IsFlag.Shi.getCode());
+        asmSql.addParam(getUserId().toString());
+        asmSql.addORParam("basic_id ", basic_id_s);
+        Dbo.execute(asmSql.sql(), asmSql.params());
     }
 
     @Method(desc = "检查标准编号是否存在", logicStep = "检查标准编号是否存在")
