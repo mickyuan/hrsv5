@@ -77,7 +77,7 @@ public class SourceDataConfBean implements Serializable {
 	private String datasource_number;
 	@DocBean(name = "classify_num", value = "分类编号", dataType = String.class, required = true)
 	private String classify_num;
-	@DocBean(name = "collectTableBeanArray", value = "采集表配置信息数组", dataType = String.class, required = true)
+	@DocBean(name = "collectTableBeanArray", value = "采集表配置信息数组", dataType = List.class, required = true)
 	private List<CollectTableBean> collectTableBeanArray;
 	@DocBean(name = "signal_file_list", value = "信号文件入库信息集合", dataType = List.class, required = false)
 	private List<Signal_file> signal_file_list;
