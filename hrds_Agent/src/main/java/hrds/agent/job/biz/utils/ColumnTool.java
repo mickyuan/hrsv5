@@ -12,7 +12,6 @@ import hrds.agent.job.biz.constant.DataTypeConstant;
 import hrds.agent.job.biz.core.dbstage.service.CollectTableHandleParse;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.exception.AppSystemException;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
@@ -204,27 +203,33 @@ public class ColumnTool {
 		return readSchema;
 	}
 
+	/**
+	 * @param group      parquet文件group
+	 * @param columnType 字段类型
+	 * @param columname  字段名称
+	 * @param data       数据
+	 */
 	public static void addData2Group(Group group, String columnType, String columname, String data) {
 		//TODO 字段类型转换，这里要设计表
 		columnType = columnType.toLowerCase();
 		if (columnType.contains(DataTypeConstant.BOOLEAN.getMessage())) {
-			boolean dataResult = Boolean.valueOf(data.trim());
+			boolean dataResult = StringUtil.isEmpty(data) ? null : Boolean.valueOf(data.trim());
 			group.add(columname, dataResult);
 		} else if (columnType.contains(DataTypeConstant.INT8.getMessage())
 				|| columnType.equals(DataTypeConstant.BIGINT.getMessage())
 				|| columnType.equals(DataTypeConstant.LONG.getMessage())) {
-			long dataResult = StringUtil.isEmpty(data) ? 0L : Long.valueOf(data.trim());
+			long dataResult = StringUtil.isEmpty(data) ? null : Long.valueOf(data.trim());
 			group.add(columname, dataResult);
 		} else if (columnType.contains(DataTypeConstant.INT.getMessage())) {
-			int dataResult = StringUtil.isEmpty(data) ? 0 : Integer.valueOf(data.trim());
+			int dataResult = StringUtil.isEmpty(data) ? null : Integer.valueOf(data.trim());
 			group.add(columname, dataResult);
 		} else if (columnType.contains(DataTypeConstant.FLOAT.getMessage())) {
-			float dataResult = StringUtil.isEmpty(data) ? 0 : Float.valueOf(data.trim());
+			float dataResult = StringUtil.isEmpty(data) ? null : Float.valueOf(data.trim());
 			group.add(columname, dataResult);
 		} else if (columnType.contains(DataTypeConstant.DOUBLE.getMessage())
 				|| columnType.contains(DataTypeConstant.DECIMAL.getMessage())
 				|| columnType.contains(DataTypeConstant.NUMERIC.getMessage())) {
-			double dataResult = StringUtil.isEmpty(data) ? 0 : Double.valueOf(data.trim());
+			double dataResult = StringUtil.isEmpty(data) ? null : Double.valueOf(data.trim());
 			group.add(columname, dataResult);
 		} else {
 			//char与varchar都为string
