@@ -24,12 +24,12 @@ public class DbmDataImportAction extends BaseAction {
     @Return(desc = "返回值说明", range = "返回值取值范围")
     @UploadFile
     public void importExcelData(String pathName) {
-        //获取excel的Workbook对象
-//        pathName = "E:\\hyren\\hyrenserv\\hrsv5\\hrds_K\\src\\test\\java\\hrds\\k\\biz\\dbmdataimport\\upload\\基础数据标准_V2.1.xlsx";
+        //获取文件对象
         File excelFile = FileUploadUtil.getUploadedFile(pathName);
         if (!excelFile.exists()) {
             throw new BusinessException("excel文件不存在!");
         }
+        //获取excel的Workbook对象
         Workbook workbook;
         try {
             workbook = ExcelUtil.getWorkbookFromExcel(excelFile);
