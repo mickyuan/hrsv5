@@ -179,7 +179,13 @@ public class FtpCollectJobImpl implements JobInterface {
 		//8.任务结束，根据当前任务id移除线程
 		mapJob.remove(ftpId);
 		//告诉消费端，当前任务结束了
-		FtpConsumerThread.flag = true;
+		try {
+			JSONObject object = new JSONObject();
+			object.put("end", true);
+			FtpConsumerThread.queueMap.get(ftpId).put(object.toJSONString());
+		} catch (InterruptedException e) {
+			log.info("告诉同步程序，当前任务结束被重新发送过来的任务打断",e);
+		}
 		//记录作业的状态
 		ProductFileUtil.createStatusFile(statusFilePath, JSONObject.toJSONString(jobStatus));
 		log.info("任务结束，根据当前任务id移除线程");
@@ -312,6 +318,7 @@ public class FtpCollectJobImpl implements JobInterface {
 							object.put("md5", lsEntry.getAttrs().getMtimeString());
 							object.put("ftpDate", DateUtil.getSysDate());
 							object.put("ftpTime", DateUtil.getSysTime());
+							object.put("end",false);
 							FtpConsumerThread.queueMap.get(ftp_collect.getFtp_id()
 									.toString()).put(object.toJSONString());
 							object.clear();
@@ -395,6 +402,7 @@ public class FtpCollectJobImpl implements JobInterface {
 							object.put("absolutePath", absolutePath);
 							object.put("ftpDate", DateUtil.getSysDate());
 							object.put("ftpTime", DateUtil.getSysTime());
+							object.put("end",false);
 							FtpConsumerThread.queueMap.get(ftp_collect.getFtp_id()
 									.toString()).put(object.toJSONString());
 							object.clear();
