@@ -8,6 +8,7 @@ import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DefaultPageImpl;
 import fd.ng.db.jdbc.Page;
+import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.IsFlag;
@@ -88,38 +89,115 @@ public class DbmCodeTypeInfoAction extends BaseAction {
     @Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", valueIfNull = "10")
     @Return(desc = "所有分类信息", range = "所有分类信息")
     public Map<String, Object> getDbmCodeTypeInfo(int currPage, int pageSize) {
-        Map<String, Object> dbmDbmCodeTypeInfoMap = new HashMap<>();
+        Map<String, Object> dbmCodeTypeInfoMap = new HashMap<>();
         Page page = new DefaultPageImpl(currPage, pageSize);
         List<Dbm_code_type_info> dbmCodeTypeInfos =
                 Dbo.queryPagedList(Dbm_code_type_info.class, page,
                         "select * from " + Dbm_code_type_info.TableName);
-        dbmDbmCodeTypeInfoMap.put("dbmCodeTypeInfos", dbmCodeTypeInfos);
-        dbmDbmCodeTypeInfoMap.put("totalSize", page.getTotalSize());
-        return dbmDbmCodeTypeInfoMap;
+        dbmCodeTypeInfoMap.put("dbmCodeTypeInfos", dbmCodeTypeInfos);
+        dbmCodeTypeInfoMap.put("totalSize", page.getTotalSize());
+        return dbmCodeTypeInfoMap;
     }
 
     @Method(desc = "获取所有代码类信息(只获取code_type_id和code_type_name)", logicStep = "获取所有代码类信息")
     @Return(desc = "所有分类信息(只获取code_type_id和code_type_name)", range = "所有分类信息")
     public Map<String, Object> getDbmCodeTypeIdAndNameInfo() {
-        Map<String, Object> dbmDbmCodeTypeInfoMap = new HashMap<>();
+        Map<String, Object> dbmCodeTypeInfoMap = new HashMap<>();
         List<Map<String, Object>> dbmCodeTypeInfos =
                 Dbo.queryList("select code_type_id,code_type_name from " + Dbm_code_type_info.TableName);
-        dbmDbmCodeTypeInfoMap.put("dbmCodeTypeInfos", dbmCodeTypeInfos);
-        dbmDbmCodeTypeInfoMap.put("totalSize", dbmCodeTypeInfos.size());
-        return dbmDbmCodeTypeInfoMap;
+        dbmCodeTypeInfoMap.put("dbmCodeTypeInfos", dbmCodeTypeInfos);
+        dbmCodeTypeInfoMap.put("totalSize", dbmCodeTypeInfos.size());
+        return dbmCodeTypeInfoMap;
     }
 
     @Method(desc = "根据Id获取代码分类信息",
             logicStep = "根据Id获取分类信息")
     @Param(name = "code_type_id", desc = "分类Id", range = "long类型")
     @Return(desc = "返回值说明", range = "返回值取值范围")
-    public Optional<Dbm_code_type_info> getDbmSortInfoById(long code_type_id) {
+    public Optional<Dbm_code_type_info> getDbmCodeTypeInfoById(long code_type_id) {
         //1.检查分类是否存在
         if (checkCodeTypeIdIsNotExist(code_type_id)) {
             throw new BusinessException("查询的分类已经不存在! code_type_id=" + code_type_id);
         }
         return Dbo.queryOneObject(Dbm_code_type_info.class, "select * from " + Dbm_code_type_info.TableName +
                 " where code_type_id = ?", code_type_id);
+    }
+
+    @Method(desc = "根据发布状态获取代码分类信息",
+            logicStep = "根据发布状态获取代码分类信息")
+    @Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数", valueIfNull = "1")
+    @Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", valueIfNull = "10")
+    @Param(name = "code_status", desc = "发布状态", range = "IsFlag 0:未发布,1:已发布")
+    @Return(desc = "返回值说明", range = "返回值取值范围")
+    public Map<String, Object> getDbmCodeTypeInfoByStatus(int currPage, int pageSize, String code_status) {
+        Map<String, Object> dbmCodeTypeInfoMap = new HashMap<>();
+        Page page = new DefaultPageImpl(currPage, pageSize);
+        List<Dbm_code_type_info> dbmCodeTypeInfos = Dbo.queryPagedList(Dbm_code_type_info.class, page,
+                "select * from " + Dbm_code_type_info.TableName +
+                        " where code_status = ? and create_user = ?", code_status, getUserId().toString());
+        dbmCodeTypeInfoMap.put("dbmCodeTypeInfos", dbmCodeTypeInfos);
+        dbmCodeTypeInfoMap.put("totalSize", page.getTotalSize());
+        return dbmCodeTypeInfoMap;
+    }
+
+    @Method(desc = "检索代码项分类信息",
+            logicStep = "检索代码项分类信息")
+    @Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数", valueIfNull = "1")
+    @Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", valueIfNull = "10")
+    @Param(name = "search_cond", desc = "检索字符串", range = "String类型,任意值")
+    @Return(desc = "代码项分类信息列表", range = "代码项分类信息列表")
+    public Map<String, Object> searchDbmCodeTypeInfo(int currPage, int pageSize, String search_cond) {
+        Map<String, Object> dbmCodeTypeInfoMap = new HashMap<>();
+        Page page = new DefaultPageImpl(currPage, pageSize);
+        SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
+        asmSql.clean();
+        asmSql.addSql("select * from " + Dbm_code_type_info.TableName)
+                .addSql(" where create_user = ? and (").addParam(getUserId().toString())
+                .addLikeParam("code_type_name", '%' + search_cond + '%', "")
+                .addLikeParam("code_encode", '%' + search_cond + '%', "or")
+                .addLikeParam("code_remark", '%' + search_cond + '%', "or").addSql(")");
+        List<Dbm_code_type_info> dbmCodeTypeInfos = Dbo.queryPagedList(Dbm_code_type_info.class, page, asmSql.sql(),
+                asmSql.params());
+        dbmCodeTypeInfoMap.put("dbmCodeTypeInfos", dbmCodeTypeInfos);
+        dbmCodeTypeInfoMap.put("totalSize", page.getTotalSize());
+        return dbmCodeTypeInfoMap;
+    }
+
+    @Method(desc = "根据代码分类id发布代码分类",
+            logicStep = "根据代码分类id发布代码分类")
+    @Param(name = "code_type_id", desc = "代码分类id", range = "long类型")
+    public void releaseDbmCodeTypeInfoById(long code_type_id) {
+        int execute = Dbo.execute("update " + Dbm_code_type_info.TableName + " set code_status = ? where" +
+                        " code_type_id = ? ",
+                IsFlag.Shi.getCode(), code_type_id);
+        if (execute != 1) {
+            throw new BusinessException("标准分类发布失败！code_type_id" + code_type_id);
+        }
+    }
+
+    @Method(desc = "根据代码分类id数组批量发布代码分类",
+            logicStep = "根据代码分类id数组批量发布代码分类")
+    @Param(name = "code_type_id_s", desc = "代码分类id数组", range = "long类型数组")
+    public void batchReleaseDbmCodeTypeInfo(Long[] code_type_id_s) {
+        SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
+        asmSql.clean();
+        asmSql.addSql("update " + Dbm_code_type_info.TableName + " set code_status = ? where create_user=?");
+        asmSql.addParam(IsFlag.Shi.getCode());
+        asmSql.addParam(getUserId().toString());
+        asmSql.addORParam("code_type_id ", code_type_id_s);
+        Dbo.execute(asmSql.sql(), asmSql.params());
+    }
+
+    @Method(desc = "根据标准id数组批量删除标准",
+            logicStep = "根据标准id数组批量删除标准")
+    @Param(name = "code_type_id_s", desc = "标准分类id", range = "long类型数组")
+    public void batchDeleteDbmCodeTypeInfo(Long[] code_type_id_s) {
+        SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
+        asmSql.clean();
+        asmSql.addSql("delete from " + Dbm_code_type_info.TableName + " where create_user=?");
+        asmSql.addParam(getUserId().toString());
+        asmSql.addORParam("code_type_id ", code_type_id_s);
+        Dbo.execute(asmSql.sql(), asmSql.params());
     }
 
     @Method(desc = "检查代码分类id是否存在", logicStep = "检查代码分类id是否存在")
@@ -130,18 +208,6 @@ public class DbmCodeTypeInfoAction extends BaseAction {
         return Dbo.queryNumber("SELECT COUNT(code_type_id) FROM " + Dbm_code_type_info.TableName +
                 " WHERE code_type_id = ?", code_type_id).orElseThrow(() ->
                 new BusinessException("检查分类id否存在的SQL编写错误")) != 1;
-    }
-
-    @Method(desc = "根据代码分类id发布代码分类",
-            logicStep = "根据代码分类id发布代码分类")
-    @Param(name = "code_type_id", desc = "代码分类id", range = "long类型")
-    public void releaseDbmSortInfoById(long code_type_id) {
-        int execute = Dbo.execute("update " + Dbm_code_type_info.TableName + " set code_status = ? where" +
-                        " code_type_id = ? ",
-                IsFlag.Shi.getCode(), code_type_id);
-        if (execute != 1) {
-            throw new BusinessException("标准分类发布失败！code_type_id" + code_type_id);
-        }
     }
 
     @Method(desc = "检查代码分类是否存在", logicStep = "检查代码分类是否存在")

@@ -51,9 +51,10 @@ public class ObjectCollectJob extends AgentBaseAction {
 	@Param(name = "objectCollectParam", desc = "半结构化采集参数", range = "不为空")
 	@Return(desc = "", range = "")
 	public String parseObjectCollectDataDictionary(String objectCollectParam) throws Exception {
+		Map<String, String> unpackMsg = PackUtil.unpackMsg(objectCollectParam);
 		Type type = new TypeReference<Map<String, String>>() {
 		}.getType();
-		Map<String, String> objectCollectMap = JsonUtil.toObject(objectCollectParam, type);
+		Map<String, String> objectCollectMap = JsonUtil.toObject(unpackMsg.get("msg"), type);
 		String xmlName = ConnUtil.getDataBaseFile("", "",
 				objectCollectMap.get("file_path"), "");
 		JSONObject jsonData = new JSONObject();
@@ -69,6 +70,6 @@ public class ObjectCollectJob extends AgentBaseAction {
 						+ objectCollectMap.get("is_dictionary"));
 			}
 		}
-		return PackUtil.packMsg(jsonData.toString());
+		return PackUtil.packMsg(JsonUtil.toJson(jsonData));
 	}
 }

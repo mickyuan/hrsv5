@@ -288,6 +288,7 @@ public class CollectTableHandleParse {
 							Map<String, Column_split> map = new HashMap<>();
 							List<Column_split> column_split_list = columnCleanBean.getColumn_split_list();
 							for (Column_split column_split : column_split_list) {
+								column_split.setSplit_sep(StringUtil.unicode2String(column_split.getSplit_sep()));
 								map.put(column_split.getCol_name(), column_split);
 							}
 							splitIng.put(column_name_up, map);

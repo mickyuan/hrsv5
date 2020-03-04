@@ -102,7 +102,7 @@ public class DataClean_Biz implements DataCleanInterface {
 						columnData = newformat.format(parse);
 					} catch (Exception e) {
 						//日志太多影响阅读
-						//Debug.exception(logger, e.getMessage(),e);
+						log.error(e.getMessage(), e);
 					}
 				}
 			}

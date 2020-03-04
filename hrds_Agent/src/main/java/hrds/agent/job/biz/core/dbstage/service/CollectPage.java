@@ -131,19 +131,20 @@ public class CollectPage implements Callable<Map<String, Object>> {
 	private String pageForSql(String dataType, String primaryKey) {
 		LOGGER.info("start-->" + start + "  limit --> " + pageRow + "  end--> " + end);
 		if (DatabaseType.MYSQL.getCode().equals(dataType)) {
-			sql = sql + " limit " + start + "," + pageRow;
+			sql = "select * from (" + sql + ") as hyren_collect_temp limit " + start + "," + pageRow;
 		} else if (DatabaseType.TeraData.getCode().equals(dataType)) {
-			sql = sql + " qualify row_number() over(order by " + primaryKey + ") >= " + start
-					+ " and row_number() over(order by " + primaryKey + ") <=" + end;
+			sql = "select * from (" + sql + ") as hyren_collect_temp qualify row_number() over(order by "
+					+ primaryKey + ") >= " + start + " and row_number() over(order by "
+					+ primaryKey + ") <=" + end;
 		} else if (DatabaseType.Oracle9i.getCode().equals(dataType) ||
 				DatabaseType.Oracle10g.getCode().equals(dataType)) {
 			sql = "select * from (select t.*,rownum hyren_rn from (" + sql + ") t where rownum <= "
 					+ Math.abs(end) + ") t1 where t1.hyren_rn>" + start + "";
 		} else if (DatabaseType.Postgresql.getCode().equals(dataType)) {
-			sql = sql + " limit " + pageRow + " offset " + start;
+			sql = "select * from (" + sql + ") as hyren_collect_temp  limit " + pageRow + " offset " + start;
 		} else {
 			//TODO 这里欢迎补全，最后else抛异常
-			sql = sql + " limit " + start + "," + pageRow;
+			sql = "select * from (" + sql + ") as hyren_collect_temp  limit " + start + "," + pageRow;
 		}
 		LOGGER.info("分页这里执行的sql是：" + sql);
 		return sql;

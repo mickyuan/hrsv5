@@ -43,45 +43,18 @@ public class ParquetUtil {
 				sb.append("required ").append("INT64 ").append(colList.get(i)).append(" ;");
 			} else if (columns_type.contains(DataTypeConstant.INT.getMessage())) {
 				sb.append("required ").append("INT32 ").append(colList.get(i)).append(" ;");
-			} else if (columns_type.contains(DataTypeConstant.DECIMAL.getMessage())) {
+			} else if (columns_type.contains(DataTypeConstant.DECIMAL.getMessage())
+					|| columns_type.contains(DataTypeConstant.NUMERIC.getMessage())
+					|| columns_type.contains(DataTypeConstant.DOUBLE.getMessage())) {
 				sb.append("required ").append("DOUBLE ").append(colList.get(i)).append(" ;");
 			} else if (columns_type.contains(DataTypeConstant.FLOAT.getMessage())) {
 				sb.append("required ").append("FLOAT ").append(colList.get(i)).append(" ;");
-			} else if (columns_type.contains(DataTypeConstant.DOUBLE.getMessage())) {
-				sb.append("required ").append("DOUBLE ").append(colList.get(i)).append(" ;");
 			} else {
 				sb.append("required binary ").append(colList.get(i)).append(" (UTF8);");
 			}
 		}
 		sb.append(" }");
 		return MessageTypeParser.parseMessageType(sb.toString());
-	}
-
-	/**
-	 * 对数据进行格式化，存入Group中
-	 *
-	 * @param group      Group对象
-	 * @param columname  字段名称
-	 * @param columnType 字段类型
-	 * @param data       数据
-	 * @author 13616
-	 * @date 2019/8/7 11:31
-	 */
-	public static void addData2Group(Group group, String columname, String columnType, String data) {
-
-		if (columnType.contains(DataTypeConstant.BOOLEAN.getMessage())) {
-			group.add(columname, Boolean.valueOf(data));
-		} else if (columnType.contains(DataTypeConstant.INT.getMessage())) {
-			group.add(columname, null == data ? 0 : Integer.valueOf(data));
-		} else if (columnType.contains(DataTypeConstant.FLOAT.getMessage())) {
-			group.add(columname, null == data ? 0 : Float.valueOf(data));
-		} else if (columnType.contains(DataTypeConstant.DOUBLE.getMessage()) ||
-				columnType.contains(DataTypeConstant.DECIMAL.getMessage())) {
-			group.add(columname, null == data ? 0 : Double.valueOf(data));
-		} else {
-			//char与varchar都为string
-			group.add(columname, null == data ? "" : data);
-		}
 	}
 
 	/**

@@ -37,7 +37,7 @@ public class JdbcCollectJob extends AgentBaseAction {
 		//对配置信息解压缩并反序列化为SourceDataConfBean对象
 		SourceDataConfBean sourceDataConfBean =
 				JSONObject.parseObject(PackUtil.unpackMsg(taskInfo).get("msg"), SourceDataConfBean.class);
-		//将页面传递过来的压缩信息写文件
+		//将页面传递过来的压缩信息解压写文件
 		FileUtil.createFile(Constant.MESSAGEFILE + sourceDataConfBean.getDatabase_id(),
 				PackUtil.unpackMsg(taskInfo).get("msg"));
 		ExecutorService executor = null;

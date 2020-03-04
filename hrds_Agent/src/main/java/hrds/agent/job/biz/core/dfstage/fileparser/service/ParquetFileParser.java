@@ -2,6 +2,7 @@ package hrds.agent.job.biz.core.dfstage.fileparser.service;
 
 import fd.ng.core.annotation.DocClass;
 import hrds.agent.job.biz.constant.JobConstant;
+import hrds.agent.job.biz.utils.ColumnTool;
 import hrds.agent.job.biz.utils.ParquetUtil;
 import org.apache.parquet.example.data.Group;
 import org.apache.parquet.example.data.GroupFactory;
@@ -79,7 +80,7 @@ public class ParquetFileParser extends AbstractFileParser {
 			data = datas[i];
 			strBuilder.append(data);
 			strBuilder.append(JobConstant.COLUMN_SEPARATOR);
-			ParquetUtil.addData2Group(group, column, columnType, data);
+			ColumnTool.addData2Group(group, column, columnType, data);
 		}
 		group.append(JobConstant.START_DATE_NAME, startDate);
 		//计算MD5

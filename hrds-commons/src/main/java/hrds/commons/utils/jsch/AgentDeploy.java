@@ -67,7 +67,7 @@ public class AgentDeploy {
   @Param(name = "down_info", desc = "部署Agent信息,这个里面的路径是最新的", range = "", isBean = true)
   @Param(name = "oldAgentPath", desc = "旧的,Agent部署目录地址", range = "可以为空,为空表示为第一次部署")
   @Param(name = "oldLogPath", desc = "旧的,Agent部署日志地址", range = "可以为空,为空表示为第一次部署")
-  @Return(desc = "返回部署是否操作成功", range = "true-成功/false-失败")
+//  @Return(desc = "返回部署是否操作成功", range = "true-成功/false-失败")
   public static void agentConfDeploy(
       Agent_down_info down_info, String oldAgentPath, String oldLogPath) {
     try {
@@ -195,6 +195,18 @@ public class AgentDeploy {
       // 二 : 将本地写的agent配置文件,sftp复制到agent部署的目标机器
       sftpFiles(CONFPATH, chSftp, targetDir + SEPARATOR + "resources");
 
+      // 这里需要在 appinfo.conf文件中写入数据库的连接为false
+      SFTPChannel.execCommandByJSch(
+          shellSession,
+          "echo 'hasDatabase=false'>>"
+              + targetDir
+              + SEPARATOR
+              + "resources"
+              + SEPARATOR
+              + "fdconfig"
+              + SEPARATOR
+              + "appinfo.conf");
+
       // 三 : 将储存层上传的文件 SFTP 到agent目录下
       ScpHadoopConf.scpConfToAgent(targetDir, chSftp, shellSession);
 
@@ -209,12 +221,16 @@ public class AgentDeploy {
         logger.info(
             "启动agent命令 : cd "
                 + targetDir
-                + ";nohup java -Dorg.eclipse.jetty.server.Request.maxFormContentSize=99900000 -jar hrds_Agent-5.0.jar &");
+                + ";nohup java -Dorg.eclipse.jetty.server.Request.maxFormContentSize=99900000 -jar "
+                + file.getName()
+                + " &");
         SFTPChannel.execCommandByJSchNoRs(
             shellSession,
             "cd "
                 + targetDir
-                + ";nohup java -Dorg.eclipse.jetty.server.Request.maxFormContentSize=99900000 -jar hrds_Agent-5.0.jar &");
+                + ";nohup java -Dorg.eclipse.jetty.server.Request.maxFormContentSize=99900000 -jar "
+                + file.getName()
+                + " &");
       }
 
     } catch (Exception e) {
@@ -271,6 +287,7 @@ public class AgentDeploy {
             chSftp,
             targetDir + SEPARATOR + new File(confFiles[i].getParent()).getName());
       } else {
+
         chSftp.put(
             confFiles[i].getAbsolutePath(),
             targetDir + SEPARATOR + new File(confFiles[i].getParent()).getName(),
