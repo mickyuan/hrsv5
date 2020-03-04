@@ -5,6 +5,9 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
+import fd.ng.db.jdbc.DefaultPageImpl;
+import fd.ng.db.jdbc.Page;
+import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.entity.Dbm_code_item_info;
@@ -103,6 +106,44 @@ public class DbmCodeItemInfoAction extends BaseAction {
         }
         return Dbo.queryOneObject(Dbm_code_item_info.class, "select * from " + Dbm_code_item_info.TableName +
                 " where code_item_id = ?", code_item_id);
+    }
+
+    @Method(desc = "根据代码项id数组批量删除代码项",
+            logicStep = "根据代码项id数组批量删除代码项")
+    @Param(name = "code_item_id_s", desc = "标准分类id", range = "long类型数组")
+    public void batchDeleteDbmCodeItemInfo(Long[] code_item_id_s) {
+        SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
+        asmSql.clean();
+        asmSql.addSql("delete from " + Dbm_code_item_info.TableName + " where create_user=?");
+        asmSql.addParam(getUserId().toString());
+        asmSql.addORParam("code_item_id ", code_item_id_s);
+        Dbo.execute(asmSql.sql(), asmSql.params());
+    }
+
+    @Method(desc = "检索代码项信息",
+            logicStep = "检索代码项信息")
+    @Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数", valueIfNull = "1")
+    @Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", valueIfNull = "10")
+    @Param(name = "search_cond", desc = "检索字符串", range = "String类型,任意值")
+    @Param(name = "code_type_id", desc = "代码项分类di", range = "long类型值")
+    @Return(desc = "代码项信息列表", range = "代码项信息列表")
+    public Map<String, Object> searchDbmCodeItemInfo(int currPage, int pageSize, String search_cond, long code_type_id) {
+        Map<String, Object> dbmCodeItemInfoMap = new HashMap<>();
+        Page page = new DefaultPageImpl(currPage, pageSize);
+        SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
+        asmSql.clean();
+        asmSql.addSql("select * from " + Dbm_code_item_info.TableName)
+                .addSql(" where code_type_id = ? and (").addParam(code_type_id)
+                .addLikeParam("code_encode", '%' + search_cond + '%', "")
+                .addLikeParam("code_item_name", '%' + search_cond + '%', "or")
+                .addLikeParam("code_value", '%' + search_cond + '%', "or")
+                .addLikeParam("dbm_level", '%' + search_cond + '%', "or")
+                .addLikeParam("code_remark", '%' + search_cond + '%', "or").addSql(")");
+        List<Dbm_code_item_info> dbmCodeItemInfos = Dbo.queryPagedList(Dbm_code_item_info.class, page, asmSql.sql(),
+                asmSql.params());
+        dbmCodeItemInfoMap.put("dbmCodeItemInfos", dbmCodeItemInfos);
+        dbmCodeItemInfoMap.put("totalSize", page.getTotalSize());
+        return dbmCodeItemInfoMap;
     }
 
     @Method(desc = "检查代码项id是否存在", logicStep = "检查代码项id是否存在")

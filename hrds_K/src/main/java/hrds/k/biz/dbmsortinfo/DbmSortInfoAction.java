@@ -125,7 +125,7 @@ public class DbmSortInfoAction extends BaseAction {
     @Method(desc = "根据Id获取分类信息",
             logicStep = "根据Id获取分类信息")
     @Param(name = "sort_id", desc = "分类Id", range = "long类型")
-    @Return(desc = "返回值说明", range = "返回值取值范围")
+    @Return(desc = "分类信息", range = "分类信息")
     public Optional<Dbm_sort_info> getDbmSortInfoById(long sort_id) {
         //1.检查分类是否存在
         if (checkSortIdIsNotExist(sort_id)) {
@@ -137,16 +137,39 @@ public class DbmSortInfoAction extends BaseAction {
 
     @Method(desc = "根据发布状态获取分类信息",
             logicStep = "根据发布状态获取分类信息")
+    @Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数", valueIfNull = "1")
+    @Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", valueIfNull = "10")
     @Param(name = "sort_status", desc = "发布状态", range = "IsFlag 0:未发布,1:已发布")
-    @Return(desc = "返回值说明", range = "返回值取值范围")
-    public Map<String, Object> getDbmSortInfoByStatus(String sort_status) {
+    @Return(desc = "分类信息列表", range = "分类信息列表")
+    public Map<String, Object> getDbmSortInfoByStatus(int currPage, int pageSize, String sort_status) {
         Map<String, Object> dbmSortInfoMap = new HashMap<>();
-        //1.检查分类是否存在
-        List<Dbm_sort_info> dbmSortInfos = Dbo.queryList(Dbm_sort_info.class,
+        Page page = new DefaultPageImpl(currPage, pageSize);
+        List<Dbm_sort_info> dbmSortInfos = Dbo.queryPagedList(Dbm_sort_info.class, page,
                 "select * from " + Dbm_sort_info.TableName + " where sort_status = ? and create_user = ?",
                 sort_status, getUserId().toString());
         dbmSortInfoMap.put("dbmSortInfos", dbmSortInfos);
-        dbmSortInfoMap.put("totalSize", dbmSortInfos.size());
+        dbmSortInfoMap.put("totalSize", page.getTotalSize());
+        return dbmSortInfoMap;
+    }
+
+    @Method(desc = "检索分类信息",
+            logicStep = "检索分类信息")
+    @Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数", valueIfNull = "1")
+    @Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", valueIfNull = "10")
+    @Param(name = "search_cond", desc = "检索字符串", range = "String类型,任意值")
+    @Return(desc = "分类信息列表", range = "分类信息列表")
+    public Map<String, Object> searchDbmSortInfo(int currPage, int pageSize, String search_cond) {
+        Map<String, Object> dbmSortInfoMap = new HashMap<>();
+        Page page = new DefaultPageImpl(currPage, pageSize);
+        SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
+        asmSql.clean();
+        asmSql.addSql("select * from " + Dbm_sort_info.TableName)
+                .addSql(" where create_user = ? and (").addParam(getUserId().toString())
+                .addLikeParam("sort_name", '%' + search_cond + '%', "")
+                .addLikeParam("sort_remark", '%' + search_cond + '%', "or").addSql(")");
+        List<Dbm_sort_info> dbmSortInfos = Dbo.queryPagedList(Dbm_sort_info.class, page, asmSql.sql(), asmSql.params());
+        dbmSortInfoMap.put("dbmSortInfos", dbmSortInfos);
+        dbmSortInfoMap.put("totalSize", page.getTotalSize());
         return dbmSortInfoMap;
     }
 
@@ -206,7 +229,6 @@ public class DbmSortInfoAction extends BaseAction {
         SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
         asmSql.clean();
         asmSql.addSql("delete from " + Dbm_sort_info.TableName + " where create_user=?");
-        asmSql.addParam(IsFlag.Shi.getCode());
         asmSql.addParam(getUserId().toString());
         asmSql.addORParam("sort_id ", sort_id_s);
         Dbo.execute(asmSql.sql(), asmSql.params());

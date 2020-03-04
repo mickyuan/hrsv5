@@ -177,17 +177,52 @@ public class DbmNormbasicAction extends BaseAction {
 
     @Method(desc = "根据发布状态获取标准信息",
             logicStep = "根据发布状态获取标准信息")
+    @Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数", valueIfNull = "1")
+    @Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", valueIfNull = "10")
     @Param(name = "norm_status", desc = "发布状态", range = "IsFlag 0:未发布,1:已发布")
     @Return(desc = "返回值说明", range = "返回值取值范围")
-    public Map<String, Object> getDbmNormbasicByStatus(String norm_status) {
+    public Map<String, Object> getDbmNormbasicByStatus(int currPage, int pageSize, String norm_status) {
         Map<String, Object> dbmNormbasicInfoMap = new HashMap<>();
-        //1.检查分类是否存在
-        List<Dbm_normbasic> dbmNormbasicInfos = Dbo.queryList(Dbm_normbasic.class,
+        Page page = new DefaultPageImpl(currPage, pageSize);
+        List<Dbm_normbasic> dbmNormbasicInfos = Dbo.queryPagedList(Dbm_normbasic.class, page,
                 "select * from " + Dbm_normbasic.TableName +
                         " where norm_status = ? and create_user = ?", norm_status, getUserId().toString());
         dbmNormbasicInfoMap.put("dbmNormbasicInfos", dbmNormbasicInfos);
-        dbmNormbasicInfoMap.put("totalSize", dbmNormbasicInfos.size());
+        dbmNormbasicInfoMap.put("totalSize", page.getTotalSize());
         return dbmNormbasicInfoMap;
+    }
+
+    @Method(desc = "检索标准信息",
+            logicStep = "检索标准信息")
+    @Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数", valueIfNull = "1")
+    @Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", valueIfNull = "10")
+    @Param(name = "search_cond", desc = "检索字符串", range = "String类型,任意值")
+    @Return(desc = "标准信息列表", range = "标准信息列表")
+    public Map<String, Object> searchDbmNormbasic(int currPage, int pageSize, String search_cond) {
+        Map<String, Object> dbmNormbasicMap = new HashMap<>();
+        Page page = new DefaultPageImpl(currPage, pageSize);
+        SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
+        asmSql.clean();
+        asmSql.addSql("select * from " + Dbm_normbasic.TableName)
+                .addSql(" where create_user = ? and (").addParam(getUserId().toString())
+                .addLikeParam("norm_code", '%' + search_cond + '%', "")
+                .addLikeParam("norm_cname", '%' + search_cond + '%', "or")
+                .addLikeParam("norm_ename", '%' + search_cond + '%', "or")
+                .addLikeParam("norm_aname", '%' + search_cond + '%', "or")
+                .addLikeParam("business_def", '%' + search_cond + '%', "or")
+                .addLikeParam("business_rule", '%' + search_cond + '%', "or")
+                .addLikeParam("dbm_domain", '%' + search_cond + '%', "or")
+                .addLikeParam("norm_basis", '%' + search_cond + '%', "or")
+                .addLikeParam("manage_department", '%' + search_cond + '%', "or")
+                .addLikeParam("relevant_department", '%' + search_cond + '%', "or")
+                .addLikeParam("origin_system", '%' + search_cond + '%', "or")
+                .addLikeParam("related_system", '%' + search_cond + '%', "or")
+                .addLikeParam("formulator", '%' + search_cond + '%').addSql(")");
+        List<Dbm_normbasic> dbmNormbasicInfos = Dbo.queryPagedList(Dbm_normbasic.class, page, asmSql.sql(),
+                asmSql.params());
+        dbmNormbasicMap.put("dbmNormbasicInfos", dbmNormbasicInfos);
+        dbmNormbasicMap.put("totalSize", page.getTotalSize());
+        return dbmNormbasicMap;
     }
 
     @Method(desc = "根据标准id发布标准",
@@ -222,7 +257,6 @@ public class DbmNormbasicAction extends BaseAction {
         SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
         asmSql.clean();
         asmSql.addSql("delete from " + Dbm_normbasic.TableName + " where create_user=?");
-        asmSql.addParam(IsFlag.Shi.getCode());
         asmSql.addParam(getUserId().toString());
         asmSql.addORParam("basic_id ", basic_id_s);
         Dbo.execute(asmSql.sql(), asmSql.params());

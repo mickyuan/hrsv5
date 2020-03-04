@@ -13,7 +13,6 @@ import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Dbm_code_type_info;
-import hrds.commons.entity.Dbm_normbasic;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.key.PrimayKeyGener;
@@ -90,25 +89,25 @@ public class DbmCodeTypeInfoAction extends BaseAction {
     @Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", valueIfNull = "10")
     @Return(desc = "所有分类信息", range = "所有分类信息")
     public Map<String, Object> getDbmCodeTypeInfo(int currPage, int pageSize) {
-        Map<String, Object> dbmDbmCodeTypeInfoMap = new HashMap<>();
+        Map<String, Object> dbmCodeTypeInfoMap = new HashMap<>();
         Page page = new DefaultPageImpl(currPage, pageSize);
         List<Dbm_code_type_info> dbmCodeTypeInfos =
                 Dbo.queryPagedList(Dbm_code_type_info.class, page,
                         "select * from " + Dbm_code_type_info.TableName);
-        dbmDbmCodeTypeInfoMap.put("dbmCodeTypeInfos", dbmCodeTypeInfos);
-        dbmDbmCodeTypeInfoMap.put("totalSize", page.getTotalSize());
-        return dbmDbmCodeTypeInfoMap;
+        dbmCodeTypeInfoMap.put("dbmCodeTypeInfos", dbmCodeTypeInfos);
+        dbmCodeTypeInfoMap.put("totalSize", page.getTotalSize());
+        return dbmCodeTypeInfoMap;
     }
 
     @Method(desc = "获取所有代码类信息(只获取code_type_id和code_type_name)", logicStep = "获取所有代码类信息")
     @Return(desc = "所有分类信息(只获取code_type_id和code_type_name)", range = "所有分类信息")
     public Map<String, Object> getDbmCodeTypeIdAndNameInfo() {
-        Map<String, Object> dbmDbmCodeTypeInfoMap = new HashMap<>();
+        Map<String, Object> dbmCodeTypeInfoMap = new HashMap<>();
         List<Map<String, Object>> dbmCodeTypeInfos =
                 Dbo.queryList("select code_type_id,code_type_name from " + Dbm_code_type_info.TableName);
-        dbmDbmCodeTypeInfoMap.put("dbmCodeTypeInfos", dbmCodeTypeInfos);
-        dbmDbmCodeTypeInfoMap.put("totalSize", dbmCodeTypeInfos.size());
-        return dbmDbmCodeTypeInfoMap;
+        dbmCodeTypeInfoMap.put("dbmCodeTypeInfos", dbmCodeTypeInfos);
+        dbmCodeTypeInfoMap.put("totalSize", dbmCodeTypeInfos.size());
+        return dbmCodeTypeInfoMap;
     }
 
     @Method(desc = "根据Id获取代码分类信息",
@@ -126,16 +125,42 @@ public class DbmCodeTypeInfoAction extends BaseAction {
 
     @Method(desc = "根据发布状态获取代码分类信息",
             logicStep = "根据发布状态获取代码分类信息")
+    @Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数", valueIfNull = "1")
+    @Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", valueIfNull = "10")
     @Param(name = "code_status", desc = "发布状态", range = "IsFlag 0:未发布,1:已发布")
     @Return(desc = "返回值说明", range = "返回值取值范围")
-    public Map<String, Object> getDbmCodeTypeInfoByStatus(String code_status) {
-        Map<String, Object> dbmDbmCodeTypeInfoMap = new HashMap<>();
-        List<Dbm_code_type_info> dbmCodeTypeInfos = Dbo.queryList(Dbm_code_type_info.class,
+    public Map<String, Object> getDbmCodeTypeInfoByStatus(int currPage, int pageSize, String code_status) {
+        Map<String, Object> dbmCodeTypeInfoMap = new HashMap<>();
+        Page page = new DefaultPageImpl(currPage, pageSize);
+        List<Dbm_code_type_info> dbmCodeTypeInfos = Dbo.queryPagedList(Dbm_code_type_info.class, page,
                 "select * from " + Dbm_code_type_info.TableName +
                         " where code_status = ? and create_user = ?", code_status, getUserId().toString());
-        dbmDbmCodeTypeInfoMap.put("dbmCodeTypeInfos", dbmCodeTypeInfos);
-        dbmDbmCodeTypeInfoMap.put("totalSize", dbmCodeTypeInfos.size());
-        return dbmDbmCodeTypeInfoMap;
+        dbmCodeTypeInfoMap.put("dbmCodeTypeInfos", dbmCodeTypeInfos);
+        dbmCodeTypeInfoMap.put("totalSize", page.getTotalSize());
+        return dbmCodeTypeInfoMap;
+    }
+
+    @Method(desc = "检索代码项分类信息",
+            logicStep = "检索代码项分类信息")
+    @Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数", valueIfNull = "1")
+    @Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", valueIfNull = "10")
+    @Param(name = "search_cond", desc = "检索字符串", range = "String类型,任意值")
+    @Return(desc = "代码项分类信息列表", range = "代码项分类信息列表")
+    public Map<String, Object> searchDbmCodeTypeInfo(int currPage, int pageSize, String search_cond) {
+        Map<String, Object> dbmCodeTypeInfoMap = new HashMap<>();
+        Page page = new DefaultPageImpl(currPage, pageSize);
+        SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
+        asmSql.clean();
+        asmSql.addSql("select * from " + Dbm_code_type_info.TableName)
+                .addSql(" where create_user = ? and (").addParam(getUserId().toString())
+                .addLikeParam("code_type_name", '%' + search_cond + '%', "")
+                .addLikeParam("code_encode", '%' + search_cond + '%', "or")
+                .addLikeParam("code_remark", '%' + search_cond + '%', "or").addSql(")");
+        List<Dbm_code_type_info> dbmCodeTypeInfos = Dbo.queryPagedList(Dbm_code_type_info.class, page, asmSql.sql(),
+                asmSql.params());
+        dbmCodeTypeInfoMap.put("dbmCodeTypeInfos", dbmCodeTypeInfos);
+        dbmCodeTypeInfoMap.put("totalSize", page.getTotalSize());
+        return dbmCodeTypeInfoMap;
     }
 
     @Method(desc = "根据代码分类id发布代码分类",
@@ -170,7 +195,6 @@ public class DbmCodeTypeInfoAction extends BaseAction {
         SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
         asmSql.clean();
         asmSql.addSql("delete from " + Dbm_code_type_info.TableName + " where create_user=?");
-        asmSql.addParam(IsFlag.Shi.getCode());
         asmSql.addParam(getUserId().toString());
         asmSql.addORParam("code_type_id ", code_type_id_s);
         Dbo.execute(asmSql.sql(), asmSql.params());
