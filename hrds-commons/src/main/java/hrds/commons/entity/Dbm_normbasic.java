@@ -38,11 +38,11 @@ public class Dbm_normbasic extends ProjectTableEntity
 	private String norm_cname;
 	@DocBean(name ="norm_ename",value="标准英文名称:",dataType = String.class,required = true)
 	private String norm_ename;
-	@DocBean(name ="norm_aname",value="标准别名:",dataType = String.class,required = true)
+	@DocBean(name ="norm_aname",value="标准别名:",dataType = String.class,required = false)
 	private String norm_aname;
 	@DocBean(name ="col_len",value="字段长度:",dataType = Long.class,required = true)
 	private Long col_len;
-	@DocBean(name ="decimal_point",value="小数长度:",dataType = Long.class,required = true)
+	@DocBean(name ="decimal_point",value="小数长度:",dataType = Long.class,required = false)
 	private Long decimal_point;
 	@DocBean(name ="business_def",value="业务定义:",dataType = String.class,required = false)
 	private String business_def;
@@ -72,7 +72,7 @@ public class Dbm_normbasic extends ProjectTableEntity
 	private Long sort_id;
 	@DocBean(name ="code_type_id",value="代码类主键:",dataType = Long.class,required = false)
 	private Long code_type_id;
-	@DocBean(name ="dbm_domain",value="值域:",dataType = String.class,required = true)
+	@DocBean(name ="dbm_domain",value="值域:",dataType = String.class,required = false)
 	private String dbm_domain;
 	@DocBean(name ="data_type",value="数据类别(DbmDataType):101-编码类<BianMaLei> 102-标识类<BiaoShiLei> 103-代码类<DaiMaLei> 104-金额类<JinELei> 105-日期类<RiQiLei> 106-日期时间类<RiQiShiJianLei> 107-时间类<ShiJianLei> 108-数值类<ShuZhiLei> 109-文本类<WenBenLei> ",dataType = String.class,required = false)
 	private String data_type;

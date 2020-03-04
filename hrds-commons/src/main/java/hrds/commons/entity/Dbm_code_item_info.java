@@ -38,7 +38,7 @@ public class Dbm_code_item_info extends ProjectTableEntity
 	private String code_item_name;
 	@DocBean(name ="code_value",value="代码值:",dataType = String.class,required = false)
 	private String code_value;
-	@DocBean(name ="dbm_level",value="层级:",dataType = String.class,required = true)
+	@DocBean(name ="dbm_level",value="层级:",dataType = String.class,required = false)
 	private String dbm_level;
 	@DocBean(name ="code_remark",value="代码描述:",dataType = String.class,required = false)
 	private String code_remark;

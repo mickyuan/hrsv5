@@ -14,15 +14,15 @@ NORM_CODE                                         VARCHAR(100) NULL, --标准编
 SORT_ID                                           BIGINT default 0 NOT NULL, --分类主键
 NORM_CNAME                                        VARCHAR(512) NOT NULL, --标准中文名称
 NORM_ENAME                                        VARCHAR(512) NOT NULL, --标准英文名称
-NORM_ANAME                                        VARCHAR(512) NOT NULL, --标准别名
+NORM_ANAME                                        VARCHAR(512) NULL, --标准别名
 BUSINESS_DEF                                      VARCHAR(2048) NULL, --业务定义
 BUSINESS_RULE                                     VARCHAR(2048) NULL, --业务规则
-DBM_DOMAIN                                        VARCHAR(200) NOT NULL, --值域
+DBM_DOMAIN                                        VARCHAR(200) NULL, --值域
 NORM_BASIS                                        VARCHAR(2048) NULL, --标准依据
 DATA_TYPE                                         CHAR(3) NULL, --数据类别
 CODE_TYPE_ID                                      BIGINT default 0 NULL, --代码类主键
 COL_LEN                                           BIGINT default 0 NOT NULL, --字段长度
-DECIMAL_POINT                                     BIGINT default 0 NOT NULL, --小数长度
+DECIMAL_POINT                                     BIGINT default 0 NULL, --小数长度
 MANAGE_DEPARTMENT                                 VARCHAR(512) NULL, --标准管理部门
 RELEVANT_DEPARTMENT                               VARCHAR(512) NULL, --标准相关部门
 ORIGIN_SYSTEM                                     VARCHAR(512) NULL, --可信系统（数据源）
@@ -68,7 +68,7 @@ CODE_ITEM_ID                                      BIGINT default 0 NOT NULL, --�
 CODE_ENCODE                                       VARCHAR(100) NULL, --代码编码
 CODE_ITEM_NAME                                    VARCHAR(512) NOT NULL, --代码项名
 CODE_VALUE                                        VARCHAR(80) NULL, --代码值
-DBM_LEVEL                                         VARCHAR(100) NOT NULL, --层级
+DBM_LEVEL                                         VARCHAR(100) NULL, --层级
 CODE_REMARK                                       VARCHAR(512) NULL, --代码描述
 CODE_TYPE_ID                                      BIGINT default 0 NOT NULL, --代码类主键
 CONSTRAINT DBM_CODE_ITEM_INFO_PK PRIMARY KEY(CODE_ITEM_ID)   );
