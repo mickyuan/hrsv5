@@ -51,9 +51,10 @@ public class AgentActionUtil {
 	//向agent端发送一个ftp采集的任务
 	public static final String SENDFTPCOLLECTTASKINFO = "/hrds/agent/trans/biz/ftpcollect/execute";
 	//向agent发送一个半结构化直连解析数据字典任务
-	public static final String PARSEDATADICTIONARY = "/hrds/agent/trans/biz/objectcollect/parseDataDictionary";
+	public static final String PARSEDATADICTIONARY = "/hrds/agent/trans/biz/objectCollect" +
+			"/parseObjectCollectDataDictionary";
 	//向agent发送一个半结构化直连重写数据字典任务
-	public static final String WRITEDICTIONARY = "/hrds/agent/trans/biz/objectcollect/writeDictionary";
+	public static final String WRITEDICTIONARY = "/hrds/agent/trans/biz/objectCollect/writeDictionary";
 
 	static {
 		list = new ArrayList<>();

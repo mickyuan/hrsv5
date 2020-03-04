@@ -23,6 +23,7 @@ public class Xls2xml {
 	public static Element table = null;
 	public static Element root = null;
 	public static Element column = null;
+	public static Element handleType = null;
 	private static final Log logger = LogFactory.getLog(Xls2xml.class);
 	private static final String NONEED_ = "NONEED_";
 
@@ -120,6 +121,105 @@ public class Xls2xml {
 			}
 			XlsToXml(path_cd, xml_path);
 		}
+	}
+
+	public static void toXmlForObjectCollect(String db_path, String xml_path) {
+
+		String path_cd = pathToUnEscape(db_path + "~dd_data.json", SystemUtils.OS_NAME);
+		File file = FileUtils.getFile(path_cd);
+		if (file.exists()) {
+			jsonToXmlForObjectCollect(path_cd, xml_path);
+		} else {
+			throw new BusinessException("没有找到相应的数据字典定义文件！");
+		}
+	}
+
+	public static void jsonToXmlForObjectCollect(String json_path, String xml_path) {
+		InputStream xlsFileInputStream = null;
+		createXml(xml_path);// 调用方法生成xml文件
+		String info = "";
+		BufferedReader br = null;
+		try {
+			StringBuilder result = new StringBuilder();
+			br = new BufferedReader(new FileReader(json_path));// 构造一个BufferedReader类来读取文件
+			String s = null;
+			while ((s = br.readLine()) != null) {// 使用readLine方法，一次读一行
+				result.append('\n').append(s);
+			}
+			JSONArray jsonArray = JSONArray.parseArray(result.toString());
+			for (int i = 0; i < jsonArray.size(); i++) {
+				JSONObject json = jsonArray.getJSONObject(i);
+				String table_name = json.getString("table_name");// 表名
+				String table_cn_name = json.getString("table_cn_name");// 中文表名
+				String updatetype = json.getString("updatetype");// 数据存储方式
+				addTable(table_name.toLowerCase(), table_cn_name, updatetype);
+				JSONObject handletype = json.getJSONObject("handletype");
+				String insert = handletype.getString("insert");
+				String update = handletype.getString("update");
+				String delete = handletype.getString("delete");
+				addHandleType(insert, update, delete);
+				JSONArray columns = json.getJSONArray("columns");// 列信息
+				for (int j = 0; j < columns.size(); j++) {
+					JSONObject column = columns.getJSONObject(j);
+					String column_id = column.getString("column_id");// 列ID
+					String column_name = column.getString("column_name").toLowerCase();// 字段名
+					String column_cn_name = column.getString("column_cn_name");// 字段中文名
+					String column_type = column.getString("column_type");// 字段类型
+					String is_key = column.getString("is_key");// 是否为主键
+					String column_remark = column.getString("column_remark");// 备注信息
+					String columnposition = column.getString("columnposition");// 字段位置
+					String is_hbase = column.getString("is_hbase");// 是否进入hbase
+					String is_rowkey = column.getString("is_rowkey");// 是否为rowkey
+					String is_solr = column.getString("is_solr");// 是否进solr
+					String is_operate = column.getString("is_operate");// 是否为操作标识字段
+					int length = getLength(column_type);
+					addColumnForObjectCollect(column_id, column_name, column_cn_name, column_type, length,
+							column_remark, is_key,
+							columnposition, is_hbase, is_rowkey, is_solr, is_operate);
+				}
+			}
+			xmlCreater.buildXmlFile();// 生成xml文档
+		} catch (Exception e) {
+			if (e instanceof FileNotFoundException) {
+				// 如果继续错误，将已经身
+				File file = new File(xml_path);
+				if (file.exists()) {
+					file.delete();
+				}
+			}
+			logger.info(info + "json定义错误数据错误");
+		} finally {
+			IOUtils.closeQuietly(br);
+			IOUtils.closeQuietly(xlsFileInputStream);
+		}
+	}
+
+	public static void addColumnForObjectCollect(String column_id, String column_name, String column_cn_name,
+	                                             String column_type, int length, String column_remark,
+	                                             String is_key, String columnposition, String is_hbase,
+	                                             String is_rowkey, String is_solr, String is_operate) {
+
+		column = xmlCreater.createElement(table, "column");
+		xmlCreater.createAttribute(column, "column_id", column_id);
+		xmlCreater.createAttribute(column, "name", column_name);
+		xmlCreater.createAttribute(column, "column_cn_name", column_cn_name);
+		xmlCreater.createAttribute(column, "column_type", column_type);
+		xmlCreater.createAttribute(column, "length", String.valueOf(length));
+		xmlCreater.createAttribute(column, "is_key", is_key);
+		xmlCreater.createAttribute(column, "column_remark", column_remark);
+		xmlCreater.createAttribute(column, "columnposition", columnposition);
+		xmlCreater.createAttribute(column, "is_hbase", is_hbase);
+		xmlCreater.createAttribute(column, "is_rowkey", is_rowkey);
+		xmlCreater.createAttribute(column, "is_solr", is_solr);
+		xmlCreater.createAttribute(column, "is_operate", is_operate);
+	}
+
+	public static void addHandleType(String insert, String update, String delete) {
+
+		handleType = xmlCreater.createElement(table, "handletype");
+		xmlCreater.createAttribute(handleType, "insert", insert);
+		xmlCreater.createAttribute(handleType, "update", update);
+		xmlCreater.createAttribute(handleType, "delete", delete);
 	}
 
 	/**
@@ -394,7 +494,8 @@ public class Xls2xml {
 	String column_null = "";
 	String column_remark = "";
 
-	public static void addColumn(String column_id, String column_name, String column_cn_name, String column_type, int length, String column_key,
+	public static void addColumn(String column_id, String column_name, String column_cn_name, String
+			column_type, int length, String column_key,
 	                             String column_null, String column_remark, String primaryKey) {
 
 		column = xmlCreater.createElement(table, "column");
