@@ -102,7 +102,7 @@ public class FileCollectLoadingDataStageImpl implements Callable<String> {
 				if (IsFlag.Shi.getCode().equals(fileCollectParamBean.getIs_solr())) {
 					abp.saveInSolr(avroBeans);
 				}
-				//存入Mysql和solr
+				//存入Mysql
 				List<String[]> hbaseList = abp.saveMetaData(avroBeans, fileNameHTreeMap);
 				if (!JobConstant.HAS_HADOOP_ENV) {
 					abp.saveInPostgreSupersedeHbase(hbaseList);
