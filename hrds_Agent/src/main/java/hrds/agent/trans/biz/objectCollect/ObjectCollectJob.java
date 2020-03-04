@@ -60,7 +60,7 @@ public class ObjectCollectJob extends AgentBaseAction {
 		JSONObject jsonData = new JSONObject();
 		if (StringUtil.isNotBlank(objectCollectMap.get("is_dictionary"))) {
 			if (IsFlag.Shi == (IsFlag.ofEnumByCode(objectCollectMap.get("is_dictionary")))) {
-				Xls2xml.toXml(objectCollectMap.get("file_path"), xmlName);
+				Xls2xml.toXmlForObjectCollect(objectCollectMap.get("file_path"), xmlName);
 				jsonData = ConnUtil.getTableToXML2(xmlName);
 			} else if (IsFlag.Fou == (IsFlag.ofEnumByCode(objectCollectMap.get("is_dictionary")))) {
 				jsonData = ConnUtil.getTableFromJson(objectCollectMap.get("file_path"),
