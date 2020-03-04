@@ -110,7 +110,7 @@ public class DbmCodeItemInfoAction extends BaseAction {
 
     @Method(desc = "根据代码项id数组批量删除代码项",
             logicStep = "根据代码项id数组批量删除代码项")
-    @Param(name = "code_item_id_s", desc = "标准分类id", range = "long类型数组")
+    @Param(name = "code_item_id_s", desc = "代码项id数组", range = "long类型数组")
     public void batchDeleteDbmCodeItemInfo(Long[] code_item_id_s) {
         SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
         asmSql.clean();

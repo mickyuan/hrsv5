@@ -224,7 +224,7 @@ public class DbmSortInfoAction extends BaseAction {
 
     @Method(desc = "根据标准分类id数组批量删除标准分类",
             logicStep = "根据标准分类id数组批量删除标准分类")
-    @Param(name = "sort_id_s", desc = "标准分类id", range = "long类型数组")
+    @Param(name = "sort_id_s", desc = "标准分类id数组", range = "long类型数组")
     public void batchDeleteDbmSortInfo(Long[] sort_id_s) {
         SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
         asmSql.clean();
