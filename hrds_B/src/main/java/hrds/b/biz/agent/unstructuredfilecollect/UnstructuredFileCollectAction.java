@@ -18,6 +18,7 @@ import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.AgentActionUtil;
 import hrds.commons.utils.DboExecute;
+import hrds.commons.utils.PackUtil;
 import hrds.commons.utils.key.PrimayKeyGener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -238,7 +239,7 @@ public class UnstructuredFileCollectAction extends BaseAction {
 		if (source.isEmpty()) {
 			throw new BusinessException("查询不到文件源设置表数据，请检查传入的id是否正确");
 		}
-		object.put("file_sourceList", source.toJSON());
+		object.put("file_sourceList", JSONArray.parseArray(source.toJSON()));
 		long agent_id = result.getLong(0, "agent_id");
 		//1.根据前端传过来的agent_id获取需要访问的url
 		String url = AgentActionUtil.getUrl(agent_id, getUserId(), AgentActionUtil.EXECUTEFILECOLLECT);
@@ -256,7 +257,7 @@ public class UnstructuredFileCollectAction extends BaseAction {
 //				.addData("source_id", result.getString(0, "source_id"))
 //				.addData("datasource_name", result.getString(0, "datasource_name"))
 //				.addData("dep_id", result.getString(0, "dep_id"))
-				.addData("fileCollectTaskInfo", object.toJSONString())
+				.addData("fileCollectTaskInfo", PackUtil.packMsg(object.toJSONString()))
 				.post(url);
 		ActionResult ar = JsonUtil.toObjectSafety(resVal.getBodyString(), ActionResult.class)
 				.orElseThrow(() -> new BusinessException("连接" + url + "服务异常"));
