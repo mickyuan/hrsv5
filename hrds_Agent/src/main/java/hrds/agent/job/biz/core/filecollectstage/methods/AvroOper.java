@@ -10,6 +10,7 @@ import hrds.agent.job.biz.bean.AvroBean;
 import hrds.agent.job.biz.bean.FileCollectParamBean;
 import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.trans.biz.unstructuredfilecollect.FileCollectJob;
+import hrds.commons.codes.DataSourceType;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.hadoop.readconfig.ConfigReader;
@@ -84,7 +85,7 @@ public class AvroOper {
 		//XXX 下面这个方法改造，不能直接对数据库进行操作
 		collectionWatcher = new CollectionWatcher(fileCollectParamBean);
 		fileCollectHdfsPath = FileNameUtils.normalize(PropertyParaUtil.getString("pathprefix",
-				"/hrds") + File.separator + PathUtil.DCL + File.separator +
+				"/hrds") + File.separator + DataSourceType.DCL.getCode() + File.separator +
 				fileCollectParamBean.getFcs_id() + File.separator
 				+ fileCollectParamBean.getFile_source_id() + File.separator, true);
 		bigFileCollectHdfsPath = FileNameUtils.normalize(fileCollectHdfsPath +

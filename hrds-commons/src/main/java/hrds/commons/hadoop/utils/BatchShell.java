@@ -66,7 +66,7 @@ public class BatchShell {
       SFTPDetails sftpDetails = new SFTPDetails();
       sftpDetails.setHost(PropertyParaUtil.getString("hyren_host", ""));
       sftpDetails.setPort(22);
-      sftpDetails.setUser_name(PropertyParaUtil.getString("hyren_pwd", ""));
+      sftpDetails.setUser_name(PropertyParaUtil.getString("hyren_user", ""));
       sftpDetails.setPwd(PropertyParaUtil.getString("hyren_pwd", ""));
 
       Session shellSession = SFTPChannel.getJSchSession(sftpDetails, 0);
@@ -83,7 +83,7 @@ public class BatchShell {
       chSftp.quit();
       channel.closeChannel();
     } catch (Exception e) {
-      logger.error("在远程机器 " + PropertyParaValue.getString("hyren_host", "") + " 执行命令异常 ", e);
+      logger.error("在远程机器 " + PropertyParaUtil.getString("hyren_host", "") + " 执行命令异常 ", e);
       if (e instanceof BusinessException) {
         throw (BusinessException) e;
       } else {

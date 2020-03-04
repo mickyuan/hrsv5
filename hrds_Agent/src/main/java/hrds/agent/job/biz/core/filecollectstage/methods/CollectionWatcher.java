@@ -7,6 +7,7 @@ import hrds.agent.job.biz.bean.FileCollectParamBean;
 import hrds.agent.job.biz.utils.CommunicationUtil;
 import hrds.commons.codes.CollectType;
 import hrds.commons.codes.ExecuteState;
+import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Collect_case;
 
 import java.util.UUID;
@@ -57,7 +58,7 @@ public class CollectionWatcher {
 		collectCase.setCollect_type(CollectType.WenJianCaiJi.getCode());
 		collectCase.setJob_type(CollectType.WenJianCaiJi.getCode());
 		collectCase.setCollet_database_size("");
-		collectCase.setIs_again("1");
+		collectCase.setIs_again(IsFlag.Fou.getCode());
 		startJob();//此时作为任务开始
 	}
 
@@ -78,7 +79,6 @@ public class CollectionWatcher {
 		collectCase.setExecute_length(excuteLength);//运行总时长
 		collectCase.setCollect_total(collect_total);
 		//TODO 下面的运行情况的记录，查询，需要调用接口，这里不允许有查询的接口，所有的地方有异常全部抛异常抛出去
-//		Result r = CommunicationUtil.searchErrorInfo(job_rs_id);
 		//捕捉到了异常会入库，如果查出此任务有异常被捕捉到，则认为此任务失败，反之成功
 		if (!StringUtil.isBlank(loadMessage)) {
 			collectCase.setExecute_state(ExecuteState.TongZhiChengGong.getCode());
@@ -86,7 +86,6 @@ public class CollectionWatcher {
 			collectCase.setExecute_state(ExecuteState.TongZhiShiBai.getCode());
 		}
 		CommunicationUtil.saveCollectCase(collectCase,loadMessage);
-//		CommunicationUtil.saveErrorInfo(job_rs_id, loadMessage);
 	}
 
 }

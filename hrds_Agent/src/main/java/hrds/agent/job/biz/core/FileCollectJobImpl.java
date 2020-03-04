@@ -10,6 +10,7 @@ import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.FileCollectParamBean;
 import hrds.agent.job.biz.bean.JobStatusInfo;
 import hrds.agent.job.biz.bean.MetaInfoBean;
+import hrds.agent.job.biz.bean.StageParamInfo;
 import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.core.filecollectstage.FileCollectUnloadDataStageImpl;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
@@ -102,12 +103,13 @@ public class FileCollectJobImpl implements JobInterface {
 			JobStageInterface unloadData = new FileCollectUnloadDataStageImpl(fileCollectParamBean,
 					newFile, changeFileList, fileNameHTreeMap, mapDBHelper);
 			//利用JobStageController构建本次非结构化文件采集作业流程
-			JobStageController controller = new JobStageController();
+//			JobStageController controller = new JobStageController();
 			//7.构建责任链，串起每个阶段
-			controller.registerJobStage(unloadData);
+//			controller.registerJobStage(unloadData);
 			//8.按照顺序从第一个阶段开始执行作业
 			//XXX 这里需要决定每个状态执行完成数据存到哪里，文件？mapDB?palDB?,哪个目录？
-			jobStatus = controller.handleStageByOrder(statusFilePath, jobStatus);
+			StageParamInfo stageParamInfo = unloadData.handleStage(new StageParamInfo());
+			jobStatus.setStageParamInfo(stageParamInfo);
 			//所有的流程执行完成，将队列从map中移除
 			FileCollectJob.mapQueue.remove(file_source_id);
 		} catch (Exception e) {
