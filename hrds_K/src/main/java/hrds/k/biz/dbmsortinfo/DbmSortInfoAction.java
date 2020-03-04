@@ -71,10 +71,8 @@ public class DbmSortInfoAction extends BaseAction {
                     "3.根据分类id删除分类")
     @Param(name = "sort_id", desc = "标准分类id", range = "Int类型")
     public void deleteDbmSortInfo(long sort_id) {
-        //1.检查待删除的分类下是否存在标准
-        if (checkExistDataUnderTheSortInfo(sort_id)) {
-            throw new BusinessException("分类下还存子分类或者标准!");
-        }
+        //1.检查待删除的分类下是否存在子分类或标准
+        checkExistDataUnderTheSortInfo(sort_id);
         //2.检查分类id是否存在
         if (checkSortIdIsNotExist(sort_id)) {
             throw new BusinessException("删除的分类已经不存在!");
@@ -255,25 +253,23 @@ public class DbmSortInfoAction extends BaseAction {
     }
 
     @Method(desc = "检查分类下是否存在标准",
-            logicStep = "1.检查分类下是否存在标准" +
-                    "2.检查分类下是否存在子分类")
+            logicStep = "1.检查分类下是否存在子分类" +
+                    "2.检查分类下是否存在标准")
     @Param(name = "standardCategoryId", desc = "分类id", range = "long类型")
     @Return(desc = "分类下是否存在标准或者子分类", range = "true：存在，false：不存在")
-    private boolean checkExistDataUnderTheSortInfo(long sort_id) {
-        boolean isExist = false;
-        //1.根据 sort_id 检查集分类下是否存在标准
-        if (Dbo.queryNumber("select count(sort_id) count from " + Dbm_normbasic.TableName + " WHERE " +
-                "sort_id =?", sort_id).orElseThrow(() ->
-                new BusinessException("检查集分类下是否存在标准的SQL编写错误")) > 0) {
-            isExist = true;
-        }
-        //2.根据 sort_id 检查集分类下是否存在子分类
+    private void checkExistDataUnderTheSortInfo(long sort_id) {
+        //1.根据 sort_id 检查集分类下是否存在子分类
         if (Dbo.queryNumber("select count(sort_id) count from " + Dbm_sort_info.TableName +
                 " WHERE parent_id=?", sort_id).orElseThrow(() ->
                 new BusinessException("检查集分类下是否存在子分类的SQL编写错误")) > 0) {
-            isExist = true;
+            throw new BusinessException("分类下还存在子分类!");
         }
-        return isExist;
+        //2.根据 sort_id 检查集分类下是否存在标准
+        if (Dbo.queryNumber("select count(sort_id) count from " + Dbm_normbasic.TableName + " WHERE " +
+                "sort_id =?", sort_id).orElseThrow(() ->
+                new BusinessException("检查集分类下是否存在标准的SQL编写错误")) > 0) {
+            throw new BusinessException("分类下还存在标准!");
+        }
     }
 
     @Method(desc = "检查分类id是否存在", logicStep = "检查分类id是否存在")
