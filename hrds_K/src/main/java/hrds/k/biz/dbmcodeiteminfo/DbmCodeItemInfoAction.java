@@ -113,9 +113,8 @@ public class DbmCodeItemInfoAction extends BaseAction {
     public void batchDeleteDbmCodeItemInfo(Long[] code_item_id_s) {
         SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
         asmSql.clean();
-        asmSql.addSql("delete from " + Dbm_code_item_info.TableName + " where create_user=?");
-        asmSql.addParam(getUserId().toString());
-        asmSql.addORParam("code_item_id ", code_item_id_s);
+        asmSql.addSql("delete from " + Dbm_code_item_info.TableName + " where");
+        asmSql.addORParam(" code_item_id ", code_item_id_s);
         Dbo.execute(asmSql.sql(), asmSql.params());
     }
 
