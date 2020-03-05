@@ -712,27 +712,28 @@ public class ObjectCollectAction extends BaseAction {
 			Map<String, Object> taskMap = Dbo.queryOneObject("select * from "
 							+ Object_collect_task.TableName + " where odc_id = ? and en_name = ?",
 					object_collect.getOdc_id(), tableName);
-			Object_collect_task objectCollectTask = new Object_collect_task();
-			if (!taskMap.isEmpty()) {
-				objectCollectTask.setAgent_id(object_collect.getAgent_id());
-				objectCollectTask.setCollect_data_type(CollectDataType.JSON.getCode());
-				objectCollectTask.setFirstline(firstLine != null ? firstLine : "");
-				objectCollectTask.setOdc_id(object_collect.getOdc_id());
-				objectCollectTask.setOcs_id(taskMap.get("ocs_id").toString());
-				if (IsFlag.Fou == (IsFlag.ofEnumByCode(object_collect.getIs_dictionary()))) {
-					if (!taskMap.isEmpty()) {
-						objectCollectTask.setOcs_id(taskMap.get("ocs_id").toString());
-						tableName = taskMap.get("en_name").toString();
-						zh_name = taskMap.get("zh_name").toString();
-						updateType = taskMap.get("updatetype").toString();
-						objectCollectTask.setDatabase_code(taskMap.get("database_code").toString());
-					}
-				}
-				objectCollectTask.setZh_name(zh_name != null ? zh_name : "");
-				objectCollectTask.setUpdatetype(updateType);
-				objectCollectTask.setEn_name(tableName != null ? tableName : "");
-				objectCollectTask.update(Dbo.db());
+			if (taskMap.isEmpty()) {
+				throw new BusinessException("当前半结构化采集对象采集对应表信息为空，odc_id=" + object_collect.getOdc_id());
 			}
+			Object_collect_task objectCollectTask = new Object_collect_task();
+			objectCollectTask.setAgent_id(object_collect.getAgent_id());
+			objectCollectTask.setCollect_data_type(CollectDataType.JSON.getCode());
+			objectCollectTask.setFirstline(firstLine != null ? firstLine : "");
+			objectCollectTask.setOdc_id(object_collect.getOdc_id());
+			objectCollectTask.setOcs_id(taskMap.get("ocs_id").toString());
+			if (IsFlag.Fou == (IsFlag.ofEnumByCode(object_collect.getIs_dictionary()))) {
+				if (!taskMap.isEmpty()) {
+					objectCollectTask.setOcs_id(taskMap.get("ocs_id").toString());
+					tableName = taskMap.get("en_name").toString();
+					zh_name = taskMap.get("zh_name").toString();
+					updateType = taskMap.get("updatetype").toString();
+					objectCollectTask.setDatabase_code(taskMap.get("database_code").toString());
+				}
+			}
+			objectCollectTask.setZh_name(zh_name != null ? zh_name : "");
+			objectCollectTask.setUpdatetype(updateType);
+			objectCollectTask.setEn_name(tableName != null ? tableName : "");
+			objectCollectTask.update(Dbo.db());
 			// 8.获取字段信息
 			List<Map<String, String>> columns = JsonUtil.toObject(tableNameMap.get("column"), type2);
 			// 9.如果没有数据字典，第一次新增则不会加载object_collect_struct，第二次编辑也不会修改库中信息
