@@ -6,8 +6,8 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.JsonUtil;
 import hrds.commons.base.BaseAction;
 import hrds.k.biz.dbmtree.commons.DbmDataQuery;
-import hrds.k.biz.dbmtree.util.DataConvertedNode;
-import hrds.k.biz.dbmtree.util.Node;
+import hrds.commons.utils.tree.DataConvertedNode;
+import hrds.commons.utils.tree.Node;
 
 import java.util.HashMap;
 import java.util.List;

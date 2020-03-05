@@ -1,4 +1,4 @@
-package hrds.k.biz.dbmtree.util;
+package hrds.commons.utils.tree;
 
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
