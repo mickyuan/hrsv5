@@ -125,9 +125,12 @@ public class DbmCodeItemInfoAction extends BaseAction {
     @Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数", valueIfNull = "1")
     @Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", valueIfNull = "10")
     @Param(name = "search_cond", desc = "检索字符串", range = "String类型,任意值")
-    @Param(name = "code_type_id", desc = "代码项分类di", range = "long类型值")
+    @Param(name = "code_type_id", desc = "代码项分类id", range = "long类型值")
     @Return(desc = "代码项信息列表", range = "代码项信息列表")
     public Map<String, Object> searchDbmCodeItemInfo(int currPage, int pageSize, String search_cond, long code_type_id) {
+        if (StringUtil.isBlank(search_cond)) {
+            throw new BusinessException("搜索条件不能为空!" + search_cond);
+        }
         Map<String, Object> dbmCodeItemInfoMap = new HashMap<>();
         Page page = new DefaultPageImpl(currPage, pageSize);
         SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();

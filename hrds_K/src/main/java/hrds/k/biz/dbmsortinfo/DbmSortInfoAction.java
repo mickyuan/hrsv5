@@ -154,17 +154,24 @@ public class DbmSortInfoAction extends BaseAction {
             logicStep = "检索分类信息")
     @Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数", valueIfNull = "1")
     @Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", valueIfNull = "10")
-    @Param(name = "search_cond", desc = "检索字符串", range = "String类型,任意值")
+    @Param(name = "search_cond", desc = "检索字符串", range = "String类型,任意值", valueIfNull = "")
+    @Param(name = "status", desc = "发布状态", range = "IsFlag 0:未发布,1:已发布", nullable = true)
     @Return(desc = "分类信息列表", range = "分类信息列表")
-    public Map<String, Object> searchDbmSortInfo(int currPage, int pageSize, String search_cond) {
+    public Map<String, Object> searchDbmSortInfo(int currPage, int pageSize, String search_cond, String status) {
+        if (StringUtil.isBlank(search_cond)) {
+            throw new BusinessException("搜索条件不能为空!" + search_cond);
+        }
         Map<String, Object> dbmSortInfoMap = new HashMap<>();
         Page page = new DefaultPageImpl(currPage, pageSize);
         SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
         asmSql.clean();
-        asmSql.addSql("select * from " + Dbm_sort_info.TableName)
-                .addSql(" where create_user = ? and (").addParam(getUserId().toString())
-                .addLikeParam("sort_name", '%' + search_cond + '%', "")
-                .addLikeParam("sort_remark", '%' + search_cond + '%', "or").addSql(")");
+        asmSql.addSql("select * from " + Dbm_sort_info.TableName + " where");
+        if (StringUtil.isNotBlank(status)) {
+            asmSql.addSql(" sort_status = ? and").addParam(status);
+        }
+        asmSql.addSql(" create_user = ? and (").addParam(getUserId().toString());
+        asmSql.addLikeParam("sort_name", '%' + search_cond + '%', "");
+        asmSql.addLikeParam("sort_remark", '%' + search_cond + '%', "or").addSql(")");
         List<Dbm_sort_info> dbmSortInfos = Dbo.queryPagedList(Dbm_sort_info.class, page, asmSql.sql(), asmSql.params());
         dbmSortInfoMap.put("dbmSortInfos", dbmSortInfos);
         dbmSortInfoMap.put("totalSize", page.getTotalSize());
@@ -221,9 +228,15 @@ public class DbmSortInfoAction extends BaseAction {
     }
 
     @Method(desc = "根据标准分类id数组批量删除标准分类",
-            logicStep = "根据标准分类id数组批量删除标准分类")
+            logicStep = "1.检查待删除的分类下是否还存在数据" +
+                    "2.待删除的分类id下没有子分类和标准")
     @Param(name = "sort_id_s", desc = "标准分类id数组", range = "long类型数组")
     public void batchDeleteDbmSortInfo(Long[] sort_id_s) {
+        //1.检查待删除的分类下是否还存在数据
+        for (Long sort_id : sort_id_s) {
+            checkExistDataUnderTheSortInfo(sort_id);
+        }
+        //2.待删除的分类id下没有子分类和标准,则删除
         SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
         asmSql.clean();
         asmSql.addSql("delete from " + Dbm_sort_info.TableName + " where create_user=?");
