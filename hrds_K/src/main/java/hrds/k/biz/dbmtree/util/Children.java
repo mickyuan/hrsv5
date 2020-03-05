@@ -3,7 +3,6 @@ package hrds.k.biz.dbmtree.util;
 import fd.ng.core.annotation.DocClass;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 @DocClass(desc = "孩子列表类", author = "BY-HLL", createdate = "2020/2/20 0020 下午 07:04")
@@ -36,10 +35,8 @@ public class Children {
     void sortChildren() {
         // 对本层节点进行排序
         // 可根据不同的排序属性，传入不同的比较器，这里传入ID比较器
-        Collections.sort(nodeList, new NodeIDComparator());
+        nodeList.sort(new NodeIDComparator());
         // 对每个节点的下一层节点进行排序
-        nodeList.forEach(node -> {
-            node.sortChildren();
-        });
+        nodeList.forEach(Node::sortChildren);
     }
 }
