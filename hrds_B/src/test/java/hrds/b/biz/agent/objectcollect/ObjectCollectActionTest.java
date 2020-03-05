@@ -99,7 +99,7 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 			agent_info.setAgent_port("56000");
 			agent_info.setAgent_type(AgentType.ShuJuKu.getCode());
 			agent_info.setAgent_name("非结构化采集Agent");
-			agent_info.setSave_dir("/aaa/ccc/");
+			agent_info.setSave_dir("D:\\采集目录\\dhw");
 			agent_info.setLog_dir("/aaa/ccc/log");
 			agent_info.setDeploy(IsFlag.Shi.getCode());
 			agent_info.setAgent_context("/agent");
@@ -124,6 +124,9 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 				object_collect.setFile_path("/aaaa/ccc/ddd");
 				object_collect.setIs_sendok(IsFlag.Fou.getCode());
 				object_collect.setAgent_id(AGENT_ID);
+				object_collect.setIs_dictionary(IsFlag.Fou.getCode());
+				object_collect.setData_date(DateUtil.getSysDate());
+				object_collect.setFile_suffix("json");
 				assertThat("初始化数据成功", object_collect.add(db), is(1));
 			}
 			//5.造object_collect_task表数据，默认为10条,OCS_ID为30000001---30000010
@@ -136,6 +139,8 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 				object_collect_task.setCollect_data_type(CollectDataType.JSON.getCode());
 				object_collect_task.setDatabase_code(DataBaseCode.UTF_8.getCode());
 				object_collect_task.setOdc_id(ODC_ID);
+				object_collect_task.setUpdatetype(UpdateType.DirectUpdate.getCode());
+				object_collect_task.setFirstline("aaa");
 				assertThat("初始化数据成功", object_collect_task.add(db), is(1));
 			}
 			//6.造object_storage表数据，默认为10条,OBJ_STID为40000001---40000010
@@ -146,6 +151,7 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 				object_storage.setIs_hdfs(IsFlag.Shi.getCode());
 				object_storage.setOcs_id(OCS_ID + i + 3);
 				object_storage.setRemark("zxz测试用例清除表object_storage专用");
+				object_storage.setIs_solr(IsFlag.Fou.getCode());
 				assertThat("初始化数据成功", object_storage.add(db), is(1));
 			}
 			//7.造object_collect_struct表数据，默认为10条,STRUCT_ID为50000001---50000010
@@ -156,6 +162,13 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 				object_collect_struct.setColumn_name("testcol" + i);
 				object_collect_struct.setData_desc("测试对象中文描述" + i);
 				object_collect_struct.setColumn_type(ObjectDataType.ZiFuChuan.getCode());
+				object_collect_struct.setIs_hbase(IsFlag.Fou.getCode());
+				object_collect_struct.setIs_key(IsFlag.Fou.getCode());
+				object_collect_struct.setIs_operate(IsFlag.Fou.getCode());
+				object_collect_struct.setIs_rowkey(IsFlag.Fou.getCode());
+				object_collect_struct.setIs_solr(IsFlag.Fou.getCode());
+				object_collect_struct.setColumnposition("columns." + "testcol" + i);
+				object_collect_struct.setCol_seq(Long.valueOf(i + 1));
 				assertThat("初始化数据成功", object_collect_struct.add(db), is(1));
 			}
 			SqlOperator.commitTransaction(db);
@@ -164,7 +177,7 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 		String responseValue = new HttpClient().buildSession()
 				.addData("user_id", USER_ID)
 				.addData("password", "1")
-				.post("http://127.0.0.1:8099/A/action/hrds/a/biz/login/login").getBodyString();
+				.post("http://127.0.0.1:8088/A/action/hrds/a/biz/login/login").getBodyString();
 		ActionResult ar = JsonUtil.toObjectSafety(responseValue, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败"));
 		assertThat(ar.isSuccess(), is(true));
@@ -241,9 +254,12 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 				.addData("e_date", DateUtil.getSysDate())
 				.addData("database_code", DataBaseCode.UTF_8.getCode())
 				.addData("run_way", ExecuteWay.MingLingChuFa.getCode())
-				.addData("file_path", "/aaaa/ccc/ddd")
+				.addData("file_path", "D:\\采集目录\\dhw")
 				.addData("is_sendok", IsFlag.Fou.getCode())
 				.addData("agent_id", AGENT_ID)
+				.addData("is_dictionary", IsFlag.Shi.getCode())
+				.addData("data_date", "20200301")
+				.addData("file_suffix", "json")
 				.post(getActionUrl("addObjectCollect")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败！"));
@@ -338,7 +354,7 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 	public void updateObjectCollectTest() {
 		//1.更新一个正确的半结构化采集设置表
 		bodyString = new HttpClient()
-				.addData("odc_id", ODC_ID)
+				.addData("odc_id", "1000001586")
 				.addData("object_collect_type", ObjectCollectType.HangCaiJi.getCode())
 				.addData("obj_number", "hahahahxianshi")
 				.addData("obj_collect_name", "测试对象采集编号0")
@@ -350,9 +366,12 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 				.addData("e_date", DateUtil.getSysDate())
 				.addData("database_code", DataBaseCode.UTF_8.getCode())
 				.addData("run_way", ExecuteWay.MingLingChuFa.getCode())
-				.addData("file_path", "/aaaa/ccc/ddd")
+				.addData("file_path", "D:\\采集目录\\dhw")
 				.addData("is_sendok", IsFlag.Fou.getCode())
 				.addData("agent_id", AGENT_ID)
+				.addData("is_dictionary", IsFlag.Shi.getCode())
+				.addData("data_date", "20200301")
+				.addData("file_suffix", "json")
 				.post(getActionUrl("updateObjectCollect")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败！"));
@@ -1016,11 +1035,13 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 			SqlOperator.execute(db, "DELETE FROM " + Agent_down_info.TableName + " WHERE remark = ?"
 					, "测试用例清除数据专用列");
 			//4.删除测试用例造的Object_collect表数据，默认为2条,ODC_ID为20000001---20000002
-			SqlOperator.execute(db, "DELETE FROM " + Object_collect.TableName + " WHERE agent_id = ?"
-					, AGENT_ID);
-			//5.删除测试用例造的object_collect_task表数据，默认为10条,OCS_ID为30000001---30000010
-			SqlOperator.execute(db, "DELETE FROM " + Object_collect_task.TableName
-					+ " WHERE agent_id = ?", AGENT_ID);
+			for (int i = 0; i < OBJECT_COLLECT_ROWS; i++) {
+				SqlOperator.execute(db, "DELETE FROM " + Object_collect.TableName + " WHERE odc_id = ?"
+						, ODC_ID + i);
+				//5.删除测试用例造的object_collect_task表数据，默认为10条,OCS_ID为30000001---30000010
+				SqlOperator.execute(db, "DELETE FROM " + Object_collect_task.TableName
+						+ " WHERE odc_id = ?", ODC_ID + i);
+			}
 			//6.删除测试用例造的object_storage表数据，默认为10条,OBJ_STID为40000001---40000010
 			SqlOperator.execute(db, "DELETE FROM " + Object_storage.TableName
 					+ " WHERE remark = ?", "zxz测试用例清除表object_storage专用");
