@@ -5,8 +5,6 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
-import fd.ng.db.jdbc.DefaultPageImpl;
-import fd.ng.db.jdbc.Page;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
@@ -96,7 +94,7 @@ public class DbmCodeItemInfoAction extends BaseAction {
         return dbmCodeItemInfoMap;
     }
 
-    @Method(desc = "根据代码分类id获取所有代码项信息", logicStep = "根据代码分类id获取所有代码项信息")
+    @Method(desc = "根据代码项id获取所有代码项信息", logicStep = "根据代码项id获取所有代码项信息")
     @Param(name = "code_item_id", desc = "代码项id", range = "Long类型值")
     @Return(desc = "单个代码项信息", range = "单个代码项信息")
     public Optional<Dbm_code_item_info> getDbmSortInfoById(long code_item_id) {
@@ -122,17 +120,14 @@ public class DbmCodeItemInfoAction extends BaseAction {
 
     @Method(desc = "检索代码项信息",
             logicStep = "检索代码项信息")
-    @Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数", valueIfNull = "1")
-    @Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", valueIfNull = "10")
     @Param(name = "search_cond", desc = "检索字符串", range = "String类型,任意值")
     @Param(name = "code_type_id", desc = "代码项分类id", range = "long类型值")
     @Return(desc = "代码项信息列表", range = "代码项信息列表")
-    public Map<String, Object> searchDbmCodeItemInfo(int currPage, int pageSize, String search_cond, long code_type_id) {
+    public Map<String, Object> searchDbmCodeItemInfo(String search_cond, long code_type_id) {
         if (StringUtil.isBlank(search_cond)) {
             throw new BusinessException("搜索条件不能为空!" + search_cond);
         }
         Map<String, Object> dbmCodeItemInfoMap = new HashMap<>();
-        Page page = new DefaultPageImpl(currPage, pageSize);
         SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
         asmSql.clean();
         asmSql.addSql("select * from " + Dbm_code_item_info.TableName)
@@ -142,10 +137,10 @@ public class DbmCodeItemInfoAction extends BaseAction {
                 .addLikeParam("code_value", '%' + search_cond + '%', "or")
                 .addLikeParam("dbm_level", '%' + search_cond + '%', "or")
                 .addLikeParam("code_remark", '%' + search_cond + '%', "or").addSql(")");
-        List<Dbm_code_item_info> dbmCodeItemInfos = Dbo.queryPagedList(Dbm_code_item_info.class, page, asmSql.sql(),
+        List<Dbm_code_item_info> dbmCodeItemInfos = Dbo.queryList(Dbm_code_item_info.class, asmSql.sql(),
                 asmSql.params());
         dbmCodeItemInfoMap.put("dbmCodeItemInfos", dbmCodeItemInfos);
-        dbmCodeItemInfoMap.put("totalSize", page.getTotalSize());
+        dbmCodeItemInfoMap.put("totalSize", dbmCodeItemInfos.size());
         return dbmCodeItemInfoMap;
     }
 
