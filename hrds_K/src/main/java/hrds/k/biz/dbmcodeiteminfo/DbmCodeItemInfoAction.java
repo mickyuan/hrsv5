@@ -32,9 +32,6 @@ public class DbmCodeItemInfoAction extends BaseAction {
         if (StringUtil.isBlank(dbm_code_item_info.getCode_item_name())) {
             throw new BusinessException("代码项名称为空!" + dbm_code_item_info.getCode_item_name());
         }
-        if (StringUtil.isBlank(dbm_code_item_info.getDbm_level())) {
-            throw new BusinessException("代码项层级为空!" + dbm_code_item_info.getCode_item_name());
-        }
         if (StringUtil.isBlank(dbm_code_item_info.getCode_type_id().toString())) {
             throw new BusinessException("代码项分类为空!" + dbm_code_item_info.getCode_type_id());
         }
