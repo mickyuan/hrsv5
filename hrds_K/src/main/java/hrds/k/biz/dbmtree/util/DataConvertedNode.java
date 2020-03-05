@@ -12,7 +12,7 @@ public class DataConvertedNode {
 
     @Method(desc = "树数据转分叉树菜单数据", logicStep = "标准分类树数据转分叉树菜单数据")
     @Param(name = "dataList", desc = "数据列表", range = "dataList")
-    @Return(desc = "转化成分叉树的树菜单数据字符串", range = "转化成分叉树的树菜单数据字符串")
+    @Return(desc = "转化成分叉树的树菜单数据List列表", range = "转化成分叉树的树菜单数据List列表")
     public static List<Node> dataConversionTreeInfo(List<Map<String, Object>> dataList) {
         // 节点列表（散列表，用于临时存储节点对象）
         Map<String, Node> nodeMap = new HashMap<>();
