@@ -114,7 +114,7 @@ public class DbmCodeItemInfoAction extends BaseAction {
         SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
         asmSql.clean();
         asmSql.addSql("delete from " + Dbm_code_item_info.TableName + " where");
-        asmSql.addORParam(" code_item_id ", code_item_id_s);
+        asmSql.addORParam(" code_item_id ", code_item_id_s, "");
         Dbo.execute(asmSql.sql(), asmSql.params());
     }
 
