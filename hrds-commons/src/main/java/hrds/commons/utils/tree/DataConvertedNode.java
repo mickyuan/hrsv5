@@ -67,7 +67,6 @@ public class DataConvertedNode {
             String id = (String) itemMap.get("id");
             if (childrenMap.containsKey(id)) {
                 itemMap.put("children", childrenMap.get(id));
-                System.out.println(itemMap);
                 treeList.add(itemMap);
             }
         }));
