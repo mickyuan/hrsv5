@@ -102,9 +102,9 @@ public class DbmCodeItemInfoAction extends BaseAction {
     @Param(name = "code_item_id", desc = "代码项id", range = "Long类型值")
     @Return(desc = "单个代码项信息", range = "单个代码项信息")
     public Optional<Dbm_code_item_info> getDbmCodeItemInfoById(long code_item_id) {
-        //1.检查分类是否存在
+        //1.检查代码项是否存在
         if (checkCodeItemIdIsNotExist(code_item_id)) {
-            throw new BusinessException("查询的分类已经不存在! code_item_id=" + code_item_id);
+            throw new BusinessException("代码项已经不存在! code_item_id=" + code_item_id);
         }
         return Dbo.queryOneObject(Dbm_code_item_info.class, "select * from " + Dbm_code_item_info.TableName +
                 " where code_item_id = ?", code_item_id);
