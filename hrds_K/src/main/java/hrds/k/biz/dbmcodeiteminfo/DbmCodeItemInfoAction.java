@@ -12,6 +12,7 @@ import hrds.commons.entity.Dbm_code_item_info;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.key.PrimayKeyGener;
+import hrds.k.biz.dbmcodetypeinfo.DbmCodeTypeInfoAction;
 
 import java.util.HashMap;
 import java.util.List;
@@ -36,6 +37,9 @@ public class DbmCodeItemInfoAction extends BaseAction {
         }
         if (StringUtil.isBlank(dbm_code_item_info.getCode_type_id().toString())) {
             throw new BusinessException("代码项分类为空!" + dbm_code_item_info.getCode_type_id());
+        }
+        if (DbmCodeTypeInfoAction.checkCodeTypeIdIsNotExist(dbm_code_item_info.getCode_type_id())) {
+            throw new BusinessException("代码项分类已经不存在!" + dbm_code_item_info.getCode_type_id());
         }
         //2.设置代码项信息
         dbm_code_item_info.setCode_item_id(PrimayKeyGener.getNextId());

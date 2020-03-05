@@ -210,7 +210,7 @@ public class DbmCodeTypeInfoAction extends BaseAction {
     @Method(desc = "检查代码分类id是否存在", logicStep = "检查代码分类id是否存在")
     @Param(name = "code_type_id", desc = "代码分类id", range = "long类型")
     @Return(desc = "分类否存在", range = "true：不存在，false：存在")
-    private boolean checkCodeTypeIdIsNotExist(long code_type_id) {
+    public static boolean checkCodeTypeIdIsNotExist(long code_type_id) {
         //1.根据 code_type_id 检查分类是否存在(1 : 表示存在, 其他为异常情况,因为根据主键只能查出一条记录信息)
         return Dbo.queryNumber("SELECT COUNT(code_type_id) FROM " + Dbm_code_type_info.TableName +
                 " WHERE code_type_id = ?", code_type_id).orElseThrow(() ->
