@@ -695,8 +695,7 @@ public class ObjectCollectAction extends BaseAction {
 			if (!tableNameList.contains(en_name)) {
 				Long ocs_id = new Long(objectMap.get("ocs_id").toString());
 				// 删除对象采集对应信息
-				Dbo.execute("刪除Object_collect_task表失敗，ocs_id=" + ocs_id,
-						"delete from " + Object_collect_task.TableName + " where ocs_id=?", ocs_id);
+				Dbo.execute("delete from " + Object_collect_task.TableName + " where ocs_id=?", ocs_id);
 				// 删除对象采集结构信息
 				Dbo.execute("delete from " + Object_collect_struct.TableName + " where ocs_id=?", ocs_id);
 				// 删除存储目的地
@@ -714,23 +713,26 @@ public class ObjectCollectAction extends BaseAction {
 							+ Object_collect_task.TableName + " where odc_id = ? and en_name = ?",
 					object_collect.getOdc_id(), tableName);
 			Object_collect_task objectCollectTask = new Object_collect_task();
-			objectCollectTask.setAgent_id(object_collect.getAgent_id());
-			objectCollectTask.setCollect_data_type(CollectDataType.JSON.getCode());
-			objectCollectTask.setFirstline(firstLine != null ? firstLine : "");
-			objectCollectTask.setOdc_id(object_collect.getOdc_id());
-			if (IsFlag.Fou == (IsFlag.ofEnumByCode(object_collect.getIs_dictionary()))) {
-				if (!taskMap.isEmpty()) {
-					objectCollectTask.setOcs_id(taskMap.get("ocs_id").toString());
-					tableName = taskMap.get("en_name").toString();
-					zh_name = taskMap.get("zh_name").toString();
-					updateType = taskMap.get("updatetype").toString();
-					objectCollectTask.setDatabase_code(taskMap.get("database_code").toString());
+			if (!taskMap.isEmpty()) {
+				objectCollectTask.setAgent_id(object_collect.getAgent_id());
+				objectCollectTask.setCollect_data_type(CollectDataType.JSON.getCode());
+				objectCollectTask.setFirstline(firstLine != null ? firstLine : "");
+				objectCollectTask.setOdc_id(object_collect.getOdc_id());
+				objectCollectTask.setOcs_id(taskMap.get("ocs_id").toString());
+				if (IsFlag.Fou == (IsFlag.ofEnumByCode(object_collect.getIs_dictionary()))) {
+					if (!taskMap.isEmpty()) {
+						objectCollectTask.setOcs_id(taskMap.get("ocs_id").toString());
+						tableName = taskMap.get("en_name").toString();
+						zh_name = taskMap.get("zh_name").toString();
+						updateType = taskMap.get("updatetype").toString();
+						objectCollectTask.setDatabase_code(taskMap.get("database_code").toString());
+					}
 				}
+				objectCollectTask.setZh_name(zh_name != null ? zh_name : "");
+				objectCollectTask.setUpdatetype(updateType);
+				objectCollectTask.setEn_name(tableName != null ? tableName : "");
+				objectCollectTask.update(Dbo.db());
 			}
-			objectCollectTask.setZh_name(zh_name != null ? zh_name : "");
-			objectCollectTask.setEn_name(tableName != null ? tableName : "");
-			objectCollectTask.setUpdatetype(updateType);
-			objectCollectTask.update(Dbo.db());
 			// 8.获取字段信息
 			List<Map<String, String>> columns = JsonUtil.toObject(tableNameMap.get("column"), type2);
 			// 9.如果没有数据字典，第一次新增则不会加载object_collect_struct，第二次编辑也不会修改库中信息
@@ -757,7 +759,7 @@ public class ObjectCollectAction extends BaseAction {
 						object_collect_struct.setCol_seq(String.valueOf(j));
 						object_collect_struct.setColumnposition(columnMap.get("columnposition"));
 						object_collect_struct.setData_desc(object_collect_struct.getColumn_name());
-						object_collect_struct.update(Dbo.db());
+						object_collect_struct.add(Dbo.db());
 					}
 				}
 				Map<String, String> handleTypMap = JsonUtil.toObject(tableNameMap.get("handletype"), type);
@@ -771,17 +773,17 @@ public class ObjectCollectAction extends BaseAction {
 					object_handle_type.setOcs_id(objectCollectTask.getOcs_id());
 					object_handle_type.setHandle_type(OperationType.INSERT.getCode());
 					object_handle_type.setHandle_value(handleTypMap.get("insert"));
-					object_handle_type.update(Dbo.db());
+					object_handle_type.add(Dbo.db());
 					// 插入delete对应的值
 					object_handle_type.setObject_handle_id(PrimayKeyGener.getNextId());
 					object_handle_type.setHandle_type(OperationType.DELETE.getCode());
 					object_handle_type.setHandle_value(handleTypMap.get("delete"));
-					object_handle_type.update(Dbo.db());
+					object_handle_type.add(Dbo.db());
 					// 插入update对应的值
 					object_handle_type.setObject_handle_id(PrimayKeyGener.getNextId());
 					object_handle_type.setHandle_type(OperationType.UPDATE.getCode());
 					object_handle_type.setHandle_value(handleTypMap.get("update"));
-					object_handle_type.update(Dbo.db());
+					object_handle_type.add(Dbo.db());
 				}
 			}
 		}
