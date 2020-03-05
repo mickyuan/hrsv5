@@ -29,7 +29,7 @@ public class DataConvertedNode {
         for (Map.Entry<String, Node> nodeEntry : nodeMap.entrySet()) {
             Node treeNodeData;
             Node node = nodeEntry.getValue();
-            if (node.parent_id == null || "0".equals(node.parent_id)) {
+            if (node.parent_id == null || "0" .equals(node.parent_id)) {
                 treeNodeData = node;
                 treeNodeDataList.add(treeNodeData);
             } else {
@@ -63,35 +63,34 @@ public class DataConvertedNode {
         });
         // 构造多叉树
         List<Map<String, Object>> treeList = new ArrayList<>();
-        childrenMap.forEach((key, item) -> {
-            item.forEach(itemMap -> {
-                String id = (String) itemMap.get("id");
-                if (childrenMap.containsKey(id)) {
-                    itemMap.put("children", childrenMap.get(id));
-                    System.out.println(itemMap);
-                    treeList.add(itemMap);
-                }
-            });
-        });
+        childrenMap.forEach((key, item) -> item.forEach(itemMap -> {
+            String id = (String) itemMap.get("id");
+            if (childrenMap.containsKey(id)) {
+                itemMap.put("children", childrenMap.get(id));
+                System.out.println(itemMap);
+                treeList.add(itemMap);
+            }
+        }));
         return treeList;
     }
 
-    private List<Map<String, Object>> findChild(Map<String, List<Map<String, Object>>> childrenMap,
-                                                List<Map<String, Object>> childrenList) {
-        List<Map<String, Object>> treeList = new ArrayList<>();
 
-        childrenMap.forEach((key, item) -> {
-            item.forEach(itemMap -> {
-                String id = (String) itemMap.get("id");
-                if (childrenMap.containsKey(id)) {
-                    findChild(childrenMap, childrenMap.get(id));
-                } else {
-                    itemMap.put("children", childrenMap.get(id));
-                    treeList.add(itemMap);
-                }
-            });
-        });
-
+//    @Deprecated
+//    private List<Map<String, Object>> findChild(Map<String, List<Map<String, Object>>> childrenMap,
+//                                                List<Map<String, Object>> childrenList) {
+//        List<Map<String, Object>> treeList = new ArrayList<>();
+//
+//        childrenMap.forEach((key, item) -> {
+//            item.forEach(itemMap -> {
+//                String id = (String) itemMap.get("id");
+//                if (childrenMap.containsKey(id)) {
+//                    findChild(childrenMap, childrenMap.get(id));
+//                } else {
+//                    itemMap.put("children", childrenMap.get(id));
+//                    treeList.add(itemMap);
+//                }
+//            });
+//        });
 //        childrenList.forEach(itme -> {
 //            String id = (String) itme.get("id");
 //            if (childrenMap.containsKey(id)) {
@@ -101,8 +100,6 @@ public class DataConvertedNode {
 //                treeList.add(itme);
 //            }
 //        });
-
-        return treeList;
-
-    }
+//        return treeList;
+//    }
 }
