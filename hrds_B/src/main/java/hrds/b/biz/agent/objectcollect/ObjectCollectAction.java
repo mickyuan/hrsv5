@@ -72,8 +72,18 @@ public class ObjectCollectAction extends BaseAction {
 	}
 
 	@Method(desc = "保存半结构化文件采集页面信息到对象采集设置表对象，同时返回对象采集id",
-			logicStep = "1.根据obj_collect_name查询半结构化任务名称是否重复" +
-					"2.保存object_collect表")
+			logicStep = "1.数据可访问权限处理方式：该表没有对应的用户访问权限限制" +
+					"2.根据obj_collect_name查询半结构化任务名称是否重复" +
+					"3.保存object_collect表" +
+					"4.保存object_collect表" +
+					"5.获取agent解析数据字典返回json格式数据" +
+					"6.遍历json对象" +
+					"7.object_collect_task表信息入库" +
+					"8.获取字段信息" +
+					"9.保存对象采集结构信息" +
+					"10.保存对象采集数据处理类型对应表信息" +
+					"11.保存数据存储表信息入库" +
+					"12.返回对象采集ID")
 	@Param(name = "object_collect", desc = "对象采集设置表对象，对象中不能为空的字段必须有值",
 			range = "不可为空", isBean = true)
 	@Return(desc = "对象采集设置表id，新建的id后台生成的所以要返回到前端", range = "不会为空")
@@ -95,9 +105,9 @@ public class ObjectCollectAction extends BaseAction {
 		}
 		// 4.保存object_collect表
 		object_collect.add(Dbo.db());
-		Map<String, String> jsonMap = getJsonMap(object_collect);
+		String jsonParamMap = getJsonParamForAgent(object_collect);
 		// 5.获取agent解析数据字典返回json格式数据
-		Map<String, String> jsonMsg = getJsonDataForAgent(JsonUtil.toJson(jsonMap), object_collect.getAgent_id());
+		Map<String, String> jsonMsg = getJsonDataForAgent(jsonParamMap, object_collect.getAgent_id());
 		Type type = new TypeReference<Map<String, String>>() {
 		}.getType();
 		Map<String, String> objectCollectMap = JsonUtil.toObject(jsonMsg.get("msg"), type);
@@ -106,7 +116,6 @@ public class ObjectCollectAction extends BaseAction {
 		List<Map<String, String>> tableNameList = JsonUtil.toObject(objectCollectMap.get("tablename"), type2);
 		// 6.遍历json对象
 		for (Map<String, String> tableNameMap : tableNameList) {
-			// 7.object_collect_task表信息入库
 			String tableName = tableNameMap.get("tableName");
 			String zh_name = tableNameMap.get("description");
 			String updateType = tableNameMap.get("updatetype");
@@ -127,11 +136,12 @@ public class ObjectCollectAction extends BaseAction {
 			if (StringUtil.isBlank(tableNameMap.get("update_type"))) {
 				objectCollectTask.setUpdatetype(UpdateType.DirectUpdate.getCode());
 			}
+			// 7.object_collect_task表信息入库
 			objectCollectTask.add(Dbo.db());
 
 			// 8.获取字段信息
 			List<Map<String, String>> columnList = JsonUtil.toObject(tableNameMap.get("column"), type2);
-			// 9.如果没有数据字典，第一次新增则不会加载object_collect_struct，第二次编辑也不会修改库中信息
+			// 如果没有数据字典，第一次新增则不会加载object_collect_struct，第二次编辑也不会修改库中信息
 			boolean isSolr = false;
 			if (IsFlag.Shi.getCode().equals(object_collect.getIs_dictionary())) {
 				if (!columnList.isEmpty()) {
@@ -141,24 +151,14 @@ public class ObjectCollectAction extends BaseAction {
 							isSolr = true;
 						}
 						Object_collect_struct object_collect_struct = new Object_collect_struct();
-						object_collect_struct.setStruct_id(PrimayKeyGener.getNextId());
-						object_collect_struct.setOcs_id(objectCollectTask.getOcs_id());
-						object_collect_struct.setColumn_name(columnMap.get("columnname"));
-						object_collect_struct.setColumn_type(columnMap.get("columntype"));
-						object_collect_struct.setIs_key(columnMap.get("is_key"));
-						object_collect_struct.setIs_hbase(columnMap.get("is_hbase"));
-						object_collect_struct.setIs_rowkey(columnMap.get("is_rowkey"));
-						object_collect_struct.setIs_solr(columnMap.get("is_solr"));
-						object_collect_struct.setIs_operate(columnMap.get("is_operate"));
-						object_collect_struct.setCol_seq(String.valueOf(i));
-						object_collect_struct.setColumnposition(columnMap.get("columnposition"));
-						object_collect_struct.setData_desc(object_collect_struct.getColumn_name());
-						object_collect_struct.add(Dbo.db());
+						// 9.保存对象采集结构信息
+						addObjectCollectStruct(objectCollectTask, i, columnMap, object_collect_struct);
 					}
 				}
-				Map<String, String> handleTypeMap = JsonUtil.toObject(tableNameMap.get("handletype"), type);
 				// 如果没有数据字典，第一次新增则不会加载object_handle_type，第二次编辑也不会修改库中信息
+				Map<String, String> handleTypeMap = JsonUtil.toObject(tableNameMap.get("handletype"), type);
 				Object_handle_type object_handle_type = new Object_handle_type();
+				// 10.保存对象采集数据处理类型对应表信息
 				if (!handleTypeMap.isEmpty()) {
 					// 插入insert对应的值
 					object_handle_type.setObject_handle_id(PrimayKeyGener.getNextId());
@@ -177,25 +177,18 @@ public class ObjectCollectAction extends BaseAction {
 					object_handle_type.setHandle_value(handleTypeMap.get("update"));
 					object_handle_type.add(Dbo.db());
 				} else {
-					// 插入insert对应的值
-					object_handle_type.setObject_handle_id(PrimayKeyGener.getNextId());
-					object_handle_type.setOcs_id(ocs_id);
-					object_handle_type.setHandle_type(OperationType.INSERT.getCode());
-					object_handle_type.setHandle_value(OperationType.INSERT.getValue());
-					object_handle_type.add(Dbo.db());
-					// 插入delete对应的值
-					object_handle_type.setObject_handle_id(PrimayKeyGener.getNextId());
-					object_handle_type.setHandle_type(OperationType.DELETE.getCode());
-					object_handle_type.setHandle_value(OperationType.DELETE.getValue());
-					object_handle_type.add(Dbo.db());
-					// 插入update对应的值
-					object_handle_type.setObject_handle_id(PrimayKeyGener.getNextId());
-					object_handle_type.setHandle_type(OperationType.UPDATE.getCode());
-					object_handle_type.setHandle_value(OperationType.UPDATE.getValue());
-					object_handle_type.add(Dbo.db());
+					// 插入操作码表对应的值
+					OperationType[] operationTypes = OperationType.values();
+					for (OperationType operationType : operationTypes) {
+						object_handle_type.setObject_handle_id(PrimayKeyGener.getNextId());
+						object_handle_type.setOcs_id(ocs_id);
+						object_handle_type.setHandle_type(operationType.getCode());
+						object_handle_type.setHandle_value(operationType.getValue());
+						object_handle_type.add(Dbo.db());
+					}
 				}
 			}
-			// 插入数据存储表信息入库
+			// 11.保存数据存储表信息入库
 			Object_storage object_storage = new Object_storage();
 			object_storage.setObj_stid(PrimayKeyGener.getNextId());
 			object_storage.setOcs_id(objectCollectTask.getOcs_id());
@@ -210,6 +203,7 @@ public class ObjectCollectAction extends BaseAction {
 			object_storage.setIs_hdfs(IsFlag.Fou.getCode());
 			object_storage.add(Dbo.db());
 		}
+		// 12.返回对象采集ID
 		return object_collect.getOdc_id();
 	}
 
@@ -222,14 +216,13 @@ public class ObjectCollectAction extends BaseAction {
 	@Param(name = "json", desc = "发送到agent的josn格式参数", range = "不可为空")
 	@Param(name = "agent_id", desc = "agent_info表主键", range = "新增agent时生成")
 	@Return(desc = "解析agent返回的json数据", range = "无限制")
-	private Map<String, String> getJsonDataForAgent(String json, long agent_id) {
+	private Map<String, String> getJsonDataForAgent(String jsonParamMap, long agent_id) {
 		// 1.数据可访问权限处理方式：该表没有对应的用户访问权限限制
 		// 2.调用工具类获取本次访问的agentserver端url
-		String url = AgentActionUtil.getUrl(agent_id, getUserId(),
-				AgentActionUtil.PARSEDATADICTIONARY);
+		String url = AgentActionUtil.getUrl(agent_id, getUserId(), AgentActionUtil.PARSEDATADICTIONARY);
 		// 3、给agent发消息，并获取agent响应
 		HttpClient.ResponseValue resVal = new HttpClient()
-				.addData("objectCollectParam", PackUtil.packMsg(json))
+				.addData("objectCollectParam", jsonParamMap)
 				.post(url);
 		// 4、如果测试连接不成功，则抛异常给前端，说明连接失败，如果成功，则不做任务处理
 		ActionResult actionResult = JsonUtil.toObjectSafety(resVal.getBodyString(), ActionResult.class).
@@ -653,8 +646,19 @@ public class ObjectCollectAction extends BaseAction {
 	}
 
 	@Method(desc = "更新半结构化文件采集页面信息到对象采集设置表对象，同时返回对象采集id",
-			logicStep = "1.根据obj_collect_name查询半结构化任务名称是否与其他采集任务名称重复" +
-					"2.更新object_collect表")
+			logicStep = "1.数据可访问权限处理方式：该表没有对应的用户访问权限限制" +
+					"2.根据obj_collect_name查询半结构化任务名称是否与其他采集任务名称重复" +
+					"3.更新object_collect表" +
+					"4.获取传递到agent的参数" +
+					"5.获取agent解析数据字典返回json格式数据" +
+					"6.如果数据字典减少了表，则需要删除之前在数据库中记录的表" +
+					"7.遍历数据字典信息循环更新半结构化对应信息" +
+					"8.通过对象采集id查询对象采集对应信息" +
+					"9.更新保存对象采集对应信息" +
+					"10.获取字段信息" +
+					"11.保存对象采集结构信息" +
+					"12.保存对象采集数据处理类型对应表" +
+					"13.返回对象采集ID")
 	@Param(name = "object_collect", desc = "对象采集设置表对象", range = "不可为空", isBean = true)
 	@Return(desc = "返回对象采集配置ID", range = "不能为空")
 	public long updateObjectCollect(Object_collect object_collect) {
@@ -673,20 +677,21 @@ public class ObjectCollectAction extends BaseAction {
 		}
 		// 3.更新object_collect表
 		object_collect.update(Dbo.db());
-		Map<String, String> jsonMap = getJsonMap(object_collect);
-		// 4.获取agent解析数据字典返回json格式数据
-		Map<String, String> jsonMsg = getJsonDataForAgent(JsonUtil.toJson(jsonMap), object_collect.getAgent_id());
+		// 4.获取传递到agent的参数
+		String jsonParam = getJsonParamForAgent(object_collect);
+		// 5.获取agent解析数据字典返回json格式数据
 		Type type = new TypeReference<Map<String, String>>() {
 		}.getType();
-		Map<String, String> objectCollectMap = JsonUtil.toObject(jsonMsg.get("msg"), type);
 		Type type2 = new TypeReference<List<Map<String, String>>>() {
 		}.getType();
+		Map<String, String> jsonMsg = getJsonDataForAgent(jsonParam, object_collect.getAgent_id());
+		Map<String, String> objectCollectMap = JsonUtil.toObject(jsonMsg.get("msg"), type);
 		List<Map<String, String>> tableNames = JsonUtil.toObject(objectCollectMap.get("tablename"), type2);
 		List<String> tableNameList = new ArrayList<String>();
 		for (Map<String, String> tableNameMap : tableNames) {
 			tableNameList.add(tableNameMap.get("tableName"));
 		}
-		// 5.如果数据字典减少了表，则需要删除之前在数据库中记录的表
+		// 6.如果数据字典减少了表，则需要删除之前在数据库中记录的表
 		List<Map<String, Object>> objCollectTaskList = Dbo.queryList("select en_name,ocs_id from "
 				+ Object_collect_task.TableName + " where odc_id =?", object_collect.getOdc_id());
 		for (Map<String, Object> objectMap : objCollectTaskList) {
@@ -704,17 +709,20 @@ public class ObjectCollectAction extends BaseAction {
 				Dbo.execute("delete from " + Object_handle_type.TableName + " where ocs_id =?", ocs_id);
 			}
 		}
+		// 7.遍历数据字典信息循环更新半结构化对应信息
 		for (Map<String, String> tableNameMap : tableNames) {
 			String tableName = tableNameMap.get("tableName");
 			String zh_name = tableNameMap.get("description");
 			String updateType = tableNameMap.get("updatetype");
 			String firstLine = tableNameMap.get("everyline");
+			// 8.通过对象采集id查询对象采集对应信息
 			Map<String, Object> taskMap = Dbo.queryOneObject("select * from "
 							+ Object_collect_task.TableName + " where odc_id = ? and en_name = ?",
 					object_collect.getOdc_id(), tableName);
 			if (taskMap.isEmpty()) {
 				throw new BusinessException("当前半结构化采集对象采集对应表信息为空，odc_id=" + object_collect.getOdc_id());
 			}
+			// 9.更新保存对象采集对应信息
 			Object_collect_task objectCollectTask = new Object_collect_task();
 			objectCollectTask.setAgent_id(object_collect.getAgent_id());
 			objectCollectTask.setCollect_data_type(CollectDataType.JSON.getCode());
@@ -734,9 +742,9 @@ public class ObjectCollectAction extends BaseAction {
 			objectCollectTask.setUpdatetype(updateType);
 			objectCollectTask.setEn_name(tableName != null ? tableName : "");
 			objectCollectTask.update(Dbo.db());
-			// 8.获取字段信息
+			// 10.获取字段信息
 			List<Map<String, String>> columns = JsonUtil.toObject(tableNameMap.get("column"), type2);
-			// 9.如果没有数据字典，第一次新增则不会加载object_collect_struct，第二次编辑也不会修改库中信息
+			// 如果没有数据字典，第一次新增则不会加载object_collect_struct，第二次编辑也不会修改库中信息
 			boolean isSolr = false;
 			if (IsFlag.Shi == IsFlag.ofEnumByCode(object_collect.getIs_dictionary())) {
 				if (!columns.isEmpty()) {
@@ -748,24 +756,16 @@ public class ObjectCollectAction extends BaseAction {
 							isSolr = true;
 						}
 						Object_collect_struct object_collect_struct = new Object_collect_struct();
-						object_collect_struct.setStruct_id(PrimayKeyGener.getNextId());
-						object_collect_struct.setOcs_id(objectCollectTask.getOcs_id());
-						object_collect_struct.setColumn_name(columnMap.get("columnname"));
-						object_collect_struct.setColumn_type(columnMap.get("columntype"));
-						object_collect_struct.setIs_key(columnMap.get("is_key"));
-						object_collect_struct.setIs_hbase(columnMap.get("is_hbase"));
-						object_collect_struct.setIs_rowkey(columnMap.get("is_rowkey"));
-						object_collect_struct.setIs_solr(columnMap.get("is_solr"));
-						object_collect_struct.setIs_operate(columnMap.get("is_operate"));
-						object_collect_struct.setCol_seq(String.valueOf(j));
-						object_collect_struct.setColumnposition(columnMap.get("columnposition"));
-						object_collect_struct.setData_desc(object_collect_struct.getColumn_name());
-						object_collect_struct.add(Dbo.db());
+						// 11.保存对象采集结构信息
+						addObjectCollectStruct(objectCollectTask, j, columnMap, object_collect_struct);
 					}
 				}
-				Map<String, String> handleTypMap = JsonUtil.toObject(tableNameMap.get("handletype"), type);
 				// 如果没有数据字典，第一次新增则不会加载object_handle_type，第二次编辑也不会修改库中信息
-				if (!handleTypMap.isEmpty()) {
+				Map<String, String> handleTypMap = JsonUtil.toObject(tableNameMap.get("handletype"), type);
+				if (handleTypMap.isEmpty()) {
+					throw new BusinessException("有数据字典存在的时候，操作码表类型不能为空");
+				} else {
+					// 12.保存对象采集数据处理类型对应表
 					Dbo.execute("delete from " + Object_handle_type.TableName + " where ocs_id=?",
 							objectCollectTask.getOcs_id());
 					Object_handle_type object_handle_type = new Object_handle_type();
@@ -775,31 +775,66 @@ public class ObjectCollectAction extends BaseAction {
 					object_handle_type.setHandle_type(OperationType.INSERT.getCode());
 					object_handle_type.setHandle_value(handleTypMap.get("insert"));
 					object_handle_type.add(Dbo.db());
-					// 插入delete对应的值
-					object_handle_type.setObject_handle_id(PrimayKeyGener.getNextId());
-					object_handle_type.setHandle_type(OperationType.DELETE.getCode());
-					object_handle_type.setHandle_value(handleTypMap.get("delete"));
-					object_handle_type.add(Dbo.db());
 					// 插入update对应的值
 					object_handle_type.setObject_handle_id(PrimayKeyGener.getNextId());
 					object_handle_type.setHandle_type(OperationType.UPDATE.getCode());
 					object_handle_type.setHandle_value(handleTypMap.get("update"));
 					object_handle_type.add(Dbo.db());
+					// 插入delete对应的值
+					object_handle_type.setObject_handle_id(PrimayKeyGener.getNextId());
+					object_handle_type.setHandle_type(OperationType.DELETE.getCode());
+					object_handle_type.setHandle_value(handleTypMap.get("delete"));
+					object_handle_type.add(Dbo.db());
 				}
 			}
 		}
-		// 7.object_collect_task表信息入库
+		// 13.返回对象采集ID
 		return object_collect.getOdc_id();
 	}
 
-	private Map<String, String> getJsonMap(Object_collect object_collect) {
-		Map<String, String> jsonMap = new HashMap<String, String>();
-		jsonMap.put("file_suffix", object_collect.getFile_suffix());
-		jsonMap.put("is_dictionary", object_collect.getIs_dictionary());
-		jsonMap.put("data_date", object_collect.getData_date());
-		jsonMap.put("file_path", object_collect.getFile_path());
-		jsonMap.put("dbtype", "1");
-		return jsonMap;
+	@Method(desc = "保存对象采集结构信息", logicStep = "1.数据可访问权限处理方式：该方法没有用户访问权限限制" +
+			"2.封装对象采集结构信息" +
+			"3.保存对象采集结构信息")
+	@Param(name = "objectCollectTask", desc = "对象采集对应信息", range = "不为空", isBean = true)
+	@Param(name = "j", desc = "字段序号", range = "不为空")
+	@Param(name = "columnMap", desc = "列信息集合", range = "不为空")
+	@Param(name = "object_collect_struct", desc = "对象采集结构信息", range = "不为空", isBean = true)
+	private void addObjectCollectStruct(Object_collect_task objectCollectTask, int j, Map<String, String> columnMap,
+	                                    Object_collect_struct object_collect_struct) {
+		// 1.数据可访问权限处理方式：该方法没有用户访问权限限制
+		// 2.封装对象采集结构信息
+		object_collect_struct.setStruct_id(PrimayKeyGener.getNextId());
+		object_collect_struct.setOcs_id(objectCollectTask.getOcs_id());
+		object_collect_struct.setColumn_name(columnMap.get("columnname"));
+		object_collect_struct.setColumn_type(columnMap.get("columntype"));
+		object_collect_struct.setIs_key(columnMap.get("is_key"));
+		object_collect_struct.setIs_hbase(columnMap.get("is_hbase"));
+		object_collect_struct.setIs_rowkey(columnMap.get("is_rowkey"));
+		object_collect_struct.setIs_solr(columnMap.get("is_solr"));
+		object_collect_struct.setIs_operate(columnMap.get("is_operate"));
+		object_collect_struct.setCol_seq(String.valueOf(j));
+		object_collect_struct.setColumnposition(columnMap.get("columnposition"));
+		object_collect_struct.setData_desc(object_collect_struct.getColumn_name());
+		// 3.保存对象采集结构信息
+		object_collect_struct.add(Dbo.db());
+	}
+
+	@Method(desc = "获取传递到agent的参数", logicStep = "1.数据可访问权限处理方式：该方法没有用户访问权限限制" +
+			"2.封装半结构化采集与agent交互参数" +
+			"3.返回半结构化采集与agent交互参数")
+	@Param(name = "object_collect", desc = "对象采集设置表信息", range = "不能为空", isBean = true)
+	@Return(desc = "返回半结构化采集与agent交互参数", range = "不能为空")
+	private String getJsonParamForAgent(Object_collect object_collect) {
+		// 1.数据可访问权限处理方式：该方法没有用户访问权限限制
+		// 2.封装半结构化采集与agent交互参数
+		Map<String, String> jsonParamMap = new HashMap<String, String>();
+		jsonParamMap.put("file_suffix", object_collect.getFile_suffix());
+		jsonParamMap.put("is_dictionary", object_collect.getIs_dictionary());
+		jsonParamMap.put("data_date", object_collect.getData_date());
+		jsonParamMap.put("file_path", object_collect.getFile_path());
+		jsonParamMap.put("dbtype", "1");
+		// 3.返回半结构化采集与agent交互参数
+		return PackUtil.packMsg(JsonUtil.toJson(jsonParamMap));
 	}
 
 	@Method(desc = "根据对象采集id查询对象采集对应信息的合集",
