@@ -201,8 +201,10 @@ public class DbmNormbasicAction extends BaseAction {
     @Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", valueIfNull = "10")
     @Param(name = "search_cond", desc = "检索字符串", range = "String类型,任意值", valueIfNull = "")
     @Param(name = "status", desc = "发布状态", range = "IsFlag 0:未发布,1:已发布", nullable = true)
+    @Param(name = "sort_id", desc = "sort_id所属分类", range = "String类型", valueIfNull = "")
     @Return(desc = "标准信息列表", range = "标准信息列表")
-    public Map<String, Object> searchDbmNormbasic(int currPage, int pageSize, String search_cond, String status) {
+    public Map<String, Object> searchDbmNormbasic(int currPage, int pageSize, String search_cond, String status,
+                                                  String sort_id) {
         if (StringUtil.isBlank(search_cond)) {
             throw new BusinessException("搜索条件不能为空!" + search_cond);
         }
@@ -214,20 +216,26 @@ public class DbmNormbasicAction extends BaseAction {
         if (StringUtil.isNotBlank(status)) {
             asmSql.addSql(" norm_status = ? and").addParam(status);
         }
-        asmSql.addSql(" create_user = ? and (").addParam(getUserId().toString());
-        asmSql.addLikeParam("norm_code", '%' + search_cond + '%', "");
-        asmSql.addLikeParam("norm_cname", '%' + search_cond + '%', "or");
-        asmSql.addLikeParam("norm_ename", '%' + search_cond + '%', "or");
-        asmSql.addLikeParam("norm_aname", '%' + search_cond + '%', "or");
-        asmSql.addLikeParam("business_def", '%' + search_cond + '%', "or");
-        asmSql.addLikeParam("business_rule", '%' + search_cond + '%', "or");
-        asmSql.addLikeParam("dbm_domain", '%' + search_cond + '%', "or");
-        asmSql.addLikeParam("norm_basis", '%' + search_cond + '%', "or");
-        asmSql.addLikeParam("manage_department", '%' + search_cond + '%', "or");
-        asmSql.addLikeParam("relevant_department", '%' + search_cond + '%', "or");
-        asmSql.addLikeParam("origin_system", '%' + search_cond + '%', "or");
-        asmSql.addLikeParam("related_system", '%' + search_cond + '%', "or");
-        asmSql.addLikeParam("formulator", '%' + search_cond + '%').addSql(")");
+        if (StringUtil.isNotBlank(sort_id)) {
+            asmSql.addSql(" sort_id = ? and").addParam(sort_id);
+        }
+        asmSql.addSql(" create_user = ?").addParam(getUserId().toString());
+        if (StringUtil.isNotBlank(search_cond)) {
+            asmSql.addSql(" and (");
+            asmSql.addLikeParam("norm_code", '%' + search_cond + '%', "");
+            asmSql.addLikeParam("norm_cname", '%' + search_cond + '%', "or");
+            asmSql.addLikeParam("norm_ename", '%' + search_cond + '%', "or");
+            asmSql.addLikeParam("norm_aname", '%' + search_cond + '%', "or");
+            asmSql.addLikeParam("business_def", '%' + search_cond + '%', "or");
+            asmSql.addLikeParam("business_rule", '%' + search_cond + '%', "or");
+            asmSql.addLikeParam("dbm_domain", '%' + search_cond + '%', "or");
+            asmSql.addLikeParam("norm_basis", '%' + search_cond + '%', "or");
+            asmSql.addLikeParam("manage_department", '%' + search_cond + '%', "or");
+            asmSql.addLikeParam("relevant_department", '%' + search_cond + '%', "or");
+            asmSql.addLikeParam("origin_system", '%' + search_cond + '%', "or");
+            asmSql.addLikeParam("related_system", '%' + search_cond + '%', "or");
+            asmSql.addLikeParam("formulator", '%' + search_cond + '%').addSql(")");
+        }
         List<Dbm_normbasic> dbmNormbasicInfos = Dbo.queryPagedList(Dbm_normbasic.class, page, asmSql.sql(),
                 asmSql.params());
         dbmNormbasicMap.put("dbmNormbasicInfos", dbmNormbasicInfos);
