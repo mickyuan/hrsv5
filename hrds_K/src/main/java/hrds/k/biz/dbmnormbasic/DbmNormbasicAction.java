@@ -164,14 +164,17 @@ public class DbmNormbasicAction extends BaseAction {
 
     @Method(desc = "根据sort_id获取标准信息",
             logicStep = "根据sort_id获取标准信息")
+    @Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数", valueIfNull = "1")
+    @Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", valueIfNull = "10")
     @Param(name = "sort_id", desc = "分类id", range = "long类型")
     @Return(desc = "返回值说明", range = "返回值取值范围")
-    public Map<String, Object> getDbmNormbasicInfoBySortId(long sort_id) {
+    public Map<String, Object> getDbmNormbasicInfoBySortId(int currPage, int pageSize, long sort_id) {
         Map<String, Object> dbmNormbasicInfoMap = new HashMap<>();
-        List<Dbm_normbasic> dbmNormbasicInfos = Dbo.queryList(Dbm_normbasic.class, "select * from "
+        Page page = new DefaultPageImpl(currPage, pageSize);
+        List<Dbm_normbasic> dbmNormbasicInfos = Dbo.queryPagedList(Dbm_normbasic.class, page, "select * from "
                 + Dbm_normbasic.TableName + " where sort_id = ?", sort_id);
         dbmNormbasicInfoMap.put("dbmNormbasicInfos", dbmNormbasicInfos);
-        dbmNormbasicInfoMap.put("totalSize", dbmNormbasicInfos.size());
+        dbmNormbasicInfoMap.put("totalSize", page.getTotalSize());
         return dbmNormbasicInfoMap;
     }
 
