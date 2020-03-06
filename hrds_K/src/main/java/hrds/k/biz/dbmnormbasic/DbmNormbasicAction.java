@@ -205,9 +205,6 @@ public class DbmNormbasicAction extends BaseAction {
     @Return(desc = "标准信息列表", range = "标准信息列表")
     public Map<String, Object> searchDbmNormbasic(int currPage, int pageSize, String search_cond, String status,
                                                   Long sort_id) {
-        if (StringUtil.isBlank(search_cond)) {
-            throw new BusinessException("搜索条件不能为空!" + search_cond);
-        }
         Map<String, Object> dbmNormbasicMap = new HashMap<>();
         Page page = new DefaultPageImpl(currPage, pageSize);
         SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
