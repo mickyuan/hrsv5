@@ -45,12 +45,12 @@ public class DbmSortInfoAction extends BaseAction {
             throw new BusinessException("分类名称已经存在!" + dbm_sort_info.getSort_name());
         }
         //1-3.父分类为空,则设置分类id为0(代表该分类为顶级分类)
-        if (StringUtil.isNotBlank(dbm_sort_info.getParent_id().toString())) {
+        if (StringUtil.isBlank(dbm_sort_info.getParent_id().toString())) {
             dbm_sort_info.setParent_id(0L);
         }
         // 父分类不为空的情况下,检查上级分类是否存在
         if (0 != dbm_sort_info.getParent_id()) {
-            if (!checkParentIdIsRepeat(dbm_sort_info.getParent_id())) {
+            if (checkSortIdIsNotExist(dbm_sort_info.getParent_id())) {
                 throw new BusinessException("选择父分类名称不存在!" + dbm_sort_info.getParent_id());
             }
         }
