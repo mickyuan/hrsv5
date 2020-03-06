@@ -267,7 +267,7 @@ public class ObjectCollectAction extends BaseAction {
 		if (!firstLineList.isEmpty()) {
 			isDictionary = IsFlag.Fou.getCode();
 			// 4.解析json获取树结构信息并返回
-			JSONArray treeConstruct = parseFirstLine(firstLineList.get(0).toString(), "");
+			JSONArray treeConstruct = parseEveryFirstLine(firstLineList.get(0).toString(), "");
 			objColStructMap.put("treeConstruct", treeConstruct);
 		}
 		objColStructMap.put("isDictionary", isDictionary);
@@ -299,21 +299,19 @@ public class ObjectCollectAction extends BaseAction {
 		List<Object> firstLineList = getFirstLineInfo(ocs_id);
 		if (!firstLineList.isEmpty() && StringUtil.isNotBlank(treeId)) {
 			// 2.解析json获取树结构信息并返回
-			return parseFirstLine(firstLineList.get(0).toString(), treeId);
+			return parseEveryFirstLine(firstLineList.get(0).toString(), treeId);
 		} else {
 			// 3.获取树信息失败
 			throw new BusinessException("当前对象采集对应的第一行数据不存在，树节点为空，treeId="
 					+ treeId + ",ocs_id=" + ocs_id);
 		}
-
-
 	}
 
 	@Method(desc = "解析没有数据字典的第一行数据", logicStep = "1.数据可访问权限处理方式：该方法没有访问权限限制")
 	@Param(name = "firstLine", desc = "第一行数据", range = "无限制")
 	@Param(name = "treeId", desc = "树节点", range = "无限制")
 	@Return(desc = "", range = "")
-	private JSONArray parseFirstLine(String firstLine, String treeId) {
+	private JSONArray parseEveryFirstLine(String firstLine, String treeId) {
 		// 1.数据可访问权限处理方式：该方法没有访问权限限制
 		JSONArray array;
 		try {
@@ -332,7 +330,7 @@ public class ObjectCollectAction extends BaseAction {
 				}
 				array = getTree(jsonobject, treeId);
 			} else {
-				throw new BusinessException("解析json结构错误 jsonarray下面不存在jsonobject");
+				throw new BusinessException("解析json结构错误 jsonArray下面不存在jsonObject");
 			}
 		} catch (JSONException e) {
 			try {
@@ -344,7 +342,7 @@ public class ObjectCollectAction extends BaseAction {
 				}
 				array = getTree(jsonobject, treeId);
 			} catch (JSONException e2) {
-				throw new BusinessException("既不是jsonarray，也不是jsonobject");
+				throw new BusinessException("既不是jsonArray，也不是jsonObject");
 			}
 		}
 		return array;
