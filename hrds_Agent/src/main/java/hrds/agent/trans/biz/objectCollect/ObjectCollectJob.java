@@ -7,6 +7,7 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
+import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.JobParamBean;
@@ -19,7 +20,11 @@ import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.ConnUtil;
 import hrds.commons.utils.PackUtil;
 import hrds.commons.utils.xlstoxml.Xls2xml;
+import org.stringtemplate.v4.ST;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +32,11 @@ import java.util.concurrent.CancellationException;
 
 @DocClass(desc = "接收页面定义的参数执行object采集", author = "zxz", createdate = "2019/10/23 16:29")
 public class ObjectCollectJob extends AgentBaseAction {
+
+	private static final Type TYPE = new TypeReference<Map<String, Object>>() {
+	}.getType();
+
+	private static String DICTIONARYFILENAME = "dd_data.json";
 
 	@Method(desc = "object采集和前端交互的接口",
 			logicStep = "1.获取json数组转成ObjectCollectParamBean的集合" +
@@ -53,9 +63,7 @@ public class ObjectCollectJob extends AgentBaseAction {
 	@Return(desc = "", range = "")
 	public String parseObjectCollectDataDictionary(String objectCollectParam) {
 		Map<String, String> unpackMsg = PackUtil.unpackMsg(objectCollectParam);
-		Type type = new TypeReference<Map<String, String>>() {
-		}.getType();
-		Map<String, String> objectCollectMap = JsonUtil.toObject(unpackMsg.get("msg"), type);
+		Map<String, String> objectCollectMap = JsonUtil.toObject(unpackMsg.get("msg"), TYPE);
 		String xmlName = ConnUtil.getDataBaseFile("", "",
 				objectCollectMap.get("file_path"), "");
 		JSONObject jsonData = new JSONObject();
@@ -78,6 +86,31 @@ public class ObjectCollectJob extends AgentBaseAction {
 	@Param(name = "", desc = "", range = "")
 	@Return(desc = "", range = "")
 	public void writeDictionary(String dictionaryParam) {
-
+		Map<String, String> unpackMsg = PackUtil.unpackMsg(dictionaryParam);
+		Map<String, String> jsonMsgMap = JsonUtil.toObject(unpackMsg.get("msg"), TYPE);
+		String filepath = jsonMsgMap.get("file_path");
+		if (!filepath.endsWith(File.separator)) {
+			filepath += File.separator;
+		}
+		String dictionaryFilepath = filepath + "writeDictionary" + File.separator;
+		String jsonArray = jsonMsgMap.get("jsonArray");
+		try {
+			File originalFile = new File(filepath + DICTIONARYFILENAME);
+			if (originalFile.exists()) {
+				File dictionaryFile = new File(dictionaryFilepath);
+				if (!dictionaryFile.exists()) {
+					dictionaryFile.mkdir();
+				}
+				String sysDate = DateUtil.getSysDate();
+				String sysTime = DateUtil.getSysTime();
+				originalFile.renameTo(new File(dictionaryFilepath + DICTIONARYFILENAME + sysDate + sysTime));
+			}
+			originalFile = new File(filepath + DICTIONARYFILENAME);
+			BufferedWriter writer = new BufferedWriter(new FileWriter(originalFile));
+			writer.write(jsonArray);
+			writer.close();
+		} catch (Exception e) {
+			throw new BusinessException("重命名dd_data.json或者写dd_data.json时失败");
+		}
 	}
 }
