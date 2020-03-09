@@ -28,9 +28,11 @@ import java.util.*;
 @DocClass(desc = "对象采集接口类，处理对象采集的增删改查", author = "zxz", createdate = "2019/9/16 15:02")
 public class ObjectCollectAction extends BaseAction {
 
-	private static Type MAPTYPE = new TypeReference<Map<String, String>>() {
+	private static final Type MAPTYPE = new TypeReference<Map<String, Object>>() {
 	}.getType();
-	private static Type LISTTYPE = new TypeReference<List<Map<String, String>>>() {
+	private static final Type LISTTYPE = new TypeReference<List<Map<String, Object>>>() {
+	}.getType();
+	private static final Type OBJECTTYPE = new TypeReference<List<Object>>() {
 	}.getType();
 
 	@Method(desc = "获取半结构化采集配置页面初始化的值，当odc_id不为空时，则同时返回object_collect表的值",
@@ -212,7 +214,7 @@ public class ObjectCollectAction extends BaseAction {
 					"3、给agent发消息，并获取agent响应" +
 					"4、如果测试连接不成功，则抛异常给前端，说明连接失败，如果成功，则不做任务处理" +
 					"5.解析agent返回的json数据")
-	@Param(name = "json", desc = "发送到agent的josn格式参数", range = "不可为空")
+	@Param(name = "json", desc = "发送到agent的json格式参数", range = "不可为空")
 	@Param(name = "agent_id", desc = "agent_info表主键", range = "新增agent时生成")
 	@Return(desc = "解析agent返回的json数据", range = "无限制")
 	private List<Map<String, String>> getJsonDataForAgent(String jsonParamMap, long agent_id) {
@@ -292,107 +294,136 @@ public class ObjectCollectAction extends BaseAction {
 			"2.解析json获取树结构信息并返回" +
 			"3.获取树信息失败")
 	@Param(name = "ocs_id", desc = "对象采集任务编号", range = "新增对象采集任务时生成")
-	@Param(name = "treeId", desc = "树节点", range = "无限制")
+	@Param(name = "location", desc = "树节点位置，不是根节点则格式如（columns,column_id）", range = "无限制")
 	@Return(desc = "获取对象采集树节点信息", range = "无限制")
-	public JSONArray getObjectCollectTreeInfo(long ocs_id, String treeId) {
+	public JSONArray getObjectCollectTreeInfo(long ocs_id, String location) {
 		// 1.数据可访问权限处理方式：该方法没有访问权限限制
 		List<Object> firstLineList = getFirstLineInfo(ocs_id);
-		if (!firstLineList.isEmpty() && StringUtil.isNotBlank(treeId)) {
+		if (!firstLineList.isEmpty() && StringUtil.isNotBlank(location)) {
 			// 2.解析json获取树结构信息并返回
-			return parseEveryFirstLine(firstLineList.get(0).toString(), treeId);
+			return parseEveryFirstLine(firstLineList.get(0).toString(), location);
 		} else {
 			// 3.获取树信息失败
 			throw new BusinessException("当前对象采集对应的第一行数据不存在，树节点为空，treeId="
-					+ treeId + ",ocs_id=" + ocs_id);
+					+ location + ",ocs_id=" + ocs_id);
 		}
 	}
 
-	@Method(desc = "解析没有数据字典的第一行数据", logicStep = "1.数据可访问权限处理方式：该方法没有访问权限限制")
+	@Method(desc = "解析没有数据字典的第一行数据",
+			logicStep = "1.数据可访问权限处理方式：该方法没有访问权限限制" +
+					"2.解析第一行数据，第一行数据为jsonArray格式，解析错误会跳到6" +
+					"3.获取第一层第一个对象，因为每个对象的格式是相同的" +
+					"4.判断第一层第一个对象是否为jsonArray格式，如果是，获取第二层第一个对象" +
+					"5.判断是否为jsonObject格式" +
+					"5.1如果location不为空，则通过当前树节点去查询当前节点下的信息" +
+					"5.2根据树节点获取当前树节点信息" +
+					"6.解析第一行数据，第一行数据格式为jsonObject" +
+					"6.1如果location不为空，则通过当前树节点去查询当前节点下的信息" +
+					"6.2根据树节点获取当前树节点信息")
 	@Param(name = "firstLine", desc = "第一行数据", range = "无限制")
-	@Param(name = "treeId", desc = "树节点", range = "无限制")
+	@Param(name = "location", desc = "树节点位置，不是根节点则格式如（columns,column_id）", range = "无限制")
 	@Return(desc = "", range = "")
-	private JSONArray parseEveryFirstLine(String firstLine, String treeId) {
+	private JSONArray parseEveryFirstLine(String firstLine, String location) {
 		// 1.数据可访问权限处理方式：该方法没有访问权限限制
-		JSONArray array;
+		JSONArray treeInfo;
+		String[] treeId = location.split(",");
 		try {
+			// 2.解析第一行数据，第一行数据为jsonArray格式,解析错误会跳到6
 			JSONArray parseArray = JSONArray.parseArray(firstLine);
+			// 3.获取第一层第一个对象，因为每个对象的格式是相同的
 			Object everyObject = parseArray.getObject(0, Object.class);
-			while (everyObject instanceof JSONArray) {
+			// 4.判断第一层第一个对象是否为jsonArray格式，如果是，获取第二层第一个对象
+			if (everyObject instanceof JSONArray) {
 				JSONArray jsonarray = (JSONArray) everyObject;
 				everyObject = jsonarray.getObject(0, Object.class);
 			}
+			// 5.判断是否为jsonObject格式
 			if (everyObject instanceof JSONObject) {
 				JSONObject jsonobject = (JSONObject) everyObject;
-				if (StringUtil.isNotBlank(treeId)) {
-					for (String key : treeId.split(",")) {
-						jsonobject = makeJsonFileToJsonObj(jsonobject, key);
-					}
+				// 5.1如果location不为空，则通过当前树节点去查询当前节点下的信息
+				if (StringUtil.isNotBlank(location)) {
+					jsonobject = makeJsonFileToJsonObj(jsonobject, treeId[treeId.length - 1]);
 				}
-				array = getTree(jsonobject, treeId);
+				// 5.2根据树节点获取当前树节点信息
+				treeInfo = getTree(jsonobject, location);
 			} else {
 				throw new BusinessException("解析json结构错误 jsonArray下面不存在jsonObject");
 			}
 		} catch (JSONException e) {
 			try {
-				JSONObject jsonobject = JSONObject.parseObject(firstLine);
-				if (StringUtil.isNotBlank(treeId)) {
-					for (String key : treeId.split(",")) {
-						jsonobject = makeJsonFileToJsonObj(jsonobject, key);
-					}
+				// 6.解析第一行数据，第一行数据格式为jsonObject
+				JSONObject parseObject = JSONObject.parseObject(firstLine);
+				// 6.1如果location不为空，则通过当前树节点去查询当前节点下的信息
+				if (StringUtil.isNotBlank(location)) {
+					parseObject = makeJsonFileToJsonObj(parseObject, treeId[treeId.length - 1]);
 				}
-				array = getTree(jsonobject, treeId);
+				// 6.2根据树节点获取当前树节点信息
+				treeInfo = getTree(parseObject, location);
 			} catch (JSONException e2) {
 				throw new BusinessException("既不是jsonArray，也不是jsonObject");
 			}
 		}
-		return array;
+		return treeInfo;
 	}
 
-	private JSONArray getTree(JSONObject jsonobject, String keys) {
-		if (keys == null || keys == "") {
+	@Method(desc = "获取当前节点树信息", logicStep = "1.数据可访问权限处理方式：该方法没有访问权限限制" +
+			"2.判断树节点是否为空" +
+			"3.遍历获取当前树节点下的数据" +
+			"4.返回当前树节点信息")
+	@Param(name = "jsonObject", desc = "当前树节点信息", range = "不为空")
+	@Param(name = "keys", desc = "当前树节点位置", range = "不为空")
+	@Return(desc = "返回当前节点树信息", range = "不为空")
+	private JSONArray getTree(JSONObject jsonObject, String keys) {
+		// 1.数据可访问权限处理方式：该方法没有访问权限限制
+		// 2.判断树节点是否为空
+		if (StringUtil.isBlank(keys)) {
 			keys = "";
 		} else {
 			keys += ",";
 		}
 		JSONArray array = new JSONArray();
-		Set<Map.Entry<String, Object>> entrySet = jsonobject.entrySet();
+		Set<Map.Entry<String, Object>> entrySet = jsonObject.entrySet();
 		int rowcount = 0;
-		for (Map.Entry<String, Object> everyentrySet : entrySet) {
-			JSONObject resultobject = new JSONObject();
-			String key = everyentrySet.getKey();
-			Object object = jsonobject.get(key);
+		// 3.遍历获取当前树节点下的数据
+		for (Map.Entry<String, Object> entry : entrySet) {
+			JSONObject resultObject = new JSONObject();
+			String key = entry.getKey();
+			Object object = jsonObject.get(key);
 			boolean isParent;
 			if (object instanceof JSONObject || object instanceof JSONArray) {
 				isParent = true;
 			} else {
 				isParent = false;
 			}
-			resultobject.put("location", keys + key);
-			resultobject.put("description", key);
-			resultobject.put("id", key);
-			resultobject.put("isParent", isParent);
-			resultobject.put("name", key);
-			resultobject.put("pId", "~" + rowcount);
-			resultobject.put("rootName", "~" + rowcount);
-			array.add(resultobject);
+			// 字段位置
+			resultObject.put("location", keys + key);
+			resultObject.put("description", key);
+			resultObject.put("id", key);
+			resultObject.put("isParent", isParent);
+			resultObject.put("name", key);
+			resultObject.put("pId", "~" + rowcount);
+			resultObject.put("rootName", "~" + rowcount);
+			array.add(resultObject);
 			rowcount++;
 		}
+		// 4.返回当前树节点信息
 		return array;
 	}
 
-	@Method(desc = "", logicStep = "1.数据可访问权限处理方式：该方法没有访问权限限制")
-	@Param(name = "", desc = "", range = "")
-	@Return(desc = "", range = "")
-	private JSONObject makeJsonFileToJsonObj(JSONObject JsonObject, String nextKey) {
+	@Method(desc = "获取当前树节点对应信息", logicStep = "1.数据可访问权限处理方式：该方法没有访问权限限制" +
+			"2.判断对象是jsonArray还是jsonObject" +
+			"3.返回通过树节点获取当前树节点对应信息")
+	@Param(name = "jsonObject", desc = "当前树节点对应信息", range = "不为空")
+	@Param(name = "nextKey", desc = "当前树节点", range = "不为空")
+	@Return(desc = "返回当前树节点对应信息", range = "不为空")
+	private JSONObject makeJsonFileToJsonObj(JSONObject jsonObject, String nextKey) {
 		// 1.数据可访问权限处理方式：该方法没有访问权限限制
-		Object object = JsonObject.get(nextKey);
+		Object object = jsonObject.get(nextKey);
 		JSONObject jsonobject;
 		// 2.判断对象是jsonArray还是jsonObject
 		if (object instanceof JSONArray) {
-			while (object instanceof JSONArray) {
-				JSONArray jsonarray = (JSONArray) object;
-				object = jsonarray.getObject(0, Object.class);
-			}
+			JSONArray jsonarray = (JSONArray) object;
+			object = jsonarray.getObject(0, Object.class);
 			if (object instanceof JSONObject) {
 				jsonobject = (JSONObject) object;
 			} else {
@@ -403,6 +434,7 @@ public class ObjectCollectAction extends BaseAction {
 		} else {
 			throw new BusinessException("json格式错误，既不是jsonArray也不是jsonObject");
 		}
+		// 3.返回通过树节点获取当前树节点对应信息
 		return jsonobject;
 	}
 
@@ -534,9 +566,8 @@ public class ObjectCollectAction extends BaseAction {
 					"4.重写数据字典")
 	@Param(name = "agent_id", desc = "agent id", range = "新增agent时生成")
 	@Param(name = "odc_id", desc = "对象采集id", range = "新增对象采集时生成")
-	@Param(name = "source_id", desc = "数据源ID", range = "新增数据源时生成")
 	@Param(name = "objColTask", desc = "jsonArray格式的对象采集对应信息", range = "无限制")
-	public void saveObjectCollectTask(long agent_id, long odc_id, long source_id, String objColTask) {
+	public void saveObjectCollectTask(long agent_id, long odc_id, String objColTask) {
 		// 1.数据可访问权限处理方式：该方法没有访问权限限制
 		Type type = new TypeReference<List<Object_collect_task>>() {
 		}.getType();
