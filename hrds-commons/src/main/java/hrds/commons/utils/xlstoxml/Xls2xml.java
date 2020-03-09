@@ -486,17 +486,9 @@ public class Xls2xml {
 		xmlCreater.createAttribute(table, "storage_type", storage_type);
 	}
 
-	String column_id = "";
-	String column_name = "";
-	String column_cn_name = "";
-	String column_type = "";
-	String column_key = "";
-	String column_null = "";
-	String column_remark = "";
-
 	public static void addColumn(String column_id, String column_name, String column_cn_name, String
-			column_type, int length, String column_key,
-	                             String column_null, String column_remark, String primaryKey) {
+			column_type, int length, String column_key, String column_null, String column_remark,
+	                             String primaryKey) {
 
 		column = xmlCreater.createElement(table, "column");
 		xmlCreater.createAttribute(column, "column_id", column_id);

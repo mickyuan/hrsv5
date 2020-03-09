@@ -2,6 +2,7 @@ package hrds.commons.utils;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import hrds.commons.codes.DatabaseType;
@@ -446,12 +447,12 @@ public class ConnUtil {
 			throw new BusinessException("加载信息异常！ ");
 		}
 	}
-
+	@Method(desc = "没有数据字典时读取数据文件",logicStep = "")
 	@Param(desc = "文件路径", name = "dbpath", range = "无限制")
 	@Param(desc = "数据日期", name = "data_date", range = "无限制")
 	@Param(desc = "文件后缀名", name = "filesuffix", range = "无限制")
 	@Return(desc = "半结构化采集查看表时，对于不提供数据字典的情况，解析返回表名", range = "无限制")
-	public static JSONObject getTableFromJson(String dbpath, String data_date, String filesuffix) throws Exception {
+	public static JSONObject getTableFromJson(String dbpath, String data_date, String filesuffix) {
 		if (!dbpath.endsWith(File.separator)) {
 			dbpath += File.separator;
 		}
@@ -468,8 +469,8 @@ public class ConnUtil {
 		}
 		List<String> tablenamelsit = new ArrayList<String>();
 		String filepath = dbpath + data_date;
-		File targetFiledirectory = new File(filepath);
-		if (!targetFiledirectory.isDirectory()) {
+		File targetFileDirectory = new File(filepath);
+		if (!targetFileDirectory.isDirectory()) {
 			resultobject.put("ErrorMessage", "文件路径：" + filepath + " 不是一个文件夹，请检查");
 			throw new BusinessException(resultobject.getString("ErrorMessage"));
 		}
@@ -484,14 +485,18 @@ public class ConnUtil {
 			if (filename.endsWith("_" + data_date + "." + filesuffix)) {
 				String tablename = filename.split("_" + data_date + "." + filesuffix)[0];
 				if (!tablenamelsit.contains(tablename)) {
-					BufferedReader reader = new BufferedReader(new FileReader(everyfile));
-					String readLine = reader.readLine();
-					tablenamelsit.add(tablename);
-					JSONObject everyobject = new JSONObject();
-					everyobject.put("tableName", tablename);
-					everyobject.put("description", tablename);
-					everyobject.put("everyline", readLine);
-					jsonarray.add(everyobject);
+					try {
+						BufferedReader reader = new BufferedReader(new FileReader(everyfile));
+						String readLine = reader.readLine();
+						tablenamelsit.add(tablename);
+						JSONObject everyobject = new JSONObject();
+						everyobject.put("tableName", tablename);
+						everyobject.put("description", tablename);
+						everyobject.put("everyline", readLine);
+						jsonarray.add(everyobject);
+					} catch (Exception e) {
+						throw new BusinessException("没有数据字典时读取数据文件失败！");
+					}
 				}
 			}
 		}
