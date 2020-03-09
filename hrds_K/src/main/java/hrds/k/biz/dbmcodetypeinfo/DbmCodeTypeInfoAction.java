@@ -92,8 +92,8 @@ public class DbmCodeTypeInfoAction extends BaseAction {
         Map<String, Object> dbmCodeTypeInfoMap = new HashMap<>();
         Page page = new DefaultPageImpl(currPage, pageSize);
         List<Dbm_code_type_info> dbmCodeTypeInfos =
-                Dbo.queryPagedList(Dbm_code_type_info.class, page,
-                        "select * from " + Dbm_code_type_info.TableName);
+                Dbo.queryPagedList(Dbm_code_type_info.class, page, "select * from " + Dbm_code_type_info.TableName
+                        + " where create_user = ?", getUserId().toString());
         dbmCodeTypeInfoMap.put("dbmCodeTypeInfos", dbmCodeTypeInfos);
         dbmCodeTypeInfoMap.put("totalSize", page.getTotalSize());
         return dbmCodeTypeInfoMap;
