@@ -662,7 +662,7 @@ public class ObjectCollectAction extends BaseAction {
 					tableMap.put("handletype", handleTypeMap);
 					dictionaryList.add(tableMap);
 				}
-				dictionaryMap.put("jsonarray", JsonUtil.toJson(dictionaryList));
+				dictionaryMap.put("jsonArray", JsonUtil.toJson(dictionaryList));
 				// 2.调用工具类获取本次访问的agentserver端url
 				String url = AgentActionUtil.getUrl(agent_id, getUserId(),
 						AgentActionUtil.WRITEDICTIONARY);
