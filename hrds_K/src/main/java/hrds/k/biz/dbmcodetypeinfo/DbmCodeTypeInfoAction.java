@@ -104,7 +104,8 @@ public class DbmCodeTypeInfoAction extends BaseAction {
     public Map<String, Object> getDbmCodeTypeIdAndNameInfo() {
         Map<String, Object> dbmCodeTypeInfoMap = new HashMap<>();
         List<Map<String, Object>> dbmCodeTypeInfos =
-                Dbo.queryList("select code_type_id,code_type_name from " + Dbm_code_type_info.TableName);
+                Dbo.queryList("select code_type_id,code_type_name from " + Dbm_code_type_info.TableName +
+                        " where create_user = ?", getUserId().toString());
         dbmCodeTypeInfoMap.put("dbmCodeTypeInfos", dbmCodeTypeInfos);
         dbmCodeTypeInfoMap.put("totalSize", dbmCodeTypeInfos.size());
         return dbmCodeTypeInfoMap;
@@ -120,7 +121,7 @@ public class DbmCodeTypeInfoAction extends BaseAction {
             throw new BusinessException("查询的分类已经不存在! code_type_id=" + code_type_id);
         }
         return Dbo.queryOneObject(Dbm_code_type_info.class, "select * from " + Dbm_code_type_info.TableName +
-                " where code_type_id = ?", code_type_id);
+                " where create_user = ? and code_type_id = ?", getUserId().toString(), code_type_id);
     }
 
     @Method(desc = "根据发布状态获取代码分类信息",
