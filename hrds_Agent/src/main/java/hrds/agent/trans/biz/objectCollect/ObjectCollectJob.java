@@ -23,6 +23,7 @@ import hrds.commons.utils.xlstoxml.Xls2xml;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 
 @DocClass(desc = "接收页面定义的参数执行object采集", author = "zxz", createdate = "2019/10/23 16:29")
 public class ObjectCollectJob extends AgentBaseAction {
@@ -50,7 +51,7 @@ public class ObjectCollectJob extends AgentBaseAction {
 	@Method(desc = "解析半结构化采集数据字典", logicStep = "")
 	@Param(name = "objectCollectParam", desc = "半结构化采集参数", range = "不为空")
 	@Return(desc = "", range = "")
-	public String parseObjectCollectDataDictionary(String objectCollectParam) throws Exception {
+	public String parseObjectCollectDataDictionary(String objectCollectParam) {
 		Map<String, String> unpackMsg = PackUtil.unpackMsg(objectCollectParam);
 		Type type = new TypeReference<Map<String, String>>() {
 		}.getType();
@@ -71,5 +72,12 @@ public class ObjectCollectJob extends AgentBaseAction {
 			}
 		}
 		return PackUtil.packMsg(JsonUtil.toJson(jsonData));
+	}
+
+	@Method(desc = "重写数据字典", logicStep = "")
+	@Param(name = "", desc = "", range = "")
+	@Return(desc = "", range = "")
+	public void writeDictionary(String dictionaryParam) {
+
 	}
 }
