@@ -99,11 +99,15 @@ public class ObjectCollectJob extends AgentBaseAction {
 			if (originalFile.exists()) {
 				File dictionaryFile = new File(dictionaryFilepath);
 				if (!dictionaryFile.exists()) {
-					dictionaryFile.mkdir();
+					if (!dictionaryFile.mkdir()) {
+						throw new BusinessException("创建数据字典目录失败！");
+					}
 				}
-				String sysDate = DateUtil.getSysDate();
-				String sysTime = DateUtil.getSysTime();
-				originalFile.renameTo(new File(dictionaryFilepath + DICTIONARYFILENAME + sysDate + sysTime));
+				String sysDateTime = DateUtil.getSysDate() + DateUtil.getSysTime();
+				if (!originalFile.renameTo(new File(dictionaryFilepath + DICTIONARYFILENAME
+						+ sysDateTime))) {
+					throw new BusinessException("文件重命名失败！");
+				}
 			}
 			originalFile = new File(filepath + DICTIONARYFILENAME);
 			BufferedWriter writer = new BufferedWriter(new FileWriter(originalFile));
