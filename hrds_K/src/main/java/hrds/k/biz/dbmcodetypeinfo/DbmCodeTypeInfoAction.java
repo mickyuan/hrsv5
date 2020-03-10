@@ -196,8 +196,8 @@ public class DbmCodeTypeInfoAction extends BaseAction {
         Dbo.execute(asmSql.sql(), asmSql.params());
     }
 
-    @Method(desc = "根据标准id数组批量删除标准",
-            logicStep = "根据标准id数组批量删除标准")
+    @Method(desc = "根据id数组批量删除",
+            logicStep = "根据id数组批量删除")
     @Param(name = "code_type_id_s", desc = "标准分类id", range = "long类型数组")
     public void batchDeleteDbmCodeTypeInfo(Long[] code_type_id_s) {
         SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
