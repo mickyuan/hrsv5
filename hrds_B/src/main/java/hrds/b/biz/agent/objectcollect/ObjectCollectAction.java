@@ -1,6 +1,9 @@
 package hrds.b.biz.agent.objectcollect;
 
-import com.alibaba.fastjson.*;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONException;
+import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.TypeReference;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
@@ -559,7 +562,7 @@ public class ObjectCollectAction extends BaseAction {
 		}
 	}
 
-	@Method(desc = "保存对象任务采集的文件信息并重写数据字典",
+	@Method(desc = "保存对象任务采集的文件信息并重写数据字典(采集文件设置)",
 			logicStep = "1.数据可访问权限处理方式：该方法没有访问权限限制" +
 					"2.解析json为对象采集对应信息" +
 					"3.保存对象任务采集的文件信息" +
@@ -576,7 +579,7 @@ public class ObjectCollectAction extends BaseAction {
 		// 3.保存对象任务采集的文件信息
 		saveObjectCollectFileInfo(collectList, agent_id, odc_id);
 		// 4.重写数据字典
-		rewriteDataDictionary(odc_id, agent_id);
+		rewriteDataDictionary(odc_id);
 	}
 
 	@Method(desc = "保存对象任务采集的文件信息", logicStep = "1.数据可访问权限处理方式：该方法没有访问权限限制" +
@@ -603,10 +606,10 @@ public class ObjectCollectAction extends BaseAction {
 
 	@Method(desc = "重写数据字典",
 			logicStep = "1.数据可访问权限处理方式：该方法没有访问权限限制" +
-					"2.根据对象采集ID当前半结构化采集任务是否存在数据字典")
+					"2.根据对象采集ID当前半结构化采集任务是否存在数据字典" +
+					"3.判断是否数据字典已存在，已存在不重写数据字典")
 	@Param(name = "odc_id", desc = "对象采集id", range = "新增对象采集时生成")
-	@Param(name = "agent_id", desc = "agent id", range = "新增agent时生成")
-	private void rewriteDataDictionary(long odc_id, long agent_id) {
+	private void rewriteDataDictionary(long odc_id) {
 		// 1.数据可访问权限处理方式：该方法没有访问权限限制
 		Map<String, Object> dictionaryMap = new HashMap<String, Object>();
 		List<Object> dictionaryList = new ArrayList<Object>();
@@ -618,10 +621,6 @@ public class ObjectCollectAction extends BaseAction {
 			if (IsFlag.Fou == IsFlag.ofEnumByCode(isDictionaryList.get(0).toString())) {
 				throw new BusinessException("已经存在数据字典，不重写数据字典");
 			} else {
-				List<Object> agentIdList = Dbo.queryOneColumnList("select agent_id from "
-						+ Object_collect.TableName + " where odc_id = ?", odc_id);
-				Map<String, Object> agentInfo = Dbo.queryOneObject("select * from "
-						+ Agent_info.TableName + " where agent_id=?", agentIdList.get(0));
 				List<Object> filePathList = Dbo.queryOneColumnList("select file_path from "
 						+ Object_collect.TableName + " where odc_id=?", odc_id);
 				dictionaryMap.put("file_path", filePathList.get(0));
@@ -662,9 +661,11 @@ public class ObjectCollectAction extends BaseAction {
 					tableMap.put("handletype", handleTypeMap);
 					dictionaryList.add(tableMap);
 				}
-				dictionaryMap.put("jsonArray", JsonUtil.toJson(dictionaryList));
+				dictionaryMap.put("dictionaryParam", JsonUtil.toJson(dictionaryList));
 				// 2.调用工具类获取本次访问的agentserver端url
-				String url = AgentActionUtil.getUrl(agent_id, getUserId(),
+				List<Object> agentIdList = Dbo.queryOneColumnList("select agent_id from "
+						+ Object_collect.TableName + " where odc_id = ?", odc_id);
+				String url = AgentActionUtil.getUrl(Long.parseLong(agentIdList.get(0).toString()), getUserId(),
 						AgentActionUtil.WRITEDICTIONARY);
 				// 3、给agent发消息，并获取agent响应
 				HttpClient.ResponseValue resVal = new HttpClient()
@@ -674,7 +675,7 @@ public class ObjectCollectAction extends BaseAction {
 				ActionResult actionResult = JsonUtil.toObjectSafety(resVal.getBodyString(), ActionResult.class).
 						orElseThrow(() -> new BusinessException("应用管理端与" + url + "服务交互异常"));
 				if (!actionResult.isSuccess()) {
-					throw new BusinessException("连接失败");
+					throw new BusinessException("半结构化采集重写数据字典连接agent服务失败");
 				}
 			}
 		} else {
@@ -1053,14 +1054,14 @@ public class ObjectCollectAction extends BaseAction {
 				" where ocs_id = ? and is_hbase = ? order by col_seq", ocs_id, IsFlag.Shi.getCode());
 	}
 
-	@Method(desc = "保存对象采集存储设置表",
+	@Method(desc = "保存对象采集存储设置表(存储设置)",
 			logicStep = "1.获取json数组转成对象采集结构信息表的集合" +
 					"2.根据对象采集存储设置表id是否为空判断是编辑还是新增" +
 					"3.保存对象采集存储设置表" +
 					"4.更新对象采集设置表的字段是否完成设置并发送成功为是")
 	@Param(name = "object_storage_array", desc = "多条对象采集存储设置表的JSONArray格式的字符串，" +
 			"其中object_storage表不能为空的列所对应的值不能为空", range = "不能为空")
-	@Param(name = "odc_id", desc = "对象采集id", range = "不能为空")
+	@Param(name = "odc_id", desc = "对象采集id", range = "新增对象采集时生成")
 	public void saveObjectStorage(String object_storage_array, long odc_id) {
 		//数据可访问权限处理方式：该表没有对应的用户访问权限限制
 		//1.获取json数组转成对象采集结构信息表的集合
@@ -1081,9 +1082,11 @@ public class ObjectCollectAction extends BaseAction {
 				object_storage.update(Dbo.db());
 			}
 		}
-		//4.更新对象采集设置表的字段是否完成设置并发送成功为是
+		// 4.更新对象采集设置表的字段是否完成设置并发送成功为是
 		DboExecute.updatesOrThrow("更新表" + Object_collect.TableName + "失败"
 				, "UPDATE " + Object_collect.TableName + " SET is_sendok = ?"
 						+ " WHERE odc_id = ? ", IsFlag.Shi.getCode(), odc_id);
+		// 5.重写数据字典
+		rewriteDataDictionary(odc_id);
 	}
 }
