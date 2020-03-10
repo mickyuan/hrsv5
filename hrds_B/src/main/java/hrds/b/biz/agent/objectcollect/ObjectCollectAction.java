@@ -24,13 +24,15 @@ import hrds.commons.utils.AgentActionUtil;
 import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.PackUtil;
 import hrds.commons.utils.key.PrimayKeyGener;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.lang.reflect.Type;
 import java.util.*;
 
 @DocClass(desc = "对象采集接口类，处理对象采集的增删改查", author = "zxz", createdate = "2019/9/16 15:02")
 public class ObjectCollectAction extends BaseAction {
-
+	private static final Logger logger = LogManager.getLogger(ObjectCollectAction.class.getName());
 	private static final Type MAPTYPE = new TypeReference<Map<String, Object>>() {
 	}.getType();
 	private static final Type LISTTYPE = new TypeReference<List<Map<String, Object>>>() {
@@ -241,19 +243,7 @@ public class ObjectCollectAction extends BaseAction {
 		return JsonUtil.toObject(objectCollectMap.get("tablename"), LISTTYPE);
 	}
 
-	@Method(desc = "采集文件配置", logicStep = "1.数据可访问权限处理方式：该方法没有访问权限限制" +
-			"2.查询采集文件配置信息")
-	@Param(name = "odc_id", desc = "对象采集id", range = "object_collect表主鍵，新增时生成")
-	@Param(name = "agent_id", desc = "agent id", range = "agent_info表主键，新增时生成")
-	@Return(desc = "返回对象采集对应信息", range = "无限制")
-	public List<Map<String, Object>> collectFileConfig(long odc_id, long agent_id) {
-		// 1.数据可访问权限处理方式：该方法没有访问权限限制
-		// 2.查询采集文件配置信息
-		return Dbo.queryList("SELECT * from " + Object_collect_task.TableName +
-				" where agent_id=? and odc_id=? order by ocs_id", agent_id, odc_id);
-	}
-
-	@Method(desc = "查询半结构化采集列结构信息",
+	@Method(desc = "查询半结构化采集列结构信息(采集列结构）",
 			logicStep = "1.数据可访问权限处理方式：该方法没有访问权限限制" +
 					"2.有数据字典，查询对象采集结构信息" +
 					"3.没有数据字典查询第一行数据" +
@@ -445,11 +435,11 @@ public class ObjectCollectAction extends BaseAction {
 			"2.查询当前表的码表信息")
 	@Param(name = "ocs_id", desc = "对象采集任务编号", range = "新增对象采集任务时生成")
 	@Return(desc = "返回当前表的码表信息", range = "无限制")
-	public List<Object> searchOperateCodeTableInfo(long ocs_id) {
+	public List<Object_handle_type> searchOperateCodeTableInfo(long ocs_id) {
 		// 1.数据可访问权限处理方式：该方法没有访问权限限制
 		// 2.查询当前表的码表信息
-		return Dbo.queryOneColumnList("select handle_type from "
-				+ Object_handle_type.TableName + " where ocs_id=?", ocs_id);
+		return Dbo.queryList(Object_handle_type.class, "select * from " + Object_handle_type.TableName
+				+ " where ocs_id=?", ocs_id);
 	}
 
 	@Method(desc = "保存表的码表信息", logicStep = "1.数据可访问权限处理方式：该方法没有访问权限限制" +
@@ -512,21 +502,21 @@ public class ObjectCollectAction extends BaseAction {
 		Dbo.execute(asmSql.sql(), asmSql.params());
 	}
 
-	@Method(desc = "保存对象文件配置信息时检查字段", logicStep = "1.数据可访问权限处理方式：该方法没有访问权限限制" +
-			"2.解析json对象为对象采集对应信息" +
-			"3.循环检查英文名是否为空" +
-			"4.循环检查中文名是否为空" +
-			"5.循环检查采集列结构是否为空" +
-			"6.循环检查操作码表是否为空" +
-			"7.循环检查操作字段是否为1个")
+	@Method(desc = "保存对象文件配置信息时检查字段(采集文件设置)",
+			logicStep = "1.数据可访问权限处理方式：该方法没有访问权限限制" +
+					"2.解析json对象为对象采集对应信息" +
+					"3.循环检查英文名是否为空" +
+					"4.循环检查中文名是否为空" +
+					"5.循环检查采集列结构是否为空" +
+					"6.循环检查操作码表是否为空" +
+					"7.循环检查操作字段是否为1个")
 	@Param(name = "objColTask", desc = "jsonArray格式的对象采集对应信息", range = "无限制")
-	public void checkFieldsToSaveObjectFileConf(String objColTask) {
+	public void checkFieldsForSaveObjectCollectTask(String objColTask) {
 		// 1.数据可访问权限处理方式：该方法没有访问权限限制
 		Type type = new TypeReference<List<Object_collect_task>>() {
 		}.getType();
 		// 2.解析json对象为对象采集对应信息
 		List<Object_collect_task> objectCollectTaskList = JsonUtil.toObject(objColTask, type);
-		Map<String, Object> objectMap = new HashMap<String, Object>();
 		for (int i = 0; i < objectCollectTaskList.size(); i++) {
 			// 3.循环检查英文名是否为空
 			if (StringUtil.isBlank(objectCollectTaskList.get(i).getEn_name())) {
@@ -538,70 +528,27 @@ public class ObjectCollectAction extends BaseAction {
 						"中文名为空，请检查");
 			}
 			// 5.循环检查采集列结构是否为空
-			List<Map<String, Object>> objColStructList = Dbo.queryList("select * from " +
-					Object_collect_struct.TableName + " where ocs_id=?", objectCollectTaskList.get(i).getOcs_id());
-			if (objColStructList.isEmpty()) {
+			if (Dbo.queryNumber("select * from " + Object_collect_struct.TableName +
+					" where ocs_id=?", objectCollectTaskList.get(i).getOcs_id())
+					.orElseThrow(() -> new BusinessException("sql查询错误！")) == 0) {
 				throw new BusinessException("第" + (i + 1) + "行表" + objectCollectTaskList.get(i).getEn_name() +
 						"采集列结构为空，请检查");
 			}
 			// 6.循环检查操作码表是否为空
-			List<Map<String, Object>> objHandleTypeList = Dbo.queryList("select * from " +
-					Object_handle_type.TableName + " where ocs_id=?", objectCollectTaskList.get(i).getOcs_id());
-			if (objHandleTypeList.isEmpty()) {
+			if (Dbo.queryNumber("select * from " + Object_handle_type.TableName +
+					" where ocs_id=?", objectCollectTaskList.get(i).getOcs_id())
+					.orElseThrow(() -> new BusinessException("sql查询错误！")) == 0) {
 				throw new BusinessException("第" + (i + 1) + "行表" + objectCollectTaskList.get(i).getEn_name() +
 						"操作码表为空，请检查");
 			}
 			// 7.循环检查操作字段是否为1个
-			List<Map<String, Object>> objColStructList2 = Dbo.queryList("select * from "
-							+ Object_collect_struct.TableName + " where ocs_id=? and is_operate=?",
-					objectCollectTaskList.get(i).getOcs_id(), IsFlag.Shi.getCode());
-			if (objColStructList2.size() != 1) {
+			if (Dbo.queryNumber("select * from " + Object_collect_struct.TableName +
+							" where ocs_id=? and is_operate=?", objectCollectTaskList.get(i).getOcs_id(),
+					IsFlag.Shi.getCode()).orElseThrow(() -> new BusinessException("sql查询错误！")) != 1) {
 				throw new BusinessException("第" + (i + 1) + "行表" + objectCollectTaskList.get(i).getEn_name() +
 						"操作字段不为1个，请检查");
 			}
 		}
-	}
-
-	@Method(desc = "保存对象任务采集的文件信息并重写数据字典(采集文件设置)",
-			logicStep = "1.数据可访问权限处理方式：该方法没有访问权限限制" +
-					"2.解析json为对象采集对应信息" +
-					"3.保存对象任务采集的文件信息" +
-					"4.重写数据字典")
-	@Param(name = "agent_id", desc = "agent id", range = "新增agent时生成")
-	@Param(name = "odc_id", desc = "对象采集id", range = "新增对象采集时生成")
-	@Param(name = "objColTask", desc = "jsonArray格式的对象采集对应信息", range = "无限制")
-	public void saveObjectCollectTask(long agent_id, long odc_id, String objColTask) {
-		// 1.数据可访问权限处理方式：该方法没有访问权限限制
-		Type type = new TypeReference<List<Object_collect_task>>() {
-		}.getType();
-		// 2.解析json为对象采集对应信息
-		List<Object_collect_task> collectList = JsonUtil.toObject(objColTask, type);
-		// 3.保存对象任务采集的文件信息
-		saveObjectCollectFileInfo(collectList, agent_id, odc_id);
-		// 4.重写数据字典
-		rewriteDataDictionary(odc_id);
-	}
-
-	@Method(desc = "保存对象任务采集的文件信息", logicStep = "1.数据可访问权限处理方式：该方法没有访问权限限制" +
-			"2.遍历新增或更新对象采集文件信息")
-	@Param(name = "collectList", desc = "对象采集对应信息的集合", range = "无限制")
-	@Param(name = "agent_id", desc = "agent id", range = "新增agent时生成")
-	@Param(name = "odc_id", desc = "对象采集id", range = "新增对象采集时生成")
-	private void saveObjectCollectFileInfo(List<Object_collect_task> collectList, long agent_id, long odc_id) {
-		// 1.数据可访问权限处理方式：该方法没有访问权限限制
-		// 2.遍历新增或更新对象采集文件信息
-		for (Object_collect_task collect_task : collectList) {
-			if (null == collect_task.getOcs_id()) {
-				collect_task.setOcs_id(PrimayKeyGener.getNextId());
-				collect_task.setAgent_id(agent_id);
-				collect_task.setOdc_id(odc_id);
-				collect_task.add(Dbo.db());
-			} else {
-				collect_task.setOcs_id(collect_task.getOcs_id());
-				collect_task.update(Dbo.db());
-			}
-		}
-
 	}
 
 	@Method(desc = "重写数据字典",
@@ -619,7 +566,7 @@ public class ObjectCollectAction extends BaseAction {
 		if (!isDictionaryList.isEmpty()) {
 			// 3.判断是否数据字典已存在，已存在不重写数据字典
 			if (IsFlag.Fou == IsFlag.ofEnumByCode(isDictionaryList.get(0).toString())) {
-				throw new BusinessException("已经存在数据字典，不重写数据字典");
+				logger.info("已经存在数据字典，不需要重写数据字典");
 			} else {
 				List<Object> filePathList = Dbo.queryOneColumnList("select file_path from "
 						+ Object_collect.TableName + " where odc_id=?", odc_id);
@@ -874,7 +821,7 @@ public class ObjectCollectAction extends BaseAction {
 		return PackUtil.packMsg(JsonUtil.toJson(jsonParamMap));
 	}
 
-	@Method(desc = "根据对象采集id与agent id查询对象采集对应信息的合集",
+	@Method(desc = "根据对象采集id与agent id查询对象采集对应信息的合集(采集文件配置）",
 			logicStep = "1.根据对象采集id查询对象采集对应信息表返回到前端")
 	@Param(name = "odc_id", desc = "对象采集id", range = "不能为空")
 	@Param(name = "agent_id", desc = "agent id", range = "新增agent时生成")
@@ -918,15 +865,19 @@ public class ObjectCollectAction extends BaseAction {
 					"2.获取对象采集对应信息表list进行遍历" +
 					"3.根据对象采集对应信息表id判断是新增还是编辑" +
 					"4.根据en_name查询对象采集对应信息表的英文名称是否重复")
-	@Param(name = "object_collect_task_array", desc = "多条对象采集对应信息表的JSONArray格式的字符串，" +
+	@Param(name = "objectCollectTask", desc = "多条对象采集对应信息表的JSONArray格式的字符串，" +
 			"其中object_collect_task表不能为空的列所对应的值不能为空", range = "不能为空")
-	public void saveObjectCollectTaskInfo(String object_collect_task_array) {
+	@Param(name = "odc_id", desc = "对象采集表主键ID", range = "新增对象采集时生成")
+	@Param(name = "agent_id", desc = "agent信息表主键ID", range = "新增agent时生成")
+	public void saveObjectCollectTaskInfo(long odc_id, long agent_id, String objectCollectTask) {
 		//数据可访问权限处理方式：该表没有对应的用户访问权限限制
 		//1.获取json数组转成对象采集对应信息表的集合
-		List<Object_collect_task> object_collect_tasks = JSONArray
-				.parseArray(object_collect_task_array, Object_collect_task.class);
+		Type type = new TypeReference<List<Object_collect_task>>() {
+		}.getType();
+		// 2.解析json为对象采集对应信息
+		List<Object_collect_task> objectCollectTaskList = JsonUtil.toObject(objectCollectTask, type);
 		//2.获取对象采集对应信息表list进行遍历
-		for (Object_collect_task object_collect_task : object_collect_tasks) {
+		for (Object_collect_task object_collect_task : objectCollectTaskList) {
 			//TODO 使用公共方法校验数据的正确性
 			//XXX 这里新增和编辑是放在一起的，因为这里面是保存一个列表的数据，可能为一条或者多条。
 			//XXX 这一条或者多条数据会有新增也会有编辑，所以对应在一个方法里面了
@@ -934,22 +885,22 @@ public class ObjectCollectAction extends BaseAction {
 			if (object_collect_task.getOcs_id() == null) {
 				//新增
 				//4.根据en_name查询对象采集对应信息表的英文名称是否重复
-				long count = Dbo.queryNumber("SELECT count(1) count FROM " + Object_collect_task.TableName
+				if (Dbo.queryNumber("SELECT count(1) count FROM " + Object_collect_task.TableName
 						+ " WHERE en_name = ?", object_collect_task.getEn_name()).orElseThrow(()
-						-> new BusinessException("查询得到的数据必须有且只有一条"));
-				if (count > 0) {
+						-> new BusinessException("sql查询错误")) > 0) {
 					throw new BusinessException("对象采集对应信息表的英文名称重复");
 				}
 				object_collect_task.setOcs_id(PrimayKeyGener.getNextId());
+				object_collect_task.setOdc_id(odc_id);
+				object_collect_task.setAgent_id(agent_id);
 				object_collect_task.add(Dbo.db());
 			} else {
 				//更新
 				//4.根据en_name查询对象采集对应信息表的英文名称是否重复
-				long count = Dbo.queryNumber("SELECT count(1) count FROM "
+				if (Dbo.queryNumber("SELECT count(1) count FROM "
 								+ Object_collect_task.TableName + " WHERE en_name = ? AND ocs_id != ?",
 						object_collect_task.getEn_name(), object_collect_task.getOcs_id())
-						.orElseThrow(() -> new BusinessException("查询得到的数据必须有且只有一条"));
-				if (count > 0) {
+						.orElseThrow(() -> new BusinessException("sql查询错误")) > 0) {
 					throw new BusinessException("对象采集对应信息表的英文名称重复");
 				}
 				object_collect_task.update(Dbo.db());
@@ -1032,7 +983,7 @@ public class ObjectCollectAction extends BaseAction {
 			logicStep = "1.根据对象采集id，查询对象采集任务及每个任务对象的存储设置")
 	@Param(name = "odc_id", desc = "对象采集id", range = "不可为空")
 	@Return(desc = "采集任务及每个任务的存储设置", range = "不会为空")
-	public Result searchObjectStorage(long odc_id) {
+	public Result searchObjectStorageInfo(long odc_id) {
 		//数据可访问权限处理方式：该表没有对应的用户访问权限限制
 		//1.根据对象采集id，查询对象采集任务及每个任务对象的存储设置
 		Result result = Dbo.queryResult("SELECT * FROM " + Object_collect_task.TableName + " t1 left join "
@@ -1067,8 +1018,8 @@ public class ObjectCollectAction extends BaseAction {
 		//1.获取json数组转成对象采集结构信息表的集合
 		Type type = new TypeReference<List<Object_storage>>() {
 		}.getType();
-		List<Object_storage> object_storage_list = JsonUtil.toObject(object_storage_array, type);
-		for (Object_storage object_storage : object_storage_list) {
+		List<Object_storage> objectStorageList = JsonUtil.toObject(object_storage_array, type);
+		for (Object_storage object_storage : objectStorageList) {
 			//2.根据对象采集存储设置表id是否为空判断是编辑还是新增
 			//TODO 应该使用一个公共的校验类进行校验
 			//XXX 这里新增和编辑是放在一起的，因为这里面是保存一个列表的数据，可能为一条或者多条。
@@ -1088,5 +1039,61 @@ public class ObjectCollectAction extends BaseAction {
 						+ " WHERE odc_id = ? ", IsFlag.Shi.getCode(), odc_id);
 		// 5.重写数据字典
 		rewriteDataDictionary(odc_id);
+	}
+
+	@Method(desc = "检查保存对象存储的字段(存储设置)",
+			logicStep = "1.数据可访问权限处理方式：该表没有对应的用户访问权限限制" +
+					"2.解析json对象为数据存储实体集合" +
+					"3.遍历数据存储实体检查对象存储字段" +
+					"4.判断进solr的表是否进了HBase" +
+					"5.判断当前数据存储表是否进HBase" +
+					"6.判断当前数据存储表是否选择字段进HBase" +
+					"7.判断当前数据存储表是否选择字段为rowkey" +
+					"8.判断当前存储表是否进solr" +
+					"9.判断当前数据存储表字段是否选择字段进solr")
+	@Param(name = "object_storage_array", desc = "多条对象采集存储设置表的JSONArray格式的字符串，" +
+			"其中object_storage表不能为空的列所对应的值不能为空", range = "不能为空")
+	public void checkFieldsForSaveObjectStorage(String object_storage_array) {
+		// 1.数据可访问权限处理方式：该表没有对应的用户访问权限限制
+		Type type = new TypeReference<List<Object_storage>>() {
+		}.getType();
+		// 2.解析json对象为数据存储实体集合
+		List<Object_storage> objectStorageList = JsonUtil.toObject(object_storage_array, type);
+		// 3.遍历数据存储实体检查对象存储字段
+		for (int i = 0; i < objectStorageList.size(); i++) {
+			Object_storage object_storage = objectStorageList.get(i);
+			List<Object> enNameList = Dbo.queryOneColumnList("select en_name from "
+					+ Object_collect_task.TableName + " where ocs_id = ?", object_storage.getOcs_id());
+			// 4.判断进solr的表是否进了HBase
+			if (IsFlag.Fou == IsFlag.ofEnumByCode(object_storage.getIs_hbase()) &&
+					IsFlag.Shi == IsFlag.ofEnumByCode(object_storage.getIs_solr())) {
+				throw new BusinessException("第" + (i + 1) + "行表" + enNameList.get(0) + "未选择进入hbase，请检查");
+			}
+			// 5.判断当前数据存储表是否进HBase
+			if (IsFlag.Shi == IsFlag.ofEnumByCode(object_storage.getIs_hbase())) {
+				// 6.判断当前数据存储表是否选择字段进HBase
+				if (Dbo.queryNumber("select count(*) from " + Object_collect_struct.TableName +
+						" where ocs_id=? and is_hbase=?", object_storage.getOcs_id(), IsFlag.Shi.getCode())
+						.orElseThrow(() -> new BusinessException("sql查询错误")) == 0) {
+					throw new BusinessException("第" + (i + 1) + "行表" + enNameList.get(0) + "未选择字段进入hbase，请检查");
+				}
+				// 7.判断当前数据存储表是否选择字段为rowkey
+				if (Dbo.queryNumber("select count(*) from " + Object_collect_struct.TableName +
+								" where ocs_id=? and is_hbase=? and is_rowkey=?", object_storage.getOcs_id(),
+						IsFlag.Shi.getCode(), IsFlag.Shi.getCode())
+						.orElseThrow(() -> new BusinessException("sql查询错误")) == 0) {
+					throw new BusinessException("第" + (i + 1) + "行表" + enNameList.get(0) + "未选择字段为rowkey，请检查");
+				}
+			}
+			// 8.判断当前存储表是否进solr
+			if (IsFlag.Shi == IsFlag.ofEnumByCode(object_storage.getIs_solr())) {
+				// 9.判断当前数据存储表字段是否选择字段进solr
+				if (Dbo.queryNumber("select count(*) from " + Object_collect_struct.TableName +
+						" where ocs_id=? and is_solr=?", object_storage.getOcs_id(), IsFlag.Shi.getCode())
+						.orElseThrow(() -> new BusinessException("sql查询错误")) == 0) {
+					throw new BusinessException("第" + (i + 1) + "行表" + enNameList.get(0) + "未选择字段进入solr，请检查");
+				}
+			}
+		}
 	}
 }
