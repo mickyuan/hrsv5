@@ -36,7 +36,7 @@ public class ObjectCollectJob extends AgentBaseAction {
 	private static final Type TYPE = new TypeReference<Map<String, Object>>() {
 	}.getType();
 
-	private static String DICTIONARYFILENAME = "dd_data.json";
+	private static final String DICTIONARYFILENAME = "dd_data.json";
 
 	@Method(desc = "object采集和前端交互的接口",
 			logicStep = "1.获取json数组转成ObjectCollectParamBean的集合" +
@@ -58,43 +58,82 @@ public class ObjectCollectJob extends AgentBaseAction {
 				"", null).runJob();
 	}
 
-	@Method(desc = "解析半结构化采集数据字典", logicStep = "")
+	@Method(desc = "解析半结构化采集数据字典",
+			logicStep = "1.数据可访问权限处理方式：该方法没有访问权限限制" +
+					"2.获取解包后半结构化采集与http交互参数" +
+					"3.获取生成xml文件文件名" +
+					"4.判断是否存在数据字典，根据不同情况做不同处理" +
+					"5.有数据字典写xml文件获取数据字典数据" +
+					"6.数据字典不存在，获取当前日期下的数据文件数据" +
+					"7.返回解析后的数据文件数据")
 	@Param(name = "objectCollectParam", desc = "半结构化采集参数", range = "不为空")
-	@Return(desc = "", range = "")
+	@Return(desc = "返回解析后的数据文件数据", range = "不能为空")
 	public String parseObjectCollectDataDictionary(String objectCollectParam) {
-		Map<String, String> unpackMsg = PackUtil.unpackMsg(objectCollectParam);
-		Map<String, String> objectCollectMap = JsonUtil.toObject(unpackMsg.get("msg"), TYPE);
+		// 1.数据可访问权限处理方式：该方法没有访问权限限制
+		// 2.获取解包后半结构化采集与http交互参数
+		Map<String, String> objectCollectMap = getJsonParamMap(objectCollectParam);
+		// 3.获取生成xml文件文件名
 		String xmlName = ConnUtil.getDataBaseFile("", "",
 				objectCollectMap.get("file_path"), "");
-		JSONObject jsonData = new JSONObject();
+		// 4.判断是否存在数据字典，根据不同情况做不同处理
 		if (StringUtil.isNotBlank(objectCollectMap.get("is_dictionary"))) {
+			JSONObject jsonData;
 			if (IsFlag.Shi == (IsFlag.ofEnumByCode(objectCollectMap.get("is_dictionary")))) {
+				// 5.有数据字典写xml文件获取数据字典数据
 				Xls2xml.toXmlForObjectCollect(objectCollectMap.get("file_path"), xmlName);
 				jsonData = ConnUtil.getTableToXML2(xmlName);
 			} else if (IsFlag.Fou == (IsFlag.ofEnumByCode(objectCollectMap.get("is_dictionary")))) {
+				// 6.数据字典不存在，获取当前日期下的数据文件数据
 				jsonData = ConnUtil.getTableFromJson(objectCollectMap.get("file_path"),
 						objectCollectMap.get("data_date"), objectCollectMap.get("file_suffix"));
 			} else {
 				throw new BusinessException("字段is_dictionary不为是否标志，请检查：is_dictionary:"
 						+ objectCollectMap.get("is_dictionary"));
 			}
+			// 7.返回解析后的数据文件数据
+			return PackUtil.packMsg(jsonData.toString());
+		} else {
+			throw new BusinessException("字段is_dictionary不能为空");
 		}
-		return PackUtil.packMsg(JsonUtil.toJson(jsonData));
 	}
 
-	@Method(desc = "重写数据字典", logicStep = "")
-	@Param(name = "", desc = "", range = "")
-	@Return(desc = "", range = "")
+	@Method(desc = "获取解包后半结构化采集与http交互参数",
+			logicStep = "1.数据可访问权限处理方式：该方法没有访问权限限制" +
+					"2.解包" +
+					"3.返回解包后的半结构化采集与http交互参数")
+	@Param(name = "objectCollectParam", desc = "半结构化采集参数", range = "不为空")
+	@Return(desc = "返回解包后的半结构化采集与http交互参数", range = "不为空")
+	private Map<String, String> getJsonParamMap(String jsonParam) {
+		// 1.数据可访问权限处理方式：该方法没有访问权限限制
+		// 2.解包
+		Map<String, String> unpackMsg = PackUtil.unpackMsg(jsonParam);
+		// 3.返回解包后的半结构化采集与http交互参数
+		return JsonUtil.toObject(unpackMsg.get("msg"), TYPE);
+	}
+
+	@Method(desc = "重写数据字典",
+			logicStep = "1.数据可访问权限处理方式：该方法没有访问权限限制" +
+					"2.获取解包后半结构化采集与http交互参数" +
+					"3.获取数据字典文件路径" +
+					"4.获取重写数据字典参数" +
+					"5.创建数据字典目录" +
+					"6.对数据字典文件重命名" +
+					"7.写数据字典文件")
+	@Param(name = "dictionaryParam", desc = "半结构化采集重写数据字典与agent交互参数", range = "不为空")
 	public void writeDictionary(String dictionaryParam) {
-		Map<String, String> unpackMsg = PackUtil.unpackMsg(dictionaryParam);
-		Map<String, String> jsonMsgMap = JsonUtil.toObject(unpackMsg.get("msg"), TYPE);
+		// 1.数据可访问权限处理方式：该方法没有访问权限限制
+		// 2.获取解包后半结构化采集与http交互参数
+		Map<String, String> jsonMsgMap = getJsonParamMap(dictionaryParam);
+		// 3.获取数据字典文件路径
 		String filepath = jsonMsgMap.get("file_path");
 		if (!filepath.endsWith(File.separator)) {
 			filepath += File.separator;
 		}
 		String dictionaryFilepath = filepath + "writeDictionary" + File.separator;
-		String jsonArray = jsonMsgMap.get("jsonArray");
+		// 4.获取重写数据字典参数
+		String jsonArray = jsonMsgMap.get("dictionaryParam");
 		try {
+			// 5.创建数据字典目录
 			File originalFile = new File(filepath + DICTIONARYFILENAME);
 			if (originalFile.exists()) {
 				File dictionaryFile = new File(dictionaryFilepath);
@@ -103,13 +142,15 @@ public class ObjectCollectJob extends AgentBaseAction {
 						throw new BusinessException("创建数据字典目录失败！");
 					}
 				}
-				String sysDateTime = DateUtil.getSysDate() + DateUtil.getSysTime();
-				if (!originalFile.renameTo(new File(dictionaryFilepath + DICTIONARYFILENAME
-						+ sysDateTime))) {
+				// 6.对数据字典文件重命名
+				if (!originalFile.renameTo(new File(dictionaryFilepath + DateUtil.getSysDate()
+						+ DateUtil.getSysTime() + DICTIONARYFILENAME))) {
 					throw new BusinessException("文件重命名失败！");
 				}
 			}
+			// 7.写数据字典文件
 			originalFile = new File(filepath + DICTIONARYFILENAME);
+			String absolutePath = originalFile.getAbsolutePath();
 			BufferedWriter writer = new BufferedWriter(new FileWriter(originalFile));
 			writer.write(jsonArray);
 			writer.close();
