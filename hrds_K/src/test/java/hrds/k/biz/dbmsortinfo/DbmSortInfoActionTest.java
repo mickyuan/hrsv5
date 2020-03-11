@@ -1,5 +1,6 @@
 package hrds.k.biz.dbmsortinfo;
 
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
@@ -23,6 +24,7 @@ import java.util.OptionalLong;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
+@DocClass(desc = "标准分类管理测试类", author = "BY-HLL", createdate = "2020/3/11 0011 下午 03:21")
 public class DbmSortInfoActionTest extends WebBaseTestCase {
 
     //测试数据的用户ID
