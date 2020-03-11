@@ -69,7 +69,7 @@ public class ObjectCollectAction extends BaseAction {
 		//FIXME 这两个时间和Agent部署主机的时间并不是一个，确定要这样用吗？
 		//XXX 这里面是获取本地时间，原先的半结构化采集页面是有服务器时间和本地时间的
 		//XXX 服务器时间通过上面得到，本地时间通过下面得到
-		map.put("localdate", DateUtil.getSysDate());
+		map.put("localDate", DateUtil.getSysDate());
 		map.put("localtime", DateUtil.getSysTime());
 		//3.对象采集id不为空则获取对象采集设置表信息
 		//XXX 这里的Odc_id不为空则返回回显数据，为空则不处理
@@ -171,7 +171,7 @@ public class ObjectCollectAction extends BaseAction {
 	@Param(name = "object_collect", desc = "对象采集设置表对象，对象中不能为空的字段必须有值",
 			range = "不可为空", isBean = true)
 	@Return(desc = "对象采集设置表id，新建的id后台生成的所以要返回到前端", range = "不会为空")
-	public long saveObjectCollect(Object_collect object_collect) {
+	public long addObjectCollect(Object_collect object_collect) {
 		// 1.数据可访问权限处理方式：该表没有对应的用户访问权限限制
 		//TODO 应该使用一个公共的校验类进行校验
 
@@ -182,7 +182,6 @@ public class ObjectCollectAction extends BaseAction {
 		if (count > 0) {
 			throw new BusinessException("半结构化采集任务名称重复");
 		}
-		object_collect.setOdc_id(PrimayKeyGener.getNextId());
 		// 3.之前对象采集存在行采集与对象采集两种，目前仅支持行采集 所以默认给
 		if (StringUtil.isNotBlank(object_collect.getObject_collect_type())) {
 			object_collect.setObject_collect_type(ObjectCollectType.HangCaiJi.getCode());
@@ -193,6 +192,7 @@ public class ObjectCollectAction extends BaseAction {
 			throw new BusinessException("当是否存在数据字典是否的时候，数据日期不能为空");
 		}
 		// 5.保存object_collect表
+		object_collect.setOdc_id(PrimayKeyGener.getNextId());
 		object_collect.add(Dbo.db());
 		String jsonParamMap = getJsonParamForAgent(object_collect.getFile_path(),
 				object_collect.getFile_suffix(), object_collect.getIs_dictionary(), object_collect.getData_date());
