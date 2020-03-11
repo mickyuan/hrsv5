@@ -2,7 +2,12 @@ package hrds.b.biz.agent.objectcollect;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.TypeReference;
+import fd.ng.core.annotation.Method;
+import fd.ng.core.annotation.Param;
+import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
+import fd.ng.core.utils.FileUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
@@ -10,6 +15,7 @@ import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
+import fd.ng.web.util.Dbo;
 import hrds.commons.codes.*;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
@@ -18,6 +24,13 @@ import hrds.testbase.WebBaseTestCase;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.io.File;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -37,6 +50,8 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 	private static final long OBJECT_STORAGE_ROWS = 10L;
 	//向object_collect_struct表中初始化的数据条数
 	private static final long OBJECT_COLLECT_STRUCT_ROWS = 10L;
+	//向object_collect_struct表中初始化的数据条数
+	private static final long OBJECT_HANDLE_TYPE_ROWS = 3L;
 	//Agent信息表id
 	private static final long AGENT_ID = 10000001L;
 	//用户id
@@ -51,6 +66,8 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 	private static final long OBJ_STID = 40000001L;
 	//对象采集结构信息表结构信息id
 	private static final long STRUCT_ID = 50000001L;
+	// 对象操作码表信息ID
+	private static final long OBJECT_HANDLE_ID = 60000001L;
 
 	/**
 	 * 测试用例初始化参数
@@ -171,6 +188,27 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 				object_collect_struct.setCol_seq(Long.valueOf(i + 1));
 				assertThat("初始化数据成功", object_collect_struct.add(db), is(1));
 			}
+			// 8.构造object_handle_type表数据，默认三条object_handle_id为6000001-60000003
+			for (int i = 0; i < OBJECT_HANDLE_TYPE_ROWS; i++) {
+				Object_handle_type object_handle_type = new Object_handle_type();
+				object_handle_type.setObject_handle_id(OBJECT_HANDLE_ID + i);
+				switch (i) {
+					case 0:
+						object_handle_type.setHandle_type(OperationType.INSERT.getCode());
+						object_handle_type.setHandle_value(OperationType.INSERT.getValue());
+						break;
+					case 1:
+						object_handle_type.setHandle_type(OperationType.UPDATE.getCode());
+						object_handle_type.setHandle_value(OperationType.UPDATE.getValue());
+						break;
+					case 2:
+						object_handle_type.setHandle_type(OperationType.DELETE.getCode());
+						object_handle_type.setHandle_value(OperationType.DELETE.getValue());
+						break;
+				}
+				object_handle_type.setOcs_id(OCS_ID);
+				assertThat("初始化数据成功", object_handle_type.add(db), is(1));
+			}
 			SqlOperator.commitTransaction(db);
 		}
 		//8.模拟用户登录
@@ -218,7 +256,7 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
-		assertThat(ar.getDataForMap().get("localdate"), is(DateUtil.getSysDate()));
+		assertThat(ar.getDataForMap().get("localDate"), is(DateUtil.getSysDate()));
 		assertThat(StringUtil.isBlank(ar.getDataForMap().get("object_collect_info").toString()), is(false));
 
 		//4.agent_id不为空，odc_id也不为空查询信息，agent_id为正确造数据的值和odc_id为不正确的值
@@ -241,6 +279,7 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 	 */
 	@Test
 	public void addObjectCollectTest() {
+		File file = FileUtil.getFile("src/test/java/hrds/b/biz/agent/objectcollect/dictionary");
 		//1.添加一个正确的半结构化采集设置表
 		bodyString = new HttpClient()
 				.addData("object_collect_type", ObjectCollectType.HangCaiJi.getCode())
@@ -254,10 +293,10 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 				.addData("e_date", DateUtil.getSysDate())
 				.addData("database_code", DataBaseCode.UTF_8.getCode())
 				.addData("run_way", ExecuteWay.MingLingChuFa.getCode())
-				.addData("file_path", "D:\\采集目录\\dhw")
+				.addData("file_path", file.getAbsolutePath())
 				.addData("is_sendok", IsFlag.Fou.getCode())
 				.addData("agent_id", AGENT_ID)
-				.addData("is_dictionary", IsFlag.Shi.getCode())
+				.addData("is_dictionary", IsFlag.Fou.getCode())
 				.addData("data_date", "20200301")
 				.addData("file_suffix", "json")
 				.post(getActionUrl("addObjectCollect")).getBodyString();
@@ -273,12 +312,12 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 					+ Object_collect.TableName + " WHERE obj_collect_name = ?", "测试对象采集名称1112")
 					.orElseThrow(() -> new BusinessException("测试用例异常"));
 			assertThat("校验object_collect表数据量正确", collect.getFile_path()
-					, is("/aaaa/ccc/ddd"));
+					, is(file.getAbsolutePath()));
 			assertThat("校验object_collect表数据量正确", collect.getObj_number()
 					, is("qqwwtt"));
 		}
 
-		//2.添加一个半结构化采集，但ftp采集任务名称重复
+		//2.添加一个半结构化采集，但半结构化采集任务名称重复
 		bodyString = new HttpClient()
 				.addData("object_collect_type", ObjectCollectType.HangCaiJi.getCode())
 				.addData("obj_number", "qqww")
@@ -1011,6 +1050,44 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 //		assertThat(ar.isSuccess(), is(false));
 	}
 
+	@Method(desc = "", logicStep = "")
+	@Param(name = "", desc = "", range = "")
+	@Test
+	public void searchOperateCodeTableInfo() {
+		bodyString = new HttpClient()
+				.addData("ocs_id", OCS_ID)
+				.post(getActionUrl("searchOperateCodeTableInfo")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
+		assertThat(ar.isSuccess(), is(true));
+	}
+
+	@Test
+	public void selectPath() {
+		bodyString = new HttpClient()
+				.addData("agent_id", AGENT_ID)
+				.addData("file_path", "D:\\采集目录\\dhw")
+				.post(getActionUrl("selectPath")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
+		assertThat(ar.isSuccess(), is(true));
+		String s = ar.getData().toString();
+	}
+
+	@Test
+	public void viewTable() {
+		bodyString = new HttpClient()
+				.addData("agent_id", AGENT_ID)
+				.addData("file_path", "D:\\采集目录\\dhw")
+				.addData("is_dictionary", IsFlag.Fou.getCode())
+				.addData("data_date", "20200301")
+				.addData("file_suffix", "json")
+				.post(getActionUrl("viewTable")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
+		assertThat(ar.isSuccess(), is(true));
+	}
+
 	/**
 	 * 测试用例清理数据
 	 * <p>
@@ -1047,6 +1124,9 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 					+ " WHERE remark = ?", "zxz测试用例清除表object_storage专用");
 			//7.删除测试用例造的object_collect_struct表数据，默认为10条,STRUCT_ID为50000001---50000010
 			SqlOperator.execute(db, "DELETE FROM " + Object_collect_struct.TableName
+					+ " WHERE ocs_id = ?", OCS_ID);
+			// 8.删除测试用例造的Object_handle_type表数据，默认为3条,object_handle_id为60000001---60000003
+			SqlOperator.execute(db, "DELETE FROM " + Object_handle_type.TableName
 					+ " WHERE ocs_id = ?", OCS_ID);
 			SqlOperator.commitTransaction(db);
 		}

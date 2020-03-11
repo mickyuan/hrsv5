@@ -1,0 +1,1 @@
+[{"columns":[{"column_id":"0","is_key":"1","columnposition":"date","column_name":"date","is_solr":"1","column_type":"decimal(38,18)","is_operate":"1","is_rowkey":"0","is_hbase":"0"}],"handletype":{"insert":"","update":"","delete":""},"updatetype":"0","table_cn_name":"t_executedpersons","table_name":"t_executedpersons"}]
