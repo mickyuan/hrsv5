@@ -264,50 +264,10 @@ public class DbmSortInfoActionTest extends WebBaseTestCase {
             SqlOperator.execute(db, "delete from " + Dbm_sort_info.TableName + " where sort_name=?",
                     "测试新增标准分类hll");
             SqlOperator.commitTransaction(db);
-            long dsiNum;
-            dsiNum = SqlOperator.queryNumber(db, "select count(1) from " + Dbm_sort_info.TableName +
-                    " where sort_id =?", -1000L).orElseThrow(() -> new RuntimeException("count fail!"));
-            assertThat("Dbm_code_type_info 表此条数据删除后,记录数应该为0", dsiNum, is(0L));
-            dsiNum = SqlOperator.queryNumber(db, "select count(1) from " + Dbm_sort_info.TableName +
-                    " where sort_id =?", -2000L).orElseThrow(() -> new RuntimeException("count fail!"));
-            assertThat("Dbm_code_type_info 表此条数据删除后,记录数应该为0", dsiNum, is(0L));
-            dsiNum = SqlOperator.queryNumber(db, "select count(1) from " + Dbm_sort_info.TableName +
-                    " where sort_id =?", -3000L).orElseThrow(() -> new RuntimeException("count fail!"));
-            assertThat("Dbm_code_type_info 表此条数据删除后,记录数应该为0", dsiNum, is(0L));
-            dsiNum = SqlOperator.queryNumber(db, "select count(1) from " + Dbm_sort_info.TableName +
-                    " where sort_id =?", -4000L).orElseThrow(() -> new RuntimeException("count fail!"));
-            assertThat("Dbm_code_type_info 表此条数据删除后,记录数应该为0", dsiNum, is(0L));
-            dsiNum = SqlOperator.queryNumber(db, "select count(1) from " + Dbm_sort_info.TableName +
-                    " where sort_id =?", -4001L).orElseThrow(() -> new RuntimeException("count fail!"));
-            assertThat("Dbm_code_type_info 表此条数据删除后,记录数应该为0", dsiNum, is(0L));
-            dsiNum = SqlOperator.queryNumber(db, "select count(1) from " + Dbm_sort_info.TableName +
-                    " where sort_id =?", -4002L).orElseThrow(() -> new RuntimeException("count fail!"));
-            assertThat("Dbm_code_type_info 表此条数据删除后,记录数应该为0", dsiNum, is(0L));
-            dsiNum = SqlOperator.queryNumber(db, "select count(1) from " + Dbm_sort_info.TableName +
-                    " where sort_id =?", -5000L).orElseThrow(() -> new RuntimeException("count fail!"));
-            assertThat("Dbm_code_type_info 表此条数据删除后,记录数应该为0", dsiNum, is(0L));
-            dsiNum = SqlOperator.queryNumber(db, "select count(1) from " + Dbm_sort_info.TableName +
-                    " where sort_id =?", -5001L).orElseThrow(() -> new RuntimeException("count fail!"));
-            assertThat("Dbm_code_type_info 表此条数据删除后,记录数应该为0", dsiNum, is(0L));
-            dsiNum = SqlOperator.queryNumber(db, "select count(1) from " + Dbm_sort_info.TableName +
-                    " where sort_id =?", -5002L).orElseThrow(() -> new RuntimeException("count fail!"));
-            assertThat("Dbm_code_type_info 表此条数据删除后,记录数应该为0", dsiNum, is(0L));
-            dsiNum = SqlOperator.queryNumber(db, "select count(1) from " + Dbm_sort_info.TableName +
-                    " where sort_id =?", -6000L).orElseThrow(() -> new RuntimeException("count fail!"));
-            assertThat("Dbm_code_type_info 表此条数据删除后,记录数应该为0", dsiNum, is(0L));
-            dsiNum = SqlOperator.queryNumber(db, "select count(1) from " + Dbm_sort_info.TableName +
-                    " where sort_id =?", -7000L).orElseThrow(() -> new RuntimeException("count fail!"));
-            assertThat("Dbm_code_type_info 表此条数据删除后,记录数应该为0", dsiNum, is(0L));
-            dsiNum = SqlOperator.queryNumber(db, "select count(1) from " + Dbm_sort_info.TableName +
-                    " where sort_id =?", -7001L).orElseThrow(() -> new RuntimeException("count fail!"));
-            assertThat("Dbm_code_type_info 表此条数据删除后,记录数应该为0", dsiNum, is(0L));
-            dsiNum = SqlOperator.queryNumber(db, "select count(1) from " + Dbm_sort_info.TableName +
-                    " where sort_id =?", -7002L).orElseThrow(() -> new RuntimeException("count fail!"));
-            assertThat("Dbm_code_type_info 表此条数据删除后,记录数应该为0", dsiNum, is(0L));
-            dsiNum = SqlOperator.queryNumber(db, "select count(1) from " + Dbm_sort_info.TableName +
-                    " where sort_name =?", "测试新增标准分类hll"
-            ).orElseThrow(() -> new RuntimeException("count fail!"));
-            assertThat("Dbm_code_type_info 表此条数据删除后,记录数应该为0", dsiNum, is(0L));
+            long dsiNum = SqlOperator.queryNumber(db, "select count(1) from " + Dbm_sort_info.TableName +
+                    " where sort_id in(-1000,-2000,-3000,-4000,-4001,-4002,-5000,-5001,-5002,-6000,-7000,-7001,-7002)")
+                    .orElseThrow(() -> new RuntimeException("count fail!"));
+            assertThat("Dbm_sort_info 表此条数据删除后,记录数应该为0", dsiNum, is(0L));
         }
     }
 
@@ -598,8 +558,7 @@ public class DbmSortInfoActionTest extends WebBaseTestCase {
             try (DatabaseWrapper db = new DatabaseWrapper()) {
                 //检查删除的数据
                 OptionalLong number = SqlOperator.queryNumber(db,
-                        "select count(*) from " + Dbm_sort_info.TableName + " where" +
-                                " sort_id in(-4000, -4001, -4002)");
+                        "select count(*) from " + Dbm_sort_info.TableName + " where sort_id in(-4000,-4001,-4002)");
                 assertThat("表 Dbm_sort_info 数据删除成功", number.orElse(-1), is(0L));
             }
         }

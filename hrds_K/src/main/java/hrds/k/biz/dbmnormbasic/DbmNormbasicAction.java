@@ -36,9 +36,6 @@ public class DbmNormbasicAction extends BaseAction {
     @Param(name = "dbm_normbasic", desc = "标准分类的实体对象", range = "标准分类的实体对象", isBean = true)
     public void addDbmNormbasicInfo(Dbm_normbasic dbm_normbasic) {
         //1.数据校验
-        if (checkNormCodeIsRepeat(dbm_normbasic.getNorm_code())) {
-            throw new BusinessException("分类编码已经存在!" + dbm_normbasic.getNorm_code());
-        }
         if (StringUtil.isNotBlank(dbm_normbasic.getSort_id().toString())) {
             if (checkSortIdIsNotExist(dbm_normbasic.getSort_id())) {
                 throw new BusinessException("选择分类不存在!" + dbm_normbasic.getSort_id());
@@ -70,7 +67,6 @@ public class DbmNormbasicAction extends BaseAction {
         }
         //2.设置标准分类信息
         dbm_normbasic.setBasic_id(PrimayKeyGener.getNextId());
-        dbm_normbasic.setNorm_status(IsFlag.Fou.getCode());
         dbm_normbasic.setCreate_user(getUserId().toString());
         dbm_normbasic.setCreate_date(DateUtil.getSysDate());
         dbm_normbasic.setCreate_time(DateUtil.getSysTime());
@@ -125,6 +121,9 @@ public class DbmNormbasicAction extends BaseAction {
         if (StringUtil.isBlank(dbm_normbasic.getFormulator())) {
             throw new BusinessException("制定人为空!" + dbm_normbasic.getFormulator());
         }
+        if (StringUtil.isBlank(dbm_normbasic.getNorm_status())) {
+            throw new BusinessException("发布状态为空!" + dbm_normbasic.getNorm_status());
+        }
         dbm_normbasic.update(Dbo.db());
     }
 
@@ -136,7 +135,7 @@ public class DbmNormbasicAction extends BaseAction {
         Map<String, Object> dbmNormbasicInfoMap = new HashMap<>();
         Page page = new DefaultPageImpl(currPage, pageSize);
         List<Dbm_normbasic> dbmNormbasicInfos = Dbo.queryPagedList(Dbm_normbasic.class, page,
-                "select * from " + Dbm_normbasic.TableName);
+                "select * from " + Dbm_normbasic.TableName + " where create_user = ?", getUserId().toString());
         dbmNormbasicInfoMap.put("dbmNormbasicInfos", dbmNormbasicInfos);
         dbmNormbasicInfoMap.put("totalSize", page.getTotalSize());
         return dbmNormbasicInfoMap;
@@ -146,8 +145,8 @@ public class DbmNormbasicAction extends BaseAction {
     @Return(desc = "所有分类信息(只获取basic_id,norm_cname)", range = "所有分类信息")
     public Map<String, Object> getDbmNormbasicIdAndNameInfo() {
         Map<String, Object> dbmNormbasicInfoMap = new HashMap<>();
-        List<Map<String, Object>> dbmNormbasicInfos =
-                Dbo.queryList("select basic_id,norm_cname from " + Dbm_normbasic.TableName);
+        List<Map<String, Object>> dbmNormbasicInfos = Dbo.queryList("select basic_id,norm_cname from " +
+                Dbm_normbasic.TableName + " where create_user = ?", getUserId().toString());
         dbmNormbasicInfoMap.put("dbmNormbasicInfos", dbmNormbasicInfos);
         dbmNormbasicInfoMap.put("totalSize", dbmNormbasicInfos.size());
         return dbmNormbasicInfoMap;
