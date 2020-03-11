@@ -21,7 +21,7 @@ public class DbmTreeInfoAction extends BaseAction {
     public Map<String, Object> getDbmSortInfoTreeData() {
         Map<String, Object> dbmSortInfoTreeDataMap = new HashMap<>();
         //获取数据对标-标准分类信息的所有分类信息
-        List<Map<String, Object>> dbmSortInfos = DbmDataQuery.getDbmSortInfos();
+        List<Map<String, Object>> dbmSortInfos = DbmDataQuery.getDbmSortInfos(getUser());
         //转换所有标准分类信息数据为树节点信息数据
         List<Node> dbmSortInfoTreeDataList = DataConvertedNode.dataConversionTreeInfo(dbmSortInfos);
         dbmSortInfoTreeDataMap.put("dbmSortInfoTreeDataList",

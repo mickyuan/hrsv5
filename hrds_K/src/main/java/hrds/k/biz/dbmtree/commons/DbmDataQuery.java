@@ -6,6 +6,7 @@ import fd.ng.core.annotation.Return;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
 import hrds.commons.entity.Dbm_sort_info;
+import hrds.commons.utils.User;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,8 +19,9 @@ public class DbmDataQuery {
     @Method(desc = "获取标准分类的所有分类信息",
             logicStep = "1.获取标准分类的所有分类信息")
     @Return(desc = "分类信息列表", range = "无限制")
-    public static List<Map<String, Object>> getDbmSortInfos() {
-        Result dbmSortInfoRs = Dbo.queryResult("select * from " + Dbm_sort_info.TableName);
+    public static List<Map<String, Object>> getDbmSortInfos(User user) {
+        Result dbmSortInfoRs = Dbo.queryResult("select * from " + Dbm_sort_info.TableName + " where create_user=?"
+                , user.getUserId().toString());
         List<Map<String, Object>> dataList = new ArrayList<>();
         for (int i = 0; i < dbmSortInfoRs.getRowCount(); i++) {
             Map<String, Object> map = new HashMap<>();
