@@ -185,7 +185,7 @@ public class DbmSortInfoAction extends BaseAction {
         Map<String, Object> dbmSortInfoMap = new HashMap<>();
         List<Dbm_sort_info> dbmSortInfos = Dbo.queryList(Dbm_sort_info.class,
                 "select * from " + Dbm_sort_info.TableName + " where parent_id=? and create_user=?",
-                '0', getUserId().toString());
+                0L, getUserId().toString());
         dbmSortInfoMap.put("dbmSortInfos", dbmSortInfos);
         dbmSortInfoMap.put("totalSize", dbmSortInfos.size());
         return dbmSortInfoMap;
@@ -200,6 +200,7 @@ public class DbmSortInfoAction extends BaseAction {
                 "select * from " + Dbm_sort_info.TableName + " where parent_id=? and create_user=?",
                 sort_id, getUserId().toString());
         dbmSortInfoMap.put("dbmSortInfos", dbmSortInfos);
+        dbmSortInfoMap.put("totalSize", dbmSortInfos.size());
         return dbmSortInfoMap;
     }
 

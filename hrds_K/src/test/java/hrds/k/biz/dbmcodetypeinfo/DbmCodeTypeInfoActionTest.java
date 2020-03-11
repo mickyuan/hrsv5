@@ -303,7 +303,6 @@ public class DbmCodeTypeInfoActionTest extends WebBaseTestCase {
         if (ar != null) {
             assertThat(ar.isSuccess(), is(true));
             try (DatabaseWrapper db = new DatabaseWrapper()) {
-                //检查新增的数据是否正确
                 OptionalLong number = SqlOperator.queryNumber(db,
                         "select count(*) from " + Dbm_code_type_info.TableName + " where code_type_id=?",
                         -1000L);
@@ -351,12 +350,7 @@ public class DbmCodeTypeInfoActionTest extends WebBaseTestCase {
         ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElse(null);
         if (ar != null) {
             assertThat(ar.isSuccess(), is(true));
-            try (DatabaseWrapper db = new DatabaseWrapper()) {
-                //检查新增的数据是否正确
-                Result rs = SqlOperator.queryResult(db, "select * from " + Dbm_code_type_info.TableName +
-                        " where create_user=?", "-1000");
-                assertThat(rs.getRowCount(), is(11));
-            }
+            assertThat(ar.getDataForMap().get("totalSize"), is(11));
         }
     }
 
