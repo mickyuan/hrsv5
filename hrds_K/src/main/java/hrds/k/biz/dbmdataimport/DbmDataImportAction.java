@@ -18,8 +18,8 @@ import java.io.IOException;
 @DocClass(desc = "数据对标元管理-标准数据导入类", author = "BY-HLL", createdate = "2020/2/21 0021 下午 05:56")
 public class DbmDataImportAction extends BaseAction {
 
-    @Method(desc = "导入标准分类信息",
-            logicStep = "导入标准分类信息")
+    @Method(desc = "批量导入标准元数据信息",
+            logicStep = "批量导入标准元数据信息")
     @Param(name = "pathName", desc = "excel文件的全路径", range = "String")
     @Return(desc = "返回值说明", range = "返回值取值范围")
     @UploadFile
