@@ -9,7 +9,6 @@ import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import hrds.commons.codes.IsFlag;
-import hrds.commons.entity.Dbm_code_type_info;
 import hrds.commons.entity.Dbm_sort_info;
 import hrds.commons.entity.Department_info;
 import hrds.commons.entity.Sys_user;
