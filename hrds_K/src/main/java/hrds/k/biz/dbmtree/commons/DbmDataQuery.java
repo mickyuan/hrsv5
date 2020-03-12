@@ -19,18 +19,8 @@ public class DbmDataQuery {
     @Method(desc = "获取标准分类的所有分类信息",
             logicStep = "1.获取标准分类的所有分类信息")
     @Return(desc = "分类信息列表", range = "无限制")
-    public static List<Map<String, Object>> getDbmSortInfos(User user) {
-        Result dbmSortInfoRs = Dbo.queryResult("select * from " + Dbm_sort_info.TableName + " where create_user=?"
+    public static Result getDbmSortInfos(User user) {
+        return Dbo.queryResult("select * from " + Dbm_sort_info.TableName + " where create_user=?"
                 , user.getUserId().toString());
-        List<Map<String, Object>> dataList = new ArrayList<>();
-        for (int i = 0; i < dbmSortInfoRs.getRowCount(); i++) {
-            Map<String, Object> map = new HashMap<>();
-            map.put("id", dbmSortInfoRs.getString(i, "sort_id"));
-            map.put("label", dbmSortInfoRs.getString(i, "sort_name"));
-            map.put("parent_id", dbmSortInfoRs.getString(i, "parent_id"));
-            map.put("description", dbmSortInfoRs.getString(i, "sort_name"));
-            dataList.add(map);
-        }
-        return dataList;
     }
 }

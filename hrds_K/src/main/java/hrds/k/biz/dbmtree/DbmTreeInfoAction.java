@@ -4,11 +4,13 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.JsonUtil;
+import fd.ng.db.resultset.Result;
 import hrds.commons.base.BaseAction;
 import hrds.k.biz.dbmtree.commons.DbmDataQuery;
 import hrds.commons.utils.tree.DataConvertedNode;
 import hrds.commons.utils.tree.Node;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,9 +23,20 @@ public class DbmTreeInfoAction extends BaseAction {
     public Map<String, Object> getDbmSortInfoTreeData() {
         Map<String, Object> dbmSortInfoTreeDataMap = new HashMap<>();
         //获取数据对标-标准分类信息的所有分类信息
-        List<Map<String, Object>> dbmSortInfos = DbmDataQuery.getDbmSortInfos(getUser());
-        //转换所有标准分类信息数据为树节点信息数据
-        List<Node> dbmSortInfoTreeDataList = DataConvertedNode.dataConversionTreeInfo(dbmSortInfos);
+        Result dbmSortInfoRs = DbmDataQuery.getDbmSortInfos(getUser());
+        //转换查询数据为Node数据
+        List<Map<String, Object>> dataList = new ArrayList<>();
+        for (int i = 0; i < dbmSortInfoRs.getRowCount(); i++) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("id", dbmSortInfoRs.getString(i, "sort_id"));
+            map.put("label", dbmSortInfoRs.getString(i, "sort_name"));
+            map.put("parent_id", dbmSortInfoRs.getString(i, "parent_id"));
+            map.put("description", dbmSortInfoRs.getString(i, "sort_name"));
+            dataList.add(map);
+        }
+        //转换Node信息数据为分叉树节点数据List
+        List<Node> dbmSortInfoTreeDataList = DataConvertedNode.dataConversionTreeInfo(dataList);
+        //创建返回结果Map集合
         dbmSortInfoTreeDataMap.put("dbmSortInfoTreeDataList",
                 JsonUtil.toObjectSafety(dbmSortInfoTreeDataList.toString(), List.class));
         return dbmSortInfoTreeDataMap;
