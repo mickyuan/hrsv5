@@ -4,8 +4,6 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import fd.ng.core.annotation.Method;
-import fd.ng.core.annotation.Param;
-import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.FileUtil;
 import fd.ng.core.utils.JsonUtil;
@@ -15,7 +13,6 @@ import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
-import fd.ng.web.util.Dbo;
 import hrds.commons.codes.*;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
@@ -24,15 +21,15 @@ import hrds.testbase.WebBaseTestCase;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import scala.reflect.internal.Trees;
 
 import java.io.File;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
@@ -40,6 +37,10 @@ import static org.hamcrest.MatcherAssert.assertThat;
  */
 public class ObjectCollectActionTest extends WebBaseTestCase {
 
+	private static final Type LISTTYPE = new TypeReference<List<Map<String, Object>>>() {
+	}.getType();
+	private static final File DICTINARYFILE = FileUtil.getFile("src/test/java/hrds/b/biz/agent" +
+			"/objectcollect/dictionary");
 	private static String bodyString;
 	private static ActionResult ar;
 	//向object_collect表中初始化的数据条数
@@ -138,10 +139,10 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 				object_collect.setE_date(DateUtil.getSysDate());
 				object_collect.setDatabase_code(DataBaseCode.UTF_8.getCode());
 				object_collect.setRun_way(ExecuteWay.MingLingChuFa.getCode());
-				object_collect.setFile_path("/aaaa/ccc/ddd");
+				object_collect.setFile_path(DICTINARYFILE.getAbsolutePath());
 				object_collect.setIs_sendok(IsFlag.Fou.getCode());
 				object_collect.setAgent_id(AGENT_ID);
-				object_collect.setIs_dictionary(IsFlag.Fou.getCode());
+				object_collect.setIs_dictionary(IsFlag.Shi.getCode());
 				object_collect.setData_date(DateUtil.getSysDate());
 				object_collect.setFile_suffix("json");
 				assertThat("初始化数据成功", object_collect.add(db), is(1));
@@ -158,6 +159,16 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 				object_collect_task.setOdc_id(ODC_ID);
 				object_collect_task.setUpdatetype(UpdateType.DirectUpdate.getCode());
 				object_collect_task.setFirstline("aaa");
+				if (i == 0) {
+					object_collect_task.setFirstline("[{\"columns\":[{\"column_id\":\"0\",\"is_key\":\"1\"," +
+							"\"columnposition\":\"date\",\"column_name\":\"date\",\"is_solr\":\"1\"," +
+							"\"column_type\":\"decimal(38,18)\",\"is_operate\":\"1\",\"is_rowkey\":\"0\"," +
+							"\"is_hbase\":\"0\"}],\"handletype\":{\"insert\":\"\",\"update\":\"\"," +
+							"\"delete\":\"\"},\"updatetype\":\"0\",\"table_cn_name\":\"t_executedpersons\"," +
+							"\"table_name\":\"t_executedpersons\"}]");
+					object_collect_task.setEn_name("t_executedpersons");
+					object_collect_task.setZh_name("t_executedpersons");
+				}
 				assertThat("初始化数据成功", object_collect_task.add(db), is(1));
 			}
 			//6.造object_storage表数据，默认为10条,OBJ_STID为40000001---40000010
@@ -279,7 +290,6 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 	 */
 	@Test
 	public void addObjectCollectTest() {
-		File file = FileUtil.getFile("src/test/java/hrds/b/biz/agent/objectcollect/dictionary");
 		//1.添加一个正确的半结构化采集设置表
 		bodyString = new HttpClient()
 				.addData("object_collect_type", ObjectCollectType.HangCaiJi.getCode())
@@ -293,7 +303,7 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 				.addData("e_date", DateUtil.getSysDate())
 				.addData("database_code", DataBaseCode.UTF_8.getCode())
 				.addData("run_way", ExecuteWay.MingLingChuFa.getCode())
-				.addData("file_path", file.getAbsolutePath())
+				.addData("file_path", DICTINARYFILE.getAbsolutePath())
 				.addData("is_sendok", IsFlag.Fou.getCode())
 				.addData("agent_id", AGENT_ID)
 				.addData("is_dictionary", IsFlag.Fou.getCode())
@@ -312,7 +322,7 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 					+ Object_collect.TableName + " WHERE obj_collect_name = ?", "测试对象采集名称1112")
 					.orElseThrow(() -> new BusinessException("测试用例异常"));
 			assertThat("校验object_collect表数据量正确", collect.getFile_path()
-					, is(file.getAbsolutePath()));
+					, is(DICTINARYFILE.getAbsolutePath()));
 			assertThat("校验object_collect表数据量正确", collect.getObj_number()
 					, is("qqwwtt"));
 		}
@@ -393,7 +403,7 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 	public void updateObjectCollectTest() {
 		//1.更新一个正确的半结构化采集设置表
 		bodyString = new HttpClient()
-				.addData("odc_id", "1000001586")
+				.addData("odc_id", ODC_ID)
 				.addData("object_collect_type", ObjectCollectType.HangCaiJi.getCode())
 				.addData("obj_number", "hahahahxianshi")
 				.addData("obj_collect_name", "测试对象采集编号0")
@@ -405,11 +415,10 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 				.addData("e_date", DateUtil.getSysDate())
 				.addData("database_code", DataBaseCode.UTF_8.getCode())
 				.addData("run_way", ExecuteWay.MingLingChuFa.getCode())
-				.addData("file_path", "D:\\采集目录\\dhw")
+				.addData("file_path", DICTINARYFILE.getAbsolutePath())
 				.addData("is_sendok", IsFlag.Fou.getCode())
 				.addData("agent_id", AGENT_ID)
 				.addData("is_dictionary", IsFlag.Shi.getCode())
-				.addData("data_date", "20200301")
 				.addData("file_suffix", "json")
 				.post(getActionUrl("updateObjectCollect")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
@@ -702,11 +711,11 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 	 * 注：此方法没有写到四个及以上的测试用例是因为此方法只是一个查询方法，只有正确和错误两种情况
 	 */
 	@Test
-	public void searchObject_collect_structTest() {
+	public void searchObjectCollectStructTest() {
 		//1.测试一个正确的ocs_id查询数据
 		bodyString = new HttpClient()
 				.addData("ocs_id", OCS_ID)
-				.post(getActionUrl("searchObject_collect_struct")).getBodyString();
+				.post(getActionUrl("searchObjectCollectStruct")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
@@ -718,26 +727,23 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 		//2.测试使用一个错误的ocs_id查询数据
 		bodyString = new HttpClient()
 				.addData("ocs_id", 7826112L)
-				.post(getActionUrl("searchObject_collect_struct")).getBodyString();
+				.post(getActionUrl("searchObjectCollectStruct")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
 		assertThat(ar.getDataForResult().isEmpty(), is(true));
 	}
 
-	/**
-	 * deleteObject_collect_struct删除对象采集结构信息表测试用例
-	 * <p>
-	 * 1.测试一个正确的struct_id，删除对象采集结构信息表
-	 * 2.测试一个错误的struct_id，删除对象采集结构信息表
-	 * 注：此方法没有写到四个及以上的测试用例是因为此方法只是一个查询方法，只有正确和错误两种情况
-	 */
+	@Method(desc = "删除对象采集结构信息表测试用例",
+			logicStep = "1.测试一个正确的struct_id，删除对象采集结构信息表" +
+					"2.测试一个错误的struct_id，删除对象采集结构信息表" +
+					"注：此方法没有写到四个及以上的测试用例是因为此方法只是一个查询方法，只有正确和错误两种情况")
 	@Test
-	public void deleteObject_collect_structTest() {
+	public void deleteObjectCollectStructTest() {
 		//1.测试一个正确的struct_id，删除对象采集结构信息表
 		bodyString = new HttpClient()
 				.addData("struct_id", STRUCT_ID)
-				.post(getActionUrl("deleteObject_collect_struct")).getBodyString();
+				.post(getActionUrl("deleteObjectCollectStruct")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
@@ -752,7 +758,7 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 		//2.测试一个错误的struct_id，删除对象采集结构信息表
 		bodyString = new HttpClient()
 				.addData("struct_id", 7826112L)
-				.post(getActionUrl("deleteObject_collect_struct")).getBodyString();
+				.post(getActionUrl("deleteObjectCollectStruct")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(false));
@@ -901,31 +907,38 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 //		assertThat(ar.isSuccess(), is(false));
 	}
 
-	/**
-	 * searchObject_storage根据对象采集id查询对象采集任务存储设置测试用例
-	 * <p>
-	 * 1.测试一个正确的odc_id查询数据
-	 * 2.测试使用一个错误的odc_id查询数据
-	 * 注：此方法没有写到四个及以上的测试用例是因为此方法只是一个查询方法，只有正确和错误两种情况
-	 */
+	@Method(desc = "根据对象采集id查询对象采集任务存储设置测试用例",
+			logicStep = "1.测试一个正确的odc_id查询数据" +
+					"2.测试使用一个错误的odc_id查询数据" +
+					"此方法没有写到四个及以上的测试用例是因为此方法只是一个查询方法，只有正确和错误两种情况")
 	@Test
-	public void searchObject_storageTest() {
+	public void searchObjectStorageTest() {
 		//1.测试一个正确的odc_id查询数据
 		bodyString = new HttpClient()
 				.addData("odc_id", ODC_ID)
-				.post(getActionUrl("searchObject_storage")).getBodyString();
+				.post(getActionUrl("searchObjectStorage")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
 		//验证数据
 		assertThat(ar.getDataForResult().getRowCount(), is(Integer.parseInt(OBJECT_COLLECT_TASK_ROWS + "")));
-		assertThat(ar.getDataForResult().getString(0, "is_hbase"), is(IsFlag.Fou.getCode()));
-		assertThat(ar.getDataForResult().getString(0, "is_hdfs"), is(IsFlag.Shi.getCode()));
+		for (int i = 0; i < ar.getDataForResult().getRowCount(); i++) {
+			long ocs_id = ar.getDataForResult().getLong(i, "ocs_id");
+			if (ocs_id != OCS_ID && ocs_id != OCS_ID + 1 && ocs_id != OCS_ID + 2) {
+				assertThat(ar.getDataForResult().getString(i, "is_hbase"), is(IsFlag.Fou.getCode()));
+				assertThat(ar.getDataForResult().getString(i, "is_hdfs"), is(IsFlag.Shi.getCode()));
+				assertThat(ar.getDataForResult().getString(i, "is_solr"), is(IsFlag.Fou.getCode()));
+			} else {
+				assertThat(ar.getDataForResult().getString(i, "is_hbase"), is(""));
+				assertThat(ar.getDataForResult().getString(i, "is_hdfs"), is(""));
+				assertThat(ar.getDataForResult().getString(i, "is_solr"), is(""));
+			}
+		}
 
 		//2.测试使用一个错误的odc_id查询数据
 		bodyString = new HttpClient()
 				.addData("odc_id", 7826112L)
-				.post(getActionUrl("searchObject_storage")).getBodyString();
+				.post(getActionUrl("searchObjectStorage")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(false));
@@ -940,7 +953,7 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 	 * 4.更新对象采集存储设置表，is_hdfs格式不正确
 	 */
 	@Test
-	public void saveObject_storageTest() {
+	public void saveObjectStorageTest() {
 		//1.保存对象采集存储设置表，obj_stid不为空，走编辑逻辑，更新数据
 		JSONArray array = new JSONArray();
 		for (int i = 0; i < OBJECT_STORAGE_ROWS; i++) {
@@ -1050,35 +1063,89 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 //		assertThat(ar.isSuccess(), is(false));
 	}
 
-	@Method(desc = "", logicStep = "")
-	@Param(name = "", desc = "", range = "")
+	@Method(desc = "获取当前表的码表信息", logicStep = "1.正确的数据访问1，数据有效" +
+			"2.错误的数据访问1，ocs_id不存在" +
+			"此方法没有写到四个及以上的测试用例是因为此方法只是一个查询方法，只有正确和错误两种情况")
 	@Test
-	public void searchOperateCodeTableInfo() {
+	public void searchObjectHandleType() {
+		// 1.正确的数据访问1，数据有效
 		bodyString = new HttpClient()
 				.addData("ocs_id", OCS_ID)
-				.post(getActionUrl("searchOperateCodeTableInfo")).getBodyString();
+				.post(getActionUrl("searchObjectHandleType")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
+		List<Object_handle_type> objectHandleTypes = ar.getDataForEntityList(Object_handle_type.class);
+		assertThat(objectHandleTypes.size(), is(3));
+		for (int i = 0; i < objectHandleTypes.size(); i++) {
+			assertThat(objectHandleTypes.get(i).getHandle_type(), is(i + ""));
+			assertThat(objectHandleTypes.get(i).getHandle_value(), is(OperationType.ofValueByCode(i + "")));
+			assertThat(objectHandleTypes.get(i).getObject_handle_id(), is(OBJECT_HANDLE_ID + i));
+			assertThat(objectHandleTypes.get(i).getOcs_id(), is(OCS_ID));
+		}
+		// 2.错误的数据访问1，ocs_id不存在
+		bodyString = new HttpClient()
+				.addData("ocs_id", "111")
+				.post(getActionUrl("searchObjectHandleType")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
+		assertThat(ar.isSuccess(), is(true));
+		assertThat(ar.getData().toString(), is("[]"));
 	}
 
+	@Method(desc = "选择文件路径", logicStep = "1.正确的数据访问1，文件路径为空" +
+			"2.正确的数据访问2，文件路径不为空" +
+			"3.错误的数据访问1，agent_id不存在" +
+			"4.错误的数据访问2，file_path不存在")
 	@Test
-	public void selectPath() {
+	public void selectFilePath() {
+		// 1.正确的数据访问1，文件路径为空
 		bodyString = new HttpClient()
 				.addData("agent_id", AGENT_ID)
-				.addData("file_path", "D:\\采集目录\\dhw")
-				.post(getActionUrl("selectPath")).getBodyString();
+				.post(getActionUrl("selectFilePath")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
-		String s = ar.getData().toString();
+		assertThat(ar.getData().toString(), notNullValue());
+		// 2.正确的数据访问2，文件路径不为空
+		bodyString = new HttpClient()
+				.addData("agent_id", AGENT_ID)
+				.addData("file_path", DICTINARYFILE.getAbsolutePath())
+				.post(getActionUrl("selectFilePath")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
+		assertThat(ar.isSuccess(), is(true));
+		assertThat(ar.getData().toString(), notNullValue());
+		// 3.错误的数据访问1，agent_id不存在
+		bodyString = new HttpClient()
+				.addData("agent_id", "111")
+				.post(getActionUrl("selectFilePath")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
+		assertThat(ar.isSuccess(), is(false));
+		// 4.错误的数据访问2，file_path不存在
+		bodyString = new HttpClient()
+				.addData("agent_id", AGENT_ID)
+				.addData("file_path", "/aaa")
+				.post(getActionUrl("selectFilePath")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
+		assertThat(ar.isSuccess(), is(true));
+		assertThat(ar.getData(), is("[]"));
 	}
 
+	@Method(desc = "查看表", logicStep = "1.正确的数据访问1，数据都有效，数据字典不存在" +
+			"2.正确的数据访问2，数据都有效，数据字典存在" +
+			"3.错误的数据访问1，agent_id不存在" +
+			"4.错误的数据访问2，file_path不存在" +
+			"5.错误的数据访问3，is_dictionary不存在" +
+			"6.错误的数据访问5，当是否存在数据字典是否的时候，数据日期为空")
 	@Test
 	public void viewTable() {
+		// 1.正确的数据访问1，数据都有效，数据字典不存在
 		bodyString = new HttpClient()
 				.addData("agent_id", AGENT_ID)
-				.addData("file_path", "D:\\采集目录\\dhw")
+				.addData("file_path", DICTINARYFILE.getAbsolutePath())
 				.addData("is_dictionary", IsFlag.Fou.getCode())
 				.addData("data_date", "20200301")
 				.addData("file_suffix", "json")
@@ -1086,6 +1153,64 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
+		Result dataForResult = ar.getDataForResult();
+		assertThat(dataForResult.getRowCount(), is(1));
+		assertThat(dataForResult.getString(0, "table_name"), is("dd_data"));
+		assertThat(dataForResult.getString(0, "table_ch_name"), is("dd_data"));
+		// 2.正确的数据访问2，数据都有效，数据字典存在
+		bodyString = new HttpClient()
+				.addData("agent_id", AGENT_ID)
+				.addData("file_path", DICTINARYFILE.getAbsolutePath())
+				.addData("is_dictionary", IsFlag.Shi.getCode())
+				.addData("file_suffix", "json")
+				.post(getActionUrl("viewTable")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
+		assertThat(ar.isSuccess(), is(true));
+		dataForResult = ar.getDataForResult();
+		assertThat(dataForResult.getRowCount(), is(1));
+		assertThat(dataForResult.getString(0, "table_name"), is("t_executedpersons"));
+		assertThat(dataForResult.getString(0, "table_ch_name"), is("t_executedpersons"));
+		// 3.错误的数据访问1，agent_id不存在
+		bodyString = new HttpClient()
+				.addData("agent_id", "111")
+				.addData("file_path", DICTINARYFILE.getAbsolutePath())
+				.addData("is_dictionary", IsFlag.Shi.getCode())
+				.addData("file_suffix", "json")
+				.post(getActionUrl("viewTable")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
+		assertThat(ar.isSuccess(), is(false));
+		// 4.错误的数据访问2，file_path不存在
+		bodyString = new HttpClient()
+				.addData("agent_id", AGENT_ID)
+				.addData("file_path", "/aaa")
+				.addData("is_dictionary", IsFlag.Shi.getCode())
+				.addData("file_suffix", "json")
+				.post(getActionUrl("viewTable")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
+		assertThat(ar.isSuccess(), is(false));
+		// 5.错误的数据访问3，is_dictionary不存在
+		bodyString = new HttpClient()
+				.addData("agent_id", AGENT_ID)
+				.addData("file_path", DICTINARYFILE.getAbsolutePath())
+				.addData("is_dictionary", "2")
+				.addData("file_suffix", "json")
+				.post(getActionUrl("viewTable")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
+		assertThat(ar.isSuccess(), is(false));
+		// 6.错误的数据访问5，当是否存在数据字典是否的时候，数据日期为空
+		bodyString = new HttpClient()
+				.addData("agent_id", AGENT_ID)
+				.addData("file_path", DICTINARYFILE.getAbsolutePath())
+				.addData("is_dictionary", IsFlag.Fou.getCode())
+				.addData("file_suffix", "json")
+				.post(getActionUrl("viewTable")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
+		assertThat(ar.isSuccess(), is(false));
 	}
 
 	/**
@@ -1112,13 +1237,10 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 			SqlOperator.execute(db, "DELETE FROM " + Agent_down_info.TableName + " WHERE remark = ?"
 					, "测试用例清除数据专用列");
 			//4.删除测试用例造的Object_collect表数据，默认为2条,ODC_ID为20000001---20000002
-			for (int i = 0; i < OBJECT_COLLECT_ROWS; i++) {
-				SqlOperator.execute(db, "DELETE FROM " + Object_collect.TableName + " WHERE odc_id = ?"
-						, ODC_ID + i);
-				//5.删除测试用例造的object_collect_task表数据，默认为10条,OCS_ID为30000001---30000010
-				SqlOperator.execute(db, "DELETE FROM " + Object_collect_task.TableName
-						+ " WHERE odc_id = ?", ODC_ID + i);
-			}
+			SqlOperator.execute(db, "DELETE FROM " + Object_collect.TableName + " WHERE agent_id = ?"
+					, AGENT_ID);
+			SqlOperator.execute(db, "DELETE FROM " + Object_collect_task.TableName
+					+ " WHERE agent_id = ?", AGENT_ID);
 			//6.删除测试用例造的object_storage表数据，默认为10条,OBJ_STID为40000001---40000010
 			SqlOperator.execute(db, "DELETE FROM " + Object_storage.TableName
 					+ " WHERE remark = ?", "zxz测试用例清除表object_storage专用");
