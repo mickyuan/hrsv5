@@ -28,6 +28,7 @@ public class DbmDataQuery {
             map.put("id", dbmSortInfoRs.getString(i, "sort_id"));
             map.put("label", dbmSortInfoRs.getString(i, "sort_name"));
             map.put("parent_id", dbmSortInfoRs.getString(i, "parent_id"));
+            map.put("description", dbmSortInfoRs.getString(i, "sort_name"));
             dataList.add(map);
         }
         return dataList;
