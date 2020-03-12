@@ -22,6 +22,7 @@ public class DataConvertedNode {
             node.id = (String) dataRecord.get("id");
             node.label = (String) dataRecord.get("label");
             node.parent_id = (String) dataRecord.get("parent_id");
+            node.description = (String) dataRecord.get("description");
             nodeMap.put(node.id, node);
         });
         // 构造无序的多叉树

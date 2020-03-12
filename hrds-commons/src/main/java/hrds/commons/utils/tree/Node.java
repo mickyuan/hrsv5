@@ -18,6 +18,10 @@ public class Node {
      */
     String parent_id;
     /**
+     * 节点描述
+     */
+    String description;
+    /**
      * 孩子节点列表
      */
     private Children children = new Children();
@@ -26,7 +30,8 @@ public class Node {
     public String toString() {
         String str = "{"
                 + "id : '" + id + "'"
-                + ", label : '" + label + "'";
+                + ", label : '" + label + "'"
+                + ", description : '" + description + "'";
         if (children != null && children.getSize() != 0) {
             str += ", children : " + children.toString();
         } else {
