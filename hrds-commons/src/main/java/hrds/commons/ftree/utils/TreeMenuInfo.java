@@ -1,4 +1,4 @@
-package hrds.commons.FTree.utils;
+package hrds.commons.ftree.utils;
 
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
@@ -7,8 +7,8 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
 import hrds.commons.codes.DataSourceType;
 import hrds.commons.utils.User;
-import hrds.commons.FTree.bean.TreeDataInfo;
-import hrds.commons.FTree.commons.*;
+import hrds.commons.ftree.bean.TreeDataInfo;
+import hrds.commons.ftree.commons.*;
 
 import java.util.HashMap;
 import java.util.List;

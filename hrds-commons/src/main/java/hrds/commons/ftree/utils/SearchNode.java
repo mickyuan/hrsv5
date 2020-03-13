@@ -1,12 +1,12 @@
-package hrds.commons.FTree.utils;
+package hrds.commons.ftree.utils;
 
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import hrds.commons.utils.User;
-import hrds.commons.FTree.bean.TreeDataInfo;
-import hrds.commons.FTree.commons.DCLDataQuery;
+import hrds.commons.ftree.bean.TreeDataInfo;
+import hrds.commons.ftree.commons.DCLDataQuery;
 
 import java.util.HashMap;
 import java.util.List;
