@@ -88,7 +88,7 @@ public class WebSqlQueryAction extends BaseAction {
                                                String isFileCo, String tree_menu_from, String isPublicLayer,
                                                String isRootNode) {
         //1.声明获取到 zTreeUtil 的对象
-        ForegroundTreeUtil treeUtil = new ForegroundTreeUtil();
+        ForegroundTreeUtil foregroundTreeUtil = new ForegroundTreeUtil();
         //2.设置树实体
         TreeDataInfo treeDataInfo = new TreeDataInfo();
         treeDataInfo.setAgent_layer(agent_layer);
@@ -110,7 +110,7 @@ public class WebSqlQueryAction extends BaseAction {
         treeDataInfo.setIsShTable(isRootNode);
         //3.调用ZTreeUtil的getTreeDataInfo获取树数据信息
         Map<String, Object> treeSourcesMap = new HashMap<>();
-        treeSourcesMap.put("tree_sources", treeUtil.getTreeDataInfo(getUser(), treeDataInfo));
+        treeSourcesMap.put("tree_sources", foregroundTreeUtil.getTreeDataInfo(getUser(), treeDataInfo));
         return treeSourcesMap;
     }
 
@@ -126,7 +126,7 @@ public class WebSqlQueryAction extends BaseAction {
     public Map<String, Object> getTreeNodeSearchInfo(String tree_menu_from, String tableName, String isFileCo,
                                                      String isRootNode) {
         //1.声明获取到 treeUtil 的对象
-        ForegroundTreeUtil treeUtil = new ForegroundTreeUtil();
+        ForegroundTreeUtil foregroundTreeUtil = new ForegroundTreeUtil();
         //2.设置树实体
         TreeDataInfo treeDataInfo = new TreeDataInfo();
         treeDataInfo.setPage_from(tree_menu_from);
@@ -135,7 +135,7 @@ public class WebSqlQueryAction extends BaseAction {
         treeDataInfo.setIsShTable(isRootNode);
         //3.调用ZTreeUtil的getTreeNodeSearchInfo获取检索的数据信息
         Map<String, Object> treeNodeSearchMap = new HashMap<>();
-        treeNodeSearchMap.put("search_nodes", treeUtil.getTreeNodeSearchInfo(getUser(), treeDataInfo));
+        treeNodeSearchMap.put("search_nodes", foregroundTreeUtil.getTreeNodeSearchInfo(getUser(), treeDataInfo));
         return treeNodeSearchMap;
     }
 }
