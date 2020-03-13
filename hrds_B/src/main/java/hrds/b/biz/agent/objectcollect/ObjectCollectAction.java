@@ -380,11 +380,13 @@ public class ObjectCollectAction extends BaseAction {
 					"5.返回半结构化采集列结构信息")
 	@Param(name = "ocs_id", desc = "对象采集任务编号", range = "新增对象采集任务时生成")
 	@Return(desc = "返回半结构化采集列结构信息", range = "无限制")
-	public Map<String, Object> searchCollectColumnStructInfo(long ocs_id) {
+	public Map<String, Object> searchCollectColumnStruct(long ocs_id) {
 		// 1.数据可访问权限处理方式：该方法没有访问权限限制
 		// 2.有数据字典，查询对象采集结构信息
-		Map<String, Object> objColStructMap = Dbo.queryOneObject("select * from "
+		List<Map<String, Object>> objectStructList = Dbo.queryList("select * from "
 				+ Object_collect_struct.TableName + " where ocs_id=? order by col_seq", ocs_id);
+		Map<String, Object> objColStructMap = new HashMap<String, Object>();
+		objColStructMap.put("objectStructList", objectStructList);
 		// 3.没有数据字典查询第一行数据
 		List<Object> firstLineList = getFirstLineInfo(ocs_id);
 		String isDictionary = IsFlag.Shi.getCode();
