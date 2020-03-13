@@ -939,7 +939,7 @@ public class ObjectCollectAction extends BaseAction {
 		//数据可访问权限处理方式：该表没有对应的用户访问权限限制
 		//1.根据对象采集id查询对象采集对应信息表返回到前端
 		return Dbo.queryResult("SELECT * FROM " + Object_collect_task.TableName
-				+ " WHERE odc_id = ? agent_id = ?", odc_id, agent_id);
+				+ " WHERE odc_id = ? and agent_id = ?", odc_id, agent_id);
 	}
 
 	@Method(desc = "对象采集任务编号删除对象采集对应信息表",
@@ -974,17 +974,15 @@ public class ObjectCollectAction extends BaseAction {
 					"2.获取对象采集对应信息表list进行遍历" +
 					"3.根据对象采集对应信息表id判断是新增还是编辑" +
 					"4.根据en_name查询对象采集对应信息表的英文名称是否重复")
-	@Param(name = "objectCollectTask", desc = "多条对象采集对应信息表的JSONArray格式的字符串，" +
+	@Param(name = "object_collect_task_array", desc = "多条对象采集对应信息表的JSONArray格式的字符串，" +
 			"其中object_collect_task表不能为空的列所对应的值不能为空", range = "不能为空")
-	@Param(name = "odc_id", desc = "对象采集表主键ID", range = "新增对象采集时生成")
-	@Param(name = "agent_id", desc = "agent信息表主键ID", range = "新增agent时生成")
-	public void saveObjectCollectTaskInfo(long odc_id, long agent_id, String objectCollectTask) {
+	public void saveObjectCollectTask(String object_collect_task_array) {
 		//数据可访问权限处理方式：该表没有对应的用户访问权限限制
 		//1.获取json数组转成对象采集对应信息表的集合
 		Type type = new TypeReference<List<Object_collect_task>>() {
 		}.getType();
 		// 2.解析json为对象采集对应信息
-		List<Object_collect_task> objectCollectTaskList = JsonUtil.toObject(objectCollectTask, type);
+		List<Object_collect_task> objectCollectTaskList = JsonUtil.toObject(object_collect_task_array, type);
 		//2.获取对象采集对应信息表list进行遍历
 		for (Object_collect_task object_collect_task : objectCollectTaskList) {
 			//TODO 使用公共方法校验数据的正确性
@@ -1000,8 +998,6 @@ public class ObjectCollectAction extends BaseAction {
 					throw new BusinessException("对象采集对应信息表的英文名称重复");
 				}
 				object_collect_task.setOcs_id(PrimayKeyGener.getNextId());
-				object_collect_task.setOdc_id(odc_id);
-				object_collect_task.setAgent_id(agent_id);
 				object_collect_task.add(Dbo.db());
 			} else {
 				//更新
@@ -1025,7 +1021,7 @@ public class ObjectCollectAction extends BaseAction {
 		//数据可访问权限处理方式：该表没有对应的用户访问权限限制
 		//1.查询对应对象采集结构信息表，返回前端
 		return Dbo.queryResult("SELECT * FROM " + Object_collect_struct.TableName
-				+ "order by col_seq", ocs_id);
+				+ " where ocs_id=? order by col_seq", ocs_id);
 	}
 
 	@Method(desc = "根据结构信息id删除对象采集结构信息表",
@@ -1046,14 +1042,14 @@ public class ObjectCollectAction extends BaseAction {
 					"3.根据对象采集结构信息id判断是新增还是编辑" +
 					"4.判断同一个对象采集任务下，对象采集结构信息表的coll_name有没有重复" +
 					"5.新增或更新数据库")
-	@Param(name = "objectCollectStruct", desc = "多条对象采集对应结构信息表的JSONArray格式的字符串，" +
+	@Param(name = "object_collect_struct_array", desc = "多条对象采集对应结构信息表的JSONArray格式的字符串，" +
 			"其中object_collect_struct表不能为空的列所对应的值不能为空", range = "不可为空")
-	public void saveObjectCollectStruct(String objectCollectStruct) {
+	public void saveObjectCollectStruct(String object_collect_struct_array) {
 		//数据可访问权限处理方式：该表没有对应的用户访问权限限制
 		//1.获取json数组转成对象采集结构信息表的集合
 		Type type = new TypeReference<List<Object_collect_struct>>() {
 		}.getType();
-		List<Object_collect_struct> objectCollectStructList = JsonUtil.toObject(objectCollectStruct, type);
+		List<Object_collect_struct> objectCollectStructList = JsonUtil.toObject(object_collect_struct_array, type);
 		//2.获取对象采集结构信息list进行遍历
 		for (Object_collect_struct object_collect_struct : objectCollectStructList) {
 			//TODO 应该使用一个公共的校验类进行校验
@@ -1075,7 +1071,7 @@ public class ObjectCollectAction extends BaseAction {
 				object_collect_struct.add(Dbo.db());
 			} else {
 				long count = Dbo.queryNumber("SELECT count(1) count FROM "
-								+ Object_collect_struct.TableName + " WHERE coll_name = ? AND ocs_id = ? " +
+								+ Object_collect_struct.TableName + " WHERE column_name = ? AND ocs_id = ? " +
 								" AND struct_id != ?", object_collect_struct.getColumn_name()
 						, object_collect_struct.getOcs_id(), object_collect_struct.getStruct_id())
 						.orElseThrow(() -> new BusinessException("有且只有一个返回值"));
@@ -1095,7 +1091,7 @@ public class ObjectCollectAction extends BaseAction {
 	public Result searchObjectStorage(long odc_id) {
 		//数据可访问权限处理方式：该表没有对应的用户访问权限限制
 		//1.根据对象采集id，查询对象采集任务及每个任务对象的存储设置
-		Result result = Dbo.queryResult("SELECT t1.*,t2.is_hbase,t2.is_hdfs,t2.obj_stid,t2.is_solr  FROM "
+		Result result = Dbo.queryResult("SELECT t1.*,t2.is_hbase,t2.is_hdfs,t2.obj_stid,t2.is_solr FROM "
 				+ Object_collect_task.TableName + " t1 left join " + Object_storage.TableName +
 				" t2 on t1.ocs_id = t2.ocs_id WHERE odc_id = ?", odc_id);
 		if (result.isEmpty()) {

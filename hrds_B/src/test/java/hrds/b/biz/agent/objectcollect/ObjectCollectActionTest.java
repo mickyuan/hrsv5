@@ -37,8 +37,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
  */
 public class ObjectCollectActionTest extends WebBaseTestCase {
 
-	private static final Type LISTTYPE = new TypeReference<List<Map<String, Object>>>() {
-	}.getType();
 	private static final File DICTINARYFILE = FileUtil.getFile("src/test/java/hrds/b/biz/agent" +
 			"/objectcollect/dictionary");
 	private static String bodyString;
@@ -159,16 +157,6 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 				object_collect_task.setOdc_id(ODC_ID);
 				object_collect_task.setUpdatetype(UpdateType.DirectUpdate.getCode());
 				object_collect_task.setFirstline("aaa");
-				if (i == 0) {
-					object_collect_task.setFirstline("[{\"columns\":[{\"column_id\":\"0\",\"is_key\":\"1\"," +
-							"\"columnposition\":\"date\",\"column_name\":\"date\",\"is_solr\":\"1\"," +
-							"\"column_type\":\"decimal(38,18)\",\"is_operate\":\"1\",\"is_rowkey\":\"0\"," +
-							"\"is_hbase\":\"0\"}],\"handletype\":{\"insert\":\"\",\"update\":\"\"," +
-							"\"delete\":\"\"},\"updatetype\":\"0\",\"table_cn_name\":\"t_executedpersons\"," +
-							"\"table_name\":\"t_executedpersons\"}]");
-					object_collect_task.setEn_name("t_executedpersons");
-					object_collect_task.setZh_name("t_executedpersons");
-				}
 				assertThat("初始化数据成功", object_collect_task.add(db), is(1));
 			}
 			//6.造object_storage表数据，默认为10条,OBJ_STID为40000001---40000010
@@ -306,7 +294,7 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 				.addData("file_path", DICTINARYFILE.getAbsolutePath())
 				.addData("is_sendok", IsFlag.Fou.getCode())
 				.addData("agent_id", AGENT_ID)
-				.addData("is_dictionary", IsFlag.Fou.getCode())
+				.addData("is_dictionary", IsFlag.Shi.getCode())
 				.addData("data_date", "20200301")
 				.addData("file_suffix", "json")
 				.post(getActionUrl("addObjectCollect")).getBodyString();
@@ -419,6 +407,7 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 				.addData("is_sendok", IsFlag.Fou.getCode())
 				.addData("agent_id", AGENT_ID)
 				.addData("is_dictionary", IsFlag.Shi.getCode())
+//				.addData("data_date","20200301")
 				.addData("file_suffix", "json")
 				.post(getActionUrl("updateObjectCollect")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
@@ -433,7 +422,7 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 					+ Object_collect.TableName + " WHERE obj_collect_name = ?", "测试对象采集编号0")
 					.orElseThrow(() -> new BusinessException("测试用例异常"));
 			assertThat("校验object_collect表数据量正确", collect.getFile_path()
-					, is("/aaaa/ccc/ddd"));
+					, is(DICTINARYFILE.getAbsolutePath()));
 			assertThat("校验object_collect表数据量正确", collect.getObj_number()
 					, is("hahahahxianshi"));
 		}
@@ -517,17 +506,40 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 		//1.使用正确的odc_id查询OBJECT_COLLECT_TASK表
 		bodyString = new HttpClient()
 				.addData("odc_id", ODC_ID)
+				.addData("agent_id", AGENT_ID)
 				.post(getActionUrl("searchObjectCollectTask")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
 		assertThat(ar.getDataForResult().getRowCount(), is(Integer.parseInt(OBJECT_COLLECT_TASK_ROWS + "")));
-		assertThat(ar.getDataForResult().getString(0, "database_code")
-				, is(DataBaseCode.UTF_8.getCode()));
+		for (int i = 0; i < OBJECT_COLLECT_TASK_ROWS; i++) {
+			assertThat(ar.getDataForResult().getString(i, "updatetype")
+					, is(IsFlag.Fou.getCode()));
+			assertThat(ar.getDataForResult().getString(i, "database_code")
+					, is(DataBaseCode.UTF_8.getCode()));
+			assertThat(ar.getDataForResult().getString(i, "collect_data_type")
+					, is(CollectDataType.JSON.getCode()));
+			assertThat(ar.getDataForResult().getString(i, "firstline")
+					, is("aaa"));
+			assertThat(ar.getDataForResult().getString(i, "en_name")
+					, is("aaa" + i));
+			assertThat(ar.getDataForResult().getString(i, "zh_name")
+					, is("测试aaa" + i));
+		}
 
 		//2.使用错误的odc_id查询OBJECT_COLLECT_TASK表
 		bodyString = new HttpClient()
 				.addData("odc_id", "27266381")
+				.addData("agent_id", AGENT_ID)
+				.post(getActionUrl("searchObjectCollectTask")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
+		assertThat(ar.isSuccess(), is(true));
+		assertThat(ar.getDataForResult().isEmpty(), is(true));
+		//3.使用错误的agent_id查询OBJECT_COLLECT_TASK表
+		bodyString = new HttpClient()
+				.addData("odc_id", ODC_ID)
+				.addData("agent_id", "27266381")
 				.post(getActionUrl("searchObjectCollectTask")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败！"));
@@ -640,6 +652,8 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 			object.put("odc_id", ODC_ID);
 			object.put("database_code", DataBaseCode.UTF_8.getCode());
 			object.put("agent_id", AGENT_ID);
+			object.put("updatetype", UpdateType.DirectUpdate.getCode());
+			object.put("firstline", "bbb");
 			array.add(object);
 		}
 		bodyString = new HttpClient()
@@ -721,8 +735,26 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 		assertThat(ar.isSuccess(), is(true));
 		//验证数据
 		assertThat(ar.getDataForResult().getRowCount(), is(Integer.parseInt(OBJECT_COLLECT_STRUCT_ROWS + "")));
-		assertThat(ar.getDataForResult().getString(0, "struct_type")
+		assertThat(ar.getDataForResult().getString(0, "column_type")
 				, is(ObjectDataType.ZiFuChuan.getCode()));
+		assertThat(ar.getDataForResult().getLong(0, "col_seq")
+				, is(1L));
+		assertThat(ar.getDataForResult().getString(0, "is_key")
+				, is(IsFlag.Fou.getCode()));
+		assertThat(ar.getDataForResult().getString(0, "is_hbase")
+				, is(IsFlag.Fou.getCode()));
+		assertThat(ar.getDataForResult().getString(0, "is_rowkey")
+				, is(IsFlag.Fou.getCode()));
+		assertThat(ar.getDataForResult().getString(0, "is_solr")
+				, is(IsFlag.Fou.getCode()));
+		assertThat(ar.getDataForResult().getString(0, "columnposition")
+				, is("columns.testcol0"));
+		assertThat(ar.getDataForResult().getString(0, "is_operate")
+				, is(IsFlag.Fou.getCode()));
+		assertThat(ar.getDataForResult().getString(0, "is_solr")
+				, is(IsFlag.Fou.getCode()));
+		assertThat(ar.getDataForResult().getString(0, "data_desc")
+				, is("测试对象中文描述0"));
 
 		//2.测试使用一个错误的ocs_id查询数据
 		bodyString = new HttpClient()
@@ -775,22 +807,29 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 	 * 5.保存对象采集对应结构信息表，en_name格式不正确
 	 */
 	@Test
-	public void saveObject_collect_structTest() {
+	public void saveObjectCollectStructTest() {
 		//1.保存对象采集对应结构信息表，ocs_id不为空，走编辑逻辑，更新数据
 		JSONArray array = new JSONArray();
 		for (int i = 0; i < OBJECT_COLLECT_STRUCT_ROWS; i++) {
 			JSONObject object = new JSONObject();
 			object.put("struct_id", STRUCT_ID + i);
-			object.put("coll_name", "aaaTestzzuuiqyqiw" + i);
+			object.put("column_name", "aaaTestzzuuiqyqiw" + i);
 			object.put("remark", "测试用例使用" + i);
 			object.put("ocs_id", OCS_ID);
 			object.put("struct_type", ObjectDataType.ZiFuChuan.getCode());
-			object.put("data_desc", "对象采集对应结构信息表coll_name描述" + i);
+			object.put("column_type", "string");
+			object.put("is_hbase", IsFlag.Fou.getCode());
+			object.put("is_rowkey", IsFlag.Fou.getCode());
+			object.put("is_solr", IsFlag.Fou.getCode());
+			object.put("is_key", IsFlag.Fou.getCode());
+			object.put("is_operate", IsFlag.Fou.getCode());
+			object.put("col_seq", i + 1);
+			object.put("columnposition", "aaaTestzzuuiqyqiw" + i);
 			array.add(object);
 		}
 		bodyString = new HttpClient()
 				.addData("object_collect_struct_array", array.toJSONString())
-				.post(getActionUrl("saveObject_collect_struct")).getBodyString();
+				.post(getActionUrl("saveObjectCollectStruct")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
@@ -800,26 +839,46 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 					new BusinessException("查询得到的数据必须有且只有一条"));
 			assertThat("校验数据量正确", optionalLong, is(OBJECT_COLLECT_STRUCT_ROWS));
 			Result result = SqlOperator.queryResult(db, "select * from " +
-							Object_collect_struct.TableName + " where coll_name = ? "
+							Object_collect_struct.TableName + " where column_name = ? "
 					, "aaaTestzzuuiqyqiw1");
 			assertThat("校验Object_collect_task表数据正确", result.getString(0
+					, "column_type"), is("string"));
+			assertThat("校验Object_collect_task表数据正确", result.getString(0
 					, "remark"), is("测试用例使用1"));
+			assertThat("校验Object_collect_task表数据正确", result.getString(0
+					, "is_hbase"), is(IsFlag.Fou.getCode()));
+			assertThat("校验Object_collect_task表数据正确", result.getString(0
+					, "is_rowkey"), is(IsFlag.Fou.getCode()));
+			assertThat("校验Object_collect_task表数据正确", result.getString(0
+					, "is_solr"), is(IsFlag.Fou.getCode()));
+			assertThat("校验Object_collect_task表数据正确", result.getString(0
+					, "is_operate"), is(IsFlag.Fou.getCode()));
+			assertThat("校验Object_collect_task表数据正确", result.getString(0
+					, "is_key"), is(IsFlag.Fou.getCode()));
+			assertThat("校验Object_collect_task表数据正确", result.getString(0
+					, "columnposition"), is("aaaTestzzuuiqyqiw1"));
 		}
 
 		//2.保存对象采集对应结构信息表，ocs_id为空，走新增逻辑，插入数据
 		array.clear();
 		for (int i = 20; i < OBJECT_COLLECT_STRUCT_ROWS + 20; i++) {
 			JSONObject object = new JSONObject();
-			object.put("coll_name", "gggggyyyyyyyytttr88792120" + i);
-			object.put("remark", "测试用例使用");
+			object.put("column_name", "gggggyyyyyyyytttr88792120" + i);
+			object.put("remark", "测试用例使用" + i);
 			object.put("ocs_id", OCS_ID);
-			object.put("struct_type", ObjectDataType.ZiFuChuan.getCode());
-			object.put("data_desc", "对象采集对应结构信息表coll_name描述" + i);
+			object.put("is_hbase", IsFlag.Fou.getCode());
+			object.put("is_rowkey", IsFlag.Fou.getCode());
+			object.put("is_solr", IsFlag.Fou.getCode());
+			object.put("is_key", IsFlag.Fou.getCode());
+			object.put("is_operate", IsFlag.Fou.getCode());
+			object.put("col_seq", i + 1);
+			object.put("columnposition", "aaaTestzzuuiqyqiw" + i);
+			object.put("columntype", "string");
 			array.add(object);
 		}
 		bodyString = new HttpClient()
 				.addData("object_collect_struct_array", array.toJSONString())
-				.post(getActionUrl("saveObject_collect_struct")).getBodyString();
+				.post(getActionUrl("saveObjectCollectStruct")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
@@ -829,12 +888,26 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 					new BusinessException("查询得到的数据必须有且只有一条"));
 			assertThat("校验数据量正确", optionalLong, is(OBJECT_COLLECT_STRUCT_ROWS * 2));
 			Result result = SqlOperator.queryResult(db, "select * from " +
-							Object_collect_struct.TableName + " where coll_name = ? "
+							Object_collect_struct.TableName + " where column_name = ? "
 					, "gggggyyyyyyyytttr8879212020");
 			assertThat("校验Object_collect_task表数据正确", result.getLong(0
 					, "ocs_id"), is(OCS_ID));
 			assertThat("校验Object_collect_task表数据正确", result.getString(0
-					, "struct_type"), is(ObjectDataType.ZiFuChuan.getCode()));
+					, "column_type"), is("string"));
+			assertThat("校验Object_collect_task表数据正确", result.getString(0
+					, "remark"), is("测试用例使用20"));
+			assertThat("校验Object_collect_task表数据正确", result.getString(0
+					, "is_hbase"), is(IsFlag.Fou.getCode()));
+			assertThat("校验Object_collect_task表数据正确", result.getString(0
+					, "is_rowkey"), is(IsFlag.Fou.getCode()));
+			assertThat("校验Object_collect_task表数据正确", result.getString(0
+					, "is_solr"), is(IsFlag.Fou.getCode()));
+			assertThat("校验Object_collect_task表数据正确", result.getString(0
+					, "is_operate"), is(IsFlag.Fou.getCode()));
+			assertThat("校验Object_collect_task表数据正确", result.getString(0
+					, "is_key"), is(IsFlag.Fou.getCode()));
+			assertThat("校验Object_collect_task表数据正确", result.getString(0
+					, "columnposition"), is("aaaTestzzuuiqyqiw20"));
 		}
 
 		//3.保存对象采集对应结构信息表，struct_id不为空，同一个struct_id,en_name名称重复,更新没问题
@@ -842,16 +915,23 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 		for (int i = 0; i < OBJECT_COLLECT_STRUCT_ROWS; i++) {
 			JSONObject object = new JSONObject();
 			object.put("struct_id", STRUCT_ID + i);
-			object.put("coll_name", "aaaTestzzuuiqyqiw" + i);
-			object.put("remark", "测试用例使用");
+			object.put("column_name", "aaaTestzzuuiqyqiw" + i);
+			object.put("remark", "测试用例使用" + i);
 			object.put("ocs_id", OCS_ID);
-			object.put("struct_type", ObjectDataType.ShuZu.getCode());
-			object.put("data_desc", "对象采集对应结构信息表coll_name描述" + i);
+			object.put("data_desc", "对象采集对应结构信息表column_name描述" + i);
+			object.put("is_hbase", IsFlag.Fou.getCode());
+			object.put("is_rowkey", IsFlag.Shi.getCode());
+			object.put("is_solr", IsFlag.Fou.getCode());
+			object.put("is_key", IsFlag.Shi.getCode());
+			object.put("is_operate", IsFlag.Fou.getCode());
+			object.put("col_seq", i + 1);
+			object.put("columnposition", "aaaTestzzuuiqyqiw" + i);
+			object.put("columntype", "string");
 			array.add(object);
 		}
 		bodyString = new HttpClient()
 				.addData("object_collect_struct_array", array.toJSONString())
-				.post(getActionUrl("saveObject_collect_struct")).getBodyString();
+				.post(getActionUrl("saveObjectCollectStruct")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
@@ -861,28 +941,48 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 					new BusinessException("查询得到的数据必须有且只有一条"));
 			assertThat("校验数据量正确", optionalLong, is(OBJECT_COLLECT_STRUCT_ROWS * 2));
 			Result result = SqlOperator.queryResult(db, "select * from " +
-							Object_collect_struct.TableName + " where coll_name = ? "
-					, "aaaTestzzuuiqyqiw1");
+							Object_collect_struct.TableName + " where column_name = ? "
+					, "aaaTestzzuuiqyqiw6");
 			assertThat("校验Object_collect_task表数据正确", result.getLong(0
 					, "ocs_id"), is(OCS_ID));
 			assertThat("校验Object_collect_task表数据正确", result.getString(0
-					, "struct_type"), is(ObjectDataType.ShuZu.getCode()));
+					, "column_type"), is("string"));
+			assertThat("校验Object_collect_task表数据正确", result.getString(0
+					, "remark"), is("测试用例使用6"));
+			assertThat("校验Object_collect_task表数据正确", result.getString(0
+					, "is_hbase"), is(IsFlag.Fou.getCode()));
+			assertThat("校验Object_collect_task表数据正确", result.getString(0
+					, "is_rowkey"), is(IsFlag.Shi.getCode()));
+			assertThat("校验Object_collect_task表数据正确", result.getString(0
+					, "is_solr"), is(IsFlag.Fou.getCode()));
+			assertThat("校验Object_collect_task表数据正确", result.getString(0
+					, "is_operate"), is(IsFlag.Fou.getCode()));
+			assertThat("校验Object_collect_task表数据正确", result.getString(0
+					, "is_key"), is(IsFlag.Shi.getCode()));
+			assertThat("校验Object_collect_task表数据正确", result.getString(0
+					, "columnposition"), is("aaaTestzzuuiqyqiw6"));
 		}
 
-		//4.保存对象采集对应结构信息表，coll_name名称重复
+		//4.保存对象采集对应结构信息表，column_name名称重复
 		array.clear();
 		for (int i = 20; i < OBJECT_COLLECT_STRUCT_ROWS + 20; i++) {
 			JSONObject object = new JSONObject();
-			object.put("coll_name", "aaaTestzzuuiqyqiw");
-			object.put("remark", "测试用例使用");
+			object.put("column_name", "aaaTestzzuuiqyqiw");
+			object.put("remark", "测试用例使用" + i);
 			object.put("ocs_id", OCS_ID);
-			object.put("struct_type", ObjectDataType.ZiFuChuan.getCode());
-			object.put("data_desc", "对象采集对应结构信息表coll_name描述" + i);
+			object.put("is_hbase", IsFlag.Fou.getCode());
+			object.put("is_rowkey", IsFlag.Fou.getCode());
+			object.put("is_solr", IsFlag.Fou.getCode());
+			object.put("is_key", IsFlag.Fou.getCode());
+			object.put("is_operate", IsFlag.Fou.getCode());
+			object.put("col_seq", i + 1);
+			object.put("columnposition", "aaaTestzzuuiqyqiw" + i);
+			object.put("columntype", "string");
 			array.add(object);
 		}
 		bodyString = new HttpClient()
 				.addData("object_collect_struct_array", array.toJSONString())
-				.post(getActionUrl("saveObject_collect_struct")).getBodyString();
+				.post(getActionUrl("saveObjectCollectStruct")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(false));
@@ -892,11 +992,10 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 //		for (int i = 20; i < OBJECT_COLLECT_STRUCT_ROWS + 20; i++) {
 //			JSONObject object = new JSONObject();
 //			object.put("struct_id", STRUCT_ID + i);
-//			object.put("coll_name", "我是中文，哈哈哈，不正确"+i);
+//			object.put("column_name", "我是中文，哈哈哈，不正确"+i);
 //			object.put("remark", "测试用例使用");
 //			object.put("ocs_id", OCS_ID);
-//			object.put("struct_type", ObjectDataType.ZiFuChuan.getCode());
-//			object.put("data_desc", "对象采集对应结构信息表coll_name描述"+i);
+//			object.put("data_desc", "对象采集对应结构信息表column_name描述"+i);
 //			array.add(object);
 //		}
 //		bodyString = new HttpClient()
@@ -961,6 +1060,7 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 			object.put("obj_stid", OBJ_STID + i);
 			object.put("is_hbase", IsFlag.Shi.getCode());
 			object.put("is_hdfs", IsFlag.Fou.getCode());
+			object.put("is_solr", IsFlag.Fou.getCode());
 			object.put("remark", "zxz测试用例清除表object_storage专用");
 			object.put("ocs_id", OCS_ID + i);
 			array.add(object);
@@ -968,7 +1068,7 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("object_storage_array", array.toJSONString())
 				.addData("odc_id", ODC_ID)
-				.post(getActionUrl("saveObject_storage")).getBodyString();
+				.post(getActionUrl("saveObjectStorage")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
@@ -996,13 +1096,14 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 		JSONObject obj = new JSONObject();
 		obj.put("is_hbase", IsFlag.Shi.getCode());
 		obj.put("is_hdfs", IsFlag.Shi.getCode());
+		obj.put("is_solr", IsFlag.Fou.getCode());
 		obj.put("remark", "zxz测试用例清除表object_storage专用");
 		obj.put("ocs_id", 77666111L);
 		array.add(obj);
 		bodyString = new HttpClient()
 				.addData("object_storage_array", array.toJSONString())
 				.addData("odc_id", ODC_ID)
-				.post(getActionUrl("saveObject_storage")).getBodyString();
+				.post(getActionUrl("saveObjectStorage")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
@@ -1031,6 +1132,7 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 			JSONObject object = new JSONObject();
 			object.put("is_hbase", "shi");
 			object.put("is_hdfs", IsFlag.Fou.getCode());
+			object.put("is_solr", IsFlag.Fou.getCode());
 			object.put("remark", "zxz测试用例清除表object_storage专用");
 			object.put("ocs_id", OCS_ID + i);
 			array.add(object);
@@ -1038,7 +1140,7 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("object_storage_array", array.toJSONString())
 				.addData("odc_id", ODC_ID)
-				.post(getActionUrl("saveObject_storage")).getBodyString();
+				.post(getActionUrl("saveObjectStorage")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(false));
