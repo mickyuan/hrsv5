@@ -15,7 +15,6 @@ import hrds.commons.entity.Agent_info;
 import hrds.commons.entity.Collect_job_classify;
 import hrds.commons.entity.Database_set;
 import hrds.commons.utils.Constant;
-import hrds.commons.utils.PathUtil;
 import hrds.commons.utils.User;
 
 import java.util.ArrayList;
@@ -26,169 +25,175 @@ import java.util.Map;
 @DocClass(desc = "贴源层(DCL)层数据信息查询类", author = "BY-HLL", createdate = "2020/1/7 0007 上午 11:10")
 public class DCLDataQuery {
 
-	@Method(desc = "获取登录用户的批量数据的数据源列表(未使用)",
-			logicStep = "1.获取登录用户的数据源列表")
-	@Return(desc = "数据源列表", range = "无限制")
-	public static List<Map<String, Object>> getDCLDataInfos() {
-		List<Map<String, Object>> dclDataInfos = new ArrayList<>();
-		Map<String, Object> map;
-		map = new HashMap<>();
-		//1.添加批量数据子级文件夹
-		map.put("batch_id", Constant.DCL_BATCH);
-		map.put("name", "批量数据");
-		map.put("description", "批量数据管理");
-		map.put("rootName", PathUtil.DCL);
-		map.put("source", Constant.DCL_BATCH);
-		map.put("pId", DataSourceType.DCL.getCode());
-		map.put("id", Constant.DCL_BATCH);
-		map.put("isParent", true);
-		dclDataInfos.add(map);
-		//2.添加实时数据子级文件夹
-//		map = new HashMap<>();
-//		map.put("kafka_id", Constant.REALTIME_TYPE);
-//		map.put("name", "实时数据");
-//		map.put("description", "实时数据管理");
-//		map.put("rootName", PathUtil.DCL);
-//		map.put("source", Constant.DCL_REALTIME);
-//		map.put("pId", DataSourceType.DCL.getCode());
-//		map.put("id", Constant.REALTIME_TYPE);
-//		map.put("isParent", true);
-//		treeDataList.add(map);
-		return dclDataInfos;
-	}
+    @Method(desc = "获取登录用户的贴源层数据信息",
+            logicStep = "1.获取登录用户的数据源列表")
+    @Return(desc = "数据源列表", range = "无限制")
+    public static List<Map<String, Object>> getDCLDataInfos() {
+        List<Map<String, Object>> dclDataInfos = new ArrayList<>();
+        Map<String, Object> map;
+        map = new HashMap<>();
+        //1.添加批量数据子级
+        map.put("id", Constant.DCL_BATCH);
+        map.put("label", "批量数据");
+        map.put("parent_id", DataSourceType.DCL.getCode());
+        map.put("description", "批量数据管理");
 
-	@Method(desc = "获取批量数据的数据源列表",
-			logicStep = "1.获取批量数据的数据源列表")
-	@Param(name = "user", desc = "User", range = "登录用户User的对象实例")
-	@Return(desc = "数据源列表", range = "无限制")
-	public static List<Map<String, Object>> getDCLBatchDataInfos(User User) {
-		//1.获取登录用户的数据源列表
-		return getDCLBatchDataInfos(User, null);
-	}
+        map.put("batch_id", Constant.DCL_BATCH);
+        map.put("name", "批量数据");
+        map.put("rootName", DataSourceType.DCL.getValue());
+        map.put("source", Constant.DCL_BATCH);
+        map.put("pId", DataSourceType.DCL.getCode());
+        map.put("isParent", true);
+        dclDataInfos.add(map);
+        //2.添加实时数据子级
+        map = new HashMap<>();
+        map.put("id", Constant.DCL_REALTIME);
+        map.put("label", "实时数据");
+        map.put("parent_id", DataSourceType.DCL.getCode());
+        map.put("description", "实时数据管理");
 
-	@Method(desc = "获取批量数据的数据源列表,根据数据源名称模糊查询",
-			logicStep = "1.如果数据源名称不为空,模糊查询获取数据源信息" +
-					"2.如果是系统管理员,则不过滤部门" +
-					"3.获取查询结果集")
-	@Param(name = "user", desc = "User", range = "登录用户User的对象实例")
-	@Param(name = "dataSourceName", desc = "查询数据源的名称", range = "String类型字符,512长度", nullable = true)
-	@Return(desc = "数据源列表", range = "无限制")
-	public static List<Map<String, Object>> getDCLBatchDataInfos(User user, String dataSourceName) {
-		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
-		asmSql.clean();
-		asmSql.addSql("SELECT distinct ds.source_id, ds.datasource_name from source_relation_dep srd JOIN " +
-				"data_source ds on srd.SOURCE_ID = ds.SOURCE_ID");
-		//1.如果数据源名称不为空,模糊查询获取数据源信息
-		if (!StringUtil.isBlank(dataSourceName)) {
-			asmSql.addSql(" AND datasource_name like ? OR datasource_number like ?");
-			asmSql.addParam('%' + dataSourceName + '%').addParam('%' + dataSourceName + '%');
-		}
-		//2.如果不是系统管理员,则过滤部门
-		UserType userType = UserType.ofEnumByCode(user.getUserType());
-		if (UserType.XiTongGuanLiYuan != userType) {
-			asmSql.addSql("where srd.dep_id = ?");
-			asmSql.addParam(user.getDepId());
-		}
-		//3.获取查询结果集
-		return Dbo.queryList(asmSql.sql(), asmSql.params());
-	}
+        map.put("kafka_id", Constant.DCL_REALTIME);
+        map.put("name", "实时数据");
+        map.put("rootName", DataSourceType.DCL.getValue());
+        map.put("source", Constant.DCL_REALTIME);
+        map.put("pId", DataSourceType.DCL.getCode());
+        map.put("isParent", true);
+        dclDataInfos.add(map);
+        return dclDataInfos;
+    }
 
-	@Method(desc = "获取批量数据下数据源下分类信息",
-			logicStep = "1.获取批量数据下数据源下分类信息,如果是系统管理员,则不过滤部门")
-	@Param(name = "source_id", desc = "数据源id", range = "数据源id,唯一")
-	@Param(name = "isFileCollection", desc = "是否文件采集", range = "true:是,false:否")
-	@Param(name = "user", desc = "User", range = "登录用户User的对象实例")
-	@Return(desc = "加工信息列表", range = "无限制")
-	public static List<Map<String, Object>> getDCLBatchClassifyInfos(String source_id, Boolean isFileCollection,
-	                                                                 User user) {
-		return getDCLBatchClassifyInfos(source_id, isFileCollection, user, null);
-	}
+    @Method(desc = "获取批量数据的数据源列表",
+            logicStep = "1.获取批量数据的数据源列表")
+    @Param(name = "user", desc = "User", range = "登录用户User的对象实例")
+    @Return(desc = "数据源列表", range = "无限制")
+    public static List<Map<String, Object>> getDCLBatchDataInfos(User User) {
+        //1.获取登录用户的数据源列表
+        return getDCLBatchDataInfos(User, null);
+    }
 
-	@Method(desc = "获取批量数据下数据源下分类信息",
-			logicStep = "1.获取批量数据下数据源下分类信息,如果是系统管理员,则不过滤部门")
-	@Param(name = "source_id", desc = "数据源id", range = "数据源id,唯一")
-	@Param(name = "isFileCollection", desc = "是否文件采集", range = "true:是,false:否")
-	@Param(name = "user", desc = "User", range = "登录用户User的对象实例")
-	@Return(desc = "加工信息列表", range = "无限制")
-	public static List<Map<String, Object>> getDCLBatchClassifyInfos(String source_id, Boolean isFileCollection, User user,
-	                                                                 String searchName) {
-		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
-		asmSql.clean();
-		UserType userType = UserType.ofEnumByCode(user.getUserType());
-		Agent_info agent_info = new Agent_info();
-		//1.获取数据源下分类信息,如果是系统管理员,则不过滤部门
-		if (UserType.XiTongGuanLiYuan != userType) {
-			asmSql.addSql("SELECT * FROM agent_info ai join data_source ds on ai.source_id = ds.source_id JOIN" +
-					" source_relation_dep srd ON ds.source_id = srd.source_id JOIN collect_job_classify cjc" +
-					" ON ai.agent_id = cjc.agent_id where srd.dep_id = ?").addParam(user.getDepId());
-			if (StringUtil.isNotBlank(source_id)) {
-				agent_info.setSource_id(source_id);
-				asmSql.addSql(" AND ds.source_id = ?").addParam(agent_info.getSource_id());
-			}
-		} else {
-			asmSql.addParam("SELECT t3.datasource_name,* FROM collect_job_classify t1 JOIN agent_info t2 ON" +
-					" t2.agent_id = t1.agent_id JOIN data_source t3 ON t3.source_id = t2.source_id");
-			if (StringUtil.isNotBlank(source_id)) {
-				agent_info.setSource_id(source_id);
-				asmSql.addSql(" WHERE t2.source_id = ? ").addParam(agent_info.getSource_id());
-			}
-		}
-		if (!isFileCollection) {
-			asmSql.addSql(" AND agent_type not in (?,?)").addParam(AgentType.WenJianXiTong.getCode())
-					.addParam(AgentType.FTP.getCode());
-		}
-		return Dbo.queryList(asmSql.sql(), asmSql.params());
-	}
+    @Method(desc = "获取批量数据的数据源列表,根据数据源名称模糊查询",
+            logicStep = "1.如果数据源名称不为空,模糊查询获取数据源信息" +
+                    "2.如果是系统管理员,则不过滤部门" +
+                    "3.获取查询结果集")
+    @Param(name = "user", desc = "User", range = "登录用户User的对象实例")
+    @Param(name = "dataSourceName", desc = "查询数据源的名称", range = "String类型字符,512长度", nullable = true)
+    @Return(desc = "数据源列表", range = "无限制")
+    public static List<Map<String, Object>> getDCLBatchDataInfos(User user, String dataSourceName) {
+        SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
+        asmSql.clean();
+        asmSql.addSql("SELECT distinct ds.source_id, ds.datasource_name from source_relation_dep srd JOIN " +
+                "data_source ds on srd.SOURCE_ID = ds.SOURCE_ID");
+        //1.如果数据源名称不为空,模糊查询获取数据源信息
+        if (StringUtil.isNotBlank(dataSourceName)) {
+            asmSql.addSql(" AND datasource_name like ? OR datasource_number like ?");
+            asmSql.addParam('%' + dataSourceName + '%').addParam('%' + dataSourceName + '%');
+        }
+        //2.如果不是系统管理员,则过滤部门
+        UserType userType = UserType.ofEnumByCode(user.getUserType());
+        if (UserType.XiTongGuanLiYuan != userType) {
+            asmSql.addSql("where srd.dep_id = ?");
+            asmSql.addParam(user.getDepId());
+        }
+        //3.获取查询结果集
+        return Dbo.queryList(asmSql.sql(), asmSql.params());
+    }
 
-	@Method(desc = "获取分类id获取分类下表信息",
-			logicStep = "1.获取分类id获取分类下表信息")
-	@Param(name = "classify_id", desc = "分类id", range = "分类id,唯一")
-	@Param(name = "classify_name", desc = "分类名称", range = "String字符串,512长度")
-	@Param(name = "user", desc = "User", range = "登录用户User的对象实例")
-	@Param(name = "isIntoHBase", desc = "是否进HBase", range = "0:是,1:否")
-	@Return(desc = "分类下表信息", range = "无限制")
-	public static List<Map<String, Object>> getDCLBatchTableInfos(String classify_id, String classify_name,
-	                                                              User user, String isIntoHBase) {
-		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
-		//1.获取分类id获取分类下表信息
-		asmSql.clean();
-		UserType userType = UserType.ofEnumByCode(user.getUserType());
-		Database_set database_set = new Database_set();
-		Collect_job_classify classify = new Collect_job_classify();
-		if (UserType.XiTongGuanLiYuan != userType) {
-			asmSql.addSql("SELECT t2.task_name,t1.*,t3.* FROM source_file_attribute t1 JOIN database_set t2 ON" +
-					" t1.collect_set_id = t2.database_id JOIN collect_job_classify t3 ON" +
-					" t3.classify_id = t2.classify_id JOIN source_relation_dep t4 ON t1.source_id = t4.source_id");
-		} else {
-			asmSql.addSql("SELECT t2.task_name,t1.*,t3.* FROM source_file_attribute t1 JOIN database_set t2 ON" +
-					" t1.collect_set_id = t2.database_id JOIN collect_job_classify t3 ON" +
-					" t3.classify_id = t2.classify_id");
-		}
-		if (StringUtil.isNotBlank(classify_id)) {
-			database_set.setClassify_id(classify_id);
-			asmSql.addSql(" WHERE t2.classify_id = ?").addParam(database_set.getClassify_id());
-		}
-		if (StringUtil.isNotBlank(classify_name)) {
-			classify.setClassify_name("%" + classify_name + "%");
-			asmSql.addSql(" WHERE t1.table_name like ? OR t1.hbase_name like ? OR t1.original_name like ? OR" +
-					" t2.task_name like ? OR t2.database_number like ?");
-			asmSql.addParam(classify.getClassify_name()).addParam(classify.getClassify_name())
-					.addParam(classify.getClassify_name()).addParam(classify.getClassify_name())
-					.addParam(classify.getClassify_name());
-		}
-		if (UserType.XiTongGuanLiYuan != userType) {
-			asmSql.addSql(" AND t4.dep_id = ?").addParam(user.getDepId());
-		}
-		if (StringUtil.isNotBlank(isIntoHBase)) {
-			IsFlag isFlag = IsFlag.ofEnumByCode(isIntoHBase);
-			if (IsFlag.Fou == isFlag) {
-				asmSql.addORParam("t1.is_in_hbase", new String[]{isIntoHBase, "3"});
-			} else {
-				asmSql.addSql(" AND t1.is_in_hbase = ?").addParam(isIntoHBase);
-			}
-		}
-		return Dbo.queryList(asmSql.sql(), asmSql.params());
-	}
+    @Method(desc = "获取批量数据下数据源下分类信息",
+            logicStep = "1.获取批量数据下数据源下分类信息,如果是系统管理员,则不过滤部门")
+    @Param(name = "source_id", desc = "数据源id", range = "数据源id,唯一")
+    @Param(name = "isFileCollection", desc = "是否文件采集", range = "true:是,false:否")
+    @Param(name = "user", desc = "User", range = "登录用户User的对象实例")
+    @Return(desc = "加工信息列表", range = "无限制")
+    public static List<Map<String, Object>> getDCLBatchClassifyInfos(String source_id, Boolean isFileCollection,
+                                                                     User user) {
+        return getDCLBatchClassifyInfos(source_id, isFileCollection, user, null);
+    }
+
+    @Method(desc = "获取批量数据下数据源下分类信息",
+            logicStep = "1.获取批量数据下数据源下分类信息,如果是系统管理员,则不过滤部门")
+    @Param(name = "source_id", desc = "数据源id", range = "数据源id,唯一")
+    @Param(name = "isFileCollection", desc = "是否文件采集", range = "true:是,false:否")
+    @Param(name = "user", desc = "User", range = "登录用户User的对象实例")
+    @Return(desc = "加工信息列表", range = "无限制")
+    public static List<Map<String, Object>> getDCLBatchClassifyInfos(String source_id, Boolean isFileCollection, User user,
+                                                                     String searchName) {
+        SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
+        asmSql.clean();
+        UserType userType = UserType.ofEnumByCode(user.getUserType());
+        Agent_info agent_info = new Agent_info();
+        //1.获取数据源下分类信息,如果是系统管理员,则不过滤部门
+        if (UserType.XiTongGuanLiYuan != userType) {
+            asmSql.addSql("SELECT * FROM agent_info ai join data_source ds on ai.source_id = ds.source_id JOIN" +
+                    " source_relation_dep srd ON ds.source_id = srd.source_id JOIN collect_job_classify cjc" +
+                    " ON ai.agent_id = cjc.agent_id where srd.dep_id = ?").addParam(user.getDepId());
+            if (StringUtil.isNotBlank(source_id)) {
+                agent_info.setSource_id(source_id);
+                asmSql.addSql(" AND ds.source_id = ?").addParam(agent_info.getSource_id());
+            }
+        } else {
+            asmSql.addParam("SELECT t3.datasource_name,* FROM collect_job_classify t1 JOIN agent_info t2 ON" +
+                    " t2.agent_id = t1.agent_id JOIN data_source t3 ON t3.source_id = t2.source_id");
+            if (StringUtil.isNotBlank(source_id)) {
+                agent_info.setSource_id(source_id);
+                asmSql.addSql(" WHERE t2.source_id = ? ").addParam(agent_info.getSource_id());
+            }
+        }
+        if (!isFileCollection) {
+            asmSql.addSql(" AND agent_type not in (?,?)").addParam(AgentType.WenJianXiTong.getCode())
+                    .addParam(AgentType.FTP.getCode());
+        }
+        return Dbo.queryList(asmSql.sql(), asmSql.params());
+    }
+
+    @Method(desc = "获取分类id获取分类下表信息",
+            logicStep = "1.获取分类id获取分类下表信息")
+    @Param(name = "classify_id", desc = "分类id", range = "分类id,唯一")
+    @Param(name = "classify_name", desc = "分类名称", range = "String字符串,512长度")
+    @Param(name = "user", desc = "User", range = "登录用户User的对象实例")
+    @Param(name = "isIntoHBase", desc = "是否进HBase", range = "0:是,1:否")
+    @Return(desc = "分类下表信息", range = "无限制")
+    public static List<Map<String, Object>> getDCLBatchTableInfos(String classify_id, String classify_name,
+                                                                  User user, String isIntoHBase) {
+        SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
+        //1.获取分类id获取分类下表信息
+        asmSql.clean();
+        UserType userType = UserType.ofEnumByCode(user.getUserType());
+        Database_set database_set = new Database_set();
+        Collect_job_classify classify = new Collect_job_classify();
+        if (UserType.XiTongGuanLiYuan != userType) {
+            asmSql.addSql("SELECT t2.task_name,t1.*,t3.* FROM source_file_attribute t1 JOIN database_set t2 ON" +
+                    " t1.collect_set_id = t2.database_id JOIN collect_job_classify t3 ON" +
+                    " t3.classify_id = t2.classify_id JOIN source_relation_dep t4 ON t1.source_id = t4.source_id");
+        } else {
+            asmSql.addSql("SELECT t2.task_name,t1.*,t3.* FROM source_file_attribute t1 JOIN database_set t2 ON" +
+                    " t1.collect_set_id = t2.database_id JOIN collect_job_classify t3 ON" +
+                    " t3.classify_id = t2.classify_id");
+        }
+        if (StringUtil.isNotBlank(classify_id)) {
+            database_set.setClassify_id(classify_id);
+            asmSql.addSql(" WHERE t2.classify_id = ?").addParam(database_set.getClassify_id());
+        }
+        if (StringUtil.isNotBlank(classify_name)) {
+            classify.setClassify_name("%" + classify_name + "%");
+            asmSql.addSql(" WHERE t1.table_name like ? OR t1.hbase_name like ? OR t1.original_name like ? OR" +
+                    " t2.task_name like ? OR t2.database_number like ?");
+            asmSql.addParam(classify.getClassify_name()).addParam(classify.getClassify_name())
+                    .addParam(classify.getClassify_name()).addParam(classify.getClassify_name())
+                    .addParam(classify.getClassify_name());
+        }
+        if (UserType.XiTongGuanLiYuan != userType) {
+            asmSql.addSql(" AND t4.dep_id = ?").addParam(user.getDepId());
+        }
+        if (StringUtil.isNotBlank(isIntoHBase)) {
+            IsFlag isFlag = IsFlag.ofEnumByCode(isIntoHBase);
+            if (IsFlag.Fou == isFlag) {
+                asmSql.addORParam("t1.is_in_hbase", new String[]{isIntoHBase, "3"});
+            } else {
+                asmSql.addSql(" AND t1.is_in_hbase = ?").addParam(isIntoHBase);
+            }
+        }
+        return Dbo.queryList(asmSql.sql(), asmSql.params());
+    }
 
 //	@Method(desc = "获取流数据管理的groupId信息",
 //			logicStep = "1.获取流数据管理的groupId信息")
