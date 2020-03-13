@@ -25,40 +25,34 @@ import java.util.Map;
 @DocClass(desc = "贴源层(DCL)层数据信息查询类", author = "BY-HLL", createdate = "2020/1/7 0007 上午 11:10")
 public class DCLDataQuery {
 
-    @Method(desc = "获取登录用户的贴源层数据信息",
+    @Method(desc = "获取登录用户的批量数据的数据源列表(未使用)",
             logicStep = "1.获取登录用户的数据源列表")
     @Return(desc = "数据源列表", range = "无限制")
     public static List<Map<String, Object>> getDCLDataInfos() {
         List<Map<String, Object>> dclDataInfos = new ArrayList<>();
         Map<String, Object> map;
         map = new HashMap<>();
-        //1.添加批量数据子级
-        map.put("id", Constant.DCL_BATCH);
-        map.put("label", "批量数据");
-        map.put("parent_id", DataSourceType.DCL.getCode());
-        map.put("description", "批量数据管理");
-
+        //1.添加批量数据子级文件夹
         map.put("batch_id", Constant.DCL_BATCH);
         map.put("name", "批量数据");
+        map.put("description", "批量数据管理");
         map.put("rootName", DataSourceType.DCL.getValue());
         map.put("source", Constant.DCL_BATCH);
         map.put("pId", DataSourceType.DCL.getCode());
+        map.put("id", Constant.DCL_BATCH);
         map.put("isParent", true);
         dclDataInfos.add(map);
-        //2.添加实时数据子级
-        map = new HashMap<>();
-        map.put("id", Constant.DCL_REALTIME);
-        map.put("label", "实时数据");
-        map.put("parent_id", DataSourceType.DCL.getCode());
-        map.put("description", "实时数据管理");
-
-        map.put("kafka_id", Constant.DCL_REALTIME);
-        map.put("name", "实时数据");
-        map.put("rootName", DataSourceType.DCL.getValue());
-        map.put("source", Constant.DCL_REALTIME);
-        map.put("pId", DataSourceType.DCL.getCode());
-        map.put("isParent", true);
-        dclDataInfos.add(map);
+        //2.添加实时数据子级文件夹
+//		map = new HashMap<>();
+//		map.put("kafka_id", Constant.REALTIME_TYPE);
+//		map.put("name", "实时数据");
+//		map.put("description", "实时数据管理");
+//		map.put("rootName", PathUtil.DCL);
+//		map.put("source", Constant.DCL_REALTIME);
+//		map.put("pId", DataSourceType.DCL.getCode());
+//		map.put("id", Constant.REALTIME_TYPE);
+//		map.put("isParent", true);
+//		treeDataList.add(map);
         return dclDataInfos;
     }
 
@@ -84,7 +78,7 @@ public class DCLDataQuery {
         asmSql.addSql("SELECT distinct ds.source_id, ds.datasource_name from source_relation_dep srd JOIN " +
                 "data_source ds on srd.SOURCE_ID = ds.SOURCE_ID");
         //1.如果数据源名称不为空,模糊查询获取数据源信息
-        if (StringUtil.isNotBlank(dataSourceName)) {
+        if (!StringUtil.isBlank(dataSourceName)) {
             asmSql.addSql(" AND datasource_name like ? OR datasource_number like ?");
             asmSql.addParam('%' + dataSourceName + '%').addParam('%' + dataSourceName + '%');
         }
