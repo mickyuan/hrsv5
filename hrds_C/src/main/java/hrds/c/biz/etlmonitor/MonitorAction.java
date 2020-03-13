@@ -268,8 +268,8 @@ public class MonitorAction extends BaseAction {
 	@Param(name = "end_date", desc = "结束批量日期", range = "yyyy-MM-dd格式年月日", nullable = true)
 	@Param(name = "isHistoryBatch", desc = "是否从历史批量跳转过来标志", range = "为空代表不是，不为空代表是", nullable = true)
 	@Return(desc = "返回监控历史作业信息", range = "无限制")
-	public Map<String, Object> monitorHistoryJobInfo(String etl_sys_cd, String etl_job, String start_date,
-	                                                 String end_date, String isHistoryBatch) {
+	public List<Map<String, Object>> monitorHistoryJobInfo(String etl_sys_cd, String etl_job, String start_date,
+	                                                       String end_date, String isHistoryBatch) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
 		// 2.判断工程是否存在
 		if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
@@ -309,7 +309,7 @@ public class MonitorAction extends BaseAction {
 							" AND A.curr_st_time=B.curr_st_time" + ") t1 LEFT JOIN " + Etl_sub_sys_list.TableName
 							+ " t2 ON t1.sub_sys_cd=t2.sub_sys_cd  and t1.etl_sys_cd=t2.etl_sys_cd ORDER BY" +
 							" curr_bath_date,curr_st_time,curr_end_time");
-			return Dbo.queryOneObject(asmSql.sql(), asmSql.params());
+			return Dbo.queryList(asmSql.sql(), asmSql.params());
 		}
 		// 6.如果作业为空，返回null
 		return null;
