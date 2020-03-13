@@ -14,7 +14,7 @@ public class Constant {
     public static final char DATADELIMITER = '\001';//此分隔符为hive的默认分隔符
     public static final String MAXDATE = "99991231";
     public static final String SFTP_PORT = "22";
-    public static final byte[] HBASE_COLUMN_FAMILY = "F".getBytes();
+    public static final byte[] HBASE_COLUMN_FAMILY = "F" .getBytes();
     public static final String HBASE_ROW_KEY = "hyren_key";
     //当前程序运行的目录
     private static final String USER_DIR = System.getProperty("user.dir");
@@ -41,16 +41,14 @@ public class Constant {
     //定义并行抽取SQL结束条数占位符
     public static final String PARALLEL_SQL_END = "#{hy_end}";
 
-    //贴源层下实时数据
-    public static final String DCL_REALTIME = DataSourceType.DCL.getCode() + "_REALTIME";
-    //贴源层下实时数据类型
-    public static final String REALTIME_TYPE = "kafka";
-    //贴源层下批量采集数据
-    public static final String DCL_BATCH = DataSourceType.DCL.getCode() + "_BATCH";
-    //系统数据表
-    public static final String SYS_DATA_TABLE = "sysDataTable";
-    //系统数据备份
-    public static final String SYS_DATA_BAK = "sysDataBak";
+    //贴源层下批量采集数据 01:批量类型数据
+    public static final String DCL_BATCH = "01";
+    //贴源层下实时数据 02:实时类型数据
+    public static final String DCL_REALTIME = "02";
+    //系统数据表 11:系统数据表
+    public static final String SYS_DATA_TABLE = "11";
+    //系统数据备份 12:系统数据备份
+    public static final String SYS_DATA_BAK = "12";
 
     //自定义层数据库类型列表
     public static final String[] DATABASE_TYPE = {"Hive", "HBase", "Mpp", "Spark"};
@@ -64,6 +62,6 @@ public class Constant {
     public static final String CARBON_DATA = DATABASE_TYPE[3];
     //solr自定义的handler
     public static final String HANDLER = "/reloadDictionary";
-	//solr自定义的分隔符
-	public static final char SOLR_DATA_DELIMITER = '\001';
+    //solr自定义的分隔符
+    public static final char SOLR_DATA_DELIMITER = '\001';
 }
