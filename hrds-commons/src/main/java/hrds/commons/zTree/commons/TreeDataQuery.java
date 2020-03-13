@@ -17,34 +17,20 @@ public class TreeDataQuery {
 
     @Method(desc = "根据web类型获取源树菜单",
             logicStep = "根据web类型获取源树菜单")
-    @Param(name = "tree_source", desc = "树来源", range = "树来源页面TreePageSource.TREE_SOURCE")
+    @Param(name = "tree_source", desc = "树来源", range = "树来源页面TreePageSource.TREESOURCE")
     @Return(desc = "源树菜单数据的List", range = "无限制")
     public static List<Map<String, Object>> getSourceTreeInfos(String tree_source) {
         List<Map<String, Object>> sourceTreeMenuInfos = new ArrayList<>();
         DataSourceType[] dataSourceTypes = TreePageSource.TREE_SOURCE.get(tree_source);
-        for (DataSourceType dataSourceType : dataSourceTypes) {
+        for (int i = 0; i < dataSourceTypes.length; i++) {
             Map<String, Object> map = new HashMap<>();
-            map.put("id", dataSourceType.getCode());
-            map.put("label", dataSourceType.getValue());
-            map.put("parent_id", "0");
-            map.put("description", dataSourceType.getValue());
-            sourceTreeMenuInfos.add(map);
-        }
-        return sourceTreeMenuInfos;
-    }
-
-    @Method(desc = "获取自定义源树菜单",
-            logicStep = "获取自定义源树菜单")
-    @Param(name = "dataLayers", desc = "源树菜单数组", range = "DataSourceType[]类型: [DCL,DPL]")
-    @Return(desc = "源树菜单数据的List", range = "无限制")
-    public static List<Map<String, Object>> getSourceTreeInfos(DataSourceType[] dataSourceTypes) {
-        List<Map<String, Object>> sourceTreeMenuInfos = new ArrayList<>();
-        for (DataSourceType dataSourceType : dataSourceTypes) {
-            Map<String, Object> map = new HashMap<>();
-            map.put("id", dataSourceType.getCode());
-            map.put("label", dataSourceType.getValue());
-            map.put("parent_id", "0");
-            map.put("description", dataSourceType.getValue());
+            map.put("name", dataSourceTypes[i].getValue());
+            map.put("agent_layer", dataSourceTypes[i].getValue());
+            map.put("isParent", true);
+            map.put("rootName", dataSourceTypes[i].getValue());
+            map.put("id", dataSourceTypes[i].getValue());
+            map.put("pId", "~" + i);
+            map.put("description", dataSourceTypes[i].getValue());
             sourceTreeMenuInfos.add(map);
         }
         return sourceTreeMenuInfos;

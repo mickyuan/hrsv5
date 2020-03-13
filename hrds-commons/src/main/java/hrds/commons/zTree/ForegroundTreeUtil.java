@@ -149,26 +149,26 @@ public class ForegroundTreeUtil {
 //		if (null != sflDataBakInfos && !sflDataBakInfos.isEmpty()) {
 //			DataConvertedToTreeNode.ConversionSFLDataBakInfos(sflDataBakInfos, treeDataList);
 //		}
-        //6.自定义层(UDL)信息转树节点
-        //6-1.自定义层下数据库信息转树节点
-        List<Map<String, Object>> udlDatabaseInfos = (List<Map<String, Object>>) treeInfos.get("udlDatabaseInfos");
-        if (null != udlDatabaseInfos && !udlDatabaseInfos.isEmpty()) {
-            DataConvertedToTreeNode.ConversionUDLDatabaseInfos(udlDatabaseInfos, treeDataList);
-        }
-        //6-2.自定义层数据库下表空间信息转树节点
-        List<Map<String, Object>> udlDatabaseTableSpaceInfos =
-                (List<Map<String, Object>>) treeInfos.get("udlDatabaseTableSpaceInfos");
-        if (null != udlDatabaseTableSpaceInfos && !udlDatabaseTableSpaceInfos.isEmpty()) {
-            DataConvertedToTreeNode.ConversionUDLDatabaseTableSpaceInfos(udlDatabaseTableSpaceInfos, treeDataList,
-                    treeDataInfo.getRootName(), treeDataInfo.getParent_id());
-        }
-        //6-3.自定义层数据库表空间下数据表信息转树节点
-        List<Map<String, Object>> udlTableSpaceTableInfos =
-                (List<Map<String, Object>>) treeInfos.get("udlTableSpaceTableInfos");
-        if (null != udlTableSpaceTableInfos && !udlTableSpaceTableInfos.isEmpty()) {
-            DataConvertedToTreeNode.ConversionUDLTableSpaceTableInfos(udlTableSpaceTableInfos, treeDataList,
-                    treeDataInfo.getRootName(), treeDataInfo.getParent_id());
-        }
+//        //6.自定义层(UDL)信息转树节点
+//        //6-1.自定义层下数据库信息转树节点
+//        List<Map<String, Object>> udlDatabaseInfos = (List<Map<String, Object>>) treeInfos.get("udlDatabaseInfos");
+//        if (null != udlDatabaseInfos && !udlDatabaseInfos.isEmpty()) {
+//            DataConvertedToTreeNode.ConversionUDLDatabaseInfos(udlDatabaseInfos, treeDataList);
+//        }
+//        //6-2.自定义层数据库下表空间信息转树节点
+//        List<Map<String, Object>> udlDatabaseTableSpaceInfos =
+//                (List<Map<String, Object>>) treeInfos.get("udlDatabaseTableSpaceInfos");
+//        if (null != udlDatabaseTableSpaceInfos && !udlDatabaseTableSpaceInfos.isEmpty()) {
+//            DataConvertedToTreeNode.ConversionUDLDatabaseTableSpaceInfos(udlDatabaseTableSpaceInfos, treeDataList,
+//                    treeDataInfo.getRootName(), treeDataInfo.getParent_id());
+//        }
+//        //6-3.自定义层数据库表空间下数据表信息转树节点
+//        List<Map<String, Object>> udlTableSpaceTableInfos =
+//                (List<Map<String, Object>>) treeInfos.get("udlTableSpaceTableInfos");
+//        if (null != udlTableSpaceTableInfos && !udlTableSpaceTableInfos.isEmpty()) {
+//            DataConvertedToTreeNode.ConversionUDLTableSpaceTableInfos(udlTableSpaceTableInfos, treeDataList,
+//                    treeDataInfo.getRootName(), treeDataInfo.getParent_id());
+//        }
         //7.模型层(AML)信息转树节点
         //8.无大数据环境(NoHadoop)环境树信息转树节点
         return treeDataList;
