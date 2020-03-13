@@ -7,8 +7,8 @@ import fd.ng.core.annotation.Return;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
-import hrds.commons.zTree.ForegroundTreeUtil;
-import hrds.commons.zTree.bean.TreeDataInfo;
+import hrds.commons.ftree.ForegroundTreeUtil;
+import hrds.commons.ftree.bean.TreeDataInfo;
 
 import java.sql.ResultSet;
 import java.util.HashMap;
