@@ -5,9 +5,11 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.db.resultset.Result;
+import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
+import hrds.commons.utils.Constant;
 import hrds.k.biz.dbmtree.commons.DbmDataQuery;
-import hrds.commons.utils.tree.DataConvertedNode;
+import hrds.commons.utils.tree.NodeDataConvertedTreeList;
 import hrds.commons.utils.tree.Node;
 
 import java.util.ArrayList;
@@ -35,7 +37,7 @@ public class DbmTreeInfoAction extends BaseAction {
             dataList.add(map);
         }
         //转换Node信息数据为分叉树节点数据List
-        List<Node> dbmSortInfoTreeDataList = DataConvertedNode.dataConversionTreeInfo(dataList);
+        List<Node> dbmSortInfoTreeDataList = NodeDataConvertedTreeList.dataConversionTreeInfo(dataList);
         //创建返回结果Map集合
         dbmSortInfoTreeDataMap.put("dbmSortInfoTreeDataList",
                 JsonUtil.toObjectSafety(dbmSortInfoTreeDataList.toString(), List.class));
