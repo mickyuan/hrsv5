@@ -47,8 +47,7 @@ public class TreePageSource {
     private static DataSourceType[] MACHINE_LEARNING_ARRAY = new DataSourceType[]{DataSourceType.DCL,
             DataSourceType.DPL, DataSourceType.DML, DataSourceType.UDL};
     //数据对标
-    private static DataSourceType[] DATA_BENCHMARKING_ARRAY = new DataSourceType[]{DataSourceType.DCL,
-            DataSourceType.SFL};
+    private static DataSourceType[] DATA_BENCHMARKING_ARRAY = new DataSourceType[]{DataSourceType.DCL};
 
     public static Map<String, DataSourceType[]> TREE_SOURCE = new HashMap<>();
 
