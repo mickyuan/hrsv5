@@ -19,10 +19,10 @@ public class NodeDataConvertedTreeList {
         // 根据结果集构造节点列表（存入散列表）
         nodeDataList.forEach(dataRecord -> {
             Node node = new Node();
-            node.id = (String) dataRecord.get("id");
-            node.label = (String) dataRecord.get("label");
-            node.parent_id = (String) dataRecord.get("parent_id");
-            node.description = (String) dataRecord.get("description");
+            node.id = dataRecord.get("id").toString();
+            node.label = dataRecord.get("label").toString();
+            node.parent_id = dataRecord.get("parent_id").toString();
+            node.description = dataRecord.get("description").toString();
             nodeMap.put(node.id, node);
         });
         // 构造无序的多叉树
