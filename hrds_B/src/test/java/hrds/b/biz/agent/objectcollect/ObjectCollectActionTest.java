@@ -220,14 +220,11 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 		assertThat(ar.isSuccess(), is(true));
 	}
 
-	/**
-	 * searchObjectCollect方法测试用例
-	 * <p>
-	 * 1.agent_id不为空，odc_id为空查询信息，agent_id为正确造数据的值
-	 * 2.agent_id不为空，odc_id为空查询信息，agent_id为不正确的值
-	 * 3.agent_id不为空，odc_id也不为空查询信息，agent_id和odc_id为正确造数据的值
-	 * 4.agent_id不为空，odc_id也不为空查询信息，agent_id为正确造数据的值和odc_id为不正确的值
-	 */
+	@Method(desc = "查询对象采集信息测试用例",
+			logicStep = "1.agent_id不为空，odc_id为空查询信息，agent_id为正确造数据的值" +
+					"2.agent_id不为空，odc_id为空查询信息，agent_id为不正确的值" +
+					"3.agent_id不为空，odc_id也不为空查询信息，agent_id和odc_id为正确造数据的值" +
+					"4.agent_id不为空，odc_id也不为空查询信息，agent_id为正确造数据的值和odc_id为不正确的值")
 	@Test
 	public void searchObjectCollectTest() {
 		//1.agent_id不为空，odc_id为空查询信息，agent_id为正确造数据的值
@@ -494,13 +491,11 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 //		assertThat(ar.isSuccess(), is(false));
 	}
 
-	/**
-	 * searchObjectCollectTask根据对象采集id查询对象采集对应信息表
-	 * <p>
-	 * 1.使用正确的odc_id查询OBJECT_COLLECT_TASK表
-	 * 2.使用错误的odc_id查询OBJECT_COLLECT_TASK表
-	 * 注：此方法没有写到四个及以上的测试用例是因为此方法只是一个查询方法，只有正确和错误两种情况
-	 */
+	@Method(desc = "根据对象采集id查询对象采集对应信息表",
+			logicStep = "1.使用正确的odc_id查询OBJECT_COLLECT_TASK表" +
+					"2.使用错误的odc_id查询OBJECT_COLLECT_TASK表" +
+					"3.使用错误的agent_id查询OBJECT_COLLECT_TASK表" +
+					"注：此方法没有写到四个及以上的测试用例是因为此方法只是一个查询方法，只有正确和错误3种情况")
 	@Test
 	public void searchObjectCollectTaskTest() {
 		//1.使用正确的odc_id查询OBJECT_COLLECT_TASK表
@@ -1313,6 +1308,26 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(false));
+	}
+
+	@Method(desc = "查询半结构化采集列结构信息",
+			logicStep = "1.正确的数据访问1，数据都有效" +
+					"2.错误的数据访问1，ocs_id不存在")
+	@Test
+	public void searchCollectColumnStructTest() {
+		// 1.正确的数据访问1，数据都有效
+		bodyString = new HttpClient().addData("ocs_id", OCS_ID)
+				.post(getActionUrl("searchCollectColumnStruct")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
+		assertThat(ar.isSuccess(), is(true));
+		Map<Object, Object> dataForMap = ar.getDataForMap();
+		// 2.错误的数据访问1，ocs_id不存在
+		bodyString = new HttpClient().addData("ocs_id", "111")
+				.post(getActionUrl("searchCollectColumnStruct")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
+		assertThat(ar.isSuccess(), is(true));
 	}
 
 	/**
