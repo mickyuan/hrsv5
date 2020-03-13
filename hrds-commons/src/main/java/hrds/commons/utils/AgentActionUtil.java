@@ -76,6 +76,7 @@ public class AgentActionUtil {
 		list.add(BATCHADDFTPTRANSFER);
 		list.add(SENDFTPCOLLECTTASKINFO);
 		list.add(PARSEDATADICTIONARY);
+		list.add(WRITEDICTIONARY);
 	}
 
 	private AgentActionUtil() {
