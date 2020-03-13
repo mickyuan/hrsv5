@@ -1,4 +1,4 @@
-package hrds.commons.zTree.utils;
+package hrds.commons.FTree.utils;
 
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;

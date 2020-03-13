@@ -1,11 +1,11 @@
-package hrds.commons.zTree.commons;
+package hrds.commons.FTree.commons;
 
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import hrds.commons.codes.DataSourceType;
-import hrds.commons.zTree.bean.TreePageSource;
+import hrds.commons.FTree.bean.TreePageSource;
 
 import java.util.ArrayList;
 import java.util.HashMap;

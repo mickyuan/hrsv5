@@ -1,4 +1,4 @@
-package hrds.commons.zTree;
+package hrds.commons.FTree;
 
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
@@ -8,11 +8,11 @@ import fd.ng.core.utils.StringUtil;
 import hrds.commons.codes.DataSourceType;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.User;
-import hrds.commons.zTree.bean.TreeDataInfo;
-import hrds.commons.zTree.utils.DataConvertedToTreeNode;
-import hrds.commons.zTree.utils.SearchNode;
-import hrds.commons.zTree.commons.TreeDataQuery;
-import hrds.commons.zTree.utils.TreeMenuInfo;
+import hrds.commons.FTree.bean.TreeDataInfo;
+import hrds.commons.FTree.utils.DataConvertedToTreeNode;
+import hrds.commons.FTree.utils.SearchNode;
+import hrds.commons.FTree.commons.TreeDataQuery;
+import hrds.commons.FTree.utils.TreeMenuInfo;
 
 import java.util.ArrayList;
 import java.util.List;
