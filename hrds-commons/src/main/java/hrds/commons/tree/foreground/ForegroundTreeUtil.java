@@ -64,7 +64,7 @@ public class ForegroundTreeUtil {
                     treeDataInfo.getRootName());
         }
         //1-4.贴源层批量数据源分类信息下表信息转树节点
-        List<Map<String, Object>> dclTableInfos = (List<Map<String, Object>>) treeInfos.get("dclTableInfos");
+        List<Map<String, Object>> dclTableInfos = (List<Map<String, Object>>) treeInfos.get("dclBatchTableInfos");
         if (null != dclTableInfos && !dclTableInfos.isEmpty()) {
             DataConvertedToTreeNode.ConversionDCLBatchTableInfos(dclTableInfos, treeDataList,
                     treeDataInfo.getRootName());
