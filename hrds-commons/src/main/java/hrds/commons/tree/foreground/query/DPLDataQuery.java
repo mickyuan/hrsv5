@@ -1,4 +1,4 @@
-package hrds.commons.ftree.commons;
+package hrds.commons.tree.foreground.query;
 
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;

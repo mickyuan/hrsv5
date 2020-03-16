@@ -1,4 +1,4 @@
-package hrds.commons.ftree.bean;
+package hrds.commons.tree.commons;
 
 import fd.ng.core.annotation.DocClass;
 import hrds.commons.codes.DataSourceType;
