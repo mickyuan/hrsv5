@@ -87,21 +87,21 @@ public class DCLDataQuery {
     @Method(desc = "获取批量数据下数据源下分类信息",
             logicStep = "1.获取批量数据下数据源下分类信息,如果是系统管理员,则不过滤部门")
     @Param(name = "source_id", desc = "数据源id", range = "数据源id,唯一")
-    @Param(name = "isFileCollection", desc = "是否文件采集", range = "true:是,false:否")
+    @Param(name = "showFileCollection", desc = "是否文件采集", range = "true:是,false:否")
     @Param(name = "user", desc = "User", range = "登录用户User的对象实例")
     @Return(desc = "加工信息列表", range = "无限制")
-    public static List<Map<String, Object>> getDCLBatchClassifyInfos(String source_id, Boolean isFileCollection,
+    public static List<Map<String, Object>> getDCLBatchClassifyInfos(String source_id, Boolean showFileCollection,
                                                                      User user) {
-        return getDCLBatchClassifyInfos(source_id, isFileCollection, user, null);
+        return getDCLBatchClassifyInfos(source_id, showFileCollection, user, null);
     }
 
     @Method(desc = "获取批量数据下数据源下分类信息",
             logicStep = "1.获取批量数据下数据源下分类信息,如果是系统管理员,则不过滤部门")
     @Param(name = "source_id", desc = "数据源id", range = "数据源id,唯一")
-    @Param(name = "isFileCollection", desc = "是否获取文件采集任务采集数据", range = "true:是,false:否")
+    @Param(name = "showFileCollection", desc = "是否获取文件采集任务采集数据", range = "true:是,false:否")
     @Param(name = "user", desc = "User", range = "登录用户User的对象实例")
     @Return(desc = "加工信息列表", range = "无限制")
-    public static List<Map<String, Object>> getDCLBatchClassifyInfos(String source_id, Boolean isFileCollection,
+    public static List<Map<String, Object>> getDCLBatchClassifyInfos(String source_id, Boolean showFileCollection,
                                                                      User user, String searchName) {
         SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
         asmSql.clean();
@@ -124,7 +124,7 @@ public class DCLDataQuery {
                 asmSql.addSql(" WHERE t2.source_id = ? ").addParam(agent_info.getSource_id());
             }
         }
-        if (!isFileCollection) {
+        if (!showFileCollection) {
             asmSql.addSql(" AND agent_type not in (?,?)").addParam(AgentType.WenJianXiTong.getCode())
                     .addParam(AgentType.FTP.getCode());
         }
