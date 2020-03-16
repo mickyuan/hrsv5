@@ -7,10 +7,8 @@ import java.util.Comparator;
 @DocClass(desc = "节点比较器", author = "BY-HLL", createdate = "2020/2/20 0020 下午 07:06")
 public class NodeIDComparator implements Comparator<Node> {
 
-    // 按照节点编号比较
+    // 按照节点id的Unicode值排序
     public int compare(Node n1, Node n2) {
-        int x = Integer.parseInt(n1.id);
-        int y = Integer.parseInt(n2.id);
-        return (Integer.compare(x, y));
+        return -n1.id.compareTo(n2.id);
     }
 }

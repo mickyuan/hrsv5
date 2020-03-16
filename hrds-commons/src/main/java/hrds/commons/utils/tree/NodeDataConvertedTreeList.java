@@ -30,7 +30,7 @@ public class NodeDataConvertedTreeList {
         for (Map.Entry<String, Node> nodeEntry : nodeMap.entrySet()) {
             Node treeNodeData;
             Node node = nodeEntry.getValue();
-            if (node.parent_id == null || "0" .equals(node.parent_id)) {
+            if (node.parent_id == null || "0".equals(node.parent_id)) {
                 treeNodeData = node;
                 treeList.add(treeNodeData);
             } else {
