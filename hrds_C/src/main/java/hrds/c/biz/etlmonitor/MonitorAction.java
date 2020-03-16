@@ -830,15 +830,14 @@ public class MonitorAction extends BaseAction {
 					+ "4.获取日志目录"
 					+ "5.打包指令"
 					+ "6.根据工程编号获取工程信息"
-					+ "7.设置主机ip，端口，用户名，密码"
-					+ "8.与远端服务器进行交互，建立连接，发送数据到远端并且接收远端发来的数据"
-					+ "9.执行压缩日志命令"
-					+ "10.远程文件名"
-					+ "11.本地下载路径"
-					+ "12.判断路径是否以分隔符结尾，如果不是加分隔符拼接文件名"
-					+ "13.从服务器下载文件"
-					+ "14.下载完删除压缩包"
-					+ "15.返回文件名")
+					+ "7.检查工程部署参数是否为空"
+					+ "8.与ETLAgent服务交互"
+					+ "9.获取远程文件名"
+					+ "10.本地下载路径"
+					+ "11.判断路径是否以分隔符结尾，如果不是加分隔符拼接文件名"
+					+ "12.从服务器下载文件"
+					+ "13.下载完删除压缩包"
+					+ "14.返回文件名")
 	@Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
 	@Param(name = "etl_job", desc = "作业名称", range = "新增作业时生成")
 	@Param(name = "curr_bath_date", desc = "批量日期", range = "yyyy-MM-dd格式的年月日，如：2019-12-19")
@@ -859,35 +858,66 @@ public class MonitorAction extends BaseAction {
 					+ etl_job + "_" + date + ".log " + logDir + etl_job + date + "000000error.log ";
 			// 6.根据工程编号获取工程信息
 			Map<String, Object> etlSysInfo = ETLJobUtil.getEtlSysByCd(etl_sys_cd, getUserId());
+			// 7.检查工程部署参数是否为空
+			checkEtlDeployParam(etlSysInfo);
 			SFTPDetails sftpDetails = new SFTPDetails();
-			sftpDetails.setHost(etlSysInfo.get("etl_serv_ip").toString());
-			sftpDetails.setPort(((Integer) etlSysInfo.get("etl_serv_port")));
-			sftpDetails.setUser_name(etlSysInfo.get("user_name").toString());
-			sftpDetails.setPwd(etlSysInfo.get("user_pwd").toString());
-			// 8.与远端服务器进行交互，建立连接，发送数据到远端并且接收远端发来的数据
-			Session shellSession = SFTPChannel.getJSchSession(sftpDetails, 0);
-			// 9.执行压缩日志命令
-			SFTPChannel.execCommandByJSch(shellSession, compressCommand);
-			// 10.远程文件名
+			// 8.与ETLAgent服务交互
+			interactingWithTheAgentServer(compressCommand, etlSysInfo, sftpDetails);
+			// 9.获取远程文件名
 			String remoteFileName = date + "_" + etl_job + ".tar.gz";
-			// 11.本地下载路径
+			// 10.本地下载路径
 			String localPath = ETLJobUtil.getFilePath(null) + remoteFileName;
-			// 12.判断路径是否以分隔符结尾，如果不是加分隔符拼接文件名
+			// 11.判断路径是否以分隔符结尾，如果不是加分隔符拼接文件名
 			if (logDir.endsWith(File.separator)) {
 				logDir = logDir + File.separator + remoteFileName;
 			} else {
 				logDir = logDir + remoteFileName;
 			}
-			// 13.从服务器下载文件
+			// 12.从服务器下载文件
 			DownloadLogUtil.downloadLogFile(logDir, localPath, sftpDetails);
-			// 14.下载完删除压缩包
+			// 13.下载完删除压缩包
 			DownloadLogUtil.deleteLogFileBySFTP(logDir, sftpDetails);
-			// 15.返回文件名
+			// 14.返回文件名
 			return remoteFileName;
 		} catch (JSchException e) {
 			throw new BusinessException("与远端服务器进行交互，建立连接失败！");
 		} catch (IOException e) {
 			throw new BusinessException("下载日志文件失败！");
+		}
+	}
+
+	@Method(desc = "与ETLAgent服务交互",
+			logicStep = "1.数据可访问权限处理方式，该方法不需要权限控制" +
+					"2.封装与远端服务器进行交互所需参数" +
+					"3.与远端服务器进行交互，建立连接，发送数据到远端并且接收远端发来的数据" +
+					"4.执行压缩日志命令")
+	@Param(name = "compressCommand", desc = "压缩命令", range = "不为空")
+	@Param(name = "etlSysInfo", desc = "工程参数", range = "不为空")
+	@Param(name = "sftpDetails", desc = "sftp参数对象", range = "无限制")
+	private void interactingWithTheAgentServer(String compressCommand, Map<String, Object> etlSysInfo,
+	                                           SFTPDetails sftpDetails) throws JSchException, IOException {
+		// 1.数据可访问权限处理方式，该方法不需要权限控制
+		// 2.封装与远端服务器进行交互所需参数
+		sftpDetails.setHost(etlSysInfo.get("etl_serv_ip").toString());
+		sftpDetails.setPort(Integer.parseInt(etlSysInfo.get("etl_serv_port").toString()));
+		sftpDetails.setUser_name(etlSysInfo.get("user_name").toString());
+		sftpDetails.setPwd(etlSysInfo.get("user_pwd").toString());
+		// 3.与远端服务器进行交互，建立连接，发送数据到远端并且接收远端发来的数据
+		Session shellSession = SFTPChannel.getJSchSession(sftpDetails, 0);
+		// 4.执行压缩日志命令
+		SFTPChannel.execCommandByJSch(shellSession, compressCommand);
+	}
+
+	@Method(desc = "检查工程部署参数是否为空",
+			logicStep = "1.数据可访问权限处理方式，该方法不需要权限控制" +
+					"2.检查工程部署参数是否为空")
+	@Param(name = "etlSysInfo", desc = "工程参数", range = "不为空")
+	private void checkEtlDeployParam(Map<String, Object> etlSysInfo) {
+		// 1.数据可访问权限处理方式，该方法不需要权限控制
+		// 2.检查工程部署参数是否为空
+		if (etlSysInfo.get("etl_serv_ip") == null || etlSysInfo.get("etl_serv_port") == null
+				|| etlSysInfo.get("user_name") == null || etlSysInfo.get("user_pwd") == null) {
+			throw new BusinessException("工程服务部署参数不能为空，服务可能未部署，请检查！");
 		}
 	}
 
