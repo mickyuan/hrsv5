@@ -39,12 +39,12 @@ public class DCLDataQuery {
         map.put("description", "批量数据查询");
         dclDataInfos.add(map);
         //2.添加实时数据子级
-        map = new HashMap<>();
-        map.put("id", Constant.DCL_REALTIME);
-        map.put("label", "实时数据");
-        map.put("parent_id", DataSourceType.DCL.getCode());
-        map.put("description", "实时数据查询");
-        dclDataInfos.add(map);
+//        map = new HashMap<>();
+//        map.put("id", Constant.DCL_REALTIME);
+//        map.put("label", "实时数据");
+//        map.put("parent_id", DataSourceType.DCL.getCode());
+//        map.put("description", "实时数据查询");
+//        dclDataInfos.add(map);
         return dclDataInfos;
     }
 

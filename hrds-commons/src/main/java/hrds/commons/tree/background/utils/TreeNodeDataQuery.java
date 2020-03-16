@@ -32,7 +32,6 @@ public class TreeNodeDataQuery {
         dataList.addAll(DCLDataQuery.getDCLDataInfos());
         //获取DCL层批量数据下的数据源列表
         List<Map<String, Object>> dclBatchDataInfos = DCLDataQuery.getDCLBatchDataInfos(user);
-
         //添加DCL层批量数据下数据源节点数据到DCL数据层的层次数据中
         dataList.addAll(DataConvertedNodeData.ConversionDCLBatchDataInfos(dclBatchDataInfos));
         dclBatchDataInfos.forEach(dclBatchDataInfo -> {
