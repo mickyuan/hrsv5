@@ -26,6 +26,7 @@ import java.lang.reflect.Type;
 import java.util.*;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 @DocClass(desc = "作业调度配置管理测试类", author = "dhw", createdate = "2019/11/8 9:18")
@@ -5712,11 +5713,12 @@ public class JobConfigurationTest extends WebBaseTestCase {
 					"2.错误的数据访问1，文件不存在")
 	@Test
 	public void uploadExcelFile() {
+		File file1 = FileUtil.getFile("src//main//java//upload//样式.xlsx");
 		File file = FileUtil.getFile("src//main//java//upload//Etl_resource.xlsx");
 		// 1.正常的数据访问1，数据都正常
 		String bodyString = new HttpClient()
 				.reset(SubmitMediaType.MULTIPART)
-				.addFile("file", file)
+				.addFile("file", file1)
 				.post(getActionUrl("uploadExcelFile"))
 				.getBodyString();
 		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -5741,7 +5743,26 @@ public class JobConfigurationTest extends WebBaseTestCase {
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
 		assertThat(ar.isSuccess(), is(false));
+
+
 	}
 
+	@Test
+	public void generateExcelTest() {
+		String bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+				.addData("tableName", "etl_sub_sys_list")
+				.post(getActionUrl("generateExcel")).getBodyString();
+		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+		assertThat(ar.isSuccess(), is(true));
+	}
+
+	@Test
+	public void downloadFileTest() {
+		String bodyString = new HttpClient()
+				.addData("fileName", "etl_sub_sys_list")
+				.post(getActionUrl("downloadFile")).getBodyString();
+		assertThat(bodyString, is(notNullValue()));
+	}
 }
 
