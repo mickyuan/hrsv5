@@ -1,4 +1,4 @@
-package hrds.c.biz.jobschedule;
+package hrds.c.biz.jobconfig;
 
 import com.alibaba.fastjson.TypeReference;
 import fd.ng.core.annotation.DocClass;
@@ -9,7 +9,6 @@ import fd.ng.core.utils.*;
 import fd.ng.db.jdbc.DefaultPageImpl;
 import fd.ng.db.jdbc.Page;
 import fd.ng.db.jdbc.SqlOperator;
-import fd.ng.db.meta.ColumnMeta;
 import fd.ng.db.meta.MetaOperator;
 import fd.ng.db.meta.TableMeta;
 import fd.ng.db.resultset.Result;
@@ -25,7 +24,6 @@ import hrds.commons.codes.*;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.DboExecute;
-import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
