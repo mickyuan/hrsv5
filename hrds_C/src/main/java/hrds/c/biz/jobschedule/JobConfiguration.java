@@ -9,6 +9,7 @@ import fd.ng.core.utils.*;
 import fd.ng.db.jdbc.DefaultPageImpl;
 import fd.ng.db.jdbc.Page;
 import fd.ng.db.jdbc.SqlOperator;
+import fd.ng.db.meta.ColumnMeta;
 import fd.ng.db.meta.MetaOperator;
 import fd.ng.db.meta.TableMeta;
 import fd.ng.db.resultset.Result;
@@ -1849,6 +1850,7 @@ public class JobConfiguration extends BaseAction {
 					Map<String, String> map = new HashMap<>();
 					// 11.获取不为空的列个数
 					int physicalNumberOfCells = row.getPhysicalNumberOfCells();
+					logger.info(i + "============" + physicalNumberOfCells);
 					for (int j = row.getFirstCellNum(); j < physicalNumberOfCells; j++) {
 						// 12.如果获取的列数是-1则表示为无效行的单元格,直接跳过
 						if (j == -1) {
@@ -1865,11 +1867,10 @@ public class JobConfiguration extends BaseAction {
 						if (i == 0) {
 							// 14.1第一行是表头，获取列名称
 							String[] columnArray = cellVal.split("-");
-							if (StringUtil.isNotBlank(cellVal)) {
-								columnList.add(columnArray[0]);
-							}
+							columnList.add(columnArray[0]);
 						} else {
 							// 14.2.第二行之后是表的值，如果第二行的列值不存在,则不添加
+							String s = columnList.get(j);
 							map.put(columnList.get(j).trim(), cellVal.trim());
 						}
 					}
@@ -2023,7 +2024,7 @@ public class JobConfiguration extends BaseAction {
 		String filePath = null;
 		try {
 			// 2.获取本地文件路径
-			filePath = ETLJobUtil.getFilePath(fileName) + xlsxSuffix;
+			filePath = ETLJobUtil.getFilePath(fileName);
 			// 3.清空response
 			ResponseUtil.getResponse().reset();
 			// 4.设置响应头，控制浏览器下载该文件
@@ -2111,7 +2112,7 @@ public class JobConfiguration extends BaseAction {
 			// 8.创建输出流
 			out = new FileOutputStream(file);
 			// 9.获取Excel的头列信息
-			List<TableMeta> tableMetas = MetaOperator.getTablesWithColumns(Dbo.db(), Etl_sub_sys_list.TableName);
+			List<TableMeta> tableMetas = MetaOperator.getTablesWithColumns(Dbo.db(), tableName);
 			Set<String> columnNames = tableMetas.get(0).getColumnNames();
 			// 10.创建绘图对象
 			XSSFDrawing xssfDrawing = sheet.createDrawingPatriarch();
@@ -2119,20 +2120,19 @@ public class JobConfiguration extends BaseAction {
 			// 11.遍历列名设置头信息
 			for (String columnName : columnNames) {
 				XSSFCell createCell = headRow.createCell(cellNum);
-				cellNum++;
 				// 12.设置头单元格信息
-				logger.info(columnName);
-				createCell.setCellValue(columnName + "-(" + ConvertColumnNameToChinese.getZh_name(columnName)
-						+ ")");
+				createCell.setCellValue(columnName +
+						"-(" + ConvertColumnNameToChinese.getZh_name(columnName) + ")");
 				// 13.根据列名判断是否获取备注信息
 				String comments = getCodeValueByColumn(columnName);
 				if (StringUtil.isNotBlank(comments)) {
 					// 前四个参数是坐标点,后四个参数是编辑和显示批注时的大小.
 					XSSFComment comment = xssfDrawing.createCellComment(new XSSFClientAnchor
-							(0, 0, 0, 0, (short) 0, 0, (short) 3, 11));
+							(0, 0, 0, 0, (short) 4, 2, (short) 6, 5));
 					comment.setString(new XSSFRichTextString(comments));
 					createCell.setCellComment(comment);
 				}
+				cellNum++;
 			}
 			// 14.表对应所有列的值信息
 			List<List<String>> columnValList = new ArrayList<>();
@@ -2144,7 +2144,6 @@ public class JobConfiguration extends BaseAction {
 					List<String> columnInfoList = new ArrayList<>();
 					for (String columnName : columnNames) {
 						// 17.设置每列信息
-						logger.info("========" + columnName);
 						if (tableInfo.get(columnName) != null) {
 							columnInfoList.add(tableInfo.get(columnName).toString());
 						} else {
@@ -2213,64 +2212,73 @@ public class JobConfiguration extends BaseAction {
 			// 作业程序类型
 			case pro_type:
 				Pro_Type[] proTypes = Pro_Type.values();
+				sb.append("详细说明：");
 				for (Pro_Type proType : proTypes) {
-					sb.append("详细信息：").append("\r\n").append(proType.getCode()).append(" ：").append(proType.getValue());
+					sb.append("\r\n").append(proType.getCode()).append(" ：").append(proType.getValue());
 				}
 				break;
 			// 调度频率
 			case disp_freq:
 				Dispatch_Frequency[] dispatchFrequencies = Dispatch_Frequency.values();
+				sb.append("详细说明：");
 				for (Dispatch_Frequency frequency : dispatchFrequencies) {
-					sb.append("详细信息：").append("\r\n").append(frequency.getCode()).append(" ：").append(frequency.getValue());
+					sb.append("\r\n").append(frequency.getCode()).append(" ：").append(frequency.getValue());
 				}
 				break;
 			// 触发方式
 			case disp_type:
 				Dispatch_Type[] dispatchTypes = Dispatch_Type.values();
+				sb.append("详细说明：");
 				for (Dispatch_Type dispatchType : dispatchTypes) {
-					sb.append("详细信息：").append("\r\n").append(dispatchType.getCode()).append(" ：").append(dispatchType.getValue());
+					sb.append("\r\n").append(dispatchType.getCode()).append(" ：").append(dispatchType.getValue());
 				}
 				break;
 			// 作业有效标志
 			case job_eff_flag:
 				Job_Effective_Flag[] effectiveFlags = Job_Effective_Flag.values();
+				sb.append("详细说明：");
 				for (Job_Effective_Flag effectiveFlag : effectiveFlags) {
-					sb.append("详细信息：").append("\r\n").append(effectiveFlag.getCode()).append(" ：").append(effectiveFlag.getValue());
+					sb.append("\r\n").append(effectiveFlag.getCode()).append(" ：").append(effectiveFlag.getValue());
 				}
 				break;
 			// 作业调度状态
 			case job_disp_status:
 				Job_Status[] jobStatuses = Job_Status.values();
+				sb.append("详细说明：");
 				for (Job_Status jobStatus : jobStatuses) {
-					sb.append("详细信息：").append("\r\n").append(jobStatus.getCode()).append(" ：").append(jobStatus.getValue());
+					sb.append("\r\n").append(jobStatus.getCode()).append(" ：").append(jobStatus.getValue());
 				}
 				break;
 			// 当天是否调度
 			case today_disp:
 				Today_Dispatch_Flag[] todayDispatchFlags = Today_Dispatch_Flag.values();
+				sb.append("详细说明：");
 				for (Today_Dispatch_Flag todayDispatchFlag : todayDispatchFlags) {
-					sb.append("详细信息：").append("\r\n").append(todayDispatchFlag.getCode()).append(" ：").append(todayDispatchFlag.getValue());
+					sb.append("\r\n").append(todayDispatchFlag.getCode()).append(" ：").append(todayDispatchFlag.getValue());
 				}
 				break;
 			// 主服务器同步标志
 			case main_serv_sync:
 				Main_Server_Sync[] mainServerSyncs = Main_Server_Sync.values();
+				sb.append("详细说明：");
 				for (Main_Server_Sync mainServerSync : mainServerSyncs) {
-					sb.append("详细信息：").append("\r\n").append(mainServerSync.getCode()).append(" ：").append(mainServerSync.getValue());
+					sb.append("\r\n").append(mainServerSync.getCode()).append(" ：").append(mainServerSync.getValue());
 				}
 				break;
 			// 状态
 			case status:
 				Status[] statuses = Status.values();
+				sb.append("详细说明：");
 				for (Status status : statuses) {
-					sb.append("详细信息：").append("\r\n").append(status.getCode()).append(" ：").append(status.getValue());
+					sb.append("\r\n").append(status.getCode()).append(" ：").append(status.getValue());
 				}
 				break;
 			// 变量类型
 			case para_type:
 				ParamType[] paramTypes = ParamType.values();
+				sb.append("详细说明：");
 				for (ParamType paramType : paramTypes) {
-					sb.append("详细信息：").append("\r\n").append(paramType.getCode()).append(" ：").append(paramType.getValue());
+					sb.append("\r\n").append(paramType.getCode()).append(" ：").append(paramType.getValue());
 				}
 				break;
 		}
