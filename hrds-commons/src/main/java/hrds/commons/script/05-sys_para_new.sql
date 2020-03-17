@@ -79,3 +79,4 @@ INSERT INTO sys_para VALUES ('187', 'ocr_rpc_use', '0', 'server.properties', '�
 INSERT INTO sys_para VALUES ('188', 'pic_rpc_cpu', 'http://10.71.4.55:33332', 'server.properties', '以图搜图模糊搜索RPC服务器地址');
 INSERT INTO sys_para VALUES ('189', 'redis_ip', '10.71.4.61', 'server.properties', 'Redis服务IP');
 INSERT INTO sys_para VALUES ('190', 'redis_port', '56379', 'server.properties', 'Redis端口');
+INSERT INTO sys_para VALUES ('191', 'predict_address', 'http://139.9.126.19:38081/predict', 'server.properties','数据对标-标准预测地址');
