@@ -17,10 +17,7 @@ import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
-import hrds.commons.codes.CollectDataType;
-import hrds.commons.codes.IsFlag;
-import hrds.commons.codes.ObjectCollectType;
-import hrds.commons.codes.OperationType;
+import hrds.commons.codes.*;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.AgentActionUtil;
@@ -33,7 +30,7 @@ import org.apache.logging.log4j.Logger;
 import java.lang.reflect.Type;
 import java.util.*;
 
-@DocClass(desc = "半结构化采集接口类，处理对象采集的增删改查", author = "dhw", createdate = "2019/9/16 15:02")
+@DocClass(desc = "半结构化采集接口类，处理对象采集的增删改查", author = "zxz", createdate = "2019/9/16 15:02")
 public class ObjectCollectAction extends BaseAction {
 
 	private static final Logger logger = LogManager.getLogger(ObjectCollectAction.class.getName());
@@ -699,7 +696,7 @@ public class ObjectCollectAction extends BaseAction {
 				+ Object_collect.TableName + " where odc_id=?", odc_id);
 		if (!isDictionaryList.isEmpty()) {
 			// 3.判断是否数据字典已存在，已存在不重写数据字典
-			if (IsFlag.Fou == IsFlag.ofEnumByCode(isDictionaryList.get(0).toString())) {
+			if (IsFlag.Shi == IsFlag.ofEnumByCode(isDictionaryList.get(0).toString())) {
 				logger.info("已经存在数据字典，不需要重写数据字典");
 			} else {
 				List<Object> filePathList = Dbo.queryOneColumnList("select file_path from "
