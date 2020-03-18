@@ -2,7 +2,6 @@ package hrds.b.biz.agent.objectcollect;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.alibaba.fastjson.TypeReference;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.FileUtil;
@@ -21,10 +20,10 @@ import hrds.testbase.WebBaseTestCase;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import scala.reflect.internal.Trees;
 
 import java.io.File;
-import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -49,8 +48,6 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 	private static final long OBJECT_STORAGE_ROWS = 10L;
 	//向object_collect_struct表中初始化的数据条数
 	private static final long OBJECT_COLLECT_STRUCT_ROWS = 10L;
-	//向object_collect_struct表中初始化的数据条数
-	private static final long OBJECT_HANDLE_TYPE_ROWS = 3L;
 	//Agent信息表id
 	private static final long AGENT_ID = 10000001L;
 	//用户id
@@ -141,7 +138,13 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 				object_collect.setIs_sendok(IsFlag.Fou.getCode());
 				object_collect.setAgent_id(AGENT_ID);
 				object_collect.setIs_dictionary(IsFlag.Shi.getCode());
-				object_collect.setData_date(DateUtil.getSysDate());
+				if (i == 0) {
+					object_collect.setIs_dictionary(IsFlag.Fou.getCode());
+					object_collect.setData_date(DateUtil.getSysDate());
+					object_collect.setFile_path(DICTINARYFILE.getAbsolutePath());
+				} else {
+					object_collect.setData_date("");
+				}
 				object_collect.setFile_suffix("json");
 				assertThat("初始化数据成功", object_collect.add(db), is(1));
 			}
@@ -157,6 +160,14 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 				object_collect_task.setOdc_id(ODC_ID);
 				object_collect_task.setUpdatetype(UpdateType.DirectUpdate.getCode());
 				object_collect_task.setFirstline("aaa");
+				if (i == 0) {
+					object_collect_task.setFirstline("[{\"columns\":[{\"column_id\":\"0\"," +
+							"\"is_key\":\"1\",\"columnposition\":\"date\",\"column_name\":\"date\"," +
+							"\"is_solr\":\"1\",\"column_type\":\"decimal(38,18)\",\"is_operate\":\"1\"," +
+							"\"is_rowkey\":\"0\",\"is_hbase\":\"0\"}],\"handletype\":{\"insert\":\"\"," +
+							"\"update\":\"\",\"delete\":\"\"},\"updatetype\":\"0\"," +
+							"\"table_cn_name\":\"t_executedpersons\",\"table_name\":\"t_executedpersons\"}]");
+				}
 				assertThat("初始化数据成功", object_collect_task.add(db), is(1));
 			}
 			//6.造object_storage表数据，默认为10条,OBJ_STID为40000001---40000010
@@ -174,39 +185,31 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 			for (int i = 0; i < OBJECT_COLLECT_STRUCT_ROWS; i++) {
 				Object_collect_struct object_collect_struct = new Object_collect_struct();
 				object_collect_struct.setStruct_id(STRUCT_ID + i);
-				object_collect_struct.setOcs_id(OCS_ID);
+				object_collect_struct.setOcs_id(OCS_ID + i);
 				object_collect_struct.setColumn_name("testcol" + i);
 				object_collect_struct.setData_desc("测试对象中文描述" + i);
-				object_collect_struct.setColumn_type(ObjectDataType.ZiFuChuan.getCode());
-				object_collect_struct.setIs_hbase(IsFlag.Fou.getCode());
-				object_collect_struct.setIs_key(IsFlag.Fou.getCode());
-				object_collect_struct.setIs_operate(IsFlag.Fou.getCode());
-				object_collect_struct.setIs_rowkey(IsFlag.Fou.getCode());
-				object_collect_struct.setIs_solr(IsFlag.Fou.getCode());
+				object_collect_struct.setColumn_type("decimal(18,32)");
+				object_collect_struct.setIs_hbase(IsFlag.Shi.getCode());
+				object_collect_struct.setIs_key(IsFlag.Shi.getCode());
+				object_collect_struct.setIs_operate(IsFlag.Shi.getCode());
+				object_collect_struct.setIs_rowkey(IsFlag.Shi.getCode());
+				object_collect_struct.setIs_solr(IsFlag.Shi.getCode());
 				object_collect_struct.setColumnposition("columns." + "testcol" + i);
 				object_collect_struct.setCol_seq(Long.valueOf(i + 1));
 				assertThat("初始化数据成功", object_collect_struct.add(db), is(1));
 			}
-			// 8.构造object_handle_type表数据，默认三条object_handle_id为6000001-60000003
-			for (int i = 0; i < OBJECT_HANDLE_TYPE_ROWS; i++) {
+			// 8.构造object_handle_type表数据，默认30条object_handle_id为6000001-600000030
+			for (int i = 0; i < OBJECT_COLLECT_TASK_ROWS; i++) {
 				Object_handle_type object_handle_type = new Object_handle_type();
 				object_handle_type.setObject_handle_id(OBJECT_HANDLE_ID + i);
-				switch (i) {
-					case 0:
-						object_handle_type.setHandle_type(OperationType.INSERT.getCode());
-						object_handle_type.setHandle_value(OperationType.INSERT.getValue());
-						break;
-					case 1:
-						object_handle_type.setHandle_type(OperationType.UPDATE.getCode());
-						object_handle_type.setHandle_value(OperationType.UPDATE.getValue());
-						break;
-					case 2:
-						object_handle_type.setHandle_type(OperationType.DELETE.getCode());
-						object_handle_type.setHandle_value(OperationType.DELETE.getValue());
-						break;
+				object_handle_type.setOcs_id(OCS_ID + i);
+				OperationType[] values = OperationType.values();
+				for (int j = 0; j < values.length; j++) {
+					object_handle_type.setObject_handle_id(OBJECT_HANDLE_ID + i + j);
+					object_handle_type.setHandle_type(values[j].getCode());
+					object_handle_type.setHandle_value(values[j].getValue());
+					assertThat("初始化数据成功", object_handle_type.add(db), is(1));
 				}
-				object_handle_type.setOcs_id(OCS_ID);
-				assertThat("初始化数据成功", object_handle_type.add(db), is(1));
 			}
 			SqlOperator.commitTransaction(db);
 		}
@@ -514,8 +517,17 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 					, is(DataBaseCode.UTF_8.getCode()));
 			assertThat(ar.getDataForResult().getString(i, "collect_data_type")
 					, is(CollectDataType.JSON.getCode()));
-			assertThat(ar.getDataForResult().getString(i, "firstline")
-					, is("aaa"));
+			if (i==0){
+				assertThat(ar.getDataForResult().getString(i, "firstline")
+						, is("[{\"columns\":[{\"column_id\":\"0\"," +
+								"\"is_key\":\"1\",\"columnposition\":\"date\",\"column_name\":\"date\"," +
+								"\"is_solr\":\"1\",\"column_type\":\"decimal(38,18)\",\"is_operate\":\"1\"," +
+								"\"is_rowkey\":\"0\",\"is_hbase\":\"0\"}],\"handletype\":{\"insert\":\"\"," +
+								"\"update\":\"\",\"delete\":\"\"},\"updatetype\":\"0\"," +
+								"\"table_cn_name\":\"t_executedpersons\",\"table_name\":\"t_executedpersons\"}]"));
+			}else {
+				assertThat(ar.getDataForResult().getString(i, "firstline"), is("aaa"));
+			}
 			assertThat(ar.getDataForResult().getString(i, "en_name")
 					, is("aaa" + i));
 			assertThat(ar.getDataForResult().getString(i, "zh_name")
@@ -547,8 +559,7 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 	 * <p>
 	 * 1.使用ocs_id为30000007删除object_collect_task表，ocs_id为30000001对应的对象采集存储设置下有数据
 	 * 2.使用ocs_id为30000001删除object_collect_task表，ocs_id为30000007对应的对象采集结构信息表
-	 * 3.使用ocs_id为30000002删除object_collect_task表
-	 * 4.使用不存在的ocs_id删除object_collect_task表
+	 * 3.使用不存在的ocs_id删除object_collect_task表
 	 * 注：此方法没有写到四个及以上的测试用例是因为此方法只是一个查询方法，只有正确和错误两种情况
 	 */
 	@Test
@@ -569,23 +580,7 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(false));
 
-		//3.使用ocs_id为30000002删除object_collect_task表
-		bodyString = new HttpClient()
-				.addData("ocs_id", OCS_ID + 1)
-				.post(getActionUrl("deleteObjectCollectTask")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
-				-> new BusinessException("连接失败！"));
-		assertThat(ar.isSuccess(), is(true));
-		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			long optionalLong = SqlOperator.queryNumber(db, "select count(1) count from "
-					+ Object_collect_task.TableName + " where agent_id = ? ", AGENT_ID)
-					.orElseThrow(() -> new BusinessException("该查询有且仅有一条数据"));
-			assertThat("校验Object_collect_task表数据量正确", optionalLong
-					, is(OBJECT_COLLECT_TASK_ROWS - 1));
-		}
-
-
-		//4.使用不存在的ocs_id删除object_collect_task表
+		//3.使用不存在的ocs_id删除object_collect_task表
 		bodyString = new HttpClient()
 				.addData("ocs_id", OCS_ID + 100)
 				.post(getActionUrl("deleteObjectCollectTask")).getBodyString();
@@ -729,25 +724,25 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
 		//验证数据
-		assertThat(ar.getDataForResult().getRowCount(), is(Integer.parseInt(OBJECT_COLLECT_STRUCT_ROWS + "")));
+		assertThat(ar.getDataForResult().getRowCount(), is(1));
 		assertThat(ar.getDataForResult().getString(0, "column_type")
-				, is(ObjectDataType.ZiFuChuan.getCode()));
+				, is("decimal(18,32)"));
 		assertThat(ar.getDataForResult().getLong(0, "col_seq")
 				, is(1L));
 		assertThat(ar.getDataForResult().getString(0, "is_key")
-				, is(IsFlag.Fou.getCode()));
+				, is(IsFlag.Shi.getCode()));
 		assertThat(ar.getDataForResult().getString(0, "is_hbase")
-				, is(IsFlag.Fou.getCode()));
+				, is(IsFlag.Shi.getCode()));
 		assertThat(ar.getDataForResult().getString(0, "is_rowkey")
-				, is(IsFlag.Fou.getCode()));
+				, is(IsFlag.Shi.getCode()));
 		assertThat(ar.getDataForResult().getString(0, "is_solr")
-				, is(IsFlag.Fou.getCode()));
+				, is(IsFlag.Shi.getCode()));
 		assertThat(ar.getDataForResult().getString(0, "columnposition")
 				, is("columns.testcol0"));
 		assertThat(ar.getDataForResult().getString(0, "is_operate")
-				, is(IsFlag.Fou.getCode()));
+				, is(IsFlag.Shi.getCode()));
 		assertThat(ar.getDataForResult().getString(0, "is_solr")
-				, is(IsFlag.Fou.getCode()));
+				, is(IsFlag.Shi.getCode()));
 		assertThat(ar.getDataForResult().getString(0, "data_desc")
 				, is("测试对象中文描述0"));
 
@@ -777,9 +772,9 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 		//验证数据
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			long optionalLong = SqlOperator.queryNumber(db, "select count(1) count from "
-					+ Object_collect_struct.TableName + " where ocs_id = ?", OCS_ID).orElseThrow(() ->
+					+ Object_collect_struct.TableName + " where struct_id = ?", STRUCT_ID).orElseThrow(() ->
 					new BusinessException("查询得到的数据必须有且只有一条"));
-			assertThat("校验数据量正确", optionalLong, is(OBJECT_COLLECT_STRUCT_ROWS - 1));
+			assertThat("校验数据量正确", optionalLong, is(0L));
 		}
 
 		//2.测试一个错误的struct_id，删除对象采集结构信息表
@@ -1330,6 +1325,218 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 		assertThat(ar.isSuccess(), is(true));
 	}
 
+	@Method(desc = "保存对象采集结构信息（采集列结构）",
+			logicStep = "1.正确的数据访问1，数据都有效，struct_id为空，走新增路线" +
+					"2.正确的数据访问，数据有效，struct_id不为空，走更新路线" +
+					"3.错误的数据访问1，collectStruct数据格式有误" +
+					"备注：此方法只有三种情况")
+	@Test
+	public void saveCollectColumnStructTest() {
+		List<Map<String, Object>> list = new ArrayList<>();
+		for (int i = 0; i < 6; i++) {
+			Map<String, Object> map = new HashMap<>();
+			map.put("ocs_id", "10001");
+			map.put("is_hbase", IsFlag.Fou.getCode());
+			map.put("is_solr", IsFlag.Fou.getCode());
+			map.put("is_rowkey", IsFlag.Fou.getCode());
+			map.put("is_operate", IsFlag.Shi.getCode());
+			map.put("is_key", IsFlag.Shi.getCode());
+			map.put("col_seq", i);
+			switch (i) {
+				case 0:
+					map.put("column_name", "column_id");
+					map.put("column_type", "decimal(38,18)");
+					map.put("columnposition", "columns,column_id");
+					break;
+				case 1:
+					map.put("column_name", "table_name");
+					map.put("column_type", "varchar(512)");
+					map.put("columnposition", "columns,table_name");
+					break;
+				case 2:
+					map.put("column_name", "table_cn_name");
+					map.put("column_type", "varchar(512)");
+					map.put("columnposition", "columns,table_cn_name");
+					break;
+				case 3:
+					map.put("column_name", "updatetype");
+					map.put("column_type", "varchar(1)");
+					map.put("columnposition", "updatetype");
+					break;
+				case 4:
+					map.put("column_name", "insert");
+					map.put("column_type", "decimal(38,18)");
+					map.put("columnposition", "handletype,insert");
+					break;
+				case 5:
+					map.put("column_name", "column_name");
+					map.put("column_type", "decimal(38,18)");
+					map.put("columnposition", "columns,column_name");
+					break;
+			}
+			list.add(map);
+		}
+		// 1.正确的数据访问1，数据都有效，struct_id为空，走新增路线
+		bodyString = new HttpClient().addData("collectStruct", JsonUtil.toJson(list))
+				.post(getActionUrl("saveCollectColumnStruct")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
+		assertThat(ar.isSuccess(), is(true));
+		// 验证数据保存是否正确
+		List<Object_collect_struct> collectStructs;
+		try (DatabaseWrapper db = new DatabaseWrapper()) {
+			collectStructs = SqlOperator.queryList(db, Object_collect_struct.class,
+					"select * from " + Object_collect_struct.TableName + " where ocs_id=? order by col_seq",
+					10001);
+			assertThat(collectStructs.get(0).getOcs_id(), is(Long.parseLong("10001")));
+			assertThat(collectStructs.get(0).getColumn_type(), is("decimal(38,18)"));
+			assertThat(collectStructs.get(0).getColumnposition(), is("columns,column_id"));
+			assertThat(collectStructs.get(0).getIs_hbase(), is(IsFlag.Fou.getCode()));
+			assertThat(collectStructs.get(0).getIs_rowkey(), is(IsFlag.Fou.getCode()));
+			assertThat(collectStructs.get(0).getIs_solr(), is(IsFlag.Fou.getCode()));
+			assertThat(collectStructs.get(0).getCol_seq(), is(0L));
+			assertThat(collectStructs.get(0).getIs_operate(), is(IsFlag.Shi.getCode()));
+			assertThat(collectStructs.get(0).getIs_key(), is(IsFlag.Shi.getCode()));
+		}
+		// 2.正确的数据访问，数据有效，struct_id不为空，走更新路线
+		List<Map<String, Object>> list2 = new ArrayList<>();
+		for (int i = 0; i < 6; i++) {
+			Map<String, Object> map = new HashMap<>();
+			map.put("ocs_id", "10001");
+			map.put("is_hbase", IsFlag.Shi.getCode());
+			map.put("is_solr", IsFlag.Fou.getCode());
+			map.put("is_rowkey", IsFlag.Fou.getCode());
+			map.put("is_operate", IsFlag.Shi.getCode());
+			map.put("is_key", IsFlag.Shi.getCode());
+			map.put("col_seq", i);
+			map.put("struct_id", collectStructs.get(i).getStruct_id());
+			switch (i) {
+				case 0:
+					map.put("column_name", "column_id");
+					map.put("column_type", "int(8)");
+					map.put("columnposition", "columns,column_id");
+					break;
+				case 1:
+					map.put("column_name", "table_name");
+					map.put("column_type", "varchar(256)");
+					map.put("columnposition", "columns,table_name");
+					break;
+				case 2:
+					map.put("column_name", "table_cn_name");
+					map.put("column_type", "varchar(256)");
+					map.put("columnposition", "columns,table_cn_name");
+					break;
+				case 3:
+					map.put("column_name", "updatetype");
+					map.put("column_type", "bpchar(1)");
+					map.put("columnposition", "updatetype");
+					break;
+				case 4:
+					map.put("column_name", "insert");
+					map.put("column_type", "bpchar(1)");
+					map.put("columnposition", "handletype,insert");
+					break;
+				case 5:
+					map.put("column_name", "column_name");
+					map.put("column_type", "varchar(512)");
+					map.put("columnposition", "columns,column_name");
+					break;
+			}
+			list2.add(map);
+		}
+		bodyString = new HttpClient().addData("collectStruct", JsonUtil.toJson(list2))
+				.post(getActionUrl("saveCollectColumnStruct")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
+		assertThat(ar.isSuccess(), is(true));
+		try (DatabaseWrapper db = new DatabaseWrapper()) {
+			collectStructs = SqlOperator.queryList(db, Object_collect_struct.class,
+					"select * from " + Object_collect_struct.TableName + " where ocs_id=? order by col_seq",
+					10001);
+			assertThat(collectStructs.get(0).getOcs_id(), is(Long.parseLong("10001")));
+			assertThat(collectStructs.get(0).getColumn_type(), is("int(8)"));
+			assertThat(collectStructs.get(0).getColumnposition(), is("columns,column_id"));
+			assertThat(collectStructs.get(0).getIs_hbase(), is(IsFlag.Shi.getCode()));
+			assertThat(collectStructs.get(0).getIs_rowkey(), is(IsFlag.Fou.getCode()));
+			assertThat(collectStructs.get(0).getIs_solr(), is(IsFlag.Fou.getCode()));
+			assertThat(collectStructs.get(0).getCol_seq(), is(0L));
+			assertThat(collectStructs.get(0).getIs_operate(), is(IsFlag.Shi.getCode()));
+			assertThat(collectStructs.get(0).getIs_key(), is(IsFlag.Shi.getCode()));
+		}
+		// 3.错误的数据访问1，collectStruct数据格式有误
+		bodyString = new HttpClient().addData("collectStruct", "aaaa")
+				.post(getActionUrl("saveCollectColumnStruct")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
+		assertThat(ar.isSuccess(), is(false));
+	}
+
+	@Method(desc = "保存表的码表信息（操作码表）",
+			logicStep = "1.正确的数据访问1，数据都有效")
+	@Test
+	public void saveHandleTypeTest() {
+		List<Object> list = new ArrayList<>();
+		for (int i = 0; i < 3; i++) {
+			Map<String, Object> map = new HashMap<>();
+			map.put("ocs_id", OCS_ID);
+			switch (i) {
+				case 0:
+					map.put("handle_type", OperationType.INSERT.getCode());
+					map.put("handle_value", OperationType.INSERT.getValue());
+					break;
+				case 1:
+					map.put("handle_type", OperationType.UPDATE.getCode());
+					map.put("handle_value", OperationType.UPDATE.getValue());
+					break;
+				case 2:
+					map.put("handle_type", OperationType.DELETE.getCode());
+					map.put("handle_value", OperationType.DELETE.getValue());
+					break;
+			}
+			list.add(map);
+		}
+		// 1.正确的数据访问1，数据都有效
+		bodyString = new HttpClient()
+				.addData("handleType", JsonUtil.toJson(list))
+				.post(getActionUrl("saveHandleType")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
+		assertThat(ar.isSuccess(), is(true));
+		// 2.错误的数据访问1，handleType格式错误不存在
+		bodyString = new HttpClient()
+				.addData("handleType", "aaa")
+				.post(getActionUrl("saveHandleType")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
+		assertThat(ar.isSuccess(), is(false));
+	}
+
+	@Method(desc = "", logicStep = "")
+	@Test
+	public void checkFieldsForSaveObjectCollectTaskTest() {
+		List<Object_collect_task> list = new ArrayList<>();
+		for (int i = 0; i < OBJECT_COLLECT_TASK_ROWS; i++) {
+			Object_collect_task objectCollectTask = new Object_collect_task();
+			objectCollectTask.setOcs_id(OCS_ID + i);
+			objectCollectTask.setOdc_id(ODC_ID);
+			objectCollectTask.setUpdatetype(UpdateType.DirectUpdate.getCode());
+			objectCollectTask.setEn_name("aaa" + i);
+			objectCollectTask.setZh_name("测试aaa" + i);
+			objectCollectTask.setFirstline("");
+			objectCollectTask.setDatabase_code(DataBaseCode.UTF_8.getCode());
+			objectCollectTask.setAgent_id(AGENT_ID);
+			objectCollectTask.setCollect_data_type(CollectDataType.JSON.getCode());
+			list.add(objectCollectTask);
+		}
+		bodyString = new HttpClient()
+				.addData("objColTask", JsonUtil.toJson(list))
+				.post(getActionUrl("checkFieldsForSaveObjectCollectTask")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
+		assertThat(ar.isSuccess(), is(true));
+	}
+
+
 	/**
 	 * 测试用例清理数据
 	 * <p>
@@ -1362,11 +1569,15 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 			SqlOperator.execute(db, "DELETE FROM " + Object_storage.TableName
 					+ " WHERE remark = ?", "zxz测试用例清除表object_storage专用");
 			//7.删除测试用例造的object_collect_struct表数据，默认为10条,STRUCT_ID为50000001---50000010
-			SqlOperator.execute(db, "DELETE FROM " + Object_collect_struct.TableName
-					+ " WHERE ocs_id = ?", OCS_ID);
+			for (long i = 0; i < OBJECT_COLLECT_STRUCT_ROWS; i++) {
+				SqlOperator.execute(db, "DELETE FROM " + Object_collect_struct.TableName
+						+ " WHERE ocs_id = ?", OCS_ID + i);
+			}
 			// 8.删除测试用例造的Object_handle_type表数据，默认为3条,object_handle_id为60000001---60000003
-			SqlOperator.execute(db, "DELETE FROM " + Object_handle_type.TableName
-					+ " WHERE ocs_id = ?", OCS_ID);
+			for (long i = 0; i < OBJECT_COLLECT_TASK_ROWS; i++) {
+				SqlOperator.execute(db, "DELETE FROM " + Object_handle_type.TableName
+						+ " WHERE ocs_id = ?", OCS_ID + i);
+			}
 			SqlOperator.commitTransaction(db);
 		}
 	}
