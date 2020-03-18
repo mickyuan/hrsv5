@@ -17,7 +17,10 @@ import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
-import hrds.commons.codes.*;
+import hrds.commons.codes.CollectDataType;
+import hrds.commons.codes.IsFlag;
+import hrds.commons.codes.ObjectCollectType;
+import hrds.commons.codes.OperationType;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.AgentActionUtil;
@@ -30,7 +33,7 @@ import org.apache.logging.log4j.Logger;
 import java.lang.reflect.Type;
 import java.util.*;
 
-@DocClass(desc = "对象采集接口类，处理对象采集的增删改查", author = "zxz", createdate = "2019/9/16 15:02")
+@DocClass(desc = "半结构化采集接口类，处理对象采集的增删改查", author = "dhw", createdate = "2019/9/16 15:02")
 public class ObjectCollectAction extends BaseAction {
 
 	private static final Logger logger = LogManager.getLogger(ObjectCollectAction.class.getName());
