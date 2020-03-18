@@ -1,4 +1,4 @@
-package hrds.c.biz.jobschedule;
+package hrds.c.biz.jobconfig;
 
 import com.alibaba.fastjson.TypeReference;
 import fd.ng.core.annotation.DocClass;
@@ -5122,8 +5122,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
 					"12.错误的数据访问11，etl_job为空格" +
 					"13.错误的数据访问12，status为空" +
 					"14.错误的数据访问13，status为空格" +
-					"15.错误的数据访问14，status不存在" +
-					"16.错误的数据访问15，作业依赖已存在")
+					"15.错误的数据访问14，status不存在")
 	@Test
 	public void updateEtlDependency() {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
@@ -5324,19 +5323,6 @@ public class JobConfigurationTest extends WebBaseTestCase {
 					.addData("etl_job", "测试作业1")
 					.addData("pre_etl_job", "测试作业0")
 					.addData("status", 2)
-					.addData("oldEtlJob", "测试作业6")
-					.addData("oldPreEtlJob", "测试作业10")
-					.post(getActionUrl("updateEtlDependency"))
-					.getBodyString();
-			ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
-					.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
-			assertThat(ar.isSuccess(), is(false));
-			// 16.错误的数据访问15，作业依赖已存在
-			bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
-					.addData("pre_etl_sys_cd", EtlSysCd)
-					.addData("etl_job", "测试作业6")
-					.addData("pre_etl_job", "测试作业10")
-					.addData("status", Status.TRUE.getCode())
 					.addData("oldEtlJob", "测试作业6")
 					.addData("oldPreEtlJob", "测试作业10")
 					.post(getActionUrl("updateEtlDependency"))
@@ -5713,12 +5699,11 @@ public class JobConfigurationTest extends WebBaseTestCase {
 					"2.错误的数据访问1，文件不存在")
 	@Test
 	public void uploadExcelFile() {
-		File file1 = FileUtil.getFile("src//main//java//upload//样式.xlsx");
 		File file = FileUtil.getFile("src//main//java//upload//Etl_resource.xlsx");
 		// 1.正常的数据访问1，数据都正常
 		String bodyString = new HttpClient()
 				.reset(SubmitMediaType.MULTIPART)
-				.addFile("file", file1)
+				.addFile("file", file)
 				.post(getActionUrl("uploadExcelFile"))
 				.getBodyString();
 		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -5747,22 +5732,34 @@ public class JobConfigurationTest extends WebBaseTestCase {
 
 	}
 
+	@Method(desc = "生成excel文件",
+			logicStep = "1.正确的数据访问1，数据都有效" +
+					"2.错误的数据访问1，etl_sys_cd不存在" +
+					"3.错误的数据访问2，tableName不存在")
 	@Test
 	public void generateExcelTest() {
+		// 1.正确的数据访问1，数据都有效
 		String bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
 				.addData("tableName", "etl_sub_sys_list")
 				.post(getActionUrl("generateExcel")).getBodyString();
 		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
 		assertThat(ar.isSuccess(), is(true));
-	}
-
-	@Test
-	public void downloadFileTest() {
-		String bodyString = new HttpClient()
-				.addData("fileName", "etl_sub_sys_list")
-				.post(getActionUrl("downloadFile")).getBodyString();
-		assertThat(bodyString, is(notNullValue()));
+		assertThat(ar.getData().toString(),is("etl_sub_sys_list.xlsx"));
+		// 2.错误的数据访问1，etl_sys_cd不存在
+		bodyString = new HttpClient().addData("etl_sys_cd", "dlfsjl")
+				.addData("tableName", "etl_sub_sys_list")
+				.post(getActionUrl("generateExcel")).getBodyString();
+		 ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+		assertThat(ar.isSuccess(), is(false));
+		// 3.错误的数据访问2，tableName不存在
+		bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+				.addData("tableName", "aaa")
+				.post(getActionUrl("generateExcel")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+		assertThat(ar.isSuccess(), is(false));
 	}
 }
 
