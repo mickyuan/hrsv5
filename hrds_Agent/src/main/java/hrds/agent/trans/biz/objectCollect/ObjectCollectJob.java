@@ -150,7 +150,6 @@ public class ObjectCollectJob extends AgentBaseAction {
 			}
 			// 7.写数据字典文件
 			originalFile = new File(filepath + DICTIONARYFILENAME);
-			String absolutePath = originalFile.getAbsolutePath();
 			BufferedWriter writer = new BufferedWriter(new FileWriter(originalFile));
 			writer.write(jsonArray);
 			writer.close();
