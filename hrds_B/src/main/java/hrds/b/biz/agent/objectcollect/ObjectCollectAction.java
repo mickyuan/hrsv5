@@ -659,21 +659,21 @@ public class ObjectCollectAction extends BaseAction {
 						"中文名为空，请检查");
 			}
 			// 5.循环检查采集列结构是否为空
-			if (Dbo.queryNumber("select * from " + Object_collect_struct.TableName +
+			if (Dbo.queryNumber("select count(*) from " + Object_collect_struct.TableName +
 					" where ocs_id=?", objectCollectTaskList.get(i).getOcs_id())
 					.orElseThrow(() -> new BusinessException("sql查询错误！")) == 0) {
 				throw new BusinessException("第" + (i + 1) + "行表" + objectCollectTaskList.get(i).getEn_name() +
 						"采集列结构为空，请检查");
 			}
 			// 6.循环检查操作码表是否为空
-			if (Dbo.queryNumber("select * from " + Object_handle_type.TableName +
+			if (Dbo.queryNumber("select count(*) from " + Object_handle_type.TableName +
 					" where ocs_id=?", objectCollectTaskList.get(i).getOcs_id())
 					.orElseThrow(() -> new BusinessException("sql查询错误！")) == 0) {
 				throw new BusinessException("第" + (i + 1) + "行表" + objectCollectTaskList.get(i).getEn_name() +
 						"操作码表为空，请检查");
 			}
 			// 7.循环检查操作字段是否为1个
-			if (Dbo.queryNumber("select * from " + Object_collect_struct.TableName +
+			if (Dbo.queryNumber("select count(*) from " + Object_collect_struct.TableName +
 							" where ocs_id=? and is_operate=?", objectCollectTaskList.get(i).getOcs_id(),
 					IsFlag.Shi.getCode()).orElseThrow(() -> new BusinessException("sql查询错误！")) != 1) {
 				throw new BusinessException("第" + (i + 1) + "行表" + objectCollectTaskList.get(i).getEn_name() +
