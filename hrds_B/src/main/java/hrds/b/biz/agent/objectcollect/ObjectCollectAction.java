@@ -576,15 +576,16 @@ public class ObjectCollectAction extends BaseAction {
 	@Method(desc = "保存表的码表信息（操作码表）", logicStep = "1.数据可访问权限处理方式：该方法没有访问权限限制" +
 			"2.解析json为对象采集结构信息" +
 			"3.循环保存对象采集数据处理类型对应表信息")
-	@Param(name = "ocs_id", desc = "对象采集任务编号", range = "新增对象采集任务时生成")
 	@Param(name = "handleType", desc = "jsonArray格式的码表类型信息", range = "无限制")
-	public void saveHandleType(long ocs_id, String handleType) {
+	public void saveHandleType(String handleType) {
 		// 1.数据可访问权限处理方式：该方法没有访问权限限制
-		Dbo.execute("delete from " + Object_handle_type.TableName + " where ocs_id = ?", ocs_id);
-		Type type = new TypeReference<List<Object_collect_struct>>() {
+		Type type = new TypeReference<List<Object_handle_type>>() {
 		}.getType();
 		// 2.解析json为对象采集结构信息
 		List<Object_handle_type> handleTypeList = JsonUtil.toObject(handleType, type);
+		// 3.先删除原来的码表信息
+		Dbo.execute("delete from " + Object_handle_type.TableName + " where ocs_id = ?",
+				handleTypeList.get(0).getOcs_id());
 		// 3.循环保存对象采集数据处理类型对应表信息
 		for (Object_handle_type object_handle_type : handleTypeList) {
 			object_handle_type.setObject_handle_id(PrimayKeyGener.getNextId());
@@ -603,7 +604,7 @@ public class ObjectCollectAction extends BaseAction {
 		}.getType();
 		// 2.解析json为对象采集结构信息
 		List<Object_collect_struct> collectStructList = JsonUtil.toObject(collectStruct, type);
-		List<String> structIdList = new ArrayList<String>();
+		List<Long> structIdList = new ArrayList<Long>();
 		String struct_id;
 		// 3.循环保存对象采集结构信息入库，获取结构信息id
 		for (Object_collect_struct object_collect_struct : collectStructList) {
@@ -613,10 +614,9 @@ public class ObjectCollectAction extends BaseAction {
 				object_collect_struct.setStruct_id(struct_id);
 				object_collect_struct.add(Dbo.db());
 			} else {
-				struct_id = String.valueOf(object_collect_struct.getStruct_id());
 				object_collect_struct.update(Dbo.db());
 			}
-			structIdList.add(struct_id);
+			structIdList.add(object_collect_struct.getStruct_id());
 		}
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		// 4.删除非新保存结构信息
@@ -624,7 +624,7 @@ public class ObjectCollectAction extends BaseAction {
 		asmSql.addParam(collectStructList.get(0).getOcs_id());
 		for (int i = 0; i < structIdList.size(); i++) {
 			asmSql.addSql("?");
-			asmSql.addParam(Long.valueOf(structIdList.get(i)));
+			asmSql.addParam(structIdList.get(i));
 			if (i != structIdList.size() - 1) {
 				asmSql.addSql(",");
 			}
