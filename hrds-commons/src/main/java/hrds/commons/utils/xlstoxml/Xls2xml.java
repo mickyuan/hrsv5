@@ -134,9 +134,9 @@ public class Xls2xml {
 		}
 	}
 
-	public static void jsonToXmlForObjectCollect(String json_path, String xml_path) {
-		InputStream xlsFileInputStream = null;
-		createXml(xml_path);// 调用方法生成xml文件
+	public static void jsonToXmlForObjectCollect(String json_path, String xml_path){
+		// 调用方法生成xml文件
+		createXml(xml_path);
 		String info = "";
 		BufferedReader br = null;
 		try {
@@ -179,18 +179,11 @@ public class Xls2xml {
 				}
 			}
 			xmlCreater.buildXmlFile();// 生成xml文档
-		} catch (Exception e) {
-			if (e instanceof FileNotFoundException) {
-				// 如果继续错误，将已经身
-				File file = new File(xml_path);
-				if (file.exists()) {
-					file.delete();
-				}
-			}
-			logger.info(info + "json定义错误数据错误");
-		} finally {
-			IOUtils.closeQuietly(br);
-			IOUtils.closeQuietly(xlsFileInputStream);
+			br.close();
+		} catch (FileNotFoundException e) {
+			throw new BusinessException("文件不存在," + e.getMessage());
+		} catch (IOException e) {
+			throw new BusinessException("读取文件失败," + e.getMessage());
 		}
 	}
 

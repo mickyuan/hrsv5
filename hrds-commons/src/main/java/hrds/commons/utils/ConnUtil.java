@@ -12,6 +12,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.xml.sax.SAXException;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -19,6 +20,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
 import java.net.URI;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -443,11 +445,14 @@ public class ConnUtil {
 			}
 			jsonTable.put("tablename", jsonArray);
 			return jsonTable;
-		} catch (Exception ex) {
-			throw new BusinessException("加载信息异常！ ");
+		} catch (SAXException e) {
+			throw new BusinessException("解析文件异常," + e.getMessage());
+		} catch (IOException e) {
+			throw new BusinessException("加载信息异常," + e.getMessage());
 		}
 	}
-	@Method(desc = "没有数据字典时读取数据文件",logicStep = "")
+
+	@Method(desc = "没有数据字典时读取数据文件", logicStep = "")
 	@Param(desc = "文件路径", name = "dbpath", range = "无限制")
 	@Param(desc = "数据日期", name = "data_date", range = "无限制")
 	@Param(desc = "文件后缀名", name = "filesuffix", range = "无限制")
