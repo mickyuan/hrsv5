@@ -117,8 +117,7 @@ public class ObjectCollectJob extends AgentBaseAction {
 					"3.获取数据字典文件路径" +
 					"4.获取重写数据字典参数" +
 					"5.创建数据字典目录" +
-					"6.对数据字典文件重命名" +
-					"7.写数据字典文件")
+					"6.写数据字典文件")
 	@Param(name = "dictionaryParam", desc = "半结构化采集重写数据字典与agent交互参数", range = "不为空")
 	public void writeDictionary(String dictionaryParam) {
 		// 1.数据可访问权限处理方式：该方法没有访问权限限制
@@ -134,23 +133,17 @@ public class ObjectCollectJob extends AgentBaseAction {
 		String jsonArray = jsonMsgMap.get("dictionaryParam");
 		try {
 			// 5.创建数据字典目录
-			File originalFile = new File(filepath + DICTIONARYFILENAME);
-			if (originalFile.exists()) {
-				File dictionaryFile = new File(dictionaryFilepath);
-				if (!dictionaryFile.exists()) {
-					if (!dictionaryFile.mkdir()) {
-						throw new BusinessException("创建数据字典目录失败！");
-					}
-				}
-				// 6.对数据字典文件重命名
-				if (!originalFile.renameTo(new File(dictionaryFilepath + DateUtil.getSysDate()
-						+ DateUtil.getSysTime() + DICTIONARYFILENAME))) {
-					throw new BusinessException("文件重命名失败！");
+			File dictionaryFile = new File(dictionaryFilepath);
+			if (!dictionaryFile.exists()) {
+				if (!dictionaryFile.mkdir()) {
+					throw new BusinessException("创建数据字典目录失败！");
 				}
 			}
-			// 7.写数据字典文件
-			originalFile = new File(filepath + DICTIONARYFILENAME);
-			BufferedWriter writer = new BufferedWriter(new FileWriter(originalFile));
+			// 6.写数据字典文件
+			String pathname = dictionaryFilepath + DateUtil.getSysDate()
+					+ DateUtil.getSysTime() + DICTIONARYFILENAME;
+			dictionaryFile = new File(pathname);
+			BufferedWriter writer = new BufferedWriter(new FileWriter(dictionaryFile));
 			writer.write(jsonArray);
 			writer.close();
 		} catch (Exception e) {
