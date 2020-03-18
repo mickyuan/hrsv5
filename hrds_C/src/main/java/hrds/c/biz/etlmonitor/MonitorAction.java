@@ -597,7 +597,7 @@ public class MonitorAction extends BaseAction {
 					String label =
 							"作业："
 									+ etl_job
-									+ "\n\r触发方式：依赖触发\n\r"
+									+ "\n\r触发方式：依赖触发，无依赖关系作业\n\r"
 									+ "任务："
 									+ dependencyJobResult.getString(i, "sub_sys_cd");
 					gephi.setLabel(label).getAttributeValues().addValue(attUrl, "1");
@@ -610,7 +610,7 @@ public class MonitorAction extends BaseAction {
 					String label =
 							"作业："
 									+ etl_job
-									+ "\n\r触发方式：依赖触发\n\r"
+									+ "\n\r触发方式：依赖触发，无上游作业\n\r"
 									+ "任务："
 									+ dependencyJobResult.getString(i, "sub_sys_cd");
 					gephi.setLabel(label).getAttributeValues().addValue(attUrl, "2");
@@ -623,7 +623,7 @@ public class MonitorAction extends BaseAction {
 					String label =
 							"作业："
 									+ etl_job
-									+ "\n\r触发方式：依赖触发\n\r"
+									+ "\n\r触发方式：依赖触发,无下游作业\n\r"
 									+ "任务："
 									+ dependencyJobResult.getString(i, "sub_sys_cd");
 					gephi.setLabel(label).getAttributeValues().addValue(attUrl, "3");
@@ -636,7 +636,7 @@ public class MonitorAction extends BaseAction {
 					String label =
 							"作业："
 									+ etl_job
-									+ "\n\r触发方式：依赖触发\n\r"
+									+ "\n\r触发方式：依赖触发，上下游作业都有\n\r"
 									+ "任务："
 									+ dependencyJobResult.getString(i, "sub_sys_cd");
 					gephi.setLabel(label).getAttributeValues().addValue(attUrl, "4");

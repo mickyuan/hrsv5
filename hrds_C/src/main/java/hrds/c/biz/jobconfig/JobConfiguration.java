@@ -1717,8 +1717,7 @@ public class JobConfiguration extends BaseAction {
 					"2.验证作业依赖实体字段的合法性" +
 					"3.验证当前用户下的工程是否存在" +
 					"4.判断更改依赖前后作业名称是否相同，依赖作业名称不能修改" +
-					"5.判断作业依赖是否存在，存在就不需要更新" +
-					"6.更新作业依赖")
+					"5.更新作业依赖")
 	@Param(name = "etlDependency", desc = "作业依赖实体对象", range = "与数据库对应表字段规则一致", isBean = true)
 	@Param(name = "oldEtlJob", desc = "更新前作业名称", range = "新增作业时生成")
 	@Param(name = "oldPreEtlJob", desc = "更新前上游作业名称", range = "新增作业时生成")
@@ -1734,12 +1733,7 @@ public class JobConfiguration extends BaseAction {
 		if (!etlDependency.getEtl_job().equals(oldEtlJob)) {
 			throw new BusinessException("更改依赖时作业名称不能修改！");
 		}
-		// 5.判断作业依赖是否存在，存在就不需要更新
-		if (ETLJobUtil.isEtlDependencyExist(etlDependency.getEtl_sys_cd(), etlDependency.getPre_etl_sys_cd(),
-				etlDependency.getEtl_job(), etlDependency.getPre_etl_job())) {
-			throw new BusinessException("当前工程对应作业的依赖已存在！");
-		}
-		// 6.更新作业依赖
+		// 5.更新作业依赖
 		DboExecute.updatesOrThrow("更新作业依赖失败，etl_sys_cd=" + etlDependency.getEtl_sys_cd()
 						+ ",pre_etl_sys_cd=" + etlDependency.getPre_etl_sys_cd() +
 						",etl_job=" + etlDependency.getEtl_job() + ",pre_etl_job=" + etlDependency.getPre_etl_job(),
@@ -2085,8 +2079,8 @@ public class JobConfiguration extends BaseAction {
 			"作业依赖对应etl_dependency", range = "下载模块对应的表名称")
 	public String generateExcel(String etl_sys_cd, String tableName) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
-		FileOutputStream out = null;
-		XSSFWorkbook workbook = null;
+		FileOutputStream out;
+		XSSFWorkbook workbook;
 		try {
 			// 2.验证当前用户下的工程是否存在
 			if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
