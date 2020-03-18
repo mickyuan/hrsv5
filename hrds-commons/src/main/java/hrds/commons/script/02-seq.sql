@@ -93,6 +93,7 @@ INSERT INTO component_menu(menu_id,menu_path,user_type,menu_name,comp_id,menu_re
 INSERT INTO component_menu(menu_id,menu_path,user_type,menu_name,comp_id,menu_remark) VALUES (1000000004, '/dataQuery', '27', '资源管理', 'A000', 'el-icon-files');
 INSERT INTO component_menu(menu_id,menu_path,user_type,menu_name,comp_id,menu_remark) VALUES (1000000008, '/dataStoreLayer', '95', '数据存储层定义', 'A000', 'el-icon-s-unfold');
 
+
 delete from department_info;
 INSERT INTO department_info (dep_id,dep_name,create_date,create_time,dep_remark) VALUES ('1000000001','第一部门','20160101','120500','');
 
