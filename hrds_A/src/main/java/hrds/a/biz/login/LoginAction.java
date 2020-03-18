@@ -121,7 +121,7 @@ public class LoginAction extends BaseAction {
 	public List<Map<String, Object>> getMenu() {
 		String userTypeGroup = this.getUser().getUserTypeGroup();
 		String userGroup = "'" + StringUtil.replace(userTypeGroup, ",", "','") + "'";
-		return Dbo.queryList("select * from component_menu where user_type in(" + userGroup + ")");
+		return Dbo.queryList("select * from component_menu where user_type in(" + userGroup + ") order by menu_id");
 	}
 
 	@Method(desc = "用户登录获取默认的页面", logicStep = "1、查询菜单，获取菜单地址")
