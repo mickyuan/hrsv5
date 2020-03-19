@@ -56,6 +56,8 @@ public enum UserType {
 	ShuJuGuanKongGuanLiYuan("24","数据管控","17","用户类型"),
 	/**自主分析管理<ZiZhuFenXiGuanLi>  */
 	ZiZhuFenXiGuanLi("25","自主分析管理","17","用户类型"),
+	/**资源管理<ZiYuanGuanLi>  */
+	ZiYuanGuanLi("27","资源管理","17","用户类型"),
 	/**自主分析操作<ZiZhuFenXiCaoZuo>  */
 	ZiZhuFenXiCaoZuo("26","自主分析操作","17","用户类型"),
 	/**数据对标操作<ShuJuDuiBiaoCaoZuo>  */

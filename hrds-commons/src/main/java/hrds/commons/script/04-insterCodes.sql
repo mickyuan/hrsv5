@@ -41,7 +41,7 @@ INSERT INTO CODE_INFO  VALUES ('2', '69', 'Operation类型', 'DELETE', 'Operatio
 delete from code_info where ci_sp_class='71';
 INSERT INTO CODE_INFO  VALUES ('0', '71', '更新方式', '直接更新', 'UpdateType');
 INSERT INTO CODE_INFO  VALUES ('1', '71', '更新方式', '拉链更新', 'UpdateType');
---　本引用值的代码个数:34 -------i==7
+--　本引用值的代码个数:35 -------i==7
 delete from code_info where ci_sp_class='17';
 INSERT INTO CODE_INFO  VALUES ('00', '17', '用户类型', '系统管理员', 'UserType');
 INSERT INTO CODE_INFO  VALUES ('01', '17', '用户类型', '采集管理', 'UserType');
@@ -69,6 +69,7 @@ INSERT INTO CODE_INFO  VALUES ('22', '17', '用户类型', '报表查看(永洪)
 INSERT INTO CODE_INFO  VALUES ('23', '17', '用户类型', '流数据消费', 'UserType');
 INSERT INTO CODE_INFO  VALUES ('24', '17', '用户类型', '数据管控', 'UserType');
 INSERT INTO CODE_INFO  VALUES ('25', '17', '用户类型', '自主分析管理', 'UserType');
+INSERT INTO CODE_INFO  VALUES ('27', '17', '用户类型', '资源管理', 'UserType');
 INSERT INTO CODE_INFO  VALUES ('26', '17', '用户类型', '自主分析操作', 'UserType');
 INSERT INTO CODE_INFO  VALUES ('37', '17', '用户类型', '数据对标操作', 'UserType');
 INSERT INTO CODE_INFO  VALUES ('55', '17', '用户类型', '数据对标管理', 'UserType');
