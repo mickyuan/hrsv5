@@ -31,12 +31,9 @@ public class DBDataLoadingStageImpl extends AbstractJobStage {
 	private final static Logger LOGGER = LoggerFactory.getLogger(DBUploadStageImpl.class);
 	//数据采集表对应的存储的所有信息
 	private CollectTableBean collectTableBean;
-	//数据库采集表对应的meta信息
-//	private TableBean tableBean;
 
 	public DBDataLoadingStageImpl(CollectTableBean collectTableBean) {
 		this.collectTableBean = collectTableBean;
-//		this.tableBean = tableBean;
 	}
 
 	@Method(desc = "数据库直连采集数据加载阶段处理逻辑，处理完成后，无论成功还是失败，" +
