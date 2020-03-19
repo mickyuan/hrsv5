@@ -48,6 +48,8 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 	private static final long OBJECT_STORAGE_ROWS = 10L;
 	//向object_collect_struct表中初始化的数据条数
 	private static final long OBJECT_COLLECT_STRUCT_ROWS = 10L;
+	//向object_collect_handle表中初始化的数据条数
+	private static final long OBJECT_COLLECT_HANDEL_ROWS = 3L;
 	//Agent信息表id
 	private static final long AGENT_ID = 10000001L;
 	//用户id
@@ -189,19 +191,50 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 				object_collect_struct.setColumn_name("testcol" + i);
 				object_collect_struct.setData_desc("测试对象中文描述" + i);
 				object_collect_struct.setColumn_type("decimal(18,32)");
-				object_collect_struct.setIs_hbase(IsFlag.Shi.getCode());
-				object_collect_struct.setIs_key(IsFlag.Shi.getCode());
-				object_collect_struct.setIs_operate(IsFlag.Shi.getCode());
-				object_collect_struct.setIs_rowkey(IsFlag.Shi.getCode());
-				object_collect_struct.setIs_solr(IsFlag.Shi.getCode());
 				object_collect_struct.setColumnposition("columns." + "testcol" + i);
+				if (i == 5) {
+					object_collect_struct.setIs_hbase(IsFlag.Fou.getCode());
+					object_collect_struct.setIs_key(IsFlag.Shi.getCode());
+					object_collect_struct.setIs_operate(IsFlag.Shi.getCode());
+					object_collect_struct.setIs_rowkey(IsFlag.Shi.getCode());
+					object_collect_struct.setIs_solr(IsFlag.Shi.getCode());
+				} else if (i == 6) {
+					object_collect_struct.setIs_hbase(IsFlag.Shi.getCode());
+					object_collect_struct.setIs_key(IsFlag.Fou.getCode());
+					object_collect_struct.setIs_operate(IsFlag.Shi.getCode());
+					object_collect_struct.setIs_rowkey(IsFlag.Shi.getCode());
+					object_collect_struct.setIs_solr(IsFlag.Shi.getCode());
+				} else if (i == 7) {
+					object_collect_struct.setIs_hbase(IsFlag.Shi.getCode());
+					object_collect_struct.setIs_key(IsFlag.Shi.getCode());
+					object_collect_struct.setIs_operate(IsFlag.Fou.getCode());
+					object_collect_struct.setIs_rowkey(IsFlag.Shi.getCode());
+					object_collect_struct.setIs_solr(IsFlag.Shi.getCode());
+				} else if (i == 8) {
+					object_collect_struct.setIs_hbase(IsFlag.Shi.getCode());
+					object_collect_struct.setIs_key(IsFlag.Shi.getCode());
+					object_collect_struct.setIs_operate(IsFlag.Shi.getCode());
+					object_collect_struct.setIs_rowkey(IsFlag.Fou.getCode());
+					object_collect_struct.setIs_solr(IsFlag.Shi.getCode());
+				} else if (i == 9) {
+					object_collect_struct.setIs_hbase(IsFlag.Shi.getCode());
+					object_collect_struct.setIs_key(IsFlag.Shi.getCode());
+					object_collect_struct.setIs_operate(IsFlag.Shi.getCode());
+					object_collect_struct.setIs_rowkey(IsFlag.Shi.getCode());
+					object_collect_struct.setIs_solr(IsFlag.Fou.getCode());
+				} else {
+					object_collect_struct.setIs_hbase(IsFlag.Shi.getCode());
+					object_collect_struct.setIs_key(IsFlag.Shi.getCode());
+					object_collect_struct.setIs_operate(IsFlag.Shi.getCode());
+					object_collect_struct.setIs_rowkey(IsFlag.Shi.getCode());
+					object_collect_struct.setIs_solr(IsFlag.Shi.getCode());
+				}
 				object_collect_struct.setCol_seq(Long.valueOf(i + 1));
 				assertThat("初始化数据成功", object_collect_struct.add(db), is(1));
 			}
 			// 8.构造object_handle_type表数据，默认30条object_handle_id为6000001-600000030
-			for (int i = 0; i < OBJECT_COLLECT_TASK_ROWS; i++) {
+			for (int i = 0; i < OBJECT_COLLECT_HANDEL_ROWS; i++) {
 				Object_handle_type object_handle_type = new Object_handle_type();
-				object_handle_type.setObject_handle_id(OBJECT_HANDLE_ID + i);
 				object_handle_type.setOcs_id(OCS_ID + i);
 				OperationType[] values = OperationType.values();
 				for (int j = 0; j < values.length; j++) {
@@ -517,7 +550,7 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 					, is(DataBaseCode.UTF_8.getCode()));
 			assertThat(ar.getDataForResult().getString(i, "collect_data_type")
 					, is(CollectDataType.JSON.getCode()));
-			if (i==0){
+			if (i == 0) {
 				assertThat(ar.getDataForResult().getString(i, "firstline")
 						, is("[{\"columns\":[{\"column_id\":\"0\"," +
 								"\"is_key\":\"1\",\"columnposition\":\"date\",\"column_name\":\"date\"," +
@@ -525,7 +558,7 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 								"\"is_rowkey\":\"0\",\"is_hbase\":\"0\"}],\"handletype\":{\"insert\":\"\"," +
 								"\"update\":\"\",\"delete\":\"\"},\"updatetype\":\"0\"," +
 								"\"table_cn_name\":\"t_executedpersons\",\"table_name\":\"t_executedpersons\"}]"));
-			}else {
+			} else {
 				assertThat(ar.getDataForResult().getString(i, "firstline"), is("aaa"));
 			}
 			assertThat(ar.getDataForResult().getString(i, "en_name")
@@ -1511,11 +1544,17 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 		assertThat(ar.isSuccess(), is(false));
 	}
 
-	@Method(desc = "", logicStep = "")
+	@Method(desc = "保存对象文件配置信息时检查字段",
+			logicStep = "1.正确的数据访问1，数据都有效" +
+					"2.错误的数据访问1，objColTask数据格式错误" +
+					"3.错误的数据访问2，objColTask数据格式正确，英文名为空" +
+					"4.错误的数据访问3，objColTask数据格式正确，采集列结构为空" +
+					"5.错误的数据访问4，objColTask数据格式正确，操作码表为空")
 	@Test
 	public void checkFieldsForSaveObjectCollectTaskTest() {
+		// 1.正确的数据访问1，数据都有效
 		List<Object_collect_task> list = new ArrayList<>();
-		for (int i = 0; i < OBJECT_COLLECT_TASK_ROWS; i++) {
+		for (int i = 0; i < OBJECT_COLLECT_HANDEL_ROWS; i++) {
 			Object_collect_task objectCollectTask = new Object_collect_task();
 			objectCollectTask.setOcs_id(OCS_ID + i);
 			objectCollectTask.setOdc_id(ODC_ID);
@@ -1534,6 +1573,168 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
+		// 2.错误的数据访问1，objColTask数据格式错误
+		bodyString = new HttpClient()
+				.addData("objColTask", "aaa")
+				.post(getActionUrl("checkFieldsForSaveObjectCollectTask")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
+		assertThat(ar.isSuccess(), is(false));
+		// 3.错误的数据访问2，objColTask数据格式正确，英文名为空
+		List<Object_collect_task> list2 = new ArrayList<>();
+		for (int i = 0; i < OBJECT_COLLECT_HANDEL_ROWS; i++) {
+			Object_collect_task objectCollectTask = new Object_collect_task();
+			objectCollectTask.setOcs_id(OCS_ID + i);
+			objectCollectTask.setOdc_id(ODC_ID);
+			objectCollectTask.setUpdatetype(UpdateType.DirectUpdate.getCode());
+			objectCollectTask.setEn_name("");
+			objectCollectTask.setZh_name("测试aaa" + i);
+			objectCollectTask.setFirstline("");
+			objectCollectTask.setDatabase_code(DataBaseCode.UTF_8.getCode());
+			objectCollectTask.setAgent_id(AGENT_ID);
+			objectCollectTask.setCollect_data_type(CollectDataType.JSON.getCode());
+			list2.add(objectCollectTask);
+		}
+		bodyString = new HttpClient()
+				.addData("objColTask", JsonUtil.toJson(list2))
+				.post(getActionUrl("checkFieldsForSaveObjectCollectTask")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
+		assertThat(ar.isSuccess(), is(false));
+		// 4.错误的数据访问3，objColTask数据格式正确，采集列结构为空
+		List<Object_collect_task> list3 = new ArrayList<>();
+		for (int i = 0; i < OBJECT_COLLECT_HANDEL_ROWS; i++) {
+			Object_collect_task objectCollectTask = new Object_collect_task();
+			objectCollectTask.setOcs_id(OCS_ID - i);
+			objectCollectTask.setOdc_id(ODC_ID);
+			objectCollectTask.setUpdatetype(UpdateType.DirectUpdate.getCode());
+			objectCollectTask.setEn_name("aaa" + i);
+			objectCollectTask.setZh_name("测试aaa" + i);
+			objectCollectTask.setFirstline("");
+			objectCollectTask.setDatabase_code(DataBaseCode.UTF_8.getCode());
+			objectCollectTask.setAgent_id(AGENT_ID);
+			objectCollectTask.setCollect_data_type(CollectDataType.JSON.getCode());
+			list3.add(objectCollectTask);
+		}
+		bodyString = new HttpClient()
+				.addData("objColTask", JsonUtil.toJson(list3))
+				.post(getActionUrl("checkFieldsForSaveObjectCollectTask")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
+		assertThat(ar.isSuccess(), is(false));
+		// 5.错误的数据访问4，objColTask数据格式正确，操作码表为空
+		List<Object_collect_task> list4 = new ArrayList<>();
+		for (int i = 0; i < OBJECT_COLLECT_HANDEL_ROWS + 1; i++) {
+			Object_collect_task objectCollectTask = new Object_collect_task();
+			objectCollectTask.setOcs_id(OCS_ID + i);
+			objectCollectTask.setOdc_id(ODC_ID);
+			objectCollectTask.setUpdatetype(UpdateType.DirectUpdate.getCode());
+			objectCollectTask.setEn_name("aaa" + i);
+			objectCollectTask.setZh_name("测试aaa" + i);
+			objectCollectTask.setFirstline("");
+			objectCollectTask.setDatabase_code(DataBaseCode.UTF_8.getCode());
+			objectCollectTask.setAgent_id(AGENT_ID);
+			objectCollectTask.setCollect_data_type(CollectDataType.JSON.getCode());
+			list4.add(objectCollectTask);
+		}
+		bodyString = new HttpClient()
+				.addData("objColTask", JsonUtil.toJson(list4))
+				.post(getActionUrl("checkFieldsForSaveObjectCollectTask")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
+		assertThat(ar.isSuccess(), is(false));
+	}
+
+	@Method(desc = "检查保存对象存储的字段",
+			logicStep = "1.正确的数据访问1，数据都有效" +
+					"2.错误的数据访问1，objColTask数据格式错误" +
+					"3.错误的数据访问2，objColTask数据格式正确，英文名为空" +
+					"4.错误的数据访问3，objColTask数据格式正确，采集列结构为空" +
+					"5.错误的数据访问4，objColTask数据格式正确，操作码表为空")
+	@Test
+	public void checkFieldsForSaveObjectStorageTest() {
+		// 1.正确的数据访问1，数据都有效
+		List<Object_storage> list = new ArrayList<>();
+		for (int i = 0; i < 3; i++) {
+			Object_storage object_storage = new Object_storage();
+			object_storage.setObj_stid(OBJ_STID + i);
+			object_storage.setIs_hbase(IsFlag.Shi.getCode());
+			object_storage.setIs_hdfs(IsFlag.Fou.getCode());
+			object_storage.setOcs_id(OCS_ID + i);
+			object_storage.setRemark("zxz测试用例清除表object_storage专用");
+			object_storage.setIs_solr(IsFlag.Fou.getCode());
+			list.add(object_storage);
+		}
+		bodyString = new HttpClient()
+				.addData("object_storage_array", JsonUtil.toJson(list))
+				.post(getActionUrl("checkFieldsForSaveObjectStorage")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
+		assertThat(ar.isSuccess(), is(true));
+		// 2.错误的数据访问1，object_storage_array数据格式错误
+		bodyString = new HttpClient()
+				.addData("object_storage_array", "aaa")
+				.post(getActionUrl("checkFieldsForSaveObjectStorage")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
+		assertThat(ar.isSuccess(), is(false));
+		// 3.错误的数据访问2，object_storage_array数据格式正确，入solr表未选择进入hbase
+		List<Object_storage> list2 = new ArrayList<>();
+		for (int i = 0; i < 3; i++) {
+			Object_storage object_storage = new Object_storage();
+			object_storage.setObj_stid(OBJ_STID + i);
+			object_storage.setIs_hbase(IsFlag.Fou.getCode());
+			object_storage.setIs_hdfs(IsFlag.Fou.getCode());
+			object_storage.setOcs_id(OCS_ID + i);
+			object_storage.setRemark("zxz测试用例清除表object_storage专用");
+			object_storage.setIs_solr(IsFlag.Shi.getCode());
+			list2.add(object_storage);
+		}
+		bodyString = new HttpClient()
+				.addData("object_storage_array", JsonUtil.toJson(list2))
+				.post(getActionUrl("checkFieldsForSaveObjectStorage")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
+		assertThat(ar.isSuccess(), is(false));
+		// 4.错误的数据访问3，object_storage_array数据格式正确，未选择进入hbase
+		List<Object_storage> list3 = new ArrayList<>();
+		for (int i = 0; i < 6; i++) {
+			Object_storage object_storage = new Object_storage();
+			object_storage.setObj_stid(OBJ_STID + i);
+			object_storage.setIs_hbase(IsFlag.Shi.getCode());
+			object_storage.setIs_hdfs(IsFlag.Fou.getCode());
+			object_storage.setOcs_id(OCS_ID + i);
+			object_storage.setRemark("zxz测试用例清除表object_storage专用");
+			object_storage.setIs_solr(IsFlag.Fou.getCode());
+			list3.add(object_storage);
+		}
+		bodyString = new HttpClient()
+				.addData("object_storage_array", JsonUtil.toJson(list3))
+				.post(getActionUrl("checkFieldsForSaveObjectStorage")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
+		assertThat(ar.isSuccess(), is(false));
+		// 4.错误的数据访问3，object_storage_array数据格式正确，未选择rowkey
+		List<Object_storage> list4 = new ArrayList<>();
+		for (int i = 0; i < 4; i++) {
+			Object_storage object_storage = new Object_storage();
+			object_storage.setObj_stid(OBJ_STID + i);
+			object_storage.setIs_hbase(IsFlag.Shi.getCode());
+			object_storage.setIs_hdfs(IsFlag.Fou.getCode());
+			object_storage.setOcs_id(OCS_ID + i);
+			if (i == 3) {
+				object_storage.setOcs_id(OCS_ID + 8);
+			}
+			object_storage.setRemark("zxz测试用例清除表object_storage专用");
+			object_storage.setIs_solr(IsFlag.Fou.getCode());
+			list4.add(object_storage);
+		}
+		bodyString = new HttpClient()
+				.addData("object_storage_array", JsonUtil.toJson(list4))
+				.post(getActionUrl("checkFieldsForSaveObjectStorage")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
+		assertThat(ar.isSuccess(), is(false));
 	}
 
 
