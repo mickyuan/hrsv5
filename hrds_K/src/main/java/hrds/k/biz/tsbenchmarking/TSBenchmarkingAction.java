@@ -224,10 +224,10 @@ public class TSBenchmarkingAction extends BaseAction {
             dbm_dtcol_info.setCol_id(PrimayKeyGener.getNextId());
             dbm_dtcol_info.setCol_cname(column_mate.get("column_ch_name").toString());
             dbm_dtcol_info.setCol_ename(column_mate.get("column_name").toString());
-            if (null == column_mate.get("remark")) {
+            if (null == column_mate.get("tc_remark")) {
                 dbm_dtcol_info.setCol_remark("");
             } else {
-                dbm_dtcol_info.setCol_remark(column_mate.get("remark").toString());
+                dbm_dtcol_info.setCol_remark(column_mate.get("tc_remark").toString());
             }
             Map<String, String> col_type_map = parsingFiledType(column_mate.get("column_type").toString());
             dbm_dtcol_info.setData_type(col_type_map.get("data_type"));

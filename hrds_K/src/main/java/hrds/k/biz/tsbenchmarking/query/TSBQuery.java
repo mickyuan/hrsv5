@@ -33,12 +33,10 @@ public class TSBQuery {
     public static List<Map<String, Object>> getDCLBatchTableColumnsById(String file_id) {
         SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
         asmSql.clean();
-        asmSql.addSql("SELECT tc.column_id,tc.column_ch_name,tc.column_name AS column_name,tc_remark As remark," +
-                "tc.column_type, tc.is_primary_key,sfa.hbase_name AS table_name,sfa.original_name AS table_ch_name," +
-                "sfa.original_update_date AS create_date,sfa.agent_id,sfa.source_id,ti.database_id,ti.table_id" +
-                " FROM source_file_attribute sfa join table_info ti ON " +
-                "sfa.collect_set_id = ti.database_id AND sfa.table_name = ti.table_name JOIN table_column tc ON " +
-                "ti.table_id = tc.table_id  WHERE sfa.file_id = ?").addParam(file_id);
+        asmSql.addSql("SELECT tc.column_ch_name,tc.column_name,tc.tc_remark,tc.column_type,tc.is_primary_key," +
+                "tc.column_id,ti.database_id,sfa.agent_id,sfa.source_id FROM source_file_attribute sfa JOIN " +
+                "table_info ti ON sfa.collect_set_id = ti.database_id AND sfa.table_name = ti.table_name JOIN " +
+                "table_column tc ON ti.table_id = tc.table_id  WHERE sfa.file_id = ?").addParam(file_id);
         return Dbo.queryList(asmSql.sql(), asmSql.params());
     }
 
