@@ -153,7 +153,7 @@ public class SysUserAction extends BaseAction {
           UserType.ZiYuanGuanLi.getCode()
         };
     asmSql.clean();
-    asmSql.addSql("select * from sys_user where create_id=?");
+    asmSql.addSql("select * from " + Sys_user.TableName + " where create_id=?");
     asmSql.addParam(getUserId());
     asmSql.addORParam("user_type", str);
     asmSql.addSql(" order by user_id,create_date asc,create_time asc");
