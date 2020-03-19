@@ -6,19 +6,25 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.FileNameUtils;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.core.utils.SystemUtil;
+import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.agent.job.biz.bean.*;
 import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
+import hrds.agent.job.biz.core.dbstage.increasement.JDBCIncreasement;
+import hrds.agent.job.biz.core.dbstage.service.CollectTableHandleParse;
 import hrds.agent.job.biz.core.dbstage.service.ReadFileToDataBase;
+import hrds.agent.job.biz.utils.DataTypeTransform;
 import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
+import hrds.agent.trans.biz.ConnectionTool;
 import hrds.commons.codes.CollectType;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.Store_type;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.hadoop.hadoop_helper.HdfsOperator;
+import hrds.commons.hadoop.utils.HSqlExecute;
 import hrds.commons.utils.Constant;
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
@@ -38,16 +44,11 @@ import java.util.concurrent.Future;
 public class DBUploadStageImpl extends AbstractJobStage {
 	private final static Logger LOGGER = LoggerFactory.getLogger(DBUploadStageImpl.class);
 	//卸数到本地的文件绝对路径
-//	private final String[] localFiles;
 	//数据采集表对应的存储的所有信息
 	private CollectTableBean collectTableBean;
-	//数据库采集表对应的meta信息
-//	private TableBean tableBean;
 
 	public DBUploadStageImpl(CollectTableBean collectTableBean) {
 		this.collectTableBean = collectTableBean;
-//		this.localFiles = localFiles;
-//		this.tableBean = tableBean;
 	}
 
 	@Method(desc = "数据库直连采集数据上传阶段处理逻辑，处理完成后，无论成功还是失败，" +
@@ -197,6 +198,9 @@ public class DBUploadStageImpl extends AbstractJobStage {
 	private void exeBatch(DataStoreConfBean dataStoreConfBean, ExecutorService executor, long count,
 	                      String[] localFiles, TableBean tableBean) throws Exception {
 		List<Future<Long>> list = new ArrayList<>();
+		//先创建表，再多线程batch数据入库
+		createTodayTable(tableBean, collectTableBean.getHbase_name() + "_"
+				+ collectTableBean.getEtlDate(), dataStoreConfBean);
 		for (String fileAbsolutePath : localFiles) {
 			ReadFileToDataBase readFileToDataBase = new ReadFileToDataBase(fileAbsolutePath, tableBean,
 					collectTableBean, dataStoreConfBean);
@@ -214,10 +218,35 @@ public class DBUploadStageImpl extends AbstractJobStage {
 				+ ",总计进数" + count + "条");
 	}
 
+	private void createTodayTable(TableBean tableBean, String todayTableName, DataStoreConfBean dataStoreConfBean) {
+		List<String> columns = StringUtil.split(tableBean.getColumnMetaInfo(), CollectTableHandleParse.STRSPLIT);
+		List<String> types = DataTypeTransform.tansform(StringUtil.split(tableBean.getColTypeMetaInfo(),
+				CollectTableHandleParse.STRSPLIT), dataStoreConfBean.getDsl_name());
+		//获取连接
+		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(dataStoreConfBean.getData_store_connect_attr())) {
+			List<String> sqlList = new ArrayList<>();
+			//拼接建表语句
+			StringBuilder sql = new StringBuilder(120); //拼接创表sql语句
+			sql.append("CREATE TABLE ");
+			sql.append(todayTableName);
+			sql.append("(");
+			for (int i = 0; i < columns.size(); i++) {
+				sql.append(columns.get(i)).append(" ").append(types.get(i)).append(",");
+			}
+			//将最后的逗号删除
+			sql.deleteCharAt(sql.length() - 1);
+			sql.append(")");
+			JDBCIncreasement.dropTableIfExists(todayTableName, db, sqlList);
+			sqlList.add(sql.toString());
+			//执行建表语句
+			HSqlExecute.executeSql(sqlList, db);
+		}
+	}
+
 	/**
 	 * 获取上传到hdfs的文件夹路径
 	 */
-	public static String getUploadHdfsPath(CollectTableBean collectTableBean) {
+	static String getUploadHdfsPath(CollectTableBean collectTableBean) {
 		return FileNameUtils.normalize(JobConstant.PREFIX + File.separator + collectTableBean.getDatabase_id()
 				+ File.separator + collectTableBean.getHbase_name() + File.separator, true);
 	}
