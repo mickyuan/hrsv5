@@ -498,7 +498,6 @@ public class DataStoreAction extends BaseAction {
 					"4.更新保存前先删除原来的数据存储附加信息" +
 					"5.更新数据存储附加信息" +
 					"6.判断文件是否存在，如果存在则先删除原配置文件，再更新数据存储配置上传文件属性信息" +
-					"6.更新保存前先删除数据存储层配置属性信息" +
 					"7.更新数据存储层配置属性信息")
 	@Param(name = "dsl_name", desc = "配置属性名称", range = "无限制")
 	@Param(name = "store_type", desc = "存储类型(使用Store_type代码项）", range = "无限制")
@@ -539,9 +538,7 @@ public class DataStoreAction extends BaseAction {
 			deleteConfFile(dsl_id, files);
 			uploadConfFile(files, dsla_remark, dsl_id);
 		}
-		// 7.更新保存前先删除数据存储层配置属性信息
-//		deleteDataStoreLayerAttr(dsl_id);
-		// 8.更新数据存储层配置属性信息
+		// 7.更新数据存储层配置属性信息
 		updateDataStorageLayerAttr(dataStoreLayerAttr);
 	}
 
