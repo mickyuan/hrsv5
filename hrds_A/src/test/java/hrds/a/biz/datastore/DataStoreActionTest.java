@@ -17,6 +17,7 @@ import hrds.commons.codes.*;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.testbase.WebBaseTestCase;
+import org.apache.hadoop.yarn.webapp.hamlet2.Hamlet;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,8 +28,7 @@ import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.util.*;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class DataStoreActionTest extends WebBaseTestCase {
@@ -757,10 +757,12 @@ public class DataStoreActionTest extends WebBaseTestCase {
 			for (int i = 0; i < 2; i++) {
 				Map<String, String> map = new HashMap<>();
 				if (i == 0) {
+					map.put("dsla_id", String.valueOf(dsla_id1));
 					map.put("storage_property_key", "数据库");
 					map.put("storage_property_val", DatabaseType.MYSQL.getCode());
 					map.put("dsla_remark", "更新数据存储层配置属性信息1");
 				} else {
+					map.put("dsla_id", String.valueOf(dsla_id2));
 					map.put("storage_property_key", "数据库驱动");
 					map.put("storage_property_val", "com.mysql.jdbc.Driver");
 					map.put("dsla_remark", "更新数据存储层配置属性信息2");
@@ -1914,6 +1916,58 @@ public class DataStoreActionTest extends WebBaseTestCase {
 				assertThat(result.getInt(i, "dlc_length"), is(20));
 			}
 		}
+	}
+
+	@Method(desc = "根据存储层定义表主键ID与存储层配置存储类型查询存储层属性信息",
+			logicStep = "1.正确的数据访问1，数据都有效" +
+					"2.错误的数据访问1，dsl_id不存在" +
+					"3.错误的数据访问2，store_type不存在")
+	@Test
+	public void searchDataStoreLayerAttrByIdAndType() {
+		// 1.正确的数据访问1，数据都有效
+		String bodyString = new HttpClient()
+				.addData("dsl_id", dsl_id1)
+				.addData("store_type", Store_type.DATABASE.getCode())
+				.post(getActionUrl("searchDataStoreLayerAttrByIdAndType"))
+				.getBodyString();
+		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+		assertThat(ar.isSuccess(), is(true));
+		Result result = ar.getDataForResult();
+		assertThat(result.getRowCount(), is(2));
+		for (int i = 0; i < result.getRowCount(); i++) {
+			assertThat(result.getLong(i, "dsla_id"), is(dsla_id1 + i));
+			assertThat(result.getLong(i, "dsl_id"), is(dsl_id1));
+			if (i == 0) {
+				assertThat(result.getString(i, "storage_property_key"), is("数据库"));
+				assertThat(result.getString(i, "storage_property_val"), is("11"));
+				assertThat(result.getString(i, "dsla_remark"), is("数据存储层配置属性测试1"));
+			} else {
+				assertThat(result.getString(i, "storage_property_key"), is("数据库驱动"));
+				assertThat(result.getString(i, "storage_property_val"), is("org.postgresql.Driver"));
+				assertThat(result.getString(i, "dsla_remark"), is("数据存储层配置属性测试2"));
+			}
+			assertThat(result.getString(i, "is_file"), is(IsFlag.Fou.getCode()));
+		}
+		// 2.错误的数据访问1，dsl_id不存在
+		bodyString = new HttpClient()
+				.addData("dsl_id", "100")
+				.addData("store_type", Store_type.DATABASE.getCode())
+				.post(getActionUrl("searchDataStoreLayerAttrByIdAndType"))
+				.getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+		assertThat(ar.isSuccess(), is(true));
+		assertThat(ar.getDataForResult().getRowCount(), is(0));
+		// 3.错误的数据访问2，store_type不存在
+		bodyString = new HttpClient()
+				.addData("dsl_id", dsl_id1)
+				.addData("store_type", "9")
+				.post(getActionUrl("searchDataStoreLayerAttrByIdAndType"))
+				.getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+		assertThat(ar.isSuccess(), is(false));
 	}
 
 	@Test
