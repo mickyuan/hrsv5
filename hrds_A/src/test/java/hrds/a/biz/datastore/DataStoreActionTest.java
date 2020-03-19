@@ -609,15 +609,15 @@ public class DataStoreActionTest extends WebBaseTestCase {
 					assertThat("org.postgresql.Driver", is(layerAttr.getStorage_property_val()));
 				} else if (layerAttr.getStorage_property_key().equals("core-site.xml")) {
 					assertThat(IsFlag.Shi.getCode(), is(layerAttr.getIs_file()));
-					assertThat("上传hive配置文件", is(layerAttr.getDsla_remark()));
+					assertThat("core-site.xml文件已上传", is(layerAttr.getDsla_remark()));
 					Files.delete(new File(layerAttr.getStorage_property_val()).toPath());
 				} else if (layerAttr.getStorage_property_key().equals("hbase-site.xml")) {
 					assertThat(IsFlag.Shi.getCode(), is(layerAttr.getIs_file()));
-					assertThat("上传hive配置文件", is(layerAttr.getDsla_remark()));
+					assertThat("hbase-site.xml文件已上传", is(layerAttr.getDsla_remark()));
 					Files.delete(new File(layerAttr.getStorage_property_val()).toPath());
 				} else if (layerAttr.getStorage_property_key().equals("hdfs-site.xml")) {
 					assertThat(IsFlag.Shi.getCode(), is(layerAttr.getIs_file()));
-					assertThat("上传hive配置文件", is(layerAttr.getDsla_remark()));
+					assertThat("hdfs-site.xml文件已上传", is(layerAttr.getDsla_remark()));
 					Files.delete(new File(layerAttr.getStorage_property_val()).toPath());
 				}
 			}
@@ -822,13 +822,13 @@ public class DataStoreActionTest extends WebBaseTestCase {
 					assertThat("更新数据存储层配置属性信息2", is(layerAttr.getDsla_remark()));
 				} else if (layerAttr.getStorage_property_key().equals("core-site.xml")) {
 					assertThat(IsFlag.Shi.getCode(), is(layerAttr.getIs_file()));
-					assertThat("hbase配置文件上传", is(layerAttr.getDsla_remark()));
+					assertThat("core-site.xml文件已上传", is(layerAttr.getDsla_remark()));
 				} else if (layerAttr.getStorage_property_key().equals("hdfs-site.xml")) {
 					assertThat(IsFlag.Shi.getCode(), is(layerAttr.getIs_file()));
-					assertThat("hbase配置文件上传", is(layerAttr.getDsla_remark()));
+					assertThat("hdfs-site.xml文件已上传", is(layerAttr.getDsla_remark()));
 				} else if (layerAttr.getStorage_property_key().equals("hbase-site.xml")) {
 					assertThat(IsFlag.Shi.getCode(), is(layerAttr.getIs_file()));
-					assertThat("hbase配置文件上传", is(layerAttr.getDsla_remark()));
+					assertThat("hbase-site.xml文件已上传", is(layerAttr.getDsla_remark()));
 				}
 			}
 			// 2.错误的数据访问1，dsl_id为空

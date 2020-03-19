@@ -52,11 +52,10 @@ public class DataStoreAction extends BaseAction {
 	@Param(name = "dtcs_id", desc = "数据类型对照主表ID", range = "新增数据类型对照主表时生成")
 	@Param(name = "dlcs_id", desc = "数据类型长度对照主表ID", range = "新增数据类型长度对照主表时生成")
 	@Param(name = "files", desc = "上传的配置文件", range = "无限制", nullable = true)
-	@Param(name = "dsla_remark", desc = "数据存储层配置属性表备注", range = "无限制", nullable = true)
 	@UploadFile
 	public void addDataStore(String dsl_name, String store_type, String is_hadoopclient, String dsl_remark,
 	                         String dslad_remark, String dataStoreLayerAttr, String[] dsla_storelayer,
-	                         long dtcs_id, long dlcs_id, String[] files, String dsla_remark) {
+	                         long dtcs_id, long dlcs_id, String[] files) {
 		// 1.数据可访问权限处理方式，该方法不需要权限控制
 		Data_store_layer dataStoreLayer = new Data_store_layer();
 		dataStoreLayer.setDsl_name(dsl_name);
@@ -78,7 +77,7 @@ public class DataStoreAction extends BaseAction {
 		addDataStorageLayerAttr(dataStoreLayerAttr, dataStoreLayer.getDsl_id());
 		// 6.判断文件是否存在，存在则上传配置文件
 		if (files != null && files.length != 0) {
-			uploadConfFile(files, dsla_remark, dataStoreLayer.getDsl_id());
+			uploadConfFile(files, dataStoreLayer.getDsl_id());
 		}
 	}
 
@@ -89,7 +88,7 @@ public class DataStoreAction extends BaseAction {
 	@Param(name = "files", desc = "上传的配置文件", range = "无限制", nullable = true)
 	@Param(name = "dsla_remark", desc = "数据存储层配置属性表备注", range = "无限制", nullable = true)
 	@Param(name = "dsl_id", desc = "数据存储层配置表主键", range = "新增数据存储层时生成")
-	private void uploadConfFile(String[] files, String dsla_remark, long dsl_id) {
+	private void uploadConfFile(String[] files, long dsl_id) {
 		// 1.数据可访问权限处理方式，该方法不需要权限控制
 		// 2.存在，遍历文件
 		Data_store_layer_attr data_store_layer_attr = new Data_store_layer_attr();
@@ -100,7 +99,7 @@ public class DataStoreAction extends BaseAction {
 			data_store_layer_attr.setStorage_property_key(FileUploadUtil.getOriginalFileName(file));
 			data_store_layer_attr.setStorage_property_val(FileUploadUtil.getUploadedFile(file).getPath());
 			data_store_layer_attr.setIs_file(IsFlag.Shi.getCode());
-			data_store_layer_attr.setDsla_remark(dsla_remark);
+			data_store_layer_attr.setDsla_remark(FileUploadUtil.getOriginalFileName(file) + "文件已上传");
 			data_store_layer_attr.add(Dbo.db());
 		}
 	}
@@ -506,15 +505,14 @@ public class DataStoreAction extends BaseAction {
 	@Param(name = "dslad_remark", desc = "数据存储附加信息表备注", range = "无限制", nullable = true)
 	@Param(name = "dsl_id", desc = "数据存储层配置表主键", range = "新增数据存储层时生成")
 	@Param(name = "dataStoreLayerAttr", desc = "数据存储层信息属性信息集合", range = "storage_property_key，" +
-			"storage_property_val,dsla_remark,is_file代表key，对应的值为value的json字符串(文件属性这里不需要）")
+			"storage_property_val,dsla_remark,is_file,dsla_id代表key，对应的值为value的json字符串(文件属性这里不需要）")
 	@Param(name = "dsla_storelayer", desc = "配置附加属性信息数组", range = "使用代码项（StoreLayerAdded）", nullable = true)
 	@Param(name = "dtcs_id", desc = "数据类型对照主表ID", range = "新增数据类型对照主表时生成")
 	@Param(name = "dlcs_id", desc = "数据类型长度对照主表ID", range = "新增数据类型长度对照主表时生成")
 	@Param(name = "files", desc = "上传的配置文件", range = "无限制", nullable = true)
-	@Param(name = "dsla_remark", desc = "数据存储层配置属性表备注", range = "无限制", nullable = true)
 	@UploadFile
 	public void updateDataStore(String dsl_name, String store_type, String is_hadoopclient, String dsl_remark,
-	                            String dslad_remark, long dsl_id, String dataStoreLayerAttr, String dsla_remark,
+	                            String dslad_remark, long dsl_id, String dataStoreLayerAttr,
 	                            String[] dsla_storelayer, long dtcs_id, long dlcs_id, String[] files) {
 		// 1.数据可访问权限处理方式，该方法不需要权限控制
 		// 2.检查数据存储配置字段合法性
@@ -536,7 +534,7 @@ public class DataStoreAction extends BaseAction {
 		// 6.判断文件是否存在，如果存在则先删除原配置文件,删除要放在删除
 		if (files != null && files.length != 0) {
 			deleteConfFile(dsl_id, files);
-			uploadConfFile(files, dsla_remark, dsl_id);
+			uploadConfFile(files, dsl_id);
 		}
 		// 7.更新数据存储层配置属性信息
 		updateDataStorageLayerAttr(dataStoreLayerAttr);
