@@ -16,6 +16,7 @@ import hrds.commons.base.BaseAction;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.UserState;
 import hrds.commons.codes.UserType;
+import hrds.commons.entity.Department_info;
 import hrds.commons.entity.Sys_user;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.DboExecute;
@@ -280,7 +281,7 @@ public class SysUserAction extends BaseAction {
   private Result getDepartmentInfo(String dep_id) {
     // 获取部门信息
     asmSql.clean();
-    asmSql.addSql("select * from department_info");
+    asmSql.addSql("select * from " + Department_info.TableName);
     // 如果部门id为空则获取所有部门信息
     if (!StringUtil.isBlank(dep_id)) {
       asmSql.addSql(" where dep_id=?");
