@@ -31,31 +31,15 @@ public class Etl_job_resource_rela extends ProjectTableEntity
 		__tmpPKS.add("etl_sys_cd");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="etl_job",value="作业名:",dataType = String.class,required = true)
-	private String etl_job;
-	@DocBean(name ="etl_sys_cd",value="工程代码:",dataType = String.class,required = true)
-	private String etl_sys_cd;
 	@DocBean(name ="resource_type",value="资源使用类型:",dataType = String.class,required = false)
 	private String resource_type;
 	@DocBean(name ="resource_req",value="资源需求数:",dataType = Integer.class,required = false)
 	private Integer resource_req;
+	@DocBean(name ="etl_job",value="作业名:",dataType = String.class,required = true)
+	private String etl_job;
+	@DocBean(name ="etl_sys_cd",value="工程代码:",dataType = String.class,required = true)
+	private String etl_sys_cd;
 
-	/** 取得：作业名 */
-	public String getEtl_job(){
-		return etl_job;
-	}
-	/** 设置：作业名 */
-	public void setEtl_job(String etl_job){
-		this.etl_job=etl_job;
-	}
-	/** 取得：工程代码 */
-	public String getEtl_sys_cd(){
-		return etl_sys_cd;
-	}
-	/** 设置：工程代码 */
-	public void setEtl_sys_cd(String etl_sys_cd){
-		this.etl_sys_cd=etl_sys_cd;
-	}
 	/** 取得：资源使用类型 */
 	public String getResource_type(){
 		return resource_type;
@@ -77,5 +61,21 @@ public class Etl_job_resource_rela extends ProjectTableEntity
 		if(!fd.ng.core.utils.StringUtil.isEmpty(resource_req)){
 			this.resource_req=new Integer(resource_req);
 		}
+	}
+	/** 取得：作业名 */
+	public String getEtl_job(){
+		return etl_job;
+	}
+	/** 设置：作业名 */
+	public void setEtl_job(String etl_job){
+		this.etl_job=etl_job;
+	}
+	/** 取得：工程代码 */
+	public String getEtl_sys_cd(){
+		return etl_sys_cd;
+	}
+	/** 设置：工程代码 */
+	public void setEtl_sys_cd(String etl_sys_cd){
+		this.etl_sys_cd=etl_sys_cd;
 	}
 }

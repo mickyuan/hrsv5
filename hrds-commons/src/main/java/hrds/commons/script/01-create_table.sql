@@ -673,21 +673,6 @@ DATATABLE_ID                                      BIGINT default 0 NOT NULL, --�
 IS_SUCCESSFUL                                     CHAR(1) NOT NULL, --是否入库成功
 CONSTRAINT DM_RELATION_DATATABLE_PK PRIMARY KEY(DSL_ID,DATATABLE_ID)   );
 
---作业Agent下载信息
-DROP TABLE IF EXISTS ETL_AGENT_DOWNINFO ;
-CREATE TABLE ETL_AGENT_DOWNINFO(
-DOWN_ID                                           BIGINT default 0 NOT NULL, --下载编号(primary)
-AGENT_NAME                                        VARCHAR(512) NOT NULL, --Agent名称
-AGENT_IP                                          VARCHAR(50) NOT NULL, --Agent IP
-USER_NAME                                         VARCHAR(10) NULL, --用户名
-PASSWD                                            VARCHAR(10) NULL, --密码
-SAVE_DIR                                          VARCHAR(512) NOT NULL, --存放目录
-AGENT_TYPE                                        CHAR(1) NOT NULL, --agent类别
-USER_ID                                           DECIMAL(10) NOT NULL, --用户id
-AI_DESC                                           VARCHAR(200) NULL, --描述
-REMARK                                            VARCHAR(512) NULL, --备注
-CONSTRAINT ETL_AGENT_DOWNINFO_PK PRIMARY KEY(DOWN_ID)   );
-
 --作业定义表
 DROP TABLE IF EXISTS ETL_JOB_DEF ;
 CREATE TABLE ETL_JOB_DEF(
@@ -945,6 +930,8 @@ SYS_RUN_STATUS                                    CHAR(1) NULL, --系统状态
 USER_NAME                                         VARCHAR(512) NULL, --主机服务器用户名
 USER_PWD                                          VARCHAR(512) NULL, --主机用户密码
 SERV_FILE_PATH                                    VARCHAR(512) NULL, --部署服务器路径
+ETL_CONTEXT                                       VARCHAR(512) NULL, --访问根
+ETL_PATTERN                                       VARCHAR(512) NULL, --访问路径
 REMARKS                                           VARCHAR(512) NULL, --备注
 USER_ID                                           BIGINT default 0 NOT NULL, --用户ID
 CONSTRAINT ETL_SYS_PK PRIMARY KEY(ETL_SYS_CD)   );
