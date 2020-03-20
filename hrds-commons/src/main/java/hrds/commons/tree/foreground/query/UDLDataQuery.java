@@ -8,7 +8,6 @@ import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.web.util.Dbo;
 import hrds.commons.codes.DataSourceType;
-import hrds.commons.utils.CommonVariables;
 import hrds.commons.utils.Constant;
 
 import java.util.ArrayList;
@@ -26,24 +25,11 @@ public class UDLDataQuery {
     @Return(desc = "数据库类型信息的list", range = "无限制")
     public static List<Map<String, Object>> getUDLDatabaseInfos() {
         List<Map<String, Object>> udlDataInfos = new ArrayList<>();
-        if (CommonVariables.HAS_HADOOP_ENV) {
-            for (String dataBaseType : Constant.DATABASE_TYPE) {
-                Map<String, Object> map = new HashMap<>();
-                map.put("id", dataBaseType);
-                map.put("name", dataBaseType);
-                map.put("description", dataBaseType);
-                map.put("rootName", DataSourceType.UDL.getValue());
-                map.put("pId", DataSourceType.UDL.getCode());
-                map.put("isParent", true);
-                map.put("parent_id", DataSourceType.UDL.getValue());
-                udlDataInfos.add(map);
-            }
-        } else {
+        for (String dataBaseType : Constant.DATABASE_TYPE) {
             Map<String, Object> map = new HashMap<>();
-            String type = "海云库";
-            map.put("id", "hyshf_" + DataSourceType.UDL.getValue());
-            map.put("name", type);
-            map.put("description", type);
+            map.put("id", dataBaseType);
+            map.put("name", dataBaseType);
+            map.put("description", dataBaseType);
             map.put("rootName", DataSourceType.UDL.getValue());
             map.put("pId", DataSourceType.UDL.getCode());
             map.put("isParent", true);
@@ -66,13 +52,13 @@ public class UDLDataQuery {
         if (DataSourceType.UDL.getValue().equals(parentId)) {
             if (Constant.HIVE.equals(databaseType) || Constant.HBASE.equals(databaseType)
                     || Constant.MPP.equals(databaseType) || Constant.CARBON_DATA.equals(databaseType)) {
-                if ("hive" .equalsIgnoreCase(databaseType)) {
+                if ("hive".equalsIgnoreCase(databaseType)) {
                     udlDataBaseTableSpaceInfos = Dbo.queryList("select *,info_id as id,table_space as space from" +
                             " sys_table_info WHERE table_type='0'");
-                } else if ("HBase" .equalsIgnoreCase(databaseType)) {
+                } else if ("HBase".equalsIgnoreCase(databaseType)) {
                     udlDataBaseTableSpaceInfos = Dbo.queryList("select *,info_id as id,table_space as space from" +
                             " sys_table_info WHERE table_type='1'");
-                } else if ("mpp" .equalsIgnoreCase(databaseType)) {
+                } else if ("mpp".equalsIgnoreCase(databaseType)) {
                     udlDataBaseTableSpaceInfos = Dbo.queryList("select *,info_id as id,table_space as space from" +
                             " sys_table_info WHERE table_type='2'");
                 } else {
