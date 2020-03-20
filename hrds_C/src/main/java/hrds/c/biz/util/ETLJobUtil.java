@@ -20,8 +20,6 @@ import java.util.Map;
 @DocClass(desc = "作业调度工程工具类", author = "dhw", createdate = "2019/11/26 11:11")
 public class ETLJobUtil {
 
-	private static final Logger logger = LogManager.getLogger(ETLJobUtil.class.getName());
-
 	@Method(desc = "判断当前工程是否还存在",
 			logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制" +
 					"2.判断user_id是否为空，为空添加条件" +
@@ -284,8 +282,9 @@ public class ETLJobUtil {
 				"etl_serv_ip,etl_serv_port,user_name,user_pwd,serv_file_path,remarks from " + Etl_sys.TableName
 				+ " where user_id=? and etl_sys_cd=? order by etl_sys_cd", user_id, etl_sys_cd);
 		// 2.判断remarks是否为空，不为空则分割获取部署工程的redis ip与port并封装数据返回
-		if (etlSys.get("remarks") != null) {
-			String[] ip_port = etlSys.get("remarks").toString().split(":");
+		Object remarks = etlSys.get("remarks");
+		if (remarks != null && StringUtil.isNotBlank(remarks.toString()) && !remarks.toString().contains(":")) {
+			String[] ip_port = remarks.toString().split(":");
 			etlSys.put("redisIp", ip_port[0]);
 			etlSys.put("redisPort", ip_port[1]);
 		}
