@@ -154,36 +154,24 @@ public class EltSysAction extends BaseAction {
 			throw new BusinessException("当前用户对应的工程已不存在！");
 		}
 		// 3.更新保存工程
-		DboExecute.updatesOrThrow(
-				"更新保存失败!",
-				"update "
-						+ Etl_sys.TableName
+		DboExecute.updatesOrThrow("更新保存失败!", "update " + Etl_sys.TableName
 						+ " set etl_sys_name=?,comments=? where etl_sys_cd=? and user_id=?",
-				etl_sys_name,
-				comments,
-				etl_sys_cd,
-				getUserId());
+				etl_sys_name, comments, etl_sys_cd, getUserId());
 	}
 
-	@Method(
-			desc = "部署作业调度工程",
-			logicStep =
-					"1.数据可访问权限处理方式，通过user_id进行权限控制"
-							+ "2.验证当前用户对应的工程是否已不存在"
-							+ "3.获取系统参数"
-							+ "4.部署ETL"
-							+ "5.部署成功，更新用户信息")
+	@Method(desc = "部署作业调度工程",
+			logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制"
+					+ "2.验证当前用户对应的工程是否已不存在"
+					+ "3.获取系统参数"
+					+ "4.部署ETL"
+					+ "5.部署成功，更新用户信息")
 	@Param(name = "etl_sys_cd", desc = "作业调度工程登记表主键ID", range = "新增工程时生成")
 	@Param(name = "etl_serv_ip", desc = "ETL部署Agent服务器IP", range = "新增工程时生成")
 	@Param(name = "serv_file_path", desc = "ETL部署Agent服务器部署路径", range = "无限制")
 	@Param(name = "user_name", desc = "ETL部署Agent服务器用户名", range = "无限制")
 	@Param(name = "user_pwd", desc = "ETL部署Agent服务器密码", range = "无限制")
-	public void deployEtlJobScheduleProject(
-			String etl_sys_cd,
-			String etl_serv_ip,
-			String serv_file_path,
-			String user_name,
-			String user_pwd) {
+	public void deployEtlJobScheduleProject(String etl_sys_cd, String etl_serv_ip, String serv_file_path,
+	                                        String user_name, String user_pwd) {
 		// fixme jsch对响应结果返回数字进行判断还未修改
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
 		// 2.验证当前用户对应的工程是否已不存在
@@ -195,15 +183,8 @@ public class EltSysAction extends BaseAction {
 		String redisPort = PropertyParaValue.getString("redis_port", "56379");
 		String etl_serv_port = Constant.SFTP_PORT;
 		// 4.部署ETL
-		ETLAgentDeployment.scpETLAgent(
-				etl_sys_cd,
-				etl_serv_ip,
-				etl_serv_port,
-				redisIP,
-				redisPort,
-				user_name,
-				user_pwd,
-				serv_file_path);
+		ETLAgentDeployment.scpETLAgent(etl_sys_cd, etl_serv_ip, etl_serv_port, redisIP, redisPort,
+				user_name, user_pwd, serv_file_path);
 		// 5.部署成功，更新用户信息
 		Etl_sys etl_sys = new Etl_sys();
 		etl_sys.setEtl_serv_ip(etl_serv_ip);
@@ -216,16 +197,14 @@ public class EltSysAction extends BaseAction {
 		etl_sys.update(Dbo.db());
 	}
 
-	@Method(
-			desc = "启动CONTROL",
-			logicStep =
-					"1.数据可访问权限处理方式，通过user_id进行权限控制"
-							+ "2.验证当前用户对应的工程是否已不存在"
-							+ "3.根据工程编号获取工程信息"
-							+ "4.判断工程是否已部署"
-							+ "5.如果日切方式不是自动日切且工程下作业列表为空，则不能启动"
-							+ "6.获取系统状态,如果不是停止说明系统不是停止状态,不是停止状态不能启动control"
-							+ "7.调用脚本启动启动Control")
+	@Method(desc = "启动CONTROL",
+			logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制"
+					+ "2.验证当前用户对应的工程是否已不存在"
+					+ "3.根据工程编号获取工程信息"
+					+ "4.判断工程是否已部署"
+					+ "5.如果日切方式不是自动日切且工程下作业列表为空，则不能启动"
+					+ "6.获取系统状态,如果不是停止说明系统不是停止状态,不是停止状态不能启动control"
+					+ "7.调用脚本启动启动Control")
 	@Param(name = "etl_sys_cd", desc = "作业调度工程登记表主键ID", range = "新增工程时生成")
 	@Param(name = "isResumeRun", desc = "是否续跑", range = "使用（IsFlag）代码项，1代表是，0代表否")
 	@Param(name = "isAutoShift", desc = "是否自动日切", range = "使用（IsFlag）代码项，1代表是，0代表否")
@@ -252,15 +231,9 @@ public class EltSysAction extends BaseAction {
 			throw new BusinessException("系统不是停止状态不能启动control");
 		}
 		// 7.调用脚本启动启动Control
-		ETLAgentDeployment.startEngineBatchControl(
-				curr_bath_date,
-				etl_sys_cd,
-				isResumeRun,
-				isAutoShift,
-				etlSys.get("etl_serv_ip").toString(),
-				etlSys.get("etl_serv_port").toString(),
-				etlSys.get("user_name").toString(),
-				etlSys.get("user_pwd").toString(),
+		ETLAgentDeployment.startEngineBatchControl(curr_bath_date, etl_sys_cd, isResumeRun, isAutoShift,
+				etlSys.get("etl_serv_ip").toString(), etlSys.get("etl_serv_port").toString(),
+				etlSys.get("user_name").toString(), etlSys.get("user_pwd").toString(),
 				etlSys.get("serv_file_path").toString());
 	}
 
@@ -299,13 +272,11 @@ public class EltSysAction extends BaseAction {
 		}
 	}
 
-	@Method(
-			desc = "启动TRIGGER",
-			logicStep =
-					"1.数据可访问权限处理方式，通过user_id进行权限控制"
-							+ "3.根据工程编号获取工程信息"
-							+ "4.获取系统状态,如果不是运行说明CONTROL还未启动，不能启动TRIGGER"
-							+ "6.调用脚本启动启动Trigger")
+	@Method(desc = "启动TRIGGER",
+			logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制"
+					+ "3.根据工程编号获取工程信息"
+					+ "4.获取系统状态,如果不是运行说明CONTROL还未启动，不能启动TRIGGER"
+					+ "6.调用脚本启动启动Trigger")
 	@Param(name = "etl_sys_cd", desc = "作业调度工程登记表主键ID", range = "新增工程时生成")
 	public void startTrigger(String etl_sys_cd) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
