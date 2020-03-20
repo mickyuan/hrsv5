@@ -5,9 +5,6 @@ delete from sys_para where para_id in('1','2','3');
 INSERT INTO sys_para VALUES ('1', 'sys_Name', '海云数服', 'server.properties', '系统名称最多输入8个字');
 INSERT INTO sys_para VALUES ('2', 'logo_img', 'hyrenlogo.png', 'server.properties', '系统logo图片名称');
 INSERT INTO sys_para VALUES ('3', 'logo_depict', '博彦科技(上海)有限公司', 'server.properties', 'logo描述信息');
-INSERT INTO sys_para VALUES ('4', 'ver_type', 'HD', 'server.properties', '产品环境(HD 大数据环境;DB 无大数据环境)');
-
-
 INSERT INTO sys_para VALUES ('12', 'platform', 'normal', 'server.properties', 'normal:不做集群认证;cdh5_13:CDH平台认证;fic50、fic60、fic70、fic80:FI平台认证,不配置默认normal');
 INSERT INTO sys_para VALUES ('102', 'summary_volumn', '3', 'server.properties', '摘要获取行数');
 INSERT INTO sys_para VALUES ('103', 'collection', 'HrdsFullTextIndexing', 'server.properties', 'solr的collection');
