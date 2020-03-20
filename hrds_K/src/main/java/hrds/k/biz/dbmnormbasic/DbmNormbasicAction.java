@@ -12,6 +12,7 @@ import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.IsFlag;
+import hrds.commons.codes.UserType;
 import hrds.commons.entity.Dbm_normbasic;
 import hrds.commons.entity.Dbm_sort_info;
 import hrds.commons.exception.BusinessException;
@@ -132,10 +133,25 @@ public class DbmNormbasicAction extends BaseAction {
     @Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", valueIfNull = "10")
     @Return(desc = "所有分类信息", range = "所有分类信息")
     public Map<String, Object> getDbmNormbasicInfo(int currPage, int pageSize) {
+        //设置查询sql
+        SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
+        asmSql.clean();
+        asmSql.addSql("select * from " + Dbm_normbasic.TableName + " where");
+        //如果用户是对标管理员,则校验并根据状态和创建用户查询
+        if (getUser().getUserTypeGroup().contains(UserType.ShuJuDuiBiaoGuanLi.getCode())) {
+            asmSql.addSql(" create_user = ?").addParam(getUserId().toString());
+        }
+        //如果是对标操作员,则检索已经发布的
+        else if (getUser().getUserTypeGroup().contains(UserType.ShuJuDuiBiaoCaoZuo.getCode())) {
+            asmSql.addSql(" norm_status = ?").addParam(IsFlag.Shi.getCode());
+        } else {
+            throw new BusinessException("登录用户没有查询对标数据权限!");
+        }
+        //查询并返回数据
         Map<String, Object> dbmNormbasicInfoMap = new HashMap<>();
         Page page = new DefaultPageImpl(currPage, pageSize);
-        List<Dbm_normbasic> dbmNormbasicInfos = Dbo.queryPagedList(Dbm_normbasic.class, page,
-                "select * from " + Dbm_normbasic.TableName + " where create_user = ?", getUserId().toString());
+        List<Dbm_normbasic> dbmNormbasicInfos = Dbo.queryPagedList(Dbm_normbasic.class, page, asmSql.sql(),
+                asmSql.params());
         dbmNormbasicInfoMap.put("dbmNormbasicInfos", dbmNormbasicInfos);
         dbmNormbasicInfoMap.put("totalSize", page.getTotalSize());
         return dbmNormbasicInfoMap;
@@ -144,9 +160,23 @@ public class DbmNormbasicAction extends BaseAction {
     @Method(desc = "获取所有标准信息(只获取basic_id,norm_cname)", logicStep = "获取所有标准信息")
     @Return(desc = "所有分类信息(只获取basic_id,norm_cname)", range = "所有分类信息")
     public Map<String, Object> getDbmNormbasicIdAndNameInfo() {
+        //设置查询sql
+        SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
+        asmSql.clean();
+        asmSql.addSql("select basic_id,norm_cname from " + Dbm_normbasic.TableName + " where");
+        //如果用户是对标管理员,则校验并根据状态和创建用户查询
+        if (getUser().getUserTypeGroup().contains(UserType.ShuJuDuiBiaoGuanLi.getCode())) {
+            asmSql.addSql(" create_user = ?").addParam(getUserId().toString());
+        }
+        //如果是对标操作员,则检索已经发布的
+        else if (getUser().getUserTypeGroup().contains(UserType.ShuJuDuiBiaoCaoZuo.getCode())) {
+            asmSql.addSql(" norm_status = ?").addParam(IsFlag.Shi.getCode());
+        } else {
+            throw new BusinessException("登录用户没有查询对标数据权限!");
+        }
+        //查询并返回数据
         Map<String, Object> dbmNormbasicInfoMap = new HashMap<>();
-        List<Map<String, Object>> dbmNormbasicInfos = Dbo.queryList("select basic_id,norm_cname from " +
-                Dbm_normbasic.TableName + " where create_user = ?", getUserId().toString());
+        List<Map<String, Object>> dbmNormbasicInfos = Dbo.queryList(asmSql.sql(), asmSql.params());
         dbmNormbasicInfoMap.put("dbmNormbasicInfos", dbmNormbasicInfos);
         dbmNormbasicInfoMap.put("totalSize", dbmNormbasicInfos.size());
         return dbmNormbasicInfoMap;
@@ -168,10 +198,21 @@ public class DbmNormbasicAction extends BaseAction {
     @Param(name = "sort_id", desc = "分类id", range = "long类型")
     @Return(desc = "返回值说明", range = "返回值取值范围")
     public Map<String, Object> getDbmNormbasicInfoBySortId(int currPage, int pageSize, long sort_id) {
+        //设置查询sql
+        SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
+        asmSql.clean();
+        asmSql.addSql("select * from " + Dbm_normbasic.TableName + " where sort_id = ?").addParam(sort_id);
+        //如果是对标操作员,则检索已经发布的
+        if (getUser().getUserTypeGroup().contains(UserType.ShuJuDuiBiaoCaoZuo.getCode())) {
+            asmSql.addSql(" and norm_status = ?").addParam(IsFlag.Shi.getCode());
+        } else {
+            throw new BusinessException("登录用户没有查询对标数据权限!");
+        }
+        //查询并返回数据
         Map<String, Object> dbmNormbasicInfoMap = new HashMap<>();
         Page page = new DefaultPageImpl(currPage, pageSize);
-        List<Dbm_normbasic> dbmNormbasicInfos = Dbo.queryPagedList(Dbm_normbasic.class, page, "select * from "
-                + Dbm_normbasic.TableName + " where sort_id = ?", sort_id);
+        List<Dbm_normbasic> dbmNormbasicInfos = Dbo.queryPagedList(Dbm_normbasic.class, page, asmSql.sql(),
+                asmSql.params());
         dbmNormbasicInfoMap.put("dbmNormbasicInfos", dbmNormbasicInfos);
         dbmNormbasicInfoMap.put("totalSize", page.getTotalSize());
         return dbmNormbasicInfoMap;
@@ -184,11 +225,28 @@ public class DbmNormbasicAction extends BaseAction {
     @Param(name = "norm_status", desc = "发布状态", range = "IsFlag 0:未发布,1:已发布")
     @Return(desc = "返回值说明", range = "返回值取值范围")
     public Map<String, Object> getDbmNormbasicByStatus(int currPage, int pageSize, String norm_status) {
+        //设置查询sql
+        SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
+        asmSql.clean();
+        asmSql.addSql("select * from " + Dbm_normbasic.TableName + " where");
+        //如果用户是对标管理员,则校验并根据状态和创建用户查询
+        if (getUser().getUserTypeGroup().contains(UserType.ShuJuDuiBiaoGuanLi.getCode())) {
+            asmSql.addSql(" create_user = ?").addParam(getUserId().toString());
+            if (StringUtil.isNotBlank(norm_status)) {
+                asmSql.addSql(" and norm_status = ?").addParam(norm_status);
+            }
+        }
+        //如果是对标操作员,则检索已经发布的
+        else if (getUser().getUserTypeGroup().contains(UserType.ShuJuDuiBiaoCaoZuo.getCode())) {
+            asmSql.addSql(" norm_status = ?").addParam(IsFlag.Shi.getCode());
+        } else {
+            throw new BusinessException("登录用户没有查询对标-标准数据数据权限!");
+        }
+        //查询并返回数据
         Map<String, Object> dbmNormbasicInfoMap = new HashMap<>();
         Page page = new DefaultPageImpl(currPage, pageSize);
-        List<Dbm_normbasic> dbmNormbasicInfos = Dbo.queryPagedList(Dbm_normbasic.class, page,
-                "select * from " + Dbm_normbasic.TableName +
-                        " where norm_status = ? and create_user = ?", norm_status, getUserId().toString());
+        List<Dbm_normbasic> dbmNormbasicInfos = Dbo.queryPagedList(Dbm_normbasic.class, page, asmSql.sql(),
+                asmSql.params());
         dbmNormbasicInfoMap.put("dbmNormbasicInfos", dbmNormbasicInfos);
         dbmNormbasicInfoMap.put("totalSize", page.getTotalSize());
         return dbmNormbasicInfoMap;
@@ -204,18 +262,22 @@ public class DbmNormbasicAction extends BaseAction {
     @Return(desc = "标准信息列表", range = "标准信息列表")
     public Map<String, Object> searchDbmNormbasic(int currPage, int pageSize, String search_cond, String status,
                                                   String sort_id) {
-        Map<String, Object> dbmNormbasicMap = new HashMap<>();
-        Page page = new DefaultPageImpl(currPage, pageSize);
         SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
         asmSql.clean();
         asmSql.addSql("select * from " + Dbm_normbasic.TableName + " where");
-        if (StringUtil.isNotBlank(status)) {
-            asmSql.addSql(" norm_status = ? and").addParam(status);
+        //如果用户是对标管理员,则校验并根据状态和创建用户查询
+        if (getUser().getUserTypeGroup().contains(UserType.ShuJuDuiBiaoGuanLi.getCode())) {
+            asmSql.addSql(" create_user = ?").addParam(getUserId().toString());
+            if (StringUtil.isNotBlank(status)) {
+                asmSql.addSql(" and norm_status = ?").addParam(status);
+            }
         }
-        if (StringUtil.isNotBlank(sort_id)) {
-            asmSql.addSql(" sort_id = ? and").addParam(Long.parseLong(sort_id));
+        //如果是对标操作员,则检索已经发布的
+        else if (getUser().getUserTypeGroup().contains(UserType.ShuJuDuiBiaoCaoZuo.getCode())) {
+            asmSql.addSql(" norm_status = ?").addParam(IsFlag.Shi.getCode());
+        } else {
+            throw new BusinessException("登录用户没有查询对标数据权限!");
         }
-        asmSql.addSql(" create_user = ?").addParam(getUserId().toString());
         if (StringUtil.isNotBlank(search_cond)) {
             asmSql.addSql(" and (");
             asmSql.addLikeParam("norm_code", '%' + search_cond + '%', "");
@@ -232,6 +294,9 @@ public class DbmNormbasicAction extends BaseAction {
             asmSql.addLikeParam("related_system", '%' + search_cond + '%', "or");
             asmSql.addLikeParam("formulator", '%' + search_cond + '%').addSql(")");
         }
+        //查询并返回数据
+        Map<String, Object> dbmNormbasicMap = new HashMap<>();
+        Page page = new DefaultPageImpl(currPage, pageSize);
         List<Dbm_normbasic> dbmNormbasicInfos = Dbo.queryPagedList(Dbm_normbasic.class, page, asmSql.sql(),
                 asmSql.params());
         dbmNormbasicMap.put("dbmNormbasicInfos", dbmNormbasicInfos);

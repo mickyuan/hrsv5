@@ -12,6 +12,7 @@ import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.IsFlag;
+import hrds.commons.codes.UserType;
 import hrds.commons.entity.Dbm_normbasic;
 import hrds.commons.entity.Dbm_sort_info;
 import hrds.commons.exception.BusinessException;
@@ -112,10 +113,20 @@ public class DbmSortInfoAction extends BaseAction {
     @Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", valueIfNull = "10")
     @Return(desc = "所有分类信息", range = "所有分类信息")
     public Map<String, Object> getDbmSortInfo(int currPage, int pageSize) {
+        //设置查询sql
+        SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
+        asmSql.clean();
+        asmSql.addSql("select * from " + Dbm_sort_info.TableName + " where ");
+        if (getUser().getUserTypeGroup().contains(UserType.ShuJuDuiBiaoGuanLi.getCode())) {
+            asmSql.addSql("create_user=?").addParam(getUserId().toString());
+        }
+        if (getUser().getUserTypeGroup().contains(UserType.ShuJuDuiBiaoCaoZuo.getCode())) {
+            asmSql.addSql("sort_status=?").addParam(IsFlag.Shi.getCode());
+        }
+        //查询并返回结果
         Map<String, Object> dbmSortInfoMap = new HashMap<>();
         Page page = new DefaultPageImpl(currPage, pageSize);
-        List<Dbm_sort_info> dbmSortInfos = Dbo.queryPagedList(Dbm_sort_info.class, page,
-                "select * from " + Dbm_sort_info.TableName + " where create_user=?", getUserId().toString());
+        List<Dbm_sort_info> dbmSortInfos = Dbo.queryPagedList(Dbm_sort_info.class, page, asmSql.sql(), asmSql.params());
         dbmSortInfoMap.put("dbmSortInfos", dbmSortInfos);
         dbmSortInfoMap.put("totalSize", page.getTotalSize());
         return dbmSortInfoMap;
@@ -141,11 +152,27 @@ public class DbmSortInfoAction extends BaseAction {
     @Param(name = "sort_status", desc = "发布状态", range = "IsFlag 0:未发布,1:已发布")
     @Return(desc = "分类信息列表", range = "分类信息列表")
     public Map<String, Object> getDbmSortInfoByStatus(int currPage, int pageSize, String sort_status) {
+        //设置查询sql
+        SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
+        asmSql.clean();
+        asmSql.addSql("select * from " + Dbm_sort_info.TableName + " where");
+        //如果用户是对标管理员,则校验并根据状态和创建用户查询
+        if (getUser().getUserTypeGroup().contains(UserType.ShuJuDuiBiaoGuanLi.getCode())) {
+            asmSql.addSql(" create_user = ?").addParam(getUserId().toString());
+            if (StringUtil.isNotBlank(sort_status)) {
+                asmSql.addSql(" and sort_status = ?").addParam(sort_status);
+            }
+        }
+        //如果是对标操作员,则检索已经发布的
+        else if (getUser().getUserTypeGroup().contains(UserType.ShuJuDuiBiaoCaoZuo.getCode())) {
+            asmSql.addSql(" sort_status = ?").addParam(IsFlag.Shi.getCode());
+        } else {
+            throw new BusinessException("登录用户没有查询对标数据权限!");
+        }
+        //查询并返回数据
         Map<String, Object> dbmSortInfoMap = new HashMap<>();
         Page page = new DefaultPageImpl(currPage, pageSize);
-        List<Dbm_sort_info> dbmSortInfos = Dbo.queryPagedList(Dbm_sort_info.class, page,
-                "select * from " + Dbm_sort_info.TableName + " where sort_status = ? and create_user = ?",
-                sort_status, getUserId().toString());
+        List<Dbm_sort_info> dbmSortInfos = Dbo.queryPagedList(Dbm_sort_info.class, page, asmSql.sql(), asmSql.params());
         dbmSortInfoMap.put("dbmSortInfos", dbmSortInfos);
         dbmSortInfoMap.put("totalSize", page.getTotalSize());
         return dbmSortInfoMap;
@@ -162,17 +189,29 @@ public class DbmSortInfoAction extends BaseAction {
         if (StringUtil.isBlank(search_cond)) {
             throw new BusinessException("搜索条件不能为空!" + search_cond);
         }
-        Map<String, Object> dbmSortInfoMap = new HashMap<>();
-        Page page = new DefaultPageImpl(currPage, pageSize);
+        //设置查询sql
         SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
         asmSql.clean();
         asmSql.addSql("select * from " + Dbm_sort_info.TableName + " where");
-        if (StringUtil.isNotBlank(status)) {
-            asmSql.addSql(" sort_status = ? and").addParam(status);
+        //如果用户是对标管理员,则校验并根据状态和创建用户查询
+        if (getUser().getUserTypeGroup().contains(UserType.ShuJuDuiBiaoGuanLi.getCode())) {
+            asmSql.addSql(" create_user = ?").addParam(getUserId().toString());
+            if (StringUtil.isNotBlank(status)) {
+                asmSql.addSql(" and sort_status = ?").addParam(status);
+            }
         }
-        asmSql.addSql(" create_user = ? and (").addParam(getUserId().toString());
+        //如果是对标操作员,则检索已经发布的
+        else if (getUser().getUserTypeGroup().contains(UserType.ShuJuDuiBiaoCaoZuo.getCode())) {
+            asmSql.addSql(" sort_status = ?").addParam(IsFlag.Shi.getCode());
+        } else {
+            throw new BusinessException("登录用户没有查询对标数据权限!");
+        }
+        asmSql.addSql(" and (");
         asmSql.addLikeParam("sort_name", '%' + search_cond + '%', "");
         asmSql.addLikeParam("sort_remark", '%' + search_cond + '%', "or").addSql(")");
+        //查询并返回数据
+        Map<String, Object> dbmSortInfoMap = new HashMap<>();
+        Page page = new DefaultPageImpl(currPage, pageSize);
         List<Dbm_sort_info> dbmSortInfos = Dbo.queryPagedList(Dbm_sort_info.class, page, asmSql.sql(), asmSql.params());
         dbmSortInfoMap.put("dbmSortInfos", dbmSortInfos);
         dbmSortInfoMap.put("totalSize", page.getTotalSize());
@@ -182,10 +221,22 @@ public class DbmSortInfoAction extends BaseAction {
     @Method(desc = "获取所有根分类信息", logicStep = "获取所有根分类信息")
     @Return(desc = "所有根分类信息", range = "所有根分类信息")
     public Map<String, Object> getDbmRootSortInfo() {
+        //设置查询sql
+        SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
+        asmSql.clean();
+        asmSql.addSql("select * from " + Dbm_sort_info.TableName + " where parent_id=?").addParam(0L);
+        //如果用户是对标管理员,则根据创建用户查询
+        if (getUser().getUserTypeGroup().contains(UserType.ShuJuDuiBiaoGuanLi.getCode())) {
+            asmSql.addSql(" create_user = ?").addParam(getUserId().toString());
+        }
+        //如果是对标操作员,则检索已经发布的
+        else if (getUser().getUserTypeGroup().contains(UserType.ShuJuDuiBiaoCaoZuo.getCode())) {
+            asmSql.addSql(" sort_status = ?").addParam(IsFlag.Shi.getCode());
+        } else {
+            throw new BusinessException("登录用户没有查询对标数据权限!");
+        }
         Map<String, Object> dbmSortInfoMap = new HashMap<>();
-        List<Dbm_sort_info> dbmSortInfos = Dbo.queryList(Dbm_sort_info.class,
-                "select * from " + Dbm_sort_info.TableName + " where parent_id=? and create_user=?",
-                0L, getUserId().toString());
+        List<Dbm_sort_info> dbmSortInfos = Dbo.queryList(Dbm_sort_info.class, asmSql.sql(), asmSql.params());
         dbmSortInfoMap.put("dbmSortInfos", dbmSortInfos);
         dbmSortInfoMap.put("totalSize", dbmSortInfos.size());
         return dbmSortInfoMap;
@@ -195,10 +246,22 @@ public class DbmSortInfoAction extends BaseAction {
     @Param(name = "sort_id", desc = "分类Id", range = "long类型")
     @Return(desc = "指定分类下的子分类信息", range = "指定分类下的子分类信息")
     public Map<String, Object> getDbmSubSortInfo(long sort_id) {
+        //设置查询sql
+        SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
+        asmSql.clean();
+        asmSql.addSql("select * from " + Dbm_sort_info.TableName + " where parent_id=?").addParam(sort_id);
+        //如果用户是对标管理员,则根据创建用户查询
+        if (getUser().getUserTypeGroup().contains(UserType.ShuJuDuiBiaoGuanLi.getCode())) {
+            asmSql.addSql(" create_user = ?").addParam(getUserId().toString());
+        }
+        //如果是对标操作员,则检索已经发布的
+        else if (getUser().getUserTypeGroup().contains(UserType.ShuJuDuiBiaoCaoZuo.getCode())) {
+            asmSql.addSql(" sort_status = ?").addParam(IsFlag.Shi.getCode());
+        } else {
+            throw new BusinessException("登录用户没有查询对标数据权限!");
+        }
         Map<String, Object> dbmSortInfoMap = new HashMap<>();
-        List<Dbm_sort_info> dbmSortInfos = Dbo.queryList(Dbm_sort_info.class,
-                "select * from " + Dbm_sort_info.TableName + " where parent_id=? and create_user=?",
-                sort_id, getUserId().toString());
+        List<Dbm_sort_info> dbmSortInfos = Dbo.queryList(Dbm_sort_info.class, asmSql.sql(), asmSql.params());
         dbmSortInfoMap.put("dbmSortInfos", dbmSortInfos);
         dbmSortInfoMap.put("totalSize", dbmSortInfos.size());
         return dbmSortInfoMap;

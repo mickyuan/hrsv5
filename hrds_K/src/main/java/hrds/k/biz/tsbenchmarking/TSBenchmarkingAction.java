@@ -186,7 +186,7 @@ public class TSBenchmarkingAction extends BaseAction {
     }
 
     @Method(desc = "设置对标检测表信息表", logicStep = "设置对标检测表信息表")
-    @Param(name = "file_id", desc = "表源属性id", range = "String[]")
+    @Param(name = "file_id", desc = "表源属性id", range = "String类型")
     private void setDbmDtableInfo(String file_id) {
         //根据表源属性id获取表信息
         Map<String, Object> dclBatchTableInfo = TSBQuery.gerDCLBatchTableInfoById(file_id);
