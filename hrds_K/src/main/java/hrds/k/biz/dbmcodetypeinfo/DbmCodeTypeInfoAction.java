@@ -12,6 +12,7 @@ import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.IsFlag;
+import hrds.commons.codes.UserType;
 import hrds.commons.entity.Dbm_code_type_info;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.DboExecute;
@@ -89,11 +90,25 @@ public class DbmCodeTypeInfoAction extends BaseAction {
     @Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", valueIfNull = "10")
     @Return(desc = "所有分类信息", range = "所有分类信息")
     public Map<String, Object> getDbmCodeTypeInfo(int currPage, int pageSize) {
+        //设置查询sql
+        SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
+        asmSql.clean();
+        asmSql.addSql("select * from " + Dbm_code_type_info.TableName + " where");
+        //如果用户是对标管理员,则校验并根据状态和创建用户查询
+        if (getUser().getUserTypeGroup().contains(UserType.ShuJuDuiBiaoGuanLi.getCode())) {
+            asmSql.addSql(" create_user = ?").addParam(getUserId().toString());
+        }
+        //如果是对标操作员,则检索已经发布的
+        else if (getUser().getUserTypeGroup().contains(UserType.ShuJuDuiBiaoCaoZuo.getCode())) {
+            asmSql.addSql(" code_status = ?").addParam(IsFlag.Shi.getCode());
+        } else {
+            throw new BusinessException("登录用户没有查询对标-代码类数据权限!");
+        }
+        //查询并返回数据
         Map<String, Object> dbmCodeTypeInfoMap = new HashMap<>();
         Page page = new DefaultPageImpl(currPage, pageSize);
         List<Dbm_code_type_info> dbmCodeTypeInfos =
-                Dbo.queryPagedList(Dbm_code_type_info.class, page, "select * from " + Dbm_code_type_info.TableName
-                        + " where create_user = ?", getUserId().toString());
+                Dbo.queryPagedList(Dbm_code_type_info.class, page, asmSql.sql(), asmSql.params());
         dbmCodeTypeInfoMap.put("dbmCodeTypeInfos", dbmCodeTypeInfos);
         dbmCodeTypeInfoMap.put("totalSize", page.getTotalSize());
         return dbmCodeTypeInfoMap;
@@ -102,10 +117,23 @@ public class DbmCodeTypeInfoAction extends BaseAction {
     @Method(desc = "获取所有代码类信息(只获取code_type_id和code_type_name)", logicStep = "获取所有代码类信息")
     @Return(desc = "所有分类信息(只获取code_type_id和code_type_name)", range = "所有分类信息")
     public Map<String, Object> getDbmCodeTypeIdAndNameInfo() {
+        //设置查询sql
+        SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
+        asmSql.clean();
+        asmSql.addSql("select code_type_id,code_type_name from " + Dbm_code_type_info.TableName + " where");
+        //如果用户是对标管理员,则校验并根据状态和创建用户查询
+        if (getUser().getUserTypeGroup().contains(UserType.ShuJuDuiBiaoGuanLi.getCode())) {
+            asmSql.addSql(" create_user = ?").addParam(getUserId().toString());
+        }
+        //如果是对标操作员,则检索已经发布的
+        else if (getUser().getUserTypeGroup().contains(UserType.ShuJuDuiBiaoCaoZuo.getCode())) {
+            asmSql.addSql(" code_status = ?").addParam(IsFlag.Shi.getCode());
+        } else {
+            throw new BusinessException("登录用户没有查询对标-代码类数据权限!");
+        }
+        //查询并返回数据
         Map<String, Object> dbmCodeTypeInfoMap = new HashMap<>();
-        List<Map<String, Object>> dbmCodeTypeInfos =
-                Dbo.queryList("select code_type_id,code_type_name from " + Dbm_code_type_info.TableName +
-                        " where create_user = ?", getUserId().toString());
+        List<Map<String, Object>> dbmCodeTypeInfos = Dbo.queryList(asmSql.sql(), asmSql.params());
         dbmCodeTypeInfoMap.put("dbmCodeTypeInfos", dbmCodeTypeInfos);
         dbmCodeTypeInfoMap.put("totalSize", dbmCodeTypeInfos.size());
         return dbmCodeTypeInfoMap;
