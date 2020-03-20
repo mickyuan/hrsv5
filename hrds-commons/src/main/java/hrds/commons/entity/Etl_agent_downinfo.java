@@ -42,14 +42,18 @@ public class Etl_agent_downinfo extends ProjectTableEntity
 	private String ai_desc;
 	@DocBean(name ="remark",value="备注:",dataType = String.class,required = false)
 	private String remark;
-	@DocBean(name ="user_id",value="用户id:",dataType = Long.class,required = true)
-	private Long user_id;
 	@DocBean(name ="user_name",value="用户名:",dataType = String.class,required = false)
 	private String user_name;
 	@DocBean(name ="passwd",value="密码:",dataType = String.class,required = false)
 	private String passwd;
 	@DocBean(name ="agent_type",value="agent类别:",dataType = String.class,required = true)
 	private String agent_type;
+	@DocBean(name ="etl_context",value="根context:",dataType = String.class,required = true)
+	private String etl_context;
+	@DocBean(name ="etl_pattern",value="访问路径:",dataType = String.class,required = true)
+	private String etl_pattern;
+	@DocBean(name ="user_id",value="用户ID:",dataType = Long.class,required = true)
+	private Long user_id;
 
 	/** 取得：下载编号(primary) */
 	public Long getDown_id(){
@@ -105,20 +109,6 @@ public class Etl_agent_downinfo extends ProjectTableEntity
 	public void setRemark(String remark){
 		this.remark=remark;
 	}
-	/** 取得：用户id */
-	public Long getUser_id(){
-		return user_id;
-	}
-	/** 设置：用户id */
-	public void setUser_id(Long user_id){
-		this.user_id=user_id;
-	}
-	/** 设置：用户id */
-	public void setUser_id(String user_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(user_id)){
-			this.user_id=new Long(user_id);
-		}
-	}
 	/** 取得：用户名 */
 	public String getUser_name(){
 		return user_name;
@@ -142,5 +132,35 @@ public class Etl_agent_downinfo extends ProjectTableEntity
 	/** 设置：agent类别 */
 	public void setAgent_type(String agent_type){
 		this.agent_type=agent_type;
+	}
+	/** 取得：根context */
+	public String getEtl_context(){
+		return etl_context;
+	}
+	/** 设置：根context */
+	public void setEtl_context(String etl_context){
+		this.etl_context=etl_context;
+	}
+	/** 取得：访问路径 */
+	public String getEtl_pattern(){
+		return etl_pattern;
+	}
+	/** 设置：访问路径 */
+	public void setEtl_pattern(String etl_pattern){
+		this.etl_pattern=etl_pattern;
+	}
+	/** 取得：用户ID */
+	public Long getUser_id(){
+		return user_id;
+	}
+	/** 设置：用户ID */
+	public void setUser_id(Long user_id){
+		this.user_id=user_id;
+	}
+	/** 设置：用户ID */
+	public void setUser_id(String user_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(user_id)){
+			this.user_id=new Long(user_id);
+		}
 	}
 }
