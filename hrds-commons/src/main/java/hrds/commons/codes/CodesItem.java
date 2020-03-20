@@ -7,18 +7,24 @@ import java.util.*;
                                                                                        
 public class CodesItem{                        
 	private static final Log logger = LogFactory.getLog(CodesItem.class);                                                      
-	/**存储层附件属性   */
-	protected static final String storeLayerAdded=new String("StoreLayerAdded");
-	/**数据源类型   */
-	protected static final String dataSourceType=new String("DataSourceType");
-	/**对标-数据类别   */
-	protected static final String dbmDataType=new String("DbmDataType");
-	/**对标-对标方式   */
-	protected static final String dbmMode=new String("DbmMode");
-	/**Operation类型   */
-	protected static final String operationType=new String("OperationType");
-	/**更新方式   */
-	protected static final String updateType=new String("UpdateType");
+	/**数据质量规则级别   */
+	protected static final String edRuleLevel=new String("EdRuleLevel");
+	/**数据质量校验结果   */
+	protected static final String dqcVerifyResult=new String("DqcVerifyResult");
+	/**数据质量处理状态   */
+	protected static final String dqcDlStat=new String("DqcDlStat");
+	/**数据质量执行方式   */
+	protected static final String dqcExecMode=new String("DqcExecMode");
+	/**hdfs文件类型   */
+	protected static final String hdfsFileType=new String("HdfsFileType");
+	/**数据表生命周期   */
+	protected static final String tableLifeCycle=new String("TableLifeCycle");
+	/**数据表存储方式   */
+	protected static final String tableStorage=new String("TableStorage");
+	/**作业运行状态   */
+	protected static final String jobExecuteState=new String("JobExecuteState");
+	/**sql执行引擎   */
+	protected static final String sqlEngine=new String("SqlEngine");
 	/**用户类型   */
 	protected static final String userType=new String("UserType");
 	/**是否标识   */
@@ -103,16 +109,35 @@ public class CodesItem{
 	protected static final String store_type=new String("Store_type");
 	/**文件类型   */
 	protected static final String fileType=new String("FileType");
+	/**存储层附件属性   */
+	protected static final String storeLayerAdded=new String("StoreLayerAdded");
+	/**数据源类型   */
+	protected static final String dataSourceType=new String("DataSourceType");
+	/**对标-数据类别   */
+	protected static final String dbmDataType=new String("DbmDataType");
+	/**对标-对标方式   */
+	protected static final String dbmMode=new String("DbmMode");
+	/**Operation类型   */
+	protected static final String operationType=new String("OperationType");
+	/**更新方式   */
+	protected static final String updateType=new String("UpdateType");
+	/**接口类型   */
+	protected static final String interfaceType=new String("InterfaceType");
+	/**接口状态   */
+	protected static final String interfaceState=new String("InterfaceState");
 
 
 	public static final Map<String,Class> mapCat= new HashMap<String,Class>(100);
 	static{
-		mapCat.put(storeLayerAdded,StoreLayerAdded.class);
-		mapCat.put(dataSourceType,DataSourceType.class);
-		mapCat.put(dbmDataType,DbmDataType.class);
-		mapCat.put(dbmMode,DbmMode.class);
-		mapCat.put(operationType,OperationType.class);
-		mapCat.put(updateType,UpdateType.class);
+		mapCat.put(edRuleLevel,EdRuleLevel.class);
+		mapCat.put(dqcVerifyResult,DqcVerifyResult.class);
+		mapCat.put(dqcDlStat,DqcDlStat.class);
+		mapCat.put(dqcExecMode,DqcExecMode.class);
+		mapCat.put(hdfsFileType,HdfsFileType.class);
+		mapCat.put(tableLifeCycle,TableLifeCycle.class);
+		mapCat.put(tableStorage,TableStorage.class);
+		mapCat.put(jobExecuteState,JobExecuteState.class);
+		mapCat.put(sqlEngine,SqlEngine.class);
 		mapCat.put(userType,UserType.class);
 		mapCat.put(isFlag,IsFlag.class);
 		mapCat.put(userState,UserState.class);
@@ -155,6 +180,14 @@ public class CodesItem{
 		mapCat.put(authType,AuthType.class);
 		mapCat.put(store_type,Store_type.class);
 		mapCat.put(fileType,FileType.class);
+		mapCat.put(storeLayerAdded,StoreLayerAdded.class);
+		mapCat.put(dataSourceType,DataSourceType.class);
+		mapCat.put(dbmDataType,DbmDataType.class);
+		mapCat.put(dbmMode,DbmMode.class);
+		mapCat.put(operationType,OperationType.class);
+		mapCat.put(updateType,UpdateType.class);
+		mapCat.put(interfaceType,InterfaceType.class);
+		mapCat.put(interfaceState,InterfaceState.class);
 	}
 
 
