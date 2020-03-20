@@ -670,7 +670,7 @@ DROP TABLE IF EXISTS DM_RELATION_DATATABLE ;
 CREATE TABLE DM_RELATION_DATATABLE(
 DSL_ID                                            BIGINT default 0 NOT NULL, --存储层配置ID
 DATATABLE_ID                                      BIGINT default 0 NOT NULL, --数据表id
-IS_SUCCESSFUL                                     CHAR(1) NOT NULL, --是否标识
+IS_SUCCESSFUL                                     CHAR(1) NOT NULL, --是否入库成功
 CONSTRAINT DM_RELATION_DATATABLE_PK PRIMARY KEY(DSL_ID,DATATABLE_ID)   );
 
 --作业Agent下载信息
