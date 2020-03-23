@@ -40,10 +40,12 @@ public class Dbm_normbmd_result extends ProjectTableEntity
 	private Long col_id;
 	@DocBean(name ="basic_id",value="标准元主键:",dataType = Long.class,required = true)
 	private Long basic_id;
-	@DocBean(name ="is_artificial",value="是否为人工对标结果(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
+	@DocBean(name ="is_artificial",value="是否人工(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_artificial;
 	@DocBean(name ="detect_id",value="检测主键:",dataType = String.class,required = true)
 	private String detect_id;
+	@DocBean(name ="is_tag",value="是否标记为最终结果(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
+	private String is_tag;
 
 	/** 取得：结果主键 */
 	public String getResult_id(){
@@ -109,11 +111,11 @@ public class Dbm_normbmd_result extends ProjectTableEntity
 			this.basic_id=new Long(basic_id);
 		}
 	}
-	/** 取得：是否为人工对标结果 */
+	/** 取得：是否人工 */
 	public String getIs_artificial(){
 		return is_artificial;
 	}
-	/** 设置：是否为人工对标结果 */
+	/** 设置：是否人工 */
 	public void setIs_artificial(String is_artificial){
 		this.is_artificial=is_artificial;
 	}
@@ -124,5 +126,13 @@ public class Dbm_normbmd_result extends ProjectTableEntity
 	/** 设置：检测主键 */
 	public void setDetect_id(String detect_id){
 		this.detect_id=detect_id;
+	}
+	/** 取得：是否标记为最终结果 */
+	public String getIs_tag(){
+		return is_tag;
+	}
+	/** 设置：是否标记为最终结果 */
+	public void setIs_tag(String is_tag){
+		this.is_tag=is_tag;
 	}
 }
