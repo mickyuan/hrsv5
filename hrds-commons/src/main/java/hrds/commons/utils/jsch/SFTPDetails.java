@@ -22,6 +22,16 @@ public class SFTPDetails {
   private String redis_info;
   /** 数据库配置文件 */
   private String db_info;
+  /** 配置文件临时存放路径 */
+  private String tmp_conf_path;
+
+  public String getTmp_conf_path() {
+    return tmp_conf_path;
+  }
+
+  public void setTmp_conf_path(String tmp_conf_path) {
+    this.tmp_conf_path = tmp_conf_path;
+  }
 
   public String getUser_name() {
     return user_name;

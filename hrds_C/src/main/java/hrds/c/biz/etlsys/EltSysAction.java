@@ -53,13 +53,11 @@ public class EltSysAction extends BaseAction {
 				getUserId());
 	}
 
-	@Method(
-			desc = "根据工程编号查询作业调度工程信息",
-			logicStep =
-					"1.数据可访问权限处理方式，根据user_id进行权限控制"
-							+ "2.验证当前工程是否存在"
-							+ "3.根据工程编号查询工程信息"
-							+ "4.判断remarks是否为空，不为空则分割获取部署工程的redis ip与port并封装数据返回")
+	@Method(desc = "根据工程编号查询作业调度工程信息",
+			logicStep = "1.数据可访问权限处理方式，根据user_id进行权限控制"
+					+ "2.验证当前工程是否存在"
+					+ "3.根据工程编号查询工程信息"
+					+ "4.判断remarks是否为空，不为空则分割获取部署工程的redis ip与port并封装数据返回")
 	@Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
 	@Return(desc = "返回根据工程编号查询的工程信息", range = "无限制")
 	public Map<String, Object> searchEtlSysById(String etl_sys_cd) {
@@ -170,8 +168,11 @@ public class EltSysAction extends BaseAction {
 	@Param(name = "serv_file_path", desc = "ETL部署Agent服务器部署路径", range = "无限制")
 	@Param(name = "user_name", desc = "ETL部署Agent服务器用户名", range = "无限制")
 	@Param(name = "user_pwd", desc = "ETL部署Agent服务器密码", range = "无限制")
+	@Param(name = "etl_context", desc = "ETL部署访问根", range = "无限制")
+	@Param(name = "etl_pattern", desc = "ETL部署Agent服务器密码", range = "无限制")
 	public void deployEtlJobScheduleProject(String etl_sys_cd, String etl_serv_ip, String serv_file_path,
-	                                        String user_name, String user_pwd) {
+	                                        String user_name, String user_pwd, String etl_context,
+	                                        String etl_pattern) {
 		// fixme jsch对响应结果返回数字进行判断还未修改
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
 		// 2.验证当前用户对应的工程是否已不存在
@@ -179,20 +180,20 @@ public class EltSysAction extends BaseAction {
 			throw new BusinessException("当前用户对应的工程已不存在！");
 		}
 		// 3.获取系统参数
+		// 4.部署ETL
+		ETLAgentDeployment.scpETLAgent(etl_sys_cd, etl_serv_ip, Constant.SFTP_PORT, user_name, user_pwd,
+				serv_file_path, etl_context, etl_pattern);
+		// 5.部署成功，更新用户信息
 		String redisIP = PropertyParaValue.getString("redis_ip", "172.168.0.61");
 		String redisPort = PropertyParaValue.getString("redis_port", "56379");
-		String etl_serv_port = Constant.SFTP_PORT;
-		// 4.部署ETL
-		ETLAgentDeployment.scpETLAgent(etl_sys_cd, etl_serv_ip, etl_serv_port, redisIP, redisPort,
-				user_name, user_pwd, serv_file_path);
-		// 5.部署成功，更新用户信息
 		Etl_sys etl_sys = new Etl_sys();
 		etl_sys.setEtl_serv_ip(etl_serv_ip);
-		etl_sys.setEtl_serv_port(etl_serv_port);
 		etl_sys.setEtl_sys_cd(etl_sys_cd);
 		etl_sys.setUser_name(user_name);
 		etl_sys.setUser_pwd(user_pwd);
 		etl_sys.setServ_file_path(serv_file_path);
+		etl_sys.setEtl_context(etl_context);
+		etl_sys.setEtl_pattern(etl_pattern);
 		etl_sys.setRemarks(redisIP + ':' + redisPort);
 		etl_sys.update(Dbo.db());
 	}
