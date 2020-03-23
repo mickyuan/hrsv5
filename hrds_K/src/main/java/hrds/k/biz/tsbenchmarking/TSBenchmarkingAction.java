@@ -19,7 +19,6 @@ import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.tree.background.TreeNodeInfo;
 import hrds.commons.tree.background.bean.TreeConf;
-import hrds.commons.utils.CommonVariables;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.PropertyParaValue;
 import hrds.commons.utils.key.PrimayKeyGener;
@@ -29,7 +28,10 @@ import hrds.k.biz.tsbenchmarking.bean.TSBConf;
 import hrds.k.biz.tsbenchmarking.query.TSBQuery;
 
 import java.lang.reflect.Type;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @DocClass(desc = "表结构对标", author = "BY-HLL", createdate = "2020/3/12 0012 上午 09:10")
 public class TSBenchmarkingAction extends BaseAction {
@@ -61,67 +63,106 @@ public class TSBenchmarkingAction extends BaseAction {
     @Param(name = "table_type", desc = "表类型标识", range = "01:批量数据,02:实时数据表", nullable = true)
     @Param(name = "file_id", desc = "表源属性id", range = "String[]")
     @Return(desc = "字段信息列表", range = "字段信息列表")
-    public List<Dbm_dtcol_info> getColumnByFileId(String data_layer, String table_type, String file_id) {
+    public List<Map<String, Object>> getColumnByFileId(String data_layer, String table_type, String file_id) {
         //设置 Dbm_normbm_detect 对象
         setDbmNormbmDetect(data_layer);
         //设置 Dbm_dtable_info 对象
         setDbmDtableInfo(file_id);
-        List<Dbm_dtcol_info> dbm_dtcol_info_s = new ArrayList<>();
-        //判断是否有Hadoop平台
-        if (CommonVariables.HAS_HADOOP_ENV) {
-            switch (data_layer) {
-                case "DCL":
-                    //如果数据表所属层是DCL层,判断表类型是批量还是实时
-                    if (Constant.DCL_BATCH.equals(table_type)) {
-                        dbm_dtcol_info_s.addAll(setDbmDtcolInfo(TSBQuery.getDCLBatchTableColumnsById(file_id)));
-                    } else if (Constant.DCL_REALTIME.equals(table_type)) {
-                        dbm_dtcol_info_s.addAll(setDbmDtcolInfo(TSBQuery.getDCLBatchRealTimeTableColumnsById(file_id)));
-                    } else {
-                        throw new BusinessException("数据表类型错误! 01:批量数据,02:实时数据");
-                    }
-                    break;
-                case "ISL":
-                case "DPL":
-                case "DML":
-                case "SFL":
-                case "AML":
-                case "DQC":
-                case "UDL":
-                    throw new BusinessException(data_layer + "层暂未实现!");
-                default:
-                    throw new BusinessException("未找到匹配的存储层!");
-            }
+        List<Map<String, Object>> col_info_s = new ArrayList<>();
+        //数据层获取不同表结构
+        switch (data_layer) {
+            case "DCL":
+                //如果数据表所属层是DCL层,判断表类型是批量还是实时
+                if (Constant.DCL_BATCH.equals(table_type)) {
+                    col_info_s.addAll(TSBQuery.getDCLBatchTableColumnsById(file_id));
+                } else if (Constant.DCL_REALTIME.equals(table_type)) {
+                    col_info_s.addAll(TSBQuery.getDCLBatchRealTimeTableColumnsById(file_id));
+                } else {
+                    throw new BusinessException("数据表类型错误! 01:批量数据,02:实时数据");
+                }
+                break;
+            case "ISL":
+            case "DPL":
+            case "DML":
+            case "SFL":
+            case "AML":
+            case "DQC":
+            case "UDL":
+                throw new BusinessException(data_layer + "层暂未实现!");
+            default:
+                throw new BusinessException("未找到匹配的存储层!");
         }
-        //无Hadoop平台
-        else {
-            throw new BusinessException("无Hadoop平台的功能暂未实现!");
-        }
-        return dbm_dtcol_info_s;
+        return col_info_s;
     }
 
-    @Method(desc = "获取预测对标结果", logicStep = "获取预测对标结果")
-    @Param(name = "col_info_s", desc = "字段信息", range = "JsonArray格式[{col_id:'',col_cname:'',col_remark:''}]")
-    @Return(desc = "预测对标结果", range = "预测对标结果")
-    public Map<String, Object> getPredictBenchmarkingResults(String col_info_s) {
+    @Method(desc = "设置对标检测字段信息表",
+            logicStep = "设置对标检测字段信息表")
+    @Param(name = "col_info_s", desc = "字段信息", range = "String类型,格式" +
+            "[column_id: 1000369846" +
+            "tc_remark: 参数名" +
+            "is_primary_key: 0" +
+            "agent_id: 1000003138" +
+            "database_id: 1000369838" +
+            "column_name: para_name" +
+            "column_ch_name: 参数名" +
+            "source_id: 1000003137" +
+            "column_type: varchar(512)]")
+    @Return(desc = "检测字段信息表信息集合", range = "检测字段信息表信息集合")
+    public void setDbmDtcolInfo(String col_info_s) {
+        //设置 Dbm_dtcol_info 对象
         Type type = new TypeReference<List<Map<String, String>>>() {
         }.getType();
         List<Map<String, String>> col_info_list = JsonUtil.toObject(col_info_s, type);
+        List<Dbm_dtcol_info> dbm_dtcol_info_list = new ArrayList<>();
+        col_info_list.forEach(col_info -> {
+            Dbm_dtcol_info dbm_dtcol_info = new Dbm_dtcol_info();
+            dbm_dtcol_info.setCol_id(PrimayKeyGener.getNextId());
+            dbm_dtcol_info.setCol_cname(col_info.get("column_ch_name"));
+            dbm_dtcol_info.setCol_ename(col_info.get("column_name"));
+            if (null == col_info.get("tc_remark")) {
+                dbm_dtcol_info.setCol_remark("");
+            } else {
+                dbm_dtcol_info.setCol_remark(col_info.get("tc_remark"));
+            }
+            Map<String, String> col_type_map = parsingFiledType(col_info.get("column_type"));
+            dbm_dtcol_info.setData_type(col_type_map.get("data_type"));
+            dbm_dtcol_info.setData_len(col_type_map.get("data_len"));
+            dbm_dtcol_info.setDecimal_point(col_type_map.get("decimal_point"));
+            dbm_dtcol_info.setIs_key(col_info.get("is_primary_key"));
+            dbm_dtcol_info.setIs_null(IsFlag.Fou.getCode());
+            dbm_dtcol_info.setDefault_value("");
+            dbm_dtcol_info.setDbm_tableid(tsbConf.getDbm_dtable_info().getDbm_tableid());
+            dbm_dtcol_info.setDetect_id(tsbConf.getDbm_normbm_detect().getDetect_id());
+            dbm_dtcol_info.setColumn_id(col_info.get("column_id"));
+            dbm_dtcol_info.setDatabase_id(col_info.get("database_id"));
+            dbm_dtcol_info.setAgent_id(col_info.get("agent_id"));
+            dbm_dtcol_info.setSource_id(col_info.get("source_id"));
+            dbm_dtcol_info_list.add(dbm_dtcol_info);
+            tsbConf.setDbm_dtcol_info_list(dbm_dtcol_info_list);
+        });
+    }
+
+    @Method(desc = "获取预测对标结果", logicStep = "获取预测对标结果")
+    @Return(desc = "预测对标结果", range = "预测对标结果")
+    public Map<String, Object> getPredictBenchmarkingResults() {
+        //获取待检测字段信息
+        List<Dbm_dtcol_info> dbm_dtcol_infos = tsbConf.getDbm_dtcol_info_list();
         //获取预测接口地址信息
         String predict_address = PropertyParaValue.getString("predict_address", "http://127.0.0.1:38081/predict");
         //设置请求参数
         List<Map<String, String>> params = new ArrayList<>();
-        col_info_list.forEach(col_info -> {
+        dbm_dtcol_infos.forEach(dbm_dtcol_info -> {
             Map<String, String> map = new HashMap<>();
-            if (StringUtil.isBlank(col_info.get("col_id"))) {
+            if (StringUtil.isBlank(dbm_dtcol_info.getCol_id().toString())) {
                 throw new BusinessException("检测字段主键为空!");
             }
-            map.put("id", col_info.get("col_id"));
-            if (StringUtil.isBlank(col_info.get("col_cname"))) {
+            map.put("id", dbm_dtcol_info.getCol_id().toString());
+            if (StringUtil.isBlank(dbm_dtcol_info.getCol_cname())) {
                 throw new BusinessException("检测字段中文名为空!");
             }
-            map.put("col_cnname", col_info.get("col_cname"));
-            map.put("col_ename", col_info.get("col_ename"));
-            map.put("col_desc", col_info.get("col_remark"));
+            map.put("col_cnname", dbm_dtcol_info.getCol_cname());
+            map.put("col_ename", dbm_dtcol_info.getCol_ename());
+            map.put("col_desc", dbm_dtcol_info.getCol_remark());
             params.add(map);
         });
         //根据接口获取预测结果
@@ -137,7 +178,11 @@ public class TSBenchmarkingAction extends BaseAction {
 
     @Method(desc = "保存表结构对标数据", logicStep = "保存表结构对标数据")
     @Param(name = "dbm_normbmd_info_s", desc = "对标结果数据信息",
-            range = "String类型,JsonArray格式,[{col_id:'',col_similarity:'',standard_id:'',is_artificial:''}]")
+            range = "String类型,JsonArray格式,[{col_id:'',col_similarity:'',standard_id:'',is_artificial:''}]" +
+                    "col_id: 字段id,唯一性" +
+                    "col_similarity: 字段相似度" +
+                    "standard_id: 标准编号(唯一性),如: IP600012" +
+                    "is_artificial: 是否人工对标,IsFlag标识,1:是,0:否")
     public void saveTSBConfData(String dbm_normbmd_info_s) {
         //设置 Dbm_normbmd_result
         Type type = new TypeReference<List<Map<String, String>>>() {
@@ -213,41 +258,6 @@ public class TSBenchmarkingAction extends BaseAction {
         tsbConf.setDbm_dtable_info(dbm_dtable_info);
     }
 
-    @Method(desc = "设置对标检测字段信息表",
-            logicStep = "设置对标检测字段信息表")
-    @Param(name = "column_mate_list", desc = "字段的mate信息List", range = "List")
-    @Return(desc = "检测字段信息表信息集合", range = "检测字段信息表信息集合")
-    private static List<Dbm_dtcol_info> setDbmDtcolInfo(List<Map<String, Object>> column_mate_list) {
-        List<Dbm_dtcol_info> dbm_dtcol_infos = new ArrayList<>();
-        column_mate_list.forEach(column_mate -> {
-            Dbm_dtcol_info dbm_dtcol_info = new Dbm_dtcol_info();
-            dbm_dtcol_info.setCol_id(PrimayKeyGener.getNextId());
-            dbm_dtcol_info.setCol_cname(column_mate.get("column_ch_name").toString());
-            dbm_dtcol_info.setCol_ename(column_mate.get("column_name").toString());
-            if (null == column_mate.get("tc_remark")) {
-                dbm_dtcol_info.setCol_remark("");
-            } else {
-                dbm_dtcol_info.setCol_remark(column_mate.get("tc_remark").toString());
-            }
-            Map<String, String> col_type_map = parsingFiledType(column_mate.get("column_type").toString());
-            dbm_dtcol_info.setData_type(col_type_map.get("data_type"));
-            dbm_dtcol_info.setData_len(col_type_map.get("data_len"));
-            dbm_dtcol_info.setDecimal_point(col_type_map.get("decimal_point"));
-            dbm_dtcol_info.setIs_key(column_mate.get("is_primary_key").toString());
-            dbm_dtcol_info.setIs_null(IsFlag.Fou.getCode());
-            dbm_dtcol_info.setDefault_value("");
-            dbm_dtcol_info.setDbm_tableid(tsbConf.getDbm_dtable_info().getDbm_tableid());
-            dbm_dtcol_info.setDetect_id(tsbConf.getDbm_normbm_detect().getDetect_id());
-            dbm_dtcol_info.setColumn_id(column_mate.get("column_id").toString());
-            dbm_dtcol_info.setDatabase_id(column_mate.get("database_id").toString());
-            dbm_dtcol_info.setAgent_id(column_mate.get("agent_id").toString());
-            dbm_dtcol_info.setSource_id(column_mate.get("source_id").toString());
-            dbm_dtcol_infos.add(dbm_dtcol_info);
-            tsbConf.setDbm_dtcol_info_list(dbm_dtcol_infos);
-        });
-        return tsbConf.getDbm_dtcol_info_list();
-    }
-
     @Method(desc = "设置对标检测结果表",
             logicStep = "逻辑说明")
     @Param(name = "dbm_normbmd_info_list", desc = "对标结果集合",
@@ -268,8 +278,6 @@ public class TSBenchmarkingAction extends BaseAction {
             dbm_normbmd_results_list.add(dbm_normbmd_result);
             tsbConf.setDbm_normbmd_result_list(dbm_normbmd_results_list);
         });
-
-
     }
 
     @Method(desc = "解析字段类型", logicStep = "解析字段类型")
