@@ -5,24 +5,34 @@ import com.jcraft.jsch.Session;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
-import fd.ng.core.utils.CodecUtil;
 import fd.ng.core.utils.FileUtil;
-import fd.ng.db.conf.DbinfosConf;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.PropertyParaValue;
+import hrds.commons.utils.datastorage.QueryContrast;
+import hrds.commons.utils.datastorage.httpserver.HttpServer;
+import hrds.commons.utils.datastorage.redisconf.RedisParam;
+import hrds.commons.utils.deployentity.HttpYaml;
 import hrds.commons.utils.jsch.SCPFileSender;
 import hrds.commons.utils.jsch.SFTPChannel;
 import hrds.commons.utils.jsch.SFTPDetails;
+import hrds.commons.utils.yaml.Yaml;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.*;
+import java.util.List;
+import java.util.Map;
 
 @DocClass(desc = "ETL部署类", author = "dhw", createdate = "2019/12/19 14:57")
 public class ETLAgentDeployment {
 
 	private static final Logger logger = LogManager.getLogger();
+
+	/**
+	 * 系统路径的符号
+	 */
+	public static final String SEPARATOR = File.separator;
 
 	@Method(desc = "ETL部署", logicStep = "1.数据可访问权限处理方式，该方法不需要权限控制"
 			+ "2.获取ETL下载地址"
@@ -44,92 +54,86 @@ public class ETLAgentDeployment {
 	@Param(name = "userName", desc = "ETL部署agent机器的用户名", range = "服务器用户名")
 	@Param(name = "password", desc = "ETL部署agent机器的密码", range = "服务器密码")
 	@Param(name = "targetDir", desc = "ETL部署服务器目录地址", range = "无限制")
-	public static void scpETLAgent(String etl_sys_cd, String etl_serv_ip, String etl_serv_port, String redisIP,
-	                               String redisPort, String userName, String password, String targetDir) {
-		BufferedWriter bw = null;
+	public static void scpETLAgent(String etl_sys_cd, String etl_serv_ip, String etl_serv_port, String userName,
+	                               String password, String targetDir, String etl_context, String etl_pattern) {
 		try {
 			// 1.数据可访问权限处理方式，该方法不需要权限控制
 			// 2.获取ETL下载地址
 			String agentPath = PropertyParaValue.getString("ETLpath", "");
-			String separator = File.separator;
+			String separator = SEPARATOR;
 			// 3.根据文件路径获取文件信息
-			File file = FileUtil.getFile(agentPath);
+			File sourceFile = FileUtil.getFile(agentPath);
 			// 4.判断文件是否存在
-			if (!file.exists()) {
+			if (!sourceFile.exists()) {
 				throw new BusinessException("ETL下载地址目录下文件不存在！");
 			}
-			String pathAbsolute = file.getParent();
-			String agent_zip = file.getName();
-			String pathFile = pathAbsolute + separator;
-			// 5.获取数据库连接配置信息
-			bw = new BufferedWriter(new OutputStreamWriter(
-					new FileOutputStream(pathFile + "db.properties", false),
-					CodecUtil.UTF8_CHARSET));
-			DbinfosConf.Dbinfo dbInfo = DbinfosConf.getDatabase("default");
-			String dbConf = "jdbc.url=" + dbInfo.getUrl() + System.lineSeparator() + "jdbc.driver="
-					+ dbInfo.getDriver() + System.lineSeparator() + "jdbc.username=" + dbInfo.getName()
-					+ System.lineSeparator() + "jdbc.password=" + dbInfo.getPassword()
-					+ System.lineSeparator();
-			bw.write(dbConf);
-			bw.flush();
-			bw.close();
-			// 6.获取redis连接配置信息
-			bw = new BufferedWriter(new OutputStreamWriter(
-					new FileOutputStream(pathFile + "redis.properties", false),
-					CodecUtil.UTF8_CHARSET));
-			String redisConf = "redis.ip=" + redisIP + System.lineSeparator() + "redis.port="
-					+ redisPort + System.lineSeparator();
-			bw.write(redisConf);
-			bw.flush();
-			bw.close();
+			// 本地文件路径路径
+			String source_path = sourceFile.getParent() + separator;
+			// 配置文件的临时存放路径
+			String tmp_conf_path = System.getProperty("user.dir") + SEPARATOR + "etlTempResources"
+					+ SEPARATOR + "fdconfig" + SEPARATOR;
+			logger.info("==========配置文件的临时存放路径===========" + tmp_conf_path);
+			// 5.生成redis配置文件
+			Yaml.dump(RedisParam.getRedisParam(), new File(tmp_conf_path + RedisParam.CONF_FILE_NAME));
+			// 6.生成httpserver.conf配置文件 fixme  control trigger control,trigger服务同一ip,端口如何控制不重复
+			Map<String, List<HttpYaml>> httpServerMap =
+					HttpServer.httpserverConfData(etl_context, etl_pattern, etl_serv_ip, etl_serv_port);
+			Yaml.dump(httpServerMap, new File(tmp_conf_path + HttpServer.HTTP_CONF_NAME));
 			// 7.获得程序当前路径
 			String userDir = System.getProperty("user.dir");
 			// 8.根据程序当前路径获取文件
 			File userDirFile = FileUtil.getFile(userDir);
-			// 9.集群conf配置文件目录
+			// 9.集群conf配置文件目录 fixme  集群配置文件暂时不知如何获取
 			String hadoopConf = userDirFile + separator + "conf" + separator;
 			// 10.创建存放部署ETL连接信息的集合并封装属性
-			//            Map<String, String> sftpDetails = new HashMap<>();
 			SFTPDetails sftpDetails = new SFTPDetails();
 			// 部署agent服务器IP
-			sftpDetails.setHost(etl_serv_ip);
-			// 部署agent服务器用户名
-			sftpDetails.setUser_name(userName);
-			// 部署agent服务器密码
-			sftpDetails.setPwd(password);
-			// 部署agent服务器端口
-			sftpDetails.setPort(Integer.parseInt(etl_serv_port));
-			// 本地文件路径
-			sftpDetails.setSource_path(pathFile);
-			// 本地文件名称
-			sftpDetails.setAgent_gz(agent_zip);
-			// db配置文件
-			sftpDetails.setDb_info("db.properties");
-			// redis配置文件
-			sftpDetails.setRedis_info("redis.properties");
-			// 集群conf配置文件
-			sftpDetails.setHADOOP_CONF(hadoopConf);
-			// 目标路径
-			sftpDetails.setTarget＿dir(targetDir + separator + etl_sys_cd + separator);
+			setSFTPDetails(etl_sys_cd, etl_serv_ip, etl_serv_port, userName, password, targetDir, separator,
+					sourceFile, source_path, hadoopConf, tmp_conf_path, sftpDetails);
 			// 11.ETL部署
 			SCPFileSender.etlScpToFrom(sftpDetails);
 			// 12.部署完成后删除db与redis配置文件
-			FileUtil.deleteDirectoryFiles(pathFile + separator + "db.properties");
-			FileUtil.deleteDirectoryFiles(pathFile + separator + "redis.properties");
+			FileUtil.deleteDirectoryFiles(sourceFile + separator + "db.conf");
+			FileUtil.deleteDirectoryFiles(sourceFile + separator + "redis.conf");
 		} catch (Exception e) {
 			throw new AppSystemException(e);
 		}
 	}
 
-	@Method(
-			desc = "启动Control",
-			logicStep =
-					"1.数据可访问权限处理方式，该方法不需要权限控制"
-							+ "2.设置连接服务器属性信息"
-							+ "3.与远端服务器进行交互，建立连接，发送数据到远端并且接收远端发来的数据"
-							+ "4.启动CONTROL脚本命令"
-							+ "5.执行命令启动CONTROL"
-							+ "6.断开连接")
+	private static void setSFTPDetails(String etl_sys_cd, String etl_serv_ip, String etl_serv_port,
+	                                   String userName, String password, String targetDir, String separator,
+	                                   File sourceFile, String source_path, String hadoopConf,
+	                                   String tmp_conf_path, SFTPDetails sftpDetails) {
+		sftpDetails.setHost(etl_serv_ip);
+		// 部署agent服务器用户名
+		sftpDetails.setUser_name(userName);
+		// 部署agent服务器密码
+		sftpDetails.setPwd(password);
+		// 部署agent服务器端口
+		sftpDetails.setPort(Integer.parseInt(etl_serv_port));
+		// 本地文件路径
+		sftpDetails.setSource_path(source_path);
+		// 本地文件名称
+		sftpDetails.setAgent_gz(sourceFile.getName());
+		// db配置文件
+		sftpDetails.setDb_info("dbinfo.conf");
+		// redis配置文件
+		sftpDetails.setRedis_info("redis.conf");
+		// 集群conf配置文件
+		sftpDetails.setHADOOP_CONF(hadoopConf);
+		// 目标路径
+		sftpDetails.setTarget＿dir(targetDir + separator + etl_sys_cd + separator);
+		// 临时存放配置文件路径
+		sftpDetails.setTmp_conf_path(tmp_conf_path);
+	}
+
+	@Method(desc = "启动Control",
+			logicStep = "1.数据可访问权限处理方式，该方法不需要权限控制"
+					+ "2.设置连接服务器属性信息"
+					+ "3.与远端服务器进行交互，建立连接，发送数据到远端并且接收远端发来的数据"
+					+ "4.启动CONTROL脚本命令"
+					+ "5.执行命令启动CONTROL"
+					+ "6.断开连接")
 	@Param(name = "batch_date", desc = "跑批日期", range = "yyyy-MM-dd格式的年月日")
 	@Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
 	@Param(name = "isResumeRun", desc = "是否续跑", range = "使用（IsFlag）代码项，1代表是，0代表否")
@@ -139,20 +143,12 @@ public class ETLAgentDeployment {
 	@Param(name = "userName", desc = "部署服务器用户名", range = "无限制")
 	@Param(name = "userName", desc = "部署服务器密码", range = "无限制")
 	@Param(name = "deploymentPath", desc = "部署服务器路径", range = "无限制")
-	public static void startEngineBatchControl(
-			String batch_date,
-			String etl_sys_cd,
-			String isResumeRun,
-			String isAutoShift,
-			String etl_serv_ip,
-			String etl_serv_port,
-			String userName,
-			String password,
-			String deploymentPath) {
+	public static void startEngineBatchControl(String batch_date, String etl_sys_cd, String isResumeRun,
+	                                           String isAutoShift, String etl_serv_ip, String etl_serv_port,
+	                                           String userName, String password, String deploymentPath) {
 		try {
 			// 1.数据可访问权限处理方式，该方法不需要权限控制
 			// 2.设置连接服务器属性信息
-			//            Map<String, String> sftpDetails = new HashMap<>();
 			SFTPDetails sftpDetails = new SFTPDetails();
 			sftpDetails.setHost(etl_serv_ip);
 			sftpDetails.setPort(Integer.parseInt(etl_serv_port));

@@ -278,9 +278,8 @@ public class ETLJobUtil {
 	@Return(desc = "返回当前用户对应工程信息", range = "不能为空")
 	public static Map<String, Object> getEtlSysByCd(String etl_sys_cd, long user_id) {
 		// 1.数据可访问权限处理方式，根据user_id进行权限验证
-		Map<String, Object> etlSys = Dbo.queryOneObject("select etl_sys_cd,etl_sys_name,comments," +
-				"etl_serv_ip,etl_serv_port,user_name,user_pwd,serv_file_path,remarks from " + Etl_sys.TableName
-				+ " where user_id=? and etl_sys_cd=? order by etl_sys_cd", user_id, etl_sys_cd);
+		Map<String, Object> etlSys = Dbo.queryOneObject("select * from " + Etl_sys.TableName
+				+ " where user_id=? and etl_sys_cd=?", user_id, etl_sys_cd);
 		// 2.判断remarks是否为空，不为空则分割获取部署工程的redis ip与port并封装数据返回
 		Object remarks = etlSys.get("remarks");
 		if (remarks != null && StringUtil.isNotBlank(remarks.toString()) && !remarks.toString().contains(":")) {

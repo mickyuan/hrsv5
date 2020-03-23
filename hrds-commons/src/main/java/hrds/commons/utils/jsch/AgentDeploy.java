@@ -276,7 +276,7 @@ public class AgentDeploy {
     return jSchSession;
   }
 
-  private static void sftpFiles(String sftpDir, ChannelSftp chSftp, String targetDir)
+  public static void sftpFiles(String sftpDir, ChannelSftp chSftp, String targetDir)
       throws SftpException {
     File file = new File(sftpDir);
     File[] confFiles = file.listFiles();
