@@ -92,18 +92,18 @@ public class SCPFileSender {
 			logger.info("###########替换dbinfo文件===");
 
 			// hadoop配置文件
-			File fileHadoopConf = new File(hadoopConf);
-			File[] list = fileHadoopConf.listFiles();
-			if (list == null || list.length == 0) {
-				throw new BusinessException("集群配置文件不能为空");
-			}
-			for (int i = 0; i < list.length; i++) {
-				long fileSizeConf = list[i].length();
-				chSftp_properties.put(list[i].toString(), targetDir + "/control/conf/",
-						new FileProgressMonitor(fileSizeConf), ChannelSftp.OVERWRITE);
-				chSftp_properties.put(list[i].toString(), targetDir + "/trigger/conf/",
-						new FileProgressMonitor(fileSizeConf), ChannelSftp.OVERWRITE);
-			}
+//			File fileHadoopConf = new File(hadoopConf);
+//			File[] list = fileHadoopConf.listFiles();
+//			if (list == null || list.length == 0) {
+//				throw new BusinessException("集群配置文件不能为空");
+//			}
+//			for (int i = 0; i < list.length; i++) {
+//				long fileSizeConf = list[i].length();
+//				chSftp_properties.put(list[i].toString(), targetDir + "/control/conf/",
+//						new FileProgressMonitor(fileSizeConf), ChannelSftp.OVERWRITE);
+//				chSftp_properties.put(list[i].toString(), targetDir + "/trigger/conf/",
+//						new FileProgressMonitor(fileSizeConf), ChannelSftp.OVERWRITE);
+//			}
 			logger.info("###########替换集群配置conf文件===");
 			chSftp_properties.quit();
 			channel_properties.closeChannel();

@@ -60,7 +60,6 @@ public class ETLAgentDeployment {
 			// 1.数据可访问权限处理方式，该方法不需要权限控制
 			// 2.获取ETL下载地址
 			String agentPath = PropertyParaValue.getString("ETLpath", "");
-			String separator = SEPARATOR;
 			// 3.根据文件路径获取文件信息
 			File sourceFile = FileUtil.getFile(agentPath);
 			// 4.判断文件是否存在
@@ -68,7 +67,7 @@ public class ETLAgentDeployment {
 				throw new BusinessException("ETL下载地址目录下文件不存在！");
 			}
 			// 本地文件路径路径
-			String source_path = sourceFile.getParent() + separator;
+			String source_path = sourceFile.getParent() + SEPARATOR;
 			// 配置文件的临时存放路径
 			String tmp_conf_path = System.getProperty("user.dir") + SEPARATOR + "etlTempResources"
 					+ SEPARATOR + "fdconfig" + SEPARATOR;
@@ -84,17 +83,17 @@ public class ETLAgentDeployment {
 			// 8.根据程序当前路径获取文件
 			File userDirFile = FileUtil.getFile(userDir);
 			// 9.集群conf配置文件目录 fixme  集群配置文件暂时不知如何获取
-			String hadoopConf = userDirFile + separator + "conf" + separator;
+			String hadoopConf = userDirFile + SEPARATOR + "conf" + SEPARATOR;
 			// 10.创建存放部署ETL连接信息的集合并封装属性
 			SFTPDetails sftpDetails = new SFTPDetails();
 			// 部署agent服务器IP
-			setSFTPDetails(etl_sys_cd, etl_serv_ip, etl_serv_port, userName, password, targetDir, separator,
+			setSFTPDetails(etl_sys_cd, etl_serv_ip, etl_serv_port, userName, password, targetDir, SEPARATOR,
 					sourceFile, source_path, hadoopConf, tmp_conf_path, sftpDetails);
 			// 11.ETL部署
 			SCPFileSender.etlScpToFrom(sftpDetails);
 			// 12.部署完成后删除db与redis配置文件
-			FileUtil.deleteDirectoryFiles(sourceFile + separator + "db.conf");
-			FileUtil.deleteDirectoryFiles(sourceFile + separator + "redis.conf");
+			FileUtil.deleteDirectoryFiles(sourceFile + SEPARATOR + "db.conf");
+			FileUtil.deleteDirectoryFiles(sourceFile + SEPARATOR + "redis.conf");
 		} catch (Exception e) {
 			throw new AppSystemException(e);
 		}

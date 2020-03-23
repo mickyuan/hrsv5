@@ -939,8 +939,9 @@ public class JobConfiguration extends BaseAction {
 	@Method(desc = "新增或修改作业时保存作业依赖",
 			logicStep = "1.数据可访问权限处理方式，该方法不需要权限控制" +
 					"2.判断修改后的上游作业名称的数组是否为空" +
-					"3.循环判断修改后的上游作业名称是否已不存在" +
-					"4.循环保存作业依赖")
+					"3.如果当前作业与上游作业名称相同则跳过" +
+					"4.循环判断修改后的上游作业名称是否已不存在" +
+					"5.循环保存作业依赖")
 	@Param(name = "etl_dependency", desc = "作业依赖实体对象", range = "与数据库对应表字段规则一致", isBean = true)
 	@Param(name = "pre_etl_job", desc = "修改后上游作业名称的数组", range = "已存在的作业名称", nullable = true)
 	private void saveEtlDependencyFromEtlJobDef(Etl_dependency etl_dependency, String[] pre_etl_job) {
@@ -948,11 +949,15 @@ public class JobConfiguration extends BaseAction {
 		// 2.判断修改后的上游作业名称的数组是否为空
 		if (pre_etl_job != null && pre_etl_job.length != 0) {
 			for (String preEtlJob : pre_etl_job) {
-				// 3.循环判断修改后的上游作业名称是否已不存在
+				// 3.如果当前作业与上游作业名称相同则跳过
+				if (etl_dependency.getEtl_job().equals(preEtlJob)) {
+					continue;
+				}
+				// 4.循环判断修改后的上游作业名称是否已不存在
 				if (!ETLJobUtil.isEtlJobDefExist(etl_dependency.getEtl_sys_cd(), preEtlJob)) {
 					throw new BusinessException("修改后的上游作业名称已不存在!");
 				}
-				// 4.循环保存作业依赖
+				// 5.循环保存作业依赖
 				etl_dependency.setPre_etl_job(preEtlJob);
 				etl_dependency.add(Dbo.db());
 			}
@@ -1536,7 +1541,8 @@ public class JobConfiguration extends BaseAction {
 					"3.验证当前用户下的工程是否存在" +
 					"4.判断当前依赖是否已存在，如果存在则不能新增" +
 					"5.将当前作业与上游作业交换，看是否已经存在依赖关系" +
-					"6.新增保存作业依赖")
+					"6.新增依赖当前作业名称与上游作业名称不能相同" +
+					"7.新增保存作业依赖")
 	@Param(name = "etl_dependency", desc = "作业依赖实体对象", range = "与数据库对应表字段规则一致", isBean = true)
 	public void saveEtlDependency(Etl_dependency etl_dependency) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限验证
@@ -1556,7 +1562,11 @@ public class JobConfiguration extends BaseAction {
 				etl_dependency.getPre_etl_job(), etl_dependency.getEtl_job())) {
 			throw new BusinessException("当前工程对应作业的依赖已存在！");
 		}
-		// 6.新增保存作业依赖
+		// 6.新增依赖当前作业名称与上游作业名称不能相同
+		if (etl_dependency.getEtl_job().equals(etl_dependency.getPre_etl_job())) {
+			throw new BusinessException("新增依赖当前作业名称与上游作业名称不能相同！");
+		}
+		// 7.新增保存作业依赖
 		etl_dependency.add(Dbo.db());
 	}
 
@@ -1608,10 +1618,11 @@ public class JobConfiguration extends BaseAction {
 					"7.获取当前任务下的所有作业" +
 					"8.获取上游任务下的所有作业即上游作业" +
 					"9.双重循环添加不同任务下的所有作业之间的依赖" +
-					"10.判断当前作业下的依赖是否存在，存在就跳过，不存在则依赖" +
-					"11.如果当前作业为定时作业则跳过" +
-					"12.将当前作业与上游作业交换，看是否已经存在依赖关系,存在则跳过" +
-					"13.循环保存作业依赖关系")
+					"10.如果当前作业等于上游作业名称则跳过" +
+					"11.判断当前作业下的依赖是否存在，存在就跳过，不存在则依赖" +
+					"12.如果当前作业为定时作业则跳过" +
+					"13.将当前作业与上游作业交换，看是否已经存在依赖关系,存在则跳过" +
+					"14.循环保存作业依赖关系")
 	@Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
 	@Param(name = "pre_etl_sys_cd", desc = "上游工程编号（目前上游工程编号与工程编号相同）", range = "新增工程时生成")
 	@Param(name = "status", desc = "依赖是否有效", range = "使用（Status）代码项")
@@ -1650,22 +1661,26 @@ public class JobConfiguration extends BaseAction {
 		// 9.双重循环添加不同任务下的所有作业之间的依赖
 		for (Etl_job_def etl_job_def : etlJobList) {
 			for (String pre_etl_job : preEtlJobList) {
-				// 10.判断当前作业下的依赖是否存在，存在就跳过，不存在则依赖
+				// 10.如果当前作业等于上游作业名称则跳过
+				if (etl_job_def.getEtl_job().equals(pre_etl_job)) {
+					continue;
+				}
+				// 11.判断当前作业下的依赖是否存在，存在就跳过，不存在则依赖
 				if (ETLJobUtil.isEtlDependencyExist(etl_sys_cd, pre_etl_sys_cd,
 						etl_job_def.getEtl_job(), pre_etl_job)) {
 					continue;
 				}
-				// 11.如果当前作业为定时作业或频率作业则跳过
+				// 12.如果当前作业为定时作业或频率作业则跳过
 				if (Dispatch_Frequency.PinLv == Dispatch_Frequency.ofEnumByCode(etl_job_def.getDisp_freq()) ||
 						Dispatch_Type.DEPENDENCE != Dispatch_Type.ofEnumByCode(etl_job_def.getDisp_type())) {
 					continue;
 				}
-				// 12.将当前作业与上游作业交换，看是否已经存在依赖关系,存在则跳过
+				// 13.将当前作业与上游作业交换，看是否已经存在依赖关系,存在则跳过
 				if (ETLJobUtil.isEtlDependencyExist(etl_sys_cd, pre_etl_sys_cd, pre_etl_job,
 						etl_job_def.getEtl_job())) {
 					continue;
 				}
-				// 13.循环保存作业依赖关系
+				// 14.循环保存作业依赖关系
 				etlDependency.setEtl_sys_cd(etl_sys_cd);
 				etlDependency.setPre_etl_sys_cd(pre_etl_sys_cd);
 				etlDependency.setStatus(status);
