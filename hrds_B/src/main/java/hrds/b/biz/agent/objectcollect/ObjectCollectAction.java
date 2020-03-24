@@ -185,7 +185,7 @@ public class ObjectCollectAction extends BaseAction {
 		if (count > 0) {
 			throw new BusinessException("半结构化采集任务名称重复");
 		}
-		// 3.之前对象采集存在行采集与对象采集两种，目前仅支持行采集 所以默认给
+		// 3.之前对象采集存在行采集与对象采集两种，目前仅支持行采集,所以默认给
 		if (StringUtil.isNotBlank(object_collect.getObject_collect_type())) {
 			object_collect.setObject_collect_type(ObjectCollectType.HangCaiJi.getCode());
 		}
