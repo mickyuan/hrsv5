@@ -17,7 +17,10 @@ import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
-import hrds.commons.codes.*;
+import hrds.commons.codes.CollectDataType;
+import hrds.commons.codes.IsFlag;
+import hrds.commons.codes.ObjectCollectType;
+import hrds.commons.codes.OperationType;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.AgentActionUtil;
@@ -224,18 +227,6 @@ public class ObjectCollectAction extends BaseAction {
 						, MAPTYPE);
 				// 11.保存对象采集数据处理类型对应表信息
 				addObjectHandleType(objectCollectTask, handleTypeMap);
-			}
-			// 当数据字典不存在时，插入默认的操作码表对应的值
-			if (IsFlag.Fou == IsFlag.ofEnumByCode(object_collect.getIs_dictionary())) {
-				OperationType[] operationTypes = OperationType.values();
-				Object_handle_type object_handle_type = new Object_handle_type();
-				for (OperationType operationType : operationTypes) {
-					object_handle_type.setObject_handle_id(PrimayKeyGener.getNextId());
-					object_handle_type.setOcs_id(objectCollectTask.getOcs_id());
-					object_handle_type.setHandle_type(operationType.getCode());
-					object_handle_type.setHandle_value(operationType.getValue());
-					object_handle_type.add(Dbo.db());
-				}
 			}
 			// 12.保存数据存储表信息入库
 			addObjectStorage(object_collect, objectCollectTask, isSolr);
@@ -1175,7 +1166,8 @@ public class ObjectCollectAction extends BaseAction {
 			// 4.判断进solr的表是否进了HBase
 			if (IsFlag.Fou == IsFlag.ofEnumByCode(object_storage.getIs_hbase()) &&
 					IsFlag.Shi == IsFlag.ofEnumByCode(object_storage.getIs_solr())) {
-				throw new BusinessException("第" + (i + 1) + "行表" + enNameList.get(0) + "未选择进入hbase，请检查");
+				throw new BusinessException("第" + (i + 1) + "行表" + enNameList.get(0) + "入solr表未选择进入hbase" +
+						"，请检查");
 			}
 			// 5.判断当前数据存储表是否进HBase
 			if (IsFlag.Shi == IsFlag.ofEnumByCode(object_storage.getIs_hbase())) {
