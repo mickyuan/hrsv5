@@ -27,14 +27,13 @@ import hrds.commons.utils.PropertyParaValue;
 import hrds.commons.utils.ReadLog;
 import hrds.commons.utils.jsch.SFTPChannel;
 import hrds.commons.utils.jsch.SFTPDetails;
+import org.apache.commons.io.FilenameUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.apache.commons.io.FilenameUtils;
 
 @DocClass(desc = "作业调度工程", author = "dhw", createdate = "2019/11/25 15:48")
 public class EltSysAction extends BaseAction {
@@ -168,11 +167,8 @@ public class EltSysAction extends BaseAction {
 	@Param(name = "serv_file_path", desc = "ETL部署Agent服务器部署路径", range = "无限制")
 	@Param(name = "user_name", desc = "ETL部署Agent服务器用户名", range = "无限制")
 	@Param(name = "user_pwd", desc = "ETL部署Agent服务器密码", range = "无限制")
-	@Param(name = "etl_context", desc = "ETL部署访问根", range = "无限制")
-	@Param(name = "etl_pattern", desc = "ETL部署Agent服务器密码", range = "无限制")
 	public void deployEtlJobScheduleProject(String etl_sys_cd, String etl_serv_ip, String serv_file_path,
-	                                        String user_name, String user_pwd, String etl_context,
-	                                        String etl_pattern) {
+	                                        String user_name, String user_pwd) {
 		// fixme jsch对响应结果返回数字进行判断还未修改
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
 		// 2.验证当前用户对应的工程是否已不存在
@@ -182,7 +178,7 @@ public class EltSysAction extends BaseAction {
 		// 3.获取系统参数
 		// 4.部署ETL
 		ETLAgentDeployment.scpETLAgent(etl_sys_cd, etl_serv_ip, Constant.SFTP_PORT, user_name, user_pwd,
-				serv_file_path, etl_context, etl_pattern);
+				serv_file_path);
 		// 5.部署成功，更新用户信息
 		String redisIP = PropertyParaValue.getString("redis_ip", "172.168.0.61");
 		String redisPort = PropertyParaValue.getString("redis_port", "56379");
@@ -192,8 +188,6 @@ public class EltSysAction extends BaseAction {
 		etl_sys.setUser_name(user_name);
 		etl_sys.setUser_pwd(user_pwd);
 		etl_sys.setServ_file_path(serv_file_path);
-		etl_sys.setEtl_context(etl_context);
-		etl_sys.setEtl_pattern(etl_pattern);
 		etl_sys.setRemarks(redisIP + ':' + redisPort);
 		etl_sys.update(Dbo.db());
 	}

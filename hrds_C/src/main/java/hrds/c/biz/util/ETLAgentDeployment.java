@@ -6,13 +6,10 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.utils.FileUtil;
+import hrds.c.biz.util.controlconf.ControlConfParam;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.PropertyParaValue;
-import hrds.commons.utils.datastorage.QueryContrast;
-import hrds.commons.utils.datastorage.httpserver.HttpServer;
-import hrds.commons.utils.datastorage.redisconf.RedisParam;
-import hrds.commons.utils.deployentity.HttpYaml;
 import hrds.commons.utils.jsch.SCPFileSender;
 import hrds.commons.utils.jsch.SFTPChannel;
 import hrds.commons.utils.jsch.SFTPDetails;
@@ -20,18 +17,15 @@ import hrds.commons.utils.yaml.Yaml;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.*;
-import java.util.List;
-import java.util.Map;
+import java.io.File;
+import java.io.IOException;
 
 @DocClass(desc = "ETL部署类", author = "dhw", createdate = "2019/12/19 14:57")
 public class ETLAgentDeployment {
 
 	private static final Logger logger = LogManager.getLogger();
 
-	/**
-	 * 系统路径的符号
-	 */
+	// 系统路径的符号
 	public static final String SEPARATOR = File.separator;
 
 	@Method(desc = "ETL部署", logicStep = "1.数据可访问权限处理方式，该方法不需要权限控制"
@@ -55,53 +49,51 @@ public class ETLAgentDeployment {
 	@Param(name = "password", desc = "ETL部署agent机器的密码", range = "服务器密码")
 	@Param(name = "targetDir", desc = "ETL部署服务器目录地址", range = "无限制")
 	public static void scpETLAgent(String etl_sys_cd, String etl_serv_ip, String etl_serv_port, String userName,
-	                               String password, String targetDir, String etl_context, String etl_pattern) {
+	                               String password, String targetDir) {
 		try {
 			// 1.数据可访问权限处理方式，该方法不需要权限控制
 			// 2.获取ETL下载地址
-			String agentPath = PropertyParaValue.getString("ETLpath", "");
+			String agentPath = PropertyParaValue.getString("ETLPath", "");
 			// 3.根据文件路径获取文件信息
 			File sourceFile = FileUtil.getFile(agentPath);
 			// 4.判断文件是否存在
 			if (!sourceFile.exists()) {
 				throw new BusinessException("ETL下载地址目录下文件不存在！");
 			}
-			// 本地文件路径路径
-			String source_path = sourceFile.getParent() + SEPARATOR;
-			// 配置文件的临时存放路径
+			// 5.配置文件的临时存放路径,判断文件目录是否存在，如果不存在创建
 			String tmp_conf_path = System.getProperty("user.dir") + SEPARATOR + "etlTempResources"
 					+ SEPARATOR + "fdconfig" + SEPARATOR;
+			File file = new File(tmp_conf_path);
+			if (!file.exists()) {
+				if (!file.mkdirs()) {
+					throw new BusinessException("创建文件临时存放目录失败");
+				}
+			}
 			logger.info("==========配置文件的临时存放路径===========" + tmp_conf_path);
-			// 5.生成redis配置文件
-			Yaml.dump(RedisParam.getRedisParam(), new File(tmp_conf_path + RedisParam.CONF_FILE_NAME));
-			// 6.生成httpserver.conf配置文件 fixme  control trigger control,trigger服务同一ip,端口如何控制不重复
-			Map<String, List<HttpYaml>> httpServerMap =
-					HttpServer.httpserverConfData(etl_context, etl_pattern, etl_serv_ip, etl_serv_port);
-			Yaml.dump(httpServerMap, new File(tmp_conf_path + HttpServer.HTTP_CONF_NAME));
-			// 7.获得程序当前路径
-			String userDir = System.getProperty("user.dir");
-			// 8.根据程序当前路径获取文件
-			File userDirFile = FileUtil.getFile(userDir);
-			// 9.集群conf配置文件目录 fixme  集群配置文件暂时不知如何获取
+			// 6.生成control.conf配置文件
+			Yaml.dump(ControlConfParam.getControlConfParam(), new File(tmp_conf_path
+					+ ControlConfParam.CONF_FILE_NAME));
+			// 7.根据程序当前路径获取文件
+			File userDirFile = FileUtil.getFile(System.getProperty("user.dir"));
+			// 8.集群conf配置文件目录 fixme  集群配置文件暂时不知如何获取
 			String hadoopConf = userDirFile + SEPARATOR + "conf" + SEPARATOR;
-			// 10.创建存放部署ETL连接信息的集合并封装属性
+			// 9.创建存放部署ETL连接信息的集合并封装属性
 			SFTPDetails sftpDetails = new SFTPDetails();
-			// 部署agent服务器IP
-			setSFTPDetails(etl_sys_cd, etl_serv_ip, etl_serv_port, userName, password, targetDir, SEPARATOR,
-					sourceFile, source_path, hadoopConf, tmp_conf_path, sftpDetails);
+			// 10.设置部署所需参数
+			setSFTPDetails(etl_sys_cd, etl_serv_ip, etl_serv_port, userName, password, targetDir,
+					sourceFile.getName(), sourceFile.getParent(), hadoopConf, tmp_conf_path, sftpDetails);
 			// 11.ETL部署
 			SCPFileSender.etlScpToFrom(sftpDetails);
-			// 12.部署完成后删除db与redis配置文件
-			FileUtil.deleteDirectoryFiles(sourceFile + SEPARATOR + "db.conf");
-			FileUtil.deleteDirectoryFiles(sourceFile + SEPARATOR + "redis.conf");
+			// 12.部署完成后删除本地临时配置文件
+			FileUtil.deleteDirectoryFiles(tmp_conf_path);
 		} catch (Exception e) {
 			throw new AppSystemException(e);
 		}
 	}
 
 	private static void setSFTPDetails(String etl_sys_cd, String etl_serv_ip, String etl_serv_port,
-	                                   String userName, String password, String targetDir, String separator,
-	                                   File sourceFile, String source_path, String hadoopConf,
+	                                   String userName, String password, String targetDir,
+	                                   String sourceFileName, String source_path, String hadoopConf,
 	                                   String tmp_conf_path, SFTPDetails sftpDetails) {
 		sftpDetails.setHost(etl_serv_ip);
 		// 部署agent服务器用户名
@@ -111,17 +103,13 @@ public class ETLAgentDeployment {
 		// 部署agent服务器端口
 		sftpDetails.setPort(Integer.parseInt(etl_serv_port));
 		// 本地文件路径
-		sftpDetails.setSource_path(source_path);
+		sftpDetails.setSource_path(source_path + SEPARATOR);
 		// 本地文件名称
-		sftpDetails.setAgent_gz(sourceFile.getName());
-		// db配置文件
-		sftpDetails.setDb_info("dbinfo.conf");
-		// redis配置文件
-		sftpDetails.setRedis_info("redis.conf");
+		sftpDetails.setAgent_gz(sourceFileName);
 		// 集群conf配置文件
 		sftpDetails.setHADOOP_CONF(hadoopConf);
 		// 目标路径
-		sftpDetails.setTarget＿dir(targetDir + separator + etl_sys_cd + separator);
+		sftpDetails.setTarget＿dir(targetDir + SEPARATOR + etl_sys_cd + SEPARATOR);
 		// 临时存放配置文件路径
 		sftpDetails.setTmp_conf_path(tmp_conf_path);
 	}
