@@ -1,4 +1,4 @@
-package testbase;
+package hrds.testbase;
 
 import fd.ng.core.utils.StringUtil;
 import fd.ng.netserver.conf.HttpServerConf;
