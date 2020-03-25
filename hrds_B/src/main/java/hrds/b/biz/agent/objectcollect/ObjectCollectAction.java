@@ -352,8 +352,9 @@ public class ObjectCollectAction extends BaseAction {
 		// 4、如果测试连接不成功，则抛异常给前端，说明连接失败，如果成功，则不做任务处理
 		ActionResult actionResult = JsonUtil.toObjectSafety(resVal.getBodyString(), ActionResult.class).
 				orElseThrow(() -> new BusinessException("应用管理端与" + url + "服务交互异常"));
+		logger.info("=====agent响应信息====" + actionResult.getMessage());
 		if (!actionResult.isSuccess()) {
-			throw new BusinessException("连接失败");
+			throw new BusinessException("连接失败," + actionResult.getMessage());
 		}
 		Object data = actionResult.getData().toString();
 		// 5.解析agent返回的json数据
@@ -576,6 +577,7 @@ public class ObjectCollectAction extends BaseAction {
 		}.getType();
 		// 2.解析json为对象采集结构信息
 		List<Object_handle_type> handleTypeList = JsonUtil.toObject(handleType, type);
+		logger.info("===================" + ocs_id);
 		// 3.先删除原来的码表信息
 		Dbo.execute("delete from " + Object_handle_type.TableName + " where ocs_id = ?", ocs_id);
 		// 3.循环保存对象采集数据处理类型对应表信息
