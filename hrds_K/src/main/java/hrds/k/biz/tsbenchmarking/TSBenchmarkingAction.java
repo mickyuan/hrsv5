@@ -14,6 +14,7 @@ import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
+import hrds.commons.codes.DbmMode;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
@@ -295,6 +296,7 @@ public class TSBenchmarkingAction extends BaseAction {
         dbm_normbm_detect.setSource_type(data_layer);
         dbm_normbm_detect.setIs_import(IsFlag.Fou.getCode());
         dbm_normbm_detect.setDetect_status(IsFlag.Shi.getCode());
+        dbm_normbm_detect.setDbm_mode(DbmMode.BiaoJieGouDuiBiao.getCode());
         dbm_normbm_detect.setCreate_user(getUserId().toString());
         dbm_normbm_detect.setDetect_sdate(DateUtil.getSysDate());
         dbm_normbm_detect.setDetect_stime(DateUtil.getSysTime());
