@@ -369,7 +369,7 @@ public class ObjectCollectAction extends BaseAction {
 					"3.没有数据字典查询第一行数据" +
 					"4.解析json获取树结构信息并返回" +
 					"5.返回半结构化采集列结构信息")
-	@Param(name = "ocs_id", desc = "对象采集任务编号", range = "新增对象采集任务时生成")
+	@Param(name = "ocs_id", desc = "对象采集任务编号(对象采集对应信息表ID）", range = "新增对象采集任务时生成")
 	@Return(desc = "返回半结构化采集列结构信息", range = "无限制")
 	public Map<String, Object> searchCollectColumnStruct(long ocs_id) {
 		// 1.数据可访问权限处理方式：该方法没有访问权限限制
@@ -567,19 +567,21 @@ public class ObjectCollectAction extends BaseAction {
 	@Method(desc = "保存表的码表信息（操作码表）", logicStep = "1.数据可访问权限处理方式：该方法没有访问权限限制" +
 			"2.解析json为对象采集结构信息" +
 			"3.循环保存对象采集数据处理类型对应表信息")
-	@Param(name = "handleType", desc = "jsonArray格式的码表类型信息", range = "无限制")
-	public void saveHandleType(String handleType) {
+	@Param(name = "handleType", desc = "jsonArray格式的码表类型信息(handle_type,handle_value为key,对应值为value)",
+			range = "无限制")
+	@Param(name = "ocs_id", desc = "对象采集任务编号", range = "新增对象采集任务时生成")
+	public void saveHandleType(String handleType, long ocs_id) {
 		// 1.数据可访问权限处理方式：该方法没有访问权限限制
 		Type type = new TypeReference<List<Object_handle_type>>() {
 		}.getType();
 		// 2.解析json为对象采集结构信息
 		List<Object_handle_type> handleTypeList = JsonUtil.toObject(handleType, type);
 		// 3.先删除原来的码表信息
-		Dbo.execute("delete from " + Object_handle_type.TableName + " where ocs_id = ?",
-				handleTypeList.get(0).getOcs_id());
+		Dbo.execute("delete from " + Object_handle_type.TableName + " where ocs_id = ?", ocs_id);
 		// 3.循环保存对象采集数据处理类型对应表信息
 		for (Object_handle_type object_handle_type : handleTypeList) {
 			object_handle_type.setObject_handle_id(PrimayKeyGener.getNextId());
+			object_handle_type.setOcs_id(ocs_id);
 			object_handle_type.add(Dbo.db());
 		}
 	}
@@ -588,7 +590,8 @@ public class ObjectCollectAction extends BaseAction {
 			"2.解析json为对象采集结构信息" +
 			"3.循环保存对象采集结构信息入库，获取结构信息id" +
 			"4.删除非新保存结构信息")
-	@Param(name = "collectStruct", desc = "jsonArray格式的字符串", range = "无限制", nullable = false)
+	@Param(name = "collectStruct", desc = "jsonArray格式的字符串(is_key,is_operate,column_name,column_type," +
+			"col_seq,columnposition为key，对应值为value)", range = "无限制")
 	public void saveCollectColumnStruct(String collectStruct) {
 		// 1.数据可访问权限处理方式：该方法没有访问权限限制
 		Type type = new TypeReference<List<Object_collect_struct>>() {
