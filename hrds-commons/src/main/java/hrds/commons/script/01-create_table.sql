@@ -1066,7 +1066,7 @@ WARNING                                           VARCHAR(80) NULL, --错误信�
 MAIN_SERV_SYNC                                    CHAR(1) NULL, --同步标志位
 CONSTRAINT ETL_JOB_HAND_HIS_PK PRIMARY KEY(EVENT_ID,ETL_JOB,ETL_SYS_CD)   );
 
---工程登记表
+--作业工程登记表
 DROP TABLE IF EXISTS ETL_SYS ;
 CREATE TABLE ETL_SYS(
 ETL_SYS_CD                                        VARCHAR(100) NOT NULL, --工程代码
@@ -1297,7 +1297,7 @@ CONSTRAINT DATA_STORE_LAYER_ATTR_PK PRIMARY KEY(DSLA_ID)   );
 DROP TABLE IF EXISTS ERROR_INFO ;
 CREATE TABLE ERROR_INFO(
 ERROR_ID                                          BIGINT default 0 NOT NULL, --错误ID
-JOB_RS_ID                                         VARCHAR(40) NULL, --作业执行结果ID
+JOB_RS_ID                                         VARCHAR(40) NOT NULL, --作业执行结果ID
 ERROR_MSG                                         VARCHAR(15555) NULL, --error_msg
 CONSTRAINT ERROR_INFO_PK PRIMARY KEY(ERROR_ID)   );
 
@@ -1590,4 +1590,12 @@ IS_SENDOK                                         CHAR(1) NOT NULL, --是否设�
 IS_SOLR                                           CHAR(1) NOT NULL, --是否入solr
 REMARK                                            VARCHAR(512) NULL, --备注
 CONSTRAINT FILE_COLLECT_SET_PK PRIMARY KEY(FCS_ID)   );
+
+--抽数作业关系表
+DROP TABLE IF EXISTS TAKE_RELATION_ETL ;
+CREATE TABLE TAKE_RELATION_ETL(
+DED_ID                                            BIGINT default 0 NOT NULL, --数据抽取定义主键
+ETL_SYS_CD                                        VARCHAR(100) NOT NULL, --工程代码
+ETL_JOB                                           VARCHAR(512) NOT NULL, --作业名
+CONSTRAINT TAKE_RELATION_ETL_PK PRIMARY KEY(DED_ID)   );
 

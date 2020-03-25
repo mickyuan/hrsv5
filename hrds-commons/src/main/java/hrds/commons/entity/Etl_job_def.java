@@ -30,6 +30,16 @@ public class Etl_job_def extends ProjectTableEntity
 		__tmpPKS.add("etl_job");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
+	@DocBean(name ="com_exe_num",value="已经执行次数:",dataType = Integer.class,required = false)
+	private Integer com_exe_num;
+	@DocBean(name ="last_exe_time",value="上次执行时间:",dataType = String.class,required = false)
+	private String last_exe_time;
+	@DocBean(name ="star_time",value="开始执行时间:",dataType = String.class,required = false)
+	private String star_time;
+	@DocBean(name ="end_time",value="结束执行时间:",dataType = String.class,required = false)
+	private String end_time;
+	@DocBean(name ="etl_sys_cd",value="工程代码:",dataType = String.class,required = true)
+	private String etl_sys_cd;
 	@DocBean(name ="etl_job",value="作业名:",dataType = String.class,required = true)
 	private String etl_job;
 	@DocBean(name ="etl_job_desc",value="作业描述:",dataType = String.class,required = false)
@@ -88,17 +98,53 @@ public class Etl_job_def extends ProjectTableEntity
 	private Integer exe_frequency;
 	@DocBean(name ="exe_num",value="执行次数:",dataType = Integer.class,required = false)
 	private Integer exe_num;
-	@DocBean(name ="com_exe_num",value="已经执行次数:",dataType = Integer.class,required = false)
-	private Integer com_exe_num;
-	@DocBean(name ="last_exe_time",value="上次执行时间:",dataType = String.class,required = false)
-	private String last_exe_time;
-	@DocBean(name ="star_time",value="开始执行时间:",dataType = String.class,required = false)
-	private String star_time;
-	@DocBean(name ="end_time",value="结束执行时间:",dataType = String.class,required = false)
-	private String end_time;
-	@DocBean(name ="etl_sys_cd",value="工程代码:",dataType = String.class,required = true)
-	private String etl_sys_cd;
 
+	/** 取得：已经执行次数 */
+	public Integer getCom_exe_num(){
+		return com_exe_num;
+	}
+	/** 设置：已经执行次数 */
+	public void setCom_exe_num(Integer com_exe_num){
+		this.com_exe_num=com_exe_num;
+	}
+	/** 设置：已经执行次数 */
+	public void setCom_exe_num(String com_exe_num){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(com_exe_num)){
+			this.com_exe_num=new Integer(com_exe_num);
+		}
+	}
+	/** 取得：上次执行时间 */
+	public String getLast_exe_time(){
+		return last_exe_time;
+	}
+	/** 设置：上次执行时间 */
+	public void setLast_exe_time(String last_exe_time){
+		this.last_exe_time=last_exe_time;
+	}
+	/** 取得：开始执行时间 */
+	public String getStar_time(){
+		return star_time;
+	}
+	/** 设置：开始执行时间 */
+	public void setStar_time(String star_time){
+		this.star_time=star_time;
+	}
+	/** 取得：结束执行时间 */
+	public String getEnd_time(){
+		return end_time;
+	}
+	/** 设置：结束执行时间 */
+	public void setEnd_time(String end_time){
+		this.end_time=end_time;
+	}
+	/** 取得：工程代码 */
+	public String getEtl_sys_cd(){
+		return etl_sys_cd;
+	}
+	/** 设置：工程代码 */
+	public void setEtl_sys_cd(String etl_sys_cd){
+		this.etl_sys_cd=etl_sys_cd;
+	}
 	/** 取得：作业名 */
 	public String getEtl_job(){
 		return etl_job;
@@ -378,51 +424,5 @@ public class Etl_job_def extends ProjectTableEntity
 		if(!fd.ng.core.utils.StringUtil.isEmpty(exe_num)){
 			this.exe_num=new Integer(exe_num);
 		}
-	}
-	/** 取得：已经执行次数 */
-	public Integer getCom_exe_num(){
-		return com_exe_num;
-	}
-	/** 设置：已经执行次数 */
-	public void setCom_exe_num(Integer com_exe_num){
-		this.com_exe_num=com_exe_num;
-	}
-	/** 设置：已经执行次数 */
-	public void setCom_exe_num(String com_exe_num){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(com_exe_num)){
-			this.com_exe_num=new Integer(com_exe_num);
-		}
-	}
-	/** 取得：上次执行时间 */
-	public String getLast_exe_time(){
-		return last_exe_time;
-	}
-	/** 设置：上次执行时间 */
-	public void setLast_exe_time(String last_exe_time){
-		this.last_exe_time=last_exe_time;
-	}
-	/** 取得：开始执行时间 */
-	public String getStar_time(){
-		return star_time;
-	}
-	/** 设置：开始执行时间 */
-	public void setStar_time(String star_time){
-		this.star_time=star_time;
-	}
-	/** 取得：结束执行时间 */
-	public String getEnd_time(){
-		return end_time;
-	}
-	/** 设置：结束执行时间 */
-	public void setEnd_time(String end_time){
-		this.end_time=end_time;
-	}
-	/** 取得：工程代码 */
-	public String getEtl_sys_cd(){
-		return etl_sys_cd;
-	}
-	/** 设置：工程代码 */
-	public void setEtl_sys_cd(String etl_sys_cd){
-		this.etl_sys_cd=etl_sys_cd;
 	}
 }

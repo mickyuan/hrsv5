@@ -9,7 +9,7 @@ import java.util.HashSet;
 import java.util.Collections;
 
 /**
- * 工程登记表
+ * 作业工程登记表
  */
 @Table(tableName = "etl_sys")
 public class Etl_sys extends ProjectTableEntity
@@ -24,7 +24,7 @@ public class Etl_sys extends ProjectTableEntity
 	*/
 	public static boolean isPrimaryKey(String name) { return __PrimaryKeys.contains(name); } 
 	public static Set<String> getPrimaryKeyNames() { return __PrimaryKeys; } 
-	/** 工程登记表 */
+	/** 作业工程登记表 */
 	static {
 		Set<String> __tmpPKS = new HashSet<>();
 		__tmpPKS.add("etl_sys_cd");

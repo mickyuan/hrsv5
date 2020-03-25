@@ -30,6 +30,10 @@ public class Dm_datatable extends ProjectTableEntity
 		__tmpPKS.add("datatable_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
+	@DocBean(name ="data_mart_id",value="数据集市id:",dataType = Long.class,required = false)
+	private Long data_mart_id;
+	@DocBean(name ="category_id",value="集市分类id:",dataType = Long.class,required = true)
+	private Long category_id;
 	@DocBean(name ="datatable_id",value="数据表id:",dataType = Long.class,required = true)
 	private Long datatable_id;
 	@DocBean(name ="datatable_cn_name",value="数据表中文名称:",dataType = String.class,required = true)
@@ -66,11 +70,35 @@ public class Dm_datatable extends ProjectTableEntity
 	private String datatype;
 	@DocBean(name ="is_append",value="数据存储方式:",dataType = String.class,required = true)
 	private String is_append;
-	@DocBean(name ="data_mart_id",value="数据集市id:",dataType = Long.class,required = false)
-	private Long data_mart_id;
-	@DocBean(name ="category_id",value="集市分类id:",dataType = Long.class,required = true)
-	private Long category_id;
 
+	/** 取得：数据集市id */
+	public Long getData_mart_id(){
+		return data_mart_id;
+	}
+	/** 设置：数据集市id */
+	public void setData_mart_id(Long data_mart_id){
+		this.data_mart_id=data_mart_id;
+	}
+	/** 设置：数据集市id */
+	public void setData_mart_id(String data_mart_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(data_mart_id)){
+			this.data_mart_id=new Long(data_mart_id);
+		}
+	}
+	/** 取得：集市分类id */
+	public Long getCategory_id(){
+		return category_id;
+	}
+	/** 设置：集市分类id */
+	public void setCategory_id(Long category_id){
+		this.category_id=category_id;
+	}
+	/** 设置：集市分类id */
+	public void setCategory_id(String category_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(category_id)){
+			this.category_id=new Long(category_id);
+		}
+	}
 	/** 取得：数据表id */
 	public Long getDatatable_id(){
 		return datatable_id;
@@ -226,33 +254,5 @@ public class Dm_datatable extends ProjectTableEntity
 	/** 设置：数据存储方式 */
 	public void setIs_append(String is_append){
 		this.is_append=is_append;
-	}
-	/** 取得：数据集市id */
-	public Long getData_mart_id(){
-		return data_mart_id;
-	}
-	/** 设置：数据集市id */
-	public void setData_mart_id(Long data_mart_id){
-		this.data_mart_id=data_mart_id;
-	}
-	/** 设置：数据集市id */
-	public void setData_mart_id(String data_mart_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(data_mart_id)){
-			this.data_mart_id=new Long(data_mart_id);
-		}
-	}
-	/** 取得：集市分类id */
-	public Long getCategory_id(){
-		return category_id;
-	}
-	/** 设置：集市分类id */
-	public void setCategory_id(Long category_id){
-		this.category_id=category_id;
-	}
-	/** 设置：集市分类id */
-	public void setCategory_id(String category_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(category_id)){
-			this.category_id=new Long(category_id);
-		}
 	}
 }

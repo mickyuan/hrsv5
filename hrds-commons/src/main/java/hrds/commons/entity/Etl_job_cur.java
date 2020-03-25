@@ -31,16 +31,6 @@ public class Etl_job_cur extends ProjectTableEntity
 		__tmpPKS.add("etl_sys_cd");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="etl_job_desc",value="作业描述:",dataType = String.class,required = false)
-	private String etl_job_desc;
-	@DocBean(name ="pro_type",value="作业程序类型(Pro_Type):SHELL-SHELL<SHELL> PERL-PERL<PERL> BAT-BAT<BAT> JAVA-JAVA<JAVA> PYTHON-PYTHON<PYTHON> WF-WF<WF> DBTRAN-DBTRAN<DBTRAN> DBJOB-DBJOB<DBJOB> Yarn-Yarn<Yarn> Thrift-Thrift<Thrift> ",dataType = String.class,required = false)
-	private String pro_type;
-	@DocBean(name ="pro_dic",value="作业程序目录:",dataType = String.class,required = false)
-	private String pro_dic;
-	@DocBean(name ="pro_name",value="作业程序名称:",dataType = String.class,required = false)
-	private String pro_name;
-	@DocBean(name ="pro_para",value="作业程序参数:",dataType = String.class,required = false)
-	private String pro_para;
 	@DocBean(name ="log_dic",value="日志目录:",dataType = String.class,required = false)
 	private String log_dic;
 	@DocBean(name ="disp_freq",value="调度频率(Dispatch_Frequency):D-天(D)<DAILY> M-月(M)<MONTHLY> W-周(W)<WEEKLY> X-旬(X)<TENDAYS> Y-年(Y)<YEARLY> F-频率(F)<PinLv> ",dataType = String.class,required = false)
@@ -97,47 +87,17 @@ public class Etl_job_cur extends ProjectTableEntity
 	private String end_time;
 	@DocBean(name ="etl_sys_cd",value="工程代码:",dataType = String.class,required = true)
 	private String etl_sys_cd;
+	@DocBean(name ="etl_job_desc",value="作业描述:",dataType = String.class,required = false)
+	private String etl_job_desc;
+	@DocBean(name ="pro_type",value="作业程序类型(Pro_Type):SHELL-SHELL<SHELL> PERL-PERL<PERL> BAT-BAT<BAT> JAVA-JAVA<JAVA> PYTHON-PYTHON<PYTHON> WF-WF<WF> DBTRAN-DBTRAN<DBTRAN> DBJOB-DBJOB<DBJOB> Yarn-Yarn<Yarn> Thrift-Thrift<Thrift> ",dataType = String.class,required = false)
+	private String pro_type;
+	@DocBean(name ="pro_dic",value="作业程序目录:",dataType = String.class,required = false)
+	private String pro_dic;
+	@DocBean(name ="pro_name",value="作业程序名称:",dataType = String.class,required = false)
+	private String pro_name;
+	@DocBean(name ="pro_para",value="作业程序参数:",dataType = String.class,required = false)
+	private String pro_para;
 
-	/** 取得：作业描述 */
-	public String getEtl_job_desc(){
-		return etl_job_desc;
-	}
-	/** 设置：作业描述 */
-	public void setEtl_job_desc(String etl_job_desc){
-		this.etl_job_desc=etl_job_desc;
-	}
-	/** 取得：作业程序类型 */
-	public String getPro_type(){
-		return pro_type;
-	}
-	/** 设置：作业程序类型 */
-	public void setPro_type(String pro_type){
-		this.pro_type=pro_type;
-	}
-	/** 取得：作业程序目录 */
-	public String getPro_dic(){
-		return pro_dic;
-	}
-	/** 设置：作业程序目录 */
-	public void setPro_dic(String pro_dic){
-		this.pro_dic=pro_dic;
-	}
-	/** 取得：作业程序名称 */
-	public String getPro_name(){
-		return pro_name;
-	}
-	/** 设置：作业程序名称 */
-	public void setPro_name(String pro_name){
-		this.pro_name=pro_name;
-	}
-	/** 取得：作业程序参数 */
-	public String getPro_para(){
-		return pro_para;
-	}
-	/** 设置：作业程序参数 */
-	public void setPro_para(String pro_para){
-		this.pro_para=pro_para;
-	}
 	/** 取得：日志目录 */
 	public String getLog_dic(){
 		return log_dic;
@@ -415,5 +375,45 @@ public class Etl_job_cur extends ProjectTableEntity
 	/** 设置：工程代码 */
 	public void setEtl_sys_cd(String etl_sys_cd){
 		this.etl_sys_cd=etl_sys_cd;
+	}
+	/** 取得：作业描述 */
+	public String getEtl_job_desc(){
+		return etl_job_desc;
+	}
+	/** 设置：作业描述 */
+	public void setEtl_job_desc(String etl_job_desc){
+		this.etl_job_desc=etl_job_desc;
+	}
+	/** 取得：作业程序类型 */
+	public String getPro_type(){
+		return pro_type;
+	}
+	/** 设置：作业程序类型 */
+	public void setPro_type(String pro_type){
+		this.pro_type=pro_type;
+	}
+	/** 取得：作业程序目录 */
+	public String getPro_dic(){
+		return pro_dic;
+	}
+	/** 设置：作业程序目录 */
+	public void setPro_dic(String pro_dic){
+		this.pro_dic=pro_dic;
+	}
+	/** 取得：作业程序名称 */
+	public String getPro_name(){
+		return pro_name;
+	}
+	/** 设置：作业程序名称 */
+	public void setPro_name(String pro_name){
+		this.pro_name=pro_name;
+	}
+	/** 取得：作业程序参数 */
+	public String getPro_para(){
+		return pro_para;
+	}
+	/** 设置：作业程序参数 */
+	public void setPro_para(String pro_para){
+		this.pro_para=pro_para;
 	}
 }
