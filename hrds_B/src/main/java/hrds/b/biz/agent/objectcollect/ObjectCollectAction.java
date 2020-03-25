@@ -360,7 +360,6 @@ public class ObjectCollectAction extends BaseAction {
 		// 5.解析agent返回的json数据
 		Map<String, String> jsonMsg = PackUtil.unpackMsg(data.toString());
 		Map<String, Object> objectCollectMap = JsonUtil.toObject(jsonMsg.get("msg"), MAPTYPE);
-		String tablename = objectCollectMap.get("tablename").toString();
 		return JsonUtil.toObject(objectCollectMap.get("tablename").toString(), LISTTYPE);
 	}
 
