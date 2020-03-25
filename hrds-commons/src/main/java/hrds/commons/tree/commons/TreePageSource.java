@@ -9,27 +9,27 @@ import java.util.Map;
 @DocClass(desc = "树页面来源配置类", author = "BY-HLL", createdate = "2019/12/24 0024 上午 10:05")
 public class TreePageSource {
     //进HBase
-    private static final String INTO_HBASE = "intoHBase";
+    public static final String INTO_HBASE = "intoHBase";
     //二级索引
-    private static final String SECOND_INDEX = "secondIndex";
+    public static final String SECOND_INDEX = "secondIndex";
     //webSQL
-    private static final String WEB_SQL = "webSQL";
+    public static final String WEB_SQL = "webSQL";
     //集市
-    private static final String MARKET = "market";
+    public static final String MARKET = "market";
     //加工
-    private static final String MACHINING = "machining";
+    public static final String MACHINING = "machining";
     //接口
-    private static final String INTERFACE = "interface";
+    public static final String INTERFACE = "interface";
     //报表
-    private static final String REPORT = "report";
+    public static final String REPORT = "report";
     //机器学习
-    private static final String MACHINE_LEARNING = "machineLearning";
+    public static final String MACHINE_LEARNING = "machineLearning";
     //外部
-    private static final String EXTERNAL = "external";
+    public static final String EXTERNAL = "external";
     //数据管控
-    private static final String DATA_MANAGEMENT = "dataManagement";
+    public static final String DATA_MANAGEMENT = "dataManagement";
     //数据对标
-    private static final String DATA_BENCHMARKING = "dataBenchmarking";
+    public static final String DATA_BENCHMARKING = "dataBenchmarking";
 
     //集市,加工,数据管控 树菜单列表
     private static DataSourceType[] DATA_MANAGEMENT_ARRAY = new DataSourceType[]{DataSourceType.DCL,

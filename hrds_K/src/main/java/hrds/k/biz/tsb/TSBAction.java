@@ -20,6 +20,7 @@ import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.tree.background.TreeNodeInfo;
 import hrds.commons.tree.background.bean.TreeConf;
+import hrds.commons.tree.commons.TreePageSource;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.PropertyParaValue;
 import hrds.commons.utils.key.PrimayKeyGener;
@@ -38,17 +39,14 @@ public class TSBAction extends BaseAction {
     private static final TSBConf tsbConf = new TSBConf();
 
     @Method(desc = "获取表结构对标树", logicStep = "获取表结构对标树")
-    @Param(name = "tree_source", desc = "树菜单来源", range = "String类型", nullable = true)
     @Return(desc = "表结构对标树信息", range = "表结构对标树信息")
-    public Map<String, Object> getTSBTreeData(String tree_source) {
-        if (StringUtil.isBlank(tree_source)) {
-            throw new BusinessException("树来源不能为空! 数据对标树请设置为: dataBenchmarking");
-        }
+    public Map<String, Object> getTSBTreeData() {
         //配置树不显示文件采集的数据
         TreeConf treeConf = new TreeConf();
         treeConf.setShowFileCollection(Boolean.FALSE);
         //根据源菜单信息获取节点数据列表
-        List<Map<String, Object>> dataList = TreeNodeInfo.getTreeNodeInfo(tree_source, getUser(), treeConf);
+        List<Map<String, Object>> dataList =
+                TreeNodeInfo.getTreeNodeInfo(TreePageSource.DATA_BENCHMARKING, getUser(), treeConf);
         //转换节点数据列表为分叉树列表
         List<Node> tsbTreeList = NodeDataConvertedTreeList.dataConversionTreeInfo(dataList);
         //定义返回的分叉树结果Map
