@@ -482,7 +482,7 @@ START_USE_DATE                                    CHAR(8) NOT NULL, --开始使�
 USE_VALID_DATE                                    CHAR(8) NOT NULL, --使用有效日期
 INTERFACE_NOTE                                    VARCHAR(512) NULL, --备注
 INTERFACE_ID                                      DECIMAL(10) NOT NULL, --接口ID
-使用接口用户ID                                          BIGINT default 0 NOT NULL, --用户ID
+USER_ID                                           BIGINT default 0 NOT NULL, --用户ID
 CONSTRAINT INTERFACE_USE_PK PRIMARY KEY(INTERFACE_USE_ID)   );
 
 --表使用信息表

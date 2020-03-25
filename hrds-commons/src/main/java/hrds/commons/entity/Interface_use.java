@@ -54,8 +54,8 @@ public class Interface_use extends ProjectTableEntity
 	private String url;
 	@DocBean(name ="interface_id",value="接口ID:",dataType = Long.class,required = true)
 	private Long interface_id;
-	@DocBean(name ="使用接口用户id",value="用户ID:",dataType = Long.class,required = true)
-	private Long 使用接口用户id;
+	@DocBean(name ="user_id",value="用户ID:",dataType = Long.class,required = true)
+	private Long user_id;
 	@DocBean(name ="create_id",value="用户ID:",dataType = Long.class,required = true)
 	private Long create_id;
 
@@ -168,17 +168,17 @@ public class Interface_use extends ProjectTableEntity
 		}
 	}
 	/** 取得：用户ID */
-	public Long get使用接口用户id(){
-		return 使用接口用户id;
+	public Long getUser_id(){
+		return user_id;
 	}
 	/** 设置：用户ID */
-	public void set使用接口用户id(Long 使用接口用户id){
-		this.使用接口用户id=使用接口用户id;
+	public void setUser_id(Long user_id){
+		this.user_id=user_id;
 	}
 	/** 设置：用户ID */
-	public void set使用接口用户id(String 使用接口用户id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(使用接口用户id)){
-			this.使用接口用户id=new Long(使用接口用户id);
+	public void setUser_id(String user_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(user_id)){
+			this.user_id=new Long(user_id);
 		}
 	}
 	/** 取得：用户ID */
