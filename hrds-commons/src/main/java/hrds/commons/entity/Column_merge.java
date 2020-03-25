@@ -42,12 +42,12 @@ public class Column_merge extends ProjectTableEntity
 	private String col_type;
 	@DocBean(name ="remark",value="备注:",dataType = String.class,required = false)
 	private String remark;
-	@DocBean(name ="table_id",value="表名ID:",dataType = Long.class,required = true)
-	private Long table_id;
 	@DocBean(name ="valid_s_date",value="有效开始日期:",dataType = String.class,required = true)
 	private String valid_s_date;
 	@DocBean(name ="valid_e_date",value="有效结束日期:",dataType = String.class,required = true)
 	private String valid_e_date;
+	@DocBean(name ="table_id",value="表名ID:",dataType = Long.class,required = true)
+	private Long table_id;
 
 	/** 取得：字段编号 */
 	public Long getCol_merge_id(){
@@ -103,20 +103,6 @@ public class Column_merge extends ProjectTableEntity
 	public void setRemark(String remark){
 		this.remark=remark;
 	}
-	/** 取得：表名ID */
-	public Long getTable_id(){
-		return table_id;
-	}
-	/** 设置：表名ID */
-	public void setTable_id(Long table_id){
-		this.table_id=table_id;
-	}
-	/** 设置：表名ID */
-	public void setTable_id(String table_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(table_id)){
-			this.table_id=new Long(table_id);
-		}
-	}
 	/** 取得：有效开始日期 */
 	public String getValid_s_date(){
 		return valid_s_date;
@@ -132,5 +118,19 @@ public class Column_merge extends ProjectTableEntity
 	/** 设置：有效结束日期 */
 	public void setValid_e_date(String valid_e_date){
 		this.valid_e_date=valid_e_date;
+	}
+	/** 取得：表名ID */
+	public Long getTable_id(){
+		return table_id;
+	}
+	/** 设置：表名ID */
+	public void setTable_id(Long table_id){
+		this.table_id=table_id;
+	}
+	/** 设置：表名ID */
+	public void setTable_id(String table_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(table_id)){
+			this.table_id=new Long(table_id);
+		}
 	}
 }

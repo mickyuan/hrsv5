@@ -32,8 +32,6 @@ public class Data_extraction_def extends ProjectTableEntity
 	}
 	@DocBean(name ="ded_id",value="数据抽取定义主键:",dataType = Long.class,required = true)
 	private Long ded_id;
-	@DocBean(name ="table_id",value="表名ID:",dataType = Long.class,required = true)
-	private Long table_id;
 	@DocBean(name ="is_header",value="是否需要表头(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_header;
 	@DocBean(name ="data_extract_type",value="数据抽取方式(DataExtractType):1-仅数据抽取<JinShuJuChouQu> 2-数据抽取及入库<ShuJuChouQuJiRuKu> ",dataType = String.class,required = true)
@@ -52,6 +50,8 @@ public class Data_extraction_def extends ProjectTableEntity
 	private String plane_url;
 	@DocBean(name ="file_suffix",value="落地文件后缀名:",dataType = String.class,required = false)
 	private String file_suffix;
+	@DocBean(name ="table_id",value="表名ID:",dataType = Long.class,required = true)
+	private Long table_id;
 
 	/** 取得：数据抽取定义主键 */
 	public Long getDed_id(){
@@ -65,20 +65,6 @@ public class Data_extraction_def extends ProjectTableEntity
 	public void setDed_id(String ded_id){
 		if(!fd.ng.core.utils.StringUtil.isEmpty(ded_id)){
 			this.ded_id=new Long(ded_id);
-		}
-	}
-	/** 取得：表名ID */
-	public Long getTable_id(){
-		return table_id;
-	}
-	/** 设置：表名ID */
-	public void setTable_id(Long table_id){
-		this.table_id=table_id;
-	}
-	/** 设置：表名ID */
-	public void setTable_id(String table_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(table_id)){
-			this.table_id=new Long(table_id);
 		}
 	}
 	/** 取得：是否需要表头 */
@@ -152,5 +138,19 @@ public class Data_extraction_def extends ProjectTableEntity
 	/** 设置：落地文件后缀名 */
 	public void setFile_suffix(String file_suffix){
 		this.file_suffix=file_suffix;
+	}
+	/** 取得：表名ID */
+	public Long getTable_id(){
+		return table_id;
+	}
+	/** 设置：表名ID */
+	public void setTable_id(Long table_id){
+		this.table_id=table_id;
+	}
+	/** 设置：表名ID */
+	public void setTable_id(String table_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(table_id)){
+			this.table_id=new Long(table_id);
+		}
 	}
 }

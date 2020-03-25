@@ -125,6 +125,8 @@ public class CodesItem{
 	protected static final String interfaceType=new String("InterfaceType");
 	/**接口状态   */
 	protected static final String interfaceState=new String("InterfaceState");
+	/**落地文件-卸数方式   */
+	protected static final String unloadType=new String("UnloadType");
 
 
 	public static final Map<String,Class> mapCat= new HashMap<String,Class>(100);
@@ -188,6 +190,7 @@ public class CodesItem{
 		mapCat.put(updateType,UpdateType.class);
 		mapCat.put(interfaceType,InterfaceType.class);
 		mapCat.put(interfaceState,InterfaceState.class);
+		mapCat.put(unloadType,UnloadType.class);
 	}
 
 

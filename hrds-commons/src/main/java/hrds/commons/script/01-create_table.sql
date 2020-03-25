@@ -1419,12 +1419,13 @@ DATABASE_ID                                       BIGINT default 0 NOT NULL, --�
 SOURCE_TABLEID                                    VARCHAR(512) NULL, --源表ID
 VALID_S_DATE                                      CHAR(8) NOT NULL, --有效开始日期
 VALID_E_DATE                                      CHAR(8) NOT NULL, --有效结束日期
+UNLOAD_TYPE                                       CHAR(1) NULL, --落地文件-卸数方式
 SQL                                               VARCHAR(6000) NULL, --自定义sql语句
-IS_USER_DEFINED                                   CHAR(1) default '1' NOT NULL, --是否自定义sql采集
 TI_OR                                             VARCHAR(512) NULL, --清洗顺序
 IS_MD5                                            CHAR(1) NOT NULL, --是否使用MD5
 IS_REGISTER                                       CHAR(1) NOT NULL, --是否仅登记
 IS_PARALLEL                                       CHAR(1) NOT NULL, --是否并行抽取
+IS_USER_DEFINED                                   CHAR(1) default '1' NOT NULL, --是否自定义分页采集
 PAGE_SQL                                          VARCHAR(6000) NULL, --分页sql
 PAGEPARALLELS                                     INTEGER default 0 NULL, --分页并行数
 DATAINCREMENT                                     INTEGER default 0 NULL, --每天数据增量

@@ -48,7 +48,7 @@ public class Table_info extends ProjectTableEntity
 	private String sql;
 	@DocBean(name ="remark",value="备注:",dataType = String.class,required = false)
 	private String remark;
-	@DocBean(name ="is_user_defined",value="是否自定义sql采集(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
+	@DocBean(name ="is_user_defined",value="是否自定义分页采集(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_user_defined;
 	@DocBean(name ="database_id",value="数据库设置id:",dataType = Long.class,required = true)
 	private Long database_id;
@@ -66,6 +66,8 @@ public class Table_info extends ProjectTableEntity
 	private Integer pageparallels;
 	@DocBean(name ="dataincrement",value="每天数据增量:",dataType = Integer.class,required = false)
 	private Integer dataincrement;
+	@DocBean(name ="unload_type",value="落地文件-卸数方式(UnloadType):1-全量卸数<QuanLiangXieShu> 2-增量卸数<ZengLiangXieShu> ",dataType = String.class,required = false)
+	private String unload_type;
 
 	/** 取得：表名ID */
 	public Long getTable_id(){
@@ -145,11 +147,11 @@ public class Table_info extends ProjectTableEntity
 	public void setRemark(String remark){
 		this.remark=remark;
 	}
-	/** 取得：是否自定义sql采集 */
+	/** 取得：是否自定义分页采集 */
 	public String getIs_user_defined(){
 		return is_user_defined;
 	}
-	/** 设置：是否自定义sql采集 */
+	/** 设置：是否自定义分页采集 */
 	public void setIs_user_defined(String is_user_defined){
 		this.is_user_defined=is_user_defined;
 	}
@@ -234,5 +236,13 @@ public class Table_info extends ProjectTableEntity
 		if(!fd.ng.core.utils.StringUtil.isEmpty(dataincrement)){
 			this.dataincrement=new Integer(dataincrement);
 		}
+	}
+	/** 取得：落地文件-卸数方式 */
+	public String getUnload_type(){
+		return unload_type;
+	}
+	/** 设置：落地文件-卸数方式 */
+	public void setUnload_type(String unload_type){
+		this.unload_type=unload_type;
 	}
 }
