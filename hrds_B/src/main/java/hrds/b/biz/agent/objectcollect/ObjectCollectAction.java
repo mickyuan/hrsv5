@@ -17,7 +17,10 @@ import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
-import hrds.commons.codes.*;
+import hrds.commons.codes.CollectDataType;
+import hrds.commons.codes.IsFlag;
+import hrds.commons.codes.ObjectCollectType;
+import hrds.commons.codes.OperationType;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.AgentActionUtil;
@@ -182,7 +185,7 @@ public class ObjectCollectAction extends BaseAction {
 		if (count > 0) {
 			throw new BusinessException("半结构化采集任务名称重复");
 		}
-		// 3.之前对象采集存在行采集与对象采集两种，目前仅支持行采集 所以默认给
+		// 3.之前对象采集存在行采集与对象采集两种，目前仅支持行采集,所以默认给
 		if (StringUtil.isNotBlank(object_collect.getObject_collect_type())) {
 			object_collect.setObject_collect_type(ObjectCollectType.HangCaiJi.getCode());
 		}
@@ -224,18 +227,6 @@ public class ObjectCollectAction extends BaseAction {
 						, MAPTYPE);
 				// 11.保存对象采集数据处理类型对应表信息
 				addObjectHandleType(objectCollectTask, handleTypeMap);
-			}
-			// 当数据字典不存在时，插入默认的操作码表对应的值
-			if (IsFlag.Fou == IsFlag.ofEnumByCode(object_collect.getIs_dictionary())) {
-				OperationType[] operationTypes = OperationType.values();
-				Object_handle_type object_handle_type = new Object_handle_type();
-				for (OperationType operationType : operationTypes) {
-					object_handle_type.setObject_handle_id(PrimayKeyGener.getNextId());
-					object_handle_type.setOcs_id(objectCollectTask.getOcs_id());
-					object_handle_type.setHandle_type(operationType.getCode());
-					object_handle_type.setHandle_value(operationType.getValue());
-					object_handle_type.add(Dbo.db());
-				}
 			}
 			// 12.保存数据存储表信息入库
 			addObjectStorage(object_collect, objectCollectTask, isSolr);
@@ -378,7 +369,7 @@ public class ObjectCollectAction extends BaseAction {
 					"3.没有数据字典查询第一行数据" +
 					"4.解析json获取树结构信息并返回" +
 					"5.返回半结构化采集列结构信息")
-	@Param(name = "ocs_id", desc = "对象采集任务编号", range = "新增对象采集任务时生成")
+	@Param(name = "ocs_id", desc = "对象采集任务编号(对象采集对应信息表ID）", range = "新增对象采集任务时生成")
 	@Return(desc = "返回半结构化采集列结构信息", range = "无限制")
 	public Map<String, Object> searchCollectColumnStruct(long ocs_id) {
 		// 1.数据可访问权限处理方式：该方法没有访问权限限制
@@ -576,19 +567,21 @@ public class ObjectCollectAction extends BaseAction {
 	@Method(desc = "保存表的码表信息（操作码表）", logicStep = "1.数据可访问权限处理方式：该方法没有访问权限限制" +
 			"2.解析json为对象采集结构信息" +
 			"3.循环保存对象采集数据处理类型对应表信息")
-	@Param(name = "handleType", desc = "jsonArray格式的码表类型信息", range = "无限制")
-	public void saveHandleType(String handleType) {
+	@Param(name = "handleType", desc = "jsonArray格式的码表类型信息(handle_type,handle_value为key,对应值为value)",
+			range = "无限制")
+	@Param(name = "ocs_id", desc = "对象采集任务编号", range = "新增对象采集任务时生成")
+	public void saveHandleType(String handleType, long ocs_id) {
 		// 1.数据可访问权限处理方式：该方法没有访问权限限制
 		Type type = new TypeReference<List<Object_handle_type>>() {
 		}.getType();
 		// 2.解析json为对象采集结构信息
 		List<Object_handle_type> handleTypeList = JsonUtil.toObject(handleType, type);
 		// 3.先删除原来的码表信息
-		Dbo.execute("delete from " + Object_handle_type.TableName + " where ocs_id = ?",
-				handleTypeList.get(0).getOcs_id());
+		Dbo.execute("delete from " + Object_handle_type.TableName + " where ocs_id = ?", ocs_id);
 		// 3.循环保存对象采集数据处理类型对应表信息
 		for (Object_handle_type object_handle_type : handleTypeList) {
 			object_handle_type.setObject_handle_id(PrimayKeyGener.getNextId());
+			object_handle_type.setOcs_id(ocs_id);
 			object_handle_type.add(Dbo.db());
 		}
 	}
@@ -597,7 +590,8 @@ public class ObjectCollectAction extends BaseAction {
 			"2.解析json为对象采集结构信息" +
 			"3.循环保存对象采集结构信息入库，获取结构信息id" +
 			"4.删除非新保存结构信息")
-	@Param(name = "collectStruct", desc = "jsonArray格式的字符串", range = "无限制", nullable = false)
+	@Param(name = "collectStruct", desc = "jsonArray格式的字符串(is_key,is_operate,column_name,column_type," +
+			"col_seq,columnposition为key，对应值为value)", range = "无限制")
 	public void saveCollectColumnStruct(String collectStruct) {
 		// 1.数据可访问权限处理方式：该方法没有访问权限限制
 		Type type = new TypeReference<List<Object_collect_struct>>() {
@@ -1175,7 +1169,8 @@ public class ObjectCollectAction extends BaseAction {
 			// 4.判断进solr的表是否进了HBase
 			if (IsFlag.Fou == IsFlag.ofEnumByCode(object_storage.getIs_hbase()) &&
 					IsFlag.Shi == IsFlag.ofEnumByCode(object_storage.getIs_solr())) {
-				throw new BusinessException("第" + (i + 1) + "行表" + enNameList.get(0) + "未选择进入hbase，请检查");
+				throw new BusinessException("第" + (i + 1) + "行表" + enNameList.get(0) + "入solr表未选择进入hbase" +
+						"，请检查");
 			}
 			// 5.判断当前数据存储表是否进HBase
 			if (IsFlag.Shi == IsFlag.ofEnumByCode(object_storage.getIs_hbase())) {

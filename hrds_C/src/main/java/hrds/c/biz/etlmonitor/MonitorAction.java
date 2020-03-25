@@ -442,7 +442,7 @@ public class MonitorAction extends BaseAction {
 				+ Etl_dependency.TableName + " ed join " + Etl_job_def.TableName
 				+ " ejd on ed.etl_job=ejd.etl_job and ed.etl_sys_cd=ejd.etl_sys_cd "
 				+ " where ed.etl_job=? and ed.etl_sys_cd=?", etl_job, etl_sys_cd);
-		// 3.如果上游作业依赖关系不为空，设置字节点
+		// 3.如果上游作业依赖关系不为空，设置子节点
 		if (!topJob.isEmpty()) {
 			for (int i = 0; i < topJob.getRowCount(); i++) {
 				topJob.setObject(i, "id", topJob.getString(i, "pre_etl_job"));
@@ -604,7 +604,7 @@ public class MonitorAction extends BaseAction {
 					gephi.setSize(10);
 					gephi.setPosition(new PositionImpl(random.nextFloat(), random.nextFloat(), 0.0f));
 					nodeMap.put(etl_job, gephi);
-				} else if (!topResult.isEmpty() && downResult.isEmpty()) {
+				} else if (topResult.isEmpty() && !downResult.isEmpty()) {
 					// 14.2当前作业的上游作业为空,下游作业不为空
 					number_key = number_key + 1;
 					String label =
@@ -617,7 +617,7 @@ public class MonitorAction extends BaseAction {
 					gephi.setSize(10);
 					gephi.setPosition(new PositionImpl(random.nextFloat(), random.nextFloat(), 0.0f));
 					nodeMap.put(etl_job, gephi);
-				} else if (topResult.isEmpty() && !downResult.isEmpty()) {
+				} else if (!topResult.isEmpty() && downResult.isEmpty()) {
 					// 14.3当前作业的上游作业不为空,下游作业为空
 					number_key = number_key + 1;
 					String label =
@@ -655,7 +655,7 @@ public class MonitorAction extends BaseAction {
 			for (int i = 0; i < dispatchFreqResult.getRowCount(); i++) {
 				String etl_job = dependencyJobResult.getString(i, "etl_job");
 				Result topResult = topEtlJobDependencyInfo(etl_job, etl_sys_cd);
-				Result downResult = topEtlJobDependencyInfo(etl_job, etl_sys_cd);
+				Result downResult = downEtlJobDependencyInfo(etl_job, etl_sys_cd);
 				// 17.建立依赖关系
 				buildDependencies(nodeMap, list_Edge, etl_job, topResult, downResult);
 			}
