@@ -67,7 +67,6 @@ public class ReleaseManageAction extends BaseAction {
 	                                  long[] interface_id, String[] start_use_date, String[] use_valid_date) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		Interface_use interface_use = new Interface_use();
-
 		// 2.遍历用户ID，接口ID保存接口使用信息
 		for (long userId : user_id) {
 			for (int i = 0; i < interface_id.length; i++) {
