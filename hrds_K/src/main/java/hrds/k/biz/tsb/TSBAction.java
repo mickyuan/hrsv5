@@ -57,10 +57,10 @@ public class TSBAction extends BaseAction {
 
     @Method(desc = "获取表字段信息列表", logicStep = "获取表字段信息列表")
     @Param(name = "data_layer", desc = "数据层", range = "String类型,DCL,DML")
-    @Param(name = "table_type", desc = "表类型标识", range = "01:批量数据,02:实时数据表", nullable = true)
+    @Param(name = "data_own_type", desc = "类型标识", range = "dcl_batch:批量数据,dcl_realtime:实时数据", nullable = true)
     @Param(name = "file_id", desc = "表源属性id", range = "String[]")
     @Return(desc = "字段信息列表", range = "字段信息列表")
-    public List<Map<String, Object>> getColumnByFileId(String data_layer, String table_type, String file_id) {
+    public List<Map<String, Object>> getColumnByFileId(String data_layer, String data_own_type, String file_id) {
         //设置 Dbm_normbm_detect 对象
         setDbmNormbmDetect(data_layer);
         //设置 Dbm_dtable_info 对象
@@ -70,12 +70,12 @@ public class TSBAction extends BaseAction {
         switch (data_layer) {
             case "DCL":
                 //如果数据表所属层是DCL层,判断表类型是批量还是实时
-                if (Constant.DCL_BATCH.equals(table_type)) {
+                if (Constant.DCL_BATCH.equals(data_own_type)) {
                     col_info_s.addAll(TSBQuery.getDCLBatchTableColumnsById(file_id));
-                } else if (Constant.DCL_REALTIME.equals(table_type)) {
+                } else if (Constant.DCL_REALTIME.equals(data_own_type)) {
                     col_info_s.addAll(TSBQuery.getDCLBatchRealTimeTableColumnsById(file_id));
                 } else {
-                    throw new BusinessException("数据表类型错误! 01:批量数据,02:实时数据");
+                    throw new BusinessException("数据表类型错误! dcl_batch:批量数据,dcl_realtime:实时数据");
                 }
                 break;
             case "ISL":
