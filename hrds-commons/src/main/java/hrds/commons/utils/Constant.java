@@ -13,7 +13,7 @@ public class Constant {
     public static final char DATADELIMITER = '\001';//此分隔符为hive的默认分隔符
     public static final String MAXDATE = "99991231";
     public static final String SFTP_PORT = "22";
-    public static final byte[] HBASE_COLUMN_FAMILY = "F" .getBytes();
+    public static final byte[] HBASE_COLUMN_FAMILY = "F".getBytes();
     public static final String HBASE_ROW_KEY = "hyren_key";
     //当前程序运行的目录
     private static final String USER_DIR = System.getProperty("user.dir");
@@ -41,13 +41,13 @@ public class Constant {
     public static final String PARALLEL_SQL_END = "#{hy_end}";
 
     //贴源层下批量采集数据 01:批量类型数据
-    public static final String DCL_BATCH = "01";
+    public static final String DCL_BATCH = "dcl_batch";
     //贴源层下实时数据 02:实时类型数据
-    public static final String DCL_REALTIME = "02";
+    public static final String DCL_REALTIME = "dcl_realtime";
     //系统数据表 11:系统数据表
-    public static final String SYS_DATA_TABLE = "11";
+    public static final String SYS_DATA_TABLE = "sys_data_table";
     //系统数据备份 12:系统数据备份
-    public static final String SYS_DATA_BAK = "12";
+    public static final String SYS_DATA_BAK = "sys_data_bak";
 
     //自定义层数据库类型列表
     public static final String[] DATABASE_TYPE = {"Hive", "HBase", "Mpp", "Spark"};
