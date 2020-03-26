@@ -13,7 +13,7 @@ import java.util.Map;
 @DocClass(desc = "节点数据转化为分叉树列表", author = "BY-HLL", createdate = "2020/2/20 0020 下午 09:49")
 public class NodeDataConvertedTreeList {
 
-    @Method(desc = "节点数据转化为分叉树列表", logicStep = "节点数据转化为分叉树列表")
+    @Method(desc = "节点数据转化为分叉树列表", logicStep = "节点数据转化为分叉树列表,节点数据根节点数据的 parent_id 必须为0")
     @Param(name = "nodeDataList", desc = "节点数据列表", range = "nodeDataList")
     @Return(desc = "分叉树列表", range = "分叉树列表")
     public static List<Node> dataConversionTreeInfo(List<Map<String, Object>> nodeDataList) {
