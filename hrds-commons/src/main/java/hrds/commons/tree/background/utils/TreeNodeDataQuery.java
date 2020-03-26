@@ -29,15 +29,15 @@ public class TreeNodeDataQuery {
     @Param(name = "treeConf", desc = "TreeConf树配置信息", range = "TreeConf树配置信息")
     public static void getDCLDataList(User user, List<Map<String, Object>> dataList, TreeConf treeConf) {
         //添加DCL层下节点数据
-        dataList.addAll(DCLDataQuery.getDCLDataInfos());
+        dataList.addAll(DCLDataQuery.getDCLDataInfos(treeConf));
         //获取DCL层批量数据下的数据源列表
         List<Map<String, Object>> dclBatchDataInfos = DCLDataQuery.getDCLBatchDataInfos(user);
         //添加DCL层批量数据下数据源节点数据到DCL数据层的层次数据中
         dataList.addAll(DataConvertedNodeData.ConversionDCLBatchDataInfos(dclBatchDataInfos));
         dclBatchDataInfos.forEach(dclBatchDataInfo -> {
-            //获取批量数据数据源下分类信息
-            //获取数据源id
+            //--获取数据源id
             String source_id = dclBatchDataInfo.get("source_id").toString();
+            //获取批量数据数据源下分类信息
             List<Map<String, Object>> dclBatchClassifyInfos =
                     DCLDataQuery.getDCLBatchClassifyInfos(source_id, treeConf.getShowFileCollection(), user);
             if (!dclBatchClassifyInfos.isEmpty()) {

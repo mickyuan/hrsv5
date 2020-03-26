@@ -14,6 +14,7 @@ import hrds.commons.codes.UserType;
 import hrds.commons.entity.Agent_info;
 import hrds.commons.entity.Collect_job_classify;
 import hrds.commons.entity.Database_set;
+import hrds.commons.tree.background.bean.TreeConf;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.User;
 
@@ -27,8 +28,9 @@ public class DCLDataQuery {
 
     @Method(desc = "获取登录用户的贴源层数据信息",
             logicStep = "1.获取登录用户的数据源列表")
+    @Param(name = "treeConf", desc = "TreeConf树配置信息", range = "TreeConf树配置信息")
     @Return(desc = "数据源列表", range = "无限制")
-    public static List<Map<String, Object>> getDCLDataInfos() {
+    public static List<Map<String, Object>> getDCLDataInfos(TreeConf treeConf) {
         List<Map<String, Object>> dclDataInfos = new ArrayList<>();
         Map<String, Object> map;
         map = new HashMap<>();
@@ -37,14 +39,19 @@ public class DCLDataQuery {
         map.put("label", "批量数据");
         map.put("parent_id", DataSourceType.DCL.getCode());
         map.put("description", "批量数据查询");
+        map.put("data_layer", DataSourceType.DCL.getCode());
         dclDataInfos.add(map);
-        //2.添加实时数据子级
-//        map = new HashMap<>();
-//        map.put("id", Constant.DCL_REALTIME);
-//        map.put("label", "实时数据");
-//        map.put("parent_id", DataSourceType.DCL.getCode());
-//        map.put("description", "实时数据查询");
-//        dclDataInfos.add(map);
+        //判断是否显示实时数据菜单
+        if (treeConf.getShowDCLRealtime()) {
+            //2.添加实时数据子级
+            map = new HashMap<>();
+            map.put("id", Constant.DCL_REALTIME);
+            map.put("label", "实时数据");
+            map.put("parent_id", DataSourceType.DCL.getCode());
+            map.put("description", "实时数据查询");
+            map.put("data_layer", DataSourceType.DCL.getCode());
+            dclDataInfos.add(map);
+        }
         return dclDataInfos;
     }
 

@@ -5,6 +5,7 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
+import hrds.commons.codes.DataSourceType;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.utils.Constant;
 
@@ -29,6 +30,9 @@ public class DataConvertedNodeData {
             map.put("label", o.get("datasource_name"));
             map.put("parent_id", Constant.DCL_BATCH);
             map.put("description", o.get("datasource_name"));
+            map.put("data_layer", DataSourceType.DCL.getCode());
+            map.put("data_own_type", Constant.DCL_BATCH);
+            map.put("data_source_id", o.get("source_id"));
             dclBatchDataNodes.add(map);
         });
         return dclBatchDataNodes;
@@ -48,6 +52,11 @@ public class DataConvertedNodeData {
             map.put("label", o.get("classify_name") + "【" + o.get("classify_num").toString() + "】");
             map.put("parent_id", o.get("source_id"));
             map.put("description", o.get("remark"));
+            map.put("data_layer", DataSourceType.DCL.getCode());
+            map.put("data_own_type", Constant.DCL_BATCH);
+            map.put("data_source_id", o.get("source_id"));
+            map.put("agent_id", o.get("agent_id"));
+            map.put("classify_id", o.get("classify_id"));
             dclBatchClassifyNodes.add(map);
         });
         return dclBatchClassifyNodes;
@@ -72,7 +81,15 @@ public class DataConvertedNodeData {
             String HBase_name = o.get("hbase_name").toString();
             //文件avro存储路径
             String file_avro_path = o.get("file_avro_path").toString();
-            map.put("id", o.get("file_id").toString());
+            //所属数据源id
+            String source_id = o.get("source_id").toString();
+            //所属agent_id
+            String agent_id = o.get("agent_id").toString();
+            //所属分类id
+            String classify_id = o.get("classify_id").toString();
+            //文件源属性id
+            String file_id = o.get("file_id").toString();
+            map.put("id", file_id);
             //如果是入HBase的表则显示原始表名,如果是文件则显示文件名加文件存储的AVRO的HDFS路径
             if (o.get("is_in_hbase").toString().equals(IsFlag.Shi.getCode())) {
                 map.put("label", table_name);
@@ -84,11 +101,18 @@ public class DataConvertedNodeData {
                 }
             }
             map.put("parent_id", o.get("classify_id"));
-            map.put("description", "分类名称:" + classify_name + "\n" +
-                    "任务名称:" + task_name + "\n" +
-                    "原始文件或源表名称:" + original_name + "\n" +
-                    "原始表名:" + table_name + "\n" +
-                    "系统内对应表名:" + HBase_name);
+            map.put("description", "" +
+                    "任务名称：" + task_name + "\n" +
+                    "分类名称：" + classify_name + "\n" +
+                    "原文件名：" + original_name + "\n" +
+                    "原始表名：" + table_name + "\n" +
+                    "系统表名：" + HBase_name);
+            map.put("data_layer", DataSourceType.DCL.getCode());
+            map.put("data_own_type", Constant.DCL_BATCH);
+            map.put("data_source_id", source_id);
+            map.put("agent_id", agent_id);
+            map.put("classify_id", classify_id);
+            map.put("file_id", file_id);
             dclBatchTableNodes.add(map);
         });
         return dclBatchTableNodes;

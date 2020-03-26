@@ -28,12 +28,14 @@ public class SFLDataQuery {
         map.put("label", "系统数据表");
         map.put("parent_id", DataSourceType.SFL.getCode());
         map.put("description", "系统数据表");
+        map.put("data_layer", DataSourceType.SFL.getCode());
         sflDataInfos.add(map);
         map = new HashMap<>();
         map.put("id", Constant.SYS_DATA_BAK);
         map.put("label", "系统数据备份");
         map.put("parent_id", DataSourceType.SFL.getCode());
         map.put("description", "系统数据表");
+        map.put("data_layer", DataSourceType.SFL.getCode());
         sflDataInfos.add(map);
         return sflDataInfos;
     }
