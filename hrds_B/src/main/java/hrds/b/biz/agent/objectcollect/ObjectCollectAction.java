@@ -591,8 +591,9 @@ public class ObjectCollectAction extends BaseAction {
 			"2.解析json为对象采集结构信息" +
 			"3.循环保存对象采集结构信息入库，获取结构信息id" +
 			"4.删除非新保存结构信息")
-	@Param(name = "collectStruct", desc = "jsonArray格式的字符串(is_key,is_operate,column_name," +
-			"column_type,col_seq,columnposition为key，对应值为value)", range = "无限制")
+	@Param(name = "collectStruct", desc = "jsonArray格式的字符串(is_rowkey,is_solr,is_hbase,is_key,is_operate," +
+			"column_name,column_type,col_seq(字段序号）,columnposition(字段位置）为key，对应值为value)",
+			range = "无限制")
 	@Param(name = "ocs_id", desc = "对象采集任务编号", range = "新增对象采集任务时生成")
 	public void saveCollectColumnStruct(long ocs_id, String collectStruct) {
 		// 1.数据可访问权限处理方式：该方法没有访问权限限制
@@ -610,7 +611,7 @@ public class ObjectCollectAction extends BaseAction {
 				object_collect_struct.setOcs_id(ocs_id);
 				object_collect_struct.setStruct_id(struct_id);
 				object_collect_struct.setIs_rowkey(IsFlag.Shi.getCode());
-				object_collect_struct.setIs_solr(IsFlag.Shi.getCode());
+				object_collect_struct.setIs_solr(IsFlag.Fou.getCode());
 				object_collect_struct.setIs_hbase(IsFlag.Shi.getCode());
 				object_collect_struct.add(Dbo.db());
 			} else {
@@ -753,7 +754,7 @@ public class ObjectCollectAction extends BaseAction {
 				ActionResult actionResult = JsonUtil.toObjectSafety(resVal.getBodyString(), ActionResult.class).
 						orElseThrow(() -> new BusinessException("应用管理端与" + url + "服务交互异常"));
 				if (!actionResult.isSuccess()) {
-					throw new BusinessException("半结构化采集重写数据字典连接agent服务失败");
+					throw new BusinessException("半结构化采集重写数据字典连接agent服务失败" + actionResult.getMessage());
 				}
 			}
 		} else {
@@ -1019,11 +1020,11 @@ public class ObjectCollectAction extends BaseAction {
 		}
 	}
 
-	@Method(desc = "根据ocs_idc查询对象采集任务对应对象采集结构信息",
+	@Method(desc = "根据ocs_id查询hbase配置信息",
 			logicStep = "1.查询对应对象采集结构信息表，返回前端")
 	@Param(name = "ocs_id", desc = "对象采集任务编号", range = "不可为空")
 	@Return(desc = "对象采集任务对应对象采集结构信息的集合", range = "可能为空")
-	public Result searchObjectCollectStruct(long ocs_id) {
+	public Result searchHBaseConfInfo(long ocs_id) {
 		//数据可访问权限处理方式：该表没有对应的用户访问权限限制
 		//1.查询对应对象采集结构信息表，返回前端
 		return Dbo.queryResult("SELECT * FROM " + Object_collect_struct.TableName
@@ -1041,56 +1042,80 @@ public class ObjectCollectAction extends BaseAction {
 						+ " WHERE struct_id = ?", struct_id);
 	}
 
-
-	@Method(desc = "保存对象采集对应结构信息表",
+	@Method(desc = "保存对象采集对应结构信息表(hbase配置信息）",
 			logicStep = "1.获取json数组转成对象采集结构信息表的集合" +
 					"2.获取对象采集结构信息list进行遍历" +
-					"3.根据对象采集结构信息id判断是新增还是编辑" +
-					"4.判断同一个对象采集任务下，对象采集结构信息表的coll_name有没有重复" +
-					"5.新增或更新数据库")
+					"3.同一个对象采集任务下，对象采集结构信息表的coll_name不能重复" +
+					"4.如果选了字段作为rowkey，那么必选进入hbase" +
+					"5.更新对象采集结构信息")
 	@Param(name = "object_collect_struct_array", desc = "多条对象采集对应结构信息表的JSONArray格式的字符串，" +
-			"其中object_collect_struct表不能为空的列所对应的值不能为空", range = "不可为空")
-	public void saveObjectCollectStruct(String object_collect_struct_array) {
+			"以struct_id，col_seq(序号）,column_name,is_rowkey为key,对应值为value", range = "不可为空")
+	@Param(name = "ocs_id", desc = "对象采集任务编号", range = "不可为空")
+	public void saveHBaseConfInfo(long ocs_id, String object_collect_struct_array) {
 		//数据可访问权限处理方式：该表没有对应的用户访问权限限制
 		//1.获取json数组转成对象采集结构信息表的集合
 		Type type = new TypeReference<List<Object_collect_struct>>() {
 		}.getType();
-		List<Object_collect_struct> objectCollectStructList = JsonUtil.toObject(object_collect_struct_array, type);
+		List<Object_collect_struct> objectCollectStructList = JsonUtil.toObject(object_collect_struct_array,
+				type);
 		//2.获取对象采集结构信息list进行遍历
 		for (Object_collect_struct object_collect_struct : objectCollectStructList) {
 			//TODO 应该使用一个公共的校验类进行校验
 			//XXX 这里新增和编辑是放在一起的，因为这里面是保存一个列表的数据，可能为一条或者多条。
 			//XXX 这一条或者多条数据会有新增也会有编辑，所以对应在一个方法里面了
-			//3.根据对象采集结构信息id判断是新增还是编辑
-			if (object_collect_struct.getStruct_id() == null) {
-				//4.判断同一个对象采集任务下，对象采集结构信息表的coll_name有没有重复
-				long count = Dbo.queryNumber("SELECT count(1) count FROM "
-								+ Object_collect_struct.TableName + " WHERE column_name = ? AND ocs_id = ?"
-						, object_collect_struct.getColumn_name(), object_collect_struct.getOcs_id())
-						.orElseThrow(() -> new BusinessException("有且只有一个返回值"));
-				if (count > 0) {
-					throw new BusinessException("同一个对象采集任务下，对象采集结构信息表的coll_name不能重复");
-				}
-				//新增
-				object_collect_struct.setStruct_id(PrimayKeyGener.getNextId());
-				//5.新增或更新数据库
-				object_collect_struct.add(Dbo.db());
-			} else {
-				long count = Dbo.queryNumber("SELECT count(1) count FROM "
-								+ Object_collect_struct.TableName + " WHERE column_name = ? AND ocs_id = ? " +
-								" AND struct_id != ?", object_collect_struct.getColumn_name()
-						, object_collect_struct.getOcs_id(), object_collect_struct.getStruct_id())
-						.orElseThrow(() -> new BusinessException("有且只有一个返回值"));
-				if (count > 0) {
-					throw new BusinessException("同一个对象采集任务下，对象采集结构信息表的coll_name不能重复");
-				}
-				//更新
-				object_collect_struct.update(Dbo.db());
+			//3.同一个对象采集任务下，对象采集结构信息表的coll_name不能重复
+			long count = Dbo.queryNumber("SELECT count(1) count FROM "
+							+ Object_collect_struct.TableName + " WHERE column_name = ? AND ocs_id = ? " +
+							" AND struct_id != ?", object_collect_struct.getColumn_name()
+					, ocs_id, object_collect_struct.getStruct_id())
+					.orElseThrow(() -> new BusinessException("有且只有一个返回值"));
+			if (count > 0) {
+				throw new BusinessException("同一个对象采集任务下，对象采集结构信息表的coll_name不能重复");
 			}
+			IsFlag.ofEnumByCode(object_collect_struct.getIs_rowkey());
+			// 4.如果选了字段作为rowkey，那么必选进入hbase
+			if (IsFlag.Shi == IsFlag.ofEnumByCode(object_collect_struct.getIs_rowkey())) {
+				object_collect_struct.setIs_hbase(IsFlag.Shi.getCode());
+			}
+			// 5.更新对象采集结构信息
+			object_collect_struct.update(Dbo.db());
 		}
 	}
 
-	@Method(desc = "根据对象采集id查询对象采集任务存储设置",
+	@Method(desc = "保存solr配置信息", logicStep = "1.获取json数组转成对象采集结构信息表的集合" +
+			"2.获取对象采集结构信息list进行遍历" +
+			"3.同一个对象采集任务下，对象采集结构信息表的coll_name不能重复" +
+			"4.更新对象采集结构信息")
+	@Param(name = "solrConfInfo", desc = "多条solr配置的JSONArray格式的字符串，以struct_id,is_solr," +
+			"column_name为key,对应值为value", range = "无限制")
+	@Param(name = "ocs_id", desc = "对象采集任务编号", range = "不可为空")
+	public void saveSolrConfInfo(long ocs_id, String solrConfInfo) {
+		//数据可访问权限处理方式：该表没有对应的用户访问权限限制
+		//1.获取json数组转成对象采集结构信息表的集合
+		Type type = new TypeReference<List<Object_collect_struct>>() {
+		}.getType();
+		List<Object_collect_struct> objectCollectStructList = JsonUtil.toObject(solrConfInfo, type);
+		//2.获取对象采集结构信息list进行遍历
+		for (Object_collect_struct object_collect_struct : objectCollectStructList) {
+			//TODO 应该使用一个公共的校验类进行校验
+			//XXX 这里新增和编辑是放在一起的，因为这里面是保存一个列表的数据，可能为一条或者多条。
+			//XXX 这一条或者多条数据会有新增也会有编辑，所以对应在一个方法里面了
+			//3.同一个对象采集任务下，对象采集结构信息表的coll_name不能重复
+			long count = Dbo.queryNumber("SELECT count(1) count FROM "
+							+ Object_collect_struct.TableName + " WHERE column_name = ? AND ocs_id = ? " +
+							" AND struct_id != ?", object_collect_struct.getColumn_name()
+					, ocs_id, object_collect_struct.getStruct_id())
+					.orElseThrow(() -> new BusinessException("有且只有一个返回值"));
+			if (count > 0) {
+				throw new BusinessException("同一个对象采集任务下，对象采集结构信息表的coll_name不能重复");
+			}
+			// 4.更新对象采集结构信息
+			IsFlag.ofEnumByCode(object_collect_struct.getIs_solr());
+			object_collect_struct.update(Dbo.db());
+		}
+	}
+
+	@Method(desc = "根据对象采集id查询对象采集任务存储设置(存储设置展示）",
 			logicStep = "1.根据对象采集id，查询对象采集任务及每个任务对象的存储设置")
 	@Param(name = "odc_id", desc = "对象采集id", range = "不可为空")
 	@Return(desc = "采集任务及每个任务的存储设置", range = "不会为空")
