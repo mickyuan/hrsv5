@@ -22,6 +22,30 @@ public class Node {
      */
     String description;
     /**
+     * 所属数据层
+     */
+    String data_layer;
+    /**
+     * 数据所属类型
+     */
+    String data_own_type;
+    /**
+     * 数据源id
+     */
+    String data_source_id;
+    /**
+     * agent_id
+     */
+    String agent_id;
+    /**
+     * 采集分类id
+     */
+    String classify_id;
+    /**
+     * 表源属性id
+     */
+    String file_id;
+    /**
      * 孩子节点列表
      */
     private Children children = new Children();
@@ -31,7 +55,14 @@ public class Node {
         String str = "{"
                 + "id : '" + id + "'"
                 + ", label : '" + label + "'"
-                + ", description : '" + description + "'";
+                + ", parent_id : '" + parent_id + "'"
+                + ", description : '" + description + "'"
+                + ", data_layer : '" + data_layer + "'"
+                + ", data_own_type : '" + data_own_type + "'"
+                + ", data_source_id : '" + data_source_id + "'"
+                + ", agent_id : '" + agent_id + "'"
+                + ", classify_id : '" + classify_id + "'"
+                + ", file_id : '" + file_id + "'";
         if (children != null && children.getSize() != 0) {
             str += ", children : " + children.toString();
         } else {
