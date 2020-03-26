@@ -591,9 +591,10 @@ public class ObjectCollectAction extends BaseAction {
 			"2.解析json为对象采集结构信息" +
 			"3.循环保存对象采集结构信息入库，获取结构信息id" +
 			"4.删除非新保存结构信息")
-	@Param(name = "collectStruct", desc = "jsonArray格式的字符串(is_key,is_operate,column_name,column_type," +
-			"col_seq,columnposition为key，对应值为value)", range = "无限制")
-	public void saveCollectColumnStruct(String collectStruct) {
+	@Param(name = "collectStruct", desc = "jsonArray格式的字符串(is_key,is_operate,column_name," +
+			"column_type,col_seq,columnposition为key，对应值为value)", range = "无限制")
+	@Param(name = "ocs_id", desc = "对象采集任务编号", range = "新增对象采集任务时生成")
+	public void saveCollectColumnStruct(long ocs_id, String collectStruct) {
 		// 1.数据可访问权限处理方式：该方法没有访问权限限制
 		Type type = new TypeReference<List<Object_collect_struct>>() {
 		}.getType();
@@ -606,7 +607,11 @@ public class ObjectCollectAction extends BaseAction {
 			if (null == object_collect_struct.getStruct_id()) {
 				object_collect_struct.setOcs_id(object_collect_struct.getOcs_id());
 				struct_id = PrimayKeyGener.getNextId();
+				object_collect_struct.setOcs_id(ocs_id);
 				object_collect_struct.setStruct_id(struct_id);
+				object_collect_struct.setIs_rowkey(IsFlag.Shi.getCode());
+				object_collect_struct.setIs_solr(IsFlag.Shi.getCode());
+				object_collect_struct.setIs_hbase(IsFlag.Shi.getCode());
 				object_collect_struct.add(Dbo.db());
 			} else {
 				object_collect_struct.update(Dbo.db());
@@ -616,7 +621,7 @@ public class ObjectCollectAction extends BaseAction {
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		// 4.删除非新保存结构信息
 		asmSql.addSql("delete from " + Object_collect_struct.TableName + " where ocs_id=? and struct_id not in (");
-		asmSql.addParam(collectStructList.get(0).getOcs_id());
+		asmSql.addParam(ocs_id);
 		for (int i = 0; i < structIdList.size(); i++) {
 			asmSql.addSql("?");
 			asmSql.addParam(structIdList.get(i));
@@ -966,14 +971,16 @@ public class ObjectCollectAction extends BaseAction {
 						+ " WHERE ocs_id = ?", ocs_id);
 	}
 
-	@Method(desc = "保存对象采集对应信息表",
+	@Method(desc = "保存采集文件设置信息（需先调保存对象文件配置信息时检查字段方法成功后在调此方法）",
 			logicStep = "1.获取json数组转成对象采集对应信息表的集合" +
 					"2.获取对象采集对应信息表list进行遍历" +
 					"3.根据对象采集对应信息表id判断是新增还是编辑" +
 					"4.根据en_name查询对象采集对应信息表的英文名称是否重复")
-	@Param(name = "object_collect_task_array", desc = "多条对象采集对应信息表的JSONArray格式的字符串，" +
-			"其中object_collect_task表不能为空的列所对应的值不能为空", range = "不能为空")
-	public void saveObjectCollectTask(String object_collect_task_array) {
+	@Param(name = "object_collect_task_array", desc = "多条对象采集对应信息表的JSONArray格式的字符串，以en_name，" +
+			"zh_name，collect_data_type，database_code，updatetype,ocs_id为key，对应值为value", range = "不能为空")
+	@Param(name = "agent_id", desc = "agent ID", range = "新增agent时生成")
+	@Param(name = "odc_id", desc = "对象采集设置表主键ID", range = "新增对象采集设置时生成")
+	public void saveObjectCollectTask(long agent_id, long odc_id, String object_collect_task_array) {
 		//数据可访问权限处理方式：该表没有对应的用户访问权限限制
 		//1.获取json数组转成对象采集对应信息表的集合
 		Type type = new TypeReference<List<Object_collect_task>>() {
@@ -995,6 +1002,8 @@ public class ObjectCollectAction extends BaseAction {
 					throw new BusinessException("对象采集对应信息表的英文名称重复");
 				}
 				object_collect_task.setOcs_id(PrimayKeyGener.getNextId());
+				object_collect_task.setAgent_id(agent_id);
+				object_collect_task.setOdc_id(odc_id);
 				object_collect_task.add(Dbo.db());
 			} else {
 				//更新
@@ -1108,13 +1117,13 @@ public class ObjectCollectAction extends BaseAction {
 				" where ocs_id = ? and is_hbase = ? order by col_seq", ocs_id, IsFlag.Shi.getCode());
 	}
 
-	@Method(desc = "保存对象采集存储设置表(存储设置)",
+	@Method(desc = "保存对象采集存储设置信息(存储设置)，检查保存对象存储的字段方法成功后调用",
 			logicStep = "1.获取json数组转成对象采集结构信息表的集合" +
 					"2.根据对象采集存储设置表id是否为空判断是编辑还是新增" +
 					"3.保存对象采集存储设置表" +
 					"4.更新对象采集设置表的字段是否完成设置并发送成功为是")
 	@Param(name = "object_storage_array", desc = "多条对象采集存储设置表的JSONArray格式的字符串，" +
-			"其中object_storage表不能为空的列所对应的值不能为空", range = "不能为空")
+			"obj_stid(可以为空），is_hbase，is_hdfs，is_solr，ocs_id为key，对应值为value", range = "不能为空")
 	@Param(name = "odc_id", desc = "对象采集id", range = "新增对象采集时生成")
 	public void saveObjectStorage(String object_storage_array, long odc_id) {
 		//数据可访问权限处理方式：该表没有对应的用户访问权限限制
@@ -1144,7 +1153,7 @@ public class ObjectCollectAction extends BaseAction {
 		rewriteDataDictionary(odc_id);
 	}
 
-	@Method(desc = "检查保存对象存储的字段(存储设置)",
+	@Method(desc = "检查保存对象存储的字段(存储设置),成功后调用保存对象采集存储设置信息方法",
 			logicStep = "1.数据可访问权限处理方式：该表没有对应的用户访问权限限制" +
 					"2.解析json对象为数据存储实体集合" +
 					"3.遍历数据存储实体检查对象存储字段" +
@@ -1155,7 +1164,7 @@ public class ObjectCollectAction extends BaseAction {
 					"8.判断当前存储表是否进solr" +
 					"9.判断当前数据存储表字段是否选择字段进solr")
 	@Param(name = "object_storage_array", desc = "多条对象采集存储设置表的JSONArray格式的字符串，" +
-			"其中object_storage表不能为空的列所对应的值不能为空", range = "不能为空")
+			"以obj_stid(可以为空），is_hbase，is_hdfs，is_solr，ocs_id为key，对应值为value", range = "不能为空")
 	public void checkFieldsForSaveObjectStorage(String object_storage_array) {
 		// 1.数据可访问权限处理方式：该表没有对应的用户访问权限限制
 		Type type = new TypeReference<List<Object_storage>>() {
