@@ -39,9 +39,9 @@ public class ParsingAnnotaion {
 
     public static void start() {
         try {
-           // ClassLoader.getSystemClassLoader().getResource(resourceName);
+            // ClassLoader.getSystemClassLoader().getResource(resourceName);
             List<Class<?>> actionClassList = ClassUtil.getClassListByAnnotation("hrds", Action.class);
-            Map<String,String> errorMethod = new HashMap<>();
+            Map<String, String> errorMethod = new HashMap<>();
             JSONArray jsonArray = new JSONArray();
             for (Class<?> actionClass : actionClassList) {
                 final String className = actionClass.getName();
@@ -122,7 +122,7 @@ public class ParsingAnnotaion {
                          * 处理参数和注解不一致的情况
                          */
                         if (apiParamMap.size() != paramSize) {
-                            errorMethod.put("paramError",actionLookupKey + "/" + curMethodName);
+                            errorMethod.put("paramError", actionLookupKey + "/" + curMethodName);
                         }
 
                         List<ParamsBean> pbList = new ArrayList<ParamsBean>();
@@ -131,8 +131,8 @@ public class ParsingAnnotaion {
                             Class<?> paramType = param.getType(); // 方法的参数类型
                             String reqParamName = param.getName(); // 该参数在 request 中的名字。默认就是参数名
                             Param par = apiParamMap.get(reqParamName);
-                            if(par==null){
-                                errorMethod.put("findName",actionLookupKey + "/" + curMethodName+",参数名称"+reqParamName);
+                            if (par == null) {
+                                errorMethod.put("findName", actionLookupKey + "/" + curMethodName + ",参数名称" + reqParamName);
                                 continue;
                             }
                             String desc = par.desc();//用于描述类、方法、参数、返回值的含义
@@ -200,10 +200,10 @@ public class ParsingAnnotaion {
                 Set<Map.Entry<String, String>> entries = errorMethod.entrySet();
                 for (Map.Entry<String, String> entry : entries) {
                     String key = entry.getKey();
-                    if("paramError".equals(key)){
+                    if ("paramError".equals(key)) {
                         logger.error("方法：" + errorMethod.get(key) + "注解参数与实际参数不一致，请进行修改");
                     }
-                    if("findName".equals(key)){
+                    if ("findName".equals(key)) {
                         logger.error("方法：" + errorMethod.get(key) + "没有找到对应的注解描述信息，请修改");
                     }
                 }
@@ -233,6 +233,11 @@ public class ParsingAnnotaion {
             String range1 = pb.getRange();
             String example1 = pb.getExample1();
             if (isbean) {
+                String paramRange = "实体:"+name;
+                if (paramType.isArray()) {
+                    paramType = paramType.getComponentType();
+                    paramRange = "实体数组:"+name;
+                }
                 Field[] declaredFields = paramType.getDeclaredFields();
                 for (Field field : declaredFields) {
                     DocBean apiModel = field.getAnnotation(DocBean.class);
@@ -242,7 +247,7 @@ public class ParsingAnnotaion {
                         JSONObject jsonParam = new JSONObject();
                         jsonParam.put("paramName", apiModel.name());
                         jsonParam.put("paramDesc", apiModel.value());
-                        jsonParam.put("paramRange", "任意");
+                        jsonParam.put("paramRange", paramRange);
                         jsonParam.put("paramRequired", apiModel.required());
                         jsonParam.put("paramDatatype", datatype);
                         jsonParam.put("paramDefault", "");
