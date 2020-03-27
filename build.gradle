@@ -27,7 +27,8 @@ subprojects {
 
     repositories {
         mavenLocal()
-        maven { url 'http://maven.aliyun.com/nexus/content/groups/public/' }
+        maven { url 'http://10.71.4.61:18081/repository/hyren-maven-group/' }
+//        maven { url 'http://maven.aliyun.com/nexus/content/groups/public/' }
     }
 
     configurations {
@@ -37,11 +38,12 @@ subprojects {
     }
 
     dependencies {
-        if (!project.name.equals("hrds-commons")) {
+        if (project.name == "hrds-commons") {
+            compile fileTree(dir: "$rootDir/libs/runtime", include: ['*.jar'])
+        }
+        if (project.name != "hrds-commons") {
             compile project(':hrds-commons')
         }
-        // compile files('lib/ojdbc-14.jar') // 加载单个文件
-        compile fileTree(dir: "$rootDir/libs/runtime", include: ['*.jar'])
 
         compile group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.11.2'
         compile group: 'org.apache.logging.log4j', name: 'log4j-slf4j-impl', version: '2.11.2'
@@ -68,19 +70,19 @@ subprojects {
         compile group: 'org.apache.hadoop', name: 'hadoop-common', version: '3.2.0'
         compile group: 'org.apache.hadoop', name: 'hadoop-hdfs', version: '3.2.0'
         compile group: 'org.apache.hadoop', name: 'hadoop-mapreduce-client-core', version: '3.2.0'
-		compile group: 'org.apache.hadoop', name: 'hadoop-common', version: '3.2.0'
-		compile group: 'org.apache.hbase', name: 'hbase-common', version: '2.2.1'
+        compile group: 'org.apache.hadoop', name: 'hadoop-common', version: '3.2.0'
+        compile group: 'org.apache.hbase', name: 'hbase-common', version: '2.2.1'
         compile group: 'org.apache.hbase', name: 'hbase-client', version: '2.2.1'
         compile group: 'org.apache.hbase', name: 'hbase-server', version: '2.2.1'
-		compile group: 'org.apache.hadoop', name: 'hadoop-yarn-client', version: '3.2.0'
-		compile group: 'org.apache.commons', name: 'commons-exec', version: '1.3'
-		compile group: 'org.apache.spark', name: 'spark-core_2.12', version: '2.4.4'
-		compile group: 'org.apache.spark', name: 'spark-yarn_2.12', version: '2.4.4'
+        compile group: 'org.apache.hadoop', name: 'hadoop-yarn-client', version: '3.2.0'
+        compile group: 'org.apache.commons', name: 'commons-exec', version: '1.3'
+        compile group: 'org.apache.spark', name: 'spark-core_2.12', version: '2.4.4'
+        compile group: 'org.apache.spark', name: 'spark-yarn_2.12', version: '2.4.4'
         compile group: 'redis.clients', name: 'jedis', version: '2.9.0'
-		compile group: 'commons-beanutils', name: 'commons-beanutils', version: '1.9.3'
-		compile group: 'net.lingala.zip4j', name: 'zip4j', version: '1.3.2'
-		compile group: 'com.belerweb', name: 'pinyin4j', version: '2.5.0'
-		compile group: 'com.jcraft', name: 'jsch', version: '0.1.54'
+        compile group: 'commons-beanutils', name: 'commons-beanutils', version: '1.9.3'
+        compile group: 'net.lingala.zip4j', name: 'zip4j', version: '1.3.2'
+        compile group: 'com.belerweb', name: 'pinyin4j', version: '2.5.0'
+        compile group: 'com.jcraft', name: 'jsch', version: '0.1.54'
         compile group: 'org.apache.poi', name: 'poi', version: '3.12'
         compile group: 'org.apache.poi', name: 'poi-ooxml', version: '3.12'
         compile group: 'org.apache.poi', name: 'poi-ooxml-schemas', version: '3.12'
@@ -117,7 +119,7 @@ subprojects {
         archivesBaseName = "${project.name}"
 
         String classpaths = 'resources/' // 存放资源文件的目录
-        configurations.runtime.each {classpaths = classpaths + " ../lib/"+it.name} //遍历项目的所有依赖的jar包赋值给变量someString
+        configurations.runtime.each { classpaths = classpaths + " ../lib/" + it.name } //遍历项目的所有依赖的jar包赋值给变量someString
 
         manifest {
             attributes(
@@ -138,11 +140,11 @@ subprojects {
         delete "$buildDir/libs/lib"
 //        followSymlinks = true
     }
-    task copyJar(type:Sync){
+    task copyJar(type: Sync) {
         from configurations.runtime
         into "$buildDir/libs/lib"
     }
-    task copyResource(type:Sync){
+    task copyResource(type: Sync) {
         // 因为resources没有打包到jar里面，所以这里自动复制到发布目录下
         sourceSets.main.resources.srcDirs.each {
             from it
