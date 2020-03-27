@@ -51,25 +51,25 @@ public class TreeNodeInfo {
         List<Map<String, Object>> dataList = new ArrayList<>(sourceTreeInfos);
         //获取各数据层下的节点数据添加到结果List
         sourceTreeInfos.forEach(sourceTreeInfo -> {
-            Object id = sourceTreeInfo.get("id");
-            if (DataSourceType.ISL.getCode().equals(id)) {
+            DataSourceType dataSourceType = DataSourceType.ofEnumByCode(sourceTreeInfo.get("id").toString());
+            if (dataSourceType == DataSourceType.ISL) {
                 TreeNodeDataQuery.getISLDataList(user, dataList, treeConf);
-            } else if (DataSourceType.DCL.getCode().equals(id)) {
+            } else if (dataSourceType == DataSourceType.DCL) {
                 TreeNodeDataQuery.getDCLDataList(user, dataList, treeConf);
-            } else if (DataSourceType.DPL.getCode().equals(id)) {
+            } else if (dataSourceType == DataSourceType.DPL) {
                 TreeNodeDataQuery.getDPLDataList(user, dataList, treeConf);
-            } else if (DataSourceType.DML.getCode().equals(id)) {
+            } else if (dataSourceType == DataSourceType.DML) {
                 TreeNodeDataQuery.getDMLDataList(user, dataList, treeConf);
-            } else if (DataSourceType.SFL.getCode().equals(id)) {
+            } else if (dataSourceType == DataSourceType.SFL) {
                 TreeNodeDataQuery.getSFLDataList(user, dataList, treeConf);
-            } else if (DataSourceType.AML.getCode().equals(id)) {
+            } else if (dataSourceType == DataSourceType.AML) {
                 TreeNodeDataQuery.getAMLDataList(user, dataList, treeConf);
-            } else if (DataSourceType.DQC.getCode().equals(id)) {
+            } else if (dataSourceType == DataSourceType.DQC) {
                 TreeNodeDataQuery.getDQCDataList(user, dataList, treeConf);
-            } else if (DataSourceType.UDL.getCode().equals(id)) {
+            } else if (dataSourceType == DataSourceType.UDL) {
                 TreeNodeDataQuery.getUDLDataList(user, dataList, treeConf);
             } else {
-                throw new BusinessException("未找到匹配的数据层!" + id);
+                throw new BusinessException("未找到匹配的数据层!" + sourceTreeInfo.get("id").toString());
             }
         });
         return dataList;
