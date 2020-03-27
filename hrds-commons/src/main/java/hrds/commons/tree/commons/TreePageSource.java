@@ -32,20 +32,15 @@ public class TreePageSource {
     public static final String DATA_BENCHMARKING = "dataBenchmarking";
 
     //集市,加工,数据管控 树菜单列表
-    private static DataSourceType[] DATA_MANAGEMENT_ARRAY = new DataSourceType[]{DataSourceType.DCL,
-            DataSourceType.DPL, DataSourceType.DML, DataSourceType.DQC,
-            DataSourceType.UDL};
+    private static DataSourceType[] DATA_MANAGEMENT_ARRAY = new DataSourceType[]{DataSourceType.DCL};
     //webSQL树菜单列表
     private static DataSourceType[] WEB_SQL_ARRAY = new DataSourceType[]{DataSourceType.DCL};
     //数据进HBase,接口,报表,外部 树菜单列表
-    private static DataSourceType[] HIRE_ARRAY = new DataSourceType[]{DataSourceType.DCL, DataSourceType.DPL,
-            DataSourceType.DML, DataSourceType.UDL};
+    private static DataSourceType[] HIRE_ARRAY = new DataSourceType[]{DataSourceType.DCL};
     //二级索引
-    private static DataSourceType[] SECOND_INDEX_ARRAY = new DataSourceType[]{DataSourceType.DCL,
-            DataSourceType.DPL, DataSourceType.DML, DataSourceType.UDL};
+    private static DataSourceType[] SECOND_INDEX_ARRAY = new DataSourceType[]{DataSourceType.DCL};
     //机器学习
-    private static DataSourceType[] MACHINE_LEARNING_ARRAY = new DataSourceType[]{DataSourceType.DCL,
-            DataSourceType.DPL, DataSourceType.DML, DataSourceType.UDL};
+    private static DataSourceType[] MACHINE_LEARNING_ARRAY = new DataSourceType[]{DataSourceType.DCL};
     //数据对标
     private static DataSourceType[] DATA_BENCHMARKING_ARRAY = new DataSourceType[]{DataSourceType.DCL};
 
