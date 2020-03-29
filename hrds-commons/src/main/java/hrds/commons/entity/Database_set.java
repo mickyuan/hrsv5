@@ -58,9 +58,9 @@ public class Database_set extends ProjectTableEntity
 	private String is_sendok;
 	@DocBean(name ="database_number",value="数据库设置编号:",dataType = String.class,required = true)
 	private String database_number;
-	@DocBean(name ="db_agent",value="是否为平面DB数据采集(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
+	@DocBean(name ="db_agent",value="是否DB文件数据采集(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String db_agent;
-	@DocBean(name ="plane_url",value="DB文件源数据路径:",dataType = String.class,required = false)
+	@DocBean(name ="plane_url",value="DB文件数据字典位置:",dataType = String.class,required = false)
 	private String plane_url;
 	@DocBean(name ="database_separatorr",value="数据采用分隔符:",dataType = String.class,required = false)
 	private String database_separatorr;
@@ -209,19 +209,19 @@ public class Database_set extends ProjectTableEntity
 	public void setDatabase_number(String database_number){
 		this.database_number=database_number;
 	}
-	/** 取得：是否为平面DB数据采集 */
+	/** 取得：是否DB文件数据采集 */
 	public String getDb_agent(){
 		return db_agent;
 	}
-	/** 设置：是否为平面DB数据采集 */
+	/** 设置：是否DB文件数据采集 */
 	public void setDb_agent(String db_agent){
 		this.db_agent=db_agent;
 	}
-	/** 取得：DB文件源数据路径 */
+	/** 取得：DB文件数据字典位置 */
 	public String getPlane_url(){
 		return plane_url;
 	}
-	/** 设置：DB文件源数据路径 */
+	/** 设置：DB文件数据字典位置 */
 	public void setPlane_url(String plane_url){
 		this.plane_url=plane_url;
 	}
