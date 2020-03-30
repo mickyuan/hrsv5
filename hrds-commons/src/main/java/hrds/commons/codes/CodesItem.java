@@ -25,6 +25,8 @@ public class CodesItem{
 	protected static final String jobExecuteState=new String("JobExecuteState");
 	/**sql执行引擎   */
 	protected static final String sqlEngine=new String("SqlEngine");
+	/**落地文件-卸数方式   */
+	protected static final String unloadType=new String("UnloadType");
 	/**用户类型   */
 	protected static final String userType=new String("UserType");
 	/**是否标识   */
@@ -95,7 +97,7 @@ public class CodesItem{
 	protected static final String timeType=new String("TimeType");
 	/**字符拆分方式   */
 	protected static final String charSplitType=new String("CharSplitType");
-	/**数据抽取方式   */
+	/**数据文件源头   */
 	protected static final String dataExtractType=new String("DataExtractType");
 	/**清洗方式   */
 	protected static final String cleanType=new String("CleanType");
@@ -125,8 +127,6 @@ public class CodesItem{
 	protected static final String interfaceType=new String("InterfaceType");
 	/**接口状态   */
 	protected static final String interfaceState=new String("InterfaceState");
-	/**落地文件-卸数方式   */
-	protected static final String unloadType=new String("UnloadType");
 
 
 	public static final Map<String,Class> mapCat= new HashMap<String,Class>(100);
@@ -140,6 +140,7 @@ public class CodesItem{
 		mapCat.put(tableStorage,TableStorage.class);
 		mapCat.put(jobExecuteState,JobExecuteState.class);
 		mapCat.put(sqlEngine,SqlEngine.class);
+		mapCat.put(unloadType,UnloadType.class);
 		mapCat.put(userType,UserType.class);
 		mapCat.put(isFlag,IsFlag.class);
 		mapCat.put(userState,UserState.class);
@@ -190,7 +191,6 @@ public class CodesItem{
 		mapCat.put(updateType,UpdateType.class);
 		mapCat.put(interfaceType,InterfaceType.class);
 		mapCat.put(interfaceState,InterfaceState.class);
-		mapCat.put(unloadType,UnloadType.class);
 	}
 
 

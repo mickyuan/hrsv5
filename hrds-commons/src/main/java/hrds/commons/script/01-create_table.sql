@@ -23,7 +23,7 @@ DROP TABLE IF EXISTS DATA_EXTRACTION_DEF ;
 CREATE TABLE DATA_EXTRACTION_DEF(
 DED_ID                                            BIGINT default 0 NOT NULL, --数据抽取定义主键
 TABLE_ID                                          BIGINT default 0 NOT NULL, --表名ID
-DATA_EXTRACT_TYPE                                 CHAR(1) NOT NULL, --数据抽取方式
+DATA_EXTRACT_TYPE                                 CHAR(1) NOT NULL, --数据文件源头
 IS_HEADER                                         CHAR(1) NOT NULL, --是否需要表头
 DATABASE_CODE                                     CHAR(1) NOT NULL, --数据抽取落地编码
 ROW_SEPARATOR                                     VARCHAR(512) NULL, --行分隔符
@@ -1236,16 +1236,10 @@ USER_NAME                                         VARCHAR(512) NULL, --用户名
 DATABASE_IP                                       VARCHAR(50) NULL, --数据库服务器IP
 DATABASE_PORT                                     VARCHAR(10) NULL, --数据库端口
 DB_AGENT                                          CHAR(1) NOT NULL, --是否DB文件数据采集
-DBFILE_FORMAT                                     CHAR(1) default '1' NULL, --DB文件格式
-FILE_SUFFIX                                       VARCHAR(512) NULL, --采集文件名后缀
-IS_LOAD                                           CHAR(1) default '1' NOT NULL, --是否直接加载数据
-DATABASE_CODE                                     CHAR(1) NULL, --数据使用编码格式
 DATABASE_SEPARATORR                               VARCHAR(512) NULL, --数据采用分隔符
 ROW_SEPARATOR                                     VARCHAR(512) NULL, --数据行分隔符
-IS_HIDDEN                                         CHAR(1) default '1' NOT NULL, --分隔符是否为ASCII隐藏字符
 PLANE_URL                                         VARCHAR(512) NULL, --DB文件数据字典位置
 IS_SENDOK                                         CHAR(1) NOT NULL, --是否设置完成并发送成功
-IS_HEADER                                         CHAR(1) default '1' NOT NULL, --是否有表头
 CP_OR                                             VARCHAR(512) NULL, --清洗顺序
 JDBC_URL                                          VARCHAR(512) NULL, --数据库连接地址
 CLASSIFY_ID                                       BIGINT default 0 NOT NULL, --分类id

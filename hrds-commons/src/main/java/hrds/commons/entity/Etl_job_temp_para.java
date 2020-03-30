@@ -30,8 +30,6 @@ public class Etl_job_temp_para extends ProjectTableEntity
 		__tmpPKS.add("etl_temp_para_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="etl_temp_id",value="模版ID:",dataType = Long.class,required = true)
-	private Long etl_temp_id;
 	@DocBean(name ="etl_temp_para_id",value="模版参数主键:",dataType = Long.class,required = true)
 	private Long etl_temp_para_id;
 	@DocBean(name ="etl_para_type",value="参数类型:",dataType = String.class,required = true)
@@ -42,21 +40,9 @@ public class Etl_job_temp_para extends ProjectTableEntity
 	private String etl_job_para_size;
 	@DocBean(name ="etl_pro_para_sort",value="参数排序:",dataType = Long.class,required = true)
 	private Long etl_pro_para_sort;
+	@DocBean(name ="etl_temp_id",value="模版ID:",dataType = Long.class,required = true)
+	private Long etl_temp_id;
 
-	/** 取得：模版ID */
-	public Long getEtl_temp_id(){
-		return etl_temp_id;
-	}
-	/** 设置：模版ID */
-	public void setEtl_temp_id(Long etl_temp_id){
-		this.etl_temp_id=etl_temp_id;
-	}
-	/** 设置：模版ID */
-	public void setEtl_temp_id(String etl_temp_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(etl_temp_id)){
-			this.etl_temp_id=new Long(etl_temp_id);
-		}
-	}
 	/** 取得：模版参数主键 */
 	public Long getEtl_temp_para_id(){
 		return etl_temp_para_id;
@@ -107,6 +93,20 @@ public class Etl_job_temp_para extends ProjectTableEntity
 	public void setEtl_pro_para_sort(String etl_pro_para_sort){
 		if(!fd.ng.core.utils.StringUtil.isEmpty(etl_pro_para_sort)){
 			this.etl_pro_para_sort=new Long(etl_pro_para_sort);
+		}
+	}
+	/** 取得：模版ID */
+	public Long getEtl_temp_id(){
+		return etl_temp_id;
+	}
+	/** 设置：模版ID */
+	public void setEtl_temp_id(Long etl_temp_id){
+		this.etl_temp_id=etl_temp_id;
+	}
+	/** 设置：模版ID */
+	public void setEtl_temp_id(String etl_temp_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(etl_temp_id)){
+			this.etl_temp_id=new Long(etl_temp_id);
 		}
 	}
 }

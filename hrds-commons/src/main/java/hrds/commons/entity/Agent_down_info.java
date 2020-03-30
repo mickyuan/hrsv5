@@ -30,6 +30,14 @@ public class Agent_down_info extends ProjectTableEntity
 		__tmpPKS.add("down_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
+	@DocBean(name ="down_id",value="下载编号(primary):",dataType = Long.class,required = true)
+	private Long down_id;
+	@DocBean(name ="agent_name",value="Agent名称:",dataType = String.class,required = true)
+	private String agent_name;
+	@DocBean(name ="agent_ip",value="Agent IP:",dataType = String.class,required = true)
+	private String agent_ip;
+	@DocBean(name ="agent_port",value="Agent端口:",dataType = String.class,required = true)
+	private String agent_port;
 	@DocBean(name ="save_dir",value="存放目录:",dataType = String.class,required = true)
 	private String save_dir;
 	@DocBean(name ="log_dir",value="日志目录:",dataType = String.class,required = true)
@@ -54,15 +62,45 @@ public class Agent_down_info extends ProjectTableEntity
 	private String agent_context;
 	@DocBean(name ="agent_pattern",value="agent的访问路径:",dataType = String.class,required = true)
 	private String agent_pattern;
-	@DocBean(name ="down_id",value="下载编号(primary):",dataType = Long.class,required = true)
-	private Long down_id;
-	@DocBean(name ="agent_name",value="Agent名称:",dataType = String.class,required = true)
-	private String agent_name;
-	@DocBean(name ="agent_ip",value="Agent IP:",dataType = String.class,required = true)
-	private String agent_ip;
-	@DocBean(name ="agent_port",value="Agent端口:",dataType = String.class,required = true)
-	private String agent_port;
 
+	/** 取得：下载编号(primary) */
+	public Long getDown_id(){
+		return down_id;
+	}
+	/** 设置：下载编号(primary) */
+	public void setDown_id(Long down_id){
+		this.down_id=down_id;
+	}
+	/** 设置：下载编号(primary) */
+	public void setDown_id(String down_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(down_id)){
+			this.down_id=new Long(down_id);
+		}
+	}
+	/** 取得：Agent名称 */
+	public String getAgent_name(){
+		return agent_name;
+	}
+	/** 设置：Agent名称 */
+	public void setAgent_name(String agent_name){
+		this.agent_name=agent_name;
+	}
+	/** 取得：Agent IP */
+	public String getAgent_ip(){
+		return agent_ip;
+	}
+	/** 设置：Agent IP */
+	public void setAgent_ip(String agent_ip){
+		this.agent_ip=agent_ip;
+	}
+	/** 取得：Agent端口 */
+	public String getAgent_port(){
+		return agent_port;
+	}
+	/** 设置：Agent端口 */
+	public void setAgent_port(String agent_port){
+		this.agent_port=agent_port;
+	}
 	/** 取得：存放目录 */
 	public String getSave_dir(){
 		return save_dir;
@@ -170,43 +208,5 @@ public class Agent_down_info extends ProjectTableEntity
 	/** 设置：agent的访问路径 */
 	public void setAgent_pattern(String agent_pattern){
 		this.agent_pattern=agent_pattern;
-	}
-	/** 取得：下载编号(primary) */
-	public Long getDown_id(){
-		return down_id;
-	}
-	/** 设置：下载编号(primary) */
-	public void setDown_id(Long down_id){
-		this.down_id=down_id;
-	}
-	/** 设置：下载编号(primary) */
-	public void setDown_id(String down_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(down_id)){
-			this.down_id=new Long(down_id);
-		}
-	}
-	/** 取得：Agent名称 */
-	public String getAgent_name(){
-		return agent_name;
-	}
-	/** 设置：Agent名称 */
-	public void setAgent_name(String agent_name){
-		this.agent_name=agent_name;
-	}
-	/** 取得：Agent IP */
-	public String getAgent_ip(){
-		return agent_ip;
-	}
-	/** 设置：Agent IP */
-	public void setAgent_ip(String agent_ip){
-		this.agent_ip=agent_ip;
-	}
-	/** 取得：Agent端口 */
-	public String getAgent_port(){
-		return agent_port;
-	}
-	/** 设置：Agent端口 */
-	public void setAgent_port(String agent_port){
-		this.agent_port=agent_port;
 	}
 }

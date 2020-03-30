@@ -34,7 +34,7 @@ public class Data_extraction_def extends ProjectTableEntity
 	private Long ded_id;
 	@DocBean(name ="is_header",value="是否需要表头(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_header;
-	@DocBean(name ="data_extract_type",value="数据抽取方式(DataExtractType):1-仅数据抽取<JinShuJuChouQu> 2-数据抽取及入库<ShuJuChouQuJiRuKu> ",dataType = String.class,required = true)
+	@DocBean(name ="data_extract_type",value="数据文件源头(DataExtractType):1-数据库抽取落地<ShuJuKuChouQuLuoDi> 2-原数据格式<YuanShuJuGeShi> 3-数据加载格式<ShuJuJiaZaiGeShi> ",dataType = String.class,required = true)
 	private String data_extract_type;
 	@DocBean(name ="database_code",value="数据抽取落地编码(DataBaseCode):1-UTF-8<UTF_8> 2-GBK<GBK> 3-UTF-16<UTF_16> 4-GB2312<GB2312> 5-ISO-8859-1<ISO_8859_1> ",dataType = String.class,required = true)
 	private String database_code;
@@ -75,11 +75,11 @@ public class Data_extraction_def extends ProjectTableEntity
 	public void setIs_header(String is_header){
 		this.is_header=is_header;
 	}
-	/** 取得：数据抽取方式 */
+	/** 取得：数据文件源头 */
 	public String getData_extract_type(){
 		return data_extract_type;
 	}
-	/** 设置：数据抽取方式 */
+	/** 设置：数据文件源头 */
 	public void setData_extract_type(String data_extract_type){
 		this.data_extract_type=data_extract_type;
 	}

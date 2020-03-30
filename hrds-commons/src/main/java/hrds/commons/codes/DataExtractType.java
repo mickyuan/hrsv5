@@ -2,12 +2,14 @@ package hrds.commons.codes;
 
 import hrds.commons.exception.AppSystemException;
 /**Created by automatic  */
-/**代码类型名：数据抽取方式  */
+/**代码类型名：数据文件源头  */
 public enum DataExtractType {
-	/**仅数据抽取<JinShuJuChouQu>  */
-	JinShuJuChouQu("1","仅数据抽取","53","数据抽取方式"),
-	/**数据抽取及入库<ShuJuChouQuJiRuKu>  */
-	ShuJuChouQuJiRuKu("2","数据抽取及入库","53","数据抽取方式");
+	/**数据库抽取落地<ShuJuKuChouQuLuoDi>  */
+	ShuJuKuChouQuLuoDi("1","数据库抽取落地","53","数据文件源头"),
+	/**原数据格式<YuanShuJuGeShi>  */
+	YuanShuJuGeShi("2","原数据格式","53","数据文件源头"),
+	/**数据加载格式<ShuJuJiaZaiGeShi>  */
+	ShuJuJiaZaiGeShi("3","数据加载格式","53","数据文件源头");
 
 	private final String code;
 	private final String value;
