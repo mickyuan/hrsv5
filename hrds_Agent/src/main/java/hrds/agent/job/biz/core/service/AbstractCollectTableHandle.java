@@ -37,7 +37,7 @@ public abstract class AbstractCollectTableHandle implements CollectTableHandle {
 	private static final String SINGLEQUOTE = "'";
 	public static final String STRSPLIT = "^";
 
-	protected static ResultSet getResultSet(String collectSQL, Connection conn) {
+	static ResultSet getResultSet(String collectSQL, Connection conn) {
 		ResultSet columnSet;
 		try {
 			String exeSql = String.format("SELECT * FROM ( %s ) AS HYREN_ALIAS WHERE 1 = 2", collectSQL);
@@ -49,7 +49,7 @@ public abstract class AbstractCollectTableHandle implements CollectTableHandle {
 		return columnSet;
 	}
 
-	protected static String getCollectSQL(SourceDataConfBean sourceDataConfBean, CollectTableBean collectTableBean) {
+	static String getCollectSQL(SourceDataConfBean sourceDataConfBean, CollectTableBean collectTableBean) {
 		String tableName = collectTableBean.getTable_name();
 		//筛选出不是新列的字段
 		Set<String> collectColumnNames = ColumnTool.getCollectColumnName(
@@ -127,7 +127,7 @@ public abstract class AbstractCollectTableHandle implements CollectTableHandle {
 	/**
 	 * 使用sql获取每个字段的长度，类型，精度
 	 */
-	protected static Map<String, String> getTableColTypeAndLengthSql(ResultSet columnSet) {
+	static Map<String, String> getTableColTypeAndLengthSql(ResultSet columnSet) {
 		//定义map存放 类型和长度
 		Map<String, String> map = new LinkedHashMap<>();
 		try {
@@ -252,8 +252,8 @@ public abstract class AbstractCollectTableHandle implements CollectTableHandle {
 	 * @param lengths  对应的类型的长度
 	 * @return 更新后的信息
 	 */
-	protected static String updateColumn(Map<String, String> mergeIng, Map<String, Map<String, Column_split>> splitIng,
-	                                     StringBuilder columns, StringBuilder colType, StringBuilder lengths) {
+	static String updateColumn(Map<String, String> mergeIng, Map<String, Map<String, Column_split>> splitIng,
+	                           StringBuilder columns, StringBuilder colType, StringBuilder lengths) {
 		if (!mergeIng.isEmpty()) {
 			for (String key : mergeIng.keySet()) {
 				//获取表名和类型
