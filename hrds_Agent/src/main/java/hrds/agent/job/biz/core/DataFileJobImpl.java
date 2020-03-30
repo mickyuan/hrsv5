@@ -1,106 +1,73 @@
 package hrds.agent.job.biz.core;
 
 import fd.ng.core.annotation.DocClass;
-import hrds.agent.job.biz.bean.*;
-import hrds.agent.job.biz.constant.JobConstant;
+import hrds.agent.job.biz.bean.CollectTableBean;
+import hrds.agent.job.biz.bean.JobStatusInfo;
+import hrds.agent.job.biz.bean.MetaInfoBean;
+import hrds.agent.job.biz.bean.SourceDataConfBean;
 import hrds.agent.job.biz.core.dfstage.*;
-import hrds.agent.job.biz.utils.FileUtil;
-import org.apache.commons.lang3.StringUtils;
+import hrds.agent.job.biz.utils.JobStatusInfoUtil;
+import hrds.commons.utils.Constant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.io.File;
 import java.util.List;
 
 @DocClass(desc = "完成数据文件采集的作业实现")
 public class DataFileJobImpl implements JobInterface {
-
 	private static final Logger LOGGER = LoggerFactory.getLogger(DataFileJobImpl.class);
 
-	private MetaInfoBean mateInfo = new MetaInfoBean();
-	private final JobInfo job;
-	//TODO DB文件采集的作业参数bean还没有，后期需要加上
-	//private final JobParamBean jobParam;
-	private final String statusFilePath;
-	private final JobStatusInfo jobStatus;
+	private CollectTableBean collectTableBean;
+	private SourceDataConfBean sourceDataConfBean;
 
-	/**
-	 * 完成数据文件采集的作业实现.
-	 *
-	 * @param job            JobInfo对象，表示一个作业
-	 * @param statusFilePath 作业状态文件地址，用于更新运行时状态
-	 * @param jobStatus      JobStatusInfo对象，表示一个作业的状态
-	 * @author 13616
-	 * @date 2019/8/7 11:52
-	 */
-	DataFileJobImpl(JobInfo job, String statusFilePath, JobStatusInfo jobStatus) {
-
-		this.job = job;
-		this.statusFilePath = statusFilePath;
-		this.jobStatus = jobStatus;
+	public DataFileJobImpl(SourceDataConfBean sourceDataConfBean, CollectTableBean collectTableBean) {
+		this.sourceDataConfBean = sourceDataConfBean;
+		this.collectTableBean = collectTableBean;
 	}
 
 	@Override
 	public JobStatusInfo runJob() {
-		String jobId = job.getJobId();
-		LOGGER.info("作业正在运行中，作业编号为{}", jobId);
-		//TODO inputFile暂时赋值为TODO_INPUT_FILE，后面需要改动
-		String inputFile = "TODO_INPUT_FILE";
-		List<String> columns = new ArrayList<>();
-		for (ColumnCleanBean column : job.getColumnList()) {
-//			columns.add(column.getColumnName());
-		}
-		//TODO 此处肯定要改，所以先写死
-		String tableName = "FAKETABLENAME";
-		String[] columnAndtypes = {};
-		/* = StringUtils.splitByWholeSeparatorPreserveAllTokens(
-				job.getTablename().getString(tableName), "#");*/
-		List<String> columnTypes = new ArrayList<>();
-		for (String colAndType : columnAndtypes) {
-			columnTypes.add(StringUtils.splitByWholeSeparatorPreserveAllTokens(colAndType,
-					JobConstant.COLUMN_TYPE_SEPARATOR)[1]);
-		}
-		//TODO 开始时间暂时写为TODO_START_DATE，后面需要改
-		String startDate = "TODO_START_DATE";
-		//目前先按照完整顺序执行，后期可改造为按照配置构建采集阶段
-		DFUnloadDataStageImpl unloadData = new DFUnloadDataStageImpl(jobId, inputFile,
-				tableName, columns, columnTypes, startDate);
-		//TODO hdfs的目录结构如何组织的
-		JobStageInterface upload = new DFUploadStageImpl(jobId, unloadData.getOutputFile(), "");
-		JobStageInterface dataLoading = new DFDataLoadingStageImpl();
-		JobStageInterface calIncrement = new DFCalIncrementStageImpl();
-		JobStageInterface dataRegistration = new DFDataRegistrationStageImpl();
-
-		JobStageController manager = new JobStageController();
-		manager.registerJobStage(unloadData, upload, dataLoading, calIncrement, dataRegistration);
-		JobStatusInfo jobStatusInfo = jobStatus;
-		//从第一个阶段开始执行作业
+		String statusFilePath = Constant.JOBINFOPATH + sourceDataConfBean.getDatabase_id()
+				+ File.separator + collectTableBean.getTable_id() + File.separator + Constant.JOBFILENAME;
+		//JobStatusInfo对象，表示一个作业的状态
+		JobStatusInfo jobStatusInfo = JobStatusInfoUtil.getStartJobStatusInfo(statusFilePath,
+				collectTableBean.getTable_id());
+		//2、构建每个阶段具体的实现类，目前先按照完整顺序执行(卸数,上传,数据加载,计算增量,数据登记)，
+		// 后期可改造为按照配置构建采集阶段
+		JobStageInterface unloadData = new DFUnloadDataStageImpl(sourceDataConfBean, collectTableBean);
+		//上传
+		JobStageInterface upload = new DFUploadStageImpl(collectTableBean);
+		//加载
+		JobStageInterface dataLoading = new DFDataLoadingStageImpl(collectTableBean);
+		//增量
+		JobStageInterface calIncrement = new DFCalIncrementStageImpl(collectTableBean);
+		//登记
+		JobStageInterface dataRegistration = new DFDataRegistrationStageImpl(collectTableBean);
+		//利用JobStageController构建本次数据库直连采集作业流程
+		JobStageController controller = new JobStageController();
+		//TODO 永远保证五个阶段，在每个阶段内部设置更合理的状态，比如直接加载时，unloadData和upload阶段的状态设置为跳过
+		//3、构建责任链，串起每个阶段
+		controller.registerJobStage(unloadData, upload, dataLoading, calIncrement, dataRegistration);
+		//4、按照顺序从第一个阶段开始执行作业
 		try {
-			jobStatusInfo = manager.handleStageByOrder(statusFilePath, jobStatusInfo);
+			jobStatusInfo = controller.handleStageByOrder(statusFilePath, jobStatusInfo);
 		} catch (Exception e) {
-			jobStatusInfo.setExceptionInfo(e.getMessage());
+			//TODO 是否记录日志待讨论,因为目前的处理逻辑是数据库直连采集发生的所有checked
+			// 类型异常全部向上抛，抛到这里统一处理
+			LOGGER.error("数据库采集异常", e);
 		}
-
-		mateInfo.setTableName(tableName);
-		mateInfo.setColumnNames(columns);
-		mateInfo.setColumnTypes(columnTypes);
-		mateInfo.setRowCount(unloadData.getRowCount());
-		mateInfo.setFileSize(FileUtil.getFileSize(unloadData.getOutputFile()));
-
 		return jobStatusInfo;
 	}
 
 	@Override
 	public List<MetaInfoBean> getMetaInfoGroup() {
-
-		return Arrays.asList(mateInfo);
+		return null;
 	}
 
 	@Override
 	public MetaInfoBean getMetaInfo() {
-
-		return mateInfo;
+		return null;
 	}
 
 	@Override

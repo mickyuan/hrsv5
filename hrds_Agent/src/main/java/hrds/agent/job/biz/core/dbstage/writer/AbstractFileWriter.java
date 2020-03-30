@@ -23,6 +23,7 @@ import java.nio.ByteBuffer;
 import java.sql.Blob;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.Date;
 
 @DocClass(desc = "数据库直连采集以指定的格式将数据卸到指定的数据文件，接口适配器，抽象类", author = "WangZhengcheng")
@@ -189,8 +190,10 @@ abstract class AbstractFileWriter implements FileWriterInterface {
 //					if (reader2String.indexOf(Constant.DATADELIMITER) > -1) {
 //						reader2String = reader2String.replace(Constant.DATADELIMITER, ' ');
 //					}
-					//TODO 目前针对换行符的没有测试，暂时没有修改，这里为什么要最后又替换\r\n不得而知，从前有人发现问题
-					//TODO 但后来并没有重现过
+					//TODO 目前针对换行符的问题，经过测试，可以通过自定义hive的TextInputFormat能解决自定义表的换行符，
+					//TODO 但是如果页面自定义填写换行符，就导致需要每一个不同的换行符都需要对应一个自定义hive的
+					//TODO TextInputFormat，难以实现，因此需要使用默认的行分隔符，或者提前实现几个TextInputFormat供选择
+					//TODO 下面几行是使用默认的行分隔符，需要替换到数据本身的换行符，这里应该替换成特殊字符串，以便于还原
 					if (reader2String.contains("\r")) {
 						reader2String = reader2String.replace('\r', ' ');
 					}
@@ -216,11 +219,21 @@ abstract class AbstractFileWriter implements FileWriterInterface {
 		return reader2String;
 	}
 
+	/**
+	 * 源表包含BLOB、VARBINARY类型获取写一个avro文件的文件输出流
+	 *
+	 * @param typeArray  所有采集字段的类型的数组
+	 * @param hbase_name 采集到目的地的表名
+	 * @param midName    采集特殊字段合成arvo文件生成的目录
+	 * @param pageNum    线程编号
+	 * @return 文件输出流
+	 * @throws IOException 获取avro文件输出流异常
+	 */
 	DataFileWriter<Object> getAvroWriter(int[] typeArray, String hbase_name,
 	                                     String midName, long pageNum) throws IOException {
 		DataFileWriter<Object> avroWriter = null;
 		for (int type : typeArray) {
-			if (type == java.sql.Types.BLOB || type == java.sql.Types.LONGVARCHAR) {
+			if (type == Types.BLOB || type == Types.VARBINARY) {
 				// 生成Avro文件到local
 				OutputStream outputStream = new FileOutputStream(midName + "avro_" + hbase_name + pageNum);
 				avroWriter = new DataFileWriter<>(new GenericDatumWriter<>()).setSyncInterval(100);

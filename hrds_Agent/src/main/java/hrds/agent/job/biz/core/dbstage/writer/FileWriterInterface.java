@@ -6,6 +6,7 @@ import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.TableBean;
+import hrds.commons.entity.Data_extraction_def;
 
 import java.sql.ResultSet;
 
@@ -25,7 +26,7 @@ public interface FileWriterInterface {
 	@Param(name = "tableName", desc = "表名, 用于大字段数据写avro", range = "不为空")
 	@Return(desc = "生成的数据文件的路径", range = "不会为null")
 	String writeFiles(ResultSet rs, CollectTableBean collectTableBean, long pageNum,
-	                  long pageRow, TableBean tableBean);
+	                  long pageRow, TableBean tableBean, Data_extraction_def data_extraction_def);
 
 //	@Method(desc = "将LONGVARCHAR和CLOB类型转换为字节数组，用于写Avro", logicStep = "")
 //	@Param(name = "characterStream", desc = "java.io.Reader形式得到此ResultSet结果集中当前行中指定列的值"

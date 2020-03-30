@@ -5,7 +5,7 @@ import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.constant.JobConstant;
-import hrds.agent.job.biz.core.dbstage.service.CollectTableHandleParse;
+import hrds.agent.job.biz.core.service.JdbcCollectTableHandleParse;
 import hrds.agent.job.biz.dataclean.Clean;
 import hrds.agent.job.biz.dataclean.CleanFactory;
 import hrds.agent.job.biz.dataclean.DataCleanInterface;
@@ -13,6 +13,7 @@ import hrds.agent.job.biz.utils.JobIoUtil;
 import hrds.agent.job.biz.utils.WriterFile;
 import hrds.commons.codes.FileFormat;
 import hrds.commons.codes.StorageType;
+import hrds.commons.entity.Data_extraction_def;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
 import org.apache.avro.file.DataFileWriter;
@@ -40,12 +41,16 @@ public class JdbcToSequenceFileWriter extends AbstractFileWriter {
 	@SuppressWarnings("unchecked")
 	@Override
 	public String writeFiles(ResultSet resultSet, CollectTableBean collectTableBean, long pageNum,
-	                         long pageRow, TableBean tableBean) {
+	                         long pageRow, TableBean tableBean, Data_extraction_def data_extraction_def) {
 		String eltDate = collectTableBean.getEtlDate();
 		StringBuilder fileInfo = new StringBuilder(1024);
 		String hbase_name = collectTableBean.getHbase_name();
-		String midName = Constant.JDBCUNLOADFOLDER + collectTableBean.getDatabase_id() + File.separator
-				+ collectTableBean.getTable_id() + File.separator;
+		//数据抽取指定的目录
+		String plane_url = data_extraction_def.getPlane_url();
+		String midName = plane_url + File.separator + collectTableBean.getTable_name()
+				+ File.separator + eltDate + File.separator + "SequenceFile" + File.separator;
+//		String midName = Constant.JDBCUNLOADFOLDER + collectTableBean.getDatabase_id() + File.separator
+//				+ collectTableBean.getTable_id() + File.separator;
 		//XXX SequenceFile不指定分隔符，页面也不允许其指定分隔符，使用hive默认的\001隐藏字符做分隔符
 		//XXX 这样只要创建hive映射外部表时使用store as sequencefile hive会自动解析。
 		String dataDelimiter = JobConstant.SEQUENCEDELIMITER;
@@ -62,15 +67,15 @@ public class JdbcToSequenceFileWriter extends AbstractFileWriter {
 			avroWriter = getAvroWriter(tableBean.getTypeArray(), hbase_name, midName, pageNum);
 			//卸数文件名为hbase_name加线程唯一标识加此线程创建文件下标
 			String fileName = midName + hbase_name + pageNum + index + ".part";
-			fileInfo.append(fileName).append(CollectTableHandleParse.STRSPLIT);
+			fileInfo.append(fileName).append(JdbcCollectTableHandleParse.STRSPLIT);
 			writerFile = new WriterFile(fileName);
 			writer = writerFile.getSequenceWrite();
 			//清洗配置
 			final DataCleanInterface allclean = CleanFactory.getInstance().getObjectClean("clean_database");
 			//获取所有字段的名称，包括列分割和列合并出来的字段名称
-			List<String> allColumnList = StringUtil.split(tableBean.getColumnMetaInfo(), CollectTableHandleParse.STRSPLIT);
+			List<String> allColumnList = StringUtil.split(tableBean.getColumnMetaInfo(), JdbcCollectTableHandleParse.STRSPLIT);
 			//获取所有查询的字段的名称，不包括列分割和列合并出来的字段名称
-			List<String> selectColumnList = StringUtil.split(tableBean.getAllColumns(), CollectTableHandleParse.STRSPLIT);
+			List<String> selectColumnList = StringUtil.split(tableBean.getAllColumns(), JdbcCollectTableHandleParse.STRSPLIT);
 			Map<String, Object> parseJson = tableBean.getParseJson();
 			Map<String, String> mergeIng = (Map<String, String>) parseJson.get("mergeIng");//字符合并
 			Clean cl = new Clean(parseJson, allclean);
@@ -81,7 +86,7 @@ public class JdbcToSequenceFileWriter extends AbstractFileWriter {
 			String currValue;
 			int numberOfColumns = selectColumnList.size();
 			int[] typeArray = tableBean.getTypeArray();
-			List<String> type = StringUtil.split(tableBean.getAllType(), CollectTableHandleParse.STRSPLIT);
+			List<String> type = StringUtil.split(tableBean.getAllType(), JdbcCollectTableHandleParse.STRSPLIT);
 			while (resultSet.next()) {
 				// Count it
 				lineCounter++;
@@ -99,7 +104,7 @@ public class JdbcToSequenceFileWriter extends AbstractFileWriter {
 					currValue = sb_.toString();
 					currValue = cl.cleanColumn(currValue, selectColumnList.get(i - 1).toUpperCase(), null,
 							type.get(i - 1), FileFormat.SEQUENCEFILE.getCode(), null,
-							collectTableBean.getDatabase_code(), dataDelimiter);
+							data_extraction_def.getDatabase_code(), dataDelimiter);
 					sb.append(currValue).append(dataDelimiter);
 				}
 				//如果有列合并处理合并信息
@@ -107,7 +112,7 @@ public class JdbcToSequenceFileWriter extends AbstractFileWriter {
 					List<String> arrColString = StringUtil.split(midStringOther.toString(), JobConstant.DATADELIMITER);
 					String mer = allclean.merge(mergeIng, arrColString.toArray(new String[0]),
 							allColumnList.toArray(new String[0]), null, null,
-							FileFormat.SEQUENCEFILE.getCode(), collectTableBean.getDatabase_code(), dataDelimiter);
+							FileFormat.SEQUENCEFILE.getCode(), data_extraction_def.getDatabase_code(), dataDelimiter);
 					//字段合并
 					sb.append(mer).append(dataDelimiter);
 				}
@@ -128,7 +133,7 @@ public class JdbcToSequenceFileWriter extends AbstractFileWriter {
 						fileName = midName + hbase_name + pageNum + index + ".part";
 						writerFile = new WriterFile(fileName);
 						writer = writerFile.getSequenceWrite();
-						fileInfo.append(fileName).append(CollectTableHandleParse.STRSPLIT);
+						fileInfo.append(fileName).append(JdbcCollectTableHandleParse.STRSPLIT);
 					}
 				}
 				value.set(sb.toString());
@@ -153,7 +158,7 @@ public class JdbcToSequenceFileWriter extends AbstractFileWriter {
 				log.error(e);
 			}
 		}
-		fileInfo.append(counter).append(CollectTableHandleParse.STRSPLIT).append(JobIoUtil.getFileSize(midName));
+		fileInfo.append(counter).append(JdbcCollectTableHandleParse.STRSPLIT).append(JobIoUtil.getFileSize(midName));
 		//返回卸数一个或者多个文件名全路径和总的文件行数和文件大小
 		return fileInfo.toString();
 	}

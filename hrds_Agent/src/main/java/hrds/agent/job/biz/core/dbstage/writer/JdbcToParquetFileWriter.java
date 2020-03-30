@@ -5,7 +5,7 @@ import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.constant.JobConstant;
-import hrds.agent.job.biz.core.dbstage.service.CollectTableHandleParse;
+import hrds.agent.job.biz.core.service.JdbcCollectTableHandleParse;
 import hrds.agent.job.biz.dataclean.Clean;
 import hrds.agent.job.biz.dataclean.CleanFactory;
 import hrds.agent.job.biz.dataclean.DataCleanInterface;
@@ -15,6 +15,7 @@ import hrds.agent.job.biz.utils.ParquetUtil;
 import hrds.commons.codes.FileFormat;
 import hrds.commons.codes.StorageType;
 import hrds.commons.entity.Column_split;
+import hrds.commons.entity.Data_extraction_def;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
 import org.apache.avro.file.DataFileWriter;
@@ -37,21 +38,25 @@ import java.util.Map;
  * date: 2019/12/6 17:20
  * author: zxz
  */
-public class JdbcToParquetFileWriter extends AbstractFileWriter {
+public class  JdbcToParquetFileWriter extends AbstractFileWriter {
 	//打印日志
 	private static final Log log = LogFactory.getLog(JdbcToParquetFileWriter.class);
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public String writeFiles(ResultSet resultSet, CollectTableBean collectTableBean, long pageNum,
-	                         long pageRow, TableBean tableBean) {
+	                         long pageRow, TableBean tableBean, Data_extraction_def data_extraction_def) {
 		String eltDate = collectTableBean.getEtlDate();
 		StringBuilder fileInfo = new StringBuilder(1024);
 		String hbase_name = collectTableBean.getHbase_name();
-		String midName = Constant.JDBCUNLOADFOLDER + collectTableBean.getDatabase_id() + File.separator
-				+ collectTableBean.getTable_id() + File.separator;
+//		String midName = Constant.JDBCUNLOADFOLDER + collectTableBean.getDatabase_id() + File.separator
+//				+ collectTableBean.getTable_id() + File.separator;
+		//数据抽取指定的目录
+		String plane_url = data_extraction_def.getPlane_url();
+		String midName = plane_url + File.separator + collectTableBean.getTable_name()
+				+ File.separator + eltDate + File.separator + "Parquet" + File.separator;
 		midName = FileNameUtils.normalize(midName, true);
-		String dataDelimiter = collectTableBean.getDatabase_separatorr();
+		String dataDelimiter = data_extraction_def.getDatabase_separatorr();
 		DataFileWriter<Object> avroWriter = null;
 		ParquetWriter<Group> parquetWriter = null;
 		long lineCounter = pageNum * pageRow;
@@ -63,9 +68,9 @@ public class JdbcToParquetFileWriter extends AbstractFileWriter {
 			//清洗配置
 			final DataCleanInterface allClean = CleanFactory.getInstance().getObjectClean("clean_database");
 			//获取所有字段的名称，包括列分割和列合并出来的字段名称
-			List<String> allColumnList = StringUtil.split(tableBean.getColumnMetaInfo(), CollectTableHandleParse.STRSPLIT);
+			List<String> allColumnList = StringUtil.split(tableBean.getColumnMetaInfo(), JdbcCollectTableHandleParse.STRSPLIT);
 			//获取所有查询的字段的名称，不包括列分割和列合并出来的字段名称
-			List<String> selectColumnList = StringUtil.split(tableBean.getAllColumns(), CollectTableHandleParse.STRSPLIT);
+			List<String> selectColumnList = StringUtil.split(tableBean.getAllColumns(), JdbcCollectTableHandleParse.STRSPLIT);
 			Map<String, Object> parseJson = tableBean.getParseJson();
 			//字符合并
 			Map<String, String> mergeIng = (Map<String, String>) parseJson.get("mergeIng");
@@ -84,9 +89,9 @@ public class JdbcToParquetFileWriter extends AbstractFileWriter {
 			factory = new SimpleGroupFactory(parquetSchema);
 			String fileName = midName + hbase_name + pageNum + index + ".part";
 			parquetWriter = ParquetUtil.getParquetWriter(parquetSchema, fileName);
-			fileInfo.append(fileName).append(CollectTableHandleParse.STRSPLIT);
+			fileInfo.append(fileName).append(JdbcCollectTableHandleParse.STRSPLIT);
 			//获取所有查询的字段的类型，不包括列分割和列合并出来的字段类型
-			List<String> type = StringUtil.split(tableBean.getAllType(), CollectTableHandleParse.STRSPLIT);
+			List<String> type = StringUtil.split(tableBean.getAllType(), JdbcCollectTableHandleParse.STRSPLIT);
 			while (resultSet.next()) {
 				lineCounter++;
 				counter++;
@@ -102,7 +107,7 @@ public class JdbcToParquetFileWriter extends AbstractFileWriter {
 					currValue = sb_.toString();
 					currValue = cl.cleanColumn(currValue, selectColumnList.get(i - 1).toUpperCase(), group,
 							type.get(i - 1), FileFormat.PARQUET.getCode(), null,
-							collectTableBean.getDatabase_code(), dataDelimiter);
+							data_extraction_def.getDatabase_code(), dataDelimiter);
 					// Write to output
 					// Add DELIMITER if not last value
 					if (i < numberOfColumns) {
@@ -119,7 +124,7 @@ public class JdbcToParquetFileWriter extends AbstractFileWriter {
 					//字段合并
 					allClean.merge(mergeIng, arrColString.toArray(new String[0]), allColumnList.toArray(new String[0]),
 							group, null, FileFormat.PARQUET.getCode(),
-							collectTableBean.getDatabase_code(), dataDelimiter);
+							data_extraction_def.getDatabase_code(), dataDelimiter);
 				}
 				group.append(Constant.SDATENAME, eltDate);
 				//因为进数方式是表级别的，如果每张表选择了存储方式则不同目的地下的都是一样的，所以拼的字段加在卸数这里
@@ -137,7 +142,7 @@ public class JdbcToParquetFileWriter extends AbstractFileWriter {
 						index++;
 						fileName = midName + hbase_name + pageNum + index + ".part";
 						parquetWriter = ParquetUtil.getParquetWriter(parquetSchema, fileName);
-						fileInfo.append(fileName).append(CollectTableHandleParse.STRSPLIT);
+						fileInfo.append(fileName).append(JdbcCollectTableHandleParse.STRSPLIT);
 					}
 				}
 				parquetWriter.write(group);
@@ -155,7 +160,7 @@ public class JdbcToParquetFileWriter extends AbstractFileWriter {
 				log.error(e);
 			}
 		}
-		fileInfo.append(counter).append(CollectTableHandleParse.STRSPLIT).append(JobIoUtil.getFileSize(midName));
+		fileInfo.append(counter).append(JdbcCollectTableHandleParse.STRSPLIT).append(JobIoUtil.getFileSize(midName));
 		//返回卸数一个或者多个文件名全路径和总的文件行数和文件大小
 		return fileInfo.toString();
 	}

@@ -11,14 +11,16 @@ import hrds.agent.job.biz.bean.SourceDataConfBean;
 import hrds.agent.job.biz.core.dbstage.*;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.commons.utils.Constant;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.List;
 
 @DocClass(desc = "完成数据库直连采集的作业实现", author = "WangZhengcheng")
 public class DataBaseJobImpl implements JobInterface {
+	private static final Logger LOGGER = LoggerFactory.getLogger(DataFileJobImpl.class);
 
-	//	private MetaInfoBean mateInfo = new MetaInfoBean();
 	private CollectTableBean collectTableBean;
 	private SourceDataConfBean sourceDataConfBean;
 
@@ -38,14 +40,12 @@ public class DataBaseJobImpl implements JobInterface {
 	public JobStatusInfo runJob() {
 		String statusFilePath = Constant.JOBINFOPATH + sourceDataConfBean.getDatabase_id()
 				+ File.separator + collectTableBean.getTable_id() + File.separator + Constant.JOBFILENAME;
-		//一开始对文件卸数分割符做转码，页面传过来时应该是Unicode编码格式
-		collectTableBean.setDatabase_separatorr(StringUtil.unicode2String(collectTableBean.getDatabase_separatorr()));
 		//JobStatusInfo对象，表示一个作业的状态
 		JobStatusInfo jobStatusInfo = JobStatusInfoUtil.getStartJobStatusInfo(statusFilePath,
 				collectTableBean.getTable_id());
 		//2、构建每个阶段具体的实现类，目前先按照完整顺序执行(卸数,上传,数据加载,计算增量,数据登记)，
 		// 后期可改造为按照配置构建采集阶段
-		DBUnloadDataStageImpl unloadData = new DBUnloadDataStageImpl(sourceDataConfBean, collectTableBean);
+		JobStageInterface unloadData = new DBUnloadDataStageImpl(sourceDataConfBean, collectTableBean);
 		//上传
 		JobStageInterface upload = new DBUploadStageImpl(collectTableBean);
 		//加载
@@ -65,21 +65,8 @@ public class DataBaseJobImpl implements JobInterface {
 		} catch (Exception e) {
 			//TODO 是否记录日志待讨论,因为目前的处理逻辑是数据库直连采集发生的所有checked
 			// 类型异常全部向上抛，抛到这里统一处理
-			e.printStackTrace();
+			LOGGER.error("数据库采集异常", e);
 		}
-//		List<String> columns = new ArrayList<>();
-//		for (CollectTableColumnBean column : collectTableBean.getCollectTableColumnBeanList()) {
-//			columns.add(column.getColumn_name());
-//		}
-		//5、阶段执行完成后，写meta信息
-//		mateInfo.setTableName(collectTableBean.getTable_name());
-		//TODO 下面这个顺序和ColumnTypes的顺序应该不一致，应该都从unloadData里面取
-//		mateInfo.setColumnNames(columns);
-//		mateInfo.setColumnTypes(unloadData.getColumnTypes());
-//		mateInfo.setRowCount(unloadData.getRowCount());
-//		//TODO 讨论:数据库多线程采集，每个线程写一个文件，设置文件大小这里应该如何处理，目前暂时得到的是所有文件的总大小
-//		mateInfo.setFileSize(unloadData.getFileSize());
-
 		return jobStatusInfo;
 	}
 

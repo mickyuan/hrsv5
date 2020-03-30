@@ -128,7 +128,24 @@ public class FileUtil {
 		}
 	}
 
-	public static void writeString2File(File file, String context, String encoding) throws IOException{
+	/**
+	 * 将文件内容读为字符串，指定编码
+	 *
+	 * @param file File对象
+	 * @return java.lang.String    文件内容
+	 * @author 13616
+	 * @date 2019/7/31 10:01
+	 */
+	public static String readFile2String(File file, String charset) throws IOException, IllegalArgumentException {
+
+		if (file.exists() && file.isFile()) {
+			return FileUtils.readFileToString(file, charset);
+		} else {
+			throw new IllegalArgumentException(file.getName() + "：不是一个可读的文件");
+		}
+	}
+
+	public static void writeString2File(File file, String context, String encoding) throws IOException {
 		FileUtils.write(file, context, encoding);
 	}
 
