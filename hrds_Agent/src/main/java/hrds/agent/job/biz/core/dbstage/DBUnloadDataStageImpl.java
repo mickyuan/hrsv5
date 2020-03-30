@@ -126,9 +126,6 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 				fileResult.addAll((List<String>) future.get().get("filePathList"));
 				pageCountResult.add(Long.parseLong((String) future.get().get("pageCount")));
 			}
-			//获得列类型
-			stageParamInfo.setColumnTypes(Arrays.asList(tableBean.getAllType().
-					split(JdbcCollectTableHandleParse.STRSPLIT)));
 			//获得本次采集总数据量
 			long rowCount = 0;
 			for (Long pageCount : pageCountResult) {

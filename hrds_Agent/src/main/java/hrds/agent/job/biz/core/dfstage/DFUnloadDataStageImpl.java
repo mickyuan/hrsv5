@@ -9,6 +9,7 @@ import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
 import hrds.agent.job.biz.core.service.CollectTableHandleFactory;
+import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.commons.codes.CollectType;
 import hrds.commons.codes.FileFormat;
@@ -55,7 +56,22 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 				String file_path = FileNameUtils.normalize(tableBean.getRoot_path() + File.separator
 						+ collectTableBean.getEtlDate() + File.separator + collectTableBean.getTable_name()
 						+ File.separator + FileFormat.ofValueByCode(tableBean.getFile_format()), true);
-				stageParamInfo.setFileArr(new File(file_path).list());
+				String[] file_list = new File(file_path).list();
+				//获得本次采集生成的数据文件的总大小
+				long fileSize = 0;
+				if (file_list != null && file_list.length > 0) {
+					for (String file_name : file_list) {
+						//判断文件是否存在，如果某个文件存在，则计算大小，若不存在，记录日志并继续运行
+						if (FileUtil.decideFileExist(file_name)) {
+							long singleFileSize = FileUtil.getFileSize(file_name);
+							fileSize += singleFileSize;
+						} else {
+							throw new AppSystemException(file_name + "文件不存在");
+						}
+					}
+				}
+				stageParamInfo.setFileArr(file_list);
+				stageParamInfo.setFileSize(fileSize);
 				//仅登记，则不用转存，则跳过db文件卸数，直接进行upload
 				LOGGER.info("Db文件采集，不需要转存，卸数跳过");
 			} else if (IsFlag.Fou.getCode().equals(collectTableBean.getIs_register())) {

@@ -44,7 +44,7 @@ public class DFDataRegistrationStageImpl extends AbstractJobStage {
 			file_attribute.setCollect_set_id(collectTableBean.getDatabase_id());
 			file_attribute.setFile_id(collectTableBean.getTable_id());
 			file_attribute.setSource_id(collectTableBean.getSource_id());
-			file_attribute.setCollect_type(CollectType.ShuJuKuCaiJi.getCode());
+			file_attribute.setCollect_type(CollectType.DBWenJianCaiJi.getCode());
 			file_attribute.setFile_size(stageParamInfo.getFileSize());
 			//TODO 下面这个可为空吧
 			file_attribute.setFile_suffix("");
