@@ -5,7 +5,7 @@ import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.constant.JobConstant;
-import hrds.agent.job.biz.core.dbstage.service.CollectTableHandleParse;
+import hrds.agent.job.biz.core.service.JdbcCollectTableHandleParse;
 import hrds.agent.job.biz.dataclean.Clean;
 import hrds.agent.job.biz.dataclean.CleanFactory;
 import hrds.agent.job.biz.dataclean.DataCleanInterface;
@@ -16,6 +16,7 @@ import hrds.commons.codes.DataBaseCode;
 import hrds.commons.codes.FileFormat;
 import hrds.commons.codes.StorageType;
 import hrds.commons.entity.Column_split;
+import hrds.commons.entity.Data_extraction_def;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
 import org.apache.avro.file.DataFileWriter;
@@ -42,14 +43,18 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 	@SuppressWarnings("unchecked")
 	@Override
 	public String writeFiles(ResultSet resultSet, CollectTableBean collectTableBean, long pageNum,
-	                         long pageRow, TableBean tableBean) {
+	                         long pageRow, TableBean tableBean, Data_extraction_def data_extraction_def) {
 		//获取行分隔符
-		String database_separatorr = collectTableBean.getDatabase_separatorr();
+		String database_separatorr = data_extraction_def.getDatabase_separatorr();
 		String eltDate = collectTableBean.getEtlDate();
 		StringBuilder fileInfo = new StringBuilder(1024);
 		String hbase_name = collectTableBean.getHbase_name();
-		String midName = Constant.JDBCUNLOADFOLDER + collectTableBean.getDatabase_id() + File.separator
-				+ collectTableBean.getTable_id() + File.separator;
+//		String midName = Constant.JDBCUNLOADFOLDER + collectTableBean.getDatabase_id() + File.separator
+//				+ collectTableBean.getTable_id() + File.separator;
+		//数据抽取指定的目录
+		String plane_url = data_extraction_def.getPlane_url();
+		String midName = plane_url + File.separator + collectTableBean.getTable_name()
+				+ File.separator + eltDate + File.separator + "FixedFile" + File.separator;
 		midName = FileNameUtils.normalize(midName, true);
 		DataFileWriter<Object> avroWriter = null;
 		BufferedWriter writer;
@@ -58,18 +63,20 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 		int index = 0;
 		WriterFile writerFile = null;
 		try {
+			//定长情况下是数据抽取的文件编码
+			String database_code = data_extraction_def.getDatabase_code();
 			avroWriter = getAvroWriter(tableBean.getTypeArray(), hbase_name, midName, pageNum);
 			//卸数文件名为hbase_name加线程唯一标识加此线程创建文件下标
 			String fileName = midName + hbase_name + pageNum + index + ".part";
-			fileInfo.append(fileName).append(CollectTableHandleParse.STRSPLIT);
+			fileInfo.append(fileName).append(JdbcCollectTableHandleParse.STRSPLIT);
 			writerFile = new WriterFile(fileName);
-			writer = writerFile.getBufferedWriter();
+			writer = writerFile.getBufferedWriter(DataBaseCode.ofValueByCode(database_code));
 			//清洗配置
 			final DataCleanInterface allclean = CleanFactory.getInstance().getObjectClean("clean_database");
 			//获取所有字段的名称，包括列分割和列合并出来的字段名称
-			List<String> allColumnList = StringUtil.split(tableBean.getColumnMetaInfo(), CollectTableHandleParse.STRSPLIT);
+			List<String> allColumnList = StringUtil.split(tableBean.getColumnMetaInfo(), JdbcCollectTableHandleParse.STRSPLIT);
 			//获取所有查询的字段的名称，不包括列分割和列合并出来的字段名称
-			List<String> selectColumnList = StringUtil.split(tableBean.getAllColumns(), CollectTableHandleParse.STRSPLIT);
+			List<String> selectColumnList = StringUtil.split(tableBean.getAllColumns(), JdbcCollectTableHandleParse.STRSPLIT);
 			Map<String, Object> parseJson = tableBean.getParseJson();
 			Map<String, String> mergeIng = (Map<String, String>) parseJson.get("mergeIng");//字符合并
 			//字符拆分
@@ -79,13 +86,11 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 			StringBuilder midStringOther = new StringBuilder(1024 * 1024);//获取所有列的值用来生成MD5值
 			StringBuilder sb = new StringBuilder();//用来写一行数据
 			StringBuilder sb_ = new StringBuilder();//用来写临时数据
-			List<String> typeList = StringUtil.split(tableBean.getAllType(), CollectTableHandleParse.STRSPLIT);
+			List<String> typeList = StringUtil.split(tableBean.getAllType(), JdbcCollectTableHandleParse.STRSPLIT);
 			int numberOfColumns = selectColumnList.size();
 			log.info("type : " + typeList.size() + "  colName " + numberOfColumns);
 			String currValue;
 			int[] typeArray = tableBean.getTypeArray();
-			//定长情况下是数据抽取的文件编码
-			String database_code = collectTableBean.getDatabase_code();
 			while (resultSet.next()) {
 				// Count it
 				lineCounter++;
@@ -129,7 +134,7 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 					sb.append(database_separatorr).append(Constant.MAXDATE).
 							append(database_separatorr).append(md5);
 				}
-				sb.append('\n');
+				sb.append(System.lineSeparator());
 				if (JobConstant.WriteMultipleFiles) {
 					long messageSize = sb.toString().length();
 					long singleFileSize = new File(fileName).length();
@@ -139,8 +144,9 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 						index++;
 						fileName = midName + hbase_name + pageNum + index + ".part";
 						writerFile = new WriterFile(fileName);
-						writer = writerFile.getBufferedWriter();
-						fileInfo.append(fileName).append(CollectTableHandleParse.STRSPLIT);
+						writer = writerFile.getBufferedWriter(DataBaseCode.ofValueByCode(
+								database_code));
+						fileInfo.append(fileName).append(JdbcCollectTableHandleParse.STRSPLIT);
 					}
 				}
 				writer.write(sb.toString());
@@ -163,7 +169,7 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 				log.error(e);
 			}
 		}
-		fileInfo.append(counter).append(CollectTableHandleParse.STRSPLIT).append(JobIoUtil.getFileSize(midName));
+		fileInfo.append(counter).append(JdbcCollectTableHandleParse.STRSPLIT).append(JobIoUtil.getFileSize(midName));
 		//返回卸数一个或者多个文件名全路径和总的文件行数和文件大小
 		return fileInfo.toString();
 	}

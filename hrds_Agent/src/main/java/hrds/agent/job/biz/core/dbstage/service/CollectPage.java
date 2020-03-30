@@ -8,7 +8,9 @@ import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.SourceDataConfBean;
 import hrds.agent.job.biz.bean.TableBean;
+import hrds.agent.job.biz.core.service.JdbcCollectTableHandleParse;
 import hrds.commons.codes.DatabaseType;
+import hrds.commons.entity.Data_extraction_def;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.ConnUtil;
 import org.slf4j.Logger;
@@ -60,21 +62,33 @@ public class CollectPage implements Callable<Map<String, Object>> {
 			//获取jdbc连接
 			conn = ConnUtil.getConnection(sourceDataConfBean.getDatabase_drive(), sourceDataConfBean.getJdbc_url(),
 					sourceDataConfBean.getUser_name(), sourceDataConfBean.getDatabase_pad());
-			//1、执行查询，获取ResultSet
+			//获得数据抽取文件格式
+			List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
+			if (data_extraction_def_list == null || data_extraction_def_list.isEmpty()) {
+				throw new AppSystemException("抽取的文件格式不能为空");
+			}
+			//抽取这里可以同时抽成多种文件格式，遍历，执行卸数。
+			//TODO 这里有一个优化的方式，就是在一个resultSet里面根据逻辑写多个文件，暂时直接遍历，复用以前的方法
+//			List<String> formatList = StringUtil.split(file_formats, ",");
+			//TODO 抽取这里其实不用返回文件路径，待删除
 			Map<String, Object> map = new HashMap<>();
-			ResultSet resultSet = getPageData(conn);
-			if (resultSet != null) {
-				//2、解析ResultSet，并写数据文件
-				ResultSetParser parser = new ResultSetParser();
-				//文件路径
-				String unLoadInfo = parser.parseResultSet(resultSet, collectTableBean, pageNum, pageRow, tableBean);
-				if (!StringUtil.isEmpty(unLoadInfo) && unLoadInfo.contains(CollectTableHandleParse.STRSPLIT)) {
-					List<String> unLoadInfoList = StringUtil.split(unLoadInfo, CollectTableHandleParse.STRSPLIT);
-					map.put("pageCount", unLoadInfoList.get(unLoadInfoList.size() - 2));
-					map.put("fileSize", unLoadInfoList.get(unLoadInfoList.size() - 1));
-					unLoadInfoList.remove(unLoadInfoList.size() - 2);
-					unLoadInfoList.remove(unLoadInfoList.size() - 1);
-					map.put("filePathList", unLoadInfoList);
+			for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
+				//1、执行查询，获取ResultSet
+				ResultSet resultSet = getPageData(conn);
+				if (resultSet != null) {
+					//2、解析ResultSet，并写数据文件
+					ResultSetParser parser = new ResultSetParser();
+					//文件路径
+					String unLoadInfo = parser.parseResultSet(resultSet, collectTableBean, pageNum, pageRow,
+							tableBean, data_extraction_def);
+					if (!StringUtil.isEmpty(unLoadInfo) && unLoadInfo.contains(JdbcCollectTableHandleParse.STRSPLIT)) {
+						List<String> unLoadInfoList = StringUtil.split(unLoadInfo, JdbcCollectTableHandleParse.STRSPLIT);
+						map.put("pageCount", unLoadInfoList.get(unLoadInfoList.size() - 2));
+						map.put("fileSize", unLoadInfoList.get(unLoadInfoList.size() - 1));
+						unLoadInfoList.remove(unLoadInfoList.size() - 2);
+						unLoadInfoList.remove(unLoadInfoList.size() - 1);
+						map.put("filePathList", unLoadInfoList);
+					}
 				}
 			}
 			return map;

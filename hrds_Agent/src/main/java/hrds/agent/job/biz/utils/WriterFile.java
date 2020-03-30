@@ -22,7 +22,6 @@ import java.io.BufferedWriter;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.nio.charset.StandardCharsets;
 
 public class WriterFile implements Closeable {
 
@@ -80,24 +79,24 @@ public class WriterFile implements Closeable {
 		return sequenceWriter;
 	}
 
-	public CsvListWriter getCsvWriter() {
+	public CsvListWriter getCsvWriter(String charset) {
 		try {
 			fs = FileSystem.get(conf);
 //			csvWriter = new CSVWriter(new OutputStreamWriter(fs.create(new Path(filePath)),
 //					StandardCharsets.UTF_8), Constant.DATADELIMITER, CSVWriter.NO_QUOTE_CHARACTER);
 			csvWriter = new CsvListWriter(new OutputStreamWriter(fs.create(new Path(filePath)),
-					StandardCharsets.UTF_8), CsvPreference.EXCEL_PREFERENCE);
+					charset), CsvPreference.EXCEL_PREFERENCE);
 		} catch (IOException e) {
 			logger.error(e);
 		}
 		return csvWriter;
 	}
 
-	public BufferedWriter getBufferedWriter() {
+	public BufferedWriter getBufferedWriter(String charset) {
 		try {
 			fs = FileSystem.get(conf);
 			bufferedWriter = new BufferedWriter(new OutputStreamWriter(fs.create(new Path(filePath)),
-					StandardCharsets.UTF_8));
+					charset));
 		} catch (IOException e) {
 			logger.error(e);
 		}

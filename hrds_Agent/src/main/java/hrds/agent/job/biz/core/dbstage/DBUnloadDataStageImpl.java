@@ -3,16 +3,19 @@ package hrds.agent.job.biz.core.dbstage;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Return;
+import fd.ng.core.utils.FileNameUtils;
 import hrds.agent.job.biz.bean.*;
 import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
 import hrds.agent.job.biz.core.dbstage.service.CollectPage;
-import hrds.agent.job.biz.core.dbstage.service.CollectTableHandleParse;
-import hrds.agent.job.biz.utils.ColumnTool;
+import hrds.agent.job.biz.core.service.JdbcCollectTableHandleParse;
+import hrds.agent.job.biz.core.service.CollectTableHandleFactory;
+import hrds.agent.job.biz.utils.DataExtractUtil;
 import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.commons.codes.CollectType;
+import hrds.commons.codes.DataBaseCode;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
@@ -73,7 +76,8 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 		ExecutorService executorService = null;
 		try {
 			//TODO 目前对于同一张表的清洗规则和查询出来的表结构是一样的，未来可能根据不同目的地去实现不同的清洗
-			TableBean tableBean = CollectTableHandleParse.generateTableInfo(sourceDataConfBean, collectTableBean);
+			TableBean tableBean = CollectTableHandleFactory.getCollectTableHandleInstance(sourceDataConfBean)
+					.generateTableInfo(sourceDataConfBean, collectTableBean);
 			stageParamInfo.setTableBean(tableBean);
 			//fileResult中是生成的所有数据文件的路径，用于判断卸数阶段结果
 			List<String> fileResult = new ArrayList<>();
@@ -124,7 +128,7 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 			}
 			//获得列类型
 			stageParamInfo.setColumnTypes(Arrays.asList(tableBean.getAllType().
-					split(CollectTableHandleParse.STRSPLIT)));
+					split(JdbcCollectTableHandleParse.STRSPLIT)));
 			//获得本次采集总数据量
 			long rowCount = 0;
 			for (Long pageCount : pageCountResult) {
@@ -151,8 +155,15 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 					+ collectTableBean.getTable_id() + File.separator + "tableData.meta";
 			midName = FilenameUtils.normalize(midName);
 			//写meta数据开始  TODO 这里这个meta信息应该是只有数据抽取才需要写，5.0版本的meta信息直接通过tableBean传递
-			ColumnTool.writeFileMeta(collectTableBean.getHbase_name(), new File(midName), tableBean.getColumnMetaInfo(),
-					rowCount, tableBean.getColTypeMetaInfo(), tableBean.getColLengthInfo(), fileSize, "n");
+			//数据字典的路径
+			String dictionaryPath = FileNameUtils.normalize(collectTableBean.getData_extraction_def_list().
+					get(0).getPlane_url() + File.separator + collectTableBean.getTable_name()
+					+ File.separator, true);
+			//写数据字典
+			DataExtractUtil.writeDataDictionary(dictionaryPath, collectTableBean.getTable_name(),
+					tableBean.getColumnMetaInfo(), tableBean.getColTypeMetaInfo(), collectTableBean.getStorage_type(),
+					DataBaseCode.ofValueByCode(collectTableBean.getData_extraction_def_list().
+							get(0).getDatabase_code()));
 			LOGGER.info("------------------数据库直连采集卸数阶段成功------------------");
 		} catch (Exception e) {
 			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.FAILED.getCode(), e.getMessage());
