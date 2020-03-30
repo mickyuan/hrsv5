@@ -11,12 +11,12 @@ import java.util.Collections;
 /**
  * 变量配置表
  */
-@Table(tableName = "dq_sys_var_cfg")
-public class Dq_sys_var_cfg extends ProjectTableEntity
+@Table(tableName = "dq_sys_cfg")
+public class Dq_sys_cfg extends ProjectTableEntity
 {
 	private static final long serialVersionUID = 321566870187324L;
 	private transient static final Set<String> __PrimaryKeys;
-	public static final String TableName = "dq_sys_var_cfg";
+	public static final String TableName = "dq_sys_cfg";
 	/**
 	* 检查给定的名字，是否为主键中的字段
 	* @param name String 检验是否为主键的名字

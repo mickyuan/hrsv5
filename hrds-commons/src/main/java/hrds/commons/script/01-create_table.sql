@@ -389,19 +389,19 @@ USER_NAME                                         VARCHAR(512) NULL, --用户名
 CONSTRAINT INTERFACE_USE_LOG_PK PRIMARY KEY(LOG_ID)   );
 
 --变量配置表
-DROP TABLE IF EXISTS DQ_SYS_VAR_CFG ;
-CREATE TABLE DQ_SYS_VAR_CFG(
+DROP TABLE IF EXISTS DQ_SYS_CFG ;
+CREATE TABLE DQ_SYS_CFG(
 SYS_VAR_ID                                        BIGINT default 0 NOT NULL, --系统变量编号
 VAR_NAME                                          VARCHAR(64) NOT NULL, --变量名
 VAR_VALUE                                         VARCHAR(80) NULL, --变量值
 APP_UPDT_DT                                       CHAR(8) NOT NULL, --更新日期
 APP_UPDT_TI                                       CHAR(6) NOT NULL, --更新时间
 USER_ID                                           BIGINT default 0 NOT NULL, --用户ID
-CONSTRAINT DQ_SYS_VAR_CFG_PK PRIMARY KEY(SYS_VAR_ID,VAR_NAME)   );
+CONSTRAINT DQ_SYS_CFG_PK PRIMARY KEY(SYS_VAR_ID,VAR_NAME)   );
 
 --数据质量规则配置清单表
-DROP TABLE IF EXISTS DQ_LIST ;
-CREATE TABLE DQ_LIST(
+DROP TABLE IF EXISTS DQ_DEFINITION ;
+CREATE TABLE DQ_DEFINITION(
 REG_NUM                                           BIGINT default 0 NOT NULL, --规则编号
 REG_NAME                                          VARCHAR(100) NULL, --规则名称
 LOAD_STRATEGY                                     VARCHAR(100) NOT NULL, --加载策略
@@ -431,18 +431,18 @@ IS_SAVEINDEX2                                     CHAR(1) NOT NULL, --是否保�
 IS_SAVEINDEX3                                     CHAR(1) NOT NULL, --是否保存指标3数据
 CASE_TYPE                                         BIGINT default 0 NOT NULL, --规则类型
 USER_ID                                           BIGINT default 0 NOT NULL, --用户ID
-CONSTRAINT DQ_LIST_PK PRIMARY KEY(REG_NUM)   );
+CONSTRAINT DQ_DEFINITION_PK PRIMARY KEY(REG_NUM)   );
 
 --数据质量规则类型定义表
-DROP TABLE IF EXISTS DQ_RULE_TYPE_DEF ;
-CREATE TABLE DQ_RULE_TYPE_DEF(
+DROP TABLE IF EXISTS DQ_RULE_DEF ;
+CREATE TABLE DQ_RULE_DEF(
 CASE_TYPE                                         BIGINT default 0 NOT NULL, --规则类型
 CASE_TYPE_DESC                                    VARCHAR(512) NULL, --规则类型描述
 INDEX_DESC1                                       VARCHAR(512) NULL, --检测指标1含义
 INDEX_DESC2                                       VARCHAR(512) NULL, --检测指标2含义
 INDEX_DESC3                                       VARCHAR(512) NULL, --检测指标3含义
 REMARK                                            VARCHAR(512) NULL, --说明
-CONSTRAINT DQ_RULE_TYPE_DEF_PK PRIMARY KEY(CASE_TYPE)   );
+CONSTRAINT DQ_RULE_DEF_PK PRIMARY KEY(CASE_TYPE)   );
 
 --数据质量校验结果表
 DROP TABLE IF EXISTS DQ_RESULT ;
@@ -493,16 +493,16 @@ TASK_ID                                           BIGINT default 0 NOT NULL, --�
 CONSTRAINT DQ_INDEX3RECORD_PK PRIMARY KEY(RECORD_ID)   );
 
 --系统帮助提示信息表
-DROP TABLE IF EXISTS SYS_HELP_INFM ;
-CREATE TABLE SYS_HELP_INFM(
+DROP TABLE IF EXISTS DQ_HELP_INFM ;
+CREATE TABLE DQ_HELP_INFM(
 HELP_INFM_ID                                      BIGINT default 0 NOT NULL, --帮助提示编号
 HELP_INFM_DESC                                    VARCHAR(512) NULL, --帮助提示描述
 HELP_INFM_DTL                                     VARCHAR(2048) NOT NULL, --帮助提示详细信息
-CONSTRAINT SYS_HELP_INFM_PK PRIMARY KEY(HELP_INFM_ID)   );
+CONSTRAINT DQ_HELP_INFM_PK PRIMARY KEY(HELP_INFM_ID)   );
 
 --校验结果处理日志
-DROP TABLE IF EXISTS DQ_DL_LOG ;
-CREATE TABLE DQ_DL_LOG(
+DROP TABLE IF EXISTS DQ_REQ_LOG ;
+CREATE TABLE DQ_REQ_LOG(
 TASK_ID                                           BIGINT default 0 NOT NULL, --任务编号
 DL_TIME                                           VARCHAR(32) NOT NULL, --处理时间
 PRCS_STT                                          VARCHAR(100) NULL, --流程状态
@@ -513,19 +513,19 @@ FL_NM                                             VARCHAR(100) NULL, --文件名
 IS_TOP                                            CHAR(1) NOT NULL, --是否置顶
 REG_NUM                                           BIGINT default 0 NOT NULL, --规则编号
 USER_ID                                           BIGINT default 0 NOT NULL, --用户ID
-CONSTRAINT DQ_DL_LOG_PK PRIMARY KEY(TASK_ID,DL_TIME)   );
+CONSTRAINT DQ_REQ_LOG_PK PRIMARY KEY(TASK_ID,DL_TIME)   );
 
 --外部检查申请执行日志
-DROP TABLE IF EXISTS DQ_EXT_REQ_EXE_LOG ;
-CREATE TABLE DQ_EXT_REQ_EXE_LOG(
+DROP TABLE IF EXISTS DQ_EXE_LOG ;
+CREATE TABLE DQ_EXE_LOG(
 REQ_ID                                            BIGINT default 0 NOT NULL, --申请编号
 TASK_ID                                           BIGINT default 0 NOT NULL, --任务编号
 DL_TIME                                           VARCHAR(32) NOT NULL, --处理时间
-CONSTRAINT DQ_EXT_REQ_EXE_LOG_PK PRIMARY KEY(REQ_ID)   );
+CONSTRAINT DQ_EXE_LOG_PK PRIMARY KEY(REQ_ID)   );
 
 --外部检查申请日志
-DROP TABLE IF EXISTS DQ_EXT_REQ_LOG ;
-CREATE TABLE DQ_EXT_REQ_LOG(
+DROP TABLE IF EXISTS DQ_EXT_LOG ;
+CREATE TABLE DQ_EXT_LOG(
 REQ_ID                                            BIGINT default 0 NOT NULL, --申请编号
 ASS_REQ_ID                                        VARCHAR(50) NULL, --关联申请号
 REQ_TYP                                           CHAR(1) NULL, --申请类型
@@ -537,15 +537,15 @@ REQ_TM                                            VARCHAR(8) NULL, --受理时�
 FIN_TM                                            VARCHAR(8) NULL, --结束时间
 EXT_JOB_ID                                        BIGINT default 0 NOT NULL, --外部作业编号
 TASK_ID                                           BIGINT default 0 NOT NULL, --任务编号
-CONSTRAINT DQ_EXT_REQ_LOG_PK PRIMARY KEY(REQ_ID)   );
+CONSTRAINT DQ_EXT_LOG_PK PRIMARY KEY(REQ_ID)   );
 
 --外部检查作业与规则关系
-DROP TABLE IF EXISTS DQ_EXT_JOB_RULE_RELA ;
-CREATE TABLE DQ_EXT_JOB_RULE_RELA(
+DROP TABLE IF EXISTS DQ_EXT_RELA ;
+CREATE TABLE DQ_EXT_RELA(
 EXT_JOB_ID                                        BIGINT default 0 NOT NULL, --外部作业编号
 TASK_ID                                           BIGINT default 0 NOT NULL, --任务编号
 DL_TIME                                           VARCHAR(32) NOT NULL, --处理时间
-CONSTRAINT DQ_EXT_JOB_RULE_RELA_PK PRIMARY KEY(EXT_JOB_ID,TASK_ID)   );
+CONSTRAINT DQ_EXT_RELA_PK PRIMARY KEY(EXT_JOB_ID,TASK_ID)   );
 
 --集市分类信息
 DROP TABLE IF EXISTS DM_CATEGORY ;
@@ -1593,4 +1593,25 @@ LOCATION_IN_HDFS                                  VARCHAR(512) NOT NULL, --hdfs�
 AGENT_ID                                          BIGINT default 0 NOT NULL, --Agent_id
 SOURCE_ID                                         BIGINT default 0 NOT NULL, --数据源ID
 CONSTRAINT SOURCE_FOLDER_ATTRIBUTE_PK PRIMARY KEY(FOLDER_ID)   );
+
+--无效表信息
+DROP TABLE IF EXISTS DQ_FAILURE_TABLE ;
+CREATE TABLE DQ_FAILURE_TABLE(
+FAILURE_TABLE_ID                                  BIGINT default 0 NOT NULL, --表id
+TABLE_CN_NAME                                     VARCHAR(512) NULL, --表中文名
+TABLE_EN_NAME                                     VARCHAR(512) NOT NULL, --表英文名
+TABLE_SOURCE                                      CHAR(3) NOT NULL, --表来源
+TABLE_META_INFO                                   VARCHAR(2000) NOT NULL, --表元信息
+REMARK                                            VARCHAR(512) NULL, --备注
+CONSTRAINT DQ_FAILURE_TABLE_PK PRIMARY KEY(FAILURE_TABLE_ID)   );
+
+--无效表列信息
+DROP TABLE IF EXISTS DQ_FAILURE_COLUMN ;
+CREATE TABLE DQ_FAILURE_COLUMN(
+FAILURE_COLUMN_ID                                 BIGINT default 0 NOT NULL, --列id
+COLUMN_SOURCE                                     CHAR(3) NOT NULL, --字段来源
+COLUMN_META_INFO                                  VARCHAR(5000) NOT NULL, --字段元信息
+REMARK                                            VARCHAR(512) NULL, --备注
+FAILURE_TABLE_ID                                  BIGINT default 0 NOT NULL, --表id
+CONSTRAINT DQ_FAILURE_COLUMN_PK PRIMARY KEY(FAILURE_COLUMN_ID)   );
 

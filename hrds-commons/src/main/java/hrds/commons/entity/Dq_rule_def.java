@@ -11,12 +11,12 @@ import java.util.Collections;
 /**
  * 数据质量规则类型定义表
  */
-@Table(tableName = "dq_rule_type_def")
-public class Dq_rule_type_def extends ProjectTableEntity
+@Table(tableName = "dq_rule_def")
+public class Dq_rule_def extends ProjectTableEntity
 {
 	private static final long serialVersionUID = 321566870187324L;
 	private transient static final Set<String> __PrimaryKeys;
-	public static final String TableName = "dq_rule_type_def";
+	public static final String TableName = "dq_rule_def";
 	/**
 	* 检查给定的名字，是否为主键中的字段
 	* @param name String 检验是否为主键的名字

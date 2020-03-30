@@ -11,12 +11,12 @@ import java.util.Collections;
 /**
  * 外部检查作业与规则关系
  */
-@Table(tableName = "dq_ext_job_rule_rela")
-public class Dq_ext_job_rule_rela extends ProjectTableEntity
+@Table(tableName = "dq_ext_rela")
+public class Dq_ext_rela extends ProjectTableEntity
 {
 	private static final long serialVersionUID = 321566870187324L;
 	private transient static final Set<String> __PrimaryKeys;
-	public static final String TableName = "dq_ext_job_rule_rela";
+	public static final String TableName = "dq_ext_rela";
 	/**
 	* 检查给定的名字，是否为主键中的字段
 	* @param name String 检验是否为主键的名字

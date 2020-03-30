@@ -11,12 +11,12 @@ import java.util.Collections;
 /**
  * 数据质量规则配置清单表
  */
-@Table(tableName = "dq_list")
-public class Dq_list extends ProjectTableEntity
+@Table(tableName = "dq_definition")
+public class Dq_definition extends ProjectTableEntity
 {
 	private static final long serialVersionUID = 321566870187324L;
 	private transient static final Set<String> __PrimaryKeys;
-	public static final String TableName = "dq_list";
+	public static final String TableName = "dq_definition";
 	/**
 	* 检查给定的名字，是否为主键中的字段
 	* @param name String 检验是否为主键的名字

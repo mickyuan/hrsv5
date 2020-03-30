@@ -11,12 +11,12 @@ import java.util.Collections;
 /**
  * 外部检查申请执行日志
  */
-@Table(tableName = "dq_ext_req_exe_log")
-public class Dq_ext_req_exe_log extends ProjectTableEntity
+@Table(tableName = "dq_exe_log")
+public class Dq_exe_log extends ProjectTableEntity
 {
 	private static final long serialVersionUID = 321566870187324L;
 	private transient static final Set<String> __PrimaryKeys;
-	public static final String TableName = "dq_ext_req_exe_log";
+	public static final String TableName = "dq_exe_log";
 	/**
 	* 检查给定的名字，是否为主键中的字段
 	* @param name String 检验是否为主键的名字

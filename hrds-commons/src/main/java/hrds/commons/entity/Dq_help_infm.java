@@ -11,12 +11,12 @@ import java.util.Collections;
 /**
  * 系统帮助提示信息表
  */
-@Table(tableName = "sys_help_infm")
-public class Sys_help_infm extends ProjectTableEntity
+@Table(tableName = "dq_help_infm")
+public class Dq_help_infm extends ProjectTableEntity
 {
 	private static final long serialVersionUID = 321566870187324L;
 	private transient static final Set<String> __PrimaryKeys;
-	public static final String TableName = "sys_help_infm";
+	public static final String TableName = "dq_help_infm";
 	/**
 	* 检查给定的名字，是否为主键中的字段
 	* @param name String 检验是否为主键的名字
