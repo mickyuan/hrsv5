@@ -128,21 +128,21 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 		for(int i = 0; i < rightResultOne.getRowCount(); i++){
 			if(rightResultOne.getString(i, "table_name").equalsIgnoreCase("sys_user")){
 				assertThat("获取到的非自定义采集表为sys_user，得到的表中文名为<用户表>", rightResultOne.getString(i, "table_ch_name"), is("用户表"));
-				assertThat("获取到的非自定义采集表为sys_user，得到数据抽取方式为<仅数据抽取>", rightResultOne.getString(i, "data_extract_type"), is(DataExtractType.JinShuJuChouQu.getCode()));
+				assertThat("获取到的非自定义采集表为sys_user，得到数据抽取方式为<仅数据抽取>", rightResultOne.getString(i, "data_extract_type"), is(DataExtractType.ShuJuKuChouQuLuoDi.getCode()));
 				assertThat("获取到的非自定义采集表为sys_user，得到的数据存储格式为<非定长>", rightResultOne.getString(i, "dbfile_format"), is(FileFormat.FeiDingChang.getCode()));
 				assertThat("获取到的非自定义采集表为sys_user，得到的行分隔符为<空格符>", rightResultOne.getString(i, "row_separator"), is("\n"));
 				assertThat("获取到的非自定义采集表为sys_user，得到的列分隔符为<|>", rightResultOne.getString(i, "database_separatorr"), is("|"));
 				assertThat("获取到的非自定义采集表为sys_user，得到的数据字符集为<UTF-8>", rightResultOne.getString(i, "database_code"), is(DataBaseCode.UTF_8.getCode()));
 			}else if(rightResultOne.getString(i, "table_name").equalsIgnoreCase("code_info")){
 				assertThat("获取到的非自定义采集表为code_info，得到的表中文名为<代码信息表>", rightResultOne.getString(i, "table_ch_name"), is("代码信息表"));
-				assertThat("获取到的非自定义采集表为code_info，得到数据抽取方式为<仅数据抽取>", rightResultOne.getString(i, "data_extract_type"), is(DataExtractType.JinShuJuChouQu.getCode()));
+				assertThat("获取到的非自定义采集表为code_info，得到数据抽取方式为<仅数据抽取>", rightResultOne.getString(i, "data_extract_type"), is(DataExtractType.ShuJuKuChouQuLuoDi.getCode()));
 				assertThat("获取到的非自定义采集表为code_info，得到的数据存储格式为<定长>", rightResultOne.getString(i, "dbfile_format"), is(FileFormat.DingChang.getCode()));
 				assertThat("获取到的非自定义采集表为code_info，没有指定行分隔符", rightResultOne.getString(i, "row_separator"), is(""));
 				assertThat("获取到的非自定义采集表为code_info，没有指定列分隔符", rightResultOne.getString(i, "database_separatorr"), is(""));
 				assertThat("获取到的非自定义采集表为code_info，得到的数据字符集为<UTF-8>", rightResultOne.getString(i, "database_code"), is(DataBaseCode.UTF_8.getCode()));
 			}else if(rightResultOne.getString(i, "table_name").equalsIgnoreCase("agent_info")){
 				assertThat("获取到的非自定义采集表为agent_info，得到的表中文名为<Agent信息表>", rightResultOne.getString(i, "table_ch_name"), is("Agent信息表"));
-				assertThat("获取到的非自定义采集表为agent_info，得到数据抽取方式为<数据抽取并入库>", rightResultOne.getString(i, "data_extract_type"), is(DataExtractType.ShuJuChouQuJiRuKu.getCode()));
+				assertThat("获取到的非自定义采集表为agent_info，得到数据抽取方式为<数据抽取并入库>", rightResultOne.getString(i, "data_extract_type"), is(DataExtractType.ShuJuKuChouQuLuoDi.getCode()));
 				assertThat("获取到的非自定义采集表为agent_info，得到的数据存储格式为<非定长>", rightResultOne.getString(i, "dbfile_format"), is(FileFormat.ORC.getCode()));
 				assertThat("获取到的非自定义采集表为agent_info，不能指定行分隔符", rightResultOne.getString(i, "row_separator"), is(""));
 				assertThat("获取到的非自定义采集表为agent_info，不能指定列分隔符", rightResultOne.getString(i, "database_separatorr"), is(""));
@@ -150,7 +150,7 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 			}
 			else if(rightResultOne.getString(i, "table_name").equalsIgnoreCase("data_source")){
 				assertThat("获取到的非自定义采集表为data_source，得到的表中文名为<用户表>", rightResultOne.getString(i, "table_ch_name"), is("数据源表"));
-				assertThat("获取到的非自定义采集表为data_source，得到数据抽取方式为<仅数据抽取>", rightResultOne.getString(i, "data_extract_type"), is(DataExtractType.ShuJuChouQuJiRuKu.getCode()));
+				assertThat("获取到的非自定义采集表为data_source，得到数据抽取方式为<仅数据抽取>", rightResultOne.getString(i, "data_extract_type"), is(DataExtractType.ShuJuKuChouQuLuoDi.getCode()));
 				assertThat("获取到的非自定义采集表为data_source，得到的数据存储格式为<非定长>", rightResultOne.getString(i, "dbfile_format"), is(FileFormat.FeiDingChang.getCode()));
 				assertThat("获取到的非自定义采集表为data_source，得到的行分隔符为<空格符>", rightResultOne.getString(i, "row_separator"), is("|"));
 				assertThat("获取到的非自定义采集表为data_source，得到的列分隔符为<|>", rightResultOne.getString(i, "database_separatorr"), is(" "));
@@ -188,7 +188,7 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 	public void getFileFormatByExtractType(){
 		//正确数据访问1：数据抽取方式为仅抽取
 		String rightString = new HttpClient()
-				.addData("extractType", DataExtractType.JinShuJuChouQu.getCode())
+				.addData("extractType", DataExtractType.ShuJuKuChouQuLuoDi.getCode())
 				.post(getActionUrl("getFileFormatByExtractType")).getBodyString();
 		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
@@ -210,7 +210,7 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 
 		//正确数据访问2：数据抽取方式为抽取及入库
 		String rightStringTwo = new HttpClient()
-				.addData("extractType", DataExtractType.ShuJuChouQuJiRuKu.getCode())
+				.addData("extractType", DataExtractType.ShuJuKuChouQuLuoDi.getCode())
 				.post(getActionUrl("getFileFormatByExtractType")).getBodyString();
 		ActionResult rightResultTwo = JsonUtil.toObjectSafety(rightStringTwo, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
@@ -275,7 +275,7 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 		Data_extraction_def sysUserDefs = new Data_extraction_def();
 		sysUserDefs.setDed_id(7788L);
 		sysUserDefs.setTable_id(SYS_USER_TABLE_ID);
-		sysUserDefs.setData_extract_type(DataExtractType.JinShuJuChouQu.getCode());
+		sysUserDefs.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
 		sysUserDefs.setIs_header(IsFlag.Shi.getCode());
 		sysUserDefs.setDatabase_code(DataBaseCode.UTF_8.getCode());
 		sysUserDefs.setRow_separator("\n");
@@ -299,7 +299,7 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 		try(DatabaseWrapper db = new DatabaseWrapper()){
 			Result result = SqlOperator.queryResult(db, "select * from " + Data_extraction_def.TableName + " where table_id = ?", SYS_USER_TABLE_ID);
 			assertThat("查询得到的数据有一条", result.getRowCount(), is(1));
-			assertThat("sys_user表配置的数据抽取定义中，抽取方式为<仅数据抽取>", result.getString(0, "data_extract_type"), is(DataExtractType.JinShuJuChouQu.getCode()));
+			assertThat("sys_user表配置的数据抽取定义中，抽取方式为<仅数据抽取>", result.getString(0, "data_extract_type"), is(DataExtractType.ShuJuKuChouQuLuoDi.getCode()));
 			assertThat("sys_user表配置的数据抽取定义中，卸数文件格式为<非定长>", result.getString(0, "dbfile_format"), is(FileFormat.FeiDingChang.getCode()));
 			assertThat("sys_user表配置的数据抽取定义中，行分隔符为<回车符>", result.getString(0, "row_separator"), is("\n"));
 			assertThat("sys_user表配置的数据抽取定义中，列分隔符为<|>", result.getString(0, "database_separatorr"), is(StringUtil.string2Unicode("|")));
@@ -322,7 +322,7 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 				case 0 :
 					id = 7789L;
 					tableId = CODE_INFO_TABLE_ID;
-					extractType = DataExtractType.ShuJuChouQuJiRuKu.getCode();
+					extractType = DataExtractType.ShuJuKuChouQuLuoDi.getCode();
 					rowSeparator = "";
 					databaseSeparatorr = "";
 					fileFormat = FileFormat.PARQUET.getCode();
@@ -331,7 +331,7 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 				case 1 :
 					id = 7790L;
 					tableId = AGENT_INFO_TABLE_ID;
-					extractType = DataExtractType.JinShuJuChouQu.getCode();
+					extractType = DataExtractType.ShuJuKuChouQuLuoDi.getCode();
 					rowSeparator = "";
 					databaseSeparatorr = "";
 					fileFormat = FileFormat.CSV.getCode();
@@ -374,7 +374,7 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 		try(DatabaseWrapper db = new DatabaseWrapper()){
 			Result result = SqlOperator.queryResult(db, "select * from " + Data_extraction_def.TableName + " where table_id = ?", CODE_INFO_TABLE_ID);
 			assertThat("查询得到的数据有一条", result.getRowCount(), is(1));
-			assertThat("code_info表配置的数据抽取定义中，抽取方式为<数据抽取并入库>", result.getString(0, "data_extract_type"), is(DataExtractType.ShuJuChouQuJiRuKu.getCode()));
+			assertThat("code_info表配置的数据抽取定义中，抽取方式为<数据抽取并入库>", result.getString(0, "data_extract_type"), is(DataExtractType.ShuJuKuChouQuLuoDi.getCode()));
 			assertThat("code_info表配置的数据抽取定义中，卸数文件格式为<PARQUET>", result.getString(0, "dbfile_format"), is(FileFormat.PARQUET.getCode()));
 			assertThat("code_info表配置的数据抽取定义中，PARQUET文件不能定义行分隔符", result.getString(0, "row_separator"), is(""));
 			assertThat("code_info表配置的数据抽取定义中，PARQUET文件不能定义列分隔符", result.getString(0, "database_separatorr"), is(""));
@@ -383,7 +383,7 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 
 			Result resultTwo = SqlOperator.queryResult(db, "select * from " + Data_extraction_def.TableName + " where table_id = ?", AGENT_INFO_TABLE_ID);
 			assertThat("查询得到的数据有一条", resultTwo.getRowCount(), is(1));
-			assertThat("agent_info表配置的数据抽取定义中，抽取方式为<仅数据抽取>", resultTwo.getString(0, "data_extract_type"), is(DataExtractType.JinShuJuChouQu.getCode()));
+			assertThat("agent_info表配置的数据抽取定义中，抽取方式为<仅数据抽取>", resultTwo.getString(0, "data_extract_type"), is(DataExtractType.ShuJuKuChouQuLuoDi.getCode()));
 			assertThat("agent_info表配置的数据抽取定义中，卸数文件格式为<CSV>", resultTwo.getString(0, "dbfile_format"), is(FileFormat.CSV.getCode()));
 			assertThat("agent_info表配置的数据抽取定义中，CSV文件没有定义行分隔符", resultTwo.getString(0, "row_separator"), is(""));
 			assertThat("agent_info表配置的数据抽取定义中，CSV文件没有定义列分隔符", resultTwo.getString(0, "database_separatorr"), is(""));
@@ -397,7 +397,7 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 		Data_extraction_def wrongSysUserDefsOne = new Data_extraction_def();
 		wrongSysUserDefsOne.setDed_id(7792L);
 		wrongSysUserDefsOne.setTable_id(SYS_USER_TABLE_ID);
-		wrongSysUserDefsOne.setData_extract_type(DataExtractType.JinShuJuChouQu.getCode());
+		wrongSysUserDefsOne.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
 		wrongSysUserDefsOne.setIs_header(IsFlag.Shi.getCode());
 		wrongSysUserDefsOne.setDatabase_code(DataBaseCode.UTF_8.getCode());
 		wrongSysUserDefsOne.setDatabase_separatorr("|");
@@ -420,7 +420,7 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 		Data_extraction_def wrongSysUserDefsTwo = new Data_extraction_def();
 		wrongSysUserDefsTwo.setDed_id(7793L);
 		wrongSysUserDefsTwo.setTable_id(SYS_USER_TABLE_ID);
-		wrongSysUserDefsTwo.setData_extract_type(DataExtractType.JinShuJuChouQu.getCode());
+		wrongSysUserDefsTwo.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
 		wrongSysUserDefsTwo.setIs_header(IsFlag.Shi.getCode());
 		wrongSysUserDefsTwo.setDatabase_code(DataBaseCode.UTF_8.getCode());
 		wrongSysUserDefsTwo.setRow_separator("\n");
@@ -443,7 +443,7 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 		Data_extraction_def wrongSysUserDefsThree = new Data_extraction_def();
 		wrongSysUserDefsThree.setDed_id(7794L);
 		wrongSysUserDefsThree.setTable_id(CODE_INFO_TABLE_ID);
-		wrongSysUserDefsThree.setData_extract_type(DataExtractType.ShuJuChouQuJiRuKu.getCode());
+		wrongSysUserDefsThree.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
 		wrongSysUserDefsThree.setRow_separator("\n");
 		wrongSysUserDefsThree.setDatabase_code(DataBaseCode.UTF_8.getCode());
 		wrongSysUserDefsThree.setDbfile_format(FileFormat.PARQUET.getCode());
@@ -464,7 +464,7 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 		Data_extraction_def wrongSysUserDefsFour = new Data_extraction_def();
 		wrongSysUserDefsFour.setDed_id(7795L);
 		wrongSysUserDefsFour.setTable_id(CODE_INFO_TABLE_ID);
-		wrongSysUserDefsFour.setData_extract_type(DataExtractType.ShuJuChouQuJiRuKu.getCode());
+		wrongSysUserDefsFour.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
 		wrongSysUserDefsFour.setDatabase_separatorr("|");
 		wrongSysUserDefsFour.setDatabase_code(DataBaseCode.UTF_8.getCode());
 		wrongSysUserDefsFour.setDbfile_format(FileFormat.PARQUET.getCode());
@@ -486,7 +486,7 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 		Data_extraction_def wrongSysUserDefsFive = new Data_extraction_def();
 		wrongSysUserDefsFive.setDed_id(7796L);
 		wrongSysUserDefsFive.setTable_id(CODE_INFO_TABLE_ID);
-		wrongSysUserDefsFive.setData_extract_type(DataExtractType.ShuJuChouQuJiRuKu.getCode());
+		wrongSysUserDefsFive.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
 		wrongSysUserDefsFive.setRow_separator("\n");
 		wrongSysUserDefsFive.setDatabase_code(DataBaseCode.UTF_8.getCode());
 		wrongSysUserDefsFive.setDbfile_format(FileFormat.ORC.getCode());
@@ -508,7 +508,7 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 		Data_extraction_def wrongSysUserDefsSix = new Data_extraction_def();
 		wrongSysUserDefsSix.setDed_id(7797L);
 		wrongSysUserDefsSix.setTable_id(CODE_INFO_TABLE_ID);
-		wrongSysUserDefsSix.setData_extract_type(DataExtractType.ShuJuChouQuJiRuKu.getCode());
+		wrongSysUserDefsSix.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
 		wrongSysUserDefsSix.setDatabase_separatorr("|");
 		wrongSysUserDefsSix.setDatabase_code(DataBaseCode.UTF_8.getCode());
 		wrongSysUserDefsSix.setDbfile_format(FileFormat.ORC.getCode());
@@ -530,7 +530,7 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 		Data_extraction_def wrongSysUserDefsSenven = new Data_extraction_def();
 		wrongSysUserDefsSenven.setDed_id(7798L);
 		wrongSysUserDefsSenven.setTable_id(CODE_INFO_TABLE_ID);
-		wrongSysUserDefsSenven.setData_extract_type(DataExtractType.ShuJuChouQuJiRuKu.getCode());
+		wrongSysUserDefsSenven.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
 		wrongSysUserDefsSenven.setRow_separator("\n");
 		wrongSysUserDefsSenven.setDatabase_code(DataBaseCode.UTF_8.getCode());
 		wrongSysUserDefsSenven.setDbfile_format(FileFormat.ORC.getCode());
@@ -552,7 +552,7 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 		Data_extraction_def wrongSysUserDefsEight = new Data_extraction_def();
 		wrongSysUserDefsEight.setDed_id(7799L);
 		wrongSysUserDefsEight.setTable_id(CODE_INFO_TABLE_ID);
-		wrongSysUserDefsEight.setData_extract_type(DataExtractType.ShuJuChouQuJiRuKu.getCode());
+		wrongSysUserDefsEight.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
 		wrongSysUserDefsEight.setDatabase_separatorr("|");
 		wrongSysUserDefsEight.setDatabase_code(DataBaseCode.UTF_8.getCode());
 		wrongSysUserDefsEight.setDbfile_format(FileFormat.ORC.getCode());
@@ -573,7 +573,7 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 		Data_extraction_def wrongSysUserDefsNine = new Data_extraction_def();
 		wrongSysUserDefsNine.setDed_id(7800L);
 		wrongSysUserDefsNine.setTable_id(CODE_INFO_TABLE_ID);
-		wrongSysUserDefsNine.setData_extract_type(DataExtractType.ShuJuChouQuJiRuKu.getCode());
+		wrongSysUserDefsNine.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
 		wrongSysUserDefsNine.setDatabase_separatorr("|");
 		wrongSysUserDefsNine.setDatabase_code(DataBaseCode.UTF_8.getCode());
 		wrongSysUserDefsNine.setDbfile_format(FileFormat.FeiDingChang.getCode());
@@ -595,7 +595,7 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 		Data_extraction_def wrongSysUserDefsTen = new Data_extraction_def();
 		wrongSysUserDefsTen.setDed_id(7801L);
 		wrongSysUserDefsTen.setTable_id(CODE_INFO_TABLE_ID);
-		wrongSysUserDefsTen.setData_extract_type(DataExtractType.ShuJuChouQuJiRuKu.getCode());
+		wrongSysUserDefsTen.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
 		wrongSysUserDefsTen.setRow_separator("\n");
 		wrongSysUserDefsTen.setDatabase_code(DataBaseCode.UTF_8.getCode());
 		wrongSysUserDefsTen.setDbfile_format(FileFormat.FeiDingChang.getCode());
@@ -617,7 +617,7 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 		Data_extraction_def wrongSysUserDefsEle = new Data_extraction_def();
 		wrongSysUserDefsEle.setDed_id(7802L);
 		wrongSysUserDefsEle.setTable_id(CODE_INFO_TABLE_ID);
-		wrongSysUserDefsEle.setData_extract_type(DataExtractType.ShuJuChouQuJiRuKu.getCode());
+		wrongSysUserDefsEle.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
 		wrongSysUserDefsEle.setRow_separator("\n");
 		wrongSysUserDefsEle.setDatabase_code(DataBaseCode.UTF_8.getCode());
 		wrongSysUserDefsEle.setDbfile_format(FileFormat.DingChang.getCode());
@@ -639,7 +639,7 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 		Data_extraction_def wrongSysUserDefsTwe = new Data_extraction_def();
 		wrongSysUserDefsTwe.setDed_id(7803L);
 		wrongSysUserDefsTwe.setTable_id(CODE_INFO_TABLE_ID);
-		wrongSysUserDefsTwe.setData_extract_type(DataExtractType.JinShuJuChouQu.getCode());
+		wrongSysUserDefsTwe.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
 		wrongSysUserDefsTwe.setRow_separator("\n");
 		wrongSysUserDefsTwe.setDatabase_code(DataBaseCode.UTF_8.getCode());
 		wrongSysUserDefsTwe.setDbfile_format(FileFormat.ORC.getCode());
@@ -661,7 +661,7 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 		Data_extraction_def wrongSysUserDefsThi = new Data_extraction_def();
 		wrongSysUserDefsThi.setDed_id(7804L);
 		wrongSysUserDefsThi.setTable_id(CODE_INFO_TABLE_ID);
-		wrongSysUserDefsThi.setData_extract_type(DataExtractType.JinShuJuChouQu.getCode());
+		wrongSysUserDefsThi.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
 		wrongSysUserDefsThi.setRow_separator("\n");
 		wrongSysUserDefsThi.setDatabase_code(DataBaseCode.UTF_8.getCode());
 		wrongSysUserDefsThi.setDbfile_format(FileFormat.PARQUET.getCode());
@@ -683,7 +683,7 @@ public class FileConfStepActionTest extends WebBaseTestCase{
 		Data_extraction_def wrongSysUserDefsFourt = new Data_extraction_def();
 		wrongSysUserDefsFourt.setDed_id(7804L);
 		wrongSysUserDefsFourt.setTable_id(CODE_INFO_TABLE_ID);
-		wrongSysUserDefsFourt.setData_extract_type(DataExtractType.JinShuJuChouQu.getCode());
+		wrongSysUserDefsFourt.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
 		wrongSysUserDefsFourt.setRow_separator("\n");
 		wrongSysUserDefsFourt.setDatabase_code(DataBaseCode.UTF_8.getCode());
 		wrongSysUserDefsFourt.setDbfile_format(FileFormat.PARQUET.getCode());

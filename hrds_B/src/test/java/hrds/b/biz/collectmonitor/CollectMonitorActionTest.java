@@ -152,10 +152,10 @@ public class CollectMonitorActionTest extends WebBaseTestCase {
         }
         database_set.setDatabase_number("test_lqcs" + i);
         database_set.setDatabase_type(DatabaseType.Postgresql.getCode());
-        database_set.setIs_load(IsFlag.Fou.getCode());
-        database_set.setIs_hidden(IsFlag.Fou.getCode());
+//        database_set.setIs_load(IsFlag.Fou.getCode());
+//        database_set.setIs_hidden(IsFlag.Fou.getCode());
         database_set.setIs_sendok(IsFlag.Shi.getCode());
-        database_set.setIs_header(IsFlag.Fou.getCode());
+//        database_set.setIs_header(IsFlag.Fou.getCode());
         database_set.setClassify_id(classify_id);
         database_set.add(db);
       }

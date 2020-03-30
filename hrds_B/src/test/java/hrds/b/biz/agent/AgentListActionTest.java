@@ -223,10 +223,10 @@ public class AgentListActionTest extends WebBaseTestCase {
 			databaseSet.setAgent_id(agentId);
 			databaseSet.setDatabase_number("dbtest" + i);
 			databaseSet.setDb_agent(dbFlag);
-			databaseSet.setIs_load(IsFlag.Shi.getCode());
-			databaseSet.setIs_hidden(isHidden);
+//			databaseSet.setIs_load(IsFlag.Shi.getCode());
+//			databaseSet.setIs_hidden(isHidden);
 			databaseSet.setIs_sendok(IsFlag.Fou.getCode());
-			databaseSet.setIs_header(IsFlag.Shi.getCode());
+//			databaseSet.setIs_header(IsFlag.Shi.getCode());
 			databaseSet.setClassify_id(classifyId);
 			databaseSet.setTask_name("wzcTaskName" + i);
 			databaseSet.setDatabase_type(databaseType);
@@ -234,10 +234,10 @@ public class AgentListActionTest extends WebBaseTestCase {
 			databaseSet.setDatabase_drive(driver);
 			databaseSet.setDatabase_ip(ip);
 			databaseSet.setDatabase_port(port);
-			databaseSet.setDatabase_code(databaseCode);
+//			databaseSet.setDatabase_code(databaseCode);
 			databaseSet.setJdbc_url(url);
-			databaseSet.setDbfile_format(dbfileFormat);
-			databaseSet.setFile_suffix(fileSuffix);
+//			databaseSet.setDbfile_format(dbfileFormat);
+//			databaseSet.setFile_suffix(fileSuffix);
 			databaseSet.setPlane_url(planeUrl);
 			databaseSet.setRow_separator(rowSeparator);
 			databaseSet.setDatabase_pad(databasePwd);
@@ -1163,7 +1163,7 @@ public class AgentListActionTest extends WebBaseTestCase {
 				assertThat("<sys_user表>pageparallels为<5>", collectTableBean.getInteger("pageparallels"), is(5));
 				assertThat("<sys_user表>dataincrement为<0>", collectTableBean.getInteger("dataincrement"), is(0));
 				assertThat("<sys_user表>is_header为<是>", collectTableBean.getString("is_header"), is(IsFlag.Shi.getCode()));
-				assertThat("<sys_user表>data_extract_type为<数据抽取及入库>", collectTableBean.getString("data_extract_type"), is(DataExtractType.ShuJuChouQuJiRuKu.getCode()));
+				assertThat("<sys_user表>data_extract_type为<数据抽取及入库>", collectTableBean.getString("data_extract_type"), is(DataExtractType.ShuJuKuChouQuLuoDi.getCode()));
 				assertThat("<sys_user表>database_code为<UTF-8>", collectTableBean.getString("database_code"), is(DataBaseCode.UTF_8.getCode()));
 				assertThat("<sys_user表>row_separator为<空>", collectTableBean.getString("row_separator"), is(""));
 				assertThat("<sys_user表>database_separatorr为<空>", collectTableBean.getString("database_separatorr"), is(""));
@@ -1424,7 +1424,7 @@ public class AgentListActionTest extends WebBaseTestCase {
 				assertThat("<code_info表>pageparallels为<6>", collectTableBean.getInteger("pageparallels"), is(6));
 				assertThat("<code_info表>dataincrement为<1000>", collectTableBean.getInteger("dataincrement"), is(1000));
 				assertThat("<code_info表>is_header为<是>", collectTableBean.getString("is_header"), is(IsFlag.Shi.getCode()));
-				assertThat("<code_info表>data_extract_type为<数据抽取及入库>", collectTableBean.getString("data_extract_type"), is(DataExtractType.ShuJuChouQuJiRuKu.getCode()));
+				assertThat("<code_info表>data_extract_type为<数据抽取及入库>", collectTableBean.getString("data_extract_type"), is(DataExtractType.ShuJuKuChouQuLuoDi.getCode()));
 				assertThat("<code_info表>database_code为<UTF-8>", collectTableBean.getString("database_code"), is(DataBaseCode.UTF_8.getCode()));
 				assertThat("<code_info表>row_separator为<空>", collectTableBean.getString("row_separator"), is(""));
 				assertThat("<code_info表>database_separatorr为<空>", collectTableBean.getString("database_separatorr"), is(""));
@@ -2013,7 +2013,7 @@ public class AgentListActionTest extends WebBaseTestCase {
 			List<Data_extraction_def> extractionDefs = new ArrayList<>();
 			for(int i = 0; i < 2; i++){
 				long tableId = i % 2 == 0 ? SYS_USER_TABLE_ID : CODE_INFO_TABLE_ID;
-				String extractType = DataExtractType.ShuJuChouQuJiRuKu.getCode();
+				String extractType = DataExtractType.ShuJuKuChouQuLuoDi.getCode();
 				String rowSeparator = i % 2 == 0 ? "" : "";
 				String databaseSeparatorr = i % 2 == 0 ? "" : "";
 				String fileFormat = i % 2 == 0 ? FileFormat.ORC.getCode() : FileFormat.PARQUET.getCode();

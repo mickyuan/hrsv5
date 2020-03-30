@@ -320,7 +320,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
             databaseSet.setDatabase_id(DatabaseId);
             databaseSet.setAgent_id(DBAgentId);
             databaseSet.setClassify_id(ClassifyId);
-            databaseSet.setDatabase_code(DataBaseCode.UTF_8.getCode());
+//            databaseSet.setDatabase_code(DataBaseCode.UTF_8.getCode());
             databaseSet.setDatabase_drive("org.postgresql.Driver");
             databaseSet.setDatabase_ip("10.71.4.51");
             databaseSet.setDatabase_name("数据库采集测试");
@@ -328,7 +328,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
             databaseSet.setDatabase_pad("hrsdxg");
             databaseSet.setUser_name("hrsdxg");
             databaseSet.setDatabase_port("34567");
-            databaseSet.setDbfile_format(FileFormat.CSV.getCode());
+//            databaseSet.setDbfile_format(FileFormat.CSV.getCode());
             databaseSet.setIs_sendok(IsFlag.Fou.getCode());
             databaseSet.setDatabase_type(DatabaseType.Postgresql.getCode());
             databaseSet.setTask_name("数据库测试");
@@ -1854,11 +1854,11 @@ public class DataSourceActionTest extends WebBaseTestCase {
             assertThat(databaseSet.getDb_agent(), is(IsFlag.Shi.getCode()));
             assertThat(databaseSet.getTask_name(), is("数据库测试"));
             assertThat(databaseSet.getIs_sendok(), is(IsFlag.Fou.getCode()));
-            assertThat(databaseSet.getDatabase_code(), is(DataBaseCode.UTF_8.getCode()));
+//            assertThat(databaseSet.getDatabase_code(), is(DataBaseCode.UTF_8.getCode()));
             assertThat(databaseSet.getDatabase_number(), is("cs01"));
-            assertThat(databaseSet.getDbfile_format(), is(FileFormat.CSV.getCode()));
-            assertThat(databaseSet.getIs_header(), is(IsFlag.Shi.getCode()));
-            assertThat(databaseSet.getIs_hidden(), is(IsFlag.Shi.getCode()));
+//            assertThat(databaseSet.getDbfile_format(), is(FileFormat.CSV.getCode()));
+//            assertThat(databaseSet.getIs_header(), is(IsFlag.Shi.getCode()));
+//            assertThat(databaseSet.getIs_hidden(), is(IsFlag.Shi.getCode()));
             assertThat(databaseSet.getClassify_id(), is(jobClassify.getClassify_id()));
             Map<String, Object> ftpCollect = SqlOperator.queryOneObject(db,
                     "select * from " + Ftp_collect.TableName + " where agent_id=?", dbAgentId);

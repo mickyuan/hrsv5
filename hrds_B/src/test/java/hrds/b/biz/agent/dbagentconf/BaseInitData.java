@@ -188,10 +188,10 @@ public class BaseInitData {
 			databaseSet.setAgent_id(agentId);
 			databaseSet.setDatabase_number("dbtest" + i);
 			databaseSet.setDb_agent(dbFlag);
-			databaseSet.setIs_load(IsFlag.Shi.getCode());
-			databaseSet.setIs_hidden(isHidden);
+//			databaseSet.setIs_load(IsFlag.Shi.getCode());
+//			databaseSet.setIs_hidden(isHidden);
 			databaseSet.setIs_sendok(isSendOk);
-			databaseSet.setIs_header(IsFlag.Shi.getCode());
+//			databaseSet.setIs_header(IsFlag.Shi.getCode());
 			databaseSet.setClassify_id(classifyId);
 			databaseSet.setTask_name("wzcTaskName" + i);
 			databaseSet.setDatabase_type(databaseType);
@@ -199,10 +199,10 @@ public class BaseInitData {
 			databaseSet.setDatabase_drive(driver);
 			databaseSet.setDatabase_ip(ip);
 			databaseSet.setDatabase_port(port);
-			databaseSet.setDatabase_code(databaseCode);
+//			databaseSet.setDatabase_code(databaseCode);
 			databaseSet.setJdbc_url(url);
-			databaseSet.setDbfile_format(dbfileFormat);
-			databaseSet.setFile_suffix(fileSuffix);
+//			databaseSet.setDbfile_format(dbfileFormat);
+//			databaseSet.setFile_suffix(fileSuffix);
 			databaseSet.setPlane_url(planeUrl);
 			databaseSet.setRow_separator(rowSeparator);
 			databaseSet.setDatabase_pad(databasePwd);
@@ -523,9 +523,9 @@ public class BaseInitData {
 
 	public static ActionResult simulatedLogin(){
 		String responseValue = new HttpClient().buildSession()
-				.addData("user_id", TEST_USER_ID)
-				.addData("password", TEST_USER_PASSWORD)
-				.post("http://127.0.0.1:8099/A/action/hrds/a/biz/login/login").getBodyString();
+				.addData("user_id", 2001)
+				.addData("password", 1)
+				.post("http://127.0.0.1:8888/A/action/hrds/a/biz/login/login").getBodyString();
 		return JsonUtil.toObjectSafety(responseValue, ActionResult.class).orElseThrow(() -> new BusinessException("连接失败"));
 	}
 }

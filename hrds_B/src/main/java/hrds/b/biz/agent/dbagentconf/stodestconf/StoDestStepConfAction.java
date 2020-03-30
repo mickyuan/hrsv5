@@ -83,7 +83,7 @@ public class StoDestStepConfAction extends BaseAction{
 		List<Object> tableIds = Dbo.queryOneColumnList("select ti.table_id from " + Table_info.TableName + " ti" +
 				" join " + Data_extraction_def.TableName + " ded" +
 				" on ti.table_id = ded.table_id" +
-				" where ti.database_id = ? and ded.data_extract_type = ?", colSetId, DataExtractType.ShuJuChouQuJiRuKu.getCode());
+				" where ti.database_id = ? and ded.data_extract_type = ?", colSetId, DataExtractType.ShuJuKuChouQuLuoDi.getCode());
 		if(tableIds.isEmpty()){
 			throw new BusinessException("未获取到数据库采集表");
 		}
@@ -133,14 +133,14 @@ public class StoDestStepConfAction extends BaseAction{
 	public Result getStoDestForOnlyExtract(long tableId){
 		//1、校验该表定义的数据抽取信息是否存在
 		long count = Dbo.queryNumber("select count(1) from " + Data_extraction_def.TableName +
-				" where table_id = ? and data_extract_type = ?", tableId, DataExtractType.JinShuJuChouQu.getCode())
+				" where table_id = ? and data_extract_type = ?", tableId, DataExtractType.ShuJuKuChouQuLuoDi.getCode())
 				.orElseThrow(() -> new BusinessException("SQL查询错误"));
 		if(count != 1){
 			throw new BusinessException("获取该表数据抽取信息异常");
 		}
 		//2、查询数据抽取定义表，获取数据落地目录并返回
 		return Dbo.queryResult("select plane_url from " + Data_extraction_def.TableName + " where table_id = ? " +
-				"and data_extract_type = ?", tableId, DataExtractType.JinShuJuChouQu.getCode());
+				"and data_extract_type = ?", tableId, DataExtractType.ShuJuKuChouQuLuoDi.getCode());
 	}
 
 	/*
@@ -157,7 +157,7 @@ public class StoDestStepConfAction extends BaseAction{
 	public void saveStoDestForOnlyExtract(long tableId, String stoDest){
 		//1、使用tableId进行校验，判断该表是否定义过数据抽取信息，且数据抽取方式为仅抽取
 		long count = Dbo.queryNumber("select count(1) from " + Data_extraction_def.TableName +
-				" where table_id = ? and data_extract_type = ?", tableId, DataExtractType.JinShuJuChouQu.getCode())
+				" where table_id = ? and data_extract_type = ?", tableId, DataExtractType.ShuJuKuChouQuLuoDi.getCode())
 				.orElseThrow(() -> new BusinessException("SQL查询错误"));
 		//2、若不存在，向前端抛异常
 		if(count != 1){
