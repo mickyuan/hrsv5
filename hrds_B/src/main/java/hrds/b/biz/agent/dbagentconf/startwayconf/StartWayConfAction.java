@@ -194,6 +194,8 @@ public class StartWayConfAction extends BaseAction {
   @Method(
       desc = "获取任务Agent的部署路径及日志目录",
       logicStep = "" + "1: 检查当前任务是否存在; 2: 回去任务部署的Agent路径及日志地址,并返回")
+  @Param(name = "colSetId",desc = "采集任务编号",range = "不可为空的整数")
+  @Return(desc = "返回Agent部署的程序目录",range = "不可为空")
   public Map<String, Object> getAgentPath(long colSetId) {
     //    1: 检查该任务是否存在
     long countNum =
