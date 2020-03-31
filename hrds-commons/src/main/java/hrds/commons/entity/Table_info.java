@@ -70,6 +70,8 @@ public class Table_info extends ProjectTableEntity
 	private String unload_type;
 	@DocBean(name ="is_customize_sql",value="是否并行抽取中的自定义sql(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_customize_sql;
+	@DocBean(name ="rec_num_date",value="数据获取时间:",dataType = String.class,required = true)
+	private String rec_num_date;
 
 	/** 取得：表名ID */
 	public Long getTable_id(){
@@ -254,5 +256,13 @@ public class Table_info extends ProjectTableEntity
 	/** 设置：是否并行抽取中的自定义sql */
 	public void setIs_customize_sql(String is_customize_sql){
 		this.is_customize_sql=is_customize_sql;
+	}
+	/** 取得：数据获取时间 */
+	public String getRec_num_date(){
+		return rec_num_date;
+	}
+	/** 设置：数据获取时间 */
+	public void setRec_num_date(String rec_num_date){
+		this.rec_num_date=rec_num_date;
 	}
 }
