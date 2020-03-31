@@ -9,7 +9,6 @@ import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
 import hrds.agent.job.biz.core.dbstage.service.CollectPage;
-import hrds.agent.job.biz.core.service.JdbcCollectTableHandleParse;
 import hrds.agent.job.biz.core.service.CollectTableHandleFactory;
 import hrds.agent.job.biz.utils.DataExtractUtil;
 import hrds.agent.job.biz.utils.FileUtil;
@@ -25,7 +24,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -89,13 +87,14 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 			if (IsFlag.Shi.getCode().equals(collectTableBean.getIs_parallel())) {
 				//2、解析作业信息，得到表名和表数据量
 				long totalCount = Long.parseLong(collectTableBean.getTable_count());
+				//获取每日新增数据量，重新计算表的数据总量
 				//3、读取并行抽取线程数
 				Integer threadCount = collectTableBean.getPageparallels();
 				long pageRow = totalCount / threadCount;
 				//4、创建固定大小的线程池，执行分页查询(线程池类型和线程数可以后续改造)
 				// 此处不会有海量的任务需要执行，不会出现队列中等待的任务对象过多的OOM事件。
-				executorService = Executors.newFixedThreadPool(threadCount + 1);
-				for (int i = 0; i < threadCount; i++) {
+				executorService = Executors.newFixedThreadPool(threadCount);
+				for (int i = 0; i < threadCount - 1; i++) {
 					long start = (i * pageRow);
 					long end = (i + 1) * pageRow;
 					//传入i(分页页码)，pageRow(每页的数据量)，用于写avro时的行号
@@ -104,10 +103,10 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 					Future<Map<String, Object>> future = executorService.submit(page);
 					futures.add(future);
 				}
-				long lastPageStart = pageRow * threadCount;
+				long lastPageStart = pageRow * (threadCount - 1);
 				//最后一个线程的最大条数设为Long.MAX_VALUE
 				CollectPage lastPage = new CollectPage(sourceDataConfBean, collectTableBean, tableBean,
-						lastPageStart, lastPageEnd, threadCount + 1, pageRow);
+						lastPageStart, lastPageEnd, threadCount, pageRow);
 				Future<Map<String, Object>> lastFuture = executorService.submit(lastPage);
 				futures.add(lastFuture);
 			} else if (IsFlag.Fou.getCode().equals(collectTableBean.getIs_parallel())) {

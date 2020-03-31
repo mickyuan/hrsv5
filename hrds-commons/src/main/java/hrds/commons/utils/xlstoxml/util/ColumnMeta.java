@@ -83,12 +83,12 @@ public class ColumnMeta {
 	 */
 	public static List<String> getColumnList(String tName, String xml_file_path) {
 
-		DocumentBuilderFactory factory = null;
-		DocumentBuilder builder = null;
-		Document doc = null;
-		NodeList table_list = null;
-		NodeList column_list = null;
-		String table_name = "";
+		DocumentBuilderFactory factory;
+		DocumentBuilder builder;
+		Document doc;
+		NodeList table_list;
+		NodeList column_list;
+		String table_name;
 		List<String> clist = new ArrayList<String>();
 
 		try {
@@ -102,6 +102,13 @@ public class ColumnMeta {
 				table_name = table_name.toLowerCase();
 				tName = tName.toLowerCase();
 				if (table_name.equals(tName)) {
+					String table_info = table_list.item(i).getAttributes().getNamedItem("file_format").getNodeValue()
+							+ "^" + table_list.item(i).getAttributes().getNamedItem("is_header").getNodeValue()
+							+ "^" + table_list.item(i).getAttributes().getNamedItem("row_separator").getNodeValue()
+							+ "^" + table_list.item(i).getAttributes().getNamedItem("column_separator").getNodeValue()
+							+ "^" + table_list.item(i).getAttributes().getNamedItem("root_path").getNodeValue()
+							+ "^" + table_list.item(i).getAttributes().getNamedItem("file_code").getNodeValue();
+					clist.add(table_info);
 					column_list = table_list.item(i).getChildNodes();
 					for (int j = 0; j < column_list.getLength(); j++) {
 						String column_name = column_list.item(j).getAttributes().getNamedItem("name").getNodeValue();

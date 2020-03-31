@@ -145,7 +145,7 @@ public class CollectPage implements Callable<Map<String, Object>> {
 	private String pageForSql(String dataType, String primaryKey) {
 		LOGGER.info("start-->" + start + "  limit --> " + pageRow + "  end--> " + end);
 		if (DatabaseType.MYSQL.getCode().equals(dataType)) {
-			sql = "select * from (" + sql + ") as hyren_collect_temp limit " + start + "," + pageRow;
+			sql = "select * from (" + sql + ") as hyren_collect_temp limit " + start + "," + end;
 		} else if (DatabaseType.TeraData.getCode().equals(dataType)) {
 			sql = "select * from (" + sql + ") as hyren_collect_temp qualify row_number() over(order by "
 					+ primaryKey + ") >= " + start + " and row_number() over(order by "
@@ -155,10 +155,10 @@ public class CollectPage implements Callable<Map<String, Object>> {
 			sql = "select * from (select t.*,rownum hyren_rn from (" + sql + ") t where rownum <= "
 					+ Math.abs(end) + ") t1 where t1.hyren_rn>" + start + "";
 		} else if (DatabaseType.Postgresql.getCode().equals(dataType)) {
-			sql = "select * from (" + sql + ") as hyren_collect_temp  limit " + pageRow + " offset " + start;
+			sql = "select * from (" + sql + ") as hyren_collect_temp  limit " + end + " offset " + start;
 		} else {
 			//TODO 这里欢迎补全，最后else抛异常
-			sql = "select * from (" + sql + ") as hyren_collect_temp  limit " + start + "," + pageRow;
+			sql = "select * from (" + sql + ") as hyren_collect_temp  limit " + start + "," + end;
 		}
 		LOGGER.info("分页这里执行的sql是：" + sql);
 		return sql;
