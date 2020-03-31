@@ -69,7 +69,6 @@ public class CollectPage implements Callable<Map<String, Object>> {
 			}
 			//抽取这里可以同时抽成多种文件格式，遍历，执行卸数。
 			//TODO 这里有一个优化的方式，就是在一个resultSet里面根据逻辑写多个文件，暂时直接遍历，复用以前的方法
-//			List<String> formatList = StringUtil.split(file_formats, ",");
 			//TODO 抽取这里其实不用返回文件路径，待删除
 			Map<String, Object> map = new HashMap<>();
 			for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
@@ -143,9 +142,17 @@ public class CollectPage implements Callable<Map<String, Object>> {
 	}
 
 	private String pageForSql(String dataType, String primaryKey) {
-		LOGGER.info("start-->" + start + "  limit --> " + pageRow + "  end--> " + end);
+		//定义一个临时的分页数,不改变成员变量的值
+		long pageRowTemp = 0;
+		//判断如果end为最后一次线程的值，对于MYSQL和Postgresql的最后一页值为最大值
+		if (end == Long.MAX_VALUE) {
+			pageRowTemp = end;
+		} else {
+			pageRowTemp = pageRow;
+		}
+		LOGGER.info("start-->" + start + "  limit --> " + pageRowTemp + "  end--> " + end);
 		if (DatabaseType.MYSQL.getCode().equals(dataType)) {
-			sql = "select * from (" + sql + ") as hyren_collect_temp limit " + start + "," + end;
+			sql = "select * from (" + sql + ") as hyren_collect_temp limit " + start + "," + pageRowTemp;
 		} else if (DatabaseType.TeraData.getCode().equals(dataType)) {
 			sql = "select * from (" + sql + ") as hyren_collect_temp qualify row_number() over(order by "
 					+ primaryKey + ") >= " + start + " and row_number() over(order by "
@@ -155,10 +162,10 @@ public class CollectPage implements Callable<Map<String, Object>> {
 			sql = "select * from (select t.*,rownum hyren_rn from (" + sql + ") t where rownum <= "
 					+ Math.abs(end) + ") t1 where t1.hyren_rn>" + start + "";
 		} else if (DatabaseType.Postgresql.getCode().equals(dataType)) {
-			sql = "select * from (" + sql + ") as hyren_collect_temp  limit " + end + " offset " + start;
+			sql = "select * from (" + sql + ") as hyren_collect_temp  limit " + pageRowTemp + " offset " + start;
 		} else {
 			//TODO 这里欢迎补全，最后else抛异常
-			sql = "select * from (" + sql + ") as hyren_collect_temp  limit " + start + "," + end;
+			sql = "select * from (" + sql + ") as hyren_collect_temp  limit " + start + "," + pageRowTemp;
 		}
 		LOGGER.info("分页这里执行的sql是：" + sql);
 		return sql;

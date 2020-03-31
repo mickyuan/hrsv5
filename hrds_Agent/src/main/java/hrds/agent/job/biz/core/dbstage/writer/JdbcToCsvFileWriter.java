@@ -62,7 +62,7 @@ public class JdbcToCsvFileWriter extends AbstractFileWriter {
 		try {
 			avroWriter = getAvroWriter(tableBean.getTypeArray(), hbase_name, midName, pageNum);
 			//卸数文件名为hbase_name加线程唯一标识加此线程创建文件下标
-			String fileName = midName + hbase_name + pageNum + index + ".part";
+			String fileName = midName + hbase_name + pageNum + index + "." + data_extraction_def.getFile_suffix();
 			String dataDelimiter = data_extraction_def.getDatabase_separatorr();
 			fileInfo.append(fileName).append(JdbcCollectTableHandleParse.STRSPLIT);
 			writerFile = new WriterFile(fileName);
@@ -138,7 +138,7 @@ public class JdbcToCsvFileWriter extends AbstractFileWriter {
 						//当文件满足阈值时 ，然后关闭当前流，并创建新的数据流
 						writerFile.csvClose();
 						index++;
-						fileName = midName + hbase_name + pageNum + index + ".part";
+						fileName = midName + hbase_name + pageNum + index + "." + data_extraction_def.getFile_suffix();
 						writerFile = new WriterFile(fileName);
 						writer = writerFile.getCsvWriter(DataBaseCode.ofValueByCode(
 								data_extraction_def.getDatabase_code()));

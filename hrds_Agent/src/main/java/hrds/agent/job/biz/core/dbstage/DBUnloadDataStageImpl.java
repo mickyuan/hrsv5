@@ -3,6 +3,7 @@ package hrds.agent.job.biz.core.dbstage;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Return;
+import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.FileNameUtils;
 import hrds.agent.job.biz.bean.*;
 import hrds.agent.job.biz.constant.RunStatusConstant;
@@ -88,13 +89,17 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 				//2、解析作业信息，得到表名和表数据量
 				long totalCount = Long.parseLong(collectTableBean.getTable_count());
 				//获取每日新增数据量，重新计算表的数据总量
+				int days = DateUtil.dateMargin(collectTableBean.getRec_num_date(), collectTableBean.getEtlDate());
+				//跑批日期小于获取数据总量日期，数据总量不变
+				days = days > 0 ? days : 0;
+				totalCount += collectTableBean.getDataincrement() * days;
 				//3、读取并行抽取线程数
 				Integer threadCount = collectTableBean.getPageparallels();
 				long pageRow = totalCount / threadCount;
 				//4、创建固定大小的线程池，执行分页查询(线程池类型和线程数可以后续改造)
 				// 此处不会有海量的任务需要执行，不会出现队列中等待的任务对象过多的OOM事件。
 				executorService = Executors.newFixedThreadPool(threadCount);
-				for (int i = 0; i < threadCount - 1; i++) {
+				for (int i = 0; i < threadCount; i++) {
 					long start = (i * pageRow);
 					long end = (i + 1) * pageRow;
 					//传入i(分页页码)，pageRow(每页的数据量)，用于写avro时的行号
@@ -103,7 +108,7 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 					Future<Map<String, Object>> future = executorService.submit(page);
 					futures.add(future);
 				}
-				long lastPageStart = pageRow * (threadCount - 1);
+				long lastPageStart = pageRow * threadCount;
 				//最后一个线程的最大条数设为Long.MAX_VALUE
 				CollectPage lastPage = new CollectPage(sourceDataConfBean, collectTableBean, tableBean,
 						lastPageStart, lastPageEnd, threadCount, pageRow);
@@ -114,7 +119,7 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 				// 此处不会有海量的任务需要执行，不会出现队列中等待的任务对象过多的OOM事件。
 				executorService = Executors.newFixedThreadPool(1);
 				CollectPage collectPage = new CollectPage(sourceDataConfBean, collectTableBean, tableBean,
-						0, lastPageEnd, 1, lastPageEnd);
+						0, lastPageEnd, 0, lastPageEnd);
 				Future<Map<String, Object>> lastFuture = executorService.submit(collectPage);
 				futures.add(lastFuture);
 			} else {
@@ -147,10 +152,6 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 			stageParamInfo.setFileArr(fileArr);
 			stageParamInfo.setFileSize(fileSize);
 			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.SUCCEED.getCode(), "执行成功");
-			String midName = Constant.JDBCUNLOADFOLDER + collectTableBean.getDatabase_id() + File.separator
-					+ collectTableBean.getTable_id() + File.separator + "tableData.meta";
-			midName = FilenameUtils.normalize(midName);
-			//写meta数据开始  TODO 这里这个meta信息应该是只有数据抽取才需要写，5.0版本的meta信息直接通过tableBean传递
 			//数据字典的路径
 			String dictionaryPath = FileNameUtils.normalize(collectTableBean.getData_extraction_def_list().
 					get(0).getPlane_url() + File.separator + collectTableBean.getTable_name()
@@ -180,7 +181,7 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 		return StageConstant.UNLOADDATA.getCode();
 	}
 
-//	@Method(desc = "获取本次数据库采集单张表的mate信息",
+	//	@Method(desc = "获取本次数据库采集单张表的mate信息",
 //			logicStep = "1、直接返回成员变量tableBean")
 //	@Return(desc = "数据库采集单张表的mate信息",
 //			range = "不会为null")
@@ -215,4 +216,5 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 //	public String[] getFileArr() {
 //		return fileArr;
 //	}
+
 }
