@@ -1616,3 +1616,23 @@ DLCS_NAME                                         VARCHAR(512) NOT NULL, --长�
 DLCS_REMARK                                       VARCHAR(512) NULL, --备注
 CONSTRAINT LENGTH_CONTRAST_SUM_PK PRIMARY KEY(DLCS_ID)   );
 
+--数据存储登记
+DROP TABLE IF EXISTS DATA_STORE_REG ;
+CREATE TABLE DATA_STORE_REG(
+FILE_ID                                           VARCHAR(40) NOT NULL, --文件编号
+COLLECT_TYPE                                      CHAR(1) NOT NULL, --采集类型
+ORIGINAL_UPDATE_DATE                              CHAR(8) NOT NULL, --原文件最后修改日期
+ORIGINAL_UPDATE_TIME                              CHAR(6) NOT NULL, --原文件最后修改时间
+ORIGINAL_NAME                                     VARCHAR(512) NOT NULL, --原始表中文名称
+TABLE_NAME                                        VARCHAR(512) NULL, --采集的原始表名
+HYREN_NAME                                        VARCHAR(512) NOT NULL, --系统内对应表名
+META_INFO                                         VARCHAR(6000) NULL, --META元信息
+STORAGE_DATE                                      CHAR(8) NOT NULL, --入库日期
+STORAGE_TIME                                      CHAR(6) NOT NULL, --入库时间
+FILE_SIZE                                         BIGINT default 0 NOT NULL, --文件大小
+AGENT_ID                                          BIGINT default 0 NOT NULL, --Agent_id
+SOURCE_ID                                         BIGINT default 0 NOT NULL, --数据源ID
+DATABASE_ID                                       BIGINT default 0 NOT NULL, --数据库设置id
+TABLE_ID                                          BIGINT default 0 NOT NULL, --表名ID
+CONSTRAINT DATA_STORE_REG_PK PRIMARY KEY(FILE_ID)   );
+
