@@ -194,8 +194,8 @@ public class StartWayConfAction extends BaseAction {
   @Method(
       desc = "获取任务Agent的部署路径及日志目录",
       logicStep = "" + "1: 检查当前任务是否存在; 2: 回去任务部署的Agent路径及日志地址,并返回")
-  @Param(name = "colSetId",desc = "采集任务编号",range = "不可为空的整数")
-  @Return(desc = "返回Agent部署的程序目录",range = "不可为空")
+  @Param(name = "colSetId", desc = "采集任务编号", range = "不可为空的整数")
+  @Return(desc = "返回Agent部署的程序目录", range = "不可为空")
   public Map<String, Object> getAgentPath(long colSetId) {
     //    1: 检查该任务是否存在
     long countNum =
@@ -222,6 +222,7 @@ public class StartWayConfAction extends BaseAction {
       logicStep = "" + "1: 获取任务配置信息" + "2: 获取表名称" + "3: 放入作业需要数据信息" + "4: 将作业的信息存入数据库中")
   @Param(name = "colSetId", desc = "任务的ID", range = "不可为空的整数")
   @Param(name = "etl_sys_cd", desc = "作业工程编号", range = "不可为空")
+  @Param(name = "sub_sys_cd", desc = "作业任务编号", range = "不可为空")
   @Param(name = "pro_dic", desc = "agent部署目录", range = "不可为空")
   @Param(name = "log_dic", desc = "agent日志路径", range = "不可为空")
   @Param(
@@ -235,7 +236,12 @@ public class StartWayConfAction extends BaseAction {
       range = "可以为空,如果需要配置启动方式不配置表信息有啥意义",
       isBean = true)
   public void saveJobDataToDatabase(
-      long colSetId, String etl_sys_cd, String pro_dic, String log_dic, Etl_job_def[] etlJobs) {
+      long colSetId,
+      String etl_sys_cd,
+      String sub_sys_cd,
+      String pro_dic,
+      String log_dic,
+      Etl_job_def[] etlJobs) {
 
     Map<String, Object> databaseData = getDatabaseData(colSetId);
     // 作业系统参数的作业程序目录
@@ -256,15 +262,37 @@ public class StartWayConfAction extends BaseAction {
 
     // FIXME 作业依赖待定
 
-    // 默认增加一个资源类型
-    Etl_resource etl_resource = new Etl_resource();
-    etl_resource.setEtl_sys_cd(etl_sys_cd);
-    etl_resource.setResource_type(RESOURCE_THRESHOLD);
-    etl_resource.setResource_max(15);
-    etl_resource.add(Dbo.db());
+    // 默认增加一个资源类型,先检查是否存在,如果不存在则不添加
+    long resourceNum =
+        Dbo.queryNumber(
+                "SELECT COUNT(1) FROM " + Etl_resource.TableName + " WHERE resource_type = ?",
+                RESOURCE_THRESHOLD)
+            .orElseThrow(() -> new BusinessException("SQL查询错误"));
+    if (resourceNum == 0) {
+      Etl_resource etl_resource = new Etl_resource();
+      etl_resource.setEtl_sys_cd(etl_sys_cd);
+      etl_resource.setResource_type(RESOURCE_THRESHOLD);
+      etl_resource.setResource_max(15);
+      etl_resource.add(Dbo.db());
+    }
+
+    // 先获取当前工程,任务下的作业名称
+    List<Object> etlJobList =
+        Dbo.queryOneColumnList(
+            "SELECT etl_job FROM "
+                + Etl_job_def.TableName
+                + " WHERE etl_sys_cd = ? AND sub_sys_cd = ?",
+            etl_sys_cd,
+            sub_sys_cd);
 
     // 作业定义信息
     for (Etl_job_def etl_job_def : etlJobs) {
+
+      // 检查表名是否存在
+      if (etlJobList.contains(etl_job_def.getEtl_job())) {
+        throw new BusinessException("作业名称 (" + etl_job_def.getEtl_job() + ")已存在");
+      }
+
       /*
        检查必要字段不能为空的情况
       */
@@ -302,13 +330,6 @@ public class StartWayConfAction extends BaseAction {
       etl_job_resource_rela.setResource_type(RESOURCE_THRESHOLD);
       etl_job_resource_rela.setResource_req(1);
       etl_job_resource_rela.add(Dbo.db());
-    }
-  }
-
-  private void checkPara(String param, String errorMsg) {
-
-    if (StringUtil.isBlank(param)) {
-      throw new BusinessException(errorMsg);
     }
   }
 }
