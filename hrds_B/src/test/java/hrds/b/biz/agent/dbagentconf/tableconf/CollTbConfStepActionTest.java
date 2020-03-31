@@ -1625,7 +1625,7 @@ public class CollTbConfStepActionTest extends WebBaseTestCase{
 			Result dataExtractionDef = SqlOperator.queryResult(db, "select * from " + Data_extraction_def.TableName + " where table_id = ?", tableId);
 			assertThat("code_info表的数据抽取定义信息在Data_extraction_def表中有数据，数据有1条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在data_extraction_def表中已经查不到数据了", defCount, is(0L));
 			assertThat("code_info表的数据抽取定义信息在Data_extraction_def表中有数据，数据有1条，并且用构造初始化数据是使用的CODE_INFO_TABLE_ID在data_extraction_def表中已经查不到数据了", dataExtractionDef.getRowCount(), is(1));
-			assertThat("code_info表的数据抽取定义信息在Data_extraction_def表中有数据，<数据抽取方式>符合预期", dataExtractionDef.getString(0, "data_extract_type"), is(DataExtractType.JinShuJuChouQu.getCode()));
+			assertThat("code_info表的数据抽取定义信息在Data_extraction_def表中有数据，<数据抽取方式>符合预期", dataExtractionDef.getString(0, "data_extract_type"), is(DataExtractType.ShuJuKuChouQuLuoDi.getCode()));
 			assertThat("code_info表的数据抽取定义信息在Data_extraction_def表中有数据，<是否表头>符合预期", dataExtractionDef.getString(0, "is_header"), is(IsFlag.Fou.getCode()));
 			assertThat("code_info表的数据抽取定义信息在Data_extraction_def表中有数据，<落地文件编码>符合预期", dataExtractionDef.getString(0, "database_code"), is(DataBaseCode.UTF_8.getCode()));
 			assertThat("code_info表的数据抽取定义信息在Data_extraction_def表中有数据，<落地文件格式>符合预期", dataExtractionDef.getString(0, "dbfile_format"), is(FileFormat.PARQUET.getCode()));

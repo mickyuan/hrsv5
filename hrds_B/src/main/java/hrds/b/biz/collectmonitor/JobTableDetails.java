@@ -5,12 +5,14 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
+import fd.ng.core.utils.StringUtil;
 import hrds.commons.codes.ExecuteState;
 import hrds.commons.entity.Collect_case;
-
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 @DocClass(desc = "处理采集任务表的信息", author = "Mr.Lee", createdate = "2019-11-01")
 public class JobTableDetails {
@@ -37,9 +39,17 @@ public class JobTableDetails {
 
           // 表采集步骤的结束时间
           String collect_e_date =
-              DateUtil.parseStr2DateWith8Char(collect_case.getCollect_e_date()).toString()
+              DateUtil.parseStr2DateWith8Char(
+                          StringUtil.isBlank(collect_case.getCollect_e_date())
+                              ? DateUtil.getSysDate()
+                              : collect_case.getCollect_e_date())
+                      .toString()
                   + ' '
-                  + DateUtil.parseStr2TimeWith6Char(collect_case.getCollect_e_time()).toString();
+                  + DateUtil.parseStr2TimeWith6Char(
+                          StringUtil.isBlank(collect_case.getCollect_e_time())
+                              ? DateUtil.getSysTime()
+                              : collect_case.getCollect_e_time())
+                      .toString();
           // 采集原表名称
           String table_name = collect_case.getTask_classify();
           /*

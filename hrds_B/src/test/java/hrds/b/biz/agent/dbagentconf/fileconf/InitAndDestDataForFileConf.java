@@ -603,7 +603,7 @@ public class InitAndDestDataForFileConf {
 			switch (i) {
 				case 0 :
 					tableId = SYS_USER_TABLE_ID;
-					extractType = DataExtractType.JinShuJuChouQu.getCode();
+					extractType = DataExtractType.ShuJuKuChouQuLuoDi.getCode();
 					fileFormat = FileFormat.FeiDingChang.getCode();
 					//rowSeparator = StringUtil.string2Unicode("\r");
 					rowSeparator = StringUtil.string2Unicode("\n");
@@ -613,7 +613,7 @@ public class InitAndDestDataForFileConf {
 					break;
 				case 1 :
 					tableId = CODE_INFO_TABLE_ID;
-					extractType = DataExtractType.JinShuJuChouQu.getCode();
+					extractType = DataExtractType.ShuJuKuChouQuLuoDi.getCode();
 					fileFormat = FileFormat.DingChang.getCode();
 					rowSeparator = "";
 					databaseSeparatorr = "";
@@ -621,7 +621,7 @@ public class InitAndDestDataForFileConf {
 					break;
 				case 2 :
 					tableId = AGENT_INFO_TABLE_ID;
-					extractType = DataExtractType.ShuJuChouQuJiRuKu.getCode();
+					extractType = DataExtractType.ShuJuKuChouQuLuoDi.getCode();
 					fileFormat = FileFormat.ORC.getCode();
 					rowSeparator = "";
 					databaseSeparatorr = "";
@@ -629,7 +629,7 @@ public class InitAndDestDataForFileConf {
 					break;
 				case 3 :
 					tableId = DATA_SOURCE_TABLE_ID;
-					extractType = DataExtractType.ShuJuChouQuJiRuKu.getCode();
+					extractType = DataExtractType.ShuJuKuChouQuLuoDi.getCode();
 					fileFormat = FileFormat.FeiDingChang.getCode();
 					rowSeparator = StringUtil.string2Unicode("|");
 					databaseSeparatorr = StringUtil.string2Unicode(" ");

@@ -3,60 +3,37 @@ package hrds.agent.job.biz.core.dfstage;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Return;
-import fd.ng.core.utils.DateUtil;
-import hrds.agent.job.biz.bean.StageParamInfo;
-import hrds.agent.job.biz.bean.StageStatusInfo;
-import hrds.agent.job.biz.constant.JobConstant;
+import fd.ng.core.utils.FileNameUtils;
+import hrds.agent.job.biz.bean.*;
 import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
-import hrds.agent.job.biz.core.dfstage.fileparser.CsvFile2Parquet;
+import hrds.agent.job.biz.core.service.CollectTableHandleFactory;
+import hrds.agent.job.biz.utils.FileUtil;
+import hrds.agent.job.biz.utils.JobStatusInfoUtil;
+import hrds.commons.codes.CollectType;
 import hrds.commons.codes.FileFormat;
-import org.apache.commons.lang3.StringUtils;
+import hrds.commons.codes.IsFlag;
+import hrds.commons.entity.Data_extraction_def;
+import hrds.commons.exception.AppSystemException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.util.List;
 
 @DocClass(desc = "数据文件采集，数据卸数阶段实现", author = "WangZhengcheng")
 public class DFUnloadDataStageImpl extends AbstractJobStage {
 
 	private final static Logger LOGGER = LoggerFactory.getLogger(DFUnloadDataStageImpl.class);
-
-	private final String jobId;
-	private final String inputFile;
-	private final String tableName;
-	private final List<String> columns;
-	private final List<String> columnTypes;
-	private final String startDate;
-
-	private final String outputFile;
-	private long rowCount = 0;
+	private SourceDataConfBean sourceDataConfBean;
+	private CollectTableBean collectTableBean;
 
 	/**
 	 * 数据文件采集，数据卸数阶段实现.
-	 *
-	 * @param jobId       作业编号
-	 * @param inputFile   数据文件，输入文件
-	 * @param tableName   名称，可以是数据库的表名或者只是名称
-	 * @param columns     字段
-	 * @param columnTypes 字段类型
-	 * @param startDate   拉链用的开始日期，该数据会额外写入文件为一列
-	 * @author 13616
-	 * @date 2019/8/7 11:49
 	 */
-	public DFUnloadDataStageImpl(String jobId, String inputFile, String tableName, List<String> columns,
-	                             List<String> columnTypes, String startDate) {
-		this.jobId = jobId;
-		this.inputFile = inputFile;
-		this.tableName = tableName;
-		this.columns = columns;
-		this.columnTypes = columnTypes;
-		this.startDate = startDate;
-		//TODO 输出文件待定
-		this.outputFile = new File(inputFile).getParent() + File.separatorChar + tableName + "." +
-				FileFormat.PARQUET.getValue();
+	public DFUnloadDataStageImpl(SourceDataConfBean sourceDataConfBean, CollectTableBean collectTableBean) {
+		this.collectTableBean = collectTableBean;
+		this.sourceDataConfBean = sourceDataConfBean;
 	}
 
 	@Method(desc = "数据文件采集，数据卸数阶段实现，处理完成后，无论成功还是失败，" +
@@ -64,40 +41,66 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 	@Return(desc = "StageStatusInfo是保存每个阶段状态信息的实体类", range = "不会为null,StageStatusInfo实体类对象")
 	@Override
 	public StageParamInfo handleStage(StageParamInfo stageParamInfo) {
-
-		StageStatusInfo status = new StageStatusInfo();
-		status.setJobId(jobId);
-		status.setStageNameCode(StageConstant.UNLOADDATA.getCode());
-		status.setStartDate(DateUtil.getSysDate());
-		status.setStartTime(DateUtil.getSysTime());
-
-		CsvFile2Parquet csvFile2Parquet = new CsvFile2Parquet.Builder(tableName, StringUtils.join(columns,
-				JobConstant.COLUMN_SEPARATOR), StringUtils.join(columnTypes, JobConstant.COLUMN_TYPE_SEPARATOR),
-				startDate).builCsvFile(inputFile, outputFile).build();
-
-		rowCount = csvFile2Parquet.handle();
-
-		LOGGER.info("------------------数据文件卸数阶段结束------------------");
-		status.setEndDate(DateUtil.getSysDate());
-		status.setEndTime(DateUtil.getSysTime());
-		status.setStatusCode(RunStatusConstant.SUCCEED.getCode());
-
-		stageParamInfo.setStatusInfo(status);
+		LOGGER.info("------------------DB文件采集卸数阶段开始------------------");
+		//1、创建卸数阶段状态信息，更新作业ID,阶段名，阶段开始时间
+		StageStatusInfo statusInfo = new StageStatusInfo();
+		JobStatusInfoUtil.startStageStatusInfo(statusInfo, collectTableBean.getTable_id(),
+				StageConstant.UNLOADDATA.getCode());
+		try {
+			//获取数据字典里对应的表的meta信息
+			TableBean tableBean = CollectTableHandleFactory.getCollectTableHandleInstance(sourceDataConfBean)
+					.generateTableInfo(sourceDataConfBean, collectTableBean);
+			//判断仅登记
+			if (IsFlag.Shi.getCode().equals(collectTableBean.getIs_register())) {
+				//文件所在的路径为  根路径+跑批日期+表名+文件格式
+				String file_path = FileNameUtils.normalize(tableBean.getRoot_path() + File.separator
+						+ collectTableBean.getEtlDate() + File.separator + collectTableBean.getTable_name()
+						+ File.separator + FileFormat.ofValueByCode(tableBean.getFile_format()), true);
+				String[] file_list = new File(file_path).list();
+				//获得本次采集生成的数据文件的总大小
+				long fileSize = 0;
+				if (file_list != null && file_list.length > 0) {
+					for (String file_name : file_list) {
+						//判断文件是否存在，如果某个文件存在，则计算大小，若不存在，记录日志并继续运行
+						if (FileUtil.decideFileExist(file_name)) {
+							long singleFileSize = FileUtil.getFileSize(file_name);
+							fileSize += singleFileSize;
+						} else {
+							throw new AppSystemException(file_name + "文件不存在");
+						}
+					}
+				}
+				stageParamInfo.setFileArr(file_list);
+				stageParamInfo.setFileSize(fileSize);
+				//仅登记，则不用转存，则跳过db文件卸数，直接进行upload
+				LOGGER.info("Db文件采集，不需要转存，卸数跳过");
+			} else if (IsFlag.Fou.getCode().equals(collectTableBean.getIs_register())) {
+				Data_extraction_def targetData_extraction_def = collectTableBean.getTargetData_extraction_def();
+				//TODO 需要转存，根据文件采集的定义，读取文件，卸数文件到指定的目录
+				//将转存之后的文件格式，文件分隔符等重新赋值
+				tableBean.setColumn_separator(targetData_extraction_def.getDatabase_separatorr());
+				tableBean.setIs_header(targetData_extraction_def.getIs_header());
+				tableBean.setRow_separator(targetData_extraction_def.getRow_separator());
+				tableBean.setFile_format(targetData_extraction_def.getDbfile_format());
+				tableBean.setFile_code(targetData_extraction_def.getDatabase_code());
+			} else {
+				throw new AppSystemException("是否转存传到后台的参数不正确");
+			}
+			stageParamInfo.setTableBean(tableBean);
+		} catch (Exception e) {
+			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.FAILED.getCode(), e.getMessage());
+			LOGGER.error("DB文件采集卸数阶段失败：", e);
+		}
+		LOGGER.info("------------------DB文件采集卸数阶段结束------------------");
+		//结束给stageParamInfo塞值
+		JobStatusInfoUtil.endStageParamInfo(stageParamInfo, statusInfo, collectTableBean
+				, CollectType.DBWenJianCaiJi.getCode());
 		return stageParamInfo;
 	}
 
 	@Override
-	public int getStageCode(){
+	public int getStageCode() {
 		return StageConstant.UNLOADDATA.getCode();
 	}
 
-	public String getOutputFile() {
-
-		return outputFile;
-	}
-
-	public long getRowCount() {
-
-		return rowCount;
-	}
 }

@@ -5,7 +5,7 @@ import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.constant.JobConstant;
-import hrds.agent.job.biz.core.dbstage.service.CollectTableHandleParse;
+import hrds.agent.job.biz.core.service.JdbcCollectTableHandleParse;
 import hrds.agent.job.biz.dataclean.Clean;
 import hrds.agent.job.biz.dataclean.CleanFactory;
 import hrds.agent.job.biz.dataclean.DataCleanInterface;
@@ -15,6 +15,7 @@ import hrds.agent.job.biz.utils.WriterFile;
 import hrds.commons.codes.FileFormat;
 import hrds.commons.codes.StorageType;
 import hrds.commons.entity.Column_split;
+import hrds.commons.entity.Data_extraction_def;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
 import org.apache.avro.file.DataFileWriter;
@@ -46,13 +47,17 @@ public class JdbcToOrcFileWriter extends AbstractFileWriter {
 	@SuppressWarnings("unchecked")
 	@Override
 	public String writeFiles(ResultSet resultSet, CollectTableBean collectTableBean, long pageNum,
-	                         long pageRow, TableBean tableBean) {
+	                         long pageRow, TableBean tableBean, Data_extraction_def data_extraction_def) {
 		String eltDate = collectTableBean.getEtlDate();
-		String midName = Constant.JDBCUNLOADFOLDER + collectTableBean.getDatabase_id() + File.separator
-				+ collectTableBean.getTable_id() + File.separator;
+//		String midName = Constant.JDBCUNLOADFOLDER + collectTableBean.getDatabase_id() + File.separator
+//				+ collectTableBean.getTable_id() + File.separator;
+		//数据抽取指定的目录
+		String plane_url = data_extraction_def.getPlane_url();
+		String midName = plane_url + File.separator + collectTableBean.getTable_name()
+				+ File.separator + eltDate + File.separator + "Orc" + File.separator;
 		String hbase_name = collectTableBean.getHbase_name();
 		midName = FileNameUtils.normalize(midName, true);
-		String dataDelimiter = collectTableBean.getDatabase_separatorr();
+		String dataDelimiter = data_extraction_def.getDatabase_separatorr();
 		DataFileWriter<Object> avroWriter = null;
 		long lineCounter = pageNum * pageRow;
 		long counter = 0;
@@ -62,7 +67,7 @@ public class JdbcToOrcFileWriter extends AbstractFileWriter {
 		StringBuilder fileInfo = new StringBuilder(1024);
 		try {
 			String fileName = midName + hbase_name + pageNum + index + ".part";
-			fileInfo.append(fileName).append(CollectTableHandleParse.STRSPLIT);
+			fileInfo.append(fileName).append(JdbcCollectTableHandleParse.STRSPLIT);
 			writerFile = new WriterFile(fileName);
 			avroWriter = getAvroWriter(tableBean.getTypeArray(), hbase_name, midName, pageNum);
 			writer = writerFile.getOrcWrite();
@@ -70,9 +75,9 @@ public class JdbcToOrcFileWriter extends AbstractFileWriter {
 			//清洗配置
 			final DataCleanInterface allClean = CleanFactory.getInstance().getObjectClean("clean_database");
 			//获取所有字段的名称，包括列分割和列合并出来的字段名称
-			List<String> allColumnList = StringUtil.split(tableBean.getColumnMetaInfo(), CollectTableHandleParse.STRSPLIT);
+			List<String> allColumnList = StringUtil.split(tableBean.getColumnMetaInfo(), JdbcCollectTableHandleParse.STRSPLIT);
 			//获取所有查询的字段的名称，不包括列分割和列合并出来的字段名称
-			List<String> selectColumnList = StringUtil.split(tableBean.getAllColumns(), CollectTableHandleParse.STRSPLIT);
+			List<String> selectColumnList = StringUtil.split(tableBean.getAllColumns(), JdbcCollectTableHandleParse.STRSPLIT);
 			Map<String, Object> parseJson = tableBean.getParseJson();
 			//字符合并
 			Map<String, String> mergeIng = (Map<String, String>) parseJson.get("mergeIng");
@@ -84,7 +89,7 @@ public class JdbcToOrcFileWriter extends AbstractFileWriter {
 			StringBuilder sb_ = new StringBuilder();//用来写临时数据
 
 			List<String> typeList = StringUtil.split(tableBean.getAllType(),
-					CollectTableHandleParse.STRSPLIT);
+					JdbcCollectTableHandleParse.STRSPLIT);
 			String currValue;
 			int numberOfColumns = selectColumnList.size();
 			int[] typeArray = tableBean.getTypeArray();
@@ -110,7 +115,7 @@ public class JdbcToOrcFileWriter extends AbstractFileWriter {
 					currValue = sb_.toString();
 					currValue = cl.cleanColumn(currValue, selectColumnList.get(i - 1).toUpperCase(), null,
 							typeList.get(i - 1), FileFormat.ORC.getCode(), lineData,
-							collectTableBean.getDatabase_code(), dataDelimiter);
+							data_extraction_def.getDatabase_code(), dataDelimiter);
 					if (i < numberOfColumns) {
 						midStringOther.append(JobConstant.DATADELIMITER);
 					}
@@ -126,7 +131,7 @@ public class JdbcToOrcFileWriter extends AbstractFileWriter {
 					//字段合并
 					allClean.merge(mergeIng, arrColString.toArray(new String[0]), allColumnList.toArray(new String[0]),
 							null, lineData, FileFormat.ORC.getCode(),
-							collectTableBean.getDatabase_code(), dataDelimiter);
+							data_extraction_def.getDatabase_code(), dataDelimiter);
 				}
 				lineData.add(eltDate);
 				//因为进数方式是表级别的，如果每张表选择了存储方式则不同目的地下的都是一样的，所以拼的字段加在卸数这里
@@ -146,7 +151,7 @@ public class JdbcToOrcFileWriter extends AbstractFileWriter {
 						fileName = midName + hbase_name + pageNum + index + ".part";
 						writerFile = new WriterFile(fileName);
 						writer = writerFile.getOrcWrite();
-						fileInfo.append(fileName).append(CollectTableHandleParse.STRSPLIT);
+						fileInfo.append(fileName).append(JdbcCollectTableHandleParse.STRSPLIT);
 					}
 				}
 				writer.write(NullWritable.get(), serde.serialize(lineData, inspector));
@@ -164,7 +169,7 @@ public class JdbcToOrcFileWriter extends AbstractFileWriter {
 				log.error(e);
 			}
 		}
-		fileInfo.append(counter).append(CollectTableHandleParse.STRSPLIT).append(JobIoUtil.getFileSize(midName));
+		fileInfo.append(counter).append(JdbcCollectTableHandleParse.STRSPLIT).append(JobIoUtil.getFileSize(midName));
 		//返回卸数一个或者多个文件名全路径和总的文件行数和文件大小
 		return fileInfo.toString();
 	}

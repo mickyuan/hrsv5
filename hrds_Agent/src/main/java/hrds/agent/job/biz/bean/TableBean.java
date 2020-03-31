@@ -11,6 +11,20 @@ public class TableBean {
 	private Map<String, Object> parseJson; //清洗配置
 	private String collectSQL;//最后拼接的执行sql
 	private int[] typeArray;
+	private String file_format; //文件格式
+	private String is_header;   //是否有表头
+	private String row_separator;   //行分隔符
+	private String column_separator;    //列分隔符
+	private String root_path;   //采集文件根路径
+	private String file_code;   //文件编码
+
+	public String getFile_code() {
+		return file_code;
+	}
+
+	public void setFile_code(String file_code) {
+		this.file_code = file_code;
+	}
 
 	public String getCollectSQL() {
 		return collectSQL;
@@ -80,5 +94,45 @@ public class TableBean {
 
 	public void setColLengthInfo(String colLengthInfo) {
 		this.colLengthInfo = colLengthInfo;
+	}
+
+	public String getFile_format() {
+		return file_format;
+	}
+
+	public void setFile_format(String file_format) {
+		this.file_format = file_format;
+	}
+
+	public String getIs_header() {
+		return is_header;
+	}
+
+	public void setIs_header(String is_header) {
+		this.is_header = is_header;
+	}
+
+	public String getRow_separator() {
+		return row_separator;
+	}
+
+	public void setRow_separator(String row_separator) {
+		this.row_separator = row_separator;
+	}
+
+	public String getColumn_separator() {
+		return column_separator;
+	}
+
+	public void setColumn_separator(String column_separator) {
+		this.column_separator = column_separator;
+	}
+
+	public String getRoot_path() {
+		return root_path;
+	}
+
+	public void setRoot_path(String root_path) {
+		this.root_path = root_path;
 	}
 }

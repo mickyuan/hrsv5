@@ -4,10 +4,11 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
+import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.core.dbstage.writer.FileWriterFactory;
-import hrds.commons.exception.AppSystemException;
+import hrds.commons.entity.Data_extraction_def;
 
 import java.sql.ResultSet;
 
@@ -30,17 +31,14 @@ public class ResultSetParser {
 	@Param(name = "pageRow", desc = "当前码的数据量，用于在写文件时计算行计数器，防止多个数据文件中的Avro行号冲突"
 			, range = "不为空")
 	@Return(desc = "当前线程生成数据文件的路径", range = "不会为null")
-	//TODO pageNum和pageRow一起，在写文件的时候，用于判断文件是否过大，如果文件过大，可以对单个数据文件进行拆分
+		//TODO pageNum和pageRow一起，在写文件的时候，用于判断文件是否过大，如果文件过大，可以对单个数据文件进行拆分
 	String parseResultSet(ResultSet rs, CollectTableBean collectTableBean, long pageNum,
-	                             long pageRow, TableBean tableBean){
-		//获得数据文件格式
-		String format = collectTableBean.getDbfile_format();
-		if (format == null || format.isEmpty()) {
-			throw new AppSystemException("HDFS文件类型不能为空");
-		}
+	                      long pageRow, TableBean tableBean, Data_extraction_def data_extraction_def) {
+		//一开始对文件卸数分割符做转码，页面传过来时应该是Unicode编码格式
+		data_extraction_def.setDatabase_separatorr(StringUtil.unicode2String(data_extraction_def.getDatabase_separatorr()));
 		//当前线程生成的数据文件的路径，用于返回
 		//8、写文件结束，返回本线程生成数据文件的路径和一个写出数据量
-		return FileWriterFactory.getFileWriterImpl(format).writeFiles(rs, collectTableBean,
-				pageNum, pageRow, tableBean);
+		return FileWriterFactory.getFileWriterImpl(data_extraction_def.getDbfile_format()).writeFiles(rs,
+				collectTableBean, pageNum, pageRow, tableBean, data_extraction_def);
 	}
 }

@@ -5,15 +5,17 @@ import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.constant.JobConstant;
-import hrds.agent.job.biz.core.dbstage.service.CollectTableHandleParse;
+import hrds.agent.job.biz.core.service.JdbcCollectTableHandleParse;
 import hrds.agent.job.biz.dataclean.Clean;
 import hrds.agent.job.biz.dataclean.CleanFactory;
 import hrds.agent.job.biz.dataclean.DataCleanInterface;
 import hrds.agent.job.biz.utils.JobIoUtil;
 import hrds.agent.job.biz.utils.WriterFile;
+import hrds.commons.codes.DataBaseCode;
 import hrds.commons.codes.FileFormat;
 import hrds.commons.codes.StorageType;
 import hrds.commons.entity.Column_split;
+import hrds.commons.entity.Data_extraction_def;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
 import org.apache.avro.file.DataFileWriter;
@@ -40,12 +42,16 @@ public class JdbcToCsvFileWriter extends AbstractFileWriter {
 	@SuppressWarnings("unchecked")
 	@Override
 	public String writeFiles(ResultSet resultSet, CollectTableBean collectTableBean, long pageNum,
-	                         long pageRow, TableBean tableBean) {
+	                         long pageRow, TableBean tableBean, Data_extraction_def data_extraction_def) {
 		String eltDate = collectTableBean.getEtlDate();
 		StringBuilder fileInfo = new StringBuilder(1024);
 		String hbase_name = collectTableBean.getHbase_name();
-		String midName = Constant.JDBCUNLOADFOLDER + collectTableBean.getDatabase_id() + File.separator
-				+ collectTableBean.getTable_id() + File.separator;
+//		String midName = Constant.JDBCUNLOADFOLDER + collectTableBean.getDatabase_id() + File.separator
+//				+ collectTableBean.getTable_id() + File.separator;
+		//数据抽取指定的目录
+		String plane_url = data_extraction_def.getPlane_url();
+		String midName = plane_url + File.separator + collectTableBean.getTable_name()
+				+ File.separator + eltDate + File.separator + "Csv" + File.separator;
 		midName = FileNameUtils.normalize(midName, true);
 		DataFileWriter<Object> avroWriter = null;
 		CsvListWriter writer;
@@ -57,16 +63,16 @@ public class JdbcToCsvFileWriter extends AbstractFileWriter {
 			avroWriter = getAvroWriter(tableBean.getTypeArray(), hbase_name, midName, pageNum);
 			//卸数文件名为hbase_name加线程唯一标识加此线程创建文件下标
 			String fileName = midName + hbase_name + pageNum + index + ".part";
-			String dataDelimiter = collectTableBean.getDatabase_separatorr();
-			fileInfo.append(fileName).append(CollectTableHandleParse.STRSPLIT);
+			String dataDelimiter = data_extraction_def.getDatabase_separatorr();
+			fileInfo.append(fileName).append(JdbcCollectTableHandleParse.STRSPLIT);
 			writerFile = new WriterFile(fileName);
-			writer = writerFile.getCsvWriter();
+			writer = writerFile.getCsvWriter(DataBaseCode.ofValueByCode(data_extraction_def.getDatabase_code()));
 			//清洗配置
 			final DataCleanInterface allclean = CleanFactory.getInstance().getObjectClean("clean_database");
 			//获取所有字段的名称，包括列分割和列合并出来的字段名称
-			List<String> allColumnList = StringUtil.split(tableBean.getColumnMetaInfo(), CollectTableHandleParse.STRSPLIT);
+			List<String> allColumnList = StringUtil.split(tableBean.getColumnMetaInfo(), JdbcCollectTableHandleParse.STRSPLIT);
 			//获取所有查询的字段的名称，不包括列分割和列合并出来的字段名称
-			List<String> selectColumnList = StringUtil.split(tableBean.getAllColumns(), CollectTableHandleParse.STRSPLIT);
+			List<String> selectColumnList = StringUtil.split(tableBean.getAllColumns(), JdbcCollectTableHandleParse.STRSPLIT);
 			Map<String, Object> parseJson = tableBean.getParseJson();
 			//字符合并
 			Map<String, String> mergeIng = (Map<String, String>) parseJson.get("mergeIng");
@@ -76,10 +82,10 @@ public class JdbcToCsvFileWriter extends AbstractFileWriter {
 			Clean cl = new Clean(parseJson, allclean);
 			StringBuilder midStringOther = new StringBuilder(1024 * 1024);//获取所有列的值用来生成MD5值
 			List<Object> sb = new ArrayList<>(StringUtil.split(tableBean.getColumnMetaInfo()
-					, CollectTableHandleParse.STRSPLIT).size());//用来写一行数据
+					, JdbcCollectTableHandleParse.STRSPLIT).size());//用来写一行数据
 			StringBuilder sb_ = new StringBuilder();//用来写临时数据
 			List<String> typeList = StringUtil.split(tableBean.getAllType(),
-					CollectTableHandleParse.STRSPLIT);
+					JdbcCollectTableHandleParse.STRSPLIT);
 			int numberOfColumns = selectColumnList.size();
 			log.info("type : " + typeList.size() + "  colName " + numberOfColumns);
 			String currValue;
@@ -100,7 +106,7 @@ public class JdbcToCsvFileWriter extends AbstractFileWriter {
 					currValue = sb_.toString();
 					currValue = cl.cleanColumn(currValue, selectColumnList.get(i - 1).toUpperCase(), null,
 							typeList.get(i - 1), FileFormat.CSV.getCode(), sb,
-							collectTableBean.getDatabase_code(), dataDelimiter);
+							data_extraction_def.getDatabase_code(), dataDelimiter);
 					// Add DELIMITER if not last value
 					if (i < numberOfColumns) {
 						midStringOther.append(JobConstant.DATADELIMITER);
@@ -116,7 +122,7 @@ public class JdbcToCsvFileWriter extends AbstractFileWriter {
 							JobConstant.DATADELIMITER);
 					allclean.merge(mergeIng, arrColString.toArray(new String[0]), allColumnList.toArray
 									(new String[0]), null, sb,
-							FileFormat.CSV.getCode(), collectTableBean.getDatabase_code(), dataDelimiter);
+							FileFormat.CSV.getCode(), data_extraction_def.getDatabase_code(), dataDelimiter);
 				}
 				sb.add(eltDate);
 				//因为进数方式是表级别的，如果每张表选择了存储方式则不同目的地下的都是一样的，所以拼的字段加在卸数这里
@@ -134,8 +140,9 @@ public class JdbcToCsvFileWriter extends AbstractFileWriter {
 						index++;
 						fileName = midName + hbase_name + pageNum + index + ".part";
 						writerFile = new WriterFile(fileName);
-						writer = writerFile.getCsvWriter();
-						fileInfo.append(fileName).append(CollectTableHandleParse.STRSPLIT);
+						writer = writerFile.getCsvWriter(DataBaseCode.ofValueByCode(
+								data_extraction_def.getDatabase_code()));
+						fileInfo.append(fileName).append(JdbcCollectTableHandleParse.STRSPLIT);
 					}
 				}
 				writer.write(sb);
@@ -158,7 +165,7 @@ public class JdbcToCsvFileWriter extends AbstractFileWriter {
 				log.error(e);
 			}
 		}
-		fileInfo.append(counter).append(CollectTableHandleParse.STRSPLIT).append(JobIoUtil.getFileSize(midName));
+		fileInfo.append(counter).append(JdbcCollectTableHandleParse.STRSPLIT).append(JobIoUtil.getFileSize(midName));
 		//返回卸数一个或者多个文件名全路径和总的文件行数和文件大小
 		return fileInfo.toString();
 	}

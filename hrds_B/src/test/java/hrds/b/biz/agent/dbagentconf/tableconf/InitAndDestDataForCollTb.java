@@ -81,9 +81,9 @@ public class InitAndDestDataForCollTb {
 		databaseSet.setJdbc_url("jdbc:postgresql://47.103.83.1:32001/hrsdxg");
 
 		//以下数据全部设置默认值
-		databaseSet.setIs_load(IsFlag.Shi.getCode());
-		databaseSet.setIs_header(IsFlag.Shi.getCode());
-		databaseSet.setIs_hidden(IsFlag.Shi.getCode());
+//		databaseSet.setIs_load(IsFlag.Shi.getCode());
+//		databaseSet.setIs_header(IsFlag.Shi.getCode());
+//		databaseSet.setIs_hidden(IsFlag.Shi.getCode());
 		databaseSet.setIs_sendok(IsFlag.Shi.getCode());
 
 		//6、构造Collect_job_classify表测试数据
@@ -582,7 +582,7 @@ public class InitAndDestDataForCollTb {
 			Data_extraction_def def = new Data_extraction_def();
 			def.setDed_id(i % 2 == 0 ? BASE_DATA_EXTRACTION_DEF : BASE_DATA_EXTRACTION_DEF + 1);
 			def.setTable_id(i % 2 == 0 ? SYS_USER_TABLE_ID : CODE_INFO_TABLE_ID);
-			def.setData_extract_type(DataExtractType.JinShuJuChouQu.getCode());
+			def.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
 			def.setIs_header(i % 2 == 0 ? IsFlag.Shi.getCode() : IsFlag.Fou.getCode());
 			def.setDatabase_code(DataBaseCode.UTF_8.getCode());
 			def.setDbfile_format(i % 2 == 0 ? FileFormat.ORC.getCode() : FileFormat.PARQUET.getCode());
@@ -597,7 +597,7 @@ public class InitAndDestDataForCollTb {
 			Data_extraction_def def = new Data_extraction_def();
 			def.setDed_id(i % 2 == 0 ? BASE_DATA_EXTRACTION_DEF + 3963 : BASE_DATA_EXTRACTION_DEF + 9086);
 			def.setTable_id(i % 2 == 0 ? DATA_SOURCE_TABLE_ID : AGENT_INFO_TABLE_ID);
-			def.setData_extract_type(DataExtractType.ShuJuChouQuJiRuKu.getCode());
+			def.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
 			def.setIs_header(i % 2 == 0 ? IsFlag.Shi.getCode() : IsFlag.Fou.getCode());
 			def.setDatabase_code(DataBaseCode.UTF_8.getCode());
 			def.setDbfile_format(i % 2 == 0 ? FileFormat.CSV.getCode() : FileFormat.FeiDingChang.getCode());

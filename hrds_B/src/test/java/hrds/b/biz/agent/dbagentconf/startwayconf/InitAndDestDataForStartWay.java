@@ -1,5 +1,8 @@
 package hrds.b.biz.agent.dbagentconf.startwayconf;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+
 import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.utils.DateUtil;
@@ -7,15 +10,41 @@ import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
 import hrds.b.biz.agent.dbagentconf.BaseInitData;
-import hrds.commons.codes.*;
-import hrds.commons.entity.*;
+import hrds.commons.codes.CleanType;
+import hrds.commons.codes.CountNum;
+import hrds.commons.codes.DataBaseCode;
+import hrds.commons.codes.DataExtractType;
+import hrds.commons.codes.FileFormat;
+import hrds.commons.codes.FillingType;
+import hrds.commons.codes.IsFlag;
+import hrds.commons.codes.StorageType;
+import hrds.commons.codes.StoreLayerAdded;
+import hrds.commons.codes.Store_type;
+import hrds.commons.entity.Agent_info;
+import hrds.commons.entity.Clean_parameter;
+import hrds.commons.entity.Collect_job_classify;
+import hrds.commons.entity.Column_clean;
+import hrds.commons.entity.Column_merge;
+import hrds.commons.entity.Column_split;
+import hrds.commons.entity.Column_storage_info;
+import hrds.commons.entity.Data_extraction_def;
+import hrds.commons.entity.Data_relation_table;
+import hrds.commons.entity.Data_source;
+import hrds.commons.entity.Data_store_layer;
+import hrds.commons.entity.Data_store_layer_added;
+import hrds.commons.entity.Data_store_layer_attr;
+import hrds.commons.entity.Database_set;
+import hrds.commons.entity.Department_info;
+import hrds.commons.entity.Orig_code_info;
+import hrds.commons.entity.Orig_syso_info;
+import hrds.commons.entity.Sys_user;
+import hrds.commons.entity.Table_clean;
+import hrds.commons.entity.Table_column;
+import hrds.commons.entity.Table_info;
+import hrds.commons.entity.Table_storage_info;
 import hrds.commons.utils.Constant;
-
 import java.util.ArrayList;
 import java.util.List;
-
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 @DocClass(desc = "为StartWayConfActionTest初始化和销毁数据", author = "WangZhengcheng")
 /*
@@ -608,7 +637,7 @@ public class InitAndDestDataForStartWay {
 			switch (i) {
 				case 0 :
 					tableId = SYS_USER_TABLE_ID;
-					extractType = DataExtractType.JinShuJuChouQu.getCode();
+					extractType = DataExtractType.ShuJuKuChouQuLuoDi.getCode();
 					fileFormat = FileFormat.FeiDingChang.getCode();
 					rowSeparator = "\n";
 					databaseSeparatorr = "|";
@@ -616,7 +645,7 @@ public class InitAndDestDataForStartWay {
 					break;
 				case 1 :
 					tableId = CODE_INFO_TABLE_ID;
-					extractType = DataExtractType.JinShuJuChouQu.getCode();
+					extractType = DataExtractType.ShuJuKuChouQuLuoDi.getCode();
 					fileFormat = FileFormat.DingChang.getCode();
 					rowSeparator = "";
 					databaseSeparatorr = "";
@@ -624,7 +653,7 @@ public class InitAndDestDataForStartWay {
 					break;
 				case 2 :
 					tableId = AGENT_INFO_TABLE_ID;
-					extractType = DataExtractType.ShuJuChouQuJiRuKu.getCode();
+					extractType = DataExtractType.ShuJuKuChouQuLuoDi.getCode();
 					fileFormat = FileFormat.ORC.getCode();
 					rowSeparator = "";
 					databaseSeparatorr = "";
@@ -632,7 +661,7 @@ public class InitAndDestDataForStartWay {
 					break;
 				case 3 :
 					tableId = DATA_SOURCE_TABLE_ID;
-					extractType = DataExtractType.ShuJuChouQuJiRuKu.getCode();
+					extractType = DataExtractType.ShuJuKuChouQuLuoDi.getCode();
 					fileFormat = FileFormat.FeiDingChang.getCode();
 					rowSeparator = "|";
 					databaseSeparatorr = " ";

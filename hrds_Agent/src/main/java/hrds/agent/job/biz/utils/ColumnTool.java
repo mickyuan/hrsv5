@@ -1,7 +1,5 @@
 package hrds.agent.job.biz.utils;
 
-import com.alibaba.fastjson.JSONObject;
-import com.nimbusds.jose.util.StandardCharset;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
@@ -9,7 +7,7 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.CollectTableColumnBean;
 import hrds.agent.job.biz.constant.DataTypeConstant;
-import hrds.agent.job.biz.core.dbstage.service.CollectTableHandleParse;
+import hrds.agent.job.biz.core.service.JdbcCollectTableHandleParse;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.exception.AppSystemException;
 import org.apache.commons.logging.Log;
@@ -22,7 +20,6 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
 import org.apache.orc.TypeDescription;
 import org.apache.parquet.example.data.Group;
 
-import java.io.*;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -94,46 +91,46 @@ public class ColumnTool {
 		return temp;
 	}
 
-	/**
-	 * 写表的字段信息及生成文件信息
-	 */
-	public static void writeFileMeta(String tableName, File file, String columns, long liner, String list, String lengths, long meta_filesize, String mr) {
-
-		BufferedWriter bw = null;
-//		String metaFile = file.getAbsolutePath() + "tableData.meta";
-//		metaFile = FilenameUtils.normalize(metaFile);
-		try {
-			bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file, false),
-					StandardCharset.UTF_8));
-			JSONObject jsonSon = new JSONObject();
-			jsonSon.put("tableName", tableName);
-			jsonSon.put("column", columns.toUpperCase());
-			jsonSon.put("length", lengths);
-			jsonSon.put("records", String.valueOf(liner));
-			jsonSon.put("fileSize", meta_filesize);
-			jsonSon.put("type", list);
-			jsonSon.put("mr", mr);
-			bw.write(jsonSon + "\n");
-			bw.flush();
-
-		} catch (Exception e) {
-			throw new AppSystemException("写表的字段信息及生成文件信息失败", e);
-		} finally {
-			try {
-				if (bw != null)
-					bw.close();
-			} catch (IOException e) {
-				logger.error(e.getMessage(), e);
-			}
-		}
-	}
+//	/**
+//	 * 写表的字段信息及生成文件信息
+//	 */
+//	public static void writeFileMeta(String tableName, File file, String columns, long liner, String list, String lengths, long meta_filesize, String mr) {
+//
+//		BufferedWriter bw = null;
+////		String metaFile = file.getAbsolutePath() + "tableData.meta";
+////		metaFile = FilenameUtils.normalize(metaFile);
+//		try {
+//			bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file, false),
+//					StandardCharset.UTF_8));
+//			JSONObject jsonSon = new JSONObject();
+//			jsonSon.put("tableName", tableName);
+//			jsonSon.put("column", columns.toUpperCase());
+//			jsonSon.put("length", lengths);
+//			jsonSon.put("records", String.valueOf(liner));
+//			jsonSon.put("fileSize", meta_filesize);
+//			jsonSon.put("type", list);
+//			jsonSon.put("mr", mr);
+//			bw.write(jsonSon + "\n");
+//			bw.flush();
+//
+//		} catch (Exception e) {
+//			throw new AppSystemException("写表的字段信息及生成文件信息失败", e);
+//		} finally {
+//			try {
+//				if (bw != null)
+//					bw.close();
+//			} catch (IOException e) {
+//				logger.error(e.getMessage(), e);
+//			}
+//		}
+//	}
 
 	public static StructObjectInspector schemaInfo(String columns, String types) {
 
 		List<ObjectInspector> listType = new ArrayList<>();
 		List<String> listColumn = new ArrayList<>();
-		List<String> columnAll = StringUtil.split(columns, CollectTableHandleParse.STRSPLIT);
-		List<String> split = StringUtil.split(types, CollectTableHandleParse.STRSPLIT);//字段类型
+		List<String> columnAll = StringUtil.split(columns, JdbcCollectTableHandleParse.STRSPLIT);
+		List<String> split = StringUtil.split(types, JdbcCollectTableHandleParse.STRSPLIT);//字段类型
 		for (int i = 0; i < columnAll.size(); i++) {
 			//TODO 类型转换这个类是否需要修改
 			String columns_type = split.get(i).toLowerCase();
@@ -166,8 +163,8 @@ public class ColumnTool {
 
 	public static TypeDescription getTypeDescription(String columns, String types) {
 		TypeDescription readSchema = TypeDescription.createStruct();
-		List<String> columnAll = StringUtil.split(columns, CollectTableHandleParse.STRSPLIT);
-		List<String> typeList = StringUtil.split(types, CollectTableHandleParse.STRSPLIT);//字段类型
+		List<String> columnAll = StringUtil.split(columns, JdbcCollectTableHandleParse.STRSPLIT);
+		List<String> typeList = StringUtil.split(types, JdbcCollectTableHandleParse.STRSPLIT);//字段类型
 		for (int i = 0; i < columnAll.size(); i++) {
 			//TODO 类型转换这个类是否需要修改
 //			String columns_type = DataTypeTransformHive.tansform(split.get(i).toUpperCase());

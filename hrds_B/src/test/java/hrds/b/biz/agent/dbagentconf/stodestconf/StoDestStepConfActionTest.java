@@ -164,22 +164,22 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 				assertThat("获取到表名为agent_info，做拉链存储", rightData.getString(i, "is_zipper"), is(IsFlag.Shi.getCode()));
 				assertThat("获取到表名为agent_info，存储方式为<增量>", rightData.getString(i, "storage_type"), is(StorageType.ZengLiang.getCode()));
 				assertThat("获取到表名为agent_info，数据保存时间为<7天>", rightData.getLong(i, "storage_time"), is(7L));
-				assertThat("获取到表名为agent_info，数据抽取方式为<抽取并入库>", rightData.getString(i, "data_extract_type"), is(DataExtractType.ShuJuChouQuJiRuKu.getCode()));
+				assertThat("获取到表名为agent_info，数据抽取方式为<抽取并入库>", rightData.getString(i, "data_extract_type"), is(DataExtractType.ShuJuKuChouQuLuoDi.getCode()));
 				assertThat("获取到表名为agent_info，destflag标识位为<是>", rightData.getString(i, "destflag"), is(IsFlag.Shi.getCode()));
 			}else if(rightData.getString(i, "table_name").equalsIgnoreCase("data_source")){
 				assertThat("获取到表名为data_source，表中文名为<数据源表>", rightData.getString(i, "table_ch_name").equalsIgnoreCase("数据源表"), is(true));
 				assertThat("获取到表名为data_source，不做拉链存储", rightData.getString(i, "is_zipper"), is(IsFlag.Fou.getCode()));
 				assertThat("获取到表名为data_source，存储方式为<追加>", rightData.getString(i, "storage_type"), is(StorageType.ZhuiJia.getCode()));
 				assertThat("获取到表名为data_source，数据保存时间为<1天>", rightData.getLong(i, "storage_time"), is(1L));
-				assertThat("获取到表名为data_source，数据抽取方式为<抽取并入库>", rightData.getString(i, "data_extract_type"), is(DataExtractType.ShuJuChouQuJiRuKu.getCode()));
+				assertThat("获取到表名为data_source，数据抽取方式为<抽取并入库>", rightData.getString(i, "data_extract_type"), is(DataExtractType.ShuJuKuChouQuLuoDi.getCode()));
 				assertThat("获取到表名为data_source，destflag标识位为<是>", rightData.getString(i, "destflag"), is(IsFlag.Shi.getCode()));
 			}else if(rightData.getString(i, "table_name").equalsIgnoreCase("sys_user")){
 				assertThat("获取到表名为sys_user，表中文名为<用户表>", rightData.getString(i, "table_ch_name").equalsIgnoreCase("用户表"), is(true));
-				assertThat("获取到表名为sys_user，数据抽取方式为<仅抽取>", rightData.getString(i, "data_extract_type"), is(DataExtractType.JinShuJuChouQu.getCode()));
+				assertThat("获取到表名为sys_user，数据抽取方式为<仅抽取>", rightData.getString(i, "data_extract_type"), is(DataExtractType.ShuJuKuChouQuLuoDi.getCode()));
 				assertThat("获取到表名为sys_user，destflag标识位为<否>", rightData.getString(i, "destflag"), is(IsFlag.Fou.getCode()));
 			}else if(rightData.getString(i, "table_name").equalsIgnoreCase("code_info")){
 				assertThat("获取到表名为code_info，表中文名为<代码信息表>", rightData.getString(i, "table_ch_name").equalsIgnoreCase("代码信息表"), is(true));
-				assertThat("获取到表名为code_info，数据抽取方式为<仅抽取>", rightData.getString(i, "data_extract_type"), is(DataExtractType.JinShuJuChouQu.getCode()));
+				assertThat("获取到表名为code_info，数据抽取方式为<仅抽取>", rightData.getString(i, "data_extract_type"), is(DataExtractType.ShuJuKuChouQuLuoDi.getCode()));
 				assertThat("获取到表名为code_info，destflag标识位为<否>", rightData.getString(i, "destflag"), is(IsFlag.Fou.getCode()));
 			}else{
 				assertThat("获取到了不符合期望的结果，表名为：" + rightData.getString(i, "table_name"), false, is(true));
@@ -392,7 +392,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			//在进行修改之前，查询数据库，确认修改前数据库的情况符合预期
 			Result result = SqlOperator.queryResult(db, " select plane_url from " + Data_extraction_def.TableName + " where table_id = ? and data_extract_type = ?"
-					, SYS_USER_TABLE_ID, DataExtractType.JinShuJuChouQu.getCode());
+					, SYS_USER_TABLE_ID, DataExtractType.ShuJuKuChouQuLuoDi.getCode());
 			assertThat("查询到的数据有一条", result.getRowCount(), is(1));
 			assertThat("得到的sys_user表的存储目的地为/root", result.getString(0 ,"plane_url"), is("/root"));
 		}
@@ -407,7 +407,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			//在进行修改之后，查询数据库，确认修改前数据库的情况符合预期
 			Result result = SqlOperator.queryResult(db, " select plane_url from " + Data_extraction_def.TableName + " where table_id = ? and data_extract_type = ?"
-					, SYS_USER_TABLE_ID, DataExtractType.JinShuJuChouQu.getCode());
+					, SYS_USER_TABLE_ID, DataExtractType.ShuJuKuChouQuLuoDi.getCode());
 			assertThat("查询到的数据有一条", result.getRowCount(), is(1));
 			assertThat("得到的sys_user表的存储目的地为/root/test", result.getString(0 ,"plane_url"), is("/root/test"));
 		}
@@ -1114,7 +1114,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 			Data_extraction_def tableInfoDef = new Data_extraction_def();
 			tableInfoDef.setDed_id(TABLE_INFO_TABLE_ID * 2);
 			tableInfoDef.setTable_id(TABLE_INFO_TABLE_ID);
-			tableInfoDef.setData_extract_type(DataExtractType.ShuJuChouQuJiRuKu.getCode());
+			tableInfoDef.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
 			tableInfoDef.setIs_header(IsFlag.Shi.getCode());
 			tableInfoDef.setDatabase_code(DataBaseCode.UTF_8.getCode());
 			tableInfoDef.setDbfile_format(FileFormat.PARQUET.getCode());
@@ -1192,7 +1192,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 			Data_extraction_def tableInfoDef = new Data_extraction_def();
 			tableInfoDef.setDed_id(TABLE_COLUMN_TABLE_ID * 2);
 			tableInfoDef.setTable_id(TABLE_COLUMN_TABLE_ID);
-			tableInfoDef.setData_extract_type(DataExtractType.ShuJuChouQuJiRuKu.getCode());
+			tableInfoDef.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
 			tableInfoDef.setIs_header(IsFlag.Shi.getCode());
 			tableInfoDef.setDatabase_code(DataBaseCode.UTF_8.getCode());
 			tableInfoDef.setDbfile_format(FileFormat.PARQUET.getCode());
@@ -1269,7 +1269,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 			Data_extraction_def tableInfoDef = new Data_extraction_def();
 			tableInfoDef.setDed_id(TABLE_COLUMN_TABLE_ID * 2);
 			tableInfoDef.setTable_id(TABLE_COLUMN_TABLE_ID);
-			tableInfoDef.setData_extract_type(DataExtractType.ShuJuChouQuJiRuKu.getCode());
+			tableInfoDef.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
 			tableInfoDef.setIs_header(IsFlag.Shi.getCode());
 			tableInfoDef.setDatabase_code(DataBaseCode.UTF_8.getCode());
 			tableInfoDef.setDbfile_format(FileFormat.PARQUET.getCode());
@@ -1337,7 +1337,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 			Data_extraction_def tableInfoDef = new Data_extraction_def();
 			tableInfoDef.setDed_id(TABLE_COLUMN_TABLE_ID * 2);
 			tableInfoDef.setTable_id(TABLE_COLUMN_TABLE_ID);
-			tableInfoDef.setData_extract_type(DataExtractType.ShuJuChouQuJiRuKu.getCode());
+			tableInfoDef.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
 			tableInfoDef.setIs_header(IsFlag.Shi.getCode());
 			tableInfoDef.setDatabase_code(DataBaseCode.UTF_8.getCode());
 			tableInfoDef.setDbfile_format(FileFormat.PARQUET.getCode());
@@ -1384,7 +1384,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 			Data_extraction_def tableInfoDef = new Data_extraction_def();
 			tableInfoDef.setDed_id(TABLE_COLUMN_TABLE_ID * 2);
 			tableInfoDef.setTable_id(TABLE_COLUMN_TABLE_ID);
-			tableInfoDef.setData_extract_type(DataExtractType.ShuJuChouQuJiRuKu.getCode());
+			tableInfoDef.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
 			tableInfoDef.setIs_header(IsFlag.Shi.getCode());
 			tableInfoDef.setDatabase_code(DataBaseCode.UTF_8.getCode());
 			tableInfoDef.setDbfile_format(FileFormat.PARQUET.getCode());
@@ -1424,7 +1424,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 			Data_extraction_def tableInfoDef = new Data_extraction_def();
 			tableInfoDef.setDed_id(TABLE_COLUMN_TABLE_ID * 2);
 			tableInfoDef.setTable_id(TABLE_COLUMN_TABLE_ID);
-			tableInfoDef.setData_extract_type(DataExtractType.ShuJuChouQuJiRuKu.getCode());
+			tableInfoDef.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
 			tableInfoDef.setIs_header(IsFlag.Shi.getCode());
 			tableInfoDef.setDatabase_code(DataBaseCode.UTF_8.getCode());
 			tableInfoDef.setDbfile_format(FileFormat.PARQUET.getCode());
@@ -1462,7 +1462,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 			Data_extraction_def tableInfoDef = new Data_extraction_def();
 			tableInfoDef.setDed_id(TABLE_COLUMN_TABLE_ID * 2);
 			tableInfoDef.setTable_id(TABLE_COLUMN_TABLE_ID);
-			tableInfoDef.setData_extract_type(DataExtractType.ShuJuChouQuJiRuKu.getCode());
+			tableInfoDef.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
 			tableInfoDef.setIs_header(IsFlag.Shi.getCode());
 			tableInfoDef.setDatabase_code(DataBaseCode.UTF_8.getCode());
 			tableInfoDef.setDbfile_format(FileFormat.PARQUET.getCode());
@@ -1510,7 +1510,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase{
 			Data_extraction_def tableInfoDef = new Data_extraction_def();
 			tableInfoDef.setDed_id(TABLE_INFO_TABLE_ID * 2);
 			tableInfoDef.setTable_id(TABLE_INFO_TABLE_ID);
-			tableInfoDef.setData_extract_type(DataExtractType.ShuJuChouQuJiRuKu.getCode());
+			tableInfoDef.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
 			tableInfoDef.setIs_header(IsFlag.Shi.getCode());
 			tableInfoDef.setDatabase_code(DataBaseCode.UTF_8.getCode());
 			tableInfoDef.setDbfile_format(FileFormat.PARQUET.getCode());

@@ -83,7 +83,7 @@ public class StoDestStepConfAction extends BaseAction{
 		List<Object> tableIds = Dbo.queryOneColumnList("select ti.table_id from " + Table_info.TableName + " ti" +
 				" join " + Data_extraction_def.TableName + " ded" +
 				" on ti.table_id = ded.table_id" +
-				" where ti.database_id = ? and ded.data_extract_type = ?", colSetId, DataExtractType.ShuJuChouQuJiRuKu.getCode());
+				" where ti.database_id = ? and ded.data_extract_type = ?", colSetId, DataExtractType.ShuJuKuChouQuLuoDi.getCode());
 		if(tableIds.isEmpty()){
 			throw new BusinessException("未获取到数据库采集表");
 		}
@@ -133,14 +133,14 @@ public class StoDestStepConfAction extends BaseAction{
 	public Result getStoDestForOnlyExtract(long tableId){
 		//1、校验该表定义的数据抽取信息是否存在
 		long count = Dbo.queryNumber("select count(1) from " + Data_extraction_def.TableName +
-				" where table_id = ? and data_extract_type = ?", tableId, DataExtractType.JinShuJuChouQu.getCode())
+				" where table_id = ? and data_extract_type = ?", tableId, DataExtractType.ShuJuKuChouQuLuoDi.getCode())
 				.orElseThrow(() -> new BusinessException("SQL查询错误"));
 		if(count != 1){
 			throw new BusinessException("获取该表数据抽取信息异常");
 		}
 		//2、查询数据抽取定义表，获取数据落地目录并返回
 		return Dbo.queryResult("select plane_url from " + Data_extraction_def.TableName + " where table_id = ? " +
-				"and data_extract_type = ?", tableId, DataExtractType.JinShuJuChouQu.getCode());
+				"and data_extract_type = ?", tableId, DataExtractType.ShuJuKuChouQuLuoDi.getCode());
 	}
 
 	/*
@@ -157,7 +157,7 @@ public class StoDestStepConfAction extends BaseAction{
 	public void saveStoDestForOnlyExtract(long tableId, String stoDest){
 		//1、使用tableId进行校验，判断该表是否定义过数据抽取信息，且数据抽取方式为仅抽取
 		long count = Dbo.queryNumber("select count(1) from " + Data_extraction_def.TableName +
-				" where table_id = ? and data_extract_type = ?", tableId, DataExtractType.JinShuJuChouQu.getCode())
+				" where table_id = ? and data_extract_type = ?", tableId, DataExtractType.ShuJuKuChouQuLuoDi.getCode())
 				.orElseThrow(() -> new BusinessException("SQL查询错误"));
 		//2、若不存在，向前端抛异常
 		if(count != 1){
@@ -402,7 +402,8 @@ public class StoDestStepConfAction extends BaseAction{
 			"4-4、获取当前保存表的ID" +
 			"4-5、遍历dataStoRelaParams集合，找到表ID相同的对象" +
 			"4-6、保存表存储信息" +
-			"5、返回数据库设置ID，目的是下一个页面可以找到上一个页面配置的信息")
+			"5，这里如果都配置文采则将此次任务的 database_set表中的字段(is_sendok) 更新为是,是表示为当前的配置任务完成" +
+			"6、返回数据库设置ID，目的是下一个页面可以找到上一个页面配置的信息")
 	@Param(name = "tbStoInfoString", desc = "存放待保存表存储配置信息的json串", range = "不为空")
 	@Param(name = "colSetId", desc = "数据库采集设置表ID", range = "不为空")
 	@Param(name = "dslIdString", desc = "Json格式字符串，json对象中携带的是采集表ID和存储目的地ID，" +
@@ -484,7 +485,12 @@ public class StoDestStepConfAction extends BaseAction{
 			//4-6、保存表存储信息
 			storageInfo.add(Dbo.db());
 		}
-		//5、返回数据库设置ID，目的是下一个页面可以找到上一个页面配置的信息
+
+		// 5，这里如果都配置文采则将此次任务的 database_set表中的字段(is_sendok) 更新为是,是表示为当前的配置任务完成
+		DboExecute.updatesOrThrow("此次采集任务配置完成,更新状态失败","UPDATE " + Database_set.TableName + " SET is_sendok = ? WHERE database_id = ?",
+				IsFlag.Shi.getCode(),colSetId);
+
+		//6、返回数据库设置ID，目的是下一个页面可以找到上一个页面配置的信息
 		return colSetId;
 	}
 

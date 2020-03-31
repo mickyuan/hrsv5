@@ -2,7 +2,9 @@ package hrds.agent.job.biz.bean;
 
 import fd.ng.core.annotation.DocBean;
 import fd.ng.core.annotation.DocClass;
+import hrds.commons.codes.DataExtractType;
 import hrds.commons.entity.Column_merge;
+import hrds.commons.entity.Data_extraction_def;
 
 import java.io.Serializable;
 import java.util.List;
@@ -49,29 +51,8 @@ public class CollectTableBean implements Serializable {
 	private Integer pageparallels;
 	@DocBean(name = "dataincrement", value = "每天数据增量:", dataType = Integer.class, required = false)
 	private Integer dataincrement;
-	@DocBean(name = "is_header", value = "是否需要表头(IsFlag):1-是<Shi> 0-否<Fou> ",
-			dataType = String.class, required = true)
-	private String is_header;
-	@DocBean(name = "data_extract_type", value = "数据抽取方式(DataExtractType):1-仅数据抽取<JinShuJuChouQu> " +
-			"2-数据抽取及入库<ShuJuChouQuJiRuKu> ", dataType = String.class, required = true)
-	private String data_extract_type;
-	@DocBean(name = "database_code", value = "数据抽取落地编码(DataBaseCode):1-UTF-8<UTF_8> 2-GBK<GBK> " +
-			"3-UTF-16<UTF_16> 4-GB2312<GB2312> 5-ISO-8859-1<ISO_8859_1> ", dataType = String.class, required = true)
-	private String database_code;
-	@DocBean(name = "row_separator", value = "行分隔符:", dataType = String.class, required = false)
-	private String row_separator;
-	@DocBean(name = "database_separatorr", value = "列分割符:", dataType = String.class, required = false)
-	private String database_separatorr;
-	@DocBean(name = "ded_remark", value = "备注:", dataType = String.class, required = false)
-	private String ded_remark;
-	@DocBean(name = "dbfile_format", value = "数据落地格式(FileFormat):0-定长<DingChang> 1-非定长<FeiDingChang> " +
-			"2-CSV<CSV> 3-SEQUENCEFILE<SEQUENCEFILE> 4-PARQUET<PARQUET> 5-ORC<ORC> ",
-			dataType = String.class, required = true)
-	private String dbfile_format;
-	@DocBean(name = "plane_url", value = "数据落地目录:", dataType = String.class, required = false)
-	private String plane_url;
-	@DocBean(name = "file_suffix", value = "落地文件后缀名:", dataType = String.class, required = false)
-	private String file_suffix;
+	@DocBean(name = "data_extraction_def_list", value = "表的数据抽取定义的集合", dataType = List.class)
+	private List<Data_extraction_def> data_extraction_def_list;
 	@DocBean(name = "collectTableColumnBeanList", value = "表采集字段集合:", dataType = String.class, required = false)
 	private List<CollectTableColumnBean> collectTableColumnBeanList;
 	@DocBean(name = "column_merge_list", value = "列合并参数信息:", dataType = Column_merge.class, required = false)
@@ -217,76 +198,36 @@ public class CollectTableBean implements Serializable {
 		this.page_sql = page_sql;
 	}
 
-	public String getIs_header() {
-		return is_header;
+	public List<Data_extraction_def> getData_extraction_def_list() {
+		return data_extraction_def_list;
 	}
 
-	public void setIs_header(String is_header) {
-		this.is_header = is_header;
+	public Data_extraction_def getSourceData_extraction_def() {
+		List<Data_extraction_def> data_extraction_def_list = getData_extraction_def_list();
+		//遍历，获取需要读取的db文件的文件格式
+		for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
+			if (DataExtractType.YuanShuJuGeShi.getCode().equals(data_extraction_def.getData_extract_type())) {
+				//此对象需要读取的db文件的文件格式
+				return data_extraction_def;
+			}
+		}
+		return null;
 	}
 
-	public String getData_extract_type() {
-		return data_extract_type;
+	public Data_extraction_def getTargetData_extraction_def() {
+		List<Data_extraction_def> data_extraction_def_list = getData_extraction_def_list();
+		//遍历，获取转存文件格式
+		for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
+			if (DataExtractType.ShuJuJiaZaiGeShi.getCode().equals(data_extraction_def.getData_extract_type())) {
+				//此对象为转存之后的文件格式对象。
+				return data_extraction_def;
+			}
+		}
+		return null;
 	}
 
-	public void setData_extract_type(String data_extract_type) {
-		this.data_extract_type = data_extract_type;
-	}
-
-	public String getDatabase_code() {
-		return database_code;
-	}
-
-	public void setDatabase_code(String database_code) {
-		this.database_code = database_code;
-	}
-
-	public String getRow_separator() {
-		return row_separator;
-	}
-
-	public void setRow_separator(String row_separator) {
-		this.row_separator = row_separator;
-	}
-
-	public String getDatabase_separatorr() {
-		return database_separatorr;
-	}
-
-	public void setDatabase_separatorr(String database_separatorr) {
-		this.database_separatorr = database_separatorr;
-	}
-
-	public String getDed_remark() {
-		return ded_remark;
-	}
-
-	public void setDed_remark(String ded_remark) {
-		this.ded_remark = ded_remark;
-	}
-
-	public String getDbfile_format() {
-		return dbfile_format;
-	}
-
-	public void setDbfile_format(String dbfile_format) {
-		this.dbfile_format = dbfile_format;
-	}
-
-	public String getPlane_url() {
-		return plane_url;
-	}
-
-	public void setPlane_url(String plane_url) {
-		this.plane_url = plane_url;
-	}
-
-	public String getFile_suffix() {
-		return file_suffix;
-	}
-
-	public void setFile_suffix(String file_suffix) {
-		this.file_suffix = file_suffix;
+	public void setData_extraction_def_list(List<Data_extraction_def> data_extraction_def_list) {
+		this.data_extraction_def_list = data_extraction_def_list;
 	}
 
 	public List<CollectTableColumnBean> getCollectTableColumnBeanList() {

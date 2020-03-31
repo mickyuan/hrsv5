@@ -1,4 +1,4 @@
-package hrds.agent.job.biz.core.dbstage.increasement;
+package hrds.agent.job.biz.core.increasement;
 
 import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.agent.job.biz.bean.TableBean;

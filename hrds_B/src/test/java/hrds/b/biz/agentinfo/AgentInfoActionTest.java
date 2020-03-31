@@ -228,14 +228,14 @@ public class AgentInfoActionTest extends WebBaseTestCase {
             databaseSet.setDatabase_id(DatabaseId);
             databaseSet.setAgent_id(DBAgentId4);
             databaseSet.setClassify_id(ClassifyId);
-            databaseSet.setDatabase_code(DataBaseCode.UTF_8.getCode());
+//            databaseSet.setDatabase_code(DataBaseCode.UTF_8.getCode());
             databaseSet.setDatabase_drive("org.postgresql.Driver");
             databaseSet.setDatabase_ip("10.71.4.51");
             databaseSet.setDatabase_name("数据库采集测试");
             databaseSet.setDatabase_number("cs");
             databaseSet.setDatabase_pad("hrsdxg");
             databaseSet.setDatabase_port("34567");
-            databaseSet.setDbfile_format(FileFormat.CSV.getCode());
+//            databaseSet.setDbfile_format(FileFormat.CSV.getCode());
             databaseSet.setIs_sendok(IsFlag.Fou.getCode());
             databaseSet.setDatabase_type(DatabaseType.Postgresql.getCode());
             databaseSet.setTask_name("数据库测试");
