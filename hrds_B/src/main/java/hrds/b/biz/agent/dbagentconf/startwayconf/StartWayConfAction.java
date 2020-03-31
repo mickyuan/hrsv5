@@ -227,13 +227,13 @@ public class StartWayConfAction extends BaseAction {
   @Param(name = "log_dic", desc = "agent日志路径", range = "不可为空")
   @Param(
       name = "etlJobs",
-      desc =
+      range =
           "作业 Etl_job_def 数组字符串,每个对象的应该都应该包含所有的实体信息如:"
               + "{作业名(etl_job),工程代码(etl_sys_cd),子系统代码(sub_sys_cd),作业描述(etl_job_desc),"
               + "作业程序类型(pro_type,使用代码项Pro_Type),作业程序目录(pro_dic),作业程序名称(pro_name),"
               + "作业程序参数(pro_para),日志目录(log_dic),调度频率(disp_freq,代码项Dispatch_Frequency),"
               + "调度时间位移(disp_offset),调度触发方式(disp_type),调度触发时间(disp_time)}",
-      range = "可以为空,如果需要配置启动方式不配置表信息有啥意义",
+      desc = "",
       isBean = true)
   public void saveJobDataToDatabase(
       long colSetId,
