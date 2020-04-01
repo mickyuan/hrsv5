@@ -23,6 +23,7 @@ public class Xls2xml {
 	public static Element table = null;
 	public static Element root = null;
 	public static Element column = null;
+	public static Element storage = null;
 	public static Element handleType = null;
 	private static final Log logger = LogFactory.getLog(Xls2xml.class);
 	private static final String NONEED_ = "NONEED_";
@@ -249,15 +250,8 @@ public class Xls2xml {
 				JSONObject json = jsonArray.getJSONObject(i);
 				String table_name = json.getString("table_name");//表名
 				String table_cn_name = json.getString("table_cn_name");//中文表名
-//				String storage_type = json.getString("storage_type");//数据存储方式
-				String file_format = json.getString("file_format");//文件格式
-				String is_header = json.getString("is_header");//是否有表头
-				String row_separator = json.getString("row_separator");//行分隔符
-				String column_separator = json.getString("column_separator");//列分隔符
-				String root_path = json.getString("root_path");//采集文件的跟目录
-				String file_code = json.getString("file_code");//采集文件的编码
-				addTable(table_name.toLowerCase(), table_cn_name, file_format,
-						is_header, row_separator, column_separator, root_path, file_code);
+				String storage_type = json.getString("storage_type");//数据存储方式
+				addTable(table_name.toLowerCase(), table_cn_name, storage_type);
 				JSONArray columns = json.getJSONArray("columns");//列信息
 				for (int j = 0; j < columns.size(); j++) {
 					JSONObject column = columns.getJSONObject(j);
@@ -274,6 +268,17 @@ public class Xls2xml {
 					}
 					int length = getLength(column_type);
 					addColumn(column_id, column_name, column_cn_name, column_type, length, column_key, column_null, column_remark, primaryKey);
+				}
+				JSONArray storages = json.getJSONArray("storage");
+				for (int j = 0; j < storages.size(); j++) {
+					JSONObject storageJson = storages.getJSONObject(j);
+					String file_format = storageJson.getString("file_format");//文件格式
+					String is_header = storageJson.getString("is_header");//是否有表头
+					String row_separator = storageJson.getString("row_separator");//行分隔符
+					String column_separator = storageJson.getString("column_separator");//列分隔符
+					String root_path = storageJson.getString("root_path");//采集文件的跟目录
+					String file_code = storageJson.getString("file_code");//采集文件的编码
+					addStorage(file_format, is_header, row_separator, column_separator, root_path, file_code);
 				}
 			}
 			xmlCreater.buildXmlFile();// 生成xml文档
@@ -478,20 +483,6 @@ public class Xls2xml {
 		xmlCreater.createAttribute(root, "name", "dict_params");
 	}
 
-	public static void addTable(String en_table_name, String cn_table_name, String file_format, String is_header,
-	                            String row_separator, String column_separator, String root_path, String file_code) {
-
-		table = xmlCreater.createElement(root, "table");
-		xmlCreater.createAttribute(table, "name", en_table_name);
-		xmlCreater.createAttribute(table, "description", cn_table_name);
-		xmlCreater.createAttribute(table, "file_format", file_format);
-		xmlCreater.createAttribute(table, "is_header", is_header);
-		xmlCreater.createAttribute(table, "row_separator", row_separator);
-		xmlCreater.createAttribute(table, "column_separator", column_separator);
-		xmlCreater.createAttribute(table, "root_path", root_path);
-		xmlCreater.createAttribute(table, "file_code", file_code);
-	}
-
 	public static void addTable(String en_table_name, String cn_table_name, String storage_type) {
 
 		table = xmlCreater.createElement(root, "table");
@@ -516,6 +507,17 @@ public class Xls2xml {
 		xmlCreater.createAttribute(column, "column_remark", column_remark);
 		xmlCreater.createAttribute(column, "primaryKey", primaryKey);
 
+	}
+
+	private static void addStorage(String file_format, String is_header, String row_separator, String column_separator,
+	                               String root_path, String file_code) {
+		storage = xmlCreater.createElement(table, "storage");
+		xmlCreater.createAttribute(storage, "file_format", file_format);
+		xmlCreater.createAttribute(storage, "is_header", is_header);
+		xmlCreater.createAttribute(storage, "row_separator", row_separator);
+		xmlCreater.createAttribute(storage, "column_separator", column_separator);
+		xmlCreater.createAttribute(storage, "root_path", String.valueOf(root_path));
+		xmlCreater.createAttribute(storage, "file_code", file_code);
 	}
 
 	/**
