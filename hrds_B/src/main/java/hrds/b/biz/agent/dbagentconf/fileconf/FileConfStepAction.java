@@ -30,8 +30,7 @@ public class FileConfStepAction extends BaseAction {
   public Result getInitInfo(long colSetId) {
     Result result =
         Dbo.queryResult(
-            " select ti.table_id, ti.table_name, ti.table_ch_name, ded.dbfile_format, "
-                + " ded.data_extract_type, ded.row_separator, ded.database_separatorr, ded.database_code "
+            " select * "
                 + " from "
                 + Table_info.TableName
                 + " ti left join "

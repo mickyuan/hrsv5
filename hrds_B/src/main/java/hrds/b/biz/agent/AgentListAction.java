@@ -512,19 +512,18 @@ public class AgentListAction extends BaseAction {
 		sourceDBConfObj.put("signal_file_list", new ArrayList<>());
 
 		//2-4、查询并组装采集表配置信息数组，除数据库中查询出的内容，还需要组装表采集字段集合、列合并参数信息、表存储配置信息
-		Result collectTableResult = Dbo.queryResult("SELECT dbs.database_id, ti.table_id, ti.table_name, ti.table_ch_name, ti.table_count, " +
-				" ti.source_tableid, ti.valid_s_date, ti.valid_e_date, ti.sql, ti.remark, ti.is_user_defined," +
-				" ti.is_md5, ti.is_register, ti.is_parallel, ti.page_sql, ti.pageparallels, ti.dataincrement," +
-				" ded.is_header, ded.data_extract_type, ded.database_code, ded.row_separator, ded.database_separatorr, " +
-				" ded.dbfile_format, ded.ded_remark, ded.file_suffix, tsi.storage_type, tsi.storage_time, tsi.is_zipper, " +
-				" ds.datasource_number || '_' || cjc.classify_num || '_' || ti.table_name as hbase_name, " +
+		Result collectTableResult = Dbo.queryResult("SELECT dbs.database_id, ti.table_id, ti.table_name, " +
+				"ti.table_ch_name, ti.table_count, ti.source_tableid, ti.valid_s_date, ti.valid_e_date, ti.sql, " +
+				"ti.remark, ti.is_user_defined, ti.is_md5,ti.is_register,ti.is_parallel,ti.page_sql,ti.rec_num_date," +
+				"ti.pageparallels, ti.dataincrement,tsi.storage_type, tsi.storage_time, tsi.is_zipper, " +
+				"ds.datasource_number || '_' || cjc.classify_num || '_' || ti.table_name as hbase_name, " +
 				" ds.datasource_name, ai.agent_name, ai.agent_id, ds.source_id" +
 				" FROM " + Data_source.TableName + " ds " +
 				" JOIN " + Agent_info.TableName + " ai ON ds.source_id = ai.source_id" +
 				" JOIN " + Database_set.TableName + " dbs ON ai.agent_id = dbs.agent_id" +
 				" LEFT JOIN " + Table_info.TableName + " ti on ti.database_id = dbs.database_id" +
 				" LEFT JOIN " + Collect_job_classify.TableName + " cjc on dbs.classify_id = cjc.classify_id" +
-				" LEFT JOIN " + Data_extraction_def.TableName + " ded on ti.table_id = ded.table_id" +
+//				" LEFT JOIN " + Data_extraction_def.TableName + " ded on ti.table_id = ded.table_id" +
 				" LEFT JOIN " + Table_storage_info.TableName + " tsi on tsi.table_id = ti.table_id" +
 				" WHERE dbs.database_id = ?", colSetId);
 
@@ -534,9 +533,18 @@ public class AgentListAction extends BaseAction {
 		for (int i = 0; i < collectTables.size(); i++) {
 			JSONObject collectTable = collectTables.getJSONObject(i);
 //			collectTable.put("etlDate", DateUtil.getSysDate());
-			//2-4-1、查询当前数据库采集任务下每张表的列合并信息，放入对应的表的JSONObject中
 			Long tableId = collectTable.getLong("table_id");
-			List<Column_merge> columnMerges = Dbo.queryList(Column_merge.class, "select * from " + Column_merge.TableName + " where table_id = ?", tableId);
+			//查询数据抽取定义，一张表对应多种数据抽取格式，放到对应的表的JSONObject中
+			List<Data_extraction_def> data_extraction_defs = Dbo.queryList(Data_extraction_def.class,
+					"select * from " + Data_extraction_def.TableName + " where table_id = ?", tableId);
+			if (!data_extraction_defs.isEmpty()) {
+				collectTable.put("data_extraction_def_list", data_extraction_defs);
+			} else {
+				collectTable.put("data_extraction_def_list", new ArrayList<>());
+			}
+			//2-4-1、查询当前数据库采集任务下每张表的列合并信息，放入对应的表的JSONObject中
+			List<Column_merge> columnMerges = Dbo.queryList(Column_merge.class, "select * from "
+					+ Column_merge.TableName + " where table_id = ?", tableId);
 			if (!columnMerges.isEmpty()) {
 				collectTable.put("column_merge_list", columnMerges);
 			} else {
@@ -674,7 +682,6 @@ public class AgentListAction extends BaseAction {
 		}
 		//到此为止，向agent发送的数据全部组装完毕
 		sourceDBConfObj.put("collectTableBeanArray", collectTables);
-
 		//return sourceDBConfObj.toJSONString();
 		//3、调用工具类，发送信息，接收agent端响应状态码，如果发送失败，则抛出异常给前端
 		String methodName = AgentActionUtil.SENDJDBCOLLECTTASKINFO;
@@ -775,5 +782,4 @@ public class AgentListAction extends BaseAction {
 		//3、删除旧的columnId在列拆分信息表做外键的数据，不关注删除的数目
 		Dbo.execute("delete from " + Column_split.TableName + " where column_id = ?", columnId);
 	}
-
 }

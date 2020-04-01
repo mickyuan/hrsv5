@@ -66,7 +66,7 @@ public class JdbcToOrcFileWriter extends AbstractFileWriter {
 		RecordWriter<NullWritable, Writable> writer;
 		StringBuilder fileInfo = new StringBuilder(1024);
 		try {
-			String fileName = midName + hbase_name + pageNum + index + ".part";
+			String fileName = midName + hbase_name + pageNum + index + "." + data_extraction_def.getFile_suffix();
 			fileInfo.append(fileName).append(JdbcCollectTableHandleParse.STRSPLIT);
 			writerFile = new WriterFile(fileName);
 			avroWriter = getAvroWriter(tableBean.getTypeArray(), hbase_name, midName, pageNum);
@@ -148,7 +148,7 @@ public class JdbcToOrcFileWriter extends AbstractFileWriter {
 						//当文件满足阈值时 ，然后关闭当前流，并创建新的数据流
 						writerFile.close();
 						index++;
-						fileName = midName + hbase_name + pageNum + index + ".part";
+						fileName = midName + hbase_name + pageNum + index + "." + data_extraction_def.getFile_suffix();
 						writerFile = new WriterFile(fileName);
 						writer = writerFile.getOrcWrite();
 						fileInfo.append(fileName).append(JdbcCollectTableHandleParse.STRSPLIT);

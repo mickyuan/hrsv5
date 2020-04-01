@@ -78,7 +78,7 @@ public class CollTbConfStepAction extends BaseAction {
   public Result getInitInfo(long colSetId) {
     // 1、查询数据并返回
     return Dbo.queryResult(
-        " select ti.table_id,ti.table_name,ti.table_ch_name, ti.is_parallel"
+        " select * "
             + " FROM "
             + Table_info.TableName
             + " ti "
@@ -153,7 +153,7 @@ public class CollTbConfStepAction extends BaseAction {
     // 1、去数据库中根据table_id查出该表定义的分页抽取SQL
     Result result =
         Dbo.queryResult(
-            "select ti.table_id, ti.page_sql, ti.table_count, ti.pageparallels, ti.dataincrement "
+            "select ti.table_id, ti.page_sql,ti.is_customize_sql, ti.table_count, ti.pageparallels, ti.dataincrement "
                 + " from "
                 + Table_info.TableName
                 + " ti where ti.table_id = ?",
@@ -1111,8 +1111,7 @@ public class CollTbConfStepAction extends BaseAction {
     for (String tableName : tableNames) {
       Map<String, Object> tableResult =
           Dbo.queryOneObject(
-              " select ti.table_id,ti.table_name,"
-                  + " ti.table_ch_name, ti.is_parallel"
+              " select *"
                   + " FROM "
                   + Table_info.TableName
                   + " ti "

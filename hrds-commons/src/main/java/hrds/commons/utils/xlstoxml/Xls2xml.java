@@ -109,12 +109,12 @@ public class Xls2xml {
 
 	public static void toXml(String db_path, String xml_path) {
 
-		String path_cd = pathToUnEscape(db_path + "~dd_data.json", SystemUtils.OS_NAME);
+		String path_cd = pathToUnEscape(db_path + "~dd_data.json");
 		File file = FileUtils.getFile(path_cd);
 		if (file.exists()) {
 			jsonToXml(path_cd, xml_path);
 		} else {
-			path_cd = pathToUnEscape(db_path + "~dd_data.xls", SystemUtils.OS_NAME);
+			path_cd = pathToUnEscape(db_path + "~dd_data.xls");
 			file = FileUtils.getFile(db_path);
 			if (!file.exists()) {
 				throw new BusinessException("没有找到相应的数据字典定义文件！");
@@ -125,7 +125,7 @@ public class Xls2xml {
 
 	public static void toXmlForObjectCollect(String db_path, String xml_path) {
 
-		String path_cd = pathToUnEscape(db_path + "~dd_data.json", SystemUtils.OS_NAME);
+		String path_cd = pathToUnEscape(db_path + "~dd_data.json");
 		File file = FileUtils.getFile(path_cd);
 		if (file.exists()) {
 			jsonToXmlForObjectCollect(path_cd, xml_path);
@@ -134,7 +134,7 @@ public class Xls2xml {
 		}
 	}
 
-	public static void jsonToXmlForObjectCollect(String json_path, String xml_path){
+	public static void jsonToXmlForObjectCollect(String json_path, String xml_path) {
 		// 调用方法生成xml文件
 		createXml(xml_path);
 		String info = "";
@@ -218,20 +218,19 @@ public class Xls2xml {
 	/**
 	 * 根据系统将~修改成对应路径地址
 	 *
-	 * @param path
-	 * @param osName
-	 * @return
+	 * @param path 文件路径
+	 * @return 转换后的路径
 	 */
-	public static String pathToUnEscape(String path, String osName) {
+	private static String pathToUnEscape(String path) {
 
-		if (osName.indexOf("win") != -1 || osName.indexOf("Win") != -1) {
+		if (SystemUtils.OS_NAME.toLowerCase().contains("win")) {
 			return StringUtil.replace(path, "~", "\\");
 		} else {
 			return StringUtil.replace(path, "~", "/");
 		}
 	}
 
-	private static void jsonToXml(String json_path, String xml_path) {
+	public static void jsonToXml(String json_path, String xml_path) {
 
 		InputStream xlsFileInputStream = null;
 		createXml(xml_path);// 调用方法生成xml文件
@@ -250,8 +249,15 @@ public class Xls2xml {
 				JSONObject json = jsonArray.getJSONObject(i);
 				String table_name = json.getString("table_name");//表名
 				String table_cn_name = json.getString("table_cn_name");//中文表名
-				String storage_type = json.getString("storage_type");//数据存储方式
-				addTable(table_name.toLowerCase(), table_cn_name, storage_type);
+//				String storage_type = json.getString("storage_type");//数据存储方式
+				String file_format = json.getString("file_format");//文件格式
+				String is_header = json.getString("is_header");//是否有表头
+				String row_separator = json.getString("row_separator");//行分隔符
+				String column_separator = json.getString("column_separator");//列分隔符
+				String root_path = json.getString("root_path");//采集文件的跟目录
+				String file_code = json.getString("file_code");//采集文件的编码
+				addTable(table_name.toLowerCase(), table_cn_name, file_format,
+						is_header, row_separator, column_separator, root_path, file_code);
 				JSONArray columns = json.getJSONArray("columns");//列信息
 				for (int j = 0; j < columns.size(); j++) {
 					JSONObject column = columns.getJSONObject(j);
@@ -293,7 +299,7 @@ public class Xls2xml {
 	 * @param xls_path {@link String} xls的路径
 	 * @param xml_path {@link String} 吐出xml的路径
 	 */
-	private static void XlsToXml(String xls_path, String xml_path) {
+	public static void XlsToXml(String xls_path, String xml_path) {
 
 		InputStream xlsFileInputStream = null;
 		createXml(xml_path);// 调用方法生成xml文件
@@ -365,6 +371,7 @@ public class Xls2xml {
 							isNoneed = false;
 						}
 						info = en_table_name;
+						//TODO xls需要重新设计，这里待修改
 						addTable(en_table_name.toLowerCase(), cn_table_name, storage_type);
 						continue;
 					}
@@ -471,12 +478,27 @@ public class Xls2xml {
 		xmlCreater.createAttribute(root, "name", "dict_params");
 	}
 
+	public static void addTable(String en_table_name, String cn_table_name, String file_format, String is_header,
+	                            String row_separator, String column_separator, String root_path, String file_code) {
+
+		table = xmlCreater.createElement(root, "table");
+		xmlCreater.createAttribute(table, "name", en_table_name);
+		xmlCreater.createAttribute(table, "description", cn_table_name);
+		xmlCreater.createAttribute(table, "file_format", file_format);
+		xmlCreater.createAttribute(table, "is_header", is_header);
+		xmlCreater.createAttribute(table, "row_separator", row_separator);
+		xmlCreater.createAttribute(table, "column_separator", column_separator);
+		xmlCreater.createAttribute(table, "root_path", root_path);
+		xmlCreater.createAttribute(table, "file_code", file_code);
+	}
+
 	public static void addTable(String en_table_name, String cn_table_name, String storage_type) {
 
 		table = xmlCreater.createElement(root, "table");
 		xmlCreater.createAttribute(table, "name", en_table_name);
 		xmlCreater.createAttribute(table, "description", cn_table_name);
 		xmlCreater.createAttribute(table, "storage_type", storage_type);
+
 	}
 
 	public static void addColumn(String column_id, String column_name, String column_cn_name, String

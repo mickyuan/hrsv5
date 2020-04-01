@@ -38,7 +38,7 @@ import java.util.Map;
  * date: 2019/12/6 17:20
  * author: zxz
  */
-public class  JdbcToParquetFileWriter extends AbstractFileWriter {
+public class JdbcToParquetFileWriter extends AbstractFileWriter {
 	//打印日志
 	private static final Log log = LogFactory.getLog(JdbcToParquetFileWriter.class);
 
@@ -87,7 +87,7 @@ public class  JdbcToParquetFileWriter extends AbstractFileWriter {
 			MessageType parquetSchema = ParquetUtil.getSchema(tableBean.getColumnMetaInfo(),
 					tableBean.getColTypeMetaInfo());
 			factory = new SimpleGroupFactory(parquetSchema);
-			String fileName = midName + hbase_name + pageNum + index + ".part";
+			String fileName = midName + hbase_name + pageNum + index + "." + data_extraction_def.getFile_suffix();
 			parquetWriter = ParquetUtil.getParquetWriter(parquetSchema, fileName);
 			fileInfo.append(fileName).append(JdbcCollectTableHandleParse.STRSPLIT);
 			//获取所有查询的字段的类型，不包括列分割和列合并出来的字段类型
@@ -140,7 +140,7 @@ public class  JdbcToParquetFileWriter extends AbstractFileWriter {
 						//当文件满足阈值时 ，然后关闭当前流，并创建新的数据流
 						parquetWriter.close();
 						index++;
-						fileName = midName + hbase_name + pageNum + index + ".part";
+						fileName = midName + hbase_name + pageNum + index + "." + data_extraction_def.getFile_suffix();
 						parquetWriter = ParquetUtil.getParquetWriter(parquetSchema, fileName);
 						fileInfo.append(fileName).append(JdbcCollectTableHandleParse.STRSPLIT);
 					}

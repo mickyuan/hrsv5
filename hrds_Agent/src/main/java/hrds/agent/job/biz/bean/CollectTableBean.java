@@ -51,6 +51,8 @@ public class CollectTableBean implements Serializable {
 	private Integer pageparallels;
 	@DocBean(name = "dataincrement", value = "每天数据增量:", dataType = Integer.class, required = false)
 	private Integer dataincrement;
+	@DocBean(name ="rec_num_date",value="数据获取时间:",dataType = String.class,required = true)
+	private String rec_num_date;
 	@DocBean(name = "data_extraction_def_list", value = "表的数据抽取定义的集合", dataType = List.class)
 	private List<Data_extraction_def> data_extraction_def_list;
 	@DocBean(name = "collectTableColumnBeanList", value = "表采集字段集合:", dataType = String.class, required = false)
@@ -116,6 +118,14 @@ public class CollectTableBean implements Serializable {
 
 	public void setTable_count(String table_count) {
 		this.table_count = table_count;
+	}
+
+	public String getRec_num_date() {
+		return rec_num_date;
+	}
+
+	public void setRec_num_date(String rec_num_date) {
+		this.rec_num_date = rec_num_date;
 	}
 
 	public String getSource_tableid() {
