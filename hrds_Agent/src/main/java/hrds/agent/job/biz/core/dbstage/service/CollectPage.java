@@ -88,6 +88,7 @@ public class CollectPage implements Callable<Map<String, Object>> {
 						unLoadInfoList.remove(unLoadInfoList.size() - 1);
 						map.put("filePathList", unLoadInfoList);
 					}
+					resultSet.close();
 				}
 			}
 			return map;
@@ -129,7 +130,7 @@ public class CollectPage implements Callable<Map<String, Object>> {
 		}
 		String database_type = sourceDataConfBean.getDatabase_type();
 		//拼分页的sql
-		sql = pageForSql(database_type, primaryKey);
+		String pageSql = pageForSql(database_type, primaryKey);
 		Statement statement = conn.createStatement();
 		//TODO 不同数据库的set fetchSize 实现方式不同，暂时设置Oracle 的参数 其他的目前不予处理
 		if (DatabaseType.Oracle10g.getCode().equals(database_type) ||
@@ -138,12 +139,14 @@ public class CollectPage implements Callable<Map<String, Object>> {
 		}
 		if (DatabaseType.MYSQL.getCode().equals(database_type))
 			((com.mysql.jdbc.Statement) statement).enableStreamingResults();
-		return statement.executeQuery(sql);
+		return statement.executeQuery(pageSql);
 	}
 
 	private String pageForSql(String dataType, String primaryKey) {
+		//定义一个临时遍历，获取sql
+		String tempSql;
 		//定义一个临时的分页数,不改变成员变量的值
-		long pageRowTemp = 0;
+		long pageRowTemp;
 		//判断如果end为最后一次线程的值，对于MYSQL和Postgresql的最后一页值为最大值
 		if (end == Long.MAX_VALUE) {
 			pageRowTemp = end;
@@ -152,23 +155,23 @@ public class CollectPage implements Callable<Map<String, Object>> {
 		}
 		LOGGER.info("start-->" + start + "  limit --> " + pageRowTemp + "  end--> " + end);
 		if (DatabaseType.MYSQL.getCode().equals(dataType)) {
-			sql = "select * from (" + sql + ") as hyren_collect_temp limit " + start + "," + pageRowTemp;
+			tempSql = "select * from (" + sql + ") as hyren_collect_temp limit " + start + "," + pageRowTemp;
 		} else if (DatabaseType.TeraData.getCode().equals(dataType)) {
-			sql = "select * from (" + sql + ") as hyren_collect_temp qualify row_number() over(order by "
+			tempSql = "select * from (" + sql + ") as hyren_collect_temp qualify row_number() over(order by "
 					+ primaryKey + ") >= " + start + " and row_number() over(order by "
 					+ primaryKey + ") <=" + end;
 		} else if (DatabaseType.Oracle9i.getCode().equals(dataType) ||
 				DatabaseType.Oracle10g.getCode().equals(dataType)) {
-			sql = "select * from (select t.*,rownum hyren_rn from (" + sql + ") t where rownum <= "
+			tempSql = "select * from (select t.*,rownum hyren_rn from (" + sql + ") t where rownum <= "
 					+ Math.abs(end) + ") t1 where t1.hyren_rn>" + start + "";
 		} else if (DatabaseType.Postgresql.getCode().equals(dataType)) {
-			sql = "select * from (" + sql + ") as hyren_collect_temp  limit " + pageRowTemp + " offset " + start;
+			tempSql = "select * from (" + sql + ") as hyren_collect_temp  limit " + pageRowTemp + " offset " + start;
 		} else {
 			//TODO 这里欢迎补全，最后else抛异常
-			sql = "select * from (" + sql + ") as hyren_collect_temp  limit " + start + "," + pageRowTemp;
+			tempSql = "select * from (" + sql + ") as hyren_collect_temp  limit " + start + "," + pageRowTemp;
 		}
-		LOGGER.info("分页这里执行的sql是：" + sql);
-		return sql;
+		LOGGER.info("分页这里执行的sql是：" + tempSql);
+		return tempSql;
 	}
 
 }

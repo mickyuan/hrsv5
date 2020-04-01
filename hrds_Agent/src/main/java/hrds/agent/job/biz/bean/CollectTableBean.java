@@ -2,6 +2,7 @@ package hrds.agent.job.biz.bean;
 
 import fd.ng.core.annotation.DocBean;
 import fd.ng.core.annotation.DocClass;
+import fd.ng.core.utils.StringUtil;
 import hrds.commons.codes.DataExtractType;
 import hrds.commons.entity.Column_merge;
 import hrds.commons.entity.Data_extraction_def;
@@ -51,7 +52,7 @@ public class CollectTableBean implements Serializable {
 	private Integer pageparallels;
 	@DocBean(name = "dataincrement", value = "每天数据增量:", dataType = Integer.class, required = false)
 	private Integer dataincrement;
-	@DocBean(name ="rec_num_date",value="数据获取时间:",dataType = String.class,required = true)
+	@DocBean(name = "rec_num_date", value = "数据获取时间:", dataType = String.class, required = true)
 	private String rec_num_date;
 	@DocBean(name = "data_extraction_def_list", value = "表的数据抽取定义的集合", dataType = List.class)
 	private List<Data_extraction_def> data_extraction_def_list;
@@ -237,6 +238,13 @@ public class CollectTableBean implements Serializable {
 	}
 
 	public void setData_extraction_def_list(List<Data_extraction_def> data_extraction_def_list) {
+		//一开始对文件卸数分割符做转码，页面传过来时应该是Unicode编码格式
+		for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
+			data_extraction_def.setDatabase_separatorr(StringUtil.
+					unicode2String(data_extraction_def.getDatabase_separatorr()));
+			data_extraction_def.setRow_separator(StringUtil.
+					unicode2String(data_extraction_def.getRow_separator()));
+		}
 		this.data_extraction_def_list = data_extraction_def_list;
 	}
 

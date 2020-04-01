@@ -18,10 +18,7 @@ import org.apache.hadoop.mapred.Reporter;
 import org.supercsv.io.CsvListWriter;
 import org.supercsv.prefs.CsvPreference;
 
-import java.io.BufferedWriter;
-import java.io.Closeable;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
+import java.io.*;
 
 public class WriterFile implements Closeable {
 
@@ -41,6 +38,11 @@ public class WriterFile implements Closeable {
 		conf.set("dfs.client.block.write.replace-datanode-on-failure.enable", "true");
 		conf.set("fs.defaultFS", "file:///");
 		this.filePath = filePath;
+		File parentFile = new File(filePath).getParentFile();
+		if (!parentFile.exists()) {
+			boolean mkdirs = parentFile.mkdirs();
+			logger.info("创建文件夹..." + parentFile.getAbsolutePath() + "..." + mkdirs);
+		}
 	}
 
 	/**
@@ -81,11 +83,8 @@ public class WriterFile implements Closeable {
 
 	public CsvListWriter getCsvWriter(String charset) {
 		try {
-			fs = FileSystem.get(conf);
-//			csvWriter = new CSVWriter(new OutputStreamWriter(fs.create(new Path(filePath)),
-//					StandardCharsets.UTF_8), Constant.DATADELIMITER, CSVWriter.NO_QUOTE_CHARACTER);
-			csvWriter = new CsvListWriter(new OutputStreamWriter(fs.create(new Path(filePath)),
-					charset), CsvPreference.EXCEL_PREFERENCE);
+			csvWriter = new CsvListWriter(new OutputStreamWriter(new FileOutputStream(filePath), charset)
+					, CsvPreference.EXCEL_PREFERENCE);
 		} catch (IOException e) {
 			logger.error(e);
 		}
@@ -94,9 +93,7 @@ public class WriterFile implements Closeable {
 
 	public BufferedWriter getBufferedWriter(String charset) {
 		try {
-			fs = FileSystem.get(conf);
-			bufferedWriter = new BufferedWriter(new OutputStreamWriter(fs.create(new Path(filePath)),
-					charset));
+			bufferedWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(filePath), charset));
 		} catch (IOException e) {
 			logger.error(e);
 		}
