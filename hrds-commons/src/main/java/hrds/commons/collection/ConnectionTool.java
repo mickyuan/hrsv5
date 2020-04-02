@@ -48,7 +48,7 @@ public class ConnectionTool {
 			String val = dbMap.get("storage_property_val").toString();
 			dbConfigMap.put(key,val);
 		}
-		return getDBWrapper(dbConfig);
+		return getDBWrapper(dbConfigMap);
 	}
 
 	public static DatabaseWrapper getDBWrapper(Map<String, String> dbConfig) {
