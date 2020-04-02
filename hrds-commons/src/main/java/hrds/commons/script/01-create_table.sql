@@ -557,6 +557,7 @@ DROP TABLE IF EXISTS TAKE_RELATION_ETL ;
 CREATE TABLE TAKE_RELATION_ETL(
 DED_ID                                            BIGINT default 0 NOT NULL, --数据抽取定义主键
 ETL_SYS_CD                                        VARCHAR(100) NOT NULL, --工程代码
+SUB_SYS_CD                                        VARCHAR(100) NOT NULL, --子系统代码
 ETL_JOB                                           VARCHAR(512) NOT NULL, --作业名
 CONSTRAINT TAKE_RELATION_ETL_PK PRIMARY KEY(DED_ID)   );
 

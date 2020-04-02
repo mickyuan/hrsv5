@@ -36,6 +36,8 @@ public class Take_relation_etl extends ProjectTableEntity
 	private String etl_sys_cd;
 	@DocBean(name ="etl_job",value="作业名:",dataType = String.class,required = true)
 	private String etl_job;
+	@DocBean(name ="sub_sys_cd",value="子系统代码:",dataType = String.class,required = true)
+	private String sub_sys_cd;
 
 	/** 取得：数据抽取定义主键 */
 	public Long getDed_id(){
@@ -66,5 +68,13 @@ public class Take_relation_etl extends ProjectTableEntity
 	/** 设置：作业名 */
 	public void setEtl_job(String etl_job){
 		this.etl_job=etl_job;
+	}
+	/** 取得：子系统代码 */
+	public String getSub_sys_cd(){
+		return sub_sys_cd;
+	}
+	/** 设置：子系统代码 */
+	public void setSub_sys_cd(String sub_sys_cd){
+		this.sub_sys_cd=sub_sys_cd;
 	}
 }
