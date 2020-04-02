@@ -564,6 +564,7 @@ CONSTRAINT TAKE_RELATION_ETL_PK PRIMARY KEY(DED_ID)   );
 DROP TABLE IF EXISTS DQ_FAILURE_TABLE ;
 CREATE TABLE DQ_FAILURE_TABLE(
 FAILURE_TABLE_ID                                  BIGINT default 0 NOT NULL, --表id
+FILE_ID                                           VARCHAR(40) NOT NULL, --表文件ID
 TABLE_CN_NAME                                     VARCHAR(512) NULL, --表中文名
 TABLE_EN_NAME                                     VARCHAR(512) NOT NULL, --表英文名
 TABLE_SOURCE                                      CHAR(3) NOT NULL, --表来源
@@ -1619,7 +1620,7 @@ CONSTRAINT LENGTH_CONTRAST_SUM_PK PRIMARY KEY(DLCS_ID)   );
 --数据存储登记
 DROP TABLE IF EXISTS DATA_STORE_REG ;
 CREATE TABLE DATA_STORE_REG(
-FILE_ID                                           VARCHAR(40) NOT NULL, --文件编号
+FILE_ID                                           VARCHAR(40) NOT NULL, --表文件ID
 COLLECT_TYPE                                      CHAR(1) NOT NULL, --采集类型
 ORIGINAL_UPDATE_DATE                              CHAR(8) NOT NULL, --原文件最后修改日期
 ORIGINAL_UPDATE_TIME                              CHAR(6) NOT NULL, --原文件最后修改时间

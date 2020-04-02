@@ -42,6 +42,8 @@ public class Dq_failure_table extends ProjectTableEntity
 	private String table_meta_info;
 	@DocBean(name ="remark",value="备注:",dataType = String.class,required = false)
 	private String remark;
+	@DocBean(name ="file_id",value="表文件ID:",dataType = String.class,required = true)
+	private String file_id;
 
 	/** 取得：表id */
 	public Long getFailure_table_id(){
@@ -96,5 +98,13 @@ public class Dq_failure_table extends ProjectTableEntity
 	/** 设置：备注 */
 	public void setRemark(String remark){
 		this.remark=remark;
+	}
+	/** 取得：表文件ID */
+	public String getFile_id(){
+		return file_id;
+	}
+	/** 设置：表文件ID */
+	public void setFile_id(String file_id){
+		this.file_id=file_id;
 	}
 }

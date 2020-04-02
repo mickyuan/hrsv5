@@ -30,7 +30,7 @@ public class Data_store_reg extends ProjectTableEntity
 		__tmpPKS.add("file_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="file_id",value="文件编号:",dataType = String.class,required = true)
+	@DocBean(name ="file_id",value="表文件ID:",dataType = String.class,required = true)
 	private String file_id;
 	@DocBean(name ="original_name",value="原始表中文名称:",dataType = String.class,required = true)
 	private String original_name;
@@ -61,11 +61,11 @@ public class Data_store_reg extends ProjectTableEntity
 	@DocBean(name ="table_id",value="表名ID:",dataType = Long.class,required = true)
 	private Long table_id;
 
-	/** 取得：文件编号 */
+	/** 取得：表文件ID */
 	public String getFile_id(){
 		return file_id;
 	}
-	/** 设置：文件编号 */
+	/** 设置：表文件ID */
 	public void setFile_id(String file_id){
 		this.file_id=file_id;
 	}
