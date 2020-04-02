@@ -18,8 +18,6 @@ import hrds.commons.codes.CollectType;
 import hrds.commons.codes.DataBaseCode;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.exception.AppSystemException;
-import hrds.commons.utils.Constant;
-import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -159,8 +157,7 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 			//写数据字典
 			DataExtractUtil.writeDataDictionary(dictionaryPath, collectTableBean.getTable_name(),
 					tableBean.getColumnMetaInfo(), tableBean.getColTypeMetaInfo(), collectTableBean.getStorage_type(),
-					DataBaseCode.ofValueByCode(collectTableBean.getData_extraction_def_list().
-							get(0).getDatabase_code()));
+					collectTableBean.getData_extraction_def_list());
 			LOGGER.info("------------------数据库直连采集卸数阶段成功------------------");
 		} catch (Exception e) {
 			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.FAILED.getCode(), e.getMessage());

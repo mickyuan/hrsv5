@@ -13,6 +13,7 @@ import hrds.agent.job.biz.utils.JobIoUtil;
 import hrds.agent.job.biz.utils.WriterFile;
 import hrds.commons.codes.DataBaseCode;
 import hrds.commons.codes.FileFormat;
+import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.StorageType;
 import hrds.commons.entity.Column_split;
 import hrds.commons.entity.Data_extraction_def;
@@ -51,7 +52,7 @@ public class JdbcToCsvFileWriter extends AbstractFileWriter {
 		//数据抽取指定的目录
 		String plane_url = data_extraction_def.getPlane_url();
 		String midName = plane_url + File.separator + collectTableBean.getTable_name()
-				+ File.separator + eltDate + File.separator + "Csv" + File.separator;
+				+ File.separator + eltDate + File.separator + FileFormat.CSV.getValue() + File.separator;
 		midName = FileNameUtils.normalize(midName, true);
 		DataFileWriter<Object> avroWriter = null;
 		CsvListWriter writer;
@@ -71,6 +72,10 @@ public class JdbcToCsvFileWriter extends AbstractFileWriter {
 			final DataCleanInterface allclean = CleanFactory.getInstance().getObjectClean("clean_database");
 			//获取所有字段的名称，包括列分割和列合并出来的字段名称
 			List<String> allColumnList = StringUtil.split(tableBean.getColumnMetaInfo(), JdbcCollectTableHandleParse.STRSPLIT);
+			//写表头
+			if(IsFlag.Shi.getCode().equals(data_extraction_def.getIs_header())){
+				writer.write(allColumnList);
+			}
 			//获取所有查询的字段的名称，不包括列分割和列合并出来的字段名称
 			List<String> selectColumnList = StringUtil.split(tableBean.getAllColumns(), JdbcCollectTableHandleParse.STRSPLIT);
 			Map<String, Object> parseJson = tableBean.getParseJson();
@@ -142,6 +147,10 @@ public class JdbcToCsvFileWriter extends AbstractFileWriter {
 						writerFile = new WriterFile(fileName);
 						writer = writerFile.getCsvWriter(DataBaseCode.ofValueByCode(
 								data_extraction_def.getDatabase_code()));
+						//写表头
+						if(IsFlag.Shi.getCode().equals(data_extraction_def.getIs_header())){
+							writer.write(allColumnList);
+						}
 						fileInfo.append(fileName).append(JdbcCollectTableHandleParse.STRSPLIT);
 					}
 				}

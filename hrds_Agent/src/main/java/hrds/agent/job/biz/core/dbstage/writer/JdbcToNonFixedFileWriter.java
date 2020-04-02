@@ -45,12 +45,10 @@ public class JdbcToNonFixedFileWriter extends AbstractFileWriter {
 		String eltDate = collectTableBean.getEtlDate();
 		StringBuilder fileInfo = new StringBuilder(1024);
 		String hbase_name = collectTableBean.getHbase_name();
-//		String midName = Constant.JDBCUNLOADFOLDER + collectTableBean.getDatabase_id() + File.separator
-//				+ collectTableBean.getTable_id() + File.separator;
 		//数据抽取指定的目录
 		String plane_url = data_extraction_def.getPlane_url();
 		String midName = plane_url + File.separator + collectTableBean.getTable_name()
-				+ File.separator + eltDate + File.separator + "NonFixedFile" + File.separator;
+				+ File.separator + eltDate + File.separator + FileFormat.FeiDingChang.getValue() + File.separator;
 		String dataDelimiter = data_extraction_def.getDatabase_separatorr();
 		midName = FileNameUtils.normalize(midName, true);
 		DataFileWriter<Object> avroWriter = null;
@@ -120,7 +118,7 @@ public class JdbcToNonFixedFileWriter extends AbstractFileWriter {
 					sb.append(dataDelimiter).append(Constant.MAXDATE).
 							append(dataDelimiter).append(md5);
 				}
-				sb.append(System.lineSeparator());
+				sb.append(data_extraction_def.getRow_separator());
 				if (JobConstant.WriteMultipleFiles) {
 					long messageSize = sb.toString().length();
 					long singleFileSize = new File(fileName).length();

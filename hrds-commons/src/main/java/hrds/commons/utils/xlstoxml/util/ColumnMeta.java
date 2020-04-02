@@ -82,7 +82,6 @@ public class ColumnMeta {
 	 * @return 表的所有信息
 	 */
 	public static List<String> getColumnList(String tName, String xml_file_path) {
-
 		DocumentBuilderFactory factory;
 		DocumentBuilder builder;
 		Document doc;
@@ -90,7 +89,6 @@ public class ColumnMeta {
 		NodeList column_list;
 		String table_name;
 		List<String> clist = new ArrayList<String>();
-
 		try {
 			File f = new File(xml_file_path);
 			factory = DocumentBuilderFactory.newInstance();
@@ -102,20 +100,16 @@ public class ColumnMeta {
 				table_name = table_name.toLowerCase();
 				tName = tName.toLowerCase();
 				if (table_name.equals(tName)) {
-					String table_info = table_list.item(i).getAttributes().getNamedItem("file_format").getNodeValue()
-							+ "^" + table_list.item(i).getAttributes().getNamedItem("is_header").getNodeValue()
-							+ "^" + table_list.item(i).getAttributes().getNamedItem("row_separator").getNodeValue()
-							+ "^" + table_list.item(i).getAttributes().getNamedItem("column_separator").getNodeValue()
-							+ "^" + table_list.item(i).getAttributes().getNamedItem("root_path").getNodeValue()
-							+ "^" + table_list.item(i).getAttributes().getNamedItem("file_code").getNodeValue();
-					clist.add(table_info);
 					column_list = table_list.item(i).getChildNodes();
 					for (int j = 0; j < column_list.getLength(); j++) {
-						String column_name = column_list.item(j).getAttributes().getNamedItem("name").getNodeValue();
-						String primaryKey = column_list.item(j).getAttributes().getNamedItem("primaryKey").getNodeValue();
-						String length = column_list.item(j).getAttributes().getNamedItem("length").getNodeValue();
-						String column_type = column_list.item(j).getAttributes().getNamedItem("column_type").getNodeValue();
-						clist.add(column_name + "^" + primaryKey + "^" + length + "^" + column_type);
+						//只取column的属性,表属性只做页面选择使用
+						if("column".equals(column_list.item(j).getNodeName())){
+							String column_name = column_list.item(j).getAttributes().getNamedItem("name").getNodeValue();
+							String primaryKey = column_list.item(j).getAttributes().getNamedItem("primaryKey").getNodeValue();
+							String length = column_list.item(j).getAttributes().getNamedItem("length").getNodeValue();
+							String column_type = column_list.item(j).getAttributes().getNamedItem("column_type").getNodeValue();
+							clist.add(column_name + "^" + primaryKey + "^" + length + "^" + column_type);
+						}
 					}
 				}
 			}

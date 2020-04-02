@@ -54,7 +54,7 @@ public class JdbcToParquetFileWriter extends AbstractFileWriter {
 		//数据抽取指定的目录
 		String plane_url = data_extraction_def.getPlane_url();
 		String midName = plane_url + File.separator + collectTableBean.getTable_name()
-				+ File.separator + eltDate + File.separator + "Parquet" + File.separator;
+				+ File.separator + eltDate + File.separator + FileFormat.PARQUET.getValue() + File.separator;
 		midName = FileNameUtils.normalize(midName, true);
 		String dataDelimiter = data_extraction_def.getDatabase_separatorr();
 		DataFileWriter<Object> avroWriter = null;

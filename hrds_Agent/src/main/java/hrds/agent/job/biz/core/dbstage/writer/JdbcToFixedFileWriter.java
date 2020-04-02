@@ -54,7 +54,7 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 		//数据抽取指定的目录
 		String plane_url = data_extraction_def.getPlane_url();
 		String midName = plane_url + File.separator + collectTableBean.getTable_name()
-				+ File.separator + eltDate + File.separator + "FixedFile" + File.separator;
+				+ File.separator + eltDate + File.separator + FileFormat.DingChang.getValue() + File.separator;
 		midName = FileNameUtils.normalize(midName, true);
 		DataFileWriter<Object> avroWriter = null;
 		BufferedWriter writer;
@@ -134,7 +134,7 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 					sb.append(database_separatorr).append(Constant.MAXDATE).
 							append(database_separatorr).append(md5);
 				}
-				sb.append(System.lineSeparator());
+				sb.append(data_extraction_def.getRow_separator());
 				if (JobConstant.WriteMultipleFiles) {
 					long messageSize = sb.toString().length();
 					long singleFileSize = new File(fileName).length();

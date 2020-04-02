@@ -19,6 +19,8 @@ public class Constant {
     private static final String USER_DIR = System.getProperty("user.dir");
     //jobInfo文件存放的顶层目录
     public static final String JOBINFOPATH = USER_DIR + File.separator + "jobInfo" + File.separator;
+    //agent读取数据字典转换为xml保存的文件目录
+    public static final String XMLPATH = USER_DIR + File.separator + "xmlPath" + File.separator;
     //job运行程序信息存储文件名称
     public static final String JOBFILENAME = "jobInfo.json";
     //TODO 数据库采集卸数文件存放的顶层目录,这里应该是根据系统参数来的

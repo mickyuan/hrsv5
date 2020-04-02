@@ -4,7 +4,9 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.StringUtil;
+import hrds.commons.codes.DataBaseCode;
 import hrds.commons.codes.FileFormat;
+import hrds.commons.entity.Data_extraction_def;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -20,8 +22,9 @@ public class DataExtractUtil {
 	/**
 	 * 生成数据字典
 	 */
-	public static synchronized void writeDataDictionary(String csv_path, String tableName, String allColumns,
-	                                                    String allType, String storage_type, String charset) {
+	public static synchronized void writeDataDictionary(String csv_path, String tableName, String allColumns, String
+			allType, String storage_type, List<Data_extraction_def> data_extraction_defList) {
+		String charset = DataBaseCode.ofValueByCode(data_extraction_defList.get(0).getDatabase_code());
 		BufferedWriter bufferOutputWriter = null;
 		OutputStreamWriter outputFileWriter = null;
 		String path = new File(csv_path).getParent();
@@ -45,8 +48,19 @@ public class DataExtractUtil {
 			JSONObject jsonObject = new JSONObject();
 			jsonObject.put("table_name", tableName);
 			jsonObject.put("table_cn_name", tableName);
-			log.info("存储类型是=========>" + storage_type);
 			jsonObject.put("storage_type", storage_type);
+			JSONArray storageArray = new JSONArray();
+			for (Data_extraction_def data_extraction_def : data_extraction_defList) {
+				JSONObject object = new JSONObject();
+				object.put("is_header", data_extraction_def.getIs_header());
+				object.put("file_format", data_extraction_def.getDbfile_format());
+				object.put("file_code", data_extraction_def.getDatabase_code());
+				object.put("root_path", data_extraction_def.getPlane_url());
+				object.put("row_separator", StringUtil.string2Unicode(data_extraction_def.getRow_separator()));
+				object.put("column_separator", StringUtil.string2Unicode(data_extraction_def.getDatabase_separatorr()));
+				storageArray.add(object);
+			}
+			jsonObject.put("storage", storageArray);
 			List<String> columnList = StringUtil.split(allColumns, "^");
 			List<String> typeList = StringUtil.split(allType, "^");
 			List<JSONObject> array = new ArrayList<>();
