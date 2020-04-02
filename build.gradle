@@ -101,7 +101,7 @@ subprojects {
         compile group: 'mysql', name: 'mysql-connector-java', version: '5.1.31'
         compile group: 'it.uniroma1.dis.wsngroup.gexf4j', name: 'gexf4j', version: '1.0.0'
         compile group: 'org.apache.hive', name: 'hive-jdbc', version: '1.1.0'
-
+        compile group: 'com.alibaba', name: 'druid', version: '1.1.16'
 
         testCompile fileTree(dir: "$rootDir/libs/testcase", include: ['*.jar'])
         testCompile group: 'junit', name: 'junit', version: '4.12'
