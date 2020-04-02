@@ -559,6 +559,7 @@ DED_ID                                            BIGINT default 0 NOT NULL, --�
 ETL_SYS_CD                                        VARCHAR(100) NOT NULL, --工程代码
 SUB_SYS_CD                                        VARCHAR(100) NOT NULL, --子系统代码
 ETL_JOB                                           VARCHAR(512) NOT NULL, --作业名
+DATABASE_ID                                       BIGINT default 0 NOT NULL, --数据库设置id
 CONSTRAINT TAKE_RELATION_ETL_PK PRIMARY KEY(DED_ID)   );
 
 --无效表信息

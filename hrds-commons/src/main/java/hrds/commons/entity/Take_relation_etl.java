@@ -38,6 +38,8 @@ public class Take_relation_etl extends ProjectTableEntity
 	private String etl_job;
 	@DocBean(name ="sub_sys_cd",value="子系统代码:",dataType = String.class,required = true)
 	private String sub_sys_cd;
+	@DocBean(name ="database_id",value="数据库设置id:",dataType = Long.class,required = true)
+	private Long database_id;
 
 	/** 取得：数据抽取定义主键 */
 	public Long getDed_id(){
@@ -76,5 +78,19 @@ public class Take_relation_etl extends ProjectTableEntity
 	/** 设置：子系统代码 */
 	public void setSub_sys_cd(String sub_sys_cd){
 		this.sub_sys_cd=sub_sys_cd;
+	}
+	/** 取得：数据库设置id */
+	public Long getDatabase_id(){
+		return database_id;
+	}
+	/** 设置：数据库设置id */
+	public void setDatabase_id(Long database_id){
+		this.database_id=database_id;
+	}
+	/** 设置：数据库设置id */
+	public void setDatabase_id(String database_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(database_id)){
+			this.database_id=new Long(database_id);
+		}
 	}
 }
