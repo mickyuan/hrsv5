@@ -16,7 +16,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.Future;
 
@@ -33,13 +32,7 @@ public class JobStatusInfoUtil {
 		//JobStatusInfo对象，表示一个作业的状态
 		JobStatusInfo jobStatus;
 		if (file.exists()) {
-			String jobInfo;
-			try {
-				jobInfo = FileUtil.readFile2String(file);
-			} catch (IOException e) {
-				throw new AppSystemException("读取文件失败！" + e.getMessage());
-			}
-			jobStatus = JSONArray.parseObject(jobInfo, JobStatusInfo.class);
+			jobStatus = JSONArray.parseObject(FileUtil.readFile2String(file), JobStatusInfo.class);
 		} else {
 			//不存在创建文件夹
 			String parent = file.getParent();

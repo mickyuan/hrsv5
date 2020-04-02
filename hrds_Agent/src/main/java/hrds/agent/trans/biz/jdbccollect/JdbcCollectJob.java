@@ -59,11 +59,7 @@ public class JdbcCollectJob extends AgentBaseAction {
 				SourceDataConfBean sourceDataConfBean1 = JSONObject.parseObject(
 						JSONObject.toJSONString(sourceDataConfBean), SourceDataConfBean.class);
 				//XXX 多线程执行
-				//TODO 使用公共方法校验所有传入参数的对象的值的合法性
-				//TODO Agent这个参数该怎么接，是统一封装成工厂需要的参数吗？
-				//XXX 程序运行存储信息。
 				DataBaseJobImpl fileCollectJob = new DataBaseJobImpl(sourceDataConfBean1, collectTableBean);
-				//TODO 这个状态是不是可以在这里
 				Future<JobStatusInfo> submit = executor.submit(fileCollectJob);
 				list.add(submit);
 			}

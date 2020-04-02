@@ -215,16 +215,8 @@ public class ProductFileUtil {
 	 * @date 2019/7/31 14:36
 	 */
 	public static TaskStatusInfo getTaskStatusInfo(String taskId) {
-
 		String taskStatusFile = ProductFileUtil.getTaskStatusFilePath(taskId);
-		String taskStatus;
-		try {
-			taskStatus = FileUtil.readFile2String(new File(taskStatusFile));
-		} catch (IOException e) {
-			throw new IllegalStateException("获取任务状态发生异常：" + e.getMessage());
-		}
-
-		return JSONObject.parseObject(taskStatus, TaskStatusInfo.class);
+		return JSONObject.parseObject(FileUtil.readFile2String(new File(taskStatusFile)), TaskStatusInfo.class);
 	}
 
 	/**
@@ -237,15 +229,7 @@ public class ProductFileUtil {
 	 * @date 2019/7/31 14:40
 	 */
 	public static JobStatusInfo getJobStatusInfo(String taskId, String jobId) {
-
 		String jobStatusFile = ProductFileUtil.getJobStatusFilePath(taskId, jobId);
-		String jobStatus;
-		try {
-			jobStatus = FileUtil.readFile2String(new File(jobStatusFile));
-		} catch (IOException e) {
-			throw new IllegalStateException("获取任务状态发生异常：" + e.getMessage());
-		}
-
-		return JSONObject.parseObject(jobStatus, JobStatusInfo.class);
+		return JSONObject.parseObject(FileUtil.readFile2String(new File(jobStatusFile)), JobStatusInfo.class);
 	}
 }

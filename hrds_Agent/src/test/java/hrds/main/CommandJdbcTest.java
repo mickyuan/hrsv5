@@ -21,7 +21,6 @@ import hrds.commons.utils.Constant;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
@@ -134,18 +133,18 @@ public class CommandJdbcTest {
 
 	@Test
 	public void test12() {
-		assertThat("执行测试卸数非定长文件成功", execute("1000120695",
+		assertThat("执行测试卸数非定长文件成功", execute("1000402881",
 				CollectType.ShuJuKuCaiJi.getCode()), is(true));
 	}
 
 	@Test
-	public void test13(){
+	public void test13() {
 		assertThat("执行测试文件采集成功", execute("1000230238",
 				CollectType.WenJianCaiJi.getCode()), is(true));
 	}
 
 	@Test
-	public void test14(){
+	public void test14() {
 		assertThat("执行测试文件采集成功", execute("1000230240",
 				CollectType.WenJianCaiJi.getCode()), is(true));
 	}
@@ -158,13 +157,7 @@ public class CommandJdbcTest {
 	 * @param collectType 采集类型
 	 */
 	private boolean execute(String job_id, String collectType) {
-		String taskInfo;
-		try {
-			taskInfo = FileUtil.readFile2String(new File(Constant.MESSAGEFILE
-					+ job_id));
-		} catch (IOException e) {
-			return false;
-		}
+		String taskInfo = FileUtil.readFile2String(new File(Constant.MESSAGEFILE + job_id));
 		if (CollectType.WenJianCaiJi.getCode().equals(collectType)) {
 			return executeFileCollect(taskInfo);
 		} else if (CollectType.ShuJuKuCaiJi.getCode().equals(collectType)) {

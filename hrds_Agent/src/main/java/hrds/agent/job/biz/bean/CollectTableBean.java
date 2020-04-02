@@ -80,6 +80,8 @@ public class CollectTableBean implements Serializable {
 	private Long agent_id;
 	@DocBean(name = "source_id", value = "数据源ID", dataType = Long.class, required = true)
 	private Long source_id;
+	@DocBean(name = "sqlParam", value = "sql占位符参数", dataType = String.class, required = true)
+	private String sqlParam;
 
 	public List<Column_merge> getColumn_merge_list() {
 		return column_merge_list;
@@ -358,5 +360,13 @@ public class CollectTableBean implements Serializable {
 
 	public void setDataincrement(Integer dataincrement) {
 		this.dataincrement = dataincrement;
+	}
+
+	public String getSqlParam() {
+		return sqlParam;
+	}
+
+	public void setSqlParam(String sqlParam) {
+		this.sqlParam = sqlParam;
 	}
 }

@@ -119,12 +119,16 @@ public class FileUtil {
 	 * @author 13616
 	 * @date 2019/7/31 10:01
 	 */
-	public static String readFile2String(File file) throws IOException, IllegalArgumentException {
+	public static String readFile2String(File file) {
 
-		if (file.exists() && file.isFile()) {
-			return FileUtils.readFileToString(file, ENCODING);
-		} else {
-			throw new IllegalArgumentException(file.getName() + "：不是一个可读的文件");
+		try {
+			if (file.exists() && file.isFile()) {
+				return FileUtils.readFileToString(file, ENCODING);
+			} else {
+				throw new IllegalArgumentException(file.getName() + "：不是一个可读的文件");
+			}
+		} catch (Exception e) {
+			throw new AppSystemException("读取任务前端配置生成的文件失败");
 		}
 	}
 
