@@ -6,19 +6,15 @@ import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
-import fd.ng.db.resultset.processor.BeanListProcessor;
 import hrds.commons.codes.CollectType;
 import hrds.commons.codes.DataSourceType;
 import hrds.commons.codes.Store_type;
 import hrds.commons.entity.*;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.DruidParseQuerySql;
-import jdk.nashorn.internal.objects.annotations.Where;
 
-import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
 import java.util.*;
 
 @DocClass(desc = "数据处理类，获取表的存储等信息", author = "xchao", createdate = "2020年3月31日 16:32:43")
@@ -115,11 +111,8 @@ public abstract class ProcessingData {
 			// TODO 混搭模式
 		}
 	}
-
-
 	/**
 	 * 获取表的存储位置
-	 *
 	 * @param tableName {@link String} 表名
 	 * @param db        {@link DatabaseWrapper} db
 	 */
@@ -164,14 +157,13 @@ public abstract class ProcessingData {
 		 */
 		return null;
 	}
-
 	/**
 	 * 实现数据库查询的方式
 	 * @param sql {@like String} 查询的sql语句
 	 * @param db
 	 * @param dsl_id
 	 */
-	public void getResultSet(String sql, DatabaseWrapper db, long dsl_id) {
+	private void getResultSet(String sql, DatabaseWrapper db, long dsl_id) {
 		List<Map<String, Object>> dataStoreConfBean = SqlOperator.queryList(db,
 				"select * from data_store_layer_attr where dsl_id = ?", dsl_id);
 		try (DatabaseWrapper dbDataConn = ConnectionTool.getDBWrapper(dataStoreConfBean)) {
@@ -190,6 +182,9 @@ public abstract class ProcessingData {
 			throw new AppSystemException("系统不支持该数据库类型",e);
 		}
 	}
+	public abstract void dealLine(Map<String,Object> map) throws Exception;
+
+
 
 	/**
 	 * 根据表名获取存储层的信息
@@ -210,6 +205,4 @@ public abstract class ProcessingData {
 		}
 		return arryLayer;
 	}
-
-	public abstract void dealLine(Map<String,Object> map) throws Exception;
 }
