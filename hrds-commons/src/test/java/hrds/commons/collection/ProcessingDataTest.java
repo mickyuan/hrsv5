@@ -143,7 +143,7 @@ public class ProcessingDataTest {
 			new ProcessingData() {
 				@Override
 				public void dealLine(Map<String, Object> map) throws Exception {
-					mm.add(map);
+					mm.add(map);//在这里，对数据处理，如写文件，清洗、还是组成什么格式给前端，有你来定
 				}
 			}.getSQLEngine("select * from sys_user", db);
 			assertThat("不等于0就ok", mm.size(), not(0L));

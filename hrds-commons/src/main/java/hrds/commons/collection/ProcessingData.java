@@ -165,6 +165,12 @@ public abstract class ProcessingData {
 		return null;
 	}
 
+	/**
+	 * 实现数据库查询的方式
+	 * @param sql {@like String} 查询的sql语句
+	 * @param db
+	 * @param dsl_id
+	 */
 	public void getResultSet(String sql, DatabaseWrapper db, long dsl_id) {
 		List<Map<String, Object>> dataStoreConfBean = SqlOperator.queryList(db,
 				"select * from data_store_layer_attr where dsl_id = ?", dsl_id);
