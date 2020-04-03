@@ -42,13 +42,22 @@ public class ConnectionTool {
 	 * @return
 	 */
 	public static DatabaseWrapper getDBWrapper(List<Map<String, Object>> dbConfig) {
+		return getDBWrapper(getLayerMap(dbConfig));
+	}
+
+	/**
+	 * 使用数据库吃信息，返回一个存储层的信息，以map的方式返回，key为用户输入的key，val为val
+	 * @param dbConfig
+	 * @return
+	 */
+	public static Map<String, String> getLayerMap(List<Map<String, Object>> dbConfig) {
 		Map<String, String> dbConfigMap = new HashMap<>();
 		for (Map<String, Object> dbMap : dbConfig) {
 			String key = dbMap.get("storage_property_key").toString();
 			String val = dbMap.get("storage_property_val").toString();
 			dbConfigMap.put(key,val);
 		}
-		return getDBWrapper(dbConfigMap);
+		return dbConfigMap;
 	}
 
 	public static DatabaseWrapper getDBWrapper(Map<String, String> dbConfig) {
