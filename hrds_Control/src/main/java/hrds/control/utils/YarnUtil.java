@@ -8,6 +8,7 @@ import org.apache.hadoop.yarn.api.records.YarnApplicationState;
 import org.apache.hadoop.yarn.client.api.YarnClient;
 import org.apache.hadoop.yarn.exceptions.ApplicationNotFoundException;
 import org.apache.hadoop.yarn.exceptions.YarnException;
+import org.apache.hadoop.yarn.util.ConverterUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -40,7 +41,7 @@ public class YarnUtil {
 	public static void killApplicationByid(String applicationId) {
 
 		//1、对传入的作业编号字符串进行格式转换，将其转化为可在Yarn上操作的样式；
-		ApplicationId appId = ApplicationId.fromString(applicationId);
+		ApplicationId appId = ConverterUtils.toApplicationId(applicationId);
 		YarnClient yarnClient = YarnM.instance.getYarnClient();
 		//2、根据传入的作业编号获得该作业的状态，若作业状态不为[已结束、已杀死、已失败]，则会杀死该作业。
 		ApplicationReport appReport = null;

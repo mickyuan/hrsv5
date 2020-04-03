@@ -1,10 +1,10 @@
 package hrds.agent.job.biz.utils;
 
 import fd.ng.core.conf.ConfFileLoader;
+import fd.ng.core.utils.StringUtil;
 import fd.ng.core.yaml.YamlArray;
 import fd.ng.core.yaml.YamlFactory;
 import fd.ng.core.yaml.YamlMap;
-import org.eclipse.jetty.util.StringUtil;
 
 import java.util.ArrayList;
 import java.util.HashMap;

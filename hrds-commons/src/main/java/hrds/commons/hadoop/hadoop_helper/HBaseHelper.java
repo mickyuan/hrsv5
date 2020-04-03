@@ -9,6 +9,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.io.compress.Compression.Algorithm;
+import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.Closeable;
@@ -337,7 +338,7 @@ public class HBaseHelper implements Closeable {
 		}
 	}
 
-	public List<SnapshotDescription> getSnapshots() throws IOException {
+	public List<HBaseProtos.SnapshotDescription> getSnapshots() throws IOException {
 
 		return admin.listSnapshots();
 	}

@@ -20,15 +20,11 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
-import org.apache.hadoop.hbase.CompareOperator;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
-import org.apache.hadoop.hbase.filter.BinaryComparator;
-import org.apache.hadoop.hbase.filter.Filter;
-import org.apache.hadoop.hbase.filter.FilterList;
-import org.apache.hadoop.hbase.filter.RowFilter;
+import org.apache.hadoop.hbase.filter.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hive.ql.io.orc.OrcFile;
 import org.apache.hadoop.hive.ql.io.orc.Reader;
@@ -231,7 +227,7 @@ public abstract class SolrOperatorImpl implements ISolrOperator {
         try (Table table = helper.getTable(tableName)) {
             Scan scan = new Scan();
             //建立filter,获取指定row_key的scanner结果
-            Filter rf = new RowFilter(CompareOperator.EQUAL, new BinaryComparator(Bytes.toBytes(rowKey)));
+            Filter rf = new RowFilter(CompareFilter.CompareOp.EQUAL, new BinaryComparator(Bytes.toBytes(rowKey)));
             scan.setFilter(rf);
             scanner = table.getScanner(scan);
             //索引HBase Scanner到的数
@@ -256,7 +252,7 @@ public abstract class SolrOperatorImpl implements ISolrOperator {
             ArrayList<Filter> listForFilters = new ArrayList<>();
             for (String rowKey : rowKeys) {
                 if (StringUtil.isNotBlank(rowKey)) {
-                    Filter filter = new RowFilter(CompareOperator.EQUAL, new BinaryComparator(Bytes.toBytes(rowKey)));
+                    Filter filter = new RowFilter(CompareFilter.CompareOp.EQUAL, new BinaryComparator(Bytes.toBytes(rowKey)));
                     listForFilters.add(filter);
                 }
             }
