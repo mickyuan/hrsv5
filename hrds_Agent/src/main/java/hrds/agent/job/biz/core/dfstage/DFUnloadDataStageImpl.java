@@ -55,23 +55,27 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 				//文件所在的路径为  根路径+跑批日期+表名+文件格式
 				String file_path = FileNameUtils.normalize(tableBean.getRoot_path() + File.separator
 						+ collectTableBean.getEtlDate() + File.separator + collectTableBean.getTable_name()
-						+ File.separator + FileFormat.ofValueByCode(tableBean.getFile_format()), true);
-				String[] file_list = new File(file_path).list();
+						+ File.separator + FileFormat.ofValueByCode(tableBean.getFile_format()) + File.separator, true);
+				String[] file_name_list = new File(file_path).list();
 				//获得本次采集生成的数据文件的总大小
-				long fileSize = 0;
-				if (file_list != null && file_list.length > 0) {
-					for (String file_name : file_list) {
+				if (file_name_list != null && file_name_list.length > 0) {
+					long fileSize = 0;
+					String[] file_path_list = new String[file_name_list.length];
+					for (int i = 0; i < file_name_list.length; i++) {
+						file_path_list[i] = file_path + file_name_list[i];
 						//判断文件是否存在，如果某个文件存在，则计算大小，若不存在，记录日志并继续运行
-						if (FileUtil.decideFileExist(file_name)) {
-							long singleFileSize = FileUtil.getFileSize(file_name);
+						if (FileUtil.decideFileExist(file_path_list[i])) {
+							long singleFileSize = FileUtil.getFileSize(file_path_list[i]);
 							fileSize += singleFileSize;
 						} else {
-							throw new AppSystemException(file_name + "文件不存在");
+							throw new AppSystemException(file_path_list[i] + "文件不存在");
 						}
 					}
+					stageParamInfo.setFileArr(file_path_list);
+					stageParamInfo.setFileSize(fileSize);
+				} else {
+					throw new AppSystemException("数据文件不存在");
 				}
-				stageParamInfo.setFileArr(file_list);
-				stageParamInfo.setFileSize(fileSize);
 				//仅登记，则不用转存，则跳过db文件卸数，直接进行upload
 				LOGGER.info("Db文件采集，不需要转存，卸数跳过");
 			} else if (IsFlag.Fou.getCode().equals(collectTableBean.getIs_register())) {
@@ -87,6 +91,7 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 				throw new AppSystemException("是否转存传到后台的参数不正确");
 			}
 			stageParamInfo.setTableBean(tableBean);
+			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.SUCCEED.getCode(), "执行成功");
 		} catch (Exception e) {
 			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.FAILED.getCode(), e.getMessage());
 			LOGGER.error("DB文件采集卸数阶段失败：", e);

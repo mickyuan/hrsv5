@@ -14,6 +14,7 @@ import hrds.agent.job.biz.utils.DataTypeTransform;
 import hrds.agent.trans.biz.ConnectionTool;
 import hrds.commons.codes.DataBaseCode;
 import hrds.commons.codes.FileFormat;
+import hrds.commons.codes.IsFlag;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.hadoop.readconfig.ConfigReader;
 import org.apache.hadoop.conf.Configuration;
@@ -101,8 +102,10 @@ public class ReadFileToDataBase implements Callable<Long> {
 			String file_format = tableBean.getFile_format();
 			//列分隔符
 			String column_separator = tableBean.getColumn_separator();
+			//是否包含表头
+			String is_header = tableBean.getIs_header();
 			if (FileFormat.CSV.getCode().equals(file_format)) {
-				count = readCsvToDataBase(db, columnList, typeList, batchSql, file_code);
+				count = readCsvToDataBase(db, columnList, typeList, batchSql, file_code, is_header);
 			} else if (FileFormat.PARQUET.getCode().equals(file_format)) {
 				count = readParquetToDataBase(db, columnList, typeList, batchSql);
 			} else if (FileFormat.ORC.getCode().equals(file_format)) {
@@ -361,7 +364,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 	}
 
 	private long readCsvToDataBase(DatabaseWrapper db, List<String> columnList, List<String> typeList,
-	                               String batchSql, String database_code) {
+	                               String batchSql, String database_code, String is_header) {
 		//TODO 分隔符应该使用传进来的，懒得找了，测试的时候一起改吧
 		long num = 0;
 		try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(fileAbsolutePath),
@@ -372,6 +375,13 @@ public class ReadFileToDataBase implements Callable<Long> {
 			int limit = 50000;
 			List<String> lineList;
 			Object[] objs;
+			if (IsFlag.Shi.getCode().equals(is_header)) {
+				//判断包含表头，先读取表头
+				lineList = csvReader.read();
+				if (lineList != null) {
+					LOGGER.info("读取到表头为：" + lineList.toString());
+				}
+			}
 			while ((lineList = csvReader.read()) != null) {
 				objs = new Object[columnList.size()];// 存储全量插入信息的list
 				for (int j = 0; j < columnList.size(); j++) {

@@ -47,8 +47,8 @@ public class JdbcToNonFixedFileWriter extends AbstractFileWriter {
 		String hbase_name = collectTableBean.getHbase_name();
 		//数据抽取指定的目录
 		String plane_url = data_extraction_def.getPlane_url();
-		String midName = plane_url + File.separator + collectTableBean.getTable_name()
-				+ File.separator + eltDate + File.separator + FileFormat.FeiDingChang.getValue() + File.separator;
+		String midName = plane_url + File.separator + eltDate + File.separator + collectTableBean.getTable_name()
+				+ File.separator + FileFormat.FeiDingChang.getValue() + File.separator;
 		String dataDelimiter = data_extraction_def.getDatabase_separatorr();
 		midName = FileNameUtils.normalize(midName, true);
 		DataFileWriter<Object> avroWriter = null;

@@ -150,7 +150,7 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 			stageParamInfo.setFileArr(fileArr);
 			stageParamInfo.setFileSize(fileSize);
 			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.SUCCEED.getCode(), "执行成功");
-			//数据字典的路径
+			//XXX 数据字典的路径,数据字典的路径应该是指定位置，待定
 			String dictionaryPath = FileNameUtils.normalize(collectTableBean.getData_extraction_def_list().
 					get(0).getPlane_url() + File.separator + collectTableBean.getTable_name()
 					+ File.separator, true);

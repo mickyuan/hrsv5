@@ -51,8 +51,8 @@ public class JdbcToCsvFileWriter extends AbstractFileWriter {
 //				+ collectTableBean.getTable_id() + File.separator;
 		//数据抽取指定的目录
 		String plane_url = data_extraction_def.getPlane_url();
-		String midName = plane_url + File.separator + collectTableBean.getTable_name()
-				+ File.separator + eltDate + File.separator + FileFormat.CSV.getValue() + File.separator;
+		String midName = plane_url + File.separator + eltDate + File.separator + collectTableBean.getTable_name()
+				+ File.separator + FileFormat.CSV.getValue() + File.separator;
 		midName = FileNameUtils.normalize(midName, true);
 		DataFileWriter<Object> avroWriter = null;
 		CsvListWriter writer;
@@ -73,7 +73,7 @@ public class JdbcToCsvFileWriter extends AbstractFileWriter {
 			//获取所有字段的名称，包括列分割和列合并出来的字段名称
 			List<String> allColumnList = StringUtil.split(tableBean.getColumnMetaInfo(), JdbcCollectTableHandleParse.STRSPLIT);
 			//写表头
-			if(IsFlag.Shi.getCode().equals(data_extraction_def.getIs_header())){
+			if (IsFlag.Shi.getCode().equals(data_extraction_def.getIs_header())) {
 				writer.write(allColumnList);
 			}
 			//获取所有查询的字段的名称，不包括列分割和列合并出来的字段名称
@@ -148,7 +148,7 @@ public class JdbcToCsvFileWriter extends AbstractFileWriter {
 						writer = writerFile.getCsvWriter(DataBaseCode.ofValueByCode(
 								data_extraction_def.getDatabase_code()));
 						//写表头
-						if(IsFlag.Shi.getCode().equals(data_extraction_def.getIs_header())){
+						if (IsFlag.Shi.getCode().equals(data_extraction_def.getIs_header())) {
 							writer.write(allColumnList);
 						}
 						fileInfo.append(fileName).append(JdbcCollectTableHandleParse.STRSPLIT);

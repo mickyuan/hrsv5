@@ -8,6 +8,7 @@ import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.SourceDataConfBean;
 import hrds.agent.job.biz.bean.TableBean;
+import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.StorageType;
 import hrds.commons.entity.Column_split;
 import hrds.commons.entity.Data_extraction_def;
@@ -77,15 +78,18 @@ public class DbCollectTableHandleParse extends AbstractCollectTableHandle {
 		//更新拆分和合并的列信息
 		String colMeta = updateColumn(mergeIng, splitIng, columnMetaInfo, colTypeMetaInfo, colLengthInfo);
 		columnMetaInfo.delete(0, columnMetaInfo.length()).append(colMeta);
-		//这里是根据不同存储目的地会有相同的拉链方式，则这新增拉链字段在这里增加
-		columnMetaInfo.append(STRSPLIT).append(Constant.SDATENAME);
-		colTypeMetaInfo.append(STRSPLIT).append("char(8)");
-		colLengthInfo.append(STRSPLIT).append("8");
-		//增量进数方式
-		if (StorageType.ZengLiang.getCode().equals(collectTableBean.getStorage_type())) {
-			columnMetaInfo.append(STRSPLIT).append(Constant.EDATENAME).append(STRSPLIT).append(Constant.MD5NAME);
-			colTypeMetaInfo.append(STRSPLIT).append("char(8)").append(STRSPLIT).append("char(32)");
-			colLengthInfo.append(STRSPLIT).append("8").append(STRSPLIT).append("32");
+		//仅登记，海云不加任何字段
+		if (IsFlag.Fou.getCode().equals(collectTableBean.getIs_register())) {
+			//这里是根据不同存储目的地会有相同的拉链方式，则这新增拉链字段在这里增加
+			columnMetaInfo.append(STRSPLIT).append(Constant.SDATENAME);
+			colTypeMetaInfo.append(STRSPLIT).append("char(8)");
+			colLengthInfo.append(STRSPLIT).append("8");
+			//增量进数方式
+			if (StorageType.ZengLiang.getCode().equals(collectTableBean.getStorage_type())) {
+				columnMetaInfo.append(STRSPLIT).append(Constant.EDATENAME).append(STRSPLIT).append(Constant.MD5NAME);
+				colTypeMetaInfo.append(STRSPLIT).append("char(8)").append(STRSPLIT).append("char(32)");
+				colLengthInfo.append(STRSPLIT).append("8").append(STRSPLIT).append("32");
+			}
 		}
 		// 页面定义的清洗格式进行卸数
 		tableBean.setAllColumns(allColumns.toString());
