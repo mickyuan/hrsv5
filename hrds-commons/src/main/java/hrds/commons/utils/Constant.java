@@ -42,7 +42,7 @@ public class Constant {
     //定义并行抽取SQL结束条数占位符
     public static final String PARALLEL_SQL_END = "#{hy_end}";
 
-    //贴源层下批量采集数据 01:批量类型数据
+    //贴源层下批量数据 01:批量类型数据
     public static final String DCL_BATCH = "dcl_batch";
     //贴源层下实时数据 02:实时类型数据
     public static final String DCL_REALTIME = "dcl_realtime";
@@ -50,17 +50,14 @@ public class Constant {
     public static final String SYS_DATA_TABLE = "sys_data_table";
     //系统数据备份 12:系统数据备份
     public static final String SYS_DATA_BAK = "sys_data_bak";
+    //数据管控失效标记前缀
+    public static final String DQC_INVALID_TABLE = "dqc_invalid_table_";
+    //数据管控失效标记后缀
+    public static final String _HYREN = "_hyren";
+    //数据管控表操作类型 set_invalid:设置为无效,restore:恢复
+    public static final String DM_SET_INVALID_TABLE = "set_invalid";
+    public static final String DM_RESTORE_TABLE = "restore";
 
-    //自定义层数据库类型列表
-    public static final String[] DATABASE_TYPE = {"Hive", "HBase", "Mpp", "Spark"};
-    //HIVE
-    public static final String HIVE = DATABASE_TYPE[0];
-    //HBASE
-    public static final String HBASE = DATABASE_TYPE[1];
-    //MPP
-    public static final String MPP = DATABASE_TYPE[2];
-    //CARBON_DATA
-    public static final String CARBON_DATA = DATABASE_TYPE[3];
     //solr自定义的handler
     public static final String HANDLER = "/reloadDictionary";
     //solr自定义的分隔符
