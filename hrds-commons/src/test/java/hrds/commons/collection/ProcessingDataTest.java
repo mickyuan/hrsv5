@@ -9,7 +9,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -135,9 +138,15 @@ public class ProcessingDataTest {
 	}
 	@Test
 	public void getSQLEngine() throws SQLException {
+		List<Map<String,Object>> mm = new ArrayList<>();
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			List<Map<String, Object>> sqlEngine = ProcessingData.getSQLEngine("select * from sys_user", db);
-			assertThat("不等于0就ok", sqlEngine.size(), not(0L));
+			new ProcessingData() {
+				@Override
+				public void dealLine(Map<String, Object> map) throws Exception {
+					mm.add(map);//在这里，对数据处理，如写文件，清洗、还是组成什么格式给前端，有你来定
+				}
+			}.getSQLEngine("select * from sys_user", db);
+			assertThat("不等于0就ok", mm.size(), not(0L));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

@@ -11,31 +11,31 @@ public class DbmColInfo extends ProjectTableEntity {
     public static final String TableName = "dbm_col_info";
 
     //字段id
-    @DocBean(name = "column_id", value = "字段id(primary):", dataType = Long.class, required = true)
+    @DocBean(name = "column_id", value = "字段id(primary):", dataType = Long.class)
     private Long column_id;
     //字段描述
-    @DocBean(name = "tc_remark", value = "字段描述(primary):", dataType = String.class, required = true)
+    @DocBean(name = "tc_remark", value = "字段描述(primary):", dataType = String.class)
     private String tc_remark;
     //是否主键标识
-    @DocBean(name = "is_primary_key", value = "是否主键标识:", dataType = String.class, required = true)
+    @DocBean(name = "is_primary_key", value = "是否主键标识:", dataType = String.class)
     private String is_primary_key;
     //字段所属agent_id
-    @DocBean(name = "agent_id", value = "字段所属agent_id:", dataType = Long.class, required = true)
+    @DocBean(name = "agent_id", value = "字段所属agent_id:", dataType = Long.class)
     private Long agent_id;
     //字段所属数据库设置
-    @DocBean(name = "database_id", value = "字段所属 database_id:", dataType = Long.class, required = true)
+    @DocBean(name = "database_id", value = "字段所属 database_id:", dataType = Long.class)
     private Long database_id;
     //字段名
-    @DocBean(name = "column_name", value = "字段英文名:", dataType = String.class, required = true)
+    @DocBean(name = "column_name", value = "字段英文名:", dataType = String.class)
     private String column_name;
     //字段中文名
-    @DocBean(name = "column_ch_name", value = "字段中文名:", dataType = String.class, required = true)
+    @DocBean(name = "column_ch_name", value = "字段中文名:", dataType = String.class)
     private String column_ch_name;
     //字段所属数据源id
-    @DocBean(name = "source_id", value = "字段所属 source_id:", dataType = Long.class, required = true)
+    @DocBean(name = "source_id", value = "字段所属 source_id:", dataType = Long.class)
     private Long source_id;
     //字段类型
-    @DocBean(name = "column_type", value = "字段类型:", dataType = String.class, required = true)
+    @DocBean(name = "column_type", value = "字段类型:", dataType = String.class)
     private String column_type;
 
     public Long getColumn_id() {

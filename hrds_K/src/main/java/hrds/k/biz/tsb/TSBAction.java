@@ -20,6 +20,7 @@ import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.tree.background.TreeNodeInfo;
 import hrds.commons.tree.background.bean.TreeConf;
+import hrds.commons.tree.background.query.DCLDataQuery;
 import hrds.commons.tree.commons.TreePageSource;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.PropertyParaValue;
@@ -27,8 +28,9 @@ import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.commons.utils.tree.Node;
 import hrds.commons.utils.tree.NodeDataConvertedTreeList;
 import hrds.k.biz.dbm.normbasic.DbmNormbasicAction;
+import hrds.k.biz.tsb.bean.DbmColInfo;
 import hrds.k.biz.tsb.bean.TSBConf;
-import hrds.k.biz.tsb.query.TSBQuery;
+import hrds.k.biz.utils.DataTableFieldUtil;
 
 import java.lang.reflect.Type;
 import java.util.*;
@@ -65,15 +67,15 @@ public class TSBAction extends BaseAction {
         setDbmNormbmDetect(data_layer);
         //设置 Dbm_dtable_info 对象
         setDbmDtableInfo(file_id);
-        List<Map<String, Object>> col_info_s = new ArrayList<>();
         //数据层获取不同表结构
+        List<Map<String, Object>> col_info_s;
         switch (data_layer) {
             case "DCL":
                 //如果数据表所属层是DCL层,判断表类型是批量还是实时
                 if (Constant.DCL_BATCH.equals(data_own_type)) {
-                    col_info_s.addAll(TSBQuery.getDCLBatchTableColumnsById(file_id));
+                    col_info_s = DCLDataQuery.getDCLBatchTableColumns(file_id);
                 } else if (Constant.DCL_REALTIME.equals(data_own_type)) {
-                    col_info_s.addAll(TSBQuery.getDCLBatchRealTimeTableColumnsById(file_id));
+                    throw new BusinessException("获取实时数据表的字段信息暂未实现!");
                 } else {
                     throw new BusinessException("数据表类型错误! dcl_batch:批量数据,dcl_realtime:实时数据");
                 }
@@ -93,11 +95,10 @@ public class TSBAction extends BaseAction {
     }
 
     @Method(desc = "预测对标结果", logicStep = "预测对标结果")
-    @Param(name = "col_info_s", desc = "字段信息", range = "String类型")
-    @Return(desc = "预测对标结果", range = "预测对标结果")
-    public void predictBenchmarking(String col_info_s) {
+    @Param(name = "dbmColInfos", desc = "待保存字段信息集合", range = "DbmColInfo自定义实体类型", isBean = true)
+    public void predictBenchmarking(DbmColInfo[] dbmColInfos) {
         //设置待检测字段信息
-        setDbmDtcolInfo(col_info_s);
+        setDbmDtcolInfo(dbmColInfos);
         //获取待检测字段信息
         List<Dbm_dtcol_info> dbm_dtcol_infos = tsbConf.getDbm_dtcol_info_list();
         //获取预测接口地址信息
@@ -305,7 +306,7 @@ public class TSBAction extends BaseAction {
     @Param(name = "file_id", desc = "表源属性id", range = "String类型")
     private void setDbmDtableInfo(String file_id) {
         //根据表源属性id获取表信息
-        Map<String, Object> dclBatchTableInfo = TSBQuery.gerDCLBatchTableInfoById(file_id);
+        Map<String, Object> dclBatchTableInfo = DCLDataQuery.getDCLBatchTableInfo(file_id);
         if (dclBatchTableInfo.isEmpty()) {
             throw new BusinessException("查询的表信息已经不存在!");
         }
@@ -331,67 +332,37 @@ public class TSBAction extends BaseAction {
 
     @Method(desc = "设置对标检测字段信息表",
             logicStep = "设置对标检测字段信息表")
-    @Param(name = "col_info_s", desc = "字段信息", range = "String类型")
-    @Param(name = "dbmColInfos", desc = "字段信息", range = "String类型")
+    @Param(name = "dbmColInfos", desc = "字段信息", range = "DbmColInfo自定义实体类型")
     @Return(desc = "检测字段信息表信息集合", range = "检测字段信息表信息集合")
-    private void setDbmDtcolInfo(String col_info_s) {
+    private void setDbmDtcolInfo(DbmColInfo[] dbmColInfos) {
         //设置 Dbm_dtcol_info 对象
-        Type type = new TypeReference<List<Map<String, String>>>() {
-        }.getType();
-        List<Map<String, String>> col_info_list = JsonUtil.toObject(col_info_s, type);
         List<Dbm_dtcol_info> dbm_dtcol_info_list = new ArrayList<>();
-//        for (DbmColInfo col_info : dbmColInfos) {
-//            Dbm_dtcol_info dbm_dtcol_info = new Dbm_dtcol_info();
-//            dbm_dtcol_info.setCol_id(PrimayKeyGener.getNextId());
-//            dbm_dtcol_info.setCol_cname(col_info.getColumn_ch_name());
-//            dbm_dtcol_info.setCol_ename(col_info.getColumn_name());
-//            if (null == col_info.getTc_remark()) {
-//                dbm_dtcol_info.setCol_remark("");
-//            } else {
-//                dbm_dtcol_info.setCol_remark(col_info.getTc_remark());
-//            }
-//            Map<String, String> col_type_map = parsingFiledType(col_info.getColumn_type());
-//            dbm_dtcol_info.setData_type(col_type_map.get("data_type"));
-//            dbm_dtcol_info.setData_len(col_type_map.get("data_len"));
-//            dbm_dtcol_info.setDecimal_point(col_type_map.get("decimal_point"));
-//            dbm_dtcol_info.setIs_key(col_info.getIs_primary_key());
-//            dbm_dtcol_info.setIs_null(IsFlag.Fou.getCode());
-//            dbm_dtcol_info.setDefault_value("");
-//            dbm_dtcol_info.setDbm_tableid(tsbConf.getDbm_dtable_info().getDbm_tableid());
-//            dbm_dtcol_info.setDetect_id(tsbConf.getDbm_normbm_detect().getDetect_id());
-//            dbm_dtcol_info.setColumn_id(col_info.getColumn_id());
-//            dbm_dtcol_info.setDatabase_id(col_info.getDatabase_id());
-//            dbm_dtcol_info.setAgent_id(col_info.getAgent_id());
-//            dbm_dtcol_info.setSource_id(col_info.getSource_id());
-//            dbm_dtcol_info_list.add(dbm_dtcol_info);
-//            tsbConf.setDbm_dtcol_info_list(dbm_dtcol_info_list);
-//        }
-        col_info_list.forEach(col_info -> {
+        for (DbmColInfo col_info : dbmColInfos) {
             Dbm_dtcol_info dbm_dtcol_info = new Dbm_dtcol_info();
             dbm_dtcol_info.setCol_id(PrimayKeyGener.getNextId());
-            dbm_dtcol_info.setCol_cname(col_info.get("column_ch_name"));
-            dbm_dtcol_info.setCol_ename(col_info.get("column_name"));
-            if (null == col_info.get("tc_remark")) {
+            dbm_dtcol_info.setCol_cname(col_info.getColumn_ch_name());
+            dbm_dtcol_info.setCol_ename(col_info.getColumn_name());
+            if (null == col_info.getTc_remark()) {
                 dbm_dtcol_info.setCol_remark("");
             } else {
-                dbm_dtcol_info.setCol_remark(col_info.get("tc_remark"));
+                dbm_dtcol_info.setCol_remark(col_info.getTc_remark());
             }
-            Map<String, String> col_type_map = parsingFiledType(col_info.get("column_type"));
+            Map<String, String> col_type_map = DataTableFieldUtil.parsingFiledType(col_info.getColumn_type());
             dbm_dtcol_info.setData_type(col_type_map.get("data_type"));
             dbm_dtcol_info.setData_len(col_type_map.get("data_len"));
             dbm_dtcol_info.setDecimal_point(col_type_map.get("decimal_point"));
-            dbm_dtcol_info.setIs_key(col_info.get("is_primary_key"));
+            dbm_dtcol_info.setIs_key(col_info.getIs_primary_key());
             dbm_dtcol_info.setIs_null(IsFlag.Fou.getCode());
             dbm_dtcol_info.setDefault_value("");
             dbm_dtcol_info.setDbm_tableid(tsbConf.getDbm_dtable_info().getDbm_tableid());
             dbm_dtcol_info.setDetect_id(tsbConf.getDbm_normbm_detect().getDetect_id());
-            dbm_dtcol_info.setColumn_id(col_info.get("column_id"));
-            dbm_dtcol_info.setDatabase_id(col_info.get("database_id"));
-            dbm_dtcol_info.setAgent_id(col_info.get("agent_id"));
-            dbm_dtcol_info.setSource_id(col_info.get("source_id"));
+            dbm_dtcol_info.setColumn_id(col_info.getColumn_id());
+            dbm_dtcol_info.setDatabase_id(col_info.getDatabase_id());
+            dbm_dtcol_info.setAgent_id(col_info.getAgent_id());
+            dbm_dtcol_info.setSource_id(col_info.getSource_id());
             dbm_dtcol_info_list.add(dbm_dtcol_info);
             tsbConf.setDbm_dtcol_info_list(dbm_dtcol_info_list);
-        });
+        }
     }
 
     @Method(desc = "设置对标检测结果表",
@@ -415,35 +386,6 @@ public class TSBAction extends BaseAction {
             dbm_normbmd_results_list.add(dbm_normbmd_result);
             tsbConf.setDbm_normbmd_result_list(dbm_normbmd_results_list);
         });
-    }
-
-    @Method(desc = "解析字段类型", logicStep = "解析字段类型")
-    @Param(name = "col_type", desc = "字段类型", range = "String类型字符串")
-    @Return(desc = "字段类型的Map", range = "data_type:数据类型,data_len:数据长度,decimal_point:数据小数长度")
-    private static Map<String, String> parsingFiledType(String col_type) {
-        Map<String, String> map = new HashMap<>();
-        if (col_type.indexOf('(') != -1) {
-            //数据类型
-            String data_type = col_type.substring(0, col_type.indexOf('('));
-            map.put("data_type", data_type);
-            //数据长度
-            String substring = col_type.substring(col_type.indexOf('(') + 1, col_type.lastIndexOf(')'));
-            map.put("data_len", substring.split(",")[0]);
-            //小数长度
-            if (substring.split(",").length == 1) {
-                map.put("decimal_point", "0");
-            } else {
-                map.put("decimal_point", substring.split(",")[1]);
-            }
-        } else {
-            map.put("data_type", col_type);
-            map.put("data_len", "0");
-            map.put("decimal_point", "0");
-        }
-        if (map.isEmpty()) {
-            throw new BusinessException("字段类型解析失败!");
-        }
-        return map;
     }
 
     @Method(desc = "根据标准编号获取标准id", logicStep = "根据标准编号获取标准id")

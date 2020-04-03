@@ -10,12 +10,15 @@ import hrds.commons.codes.CollectType;
 import hrds.commons.codes.DataSourceType;
 import hrds.commons.codes.Store_type;
 import hrds.commons.entity.*;
+import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.DruidParseQuerySql;
 
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.util.*;
 
 @DocClass(desc = "数据处理类，获取表的存储等信息", author = "xchao", createdate = "2020年3月31日 16:32:43")
-public class ProcessingData {
+public abstract class ProcessingData {
 
 	private static final String SAMEJDBC = "SAMEJDBC";
 	private static final String UNSAMEJDBC = "UNSAMEJDBC";
@@ -29,7 +32,7 @@ public class ProcessingData {
 	@Param(name = "tableName", desc = "数据表明", range = "只能是集市、采集等表中的tablename字段")
 	@Param(name = "db", desc = "数据库db操作对象", range = "不可为空")
 	@Return(desc = "查询出来的rs", range = "数据")
-	public static List<Map<String, Object>> getSQLEngine(String sql, DatabaseWrapper db) {
+	public void getSQLEngine(String sql, DatabaseWrapper db) {
 
 		List<String> listTable = DruidParseQuerySql.parseSqlTableToList(sql);
 		/**
@@ -92,28 +95,24 @@ public class ProcessingData {
 			Long dsl_id = (Long) useMapLayer.get("dsl_id");
 			//判断是不是关系型数据库和hive，因为这两个是支持jdbc的连接的
 			if (Store_type.DATABASE == Store_type.ofEnumByCode(store_type) || Store_type.HIVE == Store_type.ofEnumByCode(store_type)) {
-				return getResultSet(sql, db, dsl_id);
+				getResultSet(sql, db, dsl_id);
 			} else if (Store_type.HBASE == Store_type.ofEnumByCode(store_type)) {
-				return null; //TODO 数据都在hbase的查询实现方式
+				 //TODO 数据都在hbase的查询实现方式
 			} else if (Store_type.MONGODB == Store_type.ofEnumByCode(store_type)) {
-				return null; //TODO 数据都在MONGODB的查询实现方式
+				//TODO 数据都在MONGODB的查询实现方式
 			}
 		}
 		//第二、判断所有的表是不是都使用的jdbc的方式
 		else if (isType.equals(UNSAMEJDBC)) {
-			return null; //TODO 数据都在关系型数据库，也就说都可以使用jdbc的方式的实现方式
+			//TODO 数据都在关系型数据库，也就说都可以使用jdbc的方式的实现方式
 		}
 		//第三、其他，包含了不同的存储，如jdbc、hbase、solr等不同给情况
 		else {
-			return null;// TODO 混搭模式
+			// TODO 混搭模式
 		}
-		return null;
 	}
-
-
 	/**
 	 * 获取表的存储位置
-	 *
 	 * @param tableName {@link String} 表名
 	 * @param db        {@link DatabaseWrapper} db
 	 */
@@ -158,16 +157,35 @@ public class ProcessingData {
 		 */
 		return null;
 	}
-
-	private static List<Map<String, Object>> getResultSet(String sql, DatabaseWrapper db, long dsl_id) {
+	/**
+	 * 实现数据库查询的方式
+	 * @param sql {@like String} 查询的sql语句
+	 * @param db
+	 * @param dsl_id
+	 */
+	private void getResultSet(String sql, DatabaseWrapper db, long dsl_id) {
 		List<Map<String, Object>> dataStoreConfBean = SqlOperator.queryList(db,
 				"select * from data_store_layer_attr where dsl_id = ?", dsl_id);
 		try (DatabaseWrapper dbDataConn = ConnectionTool.getDBWrapper(dataStoreConfBean)) {
-			//ResultSet resultSet = dbDataConn.queryGetResultSet(sql);
-			List<Map<String, Object>> maps = SqlOperator.queryList(dbDataConn, sql);
-			return maps;
+			ResultSet rs = dbDataConn.queryGetResultSet(sql);
+			ResultSetMetaData meta = rs.getMetaData();
+			int cols = meta.getColumnCount();
+			while (rs.next()){
+				Map<String, Object> result = new HashMap<String, Object>();
+				for (int i = 0; i < cols; i++) {
+					String columnName = meta.getColumnName(i+1).toLowerCase();
+					result.put(columnName, rs.getObject(i+1));
+				}
+				dealLine(result);
+			}
+		} catch (Exception e) {
+			throw new AppSystemException("系统不支持该数据库类型",e);
 		}
 	}
+	public abstract void dealLine(Map<String,Object> map) throws Exception;
+
+
+
 	/**
 	 * 根据表名获取存储层的信息
 	 *
