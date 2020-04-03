@@ -37,4 +37,5 @@ TODO
 # office 缓存文件
 ~$*.*
 /hrds_B/src/main/resources/
+/hrds_H/src/main/resources/
 /hrds-commons/src/main/resources/
