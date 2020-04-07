@@ -21,7 +21,7 @@ public class DataConvertedNodeData {
             logicStep = "转化DCL层批量数据下数据源数据为Node节点数据")
     @Param(name = "dclBatchDataInfos", desc = "贴源层批量数据下数据源信息", range = "贴源层批量数据下数据源信息")
     @Return(desc = "返回值说明", range = "返回值取值范围")
-    public static List<Map<String, Object>> ConversionDCLBatchDataInfos(List<Map<String, Object>> dclBatchDataInfos) {
+    public static List<Map<String, Object>> conversionDCLBatchDataInfos(List<Map<String, Object>> dclBatchDataInfos) {
         //设置为树节点信息
         List<Map<String, Object>> dclBatchDataNodes = new ArrayList<>();
         dclBatchDataInfos.forEach(o -> {
@@ -42,7 +42,7 @@ public class DataConvertedNodeData {
             logicStep = "转化DCL层批量数据数据源下分类数据为Node节点数据")
     @Param(name = "dclBatchClassifyInfos", desc = "贴源层批量数据数据源下分类信息", range = "贴源层批量数据数据源下分类信息")
     @Return(desc = "返回值说明", range = "返回值取值范围")
-    public static List<Map<String, Object>> ConversionDCLBatchClassifyInfos(
+    public static List<Map<String, Object>> conversionDCLBatchClassifyInfos(
             List<Map<String, Object>> dclBatchClassifyInfos) {
         //设置为树节点信息
         List<Map<String, Object>> dclBatchClassifyNodes = new ArrayList<>();
@@ -65,7 +65,7 @@ public class DataConvertedNodeData {
     @Method(desc = "转化DCL层批量数据数据源分类下的表数据为Node节点数据",
             logicStep = "1.转化DCL层批量数据数据源分类下的表数据为Node节点数据")
     @Param(name = "dclBatchTableRs", desc = "贴源层分类下的表信息", range = "贴源层分类下的表信息")
-    public static List<Map<String, Object>> ConversionDCLBatchTableInfos(List<Map<String, Object>> dclTableInfos) {
+    public static List<Map<String, Object>> conversionDCLBatchTableInfos(List<Map<String, Object>> dclTableInfos) {
         List<Map<String, Object>> dclBatchTableNodes = new ArrayList<>();
         dclTableInfos.forEach(o -> {
             Map<String, Object> map = new HashMap<>();

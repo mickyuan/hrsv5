@@ -42,31 +42,31 @@ public class ForegroundTreeUtil {
         //0.初始化源树菜单
         if (StringUtil.isNotBlank(treeDataInfo.getPage_from())) {
             List<Map<String, Object>> treeMenuInfos = TreeDataQuery.getSourceTreeInfos(treeDataInfo.getPage_from());
-            DataConvertedToTreeNode.ConversionSourceTreeInfos(treeMenuInfos, treeDataList);
+            DataConvertedToTreeNode.conversionSourceTreeInfos(treeMenuInfos, treeDataList);
         }
         //1.贴源层(DCL)信息转树节点
         //1-1.贴源层数据信息转树节点
         if (DataSourceType.DCL.getValue().equals(treeDataInfo.getAgent_layer())) {
             List<Map<String, Object>> dclDataInfos = (List<Map<String, Object>>) treeInfos.get("dclDataInfos");
-            DataConvertedToTreeNode.ConversionDCLSourceInfos(dclDataInfos, treeDataList);
+            DataConvertedToTreeNode.conversionDCLSourceInfos(dclDataInfos, treeDataList);
         }
         //1-2.贴源层下批量数据源信息转树节点
         List<Map<String, Object>> dclBatchDataInfos = (List<Map<String, Object>>) treeInfos.get("dclBatchDataInfos");
         if (null != dclBatchDataInfos && !dclBatchDataInfos.isEmpty()) {
-            DataConvertedToTreeNode.ConversionDCLBatchDataInfos(dclBatchDataInfos, treeDataList,
+            DataConvertedToTreeNode.conversionDCLBatchDataInfos(dclBatchDataInfos, treeDataList,
                     treeDataInfo.getRootName());
         }
         //1-3.贴源层批量数据源分类信息转树节点
         List<Map<String, Object>> dclBatchClassifyRs =
                 (List<Map<String, Object>>) treeInfos.get("dclBatchClassifyInfos");
         if (null != dclBatchClassifyRs && !dclBatchClassifyRs.isEmpty()) {
-            DataConvertedToTreeNode.ConversionDCLBatchClassifyInfos(dclBatchClassifyRs, treeDataList,
+            DataConvertedToTreeNode.conversionDCLBatchClassifyInfos(dclBatchClassifyRs, treeDataList,
                     treeDataInfo.getRootName());
         }
         //1-4.贴源层批量数据源分类信息下表信息转树节点
         List<Map<String, Object>> dclTableInfos = (List<Map<String, Object>>) treeInfos.get("dclBatchTableInfos");
         if (null != dclTableInfos && !dclTableInfos.isEmpty()) {
-            DataConvertedToTreeNode.ConversionDCLBatchTableInfos(dclTableInfos, treeDataList,
+            DataConvertedToTreeNode.conversionDCLBatchTableInfos(dclTableInfos, treeDataList,
                     treeDataInfo.getRootName());
         }
 //		//1-5.贴源层实时数据信息转树节点
@@ -186,7 +186,7 @@ public class ForegroundTreeUtil {
         List<Map<String, Object>> treeMenuInfos = new ArrayList<>();
         if (StringUtil.isNotBlank(treeDataInfo.getPage_from())) {
             treeMenuInfos = TreeDataQuery.getSourceTreeInfos(treeDataInfo.getPage_from());
-            DataConvertedToTreeNode.ConversionSourceTreeInfos(treeMenuInfos, treeNodeInfoList);
+            DataConvertedToTreeNode.conversionSourceTreeInfos(treeMenuInfos, treeNodeInfoList);
         }
         //2.获取树数据并转换树节点信息
         if (!treeMenuInfos.isEmpty()) {
@@ -200,27 +200,27 @@ public class ForegroundTreeUtil {
                     List<Map<String, Object>> dclDataInfos =
                             (List<Map<String, Object>>) searchDCLNodeDataMap.get("dclDataInfos");
                     if (null != dclDataInfos && !dclDataInfos.isEmpty()) {
-                        DataConvertedToTreeNode.ConversionDCLSourceInfos(dclDataInfos, treeNodeInfoList);
+                        DataConvertedToTreeNode.conversionDCLSourceInfos(dclDataInfos, treeNodeInfoList);
                     }
                     //获取DCL批量数据下数据源信息,转树节点
                     List<Map<String, Object>> dclBatchDataInfos =
                             (List<Map<String, Object>>) searchDCLNodeDataMap.get("dclBatchDataInfos");
                     if (null != dclBatchDataInfos && !dclBatchDataInfos.isEmpty()) {
-                        DataConvertedToTreeNode.ConversionDCLBatchDataInfos(dclBatchDataInfos, treeNodeInfoList,
+                        DataConvertedToTreeNode.conversionDCLBatchDataInfos(dclBatchDataInfos, treeNodeInfoList,
                                 owningLayer);
                     }
                     //获取DCL批量数据数据源下分类信息,转树节点
                     List<Map<String, Object>> dclBatchClassifyInfos =
                             (List<Map<String, Object>>) searchDCLNodeDataMap.get("dclBatchClassifyInfos");
                     if (null != dclBatchClassifyInfos && !dclBatchClassifyInfos.isEmpty()) {
-                        DataConvertedToTreeNode.ConversionDCLBatchClassifyInfos(dclBatchClassifyInfos,
+                        DataConvertedToTreeNode.conversionDCLBatchClassifyInfos(dclBatchClassifyInfos,
                                 treeNodeInfoList, owningLayer);
                     }
                     //获取DCL批量数据数据源分类下表信息,转树节点
                     List<Map<String, Object>> dclBatchTableInfos =
                             (List<Map<String, Object>>) searchDCLNodeDataMap.get("dclBatchTableInfos");
                     if (null != dclBatchTableInfos && !dclBatchTableInfos.isEmpty()) {
-                        DataConvertedToTreeNode.ConversionDCLBatchTableInfos(dclBatchTableInfos, treeNodeInfoList,
+                        DataConvertedToTreeNode.conversionDCLBatchTableInfos(dclBatchTableInfos, treeNodeInfoList,
                                 owningLayer);
                     }
                 }

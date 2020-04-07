@@ -33,7 +33,7 @@ public class TreeNodeDataQuery {
         //获取DCL层批量数据下的数据源列表
         List<Map<String, Object>> dclBatchDataInfos = DCLDataQuery.getDCLBatchDataInfos(user);
         //添加DCL层批量数据下数据源节点数据到DCL数据层的层次数据中
-        dataList.addAll(DataConvertedNodeData.ConversionDCLBatchDataInfos(dclBatchDataInfos));
+        dataList.addAll(DataConvertedNodeData.conversionDCLBatchDataInfos(dclBatchDataInfos));
         dclBatchDataInfos.forEach(dclBatchDataInfo -> {
             //--获取数据源id
             String source_id = dclBatchDataInfo.get("source_id").toString();
@@ -41,16 +41,16 @@ public class TreeNodeDataQuery {
             List<Map<String, Object>> dclBatchClassifyInfos =
                     DCLDataQuery.getDCLBatchClassifyInfos(source_id, treeConf.getShowFileCollection(), user);
             if (!dclBatchClassifyInfos.isEmpty()) {
-                dataList.addAll(DataConvertedNodeData.ConversionDCLBatchClassifyInfos(dclBatchClassifyInfos));
+                dataList.addAll(DataConvertedNodeData.conversionDCLBatchClassifyInfos(dclBatchClassifyInfos));
             }
             //获取批量数据数据源的分类下数据表信息
             dclBatchClassifyInfos.forEach(dclBatchClassifyInfo -> {
                 //获取分类id
                 String classify_id = dclBatchClassifyInfo.get("classify_id").toString();
-                List<Map<String, Object>> dclBatchTableInfos =
-                        DCLDataQuery.getDCLBatchTableInfos(classify_id, user, treeConf.getIsIntoHBase());
+                //根据分类id获取分类下表信息
+                List<Map<String, Object>> dclBatchTableInfos = DCLDataQuery.getDCLBatchTableInfos(classify_id, user);
                 if (!dclBatchTableInfos.isEmpty()) {
-                    dataList.addAll(DataConvertedNodeData.ConversionDCLBatchTableInfos(dclBatchTableInfos));
+                    dataList.addAll(DataConvertedNodeData.conversionDCLBatchTableInfos(dclBatchTableInfos));
                 }
             });
         });
