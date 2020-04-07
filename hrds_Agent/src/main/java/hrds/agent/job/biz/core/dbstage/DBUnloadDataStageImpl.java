@@ -6,6 +6,7 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.FileNameUtils;
 import hrds.agent.job.biz.bean.*;
+import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
@@ -15,8 +16,8 @@ import hrds.agent.job.biz.utils.DataExtractUtil;
 import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.commons.codes.CollectType;
-import hrds.commons.codes.DataBaseCode;
 import hrds.commons.codes.IsFlag;
+import hrds.commons.codes.UnloadType;
 import hrds.commons.exception.AppSystemException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,18 +37,7 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 
 	private SourceDataConfBean sourceDataConfBean;
 	private CollectTableBean collectTableBean;
-//	//列类型
-//	private List<String> columnTypes = new ArrayList<>();
-//	//本次采集数据量
-//	private long rowCount = 0;
-//	//本次采集表的meta信息
-//	private TableBean tableBean;
-//	//本次采集生成的数据文件的总大小
-//	private long fileSize = 0;
-//	//本次采集生成的数据文件
-//	private String[] fileArr;
 
-	//TODO 卸数的分隔符应该前台指定
 	public DBUnloadDataStageImpl(SourceDataConfBean sourceDataConfBean, CollectTableBean collectTableBean) {
 		this.sourceDataConfBean = sourceDataConfBean;
 		this.collectTableBean = collectTableBean;
@@ -62,7 +52,6 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 			"5、获得结果,用于校验多线程采集的结果和写Meta文件" +
 			"6、判断本次卸数阶段是否成功，设置成功或者错误信息")
 	@Return(desc = "StageStatusInfo是保存每个阶段状态信息的实体类", range = "不会为null，StageStatusInfo实体类对象")
-	@SuppressWarnings("unchecked")
 	@Override
 	public StageParamInfo handleStage(StageParamInfo stageParamInfo) {
 		LOGGER.info("------------------数据库直连采集卸数阶段开始------------------");
@@ -70,12 +59,80 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 		StageStatusInfo statusInfo = new StageStatusInfo();
 		JobStatusInfoUtil.startStageStatusInfo(statusInfo, collectTableBean.getTable_id(),
 				StageConstant.UNLOADDATA.getCode());
+		try {
+			if (UnloadType.QuanLiangXieShu.getCode().equals(collectTableBean.getUnload_type())) {
+				//全量卸数
+				fullAmountExtract(stageParamInfo);
+			} else if (UnloadType.ZengLiangXieShu.getCode().equals(collectTableBean.getUnload_type())) {
+				//增量卸数
+				incrementExtract(stageParamInfo);
+			} else {
+				throw new AppSystemException("数据抽取卸数方式类型不正确");
+			}
+			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.SUCCEED.getCode(), "执行成功");
+			LOGGER.info("------------------数据库直连采集卸数阶段成功------------------");
+		} catch (Exception e) {
+			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.FAILED.getCode(), e.getMessage());
+			LOGGER.error("数据库直连采集卸数阶段失败：", e);
+		}
+		//结束给stageParamInfo塞值
+		JobStatusInfoUtil.endStageParamInfo(stageParamInfo, statusInfo, collectTableBean
+				, CollectType.ShuJuKuCaiJi.getCode());
+		return stageParamInfo;
+	}
+
+	@Override
+	public int getStageCode() {
+		return StageConstant.UNLOADDATA.getCode();
+	}
+
+	/**
+	 * 增量抽取
+	 */
+	private void incrementExtract(StageParamInfo stageParamInfo) {
+		//TODO
+	}
+
+	/**
+	 * 全量抽取
+	 */
+	private void fullAmountExtract(StageParamInfo stageParamInfo) throws Exception {
+		TableBean tableBean = CollectTableHandleFactory.getCollectTableHandleInstance(sourceDataConfBean)
+				.generateTableInfo(sourceDataConfBean, collectTableBean);
+		stageParamInfo.setTableBean(tableBean);
+		//根据collectSql中是否包含~@^分隔符判断是否用户自定义sql并行抽取
+		if (tableBean.getCollectSQL().contains(JobConstant.SQLDELIMITER)) {
+			//包含，是否用户自定义的sql进行多线程抽取
+			customizeParallelExtract(stageParamInfo, tableBean);
+		} else {
+			//不包含
+			pageParallelExtract(stageParamInfo, tableBean);
+		}
+		//XXX 数据字典的路径,数据字典的路径应该是指定位置，待定
+		String dictionaryPath = FileNameUtils.normalize(collectTableBean.getData_extraction_def_list().
+				get(0).getPlane_url() + File.separator + collectTableBean.getTable_name()
+				+ File.separator, true);
+		//写数据字典
+		DataExtractUtil.writeDataDictionary(dictionaryPath, collectTableBean.getTable_name(),
+				tableBean.getColumnMetaInfo(), tableBean.getColTypeMetaInfo(), collectTableBean.getStorage_type(),
+				collectTableBean.getData_extraction_def_list());
+	}
+
+	/**
+	 * 自定义并行抽取
+	 */
+	private void customizeParallelExtract(StageParamInfo stageParamInfo, TableBean tableBean) {
+		//TODO
+	}
+
+
+	/**
+	 * 分页并行抽取
+	 */
+	@SuppressWarnings("unchecked")
+	private void pageParallelExtract(StageParamInfo stageParamInfo, TableBean tableBean) throws Exception {
 		ExecutorService executorService = null;
 		try {
-			//TODO 目前对于同一张表的清洗规则和查询出来的表结构是一样的，未来可能根据不同目的地去实现不同的清洗
-			TableBean tableBean = CollectTableHandleFactory.getCollectTableHandleInstance(sourceDataConfBean)
-					.generateTableInfo(sourceDataConfBean, collectTableBean);
-			stageParamInfo.setTableBean(tableBean);
 			//fileResult中是生成的所有数据文件的路径，用于判断卸数阶段结果
 			List<String> fileResult = new ArrayList<>();
 			//pageCountResult是本次采集作业每个线程采集到的数据量，用于写meta文件
@@ -149,69 +206,10 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 			}
 			stageParamInfo.setFileArr(fileArr);
 			stageParamInfo.setFileSize(fileSize);
-			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.SUCCEED.getCode(), "执行成功");
-			//XXX 数据字典的路径,数据字典的路径应该是指定位置，待定
-			String dictionaryPath = FileNameUtils.normalize(collectTableBean.getData_extraction_def_list().
-					get(0).getPlane_url() + File.separator + collectTableBean.getTable_name()
-					+ File.separator, true);
-			//写数据字典
-			DataExtractUtil.writeDataDictionary(dictionaryPath, collectTableBean.getTable_name(),
-					tableBean.getColumnMetaInfo(), tableBean.getColTypeMetaInfo(), collectTableBean.getStorage_type(),
-					collectTableBean.getData_extraction_def_list());
-			LOGGER.info("------------------数据库直连采集卸数阶段成功------------------");
-		} catch (Exception e) {
-			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.FAILED.getCode(), e.getMessage());
-			LOGGER.error("数据库直连采集卸数阶段失败：", e);
 		} finally {
 			//关闭线程池
 			if (executorService != null)
 				executorService.shutdown();
 		}
-		//结束给stageParamInfo塞值
-		JobStatusInfoUtil.endStageParamInfo(stageParamInfo, statusInfo, collectTableBean
-				, CollectType.ShuJuKuCaiJi.getCode());
-		return stageParamInfo;
 	}
-
-	@Override
-	public int getStageCode() {
-		return StageConstant.UNLOADDATA.getCode();
-	}
-
-	//	@Method(desc = "获取本次数据库采集单张表的mate信息",
-//			logicStep = "1、直接返回成员变量tableBean")
-//	@Return(desc = "数据库采集单张表的mate信息",
-//			range = "不会为null")
-//	public TableBean getTableBean() {
-//		return tableBean;
-//	}
-//
-//	@Method(desc = "获取数据列类型，用于写meta文件", logicStep = "1、直接返回成员变量columnTypes")
-//	@Return(desc = "当前采集表所有列的列类型", range = "不会为null")
-//	public List<String> getColumnTypes() {
-//		return this.columnTypes;
-//	}
-//
-//	@Method(desc = "获取本次数据库直连采集作业采集到的数据总条数，用于写meta文件",
-//			logicStep = "1、直接返回成员变量rowCount")
-//	@Return(desc = "当前作业采集数据量(一张表一个作业，作业内部使用多线程对表数据进行采集)", range = "不限")
-//	public long getRowCount() {
-//		return rowCount;
-//	}
-//
-//	@Method(desc = "获取本次数据库直连采集作业采集卸数后生成的数据文件总大小，用于写meta文件",
-//			logicStep = "1、直接返回成员变量fileSize")
-//	@Return(desc = "多线程卸数落地数据文件的文件总大小", range = "不限，单位是字节")
-//	public long getFileSize() {
-//		return fileSize;
-//	}
-//
-//	@Method(desc = "获取本次数据库直连采集作业采集卸数后生成的数据文件的路径，用于上传HDFS",
-//			logicStep = "1、直接返回成员变成fileArr")
-//	@Return(desc = "多线程采集，每个线程写一个数据文件，多线程采集最终会有多个文件，用数组存放多个文件的路径",
-//			range = "不会为null")
-//	public String[] getFileArr() {
-//		return fileArr;
-//	}
-
 }

@@ -50,44 +50,124 @@ public abstract class AbstractCollectTableHandle implements CollectTableHandle {
 	}
 
 	static String getCollectSQL(SourceDataConfBean sourceDataConfBean, CollectTableBean collectTableBean) {
-		String tableName = collectTableBean.getTable_name();
-		//筛选出不是新列的字段
-		Set<String> collectColumnNames = ColumnTool.getCollectColumnName(
-				collectTableBean.getCollectTableColumnBeanList());
-		//3、根据列名和表名获得采集SQL为空
 		//获取自定义sql，如果自定义sql的sql语句
 		String collectSQL;
 		//如果是自定义sql,则使用自定义sql
 		if (IsFlag.Shi.getCode().equals(collectTableBean.getIs_user_defined())) {
 			collectSQL = collectTableBean.getSql();
 		} else {
-			// TODO 缺少支持自定义SQL
-			collectSQL = SQLUtil.getCollectSQL(tableName, collectColumnNames,
-					sourceDataConfBean.getDatabase_type());
-			//这时自定义sql这个字段可能会有过滤条件，需要拼接到collectSQL后面
-			String selfSql = collectTableBean.getSql();
-			//获取系统的所有日期参数格式定义
-			if (!StringUtil.isEmpty(selfSql)) {
-				SimpleDateFormat sysDatef = new SimpleDateFormat(JobConstant.SYS_DATEFORMAT);
-				String eltDate = collectTableBean.getEtlDate();
-				//输入的日期肯定是yyyyMMdd格式
-				if (selfSql.contains("#{txdate}")) {
-					Date dateByString = getDateByString(eltDate);
-					selfSql = selfSql.replace("#{txdate}", SINGLEQUOTE + sysDatef.format(dateByString) + SINGLEQUOTE);
+			//判断是否是并行抽取
+			if (IsFlag.Shi.getCode().equals(collectTableBean.getIs_parallel())) {
+				//是并行抽取
+				//判断是否自定义并行抽取
+				if (IsFlag.Shi.getCode().equals(collectTableBean.getIs_customize_sql())) {
+					//自定义并行抽取sql
+					//判断过滤条件是否为空，不为空解析自定义的分页sql,添加过滤条件
+					if (!StringUtil.isEmpty(collectTableBean.getSql())) {
+						collectSQL = getCollectSqlAddWhere(collectTableBean.getPage_sql(), collectTableBean.getSql());
+					} else {
+						//为空直接返回分页sql
+						collectSQL = collectTableBean.getPage_sql();
+					}
+				} else if (IsFlag.Fou.getCode().equals(collectTableBean.getIs_customize_sql())) {
+					//指定并行数抽取
+					collectSQL = getCollectSqlByColumn(collectTableBean, sourceDataConfBean);
+				} else {
+					throw new AppSystemException("是否标识参数错误");
 				}
-				if (selfSql.contains("#{txdate_pre}")) {
-					Date dateByString = getDateByString(getNextDateByNum(eltDate, -1));
-					selfSql = selfSql.replace("#{txdate_pre}", SINGLEQUOTE + sysDatef.format(dateByString) + SINGLEQUOTE);
-				}
-				if (selfSql.contains("#{txdate_next}")) {
-					Date dateByString = getDateByString(getNextDateByNum(eltDate, 1));
-					selfSql = selfSql.replace("#{txdate_next}", SINGLEQUOTE + sysDatef.format(dateByString) + SINGLEQUOTE);
-				}
-				collectSQL = collectSQL + " where " + selfSql;
+			} else if (IsFlag.Fou.getCode().equals(collectTableBean.getIs_parallel())) {
+				//不是并行抽取
+				collectSQL = getCollectSqlByColumn(collectTableBean, sourceDataConfBean);
+			} else {
+				throw new AppSystemException("是否标识参数错误");
 			}
 		}
+		//替换sql中的变量参数
+		collectSQL = replaceSqlParam(collectSQL, collectTableBean.getSqlParam());
 		LOGGER.info("采集要执行的sql为" + collectSQL);
 		return collectSQL;
+	}
+
+	/**
+	 * 获取数据抽取sql,根据页面选择的列
+	 */
+	private static String getCollectSqlByColumn(CollectTableBean collectTableBean,
+	                                            SourceDataConfBean sourceDataConfBean) {
+		String tableName = collectTableBean.getTable_name();
+		//筛选出不是新列的字段
+		Set<String> collectColumnNames = ColumnTool.getCollectColumnName(
+				collectTableBean.getCollectTableColumnBeanList());
+		//根据列名和表名获得采集SQL
+		String collectSql = SQLUtil.getCollectSQL(tableName, collectColumnNames,
+				sourceDataConfBean.getDatabase_type());
+		return getCollectSqlAddWhere(collectSql, collectTableBean.getSql());
+		//获取系统的所有日期参数格式定义
+//		if (!StringUtil.isEmpty(selfSql)) {
+//			SimpleDateFormat sysDateFormat = new SimpleDateFormat(JobConstant.SYS_DATEFORMAT);
+//			String eltDate = collectTableBean.getEtlDate();
+//			//输入的日期肯定是yyyyMMdd格式
+//			if (selfSql.contains("#{txdate}")) {
+//				Date dateByString = getDateByString(eltDate);
+//				selfSql = selfSql.replace("#{txdate}",
+//						SINGLEQUOTE + sysDateFormat.format(dateByString) + SINGLEQUOTE);
+//			}
+//			if (selfSql.contains("#{txdate_pre}")) {
+//				Date dateByString = getDateByString(getNextDateByNum(eltDate, -1));
+//				selfSql = selfSql.replace("#{txdate_pre}",
+//						SINGLEQUOTE + sysDateFormat.format(dateByString) + SINGLEQUOTE);
+//			}
+//			if (selfSql.contains("#{txdate_next}")) {
+//				Date dateByString = getDateByString(getNextDateByNum(eltDate, 1));
+//				selfSql = selfSql.replace("#{txdate_next}",
+//						SINGLEQUOTE + sysDateFormat.format(dateByString) + SINGLEQUOTE);
+//			}
+//			collectSQL = collectSQL + " where " + selfSql;
+//		}
+	}
+
+	/**
+	 * @param collectSql 数据库抽取拼接的sql
+	 * @param filter     过滤条件
+	 * @return 返回添加过滤条件的sql
+	 */
+	private static String getCollectSqlAddWhere(String collectSql, String filter) {
+		StringBuilder addWhereSql = new StringBuilder();
+		//抽取的sql最后可能需要有过滤条件，需要拼接到collectSQL后面
+		if (!StringUtil.isEmpty(filter)) {
+			for (String sql : StringUtil.split(collectSql, JobConstant.SQLDELIMITER)) {
+				if (sql.toLowerCase().contains("where")) {
+					addWhereSql.append("SELECT * FROM (").append(sql).append(")").append(" as hyren_tmp_table ")
+							.append(" WHERE ").append(filter).append(JobConstant.SQLDELIMITER);
+				} else {
+					addWhereSql.append(sql).append(" WHERE ").append(filter).append(JobConstant.SQLDELIMITER);
+				}
+			}
+			//去掉最后一个分隔符
+			addWhereSql.delete(addWhereSql.length() - JobConstant.SQLDELIMITER.length(), addWhereSql.length());
+			return addWhereSql.toString();
+		} else {
+			return collectSql;
+		}
+	}
+
+	/**
+	 * 采集抽取的sql中可能包含占位符,将sql中的占位符替换成对应的值
+	 *
+	 * @param collectSql 抽取的sql
+	 * @param sqlParam   sql占位符的参数 例：ccc=1~@^ddd=2~@^eee=3
+	 * @return 替换之后的抽取的sql
+	 */
+	private static String replaceSqlParam(String collectSql, String sqlParam) {
+		//将多个需要替换的参数分割出来
+		List<String> splitParamList = StringUtil.split(sqlParam, JobConstant.SQLDELIMITER);
+		for (String splitParam : splitParamList) {
+			//遍历，分割出需要替换的key和值
+			List<String> key_value = StringUtil.split(splitParam, "=");
+			String key = "#{" + key_value.get(0) + "}";
+			String value = key_value.get(1);
+			collectSql = collectSql.replaceAll(key, value);
+		}
+		return collectSql;
 	}
 
 	/**

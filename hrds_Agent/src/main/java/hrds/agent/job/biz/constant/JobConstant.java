@@ -36,5 +36,7 @@ public class JobConstant {
 			"determineFileChangesType", ""));
 	//文件上传到hdfs的顶层目录
 	public static final String PREFIX = PropertyParaUtil.getString("pathprefix", "/hrds");
+	//自定义sql或者自定义并行抽取sql时使用的分隔符
+	public static final String SQLDELIMITER = "`@^";
 }
 

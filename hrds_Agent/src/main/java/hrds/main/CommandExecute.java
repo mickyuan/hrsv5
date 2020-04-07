@@ -5,6 +5,7 @@ import fd.ng.core.annotation.DocClass;
 import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.JobStatusInfo;
 import hrds.agent.job.biz.bean.SourceDataConfBean;
+import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.core.DataBaseJobImpl;
 import hrds.agent.job.biz.core.DataFileJobImpl;
 import hrds.agent.job.biz.core.dbstage.writer.JdbcToCsvFileWriter;
@@ -52,7 +53,7 @@ public class CommandExecute {
 		//获取sql占位符的参数
 		if (args.length > 4) {
 			for (int i = 4; i < args.length; i++) {
-				sqlParam.append(args[i]).append(Constant.DATADELIMITER);
+				sqlParam.append(args[i]).append(JobConstant.SQLDELIMITER);
 			}
 			sqlParam.delete(sqlParam.length() - 1, sqlParam.length());
 		}

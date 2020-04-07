@@ -12,13 +12,13 @@ import java.util.List;
 
 @DocClass(desc = "DB文件采集,数据库采集选择表配置信息", author = "zxz", createdate = "2019/11/29 14:26")
 public class CollectTableBean implements Serializable {
-	@DocBean(name = "database_id", value = "数据库设置id:", dataType = Long.class, required = true)
+	@DocBean(name = "database_id", value = "数据库设置id:", dataType = Long.class)
 	private String database_id;
-	@DocBean(name = "table_id", value = "表名ID:", dataType = Long.class, required = true)
+	@DocBean(name = "table_id", value = "表名ID:", dataType = Long.class)
 	private String table_id;
-	@DocBean(name = "table_name", value = "表名:", dataType = String.class, required = true)
+	@DocBean(name = "table_name", value = "表名:", dataType = String.class)
 	private String table_name;
-	@DocBean(name = "table_ch_name", value = "中文名称:", dataType = String.class, required = true)
+	@DocBean(name = "table_ch_name", value = "中文名称:", dataType = String.class)
 	private String table_ch_name;
 	@DocBean(name = "table_count", value = "记录数(CountNum):10000-1万左右<YiWan> 100000-10万左右<ShiWan> " +
 			"1000000-100万左右<BaiWan> 10000000-1000万左右<Qianwan> 100000000-亿左右<Yi> " +
@@ -26,25 +26,25 @@ public class CollectTableBean implements Serializable {
 	private String table_count;
 	@DocBean(name = "source_tableid", value = "源表ID:", dataType = String.class, required = false)
 	private String source_tableid;
-	@DocBean(name = "valid_s_date", value = "有效开始日期:", dataType = String.class, required = true)
+	@DocBean(name = "valid_s_date", value = "有效开始日期:", dataType = String.class)
 	private String valid_s_date;
-	@DocBean(name = "valid_e_date", value = "有效结束日期:", dataType = String.class, required = true)
+	@DocBean(name = "valid_e_date", value = "有效结束日期:", dataType = String.class)
 	private String valid_e_date;
 	@DocBean(name = "sql", value = "自定义sql语句:", dataType = String.class, required = false)
 	private String sql;
 	@DocBean(name = "remark", value = "备注:", dataType = String.class, required = false)
 	private String remark;
 	@DocBean(name = "is_user_defined", value = "是否自定义sql采集(IsFlag):1-是<Shi> 0-否<Fou> ",
-			dataType = String.class, required = true)
+			dataType = String.class)
 	private String is_user_defined;
 	@DocBean(name = "is_md5", value = "是否使用MD5(IsFlag):1-是<Shi> 0-否<Fou> ",
-			dataType = String.class, required = true)
+			dataType = String.class)
 	private String is_md5;
 	@DocBean(name = "is_register", value = "是否仅登记(IsFlag):1-是<Shi> 0-否<Fou> ",
-			dataType = String.class, required = true)
+			dataType = String.class)
 	private String is_register;
 	@DocBean(name = "is_parallel", value = "是否并行抽取(IsFlag):1-是<Shi> 0-否<Fou> ",
-			dataType = String.class, required = true)
+			dataType = String.class)
 	private String is_parallel;
 	@DocBean(name = "page_sql", value = "分页sql:", dataType = String.class, required = false)
 	private String page_sql;
@@ -52,7 +52,7 @@ public class CollectTableBean implements Serializable {
 	private Integer pageparallels;
 	@DocBean(name = "dataincrement", value = "每天数据增量:", dataType = Integer.class, required = false)
 	private Integer dataincrement;
-	@DocBean(name = "rec_num_date", value = "数据获取时间:", dataType = String.class, required = true)
+	@DocBean(name = "rec_num_date", value = "数据获取时间:", dataType = String.class)
 	private String rec_num_date;
 	@DocBean(name = "data_extraction_def_list", value = "表的数据抽取定义的集合", dataType = List.class)
 	private List<Data_extraction_def> data_extraction_def_list;
@@ -60,28 +60,32 @@ public class CollectTableBean implements Serializable {
 	private List<CollectTableColumnBean> collectTableColumnBeanList;
 	@DocBean(name = "column_merge_list", value = "列合并参数信息:", dataType = Column_merge.class, required = false)
 	private List<Column_merge> column_merge_list;
-	@DocBean(name = "storage_type", value = "进数方式(StorageType):1-增量<ZengLiang> 2-追加<ZhuiJia> 3-替换<TiHuan> ", dataType = String.class, required = true)
+	@DocBean(name = "storage_type", value = "进数方式(StorageType):1-增量<ZengLiang> 2-追加<ZhuiJia> 3-替换<TiHuan> ", dataType = String.class)
 	private String storage_type;
-	@DocBean(name = "storage_time", value = "存储期限（以天为单位）:", dataType = Long.class, required = true)
+	@DocBean(name = "storage_time", value = "存储期限（以天为单位）:", dataType = Long.class)
 	private Long storage_time;
-	@DocBean(name = "is_zipper", value = "是否拉链存储(IsFlag):1-是<Shi> 0-否<Fou> ", dataType = String.class, required = true)
+	@DocBean(name = "is_zipper", value = "是否拉链存储(IsFlag):1-是<Shi> 0-否<Fou> ", dataType = String.class)
 	private String is_zipper;
-	@DocBean(name = "dataStoreConfBean", value = "表存储配置信息", dataType = DataStoreConfBean.class, required = true)
+	@DocBean(name = "dataStoreConfBean", value = "表存储配置信息", dataType = DataStoreConfBean.class)
 	private List<DataStoreConfBean> dataStoreConfBean;
-	@DocBean(name = "hbase_name", value = "数据采集之后的唯一表名", dataType = String.class, required = true)
+	@DocBean(name = "hbase_name", value = "数据采集之后的唯一表名", dataType = String.class)
 	private String hbase_name;
-	@DocBean(name = "etlDate", value = "数据采集的跑批日期", dataType = String.class, required = true)
+	@DocBean(name = "etlDate", value = "数据采集的跑批日期", dataType = String.class)
 	private String etlDate;
-	@DocBean(name = "datasource_name", value = "数据源名称", dataType = String.class, required = true)
+	@DocBean(name = "datasource_name", value = "数据源名称", dataType = String.class)
 	private String datasource_name;
-	@DocBean(name = "agent_name", value = "agent名称", dataType = String.class, required = true)
+	@DocBean(name = "agent_name", value = "agent名称", dataType = String.class)
 	private String agent_name;
-	@DocBean(name = "agent_id", value = "Agent_id", dataType = Long.class, required = true)
+	@DocBean(name = "agent_id", value = "Agent_id", dataType = Long.class)
 	private Long agent_id;
-	@DocBean(name = "source_id", value = "数据源ID", dataType = Long.class, required = true)
+	@DocBean(name = "source_id", value = "数据源ID", dataType = Long.class)
 	private Long source_id;
-	@DocBean(name = "sqlParam", value = "sql占位符参数", dataType = String.class, required = true)
+	@DocBean(name = "sqlParam", value = "sql占位符参数", dataType = String.class)
 	private String sqlParam;
+	@DocBean(name = "unload_type", value = "落地文件卸数方式", dataType = String.class)
+	private String unload_type;
+	@DocBean(name = "is_customize_sql", value = "是否并行抽取中的自定义sql", dataType = String.class)
+	private String is_customize_sql;
 
 	public List<Column_merge> getColumn_merge_list() {
 		return column_merge_list;
@@ -368,5 +372,21 @@ public class CollectTableBean implements Serializable {
 
 	public void setSqlParam(String sqlParam) {
 		this.sqlParam = sqlParam;
+	}
+
+	public String getUnload_type() {
+		return unload_type;
+	}
+
+	public void setUnload_type(String unload_type) {
+		this.unload_type = unload_type;
+	}
+
+	public String getIs_customize_sql() {
+		return is_customize_sql;
+	}
+
+	public void setIs_customize_sql(String is_customize_sql) {
+		this.is_customize_sql = is_customize_sql;
 	}
 }
