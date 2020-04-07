@@ -20,6 +20,7 @@ import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.tree.foreground.ForegroundTreeUtil;
 import hrds.commons.tree.foreground.bean.TreeDataInfo;
+import hrds.commons.utils.DruidParseQuerySql;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.h.biz.SqlAnalysis.HyrenOracleTableVisitor;
 //import com.alibaba.druid.
@@ -412,13 +413,8 @@ public class MarketInfoAction extends BaseAction {
         List<Map<String, Object>>  dslaStorelayerList = Dbo.queryList("select dslad_id,dsla_storelayer from " + Data_store_layer_added.TableName + " t1 " +
                 "left join " + Dm_relation_datatable.TableName + " t2 on t1.dsl_id = t2.dsl_id " +
                 "where t2.datatable_id = ? order by dsla_storelayer", dm_datatable.getDatatable_id());
-        List<SQLStatement> stmtList = SQLUtils.parseStatements(querysql, JdbcConstants.ORACLE);
-        HyrenOracleTableVisitor visitor = new HyrenOracleTableVisitor();
-        visitor.setVisitqueryblocktimes(0);
-        for (SQLStatement stmt : stmtList) {
-            stmt.accept(visitor);
-        }
-        List<String> columnNameList = visitor.getColumnNameList();
+        DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(querysql);
+        List<String> columnNameList = druidParseQuerySql.parseSelectAliasField();
         for(String everyColumnName :columnNameList){
             Map<String,Object> map = new LinkedHashMap<>();
             map.put("field_en_name",everyColumnName);
