@@ -1,35 +1,26 @@
 package hrds.agent.job.biz.core.service;
 
-import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
-import hrds.agent.job.biz.bean.*;
+import hrds.agent.job.biz.bean.CollectTableBean;
+import hrds.agent.job.biz.bean.SourceDataConfBean;
+import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.constant.JobConstant;
-import hrds.agent.job.biz.core.service.AbstractCollectTableHandle;
-import hrds.agent.job.biz.core.service.CollectTableHandle;
-import hrds.agent.job.biz.utils.ColumnTool;
-import hrds.agent.job.biz.utils.SQLUtil;
-import hrds.agent.job.biz.utils.TypeTransLength;
-import hrds.commons.codes.CleanType;
-import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.StorageType;
-import hrds.commons.entity.Column_merge;
 import hrds.commons.entity.Column_split;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.ConnUtil;
 import hrds.commons.utils.Constant;
-import hrds.commons.utils.Platform;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.sql.*;
-import java.text.ParsePosition;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.*;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.util.List;
+import java.util.Map;
 
 @DocClass(desc = "根据页面所选的表和字段对jdbc所返回的meta信息进行解析", author = "zxz", createdate = "2019/12/4 11:17")
 public class JdbcCollectTableHandleParse extends AbstractCollectTableHandle {
@@ -42,17 +33,23 @@ public class JdbcCollectTableHandleParse extends AbstractCollectTableHandle {
 	@Param(name = "collectTableBean", desc = "数据库采集表配置信息", range = "不为空")
 	@Return(desc = "卸数阶段元信息", range = "不为空")
 	public TableBean generateTableInfo(SourceDataConfBean sourceDataConfBean,
-	                                          CollectTableBean collectTableBean) {
+	                                   CollectTableBean collectTableBean) {
 		TableBean tableBean = new TableBean();
 		Connection conn = null;
 		try {
 			//获取jdbc连接
 			conn = ConnUtil.getConnection(sourceDataConfBean.getDatabase_drive(), sourceDataConfBean.getJdbc_url(),
 					sourceDataConfBean.getUser_name(), sourceDataConfBean.getDatabase_pad());
-			//1、根据数据源信息和采集表信息抽取SQL
+			//1、根据数据源信息和采集表信息获取数据库抽取SQL
 			String collectSQL = getCollectSQL(sourceDataConfBean, collectTableBean);
 			tableBean.setCollectSQL(collectSQL);
-			ResultSet resultSet = getResultSet(collectSQL, conn);
+			//抽取sql可能包含分隔符，判断如果包含分隔符，取第一条sql获取meta信息（注：包含分隔符表明并行抽取）
+			ResultSet resultSet;
+			if (collectSQL.contains(JobConstant.SQLDELIMITER)) {
+				resultSet = getResultSet(StringUtil.split(collectSQL, JobConstant.SQLDELIMITER).get(0), conn);
+			} else {
+				resultSet = getResultSet(collectSQL, conn);
+			}
 			StringBuilder columnMetaInfo = new StringBuilder();//生成的元信息列名
 			StringBuilder allColumns = new StringBuilder();//要采集的列名
 			StringBuilder colTypeMetaInfo = new StringBuilder();//生成的元信息列类型

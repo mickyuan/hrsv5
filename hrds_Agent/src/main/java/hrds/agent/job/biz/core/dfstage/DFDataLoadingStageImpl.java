@@ -10,7 +10,6 @@ import hrds.agent.job.biz.constant.DataTypeConstant;
 import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
-import hrds.agent.job.biz.core.dbstage.DBUploadStageImpl;
 import hrds.agent.job.biz.core.service.JdbcCollectTableHandleParse;
 import hrds.agent.job.biz.utils.DataTypeTransform;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
@@ -150,6 +149,10 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 		}
 		sql.deleteCharAt(sql.length() - 1);
 		sql.append(") ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde' stored as TEXTFILE");
+		if (IsFlag.Shi.getCode().equals(tableBean.getIs_header())) {
+			//包含表头，跳过第一行
+			sql.append("tblproperties (\"skip.header.line.count\"=\"1\")");
+		}
 		return sql.toString();
 	}
 
