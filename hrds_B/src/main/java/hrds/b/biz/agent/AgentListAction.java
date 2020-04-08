@@ -109,7 +109,7 @@ public class AgentListAction extends BaseAction {
 					" gi.source_id source_id" +
 					" FROM " + Database_set.TableName + " ds " +
 					" LEFT JOIN " + Agent_info.TableName + " gi ON ds.Agent_id = gi.Agent_id " +
-					" where ds.Agent_id = ? ";
+					" where ds.Agent_id = ? AND ds.is_sendok = ? ";
 		}
 		//数据文件Agent
 		else if (AgentType.DBWenJian == agentType) {
@@ -143,7 +143,7 @@ public class AgentListAction extends BaseAction {
 			throw new BusinessException("从数据库中取到的Agent类型不合法");
 		}
 		//5、返回结果
-		return Dbo.queryResult(sqlStr, agentInfo.get("agent_id"));
+		return Dbo.queryResult(sqlStr, agentInfo.get("agent_id"),IsFlag.Shi.getCode());
 	}
 
 	@Method(desc = "查看任务日志", logicStep = "" +
