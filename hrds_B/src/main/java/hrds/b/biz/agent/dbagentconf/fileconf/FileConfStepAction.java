@@ -62,13 +62,17 @@ public class FileConfStepAction extends BaseAction {
                 1: 行分隔符  2: 数据分隔符
                  */
                 //            1: 行分隔符
-                item.put(
-                    "row_separator",
-                    StringUtil.unicode2String(((String) item.get("row_separator"))));
+                if (item.get("row_separator") != null) {
+                  item.put(
+                      "row_separator",
+                      StringUtil.unicode2String((item.get("row_separator").toString())));
+                }
                 //            2: 数据分隔符
-                item.put(
-                    "database_separatorr",
-                    StringUtil.unicode2String(((String) item.get("database_separatorr"))));
+                if (item.get("database_separatorr") != null) {
+                  item.put(
+                      "database_separatorr",
+                      StringUtil.unicode2String((item.get("database_separatorr").toString())));
+                }
               });
           tableInfo.put("tableData", list);
         });
@@ -126,7 +130,7 @@ public class FileConfStepAction extends BaseAction {
   @Return(desc = "返回数据库设置ID，方便下一个页面能够通过这个参数加载初始化设置", range = "不为空")
   public long saveFileConf(Data_extraction_def[] extractionDefString, long colSetId) {
 
-//    1: 检查当前传入的数据是否为空
+    //    1: 检查当前传入的数据是否为空
     if (extractionDefString == null || extractionDefString.length == 0) {
       throw new BusinessException("未获取到卸数文件信息");
     }
@@ -138,7 +142,7 @@ public class FileConfStepAction extends BaseAction {
             + " where table_id in (select table_id from table_info where database_id = ?)",
         colSetId);
 
-//    3: 循环卸数配置信息并进行保存
+    //    3: 循环卸数配置信息并进行保存
     //    verifySeqConf(extractionDefString);
     for (int i = 0; i < extractionDefString.length; i++) {
 
