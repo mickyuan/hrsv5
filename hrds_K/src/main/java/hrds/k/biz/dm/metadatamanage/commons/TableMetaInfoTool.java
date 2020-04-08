@@ -9,6 +9,7 @@ import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
 import hrds.commons.codes.DataSourceType;
+import hrds.commons.entity.Data_store_layer;
 import hrds.commons.entity.Data_store_reg;
 import hrds.commons.entity.Dq_failure_table;
 import hrds.commons.exception.BusinessException;
@@ -93,6 +94,13 @@ public class TableMetaInfoTool {
             //提交数据库操作
             SqlOperator.commitTransaction(db);
         }
+    }
+
+    @Method(desc = "创建DCL层表", logicStep = "创建DCL层表")
+    @Param(name = "dsl_id", desc = "配置存储层id", range = "long 类型")
+    @Return(desc = "返回值说明", range = "返回值取值范围")
+    public static void createDCLTable(long dsl_id) {
+        //TODO 未实现,等表实体
     }
 
     @Method(desc = "依赖表检查", logicStep = "依赖表检查")

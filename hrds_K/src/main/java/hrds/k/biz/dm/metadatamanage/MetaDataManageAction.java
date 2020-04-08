@@ -188,6 +188,7 @@ public class MetaDataManageAction extends BaseAction {
             logicStep = "逻辑说明")
     @Param(name = "metaDataInfo", desc = "自定义实体MetaDataInfo的对象", range = "MetaDataInfo", isBean = true)
     public void saveMetaData(MetaDataInfo metaDataInfo) {
+        //TODO 随后再做
         //数据校验
         if (StringUtil.isBlank(metaDataInfo.getTable_id())) {
             throw new BusinessException("编辑的元数据信息id为空!");
@@ -350,5 +351,30 @@ public class MetaDataManageAction extends BaseAction {
         //循环每一张表逐条删除
         allTableInfos.forEach(tableInfo ->
                 removeCompletelyTable(tableInfo.getTable_source(), tableInfo.getFailure_table_id()));
+    }
+
+
+    @Method(desc = "数据管控-创建表", logicStep = "数据管控-创建表")
+    @Param(name = "data_layer", desc = "所属数据层", range = "String 类型")
+    @Param(name = "dsl_id", desc = "配置存储层id", range = "long 类型")
+    public void createTable(String data_layer, long dsl_id) {
+        //TODO 随后再做
+        //根据所属数据层创建表
+        switch (data_layer) {
+            case "DCL":
+                TableMetaInfoTool.createDCLTable(dsl_id);
+                break;
+            case "ISL":
+            case "DPL":
+            case "DML":
+            case "SFL":
+            case "AML":
+            case "DQC":
+            case "UDL":
+                throw new BusinessException("彻底删除" + data_layer + "层表信息暂未实现!");
+            default:
+                throw new BusinessException("未找到匹配的存储层!");
+        }
+
     }
 }
