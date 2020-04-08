@@ -14,6 +14,7 @@ import fd.ng.web.util.Dbo;
 import hrds.b.biz.agent.bean.DBConnectionProp;
 import hrds.b.biz.agent.tools.ConnUtil;
 import hrds.commons.base.BaseAction;
+import hrds.commons.codes.AgentType;
 import hrds.commons.codes.CleanType;
 import hrds.commons.codes.DatabaseType;
 import hrds.commons.codes.IsFlag;
@@ -61,9 +62,9 @@ public class DBConfStepAction extends BaseAction{
 		//以上SQL中，通过当前用户ID进行关联查询，达到了数据权限的限制
 
 		//2、如果任务已经设置完成并发送成功，则不允许编辑
-		if(IsFlag.Shi == IsFlag.ofEnumByCode(dbSet.getIs_sendok())){
-			throw new BusinessException("该任务已经设置完成并发送成功，不允许编辑");
-		}
+//		if(IsFlag.Shi == IsFlag.ofEnumByCode(dbSet.getIs_sendok())){
+//			throw new BusinessException("该任务已经设置完成并发送成功，不允许编辑");
+//		}
 		//3、在数据库设置表表中，关联采集作业分类表(collect_job_classify)，查询出当前database_id的所有信息并返回
 		return Dbo.queryResult("select t1.database_id, t1.agent_id, t1.database_number, t1.task_name, " +
 				" t1.database_name, t1.database_drive, t1.database_type, t1.user_name, t1.database_pad, t1.database_ip, " +
@@ -72,6 +73,21 @@ public class DBConfStepAction extends BaseAction{
 				" from " + Database_set.TableName + " t1 " +
 				" left join " + Collect_job_classify.TableName + " t2 on " +
 				" t1.classify_id = t2.classify_id  where database_id = ?", databaseId);
+	}
+
+	@Method(desc = "新增时获取数据库采集的数据",logicStep = "使用是否发生完成的标识来获取上次为配置文采的任务")
+	@Return(desc = "返回上次为配置文采的任务采集信息",range = "可以为空,为空表示首次配置")
+	public Result addDBConfInfo() {
+
+		//3、在数据库设置表表中，关联采集作业分类表(collect_job_classify)，查询出当前database_id的所有信息并返回
+		return Dbo.queryResult("select t1.database_id, t1.agent_id, t1.database_number, t1.task_name, " +
+				" t1.database_name, t1.database_drive, t1.database_type, t1.user_name, t1.database_pad, t1.database_ip, " +
+				" t1.database_port, t1.db_agent, t1.is_sendok, t1.jdbc_url, t2.classify_id, t2.classify_num, " +
+				" t2.classify_name, t2.remark " +
+				" from " + Database_set.TableName + " t1 " +
+				" left join " + Collect_job_classify.TableName + " t2 on " +
+				" t1.classify_id = t2.classify_id  join agent_info ai on t1.agent_id = ai.agent_id "
+				+ "where  t1.is_sendok = ? AND ai.agent_type = ?", IsFlag.Fou.getCode(), AgentType.ShuJuKu.getCode());
 	}
 
 	@Method(desc = "根据数据库类型获得数据库连接url等信息", logicStep = "" +
@@ -278,7 +294,7 @@ public class DBConfStepAction extends BaseAction{
 			}
 
 			databaseSet.setDb_agent(IsFlag.Fou.getCode());
-			databaseSet.setIs_sendok(IsFlag.Fou.getCode());
+//			databaseSet.setIs_sendok(IsFlag.Fou.getCode());
 			databaseSet.setCp_or(CLEANOBJ.toJSONString());
 
 			databaseSet.update(Dbo.db());
