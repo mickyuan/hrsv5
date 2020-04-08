@@ -280,7 +280,16 @@ public class MarketInfoAction extends BaseAction {
         CheckColummn(dm_datatable.getDatatable_en_name(), "表英文名");
         CheckColummn(dm_datatable.getDatatable_cn_name(), "表中文名");
         CheckColummn(dm_datatable.getSql_engine(), "Sql执行引擎");
-        CheckColummn(dm_datatable.getDatatype(), "数据类型");
+        CheckColummn(dm_datatable.getTable_storage(), "数据存储方式");
+        CheckColummn(dm_datatable.getStorage_type(), "进数方式");
+        CheckColummn(dm_datatable.getDatatable_lifecycle(), "数据生命周期");
+        if(TableLifeCycle.LinShi.getCode().equalsIgnoreCase(dm_datatable.getDatatable_lifecycle())) {
+            CheckColummn(dm_datatable.getDatatable_due_date(), "数据表到期日期");
+            dm_datatable.setDatatable_due_date(dm_datatable.getDatatable_due_date().substring(0,10).replace("-",""));
+        }
+        else{
+            dm_datatable.setDatatable_due_date(Final_Date);
+        }
         CheckColummn(dsl_id, "数据存储");
         //2检查表名重复
         if (Dbo.queryNumber("select count(*) from " + Dm_datatable.TableName + " where  datatable_en_name = ?", dm_datatable.getDatatable_en_name())
@@ -292,16 +301,14 @@ public class MarketInfoAction extends BaseAction {
         dm_datatable.setDatatable_id(datatable_id);
         dm_datatable.setDatatable_create_date(DateUtil.getSysDate());
         dm_datatable.setDatatable_create_time(DateUtil.getSysTime());
-        dm_datatable.setDatatable_due_date(Final_Date);
         dm_datatable.setDdlc_date(DateUtil.getSysDate());
         dm_datatable.setDdlc_time(DateUtil.getSysTime());
         dm_datatable.setDatac_date(DateUtil.getSysTime());
         dm_datatable.setDatac_time(DateUtil.getSysTime());
-        dm_datatable.setDatatable_lifecycle(TableLifeCycle.YongJiu.getCode());
+        //TODO 目前先全部使用默认 之后在修改
+        dm_datatable.setSql_engine(SqlEngine.MOREN.getCode());
         dm_datatable.setSoruce_size(Zero);
         dm_datatable.setEtl_date(ZeroDate);
-        //TODO 这里这个字段无意义
-        dm_datatable.setIs_append(TableStorage.ShuJuBiao.getCode());
         //TODO 见Category_id处的注释
         dm_datatable.setCategory_id(PrimayKeyGener.getNextId());
         //4.保存dm_datatable信息
@@ -334,9 +341,17 @@ public class MarketInfoAction extends BaseAction {
         CheckColummn(dm_datatable.getDatatable_en_name(), "表英文名");
         CheckColummn(dm_datatable.getDatatable_cn_name(), "表中文名");
         CheckColummn(dm_datatable.getSql_engine(), "Sql执行引擎");
-        CheckColummn(dm_datatable.getDatatype(), "数据类型");
-        CheckColummn(dsl_id, "数据存储");
-        //2检查表名重复
+        CheckColummn(dm_datatable.getTable_storage(), "数据存储方式");
+        CheckColummn(dm_datatable.getStorage_type(), "进数方式");
+        CheckColummn(dm_datatable.getDatatable_lifecycle(), "数据生命周期");
+        if(TableLifeCycle.LinShi.getCode().equalsIgnoreCase(dm_datatable.getDatatable_lifecycle())) {
+            CheckColummn(dm_datatable.getDatatable_due_date(), "数据表到期日期");
+            dm_datatable.setDatatable_due_date(dm_datatable.getDatatable_due_date().substring(0,10).replace("-",""));
+        } else{
+            dm_datatable.setDatatable_due_date(Final_Date);
+        }
+        //TODO 目前先全部使用默认 之后在修改
+        dm_datatable.setSql_engine(SqlEngine.MOREN.getCode());
         //TODO 见Category_id处的注释
         dm_datatable.setCategory_id(PrimayKeyGener.getNextId());
         //4.dm_datatable
@@ -413,6 +428,22 @@ public class MarketInfoAction extends BaseAction {
         List<Map<String, Object>>  dslaStorelayerList = Dbo.queryList("select dslad_id,dsla_storelayer from " + Data_store_layer_added.TableName + " t1 " +
                 "left join " + Dm_relation_datatable.TableName + " t2 on t1.dsl_id = t2.dsl_id " +
                 "where t2.datatable_id = ? order by dsla_storelayer", dm_datatable.getDatatable_id());
+        List<Map<String, Object>> storeTypeList =  Dbo.queryList("select store_type from "+Data_store_layer.TableName+" t1 left join "+Dm_relation_datatable.TableName+" t2 on t1.dsl_id = t2.dsl_id " +
+                "where t2.datatable_id = ? ", dm_datatable.getDatatable_id());
+        String storeType = storeTypeList.get(0).get("store_type").toString();
+        String field_type = "";
+        //TODO 分类讨论 目前只考虑关系性数据库、hive、hbase这三种情况
+        if(storeType.equals(Store_type.DATABASE.getCode())){
+            field_type = "varchar";
+        }
+        else if(storeType.equals(Store_type.HIVE.getCode())){
+            field_type = "string";
+        }
+        else if(storeType.equals(Store_type.HBASE.getCode())){
+            field_type = "string";
+        }else{
+            field_type = targetTypeList.get(0).get("target_type").toString();
+        }
         DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(querysql);
         List<String> columnNameList = druidParseQuerySql.parseSelectAliasField();
         for(String everyColumnName :columnNameList){
@@ -420,9 +451,8 @@ public class MarketInfoAction extends BaseAction {
             map.put("field_en_name",everyColumnName);
             map.put("field_cn_name",everyColumnName);
             //这里选择第一个字段类型作为默认字段类型
-            map.put("field_type",targetTypeList.get(0).get("target_type"));
-            //TODO 这里需要增加代码项
-            map.put("field_process","map");
+            map.put("field_type",field_type);
+            map.put("field_process",ProcessType.YingShe.getCode());
             for(Map<String,Object> dslaStorelayeMap : dslaStorelayerList){
                 map.put(StoreLayerAdded.ofValueByCode(dslaStorelayeMap.get("dsla_storelayer").toString()),false);
             }
@@ -465,7 +495,7 @@ public class MarketInfoAction extends BaseAction {
     public List<Map<String, Object>> getAllField_Type(String datatable_id) {
         Dm_datatable dm_datatable = new Dm_datatable();
         dm_datatable.setDatatable_id(datatable_id);
-        return Dbo.queryList("SELECT distinct replace(replace(trim(t1.target_type),'(',''),')','') as target_type " +
+        return Dbo.queryList("SELECT distinct lower(replace(replace(trim(t1.target_type),'(',''),')','')) as target_type " +
                 "FROM " + Type_contrast.TableName + " t1 LEFT JOIN " + Data_store_layer.TableName + " t2 ON t1.dtcs_id = t2.dtcs_id " +
                 "LEFT JOIN " + Dm_relation_datatable.TableName + " t3 ON t2.dsl_id=t3.dsl_id" +
                 " WHERE t3.datatable_id = ?", dm_datatable.getDatatable_id());
