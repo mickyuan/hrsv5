@@ -46,7 +46,7 @@ public class Datatable_field_info extends ProjectTableEntity
 	private String remark;
 	@DocBean(name ="field_length",value="字段长度:",dataType = String.class,required = false)
 	private String field_length;
-	@DocBean(name ="field_process",value="处理方式:",dataType = String.class,required = true)
+	@DocBean(name ="field_process",value="处理方式(ProcessType):1-定值<DingZhi> 2-自增<ZiZeng> 3-映射<YingShe> ",dataType = String.class,required = true)
 	private String field_process;
 	@DocBean(name ="process_para",value="处理方式对应参数:",dataType = String.class,required = false)
 	private String process_para;

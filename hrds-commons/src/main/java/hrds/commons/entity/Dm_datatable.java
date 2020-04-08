@@ -62,14 +62,14 @@ public class Dm_datatable extends ProjectTableEntity
 	private String etl_date;
 	@DocBean(name ="sql_engine",value="sql执行引擎(SqlEngine):1-JDBC<JDBC> 2-SPARK<SPARK> 3-默认<MOREN> ",dataType = String.class,required = false)
 	private String sql_engine;
-	@DocBean(name ="datatype",value="存储类型(StorageType):1-增量<ZengLiang> 2-追加<ZhuiJia> 3-替换<TiHuan> ",dataType = String.class,required = true)
-	private String datatype;
-	@DocBean(name ="is_append",value="数据存储方式:",dataType = String.class,required = true)
-	private String is_append;
+	@DocBean(name ="storage_type",value="进数方式(StorageType):1-增量<ZengLiang> 2-追加<ZhuiJia> 3-替换<TiHuan> ",dataType = String.class,required = true)
+	private String storage_type;
 	@DocBean(name ="data_mart_id",value="数据集市id:",dataType = Long.class,required = false)
 	private Long data_mart_id;
 	@DocBean(name ="category_id",value="集市分类id:",dataType = Long.class,required = true)
 	private Long category_id;
+	@DocBean(name ="table_storage",value="数据表存储方式(TableStorage):0-数据表<ShuJuBiao> 1-数据视图<ShuJuShiTu> ",dataType = String.class,required = true)
+	private String table_storage;
 
 	/** 取得：数据表id */
 	public Long getDatatable_id(){
@@ -211,21 +211,13 @@ public class Dm_datatable extends ProjectTableEntity
 	public void setSql_engine(String sql_engine){
 		this.sql_engine=sql_engine;
 	}
-	/** 取得：存储类型 */
-	public String getDatatype(){
-		return datatype;
+	/** 取得：进数方式 */
+	public String getStorage_type(){
+		return storage_type;
 	}
-	/** 设置：存储类型 */
-	public void setDatatype(String datatype){
-		this.datatype=datatype;
-	}
-	/** 取得：数据存储方式 */
-	public String getIs_append(){
-		return is_append;
-	}
-	/** 设置：数据存储方式 */
-	public void setIs_append(String is_append){
-		this.is_append=is_append;
+	/** 设置：进数方式 */
+	public void setStorage_type(String storage_type){
+		this.storage_type=storage_type;
 	}
 	/** 取得：数据集市id */
 	public Long getData_mart_id(){
@@ -254,5 +246,13 @@ public class Dm_datatable extends ProjectTableEntity
 		if(!fd.ng.core.utils.StringUtil.isEmpty(category_id)){
 			this.category_id=new Long(category_id);
 		}
+	}
+	/** 取得：数据表存储方式 */
+	public String getTable_storage(){
+		return table_storage;
+	}
+	/** 设置：数据表存储方式 */
+	public void setTable_storage(String table_storage){
+		this.table_storage=table_storage;
 	}
 }

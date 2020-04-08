@@ -1,137 +1,4 @@
-﻿--数据对标元管理标准元表
-DROP TABLE IF EXISTS DBM_NORMBASIC ;
-CREATE TABLE DBM_NORMBASIC(
-BASIC_ID                                          BIGINT default 0 NOT NULL, --标准元主键
-NORM_CODE                                         VARCHAR(100) NULL, --标准编号
-SORT_ID                                           BIGINT default 0 NOT NULL, --分类主键
-NORM_CNAME                                        VARCHAR(512) NOT NULL, --标准中文名称
-NORM_ENAME                                        VARCHAR(512) NOT NULL, --标准英文名称
-NORM_ANAME                                        VARCHAR(512) NULL, --标准别名
-BUSINESS_DEF                                      VARCHAR(2048) NULL, --业务定义
-BUSINESS_RULE                                     VARCHAR(2048) NULL, --业务规则
-DBM_DOMAIN                                        VARCHAR(200) NULL, --值域
-NORM_BASIS                                        VARCHAR(2048) NULL, --标准依据
-DATA_TYPE                                         CHAR(3) NULL, --数据类别
-CODE_TYPE_ID                                      BIGINT default 0 NULL, --代码类主键
-COL_LEN                                           BIGINT default 0 NOT NULL, --字段长度
-DECIMAL_POINT                                     BIGINT default 0 NULL, --小数长度
-MANAGE_DEPARTMENT                                 VARCHAR(512) NULL, --标准管理部门
-RELEVANT_DEPARTMENT                               VARCHAR(512) NULL, --标准相关部门
-ORIGIN_SYSTEM                                     VARCHAR(512) NULL, --可信系统（数据源）
-RELATED_SYSTEM                                    VARCHAR(512) NULL, --相关标准
-FORMULATOR                                        VARCHAR(100) NOT NULL, --制定人
-NORM_STATUS                                       CHAR(1) NOT NULL, --标准元状态（是否已发布）
-CREATE_USER                                       VARCHAR(100) NOT NULL, --创建人
-CREATE_DATE                                       CHAR(8) NOT NULL, --创建日期
-CREATE_TIME                                       CHAR(6) NOT NULL, --创建时间
-CONSTRAINT DBM_NORMBASIC_PK PRIMARY KEY(BASIC_ID)   );
-
---数据对标元管理标准分类信息表
-DROP TABLE IF EXISTS DBM_SORT_INFO ;
-CREATE TABLE DBM_SORT_INFO(
-SORT_ID                                           BIGINT default 0 NOT NULL, --分类主键
-PARENT_ID                                         BIGINT default 0 NOT NULL, --父级分类主键
-SORT_LEVEL_NUM                                    BIGINT default 0 NOT NULL, --分类层级数
-SORT_NAME                                         VARCHAR(512) NOT NULL, --分类名称
-SORT_REMARK                                       VARCHAR(512) NULL, --分类描述
-SORT_STATUS                                       CHAR(1) NOT NULL, --分类状态（是否发布）
-CREATE_USER                                       VARCHAR(100) NOT NULL, --创建人
-CREATE_DATE                                       CHAR(8) NOT NULL, --创建日期
-CREATE_TIME                                       CHAR(6) NOT NULL, --创建时间
-CONSTRAINT DBM_SORT_INFO_PK PRIMARY KEY(SORT_ID)   );
-
---数据对标元管理代码类信息表
-DROP TABLE IF EXISTS DBM_CODE_TYPE_INFO ;
-CREATE TABLE DBM_CODE_TYPE_INFO(
-CODE_TYPE_ID                                      BIGINT default 0 NOT NULL, --代码类主键
-CODE_TYPE_NAME                                    VARCHAR(512) NOT NULL, --代码类名
-CODE_ENCODE                                       VARCHAR(100) NULL, --代码编码
-CODE_REMARK                                       VARCHAR(512) NULL, --代码描述
-CODE_STATUS                                       CHAR(1) NOT NULL, --代码状态（是否发布）
-CREATE_USER                                       VARCHAR(100) NOT NULL, --创建人
-CREATE_DATE                                       CHAR(8) NOT NULL, --日期创建
-CREATE_TIME                                       CHAR(6) NOT NULL, --创建时间
-CONSTRAINT DBM_CODE_TYPE_INFO_PK PRIMARY KEY(CODE_TYPE_ID)   );
-
---数据对标元管理代码项信息表
-DROP TABLE IF EXISTS DBM_CODE_ITEM_INFO ;
-CREATE TABLE DBM_CODE_ITEM_INFO(
-CODE_ITEM_ID                                      BIGINT default 0 NOT NULL, --代码项主键
-CODE_ENCODE                                       VARCHAR(100) NULL, --代码编码
-CODE_ITEM_NAME                                    VARCHAR(512) NOT NULL, --代码项名
-CODE_VALUE                                        VARCHAR(80) NULL, --代码值
-DBM_LEVEL                                         VARCHAR(100) NULL, --层级
-CODE_REMARK                                       VARCHAR(512) NULL, --代码描述
-CODE_TYPE_ID                                      BIGINT default 0 NOT NULL, --代码类主键
-CONSTRAINT DBM_CODE_ITEM_INFO_PK PRIMARY KEY(CODE_ITEM_ID)   );
-
---数据对标标准对标检测表信息表
-DROP TABLE IF EXISTS DBM_DTABLE_INFO ;
-CREATE TABLE DBM_DTABLE_INFO(
-DBM_TABLEID                                       BIGINT default 0 NOT NULL, --检测表主键
-TABLE_CNAME                                       VARCHAR(100) NOT NULL, --表中文名称
-TABLE_ENAME                                       VARCHAR(512) NOT NULL, --表英文名称
-IS_EXTERNAL                                       CHAR(1) NOT NULL, --是否为外部数据源
-TABLE_REMARK                                      VARCHAR(512) NULL, --表描述信息
-DETECT_ID                                         VARCHAR(32) NOT NULL, --检测主键
-TABLE_ID                                          BIGINT default 0 NULL, --表名ID
-SOURCE_ID                                         BIGINT default 0 NULL, --数据源ID
-AGENT_ID                                          BIGINT default 0 NULL, --Agent_id
-DATABASE_ID                                       BIGINT default 0 NULL, --数据库设置id
-CONSTRAINT DBM_DTABLE_INFO_PK PRIMARY KEY(DBM_TABLEID)   );
-
---数据对标标准对标检测字段信息表
-DROP TABLE IF EXISTS DBM_DTCOL_INFO ;
-CREATE TABLE DBM_DTCOL_INFO(
-COL_ID                                            BIGINT default 0 NOT NULL, --字段主键
-COL_CNAME                                         VARCHAR(100) NOT NULL, --字段中文名
-COL_ENAME                                         VARCHAR(512) NOT NULL, --字段英文名
-COL_REMARK                                        VARCHAR(512) NULL, --字段描述
-DATA_TYPE                                         VARCHAR(100) NOT NULL, --数据类型
-DATA_LEN                                          BIGINT default 0 NOT NULL, --数据长度
-DECIMAL_POINT                                     BIGINT default 0 NOT NULL, --小数长度
-IS_KEY                                            CHAR(1) NOT NULL, --是否作为主键
-IS_NULL                                           CHAR(1) NOT NULL, --是否可为空
-DEFAULT_VALUE                                     VARCHAR(80) NULL, --默认值
-DBM_TABLEID                                       BIGINT default 0 NOT NULL, --检测表主键
-DETECT_ID                                         VARCHAR(32) NOT NULL, --检测主键
-COLUMN_ID                                         BIGINT default 0 NULL, --字段ID
-DATABASE_ID                                       BIGINT default 0 NULL, --数据库设置id
-AGENT_ID                                          BIGINT default 0 NULL, --Agent_id
-SOURCE_ID                                         BIGINT default 0 NULL, --数据源ID
-CONSTRAINT DBM_DTCOL_INFO_PK PRIMARY KEY(COL_ID)   );
-
---数据对标标准对标检测结果表
-DROP TABLE IF EXISTS DBM_NORMBMD_RESULT ;
-CREATE TABLE DBM_NORMBMD_RESULT(
-RESULT_ID                                         VARCHAR(32) NOT NULL, --结果主键
-COL_SIMILARITY                                    DECIMAL(16,2) default 0 NOT NULL, --字段相似度
-REMARK_SIMILARITY                                 DECIMAL(16,2) default 0 NOT NULL, --描述相似度
-DETECT_ID                                         VARCHAR(32) NOT NULL, --检测主键
-COL_ID                                            BIGINT default 0 NOT NULL, --字段主键
-BASIC_ID                                          BIGINT default 0 NOT NULL, --标准元主键
-IS_ARTIFICIAL                                     CHAR(1) NOT NULL, --是否人工
-IS_TAG                                            CHAR(1) NOT NULL, --是否标记为最终结果
-CONSTRAINT DBM_NORMBMD_RESULT_PK PRIMARY KEY(RESULT_ID)   );
-
---数据对标标准对标检测记录表
-DROP TABLE IF EXISTS DBM_NORMBM_DETECT ;
-CREATE TABLE DBM_NORMBM_DETECT(
-DETECT_ID                                         VARCHAR(32) NOT NULL, --检测主键
-DETECT_NAME                                       VARCHAR(512) NOT NULL, --检测记名
-SOURCE_TYPE                                       CHAR(3) NOT NULL, --数据来源类型
-IS_IMPORT                                         CHAR(1) NOT NULL, --是否为外部导入数据
-DETECT_STATUS                                     CHAR(1) NOT NULL, --检测状态(是否发布)
-DBM_MODE                                          CHAR(1) NULL, --对标方式
-CREATE_USER                                       VARCHAR(100) NOT NULL, --创建人
-DETECT_SDATE                                      CHAR(8) NOT NULL, --检测开始日期
-DETECT_STIME                                      CHAR(6) NOT NULL, --检测开始时间
-DETECT_EDATE                                      CHAR(8) NOT NULL, --检测结束日期
-DETECT_ETIME                                      CHAR(6) NOT NULL, --检测结束时间
-DND_REMARK                                        VARCHAR(512) NULL, --备注
-CONSTRAINT DBM_NORMBM_DETECT_PK PRIMARY KEY(DETECT_ID)   );
-
---数据对标结果分类表
+﻿--数据对标结果分类表
 DROP TABLE IF EXISTS DBM_DATA_SORT ;
 CREATE TABLE DBM_DATA_SORT(
 DDS_ID                                            BIGINT default 0 NOT NULL, --对标分类结构ID
@@ -473,8 +340,8 @@ DATATABLE_LIFECYCLE                               CHAR(1) NOT NULL, --数据表�
 SORUCE_SIZE                                       DECIMAL(16,2) default 0 NOT NULL, --资源大小
 ETL_DATE                                          CHAR(8) NOT NULL, --跑批日期
 SQL_ENGINE                                        CHAR(1) NULL, --sql执行引擎
-DATATYPE                                          CHAR(1) NOT NULL, --存储类型
-IS_APPEND                                         CHAR(1) default '1' NOT NULL, --数据存储方式
+STORAGE_TYPE                                      CHAR(1) NOT NULL, --进数方式
+TABLE_STORAGE                                     CHAR(1) NOT NULL, --数据表存储方式
 REMARK                                            VARCHAR(6000) NULL, --备注
 CATEGORY_ID                                       BIGINT default 0 NOT NULL, --集市分类id
 CONSTRAINT DM_DATATABLE_PK PRIMARY KEY(DATATABLE_ID)   );
@@ -529,7 +396,7 @@ FIELD_CN_NAME                                     VARCHAR(512) NOT NULL, --字�
 FIELD_EN_NAME                                     VARCHAR(512) NOT NULL, --字段英文名称
 FIELD_TYPE                                        VARCHAR(30) NOT NULL, --字段类型
 FIELD_DESC                                        VARCHAR(200) NULL, --字段描述
-FIELD_PROCESS                                     VARCHAR(10) NOT NULL, --处理方式
+FIELD_PROCESS                                     CHAR(1) NOT NULL, --处理方式
 PROCESS_PARA                                      VARCHAR(512) NULL, --处理方式对应参数
 FIELD_LENGTH                                      VARCHAR(200) NULL, --字段长度
 FIELD_SEQ                                         BIGINT default 0 NOT NULL, --字段序号
@@ -583,6 +450,26 @@ COLUMN_META_INFO                                  VARCHAR(5000) NOT NULL, --字�
 REMARK                                            VARCHAR(512) NULL, --备注
 FAILURE_TABLE_ID                                  BIGINT default 0 NOT NULL, --表id
 CONSTRAINT DQ_FAILURE_COLUMN_PK PRIMARY KEY(FAILURE_COLUMN_ID)   );
+
+--数据存储登记
+DROP TABLE IF EXISTS DATA_STORE_REG ;
+CREATE TABLE DATA_STORE_REG(
+FILE_ID                                           VARCHAR(40) NOT NULL, --表文件ID
+COLLECT_TYPE                                      CHAR(1) NOT NULL, --采集类型
+ORIGINAL_UPDATE_DATE                              CHAR(8) NOT NULL, --原文件最后修改日期
+ORIGINAL_UPDATE_TIME                              CHAR(6) NOT NULL, --原文件最后修改时间
+ORIGINAL_NAME                                     VARCHAR(512) NOT NULL, --原始表中文名称
+TABLE_NAME                                        VARCHAR(512) NULL, --采集的原始表名
+HYREN_NAME                                        VARCHAR(512) NOT NULL, --系统内对应表名
+META_INFO                                         VARCHAR(6000) NULL, --META元信息
+STORAGE_DATE                                      CHAR(8) NOT NULL, --入库日期
+STORAGE_TIME                                      CHAR(6) NOT NULL, --入库时间
+FILE_SIZE                                         BIGINT default 0 NOT NULL, --文件大小
+AGENT_ID                                          BIGINT default 0 NOT NULL, --Agent_id
+SOURCE_ID                                         BIGINT default 0 NOT NULL, --数据源ID
+DATABASE_ID                                       BIGINT default 0 NOT NULL, --数据库设置id
+TABLE_ID                                          BIGINT default 0 NOT NULL, --表名ID
+CONSTRAINT DATA_STORE_REG_PK PRIMARY KEY(FILE_ID)   );
 
 --作业定义表
 DROP TABLE IF EXISTS ETL_JOB_DEF ;
@@ -1619,23 +1506,136 @@ DLCS_NAME                                         VARCHAR(512) NOT NULL, --长�
 DLCS_REMARK                                       VARCHAR(512) NULL, --备注
 CONSTRAINT LENGTH_CONTRAST_SUM_PK PRIMARY KEY(DLCS_ID)   );
 
---数据存储登记
-DROP TABLE IF EXISTS DATA_STORE_REG ;
-CREATE TABLE DATA_STORE_REG(
-FILE_ID                                           VARCHAR(40) NOT NULL, --表文件ID
-COLLECT_TYPE                                      CHAR(1) NOT NULL, --采集类型
-ORIGINAL_UPDATE_DATE                              CHAR(8) NOT NULL, --原文件最后修改日期
-ORIGINAL_UPDATE_TIME                              CHAR(6) NOT NULL, --原文件最后修改时间
-ORIGINAL_NAME                                     VARCHAR(512) NOT NULL, --原始表中文名称
-TABLE_NAME                                        VARCHAR(512) NULL, --采集的原始表名
-HYREN_NAME                                        VARCHAR(512) NOT NULL, --系统内对应表名
-META_INFO                                         VARCHAR(6000) NULL, --META元信息
-STORAGE_DATE                                      CHAR(8) NOT NULL, --入库日期
-STORAGE_TIME                                      CHAR(6) NOT NULL, --入库时间
-FILE_SIZE                                         BIGINT default 0 NOT NULL, --文件大小
-AGENT_ID                                          BIGINT default 0 NOT NULL, --Agent_id
-SOURCE_ID                                         BIGINT default 0 NOT NULL, --数据源ID
-DATABASE_ID                                       BIGINT default 0 NOT NULL, --数据库设置id
-TABLE_ID                                          BIGINT default 0 NOT NULL, --表名ID
-CONSTRAINT DATA_STORE_REG_PK PRIMARY KEY(FILE_ID)   );
+--数据对标元管理标准元表
+DROP TABLE IF EXISTS DBM_NORMBASIC ;
+CREATE TABLE DBM_NORMBASIC(
+BASIC_ID                                          BIGINT default 0 NOT NULL, --标准元主键
+NORM_CODE                                         VARCHAR(100) NULL, --标准编号
+SORT_ID                                           BIGINT default 0 NOT NULL, --分类主键
+NORM_CNAME                                        VARCHAR(512) NOT NULL, --标准中文名称
+NORM_ENAME                                        VARCHAR(512) NOT NULL, --标准英文名称
+NORM_ANAME                                        VARCHAR(512) NULL, --标准别名
+BUSINESS_DEF                                      VARCHAR(2048) NULL, --业务定义
+BUSINESS_RULE                                     VARCHAR(2048) NULL, --业务规则
+DBM_DOMAIN                                        VARCHAR(200) NULL, --值域
+NORM_BASIS                                        VARCHAR(2048) NULL, --标准依据
+DATA_TYPE                                         CHAR(3) NULL, --数据类别
+CODE_TYPE_ID                                      BIGINT default 0 NULL, --代码类主键
+COL_LEN                                           BIGINT default 0 NOT NULL, --字段长度
+DECIMAL_POINT                                     BIGINT default 0 NULL, --小数长度
+MANAGE_DEPARTMENT                                 VARCHAR(512) NULL, --标准管理部门
+RELEVANT_DEPARTMENT                               VARCHAR(512) NULL, --标准相关部门
+ORIGIN_SYSTEM                                     VARCHAR(512) NULL, --可信系统（数据源）
+RELATED_SYSTEM                                    VARCHAR(512) NULL, --相关标准
+FORMULATOR                                        VARCHAR(100) NOT NULL, --制定人
+NORM_STATUS                                       CHAR(1) NOT NULL, --标准元状态（是否已发布）
+CREATE_USER                                       VARCHAR(100) NOT NULL, --创建人
+CREATE_DATE                                       CHAR(8) NOT NULL, --创建日期
+CREATE_TIME                                       CHAR(6) NOT NULL, --创建时间
+CONSTRAINT DBM_NORMBASIC_PK PRIMARY KEY(BASIC_ID)   );
+
+--数据对标元管理标准分类信息表
+DROP TABLE IF EXISTS DBM_SORT_INFO ;
+CREATE TABLE DBM_SORT_INFO(
+SORT_ID                                           BIGINT default 0 NOT NULL, --分类主键
+PARENT_ID                                         BIGINT default 0 NOT NULL, --父级分类主键
+SORT_LEVEL_NUM                                    BIGINT default 0 NOT NULL, --分类层级数
+SORT_NAME                                         VARCHAR(512) NOT NULL, --分类名称
+SORT_REMARK                                       VARCHAR(512) NULL, --分类描述
+SORT_STATUS                                       CHAR(1) NOT NULL, --分类状态（是否发布）
+CREATE_USER                                       VARCHAR(100) NOT NULL, --创建人
+CREATE_DATE                                       CHAR(8) NOT NULL, --创建日期
+CREATE_TIME                                       CHAR(6) NOT NULL, --创建时间
+CONSTRAINT DBM_SORT_INFO_PK PRIMARY KEY(SORT_ID)   );
+
+--数据对标元管理代码类信息表
+DROP TABLE IF EXISTS DBM_CODE_TYPE_INFO ;
+CREATE TABLE DBM_CODE_TYPE_INFO(
+CODE_TYPE_ID                                      BIGINT default 0 NOT NULL, --代码类主键
+CODE_TYPE_NAME                                    VARCHAR(512) NOT NULL, --代码类名
+CODE_ENCODE                                       VARCHAR(100) NULL, --代码编码
+CODE_REMARK                                       VARCHAR(512) NULL, --代码描述
+CODE_STATUS                                       CHAR(1) NOT NULL, --代码状态（是否发布）
+CREATE_USER                                       VARCHAR(100) NOT NULL, --创建人
+CREATE_DATE                                       CHAR(8) NOT NULL, --日期创建
+CREATE_TIME                                       CHAR(6) NOT NULL, --创建时间
+CONSTRAINT DBM_CODE_TYPE_INFO_PK PRIMARY KEY(CODE_TYPE_ID)   );
+
+--数据对标元管理代码项信息表
+DROP TABLE IF EXISTS DBM_CODE_ITEM_INFO ;
+CREATE TABLE DBM_CODE_ITEM_INFO(
+CODE_ITEM_ID                                      BIGINT default 0 NOT NULL, --代码项主键
+CODE_ENCODE                                       VARCHAR(100) NULL, --代码编码
+CODE_ITEM_NAME                                    VARCHAR(512) NOT NULL, --代码项名
+CODE_VALUE                                        VARCHAR(80) NULL, --代码值
+DBM_LEVEL                                         VARCHAR(100) NULL, --层级
+CODE_REMARK                                       VARCHAR(512) NULL, --代码描述
+CODE_TYPE_ID                                      BIGINT default 0 NOT NULL, --代码类主键
+CONSTRAINT DBM_CODE_ITEM_INFO_PK PRIMARY KEY(CODE_ITEM_ID)   );
+
+--数据对标标准对标检测表信息表
+DROP TABLE IF EXISTS DBM_DTABLE_INFO ;
+CREATE TABLE DBM_DTABLE_INFO(
+DBM_TABLEID                                       BIGINT default 0 NOT NULL, --检测表主键
+TABLE_CNAME                                       VARCHAR(100) NOT NULL, --表中文名称
+TABLE_ENAME                                       VARCHAR(512) NOT NULL, --表英文名称
+IS_EXTERNAL                                       CHAR(1) NOT NULL, --是否为外部数据源
+TABLE_REMARK                                      VARCHAR(512) NULL, --表描述信息
+DETECT_ID                                         VARCHAR(32) NOT NULL, --检测主键
+TABLE_ID                                          BIGINT default 0 NULL, --表名ID
+SOURCE_ID                                         BIGINT default 0 NULL, --数据源ID
+AGENT_ID                                          BIGINT default 0 NULL, --Agent_id
+DATABASE_ID                                       BIGINT default 0 NULL, --数据库设置id
+CONSTRAINT DBM_DTABLE_INFO_PK PRIMARY KEY(DBM_TABLEID)   );
+
+--数据对标标准对标检测字段信息表
+DROP TABLE IF EXISTS DBM_DTCOL_INFO ;
+CREATE TABLE DBM_DTCOL_INFO(
+COL_ID                                            BIGINT default 0 NOT NULL, --字段主键
+COL_CNAME                                         VARCHAR(100) NOT NULL, --字段中文名
+COL_ENAME                                         VARCHAR(512) NOT NULL, --字段英文名
+COL_REMARK                                        VARCHAR(512) NULL, --字段描述
+DATA_TYPE                                         VARCHAR(100) NOT NULL, --数据类型
+DATA_LEN                                          BIGINT default 0 NOT NULL, --数据长度
+DECIMAL_POINT                                     BIGINT default 0 NOT NULL, --小数长度
+IS_KEY                                            CHAR(1) NOT NULL, --是否作为主键
+IS_NULL                                           CHAR(1) NOT NULL, --是否可为空
+DEFAULT_VALUE                                     VARCHAR(80) NULL, --默认值
+DBM_TABLEID                                       BIGINT default 0 NOT NULL, --检测表主键
+DETECT_ID                                         VARCHAR(32) NOT NULL, --检测主键
+COLUMN_ID                                         BIGINT default 0 NULL, --字段ID
+DATABASE_ID                                       BIGINT default 0 NULL, --数据库设置id
+AGENT_ID                                          BIGINT default 0 NULL, --Agent_id
+SOURCE_ID                                         BIGINT default 0 NULL, --数据源ID
+CONSTRAINT DBM_DTCOL_INFO_PK PRIMARY KEY(COL_ID)   );
+
+--数据对标标准对标检测结果表
+DROP TABLE IF EXISTS DBM_NORMBMD_RESULT ;
+CREATE TABLE DBM_NORMBMD_RESULT(
+RESULT_ID                                         VARCHAR(32) NOT NULL, --结果主键
+COL_SIMILARITY                                    DECIMAL(16,2) default 0 NOT NULL, --字段相似度
+REMARK_SIMILARITY                                 DECIMAL(16,2) default 0 NOT NULL, --描述相似度
+DETECT_ID                                         VARCHAR(32) NOT NULL, --检测主键
+COL_ID                                            BIGINT default 0 NOT NULL, --字段主键
+BASIC_ID                                          BIGINT default 0 NOT NULL, --标准元主键
+IS_ARTIFICIAL                                     CHAR(1) NOT NULL, --是否人工
+IS_TAG                                            CHAR(1) NOT NULL, --是否标记为最终结果
+CONSTRAINT DBM_NORMBMD_RESULT_PK PRIMARY KEY(RESULT_ID)   );
+
+--数据对标标准对标检测记录表
+DROP TABLE IF EXISTS DBM_NORMBM_DETECT ;
+CREATE TABLE DBM_NORMBM_DETECT(
+DETECT_ID                                         VARCHAR(32) NOT NULL, --检测主键
+DETECT_NAME                                       VARCHAR(512) NOT NULL, --检测记名
+SOURCE_TYPE                                       CHAR(3) NOT NULL, --数据来源类型
+IS_IMPORT                                         CHAR(1) NOT NULL, --是否为外部导入数据
+DETECT_STATUS                                     CHAR(1) NOT NULL, --检测状态(是否发布)
+DBM_MODE                                          CHAR(1) NULL, --对标方式
+CREATE_USER                                       VARCHAR(100) NOT NULL, --创建人
+DETECT_SDATE                                      CHAR(8) NOT NULL, --检测开始日期
+DETECT_STIME                                      CHAR(6) NOT NULL, --检测开始时间
+DETECT_EDATE                                      CHAR(8) NOT NULL, --检测结束日期
+DETECT_ETIME                                      CHAR(6) NOT NULL, --检测结束时间
+DND_REMARK                                        VARCHAR(512) NULL, --备注
+CONSTRAINT DBM_NORMBM_DETECT_PK PRIMARY KEY(DETECT_ID)   );
 

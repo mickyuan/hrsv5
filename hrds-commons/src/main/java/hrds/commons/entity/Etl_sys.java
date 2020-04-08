@@ -30,10 +30,6 @@ public class Etl_sys extends ProjectTableEntity
 		__tmpPKS.add("etl_sys_cd");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="etl_context",value="访问根:",dataType = String.class,required = false)
-	private String etl_context;
-	@DocBean(name ="etl_pattern",value="访问路径:",dataType = String.class,required = false)
-	private String etl_pattern;
 	@DocBean(name ="etl_sys_cd",value="工程代码:",dataType = String.class,required = true)
 	private String etl_sys_cd;
 	@DocBean(name ="etl_sys_name",value="工程名称:",dataType = String.class,required = true)
@@ -66,23 +62,11 @@ public class Etl_sys extends ProjectTableEntity
 	private String remarks;
 	@DocBean(name ="user_id",value="用户ID:",dataType = Long.class,required = true)
 	private Long user_id;
+	@DocBean(name ="etl_context",value="访问根:",dataType = String.class,required = false)
+	private String etl_context;
+	@DocBean(name ="etl_pattern",value="访问路径:",dataType = String.class,required = false)
+	private String etl_pattern;
 
-	/** 取得：访问根 */
-	public String getEtl_context(){
-		return etl_context;
-	}
-	/** 设置：访问根 */
-	public void setEtl_context(String etl_context){
-		this.etl_context=etl_context;
-	}
-	/** 取得：访问路径 */
-	public String getEtl_pattern(){
-		return etl_pattern;
-	}
-	/** 设置：访问路径 */
-	public void setEtl_pattern(String etl_pattern){
-		this.etl_pattern=etl_pattern;
-	}
 	/** 取得：工程代码 */
 	public String getEtl_sys_cd(){
 		return etl_sys_cd;
@@ -216,5 +200,21 @@ public class Etl_sys extends ProjectTableEntity
 		if(!fd.ng.core.utils.StringUtil.isEmpty(user_id)){
 			this.user_id=new Long(user_id);
 		}
+	}
+	/** 取得：访问根 */
+	public String getEtl_context(){
+		return etl_context;
+	}
+	/** 设置：访问根 */
+	public void setEtl_context(String etl_context){
+		this.etl_context=etl_context;
+	}
+	/** 取得：访问路径 */
+	public String getEtl_pattern(){
+		return etl_pattern;
+	}
+	/** 设置：访问路径 */
+	public void setEtl_pattern(String etl_pattern){
+		this.etl_pattern=etl_pattern;
 	}
 }
