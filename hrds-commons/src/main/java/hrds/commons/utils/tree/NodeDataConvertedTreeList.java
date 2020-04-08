@@ -25,7 +25,11 @@ public class NodeDataConvertedTreeList {
             node.id = dataRecord.get("id").toString();
             node.label = dataRecord.get("label").toString();
             node.parent_id = dataRecord.get("parent_id").toString();
-            node.description = dataRecord.get("description").toString();
+            if (null == dataRecord.get("description")) {
+                node.description = "";
+            } else {
+                node.description = dataRecord.get("description").toString();
+            }
             if (null == dataRecord.get("data_layer")) {
                 node.data_layer = "";
             } else {
