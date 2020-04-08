@@ -32,6 +32,7 @@ public class HyrenOracleTableVisitor extends OracleASTVisitorAdapter {
 
     public static void main(String[] args) {
         String sql = "select a,b,c,d,e from (select t1.a,t1.b,t2.c,t2.d,t3.e from (select a,b from table_B ) t1 , TableB t2,TableC t3 ) t4";
+//        String sql = "SELECT CBS_CUST_ID FROM CCS_CCS_CAS_CREDITLEVEL,TableB";
 //        String sql = "select a,b,c,d from (select b from table_0) table_1,(select c from table_2," +
 //                "(select d from table_21 union select e from table_union) table_22  union select a from table_3  ) table_3 union select a from table_4";
         mainSql = sql;
@@ -55,44 +56,8 @@ public class HyrenOracleTableVisitor extends OracleASTVisitorAdapter {
             //因为选择的是oracle的datatype 所以只考虑unionquery和oraclequeryblock这两种
         } else if (sqlSelectQuery instanceof OracleSelectQueryBlock) {
             OracleSelectQueryBlock oracleSelectQueryBlock = (OracleSelectQueryBlock) sqlSelectQuery;
-            //如果是最外层的话 开始记录要查询的字段，并放入resultmap中
-            List<SQLSelectItem> sqlSelectItems = oracleSelectQueryBlock.getSelectList();
-//            for (SQLSelectItem sqlSelectItem : sqlSelectItems) {
-//                SQLExpr expr = sqlSelectItem.getExpr();
-//                //如果有别名 直接取别名作为字段最终名称
-//                if (!StringUtils.isBlank(sqlSelectItem.getAlias())) {
-//                    //考虑union的情况 如果之前没有，那么就放入一个最终查询字段进去
-//                    if (resultmap.get(sqlSelectItem.getAlias()) == null) {
-//                        resultmap.put(sqlSelectItem.getAlias(), new HashMap<String, String>());
-//                    }
-//                }
-//                //如果没有别名，则判断
-//                else {
-//                    //如果是单字段，那么字段名就是
-//                    if (sqlSelectItem.getExpr() instanceof SQLIdentifierExpr) {
-//                        //考虑union的情况 如果之前没有，那么就放入一个最终查询字段进去
-//                        if (resultmap.get(sqlSelectItem.getExpr().toString()) == null) {
-//                            resultmap.put(sqlSelectItem.getExpr().toString(), new HashMap<String, String>());
-//                        }
-//                    } else if (sqlSelectItem.getExpr() instanceof SQLPropertyExpr) {
-//                        SQLPropertyExpr sqlPropertyExpr = (SQLPropertyExpr) sqlSelectItem.getExpr();
-//                        //考虑union的情况 如果之前没有，那么就放入一个最终查询字段进去
-//                        if (resultmap.get(sqlPropertyExpr.getName()) == null) {
-//                            resultmap.put(sqlPropertyExpr.getName(), new HashMap<String, String>());
-//                        }
-//                    }
-//                    //如果存在*，抛出错误
-//                    else if (sqlSelectItem.getExpr() instanceof SQLAllColumnExpr) {
-//                        throw new BusinessSystemException("请明确字段，禁止使用 * 代替字段");
-//                    } else {
-//                        throw new BusinessSystemException("请明确字段 " + sqlSelectItem.getExpr() + " 没有别名 ");
-//                    }
-//                }
-//            }
             //开始处理from的部分
             handleFrom(oracleSelectQueryBlock.getFrom());
-            System.out.println("");
-            //当前查询不是最外层，是from当中包含的子查询层级
         } else {
             throw new BusinessSystemException("未知的sqlSelectQuery：" + sqlSelectQuery.toString() + " class:" + sqlSelectQuery.getClass());
         }
@@ -134,62 +99,69 @@ public class HyrenOracleTableVisitor extends OracleASTVisitorAdapter {
                 }
             }
             OracleSelectQueryBlock oracleSelectQueryBlock = (OracleSelectQueryBlock) sqlObject;
-            for (int i = 0; i < listmap.size(); i++) {
-                HashMap<String, Object> stringObjectHashMap = listmap.get(i);
-                List<String> uppercolumnlist = (ArrayList<String>) stringObjectHashMap.get("uppercolumn");
-                for (String uppercolumn : uppercolumnlist) {
-                    List<SQLSelectItem> selectList = oracleSelectQueryBlock.getSelectList();
-                    columnlist.clear();
-                    for (SQLSelectItem sqlSelectItem : selectList) {
-                        String alias = getAlias(sqlSelectItem);
-                        getcolumn(sqlSelectItem.getExpr(), alias);
+            handleGetColumn(oracleSelectQueryBlock);
+            //如果listmap为空，说明这个table是最外层的，直接去寻找最外层selectexpr和该表关链的部分
+            if (listmap.isEmpty()) {
+                for (int j = 0; j < columnlist.size(); j++) {
+                    SQLExpr sqlexpr = (SQLExpr) columnlist.get(j).get("column");
+                    String alias = columnlist.get(j).get("alias").toString();
+                    ArrayList<HashMap<String, Object>> templist = getTempList(alias);
+                    if (sqlexpr instanceof SQLIdentifierExpr) {
+                        putResult(templist, alias, sqlexpr.toString(), sqlTableSource.toString());
+                    } else if (sqlexpr instanceof SQLPropertyExpr) {
+                        SQLPropertyExpr sqlPropertyExpr = (SQLPropertyExpr) sqlexpr;
+                        putResult(templist, alias, sqlPropertyExpr.getName(), sqlTableSource.toString());
                     }
-                    for (int j = 0; j < columnlist.size(); j++) {
-                        ArrayList<HashMap<String, Object>> templist = new ArrayList<HashMap<String, Object>>();
-                        SQLExpr sqlexpr = (SQLExpr) columnlist.get(j).get("column");
-                        String alias = columnlist.get(j).get("alias").toString();
-                        if (sqlexpr instanceof SQLIdentifierExpr) {
-                            if (uppercolumn.equalsIgnoreCase(sqlexpr.toString())) {
-                                if (hashmap.get(alias) != null) {
-                                    templist = (ArrayList<HashMap<String, Object>>) hashmap.get(alias);
-                                } else {
-                                    hashmap.put(alias, templist);
+                }
+            } else {
+                for (int i = 0; i < listmap.size(); i++) {
+                    HashMap<String, Object> stringObjectHashMap = listmap.get(i);
+                    List<String> uppercolumnlist = (ArrayList<String>) stringObjectHashMap.get("uppercolumn");
+                    for (String uppercolumn : uppercolumnlist) {
+                        for (int j = 0; j < columnlist.size(); j++) {
+                            SQLExpr sqlexpr = (SQLExpr) columnlist.get(j).get("column");
+                            String alias = columnlist.get(j).get("alias").toString();
+                            ArrayList<HashMap<String, Object>> templist = getTempList(alias);
+                            if (sqlexpr instanceof SQLIdentifierExpr) {
+                                if (uppercolumn.equalsIgnoreCase(sqlexpr.toString())) {
+                                    putResult(templist, alias, stringObjectHashMap.get("columnname") == null ? null : stringObjectHashMap.get("columnname").toString(),
+                                            stringObjectHashMap.get("table").toString());
                                 }
-                                if (listmap.get(i).get("columnname") != null) {
-                                    HashMap<String, Object> temphashmap = new HashMap<String, Object>();
-                                    temphashmap.put("sourcecolumn", listmap.get(i).get("columnname"));
-                                    temphashmap.put("sourcetable", listmap.get(i).get("table"));
-                                    templist.add(temphashmap);
-                                    System.out.println(alias + " " + "sourcecolumn:" + listmap.get(i).get("columnname") + " sourcetable:"
-                                            + listmap.get(i).get("table"));
-                                }
-                            }
-                        } else if (sqlexpr instanceof SQLPropertyExpr) {
-                            SQLPropertyExpr sqlPropertyExpr = (SQLPropertyExpr) sqlexpr;
-                            if (uppercolumn.equalsIgnoreCase(sqlPropertyExpr.getName())
-                                    && sqlPropertyExpr.getOwner().toString().equalsIgnoreCase(upperealias)) {
-                                if (hashmap.get(alias) != null) {
-                                    templist = (ArrayList<HashMap<String, Object>>) hashmap.get(alias);
-                                } else {
-                                    hashmap.put(alias, templist);
-                                }
-                                if (listmap.get(i).get("columnname") != null) {
-                                    HashMap<String, Object> temphashmap = new HashMap<String, Object>();
-                                    temphashmap.put("sourcecolumn", listmap.get(i).get("columnname"));
-                                    temphashmap.put("sourcetable", listmap.get(i).get("table"));
-                                    templist.add(temphashmap);
-                                    System.out.println(alias + " " + "sourcecolumn:" + listmap.get(i).get("columnname") + " sourcetable:"
-                                            + listmap.get(i).get("table"));
+                            } else if (sqlexpr instanceof SQLPropertyExpr) {
+                                SQLPropertyExpr sqlPropertyExpr = (SQLPropertyExpr) sqlexpr;
+                                if (uppercolumn.equalsIgnoreCase(sqlPropertyExpr.getName())
+                                        && sqlPropertyExpr.getOwner().toString().equalsIgnoreCase(upperealias)) {
+                                    putResult(templist, alias, stringObjectHashMap.get("columnname") == null ? null : stringObjectHashMap.get("columnname").toString(),
+                                            stringObjectHashMap.get("table").toString());
                                 }
                             }
                         }
                     }
                 }
-                System.out.println(":");
             }
         } else {
             throw new BusinessSystemException("未知的sqlTableSource：" + sqlTableSource.toString() + " class:" + sqlTableSource.getClass());
         }
+    }
+
+    private static void putResult(ArrayList<HashMap<String, Object>> templist, String alias, String columnname, String table) {
+        if (columnname != null) {
+            HashMap<String, Object> temphashmap = new HashMap<String, Object>();
+            temphashmap.put("sourcecolumn", columnname);
+            temphashmap.put("sourcetable", table);
+            templist.add(temphashmap);
+            System.out.println(alias + " " + "sourcecolumn:" + columnname + " sourcetable:" + table);
+        }
+    }
+
+    private static ArrayList<HashMap<String, Object>> getTempList(String alias) {
+        ArrayList<HashMap<String, Object>> templist = new ArrayList<HashMap<String, Object>>();
+        if (hashmap.get(alias) != null) {
+            templist = (ArrayList<HashMap<String, Object>>) hashmap.get(alias);
+        } else {
+            hashmap.put(alias, templist);
+        }
+        return templist;
     }
 
     private static void handleFrom2(SQLSelectQuery sqlSelectQuery) {
@@ -235,12 +207,7 @@ public class HyrenOracleTableVisitor extends OracleASTVisitorAdapter {
                 List<String> newuppercolumnlist = new ArrayList<String>();
                 for (int k = 0; k < uppercolumnlist.size(); k++) {
                     String uppercolumn = uppercolumnlist.get(k);
-                    List<SQLSelectItem> selectList = oracleSelectQueryBlock.getSelectList();
-                    columnlist.clear();
-                    for (SQLSelectItem sqlSelectItem : selectList) {
-                        String alias = getAlias(sqlSelectItem);
-                        getcolumn(sqlSelectItem.getExpr(), alias);
-                    }
+                    handleGetColumn(oracleSelectQueryBlock);
                     Boolean flag = true;
                     for (int j = 0; j < columnlist.size(); j++) {
                         SQLExpr sqlexpr = (SQLExpr) columnlist.get(j).get("column");
@@ -455,5 +422,14 @@ public class HyrenOracleTableVisitor extends OracleASTVisitorAdapter {
         sql = sql.replace(" ", "");
         sql = sql.trim();
         return sql;
+    }
+
+    private static void handleGetColumn(OracleSelectQueryBlock oracleSelectQueryBlock) {
+        List<SQLSelectItem> selectList = oracleSelectQueryBlock.getSelectList();
+        columnlist.clear();
+        for (SQLSelectItem sqlSelectItem : selectList) {
+            String alias = getAlias(sqlSelectItem);
+            getcolumn(sqlSelectItem.getExpr(), alias);
+        }
     }
 }
