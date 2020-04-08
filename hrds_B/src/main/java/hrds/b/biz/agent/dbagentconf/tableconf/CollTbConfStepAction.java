@@ -19,7 +19,6 @@ import hrds.b.biz.agent.bean.CollTbConfParam;
 import hrds.b.biz.agent.tools.SendMsgUtil;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.CleanType;
-import hrds.commons.codes.CountNum;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.UnloadType;
 import hrds.commons.entity.Agent_info;
@@ -46,6 +45,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @DocClass(desc = "定义表抽取属性", author = "WangZhengcheng")
 public class CollTbConfStepAction extends BaseAction {
@@ -190,11 +190,17 @@ public class CollTbConfStepAction extends BaseAction {
               + "如果并行抽取选择,则需要传递 page_sql(这里的SQL指的是页面查询SQL语句),table_count, pageparallels, dataincrement. 反之不需要"
               + "如果页面上没有数据，则该参数可以不传",
       nullable = true,
-      isBean = true,
       valueIfNull = "")
   @Param(name = "colSetId", desc = "数据库设置ID,源系统数据库设置表主键,数据库对应表外键", range = "不为空")
   // 使用SQL抽取数据页面，保存按钮后台方法
-  public long saveAllSQL(Table_info[] tableInfoArray, long colSetId) {
+  public long saveAllSQL(String tableInfoArray, long colSetId) {
+
+    /**
+     * 1: 获取当前数据库连接下的所有表名 2: 获取数据库下存储的表名 3: 将数据库的表和此次数据库连接的表进行对比 3-1:
+     * 找出删除的表,并将数据库中的表信息,列信息,清洗信息,卸数配置,作业信息删除 3-2: 找出新增的,将此记录保存在数据库中.表信息,列信息 3-3:
+     * 找出还存在的表,并检查列信息是否有变动 3-3-1: 找出选择表的列和数据库已存在的列进行对比 3-3-1-1: 如果列不存在, 删除列信息,列清洗信息 3-3-1-2: 如果列存在,
+     * 更新列的信息,列清洗信息 3-3-1-3: 如果列新增, 增加列信息
+     */
     // 1、根据databaseId去数据库中查询该数据库采集任务是否存在
     long dbSetCount =
         Dbo.queryNumber(
@@ -220,14 +226,21 @@ public class CollTbConfStepAction extends BaseAction {
         IsFlag.Shi.getCode());
 
     // 3、将前端传过来的参数转为List<Table_info>集合
-    //    List<Table_info> tableInfos = JSONArray.parseArray(tableInfoArray, Table_info.class);
+    List<Table_info> tableInfos = JSONArray.parseArray(tableInfoArray, Table_info.class);
     /*
      * 4、如果List集合不为空，遍历list,给每条记录生成ID，设置有效开始日期、有效结束日期、是否自定义SQL采集(是)、是否使用MD5(是)、
      *  是否仅登记(是)
      * */
-    if (tableInfoArray != null && tableInfoArray.length != 0) {
-      for (int i = 0; i < tableInfoArray.length; i++) {
-        Table_info tableInfo = tableInfoArray[i];
+    if (tableInfos != null && tableInfos.size() != 0) {
+      for (int i = 0; i < tableInfos.size(); i++) {
+        Table_info tableInfo = tableInfos.get(i);
+
+        // 设置并行抽取SQL的定义方式为否
+        tableInfo.setIs_customize_sql(IsFlag.Fou.getCode());
+
+        // 设置分页SQL为空
+        tableInfo.setPage_sql("");
+
         if (StringUtil.isBlank(tableInfo.getTable_name())) {
           throw new BusinessException("保存SQL抽取数据配置，第" + (i + 1) + "条数据表名不能为空!");
         }
@@ -250,33 +263,27 @@ public class CollTbConfStepAction extends BaseAction {
           }
           // 设置并行抽取方式为否
           tableInfo.setIs_parallel(IsFlag.Fou.getCode());
-          // 设置并行抽取SQL的定义方式为否
-          tableInfo.setIs_customize_sql(IsFlag.Fou.getCode());
+
           /*
-            1 : 设置SQL为空
             2 : 设置数据总量为空
             3 : 设置每日数据量为空
             4 : 设置分页并行数为空
           */
-          tableInfo.setPage_sql("");
           tableInfo.setTable_count("");
           tableInfo.setDataincrement("");
           tableInfo.setPageparallels("");
         } else if (UnloadType.ofEnumByCode(tableInfo.getUnload_type())
             == UnloadType.QuanLiangXieShu) {
-          // 如果是全量的方式则将增量的自定义SQL置空
 
           if (StringUtil.isBlank(tableInfo.getIs_parallel())) {
             throw new BusinessException(
                 "保存采集表" + tableInfo.getTable_name() + "配置，第 " + (i + 1) + "条数据并行方式不能为空!");
           }
 
-          if (StringUtil.isBlank(tableInfo.getPage_sql())) {
-            throw new BusinessException("保存SQL抽取数据配置，第" + (i + 1) + "条数据SQL不能为空!");
+          if (StringUtil.isBlank(tableInfo.getSql())) {
+            throw new BusinessException(
+                "保存采集表 " + tableInfo.getTable_name() + " 配置,第 " + (i + 1) + " 条,全量SQL不能为空!");
           }
-
-          // 将增量SQL置为空
-          tableInfo.setSql("");
 
           if (IsFlag.ofEnumByCode(tableInfo.getIs_parallel()) == IsFlag.Shi) {
 
@@ -292,8 +299,6 @@ public class CollTbConfStepAction extends BaseAction {
               throw new BusinessException(
                   "保存采集表" + tableInfo.getTable_name() + "配置，第 " + (i + 1) + "条数据总量不能为空!");
             }
-          } else {
-            tableInfo.setIs_customize_sql(IsFlag.Fou.getCode());
           }
         } else {
           throw new BusinessException(
@@ -305,8 +310,8 @@ public class CollTbConfStepAction extends BaseAction {
                   + tableInfo.getUnload_type());
         }
 
-        if (StringUtil.isBlank(tableInfo.getSql())) {
-          throw new BusinessException("保存SQL抽取数据配置，第" + (i + 1) + "条数据查询SQL语句不能为空!");
+        if (StringUtil.isBlank(tableInfo.getRec_num_date())) {
+          tableInfo.setRec_num_date(DateUtil.getSysDate());
         }
         //        tableInfo.setTable_count(CountNum.YiWan.getCode());
         tableInfo.setDatabase_id(colSetId);
@@ -848,7 +853,6 @@ public class CollTbConfStepAction extends BaseAction {
               + "如果卸数方式为全量卸数, 传递是否并行抽取(is_parallel,代码项IsFlag)、"
               + "如果用户定义了并行抽取,那么应该还有is_customize_sql(IsFlag代码项),"
               + "如果is_customize_sql为是,则需要(page_sql)，反之需要table_count, pageparallels, dataincrement. 如果页面上没有数据，则该参数可以不传",
-      isBean = true,
       nullable = true,
       valueIfNull = "")
   @Param(name = "colSetId", desc = "数据库设置ID，源系统数据库设置表主键，数据库对应表外键", range = "不为空")
@@ -864,21 +868,16 @@ public class CollTbConfStepAction extends BaseAction {
               + "tableInfoString：[{A表表信息},{B表表信息}]"
               + "collTbConfParamString：[{A表字段配置参数},{B表字段配置参数}]"
               + "如果页面上不选择采集表，那么这个参数可以不传",
-      isBean = true,
       nullable = true,
       valueIfNull = "")
   @Param(
       name = "delTbString",
       desc = "本次接口访问被删除的表ID组成的json字符串",
       range = "如果本次访问没有被删除的接口，该参数可以不传",
-      nullable = true,
-      valueIfNull = "")
+      nullable = true)
   @Return(desc = "保存成功后返回当前采集任务ID", range = "不为空")
   public long saveCollTbInfo(
-      Table_info[] tableInfoString,
-      long colSetId,
-      CollTbConfParam[] collTbConfParamString,
-      String delTbString) {
+      String tableInfoString, long colSetId, String collTbConfParamString, String delTbString) {
 
     Map<String, Object> resultMap =
         Dbo.queryOneObject(
@@ -896,17 +895,17 @@ public class CollTbConfStepAction extends BaseAction {
         colSetId,
         IsFlag.Fou.getCode());
 
-    //		List<Table_info> tableInfos = JSONArray.parseArray(tableInfoString, Table_info.class);
-    //		List<CollTbConfParam> tbConfParams = JSONArray.parseArray(collTbConfParamString,
-    // CollTbConfParam.class);
+    List<Table_info> tableInfos = JSONArray.parseArray(tableInfoString, Table_info.class);
+    List<CollTbConfParam> tbConfParams =
+        JSONArray.parseArray(collTbConfParamString, CollTbConfParam.class);
 
-    if (tableInfoString != null && collTbConfParamString != null) {
-      if (tableInfoString.length != collTbConfParamString.length) {
+    if (tableInfos != null && tbConfParams != null) {
+      if (tableInfos.size() != tbConfParams.size()) {
         throw new BusinessException("请在传参时确保采集表数据和配置采集字段信息一一对应");
       }
-      for (int i = 0; i < tableInfoString.length; i++) {
-        Table_info tableInfo = tableInfoString[i];
-        String collColumn = collTbConfParamString[i].getCollColumnString();
+      for (int i = 0; i < tableInfos.size(); i++) {
+        Table_info tableInfo = tableInfos.get(i);
+        String collColumn = tbConfParams.get(i).getCollColumnString();
         // 2、校验Table_info对象中的信息是否合法
         if (StringUtil.isBlank(tableInfo.getTable_name())) {
           throw new BusinessException(
@@ -950,8 +949,6 @@ public class CollTbConfStepAction extends BaseAction {
             tableInfo.setPageparallels("");
           } else if (UnloadType.ofEnumByCode(tableInfo.getUnload_type())
               == UnloadType.QuanLiangXieShu) {
-            // 如果是全量的方式则将增量的自定义SQL置空
-            tableInfo.setSql("");
 
             if (StringUtil.isBlank(tableInfo.getIs_parallel())) {
               throw new BusinessException(
@@ -991,12 +988,16 @@ public class CollTbConfStepAction extends BaseAction {
                     throw new BusinessException(
                         "保存采集表" + tableInfo.getTable_name() + "配置，第 " + (i + 1) + "条每日数据增量不能为空!");
                   }
-                  if (StringUtil.isBlank(tableInfo.getTable_count())) {
-                    throw new BusinessException(
-                        "保存采集表" + tableInfo.getTable_name() + "配置，第 " + (i + 1) + "条数据总量不能为空!");
-                  }
+                  //                  if (StringUtil.isBlank(tableInfo.getTable_count())) {
+                  //                    throw new BusinessException(
+                  //                        "保存采集表" + tableInfo.getTable_name() + "配置，第 " + (i + 1)
+                  // + "条数据总量不能为空!");
+                  //                  }
                 }
               }
+            } else {
+              // 如果并行抽取的方式是否,则将是否并行抽取中的自定义sql设置为否
+              tableInfo.setIs_customize_sql(IsFlag.Fou.getCode());
             }
           } else {
             throw new BusinessException(
@@ -1007,6 +1008,11 @@ public class CollTbConfStepAction extends BaseAction {
                     + "条数据的卸数方式不存在, 得到的卸数方式是 :"
                     + tableInfo.getUnload_type());
           }
+        }
+
+        // 数据获取时间如果为空,则使用当天的时间
+        if (StringUtil.isBlank(tableInfo.getRec_num_date())) {
+          tableInfo.setRec_num_date(DateUtil.getSysDate());
         }
 
         // 检查MD5是否有值
@@ -1127,7 +1133,17 @@ public class CollTbConfStepAction extends BaseAction {
         Map<String, Object> map = new HashMap<>();
         map.put("table_name", tableName);
         map.put("table_ch_name", tableName);
-        // 给是否并行抽取默认值为否
+        /*
+         如果当前表的信息未在我们数据库中出现,
+         1: 卸数方式 : 默认全量
+         2: 是否使用MD5 : 默认否
+         3: 是否并行抽取 : 默认否
+        */
+        //        1: 卸数方式 : 默认全量
+        map.put("unload_type", UnloadType.QuanLiangXieShu.getCode());
+        //        2: 是否使用MD5 : 默认否
+        map.put("is_md5", IsFlag.Fou.getCode());
+        //        3: 是否并行抽取 : 默认否
         map.put("is_parallel", IsFlag.Fou.getCode());
         results.add(map);
       } else {
@@ -1216,7 +1232,7 @@ public class CollTbConfStepAction extends BaseAction {
           ""
               + "1、更新table_storage_info表对应条目的table_id字段,一个table_id在该表中的数据存在情况为0-1"
               + "2、更新table_clean表对应条目的table_id字段，一个table_id在table_clean中可能有0-N条数据"
-              + "3、更新data_extraction_def表对应条目的table_id，一个table_id在该表中的数据存在情况为0-1"
+              + "3、更新data_extraction_def表对应条目的table_id，一个table_id在该表中的数据存在情况为0-N"
               + "4、更新column_merge表对应条目的table_id字段，一个table_id在该表中的数据存在情况为0-N")
   @Param(name = "newID", desc = "新的tableId", range = "不为空")
   @Param(name = "oldID", desc = "旧的tableId", range = "不为空")
@@ -1258,16 +1274,23 @@ public class CollTbConfStepAction extends BaseAction {
     List<Object> extractDefIdList =
         Dbo.queryOneColumnList(
             " select ded_id from " + Data_extraction_def.TableName + " where table_id = ? ", oldID);
-    if (extractDefIdList.size() > 1) {
-      throw new BusinessException("数据抽取定义信息不唯一");
-    }
+    //    if (extractDefIdList.size() > 1) {
+    //      throw new BusinessException("数据抽取定义信息不唯一");
+    //    }
+
     if (!extractDefIdList.isEmpty()) {
-      long dedId = (long) extractDefIdList.get(0);
-      DboExecute.updatesOrThrow(
-          "更新数据抽取定义信息失败",
-          "update " + Data_extraction_def.TableName + " set table_id = ? where ded_id = ?",
-          newID,
-          dedId);
+
+      StringBuilder data_extraction_def =
+          new StringBuilder(
+              "update " + Data_extraction_def.TableName + " set table_id = ? where ded_id in ( ");
+
+      for (int j = 0; j < extractDefIdList.size(); j++) {
+        data_extraction_def.append(extractDefIdList.get(j));
+        if (j != extractDefIdList.size() - 1) data_extraction_def.append(",");
+      }
+      data_extraction_def.append(" )");
+
+      Dbo.execute(data_extraction_def.toString(), newID);
     }
 
     // 4、更新column_merge表对应条目的table_id字段，一个table_id在该表中的数据存在情况为0-N
@@ -1395,5 +1418,15 @@ public class CollTbConfStepAction extends BaseAction {
     Dbo.execute("delete from " + Column_clean.TableName + " where column_id = ?", columnId);
     // 3、删除旧的columnId在列拆分信息表做外键的数据，不关注删除的数目
     Dbo.execute("delete from " + Column_split.TableName + " where column_id = ?", columnId);
+  }
+
+  @Method(desc = "根据表ID获取卸数方式的数据信息", logicStep = "" + "1: 返回数据信息")
+  @Param(name = "table_id", desc = "表ID", range = "不为空")
+  @Return(desc = "返回当前表的卸数信息", range = "可为空,为空表示为配置过")
+  public Optional<Table_info> getTableSetUnloadData(long table_id) {
+    return Dbo.queryOneObject(
+        Table_info.class,
+        "SELECT * FROM " + Table_info.TableName + " WHERE table_id = ?",
+        table_id);
   }
 }
