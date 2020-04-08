@@ -10,6 +10,7 @@ import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.FileFormat;
 import hrds.commons.codes.IsFlag;
+import hrds.commons.codes.Main_Server_Sync;
 import hrds.commons.codes.ParamType;
 import hrds.commons.codes.Pro_Type;
 import hrds.commons.entity.Agent_down_info;
@@ -130,7 +131,8 @@ public class StartWayConfAction extends BaseAction {
     tableList.forEach(
         itemMap -> {
           Map<String, String> assemblyMap = new LinkedHashMap<>();
-
+          //
+          assemblyMap.put("ded_id", itemMap.get("ded_id").toString());
           // 作业采集文件类型
           String dbfile_format = FileFormat.ofValueByCode(((String) itemMap.get("dbfile_format")));
           // 作业名称
@@ -294,10 +296,10 @@ public class StartWayConfAction extends BaseAction {
               + "{作业名(etl_job),工程代码(etl_sys_cd),子系统代码(sub_sys_cd),作业描述(etl_job_desc),"
               + "作业程序类型(pro_type,使用代码项Pro_Type),作业程序目录(pro_dic),作业程序名称(pro_name),"
               + "作业程序参数(pro_para),日志目录(log_dic),调度频率(disp_freq,代码项Dispatch_Frequency),"
-              + "调度时间位移(disp_offset),调度触发方式(disp_type),调度触发时间(disp_time)}",
+              + "调度时间位移(disp_offset),调度触发方式(disp_type),调度触发时间(disp_time),}",
       desc = "",
       isBean = true)
-  @Param(name = "ded_arr", desc = "卸数文件的ID", range = "不可为空的数组")
+  @Param(name = "ded_arr", desc = "卸数文件的ID", range = "不可为空的字符串,多个参数之间使用 ^ 隔开")
   public void saveJobDataToDatabase(
       long colSetId,
       String etl_sys_cd,
@@ -305,9 +307,10 @@ public class StartWayConfAction extends BaseAction {
       String pro_dic,
       String log_dic,
       Etl_job_def[] etlJobs,
-      String[] ded_arr) {
+      String ded_arr) {
 
-    if (etlJobs.length != ded_arr.length) {
+    List<String> dedList = StringUtil.split(ded_arr, "^");
+    if (etlJobs.length != dedList.size()) {
       throw new BusinessException("卸数文件的数量与作业的数量不一致!!!");
     }
 
@@ -316,8 +319,6 @@ public class StartWayConfAction extends BaseAction {
 
     // 检查作业系统参数的作业日志是否存在
     setDefaultEtlConf(etl_sys_cd, HYRENLOG, log_dic);
-
-    // FIXME 作业依赖待定
 
     // 默认增加一个资源类型,先检查是否存在,如果不存在则添加
     setDefaultEtlResource(etl_sys_cd);
@@ -390,7 +391,7 @@ public class StartWayConfAction extends BaseAction {
 
         Take_relation_etl take_relation_etl = new Take_relation_etl();
         take_relation_etl.setDatabase_id(colSetId);
-        take_relation_etl.setDed_id(ded_arr[index]);
+        take_relation_etl.setDed_id(dedList.get(index));
         take_relation_etl.setEtl_job(etl_job_def.getEtl_job());
         take_relation_etl.setEtl_sys_cd(etl_job_def.getEtl_sys_cd());
         take_relation_etl.setSub_sys_cd(etl_job_def.getSub_sys_cd());
@@ -441,6 +442,7 @@ public class StartWayConfAction extends BaseAction {
       etl_resource.setEtl_sys_cd(etl_sys_cd);
       etl_resource.setResource_type(RESOURCE_THRESHOLD);
       etl_resource.setResource_max(RESOURCE_NUM);
+      etl_resource.setMain_serv_sync(Main_Server_Sync.YES.getCode());
       etl_resource.add(Dbo.db());
     }
   }
@@ -462,7 +464,8 @@ public class StartWayConfAction extends BaseAction {
   private List<Object> getJobResource(String etl_sys_cd) {
 
     return Dbo.queryOneColumnList(
-        "SELECT etl_job FROM " + Etl_job_resource_rela.TableName + " WHERE etl_sys_cd = ? ");
+        "SELECT etl_job FROM " + Etl_job_resource_rela.TableName + " WHERE etl_sys_cd = ? ",
+        etl_sys_cd);
   }
 
   @Method(desc = "获取当前任务下表抽数作业关系表", logicStep = "")
