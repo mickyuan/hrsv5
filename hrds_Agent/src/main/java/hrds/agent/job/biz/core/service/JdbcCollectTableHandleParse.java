@@ -6,10 +6,13 @@ import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.CollectTableBean;
+import hrds.agent.job.biz.bean.CollectTableColumnBean;
 import hrds.agent.job.biz.bean.SourceDataConfBean;
 import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.constant.JobConstant;
-import hrds.commons.codes.StorageType;
+import hrds.agent.job.biz.utils.TypeTransLength;
+import hrds.commons.codes.IsFlag;
+import hrds.commons.codes.UnloadType;
 import hrds.commons.entity.Column_split;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.ConnUtil;
@@ -25,15 +28,74 @@ import java.util.Map;
 @DocClass(desc = "根据页面所选的表和字段对jdbc所返回的meta信息进行解析", author = "zxz", createdate = "2019/12/4 11:17")
 public class JdbcCollectTableHandleParse extends AbstractCollectTableHandle {
 
-	@SuppressWarnings("unchecked")
+
+	@Method(desc = "根据数据源信息和采集表信息得到卸数元信息", logicStep = "" +
+			"1、判断是增量抽取还是全量抽取" +
+			"2、调用对应方法获取卸数元信息")
+	@Param(name = "sourceDataConfBean", desc = "数据库采集,DB文件采集数据源配置信息", range = "不为空")
+	@Param(name = "collectTableBean", desc = "数据库采集表配置信息", range = "不为空")
+	@Return(desc = "卸数阶段元信息", range = "不为空")
+	public TableBean generateTableInfo(SourceDataConfBean sourceDataConfBean,
+	                                   CollectTableBean collectTableBean) {
+		if (UnloadType.QuanLiangXieShu.getCode().equals(collectTableBean.getUnload_type())) {
+			//全量卸数，根据采集的sql获取meta信息。
+			return getFullAmountExtractTableBean(sourceDataConfBean, collectTableBean);
+		} else if (UnloadType.ZengLiangXieShu.getCode().equals(collectTableBean.getUnload_type())) {
+			//增量卸数，根据table_column选择的字段获取meta信息
+			return getIncrementExtractTableBean(collectTableBean);
+		} else {
+			throw new AppSystemException("数据库抽取方式参数不正确");
+		}
+	}
+
+	@Method(desc = "根据数据源信息和采集表信息得到卸数元信息", logicStep = "" +
+			"1、根据采集表信息选择的列获取卸数元信息")
+	@Param(name = "sourceDataConfBean", desc = "数据库采集,DB文件采集数据源配置信息", range = "不为空")
+	@Param(name = "collectTableBean", desc = "数据库采集表配置信息", range = "不为空")
+	@Return(desc = "卸数阶段元信息", range = "不为空")
+	private TableBean getIncrementExtractTableBean(CollectTableBean collectTableBean) {
+		TableBean tableBean = new TableBean();
+		StringBuilder columnMetaInfo = new StringBuilder();//生成的元信息列名
+		StringBuilder allColumns = new StringBuilder();//要采集的列名
+		StringBuilder colTypeMetaInfo = new StringBuilder();//生成的元信息列类型
+		StringBuilder allType = new StringBuilder();//要采集的列类型
+		StringBuilder colLengthInfo = new StringBuilder();//生成的元信息列长度
+		StringBuilder primaryKeyInfo = new StringBuilder();//字段是否为主键
+		List<CollectTableColumnBean> collectTableColumnBeanList = collectTableBean.getCollectTableColumnBeanList();
+		for (CollectTableColumnBean column : collectTableColumnBeanList) {
+			columnMetaInfo.append(column.getColumn_name()).append(STRSPLIT);
+			allColumns.append(column.getColumn_name()).append(STRSPLIT);
+			colTypeMetaInfo.append(column.getColumn_type()).append(STRSPLIT);
+			allType.append(column.getColumn_type()).append(STRSPLIT);
+			colLengthInfo.append(TypeTransLength.getLength(column.getColumn_type())).append(STRSPLIT);
+			primaryKeyInfo.append(column.getIs_primary_key()).append(STRSPLIT);
+		}
+		columnMetaInfo.deleteCharAt(columnMetaInfo.length() - 1);//元信息列名
+		allColumns.deleteCharAt(allColumns.length() - 1);//列名
+		colLengthInfo.deleteCharAt(colLengthInfo.length() - 1);//列长度
+		colTypeMetaInfo.deleteCharAt(colTypeMetaInfo.length() - 1);//列类型
+		allType.deleteCharAt(allType.length() - 1);//列类型
+		primaryKeyInfo.deleteCharAt(primaryKeyInfo.length() - 1);//是否主键
+		// 页面定义的清洗格式进行卸数
+		tableBean.setAllColumns(allColumns.toString());
+		tableBean.setAllType(allType.toString());
+		tableBean.setColLengthInfo(colLengthInfo.toString());
+		tableBean.setColTypeMetaInfo(colTypeMetaInfo.toString());
+		tableBean.setColumnMetaInfo(columnMetaInfo.toString().toUpperCase());
+		tableBean.setPrimaryKeyInfo(primaryKeyInfo.toString());
+		return tableBean;
+	}
+
+
 	@Method(desc = "根据数据源信息和采集表信息得到卸数元信息", logicStep = "" +
 			"1、根据数据源信息和采集表信息抽取SQL" +
 			"2、根据数据源信息和抽取SQL，执行SQL，获取")
 	@Param(name = "sourceDataConfBean", desc = "数据库采集,DB文件采集数据源配置信息", range = "不为空")
 	@Param(name = "collectTableBean", desc = "数据库采集表配置信息", range = "不为空")
 	@Return(desc = "卸数阶段元信息", range = "不为空")
-	public TableBean generateTableInfo(SourceDataConfBean sourceDataConfBean,
-	                                   CollectTableBean collectTableBean) {
+	@SuppressWarnings("unchecked")
+	private TableBean getFullAmountExtractTableBean(SourceDataConfBean sourceDataConfBean,
+	                                                CollectTableBean collectTableBean) {
 		TableBean tableBean = new TableBean();
 		Connection conn = null;
 		try {
@@ -91,16 +153,34 @@ public class JdbcCollectTableHandleParse extends AbstractCollectTableHandle {
 			//更新拆分和合并的列信息
 			String colMeta = updateColumn(mergeIng, splitIng, columnMetaInfo, colTypeMetaInfo, colLengthInfo);
 			columnMetaInfo.delete(0, columnMetaInfo.length()).append(colMeta);
-			//这里是根据不同存储目的地会有相同的拉链方式，则这新增拉链字段在这里增加
+			//默认拼一列字段海云开始日期（跑批日期）
 			columnMetaInfo.append(STRSPLIT).append(Constant.SDATENAME);
 			colTypeMetaInfo.append(STRSPLIT).append("char(8)");
 			colLengthInfo.append(STRSPLIT).append("8");
-			//增量进数方式
-			if (StorageType.ZengLiang.getCode().equals(collectTableBean.getStorage_type())) {
+			//根据是否算MD5判断是否追加结束日期和MD5两个字段
+			if (IsFlag.Shi.getCode().equals(collectTableBean.getIs_md5())) {
 				columnMetaInfo.append(STRSPLIT).append(Constant.EDATENAME).append(STRSPLIT).append(Constant.MD5NAME);
 				colTypeMetaInfo.append(STRSPLIT).append("char(8)").append(STRSPLIT).append("char(32)");
 				colLengthInfo.append(STRSPLIT).append("8").append(STRSPLIT).append("32");
 			}
+			//根据字段名称和页面选择的信息，判断是否为主键
+			StringBuilder primaryKeyInfo = new StringBuilder();//字段是否为主键
+			List<String> column_list = StringUtil.split(columnMetaInfo.toString(), STRSPLIT);
+			List<CollectTableColumnBean> collectTableColumnBeanList = collectTableBean.getCollectTableColumnBeanList();
+			for (String col : column_list) {
+				boolean flag = true;
+				for (CollectTableColumnBean columnBean : collectTableColumnBeanList) {
+					if (columnBean.getColumn_name().equals(col)) {
+						primaryKeyInfo.append(columnBean.getIs_primary_key()).append(STRSPLIT);
+						flag = false;
+						break;
+					}
+				}
+				if (flag) {
+					primaryKeyInfo.append(IsFlag.Fou.getCode()).append(STRSPLIT);
+				}
+			}
+			primaryKeyInfo.deleteCharAt(primaryKeyInfo.length() - 1);//主键
 			// 页面定义的清洗格式进行卸数
 			tableBean.setAllColumns(allColumns.toString());
 			tableBean.setAllType(allType.toString());
@@ -109,6 +189,7 @@ public class JdbcCollectTableHandleParse extends AbstractCollectTableHandle {
 			tableBean.setColumnMetaInfo(columnMetaInfo.toString().toUpperCase());
 			tableBean.setTypeArray(typeArray);
 			tableBean.setParseJson(parseJson);
+			tableBean.setPrimaryKeyInfo(primaryKeyInfo.toString());
 		} catch (Exception e) {
 			throw new AppSystemException("根据数据源信息和采集表信息得到卸数元信息失败！", e);
 		} finally {

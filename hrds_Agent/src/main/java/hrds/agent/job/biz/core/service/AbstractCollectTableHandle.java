@@ -23,8 +23,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
-import java.text.ParsePosition;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -34,7 +32,6 @@ import java.util.*;
  */
 public abstract class AbstractCollectTableHandle implements CollectTableHandle {
 	protected final static Logger LOGGER = LoggerFactory.getLogger(JdbcCollectTableHandleParse.class);
-	private static final String SINGLEQUOTE = "'";
 	public static final String STRSPLIT = "^";
 
 	static ResultSet getResultSet(String collectSQL, Connection conn) {
@@ -136,7 +133,7 @@ public abstract class AbstractCollectTableHandle implements CollectTableHandle {
 		if (!StringUtil.isEmpty(filter)) {
 			for (String sql : StringUtil.split(collectSql, JobConstant.SQLDELIMITER)) {
 				if (sql.toLowerCase().contains("where")) {
-					addWhereSql.append("SELECT * FROM (").append(sql).append(")").append(" as hyren_tmp_table ")
+					addWhereSql.append("SELECT * FROM (").append(sql).append(")").append(" as hyren_tmp_where ")
 							.append(" WHERE ").append(filter).append(JobConstant.SQLDELIMITER);
 				} else {
 					addWhereSql.append(sql).append(" WHERE ").append(filter).append(JobConstant.SQLDELIMITER);
@@ -157,7 +154,7 @@ public abstract class AbstractCollectTableHandle implements CollectTableHandle {
 	 * @param sqlParam   sql占位符的参数 例：ccc=1~@^ddd=2~@^eee=3
 	 * @return 替换之后的抽取的sql
 	 */
-	private static String replaceSqlParam(String collectSql, String sqlParam) {
+	public static String replaceSqlParam(String collectSql, String sqlParam) {
 		//将多个需要替换的参数分割出来
 		List<String> splitParamList = StringUtil.split(sqlParam, JobConstant.SQLDELIMITER);
 		for (String splitParam : splitParamList) {
@@ -170,39 +167,39 @@ public abstract class AbstractCollectTableHandle implements CollectTableHandle {
 		return collectSql;
 	}
 
-	/**
-	 * 根据指定格式将字符串转为日期
-	 */
-	private static Date getDateByString(String dateByString) {
-		Date date;
-		//为空返回当前日期
-		if (dateByString == null || dateByString.trim().equals("")) {
-			date = new Date();
-		} else {
-			try {
-				SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd");
-				date = format.parse(dateByString);
-			} catch (Exception e) {
-				throw new AppSystemException("输入的日期格式不正确，请输入yyyyMMdd格式的日期", e);
-			}
-		}
-		return date;
-	}
-
-	/**
-	 * 得到输入日期+i天以后的日期
-	 */
-	private static String getNextDateByNum(String s, int i) {
-
-		SimpleDateFormat simpledateformat = new SimpleDateFormat("yyyyMMdd");
-		java.util.Date date = simpledateformat.parse(s, new ParsePosition(0));
-		Calendar calendar = Calendar.getInstance();
-		calendar.setTime(date);
-		calendar.add(Calendar.DAY_OF_MONTH, i);
-		date = calendar.getTime();
-		s = simpledateformat.format(date);
-		return s;
-	}
+//	/**
+//	 * 根据指定格式将字符串转为日期
+//	 */
+//	private static Date getDateByString(String dateByString) {
+//		Date date;
+//		//为空返回当前日期
+//		if (dateByString == null || dateByString.trim().equals("")) {
+//			date = new Date();
+//		} else {
+//			try {
+//				SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd");
+//				date = format.parse(dateByString);
+//			} catch (Exception e) {
+//				throw new AppSystemException("输入的日期格式不正确，请输入yyyyMMdd格式的日期", e);
+//			}
+//		}
+//		return date;
+//	}
+//
+//	/**
+//	 * 得到输入日期+i天以后的日期
+//	 */
+//	private static String getNextDateByNum(String s, int i) {
+//
+//		SimpleDateFormat simpledateformat = new SimpleDateFormat("yyyyMMdd");
+//		java.util.Date date = simpledateformat.parse(s, new ParsePosition(0));
+//		Calendar calendar = Calendar.getInstance();
+//		calendar.setTime(date);
+//		calendar.add(Calendar.DAY_OF_MONTH, i);
+//		date = calendar.getTime();
+//		s = simpledateformat.format(date);
+//		return s;
+//	}
 
 	/**
 	 * 使用sql获取每个字段的长度，类型，精度

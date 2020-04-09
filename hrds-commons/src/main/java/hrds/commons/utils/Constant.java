@@ -23,8 +23,8 @@ public class Constant {
     public static final String XMLPATH = USER_DIR + File.separator + "xmlPath" + File.separator;
     //job运行程序信息存储文件名称
     public static final String JOBFILENAME = "jobInfo.json";
-    //TODO 数据库采集卸数文件存放的顶层目录,这里应该是根据系统参数来的
-    public static final String JDBCUNLOADFOLDER = USER_DIR + File.separator + "jdbc" + File.separator;
+    //TODO 数据库采集数据字典存放的顶层目录
+    public static final String DICTIONARY = USER_DIR + File.separator + "dictionary" + File.separator;
     //mapDB文件存放的顶层目录
     public static final String MAPDBPATH = USER_DIR + File.separator + "mapDb" + File.separator;
     //TODO 文件采集卸数文件存放的顶层目录,这里应该是根据系统参数来的

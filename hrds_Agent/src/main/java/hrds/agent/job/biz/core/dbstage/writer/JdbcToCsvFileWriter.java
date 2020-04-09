@@ -14,7 +14,6 @@ import hrds.agent.job.biz.utils.WriterFile;
 import hrds.commons.codes.DataBaseCode;
 import hrds.commons.codes.FileFormat;
 import hrds.commons.codes.IsFlag;
-import hrds.commons.codes.StorageType;
 import hrds.commons.entity.Column_split;
 import hrds.commons.entity.Data_extraction_def;
 import hrds.commons.exception.AppSystemException;
@@ -42,13 +41,11 @@ public class JdbcToCsvFileWriter extends AbstractFileWriter {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public String writeFiles(ResultSet resultSet, CollectTableBean collectTableBean, long pageNum,
-	                         long pageRow, TableBean tableBean, Data_extraction_def data_extraction_def) {
+	public String writeFiles(ResultSet resultSet, CollectTableBean collectTableBean, int pageNum,
+	                         TableBean tableBean, Data_extraction_def data_extraction_def) {
 		String eltDate = collectTableBean.getEtlDate();
 		StringBuilder fileInfo = new StringBuilder(1024);
 		String hbase_name = collectTableBean.getHbase_name();
-//		String midName = Constant.JDBCUNLOADFOLDER + collectTableBean.getDatabase_id() + File.separator
-//				+ collectTableBean.getTable_id() + File.separator;
 		//数据抽取指定的目录
 		String plane_url = data_extraction_def.getPlane_url();
 		String midName = plane_url + File.separator + eltDate + File.separator + collectTableBean.getTable_name()
@@ -56,7 +53,6 @@ public class JdbcToCsvFileWriter extends AbstractFileWriter {
 		midName = FileNameUtils.normalize(midName, true);
 		DataFileWriter<Object> avroWriter = null;
 		CsvListWriter writer;
-		long lineCounter = pageNum * pageRow;
 		long counter = 0;
 		int index = 0;
 		WriterFile writerFile = null;
@@ -97,7 +93,6 @@ public class JdbcToCsvFileWriter extends AbstractFileWriter {
 			int[] typeArray = tableBean.getTypeArray();
 			while (resultSet.next()) {
 				// Count it
-				lineCounter++;
 				counter++;
 				//获取所有列的值用来生成MD5值
 				midStringOther.delete(0, midStringOther.length());
@@ -105,7 +100,7 @@ public class JdbcToCsvFileWriter extends AbstractFileWriter {
 				for (int i = 1; i <= numberOfColumns; i++) {
 					//获取原始值来计算 MD5
 					sb_.delete(0, sb_.length());
-					midStringOther.append(getOneColumnValue(avroWriter, lineCounter, resultSet, typeArray[i - 1],
+					midStringOther.append(getOneColumnValue(avroWriter, counter, pageNum, resultSet, typeArray[i - 1],
 							sb_, i, hbase_name));
 					//清洗操作
 					currValue = sb_.toString();
@@ -130,8 +125,8 @@ public class JdbcToCsvFileWriter extends AbstractFileWriter {
 							FileFormat.CSV.getCode(), data_extraction_def.getDatabase_code(), dataDelimiter);
 				}
 				sb.add(eltDate);
-				//因为进数方式是表级别的，如果每张表选择了存储方式则不同目的地下的都是一样的，所以拼的字段加在卸数这里
-				if (StorageType.ZengLiang.getCode().equals(collectTableBean.getStorage_type())) {
+				//根据是否算MD5判断是否追加结束日期和MD5两个字段
+				if (IsFlag.Shi.getCode().equals(collectTableBean.getIs_md5())) {
 					String md5 = toMD5(midStringOther.toString());
 					sb.add(Constant.MAXDATE);
 					sb.add(md5);
@@ -155,7 +150,7 @@ public class JdbcToCsvFileWriter extends AbstractFileWriter {
 					}
 				}
 				writer.write(sb);
-				if (lineCounter % 50000 == 0) {
+				if (counter % 50000 == 0) {
 					writer.flush();
 				}
 				sb.clear();
@@ -163,7 +158,7 @@ public class JdbcToCsvFileWriter extends AbstractFileWriter {
 			writer.flush();
 		} catch (Exception e) {
 			log.error("卸数失败", e);
-			throw new AppSystemException("数据库采集卸数Csv文件失败" + e.getMessage());
+			throw new AppSystemException("数据库采集卸数Csv文件失败", e);
 		} finally {
 			try {
 				if (writerFile != null)
@@ -174,8 +169,8 @@ public class JdbcToCsvFileWriter extends AbstractFileWriter {
 				log.error(e);
 			}
 		}
-		fileInfo.append(counter).append(JdbcCollectTableHandleParse.STRSPLIT).append(JobIoUtil.getFileSize(midName));
-		//返回卸数一个或者多个文件名全路径和总的文件行数和文件大小
+		fileInfo.append(counter);
+		//返回卸数一个或者多个文件名全路径和总的文件行数
 		return fileInfo.toString();
 	}
 

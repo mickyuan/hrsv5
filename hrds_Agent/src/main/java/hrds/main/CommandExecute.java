@@ -117,7 +117,7 @@ public class CommandExecute {
 		ExecutorService executor = null;
 		try {
 			//初始化当前任务需要保存的文件的根目录
-			String[] paths = {Constant.JOBINFOPATH, Constant.JDBCUNLOADFOLDER};
+			String[] paths = {Constant.JOBINFOPATH, Constant.DICTIONARY};
 			FileUtil.initPath(sourceDataConfBean.getDatabase_id(), paths);
 			//此处不会有海量的任务需要执行，不会出现队列中等待的任务对象过多的OOM事件。
 			//TODO Runtime.getRuntime().availableProcessors()此处不能用这个,因为可能同时又多个数据库采集同时进行

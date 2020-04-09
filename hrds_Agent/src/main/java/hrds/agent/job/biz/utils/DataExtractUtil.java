@@ -4,13 +4,15 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.StringUtil;
-import hrds.commons.codes.DataBaseCode;
+import hrds.agent.job.biz.core.service.AbstractCollectTableHandle;
 import hrds.commons.codes.FileFormat;
+import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Data_extraction_def;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,13 +24,11 @@ public class DataExtractUtil {
 	/**
 	 * 生成数据字典
 	 */
-	public static synchronized void writeDataDictionary(String csv_path, String tableName, String allColumns, String
-			allType, String storage_type, List<Data_extraction_def> data_extraction_defList) {
-		String charset = DataBaseCode.ofValueByCode(data_extraction_defList.get(0).getDatabase_code());
+	public static synchronized void writeDataDictionary(String dictionaryPath, String tableName, String allColumns, String
+			allType, String storage_type, List<Data_extraction_def> data_extraction_defList, String unload_type, String primaryKeyInfo) {
 		BufferedWriter bufferOutputWriter = null;
 		OutputStreamWriter outputFileWriter = null;
-		String path = new File(csv_path).getParent();
-		String dataDictionaryFile = path + File.separator + DATADICTIONARY;
+		String dataDictionaryFile = dictionaryPath + DATADICTIONARY;
 		try {
 			File file = new File(dataDictionaryFile);
 			String dd_data = "";
@@ -49,6 +49,7 @@ public class DataExtractUtil {
 			jsonObject.put("table_name", tableName);
 			jsonObject.put("table_cn_name", tableName);
 			jsonObject.put("storage_type", storage_type);
+			jsonObject.put("unload_type", unload_type);
 			JSONArray storageArray = new JSONArray();
 			for (Data_extraction_def data_extraction_def : data_extraction_defList) {
 				JSONObject object = new JSONObject();
@@ -61,8 +62,9 @@ public class DataExtractUtil {
 				storageArray.add(object);
 			}
 			jsonObject.put("storage", storageArray);
-			List<String> columnList = StringUtil.split(allColumns, "^");
-			List<String> typeList = StringUtil.split(allType, "^");
+			List<String> columnList = StringUtil.split(allColumns, AbstractCollectTableHandle.STRSPLIT);
+			List<String> typeList = StringUtil.split(allType, AbstractCollectTableHandle.STRSPLIT);
+			List<String> primaryKeyList = StringUtil.split(primaryKeyInfo, AbstractCollectTableHandle.STRSPLIT);
 			List<JSONObject> array = new ArrayList<>();
 			for (int i = 0; i < columnList.size(); i++) {
 				JSONObject object = new JSONObject();
@@ -72,12 +74,13 @@ public class DataExtractUtil {
 				object.put("column_id", i);
 				object.put("column_cn_name", "");
 				object.put("column_name", columnList.get(i));
-				object.put("column_key", "N");
+				object.put("column_key", IsFlag.Shi.getCode().equals(primaryKeyList.get(i)) ? "Y" : "N");
 				array.add(object);
 			}
 			jsonObject.put("columns", array);
 			jsonArray.add(jsonObject);
-			outputFileWriter = new OutputStreamWriter(new FileOutputStream(file), charset);
+			//数据字典的编码默认直接使用utf-8
+			outputFileWriter = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8);
 			bufferOutputWriter = new BufferedWriter(outputFileWriter, 4096);
 			bufferOutputWriter.write(jsonArray.toJSONString());
 			bufferOutputWriter.flush();

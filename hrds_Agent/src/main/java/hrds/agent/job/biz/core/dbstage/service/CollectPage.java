@@ -32,11 +32,11 @@ public class CollectPage implements Callable<Map<String, Object>> {
 	private String sql;
 	private long start;
 	private long end;
-	private long pageNum;
+	private int pageNum;
 	private long pageRow;
 
 	public CollectPage(SourceDataConfBean sourceDataConfBean, CollectTableBean collectTableBean,
-	                   TableBean tableBean, long start, long end, long pageNum, long pageRow) {
+	                   TableBean tableBean, long start, long end, int pageNum, long pageRow) {
 		this.sourceDataConfBean = sourceDataConfBean;
 		this.collectTableBean = collectTableBean;
 		this.tableBean = tableBean;
@@ -45,6 +45,18 @@ public class CollectPage implements Callable<Map<String, Object>> {
 		this.pageNum = pageNum;
 		this.pageRow = pageRow;
 		this.sql = tableBean.getCollectSQL();
+	}
+
+	public CollectPage(SourceDataConfBean sourceDataConfBean, CollectTableBean collectTableBean,
+	                   TableBean tableBean, long start, long end, int pageNum, long pageRow, String sql) {
+		this.sourceDataConfBean = sourceDataConfBean;
+		this.collectTableBean = collectTableBean;
+		this.tableBean = tableBean;
+		this.start = start;
+		this.end = end;
+		this.pageNum = pageNum;
+		this.pageRow = pageRow;
+		this.sql = sql;
 	}
 
 	@Method(desc = "多线程采集执行方法", logicStep = "" +
@@ -78,13 +90,11 @@ public class CollectPage implements Callable<Map<String, Object>> {
 					//2、解析ResultSet，并写数据文件
 					ResultSetParser parser = new ResultSetParser();
 					//文件路径
-					String unLoadInfo = parser.parseResultSet(resultSet, collectTableBean, pageNum, pageRow,
+					String unLoadInfo = parser.parseResultSet(resultSet, collectTableBean, pageNum,
 							tableBean, data_extraction_def);
 					if (!StringUtil.isEmpty(unLoadInfo) && unLoadInfo.contains(JdbcCollectTableHandleParse.STRSPLIT)) {
 						List<String> unLoadInfoList = StringUtil.split(unLoadInfo, JdbcCollectTableHandleParse.STRSPLIT);
-						map.put("pageCount", unLoadInfoList.get(unLoadInfoList.size() - 2));
-						map.put("fileSize", unLoadInfoList.get(unLoadInfoList.size() - 1));
-						unLoadInfoList.remove(unLoadInfoList.size() - 2);
+						map.put("pageCount", unLoadInfoList.get(unLoadInfoList.size() - 1));
 						unLoadInfoList.remove(unLoadInfoList.size() - 1);
 						map.put("filePathList", unLoadInfoList);
 					}

@@ -1,17 +1,22 @@
 package hrds.agent.job.biz.core.dbstage;
 
+import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.FileNameUtils;
+import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.*;
 import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
 import hrds.agent.job.biz.core.dbstage.service.CollectPage;
+import hrds.agent.job.biz.core.dbstage.service.ResultSetParser;
+import hrds.agent.job.biz.core.service.AbstractCollectTableHandle;
 import hrds.agent.job.biz.core.service.CollectTableHandleFactory;
+import hrds.agent.job.biz.core.service.JdbcCollectTableHandleParse;
 import hrds.agent.job.biz.utils.DataExtractUtil;
 import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
@@ -19,10 +24,16 @@ import hrds.commons.codes.CollectType;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.UnloadType;
 import hrds.commons.exception.AppSystemException;
+import hrds.commons.utils.ConnUtil;
+import hrds.commons.utils.Constant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -60,15 +71,26 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 		JobStatusInfoUtil.startStageStatusInfo(statusInfo, collectTableBean.getTable_id(),
 				StageConstant.UNLOADDATA.getCode());
 		try {
+			TableBean tableBean = CollectTableHandleFactory.getCollectTableHandleInstance(sourceDataConfBean)
+					.generateTableInfo(sourceDataConfBean, collectTableBean);
 			if (UnloadType.QuanLiangXieShu.getCode().equals(collectTableBean.getUnload_type())) {
 				//全量卸数
-				fullAmountExtract(stageParamInfo);
+				fullAmountExtract(stageParamInfo, tableBean);
 			} else if (UnloadType.ZengLiangXieShu.getCode().equals(collectTableBean.getUnload_type())) {
 				//增量卸数
-				incrementExtract(stageParamInfo);
+				incrementExtract(stageParamInfo, tableBean);
 			} else {
 				throw new AppSystemException("数据抽取卸数方式类型不正确");
 			}
+			stageParamInfo.setTableBean(tableBean);
+			//数据字典的路径
+			String dictionaryPath = FileNameUtils.normalize(Constant.DICTIONARY + File.separator +
+					collectTableBean.getDatabase_id() + File.separator, true);
+			//写数据字典
+			DataExtractUtil.writeDataDictionary(dictionaryPath, collectTableBean.getTable_name(),
+					tableBean.getColumnMetaInfo(), tableBean.getColTypeMetaInfo(), collectTableBean.getStorage_type(),
+					collectTableBean.getData_extraction_def_list(), collectTableBean.getUnload_type(),
+					tableBean.getPrimaryKeyInfo());
 			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.SUCCEED.getCode(), "执行成功");
 			LOGGER.info("------------------数据库直连采集卸数阶段成功------------------");
 		} catch (Exception e) {
@@ -89,54 +111,153 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 	/**
 	 * 增量抽取
 	 */
-	private void incrementExtract(StageParamInfo stageParamInfo) {
-		//TODO
+	private void incrementExtract(StageParamInfo stageParamInfo, TableBean tableBean) {
+		Connection conn = null;
+		Statement statement = null;
+		ResultSet resultSet = null;
+		try {
+			//获取jdbc连接
+			conn = ConnUtil.getConnection(sourceDataConfBean.getDatabase_drive(), sourceDataConfBean.getJdbc_url(),
+					sourceDataConfBean.getUser_name(), sourceDataConfBean.getDatabase_pad());
+			List<String> fileResult = new ArrayList<>();
+			//pageCountResult是本次采集作业每个线程采集到的数据量，用于写meta文件
+			List<Long> pageCountResult = new ArrayList<>();
+			//增量抽取是根据页面传过来的三个sql直接抽取出增量数据
+			String incrementSql = collectTableBean.getSql();
+			JSONObject incrementSqlObject = JSONObject.parseObject(incrementSql);
+			//遍历json根据json的key执行sql,拼接对应的操作方式,增量抽取是写到同一个文件，因此这里不使用多线程
+			for (String key : incrementSqlObject.keySet()) {
+				//获取增量的sql
+				String sql = incrementSqlObject.getString(key);
+				if (!StringUtil.isEmpty(sql)) {
+					sql = AbstractCollectTableHandle.replaceSqlParam(sql, collectTableBean.getSqlParam());
+					statement = conn.createStatement();
+					//查询第一个增量sql是两个sql,先删除再新增的方式做增量
+					// 找需要删除的数据
+					resultSet = statement.executeQuery(sql);
+					tableBean.setOperate(key);
+					//2、解析ResultSet，并写数据文件
+					ResultSetParser parser = new ResultSetParser();
+					//文件路径
+					String unLoadInfo = parser.parseResultSet(resultSet, collectTableBean, 0,
+							tableBean, collectTableBean.getData_extraction_def_list().get(0));
+					if (!StringUtil.isEmpty(unLoadInfo) && unLoadInfo.contains(JdbcCollectTableHandleParse.STRSPLIT)) {
+						List<String> unLoadInfoList = StringUtil.split(unLoadInfo, JdbcCollectTableHandleParse.STRSPLIT);
+						String pageCount = unLoadInfoList.get(unLoadInfoList.size() - 1);
+						unLoadInfoList.remove(unLoadInfoList.size() - 1);
+						fileResult.addAll(unLoadInfoList);
+						pageCountResult.add(Long.parseLong(pageCount));
+					}
+				}
+			}
+			countResult(fileResult, pageCountResult, stageParamInfo);
+		} catch (Exception e) {
+			throw new AppSystemException("执行增量抽取sql失败", e);
+		} finally {
+			try {
+				if (resultSet != null)
+					resultSet.close();
+				if (statement != null)
+					statement.close();
+				if (conn != null)
+					conn.close();
+			} catch (SQLException e) {
+				LOGGER.error(e.getMessage());
+			}
+		}
+	}
+
+	private void countResult(List<String> fileResult, List<Long> pageCountResult, StageParamInfo stageParamInfo) {
+		//获得本次采集总数据量
+		long rowCount = 0;
+		for (Long pageCount : pageCountResult) {
+			rowCount += pageCount;
+		}
+		stageParamInfo.setRowCount(rowCount);
+		//获得本次采集生成的数据文件的总大小
+		long fileSize = 0;
+		String[] fileArr = new String[fileResult.size()];
+		for (int i = 0; i < fileResult.size(); i++) {
+			fileArr[i] = fileResult.get(i);
+			//判断文件是否存在，如果某个文件存在，则计算大小，若不存在，记录日志并继续运行
+			if (FileUtil.decideFileExist(fileArr[i])) {
+				long singleFileSize = FileUtil.getFileSize(fileArr[i]);
+				fileSize += singleFileSize;
+			} else {
+				throw new AppSystemException("数据库直连采集" + fileArr[i] + "文件不存在");
+			}
+		}
+		stageParamInfo.setFileArr(fileArr);
+		stageParamInfo.setFileSize(fileSize);
 	}
 
 	/**
 	 * 全量抽取
 	 */
-	private void fullAmountExtract(StageParamInfo stageParamInfo) throws Exception {
-		TableBean tableBean = CollectTableHandleFactory.getCollectTableHandleInstance(sourceDataConfBean)
-				.generateTableInfo(sourceDataConfBean, collectTableBean);
-		stageParamInfo.setTableBean(tableBean);
-		//根据collectSql中是否包含~@^分隔符判断是否用户自定义sql并行抽取
-		if (tableBean.getCollectSQL().contains(JobConstant.SQLDELIMITER)) {
+	@SuppressWarnings("unchecked")
+	private void fullAmountExtract(StageParamInfo stageParamInfo, TableBean tableBean) throws Exception {
+		//fileResult中是生成的所有数据文件的路径，用于判断卸数阶段结果
+		List<String> fileResult = new ArrayList<>();
+		//pageCountResult是本次采集作业每个线程采集到的数据量，用于写meta文件
+		List<Long> pageCountResult = new ArrayList<>();
+		List<Future<Map<String, Object>>> futures;
+		//根据collectSql中是否包含~@^分隔符判断是否用户自定义sql并行抽取。
+		// 为了防止用户自定义并行抽取，又只写了一个sql,加了第二个判断条件
+		if (tableBean.getCollectSQL().contains(JobConstant.SQLDELIMITER) ||
+				IsFlag.Shi.getCode().equals(collectTableBean.getIs_customize_sql())) {
 			//包含，是否用户自定义的sql进行多线程抽取
-			customizeParallelExtract(stageParamInfo, tableBean);
+			futures = customizeParallelExtract(tableBean);
 		} else {
 			//不包含
-			pageParallelExtract(stageParamInfo, tableBean);
+			futures = pageParallelExtract(tableBean);
 		}
-		//XXX 数据字典的路径,数据字典的路径应该是指定位置，待定
-		String dictionaryPath = FileNameUtils.normalize(collectTableBean.getData_extraction_def_list().
-				get(0).getPlane_url() + File.separator + collectTableBean.getTable_name()
-				+ File.separator, true);
-		//写数据字典
-		DataExtractUtil.writeDataDictionary(dictionaryPath, collectTableBean.getTable_name(),
-				tableBean.getColumnMetaInfo(), tableBean.getColTypeMetaInfo(), collectTableBean.getStorage_type(),
-				collectTableBean.getData_extraction_def_list());
+		//5、获得结果,用于校验多线程采集的结果和写Meta文件
+		for (Future<Map<String, Object>> future : futures) {
+			fileResult.addAll((List<String>) future.get().get("filePathList"));
+			pageCountResult.add(Long.parseLong((String) future.get().get("pageCount")));
+		}
+		//获得本次采集总数据量
+		countResult(fileResult, pageCountResult, stageParamInfo);
 	}
 
 	/**
 	 * 自定义并行抽取
 	 */
-	private void customizeParallelExtract(StageParamInfo stageParamInfo, TableBean tableBean) {
-		//TODO
+	private List<Future<Map<String, Object>>> customizeParallelExtract(TableBean tableBean) {
+		ExecutorService executorService = null;
+		try {
+			List<Future<Map<String, Object>>> futures = new ArrayList<>();
+			long lastPageEnd = Long.MAX_VALUE;
+			//判断是否并行抽取
+			if (IsFlag.Shi.getCode().equals(collectTableBean.getIs_parallel())) {
+				//3、读取并行抽取sql数
+				List<String> parallelSqlList = StringUtil.split(tableBean.getCollectSQL(), JobConstant.SQLDELIMITER);
+				//4、创建固定大小的线程池，执行分页查询(线程池类型和线程数可以后续改造)
+				// 此处不会有海量的任务需要执行，不会出现队列中等待的任务对象过多的OOM事件。
+				executorService = Executors.newFixedThreadPool(parallelSqlList.size());
+				for (int i = 0; i < parallelSqlList.size(); i++) {
+					//最后一个线程的最大条数设为Long.MAX_VALUE
+					CollectPage lastPage = new CollectPage(sourceDataConfBean, collectTableBean, tableBean,
+							0, lastPageEnd, i, lastPageEnd, parallelSqlList.get(i));
+					Future<Map<String, Object>> lastFuture = executorService.submit(lastPage);
+					futures.add(lastFuture);
+				}
+			}
+			return futures;
+		} finally {
+			//关闭线程池
+			if (executorService != null)
+				executorService.shutdown();
+		}
 	}
 
 
 	/**
 	 * 分页并行抽取
 	 */
-	@SuppressWarnings("unchecked")
-	private void pageParallelExtract(StageParamInfo stageParamInfo, TableBean tableBean) throws Exception {
+	private List<Future<Map<String, Object>>> pageParallelExtract(TableBean tableBean) {
 		ExecutorService executorService = null;
 		try {
-			//fileResult中是生成的所有数据文件的路径，用于判断卸数阶段结果
-			List<String> fileResult = new ArrayList<>();
-			//pageCountResult是本次采集作业每个线程采集到的数据量，用于写meta文件
-			List<Long> pageCountResult = new ArrayList<>();
 			List<Future<Map<String, Object>>> futures = new ArrayList<>();
 			long lastPageEnd = Long.MAX_VALUE;
 			//判断是否并行抽取
@@ -180,32 +301,7 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 			} else {
 				throw new AppSystemException("错误的是否标识");
 			}
-			//5、获得结果,用于校验多线程采集的结果和写Meta文件
-			for (Future<Map<String, Object>> future : futures) {
-				fileResult.addAll((List<String>) future.get().get("filePathList"));
-				pageCountResult.add(Long.parseLong((String) future.get().get("pageCount")));
-			}
-			//获得本次采集总数据量
-			long rowCount = 0;
-			for (Long pageCount : pageCountResult) {
-				rowCount += pageCount;
-			}
-			stageParamInfo.setRowCount(rowCount);
-			//获得本次采集生成的数据文件的总大小
-			long fileSize = 0;
-			String[] fileArr = new String[fileResult.size()];
-			for (int i = 0; i < fileResult.size(); i++) {
-				fileArr[i] = fileResult.get(i);
-				//判断文件是否存在，如果某个文件存在，则计算大小，若不存在，记录日志并继续运行
-				if (FileUtil.decideFileExist(fileArr[i])) {
-					long singleFileSize = FileUtil.getFileSize(fileArr[i]);
-					fileSize += singleFileSize;
-				} else {
-					throw new AppSystemException("数据库直连采集" + fileArr[i] + "文件不存在");
-				}
-			}
-			stageParamInfo.setFileArr(fileArr);
-			stageParamInfo.setFileSize(fileSize);
+			return futures;
 		} finally {
 			//关闭线程池
 			if (executorService != null)
