@@ -21,11 +21,11 @@ import java.util.List;
 @DocClass(desc = "接口发布管理类", author = "dhw", createdate = "2020/3/25 14:07")
 public class ReleaseManageAction extends BaseAction {
 
-	@Method(desc = "搜索发布管理信息(首页展示）",
+	@Method(desc = "搜索管理用户信息",
 			logicStep = "1.数据可访问权限处理方式：该方法通过create_id进行访问权限限制" +
 					"2.返回接口用户信息")
 	@Return(desc = "返回接口用户信息", range = "无限制")
-	public Result searchReleaseManageInfo() {
+	public Result searchUserInfo() {
 		// 1.数据可访问权限处理方式：该方法通过create_id进行访问权限限制
 		// 2.返回接口用户信息
 		return Dbo.queryResult("SELECT user_id,user_name,user_email,user_remark FROM "

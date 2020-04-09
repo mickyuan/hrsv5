@@ -223,15 +223,15 @@ public class DataRangeManageAction extends BaseAction {
 		SqlOperator.Assembler assembler = SqlOperator.Assembler.newInstance();
 		assembler.clean();
 		assembler.addSql("SELECT t1.file_id,t1.original_name,t1.original_update_date," +
-				"t1.original_update_time,t1.table_name,t1.hbase_name from "
-				+ Source_file_attribute.TableName + " t1 ");
+				"t1.original_update_time,t1.table_name,t1.hyren_name from "
+				+ Data_store_reg.TableName + " t1 ");
 		// 2.判断ID是否为空，为空则为分类触发，不为空为表触发
 		if (id != null) {
 			// 表触发
 			assembler.addSql(" WHERE t1.collect_set_id = ? ").addParam(table_id);
 		} else {
 			// 分类触发
-			assembler.addSql(" join " + Database_set.TableName + " t2 ON t1.collect_set_id=t2.database_id" +
+			assembler.addSql(" join " + Database_set.TableName + " t2 ON t1.database_id=t2.database_id" +
 					" where t2.classify_id = ?").addParam(table_id);
 		}
 		// 3.查询贴源层表信息
@@ -259,11 +259,7 @@ public class DataRangeManageAction extends BaseAction {
 	}
 
 	@Method(desc = "保存表数据", logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制")
-	@Param(name = "user_id", desc = "用户ID", range = "新增用户时生成")
-	@Param(name = "table_note", desc = "备注", range = "无限制")
-	@Param(name = "file_id", desc = "文件ID", range = "无限制")
-	@Param(name = "dataSourceType", desc = "数据源类型(使用DataSourceType）代码项，树根节点", range = "无限制")
-	@Param(name = "checked_fields", desc = "被选中的文件ID", range = "无限制")
+	@Param(name = "tableDataInfos", desc = "表数据信息对象数组", range = "无限制", isBean = true)
 	public void saveTableData(TableDataInfo[] tableDataInfos) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		for (TableDataInfo tableDataInfo : tableDataInfos) {
@@ -305,29 +301,29 @@ public class DataRangeManageAction extends BaseAction {
 	                         long userId) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		// 2.查询贴源层表数据信息
-		Result tableResult = Dbo.queryResult("SELECT sysreg_name,meta_info,original_name FROM " +
-				Source_file_attribute.TableName + " WHERE file_id = ?", file_id);
+		Result tableResult = Dbo.queryResult("SELECT hyren_name,meta_info,original_name FROM " +
+				Data_store_reg.TableName + " WHERE file_id = ?", file_id);
 		Table_use_info table_use_info = new Table_use_info();
 		// 3.遍历贴源层表数据信息保存表使用信息以及系统登记表参数信息
 		for (int i = 0; i < tableResult.getRowCount(); i++) {
-			// 4.获取原始登记表名称
-			String sysreg_name = tableResult.getString(i, "sysreg_name");
+			// 4.获取系统内对应表名
+			String hyren_name = tableResult.getString(i, "hyren_name");
 			// 5.获取原始文件名称
 			String original_name = tableResult.getString(i, "original_name");
 			// 6.根据用户ID、表名查询当前表是否已登记
-			boolean flag = getUserTableInfo(userId, sysreg_name);
+			boolean flag = getUserTableInfo(userId, hyren_name);
 			// 7.生成表使用ID
 			String useId = PrimayKeyGener.getNextId();
 			// 8.判断当前用户对应表是否已登记做不同处理
 			if (flag) {
 				// 8.1已登记,根据用户ID、表名删除接口表数据
-				deleteInterfaceTableInfo(userId, sysreg_name);
+				deleteInterfaceTableInfo(userId, hyren_name);
 			}
 			// 9.新增表使用信息
 			addTableUseInfo(table_note, dataSourceType, userId, useId, table_use_info,
-					sysreg_name, original_name);
+					hyren_name, original_name);
 			// 10.新增系统登记表参数信息
-			addSysregParameterInfo(tableResult.getString(i, "meta_info"), column_name, useId);
+			addSysregParameterInfo(tableResult.getString(i, "meta_info"), column_name, useId, userId);
 		}
 	}
 
@@ -339,13 +335,15 @@ public class DataRangeManageAction extends BaseAction {
 	@Param(name = "meta_info", desc = "元数据信息", range = "无限制")
 	@Param(name = "column_id", desc = "被选中的文件ID", range = "无限制")
 	@Param(name = "useId", desc = "表使用ID", range = "新增表使用信息时生成")
-	private void addSysregParameterInfo(String meta_info, String[] column_name, String useId) {
+	@Param(name = "userId", desc = "用户ID", range = "新增用户时生成")
+	private void addSysregParameterInfo(String meta_info, String[] column_name, String useId, long userId) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		// 2.封装系统登记参数表信息
 		Sysreg_parameter_info sysreg_parameter_info = new Sysreg_parameter_info();
 		sysreg_parameter_info.setParameter_id(PrimayKeyGener.getNextId());
 		sysreg_parameter_info.setUse_id(useId);
 		sysreg_parameter_info.setIs_flag(IsFlag.Fou.getCode());
+		sysreg_parameter_info.setUser_id(userId);
 		// 3.元数据并解析
 		Map<String, Object> metaInfoMap = JsonUtil.toObject(meta_info, MAPTYPE);
 		String column;
@@ -353,8 +351,8 @@ public class DataRangeManageAction extends BaseAction {
 			column = metaInfoMap.get("column").toString();
 		} else {
 			StringBuilder sb = new StringBuilder();
-			for (String s : column_name) {
-				sb.append(s).append(",");
+			for (String columnName : column_name) {
+				sb.append(columnName).append(",");
 			}
 			column = sb.deleteCharAt(sb.length() - 1).toString();
 		}
@@ -375,18 +373,18 @@ public class DataRangeManageAction extends BaseAction {
 	@Param(name = "userId", desc = "用户ID", range = "新增用户时生成")
 	@Param(name = "useId", desc = "表使用ID", range = "新增表使用信息时生成")
 	@Param(name = "table_use_info", desc = "表使用信息实体", range = "与数据库对应表规则一致", isBean = true)
-	@Param(name = "sysreg_name", desc = "原始登记表名", range = "")
+	@Param(name = "hyren_name", desc = "原始登记表名", range = "")
 	@Param(name = "original_name", desc = "原始文件名", range = "")
 	private void addTableUseInfo(String table_note, String dataSourceType, long userId, String useId,
-	                             Table_use_info table_use_info, String sysreg_name, String original_name) {
+	                             Table_use_info table_use_info, String hyren_name, String original_name) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		// 2.封装表使用信息参数
-		table_use_info.setSysreg_name(sysreg_name);
+		table_use_info.setSysreg_name(hyren_name);
 		table_use_info.setUser_id(userId);
 		table_use_info.setUse_id(useId);
 		table_use_info.setTable_blsystem(dataSourceType);
 		if (StringUtil.isBlank(original_name)) {
-			table_use_info.setOriginal_name(sysreg_name);
+			table_use_info.setOriginal_name(hyren_name);
 		} else {
 			table_use_info.setOriginal_name(original_name);
 		}
@@ -427,10 +425,10 @@ public class DataRangeManageAction extends BaseAction {
 
 	@Method(desc = "根据ID与数据源类型获取结果集(实时数据）",
 			logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制")
-	@Param(name = "file_id", desc = "文件ID", range = "无限制")
+	@Param(name = "fileId", desc = "文件ID", range = "无限制")
 	@Param(name = "dataSourceType", desc = "数据源类型(使用DataSourceType）代码项，树根节点", range = "无限制")
 	@Return(desc = "", range = "")
-	public Result getResult(long fileId, String dataSourceType) {
+	private Result getResult(long fileId, String dataSourceType) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		Map<String, String> columnMap = new HashMap<>();
 		Result tableResult;
