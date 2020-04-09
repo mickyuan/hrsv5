@@ -1,7 +1,12 @@
 package hrds.commons.utils;
 
 import fd.ng.core.utils.StringUtil;
+import fd.ng.db.jdbc.DatabaseWrapper;
+import fd.ng.db.meta.ColumnMeta;
+import fd.ng.db.meta.MetaOperator;
+import fd.ng.db.meta.TableMeta;
 import hrds.commons.codes.DatabaseType;
+import hrds.commons.collection.ConnectionTool;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.xlstoxml.XmlCreater;
@@ -12,10 +17,7 @@ import org.w3c.dom.Element;
 
 import java.io.File;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Platform {
 
@@ -39,158 +41,61 @@ public class Platform {
 		root = xmlCreater.getElement();
 	}
 
-	private static void addTable(String en_table_name, String cn_table_name) {
+	private static void addTable(String en_table_name, String cn_table_name, TableMeta tableMeta) {
 
 		table = xmlCreater.createElement(root, "table");
 		xmlCreater.createAttribute(table, "name", en_table_name.toLowerCase());
 		xmlCreater.createAttribute(table, "description", cn_table_name);
 		xmlCreater.createAttribute(table, "storage_type", "1");
+		Map<String, ColumnMeta> columnMetas = tableMeta.getColumnMetas();
+		Set<String> primaryKeys = tableMeta.getPrimaryKeys();
+		for (String key : columnMetas.keySet()) {
+			ColumnMeta columnMeta = columnMetas.get(key);
+			String colName = columnMeta.getName();//列名
+			String typeName = columnMeta.getTypeName();//类型名称
+			int precision = columnMeta.getLength();//长度
+			boolean isNull = columnMeta.isNullable();//是否为空
+			int dataType = columnMeta.getTypeOfSQL();//类型
+			int scale = columnMeta.getScale();// 小数的位数
+			String column_type = getColType(dataType, typeName, precision, scale);
+			boolean primaryKey = primaryKeys.contains(colName);
+			addColumn(colName, primaryKey, column_type, typeName, precision, isNull, dataType, scale);
+		}
 	}
 
-	private static void addColumn(String colName, String primaryKey, String column_type, String typeName, String precision, String isNull,
-	                              String dataType, String scale) {
+	private static void addColumn(String colName, boolean primaryKey, String column_type, String typeName, int precision, boolean isNull,
+	                              int dataType, int scale) {
 
 		column = xmlCreater.createElement(table, "column");
 		xmlCreater.createAttribute(column, "name", colName);
-		xmlCreater.createAttribute(column, "primaryKey", primaryKey);
+		xmlCreater.createAttribute(column, "primaryKey", primaryKey ? "true" : "false");
 		xmlCreater.createAttribute(column, "column_type", column_type);
 		xmlCreater.createAttribute(column, "typeName", typeName);
-		xmlCreater.createAttribute(column, "length", precision);
-		xmlCreater.createAttribute(column, "column_null", isNull);
-		xmlCreater.createAttribute(column, "dataType", dataType);
-		xmlCreater.createAttribute(column, "scale", scale);
+		xmlCreater.createAttribute(column, "length", String.valueOf(precision));
+		xmlCreater.createAttribute(column, "column_null", isNull ? "true" : "false");
+		xmlCreater.createAttribute(column, "dataType", String.valueOf(dataType));
+		xmlCreater.createAttribute(column, "scale", String.valueOf(scale));
 	}
 
-	public static void readModelFromDatabase(Connection conn, String xmlName, String type, String database_name) {
-
+	public static void readModelFromDatabase(DatabaseWrapper db, String xmlName) {
 		try {
-			DatabaseMetaData dbmd = conn.getMetaData();
 			// 调用方法生成xml文件
-			String userName = dbmd.getUserName();
+			String userName = db.getName();
 			createXml(xmlName, userName);
 
-			String schemaPattern = "%";
-
-			boolean isSchem = true;
-			if (DatabaseType.Oracle10g.getCode().equals(type) || DatabaseType.Oracle9i.getCode().equals(type)) {
-				schemaPattern = database_name;
-			} else if (DatabaseType.SqlServer2000.getCode().equals(type) || DatabaseType.SqlServer2005.getCode().equals(type)
-					|| DatabaseType.Postgresql.getCode().equals(type)) {
-				isSchem = false;
-			} else if (DatabaseType.TeraData.getCode().equals(type)) {
-				schemaPattern = database_name;
-				isSchem = false;
-			}
-
-			if (DatabaseType.TeraData.getCode().equals(type)) {
-				ResultSet columnSet = dbmd.getColumns(null, schemaPattern, "%", "%");
-				logger.info("数据库连接成功,已获取数据库表信息");
-				//获取所有表
-				String tableNameTemp = "";
-				while (columnSet.next()) {
-					String tableName = columnSet.getString("TABLE_NAME");
-					/*
-					 * TODO 1、第二个参数，DB2添加%
-						2、第二个参数，oracle 是否可以为  OPS$AIMSADM，也可以是getUserName().toUpperCase()都待测试。
-							oracle 貌似需要大写
-						3、第二个参数，mysql可以加上面所有的都是ok的
-					 */
-					Map<String, String> isPrimaryKey = new HashMap<>();
-					if (!tableName.equals(tableNameTemp)) {
-						tableNameTemp = tableName;
-						//添加表名
-						addTable(tableName, tableName);
-						ResultSet rs = dbmd.getPrimaryKeys(null, null, tableName.toUpperCase());
-						while (rs.next()) {
-							isPrimaryKey.put(rs.getString("COLUMN_NAME"), "true");
-						}
-						rs.close();
-					}
-					String colName = columnSet.getString("COLUMN_NAME");//列名
-					String typeName = columnSet.getString("TYPE_NAME");//类型名称
-					int precision = columnSet.getInt("COLUMN_SIZE");//长度
-					int isNull = columnSet.getInt("NULLABLE");//是否为空
-					int dataType = columnSet.getInt("DATA_TYPE");//类型
-					int scale = columnSet.getInt("DECIMAL_DIGITS");// 小数的位数
-
-					String column_type = getColType(dataType, typeName, precision, scale);
-					String primaryKey = (isPrimaryKey.get(colName) == null) ? "false" : "true";
-					addColumn(colName, primaryKey, column_type, typeName, precision + "", isNull + "", dataType + "", scale + "");
-					isPrimaryKey.clear();
-				}
-				columnSet.close();
-				logger.info("写数据库表信息完成");
-			} else {
-				//获取所有表
-				ResultSet tableSet = dbmd.getTables(null, schemaPattern, "%", new String[]{"TABLE"});
-				while (tableSet.next()) {
-					String tableSchem = tableSet.getString("TABLE_SCHEM");
-					//Debug.info(logger, "val=" + userName + ";equalsIgoreCase=" + tableSchem + ";dbmd.getUserName():" + dbmd.getUserName());
-					boolean flag;
-					if (DatabaseType.Oracle10g.getCode().equals(type) || DatabaseType.Oracle9i.getCode().equals(type)) {
-						flag = true;
-					} else {
-						flag = StringUtil.isEmpty(tableSchem) || dbmd.getUserName().equalsIgnoreCase(tableSchem) || !isSchem;
-					}
-					if (flag) {
-						String tableName = tableSet.getString("TABLE_NAME");
-						String tableComment = tableSet.getString("REMARKS");
-						//添加表名
-						addTable(tableName, tableComment);
-
-						/*
-						 * TODO 1、第二个参数，DB2添加%
-							2、第二个参数，oracle 是否可以为  OPS$AIMSADM，也可以是getUserName().toUpperCase()都待测试。
-								oracle 貌似需要大写
-							3、第二个参数，mysql可以加上面所有的都是ok的
-						 */
-						ResultSet columnSet = dbmd.getColumns(null, schemaPattern, tableName, "%");
-
-						List<Map<String, String>> list = new ArrayList<>();
-
-						while (columnSet.next()) {
-							Map<String, String> mapColumn = new HashMap<>();
-							String colName = columnSet.getString("COLUMN_NAME");//列名
-							String typeName = columnSet.getString("TYPE_NAME");//类型名称
-							int precision = columnSet.getInt("COLUMN_SIZE");//长度
-							int isNull = columnSet.getInt("NULLABLE");//是否为空
-							int dataType = columnSet.getInt("DATA_TYPE");//类型
-							int scale = columnSet.getInt("DECIMAL_DIGITS");// 小数的位数
-
-							String column_type = getColType(dataType, typeName, precision, scale);
-
-							mapColumn.put("column_type", column_type);
-							mapColumn.put("colName", colName);
-							mapColumn.put("typeName", typeName);
-							mapColumn.put("precision", precision + "");
-							mapColumn.put("isNull", isNull + "");
-							mapColumn.put("dataType", dataType + "");
-							mapColumn.put("scale", scale + "");
-							list.add(mapColumn);
-						}
-						columnSet.close();
-						ResultSet rs = dbmd.getPrimaryKeys(null, null, tableName.toUpperCase());
-						Map<String, String> isPrimaryKey = new HashMap<>();
-						while (rs.next()) {
-							isPrimaryKey.put(rs.getString("COLUMN_NAME"), "true");
-						}
-						for (Map<String, String> mapColumn : list) {
-							String colName = mapColumn.get("colName");
-							String typeName = mapColumn.get("typeName");
-							String precision = mapColumn.get("precision");
-							String isNull = mapColumn.get("isNull");
-							String dataType = mapColumn.get("dataType");
-							String scale = mapColumn.get("scale");
-							String column_type = mapColumn.get("column_type");
-
-							String primaryKey = (isPrimaryKey.get(colName) == null) ? "false" : "true";
-
-							addColumn(colName, primaryKey, column_type, typeName, precision, isNull, dataType, scale);
-						}
-						rs.close();
-					}
-				}
-				tableSet.close();
+			//获取所有表
+			List<TableMeta> tableMetas = MetaOperator.getTablesWithColumns(db);
+			for (TableMeta tableMeta : tableMetas) {
+				String tableName = tableMeta.getTableName();
+				String remarks = tableMeta.getRemarks();
+				//添加表名
+				addTable(tableName, remarks, tableMeta);
+				/*
+				 * TODO 1、第二个参数，DB2添加%
+					2、第二个参数，oracle 是否可以为  OPS$AIMSADM，也可以是getUserName().toUpperCase()都待测试。
+						oracle 貌似需要大写
+					3、第二个参数，mysql可以加上面所有的都是ok的
+				 */
 			}
 			// 生成xml文档
 			xmlCreater.buildXmlFile();
@@ -201,12 +106,10 @@ public class Platform {
 		}
 	}
 
-	public static void readModelFromDatabase(Connection conn, String xmlName, String type, String database_name, String table) {
-
+	public static void readModelFromDatabase(DatabaseWrapper db, String xmlName, String tableNameList) {
 		try {
-			DatabaseMetaData dbmd = conn.getMetaData();
 			// 调用方法生成xml文件
-			String userName = dbmd.getUserName();
+			String userName = db.getName();
 			File file = FileUtils.getFile(xmlName);
 			if (!file.exists()) {
 				createXml(xmlName, userName);
@@ -216,52 +119,23 @@ public class Platform {
 					throw new AppSystemException("删除文件失败");
 				}
 				createXml(xmlName, userName);
-//				openXml(new File(xmlName).getAbsolutePath());
-			}
-
-			String schemaPattern = "%";
-
-			if (DatabaseType.Oracle10g.getCode().equals(type) || DatabaseType.Oracle9i.getCode().equals(type)) {
-				schemaPattern = database_name;
-			} else if (DatabaseType.TeraData.getCode().equals(type)) {
-				schemaPattern = database_name;
 			}
 			//table是多张表
-			List<String> names = StringUtil.split(table, "|");
+			List<String> names = StringUtil.split(tableNameList, "|");
+			List<String> table = new ArrayList<>();
 			for (String name : names) {
-				ResultSet columnSet = dbmd.getColumns(null, schemaPattern, "%" + name + "%"
-						, "%");
 				//获取所有表
+				List<TableMeta> tableMetas = MetaOperator.getTablesWithColumns(db, "%" + name + "%");
 				String tableNameTemp = "";
-				Map<String, String> isPrimaryKey = new HashMap<>();
-				while (columnSet.next()) {
-					String tableName = columnSet.getString("TABLE_NAME");
-					if (!tableName.equals(tableNameTemp)) {
-						tableNameTemp = tableName;
-						xmlCreater.removeElement(tableName);
-						//添加表名
-						addTable(tableName, tableName);
-						ResultSet rs = dbmd.getPrimaryKeys(null, null, tableName.toUpperCase());
-						while (rs.next()) {
-							isPrimaryKey.put(rs.getString("COLUMN_NAME"), "true");
-						}
-						rs.close();
+				for (TableMeta tableMeta : tableMetas) {
+					String tableName = tableMeta.getTableName();
+					String remarks = tableMeta.getRemarks();
+					if (!table.contains(tableName)) {
+						table.add(tableName);
+						addTable(tableName, remarks, tableMeta);
 					}
-					String colName = columnSet.getString("COLUMN_NAME");//列名
-					String typeName = columnSet.getString("TYPE_NAME");//类型名称
-					int precision = columnSet.getInt("COLUMN_SIZE");//长度
-					int isNull = columnSet.getInt("NULLABLE");//是否为空
-					int dataType = columnSet.getInt("DATA_TYPE");//类型
-					int scale = columnSet.getInt("DECIMAL_DIGITS");// 小数的位数
-
-					String column_type = getColType(dataType, typeName, precision, scale);
-					String primaryKey = (isPrimaryKey.get(colName) == null) ? "false" : "true";
-					addColumn(colName, primaryKey, column_type, typeName, precision + "", isNull + "", dataType + "", scale + "");
-					isPrimaryKey.clear();
 				}
-				columnSet.close();
 			}
-			logger.info("写数据库表信息完成");
 			// 生成xml文档
 			xmlCreater.buildXmlFile();
 			logger.info("写xml信息完成");
@@ -312,69 +186,31 @@ public class Platform {
 		return column_type;
 	}
 
-	public static List<Map<String, String>> getSqlInfo(String sql, Connection conn) {
-
-		Statement statement = null;
-		ResultSet executeQuery = null;
-		try {
-			List<Map<String, String>> columnList = new ArrayList<>();
-			statement = conn.createStatement();
-			executeQuery = statement.executeQuery(sql);
-			ResultSetMetaData metaData = executeQuery.getMetaData();
-			for (int i = 1; i <= metaData.getColumnCount(); i++) {
-				Map<String, String> hashMap = new HashMap<>();
-				hashMap.put("column_name", metaData.getColumnName(i));
-				hashMap.put("type", getColType(metaData.getColumnType(i), metaData.getColumnTypeName(i), metaData.getPrecision(i), metaData.getScale(i)));
-				columnList.add(hashMap);
-			}
-			return columnList;
-		} catch (SQLException e) {
-			throw new BusinessException("sql错误" + e.getMessage());
-		} finally {
-			try {
-				if (executeQuery != null)
-					executeQuery.close();
-				if (statement != null)
-					statement.close();
-			} catch (SQLException e) {
-				logger.error("关闭statement错误", e);
-			}
+	public static List<Map<String, String>> getSqlColumnMeta(String sql, DatabaseWrapper db) {
+		Map<String, ColumnMeta> sqlColumnMeta = MetaOperator.getSqlColumnMeta(db, sql);
+		List<Map<String, String>> columnList = new ArrayList<>();
+		for (String key : sqlColumnMeta.keySet()) {
+			ColumnMeta metaData = sqlColumnMeta.get(key);
+			Map<String, String> hashMap = new HashMap<>();
+			hashMap.put("column_name", key);
+			hashMap.put("type", getColType(metaData.getTypeOfSQL(), metaData.getName(), metaData.getLength(), metaData.getScale()));
+			columnList.add(hashMap);
 		}
+		return columnList;
 	}
 
-//	public static Connection getConnectionTest() {
-//
-//		Connection conn = null;
-//		//		PreparedStatement stmt;
-//		try {
-//			Class.forName("org.postgresql.Driver");
-//			String url = "jdbc:postgresql://10.71.4.61:31001/hrsdxg";
-//			String user = "hrsdxg";
-//			String pass = "hrds";
-//
-//			//			Class.forName("com.mysql.jdbc.Driver");
-//			//			String url = "jdbc:mysql://172.168.0.200:3306/hrds";
-//			conn = DriverManager.getConnection(url, user, pass);
-//
-//			readModelFromDatabase(conn, "666666.xml", DatabaseType.Postgresql.getCode(), "hrds", "code_info");
-//			//			String sql = "select * from result_table_copy limit 1";
-//			//			stmt = (PreparedStatement)conn.prepareStatement(sql);
-//			//
-//			//			ResultSet rs = stmt.executeQuery();
-//			//
-//			//			ResultSetMetaData data = rs.getMetaData();
-//			//
-//			//			while( rs.next() ) {
-//			//				for(int i = 1; i <= data.getColumnCount(); i++) {
-//			//					System.out.println(Platform.getColType(data.getColumnType(i), data.getColumnTypeName(i), data.getPrecision(i), data.getScale(i)));
-//			//				}
-//			//			}
-//
-//		} catch (ClassNotFoundException e) {
-//			e.printStackTrace();
-//		} catch (SQLException e) {
-//			e.printStackTrace();
-//		}
-//		return conn;
-//	}
+	public static void main(String[] args) {
+		Map map = new HashMap<>();
+		//2、从想要的数据库中获取连接信息
+		map.put("database_type", DatabaseType.Postgresql.getCode());
+		map.put("database_drive", "org.postgresql.Driver");
+		map.put("jdbc_url", "jdbc:postgresql://10.71.4.52:31001/hrsdxgtest");
+		map.put("user_name", "hrsdxg");
+		map.put("database_pad", "hrsdxg");
+
+		DatabaseWrapper db = ConnectionTool.getDBWrapper(map);
+		//readModelFromDatabase(db,"D:\\aa.xml");
+
+		readModelFromDatabase(db, "D:\\aa.xml", "agent_down_info");
+	}
 }
