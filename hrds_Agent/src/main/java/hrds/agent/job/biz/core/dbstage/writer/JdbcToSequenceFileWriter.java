@@ -12,7 +12,7 @@ import hrds.agent.job.biz.dataclean.DataCleanInterface;
 import hrds.agent.job.biz.utils.JobIoUtil;
 import hrds.agent.job.biz.utils.WriterFile;
 import hrds.commons.codes.FileFormat;
-import hrds.commons.codes.StorageType;
+import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Data_extraction_def;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
@@ -40,8 +40,8 @@ public class JdbcToSequenceFileWriter extends AbstractFileWriter {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public String writeFiles(ResultSet resultSet, CollectTableBean collectTableBean, long pageNum,
-	                         long pageRow, TableBean tableBean, Data_extraction_def data_extraction_def) {
+	public String writeFiles(ResultSet resultSet, CollectTableBean collectTableBean, int pageNum,
+	                         TableBean tableBean, Data_extraction_def data_extraction_def) {
 		String eltDate = collectTableBean.getEtlDate();
 		StringBuilder fileInfo = new StringBuilder(1024);
 		String hbase_name = collectTableBean.getHbase_name();
@@ -49,15 +49,11 @@ public class JdbcToSequenceFileWriter extends AbstractFileWriter {
 		String plane_url = data_extraction_def.getPlane_url();
 		String midName = plane_url + File.separator + eltDate + File.separator + collectTableBean.getTable_name()
 				+ File.separator + FileFormat.SEQUENCEFILE.getValue() + File.separator;
-//		String midName = Constant.JDBCUNLOADFOLDER + collectTableBean.getDatabase_id() + File.separator
-//				+ collectTableBean.getTable_id() + File.separator;
 		//XXX SequenceFile不指定分隔符，页面也不允许其指定分隔符，使用hive默认的\001隐藏字符做分隔符
 		//XXX 这样只要创建hive映射外部表时使用store as sequencefile hive会自动解析。
 		String dataDelimiter = JobConstant.SEQUENCEDELIMITER;
-		//String dataDelimiter = collectTableBean.getDatabase_separatorr();
 		midName = FileNameUtils.normalize(midName, true);
 		DataFileWriter<Object> avroWriter = null;
-		long lineCounter = pageNum * pageRow;
 		long counter = 0;
 		int index = 0;
 		WriterFile writerFile = null;
@@ -89,7 +85,6 @@ public class JdbcToSequenceFileWriter extends AbstractFileWriter {
 			List<String> type = StringUtil.split(tableBean.getAllType(), JdbcCollectTableHandleParse.STRSPLIT);
 			while (resultSet.next()) {
 				// Count it
-				lineCounter++;
 				counter++;
 				//获取所有列的值用来生成MD5值
 				midStringOther.delete(0, midStringOther.length());
@@ -98,7 +93,7 @@ public class JdbcToSequenceFileWriter extends AbstractFileWriter {
 				for (int i = 1; i <= numberOfColumns; i++) {
 					//获取原始值来计算 MD5
 					sb_.delete(0, sb_.length());
-					midStringOther.append(getOneColumnValue(avroWriter, lineCounter, resultSet,
+					midStringOther.append(getOneColumnValue(avroWriter, counter, pageNum, resultSet,
 							typeArray[i - 1], sb_, i, hbase_name)).append(JobConstant.DATADELIMITER);
 					//清洗操作
 					currValue = sb_.toString();
@@ -117,7 +112,8 @@ public class JdbcToSequenceFileWriter extends AbstractFileWriter {
 					sb.append(mer).append(dataDelimiter);
 				}
 				sb.append(eltDate);
-				if (StorageType.ZengLiang.getCode().equals(collectTableBean.getStorage_type())) {
+				//根据是否算MD5判断是否追加结束日期和MD5两个字段
+				if (IsFlag.Shi.getCode().equals(collectTableBean.getIs_md5())) {
 					String md5 = toMD5(midStringOther.toString());
 					sb.append(dataDelimiter).append(Constant.MAXDATE).
 							append(dataDelimiter).append(md5);
@@ -138,8 +134,8 @@ public class JdbcToSequenceFileWriter extends AbstractFileWriter {
 				}
 				value.set(sb.toString());
 				writer.append(NullWritable.get(), value);
-				if (lineCounter % 50000 == 0) {
-					log.info(hbase_name + "文件已写入一次,目前写到" + lineCounter + "行");
+				if (counter % 50000 == 0) {
+					log.info(hbase_name + "文件已写入一次,目前写到" + counter + "行");
 					writer.hflush();
 				}
 				sb.delete(0, sb.length());
@@ -158,8 +154,8 @@ public class JdbcToSequenceFileWriter extends AbstractFileWriter {
 				log.error(e);
 			}
 		}
-		fileInfo.append(counter).append(JdbcCollectTableHandleParse.STRSPLIT).append(JobIoUtil.getFileSize(midName));
-		//返回卸数一个或者多个文件名全路径和总的文件行数和文件大小
+		fileInfo.append(counter);
+		//返回卸数一个或者多个文件名全路径和总的文件行数
 		return fileInfo.toString();
 	}
 }

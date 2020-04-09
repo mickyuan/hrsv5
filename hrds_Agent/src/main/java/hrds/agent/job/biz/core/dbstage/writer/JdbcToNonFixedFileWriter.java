@@ -13,7 +13,7 @@ import hrds.agent.job.biz.utils.JobIoUtil;
 import hrds.agent.job.biz.utils.WriterFile;
 import hrds.commons.codes.DataBaseCode;
 import hrds.commons.codes.FileFormat;
-import hrds.commons.codes.StorageType;
+import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Data_extraction_def;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
@@ -40,8 +40,8 @@ public class JdbcToNonFixedFileWriter extends AbstractFileWriter {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public String writeFiles(ResultSet resultSet, CollectTableBean collectTableBean, long pageNum,
-	                         long pageRow, TableBean tableBean, Data_extraction_def data_extraction_def) {
+	public String writeFiles(ResultSet resultSet, CollectTableBean collectTableBean, int pageNum,
+	                         TableBean tableBean, Data_extraction_def data_extraction_def) {
 		String eltDate = collectTableBean.getEtlDate();
 		StringBuilder fileInfo = new StringBuilder(1024);
 		String hbase_name = collectTableBean.getHbase_name();
@@ -53,7 +53,6 @@ public class JdbcToNonFixedFileWriter extends AbstractFileWriter {
 		midName = FileNameUtils.normalize(midName, true);
 		DataFileWriter<Object> avroWriter = null;
 		BufferedWriter writer;
-		long lineCounter = pageNum * pageRow;
 		long counter = 0;
 		int index = 0;
 		WriterFile writerFile = null;
@@ -84,7 +83,6 @@ public class JdbcToNonFixedFileWriter extends AbstractFileWriter {
 			int[] typeArray = tableBean.getTypeArray();
 			while (resultSet.next()) {
 				// Count it
-				lineCounter++;
 				counter++;
 				//获取所有列的值用来生成MD5值
 				midStringOther.delete(0, midStringOther.length());
@@ -93,7 +91,7 @@ public class JdbcToNonFixedFileWriter extends AbstractFileWriter {
 				for (int i = 1; i <= numberOfColumns; i++) {
 					//获取原始值来计算 MD5
 					sb_.delete(0, sb_.length());
-					midStringOther.append(getOneColumnValue(avroWriter, lineCounter, resultSet, typeArray[i - 1],
+					midStringOther.append(getOneColumnValue(avroWriter, counter, pageNum, resultSet, typeArray[i - 1],
 							sb_, i, hbase_name)).append(JobConstant.DATADELIMITER);
 					//清洗操作
 					currValue = sb_.toString();
@@ -113,7 +111,8 @@ public class JdbcToNonFixedFileWriter extends AbstractFileWriter {
 					sb.append(merge).append(dataDelimiter);
 				}
 				sb.append(eltDate);
-				if (StorageType.ZengLiang.getCode().equals(collectTableBean.getStorage_type())) {
+				//根据是否算MD5判断是否追加结束日期和MD5两个字段
+				if (IsFlag.Shi.getCode().equals(collectTableBean.getIs_md5())) {
 					String md5 = toMD5(midStringOther.toString());
 					sb.append(dataDelimiter).append(Constant.MAXDATE).
 							append(dataDelimiter).append(md5);
@@ -134,7 +133,7 @@ public class JdbcToNonFixedFileWriter extends AbstractFileWriter {
 					}
 				}
 				writer.write(sb.toString());
-				if (lineCounter % 50000 == 0) {
+				if (counter % 50000 == 0) {
 					writer.flush();
 				}
 				sb.delete(0, sb.length());
@@ -154,8 +153,8 @@ public class JdbcToNonFixedFileWriter extends AbstractFileWriter {
 				log.error(e);
 			}
 		}
-		fileInfo.append(counter).append(JdbcCollectTableHandleParse.STRSPLIT).append(JobIoUtil.getFileSize(midName));
-		//返回卸数一个或者多个文件名全路径和总的文件行数和文件大小
+		fileInfo.append(counter);
+		//返回卸数一个或者多个文件名全路径和总的文件行数
 		return fileInfo.toString();
 	}
 }

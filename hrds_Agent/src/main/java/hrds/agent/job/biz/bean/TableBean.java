@@ -17,6 +17,8 @@ public class TableBean {
 	private String column_separator;    //列分隔符
 	private String root_path;   //采集文件根路径
 	private String file_code;   //文件编码
+	private String primaryKeyInfo; //是否为主键
+	private String operate; //操作类型
 
 	public String getFile_code() {
 		return file_code;
@@ -134,5 +136,21 @@ public class TableBean {
 
 	public void setRoot_path(String root_path) {
 		this.root_path = root_path;
+	}
+
+	public String getPrimaryKeyInfo() {
+		return primaryKeyInfo;
+	}
+
+	public void setPrimaryKeyInfo(String primaryKeyInfo) {
+		this.primaryKeyInfo = primaryKeyInfo;
+	}
+
+	public String getOperate() {
+		return operate;
+	}
+
+	public void setOperate(String operate) {
+		this.operate = operate;
 	}
 }

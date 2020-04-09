@@ -32,11 +32,12 @@ public class ResultSetParser {
 			, range = "不为空")
 	@Return(desc = "当前线程生成数据文件的路径", range = "不会为null")
 		//TODO pageNum和pageRow一起，在写文件的时候，用于判断文件是否过大，如果文件过大，可以对单个数据文件进行拆分
-	String parseResultSet(ResultSet rs, CollectTableBean collectTableBean, long pageNum,
-	                      long pageRow, TableBean tableBean, Data_extraction_def data_extraction_def) {
+	public String parseResultSet(ResultSet rs, CollectTableBean collectTableBean, int pageNum,
+	                      TableBean tableBean, Data_extraction_def data_extraction_def) {
 		//当前线程生成的数据文件的路径，用于返回
 		//8、写文件结束，返回本线程生成数据文件的路径和一个写出数据量
-		return FileWriterFactory.getFileWriterImpl(data_extraction_def.getDbfile_format()).writeFiles(rs,
-				collectTableBean, pageNum, pageRow, tableBean, data_extraction_def);
+		return FileWriterFactory.getFileWriterImpl(data_extraction_def.getDbfile_format(),
+				collectTableBean.getUnload_type()).writeFiles(rs,
+				collectTableBean, pageNum, tableBean, data_extraction_def);
 	}
 }

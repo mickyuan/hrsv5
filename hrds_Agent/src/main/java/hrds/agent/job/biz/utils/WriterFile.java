@@ -29,6 +29,7 @@ public class WriterFile implements Closeable {
 	private Configuration conf;
 	private Writer sequenceWriter = null;
 	private BufferedWriter bufferedWriter = null;
+	private BufferedWriter incrementBufferedWriter = null;
 	private CsvListWriter csvWriter = null;
 
 	public WriterFile(String filePath) {
@@ -100,6 +101,16 @@ public class WriterFile implements Closeable {
 		return bufferedWriter;
 	}
 
+	public BufferedWriter getIncrementBufferedWriter(String charset) {
+		try {
+			incrementBufferedWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(filePath,
+					true), charset));
+		} catch (IOException e) {
+			logger.error(e);
+		}
+		return incrementBufferedWriter;
+	}
+
 	public void orcClose() {
 
 		try {
@@ -120,6 +131,17 @@ public class WriterFile implements Closeable {
 				fs.close();
 		} catch (IOException e) {
 			logger.error("bufferedWriter文件关闭失败！！！", e);
+		}
+	}
+
+	public void incrementBufferedWriterClose() {
+		try {
+			if (incrementBufferedWriter != null)
+				incrementBufferedWriter.close();
+			if (fs != null)
+				fs.close();
+		} catch (IOException e) {
+			logger.error("incrementBufferedWriter文件关闭失败！！！", e);
 		}
 	}
 

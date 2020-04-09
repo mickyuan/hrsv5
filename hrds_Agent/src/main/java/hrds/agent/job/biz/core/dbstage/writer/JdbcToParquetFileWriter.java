@@ -13,7 +13,7 @@ import hrds.agent.job.biz.utils.ColumnTool;
 import hrds.agent.job.biz.utils.JobIoUtil;
 import hrds.agent.job.biz.utils.ParquetUtil;
 import hrds.commons.codes.FileFormat;
-import hrds.commons.codes.StorageType;
+import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Column_split;
 import hrds.commons.entity.Data_extraction_def;
 import hrds.commons.exception.AppSystemException;
@@ -44,8 +44,8 @@ public class JdbcToParquetFileWriter extends AbstractFileWriter {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public String writeFiles(ResultSet resultSet, CollectTableBean collectTableBean, long pageNum,
-	                         long pageRow, TableBean tableBean, Data_extraction_def data_extraction_def) {
+	public String writeFiles(ResultSet resultSet, CollectTableBean collectTableBean, int pageNum,
+	                         TableBean tableBean, Data_extraction_def data_extraction_def) {
 		String eltDate = collectTableBean.getEtlDate();
 		StringBuilder fileInfo = new StringBuilder(1024);
 		String hbase_name = collectTableBean.getHbase_name();
@@ -59,7 +59,6 @@ public class JdbcToParquetFileWriter extends AbstractFileWriter {
 		String dataDelimiter = data_extraction_def.getDatabase_separatorr();
 		DataFileWriter<Object> avroWriter = null;
 		ParquetWriter<Group> parquetWriter = null;
-		long lineCounter = pageNum * pageRow;
 		long counter = 0;
 		int index = 0;
 		GroupFactory factory;
@@ -93,7 +92,6 @@ public class JdbcToParquetFileWriter extends AbstractFileWriter {
 			//获取所有查询的字段的类型，不包括列分割和列合并出来的字段类型
 			List<String> type = StringUtil.split(tableBean.getAllType(), JdbcCollectTableHandleParse.STRSPLIT);
 			while (resultSet.next()) {
-				lineCounter++;
 				counter++;
 				midStringOther.delete(0, midStringOther.length());
 				//每一行获取一个group对象
@@ -101,7 +99,7 @@ public class JdbcToParquetFileWriter extends AbstractFileWriter {
 				for (int i = 1; i <= numberOfColumns; i++) {
 					//获取原始值来计算 MD5
 					sb_.delete(0, sb_.length());
-					midStringOther.append(getOneColumnValue(avroWriter, lineCounter, resultSet,
+					midStringOther.append(getOneColumnValue(avroWriter, counter, pageNum, resultSet,
 							typeArray[i - 1], sb_, i, hbase_name));
 					//清洗操作
 					currValue = sb_.toString();
@@ -127,8 +125,8 @@ public class JdbcToParquetFileWriter extends AbstractFileWriter {
 							data_extraction_def.getDatabase_code(), dataDelimiter);
 				}
 				group.append(Constant.SDATENAME, eltDate);
-				//因为进数方式是表级别的，如果每张表选择了存储方式则不同目的地下的都是一样的，所以拼的字段加在卸数这里
-				if (StorageType.ZengLiang.getCode().equals(collectTableBean.getStorage_type())) {
+				//根据是否算MD5判断是否追加结束日期和MD5两个字段
+				if (IsFlag.Shi.getCode().equals(collectTableBean.getIs_md5())) {
 					String md5 = toMD5(midStringOther.toString());
 					group.append(Constant.EDATENAME, Constant.MAXDATE).append(Constant.MD5NAME, md5);
 				}
@@ -160,8 +158,8 @@ public class JdbcToParquetFileWriter extends AbstractFileWriter {
 				log.error(e);
 			}
 		}
-		fileInfo.append(counter).append(JdbcCollectTableHandleParse.STRSPLIT).append(JobIoUtil.getFileSize(midName));
-		//返回卸数一个或者多个文件名全路径和总的文件行数和文件大小
+		fileInfo.append(counter);
+		//返回卸数一个或者多个文件名全路径和总的文件行数
 		return fileInfo.toString();
 	}
 }

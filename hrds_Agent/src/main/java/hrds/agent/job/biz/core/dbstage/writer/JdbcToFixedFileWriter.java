@@ -14,7 +14,7 @@ import hrds.agent.job.biz.utils.TypeTransLength;
 import hrds.agent.job.biz.utils.WriterFile;
 import hrds.commons.codes.DataBaseCode;
 import hrds.commons.codes.FileFormat;
-import hrds.commons.codes.StorageType;
+import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Column_split;
 import hrds.commons.entity.Data_extraction_def;
 import hrds.commons.exception.AppSystemException;
@@ -26,7 +26,6 @@ import org.apache.commons.logging.LogFactory;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.sql.ResultSet;
 import java.util.List;
 import java.util.Map;
@@ -38,19 +37,17 @@ import java.util.Map;
  */
 public class JdbcToFixedFileWriter extends AbstractFileWriter {
 	//打印日志
-	private static final Log log = LogFactory.getLog(JdbcToNonFixedFileWriter.class);
+	private static final Log log = LogFactory.getLog(JdbcToFixedFileWriter.class);
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public String writeFiles(ResultSet resultSet, CollectTableBean collectTableBean, long pageNum,
-	                         long pageRow, TableBean tableBean, Data_extraction_def data_extraction_def) {
+	public String writeFiles(ResultSet resultSet, CollectTableBean collectTableBean, int pageNum,
+	                         TableBean tableBean, Data_extraction_def data_extraction_def) {
 		//获取行分隔符
 		String database_separatorr = data_extraction_def.getDatabase_separatorr();
 		String eltDate = collectTableBean.getEtlDate();
 		StringBuilder fileInfo = new StringBuilder(1024);
 		String hbase_name = collectTableBean.getHbase_name();
-//		String midName = Constant.JDBCUNLOADFOLDER + collectTableBean.getDatabase_id() + File.separator
-//				+ collectTableBean.getTable_id() + File.separator;
 		//数据抽取指定的目录
 		String plane_url = data_extraction_def.getPlane_url();
 		String midName = plane_url + File.separator + eltDate + File.separator + collectTableBean.getTable_name()
@@ -58,7 +55,6 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 		midName = FileNameUtils.normalize(midName, true);
 		DataFileWriter<Object> avroWriter = null;
 		BufferedWriter writer;
-		long lineCounter = pageNum * pageRow;
 		long counter = 0;
 		int index = 0;
 		WriterFile writerFile = null;
@@ -93,7 +89,6 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 			int[] typeArray = tableBean.getTypeArray();
 			while (resultSet.next()) {
 				// Count it
-				lineCounter++;
 				counter++;
 				//获取所有列的值用来生成MD5值
 				midStringOther.delete(0, midStringOther.length());
@@ -102,7 +97,7 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 					//获取原始值来计算 MD5
 					sb_.delete(0, sb_.length());
 					//定长的分隔符可能为空，为了列合并取值，这里MD5值默认拼接commons里面的常量
-					midStringOther.append(getOneColumnValue(avroWriter, lineCounter, resultSet, typeArray[i - 1]
+					midStringOther.append(getOneColumnValue(avroWriter, counter, pageNum, resultSet, typeArray[i - 1]
 							, sb_, i, hbase_name)).append(JobConstant.DATADELIMITER);
 					//清洗操作
 					currValue = sb_.toString();
@@ -129,7 +124,8 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 					sb.append(merge).append(database_separatorr);
 				}
 				sb.append(eltDate);
-				if (StorageType.ZengLiang.getCode().equals(collectTableBean.getStorage_type())) {
+				//根据是否算MD5判断是否追加结束日期和MD5两个字段
+				if (IsFlag.Shi.getCode().equals(collectTableBean.getIs_md5())) {
 					String md5 = toMD5(midStringOther.toString());
 					sb.append(database_separatorr).append(Constant.MAXDATE).
 							append(database_separatorr).append(md5);
@@ -142,7 +138,7 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 						//当文件满足阈值时 ，然后关闭当前流，并创建新的数据流
 						writerFile.bufferedWriterClose();
 						index++;
-						fileName = midName + hbase_name + pageNum + index + "."+ data_extraction_def.getFile_suffix();
+						fileName = midName + hbase_name + pageNum + index + "." + data_extraction_def.getFile_suffix();
 						writerFile = new WriterFile(fileName);
 						writer = writerFile.getBufferedWriter(DataBaseCode.ofValueByCode(
 								database_code));
@@ -150,7 +146,7 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 					}
 				}
 				writer.write(sb.toString());
-				if (lineCounter % 50000 == 0) {
+				if (counter % 50000 == 0) {
 					writer.flush();
 				}
 				sb.delete(0, sb.length());
@@ -169,55 +165,9 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 				log.error(e);
 			}
 		}
-		fileInfo.append(counter).append(JdbcCollectTableHandleParse.STRSPLIT).append(JobIoUtil.getFileSize(midName));
-		//返回卸数一个或者多个文件名全路径和总的文件行数和文件大小
+		fileInfo.append(counter);
+		//返回卸数一个或者多个文件名全路径和总的文件行数
 		return fileInfo.toString();
 	}
 
-	/**
-	 * 字段变为定长
-	 */
-	public static String columnToFixed(String columnValue, int length, String database_code) {
-		StringBuilder sb;
-		try {
-			byte[] bytes = columnValue.getBytes(DataBaseCode.ofValueByCode(database_code));
-			int columnValueLength = bytes.length;
-			sb = new StringBuilder();
-			sb.append(columnValue);
-			if (length >= columnValueLength) {
-				for (int j = 0; j < length - columnValueLength; j++) {
-					sb.append(" ");
-				}
-			} else {
-				throw new AppSystemException("定长指定的长度小于源数据长度");
-			}
-			return sb.toString();
-		} catch (UnsupportedEncodingException e) {
-			throw new AppSystemException("定长文件卸数编码读取错误", e);
-		}
-	}
-
-//	/**
-//	 * 获取字段的长度
-//	 */
-//	private int getColumnLength(ResultSetMetaData rsMetaData, int i) throws SQLException {
-//		int length = rsMetaData.getPrecision(i);
-//		String columnType = rsMetaData.getColumnTypeName(i).toUpperCase();
-//		if (columnType.equals("DECIMAL") || columnType.equals("NUMERIC")) {
-//			length = length + 2;
-//		}
-//		JSONObject jsonTypeObj;
-//		if (length <= 0) {
-//			//TODO 待讨论，这个需要从哪里取值
-//			String jsonType = PropertyParaUtil.getString("fixedType", "");
-//			jsonTypeObj = JSON.parseObject(jsonType);
-//			String lengthValue = jsonTypeObj.getString(columnType);
-//			try {
-//				length = Integer.parseInt(lengthValue);
-//			} catch (NumberFormatException e) {
-//				log.error("读取类型数据库类型错误 " + columnType, e);
-//			}
-//		}
-//		return length;
-//	}
 }
