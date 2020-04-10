@@ -5,6 +5,8 @@ import com.alibaba.druid.sql.ast.SQLStatement;
 import com.alibaba.druid.sql.ast.statement.SQLSelectItem;
 import com.alibaba.druid.sql.dialect.oracle.visitor.OracleASTVisitor;
 import com.alibaba.druid.util.JdbcConstants;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
@@ -23,6 +25,7 @@ import hrds.commons.tree.foreground.bean.TreeDataInfo;
 import hrds.commons.utils.DruidParseQuerySql;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.h.biz.SqlAnalysis.HyrenOracleTableVisitor;
+import javolution.io.Struct;
 //import com.alibaba.druid.
 import java.math.BigDecimal;
 import java.sql.ResultSet;
@@ -410,7 +413,6 @@ public class MarketInfoAction extends BaseAction {
                 "where t2.datatable_id = ? order by dsla_storelayer", dm_datatable.getDatatable_id());
     }
 
-    //TODO
     @Method(desc = "根据SQL获取列结构",
             logicStep = "")
     @Param(name = "querysql", desc = "查询SQL", range = "String类型SQL")
@@ -421,7 +423,7 @@ public class MarketInfoAction extends BaseAction {
         CheckColummn(querysql,"查询sql");
         Dm_datatable dm_datatable = new Dm_datatable();
         dm_datatable.setDatatable_id(datatable_id);
-        List<Map<String, Object>> targetTypeList = Dbo.queryList("SELECT distinct replace(replace(trim(t1.target_type),'(',''),')','') as target_type " +
+        List<Map<String, Object>> targetTypeList = Dbo.queryList("SELECT distinct lower(replace(replace(trim(t1.target_type),'(',''),')','')) as target_type " +
                 "FROM " + Type_contrast.TableName + " t1 LEFT JOIN " + Data_store_layer.TableName + " t2 ON t1.dtcs_id = t2.dtcs_id " +
                 "LEFT JOIN " + Dm_relation_datatable.TableName + " t3 ON t2.dsl_id=t3.dsl_id" +
                 " WHERE t3.datatable_id = ?", dm_datatable.getDatatable_id());
@@ -470,7 +472,7 @@ public class MarketInfoAction extends BaseAction {
         Dm_datatable dm_datatable = new Dm_datatable();
         dm_datatable.setDatatable_id(datatable_id);
         List<Map<String, Object>> list = Dbo.queryList("select * from " + Datatable_field_info.TableName +
-                " where datatable_id = ?", dm_datatable.getDatatable_id());
+                " where datatable_id = ? order by field_seq", dm_datatable.getDatatable_id());
         Datatable_field_info datatable_field_info = new Datatable_field_info();
         for (Map<String, Object> map : list) {
             String datatable_field_id = map.get("datatable_field_id").toString();
@@ -495,10 +497,38 @@ public class MarketInfoAction extends BaseAction {
     public List<Map<String, Object>> getAllField_Type(String datatable_id) {
         Dm_datatable dm_datatable = new Dm_datatable();
         dm_datatable.setDatatable_id(datatable_id);
-        return Dbo.queryList("SELECT distinct lower(replace(replace(trim(t1.target_type),'(',''),')','')) as target_type " +
+        List<Map<String, Object>> storeTypeList =  Dbo.queryList("select store_type from "+Data_store_layer.TableName+" t1 left join "+Dm_relation_datatable.TableName+" t2 on t1.dsl_id = t2.dsl_id " +
+                "where t2.datatable_id = ? ", dm_datatable.getDatatable_id());
+        String storeType = storeTypeList.get(0).get("store_type").toString();
+        String field_type = "";
+        //TODO 分类讨论 目前只考虑关系性数据库、hive、hbase这三种情况
+        if(storeType.equals(Store_type.DATABASE.getCode())){
+            field_type = "varchar";
+        }
+        else if(storeType.equals(Store_type.HIVE.getCode())){
+            field_type = "string";
+        }
+        else if(storeType.equals(Store_type.HBASE.getCode())){
+            field_type = "string";
+        }
+        List<Map<String, Object>> targetTypeList =  Dbo.queryList("SELECT distinct lower(replace(replace(trim(t1.target_type),'(',''),')','')) as target_type " +
                 "FROM " + Type_contrast.TableName + " t1 LEFT JOIN " + Data_store_layer.TableName + " t2 ON t1.dtcs_id = t2.dtcs_id " +
                 "LEFT JOIN " + Dm_relation_datatable.TableName + " t3 ON t2.dsl_id=t3.dsl_id" +
                 " WHERE t3.datatable_id = ?", dm_datatable.getDatatable_id());
+        Boolean flag = true;
+        for(Map<String, Object> map : targetTypeList){
+            String target_type = map.get("target_type").toString();
+            if(target_type.equalsIgnoreCase(field_type)){
+                flag = false;
+                break;
+            }
+        }
+        if(flag){
+            Map<String, Object> tempmap = new HashMap<>();
+            tempmap.put("target_type",field_type);
+            targetTypeList.add(tempmap);
+        }
+        return targetTypeList;
 
     }
 
@@ -510,7 +540,15 @@ public class MarketInfoAction extends BaseAction {
             isBean = true)
     @Param(name = "datatable_id", desc = "datatable_id", range = "String类型集市表ID")
     @Param(name = "querysql", desc = "querysql", range = "String类型集市查询SQL")
-    public void addDFInfo(Datatable_field_info[] datatable_field_info, String datatable_id, Dm_column_storage[] dm_column_storage,String querysql) {
+    @Param(name = "hbasesort", desc = "hbasesort", range = "hbaserowkey的排序")
+    public void addDFInfo(Datatable_field_info[] datatable_field_info, String datatable_id, Dm_column_storage[] dm_column_storage,String querysql,String hbasesort) {
+        for (int i = 0; i < datatable_field_info.length; i++) {
+            Datatable_field_info df_info = datatable_field_info[i];
+            CheckColummn(df_info.getField_en_name(),"字段英文名第"+(i+1)+"个");
+            CheckColummn(df_info.getField_cn_name(),"字段中文名"+(i+1)+"个");
+            CheckColummn(df_info.getField_type(),"字段类型"+(i+1)+"个");
+            CheckColummn(df_info.getField_process(),"字段处理方式"+(i+1)+"个");
+        }
         Dm_datatable dm_datatable = new Dm_datatable();
         dm_datatable.setDatatable_id(datatable_id);
         Dbo.execute("delete from " + Dm_column_storage.TableName + " where datatable_field_id in (select datatable_field_id from " +
@@ -527,9 +565,53 @@ public class MarketInfoAction extends BaseAction {
         }
         for (int i = 0; i < dm_column_storage.length; i++) {
             Dm_column_storage dc_storage = dm_column_storage[i];
-            dc_storage.getCsi_number().intValue();
+//            dc_storage.getCsi_number().intValue();
             dc_storage.setDatatable_field_id(datatable_field_info[dc_storage.getCsi_number().intValue()].getDatatable_field_id());
             dc_storage.add(Dbo.db());
+        }
+        //排序dc_storage
+        JSONArray jsonarray = JSONArray.parseArray(hbasesort);
+        List<Map<String, Object>> maps = Dbo.queryList("select distinct t1.dslad_id,t2.dsla_storelayer from " + Dm_column_storage.TableName
+                + " t1 left join "+Data_store_layer_added.TableName+" t2 on t1.dslad_id = t2.dslad_id where datatable_field_id in " +
+                "(select datatable_field_id from " + Datatable_field_info.TableName + " where datatable_id = ? )", dm_datatable.getDatatable_id());
+        for(Map<String,Object> everymap : maps){
+            String dslad_id = everymap.get("dslad_id").toString();
+            String dsla_storelayer = everymap.get("dsla_storelayer").toString();
+            Dm_column_storage dcs = new Dm_column_storage();
+            dcs.setDslad_id(dslad_id);
+            //如果是rowkey的话 排序的时候 需要根据hbasesort来排序
+            if(dsla_storelayer.equals(StoreLayerAdded.RowKey.getCode())){
+                for(int i=0;i<jsonarray.size();i++){
+                    JSONObject jsonObject = jsonarray.getJSONObject(i);
+                    String field_en_name = jsonObject.getString("field_en_name");
+                    Datatable_field_info datatable_field_info1 = new Datatable_field_info();
+                    datatable_field_info1.setField_en_name(field_en_name);
+                    List<Map<String, Object>> maps1 = Dbo.queryList("select * from " + Dm_column_storage.TableName + " where datatable_field_id = " +
+                                    "(select datatable_field_id from " + Datatable_field_info.TableName + " where datatable_id = ? and field_en_name = ? )" +
+                                    " and dslad_id = ? ",
+                            dm_datatable.getDatatable_id(), datatable_field_info1.getField_en_name(),dcs.getDslad_id());
+                    Map<String, Object> everymap1 = maps1.get(0);
+                    Dm_column_storage dc_storage = new Dm_column_storage();
+                    dc_storage.setDatatable_field_id(everymap1.get("datatable_field_id").toString());
+                    dc_storage.setDslad_id(everymap1.get("dslad_id").toString());
+                    dc_storage.setCsi_number(String.valueOf(i));
+                    dc_storage.update(Dbo.db());
+                }
+            }
+            //如果不是rowkey 那么排序的时候 只需简单排序即可
+            else {
+                List<Map<String, Object>> maps1 = Dbo.queryList("select * from " + Dm_column_storage.TableName + " where datatable_field_id in " +
+                                "(select datatable_field_id from " + Datatable_field_info.TableName + " where datatable_id = ? ) and dslad_id = ? order by csi_number",
+                        dm_datatable.getDatatable_id(), dcs.getDslad_id());
+                for (int i = 0; i < maps1.size(); i++) {
+                    Map<String, Object> everymap1 = maps1.get(i);
+                    Dm_column_storage dc_storage = new Dm_column_storage();
+                    dc_storage.setDatatable_field_id(everymap1.get("datatable_field_id").toString());
+                    dc_storage.setDslad_id(everymap1.get("dslad_id").toString());
+                    dc_storage.setCsi_number(String.valueOf(i));
+                    dc_storage.update(Dbo.db());
+                }
+            }
         }
         Dm_operation_info dm_operation_info = new Dm_operation_info();
         dm_operation_info.setId(PrimayKeyGener.getNextId());
@@ -548,6 +630,69 @@ public class MarketInfoAction extends BaseAction {
         return Dbo.queryList("select execute_sql as querysql from "+Dm_operation_info.TableName+" t1 where " +
                 "datatable_id = ?", dm_datatable.getDatatable_id());
     }
+
+    @Method(desc = "根据集市表ID，判断是否是进入Hbase的目的地",
+            logicStep = "")
+    @Param(name = "datatable_id", desc = "datatable_id", range = "String类型集市表ID")
+    @Return(desc = "返回true或者false", range = "无限制")
+    public Map<String,Object> getIfHbase(String datatable_id) {
+        Map<String,Object> map = new HashMap<>();
+        Dm_datatable dm_datatable = new Dm_datatable();
+        dm_datatable.setDatatable_id(datatable_id);
+        List<Map<String, Object>> maps = Dbo.queryList("select * from " + Data_store_layer.TableName + " t1 left join " + Dm_relation_datatable.TableName + " t2 " +
+                "on t1.dsl_id = t2.dsl_id where t2.datatable_id = ? and t1.store_type = ? ", dm_datatable.getDatatable_id(), Store_type.HBASE.getCode());
+        if(maps.size() > 0 ){
+            map.put("result",true);
+            return map;
+        }else{
+            map.put("result",false);
+            return map;
+        }
+    }
+
+    @Method(desc = "回显hbase的rowkey排序",
+            logicStep = "")
+    @Param(name = "datatable_id", desc = "datatable_id", range = "String类型集市表ID")
+    @Param(name = "hbasesort", desc = "hbasesort", range = "hbaserowkey的排序")
+    @Return(desc = "排序完成后的hbasesort", range = "无限制")
+    public List<Map<String,Object>> sortHbae(String datatable_id,String hbasesort) {
+        JSONArray jsonArray = JSONArray.parseArray(hbasesort);
+        List<String> enNameList = new ArrayList<>();
+        for(int i =0 ; i<jsonArray.size();i++){
+            JSONObject jsonObject = jsonArray.getJSONObject(i);
+            String field_en_name = jsonObject.getString("field_en_name");
+            enNameList.add(field_en_name);
+        }
+        Datatable_field_info datatable_field_info = new Datatable_field_info();
+        datatable_field_info.setDatatable_id(datatable_id);
+        List<Map<String, Object>> list = Dbo.queryList("SELECT t1.csi_number , t3.field_en_name FROM "+Dm_column_storage.TableName +
+                " t1 LEFT JOIN "+Data_store_layer_added.TableName+" t2 ON t1.dslad_id = t2.dslad_id " +
+                " LEFT JOIN "+Datatable_field_info.TableName+" t3 ON t1.datatable_field_id = t3.datatable_field_id " +
+                " WHERE t2.dsla_storelayer = ? AND t1.datatable_field_id IN " +
+                " ( SELECT datatable_field_id FROM Datatable_field_info WHERE datatable_id = ?) " +
+                " order by csi_number",StoreLayerAdded.RowKey.getCode(),datatable_field_info.getDatatable_id());
+
+        List<Map<String,Object>> resultlist = new ArrayList<>();
+        for(Map<String,Object> map :list){
+            Map<String,Object> resultmap = new HashMap<>();
+            String field_en_name = map.get("field_en_name").toString();
+            String csi_number = map.get("csi_number").toString();
+            if(enNameList.contains(field_en_name)){
+                resultmap.put("field_en_name",field_en_name);
+                resultlist.add(resultmap);
+                enNameList.remove(field_en_name);
+            }
+        }
+        for(String field_en_name : enNameList){
+            Map<String,Object> resultmap = new HashMap<>();
+            resultmap.put("field_en_name",field_en_name);
+            resultlist.add(resultmap);
+            enNameList.remove(field_en_name);
+        }
+        return resultlist;
+    }
+
+
 
 
 }
