@@ -678,6 +678,16 @@ public class MarketInfoAction extends BaseAction {
         }
         return resultlist;
     }
+
+    @Method(desc = "执行集市作业",
+            logicStep = "")
+    @Param(name = "datatable_id", desc = "datatable_id", range = "String类型集市表ID")
+    @Param(name = "date", desc = "date", range = "String类型跑批日期")
+    @Param(name = "parameter", desc = "parameter", range = "动态参数")
+    public void excutMartJob(String datatable_id, String date,String parameter) {
+        date = date.substring(0, 10).replace("-", "");
+        System.out.println("a");
+    }
 }
 
 

@@ -486,6 +486,9 @@ public class DruidParseQuerySql {
      * <p>参   数:  </p>
      */
     public void getcolumn(SQLExpr sqlexpr, String alias) {
+        if(null == sqlexpr){
+            return;
+        }
         if (sqlexpr instanceof SQLIdentifierExpr) {
             //简单类型 例如：a
             HashMap<String, Object> map = new HashMap<>();
@@ -630,6 +633,8 @@ public class DruidParseQuerySql {
             }
         } else if (sqlexpr instanceof SQLVariantRefExpr) {
             return;
+        }else{
+            throw new BusinessSystemException("未知的sqlexpr类型 sqlexpr："+sqlexpr.toString()+"class:"+sqlexpr.getClass());
         }
     }
 
@@ -663,6 +668,7 @@ public class DruidParseQuerySql {
             getcolumn(sqlSelectItem.getExpr(), alias);
         }
     }
+
 
 
 }
