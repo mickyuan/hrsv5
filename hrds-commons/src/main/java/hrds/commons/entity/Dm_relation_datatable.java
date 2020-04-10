@@ -35,7 +35,7 @@ public class Dm_relation_datatable extends ProjectTableEntity
 	private Long dsl_id;
 	@DocBean(name ="datatable_id",value="数据表id:",dataType = Long.class,required = true)
 	private Long datatable_id;
-	@DocBean(name ="is_successful",value="是否入库成功(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
+	@DocBean(name ="is_successful",value="是否入库成功(JobExecuteState):100-等待<DengDai> 101-运行<YunXing> 102-暂停<ZanTing> 103-中止<ZhongZhi> 104-完成<WanCheng> 105-失败<ShiBai> ",dataType = String.class,required = false)
 	private String is_successful;
 
 	/** 取得：存储层配置ID */

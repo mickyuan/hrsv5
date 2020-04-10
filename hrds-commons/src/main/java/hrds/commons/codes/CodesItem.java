@@ -7,8 +7,6 @@ import java.util.*;
                                                                                        
 public class CodesItem{                        
 	private static final Log logger = LogFactory.getLog(CodesItem.class);                                                      
-	/**数据质量规则级别   */
-	protected static final String edRuleLevel=new String("EdRuleLevel");
 	/**数据质量校验结果   */
 	protected static final String dqcVerifyResult=new String("DqcVerifyResult");
 	/**数据质量处理状态   */
@@ -27,6 +25,8 @@ public class CodesItem{
 	protected static final String sqlEngine=new String("SqlEngine");
 	/**落地文件-卸数方式   */
 	protected static final String unloadType=new String("UnloadType");
+	/**数据处理方式   */
+	protected static final String processType=new String("ProcessType");
 	/**用户类型   */
 	protected static final String userType=new String("UserType");
 	/**是否标识   */
@@ -127,13 +127,12 @@ public class CodesItem{
 	protected static final String interfaceType=new String("InterfaceType");
 	/**接口状态   */
 	protected static final String interfaceState=new String("InterfaceState");
-	/**数据处理方式   */
-	protected static final String processType=new String("ProcessType");
+	/**数据质量规则级别   */
+	protected static final String edRuleLevel=new String("EdRuleLevel");
 
 
 	public static final Map<String,Class> mapCat= new HashMap<String,Class>(100);
 	static{
-		mapCat.put(edRuleLevel,EdRuleLevel.class);
 		mapCat.put(dqcVerifyResult,DqcVerifyResult.class);
 		mapCat.put(dqcDlStat,DqcDlStat.class);
 		mapCat.put(dqcExecMode,DqcExecMode.class);
@@ -143,6 +142,7 @@ public class CodesItem{
 		mapCat.put(jobExecuteState,JobExecuteState.class);
 		mapCat.put(sqlEngine,SqlEngine.class);
 		mapCat.put(unloadType,UnloadType.class);
+		mapCat.put(processType,ProcessType.class);
 		mapCat.put(userType,UserType.class);
 		mapCat.put(isFlag,IsFlag.class);
 		mapCat.put(userState,UserState.class);
@@ -193,7 +193,7 @@ public class CodesItem{
 		mapCat.put(updateType,UpdateType.class);
 		mapCat.put(interfaceType,InterfaceType.class);
 		mapCat.put(interfaceState,InterfaceState.class);
-		mapCat.put(processType,ProcessType.class);
+		mapCat.put(edRuleLevel,EdRuleLevel.class);
 	}
 
 

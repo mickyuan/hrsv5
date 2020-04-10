@@ -416,7 +416,7 @@ DROP TABLE IF EXISTS DM_RELATION_DATATABLE ;
 CREATE TABLE DM_RELATION_DATATABLE(
 DSL_ID                                            BIGINT default 0 NOT NULL, --存储层配置ID
 DATATABLE_ID                                      BIGINT default 0 NOT NULL, --数据表id
-IS_SUCCESSFUL                                     CHAR(1) NOT NULL, --是否入库成功
+IS_SUCCESSFUL                                     CHAR(3) NULL, --是否入库成功
 CONSTRAINT DM_RELATION_DATATABLE_PK PRIMARY KEY(DSL_ID,DATATABLE_ID)   );
 
 --抽数作业关系表
@@ -1136,7 +1136,7 @@ COLUMN_CH_NAME                                    VARCHAR(512) NULL, --列中文
 TABLE_ID                                          BIGINT default 0 NOT NULL, --表名ID
 VALID_S_DATE                                      CHAR(8) NOT NULL, --有效开始日期
 VALID_E_DATE                                      CHAR(8) NOT NULL, --有效结束日期
-IS_ALIVE                                          CHAR(1) default '0' NOT NULL, --是否保留原字段
+IS_ALIVE                                          CHAR(1) default '1' NOT NULL, --是否保留原字段
 IS_NEW                                            CHAR(1) default '1' NOT NULL, --是否为变化生成
 TC_OR                                             VARCHAR(512) NULL, --清洗顺序
 TC_REMARK                                         VARCHAR(512) NULL, --备注
