@@ -49,7 +49,7 @@ CONSTRAINT OBJECT_COLLECT_STRUCT_PK PRIMARY KEY(STRUCT_ID)   );
 --接口信息表
 DROP TABLE IF EXISTS INTERFACE_INFO ;
 CREATE TABLE INTERFACE_INFO(
-INTERFACE_ID                                      DECIMAL(10) NOT NULL, --接口ID
+INTERFACE_ID                                      BIGINT default 0 NOT NULL, --接口ID
 URL                                               VARCHAR(512) NOT NULL, --请求地址
 INTERFACE_NAME                                    VARCHAR(512) NOT NULL, --接口名称
 INTERFACE_TYPE                                    CHAR(1) NOT NULL, --接口类型
@@ -74,7 +74,7 @@ USE_STATE                                         CHAR(1) NOT NULL, --使用状�
 START_USE_DATE                                    CHAR(8) NOT NULL, --开始使用日期
 USE_VALID_DATE                                    CHAR(8) NOT NULL, --使用有效日期
 INTERFACE_NOTE                                    VARCHAR(512) NULL, --备注
-INTERFACE_ID                                      DECIMAL(10) NOT NULL, --接口ID
+INTERFACE_ID                                      BIGINT default 0 NOT NULL, --接口ID
 USER_ID                                           BIGINT default 0 NOT NULL, --用户ID
 CONSTRAINT INTERFACE_USE_PK PRIMARY KEY(INTERFACE_USE_ID)   );
 
