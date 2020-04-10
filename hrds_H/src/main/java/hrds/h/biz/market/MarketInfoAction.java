@@ -1,10 +1,5 @@
 package hrds.h.biz.market;
 
-import com.alibaba.druid.sql.SQLUtils;
-import com.alibaba.druid.sql.ast.SQLStatement;
-import com.alibaba.druid.sql.ast.statement.SQLSelectItem;
-import com.alibaba.druid.sql.dialect.oracle.visitor.OracleASTVisitor;
-import com.alibaba.druid.util.JdbcConstants;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.DocClass;
@@ -20,16 +15,13 @@ import hrds.commons.base.BaseAction;
 import hrds.commons.codes.*;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
-import hrds.commons.tree.foreground.ForegroundTreeUtil;
-import hrds.commons.tree.foreground.bean.TreeDataInfo;
 import hrds.commons.utils.DruidParseQuerySql;
 import hrds.commons.utils.key.PrimayKeyGener;
-import hrds.h.biz.SqlAnalysis.HyrenOracleTableVisitor;
-import javolution.io.Struct;
-//import com.alibaba.druid.
-import java.math.BigDecimal;
-import java.sql.ResultSet;
+
 import java.util.*;
+
+//import hrds.h.biz.SqlAnalysis.HyrenOracleTableVisitor;
+//import com.alibaba.druid.
 
 @DocClass(desc = "集市信息查询类", author = "BY-HLL", createdate = "2019/10/31 0031 下午 04:17")
 /**
@@ -286,11 +278,10 @@ public class MarketInfoAction extends BaseAction {
         CheckColummn(dm_datatable.getTable_storage(), "数据存储方式");
         CheckColummn(dm_datatable.getStorage_type(), "进数方式");
         CheckColummn(dm_datatable.getDatatable_lifecycle(), "数据生命周期");
-        if(TableLifeCycle.LinShi.getCode().equalsIgnoreCase(dm_datatable.getDatatable_lifecycle())) {
+        if (TableLifeCycle.LinShi.getCode().equalsIgnoreCase(dm_datatable.getDatatable_lifecycle())) {
             CheckColummn(dm_datatable.getDatatable_due_date(), "数据表到期日期");
-            dm_datatable.setDatatable_due_date(dm_datatable.getDatatable_due_date().substring(0,10).replace("-",""));
-        }
-        else{
+            dm_datatable.setDatatable_due_date(dm_datatable.getDatatable_due_date().substring(0, 10).replace("-", ""));
+        } else {
             dm_datatable.setDatatable_due_date(Final_Date);
         }
         CheckColummn(dsl_id, "数据存储");
@@ -347,10 +338,10 @@ public class MarketInfoAction extends BaseAction {
         CheckColummn(dm_datatable.getTable_storage(), "数据存储方式");
         CheckColummn(dm_datatable.getStorage_type(), "进数方式");
         CheckColummn(dm_datatable.getDatatable_lifecycle(), "数据生命周期");
-        if(TableLifeCycle.LinShi.getCode().equalsIgnoreCase(dm_datatable.getDatatable_lifecycle())) {
+        if (TableLifeCycle.LinShi.getCode().equalsIgnoreCase(dm_datatable.getDatatable_lifecycle())) {
             CheckColummn(dm_datatable.getDatatable_due_date(), "数据表到期日期");
-            dm_datatable.setDatatable_due_date(dm_datatable.getDatatable_due_date().substring(0,10).replace("-",""));
-        } else{
+            dm_datatable.setDatatable_due_date(dm_datatable.getDatatable_due_date().substring(0, 10).replace("-", ""));
+        } else {
             dm_datatable.setDatatable_due_date(Final_Date);
         }
         //TODO 目前先全部使用默认 之后在修改
@@ -420,43 +411,41 @@ public class MarketInfoAction extends BaseAction {
     @Param(name = "datatable_id", desc = "datatable_id", range = "String类型集市表ID")
     public List<Map<String, Object>> getColumnBySql(String querysql, String datatable_id) {
         List<Map<String, Object>> resultlist = new ArrayList<Map<String, Object>>();
-        CheckColummn(querysql,"查询sql");
+        CheckColummn(querysql, "查询sql");
         Dm_datatable dm_datatable = new Dm_datatable();
         dm_datatable.setDatatable_id(datatable_id);
         List<Map<String, Object>> targetTypeList = Dbo.queryList("SELECT distinct lower(replace(replace(trim(t1.target_type),'(',''),')','')) as target_type " +
                 "FROM " + Type_contrast.TableName + " t1 LEFT JOIN " + Data_store_layer.TableName + " t2 ON t1.dtcs_id = t2.dtcs_id " +
                 "LEFT JOIN " + Dm_relation_datatable.TableName + " t3 ON t2.dsl_id=t3.dsl_id" +
                 " WHERE t3.datatable_id = ?", dm_datatable.getDatatable_id());
-        List<Map<String, Object>>  dslaStorelayerList = Dbo.queryList("select dslad_id,dsla_storelayer from " + Data_store_layer_added.TableName + " t1 " +
+        List<Map<String, Object>> dslaStorelayerList = Dbo.queryList("select dslad_id,dsla_storelayer from " + Data_store_layer_added.TableName + " t1 " +
                 "left join " + Dm_relation_datatable.TableName + " t2 on t1.dsl_id = t2.dsl_id " +
                 "where t2.datatable_id = ? order by dsla_storelayer", dm_datatable.getDatatable_id());
-        List<Map<String, Object>> storeTypeList =  Dbo.queryList("select store_type from "+Data_store_layer.TableName+" t1 left join "+Dm_relation_datatable.TableName+" t2 on t1.dsl_id = t2.dsl_id " +
+        List<Map<String, Object>> storeTypeList = Dbo.queryList("select store_type from " + Data_store_layer.TableName + " t1 left join " + Dm_relation_datatable.TableName + " t2 on t1.dsl_id = t2.dsl_id " +
                 "where t2.datatable_id = ? ", dm_datatable.getDatatable_id());
         String storeType = storeTypeList.get(0).get("store_type").toString();
         String field_type = "";
         //TODO 分类讨论 目前只考虑关系性数据库、hive、hbase这三种情况
-        if(storeType.equals(Store_type.DATABASE.getCode())){
+        if (storeType.equals(Store_type.DATABASE.getCode())) {
             field_type = "varchar";
-        }
-        else if(storeType.equals(Store_type.HIVE.getCode())){
+        } else if (storeType.equals(Store_type.HIVE.getCode())) {
             field_type = "string";
-        }
-        else if(storeType.equals(Store_type.HBASE.getCode())){
+        } else if (storeType.equals(Store_type.HBASE.getCode())) {
             field_type = "string";
-        }else{
+        } else {
             field_type = targetTypeList.get(0).get("target_type").toString();
         }
         DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(querysql);
         List<String> columnNameList = druidParseQuerySql.parseSelectAliasField();
-        for(String everyColumnName :columnNameList){
-            Map<String,Object> map = new LinkedHashMap<>();
-            map.put("field_en_name",everyColumnName);
-            map.put("field_cn_name",everyColumnName);
+        for (String everyColumnName : columnNameList) {
+            Map<String, Object> map = new LinkedHashMap<>();
+            map.put("field_en_name", everyColumnName);
+            map.put("field_cn_name", everyColumnName);
             //这里选择第一个字段类型作为默认字段类型
-            map.put("field_type",field_type);
-            map.put("field_process",ProcessType.YingShe.getCode());
-            for(Map<String,Object> dslaStorelayeMap : dslaStorelayerList){
-                map.put(StoreLayerAdded.ofValueByCode(dslaStorelayeMap.get("dsla_storelayer").toString()),false);
+            map.put("field_type", field_type);
+            map.put("field_process", ProcessType.YingShe.getCode());
+            for (Map<String, Object> dslaStorelayeMap : dslaStorelayerList) {
+                map.put(StoreLayerAdded.ofValueByCode(dslaStorelayeMap.get("dsla_storelayer").toString()), false);
             }
             resultlist.add(map);
         }
@@ -497,35 +486,33 @@ public class MarketInfoAction extends BaseAction {
     public List<Map<String, Object>> getAllField_Type(String datatable_id) {
         Dm_datatable dm_datatable = new Dm_datatable();
         dm_datatable.setDatatable_id(datatable_id);
-        List<Map<String, Object>> storeTypeList =  Dbo.queryList("select store_type from "+Data_store_layer.TableName+" t1 left join "+Dm_relation_datatable.TableName+" t2 on t1.dsl_id = t2.dsl_id " +
+        List<Map<String, Object>> storeTypeList = Dbo.queryList("select store_type from " + Data_store_layer.TableName + " t1 left join " + Dm_relation_datatable.TableName + " t2 on t1.dsl_id = t2.dsl_id " +
                 "where t2.datatable_id = ? ", dm_datatable.getDatatable_id());
         String storeType = storeTypeList.get(0).get("store_type").toString();
         String field_type = "";
         //TODO 分类讨论 目前只考虑关系性数据库、hive、hbase这三种情况
-        if(storeType.equals(Store_type.DATABASE.getCode())){
+        if (storeType.equals(Store_type.DATABASE.getCode())) {
             field_type = "varchar";
-        }
-        else if(storeType.equals(Store_type.HIVE.getCode())){
+        } else if (storeType.equals(Store_type.HIVE.getCode())) {
+            field_type = "string";
+        } else if (storeType.equals(Store_type.HBASE.getCode())) {
             field_type = "string";
         }
-        else if(storeType.equals(Store_type.HBASE.getCode())){
-            field_type = "string";
-        }
-        List<Map<String, Object>> targetTypeList =  Dbo.queryList("SELECT distinct lower(replace(replace(trim(t1.target_type),'(',''),')','')) as target_type " +
+        List<Map<String, Object>> targetTypeList = Dbo.queryList("SELECT distinct lower(replace(replace(trim(t1.target_type),'(',''),')','')) as target_type " +
                 "FROM " + Type_contrast.TableName + " t1 LEFT JOIN " + Data_store_layer.TableName + " t2 ON t1.dtcs_id = t2.dtcs_id " +
                 "LEFT JOIN " + Dm_relation_datatable.TableName + " t3 ON t2.dsl_id=t3.dsl_id" +
                 " WHERE t3.datatable_id = ?", dm_datatable.getDatatable_id());
         Boolean flag = true;
-        for(Map<String, Object> map : targetTypeList){
+        for (Map<String, Object> map : targetTypeList) {
             String target_type = map.get("target_type").toString();
-            if(target_type.equalsIgnoreCase(field_type)){
+            if (target_type.equalsIgnoreCase(field_type)) {
                 flag = false;
                 break;
             }
         }
-        if(flag){
+        if (flag) {
             Map<String, Object> tempmap = new HashMap<>();
-            tempmap.put("target_type",field_type);
+            tempmap.put("target_type", field_type);
             targetTypeList.add(tempmap);
         }
         return targetTypeList;
@@ -541,20 +528,20 @@ public class MarketInfoAction extends BaseAction {
     @Param(name = "datatable_id", desc = "datatable_id", range = "String类型集市表ID")
     @Param(name = "querysql", desc = "querysql", range = "String类型集市查询SQL")
     @Param(name = "hbasesort", desc = "hbasesort", range = "hbaserowkey的排序")
-    public void addDFInfo(Datatable_field_info[] datatable_field_info, String datatable_id, Dm_column_storage[] dm_column_storage,String querysql,String hbasesort) {
+    public void addDFInfo(Datatable_field_info[] datatable_field_info, String datatable_id, Dm_column_storage[] dm_column_storage, String querysql, String hbasesort) {
         for (int i = 0; i < datatable_field_info.length; i++) {
             Datatable_field_info df_info = datatable_field_info[i];
-            CheckColummn(df_info.getField_en_name(),"字段英文名第"+(i+1)+"个");
-            CheckColummn(df_info.getField_cn_name(),"字段中文名"+(i+1)+"个");
-            CheckColummn(df_info.getField_type(),"字段类型"+(i+1)+"个");
-            CheckColummn(df_info.getField_process(),"字段处理方式"+(i+1)+"个");
+            CheckColummn(df_info.getField_en_name(), "字段英文名第" + (i + 1) + "个");
+            CheckColummn(df_info.getField_cn_name(), "字段中文名" + (i + 1) + "个");
+            CheckColummn(df_info.getField_type(), "字段类型" + (i + 1) + "个");
+            CheckColummn(df_info.getField_process(), "字段处理方式" + (i + 1) + "个");
         }
         Dm_datatable dm_datatable = new Dm_datatable();
         dm_datatable.setDatatable_id(datatable_id);
         Dbo.execute("delete from " + Dm_column_storage.TableName + " where datatable_field_id in (select datatable_field_id from " +
                 Datatable_field_info.TableName + " where datatable_id = ?)", dm_datatable.getDatatable_id());
-        Dbo.execute("delete from "+Datatable_field_info.TableName+" where datatable_id = ?", dm_datatable.getDatatable_id());
-        Dbo.execute("delete from "+Dm_operation_info.TableName+" where datatable_id = ?", dm_datatable.getDatatable_id());
+        Dbo.execute("delete from " + Datatable_field_info.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
+        Dbo.execute("delete from " + Dm_operation_info.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
         for (int i = 0; i < datatable_field_info.length; i++) {
             Datatable_field_info df_info = datatable_field_info[i];
             String datatable_field_id = PrimayKeyGener.getNextId();
@@ -572,16 +559,16 @@ public class MarketInfoAction extends BaseAction {
         //排序dc_storage
         JSONArray jsonarray = JSONArray.parseArray(hbasesort);
         List<Map<String, Object>> maps = Dbo.queryList("select distinct t1.dslad_id,t2.dsla_storelayer from " + Dm_column_storage.TableName
-                + " t1 left join "+Data_store_layer_added.TableName+" t2 on t1.dslad_id = t2.dslad_id where datatable_field_id in " +
+                + " t1 left join " + Data_store_layer_added.TableName + " t2 on t1.dslad_id = t2.dslad_id where datatable_field_id in " +
                 "(select datatable_field_id from " + Datatable_field_info.TableName + " where datatable_id = ? )", dm_datatable.getDatatable_id());
-        for(Map<String,Object> everymap : maps){
+        for (Map<String, Object> everymap : maps) {
             String dslad_id = everymap.get("dslad_id").toString();
             String dsla_storelayer = everymap.get("dsla_storelayer").toString();
             Dm_column_storage dcs = new Dm_column_storage();
             dcs.setDslad_id(dslad_id);
             //如果是rowkey的话 排序的时候 需要根据hbasesort来排序
-            if(dsla_storelayer.equals(StoreLayerAdded.RowKey.getCode())){
-                for(int i=0;i<jsonarray.size();i++){
+            if (dsla_storelayer.equals(StoreLayerAdded.RowKey.getCode())) {
+                for (int i = 0; i < jsonarray.size(); i++) {
                     JSONObject jsonObject = jsonarray.getJSONObject(i);
                     String field_en_name = jsonObject.getString("field_en_name");
                     Datatable_field_info datatable_field_info1 = new Datatable_field_info();
@@ -589,7 +576,7 @@ public class MarketInfoAction extends BaseAction {
                     List<Map<String, Object>> maps1 = Dbo.queryList("select * from " + Dm_column_storage.TableName + " where datatable_field_id = " +
                                     "(select datatable_field_id from " + Datatable_field_info.TableName + " where datatable_id = ? and field_en_name = ? )" +
                                     " and dslad_id = ? ",
-                            dm_datatable.getDatatable_id(), datatable_field_info1.getField_en_name(),dcs.getDslad_id());
+                            dm_datatable.getDatatable_id(), datatable_field_info1.getField_en_name(), dcs.getDslad_id());
                     Map<String, Object> everymap1 = maps1.get(0);
                     Dm_column_storage dc_storage = new Dm_column_storage();
                     dc_storage.setDatatable_field_id(everymap1.get("datatable_field_id").toString());
@@ -627,7 +614,7 @@ public class MarketInfoAction extends BaseAction {
     public List<Map<String, Object>> getQuerySql(String datatable_id) {
         Dm_datatable dm_datatable = new Dm_datatable();
         dm_datatable.setDatatable_id(datatable_id);
-        return Dbo.queryList("select execute_sql as querysql from "+Dm_operation_info.TableName+" t1 where " +
+        return Dbo.queryList("select execute_sql as querysql from " + Dm_operation_info.TableName + " t1 where " +
                 "datatable_id = ?", dm_datatable.getDatatable_id());
     }
 
@@ -635,17 +622,17 @@ public class MarketInfoAction extends BaseAction {
             logicStep = "")
     @Param(name = "datatable_id", desc = "datatable_id", range = "String类型集市表ID")
     @Return(desc = "返回true或者false", range = "无限制")
-    public Map<String,Object> getIfHbase(String datatable_id) {
-        Map<String,Object> map = new HashMap<>();
+    public Map<String, Object> getIfHbase(String datatable_id) {
+        Map<String, Object> map = new HashMap<>();
         Dm_datatable dm_datatable = new Dm_datatable();
         dm_datatable.setDatatable_id(datatable_id);
         List<Map<String, Object>> maps = Dbo.queryList("select * from " + Data_store_layer.TableName + " t1 left join " + Dm_relation_datatable.TableName + " t2 " +
                 "on t1.dsl_id = t2.dsl_id where t2.datatable_id = ? and t1.store_type = ? ", dm_datatable.getDatatable_id(), Store_type.HBASE.getCode());
-        if(maps.size() > 0 ){
-            map.put("result",true);
+        if (maps.size() > 0) {
+            map.put("result", true);
             return map;
-        }else{
-            map.put("result",false);
+        } else {
+            map.put("result", false);
             return map;
         }
     }
@@ -655,46 +642,42 @@ public class MarketInfoAction extends BaseAction {
     @Param(name = "datatable_id", desc = "datatable_id", range = "String类型集市表ID")
     @Param(name = "hbasesort", desc = "hbasesort", range = "hbaserowkey的排序")
     @Return(desc = "排序完成后的hbasesort", range = "无限制")
-    public List<Map<String,Object>> sortHbae(String datatable_id,String hbasesort) {
+    public List<Map<String, Object>> sortHbae(String datatable_id, String hbasesort) {
         JSONArray jsonArray = JSONArray.parseArray(hbasesort);
         List<String> enNameList = new ArrayList<>();
-        for(int i =0 ; i<jsonArray.size();i++){
+        for (int i = 0; i < jsonArray.size(); i++) {
             JSONObject jsonObject = jsonArray.getJSONObject(i);
             String field_en_name = jsonObject.getString("field_en_name");
             enNameList.add(field_en_name);
         }
         Datatable_field_info datatable_field_info = new Datatable_field_info();
         datatable_field_info.setDatatable_id(datatable_id);
-        List<Map<String, Object>> list = Dbo.queryList("SELECT t1.csi_number , t3.field_en_name FROM "+Dm_column_storage.TableName +
-                " t1 LEFT JOIN "+Data_store_layer_added.TableName+" t2 ON t1.dslad_id = t2.dslad_id " +
-                " LEFT JOIN "+Datatable_field_info.TableName+" t3 ON t1.datatable_field_id = t3.datatable_field_id " +
+        List<Map<String, Object>> list = Dbo.queryList("SELECT t1.csi_number , t3.field_en_name FROM " + Dm_column_storage.TableName +
+                " t1 LEFT JOIN " + Data_store_layer_added.TableName + " t2 ON t1.dslad_id = t2.dslad_id " +
+                " LEFT JOIN " + Datatable_field_info.TableName + " t3 ON t1.datatable_field_id = t3.datatable_field_id " +
                 " WHERE t2.dsla_storelayer = ? AND t1.datatable_field_id IN " +
                 " ( SELECT datatable_field_id FROM Datatable_field_info WHERE datatable_id = ?) " +
-                " order by csi_number",StoreLayerAdded.RowKey.getCode(),datatable_field_info.getDatatable_id());
+                " order by csi_number", StoreLayerAdded.RowKey.getCode(), datatable_field_info.getDatatable_id());
 
-        List<Map<String,Object>> resultlist = new ArrayList<>();
-        for(Map<String,Object> map :list){
-            Map<String,Object> resultmap = new HashMap<>();
+        List<Map<String, Object>> resultlist = new ArrayList<>();
+        for (Map<String, Object> map : list) {
+            Map<String, Object> resultmap = new HashMap<>();
             String field_en_name = map.get("field_en_name").toString();
             String csi_number = map.get("csi_number").toString();
-            if(enNameList.contains(field_en_name)){
-                resultmap.put("field_en_name",field_en_name);
+            if (enNameList.contains(field_en_name)) {
+                resultmap.put("field_en_name", field_en_name);
                 resultlist.add(resultmap);
                 enNameList.remove(field_en_name);
             }
         }
-        for(String field_en_name : enNameList){
-            Map<String,Object> resultmap = new HashMap<>();
-            resultmap.put("field_en_name",field_en_name);
+        for (String field_en_name : enNameList) {
+            Map<String, Object> resultmap = new HashMap<>();
+            resultmap.put("field_en_name", field_en_name);
             resultlist.add(resultmap);
             enNameList.remove(field_en_name);
         }
         return resultlist;
     }
-
-
-
-
 }
 
 
