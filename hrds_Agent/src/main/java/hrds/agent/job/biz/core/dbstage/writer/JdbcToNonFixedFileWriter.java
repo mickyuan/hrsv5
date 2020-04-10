@@ -91,7 +91,7 @@ public class JdbcToNonFixedFileWriter extends AbstractFileWriter {
 					//获取原始值来计算 MD5
 					sb_.delete(0, sb_.length());
 					midStringOther.append(getOneColumnValue(avroWriter, counter, pageNum, resultSet, typeArray[i],
-							sb_, selectColumnList.get(i), hbase_name));
+							sb_, selectColumnList.get(i), hbase_name, midName));
 					// Add DELIMITER if not last value
 					if (i < numberOfColumns - 1) {
 						midStringOther.append(JobConstant.DATADELIMITER);

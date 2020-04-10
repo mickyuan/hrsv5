@@ -14,6 +14,7 @@ import org.apache.avro.file.DataFileWriter;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.generic.GenericRecord;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -76,23 +77,34 @@ abstract class AbstractFileWriter implements FileWriterInterface {
 	 * 解析result一行的值
 	 */
 	String getOneColumnValue(DataFileWriter<Object> avroWriter, long lineCounter, int pageNum, ResultSet resultSet,
-	                         int type, StringBuilder sb_, String column_name, String hbase_name)
+	                         int type, StringBuilder sb_, String column_name, String hbase_name, String midName)
 			throws SQLException, IOException {
-
+		String lobs_file_name = "";
 		String reader2String = null;
 		byte[] readerToByte = null;
-		if (type == java.sql.Types.BLOB) {
+		if (type == java.sql.Types.BLOB || type == Types.LONGVARBINARY) {
 			Blob blob = resultSet.getBlob(column_name);
 			if (null != blob) {
 				readerToByte = blobToBytes(blob);
-				sb_.append("LOBs_").append(hbase_name).append("_").append(column_name).append("_")
-						.append(pageNum).append("_").append(lineCounter).append("_BLOB_").append(avroWriter.sync());
+				lobs_file_name = "LOBs_" + hbase_name + "_" + column_name + "_" + pageNum + "_"
+						+ lineCounter + "_BLOB_" + avroWriter.sync();
+				sb_.append(lobs_file_name);
 				if (readerToByte != null) {
 					reader2String = new String(readerToByte);
 				} else {
 					reader2String = "";
 				}
 			}
+		} else if (type == Types.VARBINARY) {
+			InputStream binaryStream = resultSet.getBinaryStream(column_name);
+			if (null != binaryStream) {
+				readerToByte = IOUtils.toByteArray(binaryStream);
+				lobs_file_name = "LOBs_" + hbase_name + "_" + column_name + "_" + pageNum + "_"
+						+ lineCounter + "_VARBINARY_" + avroWriter.sync();
+				sb_.append(lobs_file_name);
+				reader2String = new String(readerToByte);
+			}
+
 		} else {
 			Object oj = resultSet.getObject(column_name);
 			if (null != oj) {
@@ -126,11 +138,43 @@ abstract class AbstractFileWriter implements FileWriterInterface {
 			sb_.append(reader2String);
 		}
 		if (readerToByte != null) {
-			record.put("currValue", sb_);
+			record.put("currValue", lobs_file_name);
 			record.put("readerToByte", ByteBuffer.wrap(readerToByte));
 			avroWriter.append(record);//往avro文件中写入信息（每行）
+			//写lobs小文件
+			writeLobsFileToOracle(midName + "LOBS", lobs_file_name, readerToByte);
 		}
 		return reader2String;
+	}
+
+	/**
+	 * 将大字段写一个小文件
+	 *
+	 * @param lobs_path      大字段文件路径
+	 * @param lobs_file_name 大字段文件名称
+	 * @param readerToByte   数据
+	 */
+	private void writeLobsFileToOracle(String lobs_path, String lobs_file_name, byte[] readerToByte) {
+		FileOutputStream fos = null;
+		BufferedOutputStream output = null;
+		try {
+			File file = new File(lobs_path + lobs_file_name);
+			fos = new FileOutputStream(file);
+			// 实例化OutputStream 对象
+			output = new BufferedOutputStream(fos);
+			output.write(readerToByte, 0, readerToByte.length);
+		} catch (Exception e) {
+			throw new AppSystemException("大字段输出文件流时抛异常，filePath={}");
+		} finally {
+			try {
+				if (output != null)
+					output.close();
+				if (fos != null)
+					fos.close();
+			} catch (IOException e0) {
+				LOGGER.error("关闭流异常", e0);
+			}
+		}
 	}
 
 	/**
@@ -147,9 +191,11 @@ abstract class AbstractFileWriter implements FileWriterInterface {
 	                                     String midName, long pageNum) throws IOException {
 		DataFileWriter<Object> avroWriter = null;
 		for (int type : typeArray) {
-			if (type == Types.BLOB || type == Types.VARBINARY) {
+			if (type == Types.BLOB || type == Types.VARBINARY || type == Types.LONGVARBINARY) {
+				createLobsDir(midName);
 				// 生成Avro文件到local
-				OutputStream outputStream = new FileOutputStream(midName + "avro_" + hbase_name + pageNum);
+				OutputStream outputStream = new FileOutputStream(midName + "LOB" + File.separator
+						+ "avro_" + hbase_name + pageNum);
 				avroWriter = new DataFileWriter<>(new GenericDatumWriter<>()).setSyncInterval(100);
 				avroWriter.setCodec(CodecFactory.snappyCodec());
 				avroWriter.create(SCHEMA, outputStream);
@@ -160,9 +206,29 @@ abstract class AbstractFileWriter implements FileWriterInterface {
 	}
 
 	/**
+	 * 创建LOB文件夹路径
+	 *
+	 * @param midName 文件夹路径
+	 */
+	private void createLobsDir(String midName) {
+		//创建文件夹,写Avro文件
+		File file = new File(midName + "LOB");
+		if (!file.exists()) {
+			boolean mkdirs = file.mkdirs();
+			LOGGER.info("创建文件夹" + midName + "LOB" + mkdirs);
+		}
+		//创建文件夹,写多个lobs文件
+		File file2 = new File(midName + "LOBS");
+		if (!file2.exists()) {
+			boolean mkdirs = file2.mkdirs();
+			LOGGER.info("创建文件夹" + midName + "LOBS" + mkdirs);
+		}
+	}
+
+	/**
 	 * 源表包含BLOB、VARBINARY类型获取写一个avro文件的文件输出流
 	 *
-	 * @param typeMap  所有采集字段的类型的集合
+	 * @param typeMap    所有采集字段的类型的集合
 	 * @param hbase_name 采集到目的地的表名
 	 * @param midName    采集特殊字段合成arvo文件生成的目录
 	 * @param pageNum    线程编号
@@ -174,9 +240,11 @@ abstract class AbstractFileWriter implements FileWriterInterface {
 		DataFileWriter<Object> avroWriter = null;
 		for (String key : typeMap.keySet()) {
 			Integer type = typeMap.get(key);
-			if (type == Types.BLOB || type == Types.VARBINARY) {
+			if (type == Types.BLOB || type == Types.VARBINARY || type == Types.LONGVARBINARY) {
+				createLobsDir(midName);
 				// 生成Avro文件到local
-				OutputStream outputStream = new FileOutputStream(midName + "avro_" + hbase_name + pageNum);
+				OutputStream outputStream = new FileOutputStream(midName + "LOB" + File.separator
+						+ "avro_" + hbase_name + pageNum);
 				avroWriter = new DataFileWriter<>(new GenericDatumWriter<>()).setSyncInterval(100);
 				avroWriter.setCodec(CodecFactory.snappyCodec());
 				avroWriter.create(SCHEMA, outputStream);

@@ -83,7 +83,7 @@ public class JdbcToIncrementFileWriter extends AbstractFileWriter {
 					if (queryColumnList.contains(allColumnList.get(i))) {
 						//如果是查询的列，取值拼接
 						getOneColumnValue(avroWriter, counter, pageNum, rs,
-								typeValueMap.get(allColumnList.get(i)), sb_, allColumnList.get(i), hbase_name);
+								typeValueMap.get(allColumnList.get(i)), sb_, allColumnList.get(i), hbase_name, midName);
 						line.append(columnToFixed(sb_.toString(), allLengthList.get(i), database_code));
 						sb_.delete(0, sb_.length());
 					} else {

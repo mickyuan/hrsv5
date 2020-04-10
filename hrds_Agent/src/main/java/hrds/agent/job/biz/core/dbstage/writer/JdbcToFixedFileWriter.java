@@ -97,7 +97,7 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 					sb_.delete(0, sb_.length());
 					//定长的分隔符可能为空，为了列合并取值，这里MD5值默认拼接commons里面的常量
 					midStringOther.append(getOneColumnValue(avroWriter, counter, pageNum, resultSet, typeArray[i]
-							, sb_, selectColumnList.get(i), hbase_name));
+							, sb_, selectColumnList.get(i), hbase_name, midName));
 					// Add DELIMITER if not last value
 					if (i < numberOfColumns - 1) {
 						midStringOther.append(JobConstant.DATADELIMITER);
