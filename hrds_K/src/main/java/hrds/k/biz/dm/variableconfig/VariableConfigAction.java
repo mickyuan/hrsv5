@@ -9,14 +9,11 @@ import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
-import hrds.commons.entity.Dbm_sort_info;
 import hrds.commons.entity.Dq_sys_cfg;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.key.PrimayKeyGener;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @DocClass(desc = "数据管控-变量配置类", author = "BY-HLL", createdate = "2020/4/3 0003 下午 05:08")
 public class VariableConfigAction extends BaseAction {
