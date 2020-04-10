@@ -71,6 +71,9 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 		JobStatusInfoUtil.startStageStatusInfo(statusInfo, collectTableBean.getTable_id(),
 				StageConstant.UNLOADDATA.getCode());
 		try {
+			//开始执行防止重跑，先把抽取的文件的目录重命名
+
+			//执行卸数
 			TableBean tableBean = CollectTableHandleFactory.getCollectTableHandleInstance(sourceDataConfBean)
 					.generateTableInfo(sourceDataConfBean, collectTableBean);
 			if (UnloadType.QuanLiangXieShu.getCode().equals(collectTableBean.getUnload_type())) {
@@ -91,9 +94,11 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 					tableBean.getColumnMetaInfo(), tableBean.getColTypeMetaInfo(), collectTableBean.getStorage_type(),
 					collectTableBean.getData_extraction_def_list(), collectTableBean.getUnload_type(),
 					tableBean.getPrimaryKeyInfo());
+			//卸数成功，删除重命名的目录
 			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.SUCCEED.getCode(), "执行成功");
 			LOGGER.info("------------------数据库直连采集卸数阶段成功------------------");
 		} catch (Exception e) {
+			//卸数失败，删除本次卸数的目录，恢复数据
 			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.FAILED.getCode(), e.getMessage());
 			LOGGER.error("数据库直连采集卸数阶段失败：", e);
 		}

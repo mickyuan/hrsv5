@@ -7,9 +7,9 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.agent.job.biz.bean.SourceDataConfBean;
-import hrds.agent.trans.biz.ConnectionTool;
 import hrds.commons.base.AgentBaseAction;
 import hrds.commons.codes.IsFlag;
+import hrds.commons.collection.ConnectionTool;
 import hrds.commons.entity.Database_set;
 import hrds.commons.entity.Table_column;
 import hrds.commons.exception.BusinessException;
@@ -51,27 +51,21 @@ public class DatabaseInfo extends AgentBaseAction {
 			//3.读取xml获取数据字典下所有的表信息
 			table_List = ConnUtil.getTableToXML(xmlName);
 		} else {
-			String type = database_set.getDatabase_type();//数据库类型
 			String database_name = database_set.getDatabase_name();//数据库名称
 			String user_name = database_set.getUser_name();//用户名
 			String xmlName = ConnUtil.getDataBaseFile(database_set.getDatabase_ip(), database_set.getDatabase_port(),
 					database_name, user_name);
-			Connection con = null;
-			try {
+			try (DatabaseWrapper db = ConnectionTool.getDBWrapper(database_set)) {
 				//4.数据库采集则获取jdbc连接，读取mate信息，将mate信息写成xml文件
-				con = ConnUtil.getConnection(database_set.getDatabase_drive(), database_set.getJdbc_url(),
-						user_name, database_set.getDatabase_pad());
 				if (StringUtil.isEmpty(search)) {
-					Platform.readModelFromDatabase(con, xmlName, type, database_name);
+					Platform.readModelFromDatabase(db, xmlName);
 				} else {
-					Platform.readModelFromDatabase(con, xmlName, type, database_name, search);
+					Platform.readModelFromDatabase(db, xmlName, search);
 				}
 				//5.读取xml，获取数据库下所有表的信息
 				table_List = ConnUtil.getTable(xmlName);
 			} catch (Exception e) {
 				throw new BusinessException("获取数据库的表信息失败" + e.getMessage());
-			} finally {
-				ConnUtil.close(con);
 			}
 		}
 		//6.返回所有表的信息
@@ -106,37 +100,28 @@ public class DatabaseInfo extends AgentBaseAction {
 				columnList = ConnUtil.getColumnByTable(xmlName, tableName);
 			}
 		} else {
-			String type = database_set.getDatabase_type();//数据库类型
 			String database_ip = database_set.getDatabase_ip();//数据库IP
 			String database_name = database_set.getDatabase_name();//数据库名称
-			String database_pad = database_set.getDatabase_pad();//数据库密码
 			String database_port = database_set.getDatabase_port();//数据库端口
 			String user_name = database_set.getUser_name();//用户名
-			String database_drive = database_set.getDatabase_drive();//数据库驱动
-			String jdbc_url = database_set.getJdbc_url();//数据库连接的url
-
 			String xmlName = ConnUtil.getDataBaseFile(database_ip, database_port, database_name, user_name);
-			Connection con = null;
-			try {
-				con = ConnUtil.getConnection(database_drive, jdbc_url, user_name, database_pad);
+			try (DatabaseWrapper db = ConnectionTool.getDBWrapper(database_set)) {
 				//4.数据库采集，判断表是否是指定sql查询需要的列，是则根据sql取字段信息
 				if (!StringUtil.isEmpty(hy_sql_meta)) {
 					//根据指定sql取需要查询的表的字段信息
-					columnList = Platform.getSqlInfo(hy_sql_meta, con);
+					columnList = Platform.getSqlColumnMeta(hy_sql_meta, db);
 				} else {
 					try {
 						//5.去读xml下指定表的字段信息
 						columnList = ConnUtil.getColumnByTable(xmlName, tableName);
 					} catch (Exception e) {
 						//报错了，说明解析xml文件失败，可能是文件被修改或者被删了，重新生成一次
-						Platform.readModelFromDatabase(con, xmlName, type, database_name, tableName);
+						Platform.readModelFromDatabase(db, xmlName, tableName);
 						columnList = ConnUtil.getColumnByTable(xmlName, tableName);
 					}
 				}
 			} catch (Exception e) {
-				throw new BusinessException("获取");
-			} finally {
-				ConnUtil.close(con);
+				throw new BusinessException("获取表字段异常");
 			}
 		}
 		//6.返回指定表的字段信息
@@ -153,22 +138,16 @@ public class DatabaseInfo extends AgentBaseAction {
 	@Param(name = "dbSet", desc = "数据库连接设置信息表对象", range = "表中不能为空的字段必须有值", isBean = true)
 	@Param(name = "custSQL", desc = "自定义抽取SQL", range = "不为空")
 	@Return(desc = "自定义SQL抽取的字段信息", range = "不会为空，如果字符串的长度超过300，将会被压缩")
-	public String getCustColumn(Database_set dbSet, String custSQL){
+	public String getCustColumn(Database_set dbSet, String custSQL) {
 		//1、使用dbinfo将需要测试并行抽取的数据库连接内容填充
-		SourceDataConfBean dbInfo = new SourceDataConfBean();
-		dbInfo.setDatabase_drive(dbSet.getDatabase_drive());
-		dbInfo.setJdbc_url(dbSet.getJdbc_url());
-		dbInfo.setUser_name(dbSet.getUser_name());
-		dbInfo.setDatabase_pad(dbSet.getDatabase_pad());
-		dbInfo.setDatabase_type(dbSet.getDatabase_type());
-		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(dbInfo)) {
+		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(dbSet)) {
 			//2、执行自定义抽取SQL，获取执行结果集
 			ResultSet rs = db.queryGetResultSet(custSQL);
 			List<Table_column> tableColumns = new ArrayList<>();
 			try {
 				//3、根据结果集拿到该结果集的meta信息
 				ResultSetMetaData metaData = rs.getMetaData();
-				for(int j = 0; j < metaData.getColumnCount(); j++){
+				for (int j = 0; j < metaData.getColumnCount(); j++) {
 					Table_column tableColumn = new Table_column();
 					tableColumn.setColumn_name(metaData.getColumnName(j + 1));
 					//对列类型做特殊处理，处理成varchar(512), numeric(10,4)
@@ -178,7 +157,6 @@ public class DatabaseInfo extends AgentBaseAction {
 					tableColumn.setColumn_type(colTypeAndPreci);
 					//列中文名默认设置为列英文名
 					tableColumn.setColumn_ch_name(metaData.getColumnName(j + 1));
-
 					//4、将每一个采集列加入到List集合中
 					tableColumns.add(tableColumn);
 				}
