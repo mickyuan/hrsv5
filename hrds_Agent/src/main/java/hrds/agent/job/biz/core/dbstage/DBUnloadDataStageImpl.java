@@ -21,8 +21,10 @@ import hrds.agent.job.biz.utils.DataExtractUtil;
 import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.commons.codes.CollectType;
+import hrds.commons.codes.FileFormat;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.UnloadType;
+import hrds.commons.entity.Data_extraction_def;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.ConnUtil;
 import hrds.commons.utils.Constant;
@@ -71,6 +73,9 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 		JobStatusInfoUtil.startStageStatusInfo(statusInfo, collectTableBean.getTable_id(),
 				StageConstant.UNLOADDATA.getCode());
 		try {
+			//开始执行防止重跑，先把抽取的文件的目录重命名
+			renameUnloadDir(collectTableBean);
+			//执行卸数
 			TableBean tableBean = CollectTableHandleFactory.getCollectTableHandleInstance(sourceDataConfBean)
 					.generateTableInfo(sourceDataConfBean, collectTableBean);
 			if (UnloadType.QuanLiangXieShu.getCode().equals(collectTableBean.getUnload_type())) {
@@ -91,9 +96,17 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 					tableBean.getColumnMetaInfo(), tableBean.getColTypeMetaInfo(), collectTableBean.getStorage_type(),
 					collectTableBean.getData_extraction_def_list(), collectTableBean.getUnload_type(),
 					tableBean.getPrimaryKeyInfo());
+			//卸数成功，删除重命名的目录
+			deleteRenameDir(collectTableBean);
 			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.SUCCEED.getCode(), "执行成功");
 			LOGGER.info("------------------数据库直连采集卸数阶段成功------------------");
 		} catch (Exception e) {
+			//卸数失败，删除本次卸数的目录，恢复数据
+			try {
+				restoreRenameDir(collectTableBean);
+			} catch (Exception e1) {
+				LOGGER.info("卸数失败，恢复上次卸数数据失败", e);
+			}
 			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.FAILED.getCode(), e.getMessage());
 			LOGGER.error("数据库直连采集卸数阶段失败：", e);
 		}
@@ -101,6 +114,72 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 		JobStatusInfoUtil.endStageParamInfo(stageParamInfo, statusInfo, collectTableBean
 				, CollectType.ShuJuKuCaiJi.getCode());
 		return stageParamInfo;
+	}
+
+	/**
+	 * 卸数失败，删除本次卸数的文件目录，恢复上次卸数的文件目录（同一个跑批日期的情况下）
+	 *
+	 * @param collectTableBean 表存储信息
+	 */
+	private void restoreRenameDir(CollectTableBean collectTableBean) throws Exception {
+		List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
+		for (Data_extraction_def extraction_def : data_extraction_def_list) {
+			String targetName = extraction_def.getPlane_url() + File.separator + collectTableBean.getEtlDate()
+					+ File.separator + collectTableBean.getTable_name() + File.separator +
+					FileFormat.ofValueByCode(extraction_def.getDbfile_format()) + File.separator;
+			File file = new File(targetName);
+			if (file.exists()) {
+				fd.ng.core.utils.FileUtil.deleteDirectory(file);
+			}
+			String sourceName = extraction_def.getPlane_url() + File.separator + collectTableBean.getEtlDate()
+					+ File.separator + collectTableBean.getTable_name() + File.separator +
+					FileFormat.ofValueByCode(extraction_def.getDbfile_format()) + "_BAK" + File.separator;
+			File sourceFile = new File(sourceName);
+			if (sourceFile.exists()) {
+				if (!sourceFile.renameTo(new File(targetName)))
+					throw new AppSystemException("重名" + sourceName + "为" + targetName + "失败");
+			}
+		}
+	}
+
+	/**
+	 * 卸数成功，将上次卸数的文件目录删除（同一个跑批日期的情况下）
+	 *
+	 * @param collectTableBean 表存储信息
+	 */
+	private void deleteRenameDir(CollectTableBean collectTableBean) throws Exception {
+		List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
+		for (Data_extraction_def extraction_def : data_extraction_def_list) {
+			String targetName = extraction_def.getPlane_url() + File.separator + collectTableBean.getEtlDate()
+					+ File.separator + collectTableBean.getTable_name() + File.separator +
+					FileFormat.ofValueByCode(extraction_def.getDbfile_format()) + "_BAK" + File.separator;
+			File file = new File(targetName);
+			if (file.exists()) {
+				fd.ng.core.utils.FileUtil.deleteDirectory(file);
+			}
+		}
+	}
+
+	/**
+	 * 开始卸数，将上次卸数的文件目录重命名（同一个跑批日期的情况下）
+	 *
+	 * @param collectTableBean 表存储信息
+	 */
+	private void renameUnloadDir(CollectTableBean collectTableBean) {
+		List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
+		for (Data_extraction_def extraction_def : data_extraction_def_list) {
+			String sourceName = extraction_def.getPlane_url() + File.separator + collectTableBean.getEtlDate()
+					+ File.separator + collectTableBean.getTable_name() + File.separator +
+					FileFormat.ofValueByCode(extraction_def.getDbfile_format()) + File.separator;
+			File file = new File(sourceName);
+			String targetName = extraction_def.getPlane_url() + File.separator + collectTableBean.getEtlDate()
+					+ File.separator + collectTableBean.getTable_name() + File.separator +
+					FileFormat.ofValueByCode(extraction_def.getDbfile_format()) + "_BAK" + File.separator;
+			if (file.exists()) {
+				if (!file.renameTo(new File(targetName)))
+					throw new AppSystemException("重名" + sourceName + "为" + targetName + "失败");
+			}
+		}
 	}
 
 	@Override

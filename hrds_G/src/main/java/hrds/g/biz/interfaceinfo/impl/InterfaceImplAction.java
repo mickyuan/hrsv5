@@ -496,7 +496,7 @@ public class InterfaceImplAction extends BaseAction implements InterfaceDefine {
 			return responseMap;
 		}
 		// 4.根据rowkey，表名称、数据版本号获取hbase表信息,如果返回状态信息不为normal则返回错误响应信息
-		Query queryByRK = new QueryByRowkey(rowKeySearch.getCnTable(), rowKeySearch.getRowkey(),
+		Query queryByRK = new QueryByRowkey(rowKeySearch.getEnTable(), rowKeySearch.getRowkey(),
 				rowKeySearch.getEnColumn(), rowKeySearch.getVersion());
 		Map<String, Object> feedback = queryByRK.query().feedback();
 		if (StateType.NORMAL != StateType.ofEnumByCode(feedback.get("status").toString())) {
@@ -517,7 +517,7 @@ public class InterfaceImplAction extends BaseAction implements InterfaceDefine {
 						rowKeySearch.getFilename());
 			}
 		}
-		responseMap.put("cnTable", rowKeySearch.getCnTable());
+		responseMap.put("enTable", rowKeySearch.getEnTable());
 		return responseMap;
 	}
 

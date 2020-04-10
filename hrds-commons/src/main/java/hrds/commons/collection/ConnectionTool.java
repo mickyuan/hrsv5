@@ -10,6 +10,7 @@ import fd.ng.db.conf.Dbtype;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.commons.codes.DatabaseType;
 import hrds.commons.collection.bean.DbConfBean;
+import hrds.commons.entity.Database_set;
 import hrds.commons.exception.AppSystemException;
 
 import java.util.HashMap;
@@ -28,16 +29,17 @@ public class ConnectionTool {
 	public static DatabaseWrapper getDBWrapper(DbConfBean dbConfBean) {
 		//1、将SourceDataConfBean对象中的内容封装到dbInfo中
 		Map<String, String> dbConfig = new HashMap<>();
-		dbConfig.put("database_drive",dbConfBean.getDatabase_drive());
-		dbConfig.put("jdbc_url",dbConfBean.getJdbc_url());
-		dbConfig.put("user_name",dbConfBean.getUser_name());
-		dbConfig.put("database_pad",dbConfBean.getDatabase_pad());
-		dbConfig.put("database_type",dbConfBean.getDatabase_type());
+		dbConfig.put("database_drive", dbConfBean.getDatabase_drive());
+		dbConfig.put("jdbc_url", dbConfBean.getJdbc_url());
+		dbConfig.put("user_name", dbConfBean.getUser_name());
+		dbConfig.put("database_pad", dbConfBean.getDatabase_pad());
+		dbConfig.put("database_type", dbConfBean.getDatabase_type());
 		return getDBWrapper(dbConfig);
 	}
 
 	/**
 	 * 直接通过数据库查询出来的List数据
+	 *
 	 * @param dbConfig
 	 * @return
 	 */
@@ -47,6 +49,7 @@ public class ConnectionTool {
 
 	/**
 	 * 使用数据库吃信息，返回一个存储层的信息，以map的方式返回，key为用户输入的key，val为val
+	 *
 	 * @param dbConfig
 	 * @return
 	 */
@@ -55,7 +58,7 @@ public class ConnectionTool {
 		for (Map<String, Object> dbMap : dbConfig) {
 			String key = dbMap.get("storage_property_key").toString();
 			String val = dbMap.get("storage_property_val").toString();
-			dbConfigMap.put(key,val);
+			dbConfigMap.put(key, val);
 		}
 		return dbConfigMap;
 	}
@@ -79,6 +82,23 @@ public class ConnectionTool {
 		dbInfo.setShow_sql(true);
 		//3、根据数据库类型获取对应数据库的数据库连接
 		return new DatabaseWrapper.Builder().dbconf(dbInfo).create();
+	}
+
+	@Method(desc = "根据数据库配置信息获取数据库连接", logicStep = "" +
+			"1、将database_set对象中的内容封装到dbInfo中" +
+			"2、获取数据库类型" +
+			"3、根据数据库类型获取对应数据库的数据库连接")
+	@Param(name = "database_set", desc = "该对象封装了海云应用服务端发过来的数据库采集连接数据库的信息", range = "database_set")
+	@Return(desc = "项目中常用的DatabaseWrapper对象", range = "DatabaseWrapper类型对象")
+	public static DatabaseWrapper getDBWrapper(Database_set database_set) {
+		//1、将SourceDataConfBean对象中的内容封装到dbInfo中
+		Map<String, String> dbConfig = new HashMap<>();
+		dbConfig.put("database_drive", database_set.getDatabase_drive());
+		dbConfig.put("jdbc_url", database_set.getJdbc_url());
+		dbConfig.put("user_name", database_set.getUser_name());
+		dbConfig.put("database_pad", database_set.getDatabase_pad());
+		dbConfig.put("database_type", database_set.getDatabase_type());
+		return getDBWrapper(dbConfig);
 	}
 
 	private static Dbtype getDbType(String database_type) {

@@ -812,7 +812,7 @@ public class InterfaceCommon {
 	@Param(name = "outType", desc = "输出数据形式", range = "stream/file")
 	@Param(name = "path", desc = "文件路径", range = "生成文件路径")
 	@Return(desc = "返回保存文件生成信息是否成功状态", range = "1代表成功，否则失败")
-	public int saveFileInfo(String user_id, String uuid, String dataType, String outType, String path) {
+	public static int saveFileInfo(String user_id, String uuid, String dataType, String outType, String path) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		Interface_file_info file_info = new Interface_file_info();
 		file_info.setFile_id(uuid);
