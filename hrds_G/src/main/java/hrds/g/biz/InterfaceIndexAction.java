@@ -16,7 +16,7 @@ public class InterfaceIndexAction extends BaseAction {
 	@Method(desc = "查询接口响应时间", logicStep = "1.数据可访问权限处理方式：该方法user_id进行权限限制" +
 			"2.返回接口响应时间信息")
 	@Return(desc = "返回接口响应时间信息", range = "无限制")
-	public Result InterfaceResponseTime() {
+	public Result interfaceResponseTime() {
 		// 1.数据可访问权限处理方式：该方法user_id进行权限限制
 		// 2.返回接口响应时间信息
 		return Dbo.queryResult("select avg(response_time) avg,max(response_time) max," +

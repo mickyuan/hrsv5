@@ -11,6 +11,7 @@ import hrds.commons.utils.PropertyParaValue;
 import hrds.g.biz.enumerate.DataType;
 import hrds.g.biz.enumerate.OutType;
 import hrds.g.biz.enumerate.StateType;
+import hrds.g.biz.interfaceinfo.common.InterfaceCommon;
 import hrds.g.biz.interfaceinfo.impl.InterfaceImplAction;
 import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -75,8 +76,7 @@ public class LocalFile {
 				boolean isWriteSuccess = writeDataFile(filePath, feedback, dataType);
 				// 8.如果文件写成功则保存此次记录
 				if (isWriteSuccess) {
-					InterfaceImplAction queryInterface = new InterfaceImplAction();
-					if (queryInterface.saveFileInfo(user_id, uuid, dataType, outType, PATH) == 1) {
+					if (InterfaceCommon.saveFileInfo(user_id, uuid, dataType, outType, PATH) == 1) {
 						JSONObject obj = new JSONObject();
 						obj.put("uuid", uuid);
 						obj.put("dataType", dataType);
