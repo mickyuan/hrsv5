@@ -10,7 +10,6 @@ import hrds.agent.job.biz.dataclean.Clean;
 import hrds.agent.job.biz.dataclean.CleanFactory;
 import hrds.agent.job.biz.dataclean.DataCleanInterface;
 import hrds.agent.job.biz.utils.ColumnTool;
-import hrds.agent.job.biz.utils.JobIoUtil;
 import hrds.agent.job.biz.utils.ParquetUtil;
 import hrds.commons.codes.FileFormat;
 import hrds.commons.codes.IsFlag;
@@ -96,24 +95,23 @@ public class JdbcToParquetFileWriter extends AbstractFileWriter {
 				midStringOther.delete(0, midStringOther.length());
 				//每一行获取一个group对象
 				Group group = factory.newGroup();
-				for (int i = 1; i <= numberOfColumns; i++) {
+				for (int i = 0; i < numberOfColumns; i++) {
 					//获取原始值来计算 MD5
 					sb_.delete(0, sb_.length());
 					midStringOther.append(getOneColumnValue(avroWriter, counter, pageNum, resultSet,
-							typeArray[i - 1], sb_, i, hbase_name));
-					//清洗操作
-					currValue = sb_.toString();
-					currValue = cl.cleanColumn(currValue, selectColumnList.get(i - 1).toUpperCase(), group,
-							type.get(i - 1), FileFormat.PARQUET.getCode(), null,
-							data_extraction_def.getDatabase_code(), dataDelimiter);
-					// Write to output
+							typeArray[i], sb_, selectColumnList.get(i), hbase_name));
 					// Add DELIMITER if not last value
-					if (i < numberOfColumns) {
+					if (i < numberOfColumns - 1) {
 						midStringOther.append(JobConstant.DATADELIMITER);
 					}
-					if (splitIng.get(selectColumnList.get(i - 1).toUpperCase()) == null
-							|| splitIng.get(selectColumnList.get(i - 1).toUpperCase()).size() == 0) {
-						ColumnTool.addData2Group(group, type.get(i - 1), selectColumnList.get(i - 1), currValue);
+					//清洗操作
+					currValue = sb_.toString();
+					currValue = cl.cleanColumn(currValue, selectColumnList.get(i).toUpperCase(), group,
+							type.get(i), FileFormat.PARQUET.getCode(), null,
+							data_extraction_def.getDatabase_code(), dataDelimiter);
+					if (splitIng.get(selectColumnList.get(i).toUpperCase()) == null
+							|| splitIng.get(selectColumnList.get(i).toUpperCase()).size() == 0) {
+						ColumnTool.addData2Group(group, type.get(i), selectColumnList.get(i), currValue);
 					}
 				}
 				//如果有列合并处理合并信息

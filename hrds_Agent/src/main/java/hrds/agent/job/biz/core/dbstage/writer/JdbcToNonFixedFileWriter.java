@@ -9,7 +9,6 @@ import hrds.agent.job.biz.core.service.JdbcCollectTableHandleParse;
 import hrds.agent.job.biz.dataclean.Clean;
 import hrds.agent.job.biz.dataclean.CleanFactory;
 import hrds.agent.job.biz.dataclean.DataCleanInterface;
-import hrds.agent.job.biz.utils.JobIoUtil;
 import hrds.agent.job.biz.utils.WriterFile;
 import hrds.commons.codes.DataBaseCode;
 import hrds.commons.codes.FileFormat;
@@ -88,15 +87,19 @@ public class JdbcToNonFixedFileWriter extends AbstractFileWriter {
 				midStringOther.delete(0, midStringOther.length());
 				// Write columns
 
-				for (int i = 1; i <= numberOfColumns; i++) {
+				for (int i = 0; i < numberOfColumns; i++) {
 					//获取原始值来计算 MD5
 					sb_.delete(0, sb_.length());
-					midStringOther.append(getOneColumnValue(avroWriter, counter, pageNum, resultSet, typeArray[i - 1],
-							sb_, i, hbase_name)).append(JobConstant.DATADELIMITER);
+					midStringOther.append(getOneColumnValue(avroWriter, counter, pageNum, resultSet, typeArray[i],
+							sb_, selectColumnList.get(i), hbase_name));
+					// Add DELIMITER if not last value
+					if (i < numberOfColumns - 1) {
+						midStringOther.append(JobConstant.DATADELIMITER);
+					}
 					//清洗操作
 					currValue = sb_.toString();
-					currValue = cl.cleanColumn(currValue, selectColumnList.get(i - 1).toUpperCase(), null,
-							typeList.get(i - 1), FileFormat.FeiDingChang.getCode(), null,
+					currValue = cl.cleanColumn(currValue, selectColumnList.get(i).toUpperCase(), null,
+							typeList.get(i), FileFormat.FeiDingChang.getCode(), null,
 							data_extraction_def.getDatabase_code(), dataDelimiter);
 					// Write to output
 					sb.append(currValue).append(dataDelimiter);

@@ -9,7 +9,6 @@ import hrds.agent.job.biz.core.service.JdbcCollectTableHandleParse;
 import hrds.agent.job.biz.dataclean.Clean;
 import hrds.agent.job.biz.dataclean.CleanFactory;
 import hrds.agent.job.biz.dataclean.DataCleanInterface;
-import hrds.agent.job.biz.utils.JobIoUtil;
 import hrds.agent.job.biz.utils.TypeTransLength;
 import hrds.agent.job.biz.utils.WriterFile;
 import hrds.commons.codes.DataBaseCode;
@@ -93,28 +92,31 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 				//获取所有列的值用来生成MD5值
 				midStringOther.delete(0, midStringOther.length());
 				// Write columns
-				for (int i = 1; i <= numberOfColumns; i++) {
+				for (int i = 0; i < numberOfColumns; i++) {
 					//获取原始值来计算 MD5
 					sb_.delete(0, sb_.length());
 					//定长的分隔符可能为空，为了列合并取值，这里MD5值默认拼接commons里面的常量
-					midStringOther.append(getOneColumnValue(avroWriter, counter, pageNum, resultSet, typeArray[i - 1]
-							, sb_, i, hbase_name)).append(JobConstant.DATADELIMITER);
+					midStringOther.append(getOneColumnValue(avroWriter, counter, pageNum, resultSet, typeArray[i]
+							, sb_, selectColumnList.get(i), hbase_name));
+					// Add DELIMITER if not last value
+					if (i < numberOfColumns - 1) {
+						midStringOther.append(JobConstant.DATADELIMITER);
+					}
 					//清洗操作
 					currValue = sb_.toString();
-					currValue = cl.cleanColumn(currValue, selectColumnList.get(i - 1).toUpperCase(), null,
-							typeList.get(i - 1), FileFormat.DingChang.getCode(), null,
+					currValue = cl.cleanColumn(currValue, selectColumnList.get(i).toUpperCase(), null,
+							typeList.get(i), FileFormat.DingChang.getCode(), null,
 							database_code, database_separatorr);
-					if (splitIng.get(selectColumnList.get(i - 1).toUpperCase()) == null
-							|| splitIng.get(selectColumnList.get(i - 1).toUpperCase()).size() == 0) {
+					if (splitIng.get(selectColumnList.get(i).toUpperCase()) == null
+							|| splitIng.get(selectColumnList.get(i).toUpperCase()).size() == 0) {
 						//TODO 下面这一行可以优化，TypeTransLength.getLength(typeList.get(i - 1))提出到循环外面
 						sb.append(columnToFixed(currValue, TypeTransLength.getLength(
-								typeList.get(i - 1)), database_code)).append(database_separatorr);
+								typeList.get(i)), database_code)).append(database_separatorr);
 					} else {
 						sb.append(currValue).append(database_separatorr);
 					}
 
 				}
-				//TODO 定长目前不支持列合并，原因同上
 				if (!mergeIng.isEmpty()) {
 					List<String> arrColString = StringUtil.split(midStringOther.toString(),
 							JobConstant.DATADELIMITER);

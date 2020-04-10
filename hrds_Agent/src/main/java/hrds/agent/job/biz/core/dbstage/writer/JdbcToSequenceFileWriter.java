@@ -9,7 +9,6 @@ import hrds.agent.job.biz.core.service.JdbcCollectTableHandleParse;
 import hrds.agent.job.biz.dataclean.Clean;
 import hrds.agent.job.biz.dataclean.CleanFactory;
 import hrds.agent.job.biz.dataclean.DataCleanInterface;
-import hrds.agent.job.biz.utils.JobIoUtil;
 import hrds.agent.job.biz.utils.WriterFile;
 import hrds.commons.codes.FileFormat;
 import hrds.commons.codes.IsFlag;
@@ -90,15 +89,19 @@ public class JdbcToSequenceFileWriter extends AbstractFileWriter {
 				midStringOther.delete(0, midStringOther.length());
 				// Write columns
 				value = new Text();
-				for (int i = 1; i <= numberOfColumns; i++) {
+				for (int i = 0; i < numberOfColumns; i++) {
 					//获取原始值来计算 MD5
 					sb_.delete(0, sb_.length());
 					midStringOther.append(getOneColumnValue(avroWriter, counter, pageNum, resultSet,
-							typeArray[i - 1], sb_, i, hbase_name)).append(JobConstant.DATADELIMITER);
+							typeArray[i], sb_, selectColumnList.get(i), hbase_name));
+					// Add DELIMITER if not last value
+					if (i < numberOfColumns - 1) {
+						midStringOther.append(JobConstant.DATADELIMITER);
+					}
 					//清洗操作
 					currValue = sb_.toString();
-					currValue = cl.cleanColumn(currValue, selectColumnList.get(i - 1).toUpperCase(), null,
-							type.get(i - 1), FileFormat.SEQUENCEFILE.getCode(), null,
+					currValue = cl.cleanColumn(currValue, selectColumnList.get(i).toUpperCase(), null,
+							type.get(i), FileFormat.SEQUENCEFILE.getCode(), null,
 							data_extraction_def.getDatabase_code(), dataDelimiter);
 					sb.append(currValue).append(dataDelimiter);
 				}

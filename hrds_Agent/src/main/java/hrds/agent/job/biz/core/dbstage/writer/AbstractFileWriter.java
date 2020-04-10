@@ -76,71 +76,6 @@ abstract class AbstractFileWriter implements FileWriterInterface {
 	 * 解析result一行的值
 	 */
 	String getOneColumnValue(DataFileWriter<Object> avroWriter, long lineCounter, int pageNum, ResultSet resultSet,
-	                         int type, StringBuilder sb_, int i, String hbase_name)
-			throws SQLException, IOException {
-
-		String reader2String = null;
-		byte[] readerToByte = null;
-		if (type == java.sql.Types.BLOB) {
-			Blob blob = resultSet.getBlob(i);
-			if (null != blob) {
-				readerToByte = blobToBytes(blob);
-				sb_.append("LOBs_").append(hbase_name).append("_").append(i).append("_")
-						.append(pageNum).append("_").append(lineCounter).append("_BLOB_").append(avroWriter.sync());
-				if (readerToByte != null) {
-					reader2String = new String(readerToByte);
-				} else {
-					reader2String = "";
-				}
-			}
-		} else {
-			Object oj = resultSet.getObject(i);
-			if (null != oj) {
-				if (type == java.sql.Types.TIMESTAMP || type == java.sql.Types.DATE || type == java.sql.Types.TIME) {
-					Date date = resultSet.getTimestamp(i);
-					reader2String = date.toString();
-				} else if (type == java.sql.Types.CHAR || type == java.sql.Types.VARCHAR
-						|| type == java.sql.Types.NVARCHAR
-						|| type == java.sql.Types.BINARY || type == java.sql.Types.CLOB
-						|| type == java.sql.Types.LONGVARCHAR) {
-					reader2String = oj.toString();
-					//TODO 指定分隔符的情况下，这一行应该不用了，这里如果冲突，就让页面选择别的分隔符好了
-//					if (reader2String.indexOf(Constant.DATADELIMITER) > -1) {
-//						reader2String = reader2String.replace(Constant.DATADELIMITER, ' ');
-//					}
-					//TODO 目前针对换行符的问题，经过测试，可以通过自定义hive的TextInputFormat能解决自定义表的换行符，
-					//TODO 但是如果页面自定义填写换行符，就导致需要每一个不同的换行符都需要对应一个自定义hive的
-					//TODO TextInputFormat，难以实现，因此需要使用默认的行分隔符，或者提前实现几个TextInputFormat供选择
-					//TODO 下面几行是使用默认的行分隔符，需要替换到数据本身的换行符，这里应该替换成特殊字符串，以便于还原
-					if (reader2String.contains("\r")) {
-						reader2String = reader2String.replace('\r', ' ');
-					}
-					if (reader2String.contains("\n")) {
-						reader2String = reader2String.replace('\n', ' ');
-					}
-					if (reader2String.contains("\r\n")) {
-						reader2String = StringUtil.replace(reader2String, "\r\n", " ");
-					}
-				} else {
-					reader2String = oj.toString();
-				}
-			} else {
-				reader2String = "";
-			}
-			sb_.append(reader2String);
-		}
-		if (readerToByte != null) {
-			record.put("currValue", sb_);
-			record.put("readerToByte", ByteBuffer.wrap(readerToByte));
-			avroWriter.append(record);//往avro文件中写入信息（每行）
-		}
-		return reader2String;
-	}
-
-	/**
-	 * 解析result一行的值
-	 */
-	String getOneColumnValue(DataFileWriter<Object> avroWriter, long lineCounter, int pageNum, ResultSet resultSet,
 	                         int type, StringBuilder sb_, String column_name, String hbase_name)
 			throws SQLException, IOException {
 
@@ -169,10 +104,6 @@ abstract class AbstractFileWriter implements FileWriterInterface {
 						|| type == java.sql.Types.BINARY || type == java.sql.Types.CLOB
 						|| type == java.sql.Types.LONGVARCHAR) {
 					reader2String = oj.toString();
-					//TODO 指定分隔符的情况下，这一行应该不用了，这里如果冲突，就让页面选择别的分隔符好了
-//					if (reader2String.indexOf(Constant.DATADELIMITER) > -1) {
-//						reader2String = reader2String.replace(Constant.DATADELIMITER, ' ');
-//					}
 					//TODO 目前针对换行符的问题，经过测试，可以通过自定义hive的TextInputFormat能解决自定义表的换行符，
 					//TODO 但是如果页面自定义填写换行符，就导致需要每一个不同的换行符都需要对应一个自定义hive的
 					//TODO TextInputFormat，难以实现，因此需要使用默认的行分隔符，或者提前实现几个TextInputFormat供选择
