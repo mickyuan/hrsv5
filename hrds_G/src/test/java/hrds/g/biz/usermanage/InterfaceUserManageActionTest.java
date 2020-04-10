@@ -88,34 +88,38 @@ public class InterfaceUserManageActionTest extends WebBaseTestCase {
 		assertThat(ar.isSuccess(), is(true));
 	}
 
-	@Method(desc = "查询接口用户信息测试方法", logicStep = "1.正确的数据访问1，user_name不为空查询信息" +
-			"2.正确的数据访问2，user_name为空查询信息" +
-			"3.该方法只有两种可能")
+	@Method(desc = "查询接口用户信息测试方法", logicStep = "1.正确的数据访问1" +
+			"2.该方法只有一种可能")
 	@Test
-	public void selectUserInfo() {
-		//1.正确的数据访问1，user_name不为空查询信息
+	public void selectUserInfoByPage() {
+		//1.正确的数据访问1
 		bodyString = new HttpClient()
-				.addData("user_name", "接口测试用户-dhw0")
-				.post(getActionUrl("selectUserInfo")).getBodyString();
+				.post(getActionUrl("selectUserInfoByPage")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
+		assertThat(ar.isSuccess(), is(true));
+		Map<Object, Object> map = ar.getDataForMap();
+		assertThat(Integer.parseInt(map.get("totalSize").toString()), is(USERROWS));
+		List<Map<String, String>> userList = JsonUtil.toObject(map.get("userList").toString(), LISTTYPE);
+		assertThat("接口测试用户-dhw0", is(userList.get(0).get("user_name")));
+		assertThat("123@163.com", is(userList.get(0).get("user_email")));
+		assertThat("1", is(userList.get(0).get("user_password")));
+		assertThat("接口测试用户-dhw0", is(userList.get(0).get("user_remark")));
+	}
+
+	@Method(desc = "分页查询接口用户信息", logicStep = "1.正确的数据访问1，数据都有效" +
+			"2.该方法只有一种情况")
+	@Test
+	public void selectUserInfoByName() {
+		// 1.正确的数据访问1，数据都有效
+		bodyString = new HttpClient().addData("user_name", "接口测试用户-dhw0")
+				.post(getActionUrl("selectUserInfoByName")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
 		Map<Object, Object> map = ar.getDataForMap();
 		assertThat(Integer.parseInt(map.get("totalSize").toString()), is(1));
 		List<Map<String, String>> userList = JsonUtil.toObject(map.get("userList").toString(), LISTTYPE);
-		assertThat("接口测试用户-dhw0", is(userList.get(0).get("user_name")));
-		assertThat("123@163.com", is(userList.get(0).get("user_email")));
-		assertThat("1", is(userList.get(0).get("user_password")));
-		assertThat("接口测试用户-dhw0", is(userList.get(0).get("user_remark")));
-		//2.正确的数据访问2，user_name为空查询信息
-		bodyString = new HttpClient()
-				.post(getActionUrl("selectUserInfo")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
-				-> new BusinessException("连接失败！"));
-		assertThat(ar.isSuccess(), is(true));
-		map = ar.getDataForMap();
-		assertThat(Integer.parseInt(map.get("totalSize").toString()), is(USERROWS));
-		userList = JsonUtil.toObject(map.get("userList").toString(), LISTTYPE);
 		for (int i = 0; i < userList.size(); i++) {
 			assertThat("接口测试用户-dhw" + i, is(userList.get(i).get("user_name")));
 			assertThat("123@163.com", is(userList.get(i).get("user_email")));
