@@ -108,7 +108,9 @@ public class DBConfStepAction extends BaseAction {
             + " left join "
             + Collect_job_classify.TableName
             + " t2 on "
-            + " t1.classify_id = t2.classify_id  join agent_info ai on t1.agent_id = ai.agent_id "
+            + " t1.classify_id = t2.classify_id  join "
+            + Agent_info.TableName
+            + " ai on t1.agent_id = ai.agent_id "
             + "where  t1.is_sendok = ? AND ai.agent_type = ? AND ai.user_id = ? AND ai.source_id = ?",
         IsFlag.Fou.getCode(),
         AgentType.ShuJuKu.getCode(),
