@@ -19,9 +19,11 @@ import hrds.b.biz.agent.bean.CollTbConfParam;
 import hrds.b.biz.agent.tools.SendMsgUtil;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.CleanType;
+import hrds.commons.codes.ExecuteState;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.UnloadType;
 import hrds.commons.entity.Agent_info;
+import hrds.commons.entity.Collect_case;
 import hrds.commons.entity.Column_clean;
 import hrds.commons.entity.Column_merge;
 import hrds.commons.entity.Column_split;
@@ -38,14 +40,19 @@ import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.AgentActionUtil;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.DboExecute;
+import hrds.commons.utils.DruidParseQuerySql;
 import hrds.commons.utils.key.PrimayKeyGener;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import org.apache.commons.collections.map.HashedMap;
+import org.apache.commons.lang.StringUtils;
 
 @DocClass(desc = "定义表抽取属性", author = "WangZhengcheng")
 public class CollTbConfStepAction extends BaseAction {
@@ -53,6 +60,7 @@ public class CollTbConfStepAction extends BaseAction {
   private static final long DEFAULT_TABLE_ID = 999999L;
   private static final JSONObject DEFAULT_TABLE_CLEAN_ORDER;
   private static final JSONObject DEFAULT_COLUMN_CLEAN_ORDER;
+  private static final String VALID_S_DATE = "99991231";
 
   static {
     DEFAULT_TABLE_CLEAN_ORDER = new JSONObject();
@@ -72,21 +80,46 @@ public class CollTbConfStepAction extends BaseAction {
     DEFAULT_COLUMN_CLEAN_ORDER.put(CleanType.ZiFuTrim.getCode(), 6);
   }
 
-  @Method(desc = "根据数据库采集设置表ID加载页面初始化数据", logicStep = "1、查询数据并返回")
+  @Method(
+      desc = "根据数据库采集设置表ID加载页面初始化数据",
+      logicStep =
+          ""
+              + "1、查询表信息数据"
+              + "2: 根据表名检查是否采集过(只要有一个阶段采集是完成或者运行中的,将不再支持编辑),这里的采集指的是发给Agent的"
+              + "3: 返回处理后的表信息")
   @Param(name = "colSetId", desc = "数据库设置ID,源系统数据库设置表主键,数据库对应表外键", range = "不为空")
   @Return(desc = "查询结果集", range = "不会为null")
-  public Result getInitInfo(long colSetId) {
-    // 1、查询数据并返回
-    return Dbo.queryResult(
-        " select * "
-            + " FROM "
-            + Table_info.TableName
-            + " ti "
-            + " WHERE ti.database_id = ? AND ti.is_user_defined = ? ",
-        colSetId,
-        IsFlag.Fou.getCode());
+  public List<Map<String, Object>> getInitInfo(long colSetId) {
+    // 1、查询表信息数据
+    List<Map<String, Object>> tableList =
+        Dbo.queryList(
+            " SELECT *, "
+                + " (CASE WHEN ( SELECT COUNT(1) FROM table_column WHERE "
+                + " table_id = ti.table_id AND is_primary_key = ? ) > 0 "
+                + " THEN 'true' ELSE 'false' END ) is_primary_key FROM "
+                + Table_info.TableName
+                + " ti "
+                + " WHERE ti.database_id = ? AND ti.is_user_defined = ? ",
+            IsFlag.Shi.getCode(),
+            colSetId,
+            IsFlag.Fou.getCode());
+    // 2: 根据表名检查是否采集过(只要有一个阶段采集是完成或者运行中的,将不再支持编辑),这里的采集指的是发给Agent的
+    tableList.forEach(
+        itemMap -> {
+          List<Object> tableStateList =
+              checkTableCollectState(colSetId, itemMap.get("table_name").toString());
+          if (tableStateList.contains(ExecuteState.YunXingWanCheng.getCode())
+              || tableStateList.contains(ExecuteState.KaiShiYunXing)) {
+            itemMap.put("collectState", false);
+          } else {
+            itemMap.put("collectState", true);
+          }
+        });
+
     // 数据可访问权限处理方式
     // 以上table_info表中都没有user_id字段，解决方式待讨论
+    //    3: 返回处理后的表信息
+    return tableList;
   }
 
   @Method(
@@ -235,7 +268,7 @@ public class CollTbConfStepAction extends BaseAction {
       for (int i = 0; i < tableInfos.size(); i++) {
         Table_info tableInfo = tableInfos.get(i);
 
-        // 设置并行抽取SQL的定义方式为否
+        // 设置并行抽取自定义SQL的定义方式为否
         tableInfo.setIs_customize_sql(IsFlag.Fou.getCode());
 
         // 设置分页SQL为空
@@ -456,22 +489,45 @@ public class CollTbConfStepAction extends BaseAction {
     return Long.parseLong(count);
   }
 
-  @Method(desc = "根据数据库设置ID获得用户自定义抽取SQL", logicStep = "" + "1、根据colSetId在table_info表中查询数据并返回")
+  @Method(
+      desc = "根据数据库设置ID获得用户自定义抽取SQL",
+      logicStep =
+          ""
+              + "1、根据colSetId在table_info表中查询数据"
+              + "2: 根据表名检查是否采集过(只要有一个阶段采集是完成或者运行中的,将不再支持编辑),这里的采集指的是发给Agent的"
+              + "3: 返回处理后的表信息")
   @Param(name = "colSetId", desc = "数据库设置ID,源系统数据库设置表主键，数据库对应表外键", range = "不为空")
   @Return(desc = "查询结果集", range = "不为空，是否有数据视实际情况而定")
   // 配置采集表页面，使用SQL抽取数据Tab页后台方法，用于回显已经设置的SQL
-  public List<Table_info> getAllSQLs(long colSetId) {
+  public List<Map<String, Object>> getAllSQLs(long colSetId) {
     // 1、根据colSetId在table_info表中查询数据并返回
-    return Dbo.queryList(
-        Table_info.class,
-        " SELECT table_id, table_name, table_ch_name, sql "
-            + " FROM "
-            + Table_info.TableName
-            + " WHERE database_id = ? AND is_user_defined = ? order by table_id",
-        colSetId,
-        IsFlag.Shi.getCode());
+    List<Map<String, Object>> tableList =
+        Dbo.queryList(
+            " SELECT * "
+                + " FROM "
+                + Table_info.TableName
+                + " WHERE database_id = ? AND is_user_defined = ? order by table_id",
+            colSetId,
+            IsFlag.Shi.getCode());
     // 数据可访问权限处理方式
     // 以上table_info表中都没有user_id字段，解决方式待讨论
+    // 2: 根据表名检查是否采集过(只要有一个阶段采集是完成或者运行中的,将不再支持编辑),这里的采集指的是发给Agent的
+    tableList.forEach(
+        itemMap -> {
+          List<Object> tableStateList =
+              checkTableCollectState(colSetId, itemMap.get("table_name").toString());
+          if (tableStateList.contains(ExecuteState.YunXingWanCheng.getCode())
+              || tableStateList.contains(ExecuteState.KaiShiYunXing)) {
+            itemMap.put("collectState", false);
+          } else {
+            itemMap.put("collectState", true);
+          }
+        });
+
+    // 数据可访问权限处理方式
+    // 以上table_info表中都没有user_id字段，解决方式待讨论
+    //    3: 返回处理后的表信息
+    return tableList;
   }
 
   @Method(
@@ -484,7 +540,7 @@ public class CollTbConfStepAction extends BaseAction {
   public Result getSingleTableSQL(long colSetId, String tableName) {
     // 1、根据colSetId和tableName在table_info表中获取数据并返回
     return Dbo.queryResult(
-        "SELECT table_id,table_name,table_ch_name,sql "
+        "SELECT * "
             + " FROM "
             + Table_info.TableName
             + " WHERE database_id = ? AND table_name = ? ",
@@ -583,7 +639,7 @@ public class CollTbConfStepAction extends BaseAction {
     }
     // 3、根据数据库设置ID在数据库采集对应表中获取SQL过滤，是否并行抽取，分页SQL，数据总量，分页并行数，每天数据增量返回给前端
     return Dbo.queryResult(
-        "select table_id, table_name, sql, is_parallel, page_sql, table_count, pageparallels, dataincrement "
+        "select * "
             + " from "
             + Table_info.TableName
             + " where database_id = ? and is_user_defined = ?",
@@ -685,7 +741,16 @@ public class CollTbConfStepAction extends BaseAction {
       if (!tableColumns.isEmpty()) {
         for (Table_column tableColumn : tableColumns) {
           tableColumn.setIs_get(IsFlag.Shi.getCode());
-          tableColumn.setIs_primary_key(IsFlag.Fou.getCode());
+          // 这里取得的列主键根据在源数据库是否为主键进行设置
+          if (tableColumn.getIs_primary_key() != null) {
+            if (tableColumn.getIs_primary_key().equals("true")) {
+              tableColumn.setIs_primary_key(IsFlag.Shi.getCode());
+            } else {
+              tableColumn.setIs_primary_key(IsFlag.Fou.getCode());
+            }
+          } else {
+            tableColumn.setIs_primary_key(IsFlag.Fou.getCode());
+          }
         }
       }
     } else {
@@ -798,11 +863,11 @@ public class CollTbConfStepAction extends BaseAction {
     if (databaseInfo.isEmpty()) {
       throw new BusinessException("未找到数据库采集任务");
     }
-    String methodName = AgentActionUtil.GETTABLECOLUMN;
     long agentId = (long) databaseInfo.get("agent_id");
     // 2、封装数据，调用方法和agent交互，获取列信息
     String respMsg =
-        SendMsgUtil.getColInfoByTbName(agentId, getUserId(), databaseInfo, tableName, methodName);
+        SendMsgUtil.getColInfoByTbName(
+            agentId, getUserId(), databaseInfo, tableName, AgentActionUtil.GETTABLECOLUMN);
     // 3、将列信息反序列化为Json数组
     JSONArray columnInfos = JSONObject.parseArray(respMsg);
     List<Table_column> tableColumns = new ArrayList<>();
@@ -813,6 +878,7 @@ public class CollTbConfStepAction extends BaseAction {
       tableColumn.setColumn_name(columnInfo.getString("column_name"));
       tableColumn.setColumn_ch_name(columnInfo.getString("column_ch_name"));
       tableColumn.setColumn_type(columnInfo.getString("type"));
+      tableColumn.setIs_primary_key(columnInfo.getString("is_primary_key"));
 
       tableColumns.add(tableColumn);
     }
@@ -1034,7 +1100,8 @@ public class CollTbConfStepAction extends BaseAction {
         // 4、获取Table_info对象的table_id属性，如果该属性没有值，说明这张采集表是新增的，否则这张采集表在当前采集任务中
         // 已经存在，且有可能经过了修改
         // 5、如果是新增采集表
-        if (StringUtil.isBlank(tableInfo.getTable_id().toString())) {
+        if (tableInfo.getTable_id() == null
+            || StringUtil.isBlank(tableInfo.getTable_id().toString())) {
           // 5-1、生成table_id，并存入Table_info对象中
           tableInfo.setTable_id(PrimayKeyGener.getNextId());
           tableInfo.setTi_or(DEFAULT_TABLE_CLEAN_ORDER.toJSONString());
@@ -1075,6 +1142,15 @@ public class CollTbConfStepAction extends BaseAction {
   @Param(name = "userId", desc = "当前登录用户ID，sys_user表主键", range = "不为空")
   @Return(desc = "查询结果集", range = "不为空")
   private Map<String, Object> getDatabaseSetInfo(long colSetId, long userId) {
+
+    long databaseNum =
+        Dbo.queryNumber(
+                "SELECT COUNT(1) FROM " + Database_set.TableName + " WHERE database_id = ?",
+                colSetId)
+            .orElseThrow(() -> new BusinessException("SQL查询异常"));
+    if (databaseNum == 0) {
+      throw new BusinessException("任务(" + colSetId + ")不存在!!!");
+    }
     // 1、根据colSetId和userId去数据库中查出DB连接信息
     return Dbo.queryOneObject(
         " select t1.database_type, t1.database_ip, t1.database_port, t1.database_name, "
@@ -1126,6 +1202,7 @@ public class CollTbConfStepAction extends BaseAction {
               colSetId,
               tableName,
               IsFlag.Fou.getCode());
+
       // 2-2、tableResult结果可能有数据，也可能没有数据
       // 2-3、有数据的情况：编辑采集任务，模糊查询的这张表已经存在于本次采集任务中
       // 2-4、没有数据的情况：新增采集任务，那么所有的表都无法在table_info中查到数据，给是否并行抽取默认值为否
@@ -1138,6 +1215,7 @@ public class CollTbConfStepAction extends BaseAction {
          1: 卸数方式 : 默认全量
          2: 是否使用MD5 : 默认否
          3: 是否并行抽取 : 默认否
+         4: 如果表记录不存在则设置当前表为未采集状态
         */
         //        1: 卸数方式 : 默认全量
         map.put("unload_type", UnloadType.QuanLiangXieShu.getCode());
@@ -1145,8 +1223,18 @@ public class CollTbConfStepAction extends BaseAction {
         map.put("is_md5", IsFlag.Fou.getCode());
         //        3: 是否并行抽取 : 默认否
         map.put("is_parallel", IsFlag.Fou.getCode());
+        map.put("collectState", true);
         results.add(map);
       } else {
+        List<Object> tableStateList =
+            checkTableCollectState(colSetId, tableResult.get("table_name").toString());
+        if (tableStateList.contains(ExecuteState.YunXingWanCheng.getCode())
+            || tableStateList.contains(ExecuteState.KaiShiYunXing)) {
+          tableResult.put("collectState", false);
+        } else {
+          tableResult.put("collectState", true);
+        }
+
         results.add(tableResult);
       }
     }
@@ -1327,19 +1415,20 @@ public class CollTbConfStepAction extends BaseAction {
   @Param(name = "colSetId", desc = "数据库设置ID，源系统数据库设置表主键，数据库对应表外键", range = "不为空")
   @Param(name = "userId", desc = "当前登录用户ID，sys_user表主键", range = "不为空")
   private void saveCustomSQLColumnInfoForAdd(Table_info tableInfo, long colSetId, long userId) {
-    // 1、根据colSetId和userId去数据库中查出DB连接信息
-    Map<String, Object> databaseInfo = getDatabaseSetInfo(colSetId, userId);
-    if (databaseInfo.isEmpty()) {
-      throw new BusinessException("未找到数据库采集任务");
-    }
-    String methodName = AgentActionUtil.GETCUSTCOLUMN;
-    long agentId = (long) databaseInfo.get("agent_id");
-    // 2、封装数据，调用方法和agent交互，获取列信息
-    String respMsg =
-        SendMsgUtil.getCustColumn(
-            agentId, getUserId(), databaseInfo, tableInfo.getSql(), methodName);
-    // 3、将列信息反序列化为List集合
-    List<Table_column> tableColumns = JSONArray.parseArray(respMsg, Table_column.class);
+    //    // 1、根据colSetId和userId去数据库中查出DB连接信息
+    //    Map<String, Object> databaseInfo = getDatabaseSetInfo(colSetId, userId);
+    //    if (databaseInfo.isEmpty()) {
+    //      throw new BusinessException("未找到数据库采集任务");
+    //    }
+    //    long agentId = (long) databaseInfo.get("agent_id");
+    //    // 2、封装数据，调用方法和agent交互，获取列信息
+    //    String respMsg =
+    //        SendMsgUtil.getCustColumn(
+    //            agentId, getUserId(), databaseInfo, tableInfo.getSql(),
+    // AgentActionUtil.GETCUSTCOLUMN);
+    //    // 3、将列信息反序列化为List集合
+    //    List<Table_column> tableColumns = JSONArray.parseArray(respMsg, Table_column.class);
+    List<Table_column> tableColumns = getTableColumns(colSetId, tableInfo.getSql());
     // 4、遍历List集合，给每个Table_column对象设置主键等信息
     for (Table_column tableColumn : tableColumns) {
       tableColumn.setColumn_id(PrimayKeyGener.getNextId());
@@ -1428,5 +1517,179 @@ public class CollTbConfStepAction extends BaseAction {
         Table_info.class,
         "SELECT * FROM " + Table_info.TableName + " WHERE table_id = ?",
         table_id);
+  }
+
+  @Method(
+      desc = "检查每个表的主键是否存在",
+      logicStep =
+          "1: 循环获取表的列信息"
+              + "2: 根据返回的列信息,进行检查是否存在着主键,如果存在就将此表的值设为true然后进行下个表的检查,反之所有列检查完毕后为出现主键,则设置值为false")
+  @Param(name = "colSetId", desc = "采集任务ID", range = "不可为空")
+  @Param(name = "tableNames", desc = "采集表集合数组", range = "不可为空")
+  @Return(desc = "返回检查后的表数据信息", range = "不可为空")
+  public Map<String, Boolean> checkTablePrimary(long colSetId, String[] tableNames) {
+
+    List<Table_column> tableColumns;
+    Map<String, Boolean> checkPrimaryMap = new HashedMap();
+    //    1: 循环获取表的列信息
+    for (String table_name : tableNames) {
+      tableColumns = getColumnInfoByTableName(colSetId, getUserId(), table_name);
+      //      2: 根据返回的列信息,进行检查是否存在着主键,如果存在就将此表的值设为true然后进行下个表的检查,反之检查完毕设置值为false
+      for (Table_column tableColumn : tableColumns) {
+        if (tableColumn.getIs_primary_key().equals("true")) {
+          checkPrimaryMap.put(table_name, true);
+          continue;
+        } else {
+          checkPrimaryMap.put(table_name, false);
+        }
+      }
+    }
+
+    return checkPrimaryMap;
+  }
+
+  @Method(
+      desc = "根据SQL获取其中的列信息",
+      logicStep =
+          ""
+              + "1: 获取任务数据库连接信息"
+              + "2: 检查卸数方式是否选择"
+              + "3: 检查SQL是否存在"
+              + "4: 检查卸数方式,这里根据卸数方式来处理SQL, 因为增量的SQL可能存在三种这里需要对SQL的字段进行去重"
+              + "5: 获取SQL中的字段名称"
+              + "6: 返回处理的字段信息")
+  @Param(name = "colSetId", desc = "采集任务ID", range = "不可为空")
+  @Param(name = "unloadType", desc = "卸数方式(代码项: UnloadType)", range = "不可为空")
+  @Param(name = "sql", desc = "获取列的SQL", range = "不可为空")
+  @Return(desc = "返回检查后的表数据信息", range = "不可为空")
+  public List<Table_column> getSqlColumnData(long colSetId, String unloadType, String sql) {
+
+    // 1: 获取任务数据库连接信息
+    Map<String, Object> databaseInfo = getDatabaseSetInfo(colSetId, getUserId());
+
+    // 2: 检查卸数方式是否选择
+    if (StringUtil.isBlank(unloadType)) {
+      throw new BusinessException("请指定卸数方式");
+    }
+
+    // 3: 检查SQL是否存在
+    if (StringUtil.isBlank(sql)) {
+      throw new BusinessException("SQL不能为空");
+    }
+
+    //      4: 检查卸数方式,这里根据卸数方式来处理SQL, 因为增量的SQL可能存在三种这里需要对SQL的字段进行去重
+    if (UnloadType.ofEnumByCode(unloadType) == UnloadType.ZengLiangXieShu) {
+
+      // 解析增量SQL的数据信息
+      Map incrementSqlMap =
+          JsonUtil.toObjectSafety(sql, Map.class)
+              .orElseThrow(() -> new BusinessException("增量SQL解析出现错误"));
+      // 定义存放增量SQL中表名称集合
+      Set<String> tableDataSet = new LinkedHashSet<>();
+      // 定义存放增量SQL中的列的集合
+      Set<String> columnDataSet = new LinkedHashSet<>();
+      // 找出增量sql中不重复的列
+      incrementSqlMap.forEach(
+          (sqlKey, sqlVal) -> {
+            if (sqlVal != null || StringUtil.isNotBlank(sqlVal.toString())) {
+              List<String> tableList = DruidParseQuerySql.parseSqlTableToList(sqlVal.toString());
+              tableDataSet.addAll(tableList);
+              parseSQLGetColumn(sqlVal.toString(), columnDataSet);
+            }
+          });
+
+      // 这里只是获取SQL的字段信息,不关注数据,所以只是给了一个不成立的查询条件
+      if (!columnDataSet.isEmpty()) {
+        sql =
+            "SELECT "
+                + StringUtils.join(columnDataSet, ',')
+                + " FROM "
+                + StringUtils.join(tableDataSet, ',')
+                + " WHERE 1 != 2";
+      }
+    } else {
+      // 这里只是获取SQL的字段信息,不关注数据,所以只是给了一个不成立的查询条件
+      sql = "SELECT * FROM (" + sql + " ) temp WHERE 1 != 2";
+    }
+
+    //      5: 获取SQL中的字段名称
+    List<Table_column> tableColumns = getTableColumns(colSetId, sql);
+    // 6: 返回处理的字段信息
+    tableColumns.forEach(
+        table_column -> {
+          table_column.setIs_get(IsFlag.Shi.getCode());
+          table_column.setIs_primary_key(IsFlag.Fou.getCode());
+          table_column.setIs_new(IsFlag.Fou.getCode());
+          table_column.setTc_or(DEFAULT_COLUMN_CLEAN_ORDER.toJSONString());
+          table_column.setIs_alive(IsFlag.Shi.getCode());
+          table_column.setIs_new(IsFlag.Fou.getCode());
+          table_column.setValid_s_date(DateUtil.getSysDate());
+          table_column.setValid_e_date(VALID_S_DATE);
+        });
+    return tableColumns;
+  }
+
+  @Method(
+      desc = "根据SQL获取表的字段信息",
+      logicStep =
+          ""
+              + "1: 根据colSetId和userId去数据库中查出DB连接信息"
+              + "2: 封装数据，调用方法和agent交互，获取列信息"
+              + "3: 将列信息反序列化为List集合")
+  @Param(name = "colSetId", desc = "采集任务ID", range = "不可为空")
+  @Param(name = "sql", desc = "需要获取列的SQL", range = "不可为空")
+  @Return(desc = "返回SQL的列信息", range = "不为空的列集合")
+  private List<Table_column> getTableColumns(long colSetId, String sql) {
+    // 1、根据colSetId和userId去数据库中查出DB连接信息
+    Map<String, Object> databaseInfo = getDatabaseSetInfo(colSetId, getUserId());
+
+    // 2、封装数据，调用方法和agent交互，获取列信息
+    String respMsg =
+        SendMsgUtil.getCustColumn(
+            ((long) databaseInfo.get("agent_id")),
+            getUserId(),
+            databaseInfo,
+            sql,
+            AgentActionUtil.GETCUSTCOLUMN);
+    // 3、将列信息反序列化为List集合
+    return JSONArray.parseArray(respMsg, Table_column.class);
+  }
+
+  @Method(desc = "解析SQL中的列字段", logicStep = "使用Druid来解析SQL中的字段信息")
+  @Param(name = "sql", desc = "要解析的sql", range = "不可为空")
+  private void parseSQLGetColumn(String sql, Set<String> columnDataSet) {
+    DruidParseQuerySql parseQuerySql = new DruidParseQuerySql(sql);
+    List<String> originalField = parseQuerySql.parseSelectOriginalField();
+    columnDataSet.addAll(originalField);
+  }
+
+  @Method(desc = "检查表的采集状态信息", logicStep = "1: 检查表名是否存在 2: 返回表的采集信息集合")
+  @Param(name = "colSetId", desc = "采集任务ID", range = "不可为空")
+  @Param(name = "table_name", desc = "表名称", range = "不可为空")
+  @Return(desc = "返回表的采集状态集合", range = "可以为空,为空表示表未采集过")
+  private List<Object> checkTableCollectState(long colSetId, String table_name) {
+    //    1: 检查表名是否存在
+    long checkTableNum =
+        Dbo.queryNumber(
+                "SELECT COUNT(1) FROM "
+                    + Table_info.TableName
+                    + " WHERE database_id = ? AND table_name = ?",
+                colSetId,
+                table_name)
+            .orElseThrow(() -> new BusinessException("SQL查询错误"));
+
+    if (checkTableNum == 0) {
+      throw new BusinessException("任务(" + colSetId + ")下不存在表 (" + table_name + ")");
+    }
+    //    2: 返回表的采集信息集合
+    return Dbo.queryOneColumnList(
+        "SELECT t1.execute_state FROM "
+            + Collect_case.TableName
+            + " t1 JOIN "
+            + Table_info.TableName
+            + " t2 ON t1.collect_set_id = t2.database_id "
+            + "AND t1.task_classify = t2.table_name  WHERE t1.collect_set_id = ? AND t2.table_name = ?",
+        colSetId,
+        table_name);
   }
 }
