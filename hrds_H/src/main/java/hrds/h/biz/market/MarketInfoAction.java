@@ -9,14 +9,15 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.SqlOperator;
-import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.*;
+import hrds.commons.collection.ProcessingData;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.DruidParseQuerySql;
 import hrds.commons.utils.key.PrimayKeyGener;
+import org.apache.commons.lang.StringUtils;
 
 import java.util.*;
 
@@ -255,7 +256,8 @@ public class MarketInfoAction extends BaseAction {
     @Param(name = "fuzzyqueryitem", desc = "fuzzyqueryitem", range = "模糊查询字段", nullable = true)
     @Return(desc = "用户集市查询存储配置表", range = "返回值取值范围")
     public List<Data_store_layer> searchDataStoreByFuzzyQuery(String fuzzyqueryitem) {
-        return Dbo.queryList(Data_store_layer.class, "select * from " + Data_store_layer.TableName + " where dsl_name like ?", fuzzyqueryitem);
+        return Dbo.queryList(Data_store_layer.class, "select * from " + Data_store_layer.TableName + " where dsl_name like ?",
+                "%" + fuzzyqueryitem + "%");
     }
 
 
@@ -381,15 +383,36 @@ public class MarketInfoAction extends BaseAction {
                     "2.获取pgsql连接配置" +
                     "2-1.根据sql语句判断执行引擎")
     @Param(name = "querysql", desc = "查询SQL", range = "String类型SQL")
+    @Param(name = "sqlparameter", desc = "SQL参数", range = "String类型参数",nullable = true)
     @Return(desc = "查询返回结果集", range = "无限制")
-    public Result getDataBySQL(String querysql) {
+    public Map<String, Object> getDataBySQL(String querysql,String sqlparameter) {
+        if (!StringUtils.isEmpty(sqlparameter)) {
+            // 获取参数组
+            String[] singlePara = StringUtils.split(sqlparameter, ';');// 获取单个动态参数
+            for (int i = 0; i < singlePara.length; i++) {
+                String[] col_val = StringUtils.split(singlePara[i], '=');
+                if (col_val.length > 1) {
+                    // 按顺序从左到右对原始sql中的(0)进行替换
+                    querysql = StringUtils.replace(querysql, "#{" + col_val[0].trim() + "}", col_val[1]);
+                }
+            }
+        }
+        Map<String, Object> resultmap = new HashMap<String, Object>();
         querysql = querysql.trim();
         if (querysql.endsWith(";")) {
             //去除分号
             querysql = querysql.substring(0, querysql.length() - 1);
         }
         querysql = "select * from (" + querysql + ") as " + alias + " limit " + LimitNumber;
-        return Dbo.queryResult(querysql);
+        try {
+            List<Map<String, Object>> maps = Dbo.queryList(querysql);
+            resultmap.put("result", maps);
+            resultmap.put("success", true);
+        } catch (Exception e) {
+            resultmap.put("success", false);
+            resultmap.put("message", e.getMessage());
+        }
+        return resultmap;
     }
 
     @Method(desc = "根据数据表ID,获取数据库类型，获取选中数据库的附件属性字段",
@@ -407,13 +430,17 @@ public class MarketInfoAction extends BaseAction {
     @Method(desc = "根据SQL获取列结构",
             logicStep = "")
     @Param(name = "querysql", desc = "查询SQL", range = "String类型SQL")
-    @Return(desc = "列结构", range = "无限制")
     @Param(name = "datatable_id", desc = "datatable_id", range = "String类型集市表ID")
-    public List<Map<String, Object>> getColumnBySql(String querysql, String datatable_id) {
+    @Param(name = "sqlparameter", desc = "SQL参数", range = "String类型参数",nullable = true)
+    @Return(desc = "列结构", range = "无限制")
+    public  Map<String,Object> getColumnBySql(String querysql, String datatable_id,String sqlparameter) {
+        Map<String,Object> resultmap = new HashMap<>();
         List<Map<String, Object>> resultlist = new ArrayList<Map<String, Object>>();
         CheckColummn(querysql, "查询sql");
         Dm_datatable dm_datatable = new Dm_datatable();
         dm_datatable.setDatatable_id(datatable_id);
+        String dsl_id = Dbo.queryList("select dsl_id from dm_relation_datatable where datatable_id = ?", dm_datatable.getDatatable_id())
+                .get(0).get("dsl_id").toString();
         List<Map<String, Object>> targetTypeList = Dbo.queryList("SELECT distinct lower(replace(replace(trim(t1.target_type),'(',''),')','')) as target_type " +
                 "FROM " + Type_contrast.TableName + " t1 LEFT JOIN " + Data_store_layer.TableName + " t2 ON t1.dtcs_id = t2.dtcs_id " +
                 "LEFT JOIN " + Dm_relation_datatable.TableName + " t3 ON t2.dsl_id=t3.dsl_id" +
@@ -422,7 +449,7 @@ public class MarketInfoAction extends BaseAction {
                 "left join " + Dm_relation_datatable.TableName + " t2 on t1.dsl_id = t2.dsl_id " +
                 "where t2.datatable_id = ? order by dsla_storelayer", dm_datatable.getDatatable_id());
         List<Map<String, Object>> storeTypeList = Dbo.queryList("select store_type from " + Data_store_layer.TableName + " t1 left join " + Dm_relation_datatable.TableName + " t2 on t1.dsl_id = t2.dsl_id " +
-                "where t2.datatable_id = ? ", dm_datatable.getDatatable_id());
+                "where t2.datatable_id = ? limit 1", dm_datatable.getDatatable_id());
         String storeType = storeTypeList.get(0).get("store_type").toString();
         String field_type = "";
         //TODO 分类讨论 目前只考虑关系性数据库、hive、hbase这三种情况
@@ -435,21 +462,110 @@ public class MarketInfoAction extends BaseAction {
         } else {
             field_type = targetTypeList.get(0).get("target_type").toString();
         }
-        DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(querysql);
-        List<String> columnNameList = druidParseQuerySql.parseSelectAliasField();
+        List<String> columnNameList = new ArrayList<>();
+        HashMap<String, Object> bloodRelationMap = new HashMap<>();
+        try {
+            DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(querysql);
+            columnNameList = druidParseQuerySql.parseSelectAliasField();
+            DruidParseQuerySql dpqs = new DruidParseQuerySql();
+            bloodRelationMap = dpqs.getBloodRelationMap(querysql);
+        } catch (Exception e) {
+            String message = e.getMessage();
+            return getDataBySQL(querysql,sqlparameter);
+        }
+        //此处进行获取血缘关系map 如果sql写的不规范 会存在报错
+        String targetfield_type = "";
         for (String everyColumnName : columnNameList) {
             Map<String, Object> map = new LinkedHashMap<>();
             map.put("field_en_name", everyColumnName);
             map.put("field_cn_name", everyColumnName);
-            //这里选择第一个字段类型作为默认字段类型
-            map.put("field_type", field_type);
+            Object object = bloodRelationMap.get(everyColumnName);
+            targetfield_type = getFieldType(object, field_type, dsl_id);
+            map.put("field_type", targetfield_type);
             map.put("field_process", ProcessType.YingShe.getCode());
             for (Map<String, Object> dslaStorelayeMap : dslaStorelayerList) {
                 map.put(StoreLayerAdded.ofValueByCode(dslaStorelayeMap.get("dsla_storelayer").toString()), false);
             }
             resultlist.add(map);
         }
-        return resultlist;
+        resultmap.put("result",resultlist);
+        resultmap.put("success",true);
+        return resultmap;
+    }
+
+    /**
+     * @param object
+     * @param field_type 默认的字段类型 String/Varchar
+     * @param dsl_id
+     * @return
+     */
+    private String getFieldType(Object object, String field_type, String dsl_id) {
+        if (null == object) {
+            return field_type;
+        } else {
+            ArrayList<HashMap<String, Object>> list = (ArrayList<HashMap<String, Object>>) object;
+            if (list.size() == 1) {
+                HashMap<String, Object> stringObjectHashMap = list.get(0);
+                String sourcetable = stringObjectHashMap.get("sourcetable").toString();
+                String sourcecolumn = stringObjectHashMap.get("sourcecolumn").toString();
+                Map<String, Object> tableLayer = ProcessingData.getTableLayer(sourcetable, Dbo.db());
+                if (null == tableLayer) {
+                    //如果没有找到该表属于哪一层 则返回原始类型
+                    return field_type;
+                } else {
+                    String dataSourceType = tableLayer.get("dataSourceType").toString();
+                    if (dataSourceType.equals(DataSourceType.DCL.getCode())) {
+                        List<Map<String, Object>> maps = Dbo.queryList("select t2.column_type,t4.dsl_id from " + Data_store_reg.TableName + " t1 left join " + Table_column.TableName + " t2 on t1.table_id = t2.table_id" +
+                                        " left join " + Table_storage_info.TableName + " t3 on t1.table_id = t3.table_id left join " +
+                                        Data_relation_table.TableName + " t4 on t4.storage_id = t3.storage_id " +
+                                        "where lower(t2.column_name) = ? and lower(t1.hyren_name) = ? limit 1",
+                                sourcecolumn.toLowerCase(), sourcetable.toLowerCase());
+                        String column_type = maps.get(0).get("column_type").toString();
+                        String DCLdsl_id = maps.get(0).get("dsl_id").toString();
+                        //如果为空，说明字段不存在
+                        if (StringUtils.isEmpty(column_type)) {
+                            return field_type;
+                        } else {
+                            //如果是来自帖源的话 就需要做两次转换
+                            column_type = transFormColumnType(column_type, DCLdsl_id);
+                            column_type = transFormColumnType(column_type, dsl_id);
+                            return column_type;
+                        }
+                    } else if (dataSourceType.equals(DataSourceType.DML.getCode())) {
+                        List<Map<String, Object>> maps = Dbo.queryList("select field_type from " + Datatable_field_info.TableName + " t1 left join " + Dm_datatable.TableName +
+                                " t2 on t1.datatable_id = t2.datatable_id where lower(t2.datatable_en_name) = ? and lower(t1.field_en_name) = ?", sourcetable.toLowerCase(), sourcecolumn);
+                        String DMLfield_type = maps.get(0).get("field_type").toString();
+                        if (StringUtils.isEmpty(DMLfield_type)) {
+                            return field_type;
+                        } else {
+                            DMLfield_type = transFormColumnType(DMLfield_type, dsl_id);
+                            return DMLfield_type;
+                        }
+                    }
+                    //TODO 之后层级加入 还需要补充
+                }
+                System.out.println("aa");
+            } else {
+                //如果size大于1 说明改字段是由多个字段构成的 使用默认的field_type返回
+                return field_type;
+            }
+        }
+        return null;
+    }
+
+    private String transFormColumnType(String column_type, String dsl_id) {
+        if (column_type.contains("(")) {
+            column_type = column_type.substring(0, column_type.indexOf("("));
+        }
+        Data_store_layer data_store_layer = new Data_store_layer();
+        data_store_layer.setDsl_id(dsl_id);
+        List<Map<String, Object>> maps = Dbo.queryList("select target_type from " + Type_contrast.TableName + " t1 left join " + Data_store_layer.TableName + " t2 on t1.dtcs_id = t2.dtcs_id " +
+                "where t2.dsl_id = ? and lower(t1.source_type) = ?", data_store_layer.getDsl_id(), column_type);
+        if (maps.isEmpty()) {
+            return column_type;
+        } else {
+            return maps.get(0).get("target_type").toString();
+        }
     }
 
 
@@ -552,7 +668,6 @@ public class MarketInfoAction extends BaseAction {
         }
         for (int i = 0; i < dm_column_storage.length; i++) {
             Dm_column_storage dc_storage = dm_column_storage[i];
-//            dc_storage.getCsi_number().intValue();
             dc_storage.setDatatable_field_id(datatable_field_info[dc_storage.getCsi_number().intValue()].getDatatable_field_id());
             dc_storage.add(Dbo.db());
         }
@@ -684,7 +799,7 @@ public class MarketInfoAction extends BaseAction {
     @Param(name = "datatable_id", desc = "datatable_id", range = "String类型集市表ID")
     @Param(name = "date", desc = "date", range = "String类型跑批日期")
     @Param(name = "parameter", desc = "parameter", range = "动态参数")
-    public void excutMartJob(String datatable_id, String date,String parameter) {
+    public void excutMartJob(String datatable_id, String date, String parameter) {
         date = date.substring(0, 10).replace("-", "");
         System.out.println("a");
     }

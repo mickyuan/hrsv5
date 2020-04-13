@@ -116,15 +116,15 @@ public abstract class ProcessingData {
 	 * @param tableName {@link String} 表名
 	 * @param db        {@link DatabaseWrapper} db
 	 */
-	private static Map<String, Object> getTableLayer(String tableName, DatabaseWrapper db) {
+	public static Map<String, Object> getTableLayer(String tableName, DatabaseWrapper db) {
 		Map<String, Object> mapTaberLayer = new HashMap<>();
 		/**
 		 * 查询贴元表信息，也就是通过数据采集过来的数据表
 		 */
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance()
-				.addSql("select * from " + Data_store_reg.TableName + " where collect_type in (?,?) and hyren_name = ?")
+				.addSql("select * from " + Data_store_reg.TableName + " where collect_type in (?,?) and lower(hyren_name) = ?")
 				.addParam(CollectType.DBWenJianCaiJi.getCode()).addParam(CollectType.ShuJuKuCaiJi.getCode())
-				.addParam(tableName);
+				.addParam(tableName.toLowerCase());
 		Optional<Data_store_reg> opdsr = SqlOperator.queryOneObject(db, Data_store_reg.class, asmSql.sql(), asmSql.params());
 		if (opdsr.isPresent()) {
 			Data_store_reg dsr = opdsr.get();
@@ -146,7 +146,7 @@ public abstract class ProcessingData {
 				"select dsl.dsl_id,dsl.dsl_name,dsl.store_type from "
 						+ Dm_datatable.TableName + " dd join  " + Dm_relation_datatable.TableName + " drd " +
 						"on dd.datatable_id = drd.datatable_id join " + Data_store_layer.TableName + " dsl " +
-						"on drd.dsl_id = dsl.dsl_id where datatable_en_name = ?", tableName);
+						"on drd.dsl_id = dsl.dsl_id where lower(datatable_en_name) = ?", tableName.toLowerCase());
 		if (dslMap.size() != 0) {
 			mapTaberLayer.put("dataSourceType", DataSourceType.DML.getCode());
 			mapTaberLayer.put(tableName, dslMap);//key 为表名+存储层ID

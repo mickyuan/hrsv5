@@ -298,7 +298,13 @@ public class DruidParseQuerySql {
                 }
             }
         } else {
-            throw new BusinessSystemException("未知的sqlTableSource：" + sqlTableSource.toString() + " class:" + sqlTableSource.getClass());
+            String message;
+            if(sqlTableSource == null){
+                message = "未知的From来源";
+            }else{
+                message = "未知的From来源：" + sqlTableSource.toString() +" class:" + sqlTableSource.getClass();
+            }
+            throw new BusinessSystemException(message);
         }
     }
 
@@ -351,7 +357,13 @@ public class DruidParseQuerySql {
             OracleSelectQueryBlock oracleSelectQueryBlock = (OracleSelectQueryBlock) sqlSelectQuery;
             handleFrom(oracleSelectQueryBlock.getFrom());
         } else {
-            throw new BusinessSystemException("未知的sqlSelectQuery：" + sqlSelectQuery.toString() + " class:" + sqlSelectQuery.getClass());
+            String message;
+            if(sqlSelectQuery == null){
+                message = "未知的SelectQuery";
+            }else{
+                message = "未知的SelectQuery来源：" + sqlSelectQuery.toString() +" class:" + sqlSelectQuery.getClass();
+            }
+            throw new BusinessSystemException(message);
         }
     }
 
