@@ -5,6 +5,7 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
+import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
@@ -19,6 +20,7 @@ import hrds.commons.entity.Collect_job_classify;
 import hrds.commons.entity.Data_extraction_def;
 import hrds.commons.entity.Data_source;
 import hrds.commons.entity.Database_set;
+import hrds.commons.entity.Etl_dependency;
 import hrds.commons.entity.Etl_job_def;
 import hrds.commons.entity.Etl_job_resource_rela;
 import hrds.commons.entity.Etl_para;
@@ -33,6 +35,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import org.apache.commons.lang.StringUtils;
 
 @DocClass(desc = "定义启动方式配置", author = "Lee-Qiang")
 public class StartWayConfAction extends BaseAction {
@@ -207,19 +211,32 @@ public class StartWayConfAction extends BaseAction {
         colSetId);
   }
 
-  @Method(desc = "获取编辑时任务下的作业信息", logicStep = "获取任务信息")
+  @Method(desc = "获取编辑时任务下的作业信息", logicStep = "1: 获取任务信息的作业信息, 2: 获取每个作业的上游作业信息")
   @Param(name = "colSetId", desc = "任务ID", range = "不可为空")
   @Return(desc = "返回作业信息", range = "可以为空..为空表示没有设置作业信息")
   public List<Map<String, Object>> getEtlJobData(long colSetId) {
-    return Dbo.queryList(
-        "SELECT t1.database_id,t1.ded_id,t2.* from "
-            + Take_relation_etl.TableName
-            + " t1 JOIN "
-            + Etl_job_def.TableName
-            + " t2 ON "
-            + "t1.etl_job = t2.etl_job WHERE t1.etl_sys_cd = t2.etl_sys_cd AND t1.sub_sys_cd = t2.etl_sys_cd "
-            + "AND t1.database_id = ? ",
-        colSetId);
+    List<Map<String, Object>> etlJobList =
+        Dbo.queryList(
+            "SELECT t1.database_id,t1.ded_id,t2.* from "
+                + Take_relation_etl.TableName
+                + " t1 JOIN "
+                + Etl_job_def.TableName
+                + " t2 ON "
+                + "t1.etl_job = t2.etl_job WHERE t1.etl_sys_cd = t2.etl_sys_cd AND t1.sub_sys_cd = t2.etl_sys_cd "
+                + "AND t1.database_id = ? ",
+            colSetId);
+    etlJobList.forEach(
+        itemMap -> {
+          List<Object> preJobList =
+              Dbo.queryOneColumnList(
+                  "SELECT pre_etl_job FROM "
+                      + Etl_dependency.TableName
+                      + " WHERE etl_sys_cd = ? AND etl_job = ?",
+                  itemMap.get("etl_sys_cd").toString(),
+                  itemMap.get("etl_job").toString());
+          itemMap.put("pre_etl_job", preJobList);
+        });
+    return etlJobList;
   }
 
   @Method(
@@ -228,7 +245,7 @@ public class StartWayConfAction extends BaseAction {
           ""
               + "1: 检查当前任务是否存在; "
               + "2: 获取任务部署的Agent路径及日志地址,并将程序类型,名称的默认值返回 "
-              + "3: 获取任务存在着抽取作业关系"
+              + "3: : 获取任务存在着抽取作业关系.. 如果存在就获取一条信息就可以... 因为同个任务的作业工程编号,任务编号是一个"
               + "4: 合并数据集返回数据")
   @Param(name = "colSetId", desc = "采集任务编号", range = "不可为空的整数")
   @Return(desc = "返回Agent部署的程序目录", range = "不可为空")
@@ -255,22 +272,12 @@ public class StartWayConfAction extends BaseAction {
             colSetId);
     map.put("pro_type", Pro_Type.JAVA.getCode());
     map.put("pro_name", PropertyParaValue.getString("agentpath", ""));
-    /*
-       3: 获取任务存在着抽取作业关系
-    */
-    //    countNum =
-    //        Dbo.queryNumber(
-    //                "SELECT COUNT(1) FROM " + Take_relation_etl.TableName + " WHERE database_id =
-    // ?",
-    //                colSetId)
-    //            .orElseThrow(() -> new BusinessException("SQL查询错误"));
-    //    if (countNum != 0) {
-    // 如果存在就获取一条信息就可以... 因为同个任务的作业工程编号,任务编号是一个
+
+    // 3: 获取任务存在着抽取作业关系.. 如果存在就获取一条信息就可以... 因为同个任务的作业工程编号,任务编号是一个
     map.putAll(
         Dbo.queryOneObject(
             "SELECT * FROM " + Take_relation_etl.TableName + " WHERE database_id = ? LIMIT 1",
             colSetId));
-    //    }
     return map;
   }
 
@@ -290,13 +297,18 @@ public class StartWayConfAction extends BaseAction {
   @Param(name = "pro_dic", desc = "agent部署目录", range = "不可为空")
   @Param(name = "log_dic", desc = "agent日志路径", range = "不可为空")
   @Param(
+      name = "jobRelations",
+      desc = "作业的依赖关系",
+      range = "可为空",
+      example = "数据结构如: {aaaa:bbbb^cccc^dddd},其中 aaaa表示作业名称,bbbb,cccc,dddd分别表示为上游作业名称")
+  @Param(
       name = "etlJobs",
       range =
           "作业 Etl_job_def 数组字符串,每个对象的应该都应该包含所有的实体信息如:"
               + "{作业名(etl_job),工程代码(etl_sys_cd),子系统代码(sub_sys_cd),作业描述(etl_job_desc),"
               + "作业程序类型(pro_type,使用代码项Pro_Type),作业程序目录(pro_dic),作业程序名称(pro_name),"
               + "作业程序参数(pro_para),日志目录(log_dic),调度频率(disp_freq,代码项Dispatch_Frequency),"
-              + "调度时间位移(disp_offset),调度触发方式(disp_type),调度触发时间(disp_time),}",
+              + "调度时间位移(disp_offset),调度触发方式(disp_type),调度触发时间(disp_time)}",
       desc = "",
       isBean = true)
   @Param(name = "ded_arr", desc = "卸数文件的ID", range = "不可为空的字符串,多个参数之间使用 ^ 隔开")
@@ -307,7 +319,8 @@ public class StartWayConfAction extends BaseAction {
       String pro_dic,
       String log_dic,
       Etl_job_def[] etlJobs,
-      String ded_arr) {
+      String ded_arr,
+      String jobRelations) {
 
     List<String> dedList = StringUtil.split(ded_arr, "^");
     if (etlJobs.length != dedList.size()) {
@@ -331,6 +344,12 @@ public class StartWayConfAction extends BaseAction {
 
     // 先获取当前工程,任务下的作业名称
     List<Object> etlJobList = getEtlJob(etl_sys_cd, sub_sys_cd);
+
+    // 解析出作业上游的关系数据
+    Map jobRelationMap = null;
+    if (StringUtil.isNotBlank(jobRelations)) {
+      jobRelationMap = JsonUtil.toObjectSafety(jobRelations, Map.class).get();
+    }
 
     // 作业定义信息
     int index = 0;
@@ -371,6 +390,14 @@ public class StartWayConfAction extends BaseAction {
               + " "
               + DateUtil.parseStr2TimeWith6Char(DateUtil.getSysTime()));
       etl_job_def.add(Dbo.db());
+
+      // 保存每个作业的上游依赖关系
+      if (jobRelationMap != null) {
+        Object pre_job = jobRelationMap.get(etl_job_def.getEtl_job());
+        if (pre_job != null) {
+          saveEtlDependencies(etl_sys_cd, etl_job_def.getEtl_job(), pre_job.toString());
+        }
+      }
 
       /*
        对每个采集作业定义资源分配 ,检查作业所需资源是否存在,如果存在则跳过
@@ -474,5 +501,37 @@ public class StartWayConfAction extends BaseAction {
   private List<Object> getRelationEtl(long colSetId) {
     return Dbo.queryOneColumnList(
         "SELECT etl_job FROM " + Take_relation_etl.TableName + " WHERE database_id = ?", colSetId);
+  }
+
+  @Method(
+      desc = "保存作业的依赖关系",
+      logicStep = "1: 根据工程编号,作业名称删除当前作业和当前作业有关系的依赖作业.不关心删除条数" + "2: 根据新的依赖进行入库操作")
+  @Param(name = "etl_sys_cd", desc = "工程编号", range = "不可为空")
+  @Param(name = "status", desc = "作业有效标识", range = "不可为空")
+  @Param(name = "jobRelation", desc = "上游作业名称", range = "不可为空")
+  private void saveEtlDependencies(String etl_sys_cd, String etl_job, String jobRelation) {
+
+    // 1: 根据工程编号,作业名称删除当前作业的依赖.不关心删除条数
+    Dbo.execute(
+        "DELETE FROM "
+            + Etl_dependency.TableName
+            + " WHERE (etl_job = ? OR pre_etl_job = ?) AND etl_sys_cd = ? ",
+        etl_job,
+        etl_job,
+        etl_sys_cd);
+    // 2: 根据新的依赖进行入库操作
+    if (StringUtil.isNotBlank(jobRelation)) {
+      StringUtil.split(jobRelation, "^")
+          .forEach(
+              item -> {
+                Etl_dependency etl_dependency = new Etl_dependency();
+                etl_dependency.setEtl_sys_cd(etl_sys_cd);
+                etl_dependency.setEtl_job(etl_job);
+                etl_dependency.setPre_etl_sys_cd(etl_sys_cd);
+                etl_dependency.setPre_etl_job(item);
+                etl_dependency.setStatus(IsFlag.Shi.getCode());
+                etl_dependency.add(Dbo.db());
+              });
+    }
   }
 }
