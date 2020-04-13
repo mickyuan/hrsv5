@@ -21,6 +21,9 @@ import java.util.Map;
 @DocClass(desc = "数据文件采集数据字典的表配置", author = "Mr.Lee", createdate = "2020-04-13 14:41")
 public class DictionaryTableAction extends BaseAction {
 
+  @Method(desc = "获取表信息", logicStep = "根据任务获取该任务下的表及数据字典中的表")
+  @Param(name = "colSetId", desc = "采集任务ID", range = "不可为空")
+  @Return(desc = "返回数据字典和数据库的表信息", range = "可以为空,为空表示数据字典及数据库无表记录信息")
   public void dictionTableData(long colSetId) {
     long countNum =
         Dbo.queryNumber(
@@ -30,7 +33,7 @@ public class DictionaryTableAction extends BaseAction {
     if (countNum == 0) {
       CheckParam.throwErrorMsg("采集任务( %s ),不存在!!!", colSetId);
     }
-    // 获取数据库上次已存在的表
+    // 获取数据库已存在的表
     List<Map<String, Object>> list =
         Dbo.queryList(
             Table_info.TableName,
@@ -42,13 +45,17 @@ public class DictionaryTableAction extends BaseAction {
     if (databaseInfo.size() > 0) {
       throw new BusinessException("未找到数据库采集任务");
     }
-    // 2、和Agent端进行交互，得到Agent返回的数据
-    long agentId = (long) databaseInfo.get("agent_id");
+    // 2、和Agent端进行交互，得到Agent返回的表名数据
     String respMsg =
         SendMsgUtil.getAllTableName(
-            agentId, getUserId(), databaseInfo, AgentActionUtil.GETDATABASETABLE);
+            ((long) databaseInfo.get("agent_id")),
+            getUserId(),
+            databaseInfo,
+            AgentActionUtil.GETDATABASETABLE);
     // 3、对获取到的数据进行处理，根据表名和colSetId获取界面需要显示的信息并返回
-    List<String> tableNames = JSON.parseObject(respMsg, new TypeReference<List<String>>() {});
+    List<Table_info> tableNames =
+        JSON.parseObject(respMsg, new TypeReference<List<Table_info>>() {});
+
     // 找出已在数据字典中存在表
 
   }
