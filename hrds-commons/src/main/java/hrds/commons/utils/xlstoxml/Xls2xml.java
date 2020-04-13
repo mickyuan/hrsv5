@@ -3,6 +3,8 @@ package hrds.commons.utils.xlstoxml;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.utils.StringUtil;
+import hrds.commons.codes.IsFlag;
+import hrds.commons.codes.UnloadType;
 import hrds.commons.exception.BusinessException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -357,7 +359,7 @@ public class Xls2xml {
 						List<String> table_name = StringUtil.split(value, "-");
 						String en_table_name = "";
 						String cn_table_name = "";
-						String storage_type = "1";
+//						String storage_type = "1";
 						if (table_name.get(0) != null) {
 							en_table_name = subString(table_name.get(0), 100);
 						}
@@ -365,9 +367,9 @@ public class Xls2xml {
 							cn_table_name = subString(table_name.get(1), 200);
 						}
 						//添加表的存储方式
-						if (table_name.size() >= 3) {
-							storage_type = subString(table_name.get(2), 200);
-						}
+//						if (table_name.size() >= 3) {
+//							storage_type = UnloadType.QuanLiangXieShu.getCode();
+//						}
 						//如果表名开头为neneed_不作为数据加载
 						if (StringUtil.isEmpty(en_table_name) || en_table_name.toUpperCase().startsWith(NONEED_)) {
 							isNoneed = true;
@@ -376,15 +378,15 @@ public class Xls2xml {
 							isNoneed = false;
 						}
 						info = en_table_name;
-						//TODO xls需要重新设计，这里待修改
-						addTable(en_table_name.toLowerCase(), cn_table_name, storage_type);
+						//TODO xls需要重新设计，这里待修改 这里的卸数方式默认为全量方式,
+						addTable(en_table_name.toLowerCase(), cn_table_name, UnloadType.QuanLiangXieShu.getCode());
 						continue;
 					}
 
 					if (i == tableIndex + 1) {//表名下一行一定是表头，不用进行读取
 						continue;
 					}
-					String primaryKey = "1";
+					String primaryKey = IsFlag.Fou.getCode();
 					String column_id = "", column_name = "", column_cn_name = "", column_type = "", column_key = "", column_null = "", column_remark = "";
 					for (int j = 0; j < 7; j++) {
 						Cell cell = row.getCell(j);
@@ -419,14 +421,14 @@ public class Xls2xml {
 					//i不等于表名且不等于全空额，且表头continue后，其他肯定是列内容
 					if (!StringUtil.isEmpty(isTable)) {
 						if ("pk".equalsIgnoreCase(column_key)) {
-							primaryKey = "0";
+							primaryKey = IsFlag.Shi.getCode();
 						}
 						if (!isNoneed) {
 							int length = getLength(column_type);
 							addColumn(column_id, column_name.toLowerCase(), column_cn_name, column_type, length, column_key, column_null,
 									column_remark, primaryKey);
 						}
-						primaryKey = "1";
+						primaryKey = IsFlag.Fou.getCode();
 					}
 					//如果整行为空,下一行一定是表名
 					if (StringUtil.isEmpty(isTable)) {
@@ -483,12 +485,12 @@ public class Xls2xml {
 		xmlCreater.createAttribute(root, "name", "dict_params");
 	}
 
-	public static void addTable(String en_table_name, String cn_table_name, String storage_type) {
+	public static void addTable(String en_table_name, String cn_table_name, String unload_type) {
 
 		table = xmlCreater.createElement(root, "table");
-		xmlCreater.createAttribute(table, "name", en_table_name);
-		xmlCreater.createAttribute(table, "description", cn_table_name);
-		xmlCreater.createAttribute(table, "storage_type", storage_type);
+		xmlCreater.createAttribute(table, "table_name", en_table_name);
+		xmlCreater.createAttribute(table, "table_ch_name", cn_table_name);
+		xmlCreater.createAttribute(table, "unload_type", unload_type);
 
 	}
 
@@ -498,14 +500,17 @@ public class Xls2xml {
 
 		column = xmlCreater.createElement(table, "column");
 		xmlCreater.createAttribute(column, "column_id", column_id);
-		xmlCreater.createAttribute(column, "name", column_name);
-		xmlCreater.createAttribute(column, "column_cn_name", column_cn_name);
+		xmlCreater.createAttribute(column, "column_name", column_name);
+		xmlCreater.createAttribute(column, "column_ch_name", column_cn_name);
 		xmlCreater.createAttribute(column, "column_type", column_type);
 		xmlCreater.createAttribute(column, "length", String.valueOf(length));
 		xmlCreater.createAttribute(column, "column_key", column_key);
 		xmlCreater.createAttribute(column, "column_null", column_null);
 		xmlCreater.createAttribute(column, "column_remark", column_remark);
-		xmlCreater.createAttribute(column, "primaryKey", primaryKey);
+		xmlCreater.createAttribute(column, "is_primary_key", primaryKey);
+		xmlCreater.createAttribute(column, "is_get", IsFlag.Shi.getCode());
+		xmlCreater.createAttribute(column, "is_alive", IsFlag.Shi.getCode());
+		xmlCreater.createAttribute(column, "is_new", IsFlag.Fou.getCode());
 
 	}
 
