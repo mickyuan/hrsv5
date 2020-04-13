@@ -4,7 +4,6 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
-import fd.ng.core.utils.StringUtil;
 import fd.ng.web.util.Dbo;
 import hrds.b.biz.agent.datafileconf.CheckParam;
 import hrds.commons.base.BaseAction;
@@ -48,6 +47,7 @@ public class CollectFIleAction extends BaseAction {
   }
 
   @Method(desc = "新增数据文件采集", logicStep = "根据用户信息查询数据文件上次为配置完成的数据信息")
+  @Param(name = "source_id", desc = "数据源ID", range = "不可为空")
   @Return(desc = "返回为配置的数据采集信息", range = "可以为空,为空表示不存在上次为配置完成的数据信息")
   public Map<String, Object> addDataFileData(long source_id) {
     return Dbo.queryOneObject(
@@ -83,6 +83,8 @@ public class CollectFIleAction extends BaseAction {
     }
     //    2: 设置此次任务的ID
     String database_id = PrimayKeyGener.getNextId();
+    // 设置是否为DB文件为是
+    database_set.setDb_agent(IsFlag.Shi.getCode());
     database_set.setDatabase_id(database_id);
     database_set.add(Dbo.db());
     //    3: 返回生成的采集任务ID给前端
