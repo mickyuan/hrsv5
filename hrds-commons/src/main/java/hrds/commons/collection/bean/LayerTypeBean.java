@@ -9,18 +9,18 @@ import java.util.List;
  * @create: 2020-04-14 09:29
  */
 public class LayerTypeBean {
-	public enum ConnPyte{
+	public enum ConnTyte{
 		oneJdbc,moreJdbc,oneOther,moreOther
 	}
-	private ConnPyte connType;
+	private ConnTyte connType;
 	private LayerBean layerBean;
 	private List<LayerBean> layerBeanList;
 
-	public ConnPyte getConnType() {
+	public ConnTyte getConnType() {
 		return connType;
 	}
 
-	public void setConnType(ConnPyte connType) {
+	public void setConnType(ConnTyte connType) {
 		this.connType = connType;
 	}
 

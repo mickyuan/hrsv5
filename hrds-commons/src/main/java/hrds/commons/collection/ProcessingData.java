@@ -31,22 +31,22 @@ public abstract class ProcessingData {
 
 		LayerTypeBean ltb = getAllTableIsLayer(sql, db);
 		//只有一个存储，且是jdbc的方式
-		if (ltb.getConnType() == LayerTypeBean.ConnPyte.oneJdbc) {
+		if (ltb.getConnType() == LayerTypeBean.ConnTyte.oneJdbc) {
 			Long dsl_id = ltb.getLayerBean().getDsl_id();
 			getResultSet(sql, db, dsl_id);
 		}
 		//只有一种存储，是什么，可以使用ltb.getLayerBean().getStore_type(),进行判断
-		else if (ltb.getConnType() == LayerTypeBean.ConnPyte.oneOther) {
+		else if (ltb.getConnType() == LayerTypeBean.ConnTyte.oneOther) {
 			//ltb.getLayerBean().getStore_type();
 			//TODO 数据在一种存介质中，但不是jdbc
 		}
 		//有多种存储，但都支持JDBC，是否可以使用dblink的方式
-		else if (ltb.getConnType() == LayerTypeBean.ConnPyte.moreJdbc) {
+		else if (ltb.getConnType() == LayerTypeBean.ConnTyte.moreJdbc) {
 			//List<LayerBean> layerBeanList = ltb.getLayerBeanList();
 			//TODO 数据都在关系型数据库，也就说都可以使用jdbc的方式的实现方式
 		}
 		// 其他，包含了不同的存储，如jdbc、hbase、solr等不同给情况
-		else if (ltb.getConnType() == LayerTypeBean.ConnPyte.moreOther) {
+		else if (ltb.getConnType() == LayerTypeBean.ConnTyte.moreOther) {
 			//List<LayerBean> layerBeanList = ltb.getLayerBeanList();
 			// TODO 混搭模式
 		}
@@ -140,23 +140,35 @@ public abstract class ProcessingData {
 	}
 
 	/**
-	 * @param sql
-	 * @param db
-	 * @return
+	 * 获取所有的表是不是在同一个存储层，且是jdbc或其他
+	 * @param sql {@link String} sql语句
+	 * @param db {@link DatabaseWrapper} db
+	 * @return layerTypeBean  存储信息
 	 */
 	public static LayerTypeBean getAllTableIsLayer(String sql, DatabaseWrapper db) {
-		/**
-		 * 一、判断所有的表是不是使用了同一个存储层，直接使用sql的方式就可以完成
-		 * 二、判断所有的表是不是都使用的jdbc的方式
-		 * 三、其他，包含了不同的存储，如jdbc、hbase、solr等不同给情况
-		 */
 		List<String> listTable = DruidParseQuerySql.parseSqlTableToList(sql);
+		return getAllTableIsLayer(listTable,db);
+	}
+	/**
+	 * 获取所有的表是不是在同一个存储层，且是jdbc或其他
+	 * @param allTableList {@link List} sql语句
+	 * @param db {@link DatabaseWrapper} db
+	 * @return layerTypeBean  存储信息
+	 */
+
+	public static LayerTypeBean getAllTableIsLayer(List<String> allTableList, DatabaseWrapper db) {
+		/**
+		 * 一、判断所有的表是不是使用了同一个存储层，且是jdbc 返回 oneJdbc
+		 * 二、判断所有的表是不是都使用的jdbc的方式，且是多个jdbc，返回 morejdbc
+		 * 三、判断如果只有一个存储层，且不是jdbc，返回oneother
+		 * 四、判断有多个存储层，且不是jdbc，返回 moreother
+		 */
 		/**
 		 * 1、使用存储ID为key记录每个存储层下面有多少张表
 		 * 获取所有表的存储层，记录所有表的存储层ID
 		 */
 		Map<String, LayerBean> allTableLayer = new HashMap<>();
-		for (String tableName : listTable) {
+		for (String tableName : allTableList) {
 			List<LayerBean> tableLayer = getTableLayer(tableName, db);
 			if(tableLayer == null)
 				throw new AppSystemException("根据接卸的表没有找到对应存储层信息，请确认数据是否正确");
@@ -181,7 +193,7 @@ public abstract class ProcessingData {
 		LayerTypeBean layerTypeBean = new LayerTypeBean();
 		List<LayerBean> list = new ArrayList<>();
 		Iterator<String> iter = allTableLayer.keySet().iterator();
-		Set<LayerTypeBean.ConnPyte> setconn = new HashSet<>();
+		Set<LayerTypeBean.ConnTyte> setconn = new HashSet<>();
 		while (iter.hasNext()) {
 			String key = iter.next();
 			LayerBean objectMap = allTableLayer.get(key);
@@ -191,31 +203,30 @@ public abstract class ProcessingData {
 			 * 1、如果有一个list中的表个数和解析的表个数一样，也就是说所有的表都在一个存储层中存在，所有直接用这个存储层的信息即可
 			 * 2、如果不一样，所有的都是jdbc
 			 */
-			if (tableNameList.size() == listTable.size()) {
+			if (tableNameList.size() == allTableList.size()) {
 				if (Store_type.DATABASE == Store_type.ofEnumByCode(store_type) || Store_type.HIVE == Store_type.ofEnumByCode(store_type))
-					layerTypeBean.setConnType(LayerTypeBean.ConnPyte.oneJdbc);
+					layerTypeBean.setConnType(LayerTypeBean.ConnTyte.oneJdbc);
 				else
-					layerTypeBean.setConnType(LayerTypeBean.ConnPyte.oneOther);
+					layerTypeBean.setConnType(LayerTypeBean.ConnTyte.oneOther);
 				layerTypeBean.setLayerBean(objectMap);
 				return layerTypeBean;
 			}
 			//2、判断是不是都支持jdbc，是否可以使用dblink的方式进行使用
 			if (Store_type.DATABASE == Store_type.ofEnumByCode(store_type) || Store_type.HIVE == Store_type.ofEnumByCode(store_type)) {
-				setconn.add(LayerTypeBean.ConnPyte.moreJdbc);
+				setconn.add(LayerTypeBean.ConnTyte.moreJdbc);
 			} else {
-				setconn.add(LayerTypeBean.ConnPyte.moreOther);
+				setconn.add(LayerTypeBean.ConnTyte.moreOther);
 			}
 			list.add(objectMap);
 			layerTypeBean.setLayerBeanList(list);
 		}
 		//set有一个，且是morejdbc，就是有过的且全部是jdbc的方式
-		if (setconn.size() == 1 && setconn.contains(LayerTypeBean.ConnPyte.moreJdbc))
-			layerTypeBean.setConnType(LayerTypeBean.ConnPyte.moreJdbc);
+		if (setconn.size() == 1 && setconn.contains(LayerTypeBean.ConnTyte.moreJdbc))
+			layerTypeBean.setConnType(LayerTypeBean.ConnTyte.moreJdbc);
 		else
-			layerTypeBean.setConnType(LayerTypeBean.ConnPyte.moreOther);
+			layerTypeBean.setConnType(LayerTypeBean.ConnTyte.moreOther);
 		return layerTypeBean;
 	}
-
 
 	//************************************************具体的实现********************************************************/
 

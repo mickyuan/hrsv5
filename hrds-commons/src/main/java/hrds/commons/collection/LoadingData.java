@@ -1,5 +1,9 @@
 package hrds.commons.collection;
 
+import fd.ng.db.jdbc.DatabaseWrapper;
+import fd.ng.db.jdbc.SqlOperator;
+import hrds.commons.collection.bean.LayerBean;
+import hrds.commons.collection.bean.LayerTypeBean;
 import hrds.commons.collection.bean.LoadingDataBean;
 
 import java.util.List;
@@ -14,24 +18,41 @@ import java.util.Map;
 public abstract class LoadingData {
 
 	private LoadingDataBean ldbbean = new LoadingDataBean();
+
 	/**
 	 * @param ldbean 存储层信息
 	 */
-	public LoadingData(LoadingDataBean ldbean){
+	public LoadingData(LoadingDataBean ldbean) {
 		this.ldbbean = ldbean;
 	}
+
 	/**
 	 * @return
 	 */
-	public String intoDataLayer(Map<String,Object> map){
-		Map<String, String> layer = LoadingDataBean.getLayer();//存储层
+	public String intoDataLayer(String sql, DatabaseWrapper db) {
+		LayerTypeBean allTableIsLayer = ProcessingData.getAllTableIsLayer(sql, db);
+		LayerTypeBean.ConnTyte connType = allTableIsLayer.getConnType();
+		if (LayerTypeBean.ConnTyte.oneJdbc == connType) {
+			if (ldbbean.isIsDirTran()) {
+				LayerBean layerBean = allTableIsLayer.getLayerBean();
+				Map<String, String> layerAttr = layerBean.getLayerAttr();
+				try (DatabaseWrapper dbDataConn = ConnectionTool.getDBWrapper(layerAttr)) {
+					SqlOperator.execute(dbDataConn, "insert into " + ldbbean.getTableName() + sql);
+					dbDataConn.commit();
+				}
+			} else {
 
-		boolean isbatch = LoadingDataBean.isIsbatch();//是否批量存储
-		if(isbatch){
+			}
+		}else if(LayerTypeBean.ConnTyte.oneOther == connType){
+			new ProcessingData() {
+				@Override
+				public void dealLine(Map<String, Object> map) throws Exception {
 
+				}
+			}.getDataLayer(sql,db);
 		}
-		return "";
+		return null;
 	}
 
-	public abstract String intoDataImp(List<Map<String,Object>> data);
+	public abstract String intoDataImp(List<Map<String, Object>> data);
 }

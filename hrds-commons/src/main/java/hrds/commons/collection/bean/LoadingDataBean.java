@@ -11,8 +11,24 @@ import java.util.Map;
 public class LoadingDataBean {
 	private static Map<String, String> layer;
 	private static boolean isbatch = true;
+	private static boolean isDirTran = true;
 	private static int batchNum = 50000;
+	private static String tableName;
 
+	public static String getTableName() {
+		return tableName;
+	}
+
+	public static void setTableName(String tableName) {
+		LoadingDataBean.tableName = tableName;
+	}
+	public static boolean isIsDirTran() {
+		return isDirTran;
+	}
+
+	public static void setIsDirTran(boolean isDirTran) {
+		LoadingDataBean.isDirTran = isDirTran;
+	}
 	public static Map<String, String> getLayer() {
 		return layer;
 	}
