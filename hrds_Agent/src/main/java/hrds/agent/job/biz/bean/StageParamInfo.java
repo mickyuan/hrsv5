@@ -21,6 +21,9 @@ public class StageParamInfo implements Serializable {
 	//卸数完成后，本次采集生成的数据文件路径
 	private String[] fileArr;
 
+	//卸数完成后的，生成的数据文件名称
+	private String[] fileNameArr;
+
 	//TODO 如果后期有使用到这个类来进行各个阶段间的传参，就自行往这里面加
 
 	//本阶段执行状态信息
@@ -130,5 +133,13 @@ public class StageParamInfo implements Serializable {
 
 	public void setCollectType(String collectType) {
 		this.collectType = collectType;
+	}
+
+	public String[] getFileNameArr() {
+		return fileNameArr;
+	}
+
+	public void setFileNameArr(String[] fileNameArr) {
+		this.fileNameArr = fileNameArr;
 	}
 }

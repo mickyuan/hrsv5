@@ -185,10 +185,20 @@ public class DbmCodeTypeInfoAction extends BaseAction {
         SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
         asmSql.clean();
         asmSql.addSql("select * from " + Dbm_code_type_info.TableName + " where");
-        if (StringUtil.isNotBlank(status)) {
-            asmSql.addSql(" code_status = ? and").addParam(status);
+        //如果用户是对标管理员,则校验并根据状态和创建用户查询
+        if (getUser().getUserTypeGroup().contains(UserType.ShuJuDuiBiaoGuanLi.getCode())) {
+            asmSql.addSql("create_user = ? ").addParam(getUserId().toString());
+            if (StringUtil.isNotBlank(status)) {
+                asmSql.addSql(" code_status = ? ").addParam(status);
+            }
         }
-        asmSql.addSql("create_user = ? and (").addParam(getUserId().toString());
+        //如果是对标操作员,则检索已经发布的
+        else if (getUser().getUserTypeGroup().contains(UserType.ShuJuDuiBiaoCaoZuo.getCode())) {
+            asmSql.addSql(" code_status = ?").addParam(IsFlag.Shi.getCode());
+        } else {
+            throw new BusinessException("登录用户没有查询对标数据权限!");
+        }
+        asmSql.addSql(" and (");
         asmSql.addLikeParam("code_type_name", '%' + search_cond + '%', "");
         asmSql.addLikeParam("code_encode", '%' + search_cond + '%', "or");
         asmSql.addLikeParam("code_remark", '%' + search_cond + '%', "or").addSql(")");

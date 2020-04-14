@@ -18,6 +18,10 @@ import com.alibaba.druid.stat.TableStat.Name;
 import com.alibaba.druid.util.JdbcConstants;
 import fd.ng.core.exception.BusinessSystemException;
 import fd.ng.core.utils.StringUtil;
+import fd.ng.web.util.Dbo;
+import hrds.commons.codes.TableStorage;
+import hrds.commons.entity.Dm_datatable;
+import hrds.commons.entity.Dm_operation_info;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.*;
@@ -32,6 +36,8 @@ import java.util.*;
  * <p>version: JDK 1.8</p>
  */
 public class DruidParseQuerySql {
+    public static String sourcecolumn = "sourcecolumn";
+    public static String sourcetable = "sourcetable";
     public List<SQLSelectItem> selectList = null;
     private List<HashMap<String, Object>> listmap = new ArrayList<HashMap<String, Object>>();
     private List<HashMap<String, Object>> columnlist = new ArrayList<HashMap<String, Object>>();
@@ -66,7 +72,9 @@ public class DruidParseQuerySql {
         }
     }
 
-    public DruidParseQuerySql(){}
+    public DruidParseQuerySql() {
+    }
+
     /**
      * <p>方法描述: 解析查询SQL中的原字段信息,如果查询的列字段中有自定义字段,则放入自定义字段</p>
      * <p>@author: Mr.Lee </p>
@@ -165,8 +173,8 @@ public class DruidParseQuerySql {
      */
     public HashMap<String, Object> getBloodRelationMap(String sql) {
         sql = sql.trim();
-        if(sql.endsWith(";")){
-            sql = sql.substring(0,sql.length()-1);
+        if (sql.endsWith(";")) {
+            sql = sql.substring(0, sql.length() - 1);
         }
         this.listmap.clear();
         this.columnlist.clear();
@@ -197,8 +205,8 @@ public class DruidParseQuerySql {
             //因为选择的是oracle的datatype 所以只考虑unionquery和oraclequeryblock这两种
         } else if (sqlSelectQuery instanceof OracleSelectQueryBlock) {
             OracleSelectQueryBlock oracleSelectQueryBlock = (OracleSelectQueryBlock) sqlSelectQuery;
-            this.mainSql =oracleSelectQueryBlock.toString();
-                    //开始处理from的部分
+            this.mainSql = oracleSelectQueryBlock.toString();
+            //开始处理from的部分
             handleFrom(oracleSelectQueryBlock.getFrom());
         } else {
             throw new BusinessSystemException("未知的sqlSelectQuery：" + sqlSelectQuery.toString() + " class:" + sqlSelectQuery.getClass());
@@ -299,10 +307,10 @@ public class DruidParseQuerySql {
             }
         } else {
             String message;
-            if(sqlTableSource == null){
+            if (sqlTableSource == null) {
                 message = "未知的From来源";
-            }else{
-                message = "未知的From来源：" + sqlTableSource.toString() +" class:" + sqlTableSource.getClass();
+            } else {
+                message = "未知的From来源：" + sqlTableSource.toString() + " class:" + sqlTableSource.getClass();
             }
             throw new BusinessSystemException(message);
         }
@@ -317,10 +325,10 @@ public class DruidParseQuerySql {
     private void putResult(ArrayList<HashMap<String, Object>> templist, String alias, String columnname, String table) {
         if (columnname != null) {
             HashMap<String, Object> temphashmap = new HashMap<String, Object>();
-            temphashmap.put("sourcecolumn", columnname);
-            temphashmap.put("sourcetable", table);
+            temphashmap.put(sourcecolumn, columnname.toLowerCase());
+            temphashmap.put(sourcetable, table.toLowerCase());
             templist.add(temphashmap);
-            System.out.println(alias + " " + "sourcecolumn:" + columnname + " sourcetable:" + table);
+            System.out.println(alias + " " + "sourcecolumn:" + columnname.toLowerCase() + " sourcetable:" + table.toLowerCase());
         }
     }
 
@@ -358,10 +366,10 @@ public class DruidParseQuerySql {
             handleFrom(oracleSelectQueryBlock.getFrom());
         } else {
             String message;
-            if(sqlSelectQuery == null){
+            if (sqlSelectQuery == null) {
                 message = "未知的SelectQuery";
-            }else{
-                message = "未知的SelectQuery来源：" + sqlSelectQuery.toString() +" class:" + sqlSelectQuery.getClass();
+            } else {
+                message = "未知的SelectQuery来源：" + sqlSelectQuery.toString() + " class:" + sqlSelectQuery.getClass();
             }
             throw new BusinessSystemException(message);
         }
@@ -498,7 +506,7 @@ public class DruidParseQuerySql {
      * <p>参   数:  </p>
      */
     public void getcolumn(SQLExpr sqlexpr, String alias) {
-        if(null == sqlexpr){
+        if (null == sqlexpr) {
             return;
         }
         if (sqlexpr instanceof SQLIdentifierExpr) {
@@ -563,11 +571,11 @@ public class DruidParseQuerySql {
         } else if (sqlexpr instanceof SQLCharExpr) {
             return;
         } else if (sqlexpr instanceof SQLContainsExpr) {
-            SQLContainsExpr sqlContainsExpr = (SQLContainsExpr)sqlexpr;
-            getcolumn(sqlContainsExpr.getExpr(),alias);
+            SQLContainsExpr sqlContainsExpr = (SQLContainsExpr) sqlexpr;
+            getcolumn(sqlContainsExpr.getExpr(), alias);
             List<SQLExpr> targetList = sqlContainsExpr.getTargetList();
-            for(SQLExpr sqlExpr : targetList){
-                getcolumn(sqlExpr,alias);
+            for (SQLExpr sqlExpr : targetList) {
+                getcolumn(sqlExpr, alias);
             }
         } else if (sqlexpr instanceof SQLCurrentOfCursorExpr) {
             return;
@@ -580,44 +588,44 @@ public class DruidParseQuerySql {
         } else if (sqlexpr instanceof SQLFlashbackExpr) {
             throw new BusinessSystemException("SQLFlashbackExpr 有待开发");
         } else if (sqlexpr instanceof SQLGroupingSetExpr) {
-            SQLGroupingSetExpr sqlGroupingSetExpr=(SQLGroupingSetExpr)sqlexpr;
+            SQLGroupingSetExpr sqlGroupingSetExpr = (SQLGroupingSetExpr) sqlexpr;
             List<SQLExpr> parameters = sqlGroupingSetExpr.getParameters();
-            for(SQLExpr sqlExpr : parameters){
-                getcolumn(sqlexpr,alias);
+            for (SQLExpr sqlExpr : parameters) {
+                getcolumn(sqlexpr, alias);
             }
         } else if (sqlexpr instanceof SQLHexExpr) {
             return;
         } else if (sqlexpr instanceof SQLInListExpr) {
-            SQLInListExpr sqlInListExpr = (SQLInListExpr)sqlexpr;
-            getcolumn(sqlInListExpr.getExpr(),alias);
+            SQLInListExpr sqlInListExpr = (SQLInListExpr) sqlexpr;
+            getcolumn(sqlInListExpr.getExpr(), alias);
             List<SQLExpr> targetList = sqlInListExpr.getTargetList();
-            for(SQLExpr sqlExpr : targetList){
-                getcolumn(sqlExpr,alias);
+            for (SQLExpr sqlExpr : targetList) {
+                getcolumn(sqlExpr, alias);
             }
         } else if (sqlexpr instanceof SQLInSubQueryExpr) {
-            SQLInSubQueryExpr sqlInSubQueryExpr = (SQLInSubQueryExpr)sqlexpr;
-            getcolumn(sqlInSubQueryExpr.getExpr(),alias);
+            SQLInSubQueryExpr sqlInSubQueryExpr = (SQLInSubQueryExpr) sqlexpr;
+            getcolumn(sqlInSubQueryExpr.getExpr(), alias);
         } else if (sqlexpr instanceof SQLIntegerExpr) {
             return;
         } else if (sqlexpr instanceof SQLIntervalExpr) {
             return;
         } else if (sqlexpr instanceof SQLListExpr) {
-            SQLListExpr sqlListExpr = (SQLListExpr)sqlexpr;
+            SQLListExpr sqlListExpr = (SQLListExpr) sqlexpr;
             List<SQLExpr> items = sqlListExpr.getItems();
-            for(SQLExpr sqlExpr:items){
-                getcolumn(sqlExpr,alias);
+            for (SQLExpr sqlExpr : items) {
+                getcolumn(sqlExpr, alias);
             }
         } else if (sqlexpr instanceof SQLMethodInvokeExpr) {
-            SQLMethodInvokeExpr sqlMethodInvokeExpr = (SQLMethodInvokeExpr)sqlexpr;
+            SQLMethodInvokeExpr sqlMethodInvokeExpr = (SQLMethodInvokeExpr) sqlexpr;
             List<SQLExpr> parameters = sqlMethodInvokeExpr.getParameters();
-            for(SQLExpr sqlExpr : parameters){
-                getcolumn(sqlExpr,alias);
+            for (SQLExpr sqlExpr : parameters) {
+                getcolumn(sqlExpr, alias);
             }
         } else if (sqlexpr instanceof SQLNCharExpr) {
             return;
         } else if (sqlexpr instanceof SQLNotExpr) {
             SQLNotExpr sqlNotExpr = (SQLNotExpr) sqlexpr;
-            getcolumn(sqlNotExpr.getExpr(),alias);
+            getcolumn(sqlNotExpr.getExpr(), alias);
         } else if (sqlexpr instanceof SQLNullExpr) {
             return;
         } else if (sqlexpr instanceof SQLNumberExpr) {
@@ -633,20 +641,20 @@ public class DruidParseQuerySql {
         } else if (sqlexpr instanceof SQLTextLiteralExpr) {
             return;
         } else if (sqlexpr instanceof SQLTimestampExpr) {
-            return ;
+            return;
         } else if (sqlexpr instanceof SQLUnaryExpr) {
-            SQLUnaryExpr sqlUnaryExpr = (SQLUnaryExpr)sqlexpr;
-            getcolumn(sqlUnaryExpr.getExpr(),alias);
+            SQLUnaryExpr sqlUnaryExpr = (SQLUnaryExpr) sqlexpr;
+            getcolumn(sqlUnaryExpr.getExpr(), alias);
         } else if (sqlexpr instanceof SQLValuesExpr) {
-            SQLValuesExpr sqlValuesExpr = (SQLValuesExpr)sqlexpr;
+            SQLValuesExpr sqlValuesExpr = (SQLValuesExpr) sqlexpr;
             List<SQLListExpr> values = sqlValuesExpr.getValues();
-            for(SQLListExpr sqlListExpr : values){
-                    getcolumn(sqlListExpr,alias);
+            for (SQLListExpr sqlListExpr : values) {
+                getcolumn(sqlListExpr, alias);
             }
         } else if (sqlexpr instanceof SQLVariantRefExpr) {
             return;
-        }else{
-            throw new BusinessSystemException("未知的sqlexpr类型 sqlexpr："+sqlexpr.toString()+"class:"+sqlexpr.getClass());
+        } else {
+            throw new BusinessSystemException("未知的sqlexpr类型 sqlexpr：" + sqlexpr.toString() + "class:" + sqlexpr.getClass());
         }
     }
 
@@ -681,6 +689,84 @@ public class DruidParseQuerySql {
         }
     }
 
+    /**
+     * 判断视图
+     *
+     * @param sql
+     * @return
+     */
+    public String GetNewSql(String sql) {
+        String dbType = JdbcConstants.ORACLE;
+        List<SQLStatement> stmtList = SQLUtils.parseStatements(sql, dbType);
+        for (SQLStatement stmt : stmtList) {
+            SQLSelectStatement sqlSelectStatement = (SQLSelectStatement) stmt;
+            SQLSelect sqlSelect = sqlSelectStatement.getSelect();
+            SQLSelectQuery sqlSelectQuery = sqlSelect.getQuery();
+            setFrom(sqlSelectQuery);
+        }
+        return sql;
+    }
 
+    /**
+     * 遍历每一个query的部分用以获取from
+     *
+     * @param sqlSelectQuery
+     */
+    private void setFrom(SQLSelectQuery sqlSelectQuery) {
+        if (sqlSelectQuery instanceof SQLUnionQuery) {
+            SQLUnionQuery sqlUnionQuery = (SQLUnionQuery) sqlSelectQuery;
+            setFrom(sqlUnionQuery.getLeft());
+            setFrom(sqlUnionQuery.getRight());
+            // 因为选择的是oracle的datatype 所以只考虑unionquery和oraclequeryblock这两种
+        } else if (sqlSelectQuery instanceof OracleSelectQueryBlock) {
+            OracleSelectQueryBlock oracleSelectQueryBlock = (OracleSelectQueryBlock) sqlSelectQuery;
+            handleSetFrom(oracleSelectQueryBlock.getFrom());
+        } else {
+            String message;
+            if (sqlSelectQuery == null) {
+                message = "未知的SelectQuery";
+            } else {
+                message = "未知的SelectQuery来源：" + sqlSelectQuery.toString() + " class:" + sqlSelectQuery.getClass();
+            }
+        }
+    }
 
+    /**
+     * 拆分from 直至单表
+     *
+     * @param sqlTableSource
+     */
+    private void handleSetFrom(SQLTableSource sqlTableSource) {
+        // 如果是join的形式 就递归继续拆分
+        if (sqlTableSource instanceof OracleSelectJoin) {
+            OracleSelectJoin oracleSelectJoin = (OracleSelectJoin) sqlTableSource;
+            handleSetFrom(oracleSelectJoin.getLeft());
+            handleSetFrom(oracleSelectJoin.getRight());
+        }
+        // 如果是子查询，继续拆分from
+        else if (sqlTableSource instanceof OracleSelectSubqueryTableSource) {
+            OracleSelectSubqueryTableSource oracleSelectSubqueryTableSource = (OracleSelectSubqueryTableSource) sqlTableSource;
+            SQLSelect sqlSelect = oracleSelectSubqueryTableSource.getSelect();
+            SQLSelectQuery sqlSelectQuery = sqlSelect.getQuery();
+            setFrom(sqlSelectQuery);
+        }
+        else if (sqlTableSource instanceof OracleSelectTableReference) {
+            OracleSelectTableReference oracleSelectTableReference = (OracleSelectTableReference) sqlTableSource;
+            String tablename = oracleSelectTableReference.getExpr().toString();
+            List<Map<String, Object>> maps = Dbo.queryList("select t2.execute_sql from " + Dm_datatable.TableName + " t1 left join "+ Dm_operation_info.TableName+
+                    " t2 on t1.datatable_id = t2.datatable_id where lower(t1.datatable_en_name) = ? and t1.table_storage = ?",
+                    tablename.toLowerCase(), TableStorage.ShuJuShiTu.getCode());
+            if(!maps.isEmpty()){
+                String execute_sql = maps.get(0).get("execute_sql").toString();
+                oracleSelectTableReference.setExpr(" ( "+execute_sql+" ) "+tablename);
+            }
+        } else {
+            String message;
+            if (sqlTableSource == null) {
+                message = "sqlTableSource";
+            } else {
+                message = "未知的sqlTableSource来源：" + sqlTableSource.toString() + " class:" + sqlTableSource.getClass();
+            }
+        }
+    }
 }

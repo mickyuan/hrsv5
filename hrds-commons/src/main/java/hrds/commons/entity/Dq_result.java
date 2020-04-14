@@ -82,8 +82,8 @@ public class Dq_result extends ProjectTableEntity
 	private String is_saveindex1;
 	@DocBean(name ="is_saveindex2",value="是否保存指标2数据(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_saveindex2;
-	@DocBean(name ="case_type",value="规则类型:",dataType = Long.class,required = true)
-	private Long case_type;
+	@DocBean(name ="case_type",value="规则类型:",dataType = String.class,required = true)
+	private String case_type;
 	@DocBean(name ="reg_num",value="规则编号:",dataType = Long.class,required = true)
 	private Long reg_num;
 
@@ -326,18 +326,12 @@ public class Dq_result extends ProjectTableEntity
 		this.is_saveindex2=is_saveindex2;
 	}
 	/** 取得：规则类型 */
-	public Long getCase_type(){
+	public String getCase_type(){
 		return case_type;
 	}
 	/** 设置：规则类型 */
-	public void setCase_type(Long case_type){
-		this.case_type=case_type;
-	}
-	/** 设置：规则类型 */
 	public void setCase_type(String case_type){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(case_type)){
-			this.case_type=new Long(case_type);
-		}
+		this.case_type=case_type;
 	}
 	/** 取得：规则编号 */
 	public Long getReg_num(){

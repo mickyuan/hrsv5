@@ -174,14 +174,14 @@ RULE_SRC                                          VARCHAR(50) NULL, --规则来�
 IS_SAVEINDEX1                                     CHAR(1) NOT NULL, --是否保存指标1数据
 IS_SAVEINDEX2                                     CHAR(1) NOT NULL, --是否保存指标2数据
 IS_SAVEINDEX3                                     CHAR(1) NOT NULL, --是否保存指标3数据
-CASE_TYPE                                         BIGINT default 0 NOT NULL, --规则类型
+CASE_TYPE                                         VARCHAR(80) NOT NULL, --规则类型
 USER_ID                                           BIGINT default 0 NOT NULL, --用户ID
 CONSTRAINT DQ_DEFINITION_PK PRIMARY KEY(REG_NUM)   );
 
 --数据质量规则类型定义表
 DROP TABLE IF EXISTS DQ_RULE_DEF ;
 CREATE TABLE DQ_RULE_DEF(
-CASE_TYPE                                         BIGINT default 0 NOT NULL, --规则类型
+CASE_TYPE                                         VARCHAR(80) NOT NULL, --规则类型
 CASE_TYPE_DESC                                    VARCHAR(512) NULL, --规则类型描述
 INDEX_DESC1                                       VARCHAR(512) NULL, --检测指标1含义
 INDEX_DESC2                                       VARCHAR(512) NULL, --检测指标2含义
@@ -218,7 +218,7 @@ ERR_DTL_FILE_NAME                                 VARCHAR(100) NULL, --异常数
 IS_SAVEINDEX1                                     CHAR(1) NOT NULL, --是否保存指标1数据
 IS_SAVEINDEX2                                     CHAR(1) NOT NULL, --是否保存指标2数据
 IS_SAVEINDEX3                                     CHAR(1) NOT NULL, --是否保存指标3数据
-CASE_TYPE                                         BIGINT default 0 NOT NULL, --规则类型
+CASE_TYPE                                         VARCHAR(80) NOT NULL, --规则类型
 REG_NUM                                           BIGINT default 0 NOT NULL, --规则编号
 CONSTRAINT DQ_RESULT_PK PRIMARY KEY(TASK_ID)   );
 
@@ -1020,7 +1020,7 @@ TASK_NAME                                         VARCHAR(512) NULL, --数据库
 DATABASE_NAME                                     VARCHAR(512) NULL, --数据库名称
 DATABASE_PAD                                      VARCHAR(100) NULL, --数据库密码
 DATABASE_DRIVE                                    VARCHAR(512) NULL, --数据库驱动
-DATABASE_TYPE                                     CHAR(2) NOT NULL, --数据库类型
+DATABASE_TYPE                                     CHAR(2) NULL, --数据库类型
 USER_NAME                                         VARCHAR(512) NULL, --用户名称
 DATABASE_IP                                       VARCHAR(50) NULL, --数据库服务器IP
 DATABASE_PORT                                     VARCHAR(10) NULL, --数据库端口
@@ -1455,7 +1455,7 @@ CREATE TABLE DATA_STORE_LAYER(
 DSL_ID                                            BIGINT default 0 NOT NULL, --存储层配置ID
 DSL_NAME                                          VARCHAR(512) NOT NULL, --配置属性名称
 STORE_TYPE                                        CHAR(1) NOT NULL, --存储类型
-IS_HADOOPCLIENT                                   CHAR(1) NOT NULL, --是否有hadoop客户端
+IS_HADOOPCLIENT                                   CHAR(1) NOT NULL, --是否支持外部表
 DSL_REMARK                                        VARCHAR(512) NULL, --备注
 DTCS_ID                                           BIGINT default 0 NULL, --类型对照ID
 DLCS_ID                                           BIGINT default 0 NULL, --长度对照表ID
