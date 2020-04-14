@@ -38,7 +38,7 @@ public class Data_store_layer extends ProjectTableEntity
 	private String store_type;
 	@DocBean(name ="dsl_remark",value="备注:",dataType = String.class,required = false)
 	private String dsl_remark;
-	@DocBean(name ="is_hadoopclient",value="是否有hadoop客户端(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
+	@DocBean(name ="is_hadoopclient",value="是否支持外部表(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_hadoopclient;
 	@DocBean(name ="dtcs_id",value="类型对照ID:",dataType = Long.class,required = false)
 	private Long dtcs_id;
@@ -83,11 +83,11 @@ public class Data_store_layer extends ProjectTableEntity
 	public void setDsl_remark(String dsl_remark){
 		this.dsl_remark=dsl_remark;
 	}
-	/** 取得：是否有hadoop客户端 */
+	/** 取得：是否支持外部表 */
 	public String getIs_hadoopclient(){
 		return is_hadoopclient;
 	}
-	/** 设置：是否有hadoop客户端 */
+	/** 设置：是否支持外部表 */
 	public void setIs_hadoopclient(String is_hadoopclient){
 		this.is_hadoopclient=is_hadoopclient;
 	}
