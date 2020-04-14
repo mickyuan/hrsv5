@@ -56,7 +56,10 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 				String file_path = FileNameUtils.normalize(tableBean.getRoot_path() + File.separator
 						+ collectTableBean.getEtlDate() + File.separator + collectTableBean.getTable_name()
 						+ File.separator + FileFormat.ofValueByCode(tableBean.getFile_format()) + File.separator, true);
-				String[] file_name_list = new File(file_path).list();
+				//列出文件目录下的文件
+				String[] file_name_list = new File("file_path").list(
+						(dir, name) -> new File(dir.getAbsolutePath() + name).isFile()
+				);
 				//获得本次采集生成的数据文件的总大小
 				if (file_name_list != null && file_name_list.length > 0) {
 					long fileSize = 0;
@@ -73,6 +76,7 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 					}
 					stageParamInfo.setFileArr(file_path_list);
 					stageParamInfo.setFileSize(fileSize);
+					stageParamInfo.setFileNameArr(file_name_list);
 				} else {
 					throw new AppSystemException("数据文件不存在");
 				}

@@ -13,10 +13,7 @@ import hrds.agent.job.biz.core.AbstractJobStage;
 import hrds.agent.job.biz.core.service.JdbcCollectTableHandleParse;
 import hrds.agent.job.biz.utils.DataTypeTransform;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
-import hrds.commons.codes.CollectType;
-import hrds.commons.codes.FileFormat;
-import hrds.commons.codes.IsFlag;
-import hrds.commons.codes.Store_type;
+import hrds.commons.codes.*;
 import hrds.commons.collection.ConnectionTool;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.hadoop.utils.HSqlExecute;
@@ -25,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @DocClass(desc = "数据文件采集，数据加载阶段实现", author = "WangZhengcheng")
 public class DFDataLoadingStageImpl extends AbstractJobStage {
@@ -51,13 +49,27 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 			for (DataStoreConfBean dataStoreConfBean : dataStoreConfBeanList) {
 				//根据存储类型上传到目的地
 				if (Store_type.DATABASE.getCode().equals(dataStoreConfBean.getStore_type())) {
+					//传统数据库有两种情况，支持外部表和不支持外部表
+					if (IsFlag.Shi.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
+						//支持外部表
+						String todayTableName = collectTableBean.getHbase_name() + "_" + collectTableBean.getEtlDate();
+						//通过外部表加载数据到todayTableName
+						createExternalTableLoadData(todayTableName, collectTableBean, dataStoreConfBean,
+								stageParamInfo.getTableBean(), stageParamInfo.getFileNameArr());
+					} else if (IsFlag.Fou.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
+						//没有客户端，则表示为数据库类型在upload时已经装载数据了，直接跳过
+						continue;
+					} else {
+						throw new AppSystemException("错误的是否标识");
+					}
+				} else if (Store_type.HIVE.getCode().equals(dataStoreConfBean.getStore_type())) {
 					//hive库有两种情况，有客户端和没有客户端
 					if (IsFlag.Shi.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
 						//有客户端
 						String todayTableName = collectTableBean.getHbase_name() + "_" + collectTableBean.getEtlDate();
 						String hdfsFilePath = DFUploadStageImpl.getUploadHdfsPath(collectTableBean);
 						//通过load方式加载数据到hive
-						createTableLoadData(todayTableName, hdfsFilePath, dataStoreConfBean,
+						createHiveTableLoadData(todayTableName, hdfsFilePath, dataStoreConfBean,
 								stageParamInfo.getTableBean());
 					} else if (IsFlag.Fou.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
 						//没有客户端，则表示为数据库类型在upload时已经装载数据了，直接跳过
@@ -65,22 +77,7 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 					} else {
 						throw new AppSystemException("错误的是否标识");
 					}
-				} /*else if (Store_type.HIVE.getCode().equals(dataStoreConfBean.getStore_type())) {
-					//hive库有两种情况，有客户端和没有客户端
-					if (IsFlag.Shi.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
-						//有客户端
-						String todayTableName = collectTableBean.getHbase_name() + "_" + collectTableBean.getEtlDate();
-						String hdfsFilePath = DBUploadStageImpl.getUploadHdfsPath(collectTableBean);
-						//通过load方式加载数据到hive
-						createTableLoadData(todayTableName, hdfsFilePath, dataStoreConfBean,
-								stageParamInfo.getTableBean());
-					} else if (IsFlag.Fou.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
-						//没有客户端，在upload时已经装载数据了，直接跳过
-						continue;
-					} else {
-						throw new AppSystemException("错误的是否标识");
-					}
-				}*/ else if (Store_type.HBASE.getCode().equals(dataStoreConfBean.getStore_type())) {
+				} else if (Store_type.HBASE.getCode().equals(dataStoreConfBean.getStore_type())) {
 
 				} else if (Store_type.SOLR.getCode().equals(dataStoreConfBean.getStore_type())) {
 
@@ -107,13 +104,45 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 		return stageParamInfo;
 	}
 
+	private void createExternalTableLoadData(String todayTableName, CollectTableBean collectTableBean
+			, DataStoreConfBean dataStoreConfBean, TableBean tableBean, String[] fileNameArr) {
+		Map<String, String> data_store_connect_attr = dataStoreConfBean.getData_store_connect_attr();
+		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(dataStoreConfBean.getData_store_connect_attr())) {
+			String database_type = data_store_connect_attr.get(StorageTypeKey.database_type);
+			if (DatabaseType.Oracle10g.getCode().equals(database_type) ||
+					DatabaseType.Oracle9i.getCode().equals(database_type)) {
+				//创建外部临时表
+				String tmpTodayTableName = todayTableName + "_tmp";
+				String sql = createOracleExternalTable(tmpTodayTableName, tableBean, fileNameArr);
+			} else if (DatabaseType.Postgresql.getCode().equals(database_type)) {
+				//数据库服务器上文件所在路径
+				String uploadServerPath = DFUploadStageImpl.getUploadServerPath(collectTableBean,
+						data_store_connect_attr.get(StorageTypeKey.external_root_path));
+
+			} else {
+				//其他支持外部表的数据库 TODO 这里的逻辑后面可能需要不断补充
+				throw new AppSystemException(dataStoreConfBean.getDsl_name() + "数据库暂不支持外部表的形式入库");
+			}
+		} catch (Exception e) {
+			throw new AppSystemException("执行数据库" + dataStoreConfBean.getDsl_name() + "外部表加载数据的sql报错", e);
+		}
+	}
+
+	/*
+	 *拼接创建oracle外部表的sql
+	 */
+	private String createOracleExternalTable(String tmpTodayTableName, TableBean tableBean, String[] fileNameArr) {
+
+		return null;
+	}
+
 	@Override
 	public int getStageCode() {
 		return StageConstant.DATALOADING.getCode();
 	}
 
-	private void createTableLoadData(String todayTableName, String hdfsFilePath,
-	                                 DataStoreConfBean dataStoreConfBean, TableBean tableBean) {
+	private void createHiveTableLoadData(String todayTableName, String hdfsFilePath,
+	                                     DataStoreConfBean dataStoreConfBean, TableBean tableBean) {
 		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(dataStoreConfBean.getData_store_connect_attr())) {
 			List<String> sqlList = new ArrayList<>();
 			//1.如果表已存在则删除
@@ -200,6 +229,7 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 		sql.append(") stored as ").append(hiveStored);
 		return sql.toString();
 	}
+
 
 	/**
 	 * 创建hive外部表加载行式存储文件

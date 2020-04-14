@@ -13,6 +13,29 @@ import java.util.List;
 public class FileUtil {
 
 	public static final String ENCODING = "UTF-8";
+	private static List<String> pathList = new ArrayList<String>();
+
+	static {
+		pathList.add("/");
+		pathList.add("/bin");
+		pathList.add("/boot");
+		pathList.add("/dev");
+		pathList.add("/etc");
+		pathList.add("/home");
+		pathList.add("/lib");
+		pathList.add("/lib64");
+		pathList.add("/media");
+		pathList.add("/mnt");
+		pathList.add("/opt");
+		pathList.add("/proc");
+		pathList.add("/root");
+		pathList.add("/run");
+		pathList.add("/sbin");
+		pathList.add("/srv");
+		pathList.add("/sys");
+		pathList.add("/usr");
+		pathList.add("/var");
+	}
 
 	private FileUtil() {
 	}
@@ -178,6 +201,23 @@ public class FileUtil {
 				}
 			}
 		}
+	}
+
+	/**
+	 * 判断目录是不是系统目录
+	 *
+	 * @param path
+	 * @return
+	 */
+	public static boolean isSysDir(String path) {
+		if (path.endsWith("/") || path.endsWith("\\")) {
+			path = path.substring(0, path.length() - 1);
+		}
+		boolean flag = false;
+		if (pathList.contains(path)) {
+			return true;
+		}
+		return flag;
 	}
 
 }
