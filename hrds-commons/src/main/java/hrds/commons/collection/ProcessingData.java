@@ -154,15 +154,15 @@ public abstract class ProcessingData {
 	 * @param allTableList {@link List} sql语句
 	 * @param db {@link DatabaseWrapper} db
 	 * @return layerTypeBean  存储信息
+	 *
+	 * 一、判断所有的表是不是使用了同一个存储层，且是jdbc 返回 oneJdbc
+	 * 二、判断所有的表是不是都使用的jdbc的方式，且是多个jdbc，返回 morejdbc
+	 * 三、判断如果只有一个存储层，且不是jdbc，返回oneother
+	 * 四、判断有多个存储层，且不是jdbc，返回 moreother
+	 * 
 	 */
 
 	public static LayerTypeBean getAllTableIsLayer(List<String> allTableList, DatabaseWrapper db) {
-		/**
-		 * 一、判断所有的表是不是使用了同一个存储层，且是jdbc 返回 oneJdbc
-		 * 二、判断所有的表是不是都使用的jdbc的方式，且是多个jdbc，返回 morejdbc
-		 * 三、判断如果只有一个存储层，且不是jdbc，返回oneother
-		 * 四、判断有多个存储层，且不是jdbc，返回 moreother
-		 */
 		/**
 		 * 1、使用存储ID为key记录每个存储层下面有多少张表
 		 * 获取所有表的存储层，记录所有表的存储层ID
