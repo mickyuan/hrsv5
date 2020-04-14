@@ -17,6 +17,7 @@ import hrds.commons.codes.*;
 import hrds.commons.collection.ConnectionTool;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.hadoop.utils.HSqlExecute;
+import hrds.commons.utils.Constant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -107,18 +108,24 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 	private void createExternalTableLoadData(String todayTableName, CollectTableBean collectTableBean
 			, DataStoreConfBean dataStoreConfBean, TableBean tableBean, String[] fileNameArr) {
 		Map<String, String> data_store_connect_attr = dataStoreConfBean.getData_store_connect_attr();
+		List<String> sqlList = new ArrayList<>();
 		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(dataStoreConfBean.getData_store_connect_attr())) {
 			String database_type = data_store_connect_attr.get(StorageTypeKey.database_type);
 			if (DatabaseType.Oracle10g.getCode().equals(database_type) ||
 					DatabaseType.Oracle9i.getCode().equals(database_type)) {
 				//创建外部临时表
 				String tmpTodayTableName = todayTableName + "_tmp";
-				String sql = createOracleExternalTable(tmpTodayTableName, tableBean, fileNameArr);
+				sqlList.add(createOracleExternalTable(tmpTodayTableName, tableBean, fileNameArr,
+						dataStoreConfBean.getDsl_name()));
+				sqlList.add(" CREATE TABLE " + todayTableName + " parallel (degree 4) nologging  " +
+						"AS SELECT * FROM  " + tmpTodayTableName);
+				//4.执行sql语句
+				HSqlExecute.executeSql(sqlList, db);
 			} else if (DatabaseType.Postgresql.getCode().equals(database_type)) {
 				//数据库服务器上文件所在路径
 				String uploadServerPath = DFUploadStageImpl.getUploadServerPath(collectTableBean,
 						data_store_connect_attr.get(StorageTypeKey.external_root_path));
-
+				//TODO
 			} else {
 				//其他支持外部表的数据库 TODO 这里的逻辑后面可能需要不断补充
 				throw new AppSystemException(dataStoreConfBean.getDsl_name() + "数据库暂不支持外部表的形式入库");
@@ -131,9 +138,68 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 	/*
 	 *拼接创建oracle外部表的sql
 	 */
-	private String createOracleExternalTable(String tmpTodayTableName, TableBean tableBean, String[] fileNameArr) {
+	private String createOracleExternalTable(String tmpTodayTableName, TableBean tableBean,
+	                                         String[] fileNameArr, String dsl_name) {
+		List<String> columnList = StringUtil.split(tableBean.getColumnMetaInfo(), JdbcCollectTableHandleParse.STRSPLIT);
+		List<String> typeList = DataTypeTransform.tansform(StringUtil.split(tableBean.getColTypeMetaInfo().toUpperCase(),
+				JdbcCollectTableHandleParse.STRSPLIT), dsl_name);
+		StringBuilder sql = new StringBuilder();
+		sql.append("create table ").append(tmpTodayTableName);
+		sql.append("(");
+		for (int i = 0; i < columnList.size(); i++) {
+			sql.append(columnList.get(i)).append(" ").append(typeList.get(i)).append(",");
+		}
+		sql.deleteCharAt(sql.length() - 1); //将最后的逗号删除
+		sql.append(" )ORGANIZATION external ");
+		sql.append(" ( ");
+		sql.append(" type oracle_loader ");
+		sql.append(" DEFAULT DIRECTORY ").append(Constant.HYSHF_DCL);
+		sql.append(" ACCESS PARAMETERS( ");
+		sql.append(" records delimited by newline");
+		sql.append(" fields terminated by '").append(tableBean.getColumn_separator()).append("' ");
+//            sql.append(" optionally enclosed by '\"' ");
+		sql.append(" missing field values are null  ");
+		sql.append(getTransformsSqlForLobs(columnList, typeList));//有大字段加类型转换取大字段的值
+		sql.append(" ) ");
+		sql.append(" location ");
+		sql.append(" ( ");
+		for (String fileName : fileNameArr) {
+			sql.append("'").append(fileName).append("'").append(",");
+		}
+		sql.delete(sql.length() - 1, sql.length());
+		sql.append(" )) REJECT LIMIT UNLIMITED ");
+		return sql.toString();
+	}
 
-		return null;
+	private String getTransformsSqlForLobs(List<String> columns, List<String> types) {
+		StringBuilder sb = new StringBuilder(1024);
+		if (types.contains("BLOB") || types.contains("CLOB")) {
+			sb.append("(");
+			for (int i = 0; i < types.size(); i++) {
+				if ("BLOB".equals(types.get(i))) {
+					sb.append(columns.get(i)).append("_hylobs").append(" ").append("CHAR(100)").append(",");
+				} else if ("CLOB".equals(types.get(i))) {
+					sb.append(columns.get(i)).append(" ").append("CHAR(1000000)").append(",");
+				} else {
+					sb.append(columns.get(i)).append(" ").append(types.get(i)).append(",");
+				}
+			}
+			sb.deleteCharAt(sb.length() - 1); //将最后的逗号删除
+			sb.append(")");
+			if (types.contains("BLOB")) {
+				sb.append(" COLUMN TRANSFORMS ( ");
+				for (int i = 0; i < types.size(); i++) {
+					if ("BLOB".equals(types.get(i))) {
+						sb.append(columns.get(i)).append(" from ").append(" LOBFILE (").append(columns.get(i))
+								.append("_hylobs").append(")");
+						sb.append(" from (").append(Constant.HYSHF_DCL).append(")").append(" BLOB ").append(",");
+					}
+				}
+				sb.deleteCharAt(sb.length() - 1); //将最后的逗号删除
+				sb.append(" ) ");
+			}
+		}
+		return sb.toString();
 	}
 
 	@Override

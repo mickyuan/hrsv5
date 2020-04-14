@@ -219,8 +219,13 @@ public class DFUploadStageImpl extends AbstractJobStage {
 			String targetPath;
 			if (DatabaseType.Oracle10g.getCode().equals(database_type) ||
 					DatabaseType.Oracle9i.getCode().equals(database_type)) {
-				//oracle数据库
+				//oracle数据库采集外部表文件所在目录
 				targetPath = data_store_connect_attr.get(StorageTypeKey.external_root_path);
+				if (targetPath.endsWith("/") || targetPath.endsWith("\\")) {
+					targetPath = targetPath + Constant.HYSHF_DCL;
+				} else {
+					targetPath = targetPath + File.separator + Constant.HYSHF_DCL;
+				}
 				//使用Oracle则不能删除再创建
 				String mkdirShell = "mkdir -p " + targetPath;
 				SFTPChannel.execCommandByJSch(session, mkdirShell);
