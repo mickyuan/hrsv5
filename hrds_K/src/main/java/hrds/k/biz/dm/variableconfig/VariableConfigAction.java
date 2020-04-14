@@ -48,7 +48,7 @@ public class VariableConfigAction extends BaseAction {
         SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
         asmSql.clean();
         asmSql.addSql("delete from " + Dq_sys_cfg.TableName + " where user_id=?");
-        asmSql.addParam(getUserId().toString());
+        asmSql.addParam(getUserId());
         asmSql.addORParam("sys_var_id ", sys_var_id);
         Dbo.execute(asmSql.sql(), asmSql.params());
     }
@@ -63,9 +63,6 @@ public class VariableConfigAction extends BaseAction {
         }
         if (StringUtil.isBlank(dq_sys_cfg.getVar_name())) {
             throw new BusinessException("变量名为空!");
-        }
-        if (checkVarNameIsRepeat(dq_sys_cfg.getVar_name())) {
-            throw new BusinessException("变量名重复!");
         }
         if (StringUtil.isBlank(dq_sys_cfg.getVar_value())) {
             throw new BusinessException("变量值为空!");
@@ -94,18 +91,18 @@ public class VariableConfigAction extends BaseAction {
     }
 
     @Method(desc = "搜索变量信息", logicStep = "搜索变量信息")
-    @Param(name = "var_name", desc = "变量名", range = "String类型")
-    @Param(name = "var_value", desc = "变量值", range = "String类型")
-    @Param(name = "start_date", desc = "检索开始日期", range = "String类型")
-    @Param(name = "end_date", desc = "检索结束日期", range = "String类型")
+    @Param(name = "var_name", desc = "变量名", range = "String类型", nullable = true)
+    @Param(name = "var_value", desc = "变量值", range = "String类型", nullable = true)
+    @Param(name = "start_date", desc = "检索开始日期", range = "String类型", nullable = true)
+    @Param(name = "end_date", desc = "检索结束日期", range = "String类型", nullable = true)
     @Return(desc = "变量配置数据信息", range = "变量配置数据信息")
     public List<Dq_sys_cfg> searchVariableConfigData(String var_name, String var_value, String start_date,
                                                      String end_date) {
         //初始化sql
         SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
         asmSql.clean();
-        asmSql.addSql("select * from " + Dq_sys_cfg.TableName + " where create_user = ?");
-        asmSql.addParam(getUserId().toString());
+        asmSql.addSql("select * from " + Dq_sys_cfg.TableName + " where user_id = ?");
+        asmSql.addParam(getUserId());
         if (StringUtil.isNotBlank(var_name)) {
             asmSql.addLikeParam(" and var_name", '%' + var_name + '%', "");
         }
