@@ -23,7 +23,7 @@ public class DataTableUseInfoAction extends BaseAction {
 					"3.返回查询接口监控数据表信息")
 	@Param(name = "user_id", desc = "接口所属用户ID", range = "无限制", nullable = true)
 	@Return(desc = "返回查询接口监控数据表信息", range = "无限制")
-	public Result searchTableDataInfo(Long user_id) {
+	private Result searchTableDataInfo(Long user_id) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		SqlOperator.Assembler assembler = SqlOperator.Assembler.newInstance();
 		assembler.addSql("SELECT distinct t1.use_id,t1.original_name,t1.sysreg_name,t2.table_column_name," +
@@ -36,6 +36,28 @@ public class DataTableUseInfoAction extends BaseAction {
 		assembler.addSql(" order by t3.use_id");
 		// 3.返回查询接口监控数据表信息
 		return Dbo.queryResult(assembler.sql(), assembler.params());
+	}
+
+	@Method(desc = "查询数据表信息（接口使用监控）",
+			logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制" +
+					"2.返回查询接口监控数据表信息")
+	@Param(name = "user_id", desc = "接口所属用户ID", range = "无限制")
+	@Return(desc = "返回查询接口监控数据表信息", range = "无限制")
+	public Result searchTableData() {
+		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
+		// 2.返回查询接口监控数据表信息
+		return searchTableDataInfo(null);
+	}
+
+	@Method(desc = "根据用户ID查询数据表信息（接口使用监控）",
+			logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制" +
+					"2.返回查询接口监控数据表信息")
+	@Param(name = "user_id", desc = "接口所属用户ID", range = "无限制")
+	@Return(desc = "返回查询接口监控数据表信息", range = "无限制")
+	public Result searchTableDataById(Long user_id) {
+		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
+		// 2.返回查询接口监控数据表信息
+		return searchTableDataInfo(user_id);
 	}
 
 	@Method(desc = "查看字段信息（接口使用监控）",

@@ -14,38 +14,18 @@ public class TableDataInfo extends ProjectTableEntity {
 
 	public static final String TableName = "table_data_info";
 
-	@DocBean(name = "user_id", value = "用户ID:", dataType = Long.class, required = true)
-	private Long user_id;
-	@DocBean(name = "file_id", value = "字段ID:", dataType = Long.class, required = true)
+	@DocBean(name = "file_id", value = "表ID:", dataType = Long.class, required = true)
 	private String file_id;
-	@DocBean(name = "column_name", value = "字段ID:", dataType = String[].class, required = true)
-	private String[] column_id;
-	@DocBean(name = "table_note", value = "备注:", dataType = String.class, required = true)
-	private String table_note;
-	@DocBean(name = "dataSourceType", value = "数据源类型:", dataType = String.class, required = false)
-	private String dataSourceType;
+	@DocBean(name = "column_id", value = "字段ID:", dataType = String.class, required = true)
+	private String column_id;
+	@DocBean(name = "column_name", value = "字段名称:", dataType = String.class, required = true)
+	private String column_name;
 
-	public Long getUser_id() {
-		return user_id;
-	}
-
-	public void setUser_id(Long user_id) {
-		this.user_id = user_id;
-	}
-
-	public String getTable_note() {
-		return table_note;
-	}
-
-	public void setTable_note(String table_note) {
-		this.table_note = table_note;
-	}
-
-	public String[] getColumn_id() {
+	public String getColumn_id() {
 		return column_id;
 	}
 
-	public void setColumn_id(String[] column_id) {
+	public void setColumn_id(String column_id) {
 		this.column_id = column_id;
 	}
 
@@ -57,11 +37,11 @@ public class TableDataInfo extends ProjectTableEntity {
 		this.file_id = file_id;
 	}
 
-	public String getDataSourceType() {
-		return dataSourceType;
+	public String getColumn_name() {
+		return column_name;
 	}
 
-	public void setDataSourceType(String dataSourceType) {
-		this.dataSourceType = dataSourceType;
+	public void setColumn_name(String column_name) {
+		this.column_name = column_name;
 	}
 }
