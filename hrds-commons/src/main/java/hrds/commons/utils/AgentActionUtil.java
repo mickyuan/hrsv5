@@ -44,6 +44,8 @@ public class AgentActionUtil {
 	public static final String GETCUSTCOLUMN = "/hrds/agent/trans/biz/database/getCustColumn";
 	//单表保存或者更新source_file_attribute
 	public static final String ADDSOURCEFILEATTRIBUTE = "/hrds/server/addSourceFileAttribute";
+	//单表保存或更新data_store_reg表
+	public static final String ADDDATASTOREREG = "/hrds/server/addDataStoreReg";
 	//向agent端发送一个数据库直连采集任务
 	public static final String SENDJDBCOLLECTTASKINFO = "/hrds/agent/trans/biz/jdbccollect/execute";
 	//agent连接服务端批量添加ftp_transfered(ftp已传输表)
@@ -77,6 +79,7 @@ public class AgentActionUtil {
 		list.add(SENDFTPCOLLECTTASKINFO);
 		list.add(PARSEDATADICTIONARY);
 		list.add(WRITEDICTIONARY);
+		list.add(ADDDATASTOREREG);
 	}
 
 	private AgentActionUtil() {

@@ -2,6 +2,7 @@ package hrds.commons.collection;
 
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
+import hrds.commons.codes.Store_type;
 import hrds.commons.collection.bean.LayerBean;
 import hrds.commons.collection.bean.LayerTypeBean;
 import hrds.commons.collection.bean.LoadingDataBean;
@@ -29,27 +30,31 @@ public abstract class LoadingData {
 	/**
 	 * @return
 	 */
-	public String intoDataLayer(String sql, DatabaseWrapper db) {
+	public Long intoDataLayer(String sql, DatabaseWrapper db,LayerBean intolayerBean) {
 		LayerTypeBean allTableIsLayer = ProcessingData.getAllTableIsLayer(sql, db);
 		LayerTypeBean.ConnTyte connType = allTableIsLayer.getConnType();
 		if (LayerTypeBean.ConnTyte.oneJdbc == connType) {
-			if (ldbbean.isIsDirTran()) {
-				LayerBean layerBean = allTableIsLayer.getLayerBean();
-				Map<String, String> layerAttr = layerBean.getLayerAttr();
-				try (DatabaseWrapper dbDataConn = ConnectionTool.getDBWrapper(layerAttr)) {
-					SqlOperator.execute(dbDataConn, "insert into " + ldbbean.getTableName() + sql);
-					dbDataConn.commit();
-				}
-			} else {
-
+			LayerBean layerBean = allTableIsLayer.getLayerBean();
+			Map<String, String> layerAttr = layerBean.getLayerAttr();
+			try (DatabaseWrapper dbDataConn = ConnectionTool.getDBWrapper(layerAttr)) {
+				SqlOperator.execute(dbDataConn, "insert into " + ldbbean.getTableName() + sql);
+				dbDataConn.commit();
+				return layerBean.getDsl_id();
 			}
-		}else if(LayerTypeBean.ConnTyte.oneOther == connType){
+		} else if (LayerTypeBean.ConnTyte.oneOther == connType) {
+			LayerBean layerBean = allTableIsLayer.getLayerBean();
+			String store_type = intolayerBean.getStore_type();//入库是谁
 			new ProcessingData() {
 				@Override
-				public void dealLine(Map<String, Object> map) throws Exception {
+				public void dealLine(Map<String, Object> map){
+					if(Store_type.DATABASE == Store_type.ofEnumByCode(store_type) ){
 
+					}
 				}
-			}.getDataLayer(sql,db);
+			}.getDataLayer(sql, db);
+
+
+			return layerBean.getDsl_id();
 		}
 		return null;
 	}

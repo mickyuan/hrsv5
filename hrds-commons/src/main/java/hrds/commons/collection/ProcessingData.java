@@ -159,7 +159,7 @@ public abstract class ProcessingData {
 	 * 二、判断所有的表是不是都使用的jdbc的方式，且是多个jdbc，返回 morejdbc
 	 * 三、判断如果只有一个存储层，且不是jdbc，返回oneother
 	 * 四、判断有多个存储层，且不是jdbc，返回 moreother
-	 * 
+	 *
 	 */
 
 	public static LayerTypeBean getAllTableIsLayer(List<String> allTableList, DatabaseWrapper db) {
