@@ -9,6 +9,7 @@ import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.AgentBaseAction;
 import hrds.commons.entity.Collect_case;
+import hrds.commons.entity.Data_store_reg;
 import hrds.commons.entity.Error_info;
 import hrds.commons.entity.Source_file_attribute;
 import hrds.commons.exception.BusinessException;
@@ -135,6 +136,32 @@ public class HrdsReceiveAction extends AgentBaseAction {
 			attribute.setFile_id(result.getString(0, "file_id"));
 			//更新source_file_attribute表
 			attribute.update(Dbo.db());
+		}
+	}
+
+	@Method(desc = "保存data_store_reg表",
+			logicStep = "1.解析data_store_reg" +
+					"2.查询data_store_reg" +
+					"3.更新或者新增data_store_reg表")
+	@Param(name = "data_store_reg", desc = "data_store_reg表json类型的数据", range = "不可为空")
+	public void addDataStoreReg(String data_store_reg) {
+		data_store_reg = PackUtil.unpackMsg(data_store_reg).get("msg");
+		//1.解析source_file_attribute
+		Data_store_reg data_store = JSONObject.parseObject(data_store_reg,
+				Data_store_reg.class);
+		//2.查询source_file_attribute
+		Result result = Dbo.queryResult("select * from data_store_reg where agent_id =? and source_id = ? " +
+						"and database_id =? and lower(hyren_name) = lower(?)", data_store.getAgent_id(),
+				data_store.getSource_id(), data_store.getDatabase_id(), data_store.getHyren_name());
+		//3.更新或者新增data_store表
+		if (result.isEmpty()) {
+			data_store.setFile_id(UUID.randomUUID().toString());
+			//新增source_file_attribute表
+			data_store.add(Dbo.db());
+		} else {
+			data_store.setFile_id(result.getString(0, "file_id"));
+			//更新source_file_attribute表
+			data_store.update(Dbo.db());
 		}
 	}
 
