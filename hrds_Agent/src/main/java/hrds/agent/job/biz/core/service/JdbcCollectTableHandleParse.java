@@ -193,12 +193,11 @@ public class JdbcCollectTableHandleParse extends AbstractCollectTableHandle {
 		} catch (Exception e) {
 			throw new AppSystemException("根据数据源信息和采集表信息得到卸数元信息失败！", e);
 		} finally {
-			if (conn != null) {
-				try {
+			try {
+				if (conn != null)
 					conn.close();
-				} catch (SQLException e) {
-					e.printStackTrace();
-				}
+			} catch (SQLException e) {
+				e.printStackTrace();
 			}
 		}
 		return tableBean;

@@ -242,12 +242,11 @@ public class Xls2xml {
 		try {
 			StringBuilder result = new StringBuilder();
 			br = new BufferedReader(new FileReader(json_path));//构造一个BufferedReader类来读取文件
-			String s = null;
+			String s;
 			while ((s = br.readLine()) != null) {//使用readLine方法，一次读一行
 				result.append('\n').append(s);
 			}
 			JSONArray jsonArray = JSONArray.parseArray(result.toString());
-			String primaryKey = "1";
 			for (int i = 0; i < jsonArray.size(); i++) {
 				JSONObject json = jsonArray.getJSONObject(i);
 				String table_name = json.getString("table_name");//表名
@@ -264,12 +263,8 @@ public class Xls2xml {
 					String column_key = column.getString("column_key");//是否为主键
 					String column_null = column.getString("column_null");//是否可空
 					String column_remark = column.getString("column_remark");//备注信息
-
-					if ("pk".equalsIgnoreCase(column_key)) {
-						primaryKey = "0";
-					}
 					int length = getLength(column_type);
-					addColumn(column_id, column_name, column_cn_name, column_type, length, column_key, column_null, column_remark, primaryKey);
+					addColumn(column_id, column_name, column_cn_name, column_type, length, column_key, column_null, column_remark);
 				}
 				JSONArray storages = json.getJSONArray("storage");
 				for (int j = 0; j < storages.size(); j++) {
@@ -386,7 +381,6 @@ public class Xls2xml {
 					if (i == tableIndex + 1) {//表名下一行一定是表头，不用进行读取
 						continue;
 					}
-					String primaryKey = IsFlag.Fou.getCode();
 					String column_id = "", column_name = "", column_cn_name = "", column_type = "", column_key = "", column_null = "", column_remark = "";
 					for (int j = 0; j < 7; j++) {
 						Cell cell = row.getCell(j);
@@ -420,15 +414,11 @@ public class Xls2xml {
 					}
 					//i不等于表名且不等于全空额，且表头continue后，其他肯定是列内容
 					if (!StringUtil.isEmpty(isTable)) {
-						if ("pk".equalsIgnoreCase(column_key)) {
-							primaryKey = IsFlag.Shi.getCode();
-						}
 						if (!isNoneed) {
 							int length = getLength(column_type);
 							addColumn(column_id, column_name.toLowerCase(), column_cn_name, column_type, length, column_key, column_null,
-									column_remark, primaryKey);
+									column_remark);
 						}
-						primaryKey = IsFlag.Fou.getCode();
 					}
 					//如果整行为空,下一行一定是表名
 					if (StringUtil.isEmpty(isTable)) {
@@ -495,8 +485,7 @@ public class Xls2xml {
 	}
 
 	public static void addColumn(String column_id, String column_name, String column_cn_name, String
-			column_type, int length, String column_key, String column_null, String column_remark,
-	                             String primaryKey) {
+			column_type, int length, String column_key, String column_null, String column_remark) {
 
 		column = xmlCreater.createElement(table, "column");
 		xmlCreater.createAttribute(column, "column_id", column_id);
@@ -507,7 +496,7 @@ public class Xls2xml {
 		xmlCreater.createAttribute(column, "column_key", column_key);
 		xmlCreater.createAttribute(column, "column_null", column_null);
 		xmlCreater.createAttribute(column, "column_remark", column_remark);
-		xmlCreater.createAttribute(column, "is_primary_key", primaryKey);
+		xmlCreater.createAttribute(column, "is_primary_key", column_key);
 		xmlCreater.createAttribute(column, "is_get", IsFlag.Shi.getCode());
 		xmlCreater.createAttribute(column, "is_alive", IsFlag.Shi.getCode());
 		xmlCreater.createAttribute(column, "is_new", IsFlag.Fou.getCode());

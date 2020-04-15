@@ -10,9 +10,11 @@ import hrds.agent.job.biz.constant.DataTypeConstant;
 import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
+import hrds.agent.job.biz.core.increasement.JDBCIncreasement;
 import hrds.agent.job.biz.core.service.JdbcCollectTableHandleParse;
 import hrds.agent.job.biz.utils.DataTypeTransform;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
+import hrds.agent.job.biz.utils.TypeTransLength;
 import hrds.commons.codes.*;
 import hrds.commons.collection.ConnectionTool;
 import hrds.commons.exception.AppSystemException;
@@ -79,13 +81,13 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 						throw new AppSystemException("错误的是否标识");
 					}
 				} else if (Store_type.HBASE.getCode().equals(dataStoreConfBean.getStore_type())) {
-
+					continue;
 				} else if (Store_type.SOLR.getCode().equals(dataStoreConfBean.getStore_type())) {
-
+					continue;
 				} else if (Store_type.ElasticSearch.getCode().equals(dataStoreConfBean.getStore_type())) {
-
+					continue;
 				} else if (Store_type.MONGODB.getCode().equals(dataStoreConfBean.getStore_type())) {
-
+					continue;
 				} else {
 					//TODO 上面的待补充。
 					throw new AppSystemException("不支持的存储类型");
@@ -111,12 +113,22 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 		List<String> sqlList = new ArrayList<>();
 		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(dataStoreConfBean.getData_store_connect_attr())) {
 			String database_type = data_store_connect_attr.get(StorageTypeKey.database_type);
-			String tmpTodayTableName = todayTableName + "_tmp";
+			String file_format = tableBean.getFile_format();
 			if (DatabaseType.Oracle10g.getCode().equals(database_type) ||
 					DatabaseType.Oracle9i.getCode().equals(database_type)) {
-				//创建外部临时表，这里表名不能超过30个字符，需要
-				sqlList.add(createOracleExternalTable(tmpTodayTableName, tableBean, fileNameArr,
-						dataStoreConfBean.getDsl_name()));
+				String tmpTodayTableName = todayTableName + "_tmp";
+				if (FileFormat.FeiDingChang.getCode().equals(file_format)) {
+					//如果表已存在则删除
+					JDBCIncreasement.dropTableIfExists(tmpTodayTableName, db, sqlList);
+					//固定分隔符的文件
+					//创建外部临时表，这里表名不能超过30个字符，需要
+					sqlList.add(createOracleExternalTable(tmpTodayTableName, tableBean, fileNameArr,
+							dataStoreConfBean.getDsl_name()));
+				} else {//TODO 这里判断逻辑需要增加多种文件格式支持外部表形式
+					throw new AppSystemException("oracle数据库外部表进数目前只支持非定长文件进数");
+				}
+				//如果表已存在则删除
+				JDBCIncreasement.dropTableIfExists(todayTableName, db, sqlList);
 				sqlList.add(" CREATE TABLE " + todayTableName + " parallel (degree 4) nologging  " +
 						"AS SELECT * FROM  " + tmpTodayTableName);
 				//4.执行sql语句
@@ -125,9 +137,15 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 				//数据库服务器上文件所在路径
 				String uploadServerPath = DFUploadStageImpl.getUploadServerPath(collectTableBean,
 						data_store_connect_attr.get(StorageTypeKey.external_root_path));
-				//创建外部临时表
-				sqlList.add(createPostgresqlExternalTable(tmpTodayTableName, tableBean, fileNameArr,
-						dataStoreConfBean.getDsl_name()));
+				if (FileFormat.CSV.getCode().equals(file_format)) {
+					//创建外部临时表
+					createPostgresqlExternalTable(todayTableName, tableBean, fileNameArr,
+							dataStoreConfBean.getDsl_name(), uploadServerPath, sqlList, db);
+				} else {//TODO 这里判断逻辑需要增加多种文件格式支持外部表形式
+					throw new AppSystemException("oracle数据库外部表进数目前只支持Csv文件进数");
+				}
+				//4.执行sql语句
+				HSqlExecute.executeSql(sqlList, db);
 			} else {
 				//其他支持外部表的数据库 TODO 这里的逻辑后面可能需要不断补充
 				throw new AppSystemException(dataStoreConfBean.getDsl_name() + "数据库暂不支持外部表的形式入库");
@@ -137,8 +155,48 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 		}
 	}
 
-	private String createPostgresqlExternalTable(String tmpTodayTableName, TableBean tableBean, String[] fileNameArr, String dsl_name) {
-		return null;
+	private void createPostgresqlExternalTable(String todayTableName, TableBean tableBean, String[] fileNameArr
+			, String dsl_name, String uploadServerPath, List<String> sqlList, DatabaseWrapper db) {
+		List<String> columnList = StringUtil.split(tableBean.getColumnMetaInfo(), JdbcCollectTableHandleParse.STRSPLIT);
+		List<String> typeList = DataTypeTransform.tansform(StringUtil.split(
+				tableBean.getColTypeMetaInfo().toUpperCase(), JdbcCollectTableHandleParse.STRSPLIT), dsl_name);
+		boolean is_header = IsFlag.Shi.getCode().equalsIgnoreCase(tableBean.getIs_header());
+		//拼接需要插入表的所有字段
+		StringBuilder insertColumns = new StringBuilder();
+		for (String col : columnList) {
+			insertColumns.append(col).append(",");
+		}
+		insertColumns.delete(insertColumns.length() - 1, insertColumns.length());
+		//创建内部表
+		StringBuilder createTodayTable = new StringBuilder();
+		createTodayTable.append("create table ").append(createTodayTable);
+		createTodayTable.append("(");
+		for (int i = 0; i < columnList.size(); i++) {
+			createTodayTable.append(columnList.get(i)).append(" ").append(typeList.get(i)).append(",");
+		}
+		createTodayTable.deleteCharAt(createTodayTable.length() - 1); //将最后的逗号删除
+		createTodayTable.append(" )");
+		JDBCIncreasement.dropTableIfExists(todayTableName, db, sqlList);
+		sqlList.add(createTodayTable.toString());
+		for (int i = 0; i < fileNameArr.length; i++) {
+			String table_name = todayTableName + "_tmp" + i;
+			JDBCIncreasement.dropTableIfExists(table_name, db, sqlList);
+			StringBuilder createExternalTable = new StringBuilder();
+			createExternalTable.append("CREATE FOREIGN TABLE ");
+			createExternalTable.append(table_name);
+			createExternalTable.append("(");
+			for (int j = 0; j < columnList.size(); j++) {
+				createExternalTable.append(columnList.get(j)).append(" ").append(typeList.get(j)).append(",");
+			}
+			createExternalTable.deleteCharAt(createExternalTable.length() - 1); //将最后的逗号删除
+			createExternalTable.append(") SERVER pg_file_server OPTIONS (filename '");
+			createExternalTable.append(uploadServerPath).append(fileNameArr[i]);
+			createExternalTable.append("', FORMAT 'csv',header '").append(is_header)
+					.append("',DELIMITER '").append(tableBean.getColumn_separator()).append("' ,null '')");
+			sqlList.add(createExternalTable.toString());
+			sqlList.add("INSERT INTO " + todayTableName + "(" + insertColumns + ") SELECT "
+					+ insertColumns + " FROM " + table_name);
+		}
 	}
 
 	/*
@@ -187,7 +245,8 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 				} else if ("CLOB".equals(types.get(i))) {
 					sb.append(columns.get(i)).append(" ").append("CHAR(1000000)").append(",");
 				} else {
-					sb.append(columns.get(i)).append(" ").append(types.get(i)).append(",");
+					sb.append(columns.get(i)).append(" ").append("CHAR(").
+							append(TypeTransLength.getLength(types.get(i))).append("),");
 				}
 			}
 			sb.deleteCharAt(sb.length() - 1); //将最后的逗号删除
