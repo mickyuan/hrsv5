@@ -493,8 +493,7 @@ public class AgentListAction extends BaseAction {
 		Result sourceDBConfResult = Dbo.queryResult("SELECT dbs.agent_id, dbs.database_id, dbs.task_name, dbs.database_name, dbs.database_pad," +
 				" dbs.database_drive, dbs.database_type, dbs.user_name, dbs.database_ip, dbs.database_port," +
 				" dbs.host_name, dbs.system_type, dbs.is_sendok, dbs.database_number, dbs.db_agent, dbs.plane_url," +
-				" dbs.database_separatorr, dbs.database_code, dbs.dbfile_format, dbs.is_hidden, dbs.file_suffix," +
-				" dbs.is_load, dbs.row_separator, dbs.classify_id, dbs.is_header, dbs.jdbc_url, ds.datasource_number," +
+				" dbs.database_separatorr, dbs.row_separator, dbs.classify_id,  dbs.jdbc_url, ds.datasource_number," +
 				" cjc.classify_num FROM " + Data_source.TableName + " ds" +
 				" JOIN " + Agent_info.TableName + " ai ON ds.source_id = ai.source_id" +
 				" JOIN " + Database_set.TableName + " dbs ON ai.agent_id = dbs.agent_id" +
