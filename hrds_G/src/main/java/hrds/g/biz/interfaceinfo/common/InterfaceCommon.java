@@ -464,79 +464,88 @@ public class InterfaceCommon {
 	@Return(desc = "返回接口响应信息", range = "无限制")
 	public static Map<String, Object> getSqlData(String outType, String dataType, String sqlSb) {
 		// 1.数据可访问权限处理方式,该方法不需要进行访问权限限制
-		// 数据类型为csv的列值集合
-		List<String> columnList = new ArrayList<>();
-		List<String> valueList = new ArrayList<>();
 		// 数据类型为json时的数据集合
-		List<Map<String, Object>> jsonList = new ArrayList<>();
+		List<Map<String, Object>> jsonData = new ArrayList<>();
+		final Map<String, Object>[] responseMap = new Map[]{new HashMap<>()};
+		final long[] lineCounter = {0};
+		//列信息
+		List<Object> streamCsv = new ArrayList<>();
+		//列对应值信息
+		List<Object> streamJson = new ArrayList<>();
 		// 2.根据sql获取搜索引擎并根据输出数据类型处理数据
 		new ProcessingData() {
 			@Override
-			public void dealLine(Map<String, Object> map) throws Exception {
-				if (DataType.csv == DataType.ofEnumByCode(dataType)) {
-					// map的key为列名称，value为列名称对应的对象信息
-					map.forEach((k, v) -> {
-						columnList.add(k);
-						valueList.add(String.join(",", v.toString()));
-					});
+			public void dealLine(Map<String, Object> map) {
+				long size = lineCounter[0];
+				size++;
+				// 数据类型为csv的列值集合
+				StringBuffer sbCol = new StringBuffer();
+				StringBuffer sbVal = new StringBuffer();
+				// 3.判断输出类型为stream,还是file，如果是stream根据输出数据类型不同处理数据
+				if (OutType.STREAM == OutType.ofEnumByCode(outType)) {
+					// 4.输出类型为stream，如果输出数据类型为csv，第一行为列名，按csv格式处理数据并返回
+					if (DataType.csv == DataType.ofEnumByCode(dataType)) {
+						Map<String, Object> csvMap = new HashMap<>();
+						csvMap.put("column", sbCol.toString());
+						csvMap.put("data", map.toString());
+						streamCsv.add(csvMap);
+					} else {
+						streamJson.add(map);
+					}
 				} else {
-					jsonList.add(map);
+					// 6.输出类型为file，创建本地文件,准备数据的写入
+					String uuid = UUID.randomUUID().toString();
+					File createFile = LocalFile.createFile(uuid, dataType);
+					BufferedWriter writer;
+					try {
+						writer = new BufferedWriter(new FileWriter(createFile));
+						if (DataType.csv == DataType.ofEnumByCode(dataType)) {
+							// map的key为列名称，value为列名称对应的对象信息
+							map.forEach((k, v) -> {
+								sbCol.append(",").append(k);
+								sbVal.append(",").append(v.toString());
+							});
+							// 7.如果文件是CSV则第一行为列信息
+							if (size == 0) {
+								writer.write(sbCol.deleteCharAt(sbCol.length() - 1).toString());
+								writer.newLine();
+							}
+							if (size % 100000 == 0) {
+								writer.flush();
+							}
+							writer.write(sbVal.deleteCharAt(sbVal.length() - 1).toString());
+							writer.newLine();
+						} else if (DataType.json == DataType.ofEnumByCode(dataType)) {
+							// 8.如果输出数据类型为json，则直接输出
+							if (size % 100000 == 0) {
+								writer.flush();
+							}
+							writer.write(map.toString());
+							writer.newLine();
+						} else {
+							responseMap[0] = StateType.getResponseInfo(StateType.EXCEPTION.getValue(),
+									"不知道什么文件");
+						}
+						writer.flush();
+						writer.close();
+					} catch (IOException e) {
+						responseMap[0] = StateType.getResponseInfo(StateType.EXCEPTION.getValue(),
+								"写文件失败");
+					}
 				}
 			}
-		}.getSQLEngine(sqlSb, Dbo.db());
-		// 3.判断输出类型为stream,还是file，如果是stream根据输出数据类型不同处理数据
+		}.getDataLayer(sqlSb, Dbo.db());
 		if (OutType.STREAM == OutType.ofEnumByCode(outType)) {
 			// 4.输出类型为stream，如果输出数据类型为csv，第一行为列名，按csv格式处理数据并返回
 			if (DataType.csv == DataType.ofEnumByCode(dataType)) {
-				Map<String, Object> csvMap = new HashMap<>();
-				csvMap.put("column", columnList);
-				csvMap.put("data", valueList);
-				return StateType.getResponseInfo(StateType.NORMAL.getValue(), JsonUtil.toJson(csvMap));
+				responseMap[0] = StateType.getResponseInfo(StateType.NORMAL.getValue(),
+						streamCsv);
 			} else {
-				// 5.输出数据类型为json,直接返回查询数据
-				return StateType.getResponseInfo(StateType.NORMAL.getValue(), JsonUtil.toJson(jsonList));
-			}
-		} else {
-			// 6.输出类型为file，创建本地文件,准备数据的写入
-			String uuid = UUID.randomUUID().toString();
-			File createFile = LocalFile.createFile(uuid, dataType);
-			BufferedWriter writer;
-			try {
-				writer = new BufferedWriter(new FileWriter(createFile));
-				long size = 0;
-				if (DataType.csv == DataType.ofEnumByCode(dataType)) {
-					// 7.如果文件是CSV则第一行为列信息
-					writer.write(String.join(",", columnList));
-					writer.newLine();
-					for (String value : valueList) {
-						writer.write(value);
-						if (size % 50000 == 0) {
-							writer.flush();
-						}
-						size++;
-					}
-					writer.newLine();
-				} else if (DataType.json == DataType.ofEnumByCode(dataType)) {
-					// 8.如果输出数据类型为json，则直接输出
-					for (Map<String, Object> jsonMap : jsonList) {
-						writer.write(jsonMap.toString());
-						if (size % 50000 == 0) {
-							writer.flush();
-						}
-						size++;
-					}
-					writer.newLine();
-				} else {
-					return StateType.getResponseInfo(StateType.EXCEPTION.getValue(), "不知道什么文件");
-				}
-				writer.flush();
-				writer.close();
-				// 9.返回正常响应信息
-				return StateType.getResponseInfo(StateType.NORMAL.getValue(), "写文件成功");
-			} catch (IOException e) {
-				return StateType.getResponseInfo(StateType.EXCEPTION.getValue(), "写文件失败");
+				responseMap[0] = StateType.getResponseInfo(StateType.NORMAL.getValue(),
+						streamJson);
 			}
 		}
+		return responseMap[0];
 	}
 
 	@Method(desc = "获取查询sql条件", logicStep = "1.数据可访问权限处理方式,该方法不需要进行访问权限限制" +

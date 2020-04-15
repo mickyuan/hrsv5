@@ -9,6 +9,7 @@ import fd.ng.db.conf.DbinfosConf;
 import fd.ng.db.conf.Dbtype;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.commons.codes.DatabaseType;
+import hrds.commons.codes.StorageTypeKey;
 import hrds.commons.collection.bean.DbConfBean;
 import hrds.commons.entity.Database_set;
 import hrds.commons.exception.AppSystemException;
@@ -29,11 +30,11 @@ public class ConnectionTool {
 	public static DatabaseWrapper getDBWrapper(DbConfBean dbConfBean) {
 		//1、将SourceDataConfBean对象中的内容封装到dbInfo中
 		Map<String, String> dbConfig = new HashMap<>();
-		dbConfig.put("database_drive", dbConfBean.getDatabase_drive());
-		dbConfig.put("jdbc_url", dbConfBean.getJdbc_url());
-		dbConfig.put("user_name", dbConfBean.getUser_name());
-		dbConfig.put("database_pad", dbConfBean.getDatabase_pad());
-		dbConfig.put("database_type", dbConfBean.getDatabase_type());
+		dbConfig.put(StorageTypeKey.database_driver, dbConfBean.getDatabase_drive());
+		dbConfig.put(StorageTypeKey.jdbc_url, dbConfBean.getJdbc_url());
+		dbConfig.put(StorageTypeKey.user_name, dbConfBean.getUser_name());
+		dbConfig.put(StorageTypeKey.database_pwd, dbConfBean.getDatabase_pad());
+		dbConfig.put(StorageTypeKey.database_type, dbConfBean.getDatabase_type());
 		return getDBWrapper(dbConfig);
 	}
 
@@ -67,13 +68,13 @@ public class ConnectionTool {
 		//1、将SourceDataConfBean对象中的内容封装到dbInfo中
 		DbinfosConf.Dbinfo dbInfo = new DbinfosConf.Dbinfo();
 		dbInfo.setName(DbinfosConf.DEFAULT_DBNAME);
-		dbInfo.setDriver(dbConfig.get("database_drive"));
-		dbInfo.setUrl(dbConfig.get("jdbc_url"));
-		dbInfo.setUsername(dbConfig.get("user_name"));
-		dbInfo.setPassword(dbConfig.get("database_pad"));
+		dbInfo.setDriver(dbConfig.get(StorageTypeKey.database_driver));
+		dbInfo.setUrl(dbConfig.get(StorageTypeKey.jdbc_url));
+		dbInfo.setUsername(dbConfig.get(StorageTypeKey.user_name));
+		dbInfo.setPassword(dbConfig.get(StorageTypeKey.database_pwd));
 		dbInfo.setWay(ConnWay.JDBC);
 		//2、获取数据库类型
-		Dbtype dbType = getDbType(dbConfig.get("database_type"));
+		Dbtype dbType = getDbType(dbConfig.get(StorageTypeKey.database_type));
 		if (dbType.equals(Dbtype.HIVE)) {
 			dbInfo.setAutoCommit(false);
 		}
@@ -93,11 +94,11 @@ public class ConnectionTool {
 	public static DatabaseWrapper getDBWrapper(Database_set database_set) {
 		//1、将SourceDataConfBean对象中的内容封装到dbInfo中
 		Map<String, String> dbConfig = new HashMap<>();
-		dbConfig.put("database_drive", database_set.getDatabase_drive());
-		dbConfig.put("jdbc_url", database_set.getJdbc_url());
-		dbConfig.put("user_name", database_set.getUser_name());
-		dbConfig.put("database_pad", database_set.getDatabase_pad());
-		dbConfig.put("database_type", database_set.getDatabase_type());
+		dbConfig.put(StorageTypeKey.database_driver, database_set.getDatabase_drive());
+		dbConfig.put(StorageTypeKey.jdbc_url, database_set.getJdbc_url());
+		dbConfig.put(StorageTypeKey.user_name, database_set.getUser_name());
+		dbConfig.put(StorageTypeKey.database_pwd, database_set.getDatabase_pad());
+		dbConfig.put(StorageTypeKey.database_type, database_set.getDatabase_type());
 		return getDBWrapper(dbConfig);
 	}
 

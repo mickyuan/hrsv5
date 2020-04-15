@@ -13,18 +13,17 @@ import hrds.agent.job.biz.core.AbstractJobStage;
 import hrds.agent.job.biz.core.service.JdbcCollectTableHandleParse;
 import hrds.agent.job.biz.utils.DataTypeTransform;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
-import hrds.commons.codes.CollectType;
-import hrds.commons.codes.FileFormat;
-import hrds.commons.codes.IsFlag;
-import hrds.commons.codes.Store_type;
+import hrds.commons.codes.*;
 import hrds.commons.collection.ConnectionTool;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.hadoop.utils.HSqlExecute;
+import hrds.commons.utils.Constant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @DocClass(desc = "数据文件采集，数据加载阶段实现", author = "WangZhengcheng")
 public class DFDataLoadingStageImpl extends AbstractJobStage {
@@ -51,13 +50,27 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 			for (DataStoreConfBean dataStoreConfBean : dataStoreConfBeanList) {
 				//根据存储类型上传到目的地
 				if (Store_type.DATABASE.getCode().equals(dataStoreConfBean.getStore_type())) {
+					//传统数据库有两种情况，支持外部表和不支持外部表
+					if (IsFlag.Shi.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
+						//支持外部表
+						String todayTableName = collectTableBean.getHbase_name() + "_" + collectTableBean.getEtlDate();
+						//通过外部表加载数据到todayTableName
+						createExternalTableLoadData(todayTableName, collectTableBean, dataStoreConfBean,
+								stageParamInfo.getTableBean(), stageParamInfo.getFileNameArr());
+					} else if (IsFlag.Fou.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
+						//没有客户端，则表示为数据库类型在upload时已经装载数据了，直接跳过
+						continue;
+					} else {
+						throw new AppSystemException("错误的是否标识");
+					}
+				} else if (Store_type.HIVE.getCode().equals(dataStoreConfBean.getStore_type())) {
 					//hive库有两种情况，有客户端和没有客户端
 					if (IsFlag.Shi.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
 						//有客户端
 						String todayTableName = collectTableBean.getHbase_name() + "_" + collectTableBean.getEtlDate();
 						String hdfsFilePath = DFUploadStageImpl.getUploadHdfsPath(collectTableBean);
 						//通过load方式加载数据到hive
-						createTableLoadData(todayTableName, hdfsFilePath, dataStoreConfBean,
+						createHiveTableLoadData(todayTableName, hdfsFilePath, dataStoreConfBean,
 								stageParamInfo.getTableBean());
 					} else if (IsFlag.Fou.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
 						//没有客户端，则表示为数据库类型在upload时已经装载数据了，直接跳过
@@ -65,22 +78,7 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 					} else {
 						throw new AppSystemException("错误的是否标识");
 					}
-				} /*else if (Store_type.HIVE.getCode().equals(dataStoreConfBean.getStore_type())) {
-					//hive库有两种情况，有客户端和没有客户端
-					if (IsFlag.Shi.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
-						//有客户端
-						String todayTableName = collectTableBean.getHbase_name() + "_" + collectTableBean.getEtlDate();
-						String hdfsFilePath = DBUploadStageImpl.getUploadHdfsPath(collectTableBean);
-						//通过load方式加载数据到hive
-						createTableLoadData(todayTableName, hdfsFilePath, dataStoreConfBean,
-								stageParamInfo.getTableBean());
-					} else if (IsFlag.Fou.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
-						//没有客户端，在upload时已经装载数据了，直接跳过
-						continue;
-					} else {
-						throw new AppSystemException("错误的是否标识");
-					}
-				}*/ else if (Store_type.HBASE.getCode().equals(dataStoreConfBean.getStore_type())) {
+				} else if (Store_type.HBASE.getCode().equals(dataStoreConfBean.getStore_type())) {
 
 				} else if (Store_type.SOLR.getCode().equals(dataStoreConfBean.getStore_type())) {
 
@@ -107,13 +105,110 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 		return stageParamInfo;
 	}
 
+	private void createExternalTableLoadData(String todayTableName, CollectTableBean collectTableBean
+			, DataStoreConfBean dataStoreConfBean, TableBean tableBean, String[] fileNameArr) {
+		Map<String, String> data_store_connect_attr = dataStoreConfBean.getData_store_connect_attr();
+		List<String> sqlList = new ArrayList<>();
+		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(dataStoreConfBean.getData_store_connect_attr())) {
+			String database_type = data_store_connect_attr.get(StorageTypeKey.database_type);
+			if (DatabaseType.Oracle10g.getCode().equals(database_type) ||
+					DatabaseType.Oracle9i.getCode().equals(database_type)) {
+				//创建外部临时表
+				String tmpTodayTableName = todayTableName + "_tmp";
+				sqlList.add(createOracleExternalTable(tmpTodayTableName, tableBean, fileNameArr,
+						dataStoreConfBean.getDsl_name()));
+				sqlList.add(" CREATE TABLE " + todayTableName + " parallel (degree 4) nologging  " +
+						"AS SELECT * FROM  " + tmpTodayTableName);
+				//4.执行sql语句
+				HSqlExecute.executeSql(sqlList, db);
+			} else if (DatabaseType.Postgresql.getCode().equals(database_type)) {
+				//数据库服务器上文件所在路径
+				String uploadServerPath = DFUploadStageImpl.getUploadServerPath(collectTableBean,
+						data_store_connect_attr.get(StorageTypeKey.external_root_path));
+				//TODO
+			} else {
+				//其他支持外部表的数据库 TODO 这里的逻辑后面可能需要不断补充
+				throw new AppSystemException(dataStoreConfBean.getDsl_name() + "数据库暂不支持外部表的形式入库");
+			}
+		} catch (Exception e) {
+			throw new AppSystemException("执行数据库" + dataStoreConfBean.getDsl_name() + "外部表加载数据的sql报错", e);
+		}
+	}
+
+	/*
+	 *拼接创建oracle外部表的sql
+	 */
+	private String createOracleExternalTable(String tmpTodayTableName, TableBean tableBean,
+	                                         String[] fileNameArr, String dsl_name) {
+		List<String> columnList = StringUtil.split(tableBean.getColumnMetaInfo(), JdbcCollectTableHandleParse.STRSPLIT);
+		List<String> typeList = DataTypeTransform.tansform(StringUtil.split(tableBean.getColTypeMetaInfo().toUpperCase(),
+				JdbcCollectTableHandleParse.STRSPLIT), dsl_name);
+		StringBuilder sql = new StringBuilder();
+		sql.append("create table ").append(tmpTodayTableName);
+		sql.append("(");
+		for (int i = 0; i < columnList.size(); i++) {
+			sql.append(columnList.get(i)).append(" ").append(typeList.get(i)).append(",");
+		}
+		sql.deleteCharAt(sql.length() - 1); //将最后的逗号删除
+		sql.append(" )ORGANIZATION external ");
+		sql.append(" ( ");
+		sql.append(" type oracle_loader ");
+		sql.append(" DEFAULT DIRECTORY ").append(Constant.HYSHF_DCL);
+		sql.append(" ACCESS PARAMETERS( ");
+		sql.append(" records delimited by newline");
+		sql.append(" fields terminated by '").append(tableBean.getColumn_separator()).append("' ");
+//            sql.append(" optionally enclosed by '\"' ");
+		sql.append(" missing field values are null  ");
+		sql.append(getTransformsSqlForLobs(columnList, typeList));//有大字段加类型转换取大字段的值
+		sql.append(" ) ");
+		sql.append(" location ");
+		sql.append(" ( ");
+		for (String fileName : fileNameArr) {
+			sql.append("'").append(fileName).append("'").append(",");
+		}
+		sql.delete(sql.length() - 1, sql.length());
+		sql.append(" )) REJECT LIMIT UNLIMITED ");
+		return sql.toString();
+	}
+
+	private String getTransformsSqlForLobs(List<String> columns, List<String> types) {
+		StringBuilder sb = new StringBuilder(1024);
+		if (types.contains("BLOB") || types.contains("CLOB")) {
+			sb.append("(");
+			for (int i = 0; i < types.size(); i++) {
+				if ("BLOB".equals(types.get(i))) {
+					sb.append(columns.get(i)).append("_hylobs").append(" ").append("CHAR(100)").append(",");
+				} else if ("CLOB".equals(types.get(i))) {
+					sb.append(columns.get(i)).append(" ").append("CHAR(1000000)").append(",");
+				} else {
+					sb.append(columns.get(i)).append(" ").append(types.get(i)).append(",");
+				}
+			}
+			sb.deleteCharAt(sb.length() - 1); //将最后的逗号删除
+			sb.append(")");
+			if (types.contains("BLOB")) {
+				sb.append(" COLUMN TRANSFORMS ( ");
+				for (int i = 0; i < types.size(); i++) {
+					if ("BLOB".equals(types.get(i))) {
+						sb.append(columns.get(i)).append(" from ").append(" LOBFILE (").append(columns.get(i))
+								.append("_hylobs").append(")");
+						sb.append(" from (").append(Constant.HYSHF_DCL).append(")").append(" BLOB ").append(",");
+					}
+				}
+				sb.deleteCharAt(sb.length() - 1); //将最后的逗号删除
+				sb.append(" ) ");
+			}
+		}
+		return sb.toString();
+	}
+
 	@Override
 	public int getStageCode() {
 		return StageConstant.DATALOADING.getCode();
 	}
 
-	private void createTableLoadData(String todayTableName, String hdfsFilePath,
-	                                 DataStoreConfBean dataStoreConfBean, TableBean tableBean) {
+	private void createHiveTableLoadData(String todayTableName, String hdfsFilePath,
+	                                     DataStoreConfBean dataStoreConfBean, TableBean tableBean) {
 		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(dataStoreConfBean.getData_store_connect_attr())) {
 			List<String> sqlList = new ArrayList<>();
 			//1.如果表已存在则删除
@@ -200,6 +295,7 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 		sql.append(") stored as ").append(hiveStored);
 		return sql.toString();
 	}
+
 
 	/**
 	 * 创建hive外部表加载行式存储文件

@@ -1526,26 +1526,73 @@ public class CollTbConfStepAction extends BaseAction {
               + "2: 根据返回的列信息,进行检查是否存在着主键,如果存在就将此表的值设为true然后进行下个表的检查,反之所有列检查完毕后为出现主键,则设置值为false")
   @Param(name = "colSetId", desc = "采集任务ID", range = "不可为空")
   @Param(name = "tableNames", desc = "采集表集合数组", range = "不可为空")
+  @Param(name = "tableIds", desc = "表的ID信息", range = "不可为空", nullable = true)
   @Return(desc = "返回检查后的表数据信息", range = "不可为空")
-  public Map<String, Boolean> checkTablePrimary(long colSetId, String[] tableNames) {
+  public Map<String, Boolean> checkTablePrimary(
+      long colSetId, String[] tableNames, String tableIds) {
 
-    List<Table_column> tableColumns;
-    Map<String, Boolean> checkPrimaryMap = new HashedMap();
+    List<Table_column> tableColumns = null;
+    Map<String, Long> tableIdMap = null;
+    if (StringUtil.isNotBlank(tableIds)) {
+      tableIdMap = JSON.parseObject(tableIds, new TypeReference<Map<String, Long>>() {});
+    }
     //    1: 循环获取表的列信息
+    Map<String, Boolean> checkPrimaryMap = new HashedMap();
     for (String table_name : tableNames) {
-      tableColumns = getColumnInfoByTableName(colSetId, getUserId(), table_name);
-      //      2: 根据返回的列信息,进行检查是否存在着主键,如果存在就将此表的值设为true然后进行下个表的检查,反之检查完毕设置值为false
-      for (Table_column tableColumn : tableColumns) {
-        if (tableColumn.getIs_primary_key().equals("true")) {
-          checkPrimaryMap.put(table_name, true);
-          continue;
-        } else {
-          checkPrimaryMap.put(table_name, false);
+      if (tableIdMap != null && StringUtil.isNotBlank(String.valueOf(tableIdMap.get(table_name)))) {
+        getCheckPrimaryByTableId(colSetId, table_name, tableIdMap.get(table_name), checkPrimaryMap);
+      } else {
+        tableColumns = getColumnInfoByTableName(colSetId, getUserId(), table_name);
+        //      2: 根据返回的列信息,进行检查是否存在着主键,如果存在就将此表的值设为true然后进行下个表的检查,反之检查完毕设置值为false
+        for (Table_column tableColumn : tableColumns) {
+          if (tableColumn.getIs_primary_key().equals("true")) {
+            checkPrimaryMap.put(table_name, true);
+            break;
+          } else {
+            checkPrimaryMap.put(table_name, false);
+          }
         }
       }
     }
-
     return checkPrimaryMap;
+  }
+
+  private void getCheckPrimaryByTableId(
+      long colSetId, String tableName, long table_id, Map<String, Boolean> checkPrimaryMap) {
+    long countNum =
+        Dbo.queryNumber(
+                "SELECT COUNT(1) FROM "
+                    + Table_column.TableName
+                    + " t1 JOIN "
+                    + Table_info.TableName
+                    + " t2 ON t1.table_id = t2.table_id WHERE t2.database_id = ? AND t2.table_name = ? AND t1.table_id = ?",
+                colSetId,
+                tableName,
+                table_id)
+            .orElseThrow(() -> new BusinessException("SQL查询异常"));
+    if (countNum == 0) {
+      throw new BusinessException("任务( " + colSetId + "),不存在表( " + tableName + " )");
+    }
+
+    List<Map<String, Object>> list =
+        Dbo.queryList(
+            "SELECT (case t1.is_primary_key when ? then 'true' else 'false' end) is_primary_key FROM "
+                + Table_column.TableName
+                + " t1 JOIN "
+                + Table_info.TableName
+                + " t2 ON t1.table_id = t2.table_id WHERE t2.database_id = ? AND t2.table_name = ? AND t1.table_id = ?",
+            IsFlag.Shi.getCode(),
+            colSetId,
+            tableName,
+            table_id);
+    for (Map<String, Object> map : list) {
+      if (map.get("is_primary_key").equals("true")) {
+        checkPrimaryMap.put(tableName, true);
+        break;
+      } else {
+        checkPrimaryMap.put(tableName, false);
+      }
+    }
   }
 
   @Method(

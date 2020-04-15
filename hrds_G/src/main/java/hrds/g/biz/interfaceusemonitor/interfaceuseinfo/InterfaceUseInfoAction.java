@@ -28,11 +28,12 @@ public class InterfaceUseInfoAction extends BaseAction {
 	@Param(name = "use_valid_date", desc = "有效截至日期", range = "yyyy-MM-dd格式", nullable = true)
 	@Param(name = "user_id", desc = "接口所属用户ID", range = "无限制", nullable = true)
 	@Return(desc = "返回接口使用信息", range = "无限制")
-	public Result searchInterfaceInfo(String use_valid_date, Long user_id) {
+	private Result searchInterfaceUseInfo(String use_valid_date, Long user_id) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		SqlOperator.Assembler assembler = SqlOperator.Assembler.newInstance();
 		assembler.addSql("select interface_name,interface_code,user_name,start_use_date,use_valid_date," +
-				"use_state from " + Interface_use.TableName + " WHERE create_id = ?").addParam(getUserId());
+				"interface_use_id,use_state from " + Interface_use.TableName + " WHERE create_id = ?")
+				.addParam(getUserId());
 		// 2.判断用户是否为空，不为空加条件查询
 		if (user_id != null) {
 			assembler.addSql(" AND user_id = ?").addParam(user_id);
@@ -50,7 +51,7 @@ public class InterfaceUseInfoAction extends BaseAction {
 			Result response = Dbo.queryResult("SELECT round(avg(response_time)) avg,MIN(response_time) min,"
 							+ "MAX(response_time) max FROM " + Interface_use_log.TableName +
 							" WHERE request_state = ? AND interface_use_id=?", REQUEST_STATE,
-					infoResult.getString(i, "interface_id"));
+					infoResult.getLong(i, "interface_use_id"));
 			String avg = response.getString(0, "avg");
 			String min = response.getString(0, "min");
 			String max = response.getString(0, "max");
@@ -80,6 +81,37 @@ public class InterfaceUseInfoAction extends BaseAction {
 		// 2.更新接口状态
 		DboExecute.updatesOrThrow("更新接口状态失败", "UPDATE " + Interface_use.TableName
 				+ " set use_state = ? WHERE interface_use_id = ?", use_state, interface_use_id);
+	}
+
+	@Method(desc = "查询接口监控信息（接口使用监控）", logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制" +
+			"2.判断用户是否为空，不为空加条件查询" +
+			"3.判断有效截止日期是否为空，不为空加条件查询" +
+			"4.查询接口使用信息" +
+			"5.遍历接口使用信息封装响应时间参数" +
+			"6.返回接口使用信息")
+	@Param(name = "use_valid_date", desc = "有效截至日期", range = "yyyy-MM-dd格式", nullable = true)
+	@Param(name = "user_id", desc = "接口所属用户ID", range = "无限制", nullable = true)
+	@Return(desc = "返回接口使用信息", range = "无限制")
+	public Result searchInterfaceInfo() {
+		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
+		// 2.返回查询接口监控数据表信息
+		return searchInterfaceUseInfo("", null);
+	}
+
+	@Method(desc = "根据用户ID或有效日期查询接口监控信息（接口使用监控）",
+			logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制" +
+					"2.判断用户是否为空，不为空加条件查询" +
+					"3.判断有效截止日期是否为空，不为空加条件查询" +
+					"4.查询接口使用信息" +
+					"5.遍历接口使用信息封装响应时间参数" +
+					"6.返回接口使用信息")
+	@Param(name = "use_valid_date", desc = "有效截至日期", range = "yyyy-MM-dd格式", nullable = true)
+	@Param(name = "user_id", desc = "接口所属用户ID", range = "无限制", nullable = true)
+	@Return(desc = "返回接口使用信息", range = "无限制")
+	public Result searchInterfaceInfoByIdOrDate(Long user_id, String use_valid_date) {
+		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
+		// 2.返回查询接口监控数据表信息
+		return searchInterfaceUseInfo(use_valid_date, user_id);
 	}
 
 	@Method(desc = "删除接口使用信息（接口使用监控）", logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制" +

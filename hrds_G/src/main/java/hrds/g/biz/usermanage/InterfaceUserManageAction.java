@@ -64,8 +64,8 @@ public class InterfaceUserManageAction extends BaseAction {
 		Page page = new DefaultPageImpl(currPage, pageSize);
 		List<Map<String, Object>> userList = Dbo.queryPagedList(page, "select user_name,user_id," +
 						"user_password,user_email,user_remark from " + Sys_user.TableName +
-						" where create_id=? and user_type=? and user_name=?", getUserId(),
-				UserType.RESTYongHu.getCode(), user_name);
+						" where create_id=? and user_type=? and user_name like ?", getUserId(),
+				UserType.RESTYongHu.getCode(), "%" + user_name + "%");
 		// 3.封装并返回接口用户信息与分页总记录数
 		Map<String, Object> userMap = new HashMap<>();
 		userMap.put("userList", userList);
