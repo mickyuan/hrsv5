@@ -10,11 +10,11 @@ import fd.ng.netserver.conf.HttpServerConf;
 import fd.ng.netserver.conf.HttpServerConfBean;
 import fd.ng.web.action.ActionResult;
 import hrds.commons.entity.Collect_case;
+import hrds.commons.entity.Data_store_reg;
 import hrds.commons.entity.Source_file_attribute;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.AgentActionUtil;
 import hrds.commons.utils.PackUtil;
-import hrds.commons.utils.PackageUtil;
 
 import java.io.*;
 import java.util.List;
@@ -228,6 +228,28 @@ public class CommunicationUtil {
 			object.put("source_file_attribute", JSONObject.toJSONString(file_attribute));
 			//连接服务器报错则将信息存到文件
 			writeCommunicationErrorFile(AgentActionUtil.ADDSOURCEFILEATTRIBUTE,
+					object.toString(), e.getMessage(), database_id);
+		}
+	}
+
+	public static void addDataStoreReg(Data_store_reg data_store_reg, String database_id) {
+		try {
+			HttpServerConfBean confBean = HttpServerConf.getHttpServer("hyren_main");
+			String url = AgentActionUtil.getServerUrl(confBean, AgentActionUtil.ADDDATASTOREREG);
+			//调用工具类方法给agent发消息，并获取agent响应
+			HttpClient.ResponseValue resVal = new HttpClient()
+					.addData("data_store_reg", PackUtil.packMsg(JSONObject.toJSONString(data_store_reg)))
+					.post(url);
+			ActionResult ar = JsonUtil.toObjectSafety(resVal.getBodyString(), ActionResult.class)
+					.orElseThrow(() -> new AppSystemException("连接" + url + "服务异常"));
+			if (!ar.isSuccess()) {
+				throw new AppSystemException("agent连接服务端批量更新data_store_reg信息异常");
+			}
+		} catch (Exception e) {
+			JSONObject object = new JSONObject();
+			object.put("data_store_reg", JSONObject.toJSONString(data_store_reg));
+			//连接服务器报错则将信息存到文件
+			writeCommunicationErrorFile(AgentActionUtil.ADDDATASTOREREG,
 					object.toString(), e.getMessage(), database_id);
 		}
 	}

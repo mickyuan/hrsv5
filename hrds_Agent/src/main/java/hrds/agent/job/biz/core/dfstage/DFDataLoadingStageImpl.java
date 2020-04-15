@@ -111,10 +111,10 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 		List<String> sqlList = new ArrayList<>();
 		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(dataStoreConfBean.getData_store_connect_attr())) {
 			String database_type = data_store_connect_attr.get(StorageTypeKey.database_type);
+			String tmpTodayTableName = todayTableName + "_tmp";
 			if (DatabaseType.Oracle10g.getCode().equals(database_type) ||
 					DatabaseType.Oracle9i.getCode().equals(database_type)) {
-				//创建外部临时表
-				String tmpTodayTableName = todayTableName + "_tmp";
+				//创建外部临时表，这里表名不能超过30个字符，需要
 				sqlList.add(createOracleExternalTable(tmpTodayTableName, tableBean, fileNameArr,
 						dataStoreConfBean.getDsl_name()));
 				sqlList.add(" CREATE TABLE " + todayTableName + " parallel (degree 4) nologging  " +
@@ -125,7 +125,9 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 				//数据库服务器上文件所在路径
 				String uploadServerPath = DFUploadStageImpl.getUploadServerPath(collectTableBean,
 						data_store_connect_attr.get(StorageTypeKey.external_root_path));
-				//TODO
+				//创建外部临时表
+				sqlList.add(createPostgresqlExternalTable(tmpTodayTableName, tableBean, fileNameArr,
+						dataStoreConfBean.getDsl_name()));
 			} else {
 				//其他支持外部表的数据库 TODO 这里的逻辑后面可能需要不断补充
 				throw new AppSystemException(dataStoreConfBean.getDsl_name() + "数据库暂不支持外部表的形式入库");
@@ -133,6 +135,10 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 		} catch (Exception e) {
 			throw new AppSystemException("执行数据库" + dataStoreConfBean.getDsl_name() + "外部表加载数据的sql报错", e);
 		}
+	}
+
+	private String createPostgresqlExternalTable(String tmpTodayTableName, TableBean tableBean, String[] fileNameArr, String dsl_name) {
+		return null;
 	}
 
 	/*
