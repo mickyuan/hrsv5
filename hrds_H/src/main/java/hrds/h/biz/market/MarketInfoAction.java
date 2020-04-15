@@ -520,7 +520,7 @@ public class MarketInfoAction extends BaseAction {
     private Map<String, String> getFieldType(String sourcetable, String sourcecolumn, String field_type, String dsl_id) {
         Map<String, String> resultmap = new HashMap<>();
         List<LayerBean> layerByTable = ProcessingData.getLayerByTable(sourcetable, Dbo.db());
-        if (layerByTable.isEmpty()) {
+        if (layerByTable == null || layerByTable.isEmpty()) {
             //如果没有找到该表属于哪一层 则返回原始类型
             resultmap.put("sourcetype", field_type);
             resultmap.put("targettype", field_type);
@@ -794,7 +794,7 @@ public class MarketInfoAction extends BaseAction {
             String dataSourceType = "";
             List<LayerBean> layerByTable = ProcessingData.getLayerByTable(tablename, Dbo.db());
             //TODO 如果所涉及到的表找不到层级 则使用UDL(自定义层）
-            if (layerByTable.isEmpty()) {
+            if (layerByTable == null || layerByTable.isEmpty()) {
                 dataSourceType = DataSourceType.UDL.getCode();
             } else {
                 dataSourceType = layerByTable.get(0).getDst();
