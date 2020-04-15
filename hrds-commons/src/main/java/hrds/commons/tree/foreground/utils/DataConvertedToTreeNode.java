@@ -178,4 +178,48 @@ public class DataConvertedToTreeNode {
             treeDataList.add(map);
         }
     }
+
+    @Method(desc = "集市层工程信息转换",
+            logicStep = "1.集市层工程信息转换")
+    @Param(name = "dmlDataInfos", desc = "集市层工程信息转换", range = "取值范围说明")
+    @Param(name = "treeDataList", desc = "转换后的树数据信息", range = "取值范围说明")
+    @Param(name = "rootName", desc = "父级菜单名称", range = "取值范围说明")
+    @Param(name = "isShTable", desc = "isShTable", range = "取值范围说明")
+    public static void ConversionDMLSourceInfos(List<Map<String, Object>> dmlDataInfos, List<Map<String, Object>> treeDataList, String rootName) {
+        for (int i = 0; i < dmlDataInfos.size(); i++) {
+            Map<String, Object> stringObjectMap = dmlDataInfos.get(i);
+            Map<String, Object> map = new HashMap<>();
+            map.put("rootName",rootName);
+            map.put("isParent", Boolean.TRUE);
+            map.put("pId",stringObjectMap.get("data_mart_id").toString());
+            map.put("data_mart_id",stringObjectMap.get("data_mart_id").toString());
+            map.put("show", Boolean.TRUE);
+            map.put("source", DataSourceType.DML.getValue());
+            map.put("name",stringObjectMap.get("mart_name"));
+            map.put("description",stringObjectMap.get("mart_name"));
+            treeDataList.add(map);
+        }
+    }
+
+    @Method(desc = "集市层工程信息转换",
+            logicStep = "1.集市层工程信息转换")
+    @Param(name = "dmlDataInfos", desc = "集市层工程信息转换", range = "取值范围说明")
+    @Param(name = "treeDataList", desc = "转换后的树数据信息", range = "取值范围说明")
+    @Param(name = "rootName", desc = "父级菜单名称", range = "取值范围说明")
+    @Param(name = "isShTable", desc = "isShTable", range = "取值范围说明")
+    public static void ConversionDMLTableInfos(List<Map<String, Object>> dmlTableInfos, List<Map<String, Object>> treeDataList, String rootName) {
+        for (int i = 0; i < dmlTableInfos.size(); i++) {
+            Map<String, Object> stringObjectMap = dmlTableInfos.get(i);
+            Map<String, Object> map = new HashMap<>();
+            map.put("rootName",rootName);
+            map.put("isParent", Boolean.FALSE);
+            map.put("pId",stringObjectMap.get("datatable_id").toString());
+            map.put("show", Boolean.TRUE);
+            map.put("source", DataSourceType.DML.getValue());
+            map.put("name",stringObjectMap.get("datatable_en_name"));
+            map.put("tableName",stringObjectMap.get("datatable_en_name"));
+            map.put("description",stringObjectMap.get("datatable_en_name"));
+            treeDataList.add(map);
+        }
+    }
 }

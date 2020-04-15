@@ -8,6 +8,7 @@ import fd.ng.core.utils.StringUtil;
 import hrds.commons.codes.DataSourceType;
 import hrds.commons.tree.foreground.bean.TreeDataInfo;
 import hrds.commons.tree.foreground.query.DCLDataQuery;
+import hrds.commons.tree.foreground.query.DMLDataQuery;
 import hrds.commons.utils.User;
 
 import java.util.HashMap;
@@ -76,16 +77,15 @@ public class TreeMenuInfo {
 		//TODO 集市功能添加后放开
 //		//2.DML 集市层
 //		//2-1.获取集市层下集市信息
-//		if (DataSourceType.DML.getValue().equals(treeDataInfo.getAgent_layer())) {
-//			List<Map<String, Object>> dmlDataInfos = DMLDataQuery.getDMLDataInfos();
-//			treeMenuInfoMap.put("dmlDataInfos", dmlDataInfos);
-//		}
+		if (DataSourceType.DML.getValue().equals(treeDataInfo.getAgent_layer())) {
+			List<Map<String, Object>> dmlDataInfos = DMLDataQuery.getDMLDataInfos();
+			treeMenuInfoMap.put("dmlDataInfos", dmlDataInfos);
+		}
 //		//2-2.获取集市层集市下表数据信息
-//		if (StringUtil.isNotBlank(treeDataInfo.getData_mart_id())) {
-//			List<Map<String, Object>> dmlTableInfos = DMLDataQuery
-//					.getDMLTableInfos(treeDataInfo.getData_mart_id(), treeDataInfo.getPage_from());
-//			treeMenuInfoMap.put("dmlTableInfos", dmlTableInfos);
-//		}
+		if (StringUtil.isNotBlank(treeDataInfo.getData_mart_id())) {
+			List<Map<String, Object>> dmlTableInfos = DMLDataQuery.getDMLTableInfos(treeDataInfo.getData_mart_id());
+			treeMenuInfoMap.put("dmlTableInfos", dmlTableInfos);
+		}
 		//TODO 加工功能添加后放开
 //		//3.DPL 加工层
 //		//3-1.获取加工层下工程信息
