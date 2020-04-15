@@ -143,7 +143,7 @@ public class AgentListAction extends BaseAction {
 			throw new BusinessException("从数据库中取到的Agent类型不合法");
 		}
 		//5、返回结果
-		return Dbo.queryResult(sqlStr, agentInfo.get("agent_id"),IsFlag.Shi.getCode());
+		return Dbo.queryResult(sqlStr, agentInfo.get("agent_id"), IsFlag.Shi.getCode());
 	}
 
 	@Method(desc = "查看任务日志", logicStep = "" +
@@ -490,7 +490,8 @@ public class AgentListAction extends BaseAction {
 		}
 		//2、任务存在，则查询数据，开始拼接要发送到agent端的信息
 		//2-1、首先根据数据库设置ID查询源系统数据库信息
-		Result sourceDBConfResult = Dbo.queryResult("SELECT dbs.agent_id, dbs.database_id, dbs.task_name, dbs.database_name, dbs.database_pad," +
+		Result sourceDBConfResult = Dbo.queryResult("SELECT dbs.agent_id, dbs.database_id, dbs.task_name," +
+				" dbs.database_name, dbs.database_pad," +
 				" dbs.database_drive, dbs.database_type, dbs.user_name, dbs.database_ip, dbs.database_port," +
 				" dbs.host_name, dbs.system_type, dbs.is_sendok, dbs.database_number, dbs.db_agent, dbs.plane_url," +
 				" dbs.database_separatorr, dbs.row_separator, dbs.classify_id,  dbs.jdbc_url, ds.datasource_number," +
@@ -514,9 +515,9 @@ public class AgentListAction extends BaseAction {
 		Result collectTableResult = Dbo.queryResult("SELECT dbs.database_id, ti.table_id, ti.table_name, " +
 				"ti.table_ch_name, ti.table_count, ti.source_tableid, ti.valid_s_date, ti.valid_e_date, ti.sql, " +
 				"ti.remark, ti.is_user_defined, ti.is_md5,ti.is_register,ti.is_parallel,ti.page_sql,ti.rec_num_date," +
-				"ti.pageparallels, ti.dataincrement,tsi.storage_type, tsi.storage_time, tsi.is_zipper, " +
-				"ds.datasource_number || '_' || cjc.classify_num || '_' || ti.table_name as hbase_name, " +
-				" ds.datasource_name, ai.agent_name, ai.agent_id, ds.source_id" +
+				"ti.unload_type,ti.is_customize_sql,ti.pageparallels, ti.dataincrement,tsi.storage_type, " +
+				"tsi.storage_time, tsi.is_zipper, ds.datasource_number || '_' || cjc.classify_num || '_' || " +
+				"ti.table_name as hbase_name, ds.datasource_name, ai.agent_name, ai.agent_id, ds.source_id" +
 				" FROM " + Data_source.TableName + " ds " +
 				" JOIN " + Agent_info.TableName + " ai ON ds.source_id = ai.source_id" +
 				" JOIN " + Database_set.TableName + " dbs ON ai.agent_id = dbs.agent_id" +
