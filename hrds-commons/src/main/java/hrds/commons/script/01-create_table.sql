@@ -149,12 +149,12 @@ DROP TABLE IF EXISTS DQ_DEFINITION ;
 CREATE TABLE DQ_DEFINITION(
 REG_NUM                                           BIGINT default 0 NOT NULL, --规则编号
 REG_NAME                                          VARCHAR(100) NULL, --规则名称
-LOAD_STRATEGY                                     VARCHAR(100) NOT NULL, --加载策略
-GROUP_SEQ                                         VARCHAR(100) NOT NULL, --分组序号
-TARGET_TAB                                        VARCHAR(100) NOT NULL, --目标表名
-TARGET_KEY_FIELDS                                 VARCHAR(2048) NOT NULL, --目标表关键字段
-OPPOSITE_TAB                                      VARCHAR(100) NOT NULL, --比对表名
-OPPOSITE_KEY_FIELDS                               VARCHAR(2048) NOT NULL, --比对表关键字段
+LOAD_STRATEGY                                     VARCHAR(100) NULL, --加载策略
+GROUP_SEQ                                         VARCHAR(100) NULL, --分组序号
+TARGET_TAB                                        VARCHAR(100) NULL, --目标表名
+TARGET_KEY_FIELDS                                 VARCHAR(2048) NULL, --目标表关键字段
+OPPOSITE_TAB                                      VARCHAR(100) NULL, --比对表名
+OPPOSITE_KEY_FIELDS                               VARCHAR(2048) NULL, --比对表关键字段
 RANGE_MIN_VAL                                     VARCHAR(64) NULL, --范围区间的最小值
 RANGE_MAX_VAL                                     VARCHAR(64) NULL, --范围区间的最大值
 LIST_VALS                                         VARCHAR(1024) NULL, --清单值域
