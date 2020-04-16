@@ -7,7 +7,12 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.web.util.Dbo;
+import hrds.commons.codes.UserType;
 import hrds.commons.entity.Dm_datatable;
+import hrds.commons.entity.Dm_info;
+import hrds.commons.entity.Sys_user;
+import hrds.commons.utils.User;
+import org.apache.commons.lang.StringUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -15,40 +20,69 @@ import java.util.Map;
 @DocClass(desc = "集市层(DML)层数据信息查询类", author = "BY-HLL", createdate = "2020/1/7 0007 上午 11:17")
 public class DMLDataQuery {
 
-	private static final SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
+    private static final SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
+//
+//	@Method(desc = "获取集市信息",
+//			logicStep = "1.获取集市信息")
+//	@Return(desc = "集市信息列表", range = "无限制")
+//	public static List<Map<String, Object>> getDMLDataInfos() {
+//		//1.获取集市信息
+//		return getDMLDataInfos(null);
+//	}
 
-	@Method(desc = "获取集市信息",
-			logicStep = "1.获取集市信息")
-	@Return(desc = "集市信息列表", range = "无限制")
-	public static List<Map<String, Object>> getDMLDataInfos() {
-		//1.获取集市信息
-		return getDMLDataInfos(null);
-	}
-
-	@Method(desc = "获取集市信息",
-			logicStep = "1.如果集市名称不为空,模糊查询获取集市信息")
-	@Param(name = "marketName", desc = "集市名称", range = "marketName")
-	@Return(desc = "集市信息列表", range = "无限制")
-	public static List<Map<String, Object>> getDMLDataInfos(String marketName) {
-		asmSql.clean();
-		asmSql.addSql("SELECT * from dm_info");
-		//1.如果集市名称不为空,模糊查询获取集市信息
-		if (!StringUtil.isBlank(marketName)) {
-			asmSql.addSql(" where mart_name like ?").addParam('%' + marketName + '%');
-		}
-		return Dbo.queryList(asmSql.sql(), asmSql.params());
-	}
-
-    public static List<Map<String, Object>> getDMLTableInfos(String data_mart_id) {
-		Dm_datatable dm_datatable = new Dm_datatable();
-		dm_datatable.setData_mart_id(data_mart_id);
+    @Method(desc = "获取集市信息",
+            logicStep = "1.如果集市名称不为空,模糊查询获取集市信息")
+    @Param(name = "marketName", desc = "集市名称", range = "marketName")
+    @Return(desc = "集市信息列表", range = "无限制")
+    public static List<Map<String, Object>> getDMLDataInfos(String marketName, User user) {
         asmSql.clean();
-        asmSql.addSql("SELECT * from dm_datatable where data_mart_id = ?");
-        asmSql.addParam(dm_datatable.getData_mart_id());
+        asmSql.addSql("SELECT distinct t1.* from " + Dm_info.TableName + " t1 left join sys_user t2 on t1.create_id = t2.user_id ");
+        
+        //1.获取数据源下分类信息,如果是系统管理员,则不过滤部门
+        if (!UserType.XiTongGuanLiYuan.getCode().equals(user.getUserType())) {
+            asmSql.addSql(" where t2.dep_id = ?");
+            asmSql.addParam(user.getDepId());
+        }
         //1.如果集市名称不为空,模糊查询获取集市信息
-//        if (!StringUtil.isBlank(datatable_en_name)) {
-//            asmSql.addSql(" and datatable_en_name like ?").addParam('%' + datatable_en_name + '%');
-//        }
+        if (!StringUtil.isBlank(marketName)) {
+            if (!UserType.XiTongGuanLiYuan.getCode().equals(user.getUserType())) {
+                asmSql.addSql(" and ");
+            } else {
+                asmSql.addSql(" where ");
+            }
+            asmSql.addSql("  mart_name like ?").addParam('%' + marketName + '%');
+        }
+        return Dbo.queryList(asmSql.sql(), asmSql.params());
+    }
+
+    public static List<Map<String, Object>> getDMLTableInfos(String data_mart_id, User user, String table_name) {
+        asmSql.clean();
+        asmSql.addSql("SELECT distinct t1.* from " + Dm_datatable.TableName + " t1 left join " + Dm_info.TableName +
+                " t2 on t1.data_mart_id = t2.data_mart_id left join " + Sys_user.TableName + " t3 on t2.create_id = t3.user_id");
+
+        if (!UserType.XiTongGuanLiYuan.getCode().equals(user.getUserType())) {
+            asmSql.addSql(" where t3.dep_id = ?");
+            asmSql.addParam(user.getDepId());
+        }
+        if (!StringUtils.isEmpty(data_mart_id)) {
+            Dm_datatable dm_datatable = new Dm_datatable();
+            dm_datatable.setData_mart_id(data_mart_id);
+            if (!UserType.XiTongGuanLiYuan.getCode().equals(user.getUserType())) {
+                asmSql.addSql(" and ");
+            } else {
+                asmSql.addSql(" where ");
+            }
+            asmSql.addSql(" t1.data_mart_id = ?");
+            asmSql.addParam(dm_datatable.getData_mart_id());
+        } else if (!StringUtil.isEmpty(table_name)) {
+            if (!UserType.XiTongGuanLiYuan.getCode().equals(user.getUserType())) {
+                asmSql.addSql(" and ");
+            } else {
+                asmSql.addSql(" where ");
+            }
+            asmSql.addSql(" t1.datatable_en_name like ?").addParam('%' + table_name + '%');
+
+        }
         return Dbo.queryList(asmSql.sql(), asmSql.params());
     }
 

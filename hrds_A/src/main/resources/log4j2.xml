@@ -40,8 +40,8 @@
     <!--定义logger，只有定义了logger并引入的appender，appender才会生效-->
     <Loggers>
         <!--过滤掉其他软件包中的无用的DEBUG信息-->
-        <Logger name="org.apache" level="INFO"></Logger>
-        <Root level="info">
+        <Logger name="org.apache" level="WARN"></Logger>
+        <Root level="debug">
             <AppenderRef ref="Console"/>
         </Root>
     </Loggers>
