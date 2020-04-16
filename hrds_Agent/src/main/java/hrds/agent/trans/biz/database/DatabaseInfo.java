@@ -6,7 +6,6 @@ import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
-import hrds.agent.job.biz.bean.SourceDataConfBean;
 import hrds.commons.base.AgentBaseAction;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.collection.ConnectionTool;
@@ -18,7 +17,10 @@ import hrds.commons.utils.PackUtil;
 import hrds.commons.utils.Platform;
 import hrds.commons.utils.xlstoxml.Xls2xml;
 
-import java.sql.*;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -85,7 +87,6 @@ public class DatabaseInfo extends AgentBaseAction {
 	@Param(name = "hy_sql_meta", desc = "表指定sql查询需要的列", range = "可以为空", nullable = true)
 	@Return(desc = "数据库下表的字段信息", range = "不会为空，如果字符串的长度超过300，将会被压缩")
 	public String getTableColumn(Database_set database_set, String tableName, String hy_sql_meta) {
-
 		List<Map<String, String>> columnList;
 		//1.根据Db_agent判断是否为平面DB数据采集
 		if (IsFlag.Shi.getCode().equals(database_set.getDb_agent())) {
@@ -125,6 +126,31 @@ public class DatabaseInfo extends AgentBaseAction {
 			}
 		}
 		//6.返回指定表的字段信息
+		return PackUtil.packMsg(JSON.toJSONString(columnList));
+	}
+
+	@Method(desc = "根据数据库连接和表名获取表的字段信息",
+			logicStep = "1.根据Db_agent判断是否为平面DB数据采集" +
+					"2.去读xml下指定表的字段信息" +
+					"3.报错了，说明解析xml文件失败，可能是文件被修改或者被删了，重新生成一次xml文件再读取" +
+					"4.返回指定表的字段信息")
+	@Param(name = "database_set", desc = "数据库连接设置信息表对象", range = "表中不能为空的字段必须有值"
+			, isBean = true)
+	@Return(desc = "数据库下表的字段信息", range = "不会为空，如果字符串的长度超过300，将会被压缩")
+	public String getAllTableColumn(Database_set database_set) {
+		Map<String, List<Map<String, String>>> columnList;
+		//1.根据Db_agent判断是否为平面DB数据采集
+		String db_path = database_set.getPlane_url();
+		String xmlName = ConnUtil.getDataBaseFile("", "", db_path, "");
+		try {
+			//2.去读xml下指定表的字段信息
+			columnList = ConnUtil.getColumnByTable(xmlName);
+		} catch (Exception e) {
+			//3.报错了，说明解析xml文件失败，可能是文件被修改或者被删了，重新生成一次xml文件再读取
+			Xls2xml.toXml(db_path, xmlName);
+			columnList = ConnUtil.getColumnByTable(xmlName);
+		}
+		//4.返回指定表的字段信息
 		return PackUtil.packMsg(JSON.toJSONString(columnList));
 	}
 

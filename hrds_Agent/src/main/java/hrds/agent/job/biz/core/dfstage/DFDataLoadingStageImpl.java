@@ -1,5 +1,6 @@
 package hrds.agent.job.biz.core.dfstage;
 
+import com.jcraft.jsch.Session;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Return;
@@ -13,6 +14,7 @@ import hrds.agent.job.biz.core.AbstractJobStage;
 import hrds.agent.job.biz.core.increasement.JDBCIncreasement;
 import hrds.agent.job.biz.core.service.JdbcCollectTableHandleParse;
 import hrds.agent.job.biz.utils.DataTypeTransform;
+import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.agent.job.biz.utils.TypeTransLength;
 import hrds.commons.codes.*;
@@ -20,9 +22,12 @@ import hrds.commons.collection.ConnectionTool;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.hadoop.utils.HSqlExecute;
 import hrds.commons.utils.Constant;
+import hrds.commons.utils.jsch.SFTPChannel;
+import hrds.commons.utils.jsch.SFTPDetails;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -110,9 +115,16 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 	private void createExternalTableLoadData(String todayTableName, CollectTableBean collectTableBean
 			, DataStoreConfBean dataStoreConfBean, TableBean tableBean, String[] fileNameArr) {
 		Map<String, String> data_store_connect_attr = dataStoreConfBean.getData_store_connect_attr();
+		String database_type = data_store_connect_attr.get(StorageTypeKey.database_type);
 		List<String> sqlList = new ArrayList<>();
-		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(dataStoreConfBean.getData_store_connect_attr())) {
-			String database_type = data_store_connect_attr.get(StorageTypeKey.database_type);
+		Session session = null;
+		DatabaseWrapper db = null;
+		try {
+			db = ConnectionTool.getDBWrapper(dataStoreConfBean.getData_store_connect_attr());
+			//获取操作远程的对象
+			session = SFTPChannel.getJSchSession(new SFTPDetails(data_store_connect_attr.get(StorageTypeKey.sftp_host),
+					data_store_connect_attr.get(StorageTypeKey.sftp_user), data_store_connect_attr.
+					get(StorageTypeKey.sftp_pwd), data_store_connect_attr.get(StorageTypeKey.sftp_port)), 0);
 			String file_format = tableBean.getFile_format();
 			if (DatabaseType.Oracle10g.getCode().equals(database_type) ||
 					DatabaseType.Oracle9i.getCode().equals(database_type)) {
@@ -133,6 +145,17 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 						"AS SELECT * FROM  " + tmpTodayTableName);
 				//4.执行sql语句
 				HSqlExecute.executeSql(sqlList, db);
+				//判断是否有bad文件，有则抛异常
+				String bad_files = SFTPChannel.execCommandByJSch(session,
+						"ls " + data_store_connect_attr.get(StorageTypeKey.external_root_path) +
+								File.separator + Constant.HYSHF_DCL + File.separator +
+								tmpTodayTableName.toUpperCase() + "*bad");
+				if (!StringUtil.isEmpty(bad_files)) {
+					throw new AppSystemException("你所生成的文件无法load到Oracle数据库，请查看数据库服务器下的bad文件"
+							+ bad_files + "及其相关错误日志");
+				} else {
+					LOGGER.info("oracle数据库进数成功");
+				}
 			} else if (DatabaseType.Postgresql.getCode().equals(database_type)) {
 				//数据库服务器上文件所在路径
 				String uploadServerPath = DFUploadStageImpl.getUploadServerPath(collectTableBean,
@@ -150,9 +173,81 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 				//其他支持外部表的数据库 TODO 这里的逻辑后面可能需要不断补充
 				throw new AppSystemException(dataStoreConfBean.getDsl_name() + "数据库暂不支持外部表的形式入库");
 			}
+			//执行成功，清除上传到服务器上的文件，清除oracle外部表加载数据的日志
+			//清除上传到服务器上的文件
+			clearTemporaryFile(database_type, collectTableBean,
+					data_store_connect_attr.get(StorageTypeKey.external_root_path), session);
+			//清楚oracle外部表的日志
+			clearTemporaryLog(database_type, todayTableName,
+					data_store_connect_attr.get(StorageTypeKey.external_root_path), session);
 		} catch (Exception e) {
 			throw new AppSystemException("执行数据库" + dataStoreConfBean.getDsl_name() + "外部表加载数据的sql报错", e);
+		} finally {
+			//清除中间表
+			clearTemporaryTable(database_type, fileNameArr, todayTableName, db, dataStoreConfBean.getDsl_name());
+			if (session != null)
+				session.disconnect();
+			if (db != null)
+				db.close();
 		}
+	}
+
+	private void clearTemporaryFile(String database_type, CollectTableBean collectTableBean,
+	                                String external_root_path, Session session) throws Exception {
+		if (FileUtil.isSysDir(external_root_path)) {
+			throw new AppSystemException("请不要删除系统目录下的文件");
+		}
+		if (DatabaseType.Oracle10g.getCode().equals(database_type) ||
+				DatabaseType.Oracle9i.getCode().equals(database_type)) {
+			external_root_path = external_root_path + File.separator + Constant.HYSHF_DCL + File.separator;
+			//删除大字段文件
+			String lobs_file = "find " + external_root_path + " -name \"LOBs_" + collectTableBean.getHbase_name()
+					+ "_*\" | xargs rm -rf 'LOBs_" + collectTableBean.getHbase_name() + "_*'";
+			SFTPChannel.execCommandByJSch(session, lobs_file);
+		} else if (DatabaseType.Postgresql.getCode().equals(database_type)) {
+			//数据库服务器上文件所在路径
+			external_root_path = DFUploadStageImpl.getUploadServerPath(collectTableBean,
+					external_root_path);
+		}
+		//删除数据文件
+		SFTPChannel.execCommandByJSch(session,
+				"rm -rf " + external_root_path + collectTableBean.getHbase_name() + "*");
+	}
+
+	private void clearTemporaryLog(String database_type, String todayTableName,
+	                               String external_root_path, Session session) throws Exception {
+		if (FileUtil.isSysDir(external_root_path)) {
+			throw new AppSystemException("请不要删除系统目录下的文件");
+		}
+		String tmpTodayTableName = todayTableName + "_tmp";
+		if (DatabaseType.Oracle10g.getCode().equals(database_type) ||
+				DatabaseType.Oracle9i.getCode().equals(database_type)) {
+			external_root_path = external_root_path + File.separator + Constant.HYSHF_DCL + File.separator;
+			//删除数据文件
+			SFTPChannel.execCommandByJSch(session,
+					"rm -rf " + external_root_path + tmpTodayTableName.toUpperCase() + "*log");
+		}
+	}
+
+	private void clearTemporaryTable(String database_type, String[] fileNameArr,
+	                                 String todayTableName, DatabaseWrapper db, String dsl_name) {
+		List<String> sqlList = new ArrayList<>();
+		if (DatabaseType.Oracle10g.getCode().equals(database_type) ||
+				DatabaseType.Oracle9i.getCode().equals(database_type)) {
+			//oracle数据库只创建了一个临时表
+			//如果表已存在则删除
+			JDBCIncreasement.dropTableIfExists(todayTableName + "_tmp", db, sqlList);
+		} else if (DatabaseType.Postgresql.getCode().equals(database_type)) {
+			for (int i = 0; i < fileNameArr.length; i++) {
+				String table_name = todayTableName + "_tmp" + i;
+				JDBCIncreasement.dropTableIfExists(table_name, db, sqlList);
+			}
+		} else {
+			//其他支持外部表的数据库 TODO 这里的逻辑后面可能需要不断补充
+			throw new AppSystemException(dsl_name + "数据库暂不支持外部表的形式入库");
+		}
+		//4.执行sql语句
+		HSqlExecute.executeSql(sqlList, db);
 	}
 
 	private void createPostgresqlExternalTable(String todayTableName, TableBean tableBean, String[] fileNameArr

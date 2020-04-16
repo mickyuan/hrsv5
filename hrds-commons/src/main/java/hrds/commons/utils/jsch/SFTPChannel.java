@@ -1,6 +1,7 @@
 package hrds.commons.utils.jsch;
 
 import com.jcraft.jsch.*;
+import fd.ng.core.utils.FileNameUtils;
 import hrds.commons.exception.AppSystemException;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
@@ -92,8 +93,8 @@ public class SFTPChannel {
 
 	public static String execCommandByJSch(Session session, String command)
 			throws JSchException, IOException {
-
-		logger.info("执行命令为 : ", command);
+		command = FileNameUtils.normalize(command, true);
+		logger.info("执行命令为 : " + command);
 		ChannelExec channelExec = (ChannelExec) session.openChannel("exec");
 		InputStream in = channelExec.getInputStream();
 		channelExec.setCommand(command);

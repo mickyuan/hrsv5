@@ -32,6 +32,8 @@ public class AgentActionUtil {
 	public static final String GETDATABASETABLE = "/hrds/agent/trans/biz/database/getDatabaseTable";
 	//根据数据库连接和表名获取表的字段信息
 	public static final String GETTABLECOLUMN = "/hrds/agent/trans/biz/database/getTableColumn";
+	//DB文件采集获取所有表及列信息
+	public static final String GETAlLLTABLECOLUMN = "/hrds/agent/trans/biz/database/getAllTableColumn";
 	//agent调用海云服务端保存采集情况信息表
 	public static final String SAVECOLLECTCASE = "/hrds/server/saveCollectCase";
 	//调用agent端执行文件采集
