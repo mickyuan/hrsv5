@@ -57,8 +57,8 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 						+ collectTableBean.getEtlDate() + File.separator + collectTableBean.getTable_name()
 						+ File.separator + FileFormat.ofValueByCode(tableBean.getFile_format()) + File.separator, true);
 				//列出文件目录下的文件
-				String[] file_name_list = new File("file_path").list(
-						(dir, name) -> new File(dir.getAbsolutePath() + name).isFile()
+				String[] file_name_list = new File(file_path).list(
+						(dir, name) -> new File(file_path + name).isFile()
 				);
 				//获得本次采集生成的数据文件的总大小
 				if (file_name_list != null && file_name_list.length > 0) {

@@ -93,7 +93,7 @@ public class DqcExecution {
                     public void dealLine(Map<String, Object> map) {
                         map_result_1.putAll(map);
                     }
-                }.getSQLEngine(index1_sql, db);
+                }.getDataLayer(index1_sql, db);
             }
             //运行sql:检查总记录数
             Map<String, Object> map_result_2 = new HashMap<>();
@@ -104,7 +104,7 @@ public class DqcExecution {
                     public void dealLine(Map<String, Object> map) {
                         map_result_2.putAll(map);
                     }
-                }.getSQLEngine(index2_sql, db);
+                }.getDataLayer(index2_sql, db);
             }
             //运行sql:问题明细sql
             List<Map<String, Object>> map_result_3 = new ArrayList<>();
@@ -115,7 +115,7 @@ public class DqcExecution {
                     public void dealLine(Map<String, Object> map) {
                         map_result_3.add(map);
                     }
-                }.getSQLEngine(index3_sql, db);
+                }.getDataLayer(index3_sql, db);
             }
             //设置运行日期,时间
             dq_result.setEnd_date(DateUtil.getSysDate());
@@ -270,7 +270,7 @@ public class DqcExecution {
                     public void dealLine(Map<String, Object> map) {
 
                     }
-                }.getSQLEngine(insert_sql, db);
+                }.getDataLayer(insert_sql, db);
             }
             //获取表空间 //TODO 获取表空间
             String table_space = "";

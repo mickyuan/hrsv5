@@ -3,6 +3,7 @@ package hrds.commons.hadoop.utils;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
+import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.web.util.Dbo;
 import hrds.commons.exception.AppSystemException;
@@ -47,8 +48,10 @@ public class HSqlExecute {
 	@Param(name = "sql", desc = "需要执行的sql的", range = "不可为空")
 	@Param(name = "db", desc = "数据库db操作对象", range = "不可为空")
 	public static void executeSql(String sql, DatabaseWrapper db) {
-		logger.info("执行的sql为： " + sql);
-		db.execute(sql);
+		if (!StringUtil.isEmpty(sql)) {
+			logger.info("执行的sql为： " + sql);
+			db.execute(sql);
+		}
 	}
 
 	@Method(desc = "使用传入的db依次执行集合中sql",
@@ -57,8 +60,10 @@ public class HSqlExecute {
 	@Param(name = "db", desc = "数据库db操作对象", range = "不可为空")
 	public static void executeSql(List<String> sqlList, DatabaseWrapper db) {
 		for (String sql : sqlList) {
-			logger.info("执行的sql为： " + sql);
-			db.execute(sql);
+			if (!StringUtil.isEmpty(sql)) {
+				logger.info("执行的sql为： " + sql);
+				db.execute(sql);
+			}
 		}
 	}
 }

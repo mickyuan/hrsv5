@@ -96,7 +96,7 @@ public class ColumnMeta {
 			doc = builder.parse(f);
 			table_list = doc.getElementsByTagName("table");
 			for (int i = 0; i < table_list.getLength(); i++) {
-				table_name = table_list.item(i).getAttributes().getNamedItem("name").getNodeValue();
+				table_name = table_list.item(i).getAttributes().getNamedItem("table_name").getNodeValue();
 				table_name = table_name.toLowerCase();
 				tName = tName.toLowerCase();
 				if (table_name.equals(tName)) {
@@ -104,8 +104,8 @@ public class ColumnMeta {
 					for (int j = 0; j < column_list.getLength(); j++) {
 						//只取column的属性,表属性只做页面选择使用
 						if("column".equals(column_list.item(j).getNodeName())){
-							String column_name = column_list.item(j).getAttributes().getNamedItem("name").getNodeValue();
-							String primaryKey = column_list.item(j).getAttributes().getNamedItem("primaryKey").getNodeValue();
+							String column_name = column_list.item(j).getAttributes().getNamedItem("column_name").getNodeValue();
+							String primaryKey = column_list.item(j).getAttributes().getNamedItem("is_primary_key").getNodeValue();
 							String length = column_list.item(j).getAttributes().getNamedItem("length").getNodeValue();
 							String column_type = column_list.item(j).getAttributes().getNamedItem("column_type").getNodeValue();
 							clist.add(column_name + "^" + primaryKey + "^" + length + "^" + column_type);

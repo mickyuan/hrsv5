@@ -17,7 +17,7 @@ public class InterfaceInfos extends ProjectTableEntity {
 	private long[] user_id;
 	@DocBean(name = "interface_note", value = "备注:", dataType = String.class, required = false)
 	private String interface_note;
-	@DocBean(name = "classify_name", value = "分类名称:", dataType = long[].class, required = false)
+	@DocBean(name = "classify_name", value = "分类名称:", dataType = String.class, required = false)
 	private String classify_name;
 	@DocBean(name = "interface_id", value = "接口ID:", dataType = String.class, required = true)
 	private long[] interface_id;

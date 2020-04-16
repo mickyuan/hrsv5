@@ -222,7 +222,7 @@ public class StartWayConfAction extends BaseAction {
                 + " t1 JOIN "
                 + Etl_job_def.TableName
                 + " t2 ON "
-                + "t1.etl_job = t2.etl_job WHERE t1.etl_sys_cd = t2.etl_sys_cd AND t1.sub_sys_cd = t2.etl_sys_cd "
+                + "t1.etl_job = t2.etl_job WHERE t1.etl_sys_cd = t2.etl_sys_cd AND t1.sub_sys_cd = t2.sub_sys_cd "
                 + "AND t1.database_id = ? ",
             colSetId);
     etlJobList.forEach(
@@ -348,17 +348,14 @@ public class StartWayConfAction extends BaseAction {
     // 解析出作业上游的关系数据
     Map jobRelationMap = null;
     if (StringUtil.isNotBlank(jobRelations)) {
-      jobRelationMap = JsonUtil.toObjectSafety(jobRelations, Map.class).get();
+      jobRelationMap =
+          JsonUtil.toObjectSafety(jobRelations, Map.class)
+              .orElseThrow(() -> new BusinessException("数据转换错误"));
     }
 
     // 作业定义信息
     int index = 0;
     for (Etl_job_def etl_job_def : etlJobs) {
-
-      // 检查表名是否存在
-      if (etlJobList.contains(etl_job_def.getEtl_job())) {
-        throw new BusinessException("作业名称(" + etl_job_def.getEtl_job() + ")已存在");
-      }
 
       /*
        检查必要字段不能为空的情况
@@ -389,7 +386,24 @@ public class StartWayConfAction extends BaseAction {
           DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate())
               + " "
               + DateUtil.parseStr2TimeWith6Char(DateUtil.getSysTime()));
-      etl_job_def.add(Dbo.db());
+
+      long countNum =
+          Dbo.queryNumber(
+                  "SELECT COUNT(1) FROM "
+                      + Etl_job_def.TableName
+                      + " WHERE etl_job = ? AND etl_sys_cd = ? AND sub_sys_cd = ?",
+                  etl_job_def.getEtl_job(),
+                  etl_job_def.getEtl_sys_cd(),
+                  etl_job_def.getSub_sys_cd())
+              .orElseThrow(() -> new BusinessException("SQL查询异常!!!"));
+
+      // 检查表名是否存在
+      if (etlJobList.contains(etl_job_def.getEtl_job())) {
+        etl_job_def.update(Dbo.db());
+      } else {
+        // 新增
+        etl_job_def.add(Dbo.db());
+      }
 
       // 保存每个作业的上游依赖关系
       if (jobRelationMap != null) {
@@ -415,13 +429,13 @@ public class StartWayConfAction extends BaseAction {
        保存抽数作业关系表,检查作业名称是否存在,如果存在则跳过
       */
       if (!relationEtl.contains(etl_job_def.getEtl_job())) {
-
         Take_relation_etl take_relation_etl = new Take_relation_etl();
         take_relation_etl.setDatabase_id(colSetId);
         take_relation_etl.setDed_id(dedList.get(index));
         take_relation_etl.setEtl_job(etl_job_def.getEtl_job());
         take_relation_etl.setEtl_sys_cd(etl_job_def.getEtl_sys_cd());
         take_relation_etl.setSub_sys_cd(etl_job_def.getSub_sys_cd());
+        take_relation_etl.add(Dbo.db());
         take_relation_etl.add(Dbo.db());
       }
 

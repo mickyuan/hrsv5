@@ -6,7 +6,6 @@ import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.core.service.AbstractCollectTableHandle;
 import hrds.commons.codes.FileFormat;
-import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Data_extraction_def;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -69,12 +68,12 @@ public class DataExtractUtil {
 			for (int i = 0; i < columnList.size(); i++) {
 				JSONObject object = new JSONObject();
 				object.put("column_type", typeList.get(i));
-				object.put("column_null", "Y");
+				object.put("column_null", "1");
 				object.put("column_remark", "");
 				object.put("column_id", i);
 				object.put("column_cn_name", "");
 				object.put("column_name", columnList.get(i));
-				object.put("column_key", IsFlag.Shi.getCode().equals(primaryKeyList.get(i)) ? "Y" : "N");
+				object.put("column_key", primaryKeyList.get(i));
 				array.add(object);
 			}
 			jsonObject.put("columns", array);

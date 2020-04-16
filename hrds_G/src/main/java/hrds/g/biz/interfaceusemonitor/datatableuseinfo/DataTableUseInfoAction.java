@@ -4,6 +4,7 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
+import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
@@ -12,7 +13,10 @@ import hrds.commons.entity.Sys_user;
 import hrds.commons.entity.Sysreg_parameter_info;
 import hrds.commons.entity.Table_use_info;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @DocClass(desc = "查询接口监控信息类接口", author = "dhw", createdate = "2020/3/30 9:20")
 public class DataTableUseInfoAction extends BaseAction {
@@ -33,7 +37,7 @@ public class DataTableUseInfoAction extends BaseAction {
 		if (user_id != null) {
 			assembler.addSql(" AND t1.user_id = ?").addParam(user_id);
 		}
-		assembler.addSql(" order by t3.use_id");
+		assembler.addSql(" order by t1.use_id");
 		// 3.返回查询接口监控数据表信息
 		return Dbo.queryResult(assembler.sql(), assembler.params());
 	}
@@ -60,19 +64,32 @@ public class DataTableUseInfoAction extends BaseAction {
 		return searchTableDataInfo(user_id);
 	}
 
-	@Method(desc = "查看字段信息（接口使用监控）",
+	@Method(desc = "根据表使用ID查看字段信息（接口使用监控）",
 			logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制" +
-					"2.返回查询字段信息")
+					"2.返回查询字段信息" +
+					"3.处理数据为数组")
 	@Param(name = "use_id", desc = "接口使用ID", range = "新增接口使用信息时生成")
 	@Return(desc = "返回查询字段信息", range = "无限制")
-	public List<Object> searchFieldInfoById(Long use_id) {
+	public List<Map<String, String>> searchFieldInfoById(Long use_id) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		// 2.返回查询字段信息
-		return Dbo.queryOneColumnList("SELECT table_column_name FROM " + Sysreg_parameter_info.TableName +
-				" WHERE use_id = ?", use_id);
+		List<String> columnList = Dbo.queryOneColumnList("SELECT table_column_name FROM "
+				+ Sysreg_parameter_info.TableName + " WHERE use_id = ?", use_id);
+		if (columnList.isEmpty()) {
+			return null;
+		}
+		// 3.处理数据为数组
+		List<Map<String, String>> list = new ArrayList<>();
+		String[] table_column_names = columnList.get(0).split(",");
+		for (String table_column_name : table_column_names) {
+			Map<String, String> columnMap = new HashMap<>();
+			columnMap.put("table_column_name", table_column_name);
+			list.add(columnMap);
+		}
+		return list;
 	}
 
-	@Method(desc = "删除数据表信息（接口使用监控）",
+	@Method(desc = "根据表使用ID删除数据表信息（接口使用监控）",
 			logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制" +
 					"2.删除系统登记表参数信息" +
 					"3.删除表使用信息")

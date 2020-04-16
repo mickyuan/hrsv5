@@ -269,10 +269,8 @@ public class DataRangeManageAction extends BaseAction {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		for (TableDataInfo tableDataInfo : tableDataInfos) {
 			if (DataSourceType.DCL == DataSourceType.ofEnumByCode(dataSourceType)) {
-				for (long userId : user_id) {
-					saveDCLData(table_note, tableDataInfo.getFile_id(), dataSourceType,
-							tableDataInfo.getColumn_name(), userId);
-				}
+				saveDCLData(table_note, tableDataInfo.getFile_id(), dataSourceType,
+						tableDataInfo.getColumn_name(), user_id);
 			} else if (DataSourceType.DML == DataSourceType.ofEnumByCode(dataSourceType)) {
 				throw new BusinessException("该数据源类型还未开发，待续。。。" + dataSourceType);
 			} else if (DataSourceType.DPL == DataSourceType.ofEnumByCode(dataSourceType)) {
@@ -303,34 +301,36 @@ public class DataRangeManageAction extends BaseAction {
 	@Param(name = "file_id", desc = "文件ID", range = "无限制")
 	@Param(name = "dataSourceType", desc = "数据源类型(使用DataSourceType）代码项，树根节点", range = "无限制")
 	@Param(name = "column_name", desc = "被选中的文件名称", range = "无限制")
-	private void saveDCLData(String table_note, String file_id, String dataSourceType, String column_name,
-	                         long userId) {
+	private void saveDCLData(String table_note, String file_id, String dataSourceType, String[] column_name,
+	                         long[] user_id) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		// 2.查询贴源层表数据信息
 		Result tableResult = Dbo.queryResult("SELECT hyren_name,meta_info,original_name FROM " +
 				Data_store_reg.TableName + " WHERE file_id = ?", file_id);
-		Table_use_info table_use_info = new Table_use_info();
-		// 3.遍历贴源层表数据信息保存表使用信息以及系统登记表参数信息
-		for (int i = 0; i < tableResult.getRowCount(); i++) {
-			// 4.获取系统内对应表名
-			String hyren_name = tableResult.getString(i, "hyren_name");
-			// 5.获取原始文件名称
-			String original_name = tableResult.getString(i, "original_name");
-			// 6.根据用户ID、表名查询当前表是否已登记
-			boolean flag = getUserTableInfo(userId, hyren_name);
-			// 7.生成表使用ID
-			String useId = PrimayKeyGener.getNextId();
-			// 8.判断当前用户对应表是否已登记做不同处理
-			if (flag) {
-				// 8.1已登记,根据用户ID、表名删除接口表数据
-				deleteInterfaceTableInfo(userId, hyren_name);
+		for (long userId : user_id) {
+			Table_use_info table_use_info = new Table_use_info();
+			// 3.遍历贴源层表数据信息保存表使用信息以及系统登记表参数信息
+			for (int i = 0; i < tableResult.getRowCount(); i++) {
+				// 4.获取系统内对应表名
+				String hyren_name = tableResult.getString(i, "hyren_name");
+				// 5.获取原始文件名称
+				String original_name = tableResult.getString(i, "original_name");
+				// 6.根据用户ID、表名查询当前表是否已登记
+				boolean flag = getUserTableInfo(userId, hyren_name);
+				// 7.生成表使用ID
+				String useId = PrimayKeyGener.getNextId();
+				// 8.判断当前用户对应表是否已登记做不同处理
+				if (flag) {
+					// 8.1已登记,根据用户ID、表名删除接口表数据
+					deleteInterfaceTableInfo(userId, hyren_name);
+				}
+				// 9.新增表使用信息
+				addTableUseInfo(table_note, dataSourceType, userId, useId, table_use_info,
+						hyren_name, original_name);
+				// 10.新增系统登记表参数信息
+				addSysregParameterInfo(tableResult.getString(i, "meta_info"),
+						column_name, useId, userId);
 			}
-			// 9.新增表使用信息
-			addTableUseInfo(table_note, dataSourceType, userId, useId, table_use_info,
-					hyren_name, original_name);
-			// 10.新增系统登记表参数信息
-			addSysregParameterInfo(tableResult.getString(i, "meta_info"),
-					column_name, useId, userId);
 		}
 	}
 
@@ -343,36 +343,41 @@ public class DataRangeManageAction extends BaseAction {
 	@Param(name = "column_name", desc = "被选中的文件名称", range = "无限制")
 	@Param(name = "useId", desc = "表使用ID", range = "新增表使用信息时生成")
 	@Param(name = "userId", desc = "用户ID", range = "新增用户时生成")
-	private void addSysregParameterInfo(String meta_info, String column_name, String useId, long userId) {
+	private void addSysregParameterInfo(String meta_info, String[] column_name, String useId, long userId) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		// 2.封装系统登记参数表信息
 		Sysreg_parameter_info sysreg_parameter_info = new Sysreg_parameter_info();
-		sysreg_parameter_info.setParameter_id(PrimayKeyGener.getNextId());
-		sysreg_parameter_info.setUse_id(useId);
-		sysreg_parameter_info.setIs_flag(IsFlag.Fou.getCode());
-		sysreg_parameter_info.setUser_id(userId);
-		// 3.元数据并解析
-		if (StringUtil.isBlank(meta_info)) {
-			throw new BusinessException("当前表对应的meta信息为空");
-		}
-		Map<String, Object> metaInfoMap = JsonUtil.toObject(meta_info, MAPTYPE);
-		Object column = metaInfoMap.get("column");
-		Object type = metaInfoMap.get("type");
-		if (StringUtil.isBlank(column_name)) {
-			if (column == null) {
-				throw new BusinessException("当前表对应的meta信息没有列信息");
+		if (column_name != null && column_name.length != 0) {
+			for (String columnName : column_name) {
+				sysreg_parameter_info.setParameter_id(PrimayKeyGener.getNextId());
+				sysreg_parameter_info.setUse_id(useId);
+				sysreg_parameter_info.setIs_flag(IsFlag.Fou.getCode());
+				sysreg_parameter_info.setUser_id(userId);
+				// 3.元数据并解析
+				if (StringUtil.isBlank(meta_info)) {
+					throw new BusinessException("当前表对应的meta信息为空");
+				}
+				Map<String, Object> metaInfoMap = JsonUtil.toObject(meta_info, MAPTYPE);
+				Object column = metaInfoMap.get("column");
+				Object type = metaInfoMap.get("type");
+				if (StringUtil.isBlank(columnName)) {
+					if (column == null) {
+						throw new BusinessException("当前表对应的meta信息没有列信息");
+					}
+					columnName = column.toString();
+					sysreg_parameter_info.setTable_column_name(column.toString());
+				} else {
+					sysreg_parameter_info.setTable_column_name(columnName.toUpperCase());
+				}
+				// 4.获取相同的列类型参数信息
+				if (type != null) {
+					Map<String, String> columnTypeMap = getColumnType(columnName, column.toString(), type.toString());
+					sysreg_parameter_info.setRemark(JsonUtil.toJson(columnTypeMap).toUpperCase());
+				}
+				// 5.保存系统登记表参数信息
+				sysreg_parameter_info.add(Dbo.db());
 			}
-			sysreg_parameter_info.setTable_column_name(column.toString());
-		} else {
-			sysreg_parameter_info.setTable_column_name(column_name.toUpperCase());
 		}
-		// 4.获取相同的列类型参数信息
-		if (type != null) {
-			Map<String, String> columnTypeMap = getColumnType(column_name, column.toString(), type.toString());
-			sysreg_parameter_info.setRemark(JsonUtil.toJson(columnTypeMap).toUpperCase());
-		}
-		// 5.保存系统登记表参数信息
-		sysreg_parameter_info.add(Dbo.db());
 	}
 
 	@Method(desc = "新增表使用信息", logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制" +
@@ -401,7 +406,7 @@ public class DataRangeManageAction extends BaseAction {
 		if (StringUtil.isBlank(table_note)) {
 			table_use_info.setTable_note("");
 		} else {
-			table_use_info.setOriginal_name(table_note);
+			table_use_info.setTable_note(table_note);
 		}
 		// 3.新增保存表使用信息
 		table_use_info.add(Dbo.db());

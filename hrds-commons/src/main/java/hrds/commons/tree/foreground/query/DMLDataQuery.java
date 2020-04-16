@@ -7,6 +7,7 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.web.util.Dbo;
+import hrds.commons.entity.Dm_datatable;
 
 import java.util.List;
 import java.util.Map;
@@ -30,13 +31,26 @@ public class DMLDataQuery {
 	@Return(desc = "集市信息列表", range = "无限制")
 	public static List<Map<String, Object>> getDMLDataInfos(String marketName) {
 		asmSql.clean();
-		asmSql.addSql("SELECT * from data_mart_info");
+		asmSql.addSql("SELECT * from dm_info");
 		//1.如果集市名称不为空,模糊查询获取集市信息
 		if (!StringUtil.isBlank(marketName)) {
 			asmSql.addSql(" where mart_name like ?").addParam('%' + marketName + '%');
 		}
 		return Dbo.queryList(asmSql.sql(), asmSql.params());
 	}
+
+    public static List<Map<String, Object>> getDMLTableInfos(String data_mart_id) {
+		Dm_datatable dm_datatable = new Dm_datatable();
+		dm_datatable.setData_mart_id(data_mart_id);
+        asmSql.clean();
+        asmSql.addSql("SELECT * from dm_datatable where data_mart_id = ?");
+        asmSql.addParam(dm_datatable.getData_mart_id());
+        //1.如果集市名称不为空,模糊查询获取集市信息
+//        if (!StringUtil.isBlank(datatable_en_name)) {
+//            asmSql.addSql(" and datatable_en_name like ?").addParam('%' + datatable_en_name + '%');
+//        }
+        return Dbo.queryList(asmSql.sql(), asmSql.params());
+    }
 
 //	@Method(desc = "根据集市id获取集市下数据表信息",
 //			logicStep = "1.根据集市id获取集市下数据表信息")

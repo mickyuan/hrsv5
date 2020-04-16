@@ -448,11 +448,14 @@ public class ReadFileToDataBase implements Callable<Long> {
 
 	private void doBatch(String batchSql, List<Object[]> pool, long num, DatabaseWrapper db) {
 		int[] ints = db.execBatch(batchSql, pool);
-		for (int i : ints) {
-			if (i != 1) {
-				throw new AppSystemException("批量插入数据出现错误,退出");
-			}
-		}
+//		for (int i : ints) {
+		//XXX Oracle数据库batch插入，这边返回值是-2
+//			if (i != 1) {
+//				throw new AppSystemException("批量插入数据出现错误,退出");
+//			}
+//		LOGGER.info("batch插入的返回值为" + i);
+//		}
+		LOGGER.info("本次batch插入" + ints.length);
 		LOGGER.info("数据库已插入" + num + "条！");
 		pool.clear();// 插入成功，清空集合
 	}
