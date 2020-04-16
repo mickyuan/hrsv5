@@ -36,7 +36,7 @@ public class DMLDataQuery {
     @Return(desc = "集市信息列表", range = "无限制")
     public static List<Map<String, Object>> getDMLDataInfos(String marketName, User user) {
         asmSql.clean();
-        asmSql.addSql("SELECT distinct t1.* from " + Dm_info.TableName + " t1 left join sys_user t2 on t1.create_id = t2.user_id ");
+        asmSql.addSql("SELECT distinct t1.* from " + Dm_info.TableName + " t1 left join "+Sys_user.TableName+" t2 on t1.create_id = t2.user_id ");
         
         //1.获取数据源下分类信息,如果是系统管理员,则不过滤部门
         if (!UserType.XiTongGuanLiYuan.getCode().equals(user.getUserType())) {
@@ -50,7 +50,7 @@ public class DMLDataQuery {
             } else {
                 asmSql.addSql(" where ");
             }
-            asmSql.addSql("  mart_name like ?").addParam('%' + marketName + '%');
+            asmSql.addSql("  lower(mart_name) like ?").addParam('%' + marketName.toLowerCase() + '%');
         }
         return Dbo.queryList(asmSql.sql(), asmSql.params());
     }
@@ -80,7 +80,7 @@ public class DMLDataQuery {
             } else {
                 asmSql.addSql(" where ");
             }
-            asmSql.addSql(" t1.datatable_en_name like ?").addParam('%' + table_name + '%');
+            asmSql.addSql(" lower(t1.datatable_en_name) like ?").addParam('%' + table_name.toLowerCase() + '%');
 
         }
         return Dbo.queryList(asmSql.sql(), asmSql.params());
