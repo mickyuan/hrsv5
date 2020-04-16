@@ -1628,8 +1628,6 @@ public class CollTbConfStepAction extends BaseAction {
       Map<String, Object> incrementSqlMap =
           JsonUtil.toObjectSafety(sql, Map.class)
               .orElseThrow(() -> new BusinessException("增量SQL解析出现错误"));
-      // 定义存放增量SQL中表名称集合
-      Set<String> tableDataSet = new LinkedHashSet<>();
 
       // 找出增量sql中不重复的列
       incrementSqlMap.forEach(
