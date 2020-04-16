@@ -14,6 +14,7 @@ import hrds.commons.base.BaseAction;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Agent_info;
 import hrds.commons.entity.Database_set;
+import hrds.commons.entity.Table_column;
 import hrds.commons.entity.Table_info;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.AgentActionUtil;
@@ -109,9 +110,54 @@ public class DictionaryTableAction extends BaseAction {
     }
   }
 
+  @Method(desc = "根据表ID获取列信息", logicStep = "获取列信息")
+  @Param(name = "colSetId", desc = "采集任务ID", range = "不可为空")
+  @Param(name = "table_id", desc = "表ID", range = "不可为空")
+  @Return(desc = "返回表列数据信息", range = "不可为空,为空表示无列信息,那么在保存列的信息时就未做校验")
+  public List<Table_column> getTableColumnByTableId(long colSetId, long table_id) {
+
+    long countNum =
+        Dbo.queryNumber(
+                "SELECT COUNT(1) FROM " + Table_info.TableName + " WHERE database_id = ?", colSetId)
+            .orElseThrow(() -> new BusinessException("SQL查询异常"));
+    if (countNum == 0) {
+      CheckParam.throwErrorMsg("当前任务( %s )不存在采集表信息!!!");
+    }
+
+    return Dbo.queryList(
+        Table_column.class,
+        "SELECT t1.* from "
+            + Table_column.TableName
+            + " t1 JOIN "
+            + Table_info.TableName
+            + " t2 ON t1.table_id = t2.table_id WHERE t2.database_id = ? AND t1.table_id = ?"
+            + " AND t2.valid_e_date = ? AND t1.valid_e_date = ? ",
+        colSetId,
+        table_id,
+        VALID_E_DATE,
+        VALID_E_DATE);
+  }
+
+  @Method(desc = "根据表I名称获取列信息", logicStep = "获取列信息")
+  @Param(name = "colSetId", desc = "采集任务ID", range = "不可为空")
+  @Param(name = "table_name", desc = "表名称", range = "不可为空")
+  @Return(desc = "返回表列数据信息", range = "可以为空,为空表示数据字典为配置列信息")
+  public List<Table_column> getTableColumnByTableName(long colSetId, String table_name) {
+
+    Map<String, Object> databaseInfo = getDatabaseSetInfo(colSetId);
+
+    String respMsg =
+        SendMsgUtil.getAllTableName(
+            (Long) databaseInfo.get("agent_id"),
+            this.getUserId(),
+            databaseInfo,
+            AgentActionUtil.GETTABLECOLUMN);
+
+    return JSON.parseObject(respMsg, new TypeReference<List<Table_column>>() {});
+  }
+
   @Method(desc = "根据colSetId去数据库中查出DB连接信息", logicStep = "1、根据colSetId和userId去数据库中查出DB连接信息")
-  @Param(name = "colSetId", desc = "数据库设置ID，源系统数据库设置表主键，数据库对应表外键", range = "不为空")
-  @Param(name = "userId", desc = "当前登录用户ID，sys_user表主键", range = "不为空")
+  @Param(name = "colSetId", desc = "采集任务ID", range = "不为空")
   @Return(desc = "查询结果集", range = "不为空")
   private List<Table_info> getDirTableData(long colSetId) {
 
@@ -144,8 +190,7 @@ public class DictionaryTableAction extends BaseAction {
   }
 
   @Method(desc = "根据colSetId去数据库中查出DB连接信息", logicStep = "1、根据colSetId和userId去数据库中查出DB连接信息")
-  @Param(name = "colSetId", desc = "数据库设置ID，源系统数据库设置表主键，数据库对应表外键", range = "不为空")
-  @Param(name = "userId", desc = "当前登录用户ID，sys_user表主键", range = "不为空")
+  @Param(name = "colSetId", desc = "采集任务ID", range = "不为空")
   @Return(desc = "查询结果集", range = "不为空")
   private Map<String, Object> getDatabaseSetInfo(long colSetId) {
 
@@ -173,7 +218,7 @@ public class DictionaryTableAction extends BaseAction {
   }
 
   @Method(desc = "获取集合Bean中的表名称", logicStep = "获取表名称")
-  @Param(name = "tableBeanListd", desc = "集合Table_info数据集合", range = "可以为空")
+  @Param(name = "tableBeanList", desc = "集合Table_info数据集合", range = "可以为空")
   @Return(desc = "返回处理后的数据信息集合,只要表的名称", range = "可以为空")
   private List<String> getTableName(List<Table_info> tableBeanList) {
     List<String> tableNameList = new ArrayList<>();
@@ -218,18 +263,22 @@ public class DictionaryTableAction extends BaseAction {
     return differenceMap;
   }
 
+  @Method(desc = "根据不同情况删除表的信息", logicStep = "删除表信息")
+  @Param(name = "tableNameList", desc = "被依据的表名称集合", range = "可以为空")
+  @Param(name = "tableList", desc = "需要处理的表集合", range = "可以为空")
+  @Param(name = "deleteType", desc = "区分是数据库的表集合处理还是数据字典的表集合处理", range = "可以为空")
   private void removeTableBean(
-      List<String> deleteTableList, List<Table_info> tableList, boolean deleteType) {
+      List<String> tableNameList, List<Table_info> tableList, boolean deleteType) {
     tableList.forEach(
         table_info -> {
           if (deleteType) {
             // 如果删除的表名称和数据库中记录的表名一样,则删除(数据库的)
-            if (deleteTableList.contains(table_info.getTable_name())) {
+            if (tableNameList.contains(table_info.getTable_name())) {
               tableList.remove(table_info);
             }
           } else {
             // 删除还存在的表信息,保留新增的表信息(数据字典的)
-            if (!deleteTableList.contains(table_info.getTable_name())) {
+            if (!tableNameList.contains(table_info.getTable_name())) {
               tableList.remove(table_info);
             }
           }

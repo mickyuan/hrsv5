@@ -99,7 +99,7 @@ public class CollectFIleAction extends BaseAction {
   @Return(desc = "返回此次任务的ID", range = "不会为空")
   public String updateDataFile(Database_set database_set) {
     CheckParam.checkData("任务ID不能为空", database_set.getDatabase_id().toString());
-    CheckParam.checkData("任务编号不能为空", database_set.getDatabase_number());
+    CheckParam.checkData("作业编号不能为空", database_set.getDatabase_number());
     CheckParam.checkData("采集数据文件路径不能为空", database_set.getPlane_url());
     CheckParam.checkData("分类编号不能为空", String.valueOf(database_set.getClassify_id()));
     //    1: 检查数据文件采集信息是否存在
@@ -109,7 +109,7 @@ public class CollectFIleAction extends BaseAction {
                 database_set.getDatabase_id())
             .orElseThrow(() -> new BusinessException("SQL查询异常"));
     if (countNum == 0) {
-      CheckParam.throwErrorMsg("当前任务编号( %s ),已经不存在", database_set.getDatabase_number());
+      CheckParam.throwErrorMsg("当前任务ID( %s ),已经不存在", database_set.getDatabase_number());
     }
     //    2: 更新数据文件采集信息
     database_set.setIs_sendok(IsFlag.Fou.getCode());
