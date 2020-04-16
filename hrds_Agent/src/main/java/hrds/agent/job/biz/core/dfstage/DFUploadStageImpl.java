@@ -207,10 +207,9 @@ public class DFUploadStageImpl extends AbstractJobStage {
 			//XXX 这个map需要额外有数据库所在机器的用户名、密码、ip地址、sftp端口(没有取默认值 22)
 			Map<String, String> data_store_connect_attr = dataStoreConfBean.getData_store_connect_attr();
 			//获取操作远程的对象
-			SFTPDetails sftpDetails = new SFTPDetails(data_store_connect_attr.get(StorageTypeKey.sftp_host),
+			session = SFTPChannel.getJSchSession(new SFTPDetails(data_store_connect_attr.get(StorageTypeKey.sftp_host),
 					data_store_connect_attr.get(StorageTypeKey.sftp_user), data_store_connect_attr.
-					get(StorageTypeKey.sftp_pwd), data_store_connect_attr.get(StorageTypeKey.sftp_port));
-			session = SFTPChannel.getJSchSession(sftpDetails, 0);
+					get(StorageTypeKey.sftp_pwd), data_store_connect_attr.get(StorageTypeKey.sftp_port)), 0);
 			SFTPChannel sftpChannel = new SFTPChannel();
 			channel = sftpChannel.getChannel(session, 0);
 			// 上传文件
@@ -309,6 +308,8 @@ public class DFUploadStageImpl extends AbstractJobStage {
 				channel.put(zipFileName, targetDir, ChannelSftp.OVERWRITE); // 代码段2
 				SFTPChannel.execCommandByJSch(session, "unzip " + targetDir
 						+ unload_hbase_name + ".zip" + " -d " + targetDir);
+				//删除zip压缩包
+				SFTPChannel.execCommandByJSch(session, "rm -rf " + targetDir + unload_hbase_name + ".zip");
 			}
 		}
 	}
