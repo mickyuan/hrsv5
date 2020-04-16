@@ -1,4 +1,4 @@
-package hrds.g.biz.interfaceinfo.impl;
+package hrds.g.biz.serviceuser.impl;
 
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
@@ -22,10 +22,10 @@ import hrds.g.biz.enumerate.AsynType;
 import hrds.g.biz.enumerate.OutType;
 import hrds.g.biz.enumerate.StateType;
 import hrds.g.biz.init.InterfaceManager;
-import hrds.g.biz.interfaceinfo.InterfaceDefine;
-import hrds.g.biz.interfaceinfo.common.InterfaceCommon;
-import hrds.g.biz.interfaceinfo.query.Query;
-import hrds.g.biz.interfaceinfo.query.QueryByRowkey;
+import hrds.g.biz.serviceuser.ServiceInterfaceUserDefine;
+import hrds.g.biz.serviceuser.common.InterfaceCommon;
+import hrds.g.biz.serviceuser.query.Query;
+import hrds.g.biz.serviceuser.query.QueryByRowkey;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.Map;
 
 @DocClass(desc = "接口信息实现类", author = "dhw", createdate = "2020/3/30 15:39")
-public class InterfaceImplAction extends BaseAction implements InterfaceDefine {
+public class ServiceInterfaceUserImplAction extends BaseAction implements ServiceInterfaceUserDefine {
 
 	private static final Logger logger = LogManager.getLogger();
 	// 对于SQL的字段是否使用字段验证
