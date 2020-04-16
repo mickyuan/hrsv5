@@ -982,11 +982,11 @@ public class MarketInfoAction extends BaseAction {
         if (source.equals(DataSourceType.DCL.getCode())) {
             Table_column table_column = new Table_column();
             table_column.setTable_id(id);
-            return Dbo.queryList("select column_name as columnname from " + Table_column.TableName + " where table_id = ?", table_column.getTable_id());
+            return Dbo.queryList("select column_name as columnname,column_type as columntype,false as selectionState from " + Table_column.TableName + " where table_id = ?", table_column.getTable_id());
         } else if (source.equals(DataSourceType.DML.getCode())) {
             Datatable_field_info datatable_field_info = new Datatable_field_info();
             datatable_field_info.setDatatable_id(id);
-            return Dbo.queryList("select field_en_name as columnname from " + Datatable_field_info.TableName + " where datatable_id = ?", datatable_field_info.getDatatable_id());
+            return Dbo.queryList("select field_en_name as columnname,field_type as columntype,false as selectionState from " + Datatable_field_info.TableName + " where datatable_id = ?", datatable_field_info.getDatatable_id());
         }
         //TODO 新的层加进来后 还需要补充
         return null;
