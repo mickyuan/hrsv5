@@ -1420,8 +1420,8 @@ public class CollTbConfStepAction extends BaseAction {
     　2、封装数据，调用方法和agent交互，获取列信息
     　3、将列信息反序列化为List集合
     */
-    Set<Table_column> tableColumns = new HashSet<>();
-    getTableColumns(colSetId, tableInfo.getSql(), tableColumns);
+    Set<Table_column> tableColumns =
+        getSqlColumnData(colSetId, tableInfo.getUnload_type(), tableInfo.getSql());
 
     // 4、遍历List集合，给每个Table_column对象设置主键等信息
     for (Table_column tableColumn : tableColumns) {
