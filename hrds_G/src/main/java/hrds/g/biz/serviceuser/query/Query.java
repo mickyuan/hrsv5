@@ -1,4 +1,4 @@
-package hrds.g.biz.interfaceinfo.query;
+package hrds.g.biz.serviceuser.query;
 
 import java.util.Map;
 

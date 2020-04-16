@@ -1,4 +1,4 @@
-package hrds.g.biz.interfaceinfo;
+package hrds.g.biz.serviceuser;
 
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
@@ -9,7 +9,7 @@ import hrds.g.biz.bean.*;
 import java.util.Map;
 
 @DocClass(desc = "接口定义", author = "dhw", createdate = "2020/4/9 18:03")
-public interface InterfaceDefine {
+public interface ServiceInterfaceUserDefine {
 
 	@Method(desc = "获取token值", logicStep = "")
 	@Param(name = "user_id", desc = "用户ID", range = "新增用户时生成")
