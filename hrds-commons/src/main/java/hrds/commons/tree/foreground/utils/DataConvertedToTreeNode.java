@@ -147,6 +147,7 @@ public class DataConvertedToTreeNode {
             map.put("database_id", database_id);
             map.put("table_id", table_id);
             map.put("isParent", Boolean.FALSE);
+            map.put("isLeaf", Boolean.TRUE);
             map.put("rootName", rootName);
             map.put("show", Boolean.TRUE);
             map.put("id", table_id);
@@ -193,6 +194,7 @@ public class DataConvertedToTreeNode {
             map.put("description",stringObjectMap.get("datatable_en_name"));
             map.put("rootName",rootName);
             map.put("isParent", Boolean.FALSE);
+            map.put("isLeaf", Boolean.TRUE);
             map.put("id",stringObjectMap.get("datatable_id").toString());
             map.put("show", Boolean.TRUE);
             map.put("source", DataSourceType.DML.getCode());
