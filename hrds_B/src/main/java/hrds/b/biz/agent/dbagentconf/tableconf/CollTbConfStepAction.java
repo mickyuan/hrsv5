@@ -772,7 +772,6 @@ public class CollTbConfStepAction extends BaseAction {
         if (StringUtil.isBlank(tableColumn.getIs_primary_key())) {
           throw new BusinessException("保存" + tableColumn.getIs_primary_key() + "采集列时，是否主键标识位不能为空");
         }
-        IsFlag.ofEnumByCode(tableColumn.getIs_primary_key());
         // 设置主键
         tableColumn.setColumn_id(PrimayKeyGener.getNextId());
         // 设置外键
@@ -782,10 +781,6 @@ public class CollTbConfStepAction extends BaseAction {
         tableColumn.setValid_e_date(Constant.MAXDATE);
         // 设置清洗列默认优先级
         tableColumn.setTc_or(columnCleanOrder);
-        // 设置是否保留原字段为是
-        tableColumn.setIs_alive(IsFlag.Shi.getCode());
-        // 是否为变化生成设为否
-        tableColumn.setIs_new(IsFlag.Fou.getCode());
         // 3、保存这部分数据
         tableColumn.add(Dbo.db());
       }
@@ -868,21 +863,21 @@ public class CollTbConfStepAction extends BaseAction {
         SendMsgUtil.getColInfoByTbName(
             agentId, getUserId(), databaseInfo, tableName, AgentActionUtil.GETTABLECOLUMN);
     // 3、将列信息反序列化为Json数组
-    JSONArray columnInfos = JSONObject.parseArray(respMsg);
-    List<Table_column> tableColumns = new ArrayList<>();
+    return JSON.parseObject(respMsg, new TypeReference<List<Table_column>>() {});
+    //    List<Table_column> tableColumns = new ArrayList<>();
     // 4、由于agent端返回的信息比较多，而我们前端用到的信息较少，所以在这里重新做封装
-    for (int i = 0; i < columnInfos.size(); i++) {
-      JSONObject columnInfo = columnInfos.getJSONObject(i);
-      Table_column tableColumn = new Table_column();
-      tableColumn.setColumn_name(columnInfo.getString("column_name"));
-      tableColumn.setColumn_ch_name(columnInfo.getString("column_ch_name"));
-      tableColumn.setColumn_type(columnInfo.getString("type"));
-      tableColumn.setIs_primary_key(columnInfo.getString("is_primary_key"));
-
-      tableColumns.add(tableColumn);
-    }
+    //    for (int i = 0; i < columnInfos.size(); i++) {
+    //      JSONObject columnInfo = columnInfos.getJSONObject(i);
+    //      Table_column tableColumn = new Table_column();
+    //      tableColumn.setColumn_name(columnInfo.getString("column_name"));
+    //      tableColumn.setColumn_ch_name(columnInfo.getString("column_ch_name"));
+    //      tableColumn.setIs_primary_key(columnInfo.getString("is_primary_key"));
+    //      tableColumn.setColumn_type(columnInfo.getString("column_type("));
+    //
+    //      tableColumns.add(tableColumn);
+    //    }
     // 5、返回List集合
-    return tableColumns;
+    //    return tableColumns;
   }
 
   @Method(
