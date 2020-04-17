@@ -27,38 +27,38 @@ public class Dq_help_info extends ProjectTableEntity
 	/** 系统帮助提示信息表 */
 	static {
 		Set<String> __tmpPKS = new HashSet<>();
-		__tmpPKS.add("help_infm_id");
+		__tmpPKS.add("help_info_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="help_infm_id",value="帮助提示编号:",dataType = String.class,required = true)
-	private String help_infm_id;
-	@DocBean(name ="help_infm_desc",value="帮助提示描述:",dataType = String.class,required = false)
-	private String help_infm_desc;
-	@DocBean(name ="help_infm_dtl",value="帮助提示详细信息:",dataType = String.class,required = false)
-	private String help_infm_dtl;
+	@DocBean(name ="help_info_id",value="帮助提示编号:",dataType = String.class,required = true)
+	private String help_info_id;
+	@DocBean(name ="help_info_desc",value="帮助提示描述:",dataType = String.class,required = false)
+	private String help_info_desc;
+	@DocBean(name ="help_info_dtl",value="帮助提示详细信息:",dataType = String.class,required = false)
+	private String help_info_dtl;
 
 	/** 取得：帮助提示编号 */
-	public String getHelp_infm_id(){
-		return help_infm_id;
+	public String getHelp_info_id(){
+		return help_info_id;
 	}
 	/** 设置：帮助提示编号 */
-	public void setHelp_infm_id(String help_infm_id){
-		this.help_infm_id=help_infm_id;
+	public void setHelp_info_id(String help_info_id){
+		this.help_info_id=help_info_id;
 	}
 	/** 取得：帮助提示描述 */
-	public String getHelp_infm_desc(){
-		return help_infm_desc;
+	public String getHelp_info_desc(){
+		return help_info_desc;
 	}
 	/** 设置：帮助提示描述 */
-	public void setHelp_infm_desc(String help_infm_desc){
-		this.help_infm_desc=help_infm_desc;
+	public void setHelp_info_desc(String help_info_desc){
+		this.help_info_desc=help_info_desc;
 	}
 	/** 取得：帮助提示详细信息 */
-	public String getHelp_infm_dtl(){
-		return help_infm_dtl;
+	public String getHelp_info_dtl(){
+		return help_info_dtl;
 	}
 	/** 设置：帮助提示详细信息 */
-	public void setHelp_infm_dtl(String help_infm_dtl){
-		this.help_infm_dtl=help_infm_dtl;
+	public void setHelp_info_dtl(String help_info_dtl){
+		this.help_info_dtl=help_info_dtl;
 	}
 }
