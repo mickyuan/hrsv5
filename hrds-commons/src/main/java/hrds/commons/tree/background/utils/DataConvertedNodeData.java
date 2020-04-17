@@ -100,6 +100,9 @@ public class DataConvertedNodeData {
             map.put("agent_id", agent_id);
             map.put("classify_id", classify_id);
             map.put("file_id", file_id);
+            map.put("table_name", table_name);
+            map.put("hyren_name", hyren_name);
+            map.put("original_name", original_name);
             dclBatchTableNodes.add(map);
         });
         return dclBatchTableNodes;
