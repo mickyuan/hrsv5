@@ -41,6 +41,7 @@ public class InterfaceUserManageAction extends BaseAction {
 	public Result selectUserInfoByPage(String user_name, int currPage, int pageSize) {
 		// 1.数据可访问权限处理方式：该方法user_id进行权限限制
 		SqlOperator.Assembler assembler = SqlOperator.Assembler.newInstance();
+		assembler.clean();
 		assembler.addSql("select user_name,user_id,user_password,user_email,user_remark from "
 				+ Sys_user.TableName + " where create_id=? and user_type=?").addParam(getUserId())
 				.addParam(UserType.RESTYongHu.getCode());
