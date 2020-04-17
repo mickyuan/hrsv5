@@ -11,12 +11,12 @@ import java.util.Collections;
 /**
  * 系统帮助提示信息表
  */
-@Table(tableName = "dq_help_infm")
-public class Dq_help_infm extends ProjectTableEntity
+@Table(tableName = "dq_help_info")
+public class Dq_help_info extends ProjectTableEntity
 {
 	private static final long serialVersionUID = 321566870187324L;
 	private transient static final Set<String> __PrimaryKeys;
-	public static final String TableName = "dq_help_infm";
+	public static final String TableName = "dq_help_info";
 	/**
 	* 检查给定的名字，是否为主键中的字段
 	* @param name String 检验是否为主键的名字
@@ -30,26 +30,20 @@ public class Dq_help_infm extends ProjectTableEntity
 		__tmpPKS.add("help_infm_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="help_infm_id",value="帮助提示编号:",dataType = Long.class,required = true)
-	private Long help_infm_id;
+	@DocBean(name ="help_infm_id",value="帮助提示编号:",dataType = String.class,required = true)
+	private String help_infm_id;
 	@DocBean(name ="help_infm_desc",value="帮助提示描述:",dataType = String.class,required = false)
 	private String help_infm_desc;
 	@DocBean(name ="help_infm_dtl",value="帮助提示详细信息:",dataType = String.class,required = true)
 	private String help_infm_dtl;
 
 	/** 取得：帮助提示编号 */
-	public Long getHelp_infm_id(){
+	public String getHelp_infm_id(){
 		return help_infm_id;
 	}
 	/** 设置：帮助提示编号 */
-	public void setHelp_infm_id(Long help_infm_id){
-		this.help_infm_id=help_infm_id;
-	}
-	/** 设置：帮助提示编号 */
 	public void setHelp_infm_id(String help_infm_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(help_infm_id)){
-			this.help_infm_id=new Long(help_infm_id);
-		}
+		this.help_infm_id=help_infm_id;
 	}
 	/** 取得：帮助提示描述 */
 	public String getHelp_infm_desc(){
