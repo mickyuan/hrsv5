@@ -1,4 +1,4 @@
-package hrds.g.main;
+package hrds.main;
 
 import fd.ng.core.utils.ClassUtil;
 import fd.ng.netserver.http.WebServer;

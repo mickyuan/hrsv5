@@ -6,6 +6,7 @@ import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.core.service.AbstractCollectTableHandle;
 import hrds.commons.codes.FileFormat;
+import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Data_extraction_def;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -47,7 +48,6 @@ public class DataExtractUtil {
 			JSONObject jsonObject = new JSONObject();
 			jsonObject.put("table_name", tableName);
 			jsonObject.put("table_cn_name", tableName);
-			jsonObject.put("storage_type", storage_type);
 			jsonObject.put("unload_type", unload_type);
 			JSONArray storageArray = new JSONArray();
 			for (Data_extraction_def data_extraction_def : data_extraction_defList) {
@@ -68,12 +68,13 @@ public class DataExtractUtil {
 			for (int i = 0; i < columnList.size(); i++) {
 				JSONObject object = new JSONObject();
 				object.put("column_type", typeList.get(i));
-				object.put("column_null", "1");
 				object.put("column_remark", "");
-				object.put("column_id", i);
-				object.put("column_cn_name", "");
+				object.put("column_cn_name", columnList.get(i));
 				object.put("column_name", columnList.get(i));
-				object.put("column_key", primaryKeyList.get(i));
+				object.put("is_primary_key", primaryKeyList.get(i));
+				object.put("is_get", IsFlag.Shi.getCode());
+				object.put("is_alive", IsFlag.Shi.getCode());
+				object.put("is_new", IsFlag.Fou.getCode());
 				array.add(object);
 			}
 			jsonObject.put("columns", array);

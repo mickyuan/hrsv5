@@ -1,4 +1,4 @@
-package hrds.g.biz.interfaceinfo.impl;
+package hrds.g.biz.serviceuser.impl;
 
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
@@ -22,10 +22,10 @@ import hrds.g.biz.enumerate.AsynType;
 import hrds.g.biz.enumerate.OutType;
 import hrds.g.biz.enumerate.StateType;
 import hrds.g.biz.init.InterfaceManager;
-import hrds.g.biz.interfaceinfo.InterfaceDefine;
-import hrds.g.biz.interfaceinfo.common.InterfaceCommon;
-import hrds.g.biz.interfaceinfo.query.Query;
-import hrds.g.biz.interfaceinfo.query.QueryByRowkey;
+import hrds.g.biz.serviceuser.ServiceInterfaceUserDefine;
+import hrds.g.biz.serviceuser.common.InterfaceCommon;
+import hrds.g.biz.serviceuser.query.Query;
+import hrds.g.biz.serviceuser.query.QueryByRowkey;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.Map;
 
 @DocClass(desc = "接口信息实现类", author = "dhw", createdate = "2020/3/30 15:39")
-public class InterfaceImplAction extends BaseAction implements InterfaceDefine {
+public class ServiceInterfaceUserImplAction extends BaseAction implements ServiceInterfaceUserDefine {
 
 	private static final Logger logger = LogManager.getLogger();
 	// 对于SQL的字段是否使用字段验证
@@ -56,63 +56,6 @@ public class InterfaceImplAction extends BaseAction implements InterfaceDefine {
 		// 2.获取token值
 		return InterfaceCommon.getTokenById(user_id, user_password);
 	}
-
-//	@Override
-//	public Map<String, Object> marketTablePagingQuery(MarketPagingQuery marketPagingQuery,
-//	                                                  CheckParam checkParam) {
-//		// 1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制
-//		// 2.token，接口权限检查
-//		Map<String, Object> responseMap = checkAsynAndTokenInterface(checkParam,
-//				marketPagingQuery.getOutType(), marketPagingQuery.getAsynType(),
-//				marketPagingQuery.getBackurl(), marketPagingQuery.getFilename(),
-//				marketPagingQuery.getFilepath());
-//		// 3.如果responseMap响应状态不为normal返回错误响应信息
-//		if (StateType.NORMAL != StateType.ofEnumByCode(responseMap.get("status").toString())) {
-//			return responseMap;
-//		}
-//		try {
-//			if (!DataType.isDataType(marketPagingQuery.getDataType())) {
-//				return StateType.getResponseInfo(StateType.DATA_TYPE_ERROR);
-//			}
-//			String sql = marketPagingQuery.getSql();
-//			if (StringUtil.isBlank(sql)) {
-//				return StateType.getResponseInfo(StateType.SQL_IS_INCORRECT);
-//			}
-//			if (StringUtil.isNotBlank(marketPagingQuery.getStartRow()) &&
-//					StringUtil.isNotBlank(marketPagingQuery.getRowNum())) {
-//				// hrsrow_num的过滤sql
-//				StringBuilder formatSql = new StringBuilder();
-//				sql = sql.replaceAll("(?i)select", "SELECT")
-//						.replaceAll("(?i)from", "FROM").trim();
-//				formatSql.append("select max(hrsrow_num) as hrsrow_num from (");
-//				formatSql.append(sql.substring(0, 6));
-//				// 获取第一个SQL的FROM的下标
-//				int fromIndex = formatSql.indexOf("FROM");
-//				formatSql.append(" hrsrow_num ").append(formatSql.substring(fromIndex))
-//						.append(" order by hrsrow_num limit ");
-//				int rowNum = Integer.parseInt(marketPagingQuery.getRowNum());
-//				int startRow = Integer.parseInt(marketPagingQuery.getStartRow());
-//				formatSql.append(rowNum * startRow).append(" )");
-//				new ProcessingData() {
-//					@Override
-//					public void dealLine(Map<String, Object> map) throws Exception {
-//
-//					}
-//				}.getSQLEngine(formatSql.toString(), Dbo.db());
-//				/*
-//				 * 根据sql的情况，获取该使用什么查询引擎
-//				 */
-//			}
-////			StringBuilder sqlBuilder = new StringBuilder();
-////			sqlBuilder.append(sql).append("  WHERE hrsrow_num >= ");
-//			return null;
-//		} catch (Exception e) {
-//			if (e instanceof BusinessException) {
-//				return StateType.getResponseInfo(StateType.EXCEPTION.getCode(), e.getMessage());
-//			}
-//			return StateType.getResponseInfo((StateType.EXCEPTION));
-//		}
-//
 
 	@Method(desc = "表使用权限查询", logicStep = "1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制" +
 			"2.校验接口是否有效,返回响应状态信息" +

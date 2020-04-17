@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 @DocClass(desc = "根据页面所选的表和字段对jdbc所返回的meta信息进行解析", author = "zxz", createdate = "2019/12/4 11:17")
-public class DbCollectTableHandleParse extends AbstractCollectTableHandle {
+public class DFCollectTableHandleParse extends AbstractCollectTableHandle {
 
 	@SuppressWarnings("unchecked")
 	@Method(desc = "根据数据源信息和采集表信息得到卸数元信息", logicStep = "" +
@@ -124,7 +124,7 @@ public class DbCollectTableHandleParse extends AbstractCollectTableHandle {
 		//获取数据字典所在目录文件，根据数据字典计算xml文件名称
 		String xmlName = Math.abs(p.hashCode()) + ".xml";
 		//2.DB文件采集将数据字典dd_data.xls转为xml
-		new DbCollectTableHandleParse().toXml(p, Constant.XMLPATH + xmlName);
+		new DFCollectTableHandleParse().toXml(p, Constant.XMLPATH + xmlName);
 		//3.读取xml获取数据字典下所有的表信息,找到当前线程对应需要采集表的数据字典，获取表结构
 		List<String> cols = ColumnMeta.getColumnList("agent_info", Constant.XMLPATH + xmlName);
 		System.out.println(cols.size());

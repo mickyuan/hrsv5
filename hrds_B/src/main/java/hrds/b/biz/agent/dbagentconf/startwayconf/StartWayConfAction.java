@@ -31,6 +31,7 @@ import hrds.commons.entity.Table_info;
 import hrds.commons.entity.Take_relation_etl;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.PropertyParaValue;
+import hrds.commons.utils.key.PrimayKeyGener;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -296,6 +297,7 @@ public class StartWayConfAction extends BaseAction {
   @Param(name = "sub_sys_cd", desc = "作业任务编号", range = "不可为空")
   @Param(name = "pro_dic", desc = "agent部署目录", range = "不可为空")
   @Param(name = "log_dic", desc = "agent日志路径", range = "不可为空")
+  @Param(name = "source_id", desc = "数据源ID", range = "不可为空")
   @Param(
       name = "jobRelations",
       desc = "作业的依赖关系",
@@ -314,6 +316,7 @@ public class StartWayConfAction extends BaseAction {
   @Param(name = "ded_arr", desc = "卸数文件的ID", range = "不可为空的字符串,多个参数之间使用 ^ 隔开")
   public void saveJobDataToDatabase(
       long colSetId,
+      long source_id,
       String etl_sys_cd,
       String sub_sys_cd,
       String pro_dic,
@@ -340,7 +343,7 @@ public class StartWayConfAction extends BaseAction {
     List<Object> jobResource = getJobResource(etl_sys_cd);
 
     // 获取抽数关系依赖信息
-    List<Object> relationEtl = getRelationEtl(colSetId);
+    List<Object> relationEtl = getRelationEtl(source_id);
 
     // 先获取当前工程,任务下的作业名称
     List<Object> etlJobList = getEtlJob(etl_sys_cd, sub_sys_cd);
@@ -426,17 +429,24 @@ public class StartWayConfAction extends BaseAction {
       }
 
       /*
-       保存抽数作业关系表,检查作业名称是否存在,如果存在则跳过
+       保存抽数作业关系表,检查作业名称是否存在,如果存在则更新,反之新增
       */
       if (!relationEtl.contains(etl_job_def.getEtl_job())) {
+        Take_relation_etl take_relation_etl = new Take_relation_etl();
+        take_relation_etl.setDed_id(PrimayKeyGener.getNextId());
+        take_relation_etl.setDatabase_id(colSetId);
+        take_relation_etl.setEtl_job(etl_job_def.getEtl_job());
+        take_relation_etl.setEtl_sys_cd(etl_job_def.getEtl_sys_cd());
+        take_relation_etl.setSub_sys_cd(etl_job_def.getSub_sys_cd());
+        take_relation_etl.add(Dbo.db());
+      } else {
         Take_relation_etl take_relation_etl = new Take_relation_etl();
         take_relation_etl.setDatabase_id(colSetId);
         take_relation_etl.setDed_id(dedList.get(index));
         take_relation_etl.setEtl_job(etl_job_def.getEtl_job());
         take_relation_etl.setEtl_sys_cd(etl_job_def.getEtl_sys_cd());
         take_relation_etl.setSub_sys_cd(etl_job_def.getSub_sys_cd());
-        take_relation_etl.add(Dbo.db());
-        take_relation_etl.add(Dbo.db());
+        take_relation_etl.update(Dbo.db());
       }
 
       index++;
@@ -509,12 +519,23 @@ public class StartWayConfAction extends BaseAction {
         etl_sys_cd);
   }
 
-  @Method(desc = "获取当前任务下表抽数作业关系表", logicStep = "")
-  @Param(name = "colSetId", desc = "任务ID", range = "不可为空")
+  @Method(desc = "获取当前同个数据源分类下表抽数作业关系表", logicStep = "防止数据源下的同个分类出现重复的作业信息")
+  @Param(name = "source_id", desc = "任务ID", range = "不可为空")
   @Return(desc = "返回抽数作业关系表下作业名称集合", range = "可以为空.为空表示没有作业存在")
-  private List<Object> getRelationEtl(long colSetId) {
+  private List<Object> getRelationEtl(long source_id) {
     return Dbo.queryOneColumnList(
-        "SELECT etl_job FROM " + Take_relation_etl.TableName + " WHERE database_id = ?", colSetId);
+        "SELECT t1.etl_job FROM "
+            + Take_relation_etl.TableName
+            + " t1 JOIN "
+            + Database_set.TableName
+            + " t2 ON t1.database_id = t2.database_id"
+            + " JOIN "
+            + Collect_job_classify.TableName
+            + " t3 ON t2.classify_id = t3.classify_id JOIN "
+            + Agent_info.TableName
+            + " t4 ON "
+            + "t2.agent_id = t4.agent_id  WHERE t4.source_id = ?",
+        source_id);
   }
 
   @Method(

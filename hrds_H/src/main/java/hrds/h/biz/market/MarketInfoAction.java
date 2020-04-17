@@ -410,10 +410,17 @@ public class MarketInfoAction extends BaseAction {
             querysql = querysql.substring(0, querysql.length() - 1);
         }
         querysql = "select * from (" + querysql + ") as " + alias + " limit " + LimitNumber;
-        //2.查询SQL
+        //2.查询SQL TODO
         Map<String, Object> resultmap = new HashMap<String, Object>();
         try {
-            List<Map<String, Object>> maps = Dbo.queryList(querysql);
+            List<Map<String, Object>> maps = new ArrayList<>();
+            ProcessingData processingData = new ProcessingData() {
+                @Override
+                public void dealLine(Map<String, Object> map) throws Exception {
+                    //因为限制了limit 100所以此处可以将数据存放在内存中进行处理
+                    maps.add(map);
+                }
+            };
             resultmap.put("result", maps);
             resultmap.put("success", true);
         } catch (Exception e) {
@@ -645,9 +652,9 @@ public class MarketInfoAction extends BaseAction {
                 "LEFT JOIN " + Dm_relation_datatable.TableName + " t3 ON t2.dsl_id=t3.dsl_id" +
                 " WHERE t3.datatable_id = ?", dm_datatable.getDatatable_id());
         Boolean flag = true;
-        Map<String,Object> tempmap = new HashMap<>();
-        tempmap.put("target_type",field_type);
-        if(!targetTypeList.contains(tempmap)){
+        Map<String, Object> tempmap = new HashMap<>();
+        tempmap.put("target_type", field_type);
+        if (!targetTypeList.contains(tempmap)) {
             targetTypeList.add(tempmap);
         }
         return targetTypeList;
@@ -656,6 +663,7 @@ public class MarketInfoAction extends BaseAction {
 
     /**
      * 设置一个默认的字段类型 以便于对于多字段合成的字段类型进行初始化
+     *
      * @param storeType
      * @return
      */
@@ -777,7 +785,7 @@ public class MarketInfoAction extends BaseAction {
                 String sourcecolumn = map.get(DruidParseQuerySql.sourcecolumn).toString().toLowerCase();
                 String sourcetable = map.get(DruidParseQuerySql.sourcetable).toString().toLowerCase();
                 List<Map<String, Object>> templist = new ArrayList<>();
-                if(!tableMap.containsKey(sourcetable)){
+                if (!tableMap.containsKey(sourcetable)) {
                     tableMap.put(sourcetable, templist);
                 } else {
                     templist = (ArrayList<Map<String, Object>>) tableMap.get(sourcetable);
@@ -968,18 +976,17 @@ public class MarketInfoAction extends BaseAction {
     @Method(desc = "根据集市表ID,获取SQL回显",
             logicStep = "返回查询结果")
     @Param(name = "source", desc = "source", range = "String类型表来源")
-    @Param(name = "name", desc = "name", range = "String类型表名(全称)")
+    @Param(name = "id", desc = "id", range = "String类型id")
     @Return(desc = "查询返回结果集", range = "无限制")
-    public List<Map<String, Object>> queryAllColumnOnTableName(String source,String name) {
-        if(source.equals(DataSourceType.DCL.getValue())){
-            //TODO
-            return Dbo.queryList("select t2.column_name as columnname from " + Data_store_reg.TableName + " t1 left join " + Table_column.TableName + " t2 on t1.table_id = t2.table_id" +
-                            " left join " + Table_storage_info.TableName + " t3 on t1.table_id = t3.table_id left join " +
-                            Data_relation_table.TableName + " t4 on t4.storage_id = t3.storage_id " +
-                            "where lower(t1.hyren_name) = ?",name.toLowerCase());
-        }else if(source.equals(DataSourceType.DML.getValue())){
-            return Dbo.queryList("select field_en_name as columnname from "+Datatable_field_info.TableName+" t1 left join "
-            +Dm_datatable.TableName+" t2 on t1.datatable_id = t2.datatable_id where lower(t2.datatable_en_name) = ?",name.toLowerCase());
+    public List<Map<String, Object>> queryAllColumnOnTableName(String source, String id) {
+        if (source.equals(DataSourceType.DCL.getCode())) {
+            Table_column table_column = new Table_column();
+            table_column.setTable_id(id);
+            return Dbo.queryList("select column_name as columnname,column_type as columntype,false as selectionState from " + Table_column.TableName + " where table_id = ?", table_column.getTable_id());
+        } else if (source.equals(DataSourceType.DML.getCode())) {
+            Datatable_field_info datatable_field_info = new Datatable_field_info();
+            datatable_field_info.setDatatable_id(id);
+            return Dbo.queryList("select field_en_name as columnname,field_type as columntype,false as selectionState from " + Datatable_field_info.TableName + " where datatable_id = ?", datatable_field_info.getDatatable_id());
         }
         //TODO 新的层加进来后 还需要补充
         return null;

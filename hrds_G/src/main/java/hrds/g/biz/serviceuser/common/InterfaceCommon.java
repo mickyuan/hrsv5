@@ -1,4 +1,4 @@
-package hrds.g.biz.interfaceinfo.common;
+package hrds.g.biz.serviceuser.common;
 
 import com.alibaba.fastjson.TypeReference;
 import fd.ng.core.annotation.DocClass;
