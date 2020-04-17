@@ -375,7 +375,7 @@ public class ConnUtil {
 		List<String> tableNameList = new ArrayList<>();
 		for (Object element : tableList) {
 			Element table = (Element) element;
-			String tableName = table.getAttribute("name");
+			String tableName = table.getAttribute("table_name");
 			mapCol.put(tableName, table);
 			tableNameList.add(tableName);
 		}
