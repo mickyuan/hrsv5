@@ -242,7 +242,7 @@ DROP TABLE IF EXISTS DQ_HELP_INFO ;
 CREATE TABLE DQ_HELP_INFO(
 HELP_INFM_ID                                      VARCHAR(80) NOT NULL, --帮助提示编号
 HELP_INFM_DESC                                    VARCHAR(512) NULL, --帮助提示描述
-HELP_INFM_DTL                                     VARCHAR(2048) NOT NULL, --帮助提示详细信息
+HELP_INFM_DTL                                     VARCHAR(2048) NULL, --帮助提示详细信息
 CONSTRAINT DQ_HELP_INFO_PK PRIMARY KEY(HELP_INFM_ID)   );
 
 --校验结果处理日志

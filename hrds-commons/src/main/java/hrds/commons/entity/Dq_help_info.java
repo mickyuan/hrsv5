@@ -34,7 +34,7 @@ public class Dq_help_info extends ProjectTableEntity
 	private String help_infm_id;
 	@DocBean(name ="help_infm_desc",value="帮助提示描述:",dataType = String.class,required = false)
 	private String help_infm_desc;
-	@DocBean(name ="help_infm_dtl",value="帮助提示详细信息:",dataType = String.class,required = true)
+	@DocBean(name ="help_infm_dtl",value="帮助提示详细信息:",dataType = String.class,required = false)
 	private String help_infm_dtl;
 
 	/** 取得：帮助提示编号 */
