@@ -456,9 +456,7 @@ public class StartWayConfAction extends BaseAction {
                     + Etl_para.TableName
                     + " WHERE etl_sys_cd = ? AND para_cd = ?",
                 etl_sys_cd,
-                para_cd,
-                pro_val,
-                ParamType.LuJing.getCode())
+                para_cd)
             .orElseThrow(() -> new BusinessException("SQL查询错误"));
     //    2: 如果不存在则添加
     if (resourceNum == 0) {
