@@ -45,7 +45,6 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -173,6 +172,7 @@ public class CollTbConfStepAction extends BaseAction {
     String respMsg = SendMsgUtil.getAllTableName(agentId, getUserId(), databaseInfo, methodName);
     // 3、对获取到的数据进行处理，根据表名和colSetId获取界面需要显示的信息并返回
     List<String> tableNames = JSON.parseObject(respMsg, new TypeReference<List<String>>() {});
+
     return getTableInfoByTableName(tableNames, colSetId);
   }
 
@@ -760,17 +760,17 @@ public class CollTbConfStepAction extends BaseAction {
     if (tableColumns != null && !tableColumns.isEmpty()) {
       for (Table_column tableColumn : tableColumns) {
         if (StringUtil.isBlank(tableColumn.getColumn_name())) {
-          throw new BusinessException("保存" + tableInfo.getTable_name() + "采集列时，字段名不能为空");
+          throw new BusinessException("保存" + tableColumn.getColumn_name() + "采集列时，字段名不能为空");
         }
         if (StringUtil.isBlank(tableColumn.getColumn_type())) {
-          throw new BusinessException("保存" + tableInfo.getTable_name() + "采集列时，字段类型不能为空");
+          throw new BusinessException("保存" + tableColumn.getColumn_type() + "采集列时，字段类型不能为空");
         }
         if (StringUtil.isBlank(tableColumn.getIs_get())) {
-          throw new BusinessException("保存" + tableInfo.getTable_name() + "采集列时，是否采集标识位不能为空");
+          throw new BusinessException("保存" + tableColumn.getIs_get() + "采集列时，是否采集标识位不能为空");
         }
         IsFlag.ofEnumByCode(tableColumn.getIs_get());
         if (StringUtil.isBlank(tableColumn.getIs_primary_key())) {
-          throw new BusinessException("保存" + tableInfo.getTable_name() + "采集列时，是否主键标识位不能为空");
+          throw new BusinessException("保存" + tableColumn.getIs_primary_key() + "采集列时，是否主键标识位不能为空");
         }
         IsFlag.ofEnumByCode(tableColumn.getIs_primary_key());
         // 设置主键
@@ -1216,8 +1216,8 @@ public class CollTbConfStepAction extends BaseAction {
          3: 是否并行抽取 : 默认否
          4: 如果表记录不存在则设置当前表为未采集状态
         */
-        //        1: 卸数方式 : 默认全量
-        map.put("unload_type", UnloadType.QuanLiangXieShu.getCode());
+        //        //        1: 卸数方式 : 默认全量
+        //        map.put("unload_type", UnloadType.QuanLiangXieShu.getCode());
         //        2: 是否使用MD5 : 默认否
         map.put("is_md5", IsFlag.Fou.getCode());
         //        3: 是否并行抽取 : 默认否
