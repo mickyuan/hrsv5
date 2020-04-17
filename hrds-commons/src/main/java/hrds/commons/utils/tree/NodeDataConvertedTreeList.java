@@ -60,6 +60,21 @@ public class NodeDataConvertedTreeList {
             } else {
                 node.file_id = dataRecord.get("file_id").toString();
             }
+            if (null == dataRecord.get("table_name")) {
+                node.table_name = "";
+            } else {
+                node.table_name = dataRecord.get("table_name").toString();
+            }
+            if (null == dataRecord.get("original_name")) {
+                node.original_name = "";
+            } else {
+                node.original_name = dataRecord.get("original_name").toString();
+            }
+            if (null == dataRecord.get("hyren_name")) {
+                node.hyren_name = "";
+            } else {
+                node.hyren_name = dataRecord.get("hyren_name").toString();
+            }
             nodeMap.put(node.id, node);
         });
         // 构造无序的多叉树
