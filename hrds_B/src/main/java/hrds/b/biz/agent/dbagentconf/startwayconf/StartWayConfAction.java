@@ -36,8 +36,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import org.apache.commons.lang.StringUtils;
 
 @DocClass(desc = "定义启动方式配置", author = "Lee-Qiang")
 public class StartWayConfAction extends BaseAction {
@@ -302,7 +300,8 @@ public class StartWayConfAction extends BaseAction {
       name = "jobRelations",
       desc = "作业的依赖关系",
       range = "可为空",
-      example = "数据结构如: {aaaa:bbbb^cccc^dddd},其中 aaaa表示作业名称,bbbb,cccc,dddd分别表示为上游作业名称")
+      example = "数据结构如: {aaaa:bbbb^cccc^dddd},其中 aaaa表示作业名称,bbbb,cccc,dddd分别表示为上游作业名称",
+      nullable = true)
   @Param(
       name = "etlJobs",
       range =
@@ -439,14 +438,6 @@ public class StartWayConfAction extends BaseAction {
         take_relation_etl.setEtl_sys_cd(etl_job_def.getEtl_sys_cd());
         take_relation_etl.setSub_sys_cd(etl_job_def.getSub_sys_cd());
         take_relation_etl.add(Dbo.db());
-      } else {
-        Take_relation_etl take_relation_etl = new Take_relation_etl();
-        take_relation_etl.setDatabase_id(colSetId);
-        take_relation_etl.setDed_id(dedList.get(index));
-        take_relation_etl.setEtl_job(etl_job_def.getEtl_job());
-        take_relation_etl.setEtl_sys_cd(etl_job_def.getEtl_sys_cd());
-        take_relation_etl.setSub_sys_cd(etl_job_def.getSub_sys_cd());
-        take_relation_etl.update(Dbo.db());
       }
 
       index++;
