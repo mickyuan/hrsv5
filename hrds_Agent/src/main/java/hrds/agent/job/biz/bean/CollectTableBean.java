@@ -6,6 +6,7 @@ import fd.ng.core.utils.StringUtil;
 import hrds.commons.codes.DataExtractType;
 import hrds.commons.entity.Column_merge;
 import hrds.commons.entity.Data_extraction_def;
+import hrds.commons.exception.AppSystemException;
 
 import java.io.Serializable;
 import java.util.List;
@@ -246,10 +247,23 @@ public class CollectTableBean implements Serializable {
 	public void setData_extraction_def_list(List<Data_extraction_def> data_extraction_def_list) {
 		//一开始对文件卸数分割符做转码，页面传过来时应该是Unicode编码格式
 		for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
+			String row_sp = StringUtil.unicode2String(data_extraction_def.getRow_separator());
+			//对于转义的换行符做处理
+			switch (row_sp) {
+				case "\\r\\n":
+					data_extraction_def.setRow_separator("\r\n");
+					break;
+				case "\\r":
+					data_extraction_def.setRow_separator("\r");
+					break;
+				case "\\n":
+					data_extraction_def.setRow_separator("\n");
+					break;
+				default: //可选
+					data_extraction_def.setRow_separator("\n");
+			}
 			data_extraction_def.setDatabase_separatorr(StringUtil.
 					unicode2String(data_extraction_def.getDatabase_separatorr()));
-			data_extraction_def.setRow_separator(StringUtil.
-					unicode2String(data_extraction_def.getRow_separator()));
 		}
 		this.data_extraction_def_list = data_extraction_def_list;
 	}

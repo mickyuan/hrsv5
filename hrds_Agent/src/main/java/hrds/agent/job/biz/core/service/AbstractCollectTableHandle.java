@@ -37,7 +37,7 @@ public abstract class AbstractCollectTableHandle implements CollectTableHandle {
 	static ResultSet getResultSet(String collectSQL, Connection conn) {
 		ResultSet columnSet;
 		try {
-			String exeSql = String.format("SELECT * FROM ( %s ) AS HYREN_ALIAS WHERE 1 = 2", collectSQL);
+			String exeSql = String.format("SELECT * FROM ( %s ) HYREN_WHERE_ALIAS WHERE 1 = 2", collectSQL);
 			PreparedStatement statement = conn.prepareStatement(exeSql);
 			columnSet = statement.executeQuery();
 		} catch (Exception e) {

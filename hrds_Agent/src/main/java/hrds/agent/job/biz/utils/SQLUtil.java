@@ -50,7 +50,7 @@ public class SQLUtil {
 					+ JobConstant.CLEAN_SEPARATOR;
 		} else if (typeConstant == DatabaseType.Oracle9i || typeConstant == DatabaseType.Oracle10g) {
 			//4-2、如果数据库类型是Oracle，则进行如下处理
-			return "select /*+parallel(" + tableName + ",4)*/ " + column + " from " + tableName;
+			return "select " + column + " from " + tableName;
 		} else {
 			//4-3、对其他数据库，不做特殊处理
 			return "select " + column + " from " + tableName;
