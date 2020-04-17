@@ -26,13 +26,13 @@ public interface ServiceInterfaceUserDefine {
 	@Method(desc = "表使用权限查询", logicStep = "")
 	@Param(name = "checkParam", desc = "接口检查参数实体", range = "无限制", isBean = true)
 	@Return(desc = "返回接口响应信息", range = "无限制")
-	Map<String, Object> tableUsePermissionsQuery(CheckParam checkParam);
+	Map<String, Object> tableUsePermissions(CheckParam checkParam);
 
 	@Method(desc = "单表普通查询", logicStep = "")
 	@Param(name = "singleTable", desc = "单表普通查询参数实体", range = "无限制", isBean = true)
 	@Param(name = "checkParam", desc = "接口检查参数实体", range = "无限制", isBean = true)
 	@Return(desc = "返回接口响应信息", range = "无限制")
-	Map<String, Object> singleTableGeneralQuery(SingleTable singleTable, CheckParam checkParam);
+	Map<String, Object> generalQuery(SingleTable singleTable, CheckParam checkParam);
 
 //	@Method(desc = "单表索引查询接口", logicStep = "")
 //	@Param(name = "singleTable", desc = "单表普通查询参数实体", range = "无限制", isBean = true)
@@ -86,7 +86,7 @@ public interface ServiceInterfaceUserDefine {
 	@Param(name = "sqlSearch", desc = "sql查询参数实体", range = "无限制", isBean = true)
 	@Param(name = "checkParam", desc = "接口检查参数实体", range = "无限制", isBean = true)
 	@Return(desc = "返回接口响应信息", range = "无限制")
-	Map<String, Object> sqlSearch(SqlSearch sqlSearch, CheckParam checkParam);
+	Map<String, Object> sqlInterfaceSearch(SqlSearch sqlSearch, CheckParam checkParam);
 
 //	@Method(desc = "数据下载接口", logicStep = "")
 //	@Param(name = "table", desc = "表名称", range = "无限制")
