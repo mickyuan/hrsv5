@@ -329,9 +329,9 @@ public class ConnUtil {
 	}
 
 	@SuppressWarnings("unchecked")
-	public static Map<String, List<Map<String, String>>> getColumnByTable(String filename) {
+	public static Map<String, List<Map<String, String>>> getColumnByXml(String xmlName) {
 		Map<String, List<Map<String, String>>> columnMap = new HashMap<>();
-		Map<?, ?> retMap = loadStoreInfo(filename);
+		Map<?, ?> retMap = loadStoreInfo(xmlName);
 		Map<String, Element> mapCol = (Map<String, Element>) retMap.get("mapCol");
 		// 当xml树中没有节点的时候跳出
 		if (null == mapCol) {
@@ -356,6 +356,34 @@ public class ConnUtil {
 			columnMap.put(table_name, columnList);
 		}
 		return columnMap;
+	}
+
+	@SuppressWarnings("unchecked")
+	public static Map<String, List<Map<String, String>>> getStorageByXml(String xmlName) {
+		Map<String, List<Map<String, String>>> storageMap = new HashMap<>();
+		Map<?, ?> retMap = loadStoreInfo(xmlName);
+		Map<String, Element> mapCol = (Map<String, Element>) retMap.get("mapCol");
+		// 当xml树中没有节点的时候跳出
+		if (null == mapCol) {
+			return storageMap;
+		}
+		for (String table_name : mapCol.keySet()) {
+			List<Map<String, String>> storageList = new ArrayList<>();
+			List<?> acctTypes = XMLUtil.getChildElements(mapCol.get(table_name), "storage");
+			for (Object object : acctTypes) {
+				Element type = (Element) object;
+				Map<String, String> hashMap = new HashMap<>();
+				hashMap.put("file_format", type.getAttribute("file_format"));
+				hashMap.put("is_header", type.getAttribute("is_header"));
+				hashMap.put("row_separator", type.getAttribute("row_separator"));
+				hashMap.put("column_separator", type.getAttribute("column_separator"));
+				hashMap.put("root_path", type.getAttribute("root_path"));
+				hashMap.put("file_code", type.getAttribute("file_code"));
+				storageList.add(hashMap);
+			}
+			storageMap.put(table_name, storageList);
+		}
+		return storageMap;
 	}
 
 	/**
@@ -566,4 +594,5 @@ public class ConnUtil {
 		resultobject.put("tablename", jsonarray);
 		return resultobject;
 	}
+
 }

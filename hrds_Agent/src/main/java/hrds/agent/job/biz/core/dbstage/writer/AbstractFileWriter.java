@@ -104,7 +104,17 @@ abstract class AbstractFileWriter implements FileWriterInterface {
 				sb_.append(lobs_file_name);
 				reader2String = new String(readerToByte);
 			}
-
+		} else if (type == Types.CLOB) {
+			Object obj = resultSet.getClob(column_name);
+			if (null != obj) {
+				Reader characterStream = resultSet.getClob(column_name).getCharacterStream();
+				reader2String = readerStreamToString(characterStream);
+				//清理数据  TODO 这里其实修改了数据，需要讨论
+				reader2String = clearIrregularData(reader2String);
+			} else {
+				reader2String = "";
+			}
+			sb_.append(reader2String);
 		} else {
 			Object oj = resultSet.getObject(column_name);
 			if (null != oj) {
@@ -112,26 +122,15 @@ abstract class AbstractFileWriter implements FileWriterInterface {
 					Date date = resultSet.getTimestamp(column_name);
 					reader2String = date.toString();
 				} else if (type == java.sql.Types.CHAR || type == java.sql.Types.VARCHAR
-						|| type == java.sql.Types.NVARCHAR
-						|| type == java.sql.Types.BINARY || type == java.sql.Types.CLOB
+						|| type == java.sql.Types.NVARCHAR || type == java.sql.Types.BINARY
 						|| type == java.sql.Types.LONGVARCHAR) {
 					reader2String = oj.toString();
-					//TODO 目前针对换行符的问题，经过测试，可以通过自定义hive的TextInputFormat能解决自定义表的换行符，
-					//TODO 但是如果页面自定义填写换行符，就导致需要每一个不同的换行符都需要对应一个自定义hive的
-					//TODO TextInputFormat，难以实现，因此需要使用默认的行分隔符，或者提前实现几个TextInputFormat供选择
-					//TODO 下面几行是使用默认的行分隔符，需要替换到数据本身的换行符，这里应该替换成特殊字符串，以便于还原
-					if (reader2String.contains("\r")) {
-						reader2String = reader2String.replace('\r', ' ');
-					}
-					if (reader2String.contains("\n")) {
-						reader2String = reader2String.replace('\n', ' ');
-					}
-					if (reader2String.contains("\r\n")) {
-						reader2String = StringUtil.replace(reader2String, "\r\n", " ");
-					}
+
 				} else {
 					reader2String = oj.toString();
 				}
+				//清理数据  TODO 这里其实修改了数据，需要讨论
+				reader2String = clearIrregularData(reader2String);
 			} else {
 				reader2String = "";
 			}
@@ -145,6 +144,41 @@ abstract class AbstractFileWriter implements FileWriterInterface {
 			writeLobsFileToOracle(midName + "LOBS", lobs_file_name, readerToByte);
 		}
 		return reader2String;
+	}
+
+	/**
+	 * 清理掉不规则的数据
+	 * @param columnData 单列的数据
+	 * @return 清理之后的数据
+	 */
+	private String clearIrregularData(String columnData){
+//TODO 目前针对换行符的问题，经过测试，可以通过自定义hive的TextInputFormat能解决自定义表的换行符，
+		//TODO 但是如果页面自定义填写换行符，就导致需要每一个不同的换行符都需要对应一个自定义hive的
+		//TODO TextInputFormat，难以实现，因此需要使用默认的行分隔符，或者提前实现几个TextInputFormat供选择
+		//TODO 下面几行是使用默认的行分隔符，需要替换到数据本身的换行符，这里应该替换成特殊字符串，以便于还原
+		if (columnData.contains("\r")) {
+			columnData = columnData.replace('\r', ' ');
+		}
+		if (columnData.contains("\n")) {
+			columnData = columnData.replace('\n', ' ');
+		}
+		if (columnData.contains("\r\n")) {
+			columnData = StringUtil.replace(columnData, "\r\n", " ");
+		}
+		return columnData;
+	}
+
+	/**
+	 * 获取数据库中clob的值，将其转为字符串
+	 */
+	private String readerStreamToString(Reader characterStream) throws IOException {
+		BufferedReader br = new BufferedReader(characterStream);
+		String s;
+		StringBuilder sb = new StringBuilder();
+		while ((s = br.readLine()) != null) {// 执行循环将字符串全部取出付值给StringBuffer由StringBuffer转成STRING
+			sb.append(s);
+		}
+		return sb.toString();
 	}
 
 	/**
