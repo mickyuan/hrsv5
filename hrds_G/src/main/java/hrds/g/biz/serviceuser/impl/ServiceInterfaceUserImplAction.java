@@ -64,7 +64,7 @@ public class ServiceInterfaceUserImplAction extends BaseAction implements Servic
 	@Param(name = "checkParam", desc = "接口检查参数实体", range = "无限制", isBean = true)
 	@Return(desc = "返回接口响应信息", range = "无限制")
 	@Override
-	public Map<String, Object> tableUsePermissionsQuery(CheckParam checkParam) {
+	public Map<String, Object> tableUsePermissions(CheckParam checkParam) {
 		// 1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制
 		// 2.校验接口是否有效,返回响应状态信息
 		Map<String, Object> responseMap = InterfaceCommon.checkTokenAndInterface(checkParam);
@@ -86,7 +86,7 @@ public class ServiceInterfaceUserImplAction extends BaseAction implements Servic
 	@Param(name = "checkParam", desc = "接口检查参数实体", range = "无限制", isBean = true)
 	@Return(desc = "返回接口响应信息", range = "无限制")
 	@Override
-	public Map<String, Object> singleTableGeneralQuery(SingleTable singleTable, CheckParam checkParam) {
+	public Map<String, Object> generalQuery(SingleTable singleTable, CheckParam checkParam) {
 		// 1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制
 		// 2.token，接口权限检查
 		Map<String, Object> responseMap = InterfaceCommon.checkAsynAndTokenInterface(checkParam,
@@ -351,7 +351,7 @@ public class ServiceInterfaceUserImplAction extends BaseAction implements Servic
 	@Param(name = "checkParam", desc = "接口检查参数实体", range = "无限制", isBean = true)
 	@Return(desc = "返回接口响应信息", range = "无限制")
 	@Override
-	public Map<String, Object> sqlSearch(SqlSearch sqlSearch, CheckParam checkParam) {
+	public Map<String, Object> sqlInterfaceSearch(SqlSearch sqlSearch, CheckParam checkParam) {
 		// 1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制
 		// 2.token、接口权限检查
 		Map<String, Object> responseMap = InterfaceCommon.checkAsynAndTokenInterface(checkParam, sqlSearch.getOutType(),
@@ -505,23 +505,18 @@ public class ServiceInterfaceUserImplAction extends BaseAction implements Servic
 		}
 	}
 
-	@Method(desc = "获取当前用户请求ip端口、请求地址，接口代码参数",
+	@Method(desc = "获取当前用户请求ip端口",
 			logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制" +
-					"2.查询当前用户接口使用信息" +
-					"3.封装当前用户请求ip端口" +
-					"4.返回当前用户请求ip端口、请求地址，接口代码参数")
-	@Param(name = "interface_use_id", desc = "接口使用ID", range = "新增接口使用信息时生成")
-	@Return(desc = "返回当前用户请求ip端口、请求地址，接口代码参数", range = "无限制")
-	public Map<String, Object> getInterfaceUseParam(Long interface_use_id) {
+					"2.封装当前用户请求ip端口" +
+					"3.返回当前用户请求ip端口")
+	@Return(desc = "返回当前用户请求ip端口", range = "无限制")
+	public Map<String, Object> getIpAndPort() {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
-		// 2.查询当前用户接口使用信息
-		Map<String, Object> useMap = Dbo.queryOneObject("SELECT url,interface_code FROM "
-						+ Interface_use.TableName + " WHERE interface_use_id = ? AND user_id = ?",
-				interface_use_id, getUserId());
-		// 3.封装当前用户请求ip端口
+		Map<String, Object> useMap = new HashMap<>();
+		// 2.封装当前用户请求ip端口
 		useMap.put("ipAndPort", RequestUtil.getRequest().getLocalAddr() + ":"
 				+ RequestUtil.getRequest().getLocalPort());
-		// 4.返回当前用户请求ip端口、请求地址，接口代码参数
+		// 3.返回当前用户请求ip端口
 		return useMap;
 	}
 
