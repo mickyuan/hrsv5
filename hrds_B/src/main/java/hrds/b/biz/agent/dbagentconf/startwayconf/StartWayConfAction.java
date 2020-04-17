@@ -454,7 +454,7 @@ public class StartWayConfAction extends BaseAction {
         Dbo.queryNumber(
                 "SELECT COUNT(1) FROM "
                     + Etl_para.TableName
-                    + " WHERE etl_sys_cd = ? AND para_cd = ? AND para_val = ? AND para_type = ?",
+                    + " WHERE etl_sys_cd = ? AND para_cd = ?",
                 etl_sys_cd,
                 para_cd,
                 pro_val,
