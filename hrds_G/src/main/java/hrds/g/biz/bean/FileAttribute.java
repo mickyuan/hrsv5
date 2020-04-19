@@ -20,10 +20,10 @@ public class FileAttribute extends ProjectTableEntity {
 	private String filesize;
 	@DocBean(name = "filesuffix", value = "文件后缀:", dataType = String.class, required = false)
 	private String filesuffix;
-	@DocBean(name = "fileMD5", value = "文件MD5:", dataType = String.class, required = false)
+	@DocBean(name = "filemd5", value = "文件MD5:", dataType = String.class, required = false)
 	private String fileMD5;
-	@DocBean(name = "filepath", value = "文件地址:", dataType = String.class, required = false)
-	private String filepath;
+	@DocBean(name = "filepath", value = "文件地址:", dataType = String[].class, required = false)
+	private String[] filepath;
 	@DocBean(name = "storagedate", value = "入库时间:", dataType = String.class, required = false)
 	private String storagedate;
 	@DocBean(name = "num", value = "查询记录数:num=1,10输入范围值以英文逗号隔开，表示从第几条开始查询多少条",
@@ -35,10 +35,10 @@ public class FileAttribute extends ProjectTableEntity {
 	private String agent_name;
 	@DocBean(name = "fcs_name", value = "采集任务名称:", dataType = String.class, required = false)
 	private String fcs_name;
-	@DocBean(name = "fcs_id", value = "采集任务id:", dataType = String.class, required = false)
-	private String fcs_id;
-	@DocBean(name = "dep_id", value = "所属部门id:", dataType = String.class, required = false)
-	private String dep_id;
+	@DocBean(name = "fcs_id", value = "采集任务id:", dataType = Long[].class, required = false)
+	private Long[] fcs_id;
+	@DocBean(name = "dep_id", value = "所属部门id:", dataType = Long[].class, required = false)
+	private Long[] dep_id;
 
 	public String getFilename() {
 		return filename;
@@ -72,11 +72,11 @@ public class FileAttribute extends ProjectTableEntity {
 		this.fileMD5 = fileMD5;
 	}
 
-	public String getFilepath() {
+	public String[] getFilepath() {
 		return filepath;
 	}
 
-	public void setFilepath(String filepath) {
+	public void setFilepath(String[] filepath) {
 		this.filepath = filepath;
 	}
 
@@ -120,19 +120,19 @@ public class FileAttribute extends ProjectTableEntity {
 		this.fcs_name = fcs_name;
 	}
 
-	public String getFcs_id() {
+	public Long[] getFcs_id() {
 		return fcs_id;
 	}
 
-	public void setFcs_id(String fcs_id) {
+	public void setFcs_id(Long[] fcs_id) {
 		this.fcs_id = fcs_id;
 	}
 
-	public String getDep_id() {
+	public Long[] getDep_id() {
 		return dep_id;
 	}
 
-	public void setDep_id(String dep_id) {
+	public void setDep_id(Long[] dep_id) {
 		this.dep_id = dep_id;
 	}
 }

@@ -158,6 +158,7 @@ public class ServiceInterfaceUserImplAction extends BaseAction implements Servic
 		}
 		String user_id = InterfaceManager.getUserByToken(responseMap.get("token").toString()).getUser_id();
 		// 3.判断表是否有效
+//		String tableName = checkParam.getTableName();
 		if (InterfaceManager.existsTable(user_id, tableName)) {
 			// 4.有效，根据user_id与表名获取查询接口信息
 			QueryInterfaceInfo userTableInfo = InterfaceManager.getUserTableInfo(checkParam.getUser_id(),
@@ -273,6 +274,7 @@ public class ServiceInterfaceUserImplAction extends BaseAction implements Servic
 			}
 		}
 		SqlOperator.Assembler assembler = SqlOperator.Assembler.newInstance();
+		assembler.clean();
 		assembler.addSql("SELECT source_path,file_suffix,file_id,storage_time,storage_date,original_update_date,"
 				+ " original_update_time,file_md5,original_name,file_size,file_avro_path,file_avro_block,"
 				+ " sfa.collect_set_id,sfa.source_id,sfa.agent_id,fcs_name,datasource_name,agent_name FROM  "
@@ -296,14 +298,14 @@ public class ServiceInterfaceUserImplAction extends BaseAction implements Servic
 			assembler.addORParam("file_suffix", split);
 		}
 		// 9.判断采集任务路径是否为空，不为空加条件查询
-		if (StringUtil.isNotBlank(fileAttribute.getFilepath())) {
-			String[] split = fileAttribute.getFilepath().split(",");
-			assembler.addORParam("source_path", split);
+		String[] filepath = fileAttribute.getFilepath();
+		if (filepath == null || filepath.length == 0) {
+			assembler.addORParam("source_path", filepath);
 		}
 		// 10.判断采集任务id是否为空，不为空加条件查询
-		if (StringUtil.isNotBlank(fileAttribute.getFcs_id())) {
-			String[] split = fileAttribute.getFcs_id().split(",");
-			assembler.addORParam("fcs_id", split);
+		Long[] fcs_id = fileAttribute.getFcs_id();
+		if (fcs_id == null || fcs_id.length == 0) {
+			assembler.addORParam("fcs_id", fcs_id);
 		}
 		assembler.addSql("storage_date=?").addParam(fileAttribute.getStoragedate());
 		assembler.addSql("file_md5=?").addParam(fileAttribute.getFileMD5());
@@ -311,12 +313,10 @@ public class ServiceInterfaceUserImplAction extends BaseAction implements Servic
 		assembler.addLikeParam("agent_name", fileAttribute.getAgent_name());
 		assembler.addLikeParam("fcs_name", fileAttribute.getFcs_name());
 		// 11.判断部门ID是否为空，不为空加条件查询
-		if (StringUtil.isNotBlank(fileAttribute.getDep_id())) {
-			String[] dep_ids = fileAttribute.getDep_id().split(",");
+		Long[] dep_id = fileAttribute.getDep_id();
+		if (dep_id == null || dep_id.length == 0) {
 			assembler.addSql("and  exists (select source_id from " + Source_relation_dep.TableName +
-					" dep where dep.SOURCE_ID = ds.SOURCE_ID ");
-			assembler.addORParam("dep_id", dep_ids);
-			assembler.addSql(" ) ");
+					" dep where dep.SOURCE_ID = ds.SOURCE_ID ").addORParam("dep_id", dep_id).addSql(" ) ");
 		}
 		// 12.设置分页
 		assembler.addSql("limit " + num_count + " offset " + num_start);
