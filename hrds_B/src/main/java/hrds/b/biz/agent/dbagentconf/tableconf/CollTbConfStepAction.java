@@ -107,7 +107,7 @@ public class CollTbConfStepAction extends BaseAction {
           List<Object> tableStateList =
               checkTableCollectState(colSetId, itemMap.get("table_name").toString());
           if (tableStateList.contains(ExecuteState.YunXingWanCheng.getCode())
-              || tableStateList.contains(ExecuteState.KaiShiYunXing)) {
+              || tableStateList.contains(ExecuteState.KaiShiYunXing.getCode())) {
             itemMap.put("collectState", false);
           } else {
             itemMap.put("collectState", true);
@@ -516,7 +516,7 @@ public class CollTbConfStepAction extends BaseAction {
           List<Object> tableStateList =
               checkTableCollectState(colSetId, itemMap.get("table_name").toString());
           if (tableStateList.contains(ExecuteState.YunXingWanCheng.getCode())
-              || tableStateList.contains(ExecuteState.KaiShiYunXing)) {
+              || tableStateList.contains(ExecuteState.KaiShiYunXing.getCode())) {
             itemMap.put("collectState", false);
           } else {
             itemMap.put("collectState", true);
@@ -1223,7 +1223,7 @@ public class CollTbConfStepAction extends BaseAction {
         List<Object> tableStateList =
             checkTableCollectState(colSetId, tableResult.get("table_name").toString());
         if (tableStateList.contains(ExecuteState.YunXingWanCheng.getCode())
-            || tableStateList.contains(ExecuteState.KaiShiYunXing)) {
+            || tableStateList.contains(ExecuteState.KaiShiYunXing.getCode())) {
           tableResult.put("collectState", false);
         } else {
           tableResult.put("collectState", true);
