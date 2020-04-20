@@ -15,7 +15,7 @@ public interface ServiceInterfaceUserDefine {
 	@Param(name = "user_id", desc = "用户ID", range = "新增用户时生成")
 	@Param(name = "user_password", desc = "密码", range = "新增用户时生成")
 	@Return(desc = "返回接口响应信息", range = "无限制")
-	Map<String, Object> getToken(String user_id, String user_password);
+	Map<String, Object> getToken(Long user_id, String user_password);
 
 //	@Method(desc = "集市表分页查询", logicStep = "")
 //	@Param(name = "marketPagingQuery", desc = "集市分页查询参数实体", range = "自定义", isBean = true)
@@ -128,11 +128,11 @@ public interface ServiceInterfaceUserDefine {
 //	@Return(desc = "返回接口响应信息", range = "无限制")
 //	Map<String, Object> tableDataBatchUpdate(DataBatchUpdate dataBatchUpdate, CheckParam checkParam);
 
-	@Method(desc = "Solr查询Hbase数据接口", logicStep = "")
-	@Param(name = "hBaseSolr", desc = "HBaseSolr查询参数实体", range = "无限制", isBean = true)
-	@Param(name = "checkParam", desc = "接口检查参数实体", range = "无限制", isBean = true)
-	@Return(desc = "返回接口响应信息", range = "无限制")
-	Map<String, Object> hBaseSolrQuery(HBaseSolr hBaseSolr, CheckParam checkParam);
+//	@Method(desc = "Solr查询Hbase数据接口", logicStep = "")
+//	@Param(name = "hBaseSolr", desc = "HBaseSolr查询参数实体", range = "无限制", isBean = true)
+//	@Param(name = "checkParam", desc = "接口检查参数实体", range = "无限制", isBean = true)
+//	@Return(desc = "返回接口响应信息", range = "无限制")
+//	Map<String, Object> hBaseSolrQuery(HBaseSolr hBaseSolr, CheckParam checkParam);
 
 	@Method(desc = "UUID数据下载", logicStep = "")
 	@Param(name = "uuid", desc = "uuid", range = "无限制")

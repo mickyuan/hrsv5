@@ -12,21 +12,21 @@ public class TokenModel {
 
 	public static final String TableName = "table_data_info";
 
-	public TokenModel(String user_id, String token) {
+	public TokenModel(Long user_id, String token) {
 		this.user_id = user_id;
 		this.token = token;
 	}
 
-	@DocBean(name = "user_id", value = "用户ID:", dataType = String.class, required = true)
-	private String user_id;
+	@DocBean(name = "user_id", value = "用户ID:", dataType = Long.class, required = true)
+	private Long user_id;
 	@DocBean(name = "user_id", value = "随机生成的token:", dataType = String.class, required = true)
 	private String token;
 
-	public String getUserId() {
+	public Long getUserId() {
 		return user_id;
 	}
 
-	public void setUserId(String user_id) {
+	public void setUserId(Long user_id) {
 		this.user_id = user_id;
 	}
 
