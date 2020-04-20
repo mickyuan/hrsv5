@@ -109,7 +109,7 @@ abstract class AbstractFileWriter implements FileWriterInterface {
 			if (null != obj) {
 				Reader characterStream = resultSet.getClob(column_name).getCharacterStream();
 				reader2String = readerStreamToString(characterStream);
-				//清理数据  TODO 这里其实修改了数据，需要讨论
+				//清理不能处理的数据  TODO 这里其实修改了数据，需要讨论
 				reader2String = clearIrregularData(reader2String);
 			} else {
 				reader2String = "";
@@ -152,7 +152,7 @@ abstract class AbstractFileWriter implements FileWriterInterface {
 	 * @return 清理之后的数据
 	 */
 	private String clearIrregularData(String columnData){
-//TODO 目前针对换行符的问题，经过测试，可以通过自定义hive的TextInputFormat能解决自定义表的换行符，
+		//TODO 目前针对换行符的问题，经过测试，可以通过自定义hive的TextInputFormat能解决自定义表的换行符，
 		//TODO 但是如果页面自定义填写换行符，就导致需要每一个不同的换行符都需要对应一个自定义hive的
 		//TODO TextInputFormat，难以实现，因此需要使用默认的行分隔符，或者提前实现几个TextInputFormat供选择
 		//TODO 下面几行是使用默认的行分隔符，需要替换到数据本身的换行符，这里应该替换成特殊字符串，以便于还原
