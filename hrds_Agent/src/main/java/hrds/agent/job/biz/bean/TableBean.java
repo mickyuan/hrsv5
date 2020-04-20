@@ -1,10 +1,11 @@
 package hrds.agent.job.biz.bean;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class TableBean {
-	private String columnMetaInfo;//生成的元信息列名
-	private String allColumns;//要采集的列名
+	private String columnMetaInfo;//生成的元信息列名（这里跟要采集的列名不一样，这里包括列合并、拆分出来的新列）
+	private String allColumns;//要采集的列名 （页面选择的使用jdbc查询的列，解析db文件采集的列）
 	private String colTypeMetaInfo;//生成的元信息列类型
 	private String allType;//要采集的列类型
 	private String colLengthInfo;//生成的元信息列长度
@@ -19,6 +20,8 @@ public class TableBean {
 	private String file_code;   //文件编码
 	private String primaryKeyInfo; //是否为主键
 	private String operate; //操作类型
+	//db文件采集，字段是否采集的映射,对新增列不做映射，默认采集(注：新增列指的是拆分和合并的列)
+	private HashMap<String, Boolean> isCollectMap = null;
 
 	public String getFile_code() {
 		return file_code;
@@ -152,5 +155,13 @@ public class TableBean {
 
 	public void setOperate(String operate) {
 		this.operate = operate;
+	}
+
+	public HashMap<String, Boolean> getIsCollectMap() {
+		return isCollectMap;
+	}
+
+	public void setIsCollectMap(HashMap<String, Boolean> isCollectMap) {
+		this.isCollectMap = isCollectMap;
 	}
 }
