@@ -148,7 +148,8 @@ public class JdbcCollectTableHandleParse extends AbstractCollectTableHandle {
 			allType.deleteCharAt(allType.length() - 1);//列类型
 			//清洗配置
 			Map<String, Object> parseJson = parseJson(collectTableBean);
-			Map<String, Map<String, Column_split>> splitIng = (Map<String, Map<String, Column_split>>) parseJson.get("splitIng");//字符拆分
+			Map<String, Map<String, Column_split>> splitIng = (Map<String, Map<String, Column_split>>)
+					parseJson.get("splitIng");//字符拆分
 			Map<String, String> mergeIng = (Map<String, String>) parseJson.get("mergeIng");//字符合并
 			//更新拆分和合并的列信息
 			String colMeta = updateColumn(mergeIng, splitIng, columnMetaInfo, colTypeMetaInfo, colLengthInfo);

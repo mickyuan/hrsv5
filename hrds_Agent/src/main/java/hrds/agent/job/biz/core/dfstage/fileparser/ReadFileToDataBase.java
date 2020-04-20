@@ -342,8 +342,8 @@ public class ReadFileToDataBase implements Callable<Long> {
 			// 如果取出的值为null则给空字符串
 			str = line.getBoolean(column, 0);
 		} else if (type.contains(DataTypeConstant.INT8.getMessage())
-				|| type.equals(DataTypeConstant.BIGINT.getMessage())
-				|| type.equals(DataTypeConstant.LONG.getMessage())) {
+				|| type.contains(DataTypeConstant.BIGINT.getMessage())
+				|| type.contains(DataTypeConstant.LONG.getMessage())) {
 			str = line.getLong(column, 0);
 		} else if (type.contains(DataTypeConstant.INT.getMessage())) {
 			str = line.getInteger(column, 0);
@@ -408,7 +408,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 		if (type.contains(DataTypeConstant.BOOLEAN.getMessage())) {
 			// 如果取出的值为null则给空字符串
 			str = tmpValue == null ? null : Boolean.parseBoolean(tmpValue.toString().trim());
-		} else if (type.equals(DataTypeConstant.LONG.getMessage())
+		} else if (type.contains(DataTypeConstant.LONG.getMessage())
 				|| type.contains(DataTypeConstant.INT.getMessage())
 				|| type.contains(DataTypeConstant.FLOAT.getMessage())
 				|| type.contains(DataTypeConstant.DOUBLE.getMessage())
@@ -430,7 +430,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 		if (type.contains(DataTypeConstant.BOOLEAN.getMessage())) {
 			// 如果取出的值为null则给空字符串
 			str = tmpValue == null ? null : Boolean.parseBoolean(tmpValue.trim());
-		} else if (type.equals(DataTypeConstant.LONG.getMessage())
+		} else if (type.contains(DataTypeConstant.LONG.getMessage())
 				|| type.contains(DataTypeConstant.INT.getMessage())
 				|| type.contains(DataTypeConstant.FLOAT.getMessage())
 				|| type.contains(DataTypeConstant.DOUBLE.getMessage())

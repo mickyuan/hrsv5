@@ -103,12 +103,11 @@ public class ColumnMeta {
 					column_list = table_list.item(i).getChildNodes();
 					for (int j = 0; j < column_list.getLength(); j++) {
 						//只取column的属性,表属性只做页面选择使用
-						if("column".equals(column_list.item(j).getNodeName())){
+						if ("column".equals(column_list.item(j).getNodeName())) {
 							String column_name = column_list.item(j).getAttributes().getNamedItem("column_name").getNodeValue();
-							String primaryKey = column_list.item(j).getAttributes().getNamedItem("is_primary_key").getNodeValue();
-							String length = column_list.item(j).getAttributes().getNamedItem("length").getNodeValue();
 							String column_type = column_list.item(j).getAttributes().getNamedItem("column_type").getNodeValue();
-							clist.add(column_name + "^" + primaryKey + "^" + length + "^" + column_type);
+							String primaryKey = column_list.item(j).getAttributes().getNamedItem("is_primary_key").getNodeValue();
+							clist.add(column_name + "^" + column_type + "^" + primaryKey);
 						}
 					}
 				}
