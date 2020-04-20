@@ -1,4 +1,4 @@
-package hrds.k.biz.utils;
+package hrds.commons.utils;
 
 
 import fd.ng.core.annotation.DocClass;
@@ -50,7 +50,7 @@ public class DataTableFieldUtil {
             logicStep = "字段的mate信息转换为List列表")
     @Param(name = "table_column_list", desc = "Table_column的List集合", range = "Table_column的对象List")
     @Return(desc = "返回值说明", range = "返回值取值范围")
-    public static List<Map<String, String>> metasToList(List<Map<String, Object>> table_column_list) {
+    public static List<Map<String, String>> metaInfoToList(List<Map<String, Object>> table_column_list) {
         //初始化返回的字段List
         List<Map<String, String>> column_list = new ArrayList<>();
         //转换mate信息为List列表
