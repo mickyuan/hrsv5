@@ -26,13 +26,13 @@ public class DqcExecution {
 
     @Method(desc = "执行规则调用方法", logicStep = "执行规则调用方法")
     @Param(name = "db", desc = "DatabaseWrapper连接信息", range = "DatabaseWrapper类型")
-    @Param(name = "dq_definition", desc = "Dq_definition实体", range = "Dq_definition实体")
+    @Param(name = "dq_definition", desc = "Dq_definition实体", range = "Dq_definition实体", isBean = true)
     @Param(name = "verify_date", desc = "验证日期", range = "String类型")
     @Param(name = "beans", desc = "List<SysVarCheckBean>", range = "自定义bean类型")
     @Param(name = "exec_method", desc = "执行方式（DqcExecMode代码项）", range = "DqcExecMode代码项")
     @Return(desc = "返回值说明", range = "返回值取值范围")
     public static void executionRule(DatabaseWrapper db, Dq_definition dq_definition, String verify_date,
-                                     List<SysVarCheckBean> beans, String exec_method) {
+                                     Set<SysVarCheckBean> beans, String exec_method) {
         //数据校验
         if (StringUtil.isBlank(dq_definition.getReg_num().toString())) {
             throw new BusinessException("执行规则时,规则编号为空!");
@@ -160,10 +160,7 @@ public class DqcExecution {
             logicStep = "指定SQL（校验SQL）的系统变量对应结果bean")
     @Param(name = "dq_definition", desc = "Dq_definition实体", range = "Dq_definition实体")
     @Return(desc = "对应结果bean的List", range = "对应结果bean的List")
-    public static List<SysVarCheckBean> getSysVarCheckBean(Dq_definition dqd) {
-        if (StringUtil.isBlank(dqd.getReg_num().toString())) {
-            throw new BusinessException("指定SQL（校验SQL）的系统变量检查的规则编号为空!");
-        }
+    public static Set<SysVarCheckBean> getSysVarCheckBean(Dq_definition dqd) {
         //获取变量信息
         List<Dq_sys_cfg> dq_sys_cfg_s = Dbo.queryList(Dq_sys_cfg.class, "select * from " + Dq_sys_cfg.TableName);
         //转换变量信息为map
@@ -172,7 +169,7 @@ public class DqcExecution {
         dq_sys_cfg_map.put("#{TX_DATE}", DateUtil.getSysDate());
         dq_sys_cfg_map.put("#{TX_DATE10}", DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate()).toString());
         //初始化系统变量检查bean的集合
-        List<SysVarCheckBean> sysVarCheckBeans = new ArrayList<>();
+        Set<SysVarCheckBean> sysVarCheckBeans = new HashSet<>();
         //根据正则表达式提取bean中的value值
         List<String> str_s = CheckBeanUtil.getBeanValueWithPattern(dqd, "(?=#\\{)(.*?)(?>\\})");
         str_s.forEach(str -> {
@@ -242,7 +239,7 @@ public class DqcExecution {
     @Param(name = "dq_definition", desc = "Dq_definition实体", range = "Dq_definition实体")
     @Param(name = "beans", desc = "List<SysVarCheckBean>", range = "自定义bean类型")
     @Return(desc = "返回值说明", range = "返回值取值范围")
-    private static boolean recordIndicator3Data(DatabaseWrapper db, Dq_result dq_result, List<SysVarCheckBean> beans) {
+    private static boolean recordIndicator3Data(DatabaseWrapper db, Dq_result dq_result, Set<SysVarCheckBean> beans) {
         //数据校验
         if (StringUtil.isBlank(dq_result.getTask_id().toString())) {
             throw new BusinessException("在记录指标3的数据时，传入的任务编号为空!");
@@ -289,4 +286,37 @@ public class DqcExecution {
         return true;
     }
 
+    @Method(desc = "执行sql检查", logicStep = "执行sql检查")
+    @Param(name = "beans", desc = "List<SysVarCheckBean>", range = "自定义Bean的集合")
+    @Param(name = "sql", desc = "要检验的sql数组", range = "String类型可变长度数组")
+    @Return(desc = "返回值说明", range = "返回值取值范围")
+    public static String executionSqlCheck(Set<SysVarCheckBean> beans, String... sql_s) {
+        //数据校验
+        if (StringUtil.isBlank(Arrays.toString(sql_s))) {
+            throw new BusinessException("需要执行的sql为空!");
+        }
+        try (DatabaseWrapper db = new DatabaseWrapper()) {
+            for (String sql : sql_s) {
+                //处理sql
+                sql = sql.replace("\n", " ");
+                for (SysVarCheckBean bean : beans) {
+                    sql = sql.replace(bean.getName(), bean.getValue());
+                }
+                if (!sql.toLowerCase().contains("limit")) {
+                    sql = sql + "limit 1";
+                }
+                //执行sql
+                if (StringUtil.isBlank(sql)) {
+                    throw new BusinessException("执行sql的时候,sql为空!");
+                }
+                new ProcessingData() {
+                    @Override
+                    public void dealLine(Map<String, Object> map) {
+
+                    }
+                }.getDataLayer(sql, db);
+            }
+        }
+        return "success";
+    }
 }
