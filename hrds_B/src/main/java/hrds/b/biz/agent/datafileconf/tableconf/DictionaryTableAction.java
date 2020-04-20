@@ -37,6 +37,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.collections.map.HashedMap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.tools.ant.util.DateUtils;
 
 @DocClass(desc = "数据文件采集表配置", author = "Mr.Lee", createdate = "2020-04-13 14:41")
 public class DictionaryTableAction extends BaseAction {
@@ -265,23 +266,26 @@ public class DictionaryTableAction extends BaseAction {
       CheckParam.throwErrorMsg("任务ID(%s),不存在", colSetId);
     }
 
-    // 2: 获取数据字典表的全部列信息
-    Map<String, List<Table_column>> dicTableAllColumnMap = getDicTableAllColumn(colSetId);
-
     for (Table_info tableInfo : tableInfos) {
       // 3: 如果没有table_id的主键,则表示为新增数据信息
       if (tableInfo.getTable_id() == null) {
         // 设置新增数据的主键信息
         String table_id = PrimayKeyGener.getNextId();
-        tableInfo.setTable_id(PrimayKeyGener.getNextId());
+        tableInfo.setTable_id(table_id);
         // 设置任务主键
         tableInfo.setDatabase_id(colSetId);
         // 设置默认的表清洗顺序
         tableInfo.setTi_or(DEFAULT_TABLE_CLEAN_ORDER.toJSONString());
+        // 设置表的有效开始时间为当天入库的时间
+        tableInfo.setValid_s_date(DateUtil.getSysDate());
+        // 设置表的有效使用时间为 99991231
+        tableInfo.setValid_e_date(VALID_E_DATE);
         // 保存表信息
         tableInfo.add(Dbo.db());
         // 3-1: 并在列数据中找出表的列信息,如果没有则表示没有触发列的保存.则使用默认的列信息
         if (StringUtil.isBlank(tableColumns)) {
+          // 2: 获取数据字典表的全部列信息
+          Map<String, List<Table_column>> dicTableAllColumnMap = getDicTableAllColumn(colSetId);
           setColumnDefaultData(
               dicTableAllColumnMap.get(tableInfo.getTable_name()), Long.parseLong(table_id));
         } else {
@@ -306,7 +310,42 @@ public class DictionaryTableAction extends BaseAction {
                   // 循环列的集合信息,经行列的数据更新
                   table_columns.forEach(
                       table_column -> {
-                        table_column.update(Dbo.db());
+                        if (table_column.getColumn_id() == null) {
+                          // 设置列的主键
+                          table_column.setColumn_id(PrimayKeyGener.getNextId());
+                          // 设置列对应表的主键
+                          table_column.setTable_id(tableInfo.getTable_id());
+                          // 设置列的有效开始时间为当天入库的时间
+                          table_column.setValid_s_date(DateUtil.getSysDate());
+                          // 设置列的有效使用时间为 99991231
+                          table_column.setValid_e_date(VALID_E_DATE);
+                          // 新增列信息
+                          table_column.add(Dbo.db());
+                        } else {
+                          // 这里先将有效的日期更新为当天日期,然后在根据还存在的列主键在更新回来,这样不存在的列信息就将自动变为无效的字段
+                          Dbo.execute(
+                              " UPDATE "
+                                  + Table_column.TableName
+                                  + " SET valid_e_date = ? where table_id = ? and column_id = ?",
+                              DateUtil.getSysDate(),
+                              table_column.getTable_id(),
+                              table_column.getColumn_id());
+                          Dbo.execute(
+                              "UPDATE "
+                                  + Table_column.TableName
+                                  + " SET column_name = ?,colume_ch_name = ?,column_type = ?,is_primary_key = ?,"
+                                  + "is_get = ?,is_alive = ?,is_new = ?,valid_e_date = ? where table_id = ? and column_id = ?",
+                              table_column.getColumn_name(),
+                              table_column.getColumn_ch_name(),
+                              table_column.getColumn_type(),
+                              table_column.getIs_primary_key(),
+                              table_column.getIs_get(),
+                              table_column.getIs_alive(),
+                              table_column.getIs_new(),
+                              VALID_E_DATE,
+                              table_column.getTable_id(),
+                              table_column.getColumn_id());
+                        }
                       });
                 });
           }
