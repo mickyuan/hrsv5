@@ -11,12 +11,14 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 
+import java.io.Closeable;
+
 /**
  * @Author: Mick Yuan
  * @Date:
  * @Since jdk1.8
  */
-public class MarketSparkMain {
+public class MarketSparkMain implements Closeable {
     private MarketConf conf;
     private SparkSession sparkSession;
     private Dataset<Row> dataset;
@@ -32,11 +34,16 @@ public class MarketSparkMain {
         sparkSession = sparkDataset.getSparkSession();
     }
 
-    private void handleJdbc(final SparkHandleArgument.DatabaseArgs databaseArgs) {
+    private void handleDatabase(final SparkHandleArgument.DatabaseArgs databaseArgs) {
         new DatabaseHandle(dataset, databaseArgs, conf.getTableName())
                 .handle();
 
+    }
 
+    @Override
+    public void close() {
+        if (sparkSession != null)
+            sparkSession.close();
     }
 
     public static void main(String[] args) {
@@ -45,19 +52,19 @@ public class MarketSparkMain {
             throw new AppSystemException("Spark runner 主类参数不可为空: " + datatableId);
         }
 
-        MarketSparkMain main = new MarketSparkMain(datatableId);
+        try (MarketSparkMain main = new MarketSparkMain(datatableId)) {
 
-        String handleArgs = args[1];
-        SparkHandleArgument sparkHandleArgument = SparkHandleArgument.fromString(handleArgs);
+            String handleArgs = args[1];
+            SparkHandleArgument sparkHandleArgument = SparkHandleArgument.fromString(handleArgs);
 
-        Store_type handleType = sparkHandleArgument.getHandleType();
+            Store_type handleType = sparkHandleArgument.getHandleType();
 
-        if (Store_type.DATABASE.equals(handleType)) {
-            main.handleJdbc((SparkHandleArgument.DatabaseArgs) sparkHandleArgument);
-        } else {
-            throw new AppSystemException("无法处理类型：" + handleType.getValue());
+            if (Store_type.DATABASE.equals(handleType)) {
+                main.handleDatabase((SparkHandleArgument.DatabaseArgs) sparkHandleArgument);
+            } else {
+                throw new AppSystemException("无法处理类型：" + handleType.getValue());
+            }
         }
-
 
     }
 

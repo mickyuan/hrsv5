@@ -14,6 +14,6 @@ package hrds.h.biz.service;
  */
 public interface FirstLoad {
 	
-	void firstLoadData();
+	void firstLoad();
 	
 }

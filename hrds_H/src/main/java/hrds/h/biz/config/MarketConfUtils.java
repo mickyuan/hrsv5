@@ -128,7 +128,9 @@ public class MarketConfUtils {
      * @param datatableFields 所有字段实体
      */
     private static void handleFields(List<Datatable_field_info> datatableFields) {
-
+        if (datatableFields.size() == 0) {
+            throw new AppSystemException("状态错误,字段数量为0");
+        }
 
         //添加 HYREN_S_DATE
         Datatable_field_info sDateField = new Datatable_field_info();

@@ -150,6 +150,7 @@ public class DatasetProcessBack implements SparkDataset, Closeable {
         }
 
         sparkSession.sql("use hyshf");
+        sparkSession.sql(sql);
         return null;
     }
 

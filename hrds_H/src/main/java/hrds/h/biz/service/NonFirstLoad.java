@@ -23,7 +23,7 @@ public interface NonFirstLoad {
 	 * @throws Exception 
 	 * @since JDK 1.7
 	 */
-	void appendData();
+	void append();
 	
 	/**
 	 * 替换
@@ -34,7 +34,7 @@ public interface NonFirstLoad {
 	 * @throws Exception 
 	 * @since JDK 1.7
 	 */
-	void replaceData() ;
+	void replace() ;
 	
 	/**
 	 * 增量
@@ -44,7 +44,7 @@ public interface NonFirstLoad {
 	 * Date:2018年5月13日下午10:29:37 
 	 * @since JDK 1.7
 	 */
-	void IncrementData();
+	void increment();
 
 	/**
 	 * 重跑替换
@@ -54,6 +54,6 @@ public interface NonFirstLoad {
 	 * Date:2018年10月31日10:25:36 
 	 * @since JDK 1.7
 	 */
-	void reAppendData();
+	void reappend();
 	
 }

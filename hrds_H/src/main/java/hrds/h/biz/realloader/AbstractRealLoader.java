@@ -1,10 +1,13 @@
 package hrds.h.biz.realloader;
 
 import fd.ng.core.utils.StringUtil;
+import hrds.commons.entity.Datatable_field_info;
 import hrds.h.biz.config.MarketConf;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @Author: Mick Yuan
@@ -14,9 +17,11 @@ import java.util.Map;
 public abstract class AbstractRealLoader implements Loader {
     final Map<String, String> tableLayerAttrs = new HashMap<>();
     protected final MarketConf conf;
+    final String tableName;
 
     protected AbstractRealLoader(MarketConf conf) {
         this.conf = conf;
+        tableName = conf.getTableName();
         initTableLayerProperties();
     }
 
@@ -50,8 +55,27 @@ public abstract class AbstractRealLoader implements Loader {
         });
         //把最后一个逗号给删除掉
         createTableColumnTypes.deleteCharAt(createTableColumnTypes.length() - 1);
-        return createTableColumnTypes.toString();
 
+        String s = createTableColumnTypes.toString();
+        StringUtil.replaceLast(s,"string","char(32)");
+        StringUtil.replaceLast(s,"string","char(8)");
+        StringUtil.replaceLast(s,"string","char(8)");
+
+        return s;
+
+    }
+
+    /**
+     * 不带有 hyren 字段的所有字段，以逗号隔开
+     *
+     * @return
+     */
+    String columnsWithoutHyren() {
+                //后面的三个hyren字段去掉
+        return conf.getDatatableFields().subList(0, conf.getDatatableFields().size() - 4)
+                .stream()
+                .map(Datatable_field_info::getField_en_name)
+                .collect(Collectors.joining(","));
     }
 
 }

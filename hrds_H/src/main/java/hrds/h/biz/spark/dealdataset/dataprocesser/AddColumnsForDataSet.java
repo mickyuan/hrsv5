@@ -25,7 +25,7 @@ public class AddColumnsForDataSet implements DataSetProcesser {
 
     private static final String HYREN_COLUMN_SUFFIX = "hyren_";
 
-    private MarketConf marketConf = null;
+    private MarketConf marketConf;
 
     public AddColumnsForDataSet(MarketConf conf) {
 

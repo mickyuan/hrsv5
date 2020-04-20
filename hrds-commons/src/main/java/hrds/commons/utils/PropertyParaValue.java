@@ -118,4 +118,20 @@ public class PropertyParaValue {
             return defaultValue;
         }
     }
+
+    /**
+     * 返回sys_para表中名字为name的字符串值。如果没有找到, 则返回默认值defaultValue.
+     *
+     * @param name         名字。
+     * @param defaultValue 默认值。
+     * @return 返回sys_para表中名字为name的字符串值。如果没有找到, 则返回默认值defaultValue.
+     */
+    public static Boolean getBoolean(String name, boolean defaultValue) {
+
+        try {
+            return Boolean.parseBoolean(mapParaType.get(name));
+        } catch (Exception e) {
+            return defaultValue;
+        }
+    }
 }

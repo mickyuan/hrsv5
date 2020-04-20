@@ -22,14 +22,14 @@ public class BusinessForStorageType extends AbstractBusiness {
 
         if (conf.isFirstLoad()) {
             logger.info("首次执行=======================");
-            load.firstLoadData();
+            load.firstLoad();
         } else {
             logger.info("第二次执行=======================");
             //该变量表示追加，替换还是增量
             String storageType = conf.getDmDatatable().getStorage_type();
             if (StorageType.TiHuan.getCode().equals(storageType)) {
                 logger.info("替换=======================");
-                load.replaceData();
+                load.replace();
             } else if (StorageType.ZhuiJia.getCode().equals(storageType)) {
                 logger.info("追加=======================");
                 /*
@@ -37,12 +37,12 @@ public class BusinessForStorageType extends AbstractBusiness {
                  */
                 if (conf.isRerun()) {
                     logger.info("此任务已运行成功，重跑任务: " + loaderName);
-                    load.reAppendData();
+                    load.reappend();
                 }
-                load.appendData();
+                load.append();
             } else if (StorageType.ZengLiang.getCode().equals(storageType)) {
                 logger.info("增量=======================");
-                load.IncrementData();
+                load.increment();
             } else {
                 throw new AppSystemException("无效的进数方式: " + storageType);
             }

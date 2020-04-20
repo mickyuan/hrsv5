@@ -14,7 +14,8 @@ import static hrds.commons.codes.StorageTypeKey.*;
  */
 public class DatabaseLoader extends AbstractRealLoader {
 
-    private DatabaseArgs databaseArgs = new DatabaseArgs(Store_type.DATABASE);
+    private final DatabaseArgs databaseArgs = new DatabaseArgs(Store_type.DATABASE);
+//    private
 
     DatabaseLoader(MarketConf conf) {
         super(conf);
@@ -31,32 +32,32 @@ public class DatabaseLoader extends AbstractRealLoader {
     }
 
     @Override
-    public void firstLoadData() {
+    public void firstLoad() {
         databaseArgs.setOverWrite(true);
         SparkJobRunner.runJob(conf.getDatatableId(), databaseArgs);
 
     }
 
     @Override
-    public void appendData() {
+    public void append() {
         databaseArgs.setOverWrite(false);
         SparkJobRunner.runJob(conf.getDatatableId(), databaseArgs);
 
     }
 
     @Override
-    public void replaceData() {
+    public void replace() {
         databaseArgs.setOverWrite(true);
         SparkJobRunner.runJob(conf.getDatatableId(), databaseArgs);
     }
 
     @Override
-    public void IncrementData() {
+    public void increment() {
 
     }
 
     @Override
-    public void reAppendData() {
+    public void reappend() {
 
     }
 

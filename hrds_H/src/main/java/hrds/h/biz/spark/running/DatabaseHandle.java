@@ -37,7 +37,7 @@ public class DatabaseHandle extends Handle {
             dataFrameWriter = dataset.write().mode(SaveMode.Append);
         }
         if(StringUtil.isNotBlank(databaseArgs.createTableColumnTypes)){
-            dataFrameWriter = dataFrameWriter.option("createTableColumnTypes",databaseArgs.createTableColumnTypes);
+            dataFrameWriter = dataFrameWriter.option("createTableColumnTypes",databaseArgs.getCreateTableColumnTypes());
         }
         dataFrameWriter.jdbc(databaseArgs.getUrl(), tableName, connProperties);
     }

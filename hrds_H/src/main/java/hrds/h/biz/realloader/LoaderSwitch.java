@@ -8,10 +8,7 @@ import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.DruidParseQuerySql;
 import hrds.h.biz.config.MarketConf;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @Author: Mick Yuan
