@@ -5,6 +5,7 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
+import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.DefaultPageImpl;
@@ -14,41 +15,64 @@ import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.DataSourceType;
 import hrds.commons.codes.DqcExecMode;
+import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.Job_Effective_Flag;
-import hrds.commons.entity.Dq_definition;
-import hrds.commons.entity.Dq_rule_def;
-import hrds.commons.entity.Etl_sub_sys_list;
-import hrds.commons.entity.Etl_sys;
+import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.tree.background.TreeNodeInfo;
+import hrds.commons.tree.background.bean.TreeConf;
+import hrds.commons.tree.commons.TreePageSource;
+import hrds.commons.utils.DataTableUtil;
 import hrds.commons.utils.etl.EtlJobUtil;
 import hrds.commons.utils.key.PrimayKeyGener;
+import hrds.commons.utils.tree.Node;
+import hrds.commons.utils.tree.NodeDataConvertedTreeList;
 import hrds.k.biz.dm.ruleconfig.bean.RuleConfSearchBean;
 import hrds.k.biz.dm.ruleconfig.bean.SysVarCheckBean;
 import hrds.k.biz.dm.ruleconfig.commons.DqcExecution;
 import hrds.k.biz.utils.CheckBeanUtil;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @DocClass(desc = "数据管控-规则配置", author = "BY-HLL", createdate = "2020/4/8 0008 上午 09:29")
 public class RuleConfigAction extends BaseAction {
 
+    @Method(desc = "获取数据源树信息", logicStep = "获取数据源树信息")
+    @Return(desc = "数据源树信息", range = "数据源树信息")
+    public Object getRuleConfigTreeData() {
+        //配置树不显示文件采集的数据
+        TreeConf treeConf = new TreeConf();
+        treeConf.setShowFileCollection(Boolean.FALSE);
+        //根据源菜单信息获取节点数据列表
+        List<Map<String, Object>> dataList =
+                TreeNodeInfo.getTreeNodeInfo(TreePageSource.DATA_MANAGEMENT, getUser(), treeConf);
+        //转换节点数据列表为分叉树列表
+        List<Node> ruleConfigTreeList = NodeDataConvertedTreeList.dataConversionTreeInfo(dataList);
+        return JsonUtil.toObjectSafety(ruleConfigTreeList.toString(), Object.class).orElseThrow(()
+                -> (new BusinessException("数据类型转换失败!")));
+    }
+
     @Method(desc = "添加规则", logicStep = "添加规则")
-    @Param(name = "dq_definition", desc = "Dq_definition的实体对象", range = "Dq_definition的实体对象")
+    @Param(name = "dq_definition", desc = "Dq_definition的实体对象", range = "Dq_definition的实体对象", isBean = true)
     public void addDqDefinition(Dq_definition dq_definition) {
         //数据校验
-        if (StringUtil.isBlank(dq_definition.getLoad_strategy())) {
-            throw new BusinessException("规则加载策略为空!");
-        }
-        if (StringUtil.isBlank(dq_definition.getFlags())) {
-            throw new BusinessException("规则级别为空!");
+        if (StringUtil.isBlank(dq_definition.getCase_type())) {
+            throw new BusinessException("规则类型为空!");
         }
         //设置数据对象
         dq_definition.setReg_num(PrimayKeyGener.getNextId());
         dq_definition.setApp_updt_dt(DateUtil.getSysDate());
         dq_definition.setApp_updt_ti(DateUtil.getSysTime());
+        //是否保存指标数据为空的时候,默认给 0:否
+        if (StringUtil.isBlank(dq_definition.getIs_saveindex1())) {
+            dq_definition.setIs_saveindex1(IsFlag.Fou.getCode());
+        }
+        if (StringUtil.isBlank(dq_definition.getIs_saveindex2())) {
+            dq_definition.setIs_saveindex2(IsFlag.Fou.getCode());
+        }
+        if (StringUtil.isBlank(dq_definition.getIs_saveindex3())) {
+            dq_definition.setIs_saveindex3(IsFlag.Fou.getCode());
+        }
         dq_definition.setUser_id(getUserId());
         dq_definition.setSpecify_sql(dq_definition.getSpecify_sql().replace("\n", " "));
         dq_definition.setErr_data_sql(dq_definition.getErr_data_sql().replace("\n", " "));
@@ -93,21 +117,24 @@ public class RuleConfigAction extends BaseAction {
         if (!checkRegNumIsExist(dq_definition.getReg_num())) {
             throw new BusinessException("修改的规则已经不存在!");
         }
-        if (StringUtil.isBlank(dq_definition.getLoad_strategy())) {
-            throw new BusinessException("规则加载策略为空!");
-        }
-        if (StringUtil.isBlank(dq_definition.getFlags())) {
-            throw new BusinessException("规则级别为空!");
-        }
         //设置数据对象
-        dq_definition.setReg_num(PrimayKeyGener.getNextId());
         dq_definition.setApp_updt_dt(DateUtil.getSysDate());
         dq_definition.setApp_updt_ti(DateUtil.getSysTime());
+        //是否保存指标数据为空的时候,默认给 0:否
+        if (StringUtil.isBlank(dq_definition.getIs_saveindex1())) {
+            dq_definition.setIs_saveindex1(IsFlag.Fou.getCode());
+        }
+        if (StringUtil.isBlank(dq_definition.getIs_saveindex2())) {
+            dq_definition.setIs_saveindex2(IsFlag.Fou.getCode());
+        }
+        if (StringUtil.isBlank(dq_definition.getIs_saveindex3())) {
+            dq_definition.setIs_saveindex3(IsFlag.Fou.getCode());
+        }
         dq_definition.setUser_id(getUserId());
         dq_definition.setSpecify_sql(dq_definition.getSpecify_sql().replace("\n", " "));
         dq_definition.setErr_data_sql(dq_definition.getErr_data_sql().replace("\n", " "));
         //添加规则
-        dq_definition.add(Dbo.db());
+        dq_definition.update(Dbo.db());
     }
 
     @Method(desc = "获取规则信息列表",
@@ -151,12 +178,26 @@ public class RuleConfigAction extends BaseAction {
                 " where reg_num=?", reg_num).orElseThrow(() -> (new BusinessException("获取规则信息的SQL错误!")));
     }
 
+    @Method(desc = "获取表字段信息列表", logicStep = "获取表字段信息列表")
+    @Param(name = "data_layer", desc = "数据层", range = "String类型,DCL,DML")
+    @Param(name = "data_own_type", desc = "类型标识", range = "dcl_batch:批量数据,dcl_realtime:实时数据", nullable = true)
+    @Param(name = "file_id", desc = "表源属性id", range = "String[]")
+    @Return(desc = "字段信息列表", range = "字段信息列表")
+    public List<Map<String, Object>> getColumnByFileId(String data_layer, String data_own_type, String file_id) {
+        //数据层获取不同表结构
+        return DataTableUtil.getColumnByFileId(data_layer, data_own_type, file_id);
+    }
+
     @Method(desc = "获取规则类型数据", logicStep = "获取规则类型数据")
     @Return(desc = "规则类型数据", range = "规则类型数据")
     public List<Dq_rule_def> getDqRuleDef() {
-//        List<Map<String, Object>> dq_rule_def_s = Dbo.queryList("select * from " + Dq_rule_def.TableName);
-//        return listToMap(dq_rule_def_s, "case_type", "case_type_desc");
         return Dbo.queryList(Dq_rule_def.class, "select * from " + Dq_rule_def.TableName);
+    }
+
+    @Method(desc = "获取系统帮助提示信息", logicStep = "获取系统帮助提示信息")
+    @Return(desc = "系统帮助提示信息", range = "系统帮助提示信息")
+    public List<Dq_help_info> getDqHelpInfo() {
+        return Dbo.queryList(Dq_help_info.class, "select * from " + Dq_help_info.TableName);
     }
 
     @Method(desc = "保存作业信息",
@@ -263,7 +304,7 @@ public class RuleConfigAction extends BaseAction {
             Dq_definition dq_definition = Dbo.queryOneObject(Dq_definition.class, "SELECT * FROM dq_list WHERE" +
                     " reg_num=?", dqd.getReg_num()).orElseThrow(() -> (new BusinessException("获取配置信息的SQL失败!")));
             //系统变量对应结果
-            List<SysVarCheckBean> beans = DqcExecution.getSysVarCheckBean(dq_definition);
+            Set<SysVarCheckBean> beans = DqcExecution.getSysVarCheckBean(dq_definition);
             //执行规则
             DqcExecution.executionRule(db, dq_definition, verify_date, beans, DqcExecMode.ShouGong.getCode());
             //提交数据库操作
@@ -319,9 +360,50 @@ public class RuleConfigAction extends BaseAction {
         return ruleSchedulingStatusInfos;
     }
 
+    @Method(desc = "指定SQL（校验SQL）检查，检查所有的系统变量是否合法以及sql是否能运行",
+            logicStep = "指定SQL（校验SQL）检查，检查所有的系统变量是否合法以及sql是否能运行")
+    @Param(name = "dq_definition", desc = "Dq_definition的实体对象", range = "Dq_definition的实体对象", isBean = true)
+    @Return(desc = "返回值说明", range = "返回值取值范围")
+    public Map<String, Object> specifySqlCheck(Dq_definition dq_definition) {
+        //数据校验
+        if (StringUtil.isBlank(dq_definition.getSpecify_sql())) {
+            throw new BusinessException("指定SQL为空!");
+        }
+        //系统变量对应结果
+        Set<SysVarCheckBean> beans = DqcExecution.getSysVarCheckBean(dq_definition);
+        //获取检查结果 成功:success,失败:具体报错信息
+        String check_is_success = DqcExecution.executionSqlCheck(beans, dq_definition.getSpecify_sql().split(";"));
+        //初始化检查结果
+        Map<String, Object> specifySqlCheckMap = new HashMap<>();
+        specifySqlCheckMap.put("sysVarCheckBean", beans);
+        specifySqlCheckMap.put("check_is_success", check_is_success);
+        return specifySqlCheckMap;
+    }
+
+    @Method(desc = "异常数据sql检查，检查所有的系统变量是否合法以及sql是否能运行",
+            logicStep = "异常数据sql检查，检查所有的系统变量是否合法以及sql是否能运行")
+    @Param(name = "dq_definition", desc = "Dq_definition的实体对象", range = "Dq_definition的实体对象", isBean = true)
+    @Return(desc = "返回值说明", range = "返回值取值范围")
+    public Map<String, Object> errDataSqlCheck(Dq_definition dq_definition) {
+        //数据校验
+        if (StringUtil.isBlank(dq_definition.getErr_data_sql())) {
+            throw new BusinessException("指定SQL为空!");
+        }
+        //系统变量对应结果
+        Set<SysVarCheckBean> beans = DqcExecution.getSysVarCheckBean(dq_definition);
+        //获取检查结果 成功:success,失败:具体报错信息
+        String check_is_success = DqcExecution.executionSqlCheck(beans, dq_definition.getErr_data_sql());
+        //初始化检查结果
+        Map<String, Object> specifySqlCheckMap = new HashMap<>();
+        specifySqlCheckMap.put("sysVarCheckBean", beans);
+        specifySqlCheckMap.put("check_is_success", check_is_success);
+        return specifySqlCheckMap;
+    }
+
     @Method(desc = "检查规则reg_num是否存在", logicStep = "检查规则reg_num是否存在")
     @Param(name = "reg_num", desc = "规则编号", range = "long类型")
     @Return(desc = "规则否存在", range = "true：不存在，false：存在")
+
     private boolean checkRegNumIsExist(long reg_num) {
         return Dbo.queryNumber("SELECT COUNT(reg_num) FROM " + Dq_definition.TableName + " WHERE reg_num = ?",
                 reg_num).orElseThrow(() -> new BusinessException("检查规则reg_num否存在的SQL错误")) == 1;
