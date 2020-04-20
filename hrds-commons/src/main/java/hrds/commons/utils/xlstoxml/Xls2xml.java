@@ -268,12 +268,12 @@ public class Xls2xml {
 				JSONArray storages = json.getJSONArray("storage");
 				for (int j = 0; j < storages.size(); j++) {
 					JSONObject storageJson = storages.getJSONObject(j);
-					String file_format = storageJson.getString("file_format");//文件格式
+					String file_format = storageJson.getString("dbfile_format");//文件格式
 					String is_header = storageJson.getString("is_header");//是否有表头
 					String row_separator = storageJson.getString("row_separator");//行分隔符
-					String column_separator = storageJson.getString("column_separator");//列分隔符
-					String root_path = storageJson.getString("root_path");//采集文件的跟目录
-					String file_code = storageJson.getString("file_code");//采集文件的编码
+					String column_separator = storageJson.getString("database_separatorr");//列分隔符
+					String root_path = storageJson.getString("plane_url");//采集文件的跟目录
+					String file_code = storageJson.getString("database_code");//采集文件的编码
 					addStorage(file_format, is_header, row_separator, column_separator, root_path, file_code);
 				}
 			}
@@ -501,12 +501,12 @@ public class Xls2xml {
 	private static void addStorage(String file_format, String is_header, String row_separator, String column_separator,
 	                               String root_path, String file_code) {
 		storage = xmlCreater.createElement(table, "storage");
-		xmlCreater.createAttribute(storage, "file_format", file_format);
+		xmlCreater.createAttribute(storage, "dbfile_format", file_format);
 		xmlCreater.createAttribute(storage, "is_header", is_header);
 		xmlCreater.createAttribute(storage, "row_separator", row_separator);
-		xmlCreater.createAttribute(storage, "column_separator", column_separator);
-		xmlCreater.createAttribute(storage, "root_path", String.valueOf(root_path));
-		xmlCreater.createAttribute(storage, "file_code", file_code);
+		xmlCreater.createAttribute(storage, "database_separatorr", column_separator);
+		xmlCreater.createAttribute(storage, "plane_url", String.valueOf(root_path));
+		xmlCreater.createAttribute(storage, "database_code", file_code);
 	}
 
 	/**

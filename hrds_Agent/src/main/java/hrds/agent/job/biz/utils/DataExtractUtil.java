@@ -53,11 +53,11 @@ public class DataExtractUtil {
 			for (Data_extraction_def data_extraction_def : data_extraction_defList) {
 				JSONObject object = new JSONObject();
 				object.put("is_header", data_extraction_def.getIs_header());
-				object.put("file_format", data_extraction_def.getDbfile_format());
-				object.put("file_code", data_extraction_def.getDatabase_code());
-				object.put("root_path", data_extraction_def.getPlane_url());
+				object.put("dbfile_format", data_extraction_def.getDbfile_format());
+				object.put("database_code", data_extraction_def.getDatabase_code());
+				object.put("plane_url", data_extraction_def.getPlane_url());
 				object.put("row_separator", StringUtil.string2Unicode(data_extraction_def.getRow_separator()));
-				object.put("column_separator", StringUtil.string2Unicode(data_extraction_def.getDatabase_separatorr()));
+				object.put("database_separatorr", StringUtil.string2Unicode(data_extraction_def.getDatabase_separatorr()));
 				storageArray.add(object);
 			}
 			jsonObject.put("storage", storageArray);
