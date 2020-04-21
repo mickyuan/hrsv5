@@ -1417,6 +1417,7 @@ DATABASE_SEPARATORR                               VARCHAR(512) NULL, --列分割
 DBFILE_FORMAT                                     CHAR(1) default '1' NOT NULL, --数据落地格式
 PLANE_URL                                         VARCHAR(512) NULL, --数据落地目录
 FILE_SUFFIX                                       VARCHAR(80) NULL, --落地文件后缀名
+IS_ARCHIVED                                       CHAR(1) default '0' NOT NULL, --是否转存
 DED_REMARK                                        VARCHAR(512) NULL, --备注
 CONSTRAINT DATA_EXTRACTION_DEF_PK PRIMARY KEY(DED_ID)   );
 
