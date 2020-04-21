@@ -1,5 +1,8 @@
 package hrds.g.biz.serviceuser.impl;
 
+import com.alibaba.druid.sql.SQLUtils;
+import com.alibaba.druid.sql.ast.statement.SQLSelectItem;
+import com.alibaba.druid.util.DruidWebUtils;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
@@ -355,8 +358,8 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction imp
 			List<String> sqlColumnList = druidParseQuerySql.parseSelectOriginalField();
 			if (!columnList.isEmpty()) {
 				// 12.判断查询列是否存在，支持t1.*,t2.*
-				if (sqlColumnList.size() > 0 && !sqlColumnList.contains("*")) {
-					// 13.存在，遍历列集合，判断列是否包含.,包含.说明是有别名获取别名后的列名称，否则直接获取列名称
+				if ( !sqlColumnList.contains(null)) {
+					 // 13.存在，遍历列集合，判断列是否包含.,包含.说明是有别名获取别名后的列名称，否则直接获取列名称
 					for (String col : sqlColumnList) {
 						if (col.contains(".")) {
 							col = col.substring(col.indexOf(".") + 1).toLowerCase();
