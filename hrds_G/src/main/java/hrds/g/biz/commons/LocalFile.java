@@ -46,7 +46,7 @@ public class LocalFile {
 	@Param(name = "user_id", desc = "用户ID", range = "新增用户时生成")
 	@Return(desc = "返回接口响应信息", range = "无限制")
 	public static Map<String, Object> writeFile(Map<String, Object> feedback, String dataType, String outType,
-	                                            String user_id) {
+	                                            Long user_id) {
 		try {
 			// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 			// 2.判断dataType,outType是否合法

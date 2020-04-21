@@ -18,15 +18,38 @@ import hrds.commons.base.BaseAction;
 import hrds.commons.codes.AgentType;
 import hrds.commons.codes.CleanType;
 import hrds.commons.codes.IsFlag;
-import hrds.commons.entity.*;
+import hrds.commons.entity.Agent_down_info;
+import hrds.commons.entity.Agent_info;
+import hrds.commons.entity.Collect_job_classify;
+import hrds.commons.entity.Column_clean;
+import hrds.commons.entity.Column_merge;
+import hrds.commons.entity.Column_split;
+import hrds.commons.entity.Column_storage_info;
+import hrds.commons.entity.Data_extraction_def;
+import hrds.commons.entity.Data_relation_table;
+import hrds.commons.entity.Data_source;
+import hrds.commons.entity.Data_store_layer;
+import hrds.commons.entity.Data_store_layer_added;
+import hrds.commons.entity.Data_store_layer_attr;
+import hrds.commons.entity.Database_set;
+import hrds.commons.entity.Etl_sub_sys_list;
+import hrds.commons.entity.Etl_sys;
+import hrds.commons.entity.File_collect_set;
+import hrds.commons.entity.File_source;
+import hrds.commons.entity.Ftp_collect;
+import hrds.commons.entity.Length_contrast_sum;
+import hrds.commons.entity.Object_collect;
+import hrds.commons.entity.Orig_code_info;
+import hrds.commons.entity.Table_clean;
+import hrds.commons.entity.Table_column;
+import hrds.commons.entity.Table_info;
+import hrds.commons.entity.Table_storage_info;
+import hrds.commons.entity.Type_contrast_sum;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.AgentActionUtil;
 import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.ReadLog;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -35,6 +58,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 @DocClass(desc = "获取数据源Agent列表", author = "WangZhengcheng")
 public class AgentListAction extends BaseAction {
@@ -102,7 +127,7 @@ public class AgentListAction extends BaseAction {
 
 		//3、判断该agent是那种类型，并且根据类型，到对应的数据库表中查询采集任务管理详细信息
 		String sqlStr;
-		AgentType agentType = AgentType.ofEnumByCode((String) agentInfo.get("agent_type"));
+		AgentType agentType = AgentType.ofEnumByCode(String.valueOf(agentInfo.get("agent_type")));
 		//数据库直连采集Agent
 		if (AgentType.ShuJuKu == agentType) {
 			sqlStr = " SELECT ds.DATABASE_ID ID,ds.task_name task_name,ds.AGENT_ID AGENT_ID," +
@@ -117,7 +142,7 @@ public class AgentListAction extends BaseAction {
 					" gi.source_id source_id" +
 					" FROM " + Database_set.TableName + " ds " +
 					" LEFT JOIN " + Agent_info.TableName + " gi ON ds.Agent_id = gi.Agent_id " +
-					" where ds.Agent_id = ? ";
+					" where ds.Agent_id = ?  AND ds.is_sendok = ?";
 		}
 		//半结构化采集Agent
 		else if (AgentType.DuiXiang == agentType) {
@@ -131,7 +156,7 @@ public class AgentListAction extends BaseAction {
 			sqlStr = " SELECT fs.ftp_id id,fs.ftp_name task_name,fs.AGENT_ID AGENT_ID,gi.source_id" +
 					" FROM " + Ftp_collect.TableName + " fs " +
 					" LEFT JOIN " + Agent_info.TableName + " gi ON gi.Agent_id = fs.Agent_id " +
-					" WHERE fs.Agent_id = ?";
+					" WHERE fs.Agent_id = ? AND fs.is_sendok = ?";
 		}
 		//非结构化Agent
 		else if (AgentType.WenJianXiTong == agentType) {

@@ -251,7 +251,7 @@ public class Xls2xml {
 				String table_name = json.getString("table_name");//表名
 				String table_cn_name = json.getString("table_cn_name");//中文表名
 				String unload_type = json.getString("unload_type");//数据存储方式
-				addTable(table_name.toLowerCase(), table_cn_name, unload_type);
+				addTable(table_name, table_cn_name, unload_type);
 				JSONArray columns = json.getJSONArray("columns");//列信息
 				for (int j = 0; j < columns.size(); j++) {
 					JSONObject column = columns.getJSONObject(j);

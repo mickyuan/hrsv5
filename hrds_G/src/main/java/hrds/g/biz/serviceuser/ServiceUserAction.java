@@ -9,6 +9,7 @@ import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
+import fd.ng.web.util.RequestUtil;
 import hrds.commons.base.BaseAction;
 import hrds.commons.entity.Interface_use;
 import hrds.commons.entity.Sysreg_parameter_info;
@@ -94,6 +95,21 @@ public class ServiceUserAction extends BaseAction {
 			list.add(columnMap);
 		}
 		return list;
+	}
+
+	@Method(desc = "获取当前用户请求ip端口",
+			logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制" +
+					"2.封装当前用户请求ip端口" +
+					"3.返回当前用户请求ip端口")
+	@Return(desc = "返回当前用户请求ip端口", range = "无限制")
+	public Map<String, Object> getIpAndPort() {
+		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
+		Map<String, Object> useMap = new HashMap<>();
+		// 2.封装当前用户请求ip端口
+		useMap.put("ipAndPort", RequestUtil.getRequest().getLocalAddr() + ":"
+				+ RequestUtil.getRequest().getLocalPort());
+		// 3.返回当前用户请求ip端口
+		return useMap;
 	}
 
 }

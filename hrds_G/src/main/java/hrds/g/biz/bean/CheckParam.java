@@ -15,8 +15,8 @@ public class CheckParam extends ProjectTableEntity {
 	@DocBean(name = "token", value = "token值:与user_id,user_password二选一", dataType = String.class,
 			required = false)
 	private String token;
-	@DocBean(name = "user_id", value = "用户ID:与user_password同选", dataType = String.class, required = false)
-	private String user_id;
+	@DocBean(name = "user_id", value = "用户ID:与user_password同选", dataType = Long.class, required = false)
+	private Long user_id;
 	@DocBean(name = "user_password", value = "密码:与user_id同选", dataType = String.class, required = false)
 	private String user_password;
 	@DocBean(name = "url", value = "请求url地址:", dataType = String.class)
@@ -32,11 +32,11 @@ public class CheckParam extends ProjectTableEntity {
 		this.token = token;
 	}
 
-	public String getUser_id() {
+	public Long getUser_id() {
 		return user_id;
 	}
 
-	public void setUser_id(String user_id) {
+	public void setUser_id(Long user_id) {
 		this.user_id = user_id;
 	}
 

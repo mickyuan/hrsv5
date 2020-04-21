@@ -22,7 +22,7 @@ import hrds.commons.tree.background.TreeNodeInfo;
 import hrds.commons.tree.background.bean.TreeConf;
 import hrds.commons.tree.background.query.DCLDataQuery;
 import hrds.commons.tree.commons.TreePageSource;
-import hrds.commons.utils.Constant;
+import hrds.commons.utils.DataTableUtil;
 import hrds.commons.utils.PropertyParaValue;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.commons.utils.tree.Node;
@@ -30,7 +30,7 @@ import hrds.commons.utils.tree.NodeDataConvertedTreeList;
 import hrds.k.biz.dbm.normbasic.DbmNormbasicAction;
 import hrds.k.biz.tsb.bean.DbmColInfo;
 import hrds.k.biz.tsb.bean.TSBConf;
-import hrds.k.biz.utils.DataTableFieldUtil;
+import hrds.commons.utils.DataTableFieldUtil;
 
 import java.lang.reflect.Type;
 import java.util.*;
@@ -68,30 +68,7 @@ public class TSBAction extends BaseAction {
         //设置 Dbm_dtable_info 对象
         setDbmDtableInfo(file_id);
         //数据层获取不同表结构
-        List<Map<String, Object>> col_info_s;
-        switch (data_layer) {
-            case "DCL":
-                //如果数据表所属层是DCL层,判断表类型是批量还是实时
-                if (Constant.DCL_BATCH.equals(data_own_type)) {
-                    col_info_s = DCLDataQuery.getDCLBatchTableColumns(file_id);
-                } else if (Constant.DCL_REALTIME.equals(data_own_type)) {
-                    throw new BusinessException("获取实时数据表的字段信息暂未实现!");
-                } else {
-                    throw new BusinessException("数据表类型错误! dcl_batch:批量数据,dcl_realtime:实时数据");
-                }
-                break;
-            case "ISL":
-            case "DPL":
-            case "DML":
-            case "SFL":
-            case "AML":
-            case "DQC":
-            case "UDL":
-                throw new BusinessException(data_layer + "层暂未实现!");
-            default:
-                throw new BusinessException("未找到匹配的存储层!");
-        }
-        return col_info_s;
+        return DataTableUtil.getColumnByFileId(data_layer, data_own_type, file_id);
     }
 
     @Method(desc = "预测对标结果", logicStep = "预测对标结果")
@@ -162,7 +139,6 @@ public class TSBAction extends BaseAction {
         List<Map<String, Object>> predictResult = new ArrayList<>();
         //获取对标结果字段信息
         List<Dbm_dtcol_info> dbm_dtcol_info_s = tsbConf.getDbm_dtcol_info_list();
-        System.out.println(dbm_dtcol_info_s);
         if (null == dbm_dtcol_info_s || dbm_dtcol_info_s.isEmpty()) {
             throw new BusinessException("对标信息已失效,请重新选择字段进行对标!");
         }
