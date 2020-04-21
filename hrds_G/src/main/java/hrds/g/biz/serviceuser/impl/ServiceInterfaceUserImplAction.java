@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.Map;
 
 @DocClass(desc = "接口信息实现类", author = "dhw", createdate = "2020/3/30 15:39")
-public class ServiceInterfaceUserImplAction implements ServiceInterfaceUserDefine {
+public class ServiceInterfaceUserImplAction extends BaseAction implements ServiceInterfaceUserDefine {
 
 	private static final Logger logger = LogManager.getLogger();
 	// 对于SQL的字段是否使用字段验证
@@ -496,22 +496,6 @@ public class ServiceInterfaceUserImplAction implements ServiceInterfaceUserDefin
 			return StateType.getResponseInfo(StateType.EXCEPTION.getCode(), "下载失败");
 		}
 	}
-
-	@Method(desc = "获取当前用户请求ip端口",
-			logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制" +
-					"2.封装当前用户请求ip端口" +
-					"3.返回当前用户请求ip端口")
-	@Return(desc = "返回当前用户请求ip端口", range = "无限制")
-	public Map<String, Object> getIpAndPort() {
-		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
-		Map<String, Object> useMap = new HashMap<>();
-		// 2.封装当前用户请求ip端口
-		useMap.put("ipAndPort", RequestUtil.getRequest().getLocalAddr() + ":"
-				+ RequestUtil.getRequest().getLocalPort());
-		// 3.返回当前用户请求ip端口
-		return useMap;
-	}
-
 
 }
 
