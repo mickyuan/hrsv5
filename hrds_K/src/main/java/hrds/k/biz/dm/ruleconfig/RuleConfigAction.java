@@ -7,7 +7,6 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
-import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.DefaultPageImpl;
 import fd.ng.db.jdbc.Page;
 import fd.ng.db.jdbc.SqlOperator;
@@ -147,25 +146,23 @@ public class RuleConfigAction extends BaseAction {
     @Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", valueIfNull = "10")
     @Return(desc = "规则信息列", range = "规则信息列")
     public List<Map<String, Object>> getDqDefinitionInfos(int currPage, int pageSize) {
-        try (DatabaseWrapper db = new DatabaseWrapper()) {
-            //设置查询sql
-            SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
-            asmSql.clean();
-            asmSql.addSql("select dql.*,? as job_status from " + Dq_definition.TableName + " dql where user_id=?")
-                    .addParam(Job_Effective_Flag.NO.getCode()).addParam(getUserId());
-            //查询
-            Page page = new DefaultPageImpl(currPage, pageSize);
-            List<Map<String, Object>> dqd_list = Dbo.queryPagedList(page, asmSql.sql(), asmSql.params());
-            //处理查询结果
-            Dq_definition dq_definition = new Dq_definition();
-            for (Map<String, Object> dqd : dqd_list) {
-                dq_definition.setReg_num(dqd.get("reg_num").toString());
-                if (DqcExecution.getEffDepJobs(db, dq_definition).size() > 0) {
-                    dqd.put("job_status", Job_Effective_Flag.YES.getCode());
-                }
+        //设置查询sql
+        SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
+        asmSql.clean();
+        asmSql.addSql("select dql.*,? as job_status from " + Dq_definition.TableName + " dql where user_id=?")
+                .addParam(Job_Effective_Flag.NO.getCode()).addParam(getUserId());
+        //查询
+        Page page = new DefaultPageImpl(currPage, pageSize);
+        List<Map<String, Object>> dqd_list = Dbo.queryPagedList(page, asmSql.sql(), asmSql.params());
+        //处理查询结果
+        Dq_definition dq_definition = new Dq_definition();
+        for (Map<String, Object> dqd : dqd_list) {
+            dq_definition.setReg_num(dqd.get("reg_num").toString());
+            if (DqcExecution.getEffDepJobs(dq_definition).size() > 0) {
+                dqd.put("job_status", Job_Effective_Flag.YES.getCode());
             }
-            return dqd_list;
         }
+        return dqd_list;
     }
 
     @Method(desc = "获取规则信息",
@@ -249,52 +246,48 @@ public class RuleConfigAction extends BaseAction {
         if (null != ruleConfSearchBean.getCase_type() && ruleConfSearchBean.getCase_type().length > 0) {
             asmSql.addORParam("case_type", ruleConfSearchBean.getCase_type());
         }
-        try (DatabaseWrapper db = new DatabaseWrapper()) {
-            //获取搜索结果
-            List<Map<String, Object>> dqd_list = Dbo.queryList(db, asmSql.sql(), asmSql.params());
-            //根据规则编号查询该规则是否被作业有效的引用
-            Dq_definition dq_definition = new Dq_definition();
-            for (Map<String, Object> dqd : dqd_list) {
-                dqd.put("job_status", Job_Effective_Flag.NO.getCode());
-                dq_definition.setReg_num(dqd.get("reg_num").toString());
-                //根据规则编号获取有效依赖作业信息
-                List<Map<String, Object>> effDepJobs = DqcExecution.getEffDepJobs(db, dq_definition);
-                //如果有效依赖作业大于0,则改规则处于有效调度状态
-                if (effDepJobs.size() > 0) {
-                    dqd.put("job_status", Job_Effective_Flag.YES.getCode());
+        //获取搜索结果
+        List<Map<String, Object>> dqd_list = Dbo.queryList(asmSql.sql(), asmSql.params());
+        //根据规则编号查询该规则是否被作业有效的引用
+        Dq_definition dq_definition = new Dq_definition();
+        for (Map<String, Object> dqd : dqd_list) {
+            dqd.put("job_status", Job_Effective_Flag.NO.getCode());
+            dq_definition.setReg_num(dqd.get("reg_num").toString());
+            //根据规则编号获取有效依赖作业信息
+            List<Map<String, Object>> effDepJobs = DqcExecution.getEffDepJobs(dq_definition);
+            //如果有效依赖作业大于0,则改规则处于有效调度状态
+            if (effDepJobs.size() > 0) {
+                dqd.put("job_status", Job_Effective_Flag.YES.getCode());
+            }
+        }
+        //初始化返回结果List
+        List<Map<String, Object>> search_data_list = new ArrayList<>();
+        //处理检索结果
+        dqd_list.forEach(dqd -> {
+            //根据调度状态处理检索结果
+            Job_Effective_Flag job_flag = Job_Effective_Flag.ofEnumByCode(dqd.get("job_status").toString());
+            if (null != ruleConfSearchBean.getJob_status()) {
+                for (String job_status : ruleConfSearchBean.getJob_status()) {
+                    if (job_flag == Job_Effective_Flag.ofEnumByCode(job_status)) {
+                        search_data_list.add(dqd);
+                    }
                 }
             }
-            //提交数据库操作
-            db.commit();
-            //初始化返回结果List
-            List<Map<String, Object>> search_data_list = new ArrayList<>();
-            //处理检索结果
-            dqd_list.forEach(dqd -> {
-                //根据调度状态处理检索结果
-                Job_Effective_Flag job_flag = Job_Effective_Flag.ofEnumByCode(dqd.get("job_status").toString());
-                if (null != ruleConfSearchBean.getJob_status()) {
-                    for (String job_status : ruleConfSearchBean.getJob_status()) {
-                        if (job_flag == Job_Effective_Flag.ofEnumByCode(job_status)) {
-                            search_data_list.add(dqd);
-                        }
+            //根据规则类型处理检索结果
+            else if (null != ruleConfSearchBean.getCase_type()) {
+                for (String c_type : ruleConfSearchBean.getCase_type()) {
+                    if (dqd.get("case_type").toString().equals(c_type)) {
+                        search_data_list.add(dqd);
                     }
                 }
-                //根据规则类型处理检索结果
-                else if (null != ruleConfSearchBean.getCase_type()) {
-                    for (String c_type : ruleConfSearchBean.getCase_type()) {
-                        if (dqd.get("case_type").toString().equals(c_type)) {
-                            search_data_list.add(dqd);
-                        }
-                    }
-                }
-                //规则类型和调度状态都为空,设置检索到的所有数据
-                else {
-                    search_data_list.add(dqd);
-                }
-            });
-            //返回检索结果
-            return search_data_list;
-        }
+            }
+            //规则类型和调度状态都为空,设置检索到的所有数据
+            else {
+                search_data_list.add(dqd);
+            }
+        });
+        //返回检索结果
+        return search_data_list;
     }
 
     @Method(desc = "手动执行", logicStep = "手动执行")
