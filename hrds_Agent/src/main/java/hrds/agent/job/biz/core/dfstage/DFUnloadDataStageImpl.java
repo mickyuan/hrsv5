@@ -8,6 +8,7 @@ import hrds.agent.job.biz.bean.*;
 import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
+import hrds.agent.job.biz.core.dfstage.service.FileConversionThread;
 import hrds.agent.job.biz.core.service.CollectTableHandleFactory;
 import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
@@ -20,6 +21,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 @DocClass(desc = "数据文件采集，数据卸数阶段实现", author = "WangZhengcheng")
 public class DFUnloadDataStageImpl extends AbstractJobStage {
@@ -46,21 +52,23 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 		StageStatusInfo statusInfo = new StageStatusInfo();
 		JobStatusInfoUtil.startStageStatusInfo(statusInfo, collectTableBean.getTable_id(),
 				StageConstant.UNLOADDATA.getCode());
+		ExecutorService executorService = null;
 		try {
 			//获取数据字典里对应的表的meta信息
 			TableBean tableBean = CollectTableHandleFactory.getCollectTableHandleInstance(sourceDataConfBean)
 					.generateTableInfo(sourceDataConfBean, collectTableBean);
-			//判断仅登记
-			if (IsFlag.Shi.getCode().equals(collectTableBean.getIs_register())) {
-				//文件所在的路径为  根路径+跑批日期+表名+文件格式
-				String file_path = FileNameUtils.normalize(tableBean.getRoot_path() + File.separator
-						+ collectTableBean.getEtlDate() + File.separator + collectTableBean.getTable_name()
-						+ File.separator + FileFormat.ofValueByCode(tableBean.getFile_format())
-						+ File.separator, true);
-				//列出文件目录下的文件
-				String[] file_name_list = new File(file_path).list(
-						(dir, name) -> name.startsWith(collectTableBean.getHbase_name())
-				);
+			//文件所在的路径为  根路径+跑批日期+表名+文件格式
+			String file_path = FileNameUtils.normalize(tableBean.getRoot_path() + File.separator
+					+ collectTableBean.getEtlDate() + File.separator + collectTableBean.getTable_name()
+					+ File.separator + FileFormat.ofValueByCode(tableBean.getFile_format())
+					+ File.separator, true);
+			//列出文件目录下的文件
+			String[] file_name_list = new File(file_path).list(
+					(dir, name) -> name.startsWith(collectTableBean.getHbase_name())
+			);
+			//判断是否转存
+			if (IsFlag.Fou.getCode().equals(tableBean.getIs_archived())) {
+				//不转存
 				//获得本次采集生成的数据文件的总大小
 				if (file_name_list != null && file_name_list.length > 0) {
 					long fileSize = 0;
@@ -81,11 +89,29 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 				} else {
 					throw new AppSystemException("数据文件不存在");
 				}
-				//仅登记，则不用转存，则跳过db文件卸数，直接进行upload
+				//不用转存，则跳过db文件卸数，直接进行upload
 				LOGGER.info("Db文件采集，不需要转存，卸数跳过");
-			} else if (IsFlag.Fou.getCode().equals(collectTableBean.getIs_register())) {
+			} else if (IsFlag.Shi.getCode().equals(tableBean.getIs_archived())) {
+				//转存
 				Data_extraction_def targetData_extraction_def = collectTableBean.getTargetData_extraction_def();
 				//TODO 需要转存，根据文件采集的定义，读取文件，卸数文件到指定的目录
+				//根据源定义读取文件，将读取到的文件统一转为List<List>每5000行统一处理一次
+				// 此处不会有海量的任务需要执行，不会出现队列中等待的任务对象过多的OOM事件。XXX 默认五个线程读取文件
+				if (file_name_list != null && file_name_list.length > 0) {
+					executorService = Executors.newFixedThreadPool(5);
+					List<Future<String>> futures = new ArrayList<>();
+					for (String fileName : file_name_list) {
+						FileConversionThread thread = new FileConversionThread(tableBean, collectTableBean,
+								file_path + fileName);
+						Future<String> future = executorService.submit(thread);
+						futures.add(future);
+					}
+					//5、获得结果,用于校验多线程采集的结果和写Meta文件
+					for (Future<String> future : futures) {
+						LOGGER.info("---------------" + future.get() + "---------------");
+					}
+				}
+				//写处理类，根据转存的文件格式，对文件分别进行处理
 				//将转存之后的文件格式，文件分隔符等重新赋值
 				tableBean.setColumn_separator(targetData_extraction_def.getDatabase_separatorr());
 				tableBean.setIs_header(targetData_extraction_def.getIs_header());
@@ -100,6 +126,9 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 		} catch (Exception e) {
 			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.FAILED.getCode(), e.getMessage());
 			LOGGER.error("DB文件采集卸数阶段失败：", e);
+		} finally {
+			if (executorService != null)
+				executorService.shutdown();
 		}
 		LOGGER.info("------------------DB文件采集卸数阶段结束------------------");
 		//结束给stageParamInfo塞值
