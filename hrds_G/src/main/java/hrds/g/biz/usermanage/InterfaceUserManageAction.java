@@ -21,6 +21,7 @@ import hrds.commons.entity.Table_use_info;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.key.PrimayKeyGener;
+import hrds.g.biz.init.InterfaceManager;
 
 import java.util.HashMap;
 import java.util.List;
@@ -59,7 +60,8 @@ public class InterfaceUserManageAction extends BaseAction {
 	@Method(desc = "添加接口用户", logicStep = "1.数据可访问权限处理方式：该方法不需要进行权限限制" +
 			"2.检查系统用户字段合法性" +
 			"3.封装添加接口用户的一些默认参数" +
-			"4.添加接口用户")
+			"4.添加接口用户" +
+			"5.重新更新内存")
 	@Param(name = "sys_user", desc = "用户信息表对象", range = "与数据库表定义规则一致", isBean = true)
 	public void addUser(Sys_user sys_user) {
 		// 1.数据可访问权限处理方式：该方法不需要进行权限限制
@@ -78,6 +80,8 @@ public class InterfaceUserManageAction extends BaseAction {
 		sys_user.setUser_type(UserType.RESTYongHu.getCode());
 		// 4.添加接口用户
 		sys_user.add(Dbo.db());
+		// 5.重新更新内存
+		InterfaceManager.initAll();
 	}
 
 	@Method(desc = "检查系统用户字段合法性", logicStep = "1.数据可访问权限处理方式：该方法不需要进行权限限制")
@@ -107,7 +111,8 @@ public class InterfaceUserManageAction extends BaseAction {
 			"2.判断当前登录用户对应用户是否还存在" +
 			"3.创建用户实体对象封装实体参数" +
 			"4.检查系统用户字段合法性" +
-			"5.更新接口用户信息")
+			"5.更新接口用户信息" +
+			"6.重新更新内存")
 	@Param(name = "user_name", desc = "用户名", range = "新增用户时生成")
 	@Param(name = "user_email", desc = "用户邮箱", range = "新增用户时生成")
 	@Param(name = "user_password", desc = "用户密码", range = "新增用户时生成")
@@ -131,6 +136,8 @@ public class InterfaceUserManageAction extends BaseAction {
 		checkFieldsForSysUser(sys_user);
 		// 5.更新接口用户信息
 		sys_user.update(Dbo.db());
+		// 6.重新更新内存
+		InterfaceManager.initAll();
 	}
 
 	@Method(desc = "判断当前登录用户对应的用户是否还存在",
@@ -150,7 +157,8 @@ public class InterfaceUserManageAction extends BaseAction {
 			" 2.删除接口用户信息2.删除接口用户信息" +
 			"3.删除该用户下的所有接口使用信息" +
 			"4.删除该用户下的所有接口表使用信息" +
-			"5.删除该用户下的所有接口系统登记参数信息")
+			"5.删除该用户下的所有接口系统登记参数信息" +
+			"6.重新更新内存")
 	@Param(name = "user_id", desc = "用户表主键ID", range = "新增用户时生成")
 	public void deleteUser(long user_id) {
 		// 1.数据可访问权限处理方式：该方法不需要进行权限限制
@@ -163,6 +171,8 @@ public class InterfaceUserManageAction extends BaseAction {
 		Dbo.execute("delete from " + Table_use_info.TableName + " where user_id = ?", user_id);
 		// 5.删除该用户下的所有接口系统登记参数信息
 		Dbo.execute("delete from " + Sysreg_parameter_info.TableName + " where user_id = ?", user_id);
+		// 6.重新更新内存
+		InterfaceManager.removeUser();
 	}
 
 	@Method(desc = "根据用户ID查询用户信息", logicStep = "1.数据可访问权限处理方式：该方法通过不需要进行权限限制" +
