@@ -5,7 +5,6 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
-import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
@@ -14,6 +13,7 @@ import hrds.commons.codes.*;
 import hrds.commons.collection.ProcessingData;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.utils.BeanUtils;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.k.biz.dm.ruleconfig.bean.SysVarCheckBean;
 import hrds.k.biz.utils.CheckBeanUtil;
@@ -25,13 +25,12 @@ import java.util.*;
 public class DqcExecution {
 
     @Method(desc = "执行规则调用方法", logicStep = "执行规则调用方法")
-    @Param(name = "db", desc = "DatabaseWrapper连接信息", range = "DatabaseWrapper类型")
     @Param(name = "dq_definition", desc = "Dq_definition实体", range = "Dq_definition实体", isBean = true)
     @Param(name = "verify_date", desc = "验证日期", range = "String类型")
     @Param(name = "beans", desc = "List<SysVarCheckBean>", range = "自定义bean类型")
     @Param(name = "exec_method", desc = "执行方式（DqcExecMode代码项）", range = "DqcExecMode代码项")
-    @Return(desc = "返回值说明", range = "返回值取值范围")
-    public static void executionRule(DatabaseWrapper db, Dq_definition dq_definition, String verify_date,
+    @Return(desc = "执行任务id", range = "执行任务id")
+    public static long executionRule(Dq_definition dq_definition, String verify_date,
                                      Set<SysVarCheckBean> beans, String exec_method) {
         //数据校验
         if (StringUtil.isBlank(dq_definition.getReg_num().toString())) {
@@ -46,12 +45,15 @@ public class DqcExecution {
         boolean has_exception = Boolean.FALSE;
         //初始化检测记录日志信息
         Dq_result dq_result = new Dq_result();
+        //初始化操作db
+        DatabaseWrapper db = new DatabaseWrapper();
         try {
             //获取定义的数据质量规则级别
             dq_rule_level = dq_definition.getFlags();
-            dq_result = JsonUtil.toObjectSafety(dq_definition.toString(), Dq_result.class).orElseThrow(()
-                    -> (new BusinessException("规则信息和规则结果的公共信息转换出错!")));
-            dq_result.setTask_id(getRuleTaskId(exec_method));
+            System.out.println(dq_definition.toString());
+            //将原始通用属性从原始bean中复制到目标bean中
+            BeanUtils.copyProperties(dq_definition, dq_result);
+            dq_result.setTask_id(PrimayKeyGener.getNextId());
             dq_result.setVerify_date(verify_date);
             dq_result.setStart_date(DateUtil.getSysDate());
             dq_result.setStart_time(DateUtil.getSysTime());
@@ -117,12 +119,11 @@ public class DqcExecution {
                     }
                 }.getDataLayer(index3_sql, db);
             }
-            //设置运行日期,时间
+            //设置运行结束日期,时间
             dq_result.setEnd_date(DateUtil.getSysDate());
             dq_result.setEnd_time(DateUtil.getSysTime());
-            //执行结束时间
-            long execution_end_time = System.currentTimeMillis();
             //设置耗时
+            long execution_end_time = System.currentTimeMillis();
             dq_result.setElapsed_ms((int) (execution_end_time - execution_start_time));
             //处理sql运行结果
             dq_result.setCheck_index1(map_result_1.get("index1").toString());
@@ -138,6 +139,10 @@ public class DqcExecution {
             if (EdRuleLevel.YanZhong.getCode().equals(dq_rule_level)) {
                 dq_result.setVerify_result(DqcVerifyResult.ZhiXingShiBai.getCode());
             }
+        } finally {
+            //保存检查结果
+            dq_result.add(db);
+            db.commit();
         }
         //如果规则级别是严重且发生了异常，则记录异常信息并异常退出
         if (EdRuleLevel.YanZhong.getCode().equals(dq_rule_level) && has_exception) {
@@ -152,8 +157,9 @@ public class DqcExecution {
         //执行到此处则代表程序正常运行结束，开始记录指标3的数据
         if (IsFlag.Shi.getCode().equals(dq_result.getIs_saveindex3())
                 && StringUtil.isNotBlank(dq_result.getErr_dtl_sql())) {
-            recordIndicator3Data(db, dq_result, beans);
+            recordIndicator3Data(dq_result, beans);
         }
+        return dq_result.getTask_id();
     }
 
     @Method(desc = "指定SQL（校验SQL）的系统变量对应结果bean",
@@ -231,19 +237,20 @@ public class DqcExecution {
         //随机一个三位数
         int random = (int) (Math.random() * 900) + 100;
         //返回任务id
-        return job_method + "\t" + time + "\t" + random;
+        return job_method + time + random;
     }
 
     @Method(desc = "记录指标3的数据", logicStep = "记录指标3的数据")
-    @Param(name = "db", desc = "DatabaseWrapper连接信息", range = "DatabaseWrapper类型")
     @Param(name = "dq_definition", desc = "Dq_definition实体", range = "Dq_definition实体")
     @Param(name = "beans", desc = "List<SysVarCheckBean>", range = "自定义bean类型")
     @Return(desc = "返回值说明", range = "返回值取值范围")
-    private static boolean recordIndicator3Data(DatabaseWrapper db, Dq_result dq_result, Set<SysVarCheckBean> beans) {
+    private static boolean recordIndicator3Data(Dq_result dq_result, Set<SysVarCheckBean> beans) {
         //数据校验
         if (StringUtil.isBlank(dq_result.getTask_id().toString())) {
             throw new BusinessException("在记录指标3的数据时，传入的任务编号为空!");
         }
+        //初始化操作db
+        DatabaseWrapper db = new DatabaseWrapper();
         try {
             //指标3的sql
             String sql = dq_result.getErr_dtl_sql();
@@ -281,7 +288,7 @@ public class DqcExecution {
             dq_index3record.setTask_id(dq_result.getTask_id());
             dq_index3record.add(db);
         } catch (Exception e) {
-            throw new BusinessException("在插入指标3的全量数据或生产记录信息时失败，任务编号为：" + dq_result.getTask_id());
+            throw new BusinessException("在插入指标3的全量数据记录信息时失败，任务编号为：" + dq_result.getTask_id());
         }
         return true;
     }

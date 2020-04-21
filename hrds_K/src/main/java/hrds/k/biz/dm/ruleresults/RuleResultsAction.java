@@ -85,7 +85,7 @@ public class RuleResultsAction extends BaseAction {
             logicStep = "规则执行详细信息")
     @Param(name = "task_id", desc = "任务编号", range = "String类型")
     @Return(desc = "规则执行详细信息", range = "规则执行详细信息")
-    public Dq_result ruleDetectDetail(String task_id) {
+    public Dq_result getRuleDetectDetail(String task_id) {
         //数据校验
         if (StringUtil.isBlank(task_id)) {
             throw new BusinessException("查看的任务编号为空!");
@@ -99,7 +99,7 @@ public class RuleResultsAction extends BaseAction {
             logicStep = "规则执行历史信息")
     @Param(name = "reg_num", desc = "规则编号", range = "long类型")
     @Return(desc = "规则执行历史信息", range = "规则执行历史信息")
-    public List<Dq_result> ruleExecuteHistoryInfo(long reg_num) {
+    public List<Dq_result> getRuleExecuteHistoryInfo(long reg_num) {
         //数据校验
         if (StringUtil.isBlank(String.valueOf(reg_num))) {
             throw new BusinessException("规则编号为空!");

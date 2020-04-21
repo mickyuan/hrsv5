@@ -75,7 +75,9 @@ public class RuleConfigAction extends BaseAction {
         }
         dq_definition.setUser_id(getUserId());
         dq_definition.setSpecify_sql(dq_definition.getSpecify_sql().replace("\n", " "));
+        dq_definition.setSpecify_sql(dq_definition.getSpecify_sql().replace("\t", " "));
         dq_definition.setErr_data_sql(dq_definition.getErr_data_sql().replace("\n", " "));
+        dq_definition.setErr_data_sql(dq_definition.getErr_data_sql().replace("\t", " "));
         //添加规则
         dq_definition.add(Dbo.db());
     }
@@ -132,7 +134,9 @@ public class RuleConfigAction extends BaseAction {
         }
         dq_definition.setUser_id(getUserId());
         dq_definition.setSpecify_sql(dq_definition.getSpecify_sql().replace("\n", " "));
+        dq_definition.setSpecify_sql(dq_definition.getSpecify_sql().replace("\t", " "));
         dq_definition.setErr_data_sql(dq_definition.getErr_data_sql().replace("\n", " "));
+        dq_definition.setErr_data_sql(dq_definition.getErr_data_sql().replace("\t", " "));
         //添加规则
         dq_definition.update(Dbo.db());
     }
@@ -296,20 +300,17 @@ public class RuleConfigAction extends BaseAction {
     @Method(desc = "手动执行", logicStep = "手动执行")
     @Param(name = "reg_num", desc = "规则编号", range = "long类型")
     @Param(name = "verify_date", desc = "验证日期", range = "String类型,20200202")
-    public void manualExecution(long reg_num, String verify_date) {
-        try (DatabaseWrapper db = new DatabaseWrapper()) {
-            //获取规则配置信息
-            Dq_definition dqd = new Dq_definition();
-            dqd.setReg_num(reg_num);
-            Dq_definition dq_definition = Dbo.queryOneObject(Dq_definition.class, "SELECT * FROM dq_list WHERE" +
-                    " reg_num=?", dqd.getReg_num()).orElseThrow(() -> (new BusinessException("获取配置信息的SQL失败!")));
-            //系统变量对应结果
-            Set<SysVarCheckBean> beans = DqcExecution.getSysVarCheckBean(dq_definition);
-            //执行规则
-            DqcExecution.executionRule(db, dq_definition, verify_date, beans, DqcExecMode.ShouGong.getCode());
-            //提交数据库操作
-            db.commit();
-        }
+    public long manualExecution(long reg_num, String verify_date) {
+        //获取规则配置信息
+        Dq_definition dqd = new Dq_definition();
+        dqd.setReg_num(reg_num);
+        Dq_definition dq_definition = Dbo.queryOneObject(Dq_definition.class, "SELECT * FROM "
+                + Dq_definition.TableName + " " + "WHERE reg_num=?", dqd.getReg_num()).orElseThrow(()
+                -> (new BusinessException("获取配置信息的SQL失败!")));
+        //系统变量对应结果
+        Set<SysVarCheckBean> beans = DqcExecution.getSysVarCheckBean(dq_definition);
+        //执行规则,返回执行的任务id
+        return DqcExecution.executionRule(dq_definition, verify_date, beans, DqcExecMode.ShouGong.getCode());
     }
 
     @Method(desc = "获取作业工程信息", logicStep = "获取作业工程信息")
