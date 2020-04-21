@@ -14,9 +14,14 @@ import hrds.commons.exception.AppSystemException;
 public class JobStateImpl implements JobState {
 
     private Dm_relation_datatable dmRelationDatatable;
+    /**
+     * 程序运行过程中，JVM退出执行job错误退出
+     */
+    final Thread shutdownThread;
 
     public JobStateImpl(Dm_relation_datatable dmRelationDatatable) {
         this.dmRelationDatatable = dmRelationDatatable;
+        shutdownThread = new Thread(() -> endJob(false));
     }
 
     @Override
@@ -33,7 +38,7 @@ public class JobStateImpl implements JobState {
             dmRelationDatatable.setIs_successful(JobExecuteState.YunXing.getCode());
             dmRelationDatatable.update(db);
         }
-
+        Runtime.getRuntime().addShutdownHook(shutdownThread);
     }
 
     @Override
@@ -45,6 +50,8 @@ public class JobStateImpl implements JobState {
         try (DatabaseWrapper db = new DatabaseWrapper()) {
             dmRelationDatatable.setIs_successful(jobCode);
             dmRelationDatatable.update(db);
+        } finally {
+            Runtime.getRuntime().removeShutdownHook(shutdownThread);
         }
     }
 

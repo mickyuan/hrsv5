@@ -1,11 +1,17 @@
 package hrds.h.biz.realloader;
 
+import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.commons.codes.Store_type;
+import hrds.commons.collection.ConnectionTool;
 import hrds.h.biz.config.MarketConf;
 import hrds.h.biz.spark.running.SparkHandleArgument.DatabaseArgs;
 import hrds.h.biz.spark.running.SparkJobRunner;
 
+import javax.rmi.CORBA.Util;
+
 import static hrds.commons.codes.StorageTypeKey.*;
+import static hrds.commons.utils.Constant.*;
+import static hrds.commons.utils.Constant.EDATENAME;
 
 /**
  * @Author: Mick Yuan
@@ -29,7 +35,8 @@ public class DatabaseLoader extends AbstractRealLoader {
         databaseArgs.setUser(tableLayerAttrs.get(user_name));
         databaseArgs.setPassword(tableLayerAttrs.get(database_pwd));
         databaseArgs.setDatabaseType(tableLayerAttrs.get(database_type));
-        databaseArgs.setCreateTableColumnTypes(buildCreateTableColumnTypes());
+        databaseArgs.setCreateTableColumnTypes(Utils.buildCreateTableColumnTypes(
+                conf.getDatatableFields(), true));
     }
 
     @Override
@@ -54,12 +61,17 @@ public class DatabaseLoader extends AbstractRealLoader {
 
     @Override
     public void increment() {
-
+        databaseArgs.setIncrement(true);
+        SparkJobRunner.runJob(conf.getDatatableId(), databaseArgs);
     }
 
     @Override
     public void reappend() {
-
+        try (DatabaseWrapper db = ConnectionTool.getDBWrapper(tableLayerAttrs)) {
+            Utils.restoreDatabaseData(db,tableName,conf.getEtlData());
+        }
+        databaseArgs.setOverWrite(false);
+        SparkJobRunner.runJob(conf.getDatatableId(), databaseArgs);
     }
 
     @Override

@@ -31,44 +31,35 @@ public class SparkJobRunner {
     public static void runJob(String dataTableId, SparkHandleArgument handleArgument) {
 
         long start = System.currentTimeMillis();
-        ByteArrayOutputStream out = null;
-        ByteArrayOutputStream err = null;
+        String command = String.format("java %s -cp %s %s %s %s",
+                SPARK_DRIVER_EXTRAJAVAOPTIONS,
+                SPARK_CLASSPATH, SPARK_MAIN_CLASS, dataTableId, handleArgument);
+        logger.info(String.format("开始执行spark作业调度:[%s]", command));
+        CommandLine commandLine = CommandLine.parse(command);
+        DefaultExecutor executor = new DefaultExecutor();
+
+        //创建监控时间，超过限制时间则中端执行，默认2小时
+        ExecuteWatchdog watchdog = new ExecuteWatchdog(SPARK_JOB_TIMEOUT_SECONDS * 1000);
+        executor.setWatchdog(watchdog);
+
+        //接收执行结果流
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ByteArrayOutputStream err = new ByteArrayOutputStream();
+        PumpStreamHandler streamHandler = new PumpStreamHandler(out, err);
+        executor.setStreamHandler(streamHandler);
+        //spark 进程执行过程中，JVM退出，直接关闭进程
+        //获取到 SIGTERM & SIGINT 会自动关闭进程 （yarn-client/lcal模式下生效）
+        Thread shutdownThread = new Thread(watchdog::destroyProcess);
+        Runtime.getRuntime().addShutdownHook(shutdownThread);
         try {
-            String command = String.format("java %s -cp %s %s %s %s",
-                    SPARK_DRIVER_EXTRAJAVAOPTIONS,
-                    SPARK_CLASSPATH, SPARK_MAIN_CLASS, dataTableId, handleArgument);
-            logger.info(String.format("开始执行spark作业调度:[%s]", command));
-            CommandLine commandLine = CommandLine.parse(command);
-            DefaultExecutor executor = new DefaultExecutor();
-
-            //创建监控时间，超过限制时间则中端执行，默认2小时
-            ExecuteWatchdog watchdog = new ExecuteWatchdog(SPARK_JOB_TIMEOUT_SECONDS * 1000);
-            executor.setWatchdog(watchdog);
-
-            //接收执行结果流
-            out = new ByteArrayOutputStream();
-            err = new ByteArrayOutputStream();
-            PumpStreamHandler streamHandler = new PumpStreamHandler(out, err);
-            executor.setStreamHandler(streamHandler);
+            //提起进程
             executor.execute(commandLine);
-            logger.info("执行时间：" + (System.currentTimeMillis() - start) / 1000 + "s");
         } catch (Exception e) {
             throw new AppSystemException("调度spark作业失败：", e);
         } finally {
-            if (err != null) {
-                try {
-                    err.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            if (out != null) {
-                try {
-                    out.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
+            logger.info("Spark作业执行时间：" + (System.currentTimeMillis() - start) / 1000 + "s");
+            //进程完成后，删除关闭钩子
+            Runtime.getRuntime().removeShutdownHook(shutdownThread);
         }
 
     }

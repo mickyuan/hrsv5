@@ -20,7 +20,6 @@ public class SameDatabaseLoader extends AbstractRealLoader {
     private final String sql;
     private final String createTableColumnTypes;
     private final String columnsWithoutHyren;
-
     private final String currentTableName;
     private final String deltaTableName;
 
@@ -28,8 +27,8 @@ public class SameDatabaseLoader extends AbstractRealLoader {
         super(conf);
         db = ConnectionTool.getDBWrapper(tableLayerAttrs);
         sql = conf.getCompleteSql();
-        createTableColumnTypes = buildCreateTableColumnTypes();
-        columnsWithoutHyren = columnsWithoutHyren();
+        createTableColumnTypes = Utils.buildCreateTableColumnTypes(conf.getDatatableFields(), true);
+        columnsWithoutHyren = Utils.columnsWithoutHyren(conf.getDatatableFields());
         currentTableName = conf.getEtlData() + "_" + tableName;
         deltaTableName = "delta_" + tableName;
     }
@@ -93,7 +92,7 @@ public class SameDatabaseLoader extends AbstractRealLoader {
     @Override
     public void reappend() {
         ensureTableExists("重追加");
-        restoreData();
+        Utils.restoreDatabaseData(db,tableName,conf.getEtlData());
         insertData(tableName);
     }
 
@@ -149,15 +148,5 @@ public class SameDatabaseLoader extends AbstractRealLoader {
     private String lineMd5Expr(String columnsJoin) {
         return "md5(" + columnsJoin.replace(",", "||") + ")";
     }
-
-    private void restoreData() {
-        db.execute("DELETE FROM ? WHERE ? = '?'",
-                tableName, SDATENAME, conf.getEtlData());
-
-        db.execute("UPDATE ? SET ? = '?' WHERE ? = '?'",
-                tableName, EDATENAME, MAXDATE, EDATENAME, conf.getEtlData());
-
-    }
-
 
 }
