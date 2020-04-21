@@ -10,10 +10,11 @@ import hrds.commons.exception.AppSystemException;
  * @Since jdk1.8
  */
 public class SparkHandleArgument {
-
-    private Store_type handleType;
+    /** 处理类型，如 database,hive,hbase,solr.etc */
+    private final Store_type handleType;
     private boolean overWrite;
-    private boolean increment;
+    /** spark 任务是否为增量， 默认为 false */
+    private boolean increment = false;
     private String tableName;
 
     public SparkHandleArgument(Store_type handleType) {
@@ -55,6 +56,7 @@ public class SparkHandleArgument {
         String user;
         String password;
         String createTableColumnTypes;
+        String databaseType;
 
         public DatabaseArgs(Store_type handleType) {
             super(handleType);
@@ -98,6 +100,14 @@ public class SparkHandleArgument {
 
         public void setCreateTableColumnTypes(String createTableColumnTypes) {
             this.createTableColumnTypes = createTableColumnTypes;
+        }
+
+        public String getDatabaseType() {
+            return databaseType;
+        }
+
+        public void setDatabaseType(String databaseType) {
+            this.databaseType = databaseType;
         }
     }
 

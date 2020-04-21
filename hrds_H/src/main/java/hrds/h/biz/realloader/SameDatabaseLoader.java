@@ -4,7 +4,6 @@ import fd.ng.db.jdbc.DatabaseWrapper;
 
 import hrds.commons.collection.ConnectionTool;
 import hrds.commons.exception.AppSystemException;
-import hrds.commons.utils.PropertyParaUtil;
 import hrds.commons.utils.PropertyParaValue;
 import hrds.h.biz.config.MarketConf;
 
@@ -65,22 +64,29 @@ public class SameDatabaseLoader extends AbstractRealLoader {
         forceCreateTable(deltaTableName, "action char(1)");
         //4.当前表与最终表中的有效数据做比较，执行增量算法计算出 新增的数据 并插入到增量表中，action 字段值为 I
         computeValidDataAndInsert();
-        //4.当前表与最终表中的有效数据做比较，执行增量算法计算出 关链的数据 并插入到增量表中，action 字段值为 D
+        //5.当前表与最终表中的有效数据做比较，执行增量算法计算出 关链的数据 并插入到增量表中，action 字段值为 D
         computeInvalidDataAndInsert();
+        //6.根据增量表中存储的拉链结果来更新最终表
+        // 开链数据
+        db.execute("INSERT INTO ? SELECT ?,'?','?',? FROM ? WHERE action = 'I'",
+                tableName, columnsWithoutHyren, conf.getEtlData(), MAXDATE, MD5NAME, deltaTableName);
+        // 关链数据
+        db.execute("UPDATE ? SET ? = '?' WHERE EXISTS ( SELECT 1 FROM ? WHERE action = 'D'",
+                tableName, EDATENAME, MAXDATE, deltaTableName);
 
     }
 
     private void computeValidDataAndInsert() {
-        String insertDataSql = "INSERT INTO ? select *,'I' from ? WHERE NOT EXISTS " +
-                "( select 1 from ? WHERE ?.? = ?.? AND ?.? = '?')";
-        db.execute(insertDataSql, deltaTableName, currentTableName, tableName, currentTableName,
+        String validDataSql = "INSERT INTO ? select *,'I' from ? WHERE NOT EXISTS " +
+                "( SELECT 1 from ? WHERE ?.? = ?.? AND ?.? = '?')";
+        db.execute(validDataSql, deltaTableName, currentTableName, tableName, currentTableName,
                 MD5NAME, tableName, MD5NAME, tableName, EDATENAME, MAXDATE);
     }
 
     private void computeInvalidDataAndInsert() {
-        final String deleteDatasql = "INSERT INTO ? select *,'D' from ? WHERE NOT EXISTS " +
-                "( select 1 from ? WHERE ?.? = ?.?) AND ?.? = '?'";
-        db.execute(deleteDatasql, deltaTableName, tableName, currentTableName,
+        final String invalidDataSql = "INSERT INTO ? select *,'D' from ? WHERE NOT EXISTS " +
+                "( SELECT 1 from ? WHERE ?.? = ?.?) AND ?.? = '?'";
+        db.execute(invalidDataSql, deltaTableName, tableName, currentTableName,
                 tableName, MD5NAME, currentTableName, MD5NAME, tableName, EDATENAME, MAXDATE);
     }
 
@@ -135,7 +141,7 @@ public class SameDatabaseLoader extends AbstractRealLoader {
     }
 
     private void insertData(String tableName) {
-        db.execute("INSERT INTO ? SELECT ?,?,?,? FROM ( ? )",
+        db.execute("INSERT INTO ? SELECT ?,?,'?',? FROM ( ? )",
                 tableName, columnsWithoutHyren, conf.getEtlData(), MAXDATE,
                 lineMd5Expr(columnsWithoutHyren), sql);
     }
@@ -145,10 +151,10 @@ public class SameDatabaseLoader extends AbstractRealLoader {
     }
 
     private void restoreData() {
-        db.execute("DELETE FROM ? WHERE ? = ?",
+        db.execute("DELETE FROM ? WHERE ? = '?'",
                 tableName, SDATENAME, conf.getEtlData());
 
-        db.execute("UPDATE ? SET ? = ? WHERE ? = ?",
+        db.execute("UPDATE ? SET ? = '?' WHERE ? = '?'",
                 tableName, EDATENAME, MAXDATE, EDATENAME, conf.getEtlData());
 
     }

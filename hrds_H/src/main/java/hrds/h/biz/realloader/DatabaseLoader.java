@@ -28,6 +28,7 @@ public class DatabaseLoader extends AbstractRealLoader {
         databaseArgs.setUrl(tableLayerAttrs.get(jdbc_url));
         databaseArgs.setUser(tableLayerAttrs.get(user_name));
         databaseArgs.setPassword(tableLayerAttrs.get(database_pwd));
+        databaseArgs.setDatabaseType(tableLayerAttrs.get(database_type));
         databaseArgs.setCreateTableColumnTypes(buildCreateTableColumnTypes());
     }
 

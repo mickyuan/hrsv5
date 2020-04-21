@@ -8,6 +8,7 @@ import fd.ng.db.jdbc.SqlOperator;
 import hrds.commons.entity.*;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
+import hrds.commons.utils.DruidParseQuerySql;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -79,8 +80,8 @@ public class MarketConfUtils {
                 throw new AppSystemException(String.format(nullQueryExceptString,
                         Dm_operation_info.TableName, "datatable_id", datatableId));
             }
-            marketConf.setCompleteSql(fillSqlWithParams(dmOperationInfo.get().getExecute_sql()
-                    , marketConf.getSqlParams()));
+            marketConf.setCompleteSql(replaceView(fillSqlWithParams(dmOperationInfo.get().getExecute_sql()
+                    , marketConf.getSqlParams())));
 
             /*
               根据主键 datatable_id 查询出 集市表存储关系表
@@ -152,6 +153,16 @@ public class MarketConfUtils {
         datatableFields.forEach(datatableField ->
                 datatableField.setField_en_name(datatableField.getField_en_name().toLowerCase()));
 
+    }
+
+    /**
+     * 将可能带有集市视图的sql中的视图转换为子查询sql
+     * @param perhapsWithViewSql 能带有集市视图的sql
+     * @return 不带有集市视图的sql
+     */
+    private static String replaceView(String perhapsWithViewSql) {
+
+        return new DruidParseQuerySql().GetNewSql(perhapsWithViewSql);
     }
 
     /**

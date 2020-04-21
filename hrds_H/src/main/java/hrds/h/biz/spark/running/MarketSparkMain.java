@@ -20,7 +20,7 @@ import java.io.Closeable;
  */
 public class MarketSparkMain implements Closeable {
     private MarketConf conf;
-    private SparkSession sparkSession;
+    private SparkSession spark;
     private Dataset<Row> dataset;
 
     public MarketSparkMain(String datatableId) {
@@ -31,19 +31,22 @@ public class MarketSparkMain implements Closeable {
         SparkDataset sparkDataset = new DatasetProcessBack(conf);
 
         dataset = sparkDataset.getDataset();
-        sparkSession = sparkDataset.getSparkSession();
+        spark = sparkDataset.getSparkSession();
     }
 
     private void handleDatabase(final SparkHandleArgument.DatabaseArgs databaseArgs) {
-        new DatabaseHandle(dataset, databaseArgs, conf.getTableName())
-                .handle();
-
+        DatabaseHandle handle = new DatabaseHandle(spark, dataset, databaseArgs);
+        if (databaseArgs.isIncrement()) {
+            handle.increment();
+        } else {
+            handle.insert();
+        }
     }
 
     @Override
     public void close() {
-        if (sparkSession != null)
-            sparkSession.close();
+        if (spark != null)
+            spark.close();
     }
 
     public static void main(String[] args) {

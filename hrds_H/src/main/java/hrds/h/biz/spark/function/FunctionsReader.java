@@ -17,7 +17,7 @@ public class FunctionsReader {
 
     private static final Log logger = LogFactory.getLog(FunctionsReader.class);
     private static final File funcProperty = new File("conf/function.properties");
-    private List<Function> functions = new ArrayList<>();
+    private final List<Function> functions = new ArrayList<>();
 
     public FunctionsReader() {
 
