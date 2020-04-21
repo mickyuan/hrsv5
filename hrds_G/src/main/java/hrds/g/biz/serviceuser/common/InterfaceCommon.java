@@ -1,4 +1,4 @@
-package hrds.g.biz.interfaceinfo.common;
+package hrds.g.biz.serviceuser.common;
 
 import com.alibaba.fastjson.TypeReference;
 import fd.ng.core.annotation.DocClass;
@@ -8,9 +8,9 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
+import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
-import fd.ng.web.util.Dbo;
 import hrds.commons.codes.InterfaceState;
 import hrds.commons.collection.ProcessingData;
 import hrds.commons.entity.Interface_file_info;
@@ -64,7 +64,7 @@ public class InterfaceCommon {
 	@Param(name = "user_id", desc = "用户ID", range = "新增用户时生成")
 	@Param(name = "user_password", desc = "密码", range = "新增用户时生成")
 	@Return(desc = "返回接口响应信息", range = "无限制")
-	public static Map<String, Object> getTokenById(String user_id, String user_password) {
+	public static Map<String, Object> getTokenById(Long user_id, String user_password) {
 		// 1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制
 		// 2.根据用户id获取用户信息
 		QueryInterfaceInfo queryInterfaceInfo = InterfaceManager.getUserTokenInfo(user_id);
@@ -101,7 +101,7 @@ public class InterfaceCommon {
 		String token = checkParam.getToken();
 		if (StringUtil.isBlank(token)) {
 			// 2.token值为空时检查user_id与user_password是否也为空
-			if (StringUtil.isBlank(checkParam.getUser_id()) || StringUtil.isBlank(checkParam.getUser_password())) {
+			if (checkParam.getUser_id() == null || StringUtil.isBlank(checkParam.getUser_password())) {
 				return StateType.getResponseInfo(StateType.ARGUMENT_ERROR.getCode(),
 						"token值为空时，user_id与user_password不能为空");
 			}
@@ -188,7 +188,7 @@ public class InterfaceCommon {
 	@Param(name = "url", desc = "接口请求地址", range = "无限制")
 	@Param(name = "interface_code", desc = "接口代码", range = "报表类型的接口使用", nullable = true)
 	@Return(desc = "返回接口响应信息", range = "无限制")
-	public static Map<String, Object> interfaceInfoCheck(String user_id, String url, String
+	public static Map<String, Object> interfaceInfoCheck(Long user_id, String url, String
 			interface_code) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		// 2.判断接口信息是否存在
@@ -234,7 +234,7 @@ public class InterfaceCommon {
 	@Param(name = "user_id", desc = "用户ID", range = "新增用户时生成")
 	@Param(name = "singleTable", desc = "单表查询实体参数", range = "无限制")
 	@Return(desc = "返回接口响应信息", range = "无限制")
-	public static Map<String, Object> checkTable(String user_id, SingleTable singleTable) {
+	public static Map<String, Object> checkTable(Long user_id, SingleTable singleTable) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		try {
 			// 2.验证数据输出类型，数据类型是否合法
@@ -353,11 +353,11 @@ public class InterfaceCommon {
 	@Param(name = "user_id", desc = "用户ID", range = "新增用户时生成")
 	@Param(name = "columns", desc = "当前表对应数据库的列名称集合", range = "无限制")
 	@Return(desc = "返回接口响应信息", range = "无限制")
-	public static Map<String, Object> checkColumnsIsExist(String selectColumn, String user_id, List<String> columns) {
+	public static Map<String, Object> checkColumnsIsExist(String selectColumn, Long user_id, List<String> columns) {
 		// 1.数据可访问权限处理方式,该方法不需要进行访问权限限制
 		if (StringUtil.isNotBlank(selectColumn)) {
 			// 2.如果不是指定用户将进行字段验证
-			if (!AUTHORITY.contains(user_id)) {
+			if (!AUTHORITY.contains(String.valueOf(user_id))) {
 				// 3.获取用户需要查询的列名的列
 				List<String> userColumns = StringUtil.split(selectColumn, ",");
 				// 4.判断列当前表对应数据库的列名称集合是否为空，不为空遍历列名称
@@ -410,7 +410,7 @@ public class InterfaceCommon {
 	@Param(name = "table_column_name", desc = "当前表对应登记列名称通过逗号拼接的字符串", range = "无限制")
 	@Param(name = "user_id", desc = "用户ID", range = "新增用户时生成")
 	@Return(desc = "返回接口响应信息", range = "无限制")
-	public static Map<String, Object> checkColumn(SingleTable singleTable, String table_column_name, String user_id) {
+	public static Map<String, Object> checkColumn(SingleTable singleTable, String table_column_name, Long user_id) {
 		// 1.数据可访问权限处理方式,该方法不需要进行访问权限限制
 		// 2.显示条数如果为空默认10条
 		Integer num = singleTable.getNum();
@@ -534,7 +534,7 @@ public class InterfaceCommon {
 					}
 				}
 			}
-		}.getDataLayer(sqlSb, Dbo.db());
+		}.getDataLayer(sqlSb, new DatabaseWrapper());
 		if (OutType.STREAM == OutType.ofEnumByCode(outType)) {
 			// 4.输出类型为stream，如果输出数据类型为csv，第一行为列名，按csv格式处理数据并返回
 			if (DataType.csv == DataType.ofEnumByCode(dataType)) {
@@ -619,7 +619,7 @@ public class InterfaceCommon {
 	@Param(name = "user_id", desc = "用户ID", range = "无限制")
 	@Param(name = "table_name", desc = "表名称", range = "无限制")
 	@Return(desc = "返回接口响应信息", range = "无限制")
-	public static Map<String, Object> verifyTable(String user_id, String table_name) {
+	public static Map<String, Object> verifyTable(Long user_id, String table_name) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		// 2.判断表是否存在
 		if (StringUtil.isBlank(table_name)) {
@@ -821,16 +821,18 @@ public class InterfaceCommon {
 	@Param(name = "outType", desc = "输出数据形式", range = "stream/file")
 	@Param(name = "path", desc = "文件路径", range = "生成文件路径")
 	@Return(desc = "返回保存文件生成信息是否成功状态", range = "1代表成功，否则失败")
-	public static int saveFileInfo(String user_id, String uuid, String dataType, String outType, String path) {
+	public static int saveFileInfo(Long user_id, String uuid, String dataType, String outType, String path) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
-		Interface_file_info file_info = new Interface_file_info();
-		file_info.setFile_id(uuid);
-		file_info.setFile_path(path);
-		file_info.setData_output(outType);
-		file_info.setUser_id(user_id);
-		file_info.setData_class(dataType);
-		// 2.保存接口文件生成信息并返回保存状态
-		return file_info.add(Dbo.db());
+		try (DatabaseWrapper db = new DatabaseWrapper()) {
+			Interface_file_info file_info = new Interface_file_info();
+			file_info.setFile_id(uuid);
+			file_info.setFile_path(path);
+			file_info.setData_output(outType);
+			file_info.setUser_id(user_id);
+			file_info.setData_class(dataType);
+			// 2.保存接口文件生成信息并返回保存状态
+			return file_info.add(db);
+		}
 	}
 
 }

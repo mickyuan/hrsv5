@@ -5,17 +5,14 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
-import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
-import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.CollectType;
 import hrds.commons.codes.DataSourceType;
 import hrds.commons.codes.IsFlag;
-import hrds.commons.codes.JobExecuteState;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.tree.background.TreeNodeInfo;
@@ -25,6 +22,7 @@ import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.commons.utils.tree.Node;
 import hrds.commons.utils.tree.NodeDataConvertedTreeList;
 import hrds.g.biz.bean.TableDataInfo;
+import hrds.g.biz.init.InterfaceManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -50,7 +48,7 @@ public class DataRangeManageAction extends BaseAction {
 			"4.转换节点数据列表为分叉树列表" +
 			"5.定义返回的分叉树结果Map")
 	@Return(desc = "返回的分叉树结果Map", range = "无限制")
-	public Map<String, Object> searchDataUsageRangeInfoToTreeData() {
+	public Object searchDataUsageRangeInfoToTreeData() {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		TreeConf treeConf = new TreeConf();
 		// 2.配置树不显示文件采集的数据
@@ -60,231 +58,35 @@ public class DataRangeManageAction extends BaseAction {
 				treeConf);
 		// 4.转换节点数据列表为分叉树列表
 		List<Node> interfaceTreeList = NodeDataConvertedTreeList.dataConversionTreeInfo(dataList);
-		// 5.定义返回的分叉树结果Map
-		Map<String, Object> interfaceTreeDataMap = new HashMap<>();
-		interfaceTreeDataMap.put("interfaceTreeList", JsonUtil.toObjectSafety(interfaceTreeList.toString(),
-				List.class));
-		return interfaceTreeDataMap;
-	}
-
-	@Method(desc = "查询Agent采集的所有表信息", logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制" +
-			"2.判断ID与table_id是否都为空" +
-			"3.判断属于哪个层的数据，做不同的查询" +
-			"3.1贴源层" +
-			"3.2集市层" +
-			"3.3加工层" +
-			"3.4自定义层" +
-			"3.5系统层" +
-			"4.返回表数据信息结果集")
-	@Param(name = "id", desc = "table_id上一级", range = "无限制", nullable = true)
-	@Param(name = "file_id", desc = "树最后一层节点", range = "无限制", nullable = true)
-	@Param(name = "dataSourceType", desc = "数据源类型(使用DataSourceType）代码项，树根节点", range = "无限制")
-	@Param(name = "table_space", desc = "自定义层查询时传递", range = "无限制", nullable = true)
-	@Return(desc = "返回查询表信息", range = "无限制")
-	public Result searchCollectTableInfo(Long id, String file_id, String dataSourceType
-			, String table_space) {
-		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
-		// 2.判断ID与table_id是否都为空
-		if (id == null && file_id == null) {
-			throw new BusinessException("classify_id与collect_set_id不能都为空");
-		}
-		Result tableResult;
-		// 3.判断属于哪个层的数据，做不同的查询
-		if (DataSourceType.ofEnumByCode(dataSourceType) == DataSourceType.DCL) {
-			// 3.1贴源层
-			tableResult = getDCLResult(id, file_id, dataSourceType);
-		} else if (DataSourceType.ofEnumByCode(dataSourceType) == DataSourceType.DML) {
-			// 3.2集市层
-//			getDMLResult(id, table_id, dataSourceType);
-			throw new BusinessException("暂时未开发此功能，待续...");
-		} else if (DataSourceType.ofEnumByCode(dataSourceType) == DataSourceType.DPL) {
-			// 3.3加工层
-//			getDPLResult(id, table_id, dataSourceType);
-			throw new BusinessException("暂时未开发此功能，待续...");
-		} else if (DataSourceType.ofEnumByCode(dataSourceType) == DataSourceType.UDL) {
-			// 3.4自定义层
-//			getUDLResult(id, table_id, dataSourceType, table_space);
-			throw new BusinessException("暂时未开发此功能，待续...");
-		} else if (DataSourceType.ofEnumByCode(dataSourceType) == DataSourceType.SFL) {
-			// 3.5系统层
-			throw new BusinessException("暂时未开发此功能，待续...");
-		} else {
-			throw new BusinessException("暂时未开发此功能，待续...");
-		}
-		// 4.返回表数据信息结果集
-		return tableResult;
-	}
-
-	@Method(desc = "获取自定义层表信息结果集", logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制" +
-			"2.判断table_id是否为空，为空判断表空间是否为空，不为空根据表空间查询，不为空根据table_id查询" +
-			"3.查询自定义层表信息" +
-			"4.封装表数据到结果集" +
-			"5.返回自定义层表信息结果集")
-	@Param(name = "id", desc = "table_id上一级", range = "无限制", nullable = true)
-	@Param(name = "table_id", desc = "树最后一层节点", range = "无限制", nullable = true)
-	@Param(name = "dataSourceType", desc = "数据源类型(使用DataSourceType）代码项，树根节点", range = "无限制")
-	private Result getUDLResult(Long id, Long table_id, String dataSourceType, String table_space) {
-		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
-		SqlOperator.Assembler assembler = SqlOperator.Assembler.newInstance();
-		assembler.clean();
-		assembler.addSql("select table_name,info_id as file_id,ch_name as original_name," +
-				"'" + dataSourceType + "' as source_type,'" + table_space + "' as table_space '"
-				+ " from sys_table_info WHERE table_type = ?").addParam(id);
-		// 2.判断table_id是否为空，为空判断表空间是否为空，不为空根据表空间查询，不为空根据table_id查询
-		if (table_id == null) {
-			if (StringUtil.isNotBlank(table_space)) {
-				assembler.addSql(" and table_space=?").addParam(table_space);
-			}
-		} else {
-			assembler.addSql(" and info_id=?").addParam(table_id);
-		}
-		// 3.查询自定义层表信息
-		Result tableResult = Dbo.queryResult(assembler.sql(), assembler.params());
-		// 4.封装表数据到结果集
-		setTableParamToResult(tableResult, dataSourceType);
-		// 5.返回自定义层表信息结果集
-		return tableResult;
-	}
-
-	@Method(desc = "获取加工层表信息结果集", logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制" +
-			"2.判断ID是否为空，为空则为分类触发，不为空为表触发" +
-			"3.查询加工层表信息" +
-			"4.封装表数据到结果集" +
-			"5.返回加工层表信息结果集")
-	@Param(name = "id", desc = "table_id上一级", range = "无限制", nullable = true)
-	@Param(name = "table_id", desc = "树最后一层节点", range = "无限制", nullable = true)
-	@Param(name = "dataSourceType", desc = "数据源类型(使用DataSourceType）代码项，树根节点", range = "无限制")
-	private Result getDPLResult(Long id, Long table_id, String dataSourceType) {
-		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
-		SqlOperator.Assembler assembler = SqlOperator.Assembler.newInstance();
-		assembler.clean();
-		Result tableResult;
-		assembler.addSql("SELECT table_id as file_id,ctname as original_name," +
-				"ST_DT as original_update_date,st_time as original_update_time,tabname as table_name " +
-				" FROM edw_table WHERE end_dt =?").addParam(END_DATE);
-		// 2.判断ID是否为空，为空则为分类触发，不为空为表触发
-		if (id != null) {
-			assembler.addSql("  and category_id=?").addParam(id);
-		} else {
-			assembler.addSql("  and table_id=?").addParam(table_id);
-		}
-		// 3.查询加工层表信息
-		tableResult = Dbo.queryResult(assembler.sql(), assembler.params());
-		// 4.封装表数据到结果集
-		setTableParamToResult(tableResult, dataSourceType);
-		// 5.返回加工层表信息结果集
-		return tableResult;
-	}
-
-	@Method(desc = "获取集市层表信息结果集", logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制" +
-			"2.判断ID是否为空，为空则为分类触发，不为空为表触发" +
-			"3.查询集市层表信息" +
-			"4.封装表数据到结果集" +
-			"5.返回集市层表信息结果集")
-	@Param(name = "id", desc = "table_id上一级", range = "无限制", nullable = true)
-	@Param(name = "table_id", desc = "树最后一层节点", range = "无限制", nullable = true)
-	@Param(name = "dataSourceType", desc = "数据源类型(使用DataSourceType）代码项，树根节点", range = "无限制")
-	private Result getDMLResult(Long id, Long table_id, String dataSourceType) {
-		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
-		SqlOperator.Assembler assembler = SqlOperator.Assembler.newInstance();
-		assembler.clean();
-		assembler.addSql("SELECT datatable_id as file_id,datatable_en_name as table_name, " +
-				"datatable_create_date as original_update_date,datatable_create_time as original_update_time," +
-				"datatable_cn_name as sysreg_name,datatable_en_name as hbase_name  from "
-				+ Dm_datatable.TableName + " WHERE datatable_due_date >= ? " +
-				" AND (? IN (hy_success,elk_success,kv_success,solr_success,solrbase_success," +
-				"carbondata_success)) and datatype=?").addParam(DateUtil.getSysDate())
-				.addParam(JobExecuteState.WanCheng.getCode()).addParam(IsFlag.Shi.getCode());
-		// 2.判断ID是否为空，为空则为分类触发，不为空为表触发
-		if (id != null) {
-			// 分类触发
-			assembler.addSql(" and data_mart_id=?").addParam(id);
-		} else {
-			// 表触发
-			assembler.addSql(" where datatable_id=?").addParam(table_id);
-		}
-		// 3.查询集市层表信息
-		Result tableResult = Dbo.queryResult(assembler.sql(), assembler.params());
-		// 4.封装表数据到结果集
-		setTableParamToResult(tableResult, dataSourceType);
-		// 5.返回集市层表信息结果集
-		return tableResult;
-	}
-
-	@Method(desc = "获取贴源层表信息结果集", logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制" +
-			"2.判断ID是否为空，为空则为分类触发，不为空为表触发" +
-			"3.查询贴源层表信息" +
-			"4.封装表数据到结果集" +
-			"5.返回贴源层表信息结果集")
-	@Param(name = "id", desc = "table_id上一级", range = "无限制", nullable = true)
-	@Param(name = "file_id", desc = "树最后一层节点", range = "无限制", nullable = true)
-	@Param(name = "dataSourceType", desc = "数据源类型(使用DataSourceType）代码项，树根节点", range = "无限制")
-	private Result getDCLResult(Long id, String file_id, String dataSourceType) {
-		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
-		SqlOperator.Assembler assembler = SqlOperator.Assembler.newInstance();
-		assembler.clean();
-		assembler.addSql("SELECT t1.file_id,t1.original_name,t1.original_update_date," +
-				"t1.original_update_time,t1.table_name,t1.hyren_name from "
-				+ Data_store_reg.TableName + " t1 ");
-		// 2.判断ID是否为空，为空则为分类触发，不为空为表触发
-		if (id == null && file_id != null) {
-			// 表触发
-			assembler.addSql(" WHERE t1.file_id = ? ").addParam(file_id);
-		} else {
-			// 分类触发
-			assembler.addSql(" join " + Database_set.TableName + " t2 ON t1.database_id=t2.database_id" +
-					" where t2.classify_id = ?").addParam(id);
-		}
-		// 3.查询贴源层表信息
-		Result tableResult = Dbo.queryResult(assembler.sql(), assembler.params());
-		// 4.封装表数据到结果集
-		setTableParamToResult(tableResult, dataSourceType);
-		// 5.返回贴源层表信息结果集
-		return tableResult;
-	}
-
-	@Method(desc = "封装表数据到结果集", logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制" +
-			"2.封装表数据到结果集")
-	@Param(name = "tableResult", desc = "表信息结果集", range = "无限制")
-	@Param(name = "dataSourceType", desc = "数据源类型(使用DataSourceType）代码项，树根节点", range = "无限制")
-	private void setTableParamToResult(Result tableResult, String dataSourceType) {
-		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
-		// 2.封装表数据到结果集
-		for (int i = 0; i < tableResult.getRowCount(); i++) {
-			tableResult.setObject(i, "original_update_date", DateUtil.parseStr2DateWith8Char(
-					tableResult.getString(i, "original_update_date")));
-			tableResult.setObject(i, "original_update_time", DateUtil.parseStr2TimeWith6Char(
-					tableResult.getString(i, "original_update_time")));
-			tableResult.setObject(i, "dataSourceType", dataSourceType);
-		}
+		return JsonUtil.toObjectSafety(interfaceTreeList.toString(), Object.class).orElseThrow(() ->
+				new BusinessException("树数据转换格式失败！"));
 	}
 
 	@Method(desc = "保存数据表数据", logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制")
 	@Param(name = "tableDataInfos", desc = "表数据信息对象数组", range = "无限制", isBean = true)
 	@Param(name = "table_note", desc = "表数据信息对象数组", range = "无限制", nullable = true)
-	@Param(name = "dataSourceType", desc = "数据源类型(使用DataSourceType）代码项", range = "无限制")
+	@Param(name = "data_layer", desc = "数据层", range = "无限制")
 	@Param(name = "user_id", desc = "用户ID", range = "无限制")
-	public void saveTableData(TableDataInfo[] tableDataInfos, String table_note, String dataSourceType,
+	public void saveTableData(TableDataInfo[] tableDataInfos, String table_note, String data_layer,
 	                          long[] user_id) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		for (TableDataInfo tableDataInfo : tableDataInfos) {
-			if (DataSourceType.DCL == DataSourceType.ofEnumByCode(dataSourceType)) {
-				for (long userId : user_id) {
-					saveDCLData(table_note, tableDataInfo.getFile_id(), dataSourceType,
-							tableDataInfo.getColumn_name(), userId);
-				}
-			} else if (DataSourceType.DML == DataSourceType.ofEnumByCode(dataSourceType)) {
-				throw new BusinessException("该数据源类型还未开发，待续。。。" + dataSourceType);
-			} else if (DataSourceType.DPL == DataSourceType.ofEnumByCode(dataSourceType)) {
-				throw new BusinessException("该数据源类型还未开发，待续。。。" + dataSourceType);
-			} else if (DataSourceType.SFL == DataSourceType.ofEnumByCode(dataSourceType)) {
-				throw new BusinessException("该数据源类型还未开发，待续。。。" + dataSourceType);
-			} else if (DataSourceType.UDL == DataSourceType.ofEnumByCode(dataSourceType)) {
-				throw new BusinessException("该数据源类型还未开发，待续。。。" + dataSourceType);
+			if (DataSourceType.DCL == DataSourceType.ofEnumByCode(data_layer)) {
+				saveDCLData(table_note, tableDataInfo.getFile_id(), data_layer,
+						tableDataInfo.getColumn_name(), user_id);
+			} else if (DataSourceType.DML == DataSourceType.ofEnumByCode(data_layer)) {
+				throw new BusinessException("该数据源类型还未开发，待续。。。" + data_layer);
+			} else if (DataSourceType.DPL == DataSourceType.ofEnumByCode(data_layer)) {
+				throw new BusinessException("该数据源类型还未开发，待续。。。" + data_layer);
+			} else if (DataSourceType.SFL == DataSourceType.ofEnumByCode(data_layer)) {
+				throw new BusinessException("该数据源类型还未开发，待续。。。" + data_layer);
+			} else if (DataSourceType.UDL == DataSourceType.ofEnumByCode(data_layer)) {
+				throw new BusinessException("该数据源类型还未开发，待续。。。" + data_layer);
 			} else {
-				throw new BusinessException("该数据源类型还未开发，待续。。。" + dataSourceType);
+				throw new BusinessException("该数据源类型还未开发，待续。。。" + data_layer);
 			}
 		}
+		InterfaceManager.userTableInfo();
 	}
 
 	@Method(desc = "保存贴源层数据", logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制" +
@@ -301,36 +103,38 @@ public class DataRangeManageAction extends BaseAction {
 	@Param(name = "userId", desc = "用户ID", range = "新增用户时生成")
 	@Param(name = "table_note", desc = "备注", range = "无限制")
 	@Param(name = "file_id", desc = "文件ID", range = "无限制")
-	@Param(name = "dataSourceType", desc = "数据源类型(使用DataSourceType）代码项，树根节点", range = "无限制")
+	@Param(name = "data_layer", desc = "数据层，树根节点", range = "无限制")
 	@Param(name = "column_name", desc = "被选中的文件名称", range = "无限制")
-	private void saveDCLData(String table_note, String file_id, String dataSourceType, String column_name,
-	                         long userId) {
+	private void saveDCLData(String table_note, String file_id, String data_layer, String[] column_name,
+	                         long[] user_id) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		// 2.查询贴源层表数据信息
 		Result tableResult = Dbo.queryResult("SELECT hyren_name,meta_info,original_name FROM " +
 				Data_store_reg.TableName + " WHERE file_id = ?", file_id);
-		Table_use_info table_use_info = new Table_use_info();
-		// 3.遍历贴源层表数据信息保存表使用信息以及系统登记表参数信息
-		for (int i = 0; i < tableResult.getRowCount(); i++) {
-			// 4.获取系统内对应表名
-			String hyren_name = tableResult.getString(i, "hyren_name");
-			// 5.获取原始文件名称
-			String original_name = tableResult.getString(i, "original_name");
-			// 6.根据用户ID、表名查询当前表是否已登记
-			boolean flag = getUserTableInfo(userId, hyren_name);
-			// 7.生成表使用ID
-			String useId = PrimayKeyGener.getNextId();
-			// 8.判断当前用户对应表是否已登记做不同处理
-			if (flag) {
-				// 8.1已登记,根据用户ID、表名删除接口表数据
-				deleteInterfaceTableInfo(userId, hyren_name);
+		for (long userId : user_id) {
+			Table_use_info table_use_info = new Table_use_info();
+			// 3.遍历贴源层表数据信息保存表使用信息以及系统登记表参数信息
+			for (int i = 0; i < tableResult.getRowCount(); i++) {
+				// 4.获取系统内对应表名
+				String hyren_name = tableResult.getString(i, "hyren_name");
+				// 5.获取原始文件名称
+				String original_name = tableResult.getString(i, "original_name");
+				// 6.根据用户ID、表名查询当前表是否已登记
+				boolean flag = getUserTableInfo(userId, hyren_name);
+				// 7.生成表使用ID
+				String useId = PrimayKeyGener.getNextId();
+				// 8.判断当前用户对应表是否已登记做不同处理
+				if (flag) {
+					// 8.1已登记,根据用户ID、表名删除接口表数据
+					deleteInterfaceTableInfo(userId, hyren_name);
+				}
+				// 9.新增表使用信息
+				addTableUseInfo(table_note, data_layer, userId, useId, table_use_info,
+						hyren_name, original_name);
+				// 10.新增系统登记表参数信息
+				addSysregParameterInfo(tableResult.getString(i, "meta_info"),
+						column_name, useId, userId);
 			}
-			// 9.新增表使用信息
-			addTableUseInfo(table_note, dataSourceType, userId, useId, table_use_info,
-					hyren_name, original_name);
-			// 10.新增系统登记表参数信息
-			addSysregParameterInfo(tableResult.getString(i, "meta_info"),
-					column_name, useId, userId);
 		}
 	}
 
@@ -343,56 +147,61 @@ public class DataRangeManageAction extends BaseAction {
 	@Param(name = "column_name", desc = "被选中的文件名称", range = "无限制")
 	@Param(name = "useId", desc = "表使用ID", range = "新增表使用信息时生成")
 	@Param(name = "userId", desc = "用户ID", range = "新增用户时生成")
-	private void addSysregParameterInfo(String meta_info, String column_name, String useId, long userId) {
+	private void addSysregParameterInfo(String meta_info, String[] column_name, String useId, long userId) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		// 2.封装系统登记参数表信息
 		Sysreg_parameter_info sysreg_parameter_info = new Sysreg_parameter_info();
-		sysreg_parameter_info.setParameter_id(PrimayKeyGener.getNextId());
-		sysreg_parameter_info.setUse_id(useId);
-		sysreg_parameter_info.setIs_flag(IsFlag.Fou.getCode());
-		sysreg_parameter_info.setUser_id(userId);
-		// 3.元数据并解析
-		if (StringUtil.isBlank(meta_info)) {
-			throw new BusinessException("当前表对应的meta信息为空");
-		}
-		Map<String, Object> metaInfoMap = JsonUtil.toObject(meta_info, MAPTYPE);
-		Object column = metaInfoMap.get("column");
-		Object type = metaInfoMap.get("type");
-		if (StringUtil.isBlank(column_name)) {
-			if (column == null) {
-				throw new BusinessException("当前表对应的meta信息没有列信息");
+		if (column_name != null && column_name.length != 0) {
+			for (String columnName : column_name) {
+				sysreg_parameter_info.setParameter_id(PrimayKeyGener.getNextId());
+				sysreg_parameter_info.setUse_id(useId);
+				sysreg_parameter_info.setIs_flag(IsFlag.Fou.getCode());
+				sysreg_parameter_info.setUser_id(userId);
+				// 3.元数据并解析
+				if (StringUtil.isBlank(meta_info)) {
+					throw new BusinessException("当前表对应的meta信息为空");
+				}
+				Map<String, Object> metaInfoMap = JsonUtil.toObject(meta_info, MAPTYPE);
+				Object column = metaInfoMap.get("column");
+				Object type = metaInfoMap.get("type");
+				if (StringUtil.isBlank(columnName)) {
+					if (column == null) {
+						throw new BusinessException("当前表对应的meta信息没有列信息");
+					}
+					columnName = column.toString();
+					sysreg_parameter_info.setTable_column_name(column.toString());
+				} else {
+					sysreg_parameter_info.setTable_column_name(columnName.toUpperCase());
+				}
+				// 4.获取相同的列类型参数信息
+				if (type != null) {
+					Map<String, String> columnTypeMap = getColumnType(columnName, column.toString(), type.toString());
+					sysreg_parameter_info.setRemark(JsonUtil.toJson(columnTypeMap).toUpperCase());
+				}
+				// 5.保存系统登记表参数信息
+				sysreg_parameter_info.add(Dbo.db());
 			}
-			sysreg_parameter_info.setTable_column_name(column.toString());
-		} else {
-			sysreg_parameter_info.setTable_column_name(column_name.toUpperCase());
 		}
-		// 4.获取相同的列类型参数信息
-		if (type != null) {
-			Map<String, String> columnTypeMap = getColumnType(column_name, column.toString(), type.toString());
-			sysreg_parameter_info.setRemark(JsonUtil.toJson(columnTypeMap).toUpperCase());
-		}
-		// 5.保存系统登记表参数信息
-		sysreg_parameter_info.add(Dbo.db());
 	}
 
 	@Method(desc = "新增表使用信息", logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制" +
 			"2.封装表使用信息参数" +
 			"3.新增保存表使用信息")
 	@Param(name = "table_note", desc = "备注", range = "无限制")
-	@Param(name = "dataSourceType", desc = "数据源类型(使用DataSourceType）代码项，树根节点", range = "无限制")
+	@Param(name = "data_layer", desc = "数据层，树根节点", range = "无限制")
 	@Param(name = "userId", desc = "用户ID", range = "新增用户时生成")
 	@Param(name = "useId", desc = "表使用ID", range = "新增表使用信息时生成")
 	@Param(name = "table_use_info", desc = "表使用信息实体", range = "与数据库对应表规则一致", isBean = true)
-	@Param(name = "hyren_name", desc = "原始登记表名", range = "")
-	@Param(name = "original_name", desc = "原始文件名", range = "")
-	private void addTableUseInfo(String table_note, String dataSourceType, long userId, String useId,
+	@Param(name = "hyren_name", desc = "原始登记表名", range = "无限制")
+	@Param(name = "original_name", desc = "原始文件名", range = "无限制")
+	private void addTableUseInfo(String table_note, String data_layer, long userId, String useId,
 	                             Table_use_info table_use_info, String hyren_name, String original_name) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		// 2.封装表使用信息参数
 		table_use_info.setSysreg_name(hyren_name);
 		table_use_info.setUser_id(userId);
 		table_use_info.setUse_id(useId);
-		table_use_info.setTable_blsystem(dataSourceType);
+		table_use_info.setTable_blsystem(data_layer);
 		if (StringUtil.isBlank(original_name)) {
 			table_use_info.setOriginal_name(hyren_name);
 		} else {
@@ -401,7 +210,7 @@ public class DataRangeManageAction extends BaseAction {
 		if (StringUtil.isBlank(table_note)) {
 			table_use_info.setTable_note("");
 		} else {
-			table_use_info.setOriginal_name(table_note);
+			table_use_info.setTable_note(table_note);
 		}
 		// 3.新增保存表使用信息
 		table_use_info.add(Dbo.db());
@@ -433,38 +242,6 @@ public class DataRangeManageAction extends BaseAction {
 		return columnTypeMap;
 	}
 
-	@Method(desc = "根据ID与数据源类型获取结果集(实时数据）",
-			logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制")
-	@Param(name = "fileId", desc = "文件ID", range = "无限制")
-	@Param(name = "dataSourceType", desc = "数据源类型(使用DataSourceType）代码项，树根节点", range = "无限制")
-	@Return(desc = "", range = "")
-	private Result getResult(long fileId, String dataSourceType) {
-		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
-		Map<String, String> columnMap = new HashMap<>();
-		Result tableResult;
-		if (KAFKA.equalsIgnoreCase(dataSourceType)) {
-			// 实时数据
-			tableResult = Dbo.queryResult("select table_en_name as hbase_name,table_cn_name as " +
-					"original_name" +
-					" from sdm_inner_table t1  where t1.table_id = ?", fileId);
-			Result columnResult = Dbo.queryResult("select t1.field_en_name,t1.field_cn_name from " +
-					"sdm_inner_column t1 " +
-					" where t1.table_id = ?", fileId);
-			if (!columnResult.isEmpty()) {
-				StringBuilder builder = new StringBuilder();
-				for (int i = 0; i < columnResult.getRowCount(); i++) {
-					builder.append(columnResult.getString(i, "field_en_name")).append(',');
-				}
-				builder.deleteCharAt(builder.length() - 1);
-				columnMap.put("column", builder.toString());
-			}
-			tableResult.setObject(0, "meta_info", columnMap);
-			return tableResult;
-		} else {
-			throw new BusinessException("暂时不支持此数据源类型的数据，dataSourceType=" + dataSourceType);
-		}
-	}
-
 	@Method(desc = "根据用户ID、表名查询当前表是否已登记",
 			logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制" +
 					"2.根据用户ID、表名查询表使用信息是否存在")
@@ -476,7 +253,7 @@ public class DataRangeManageAction extends BaseAction {
 		// 2.根据用户ID、表名查询当前表是否已登记
 		if (Dbo.queryNumber("select count(1) from " + Table_use_info.TableName
 				+ " where user_id = ? and sysreg_name = ?", user_id, sysreg_name)
-				.orElseThrow(() -> new BusinessException("sql查询错误")) > 1) {
+				.orElseThrow(() -> new BusinessException("sql查询错误")) > 0) {
 			// 已登记
 			logger.info("此表已登记");
 			return true;
@@ -492,16 +269,18 @@ public class DataRangeManageAction extends BaseAction {
 					"2.先删除Sysreg_parameter_info" +
 					"3.再删除table_use_info")
 	@Param(name = "user_id", desc = "用户ID", range = "新增用户时生成")
-	@Param(name = "hbase_name", desc = "表名", range = "无限制")
-	public void deleteInterfaceTableInfo(long user_id, String hbase_name) {
+	@Param(name = "sysreg_name", desc = "表名", range = "无限制")
+	public void deleteInterfaceTableInfo(long user_id, String sysreg_name) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		// 2.先删除Sysreg_parameter_info
-		Dbo.execute("delete from " + Sysreg_parameter_info.TableName + " where use_id = " +
-						"(select use_id from  table_use_info where lower(hbase_name)=lower(?) and user_id=?)"
-				, hbase_name, user_id);
+		List<Long> useIdList = Dbo.queryOneColumnList("select use_id from " + Table_use_info.TableName +
+				" where lower(sysreg_name)=lower(?) and user_id=?", sysreg_name, user_id);
+		for (Long use_id : useIdList) {
+			Dbo.execute("delete from " + Sysreg_parameter_info.TableName + " where use_id =? ", use_id);
+		}
 		// 3.再删除table_use_info
-		Dbo.execute("delete from " + Table_use_info.TableName + " where lower(hbase_name) = lower(?)" +
-				" and user_id = ?", hbase_name, user_id);
+		Dbo.execute("delete from " + Table_use_info.TableName + " where lower(sysreg_name) = lower(?)" +
+				" and user_id = ?", sysreg_name, user_id);
 	}
 
 	@Method(desc = "根据ID查询列信息", logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制" +
@@ -509,12 +288,12 @@ public class DataRangeManageAction extends BaseAction {
 			"2.1贴源层" +
 			"2.2集市层")
 	@Param(name = "file_id", desc = "表ID", range = "无限制", nullable = true)
-	@Param(name = "dataSourceType", desc = "数据源类型(使用DataSourceType）代码项，树根节点", range = "无限制")
+	@Param(name = "data_layer", desc = "数据层，树根节点", range = "无限制")
 	@Return(desc = "根据不同数据源类型查询表的列信息并返回", range = "无限制")
-	public Result searchFieldById(String file_id, String dataSourceType) {
+	public Result searchFieldById(String file_id, String data_layer) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		// 2.根据不同数据源类型查询表的列信息并返回
-		if (DataSourceType.DCL == DataSourceType.ofEnumByCode(dataSourceType)) {
+		if (DataSourceType.DCL == DataSourceType.ofEnumByCode(data_layer)) {
 			// 2.1贴源层
 			Map<String, Object> dataStoreMap = Dbo.queryOneObject("SELECT hyren_name,collect_type," +
 					" database_id FROM " + Data_store_reg.TableName + " WHERE file_id = ?", file_id);
@@ -534,7 +313,7 @@ public class DataRangeManageAction extends BaseAction {
 						" t ON c.ocs_id = t.ocs_id WHERE t.odc_id = ?", database_id);
 			}
 			return columnResult;
-		} else if (DataSourceType.DML == DataSourceType.ofEnumByCode(dataSourceType)) {
+		} else if (DataSourceType.DML == DataSourceType.ofEnumByCode(data_layer)) {
 			// 2.2集市层
 			return Dbo.queryResult("SELECT field_en_name,field_cn_name FROM " + Datatable_field_info.TableName
 					+ " WHERE datatable_id = ?");

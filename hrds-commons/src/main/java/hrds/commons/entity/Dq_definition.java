@@ -34,17 +34,17 @@ public class Dq_definition extends ProjectTableEntity
 	private Long reg_num;
 	@DocBean(name ="reg_name",value="规则名称:",dataType = String.class,required = false)
 	private String reg_name;
-	@DocBean(name ="load_strategy",value="加载策略:",dataType = String.class,required = true)
+	@DocBean(name ="load_strategy",value="加载策略:",dataType = String.class,required = false)
 	private String load_strategy;
-	@DocBean(name ="group_seq",value="分组序号:",dataType = String.class,required = true)
+	@DocBean(name ="group_seq",value="分组序号:",dataType = String.class,required = false)
 	private String group_seq;
-	@DocBean(name ="target_tab",value="目标表名:",dataType = String.class,required = true)
+	@DocBean(name ="target_tab",value="目标表名:",dataType = String.class,required = false)
 	private String target_tab;
-	@DocBean(name ="target_key_fields",value="目标表关键字段:",dataType = String.class,required = true)
+	@DocBean(name ="target_key_fields",value="目标表关键字段:",dataType = String.class,required = false)
 	private String target_key_fields;
-	@DocBean(name ="opposite_tab",value="比对表名:",dataType = String.class,required = true)
+	@DocBean(name ="opposite_tab",value="比对表名:",dataType = String.class,required = false)
 	private String opposite_tab;
-	@DocBean(name ="opposite_key_fields",value="比对表关键字段:",dataType = String.class,required = true)
+	@DocBean(name ="opposite_key_fields",value="比对表关键字段:",dataType = String.class,required = false)
 	private String opposite_key_fields;
 	@DocBean(name ="range_min_val",value="范围区间的最小值:",dataType = String.class,required = false)
 	private String range_min_val;

@@ -149,12 +149,12 @@ DROP TABLE IF EXISTS DQ_DEFINITION ;
 CREATE TABLE DQ_DEFINITION(
 REG_NUM                                           BIGINT default 0 NOT NULL, --规则编号
 REG_NAME                                          VARCHAR(100) NULL, --规则名称
-LOAD_STRATEGY                                     VARCHAR(100) NOT NULL, --加载策略
-GROUP_SEQ                                         VARCHAR(100) NOT NULL, --分组序号
-TARGET_TAB                                        VARCHAR(100) NOT NULL, --目标表名
-TARGET_KEY_FIELDS                                 VARCHAR(2048) NOT NULL, --目标表关键字段
-OPPOSITE_TAB                                      VARCHAR(100) NOT NULL, --比对表名
-OPPOSITE_KEY_FIELDS                               VARCHAR(2048) NOT NULL, --比对表关键字段
+LOAD_STRATEGY                                     VARCHAR(100) NULL, --加载策略
+GROUP_SEQ                                         VARCHAR(100) NULL, --分组序号
+TARGET_TAB                                        VARCHAR(100) NULL, --目标表名
+TARGET_KEY_FIELDS                                 VARCHAR(2048) NULL, --目标表关键字段
+OPPOSITE_TAB                                      VARCHAR(100) NULL, --比对表名
+OPPOSITE_KEY_FIELDS                               VARCHAR(2048) NULL, --比对表关键字段
 RANGE_MIN_VAL                                     VARCHAR(64) NULL, --范围区间的最小值
 RANGE_MAX_VAL                                     VARCHAR(64) NULL, --范围区间的最大值
 LIST_VALS                                         VARCHAR(1024) NULL, --清单值域
@@ -238,12 +238,12 @@ TASK_ID                                           BIGINT default 0 NOT NULL, --�
 CONSTRAINT DQ_INDEX3RECORD_PK PRIMARY KEY(RECORD_ID)   );
 
 --系统帮助提示信息表
-DROP TABLE IF EXISTS DQ_HELP_INFM ;
-CREATE TABLE DQ_HELP_INFM(
-HELP_INFM_ID                                      BIGINT default 0 NOT NULL, --帮助提示编号
-HELP_INFM_DESC                                    VARCHAR(512) NULL, --帮助提示描述
-HELP_INFM_DTL                                     VARCHAR(2048) NOT NULL, --帮助提示详细信息
-CONSTRAINT DQ_HELP_INFM_PK PRIMARY KEY(HELP_INFM_ID)   );
+DROP TABLE IF EXISTS DQ_HELP_INFO ;
+CREATE TABLE DQ_HELP_INFO(
+HELP_INFO_ID                                      VARCHAR(80) NOT NULL, --帮助提示编号
+HELP_INFO_DESC                                    VARCHAR(512) NULL, --帮助提示描述
+HELP_INFO_DTL                                     VARCHAR(2048) NULL, --帮助提示详细信息
+CONSTRAINT DQ_HELP_INFO_PK PRIMARY KEY(HELP_INFO_ID)   );
 
 --校验结果处理日志
 DROP TABLE IF EXISTS DQ_REQ_LOG ;

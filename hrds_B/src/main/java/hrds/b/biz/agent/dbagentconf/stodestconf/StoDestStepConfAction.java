@@ -83,7 +83,7 @@ public class StoDestStepConfAction extends BaseAction{
 		List<Object> tableIds = Dbo.queryOneColumnList("select ti.table_id from " + Table_info.TableName + " ti" +
 				" join " + Data_extraction_def.TableName + " ded" +
 				" on ti.table_id = ded.table_id" +
-				" where ti.database_id = ? and ded.data_extract_type = ?", colSetId, DataExtractType.ShuJuKuChouQuLuoDi.getCode());
+				" where ti.database_id = ? and ded.data_extract_type in (?,?)", colSetId, DataExtractType.ShuJuJiaZaiGeShi.getCode(),DataExtractType.YuanShuJuGeShi.getCode());
 		if(tableIds.isEmpty()){
 			throw new BusinessException("未获取到数据库采集表");
 		}

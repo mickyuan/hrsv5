@@ -16,6 +16,8 @@ import hrds.commons.collection.ProcessingData;
 import hrds.commons.collection.bean.LayerBean;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.tree.foreground.ForegroundTreeUtil;
+import hrds.commons.tree.foreground.bean.TreeDataInfo;
 import hrds.commons.utils.DruidParseQuerySql;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.h.biz.MainClass;
@@ -208,11 +210,11 @@ public class MarketInfoAction extends BaseAction {
             logicStep = "根据数据集市工程ID进行查询")
     @Param(name = "data_mart_id", desc = "data_mart_id", range = "data_mart_id")
     @Return(desc = "当前集市工程下创建的所有集市表", range = "返回值取值范围")
-    public List<Dm_datatable> queryDMDataTableByDataMartID(String data_mart_id) {
+    public List<Map<String,Object>> queryDMDataTableByDataMartID(String data_mart_id) {
         Dm_datatable dm_datatable = new Dm_datatable();
         dm_datatable.setData_mart_id(data_mart_id);
-        return Dbo.queryList(Dm_datatable.class, "SELECT * FROM " + Dm_datatable.TableName + " where data_mart_id = ? order by " +
-                "datatable_id asc", dm_datatable.getData_mart_id());
+        return Dbo.queryList("SELECT * ,case when datatable_id in (select datatable_id from " + Datatable_field_info.TableName + ") then true else false end as isadd from "
+                + Dm_datatable.TableName + " where data_mart_id = ? order by " + "datatable_id asc", dm_datatable.getData_mart_id());
     }
 
     @Method(desc = "删除集市表及其相关的所有信息",
@@ -409,10 +411,17 @@ public class MarketInfoAction extends BaseAction {
             querysql = querysql.substring(0, querysql.length() - 1);
         }
         querysql = "select * from (" + querysql + ") as " + alias + " limit " + LimitNumber;
-        //2.查询SQL
+        //2.查询SQL TODO
         Map<String, Object> resultmap = new HashMap<String, Object>();
         try {
-            List<Map<String, Object>> maps = Dbo.queryList(querysql);
+            List<Map<String, Object>> maps = new ArrayList<>();
+            ProcessingData processingData = new ProcessingData() {
+                @Override
+                public void dealLine(Map<String, Object> map) throws Exception {
+                    //因为限制了limit 100所以此处可以将数据存放在内存中进行处理
+                    maps.add(map);
+                }
+            };
             resultmap.put("result", maps);
             resultmap.put("success", true);
         } catch (Exception e) {
@@ -521,7 +530,7 @@ public class MarketInfoAction extends BaseAction {
     private Map<String, String> getFieldType(String sourcetable, String sourcecolumn, String field_type, String dsl_id) {
         Map<String, String> resultmap = new HashMap<>();
         List<LayerBean> layerByTable = ProcessingData.getLayerByTable(sourcetable, Dbo.db());
-        if (layerByTable.isEmpty()) {
+        if (layerByTable == null || layerByTable.isEmpty()) {
             //如果没有找到该表属于哪一层 则返回原始类型
             resultmap.put("sourcetype", field_type);
             resultmap.put("targettype", field_type);
@@ -644,9 +653,9 @@ public class MarketInfoAction extends BaseAction {
                 "LEFT JOIN " + Dm_relation_datatable.TableName + " t3 ON t2.dsl_id=t3.dsl_id" +
                 " WHERE t3.datatable_id = ?", dm_datatable.getDatatable_id());
         Boolean flag = true;
-        Map<String,Object> tempmap = new HashMap<>();
-        tempmap.put("target_type",field_type);
-        if(!targetTypeList.contains(tempmap)){
+        Map<String, Object> tempmap = new HashMap<>();
+        tempmap.put("target_type", field_type);
+        if (!targetTypeList.contains(tempmap)) {
             targetTypeList.add(tempmap);
         }
         return targetTypeList;
@@ -655,6 +664,7 @@ public class MarketInfoAction extends BaseAction {
 
     /**
      * 设置一个默认的字段类型 以便于对于多字段合成的字段类型进行初始化
+     *
      * @param storeType
      * @return
      */
@@ -692,6 +702,20 @@ public class MarketInfoAction extends BaseAction {
         }
         Dm_datatable dm_datatable = new Dm_datatable();
         dm_datatable.setDatatable_id(datatable_id);
+        List<Map<String, Object>> maps2 = Dbo.queryList("select execute_sql from " + Dm_operation_info.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
+        Object object_execute_sql = maps2.get(0).get("execute_sql");
+        if (object_execute_sql == null) {
+            dm_datatable.setDdlc_date(DateUtil.getSysDate());
+            dm_datatable.setDdlc_time(DateUtil.getSysTime());
+            dm_datatable.update(Dbo.db());
+        } else {
+            String execute_sql = object_execute_sql.toString();
+            if (!execute_sql.equals(querysql)) {
+                dm_datatable.setDdlc_date(DateUtil.getSysDate());
+                dm_datatable.setDdlc_time(DateUtil.getSysTime());
+                dm_datatable.update(Dbo.db());
+            }
+        }
         Dbo.execute("delete from " + Dm_column_storage.TableName + " where datatable_field_id in (select datatable_field_id from " +
                 Datatable_field_info.TableName + " where datatable_id = ?)", dm_datatable.getDatatable_id());
         Dbo.execute("delete from " + Datatable_field_info.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
@@ -776,7 +800,7 @@ public class MarketInfoAction extends BaseAction {
                 String sourcecolumn = map.get(DruidParseQuerySql.sourcecolumn).toString().toLowerCase();
                 String sourcetable = map.get(DruidParseQuerySql.sourcetable).toString().toLowerCase();
                 List<Map<String, Object>> templist = new ArrayList<>();
-                if(!tableMap.containsKey(sourcetable)){
+                if (!tableMap.containsKey(sourcetable)) {
                     tableMap.put(sourcetable, templist);
                 } else {
                     templist = (ArrayList<Map<String, Object>>) tableMap.get(sourcetable);
@@ -795,7 +819,7 @@ public class MarketInfoAction extends BaseAction {
             String dataSourceType = "";
             List<LayerBean> layerByTable = ProcessingData.getLayerByTable(tablename, Dbo.db());
             //TODO 如果所涉及到的表找不到层级 则使用UDL(自定义层）
-            if (layerByTable.isEmpty()) {
+            if (layerByTable == null || layerByTable.isEmpty()) {
                 dataSourceType = DataSourceType.UDL.getCode();
             } else {
                 dataSourceType = layerByTable.get(0).getDst();
@@ -907,6 +931,92 @@ public class MarketInfoAction extends BaseAction {
         return resultlist;
     }
 
+
+    @Method(desc = "获取树的数据信息",
+            logicStep = "1.声明获取到 zTreeUtil 的对象" +
+                    "2.设置树实体" +
+                    "3.调用ZTreeUtil的getTreeDataInfo获取treeData的信息")
+    @Param(name = "agent_layer", desc = "数据层类型", range = "String类型", nullable = true)
+    @Param(name = "source_id", desc = "数据源id", range = "String类型", nullable = true)
+    @Param(name = "classify_id", desc = "分类id", range = "String类型", nullable = true)
+    @Param(name = "data_mart_id", desc = "集市id", range = "String类型", nullable = true)
+    @Param(name = "category_id", desc = "分类编号", range = "String类型", nullable = true)
+    @Param(name = "systemDataType", desc = "系统数据类型", range = "String类型", nullable = true)
+    @Param(name = "kafka_id", desc = "kafka数据id", range = "String类型", nullable = true)
+    @Param(name = "batch_id", desc = "批量数据id", range = "String类型", nullable = true)
+    @Param(name = "groupId", desc = "分组id", range = "String类型", nullable = true)
+    @Param(name = "sdm_consumer_id", desc = "消费id", range = "String类型", nullable = true)
+    @Param(name = "parent_id", desc = "父id", range = "String类型", nullable = true)
+    @Param(name = "tableSpace", desc = "表空间", range = "String类型", nullable = true)
+    @Param(name = "database_type", desc = "数据库类型", range = "String类型", nullable = true)
+    @Param(name = "isFileCo", desc = "是否文件采集", range = "String类型", valueIfNull = "false")
+    @Param(name = "tree_menu_from", desc = "树菜单来源", range = "String类型", nullable = true)
+    @Param(name = "isPublicLayer", desc = "公共层", range = "IsFlag代码项1:是,0:否", valueIfNull = "1")
+    @Param(name = "isRootNode", desc = "是否为树的根节点标志", range = "IsFlag代码项1:是,0:否", valueIfNull = "1")
+    @Return(desc = "树数据Map信息", range = "无限制")
+    public Map<String, Object> getTreeDataInfo(String agent_layer, String source_id, String classify_id,
+                                               String data_mart_id, String category_id, String systemDataType,
+                                               String kafka_id, String batch_id, String groupId, String sdm_consumer_id,
+                                               String parent_id, String tableSpace, String database_type,
+                                               String isFileCo, String tree_menu_from, String isPublicLayer,
+                                               String isRootNode) {
+        //1.声明获取到 zTreeUtil 的对象
+        ForegroundTreeUtil foregroundTreeUtil = new ForegroundTreeUtil();
+        //2.设置树实体
+        TreeDataInfo treeDataInfo = new TreeDataInfo();
+        treeDataInfo.setAgent_layer(agent_layer);
+        treeDataInfo.setSource_id(source_id);
+        treeDataInfo.setClassify_id(classify_id);
+        treeDataInfo.setData_mart_id(data_mart_id);
+        treeDataInfo.setCategory_id(category_id);
+        treeDataInfo.setSystemDataType(systemDataType);
+        treeDataInfo.setKafka_id(kafka_id);
+        treeDataInfo.setBatch_id(batch_id);
+        treeDataInfo.setGroupId(groupId);
+        treeDataInfo.setSdm_consumer_id(sdm_consumer_id);
+        treeDataInfo.setParent_id(parent_id);
+        treeDataInfo.setTableSpace(tableSpace);
+        treeDataInfo.setDatabaseType(database_type);
+        treeDataInfo.setIsFileCo(isFileCo);
+        treeDataInfo.setPage_from(tree_menu_from);
+        treeDataInfo.setIsPublic(isPublicLayer);
+        treeDataInfo.setIsShTable(isRootNode);
+        //3.调用ZTreeUtil的getTreeDataInfo获取树数据信息
+        Map<String, Object> treeSourcesMap = new HashMap<>();
+        treeSourcesMap.put("tree_sources", foregroundTreeUtil.getTreeDataInfo(getUser(), treeDataInfo));
+        return treeSourcesMap;
+    }
+
+
+    @Method(desc = "根据集市表ID,获取SQL回显",
+            logicStep = "返回查询结果")
+    @Param(name = "source", desc = "source", range = "String类型表来源")
+    @Param(name = "id", desc = "id", range = "String类型id")
+    @Return(desc = "查询返回结果集", range = "无限制")
+    public Map<String, Object> queryAllColumnOnTableName(String source, String id) {
+        Map<String, Object> resultmap = new HashMap<>();
+        if (source.equals(DataSourceType.DCL.getCode())) {
+            Table_column table_column = new Table_column();
+            table_column.setTable_id(id);
+            List<Map<String, Object>> maps = Dbo.queryList("select column_name as columnname,column_type as columntype,false as selectionState from " + Table_column.TableName + " where table_id = ?", table_column.getTable_id());
+            resultmap.put("columnresult", maps);
+            List<Map<String, Object>> tablenamelist = Dbo.queryList("select hyren_name as tablename from " + Data_store_reg.TableName + " where table_id = ?", table_column.getTable_id());
+            resultmap.put("tablename", tablenamelist.get(0).get("tablename"));
+            return resultmap;
+        } else if (source.equals(DataSourceType.DML.getCode())) {
+            Datatable_field_info datatable_field_info = new Datatable_field_info();
+            datatable_field_info.setDatatable_id(id);
+            List<Map<String, Object>> maps = Dbo.queryList("select field_en_name as columnname,field_type as columntype,false as selectionState from " + Datatable_field_info.TableName + " where datatable_id = ?", datatable_field_info.getDatatable_id());
+            resultmap.put("columnresult", maps);
+            List<Map<String, Object>> tablenamelist = Dbo.queryList("select datatable_en_name as tablename  from " + Dm_datatable.TableName + " where datatable_id = ?", datatable_field_info.getDatatable_id());
+            resultmap.put("tablename", tablenamelist.get(0).get("tablename"));
+            return resultmap;
+        }
+        //TODO 新的层加进来后 还需要补充
+        return null;
+    }
+
+
     @Method(desc = "执行集市作业",
             logicStep = "")
     @Param(name = "datatable_id", desc = "datatable_id", range = "String类型集市表ID")
@@ -921,6 +1031,24 @@ public class MarketInfoAction extends BaseAction {
             throw new BusinessException(e.getMessage());
         }
 
+    }
+
+    @Method(desc = "查询所有作业调度工程",
+            logicStep = "返回查询结果g")
+    @Return(desc = "查询返回结果集", range = "无限制")
+    public List<Map<String, Object>> queryAllEtlSys() {
+        return Dbo.queryList("SELECT * from " + Etl_sys.TableName);
+    }
+
+
+    @Method(desc = "查询所有作业调度工程",
+            logicStep = "返回查询结果g")
+    @Param(name = "etl_sys_cd", desc = "etl_sys_cd", range = "String类型作业调度工程主键")
+    @Return(desc = "查询返回结果集", range = "无限制")
+    public List<Map<String, Object>> queryEtlTaskByEtlSys(String etl_sys_cd) {
+        Etl_sys etl_sys = new Etl_sys();
+        etl_sys.setEtl_sys_cd(etl_sys_cd);
+        return Dbo.queryList("select distinct * from " + Etl_sub_sys_list.TableName + " where etl_sys_cd = ?", etl_sys.getEtl_sys_cd());
     }
 }
 

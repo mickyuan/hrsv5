@@ -8,6 +8,7 @@ import fd.ng.core.utils.StringUtil;
 import hrds.commons.codes.DataSourceType;
 import hrds.commons.tree.foreground.bean.TreeDataInfo;
 import hrds.commons.tree.foreground.query.DCLDataQuery;
+import hrds.commons.tree.foreground.query.DMLDataQuery;
 import hrds.commons.utils.User;
 
 import java.util.HashMap;
@@ -41,18 +42,16 @@ public class TreeMenuInfo {
 			treeMenuInfoMap.put("dclBatchDataInfos", dclBatchDataInfos);
 		}
 		//1-3.获取贴源层批量数据数据源下分类信息
-		boolean isFileCo = Boolean.parseBoolean(treeDataInfo.getIsFileCo());
+//		boolean isFileCo = Boolean.parseBoolean(treeDataInfo.getIsFileCo());
 		if (!StringUtil.isBlank(treeDataInfo.getSource_id())) {
 			List<Map<String, Object>> dclBatchClassifyInfos =
-					DCLDataQuery.getDCLBatchClassifyInfos(treeDataInfo.getSource_id(),
-							isFileCo, user);
+					DCLDataQuery.getDCLBatchClassifyInfos(treeDataInfo.getSource_id(), user);
 			treeMenuInfoMap.put("dclBatchClassifyInfos", dclBatchClassifyInfos);
 		}
 		//1-4.获取贴源层批量数据数据源分类下表信息
 		if (StringUtil.isNotBlank(treeDataInfo.getClassify_id())) {
 			List<Map<String, Object>> dclBatchTableInfos =
-					DCLDataQuery.getDCLBatchTableInfos(treeDataInfo.getClassify_id(), null, user,
-							treeDataInfo.getIsIntoHBase());
+					DCLDataQuery.getDCLBatchTableInfos(treeDataInfo.getClassify_id(), null, user);
 			treeMenuInfoMap.put("dclBatchTableInfos", dclBatchTableInfos);
 		}
 		//TODO 实时数据功能添加后放开
@@ -73,19 +72,17 @@ public class TreeMenuInfo {
 //					.getDCLRealTimeInnerTableInfos(treeDataInfo.getSdm_consumer_id());
 //			treeMenuInfoMap.put("dclRealTimeInnerTableInfos", dclRealTimeInnerTableInfos);
 //		}
-		//TODO 集市功能添加后放开
 //		//2.DML 集市层
 //		//2-1.获取集市层下集市信息
-//		if (DataSourceType.DML.getValue().equals(treeDataInfo.getAgent_layer())) {
-//			List<Map<String, Object>> dmlDataInfos = DMLDataQuery.getDMLDataInfos();
-//			treeMenuInfoMap.put("dmlDataInfos", dmlDataInfos);
-//		}
+		if (DataSourceType.DML.getValue().equals(treeDataInfo.getAgent_layer())) {
+			List<Map<String, Object>> dmlDataInfos = DMLDataQuery.getDMLDataInfos(null,user);
+			treeMenuInfoMap.put("dmlDataInfos", dmlDataInfos);
+		}
 //		//2-2.获取集市层集市下表数据信息
-//		if (StringUtil.isNotBlank(treeDataInfo.getData_mart_id())) {
-//			List<Map<String, Object>> dmlTableInfos = DMLDataQuery
-//					.getDMLTableInfos(treeDataInfo.getData_mart_id(), treeDataInfo.getPage_from());
-//			treeMenuInfoMap.put("dmlTableInfos", dmlTableInfos);
-//		}
+		if (StringUtil.isNotBlank(treeDataInfo.getData_mart_id())) {
+			List<Map<String, Object>> dmlTableInfos = DMLDataQuery.getDMLTableInfos(treeDataInfo.getData_mart_id(),user,null);
+			treeMenuInfoMap.put("dmlTableInfos", dmlTableInfos);
+		}
 		//TODO 加工功能添加后放开
 //		//3.DPL 加工层
 //		//3-1.获取加工层下工程信息

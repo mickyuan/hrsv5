@@ -148,7 +148,8 @@ public class JdbcCollectTableHandleParse extends AbstractCollectTableHandle {
 			allType.deleteCharAt(allType.length() - 1);//列类型
 			//清洗配置
 			Map<String, Object> parseJson = parseJson(collectTableBean);
-			Map<String, Map<String, Column_split>> splitIng = (Map<String, Map<String, Column_split>>) parseJson.get("splitIng");//字符拆分
+			Map<String, Map<String, Column_split>> splitIng = (Map<String, Map<String, Column_split>>)
+					parseJson.get("splitIng");//字符拆分
 			Map<String, String> mergeIng = (Map<String, String>) parseJson.get("mergeIng");//字符合并
 			//更新拆分和合并的列信息
 			String colMeta = updateColumn(mergeIng, splitIng, columnMetaInfo, colTypeMetaInfo, colLengthInfo);
@@ -193,12 +194,11 @@ public class JdbcCollectTableHandleParse extends AbstractCollectTableHandle {
 		} catch (Exception e) {
 			throw new AppSystemException("根据数据源信息和采集表信息得到卸数元信息失败！", e);
 		} finally {
-			if (conn != null) {
-				try {
+			try {
+				if (conn != null)
 					conn.close();
-				} catch (SQLException e) {
-					e.printStackTrace();
-				}
+			} catch (SQLException e) {
+				e.printStackTrace();
 			}
 		}
 		return tableBean;

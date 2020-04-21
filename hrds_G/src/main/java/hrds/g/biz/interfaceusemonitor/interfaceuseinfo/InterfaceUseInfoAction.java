@@ -4,8 +4,9 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
-import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.StringUtil;
+import fd.ng.db.jdbc.DefaultPageImpl;
+import fd.ng.db.jdbc.Page;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
@@ -13,6 +14,9 @@ import hrds.commons.base.BaseAction;
 import hrds.commons.entity.Interface_use;
 import hrds.commons.entity.Interface_use_log;
 import hrds.commons.utils.DboExecute;
+import hrds.g.biz.init.InterfaceManager;
+
+import java.util.Map;
 
 @DocClass(desc = "查询接口监控信息类接口", author = "dhw", createdate = "2020/3/30 9:20")
 public class InterfaceUseInfoAction extends BaseAction {
@@ -31,6 +35,7 @@ public class InterfaceUseInfoAction extends BaseAction {
 	private Result searchInterfaceUseInfo(String use_valid_date, Long user_id) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		SqlOperator.Assembler assembler = SqlOperator.Assembler.newInstance();
+		assembler.clean();
 		assembler.addSql("select interface_name,interface_code,user_name,start_use_date,use_valid_date," +
 				"interface_use_id,use_state from " + Interface_use.TableName + " WHERE create_id = ?")
 				.addParam(getUserId());
@@ -40,7 +45,6 @@ public class InterfaceUseInfoAction extends BaseAction {
 		}
 		// 3.判断有效截止日期是否为空，不为空加条件查询
 		if (StringUtil.isNotBlank(use_valid_date)) {
-			use_valid_date = DateUtil.parseStr2DateWith8Char(use_valid_date).toString();
 			assembler.addSql("AND use_valid_date = ?").addParam(use_valid_date);
 		}
 		assembler.addSql(" order by interface_use_id");
@@ -73,7 +77,8 @@ public class InterfaceUseInfoAction extends BaseAction {
 	}
 
 	@Method(desc = "接口禁用启用（接口使用监控）", logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制" +
-			"2.更新接口状态")
+			"2.更新接口状态" +
+			"3.重新初始化接口使用信息")
 	@Param(name = "use_state", desc = "接口状态", range = "使用（IsFlag）代码项")
 	@Param(name = "interface_use_id", desc = "接口使用用户ID", range = "新增接口使用信息时生成")
 	public void interfaceDisableEnable(Long interface_use_id, String use_state) {
@@ -81,6 +86,8 @@ public class InterfaceUseInfoAction extends BaseAction {
 		// 2.更新接口状态
 		DboExecute.updatesOrThrow("更新接口状态失败", "UPDATE " + Interface_use.TableName
 				+ " set use_state = ? WHERE interface_use_id = ?", use_state, interface_use_id);
+		// 3.重新初始化接口使用信息
+		InterfaceManager.userInterface();
 	}
 
 	@Method(desc = "查询接口监控信息（接口使用监控）", logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制" +
@@ -115,13 +122,16 @@ public class InterfaceUseInfoAction extends BaseAction {
 	}
 
 	@Method(desc = "删除接口使用信息（接口使用监控）", logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制" +
-			"2.删除接口使用信息")
+			"2.删除接口使用信息" +
+			"3.重新初始化接口使用信息")
 	@Param(name = "interface_use_id", desc = "接口使用用户ID", range = "新增接口使用信息时生成")
 	public void deleteInterfaceUseInfo(Long interface_use_id) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		// 2.删除接口使用信息
 		DboExecute.deletesOrThrow("当前接口ID对应接口信息不存在", "DELETE FROM "
 				+ Interface_use.TableName + " WHERE interface_use_id = ?", interface_use_id);
+		// 3.重新初始化接口使用信息
+		InterfaceManager.userInterface();
 	}
 
 	@Method(desc = " 根据接口使用ID获取相应的信息（接口使用监控）",
@@ -129,26 +139,27 @@ public class InterfaceUseInfoAction extends BaseAction {
 					"2.根据接口使用ID查询接口使用信息")
 	@Param(name = "interface_use_id", desc = "接口使用用户ID", range = "新增接口使用信息时生成")
 	@Return(desc = "返回根据接口使用ID获取相应的信息", range = "无限制")
-	public Result searchInterfaceUseInfoById(Long interface_use_id) {
+	public Map<String, Object> searchInterfaceUseInfoById(Long interface_use_id) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		// 2.根据接口使用ID查询接口使用信息
-		return Dbo.queryResult("SELECT start_use_date,use_valid_date FROM " + Interface_use.TableName
-				+ " WHERE interface_use_id = ?", interface_use_id);
+		return Dbo.queryOneObject("SELECT interface_use_id,start_use_date,use_valid_date FROM "
+				+ Interface_use.TableName + " WHERE interface_use_id = ?", interface_use_id);
 	}
 
 	@Method(desc = "更新接口使用信息（接口使用监控）", logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制" +
-			"2.更新接口使用信息")
+			"2.更新接口使用信息" +
+			"3.重新初始化接口使用信息")
 	@Param(name = "interface_use_id", desc = "接口使用用户ID", range = "新增接口使用信息时生成")
-	@Param(name = "use_valid_date", desc = "有效截至日期", range = "yyyy-MM-dd格式")
-	@Param(name = "start_use_date", desc = "有效截至日期", range = "yyyy-MM-dd格式")
+	@Param(name = "use_valid_date", desc = "有效截至日期", range = "yyyyMMdd格式")
+	@Param(name = "start_use_date", desc = "有效截至日期", range = "yyyyMMdd格式")
 	public void updateInterfaceUseInfo(Long interface_use_id, String start_use_date, String use_valid_date) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
-		start_use_date = DateUtil.parseStr2DateWith8Char(start_use_date).toString();
-		use_valid_date = DateUtil.parseStr2DateWith8Char(use_valid_date).toString();
 		// 2.更新接口使用信息
 		DboExecute.updatesOrThrow("更新接口使用信息失败", " update " + Interface_use.TableName
 						+ " set start_use_date=?,use_valid_date=? where interface_use_id = ?",
 				start_use_date, use_valid_date, interface_use_id);
+		// 3.重新初始化接口使用信息
+		InterfaceManager.userInterface();
 	}
 
 }

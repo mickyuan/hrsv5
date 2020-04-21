@@ -6,8 +6,10 @@ import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.CollectTableBean;
+import hrds.agent.job.biz.bean.CollectTableColumnBean;
 import hrds.agent.job.biz.bean.SourceDataConfBean;
 import hrds.agent.job.biz.bean.TableBean;
+import hrds.agent.job.biz.utils.TypeTransLength;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.StorageType;
 import hrds.commons.entity.Column_split;
@@ -17,11 +19,12 @@ import hrds.commons.utils.Constant;
 import hrds.commons.utils.xlstoxml.Xls2xml;
 import hrds.commons.utils.xlstoxml.util.ColumnMeta;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @DocClass(desc = "根据页面所选的表和字段对jdbc所返回的meta信息进行解析", author = "zxz", createdate = "2019/12/4 11:17")
-public class DbCollectTableHandleParse extends AbstractCollectTableHandle {
+public class DFCollectTableHandleParse extends AbstractCollectTableHandle {
 
 	@SuppressWarnings("unchecked")
 	@Method(desc = "根据数据源信息和采集表信息得到卸数元信息", logicStep = "" +
@@ -46,22 +49,31 @@ public class DbCollectTableHandleParse extends AbstractCollectTableHandle {
 		tableBean.setColumn_separator(sourceData_extraction_def.getDatabase_separatorr());
 		tableBean.setRoot_path(sourceData_extraction_def.getPlane_url());
 		tableBean.setFile_code(sourceData_extraction_def.getDatabase_code());
-		StringBuilder columnMetaInfo = new StringBuilder();//生成的元信息列名
 		StringBuilder allColumns = new StringBuilder();//要采集的列名
-		StringBuilder colTypeMetaInfo = new StringBuilder();//生成的元信息列类型
 		StringBuilder allType = new StringBuilder();//要采集的列类型
+		StringBuilder columnMetaInfo = new StringBuilder();//生成的元信息列名
+		StringBuilder colTypeMetaInfo = new StringBuilder();//生成的元信息列类型
 		StringBuilder colLengthInfo = new StringBuilder();//生成的元信息列长度
+		HashMap<String, Boolean> isCollectMap = new HashMap<>();//db文件采集，字段是否采集的映射,对新增列不做映射，默认采集
 		//3.读取xml获取数据字典下所有的表信息,找到当前线程对应需要采集表的数据字典，获取表结构(注数据字典中的是有序的)
 		List<String> cols = ColumnMeta.getColumnList(collectTableBean.getTable_name(),
 				Constant.XMLPATH + xmlName);
-		//遍历集合
+		//遍历db文件数据字典里面列信息的集合
 		for (String col : cols) {
 			List<String> colList = StringUtil.split(col, STRSPLIT);
-			allType.append(colList.get(3)).append(STRSPLIT);
-			colTypeMetaInfo.append(colList.get(3)).append(STRSPLIT);
 			allColumns.append(colList.get(0)).append(STRSPLIT);
-			columnMetaInfo.append(colList.get(0)).append(STRSPLIT);
-			colLengthInfo.append(colList.get(2)).append(STRSPLIT);
+			allType.append(colList.get(1)).append(STRSPLIT);
+			isCollectMap.put(colList.get(0), false);
+			for (CollectTableColumnBean table_column : collectTableBean.getCollectTableColumnBeanList()) {
+				//如果页面选择了这一列，且是否采集选择了是，则给true
+				if (colList.get(0).equals(table_column.getColumn_name()) &&
+						IsFlag.Shi.getCode().equals(table_column.getIs_get())) {
+					isCollectMap.put(colList.get(0), true);
+					columnMetaInfo.append(colList.get(0)).append(STRSPLIT);
+					colTypeMetaInfo.append(colList.get(1)).append(STRSPLIT);
+					colLengthInfo.append(TypeTransLength.getLength(colList.get(1))).append(STRSPLIT);
+				}
+			}
 		}
 		if (colLengthInfo.length() > 0) {
 			colLengthInfo.delete(colLengthInfo.length() - 1, colLengthInfo.length());
@@ -78,7 +90,7 @@ public class DbCollectTableHandleParse extends AbstractCollectTableHandle {
 		//更新拆分和合并的列信息
 		String colMeta = updateColumn(mergeIng, splitIng, columnMetaInfo, colTypeMetaInfo, colLengthInfo);
 		columnMetaInfo.delete(0, columnMetaInfo.length()).append(colMeta);
-		//仅登记，海云不加任何字段
+		//仅登记，海云不加任何字段 XXX 这里是否转存之后是否新增列，是否过滤海云列，待...
 		if (IsFlag.Fou.getCode().equals(collectTableBean.getIs_register())) {
 			//这里是根据不同存储目的地会有相同的拉链方式，则这新增拉链字段在这里增加
 			columnMetaInfo.append(STRSPLIT).append(Constant.SDATENAME);
@@ -98,6 +110,7 @@ public class DbCollectTableHandleParse extends AbstractCollectTableHandle {
 		tableBean.setColTypeMetaInfo(colTypeMetaInfo.toString());
 		tableBean.setColumnMetaInfo(columnMetaInfo.toString().toUpperCase());
 		tableBean.setParseJson(parseJson);
+		tableBean.setIsCollectMap(isCollectMap);
 		//返回表结构信息
 		return tableBean;
 	}
@@ -124,7 +137,7 @@ public class DbCollectTableHandleParse extends AbstractCollectTableHandle {
 		//获取数据字典所在目录文件，根据数据字典计算xml文件名称
 		String xmlName = Math.abs(p.hashCode()) + ".xml";
 		//2.DB文件采集将数据字典dd_data.xls转为xml
-		new DbCollectTableHandleParse().toXml(p, Constant.XMLPATH + xmlName);
+		new DFCollectTableHandleParse().toXml(p, Constant.XMLPATH + xmlName);
 		//3.读取xml获取数据字典下所有的表信息,找到当前线程对应需要采集表的数据字典，获取表结构
 		List<String> cols = ColumnMeta.getColumnList("agent_info", Constant.XMLPATH + xmlName);
 		System.out.println(cols.size());

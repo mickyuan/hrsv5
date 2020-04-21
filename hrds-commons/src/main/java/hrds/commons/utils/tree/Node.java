@@ -46,6 +46,18 @@ public class Node {
      */
     String file_id;
     /**
+     * 原始表名
+     */
+    String table_name;
+    /**
+     * 原始文件名或中文名称
+     */
+    String original_name;
+    /**
+     * 系统内对应表名
+     */
+    String hyren_name;
+    /**
      * 孩子节点列表
      */
     private Children children = new Children();
@@ -62,7 +74,10 @@ public class Node {
                 + ", data_source_id : '" + data_source_id + "'"
                 + ", agent_id : '" + agent_id + "'"
                 + ", classify_id : '" + classify_id + "'"
-                + ", file_id : '" + file_id + "'";
+                + ", file_id : '" + file_id + "'"
+                + ", table_name : '" + table_name + "'"
+                + ", original_name : '" + original_name + "'"
+                + ", hyren_name : '" + hyren_name + "'";
         if (children != null && children.getSize() != 0) {
             str += ", children : " + children.toString();
         } else {

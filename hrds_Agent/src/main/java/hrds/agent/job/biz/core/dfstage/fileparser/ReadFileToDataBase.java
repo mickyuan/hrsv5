@@ -342,8 +342,8 @@ public class ReadFileToDataBase implements Callable<Long> {
 			// 如果取出的值为null则给空字符串
 			str = line.getBoolean(column, 0);
 		} else if (type.contains(DataTypeConstant.INT8.getMessage())
-				|| type.equals(DataTypeConstant.BIGINT.getMessage())
-				|| type.equals(DataTypeConstant.LONG.getMessage())) {
+				|| type.contains(DataTypeConstant.BIGINT.getMessage())
+				|| type.contains(DataTypeConstant.LONG.getMessage())) {
 			str = line.getLong(column, 0);
 		} else if (type.contains(DataTypeConstant.INT.getMessage())) {
 			str = line.getInteger(column, 0);
@@ -408,7 +408,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 		if (type.contains(DataTypeConstant.BOOLEAN.getMessage())) {
 			// 如果取出的值为null则给空字符串
 			str = tmpValue == null ? null : Boolean.parseBoolean(tmpValue.toString().trim());
-		} else if (type.equals(DataTypeConstant.LONG.getMessage())
+		} else if (type.contains(DataTypeConstant.LONG.getMessage())
 				|| type.contains(DataTypeConstant.INT.getMessage())
 				|| type.contains(DataTypeConstant.FLOAT.getMessage())
 				|| type.contains(DataTypeConstant.DOUBLE.getMessage())
@@ -430,7 +430,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 		if (type.contains(DataTypeConstant.BOOLEAN.getMessage())) {
 			// 如果取出的值为null则给空字符串
 			str = tmpValue == null ? null : Boolean.parseBoolean(tmpValue.trim());
-		} else if (type.equals(DataTypeConstant.LONG.getMessage())
+		} else if (type.contains(DataTypeConstant.LONG.getMessage())
 				|| type.contains(DataTypeConstant.INT.getMessage())
 				|| type.contains(DataTypeConstant.FLOAT.getMessage())
 				|| type.contains(DataTypeConstant.DOUBLE.getMessage())
@@ -448,11 +448,14 @@ public class ReadFileToDataBase implements Callable<Long> {
 
 	private void doBatch(String batchSql, List<Object[]> pool, long num, DatabaseWrapper db) {
 		int[] ints = db.execBatch(batchSql, pool);
-		for (int i : ints) {
-			if (i != 1) {
-				throw new AppSystemException("批量插入数据出现错误,退出");
-			}
-		}
+//		for (int i : ints) {
+		//XXX Oracle数据库batch插入，这边返回值是-2
+//			if (i != 1) {
+//				throw new AppSystemException("批量插入数据出现错误,退出");
+//			}
+//		LOGGER.info("batch插入的返回值为" + i);
+//		}
+		LOGGER.info("本次batch插入" + ints.length);
 		LOGGER.info("数据库已插入" + num + "条！");
 		pool.clear();// 插入成功，清空集合
 	}

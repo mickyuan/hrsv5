@@ -15,7 +15,7 @@ public class CollectTableHandleFactory {
 		//判断是否为db平面采集
 		if (IsFlag.Shi.getCode().equals(sourceDataConfBean.getDb_agent())) {
 			//是
-			return new DbCollectTableHandleParse();
+			return new DFCollectTableHandleParse();
 		} else if (IsFlag.Fou.getCode().equals(sourceDataConfBean.getDb_agent())) {
 			//否
 			return new JdbcCollectTableHandleParse();

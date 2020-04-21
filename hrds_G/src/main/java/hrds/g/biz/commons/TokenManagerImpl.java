@@ -4,7 +4,8 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
-import fd.ng.web.util.Dbo;
+import fd.ng.db.jdbc.DatabaseWrapper;
+import fd.ng.db.jdbc.SqlOperator;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Sys_user;
 import hrds.commons.exception.BusinessException;
@@ -26,17 +27,17 @@ public class TokenManagerImpl implements TokenManager {
 	@Param(name = "user_id", desc = "用户ID", range = "新增用户时生成")
 	@Param(name = "token", desc = "根据生成token接口获取", range = "不为空")
 	@Override
-	public TokenModel createToken(String user_id, String pwd) {
+	public TokenModel createToken(DatabaseWrapper db, Long user_id, String pwd) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		// 2.使用用户名和密码的MD5作为源token
-		String defaultToken = TokenManagerImpl.getDefaultToken(user_id, pwd);
+		String defaultToken = TokenManagerImpl.getDefaultToken(db, user_id, pwd);
 		TokenModel model;
 		// 3.判断数据库中token值是否为默认值,如果是创建token并更新数据库
 		if (IsFlag.Fou == IsFlag.ofEnumByCode(defaultToken)) {
 			String token = DigestUtils.md5Hex(user_id + pwd + System.currentTimeMillis());
 			model = new TokenModel(user_id, token);
 			// 3.1创建token
-			create(user_id, token);
+			create(db,user_id, token);
 		} else {
 			model = new TokenModel(user_id, defaultToken);
 		}
@@ -51,7 +52,7 @@ public class TokenManagerImpl implements TokenManager {
 			"5.更新插入库")
 	@Param(name = "token", desc = "根据生成token接口获取", range = "不为空")
 	@Return(desc = "返回token是否还有效标志", range = "true有效，false无效")
-	public boolean checkToken(String token) {
+	public boolean checkToken(DatabaseWrapper db, String token) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		// 2.判断token值是否存在
 		TokenManagerImpl.isTokenExist(token);
@@ -82,14 +83,14 @@ public class TokenManagerImpl implements TokenManager {
 			"2.更新token")
 	@Param(name = "user_id", desc = "用户ID", range = "新增用户时生成")
 	@Param(name = "token", desc = "根据生成token接口获取", range = "不为空")
-	public void create(String user_id, String token) {
+	public void create(DatabaseWrapper db,Long user_id, String token) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		Sys_user user = new Sys_user();
 		user.setToken(token);
 		user.setValid_time(String.valueOf(System.currentTimeMillis() + 2 * 60 * 60 * 1000));
 		user.setUser_id(user_id);
 		// 2.更新token
-		user.update(Dbo.db());
+		user.update(db);
 	}
 
 	@Method(desc = "更新token有效时间", logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制" +
@@ -98,7 +99,8 @@ public class TokenManagerImpl implements TokenManager {
 	private static void updateValidTime(String token) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		// 2.更新token有效时间
-		Dbo.execute("update " + Sys_user.TableName + "  set valid_time=? WHERE token=?",
+		SqlOperator.execute(new DatabaseWrapper(), "update " + Sys_user.TableName + "  set valid_time=? " +
+						"WHERE token=?",
 				System.currentTimeMillis() + 2 * 60 * 60 * 1000, token);
 	}
 
@@ -108,8 +110,8 @@ public class TokenManagerImpl implements TokenManager {
 	private static void updateTokenToDefault(String token) {
 		// 1.数据可访问权限处理方式：该方法通不需要进行访问权限限制
 		// 2.更新token值为默认值
-		Dbo.execute("update " + Sys_user.TableName + " set token = ? WHERE token = ?",
-				IsFlag.Fou.getCode(), token);
+		SqlOperator.execute(new DatabaseWrapper(), "update " + Sys_user.TableName + " set token = ?" +
+				" WHERE token = ?", IsFlag.Fou.getCode(), token);
 	}
 
 	@Method(desc = "判断token值是否存在", logicStep = "1.数据可访问权限处理方式：该方法通不需要进行访问权限限制" +
@@ -118,8 +120,9 @@ public class TokenManagerImpl implements TokenManager {
 	private static void isTokenExist(String token) {
 		// 1.数据可访问权限处理方式：该方法通不需要进行访问权限限制
 		// 2.判断token值是否存在
-		if (Dbo.queryNumber("select count(*) FROM " + Sys_user.TableName + "  WHERE  token = ?",
-				token).orElseThrow(() -> new BusinessException("sql查询错误")) == 0) {
+		if (SqlOperator.queryNumber(new DatabaseWrapper(), "select count(*) FROM "
+				+ Sys_user.TableName + " WHERE  token = ?", token)
+				.orElseThrow(() -> new BusinessException("sql查询错误")) == 0) {
 			throw new BusinessException("token值不能为空");
 		}
 	}
@@ -131,11 +134,12 @@ public class TokenManagerImpl implements TokenManager {
 	@Param(name = "user_id", desc = "用户ID", range = "新增用户时生成")
 	@Param(name = "user_password", desc = "密码", range = "新增用户时生成")
 	@Return(desc = "返回token值", range = "无限制")
-	private static String getDefaultToken(String user_id, String user_password) {
+	private static String getDefaultToken(DatabaseWrapper db, Long user_id, String user_password) {
 		// 1.数据可访问权限处理方式：该方法通不需要进行访问权限限制
 		// 2.查询token值与token有效时间
-		Map<String, Object> userMap = Dbo.queryOneObject("select token,valid_time FROM " + Sys_user.TableName +
-				" WHERE user_id=? and user_password=?", user_id, user_password);
+		Map<String, Object> userMap =
+				SqlOperator.queryOneObject(db, "select token,valid_time FROM " + Sys_user.TableName +
+						" WHERE user_id=? and user_password=?", user_id, user_password);
 		// 3.判断token值与token有效时间是否为空，不为空返回查询token值，为空给默认值
 		if (!userMap.isEmpty()) {
 			String token = userMap.get("token").toString();
@@ -160,13 +164,16 @@ public class TokenManagerImpl implements TokenManager {
 	private static String getValidTime(String token) {
 		// 1.数据可访问权限处理方式：该方法通不需要进行访问权限限制
 		// 2.查询token有效时间
-		List<Object> columnList = Dbo.queryOneColumnList("select valid_time FROM " + Sys_user.TableName
-				+ "  WHERE token = ?", token);
-		// 3.判断token有效时间是否为空，为空返回空字符串，不为空返回查询结果
-		if (!columnList.isEmpty()) {
-			return columnList.get(0).toString();
-		} else {
-			return "";
+		try (DatabaseWrapper db = new DatabaseWrapper()) {
+			List<Object> columnList =
+					SqlOperator.queryOneColumnList(db, "select valid_time FROM " + Sys_user.TableName
+							+ "  WHERE token = ?", token);
+			// 3.判断token有效时间是否为空，为空返回空字符串，不为空返回查询结果
+			if (!columnList.isEmpty()) {
+				return columnList.get(0).toString();
+			} else {
+				return "";
+			}
 		}
 	}
 }

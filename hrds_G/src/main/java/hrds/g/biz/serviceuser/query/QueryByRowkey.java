@@ -1,4 +1,4 @@
-package hrds.g.biz.interfaceinfo.query;
+package hrds.g.biz.serviceuser.query;
 
 import fd.ng.core.utils.StringUtil;
 import hrds.commons.hadoop.hadoop_helper.HBaseHelper;

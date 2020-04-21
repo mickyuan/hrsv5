@@ -87,21 +87,20 @@ public class ForegroundTreeUtil {
 //		List<Map<String, Object>> dclRealTimeInnerTableInfos =
 //				(List<Map<String, Object>>) treeInfos.get("dclRealTimeInnerTableInfos");
 //		if (null != dclRealTimeInnerTableInfos && !dclRealTimeInnerTableInfos.isEmpty()) {
-//			DataConvertedToTreeNode.ConversionDCLRealTimeInnerTableInfos(dclRealTimeInnerTableInfos, treeDataList,
+//			DataConvertedToTreeNode.ConversionDCLRealTimeInnConversionDMLSourceInfoserTableInfos(dclRealTimeInnerTableInfos, treeDataList,
 //					treeDataInfo.getRootName());
 //		}
 //		//2.集市层(DML)信息转树节点
 //		//2-1.集市层信息转树节点
-//		List<Map<String, Object>> dmlDataInfos = (List<Map<String, Object>>) treeInfos.get("dmlDataInfos");
-//		if (null != dmlDataInfos && !dmlDataInfos.isEmpty()) {
-//			DataConvertedToTreeNode.ConversionDMLSourceInfos(dmlDataInfos, treeDataList, treeDataInfo.getRootName(),
-//					treeDataInfo.getIsShTable());
-//		}
+		List<Map<String, Object>> dmlDataInfos = (List<Map<String, Object>>) treeInfos.get("dmlDataInfos");
+		if (null != dmlDataInfos && !dmlDataInfos.isEmpty()) {
+			DataConvertedToTreeNode.ConversionDMLSourceInfos(dmlDataInfos, treeDataList, treeDataInfo.getRootName());
+		}
 //		//2-2.集市层集市下的表信息转树节点
-//		List<Map<String, Object>> dmlTableInfos = (List<Map<String, Object>>) treeInfos.get("dmlTableInfos");
-//		if (null != dmlTableInfos && !dmlTableInfos.isEmpty()) {
-//			DataConvertedToTreeNode.ConversionDMLTableInfos(dmlTableInfos, treeDataList, treeDataInfo.getRootName());
-//		}
+		List<Map<String, Object>> dmlTableInfos = (List<Map<String, Object>>) treeInfos.get("dmlTableInfos");
+        if (null != dmlTableInfos && !dmlTableInfos.isEmpty()) {
+            DataConvertedToTreeNode.ConversionDMLTableInfos(dmlTableInfos, treeDataList, treeDataInfo.getRootName());
+        }
 //		//3.加工层(DPL)信息转树节点
 //		//3-1.加工层源信息转树节点
 //		List<Map<String, Object>> dplDataInfos = (List<Map<String, Object>>) treeInfos.get("dplDataInfos");

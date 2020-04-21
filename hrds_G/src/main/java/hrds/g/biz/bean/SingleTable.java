@@ -12,7 +12,7 @@ public class SingleTable {
 
 	public static final String TableName = "single_table";
 
-	@DocBean(name = "table", value = "表名称:", dataType = String.class, required = true)
+	@DocBean(name = "tableName", value = "表名称:", dataType = String.class, required = true)
 	private String table;
 	@DocBean(name = "whereColumn", value = "条件Column:", dataType = String.class, required = false)
 	private String whereColumn;

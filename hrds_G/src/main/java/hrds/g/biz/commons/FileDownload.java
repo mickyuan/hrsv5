@@ -12,7 +12,7 @@ import java.util.Map;
 
 public class FileDownload {
 
-	public HttpServletResponse downLoadFile(String uuid, String user_id) {
+	public HttpServletResponse downLoadFile(String uuid, Long user_id) {
 
 		OutputStream out;
 		BufferedInputStream in;
@@ -56,7 +56,7 @@ public class FileDownload {
 		return response;
 	}
 
-	public Map<String, Object> fileInfo(String uuid, String user_id) {
+	public Map<String, Object> fileInfo(String uuid, Long user_id) {
 
 		Interface_file_info info = new Interface_file_info();
 		info.setUser_id(user_id);
@@ -71,7 +71,7 @@ public class FileDownload {
 	 * @param uuid
 	 * @return
 	 */
-	public HttpServletResponse downLoadFileESB(String uuid, String user_id) {
+	public HttpServletResponse downLoadFileESB(String uuid, Long user_id) {
 
 		OutputStream out;
 		BufferedInputStream in;

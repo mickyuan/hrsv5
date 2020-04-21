@@ -7,15 +7,12 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.web.util.Dbo;
-import hrds.commons.codes.AgentType;
 import hrds.commons.codes.DataSourceType;
-import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.UserType;
-import hrds.commons.entity.Agent_info;
-import hrds.commons.entity.Collect_job_classify;
-import hrds.commons.entity.Database_set;
+import hrds.commons.entity.*;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.User;
+import org.apache.commons.lang.StringUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -74,19 +71,22 @@ public class DCLDataQuery {
     @Return(desc = "数据源列表", range = "无限制")
     public static List<Map<String, Object>> getDCLBatchDataInfos(User user, String dataSourceName) {
         SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
-        asmSql.clean();
-        asmSql.addSql("SELECT distinct ds.source_id, ds.datasource_name from source_relation_dep srd JOIN " +
-                "data_source ds on srd.SOURCE_ID = ds.SOURCE_ID");
-        //1.如果数据源名称不为空,模糊查询获取数据源信息
-        if (!StringUtil.isBlank(dataSourceName)) {
-            asmSql.addSql(" AND datasource_name like ? OR datasource_number like ?");
-            asmSql.addParam('%' + dataSourceName + '%').addParam('%' + dataSourceName + '%');
-        }
-        //2.如果不是系统管理员,则过滤部门
-        UserType userType = UserType.ofEnumByCode(user.getUserType());
-        if (UserType.XiTongGuanLiYuan != userType) {
-            asmSql.addSql("where srd.dep_id = ?");
+
+        asmSql.addSql("select distinct t1.* from " + Data_source.TableName + " t1 left join " + Source_relation_dep.TableName + " t2 on t1.source_id = t2.source_id ");
+        //如果不是系统管理员,则过滤部门
+        if (!UserType.XiTongGuanLiYuan.getCode().equals(user.getUserType())) {
+            asmSql.addSql("where t2.dep_id = ? ");
             asmSql.addParam(user.getDepId());
+        }
+        //如果数据源名称不为空,模糊查询获取数据源信息
+        if (!StringUtil.isBlank(dataSourceName)) {
+            if (!UserType.XiTongGuanLiYuan.getCode().equals(user.getUserType())) {
+                asmSql.addSql(" and ");
+            } else {
+                asmSql.addSql(" where ");
+            }
+            asmSql.addSql(" ( lower(datasource_name) like ? OR lower(datasource_number) like ? )");
+            asmSql.addParam('%' + dataSourceName.toLowerCase() + '%').addParam('%' + dataSourceName.toLowerCase() + '%');
         }
         //3.获取查询结果集
         return Dbo.queryList(asmSql.sql(), asmSql.params());
@@ -98,43 +98,53 @@ public class DCLDataQuery {
     @Param(name = "isFileCollection", desc = "是否文件采集", range = "true:是,false:否")
     @Param(name = "user", desc = "User", range = "登录用户User的对象实例")
     @Return(desc = "加工信息列表", range = "无限制")
-    public static List<Map<String, Object>> getDCLBatchClassifyInfos(String source_id, Boolean isFileCollection,
-                                                                     User user) {
-        return getDCLBatchClassifyInfos(source_id, isFileCollection, user, null);
+    public static List<Map<String, Object>> getDCLBatchClassifyInfos(String source_id, User user) {
+        return getDCLBatchClassifyInfos(source_id, user, null);
     }
 
     @Method(desc = "获取批量数据下数据源下分类信息",
             logicStep = "1.获取批量数据下数据源下分类信息,如果是系统管理员,则不过滤部门")
     @Param(name = "source_id", desc = "数据源id", range = "数据源id,唯一")
-    @Param(name = "isFileCollection", desc = "是否文件采集", range = "true:是,false:否")
     @Param(name = "user", desc = "User", range = "登录用户User的对象实例")
     @Return(desc = "加工信息列表", range = "无限制")
-    public static List<Map<String, Object>> getDCLBatchClassifyInfos(String source_id, Boolean isFileCollection, User user,
+    public static List<Map<String, Object>> getDCLBatchClassifyInfos(String source_id, User user,
                                                                      String searchName) {
         SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
-        asmSql.clean();
-        UserType userType = UserType.ofEnumByCode(user.getUserType());
-        Agent_info agent_info = new Agent_info();
+        asmSql.addSql("select distinct t1.* from " + Collect_job_classify.TableName + " t1 left join " + Agent_info.TableName + " t2 on t1.agent_id = t2.agent_id left join " + Source_relation_dep.TableName
+                + " t3 on t2.source_id = t3.source_id");
         //1.获取数据源下分类信息,如果是系统管理员,则不过滤部门
-        if (UserType.XiTongGuanLiYuan != userType) {
-            asmSql.addSql("SELECT * FROM agent_info ai join data_source ds on ai.source_id = ds.source_id JOIN" +
-                    " source_relation_dep srd ON ds.source_id = srd.source_id JOIN collect_job_classify cjc" +
-                    " ON ai.agent_id = cjc.agent_id where srd.dep_id = ?").addParam(user.getDepId());
-            if (StringUtil.isNotBlank(source_id)) {
+        if (UserType.XiTongGuanLiYuan.getCode().equals(user.getUserType())) {
+            //如果是有数据源的话 根据数据源搜索
+            if (!StringUtils.isEmpty(source_id)) {
+                Agent_info agent_info = new Agent_info();
                 agent_info.setSource_id(source_id);
-                asmSql.addSql(" AND ds.source_id = ?").addParam(agent_info.getSource_id());
+                asmSql.addSql(" where t2.source_id = ? ");
+                asmSql.addParam(agent_info.getSource_id());
             }
-        } else {
-            asmSql.addParam("SELECT t3.datasource_name,* FROM collect_job_classify t1 JOIN agent_info t2 ON" +
-                    " t2.agent_id = t1.agent_id JOIN data_source t3 ON t3.source_id = t2.source_id");
-            if (StringUtil.isNotBlank(source_id)) {
-                agent_info.setSource_id(source_id);
-                asmSql.addSql(" WHERE t2.source_id = ? ").addParam(agent_info.getSource_id());
+            //如果是模糊查询 根据模糊查询搜索
+            else if (!StringUtils.isEmpty(searchName)) {
+                asmSql.addSql(" where (lower(t1.classify_num) like ? or lower(t1.classify_name) like ?)");
+                asmSql.addParam("%" + searchName.toLowerCase() + "%");
+                asmSql.addParam("%" + searchName.toLowerCase() + "%");
             }
         }
-        if (!isFileCollection) {
-            asmSql.addSql(" AND agent_type not in (?,?)").addParam(AgentType.WenJianXiTong.getCode())
-                    .addParam(AgentType.FTP.getCode());
+        //如果不是系统管理员
+        else {
+            //如果有source_id 根据source_id 搜索过滤部门
+            if (!StringUtils.isEmpty(source_id)) {
+                Agent_info agent_info = new Agent_info();
+                agent_info.setSource_id(source_id);
+                asmSql.addSql(" where t2.source_id = ? and t3.dep_id = ?");
+                asmSql.addParam(agent_info.getSource_id());
+                asmSql.addParam(user.getDepId());
+            }
+            //如果是模糊查询，根据模糊查询，过滤部门搜索
+            else if (!StringUtils.isEmpty(searchName)) {
+                asmSql.addSql(" where (lower(t1.classify_num) like ? or lower(t1.classify_name) like ?) and t3.dep_id = ?");
+                asmSql.addParam("%" + searchName.toLowerCase() + "%");
+                asmSql.addParam("%" + searchName.toLowerCase() + "%");
+                asmSql.addParam(user.getDepId());
+            }
         }
         return Dbo.queryList(asmSql.sql(), asmSql.params());
     }
@@ -144,46 +154,34 @@ public class DCLDataQuery {
     @Param(name = "classify_id", desc = "分类id", range = "分类id,唯一")
     @Param(name = "classify_name", desc = "分类名称", range = "String字符串,512长度")
     @Param(name = "user", desc = "User", range = "登录用户User的对象实例")
-    @Param(name = "isIntoHBase", desc = "是否进HBase", range = "0:是,1:否")
     @Return(desc = "分类下表信息", range = "无限制")
-    public static List<Map<String, Object>> getDCLBatchTableInfos(String classify_id, String classify_name,
-                                                                  User user, String isIntoHBase) {
+    public static List<Map<String, Object>> getDCLBatchTableInfos(String classify_id, String table_name, User user) {
         SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
         //1.获取分类id获取分类下表信息
-        asmSql.clean();
-        UserType userType = UserType.ofEnumByCode(user.getUserType());
-        Database_set database_set = new Database_set();
-        Collect_job_classify classify = new Collect_job_classify();
-        if (UserType.XiTongGuanLiYuan != userType) {
-            asmSql.addSql("SELECT t2.task_name,t1.*,t3.* FROM source_file_attribute t1 JOIN database_set t2 ON" +
-                    " t1.collect_set_id = t2.database_id JOIN collect_job_classify t3 ON" +
-                    " t3.classify_id = t2.classify_id JOIN source_relation_dep t4 ON t1.source_id = t4.source_id");
+
+        asmSql.addSql("select distinct t1.* from "+Data_store_reg.TableName+" t1 left join "+Collect_job_classify.TableName+" t2 on t1.agent_id = t2.agent_id left join "+Agent_info.TableName+
+                " t3 on t1.agent_id = t3.agent_id left join "+Source_relation_dep.TableName+" t4 on t3.source_id = t4.source_id");
+        if (UserType.XiTongGuanLiYuan.getCode().equals(user.getUserType())) {
+            if (!StringUtils.isEmpty(classify_id)) {
+                Database_set database_set = new Database_set();
+                database_set.setClassify_id(classify_id);
+                asmSql.addSql(" where t2.classify_id = ?");
+                asmSql.addParam(database_set.getClassify_id());
+            } else if (!StringUtils.isEmpty(table_name)) {
+                asmSql.addSql(" where lower(t1.hyren_name) like ");
+                asmSql.addParam("%" + table_name.toLowerCase() + "%");
+            }
         } else {
-            asmSql.addSql("SELECT t2.task_name,t1.*,t3.* FROM source_file_attribute t1 JOIN database_set t2 ON" +
-                    " t1.collect_set_id = t2.database_id JOIN collect_job_classify t3 ON" +
-                    " t3.classify_id = t2.classify_id");
-        }
-        if (StringUtil.isNotBlank(classify_id)) {
-            database_set.setClassify_id(classify_id);
-            asmSql.addSql(" WHERE t2.classify_id = ?").addParam(database_set.getClassify_id());
-        }
-        if (StringUtil.isNotBlank(classify_name)) {
-            classify.setClassify_name("%" + classify_name + "%");
-            asmSql.addSql(" WHERE t1.table_name like ? OR t1.hbase_name like ? OR t1.original_name like ? OR" +
-                    " t2.task_name like ? OR t2.database_number like ?");
-            asmSql.addParam(classify.getClassify_name()).addParam(classify.getClassify_name())
-                    .addParam(classify.getClassify_name()).addParam(classify.getClassify_name())
-                    .addParam(classify.getClassify_name());
-        }
-        if (UserType.XiTongGuanLiYuan != userType) {
-            asmSql.addSql(" AND t4.dep_id = ?").addParam(user.getDepId());
-        }
-        if (StringUtil.isNotBlank(isIntoHBase)) {
-            IsFlag isFlag = IsFlag.ofEnumByCode(isIntoHBase);
-            if (IsFlag.Fou == isFlag) {
-                asmSql.addORParam("t1.is_in_hbase", new String[]{isIntoHBase, "3"});
-            } else {
-                asmSql.addSql(" AND t1.is_in_hbase = ?").addParam(isIntoHBase);
+            if (!StringUtils.isEmpty(classify_id)) {
+                Database_set database_set = new Database_set();
+                database_set.setClassify_id(classify_id);
+                asmSql.addSql(" where t2.classify_id = ? and t4.dep_id = ?");
+                asmSql.addParam(database_set.getClassify_id());
+                asmSql.addParam(user.getDepId());
+            } else if (!StringUtils.isEmpty(table_name)) {
+                asmSql.addSql(" where lower(t1.hyren_name) like ?  and t4.dep_id = ?");
+                asmSql.addParam("%" + table_name.toLowerCase() + "%");
+                asmSql.addParam(user.getDepId());
             }
         }
         return Dbo.queryList(asmSql.sql(), asmSql.params());

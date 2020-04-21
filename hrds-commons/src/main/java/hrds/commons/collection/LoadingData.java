@@ -30,7 +30,7 @@ public abstract class LoadingData {
 	/**
 	 * @return
 	 */
-	public Long intoDataLayer(String sql, DatabaseWrapper db,LayerBean intolayerBean) {
+	public Long intoDataLayer(String sql, DatabaseWrapper db, LayerBean intolayerBean) {
 		LayerTypeBean allTableIsLayer = ProcessingData.getAllTableIsLayer(sql, db);
 		LayerTypeBean.ConnTyte connType = allTableIsLayer.getConnType();
 		if (LayerTypeBean.ConnTyte.oneJdbc == connType) {
@@ -46,16 +46,20 @@ public abstract class LoadingData {
 			String store_type = intolayerBean.getStore_type();//入库是谁
 			new ProcessingData() {
 				@Override
-				public void dealLine(Map<String, Object> map){
-					if(Store_type.DATABASE == Store_type.ofEnumByCode(store_type) ){
+				public void dealLine(Map<String, Object> map) {
+					//这里拿到数据进行入库
+					if (Store_type.DATABASE == Store_type.ofEnumByCode(store_type)) {
 
 					}
 				}
 			}.getDataLayer(sql, db);
-
-
 			return layerBean.getDsl_id();
+		} else if (LayerTypeBean.ConnTyte.moreJdbc == connType) {
+
+		} else if (LayerTypeBean.ConnTyte.moreOther == connType) {
+
 		}
+
 		return null;
 	}
 

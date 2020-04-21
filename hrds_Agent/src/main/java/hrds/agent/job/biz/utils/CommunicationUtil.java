@@ -11,7 +11,6 @@ import fd.ng.netserver.conf.HttpServerConfBean;
 import fd.ng.web.action.ActionResult;
 import hrds.commons.entity.Collect_case;
 import hrds.commons.entity.Data_store_reg;
-import hrds.commons.entity.Source_file_attribute;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.AgentActionUtil;
 import hrds.commons.utils.PackUtil;
@@ -210,27 +209,27 @@ public class CommunicationUtil {
 		}
 	}
 
-	public static void addSourceFileAttribute(Source_file_attribute file_attribute, String database_id) {
-		try {
-			HttpServerConfBean confBean = HttpServerConf.getHttpServer("hyren_main");
-			String url = AgentActionUtil.getServerUrl(confBean, AgentActionUtil.ADDSOURCEFILEATTRIBUTE);
-			//调用工具类方法给agent发消息，并获取agent响应
-			HttpClient.ResponseValue resVal = new HttpClient()
-					.addData("source_file_attribute", PackUtil.packMsg(JSONObject.toJSONString(file_attribute)))
-					.post(url);
-			ActionResult ar = JsonUtil.toObjectSafety(resVal.getBodyString(), ActionResult.class)
-					.orElseThrow(() -> new AppSystemException("连接" + url + "服务异常"));
-			if (!ar.isSuccess()) {
-				throw new AppSystemException("agent连接服务端批量更新source_file_attribute信息异常");
-			}
-		} catch (Exception e) {
-			JSONObject object = new JSONObject();
-			object.put("source_file_attribute", JSONObject.toJSONString(file_attribute));
-			//连接服务器报错则将信息存到文件
-			writeCommunicationErrorFile(AgentActionUtil.ADDSOURCEFILEATTRIBUTE,
-					object.toString(), e.getMessage(), database_id);
-		}
-	}
+//	public static void addSourceFileAttribute(Source_file_attribute file_attribute, String database_id) {
+//		try {
+//			HttpServerConfBean confBean = HttpServerConf.getHttpServer("hyren_main");
+//			String url = AgentActionUtil.getServerUrl(confBean, AgentActionUtil.ADDSOURCEFILEATTRIBUTE);
+//			//调用工具类方法给agent发消息，并获取agent响应
+//			HttpClient.ResponseValue resVal = new HttpClient()
+//					.addData("source_file_attribute", PackUtil.packMsg(JSONObject.toJSONString(file_attribute)))
+//					.post(url);
+//			ActionResult ar = JsonUtil.toObjectSafety(resVal.getBodyString(), ActionResult.class)
+//					.orElseThrow(() -> new AppSystemException("连接" + url + "服务异常"));
+//			if (!ar.isSuccess()) {
+//				throw new AppSystemException("agent连接服务端批量更新source_file_attribute信息异常");
+//			}
+//		} catch (Exception e) {
+//			JSONObject object = new JSONObject();
+//			object.put("source_file_attribute", JSONObject.toJSONString(file_attribute));
+//			//连接服务器报错则将信息存到文件
+//			writeCommunicationErrorFile(AgentActionUtil.ADDSOURCEFILEATTRIBUTE,
+//					object.toString(), e.getMessage(), database_id);
+//		}
+//	}
 
 	public static void addDataStoreReg(Data_store_reg data_store_reg, String database_id) {
 		try {

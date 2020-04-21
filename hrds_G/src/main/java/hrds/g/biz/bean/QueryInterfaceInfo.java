@@ -14,8 +14,8 @@ public class QueryInterfaceInfo {
 
 	@DocBean(name = "token", value = "token值:", dataType = String.class, required = true)
 	private String token;
-	@DocBean(name = "user_id", value = "用户ID:", dataType = String.class, required = true)
-	private String user_id;
+	@DocBean(name = "user_id", value = "用户ID:", dataType = Long.class, required = true)
+	private Long user_id;
 	@DocBean(name = "user_password", value = "密码:", dataType = String.class, required = true)
 	private String user_password;
 	@DocBean(name = "user_name", value = "用户名:", dataType = String.class, required = true)
@@ -43,7 +43,7 @@ public class QueryInterfaceInfo {
 	private String interface_name;
 	@DocBean(name = "interface_id", value = "接口ID:", dataType = String.class, required = true)
 	private String interface_id;
-	@DocBean(name = "user_id", value = "表使用ID:", dataType = String.class, required = true)
+	@DocBean(name = "use_id", value = "表使用ID:", dataType = String.class, required = true)
 	private String use_id;
 	@DocBean(name = "interface_use_id", value = "接口使用ID:", dataType = String.class, required = true)
 	private String interface_use_id;
@@ -64,11 +64,11 @@ public class QueryInterfaceInfo {
 		this.token = token;
 	}
 
-	public String getUser_id() {
+	public Long getUser_id() {
 		return user_id;
 	}
 
-	public void setUser_id(String user_id) {
+	public void setUser_id(Long user_id) {
 		this.user_id = user_id;
 	}
 

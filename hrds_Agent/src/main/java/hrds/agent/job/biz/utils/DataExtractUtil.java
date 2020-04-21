@@ -48,17 +48,16 @@ public class DataExtractUtil {
 			JSONObject jsonObject = new JSONObject();
 			jsonObject.put("table_name", tableName);
 			jsonObject.put("table_cn_name", tableName);
-			jsonObject.put("storage_type", storage_type);
 			jsonObject.put("unload_type", unload_type);
 			JSONArray storageArray = new JSONArray();
 			for (Data_extraction_def data_extraction_def : data_extraction_defList) {
 				JSONObject object = new JSONObject();
 				object.put("is_header", data_extraction_def.getIs_header());
-				object.put("file_format", data_extraction_def.getDbfile_format());
-				object.put("file_code", data_extraction_def.getDatabase_code());
-				object.put("root_path", data_extraction_def.getPlane_url());
+				object.put("dbfile_format", data_extraction_def.getDbfile_format());
+				object.put("database_code", data_extraction_def.getDatabase_code());
+				object.put("plane_url", data_extraction_def.getPlane_url());
 				object.put("row_separator", StringUtil.string2Unicode(data_extraction_def.getRow_separator()));
-				object.put("column_separator", StringUtil.string2Unicode(data_extraction_def.getDatabase_separatorr()));
+				object.put("database_separatorr", StringUtil.string2Unicode(data_extraction_def.getDatabase_separatorr()));
 				storageArray.add(object);
 			}
 			jsonObject.put("storage", storageArray);
@@ -69,12 +68,13 @@ public class DataExtractUtil {
 			for (int i = 0; i < columnList.size(); i++) {
 				JSONObject object = new JSONObject();
 				object.put("column_type", typeList.get(i));
-				object.put("column_null", "Y");
 				object.put("column_remark", "");
-				object.put("column_id", i);
-				object.put("column_cn_name", "");
+				object.put("column_cn_name", columnList.get(i));
 				object.put("column_name", columnList.get(i));
-				object.put("column_key", IsFlag.Shi.getCode().equals(primaryKeyList.get(i)) ? "Y" : "N");
+				object.put("is_primary_key", primaryKeyList.get(i));
+				object.put("is_get", IsFlag.Shi.getCode());
+				object.put("is_alive", IsFlag.Shi.getCode());
+				object.put("is_new", IsFlag.Fou.getCode());
 				array.add(object);
 			}
 			jsonObject.put("columns", array);

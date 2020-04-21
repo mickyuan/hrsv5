@@ -32,12 +32,12 @@ public class SearchNode {
         if (!dclBatchDataInfos.isEmpty()) {
             boolean isFileCo = Boolean.parseBoolean(treeDataInfo.getIsFileCo());
             List<Map<String, Object>> dclBatchClassifyInfos = DCLDataQuery
-                    .getDCLBatchClassifyInfos(null, isFileCo, user, treeDataInfo.getTableName());
+                    .getDCLBatchClassifyInfos(null, user, treeDataInfo.getTableName());
             searchDCLNodeDataMap.put("dclBatchClassifyInfos", dclBatchClassifyInfos);
         }
         //1-3.获取DCL分类下数据表信息
         List<Map<String, Object>> dclBatchTableInfos = DCLDataQuery.getDCLBatchTableInfos(null,
-                treeDataInfo.getTableName(), user, treeDataInfo.getIsIntoHBase());
+                treeDataInfo.getTableName(), user);
         if (!dclBatchTableInfos.isEmpty()) {
             searchDCLNodeDataMap.put("dclBatchTableInfos", dclBatchTableInfos);
         }

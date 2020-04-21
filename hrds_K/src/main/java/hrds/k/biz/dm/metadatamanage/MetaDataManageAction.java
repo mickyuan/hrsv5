@@ -25,7 +25,7 @@ import hrds.k.biz.dm.metadatamanage.drbtree.DRBTreeNodeInfo;
 import hrds.k.biz.dm.metadatamanage.drbtree.MDMTreeNodeInfo;
 import hrds.k.biz.dm.metadatamanage.query.DRBDataQuery;
 import hrds.k.biz.dm.metadatamanage.query.MDMDataQuery;
-import hrds.k.biz.utils.DataTableFieldUtil;
+import hrds.commons.utils.DataTableFieldUtil;
 
 import java.util.HashMap;
 import java.util.List;
@@ -93,7 +93,7 @@ public class MetaDataManageAction extends BaseAction {
                 //设置表创建日期
                 create_date = table_info.get("original_update_date").toString();
                 //获取并转换字段信息List
-                meta_list = DataTableFieldUtil.metasToList(DCLDataQuery.getDCLBatchTableColumns(file_id));
+                meta_list = DataTableFieldUtil.metaInfoToList(DCLDataQuery.getDCLBatchTableColumns(file_id));
                 break;
             case "ISL":
             case "DPL":
@@ -152,7 +152,7 @@ public class MetaDataManageAction extends BaseAction {
                 //获取字段信息列表
                 List<Map<String, Object>> dclBatchTableColumns = DCLDataQuery.getDCLBatchTableColumns(dsr.getTable_id());
                 //转化字段信息列表为meta_list
-                meta_list = DataTableFieldUtil.metasToList(dclBatchTableColumns);
+                meta_list = DataTableFieldUtil.metaInfoToList(dclBatchTableColumns);
                 break;
             case "ISL":
             case "DPL":
