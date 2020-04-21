@@ -82,7 +82,7 @@ public class RuleResultsAction extends BaseAction {
     }
 
     @Method(desc = "规则执行详细信息",
-            logicStep = "规则执行详细信息")
+            logicStep = "1.规则执行详细信息")
     @Param(name = "task_id", desc = "任务编号", range = "String类型")
     @Return(desc = "规则执行详细信息", range = "规则执行详细信息")
     public Dq_result getRuleDetectDetail(String task_id) {
