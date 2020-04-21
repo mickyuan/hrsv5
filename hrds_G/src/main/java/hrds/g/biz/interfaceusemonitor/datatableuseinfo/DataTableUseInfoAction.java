@@ -12,6 +12,7 @@ import hrds.commons.base.BaseAction;
 import hrds.commons.entity.Sys_user;
 import hrds.commons.entity.Sysreg_parameter_info;
 import hrds.commons.entity.Table_use_info;
+import hrds.g.biz.init.InterfaceManager;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -92,7 +93,8 @@ public class DataTableUseInfoAction extends BaseAction {
 	@Method(desc = "根据表使用ID删除数据表信息（接口使用监控）",
 			logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制" +
 					"2.删除系统登记表参数信息" +
-					"3.删除表使用信息")
+					"3.删除表使用信息" +
+					"4.重新初始化表使用信息")
 	@Param(name = "use_id", desc = "接口使用ID", range = "新增接口使用信息时生成")
 	@Return(desc = "删除数据表信息", range = "无限制")
 	public void deleteDataTableUseInfo(Long use_id) {
@@ -101,5 +103,7 @@ public class DataTableUseInfoAction extends BaseAction {
 		Dbo.execute("delete from " + Sysreg_parameter_info.TableName + " where use_id = ?", use_id);
 		// 3.删除表使用信息
 		Dbo.execute("delete from " + Table_use_info.TableName + " where use_id = ?", use_id);
+		// 4.重新初始化表使用信息
+		InterfaceManager.userTableInfo();
 	}
 }

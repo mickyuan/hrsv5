@@ -22,6 +22,7 @@ import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.commons.utils.tree.Node;
 import hrds.commons.utils.tree.NodeDataConvertedTreeList;
 import hrds.g.biz.bean.TableDataInfo;
+import hrds.g.biz.init.InterfaceManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -85,6 +86,7 @@ public class DataRangeManageAction extends BaseAction {
 				throw new BusinessException("该数据源类型还未开发，待续。。。" + data_layer);
 			}
 		}
+		InterfaceManager.userTableInfo();
 	}
 
 	@Method(desc = "保存贴源层数据", logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制" +

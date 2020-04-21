@@ -409,7 +409,6 @@ public class InterfaceManager {
 	public static void userTableInfo() {
 		// 1.数据可访问权限处理方式：该方法通过不需要进行访问权限限制
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			Table_use_info table = new Table_use_info();
 			SqlOperator.Assembler assembler = SqlOperator.Assembler.newInstance();
 			assembler.clean();
 			assembler.addSql("select t1.user_id,t1.sysreg_name,t2.table_column_name,t2.remark,original_name," +
