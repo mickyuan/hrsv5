@@ -8,6 +8,7 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
+import fd.ng.core.utils.FileUtil;
 import fd.ng.core.utils.StringUtil;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Agent_down_info;
@@ -21,6 +22,7 @@ import hrds.commons.utils.deployentity.HttpYaml;
 import hrds.commons.utils.yaml.Yaml;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -45,6 +47,21 @@ public class AgentDeploy {
           + "fdconfig"
           + SEPARATOR;
 
+  // 初始化当前本地临时目录地址
+  static {
+    File dir = new File(CONFPATH);
+    if (dir.exists()) {
+      logger.info("创建目录 " + CONFPATH + " 已经存在");
+    } else {
+      // 创建目录
+      if (dir.mkdirs()) {
+        logger.info("创建目录" + CONFPATH + "成功！");
+      } else {
+        logger.info("创建目录" + CONFPATH + "失败！");
+      }
+    }
+  }
+
   /** 写本地临时Yaml配置文件 */
   @Method(
       desc = "部署Agent配置文件",
@@ -67,7 +84,7 @@ public class AgentDeploy {
   @Param(name = "down_info", desc = "部署Agent信息,这个里面的路径是最新的", range = "", isBean = true)
   @Param(name = "oldAgentPath", desc = "旧的,Agent部署目录地址", range = "可以为空,为空表示为第一次部署")
   @Param(name = "oldLogPath", desc = "旧的,Agent部署日志地址", range = "可以为空,为空表示为第一次部署")
-//  @Return(desc = "返回部署是否操作成功", range = "true-成功/false-失败")
+  //  @Return(desc = "返回部署是否操作成功", range = "true-成功/false-失败")
   public static void agentConfDeploy(
       Agent_down_info down_info, String oldAgentPath, String oldLogPath) {
     try {
@@ -87,7 +104,6 @@ public class AgentDeploy {
               down_info.getAgent_ip(),
               down_info.getAgent_port());
       Yaml.dump(httpServerMap, new File(CONFPATH + HttpServer.HTTP_CONF_NAME));
-
       // 二 : resources/fdconfig/ 下的全部文件SCP 到agent目录下
       /* 开始将本地写好的文件SCP到Agent目下, */
       sftpAgentToTargetMachine(down_info, oldAgentPath, oldLogPath);
@@ -336,4 +352,5 @@ public class AgentDeploy {
         shellSession,
         "mkdir -p " + rootDir + SEPARATOR + targetch_machine[3] + SEPARATOR + targetch_machine[5]);
   }
+
 }
