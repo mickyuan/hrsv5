@@ -7,6 +7,7 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
+import fd.ng.web.action.AbstractWebappBaseAction;
 import fd.ng.web.util.RequestUtil;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.CollectType;
@@ -36,7 +37,7 @@ import java.util.List;
 import java.util.Map;
 
 @DocClass(desc = "接口信息实现类", author = "dhw", createdate = "2020/3/30 15:39")
-public class ServiceInterfaceUserImplAction extends BaseAction implements ServiceInterfaceUserDefine {
+public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction implements ServiceInterfaceUserDefine {
 
 	private static final Logger logger = LogManager.getLogger();
 	// 对于SQL的字段是否使用字段验证

@@ -46,7 +46,6 @@ public class DataTableUseInfoAction extends BaseAction {
 	@Method(desc = "查询数据表信息（接口使用监控）",
 			logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制" +
 					"2.返回查询接口监控数据表信息")
-	@Param(name = "user_id", desc = "接口所属用户ID", range = "无限制")
 	@Return(desc = "返回查询接口监控数据表信息", range = "无限制")
 	public Result searchTableData() {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制

@@ -96,8 +96,6 @@ public class InterfaceUseInfoAction extends BaseAction {
 			"4.查询接口使用信息" +
 			"5.遍历接口使用信息封装响应时间参数" +
 			"6.返回接口使用信息")
-	@Param(name = "use_valid_date", desc = "有效截至日期", range = "yyyy-MM-dd格式", nullable = true)
-	@Param(name = "user_id", desc = "接口所属用户ID", range = "无限制", nullable = true)
 	@Return(desc = "返回接口使用信息", range = "无限制")
 	public Result searchInterfaceInfo() {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
