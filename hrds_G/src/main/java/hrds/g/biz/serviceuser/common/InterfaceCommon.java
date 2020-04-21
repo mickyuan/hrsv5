@@ -648,7 +648,7 @@ public class InterfaceCommon {
 			return StateType.getResponseInfo(StateType.DATA_TYPE_ERROR);
 		}
 		// 3.判断输出类型是否合法
-		if (OutType.isOutType(outType)) {
+		if (!OutType.isOutType(outType)) {
 			return StateType.getResponseInfo(StateType.OUT_TYPE_ERROR);
 		}
 		// 4.合法返回正常响应信息
@@ -679,13 +679,12 @@ public class InterfaceCommon {
 			return responseMap;
 		}
 		// 4.检查异步响应状态信息
-		responseMap = checkAsyn(outTye, asynType, backurl, fileName, filePath);
+		responseMap = checkAsyn(responseMap, outTye, asynType, backurl, fileName, filePath);
 		// 5.如果checkasyn不为响应状态不为normal返回错误响应信息
 		if (StateType.NORMAL != StateType.ofEnumByCode(responseMap.get("status").toString())) {
 			return responseMap;
 		}
-		// 6.返回正常响应信息
-		return StateType.getResponseInfo(StateType.NORMAL);
+		return responseMap;
 	}
 
 	@Method(desc = "检查回调url地址是否可以连接",
@@ -718,43 +717,45 @@ public class InterfaceCommon {
 					"3.1判断是否为异步状态是否合法" +
 					"3.2判断是否为异步回调，如果是判断回调url是否为空" +
 					"3.3判断是否为异步轮询，如果是判断filename,filepath是否为空")
+	@Param(name = "responseMap", desc = "接口响应状态信息集合", range = "无限制")
 	@Param(name = "outType", desc = "输出数据类型", range = "stream,file二选一")
 	@Param(name = "asynType", desc = "是否异步状态", range = "0：同步返回，1:异步回调，2：异步轮询")
 	@Param(name = "backUrl", desc = "回调utl地址", range = "asynType为1时必传", nullable = true)
 	@Param(name = "fileName", desc = "文件名称", range = "asynType为2时必传", nullable = true)
 	@Param(name = "filepath", desc = "文件路径", range = "asynType为2时必传", nullable = true)
 	@Return(desc = "返回响应状态信息", range = "无限制")
-	public static Map<String, Object> checkAsyn(String outType, String asynType, String backUrl, String
-			fileName, String filepath) {
+	public static Map<String, Object> checkAsyn(Map<String, Object> responseMap, String outType,
+	                                            String asynType, String backUrl,
+	                                            String fileName, String filepath) {
 
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		// 2.判断输出数据形式是否合法
 		if (!OutType.isOutType(outType)) {
-			return StateType.getResponseInfo(StateType.OUT_TYPE_ERROR);
+			responseMap = StateType.getResponseInfo(StateType.OUT_TYPE_ERROR);
 		}
 		// 3.判断输出数据形式是否为file
 		if (OutType.FILE == OutType.ofEnumByCode(outType)) {
 			// 3.1判断是否为异步状态是否合法
 			if (!AsynType.isAsynType(asynType)) {
-				return StateType.getResponseInfo(StateType.ASYNTYPE_ERROR);
+				responseMap = StateType.getResponseInfo(StateType.ASYNTYPE_ERROR);
 			}
 			// 3.2判断是否为异步回调，如果是判断回调url是否为空
 			if (AsynType.ASYNCALLBACK == AsynType.ofEnumByCode(asynType)) {
 				if (StringUtil.isBlank(backUrl)) {
-					return StateType.getResponseInfo(StateType.CALBACK_URL_ERROR);
+					responseMap = StateType.getResponseInfo(StateType.CALBACK_URL_ERROR);
 				}
 			}
 			// 3.3判断是否为异步轮询，如果是判断filename,filepath是否为空
 			if (AsynType.ASYNPOLLING == AsynType.ofEnumByCode(asynType)) {
 				if (StringUtil.isBlank(fileName)) {
-					return StateType.getResponseInfo(StateType.FILENAME_ERROR);
+					responseMap = StateType.getResponseInfo(StateType.FILENAME_ERROR);
 				}
 				if (StringUtil.isBlank(filepath)) {
-					return StateType.getResponseInfo(StateType.FILEPARH_ERROR);
+					responseMap = StateType.getResponseInfo(StateType.FILEPARH_ERROR);
 				}
 			}
 		}
-		return StateType.getResponseInfo(StateType.NORMAL);
+		return responseMap;
 	}
 
 	@Method(desc = "按类型操作接口", logicStep = "1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制" +

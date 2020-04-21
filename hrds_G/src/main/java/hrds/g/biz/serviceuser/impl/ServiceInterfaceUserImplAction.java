@@ -8,6 +8,7 @@ import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.web.action.AbstractWebappBaseAction;
+import fd.ng.web.util.Dbo;
 import fd.ng.web.util.RequestUtil;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.CollectType;
@@ -73,9 +74,10 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction imp
 		if (StateType.NORMAL != StateType.ofEnumByCode(responseMap.get("status").toString())) {
 			return responseMap;
 		}
+		QueryInterfaceInfo userByToken = InterfaceManager.getUserByToken(responseMap.get("token").toString());
 		// 4.正常响应信息，返回有使用权限的表
 		return StateType.getResponseInfo(StateType.NORMAL.getCode(),
-				InterfaceManager.getTableList(checkParam.getUser_id()));
+				InterfaceManager.getTableList(userByToken.getUser_id()));
 	}
 
 	@Method(desc = "单表普通查询", logicStep = "1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制" +
@@ -106,37 +108,6 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction imp
 				singleTable.getFilename(), responseMap);
 	}
 
-//	@Method(desc = "单表索引查询接口", logicStep = "1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制" +
-//			"2.token、接口权限检查" +
-//			"3.如果responseMap响应状态不为normal返回错误响应信息" +
-//			"4.检查表信息" +
-//			"5.返回按类型操作接口响应信息")
-//	@Param(name = "singleTable", desc = "单表普通查询参数实体", range = "无限制", isBean = true)
-//	@Param(name = "checkParam", desc = "接口检查参数实体", range = "无限制", isBean = true)
-//	@Return(desc = "返回接口响应信息", range = "无限制")
-//	@Override
-//	public Map<String, Object> singleTableIndexQuery(SingleTable singleTable, CheckParam checkParam) {
-//		// 1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制
-//		// 2.token、接口权限检查
-//		Map<String, Object> responseMap = checkAsynAndTokenInterface(checkParam, singleTable.getOutType(),
-//				singleTable.getAsynType(), singleTable.getBackurl(), singleTable.getFilename(),
-//				singleTable.getFilepath());
-//		// 3.如果responseMap响应状态不为normal返回错误响应信息
-//		if (StateType.NORMAL != StateType.ofEnumByCode(responseMap.get("status").toString())) {
-//			return responseMap;
-//		}
-//		// 4.检查表信息
-//		responseMap = checkTable(checkParam.getUser_id(), singleTable.getTable(),
-//				singleTable.getWhereColumn(), singleTable.getSelectColumn(), singleTable.getNum(),
-//				"phoenix", new String[]{}, singleTable.getDataType(), singleTable.getOutType(),
-//				"");
-//		// 5.返回按类型操作接口响应信息
-//		return operateInterfaceByType(singleTable.getDataType(), singleTable.getOutType(),
-//				singleTable.getAsynType(), singleTable.getBackurl(), singleTable.getFilepath(),
-//				singleTable.getFilename(), responseMap);
-//	}
-
-
 	@Method(desc = "表结构查询接口", logicStep = "1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制" +
 			"2.检查token以及接口是否有效" +
 			"3.判断表是否有效" +
@@ -161,11 +132,9 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction imp
 			}
 			Long user_id = InterfaceManager.getUserByToken(responseMap.get("token").toString()).getUser_id();
 			// 3.判断表是否有效
-//		String tableName = checkParam.getTableName();
 			if (InterfaceManager.existsTable(user_id, tableName)) {
 				// 4.有效，根据user_id与表名获取查询接口信息
-				QueryInterfaceInfo userTableInfo = InterfaceManager.getUserTableInfo(checkParam.getUser_id(),
-						tableName);
+				QueryInterfaceInfo userTableInfo = InterfaceManager.getUserTableInfo(user_id, tableName);
 				String type = userTableInfo.getTable_blsystem();
 				String sysreg_name = userTableInfo.getSysreg_name();
 				Map<String, Object> res = new HashMap<>();
@@ -187,7 +156,7 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction imp
 									+ Table_column.TableName + "  tc join " + Table_info.TableName + " ti ON " +
 									"tc.table_id = ti.table_id join " + Data_store_reg.TableName +
 									" dsr ON dsr.table_name = ti.table_name " +
-									" WHERE dsr.database_id = ti.database_id and lower(ds.hyren_name)=lower(?) "
+									" WHERE dsr.database_id = ti.database_id and lower(dsr.hyren_name)=lower(?) "
 									+ " and ti.valid_e_date=? AND tc.is_get=? and is_alive=?",
 							sysreg_name, END_DATE, IsFlag.Shi.getCode(), IsFlag.Shi.getCode());
 					res.put("field", list);
@@ -299,15 +268,15 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction imp
 			if (fcs_id == null || fcs_id.length == 0) {
 				assembler.addORParam("fcs_id", fcs_id);
 			}
-			assembler.addSql("storage_date=?").addParam(fileAttribute.getStoragedate());
-			assembler.addSql("file_md5=?").addParam(fileAttribute.getFileMD5());
+			assembler.addSql(" and storage_date=?").addParam(fileAttribute.getStoragedate());
+			assembler.addSql(" and file_md5=?").addParam(fileAttribute.getFileMD5());
 			assembler.addLikeParam("datasource_name", fileAttribute.getDs_name());
 			assembler.addLikeParam("agent_name", fileAttribute.getAgent_name());
 			assembler.addLikeParam("fcs_name", fileAttribute.getFcs_name());
 			// 11.判断部门ID是否为空，不为空加条件查询
 			Long[] dep_id = fileAttribute.getDep_id();
 			if (dep_id == null || dep_id.length == 0) {
-				assembler.addSql("and  exists (select source_id from " + Source_relation_dep.TableName +
+				assembler.addSql(" and  exists (select source_id from " + Source_relation_dep.TableName +
 						" dep where dep.SOURCE_ID = ds.SOURCE_ID ").addORParam("dep_id", dep_id).addSql(" ) ");
 			}
 			// 12.设置分页
@@ -348,8 +317,9 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction imp
 	public Map<String, Object> sqlInterfaceSearch(SqlSearch sqlSearch, CheckParam checkParam) {
 		// 1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制
 		// 2.token、接口权限检查
-		Map<String, Object> responseMap = InterfaceCommon.checkAsynAndTokenInterface(checkParam, sqlSearch.getOutType(),
-				sqlSearch.getAsynType(), sqlSearch.getBackurl(), sqlSearch.getFilename(), sqlSearch.getFilepath());
+		Map<String, Object> responseMap = InterfaceCommon.checkAsynAndTokenInterface(checkParam,
+				sqlSearch.getOutType(), sqlSearch.getAsynType(), sqlSearch.getBackurl(),
+				sqlSearch.getFilename(), sqlSearch.getFilepath());
 		// 3.如果responseMap响应状态不为normal返回错误响应信息
 		if (StateType.NORMAL != StateType.ofEnumByCode(responseMap.get("status").toString())) {
 			return responseMap;
@@ -361,7 +331,7 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction imp
 		if (StateType.NORMAL != StateType.ofEnumByCode(responseMap.get("status").toString())) {
 			return responseMap;
 		}
-		// 6.检查sql是否正确
+		// 5.检查sql是否正确
 		if (StringUtil.isBlank(sqlSearch.getSql())) {
 			return StateType.getResponseInfo(StateType.SQL_IS_INCORRECT);
 		}
@@ -379,7 +349,7 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction imp
 			columnList = StringUtil.split(userTableInfo.getTable_column_name().toLowerCase(), ",");
 		}
 		// 10.如果为某些特定的用户,则不做字段的检测
-		if (!AUTHORITY.contains(String.valueOf(checkParam.getUser_id()))) {
+		if (!AUTHORITY.contains(String.valueOf(user_id))) {
 			// 11.使用sql解析获取列
 			DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(sqlSearch.getSql());
 			List<String> sqlColumnList = druidParseQuerySql.parseSelectOriginalField();
@@ -483,7 +453,8 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction imp
 		FileDownload fileDownload = new FileDownload();
 		try {
 			if (uuid != null) {
-				HttpServletResponse response = fileDownload.downLoadFile(uuid, checkParam.getUser_id());
+				Long user_id = InterfaceManager.getUserByToken(responseMap.get("token").toString()).getUser_id();
+				HttpServletResponse response = fileDownload.downLoadFile(uuid, user_id);
 				if (response.getStatus() < 300) {
 					return StateType.getResponseInfo(StateType.NORMAL.getCode(), "下载成功");
 				} else {
