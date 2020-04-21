@@ -51,7 +51,6 @@ public class DqcExecution {
             try {
                 //获取定义的数据质量规则级别
                 dq_rule_level = dq_definition.getFlags();
-                System.out.println(dq_definition.toString());
                 //将原始通用属性从原始bean中复制到目标bean中
                 BeanUtils.copyProperties(dq_definition, dq_result);
                 dq_result.setTask_id(PrimayKeyGener.getNextId());
