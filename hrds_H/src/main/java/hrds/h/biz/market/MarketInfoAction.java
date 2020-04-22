@@ -249,6 +249,9 @@ public class MarketInfoAction extends BaseAction {
         //5、删除数据源表字段
         Dbo.execute("delete from " + Own_source_field.TableName + " where own_dource_table_id in " +
                 "(select own_dource_table_id from " + Dm_datatable_source.TableName + " where datatable_id = ? )", dm_datatable.getDatatable_id());
+        //8、删除集市字段存储信息
+        Dbo.execute("delete from " + Dm_column_storage.TableName + " where datatable_field_id in " +
+                "(select datatable_field_id from " + Datatable_field_info.TableName + " where datatable_id = ?)", dm_datatable.getDatatable_id());
         //1、删除数据表信息
         Dbo.execute("delete from " + Dm_datatable.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
         //2、删除数据操作信息表
@@ -262,9 +265,7 @@ public class MarketInfoAction extends BaseAction {
         Dbo.execute("delete from " + Datatable_field_info.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
         //7、删除集市表存储关系表
         Dbo.execute("delete from " + Dm_relation_datatable.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
-        //8、删除集市字段存储信息
-        Dbo.execute("delete from " + Dm_column_storage.TableName + " where datatable_field_id in " +
-                "(select datatable_field_id from " + Datatable_field_info.TableName + " where datatable_id = ?)", dm_datatable.getDatatable_id());
+
     }
 
     @Method(desc = "获取登录用户集市查询存储配置表",
