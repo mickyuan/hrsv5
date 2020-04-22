@@ -15,6 +15,7 @@ import hrds.commons.codes.InterfaceState;
 import hrds.commons.collection.ProcessingData;
 import hrds.commons.entity.Interface_file_info;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.utils.DruidParseQuerySql;
 import hrds.commons.utils.PropertyParaValue;
 import hrds.g.biz.bean.CheckParam;
 import hrds.g.biz.bean.QueryInterfaceInfo;
@@ -296,56 +297,6 @@ public class InterfaceCommon {
 
 	}
 
-//	public static Map<String, Object> hBaseInfoRowKey(Integer num, String table_name, String whereColumn,
-//	                                            String selectColumn, String table_column_name,
-//	                                            String[] pk, String user_id) {
-//		try {
-//			String tableColumn = table_column_name.toLowerCase();
-//			// 数据库的列
-//			List<String> columns = StringUtil.split(tableColumn, ",");
-//			// 查询字段,检查列名是否存在
-//			Map<String, Object> userColumn = checkColumnsIsExist(selectColumn, user_id, columns);
-//			if (userColumn != null) return userColumn;
-//			if (StringUtil.isNotBlank(tableColumn)) {
-//				selectColumn = tableColumn;
-//			} else {
-//				selectColumn = "";
-//			}
-//			// 列
-//			StringBuilder keyBuffer = new StringBuilder();
-//			// 值
-//			StringBuilder valueBuffer = new StringBuilder();
-//			// pk查询
-//			if (pk.length != 0) {
-//				for (String pkCol : pk) {
-//					String[] column = pkCol.split("=");
-//					if (column.length == 2) {
-//						String colName = column[0];
-//						String colVal = column[1];
-//						if (!colIsExist(colName.toLowerCase(), columns)) {
-//							return StateType.getResponseInfo(StateType.COLUMN_DOES_NOT_EXIST.getCode(),
-//									"请求错误...PK列名" + colName + "不存在");
-//						}
-//						keyBuffer.append(colName).append('_');
-//						valueBuffer.append(colVal).append('_');
-//					}
-//				}
-//			} else {
-//				return StateType.getResponseInfo(StateType.PK_ERROR.getCode(),
-//						"请求错误,PK信息不能为空，请确认");
-//			}
-//			String columnKey = keyBuffer.delete(keyBuffer.length() - 1, keyBuffer.length()).toString().toLowerCase();
-//			String columnValue = valueBuffer.delete(valueBuffer.length() - 1, valueBuffer.length()).toString();
-//			// fixme 待处理
-////			message = SecIndexSelect.IndexSelect(table_name, columnKey.toLowerCase(), columnValue,
-////					selectColumn, num);
-//			return StateType.getResponseInfo(StateType.NORMAL);
-//		} catch (Exception e) {
-//			logger.error(e);
-//			return StateType.getResponseInfo(StateType.EXCEPTION);
-//		}
-//	}
-
 	@Method(desc = "检查列是否存在", logicStep = "1.数据可访问权限处理方式,该方法不需要进行访问权限限制" +
 			"2.如果不是指定用户将进行字段验证" +
 			"3.获取用户需要查询的列名的列" +
@@ -409,7 +360,8 @@ public class InterfaceCommon {
 			"6.获取查询条件参数，判断查询列是否存在" +
 			"7.获取sql查询条件，如果响应状态不为normal返回错误响应信息，如果是获取查询条件" +
 			"8.获取查询sql" +
-			"9.根据sql获取搜索引擎并根据输出数据类型处理数据")
+			"9.获取新sql，判断视图" +
+			"10.根据sql获取搜索引擎并根据输出数据类型处理数据")
 	@Param(name = "singleTable", desc = "单表查询参数实体", range = "无限制")
 	@Param(name = "table_column_name", desc = "当前表对应登记列名称通过逗号拼接的字符串", range = "无限制")
 	@Param(name = "user_id", desc = "用户ID", range = "新增用户时生成")
@@ -444,24 +396,25 @@ public class InterfaceCommon {
 			}
 			condition = sqlSelectCondition.get("condition").toString();
 		}
-		// 获取新sql，视图  fixme
-//		String sqlNew = MySelectTableParser.getNewSql(sql);
 		// 8.获取查询sql
 		String sqlSb = "SELECT " + selectColumn + " FROM " + singleTable.getTable() + condition + " LIMIT " + num;
-		// 9.根据sql获取搜索引擎并根据输出数据类型处理数据
-		return getSqlData(singleTable.getOutType(), singleTable.getDataType(), sqlSb);
+		// 9.获取新sql，判断视图
+		DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(sqlSb);
+		String newSql = druidParseQuerySql.GetNewSql(sqlSb);
+		// 10.根据sql获取搜索引擎并根据输出数据类型处理数据
+		return getSqlData(singleTable.getOutType(), singleTable.getDataType(), newSql);
 	}
 
 	@Method(desc = "根据sql获取搜索引擎并根据输出数据类型处理数据",
 			logicStep = "1.数据可访问权限处理方式,该方法不需要进行访问权限限制" +
 					"2.根据sql获取搜索引擎并根据输出数据类型处理数据" +
-					"3.判断输出类型为stream,还是file，如果是stream根据输出数据类型不同处理数据" +
-					"4.输出类型为stream，如果输出数据类型为csv，第一行为列名，按csv格式处理数据并返回" +
-					"5.输出数据类型为json,直接返回查询数据" +
-					"6.输出类型为file，创建本地文件,准备数据的写入" +
+					"3.根据输出数据类型不同处理数据" +
+					"4.输出类型为stream，处理数据并返回" +
+					"5.输出类型为file，创建本地文件,准备数据的写入" +
+					"6.输出类型错误" +
 					"7.如果文件是CSV则第一行为列信息" +
 					"8.如果输出数据类型为json，则直接输出" +
-					"9.返回正常响应信息")
+					"9.返回正常响应信息9.输出数据形式不是stream返回处理后的响应数据")
 	@Param(name = "outType", desc = "数据输出形式", range = "stream/file")
 	@Param(name = "dataType", desc = "数据输出类型", range = "json/csv")
 	@Param(name = "sqlSb", desc = "需要查询的sql语句", range = "无限制")
@@ -482,19 +435,20 @@ public class InterfaceCommon {
 				// 数据类型为csv的列值集合
 				StringBuffer sbCol = new StringBuffer();
 				StringBuffer sbVal = new StringBuffer();
-				// 3.判断输出类型为stream,还是file，如果是stream根据输出数据类型不同处理数据
+				// 3.根据输出数据类型不同处理数据
 				if (OutType.STREAM == OutType.ofEnumByCode(outType)) {
-					// 4.输出类型为stream，如果输出数据类型为csv，第一行为列名，按csv格式处理数据并返回
+					// 4.输出类型为stream，处理数据并返回
 					dealWithStreamType(map, sbVal, dataType, streamCsv, streamCsvData, streamJson);
 				} else if (OutType.FILE == OutType.ofEnumByCode(outType)) {
-					// 6.输出类型为file，创建本地文件,准备数据的写入
+					// 5.输出类型为file，创建本地文件,准备数据的写入
 					dealWithFileType(map, sbCol, sbVal, dataType);
 				} else {
+					// 6.输出类型错误
 					responseMap = StateType.getResponseInfo(StateType.OUT_TYPE_ERROR);
 				}
 			}
 		}.getDataLayer(sqlSb, new DatabaseWrapper());
-		// 4.输出类型为stream，如果输出数据类型为csv，第一行为列名，按csv格式处理数据并返回
+		// 7.输出类型为stream，如果输出数据类型为csv，第一行为列名，按csv格式处理数据并返回
 		if (OutType.STREAM == OutType.ofEnumByCode(outType)) {
 			if (DataType.csv == DataType.ofEnumByCode(dataType)) {
 				Map<String, Object> map = new HashMap<>();
@@ -503,10 +457,12 @@ public class InterfaceCommon {
 				responseMap = StateType.getResponseInfo(StateType.NORMAL.getValue(),
 						map);
 			} else {
+				// 8.如果输出数据类型为json则直接返回数据
 				responseMap = StateType.getResponseInfo(StateType.NORMAL.getValue(),
 						streamJson);
 			}
 		}
+		// 9.输出数据形式不是stream返回处理后的响应数据
 		return responseMap;
 	}
 

@@ -389,8 +389,8 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction imp
 			"3.如果responseMap响应状态不为normal返回错误响应信息" +
 			"4.根据rowkey，表名称、数据版本号获取hbase表信息,如果返回状态信息不为normal则返回错误响应信息" +
 			"5.将数据写成对应的数据文件" +
-			"" +
-			"")
+			"6.判断是同步还是异步回调或者异步轮询" +
+			"7.封装表英文名并返回接口响应信息")
 	@Param(name = "rowKeySearch", desc = "rowkey查询参数实体", range = "无限制", isBean = true)
 	@Param(name = "checkParam", desc = "接口检查参数实体", range = "无限制", isBean = true)
 	@Return(desc = "返回接口响应信息", range = "无限制")
@@ -416,7 +416,7 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction imp
 		// 5.将数据写成对应的数据文件
 		LocalFile.writeFile(feedback, rowKeySearch.getDataType(), rowKeySearch.getOutType(), user_id);
 		if (OutType.FILE == OutType.ofEnumByCode(rowKeySearch.getOutType())) {
-			// 判断是同步还是异步回调或者异步轮询
+			// 6.判断是同步还是异步回调或者异步轮询
 			if (AsynType.ASYNCALLBACK == AsynType.ofEnumByCode(rowKeySearch.getAsynType())) {
 				// 异步回调
 				return InterfaceCommon.checkBackUrl(responseMap, rowKeySearch.getBackurl());
@@ -426,19 +426,10 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction imp
 						rowKeySearch.getFilename());
 			}
 		}
+		// 7.封装表英文名并返回接口响应信息
 		responseMap.put("enTable", rowKeySearch.getEnTable());
 		return responseMap;
 	}
-
-
-//	@Method(desc = "Solr查询Hbase数据接口", logicStep = "")
-//	@Param(name = "hBaseSolr", desc = "HBaseSolr查询参数实体", range = "无限制", isBean = true)
-//	@Param(name = "checkParam", desc = "接口检查参数实体", range = "无限制", isBean = true)
-//	@Return(desc = "返回接口响应信息", range = "无限制")
-//	@Override
-//	public Map<String, Object> hBaseSolrQuery(HBaseSolr hBaseSolr, CheckParam checkParam) {
-//		return null;
-//	}
 
 	@Method(desc = "UUID数据下载", logicStep = "")
 	@Param(name = "uuid", desc = "uuid", range = "无限制")
