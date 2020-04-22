@@ -18,6 +18,7 @@ import hrds.commons.base.BaseAction;
 import hrds.commons.codes.*;
 import hrds.commons.collection.ProcessingData;
 import hrds.commons.collection.bean.LayerBean;
+import hrds.commons.collection.bean.LayerTypeBean;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.tree.foreground.ForegroundTreeUtil;
@@ -403,29 +404,31 @@ public class MarketInfoAction extends BaseAction {
     @Param(name = "datatable_id", desc = "datatable_id", range = "String类型集市表ID ")
     @Return(desc = "查询返回结果集", range = "无限制")
     public Map<String, Object> getDataBySQL(String querysql, String sqlparameter, String datatable_id) {
+        Map<String, Object> resultmap = new HashMap<String, Object>();
         //1.处理SQL
-        DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql();
-        querysql = druidParseQuerySql.GetNewSql(querysql);
-        if (!StringUtils.isEmpty(sqlparameter)) {
-            // 获取参数组
-            String[] singlePara = StringUtils.split(sqlparameter, ';');// 获取单个动态参数
-            for (int i = 0; i < singlePara.length; i++) {
-                String[] col_val = StringUtils.split(singlePara[i], '=');
-                if (col_val.length > 1) {
-                    // 按顺序从左到右对原始sql中的(0)进行替换
-                    querysql = StringUtils.replace(querysql, "#{" + col_val[0].trim() + "}", col_val[1]);
+        try {
+            DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql();
+            querysql = druidParseQuerySql.GetNewSql(querysql);
+            DruidParseQuerySql dpqs = new DruidParseQuerySql();
+            dpqs.getBloodRelationMap(querysql);
+            if (!StringUtils.isEmpty(sqlparameter)) {
+                // 获取参数组
+                String[] singlePara = StringUtils.split(sqlparameter, ';');// 获取单个动态参数
+                for (int i = 0; i < singlePara.length; i++) {
+                    String[] col_val = StringUtils.split(singlePara[i], '=');
+                    if (col_val.length > 1) {
+                        // 按顺序从左到右对原始sql中的(0)进行替换
+                        querysql = StringUtils.replace(querysql, "#{" + col_val[0].trim() + "}", col_val[1]);
+                    }
                 }
             }
-        }
-        querysql = querysql.trim();
-        if (querysql.endsWith(";")) {
-            //去除分号
-            querysql = querysql.substring(0, querysql.length() - 1);
-        }
-        querysql = getlimitsql(querysql, datatable_id);
-        //2.查询SQL TODO
-        Map<String, Object> resultmap = new HashMap<String, Object>();
-        try {
+            querysql = querysql.trim();
+            if (querysql.endsWith(";")) {
+                //去除分号
+                querysql = querysql.substring(0, querysql.length() - 1);
+            }
+            querysql = getlimitsql(querysql, datatable_id);
+            //2.查询SQL
             List<Map<String, Object>> maps = new ArrayList<>();
             ProcessingData processingData = new ProcessingData() {
                 @Override
@@ -453,15 +456,28 @@ public class MarketInfoAction extends BaseAction {
      * @return
      */
     private String getlimitsql(String querysql, String datatable_id) {
-        Dm_datatable dm_datatable = new Dm_datatable();
-        dm_datatable.setDatatable_id(datatable_id);
-        List<Map<String, Object>> maps = Dbo.queryList("select t1.* from data_store_layer_attr t1 left join dm_relation_datatable t2 on t1.dsl_id = t2.dsl_id " +
-                "where t2.datatable_id = ? and lower(t1.storage_property_key) = ? and t1.storage_property_val like ?", dm_datatable.getDatatable_id(), jdbc_url, "%oracle%");
-        if (maps.isEmpty()) {
-            querysql = "select * from (" + querysql + ") as " + alias + " limit " + LimitNumber;
-        } else {
-            querysql = "select * from (" + querysql + ") " + alias + " where rownum <  " + LimitNumber;
+        LayerTypeBean allTableIsLayer = ProcessingData.getAllTableIsLayer(querysql, Dbo.db());
+        LayerTypeBean.ConnType connType = allTableIsLayer.getConnType();
+        if(connType == LayerTypeBean.ConnType.oneJdbc){
+            String dsl_name = allTableIsLayer.getLayerBean().getDsl_name();
+            if(dsl_name.equalsIgnoreCase("ORACLE")){
+                querysql = "select * from (" + querysql + ") " + alias + " where rownum <  " + LimitNumber;
+            }else{
+                querysql = "select * from (" + querysql + ") as " + alias + " limit " + LimitNumber;
+            }
+        }else{
+            throw new BusinessException("目前不支持非ONE JDBC的情况");
         }
+//        List<LayerBean> layerBeanList = allTableIsLayer.getLayerBeanList();
+//        Dm_datatable dm_datatable = new Dm_datatable();
+//        dm_datatable.setDatatable_id(datatable_id);
+//        List<Map<String, Object>> maps = Dbo.queryList("select t1.* from data_store_layer_attr t1 left join dm_relation_datatable t2 on t1.dsl_id = t2.dsl_id " +
+//                "where t2.datatable_id = ? and lower(t1.storage_property_key) = ? and t1.storage_property_val like ?", dm_datatable.getDatatable_id(), jdbc_url, "%oracle%");
+//        if (maps.isEmpty()) {
+//            querysql = "select * from (" + querysql + ") as " + alias + " limit " + LimitNumber;
+//        } else {
+//            querysql = "select * from (" + querysql + ") " + alias + " where rownum <  " + LimitNumber;
+//        }
         return querysql;
     }
 
@@ -1032,7 +1048,7 @@ public class MarketInfoAction extends BaseAction {
         if (source.equals(DataSourceType.DCL.getCode())) {
             Table_column table_column = new Table_column();
             table_column.setTable_id(id);
-            List<Map<String, Object>> maps = Dbo.queryList("select column_name as columnname,column_type as columntype,false as selectionState from " + Table_column.TableName + " where table_id = ?", table_column.getTable_id());
+            List<Map<String, Object>> maps = Dbo.queryList("select column_name as columnname,column_type as columntype,false as selectionstate from " + Table_column.TableName + " where table_id = ?", table_column.getTable_id());
             resultmap.put("columnresult", maps);
             List<Map<String, Object>> tablenamelist = Dbo.queryList("select hyren_name as tablename from " + Data_store_reg.TableName + " where table_id = ?", table_column.getTable_id());
             resultmap.put("tablename", tablenamelist.get(0).get("tablename"));
@@ -1040,7 +1056,7 @@ public class MarketInfoAction extends BaseAction {
         } else if (source.equals(DataSourceType.DML.getCode())) {
             Datatable_field_info datatable_field_info = new Datatable_field_info();
             datatable_field_info.setDatatable_id(id);
-            List<Map<String, Object>> maps = Dbo.queryList("select field_en_name as columnname,field_type as columntype,false as selectionState from " + Datatable_field_info.TableName + " where datatable_id = ?", datatable_field_info.getDatatable_id());
+            List<Map<String, Object>> maps = Dbo.queryList("select field_en_name as columnname,field_type as columntype,false as selectionstate from " + Datatable_field_info.TableName + " where datatable_id = ?", datatable_field_info.getDatatable_id());
             resultmap.put("columnresult", maps);
             List<Map<String, Object>> tablenamelist = Dbo.queryList("select datatable_en_name as tablename  from " + Dm_datatable.TableName + " where datatable_id = ?", datatable_field_info.getDatatable_id());
             resultmap.put("tablename", tablenamelist.get(0).get("tablename"));
