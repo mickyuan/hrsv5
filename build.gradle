@@ -108,6 +108,7 @@ subprojects {
         compile group: 'redis.clients', name: 'jedis', version: '2.9.0'
         compile group: 'mysql', name: 'mysql-connector-java', version: '5.1.31'
         compile group: 'org.postgresql', name: 'postgresql', version: '42.2.6'
+        compile group: 'com.oracle.database.jdbc', name: 'ojdbc8', version: '12.2.0.1'
         // jdbc连接池
         compile group: 'com.zaxxer', name: 'HikariCP', version: '3.3.1'
 
