@@ -359,15 +359,17 @@ public class ConnUtil {
 	}
 
 	@SuppressWarnings("unchecked")
-	public static Map<String, List<Map<String, String>>> getStorageByXml(String xmlName) {
-		Map<String, List<Map<String, String>>> storageMap = new HashMap<>();
+	public static List<Map<String, Object>> getStorageByXml(String xmlName) {
+		List<Map<String, Object>> allStorageList = new ArrayList<>();
 		Map<?, ?> retMap = loadStoreInfo(xmlName);
 		Map<String, Element> mapCol = (Map<String, Element>) retMap.get("mapCol");
+		Map<String, String> tableNameMap = (Map<String, String>) retMap.get("tableNameMap");
 		// 当xml树中没有节点的时候跳出
 		if (null == mapCol) {
-			return storageMap;
+			return allStorageList;
 		}
 		for (String table_name : mapCol.keySet()) {
+			Map<String, Object> storageMap = new HashMap<>();
 			List<Map<String, String>> storageList = new ArrayList<>();
 			List<?> acctTypes = XMLUtil.getChildElements(mapCol.get(table_name), "storage");
 			for (Object object : acctTypes) {
@@ -381,9 +383,12 @@ public class ConnUtil {
 				hashMap.put("file_code", type.getAttribute("file_code"));
 				storageList.add(hashMap);
 			}
-			storageMap.put(table_name, storageList);
+			storageMap.put("storage", storageList);
+			storageMap.put("table_name", table_name);
+			storageMap.put("table_cn_name", tableNameMap.get(table_name));
+			allStorageList.add(storageMap);
 		}
-		return storageMap;
+		return allStorageList;
 	}
 
 	/**
@@ -401,13 +406,17 @@ public class ConnUtil {
 		List<?> tableList = getXmlToList(filename);
 		Map<String, Element> mapCol = new HashMap<String, Element>();
 		List<String> tableNameList = new ArrayList<>();
+		Map<String, String> tableNameMap = new HashMap<>();
 		for (Object element : tableList) {
 			Element table = (Element) element;
 			String tableName = table.getAttribute("table_name");
+			String table_cn_name = table.getAttribute("table_cn_name");
 			mapCol.put(tableName, table);
 			tableNameList.add(tableName);
+			tableNameMap.put(tableName, table_cn_name);
 		}
 		HashMap<String, Object> retMap = new HashMap<String, Object>();
+		retMap.put("tableNameMap", tableNameMap);
 		retMap.put("tableNameList", tableNameList);
 		retMap.put("mapCol", mapCol);
 		return retMap;
