@@ -25,6 +25,7 @@ import java.util.Optional;
  */
 public class MarketConfUtils {
     private static final Log log = LogFactory.getLog(MarketConfUtils.class);
+    public static final String DEFAULT_STRING_TYPE = "string";
 
     static void checkArguments(String datatableId, String etldate) {
         if (StringUtil.isBlank(datatableId)) {
@@ -136,17 +137,17 @@ public class MarketConfUtils {
         //添加 HYREN_S_DATE
         Datatable_field_info sDateField = new Datatable_field_info();
         sDateField.setField_en_name(Constant.SDATENAME);
-        sDateField.setField_type("varchar");
+        sDateField.setField_type(DEFAULT_STRING_TYPE);
         datatableFields.add(sDateField);
         //添加 HYREN_E_DATE
         Datatable_field_info eDateField = new Datatable_field_info();
         eDateField.setField_en_name(Constant.EDATENAME);
-        eDateField.setField_type("varchar");
+        eDateField.setField_type(DEFAULT_STRING_TYPE);
         datatableFields.add(eDateField);
         //添加 HYREN_MD5_VAL
         Datatable_field_info md5Field = new Datatable_field_info();
         md5Field.setField_en_name(Constant.MD5NAME);
-        md5Field.setField_type("varchar");
+        md5Field.setField_type(DEFAULT_STRING_TYPE);
         datatableFields.add(md5Field);
 
         //字段全部转小写
@@ -219,9 +220,7 @@ public class MarketConfUtils {
 
         try {
             FileUtil.forceDelete(serializeFile);
-        } catch (IOException e) {
-            throw new AppSystemException(e);
-        }
+        } catch (IOException ignore) {}
 
         try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(serializeFile))) {
             out.writeObject(conf);

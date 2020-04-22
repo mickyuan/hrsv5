@@ -17,6 +17,7 @@ public abstract class AbstractBusiness implements ILoadBussiness{
 	public AbstractBusiness(Loader load) {
 
 		this.load = load;
+		conf = load.getConf();
 	}
 
 
