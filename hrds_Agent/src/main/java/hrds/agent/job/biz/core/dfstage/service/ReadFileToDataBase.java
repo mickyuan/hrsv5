@@ -1,4 +1,4 @@
-package hrds.agent.job.biz.core.dfstage.fileparser;
+package hrds.agent.job.biz.core.dfstage.service;
 
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;

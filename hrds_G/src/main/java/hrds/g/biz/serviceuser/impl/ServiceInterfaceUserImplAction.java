@@ -8,9 +8,6 @@ import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.web.action.AbstractWebappBaseAction;
-import fd.ng.web.util.Dbo;
-import fd.ng.web.util.RequestUtil;
-import hrds.commons.base.BaseAction;
 import hrds.commons.codes.CollectType;
 import hrds.commons.codes.DataSourceType;
 import hrds.commons.codes.IsFlag;
@@ -125,7 +122,6 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction imp
 		// 1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制
 		// 2.检查token以及接口是否有效
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-
 			Map<String, Object> responseMap = InterfaceCommon.checkTokenAndInterface(checkParam);
 			if (StateType.NORMAL != StateType.ofEnumByCode(responseMap.get("status").toString())) {
 				return responseMap;
@@ -194,7 +190,6 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction imp
 		// 1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制
 		// 2.token、接口权限检查
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-
 			Map<String, Object> responseMap = InterfaceCommon.checkTokenAndInterface(checkParam);
 			// 3.如果responseMap响应状态不为normal返回错误响应信息
 			if (StateType.NORMAL != StateType.ofEnumByCode(responseMap.get("status").toString())) {
@@ -355,7 +350,7 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction imp
 			List<String> sqlColumnList = druidParseQuerySql.parseSelectOriginalField();
 			if (!columnList.isEmpty()) {
 				// 12.判断查询列是否存在，支持t1.*,t2.*
-				if (sqlColumnList.size() > 0 && !sqlColumnList.contains("*")) {
+				if (!sqlColumnList.contains(null)) {
 					// 13.存在，遍历列集合，判断列是否包含.,包含.说明是有别名获取别名后的列名称，否则直接获取列名称
 					for (String col : sqlColumnList) {
 						if (col.contains(".")) {
@@ -386,8 +381,8 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction imp
 			"3.如果responseMap响应状态不为normal返回错误响应信息" +
 			"4.根据rowkey，表名称、数据版本号获取hbase表信息,如果返回状态信息不为normal则返回错误响应信息" +
 			"5.将数据写成对应的数据文件" +
-			"" +
-			"")
+			"6.判断是同步还是异步回调或者异步轮询" +
+			"7.封装表英文名并返回接口响应信息")
 	@Param(name = "rowKeySearch", desc = "rowkey查询参数实体", range = "无限制", isBean = true)
 	@Param(name = "checkParam", desc = "接口检查参数实体", range = "无限制", isBean = true)
 	@Return(desc = "返回接口响应信息", range = "无限制")
@@ -413,7 +408,7 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction imp
 		// 5.将数据写成对应的数据文件
 		LocalFile.writeFile(feedback, rowKeySearch.getDataType(), rowKeySearch.getOutType(), user_id);
 		if (OutType.FILE == OutType.ofEnumByCode(rowKeySearch.getOutType())) {
-			// 判断是同步还是异步回调或者异步轮询
+			// 6.判断是同步还是异步回调或者异步轮询
 			if (AsynType.ASYNCALLBACK == AsynType.ofEnumByCode(rowKeySearch.getAsynType())) {
 				// 异步回调
 				return InterfaceCommon.checkBackUrl(responseMap, rowKeySearch.getBackurl());
@@ -423,19 +418,10 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction imp
 						rowKeySearch.getFilename());
 			}
 		}
+		// 7.封装表英文名并返回接口响应信息
 		responseMap.put("enTable", rowKeySearch.getEnTable());
 		return responseMap;
 	}
-
-
-//	@Method(desc = "Solr查询Hbase数据接口", logicStep = "")
-//	@Param(name = "hBaseSolr", desc = "HBaseSolr查询参数实体", range = "无限制", isBean = true)
-//	@Param(name = "checkParam", desc = "接口检查参数实体", range = "无限制", isBean = true)
-//	@Return(desc = "返回接口响应信息", range = "无限制")
-//	@Override
-//	public Map<String, Object> hBaseSolrQuery(HBaseSolr hBaseSolr, CheckParam checkParam) {
-//		return null;
-//	}
 
 	@Method(desc = "UUID数据下载", logicStep = "")
 	@Param(name = "uuid", desc = "uuid", range = "无限制")

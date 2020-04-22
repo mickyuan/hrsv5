@@ -19,7 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@DocClass(desc = "查询接口监控信息类接口", author = "dhw", createdate = "2020/3/30 9:20")
+@DocClass(desc = "查询接口监控信息类接口（数据表信息）", author = "dhw", createdate = "2020/3/30 9:20")
 public class DataTableUseInfoAction extends BaseAction {
 
 	@Method(desc = "查询数据表信息（接口使用监控）",

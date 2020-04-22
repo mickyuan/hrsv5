@@ -18,7 +18,7 @@ import hrds.g.biz.init.InterfaceManager;
 
 import java.util.Map;
 
-@DocClass(desc = "查询接口监控信息类接口", author = "dhw", createdate = "2020/3/30 9:20")
+@DocClass(desc = "查询接口监控信息类接口（接口使用信息）", author = "dhw", createdate = "2020/3/30 9:20")
 public class InterfaceUseInfoAction extends BaseAction {
 
 	private static final String REQUEST_STATE = "NORMAL";

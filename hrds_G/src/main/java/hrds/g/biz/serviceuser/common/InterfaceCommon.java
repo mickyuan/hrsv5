@@ -15,6 +15,7 @@ import hrds.commons.codes.InterfaceState;
 import hrds.commons.collection.ProcessingData;
 import hrds.commons.entity.Interface_file_info;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.utils.DruidParseQuerySql;
 import hrds.commons.utils.PropertyParaValue;
 import hrds.g.biz.bean.CheckParam;
 import hrds.g.biz.bean.QueryInterfaceInfo;
@@ -43,6 +44,10 @@ public class InterfaceCommon {
 	private static final String AUTHORITY = PropertyParaValue.getString("restAuthority", "");
 	// 没有字段的函数添加列表
 	private static final List<String> notCheckFunction = new ArrayList<String>();
+
+	private static long lineCounter = 0;
+	// 接口响应信息集合
+	private static Map<String, Object> responseMap = new HashMap<>();
 
 	static {
 		notCheckFunction.add("count(*)");
@@ -292,56 +297,6 @@ public class InterfaceCommon {
 
 	}
 
-//	public static Map<String, Object> hBaseInfoRowKey(Integer num, String table_name, String whereColumn,
-//	                                            String selectColumn, String table_column_name,
-//	                                            String[] pk, String user_id) {
-//		try {
-//			String tableColumn = table_column_name.toLowerCase();
-//			// 数据库的列
-//			List<String> columns = StringUtil.split(tableColumn, ",");
-//			// 查询字段,检查列名是否存在
-//			Map<String, Object> userColumn = checkColumnsIsExist(selectColumn, user_id, columns);
-//			if (userColumn != null) return userColumn;
-//			if (StringUtil.isNotBlank(tableColumn)) {
-//				selectColumn = tableColumn;
-//			} else {
-//				selectColumn = "";
-//			}
-//			// 列
-//			StringBuilder keyBuffer = new StringBuilder();
-//			// 值
-//			StringBuilder valueBuffer = new StringBuilder();
-//			// pk查询
-//			if (pk.length != 0) {
-//				for (String pkCol : pk) {
-//					String[] column = pkCol.split("=");
-//					if (column.length == 2) {
-//						String colName = column[0];
-//						String colVal = column[1];
-//						if (!colIsExist(colName.toLowerCase(), columns)) {
-//							return StateType.getResponseInfo(StateType.COLUMN_DOES_NOT_EXIST.getCode(),
-//									"请求错误...PK列名" + colName + "不存在");
-//						}
-//						keyBuffer.append(colName).append('_');
-//						valueBuffer.append(colVal).append('_');
-//					}
-//				}
-//			} else {
-//				return StateType.getResponseInfo(StateType.PK_ERROR.getCode(),
-//						"请求错误,PK信息不能为空，请确认");
-//			}
-//			String columnKey = keyBuffer.delete(keyBuffer.length() - 1, keyBuffer.length()).toString().toLowerCase();
-//			String columnValue = valueBuffer.delete(valueBuffer.length() - 1, valueBuffer.length()).toString();
-//			// fixme 待处理
-////			message = SecIndexSelect.IndexSelect(table_name, columnKey.toLowerCase(), columnValue,
-////					selectColumn, num);
-//			return StateType.getResponseInfo(StateType.NORMAL);
-//		} catch (Exception e) {
-//			logger.error(e);
-//			return StateType.getResponseInfo(StateType.EXCEPTION);
-//		}
-//	}
-
 	@Method(desc = "检查列是否存在", logicStep = "1.数据可访问权限处理方式,该方法不需要进行访问权限限制" +
 			"2.如果不是指定用户将进行字段验证" +
 			"3.获取用户需要查询的列名的列" +
@@ -405,7 +360,8 @@ public class InterfaceCommon {
 			"6.获取查询条件参数，判断查询列是否存在" +
 			"7.获取sql查询条件，如果响应状态不为normal返回错误响应信息，如果是获取查询条件" +
 			"8.获取查询sql" +
-			"9.根据sql获取搜索引擎并根据输出数据类型处理数据")
+			"9.获取新sql，判断视图" +
+			"10.根据sql获取搜索引擎并根据输出数据类型处理数据")
 	@Param(name = "singleTable", desc = "单表查询参数实体", range = "无限制")
 	@Param(name = "table_column_name", desc = "当前表对应登记列名称通过逗号拼接的字符串", range = "无限制")
 	@Param(name = "user_id", desc = "用户ID", range = "新增用户时生成")
@@ -440,112 +396,185 @@ public class InterfaceCommon {
 			}
 			condition = sqlSelectCondition.get("condition").toString();
 		}
-		// 获取新sql，视图  fixme
-//		String sqlNew = MySelectTableParser.getNewSql(sql);
 		// 8.获取查询sql
 		String sqlSb = "SELECT " + selectColumn + " FROM " + singleTable.getTable() + condition + " LIMIT " + num;
-		// 9.根据sql获取搜索引擎并根据输出数据类型处理数据
-		return getSqlData(singleTable.getOutType(), singleTable.getDataType(), sqlSb);
+		// 9.获取新sql，判断视图
+		DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(sqlSb);
+		String newSql = druidParseQuerySql.GetNewSql(sqlSb);
+		// 10.根据sql获取搜索引擎并根据输出数据类型处理数据
+		return getSqlData(singleTable.getOutType(), singleTable.getDataType(), newSql);
 	}
 
 	@Method(desc = "根据sql获取搜索引擎并根据输出数据类型处理数据",
 			logicStep = "1.数据可访问权限处理方式,该方法不需要进行访问权限限制" +
 					"2.根据sql获取搜索引擎并根据输出数据类型处理数据" +
-					"3.判断输出类型为stream,还是file，如果是stream根据输出数据类型不同处理数据" +
-					"4.输出类型为stream，如果输出数据类型为csv，第一行为列名，按csv格式处理数据并返回" +
-					"5.输出数据类型为json,直接返回查询数据" +
-					"6.输出类型为file，创建本地文件,准备数据的写入" +
+					"3.根据输出数据类型不同处理数据" +
+					"4.输出类型为stream，处理数据并返回" +
+					"5.输出类型为file，创建本地文件,准备数据的写入" +
+					"6.输出类型错误" +
 					"7.如果文件是CSV则第一行为列信息" +
 					"8.如果输出数据类型为json，则直接输出" +
-					"9.返回正常响应信息")
+					"9.返回正常响应信息9.输出数据形式不是stream返回处理后的响应数据")
 	@Param(name = "outType", desc = "数据输出形式", range = "stream/file")
 	@Param(name = "dataType", desc = "数据输出类型", range = "json/csv")
 	@Param(name = "sqlSb", desc = "需要查询的sql语句", range = "无限制")
 	@Return(desc = "返回接口响应信息", range = "无限制")
 	public static Map<String, Object> getSqlData(String outType, String dataType, String sqlSb) {
 		// 1.数据可访问权限处理方式,该方法不需要进行访问权限限制
-		// 数据类型为json时的数据集合
-		List<Map<String, Object>> jsonData = new ArrayList<>();
-		final Map<String, Object>[] responseMap = new Map[]{new HashMap<>()};
-		final long[] lineCounter = {0};
-		//列信息
-		List<Object> streamCsv = new ArrayList<>();
-		//列对应值信息
+		// 数据类型为json时列对应值信息
 		List<Object> streamJson = new ArrayList<>();
+		// 数据类型为csv时表对应列信息
+		List<String> streamCsv = new ArrayList<>();
+		// 数据类型为csv时表对应列值信息
+		List<String> streamCsvData = new ArrayList<>();
 		// 2.根据sql获取搜索引擎并根据输出数据类型处理数据
-		new ProcessingData() {
-			@Override
-			public void dealLine(Map<String, Object> map) {
-				long size = lineCounter[0];
-				size++;
-				// 数据类型为csv的列值集合
-				StringBuffer sbCol = new StringBuffer();
-				StringBuffer sbVal = new StringBuffer();
-				// 3.判断输出类型为stream,还是file，如果是stream根据输出数据类型不同处理数据
-				if (OutType.STREAM == OutType.ofEnumByCode(outType)) {
-					// 4.输出类型为stream，如果输出数据类型为csv，第一行为列名，按csv格式处理数据并返回
-					if (DataType.csv == DataType.ofEnumByCode(dataType)) {
-						Map<String, Object> csvMap = new HashMap<>();
-						csvMap.put("column", sbCol.toString());
-						csvMap.put("data", map.toString());
-						streamCsv.add(csvMap);
+		try (DatabaseWrapper db = new DatabaseWrapper()) {
+			new ProcessingData() {
+				@Override
+				public void dealLine(Map<String, Object> map) {
+					lineCounter++;
+					// 数据类型为csv的列值集合
+					StringBuffer sbCol = new StringBuffer();
+					StringBuffer sbVal = new StringBuffer();
+					// 3.根据输出数据类型不同处理数据
+					if (OutType.STREAM == OutType.ofEnumByCode(outType)) {
+						// 4.输出类型为stream，处理数据并返回
+						dealWithStreamType(map, sbVal, dataType, streamCsv, streamCsvData, streamJson);
+					} else if (OutType.FILE == OutType.ofEnumByCode(outType)) {
+						// 5.输出类型为file，创建本地文件,准备数据的写入
+						dealWithFileType(map, sbCol, sbVal, dataType);
 					} else {
-						streamJson.add(map);
-					}
-				} else {
-					// 6.输出类型为file，创建本地文件,准备数据的写入
-					String uuid = UUID.randomUUID().toString();
-					File createFile = LocalFile.createFile(uuid, dataType);
-					BufferedWriter writer;
-					try {
-						writer = new BufferedWriter(new FileWriter(createFile));
-						if (DataType.csv == DataType.ofEnumByCode(dataType)) {
-							// map的key为列名称，value为列名称对应的对象信息
-							map.forEach((k, v) -> {
-								sbCol.append(",").append(k);
-								sbVal.append(",").append(v.toString());
-							});
-							// 7.如果文件是CSV则第一行为列信息
-							if (size == 0) {
-								writer.write(sbCol.deleteCharAt(sbCol.length() - 1).toString());
-								writer.newLine();
-							}
-							if (size % 100000 == 0) {
-								writer.flush();
-							}
-							writer.write(sbVal.deleteCharAt(sbVal.length() - 1).toString());
-							writer.newLine();
-						} else if (DataType.json == DataType.ofEnumByCode(dataType)) {
-							// 8.如果输出数据类型为json，则直接输出
-							if (size % 100000 == 0) {
-								writer.flush();
-							}
-							writer.write(map.toString());
-							writer.newLine();
-						} else {
-							responseMap[0] = StateType.getResponseInfo(StateType.EXCEPTION.getValue(),
-									"不知道什么文件");
-						}
-						writer.flush();
-						writer.close();
-					} catch (IOException e) {
-						responseMap[0] = StateType.getResponseInfo(StateType.EXCEPTION.getValue(),
-								"写文件失败");
+						// 6.输出类型错误
+						responseMap = StateType.getResponseInfo(StateType.OUT_TYPE_ERROR);
 					}
 				}
+			}.getDataLayer(sqlSb, db);
+			// 7.输出类型为stream，如果输出数据类型为csv，第一行为列名，按csv格式处理数据并返回
+			if (OutType.STREAM == OutType.ofEnumByCode(outType)) {
+				if (DataType.csv == DataType.ofEnumByCode(dataType)) {
+					Map<String, Object> map = new HashMap<>();
+					map.put("column", streamCsv);
+					map.put("data", streamCsvData);
+					responseMap = StateType.getResponseInfo(StateType.NORMAL.getValue(),
+							map);
+				} else {
+					// 8.如果输出数据类型为json则直接返回数据
+					responseMap = StateType.getResponseInfo(StateType.NORMAL.getValue(),
+							streamJson);
+				}
 			}
-		}.getDataLayer(sqlSb, new DatabaseWrapper());
-		if (OutType.STREAM == OutType.ofEnumByCode(outType)) {
-			// 4.输出类型为stream，如果输出数据类型为csv，第一行为列名，按csv格式处理数据并返回
-			if (DataType.csv == DataType.ofEnumByCode(dataType)) {
-				responseMap[0] = StateType.getResponseInfo(StateType.NORMAL.getValue(),
-						streamCsv);
-			} else {
-				responseMap[0] = StateType.getResponseInfo(StateType.NORMAL.getValue(),
-						streamJson);
-			}
+			// 9.输出数据形式不是stream返回处理后的响应数据
+			return responseMap;
 		}
-		return responseMap[0];
+	}
+
+	@Method(desc = "处理输出数据类型为file的数据",
+			logicStep = "1.数据可访问权限处理方式,该方法不需要进行访问权限限制" +
+					"2.获取UUID" +
+					"3.创建存放文件的路径.文件名为UUID+dataType" +
+					"4.创建写文件流" +
+					"5.根据输出数据类型对数据进行不同的处理" +
+					"6.map的key为列名称，value为列名称对应的对象信息" +
+					"7.如果文件是CSV则第一行为列信息" +
+					"8.如果文件写了24608行进行一次刷新并打印日志" +
+					"9.写列对应值数据" +
+					"10.如果输出数据类型为json，则直接输出" +
+					"11.输出数据类型有误" +
+					"12.关闭连接")
+	@Param(name = "map", desc = "存放表列与值信息的集合", range = "无限制")
+	@Param(name = "sbCol", desc = "拼接列对象", range = "无限制")
+	@Param(name = "sbVal", desc = "拼接列对应值对象", range = "无限制")
+	@Param(name = "dataType", desc = "输出数据类型", range = "使用（DataType代码项）")
+	private static void dealWithFileType(Map<String, Object> map, StringBuffer sbCol, StringBuffer sbVal,
+	                                     String dataType) {
+		// 1.数据可访问权限处理方式,该方法不需要进行访问权限限制
+		// 2.获取UUID
+		String uuid = UUID.randomUUID().toString();
+		// 3.创建存放文件的路径.文件名为UUID+dataType
+		File createFile = LocalFile.createFile(uuid, dataType);
+		BufferedWriter writer;
+		try {
+			// 4.创建写文件流
+			writer = new BufferedWriter(new FileWriter(createFile));
+			// 5.根据输出数据类型对数据进行不同的处理
+			if (DataType.csv == DataType.ofEnumByCode(dataType)) {
+				// 6.map的key为列名称，value为列名称对应的对象信息
+				map.forEach((k, v) -> {
+					sbCol.append(k).append(",");
+					sbVal.append(v.toString()).append(",");
+				});
+				// 7.如果文件是CSV则第一行为列信息
+				if (lineCounter == 0) {
+					writer.write(sbCol.deleteCharAt(sbCol.length() - 1).toString());
+					writer.newLine();
+				}
+				// 8.如果文件写了24608行进行一次刷新并打印日志
+				if (lineCounter % 24608 == 0) {
+					logger.info("已经处理了 ：" + lineCounter + " 行数据！");
+					writer.flush();
+				}
+				// 9.写列对应值数据
+				writer.write(sbVal.deleteCharAt(sbVal.length() - 1).toString());
+				writer.newLine();
+			} else if (DataType.json == DataType.ofEnumByCode(dataType)) {
+				// 10.如果输出数据类型为json，则直接输出
+				if (lineCounter % 24608 == 0) {
+					writer.flush();
+				}
+				writer.write(map.toString());
+				writer.newLine();
+			} else {
+				// 11.输出数据类型有误
+				responseMap = StateType.getResponseInfo(StateType.EXCEPTION.getValue(),
+						"不知道什么文件");
+			}
+			// 12.关闭连接
+			writer.flush();
+			writer.close();
+		} catch (IOException e) {
+			responseMap = StateType.getResponseInfo(StateType.EXCEPTION.getValue(),
+					"写文件失败");
+		}
+	}
+
+	@Method(desc = "处理输出数据类型为stream的数据",
+			logicStep = "1.数据可访问权限处理方式,该方法不需要进行访问权限限制" +
+					"2.根据输出数据类型对数据进行不同的处理" +
+					"3.遍历获取列与值信息" +
+					"4.如果文件是CSV则第一行为列信息" +
+					"5.循环添加表对应列值信息" +
+					"6.数据类型为json，循环添加表信息" +
+					"7.输出数据类型有误")
+	@Param(name = "map", desc = "存放表列与值信息的集合", range = "无限制")
+	@Param(name = "sbCol", desc = "拼接列对象", range = "无限制")
+	@Param(name = "sbVal", desc = "拼接列对应值对象", range = "无限制")
+	@Param(name = "dataType", desc = "输出数据类型", range = "使用（DataType代码项）")
+	@Param(name = "streamCsv", desc = "数据类型为csv时表对应列信息", range = "无限制")
+	@Param(name = "streamCsvData", desc = "数据类型为csv时表对应列值信息", range = "无限制")
+	@Param(name = "streamJson", desc = "数据类型为json时列对应值信息", range = "无限制")
+	private static void dealWithStreamType(Map<String, Object> map, StringBuffer sbVal, String dataType,
+	                                       List<String> streamCsv, List<String> streamCsvData,
+	                                       List<Object> streamJson) {
+		// 1.数据可访问权限处理方式,该方法不需要进行访问权限限制
+		// 2.根据输出数据类型对数据进行不同的处理
+		if (DataType.csv == DataType.ofEnumByCode(dataType)) {
+			// 3.遍历获取列与值信息
+			map.forEach((k, v) -> {
+				// 4.如果文件是CSV则第一行为列信息
+				if (lineCounter == 0) {
+					streamCsv.add(k);
+				}
+				sbVal.append(v.toString()).append(",");
+			});
+			// 5.循环添加表对应列值信息
+			streamCsvData.add(sbVal.deleteCharAt(sbVal.length() - 1).toString());
+		} else if (DataType.json == DataType.ofEnumByCode(dataType)) {
+			// 6.数据类型为json，循环添加表信息
+			streamJson.add(map);
+		} else {
+			// 7.输出数据类型有误
+			responseMap = StateType.getResponseInfo(StateType.DATA_TYPE_ERROR);
+		}
 	}
 
 	@Method(desc = "获取查询sql条件", logicStep = "1.数据可访问权限处理方式,该方法不需要进行访问权限限制" +
