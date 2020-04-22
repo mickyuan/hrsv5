@@ -38,5 +38,7 @@ public class JobConstant {
 	public static final String PREFIX = PropertyParaUtil.getString("pathprefix", "/hrds");
 	//自定义sql或者自定义并行抽取sql时使用的分隔符
 	public static final String SQLDELIMITER = "`@^";
+
+	public static final String DEFAULTLINESEPARATOR = "\n";
 }
 

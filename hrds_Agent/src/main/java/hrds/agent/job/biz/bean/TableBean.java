@@ -21,7 +21,10 @@ public class TableBean {
 	private String operate; //操作类型
 	private String is_archived; //是否转存
 	//db文件采集，字段是否采集的映射,对新增列不做映射，默认采集(注：新增列指的是拆分和合并的列)
-//	private HashMap<String, Boolean> isCollectMap = null;
+	//	private HashMap<String, Boolean> isCollectMap = null;
+	//db文件转存的文件编码，这里的编码是主要涉及到oracle数据库如果用外部表进数，字符集必须跟文件字符集一致的问题，
+	// 默认是UTF-8，针对oracle存储层，会读取oracle存储层配置的编码，根据页面传过来的值，转为代码项
+	private String dbFileArchivedCode;
 
 	public String getFile_code() {
 		return file_code;
@@ -171,4 +174,12 @@ public class TableBean {
 //	public void setIsCollectMap(HashMap<String, Boolean> isCollectMap) {
 //		this.isCollectMap = isCollectMap;
 //	}
+
+	public String getDbFileArchivedCode() {
+		return dbFileArchivedCode;
+	}
+
+	public void setDbFileArchivedCode(String dbFileArchivedCode) {
+		this.dbFileArchivedCode = dbFileArchivedCode;
+	}
 }

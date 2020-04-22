@@ -13,7 +13,7 @@ import java.util.List;
  */
 public class CsvFileParserDeal extends FileParserAbstract {
 
-	public CsvFileParserDeal(TableBean tableBean, CollectTableBean collectTableBean, String readFile) {
+	public CsvFileParserDeal(TableBean tableBean, CollectTableBean collectTableBean, String readFile) throws Exception {
 		super(tableBean, collectTableBean, readFile);
 	}
 
