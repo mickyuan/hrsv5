@@ -1,55 +1,59 @@
 package hrds.commons.collection.bean;
 
+import fd.ng.core.annotation.DocClass;
+
 import java.util.Map;
 
-/**
- * @program: hrsv5
- * @description: 数据加载需要的数据实体
- * @author: xchao
- * @create: 2020-04-13 11:31
- */
+@DocClass(desc = "加载数据的实体Bean", author = "博彦科技", createdate = "2020/4/22 0022 下午 01:43")
 public class LoadingDataBean {
-	private static Map<String, String> layer;
-	private static boolean isbatch = true;
-	private static boolean isDirTran = true;
-	private static int batchNum = 50000;
-	private static String tableName;
 
-	public static String getTableName() {
-		return tableName;
-	}
+    //存储层信息
+    private Map<String, String> layerMap;
+    //是否批量
+    private boolean isBatch = true;
+    private boolean isDirTran = true;
+    //批量值
+    private int batchNum = 50000;
+    //表名
+    private String tableName;
 
-	public static void setTableName(String tableName) {
-		LoadingDataBean.tableName = tableName;
-	}
-	public static boolean isIsDirTran() {
-		return isDirTran;
-	}
+    public Map<String, String> getLayerMap() {
+        return layerMap;
+    }
 
-	public static void setIsDirTran(boolean isDirTran) {
-		LoadingDataBean.isDirTran = isDirTran;
-	}
-	public static Map<String, String> getLayer() {
-		return layer;
-	}
+    public void setLayerMap(Map<String, String> layerMap) {
+        this.layerMap = layerMap;
+    }
 
-	public static void setLayer(Map<String, String> layer) {
-		LoadingDataBean.layer = layer;
-	}
+    public boolean isBatch() {
+        return isBatch;
+    }
 
-	public static boolean isIsbatch() {
-		return isbatch;
-	}
+    public void setBatch(boolean batch) {
+        isBatch = batch;
+    }
 
-	public static void setIsbatch(boolean isbatch) {
-		LoadingDataBean.isbatch = isbatch;
-	}
+    public boolean isDirTran() {
+        return isDirTran;
+    }
 
-	public static int getBatchNum() {
-		return batchNum;
-	}
+    public void setDirTran(boolean dirTran) {
+        isDirTran = dirTran;
+    }
 
-	public static void setBatchNum(int batchNum) {
-		LoadingDataBean.batchNum = batchNum;
-	}
+    public int getBatchNum() {
+        return batchNum;
+    }
+
+    public void setBatchNum(int batchNum) {
+        this.batchNum = batchNum;
+    }
+
+    public String getTableName() {
+        return tableName;
+    }
+
+    public void setTableName(String tableName) {
+        this.tableName = tableName;
+    }
 }
