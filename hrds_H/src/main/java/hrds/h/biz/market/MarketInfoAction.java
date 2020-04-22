@@ -11,7 +11,9 @@ import fd.ng.core.utils.CodecUtil;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.SqlOperator;
+import fd.ng.web.annotation.UploadFile;
 import fd.ng.web.util.Dbo;
+import fd.ng.web.util.FileUploadUtil;
 import fd.ng.web.util.RequestUtil;
 import fd.ng.web.util.ResponseUtil;
 import hrds.commons.base.BaseAction;
@@ -31,8 +33,10 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Files;
 import java.util.*;
 
 //import hrds.h.biz.SqlAnalysis.HyrenOracleTableVisitor;
@@ -242,6 +246,9 @@ public class MarketInfoAction extends BaseAction {
     public void deleteDMDataTable(String datatable_id) {
         Dm_datatable dm_datatable = new Dm_datatable();
         dm_datatable.setDatatable_id(datatable_id);
+        //5、删除数据源表字段
+        Dbo.execute("delete from " + Own_source_field.TableName + " where own_dource_table_id in " +
+                "(select own_dource_table_id from " + Dm_datatable_source.TableName + " where datatable_id = ? )", dm_datatable.getDatatable_id());
         //1、删除数据表信息
         Dbo.execute("delete from " + Dm_datatable.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
         //2、删除数据操作信息表
@@ -250,9 +257,7 @@ public class MarketInfoAction extends BaseAction {
         Dbo.execute("delete from " + Dm_datatable_source.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
         //4、删除结果映射信息表
         Dbo.execute("delete from " + Dm_etlmap_info.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
-        //5、删除数据源表字段
-        Dbo.execute("delete from " + Own_source_field.TableName + " where own_dource_table_id in " +
-                "(select own_dource_table_id from " + Dm_datatable_source.TableName + " where datatable_id = ? )", dm_datatable.getDatatable_id());
+
         //6、删除数据表字段信息
         Dbo.execute("delete from " + Datatable_field_info.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
         //7、删除集市表存储关系表
@@ -458,14 +463,14 @@ public class MarketInfoAction extends BaseAction {
     private String getlimitsql(String querysql, String datatable_id) {
         LayerTypeBean allTableIsLayer = ProcessingData.getAllTableIsLayer(querysql, Dbo.db());
         LayerTypeBean.ConnType connType = allTableIsLayer.getConnType();
-        if(connType == LayerTypeBean.ConnType.oneJdbc){
+        if (connType == LayerTypeBean.ConnType.oneJdbc) {
             String dsl_name = allTableIsLayer.getLayerBean().getDsl_name();
-            if(dsl_name.equalsIgnoreCase("ORACLE")){
+            if (dsl_name.equalsIgnoreCase("ORACLE")) {
                 querysql = "select * from (" + querysql + ") " + alias + " where rownum <  " + LimitNumber;
-            }else{
+            } else {
                 querysql = "select * from (" + querysql + ") as " + alias + " limit " + LimitNumber;
             }
-        }else{
+        } else {
             throw new BusinessException("目前不支持非ONE JDBC的情况");
         }
 //        List<LayerBean> layerBeanList = allTableIsLayer.getLayerBeanList();
@@ -1182,6 +1187,66 @@ public class MarketInfoAction extends BaseAction {
         Map<String, Object> map = JSON.parseObject(new String(bytes));
         return bytes;
     }
+
+
+    @Method(desc = "上传集市工程",
+            logicStep = "")
+    @Param(name = "file", desc = "上传文件名称（全路径），上传要导入的集市工程", range = "不能为空以及空格")
+    @UploadFile
+    public void uploadFile(String file) throws Exception {
+//        try {
+        // 3.通过文件名称获取文件
+        File uploadedFile = FileUploadUtil.getUploadedFile(file);
+        if (!uploadedFile.exists()) {
+            throw new BusinessException("上传文件不存在！");
+        }
+        String strTemp = new String(Files.readAllBytes(uploadedFile.toPath()));
+        JSONObject jsonObject = JSONObject.parseObject(strTemp);
+        //工程表
+        List<Dm_info> dm_infos = JSONObject.parseArray(jsonObject.getJSONArray("dm_infos").toJSONString(), Dm_info.class);
+        for (Dm_info dm_info : dm_infos) {
+            dm_info.add(Dbo.db());
+        }
+        //集市表
+        List<Dm_datatable> dm_datatables = JSONObject.parseArray(jsonObject.getJSONArray("dm_datatables").toJSONString(), Dm_datatable.class);
+        for (Dm_datatable dm_datatable : dm_datatables) {
+            dm_datatable.add(Dbo.db());
+        }
+        //sql表
+        List<Dm_operation_info> dm_operation_infos = JSONObject.parseArray(jsonObject.getJSONArray("dm_operation_infos").toJSONString(), Dm_operation_info.class);
+        for (Dm_operation_info dm_operation_info : dm_operation_infos) {
+            dm_operation_info.add(Dbo.db());
+        }
+        //关系表
+        List<Dm_relation_datatable> dm_relation_datatables = JSONObject.parseArray(jsonObject.getJSONArray("dm_relation_datatables").toJSONString(), Dm_relation_datatable.class);
+        for (Dm_relation_datatable dm_relation_datatable : dm_relation_datatables) {
+            dm_relation_datatable.add(Dbo.db());
+        }
+        //字段表
+        List<Datatable_field_info> datatable_field_infos = JSONObject.parseArray(jsonObject.getJSONArray("datatable_field_infos").toJSONString(), Datatable_field_info.class);
+        for (Datatable_field_info datatable_field_info : datatable_field_infos) {
+            datatable_field_info.add(Dbo.db());
+        }
+        //字段关系表
+        List<Dm_column_storage> dm_column_storages = JSONObject.parseArray(jsonObject.getJSONArray("dm_column_storages").toJSONString(), Dm_column_storage.class);
+        for (Dm_column_storage dm_column_storage : dm_column_storages) {
+            dm_column_storage.add(Dbo.db());
+        }
+        //血缘表1
+        List<Dm_datatable_source> dm_datatable_sources = JSONObject.parseArray(jsonObject.getJSONArray("dm_datatable_sources").toJSONString(), Dm_datatable_source.class);
+        for (Dm_datatable_source dm_datatable_source : dm_datatable_sources) {
+            dm_datatable_source.add(Dbo.db());
+        }
+        //血缘表2
+        List<Dm_etlmap_info> dm_etlmap_infos = JSONObject.parseArray(jsonObject.getJSONArray("dm_etlmap_infos").toJSONString(), Dm_etlmap_info.class);
+        for (Dm_etlmap_info dm_etlmap_info : dm_etlmap_infos) {
+            dm_etlmap_info.add(Dbo.db());
+        }
+        //血缘表3
+        List<Own_source_field> own_source_fields = JSONObject.parseArray(jsonObject.getJSONArray("own_source_fields").toJSONString(), Own_source_field.class);
+        for (Own_source_field own_source_field : own_source_fields) {
+            own_source_field.add(Dbo.db());
+        }
+
+    }
 }
-
-
