@@ -24,6 +24,7 @@ import hrds.commons.tree.foreground.ForegroundTreeUtil;
 import hrds.commons.tree.foreground.bean.TreeDataInfo;
 import hrds.commons.utils.DruidParseQuerySql;
 import hrds.commons.utils.key.PrimayKeyGener;
+import hrds.h.biz.MainClass;
 import hrds.main.AppMain;
 import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -1057,7 +1058,11 @@ public class MarketInfoAction extends BaseAction {
     @Param(name = "parameter", desc = "parameter", range = "动态参数", nullable = true)
     public void excutMartJob(String datatable_id, String date, String parameter) {
         date = date.substring(0, 10).replace("-", "");
-
+        try {
+            MainClass.run(datatable_id, date, parameter);
+        } catch (Exception e) {
+            throw new BusinessException(e.getMessage());
+        }
     }
 
     @Method(desc = "查询所有作业调度工程",
