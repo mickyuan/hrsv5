@@ -12,7 +12,8 @@ import java.util.List;
  */
 public class FixedFileParserDeal extends FileParserAbstract {
 
-	public FixedFileParserDeal(TableBean tableBean, CollectTableBean collectTableBean, String readFile) {
+	public FixedFileParserDeal(TableBean tableBean, CollectTableBean collectTableBean, String readFile)
+			throws Exception {
 		super(tableBean, collectTableBean, readFile);
 	}
 

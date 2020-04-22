@@ -4,18 +4,19 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.FileNameUtils;
+import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.*;
+import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
+import hrds.agent.job.biz.core.dbstage.DBUnloadDataStageImpl;
 import hrds.agent.job.biz.core.dfstage.service.FileConversionThread;
 import hrds.agent.job.biz.core.service.CollectTableHandleFactory;
+import hrds.agent.job.biz.core.service.JdbcCollectTableHandleParse;
 import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
-import hrds.commons.codes.CollectType;
-import hrds.commons.codes.FileFormat;
-import hrds.commons.codes.IsFlag;
-import hrds.commons.entity.Data_extraction_def;
+import hrds.commons.codes.*;
 import hrds.commons.exception.AppSystemException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -87,13 +89,15 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 					stageParamInfo.setFileSize(fileSize);
 					stageParamInfo.setFileNameArr(file_name_list);
 				} else {
-					throw new AppSystemException("数据文件不存在");
+					throw new AppSystemException("数据字典指定目录下数据文件不存在");
 				}
 				//不用转存，则跳过db文件卸数，直接进行upload
 				LOGGER.info("Db文件采集，不需要转存，卸数跳过");
 			} else if (IsFlag.Shi.getCode().equals(tableBean.getIs_archived())) {
-				//转存
-				Data_extraction_def targetData_extraction_def = collectTableBean.getTargetData_extraction_def();
+				//获取db文件采集转存的文件编码，
+				// XXX 主要涉及到oracle数据库如果用外部表进数，字符集必须跟文件字符集一致的问题
+				tableBean.setDbFileArchivedCode(getDbFileArchivedCode(collectTableBean, tableBean.getFile_code()));
+				//Data_extraction_def targetData_extraction_def = collectTableBean.getTargetData_extraction_def();
 				//TODO 需要转存，根据文件采集的定义，读取文件，卸数文件到指定的目录
 				//根据源定义读取文件，将读取到的文件统一转为List<List>每5000行统一处理一次
 				// 此处不会有海量的任务需要执行，不会出现队列中等待的任务对象过多的OOM事件。XXX 默认五个线程读取文件
@@ -106,18 +110,32 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 						Future<String> future = executorService.submit(thread);
 						futures.add(future);
 					}
+					//fileResult中是生成的所有数据文件的路径，用于判断卸数阶段结果
+					List<String> fileResult = new ArrayList<>();
+					//pageCountResult是本次采集作业每个线程采集到的数据量，用于写meta文件
+					List<Long> pageCountResult = new ArrayList<>();
 					//5、获得结果,用于校验多线程采集的结果和写Meta文件
 					for (Future<String> future : futures) {
-						LOGGER.info("---------------" + future.get() + "---------------");
+						String parseResult = future.get();
+						List<String> split = StringUtil.split(parseResult, JdbcCollectTableHandleParse.STRSPLIT);
+						fileResult.add(split.get(0));
+						pageCountResult.add(Long.parseLong(split.get(1)));
+						LOGGER.info("---------------" + parseResult + "---------------");
 					}
+					//统计的结果
+					DBUnloadDataStageImpl.countResult(fileResult, pageCountResult, stageParamInfo);
+					stageParamInfo.setFileNameArr(file_name_list);
+					//将转存之后的文件格式，文件分隔符等重新赋值
+					//列分隔符为默认值
+					tableBean.setColumn_separator(JobConstant.DATADELIMITER);
+					tableBean.setIs_header(IsFlag.Fou.getCode());
+					//换行符默认使用linux的换行符 XXX
+					tableBean.setRow_separator("\n");
+					tableBean.setFile_format(FileFormat.FeiDingChang.getCode());
+					tableBean.setFile_code(tableBean.getDbFileArchivedCode());
+				} else {
+					throw new AppSystemException("数据字典指定目录下数据文件不存在");
 				}
-				//写处理类，根据转存的文件格式，对文件分别进行处理
-				//将转存之后的文件格式，文件分隔符等重新赋值
-				tableBean.setColumn_separator(targetData_extraction_def.getDatabase_separatorr());
-				tableBean.setIs_header(targetData_extraction_def.getIs_header());
-				tableBean.setRow_separator(targetData_extraction_def.getRow_separator());
-				tableBean.setFile_format(targetData_extraction_def.getDbfile_format());
-				tableBean.setFile_code(targetData_extraction_def.getDatabase_code());
 			} else {
 				throw new AppSystemException("是否转存传到后台的参数不正确");
 			}
@@ -137,9 +155,31 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 		return stageParamInfo;
 	}
 
+	private String getDbFileArchivedCode(CollectTableBean collectTableBean, String fileCode) {
+		List<DataStoreConfBean> dataStoreConfBean = collectTableBean.getDataStoreConfBean();
+		for (DataStoreConfBean bean : dataStoreConfBean) {
+			if (Store_type.DATABASE.getCode().equals(bean.getStore_type())) {
+				Map<String, String> data_store_connect_attr = bean.getData_store_connect_attr();
+//				if(DatabaseType.Oracle10g.getCode().equals(data_store_connect_attr.get(StorageTypeKey.database_type)))
+				if (!StringUtil.isEmpty(data_store_connect_attr.get(StorageTypeKey.database_code))) {
+					for (DataBaseCode typeCode : DataBaseCode.values()) {
+						if (typeCode.getValue().equalsIgnoreCase(data_store_connect_attr.
+								get(StorageTypeKey.database_code))) {
+							return typeCode.getCode();
+						}
+					}
+				}
+			}
+		}
+		return fileCode;
+	}
+
 	@Override
 	public int getStageCode() {
 		return StageConstant.UNLOADDATA.getCode();
 	}
 
+	public static void main(String[] args) {
+
+	}
 }

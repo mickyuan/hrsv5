@@ -46,6 +46,8 @@ public class StorageTypeKey {
 	public static final String solr_url = "solr_url";
 
 	public static final String zkhost = "zkhost";
+	//数据库的编码
+	public static final String database_code = "database_code";
 
 	static {
 

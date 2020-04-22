@@ -12,7 +12,7 @@ import java.util.List;
  */
 public class OrcFileParserDeal extends FileParserAbstract {
 
-	public OrcFileParserDeal(TableBean tableBean, CollectTableBean collectTableBean, String readFile) {
+	public OrcFileParserDeal(TableBean tableBean, CollectTableBean collectTableBean, String readFile) throws Exception {
 		super(tableBean, collectTableBean, readFile);
 	}
 

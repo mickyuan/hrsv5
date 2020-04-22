@@ -9,33 +9,35 @@ import java.util.List;
  * @create: 2020-04-14 09:29
  */
 public class LayerTypeBean {
-	public enum ConnTyte{
-		oneJdbc,moreJdbc,oneOther,moreOther
-	}
-	private ConnTyte connType;
-	private LayerBean layerBean;
-	private List<LayerBean> layerBeanList;
+    public enum ConnType {
+        oneJdbc, moreJdbc, oneOther, moreOther
+    }
 
-	public ConnTyte getConnType() {
-		return connType;
-	}
+    private ConnType connType;
+    private LayerBean layerBean;
+    private List<LayerBean> layerBeanList;
 
-	public void setConnType(ConnTyte connType) {
-		this.connType = connType;
-	}
+    public ConnType getConnType() {
+        return connType;
+    }
 
-	public List<LayerBean> getLayerBeanList() {
-		return layerBeanList;
-	}
+    public void setConnType(ConnType connType) {
+        this.connType = connType;
+    }
 
-	public void setLayerBeanList(List<LayerBean> layerBeanList) {
-		this.layerBeanList = layerBeanList;
-	}
-	public LayerBean getLayerBean() {
-		return layerBean;
-	}
+    public List<LayerBean> getLayerBeanList() {
+        return layerBeanList;
+    }
 
-	public void setLayerBean(LayerBean layerBean) {
-		this.layerBean = layerBean;
-	}
+    public void setLayerBeanList(List<LayerBean> layerBeanList) {
+        this.layerBeanList = layerBeanList;
+    }
+
+    public LayerBean getLayerBean() {
+        return layerBean;
+    }
+
+    public void setLayerBean(LayerBean layerBean) {
+        this.layerBean = layerBean;
+    }
 }
