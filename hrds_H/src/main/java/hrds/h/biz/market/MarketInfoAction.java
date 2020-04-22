@@ -454,7 +454,7 @@ public class MarketInfoAction extends BaseAction {
         if(maps.isEmpty()){
             querysql = "select * from (" + querysql + ") as " + alias + " limit " + LimitNumber;
         }else{
-            querysql = "select * from (" + querysql + ") as " + alias + " where rownum =  " + LimitNumber;
+            querysql = "select * from (" + querysql + ") " + alias + " where rownum <  " + LimitNumber;
         }
         return querysql;
     }
