@@ -24,8 +24,10 @@ import hrds.commons.tree.foreground.ForegroundTreeUtil;
 import hrds.commons.tree.foreground.bean.TreeDataInfo;
 import hrds.commons.utils.DruidParseQuerySql;
 import hrds.commons.utils.key.PrimayKeyGener;
-import hrds.h.biz.MainClass;
+import hrds.main.AppMain;
 import org.apache.commons.lang.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -53,6 +55,7 @@ public class MarketInfoAction extends BaseAction {
     //TODO 由于目前不存在集市分类 所以随便写的一个ID 为了满足入库需求 之后将去除
     private static final String Category_id = "1000025018";
     private static final String jdbc_url = "jdbc_url";
+    private static final Logger logger = LogManager.getLogger(AppMain.class.getName());
 
     /**
      * 封装一个检查字段正确的方法
@@ -398,7 +401,7 @@ public class MarketInfoAction extends BaseAction {
     @Param(name = "sqlparameter", desc = "SQL参数", range = "String类型参数", nullable = true)
     @Param(name = "datatable_id", desc = "datatable_id", range = "String类型集市表ID ")
     @Return(desc = "查询返回结果集", range = "无限制")
-    public Map<String, Object> getDataBySQL(String querysql, String sqlparameter,String datatable_id) {
+    public Map<String, Object> getDataBySQL(String querysql, String sqlparameter, String datatable_id) {
         //1.处理SQL
         DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql();
         querysql = druidParseQuerySql.GetNewSql(querysql);
@@ -418,7 +421,7 @@ public class MarketInfoAction extends BaseAction {
             //去除分号
             querysql = querysql.substring(0, querysql.length() - 1);
         }
-        querysql = getlimitsql(querysql,datatable_id);
+        querysql = getlimitsql(querysql, datatable_id);
         //2.查询SQL TODO
         Map<String, Object> resultmap = new HashMap<String, Object>();
         try {
@@ -430,30 +433,32 @@ public class MarketInfoAction extends BaseAction {
                     maps.add(map);
                 }
             };
-            processingData.getDataLayer(querysql,Dbo.db());
+            processingData.getDataLayer(querysql, Dbo.db());
             resultmap.put("result", maps);
             resultmap.put("success", true);
         } catch (Exception e) {
             resultmap.put("success", false);
             resultmap.put("message", e.getMessage());
+            logger.info(e.getMessage());
         }
         return resultmap;
     }
 
     /**
      * 处理oracle部分的limit问题
+     *
      * @param querysql
      * @param datatable_id
      * @return
      */
-    private String getlimitsql(String querysql,String datatable_id) {
+    private String getlimitsql(String querysql, String datatable_id) {
         Dm_datatable dm_datatable = new Dm_datatable();
         dm_datatable.setDatatable_id(datatable_id);
         List<Map<String, Object>> maps = Dbo.queryList("select t1.* from data_store_layer_attr t1 left join dm_relation_datatable t2 on t1.dsl_id = t2.dsl_id " +
-                "where t2.datatable_id = ? and lower(t1.storage_property_key) = ? and t1.storage_property_val like ?",dm_datatable.getDatatable_id(),jdbc_url,"%oracle%");
-        if(maps.isEmpty()){
+                "where t2.datatable_id = ? and lower(t1.storage_property_key) = ? and t1.storage_property_val like ?", dm_datatable.getDatatable_id(), jdbc_url, "%oracle%");
+        if (maps.isEmpty()) {
             querysql = "select * from (" + querysql + ") as " + alias + " limit " + LimitNumber;
-        }else{
+        } else {
             querysql = "select * from (" + querysql + ") " + alias + " where rownum <  " + LimitNumber;
         }
         return querysql;
@@ -508,7 +513,7 @@ public class MarketInfoAction extends BaseAction {
             }
             //如果druid解析错误 并且没有返回信息 说明sql存在问题 用获取sql查询结果的方法返回错误信息
             else {
-                return getDataBySQL(querysql, sqlparameter,datatable_id);
+                return getDataBySQL(querysql, sqlparameter, datatable_id);
             }
         }
         String targetfield_type = "";
@@ -731,12 +736,12 @@ public class MarketInfoAction extends BaseAction {
         Dm_datatable dm_datatable = new Dm_datatable();
         dm_datatable.setDatatable_id(datatable_id);
         List<Map<String, Object>> maps2 = Dbo.queryList("select execute_sql from " + Dm_operation_info.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
-        Object object_execute_sql = maps2.get(0).get("execute_sql");
-        if (object_execute_sql == null) {
+        if (maps2.isEmpty()) {
             dm_datatable.setDdlc_date(DateUtil.getSysDate());
             dm_datatable.setDdlc_time(DateUtil.getSysTime());
             dm_datatable.update(Dbo.db());
         } else {
+            Object object_execute_sql = maps2.get(0).get("execute_sql");
             String execute_sql = object_execute_sql.toString();
             if (!execute_sql.equals(querysql)) {
                 dm_datatable.setDdlc_date(DateUtil.getSysDate());
@@ -1053,12 +1058,6 @@ public class MarketInfoAction extends BaseAction {
     public void excutMartJob(String datatable_id, String date, String parameter) {
         date = date.substring(0, 10).replace("-", "");
 
-        try {
-            MainClass.run(datatable_id, date, parameter);
-        } catch (Exception e) {
-            throw new BusinessException(e.getMessage());
-        }
-
     }
 
     @Method(desc = "查询所有作业调度工程",
@@ -1084,8 +1083,8 @@ public class MarketInfoAction extends BaseAction {
     @Param(name = "data_mart_id", desc = "data_mart_id", range = "String类型集市工程主键")
     @Return(desc = "查询返回结果集", range = "无限制")
     public void downLoadMart(String data_mart_id) {
-        String fileName = data_mart_id+".hrds";
-        try{
+        String fileName = data_mart_id + ".hrds";
+        try {
             ResponseUtil.getResponse().reset();
             // 4.设置响应头，控制浏览器下载该文件
             if (RequestUtil.getRequest().getHeader("User-Agent").toLowerCase().indexOf("firefox") > 0) {
@@ -1125,39 +1124,39 @@ public class MarketInfoAction extends BaseAction {
         Dm_info dm_info = new Dm_info();
         dm_info.setData_mart_id(data_mart_id);
         //集市工程表
-        List<Dm_info> dm_infos = Dbo.queryList(Dm_info.class,"select * from " + Dm_info.TableName + " where data_mart_id = ?", dm_info.getData_mart_id());
+        List<Dm_info> dm_infos = Dbo.queryList(Dm_info.class, "select * from " + Dm_info.TableName + " where data_mart_id = ?", dm_info.getData_mart_id());
         //集市表表
-        List<Dm_datatable> dm_datatables = Dbo.queryList(Dm_datatable.class,"select * from " + Dm_datatable.TableName + " where data_mart_id = ?", dm_info.getData_mart_id());
+        List<Dm_datatable> dm_datatables = Dbo.queryList(Dm_datatable.class, "select * from " + Dm_datatable.TableName + " where data_mart_id = ?", dm_info.getData_mart_id());
         //sql表
-        List<Dm_operation_info> dm_operation_infos = Dbo.queryList(Dm_operation_info.class,"select * from " + Dm_operation_info.TableName + " where datatable_id in " +
+        List<Dm_operation_info> dm_operation_infos = Dbo.queryList(Dm_operation_info.class, "select * from " + Dm_operation_info.TableName + " where datatable_id in " +
                 "(select datatable_id from " + Dm_datatable.TableName + " where data_mart_id =  ? )", dm_info.getData_mart_id());
         //血缘表1
-        List<Dm_datatable_source> dm_datatable_sources = Dbo.queryList(Dm_datatable_source.class,"select * from " + Dm_datatable_source.TableName + " where datatable_id in " +
+        List<Dm_datatable_source> dm_datatable_sources = Dbo.queryList(Dm_datatable_source.class, "select * from " + Dm_datatable_source.TableName + " where datatable_id in " +
                 "(select datatable_id from " + Dm_datatable.TableName + " where data_mart_id =  ? )", dm_info.getData_mart_id());
         //血缘表2
-        List<Dm_etlmap_info> dm_etlmap_infos = Dbo.queryList(Dm_etlmap_info.class,"select * from " + Dm_etlmap_info.TableName + " where datatable_id in " +
+        List<Dm_etlmap_info> dm_etlmap_infos = Dbo.queryList(Dm_etlmap_info.class, "select * from " + Dm_etlmap_info.TableName + " where datatable_id in " +
                 "(select datatable_id from " + Dm_datatable.TableName + " where data_mart_id =  ? )", dm_info.getData_mart_id());
         //血缘表3
-        List<Own_source_field> own_source_fields = Dbo.queryList(Own_source_field.class,"select * from " + Own_source_field.TableName + " where own_dource_table_id in (" +
+        List<Own_source_field> own_source_fields = Dbo.queryList(Own_source_field.class, "select * from " + Own_source_field.TableName + " where own_dource_table_id in (" +
                 "select own_dource_table_id from " + Dm_datatable_source.TableName + " where datatable_id in " +
                 "(select datatable_id from " + Dm_datatable.TableName + " where data_mart_id =  ? ))", dm_info.getData_mart_id());
         //字段表
-        List<Datatable_field_info> datatable_field_infos = Dbo.queryList(Datatable_field_info.class,"select * from " + Datatable_field_info.TableName + " where datatable_id in " +
+        List<Datatable_field_info> datatable_field_infos = Dbo.queryList(Datatable_field_info.class, "select * from " + Datatable_field_info.TableName + " where datatable_id in " +
                 "(select datatable_id from " + Dm_datatable.TableName + " where data_mart_id =  ? )", dm_info.getData_mart_id());
-        List<Dm_relation_datatable> dm_relation_datatables = Dbo.queryList(Dm_relation_datatable.class,"select * from " + Dm_relation_datatable.TableName + " where datatable_id in " +
+        List<Dm_relation_datatable> dm_relation_datatables = Dbo.queryList(Dm_relation_datatable.class, "select * from " + Dm_relation_datatable.TableName + " where datatable_id in " +
                 "(select datatable_id from " + Dm_datatable.TableName + " where data_mart_id =  ? )", dm_info.getData_mart_id());
-        List<Dm_column_storage> dm_column_storages = Dbo.queryList(Dm_column_storage.class,"select * from " + Dm_column_storage.TableName + " where datatable_field_id in (" +
+        List<Dm_column_storage> dm_column_storages = Dbo.queryList(Dm_column_storage.class, "select * from " + Dm_column_storage.TableName + " where datatable_field_id in (" +
                 "select datatable_field_id from " + Datatable_field_info.TableName + " where datatable_id in " +
                 "(select datatable_id from " + Dm_datatable.TableName + " where data_mart_id =  ? ))", dm_info.getData_mart_id());
-        resultmap.put("dm_infos",dm_infos);
-        resultmap.put("dm_datatables",dm_datatables);
-        resultmap.put("dm_operation_infos",dm_operation_infos);
-        resultmap.put("dm_datatable_sources",dm_datatable_sources);
-        resultmap.put("dm_etlmap_infos",dm_etlmap_infos);
-        resultmap.put("own_source_fields",own_source_fields);
-        resultmap.put("datatable_field_infos",datatable_field_infos);
-        resultmap.put("dm_relation_datatables",dm_relation_datatables);
-        resultmap.put("dm_column_storages",dm_column_storages);
+        resultmap.put("dm_infos", dm_infos);
+        resultmap.put("dm_datatables", dm_datatables);
+        resultmap.put("dm_operation_infos", dm_operation_infos);
+        resultmap.put("dm_datatable_sources", dm_datatable_sources);
+        resultmap.put("dm_etlmap_infos", dm_etlmap_infos);
+        resultmap.put("own_source_fields", own_source_fields);
+        resultmap.put("datatable_field_infos", datatable_field_infos);
+        resultmap.put("dm_relation_datatables", dm_relation_datatables);
+        resultmap.put("dm_column_storages", dm_column_storages);
         byte[] bytes = JSON.toJSONString(resultmap).getBytes();
         Map<String, Object> map = JSON.parseObject(new String(bytes));
         return bytes;
