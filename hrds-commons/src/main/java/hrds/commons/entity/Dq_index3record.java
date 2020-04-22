@@ -38,18 +38,20 @@ public class Dq_index3record extends ProjectTableEntity
 	private String record_time;
 	@DocBean(name ="table_name",value="数据表名:",dataType = String.class,required = true)
 	private String table_name;
-	@DocBean(name ="table_size",value="数据表大小:",dataType = BigDecimal.class,required = true)
+	@DocBean(name ="table_size",value="数据表大小:",dataType = BigDecimal.class,required = false)
 	private BigDecimal table_size;
-	@DocBean(name ="file_type",value="数据物理文件类型(HdfsFileType):1-csv<Csv> 2-parquet<Parquet> 3-avro<Avro> 4-orcfile<OrcFile> 5-sequencefile<SequenceFile> 6-其他<Other> ",dataType = String.class,required = true)
+	@DocBean(name ="file_type",value="数据物理文件类型(HdfsFileType):1-csv<Csv> 2-parquet<Parquet> 3-avro<Avro> 4-orcfile<OrcFile> 5-sequencefile<SequenceFile> 6-其他<Other> ",dataType = String.class,required = false)
 	private String file_type;
-	@DocBean(name ="file_path",value="数据物理文件路径:",dataType = String.class,required = true)
+	@DocBean(name ="file_path",value="数据物理文件路径:",dataType = String.class,required = false)
 	private String file_path;
-	@DocBean(name ="table_col",value="数据表字段:",dataType = String.class,required = true)
+	@DocBean(name ="table_col",value="数据表字段:",dataType = String.class,required = false)
 	private String table_col;
-	@DocBean(name ="dqc_ts",value="表空间名:",dataType = String.class,required = true)
+	@DocBean(name ="dqc_ts",value="表空间名:",dataType = String.class,required = false)
 	private String dqc_ts;
 	@DocBean(name ="task_id",value="任务编号:",dataType = Long.class,required = true)
 	private Long task_id;
+	@DocBean(name ="dsl_id",value="存储层配置ID:",dataType = Long.class,required = true)
+	private Long dsl_id;
 
 	/** 取得：记录编号 */
 	public Long getRecord_id(){
@@ -147,6 +149,20 @@ public class Dq_index3record extends ProjectTableEntity
 	public void setTask_id(String task_id){
 		if(!fd.ng.core.utils.StringUtil.isEmpty(task_id)){
 			this.task_id=new Long(task_id);
+		}
+	}
+	/** 取得：存储层配置ID */
+	public Long getDsl_id(){
+		return dsl_id;
+	}
+	/** 设置：存储层配置ID */
+	public void setDsl_id(Long dsl_id){
+		this.dsl_id=dsl_id;
+	}
+	/** 设置：存储层配置ID */
+	public void setDsl_id(String dsl_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(dsl_id)){
+			this.dsl_id=new Long(dsl_id);
 		}
 	}
 }

@@ -14,7 +14,7 @@ import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
-import hrds.agent.job.biz.core.dfstage.fileparser.ReadFileToDataBase;
+import hrds.agent.job.biz.core.dfstage.service.ReadFileToDataBase;
 import hrds.agent.job.biz.core.increasement.JDBCIncreasement;
 import hrds.agent.job.biz.core.service.AbstractCollectTableHandle;
 import hrds.agent.job.biz.utils.DataTypeTransform;

@@ -1,6 +1,5 @@
 package hrds.agent.job.biz.bean;
 
-import java.util.HashMap;
 import java.util.Map;
 
 public class TableBean {
@@ -20,8 +19,9 @@ public class TableBean {
 	private String file_code;   //文件编码
 	private String primaryKeyInfo; //是否为主键
 	private String operate; //操作类型
+	private String is_archived; //是否转存
 	//db文件采集，字段是否采集的映射,对新增列不做映射，默认采集(注：新增列指的是拆分和合并的列)
-	private HashMap<String, Boolean> isCollectMap = null;
+//	private HashMap<String, Boolean> isCollectMap = null;
 
 	public String getFile_code() {
 		return file_code;
@@ -157,11 +157,18 @@ public class TableBean {
 		this.operate = operate;
 	}
 
-	public HashMap<String, Boolean> getIsCollectMap() {
-		return isCollectMap;
+	public String getIs_archived() {
+		return is_archived;
 	}
 
-	public void setIsCollectMap(HashMap<String, Boolean> isCollectMap) {
-		this.isCollectMap = isCollectMap;
+	public void setIs_archived(String is_archived) {
+		this.is_archived = is_archived;
 	}
+	//	public HashMap<String, Boolean> getIsCollectMap() {
+//		return isCollectMap;
+//	}
+//
+//	public void setIsCollectMap(HashMap<String, Boolean> isCollectMap) {
+//		this.isCollectMap = isCollectMap;
+//	}
 }

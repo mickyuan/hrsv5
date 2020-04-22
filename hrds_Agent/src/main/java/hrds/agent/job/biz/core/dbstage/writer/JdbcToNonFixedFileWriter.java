@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * JdbcToNonFixedFileWriter
+ * FileConversion
  * date: 2019/12/6 17:22
  * author: zxz
  */

@@ -52,6 +52,8 @@ public class Data_extraction_def extends ProjectTableEntity
 	private String file_suffix;
 	@DocBean(name ="table_id",value="表名ID:",dataType = Long.class,required = true)
 	private Long table_id;
+	@DocBean(name ="is_archived",value="是否转存(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
+	private String is_archived;
 
 	/** 取得：数据抽取定义主键 */
 	public Long getDed_id(){
@@ -152,5 +154,13 @@ public class Data_extraction_def extends ProjectTableEntity
 		if(!fd.ng.core.utils.StringUtil.isEmpty(table_id)){
 			this.table_id=new Long(table_id);
 		}
+	}
+	/** 取得：是否转存 */
+	public String getIs_archived(){
+		return is_archived;
+	}
+	/** 设置：是否转存 */
+	public void setIs_archived(String is_archived){
+		this.is_archived=is_archived;
 	}
 }

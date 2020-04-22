@@ -163,20 +163,20 @@ public class DatabaseInfo extends AgentBaseAction {
 			, isBean = true)
 	@Return(desc = "数据库下表的字段信息", range = "不会为空，如果字符串的长度超过300，将会被压缩")
 	public String getAllTableStorage(Database_set database_set) {
-		Map<String, List<Map<String, String>>> columnList;
+		List<Map<String, Object>> allStorageList;
 		//1.根据Db_agent判断是否为平面DB数据采集
 		String db_path = database_set.getPlane_url();
 		String xmlName = ConnUtil.getDataBaseFile("", "", db_path, "");
 		try {
 			//2.去读xml下指定表的字段信息
-			columnList = ConnUtil.getStorageByXml(xmlName);
+			allStorageList = ConnUtil.getStorageByXml(xmlName);
 		} catch (Exception e) {
 			//3.报错了，说明解析xml文件失败，可能是文件被修改或者被删了，重新生成一次xml文件再读取
 			Xls2xml.toXml(db_path, xmlName);
-			columnList = ConnUtil.getStorageByXml(xmlName);
+			allStorageList = ConnUtil.getStorageByXml(xmlName);
 		}
 		//4.返回指定表的字段信息
-		return PackUtil.packMsg(JSON.toJSONString(columnList));
+		return PackUtil.packMsg(JSON.toJSONString(allStorageList));
 	}
 
 	@Method(desc = "根据数据库连接和自定义抽取SQL获取表的字段信息",

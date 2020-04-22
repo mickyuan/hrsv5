@@ -6,7 +6,6 @@ import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.CollectTableBean;
-import hrds.agent.job.biz.bean.CollectTableColumnBean;
 import hrds.agent.job.biz.bean.SourceDataConfBean;
 import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.utils.TypeTransLength;
@@ -19,7 +18,6 @@ import hrds.commons.utils.Constant;
 import hrds.commons.utils.xlstoxml.Xls2xml;
 import hrds.commons.utils.xlstoxml.util.ColumnMeta;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -49,32 +47,62 @@ public class DFCollectTableHandleParse extends AbstractCollectTableHandle {
 		tableBean.setColumn_separator(sourceData_extraction_def.getDatabase_separatorr());
 		tableBean.setRoot_path(sourceData_extraction_def.getPlane_url());
 		tableBean.setFile_code(sourceData_extraction_def.getDatabase_code());
+		tableBean.setIs_archived(sourceData_extraction_def.getIs_archived());
 		StringBuilder allColumns = new StringBuilder();//要采集的列名
 		StringBuilder allType = new StringBuilder();//要采集的列类型
 		StringBuilder columnMetaInfo = new StringBuilder();//生成的元信息列名
 		StringBuilder colTypeMetaInfo = new StringBuilder();//生成的元信息列类型
 		StringBuilder colLengthInfo = new StringBuilder();//生成的元信息列长度
-		HashMap<String, Boolean> isCollectMap = new HashMap<>();//db文件采集，字段是否采集的映射,对新增列不做映射，默认采集
+		StringBuilder primaryKeyInfo = new StringBuilder();//是否为主键
+//		HashMap<String, Boolean> isCollectMap = new HashMap<>();//db文件采集，字段是否采集的映射,对新增列不做映射，默认采集
 		//3.读取xml获取数据字典下所有的表信息,找到当前线程对应需要采集表的数据字典，获取表结构(注数据字典中的是有序的)
 		List<String> cols = ColumnMeta.getColumnList(collectTableBean.getTable_name(),
 				Constant.XMLPATH + xmlName);
 		//遍历db文件数据字典里面列信息的集合
+		// XXX 注：DB文件采集，页面只允许查看列，不允许选择列，默认是全选，所有数据字典里面定义的列都采集。
+		//  页面选择了转存的情况下，不读取DB数据文件的HYREN_S_DATE、HYREN_E_DATE、HYREN_MD5_VAL三列
+		//  HYREN_S_DATE、HYREN_E_DATE、HYREN_MD5_VAL三列，根据页面选择的是否拉链存储的存储方式自行添加
 		for (String col : cols) {
 			List<String> colList = StringUtil.split(col, STRSPLIT);
-			allColumns.append(colList.get(0)).append(STRSPLIT);
-			allType.append(colList.get(1)).append(STRSPLIT);
-			isCollectMap.put(colList.get(0), false);
-			for (CollectTableColumnBean table_column : collectTableBean.getCollectTableColumnBeanList()) {
-				//如果页面选择了这一列，且是否采集选择了是，则给true
-				if (colList.get(0).equals(table_column.getColumn_name()) &&
-						IsFlag.Shi.getCode().equals(table_column.getIs_get())) {
-					isCollectMap.put(colList.get(0), true);
-					columnMetaInfo.append(colList.get(0)).append(STRSPLIT);
-					colTypeMetaInfo.append(colList.get(1)).append(STRSPLIT);
-					colLengthInfo.append(TypeTransLength.getLength(colList.get(1))).append(STRSPLIT);
+			String colName = colList.get(0);
+			String colType = colList.get(1);
+			allColumns.append(colName).append(STRSPLIT);
+			allType.append(colType).append(STRSPLIT);
+			if (IsFlag.Shi.getCode().equals(tableBean.getIs_archived())) {
+				//转存，过滤掉海云的三个字段
+				if (!(Constant.SDATENAME.equals(colName) || Constant.EDATENAME.equals(colName)
+						|| Constant.MD5NAME.equals(colName))) {
+					columnMetaInfo.append(colName).append(STRSPLIT);
+					colTypeMetaInfo.append(colType).append(STRSPLIT);
+					colLengthInfo.append(TypeTransLength.getLength(colType)).append(STRSPLIT);
+					primaryKeyInfo.append(colList.get(2)).append(STRSPLIT);
 				}
+			} else if (IsFlag.Fou.getCode().equals(tableBean.getIs_archived())) {
+				//不转存，取所有字段
+				columnMetaInfo.append(colName).append(STRSPLIT);
+				colTypeMetaInfo.append(colType).append(STRSPLIT);
+				colLengthInfo.append(TypeTransLength.getLength(colType)).append(STRSPLIT);
+				primaryKeyInfo.append(colList.get(2)).append(STRSPLIT);
+			} else {
+				throw new AppSystemException("错误的是否标识");
 			}
 		}
+//		for (String col : cols) {
+//			List<String> colList = StringUtil.split(col, STRSPLIT);
+//			allColumns.append(colList.get(0)).append(STRSPLIT);
+//			allType.append(colList.get(1)).append(STRSPLIT);
+//			isCollectMap.put(colList.get(0), false);
+//			for (CollectTableColumnBean table_column : collectTableBean.getCollectTableColumnBeanList()) {
+//				//如果页面选择了这一列，且是否采集选择了是，则给true
+//				if (colList.get(0).equals(table_column.getColumn_name()) &&
+//						IsFlag.Shi.getCode().equals(table_column.getIs_get())) {
+//					isCollectMap.put(colList.get(0), true);
+//					columnMetaInfo.append(colList.get(0)).append(STRSPLIT);
+//					colTypeMetaInfo.append(colList.get(1)).append(STRSPLIT);
+//					colLengthInfo.append(TypeTransLength.getLength(colList.get(1))).append(STRSPLIT);
+//				}
+//			}
+//		}
 		if (colLengthInfo.length() > 0) {
 			colLengthInfo.delete(colLengthInfo.length() - 1, colLengthInfo.length());
 			allType.delete(allType.length() - 1, allType.length());
@@ -90,8 +118,8 @@ public class DFCollectTableHandleParse extends AbstractCollectTableHandle {
 		//更新拆分和合并的列信息
 		String colMeta = updateColumn(mergeIng, splitIng, columnMetaInfo, colTypeMetaInfo, colLengthInfo);
 		columnMetaInfo.delete(0, columnMetaInfo.length()).append(colMeta);
-		//仅登记，海云不加任何字段 XXX 这里是否转存之后是否新增列，是否过滤海云列，待...
-		if (IsFlag.Fou.getCode().equals(collectTableBean.getIs_register())) {
+		if (IsFlag.Shi.getCode().equals(tableBean.getIs_archived())) {
+			//转存，根据拉链存储的进数方式拼接海云的字段HYREN_S_DATE、HYREN_E_DATE、HYREN_MD5_VAL三列
 			//这里是根据不同存储目的地会有相同的拉链方式，则这新增拉链字段在这里增加
 			columnMetaInfo.append(STRSPLIT).append(Constant.SDATENAME);
 			colTypeMetaInfo.append(STRSPLIT).append("char(8)");
@@ -108,9 +136,10 @@ public class DFCollectTableHandleParse extends AbstractCollectTableHandle {
 		tableBean.setAllType(allType.toString());
 		tableBean.setColLengthInfo(colLengthInfo.toString());
 		tableBean.setColTypeMetaInfo(colTypeMetaInfo.toString());
-		tableBean.setColumnMetaInfo(columnMetaInfo.toString().toUpperCase());
+		tableBean.setColumnMetaInfo(columnMetaInfo.toString());
+		tableBean.setPrimaryKeyInfo(primaryKeyInfo.toString());
 		tableBean.setParseJson(parseJson);
-		tableBean.setIsCollectMap(isCollectMap);
+//		tableBean.setIsCollectMap(isCollectMap);
 		//返回表结构信息
 		return tableBean;
 	}
