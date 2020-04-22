@@ -428,42 +428,44 @@ public class InterfaceCommon {
 		// 数据类型为csv时表对应列值信息
 		List<String> streamCsvData = new ArrayList<>();
 		// 2.根据sql获取搜索引擎并根据输出数据类型处理数据
-		new ProcessingData() {
-			@Override
-			public void dealLine(Map<String, Object> map) {
-				lineCounter++;
-				// 数据类型为csv的列值集合
-				StringBuffer sbCol = new StringBuffer();
-				StringBuffer sbVal = new StringBuffer();
-				// 3.根据输出数据类型不同处理数据
-				if (OutType.STREAM == OutType.ofEnumByCode(outType)) {
-					// 4.输出类型为stream，处理数据并返回
-					dealWithStreamType(map, sbVal, dataType, streamCsv, streamCsvData, streamJson);
-				} else if (OutType.FILE == OutType.ofEnumByCode(outType)) {
-					// 5.输出类型为file，创建本地文件,准备数据的写入
-					dealWithFileType(map, sbCol, sbVal, dataType);
+		try (DatabaseWrapper db = new DatabaseWrapper()) {
+			new ProcessingData() {
+				@Override
+				public void dealLine(Map<String, Object> map) {
+					lineCounter++;
+					// 数据类型为csv的列值集合
+					StringBuffer sbCol = new StringBuffer();
+					StringBuffer sbVal = new StringBuffer();
+					// 3.根据输出数据类型不同处理数据
+					if (OutType.STREAM == OutType.ofEnumByCode(outType)) {
+						// 4.输出类型为stream，处理数据并返回
+						dealWithStreamType(map, sbVal, dataType, streamCsv, streamCsvData, streamJson);
+					} else if (OutType.FILE == OutType.ofEnumByCode(outType)) {
+						// 5.输出类型为file，创建本地文件,准备数据的写入
+						dealWithFileType(map, sbCol, sbVal, dataType);
+					} else {
+						// 6.输出类型错误
+						responseMap = StateType.getResponseInfo(StateType.OUT_TYPE_ERROR);
+					}
+				}
+			}.getDataLayer(sqlSb, db);
+			// 7.输出类型为stream，如果输出数据类型为csv，第一行为列名，按csv格式处理数据并返回
+			if (OutType.STREAM == OutType.ofEnumByCode(outType)) {
+				if (DataType.csv == DataType.ofEnumByCode(dataType)) {
+					Map<String, Object> map = new HashMap<>();
+					map.put("column", streamCsv);
+					map.put("data", streamCsvData);
+					responseMap = StateType.getResponseInfo(StateType.NORMAL.getValue(),
+							map);
 				} else {
-					// 6.输出类型错误
-					responseMap = StateType.getResponseInfo(StateType.OUT_TYPE_ERROR);
+					// 8.如果输出数据类型为json则直接返回数据
+					responseMap = StateType.getResponseInfo(StateType.NORMAL.getValue(),
+							streamJson);
 				}
 			}
-		}.getDataLayer(sqlSb, new DatabaseWrapper());
-		// 7.输出类型为stream，如果输出数据类型为csv，第一行为列名，按csv格式处理数据并返回
-		if (OutType.STREAM == OutType.ofEnumByCode(outType)) {
-			if (DataType.csv == DataType.ofEnumByCode(dataType)) {
-				Map<String, Object> map = new HashMap<>();
-				map.put("column", streamCsv);
-				map.put("data", streamCsvData);
-				responseMap = StateType.getResponseInfo(StateType.NORMAL.getValue(),
-						map);
-			} else {
-				// 8.如果输出数据类型为json则直接返回数据
-				responseMap = StateType.getResponseInfo(StateType.NORMAL.getValue(),
-						streamJson);
-			}
+			// 9.输出数据形式不是stream返回处理后的响应数据
+			return responseMap;
 		}
-		// 9.输出数据形式不是stream返回处理后的响应数据
-		return responseMap;
 	}
 
 	@Method(desc = "处理输出数据类型为file的数据",

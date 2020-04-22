@@ -1,8 +1,5 @@
 package hrds.g.biz.serviceuser.impl;
 
-import com.alibaba.druid.sql.SQLUtils;
-import com.alibaba.druid.sql.ast.statement.SQLSelectItem;
-import com.alibaba.druid.util.DruidWebUtils;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
@@ -11,9 +8,6 @@ import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.web.action.AbstractWebappBaseAction;
-import fd.ng.web.util.Dbo;
-import fd.ng.web.util.RequestUtil;
-import hrds.commons.base.BaseAction;
 import hrds.commons.codes.CollectType;
 import hrds.commons.codes.DataSourceType;
 import hrds.commons.codes.IsFlag;
@@ -128,7 +122,6 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction imp
 		// 1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制
 		// 2.检查token以及接口是否有效
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-
 			Map<String, Object> responseMap = InterfaceCommon.checkTokenAndInterface(checkParam);
 			if (StateType.NORMAL != StateType.ofEnumByCode(responseMap.get("status").toString())) {
 				return responseMap;
@@ -197,7 +190,6 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction imp
 		// 1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制
 		// 2.token、接口权限检查
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-
 			Map<String, Object> responseMap = InterfaceCommon.checkTokenAndInterface(checkParam);
 			// 3.如果responseMap响应状态不为normal返回错误响应信息
 			if (StateType.NORMAL != StateType.ofEnumByCode(responseMap.get("status").toString())) {
@@ -358,8 +350,8 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction imp
 			List<String> sqlColumnList = druidParseQuerySql.parseSelectOriginalField();
 			if (!columnList.isEmpty()) {
 				// 12.判断查询列是否存在，支持t1.*,t2.*
-				if ( !sqlColumnList.contains(null)) {
-					 // 13.存在，遍历列集合，判断列是否包含.,包含.说明是有别名获取别名后的列名称，否则直接获取列名称
+				if (!sqlColumnList.contains(null)) {
+					// 13.存在，遍历列集合，判断列是否包含.,包含.说明是有别名获取别名后的列名称，否则直接获取列名称
 					for (String col : sqlColumnList) {
 						if (col.contains(".")) {
 							col = col.substring(col.indexOf(".") + 1).toLowerCase();
