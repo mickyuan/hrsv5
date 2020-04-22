@@ -36,6 +36,7 @@ public class CleanFactory {
 	private CleanFactory() {
 		//TODO 这个配置好需要吗？目前好像只有页面定义的清洗方式，而且不能通过sql去实现
 		mpTypeClass.put("clean_database", "hrds.agent.job.biz.dataclean.DataClean_Biz");
+		mpTypeClass.put("clean_db_file", "hrds.agent.job.biz.dataclean.DataClean_Biz");
 //		File file = new File("FactoryConf.xml");
 //		try {
 //			if (file.exists()) {

@@ -1,5 +1,6 @@
 package hrds.agent.job.biz.core.dfstage.fileparser;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -11,5 +12,7 @@ public interface FileParserInterface {
 
 	String parserFile();
 
-	void dealLine(List<String> lineList);
+	void dealLine(List<String> lineList) throws IOException;
+
+	void stopStream() throws IOException;
 }

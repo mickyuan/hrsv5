@@ -19,8 +19,8 @@ public class FileParserFactory {
 
 	}
 
-	public static FileParserInterface getFileParserImpl(TableBean tableBean,
-	                                                    CollectTableBean collectTableBean, String readFile) {
+	public static FileParserInterface getFileParserImpl(TableBean tableBean, CollectTableBean
+			collectTableBean, String readFile) throws Exception {
 		String unload_type = collectTableBean.getUnload_type();
 		String format = collectTableBean.getSourceData_extraction_def().getDbfile_format();
 		FileParserInterface fileParserInterface;

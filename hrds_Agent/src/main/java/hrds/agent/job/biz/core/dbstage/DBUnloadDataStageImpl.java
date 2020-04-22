@@ -246,7 +246,7 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 		}
 	}
 
-	private void countResult(List<String> fileResult, List<Long> pageCountResult, StageParamInfo stageParamInfo) {
+	public static void countResult(List<String> fileResult, List<Long> pageCountResult, StageParamInfo stageParamInfo) {
 		//获得本次采集总数据量
 		long rowCount = 0;
 		for (Long pageCount : pageCountResult) {

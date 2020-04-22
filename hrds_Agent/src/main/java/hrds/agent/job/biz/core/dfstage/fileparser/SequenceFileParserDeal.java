@@ -12,7 +12,8 @@ import java.util.List;
  */
 public class SequenceFileParserDeal extends FileParserAbstract {
 
-	public SequenceFileParserDeal(TableBean tableBean, CollectTableBean collectTableBean, String readFile) {
+	public SequenceFileParserDeal(TableBean tableBean, CollectTableBean collectTableBean, String readFile)
+			throws Exception {
 		super(tableBean, collectTableBean, readFile);
 	}
 

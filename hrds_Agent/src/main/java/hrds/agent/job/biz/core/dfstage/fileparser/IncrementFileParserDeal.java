@@ -12,7 +12,8 @@ import java.util.List;
  */
 public class IncrementFileParserDeal extends FileParserAbstract {
 
-	public IncrementFileParserDeal(TableBean tableBean, CollectTableBean collectTableBean, String readFile) {
+	public IncrementFileParserDeal(TableBean tableBean, CollectTableBean collectTableBean, String readFile)
+			throws Exception {
 		super(tableBean, collectTableBean, readFile);
 	}
 

@@ -12,7 +12,8 @@ import java.util.List;
  */
 public class ParquetFileParserDeal extends FileParserAbstract {
 
-	public ParquetFileParserDeal(TableBean tableBean, CollectTableBean collectTableBean, String readFile) {
+	public ParquetFileParserDeal(TableBean tableBean, CollectTableBean collectTableBean, String readFile)
+			throws Exception {
 		super(tableBean, collectTableBean, readFile);
 	}
 
