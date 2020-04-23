@@ -37,13 +37,16 @@ public class BusinessForStorageType extends AbstractBusiness {
                  * 如果跑批日期已经追加成功了，就执行重跑追加，否则均追加
                  */
                 if (conf.isRerun()) {
-                    logger.info("此任务在日期 " + conf.getEtlDate() + " 已运行成功，重跑任务: " + loaderName);
-                    load.reappend();
-                } else {
-                    load.append();
+                    logger.info("此任务在日期 " + conf.getEtlDate() + " 已运行成功，恢复数据到上次跑批完的数据状态: " + loaderName);
+                    load.restore();
                 }
+                load.append();
             } else if (StorageType.ZengLiang.getCode().equals(storageType)) {
                 logger.info("增量=======================");
+                if (conf.isRerun()) {
+                    logger.info("此任务在日期 " + conf.getEtlDate() + " 已运行成功，恢复数据到上次跑批完的数据状态: " + loaderName);
+                    load.restore();
+                }
                 load.increment();
             } else {
                 throw new AppSystemException("无效的进数方式: " + storageType);
