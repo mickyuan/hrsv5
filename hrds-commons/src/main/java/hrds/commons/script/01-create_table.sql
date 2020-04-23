@@ -509,7 +509,7 @@ COM_EXE_NUM                                       INTEGER default 0 NULL, --已�
 LAST_EXE_TIME                                     VARCHAR(20) NULL, --上次执行时间
 STAR_TIME                                         VARCHAR(20) NULL, --开始执行时间
 END_TIME                                          VARCHAR(20) NULL, --结束执行时间
-CONSTRAINT ETL_JOB_DEF_PK PRIMARY KEY(ETL_JOB)   );
+CONSTRAINT ETL_JOB_DEF_PK PRIMARY KEY(ETL_JOB,ETL_SYS_CD)   );
 
 --作业调度表
 DROP TABLE IF EXISTS ETL_JOB_CUR ;

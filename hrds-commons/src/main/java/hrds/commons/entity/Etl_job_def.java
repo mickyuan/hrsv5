@@ -28,6 +28,7 @@ public class Etl_job_def extends ProjectTableEntity
 	static {
 		Set<String> __tmpPKS = new HashSet<>();
 		__tmpPKS.add("etl_job");
+		__tmpPKS.add("etl_sys_cd");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
 	@DocBean(name ="etl_job",value="作业名:",dataType = String.class,required = true)
