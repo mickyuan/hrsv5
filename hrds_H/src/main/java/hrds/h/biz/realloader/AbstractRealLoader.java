@@ -21,6 +21,11 @@ public abstract class AbstractRealLoader implements Loader {
         initTableLayerProperties();
     }
 
+    @Override
+    public MarketConf getConf(){
+        return conf;
+    }
+
     /**
      * 将存储层的配置的（k,v）初始化到 Map 中
      */

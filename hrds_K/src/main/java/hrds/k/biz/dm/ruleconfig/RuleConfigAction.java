@@ -7,6 +7,7 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
+import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.DefaultPageImpl;
 import fd.ng.db.jdbc.Page;
 import fd.ng.db.jdbc.SqlOperator;
@@ -16,6 +17,7 @@ import hrds.commons.codes.DataSourceType;
 import hrds.commons.codes.DqcExecMode;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.Job_Effective_Flag;
+import hrds.commons.collection.ProcessingData;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.tree.background.TreeNodeInfo;
@@ -306,6 +308,38 @@ public class RuleConfigAction extends BaseAction {
         return DqcExecution.executionRule(dq_definition, verify_date, beans, DqcExecMode.ShouGong.getCode());
     }
 
+    @Method(desc = "获取指标3保存的结果数据,只取10条", logicStep = "获取指标3保存的结果数据,只取10条")
+    @Param(name = "task_id", desc = "任务标号", range = "long类型")
+    @Return(desc = "指标3保存的结果数据,只取10条", range = "指标3保存的结果数据,只取10条")
+    public List<Map<String, Object>> getCheckIndex3(long task_id) {
+        //设置 Dq_index3record 对象
+        Dq_index3record dq_index3record = new Dq_index3record();
+        dq_index3record.setTask_id(task_id);
+        //数据校验
+        if (StringUtil.isBlank(dq_index3record.getTask_id().toString())) {
+            throw new BusinessException("获取指标3结果时,任务标号为空!");
+        }
+        try (DatabaseWrapper db = new DatabaseWrapper()) {
+            //获取指标3存储记录信息
+            dq_index3record = Dbo.queryOneObject(Dq_index3record.class, "select * from " + Dq_index3record.TableName +
+                    " where task_id=?", dq_index3record.getTask_id()).orElseThrow(() ->
+                    (new BusinessException("获取任务指标3存储记录的SQL异常!")));
+            //设置查询sql
+            String sql = "select * from " + dq_index3record.getTable_name() + "limit 10";
+            //设置查询sql:问题数据明细sql,只取10条
+            List<Map<String, Object>> check_index3_list = new ArrayList<>();
+            //根据指标3存储记录信息获取数据
+            new ProcessingData() {
+
+                @Override
+                public void dealLine(Map<String, Object> map) {
+                    check_index3_list.add(map);
+                }
+            }.getDataLayer(sql, db);
+            return check_index3_list;
+        }
+    }
+
     @Method(desc = "获取作业工程信息", logicStep = "获取作业工程信息")
     @Return(desc = "作业工程信息", range = "作业工程信息")
     public List<Etl_sys> getProInfos() {
@@ -316,7 +350,7 @@ public class RuleConfigAction extends BaseAction {
             logicStep = "获取作业某个工程下的任务信息")
     @Param(name = "etl_sys_cd", desc = "工程代码", range = "String类型")
     @Return(desc = "工程下的任务信息", range = "工程下的任务信息")
-    public static List<Etl_sub_sys_list> getTaskInfo(String etl_sys_cd) {
+    public List<Etl_sub_sys_list> getTaskInfo(String etl_sys_cd) {
         return EtlJobUtil.getTaskInfo(etl_sys_cd);
     }
 
@@ -324,31 +358,34 @@ public class RuleConfigAction extends BaseAction {
             logicStep = "查看规则调度状态")
     @Param(name = "reg_num", desc = "规则编号", range = "long类型")
     @Return(desc = "规则调度信息列表", range = "规则调度信息列表")
-    public List<Map<String, Object>> viewRuleSchedulingStatus(String reg_num) {
+    public List<Map<String, Object>> viewRuleSchedulingStatus(long reg_num) {
         Dq_definition dqd = new Dq_definition();
         dqd.setReg_num(reg_num);
         Dq_definition dq_definition = getDqDefinition(dqd.getReg_num());
         //初始化执行sql
         SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
         asmSql.clean();
-        asmSql.addSql("SELECT etl_sys_cd,sub_sys_cd,etl_job,job_eff_flag FROM etl_job_def where");
-        asmSql.addLikeParam("etl_job", dq_definition.getReg_num().toString(), "");
+        asmSql.addSql("SELECT etl_sys_cd,sub_sys_cd,etl_job,job_eff_flag,job_disp_status FROM " + Etl_job_def.TableName +
+                " where").addLikeParam("etl_job", '%' + dq_definition.getReg_num().toString() + '%', "");
         asmSql.addSql("UNION");
-        asmSql.addSql("SELECT etl_sys_cd,sub_sys_cd,etl_job,job_eff_flag FROM etl_job WHERE");
-        asmSql.addLikeParam("etl_job", dq_definition.getReg_num().toString(), "");
+        asmSql.addSql("SELECT etl_sys_cd,sub_sys_cd,etl_job,job_eff_flag,job_disp_status FROM " + Etl_job_cur.TableName +
+                " WHERE").addLikeParam("etl_job", '%' + dq_definition.getReg_num().toString() + '%', "");
         asmSql.addSql("UNION");
-        asmSql.addSql("SELECT etl_sys_cd,sub_sys_cd,etl_job,job_eff_flag FROM etl_job_disp_his WHERE");
-        asmSql.addLikeParam("etl_job", dq_definition.getReg_num().toString(), "");
+        asmSql.addSql("SELECT etl_sys_cd,sub_sys_cd,etl_job,job_eff_flag,job_disp_status FROM " + Etl_job_disp_his.TableName +
+                " WHERE").addLikeParam("etl_job", '%' + dq_definition.getReg_num().toString() + '%', "");
         List<Map<String, Object>> queryList = Dbo.queryList(asmSql.sql(), asmSql.params());
         //处理查询结果
         List<Map<String, Object>> ruleSchedulingStatusInfos = new ArrayList<>();
         queryList.forEach(o -> {
             Map<String, Object> map = new HashMap<>();
+            map.put("etl_sys_cd", o.get("etl_sys_cd").toString());
+            map.put("sub_sys_cd", o.get("sub_sys_cd").toString());
+            map.put("etl_job", o.get("etl_job").toString());
+            map.put("job_eff_flag", o.get("job_eff_flag"));
+            map.put("job_disp_status", o.get("job_disp_status"));
             map.put("reg_num", dq_definition.getReg_num());
             map.put("case_type", dq_definition.getCase_type());
             map.put("target_tab", dq_definition.getTarget_tab());
-            map.put("job_eff_flag", o.get("job_eff_flag"));
-            map.put("job_disp_status", o.get("job_disp_status"));
             ruleSchedulingStatusInfos.add(map);
         });
         return ruleSchedulingStatusInfos;

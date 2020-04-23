@@ -3,6 +3,7 @@ package hrds.h.biz.realloader;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.commons.entity.Datatable_field_info;
+import hrds.h.biz.config.MarketConfUtils;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -42,10 +43,11 @@ public class Utils {
 
         //如果是database类型 则类型为定长char类型，否则为string类型（默认）
         if (isDatabase) {
+            String str = MarketConfUtils.DEFAULT_STRING_TYPE;
             String s = createTableColumnTypes.toString();
-            StringUtil.replaceLast(s, "string", "char(32)");
-            StringUtil.replaceLast(s, "string", "char(8)");
-            StringUtil.replaceLast(s, "string", "char(8)");
+            s = StringUtil.replaceLast(s, str, "char(32)");
+            s = StringUtil.replaceLast(s, str, "char(8)");
+            s = StringUtil.replaceLast(s, str, "char(8)");
             return s;
         }
         return createTableColumnTypes.toString();
@@ -60,7 +62,7 @@ public class Utils {
      */
     static String columnsWithoutHyren(List<Datatable_field_info> fields) {
         //后面的三个hyren字段去掉
-        return fields.subList(0, fields.size() - 4)
+        return fields.subList(0, fields.size() - 3)
                 .stream()
                 .map(Datatable_field_info::getField_en_name)
                 .collect(Collectors.joining(","));

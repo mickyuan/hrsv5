@@ -15,6 +15,7 @@ import hrds.commons.exception.BusinessException;
 import hrds.k.biz.dm.ruleresults.bean.RuleResultSearchBean;
 import hrds.k.biz.utils.CheckBeanUtil;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -90,22 +91,34 @@ public class RuleResultsAction extends BaseAction {
         if (StringUtil.isBlank(task_id)) {
             throw new BusinessException("查看的任务编号为空!");
         }
+        //设置查询对象
+        Dq_result dq_result = new Dq_result();
+        dq_result.setTask_id(task_id);
         //获取本任务的详细信息
-        return Dbo.queryOneObject(Dq_result.class, "SELECT * FROM dq_result WHERE task_id = ?", task_id)
-                .orElseThrow(() -> (new BusinessException("任务执行详细信息的SQL失败!")));
+        return Dbo.queryOneObject(Dq_result.class, "SELECT * FROM dq_result WHERE task_id = ?",
+                dq_result.getTask_id()).orElseThrow(() -> (new BusinessException("任务执行详细信息的SQL失败!")));
     }
 
     @Method(desc = "规则执行历史信息",
             logicStep = "规则执行历史信息")
     @Param(name = "reg_num", desc = "规则编号", range = "long类型")
+    @Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数", valueIfNull = "1")
+    @Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", valueIfNull = "10")
     @Return(desc = "规则执行历史信息", range = "规则执行历史信息")
-    public List<Dq_result> getRuleExecuteHistoryInfo(long reg_num) {
+    public Map<String, Object> getRuleExecuteHistoryInfo(long reg_num, int currPage, int pageSize) {
         //数据校验
         if (StringUtil.isBlank(String.valueOf(reg_num))) {
             throw new BusinessException("规则编号为空!");
         }
+        //设置分页信息
+        Page page = new DefaultPageImpl(currPage, pageSize);
         //获取该规则相关执行的历史信息
-        return Dbo.queryList(Dq_result.class, "SELECT * FROM dq_result WHERE reg_num = ? ORDER BY verify_date DESC",
-                reg_num);
+        List<Dq_result> dq_result_s = Dbo.queryPagedList(Dq_result.class, page, "SELECT * FROM dq_result WHERE" +
+                " reg_num = ? ORDER BY verify_date DESC", reg_num);
+        //初始化返会结果Map
+        Map<String, Object> dq_result_map = new HashMap<>();
+        dq_result_map.put("dq_result_s", dq_result_s);
+        dq_result_map.put("totalSize", page.getTotalSize());
+        return dq_result_map;
     }
 }

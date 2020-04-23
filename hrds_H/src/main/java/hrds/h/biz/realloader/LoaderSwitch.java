@@ -41,7 +41,7 @@ public class LoaderSwitch {
         //我要把输入输出表名都放一块来看看是不是都是一个jdbc配置的
         try (DatabaseWrapper db = new DatabaseWrapper()){
             LayerTypeBean allTableIsLayer = ProcessingData.getAllTableIsLayer(listTable, db);
-            return allTableIsLayer.getConnType().equals(LayerTypeBean.ConnTyte.oneJdbc);
+            return allTableIsLayer.getConnType().equals(LayerTypeBean.ConnType.oneJdbc);
         }
     }
 

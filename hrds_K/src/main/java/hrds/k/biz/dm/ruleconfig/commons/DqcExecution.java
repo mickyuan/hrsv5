@@ -10,7 +10,11 @@ import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.web.util.Dbo;
 import hrds.commons.codes.*;
+import hrds.commons.collection.LoadingData;
 import hrds.commons.collection.ProcessingData;
+import hrds.commons.collection.bean.LayerBean;
+import hrds.commons.collection.bean.LayerTypeBean;
+import hrds.commons.collection.bean.LoadingDataBean;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.BeanUtils;
@@ -108,17 +112,6 @@ public class DqcExecution {
                         }
                     }.getDataLayer(index2_sql, db);
                 }
-                //运行sql:问题明细sql
-                List<Map<String, Object>> map_result_3 = new ArrayList<>();
-                if (StringUtil.isNotBlank(index3_sql) && IsFlag.Shi.getCode().equals(dq_definition.getIs_saveindex3())) {
-                    new ProcessingData() {
-
-                        @Override
-                        public void dealLine(Map<String, Object> map) {
-                            map_result_3.add(map);
-                        }
-                    }.getDataLayer(index3_sql, db);
-                }
                 //设置运行结束日期,时间
                 dq_result.setEnd_date(DateUtil.getSysDate());
                 dq_result.setEnd_time(DateUtil.getSysTime());
@@ -128,7 +121,6 @@ public class DqcExecution {
                 //处理sql运行结果
                 dq_result.setCheck_index1(map_result_1.get("index1").toString());
                 dq_result.setCheck_index2(map_result_2.get("index2").toString());
-                dq_result.setCheck_index3(map_result_3.toString());
             } catch (Exception e) {
                 has_exception = Boolean.TRUE;
                 //规则级别为严重,且发生了异常
@@ -208,15 +200,15 @@ public class DqcExecution {
         asmSql.clean();
         asmSql.addSql("SELECT etl_sys_cd,etl_job,job_eff_flag,job_disp_status FROM " + Etl_job_def.TableName + " WHERE" +
                 " job_eff_flag = ?").addParam(Job_Effective_Flag.YES.getCode());
-        asmSql.addLikeParam("etl_job", dq_definition.getReg_num().toString());
+        asmSql.addLikeParam("etl_job", '%' + dq_definition.getReg_num().toString() + '%');
         asmSql.addSql("UNION");
         asmSql.addSql("SELECT etl_sys_cd,etl_job,job_eff_flag,job_disp_status FROM " + Etl_job_cur.TableName + " WHERE" +
                 " job_eff_flag = ?").addParam(Job_Effective_Flag.YES.getCode());
-        asmSql.addLikeParam("etl_job", dq_definition.getReg_num().toString());
+        asmSql.addLikeParam("etl_job", '%' + dq_definition.getReg_num().toString() + '%');
         asmSql.addSql("UNION");
         asmSql.addSql("SELECT etl_sys_cd,etl_job,job_eff_flag,job_disp_status FROM " + Etl_job_disp_his.TableName +
                 " WHERE job_eff_flag = ?").addParam(Job_Effective_Flag.YES.getCode());
-        asmSql.addLikeParam("etl_job", dq_definition.getReg_num().toString());
+        asmSql.addLikeParam("etl_job", '%' + dq_definition.getReg_num().toString() + '%');
         return Dbo.queryList(asmSql.sql(), asmSql.params());
     }
 
@@ -263,28 +255,23 @@ public class DqcExecution {
             }
             //设置检查结果表名,检查表名+当前时间+当前日期
             String dqc_table_name = dq_result.getTarget_tab() + DateUtil.getSysDate() + DateUtil.getSysTime();
-            //拼接插入执行sql
-            String insert_sql = "create table if not exists " + dqc_table_name + " as " + sql;
-            //执行sql
-            if (StringUtil.isNotBlank(insert_sql)) {
-
-                new ProcessingData() {
-                    @Override
-                    public void dealLine(Map<String, Object> map) {
-
-                    }
-                }.getDataLayer(insert_sql, db);
-            }
-            //获取表空间 //TODO 获取表空间
-            String table_space = "";
+            //设置数据加载实体Bean
+            LoadingDataBean ldbbean = new LoadingDataBean();
+            ldbbean.setTableName(dqc_table_name);
+            //插入指标3检查数据到存储层下,和查询的表存储层一致
+            long dsl_id = new LoadingData(ldbbean).intoDataLayer(sql, db);
             //记录指标3检测结果表元信息
             Dq_index3record dq_index3record = new Dq_index3record();
             dq_index3record.setRecord_id(PrimayKeyGener.getNextId());
             dq_index3record.setTable_name(dqc_table_name);
-            dq_index3record.setDqc_ts(table_space);
+            //TODO 获取表空间,目前给空
+            dq_index3record.setTable_col("");
+            //TODO 获取表空间,默认给空
+            dq_index3record.setDqc_ts(dq_result.getTarget_key_fields());
             dq_index3record.setRecord_date(DateUtil.getSysDate());
             dq_index3record.setRecord_time(DateUtil.getSysTime());
             dq_index3record.setTask_id(dq_result.getTask_id());
+            dq_index3record.setDsl_id(dsl_id);
             dq_index3record.add(db);
         } catch (Exception e) {
             throw new BusinessException("在插入指标3的全量数据记录信息时失败，任务编号为：" + dq_result.getTask_id());
@@ -305,6 +292,7 @@ public class DqcExecution {
             for (String sql : sql_s) {
                 //处理sql
                 sql = sql.replace("\n", " ");
+                sql = sql.replace("\t", " ");
                 for (SysVarCheckBean bean : beans) {
                     sql = sql.replace(bean.getName(), bean.getValue());
                 }

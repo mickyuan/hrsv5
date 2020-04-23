@@ -338,7 +338,7 @@ public class ProcessingDataTest {
 			 * 				String store_type = layerBean.getStore_type();
 			 *          }
 			 */
-			assertThat(allTableIsLayer.getConnType(), is(LayerTypeBean.ConnTyte.oneJdbc));
+			assertThat(allTableIsLayer.getConnType(), is(LayerTypeBean.ConnType.oneJdbc));
 		}
 	}
 	public void batchData(){

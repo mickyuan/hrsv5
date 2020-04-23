@@ -92,7 +92,7 @@ public class SameDatabaseLoader extends AbstractRealLoader {
     @Override
     public void reappend() {
         ensureTableExists("重追加");
-        Utils.restoreDatabaseData(db,tableName,conf.getEtlData());
+        Utils.restoreDatabaseData(db, tableName, conf.getEtlData());
         insertData(tableName);
     }
 
@@ -140,9 +140,9 @@ public class SameDatabaseLoader extends AbstractRealLoader {
     }
 
     private void insertData(String tableName) {
-        db.execute("INSERT INTO ? SELECT ?,?,'?',? FROM ( ? )",
-                tableName, columnsWithoutHyren, conf.getEtlData(), MAXDATE,
-                lineMd5Expr(columnsWithoutHyren), sql);
+        db.execute("INSERT INTO " + tableName + " SELECT " +
+                columnsWithoutHyren + "," + conf.getEtlData() + "," + MAXDATE +
+                "," + lineMd5Expr(columnsWithoutHyren) + " FROM ( " + sql + " ) aa");
     }
 
     private String lineMd5Expr(String columnsJoin) {

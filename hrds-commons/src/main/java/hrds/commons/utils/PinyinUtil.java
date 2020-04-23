@@ -14,7 +14,7 @@ import net.sourceforge.pinyin4j.format.exception.BadHanyuPinyinOutputFormatCombi
 public class PinyinUtil {
 
     //格式化配置
-    private static HanyuPinyinOutputFormat format;
+    private HanyuPinyinOutputFormat hanyuPinyinOutputFormat;
 
     public enum Type {
         //转换后的拼音全为大写
@@ -22,36 +22,36 @@ public class PinyinUtil {
         //转换后的拼音全为小写
         LOWERCASE(HanyuPinyinCaseType.LOWERCASE);
 
-        private HanyuPinyinCaseType current;
+        private HanyuPinyinCaseType caseType;
 
         //大小写设置
-        Type(HanyuPinyinCaseType temp) {
-            current = temp;
+        Type(HanyuPinyinCaseType caseType) {
+            this.caseType = caseType;
         }
 
         //大小写设置,默认为大写
         protected HanyuPinyinCaseType getType() {
-            if (null == current) {
-                current = HanyuPinyinCaseType.UPPERCASE;
+            if (null == caseType) {
+                caseType = HanyuPinyinCaseType.UPPERCASE;
             }
-            return current;
+            return caseType;
         }
     }
 
     //中文转换为英文的工具类
     public PinyinUtil() {
-        format = new HanyuPinyinOutputFormat();
+        hanyuPinyinOutputFormat = new HanyuPinyinOutputFormat();
         //设置转换类型，大写、小写等
-        format.setCaseType(HanyuPinyinCaseType.UPPERCASE);
+        hanyuPinyinOutputFormat.setCaseType(HanyuPinyinCaseType.UPPERCASE);
         //设置音调类型
-        format.setToneType(HanyuPinyinToneType.WITHOUT_TONE);
+        hanyuPinyinOutputFormat.setToneType(HanyuPinyinToneType.WITHOUT_TONE);
     }
 
     @Method(desc = "将中文转换为拼音，默认大写,如果不是中文，则不做处理.",
             logicStep = "将中文转换为拼音，默认大写,如果不是中文，则不做处理.")
     @Param(name = "chinese", desc = "中文字符串", range = "String类型")
     @Return(desc = "中文转换成英文后的字符串", range = "中文转换成英文后的字符串")
-    public static String toPinYin(String chinese) throws BadHanyuPinyinOutputFormatCombination {
+    public String toPinYin(String chinese) throws BadHanyuPinyinOutputFormatCombination {
         return toPinYin(chinese, Type.UPPERCASE);
     }
 
@@ -60,12 +60,12 @@ public class PinyinUtil {
     @Param(name = "chinese", desc = "中文字符串", range = "String类型")
     @Param(name = "type", desc = "转换类型(UPPERCASE:大写,LOWERCASE:小写)", range = "String类型")
     @Return(desc = "中文转换成英文后的字符串", range = "中文转换成英文后的字符串")
-    public static String toPinYin(String chinese, Type type) throws BadHanyuPinyinOutputFormatCombination {
+    public String toPinYin(String chinese, Type type) throws BadHanyuPinyinOutputFormatCombination {
         //如果待装换字符为空,直接返回""
         if (null == chinese || chinese.trim().length() == 0)
             return "";
         //设置转换后的大小写
-        format.setCaseType(type.getType());
+        hanyuPinyinOutputFormat.setCaseType(type.getType());
         //初始化返回结果
         StringBuilder py = new StringBuilder();
         String[] t;
@@ -74,7 +74,7 @@ public class PinyinUtil {
             if ((int) c <= 128)
                 py.append(c);
             else {
-                t = PinyinHelper.toHanyuPinyinStringArray(c, format);
+                t = PinyinHelper.toHanyuPinyinStringArray(c, hanyuPinyinOutputFormat);
                 if (t == null)
                     py.append(c);
                 else {
@@ -89,7 +89,7 @@ public class PinyinUtil {
             logicStep = "将中文字符串转换为拼音，并获取每个中文字符的首字符.")
     @Param(name = "chinese", desc = "中文字符串", range = "String类型")
     @Return(desc = "返回值说明", range = "返回值取值范围")
-    public static String toFixPinYin(String chinese) {
+    public String toFixPinYin(String chinese) {
         return toFixPinYin(chinese, 1, Type.UPPERCASE);
     }
 
@@ -98,7 +98,7 @@ public class PinyinUtil {
     @Param(name = "chinese", desc = "中文字符串", range = "String类型")
     @Param(name = "number", desc = "要获取的自定义个数的字符", range = "int类型")
     @Return(desc = "返回值说明", range = "返回值取值范围")
-    public static String toFixPinYin(String chinese, int number) {
+    public String toFixPinYin(String chinese, int number) {
         return toFixPinYin(chinese, number, Type.UPPERCASE);
     }
 
@@ -108,18 +108,19 @@ public class PinyinUtil {
     @Param(name = "number", desc = "要获取的自定义个数的字符", range = "int类型")
     @Param(name = "type", desc = "转换类型(UPPERCASE:大写,LOWERCASE:小写)", range = "String类型")
     @Return(desc = "返回值说明", range = "返回值取值范围")
-    public static String toFixPinYin(String chinese, int number, Type type) {
-        if (null == chinese || chinese.trim().length() == 0 || 0 == number)
+    public String toFixPinYin(String chinese, int number, Type type) {
+        if (null == chinese || chinese.trim().length() == 0 || 0 == number) {
             return "";
+        }
 
-        format.setCaseType(type.getType());
+        hanyuPinyinOutputFormat.setCaseType(type.getType());
 
         StringBuilder pybf = new StringBuilder();
         char[] arr = chinese.toCharArray();
         for (char c : arr) {
             if (c > 128) {
                 try {
-                    String[] temp = PinyinHelper.toHanyuPinyinStringArray(c, format);
+                    String[] temp = PinyinHelper.toHanyuPinyinStringArray(c, hanyuPinyinOutputFormat);
                     if (temp != null) {
                         for (int j = 0; j < number; j++) {
                             //如果转换后字符长度小于或等于指定长度时，跳过，不再取下一位
