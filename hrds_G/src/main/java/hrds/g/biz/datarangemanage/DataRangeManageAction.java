@@ -72,21 +72,78 @@ public class DataRangeManageAction extends BaseAction {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		for (TableDataInfo tableDataInfo : tableDataInfos) {
 			if (DataSourceType.DCL == DataSourceType.ofEnumByCode(data_layer)) {
+				// 2.保存贴源层数据
 				saveDCLData(table_note, tableDataInfo.getFile_id(), data_layer,
 						tableDataInfo.getColumn_name(), user_id);
 			} else if (DataSourceType.DML == DataSourceType.ofEnumByCode(data_layer)) {
-				throw new BusinessException("该数据源类型还未开发，待续。。。" + data_layer);
-			} else if (DataSourceType.DPL == DataSourceType.ofEnumByCode(data_layer)) {
-				throw new BusinessException("该数据源类型还未开发，待续。。。" + data_layer);
-			} else if (DataSourceType.SFL == DataSourceType.ofEnumByCode(data_layer)) {
-				throw new BusinessException("该数据源类型还未开发，待续。。。" + data_layer);
-			} else if (DataSourceType.UDL == DataSourceType.ofEnumByCode(data_layer)) {
-				throw new BusinessException("该数据源类型还未开发，待续。。。" + data_layer);
+				// 3.保存集市层数据
+				for (long userId : user_id) {
+					List<Dm_datatable> dmDataTables = Dbo.queryList(Dm_datatable.class,
+							"SELECT datatable_en_name,datatable_cn_name FROM " + Dm_datatable.TableName +
+									" WHERE datatable_id = ?", tableDataInfo.getFile_id());
+					for (Dm_datatable dmDataTable : dmDataTables) {
+						// 删除接口表信息
+						deleteInterfaceTableInfo(userId, dmDataTable.getDatatable_en_name());
+						Table_use_info tableUseInfo = new Table_use_info();
+						tableUseInfo.setTable_blsystem(data_layer);
+						// 生成主键,并记录
+						String useId = PrimayKeyGener.getNextId();
+						tableUseInfo.setUse_id(useId);
+						if (StringUtil.isBlank(dmDataTable.getDatatable_en_name())) {
+							tableUseInfo.setOriginal_name(dmDataTable.getDatatable_en_name());
+						} else {
+							tableUseInfo.setOriginal_name(dmDataTable.getDatatable_cn_name());
+						}
+						if (StringUtil.isBlank(table_note)) {
+							tableUseInfo.setTable_note("");
+						} else {
+							tableUseInfo.setTable_note(table_note);
+						}
+						tableUseInfo.add(Dbo.db());
+						// 获取列信息
+						List<Datatable_field_info> fieldInfos = Dbo.queryList(Datatable_field_info.class,
+								"SELECT field_en_name,field_type FROM " + Datatable_field_info.TableName
+										+ " WHERE datatable_id = ?", tableDataInfo.getFile_id());
+						Datatable_field_info field_info = new Datatable_field_info();
+						StringBuilder wholeColumns = new StringBuilder();
+						StringBuilder wholeTypes = new StringBuilder();
+						for (Datatable_field_info fieldInfo : fieldInfos) {
+							wholeColumns.append(fieldInfo.getField_en_name()).append(",");
+							wholeTypes.append(fieldInfo.getField_type()).append("|");
+						}
+						Map<String, String> columnType;
+						StringBuilder checkedColumns = new StringBuilder();
+						if (StringUtil.isBlank(tableDataInfo.getFile_id())) {
+							for (Datatable_field_info fieldInfo : fieldInfos) {
+								checkedColumns.append(fieldInfo.getField_en_name()).append(",");
+							}
+							columnType = getColumnType(checkedColumns.toString(), wholeColumns.toString(),
+									wholeTypes.toString());
+						} else {
+							columnType = getColumnType(String.join(",", tableDataInfo.getColumn_name()),
+									wholeColumns.toString(), wholeTypes.toString());
+						}
+						// 保存sysreg信息表
+						Sysreg_parameter_info parameter_info = new Sysreg_parameter_info();
+						// 主键
+						parameter_info.setParameter_id(PrimayKeyGener.getNextId());
+						// 使用ID
+						parameter_info.setUse_id(useId);
+						// 是否标识
+						parameter_info.setIs_flag(IsFlag.Fou.getCode());
+						// 用户ID
+						parameter_info.setUser_id(userId);
+						// 获取列信息
+						parameter_info.setTable_column_name(checkedColumns.toString().toUpperCase());
+						parameter_info.setRemark(JsonUtil.toJson(columnType).toUpperCase());
+						parameter_info.add(Dbo.db());
+					}
+				}
 			} else {
-				throw new BusinessException("该数据源类型还未开发，待续。。。" + data_layer);
+				throw new BusinessException("该数据层还未开发，待续。。。" + data_layer);
 			}
+			InterfaceManager.userTableInfo();
 		}
-		InterfaceManager.userTableInfo();
 	}
 
 	@Method(desc = "保存贴源层数据", logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制" +
@@ -132,7 +189,7 @@ public class DataRangeManageAction extends BaseAction {
 				addTableUseInfo(table_note, data_layer, userId, useId, table_use_info,
 						hyren_name, original_name);
 				// 10.新增系统登记表参数信息
-				addSysregParameterInfo(tableResult.getString(i, "meta_info"),
+				addSysRegParameterInfo(tableResult.getString(i, "meta_info"),
 						column_name, useId, userId);
 			}
 		}
@@ -147,7 +204,7 @@ public class DataRangeManageAction extends BaseAction {
 	@Param(name = "column_name", desc = "被选中的文件名称", range = "无限制")
 	@Param(name = "useId", desc = "表使用ID", range = "新增表使用信息时生成")
 	@Param(name = "userId", desc = "用户ID", range = "新增用户时生成")
-	private void addSysregParameterInfo(String meta_info, String[] column_name, String useId, long userId) {
+	private void addSysRegParameterInfo(String meta_info, String[] column_name, String useId, long userId) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		// 2.封装系统登记参数表信息
 		Sysreg_parameter_info sysreg_parameter_info = new Sysreg_parameter_info();
@@ -270,7 +327,7 @@ public class DataRangeManageAction extends BaseAction {
 					"3.再删除table_use_info")
 	@Param(name = "user_id", desc = "用户ID", range = "新增用户时生成")
 	@Param(name = "sysreg_name", desc = "表名", range = "无限制")
-	public void deleteInterfaceTableInfo(long user_id, String sysreg_name) {
+	private void deleteInterfaceTableInfo(long user_id, String sysreg_name) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		// 2.先删除Sysreg_parameter_info
 		List<Long> useIdList = Dbo.queryOneColumnList("select use_id from " + Table_use_info.TableName +

@@ -34,7 +34,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@DocClass(desc = "接口信息实现类", author = "dhw", createdate = "2020/3/30 15:39")
+@DocClass(desc = "接口服务实现类（接口api）", author = "dhw", createdate = "2020/3/30 15:39")
 public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction implements ServiceInterfaceUserDefine {
 
 	private static final Logger logger = LogManager.getLogger();
