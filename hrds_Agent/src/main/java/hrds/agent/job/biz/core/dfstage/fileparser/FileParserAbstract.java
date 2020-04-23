@@ -14,6 +14,7 @@ import hrds.commons.codes.DataBaseCode;
 import hrds.commons.codes.FileFormat;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.StorageType;
+import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
 
 import java.io.*;
@@ -39,7 +40,7 @@ public abstract class FileParserAbstract implements FileParserInterface {
 	//进目标库的所有列，包括列合并、列拆分、HYREN_S_DATE、HYREN_E_DATE、HYREN_MD5_VAL三列
 	private List<String> allColumnList;
 	//数据字典定义的所有的列类型
-	private List<String> dictionaryTypeList;
+	List<String> dictionaryTypeList;
 	//列合并的map
 	private Map<String, String> mergeIng;
 	//列清洗拆分合并的处理类
@@ -159,5 +160,15 @@ public abstract class FileParserAbstract implements FileParserInterface {
 			columnData = StringUtil.replace(columnData, "\r\n", " ");
 		}
 		return columnData;
+	}
+
+	void checkData(List<String> valueList, long fileRowCount) {
+		if (dictionaryColumnList.size() != valueList.size()) {
+			String mss = "第 " + fileRowCount + " 行数据 ，数据字典表(" + collectTableBean.getTable_name()
+					+ " )定义长度和数据不匹配！" + "\n" + "数据字典定义的长度是  " + valueList.size()
+					+ " 现在获取的长度是  " + dictionaryColumnList.size() + "\n" + "数据为 " + valueList;
+			//XXX 写文件还是直接抛异常  写文件就需要返回值，抛异常就不需要返回值
+			throw new AppSystemException(mss);
+		}
 	}
 }

@@ -125,12 +125,12 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 					//统计的结果
 					DBUnloadDataStageImpl.countResult(fileResult, pageCountResult, stageParamInfo);
 					stageParamInfo.setFileNameArr(file_name_list);
-					//将转存之后的文件格式，文件分隔符等重新赋值
+					//将转存之后的文件格式，文件分隔符等重新赋值,给上传阶段的程序使用
 					//列分隔符为默认值
 					tableBean.setColumn_separator(JobConstant.DATADELIMITER);
 					tableBean.setIs_header(IsFlag.Fou.getCode());
 					//换行符默认使用linux的换行符 XXX
-					tableBean.setRow_separator("\n");
+					tableBean.setRow_separator(JobConstant.DEFAULTLINESEPARATOR);
 					tableBean.setFile_format(FileFormat.FeiDingChang.getCode());
 					tableBean.setFile_code(tableBean.getDbFileArchivedCode());
 				} else {
