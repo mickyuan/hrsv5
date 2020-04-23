@@ -155,47 +155,47 @@ public class EtlJobUtil {
         //DPL加工层
         else if (dataSourceType == DataSourceType.DPL) {
             //获取中文任务名称的的首字母
-            String subSysCd = PinyinUtil.toFixPinYin(sub_name) + "_" + DataSourceType.DPL.toString();
+            String subSysCd = new PinyinUtil().toFixPinYin(sub_name) + "_" + dataSourceType.getCode();
             Etl_sub_sys_list etl_sub_sys_list = new Etl_sub_sys_list();
             etl_sub_sys_list.setEtl_sys_cd(etl_sys_cd);
             etl_sub_sys_list.setSub_sys_cd(subSysCd);
             etl_sub_sys_list.setSub_sys_desc(sub_sys_desc);
-            if (StringUtil.isBlank(subSysCd)) {
-                subSysCd = createEtl_sub_sys_list(etl_sub_sys_list, db);
+            if (StringUtil.isBlank(sub_sys_cd)) {
+                sub_sys_cd = createEtl_sub_sys_list(etl_sub_sys_list, db);
             }
             //创建作业
-            createEtl_job_def(etl_sys_cd, subSysCd, etl_job, etl_job_desc, param, pro_name, db, pro_dic);
+            createEtl_job_def(etl_sys_cd, sub_sys_cd, etl_job, etl_job_desc, param, pro_name, db, pro_dic);
         }
         //DML集市层
         else if (dataSourceType == DataSourceType.DML) {
             //获取中文任务名称的的首字母
-            String subSysCd = PinyinUtil.toFixPinYin(sub_name) + "_" + DataSourceType.DML.toString();
+            String subSysCd = new PinyinUtil().toFixPinYin(sub_name) + "_" + dataSourceType.getCode();
             Etl_sub_sys_list etl_sub_sys_list = new Etl_sub_sys_list();
             etl_sub_sys_list.setEtl_sys_cd(etl_sys_cd);
             etl_sub_sys_list.setSub_sys_cd(subSysCd);
             etl_sub_sys_list.setSub_sys_desc(sub_sys_desc);
-            if (StringUtil.isBlank(subSysCd)) {
-                subSysCd = createEtl_sub_sys_list(etl_sub_sys_list, db);
+            if (StringUtil.isBlank(sub_sys_cd)) {
+                sub_sys_cd = createEtl_sub_sys_list(etl_sub_sys_list, db);
             }
             //创建作业
-            createEtl_job_def(etl_sys_cd, subSysCd, subSysCd + "_" + etl_job, etl_job_desc, param, pro_name, db, pro_dic);
+            createEtl_job_def(etl_sys_cd, sub_sys_cd, subSysCd + "_" + etl_job, etl_job_desc, param, pro_name, db, pro_dic);
         }
         //DQC管控层
         else if (dataSourceType == DataSourceType.DQC) {
             //获取中文任务名称的的首字母
-            String subSysCd = PinyinUtil.toFixPinYin(sub_name) + "_" + dataSourceType;
+            String subSysCd = new PinyinUtil().toFixPinYin(sub_name) + "_" + dataSourceType.getCode();
             Etl_sub_sys_list etl_sub_sys_list = new Etl_sub_sys_list();
             etl_sub_sys_list.setEtl_sys_cd(etl_sys_cd);
             etl_sub_sys_list.setSub_sys_cd(subSysCd);
             etl_sub_sys_list.setSub_sys_desc(sub_sys_desc);
-            if (StringUtil.isBlank(subSysCd)) {
-                subSysCd = createEtl_sub_sys_list(etl_sub_sys_list, db);
+            if (StringUtil.isBlank(sub_sys_cd)) {
+                sub_sys_cd = createEtl_sub_sys_list(etl_sub_sys_list, db);
             }
             //TODO 此处的路径不应该写死在这里
             //pro_dic = "/opt/hyrenserv/server/tomcat7/webapps/K/";
             pro_dic = WebinfoConf.FileUpload_SavedDirName + File.separator + "pro_dic" + File.separator;
             //创建作业
-            createEtl_job_def(etl_sys_cd, subSysCd, subSysCd + "_" + etl_job, etl_job_desc, param, pro_name, db, pro_dic);
+            createEtl_job_def(etl_sys_cd, sub_sys_cd, subSysCd + "_" + etl_job, etl_job_desc, param, pro_name, db, pro_dic);
         }
     }
 
@@ -247,13 +247,12 @@ public class EtlJobUtil {
         etl_job_def.setMain_serv_sync(Main_Server_Sync.YES.getCode());
         //初始化查询sql
         SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
-        asmSql.addSql("select * from etl_job_def where etl_sys_cd = ? and etl_job = ?");
+        asmSql.addSql("select count(*) from etl_job_def where etl_sys_cd = ? and etl_job = ?");
         asmSql.addParam(etl_job_def.getEtl_sys_cd());
         asmSql.addParam(etl_job_def.getEtl_job());
         //校验工程作业是否存在,不存在则创建
-        long number = Dbo.queryNumber(db, asmSql.sql(), asmSql.params()).orElseThrow(() -> (new BusinessException(
-                "检查工程作业定义信息的SQL错误!")));
-        if (0 == number) {
+        if (Dbo.queryNumber(db, asmSql.sql(), asmSql.params()).orElseThrow(() -> (new BusinessException(
+                "检查工程作业定义信息的SQL错误!"))) != 1) {
             etl_job_def.add(db);
             Etl_job_resource_rela r = new Etl_job_resource_rela();
             r.setEtl_job(etl_job);
@@ -283,9 +282,8 @@ public class EtlJobUtil {
         asmSql.addSql("select count(1) count from etl_sub_sys_list where etl_sys_cd = ? and sub_sys_cd = ?");
         asmSql.addParam(etl_sub_sys_list.getEtl_sys_cd());
         asmSql.addParam(etl_sub_sys_list.getSub_sys_cd());
-        long number = Dbo.queryNumber(db, asmSql.sql(), asmSql.params()).orElseThrow(() -> (new BusinessException(
-                "检查工程子系统定义信息的SQL错误!")));
-        if (0 == number) {
+        if (Dbo.queryNumber(db, asmSql.sql(), asmSql.params()).orElseThrow(() -> (new BusinessException(
+                "检查工程子系统定义信息的SQL错误!"))) != 1) {
             etl_sub_sys_list.add(db);
         }
         return etl_sub_sys_list.getSub_sys_cd();
@@ -303,10 +301,9 @@ public class EtlJobUtil {
             asmSql.clean();
             asmSql.addSql("select count(1) count from etl_sys where etl_sys_cd = ?");
             asmSql.addParam(etl_sys_cd);
-            long number = Dbo.queryNumber(db, asmSql.sql(), asmSql.params()).orElseThrow(() -> (new BusinessException(
-                    "检查工程是否存在的SQL错误!")));
             //判断已经存在,不存在则添加
-            if (0 == number) {
+            if (Dbo.queryNumber(db, asmSql.sql(), asmSql.params()).orElseThrow(() -> (new BusinessException(
+                    "检查工程是否存在的SQL错误!"))) != 1) {
                 //添加作业工程登记表信息
                 asmSql.clean();
                 Etl_sys etl_sys = new Etl_sys();
@@ -350,19 +347,17 @@ public class EtlJobUtil {
         //不是HYREN
         else {
             //添加参数登记信息(默认的)
-            long number;
             Etl_para etl_para = new Etl_para();
             etl_para.setEtl_sys_cd(etl_sys_cd);
             etl_para.setPara_cd("!HYSHELLBIN");
             etl_para.setPara_val(WebinfoConf.FileUpload_SavedDirName + File.separator + "pro_dic" + File.separator);
             etl_para.setPara_type("url");
             asmSql.clean();
-            asmSql.addSql("select * from etl_para where etl_sys_cd = ? and para_cd = ?");
+            asmSql.addSql("select count(*) from etl_para where etl_sys_cd = ? and para_cd = ?");
             asmSql.addParam(etl_sys_cd);
             asmSql.addParam(etl_para.getPara_cd());
-            number = Dbo.queryNumber(db, asmSql.sql(), asmSql.params()).orElseThrow(() -> (new BusinessException(
-                    "检查参数登记信息的SQL错误!")));
-            if (0 == number) {
+            if (Dbo.queryNumber(db, asmSql.sql(), asmSql.params()).orElseThrow(() -> (new BusinessException(
+                    "检查参数登记信息的SQL错误!"))) != 1) {
                 etl_para.add(db);
             }
             etl_para.setEtl_sys_cd(etl_sys_cd);
@@ -372,9 +367,8 @@ public class EtlJobUtil {
             asmSql.cleanParams();
             asmSql.addParam(etl_sys_cd);
             asmSql.addParam(etl_para.getPara_cd());
-            number = Dbo.queryNumber(db, asmSql.sql(), asmSql.params()).orElseThrow(() -> (new BusinessException(
-                    "检查参数登记信息的SQL错误!")));
-            if (0 == number) {
+            if (Dbo.queryNumber(db, asmSql.sql(), asmSql.params()).orElseThrow(() -> (new BusinessException(
+                    "检查参数登记信息的SQL错误!"))) != 1) {
                 etl_para.add(db);
             }
             etl_para.setEtl_sys_cd(etl_sys_cd);
@@ -384,9 +378,8 @@ public class EtlJobUtil {
             asmSql.cleanParams();
             asmSql.addParam(etl_sys_cd);
             asmSql.addParam(etl_para.getPara_cd());
-            number = Dbo.queryNumber(db, asmSql.sql(), asmSql.params()).orElseThrow(() -> (new BusinessException(
-                    "检查参数登记信息的SQL错误!")));
-            if (0 == number) {
+            if (Dbo.queryNumber(db, asmSql.sql(), asmSql.params()).orElseThrow(() -> (new BusinessException(
+                    "检查参数登记信息的SQL错误!"))) != 1) {
                 etl_para.add(db);
             }
             //添加资源登记信息
@@ -395,13 +388,12 @@ public class EtlJobUtil {
             etl_resource.setEtl_sys_cd(etl_sys_cd);
             etl_resource.setResource_type(RESOURCE_TYPE);
             etl_resource.setResource_max(RESOURCE_MAX);
-            etl_resource.setMain_serv_sync(Main_Server_Sync.YES.toString());
-            asmSql.addSql("select * from etl_resource where etl_sys_cd = ? and resource_type = ?");
+            etl_resource.setMain_serv_sync(Main_Server_Sync.YES.getCode());
+            asmSql.addSql("select count(*) from etl_resource where etl_sys_cd = ? and resource_type = ?");
             asmSql.addParam(etl_sys_cd);
             asmSql.addParam(etl_resource.getResource_type());
-            number = Dbo.queryNumber(db, asmSql.sql(), asmSql.params()).orElseThrow(() -> (new BusinessException(
-                    "检查参数登记信息的SQL错误!")));
-            if (0 == number) {
+            if (Dbo.queryNumber(db, asmSql.sql(), asmSql.params()).orElseThrow(() -> (new BusinessException(
+                    "检查参数登记信息的SQL错误!"))) != 1) {
                 etl_resource.add(db);
             }
         }
