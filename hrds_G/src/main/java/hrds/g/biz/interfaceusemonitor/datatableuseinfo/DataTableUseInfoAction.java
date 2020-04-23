@@ -4,7 +4,6 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
-import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
@@ -31,6 +30,7 @@ public class DataTableUseInfoAction extends BaseAction {
 	private Result searchTableDataInfo(Long user_id) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		SqlOperator.Assembler assembler = SqlOperator.Assembler.newInstance();
+		assembler.clean();
 		assembler.addSql("SELECT distinct t1.use_id,t1.original_name,t1.sysreg_name," +
 				"t3.user_name FROM " + Table_use_info.TableName + " t1," + Sysreg_parameter_info.TableName +
 				" t2," + Sys_user.TableName + " t3 WHERE t1.use_id = t2.use_id AND t1.user_id = t3.user_id");

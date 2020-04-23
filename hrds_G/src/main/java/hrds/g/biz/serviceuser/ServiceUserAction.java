@@ -88,8 +88,7 @@ public class ServiceUserAction extends BaseAction {
 		}
 		// 3.处理数据为数组
 		List<Map<String, String>> list = new ArrayList<>();
-		String[] table_column_names = columnList.get(0).split(",");
-		for (String table_column_name : table_column_names) {
+		for (String table_column_name : columnList) {
 			Map<String, String> columnMap = new HashMap<>();
 			columnMap.put("table_column_name", table_column_name);
 			list.add(columnMap);
