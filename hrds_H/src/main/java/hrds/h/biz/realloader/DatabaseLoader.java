@@ -62,7 +62,7 @@ public class DatabaseLoader extends AbstractRealLoader {
     }
 
     @Override
-    public void reappend() {
+    public void restore() {
         try (DatabaseWrapper db = ConnectionTool.getDBWrapper(tableLayerAttrs)) {
             Utils.restoreDatabaseData(db,tableName,conf.getEtlDate());
         }

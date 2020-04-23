@@ -67,33 +67,32 @@ public class SameDatabaseLoader extends AbstractRealLoader {
         computeInvalidDataAndInsert();
         //6.根据增量表中存储的拉链结果来更新最终表
         // 开链数据
-        db.execute("INSERT INTO ? SELECT ?,'?','?',? FROM ? WHERE action = 'I'",
-                tableName, columnsWithoutHyren, conf.getEtlDate(), MAXDATE, MD5NAME, deltaTableName);
+        db.execute(String.format("INSERT INTO %s SELECT %s,%s,%s,%s FROM %s WHERE action = 'I'",
+                tableName, columnsWithoutHyren, conf.getEtlDate(), MAXDATE, MD5NAME, deltaTableName));
         // 关链数据
-        db.execute("UPDATE ? SET ? = '?' WHERE EXISTS ( SELECT 1 FROM ? WHERE action = 'D'",
-                tableName, EDATENAME, MAXDATE, deltaTableName);
+        db.execute(String.format("UPDATE %s SET %s = %s WHERE EXISTS ( SELECT 1 FROM %s WHERE action = 'D'",
+                tableName, EDATENAME, MAXDATE, deltaTableName));
 
     }
 
     private void computeValidDataAndInsert() {
-        String validDataSql = "INSERT INTO ? select *,'I' from ? WHERE NOT EXISTS " +
-                "( SELECT 1 from ? WHERE ?.? = ?.? AND ?.? = '?')";
-        db.execute(validDataSql, deltaTableName, currentTableName, tableName, currentTableName,
-                MD5NAME, tableName, MD5NAME, tableName, EDATENAME, MAXDATE);
+        String validDataSql = "INSERT INTO %s select *,'I' from %s WHERE NOT EXISTS " +
+                "( SELECT 1 from %s WHERE %s.%s = %s.%s AND %s.%s = %s)";
+        db.execute(String.format(validDataSql, deltaTableName, currentTableName, tableName, currentTableName,
+                MD5NAME, tableName, MD5NAME, tableName, EDATENAME, MAXDATE));
     }
 
     private void computeInvalidDataAndInsert() {
-        final String invalidDataSql = "INSERT INTO ? select *,'D' from ? WHERE NOT EXISTS " +
-                "( SELECT 1 from ? WHERE ?.? = ?.?) AND ?.? = '?'";
-        db.execute(invalidDataSql, deltaTableName, tableName, currentTableName,
-                tableName, MD5NAME, currentTableName, MD5NAME, tableName, EDATENAME, MAXDATE);
+        final String invalidDataSql = "INSERT INTO %s select *,'D' from %s WHERE NOT EXISTS " +
+                "( SELECT 1 from %s WHERE %s.%s = %s.%s) AND %s.%s = %s";
+        db.execute(String.format(invalidDataSql, deltaTableName, tableName, currentTableName,
+                tableName, MD5NAME, currentTableName, MD5NAME, tableName, EDATENAME, MAXDATE));
     }
 
     @Override
-    public void reappend() {
+    public void restore() {
         ensureTableExists("重追加");
         Utils.restoreDatabaseData(db, tableName, conf.getEtlDate());
-        insertData(tableName);
     }
 
     @Override
