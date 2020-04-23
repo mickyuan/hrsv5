@@ -13,12 +13,13 @@ public class BusinessForStorageType extends AbstractBusiness {
     }
 
     /**
+     *
      */
     @Override
     public void eventLoad() {
 
         String loaderName = load.getClass().getSimpleName();
-        logger.info(" 开始计算并导入数据，导入类型为：" + loaderName);
+        logger.info("开始计算并导入数据，导入类型为：" + loaderName);
 
         if (conf.isFirstLoad()) {
             logger.info("首次执行=======================");
@@ -36,10 +37,11 @@ public class BusinessForStorageType extends AbstractBusiness {
                  * 如果跑批日期已经追加成功了，就执行重跑追加，否则均追加
                  */
                 if (conf.isRerun()) {
-                    logger.info("此任务已运行成功，重跑任务: " + loaderName);
+                    logger.info("此任务在日期 " + conf.getEtlDate() + " 已运行成功，重跑任务: " + loaderName);
                     load.reappend();
+                } else {
+                    load.append();
                 }
-                load.append();
             } else if (StorageType.ZengLiang.getCode().equals(storageType)) {
                 logger.info("增量=======================");
                 load.increment();

@@ -7,11 +7,7 @@ import hrds.h.biz.config.MarketConf;
 import hrds.h.biz.spark.running.SparkHandleArgument.DatabaseArgs;
 import hrds.h.biz.spark.running.SparkJobRunner;
 
-import javax.rmi.CORBA.Util;
-
 import static hrds.commons.codes.StorageTypeKey.*;
-import static hrds.commons.utils.Constant.*;
-import static hrds.commons.utils.Constant.EDATENAME;
 
 /**
  * @Author: Mick Yuan
@@ -68,7 +64,7 @@ public class DatabaseLoader extends AbstractRealLoader {
     @Override
     public void reappend() {
         try (DatabaseWrapper db = ConnectionTool.getDBWrapper(tableLayerAttrs)) {
-            Utils.restoreDatabaseData(db,tableName,conf.getEtlData());
+            Utils.restoreDatabaseData(db,tableName,conf.getEtlDate());
         }
         databaseArgs.setOverWrite(false);
         SparkJobRunner.runJob(conf.getDatatableId(), databaseArgs);

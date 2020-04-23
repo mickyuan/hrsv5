@@ -29,7 +29,7 @@ public class SameDatabaseLoader extends AbstractRealLoader {
         sql = conf.getCompleteSql();
         createTableColumnTypes = Utils.buildCreateTableColumnTypes(conf.getDatatableFields(), true);
         columnsWithoutHyren = Utils.columnsWithoutHyren(conf.getDatatableFields());
-        currentTableName = conf.getEtlData() + "_" + tableName;
+        currentTableName = conf.getEtlDate() + "_" + tableName;
         deltaTableName = "delta_" + tableName;
     }
 
@@ -68,7 +68,7 @@ public class SameDatabaseLoader extends AbstractRealLoader {
         //6.根据增量表中存储的拉链结果来更新最终表
         // 开链数据
         db.execute("INSERT INTO ? SELECT ?,'?','?',? FROM ? WHERE action = 'I'",
-                tableName, columnsWithoutHyren, conf.getEtlData(), MAXDATE, MD5NAME, deltaTableName);
+                tableName, columnsWithoutHyren, conf.getEtlDate(), MAXDATE, MD5NAME, deltaTableName);
         // 关链数据
         db.execute("UPDATE ? SET ? = '?' WHERE EXISTS ( SELECT 1 FROM ? WHERE action = 'D'",
                 tableName, EDATENAME, MAXDATE, deltaTableName);
@@ -92,7 +92,7 @@ public class SameDatabaseLoader extends AbstractRealLoader {
     @Override
     public void reappend() {
         ensureTableExists("重追加");
-        Utils.restoreDatabaseData(db, tableName, conf.getEtlData());
+        Utils.restoreDatabaseData(db, tableName, conf.getEtlDate());
         insertData(tableName);
     }
 
@@ -141,7 +141,7 @@ public class SameDatabaseLoader extends AbstractRealLoader {
 
     private void insertData(String tableName) {
         db.execute("INSERT INTO " + tableName + " SELECT " +
-                columnsWithoutHyren + "," + conf.getEtlData() + "," + MAXDATE +
+                columnsWithoutHyren + "," + conf.getEtlDate() + "," + MAXDATE +
                 "," + lineMd5Expr(columnsWithoutHyren) + " FROM ( " + sql + " ) aa");
     }
 

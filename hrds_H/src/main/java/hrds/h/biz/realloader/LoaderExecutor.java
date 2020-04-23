@@ -3,6 +3,8 @@ package hrds.h.biz.realloader;
 import hrds.commons.exception.AppSystemException;
 import hrds.h.biz.service.BusinessForStorageType;
 import hrds.h.biz.service.ILoadBussiness;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -30,14 +32,16 @@ public class LoaderExecutor implements Closeable {
 
     public void execute() {
 
+        boolean success = false;
         try {
             jobState.startJob();
             iLoadBussiness.eventLoad();
+            success = true;
         } catch (Throwable e) {
-            jobState.endJob(false);
             throw new AppSystemException(e);
+        } finally {
+            jobState.endJob(success);
         }
-        jobState.endJob(true);
 
     }
 

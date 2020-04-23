@@ -74,10 +74,10 @@ public class Utils {
      * @param db
      */
     static void restoreDatabaseData(DatabaseWrapper db, String tableName, String etlDate) {
-        db.execute("DELETE FROM ? WHERE ? = '?'",
-                tableName, SDATENAME, etlDate);
+        db.execute(String.format("DELETE FROM %s WHERE %s = %s",
+                tableName, SDATENAME, etlDate));
 
-        db.execute("UPDATE ? SET ? = '?' WHERE ? = '?'",
-                tableName, EDATENAME, MAXDATE, EDATENAME, etlDate);
+        db.execute(String.format("UPDATE %s SET %s = %s WHERE %s = %s",
+                tableName, EDATENAME, MAXDATE, EDATENAME, etlDate));
     }
 }

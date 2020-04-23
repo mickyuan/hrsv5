@@ -20,7 +20,7 @@ public class MarketConf implements Serializable {
     /**
      * 调度日期
      */
-    private final String etlData;
+    private final String etlDate;
     /**
      * sql动态参数
      */
@@ -75,7 +75,7 @@ public class MarketConf implements Serializable {
 
     private MarketConf(String datatableId, String etldate, String sqlParams) {
         this.datatableId = datatableId;
-        this.etlData = etldate;
+        this.etlDate = etldate;
         this.sqlParams = sqlParams;
     }
 
@@ -114,8 +114,8 @@ public class MarketConf implements Serializable {
         return datatableId;
     }
 
-    public String getEtlData() {
-        return etlData;
+    public String getEtlDate() {
+        return etlDate;
     }
 
     public String getSqlParams() {
