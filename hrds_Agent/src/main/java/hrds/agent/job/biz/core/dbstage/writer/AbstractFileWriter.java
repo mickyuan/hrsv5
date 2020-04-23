@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.Map;
 
 @DocClass(desc = "数据库直连采集以指定的格式将数据卸到指定的数据文件，接口适配器，抽象类", author = "WangZhengcheng")
-abstract class AbstractFileWriter implements FileWriterInterface {
+public abstract class AbstractFileWriter implements FileWriterInterface {
 	private final static Logger LOGGER = LoggerFactory.getLogger(AbstractFileWriter.class);
 	private static final String SCHEMA_JSON = "{\"type\": \"record\",\"name\": \"BigFilesTest\", " + "\"fields\": [" + "{\"name\":\"" + "currValue"
 			+ "\",\"type\":\"string\"}," + "{\"name\":\"" + "readerToByte" + "\", \"type\":\"bytes\"}" + "]}";//avro schema
@@ -151,7 +151,7 @@ abstract class AbstractFileWriter implements FileWriterInterface {
 	 * @param columnData 单列的数据
 	 * @return 清理之后的数据
 	 */
-	private String clearIrregularData(String columnData){
+	public static String clearIrregularData(String columnData){
 		//TODO 目前针对换行符的问题，经过测试，可以通过自定义hive的TextInputFormat能解决自定义表的换行符，
 		//TODO 但是如果页面自定义填写换行符，就导致需要每一个不同的换行符都需要对应一个自定义hive的
 		//TODO TextInputFormat，难以实现，因此需要使用默认的行分隔符，或者提前实现几个TextInputFormat供选择
