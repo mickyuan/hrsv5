@@ -1,6 +1,7 @@
 package hrds.h.biz.realloader;
 
 
+import hrds.h.biz.config.MarketConf;
 import hrds.h.biz.service.AbstractBusiness;
 import hrds.h.biz.service.FirstLoad;
 import hrds.h.biz.service.NonFirstLoad;
@@ -12,4 +13,5 @@ import java.io.Closeable;
 public interface Loader extends FirstLoad, NonFirstLoad, Closeable {
     Log logger = LogFactory.getLog(Loader.class);
 
+    MarketConf getConf();
 }

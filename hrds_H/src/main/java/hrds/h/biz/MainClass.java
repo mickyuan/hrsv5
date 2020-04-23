@@ -24,8 +24,7 @@ public class MainClass {
         MarketConfUtils.serialize(conf);
 
         //初始化作业状态实体
-        Dm_relation_datatable dmRelationDatatable = conf.getDmRelationDatatable();
-        JobState jobState = new JobStateImpl(dmRelationDatatable);
+        JobState jobState = new JobStateImpl(conf);
 
         //选择导入数据 Loader 实现
         Loader loader = LoaderSwitch.switchLoader(conf);
