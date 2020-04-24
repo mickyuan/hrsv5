@@ -1,9 +1,10 @@
-package hrds.agent.job.biz.core.dfstage.fileparser;
+package hrds.agent.job.biz.core.dfstage.fileparser.impl;
 
 import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.constant.JobConstant;
+import hrds.agent.job.biz.core.dfstage.fileparser.FileParserAbstract;
 import hrds.agent.job.biz.core.service.JdbcCollectTableHandleParse;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.hadoop.readconfig.ConfigReader;

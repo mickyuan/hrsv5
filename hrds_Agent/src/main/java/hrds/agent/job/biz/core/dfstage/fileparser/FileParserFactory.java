@@ -1,8 +1,10 @@
 package hrds.agent.job.biz.core.dfstage.fileparser;
 
 import fd.ng.core.annotation.DocClass;
+import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.TableBean;
+import hrds.agent.job.biz.core.dfstage.fileparser.impl.*;
 import hrds.commons.codes.FileFormat;
 import hrds.commons.codes.UnloadType;
 import hrds.commons.exception.AppSystemException;
@@ -40,8 +42,14 @@ public class FileParserFactory {
 				//写SEQUENCE文件实现类
 				fileParserInterface = new SequenceFileParserDeal(tableBean, collectTableBean, readFile);
 			} else if (FileFormat.DingChang.getCode().equals(format)) {
-				//写定长文件实现类
-				fileParserInterface = new FixedFileParserDeal(tableBean, collectTableBean, readFile);
+				//定长文件如果列分隔符不为空，按非定长处理
+				if (!StringUtil.isEmpty(tableBean.getColumn_separator())) {
+					//写非定长文件实现类
+					fileParserInterface = new NonFixedFileParserDeal(tableBean, collectTableBean, readFile);
+				} else {
+					//写定长文件实现类
+					fileParserInterface = new FixedFileParserDeal(tableBean, collectTableBean, readFile);
+				}
 			} else if (FileFormat.FeiDingChang.getCode().equals(format)) {
 				//写非定长文件实现类
 				fileParserInterface = new NonFixedFileParserDeal(tableBean, collectTableBean, readFile);

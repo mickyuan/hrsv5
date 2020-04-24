@@ -1,15 +1,12 @@
-package hrds.agent.job.biz.core.dfstage.fileparser;
+package hrds.agent.job.biz.core.dfstage.fileparser.impl;
 
+import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.TableBean;
+import hrds.agent.job.biz.core.dfstage.fileparser.FileParserAbstract;
 import hrds.agent.job.biz.core.service.JdbcCollectTableHandleParse;
 import hrds.commons.codes.DataBaseCode;
-import hrds.commons.codes.IsFlag;
 import hrds.commons.exception.AppSystemException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.supercsv.io.CsvListReader;
-import org.supercsv.prefs.CsvPreference;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -22,29 +19,23 @@ import java.util.List;
  * date: 2020/4/21 16:47
  * author: zxz
  */
-public class CsvFileParserDeal extends FileParserAbstract {
-	private final static Logger LOGGER = LoggerFactory.getLogger(CsvFileParserDeal.class);
+public class NonFixedFileParserDeal extends FileParserAbstract {
 
-	public CsvFileParserDeal(TableBean tableBean, CollectTableBean collectTableBean, String readFile) throws Exception {
+	public NonFixedFileParserDeal(TableBean tableBean, CollectTableBean collectTableBean, String readFile)
+			throws Exception {
 		super(tableBean, collectTableBean, readFile);
 	}
 
 	@Override
 	public String parserFile() {
 		long fileRowCount = 0;
-		List<String> valueList;
+		String lineValue;
 		try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(new File(readFile)),
-				DataBaseCode.ofValueByCode(tableBean.getFile_code()))); CsvListReader csvReader = new CsvListReader(br,
-				CsvPreference.EXCEL_PREFERENCE)) {
-			if (IsFlag.Shi.getCode().equals(tableBean.getIs_header())) {
-				//判断包含表头，先读取表头
-				valueList = csvReader.read();
-				if (valueList != null) {
-					LOGGER.info("读取到表头为：" + valueList);
-				}
-			}
-			while ((valueList = csvReader.read()) != null) {
+				DataBaseCode.ofValueByCode(tableBean.getFile_code())))) {
+			List<String> valueList;
+			while ((lineValue = br.readLine()) != null) {
 				fileRowCount++;
+				valueList = StringUtil.split(lineValue, tableBean.getColumn_separator());
 				//校验数据
 				checkData(valueList, fileRowCount);
 				dealLine(valueList);
@@ -59,5 +50,4 @@ public class CsvFileParserDeal extends FileParserAbstract {
 		}
 		return unloadFileAbsolutePath + JdbcCollectTableHandleParse.STRSPLIT + fileRowCount;
 	}
-
 }

@@ -18,6 +18,7 @@ import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.commons.codes.*;
 import hrds.commons.exception.AppSystemException;
+import hrds.commons.utils.Constant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -102,6 +103,17 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 				//根据源定义读取文件，将读取到的文件统一转为List<List>每5000行统一处理一次
 				// 此处不会有海量的任务需要执行，不会出现队列中等待的任务对象过多的OOM事件。XXX 默认五个线程读取文件
 				if (file_name_list != null && file_name_list.length > 0) {
+					//主线程创建文件夹
+					String unloadFileAbsolutePath = FileNameUtils.normalize(Constant.DBFILEUNLOADFOLDER +
+							collectTableBean.getDatabase_id() + File.separator + collectTableBean.getHbase_name() +
+							File.separator + collectTableBean.getEtlDate() + File.separator, true);
+					File dir = new File(unloadFileAbsolutePath);
+					//这里要考虑重跑的问题
+					if (dir.exists()) {
+						fd.ng.core.utils.FileUtil.cleanDirectory(dir);
+					} else {
+						fd.ng.core.utils.FileUtil.forceMkdir(dir);
+					}
 					executorService = Executors.newFixedThreadPool(5);
 					List<Future<String>> futures = new ArrayList<>();
 					for (String fileName : file_name_list) {
@@ -129,7 +141,7 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 					//列分隔符为默认值
 					tableBean.setColumn_separator(JobConstant.DATADELIMITER);
 					tableBean.setIs_header(IsFlag.Fou.getCode());
-					//换行符默认使用linux的换行符 XXX
+					//XXX 换行符默认使用linux的换行符
 					tableBean.setRow_separator(JobConstant.DEFAULTLINESEPARATOR);
 					tableBean.setFile_format(FileFormat.FeiDingChang.getCode());
 					tableBean.setFile_code(tableBean.getDbFileArchivedCode());

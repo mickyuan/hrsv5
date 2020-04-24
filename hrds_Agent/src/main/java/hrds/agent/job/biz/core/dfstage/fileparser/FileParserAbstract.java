@@ -29,19 +29,19 @@ import java.util.Map;
  */
 public abstract class FileParserAbstract implements FileParserInterface {
 	//采集db文件的文件信息
-	TableBean tableBean;
+	protected TableBean tableBean;
 	//采集的db文件定义的表信息
 	private CollectTableBean collectTableBean;
 	//读文件的全路径
-	String readFile;
+	protected String readFile;
 	//写文件的流
-	BufferedWriter writer;
+	protected BufferedWriter writer;
 	//解析db文件的所有列
-	List<String> dictionaryColumnList;
+	protected List<String> dictionaryColumnList;
 	//进目标库的所有列，包括列合并、列拆分、HYREN_S_DATE、HYREN_E_DATE、HYREN_MD5_VAL三列
 	private List<String> allColumnList;
 	//数据字典定义的所有的列类型
-	List<String> dictionaryTypeList;
+	protected List<String> dictionaryTypeList;
 	//列合并的map
 	private Map<String, String> mergeIng;
 	//列清洗拆分合并的处理类
@@ -55,18 +55,19 @@ public abstract class FileParserAbstract implements FileParserInterface {
 	//判断是否追加结束日期和MD5字段
 	private boolean isMd5;
 	//转存落地的文件路径
-	String unloadFileAbsolutePath;
+	protected String unloadFileAbsolutePath;
 	//跑批日期
 	private String etl_date;
 
 	@SuppressWarnings("unchecked")
-	FileParserAbstract(TableBean tableBean, CollectTableBean collectTableBean, String readFile) throws Exception {
+	protected FileParserAbstract(TableBean tableBean, CollectTableBean collectTableBean, String readFile) throws Exception {
 		this.collectTableBean = collectTableBean;
 		this.readFile = readFile;
 		this.tableBean = tableBean;
 		this.unloadFileAbsolutePath = FileNameUtils.normalize(Constant.DBFILEUNLOADFOLDER +
 				collectTableBean.getDatabase_id() + File.separator + collectTableBean.getHbase_name() +
-				File.separator + FileNameUtils.getName(readFile));
+				File.separator + collectTableBean.getEtlDate() + File.separator +
+				FileNameUtils.getName(readFile), true);
 		this.writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(unloadFileAbsolutePath),
 				DataBaseCode.ofValueByCode(tableBean.getDbFileArchivedCode())));
 		//清洗配置
@@ -103,7 +104,7 @@ public abstract class FileParserAbstract implements FileParserInterface {
 		String columnData;
 		//处理每一行之前先清空MD5的值
 		midStringOther.delete(0, midStringOther.length());
-		lineSb.delete(0, midStringOther.length());
+		lineSb.delete(0, lineSb.length());
 		//遍历每一列数据
 		for (int i = 0; i < lineList.size(); i++) {
 			columnName = dictionaryColumnList.get(i);
@@ -141,7 +142,7 @@ public abstract class FileParserAbstract implements FileParserInterface {
 		writer.write(lineSb.toString());
 	}
 
-	void checkData(List<String> valueList, long fileRowCount) {
+	protected void checkData(List<String> valueList, long fileRowCount) {
 		if (dictionaryColumnList.size() != valueList.size()) {
 			String mss = "第 " + fileRowCount + " 行数据 ，数据字典表(" + collectTableBean.getTable_name()
 					+ " )定义长度和数据不匹配！" + "\n" + "数据字典定义的长度是  " + valueList.size()

@@ -1,7 +1,8 @@
-package hrds.agent.job.biz.core.dfstage.fileparser;
+package hrds.agent.job.biz.core.dfstage.fileparser.impl;
 
 import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.TableBean;
+import hrds.agent.job.biz.core.dfstage.fileparser.FileParserAbstract;
 
 import java.util.List;
 

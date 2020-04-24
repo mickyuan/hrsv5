@@ -1,26 +1,31 @@
-package hrds.agent.job.biz.core.dbstage.writer;
+package hrds.agent.job.biz.core.dbstage.writer.impl;
 
 import fd.ng.core.utils.FileNameUtils;
 import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.constant.JobConstant;
+import hrds.agent.job.biz.core.dbstage.writer.AbstractFileWriter;
 import hrds.agent.job.biz.core.service.JdbcCollectTableHandleParse;
 import hrds.agent.job.biz.dataclean.Clean;
 import hrds.agent.job.biz.dataclean.CleanFactory;
 import hrds.agent.job.biz.dataclean.DataCleanInterface;
-import hrds.agent.job.biz.utils.WriterFile;
+import hrds.agent.job.biz.utils.ColumnTool;
+import hrds.agent.job.biz.utils.ParquetUtil;
 import hrds.commons.codes.FileFormat;
 import hrds.commons.codes.IsFlag;
+import hrds.commons.entity.Column_split;
 import hrds.commons.entity.Data_extraction_def;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
 import org.apache.avro.file.DataFileWriter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.io.SequenceFile.Writer;
-import org.apache.hadoop.io.Text;
+import org.apache.parquet.example.data.Group;
+import org.apache.parquet.example.data.GroupFactory;
+import org.apache.parquet.example.data.simple.SimpleGroupFactory;
+import org.apache.parquet.hadoop.ParquetWriter;
+import org.apache.parquet.schema.MessageType;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,13 +34,13 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * JdbcToSequenceFileWriter
- * date: 2019/12/6 17:21
+ * JdbcToParquetFileWriter
+ * date: 2019/12/6 17:20
  * author: zxz
  */
-public class JdbcToSequenceFileWriter extends AbstractFileWriter {
+public class JdbcToParquetFileWriter extends AbstractFileWriter {
 	//打印日志
-	private static final Log log = LogFactory.getLog(JdbcToSequenceFileWriter.class);
+	private static final Log log = LogFactory.getLog(JdbcToParquetFileWriter.class);
 
 	@SuppressWarnings("unchecked")
 	@Override
@@ -44,51 +49,53 @@ public class JdbcToSequenceFileWriter extends AbstractFileWriter {
 		String eltDate = collectTableBean.getEtlDate();
 		StringBuilder fileInfo = new StringBuilder(1024);
 		String hbase_name = collectTableBean.getHbase_name();
+//		String midName = Constant.JDBCUNLOADFOLDER + collectTableBean.getDatabase_id() + File.separator
+//				+ collectTableBean.getTable_id() + File.separator;
 		//数据抽取指定的目录
 		String plane_url = data_extraction_def.getPlane_url();
 		String midName = plane_url + File.separator + eltDate + File.separator + collectTableBean.getTable_name()
-				+ File.separator + FileFormat.SEQUENCEFILE.getValue() + File.separator;
-		//XXX SequenceFile不指定分隔符，页面也不允许其指定分隔符，使用hive默认的\001隐藏字符做分隔符
-		//XXX 这样只要创建hive映射外部表时使用store as sequencefile hive会自动解析。
-		String dataDelimiter = JobConstant.SEQUENCEDELIMITER;
+				+ File.separator + FileFormat.PARQUET.getValue() + File.separator;
 		midName = FileNameUtils.normalize(midName, true);
+		String dataDelimiter = data_extraction_def.getDatabase_separatorr();
 		DataFileWriter<Object> avroWriter = null;
+		ParquetWriter<Group> parquetWriter = null;
 		long counter = 0;
 		int index = 0;
-		WriterFile writerFile = null;
-		Writer writer;
-		Text value;
+		GroupFactory factory;
 		try {
 			avroWriter = getAvroWriter(tableBean.getTypeArray(), hbase_name, midName, pageNum);
-			//卸数文件名为hbase_name加线程唯一标识加此线程创建文件下标
-			String fileName = midName + hbase_name + pageNum + index + "." + data_extraction_def.getFile_suffix();
-			fileInfo.append(fileName).append(JdbcCollectTableHandleParse.STRSPLIT);
-			writerFile = new WriterFile(fileName);
-			writer = writerFile.getSequenceWrite();
 			//清洗配置
-			final DataCleanInterface allclean = CleanFactory.getInstance().getObjectClean("clean_database");
+			final DataCleanInterface allClean = CleanFactory.getInstance().getObjectClean("clean_database");
 			//获取所有字段的名称，包括列分割和列合并出来的字段名称
 			List<String> allColumnList = StringUtil.split(tableBean.getColumnMetaInfo(), JdbcCollectTableHandleParse.STRSPLIT);
 			//获取所有查询的字段的名称，不包括列分割和列合并出来的字段名称
 			List<String> selectColumnList = StringUtil.split(tableBean.getAllColumns(), JdbcCollectTableHandleParse.STRSPLIT);
 			Map<String, Object> parseJson = tableBean.getParseJson();
-			Map<String, String> mergeIng = (Map<String, String>) parseJson.get("mergeIng");//字符合并
-			Clean cl = new Clean(parseJson, allclean);
+			//字符合并
+			Map<String, String> mergeIng = (Map<String, String>) parseJson.get("mergeIng");
+			//字符拆分
+			Map<String, Map<String, Column_split>> splitIng = (Map<String, Map<String, Column_split>>)
+					parseJson.get("splitIng");
+			Clean cl = new Clean(parseJson, allClean);
 			StringBuilder midStringOther = new StringBuilder(1024 * 1024);//获取所有列的值用来生成MD5值
-			StringBuilder sb = new StringBuilder();//用来写一行数据
 			StringBuilder sb_ = new StringBuilder();//用来写临时数据
 
 			String currValue;
 			int numberOfColumns = selectColumnList.size();
 			int[] typeArray = tableBean.getTypeArray();
+			MessageType parquetSchema = ParquetUtil.getSchema(tableBean.getColumnMetaInfo(),
+					tableBean.getColTypeMetaInfo());
+			factory = new SimpleGroupFactory(parquetSchema);
+			String fileName = midName + hbase_name + pageNum + index + "." + data_extraction_def.getFile_suffix();
+			parquetWriter = ParquetUtil.getParquetWriter(parquetSchema, fileName);
+			fileInfo.append(fileName).append(JdbcCollectTableHandleParse.STRSPLIT);
+			//获取所有查询的字段的类型，不包括列分割和列合并出来的字段类型
 			List<String> type = StringUtil.split(tableBean.getAllType(), JdbcCollectTableHandleParse.STRSPLIT);
 			while (resultSet.next()) {
-				// Count it
 				counter++;
-				//获取所有列的值用来生成MD5值
 				midStringOther.delete(0, midStringOther.length());
-				// Write columns
-				value = new Text();
+				//每一行获取一个group对象
+				Group group = factory.newGroup();
 				for (int i = 0; i < numberOfColumns; i++) {
 					//获取原始值来计算 MD5
 					sb_.delete(0, sb_.length());
@@ -100,57 +107,50 @@ public class JdbcToSequenceFileWriter extends AbstractFileWriter {
 					}
 					//清洗操作
 					currValue = sb_.toString();
-					currValue = cl.cleanColumn(currValue, selectColumnList.get(i).toUpperCase(), null,
-							type.get(i), FileFormat.SEQUENCEFILE.getCode(), null,
+					currValue = cl.cleanColumn(currValue, selectColumnList.get(i).toUpperCase(), group,
+							type.get(i), FileFormat.PARQUET.getCode(), null,
 							data_extraction_def.getDatabase_code(), dataDelimiter);
-					sb.append(currValue).append(dataDelimiter);
+					if (splitIng.get(selectColumnList.get(i).toUpperCase()) == null
+							|| splitIng.get(selectColumnList.get(i).toUpperCase()).size() == 0) {
+						ColumnTool.addData2Group(group, type.get(i), selectColumnList.get(i), currValue);
+					}
 				}
 				//如果有列合并处理合并信息
 				if (!mergeIng.isEmpty()) {
 					List<String> arrColString = StringUtil.split(midStringOther.toString(), JobConstant.DATADELIMITER);
-					String mer = allclean.merge(mergeIng, arrColString.toArray(new String[0]),
-							allColumnList.toArray(new String[0]), null, null,
-							FileFormat.SEQUENCEFILE.getCode(), data_extraction_def.getDatabase_code(), dataDelimiter);
 					//字段合并
-					sb.append(mer).append(dataDelimiter);
+					allClean.merge(mergeIng, arrColString.toArray(new String[0]), allColumnList.toArray(new String[0]),
+							group, null, FileFormat.PARQUET.getCode(),
+							data_extraction_def.getDatabase_code(), dataDelimiter);
 				}
-				sb.append(eltDate);
+				group.append(Constant.SDATENAME, eltDate);
 				//根据是否算MD5判断是否追加结束日期和MD5两个字段
 				if (IsFlag.Shi.getCode().equals(collectTableBean.getIs_md5())) {
 					String md5 = toMD5(midStringOther.toString());
-					sb.append(dataDelimiter).append(Constant.MAXDATE).
-							append(dataDelimiter).append(md5);
+					group.append(Constant.EDATENAME, Constant.MAXDATE).append(Constant.MD5NAME, md5);
 				}
 				if (JobConstant.WriteMultipleFiles) {
 					//获取文件大小和当前读到的内容大小
-					long messageSize = sb.toString().length();
-					long singleFileSize = new File(midName + index + ".part").length();
+					long messageSize = group.toString().length();
+					long singleFileSize = new File(fileName).length();
 					if (singleFileSize + messageSize > JobConstant.FILE_BLOCKSIZE) {
 						//当文件满足阈值时 ，然后关闭当前流，并创建新的数据流
-						writerFile.sequenceClose();
+						parquetWriter.close();
 						index++;
 						fileName = midName + hbase_name + pageNum + index + "." + data_extraction_def.getFile_suffix();
-						writerFile = new WriterFile(fileName);
-						writer = writerFile.getSequenceWrite();
+						parquetWriter = ParquetUtil.getParquetWriter(parquetSchema, fileName);
 						fileInfo.append(fileName).append(JdbcCollectTableHandleParse.STRSPLIT);
 					}
 				}
-				value.set(sb.toString());
-				writer.append(NullWritable.get(), value);
-				if (counter % 50000 == 0) {
-					log.info(hbase_name + "文件已写入一次,目前写到" + counter + "行");
-					writer.hflush();
-				}
-				sb.delete(0, sb.length());
+				parquetWriter.write(group);
 			}
-			writer.hflush();
 		} catch (Exception e) {
 			log.error("卸数失败", e);
-			throw new AppSystemException("数据库采集卸数Sequence文件失败" + e.getMessage());
+			throw new AppSystemException("数据库采集卸数Parquet文件失败" + e.getMessage());
 		} finally {
 			try {
-				if (writerFile != null)
-					writerFile.sequenceClose();
+				if (parquetWriter != null)
+					parquetWriter.close();
 				if (avroWriter != null)
 					avroWriter.close();
 			} catch (IOException e) {

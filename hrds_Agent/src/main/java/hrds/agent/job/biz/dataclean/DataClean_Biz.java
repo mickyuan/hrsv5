@@ -4,7 +4,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.core.service.JdbcCollectTableHandleParse;
-import hrds.agent.job.biz.core.dbstage.writer.JdbcToFixedFileWriter;
+import hrds.agent.job.biz.core.dbstage.writer.impl.JdbcToFixedFileWriter;
 import hrds.agent.job.biz.utils.ColUtil;
 import hrds.agent.job.biz.utils.TypeTransLength;
 import hrds.commons.codes.CharSplitType;

@@ -76,7 +76,7 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 	/**
 	 * 解析result一行的值
 	 */
-	String getOneColumnValue(DataFileWriter<Object> avroWriter, long lineCounter, int pageNum, ResultSet resultSet,
+	protected String getOneColumnValue(DataFileWriter<Object> avroWriter, long lineCounter, int pageNum, ResultSet resultSet,
 	                         int type, StringBuilder sb_, String column_name, String hbase_name, String midName)
 			throws SQLException, IOException {
 		String lobs_file_name = "";
@@ -221,7 +221,7 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 	 * @return 文件输出流
 	 * @throws IOException 获取avro文件输出流异常
 	 */
-	DataFileWriter<Object> getAvroWriter(int[] typeArray, String hbase_name,
+	protected DataFileWriter<Object> getAvroWriter(int[] typeArray, String hbase_name,
 	                                     String midName, long pageNum) throws IOException {
 		DataFileWriter<Object> avroWriter = null;
 		for (int type : typeArray) {
@@ -269,7 +269,7 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 	 * @return 文件输出流
 	 * @throws IOException 获取avro文件输出流异常
 	 */
-	DataFileWriter<Object> getAvroWriter(Map<String, Integer> typeMap, String hbase_name,
+	protected DataFileWriter<Object> getAvroWriter(Map<String, Integer> typeMap, String hbase_name,
 	                                     String midName, long pageNum) throws IOException {
 		DataFileWriter<Object> avroWriter = null;
 		for (String key : typeMap.keySet()) {
@@ -294,7 +294,7 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 	 * @author Cool Yu
 	 * @since JDK 1.6
 	 */
-	String toMD5(String plainText) {
+	protected String toMD5(String plainText) {
 		return MD5Util.md5String(plainText);
 	}
 
@@ -324,7 +324,7 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 	/**
 	 * 将string的集合转为int集合
 	 */
-	List<Integer> stringToIntegerList(List<String> list) {
+	protected List<Integer> stringToIntegerList(List<String> list) {
 		List<Integer> integerList = new ArrayList<>();
 		for (String string : list) {
 			integerList.add(Integer.parseInt(string));
