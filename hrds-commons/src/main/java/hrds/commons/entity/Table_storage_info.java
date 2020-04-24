@@ -30,6 +30,10 @@ public class Table_storage_info extends ProjectTableEntity
 		__tmpPKS.add("storage_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
+	@DocBean(name ="storage_id",value="储存编号:",dataType = Long.class,required = true)
+	private Long storage_id;
+	@DocBean(name ="file_format",value="文件格式(FileFormat):0-定长<DingChang> 1-非定长<FeiDingChang> 2-CSV<CSV> 3-SEQUENCEFILE<SEQUENCEFILE> 4-PARQUET<PARQUET> 5-ORC<ORC> ",dataType = String.class,required = true)
+	private String file_format;
 	@DocBean(name ="table_id",value="表名ID:",dataType = Long.class,required = false)
 	private Long table_id;
 	@DocBean(name ="storage_type",value="进数方式(StorageType):1-增量<ZengLiang> 2-追加<ZhuiJia> 3-替换<TiHuan> ",dataType = String.class,required = true)
@@ -38,11 +42,29 @@ public class Table_storage_info extends ProjectTableEntity
 	private Long storage_time;
 	@DocBean(name ="is_zipper",value="是否拉链存储(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_zipper;
-	@DocBean(name ="storage_id",value="储存编号:",dataType = Long.class,required = true)
-	private Long storage_id;
-	@DocBean(name ="file_format",value="文件格式(FileFormat):0-定长<DingChang> 1-非定长<FeiDingChang> 2-CSV<CSV> 3-SEQUENCEFILE<SEQUENCEFILE> 4-PARQUET<PARQUET> 5-ORC<ORC> ",dataType = String.class,required = true)
-	private String file_format;
 
+	/** 取得：储存编号 */
+	public Long getStorage_id(){
+		return storage_id;
+	}
+	/** 设置：储存编号 */
+	public void setStorage_id(Long storage_id){
+		this.storage_id=storage_id;
+	}
+	/** 设置：储存编号 */
+	public void setStorage_id(String storage_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(storage_id)){
+			this.storage_id=new Long(storage_id);
+		}
+	}
+	/** 取得：文件格式 */
+	public String getFile_format(){
+		return file_format;
+	}
+	/** 设置：文件格式 */
+	public void setFile_format(String file_format){
+		this.file_format=file_format;
+	}
 	/** 取得：表名ID */
 	public Long getTable_id(){
 		return table_id;
@@ -86,27 +108,5 @@ public class Table_storage_info extends ProjectTableEntity
 	/** 设置：是否拉链存储 */
 	public void setIs_zipper(String is_zipper){
 		this.is_zipper=is_zipper;
-	}
-	/** 取得：储存编号 */
-	public Long getStorage_id(){
-		return storage_id;
-	}
-	/** 设置：储存编号 */
-	public void setStorage_id(Long storage_id){
-		this.storage_id=storage_id;
-	}
-	/** 设置：储存编号 */
-	public void setStorage_id(String storage_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(storage_id)){
-			this.storage_id=new Long(storage_id);
-		}
-	}
-	/** 取得：文件格式 */
-	public String getFile_format(){
-		return file_format;
-	}
-	/** 设置：文件格式 */
-	public void setFile_format(String file_format){
-		this.file_format=file_format;
 	}
 }

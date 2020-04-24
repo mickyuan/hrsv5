@@ -1,117 +1,4 @@
-﻿--数据对标结果分类表
-DROP TABLE IF EXISTS DBM_DATA_SORT ;
-CREATE TABLE DBM_DATA_SORT(
-DDS_ID                                            BIGINT default 0 NOT NULL, --对标分类结构ID
-DDS_NAME                                          VARCHAR(512) NOT NULL, --分类名称
-DDS_NUMBER                                        VARCHAR(100) NOT NULL, --分类编号
-DDS_REMARK                                        VARCHAR(512) NULL, --分类备注
-BASIC_ID                                          BIGINT default 0 NOT NULL, --标准元主键
-DETECT_ID                                         VARCHAR(32) NULL, --检测主键
-CONSTRAINT DBM_DATA_SORT_PK PRIMARY KEY(DDS_ID)   );
-
---分类对应的表字段
-DROP TABLE IF EXISTS DBM_SORT_COLUMN ;
-CREATE TABLE DBM_SORT_COLUMN(
-DSC_ID                                            BIGINT default 0 NOT NULL, --分类对应主键ID
-DDS_ID                                            BIGINT default 0 NOT NULL, --对标分类结构ID
-COL_ID                                            BIGINT default 0 NOT NULL, --字段主键
-DBM_TABLEID                                       BIGINT default 0 NOT NULL, --检测表主键
-DSC_REMARK                                        VARCHAR(80) NULL, --备注
-CONSTRAINT DBM_SORT_COLUMN_PK PRIMARY KEY(DSC_ID)   );
-
---对象采集数据处理类型对应表
-DROP TABLE IF EXISTS OBJECT_HANDLE_TYPE ;
-CREATE TABLE OBJECT_HANDLE_TYPE(
-OBJECT_HANDLE_ID                                  BIGINT default 0 NOT NULL, --处理编号
-OCS_ID                                            BIGINT default 0 NOT NULL, --对象采集任务编号
-HANDLE_TYPE                                       CHAR(1) NOT NULL, --处理类型
-HANDLE_VALUE                                      VARCHAR(100) NOT NULL, --处理值
-CONSTRAINT OBJECT_HANDLE_TYPE_PK PRIMARY KEY(OBJECT_HANDLE_ID,OCS_ID)   );
-
---对象采集结构信息
-DROP TABLE IF EXISTS OBJECT_COLLECT_STRUCT ;
-CREATE TABLE OBJECT_COLLECT_STRUCT(
-STRUCT_ID                                         BIGINT default 0 NOT NULL, --结构信息id
-OCS_ID                                            BIGINT default 0 NOT NULL, --对象采集任务编号
-COLUMN_NAME                                       VARCHAR(512) NOT NULL, --字段名称
-IS_ROWKEY                                         CHAR(1) NOT NULL, --是否rowkey
-IS_KEY                                            CHAR(1) NOT NULL, --是否主键
-IS_SOLR                                           CHAR(1) NOT NULL, --是否solr
-IS_HBASE                                          CHAR(1) NOT NULL, --是否hbase
-IS_OPERATE                                        CHAR(1) NOT NULL, --是否操作标识字段
-COL_SEQ                                           BIGINT default 0 NOT NULL, --字段序号
-COLUMNPOSITION                                    VARCHAR(100) NOT NULL, --字段位置
-COLUMN_TYPE                                       VARCHAR(100) NOT NULL, --字段类型
-DATA_DESC                                         VARCHAR(200) NULL, --中文描述信息
-REMARK                                            VARCHAR(512) NULL, --备注
-CONSTRAINT OBJECT_COLLECT_STRUCT_PK PRIMARY KEY(STRUCT_ID)   );
-
---接口信息表
-DROP TABLE IF EXISTS INTERFACE_INFO ;
-CREATE TABLE INTERFACE_INFO(
-INTERFACE_ID                                      BIGINT default 0 NOT NULL, --接口ID
-URL                                               VARCHAR(512) NOT NULL, --请求地址
-INTERFACE_NAME                                    VARCHAR(512) NOT NULL, --接口名称
-INTERFACE_TYPE                                    CHAR(1) NOT NULL, --接口类型
-INTERFACE_STATE                                   CHAR(1) NOT NULL, --接口状态
-INTERFACE_CODE                                    VARCHAR(100) NOT NULL, --接口代码
-INTERFACE_NOTE                                    VARCHAR(512) NULL, --备注
-USER_ID                                           BIGINT default 0 NOT NULL, --用户ID
-CONSTRAINT INTERFACE_INFO_PK PRIMARY KEY(INTERFACE_ID)   );
-
---接口使用信息表
-DROP TABLE IF EXISTS INTERFACE_USE ;
-CREATE TABLE INTERFACE_USE(
-INTERFACE_USE_ID                                  BIGINT default 0 NOT NULL, --接口使用ID
-URL                                               VARCHAR(512) NOT NULL, --请求地址
-INTERFACE_NAME                                    VARCHAR(512) NOT NULL, --接口名称
-INTERFACE_CODE                                    VARCHAR(100) NOT NULL, --接口代码
-THEIR_TYPE                                        CHAR(1) NOT NULL, --接口所属类型
-USER_NAME                                         VARCHAR(512) NOT NULL, --用户名称
-CLASSIFY_NAME                                     VARCHAR(512) NULL, --分类名称
-CREATE_ID                                         BIGINT default 0 NOT NULL, --用户ID
-USE_STATE                                         CHAR(1) NOT NULL, --使用状态
-START_USE_DATE                                    CHAR(8) NOT NULL, --开始使用日期
-USE_VALID_DATE                                    CHAR(8) NOT NULL, --使用有效日期
-INTERFACE_NOTE                                    VARCHAR(512) NULL, --备注
-INTERFACE_ID                                      BIGINT default 0 NOT NULL, --接口ID
-USER_ID                                           BIGINT default 0 NOT NULL, --用户ID
-CONSTRAINT INTERFACE_USE_PK PRIMARY KEY(INTERFACE_USE_ID)   );
-
---表使用信息表
-DROP TABLE IF EXISTS TABLE_USE_INFO ;
-CREATE TABLE TABLE_USE_INFO(
-USE_ID                                            BIGINT default 0 NOT NULL, --表使用ID
-SYSREG_NAME                                       VARCHAR(512) NOT NULL, --系统登记表名
-ORIGINAL_NAME                                     VARCHAR(512) NOT NULL, --原始文件名称
-TABLE_BLSYSTEM                                    CHAR(3) NOT NULL, --数据表所属系统
-TABLE_NOTE                                        VARCHAR(512) NULL, --表说明
-USER_ID                                           BIGINT default 0 NOT NULL, --用户ID
-CONSTRAINT TABLE_USE_INFO_PK PRIMARY KEY(USE_ID)   );
-
---系统登记表参数信息
-DROP TABLE IF EXISTS SYSREG_PARAMETER_INFO ;
-CREATE TABLE SYSREG_PARAMETER_INFO(
-PARAMETER_ID                                      BIGINT default 0 NOT NULL, --参数ID
-TABLE_COLUMN_NAME                                 VARCHAR(20000) NOT NULL, --表列名称
-IS_FLAG                                           CHAR(1) NOT NULL, --是否可用
-REMARK                                            VARCHAR(512) NULL, --备注
-USE_ID                                            BIGINT default 0 NOT NULL, --表使用ID
-USER_ID                                           BIGINT default 0 NOT NULL, --用户ID
-CONSTRAINT SYSREG_PARAMETER_INFO_PK PRIMARY KEY(PARAMETER_ID)   );
-
---接口文件生成信息表
-DROP TABLE IF EXISTS INTERFACE_FILE_INFO ;
-CREATE TABLE INTERFACE_FILE_INFO(
-FILE_ID                                           BIGINT default 0 NOT NULL, --文件ID
-USER_ID                                           BIGINT default 0 NOT NULL, --用户ID
-FILE_PATH                                         VARCHAR(512) NOT NULL, --文件路径
-DATA_CLASS                                        VARCHAR(10) NOT NULL, --输出数据类型
-DATA_OUTPUT                                       VARCHAR(20) NOT NULL, --数据数据形式
-REMARK                                            VARCHAR(512) NULL, --备注
-CONSTRAINT INTERFACE_FILE_INFO_PK PRIMARY KEY(FILE_ID)   );
-
---接口使用信息日志表
+﻿--接口使用信息日志表
 DROP TABLE IF EXISTS INTERFACE_USE_LOG ;
 CREATE TABLE INTERFACE_USE_LOG(
 LOG_ID                                            BIGINT default 0 NOT NULL, --日志ID
@@ -471,6 +358,24 @@ SOURCE_ID                                         BIGINT default 0 NOT NULL, --�
 DATABASE_ID                                       BIGINT default 0 NOT NULL, --数据库设置id
 TABLE_ID                                          BIGINT default 0 NOT NULL, --表名ID
 CONSTRAINT DATA_STORE_REG_PK PRIMARY KEY(FILE_ID)   );
+
+--系统操作信息
+DROP TABLE IF EXISTS LOGIN_OPERATION_INFO ;
+CREATE TABLE LOGIN_OPERATION_INFO(
+LOG_ID                                            BIGINT default 0 NOT NULL, --日志ID
+BROWSER_TYPE                                      VARCHAR(512) NULL, --浏览器类型
+BROWSER_VERSION                                   VARCHAR(512) NULL, --浏览器版本
+SYSTEM_TYPE                                       VARCHAR(512) NULL, --系统类型
+REQUEST_MODE                                      VARCHAR(512) NULL, --请求方式
+REMOTEADDR                                        VARCHAR(512) NULL, --客户端的IP
+PROTOCOL                                          VARCHAR(512) NULL, --超文本传输协议版本
+REQUEST_DATE                                      CHAR(8) NOT NULL, --请求日期
+REQUEST_TIME                                      CHAR(6) NOT NULL, --请求时间
+REQUEST_TYPE                                      VARCHAR(512) NULL, --请求类型
+USER_ID                                           BIGINT default 0 NOT NULL, --用户ID
+USER_NAME                                         VARCHAR(512) NULL, --用户名称
+OPERATION_TYPE                                    VARCHAR(512) NULL, --操作类型
+CONSTRAINT LOGIN_OPERATION_INFO_PK PRIMARY KEY(LOG_ID)   );
 
 --作业定义表
 DROP TABLE IF EXISTS ETL_JOB_DEF ;
@@ -1640,4 +1545,117 @@ DETECT_EDATE                                      CHAR(8) NOT NULL, --检测结�
 DETECT_ETIME                                      CHAR(6) NOT NULL, --检测结束时间
 DND_REMARK                                        VARCHAR(512) NULL, --备注
 CONSTRAINT DBM_NORMBM_DETECT_PK PRIMARY KEY(DETECT_ID)   );
+
+--数据对标结果分类表
+DROP TABLE IF EXISTS DBM_DATA_SORT ;
+CREATE TABLE DBM_DATA_SORT(
+DDS_ID                                            BIGINT default 0 NOT NULL, --对标分类结构ID
+DDS_NAME                                          VARCHAR(512) NOT NULL, --分类名称
+DDS_NUMBER                                        VARCHAR(100) NOT NULL, --分类编号
+DDS_REMARK                                        VARCHAR(512) NULL, --分类备注
+BASIC_ID                                          BIGINT default 0 NOT NULL, --标准元主键
+DETECT_ID                                         VARCHAR(32) NULL, --检测主键
+CONSTRAINT DBM_DATA_SORT_PK PRIMARY KEY(DDS_ID)   );
+
+--分类对应的表字段
+DROP TABLE IF EXISTS DBM_SORT_COLUMN ;
+CREATE TABLE DBM_SORT_COLUMN(
+DSC_ID                                            BIGINT default 0 NOT NULL, --分类对应主键ID
+DDS_ID                                            BIGINT default 0 NOT NULL, --对标分类结构ID
+COL_ID                                            BIGINT default 0 NOT NULL, --字段主键
+DBM_TABLEID                                       BIGINT default 0 NOT NULL, --检测表主键
+DSC_REMARK                                        VARCHAR(80) NULL, --备注
+CONSTRAINT DBM_SORT_COLUMN_PK PRIMARY KEY(DSC_ID)   );
+
+--对象采集数据处理类型对应表
+DROP TABLE IF EXISTS OBJECT_HANDLE_TYPE ;
+CREATE TABLE OBJECT_HANDLE_TYPE(
+OBJECT_HANDLE_ID                                  BIGINT default 0 NOT NULL, --处理编号
+OCS_ID                                            BIGINT default 0 NOT NULL, --对象采集任务编号
+HANDLE_TYPE                                       CHAR(1) NOT NULL, --处理类型
+HANDLE_VALUE                                      VARCHAR(100) NOT NULL, --处理值
+CONSTRAINT OBJECT_HANDLE_TYPE_PK PRIMARY KEY(OBJECT_HANDLE_ID,OCS_ID)   );
+
+--对象采集结构信息
+DROP TABLE IF EXISTS OBJECT_COLLECT_STRUCT ;
+CREATE TABLE OBJECT_COLLECT_STRUCT(
+STRUCT_ID                                         BIGINT default 0 NOT NULL, --结构信息id
+OCS_ID                                            BIGINT default 0 NOT NULL, --对象采集任务编号
+COLUMN_NAME                                       VARCHAR(512) NOT NULL, --字段名称
+IS_ROWKEY                                         CHAR(1) NOT NULL, --是否rowkey
+IS_KEY                                            CHAR(1) NOT NULL, --是否主键
+IS_SOLR                                           CHAR(1) NOT NULL, --是否solr
+IS_HBASE                                          CHAR(1) NOT NULL, --是否hbase
+IS_OPERATE                                        CHAR(1) NOT NULL, --是否操作标识字段
+COL_SEQ                                           BIGINT default 0 NOT NULL, --字段序号
+COLUMNPOSITION                                    VARCHAR(100) NOT NULL, --字段位置
+COLUMN_TYPE                                       VARCHAR(100) NOT NULL, --字段类型
+DATA_DESC                                         VARCHAR(200) NULL, --中文描述信息
+REMARK                                            VARCHAR(512) NULL, --备注
+CONSTRAINT OBJECT_COLLECT_STRUCT_PK PRIMARY KEY(STRUCT_ID)   );
+
+--接口信息表
+DROP TABLE IF EXISTS INTERFACE_INFO ;
+CREATE TABLE INTERFACE_INFO(
+INTERFACE_ID                                      BIGINT default 0 NOT NULL, --接口ID
+URL                                               VARCHAR(512) NOT NULL, --请求地址
+INTERFACE_NAME                                    VARCHAR(512) NOT NULL, --接口名称
+INTERFACE_TYPE                                    CHAR(1) NOT NULL, --接口类型
+INTERFACE_STATE                                   CHAR(1) NOT NULL, --接口状态
+INTERFACE_CODE                                    VARCHAR(100) NOT NULL, --接口代码
+INTERFACE_NOTE                                    VARCHAR(512) NULL, --备注
+USER_ID                                           BIGINT default 0 NOT NULL, --用户ID
+CONSTRAINT INTERFACE_INFO_PK PRIMARY KEY(INTERFACE_ID)   );
+
+--接口使用信息表
+DROP TABLE IF EXISTS INTERFACE_USE ;
+CREATE TABLE INTERFACE_USE(
+INTERFACE_USE_ID                                  BIGINT default 0 NOT NULL, --接口使用ID
+URL                                               VARCHAR(512) NOT NULL, --请求地址
+INTERFACE_NAME                                    VARCHAR(512) NOT NULL, --接口名称
+INTERFACE_CODE                                    VARCHAR(100) NOT NULL, --接口代码
+THEIR_TYPE                                        CHAR(1) NOT NULL, --接口所属类型
+USER_NAME                                         VARCHAR(512) NOT NULL, --用户名称
+CLASSIFY_NAME                                     VARCHAR(512) NULL, --分类名称
+CREATE_ID                                         BIGINT default 0 NOT NULL, --用户ID
+USE_STATE                                         CHAR(1) NOT NULL, --使用状态
+START_USE_DATE                                    CHAR(8) NOT NULL, --开始使用日期
+USE_VALID_DATE                                    CHAR(8) NOT NULL, --使用有效日期
+INTERFACE_NOTE                                    VARCHAR(512) NULL, --备注
+INTERFACE_ID                                      BIGINT default 0 NOT NULL, --接口ID
+USER_ID                                           BIGINT default 0 NOT NULL, --用户ID
+CONSTRAINT INTERFACE_USE_PK PRIMARY KEY(INTERFACE_USE_ID)   );
+
+--表使用信息表
+DROP TABLE IF EXISTS TABLE_USE_INFO ;
+CREATE TABLE TABLE_USE_INFO(
+USE_ID                                            BIGINT default 0 NOT NULL, --表使用ID
+SYSREG_NAME                                       VARCHAR(512) NOT NULL, --系统登记表名
+ORIGINAL_NAME                                     VARCHAR(512) NOT NULL, --原始文件名称
+TABLE_BLSYSTEM                                    CHAR(3) NOT NULL, --数据表所属系统
+TABLE_NOTE                                        VARCHAR(512) NULL, --表说明
+USER_ID                                           BIGINT default 0 NOT NULL, --用户ID
+CONSTRAINT TABLE_USE_INFO_PK PRIMARY KEY(USE_ID)   );
+
+--系统登记表参数信息
+DROP TABLE IF EXISTS SYSREG_PARAMETER_INFO ;
+CREATE TABLE SYSREG_PARAMETER_INFO(
+PARAMETER_ID                                      BIGINT default 0 NOT NULL, --参数ID
+TABLE_COLUMN_NAME                                 VARCHAR(20000) NOT NULL, --表列名称
+IS_FLAG                                           CHAR(1) NOT NULL, --是否可用
+REMARK                                            VARCHAR(512) NULL, --备注
+USE_ID                                            BIGINT default 0 NOT NULL, --表使用ID
+USER_ID                                           BIGINT default 0 NOT NULL, --用户ID
+CONSTRAINT SYSREG_PARAMETER_INFO_PK PRIMARY KEY(PARAMETER_ID)   );
+
+--接口文件生成信息表
+DROP TABLE IF EXISTS INTERFACE_FILE_INFO ;
+CREATE TABLE INTERFACE_FILE_INFO(
+FILE_ID                                           BIGINT default 0 NOT NULL, --文件ID
+USER_ID                                           BIGINT default 0 NOT NULL, --用户ID
+FILE_PATH                                         VARCHAR(512) NOT NULL, --文件路径
+DATA_CLASS                                        VARCHAR(10) NOT NULL, --输出数据类型
+DATA_OUTPUT                                       VARCHAR(20) NOT NULL, --数据数据形式
+REMARK                                            VARCHAR(512) NULL, --备注
+CONSTRAINT INTERFACE_FILE_INFO_PK PRIMARY KEY(FILE_ID)   );
 
