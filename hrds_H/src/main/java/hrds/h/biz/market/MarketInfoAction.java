@@ -1086,7 +1086,6 @@ public class MarketInfoAction extends BaseAction {
     @Param(name = "date", desc = "date", range = "String类型跑批日期")
     @Param(name = "parameter", desc = "parameter", range = "动态参数", nullable = true)
     public void excutMartJob(String datatable_id, String date, String parameter) {
-        date = date.substring(0, 10).replace("-", "");
         try {
             MainClass.run(datatable_id, date, parameter);
         } catch (Exception e) {
