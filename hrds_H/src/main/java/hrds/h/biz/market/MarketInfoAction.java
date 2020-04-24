@@ -35,6 +35,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.poi.ss.usermodel.DataValidation;
 import org.apache.poi.ss.usermodel.DataValidationConstraint;
 import org.apache.poi.ss.usermodel.DataValidationHelper;
+import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.CellRangeAddressList;
 import org.apache.poi.xssf.usermodel.XSSFDataFormat;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -1234,10 +1235,11 @@ public class MarketInfoAction extends BaseAction {
         sheet1.getRow(11).createCell(5).setCellValue("存储层配置信息");
 //        sheet1.getRow(11).createCell(6).setCellValue("附加信息");
         List<Map<String, Object>> maps = Dbo.queryList("SELECT dsl_name,store_type,is_hadoopclient,dsl_remark," +
-                " string_agg(t2.storage_property_key || ':' || t2.storage_property_val,';') as configure FROM " +
+                " string_agg(t2.storage_property_key || ':' || t2.storage_property_val,'@;@') as configure FROM " +
                 Data_store_layer.TableName + " t1 LEFT JOIN " + Data_store_layer_attr.TableName +
                 " t2 ON t1.dsl_id = t2.dsl_id group by dsl_name,store_type,is_hadoopclient,dsl_remark");
         int count = maps.size();
+
         for (int i = 0; i < maps.size(); i++) {
             Map<String, Object> stringObjectMap = maps.get(i);
             String dsl_name = stringObjectMap.get("dsl_name").toString();
@@ -1249,24 +1251,41 @@ public class MarketInfoAction extends BaseAction {
             sheet1.getRow(12 + i).createCell(2).setCellValue(Store_type.ofValueByCode(store_type));
             sheet1.getRow(12 + i).createCell(3).setCellValue(dsl_remark);
             sheet1.getRow(12 + i).createCell(4).setCellValue(IsFlag.ofValueByCode(is_hadoopclient));
-            sheet1.getRow(12 + i).createCell(5).setCellValue(configure);
+            sheet1.getRow(12 + i).createCell(5).setCellValue(configure.replace("@;@","\n"));
+            CellRangeAddress region = new CellRangeAddress(12+i, 12+i, 5, 8);
+            sheet1.addMergedRegion(region);
         }
+        //第三部分
         List<Dm_operation_info> dm_operation_infos = Dbo.queryList(Dm_operation_info.class, "select execute_sql from " + Dm_operation_info.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
         String execute_sql = dm_operation_infos.get(0).getExecute_sql();
-
         sheet1.createRow(13 + count).createCell(0).setCellValue("sql");
         sheet1.getRow(13 + count).createCell(1).setCellValue(execute_sql);
+        CellRangeAddress region = new CellRangeAddress(13 + count, 13 + count, 1, 8);
+        sheet1.addMergedRegion(region);
+        //第四部分
         List<Datatable_field_info> datatable_field_infos = Dbo.queryList(Datatable_field_info.class, "select * from " + Datatable_field_info.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
         sheet1.createRow(15 + count).createCell(0).setCellValue("字段信息");
-        sheet1.getRow(16 + count).createCell(0).setCellValue("序号");
+        sheet1.createRow(16 + count).createCell(0).setCellValue("序号");
         sheet1.getRow(16 + count).createCell(1).setCellValue("英文名");
         sheet1.getRow(16 + count).createCell(2).setCellValue("中文名");
         sheet1.getRow(16 + count).createCell(3).setCellValue("类型");
         sheet1.getRow(16 + count).createCell(4).setCellValue("长度");
         sheet1.getRow(16 + count).createCell(5).setCellValue("处理方式");
         sheet1.getRow(16 + count).createCell(6).setCellValue("处理方式参数");
+        String[] processtypesubjects = new String[ProcessType.values().length];
+        for (int i = 0; i < ProcessType.values().length; i++) {
+            processtypesubjects[i] = ProcessType.values()[i].getValue();
+        }
         for (int i = 0; i < datatable_field_infos.size(); i++) {
-//TODO
+            Datatable_field_info datatable_field_info = datatable_field_infos.get(i);
+            sheet1.createRow(17 + count+i).createCell(0).setCellValue((i+1));
+            sheet1.getRow(17 + count+i).createCell(1).setCellValue(datatable_field_info.getField_en_name());
+            sheet1.getRow(17 + count+i).createCell(2).setCellValue(datatable_field_info.getField_cn_name());
+            sheet1.getRow(17 + count+i).createCell(3).setCellValue(datatable_field_info.getField_type());
+            sheet1.getRow(17 + count+i).createCell(4).setCellValue(datatable_field_info.getField_length());
+            sheet1.getRow(17 + count+i).createCell(5).setCellValue(ProcessType.ofValueByCode(datatable_field_info.getField_process()));
+            addValidationData(sheet1, processtypesubjects, 17+count+i, 5);
+            sheet1.getRow(17 + count+i).createCell(6).setCellValue(datatable_field_info.getProcess_para());
         }
 
 
