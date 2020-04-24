@@ -102,7 +102,7 @@ subprojects {
         compile group: 'com.hankcs', name: 'hanlp', version: 'portable-1.2.8'
 
         /** spark */
-        provided group: 'org.apache.spark', name: 'spark-sql_2.11', version: '2.3.2'
+        compile group: 'org.apache.spark', name: 'spark-sql_2.11', version: '2.3.2'
         provided group: 'org.apache.spark', name: 'spark-yarn_2.11', version: '2.3.2'
 
         /** database driver */
@@ -129,11 +129,14 @@ subprojects {
         // csv文件解析
         compile group: 'net.sf.supercsv', name: 'super-csv', version: '2.4.0'
         // pdf文本提取
-        compile group: 'org.apache.pdfbox', name: 'pdfbox', version: '1.8.9'
+        compile group: 'org.apache.pdfbox', name: 'pdfbox', version: '2.0.9'
         // tess4j 图片文本提取
-        compile group: 'net.sourceforge.tess4j', name: 'tess4j', version: '3.4.7'
+        compile (group: 'net.sourceforge.tess4j', name: 'tess4j', version: '3.4.7'){
+            exclude group: 'ch.qos.logback'
+            exclude group: 'org.slf4j'
+        }
         // 字符编码检测
-        compile group: 'net.sourceforge.jchardet', name: 'jchardet', version: '1.0'
+        compile (group: 'net.sourceforge.jchardet', name: 'jchardet', version: '1.0'){transitive = false}
         // 汉字转拼音
         compile group: 'com.belerweb', name: 'pinyin4j', version: '2.5.0'
         // ssh2传输
