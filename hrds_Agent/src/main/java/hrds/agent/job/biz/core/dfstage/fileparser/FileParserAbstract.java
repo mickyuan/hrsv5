@@ -52,14 +52,12 @@ public abstract class FileParserAbstract implements FileParserInterface {
 	private StringBuilder lineSb;
 	//清洗接口
 	private DataCleanInterface allClean;
-	//列分隔符
-	private static final String column_separator = JobConstant.DATADELIMITER;
-	//行分隔符
-	private static final String line_separator = JobConstant.DEFAULTLINESEPARATOR;
 	//判断是否追加结束日期和MD5字段
 	private boolean isMd5;
 	//转存落地的文件路径
 	String unloadFileAbsolutePath;
+	//跑批日期
+	private String etl_date;
 
 	@SuppressWarnings("unchecked")
 	FileParserAbstract(TableBean tableBean, CollectTableBean collectTableBean, String readFile) throws Exception {
@@ -86,6 +84,7 @@ public abstract class FileParserAbstract implements FileParserInterface {
 		this.isMd5 = IsFlag.Shi.getCode().equals(collectTableBean.getIs_md5()) ||
 				(IsFlag.Shi.getCode().equals(collectTableBean.getIs_zipper()) &&
 						StorageType.ZengLiang.getCode().equals(collectTableBean.getStorage_type()));
+		this.etl_date = collectTableBean.getEtlDate();
 	}
 
 	@Override
@@ -115,11 +114,11 @@ public abstract class FileParserAbstract implements FileParserInterface {
 			//列清洗
 			columnData = cl.cleanColumn(columnData, columnName, null,
 					dictionaryTypeList.get(i), FileFormat.FeiDingChang.getCode(), null,
-					null, column_separator);
+					null, JobConstant.DATADELIMITER);
 			//清理不规则的数据
 			columnData = AbstractFileWriter.clearIrregularData(columnData);
 			midStringOther.append(columnData);
-			lineSb.append(columnData).append(column_separator);
+			lineSb.append(columnData).append(JobConstant.DATADELIMITER);
 		}
 		//如果有列合并处理合并信息
 		if (!mergeIng.isEmpty()) {
@@ -127,16 +126,18 @@ public abstract class FileParserAbstract implements FileParserInterface {
 					JobConstant.DATADELIMITER);
 			String merge = allClean.merge(mergeIng, arrColString.toArray(new String[0]), allColumnList.toArray
 							(new String[0]), null, null, FileFormat.FeiDingChang.getCode(),
-					null, column_separator);
+					null, JobConstant.DATADELIMITER);
 			midStringOther.append(merge);
-			lineSb.append(merge).append(column_separator);
+			lineSb.append(merge).append(JobConstant.DATADELIMITER);
 		}
-		lineSb.append(Constant.SDATENAME);
+		//追加开始日期
+		lineSb.append(etl_date);
 		if (isMd5) {
-			lineSb.append(column_separator).append(Constant.MAXDATE);
-			lineSb.append(column_separator).append(MD5Util.md5String(midStringOther.toString()));
+			//根据(是否拉链存储且增量进数)和是否算md5判断是否要追加MD5和结束日期两个字段 追加结束日期和MD5
+			lineSb.append(JobConstant.DATADELIMITER).append(Constant.MAXDATE);
+			lineSb.append(JobConstant.DATADELIMITER).append(MD5Util.md5String(midStringOther.toString()));
 		}
-		lineSb.append(line_separator);
+		lineSb.append(JobConstant.DEFAULTLINESEPARATOR);
 		writer.write(lineSb.toString());
 	}
 
