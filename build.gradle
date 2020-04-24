@@ -143,6 +143,11 @@ subprojects {
         compile group: 'com.jcraft', name: 'jsch', version: '0.1.54'
 
 
+        /** 解析request请求头信息 */
+        // UserAgentUtils获取请求信息
+        compile group: 'eu.bitwalker', name: 'UserAgentUtils', version: '1.21'
+
+
 
 
 
