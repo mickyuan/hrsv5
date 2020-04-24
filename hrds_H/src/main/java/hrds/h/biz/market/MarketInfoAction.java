@@ -1186,6 +1186,7 @@ public class MarketInfoAction extends BaseAction {
         dm_datatable = dm_datatables.get(0);
         XSSFDataFormat dataFormat = workbook.createDataFormat();
         XSSFSheet sheet1 = workbook.createSheet("sheet1");
+        //第一部分
         sheet1.createRow(0).createCell(0).setCellValue("基本设置");
         sheet1.createRow(1).createCell(0).setCellValue("表英文名");
         sheet1.getRow(1).createCell(1).setCellValue(dm_datatable.getDatatable_en_name());
@@ -1223,7 +1224,7 @@ public class MarketInfoAction extends BaseAction {
         addValidationData(sheet1, tablelifecyclesubjects, 7, 1);
         sheet1.createRow(8).createCell(0).setCellValue("数据表到期日期");
         sheet1.getRow(8).createCell(1).setCellValue(dm_datatable.getDatatable_due_date());
-
+        //第二部分
         sheet1.createRow(10).createCell(0).setCellValue("数据目的地");
         sheet1.createRow(11).createCell(0).setCellValue("选择");
         sheet1.getRow(11).createCell(1).setCellValue("名称");
@@ -1232,7 +1233,23 @@ public class MarketInfoAction extends BaseAction {
         sheet1.getRow(11).createCell(4).setCellValue("hadoop客户端");
         sheet1.getRow(11).createCell(5).setCellValue("存储层配置信息");
         sheet1.getRow(11).createCell(6).setCellValue("附加信息");
-
+        List<Map<String, Object>> maps = Dbo.queryList("SELECT dsl_name,store_type,is_hadoopclient,dsl_remark," +
+                " string_agg(t2.storage_property_key || ':' || t2.storage_property_val,';') as configure FROM " +
+                Data_store_layer.TableName + " t1 LEFT JOIN " + Data_store_layer_attr.TableName +
+                " t2 ON t1.dsl_id = t2.dsl_id group by dsl_name,store_type,is_hadoopclient,dsl_remark");
+        for (int i=0;i<maps.size();i++) {
+            Map<String, Object> stringObjectMap = maps.get(i);
+            String dsl_name = stringObjectMap.get("dsl_name").toString();
+            String store_type = stringObjectMap.get("store_type").toString();
+            String dsl_remark = stringObjectMap.get("dsl_remark").toString();
+            String is_hadoopclient = stringObjectMap.get("is_hadoopclient").toString();
+            String configure = stringObjectMap.get("configure").toString();
+            sheet1.createRow(12+i).createCell(1).setCellValue(dsl_name);
+            sheet1.createRow(12+i).createCell(2).setCellValue(Store_type.ofValueByCode(store_type));
+            sheet1.createRow(12+i).createCell(3).setCellValue(dsl_remark);
+            sheet1.createRow(12+i).createCell(4).setCellValue(IsFlag.ofValueByCode(is_hadoopclient));
+            sheet1.createRow(12+i).createCell(5).setCellValue(configure);
+        }
 
     }
 
