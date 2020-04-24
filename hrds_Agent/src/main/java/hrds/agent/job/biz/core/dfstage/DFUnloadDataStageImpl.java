@@ -114,6 +114,7 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 					} else {
 						fd.ng.core.utils.FileUtil.forceMkdir(dir);
 					}
+					LOGGER.info(FileFormat.ofValueByCode(tableBean.getFile_format())+"文件开始转存");
 					executorService = Executors.newFixedThreadPool(5);
 					List<Future<String>> futures = new ArrayList<>();
 					for (String fileName : file_name_list) {
@@ -134,6 +135,7 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 						pageCountResult.add(Long.parseLong(split.get(1)));
 						LOGGER.info("---------------" + parseResult + "---------------");
 					}
+					LOGGER.info(FileFormat.ofValueByCode(tableBean.getFile_format())+"文件转存结束");
 					//统计的结果
 					DBUnloadDataStageImpl.countResult(fileResult, pageCountResult, stageParamInfo);
 					stageParamInfo.setFileNameArr(file_name_list);
