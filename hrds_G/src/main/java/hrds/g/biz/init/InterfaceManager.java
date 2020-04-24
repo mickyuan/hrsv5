@@ -321,6 +321,7 @@ public class InterfaceManager {
 					toKenMap.put(createToken.getToken(), queryInterfaceInfo);
 					userMap.put(user_id, queryInterfaceInfo);
 				}
+				db.commit();
 			}
 		}
 	}

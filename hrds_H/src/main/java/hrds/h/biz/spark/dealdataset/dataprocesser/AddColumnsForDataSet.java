@@ -93,7 +93,7 @@ public class AddColumnsForDataSet implements DataSetProcesser {
          * 添加HYREN_S_DATE,HYREN_E_DATE,HYREN_MD5_VAL
          */
         dataSet = dataSet
-                .withColumn(Constant.SDATENAME, functions.lit(marketConf.getEtlData()))
+                .withColumn(Constant.SDATENAME, functions.lit(marketConf.getEtlDate()))
                 .withColumn(Constant.EDATENAME, functions.lit(Constant.MAXDATE))
                 .withColumn(Constant.MD5NAME,functions.md5(functions.array(md5Array).cast("string")));
 

@@ -11,7 +11,9 @@ import fd.ng.core.utils.CodecUtil;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.SqlOperator;
+import fd.ng.web.annotation.UploadFile;
 import fd.ng.web.util.Dbo;
+import fd.ng.web.util.FileUploadUtil;
 import fd.ng.web.util.RequestUtil;
 import fd.ng.web.util.ResponseUtil;
 import hrds.commons.base.BaseAction;
@@ -30,9 +32,18 @@ import hrds.main.AppMain;
 import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.poi.ss.usermodel.DataValidation;
+import org.apache.poi.ss.usermodel.DataValidationConstraint;
+import org.apache.poi.ss.usermodel.DataValidationHelper;
+import org.apache.poi.ss.util.CellRangeAddressList;
+import org.apache.poi.xssf.usermodel.XSSFDataFormat;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Files;
 import java.util.*;
 
 //import hrds.h.biz.SqlAnalysis.HyrenOracleTableVisitor;
@@ -225,8 +236,8 @@ public class MarketInfoAction extends BaseAction {
     public List<Map<String, Object>> queryDMDataTableByDataMartID(String data_mart_id) {
         Dm_datatable dm_datatable = new Dm_datatable();
         dm_datatable.setData_mart_id(data_mart_id);
-        return Dbo.queryList("SELECT * ,case when datatable_id in (select datatable_id from " + Datatable_field_info.TableName + ") then true else false end as isadd from "
-                + Dm_datatable.TableName + " where data_mart_id = ? order by " + "datatable_id asc", dm_datatable.getData_mart_id());
+        return Dbo.queryList("SELECT * ,case when t1.datatable_id in (select datatable_id from " + Datatable_field_info.TableName + ") then true else false end as isadd from "
+                + Dm_datatable.TableName + " t1 left join " + Dm_relation_datatable.TableName + " t2 on t1.datatable_id = t2.datatable_id where data_mart_id = ? order by " + "t1.datatable_id asc", dm_datatable.getData_mart_id());
     }
 
     @Method(desc = "删除集市表及其相关的所有信息",
@@ -242,6 +253,12 @@ public class MarketInfoAction extends BaseAction {
     public void deleteDMDataTable(String datatable_id) {
         Dm_datatable dm_datatable = new Dm_datatable();
         dm_datatable.setDatatable_id(datatable_id);
+        //5、删除数据源表字段
+        Dbo.execute("delete from " + Own_source_field.TableName + " where own_dource_table_id in " +
+                "(select own_dource_table_id from " + Dm_datatable_source.TableName + " where datatable_id = ? )", dm_datatable.getDatatable_id());
+        //8、删除集市字段存储信息
+        Dbo.execute("delete from " + Dm_column_storage.TableName + " where datatable_field_id in " +
+                "(select datatable_field_id from " + Datatable_field_info.TableName + " where datatable_id = ?)", dm_datatable.getDatatable_id());
         //1、删除数据表信息
         Dbo.execute("delete from " + Dm_datatable.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
         //2、删除数据操作信息表
@@ -250,16 +267,12 @@ public class MarketInfoAction extends BaseAction {
         Dbo.execute("delete from " + Dm_datatable_source.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
         //4、删除结果映射信息表
         Dbo.execute("delete from " + Dm_etlmap_info.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
-        //5、删除数据源表字段
-        Dbo.execute("delete from " + Own_source_field.TableName + " where own_dource_table_id in " +
-                "(select own_dource_table_id from " + Dm_datatable_source.TableName + " where datatable_id = ? )", dm_datatable.getDatatable_id());
+
         //6、删除数据表字段信息
         Dbo.execute("delete from " + Datatable_field_info.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
         //7、删除集市表存储关系表
         Dbo.execute("delete from " + Dm_relation_datatable.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
-        //8、删除集市字段存储信息
-        Dbo.execute("delete from " + Dm_column_storage.TableName + " where datatable_field_id in " +
-                "(select datatable_field_id from " + Datatable_field_info.TableName + " where datatable_id = ?)", dm_datatable.getDatatable_id());
+
     }
 
     @Method(desc = "获取登录用户集市查询存储配置表",
@@ -300,7 +313,7 @@ public class MarketInfoAction extends BaseAction {
         CheckColummn(dm_datatable.getDatatable_lifecycle(), "数据生命周期");
         if (TableLifeCycle.LinShi.getCode().equalsIgnoreCase(dm_datatable.getDatatable_lifecycle())) {
             CheckColummn(dm_datatable.getDatatable_due_date(), "数据表到期日期");
-            dm_datatable.setDatatable_due_date(dm_datatable.getDatatable_due_date().substring(0, 10).replace("-", ""));
+            dm_datatable.setDatatable_due_date(dm_datatable.getDatatable_due_date());
         } else {
             dm_datatable.setDatatable_due_date(Final_Date);
         }
@@ -331,7 +344,7 @@ public class MarketInfoAction extends BaseAction {
         Dm_relation_datatable dm_relation_datatable = new Dm_relation_datatable();
         dm_relation_datatable.setDsl_id(dsl_id);
         dm_relation_datatable.setDatatable_id(datatable_id);
-        dm_relation_datatable.setIs_successful(IsFlag.Fou.getCode());
+        dm_relation_datatable.setIs_successful(JobExecuteState.DengDai.getCode());
         dm_relation_datatable.add(Dbo.db());
         //6 返回主键datatable_id
         map.put("datatable_id", datatable_id);
@@ -376,7 +389,7 @@ public class MarketInfoAction extends BaseAction {
         Dm_relation_datatable dm_relation_datatable = new Dm_relation_datatable();
         dm_relation_datatable.setDsl_id(dsl_id);
         dm_relation_datatable.setDatatable_id(dm_datatable.getDatatable_id());
-        dm_relation_datatable.setIs_successful(IsFlag.Fou.getCode());
+        dm_relation_datatable.setIs_successful(JobExecuteState.DengDai.getCode());
         dm_relation_datatable.add(Dbo.db());
         //6 返回主键datatable_id
         map.put("datatable_id", String.valueOf(dm_datatable.getDatatable_id()));
@@ -458,14 +471,14 @@ public class MarketInfoAction extends BaseAction {
     private String getlimitsql(String querysql, String datatable_id) {
         LayerTypeBean allTableIsLayer = ProcessingData.getAllTableIsLayer(querysql, Dbo.db());
         LayerTypeBean.ConnType connType = allTableIsLayer.getConnType();
-        if(connType == LayerTypeBean.ConnType.oneJdbc){
+        if (connType == LayerTypeBean.ConnType.oneJdbc) {
             String dsl_name = allTableIsLayer.getLayerBean().getDsl_name();
-            if(dsl_name.equalsIgnoreCase("ORACLE")){
+            if (dsl_name.equalsIgnoreCase("ORACLE")) {
                 querysql = "select * from (" + querysql + ") " + alias + " where rownum <  " + LimitNumber;
-            }else{
+            } else {
                 querysql = "select * from (" + querysql + ") as " + alias + " limit " + LimitNumber;
             }
-        }else{
+        } else {
             throw new BusinessException("目前不支持非ONE JDBC的情况");
         }
 //        List<LayerBean> layerBeanList = allTableIsLayer.getLayerBeanList();
@@ -1073,7 +1086,6 @@ public class MarketInfoAction extends BaseAction {
     @Param(name = "date", desc = "date", range = "String类型跑批日期")
     @Param(name = "parameter", desc = "parameter", range = "动态参数", nullable = true)
     public void excutMartJob(String datatable_id, String date, String parameter) {
-        date = date.substring(0, 10).replace("-", "");
         try {
             MainClass.run(datatable_id, date, parameter);
         } catch (Exception e) {
@@ -1134,6 +1146,132 @@ public class MarketInfoAction extends BaseAction {
         }
     }
 
+
+    @Method(desc = "控制响应头下载工程的hrds信息",
+            logicStep = "")
+    @Param(name = "datatable_id", desc = "datatable_id", range = "String类型集市表主键")
+    @Return(desc = "查询返回结果集", range = "无限制")
+    public void downloadDmDatatable(String datatable_id) {
+        String fileName = datatable_id + ".xlsx";
+        try {
+            ResponseUtil.getResponse().reset();
+            // 4.设置响应头，控制浏览器下载该文件
+            if (RequestUtil.getRequest().getHeader("User-Agent").toLowerCase().indexOf("firefox") > 0) {
+                // 4.1firefox浏览器
+                ResponseUtil.getResponse().setHeader("content-disposition", "attachment;filename="
+                        + new String(fileName.getBytes(CodecUtil.UTF8_CHARSET), DataBaseCode.ISO_8859_1.getCode()));
+            } else {
+                // 4.2其它浏览器
+                ResponseUtil.getResponse().setHeader("content-disposition", "attachment;filename="
+                        + Base64.getEncoder().encodeToString(fileName.getBytes(CodecUtil.UTF8_CHARSET)));
+            }
+            ResponseUtil.getResponse().setContentType("APPLICATION/OCTET-STREAM");
+            // 6.创建输出流
+            OutputStream out = ResponseUtil.getResponse().getOutputStream();
+            File file = new File(System.getProperty("user.dir") + File.separator + datatable_id + ".xlsx");
+            file.createNewFile();
+            XSSFWorkbook workbook = new XSSFWorkbook();
+            generatexlsx(workbook, datatable_id);
+            workbook.write(out);
+        } catch (IOException e) {
+            throw new BusinessException("集市数据表下载错误");
+        }
+    }
+
+    private void generatexlsx(XSSFWorkbook workbook, String datatabe_id) {
+        Dm_datatable dm_datatable = new Dm_datatable();
+        dm_datatable.setDatatable_id(datatabe_id);
+        List<Dm_datatable> dm_datatables = Dbo.queryList(Dm_datatable.class,
+                "select * from " + Dm_datatable.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
+        dm_datatable = dm_datatables.get(0);
+        XSSFDataFormat dataFormat = workbook.createDataFormat();
+        XSSFSheet sheet1 = workbook.createSheet("sheet1");
+        //第一部分
+        sheet1.createRow(0).createCell(0).setCellValue("基本设置");
+        sheet1.createRow(1).createCell(0).setCellValue("表英文名");
+        sheet1.getRow(1).createCell(1).setCellValue(dm_datatable.getDatatable_en_name());
+        sheet1.createRow(2).createCell(0).setCellValue("表中文名");
+        sheet1.getRow(2).createCell(1).setCellValue(dm_datatable.getDatatable_cn_name());
+        sheet1.createRow(3).createCell(0).setCellValue("表描述");
+        sheet1.getRow(3).createCell(1).setCellValue(dm_datatable.getDatatable_desc());
+        sheet1.createRow(4).createCell(0).setCellValue("执行引擎");
+        sheet1.getRow(4).createCell(1).setCellValue(SqlEngine.ofValueByCode(dm_datatable.getSql_engine()));
+        String[] sqlenginesubjects = new String[SqlEngine.values().length];
+        for (int i = 0; i < SqlEngine.values().length; i++) {
+            sqlenginesubjects[i] = SqlEngine.values()[i].getValue();
+        }
+        addValidationData(sheet1, sqlenginesubjects, 4, 1);
+        sheet1.createRow(5).createCell(0).setCellValue("进数方式");
+        sheet1.getRow(5).createCell(1).setCellValue(StorageType.ofValueByCode(dm_datatable.getStorage_type()));
+        String[] storagettypesubjects = new String[StorageType.values().length];
+        for (int i = 0; i < StorageType.values().length; i++) {
+            storagettypesubjects[i] = StorageType.values()[i].getValue();
+        }
+        addValidationData(sheet1, storagettypesubjects, 5, 1);
+        sheet1.createRow(6).createCell(0).setCellValue("数据存储方式");
+        sheet1.getRow(6).createCell(1).setCellValue(TableStorage.ofValueByCode(dm_datatable.getTable_storage()));
+        String[] tablestoragesubjects = new String[TableStorage.values().length];
+        for (int i = 0; i < TableStorage.values().length; i++) {
+            tablestoragesubjects[i] = TableStorage.values()[i].getValue();
+        }
+        addValidationData(sheet1, tablestoragesubjects, 6, 1);
+        sheet1.createRow(7).createCell(0).setCellValue("数据生命周期");
+        sheet1.getRow(7).createCell(1).setCellValue(TableLifeCycle.ofValueByCode(dm_datatable.getDatatable_lifecycle()));
+        String[] tablelifecyclesubjects = new String[TableLifeCycle.values().length];
+        for (int i = 0; i < TableLifeCycle.values().length; i++) {
+            tablelifecyclesubjects[i] = TableLifeCycle.values()[i].getValue();
+        }
+        addValidationData(sheet1, tablelifecyclesubjects, 7, 1);
+        sheet1.createRow(8).createCell(0).setCellValue("数据表到期日期");
+        sheet1.getRow(8).createCell(1).setCellValue(dm_datatable.getDatatable_due_date());
+        //第二部分
+        sheet1.createRow(10).createCell(0).setCellValue("数据目的地");
+        sheet1.createRow(11).createCell(0).setCellValue("选择");
+        sheet1.getRow(11).createCell(1).setCellValue("名称");
+        sheet1.getRow(11).createCell(2).setCellValue("存储类型");
+        sheet1.getRow(11).createCell(3).setCellValue("备注");
+        sheet1.getRow(11).createCell(4).setCellValue("hadoop客户端");
+        sheet1.getRow(11).createCell(5).setCellValue("存储层配置信息");
+        sheet1.getRow(11).createCell(6).setCellValue("附加信息");
+        List<Map<String, Object>> maps = Dbo.queryList("SELECT dsl_name,store_type,is_hadoopclient,dsl_remark," +
+                " string_agg(t2.storage_property_key || ':' || t2.storage_property_val,';') as configure FROM " +
+                Data_store_layer.TableName + " t1 LEFT JOIN " + Data_store_layer_attr.TableName +
+                " t2 ON t1.dsl_id = t2.dsl_id group by dsl_name,store_type,is_hadoopclient,dsl_remark");
+        for (int i=0;i<maps.size();i++) {
+            Map<String, Object> stringObjectMap = maps.get(i);
+            String dsl_name = stringObjectMap.get("dsl_name").toString();
+            String store_type = stringObjectMap.get("store_type").toString();
+            String dsl_remark = stringObjectMap.get("dsl_remark").toString();
+            String is_hadoopclient = stringObjectMap.get("is_hadoopclient").toString();
+            String configure = stringObjectMap.get("configure").toString();
+            sheet1.createRow(12+i).createCell(1).setCellValue(dsl_name);
+            sheet1.createRow(12+i).createCell(2).setCellValue(Store_type.ofValueByCode(store_type));
+            sheet1.createRow(12+i).createCell(3).setCellValue(dsl_remark);
+            sheet1.createRow(12+i).createCell(4).setCellValue(IsFlag.ofValueByCode(is_hadoopclient));
+            sheet1.createRow(12+i).createCell(5).setCellValue(configure);
+        }
+
+    }
+
+    /**
+     * 处理生成的excel中下拉选框的问题
+     *
+     * @param sheet1
+     * @param sqlenginesubjects
+     * @param row
+     * @param col
+     */
+    private void addValidationData(XSSFSheet sheet1, String[] sqlenginesubjects, int row, int col) {
+        DataValidationHelper helper = sheet1.getDataValidationHelper();
+        DataValidationConstraint constraint = null;
+        CellRangeAddressList addressList = null;
+        DataValidation dataValidation = null;
+        constraint = helper.createExplicitListConstraint(sqlenginesubjects);
+        addressList = new CellRangeAddressList(row, row, col, col);
+        dataValidation = helper.createValidation(constraint, addressList);
+        sheet1.addValidationData(dataValidation);
+    }
+
     /**
      * 根据data_mart_id 返回工程下的所有信息
      *
@@ -1182,6 +1320,86 @@ public class MarketInfoAction extends BaseAction {
         Map<String, Object> map = JSON.parseObject(new String(bytes));
         return bytes;
     }
+
+
+    @Method(desc = "上传集市工程",
+            logicStep = "")
+    @Param(name = "file", desc = "上传文件名称（全路径），上传要导入的集市工程", range = "不能为空以及空格")
+    @UploadFile
+    public void uploadFile(String file) throws Exception {
+//        try {
+        // 3.通过文件名称获取文件
+        File uploadedFile = FileUploadUtil.getUploadedFile(file);
+        if (!uploadedFile.exists()) {
+            throw new BusinessException("上传文件不存在！");
+        }
+        String strTemp = new String(Files.readAllBytes(uploadedFile.toPath()));
+        JSONObject jsonObject = JSONObject.parseObject(strTemp);
+        //工程表
+        List<Dm_info> dm_infos = JSONObject.parseArray(jsonObject.getJSONArray("dm_infos").toJSONString(), Dm_info.class);
+        for (Dm_info dm_info : dm_infos) {
+            dm_info.add(Dbo.db());
+        }
+        //集市表
+        List<Dm_datatable> dm_datatables = JSONObject.parseArray(jsonObject.getJSONArray("dm_datatables").toJSONString(), Dm_datatable.class);
+        for (Dm_datatable dm_datatable : dm_datatables) {
+            dm_datatable.add(Dbo.db());
+        }
+        //sql表
+        List<Dm_operation_info> dm_operation_infos = JSONObject.parseArray(jsonObject.getJSONArray("dm_operation_infos").toJSONString(), Dm_operation_info.class);
+        for (Dm_operation_info dm_operation_info : dm_operation_infos) {
+            dm_operation_info.add(Dbo.db());
+        }
+        //关系表
+        List<Dm_relation_datatable> dm_relation_datatables = JSONObject.parseArray(jsonObject.getJSONArray("dm_relation_datatables").toJSONString(), Dm_relation_datatable.class);
+        for (Dm_relation_datatable dm_relation_datatable : dm_relation_datatables) {
+            dm_relation_datatable.add(Dbo.db());
+        }
+        //字段表
+        List<Datatable_field_info> datatable_field_infos = JSONObject.parseArray(jsonObject.getJSONArray("datatable_field_infos").toJSONString(), Datatable_field_info.class);
+        for (Datatable_field_info datatable_field_info : datatable_field_infos) {
+            datatable_field_info.add(Dbo.db());
+        }
+        //字段关系表
+        List<Dm_column_storage> dm_column_storages = JSONObject.parseArray(jsonObject.getJSONArray("dm_column_storages").toJSONString(), Dm_column_storage.class);
+        for (Dm_column_storage dm_column_storage : dm_column_storages) {
+            dm_column_storage.add(Dbo.db());
+        }
+        //血缘表1
+        List<Dm_datatable_source> dm_datatable_sources = JSONObject.parseArray(jsonObject.getJSONArray("dm_datatable_sources").toJSONString(), Dm_datatable_source.class);
+        for (Dm_datatable_source dm_datatable_source : dm_datatable_sources) {
+            dm_datatable_source.add(Dbo.db());
+        }
+        //血缘表2
+        List<Dm_etlmap_info> dm_etlmap_infos = JSONObject.parseArray(jsonObject.getJSONArray("dm_etlmap_infos").toJSONString(), Dm_etlmap_info.class);
+        for (Dm_etlmap_info dm_etlmap_info : dm_etlmap_infos) {
+            dm_etlmap_info.add(Dbo.db());
+        }
+        //血缘表3
+        List<Own_source_field> own_source_fields = JSONObject.parseArray(jsonObject.getJSONArray("own_source_fields").toJSONString(), Own_source_field.class);
+        for (Own_source_field own_source_field : own_source_fields) {
+            own_source_field.add(Dbo.db());
+        }
+    }
+
+
+    @Method(desc = "删除集市工程",
+            logicStep = "1.判断工程下是否还有表信息" +
+                    "2.删除集市工程")
+    @Param(name = "data_mart_id", desc = "data_mart_id", range = "String类型集市工程主键")
+    @Return(desc = "查询返回结果集", range = "无限制")
+    public Map<String, Object> deleteMart(String data_mart_id) {
+        Map<String, Object> resultmap = new HashMap<>();
+        Dm_datatable dm_datatable = new Dm_datatable();
+        dm_datatable.setData_mart_id(data_mart_id);
+        List<Map<String, Object>> maps = Dbo.queryList("select * from " + Dm_datatable.TableName + " where data_mart_id = ?", dm_datatable.getData_mart_id());
+        if (!maps.isEmpty()) {
+            resultmap.put("status", false);
+            return resultmap;
+        } else {
+            Dbo.execute("delete from " + Dm_info.TableName + " where data_mart_id = ?", dm_datatable.getData_mart_id());
+            resultmap.put("status", true);
+            return resultmap;
+        }
+    }
 }
-
-

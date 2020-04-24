@@ -195,12 +195,10 @@ public class MarketConfUtils {
 
     static void checkFirstLoad(MarketConf conf) {
         conf.setFirstLoad(FIRST_LOAD_DATE.equals(conf.getDmDatatable().getEtl_date()));
-        log.info("isFirstLoad: " + conf.isFirstLoad());
     }
 
     static void checkReRun(MarketConf conf, String etlDate) {
         conf.setRerun(etlDate.equals(conf.getDmDatatable().getEtl_date()));
-        log.info("reRun: " + conf.isRerun());
     }
 
     private static final String MARKET_CONF_SERIALIZATION_PATH = FileUtil.TEMP_DIR_NAME +

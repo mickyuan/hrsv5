@@ -14,7 +14,7 @@ import java.util.Map;
 /**
  * 本类获取数据库sys_para中的数据，将数据一次性加载到内存中 ，如果配置修改了，必须重新启动
  */
-public class PropertyParaValue {
+    public class PropertyParaValue {
     private static final Logger logger = LogManager.getLogger(PropertyParaValue.class.getName());
     private static Map<String, String> mapParaType;
 
@@ -128,10 +128,7 @@ public class PropertyParaValue {
      */
     public static Boolean getBoolean(String name, boolean defaultValue) {
 
-        try {
-            return Boolean.parseBoolean(mapParaType.get(name));
-        } catch (Exception e) {
-            return defaultValue;
-        }
+        return StringUtil.isBlank(mapParaType.get(name)) ?
+                defaultValue : Boolean.parseBoolean(mapParaType.get(name));
     }
 }

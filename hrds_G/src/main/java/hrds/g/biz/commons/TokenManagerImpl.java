@@ -32,8 +32,8 @@ public class TokenManagerImpl implements TokenManager {
 		// 2.使用用户名和密码的MD5作为源token
 		String defaultToken = TokenManagerImpl.getDefaultToken(db, user_id, pwd);
 		TokenModel model;
-		// 3.判断数据库中token值是否为默认值,如果是创建token并更新数据库
-		if (IsFlag.Fou == IsFlag.ofEnumByCode(defaultToken)) {
+		// 3.判断数据库中token值是否为默认值,如果是创建token并更新数据库,这里不能用代码项的方式去判断
+		if (defaultToken.equals(IsFlag.Fou.getCode())) {
 			String token = DigestUtils.md5Hex(user_id + pwd + System.currentTimeMillis());
 			model = new TokenModel(user_id, token);
 			// 3.1创建token

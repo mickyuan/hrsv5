@@ -6,6 +6,7 @@ import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.constant.JobConstant;
+import hrds.agent.job.biz.core.dbstage.writer.AbstractFileWriter;
 import hrds.agent.job.biz.core.service.JdbcCollectTableHandleParse;
 import hrds.agent.job.biz.dataclean.Clean;
 import hrds.agent.job.biz.dataclean.CleanFactory;
@@ -14,6 +15,7 @@ import hrds.commons.codes.DataBaseCode;
 import hrds.commons.codes.FileFormat;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.StorageType;
+import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
 
 import java.io.*;
@@ -29,7 +31,7 @@ public abstract class FileParserAbstract implements FileParserInterface {
 	//采集db文件的文件信息
 	TableBean tableBean;
 	//采集的db文件定义的表信息
-	CollectTableBean collectTableBean;
+	private CollectTableBean collectTableBean;
 	//读文件的全路径
 	String readFile;
 	//写文件的流
@@ -39,7 +41,7 @@ public abstract class FileParserAbstract implements FileParserInterface {
 	//进目标库的所有列，包括列合并、列拆分、HYREN_S_DATE、HYREN_E_DATE、HYREN_MD5_VAL三列
 	private List<String> allColumnList;
 	//数据字典定义的所有的列类型
-	private List<String> dictionaryTypeList;
+	List<String> dictionaryTypeList;
 	//列合并的map
 	private Map<String, String> mergeIng;
 	//列清洗拆分合并的处理类
@@ -50,14 +52,12 @@ public abstract class FileParserAbstract implements FileParserInterface {
 	private StringBuilder lineSb;
 	//清洗接口
 	private DataCleanInterface allClean;
-	//列分隔符
-	private static final String column_separator = JobConstant.DATADELIMITER;
-	//行分隔符
-	private static final String line_separator = JobConstant.DEFAULTLINESEPARATOR;
 	//判断是否追加结束日期和MD5字段
 	private boolean isMd5;
 	//转存落地的文件路径
 	String unloadFileAbsolutePath;
+	//跑批日期
+	private String etl_date;
 
 	@SuppressWarnings("unchecked")
 	FileParserAbstract(TableBean tableBean, CollectTableBean collectTableBean, String readFile) throws Exception {
@@ -84,6 +84,7 @@ public abstract class FileParserAbstract implements FileParserInterface {
 		this.isMd5 = IsFlag.Shi.getCode().equals(collectTableBean.getIs_md5()) ||
 				(IsFlag.Shi.getCode().equals(collectTableBean.getIs_zipper()) &&
 						StorageType.ZengLiang.getCode().equals(collectTableBean.getStorage_type()));
+		this.etl_date = collectTableBean.getEtlDate();
 	}
 
 	@Override
@@ -113,11 +114,11 @@ public abstract class FileParserAbstract implements FileParserInterface {
 			//列清洗
 			columnData = cl.cleanColumn(columnData, columnName, null,
 					dictionaryTypeList.get(i), FileFormat.FeiDingChang.getCode(), null,
-					null, column_separator);
+					null, JobConstant.DATADELIMITER);
 			//清理不规则的数据
-			columnData = clearIrregularData(columnData);
+			columnData = AbstractFileWriter.clearIrregularData(columnData);
 			midStringOther.append(columnData);
-			lineSb.append(columnData).append(column_separator);
+			lineSb.append(columnData).append(JobConstant.DATADELIMITER);
 		}
 		//如果有列合并处理合并信息
 		if (!mergeIng.isEmpty()) {
@@ -125,39 +126,28 @@ public abstract class FileParserAbstract implements FileParserInterface {
 					JobConstant.DATADELIMITER);
 			String merge = allClean.merge(mergeIng, arrColString.toArray(new String[0]), allColumnList.toArray
 							(new String[0]), null, null, FileFormat.FeiDingChang.getCode(),
-					null, column_separator);
+					null, JobConstant.DATADELIMITER);
 			midStringOther.append(merge);
-			lineSb.append(merge).append(column_separator);
+			lineSb.append(merge).append(JobConstant.DATADELIMITER);
 		}
-		lineSb.append(Constant.SDATENAME);
+		//追加开始日期
+		lineSb.append(etl_date);
 		if (isMd5) {
-			lineSb.append(column_separator).append(Constant.MAXDATE);
-			lineSb.append(column_separator).append(MD5Util.md5String(midStringOther.toString()));
+			//根据(是否拉链存储且增量进数)和是否算md5判断是否要追加MD5和结束日期两个字段 追加结束日期和MD5
+			lineSb.append(JobConstant.DATADELIMITER).append(Constant.MAXDATE);
+			lineSb.append(JobConstant.DATADELIMITER).append(MD5Util.md5String(midStringOther.toString()));
 		}
-		lineSb.append(line_separator);
+		lineSb.append(JobConstant.DEFAULTLINESEPARATOR);
 		writer.write(lineSb.toString());
 	}
 
-	/**
-	 * 清理掉不规则的数据
-	 *
-	 * @param columnData 单列的数据
-	 * @return 清理之后的数据
-	 */
-	private String clearIrregularData(String columnData) {
-		//TODO 目前针对换行符的问题，经过测试，可以通过自定义hive的TextInputFormat能解决自定义表的换行符，
-		//TODO 但是如果页面自定义填写换行符，就导致需要每一个不同的换行符都需要对应一个自定义hive的
-		//TODO TextInputFormat，难以实现，因此需要使用默认的行分隔符，或者提前实现几个TextInputFormat供选择
-		//TODO 下面几行是使用默认的行分隔符，需要替换到数据本身的换行符，这里应该替换成特殊字符串，以便于还原
-		if (columnData.contains("\r")) {
-			columnData = columnData.replace('\r', ' ');
+	void checkData(List<String> valueList, long fileRowCount) {
+		if (dictionaryColumnList.size() != valueList.size()) {
+			String mss = "第 " + fileRowCount + " 行数据 ，数据字典表(" + collectTableBean.getTable_name()
+					+ " )定义长度和数据不匹配！" + "\n" + "数据字典定义的长度是  " + valueList.size()
+					+ " 现在获取的长度是  " + dictionaryColumnList.size() + "\n" + "数据为 " + valueList;
+			//XXX 写文件还是直接抛异常  写文件就需要返回值，抛异常就不需要返回值
+			throw new AppSystemException(mss);
 		}
-		if (columnData.contains("\n")) {
-			columnData = columnData.replace('\n', ' ');
-		}
-		if (columnData.contains("\r\n")) {
-			columnData = StringUtil.replace(columnData, "\r\n", " ");
-		}
-		return columnData;
 	}
 }

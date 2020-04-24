@@ -154,7 +154,7 @@ public class InterfaceUserManageAction extends BaseAction {
 	}
 
 	@Method(desc = "删除接口用户", logicStep = "1.数据可访问权限处理方式：该方法不需要进行权限限制" +
-			" 2.删除接口用户信息2.删除接口用户信息" +
+			"2.删除接口用户信息" +
 			"3.删除该用户下的所有接口使用信息" +
 			"4.删除该用户下的所有接口表使用信息" +
 			"5.删除该用户下的所有接口系统登记参数信息" +
@@ -162,7 +162,7 @@ public class InterfaceUserManageAction extends BaseAction {
 	@Param(name = "user_id", desc = "用户表主键ID", range = "新增用户时生成")
 	public void deleteUser(long user_id) {
 		// 1.数据可访问权限处理方式：该方法不需要进行权限限制
-		// 2.删除接口用户信息2.删除接口用户信息
+		// 2.删除接口用户信息
 		DboExecute.deletesOrThrow("必须有一条数据被删除,", "delete from " + Sys_user.TableName
 				+ " where user_id=?", user_id);
 		// 3.删除该用户下的所有接口使用信息

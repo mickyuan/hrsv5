@@ -40,6 +40,7 @@ import org.supercsv.prefs.CsvPreference;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -175,36 +176,40 @@ public class ReadFileToDataBase implements Callable<Long> {
 		return num;
 	}
 
-	private List<String> getDingChangValueList(String line, String colLengthInfo, String database_code)
+	public static List<String> getDingChangValueList(String line, List<Integer> lengthList, String database_code)
 			throws Exception {
-		String code = DataBaseCode.ofValueByCode(database_code);
 		List<String> valueList = new ArrayList<>();
-		List<String> lengthList = StringUtil.split(colLengthInfo, JdbcCollectTableHandleParse.STRSPLIT);
-		byte[] bytes = line.getBytes(code);
+		byte[] bytes = line.getBytes(database_code);
 		int begin = 0;
-		for (String len : lengthList) {
-			int length = Integer.parseInt(len);
+		for (int length : lengthList) {
 			byte[] byteTmp = new byte[length];
 			System.arraycopy(bytes, begin, byteTmp, 0, length);
 			begin += length;
-			valueList.add(new String(byteTmp, code));
+			valueList.add(new String(byteTmp, database_code));
 		}
 		return valueList;
 	}
 
 	private long readDingChangToDataBase(DatabaseWrapper db, List<String> columnList, List<String> typeList,
 	                                     String batchSql, String database_code) {
+		database_code = DataBaseCode.ofValueByCode(database_code);
 		long num = 0;
 		try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(fileAbsolutePath),
-				DataBaseCode.ofValueByCode(database_code)))) {
+				database_code))) {
 			List<Object[]> pool = new ArrayList<>();// 存储全量插入信息的list
 			int limit = 50000;
 			String line;
 			Object[] objs;
+			List<String> lengthStrList = StringUtil.split(tableBean.getColLengthInfo(),
+					JdbcCollectTableHandleParse.STRSPLIT);
+			List<Integer> lengthList = new ArrayList<>();
+			for (String lengthStr : lengthStrList) {
+				lengthList.add(Integer.parseInt(lengthStr));
+			}
 			while ((line = reader.readLine()) != null) {
 				num++;
 				objs = new Object[columnList.size()];// 存储全量插入信息的list
-				List<String> valueList = getDingChangValueList(line, tableBean.getColLengthInfo(), database_code);
+				List<String> valueList = getDingChangValueList(line, lengthList, database_code);
 				for (int j = 0; j < columnList.size(); j++) {
 					objs[j] = getValue(typeList.get(j), valueList.get(j));
 				}
@@ -224,6 +229,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 
 	private long readSequenceToDataBase(DatabaseWrapper db, List<String> columnList, List<String> typeList,
 	                                    String batchSql) throws Exception {
+		//TODO 这里是不是修改？？
 		Configuration conf = ConfigReader.getConfiguration();
 		conf.setBoolean("fs.hdfs.impl.disable.cache", true);
 		conf.set("dfs.client.block.write.replace-datanode-on-failure.policy", "NEVER");
@@ -309,33 +315,45 @@ public class ReadFileToDataBase implements Callable<Long> {
 	}
 
 	private long readParquetToDataBase(DatabaseWrapper db, List<String> columnList, List<String> typeList,
-	                                   String batchSql) throws Exception {
-		GroupReadSupport readSupport = new GroupReadSupport();
-		ParquetReader.Builder<Group> reader = ParquetReader.builder(readSupport, new Path(fileAbsolutePath));
-		ParquetReader<Group> build = reader.build();
-		Group line;
-		long num = 0;
-		List<Object[]> pool = new ArrayList<>();// 存储全量插入信息的list
-		int limit = 50000;
-		Object[] objs;
-		while ((line = build.read()) != null) {
-			objs = new Object[columnList.size()];// 存储全量插入信息的list
-			for (int j = 0; j < columnList.size(); j++) {
-				objs[j] = getParquetValue(typeList.get(j), line, columnList.get(j));
+	                                   String batchSql) {
+		ParquetReader<Group> build = null;
+		try {
+			long num = 0;
+			GroupReadSupport readSupport = new GroupReadSupport();
+			ParquetReader.Builder<Group> reader = ParquetReader.builder(readSupport, new Path(fileAbsolutePath));
+			build = reader.build();
+			Group line;
+			List<Object[]> pool = new ArrayList<>();// 存储全量插入信息的list
+			int limit = 50000;
+			Object[] objs;
+			while ((line = build.read()) != null) {
+				objs = new Object[columnList.size()];// 存储全量插入信息的list
+				for (int j = 0; j < columnList.size(); j++) {
+					objs[j] = getParquetValue(typeList.get(j), line, columnList.get(j));
+				}
+				num++;
+				pool.add(objs);
+				if (num % limit == 0) {
+					doBatch(batchSql, pool, num, db);
+				}
 			}
-			num++;
-			pool.add(objs);
-			if (num % limit == 0) {
+			if (pool.size() != 0) {
 				doBatch(batchSql, pool, num, db);
 			}
+			return num;
+		} catch (Exception e) {
+			throw new AppSystemException("读取parquet文件失败", e);
+		} finally {
+			try {
+				if (build != null)
+					build.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
-		if (pool.size() != 0) {
-			doBatch(batchSql, pool, num, db);
-		}
-		return num;
 	}
 
-	private Object getParquetValue(String type, Group line, String column) {
+	public static Object getParquetValue(String type, Group line, String column) {
 		Object str;
 		type = type.toLowerCase();
 		if (type.contains(DataTypeConstant.BOOLEAN.getMessage())) {
@@ -402,7 +420,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 		return num;
 	}
 
-	private Object getValue(String type, WritableComparable tmpValue) {
+	public static Object getValue(String type, WritableComparable tmpValue) {
 		Object str;
 		type = type.toLowerCase();
 		if (type.contains(DataTypeConstant.BOOLEAN.getMessage())) {

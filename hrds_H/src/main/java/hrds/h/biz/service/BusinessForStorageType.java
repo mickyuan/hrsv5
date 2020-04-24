@@ -5,7 +5,7 @@ import hrds.commons.codes.StorageType;
 import hrds.commons.exception.AppSystemException;
 import hrds.h.biz.realloader.Loader;
 
-public class BusinessForStorageType extends AbstractBusiness {
+public final class BusinessForStorageType extends AbstractBusiness {
 
     public BusinessForStorageType(Loader load) {
 
@@ -13,12 +13,13 @@ public class BusinessForStorageType extends AbstractBusiness {
     }
 
     /**
+     *
      */
     @Override
     public void eventLoad() {
 
         String loaderName = load.getClass().getSimpleName();
-        logger.info(" 开始计算并导入数据，导入类型为：" + loaderName);
+        logger.info("开始计算并导入数据，导入类型为：" + loaderName);
 
         if (conf.isFirstLoad()) {
             logger.info("首次执行=======================");
@@ -32,22 +33,30 @@ public class BusinessForStorageType extends AbstractBusiness {
                 load.replace();
             } else if (StorageType.ZhuiJia.getCode().equals(storageType)) {
                 logger.info("追加=======================");
-                /*
-                 * 如果跑批日期已经追加成功了，就执行重跑追加，否则均追加
+                /**
+                 * 支持追加重跑，前提是该loader实现了{@link NonFirstLoad#restore()}
                  */
-                if (conf.isRerun()) {
-                    logger.info("此任务已运行成功，重跑任务: " + loaderName);
-                    load.reappend();
-                }
+                restore(loaderName);
                 load.append();
             } else if (StorageType.ZengLiang.getCode().equals(storageType)) {
                 logger.info("增量=======================");
+                /**
+                 * 支持追加重跑，前提是该loader实现了{@link NonFirstLoad#restore()}
+                 */
+                restore(loaderName);
                 load.increment();
             } else {
                 throw new AppSystemException("无效的进数方式: " + storageType);
             }
         }
 
+    }
+
+    private void restore(String loaderName) {
+        if (conf.isRerun()) {
+            logger.info("此任务在日期 " + conf.getEtlDate() + " 已运行过，恢复数据到上次跑批完的数据状态: " + loaderName);
+            load.restore();
+        }
     }
 
 }

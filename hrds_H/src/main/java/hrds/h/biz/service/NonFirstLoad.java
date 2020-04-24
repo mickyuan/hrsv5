@@ -47,13 +47,13 @@ public interface NonFirstLoad {
 	void increment();
 
 	/**
-	 * 重跑替换
+	 * 恢复数据到上次跑批结束
 	 *  
 	 * @return  
 	 * @author xxx
 	 * Date:2018年10月31日10:25:36 
 	 * @since JDK 1.7
 	 */
-	void reappend();
+	void restore();
 	
 }
