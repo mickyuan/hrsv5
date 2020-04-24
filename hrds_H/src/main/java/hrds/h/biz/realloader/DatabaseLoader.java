@@ -66,8 +66,6 @@ public class DatabaseLoader extends AbstractRealLoader {
         try (DatabaseWrapper db = ConnectionTool.getDBWrapper(tableLayerAttrs)) {
             Utils.restoreDatabaseData(db,tableName,conf.getEtlDate());
         }
-        databaseArgs.setOverWrite(false);
-        SparkJobRunner.runJob(conf.getDatatableId(), databaseArgs);
     }
 
     @Override

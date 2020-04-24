@@ -6,6 +6,7 @@ import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.constant.JobConstant;
+import hrds.agent.job.biz.core.dbstage.writer.AbstractFileWriter;
 import hrds.agent.job.biz.core.service.JdbcCollectTableHandleParse;
 import hrds.agent.job.biz.dataclean.Clean;
 import hrds.agent.job.biz.dataclean.CleanFactory;
@@ -30,7 +31,7 @@ public abstract class FileParserAbstract implements FileParserInterface {
 	//采集db文件的文件信息
 	TableBean tableBean;
 	//采集的db文件定义的表信息
-	CollectTableBean collectTableBean;
+	private CollectTableBean collectTableBean;
 	//读文件的全路径
 	String readFile;
 	//写文件的流
@@ -116,7 +117,7 @@ public abstract class FileParserAbstract implements FileParserInterface {
 					dictionaryTypeList.get(i), FileFormat.FeiDingChang.getCode(), null,
 					null, column_separator);
 			//清理不规则的数据
-			columnData = clearIrregularData(columnData);
+			columnData = AbstractFileWriter.clearIrregularData(columnData);
 			midStringOther.append(columnData);
 			lineSb.append(columnData).append(column_separator);
 		}
@@ -137,29 +138,6 @@ public abstract class FileParserAbstract implements FileParserInterface {
 		}
 		lineSb.append(line_separator);
 		writer.write(lineSb.toString());
-	}
-
-	/**
-	 * 清理掉不规则的数据
-	 *
-	 * @param columnData 单列的数据
-	 * @return 清理之后的数据
-	 */
-	private String clearIrregularData(String columnData) {
-		//TODO 目前针对换行符的问题，经过测试，可以通过自定义hive的TextInputFormat能解决自定义表的换行符，
-		//TODO 但是如果页面自定义填写换行符，就导致需要每一个不同的换行符都需要对应一个自定义hive的
-		//TODO TextInputFormat，难以实现，因此需要使用默认的行分隔符，或者提前实现几个TextInputFormat供选择
-		//TODO 下面几行是使用默认的行分隔符，需要替换到数据本身的换行符，这里应该替换成特殊字符串，以便于还原
-		if (columnData.contains("\r")) {
-			columnData = columnData.replace('\r', ' ');
-		}
-		if (columnData.contains("\n")) {
-			columnData = columnData.replace('\n', ' ');
-		}
-		if (columnData.contains("\r\n")) {
-			columnData = StringUtil.replace(columnData, "\r\n", " ");
-		}
-		return columnData;
 	}
 
 	void checkData(List<String> valueList, long fileRowCount) {
