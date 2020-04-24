@@ -7,6 +7,7 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.web.action.ActionResult;
 import fd.ng.web.util.Dbo;
+import fd.ng.web.util.RequestUtil;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.UserType;
 import hrds.commons.entity.Component_menu;
@@ -14,7 +15,9 @@ import hrds.commons.entity.Department_info;
 import hrds.commons.entity.Sys_user;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.exception.ExceptionEnum;
+import hrds.commons.systemlog.LoginOperationLogInfo;
 import hrds.commons.utils.ActionUtil;
+import hrds.commons.utils.Constant;
 import hrds.commons.utils.User;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -47,7 +50,11 @@ public class LoginAction extends BaseAction {
 		}
 
 		//3 : 检查当前用户的登陆是否正确,并返回cookie数据信息
-		return checkLogin(Long.parseLong(user_id), password);
+		String checkLogin = checkLogin(Long.parseLong(user_id), password);
+		// 4.用户登入的记录
+		LoginOperationLogInfo.saveLoginLog(RequestUtil.getRequest(), user_id,
+				ActionUtil.getUser(checkLogin).getUserName(), Constant.USERLOGIN);
+		return checkLogin;
 
 	}
 
