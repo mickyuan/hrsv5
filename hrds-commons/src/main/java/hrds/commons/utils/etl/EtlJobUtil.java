@@ -247,19 +247,30 @@ public class EtlJobUtil {
         etl_job_def.setMain_serv_sync(Main_Server_Sync.YES.getCode());
         //初始化查询sql
         SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
+        asmSql.clean();
         asmSql.addSql("select count(*) from etl_job_def where etl_sys_cd = ? and etl_job = ?");
         asmSql.addParam(etl_job_def.getEtl_sys_cd());
         asmSql.addParam(etl_job_def.getEtl_job());
         //校验工程作业是否存在,不存在则创建
         if (Dbo.queryNumber(db, asmSql.sql(), asmSql.params()).orElseThrow(() -> (new BusinessException(
-                "检查工程作业定义信息的SQL错误!"))) != 1) {
+                "检查工程作业定义信息的SQL错误!"))) == 1) {
+            throw new BusinessException("作业已经存在于该工程!");
+        } else {
             etl_job_def.add(db);
-            Etl_job_resource_rela r = new Etl_job_resource_rela();
-            r.setEtl_job(etl_job);
-            r.setEtl_sys_cd(etl_sys_cd);
-            r.setResource_type(RESOURCE_TYPE);
-            r.setResource_req(1);
-            r.add(db);
+            Etl_job_resource_rela etl_job_resource_rela = new Etl_job_resource_rela();
+            etl_job_resource_rela.setEtl_sys_cd(etl_sys_cd);
+            etl_job_resource_rela.setEtl_job(etl_job);
+            etl_job_resource_rela.setResource_type(RESOURCE_TYPE);
+            etl_job_resource_rela.setResource_req(1);
+            asmSql.clean();
+            asmSql.addSql("select count(*) from " + Etl_job_resource_rela.TableName + " where etl_sys_cd = ? and etl_job = ?");
+            asmSql.addParam(etl_job_resource_rela.getEtl_sys_cd());
+            asmSql.addParam(etl_job_resource_rela.getEtl_job());
+            //校验改工程作业的资源关系是否存在
+            if (Dbo.queryNumber(db, asmSql.sql(), asmSql.params()).orElseThrow(() -> (new BusinessException(
+                    "检查工程作业资源信息的SQL错误!"))) != 1) {
+                etl_job_resource_rela.add(db);
+            }
         }
     }
 
