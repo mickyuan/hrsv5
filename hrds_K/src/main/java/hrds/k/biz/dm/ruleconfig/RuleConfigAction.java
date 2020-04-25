@@ -144,18 +144,14 @@ public class RuleConfigAction extends BaseAction {
 
     @Method(desc = "获取规则信息列表",
             logicStep = "获取规则信息列表")
-    @Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数", valueIfNull = "1")
-    @Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", valueIfNull = "10")
-    @Return(desc = "规则信息列", range = "规则信息列")
-    public List<Map<String, Object>> getDqDefinitionInfos(int currPage, int pageSize) {
+    @Return(desc = "规则信息列表", range = "规则信息列表")
+    public Map<String, Object> getDqDefinitionInfos() {
         //设置查询sql
         SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
         asmSql.clean();
         asmSql.addSql("select dql.*,? as job_status from " + Dq_definition.TableName + " dql where user_id=?")
                 .addParam(Job_Effective_Flag.NO.getCode()).addParam(getUserId());
-        //查询
-        Page page = new DefaultPageImpl(currPage, pageSize);
-        List<Map<String, Object>> dqd_list = Dbo.queryPagedList(page, asmSql.sql(), asmSql.params());
+        List<Map<String, Object>> dqd_list = Dbo.queryList(asmSql.sql(), asmSql.params());
         //处理查询结果
         Dq_definition dq_definition = new Dq_definition();
         for (Map<String, Object> dqd : dqd_list) {
@@ -164,7 +160,10 @@ public class RuleConfigAction extends BaseAction {
                 dqd.put("job_status", Job_Effective_Flag.YES.getCode());
             }
         }
-        return dqd_list;
+        Map<String, Object> dqd_map = new HashMap<>();
+        dqd_map.put("rule_dqd_data_s", dqd_list);
+        dqd_map.put("totalSize", dqd_list.size());
+        return dqd_map;
     }
 
     @Method(desc = "获取规则信息",
@@ -220,7 +219,7 @@ public class RuleConfigAction extends BaseAction {
     @Method(desc = "搜索规则信息", logicStep = "搜索规则信息")
     @Param(name = "ruleConfSearchBean", desc = "自定义RuleConfSearchBean实体", range = "自定义实体bean", isBean = true)
     @Return(desc = "检索结果", range = "检索结果")
-    public List<Map<String, Object>> searchDqDefinitionInfos(RuleConfSearchBean ruleConfSearchBean) {
+    public Map<String, Object> searchDqDefinitionInfos(RuleConfSearchBean ruleConfSearchBean) {
         //数据校验
         if (CheckBeanUtil.checkFullNull(ruleConfSearchBean)) {
             throw new BusinessException("搜索条件全部为空!");
@@ -230,8 +229,7 @@ public class RuleConfigAction extends BaseAction {
         asmSql.clean();
         asmSql.addSql("SELECT * FROM " + Dq_definition.TableName + " where user_id = ?").addParam(getUserId());
         if (StringUtil.isNotBlank(ruleConfSearchBean.getReg_num())) {
-            asmSql.addLikeParam(" cast(reg_num as varchar(10))",
-                    '%' + ruleConfSearchBean.getReg_num() + '%');
+            asmSql.addLikeParam("cast(reg_num as varchar(10))", '%' + ruleConfSearchBean.getReg_num() + '%');
         }
         if (StringUtil.isNotBlank(ruleConfSearchBean.getTarget_tab())) {
             asmSql.addLikeParam("target_tab", '%' + ruleConfSearchBean.getTarget_tab() + '%');
@@ -288,8 +286,11 @@ public class RuleConfigAction extends BaseAction {
                 search_data_list.add(dqd);
             }
         });
-        //返回检索结果
-        return search_data_list;
+        //检索结果
+        Map<String, Object> search_data_map = new HashMap<>();
+        search_data_map.put("rule_dqd_data_s", search_data_list);
+        search_data_map.put("totalSize", search_data_list.size());
+        return search_data_map;
     }
 
     @Method(desc = "手动执行", logicStep = "手动执行")

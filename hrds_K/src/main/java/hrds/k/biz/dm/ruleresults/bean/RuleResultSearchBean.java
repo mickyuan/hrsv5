@@ -23,11 +23,9 @@ public class RuleResultSearchBean extends ProjectTableEntity {
     @DocBean(name = "reg_num", value = "规则编号", dataType = String.class, required = false)
     private Long reg_num; //规则编号
     @DocBean(name = "exec_mode", value = "执行方式", dataType = String.class, required = false)
-    private String exec_mode; //执行方式
-    @DocBean(name = "dl_stat", value = "处理状态", dataType = String.class, required = false)
-    private String dl_stat; //处理状态
+    private String[] exec_mode; //执行方式
     @DocBean(name = "verify_result", value = "检查结果", dataType = String.class, required = false)
-    private String verify_result; //检查结果
+    private String[] verify_result; //检查结果
 
     public String getVerify_date() {
         return verify_date;
@@ -77,27 +75,19 @@ public class RuleResultSearchBean extends ProjectTableEntity {
         this.reg_num = reg_num;
     }
 
-    public String getExec_mode() {
+    public String[] getExec_mode() {
         return exec_mode;
     }
 
-    public void setExec_mode(String exec_mode) {
+    public void setExec_mode(String[] exec_mode) {
         this.exec_mode = exec_mode;
     }
 
-    public String getDl_stat() {
-        return dl_stat;
-    }
-
-    public void setDl_stat(String dl_stat) {
-        this.dl_stat = dl_stat;
-    }
-
-    public String getVerify_result() {
+    public String[] getVerify_result() {
         return verify_result;
     }
 
-    public void setVerify_result(String verify_result) {
+    public void setVerify_result(String[] verify_result) {
         this.verify_result = verify_result;
     }
 }
