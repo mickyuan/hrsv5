@@ -68,13 +68,13 @@ public class DFUploadStageImpl extends AbstractJobStage {
 				StageConstant.UPLOAD.getCode());
 		try {
 			//判断是全量采集还是增量采集
-			if(UnloadType.ZengLiangXieShu.getCode().equals(collectTableBean.getUnload_type())){
+			if (UnloadType.ZengLiangXieShu.getCode().equals(collectTableBean.getUnload_type())) {
 				//增量采集
 				incrementCollect(stageParamInfo);
-			}else if(UnloadType.QuanLiangXieShu.getCode().equals(collectTableBean.getUnload_type())){
+			} else if (UnloadType.QuanLiangXieShu.getCode().equals(collectTableBean.getUnload_type())) {
 				//全量采集
 				fullAmountCollect(stageParamInfo);
-			}else{
+			} else {
 				throw new AppSystemException("数据抽取卸数方式类型不正确");
 			}
 			LOGGER.info("------------------DB文件全量上传阶段成功------------------");
@@ -93,11 +93,15 @@ public class DFUploadStageImpl extends AbstractJobStage {
 		try {
 			List<DataStoreConfBean> dataStoreConfBeanList = collectTableBean.getDataStoreConfBean();
 			for (DataStoreConfBean dataStoreConfBean : dataStoreConfBeanList) {
-				long count = 0;
+				//这边做一个接口多实现，目前只实现传统数据库的增量更新接口
+				if (Store_type.DATABASE.getCode().equals(dataStoreConfBean.getStore_type())) {
+					//关系型数据库
+				}
+//				long count = 0;
 //				exeBatch(dataStoreConfBean, executor, count, stageParamInfo.getFileArr(),
 //						stageParamInfo.getTableBean());
 			}
-		}catch (Exception e){
+		} catch (Exception e) {
 			throw new AppSystemException("db文件采集增量上传失败", e);
 		}
 	}
