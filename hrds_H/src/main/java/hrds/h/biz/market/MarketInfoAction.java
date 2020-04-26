@@ -303,8 +303,8 @@ public class MarketInfoAction extends BaseAction {
     @Param(name = "dm_datatable", desc = "dm_datatable", range = "与dm_datatable表字段规则一致",
             isBean = true)
     @Param(name = "dsl_id", desc = "dsl_id", range = "与Dm_info表字段规则一致")
-    public Map<String, String> addDMDataTable(Dm_datatable dm_datatable, String dsl_id) {
-        Map<String, String> map = new HashMap<String, String>();
+    public Map<String, Object> addDMDataTable(Dm_datatable dm_datatable, String dsl_id) {
+        Map<String, Object> map = new HashMap<String, Object>();
         //1检查数据合法性
         CheckColummn(dm_datatable.getDatatable_en_name(), "表英文名");
         CheckColummn(dm_datatable.getDatatable_cn_name(), "表中文名");
@@ -319,6 +319,11 @@ public class MarketInfoAction extends BaseAction {
             dm_datatable.setDatatable_due_date(Final_Date);
         }
         CheckColummn(dsl_id, "数据存储");
+        if (!checkrunstatus(dm_datatable, dsl_id)) {
+            map.put("success", false);
+            map.put("reason", "running");
+            return map;
+        }
         //2检查表名重复
         if (Dbo.queryNumber("select count(*) from " + Dm_datatable.TableName + " where  datatable_en_name = ?", dm_datatable.getDatatable_en_name())
                 .orElseThrow(() -> new BusinessException("sql查询错误！")) != 0) {
@@ -349,8 +354,43 @@ public class MarketInfoAction extends BaseAction {
         dm_relation_datatable.add(Dbo.db());
         //6 返回主键datatable_id
         map.put("datatable_id", datatable_id);
+        map.put("success", true);
         return map;
+    }
 
+    /**
+     * 检查页面一运行中时 不允许修改页面配置的情况
+     *
+     * @param dm_datatable
+     * @param dsl_id
+     * @return
+     */
+    private Boolean checkrunstatus(Dm_datatable dm_datatable, String dsl_id) {
+        if (StringUtils.isEmpty(String.valueOf(dm_datatable.getDatatable_id()))) {
+            return true;
+        } else {
+            List<Dm_relation_datatable> dm_relation_datatables = Dbo.queryList(Dm_relation_datatable.class, "select is_successful from " + Dm_relation_datatable.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
+            String is_successful = dm_relation_datatables.get(0).getIs_successful();
+            if (is_successful.equals(JobExecuteState.YunXing.getCode())) {
+                List<Map<String, Object>> maps = Dbo.queryList("select * from " + Dm_datatable.TableName + " where datatable_id = ? and datatable_en_name = ? and sql_engine = ? and storage_type = ? and table_storage = ? ",
+                        dm_datatable.getDatatable_id(), dm_datatable.getDatatable_en_name(), dm_datatable.getSql_engine(), dm_datatable.getStorage_type(), dm_datatable.getTable_storage());
+                if (maps.isEmpty()) {
+                    return false;
+                } else {
+                    Dm_relation_datatable dm_relation_datatable = new Dm_relation_datatable();
+                    dm_relation_datatable.setDsl_id(dsl_id);
+                    List<Map<String, Object>> maps1 = Dbo.queryList("select * from " + Dm_relation_datatable.TableName + " where dsl_id = ? and datatable_id = ?", dm_relation_datatable.getDsl_id(), dm_datatable.getDatatable_id());
+                    if (maps1.isEmpty()) {
+                        return false;
+                    } else {
+                        return true;
+                    }
+                }
+            } else {
+                return true;
+            }
+
+        }
     }
 
     @Method(desc = "编辑更新集市添加表页面1的信息，更新集市表",
@@ -363,8 +403,8 @@ public class MarketInfoAction extends BaseAction {
     @Param(name = "dm_datatable", desc = "dm_datatable", range = "与dm_datatable表字段规则一致",
             isBean = true)
     @Param(name = "dsl_id", desc = "dsl_id", range = "与Dm_info表字段规则一致")
-    public Map<String, String> updateDMDataTable(Dm_datatable dm_datatable, String dsl_id) {
-        Map<String, String> map = new HashMap<String, String>();
+    public Map<String, Object> updateDMDataTable(Dm_datatable dm_datatable, String dsl_id) {
+        Map<String, Object> map = new HashMap<String, Object>();
         //1检查数据合法性
         CheckColummn(dm_datatable.getDatatable_en_name(), "表英文名");
         CheckColummn(dm_datatable.getDatatable_cn_name(), "表中文名");
@@ -378,22 +418,29 @@ public class MarketInfoAction extends BaseAction {
         } else {
             dm_datatable.setDatatable_due_date(Final_Date);
         }
+        CheckColummn(dsl_id, "数据存储");
+        if (!checkrunstatus(dm_datatable, dsl_id)) {
+            map.put("success", false);
+            map.put("reason", "running");
+            return map;
+        }
         //TODO 目前先全部使用默认 之后在修改
         dm_datatable.setSql_engine(SqlEngine.MOREN.getCode());
         //TODO 见Category_id处的注释
         dm_datatable.setCategory_id(PrimayKeyGener.getNextId());
         //4.dm_datatable
         dm_datatable.update(Dbo.db());
-        //删除之前dm_relation_datatable库中的数据
-        Dbo.execute("delete from " + Dm_relation_datatable.TableName + " where datatable_id = ? ", dm_datatable.getDatatable_id());
-        //5.新增数据至dm_relation_datatable
-        Dm_relation_datatable dm_relation_datatable = new Dm_relation_datatable();
-        dm_relation_datatable.setDsl_id(dsl_id);
-        dm_relation_datatable.setDatatable_id(dm_datatable.getDatatable_id());
-        dm_relation_datatable.setIs_successful(JobExecuteState.DengDai.getCode());
-        dm_relation_datatable.add(Dbo.db());
+        //更新dm_relation_datatable库中的数据
+        List<Dm_relation_datatable> dm_relation_datatables = Dbo.queryList(Dm_relation_datatable.class, "select * from " + Dm_relation_datatable.TableName + " where datatable_id = ?",
+                dm_datatable.getDatatable_id());
+        Dm_relation_datatable dm_relation_datatable = dm_relation_datatables.get(0);
+        if (!dsl_id.equals(dm_relation_datatable.getDsl_id())) {
+            dm_relation_datatable.setDsl_id(dsl_id);
+            dm_relation_datatable.update(Dbo.db());
+        }
         //6 返回主键datatable_id
         map.put("datatable_id", String.valueOf(dm_datatable.getDatatable_id()));
+        map.put("success", true);
         return map;
 
     }
@@ -756,7 +803,8 @@ public class MarketInfoAction extends BaseAction {
     @Param(name = "datatable_id", desc = "datatable_id", range = "String类型集市表ID")
     @Param(name = "querysql", desc = "querysql", range = "String类型集市查询SQL")
     @Param(name = "hbasesort", desc = "hbasesort", range = "hbaserowkey的排序")
-    public void addDFInfo(Datatable_field_info[] datatable_field_info, String datatable_id, Dm_column_storage[] dm_column_storage, String querysql, String hbasesort) {
+    public Map<String,Object> addDFInfo(Datatable_field_info[] datatable_field_info, String datatable_id, Dm_column_storage[] dm_column_storage, String querysql, String hbasesort) {
+        Map<String,Object> resultmap = new HashMap<>();
         for (int i = 0; i < datatable_field_info.length; i++) {
             Datatable_field_info df_info = datatable_field_info[i];
             CheckColummn(df_info.getField_en_name(), "字段英文名第" + (i + 1) + "个");
@@ -766,6 +814,13 @@ public class MarketInfoAction extends BaseAction {
         }
         Dm_datatable dm_datatable = new Dm_datatable();
         dm_datatable.setDatatable_id(datatable_id);
+        List<Dm_relation_datatable> dm_relation_datatables = Dbo.queryList(Dm_relation_datatable.class, "select * from " + Dm_relation_datatable.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
+        String is_successful = dm_relation_datatables.get(0).getIs_successful();
+        if(is_successful.equals(JobExecuteState.YunXing.getCode())){
+            resultmap.put("success",false);
+            resultmap.put("reason","running");
+            return resultmap;
+        }
         List<Map<String, Object>> maps2 = Dbo.queryList("select execute_sql from " + Dm_operation_info.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
         if (maps2.isEmpty()) {
             dm_datatable.setDdlc_date(DateUtil.getSysDate());
@@ -917,7 +972,8 @@ public class MarketInfoAction extends BaseAction {
                 own_source_field.add(Dbo.db());
             }
         }
-
+        resultmap.put("success",true);
+        return resultmap;
 
     }
 
@@ -1251,8 +1307,8 @@ public class MarketInfoAction extends BaseAction {
             sheet1.getRow(12 + i).createCell(2).setCellValue(Store_type.ofValueByCode(store_type));
             sheet1.getRow(12 + i).createCell(3).setCellValue(dsl_remark);
             sheet1.getRow(12 + i).createCell(4).setCellValue(IsFlag.ofValueByCode(is_hadoopclient));
-            sheet1.getRow(12 + i).createCell(5).setCellValue(configure.replace("@;@","\n"));
-            CellRangeAddress region = new CellRangeAddress(12+i, 12+i, 5, 8);
+            sheet1.getRow(12 + i).createCell(5).setCellValue(configure.replace("@;@", "\n"));
+            CellRangeAddress region = new CellRangeAddress(12 + i, 12 + i, 5, 8);
             sheet1.addMergedRegion(region);
         }
         //第三部分
@@ -1272,20 +1328,32 @@ public class MarketInfoAction extends BaseAction {
         sheet1.getRow(16 + count).createCell(4).setCellValue("长度");
         sheet1.getRow(16 + count).createCell(5).setCellValue("处理方式");
         sheet1.getRow(16 + count).createCell(6).setCellValue("处理方式参数");
+        for (int i = 0; i < StoreLayerAdded.values().length; i++) {
+            sheet1.getRow(16 + count).createCell(7 + i).setCellValue(StoreLayerAdded.values()[i].getValue());
+        }
+        String[] isflagsubjects = new String[IsFlag.values().length];
+        for (int i = 0; i < IsFlag.values().length; i++) {
+            isflagsubjects[i] = IsFlag.values()[i].getValue();
+        }
         String[] processtypesubjects = new String[ProcessType.values().length];
         for (int i = 0; i < ProcessType.values().length; i++) {
             processtypesubjects[i] = ProcessType.values()[i].getValue();
         }
+
         for (int i = 0; i < datatable_field_infos.size(); i++) {
             Datatable_field_info datatable_field_info = datatable_field_infos.get(i);
-            sheet1.createRow(17 + count+i).createCell(0).setCellValue((i+1));
-            sheet1.getRow(17 + count+i).createCell(1).setCellValue(datatable_field_info.getField_en_name());
-            sheet1.getRow(17 + count+i).createCell(2).setCellValue(datatable_field_info.getField_cn_name());
-            sheet1.getRow(17 + count+i).createCell(3).setCellValue(datatable_field_info.getField_type());
-            sheet1.getRow(17 + count+i).createCell(4).setCellValue(datatable_field_info.getField_length());
-            sheet1.getRow(17 + count+i).createCell(5).setCellValue(ProcessType.ofValueByCode(datatable_field_info.getField_process()));
-            addValidationData(sheet1, processtypesubjects, 17+count+i, 5);
-            sheet1.getRow(17 + count+i).createCell(6).setCellValue(datatable_field_info.getProcess_para());
+            sheet1.createRow(17 + count + i).createCell(0).setCellValue((i + 1));
+            sheet1.getRow(17 + count + i).createCell(1).setCellValue(datatable_field_info.getField_en_name());
+            sheet1.getRow(17 + count + i).createCell(2).setCellValue(datatable_field_info.getField_cn_name());
+            sheet1.getRow(17 + count + i).createCell(3).setCellValue(datatable_field_info.getField_type());
+            sheet1.getRow(17 + count + i).createCell(4).setCellValue(datatable_field_info.getField_length());
+            sheet1.getRow(17 + count + i).createCell(5).setCellValue(ProcessType.ofValueByCode(datatable_field_info.getField_process()));
+            addValidationData(sheet1, processtypesubjects, 17 + count + i, 5);
+            sheet1.getRow(17 + count + i).createCell(6).setCellValue(datatable_field_info.getProcess_para());
+            for (int j = 0; j < StoreLayerAdded.values().length; j++) {
+                addValidationData(sheet1, isflagsubjects, 17 + count + i, 7 + j);
+                sheet1.getRow(17 + count + i).createCell(7 + j).setCellValue(IsFlag.Fou.getValue());
+            }
         }
 
 
