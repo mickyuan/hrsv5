@@ -14,9 +14,8 @@ import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
 import hrds.agent.job.biz.core.dbstage.service.CollectPage;
 import hrds.agent.job.biz.core.dbstage.service.ResultSetParser;
-import hrds.agent.job.biz.core.service.AbstractCollectTableHandle;
-import hrds.agent.job.biz.core.service.CollectTableHandleFactory;
-import hrds.agent.job.biz.core.service.JdbcCollectTableHandleParse;
+import hrds.agent.job.biz.core.metaparse.AbstractCollectTableHandle;
+import hrds.agent.job.biz.core.metaparse.CollectTableHandleFactory;
 import hrds.agent.job.biz.utils.DataExtractUtil;
 import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
@@ -93,7 +92,7 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 					collectTableBean.getDatabase_id() + File.separator, true);
 			//写数据字典
 			DataExtractUtil.writeDataDictionary(dictionaryPath, collectTableBean.getTable_name(),
-					tableBean.getColumnMetaInfo(), tableBean.getColTypeMetaInfo(), collectTableBean.getStorage_type(),
+					tableBean.getColumnMetaInfo(), tableBean.getColTypeMetaInfo(),
 					collectTableBean.getData_extraction_def_list(), collectTableBean.getUnload_type(),
 					tableBean.getPrimaryKeyInfo());
 			//卸数成功，删除重命名的目录
@@ -209,10 +208,10 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 				//获取增量的sql
 				String sql = incrementSqlObject.getString(key);
 				if (!StringUtil.isEmpty(sql)) {
+					//替换掉sql中需要传递的参数
 					sql = AbstractCollectTableHandle.replaceSqlParam(sql, collectTableBean.getSqlParam());
 					statement = conn.createStatement();
-					//查询第一个增量sql是两个sql,先删除再新增的方式做增量
-					// 找需要删除的数据
+					//查询数据
 					resultSet = statement.executeQuery(sql);
 					tableBean.setOperate(key);
 					//2、解析ResultSet，并写数据文件
@@ -220,8 +219,8 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 					//文件路径
 					String unLoadInfo = parser.parseResultSet(resultSet, collectTableBean, 0,
 							tableBean, collectTableBean.getData_extraction_def_list().get(0));
-					if (!StringUtil.isEmpty(unLoadInfo) && unLoadInfo.contains(JdbcCollectTableHandleParse.STRSPLIT)) {
-						List<String> unLoadInfoList = StringUtil.split(unLoadInfo, JdbcCollectTableHandleParse.STRSPLIT);
+					if (!StringUtil.isEmpty(unLoadInfo) && unLoadInfo.contains(Constant.METAINFOSPLIT)) {
+						List<String> unLoadInfoList = StringUtil.split(unLoadInfo, Constant.METAINFOSPLIT);
 						String pageCount = unLoadInfoList.get(unLoadInfoList.size() - 1);
 						unLoadInfoList.remove(unLoadInfoList.size() - 1);
 						fileResult.addAll(unLoadInfoList);

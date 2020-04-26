@@ -7,7 +7,6 @@ import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.core.dbstage.writer.AbstractFileWriter;
-import hrds.agent.job.biz.core.service.JdbcCollectTableHandleParse;
 import hrds.agent.job.biz.dataclean.Clean;
 import hrds.agent.job.biz.dataclean.CleanFactory;
 import hrds.agent.job.biz.dataclean.DataCleanInterface;
@@ -73,14 +72,14 @@ public abstract class FileParserAbstract implements FileParserInterface {
 		//清洗配置
 		allClean = CleanFactory.getInstance().getObjectClean("clean_database");
 		//获取所有字段的名称，包括列分割和列合并出来的字段名称
-		this.allColumnList = StringUtil.split(tableBean.getColumnMetaInfo(), JdbcCollectTableHandleParse.STRSPLIT);
+		this.allColumnList = StringUtil.split(tableBean.getColumnMetaInfo(), Constant.METAINFOSPLIT);
 		//获取所有查询的字段的名称，不包括列分割和列合并出来的字段名称
-		this.dictionaryColumnList = StringUtil.split(tableBean.getAllColumns(), JdbcCollectTableHandleParse.STRSPLIT);
+		this.dictionaryColumnList = StringUtil.split(tableBean.getAllColumns(), Constant.METAINFOSPLIT);
 		this.mergeIng = (Map<String, String>) tableBean.getParseJson().get("mergeIng");//字符合并
 		this.cl = new Clean(tableBean.getParseJson(), allClean);
 		this.midStringOther = new StringBuilder();
 		this.lineSb = new StringBuilder();
-		this.dictionaryTypeList = StringUtil.split(tableBean.getAllType(), JdbcCollectTableHandleParse.STRSPLIT);
+		this.dictionaryTypeList = StringUtil.split(tableBean.getAllType(), Constant.METAINFOSPLIT);
 		//根据(是否拉链存储且增量进数)和是否算md5判断是否要追加MD5和结束日期两个字段
 		this.isMd5 = IsFlag.Shi.getCode().equals(collectTableBean.getIs_md5()) ||
 				(IsFlag.Shi.getCode().equals(collectTableBean.getIs_zipper()) &&

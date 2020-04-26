@@ -4,8 +4,8 @@ import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.core.dfstage.fileparser.FileParserAbstract;
 import hrds.agent.job.biz.core.dfstage.service.ReadFileToDataBase;
-import hrds.agent.job.biz.core.service.JdbcCollectTableHandleParse;
 import hrds.commons.exception.AppSystemException;
+import hrds.commons.utils.Constant;
 import org.apache.hadoop.fs.Path;
 import org.apache.parquet.example.data.Group;
 import org.apache.parquet.hadoop.ParquetReader;
@@ -64,6 +64,6 @@ public class ParquetFileParserDeal extends FileParserAbstract {
 				e.printStackTrace();
 			}
 		}
-		return unloadFileAbsolutePath + JdbcCollectTableHandleParse.STRSPLIT + fileRowCount;
+		return unloadFileAbsolutePath + Constant.METAINFOSPLIT + fileRowCount;
 	}
 }

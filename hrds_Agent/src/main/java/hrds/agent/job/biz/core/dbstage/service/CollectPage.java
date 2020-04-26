@@ -8,11 +8,11 @@ import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.SourceDataConfBean;
 import hrds.agent.job.biz.bean.TableBean;
-import hrds.agent.job.biz.core.service.JdbcCollectTableHandleParse;
 import hrds.commons.codes.DatabaseType;
 import hrds.commons.entity.Data_extraction_def;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.ConnUtil;
+import hrds.commons.utils.Constant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -92,8 +92,8 @@ public class CollectPage implements Callable<Map<String, Object>> {
 					//文件路径
 					String unLoadInfo = parser.parseResultSet(resultSet, collectTableBean, pageNum,
 							tableBean, data_extraction_def);
-					if (!StringUtil.isEmpty(unLoadInfo) && unLoadInfo.contains(JdbcCollectTableHandleParse.STRSPLIT)) {
-						List<String> unLoadInfoList = StringUtil.split(unLoadInfo, JdbcCollectTableHandleParse.STRSPLIT);
+					if (!StringUtil.isEmpty(unLoadInfo) && unLoadInfo.contains(Constant.METAINFOSPLIT)) {
+						List<String> unLoadInfoList = StringUtil.split(unLoadInfo, Constant.METAINFOSPLIT);
 						map.put("pageCount", unLoadInfoList.get(unLoadInfoList.size() - 1));
 						unLoadInfoList.remove(unLoadInfoList.size() - 1);
 						map.put("filePathList", unLoadInfoList);

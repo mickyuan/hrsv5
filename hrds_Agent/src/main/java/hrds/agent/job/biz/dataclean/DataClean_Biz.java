@@ -3,7 +3,6 @@ package hrds.agent.job.biz.dataclean;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.utils.StringUtil;
-import hrds.agent.job.biz.core.service.JdbcCollectTableHandleParse;
 import hrds.agent.job.biz.core.dbstage.writer.impl.JdbcToFixedFileWriter;
 import hrds.agent.job.biz.utils.ColUtil;
 import hrds.agent.job.biz.utils.TypeTransLength;
@@ -12,6 +11,7 @@ import hrds.commons.codes.FileFormat;
 import hrds.commons.codes.FillingType;
 import hrds.commons.entity.Column_split;
 import hrds.commons.exception.AppSystemException;
+import hrds.commons.utils.Constant;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -61,7 +61,7 @@ public class DataClean_Biz implements DataCleanInterface {
 		if (strFilling.size() != 0) {
 			String str = strFilling.get(columnname);
 			if (!StringUtil.isEmpty(str)) {
-				List<String> fi = StringUtil.split(str, JdbcCollectTableHandleParse.STRSPLIT);
+				List<String> fi = StringUtil.split(str, Constant.METAINFOSPLIT);
 				if (fi.size() == 3) {
 					int file_length = 0;
 					try {
@@ -92,7 +92,7 @@ public class DataClean_Biz implements DataCleanInterface {
 				if (!StringUtil.isEmpty(columnData)) {
 					try {
 						String[] split = StringUtils.splitByWholeSeparatorPreserveAllTokens(formatStr,
-								JdbcCollectTableHandleParse.STRSPLIT);
+								Constant.METAINFOSPLIT);
 						//新的装换方式
 						SimpleDateFormat newformat = new SimpleDateFormat(split[0]);
 						//解出原来的时间
@@ -280,18 +280,18 @@ public class DataClean_Biz implements DataCleanInterface {
 					sb.append(arrColString[i]);
 				}
 				if (FileFormat.PARQUET.getCode().equals(fileType)) {
-					List<String> split = StringUtil.split(key, JdbcCollectTableHandleParse.STRSPLIT);
+					List<String> split = StringUtil.split(key, Constant.METAINFOSPLIT);
 					//TODO 这里默认用varchar待讨论
 					cutil.addData2Group(group, split.get(1).toUpperCase(), split.get(0).toUpperCase(), sb.toString());
 				} else if (FileFormat.ORC.getCode().equals(fileType)) {
-					List<String> split = StringUtil.split(key, JdbcCollectTableHandleParse.STRSPLIT);
+					List<String> split = StringUtil.split(key, Constant.METAINFOSPLIT);
 					cutil.addData2Inspector(list, split.get(1).toUpperCase(), sb.toString());
 				} else if (FileFormat.CSV.getCode().equals(fileType)) {
 					list.add(sb.toString());
 				} else if (FileFormat.SEQUENCEFILE.getCode().equals(fileType)) {
 					return_sb.append(sb.toString()).append(database_separatorr);
 				} else if (FileFormat.DingChang.getCode().equals(fileType)) {
-					List<String> split = StringUtil.split(key, JdbcCollectTableHandleParse.STRSPLIT);
+					List<String> split = StringUtil.split(key, Constant.METAINFOSPLIT);
 					int length = TypeTransLength.getLength(split.get(1));
 					String fixedStr = JdbcToFixedFileWriter.columnToFixed(sb.toString(), length, database_code);
 					return_sb.append(fixedStr).append(database_separatorr);

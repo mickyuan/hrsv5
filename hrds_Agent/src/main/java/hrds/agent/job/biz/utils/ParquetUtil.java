@@ -3,7 +3,7 @@ package hrds.agent.job.biz.utils;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.constant.DataTypeConstant;
-import hrds.agent.job.biz.core.service.JdbcCollectTableHandleParse;
+import hrds.commons.utils.Constant;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -28,9 +28,9 @@ public class ParquetUtil {
 	 */
 	public static MessageType getSchema(String columns, String types) {
 		//列数组
-		List<String> colList = StringUtil.split(columns.toUpperCase(), JdbcCollectTableHandleParse.STRSPLIT);
+		List<String> colList = StringUtil.split(columns.toUpperCase(), Constant.METAINFOSPLIT);
 		//字段类型
-		List<String> typeArray = StringUtil.split(types.toLowerCase(), JdbcCollectTableHandleParse.STRSPLIT);
+		List<String> typeArray = StringUtil.split(types.toLowerCase(), Constant.METAINFOSPLIT);
 		StringBuilder sb = new StringBuilder(170);
 		sb.append("message Pair {\n");
 		for (int i = 0; i < colList.size(); i++) {

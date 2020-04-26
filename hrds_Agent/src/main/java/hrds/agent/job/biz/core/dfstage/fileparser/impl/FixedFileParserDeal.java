@@ -4,10 +4,10 @@ import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.core.dfstage.fileparser.FileParserAbstract;
 import hrds.agent.job.biz.core.dfstage.service.ReadFileToDataBase;
-import hrds.agent.job.biz.core.service.JdbcCollectTableHandleParse;
 import hrds.agent.job.biz.utils.TypeTransLength;
 import hrds.commons.codes.DataBaseCode;
 import hrds.commons.exception.AppSystemException;
+import hrds.commons.utils.Constant;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -57,7 +57,7 @@ public class FixedFileParserDeal extends FileParserAbstract {
 		} catch (Exception e) {
 			throw new AppSystemException("解析非定长文件转存报错", e);
 		}
-		return unloadFileAbsolutePath + JdbcCollectTableHandleParse.STRSPLIT + fileRowCount;
+		return unloadFileAbsolutePath + Constant.METAINFOSPLIT + fileRowCount;
 	}
 
 }

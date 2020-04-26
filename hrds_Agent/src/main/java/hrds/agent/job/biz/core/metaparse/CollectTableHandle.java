@@ -1,4 +1,4 @@
-package hrds.agent.job.biz.core.service;
+package hrds.agent.job.biz.core.metaparse;
 
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;

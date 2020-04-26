@@ -6,7 +6,6 @@ import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.core.dbstage.writer.AbstractFileWriter;
-import hrds.agent.job.biz.core.service.JdbcCollectTableHandleParse;
 import hrds.agent.job.biz.dataclean.Clean;
 import hrds.agent.job.biz.dataclean.CleanFactory;
 import hrds.agent.job.biz.dataclean.DataCleanInterface;
@@ -64,15 +63,15 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 			avroWriter = getAvroWriter(tableBean.getTypeArray(), hbase_name, midName, pageNum);
 			//卸数文件名为hbase_name加线程唯一标识加此线程创建文件下标
 			String fileName = midName + hbase_name + pageNum + index + "." + data_extraction_def.getFile_suffix();
-			fileInfo.append(fileName).append(JdbcCollectTableHandleParse.STRSPLIT);
+			fileInfo.append(fileName).append(Constant.METAINFOSPLIT);
 			writerFile = new WriterFile(fileName);
 			writer = writerFile.getBufferedWriter(DataBaseCode.ofValueByCode(database_code));
 			//清洗配置
 			final DataCleanInterface allclean = CleanFactory.getInstance().getObjectClean("clean_database");
 			//获取所有字段的名称，包括列分割和列合并出来的字段名称
-			List<String> allColumnList = StringUtil.split(tableBean.getColumnMetaInfo(), JdbcCollectTableHandleParse.STRSPLIT);
+			List<String> allColumnList = StringUtil.split(tableBean.getColumnMetaInfo(), Constant.METAINFOSPLIT);
 			//获取所有查询的字段的名称，不包括列分割和列合并出来的字段名称
-			List<String> selectColumnList = StringUtil.split(tableBean.getAllColumns(), JdbcCollectTableHandleParse.STRSPLIT);
+			List<String> selectColumnList = StringUtil.split(tableBean.getAllColumns(), Constant.METAINFOSPLIT);
 			Map<String, Object> parseJson = tableBean.getParseJson();
 			Map<String, String> mergeIng = (Map<String, String>) parseJson.get("mergeIng");//字符合并
 			//字符拆分
@@ -82,7 +81,7 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 			StringBuilder midStringOther = new StringBuilder(1024 * 1024);//获取所有列的值用来生成MD5值
 			StringBuilder sb = new StringBuilder();//用来写一行数据
 			StringBuilder sb_ = new StringBuilder();//用来写临时数据
-			List<String> typeList = StringUtil.split(tableBean.getAllType(), JdbcCollectTableHandleParse.STRSPLIT);
+			List<String> typeList = StringUtil.split(tableBean.getAllType(), Constant.METAINFOSPLIT);
 			int numberOfColumns = selectColumnList.size();
 			log.info("type : " + typeList.size() + "  colName " + numberOfColumns);
 			String currValue;
@@ -145,7 +144,7 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 						writerFile = new WriterFile(fileName);
 						writer = writerFile.getBufferedWriter(DataBaseCode.ofValueByCode(
 								database_code));
-						fileInfo.append(fileName).append(JdbcCollectTableHandleParse.STRSPLIT);
+						fileInfo.append(fileName).append(Constant.METAINFOSPLIT);
 					}
 				}
 				writer.write(sb.toString());

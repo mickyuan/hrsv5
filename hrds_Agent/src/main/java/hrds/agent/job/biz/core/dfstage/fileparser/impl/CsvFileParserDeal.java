@@ -3,10 +3,10 @@ package hrds.agent.job.biz.core.dfstage.fileparser.impl;
 import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.core.dfstage.fileparser.FileParserAbstract;
-import hrds.agent.job.biz.core.service.JdbcCollectTableHandleParse;
 import hrds.commons.codes.DataBaseCode;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.exception.AppSystemException;
+import hrds.commons.utils.Constant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.supercsv.io.CsvListReader;
@@ -58,7 +58,7 @@ public class CsvFileParserDeal extends FileParserAbstract {
 		} catch (Exception e) {
 			throw new AppSystemException("解析非定长文件转存报错", e);
 		}
-		return unloadFileAbsolutePath + JdbcCollectTableHandleParse.STRSPLIT + fileRowCount;
+		return unloadFileAbsolutePath + Constant.METAINFOSPLIT + fileRowCount;
 	}
 
 }

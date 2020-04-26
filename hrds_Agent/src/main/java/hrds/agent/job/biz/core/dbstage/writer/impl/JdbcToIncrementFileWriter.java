@@ -6,13 +6,12 @@ import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.core.dbstage.writer.AbstractFileWriter;
-import hrds.agent.job.biz.core.service.AbstractCollectTableHandle;
-import hrds.agent.job.biz.core.service.JdbcCollectTableHandleParse;
 import hrds.agent.job.biz.utils.WriterFile;
 import hrds.commons.codes.DataBaseCode;
 import hrds.commons.codes.FileFormat;
 import hrds.commons.entity.Data_extraction_def;
 import hrds.commons.exception.AppSystemException;
+import hrds.commons.utils.Constant;
 import org.apache.avro.file.DataFileWriter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -56,7 +55,7 @@ public class JdbcToIncrementFileWriter extends AbstractFileWriter {
 			midName = FileNameUtils.normalize(midName, true);
 			//卸数文件名为hbase_name加线程唯一标识加此线程创建文件下标
 			String fileName = midName + hbase_name + pageNum + index + "." + data_extraction_def.getFile_suffix();
-			fileInfo.append(fileName).append(JdbcCollectTableHandleParse.STRSPLIT);
+			fileInfo.append(fileName).append(Constant.METAINFOSPLIT);
 			writerFile = new WriterFile(fileName);
 			writer = writerFile.getIncrementBufferedWriter(DataBaseCode.ofValueByCode(database_code));
 			/* Get result set metadata */
@@ -70,9 +69,9 @@ public class JdbcToIncrementFileWriter extends AbstractFileWriter {
 			}
 			avroWriter = getAvroWriter(typeValueMap, hbase_name, midName, pageNum);
 			List<String> allColumnList = StringUtil.split(tableBean.getColumnMetaInfo(),
-					AbstractCollectTableHandle.STRSPLIT);
+					Constant.METAINFOSPLIT);
 			List<Integer> allLengthList = stringToIntegerList(StringUtil.split(tableBean.getColLengthInfo(),
-					AbstractCollectTableHandle.STRSPLIT));
+					Constant.METAINFOSPLIT));
 			StringBuilder sb_ = new StringBuilder();//用来写临时数据
 			StringBuilder line = new StringBuilder();//用来写一行数据
 			String operate = tableBean.getOperate();
@@ -104,7 +103,7 @@ public class JdbcToIncrementFileWriter extends AbstractFileWriter {
 						writerFile = new WriterFile(fileName);
 						writer = writerFile.getBufferedWriter(DataBaseCode.ofValueByCode(
 								database_code));
-						fileInfo.append(fileName).append(JdbcCollectTableHandleParse.STRSPLIT);
+						fileInfo.append(fileName).append(Constant.METAINFOSPLIT);
 					}
 				}
 				writer.write(line.toString());

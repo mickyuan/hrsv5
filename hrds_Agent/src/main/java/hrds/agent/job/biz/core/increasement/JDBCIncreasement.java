@@ -5,10 +5,10 @@ import fd.ng.core.utils.StringUtil;
 import fd.ng.db.conf.Dbtype;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.agent.job.biz.bean.TableBean;
-import hrds.agent.job.biz.core.service.JdbcCollectTableHandleParse;
 import hrds.agent.job.biz.utils.DataTypeTransform;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.hadoop.utils.HSqlExecute;
+import hrds.commons.utils.Constant;
 
 import java.io.Closeable;
 import java.sql.ResultSet;
@@ -29,9 +29,9 @@ public abstract class JDBCIncreasement implements Closeable {
 	String todayTableName;
 
 	JDBCIncreasement(TableBean tableBean, String hbase_name, String sysDate, DatabaseWrapper db, String dsl_name) {
-		this.columns = StringUtil.split(tableBean.getColumnMetaInfo(), JdbcCollectTableHandleParse.STRSPLIT);
+		this.columns = StringUtil.split(tableBean.getColumnMetaInfo(), Constant.METAINFOSPLIT);
 		this.types = DataTypeTransform.tansform(StringUtil.split(tableBean.getColTypeMetaInfo(),
-				JdbcCollectTableHandleParse.STRSPLIT), dsl_name);
+				Constant.METAINFOSPLIT), dsl_name);
 		this.sysDate = sysDate;
 		this.tableNameInHBase = hbase_name;
 		this.deltaTableName = hbase_name + "_tmp_hyren";
