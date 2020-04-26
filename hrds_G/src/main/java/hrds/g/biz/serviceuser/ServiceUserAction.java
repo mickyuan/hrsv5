@@ -14,6 +14,7 @@ import hrds.commons.base.BaseAction;
 import hrds.commons.entity.Interface_use;
 import hrds.commons.entity.Sysreg_parameter_info;
 import hrds.commons.entity.Table_use_info;
+import hrds.commons.utils.Constant;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -88,6 +89,7 @@ public class ServiceUserAction extends BaseAction {
 		}
 		// 3.处理数据为数组
 		List<Map<String, String>> list = new ArrayList<>();
+		columnList = StringUtil.split(columnList.get(0), Constant.METAINFOSPLIT);
 		for (String table_column_name : columnList) {
 			Map<String, String> columnMap = new HashMap<>();
 			columnMap.put("table_column_name", table_column_name);

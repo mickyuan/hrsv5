@@ -65,6 +65,7 @@ public class Constant {
 	public static final String HANDLER = "/reloadDictionary";
 	//solr自定义的分隔符
 	public static final char SOLR_DATA_DELIMITER = '\001';
+	// 日志审查需要加入日志管理的功能
 	public static final String USERLOGIN = "用户登入";
 	public static final String USERSIGNOUT = "用户登出";
 	public static final String INVALIDUSERINFO = "用户信息失效";
