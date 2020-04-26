@@ -75,4 +75,6 @@ public class Constant {
 	public static final String DELETEFTPTASK = "采集ftp任务的删除记录";
 	public static final String ADDDMDATATABLE = "集市新建数据表";
 	public static final String DELETEDMDATATABLE = "集市删除数据表";
+	//数据库采集，获取元数据信息拼接的分隔符
+	public static final String METAINFOSPLIT = "^";
 }
