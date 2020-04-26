@@ -8,15 +8,6 @@ import fd.ng.core.annotation.Return;
 import hrds.commons.codes.DatabaseType;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.xml.sax.SAXException;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -25,9 +16,22 @@ import java.net.URI;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.xml.sax.SAXException;
 
 /**
  * 标 题: 海云数服务
@@ -385,7 +389,7 @@ public class ConnUtil {
 			}
 			storageMap.put("storage", storageList);
 			storageMap.put("table_name", table_name);
-			storageMap.put("table_cn_name", tableNameMap.get(table_name));
+			storageMap.put("table_ch_name", tableNameMap.get(table_name));
 			allStorageList.add(storageMap);
 		}
 		return allStorageList;
