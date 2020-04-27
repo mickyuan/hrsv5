@@ -376,9 +376,13 @@ public class MarketInfoAction extends BaseAction {
         if (dm_datatable.getDatatable_id() == null) {
             return true;
         } else {
+            List<Dm_datatable> dm_datatables = Dbo.queryList(Dm_datatable.class, "select etl_date from " + Dm_datatable.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
+            String etl_date = dm_datatables.get(0).getEtl_date();
+            boolean haveRun = !etl_date.equals(ZeroDate);
             List<Dm_relation_datatable> dm_relation_datatables = Dbo.queryList(Dm_relation_datatable.class, "select is_successful from " + Dm_relation_datatable.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
             String is_successful = dm_relation_datatables.get(0).getIs_successful();
-            if (is_successful.equals(JobExecuteState.YunXing.getCode())) {
+            boolean isrunning = is_successful.equals(JobExecuteState.YunXing.getCode());
+            if(haveRun){
                 List<Map<String, Object>> maps = Dbo.queryList("select * from " + Dm_datatable.TableName + " where datatable_id = ? and datatable_en_name = ? and sql_engine = ? and storage_type = ? and table_storage = ? ",
                         dm_datatable.getDatatable_id(), dm_datatable.getDatatable_en_name(), dm_datatable.getSql_engine(), dm_datatable.getStorage_type(), dm_datatable.getTable_storage());
                 if (maps.isEmpty()) {
@@ -393,10 +397,13 @@ public class MarketInfoAction extends BaseAction {
                         return true;
                     }
                 }
-            } else {
-                return true;
+            }else{
+                if(isrunning){
+                    return false;
+                }else{
+                    return true;
+                }
             }
-
         }
     }
 
