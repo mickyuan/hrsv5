@@ -37,8 +37,6 @@ public class DataRangeManageAction extends BaseAction {
 	// 有效结束日期
 	public static final String END_DATE = "99991231";
 
-	private static final String KAFKA = "kafka";
-
 	private static final Type MAPTYPE = new TypeReference<Map<String, Object>>() {
 	}.getType();
 	private static final Logger logger = LogManager.getLogger();

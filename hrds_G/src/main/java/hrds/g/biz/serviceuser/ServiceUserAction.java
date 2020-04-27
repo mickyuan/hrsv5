@@ -15,6 +15,7 @@ import hrds.commons.entity.Interface_use;
 import hrds.commons.entity.Sysreg_parameter_info;
 import hrds.commons.entity.Table_use_info;
 import hrds.commons.utils.Constant;
+import hrds.commons.utils.PropertyParaValue;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -107,7 +108,7 @@ public class ServiceUserAction extends BaseAction {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		Map<String, Object> useMap = new HashMap<>();
 		// 2.封装当前用户请求ip端口
-		useMap.put("ipAndPort", RequestUtil.getRequest().getLocalAddr() + ":"
+		useMap.put("ipAndPort", PropertyParaValue.getString("hyren_host","127.0.0.1") + ":"
 				+ RequestUtil.getRequest().getLocalPort());
 		// 3.返回当前用户请求ip端口
 		return useMap;
