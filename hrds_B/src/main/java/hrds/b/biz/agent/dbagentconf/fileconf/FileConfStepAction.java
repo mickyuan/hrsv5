@@ -65,13 +65,13 @@ public class FileConfStepAction extends BaseAction {
                 if (item.get("row_separator") != null) {
                   item.put(
                       "row_separator",
-                      StringUtil.unicode2String((item.get("row_separator").toString())));
+                      StringUtil.unicode2String(String.valueOf(item.get("row_separator"))));
                 }
                 //            2: 数据分隔符
                 if (item.get("database_separatorr") != null) {
                   item.put(
                       "database_separatorr",
-                      StringUtil.unicode2String((item.get("database_separatorr").toString())));
+                      StringUtil.unicode2String(String.valueOf(item.get("database_separatorr"))));
                 }
               });
           tableInfo.put("tableData", list);
