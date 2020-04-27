@@ -74,6 +74,9 @@ public class MarketInfoAction extends BaseAction {
     private static final String Category_id = "1000025018";
     private static final String jdbc_url = "jdbc_url";
     private static final Logger logger = LogManager.getLogger(AppMain.class.getName());
+    private static final String Hyren_S_date = "hyren_s_date";
+    private static final String Hyren_E_date = "hyren_e_date";
+    private static final String Hyren_Md5_Val = "hyren_md5_val";
 
     /**
      * 封装一个检查字段正确的方法
@@ -1122,7 +1125,8 @@ public class MarketInfoAction extends BaseAction {
         if (source.equals(DataSourceType.DCL.getCode())) {
             Table_column table_column = new Table_column();
             table_column.setTable_id(id);
-            List<Map<String, Object>> maps = Dbo.queryList("select column_name as columnname,column_type as columntype,false as selectionstate from " + Table_column.TableName + " where table_id = ?", table_column.getTable_id());
+            List<Map<String, Object>> maps = Dbo.queryList("select column_name as columnname,column_type as columntype,false as selectionstate from " + Table_column.TableName +
+                    " where table_id = ? and lower(column_name) not in (?,?,?)", table_column.getTable_id(),Hyren_S_date,Hyren_E_date,Hyren_Md5_Val);
             resultmap.put("columnresult", maps);
             List<Map<String, Object>> tablenamelist = Dbo.queryList("select hyren_name as tablename from " + Data_store_reg.TableName + " where table_id = ?", table_column.getTable_id());
             resultmap.put("tablename", tablenamelist.get(0).get("tablename"));
@@ -1130,7 +1134,8 @@ public class MarketInfoAction extends BaseAction {
         } else if (source.equals(DataSourceType.DML.getCode())) {
             Datatable_field_info datatable_field_info = new Datatable_field_info();
             datatable_field_info.setDatatable_id(id);
-            List<Map<String, Object>> maps = Dbo.queryList("select field_en_name as columnname,field_type as columntype,false as selectionstate from " + Datatable_field_info.TableName + " where datatable_id = ?", datatable_field_info.getDatatable_id());
+            List<Map<String, Object>> maps = Dbo.queryList("select field_en_name as columnname,field_type as columntype,false as selectionstate from " + Datatable_field_info.TableName +
+                    " where datatable_id = ? and lower(field_en_name) not in (?,?,?)", datatable_field_info.getDatatable_id(),Hyren_S_date,Hyren_E_date,Hyren_Md5_Val);
             resultmap.put("columnresult", maps);
             List<Map<String, Object>> tablenamelist = Dbo.queryList("select datatable_en_name as tablename  from " + Dm_datatable.TableName + " where datatable_id = ?", datatable_field_info.getDatatable_id());
             resultmap.put("tablename", tablenamelist.get(0).get("tablename"));
