@@ -366,7 +366,7 @@ public class MarketInfoAction extends BaseAction {
      * @return
      */
     private Boolean checkrunstatus(Dm_datatable dm_datatable, String dsl_id) {
-        if (StringUtils.isEmpty(String.valueOf(dm_datatable.getDatatable_id()))) {
+        if (dm_datatable.getDatatable_id() == null) {
             return true;
         } else {
             List<Dm_relation_datatable> dm_relation_datatables = Dbo.queryList(Dm_relation_datatable.class, "select is_successful from " + Dm_relation_datatable.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
@@ -1142,12 +1142,8 @@ public class MarketInfoAction extends BaseAction {
     @Param(name = "datatable_id", desc = "datatable_id", range = "String类型集市表ID")
     @Param(name = "date", desc = "date", range = "String类型跑批日期")
     @Param(name = "parameter", desc = "parameter", range = "动态参数", nullable = true)
-    public void excutMartJob(String datatable_id, String date, String parameter) {
-        try {
+    public void excutMartJob(String datatable_id, String date, String parameter) throws IOException {
             MainClass.run(datatable_id, date, parameter);
-        } catch (Exception e) {
-            throw new BusinessException(e.getMessage());
-        }
     }
 
     @Method(desc = "查询所有作业调度工程",
