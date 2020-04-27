@@ -14,9 +14,10 @@ import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
+import hrds.agent.job.biz.core.dfstage.incrementfileprocess.TableProcessInterface;
+import hrds.agent.job.biz.core.dfstage.incrementfileprocess.impl.MppTableProcessImpl;
 import hrds.agent.job.biz.core.dfstage.service.ReadFileToDataBase;
 import hrds.agent.job.biz.core.increasement.JDBCIncreasement;
-import hrds.agent.job.biz.core.service.AbstractCollectTableHandle;
 import hrds.agent.job.biz.utils.DataTypeTransform;
 import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
@@ -67,6 +68,50 @@ public class DFUploadStageImpl extends AbstractJobStage {
 		StageStatusInfo statusInfo = new StageStatusInfo();
 		JobStatusInfoUtil.startStageStatusInfo(statusInfo, collectTableBean.getTable_id(),
 				StageConstant.UPLOAD.getCode());
+		try {
+			//判断是全量采集还是增量采集
+			if (UnloadType.ZengLiangXieShu.getCode().equals(collectTableBean.getUnload_type())) {
+				//增量采集
+				incrementCollect(stageParamInfo);
+			} else if (UnloadType.QuanLiangXieShu.getCode().equals(collectTableBean.getUnload_type())) {
+				//全量采集
+				fullAmountCollect(stageParamInfo);
+			} else {
+				throw new AppSystemException("数据抽取卸数方式类型不正确");
+			}
+			LOGGER.info("------------------DB文件全量上传阶段成功------------------");
+			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.SUCCEED.getCode(), "执行成功");
+		} catch (Exception e) {
+			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.FAILED.getCode(), e.getMessage());
+			LOGGER.error("DB文件采集上传阶段失败：", e);
+		}
+		//结束给stageParamInfo塞值
+		JobStatusInfoUtil.endStageParamInfo(stageParamInfo, statusInfo, collectTableBean
+				, CollectType.DBWenJianCaiJi.getCode());
+		return stageParamInfo;
+	}
+
+	private void incrementCollect(StageParamInfo stageParamInfo) {
+		try {
+			List<DataStoreConfBean> dataStoreConfBeanList = collectTableBean.getDataStoreConfBean();
+			for (DataStoreConfBean dataStoreConfBean : dataStoreConfBeanList) {
+				//这边做一个接口多实现，目前只实现传统数据库的增量更新接口
+				TableProcessInterface processInterface;
+				if (Store_type.DATABASE.getCode().equals(dataStoreConfBean.getStore_type())) {
+					for (String readFile : stageParamInfo.getFileArr()) {
+						//关系型数据库
+						processInterface = new MppTableProcessImpl(stageParamInfo.getTableBean(),
+								collectTableBean, readFile);
+						processInterface.parserFileToTable();
+					}
+				}
+			}
+		} catch (Exception e) {
+			throw new AppSystemException("db文件采集增量上传失败", e);
+		}
+	}
+
+	private void fullAmountCollect(StageParamInfo stageParamInfo) {
 		//此处不会有海量的任务需要执行，不会出现队列中等待的任务对象过多的OOM事件。
 		//TODO Runtime.getRuntime().availableProcessors()此处不能用这个,因为可能同时有多个数据库采集同时进行
 		//这里多个文件，使用多线程读取文件，batch进外部数据库。
@@ -114,19 +159,12 @@ public class DFUploadStageImpl extends AbstractJobStage {
 					throw new AppSystemException("不支持的存储类型");
 				}
 			}
-			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.SUCCEED.getCode(), "执行成功");
-			LOGGER.info("------------------DB文件采集上传阶段成功------------------");
 		} catch (Exception e) {
-			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.FAILED.getCode(), e.getMessage());
-			LOGGER.error("DB文件采集上传阶段失败：", e);
+			throw new AppSystemException("db文件采集全量上传失败", e);
 		} finally {
 			if (executor != null)
 				executor.shutdown();
 		}
-		//结束给stageParamInfo塞值
-		JobStatusInfoUtil.endStageParamInfo(stageParamInfo, statusInfo, collectTableBean
-				, CollectType.DBWenJianCaiJi.getCode());
-		return stageParamInfo;
 	}
 
 	/**
@@ -341,9 +379,9 @@ public class DFUploadStageImpl extends AbstractJobStage {
 	}
 
 	private void createTodayTable(TableBean tableBean, String todayTableName, DataStoreConfBean dataStoreConfBean) {
-		List<String> columns = StringUtil.split(tableBean.getColumnMetaInfo(), AbstractCollectTableHandle.STRSPLIT);
+		List<String> columns = StringUtil.split(tableBean.getColumnMetaInfo(), Constant.METAINFOSPLIT);
 		List<String> types = DataTypeTransform.tansform(StringUtil.split(tableBean.getColTypeMetaInfo(),
-				AbstractCollectTableHandle.STRSPLIT), dataStoreConfBean.getDsl_name());
+				Constant.METAINFOSPLIT), dataStoreConfBean.getDsl_name());
 		//获取连接
 		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(dataStoreConfBean.getData_store_connect_attr())) {
 			List<String> sqlList = new ArrayList<>();

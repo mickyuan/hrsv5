@@ -4,10 +4,10 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.StringUtil;
-import hrds.agent.job.biz.core.service.AbstractCollectTableHandle;
 import hrds.commons.codes.FileFormat;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Data_extraction_def;
+import hrds.commons.utils.Constant;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -19,13 +19,13 @@ import java.util.List;
 public class DataExtractUtil {
 
 	private static final Log log = LogFactory.getLog(DataExtractUtil.class);
-	private static final String DATADICTIONARY = "dd_data.json";
+	public static final String DATADICTIONARY = "dd_data.json";
 
 	/**
 	 * 生成数据字典
 	 */
 	public static synchronized void writeDataDictionary(String dictionaryPath, String tableName, String allColumns, String
-			allType, String storage_type, List<Data_extraction_def> data_extraction_defList, String unload_type, String primaryKeyInfo) {
+			allType, List<Data_extraction_def> data_extraction_defList, String unload_type, String primaryKeyInfo) {
 		BufferedWriter bufferOutputWriter = null;
 		OutputStreamWriter outputFileWriter = null;
 		String dataDictionaryFile = dictionaryPath + DATADICTIONARY;
@@ -61,9 +61,9 @@ public class DataExtractUtil {
 				storageArray.add(object);
 			}
 			jsonObject.put("storage", storageArray);
-			List<String> columnList = StringUtil.split(allColumns, AbstractCollectTableHandle.STRSPLIT);
-			List<String> typeList = StringUtil.split(allType, AbstractCollectTableHandle.STRSPLIT);
-			List<String> primaryKeyList = StringUtil.split(primaryKeyInfo, AbstractCollectTableHandle.STRSPLIT);
+			List<String> columnList = StringUtil.split(allColumns, Constant.METAINFOSPLIT);
+			List<String> typeList = StringUtil.split(allType, Constant.METAINFOSPLIT);
+			List<String> primaryKeyList = StringUtil.split(primaryKeyInfo, Constant.METAINFOSPLIT);
 			List<JSONObject> array = new ArrayList<>();
 			for (int i = 0; i < columnList.size(); i++) {
 				JSONObject object = new JSONObject();

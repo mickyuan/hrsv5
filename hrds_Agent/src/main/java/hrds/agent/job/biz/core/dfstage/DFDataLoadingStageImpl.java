@@ -12,7 +12,6 @@ import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
 import hrds.agent.job.biz.core.increasement.JDBCIncreasement;
-import hrds.agent.job.biz.core.service.JdbcCollectTableHandleParse;
 import hrds.agent.job.biz.utils.DataTypeTransform;
 import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
@@ -252,9 +251,9 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 
 	private void createPostgresqlExternalTable(String todayTableName, TableBean tableBean, String[] fileNameArr
 			, String dsl_name, String uploadServerPath, List<String> sqlList, DatabaseWrapper db) {
-		List<String> columnList = StringUtil.split(tableBean.getColumnMetaInfo(), JdbcCollectTableHandleParse.STRSPLIT);
+		List<String> columnList = StringUtil.split(tableBean.getColumnMetaInfo(), Constant.METAINFOSPLIT);
 		List<String> typeList = DataTypeTransform.tansform(StringUtil.split(
-				tableBean.getColTypeMetaInfo().toUpperCase(), JdbcCollectTableHandleParse.STRSPLIT), dsl_name);
+				tableBean.getColTypeMetaInfo().toUpperCase(), Constant.METAINFOSPLIT), dsl_name);
 		boolean is_header = IsFlag.Shi.getCode().equalsIgnoreCase(tableBean.getIs_header());
 		//拼接需要插入表的所有字段
 		StringBuilder insertColumns = new StringBuilder();
@@ -299,9 +298,9 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 	 */
 	private String createOracleExternalTable(String tmpTodayTableName, TableBean tableBean,
 	                                         String[] fileNameArr, String dsl_name) {
-		List<String> columnList = StringUtil.split(tableBean.getColumnMetaInfo(), JdbcCollectTableHandleParse.STRSPLIT);
+		List<String> columnList = StringUtil.split(tableBean.getColumnMetaInfo(), Constant.METAINFOSPLIT);
 		List<String> typeList = DataTypeTransform.tansform(StringUtil.split(tableBean.getColTypeMetaInfo().toUpperCase(),
-				JdbcCollectTableHandleParse.STRSPLIT), dsl_name);
+				Constant.METAINFOSPLIT), dsl_name);
 		StringBuilder sql = new StringBuilder();
 		sql.append("create table ").append(tmpTodayTableName);
 		sql.append("(");
@@ -397,7 +396,7 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 
 	private String genHiveLoadCsv(String todayTableName, TableBean tableBean) {
 		StringBuilder sql = new StringBuilder(120);
-		List<String> columnList = StringUtil.split(tableBean.getColumnMetaInfo(), JdbcCollectTableHandleParse.STRSPLIT);
+		List<String> columnList = StringUtil.split(tableBean.getColumnMetaInfo(), Constant.METAINFOSPLIT);
 		sql.append("CREATE TABLE IF NOT EXISTS ").append(todayTableName).append(" (");
 		for (String column : columnList) {
 			sql.append("`").append(column).append("` ").append(" string,");
@@ -432,9 +431,9 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 		String type;
 		StringBuilder sql = new StringBuilder(120);
 		sql.append("CREATE TABLE IF NOT EXISTS ").append(todayTableName).append(" (");
-		List<String> columnList = StringUtil.split(tableBean.getColumnMetaInfo(), JdbcCollectTableHandleParse.STRSPLIT);
+		List<String> columnList = StringUtil.split(tableBean.getColumnMetaInfo(), Constant.METAINFOSPLIT);
 		List<String> typeList = DataTypeTransform.tansform(StringUtil.split(tableBean.getColTypeMetaInfo(),
-				JdbcCollectTableHandleParse.STRSPLIT), dsl_name);
+				Constant.METAINFOSPLIT), dsl_name);
 		for (int i = 0; i < columnList.size(); i++) {
 			//Parquet  不支持decimal 类型
 			if (FileFormat.PARQUET.getCode().equals(file_format)) {
@@ -462,7 +461,7 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 	 */
 	private String genHiveLoad(String todayTableName, TableBean tableBean, String database_separatorr) {
 		StringBuilder sql = new StringBuilder(120);
-		List<String> columnList = StringUtil.split(tableBean.getColumnMetaInfo(), JdbcCollectTableHandleParse.STRSPLIT);
+		List<String> columnList = StringUtil.split(tableBean.getColumnMetaInfo(), Constant.METAINFOSPLIT);
 		sql.append("CREATE TABLE IF NOT EXISTS ").append(todayTableName).append(" (");
 		for (String column : columnList) {
 			sql.append("`").append(column).append("` ").append(" string,");

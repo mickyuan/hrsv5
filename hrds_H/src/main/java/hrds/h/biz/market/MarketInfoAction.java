@@ -26,6 +26,7 @@ import hrds.commons.exception.BusinessException;
 import hrds.commons.tree.foreground.ForegroundTreeUtil;
 import hrds.commons.tree.foreground.bean.TreeDataInfo;
 import hrds.commons.utils.DruidParseQuerySql;
+import hrds.commons.utils.etl.EtlJobUtil;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.h.biz.MainClass;
 import hrds.main.AppMain;
@@ -37,14 +38,17 @@ import org.apache.poi.ss.usermodel.DataValidationConstraint;
 import org.apache.poi.ss.usermodel.DataValidationHelper;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.CellRangeAddressList;
+import org.apache.poi.xssf.usermodel.XSSFColor;
 import org.apache.poi.xssf.usermodel.XSSFDataFormat;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
+import java.util.List;
 import java.util.*;
 
 //import hrds.h.biz.SqlAnalysis.HyrenOracleTableVisitor;
@@ -435,8 +439,9 @@ public class MarketInfoAction extends BaseAction {
                 dm_datatable.getDatatable_id());
         Dm_relation_datatable dm_relation_datatable = dm_relation_datatables.get(0);
         if (!dsl_id.equals(dm_relation_datatable.getDsl_id())) {
+            Dbo.execute("delete from " + Dm_relation_datatable.TableName + " where datatable_id = ?", dm_relation_datatable.getDatatable_id());
             dm_relation_datatable.setDsl_id(dsl_id);
-            dm_relation_datatable.update(Dbo.db());
+            dm_relation_datatable.add(Dbo.db());
         }
         //6 返回主键datatable_id
         map.put("datatable_id", String.valueOf(dm_datatable.getDatatable_id()));
@@ -456,7 +461,6 @@ public class MarketInfoAction extends BaseAction {
                 "on t1.datatable_id = t2.datatable_id where t1.datatable_id= ?", dm_datatable.getDatatable_id());
     }
 
-    //TODO
     @Method(desc = "根据SQL获取采集数据，默认显示10条",
             logicStep = "1.处理SQL" +
                     "2.查询SQL")
@@ -803,8 +807,8 @@ public class MarketInfoAction extends BaseAction {
     @Param(name = "datatable_id", desc = "datatable_id", range = "String类型集市表ID")
     @Param(name = "querysql", desc = "querysql", range = "String类型集市查询SQL")
     @Param(name = "hbasesort", desc = "hbasesort", range = "hbaserowkey的排序")
-    public Map<String,Object> addDFInfo(Datatable_field_info[] datatable_field_info, String datatable_id, Dm_column_storage[] dm_column_storage, String querysql, String hbasesort) {
-        Map<String,Object> resultmap = new HashMap<>();
+    public Map<String, Object> addDFInfo(Datatable_field_info[] datatable_field_info, String datatable_id, Dm_column_storage[] dm_column_storage, String querysql, String hbasesort) {
+        Map<String, Object> resultmap = new HashMap<>();
         for (int i = 0; i < datatable_field_info.length; i++) {
             Datatable_field_info df_info = datatable_field_info[i];
             CheckColummn(df_info.getField_en_name(), "字段英文名第" + (i + 1) + "个");
@@ -816,9 +820,9 @@ public class MarketInfoAction extends BaseAction {
         dm_datatable.setDatatable_id(datatable_id);
         List<Dm_relation_datatable> dm_relation_datatables = Dbo.queryList(Dm_relation_datatable.class, "select * from " + Dm_relation_datatable.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
         String is_successful = dm_relation_datatables.get(0).getIs_successful();
-        if(is_successful.equals(JobExecuteState.YunXing.getCode())){
-            resultmap.put("success",false);
-            resultmap.put("reason","running");
+        if (is_successful.equals(JobExecuteState.YunXing.getCode())) {
+            resultmap.put("success", false);
+            resultmap.put("reason", "running");
             return resultmap;
         }
         List<Map<String, Object>> maps2 = Dbo.queryList("select execute_sql from " + Dm_operation_info.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
@@ -972,7 +976,7 @@ public class MarketInfoAction extends BaseAction {
                 own_source_field.add(Dbo.db());
             }
         }
-        resultmap.put("success",true);
+        resultmap.put("success", true);
         return resultmap;
 
     }
@@ -1154,8 +1158,8 @@ public class MarketInfoAction extends BaseAction {
     }
 
 
-    @Method(desc = "查询所有作业调度工程",
-            logicStep = "返回查询结果g")
+    @Method(desc = "查询作业调度工程下的所有任务",
+            logicStep = "返回查询结果")
     @Param(name = "etl_sys_cd", desc = "etl_sys_cd", range = "String类型作业调度工程主键")
     @Return(desc = "查询返回结果集", range = "无限制")
     public List<Map<String, Object>> queryEtlTaskByEtlSys(String etl_sys_cd) {
@@ -1221,17 +1225,22 @@ public class MarketInfoAction extends BaseAction {
             ResponseUtil.getResponse().setContentType("APPLICATION/OCTET-STREAM");
             // 6.创建输出流
             OutputStream out = ResponseUtil.getResponse().getOutputStream();
-            File file = new File(System.getProperty("user.dir") + File.separator + datatable_id + ".xlsx");
-            file.createNewFile();
-            XSSFWorkbook workbook = new XSSFWorkbook();
-            generatexlsx(workbook, datatable_id);
+            XSSFWorkbook workbook = generatexlsx(datatable_id);
             workbook.write(out);
         } catch (IOException e) {
             throw new BusinessException("集市数据表下载错误");
         }
     }
 
-    private void generatexlsx(XSSFWorkbook workbook, String datatabe_id) {
+    /**
+     * 生成导出每张表的excel
+     * @param datatabe_id
+     * @return
+     */
+    private XSSFWorkbook generatexlsx(String datatabe_id) {
+        //设置背景高亮为黄色
+        XSSFColor xssfColor = new XSSFColor(Color.YELLOW);
+        XSSFWorkbook workbook = new XSSFWorkbook();
         Dm_datatable dm_datatable = new Dm_datatable();
         dm_datatable.setDatatable_id(datatabe_id);
         List<Dm_datatable> dm_datatables = Dbo.queryList(Dm_datatable.class,
@@ -1241,6 +1250,11 @@ public class MarketInfoAction extends BaseAction {
         XSSFSheet sheet1 = workbook.createSheet("sheet1");
         //第一部分
         sheet1.createRow(0).createCell(0).setCellValue("基本设置");
+        //合并单元格
+        CellRangeAddress region = new CellRangeAddress(0, 0, 0, 1);
+        sheet1.addMergedRegion(region);
+        //设置高亮
+        sheet1.getRow(0).getCell(0).getCellStyle().setFillBackgroundColor(xssfColor);
         sheet1.createRow(1).createCell(0).setCellValue("表英文名");
         sheet1.getRow(1).createCell(1).setCellValue(dm_datatable.getDatatable_en_name());
         sheet1.createRow(2).createCell(0).setCellValue("表中文名");
@@ -1249,6 +1263,7 @@ public class MarketInfoAction extends BaseAction {
         sheet1.getRow(3).createCell(1).setCellValue(dm_datatable.getDatatable_desc());
         sheet1.createRow(4).createCell(0).setCellValue("执行引擎");
         sheet1.getRow(4).createCell(1).setCellValue(SqlEngine.ofValueByCode(dm_datatable.getSql_engine()));
+        //设置设置sqlengine的下拉框的下拉框
         String[] sqlenginesubjects = new String[SqlEngine.values().length];
         for (int i = 0; i < SqlEngine.values().length; i++) {
             sqlenginesubjects[i] = SqlEngine.values()[i].getValue();
@@ -1256,6 +1271,7 @@ public class MarketInfoAction extends BaseAction {
         addValidationData(sheet1, sqlenginesubjects, 4, 1);
         sheet1.createRow(5).createCell(0).setCellValue("进数方式");
         sheet1.getRow(5).createCell(1).setCellValue(StorageType.ofValueByCode(dm_datatable.getStorage_type()));
+        //设置StorageType的下拉框
         String[] storagettypesubjects = new String[StorageType.values().length];
         for (int i = 0; i < StorageType.values().length; i++) {
             storagettypesubjects[i] = StorageType.values()[i].getValue();
@@ -1263,6 +1279,7 @@ public class MarketInfoAction extends BaseAction {
         addValidationData(sheet1, storagettypesubjects, 5, 1);
         sheet1.createRow(6).createCell(0).setCellValue("数据存储方式");
         sheet1.getRow(6).createCell(1).setCellValue(TableStorage.ofValueByCode(dm_datatable.getTable_storage()));
+        //设置TableStorage的下拉框
         String[] tablestoragesubjects = new String[TableStorage.values().length];
         for (int i = 0; i < TableStorage.values().length; i++) {
             tablestoragesubjects[i] = TableStorage.values()[i].getValue();
@@ -1270,6 +1287,7 @@ public class MarketInfoAction extends BaseAction {
         addValidationData(sheet1, tablestoragesubjects, 6, 1);
         sheet1.createRow(7).createCell(0).setCellValue("数据生命周期");
         sheet1.getRow(7).createCell(1).setCellValue(TableLifeCycle.ofValueByCode(dm_datatable.getDatatable_lifecycle()));
+        //设置TableLifeCycle的下拉框
         String[] tablelifecyclesubjects = new String[TableLifeCycle.values().length];
         for (int i = 0; i < TableLifeCycle.values().length; i++) {
             tablelifecyclesubjects[i] = TableLifeCycle.values()[i].getValue();
@@ -1279,44 +1297,71 @@ public class MarketInfoAction extends BaseAction {
         sheet1.getRow(8).createCell(1).setCellValue(dm_datatable.getDatatable_due_date());
         //第二部分
         sheet1.createRow(10).createCell(0).setCellValue("数据目的地");
+        //合并单元格
+        region = new CellRangeAddress(10, 10, 0, 4);
+        sheet1.addMergedRegion(region);
+        //设置高亮
+        sheet1.getRow(10).getCell(0).getCellStyle().setFillBackgroundColor(xssfColor);
         sheet1.createRow(11).createCell(0).setCellValue("选择");
         sheet1.getRow(11).createCell(1).setCellValue("名称");
         sheet1.getRow(11).createCell(2).setCellValue("存储类型");
         sheet1.getRow(11).createCell(3).setCellValue("备注");
         sheet1.getRow(11).createCell(4).setCellValue("hadoop客户端");
         sheet1.getRow(11).createCell(5).setCellValue("存储层配置信息");
-//        sheet1.getRow(11).createCell(6).setCellValue("附加信息");
-        List<Map<String, Object>> maps = Dbo.queryList("SELECT dsl_name,store_type,is_hadoopclient,dsl_remark," +
+        List<Map<String, Object>> maps = Dbo.queryList("SELECT dsl_id,dsl_name,store_type,is_hadoopclient,dsl_remark," +
                 " string_agg(t2.storage_property_key || ':' || t2.storage_property_val,'@;@') as configure FROM " +
                 Data_store_layer.TableName + " t1 LEFT JOIN " + Data_store_layer_attr.TableName +
-                " t2 ON t1.dsl_id = t2.dsl_id group by dsl_name,store_type,is_hadoopclient,dsl_remark");
+                " t2 ON t1.dsl_id = t2.dsl_id  group by dsl_name,store_type,is_hadoopclient,dsl_remark");
         int count = maps.size();
-
+        //设置IsFlag的下拉框
+        String[] isflagsubjects = new String[IsFlag.values().length];
+        for (int i = 0; i < IsFlag.values().length; i++) {
+            isflagsubjects[i] = IsFlag.values()[i].getValue();
+        }
         for (int i = 0; i < maps.size(); i++) {
             Map<String, Object> stringObjectMap = maps.get(i);
+            String dsl_id = stringObjectMap.get("dsl_id").toString();
             String dsl_name = stringObjectMap.get("dsl_name").toString();
             String store_type = stringObjectMap.get("store_type").toString();
             String dsl_remark = stringObjectMap.get("dsl_remark") == null ? "" : stringObjectMap.get("dsl_remark").toString();
             String is_hadoopclient = stringObjectMap.get("is_hadoopclient").toString();
             String configure = stringObjectMap.get("configure").toString();
+            addValidationData(sheet1, isflagsubjects, 12 + i, 1);
+            Dm_relation_datatable dm_relation_datatable = new Dm_relation_datatable();
+            dm_relation_datatable.setDsl_id(dsl_id);
+            //查询是否当前单元格为是
+            //这里本来想弄一个单选框的，但是查看了apache.poi 到2020.4.26，没有发现有提供单选框的组件，于是放弃
+            List<Dm_relation_datatable> dm_relation_datatables = Dbo.queryList(Dm_relation_datatable.class, "select * from " + Dm_relation_datatable.TableName + " where dsl_id = ? and datatable_id = ?"
+                    , dm_relation_datatable.getDsl_id(), dm_datatable.getDatatable_id());
+            if (dm_relation_datatables.isEmpty()) {
+                sheet1.createRow(12 + i).createCell(0).setCellValue(IsFlag.Fou.getValue());
+            } else {
+                sheet1.createRow(12 + i).createCell(0).setCellValue(IsFlag.Shi.getValue());
+            }
             sheet1.createRow(12 + i).createCell(1).setCellValue(dsl_name);
             sheet1.getRow(12 + i).createCell(2).setCellValue(Store_type.ofValueByCode(store_type));
             sheet1.getRow(12 + i).createCell(3).setCellValue(dsl_remark);
             sheet1.getRow(12 + i).createCell(4).setCellValue(IsFlag.ofValueByCode(is_hadoopclient));
+            //根据sql拼接中特殊的@;@部分进行替换
             sheet1.getRow(12 + i).createCell(5).setCellValue(configure.replace("@;@", "\n"));
-            CellRangeAddress region = new CellRangeAddress(12 + i, 12 + i, 5, 8);
+            //合并单元格
+            region = new CellRangeAddress(12 + i, 12 + i, 5, 8);
             sheet1.addMergedRegion(region);
         }
         //第三部分
         List<Dm_operation_info> dm_operation_infos = Dbo.queryList(Dm_operation_info.class, "select execute_sql from " + Dm_operation_info.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
         String execute_sql = dm_operation_infos.get(0).getExecute_sql();
         sheet1.createRow(13 + count).createCell(0).setCellValue("sql");
+        //设置高亮
+        sheet1.getRow(13 + count).getCell(0).getCellStyle().setFillBackgroundColor(xssfColor);
         sheet1.getRow(13 + count).createCell(1).setCellValue(execute_sql);
-        CellRangeAddress region = new CellRangeAddress(13 + count, 13 + count, 1, 8);
+        //合并单元格
+        region = new CellRangeAddress(13 + count, 13 + count, 1, 4);
         sheet1.addMergedRegion(region);
         //第四部分
         List<Datatable_field_info> datatable_field_infos = Dbo.queryList(Datatable_field_info.class, "select * from " + Datatable_field_info.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
         sheet1.createRow(15 + count).createCell(0).setCellValue("字段信息");
+        sheet1.getRow(15 + count).getCell(0).getCellStyle().setFillBackgroundColor(xssfColor);
         sheet1.createRow(16 + count).createCell(0).setCellValue("序号");
         sheet1.getRow(16 + count).createCell(1).setCellValue("英文名");
         sheet1.getRow(16 + count).createCell(2).setCellValue("中文名");
@@ -1327,17 +1372,20 @@ public class MarketInfoAction extends BaseAction {
         for (int i = 0; i < StoreLayerAdded.values().length; i++) {
             sheet1.getRow(16 + count).createCell(7 + i).setCellValue(StoreLayerAdded.values()[i].getValue());
         }
-        String[] isflagsubjects = new String[IsFlag.values().length];
-        for (int i = 0; i < IsFlag.values().length; i++) {
-            isflagsubjects[i] = IsFlag.values()[i].getValue();
-        }
+        //设置ProcessType的下拉框
         String[] processtypesubjects = new String[ProcessType.values().length];
         for (int i = 0; i < ProcessType.values().length; i++) {
             processtypesubjects[i] = ProcessType.values()[i].getValue();
         }
-
         for (int i = 0; i < datatable_field_infos.size(); i++) {
             Datatable_field_info datatable_field_info = datatable_field_infos.get(i);
+            //查询字段的附加属性是否为是
+            List<Data_store_layer_added> data_store_layer_addeds = Dbo.queryList(Data_store_layer_added.class, "select dsla_storelayer from " + Data_store_layer_added.TableName + " t1 left join " + Dm_column_storage.TableName +
+                    " t2 on t1.dslad_id = t2.dslad_id where datatable_field_id = ?", datatable_field_info.getDatatable_field_id());
+            List<String> dsla_storelayers = new ArrayList<>();
+            for (Data_store_layer_added data_store_layer_added : data_store_layer_addeds) {
+                dsla_storelayers.add(data_store_layer_added.getDsla_storelayer());
+            }
             sheet1.createRow(17 + count + i).createCell(0).setCellValue((i + 1));
             sheet1.getRow(17 + count + i).createCell(1).setCellValue(datatable_field_info.getField_en_name());
             sheet1.getRow(17 + count + i).createCell(2).setCellValue(datatable_field_info.getField_cn_name());
@@ -1348,11 +1396,14 @@ public class MarketInfoAction extends BaseAction {
             sheet1.getRow(17 + count + i).createCell(6).setCellValue(datatable_field_info.getProcess_para());
             for (int j = 0; j < StoreLayerAdded.values().length; j++) {
                 addValidationData(sheet1, isflagsubjects, 17 + count + i, 7 + j);
-                sheet1.getRow(17 + count + i).createCell(7 + j).setCellValue(IsFlag.Fou.getValue());
+                if (dsla_storelayers.contains(StoreLayerAdded.values()[j].getCode())) {
+                    sheet1.getRow(17 + count + i).createCell(7 + j).setCellValue(IsFlag.Shi.getValue());
+                } else {
+                    sheet1.getRow(17 + count + i).createCell(7 + j).setCellValue(IsFlag.Fou.getValue());
+                }
             }
         }
-
-
+        return workbook;
     }
 
     /**
@@ -1503,5 +1554,16 @@ public class MarketInfoAction extends BaseAction {
             resultmap.put("status", true);
             return resultmap;
         }
+    }
+
+    //TODO
+    @Method(desc = "生成集市表到作业调度",
+            logicStep = "生成集市表到作业调度")
+    @Param(name = "data_mart_id", desc = "data_mart_id", range = "String类型集市表主键")
+    @Param(name = "etl_sys_cd", desc = "etl_sys_cd", range = "String类型作业调度ID")
+    @Param(name = "sub_sys_cd", desc = "sub_sys_cd", range = "String类型作业调度任务ID")
+    @Return(desc = "查询返回结果集", range = "无限制")
+    public void generateMartJobToEtl(String etl_sys_cd,String sub_sys_cd,String datatable_id){
+        EtlJobUtil.saveJob(datatable_id, DataSourceType.DML, etl_sys_cd, sub_sys_cd, null);
     }
 }

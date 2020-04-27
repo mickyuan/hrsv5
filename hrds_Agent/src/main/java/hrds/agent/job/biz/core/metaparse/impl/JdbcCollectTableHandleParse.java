@@ -1,4 +1,4 @@
-package hrds.agent.job.biz.core.service;
+package hrds.agent.job.biz.core.metaparse.impl;
 
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
@@ -10,6 +10,7 @@ import hrds.agent.job.biz.bean.CollectTableColumnBean;
 import hrds.agent.job.biz.bean.SourceDataConfBean;
 import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.constant.JobConstant;
+import hrds.agent.job.biz.core.metaparse.AbstractCollectTableHandle;
 import hrds.agent.job.biz.utils.TypeTransLength;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.UnloadType;

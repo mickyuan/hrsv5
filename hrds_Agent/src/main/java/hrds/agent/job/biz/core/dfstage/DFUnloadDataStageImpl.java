@@ -12,8 +12,7 @@ import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
 import hrds.agent.job.biz.core.dbstage.DBUnloadDataStageImpl;
 import hrds.agent.job.biz.core.dfstage.service.FileConversionThread;
-import hrds.agent.job.biz.core.service.CollectTableHandleFactory;
-import hrds.agent.job.biz.core.service.JdbcCollectTableHandleParse;
+import hrds.agent.job.biz.core.metaparse.CollectTableHandleFactory;
 import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.commons.codes.*;
@@ -67,10 +66,11 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 					+ File.separator, true);
 			//列出文件目录下的文件
 			String[] file_name_list = new File(file_path).list(
-					(dir, name) -> name.startsWith(collectTableBean.getHbase_name())
+					(dir, name) -> name.contains(collectTableBean.getTable_name())
 			);
 			//判断是否转存
-			if (IsFlag.Fou.getCode().equals(tableBean.getIs_archived())) {
+			if (IsFlag.Fou.getCode().equals(tableBean.getIs_archived()) || UnloadType.ZengLiangXieShu.getCode().
+					equals(collectTableBean.getUnload_type())) {
 				//不转存
 				//获得本次采集生成的数据文件的总大小
 				if (file_name_list != null && file_name_list.length > 0) {
@@ -93,7 +93,7 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 					throw new AppSystemException("数据字典指定目录下数据文件不存在");
 				}
 				//不用转存，则跳过db文件卸数，直接进行upload
-				LOGGER.info("Db文件采集，不需要转存，卸数跳过");
+				LOGGER.info("Db文件采集，不需要转存或者增量采集，卸数跳过");
 			} else if (IsFlag.Shi.getCode().equals(tableBean.getIs_archived())) {
 				//获取db文件采集转存的文件编码，
 				// XXX 主要涉及到oracle数据库如果用外部表进数，字符集必须跟文件字符集一致的问题
@@ -114,7 +114,7 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 					} else {
 						fd.ng.core.utils.FileUtil.forceMkdir(dir);
 					}
-					LOGGER.info(FileFormat.ofValueByCode(tableBean.getFile_format())+"文件开始转存");
+					LOGGER.info(FileFormat.ofValueByCode(tableBean.getFile_format()) + "文件开始转存");
 					executorService = Executors.newFixedThreadPool(5);
 					List<Future<String>> futures = new ArrayList<>();
 					for (String fileName : file_name_list) {
@@ -130,12 +130,12 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 					//5、获得结果,用于校验多线程采集的结果和写Meta文件
 					for (Future<String> future : futures) {
 						String parseResult = future.get();
-						List<String> split = StringUtil.split(parseResult, JdbcCollectTableHandleParse.STRSPLIT);
+						List<String> split = StringUtil.split(parseResult, Constant.METAINFOSPLIT);
 						fileResult.add(split.get(0));
 						pageCountResult.add(Long.parseLong(split.get(1)));
 						LOGGER.info("---------------" + parseResult + "---------------");
 					}
-					LOGGER.info(FileFormat.ofValueByCode(tableBean.getFile_format())+"文件转存结束");
+					LOGGER.info(FileFormat.ofValueByCode(tableBean.getFile_format()) + "文件转存结束");
 					//统计的结果
 					DBUnloadDataStageImpl.countResult(fileResult, pageCountResult, stageParamInfo);
 					stageParamInfo.setFileNameArr(file_name_list);

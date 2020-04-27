@@ -7,11 +7,9 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.CollectTableColumnBean;
 import hrds.agent.job.biz.constant.DataTypeConstant;
-import hrds.agent.job.biz.core.service.JdbcCollectTableHandleParse;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.exception.AppSystemException;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import hrds.commons.utils.Constant;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
@@ -29,8 +27,6 @@ import java.util.Set;
 @DocClass(desc = "用于对需要进行列合并(表清洗)、列拆分(列清洗)清洗的列，获取采集列列名，更新列信息的工具类",
 		author = "WangZhengcheng")
 public class ColumnTool {
-
-	private static final Log logger = LogFactory.getLog(ColumnTool.class);
 
 	@Method(desc = "根据JobInfo中的列清洗信息返回需要采集的列名", logicStep = "" +
 			"1、验证入参是否为空，如果为空，则抛出异常" +
@@ -129,8 +125,8 @@ public class ColumnTool {
 
 		List<ObjectInspector> listType = new ArrayList<>();
 		List<String> listColumn = new ArrayList<>();
-		List<String> columnAll = StringUtil.split(columns, JdbcCollectTableHandleParse.STRSPLIT);
-		List<String> split = StringUtil.split(types, JdbcCollectTableHandleParse.STRSPLIT);//字段类型
+		List<String> columnAll = StringUtil.split(columns, Constant.METAINFOSPLIT);
+		List<String> split = StringUtil.split(types, Constant.METAINFOSPLIT);//字段类型
 		for (int i = 0; i < columnAll.size(); i++) {
 			//TODO 类型转换这个类是否需要修改
 			String columns_type = split.get(i).toLowerCase();
@@ -163,8 +159,8 @@ public class ColumnTool {
 
 	public static TypeDescription getTypeDescription(String columns, String types) {
 		TypeDescription readSchema = TypeDescription.createStruct();
-		List<String> columnAll = StringUtil.split(columns, JdbcCollectTableHandleParse.STRSPLIT);
-		List<String> typeList = StringUtil.split(types, JdbcCollectTableHandleParse.STRSPLIT);//字段类型
+		List<String> columnAll = StringUtil.split(columns, Constant.METAINFOSPLIT);
+		List<String> typeList = StringUtil.split(types, Constant.METAINFOSPLIT);//字段类型
 		for (int i = 0; i < columnAll.size(); i++) {
 			//TODO 类型转换这个类是否需要修改
 //			String columns_type = DataTypeTransformHive.tansform(split.get(i).toUpperCase());

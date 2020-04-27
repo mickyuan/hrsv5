@@ -18,6 +18,7 @@ import hrds.commons.exception.BusinessException;
 import hrds.commons.tree.background.TreeNodeInfo;
 import hrds.commons.tree.background.bean.TreeConf;
 import hrds.commons.tree.commons.TreePageSource;
+import hrds.commons.utils.Constant;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.commons.utils.tree.Node;
 import hrds.commons.utils.tree.NodeDataConvertedTreeList;
@@ -35,8 +36,6 @@ import java.util.Map;
 public class DataRangeManageAction extends BaseAction {
 	// 有效结束日期
 	public static final String END_DATE = "99991231";
-
-	private static final String KAFKA = "kafka";
 
 	private static final Type MAPTYPE = new TypeReference<Map<String, Object>>() {
 	}.getType();
@@ -77,72 +76,77 @@ public class DataRangeManageAction extends BaseAction {
 						tableDataInfo.getColumn_name(), user_id);
 			} else if (DataSourceType.DML == DataSourceType.ofEnumByCode(data_layer)) {
 				// 3.保存集市层数据
-				for (long userId : user_id) {
-					List<Dm_datatable> dmDataTables = Dbo.queryList(Dm_datatable.class,
-							"SELECT datatable_en_name,datatable_cn_name FROM " + Dm_datatable.TableName +
-									" WHERE datatable_id = ?", tableDataInfo.getFile_id());
-					for (Dm_datatable dmDataTable : dmDataTables) {
-						// 删除接口表信息
-						deleteInterfaceTableInfo(userId, dmDataTable.getDatatable_en_name());
-						Table_use_info tableUseInfo = new Table_use_info();
-						tableUseInfo.setTable_blsystem(data_layer);
-						// 生成主键,并记录
-						String useId = PrimayKeyGener.getNextId();
-						tableUseInfo.setUse_id(useId);
-						if (StringUtil.isBlank(dmDataTable.getDatatable_en_name())) {
-							tableUseInfo.setOriginal_name(dmDataTable.getDatatable_en_name());
-						} else {
-							tableUseInfo.setOriginal_name(dmDataTable.getDatatable_cn_name());
-						}
-						if (StringUtil.isBlank(table_note)) {
-							tableUseInfo.setTable_note("");
-						} else {
-							tableUseInfo.setTable_note(table_note);
-						}
-						tableUseInfo.add(Dbo.db());
-						// 获取列信息
-						List<Datatable_field_info> fieldInfos = Dbo.queryList(Datatable_field_info.class,
-								"SELECT field_en_name,field_type FROM " + Datatable_field_info.TableName
-										+ " WHERE datatable_id = ?", tableDataInfo.getFile_id());
-						Datatable_field_info field_info = new Datatable_field_info();
-						StringBuilder wholeColumns = new StringBuilder();
-						StringBuilder wholeTypes = new StringBuilder();
-						for (Datatable_field_info fieldInfo : fieldInfos) {
-							wholeColumns.append(fieldInfo.getField_en_name()).append(",");
-							wholeTypes.append(fieldInfo.getField_type()).append("|");
-						}
-						Map<String, String> columnType;
-						StringBuilder checkedColumns = new StringBuilder();
-						if (StringUtil.isBlank(tableDataInfo.getFile_id())) {
-							for (Datatable_field_info fieldInfo : fieldInfos) {
-								checkedColumns.append(fieldInfo.getField_en_name()).append(",");
-							}
-							columnType = getColumnType(checkedColumns.toString(), wholeColumns.toString(),
-									wholeTypes.toString());
-						} else {
-							columnType = getColumnType(String.join(",", tableDataInfo.getColumn_name()),
-									wholeColumns.toString(), wholeTypes.toString());
-						}
-						// 保存sysreg信息表
-						Sysreg_parameter_info parameter_info = new Sysreg_parameter_info();
-						// 主键
-						parameter_info.setParameter_id(PrimayKeyGener.getNextId());
-						// 使用ID
-						parameter_info.setUse_id(useId);
-						// 是否标识
-						parameter_info.setIs_flag(IsFlag.Fou.getCode());
-						// 用户ID
-						parameter_info.setUser_id(userId);
-						// 获取列信息
-						parameter_info.setTable_column_name(checkedColumns.toString().toUpperCase());
-						parameter_info.setRemark(JsonUtil.toJson(columnType).toUpperCase());
-						parameter_info.add(Dbo.db());
-					}
-				}
+				saveDMLData(table_note, data_layer, user_id, tableDataInfo);
 			} else {
 				throw new BusinessException("该数据层还未开发，待续。。。" + data_layer);
 			}
 			InterfaceManager.userTableInfo();
+		}
+	}
+
+	@Method(desc = "保存集市层数据", logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制" +
+			"2.查询集市层表数据信息" +
+			"3.删除接口表信息" +
+			"4.保存系统登记表使用信息" +
+			"5.获取列信息" +
+			"6.判断选择列是否为空" +
+			"6.1不为空，列名存选择列以逗号拼接，表说明存选择列与所有列的交集以及对应列类型" +
+			"6.2为空，列名存所有列，表说明存所有列以及对应列类型" +
+			"7.保存系统登记参数表信息，一对一存储")
+	@Param(name = "user_id", desc = "用户ID", range = "新增用户时生成")
+	@Param(name = "table_note", desc = "备注", range = "无限制")
+	@Param(name = "file_id", desc = "文件ID", range = "无限制")
+	@Param(name = "data_layer", desc = "数据层，树根节点", range = "无限制")
+	@Param(name = "tableDataInfo", desc = "表数据信息对象", range = "无限制", isBean = true)
+	private void saveDMLData(String table_note, String data_layer, long[] user_id, TableDataInfo tableDataInfo) {
+		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
+		// 2.查询集市层表数据信息
+		for (long userId : user_id) {
+			List<Dm_datatable> dmDataTables = Dbo.queryList(Dm_datatable.class,
+					"SELECT datatable_en_name,datatable_cn_name FROM " + Dm_datatable.TableName +
+							" WHERE datatable_id = ?", tableDataInfo.getFile_id());
+			for (Dm_datatable dmDataTable : dmDataTables) {
+				// 3.删除接口表信息
+				deleteInterfaceTableInfo(userId, dmDataTable.getDatatable_en_name());
+				// 生成主键,并记录
+				String useId = PrimayKeyGener.getNextId();
+				// 4.保存系统登记表使用信息
+				addTableUseInfo(table_note, data_layer, userId, useId, new Table_use_info(),
+						dmDataTable.getDatatable_en_name(), dmDataTable.getDatatable_cn_name());
+				// 5.获取列信息
+				List<Datatable_field_info> fieldInfos = Dbo.queryList(Datatable_field_info.class,
+						"SELECT field_en_name,field_type FROM " + Datatable_field_info.TableName
+								+ " WHERE datatable_id = ?", tableDataInfo.getFile_id());
+				Sysreg_parameter_info sysreg_parameter_info = new Sysreg_parameter_info();
+				sysreg_parameter_info.setUser_id(userId);
+				sysreg_parameter_info.setUse_id(useId);
+				sysreg_parameter_info.setIs_flag(IsFlag.Fou.getCode());
+				sysreg_parameter_info.setParameter_id(PrimayKeyGener.getNextId());
+				StringBuilder columnSb = new StringBuilder();
+				StringBuilder typeSb = new StringBuilder();
+				for (Datatable_field_info fieldInfo : fieldInfos) {
+					columnSb.append(fieldInfo.getField_en_name()).append(",");
+					typeSb.append(fieldInfo.getField_type()).append("|");
+				}
+				String table_column_name = columnSb.deleteCharAt(columnSb.length() - 1).toString();
+				String table_column_type = typeSb.deleteCharAt(typeSb.length() - 1).toString();
+				String[] column_name = tableDataInfo.getColumn_name();
+				// 6.判断选择列是否为空
+				if (column_name != null && column_name.length != 0) {
+					// 6.1不为空，列名存选择列以逗号拼接，表说明存选择列与所有列的交集以及对应列类型
+					String columnName = String.join(",", column_name);
+					sysreg_parameter_info.setTable_column_name(columnName);
+					sysreg_parameter_info.setRemark(getColumnAndType(columnName, table_column_name,
+							table_column_type).toString());
+				} else {
+					// 6.2为空，列名存所有列，表说明存所有列以及对应列类型
+					sysreg_parameter_info.setTable_column_name(table_column_name);
+					sysreg_parameter_info.setRemark(getColumnAndType(table_column_name, table_column_name,
+							table_column_type).toString());
+				}
+				// 7.保存系统登记参数表信息，一对一存储
+				sysreg_parameter_info.add(Dbo.db());
+			}
 		}
 	}
 
@@ -157,7 +161,7 @@ public class DataRangeManageAction extends BaseAction {
 			"8.1根据用户ID、表名删除接口表数据" +
 			"9.新增表使用信息" +
 			"10.保存系统登记表参数信息")
-	@Param(name = "userId", desc = "用户ID", range = "新增用户时生成")
+	@Param(name = "user_id", desc = "用户ID", range = "新增用户时生成")
 	@Param(name = "table_note", desc = "备注", range = "无限制")
 	@Param(name = "file_id", desc = "文件ID", range = "无限制")
 	@Param(name = "data_layer", desc = "数据层，树根节点", range = "无限制")
@@ -208,37 +212,36 @@ public class DataRangeManageAction extends BaseAction {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		// 2.封装系统登记参数表信息
 		Sysreg_parameter_info sysreg_parameter_info = new Sysreg_parameter_info();
-		if (column_name != null && column_name.length != 0) {
-			for (String columnName : column_name) {
-				sysreg_parameter_info.setParameter_id(PrimayKeyGener.getNextId());
-				sysreg_parameter_info.setUse_id(useId);
-				sysreg_parameter_info.setIs_flag(IsFlag.Fou.getCode());
-				sysreg_parameter_info.setUser_id(userId);
-				// 3.元数据并解析
-				if (StringUtil.isBlank(meta_info)) {
-					throw new BusinessException("当前表对应的meta信息为空");
-				}
-				Map<String, Object> metaInfoMap = JsonUtil.toObject(meta_info, MAPTYPE);
-				Object column = metaInfoMap.get("column");
-				Object type = metaInfoMap.get("type");
-				if (StringUtil.isBlank(columnName)) {
-					if (column == null) {
-						throw new BusinessException("当前表对应的meta信息没有列信息");
-					}
-					columnName = column.toString();
-					sysreg_parameter_info.setTable_column_name(column.toString());
-				} else {
-					sysreg_parameter_info.setTable_column_name(columnName.toUpperCase());
-				}
-				// 4.获取相同的列类型参数信息
-				if (type != null) {
-					Map<String, String> columnTypeMap = getColumnType(columnName, column.toString(), type.toString());
-					sysreg_parameter_info.setRemark(JsonUtil.toJson(columnTypeMap).toUpperCase());
-				}
-				// 5.保存系统登记表参数信息
-				sysreg_parameter_info.add(Dbo.db());
-			}
+		sysreg_parameter_info.setParameter_id(PrimayKeyGener.getNextId());
+		sysreg_parameter_info.setUse_id(useId);
+		sysreg_parameter_info.setIs_flag(IsFlag.Fou.getCode());
+		sysreg_parameter_info.setUser_id(userId);
+		// 3.元数据并解析
+		if (StringUtil.isBlank(meta_info)) {
+			throw new BusinessException("当前表对应的meta信息为空");
 		}
+		Map<String, Object> metaInfoMap = JsonUtil.toObject(meta_info, MAPTYPE);
+		Object column = metaInfoMap.get("column");
+		Object type = metaInfoMap.get("type");
+		if (column == null) {
+			throw new BusinessException("当前表对应的meta信息没有列信息");
+		}
+		if (type == null) {
+			throw new BusinessException("当前表对应的meta信息没有列类型信息");
+		}
+		String columnName = "";
+		if (column_name != null && column_name.length != 0) {
+			columnName = String.join(Constant.METAINFOSPLIT, column_name);
+		} else {
+			columnName = metaInfoMap.get("column").toString();
+		}
+		// 4.获取相同的列类型参数信息
+		Map<String, String> columnTypeMap = getColumnAndType(columnName,
+				column.toString(), type.toString());
+		sysreg_parameter_info.setRemark(JsonUtil.toJson(columnTypeMap).toUpperCase());
+		// 5.保存系统登记表参数信息
+		sysreg_parameter_info.setTable_column_name(columnName);
+		sysreg_parameter_info.add(Dbo.db());
 	}
 
 	@Method(desc = "新增表使用信息", logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制" +
@@ -273,29 +276,29 @@ public class DataRangeManageAction extends BaseAction {
 		table_use_info.add(Dbo.db());
 	}
 
-	@Method(desc = "获取列类型", logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制" +
-			"2.遍历获取新增的列类型" +
-			"3.返回新增的列类型")
-	@Param(name = "checkedColumns", desc = "已选择的column，‘|’连接", range = "无限制")
+	@Method(desc = "获取列与列对应类型", logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制" +
+			"2.遍历获取列与列对应类型" +
+			"3.返回列与列对应类型")
+	@Param(name = "checkedColumns", desc = "已选择的column，逗号连接", range = "无限制")
 	@Param(name = "columns", desc = "所有的column，逗号连接", range = "无限制")
-	@Param(name = "type", desc = "所有的type，逗号连接", range = "无限制")
+	@Param(name = "type", desc = "所有的type，'|'连接", range = "无限制")
 	@Return(desc = "返回列类型集合数据", range = "无限制")
-	private Map<String, String> getColumnType(String column, String columns, String type) {
+	private Map<String, String> getColumnAndType(String column, String columns, String type) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		Map<String, String> columnTypeMap = new HashMap<>();
-		String[] checkedColumnsSplit = column.split(",");
-		String[] wholeColumnsSplit = columns.split(",");
-		String[] wholeTypesSplit = type.split("\\|");
-		// 2.遍历获取新增的列类型
+		List<String> checkedColumnsSplit = StringUtil.split(column, Constant.METAINFOSPLIT);
+		List<String> wholeColumnsSplit = StringUtil.split(columns, Constant.METAINFOSPLIT);
+		List<String> wholeTypesSplit = StringUtil.split(type, Constant.METAINFOSPLIT);
+		// 2.遍历获取列与列对应类型
 		for (String checkedColumn : checkedColumnsSplit) {
-			for (int i = 0; i < wholeColumnsSplit.length; i++) {
-				if (checkedColumn.equalsIgnoreCase(wholeColumnsSplit[i])) {
-					columnTypeMap.put(checkedColumn, wholeTypesSplit[i]);
+			for (int i = 0; i < wholeColumnsSplit.size(); i++) {
+				if (checkedColumn.equalsIgnoreCase(wholeColumnsSplit.get(i))) {
+					columnTypeMap.put(checkedColumn, wholeTypesSplit.get(i));
 					break;
 				}
 			}
 		}
-		// 3.返回新增的列类型
+		// 3.返回列与列对应类型
 		return columnTypeMap;
 	}
 

@@ -34,6 +34,7 @@ public class EtlJobUtil {
     private static final String BATCH_DATE = "#{txdate}";
     //数据管控-质量管理常量
     public static final String QUALITY_MANAGE = "quality_manage";
+    public static final String MARTPRONAME = "datamart.sh";
 
     @Method(desc = "保存作业", logicStep = "保存作业")
     public static void saveJob() {
@@ -79,7 +80,23 @@ public class EtlJobUtil {
             }
             //DML层
             if (dataSourceType == DataSourceType.DML) {
-                throw new BusinessException("暂未实现!");
+                asmSql.clean();
+                Dm_datatable dm_datatable = new Dm_datatable();
+                dm_datatable.setDatatable_id(pkId);
+                asmSql.addSql("SELECT * FROM " + Dm_datatable.TableName + " WHERE datatable_id = ?");
+                asmSql.addParam(dm_datatable.getDatatable_id());
+                dm_datatable = Dbo.queryOneObject(Dm_datatable.class, asmSql.sql(), asmSql.params())
+                        .orElseThrow(() -> (new BusinessException("获取规则校验信息的SQL出错!")));
+                //TODO
+                //sub_name 和 sub_sys_desc 有啥意义？
+                String sub_name=sub_sys_cd;
+                String sub_sys_desc=sub_sys_cd;
+                String etl_job=dm_datatable.getDatatable_en_name();
+                String etl_job_desc=dm_datatable.getDatatable_en_name();
+                String param=pkId+"@"+BATCH_DATE;
+                jobCommonMethod(sub_name, sub_sys_desc, etl_job, etl_job_desc, param, dataSourceType,MARTPRONAME,
+                        etl_sys_cd, sub_sys_cd, db);
+//                throw new BusinessException("暂未实现!");
             }
             //DQC
             if (dataSourceType == DataSourceType.DQC) {

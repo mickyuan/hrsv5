@@ -10,6 +10,7 @@ import hrds.agent.job.biz.bean.SourceDataConfBean;
 import hrds.agent.job.biz.core.DataFileJobImpl;
 import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
+import hrds.commons.base.AgentBaseAction;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.PackUtil;
@@ -22,7 +23,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 
 @DocClass(desc = "db文件采集agent接受发送任务的接口", author = "zxz", createdate = "2020/3/26 9:56")
-public class DbFileCollectJob {
+public class DbFileCollectJob extends AgentBaseAction {
 	@Method(desc = "文件采集和前端交互的接口",
 			logicStep = "1.获取json数组转成File_source的集合" +
 					"2.校验对象的值是否正确" +

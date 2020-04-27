@@ -6,7 +6,6 @@ import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.core.dbstage.writer.AbstractFileWriter;
-import hrds.agent.job.biz.core.service.JdbcCollectTableHandleParse;
 import hrds.agent.job.biz.dataclean.Clean;
 import hrds.agent.job.biz.dataclean.CleanFactory;
 import hrds.agent.job.biz.dataclean.DataCleanInterface;
@@ -67,9 +66,9 @@ public class JdbcToParquetFileWriter extends AbstractFileWriter {
 			//清洗配置
 			final DataCleanInterface allClean = CleanFactory.getInstance().getObjectClean("clean_database");
 			//获取所有字段的名称，包括列分割和列合并出来的字段名称
-			List<String> allColumnList = StringUtil.split(tableBean.getColumnMetaInfo(), JdbcCollectTableHandleParse.STRSPLIT);
+			List<String> allColumnList = StringUtil.split(tableBean.getColumnMetaInfo(), Constant.METAINFOSPLIT);
 			//获取所有查询的字段的名称，不包括列分割和列合并出来的字段名称
-			List<String> selectColumnList = StringUtil.split(tableBean.getAllColumns(), JdbcCollectTableHandleParse.STRSPLIT);
+			List<String> selectColumnList = StringUtil.split(tableBean.getAllColumns(), Constant.METAINFOSPLIT);
 			Map<String, Object> parseJson = tableBean.getParseJson();
 			//字符合并
 			Map<String, String> mergeIng = (Map<String, String>) parseJson.get("mergeIng");
@@ -88,9 +87,9 @@ public class JdbcToParquetFileWriter extends AbstractFileWriter {
 			factory = new SimpleGroupFactory(parquetSchema);
 			String fileName = midName + hbase_name + pageNum + index + "." + data_extraction_def.getFile_suffix();
 			parquetWriter = ParquetUtil.getParquetWriter(parquetSchema, fileName);
-			fileInfo.append(fileName).append(JdbcCollectTableHandleParse.STRSPLIT);
+			fileInfo.append(fileName).append(Constant.METAINFOSPLIT);
 			//获取所有查询的字段的类型，不包括列分割和列合并出来的字段类型
-			List<String> type = StringUtil.split(tableBean.getAllType(), JdbcCollectTableHandleParse.STRSPLIT);
+			List<String> type = StringUtil.split(tableBean.getAllType(), Constant.METAINFOSPLIT);
 			while (resultSet.next()) {
 				counter++;
 				midStringOther.delete(0, midStringOther.length());
@@ -139,7 +138,7 @@ public class JdbcToParquetFileWriter extends AbstractFileWriter {
 						index++;
 						fileName = midName + hbase_name + pageNum + index + "." + data_extraction_def.getFile_suffix();
 						parquetWriter = ParquetUtil.getParquetWriter(parquetSchema, fileName);
-						fileInfo.append(fileName).append(JdbcCollectTableHandleParse.STRSPLIT);
+						fileInfo.append(fileName).append(Constant.METAINFOSPLIT);
 					}
 				}
 				parquetWriter.write(group);

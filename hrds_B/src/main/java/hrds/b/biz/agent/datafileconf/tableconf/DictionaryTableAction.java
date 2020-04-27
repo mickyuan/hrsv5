@@ -31,13 +31,13 @@ import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.AgentActionUtil;
 import hrds.commons.utils.key.PrimayKeyGener;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.apache.commons.collections.map.HashedMap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.tools.ant.util.DateUtils;
 
 @DocClass(desc = "数据文件采集表配置", author = "Mr.Lee", createdate = "2020-04-13 14:41")
 public class DictionaryTableAction extends BaseAction {
@@ -83,7 +83,8 @@ public class DictionaryTableAction extends BaseAction {
               + "6: 将删除的表在数据库表信息集合中剔除掉,然后再将数据字典新增的表和数据库的表进行合并"
               + "   6-1: 在数据库表的集合中剔除被删除的表"
               + "   6-2: 在数据字典中剔除新增意外的表,然后设置默认的字段信息"
-              + "   6-3: 将数据字典新增的表和数据库中的表集合进行合并"
+              + "   6-3: 删除数据字典还存在表.保留数据库的信息"
+              + "   6-4: 将数据字典新增的表和数据库中的表集合进行合并"
               + "7: 检查表是否被采集过"
               + "8: 返回表的信息")
   @Param(name = "colSetId", desc = "采集任务ID", range = "不可为空")
@@ -105,10 +106,10 @@ public class DictionaryTableAction extends BaseAction {
     List<Table_info> dirTableList = getDirTableData(colSetId);
 
     //    4: 如果数据库中的表记录是空的,则判断数据字典中是否有表信息,如果有则处理数据字典中的表,并添加一些默认值
-    if (databaseTableList.isEmpty()) {
+    if (!databaseTableList.isEmpty()) {
       // 判断数据字典的表是否存在
       if (dirTableList == null || dirTableList.isEmpty()) {
-        CheckParam.throwErrorMsg("数据字典与数据库中的表信息为空");
+        CheckParam.throwErrorMsg("数据字典中的表信息为空");
       }
       //      5: 判断数据字典和数据库中的表进行对比,找出被删除的表和新增的表
       Map<String, List<String>> differenceInfo =
@@ -116,13 +117,22 @@ public class DictionaryTableAction extends BaseAction {
 
       //        6: 将删除的表在数据库表信息集合中剔除掉,然后再将数据字典新增的表和数据库的表进行合并
       //      6-1: 在数据库表的集合中剔除被删除的表
-      removeTableBean(differenceInfo.get("delete"), databaseTableList, true);
+      if (!differenceInfo.get("delete").isEmpty()) {
+        removeTableBean(differenceInfo.get("delete"), databaseTableList, true);
+      }
 
-      //      6-2: 在数据字典中找到新增的表,然后设置默认的字段信息
-      removeTableBean(differenceInfo.get("add"), dirTableList, false);
-      setDirTableDefaultData(dirTableList, colSetId);
+      //      6-2: 在数据字典中找到还存的表,然后删除掉...因为数据库中有此表信息
+      if (!differenceInfo.get("exists").isEmpty()) {
+        removeTableBean(differenceInfo.get("exists"), dirTableList, true);
+      }
 
-      //      6-3: 将数据字典新增的表和数据库中的表集合进行合并
+      //      6-3: 在数据字典中找到新增的表,然后设置默认的字段信息
+      if (!differenceInfo.get("add").isEmpty()) {
+        removeTableBean(differenceInfo.get("add"), dirTableList, false);
+        setDirTableDefaultData(dirTableList, colSetId);
+      }
+
+      //      6-4: 将数据字典新增的表和数据库中的表集合进行合并
       dirTableList.addAll(databaseTableList);
 
     } else {
@@ -251,7 +261,8 @@ public class DictionaryTableAction extends BaseAction {
       name = "tableColumns",
       desc = "表的列集合对象字符串,如果列发生了选择必须有,否则可以为空",
       range = "可为空...如果列发生了选择必须有,否则可以为空,如果为空则使用默认的...每个表名对应的列信息集合",
-      nullable = true)
+      nullable = true,
+      example = "数据格式如 {tableName:[{}]}, tableName:表示为表名称,后面的值数组表示表的列信息集合")
   @Return(desc = "返回采集任务的ID", range = "返回采集任务的ID")
   public long saveTableData(long colSetId, Table_info[] tableInfos, String tableColumns) {
 
@@ -293,10 +304,14 @@ public class DictionaryTableAction extends BaseAction {
           Map<String, List<Table_column>> tableColumnList =
               JSON.parseObject(
                   tableColumns, new TypeReference<Map<String, List<Table_column>>>() {});
+          if (tableColumnList == null || tableColumnList.isEmpty()) {
+            CheckParam.throwErrorMsg("为获取到表的列信息");
+          }
           setColumnDefaultData(
               tableColumnList.get(tableInfo.getTable_name()), Long.parseLong(table_id));
         }
       } else {
+
         // 编辑触发了列选择情况
         if (StringUtil.isNotBlank(tableColumns)) {
           // 如果是编辑点击查看列进行了保存,则进行列的比对检查是否有新增或者删除的字段信息
@@ -506,20 +521,23 @@ public class DictionaryTableAction extends BaseAction {
   @Param(name = "deleteType", desc = "区分是数据库的表集合处理还是数据字典的表集合处理", range = "可以为空")
   private void removeTableBean(
       List<String> tableNameList, List<Table_info> tableList, boolean deleteType) {
-    tableList.forEach(
-        table_info -> {
-          if (deleteType) {
-            // 如果删除的表名称和数据库中记录的表名一样,则删除(数据库的)
-            if (tableNameList.contains(table_info.getTable_name())) {
-              tableList.remove(table_info);
-            }
-          } else {
-            // 删除还存在的表信息,保留新增的表信息(数据字典的)
-            if (!tableNameList.contains(table_info.getTable_name())) {
-              tableList.remove(table_info);
-            }
-          }
-        });
+
+    Iterator<Table_info> iterator = tableList.iterator();
+
+    while (iterator.hasNext()) {
+      Table_info table_info = iterator.next();
+      if (deleteType) {
+        // 如果删除的表名称和数据库中记录的表名一样,则删除(数据库的)
+        if (tableNameList.contains(table_info.getTable_name())) {
+          iterator.remove();
+        }
+      } else {
+        // 删除还存在的表信息,保留新增的表信息(数据字典的)
+        if (!tableNameList.contains(table_info.getTable_name())) {
+          iterator.remove();
+        }
+      }
+    }
   }
 
   @Method(desc = "根据任务ID获取任务下的表信息", logicStep = "1: 检查当前任务是否存在" + "2: 获取表信息")
@@ -575,6 +593,10 @@ public class DictionaryTableAction extends BaseAction {
   @Param(name = "deleteTableName", desc = "要删除的表集合信息", range = "可为空")
   private void deleteTableInfoByTableName(long colSetId, List<String> deleteTableName) {
 
+    if (deleteTableName == null || deleteTableName.size() == 0) {
+      return;
+    }
+
     // 获取要删除的表的ID
     Assembler assembler =
         Assembler.newInstance()
@@ -590,10 +612,14 @@ public class DictionaryTableAction extends BaseAction {
     assembler =
         Assembler.newInstance()
             .addSql(
-                "select t2.column_id from table_info t1 left join table_column t2 on t1.table_id = t2.table_id")
+                "SELECT t2.column_id FROM "
+                    + Table_info.TableName
+                    + " t1 LEFT JOIN "
+                    + Table_column.TableName
+                    + " t2 ON t1.table_id = t2.table_id "
+                    + "WHERE t1.database_id = ?")
             .addParam(colSetId)
-            .addORParam(
-                "t1.table_id", deleteTableId.toArray(new Object[deleteTableId.size()]), "WHERE");
+            .addORParam("t1.table_id", deleteTableId.toArray(new Object[deleteTableId.size()]));
     List<Object> deleteTableColumnId = Dbo.queryOneColumnList(assembler.sql(), assembler.params());
 
     // 1: 先获取表的ID(table_id)信息,在删除表信息(table_info)

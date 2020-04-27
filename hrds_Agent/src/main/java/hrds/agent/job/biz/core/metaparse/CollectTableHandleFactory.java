@@ -1,6 +1,8 @@
-package hrds.agent.job.biz.core.service;
+package hrds.agent.job.biz.core.metaparse;
 
 import hrds.agent.job.biz.bean.SourceDataConfBean;
+import hrds.agent.job.biz.core.metaparse.impl.DFCollectTableHandleParse;
+import hrds.agent.job.biz.core.metaparse.impl.JdbcCollectTableHandleParse;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.exception.AppSystemException;
 

@@ -4,6 +4,7 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
+import fd.ng.core.utils.StringUtil;
 import fd.ng.web.util.Dbo;
 import hrds.b.biz.agent.datafileconf.CheckParam;
 import hrds.commons.base.BaseAction;
@@ -69,17 +70,18 @@ public class CollectFIleAction extends BaseAction {
   @Param(name = "database_set", desc = "数据文件的配置实体", range = "不可为空", isBean = true)
   @Return(desc = "返回此次任务的ID", range = "不会为空")
   public String saveDataFile(Database_set database_set) {
-    CheckParam.checkData("采集任务编号不能为空", database_set.getDatabase_number());
+    CheckParam.checkData("采集任务作业编号不能为空", database_set.getDatabase_number());
+    CheckParam.checkData("采集任务名称不能为空", database_set.getTask_name());
     CheckParam.checkData("采集数据文件路径不能为空", database_set.getPlane_url());
     CheckParam.checkData("分类编号不能为空", String.valueOf(database_set.getClassify_id()));
     //    1: 检查数据编号是否存在
     long countNum =
         Dbo.queryNumber(
-                "SELECT COUNT(1) FROM " + Database_set.TableName + " WHERE database_number = ? ",
-                database_set.getDatabase_number())
+                "SELECT COUNT(1) FROM " + Database_set.TableName + " WHERE task_name = ? ",
+                database_set.getTask_name())
             .orElseThrow(() -> new BusinessException("SQL查询异常"));
-    if (countNum != 0) {
-      CheckParam.throwErrorMsg("当前任务编号( %s ),已经存在", database_set.getDatabase_number());
+    if (countNum == 1) {
+      CheckParam.throwErrorMsg("采集任务名称(%s),已经存在", database_set.getTask_name());
     }
     //    2: 设置此次任务的ID
     String database_id = PrimayKeyGener.getNextId();
@@ -112,9 +114,12 @@ public class CollectFIleAction extends BaseAction {
       CheckParam.throwErrorMsg("当前任务ID( %s ),已经不存在", database_set.getDatabase_number());
     }
     //    2: 更新数据文件采集信息
-    database_set.setIs_sendok(IsFlag.Fou.getCode());
     database_set.update(Dbo.db());
     //    3: 返回生成的采集任务ID给前端
     return database_set.getDatabase_id().toString();
+  }
+
+  public static void main(String[] args) {
+    System.out.println(StringUtil.unicode2String("\\u31"));
   }
 }

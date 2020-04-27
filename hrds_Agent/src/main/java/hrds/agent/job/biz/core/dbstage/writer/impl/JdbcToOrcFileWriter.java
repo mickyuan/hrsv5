@@ -6,7 +6,6 @@ import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.core.dbstage.writer.AbstractFileWriter;
-import hrds.agent.job.biz.core.service.JdbcCollectTableHandleParse;
 import hrds.agent.job.biz.dataclean.Clean;
 import hrds.agent.job.biz.dataclean.CleanFactory;
 import hrds.agent.job.biz.dataclean.DataCleanInterface;
@@ -64,7 +63,7 @@ public class JdbcToOrcFileWriter extends AbstractFileWriter {
 		StringBuilder fileInfo = new StringBuilder(1024);
 		try {
 			String fileName = midName + hbase_name + pageNum + index + "." + data_extraction_def.getFile_suffix();
-			fileInfo.append(fileName).append(JdbcCollectTableHandleParse.STRSPLIT);
+			fileInfo.append(fileName).append(Constant.METAINFOSPLIT);
 			writerFile = new WriterFile(fileName);
 			avroWriter = getAvroWriter(tableBean.getTypeArray(), hbase_name, midName, pageNum);
 			writer = writerFile.getOrcWrite();
@@ -72,9 +71,9 @@ public class JdbcToOrcFileWriter extends AbstractFileWriter {
 			//清洗配置
 			final DataCleanInterface allClean = CleanFactory.getInstance().getObjectClean("clean_database");
 			//获取所有字段的名称，包括列分割和列合并出来的字段名称
-			List<String> allColumnList = StringUtil.split(tableBean.getColumnMetaInfo(), JdbcCollectTableHandleParse.STRSPLIT);
+			List<String> allColumnList = StringUtil.split(tableBean.getColumnMetaInfo(), Constant.METAINFOSPLIT);
 			//获取所有查询的字段的名称，不包括列分割和列合并出来的字段名称
-			List<String> selectColumnList = StringUtil.split(tableBean.getAllColumns(), JdbcCollectTableHandleParse.STRSPLIT);
+			List<String> selectColumnList = StringUtil.split(tableBean.getAllColumns(), Constant.METAINFOSPLIT);
 			Map<String, Object> parseJson = tableBean.getParseJson();
 			//字符合并
 			Map<String, String> mergeIng = (Map<String, String>) parseJson.get("mergeIng");
@@ -86,7 +85,7 @@ public class JdbcToOrcFileWriter extends AbstractFileWriter {
 			StringBuilder sb_ = new StringBuilder();//用来写临时数据
 
 			List<String> typeList = StringUtil.split(tableBean.getAllType(),
-					JdbcCollectTableHandleParse.STRSPLIT);
+					Constant.METAINFOSPLIT);
 			String currValue;
 			int numberOfColumns = selectColumnList.size();
 			int[] typeArray = tableBean.getTypeArray();
@@ -147,7 +146,7 @@ public class JdbcToOrcFileWriter extends AbstractFileWriter {
 						fileName = midName + hbase_name + pageNum + index + "." + data_extraction_def.getFile_suffix();
 						writerFile = new WriterFile(fileName);
 						writer = writerFile.getOrcWrite();
-						fileInfo.append(fileName).append(JdbcCollectTableHandleParse.STRSPLIT);
+						fileInfo.append(fileName).append(Constant.METAINFOSPLIT);
 					}
 				}
 				writer.write(NullWritable.get(), serde.serialize(lineData, inspector));

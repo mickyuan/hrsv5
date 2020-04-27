@@ -5,9 +5,9 @@ import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.core.dfstage.fileparser.FileParserAbstract;
-import hrds.agent.job.biz.core.service.JdbcCollectTableHandleParse;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.hadoop.readconfig.ConfigReader;
+import hrds.commons.utils.Constant;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
@@ -70,6 +70,6 @@ public class SequenceFileParserDeal extends FileParserAbstract {
 				e.printStackTrace();
 			}
 		}
-		return unloadFileAbsolutePath + JdbcCollectTableHandleParse.STRSPLIT + fileRowCount;
+		return unloadFileAbsolutePath + Constant.METAINFOSPLIT + fileRowCount;
 	}
 }

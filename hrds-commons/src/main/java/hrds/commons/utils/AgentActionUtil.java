@@ -50,8 +50,10 @@ public class AgentActionUtil {
 	public static final String ADDSOURCEFILEATTRIBUTE = "/hrds/server/addSourceFileAttribute";
 	//单表保存或更新data_store_reg表
 	public static final String ADDDATASTOREREG = "/hrds/server/addDataStoreReg";
-	//向agent端发送一个数据库直连采集任务
-	public static final String SENDJDBCOLLECTTASKINFO = "/hrds/agent/trans/biz/jdbccollect/execute";
+	//向agent端发送一个数据库采集抽取任务
+	public static final String SENDJDBCCOLLECTTASKINFO = "/hrds/agent/trans/biz/jdbccollect/execute";
+	//向agent端发送一个db文件采集任务
+	public static final String SENDDBCOLLECTTASKINFO = "/hrds/agent/trans/biz/dbfilecollect/execute";
 	//agent连接服务端批量添加ftp_transfered(ftp已传输表)
 	public static final String BATCHADDFTPTRANSFER = "/hrds/server/batchAddFtpTransfer";
 	//向agent端发送一个ftp采集的任务
@@ -78,7 +80,8 @@ public class AgentActionUtil {
 		list.add(GETTABLECOUNT);
 		list.add(GETCUSTCOLUMN);
 		list.add(ADDSOURCEFILEATTRIBUTE);
-		list.add(SENDJDBCOLLECTTASKINFO);
+		list.add(SENDJDBCCOLLECTTASKINFO);
+		list.add(SENDDBCOLLECTTASKINFO);
 		list.add(BATCHADDFTPTRANSFER);
 		list.add(SENDFTPCOLLECTTASKINFO);
 		list.add(PARSEDATADICTIONARY);

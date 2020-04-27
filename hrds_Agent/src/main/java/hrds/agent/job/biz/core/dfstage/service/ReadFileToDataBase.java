@@ -9,7 +9,6 @@ import hrds.agent.job.biz.bean.DataStoreConfBean;
 import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.constant.DataTypeConstant;
 import hrds.agent.job.biz.constant.JobConstant;
-import hrds.agent.job.biz.core.service.JdbcCollectTableHandleParse;
 import hrds.agent.job.biz.utils.DataTypeTransform;
 import hrds.commons.codes.DataBaseCode;
 import hrds.commons.codes.FileFormat;
@@ -17,6 +16,7 @@ import hrds.commons.codes.IsFlag;
 import hrds.commons.collection.ConnectionTool;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.hadoop.readconfig.ConfigReader;
+import hrds.commons.utils.Constant;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.ql.exec.vector.VectorizedRowBatch;
@@ -89,9 +89,9 @@ public class ReadFileToDataBase implements Callable<Long> {
 			db = ConnectionTool.getDBWrapper(dataStoreConfBean.getData_store_connect_attr());
 			//2.开启事务
 			db.beginTrans();
-			List<String> columnList = StringUtil.split(tableBean.getColumnMetaInfo(), JdbcCollectTableHandleParse.STRSPLIT);
+			List<String> columnList = StringUtil.split(tableBean.getColumnMetaInfo(), Constant.METAINFOSPLIT);
 			List<String> typeList = DataTypeTransform.tansform(StringUtil.split(tableBean.getColTypeMetaInfo(),
-					JdbcCollectTableHandleParse.STRSPLIT), dataStoreConfBean.getDsl_name());
+					Constant.METAINFOSPLIT), dataStoreConfBean.getDsl_name());
 			//3.拼接batch插入数据库的sql
 			String batchSql = getBatchSql(columnList, collectTableBean.getHbase_name() + "_"
 					+ collectTableBean.getEtlDate());
@@ -201,7 +201,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 			String line;
 			Object[] objs;
 			List<String> lengthStrList = StringUtil.split(tableBean.getColLengthInfo(),
-					JdbcCollectTableHandleParse.STRSPLIT);
+					Constant.METAINFOSPLIT);
 			List<Integer> lengthList = new ArrayList<>();
 			for (String lengthStr : lengthStrList) {
 				lengthList.add(Integer.parseInt(lengthStr));

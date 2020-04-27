@@ -4,6 +4,7 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
+import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
@@ -11,6 +12,7 @@ import hrds.commons.base.BaseAction;
 import hrds.commons.entity.Sys_user;
 import hrds.commons.entity.Sysreg_parameter_info;
 import hrds.commons.entity.Table_use_info;
+import hrds.commons.utils.Constant;
 import hrds.g.biz.init.InterfaceManager;
 
 import java.util.ArrayList;
@@ -80,6 +82,7 @@ public class DataTableUseInfoAction extends BaseAction {
 		}
 		// 3.处理数据为数组
 		List<Map<String, String>> list = new ArrayList<>();
+		columnList = StringUtil.split(columnList.get(0), Constant.METAINFOSPLIT);
 		for (String table_column_name : columnList) {
 			Map<String, String> columnMap = new HashMap<>();
 			columnMap.put("table_column_name", table_column_name);

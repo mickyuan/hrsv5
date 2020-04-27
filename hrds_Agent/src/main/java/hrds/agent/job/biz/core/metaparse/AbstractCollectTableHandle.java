@@ -1,4 +1,4 @@
-package hrds.agent.job.biz.core.service;
+package hrds.agent.job.biz.core.metaparse;
 
 import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.utils.StringUtil;
@@ -7,6 +7,7 @@ import hrds.agent.job.biz.bean.CollectTableColumnBean;
 import hrds.agent.job.biz.bean.ColumnCleanBean;
 import hrds.agent.job.biz.bean.SourceDataConfBean;
 import hrds.agent.job.biz.constant.JobConstant;
+import hrds.agent.job.biz.core.metaparse.impl.JdbcCollectTableHandleParse;
 import hrds.agent.job.biz.utils.ColumnTool;
 import hrds.agent.job.biz.utils.SQLUtil;
 import hrds.agent.job.biz.utils.TypeTransLength;
@@ -15,6 +16,7 @@ import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Column_merge;
 import hrds.commons.entity.Column_split;
 import hrds.commons.exception.AppSystemException;
+import hrds.commons.utils.Constant;
 import hrds.commons.utils.Platform;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,9 +34,9 @@ import java.util.*;
  */
 public abstract class AbstractCollectTableHandle implements CollectTableHandle {
 	protected final static Logger LOGGER = LoggerFactory.getLogger(JdbcCollectTableHandleParse.class);
-	public static final String STRSPLIT = "^";
+	protected static final String STRSPLIT = Constant.METAINFOSPLIT;
 
-	static ResultSet getResultSet(String collectSQL, Connection conn) {
+	protected ResultSet getResultSet(String collectSQL, Connection conn) {
 		ResultSet columnSet;
 		try {
 			String exeSql = String.format("SELECT * FROM ( %s ) HYREN_WHERE_ALIAS WHERE 1 = 2", collectSQL);
@@ -46,7 +48,7 @@ public abstract class AbstractCollectTableHandle implements CollectTableHandle {
 		return columnSet;
 	}
 
-	static String getCollectSQL(SourceDataConfBean sourceDataConfBean, CollectTableBean collectTableBean) {
+	protected String getCollectSQL(SourceDataConfBean sourceDataConfBean, CollectTableBean collectTableBean) {
 		//获取自定义sql，如果自定义sql的sql语句
 		String collectSQL;
 		//如果是自定义sql,则使用自定义sql
@@ -88,7 +90,7 @@ public abstract class AbstractCollectTableHandle implements CollectTableHandle {
 	/**
 	 * 获取数据抽取sql,根据页面选择的列
 	 */
-	private static String getCollectSqlByColumn(CollectTableBean collectTableBean,
+	private String getCollectSqlByColumn(CollectTableBean collectTableBean,
 	                                            SourceDataConfBean sourceDataConfBean) {
 		String tableName = collectTableBean.getTable_name();
 		//筛选出不是新列的字段
@@ -127,7 +129,7 @@ public abstract class AbstractCollectTableHandle implements CollectTableHandle {
 	 * @param filter     过滤条件
 	 * @return 返回添加过滤条件的sql
 	 */
-	private static String getCollectSqlAddWhere(String collectSql, String filter) {
+	private String getCollectSqlAddWhere(String collectSql, String filter) {
 		StringBuilder addWhereSql = new StringBuilder();
 		//抽取的sql最后可能需要有过滤条件，需要拼接到collectSQL后面
 		if (!StringUtil.isEmpty(filter)) {
@@ -204,7 +206,7 @@ public abstract class AbstractCollectTableHandle implements CollectTableHandle {
 	/**
 	 * 使用sql获取每个字段的长度，类型，精度
 	 */
-	static Map<String, String> getTableColTypeAndLengthSql(ResultSet columnSet) {
+	protected Map<String, String> getTableColTypeAndLengthSql(ResultSet columnSet) {
 		//定义map存放 类型和长度
 		Map<String, String> map = new LinkedHashMap<>();
 		try {
@@ -224,7 +226,7 @@ public abstract class AbstractCollectTableHandle implements CollectTableHandle {
 		return map;
 	}
 
-	protected static Map<String, Object> parseJson(CollectTableBean collectTableBean) {
+	protected Map<String, Object> parseJson(CollectTableBean collectTableBean) {
 		Map<String, Object> all = new HashMap<>();
 		Map<String, Map<String, String>> deleSpecialSpace = new HashMap<>();
 		Map<String, String> strFilling = new HashMap<>();
@@ -305,7 +307,7 @@ public abstract class AbstractCollectTableHandle implements CollectTableHandle {
 		return all;
 	}
 
-	private static Map<Integer, String> changeKeyValue(String order) {
+	private Map<Integer, String> changeKeyValue(String order) {
 
 		Map<Integer, String> map = new HashMap<>();
 		if (!StringUtil.isEmpty(order)) {
@@ -329,7 +331,7 @@ public abstract class AbstractCollectTableHandle implements CollectTableHandle {
 	 * @param lengths  对应的类型的长度
 	 * @return 更新后的信息
 	 */
-	static String updateColumn(Map<String, String> mergeIng, Map<String, Map<String, Column_split>> splitIng,
+	protected String updateColumn(Map<String, String> mergeIng, Map<String, Map<String, Column_split>> splitIng,
 	                           StringBuilder columns, StringBuilder colType, StringBuilder lengths) {
 		if (!mergeIng.isEmpty()) {
 			for (String key : mergeIng.keySet()) {
