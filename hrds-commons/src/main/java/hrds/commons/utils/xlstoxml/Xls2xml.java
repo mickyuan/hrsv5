@@ -136,51 +136,74 @@ public class Xls2xml {
 		}
 	}
 
+	/**
+	 * 通过json格式数据字典生成xml（半结构化采集）
+	 *
+	 * @param json_path json格式数据字典目录
+	 * @param xml_path  生成xml文件目录
+	 */
 	public static void jsonToXmlForObjectCollect(String json_path, String xml_path) {
 		// 调用方法生成xml文件
 		createXml(xml_path);
-		String info = "";
-		BufferedReader br = null;
+		BufferedReader br;
 		try {
 			StringBuilder result = new StringBuilder();
-			br = new BufferedReader(new FileReader(json_path));// 构造一个BufferedReader类来读取文件
-			String s = null;
-			while ((s = br.readLine()) != null) {// 使用readLine方法，一次读一行
+			// 构造一个BufferedReader类来读取文件
+			br = new BufferedReader(new FileReader(json_path));
+			String s;
+			// 使用readLine方法，一次读一行并换行
+			while ((s = br.readLine()) != null) {
 				result.append('\n').append(s);
 			}
 			JSONArray jsonArray = JSONArray.parseArray(result.toString());
 			for (int i = 0; i < jsonArray.size(); i++) {
 				JSONObject json = jsonArray.getJSONObject(i);
-				String table_name = json.getString("table_name");// 表名
-				String table_cn_name = json.getString("table_cn_name");// 中文表名
-				String updatetype = json.getString("updatetype");// 数据存储方式
+				// 表名
+				String table_name = json.getString("table_name");
+				// 中文表名
+				String table_cn_name = json.getString("table_cn_name");
+				// 数据更新方式
+				String updatetype = json.getString("updatetype");
+				// 表信息处理
 				addTable(table_name.toLowerCase(), table_cn_name, updatetype);
-				JSONObject handletype = json.getJSONObject("handletype");
-				String insert = handletype.getString("insert");
-				String update = handletype.getString("update");
-				String delete = handletype.getString("delete");
-				addHandleType(insert, update, delete);
-				JSONArray columns = json.getJSONArray("columns");// 列信息
+				JSONObject handleType = json.getJSONObject("handletype");
+				// 数据处理类型
+				addHandleType(handleType.getString("insert"), handleType.getString("update"),
+						handleType.getString("delete"));
+				// 列信息
+				JSONArray columns = json.getJSONArray("columns");
 				for (int j = 0; j < columns.size(); j++) {
 					JSONObject column = columns.getJSONObject(j);
-					String column_id = column.getString("column_id");// 列ID
-					String column_name = column.getString("column_name").toLowerCase();// 字段名
-					String column_cn_name = column.getString("column_cn_name");// 字段中文名
-					String column_type = column.getString("column_type");// 字段类型
-					String is_key = column.getString("is_key");// 是否为主键
-					String column_remark = column.getString("column_remark");// 备注信息
-					String columnposition = column.getString("columnposition");// 字段位置
-					String is_hbase = column.getString("is_hbase");// 是否进入hbase
-					String is_rowkey = column.getString("is_rowkey");// 是否为rowkey
-					String is_solr = column.getString("is_solr");// 是否进solr
-					String is_operate = column.getString("is_operate");// 是否为操作标识字段
+					// 列ID
+					String column_id = column.getString("column_id");
+					// 字段名
+					String column_name = column.getString("column_name").toLowerCase();
+					// 字段中文名
+					String column_cn_name = column.getString("column_cn_name");
+					// 字段类型
+					String column_type = column.getString("column_type");
+					// 是否为主键
+					String is_key = column.getString("is_key");
+					// 备注信息
+					String column_remark = column.getString("column_remark");
+					// 字段位置
+					String columnposition = column.getString("columnposition");
+					// 是否进入hbase
+					String is_hbase = column.getString("is_hbase");
+					// 是否为rowkey
+					String is_rowkey = column.getString("is_rowkey");
+					// 是否进solr
+					String is_solr = column.getString("is_solr");
+					// 是否为操作标识字段
+					String is_operate = column.getString("is_operate");
 					int length = getLength(column_type);
+					// 列信息封装
 					addColumnForObjectCollect(column_id, column_name, column_cn_name, column_type, length,
-							column_remark, is_key,
-							columnposition, is_hbase, is_rowkey, is_solr, is_operate);
+							column_remark, is_key, columnposition, is_hbase, is_rowkey, is_solr, is_operate);
 				}
 			}
-			xmlCreater.buildXmlFile();// 生成xml文档
+			// 生成xml文档
+			xmlCreater.buildXmlFile();
 			br.close();
 		} catch (FileNotFoundException e) {
 			throw new BusinessException("文件不存在," + e.getMessage());

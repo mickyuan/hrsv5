@@ -117,8 +117,8 @@ public class ObjectCollectAction extends BaseAction {
 			// 6.不为空，循环获取当前目录下的数据文件表信息
 			for (int i = 0; i < tableNames.size(); i++) {
 				Map<String, Object> tableMap = new HashMap<String, Object>();
-				tableMap.put("table_name", tableNames.get(i).get("tableName").toString());
-				tableMap.put("table_ch_name", tableNames.get(i).get("description").toString());
+				tableMap.put("table_name", tableNames.get(i).get("table_name").toString());
+				tableMap.put("table_ch_name", tableNames.get(i).get("table_ch_name").toString());
 				tableNameList.add(tableMap);
 			}
 			// 7.返回解析后当前目录获取表信息

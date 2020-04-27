@@ -8,6 +8,15 @@ import fd.ng.core.annotation.Return;
 import hrds.commons.codes.DatabaseType;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.xml.sax.SAXException;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -16,22 +25,9 @@ import java.net.URI;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.xml.sax.SAXException;
 
 /**
  * 标 题: 海云数服务
@@ -491,22 +487,19 @@ public class ConnUtil {
 			Document doc = db.parse(f);
 			Element root = (Element) doc.getElementsByTagName("database").item(0);
 			JSONObject jsonTable = new JSONObject();
-			JSONArray jsonArray = new JSONArray();
+			JSONArray jsonArrayTable = new JSONArray();
 			List<?> tableList = XMLUtil.getChildElements(root, "table");
 			for (int b = 0; b < tableList.size(); b++) {
 				Element table = (Element) tableList.get(b);
-				String tableName = table.getAttribute("name");
-				String description = table.getAttribute("description");
-				String updatetype = table.getAttribute("updatetype");
-				JSONObject json = new JSONObject();
-				json.put("tableName", tableName);
-				json.put("description", description);
-				json.put("updatetype", updatetype);
+				JSONObject tableJson = new JSONObject();
+				tableJson.put("table_name", table.getAttribute("table_name"));
+				tableJson.put("table_ch_name", table.getAttribute("table_ch_name"));
+				tableJson.put("updatetype", table.getAttribute("unload_type"));
 				List<?> columnList = XMLUtil.getChildElements(table, "column");
-				JSONArray jsonarray2 = new JSONArray();
+				JSONArray columnJsonArray = new JSONArray();
 				for (int c = 0; c < columnList.size(); c++) {
 					Element column = (Element) columnList.get(c);
-					JSONObject json2 = new JSONObject();
+					JSONObject columnJson = new JSONObject();
 					String columnname = column.getAttribute("name");
 					String columntype = column.getAttribute("column_type");
 					String is_key = column.getAttribute("is_key");
@@ -515,29 +508,26 @@ public class ConnUtil {
 					String is_solr = column.getAttribute("is_solr");
 					String is_operate = column.getAttribute("is_operate");
 					String columnposition = column.getAttribute("columnposition");
-					json2.put("columnname", columnname);
-					json2.put("columntype", columntype);
-					json2.put("is_key", is_key);
-					json2.put("is_hbase", is_hbase);
-					json2.put("is_rowkey", is_rowkey);
-					json2.put("is_solr", is_solr);
-					json2.put("is_operate", is_operate);
-					json2.put("columnposition", columnposition);
-					jsonarray2.add(json2);
+					columnJson.put("columnname", columnname);
+					columnJson.put("columntype", columntype);
+					columnJson.put("is_key", is_key);
+					columnJson.put("is_hbase", is_hbase);
+					columnJson.put("is_rowkey", is_rowkey);
+					columnJson.put("is_solr", is_solr);
+					columnJson.put("is_operate", is_operate);
+					columnJson.put("columnposition", columnposition);
+					columnJsonArray.add(columnJson);
 				}
-				json.put("column", jsonarray2);
-				JSONObject json3 = new JSONObject();
-				Element handletype = XMLUtil.getChildElement(table, "handletype");
-				String insert = handletype.getAttribute("insert");
-				String update = handletype.getAttribute("update");
-				String delete = handletype.getAttribute("delete");
-				json3.put("insert", insert);
-				json3.put("update", update);
-				json3.put("delete", delete);
-				json.put("handletype", json3);
-				jsonArray.add(json);
+				tableJson.put("column", columnJsonArray);
+				JSONObject handleTypejson = new JSONObject();
+				Element handleType = XMLUtil.getChildElement(table, "handletype");
+				handleTypejson.put("insert", handleType.getAttribute("insert"));
+				handleTypejson.put("update", handleType.getAttribute("update"));
+				handleTypejson.put("delete", handleType.getAttribute("delete"));
+				tableJson.put("handletype", handleTypejson);
+				jsonArrayTable.add(tableJson);
 			}
-			jsonTable.put("tablename", jsonArray);
+			jsonTable.put("tablename", jsonArrayTable);
 			return jsonTable;
 		} catch (SAXException e) {
 			throw new BusinessException("解析文件异常," + e.getMessage());
