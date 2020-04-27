@@ -9,6 +9,7 @@ import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.SourceDataConfBean;
 import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.core.metaparse.AbstractCollectTableHandle;
+import hrds.agent.job.biz.utils.DataExtractUtil;
 import hrds.agent.job.biz.utils.TypeTransLength;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.StorageType;
@@ -19,6 +20,7 @@ import hrds.commons.utils.Constant;
 import hrds.commons.utils.xlstoxml.Xls2xml;
 import hrds.commons.utils.xlstoxml.util.ColumnMeta;
 
+import java.io.File;
 import java.util.List;
 import java.util.Map;
 
@@ -35,7 +37,7 @@ public class DFCollectTableHandleParse extends AbstractCollectTableHandle {
 	public TableBean generateTableInfo(SourceDataConfBean sourceDataConfBean,
 	                                   CollectTableBean collectTableBean) {
 		TableBean tableBean = new TableBean();
-		String plane_url = sourceDataConfBean.getPlane_url();
+		String plane_url = sourceDataConfBean.getPlane_url() + File.separator + DataExtractUtil.DATADICTIONARY;
 		//获取数据字典所在目录文件，根据数据字典计算xml文件名称
 		String xmlName = Math.abs(plane_url.hashCode()) + ".xml";
 		//2.DB文件采集将数据字典dd_data.xls转为xml

@@ -66,7 +66,7 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 					+ File.separator, true);
 			//列出文件目录下的文件
 			String[] file_name_list = new File(file_path).list(
-					(dir, name) -> name.startsWith(collectTableBean.getHbase_name())
+					(dir, name) -> name.contains(collectTableBean.getTable_name())
 			);
 			//判断是否转存
 			if (IsFlag.Fou.getCode().equals(tableBean.getIs_archived()) || UnloadType.ZengLiangXieShu.getCode().

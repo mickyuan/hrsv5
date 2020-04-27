@@ -19,7 +19,7 @@ import java.util.List;
 public class DataExtractUtil {
 
 	private static final Log log = LogFactory.getLog(DataExtractUtil.class);
-	private static final String DATADICTIONARY = "dd_data.json";
+	public static final String DATADICTIONARY = "dd_data.json";
 
 	/**
 	 * 生成数据字典
