@@ -306,8 +306,8 @@ public class ObjectCollectAction extends BaseAction {
 		objectCollectTask.setOcs_id(PrimayKeyGener.getNextId());
 		objectCollectTask.setAgent_id(object_collect.getAgent_id());
 		objectCollectTask.setOdc_id(object_collect.getOdc_id());
-		String tableName = tableNameMap.get("tableName").toString();
-		String zh_name = tableNameMap.get("description").toString();
+		String tableName = tableNameMap.get("table_name").toString();
+		String zh_name = tableNameMap.get("table_ch_name").toString();
 		objectCollectTask.setEn_name(tableName != null ? tableName : "");
 		objectCollectTask.setZh_name(zh_name != null ? zh_name : "");
 		objectCollectTask.setCollect_data_type(CollectDataType.JSON.getCode());
