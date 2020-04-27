@@ -14,6 +14,8 @@ import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
+import hrds.agent.job.biz.core.dfstage.incrementfileprocess.TableProcessInterface;
+import hrds.agent.job.biz.core.dfstage.incrementfileprocess.impl.MppTableProcessImpl;
 import hrds.agent.job.biz.core.dfstage.service.ReadFileToDataBase;
 import hrds.agent.job.biz.core.increasement.JDBCIncreasement;
 import hrds.agent.job.biz.utils.DataTypeTransform;
@@ -94,12 +96,15 @@ public class DFUploadStageImpl extends AbstractJobStage {
 			List<DataStoreConfBean> dataStoreConfBeanList = collectTableBean.getDataStoreConfBean();
 			for (DataStoreConfBean dataStoreConfBean : dataStoreConfBeanList) {
 				//这边做一个接口多实现，目前只实现传统数据库的增量更新接口
+				TableProcessInterface processInterface;
 				if (Store_type.DATABASE.getCode().equals(dataStoreConfBean.getStore_type())) {
-					//关系型数据库
+					for (String readFile : stageParamInfo.getFileArr()) {
+						//关系型数据库
+						processInterface = new MppTableProcessImpl(stageParamInfo.getTableBean(),
+								collectTableBean, readFile);
+						processInterface.parserFileToTable();
+					}
 				}
-//				long count = 0;
-//				exeBatch(dataStoreConfBean, executor, count, stageParamInfo.getFileArr(),
-//						stageParamInfo.getTableBean());
 			}
 		} catch (Exception e) {
 			throw new AppSystemException("db文件采集增量上传失败", e);
