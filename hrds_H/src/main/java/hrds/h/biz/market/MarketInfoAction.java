@@ -1559,7 +1559,7 @@ public class MarketInfoAction extends BaseAction {
     //TODO
     @Method(desc = "生成集市表到作业调度",
             logicStep = "生成集市表到作业调度")
-    @Param(name = "data_mart_id", desc = "data_mart_id", range = "String类型集市表主键")
+    @Param(name = "datatable_id", desc = "datatable_id", range = "String类型集市表主键")
     @Param(name = "etl_sys_cd", desc = "etl_sys_cd", range = "String类型作业调度ID")
     @Param(name = "sub_sys_cd", desc = "sub_sys_cd", range = "String类型作业调度任务ID")
     @Return(desc = "查询返回结果集", range = "无限制")
