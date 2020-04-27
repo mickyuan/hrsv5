@@ -143,7 +143,7 @@ public class EltSysAction extends BaseAction {
 							+ "5.部署成功，更新用户信息")
 	@Param(name = "etl_sys_cd", desc = "作业调度工程登记表主键ID", range = "新增工程时生成")
 	@Param(name = "etl_sys_name", desc = "工程名称", range = "新增工程时生成")
-	@Param(name = "comments", desc = "工程描述", range = "无限制")
+	@Param(name = "comments", desc = "工程描述", range = "无限制", nullable = true)
 	public void updateEtlSys(String etl_sys_cd, String etl_sys_name, String comments) {
 		// 1.数据可访问权限处理方式，该方法不需要权限控制
 		// 2.验证当前用户对应的工程是否已不存在
