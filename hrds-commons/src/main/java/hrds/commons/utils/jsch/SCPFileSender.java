@@ -51,10 +51,10 @@ public class SCPFileSender {
 
 			String delDir = "rm -rf " + targetDir;
 			SFTPChannel.execCommandByJSch(shellSession, delDir);
-			logger.info("###########是否之前部署过，如果目录存在先删除===");
+			logger.info("###########是否之前部署过，如果目录存在先删除###########");
 			String mkdir = "mkdir -p " + targetDir;
 			SFTPChannel.execCommandByJSch(shellSession, mkdir);
-			logger.info("###########建立agent存放目录===");
+			logger.info("###########建立agent存放目录###########");
 
 			SCPFileSender test = new SCPFileSender();
 			SFTPChannel channel = test.getSFTPChannel();
@@ -66,16 +66,16 @@ public class SCPFileSender {
 			chSftp.put(src, dst, new FileProgressMonitor(fileSize), ChannelSftp.OVERWRITE);
 			chSftp.quit();
 			channel.closeChannel();
-			logger.info("###########tar.gz上传完成===");
+			logger.info("###########tar.gz上传完成###########");
 
 			// 解压当前agent压缩包当指定目录
 			String tarCommand = "tar -zxvf " + dst + " -C " + targetDir + "";
 			SFTPChannel.execCommandByJSch(shellSession, tarCommand);
-			logger.info("###########解压tar.gz的agent压缩包===");
+			logger.info("###########解压tar.gz的agent压缩包###########");
 			// 删除当前目录下的agent压缩包
 			String delCommand = "rm -rf " + dst + "";
 			SFTPChannel.execCommandByJSch(shellSession, delCommand);
-			logger.info("###########删除tar.gz的agent包===");
+			logger.info("###########删除tar.gz的agent包###########");
 
 			// fixme 集群配置文件暂时不知如何弄
 //			String mkdirConf = "mkdir -p " + targetDir + "/control/hadoopconf/";
@@ -90,15 +90,19 @@ public class SCPFileSender {
 			// 本地当前工程下的配置文件信息dbinfo.conf,上传到目标机器
 			String fdConfigPath = System.getProperty("user.dir") + SEPARATOR + "resources" + SEPARATOR +
 					"fdconfig" + SEPARATOR;
-			logger.info("===============" + fdConfigPath);
+			logger.info("=======fdConfigPath========" + fdConfigPath);
+			logger.info("=======targetDir========" + targetDir);
+			// 判断文件control/trigger配置文件目录是否存在，不存在则创建
+			String controlDirectory = targetDir + "control" + SEPARATOR + "resources" + SEPARATOR;
+			String triggerDirectory = targetDir + "trigger" + SEPARATOR + "resources" + SEPARATOR;
+			makeDirectoryIfNotExist(chSftp_properties, controlDirectory);
+			makeDirectoryIfNotExist(chSftp_properties, triggerDirectory);
 			File fileDbInfo = new File(fdConfigPath + DBINFOCONFNAME);
 			long fileSizeDbInfo = fileDbInfo.length();
-			chSftp_properties.put(fdConfigPath + DBINFOCONFNAME, targetDir +
-							"control" + SEPARATOR + "resources" + SEPARATOR + DBINFOCONFNAME,
+			chSftp_properties.put(fdConfigPath + DBINFOCONFNAME, controlDirectory + DBINFOCONFNAME,
 					new FileProgressMonitor(fileSizeDbInfo), ChannelSftp.OVERWRITE);
 			logger.info("###########替换control dbinfo.conf文件###########");
-			chSftp_properties.put(fdConfigPath, targetDir + targetDir + "trigger" +
-							SEPARATOR + "resources" + SEPARATOR + DBINFOCONFNAME,
+			chSftp_properties.put(fdConfigPath + DBINFOCONFNAME, triggerDirectory + DBINFOCONFNAME,
 					new FileProgressMonitor(fileSizeDbInfo), ChannelSftp.OVERWRITE);
 			logger.info("###########替换trigger dbinfo.conf文件###########");
 
@@ -110,16 +114,16 @@ public class SCPFileSender {
 					new FileProgressMonitor(fileSizeAppInfo), ChannelSftp.OVERWRITE);
 			logger.info("###########替换control appinfo.conf文件###########");
 			chSftp_properties.put(fdConfigPath + APPINFOCONfNAME, targetDir
-							+ "control" + SEPARATOR + "resources" + SEPARATOR + APPINFOCONfNAME,
+							+ "trigger" + SEPARATOR + "resources" + SEPARATOR + APPINFOCONfNAME,
 					new FileProgressMonitor(fileSizeAppInfo), ChannelSftp.OVERWRITE);
 			logger.info("###########替换trigger appinfo.conf文件###########");
 
 			// 将本地写的临时配置文件(control.conf),sftp复制到agent部署的目标机器
 			File redisInfo = new File(tmp_conf_path + CONTROLCONFNAME);
-			long fileSizeControlInfo = fileAppInfo.length();
+			long fileSizeRedisInfo = redisInfo.length();
 			chSftp_properties.put(tmp_conf_path + CONTROLCONFNAME, targetDir
 							+ "control" + SEPARATOR + "resources" + SEPARATOR + CONTROLCONFNAME,
-					new FileProgressMonitor(fileSizeControlInfo), ChannelSftp.OVERWRITE);
+					new FileProgressMonitor(fileSizeRedisInfo), ChannelSftp.OVERWRITE);
 			logger.info("###########将本地写的临时配置文件(control.conf),sftp复制到agent部署的目标机器###########");
 //			File fileRedisInfo = new File(source_path + "redis.conf");
 //			long fileSizeRedisInfo = fileRedisInfo.length();
@@ -160,6 +164,28 @@ public class SCPFileSender {
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new BusinessException("部署失败，请重新部署" + e);
+		}
+	}
+
+	/**
+	 * 判断目录是否存在，不存在则创建
+	 *
+	 * @param sftp      sftp传输文件对象
+	 * @param directory 文件目录
+	 */
+	public static void makeDirectoryIfNotExist(ChannelSftp sftp, String directory) {
+		// 判断目录文件夹是否存在，不存在即创建
+		try {
+			sftp.lstat(directory);
+		} catch (Exception e) {
+			if (e.getMessage().equalsIgnoreCase("no such file")) {
+				try {
+					sftp.mkdir(directory);
+					logger.info("创建目录：" + directory);
+				} catch (Exception e1) {
+					throw new BusinessException("创建目录失败" + e1.getMessage());
+				}
+			}
 		}
 	}
 }
