@@ -24,8 +24,9 @@ public class DataExtractUtil {
 	/**
 	 * 生成数据字典
 	 */
-	public static synchronized void writeDataDictionary(String dictionaryPath, String tableName, String allColumns, String
-			allType, List<Data_extraction_def> data_extraction_defList, String unload_type, String primaryKeyInfo) {
+	public static synchronized void writeDataDictionary(String dictionaryPath, String tableName, String allColumns
+			, String allType, List<Data_extraction_def> ext_defList, String unload_type, String primaryKeyInfo
+			, String insertColumnInfo, String updateColumnInfo, String deleteColumnInfo) {
 		BufferedWriter bufferOutputWriter = null;
 		OutputStreamWriter outputFileWriter = null;
 		String dataDictionaryFile = dictionaryPath + DATADICTIONARY;
@@ -49,8 +50,12 @@ public class DataExtractUtil {
 			jsonObject.put("table_name", tableName);
 			jsonObject.put("table_cn_name", tableName);
 			jsonObject.put("unload_type", unload_type);
+
+			jsonObject.put("insertColumnInfo", insertColumnInfo);
+			jsonObject.put("updateColumnInfo", updateColumnInfo);
+			jsonObject.put("deleteColumnInfo", deleteColumnInfo);
 			JSONArray storageArray = new JSONArray();
-			for (Data_extraction_def data_extraction_def : data_extraction_defList) {
+			for (Data_extraction_def data_extraction_def : ext_defList) {
 				JSONObject object = new JSONObject();
 				object.put("is_header", data_extraction_def.getIs_header());
 				object.put("dbfile_format", data_extraction_def.getDbfile_format());
