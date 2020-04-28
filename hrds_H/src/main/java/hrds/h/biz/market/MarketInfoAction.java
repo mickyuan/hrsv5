@@ -382,7 +382,7 @@ public class MarketInfoAction extends BaseAction {
             List<Dm_relation_datatable> dm_relation_datatables = Dbo.queryList(Dm_relation_datatable.class, "select is_successful from " + Dm_relation_datatable.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
             String is_successful = dm_relation_datatables.get(0).getIs_successful();
             boolean isrunning = is_successful.equals(JobExecuteState.YunXing.getCode());
-            if(haveRun){
+            if (haveRun) {
                 List<Map<String, Object>> maps = Dbo.queryList("select * from " + Dm_datatable.TableName + " where datatable_id = ? and datatable_en_name = ? and sql_engine = ? and storage_type = ? and table_storage = ? ",
                         dm_datatable.getDatatable_id(), dm_datatable.getDatatable_en_name(), dm_datatable.getSql_engine(), dm_datatable.getStorage_type(), dm_datatable.getTable_storage());
                 if (maps.isEmpty()) {
@@ -397,10 +397,10 @@ public class MarketInfoAction extends BaseAction {
                         return true;
                     }
                 }
-            }else{
-                if(isrunning){
+            } else {
+                if (isrunning) {
                     return false;
-                }else{
+                } else {
                     return true;
                 }
             }
@@ -609,10 +609,12 @@ public class MarketInfoAction extends BaseAction {
             }
         }
         String targetfield_type = "";
-        for (String everyColumnName : columnNameList) {
+        for (int i = 0; i < columnNameList.size(); i++) {
+            String everyColumnName = columnNameList.get(i);
             Map<String, Object> map = new LinkedHashMap<>();
             map.put("field_en_name", everyColumnName);
             map.put("field_cn_name", everyColumnName);
+            map.put("field_seq", i);
             Object object = bloodRelationMap.get(everyColumnName);
             if (null == object) {
                 targetfield_type = field_type;
@@ -630,6 +632,9 @@ public class MarketInfoAction extends BaseAction {
                 }
             }
             map.put("field_type", targetfield_type);
+            if (targetfield_type.equals("varchar")) {
+                map.put("field_length", 100);
+            }
             map.put("field_process", ProcessType.YingShe.getCode());
             //将所有勾选的 附加字段属性 默认选为不勾选
             List<Map<String, Object>> dslaStorelayerList = Dbo.queryList("select dslad_id,dsla_storelayer from " + Data_store_layer_added.TableName + " t1 " +
@@ -641,6 +646,14 @@ public class MarketInfoAction extends BaseAction {
             resultlist.add(map);
         }
         resultmap.put("result", resultlist);
+        List<Map<String, Object>> columnlist = new ArrayList<>();
+        for (int i = 0; i < columnNameList.size(); i++) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("value", columnNameList.get(i));
+            map.put("code", i);
+            columnlist.add(map);
+        }
+        resultmap.put("columnlist", columnlist);
         resultmap.put("success", true);
         return resultmap;
     }
@@ -742,7 +755,7 @@ public class MarketInfoAction extends BaseAction {
         Dm_datatable dm_datatable = new Dm_datatable();
         dm_datatable.setDatatable_id(datatable_id);
         List<Map<String, Object>> list = Dbo.queryList("select * from " + Datatable_field_info.TableName +
-                " where datatable_id = ? order by field_seq", dm_datatable.getDatatable_id());
+                " where datatable_id = ? order by datatable_field_id", dm_datatable.getDatatable_id());
         Datatable_field_info datatable_field_info = new Datatable_field_info();
         for (Map<String, Object> map : list) {
             String datatable_field_id = map.get("datatable_field_id").toString();
@@ -759,6 +772,33 @@ public class MarketInfoAction extends BaseAction {
         }
         return list;
     }
+
+    @Method(desc = "回显新增集市页面2中记录所有来源字段",
+            logicStep = "")
+    @Param(name = "datatable_id", desc = "datatable_id", range = "String类型集市表ID")
+    @Return(desc = "列结构", range = "无限制")
+    public List<Map<String, Object>> getFromColumnList(String datatable_id) {
+        Dm_datatable dm_datatable = new Dm_datatable();
+        dm_datatable.setDatatable_id(datatable_id);
+        List<Dm_operation_info> dm_operation_infos = Dbo.queryList(Dm_operation_info.class, "select execute_sql from " + Dm_operation_info.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
+        if (dm_operation_infos.isEmpty()) {
+            return null;
+        } else {
+            String execute_sql = dm_operation_infos.get(0).getExecute_sql();
+            List<String> columnNameList = new ArrayList<>();
+            DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(execute_sql);
+            columnNameList = druidParseQuerySql.parseSelectAliasField();
+            List<Map<String, Object>> columnlist = new ArrayList<>();
+            for (int i = 0; i < columnNameList.size(); i++) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("value", columnNameList.get(i));
+                map.put("code", i);
+                columnlist.add(map);
+            }
+            return columnlist;
+        }
+    }
+
 
     @Method(desc = "根据集市表ID,获取字段类型的所有类型",
             logicStep = "1.获取所有字段类型" +
@@ -862,7 +902,9 @@ public class MarketInfoAction extends BaseAction {
             String datatable_field_id = PrimayKeyGener.getNextId();
             df_info.setDatatable_field_id(datatable_field_id);
             df_info.setDatatable_id(datatable_id);
-            df_info.setField_seq(String.valueOf(i));
+            if(df_info.getField_seq() == null || !df_info.getField_process().equals(ProcessType.YingShe.getCode())){
+                df_info.setField_seq(Long.valueOf(-1));
+            }
             df_info.add(Dbo.db());
         }
         for (int i = 0; i < dm_column_storage.length; i++) {
@@ -1133,7 +1175,7 @@ public class MarketInfoAction extends BaseAction {
             Table_column table_column = new Table_column();
             table_column.setTable_id(id);
             List<Map<String, Object>> maps = Dbo.queryList("select column_name as columnname,column_type as columntype,false as selectionstate from " + Table_column.TableName +
-                    " where table_id = ? and lower(column_name) not in (?,?,?)", table_column.getTable_id(),Hyren_S_date,Hyren_E_date,Hyren_Md5_Val);
+                    " where table_id = ? and lower(column_name) not in (?,?,?)", table_column.getTable_id(), Hyren_S_date, Hyren_E_date, Hyren_Md5_Val);
             resultmap.put("columnresult", maps);
             List<Map<String, Object>> tablenamelist = Dbo.queryList("select hyren_name as tablename from " + Data_store_reg.TableName + " where table_id = ?", table_column.getTable_id());
             resultmap.put("tablename", tablenamelist.get(0).get("tablename"));
@@ -1142,7 +1184,7 @@ public class MarketInfoAction extends BaseAction {
             Datatable_field_info datatable_field_info = new Datatable_field_info();
             datatable_field_info.setDatatable_id(id);
             List<Map<String, Object>> maps = Dbo.queryList("select field_en_name as columnname,field_type as columntype,false as selectionstate from " + Datatable_field_info.TableName +
-                    " where datatable_id = ? and lower(field_en_name) not in (?,?,?)", datatable_field_info.getDatatable_id(),Hyren_S_date,Hyren_E_date,Hyren_Md5_Val);
+                    " where datatable_id = ? and lower(field_en_name) not in (?,?,?)", datatable_field_info.getDatatable_id(), Hyren_S_date, Hyren_E_date, Hyren_Md5_Val);
             resultmap.put("columnresult", maps);
             List<Map<String, Object>> tablenamelist = Dbo.queryList("select datatable_en_name as tablename  from " + Dm_datatable.TableName + " where datatable_id = ?", datatable_field_info.getDatatable_id());
             resultmap.put("tablename", tablenamelist.get(0).get("tablename"));
@@ -1159,7 +1201,7 @@ public class MarketInfoAction extends BaseAction {
     @Param(name = "date", desc = "date", range = "String类型跑批日期")
     @Param(name = "parameter", desc = "parameter", range = "动态参数", nullable = true)
     public void excutMartJob(String datatable_id, String date, String parameter) throws IOException {
-            MainClass.run(datatable_id, date, parameter);
+        MainClass.run(datatable_id, date, parameter);
     }
 
     @Method(desc = "查询所有作业调度工程",
@@ -1246,6 +1288,7 @@ public class MarketInfoAction extends BaseAction {
 
     /**
      * 生成导出每张表的excel
+     *
      * @param datatabe_id
      * @return
      */
@@ -1575,7 +1618,7 @@ public class MarketInfoAction extends BaseAction {
     @Param(name = "etl_sys_cd", desc = "etl_sys_cd", range = "String类型作业调度ID")
     @Param(name = "sub_sys_cd", desc = "sub_sys_cd", range = "String类型作业调度任务ID")
     @Return(desc = "查询返回结果集", range = "无限制")
-    public void generateMartJobToEtl(String etl_sys_cd,String sub_sys_cd,String datatable_id){
+    public void generateMartJobToEtl(String etl_sys_cd, String sub_sys_cd, String datatable_id) {
         EtlJobUtil.saveJob(datatable_id, DataSourceType.DML, etl_sys_cd, sub_sys_cd, null);
     }
 }
