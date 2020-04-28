@@ -53,7 +53,7 @@ public class ETLAgentDeployment {
 		try {
 			// 1.数据可访问权限处理方式，该方法不需要权限控制
 			// 2.获取ETL下载地址
-			String agentPath = PropertyParaValue.getString("ETLPath", "");
+			String agentPath = PropertyParaValue.getString("ETLpath", "");
 			// 3.根据文件路径获取文件信息
 			File sourceFile = FileUtil.getFile(agentPath);
 			// 4.判断文件是否存在

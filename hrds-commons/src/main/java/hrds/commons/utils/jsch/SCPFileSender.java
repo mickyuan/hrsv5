@@ -5,8 +5,8 @@ import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 import com.jcraft.jsch.SftpException;
 import hrds.commons.exception.BusinessException;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,7 +18,7 @@ public class SCPFileSender {
 		return new SFTPChannel();
 	}
 
-	private static final Log logger = LogFactory.getLog(SCPFileSender.class);
+	private static final Logger logger = LogManager.getLogger();
 
 	// 系统路径的符号
 	public static final String SEPARATOR = File.separator;
