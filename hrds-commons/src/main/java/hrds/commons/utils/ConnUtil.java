@@ -580,8 +580,8 @@ public class ConnUtil {
 						String readLine = reader.readLine();
 						tablenamelsit.add(tablename);
 						JSONObject everyobject = new JSONObject();
-						everyobject.put("tableName", tablename);
-						everyobject.put("description", tablename);
+						everyobject.put("table_name", tablename);
+						everyobject.put("table_ch_name", tablename);
 						everyobject.put("everyline", readLine);
 						jsonarray.add(everyobject);
 					} catch (Exception e) {
