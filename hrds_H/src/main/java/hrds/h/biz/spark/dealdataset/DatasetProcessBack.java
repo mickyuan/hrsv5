@@ -11,7 +11,6 @@ import hrds.h.biz.config.MarketConf;
 import hrds.h.biz.spark.dealdataset.dataprocesser.AddColumnsForDataSet;
 import hrds.h.biz.spark.dealdataset.dataprocesser.DataSetProcesser;
 import hrds.h.biz.spark.initialize.SparkSessionBuilder;
-import org.apache.commons.io.IOUtils;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
@@ -133,12 +132,14 @@ public class DatasetProcessBack implements SparkDataset, Closeable {
      */
     private Dataset<Row> dataframeFromSql(String sql) {
 
+        sparkSession.sql("use hyshf");
+
         List<String> listTable = DruidParseQuerySql.parseSqlTableToList(sql);
         try (DatabaseWrapper db = new DatabaseWrapper()) {
 
             for (String tableName : listTable) {
                 List<LayerBean> layerByTable = ProcessingData.getLayerByTable(tableName, db);
-                if (validTableLayer(layerByTable)) {
+                if (!validTableLayer(layerByTable)) {
                     throw new AppSystemException("表 " + tableName + " 不属于Database,Hive,Hbase中的任意一层");
                 }
                 if (needCreateTempView(layerByTable)) {
@@ -148,10 +149,7 @@ public class DatasetProcessBack implements SparkDataset, Closeable {
                 }
             }
         }
-
-        sparkSession.sql("use hyshf");
-        sparkSession.sql(sql);
-        return null;
+        return sparkSession.sql(sql);
     }
 
     private static boolean needCreateTempView(List<LayerBean> layerByTable) {
@@ -183,7 +181,7 @@ public class DatasetProcessBack implements SparkDataset, Closeable {
                 .option("user", layerAttr.get(StorageTypeKey.user_name))
                 .option("password", layerAttr.get(StorageTypeKey.database_pwd))
                 .load()
-                .createOrReplaceGlobalTempView(tableName);
+                .createOrReplaceTempView(tableName);
     }
 
 }

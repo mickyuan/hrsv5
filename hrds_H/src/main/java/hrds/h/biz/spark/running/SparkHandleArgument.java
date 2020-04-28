@@ -10,14 +10,28 @@ import hrds.commons.exception.AppSystemException;
  * @Since jdk1.8
  */
 public class SparkHandleArgument {
-    /** 处理类型，如 database,hive,hbase,solr.etc */
-    private final Store_type handleType;
+    /**
+     * 处理类型，如 database,hive,hbase,solr.etc
+     */
+    private Store_type handleType;
     private boolean overWrite;
-    /** spark 任务是否为增量， 默认为 false */
+    /**
+     * spark 任务是否为增量， 默认为 false
+     */
     private boolean increment = false;
     private String tableName;
 
-    public SparkHandleArgument(Store_type handleType) {
+    private String etlDate;
+
+    public String getEtlDate() {
+        return etlDate;
+    }
+
+    public void setEtlDate(String etlDate) {
+        this.etlDate = etlDate;
+    }
+
+    public void setHandleType(Store_type handleType) {
         this.handleType = handleType;
     }
 
@@ -49,6 +63,21 @@ public class SparkHandleArgument {
         this.increment = increment;
     }
 
+    @Override
+    public String toString() {
+        return JsonUtil.toJson(this);
+    }
+
+    public static SparkHandleArgument fromString(String handleArgs, Class<? extends SparkHandleArgument> aClass) {
+
+        return JsonUtil.toObjectSafety(handleArgs, aClass)
+                .orElseThrow(() -> new AppSystemException(String.format("handle string转对象失败：[%s] -> [%s].",
+                        handleArgs, aClass.getSimpleName())));
+    }
+
+    /**
+     * 数据库相关参数实体
+     */
     public static class DatabaseArgs extends SparkHandleArgument {
 
         String driver;
@@ -57,10 +86,6 @@ public class SparkHandleArgument {
         String password;
         String createTableColumnTypes;
         String databaseType;
-
-        public DatabaseArgs(Store_type handleType) {
-            super(handleType);
-        }
 
         public String getDriver() {
             return driver;
@@ -109,16 +134,5 @@ public class SparkHandleArgument {
         public void setDatabaseType(String databaseType) {
             this.databaseType = databaseType;
         }
-    }
-
-    @Override
-    public String toString() {
-        return JsonUtil.toJson(this);
-    }
-
-    public static SparkHandleArgument fromString(String handleArgs) {
-
-        return JsonUtil.toObjectSafety(handleArgs, SparkHandleArgument.class)
-                .orElseThrow(() -> new AppSystemException("解析参数失败：" + handleArgs));
     }
 }

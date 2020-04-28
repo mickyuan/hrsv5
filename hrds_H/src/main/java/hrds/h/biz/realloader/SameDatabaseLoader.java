@@ -2,10 +2,14 @@ package hrds.h.biz.realloader;
 
 import fd.ng.db.jdbc.DatabaseWrapper;
 
+import hrds.commons.codes.ProcessType;
 import hrds.commons.collection.ConnectionTool;
 import hrds.commons.exception.AppSystemException;
+import hrds.commons.utils.DruidParseQuerySql;
 import hrds.commons.utils.PropertyParaValue;
 import hrds.h.biz.config.MarketConf;
+
+import java.util.List;
 
 import static hrds.commons.utils.Constant.*;
 
@@ -19,7 +23,7 @@ public class SameDatabaseLoader extends AbstractRealLoader {
     private final DatabaseWrapper db;
     private final String sql;
     private final String createTableColumnTypes;
-    private final String columnsWithoutHyren;
+    private final String columns;
     private final String currentTableName;
     private final String validTableName;
     private final String invalidTableName;
@@ -29,7 +33,7 @@ public class SameDatabaseLoader extends AbstractRealLoader {
         db = ConnectionTool.getDBWrapper(tableLayerAttrs);
         sql = conf.getCompleteSql();
         createTableColumnTypes = Utils.buildCreateTableColumnTypes(conf.getDatatableFields(), true);
-        columnsWithoutHyren = Utils.columnsWithoutHyren(conf.getDatatableFields());
+        columns = Utils.columns(conf.getDatatableFields());
         currentTableName = "curr_" + tableName;
         validTableName = "valid_" + tableName;
         invalidTableName = "invalid_" + tableName;
@@ -103,13 +107,13 @@ public class SameDatabaseLoader extends AbstractRealLoader {
     public void close() {
 
         if (PropertyParaValue.getBoolean("market.increment.tmptable.delete", false)) {
-            deleteTmptable();
+            dropTempTable();
         }
         if (db != null)
             db.close();
     }
 
-    private void deleteTmptable() {
+    private void dropTempTable() {
         try {
             db.execute("DROP TABLE " + currentTableName);
             db.execute("DROP TABLE " + validTableName);
@@ -144,14 +148,71 @@ public class SameDatabaseLoader extends AbstractRealLoader {
         db.execute(createSql);
     }
 
+    /**
+     * 插入数据
+     *
+     * @param tableName
+     */
     private void insertData(String tableName) {
-        db.execute("INSERT INTO " + tableName + " SELECT " +
-                columnsWithoutHyren + "," + conf.getEtlDate() + "," + MAXDATE +
-                "," + lineMd5Expr(columnsWithoutHyren) + " FROM ( " + sql + " ) aa");
+        db.execute(String.format("INSERT INTO %s ( %s ) SELECT %s FROM ( %s )",
+                tableName, columns, realSelectExpr(), sql));
     }
 
     private String lineMd5Expr(String columnsJoin) {
         return "md5(" + columnsJoin.replace(",", "||") + ")";
     }
 
+
+    private List<String> getColumnSequence() {
+        return new DruidParseQuerySql(sql).parseSelectAliasField();
+    }
+
+    /**
+     * 返回需要从sql中需要查询的表达式
+     * 包括，字段名称，自增函数，定制，hyren自定义字段等
+     */
+    private String realSelectExpr() {
+        final List<String> colSeq = getColumnSequence();
+        final StringBuilder selectExpr = new StringBuilder(120);
+        //只有映射字段做MD5
+        final StringBuilder md5Cols = new StringBuilder(120);
+        /**
+         * field.getProcess_para()
+         * 1.如果是映射，则返回的是改字段对应sql中的真实查询出来的字段序号
+         * 2.如果是定值，则返回的是定值的值
+         */
+        conf.getDatatableFields()
+                .stream()
+                .filter(field -> !field.getField_en_name().startsWith("hyren_"))
+                .forEach(field -> {
+                    String processCode = field.getField_process();
+                    if (ProcessType.ZiZeng.getCode().equals(processCode)) {
+                        selectExpr.append(autoIncreasingExpr());
+                    } else if (ProcessType.YingShe.getCode().equals(processCode)) {
+                        int mappingIndex = Integer.parseInt(field.getProcess_para());
+                        selectExpr.append(colSeq.get(mappingIndex));
+                        md5Cols.append(field.getField_en_name()).append(',');
+                    } else if (ProcessType.DingZhi.getCode().equals(processCode)) {
+                        selectExpr.append("'").append(field.getProcess_para()).append("'");
+                    } else {
+                        throw new AppSystemException("不支持处理方式码：" + processCode);
+                    }
+                    selectExpr.append(',');
+                });
+        //添加自定义字段
+        selectExpr.append(conf.getEtlDate())
+                .append(',')
+                .append(MAXDATE)
+                .append(',')
+                .append(lineMd5Expr(md5Cols.deleteCharAt(md5Cols.length() - 1).toString()));
+        return selectExpr.toString();
+    }
+
+    /**
+     * 返回自增函数表达式
+     */
+    private String autoIncreasingExpr() {
+        //TODO 假装一下这里是返回了一个自增函数表达式
+        return "'increasing'";
+    }
 }

@@ -60,9 +60,9 @@ public class Utils {
      *
      * @return
      */
-    static String columnsWithoutHyren(List<Datatable_field_info> fields) {
+    static String columns(List<Datatable_field_info> fields) {
         //后面的三个hyren字段去掉
-        return fields.subList(0, fields.size() - 3)
+        return fields
                 .stream()
                 .map(Datatable_field_info::getField_en_name)
                 .collect(Collectors.joining(","));

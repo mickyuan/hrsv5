@@ -16,8 +16,7 @@ import static hrds.commons.codes.StorageTypeKey.*;
  */
 public class DatabaseLoader extends AbstractRealLoader {
 
-    private final DatabaseArgs databaseArgs = new DatabaseArgs(Store_type.DATABASE);
-//    private
+    private final DatabaseArgs databaseArgs = new DatabaseArgs();
 
     DatabaseLoader(MarketConf conf) {
         super(conf);
@@ -25,6 +24,8 @@ public class DatabaseLoader extends AbstractRealLoader {
     }
 
     private void initArgs() {
+        databaseArgs.setHandleType(Store_type.DATABASE);
+        databaseArgs.setEtlDate(conf.getEtlDate());
         databaseArgs.setTableName(conf.getTableName());
         databaseArgs.setDriver(tableLayerAttrs.get(database_driver));
         databaseArgs.setUrl(tableLayerAttrs.get(jdbc_url));
