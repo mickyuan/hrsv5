@@ -189,6 +189,7 @@ public class EltSysAction extends BaseAction {
 		etl_sys.setUser_pwd(user_pwd);
 		etl_sys.setServ_file_path(serv_file_path);
 		etl_sys.setRemarks(redisIP + ':' + redisPort);
+		etl_sys.setEtl_serv_port(Constant.SFTP_PORT);
 		etl_sys.update(Dbo.db());
 	}
 
