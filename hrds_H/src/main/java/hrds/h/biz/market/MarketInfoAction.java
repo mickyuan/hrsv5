@@ -614,7 +614,7 @@ public class MarketInfoAction extends BaseAction {
             Map<String, Object> map = new LinkedHashMap<>();
             map.put("field_en_name", everyColumnName);
             map.put("field_cn_name", everyColumnName);
-            map.put("field_seq", i);
+            map.put("process_para", i);
             Object object = bloodRelationMap.get(everyColumnName);
             if (null == object) {
                 targetfield_type = field_type;
@@ -755,10 +755,16 @@ public class MarketInfoAction extends BaseAction {
         Dm_datatable dm_datatable = new Dm_datatable();
         dm_datatable.setDatatable_id(datatable_id);
         List<Map<String, Object>> list = Dbo.queryList("select * from " + Datatable_field_info.TableName +
-                " where datatable_id = ? order by datatable_field_id", dm_datatable.getDatatable_id());
+                " where datatable_id = ? order by field_seq", dm_datatable.getDatatable_id());
         Datatable_field_info datatable_field_info = new Datatable_field_info();
         for (Map<String, Object> map : list) {
             String datatable_field_id = map.get("datatable_field_id").toString();
+            if (map.get("process_para") != null) {
+                String process_para = map.get("process_para").toString();
+                if (!StringUtils.isEmpty(process_para) && StringUtils.isNumeric(process_para)) {
+                    map.put("process_para", Integer.valueOf(process_para));
+                }
+            }
             datatable_field_info.setDatatable_field_id(datatable_field_id);
             List<Map<String, Object>> list2 = Dbo.queryList("select dsla_storelayer from " + Data_store_layer_added.TableName + "" +
                             " t1 left join " + Dm_column_storage.TableName + " t2 on t1.dslad_id = t2.dslad_id where t2.datatable_field_id = ?",
@@ -902,9 +908,10 @@ public class MarketInfoAction extends BaseAction {
             String datatable_field_id = PrimayKeyGener.getNextId();
             df_info.setDatatable_field_id(datatable_field_id);
             df_info.setDatatable_id(datatable_id);
-            if(df_info.getField_seq() == null || !df_info.getField_process().equals(ProcessType.YingShe.getCode())){
-                df_info.setField_seq(Long.valueOf(-1));
-            }
+            df_info.setField_seq(String.valueOf(i));
+//            if(df_info.getField_seq() == null || !df_info.getField_process().equals(ProcessType.YingShe.getCode())){
+//                df_info.setField_seq(Long.valueOf(-1));
+//            }
             df_info.add(Dbo.db());
         }
         for (int i = 0; i < dm_column_storage.length; i++) {
