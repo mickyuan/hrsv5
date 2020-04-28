@@ -203,7 +203,9 @@ public class DbmNormbasicAction extends BaseAction {
         asmSql.clean();
         asmSql.addSql("select * from " + Dbm_normbasic.TableName + " where sort_id = ?").addParam(sort_id);
         //如果是对标操作员,则检索已经发布的
-        if (getUser().getUserTypeGroup().contains(UserType.ShuJuDuiBiaoCaoZuo.getCode())) {
+        if (getUser().getUserTypeGroup().contains(UserType.ShuJuDuiBiaoGuanLi.getCode())) {
+            asmSql.addSql(" and create_user = ?").addParam(getUserId().toString());
+        } else if (getUser().getUserTypeGroup().contains(UserType.ShuJuDuiBiaoCaoZuo.getCode())) {
             asmSql.addSql(" and norm_status = ?").addParam(IsFlag.Shi.getCode());
         } else {
             throw new BusinessException("登录用户没有查询对标数据权限!");
