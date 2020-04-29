@@ -63,14 +63,9 @@ public class DatasetProcessBack implements SparkDataset, Closeable {
      */
     private Dataset<Row> getProcessedDataSet() {
 
-        try {
-            dataset = dataframeFromSql(conf.getCompleteSql());
-            dataset = processDataSet(dataset);
-            dataSetAlreadyProcessed = true;
-        } catch (Exception e) {
-            throw new AppSystemException("通过sparkSession查询sql错误: ", e);
-        }
-
+        dataset = dataframeFromSql(conf.getCompleteSql());
+        dataset = processDataSet(dataset);
+        dataSetAlreadyProcessed = true;
         return dataset;
     }
 
@@ -145,7 +140,7 @@ public class DatasetProcessBack implements SparkDataset, Closeable {
                 if (needCreateTempView(layerByTable)) {
                     //如果表存在于多个关系型数据库，就随便读个表吧
                     Map<String, String> layerAttr = layerByTable.get(0).getLayerAttr();
-                    createJdbcTempView(tableName,layerAttr);
+                    createJdbcTempView(tableName, layerAttr);
                 }
             }
         }

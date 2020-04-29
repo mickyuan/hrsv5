@@ -84,7 +84,6 @@ public class SparkHandleArgument {
         String url;
         String user;
         String password;
-        String createTableColumnTypes;
         String databaseType;
 
         public String getDriver() {
@@ -117,14 +116,6 @@ public class SparkHandleArgument {
 
         public void setPassword(String password) {
             this.password = password;
-        }
-
-        public String getCreateTableColumnTypes() {
-            return createTableColumnTypes;
-        }
-
-        public void setCreateTableColumnTypes(String createTableColumnTypes) {
-            this.createTableColumnTypes = createTableColumnTypes;
         }
 
         public String getDatabaseType() {

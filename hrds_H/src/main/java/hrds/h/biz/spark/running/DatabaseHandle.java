@@ -17,8 +17,8 @@ import static hrds.commons.utils.Constant.*;
  */
 public class DatabaseHandle extends Handle {
 
-    private SparkHandleArgument.DatabaseArgs databaseArgs;
-    private Properties connProperties = new Properties();
+    private final SparkHandleArgument.DatabaseArgs databaseArgs;
+    private final Properties connProperties = new Properties();
 
     DatabaseHandle(SparkSession spark, Dataset<Row> dataset,
                    SparkHandleArgument.DatabaseArgs databaseArgs) {
@@ -33,15 +33,16 @@ public class DatabaseHandle extends Handle {
     }
 
     public void insert() {
-        DataFrameWriter<Row> dataFrameWriter;
+
+        DataFrameWriter<Row> dataFrameWriter = dataset
+                .write()
+                //插入数据时，只truncate表，而不删除表重建
+                .option("truncate", false);
+
         if (databaseArgs.isOverWrite()) {
-            dataFrameWriter = dataset.write().mode(SaveMode.Overwrite);
+            dataFrameWriter.mode(SaveMode.Overwrite);
         } else {
-            dataFrameWriter = dataset.write().mode(SaveMode.Append);
-        }
-        if (StringUtil.isNotBlank(databaseArgs.createTableColumnTypes)) {
-            dataFrameWriter = dataFrameWriter.option("createTableColumnTypes",
-                    databaseArgs.getCreateTableColumnTypes());
+            dataFrameWriter.mode(SaveMode.Append);
         }
         dataFrameWriter.jdbc(databaseArgs.getUrl(), tableName, connProperties);
     }

@@ -1,6 +1,7 @@
 package hrds.h.biz.spark.dealdataset.dataprocesser;
 
 import hrds.commons.codes.ProcessType;
+import hrds.commons.codes.Store_type;
 import hrds.commons.entity.Datatable_field_info;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
@@ -76,7 +77,11 @@ public class AddColumnsForDataSet implements DataSetProcesser {
 
             columnType = "varchar".equals(columnType) || "char".equals(columnType) ? "string" : columnType;
             //改为定义的列名和类型
-            sqlColumn[i] = sqlColumn[i].cast(columnType).name(columnName.toUpperCase());
+            sqlColumn[i] = sqlColumn[i].name(columnName.toUpperCase());
+            //关系型数据库类型，不需要设置类型，插入时自动转型
+            if (!Store_type.DATABASE.getCode().equals(marketConf.getDataStoreLayer().getStore_type())) {
+                sqlColumn[i] = sqlColumn[i].cast(columnType);
+            }
         }
 
         /**

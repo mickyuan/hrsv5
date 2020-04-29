@@ -2,7 +2,9 @@ package hrds.h.biz.realloader;
 
 import fd.ng.db.jdbc.DatabaseWrapper;
 
+import hrds.commons.codes.DatabaseType;
 import hrds.commons.codes.ProcessType;
+import hrds.commons.codes.StorageTypeKey;
 import hrds.commons.collection.ConnectionTool;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.DruidParseQuerySql;
@@ -22,8 +24,8 @@ public class SameDatabaseLoader extends AbstractRealLoader {
 
     private final DatabaseWrapper db;
     private final String sql;
-    private final String createTableColumnTypes;
     private final String columns;
+    private final DatabaseType databaseType;
     private final String currentTableName;
     private final String validTableName;
     private final String invalidTableName;
@@ -32,8 +34,9 @@ public class SameDatabaseLoader extends AbstractRealLoader {
         super(conf);
         db = ConnectionTool.getDBWrapper(tableLayerAttrs);
         sql = conf.getCompleteSql();
-        createTableColumnTypes = Utils.buildCreateTableColumnTypes(conf.getDatatableFields(), true);
+
         columns = Utils.columns(conf.getDatatableFields());
+        databaseType = DatabaseType.ofEnumByCode(tableLayerAttrs.get(StorageTypeKey.database_type));
         currentTableName = "curr_" + tableName;
         validTableName = "valid_" + tableName;
         invalidTableName = "invalid_" + tableName;
@@ -82,6 +85,11 @@ public class SameDatabaseLoader extends AbstractRealLoader {
                         "HYREN_MD5_VAL IN ( SELECT HYREN_MD5_VAL FROM %s )",
                 tableName, EDATENAME, conf.getEtlDate(), invalidTableName));
 
+        if (PropertyParaValue.getBoolean("market.increment.tmptable.delete", true)) {
+            dropTempTable();
+        }
+
+
     }
 
     private void computeValidDataAndInsert() {
@@ -107,9 +115,7 @@ public class SameDatabaseLoader extends AbstractRealLoader {
     @Override
     public void close() {
 
-        if (PropertyParaValue.getBoolean("market.increment.tmptable.delete", true)) {
-            dropTempTable();
-        }
+
         if (db != null)
             db.close();
     }
@@ -136,17 +142,8 @@ public class SameDatabaseLoader extends AbstractRealLoader {
      * 创建表
      * 如果表存在就删除掉
      */
-    private void forceCreateTable(String tableName, String... extraColumnTypes) {
-
-        String createTableColumnTypesExtra = createTableColumnTypes;
-        if (extraColumnTypes.length > 0) {
-            createTableColumnTypesExtra += "," + String.join(",", extraColumnTypes);
-        }
-        if (db.isExistTable(tableName)) {
-            db.execute("DROP TABLE " + tableName);
-        }
-        String createSql = "CREATE TABLE " + tableName + " (" + createTableColumnTypesExtra + ")";
-        db.execute(createSql);
+    private void forceCreateTable(String tableName) {
+        Utils.forceCreateTable(db, tableName, conf.getDatatableFields());
     }
 
     /**
@@ -160,7 +157,8 @@ public class SameDatabaseLoader extends AbstractRealLoader {
     }
 
     private String lineMd5Expr(String columnsJoin) {
-        return "md5(" + columnsJoin.replace(",", "||") + ")";
+        return Utils.registerMd5Function(db, databaseType) +
+                "(" + columnsJoin.replace(",", "||") + ")";
     }
 
 
