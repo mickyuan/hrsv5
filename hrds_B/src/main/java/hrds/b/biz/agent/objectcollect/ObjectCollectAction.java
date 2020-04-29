@@ -159,7 +159,7 @@ public class ObjectCollectAction extends BaseAction {
 
 	@Method(desc = "保存半结构化文件采集页面信息到对象采集设置表对象，同时返回对象采集id",
 			logicStep = "1.数据可访问权限处理方式：该表没有对应的用户访问权限限制" +
-					"2.根据obj_collect_name查询半结构化任务名称是否重复" +
+					"2.根据obj_number查询半结构化采集任务编号是否重复" +
 					"3.保存object_collect表" +
 					"4.判断是否存在数据字典选择否的时候数据日期是否为空" +
 					"5.保存object_collect表" +
@@ -178,12 +178,12 @@ public class ObjectCollectAction extends BaseAction {
 		// 1.数据可访问权限处理方式：该表没有对应的用户访问权限限制
 		//TODO 应该使用一个公共的校验类进行校验
 
-		// 2.根据obj_collect_name查询半结构化任务名称是否重复
+		// 2.根据obj_number查询半结构化采集任务编号是否重复
 		long count = Dbo.queryNumber("SELECT count(1) count FROM " + Object_collect.TableName
-				+ " WHERE obj_collect_name = ?", object_collect.getObj_collect_name())
+				+ " WHERE obj_number = ?", object_collect.getObj_number())
 				.orElseThrow(() -> new BusinessException("查询得到的数据必须有且只有一条"));
 		if (count > 0) {
-			throw new BusinessException("半结构化采集任务名称重复");
+			throw new BusinessException("半结构化采集任务编号重复");
 		}
 		// 3.之前对象采集存在行采集与对象采集两种，目前仅支持行采集,所以默认给
 		if (StringUtil.isNotBlank(object_collect.getObject_collect_type())) {
@@ -765,19 +765,18 @@ public class ObjectCollectAction extends BaseAction {
 
 	@Method(desc = "更新半结构化文件采集页面信息到对象采集设置表对象，同时返回对象采集id",
 			logicStep = "1.数据可访问权限处理方式：该表没有对应的用户访问权限限制" +
-					"2.根据obj_collect_name查询半结构化任务名称是否与其他采集任务名称重复" +
-					"3.判断是否存在数据字典选择否的时候数据日期是否为空" +
-					"4.更新object_collect表" +
-					"5.获取传递到agent的参数" +
-					"6.获取agent解析数据字典返回json格式数据" +
-					"7.如果数据字典减少了表，则需要删除之前在数据库中记录的表" +
-					"8.遍历数据字典信息循环更新半结构化对应信息" +
-					"9.通过对象采集id查询对象采集对应信息" +
-					"10.更新保存对象采集对应信息" +
-					"11.获取字段信息" +
-					"12.保存对象采集结构信息" +
-					"13.保存对象采集数据处理类型对应表" +
-					"14.返回对象采集ID")
+					"2.判断是否存在数据字典选择否的时候数据日期是否为空" +
+					"3.更新object_collect表" +
+					"4.获取传递到agent的参数" +
+					"5.获取agent解析数据字典返回json格式数据" +
+					"6.如果数据字典减少了表，则需要删除之前在数据库中记录的表" +
+					"7.遍历数据字典信息循环更新半结构化对应信息" +
+					"8.通过对象采集id查询对象采集对应信息" +
+					"9.更新保存对象采集对应信息" +
+					"10.获取字段信息" +
+					"11.保存对象采集结构信息" +
+					"12.保存对象采集数据处理类型对应表" +
+					"13.返回对象采集ID")
 	@Param(name = "object_collect", desc = "对象采集设置表对象", range = "不可为空", isBean = true)
 	@Return(desc = "返回对象采集配置ID", range = "不能为空")
 	public long updateObjectCollect(Object_collect object_collect) {
@@ -786,29 +785,22 @@ public class ObjectCollectAction extends BaseAction {
 		if (object_collect.getOdc_id() == null) {
 			throw new BusinessException("主键odc_id不能为空");
 		}
-		// 2.根据obj_collect_name查询半结构化任务名称是否与其他采集任务名称重复
-		if (Dbo.queryNumber("SELECT count(1) FROM " + Object_collect.TableName
-						+ " WHERE obj_collect_name = ? AND odc_id != ?",
-				object_collect.getObj_collect_name(), object_collect.getOdc_id())
-				.orElseThrow(() -> new BusinessException("sql查询错误")) > 0) {
-			throw new BusinessException("半结构化采集任务名称重复");
-		}
-		// 3.判断是否存在数据字典选择否的时候数据日期是否为空
+		// 2.判断是否存在数据字典选择否的时候数据日期是否为空
 		if (IsFlag.Fou == IsFlag.ofEnumByCode(object_collect.getIs_dictionary()) &&
 				StringUtil.isBlank(object_collect.getData_date())) {
 			throw new BusinessException("当是否存在数据字典是否的时候，数据日期不能为空");
 		}
-		// 4.更新object_collect表
+		// 3.更新object_collect表
 		object_collect.update(Dbo.db());
-		// 5.获取传递到agent的参数
+		// 4.获取传递到agent的参数
 		String jsonParam = getJsonParamForAgent(object_collect.getFile_path(), object_collect.getFile_suffix(),
 				object_collect.getIs_dictionary(), object_collect.getData_date());
-		// 6.获取agent解析数据字典返回json格式数据
+		// 5.获取agent解析数据字典返回json格式数据
 		List<Map<String, Object>> tableNames = getJsonDataForAgent(jsonParam, object_collect.getAgent_id());
 		List<String> tableNameList = new ArrayList<String>();
-		// 7.获取所有表集合
+		// 6.获取所有表集合
 		for (Map<String, Object> tableNameMap : tableNames) {
-			tableNameList.add(tableNameMap.get("tableName").toString());
+			tableNameList.add(tableNameMap.get("table_name").toString());
 		}
 		// 7.如果数据字典减少了表，则需要删除之前在数据库中记录的表
 		List<Map<String, Object>> objCollectTaskList = Dbo.queryList("select en_name,ocs_id from "
@@ -830,7 +822,7 @@ public class ObjectCollectAction extends BaseAction {
 		}
 		// 8.遍历数据字典信息循环更新半结构化对应信息
 		for (Map<String, Object> tableNameMap : tableNames) {
-			String tableName = tableNameMap.get("tableName").toString();
+			String tableName = tableNameMap.get("table_name").toString();
 			// 9.通过对象采集id以及表名查询对象采集对应信息
 			Map<String, Object> taskMap = Dbo.queryOneObject("select * from "
 							+ Object_collect_task.TableName + " where odc_id = ? and en_name = ?",
