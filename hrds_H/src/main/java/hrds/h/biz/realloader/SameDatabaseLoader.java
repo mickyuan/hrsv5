@@ -78,7 +78,8 @@ public class SameDatabaseLoader extends AbstractRealLoader {
         db.execute(String.format("INSERT INTO %s SELECT * FROM %s",
                 tableName, validTableName));
         // 关链数据
-        db.execute(String.format("UPDATE %s SET %s = %s WHERE HYREN_MD5_VAL IN ( SELECT HYREN_MD5_VAL FROM %s )",
+        db.execute(String.format("UPDATE %s SET %s = %s WHERE " +
+                        "HYREN_MD5_VAL IN ( SELECT HYREN_MD5_VAL FROM %s )",
                 tableName, EDATENAME, conf.getEtlDate(), invalidTableName));
 
     }
@@ -106,7 +107,7 @@ public class SameDatabaseLoader extends AbstractRealLoader {
     @Override
     public void close() {
 
-        if (PropertyParaValue.getBoolean("market.increment.tmptable.delete", false)) {
+        if (PropertyParaValue.getBoolean("market.increment.tmptable.delete", true)) {
             dropTempTable();
         }
         if (db != null)
