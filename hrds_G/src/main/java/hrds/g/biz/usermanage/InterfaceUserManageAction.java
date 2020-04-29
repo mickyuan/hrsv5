@@ -33,7 +33,7 @@ public class InterfaceUserManageAction extends BaseAction {
 			"3.返回接口用户信息")
 	@Param(name = "user_name", desc = "用户名", range = "新增用户时生成", nullable = true)
 	@Return(desc = "分页查询返回接口用户信息", range = "无限制")
-	public Result selectUserInfoByPage(String user_name) {
+	public Result selectUserInfo(String user_name) {
 		// 1.数据可访问权限处理方式：该方法user_id进行权限限制
 		SqlOperator.Assembler assembler = SqlOperator.Assembler.newInstance();
 		assembler.clean();
