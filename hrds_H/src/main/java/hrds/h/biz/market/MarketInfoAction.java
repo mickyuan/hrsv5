@@ -122,7 +122,6 @@ public class MarketInfoAction extends BaseAction {
         return resultlist;
     }
 
-
     @Method(desc = "获取登录用户数据集市首页信息",
             logicStep = "根据用户ID进行搜索")
     @Return(desc = "获取登录用户数据集市首页信息", range = "返回值取值范围")
@@ -617,10 +616,10 @@ public class MarketInfoAction extends BaseAction {
                     return resultmap;
                 } else {
                     //如果是来自帖源的话 就需要做两次转换
-                    resultmap.put("sourcetype", column_type);
+                    resultmap.put("sourcetype", column_type.toLowerCase());
                     column_type = transFormColumnType(column_type, DCLdsl_id);
                     column_type = transFormColumnType(column_type, dsl_id);
-                    resultmap.put("targettype", column_type);
+                    resultmap.put("targettype", column_type.toLowerCase());
                     return resultmap;
                 }
             } else if (dataSourceType.equals(DataSourceType.DML.getCode())) {
@@ -632,9 +631,9 @@ public class MarketInfoAction extends BaseAction {
                     resultmap.put("targettype", field_type);
                     return resultmap;
                 } else {
-                    resultmap.put("sourcetype", DMLfield_type);
+                    resultmap.put("sourcetype", DMLfield_type.toLowerCase());
                     DMLfield_type = transFormColumnType(DMLfield_type, dsl_id);
-                    resultmap.put("targettype", DMLfield_type);
+                    resultmap.put("targettype", DMLfield_type.toLowerCase());
                     return resultmap;
                 }
             } else {
