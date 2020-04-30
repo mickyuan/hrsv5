@@ -114,8 +114,6 @@ public class SameDatabaseLoader extends AbstractRealLoader {
 
     @Override
     public void close() {
-
-
         if (db != null)
             db.close();
     }
@@ -143,7 +141,9 @@ public class SameDatabaseLoader extends AbstractRealLoader {
      * 如果表存在就删除掉
      */
     private void forceCreateTable(String tableName) {
-        Utils.forceCreateTable(db, tableName, conf.getDatatableFields());
+        String createTableColumnTypes =
+                Utils.buildCreateTableColumnTypes(conf, true);
+        Utils.forceCreateTable(db, tableName, createTableColumnTypes);
     }
 
     /**

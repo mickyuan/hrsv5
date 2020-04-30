@@ -3,6 +3,7 @@ package hrds.h.biz.realloader;
 import hrds.commons.exception.AppSystemException;
 import hrds.h.biz.config.MarketConf;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -50,4 +51,7 @@ public abstract class AbstractRealLoader implements Loader {
                 tableLayerAttrs.put(propertyRecord.getStorage_property_key()
                         , propertyRecord.getStorage_property_val()));
     }
+
+    @Override
+    public void close() {}
 }
