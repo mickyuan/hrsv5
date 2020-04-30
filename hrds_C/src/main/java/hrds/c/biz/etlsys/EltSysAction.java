@@ -126,7 +126,7 @@ public class EltSysAction extends BaseAction {
 			throw new BusinessException("作业调度工程名不能为空！");
 		}
 		// 3.验证工程编号是否为数字英文下划线
-		Pattern pattern = Pattern.compile("^[0-9a-zA-Z_]{1,}$");
+		Pattern pattern = Pattern.compile("^[0-9a-zA-Z_]+$");
 		Matcher matcher = pattern.matcher(etl_sys_cd);
 		if (!matcher.matches()) {
 			throw new BusinessException("工程编号只能为数字英文下划线！");
