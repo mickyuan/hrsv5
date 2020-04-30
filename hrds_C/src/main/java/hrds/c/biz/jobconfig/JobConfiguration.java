@@ -24,8 +24,6 @@ import hrds.commons.codes.*;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.DboExecute;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
@@ -42,8 +40,6 @@ import java.util.*;
 
 @DocClass(desc = "作业调度配置管理", author = "dhw", createdate = "2019/10/28 11:36")
 public class JobConfiguration extends BaseAction {
-
-	private static final Logger logger = LogManager.getLogger();
 
 	// 作业系统参数变量名称前缀
 	private static final String PREFIX = "!";
@@ -2027,9 +2023,9 @@ public class JobConfiguration extends BaseAction {
 	@Param(name = "fileName", desc = "下载文件名", range = "无限制")
 	public void downloadFile(String fileName) {
 		// 1.数据可访问权限处理方式，该方法不需要权限验证
-		OutputStream out = null;
-		InputStream in = null;
-		String filePath = null;
+		OutputStream out;
+		InputStream in;
+		String filePath;
 		try {
 			// 2.获取本地文件路径
 			filePath = ETLJobUtil.getFilePath(fileName);
@@ -2215,7 +2211,6 @@ public class JobConfiguration extends BaseAction {
 		// 1.数据可访问权限处理方式，该方法不需要权限控制
 		StringBuilder sb = new StringBuilder();
 		// 2.根据不同的类型获取代码项的说明信息
-		sb = sb.append("");
 		switch (type.toLowerCase()) {
 			// 作业程序类型
 			case pro_type:

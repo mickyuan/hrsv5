@@ -17,8 +17,8 @@ import static hrds.commons.utils.Constant.*;
  */
 public class DatabaseHandle extends Handle {
 
-    private SparkHandleArgument.DatabaseArgs databaseArgs;
-    private Properties connProperties = new Properties();
+    private final SparkHandleArgument.DatabaseArgs databaseArgs;
+    private final Properties connProperties = new Properties();
 
     DatabaseHandle(SparkSession spark, Dataset<Row> dataset,
                    SparkHandleArgument.DatabaseArgs databaseArgs) {
@@ -33,15 +33,16 @@ public class DatabaseHandle extends Handle {
     }
 
     public void insert() {
-        DataFrameWriter<Row> dataFrameWriter;
+
+        DataFrameWriter<Row> dataFrameWriter = dataset
+                .write()
+                //插入数据时，只truncate表，而不删除表重建
+                .option("truncate", false);
+
         if (databaseArgs.isOverWrite()) {
-            dataFrameWriter = dataset.write().mode(SaveMode.Overwrite);
+            dataFrameWriter.mode(SaveMode.Overwrite);
         } else {
-            dataFrameWriter = dataset.write().mode(SaveMode.Append);
-        }
-        if (StringUtil.isNotBlank(databaseArgs.createTableColumnTypes)) {
-            dataFrameWriter = dataFrameWriter.option("createTableColumnTypes",
-                    databaseArgs.getCreateTableColumnTypes());
+            dataFrameWriter.mode(SaveMode.Append);
         }
         dataFrameWriter.jdbc(databaseArgs.getUrl(), tableName, connProperties);
     }
@@ -54,24 +55,32 @@ public class DatabaseHandle extends Handle {
                 .filter(EDATENAME + "=" + MAXDATE);
         dataset.createOrReplaceTempView(currentTable);
         finalDF.createOrReplaceTempView(tableName);
-
         /**
          * 有效数据的df，原样插入即可
          */
-        Dataset<Row> validDF = spark.sql("SELECT * FROM " + currentTable +
-                " WHERE NOT EXISTS(SELECT 1 FROM " + tableName + ")");
-        validDF.write().jdbc(databaseArgs.getUrl(), tableName, connProperties);
+        Dataset<Row> validDF = spark.sql(String.format(
+                "SELECT * FROM %s WHERE NOT EXISTS(SELECT 1 FROM %s" +
+                        " WHERE %s.%s = %s.%s AND %s.%s = '99991231')",
+                currentTable, tableName, currentTable, MD5NAME,
+                tableName, MD5NAME, tableName, EDATENAME));
+        validDF.write()
+                .mode(SaveMode.Append)
+                .jdbc(databaseArgs.getUrl(), tableName, connProperties);
 
         /**
          * 需要关链的数据df，只有一列，就是hyren的MD5值
          * 把该 df 写到最终表同数据库中,表名为 delta_hyren_${tableName}
          * 然后把最终表中的这些MD5记录的edate更新成调度日期
          */
-        Dataset<Row> invalidDF = spark.sql("SELECT " + MD5NAME +
-                " FROM " + tableName + " WHERE NOT EXISTS(SELECT 1 FROM " + currentTable + ")");
+        Dataset<Row> invalidDF = spark.sql(String.format(
+                "SELECT * FROM %s WHERE NOT EXISTS(SELECT 1 FROM %s" +
+                        " WHERE %s.%s = %s.%s AND %s.%s = '99991231')",
+                tableName, currentTable, tableName, MD5NAME,
+                currentTable, MD5NAME, tableName, EDATENAME));
 
         String deltaTable = "delta_hyren_" + tableName;
-        invalidDF.write().mode(SaveMode.Overwrite).
+        invalidDF.write()
+                .mode(SaveMode.Overwrite).
                 jdbc(databaseArgs.getUrl(), deltaTable, connProperties);
 
         //jdbc连接数据库进行更新
@@ -82,8 +91,8 @@ public class DatabaseHandle extends Handle {
         dbConfBean.setDatabase_pad(databaseArgs.getPassword());
         dbConfBean.setDatabase_type(databaseArgs.getDatabaseType());
         try (DatabaseWrapper db = ConnectionTool.getDBWrapper(dbConfBean)) {
-            db.execute("UPDATE ? SET ? = '?' WHERE EXISTS (SELECT 1 FROM ?)",
-                    tableName, EDATENAME, MAXDATE, deltaTable);
+            db.execute(String.format("UPDATE %s SET %s = %s WHERE %s in (SELECT %s FROM %s)",
+                    tableName, EDATENAME, databaseArgs.getEtlDate(), MD5NAME, MD5NAME, deltaTable));
             db.execute("DROP TABLE " + deltaTable);
         }
 

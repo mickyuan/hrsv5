@@ -142,6 +142,15 @@ public class DFCollectTableHandleParse extends AbstractCollectTableHandle {
 		tableBean.setColumnMetaInfo(columnMetaInfo.toString());
 		tableBean.setPrimaryKeyInfo(primaryKeyInfo.toString());
 		tableBean.setParseJson(parseJson);
+
+		//查找增量数据的新增的、删除的、和修改的列信息
+		List<String> incrementColumnList = ColumnMeta.getIncrementColumnList(collectTableBean.getTable_name(),
+				Constant.XMLPATH + xmlName);
+		if (incrementColumnList != null && incrementColumnList.size() > 2) {
+			tableBean.setInsertColumnInfo(incrementColumnList.get(0));
+			tableBean.setUpdateColumnInfo(incrementColumnList.get(1));
+			tableBean.setDeleteColumnInfo(incrementColumnList.get(2));
+		}
 //		tableBean.setIsCollectMap(isCollectMap);
 		//返回表结构信息
 		return tableBean;

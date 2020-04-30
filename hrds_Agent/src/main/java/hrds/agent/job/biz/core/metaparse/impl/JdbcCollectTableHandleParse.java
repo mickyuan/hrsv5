@@ -1,5 +1,6 @@
 package hrds.agent.job.biz.core.metaparse.impl;
 
+import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
@@ -43,7 +44,7 @@ public class JdbcCollectTableHandleParse extends AbstractCollectTableHandle {
 			return getFullAmountExtractTableBean(sourceDataConfBean, collectTableBean);
 		} else if (UnloadType.ZengLiangXieShu.getCode().equals(collectTableBean.getUnload_type())) {
 			//增量卸数，根据table_column选择的字段获取meta信息
-			return getIncrementExtractTableBean(collectTableBean);
+			return getIncrementExtractTableBean(sourceDataConfBean, collectTableBean);
 		} else {
 			throw new AppSystemException("数据库抽取方式参数不正确");
 		}
@@ -54,8 +55,10 @@ public class JdbcCollectTableHandleParse extends AbstractCollectTableHandle {
 	@Param(name = "sourceDataConfBean", desc = "数据库采集,DB文件采集数据源配置信息", range = "不为空")
 	@Param(name = "collectTableBean", desc = "数据库采集表配置信息", range = "不为空")
 	@Return(desc = "卸数阶段元信息", range = "不为空")
-	private TableBean getIncrementExtractTableBean(CollectTableBean collectTableBean) {
+	private TableBean getIncrementExtractTableBean(SourceDataConfBean sourceDataConfBean,
+	                                               CollectTableBean collectTableBean) {
 		TableBean tableBean = new TableBean();
+		//-----------------------------------获取所有列的数据字典信息----------------------------------
 		StringBuilder columnMetaInfo = new StringBuilder();//生成的元信息列名
 		StringBuilder allColumns = new StringBuilder();//要采集的列名
 		StringBuilder colTypeMetaInfo = new StringBuilder();//生成的元信息列类型
@@ -84,9 +87,67 @@ public class JdbcCollectTableHandleParse extends AbstractCollectTableHandle {
 		tableBean.setColTypeMetaInfo(colTypeMetaInfo.toString());
 		tableBean.setColumnMetaInfo(columnMetaInfo.toString().toUpperCase());
 		tableBean.setPrimaryKeyInfo(primaryKeyInfo.toString());
+		//-----------------------------------所有列的数据字典信息获取结束----------------------------------
+		//获取查询的列
+		getSqlSearchColumn(sourceDataConfBean, collectTableBean, tableBean);
 		return tableBean;
 	}
 
+	private void getSqlSearchColumn(SourceDataConfBean sourceDataConfBean,
+	                                CollectTableBean collectTableBean, TableBean tableBean) {
+		//根据实际sql获取新增、删除、更新查询的列
+		Connection conn = null;
+		ResultSet resultSet = null;
+		try {
+			//获取jdbc连接
+			conn = ConnUtil.getConnection(sourceDataConfBean.getDatabase_drive(), sourceDataConfBean.getJdbc_url(),
+					sourceDataConfBean.getUser_name(), sourceDataConfBean.getDatabase_pad());
+			String incrementSql = collectTableBean.getSql();
+			JSONObject incrementSqlObject = JSONObject.parseObject(incrementSql);
+			//遍历json根据json的key执行sql,拼接对应的操作方式,增量抽取是写到同一个文件，因此这里不使用多线程
+			for (String key : incrementSqlObject.keySet()) {
+				//获取增量的sql
+				String sql = incrementSqlObject.getString(key);
+				if (!StringUtil.isEmpty(sql)) {
+					StringBuilder columnMetaInfo = new StringBuilder();
+					//替换掉sql中需要传递的参数
+					sql = AbstractCollectTableHandle.replaceSqlParam(sql, collectTableBean.getSqlParam());
+					resultSet = getResultSet(sql, conn);
+					ResultSetMetaData rsMetaData = resultSet.getMetaData();
+					// Write header
+					for (int i = 1; i <= rsMetaData.getColumnCount(); i++) {
+						String columnTmp = rsMetaData.getColumnName(i);
+						//TODO 下一行未知
+						if (!columnTmp.equalsIgnoreCase("hyren_rn")) {
+							columnMetaInfo.append(columnTmp).append(STRSPLIT);
+						}
+					}
+					columnMetaInfo.deleteCharAt(columnMetaInfo.length() - 1);//元信息列名
+					//根据key，给tableBean塞值
+					if ("insert".equals(key)) {
+						tableBean.setInsertColumnInfo(columnMetaInfo.toString());
+					} else if ("delete".equals(key)) {
+						tableBean.setDeleteColumnInfo(columnMetaInfo.toString());
+					} else if ("update".equals(key)) {
+						tableBean.setUpdateColumnInfo(columnMetaInfo.toString());
+					} else {
+						throw new AppSystemException("增量数据采集不自持" + key + "操作");
+					}
+				}
+			}
+		} catch (Exception e) {
+			throw new AppSystemException("根据数据源信息和采集表信息得到卸数元信息失败！", e);
+		} finally {
+			try {
+				if (resultSet != null)
+					resultSet.close();
+				if (conn != null)
+					conn.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+	}
 
 	@Method(desc = "根据数据源信息和采集表信息得到卸数元信息", logicStep = "" +
 			"1、根据数据源信息和采集表信息抽取SQL" +
@@ -99,6 +160,7 @@ public class JdbcCollectTableHandleParse extends AbstractCollectTableHandle {
 	                                                CollectTableBean collectTableBean) {
 		TableBean tableBean = new TableBean();
 		Connection conn = null;
+		ResultSet resultSet = null;
 		try {
 			//获取jdbc连接
 			conn = ConnUtil.getConnection(sourceDataConfBean.getDatabase_drive(), sourceDataConfBean.getJdbc_url(),
@@ -107,7 +169,6 @@ public class JdbcCollectTableHandleParse extends AbstractCollectTableHandle {
 			String collectSQL = getCollectSQL(sourceDataConfBean, collectTableBean);
 			tableBean.setCollectSQL(collectSQL);
 			//抽取sql可能包含分隔符，判断如果包含分隔符，取第一条sql获取meta信息（注：包含分隔符表明并行抽取）
-			ResultSet resultSet;
 			if (collectSQL.contains(JobConstant.SQLDELIMITER)) {
 				resultSet = getResultSet(StringUtil.split(collectSQL, JobConstant.SQLDELIMITER).get(0), conn);
 			} else {
@@ -196,6 +257,8 @@ public class JdbcCollectTableHandleParse extends AbstractCollectTableHandle {
 			throw new AppSystemException("根据数据源信息和采集表信息得到卸数元信息失败！", e);
 		} finally {
 			try {
+				if (resultSet != null)
+					resultSet.close();
 				if (conn != null)
 					conn.close();
 			} catch (SQLException e) {

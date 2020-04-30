@@ -25,7 +25,7 @@ public final class BusinessForStorageType extends AbstractBusiness {
             logger.info("首次执行=======================");
             load.firstLoad();
         } else {
-            logger.info("第二次执行=======================");
+            logger.info("非首次执行=======================");
             //该变量表示追加，替换还是增量
             String storageType = conf.getDmDatatable().getStorage_type();
             if (StorageType.TiHuan.getCode().equals(storageType)) {
@@ -41,7 +41,7 @@ public final class BusinessForStorageType extends AbstractBusiness {
             } else if (StorageType.ZengLiang.getCode().equals(storageType)) {
                 logger.info("增量=======================");
                 /**
-                 * 支持追加重跑，前提是该loader实现了{@link NonFirstLoad#restore()}
+                 * 支持增量重跑，前提是该loader实现了{@link NonFirstLoad#restore()}
                  */
                 restore(loaderName);
                 load.increment();

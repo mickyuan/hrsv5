@@ -16,7 +16,7 @@
             <ThresholdFilter level="debug" onMatch="ACCEPT" onMismatch="DENY" />
             <!-- 输出日志的格式-->
             <!-- 长度小于30，则右边用空格填充；若名字空间长度超过30，截去多余字符 -->
-            <PatternLayout pattern="[%-30.30C{1}][%-5level] %msg%xEx%n" />
+            <PatternLayout pattern="[%-25.25C{1}][%-5level] %msg%xEx%n" />
         </Console>
 
         <!-- （2）覆盖输出到文件。这个log每次运行程序会自动清空，适合临时测试用-->

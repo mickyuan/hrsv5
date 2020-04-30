@@ -92,22 +92,28 @@ public class DFUploadStageImpl extends AbstractJobStage {
 	}
 
 	private void incrementCollect(StageParamInfo stageParamInfo) {
+		TableProcessInterface processInterface = null;
 		try {
 			List<DataStoreConfBean> dataStoreConfBeanList = collectTableBean.getDataStoreConfBean();
 			for (DataStoreConfBean dataStoreConfBean : dataStoreConfBeanList) {
 				//这边做一个接口多实现，目前只实现传统数据库的增量更新接口
-				TableProcessInterface processInterface;
 				if (Store_type.DATABASE.getCode().equals(dataStoreConfBean.getStore_type())) {
-					for (String readFile : stageParamInfo.getFileArr()) {
-						//关系型数据库
-						processInterface = new MppTableProcessImpl(stageParamInfo.getTableBean(),
-								collectTableBean, readFile);
-						processInterface.parserFileToTable();
-					}
+					//关系型数据库
+					processInterface = new MppTableProcessImpl(stageParamInfo.getTableBean(),
+							collectTableBean, dataStoreConfBean);
+				} else {
+					throw new AppSystemException("目前没有实现其他数据库的增量更新代码");
+				}
+				for (String readFile : stageParamInfo.getFileArr()) {
+					processInterface.parserFileToTable(readFile);
 				}
 			}
 		} catch (Exception e) {
 			throw new AppSystemException("db文件采集增量上传失败", e);
+		} finally {
+			if (processInterface != null) {
+				processInterface.close();
+			}
 		}
 	}
 

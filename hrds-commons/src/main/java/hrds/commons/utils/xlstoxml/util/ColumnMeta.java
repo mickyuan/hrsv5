@@ -120,9 +120,49 @@ public class ColumnMeta {
 
 	}
 
+	/**
+	 * 查找增量数据的新增的、删除的、和修改的列信息
+	 *
+	 * @param tName         表名
+	 * @param xml_file_path xml路径
+	 * @return 新增的、删除的、修改的列信息
+	 */
+	public static List<String> getIncrementColumnList(String tName, String xml_file_path) {
+		DocumentBuilderFactory factory;
+		DocumentBuilder builder;
+		Document doc;
+		NodeList table_list;
+		String table_name;
+		List<String> incrementColumnList = new ArrayList<String>();
+		try {
+			File f = new File(xml_file_path);
+			factory = DocumentBuilderFactory.newInstance();
+			builder = factory.newDocumentBuilder();
+			doc = builder.parse(f);
+			table_list = doc.getElementsByTagName("table");
+			for (int i = 0; i < table_list.getLength(); i++) {
+				table_name = table_list.item(i).getAttributes().getNamedItem("table_name").getNodeValue();
+				table_name = table_name.toLowerCase();
+				tName = tName.toLowerCase();
+				if (table_name.equals(tName)) {
+					incrementColumnList.add(table_list.item(i).getAttributes().getNamedItem("insertColumnInfo").
+							getNodeValue());
+					incrementColumnList.add(table_list.item(i).getAttributes().getNamedItem("updateColumnInfo").
+							getNodeValue());
+					incrementColumnList.add(table_list.item(i).getAttributes().getNamedItem("deleteColumnInfo").
+							getNodeValue());
+				}
+			}
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
+			throw new BusinessException(e.getMessage());
+		}
+		return incrementColumnList;
+
+	}
+
 	public static String updateColumn(Map<String, String> mergeIng, Map<String, Map<String, Column_split>> splitIng, StringBuilder columns,
 	                                  StringBuilder colType) {
-
 		return updateColumn(mergeIng, splitIng, columns, colType, new StringBuilder());
 	}
 

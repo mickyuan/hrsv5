@@ -113,12 +113,13 @@ public class ObjectCollectAction extends BaseAction {
 		List<Map<String, Object>> tableNames = getJsonDataForAgent(jsonParam, agent_id);
 		// 5.判断当前目录下的数据文件响应信息是否为空
 		if (!tableNames.isEmpty()) {
-			List<Map<String, Object>> tableNameList = new ArrayList<Map<String, Object>>();
+			List<Map<String, Object>> tableNameList = new ArrayList<>();
 			// 6.不为空，循环获取当前目录下的数据文件表信息
-			for (int i = 0; i < tableNames.size(); i++) {
-				Map<String, Object> tableMap = new HashMap<String, Object>();
-				tableMap.put("table_name", tableNames.get(i).get("table_name").toString());
-				tableMap.put("table_ch_name", tableNames.get(i).get("table_ch_name").toString());
+			for (Map<String, Object> tableName : tableNames) {
+				Map<String, Object> tableMap = new HashMap<>();
+				logger.info(tableName);
+				tableMap.put("table_name", tableName.get("table_name").toString());
+				tableMap.put("table_cn_name", tableName.get("table_cn_name").toString());
 				tableNameList.add(tableMap);
 			}
 			// 7.返回解析后当前目录获取表信息
@@ -159,7 +160,7 @@ public class ObjectCollectAction extends BaseAction {
 
 	@Method(desc = "保存半结构化文件采集页面信息到对象采集设置表对象，同时返回对象采集id",
 			logicStep = "1.数据可访问权限处理方式：该表没有对应的用户访问权限限制" +
-					"2.根据obj_collect_name查询半结构化任务名称是否重复" +
+					"2.根据obj_number查询半结构化采集任务编号是否重复" +
 					"3.保存object_collect表" +
 					"4.判断是否存在数据字典选择否的时候数据日期是否为空" +
 					"5.保存object_collect表" +
@@ -178,12 +179,12 @@ public class ObjectCollectAction extends BaseAction {
 		// 1.数据可访问权限处理方式：该表没有对应的用户访问权限限制
 		//TODO 应该使用一个公共的校验类进行校验
 
-		// 2.根据obj_collect_name查询半结构化任务名称是否重复
+		// 2.根据obj_number查询半结构化采集任务编号是否重复
 		long count = Dbo.queryNumber("SELECT count(1) count FROM " + Object_collect.TableName
-				+ " WHERE obj_collect_name = ?", object_collect.getObj_collect_name())
+				+ " WHERE obj_number = ?", object_collect.getObj_number())
 				.orElseThrow(() -> new BusinessException("查询得到的数据必须有且只有一条"));
 		if (count > 0) {
-			throw new BusinessException("半结构化采集任务名称重复");
+			throw new BusinessException("半结构化采集任务编号重复");
 		}
 		// 3.之前对象采集存在行采集与对象采集两种，目前仅支持行采集,所以默认给
 		if (StringUtil.isNotBlank(object_collect.getObject_collect_type())) {
@@ -219,7 +220,7 @@ public class ObjectCollectAction extends BaseAction {
 							LISTTYPE);
 					if (!columns.isEmpty()) {
 						// 10.保存对象采集结构信息
-						addObjectCollectStruct(objectCollectTask, isSolr, columns);
+						isSolr = addObjectCollectStruct(objectCollectTask, columns);
 					}
 				}
 				// 如果没有数据字典，第一次新增则不会加载object_handle_type，第二次编辑也不会修改库中信息
@@ -307,7 +308,7 @@ public class ObjectCollectAction extends BaseAction {
 		objectCollectTask.setAgent_id(object_collect.getAgent_id());
 		objectCollectTask.setOdc_id(object_collect.getOdc_id());
 		String tableName = tableNameMap.get("table_name").toString();
-		String zh_name = tableNameMap.get("table_ch_name").toString();
+		String zh_name = tableNameMap.get("table_cn_name").toString();
 		objectCollectTask.setEn_name(tableName != null ? tableName : "");
 		objectCollectTask.setZh_name(zh_name != null ? zh_name : "");
 		objectCollectTask.setCollect_data_type(CollectDataType.JSON.getCode());
@@ -376,7 +377,7 @@ public class ObjectCollectAction extends BaseAction {
 		// 2.有数据字典，查询对象采集结构信息
 		List<Map<String, Object>> objectStructList = Dbo.queryList("select * from "
 				+ Object_collect_struct.TableName + " where ocs_id=? order by col_seq", ocs_id);
-		Map<String, Object> objColStructMap = new HashMap<String, Object>();
+		Map<String, Object> objColStructMap = new HashMap<>();
 		objColStructMap.put("objectStructList", objectStructList);
 		// 3.没有数据字典查询第一行数据
 		List<Object> firstLineList = getFirstLineInfo(ocs_id);
@@ -505,11 +506,7 @@ public class ObjectCollectAction extends BaseAction {
 			String key = entry.getKey();
 			Object object = jsonObject.get(key);
 			boolean isParent;
-			if (object instanceof JSONObject || object instanceof JSONArray) {
-				isParent = true;
-			} else {
-				isParent = false;
-			}
+			isParent = object instanceof JSONObject || object instanceof JSONArray;
 			// 字段位置
 			resultObject.put("location", keys + key);
 			resultObject.put("description", key);
@@ -601,7 +598,7 @@ public class ObjectCollectAction extends BaseAction {
 		}.getType();
 		// 2.解析json为对象采集结构信息
 		List<Object_collect_struct> collectStructList = JsonUtil.toObject(collectStruct, type);
-		List<Long> structIdList = new ArrayList<Long>();
+		List<Long> structIdList = new ArrayList<>();
 		String struct_id;
 		// 3.循环保存对象采集结构信息入库，获取结构信息id
 		for (Object_collect_struct object_collect_struct : collectStructList) {
@@ -690,8 +687,8 @@ public class ObjectCollectAction extends BaseAction {
 	@Param(name = "odc_id", desc = "对象采集id", range = "新增对象采集时生成")
 	private void rewriteDataDictionary(long odc_id) {
 		// 1.数据可访问权限处理方式：该方法没有访问权限限制
-		Map<String, Object> dictionaryMap = new HashMap<String, Object>();
-		List<Object> dictionaryList = new ArrayList<Object>();
+		Map<String, Object> dictionaryMap = new HashMap<>();
+		List<Object> dictionaryList = new ArrayList<>();
 		// 2.根据对象采集ID当前半结构化采集任务是否存在数据字典
 		List<Object> isDictionaryList = Dbo.queryOneColumnList("select is_dictionary from "
 				+ Object_collect.TableName + " where odc_id=?", odc_id);
@@ -706,7 +703,7 @@ public class ObjectCollectAction extends BaseAction {
 				List<Map<String, Object>> objCollectTaskList = Dbo.queryList("select * from "
 						+ Object_collect_task.TableName + " where odc_id=?", odc_id);
 				for (Map<String, Object> objectMap : objCollectTaskList) {
-					Map<String, Object> tableMap = new HashMap<String, Object>();
+					Map<String, Object> tableMap = new HashMap<>();
 					tableMap.put("table_name", objectMap.get("en_name"));
 					tableMap.put("table_cn_name", objectMap.get("zh_name"));
 					tableMap.put("updatetype", objectMap.get("updatetype"));
@@ -714,9 +711,9 @@ public class ObjectCollectAction extends BaseAction {
 					long ocs_id = Long.parseLong(objectMap.get("ocs_id").toString());
 					List<Map<String, Object>> objCollStructList = Dbo.queryList("select * from "
 							+ Object_collect_struct.TableName + " where ocs_id=?", ocs_id);
-					List<Map<String, Object>> columnList = new ArrayList<Map<String, Object>>();
+					List<Map<String, Object>> columnList = new ArrayList<>();
 					for (Map<String, Object> objCollStructMap : objCollStructList) {
-						Map<String, Object> columnMap = new HashMap<String, Object>();
+						Map<String, Object> columnMap = new HashMap<>();
 						columnMap.put("column_type", objCollStructMap.get("column_type"));
 						columnMap.put("column_id", objCollStructMap.get("col_seq"));
 						columnMap.put("column_name", objCollStructMap.get("column_name"));
@@ -765,19 +762,18 @@ public class ObjectCollectAction extends BaseAction {
 
 	@Method(desc = "更新半结构化文件采集页面信息到对象采集设置表对象，同时返回对象采集id",
 			logicStep = "1.数据可访问权限处理方式：该表没有对应的用户访问权限限制" +
-					"2.根据obj_collect_name查询半结构化任务名称是否与其他采集任务名称重复" +
-					"3.判断是否存在数据字典选择否的时候数据日期是否为空" +
-					"4.更新object_collect表" +
-					"5.获取传递到agent的参数" +
-					"6.获取agent解析数据字典返回json格式数据" +
-					"7.如果数据字典减少了表，则需要删除之前在数据库中记录的表" +
-					"8.遍历数据字典信息循环更新半结构化对应信息" +
-					"9.通过对象采集id查询对象采集对应信息" +
-					"10.更新保存对象采集对应信息" +
-					"11.获取字段信息" +
-					"12.保存对象采集结构信息" +
-					"13.保存对象采集数据处理类型对应表" +
-					"14.返回对象采集ID")
+					"2.判断是否存在数据字典选择否的时候数据日期是否为空" +
+					"3.更新object_collect表" +
+					"4.获取传递到agent的参数" +
+					"5.获取agent解析数据字典返回json格式数据" +
+					"6.如果数据字典减少了表，则需要删除之前在数据库中记录的表" +
+					"7.遍历数据字典信息循环更新半结构化对应信息" +
+					"8.通过对象采集id查询对象采集对应信息" +
+					"9.更新保存对象采集对应信息" +
+					"10.获取字段信息" +
+					"11.保存对象采集结构信息" +
+					"12.保存对象采集数据处理类型对应表" +
+					"13.返回对象采集ID")
 	@Param(name = "object_collect", desc = "对象采集设置表对象", range = "不可为空", isBean = true)
 	@Return(desc = "返回对象采集配置ID", range = "不能为空")
 	public long updateObjectCollect(Object_collect object_collect) {
@@ -786,29 +782,22 @@ public class ObjectCollectAction extends BaseAction {
 		if (object_collect.getOdc_id() == null) {
 			throw new BusinessException("主键odc_id不能为空");
 		}
-		// 2.根据obj_collect_name查询半结构化任务名称是否与其他采集任务名称重复
-		if (Dbo.queryNumber("SELECT count(1) FROM " + Object_collect.TableName
-						+ " WHERE obj_collect_name = ? AND odc_id != ?",
-				object_collect.getObj_collect_name(), object_collect.getOdc_id())
-				.orElseThrow(() -> new BusinessException("sql查询错误")) > 0) {
-			throw new BusinessException("半结构化采集任务名称重复");
-		}
-		// 3.判断是否存在数据字典选择否的时候数据日期是否为空
+		// 2.判断是否存在数据字典选择否的时候数据日期是否为空
 		if (IsFlag.Fou == IsFlag.ofEnumByCode(object_collect.getIs_dictionary()) &&
 				StringUtil.isBlank(object_collect.getData_date())) {
 			throw new BusinessException("当是否存在数据字典是否的时候，数据日期不能为空");
 		}
-		// 4.更新object_collect表
+		// 3.更新object_collect表
 		object_collect.update(Dbo.db());
-		// 5.获取传递到agent的参数
+		// 4.获取传递到agent的参数
 		String jsonParam = getJsonParamForAgent(object_collect.getFile_path(), object_collect.getFile_suffix(),
 				object_collect.getIs_dictionary(), object_collect.getData_date());
-		// 6.获取agent解析数据字典返回json格式数据
+		// 5.获取agent解析数据字典返回json格式数据
 		List<Map<String, Object>> tableNames = getJsonDataForAgent(jsonParam, object_collect.getAgent_id());
-		List<String> tableNameList = new ArrayList<String>();
-		// 7.获取所有表集合
+		List<String> tableNameList = new ArrayList<>();
+		// 6.获取所有表集合
 		for (Map<String, Object> tableNameMap : tableNames) {
-			tableNameList.add(tableNameMap.get("tableName").toString());
+			tableNameList.add(tableNameMap.get("table_name").toString());
 		}
 		// 7.如果数据字典减少了表，则需要删除之前在数据库中记录的表
 		List<Map<String, Object>> objCollectTaskList = Dbo.queryList("select en_name,ocs_id from "
@@ -830,7 +819,7 @@ public class ObjectCollectAction extends BaseAction {
 		}
 		// 8.遍历数据字典信息循环更新半结构化对应信息
 		for (Map<String, Object> tableNameMap : tableNames) {
-			String tableName = tableNameMap.get("tableName").toString();
+			String tableName = tableNameMap.get("table_name").toString();
 			// 9.通过对象采集id以及表名查询对象采集对应信息
 			Map<String, Object> taskMap = Dbo.queryOneObject("select * from "
 							+ Object_collect_task.TableName + " where odc_id = ? and en_name = ?",
@@ -862,7 +851,7 @@ public class ObjectCollectAction extends BaseAction {
 				if (!columns.isEmpty()) {
 					Dbo.execute("delete from " + Object_collect_struct.TableName + " where ocs_id = ?",
 							objectCollectTask.getOcs_id());
-					addObjectCollectStruct(objectCollectTask, false, columns);
+					addObjectCollectStruct(objectCollectTask, columns);
 				}
 				// 如果没有数据字典，第一次新增则不会加载object_handle_type，第二次编辑也不会修改库中信息
 				Map<String, String> handleTypMap = JsonUtil.toObject(tableNameMap.get("handletype").toString(),
@@ -883,9 +872,10 @@ public class ObjectCollectAction extends BaseAction {
 	@Param(name = "objectCollectTask", desc = "对象采集对应信息", range = "不为空", isBean = true)
 	@Param(name = "columns", desc = "列信息集合", range = "不为空")
 	@Param(name = "isSolr", desc = "是否入solr标志", range = "使用（IsFlag）代码项")
-	private void addObjectCollectStruct(Object_collect_task objectCollectTask, boolean isSolr,
-	                                    List<Map<String, Object>> columns) {
+	private boolean addObjectCollectStruct(Object_collect_task objectCollectTask,
+	                                       List<Map<String, Object>> columns) {
 		// 1.数据可访问权限处理方式：该方法没有用户访问权限限制
+		boolean isSolr = false;
 		for (int j = 0; j < columns.size(); j++) {
 			Map<String, Object> columnMap = columns.get(j);
 			String is_solr = columnMap.get("is_solr").toString();
@@ -909,6 +899,7 @@ public class ObjectCollectAction extends BaseAction {
 			// 3.保存对象采集结构信息
 			object_collect_struct.add(Dbo.db());
 		}
+		return isSolr;
 	}
 
 
@@ -924,7 +915,7 @@ public class ObjectCollectAction extends BaseAction {
 	                                    String data_date) {
 		// 1.数据可访问权限处理方式：该方法没有用户访问权限限制
 		// 2.封装半结构化采集与agent交互参数
-		Map<String, String> jsonParamMap = new HashMap<String, String>();
+		Map<String, String> jsonParamMap = new HashMap<>();
 		jsonParamMap.put("file_suffix", file_suffix);
 		jsonParamMap.put("is_dictionary", is_dictionary);
 		jsonParamMap.put("data_date", data_date);

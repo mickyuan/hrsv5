@@ -274,7 +274,10 @@ public class Xls2xml {
 				String table_name = json.getString("table_name");//表名
 				String table_cn_name = json.getString("table_cn_name");//中文表名
 				String unload_type = json.getString("unload_type");//数据存储方式
-				addTable(table_name, table_cn_name, unload_type);
+				String insertColumnInfo = json.getString("insertColumnInfo");
+				String updateColumnInfo = json.getString("updateColumnInfo");
+				String deleteColumnInfo = json.getString("deleteColumnInfo");
+				addTable(table_name, table_cn_name, unload_type, insertColumnInfo, updateColumnInfo, deleteColumnInfo);
 				JSONArray columns = json.getJSONArray("columns");//列信息
 				for (int j = 0; j < columns.size(); j++) {
 					JSONObject column = columns.getJSONObject(j);
@@ -506,6 +509,17 @@ public class Xls2xml {
 		xmlCreater.createAttribute(table, "table_ch_name", cn_table_name);
 		xmlCreater.createAttribute(table, "unload_type", unload_type);
 
+	}
+
+	public static void addTable(String en_table_name, String cn_table_name, String unload_type
+			, String insertColumnInfo, String updateColumnInfo, String deleteColumnInfo) {
+		table = xmlCreater.createElement(root, "table");
+		xmlCreater.createAttribute(table, "table_name", en_table_name);
+		xmlCreater.createAttribute(table, "table_ch_name", cn_table_name);
+		xmlCreater.createAttribute(table, "unload_type", unload_type);
+		xmlCreater.createAttribute(table, "insertColumnInfo", insertColumnInfo);
+		xmlCreater.createAttribute(table, "updateColumnInfo", updateColumnInfo);
+		xmlCreater.createAttribute(table, "deleteColumnInfo", deleteColumnInfo);
 	}
 
 	public static void addColumn(String column_name, String column_cn_name, String column_type, String is_primary_key,

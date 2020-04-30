@@ -11,7 +11,6 @@ import hrds.h.biz.config.MarketConf;
 import hrds.h.biz.spark.dealdataset.dataprocesser.AddColumnsForDataSet;
 import hrds.h.biz.spark.dealdataset.dataprocesser.DataSetProcesser;
 import hrds.h.biz.spark.initialize.SparkSessionBuilder;
-import org.apache.commons.io.IOUtils;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
@@ -64,14 +63,9 @@ public class DatasetProcessBack implements SparkDataset, Closeable {
      */
     private Dataset<Row> getProcessedDataSet() {
 
-        try {
-            dataset = dataframeFromSql(conf.getCompleteSql());
-            dataset = processDataSet(dataset);
-            dataSetAlreadyProcessed = true;
-        } catch (Exception e) {
-            throw new AppSystemException("通过sparkSession查询sql错误: ", e);
-        }
-
+        dataset = dataframeFromSql(conf.getCompleteSql());
+        dataset = processDataSet(dataset);
+        dataSetAlreadyProcessed = true;
         return dataset;
     }
 
@@ -133,25 +127,24 @@ public class DatasetProcessBack implements SparkDataset, Closeable {
      */
     private Dataset<Row> dataframeFromSql(String sql) {
 
+        sparkSession.sql("use hyshf");
+
         List<String> listTable = DruidParseQuerySql.parseSqlTableToList(sql);
         try (DatabaseWrapper db = new DatabaseWrapper()) {
 
             for (String tableName : listTable) {
                 List<LayerBean> layerByTable = ProcessingData.getLayerByTable(tableName, db);
-                if (validTableLayer(layerByTable)) {
+                if (!validTableLayer(layerByTable)) {
                     throw new AppSystemException("表 " + tableName + " 不属于Database,Hive,Hbase中的任意一层");
                 }
                 if (needCreateTempView(layerByTable)) {
                     //如果表存在于多个关系型数据库，就随便读个表吧
                     Map<String, String> layerAttr = layerByTable.get(0).getLayerAttr();
-                    createJdbcTempView(tableName,layerAttr);
+                    createJdbcTempView(tableName, layerAttr);
                 }
             }
         }
-
-        sparkSession.sql("use hyshf");
-        sparkSession.sql(sql);
-        return null;
+        return sparkSession.sql(sql);
     }
 
     private static boolean needCreateTempView(List<LayerBean> layerByTable) {
@@ -183,7 +176,7 @@ public class DatasetProcessBack implements SparkDataset, Closeable {
                 .option("user", layerAttr.get(StorageTypeKey.user_name))
                 .option("password", layerAttr.get(StorageTypeKey.database_pwd))
                 .load()
-                .createOrReplaceGlobalTempView(tableName);
+                .createOrReplaceTempView(tableName);
     }
 
 }

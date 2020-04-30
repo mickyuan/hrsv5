@@ -10,8 +10,6 @@ import fd.ng.web.conf.WebinfoConf;
 import fd.ng.web.util.Dbo;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.util.List;
@@ -38,13 +36,8 @@ public class ETLJobUtil {
 			asmSql.addSql(" and user_id=?").addParam(user_id);
 		}
 		// 3.判断当前工程是否还存在，存在返回true,不存在返回false
-		if (Dbo.queryNumber(asmSql.sql(), asmSql.params()).orElseThrow(() ->
-				new BusinessException("sql查询错误")) > 0) {
-			// 存在
-			return true;
-		}
-		// 不存在
-		return false;
+		return Dbo.queryNumber(asmSql.sql(), asmSql.params()).orElseThrow(() ->
+				new BusinessException("sql查询错误")) > 0;
 	}
 
 	@Method(desc = "确定该工程下对应的任务确实存在",
@@ -56,12 +49,9 @@ public class ETLJobUtil {
 	public static boolean isEtlSubSysExist(String etl_sys_cd, String sub_sys_cd) {
 		// 1.数据可访问权限处理方式，该方法不需要权限控制
 		// 2.确定该工程下对应的任务是否存在，存在返回true,不存在返回false
-		if (Dbo.queryNumber("SELECT count(1) FROM " + Etl_sub_sys_list.TableName + " WHERE etl_sys_cd=?"
+		return Dbo.queryNumber("SELECT count(1) FROM " + Etl_sub_sys_list.TableName + " WHERE etl_sys_cd=?"
 				+ " AND sub_sys_cd=?", etl_sys_cd, sub_sys_cd).orElseThrow(() ->
-				new BusinessException("sql查询错误")) != 1) {
-			return false;
-		}
-		return true;
+				new BusinessException("sql查询错误")) == 1;
 	}
 
 	@Method(desc = "判断该工程对应的任务下是否还有作业",
@@ -88,23 +78,17 @@ public class ETLJobUtil {
 	public static boolean isEtlJobDefExist(String etl_sys_cd, String etl_job) {
 		// 1.数据可访问权限处理方式，该方法不需要权限验证
 		// 2.新增作业判断作业名称是否已存在，存在不能新增
-		if (Dbo.queryNumber("SELECT count(1) FROM " + Etl_job_def.TableName + " WHERE etl_job=? " +
+		return Dbo.queryNumber("SELECT count(1) FROM " + Etl_job_def.TableName + " WHERE etl_job=? " +
 				" AND etl_sys_cd=?", etl_job, etl_sys_cd).orElseThrow(() ->
-				new BusinessException("sql查询错误")) > 0) {
-			return true;
-		}
-		return false;
+				new BusinessException("sql查询错误")) > 0;
 	}
 
 	@Method(desc = "判断当前工程下是否有作业",
 			logicStep = "方法步骤")
 	@Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
 	public static boolean isEtlJObDefExistBySysCd(String etl_sys_cd) {
-		if (Dbo.queryNumber("SELECT count(1) FROM " + Etl_job_def.TableName + " WHERE etl_sys_cd=?",
-				etl_sys_cd).orElseThrow(() -> new BusinessException("sql查询错误")) == 0) {
-			return false;
-		}
-		return true;
+		return Dbo.queryNumber("SELECT count(1) FROM " + Etl_job_def.TableName + " WHERE etl_sys_cd=?",
+				etl_sys_cd).orElseThrow(() -> new BusinessException("sql查询错误")) != 0;
 	}
 
 	@Method(desc = "判断是否资源需求过大",
@@ -138,12 +122,9 @@ public class ETLJobUtil {
 	public static boolean isEtlJobResourceRelaExist(String etl_sys_cd, String etl_job) {
 		// 1.数据可访问权限处理方式，该方法不需要权限验证
 		// 2.判断当前工程对应作业资源分配信息是否存在
-		if (Dbo.queryNumber("select count(*) from " + Etl_job_resource_rela.TableName +
+		return Dbo.queryNumber("select count(*) from " + Etl_job_resource_rela.TableName +
 				" where etl_sys_cd=? and etl_job=?", etl_sys_cd, etl_job).orElseThrow(() ->
-				new BusinessException("sql查询错误")) > 0) {
-			return true;
-		}
-		return false;
+				new BusinessException("sql查询错误")) > 0;
 	}
 
 	@Method(desc = "判断资源是否存在",
@@ -155,12 +136,9 @@ public class ETLJobUtil {
 	public static boolean isEtlResourceExist(String etl_sys_cd, String resource_type) {
 		// 1.数据可访问权限处理方式，该方法不需要权限控制
 		// 2.判断资源是否存在
-		if (Dbo.queryNumber("SELECT count(1) FROM " + Etl_resource.TableName + " WHERE resource_type=?"
+		return Dbo.queryNumber("SELECT count(1) FROM " + Etl_resource.TableName + " WHERE resource_type=?"
 				+ " AND etl_sys_cd=?", resource_type, etl_sys_cd)
-				.orElseThrow(() -> new BusinessException("sql查询错误！")) > 0) {
-			return true;
-		}
-		return false;
+				.orElseThrow(() -> new BusinessException("sql查询错误！")) > 0;
 	}
 
 	@Method(desc = "判断当前表信息是否存在",
@@ -180,12 +158,9 @@ public class ETLJobUtil {
 			throw new BusinessException("作业名称与上游作业名称相同不能依赖！");
 		}
 		// 3.判断当前工程对应作业依赖作业是否存在
-		if (Dbo.queryNumber("select count(*) from " + Etl_dependency.TableName + " where etl_sys_cd=?" +
+		return Dbo.queryNumber("select count(*) from " + Etl_dependency.TableName + " where etl_sys_cd=?" +
 						" And etl_job=? AND pre_etl_sys_cd=? AND pre_etl_job=?", etl_sys_cd, etl_job,
-				pre_etl_sys_cd, pre_etl_job).orElseThrow(() -> new BusinessException("sql查询错误")) > 0) {
-			return true;
-		}
-		return false;
+				pre_etl_sys_cd, pre_etl_job).orElseThrow(() -> new BusinessException("sql查询错误")) > 0;
 	}
 
 	@Method(desc = "判断作业系统参数变量名称是否已存在",
@@ -197,12 +172,9 @@ public class ETLJobUtil {
 	public static boolean isEtlParaExist(String etl_sys_cd, String para_cd) {
 		// 1.数据可访问权限处理方式，此方法不需要权限认证
 		// 2.判断作业系统参数变量名称是否已存在
-		if (Dbo.queryNumber("select count(*) from " + Etl_para.TableName + " where etl_sys_cd=? " +
+		return Dbo.queryNumber("select count(*) from " + Etl_para.TableName + " where etl_sys_cd=? " +
 				" AND para_cd=?", etl_sys_cd, para_cd)
-				.orElseThrow(() -> new BusinessException("sql查询错误！")) > 0) {
-			return true;
-		}
-		return false;
+				.orElseThrow(() -> new BusinessException("sql查询错误！")) > 0;
 	}
 
 	@Method(desc = "判断工程下是否有作业正在干预",
@@ -222,11 +194,8 @@ public class ETLJobUtil {
 			asmSql.addSql(" and etl_job=?");
 			asmSql.addParam(etl_job);
 		}
-		if (Dbo.queryNumber(asmSql.sql(), asmSql.params()).orElseThrow(() ->
-				new BusinessException("sql查询错误！")) > 0) {
-			return true;
-		}
-		return false;
+		return Dbo.queryNumber(asmSql.sql(), asmSql.params()).orElseThrow(() ->
+				new BusinessException("sql查询错误！")) > 0;
 	}
 
 	@Method(desc = "根据工程编号查询工程名称",

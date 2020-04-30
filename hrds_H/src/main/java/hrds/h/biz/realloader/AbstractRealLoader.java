@@ -14,11 +14,15 @@ import java.util.Map;
 public abstract class AbstractRealLoader implements Loader {
     final Map<String, String> tableLayerAttrs = new HashMap<>();
     protected final MarketConf conf;
-    final String tableName;
+    protected final String tableName;
+    protected final String etlDate;
+    protected final String datatableId;
 
     protected AbstractRealLoader(MarketConf conf) {
         this.conf = conf;
         tableName = conf.getTableName();
+        etlDate = conf.getEtlDate();
+        datatableId = conf.getDatatableId();
         initTableLayerProperties();
     }
 

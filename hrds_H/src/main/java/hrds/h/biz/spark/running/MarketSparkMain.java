@@ -1,6 +1,5 @@
 package hrds.h.biz.spark.running;
 
-import fd.ng.core.utils.StringUtil;
 import hrds.commons.codes.Store_type;
 import hrds.commons.exception.AppSystemException;
 import hrds.h.biz.config.MarketConf;
@@ -10,6 +9,7 @@ import hrds.h.biz.spark.dealdataset.SparkDataset;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+import static hrds.h.biz.spark.running.SparkHandleArgument.*;
 
 import java.io.Closeable;
 
@@ -34,7 +34,7 @@ public class MarketSparkMain implements Closeable {
         spark = sparkDataset.getSparkSession();
     }
 
-    private void handleDatabase(final SparkHandleArgument.DatabaseArgs databaseArgs) {
+    private void handleDatabase(final DatabaseArgs databaseArgs) {
         DatabaseHandle handle = new DatabaseHandle(spark, dataset, databaseArgs);
         if (databaseArgs.isIncrement()) {
             handle.increment();
@@ -51,19 +51,17 @@ public class MarketSparkMain implements Closeable {
 
     public static void main(String[] args) {
         String datatableId = args[0];
-        if (StringUtil.isBlank(datatableId)) {
-            throw new AppSystemException("Spark runner 主类参数不可为空: " + datatableId);
-        }
+        String handleArgs = args[1];
 
         try (MarketSparkMain main = new MarketSparkMain(datatableId)) {
+            handleArgs = SparkJobRunner.obtainSatisfyShellString(handleArgs);
 
-            String handleArgs = args[1];
-            SparkHandleArgument sparkHandleArgument = SparkHandleArgument.fromString(handleArgs);
-
-            Store_type handleType = sparkHandleArgument.getHandleType();
+            Store_type handleType = SparkHandleArgument.fromString(handleArgs,
+                    SparkHandleArgument.class).getHandleType();
 
             if (Store_type.DATABASE.equals(handleType)) {
-                main.handleDatabase((SparkHandleArgument.DatabaseArgs) sparkHandleArgument);
+                main.handleDatabase((DatabaseArgs) SparkHandleArgument.fromString(handleArgs,
+                        DatabaseArgs.class));
             } else {
                 throw new AppSystemException("无法处理类型：" + handleType.getValue());
             }

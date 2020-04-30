@@ -94,7 +94,8 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 			DataExtractUtil.writeDataDictionary(dictionaryPath, collectTableBean.getTable_name(),
 					tableBean.getColumnMetaInfo(), tableBean.getColTypeMetaInfo(),
 					collectTableBean.getData_extraction_def_list(), collectTableBean.getUnload_type(),
-					tableBean.getPrimaryKeyInfo());
+					tableBean.getPrimaryKeyInfo(), tableBean.getInsertColumnInfo(), tableBean.getUpdateColumnInfo()
+					, tableBean.getDeleteColumnInfo());
 			//卸数成功，删除重命名的目录
 			deleteRenameDir(collectTableBean);
 			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.SUCCEED.getCode(), "执行成功");

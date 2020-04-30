@@ -75,15 +75,7 @@ public class MonitorAction extends BaseAction {
 			asmSql.addSql(" AND T1.etl_sys_cd = ? ");
 		}
 		asmSql.addSql(" GROUP BY T1.sub_sys_cd, T2.sub_sys_cd,T1.etl_sys_cd,sub_sys_desc");
-		asmSql.addParam(Job_Status.PENDING.getCode());
-		asmSql.addParam(Job_Status.WAITING.getCode());
-		asmSql.addParam(Job_Status.RUNNING.getCode());
-		asmSql.addParam(Job_Status.DONE.getCode());
-		asmSql.addParam(Job_Status.STOP.getCode());
-		asmSql.addParam(Job_Status.ERROR.getCode());
-		if (StringUtils.isNotBlank(etl_sys_cd)) {
-			asmSql.addParam(etl_sys_cd);
-		}
+		addParamsToSql(etl_sys_cd, asmSql);
 		List<Map<String, Object>> batchOperationStatus = Dbo.queryList(asmSql.sql(), asmSql.params());
 		// 4.当前工程批量运行状态汇总
 		asmSql.clean();
@@ -105,6 +97,15 @@ public class MonitorAction extends BaseAction {
 		}
 		asmSql.addSql(" and A.curr_bath_date=B.curr_bath_date group by A.curr_bath_date,A.etl_sys_cd,"
 				+ "B.etl_sys_name ORDER BY A.etl_sys_cd");
+		addParamsToSql(etl_sys_cd, asmSql);
+		Map<String, Object> systemOperationStatus = Dbo.queryOneObject(asmSql.sql(), asmSql.params());
+		// 5.将系统运行状态信息封装入当前运行状态信息集合中
+		systemOperationStatus.put("systemOperationStatus", batchOperationStatus);
+		// 6.返回系统运行状态信息与当前运行状态信息
+		return systemOperationStatus;
+	}
+
+	private void addParamsToSql(String etl_sys_cd, SqlOperator.Assembler asmSql) {
 		asmSql.addParam(Job_Status.PENDING.getCode());
 		asmSql.addParam(Job_Status.WAITING.getCode());
 		asmSql.addParam(Job_Status.RUNNING.getCode());
@@ -114,11 +115,6 @@ public class MonitorAction extends BaseAction {
 		if (StringUtils.isNotBlank(etl_sys_cd)) {
 			asmSql.addParam(etl_sys_cd);
 		}
-		Map<String, Object> systemOperationStatus = Dbo.queryOneObject(asmSql.sql(), asmSql.params());
-		// 5.将系统运行状态信息封装入当前运行状态信息集合中
-		systemOperationStatus.put("systemOperationStatus", batchOperationStatus);
-		// 6.返回系统运行状态信息与当前运行状态信息
-		return systemOperationStatus;
 	}
 
 	@Method(
@@ -504,9 +500,7 @@ public class MonitorAction extends BaseAction {
 			Gexf gexf = new GexfImpl();
 			Calendar date = Calendar.getInstance();
 			date.set(
-					Integer.parseInt(DateUtil.getSysDate().substring(0, 4)),
-					Integer.parseInt(DateUtil.getSysDate().substring(4, 6)) - 1,
-					Integer.parseInt(DateUtil.getSysDate().substring(6, 8)));
+					date.get(Calendar.YEAR), date.get(Calendar.MONTH) + 1, date.get(Calendar.DATE));
 			gexf.getMetadata()
 					.setLastModified(date.getTime())
 					.setCreator("Gephi.org")
@@ -522,11 +516,9 @@ public class MonitorAction extends BaseAction {
 			// 5.创建存放上下游作业信息的集合
 			List<String> list_Edge = new ArrayList<>();
 			// 6.获取所有调度方式为定时或者频率的作业
-			Result scheduledOrFrequency =
-					Dbo.queryResult(
-							"SELECT * FROM " + Etl_job_def.TableName + " WHERE etl_sys_cd=? AND disp_type!=?",
-							etl_sys_cd,
-							Dispatch_Type.DEPENDENCE.getCode());
+			Result scheduledOrFrequency = Dbo.queryResult(
+					"SELECT * FROM " + Etl_job_def.TableName + " WHERE etl_sys_cd=? AND disp_type!=?",
+					etl_sys_cd, Dispatch_Type.DEPENDENCE.getCode());
 			Random random = new Random();
 			// 7.遍历定时与频率作业
 			int number_key = 0;

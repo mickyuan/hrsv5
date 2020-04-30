@@ -6,8 +6,6 @@ import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.StringUtil;
-import fd.ng.db.jdbc.DefaultPageImpl;
-import fd.ng.db.jdbc.Page;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
@@ -23,8 +21,6 @@ import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.g.biz.init.InterfaceManager;
 
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -32,29 +28,24 @@ import java.util.regex.Pattern;
 @DocClass(desc = "接口用户管理", author = "dhw", createdate = "2020/3/24 13:34")
 public class InterfaceUserManageAction extends BaseAction {
 
-	@Method(desc = "分页查询接口用户信息", logicStep = "1.数据可访问权限处理方式：该方法通过user_id进行权限限制" +
-			"2.分页查询接口用户信息" +
-			"3.封装并返回接口用户信息与分页总记录数")
+	@Method(desc = "查询接口用户信息", logicStep = "1.数据可访问权限处理方式：该方法通过user_id进行权限限制" +
+			"2.查询接口用户信息" +
+			"3.返回接口用户信息")
 	@Param(name = "user_name", desc = "用户名", range = "新增用户时生成", nullable = true)
-	@Param(name = "currPage", desc = "分页查询当前页", range = "大于0的正整数", valueIfNull = "1")
-	@Param(name = "pageSize", desc = "分页查询每页显示记录数", range = "大于0的正整数", valueIfNull = "10")
 	@Return(desc = "分页查询返回接口用户信息", range = "无限制")
-	public Result selectUserInfoByPage(String user_name, int currPage, int pageSize) {
+	public Result selectUserInfo(String user_name) {
 		// 1.数据可访问权限处理方式：该方法user_id进行权限限制
 		SqlOperator.Assembler assembler = SqlOperator.Assembler.newInstance();
 		assembler.clean();
 		assembler.addSql("select user_name,user_id,user_password,user_email,user_remark from "
 				+ Sys_user.TableName + " where create_id=? and user_type=?").addParam(getUserId())
 				.addParam(UserType.RESTYongHu.getCode());
-		// 2.分页查询接口用户信息
-		Page page = new DefaultPageImpl(currPage, pageSize);
+		// 2.查询接口用户信息
 		if (StringUtil.isNotBlank(user_name)) {
 			assembler.addLikeParam("user_name", "%" + user_name + "%");
 		}
-		Result userResult = Dbo.queryPagedResult(page, assembler.sql(), assembler.params());
 		// 3.封装并返回接口用户信息与分页总记录数
-		userResult.setObject(0, "totalSize", page.getTotalSize());
-		return userResult;
+		return Dbo.queryResult(assembler.sql(), assembler.params());
 	}
 
 	@Method(desc = "添加接口用户", logicStep = "1.数据可访问权限处理方式：该方法不需要进行权限限制" +

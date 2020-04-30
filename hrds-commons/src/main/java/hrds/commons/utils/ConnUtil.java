@@ -493,7 +493,7 @@ public class ConnUtil {
 				Element table = (Element) tableList.get(b);
 				JSONObject tableJson = new JSONObject();
 				tableJson.put("table_name", table.getAttribute("table_name"));
-				tableJson.put("table_ch_name", table.getAttribute("table_ch_name"));
+				tableJson.put("table_cn_name", table.getAttribute("table_ch_name"));
 				tableJson.put("updatetype", table.getAttribute("unload_type"));
 				List<?> columnList = XMLUtil.getChildElements(table, "column");
 				JSONArray columnJsonArray = new JSONArray();
@@ -548,7 +548,7 @@ public class ConnUtil {
 		JSONObject resultobject = new JSONObject();
 		File dbpathfile = new File(dbpath);
 		File[] dbpathfilelist = Objects.requireNonNull(dbpathfile.listFiles());
-		List<String> dbpathfilelistname = new ArrayList<String>();
+		List<String> dbpathfilelistname = new ArrayList<>();
 		for (File everyfile : dbpathfilelist) {
 			dbpathfilelistname.add(everyfile.getName());
 		}
@@ -580,8 +580,8 @@ public class ConnUtil {
 						String readLine = reader.readLine();
 						tablenamelsit.add(tablename);
 						JSONObject everyobject = new JSONObject();
-						everyobject.put("tableName", tablename);
-						everyobject.put("description", tablename);
+						everyobject.put("table_name", tablename);
+						everyobject.put("table_cn_name", tablename);
 						everyobject.put("everyline", readLine);
 						jsonarray.add(everyobject);
 					} catch (Exception e) {
