@@ -548,7 +548,7 @@ public class ConnUtil {
 		JSONObject resultobject = new JSONObject();
 		File dbpathfile = new File(dbpath);
 		File[] dbpathfilelist = Objects.requireNonNull(dbpathfile.listFiles());
-		List<String> dbpathfilelistname = new ArrayList<String>();
+		List<String> dbpathfilelistname = new ArrayList<>();
 		for (File everyfile : dbpathfilelist) {
 			dbpathfilelistname.add(everyfile.getName());
 		}
@@ -581,7 +581,7 @@ public class ConnUtil {
 						tablenamelsit.add(tablename);
 						JSONObject everyobject = new JSONObject();
 						everyobject.put("table_name", tablename);
-						everyobject.put("table_ch_name", tablename);
+						everyobject.put("table_cn_name", tablename);
 						everyobject.put("everyline", readLine);
 						jsonarray.add(everyobject);
 					} catch (Exception e) {
