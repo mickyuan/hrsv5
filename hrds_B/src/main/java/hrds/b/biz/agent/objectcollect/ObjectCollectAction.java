@@ -113,12 +113,13 @@ public class ObjectCollectAction extends BaseAction {
 		List<Map<String, Object>> tableNames = getJsonDataForAgent(jsonParam, agent_id);
 		// 5.判断当前目录下的数据文件响应信息是否为空
 		if (!tableNames.isEmpty()) {
-			List<Map<String, Object>> tableNameList = new ArrayList<Map<String, Object>>();
+			List<Map<String, Object>> tableNameList = new ArrayList<>();
 			// 6.不为空，循环获取当前目录下的数据文件表信息
-			for (int i = 0; i < tableNames.size(); i++) {
-				Map<String, Object> tableMap = new HashMap<String, Object>();
-				tableMap.put("table_name", tableNames.get(i).get("table_name").toString());
-				tableMap.put("table_ch_name", tableNames.get(i).get("table_ch_name").toString());
+			for (Map<String, Object> tableName : tableNames) {
+				Map<String, Object> tableMap = new HashMap<>();
+				logger.info(tableName);
+				tableMap.put("table_name", tableName.get("table_name").toString());
+				tableMap.put("table_cn_name", tableName.get("table_cn_name").toString());
 				tableNameList.add(tableMap);
 			}
 			// 7.返回解析后当前目录获取表信息
@@ -307,7 +308,7 @@ public class ObjectCollectAction extends BaseAction {
 		objectCollectTask.setAgent_id(object_collect.getAgent_id());
 		objectCollectTask.setOdc_id(object_collect.getOdc_id());
 		String tableName = tableNameMap.get("table_name").toString();
-		String zh_name = tableNameMap.get("table_ch_name").toString();
+		String zh_name = tableNameMap.get("table_cn_name").toString();
 		objectCollectTask.setEn_name(tableName != null ? tableName : "");
 		objectCollectTask.setZh_name(zh_name != null ? zh_name : "");
 		objectCollectTask.setCollect_data_type(CollectDataType.JSON.getCode());
@@ -376,7 +377,7 @@ public class ObjectCollectAction extends BaseAction {
 		// 2.有数据字典，查询对象采集结构信息
 		List<Map<String, Object>> objectStructList = Dbo.queryList("select * from "
 				+ Object_collect_struct.TableName + " where ocs_id=? order by col_seq", ocs_id);
-		Map<String, Object> objColStructMap = new HashMap<String, Object>();
+		Map<String, Object> objColStructMap = new HashMap<>();
 		objColStructMap.put("objectStructList", objectStructList);
 		// 3.没有数据字典查询第一行数据
 		List<Object> firstLineList = getFirstLineInfo(ocs_id);
@@ -601,7 +602,7 @@ public class ObjectCollectAction extends BaseAction {
 		}.getType();
 		// 2.解析json为对象采集结构信息
 		List<Object_collect_struct> collectStructList = JsonUtil.toObject(collectStruct, type);
-		List<Long> structIdList = new ArrayList<Long>();
+		List<Long> structIdList = new ArrayList<>();
 		String struct_id;
 		// 3.循环保存对象采集结构信息入库，获取结构信息id
 		for (Object_collect_struct object_collect_struct : collectStructList) {

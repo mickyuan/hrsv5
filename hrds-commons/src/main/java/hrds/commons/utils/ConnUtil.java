@@ -493,7 +493,7 @@ public class ConnUtil {
 				Element table = (Element) tableList.get(b);
 				JSONObject tableJson = new JSONObject();
 				tableJson.put("table_name", table.getAttribute("table_name"));
-				tableJson.put("table_ch_name", table.getAttribute("table_ch_name"));
+				tableJson.put("table_cn_name", table.getAttribute("table_ch_name"));
 				tableJson.put("updatetype", table.getAttribute("unload_type"));
 				List<?> columnList = XMLUtil.getChildElements(table, "column");
 				JSONArray columnJsonArray = new JSONArray();
