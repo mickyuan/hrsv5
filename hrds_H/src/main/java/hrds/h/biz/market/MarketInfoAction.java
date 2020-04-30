@@ -90,111 +90,38 @@ public class MarketInfoAction extends BaseAction {
         }
     }
 
-    @Method(desc = "获取登录用户集市所有表加起来的存储量大小",
-            logicStep = "根据用户ID进行搜索")
-    @Return(desc = "获取登录用户集市所有表加起来的存储量大小", range = "返回值取值范围")
-    public List<Map<String, Object>> getTotalStorage() {
-        return Dbo.queryList("SELECT (CASE WHEN sources IS NULL THEN 0 ELSE sources END) sources FROM" +
-                " (SELECT SUM(soruce_size) sources FROM " + Dm_datatable.TableName + " where data_mart_id" +
-                " in (select data_mart_id from " + Dm_info.TableName + " where create_id = ? )) t", getUserId());
+    @Method(desc = "获取集市所有用到的存储层",
+            logicStep = "")
+    @Return(desc = "集市所有用到的存储层以及每个存储层的个数", range = "返回值取值范围")
+    public List<Map<String, Object>> getAllDslInMart() {
+        return Dbo.queryList("select  dsl_name,count(dsl_name) from " + Data_store_layer.TableName + " t1  join " +
+                Dm_relation_datatable.TableName + " t2 on t1.dsl_id = t2.dsl_id group by dsl_name");
     }
 
-    @Method(desc = "获取登录用户集市的所有Hbase表的个数",
-            logicStep = "根据用户ID进行搜索")
-    @Return(desc = "用户集市的所有Hbase表的个数", range = "返回值取值范围")
-    public List<Map<String, Long>> getHbaseStorage() {
-        List<Map<String, Long>> list = new ArrayList<>();
-        Map<String, Long> map = new HashMap<String, Long>();
-        Long count = Dbo.queryNumber("SELECT count(*) as count FROM " + Dm_datatable.TableName + " t1 " +
-                        "LEFT JOIN " + Dm_relation_datatable.TableName + " t2 ON t1.datatable_id = t2.datatable_id " +
-                        "LEFT JOIN " + Data_store_layer.TableName + " t3 ON t2.dsl_id = t3.dsl_id " +
-                        "WHERE t3.store_type = ? and is_successful = ?" +
-                        " and t1.data_mart_id in(select data_mart_id from " + Dm_info.TableName + " where create_id = ?)",
-                Store_type.HBASE.getCode(), IsFlag.Shi.getCode(), getUserId()).orElseThrow(() -> new BusinessException("sql查询错误！"));
-        map.put("count", count);
-        list.add(map);
-        return list;
+
+    @Method(desc = "获取各个存储层中表大小的前五名",
+            logicStep = "")
+    @Return(desc = "获取各个存储层中表大小的前五名", range = "返回值取值范围")
+    public List<Map<String, Object>> getTableTop5InDsl() {
+        List<Map<String, Object>> resultlist = new ArrayList<>();
+        List<Map<String, Object>> maps = Dbo.queryList("select  distinct t1.dsl_id,dsl_name from " + Data_store_layer.TableName + " t1  join " +
+                Dm_relation_datatable.TableName + " t2 on t1.dsl_id = t2.dsl_id  ");
+       for(Map<String,Object> map :maps){
+           String dsl_id = map.get("dsl_id").toString();
+           String dsl_name = map.get("dsl_name").toString();
+           Dm_relation_datatable dm_relation_datatable = new Dm_relation_datatable();
+           dm_relation_datatable.setDsl_id(dsl_id);
+           List<Map<String, Object>> maps1 = Dbo.queryList("select t1.datatable_en_name,t1.soruce_size from " + Dm_datatable.TableName + " t1 left join " + Dm_relation_datatable.TableName +
+                   " t2 on t1.datatable_id = t2.datatable_id where t2.dsl_id = ? order by soruce_size desc limit 5", dm_relation_datatable.getDsl_id());
+           Map<String,Object> tempmap = new HashMap<>();
+           tempmap.put("dsl_name",dsl_name);
+           tempmap.put("result",maps1);
+           resultlist.add(tempmap);
+
+       }
+        return resultlist;
     }
 
-    @Method(desc = "获取登录用户集市的所有Hive表的个数",
-            logicStep = "根据用户ID进行搜索")
-    @Return(desc = "用户集市的所有Hive表的个数", range = "返回值取值范围")
-    public List<Map<String, Long>> getHyRenDBStorage() {
-        List<Map<String, Long>> list = new ArrayList<>();
-        Map<String, Long> map = new HashMap<String, Long>();
-        Long count = Dbo.queryNumber("SELECT count(*) FROM " + Dm_datatable.TableName + " t1 " +
-                        "LEFT JOIN " + Dm_relation_datatable.TableName + " t2 ON t1.datatable_id = t2.datatable_id " +
-                        "LEFT JOIN " + Data_store_layer.TableName + " t3 ON t2.dsl_id = t3.dsl_id " +
-                        "WHERE t3.store_type = ? and is_successful = ?" +
-                        " and t1.data_mart_id in(select data_mart_id from " + Dm_info.TableName + " where create_id = ?)",
-                Store_type.HIVE.getCode(), IsFlag.Shi.getCode(), getUserId()).orElseThrow(() -> new BusinessException("sql查询错误！"));
-        map.put("count", count);
-        list.add(map);
-        return list;
-    }
-
-    @Method(desc = "获取登录用户集市的所有Solr表的个数",
-            logicStep = "根据用户ID进行搜索")
-    @Return(desc = "用户集市的所有Solr表的个数", range = "返回值取值范围")
-    public List<Map<String, Long>> getSolrDBStorage() {
-        List<Map<String, Long>> list = new ArrayList<>();
-        Map<String, Long> map = new HashMap<String, Long>();
-        Long count = Dbo.queryNumber("SELECT count(*) FROM " + Dm_datatable.TableName + " t1 " +
-                        "LEFT JOIN " + Dm_relation_datatable.TableName + " t2 ON t1.datatable_id = t2.datatable_id " +
-                        "LEFT JOIN " + Data_store_layer.TableName + " t3 ON t2.dsl_id = t3.dsl_id " +
-                        "WHERE t3.store_type = ? and is_successful = ?" +
-                        " and t1.data_mart_id in(select data_mart_id from " + Dm_info.TableName + " where create_id = ?)",
-                Store_type.SOLR.getCode(), IsFlag.Shi.getCode(), getUserId()).orElseThrow(() -> new BusinessException("sql查询错误！"));
-        map.put("count", count);
-        list.add(map);
-        return list;
-    }
-
-    @Method(desc = "获取登录用户集市占用存储量前三的集市工程名和存储量大小",
-            logicStep = "根据用户ID进行搜索")
-    @Return(desc = "用户集市占用存储量前三的集市工程名和存储量大小", range = "返回值取值范围")
-    public List<Map<String, Object>> getMarketTakesUpTop3Storage() {
-        return Dbo.queryList("SELECT t1.data_mart_id, mart_name, SUM(soruce_size) source_size " +
-                " FROM " + Dm_datatable.TableName + " t1 left join  " + Dm_info.TableName + " t2 on t1.data_mart_id = t2.data_mart_id " +
-                " WHERE t1.data_mart_id IN ( SELECT data_mart_id FROM " + Dm_info.TableName + " WHERE create_id = ? ) " +
-                " GROUP BY t1.data_mart_id, mart_name ORDER BY source_size DESC limit 3", getUserId());
-    }
-
-    @Method(desc = "获取登录用户集市Hive表占用存储前三的集市工程",
-            logicStep = "根据用户ID进行搜索")
-    @Return(desc = "用户集市Hive表占用存储前三的集市工程", range = "返回值取值范围")
-    public List<Map<String, Object>> getMarketHyRenDbTop3Storage() {
-        return Dbo.queryList("SELECT t1.data_mart_id, mart_name, SUM(soruce_size) source_size " +
-                " FROM " + Dm_datatable.TableName + " t1 left join  " + Dm_info.TableName + " t2 on t1.data_mart_id = t2.data_mart_id " +
-                " left join " + Dm_relation_datatable.TableName + " t3 on t1.datatable_id = t3.datatable_id " +
-                " left join " + Data_store_layer.TableName + " t4 on t4.dsl_id = t3.dsl_id " +
-                "WHERE t1.data_mart_id IN ( SELECT data_mart_id FROM " + Dm_info.TableName + " WHERE create_id = ? and t4.store_type = ?) " +
-                " GROUP BY t1.data_mart_id, mart_name ORDER BY source_size DESC limit 3", getUserId(), Store_type.HIVE.getCode());
-    }
-
-    @Method(desc = "获取登录用户集市Hbase表占用存储前三的集市工程",
-            logicStep = "根据用户ID进行搜索")
-    @Return(desc = "用户集市Hbase表占用存储前三的集市工程", range = "返回值取值范围")
-    public List<Map<String, Object>> getMarketHbaseTop3Storage() {
-        return Dbo.queryList("SELECT t1.data_mart_id, mart_name, SUM(soruce_size) source_size " +
-                " FROM " + Dm_datatable.TableName + " t1 left join  " + Dm_info.TableName + " t2 on t1.data_mart_id = t2.data_mart_id " +
-                " left join " + Dm_relation_datatable.TableName + " t3 on t1.datatable_id = t3.datatable_id " +
-                " left join " + Data_store_layer.TableName + " t4 on t4.dsl_id = t3.dsl_id " +
-                "WHERE t1.data_mart_id IN ( SELECT data_mart_id FROM " + Dm_info.TableName + " WHERE create_id = ? and t4.store_type = ?) " +
-                " GROUP BY t1.data_mart_id, mart_name ORDER BY source_size DESC limit 3", getUserId(), Store_type.HBASE.getCode());
-    }
-
-    @Method(desc = "获取登录用户集市Solr表占用存储前三的集市工程",
-            logicStep = "根据用户ID进行搜索")
-    @Return(desc = "用户集市Solr表占用存储前三的集市工程", range = "返回值取值范围")
-    public List<Map<String, Object>> getMarketSolrDBTop3Storage() {
-        return Dbo.queryList("SELECT t1.data_mart_id, mart_name, SUM(soruce_size) source_size " +
-                " FROM " + Dm_datatable.TableName + " t1 left join  " + Dm_info.TableName + " t2 on t1.data_mart_id = t2.data_mart_id " +
-                " left join " + Dm_relation_datatable.TableName + " t3 on t1.datatable_id = t3.datatable_id " +
-                " left join " + Data_store_layer.TableName + " t4 on t4.dsl_id = t3.dsl_id " +
-                "WHERE t1.data_mart_id IN ( SELECT data_mart_id FROM " + Dm_info.TableName + " WHERE create_id = ? and t4.store_type = ?) " +
-                " GROUP BY t1.data_mart_id, mart_name ORDER BY source_size DESC limit 3", getUserId(), Store_type.SOLR.getCode());
-    }
 
     @Method(desc = "获取登录用户数据集市首页信息",
             logicStep = "根据用户ID进行搜索")
@@ -1628,4 +1555,16 @@ public class MarketInfoAction extends BaseAction {
     public void generateMartJobToEtl(String etl_sys_cd, String sub_sys_cd, String datatable_id) {
         EtlJobUtil.saveJob(datatable_id, DataSourceType.DML, etl_sys_cd, sub_sys_cd, null);
     }
+
+    @Method(desc = "根据表主键查询表名",
+            logicStep = "")
+    @Param(name = "datatable_id", desc = "datatable_id", range = "String类型集市表主键")
+    @Return(desc = "查询返回结果集", range = "无限制")
+    public List<Map<String, Object>> getTableName(String datatable_id) {
+        Dm_datatable dm_datatable = new Dm_datatable();
+        dm_datatable.setDatatable_id(datatable_id);
+        return Dbo.queryList("select datatable_en_name from " + Dm_datatable.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
+    }
+
+
 }
