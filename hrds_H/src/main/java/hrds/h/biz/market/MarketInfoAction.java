@@ -1134,7 +1134,11 @@ public class MarketInfoAction extends BaseAction {
     @Param(name = "date", desc = "date", range = "String类型跑批日期")
     @Param(name = "parameter", desc = "parameter", range = "动态参数", nullable = true)
     public void excutMartJob(String datatable_id, String date, String parameter) throws IOException {
-        MainClass.run(datatable_id, date, parameter);
+        try {
+            MainClass.run(datatable_id, date, parameter);
+        } catch (Throwable e) {
+            throw new BusinessException(e.getMessage());
+        }
     }
 
     @Method(desc = "查询所有作业调度工程",

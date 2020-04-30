@@ -3,12 +3,19 @@ package hrds.h.biz.realloader;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.commons.codes.DatabaseType;
+import hrds.commons.codes.StoreLayerAdded;
 import hrds.commons.collection.ConnectionTool;
 import hrds.commons.collection.bean.DbConfBean;
 import hrds.commons.entity.Datatable_field_info;
+import hrds.commons.exception.AppSystemException;
+import hrds.h.biz.config.MarketConf;
 import hrds.h.biz.config.MarketConfUtils;
 import hrds.h.biz.spark.running.SparkHandleArgument;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -24,48 +31,57 @@ import static hrds.commons.utils.Constant.EDATENAME;
  */
 public class Utils {
 
-    static String buildCreateTableColumnTypes(List<Datatable_field_info> fields, boolean isDatabase) {
+    static String buildCreateTableColumnTypes(MarketConf conf, boolean isDatabase) {
+        List<String> additionalAttrs;
+        try (DatabaseWrapper db = new DatabaseWrapper()) {
+            additionalAttrs = getAdditionalAttrs(db, conf.getDatatableId(), StoreLayerAdded.ZhuJian);
+        }
+        final StringBuilder columnTypes = new StringBuilder(300);
+        conf.getDatatableFields().forEach(field -> {
 
-        final StringBuilder createTableColumnTypes = new StringBuilder(300);
-        fields.forEach(field -> {
-
-            createTableColumnTypes
-                    .append(field.getField_en_name())
-                    .append(" ").append(field.getField_type());
+            String fieldName = field.getField_en_name();
+            columnTypes
+                    .append(fieldName)
+                    .append(" ")
+                    .append(field.getField_type());
 
             String fieldLength = field.getField_length();
+            //写了精度，则添加精度
             if (StringUtil.isNotBlank(fieldLength)) {
-                createTableColumnTypes.append("(")
-                        .append(fieldLength).append(")");
+                columnTypes
+                        .append("(").append(fieldLength).append(")");
+            }
+            //如果选择了主键，则添加主键
+            if (additionalAttrs.contains(fieldName)) {
+                columnTypes.append(" primary key");
             }
 
-            createTableColumnTypes.append(",");
+            columnTypes.append(",");
 
         });
         //把最后一个逗号给删除掉
-        createTableColumnTypes.deleteCharAt(createTableColumnTypes.length() - 1);
+        columnTypes.deleteCharAt(columnTypes.length() - 1);
 
         //如果是database类型 则类型为定长char类型，否则为string类型（默认）
         if (isDatabase) {
             String str = MarketConfUtils.DEFAULT_STRING_TYPE;
-            String s = createTableColumnTypes.toString();
+            String s = columnTypes.toString();
             s = StringUtil.replaceLast(s, str, "char(32)");
             s = StringUtil.replaceLast(s, str, "char(8)");
             s = StringUtil.replaceLast(s, str, "char(8)");
             return s;
         }
-        return createTableColumnTypes.toString();
+        return columnTypes.toString();
 
 
     }
 
     /**
-     * 不带有 hyren 字段的所有字段，以逗号隔开
+     * 所有字段，以逗号隔开
      *
      * @return
      */
     static String columns(List<Datatable_field_info> fields) {
-        //后面的三个hyren字段去掉
         return fields
                 .stream()
                 .map(Datatable_field_info::getField_en_name)
@@ -120,23 +136,12 @@ public class Utils {
         return "auto_id";
     }
 
-    public static DatabaseWrapper getDb(SparkHandleArgument.DatabaseArgs databaseArgs) {
-        //jdbc连接数据库进行更新
-        DbConfBean dbConfBean = new DbConfBean();
-        dbConfBean.setDatabase_drive(databaseArgs.getDriver());
-        dbConfBean.setJdbc_url(databaseArgs.getUrl());
-        dbConfBean.setUser_name(databaseArgs.getUser());
-        dbConfBean.setDatabase_pad(databaseArgs.getPassword());
-        dbConfBean.setDatabase_type(databaseArgs.getDatabaseType());
-        return ConnectionTool.getDBWrapper(dbConfBean);
-    }
-
     /**
      * 创建表
      * 如果表存在就删除掉
      */
-    static void forceCreateTable(DatabaseWrapper db, String tableName, List<Datatable_field_info> fields) {
-        String createTableColumnTypes = buildCreateTableColumnTypes(fields, true);
+    static void forceCreateTable(DatabaseWrapper db, String tableName, String createTableColumnTypes) {
+
         if (db.isExistTable(tableName)) {
             db.execute("DROP TABLE " + tableName);
         }
@@ -144,5 +149,25 @@ public class Utils {
         db.execute(createSql);
     }
 
-
+    /**
+     * 获取带有存储附加属性的列
+     *
+     * @param db          db实体
+     * @param datatableId datatableId
+     * @param added       dsla_StoreLayer实体的
+     * @return 符合附加属性的表名集合
+     */
+    static List<String> getAdditionalAttrs(DatabaseWrapper db, String datatableId, StoreLayerAdded added) {
+        String sql = "select dfi.field_en_name from datatable_field_info dfi join dm_column_storage dcs on dfi.datatable_field_id = dcs.datatable_field_id join data_store_layer_added dsla on dcs.dslad_id = dsla.dslad_id where dfi.datatable_id = ? and dsla.dsla_storelayer = ?";
+        ResultSet resultSet = db.queryGetResultSet(sql, Long.parseLong(datatableId), added.getCode());
+        List<String> addAttrCols = new ArrayList<>();
+        try {
+            while (resultSet.next()) {
+                addAttrCols.add(resultSet.getString(1).toLowerCase());
+            }
+        } catch (SQLException throwables) {
+            throw new AppSystemException(throwables);
+        }
+        return addAttrCols;
+    }
 }
