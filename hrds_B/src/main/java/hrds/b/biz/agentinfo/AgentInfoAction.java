@@ -181,9 +181,7 @@ public class AgentInfoAction extends BaseAction {
         // 1.数据可访问权限处理方式,该方法不需要权限控制
         // 2.字段合法性验证
         fieldLegalityValidation(agent_name, agent_type, agent_ip, agent_port);
-        // 3.检查数据源是否还存在以及判断数据源下相同的IP地址中是否包含相同的端口
-        isDatasourceAndAgentExist(source_id, agent_type, agent_ip, agent_port);
-        // 4.创建agent_info实体对象，同时封装值
+        // 3.创建agent_info实体对象，同时封装值
         Agent_info agentInfo = new Agent_info();
         agentInfo.setAgent_id(agent_id);
         agentInfo.setUser_id(user_id);
