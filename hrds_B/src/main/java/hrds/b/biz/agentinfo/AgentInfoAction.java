@@ -164,9 +164,8 @@ public class AgentInfoAction extends BaseAction {
     @Method(desc = "更新agent信息并返回更新后的最新agent类型对应agent信息",
             logicStep = "1.数据可访问权限处理方式，该方法不需要权限控制" +
                     "2.字段合法性验证" +
-                    "3.检查数据源是否还存在以及判断数据源下相同的IP地址中是否包含相同的端口" +
-                    "4.创建agent_info实体对象，同时封装值" +
-                    "5.更新agent信息")
+                    "3.创建agent_info实体对象，同时封装值" +
+                    "4.更新agent信息")
     @Param(name = "agent_id", desc = "agent_info主键ID", range = "10位数字，新增时自动生成")
     @Param(name = "agent_name", desc = "data_source表主键", range = "10位数字，新增时自动生成")
     @Param(name = "agent_type", desc = "agent类型", range = "使用agent类型代码项（AgentType）")
@@ -190,7 +189,7 @@ public class AgentInfoAction extends BaseAction {
         agentInfo.setAgent_port(agent_port);
         agentInfo.setAgent_type(agent_type);
         agentInfo.setAgent_name(agent_name);
-        // 5.更新agent信息
+        // 4.更新agent信息
         agentInfo.update(Dbo.db());
     }
 
