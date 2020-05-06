@@ -39,12 +39,12 @@ import org.apache.poi.ss.usermodel.DataValidationHelper;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.CellRangeAddressList;
 import org.apache.poi.xssf.usermodel.XSSFColor;
-import org.apache.poi.xssf.usermodel.XSSFDataFormat;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.awt.*;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
@@ -106,19 +106,19 @@ public class MarketInfoAction extends BaseAction {
         List<Map<String, Object>> resultlist = new ArrayList<>();
         List<Map<String, Object>> maps = Dbo.queryList("select  distinct t1.dsl_id,dsl_name from " + Data_store_layer.TableName + " t1  join " +
                 Dm_relation_datatable.TableName + " t2 on t1.dsl_id = t2.dsl_id  ");
-       for(Map<String,Object> map :maps){
-           String dsl_id = map.get("dsl_id").toString();
-           String dsl_name = map.get("dsl_name").toString();
-           Dm_relation_datatable dm_relation_datatable = new Dm_relation_datatable();
-           dm_relation_datatable.setDsl_id(dsl_id);
-           List<Map<String, Object>> maps1 = Dbo.queryList("select t1.datatable_en_name,t1.soruce_size from " + Dm_datatable.TableName + " t1 left join " + Dm_relation_datatable.TableName +
-                   " t2 on t1.datatable_id = t2.datatable_id where t2.dsl_id = ? order by soruce_size desc limit 5", dm_relation_datatable.getDsl_id());
-           Map<String,Object> tempmap = new HashMap<>();
-           tempmap.put("dsl_name",dsl_name);
-           tempmap.put("result",maps1);
-           resultlist.add(tempmap);
+        for (Map<String, Object> map : maps) {
+            String dsl_id = map.get("dsl_id").toString();
+            String dsl_name = map.get("dsl_name").toString();
+            Dm_relation_datatable dm_relation_datatable = new Dm_relation_datatable();
+            dm_relation_datatable.setDsl_id(dsl_id);
+            List<Map<String, Object>> maps1 = Dbo.queryList("select t1.datatable_en_name,t1.soruce_size from " + Dm_datatable.TableName + " t1 left join " + Dm_relation_datatable.TableName +
+                    " t2 on t1.datatable_id = t2.datatable_id where t2.dsl_id = ? order by soruce_size desc limit 5", dm_relation_datatable.getDsl_id());
+            Map<String, Object> tempmap = new HashMap<>();
+            tempmap.put("dsl_name", dsl_name);
+            tempmap.put("result", maps1);
+            resultlist.add(tempmap);
 
-       }
+        }
         return resultlist;
     }
 
@@ -662,7 +662,8 @@ public class MarketInfoAction extends BaseAction {
         Data_store_layer data_store_layer = new Data_store_layer();
         data_store_layer.setDsl_id(dsl_id);
         List<Map<String, Object>> maps = Dbo.queryList("select target_type from " + Type_contrast.TableName + " t1 left join " + Data_store_layer.TableName + " t2 on t1.dtcs_id = t2.dtcs_id " +
-                "where t2.dsl_id = ? and lower(t1.source_type) = ?", data_store_layer.getDsl_id(), column_type);
+                "where t2.dsl_id = ? and  LOWER(  CASE  WHEN position ('(' IN t1.source_type) !=0  THEN substring(t1.source_type,0,position ('(' IN t1.source_type)) " +
+                "  ELSE t1.source_type  END ) = ?", data_store_layer.getDsl_id(), column_type);
         if (maps.isEmpty()) {
             return column_type;
         } else {
@@ -1215,10 +1216,16 @@ public class MarketInfoAction extends BaseAction {
             }
             ResponseUtil.getResponse().setContentType("APPLICATION/OCTET-STREAM");
             // 6.创建输出流
+//            File file = new File(System.getProperty("user.dir") + File.separator + datatable_id + ".xlsx");
+//            file.createNewFile();
             OutputStream out = ResponseUtil.getResponse().getOutputStream();
-            XSSFWorkbook workbook = generatexlsx(datatable_id);
+            XSSFWorkbook workbook = new XSSFWorkbook();
+            generatexlsx(workbook, datatable_id);
             workbook.write(out);
-        } catch (IOException e) {
+            out.flush();
+            out.close();
+            workbook.close();
+        } catch (Exception e) {
             throw new BusinessException("集市数据表下载错误");
         }
     }
@@ -1226,19 +1233,18 @@ public class MarketInfoAction extends BaseAction {
     /**
      * 生成导出每张表的excel
      *
-     * @param datatabe_id
+     * @param datatable_id
      * @return
      */
-    private XSSFWorkbook generatexlsx(String datatabe_id) {
+    private void generatexlsx(XSSFWorkbook workbook, String datatable_id) throws Exception {
         //设置背景高亮为黄色
         XSSFColor xssfColor = new XSSFColor(Color.YELLOW);
-        XSSFWorkbook workbook = new XSSFWorkbook();
+//        XSSFWorkbook workbook = new XSSFWorkbook();
         Dm_datatable dm_datatable = new Dm_datatable();
-        dm_datatable.setDatatable_id(datatabe_id);
+        dm_datatable.setDatatable_id(datatable_id);
         List<Dm_datatable> dm_datatables = Dbo.queryList(Dm_datatable.class,
                 "select * from " + Dm_datatable.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
         dm_datatable = dm_datatables.get(0);
-        XSSFDataFormat dataFormat = workbook.createDataFormat();
         XSSFSheet sheet1 = workbook.createSheet("sheet1");
         //第一部分
         sheet1.createRow(0).createCell(0).setCellValue("基本设置");
@@ -1246,7 +1252,7 @@ public class MarketInfoAction extends BaseAction {
         CellRangeAddress region = new CellRangeAddress(0, 0, 0, 1);
         sheet1.addMergedRegion(region);
         //设置高亮
-        sheet1.getRow(0).getCell(0).getCellStyle().setFillBackgroundColor(xssfColor);
+        sheet1.getRow(0).getCell(0).getCellStyle().setFillForegroundColor(xssfColor);
         sheet1.createRow(1).createCell(0).setCellValue("表英文名");
         sheet1.getRow(1).createCell(1).setCellValue(dm_datatable.getDatatable_en_name());
         sheet1.createRow(2).createCell(0).setCellValue("表中文名");
@@ -1300,10 +1306,10 @@ public class MarketInfoAction extends BaseAction {
         sheet1.getRow(11).createCell(3).setCellValue("备注");
         sheet1.getRow(11).createCell(4).setCellValue("hadoop客户端");
         sheet1.getRow(11).createCell(5).setCellValue("存储层配置信息");
-        List<Map<String, Object>> maps = Dbo.queryList("SELECT dsl_id,dsl_name,store_type,is_hadoopclient,dsl_remark," +
+        List<Map<String, Object>> maps = Dbo.queryList("SELECT t1.dsl_id,dsl_name,store_type,is_hadoopclient,dsl_remark," +
                 " string_agg(t2.storage_property_key || ':' || t2.storage_property_val,'@;@') as configure FROM " +
                 Data_store_layer.TableName + " t1 LEFT JOIN " + Data_store_layer_attr.TableName +
-                " t2 ON t1.dsl_id = t2.dsl_id  group by dsl_name,store_type,is_hadoopclient,dsl_remark");
+                " t2 ON t1.dsl_id = t2.dsl_id  group by t1.dsl_id,dsl_name,store_type,is_hadoopclient,dsl_remark");
         int count = maps.size();
         //设置IsFlag的下拉框
         String[] isflagsubjects = new String[IsFlag.values().length];
@@ -1318,7 +1324,7 @@ public class MarketInfoAction extends BaseAction {
             String dsl_remark = stringObjectMap.get("dsl_remark") == null ? "" : stringObjectMap.get("dsl_remark").toString();
             String is_hadoopclient = stringObjectMap.get("is_hadoopclient").toString();
             String configure = stringObjectMap.get("configure").toString();
-            addValidationData(sheet1, isflagsubjects, 12 + i, 1);
+            addValidationData(sheet1, isflagsubjects, 12 + i, 0);
             Dm_relation_datatable dm_relation_datatable = new Dm_relation_datatable();
             dm_relation_datatable.setDsl_id(dsl_id);
             //查询是否当前单元格为是
@@ -1330,7 +1336,7 @@ public class MarketInfoAction extends BaseAction {
             } else {
                 sheet1.createRow(12 + i).createCell(0).setCellValue(IsFlag.Shi.getValue());
             }
-            sheet1.createRow(12 + i).createCell(1).setCellValue(dsl_name);
+            sheet1.getRow(12 + i).createCell(1).setCellValue(dsl_name);
             sheet1.getRow(12 + i).createCell(2).setCellValue(Store_type.ofValueByCode(store_type));
             sheet1.getRow(12 + i).createCell(3).setCellValue(dsl_remark);
             sheet1.getRow(12 + i).createCell(4).setCellValue(IsFlag.ofValueByCode(is_hadoopclient));
@@ -1385,7 +1391,14 @@ public class MarketInfoAction extends BaseAction {
             sheet1.getRow(17 + count + i).createCell(4).setCellValue(datatable_field_info.getField_length());
             sheet1.getRow(17 + count + i).createCell(5).setCellValue(ProcessType.ofValueByCode(datatable_field_info.getField_process()));
             addValidationData(sheet1, processtypesubjects, 17 + count + i, 5);
-            sheet1.getRow(17 + count + i).createCell(6).setCellValue(datatable_field_info.getProcess_para());
+            if (datatable_field_info.getField_process().equals(ProcessType.YingShe.getCode())) {
+                DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(execute_sql);
+                List<String> columns = druidParseQuerySql.parseSelectOriginalField();
+                Integer integer = Integer.valueOf(datatable_field_info.getProcess_para());
+                sheet1.getRow(17 + count + i).createCell(6).setCellValue(columns.get(integer));
+            } else {
+                sheet1.getRow(17 + count + i).createCell(6).setCellValue(datatable_field_info.getProcess_para());
+            }
             for (int j = 0; j < StoreLayerAdded.values().length; j++) {
                 addValidationData(sheet1, isflagsubjects, 17 + count + i, 7 + j);
                 if (dsla_storelayers.contains(StoreLayerAdded.values()[j].getCode())) {
@@ -1395,7 +1408,10 @@ public class MarketInfoAction extends BaseAction {
                 }
             }
         }
-        return workbook;
+        File xlsxfile = new File(System.getProperty("user.dir") + File.separator + dm_datatable.getDatatable_en_name() + ".xlsx");
+        FileOutputStream out = new FileOutputStream(xlsxfile);
+        workbook.write(out);
+        out.close();
     }
 
     /**
