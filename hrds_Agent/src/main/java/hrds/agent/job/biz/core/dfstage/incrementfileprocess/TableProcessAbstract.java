@@ -32,7 +32,7 @@ public abstract class TableProcessAbstract implements TableProcessInterface {
 	//数据字典定义的所有的列类型
 	private List<String> dictionaryTypeList;
 	//解析db文件的所有列
-	protected List<String> dictionaryColumnList;
+	private List<String> dictionaryColumnList;
 	//是否为主键的列
 	protected List<Boolean> isPrimaryKeyList = new ArrayList<>();
 	//新增的所有数据列信息
@@ -48,9 +48,9 @@ public abstract class TableProcessAbstract implements TableProcessInterface {
 		//获取所有查询的字段的名称，不包括列分割和列合并出来的字段名称
 		this.dictionaryColumnList = StringUtil.split(tableBean.getAllColumns(), Constant.METAINFOSPLIT);
 		this.dictionaryTypeList = StringUtil.split(tableBean.getAllType(), Constant.METAINFOSPLIT);
-		this.insertColumnList = StringUtil.split(tableBean.getInsertColumnInfo(), Constant.METAINFOSPLIT);
-		this.updateColumnList = StringUtil.split(tableBean.getUpdateColumnInfo(), Constant.METAINFOSPLIT);
-		this.deleteColumnList = StringUtil.split(tableBean.getDeleteColumnInfo(), Constant.METAINFOSPLIT);
+		this.insertColumnList = StringUtil.split(tableBean.getInsertColumnInfo().toUpperCase(), Constant.METAINFOSPLIT);
+		this.updateColumnList = StringUtil.split(tableBean.getUpdateColumnInfo().toUpperCase(), Constant.METAINFOSPLIT);
+		this.deleteColumnList = StringUtil.split(tableBean.getDeleteColumnInfo().toUpperCase(), Constant.METAINFOSPLIT);
 		for (String isFlag : StringUtil.split(tableBean.getPrimaryKeyInfo(), Constant.METAINFOSPLIT)) {
 			this.isPrimaryKeyList.add(IsFlag.Shi.getCode().equals(isFlag));
 		}
@@ -121,28 +121,30 @@ public abstract class TableProcessAbstract implements TableProcessInterface {
 		return valueList;
 	}
 
-	private Object getColumnValue(String columnValue, String columnType) {
-		Object str = null;
+	private Object getColumnValue(String columnType, String columnValue) {
+		Object str;
 		columnType = columnType.toLowerCase();
 		if (columnType.contains(DataTypeConstant.BOOLEAN.getMessage())) {
 			// 如果取出的值为null则给空字符串
-			str = Boolean.parseBoolean(columnValue);
+			str = Boolean.parseBoolean(columnValue.trim());
 		} else if (columnType.contains(DataTypeConstant.INT8.getMessage())
 				|| columnType.contains(DataTypeConstant.BIGINT.getMessage())
 				|| columnType.contains(DataTypeConstant.LONG.getMessage())) {
-			str = Long.parseLong(columnValue);
+			str = Long.parseLong(columnValue.trim());
 		} else if (columnType.contains(DataTypeConstant.INT.getMessage())) {
-			str = Integer.parseInt(columnValue);
+			str = Integer.parseInt(columnValue.trim());
 		} else if (columnType.contains(DataTypeConstant.FLOAT.getMessage())) {
-			str = Float.parseFloat(columnValue);
+			str = Float.parseFloat(columnValue.trim());
 		} else if (columnType.contains(DataTypeConstant.DOUBLE.getMessage())
 				|| columnType.contains(DataTypeConstant.DECIMAL.getMessage())
 				|| columnType.contains(DataTypeConstant.NUMERIC.getMessage())) {
-			str = Double.parseDouble(columnValue);
+			str = Double.parseDouble(columnValue.trim());
 		} else {
 			// 如果取出的值为null则给空字符串
 			if (columnValue == null) {
 				str = "";
+			}else{
+				str = columnValue.trim();
 			}
 			//TODO 这里应该有好多类型需要支持，然后在else里面报错
 		}

@@ -203,18 +203,19 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 			List<Long> pageCountResult = new ArrayList<>();
 			//增量抽取是根据页面传过来的三个sql直接抽取出增量数据
 			String incrementSql = collectTableBean.getSql();
-			JSONObject incrementSqlObject = JSONObject.parseObject(incrementSql);
+			List<String> incrementSqlList = getSortJson(JSONObject.parseObject(incrementSql));
+			String[] operateArray = {"delete", "update", "insert"};
 			//遍历json根据json的key执行sql,拼接对应的操作方式,增量抽取是写到同一个文件，因此这里不使用多线程
-			for (String key : incrementSqlObject.keySet()) {
+			for (int i = 0; i < incrementSqlList.size(); i++) {
 				//获取增量的sql
-				String sql = incrementSqlObject.getString(key);
+				String sql = incrementSqlList.get(i);
 				if (!StringUtil.isEmpty(sql)) {
 					//替换掉sql中需要传递的参数
 					sql = AbstractCollectTableHandle.replaceSqlParam(sql, collectTableBean.getSqlParam());
 					statement = conn.createStatement();
 					//查询数据
 					resultSet = statement.executeQuery(sql);
-					tableBean.setOperate(key);
+					tableBean.setOperate(operateArray[i]);
 					//2、解析ResultSet，并写数据文件
 					ResultSetParser parser = new ResultSetParser();
 					//文件路径
@@ -387,4 +388,16 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 				executorService.shutdown();
 		}
 	}
+
+	/**
+	 * 对增量sql进行排序，保证写文件的顺序是先删除,再更新,再新增。避免出现把新增数据删除或者更新了的情况
+	 */
+	private List<String> getSortJson(JSONObject json) {
+		List<String> sqlList = new ArrayList<>();
+		sqlList.add(json.getString("delete"));
+		sqlList.add(json.getString("update"));
+		sqlList.add(json.getString("insert"));
+		return sqlList;
+	}
+
 }

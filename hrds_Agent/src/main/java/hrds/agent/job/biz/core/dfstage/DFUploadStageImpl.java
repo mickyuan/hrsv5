@@ -77,7 +77,7 @@ public class DFUploadStageImpl extends AbstractJobStage {
 				//全量采集
 				fullAmountCollect(stageParamInfo);
 			} else {
-				throw new AppSystemException("数据抽取卸数方式类型不正确");
+				throw new AppSystemException("DB文件采集指定的数据抽取卸数方式类型不正确");
 			}
 			LOGGER.info("------------------DB文件全量上传阶段成功------------------");
 			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.SUCCEED.getCode(), "执行成功");

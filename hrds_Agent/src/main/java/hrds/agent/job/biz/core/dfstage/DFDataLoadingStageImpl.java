@@ -52,52 +52,58 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 		JobStatusInfoUtil.startStageStatusInfo(statusInfo, collectTableBean.getTable_id(),
 				StageConstant.DATALOADING.getCode());
 		try {
-			List<DataStoreConfBean> dataStoreConfBeanList = collectTableBean.getDataStoreConfBean();
-			for (DataStoreConfBean dataStoreConfBean : dataStoreConfBeanList) {
-				//根据存储类型上传到目的地
-				if (Store_type.DATABASE.getCode().equals(dataStoreConfBean.getStore_type())) {
-					//传统数据库有两种情况，支持外部表和不支持外部表
-					if (IsFlag.Shi.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
-						//支持外部表
-						String todayTableName = collectTableBean.getHbase_name() + "_" + collectTableBean.getEtlDate();
-						//通过外部表加载数据到todayTableName
-						createExternalTableLoadData(todayTableName, collectTableBean, dataStoreConfBean,
-								stageParamInfo.getTableBean(), stageParamInfo.getFileNameArr());
-					} else if (IsFlag.Fou.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
-						//没有客户端，则表示为数据库类型在upload时已经装载数据了，直接跳过
+			if (UnloadType.ZengLiangXieShu.getCode().equals(collectTableBean.getUnload_type())) {
+				LOGGER.info("增量卸数数据加载阶段不用做任何操作");
+			} else if (UnloadType.QuanLiangXieShu.getCode().equals(collectTableBean.getUnload_type())) {
+				List<DataStoreConfBean> dataStoreConfBeanList = collectTableBean.getDataStoreConfBean();
+				for (DataStoreConfBean dataStoreConfBean : dataStoreConfBeanList) {
+					//根据存储类型上传到目的地
+					if (Store_type.DATABASE.getCode().equals(dataStoreConfBean.getStore_type())) {
+						//传统数据库有两种情况，支持外部表和不支持外部表
+						if (IsFlag.Shi.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
+							//支持外部表
+							String todayTableName = collectTableBean.getHbase_name() + "_" + collectTableBean.getEtlDate();
+							//通过外部表加载数据到todayTableName
+							createExternalTableLoadData(todayTableName, collectTableBean, dataStoreConfBean,
+									stageParamInfo.getTableBean(), stageParamInfo.getFileNameArr());
+						} else if (IsFlag.Fou.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
+							//没有客户端，则表示为数据库类型在upload时已经装载数据了，直接跳过
+							continue;
+						} else {
+							throw new AppSystemException("错误的是否标识");
+						}
+					} else if (Store_type.HIVE.getCode().equals(dataStoreConfBean.getStore_type())) {
+						//hive库有两种情况，有客户端和没有客户端
+						if (IsFlag.Shi.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
+							//有客户端
+							String todayTableName = collectTableBean.getHbase_name() + "_" + collectTableBean.getEtlDate();
+							String hdfsFilePath = DFUploadStageImpl.getUploadHdfsPath(collectTableBean);
+							//通过load方式加载数据到hive
+							createHiveTableLoadData(todayTableName, hdfsFilePath, dataStoreConfBean,
+									stageParamInfo.getTableBean());
+						} else if (IsFlag.Fou.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
+							//没有客户端，则表示为数据库类型在upload时已经装载数据了，直接跳过
+							continue;
+						} else {
+							throw new AppSystemException("错误的是否标识");
+						}
+					} else if (Store_type.HBASE.getCode().equals(dataStoreConfBean.getStore_type())) {
+						continue;
+					} else if (Store_type.SOLR.getCode().equals(dataStoreConfBean.getStore_type())) {
+						continue;
+					} else if (Store_type.ElasticSearch.getCode().equals(dataStoreConfBean.getStore_type())) {
+						continue;
+					} else if (Store_type.MONGODB.getCode().equals(dataStoreConfBean.getStore_type())) {
 						continue;
 					} else {
-						throw new AppSystemException("错误的是否标识");
+						//TODO 上面的待补充。
+						throw new AppSystemException("不支持的存储类型");
 					}
-				} else if (Store_type.HIVE.getCode().equals(dataStoreConfBean.getStore_type())) {
-					//hive库有两种情况，有客户端和没有客户端
-					if (IsFlag.Shi.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
-						//有客户端
-						String todayTableName = collectTableBean.getHbase_name() + "_" + collectTableBean.getEtlDate();
-						String hdfsFilePath = DFUploadStageImpl.getUploadHdfsPath(collectTableBean);
-						//通过load方式加载数据到hive
-						createHiveTableLoadData(todayTableName, hdfsFilePath, dataStoreConfBean,
-								stageParamInfo.getTableBean());
-					} else if (IsFlag.Fou.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
-						//没有客户端，则表示为数据库类型在upload时已经装载数据了，直接跳过
-						continue;
-					} else {
-						throw new AppSystemException("错误的是否标识");
-					}
-				} else if (Store_type.HBASE.getCode().equals(dataStoreConfBean.getStore_type())) {
-					continue;
-				} else if (Store_type.SOLR.getCode().equals(dataStoreConfBean.getStore_type())) {
-					continue;
-				} else if (Store_type.ElasticSearch.getCode().equals(dataStoreConfBean.getStore_type())) {
-					continue;
-				} else if (Store_type.MONGODB.getCode().equals(dataStoreConfBean.getStore_type())) {
-					continue;
-				} else {
-					//TODO 上面的待补充。
-					throw new AppSystemException("不支持的存储类型");
+					LOGGER.info("数据成功进入库" + dataStoreConfBean.getDsl_name() + "下的表"
+							+ collectTableBean.getHbase_name());
 				}
-				LOGGER.info("数据成功进入库" + dataStoreConfBean.getDsl_name() + "下的表"
-						+ collectTableBean.getHbase_name());
+			} else {
+				throw new AppSystemException("DB文件采集指定的数据抽取卸数方式类型不正确");
 			}
 			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.SUCCEED.getCode(), "执行成功");
 			LOGGER.info("------------------DB文件采集数据加载阶段成功------------------");

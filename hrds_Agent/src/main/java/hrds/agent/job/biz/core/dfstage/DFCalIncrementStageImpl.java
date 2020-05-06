@@ -16,6 +16,7 @@ import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.commons.codes.CollectType;
 import hrds.commons.codes.StorageType;
 import hrds.commons.codes.Store_type;
+import hrds.commons.codes.UnloadType;
 import hrds.commons.collection.ConnectionTool;
 import hrds.commons.exception.AppSystemException;
 import org.slf4j.Logger;
@@ -44,41 +45,47 @@ public class DFCalIncrementStageImpl extends AbstractJobStage {
 		JobStatusInfoUtil.startStageStatusInfo(statusInfo, collectTableBean.getTable_id(),
 				StageConstant.CALINCREMENT.getCode());
 		try {
-			List<DataStoreConfBean> dataStoreConfBeanList = collectTableBean.getDataStoreConfBean();
-			TableBean tableBean = stageParamInfo.getTableBean();
-			for (DataStoreConfBean dataStoreConf : dataStoreConfBeanList) {
-				//根据存储类型上传到目的地
-				if (Store_type.DATABASE.getCode().equals(dataStoreConf.getStore_type())) {
-					try (DatabaseWrapper db = ConnectionTool.getDBWrapper(dataStoreConf.getData_store_connect_attr());
-					     JDBCIncreasement increase = getJdbcIncreasement(tableBean, collectTableBean.getHbase_name(),
-							     collectTableBean.getEtlDate(), db, dataStoreConf.getDsl_name())) {
-						if (StorageType.ZengLiang.getCode().equals(collectTableBean.getStorage_type())) {
-							//计算增量
-							increase.calculateIncrement();
-							//合并增量表
-							increase.mergeIncrement();
-						} else if (StorageType.ZhuiJia.getCode().equals(collectTableBean.getStorage_type())) {
-							//追加
-							increase.append();
-						} else if (StorageType.TiHuan.getCode().equals(collectTableBean.getStorage_type())) {
-							//替换
-							increase.replace();
-						} else {
-							throw new AppSystemException("请选择正确的存储方式！");
+			if (UnloadType.ZengLiangXieShu.getCode().equals(collectTableBean.getUnload_type())) {
+				LOGGER.info("增量卸数计算增量阶段不用做任何操作");
+			} else if (UnloadType.QuanLiangXieShu.getCode().equals(collectTableBean.getUnload_type())) {
+				List<DataStoreConfBean> dataStoreConfBeanList = collectTableBean.getDataStoreConfBean();
+				TableBean tableBean = stageParamInfo.getTableBean();
+				for (DataStoreConfBean dataStoreConf : dataStoreConfBeanList) {
+					//根据存储类型上传到目的地
+					if (Store_type.DATABASE.getCode().equals(dataStoreConf.getStore_type())) {
+						try (DatabaseWrapper db = ConnectionTool.getDBWrapper(dataStoreConf.getData_store_connect_attr());
+						     JDBCIncreasement increase = getJdbcIncreasement(tableBean, collectTableBean.getHbase_name(),
+								     collectTableBean.getEtlDate(), db, dataStoreConf.getDsl_name())) {
+							if (StorageType.ZengLiang.getCode().equals(collectTableBean.getStorage_type())) {
+								//计算增量
+								increase.calculateIncrement();
+								//合并增量表
+								increase.mergeIncrement();
+							} else if (StorageType.ZhuiJia.getCode().equals(collectTableBean.getStorage_type())) {
+								//追加
+								increase.append();
+							} else if (StorageType.TiHuan.getCode().equals(collectTableBean.getStorage_type())) {
+								//替换
+								increase.replace();
+							} else {
+								throw new AppSystemException("请选择正确的存储方式！");
+							}
 						}
+					} else if (Store_type.HBASE.getCode().equals(dataStoreConf.getStore_type())) {
+
+					} else if (Store_type.SOLR.getCode().equals(dataStoreConf.getStore_type())) {
+
+					} else if (Store_type.ElasticSearch.getCode().equals(dataStoreConf.getStore_type())) {
+
+					} else if (Store_type.MONGODB.getCode().equals(dataStoreConf.getStore_type())) {
+
+					} else {
+						//TODO 上面的待补充。
+						throw new AppSystemException("不支持的存储类型");
 					}
-				} else if (Store_type.HBASE.getCode().equals(dataStoreConf.getStore_type())) {
-
-				} else if (Store_type.SOLR.getCode().equals(dataStoreConf.getStore_type())) {
-
-				} else if (Store_type.ElasticSearch.getCode().equals(dataStoreConf.getStore_type())) {
-
-				} else if (Store_type.MONGODB.getCode().equals(dataStoreConf.getStore_type())) {
-
-				} else {
-					//TODO 上面的待补充。
-					throw new AppSystemException("不支持的存储类型");
 				}
+			} else {
+				throw new AppSystemException("DB文件采集指定的数据抽取卸数方式类型不正确");
 			}
 			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.SUCCEED.getCode(), "执行成功");
 			LOGGER.info("------------------DB文件采集增量阶段成功------------------");

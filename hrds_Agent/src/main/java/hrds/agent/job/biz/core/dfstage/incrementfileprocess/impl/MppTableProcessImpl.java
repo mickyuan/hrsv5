@@ -54,7 +54,7 @@ public class MppTableProcessImpl extends TableProcessAbstract {
 		for (String column : deleteColumnList) {
 			deleteSql.append(column).append(",");
 		}
-		deleteSql.delete(deleteSql.length() - 1, deleteSql.length()).append(" IN (");
+		deleteSql.delete(deleteSql.length() - 1, deleteSql.length()).append(") IN (");
 	}
 
 	@Override
@@ -90,16 +90,7 @@ public class MppTableProcessImpl extends TableProcessAbstract {
 				throw new AppSystemException("增量数据采集不自持" + operate + "操作");
 			}
 		}
-		if (addParamsPool.size() % 5000 == 0) {
-			//每5000条batch提交一次
-			db.execBatch(insertSql, addParamsPool);
-			addParamsPool.clear();
-		}
-		if (updateParamsPool.size() % 5000 == 0) {
-			//每5000条batch提交一次
-			db.execBatch(updateSql, updateParamsPool);
-			updateParamsPool.clear();
-		}
+		//先执行删除，再执行更新, 再执行新增
 		if (deleteNum % 900 == 0) {
 			deleteSql.delete(deleteSql.length() - 1, deleteSql.length()).append(")");
 			//每900条删除一次
@@ -109,17 +100,48 @@ public class MppTableProcessImpl extends TableProcessAbstract {
 			for (String column : deleteColumnList) {
 				deleteSql.append(column).append(",");
 			}
-			deleteSql.delete(deleteSql.length() - 1, deleteSql.length()).append(" IN (");
+			deleteSql.delete(deleteSql.length() - 1, deleteSql.length()).append(") IN (");
+			deleteNum = 0;
+		}
+		if (updateParamsPool.size() != 0 && updateParamsPool.size() % 5000 == 0) {
+			//如果更新的有数据，说明delete的值全部读完，这时候判断如果deleteNum不等于0则立即执行剩余的删除操作
+			if (deleteNum > 0) {
+				deleteSql.delete(deleteSql.length() - 1, deleteSql.length()).append(")");
+				//每900条删除一次
+				db.execute(deleteSql.toString());
+				deleteNum = 0;
+			}
+			//每5000条batch提交一次
+			db.execBatch(updateSql, updateParamsPool);
+			updateParamsPool.clear();
+		}
+		if (addParamsPool.size() != 0 && addParamsPool.size() % 5000 == 0) {
+			//如果新增的有数据,说明update的值全部读完，判断如果updateParamsPool.size()大于0则立即执行剩余的更新操作
+			if (updateParamsPool.size() > 0) {
+				db.execBatch(updateSql, updateParamsPool);
+				updateParamsPool.clear();
+			}
+			//每5000条batch提交一次
+			db.execBatch(insertSql, addParamsPool);
+			addParamsPool.clear();
 		}
 	}
 
 	@Override
 	public void excute() {
-		//最后执行一次提交
-		db.execBatch(insertSql, addParamsPool);
-		db.execBatch(updateSql, updateParamsPool);
-		deleteSql.delete(deleteSql.length() - 1, deleteSql.length()).append(")");
-		db.execute(deleteSql.toString());
+		//最后执行一次提交,如果删除的没有过900，更新和新增的都没有过5000则第一次执行就到这里
+		if (deleteNum > 0) {
+			deleteSql.delete(deleteSql.length() - 1, deleteSql.length()).append(")");
+			//每900条删除一次
+			db.execute(deleteSql.toString());
+			deleteNum = 0;
+		}
+		if (updateParamsPool.size() > 0) {
+			db.execBatch(updateSql, updateParamsPool);
+		}
+		if (addParamsPool.size() > 0) {
+			db.execBatch(insertSql, addParamsPool);
+		}
 	}
 
 	/**
@@ -136,11 +158,11 @@ public class MppTableProcessImpl extends TableProcessAbstract {
 				updateSql.append(updateColumnList.get(i)).append(" = ?,");
 			} else {
 				//是主键
-				sb.append(updateColumnList.get(i)).append(" = ?,");
+				sb.append(updateColumnList.get(i)).append(" = ? and ");
 			}
 		}
 		updateSql.delete(updateSql.length() - 1, updateSql.length());
-		sb.delete(sb.length() - 1, sb.length());
+		sb.delete(sb.length() - 4, sb.length());
 		updateSql.append(sb);
 		return updateSql.toString();
 	}
