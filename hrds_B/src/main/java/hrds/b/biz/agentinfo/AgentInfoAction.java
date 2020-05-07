@@ -15,6 +15,8 @@ import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.key.PrimayKeyGener;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -27,6 +29,8 @@ import java.util.regex.Pattern;
 
 @DocClass(desc = "agent增删改查类", author = "dhw", createdate = "2019-9-23 10:32:16")
 public class AgentInfoAction extends BaseAction {
+
+	private static final Logger logger = LogManager.getLogger();
 
 	@Method(desc = "查询所有agent信息,agent页面展示",
 			logicStep = "1.数据可访问权限处理方式，通过user_id关联进行权限控制" +
@@ -248,12 +252,13 @@ public class AgentInfoAction extends BaseAction {
 			socket.connect(new InetSocketAddress(agent_ip, Integer.parseInt(agent_port)));
 		} catch (IOException e) {
 			// 未连通，端口可用
+			logger.info("端口未被占用", e);
 			return false;
 		} finally {
 			try {
 				socket.close();
 			} catch (IOException e) {
-				e.printStackTrace();
+				logger.info("关闭socket连接失败", e);
 			}
 		}
 		// 连通，端口被使用中
