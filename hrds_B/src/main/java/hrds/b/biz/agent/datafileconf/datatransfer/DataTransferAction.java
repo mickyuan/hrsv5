@@ -316,12 +316,12 @@ public class DataTransferAction extends BaseAction {
         }
       }
 
-      // 根据是否转存设置数据文件源头(转存设置为数据加载格式,否则设置为源数据格式)
-      if (dataExtractionDef.getIs_archived().equals(IsFlag.Shi.getCode())) {
-        dataExtractionDef.setData_extract_type(DataExtractType.ShuJuJiaZaiGeShi.getCode());
-      } else {
+      // 根据是否转存设置数据文件源头(转存设置为数据加载格式,否则设置为源数据格式) FIXME 这里默认都存原数据格式
+//      if (dataExtractionDef.getIs_archived().equals(IsFlag.Shi.getCode())) {
+//        dataExtractionDef.setData_extract_type(DataExtractType.ShuJuJiaZaiGeShi.getCode());
+//      } else {
         dataExtractionDef.setData_extract_type(DataExtractType.YuanShuJuGeShi.getCode());
-      }
+//      }
 
       //      2-2: 没有ID信息存在则视为新增,并将数据文件源头设置为源数据加载格式
       if (dataExtractionDef.getDed_id() == null) {
