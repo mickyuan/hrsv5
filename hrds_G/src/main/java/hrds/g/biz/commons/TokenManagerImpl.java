@@ -37,7 +37,7 @@ public class TokenManagerImpl implements TokenManager {
 			String token = DigestUtils.md5Hex(user_id + pwd + System.currentTimeMillis());
 			model = new TokenModel(user_id, token);
 			// 3.1创建token
-			create(db,user_id, token);
+			create(db, user_id, token);
 		} else {
 			model = new TokenModel(user_id, defaultToken);
 		}
@@ -55,13 +55,13 @@ public class TokenManagerImpl implements TokenManager {
 	public boolean checkToken(DatabaseWrapper db, String token) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		// 2.判断token值是否存在
-		TokenManagerImpl.isTokenExist(token);
+		TokenManagerImpl.isTokenExist(db, token);
 		// 3.获取token有效期
-		String oldValidTime = TokenManagerImpl.getValidTime(token);
+		String oldValidTime = TokenManagerImpl.getValidTime(db, token);
 		// 4.判断token是否还有效，有效更新并返回true，无效返回false
 		if (ENDTIME < Long.parseLong(oldValidTime)) {
 			// 5.更新插入库
-			TokenManagerImpl.updateValidTime(token);
+			TokenManagerImpl.updateValidTime(db, token);
 			return true;
 		} else {
 			return false;
@@ -72,10 +72,10 @@ public class TokenManagerImpl implements TokenManager {
 			"2.将token更新为默认值")
 	@Param(name = "token", desc = "根据生成token接口获取", range = "不为空")
 	@Override
-	public void deleteToken(String token) {
+	public void deleteToken(DatabaseWrapper db, String token) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		// 2.将token更新为默认值
-		updateTokenToDefault(token);
+		updateTokenToDefault(db, token);
 
 	}
 
@@ -83,7 +83,7 @@ public class TokenManagerImpl implements TokenManager {
 			"2.更新token")
 	@Param(name = "user_id", desc = "用户ID", range = "新增用户时生成")
 	@Param(name = "token", desc = "根据生成token接口获取", range = "不为空")
-	public void create(DatabaseWrapper db,Long user_id, String token) {
+	public void create(DatabaseWrapper db, Long user_id, String token) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		Sys_user user = new Sys_user();
 		user.setToken(token);
@@ -96,31 +96,30 @@ public class TokenManagerImpl implements TokenManager {
 	@Method(desc = "更新token有效时间", logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制" +
 			"2.更新token有效时间")
 	@Param(name = "token", desc = "根据生成token接口获取", range = "不为空")
-	private static void updateValidTime(String token) {
+	private static void updateValidTime(DatabaseWrapper db, String token) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		// 2.更新token有效时间
-		SqlOperator.execute(new DatabaseWrapper(), "update " + Sys_user.TableName + "  set valid_time=? " +
-						"WHERE token=?",
-				System.currentTimeMillis() + 2 * 60 * 60 * 1000, token);
+		SqlOperator.execute(db, "update " + Sys_user.TableName + "  set valid_time=? " +
+				"WHERE token=?", System.currentTimeMillis() + 2 * 60 * 60 * 1000, token);
 	}
 
 	@Method(desc = "将token更新为默认值", logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制" +
 			"2.2.更新token值为默认值")
 	@Param(name = "token", desc = "根据生成token接口获取", range = "不为空")
-	private static void updateTokenToDefault(String token) {
+	private static void updateTokenToDefault(DatabaseWrapper db, String token) {
 		// 1.数据可访问权限处理方式：该方法通不需要进行访问权限限制
 		// 2.更新token值为默认值
-		SqlOperator.execute(new DatabaseWrapper(), "update " + Sys_user.TableName + " set token = ?" +
+		SqlOperator.execute(db, "update " + Sys_user.TableName + " set token = ?" +
 				" WHERE token = ?", IsFlag.Fou.getCode(), token);
 	}
 
 	@Method(desc = "判断token值是否存在", logicStep = "1.数据可访问权限处理方式：该方法通不需要进行访问权限限制" +
 			"2.判断token值是否存在")
 	@Param(name = "token", desc = "通过生成token接口获得", range = "无限制")
-	private static void isTokenExist(String token) {
+	private static void isTokenExist(DatabaseWrapper db, String token) {
 		// 1.数据可访问权限处理方式：该方法通不需要进行访问权限限制
 		// 2.判断token值是否存在
-		if (SqlOperator.queryNumber(new DatabaseWrapper(), "select count(*) FROM "
+		if (SqlOperator.queryNumber(db, "select count(*) FROM "
 				+ Sys_user.TableName + " WHERE  token = ?", token)
 				.orElseThrow(() -> new BusinessException("sql查询错误")) == 0) {
 			throw new BusinessException("token值不能为空");
@@ -161,19 +160,17 @@ public class TokenManagerImpl implements TokenManager {
 					"3.判断token有效时间是否为空，为空返回空字符串，不为空返回查询结果")
 	@Param(name = "token", desc = "通过生成token接口获得", range = "无限制")
 	@Return(desc = "返回查询token有效时间", range = "无限制")
-	private static String getValidTime(String token) {
+	private static String getValidTime(DatabaseWrapper db, String token) {
 		// 1.数据可访问权限处理方式：该方法通不需要进行访问权限限制
 		// 2.查询token有效时间
-		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			List<Object> columnList =
-					SqlOperator.queryOneColumnList(db, "select valid_time FROM " + Sys_user.TableName
-							+ "  WHERE token = ?", token);
-			// 3.判断token有效时间是否为空，为空返回空字符串，不为空返回查询结果
-			if (!columnList.isEmpty()) {
-				return columnList.get(0).toString();
-			} else {
-				return "";
-			}
+		List<Object> columnList = SqlOperator.queryOneColumnList(db, "select valid_time FROM "
+				+ Sys_user.TableName
+				+ "  WHERE token = ?", token);
+		// 3.判断token有效时间是否为空，为空返回空字符串，不为空返回查询结果
+		if (!columnList.isEmpty()) {
+			return columnList.get(0).toString();
+		} else {
+			return "";
 		}
 	}
 }

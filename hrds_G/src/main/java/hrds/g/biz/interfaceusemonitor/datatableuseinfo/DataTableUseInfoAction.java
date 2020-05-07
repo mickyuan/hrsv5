@@ -105,6 +105,6 @@ public class DataTableUseInfoAction extends BaseAction {
 		// 3.删除表使用信息
 		Dbo.execute("delete from " + Table_use_info.TableName + " where use_id = ?", use_id);
 		// 4.重新初始化表使用信息
-		InterfaceManager.userTableInfo();
+		InterfaceManager.initTable(Dbo.db());
 	}
 }

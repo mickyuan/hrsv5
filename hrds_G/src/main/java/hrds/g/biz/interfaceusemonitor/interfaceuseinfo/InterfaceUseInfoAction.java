@@ -5,8 +5,6 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
-import fd.ng.db.jdbc.DefaultPageImpl;
-import fd.ng.db.jdbc.Page;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
@@ -87,7 +85,7 @@ public class InterfaceUseInfoAction extends BaseAction {
 		DboExecute.updatesOrThrow("更新接口状态失败", "UPDATE " + Interface_use.TableName
 				+ " set use_state = ? WHERE interface_use_id = ?", use_state, interface_use_id);
 		// 3.重新初始化接口使用信息
-		InterfaceManager.userInterface();
+		InterfaceManager.initInterface(Dbo.db());
 	}
 
 	@Method(desc = "查询接口监控信息（接口使用监控）", logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制" +
@@ -129,7 +127,7 @@ public class InterfaceUseInfoAction extends BaseAction {
 		DboExecute.deletesOrThrow("当前接口ID对应接口信息不存在", "DELETE FROM "
 				+ Interface_use.TableName + " WHERE interface_use_id = ?", interface_use_id);
 		// 3.重新初始化接口使用信息
-		InterfaceManager.userInterface();
+		InterfaceManager.initInterface(Dbo.db());
 	}
 
 	@Method(desc = " 根据接口使用ID获取相应的信息（接口使用监控）",
@@ -157,7 +155,7 @@ public class InterfaceUseInfoAction extends BaseAction {
 						+ " set start_use_date=?,use_valid_date=? where interface_use_id = ?",
 				start_use_date, use_valid_date, interface_use_id);
 		// 3.重新初始化接口使用信息
-		InterfaceManager.userInterface();
+		InterfaceManager.initInterface(Dbo.db());
 	}
 
 }
