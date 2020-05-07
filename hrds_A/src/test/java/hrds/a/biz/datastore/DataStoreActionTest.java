@@ -25,7 +25,8 @@ import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.util.*;
 
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class DataStoreActionTest extends WebBaseTestCase {
@@ -286,7 +287,7 @@ public class DataStoreActionTest extends WebBaseTestCase {
 					.buildSession()
 					.addData("user_id", UserId)
 					.addData("password", "1")
-					.post("http://127.0.0.1:8088/A/action/hrds/a/biz/login/login")
+					.post("http://127.0.0.1:8888/A/action/hrds/a/biz/login/login")
 					.getBodyString();
 			Optional<ActionResult> ar = JsonUtil.toObjectSafety(responseValue, ActionResult.class);
 			assertThat("用户登录", ar.get().isSuccess(), is(true));
@@ -1978,4 +1979,35 @@ public class DataStoreActionTest extends WebBaseTestCase {
 		assertThat(bodyString, is(notNullValue()));
 	}
 
+	@Method(desc = "根据存储层类型获取数据存储层配置属性key",
+			logicStep = "1.正确的数据访问1，数据都有效" +
+					"2.错误的数据访问1，store_type为空" +
+					"3.错误的数据访问2，store_type不存在")
+	@Test
+	public void getDataLayerAttrKey() {
+		// 1.正常的数据访问1，数据都正常
+		String bodyString = new HttpClient()
+				.addData("store_type", Store_type.DATABASE.getCode())
+				.post(getActionUrl("getDataLayerAttrKey"))
+				.getBodyString();
+		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+		assertThat(ar.isSuccess(), is(true));
+		// 2.错误的数据访问1，store_type为空
+		bodyString = new HttpClient()
+				.addData("store_type", "")
+				.post(getActionUrl("getDataLayerAttrKey"))
+				.getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+		assertThat(ar.isSuccess(), is(false));
+		// 3.错误的数据访问2，store_type不存在
+		bodyString = new HttpClient()
+				.addData("store_type", "11")
+				.post(getActionUrl("getDataLayerAttrKey"))
+				.getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+		assertThat(ar.isSuccess(), is(false));
+	}
 }
