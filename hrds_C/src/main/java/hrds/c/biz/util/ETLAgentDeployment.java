@@ -31,15 +31,14 @@ public class ETLAgentDeployment {
 	@Method(desc = "ETL部署", logicStep = "1.数据可访问权限处理方式，该方法不需要权限控制"
 			+ "2.获取ETL下载地址"
 			+ "3.根据文件路径获取文件信息"
-			+ "4.判断文件是否存在"
-			+ "5.获取数据库连接配置信息"
-			+ "6.获取redis连接配置信息"
-			+ "7.获得程序当前路径"
-			+ "8.根据程序当前路径获取文件"
-			+ "9.集群conf配置文件目录"
-			+ "10.创建存放部署ETL连接信息的集合并封装属性"
-			+ "11.ETL部署"
-			+ "12.部署完成后删除db与redis配置文件")
+			+ "4.获取数据库连接配置信息"
+			+ "5.获取redis连接配置信息"
+			+ "6.获得程序当前路径"
+			+ "7.根据程序当前路径获取文件"
+			+ "8.集群conf配置文件目录"
+			+ "9.创建存放部署ETL连接信息的集合并封装属性"
+			+ "10.ETL部署"
+			+ "11.部署完成后删除db与redis配置文件")
 	@Param(name = "etl_sys_cd", desc = "工程编号", range = "新建工程时生成")
 	@Param(name = "etl_serv_ip", desc = "ETL部署agent的IP地址", range = "如：127.0.0.1")
 	@Param(name = "etl_serv_port", desc = "ETL部署agent的端口", range = "默认22")
@@ -55,12 +54,8 @@ public class ETLAgentDeployment {
 			// 2.获取ETL下载地址
 			String agentPath = PropertyParaValue.getString("ETLpath", "");
 			// 3.根据文件路径获取文件信息
-			File sourceFile = FileUtil.getFile(agentPath);
-			// 4.判断文件是否存在
-			if (!sourceFile.exists()) {
-				throw new BusinessException("ETL下载地址目录下文件不存在！");
-			}
-			// 5.配置文件的临时存放路径,判断文件目录是否存在，如果不存在创建
+			File sourceFile = new File(agentPath);
+			// 4.配置文件的临时存放路径,判断文件目录是否存在，如果不存在创建
 			String tmp_conf_path = System.getProperty("user.dir") + SEPARATOR + "etlTempResources"
 					+ SEPARATOR + "fdconfig" + SEPARATOR;
 			File file = new File(tmp_conf_path);
@@ -70,21 +65,21 @@ public class ETLAgentDeployment {
 				}
 			}
 			logger.info("==========配置文件的临时存放路径===========" + tmp_conf_path);
-			// 6.生成control.conf配置文件
+			// 5.生成control.conf配置文件
 			Yaml.dump(ControlConfParam.getControlConfParam(), new File(tmp_conf_path
 					+ ControlConfParam.CONF_FILE_NAME));
-			// 7.根据程序当前路径获取文件
+			// 6.根据程序当前路径获取文件
 			File userDirFile = FileUtil.getFile(System.getProperty("user.dir"));
-			// 8.集群conf配置文件目录 fixme  集群配置文件暂时不知如何获取
+			// 7.集群conf配置文件目录 fixme  集群配置文件暂时不知如何获取
 			String hadoopConf = userDirFile + SEPARATOR + "conf" + SEPARATOR;
-			// 9.创建存放部署ETL连接信息的集合并封装属性
+			// 8.创建存放部署ETL连接信息的集合并封装属性
 			SFTPDetails sftpDetails = new SFTPDetails();
-			// 10.设置部署所需参数
+			// 9.设置部署所需参数
 			setSFTPDetails(etl_sys_cd, etl_serv_ip, etl_serv_port, userName, password, targetDir,
 					sourceFile.getName(), sourceFile.getParent(), hadoopConf, tmp_conf_path, sftpDetails);
-			// 11.ETL部署
+			// 10.ETL部署
 			SCPFileSender.etlScpToFrom(sftpDetails);
-			// 12.部署完成后删除本地临时配置文件
+			// 11.部署完成后删除本地临时配置文件
 			FileUtil.deleteDirectoryFiles(tmp_conf_path);
 		} catch (Exception e) {
 			throw new AppSystemException(e);
