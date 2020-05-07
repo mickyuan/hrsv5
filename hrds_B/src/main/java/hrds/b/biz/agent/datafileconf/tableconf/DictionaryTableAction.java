@@ -391,6 +391,7 @@ public class DictionaryTableAction extends BaseAction {
   @Param(name = "tableColumnList", desc = "列的实体对象数据集合", range = "不可为空", isBean = true)
   @Param(name = "table_id", desc = "表的主键ID", range = "不可为空")
   private void setColumnDefaultData(List<Table_column> tableColumnList, long table_id) {
+
     tableColumnList.forEach(
         table_column -> {
           // 设置列对应外键(表ID)

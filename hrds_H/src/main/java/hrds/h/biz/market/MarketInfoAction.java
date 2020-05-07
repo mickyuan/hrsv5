@@ -535,6 +535,7 @@ public class MarketInfoAction extends BaseAction {
             }
         }
         String targetfield_type = "";
+        String field_length = "";
         for (int i = 0; i < columnNameList.size(); i++) {
             String everyColumnName = columnNameList.get(i);
             Map<String, Object> map = new LinkedHashMap<>();
@@ -552,13 +553,22 @@ public class MarketInfoAction extends BaseAction {
                     String sourcecolumn = stringObjectHashMap.get(DruidParseQuerySql.sourcecolumn).toString();
                     String dsl_id = Dbo.queryList("select dsl_id from dm_relation_datatable where datatable_id = ?", dm_datatable.getDatatable_id())
                             .get(0).get("dsl_id").toString();
-                    targetfield_type = getFieldType(sourcetable, sourcecolumn, field_type, dsl_id).get("targettype");
+                    Map<String, String> fieldType = getFieldType(sourcetable, sourcecolumn, field_type, dsl_id);
+                    targetfield_type = fieldType.get("targettype");
+                    field_length = fieldType.get("field_length");
+                    if (field_length == null) {
+                        field_length = "";
+                    }
+                    if(targetfield_type.equals("string")){
+                        field_length = "";
+                    }
                 } else {
                     targetfield_type = field_type;
                 }
             }
             map.put("field_type", targetfield_type);
-            if (targetfield_type.equals("varchar")) {
+            map.put("field_length", field_length);
+            if (targetfield_type.equals("varchar") && field_length.isEmpty()) {
                 map.put("field_length", 100);
             }
             map.put("field_process", ProcessType.YingShe.getCode());
@@ -607,33 +617,39 @@ public class MarketInfoAction extends BaseAction {
                                 Data_relation_table.TableName + " t4 on t4.storage_id = t3.storage_id " +
                                 "where lower(t2.column_name) = ? and lower(t1.hyren_name) = ? limit 1",
                         sourcecolumn.toLowerCase(), sourcetable.toLowerCase());
-                String column_type = maps.get(0).get("column_type").toString();
-                String DCLdsl_id = maps.get(0).get("dsl_id").toString();
-                //如果为空，说明字段不存在
-                if (StringUtils.isEmpty(column_type)) {
+                if (maps.isEmpty()) {
+                    //如果为空，说明字段不存在
                     resultmap.put("sourcetype", field_type);
                     resultmap.put("targettype", field_type);
                     return resultmap;
                 } else {
+                    String column_type = maps.get(0).get("column_type").toString();
+                    String DCLdsl_id = maps.get(0).get("dsl_id").toString();
                     //如果是来自帖源的话 就需要做两次转换
                     resultmap.put("sourcetype", column_type.toLowerCase());
+                    if(column_type.contains("(") && column_type.contains(")")){
+                        String field_length = column_type.substring(column_type.indexOf("(")+1,column_type.indexOf(")"));
+                        resultmap.put("field_length", field_length);
+                    }
                     column_type = transFormColumnType(column_type, DCLdsl_id);
                     column_type = transFormColumnType(column_type, dsl_id);
                     resultmap.put("targettype", column_type.toLowerCase());
                     return resultmap;
                 }
             } else if (dataSourceType.equals(DataSourceType.DML.getCode())) {
-                List<Map<String, Object>> maps = Dbo.queryList("select field_type from " + Datatable_field_info.TableName + " t1 left join " + Dm_datatable.TableName +
+                List<Map<String, Object>> maps = Dbo.queryList("select field_length,field_type from " + Datatable_field_info.TableName + " t1 left join " + Dm_datatable.TableName +
                         " t2 on t1.datatable_id = t2.datatable_id where lower(t2.datatable_en_name) = ? and lower(t1.field_en_name) = ?", sourcetable.toLowerCase(), sourcecolumn);
-                String DMLfield_type = maps.get(0).get("field_type").toString();
-                if (StringUtils.isEmpty(DMLfield_type)) {
+                if (maps.isEmpty()) {
                     resultmap.put("sourcetype", field_type);
                     resultmap.put("targettype", field_type);
                     return resultmap;
                 } else {
+                    String DMLfield_type = maps.get(0).get("field_type").toString();
+                    String DMLfield_length = maps.get(0).get("field_length").toString();
                     resultmap.put("sourcetype", DMLfield_type.toLowerCase());
                     DMLfield_type = transFormColumnType(DMLfield_type, dsl_id);
                     resultmap.put("targettype", DMLfield_type.toLowerCase());
+                    resultmap.put("field_length", DMLfield_length);
                     return resultmap;
                 }
             } else {
@@ -643,6 +659,7 @@ public class MarketInfoAction extends BaseAction {
             }
             //TODO 之后层级加入 还需要补充
         }
+
     }
 
     /**
@@ -667,7 +684,11 @@ public class MarketInfoAction extends BaseAction {
         if (maps.isEmpty()) {
             return column_type;
         } else {
-            return maps.get(0).get("target_type").toString();
+            String target_type = maps.get(0).get("target_type").toString();
+            if (target_type.contains("(")) {
+                target_type = target_type.substring(0, target_type.indexOf("("));
+            }
+            return target_type.toLowerCase();
         }
     }
 
