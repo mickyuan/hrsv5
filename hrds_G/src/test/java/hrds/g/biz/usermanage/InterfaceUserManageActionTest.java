@@ -6,6 +6,7 @@ import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
+import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import hrds.commons.codes.IsFlag;
@@ -82,49 +83,40 @@ public class InterfaceUserManageActionTest extends WebBaseTestCase {
 		String responseValue = new HttpClient().buildSession()
 				.addData("user_id", USER_ID)
 				.addData("password", "1")
-				.post("http://127.0.0.1:8088/A/action/hrds/a/biz/login/login").getBodyString();
+				.post("http://127.0.0.1:8888/A/action/hrds/a/biz/login/login").getBodyString();
 		ActionResult ar = JsonUtil.toObjectSafety(responseValue, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败"));
 		assertThat(ar.isSuccess(), is(true));
 	}
 
-	@Method(desc = "查询接口用户信息测试方法", logicStep = "1.正确的数据访问1" +
-			"2.该方法只有一种可能")
+	@Method(desc = "查询接口用户信息测试方法", logicStep = "1.正确的数据访问1，user_name为空" +
+			"2.正确的数据访问1，user_name不为空" +
+			"3.该方法只有两种可能")
 	@Test
-	public void selectUserInfoByPage() {
-		//1.正确的数据访问1
+	public void selectUserInfo() {
+		//1.正确的数据访问1，user_name为空
 		bodyString = new HttpClient()
-				.post(getActionUrl("selectUserInfoByPage")).getBodyString();
+				.post(getActionUrl("selectUserInfo")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
-		Map<Object, Object> map = ar.getDataForMap();
-		assertThat(Integer.parseInt(map.get("totalSize").toString()), is(USERROWS));
-		List<Map<String, String>> userList = JsonUtil.toObject(map.get("userList").toString(), LISTTYPE);
-		assertThat("接口测试用户-dhw0", is(userList.get(0).get("user_name")));
-		assertThat("123@163.com", is(userList.get(0).get("user_email")));
-		assertThat("1", is(userList.get(0).get("user_password")));
-		assertThat("接口测试用户-dhw0", is(userList.get(0).get("user_remark")));
-	}
-
-	@Method(desc = "分页查询接口用户信息", logicStep = "1.正确的数据访问1，数据都有效" +
-			"2.该方法只有一种情况")
-	@Test
-	public void selectUserInfoByName() {
-		// 1.正确的数据访问1，数据都有效
+		Result result = ar.getDataForResult();
+		assertThat("接口测试用户-dhw0", is(result.getString(0, "user_name")));
+		assertThat("123@163.com", is(result.getString(0, "user_email")));
+		assertThat("1", is(result.getString(0, "user_password")));
+		assertThat("接口测试用户-dhw0", is(result.getString(0, "user_remark")));
+		// 2.正确的数据访问1，user_name不为空
 		bodyString = new HttpClient().addData("user_name", "接口测试用户-dhw0")
-				.post(getActionUrl("selectUserInfoByName")).getBodyString();
+				.post(getActionUrl("selectUserInfo")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
-		Map<Object, Object> map = ar.getDataForMap();
-		assertThat(Integer.parseInt(map.get("totalSize").toString()), is(1));
-		List<Map<String, String>> userList = JsonUtil.toObject(map.get("userList").toString(), LISTTYPE);
-		for (int i = 0; i < userList.size(); i++) {
-			assertThat("接口测试用户-dhw" + i, is(userList.get(i).get("user_name")));
-			assertThat("123@163.com", is(userList.get(i).get("user_email")));
-			assertThat("1", is(userList.get(i).get("user_password")));
-			assertThat("接口测试用户-dhw" + i, is(userList.get(i).get("user_remark")));
+		result = ar.getDataForResult();
+		for (int i = 0; i < result.getRowCount(); i++) {
+			assertThat("接口测试用户-dhw" + i, is(result.getString(0,"user_name")));
+			assertThat("123@163.com", is(result.getString(0,"user_email")));
+			assertThat("1", is(result.getString(0,"user_password")));
+			assertThat("接口测试用户-dhw" + i, is(result.getString(0,"user_remark")));
 		}
 	}
 
