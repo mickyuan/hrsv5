@@ -145,14 +145,14 @@ public class AgentDeploy {
         // 1 : 根据旧的部署目录来判断是否为第一次部署,如果部署第一次部署则先将进程kill,然后再将目录删除.
         logger.info(
             "停止就Agent的命令 : "
-                + "kill -9 $(netstat -anp|grep "
-                + down_info.getAgent_port()
-                + " |awk '{printf $7}'|cut -d/ -f1)");
+                + "kill -9 $(ps -ef |grep HYRENAgentReceive|grep "
+                + oldAgentPath
+                + " |grep -v grep| awk '{print $2}'| xargs -n 1)");
         SFTPChannel.execCommandByJSch(
             shellSession,
-            "kill -9 $(netstat -anp|grep "
-                + down_info.getAgent_port()
-                + " |awk '{printf $7}'|cut -d/ -f1)");
+            "kill -9 $(ps -ef |grep HYRENAgentReceive|grep "
+                + oldAgentPath
+                + " |grep -v grep| awk '{print $2}'| xargs -n 1)");
 
         // 这里的kill 还不知道怎么写
         logger.info("删除旧目录的命令是 : " + "rm -rf " + oldAgentPath + SEPARATOR + agentDirName);
@@ -162,15 +162,15 @@ public class AgentDeploy {
 
       // 检查当前的目录下的进程是否启动(这里直接使用kill命令,为防止后续启动出错)
       logger.info(
-          "停止Agnet的命令是 : "
-              + "kill -9 $(netstat -anp|grep "
-              + down_info.getAgent_port()
-              + " |awk '{printf $7}'|cut -d/ -f1)");
+          "停止就Agent的命令 : "
+              + "kill -9 $(ps -ef |grep HYRENAgentReceive|grep "
+              + oldAgentPath
+              + " |grep -v grep| awk '{print $2}'| xargs -n 1)");
       SFTPChannel.execCommandByJSch(
           shellSession,
-          "kill -9 $(netstat -anp|grep "
-              + down_info.getAgent_port()
-              + " |awk '{printf $7}'|cut -d/ -f1)");
+          "kill -9 $(ps -ef |grep HYRENAgentReceive|grep "
+              + oldAgentPath
+              + " |grep -v grep| awk '{print $2}'| xargs -n 1)");
 
       // 删除目标的机器的部署路径,防止存在
       logger.info("删除目标机器部署路径的命令是 : rm -rf " + down_info.getSave_dir() + SEPARATOR + agentDirName);
@@ -237,14 +237,22 @@ public class AgentDeploy {
         logger.info(
             "启动agent命令 : cd "
                 + targetDir
-                + ";nohup java -Dorg.eclipse.jetty.server.Request.maxFormContentSize=99900000 -jar "
+                + ";nohup java -D"
+                + down_info.getAgent_port()
+                + " -Dorg.eclipse.jetty.server.Request.maxFormContentSize=99900000 -jar "
                 + file.getName()
                 + " &");
         SFTPChannel.execCommandByJSchNoRs(
             shellSession,
             "cd "
                 + targetDir
-                + ";nohup java -Dorg.eclipse.jetty.server.Request.maxFormContentSize=99900000 -jar "
+                + ";nohup java -Dorg.eclipse.jetty.server.Request.maxFormContentSize=99900000"
+                + " -Dport="
+                + down_info.getAgent_port()
+                + " -Dproject.dir="
+                + down_info.getSave_dir()
+                + " -Dproject.name=\"HYRENAgentReceive\""
+                + " -jar "
                 + file.getName()
                 + " &");
       }
@@ -352,5 +360,4 @@ public class AgentDeploy {
         shellSession,
         "mkdir -p " + rootDir + SEPARATOR + targetch_machine[3] + SEPARATOR + targetch_machine[5]);
   }
-
 }
