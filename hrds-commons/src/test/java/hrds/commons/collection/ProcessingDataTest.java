@@ -4,11 +4,13 @@ import fd.ng.core.utils.DateUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
 import hrds.commons.codes.CollectType;
+import hrds.commons.codes.StorageTypeKey;
 import hrds.commons.collection.bean.LayerBean;
 import hrds.commons.collection.bean.LayerTypeBean;
 import hrds.commons.entity.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.poi.util.SystemOutLogger;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -143,14 +145,14 @@ public class ProcessingDataTest {
 
 			Data_store_layer_attr dsla = new Data_store_layer_attr();
 			dsla.setDsla_id("1234567890");
-			dsla.setStorage_property_key("database_drive");
+			dsla.setStorage_property_key(StorageTypeKey.database_driver);
 			dsla.setStorage_property_val("org.postgresql.Driver");
 			dsla.setIs_file("0");
 			dsla.setDsl_id(idL1);
 			int add4 = dsla.add(db);
 
 			dsla.setDsla_id("2234567890");
-			dsla.setStorage_property_key("database_drive");
+			dsla.setStorage_property_key(StorageTypeKey.database_driver);
 			dsla.setStorage_property_val("org.postgresql.Driver");
 			dsla.setIs_file("0");
 			dsla.setDsl_id(idL2);
@@ -158,56 +160,56 @@ public class ProcessingDataTest {
 
 
 			dsla.setDsla_id("1234567891");
-			dsla.setStorage_property_key("jdbc_url");
-			dsla.setStorage_property_val("jdbc:postgresql://10.71.4.52:31001/hrsdxgtest");
+			dsla.setStorage_property_key(StorageTypeKey.jdbc_url);
+			dsla.setStorage_property_val("jdbc:postgresql://10.71.4.57:31001/hrsdxg");
 			dsla.setIs_file("0");
 			dsla.setDsl_id(idL1);
 			add4 = dsla.add(db);
 
 			dsla.setDsla_id("2234567891");
-			dsla.setStorage_property_key("jdbc_url");
-			dsla.setStorage_property_val("jdbc:postgresql://10.71.4.52:31001/hrsdxgtest");
+			dsla.setStorage_property_key(StorageTypeKey.jdbc_url);
+			dsla.setStorage_property_val("jdbc:postgresql://10.71.4.57:31001/hrsdxg");
 			dsla.setIs_file("0");
 			dsla.setDsl_id(idL2);
 			add4 = dsla.add(db);
 
 			dsla.setDsla_id("1234567892");
-			dsla.setStorage_property_key("user_name");
+			dsla.setStorage_property_key(StorageTypeKey.user_name);
 			dsla.setStorage_property_val("hrsdxg");
 			dsla.setIs_file("0");
 			dsla.setDsl_id(idL1);
 			add4 = dsla.add(db);
 
 			dsla.setDsla_id("2234567892");
-			dsla.setStorage_property_key("user_name");
+			dsla.setStorage_property_key(StorageTypeKey.user_name);
 			dsla.setStorage_property_val("hrsdxg");
 			dsla.setIs_file("0");
 			dsla.setDsl_id(idL2);
 			add4 = dsla.add(db);
 
 			dsla.setDsla_id("1234567893");
-			dsla.setStorage_property_key("database_pad");
+			dsla.setStorage_property_key(StorageTypeKey.database_pwd);
 			dsla.setStorage_property_val("hrsdxg");
 			dsla.setIs_file("0");
 			dsla.setDsl_id(idL1);
 
 			add4 = dsla.add(db);
 			dsla.setDsla_id("2234567893");
-			dsla.setStorage_property_key("database_pad");
+			dsla.setStorage_property_key(StorageTypeKey.database_pwd);
 			dsla.setStorage_property_val("hrsdxg");
 			dsla.setIs_file("0");
 			dsla.setDsl_id(idL2);
 			add4 = dsla.add(db);
 
 			dsla.setDsla_id("1234567894");
-			dsla.setStorage_property_key("database_type");
+			dsla.setStorage_property_key(StorageTypeKey.database_type);
 			dsla.setStorage_property_val("11");
 			dsla.setIs_file("0");
 			dsla.setDsl_id(idL1);
 			add4 = dsla.add(db);
 
 			dsla.setDsla_id("2234567894");
-			dsla.setStorage_property_key("database_type");
+			dsla.setStorage_property_key(StorageTypeKey.database_type);
 			dsla.setStorage_property_val("11");
 			dsla.setIs_file("0");
 			dsla.setDsl_id(idL2);
@@ -253,18 +255,20 @@ public class ProcessingDataTest {
 	@Test
 	public void getDataLayer() throws SQLException, IOException {
 		List<Map<String, Object>> mm = new ArrayList<>();
-		BufferedWriter bw = new BufferedWriter(new FileWriter("d://bw.txt"));
+		//BufferedWriter bw = new BufferedWriter(new FileWriter("d://bw.txt"));
 		int lineCounter = 0;
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			new ProcessingData() {
+			List<String> dataLayer = new ProcessingData() {
 				@Override
 				public void dealLine(Map<String, Object> map) throws Exception {
 					mm.add(map);//在这里，对数据处理，如写文件，清洗、还是组成什么格式给前端，有你来定
 					//dataPro(map, bw);
 				}
-			}.getDataLayer("select * from sys_user a join sys_role b on a.role_id = b.role_id", db);
+			}.getDataLayer("select * from sys_user a join sys_role b on a.role_id = b.role_id where 1=2", db);
 			assertThat("不等于0就ok", mm.size(), not(0L));
-			bw.close();
+			System.out.println(mm);
+			System.out.println(dataLayer);
+			//bw.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

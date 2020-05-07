@@ -27,13 +27,13 @@ public abstract class ProcessingData {
     @Param(name = "tableName", desc = "数据表明", range = "只能是集市、采集等表中的tablename字段")
     @Param(name = "db", desc = "数据库db操作对象", range = "不可为空")
     @Return(desc = "查询出来的rs", range = "数据")
-    public void getDataLayer(String sql, DatabaseWrapper db) {
+    public List<String> getDataLayer(String sql, DatabaseWrapper db) {
 
         LayerTypeBean ltb = getAllTableIsLayer(sql, db);
         //只有一个存储，且是jdbc的方式
         if (ltb.getConnType() == LayerTypeBean.ConnType.oneJdbc) {
             Long dsl_id = ltb.getLayerBean().getDsl_id();
-            getResultSet(sql, db, dsl_id);
+            return getResultSet(sql, db, dsl_id);
         }
         //只有一种存储，是什么，可以使用ltb.getLayerBean().getStore_type(),进行判断
         else if (ltb.getConnType() == LayerTypeBean.ConnType.oneOther) {
@@ -50,6 +50,7 @@ public abstract class ProcessingData {
             //List<LayerBean> layerBeanList = ltb.getLayerBeanList();
             // TODO 混搭模式
         }
+        return null;
     }
 
     @Method(desc = "获取表的存储位置",
@@ -236,25 +237,31 @@ public abstract class ProcessingData {
      * @param db     {@link DatabaseWrapper} db
      * @param dsl_id 存储层id
      */
-    private void getResultSet(String sql, DatabaseWrapper db, long dsl_id) {
+    private List<String> getResultSet(String sql, DatabaseWrapper db, long dsl_id) {
         List<Map<String, Object>> dataStoreConfBean = SqlOperator.queryList(db,
                 "select * from data_store_layer_attr where dsl_id = ?", dsl_id);
         try (DatabaseWrapper dbDataConn = ConnectionTool.getDBWrapper(dataStoreConfBean)) {
             ResultSet rs = dbDataConn.queryGetResultSet(sql);
             ResultSetMetaData meta = rs.getMetaData();
             int cols = meta.getColumnCount();
+            List<String> colArray = new ArrayList<>();//获取数据的列信息，存放到list中
+            for (int i = 0; i < cols; i++) {
+                String colName = meta.getColumnName(i + 1).toLowerCase();
+                colArray.add(colName);
+            }
             while (rs.next()) {
                 Map<String, Object> result = new HashMap<>();
-                for (int i = 0; i < cols; i++) {
-                    String columnName = meta.getColumnName(i + 1).toLowerCase();
-                    result.put(columnName, rs.getObject(i + 1));
+                for (String col : colArray) {
+                    result.put(col, rs.getObject(col));
                 }
                 dealLine(result);
             }
+            return colArray;
         } catch (Exception e) {
             throw new AppSystemException("系统不支持该数据库类型", e);
         }
     }
 
     public abstract void dealLine(Map<String, Object> map) throws Exception;
+    //public abstract void dealColHead(Map<String, Object> map) throws Exception;
 }
