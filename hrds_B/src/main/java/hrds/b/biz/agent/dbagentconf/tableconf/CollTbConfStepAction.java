@@ -1221,7 +1221,7 @@ public class CollTbConfStepAction extends BaseAction {
         results.add(map);
       } else {
         List<Object> tableStateList =
-            checkTableCollectState(colSetId, tableResult.get("table_name").toString());
+            checkTableCollectState(colSetId, String.valueOf(tableResult.get("table_name")));
         if (tableStateList.contains(ExecuteState.YunXingWanCheng.getCode())
             || tableStateList.contains(ExecuteState.KaiShiYunXing.getCode())) {
           tableResult.put("collectState", false);
