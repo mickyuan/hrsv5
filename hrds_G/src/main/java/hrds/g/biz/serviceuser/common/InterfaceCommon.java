@@ -101,7 +101,7 @@ public class InterfaceCommon {
 					"8.返回token错误信息")
 	@Param(name = "checkParam", desc = "检查接口参数实体", range = "无限制", isBean = true)
 	@Return(desc = "返回接口响应信息", range = "无限制")
-	public static Map<String, Object> checkTokenAndInterface(CheckParam checkParam) {
+	public static Map<String, Object> checkTokenAndInterface(DatabaseWrapper db, CheckParam checkParam) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		String token = checkParam.getToken();
 		if (StringUtil.isBlank(token)) {
@@ -122,8 +122,8 @@ public class InterfaceCommon {
 		if (InterfaceManager.existsToken(token)) {
 			// 6. token值存在,检查接口状态,开始日期,结束日期的合法性
 			QueryInterfaceInfo userByToken = InterfaceManager.getUserByToken(token);
-			Map<String, Object> responseMap = interfaceInfoCheck(userByToken.getUser_id(), checkParam.getUrl(),
-					checkParam.getInterface_code());
+			Map<String, Object> responseMap = interfaceInfoCheck(db, userByToken.getUser_id(),
+					checkParam.getUrl(), checkParam.getInterface_code());
 			responseMap.put("token", token);
 			return responseMap;
 		}
@@ -193,11 +193,11 @@ public class InterfaceCommon {
 	@Param(name = "url", desc = "接口请求地址", range = "无限制")
 	@Param(name = "interface_code", desc = "接口代码", range = "报表类型的接口使用", nullable = true)
 	@Return(desc = "返回接口响应信息", range = "无限制")
-	public static Map<String, Object> interfaceInfoCheck(Long user_id, String url, String
+	public static Map<String, Object> interfaceInfoCheck(DatabaseWrapper db, Long user_id, String url, String
 			interface_code) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		// 2.判断接口信息是否存在
-		if (InterfaceManager.existsInterface(user_id, url)) {
+		if (InterfaceManager.existsInterface(db, user_id, url)) {
 			// 3.存在，从内存中获取已加载的接口使用权限信息
 			QueryInterfaceInfo queryInterfaceInfo = InterfaceManager.getInterfaceUseInfo(user_id, url);
 			// 3.1这里只有报表类型的接口才会由此验证
@@ -239,7 +239,7 @@ public class InterfaceCommon {
 	@Param(name = "user_id", desc = "用户ID", range = "新增用户时生成")
 	@Param(name = "singleTable", desc = "单表查询实体参数", range = "无限制")
 	@Return(desc = "返回接口响应信息", range = "无限制")
-	public static Map<String, Object> checkTable(Long user_id, SingleTable singleTable) {
+	public static Map<String, Object> checkTable(DatabaseWrapper db, Long user_id, SingleTable singleTable) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		try {
 			// 2.验证数据输出类型，数据类型是否合法
@@ -254,7 +254,7 @@ public class InterfaceCommon {
 
 			}
 			// 4.检查表是否有使用权限
-			if (!InterfaceManager.existsTable(user_id, singleTable.getTable())) {
+			if (!InterfaceManager.existsTable(db, user_id, singleTable.getTable())) {
 				return StateType.getResponseInfo(StateType.NO_USR_PERMISSIONS);
 			}
 			// 5.从内存中获取当前表的字段信息
@@ -287,7 +287,7 @@ public class InterfaceCommon {
 //				singleTable.setSelectColumn(table_column_name);
 //			}
 			// 8.检查列信息
-			return checkColumn(singleTable, table_column_name, user_id);
+			return checkColumn(db, singleTable, table_column_name, user_id);
 		} catch (Exception e) {
 			if (e instanceof BusinessException) {
 				return StateType.getResponseInfo(StateType.EXCEPTION.getCode(), e.getMessage());
@@ -366,7 +366,8 @@ public class InterfaceCommon {
 	@Param(name = "table_column_name", desc = "当前表对应登记列名称通过逗号拼接的字符串", range = "无限制")
 	@Param(name = "user_id", desc = "用户ID", range = "新增用户时生成")
 	@Return(desc = "返回接口响应信息", range = "无限制")
-	public static Map<String, Object> checkColumn(SingleTable singleTable, String table_column_name, Long user_id) {
+	public static Map<String, Object> checkColumn(DatabaseWrapper db, SingleTable singleTable,
+	                                              String table_column_name, Long user_id) {
 		// 1.数据可访问权限处理方式,该方法不需要进行访问权限限制
 		// 2.显示条数如果为空默认10条
 		Integer num = singleTable.getNum();
@@ -402,7 +403,7 @@ public class InterfaceCommon {
 		DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(sqlSb);
 		String newSql = druidParseQuerySql.GetNewSql(sqlSb);
 		// 10.根据sql获取搜索引擎并根据输出数据类型处理数据
-		return getSqlData(singleTable.getOutType(), singleTable.getDataType(), newSql);
+		return getSqlData(db, singleTable.getOutType(), singleTable.getDataType(), newSql);
 	}
 
 	@Method(desc = "根据sql获取搜索引擎并根据输出数据类型处理数据",
@@ -419,7 +420,8 @@ public class InterfaceCommon {
 	@Param(name = "dataType", desc = "数据输出类型", range = "json/csv")
 	@Param(name = "sqlSb", desc = "需要查询的sql语句", range = "无限制")
 	@Return(desc = "返回接口响应信息", range = "无限制")
-	public static Map<String, Object> getSqlData(String outType, String dataType, String sqlSb) {
+	public static Map<String, Object> getSqlData(DatabaseWrapper db, String outType, String dataType,
+	                                             String sqlSb) {
 		// 1.数据可访问权限处理方式,该方法不需要进行访问权限限制
 		// 数据类型为json时列对应值信息
 		List<Object> streamJson = new ArrayList<>();
@@ -428,44 +430,42 @@ public class InterfaceCommon {
 		// 数据类型为csv时表对应列值信息
 		List<String> streamCsvData = new ArrayList<>();
 		// 2.根据sql获取搜索引擎并根据输出数据类型处理数据
-		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			new ProcessingData() {
-				@Override
-				public void dealLine(Map<String, Object> map) {
-					lineCounter++;
-					// 数据类型为csv的列值集合
-					StringBuffer sbCol = new StringBuffer();
-					StringBuffer sbVal = new StringBuffer();
-					// 3.根据输出数据类型不同处理数据
-					if (OutType.STREAM == OutType.ofEnumByCode(outType)) {
-						// 4.输出类型为stream，处理数据并返回
-						dealWithStreamType(map, sbVal, dataType, streamCsv, streamCsvData, streamJson);
-					} else if (OutType.FILE == OutType.ofEnumByCode(outType)) {
-						// 5.输出类型为file，创建本地文件,准备数据的写入
-						dealWithFileType(map, sbCol, sbVal, dataType);
-					} else {
-						// 6.输出类型错误
-						responseMap = StateType.getResponseInfo(StateType.OUT_TYPE_ERROR);
-					}
-				}
-			}.getDataLayer(sqlSb, db);
-			// 7.输出类型为stream，如果输出数据类型为csv，第一行为列名，按csv格式处理数据并返回
-			if (OutType.STREAM == OutType.ofEnumByCode(outType)) {
-				if (DataType.csv == DataType.ofEnumByCode(dataType)) {
-					Map<String, Object> map = new HashMap<>();
-					map.put("column", streamCsv);
-					map.put("data", streamCsvData);
-					responseMap = StateType.getResponseInfo(StateType.NORMAL.getValue(),
-							map);
+		new ProcessingData() {
+			@Override
+			public void dealLine(Map<String, Object> map) {
+				lineCounter++;
+				// 数据类型为csv的列值集合
+				StringBuffer sbCol = new StringBuffer();
+				StringBuffer sbVal = new StringBuffer();
+				// 3.根据输出数据类型不同处理数据
+				if (OutType.STREAM == OutType.ofEnumByCode(outType)) {
+					// 4.输出类型为stream，处理数据并返回
+					dealWithStreamType(map, sbVal, dataType, streamCsv, streamCsvData, streamJson);
+				} else if (OutType.FILE == OutType.ofEnumByCode(outType)) {
+					// 5.输出类型为file，创建本地文件,准备数据的写入
+					dealWithFileType(map, sbCol, sbVal, dataType);
 				} else {
-					// 8.如果输出数据类型为json则直接返回数据
-					responseMap = StateType.getResponseInfo(StateType.NORMAL.getValue(),
-							streamJson);
+					// 6.输出类型错误
+					responseMap = StateType.getResponseInfo(StateType.OUT_TYPE_ERROR);
 				}
 			}
-			// 9.输出数据形式不是stream返回处理后的响应数据
-			return responseMap;
+		}.getDataLayer(sqlSb, db);
+		// 7.输出类型为stream，如果输出数据类型为csv，第一行为列名，按csv格式处理数据并返回
+		if (OutType.STREAM == OutType.ofEnumByCode(outType)) {
+			if (DataType.csv == DataType.ofEnumByCode(dataType)) {
+				Map<String, Object> map = new HashMap<>();
+				map.put("column", streamCsv);
+				map.put("data", streamCsvData);
+				responseMap = StateType.getResponseInfo(StateType.NORMAL.getValue(),
+						map);
+			} else {
+				// 8.如果输出数据类型为json则直接返回数据
+				responseMap = StateType.getResponseInfo(StateType.NORMAL.getValue(),
+						streamJson);
+			}
 		}
+		// 9.输出数据形式不是stream返回处理后的响应数据
+		return responseMap;
 	}
 
 	@Method(desc = "处理输出数据类型为file的数据",
@@ -648,14 +648,14 @@ public class InterfaceCommon {
 	@Param(name = "user_id", desc = "用户ID", range = "无限制")
 	@Param(name = "table_name", desc = "表名称", range = "无限制")
 	@Return(desc = "返回接口响应信息", range = "无限制")
-	public static Map<String, Object> verifyTable(Long user_id, String table_name) {
+	public static Map<String, Object> verifyTable(DatabaseWrapper db, Long user_id, String table_name) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		// 2.判断表是否存在
 		if (StringUtil.isBlank(table_name)) {
 			return StateType.getResponseInfo(StateType.TABLE_NOT_EXISTENT);
 		}
 		// 3.判断表是否有使用权限
-		if (!InterfaceManager.existsTable(user_id, table_name)) {
+		if (!InterfaceManager.existsTable(db, user_id, table_name)) {
 			return StateType.getResponseInfo(StateType.NO_USR_PERMISSIONS);
 		}
 		return StateType.getResponseInfo(StateType.NORMAL);
@@ -697,12 +697,12 @@ public class InterfaceCommon {
 	@Param(name = "fileName", desc = "文件名称", range = "asynType为2时必传", nullable = true)
 	@Param(name = "filepath", desc = "文件路径", range = "asynType为2时必传", nullable = true)
 	@Return(desc = "返回响应状态信息", range = "无限制")
-	public static Map<String, Object> checkAsynAndTokenInterface(CheckParam checkParam, String outTye,
-	                                                             String asynType, String backurl, String fileName,
-	                                                             String filePath) {
+	public static Map<String, Object> checkAsynAndTokenInterface(DatabaseWrapper db, CheckParam checkParam,
+	                                                             String outTye, String asynType, String backurl,
+	                                                             String fileName, String filePath) {
 		// 1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制
 		// 2.token，接口权限检查
-		Map<String, Object> responseMap = checkTokenAndInterface(checkParam);
+		Map<String, Object> responseMap = checkTokenAndInterface(db, checkParam);
 		// 3.如果响应状态不是normal返回错误响应信息
 		if (StateType.NORMAL != StateType.ofEnumByCode(responseMap.get("status").toString())) {
 			return responseMap;
@@ -710,9 +710,7 @@ public class InterfaceCommon {
 		// 4.检查异步响应状态信息
 		responseMap = checkAsyn(responseMap, outTye, asynType, backurl, fileName, filePath);
 		// 5.如果checkasyn不为响应状态不为normal返回错误响应信息
-		if (StateType.NORMAL != StateType.ofEnumByCode(responseMap.get("status").toString())) {
-			return responseMap;
-		}
+		StateType.ofEnumByCode(responseMap.get("status").toString());
 		return responseMap;
 	}
 
@@ -851,18 +849,17 @@ public class InterfaceCommon {
 	@Param(name = "outType", desc = "输出数据形式", range = "stream/file")
 	@Param(name = "path", desc = "文件路径", range = "生成文件路径")
 	@Return(desc = "返回保存文件生成信息是否成功状态", range = "1代表成功，否则失败")
-	public static int saveFileInfo(Long user_id, String uuid, String dataType, String outType, String path) {
+	public static int saveFileInfo(DatabaseWrapper db, Long user_id, String uuid, String dataType,
+	                               String outType, String path) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
-		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			Interface_file_info file_info = new Interface_file_info();
-			file_info.setFile_id(uuid);
-			file_info.setFile_path(path);
-			file_info.setData_output(outType);
-			file_info.setUser_id(user_id);
-			file_info.setData_class(dataType);
-			// 2.保存接口文件生成信息并返回保存状态
-			return file_info.add(db);
-		}
+		Interface_file_info file_info = new Interface_file_info();
+		file_info.setFile_id(uuid);
+		file_info.setFile_path(path);
+		file_info.setData_output(outType);
+		file_info.setUser_id(user_id);
+		file_info.setData_class(dataType);
+		// 2.保存接口文件生成信息并返回保存状态
+		return file_info.add(db);
 	}
 
 }

@@ -21,10 +21,11 @@ public interface TokenManager {
 	@Param(name = "token", desc = "token", range = "使用生成token接口生成")
 	@Param(name = "db", desc = "数据库连接", range = "无限制")
 	@Return(desc = "生成的token", range = "无限制")
-	boolean checkToken(DatabaseWrapper db,String token);
+	boolean checkToken(DatabaseWrapper db, String token);
 
 	@Method(desc = "清除token", logicStep = "")
+	@Param(name = "db", desc = "数据库连接", range = "无限制")
 	@Param(name = "token", desc = "使用生成token接口生成", range = "使用生成token接口生成")
-	void deleteToken(String token);
+	void deleteToken(DatabaseWrapper db, String token);
 
 }

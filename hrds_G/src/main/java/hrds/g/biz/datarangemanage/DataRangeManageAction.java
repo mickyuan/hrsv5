@@ -80,7 +80,7 @@ public class DataRangeManageAction extends BaseAction {
 			} else {
 				throw new BusinessException("该数据层还未开发，待续。。。" + data_layer);
 			}
-			InterfaceManager.userTableInfo();
+			InterfaceManager.initTable(Dbo.db());
 		}
 	}
 

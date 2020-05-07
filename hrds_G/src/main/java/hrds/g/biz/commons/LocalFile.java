@@ -7,6 +7,7 @@ import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.FileUtil;
 import fd.ng.core.utils.JsonUtil;
+import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.commons.utils.PropertyParaValue;
 import hrds.g.biz.enumerate.DataType;
 import hrds.g.biz.enumerate.OutType;
@@ -45,8 +46,8 @@ public class LocalFile {
 	@Param(name = "outType", desc = "输出数据形式", range = "stream/file")
 	@Param(name = "user_id", desc = "用户ID", range = "新增用户时生成")
 	@Return(desc = "返回接口响应信息", range = "无限制")
-	public static Map<String, Object> writeFile(Map<String, Object> feedback, String dataType, String outType,
-	                                            Long user_id) {
+	public static Map<String, Object> writeFile(DatabaseWrapper db, Map<String, Object> feedback,
+	                                            String dataType, String outType, Long user_id) {
 		try {
 			// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 			// 2.判断dataType,outType是否合法
@@ -75,7 +76,7 @@ public class LocalFile {
 				boolean isWriteSuccess = writeDataFile(filePath, feedback, dataType);
 				// 8.如果文件写成功则保存此次记录
 				if (isWriteSuccess) {
-					if (InterfaceCommon.saveFileInfo(user_id, uuid, dataType, outType, PATH) == 1) {
+					if (InterfaceCommon.saveFileInfo(db, user_id, uuid, dataType, outType, PATH) == 1) {
 						JSONObject obj = new JSONObject();
 						obj.put("uuid", uuid);
 						obj.put("dataType", dataType);
