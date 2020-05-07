@@ -3,6 +3,7 @@ package hrds.commons.utils.xlstoxml.util;
 import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.utils.StringUtil;
 import hrds.commons.entity.Column_split;
+import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.xlstoxml.Xls2xml;
 import org.apache.commons.io.FilenameUtils;
@@ -113,8 +114,7 @@ public class ColumnMeta {
 				}
 			}
 		} catch (Exception e) {
-			logger.error(e.getMessage(), e);
-			throw new BusinessException(e.getMessage());
+			throw new AppSystemException("获取字段信息异常", e);
 		}
 		return clist;
 
