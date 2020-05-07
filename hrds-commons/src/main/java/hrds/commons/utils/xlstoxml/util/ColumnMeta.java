@@ -4,7 +4,6 @@ import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.utils.StringUtil;
 import hrds.commons.entity.Column_split;
 import hrds.commons.exception.AppSystemException;
-import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.xlstoxml.Xls2xml;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.logging.Log;
@@ -15,6 +14,7 @@ import org.w3c.dom.NodeList;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -28,14 +28,6 @@ public class ColumnMeta {
 
 	/**
 	 * 写表的字段信息及生成文件信息
-	 *
-	 * @param tableName
-	 * @param file
-	 * @param columns
-	 * @param liner
-	 * @param list
-	 * @param lengths
-	 * @param meta_filesize
 	 */
 	public static void writeFileMeta(String tableName, File file, String columns, long liner, StringBuilder list, StringBuilder lengths, long meta_filesize, String mr) {
 
@@ -43,13 +35,12 @@ public class ColumnMeta {
 		String metaFile = file.getAbsolutePath() + "/tabledata.meta";
 		metaFile = FilenameUtils.normalize(metaFile);
 		try {
-			bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(metaFile, true), "utf-8"));
+			bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(metaFile, true),
+					StandardCharsets.UTF_8));
 
-			StringBuilder sb = new StringBuilder();
-			sb.append(tableName);
 			JSONObject jsonSon = new JSONObject();
-			jsonSon.put("tablename", sb.toString());
-			jsonSon.put("column", columns.toString());
+			jsonSon.put("tablename", tableName);
+			jsonSon.put("column", columns);
 			jsonSon.put("length", lengths.toString());
 			jsonSon.put("records", String.valueOf(liner));
 			jsonSon.put("filesize", meta_filesize);
@@ -60,15 +51,13 @@ public class ColumnMeta {
 			bw.flush();
 
 		} catch (Exception e) {
-			logger.error(e.getMessage(), e);
-			throw new BusinessException(e.getMessage());
+			throw new AppSystemException("写信号文件异常", e);
 		} finally {
 			if (bw != null) {
 				try {
 					bw.close();
 				} catch (IOException e) {
-					logger.error(e.getMessage(), e);
-					throw new BusinessException(e.getMessage());
+					logger.warn("关闭流异常", e);
 				}
 			}
 		}
@@ -154,8 +143,7 @@ public class ColumnMeta {
 				}
 			}
 		} catch (Exception e) {
-			logger.error(e.getMessage(), e);
-			throw new BusinessException(e.getMessage());
+			throw new AppSystemException("获取数据字典中的新增、更新、删除字段解析异常", e);
 		}
 		return incrementColumnList;
 
