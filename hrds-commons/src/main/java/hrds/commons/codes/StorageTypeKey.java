@@ -62,10 +62,10 @@ public class StorageTypeKey {
 
 		List<String> hbaseKeys = new ArrayList<>(Arrays.
 				asList(zkhost, core_site, hdfs_site, hbase_site, keytab, krb5));
-		FINALLY_STORAGE_KEYS.put(Store_type.HIVE.getCode(), hbaseKeys);
+		FINALLY_STORAGE_KEYS.put(Store_type.HBASE.getCode(), hbaseKeys);
 
 		List<String> solrKeys = new ArrayList<>(Collections.singletonList(solr_url));
-		FINALLY_STORAGE_KEYS.put(Store_type.HIVE.getCode(), solrKeys);
+		FINALLY_STORAGE_KEYS.put(Store_type.SOLR.getCode(), solrKeys);
 
 	}
 
