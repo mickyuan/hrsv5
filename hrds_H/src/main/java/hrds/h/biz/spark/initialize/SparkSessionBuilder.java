@@ -32,14 +32,16 @@ public class SparkSessionBuilder {
         Logger.getLogger("org").setLevel(Level.ERROR);
         logger.debug("Initializing SparkSession with configuration: ");
         Builder builder = SparkSession.builder()
-                .appName("Market_Spark_" + conf.getDmDatatable().getDatatable_en_name())
-                .enableHiveSupport();
+                .appName("Market_Spark_" + conf.getDmDatatable().getDatatable_en_name());
 
         //TODO 引擎有两种，一种是 spark，一种是 spark[local]
-        if (conf.getDmDatatable().getSql_engine().equals(SqlEngine.SPARK.getCode())) {
-            builder = builder.master("yarn-client");
+        if (SqlEngine.SPARK.getCode().equals(conf.getDmDatatable().getSql_engine())) {
+            builder = builder.master("yarn-client")
+                    .enableHiveSupport();
+            logger.info("spark yarn-client enableHiveSupport.");
         } else {
             builder = builder.master("local[*]");
+            logger.info("spark local[*]");
         }
         //TODO 设置租户，需配置动态资源池 名称为 root.${租户名称}
 //		builder.config("spark.yarn.queue", StringUtils.isBlank(lessor)?"root.default":"root."+lessor);

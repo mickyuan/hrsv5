@@ -37,7 +37,7 @@ public class DatabaseHandle extends Handle {
         DataFrameWriter<Row> dataFrameWriter = dataset
                 .write()
                 //插入数据时，只truncate表，而不删除表重建
-                .option("truncate", false);
+                .option("truncate", true);
 
         if (databaseArgs.isOverWrite()) {
             dataFrameWriter.mode(SaveMode.Overwrite);
@@ -91,7 +91,7 @@ public class DatabaseHandle extends Handle {
         dbConfBean.setDatabase_pad(databaseArgs.getPassword());
         dbConfBean.setDatabase_type(databaseArgs.getDatabaseType());
         try (DatabaseWrapper db = ConnectionTool.getDBWrapper(dbConfBean)) {
-            db.execute(String.format("UPDATE %s SET %s = %s WHERE %s in (SELECT %s FROM %s)",
+            db.execute(String.format("UPDATE %s SET %s = '%s' WHERE %s in (SELECT %s FROM %s)",
                     tableName, EDATENAME, databaseArgs.getEtlDate(), MD5NAME, MD5NAME, deltaTable));
             db.execute("DROP TABLE " + deltaTable);
         }

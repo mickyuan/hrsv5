@@ -81,7 +81,7 @@ public class SameDatabaseLoader extends AbstractRealLoader {
         db.execute(String.format("INSERT INTO %s SELECT * FROM %s",
                 tableName, validTableName));
         // 关链数据
-        db.execute(String.format("UPDATE %s SET %s = %s WHERE " +
+        db.execute(String.format("UPDATE %s SET %s = '%s' WHERE " +
                         "HYREN_MD5_VAL IN ( SELECT HYREN_MD5_VAL FROM %s )",
                 tableName, EDATENAME, conf.getEtlDate(), invalidTableName));
 
@@ -94,14 +94,14 @@ public class SameDatabaseLoader extends AbstractRealLoader {
 
     private void computeValidDataAndInsert() {
         String validDataSql = "INSERT INTO %s select * from %s WHERE NOT EXISTS " +
-                "( SELECT 1 from %s WHERE %s.%s = %s.%s AND %s.%s = %s)";
+                "( SELECT 1 from %s WHERE %s.%s = %s.%s AND %s.%s = '%s')";
         db.execute(String.format(validDataSql, validTableName, currentTableName, tableName, currentTableName,
                 MD5NAME, tableName, MD5NAME, tableName, EDATENAME, MAXDATE));
     }
 
     private void computeInvalidDataAndInsert() {
         final String invalidDataSql = "INSERT INTO %s select * from %s WHERE NOT EXISTS " +
-                "( SELECT 1 from %s WHERE %s.%s = %s.%s) AND %s.%s = %s";
+                "( SELECT 1 from %s WHERE %s.%s = %s.%s) AND %s.%s = '%s'";
         db.execute(String.format(invalidDataSql, invalidTableName, tableName, currentTableName,
                 tableName, MD5NAME, currentTableName, MD5NAME, tableName, EDATENAME, MAXDATE));
     }
