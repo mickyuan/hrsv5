@@ -5,10 +5,7 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @DocClass(desc = "节点数据转化为分叉树列表", author = "BY-HLL", createdate = "2020/2/20 0020 下午 09:49")
 public class NodeDataConvertedTreeList {
@@ -77,9 +74,13 @@ public class NodeDataConvertedTreeList {
             }
             nodeMap.put(node.id, node);
         });
+        //对所有节点进行排序
+        List<Map.Entry<String, Node>> list = new ArrayList<>(nodeMap.entrySet());
+        //升序排序
+        list.sort(Comparator.comparing(o -> o.getValue().id));
         // 构造无序的多叉树
         List<Node> treeList = new ArrayList<>();
-        for (Map.Entry<String, Node> nodeEntry : nodeMap.entrySet()) {
+        for (Map.Entry<String, Node> nodeEntry : list) {
             Node treeNodeData;
             Node node = nodeEntry.getValue();
             if (node.parent_id == null || "0".equals(node.parent_id)) {
