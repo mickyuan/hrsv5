@@ -119,7 +119,7 @@ public class DCLDataQuery {
                 asmSql.addSql(" AND ds.source_id = ?").addParam(agent_info.getSource_id());
             }
         } else {
-            asmSql.addParam("SELECT t3.datasource_name,* FROM collect_job_classify t1 JOIN agent_info t2 ON" +
+            asmSql.addSql("SELECT t3.datasource_name,* FROM collect_job_classify t1 JOIN agent_info t2 ON" +
                     " t2.agent_id = t1.agent_id JOIN data_source t3 ON t3.source_id = t2.source_id");
             if (StringUtil.isNotBlank(source_id)) {
                 agent_info.setSource_id(source_id);
