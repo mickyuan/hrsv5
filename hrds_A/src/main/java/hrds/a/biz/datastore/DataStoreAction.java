@@ -808,17 +808,19 @@ public class DataStoreAction extends BaseAction {
 			throw new BusinessException("根据该值找不到对应代码项值，请检查，store_type=" + store_type);
 		}
 		List<String> fileKey = new ArrayList<>();
+		List<String> jdbcKey = new ArrayList<>();
 		// 4.根据存储层类型获取数据存储层配置属性key并返回
 		List<String> keyList = storageKeys.get(store_type);
 		// 5.遍历判断是否包含文件属性key，分别返回文件属性key以及jdbc连接key
-		for (String key : updateStorageKeys) {
-			if (keyList.contains(key)) {
+		for (String key : keyList) {
+			if (updateStorageKeys.contains(key)) {
 				fileKey.add(key);
-				keyList.remove(key);
+			} else {
+				jdbcKey.add(key);
 			}
 		}
 		Map<String, Object> keyMap = new HashMap<>();
-		keyMap.put("jdbcKey", keyList);
+		keyMap.put("jdbcKey", jdbcKey);
 		keyMap.put("fileKey", fileKey);
 		return keyMap;
 	}
