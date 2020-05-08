@@ -4,59 +4,93 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
-import fd.ng.db.resultset.Result;
-import fd.ng.web.util.Dbo;
+import fd.ng.core.utils.JsonUtil;
+import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.commons.base.BaseAction;
+import hrds.commons.collection.ProcessingData;
+import hrds.commons.exception.BusinessException;
+import hrds.commons.tree.background.TreeNodeInfo;
+import hrds.commons.tree.background.bean.TreeConf;
+import hrds.commons.tree.commons.TreePageSource;
 import hrds.commons.tree.foreground.ForegroundTreeUtil;
 import hrds.commons.tree.foreground.bean.TreeDataInfo;
+import hrds.commons.utils.DruidParseQuerySql;
+import hrds.commons.utils.tree.Node;
+import hrds.commons.utils.tree.NodeDataConvertedTreeList;
 
-import java.sql.ResultSet;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @DocClass(desc = "WebSql查询处理类", author = "BY-HLL", createdate = "2019/10/25 0025 下午 05:51")
 public class WebSqlQueryAction extends BaseAction {
 
     @Method(desc = "根据表名获取采集数据，默认显示10条",
-            logicStep = "1.初始化查询" +
-                    "1-1.如果查询条数小于1条则显示默认10条，查询条数大于100条则显示100条，否则取传入的查询条数" +
-                    "2.获取hive连接配置" +
-                    "2-1.根据sql语句判断执行引擎")
+            logicStep = "初始化查询sql" +
+                    "获取数据")
     @Param(name = "tableName", desc = "查询表名", range = "String类型表名")
-    @Param(name = "queryNum", desc = "查询条数", range = "int类型值，默认10条，最小1条，最大100")
     @Return(desc = "查询返回结果集", range = "无限制")
-    public Result queryDataBasedOnTableName(String tableName, int queryNum) {
-        //1.初始化查询
-        ResultSet resultset;
-        Map<String, Object> tableMap = new HashMap<>();
-        //1-1.如果查询条数小于1条则显示默认10条，查询条数大于100条则显示100条，否则取传入的查询条数
-        queryNum = Math.max(1, queryNum);
-        queryNum = Math.min(queryNum, 100);
-        //2.获取hive连接配置
-        //2-1.根据sql语句判断执行引擎
-        //TODO 根据表名获取表数据暂未实现，(查询sql引擎)
-        return Dbo.queryResult("select * from " + tableName + " limit " + queryNum);
+    public List<Map<String, Object>> queryDataBasedOnTableName(String tableName) {
+        //初始化查询sql
+        String sql = "select * from " + tableName + " limit 10";
+        //获取数据
+        List<Map<String, Object>> query_list = new ArrayList<>();
+        try (DatabaseWrapper db = new DatabaseWrapper()) {
+            new ProcessingData() {
+                @Override
+                public void dealLine(Map<String, Object> map) {
+                    query_list.add(map);
+                }
+            }.getDataLayer(sql, db);
+        }
+        return query_list;
     }
 
-    @Method(desc = "根据SQL获取采集数据，默认显示10条",
-            logicStep = "1.初始化查询" +
-                    "1-1.如果查询条数小于1条则显示默认10条，查询条数大于100条则显示100条，否则取传入的查询条数" +
-                    "2.获取hive连接配置" +
-                    "2-1.根据sql语句判断执行引擎")
+    @Method(desc = "根据SQL获取采集数据",
+            logicStep = "初始化查询sql" +
+                    "根据sql语句获取数据")
     @Param(name = "querySQL", desc = "查询SQL", range = "String类型SQL")
-    @Param(name = "queryNum", desc = "查询条数", range = "int类型值，默认10条，最小1条，最大100")
     @Return(desc = "查询返回结果集", range = "无限制")
-    public Result queryDataBasedOnSql(String querySQL, int queryNum) {
-        //1.初始化查询
-        ResultSet resultset;
-        Map<String, Object> tableMap = new HashMap<>();
-        //1-1.如果查询条数小于1条则显示默认10条，查询条数大于100条则显示100条，否则取传入的查询条数
-        queryNum = Math.max(1, queryNum);
-        queryNum = Math.min(queryNum, 100);
-        //2.获取hive连接配置
-        //2-1.根据sql语句判断执行引擎
-        //TODO 根据表名获取表数据暂未实现，(查询sql引擎)
-        return Dbo.queryResult(querySQL);
+    public List<Map<String, Object>> queryDataBasedOnSql(String querySQL) {
+        //初始化查询sql
+        querySQL = new DruidParseQuerySql().GetNewSql(querySQL);
+        if (!querySQL.toLowerCase().contains(" limit ")) {
+            querySQL += " limit 100";
+        } else {
+            int limit_num = Integer.parseInt(querySQL.substring(querySQL.indexOf("limit") + 5).trim());
+            querySQL = querySQL.substring(0, querySQL.indexOf("limit"));
+            if (limit_num > 100) {
+                querySQL += "limit 100";
+            }
+        }
+        //根据sql语句获取数据
+        //获取数据
+        List<Map<String, Object>> query_list = new ArrayList<>();
+        try (DatabaseWrapper db = new DatabaseWrapper()) {
+            new ProcessingData() {
+                @Override
+                public void dealLine(Map<String, Object> map) {
+                    query_list.add(map);
+                }
+            }.getDataLayer(querySQL, db);
+        }
+        return query_list;
+    }
+
+    @Method(desc = "获取数据源树信息", logicStep = "获取数据源树信息")
+    @Return(desc = "数据源树信息", range = "数据源树信息")
+    public Object getWebSQLTreeData() {
+        //配置树不显示文件采集的数据
+        TreeConf treeConf = new TreeConf();
+        treeConf.setShowFileCollection(Boolean.FALSE);
+        //根据源菜单信息获取节点数据列表
+        List<Map<String, Object>> dataList =
+                TreeNodeInfo.getTreeNodeInfo(TreePageSource.WEB_SQL, getUser(), treeConf);
+        //转换节点数据列表为分叉树列表
+        List<Node> ruleConfigTreeList = NodeDataConvertedTreeList.dataConversionTreeInfo(dataList);
+        return JsonUtil.toObjectSafety(ruleConfigTreeList.toString(), Object.class).orElseThrow(()
+                -> (new BusinessException("数据类型转换失败!")));
     }
 
     @Method(desc = "获取树的数据信息",
@@ -81,6 +115,7 @@ public class WebSqlQueryAction extends BaseAction {
     @Param(name = "isPublicLayer", desc = "公共层", range = "IsFlag代码项1:是,0:否", valueIfNull = "1")
     @Param(name = "isRootNode", desc = "是否为树的根节点标志", range = "IsFlag代码项1:是,0:否", valueIfNull = "1")
     @Return(desc = "树数据Map信息", range = "无限制")
+    @Deprecated
     public Map<String, Object> getTreeDataInfo(String agent_layer, String source_id, String classify_id,
                                                String data_mart_id, String category_id, String systemDataType,
                                                String kafka_id, String batch_id, String groupId, String sdm_consumer_id,
@@ -123,6 +158,7 @@ public class WebSqlQueryAction extends BaseAction {
     @Param(name = "isFileCo", desc = "是否文件采集", range = "String类型", valueIfNull = "false")
     @Param(name = "isRootNode", desc = "是否为树的根节点标志", range = "IsFlag代码项1:是,0:否", valueIfNull = "1")
     @Return(desc = "树数据检索结果Map信息", range = "无限制")
+    @Deprecated
     public Map<String, Object> getTreeNodeSearchInfo(String tree_menu_from, String tableName, String isFileCo,
                                                      String isRootNode) {
         //1.声明获取到 treeUtil 的对象
