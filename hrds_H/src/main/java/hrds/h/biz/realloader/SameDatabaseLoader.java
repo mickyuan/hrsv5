@@ -152,7 +152,7 @@ public class SameDatabaseLoader extends AbstractRealLoader {
      * @param tableName
      */
     private void insertData(String tableName) {
-        db.execute(String.format("INSERT INTO %s ( %s ) SELECT %s FROM ( %s )",
+        db.execute(String.format("INSERT INTO %s ( %s ) SELECT %s FROM ( %s ) a",
                 tableName, columns, realSelectExpr(), sql));
     }
 
