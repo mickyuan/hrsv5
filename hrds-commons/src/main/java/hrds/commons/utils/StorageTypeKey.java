@@ -19,6 +19,7 @@ public class StorageTypeKey {
 	public static final String user_name = "user_name";
 	public static final String database_pwd = "database_pwd";
 	public static final String database_type = "database_type";
+	public static final String database_name = "database_name";
 
 	public static final String core_site = "core-site.xml";
 	public static final String hdfs_site = "hdfs-site.xml";
@@ -55,7 +56,7 @@ public class StorageTypeKey {
 	static {
 
 		List<String> databaseKeys = new ArrayList<>(Arrays.
-				asList(database_driver, jdbc_url, user_name, database_pwd, database_type));
+				asList(database_driver, jdbc_url, user_name, database_pwd, database_type, database_name));
 		FINALLY_STORAGE_KEYS.put(Store_type.DATABASE.getCode(), databaseKeys);
 
 		List<String> hiveKeys = new ArrayList<>(Arrays.

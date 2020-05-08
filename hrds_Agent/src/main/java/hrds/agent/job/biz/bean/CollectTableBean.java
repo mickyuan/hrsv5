@@ -6,7 +6,6 @@ import fd.ng.core.utils.StringUtil;
 import hrds.commons.codes.DataExtractType;
 import hrds.commons.entity.Column_merge;
 import hrds.commons.entity.Data_extraction_def;
-import hrds.commons.exception.AppSystemException;
 
 import java.io.Serializable;
 import java.util.List;
@@ -87,6 +86,8 @@ public class CollectTableBean implements Serializable {
 	private String unload_type;
 	@DocBean(name = "is_customize_sql", value = "是否并行抽取中的自定义sql", dataType = String.class)
 	private String is_customize_sql;
+	@DocBean(name = "storage_date", value = "最后一次执行成功入库日期", dataType = String.class)
+	private String storage_date;
 
 	public List<Column_merge> getColumn_merge_list() {
 		return column_merge_list;
@@ -402,5 +403,13 @@ public class CollectTableBean implements Serializable {
 
 	public void setIs_customize_sql(String is_customize_sql) {
 		this.is_customize_sql = is_customize_sql;
+	}
+
+	public String getStorage_date() {
+		return storage_date;
+	}
+
+	public void setStorage_date(String storage_date) {
+		this.storage_date = storage_date;
 	}
 }

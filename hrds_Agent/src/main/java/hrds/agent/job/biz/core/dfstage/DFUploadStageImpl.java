@@ -313,8 +313,6 @@ public class DFUploadStageImpl extends AbstractJobStage {
 			if (session != null)
 				session.disconnect();
 		}
-
-
 	}
 
 	private void uploadLobsFileToOracle(String absolutePath, Session session, ChannelSftp channel,
@@ -363,51 +361,77 @@ public class DFUploadStageImpl extends AbstractJobStage {
 	 * 使用batch方式进数
 	 */
 	private void exeBatch(DataStoreConfBean dataStoreConfBean, ExecutorService executor, long count,
-	                      String[] localFiles, TableBean tableBean) throws Exception {
+	                      String[] localFiles, TableBean tableBean) {
 		List<Future<Long>> list = new ArrayList<>();
-		//先创建表，再多线程batch数据入库
-		createTodayTable(tableBean, collectTableBean.getHbase_name() + "_"
-				+ collectTableBean.getEtlDate(), dataStoreConfBean);
-		for (String fileAbsolutePath : localFiles) {
-			ReadFileToDataBase readFileToDataBase = new ReadFileToDataBase(fileAbsolutePath, tableBean,
-					collectTableBean, dataStoreConfBean);
-			//TODO 这个状态是不是可以在这里
-			Future<Long> submit = executor.submit(readFileToDataBase);
-			list.add(submit);
+		String todayTableName = collectTableBean.getHbase_name() + "_" + 1;
+		DatabaseWrapper db = null;
+		try {
+			//获取连接
+			db = ConnectionTool.getDBWrapper(dataStoreConfBean.getData_store_connect_attr());
+			//备份表上次执行进数的数据
+			backupToDayTable(todayTableName, dataStoreConfBean, db);
+			//先创建表，再多线程batch数据入库，根据数据保留天数做相应调整，成功则删除最早一次进数保留的数据
+			createTodayTable(tableBean, todayTableName, dataStoreConfBean, db);
+			for (String fileAbsolutePath : localFiles) {
+				ReadFileToDataBase readFileToDataBase = new ReadFileToDataBase(fileAbsolutePath, tableBean,
+						collectTableBean, dataStoreConfBean);
+				//TODO 这个状态是不是可以在这里
+				Future<Long> submit = executor.submit(readFileToDataBase);
+				list.add(submit);
+			}
+			for (Future<Long> future : list) {
+				count += future.get();
+			}
+			if (count < 0) {
+				throw new AppSystemException("数据Batch提交到库" + dataStoreConfBean.getDsl_name() + "异常");
+			}
+			//根据表存储期限备份每张表存储期限内进数的数据
+			backupPastTable(collectTableBean, dataStoreConfBean, db);
+			LOGGER.info("数据成功进入库" + dataStoreConfBean.getDsl_name() + "下的表" + collectTableBean.getHbase_name()
+					+ ",总计进数" + count + "条");
+		} catch (Exception e) {
+			if (db != null) {
+				//执行失败，恢复上次进数的数据
+				recoverBackupToDayTable(todayTableName, dataStoreConfBean, db);
+			}
+			throw new AppSystemException("多线程读取文件batch进库" + dataStoreConfBean.getDsl_name() + "下的表"
+					+ collectTableBean.getHbase_name() + "异常", e);
+		} finally {
+			if (db != null) {
+				db.close();
+			}
 		}
-		for (Future<Long> future : list) {
-			count += future.get();
-		}
-		if (count < 0) {
-			throw new AppSystemException("数据Batch提交到库" + dataStoreConfBean.getDsl_name() + "异常");
-		}
-		LOGGER.info("数据成功进入库" + dataStoreConfBean.getDsl_name() + "下的表" + collectTableBean.getHbase_name()
-				+ ",总计进数" + count + "条");
 	}
 
-	private void createTodayTable(TableBean tableBean, String todayTableName, DataStoreConfBean dataStoreConfBean) {
+	/**
+	 * 创建当天执行成功进数的表
+	 *
+	 * @param tableBean         表结构信息
+	 * @param todayTableName    当天表进数成功的表名
+	 * @param dataStoreConfBean 存储目的地配置信息
+	 * @param db                数据库连接方式
+	 */
+	private void createTodayTable(TableBean tableBean, String todayTableName, DataStoreConfBean dataStoreConfBean,
+	                              DatabaseWrapper db) {
 		List<String> columns = StringUtil.split(tableBean.getColumnMetaInfo(), Constant.METAINFOSPLIT);
 		List<String> types = DataTypeTransform.tansform(StringUtil.split(tableBean.getColTypeMetaInfo(),
 				Constant.METAINFOSPLIT), dataStoreConfBean.getDsl_name());
-		//获取连接
-		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(dataStoreConfBean.getData_store_connect_attr())) {
-			List<String> sqlList = new ArrayList<>();
-			//拼接建表语句
-			StringBuilder sql = new StringBuilder(120); //拼接创表sql语句
-			sql.append("CREATE TABLE ");
-			sql.append(todayTableName);
-			sql.append("(");
-			for (int i = 0; i < columns.size(); i++) {
-				sql.append(columns.get(i)).append(" ").append(types.get(i)).append(",");
-			}
-			//将最后的逗号删除
-			sql.deleteCharAt(sql.length() - 1);
-			sql.append(")");
-			JDBCIncreasement.dropTableIfExists(todayTableName, db, sqlList);
-			sqlList.add(sql.toString());
-			//执行建表语句
-			HSqlExecute.executeSql(sqlList, db);
+		List<String> sqlList = new ArrayList<>();
+		//拼接建表语句
+		StringBuilder sql = new StringBuilder(120); //拼接创表sql语句
+		sql.append("CREATE TABLE ");
+		sql.append(todayTableName);
+		sql.append("(");
+		for (int i = 0; i < columns.size(); i++) {
+			sql.append(columns.get(i)).append(" ").append(types.get(i)).append(",");
 		}
+		//将最后的逗号删除
+		sql.deleteCharAt(sql.length() - 1);
+		sql.append(")");
+		JDBCIncreasement.dropTableIfExists(todayTableName, db, sqlList);
+		sqlList.add(sql.toString());
+		//执行建表语句
+		HSqlExecute.executeSql(sqlList, db);
 	}
 
 	/**
