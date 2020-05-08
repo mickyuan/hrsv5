@@ -49,7 +49,7 @@ public class JdbcToIncrementFileWriter extends AbstractFileWriter {
 		//数据抽取指定的目录
 		String plane_url = data_extraction_def.getPlane_url();
 		String midName = plane_url + File.separator + eltDate + File.separator + collectTableBean.getTable_name()
-				+ File.separator + FileFormat.DingChang.getValue() + File.separator;
+				+ File.separator + JobConstant.fileFormatMap.get(FileFormat.DingChang.getCode()) + File.separator;
 		try {
 			String database_code = data_extraction_def.getDatabase_code();
 			midName = FileNameUtils.normalize(midName, true);

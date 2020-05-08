@@ -47,7 +47,7 @@ public class JdbcToSequenceFileWriter extends AbstractFileWriter {
 		//数据抽取指定的目录
 		String plane_url = data_extraction_def.getPlane_url();
 		String midName = plane_url + File.separator + eltDate + File.separator + collectTableBean.getTable_name()
-				+ File.separator + FileFormat.SEQUENCEFILE.getValue() + File.separator;
+				+ File.separator + JobConstant.fileFormatMap.get(FileFormat.SEQUENCEFILE.getCode()) + File.separator;
 		//XXX SequenceFile不指定分隔符，页面也不允许其指定分隔符，使用hive默认的\001隐藏字符做分隔符
 		//XXX 这样只要创建hive映射外部表时使用store as sequencefile hive会自动解析。
 		String dataDelimiter = JobConstant.SEQUENCEDELIMITER;

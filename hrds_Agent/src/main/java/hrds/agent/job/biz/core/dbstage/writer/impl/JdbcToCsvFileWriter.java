@@ -48,7 +48,7 @@ public class JdbcToCsvFileWriter extends AbstractFileWriter {
 		//数据抽取指定的目录
 		String plane_url = data_extraction_def.getPlane_url();
 		String midName = plane_url + File.separator + eltDate + File.separator + collectTableBean.getTable_name()
-				+ File.separator + FileFormat.CSV.getValue() + File.separator;
+				+ File.separator + JobConstant.fileFormatMap.get(FileFormat.CSV.getCode()) + File.separator;
 		midName = FileNameUtils.normalize(midName, true);
 		DataFileWriter<Object> avroWriter = null;
 		CsvListWriter writer;

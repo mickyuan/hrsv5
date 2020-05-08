@@ -51,7 +51,7 @@ public class JdbcToOrcFileWriter extends AbstractFileWriter {
 		//数据抽取指定的目录
 		String plane_url = data_extraction_def.getPlane_url();
 		String midName = plane_url + File.separator + eltDate + File.separator + collectTableBean.getTable_name()
-				+ File.separator + FileFormat.ORC.getValue() + File.separator;
+				+ File.separator + JobConstant.fileFormatMap.get(FileFormat.ORC.getCode()) + File.separator;
 		String hbase_name = collectTableBean.getHbase_name();
 		midName = FileNameUtils.normalize(midName, true);
 		String dataDelimiter = data_extraction_def.getDatabase_separatorr();

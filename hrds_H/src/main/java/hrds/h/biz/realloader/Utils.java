@@ -95,10 +95,10 @@ public class Utils {
      */
     static void restoreDatabaseData(DatabaseWrapper db, String tableName, String etlDate) {
         if (db.isExistTable(tableName)) {
-            db.execute(String.format("DELETE FROM %s WHERE %s = %s",
+            db.execute(String.format("DELETE FROM %s WHERE %s = '%s'",
                     tableName, SDATENAME, etlDate));
 
-            db.execute(String.format("UPDATE %s SET %s = %s WHERE %s = %s",
+            db.execute(String.format("UPDATE %s SET %s = '%s' WHERE %s = '%s'",
                     tableName, EDATENAME, MAXDATE, EDATENAME, etlDate));
         }
     }
