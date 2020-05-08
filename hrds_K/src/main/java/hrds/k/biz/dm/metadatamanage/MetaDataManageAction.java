@@ -19,7 +19,7 @@ import hrds.commons.tree.background.query.TreeDataQuery;
 import hrds.commons.tree.commons.TreePageSource;
 import hrds.commons.utils.tree.Node;
 import hrds.commons.utils.tree.NodeDataConvertedTreeList;
-import hrds.k.biz.dm.metadatamanage.bean.MetaDataInfo;
+import hrds.k.biz.dm.metadatamanage.bean.ColumnInfoBean;
 import hrds.k.biz.dm.metadatamanage.commons.TableMetaInfoTool;
 import hrds.k.biz.dm.metadatamanage.drbtree.DRBTreeNodeInfo;
 import hrds.k.biz.dm.metadatamanage.drbtree.MDMTreeNodeInfo;
@@ -78,7 +78,7 @@ public class MetaDataManageAction extends BaseAction {
         //初始化表信息
         Map<String, Object> table_info;
         //初始化字段解析结果List
-        List<Map<String, String>> meta_list;
+        List<Map<String, String>> column_info_list;
         //表id
         String table_id;
         //表创建时间
@@ -88,12 +88,16 @@ public class MetaDataManageAction extends BaseAction {
             case "DCL":
                 //获取表信息
                 table_info = DCLDataQuery.getDCLBatchTableInfo(file_id);
+                //校验查询结果集
+                if (table_info.isEmpty()) {
+                    throw new BusinessException("表登记信息已经不存在!");
+                }
                 //设置表id
-                table_id = table_info.get("file_id").toString();
+                table_id = table_info.get("table_id").toString();
                 //设置表创建日期
                 create_date = table_info.get("original_update_date").toString();
                 //获取并转换字段信息List
-                meta_list = DataTableFieldUtil.metaInfoToList(DCLDataQuery.getDCLBatchTableColumns(file_id));
+                column_info_list = DataTableFieldUtil.metaInfoToList(DCLDataQuery.getDCLBatchTableColumns(file_id));
                 break;
             case "ISL":
             case "DPL":
@@ -107,17 +111,18 @@ public class MetaDataManageAction extends BaseAction {
                 throw new BusinessException("未找到匹配的存储层!");
         }
         //设置返回结果map
+        data_meta_info.put("file_id", file_id);
         data_meta_info.put("table_id", table_id);
         data_meta_info.put("data_layer", data_layer);
         data_meta_info.put("table_name", table_info.get("table_name"));
-        data_meta_info.put("table_ch_name", table_info.get("table_ch_name"));
+        data_meta_info.put("table_ch_name", table_info.get("original_name"));
         //如果表的创建日期为空,默认设置为99991231
         if (StringUtil.isNotBlank(create_date)) {
             data_meta_info.put("create_date", create_date);
         } else {
             data_meta_info.put("create_date", "99991231");
         }
-        data_meta_info.put("meta_list", meta_list);
+        data_meta_info.put("column_info_list", column_info_list);
         return data_meta_info;
     }
 
@@ -133,7 +138,7 @@ public class MetaDataManageAction extends BaseAction {
         //获取表的meta源信息
         String table_meta_info = dq_failure_table.getTable_meta_info();
         //初始化字段解析结果List
-        List<Map<String, String>> meta_list;
+        List<Map<String, String>> column_info_list;
         //表id
         String table_id;
         //获取表的来源数据类型(DCL,DPL,实时数据暂不考虑!),并根据数据源类型处理不同数据源下的表信息
@@ -152,7 +157,7 @@ public class MetaDataManageAction extends BaseAction {
                 //获取字段信息列表
                 List<Map<String, Object>> dclBatchTableColumns = DCLDataQuery.getDCLBatchTableColumns(dsr.getTable_id());
                 //转化字段信息列表为meta_list
-                meta_list = DataTableFieldUtil.metaInfoToList(dclBatchTableColumns);
+                column_info_list = DataTableFieldUtil.metaInfoToList(dclBatchTableColumns);
                 break;
             case "ISL":
             case "DPL":
@@ -165,10 +170,11 @@ public class MetaDataManageAction extends BaseAction {
             default:
                 throw new BusinessException("未找到匹配的存储层!");
         }
-        if (meta_list.isEmpty()) {
+        if (column_info_list.isEmpty()) {
             throw new BusinessException("该表的meta信息已经不存在!" + dq_failure_table.getTable_cn_name());
         }
         //设置返回结果map
+        data_meta_info.put("file_id", file_id);
         data_meta_info.put("table_id", table_id);
         data_meta_info.put("data_layer", table_source);
         //如果表类型为空,设置表类型为来源数据层,不为空代表表来源是DCL层下的 dcl_batch:批量数据或 dcl_realtime:实时数据
@@ -180,24 +186,29 @@ public class MetaDataManageAction extends BaseAction {
         } else {
             data_meta_info.put("create_date", "99991231");
         }
-        data_meta_info.put("meta_list", meta_list);
+        data_meta_info.put("column_info_list", column_info_list);
         return data_meta_info;
     }
 
     @Method(desc = "数据管控保存元数据",
             logicStep = "逻辑说明")
-    @Param(name = "metaDataInfo", desc = "自定义实体MetaDataInfo的对象", range = "MetaDataInfo", isBean = true)
-    public void saveMetaData(MetaDataInfo metaDataInfo) {
+    @Param(name = "data_layer", desc = "数据层", range = "String类型,DCL")
+    @Param(name = "file_id", desc = "数据表登记信息id", range = "String类型")
+    @Param(name = "table_id", desc = "数据表id", range = "String类型")
+    @Param(name = "table_ch_name", desc = "表中文名", range = "String类型", nullable = true)
+    @Param(name = "columnInfoBeans", desc = "自定义实体ColumnInfoBean的对象", range = "ColumnInfoBean", isBean = true)
+    public void saveMetaData(String data_layer, String file_id, String table_id, String table_ch_name,
+                             ColumnInfoBean[] columnInfoBeans) {
         //TODO 随后再做
         //数据校验
-        if (StringUtil.isBlank(metaDataInfo.getTable_id())) {
+        if (StringUtil.isBlank(table_id)) {
             throw new BusinessException("编辑的元数据信息id为空!");
         }
         //根据数据层修改不同层下的数据
-        switch (metaDataInfo.getData_layer()) {
+        switch (data_layer) {
             case "DCL":
                 //修改DCL层批量数据下的表元信息
-                TableMetaInfoTool.updateDCLTableMetaInfo(metaDataInfo);
+                TableMetaInfoTool.updateDCLTableMetaInfo(file_id, table_id, table_ch_name, columnInfoBeans);
                 break;
             case "ISL":
             case "DPL":
@@ -206,7 +217,7 @@ public class MetaDataManageAction extends BaseAction {
             case "AML":
             case "DQC":
             case "UDL":
-                throw new BusinessException("修改" + metaDataInfo.getData_layer() + "层表元信息暂未实现!");
+                throw new BusinessException("修改" + data_layer + "层表元信息暂未实现!");
             default:
                 throw new BusinessException("未找到匹配的存储层!");
         }
@@ -214,7 +225,6 @@ public class MetaDataManageAction extends BaseAction {
 
     @Method(desc = "恢复回收站表", logicStep = "恢复回收站表")
     @Param(name = "data_layer", desc = "所属数据层", range = "String 类型")
-    @Param(name = "table_type", desc = "表类型", range = "String 类型")
     @Param(name = "file_id", desc = "回收站表id", range = "long 类型")
     public void restoreDRBTable(String data_layer, long file_id) {
         //获取回收站表信息
