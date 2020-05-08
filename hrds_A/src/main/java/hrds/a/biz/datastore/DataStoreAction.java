@@ -800,15 +800,17 @@ public class DataStoreAction extends BaseAction {
 		// 1.数据可访问权限处理方式，该方法不需要权限验证
 		// 2.获取到存储层配置存储类型的所有key
 		Map<String, List<String>> storageKeys = StorageTypeKey.getFinallyStorageKeys();
+		// 3.获取文件属性的key
 		List<String> updateStorageKeys = StorageTypeKey.getUpdateFinallyStorageKeys();
 		try {
 			Store_type.ofEnumByCode(store_type);
 		} catch (Exception e) {
 			throw new BusinessException("根据该值找不到对应代码项值，请检查，store_type=" + store_type);
 		}
-		// 3.根据存储层类型获取数据存储层配置属性key并返回
 		List<String> fileKey = new ArrayList<>();
+		// 4.根据存储层类型获取数据存储层配置属性key并返回
 		List<String> keyList = storageKeys.get(store_type);
+		// 5.遍历判断是否包含文件属性key，分别返回文件属性key以及jdbc连接key
 		for (String key : updateStorageKeys) {
 			if (keyList.contains(key)) {
 				fileKey.add(key);
