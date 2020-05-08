@@ -1,8 +1,12 @@
 package hrds.agent.job.biz.constant;
 
 
+import hrds.commons.codes.FileFormat;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.utils.PropertyParaUtil;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class JobConstant {
 	//作业跑批结束时间
@@ -40,5 +44,19 @@ public class JobConstant {
 	public static final String SQLDELIMITER = "`@^";
 
 	public static final String DEFAULTLINESEPARATOR = "\n";
+
+	public static final Map<String, String> fileFormatMap = new HashMap<>();
+
+	/*
+	 * 数据库抽取卸数下来文件格式对应路径的关系
+	 */
+	static {
+		fileFormatMap.put(FileFormat.FeiDingChang.getCode(), "NONFIXEDFILE");
+		fileFormatMap.put(FileFormat.DingChang.getCode(), "FIXEDFILE");
+		fileFormatMap.put(FileFormat.CSV.getCode(), FileFormat.CSV.getValue());
+		fileFormatMap.put(FileFormat.PARQUET.getCode(), FileFormat.PARQUET.getValue());
+		fileFormatMap.put(FileFormat.ORC.getCode(), FileFormat.ORC.getValue());
+		fileFormatMap.put(FileFormat.SEQUENCEFILE.getCode(), FileFormat.SEQUENCEFILE.getValue());
+	}
 }
 
