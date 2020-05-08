@@ -136,10 +136,7 @@ public class AgentDeployAction extends BaseAction {
       }
     }
     // Agent开始部署
-    String targetDir = AgentDeploy.agentConfDeploy(agent_down_info, oldAgentDir, oldLogPath);
-
-    //将最终的目录放入
-    agent_down_info.setSave_dir(targetDir);
+    AgentDeploy.agentConfDeploy(agent_down_info, oldAgentDir, oldLogPath);
 
     /* 2 : 检查当前部署的信息是否含有Down_id,如果有表示为编辑,否则为新增 */
     if (agent_down_info.getDown_id() == null) {
