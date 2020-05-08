@@ -4,7 +4,7 @@ import fd.ng.db.jdbc.DatabaseWrapper;
 
 import hrds.commons.codes.DatabaseType;
 import hrds.commons.codes.ProcessType;
-import hrds.commons.codes.StorageTypeKey;
+import hrds.commons.utils.StorageTypeKey;
 import hrds.commons.collection.ConnectionTool;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.DruidParseQuerySql;

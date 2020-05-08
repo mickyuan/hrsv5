@@ -7,7 +7,7 @@ import hrds.h.biz.config.MarketConf;
 import hrds.h.biz.spark.running.SparkHandleArgument.DatabaseArgs;
 import hrds.h.biz.spark.running.SparkJobRunner;
 
-import static hrds.commons.codes.StorageTypeKey.*;
+import static hrds.commons.utils.StorageTypeKey.*;
 
 /**
  * @Author: Mick Yuan

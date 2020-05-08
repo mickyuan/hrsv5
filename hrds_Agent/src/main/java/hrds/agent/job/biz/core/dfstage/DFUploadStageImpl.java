@@ -27,6 +27,7 @@ import hrds.commons.exception.AppSystemException;
 import hrds.commons.hadoop.hadoop_helper.HdfsOperator;
 import hrds.commons.hadoop.utils.HSqlExecute;
 import hrds.commons.utils.Constant;
+import hrds.commons.utils.StorageTypeKey;
 import hrds.commons.utils.jsch.FileProgressMonitor;
 import hrds.commons.utils.jsch.SFTPChannel;
 import hrds.commons.utils.jsch.SFTPDetails;
