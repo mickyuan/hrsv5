@@ -8,7 +8,6 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
-import fd.ng.core.utils.FileUtil;
 import fd.ng.core.utils.StringUtil;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Agent_down_info;
@@ -22,9 +21,7 @@ import hrds.commons.utils.deployentity.HttpYaml;
 import hrds.commons.utils.yaml.Yaml;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.logging.Log;
@@ -85,7 +82,7 @@ public class AgentDeploy {
   @Param(name = "oldAgentPath", desc = "旧的,Agent部署目录地址", range = "可以为空,为空表示为第一次部署")
   @Param(name = "oldLogPath", desc = "旧的,Agent部署日志地址", range = "可以为空,为空表示为第一次部署")
   //  @Return(desc = "返回部署是否操作成功", range = "true-成功/false-失败")
-  public static void agentConfDeploy(
+  public static String agentConfDeploy(
       Agent_down_info down_info, String oldAgentPath, String oldLogPath) {
     try {
 
@@ -106,7 +103,7 @@ public class AgentDeploy {
       Yaml.dump(httpServerMap, new File(CONFPATH + HttpServer.HTTP_CONF_NAME));
       // 二 : resources/fdconfig/ 下的全部文件SCP 到agent目录下
       /* 开始将本地写好的文件SCP到Agent目下, */
-      sftpAgentToTargetMachine(down_info, oldAgentPath, oldLogPath);
+      return sftpAgentToTargetMachine(down_info, oldAgentPath, oldLogPath);
 
     } catch (FileNotFoundException e) {
       throw new BusinessException(e.getMessage());
@@ -127,12 +124,15 @@ public class AgentDeploy {
   @Param(name = "oldAgentPath", desc = "旧的,Agent部署目录地址", range = "可以为空,为空表示为第一次部署")
   @Param(name = "oldLogPath", desc = "旧的,Agent部署日志地址", range = "可以为空,为空表示为第一次部署")
   @Return(desc = "", range = "")
-  private static void sftpAgentToTargetMachine(
+  private static String sftpAgentToTargetMachine(
       Agent_down_info down_info, String oldAgentPath, String oldLogPath) {
 
     // 这里先将配置的agent名称转换为拼音在和端口组合在一起,当做agent部署的目录
     String agentDirName =
         ChineseUtil.getPingYin(down_info.getAgent_name()) + "_" + down_info.getAgent_port();
+
+    // 目标机器的目录
+    String targetDir = down_info.getSave_dir() + SEPARATOR + agentDirName + SEPARATOR + ".bin";
 
     // 一 : 将需要的文件SCP 到目标agent目录下
     Session shellSession = null;
@@ -186,7 +186,7 @@ public class AgentDeploy {
       File file = new File(PropertyParaValue.getString("agentpath", ""));
       logger.info("本地Agent路径地址 : " + file.getAbsolutePath());
       logger.info("开始传输的Agent包,从本地路径 : " + file.getAbsolutePath());
-      String targetDir = down_info.getSave_dir() + SEPARATOR + agentDirName + SEPARATOR + ".bin";
+
       chSftp.put(
           file.getAbsolutePath(),
           targetDir,
@@ -237,9 +237,13 @@ public class AgentDeploy {
         logger.info(
             "启动agent命令 : cd "
                 + targetDir
-                + ";nohup java -D"
+                + ";nohup java -Dorg.eclipse.jetty.server.Request.maxFormContentSize=99900000"
+                + " -Dport="
                 + down_info.getAgent_port()
-                + " -Dorg.eclipse.jetty.server.Request.maxFormContentSize=99900000 -jar "
+                + " -Dproject.dir="
+                + targetDir
+                + " -Dproject.name=\"HYRENAgentReceive\""
+                + " -jar "
                 + file.getName()
                 + " &");
         SFTPChannel.execCommandByJSchNoRs(
@@ -250,13 +254,13 @@ public class AgentDeploy {
                 + " -Dport="
                 + down_info.getAgent_port()
                 + " -Dproject.dir="
-                + down_info.getSave_dir()
+                + targetDir
                 + " -Dproject.name=\"HYRENAgentReceive\""
                 + " -jar "
                 + file.getName()
                 + " &");
       }
-
+      return targetDir;
     } catch (Exception e) {
       logger.error("", e);
       throw new BusinessException(e.getMessage());
