@@ -812,11 +812,13 @@ public class DataStoreAction extends BaseAction {
 		// 4.根据存储层类型获取数据存储层配置属性key并返回
 		List<String> keyList = storageKeys.get(store_type);
 		// 5.遍历判断是否包含文件属性key，分别返回文件属性key以及jdbc连接key
-		for (String key : keyList) {
-			if (updateStorageKeys.contains(key)) {
-				fileKey.add(key);
-			} else {
-				jdbcKey.add(key);
+		if (keyList != null) {
+			for (String key : keyList) {
+				if (updateStorageKeys.contains(key)) {
+					fileKey.add(key);
+				} else {
+					jdbcKey.add(key);
+				}
 			}
 		}
 		Map<String, Object> keyMap = new HashMap<>();
