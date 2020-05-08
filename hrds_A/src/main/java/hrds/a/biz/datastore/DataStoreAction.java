@@ -18,11 +18,11 @@ import fd.ng.web.util.ResponseUtil;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.DataBaseCode;
 import hrds.commons.codes.IsFlag;
-import hrds.commons.utils.StorageTypeKey;
 import hrds.commons.codes.Store_type;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.DboExecute;
+import hrds.commons.utils.StorageTypeKey;
 import hrds.commons.utils.key.PrimayKeyGener;
 
 import java.io.*;
@@ -796,16 +796,28 @@ public class DataStoreAction extends BaseAction {
 					"3.根据存储层类型获取数据存储层配置属性key并返回")
 	@Param(name = "store_type", desc = "存储层配置存储类型", range = "使用（Store_type）代码项")
 	@Return(desc = "返回根据存储层类型获取数据存储层配置属性key", range = "无限制")
-	public List<String> getDataLayerAttrKey(String store_type) {
+	public Map<String, Object> getDataLayerAttrKey(String store_type) {
 		// 1.数据可访问权限处理方式，该方法不需要权限验证
 		// 2.获取到存储层配置存储类型的所有key
 		Map<String, List<String>> storageKeys = StorageTypeKey.getFinallyStorageKeys();
+		List<String> updateStorageKeys = StorageTypeKey.getUpdateFinallyStorageKeys();
 		try {
 			Store_type.ofEnumByCode(store_type);
 		} catch (Exception e) {
 			throw new BusinessException("根据该值找不到对应代码项值，请检查，store_type=" + store_type);
 		}
 		// 3.根据存储层类型获取数据存储层配置属性key并返回
-		return storageKeys.get(store_type);
+		List<String> fileKey = new ArrayList<>();
+		List<String> keyList = storageKeys.get(store_type);
+		for (String key : updateStorageKeys) {
+			if (keyList.contains(key)) {
+				fileKey.add(key);
+				keyList.remove(key);
+			}
+		}
+		Map<String, Object> keyMap = new HashMap<>();
+		keyMap.put("jdbcKey", keyList);
+		keyMap.put("fileKey", fileKey);
+		return keyMap;
 	}
 }
