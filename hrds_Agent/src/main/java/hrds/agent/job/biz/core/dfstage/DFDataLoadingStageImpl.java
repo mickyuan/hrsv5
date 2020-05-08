@@ -21,6 +21,7 @@ import hrds.commons.collection.ConnectionTool;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.hadoop.utils.HSqlExecute;
 import hrds.commons.utils.Constant;
+import hrds.commons.utils.StorageTypeKey;
 import hrds.commons.utils.jsch.SFTPChannel;
 import hrds.commons.utils.jsch.SFTPDetails;
 import org.slf4j.Logger;
@@ -62,7 +63,7 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 						//传统数据库有两种情况，支持外部表和不支持外部表
 						if (IsFlag.Shi.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
 							//支持外部表
-							String todayTableName = collectTableBean.getHbase_name() + "_" + collectTableBean.getEtlDate();
+							String todayTableName = collectTableBean.getHbase_name() + "_" + 1;
 							//通过外部表加载数据到todayTableName
 							createExternalTableLoadData(todayTableName, collectTableBean, dataStoreConfBean,
 									stageParamInfo.getTableBean(), stageParamInfo.getFileNameArr());
@@ -76,7 +77,7 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 						//hive库有两种情况，有客户端和没有客户端
 						if (IsFlag.Shi.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
 							//有客户端
-							String todayTableName = collectTableBean.getHbase_name() + "_" + collectTableBean.getEtlDate();
+							String todayTableName = collectTableBean.getHbase_name() + "_" + 1;
 							String hdfsFilePath = DFUploadStageImpl.getUploadHdfsPath(collectTableBean);
 							//通过load方式加载数据到hive
 							createHiveTableLoadData(todayTableName, hdfsFilePath, dataStoreConfBean,
@@ -131,9 +132,11 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 					data_store_connect_attr.get(StorageTypeKey.sftp_user), data_store_connect_attr.
 					get(StorageTypeKey.sftp_pwd), data_store_connect_attr.get(StorageTypeKey.sftp_port)), 0);
 			String file_format = tableBean.getFile_format();
+			//备份表上次执行进数的数据
+			backupToDayTable(todayTableName, dataStoreConfBean, db);
 			if (DatabaseType.Oracle10g.getCode().equals(database_type) ||
 					DatabaseType.Oracle9i.getCode().equals(database_type)) {
-				String tmpTodayTableName = todayTableName + "_tmp";
+				String tmpTodayTableName = todayTableName + "t";
 				if (FileFormat.FeiDingChang.getCode().equals(file_format)) {
 					//如果表已存在则删除
 					JDBCIncreasement.dropTableIfExists(tmpTodayTableName, db, sqlList);
@@ -181,11 +184,17 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 			//执行成功，清除上传到服务器上的文件，清除oracle外部表加载数据的日志
 			//清除上传到服务器上的文件
 			clearTemporaryFile(database_type, collectTableBean,
-					data_store_connect_attr.get(StorageTypeKey.external_root_path), session);
-			//清楚oracle外部表的日志
+					data_store_connect_attr.get(StorageTypeKey.external_root_path), session, fileNameArr);
+			//清除oracle外部表的日志
 			clearTemporaryLog(database_type, todayTableName,
 					data_store_connect_attr.get(StorageTypeKey.external_root_path), session);
+			//根据表存储期限备份每张表存储期限内进数的数据
+			backupPastTable(collectTableBean, dataStoreConfBean, db);
 		} catch (Exception e) {
+			if (db != null) {
+				//执行失败，恢复上次进数的数据
+				recoverBackupToDayTable(todayTableName, dataStoreConfBean, db);
+			}
 			throw new AppSystemException("执行数据库" + dataStoreConfBean.getDsl_name() + "外部表加载数据的sql报错", e);
 		} finally {
 			//清除中间表
@@ -198,7 +207,10 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 	}
 
 	private void clearTemporaryFile(String database_type, CollectTableBean collectTableBean,
-	                                String external_root_path, Session session) throws Exception {
+	                                String external_root_path, Session session, String[] fileNameArr) throws Exception {
+		//获取数据库抽取任务生成的文件名前缀
+		String past_hbase_name = fileNameArr[0].split(collectTableBean.getTable_name())[0]
+				+ collectTableBean.getTable_name();
 		if (FileUtil.isSysDir(external_root_path)) {
 			throw new AppSystemException("请不要删除系统目录下的文件");
 		}
@@ -206,8 +218,8 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 				DatabaseType.Oracle9i.getCode().equals(database_type)) {
 			external_root_path = external_root_path + File.separator + Constant.HYSHF_DCL + File.separator;
 			//删除大字段文件
-			String lobs_file = "find " + external_root_path + " -name \"LOBs_" + collectTableBean.getHbase_name()
-					+ "_*\" | xargs rm -rf 'LOBs_" + collectTableBean.getHbase_name() + "_*'";
+			String lobs_file = "find " + external_root_path + " -name \"LOBs_" + past_hbase_name
+					+ "_*\" | xargs rm -rf 'LOBs_" + past_hbase_name + "_*'";
 			SFTPChannel.execCommandByJSch(session, lobs_file);
 		} else if (DatabaseType.Postgresql.getCode().equals(database_type)) {
 			//数据库服务器上文件所在路径
@@ -216,7 +228,7 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 		}
 		//删除数据文件
 		SFTPChannel.execCommandByJSch(session,
-				"rm -rf " + external_root_path + collectTableBean.getHbase_name() + "*");
+				"rm -rf " + external_root_path + past_hbase_name + "*");
 	}
 
 	private void clearTemporaryLog(String database_type, String todayTableName,
@@ -224,7 +236,7 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 		if (FileUtil.isSysDir(external_root_path)) {
 			throw new AppSystemException("请不要删除系统目录下的文件");
 		}
-		String tmpTodayTableName = todayTableName + "_tmp";
+		String tmpTodayTableName = todayTableName + "t";
 		if (DatabaseType.Oracle10g.getCode().equals(database_type) ||
 				DatabaseType.Oracle9i.getCode().equals(database_type)) {
 			external_root_path = external_root_path + File.separator + Constant.HYSHF_DCL + File.separator;
@@ -241,7 +253,7 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 				DatabaseType.Oracle9i.getCode().equals(database_type)) {
 			//oracle数据库只创建了一个临时表
 			//如果表已存在则删除
-			JDBCIncreasement.dropTableIfExists(todayTableName + "_tmp", db, sqlList);
+			JDBCIncreasement.dropTableIfExists(todayTableName + "t", db, sqlList);
 		} else if (DatabaseType.Postgresql.getCode().equals(database_type)) {
 			for (int i = 0; i < fileNameArr.length; i++) {
 				String table_name = todayTableName + "_tmp" + i;

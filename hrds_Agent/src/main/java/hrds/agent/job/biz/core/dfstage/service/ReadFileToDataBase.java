@@ -94,7 +94,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 					Constant.METAINFOSPLIT), dataStoreConfBean.getDsl_name());
 			//3.拼接batch插入数据库的sql
 			String batchSql = getBatchSql(columnList, collectTableBean.getHbase_name() + "_"
-					+ collectTableBean.getEtlDate());
+					+ 1);
 			//TODO 根据存储期限去修改表名称
 			//4.根据卸数问价类型读取文件插入到数据库
 			//文件编码

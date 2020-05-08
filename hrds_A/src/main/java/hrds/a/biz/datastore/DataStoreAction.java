@@ -18,7 +18,7 @@ import fd.ng.web.util.ResponseUtil;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.DataBaseCode;
 import hrds.commons.codes.IsFlag;
-import hrds.commons.codes.StorageTypeKey;
+import hrds.commons.utils.StorageTypeKey;
 import hrds.commons.codes.Store_type;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;

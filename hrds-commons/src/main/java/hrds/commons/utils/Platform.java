@@ -5,10 +5,7 @@ import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.meta.ColumnMeta;
 import fd.ng.db.meta.MetaOperator;
 import fd.ng.db.meta.TableMeta;
-import hrds.commons.codes.DatabaseType;
 import hrds.commons.codes.IsFlag;
-import hrds.commons.codes.StorageTypeKey;
-import hrds.commons.collection.ConnectionTool;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.xlstoxml.XmlCreater;
@@ -229,34 +226,5 @@ public class Platform {
 			columnList.add(hashMap);
 		}
 		return columnList;
-	}
-
-	public static void main(String[] args) {
-		Map map = new HashMap<>();
-		// 2、从想要的数据库中获取连接信息
-		/*map.put(StorageTypeKey.database_type, DatabaseType.Postgresql.getCode());
-		map.put(StorageTypeKey.database_driver, "org.postgresql.Driver");
-		map.put(StorageTypeKey.jdbc_url,"jdbc:postgresql://10.71.4.52:31001/hrsdxgtest");
-		map.put(StorageTypeKey.user_name, "hrsdxg");
-		map.put(StorageTypeKey.database_pwd, "hrsdxg");*/
-
-
-		map.put(StorageTypeKey.database_type, DatabaseType.Oracle10g.getCode());
-		map.put(StorageTypeKey.database_driver, "oracle.jdbc.OracleDriver");
-		map.put(StorageTypeKey.jdbc_url, "jdbc:oracle:thin:@47.103.83.1:1521:HYSHF");
-		map.put(StorageTypeKey.user_name, "HYSHF");
-		map.put(StorageTypeKey.database_pwd, "hyshf");
-
-		DatabaseWrapper db = ConnectionTool.getDBWrapper(map);
-
-		List<TableMeta> tableMetas = MetaOperator.getTablesWithColumns(db);
-		for (TableMeta tableMeta : tableMetas) {
-			String tableName = tableMeta.getTableName();
-			String remarks = tableMeta.getRemarks();
-		}
-
-		//readModelFromDatabase(db,"D:\\aa.xml");
-
-		//readModelFromDatabase(db, "D:\\aa.xml", "agent_down_info");
 	}
 }

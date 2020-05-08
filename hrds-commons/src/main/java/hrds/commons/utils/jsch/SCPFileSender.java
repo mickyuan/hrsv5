@@ -93,8 +93,10 @@ public class SCPFileSender {
 			logger.info("=======fdConfigPath========" + fdConfigPath);
 			logger.info("=======targetDir========" + targetDir);
 			// 判断文件control/trigger配置文件目录是否存在，不存在则创建
-			String controlDirectory = targetDir + "control" + SEPARATOR + "resources" + SEPARATOR;
-			String triggerDirectory = targetDir + "trigger" + SEPARATOR + "resources" + SEPARATOR;
+			String controlDirectory = targetDir + "control" + SEPARATOR + "resources" + SEPARATOR +
+					"fdconfig" + SEPARATOR;
+			String triggerDirectory = targetDir + "trigger" + SEPARATOR + "resources" + SEPARATOR +
+					"fdconfig" + SEPARATOR;
 			makeDirectoryIfNotExist(chSftp_properties, controlDirectory);
 			makeDirectoryIfNotExist(chSftp_properties, triggerDirectory);
 			File fileDbInfo = new File(fdConfigPath + DBINFOCONFNAME);
@@ -109,31 +111,19 @@ public class SCPFileSender {
 			// 本地当前工程下的配置文件信息appinfo.conf,上传到目标机器
 			File fileAppInfo = new File(fdConfigPath + APPINFOCONfNAME);
 			long fileSizeAppInfo = fileAppInfo.length();
-			chSftp_properties.put(fdConfigPath + APPINFOCONfNAME, targetDir
-							+ "control" + SEPARATOR + "resources" + SEPARATOR + APPINFOCONfNAME,
+			chSftp_properties.put(fdConfigPath + APPINFOCONfNAME, controlDirectory + APPINFOCONfNAME,
 					new FileProgressMonitor(fileSizeAppInfo), ChannelSftp.OVERWRITE);
 			logger.info("###########替换control appinfo.conf文件###########");
-			chSftp_properties.put(fdConfigPath + APPINFOCONfNAME, targetDir
-							+ "trigger" + SEPARATOR + "resources" + SEPARATOR + APPINFOCONfNAME,
+			chSftp_properties.put(fdConfigPath + APPINFOCONfNAME, triggerDirectory + APPINFOCONfNAME,
 					new FileProgressMonitor(fileSizeAppInfo), ChannelSftp.OVERWRITE);
 			logger.info("###########替换trigger appinfo.conf文件###########");
 
 			// 将本地写的临时配置文件(control.conf),sftp复制到agent部署的目标机器
 			File redisInfo = new File(tmp_conf_path + CONTROLCONFNAME);
 			long fileSizeRedisInfo = redisInfo.length();
-			chSftp_properties.put(tmp_conf_path + CONTROLCONFNAME, targetDir
-							+ "control" + SEPARATOR + "resources" + SEPARATOR + CONTROLCONFNAME,
+			chSftp_properties.put(tmp_conf_path + CONTROLCONFNAME, controlDirectory + CONTROLCONFNAME,
 					new FileProgressMonitor(fileSizeRedisInfo), ChannelSftp.OVERWRITE);
 			logger.info("###########将本地写的临时配置文件(control.conf),sftp复制到agent部署的目标机器###########");
-//			File fileRedisInfo = new File(source_path + "redis.conf");
-//			long fileSizeRedisInfo = fileRedisInfo.length();
-//			chSftp_properties.put(source_path + redis_conf, targetDir + "/control/resources/redis.conf",
-//					new FileProgressMonitor(fileSizeRedisInfo),
-//					ChannelSftp.OVERWRITE);
-//			chSftp_properties.put(source_path + redis_conf,
-//					targetDir + "/trigger/resources/redis.conf", new FileProgressMonitor(fileSizeRedisInfo),
-//					ChannelSftp.OVERWRITE);
-//			logger.info("###########替换redis文件###########");
 
 			// hadoop配置文件
 //			File fileHadoopConf = new File(hadoopConf);
@@ -176,16 +166,33 @@ public class SCPFileSender {
 	public static void makeDirectoryIfNotExist(ChannelSftp sftp, String directory) {
 		// 判断目录文件夹是否存在，不存在即创建
 		try {
-			sftp.lstat(directory);
-		} catch (Exception e) {
-			if (e.getMessage().equalsIgnoreCase("no such file")) {
+			// 目录不存在，则创建文件夹
+			String[] dirs = directory.split(SEPARATOR);
+			String tempPath = "";
+			for (String dir : dirs) {
+				if (null == dir || "".equals(dir))
+					continue;
+				tempPath += "/" + dir;
 				try {
-					sftp.mkdir(directory);
-					logger.info("创建目录：" + directory);
+					logger.info("检测目录[" + tempPath + "]");
+					sftp.cd(tempPath);
+				} catch (SftpException ex) {
+					try {
+						logger.error("创建目录[" + tempPath + "]");
+						sftp.mkdir(tempPath);
+						sftp.cd(tempPath);
+						logger.error("进入目录[" + tempPath + "]");
+					} catch (SftpException e1) {
+						throw new BusinessException("创建目录失败" + e1.getMessage());
+					}
 				} catch (Exception e1) {
 					throw new BusinessException("创建目录失败" + e1.getMessage());
+
 				}
 			}
+			logger.info("创建目录完成");
+		} catch (Exception e1) {
+			throw new BusinessException("创建目录失败" + e1.getMessage());
 		}
 	}
 }

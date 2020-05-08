@@ -18,6 +18,7 @@ import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.commons.codes.*;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
+import hrds.commons.utils.StorageTypeKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -169,6 +170,13 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 		return stageParamInfo;
 	}
 
+	/**
+	 * 获取文件转存的默认编码，目的地有oracle数据库时，会主动去取oracle数据库键值对下配置的编码，
+	 * 没有设置，取读文件的编码为写文件的编码
+	 *
+	 * @param collectTableBean 采集的表属性实体
+	 * @param fileCode         db文件编码
+	 */
 	private String getDbFileArchivedCode(CollectTableBean collectTableBean, String fileCode) {
 		List<DataStoreConfBean> dataStoreConfBean = collectTableBean.getDataStoreConfBean();
 		for (DataStoreConfBean bean : dataStoreConfBean) {
@@ -191,9 +199,5 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 	@Override
 	public int getStageCode() {
 		return StageConstant.UNLOADDATA.getCode();
-	}
-
-	public static void main(String[] args) {
-
 	}
 }

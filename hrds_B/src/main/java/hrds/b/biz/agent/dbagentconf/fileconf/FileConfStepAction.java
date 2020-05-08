@@ -197,8 +197,8 @@ public class FileConfStepAction extends BaseAction {
         throw new BusinessException("第 " + (i + 1) + " 条的数据落地目录不能为空!");
       }
 
-      // TODO data_extraction_def表is_header字段设置默认值为"是"，后期可能会修改
-      def.setIs_header(IsFlag.Shi.getCode());
+      // TODO data_extraction_def表is_header字段设置默认值为"否"，后期可能会修改
+      def.setIs_header(IsFlag.Fou.getCode());
       def.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
       def.add(Dbo.db());
     }

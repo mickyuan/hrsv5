@@ -745,14 +745,15 @@ public class AgentListAction extends BaseAction {
 				"ti.remark, ti.is_user_defined, ti.is_md5,ti.is_register,ti.is_parallel,ti.page_sql,ti.rec_num_date," +
 				"ti.unload_type,ti.is_customize_sql,ti.pageparallels, ti.dataincrement,tsi.storage_type, " +
 				"tsi.storage_time, tsi.is_zipper, ds.datasource_number || '_' || cjc.classify_num || '_' || " +
-				"ti.table_name as hbase_name, ds.datasource_name, ai.agent_name, ai.agent_id, ds.source_id" +
-				" FROM " + Data_source.TableName + " ds " +
+				"ti.table_name as hbase_name, ds.datasource_name, ai.agent_name, ai.agent_id, ds.source_id, " +
+				"dsr.storage_date FROM " + Data_source.TableName + " ds " +
 				" JOIN " + Agent_info.TableName + " ai ON ds.source_id = ai.source_id" +
 				" JOIN " + Database_set.TableName + " dbs ON ai.agent_id = dbs.agent_id" +
 				" LEFT JOIN " + Table_info.TableName + " ti on ti.database_id = dbs.database_id" +
 				" LEFT JOIN " + Collect_job_classify.TableName + " cjc on dbs.classify_id = cjc.classify_id" +
 //				" LEFT JOIN " + Data_extraction_def.TableName + " ded on ti.table_id = ded.table_id" +
 				" LEFT JOIN " + Table_storage_info.TableName + " tsi on tsi.table_id = ti.table_id" +
+				" LEFT JOIN " + Data_store_reg.TableName + " dsr on dsr.table_id = ti.table_id " +
 				" WHERE dbs.database_id = ?", colSetId);
 
 		//collectTables是从数据库中查询出的当前数据库采集任务要采集的表部分配置信息

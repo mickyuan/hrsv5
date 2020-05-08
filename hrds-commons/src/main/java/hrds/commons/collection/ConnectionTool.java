@@ -9,7 +9,7 @@ import fd.ng.db.conf.DbinfosConf;
 import fd.ng.db.conf.Dbtype;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.commons.codes.DatabaseType;
-import hrds.commons.codes.StorageTypeKey;
+import hrds.commons.utils.StorageTypeKey;
 import hrds.commons.collection.bean.DbConfBean;
 import hrds.commons.entity.Database_set;
 import hrds.commons.exception.AppSystemException;

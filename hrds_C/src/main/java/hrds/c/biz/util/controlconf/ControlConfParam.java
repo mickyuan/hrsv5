@@ -24,10 +24,11 @@ public class ControlConfParam {
 		map.put("timeout", 100000);
 		if (StringUtil.isBlank(redis_ip) || StringUtil.isBlank(redis_port)) {
 			map.put("redisIp", PropertyParaValue.getString("redis_ip", "172.168.0.61"));
-			map.put("redisPort", PropertyParaValue.getString("redis_port", "56379"));
+			String redis_port1 = PropertyParaValue.getString("redis_port", "56379");
+			map.put("redisPort", Integer.parseInt(redis_port1));
 		} else {
 			map.put("redisIp", redis_ip);
-			map.put("redisPort", redis_port);
+			map.put("redisPort", Integer.parseInt(redis_port));
 		}
 		return map;
 	}

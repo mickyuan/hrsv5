@@ -22,8 +22,9 @@ public class CollectFIleAction extends BaseAction {
 
   @Method(desc = "编辑数据文件采集", logicStep = "1: 检查当前任务是否存在 2: 返回编辑的数据信息")
   @Param(name = "colSetId", desc = "数据采集任务ID(database_id)", range = "不可为空")
+  @Param(name = "agent_id", desc = "采集Agent ID(agent_id)", range = "不可为空")
   @Return(desc = "返回编辑时需要的数据文件采集信息", range = "不可为空")
-  public Map<String, Object> getInitDataFileData(long colSetId) {
+  public Map<String, Object> getInitDataFileData(long colSetId, long agent_id) {
     //    1: 检查当前任务是否存在
     long countNum =
         Dbo.queryNumber(
@@ -41,16 +42,18 @@ public class CollectFIleAction extends BaseAction {
             + Database_set.TableName
             + " t1 JOIN "
             + Collect_job_classify.TableName
-            + " t2 ON t1.classify_id = t2.classify_id WHERE t2.user_id = ? AND t1.is_sendok = ? AND t1.database_id = ?",
+            + " t2 ON t1.classify_id = t2.classify_id WHERE t2.user_id = ? AND t1.is_sendok = ? AND t1.database_id = ? AND t1.agent_id = ?",
         getUserId(),
         IsFlag.Shi.getCode(),
-        colSetId);
+        colSetId,
+        agent_id);
   }
 
   @Method(desc = "新增数据文件采集", logicStep = "根据用户信息查询数据文件上次为配置完成的数据信息")
   @Param(name = "source_id", desc = "数据源ID", range = "不可为空")
+  @Param(name = "agent_id", desc = "采集Agent ID(agent_id)", range = "不可为空")
   @Return(desc = "返回为配置的数据采集信息", range = "可以为空,为空表示不存在上次为配置完成的数据信息")
-  public Map<String, Object> addDataFileData(long source_id) {
+  public Map<String, Object> addDataFileData(long source_id, long agent_id) {
     return Dbo.queryOneObject(
         "SELECT t1.*,t2.classify_num,t2.classify_name FROM "
             + Database_set.TableName
@@ -59,11 +62,12 @@ public class CollectFIleAction extends BaseAction {
             + " t2 ON t1.classify_id = t2.classify_id join "
             + Agent_info.TableName
             + " ai on t1.agent_id = ai.agent_id "
-            + " where t1.is_sendok = ? AND ai.agent_type = ? AND ai.user_id = ? AND ai.source_id = ?",
+            + " where t1.is_sendok = ? AND ai.agent_type = ? AND ai.user_id = ? AND ai.source_id = ? AND t1.agent_id = ?",
         IsFlag.Fou.getCode(),
         AgentType.DBWenJian.getCode(),
         getUserId(),
-        source_id);
+        source_id,
+        agent_id);
   }
 
   @Method(desc = "保存数据文件的配置信息", logicStep = "1: 检查数据编号是否存在" + "2: 设置此次任务的ID" + "3: 返回生成的采集任务ID给前端")

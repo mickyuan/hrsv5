@@ -1,7 +1,7 @@
 package hrds.h.biz.spark.dealdataset;
 
 import fd.ng.db.jdbc.DatabaseWrapper;
-import hrds.commons.codes.StorageTypeKey;
+import hrds.commons.utils.StorageTypeKey;
 import hrds.commons.codes.Store_type;
 import hrds.commons.collection.ProcessingData;
 import hrds.commons.collection.bean.LayerBean;
@@ -14,6 +14,7 @@ import hrds.h.biz.spark.initialize.SparkSessionBuilder;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.catalog.Catalog;
 
 import java.io.Closeable;
 import java.util.List;
@@ -126,8 +127,10 @@ public class DatasetProcessBack implements SparkDataset, Closeable {
      * @return sql转换成的 dataframe
      */
     private Dataset<Row> dataframeFromSql(String sql) {
-
-        sparkSession.sql("use hyshf");
+        Catalog catalog = sparkSession.catalog();
+        if(catalog.databaseExists("hyshf")){
+            catalog.setCurrentDatabase("hyshf");
+        }
 
         List<String> listTable = DruidParseQuerySql.parseSqlTableToList(sql);
         try (DatabaseWrapper db = new DatabaseWrapper()) {

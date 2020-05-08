@@ -34,9 +34,10 @@ public abstract class JDBCIncreasement implements Closeable {
 				Constant.METAINFOSPLIT), dsl_name);
 		this.sysDate = sysDate;
 		this.tableNameInHBase = hbase_name;
-		this.deltaTableName = hbase_name + "_tmp_hyren";
+		this.deltaTableName = hbase_name + "_ty";
 		this.yesterdayTableName = hbase_name;
-		this.todayTableName = hbase_name + "_" + sysDate;
+		//当天的数据为拼接后的表名加序号1。例如：默认保留数据的天数为4，则会有四张表，从当天跑批往后依次加下标1、2、3、4
+		this.todayTableName = hbase_name + "_" + 1;
 		this.db = db;
 	}
 

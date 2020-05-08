@@ -1,4 +1,6 @@
-package hrds.commons.codes;
+package hrds.commons.utils;
+
+import hrds.commons.codes.Store_type;
 
 import java.util.*;
 
@@ -9,6 +11,7 @@ import java.util.*;
 public class StorageTypeKey {
 
 	private static final Map<String, List<String>> FINALLY_STORAGE_KEYS = new HashMap<>();
+	private static final List<String> UPDATE_FINALLY_STORAGE_KEYS = new ArrayList<>();
 
 
 	public static final String database_driver = "database_driver";
@@ -16,6 +19,7 @@ public class StorageTypeKey {
 	public static final String user_name = "user_name";
 	public static final String database_pwd = "database_pwd";
 	public static final String database_type = "database_type";
+	public static final String database_name = "database_name";
 
 	public static final String core_site = "core-site.xml";
 	public static final String hdfs_site = "hdfs-site.xml";
@@ -52,7 +56,7 @@ public class StorageTypeKey {
 	static {
 
 		List<String> databaseKeys = new ArrayList<>(Arrays.
-				asList(database_driver, jdbc_url, user_name, database_pwd, database_type));
+				asList(database_driver, jdbc_url, user_name, database_pwd, database_type, database_name));
 		FINALLY_STORAGE_KEYS.put(Store_type.DATABASE.getCode(), databaseKeys);
 
 		List<String> hiveKeys = new ArrayList<>(Arrays.
@@ -67,11 +71,24 @@ public class StorageTypeKey {
 		List<String> solrKeys = new ArrayList<>(Collections.singletonList(solr_url));
 		FINALLY_STORAGE_KEYS.put(Store_type.SOLR.getCode(), solrKeys);
 
+		UPDATE_FINALLY_STORAGE_KEYS.add(core_site);
+		UPDATE_FINALLY_STORAGE_KEYS.add(hdfs_site);
+		UPDATE_FINALLY_STORAGE_KEYS.add(yarn_site);
+		UPDATE_FINALLY_STORAGE_KEYS.add(hbase_site);
+		UPDATE_FINALLY_STORAGE_KEYS.add(mapred_site);
+		UPDATE_FINALLY_STORAGE_KEYS.add(keytab);
+		UPDATE_FINALLY_STORAGE_KEYS.add(krb5);
+
 	}
 
 
 	public static Map<String, List<String>> getFinallyStorageKeys() {
 
 		return FINALLY_STORAGE_KEYS;
+	}
+
+	public static List<String> getUpdateFinallyStorageKeys() {
+
+		return UPDATE_FINALLY_STORAGE_KEYS;
 	}
 }
