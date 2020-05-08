@@ -11,14 +11,17 @@ import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.AgentType;
 import hrds.commons.codes.CollectType;
+import hrds.commons.codes.ExecuteState;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Agent_info;
 import hrds.commons.entity.Collect_case;
+import hrds.commons.entity.Data_store_reg;
 import hrds.commons.entity.Database_set;
 import hrds.commons.entity.Source_file_attribute;
 import hrds.commons.exception.BusinessException;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -70,7 +73,7 @@ public class CollectMonitorAction extends BaseAction {
         Dbo.queryResult(
             " select sum((CASE WHEN collect_type = ? THEN file_size ELSE 0 END)) filecollectsize,"
                 + "sum((CASE WHEN collect_type in (?,?) THEN file_size ELSE 0 END)) dbcollectsize FROM "
-                + Source_file_attribute.TableName
+                + Data_store_reg.TableName
                 + " sfa JOIN  "
                 + Agent_info.TableName
                 + " ai ON sfa.agent_id = ai.agent_id WHERE user_id = ?",
@@ -79,7 +82,9 @@ public class CollectMonitorAction extends BaseAction {
             CollectType.DBWenJianCaiJi.getCode(),
             getUserId());
     result.setObject(
-        0, "filesize", FileUtil.fileSizeConversion(result.getLongDefaultZero(0, "filecollectsize")));
+        0,
+        "filesize",
+        FileUtil.fileSizeConversion(result.getLongDefaultZero(0, "filecollectsize")));
     result.setObject(
         0, "dbsize", FileUtil.fileSizeConversion(result.getLongDefaultZero(0, "dbcollectsize")));
 
@@ -104,21 +109,28 @@ public class CollectMonitorAction extends BaseAction {
   @Method(desc = "获取当前任务的采集作业信息", logicStep = "1 : 获取相应的采集情况 2 : 将作业的数据信息处理为有错误的优先显示在前面")
   @Param(name = "database_id", desc = "任务ID", range = "不能为空,否则将无法查询表信息")
   @Return(desc = "返回采集任务表信息", range = "可以为空, 表示未有采集表信息")
-  public List<Map<String, Object>> getCurrentTaskJob(long database_id) {
+  public Map<String, Object> getCurrentTaskJob(long database_id) {
 
     // 1: 获取相应的采集情况
     List<Collect_case> collectJobList =
         Dbo.queryList(
             Collect_case.class,
             "SELECT task_classify,collect_type,job_type,execute_state,collect_s_date,collect_s_time,"
-                + "collect_e_date,collect_e_time,cc_remark FROM collect_case WHERE collect_set_id = ?"
+                + "collect_e_date,collect_e_time,cc_remark FROM "
+                + Collect_case.TableName
+                + " WHERE collect_set_id = ?"
                 + " AND collect_s_date = (select max(collect_s_date) FROM collect_case WHERE "
                 + "collect_set_id = ? ) ORDER BY task_classify",
             database_id,
             database_id);
 
     // 2 : 将作业的数据信息处理为有错误的优先显示在前面
-    return JobTableDetails.getTableDetails(collectJobList);
+    Map<String, Object> collectMap = new HashMap<>();
+    collectMap.put("collectTableData", JobTableDetails.getTableDetails(collectJobList));
+    collectMap.put("failure", ExecuteState.YunXingShiBai.getCode());
+    collectMap.put("success", ExecuteState.YunXingWanCheng.getCode());
+    collectMap.put("running", ExecuteState.KaiShiYunXing.getCode());
+    return collectMap;
   }
 
   @Method(
