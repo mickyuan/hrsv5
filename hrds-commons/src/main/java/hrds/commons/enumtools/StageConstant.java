@@ -30,6 +30,9 @@ public enum StageConstant {
 
 		return desc;
 	}
+	public int getCode(){
+		return code;
+	}
 
 	@Override
 	public String toString() {
