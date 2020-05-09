@@ -105,7 +105,7 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 			try {
 				restoreRenameDir(collectTableBean);
 			} catch (Exception e1) {
-				LOGGER.info("卸数失败，恢复上次卸数数据失败", e);
+				LOGGER.warn("卸数失败，恢复上次卸数数据失败", e);
 			}
 			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.FAILED.getCode(), e.getMessage());
 			LOGGER.error("数据库直连采集卸数阶段失败：", e);
