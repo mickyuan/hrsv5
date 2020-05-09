@@ -77,7 +77,7 @@ public class JobStatusInfoUtil {
 		stageStatusInfo.setMessage(message);
 		stageStatusInfo.setStatusCode(statusCode);
 		stageStatusInfo.setEndDate(DateUtil.getSysDate());
-		stageStatusInfo.setStartTime(DateUtil.getSysTime());
+		stageStatusInfo.setEndTime(DateUtil.getSysTime());
 	}
 
 	public static void endStageParamInfo(StageParamInfo stageParamInfo, StageStatusInfo stageStatusInfo,
