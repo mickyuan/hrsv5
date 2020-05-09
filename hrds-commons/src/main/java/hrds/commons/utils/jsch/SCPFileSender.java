@@ -90,8 +90,8 @@ public class SCPFileSender {
 			SFTPChannel channel_properties = test_properties.getSFTPChannel();
 			ChannelSftp chSftp_properties = channel_properties.getChannel(sftpDetails, 60000);
 			// 本地当前工程下的配置文件信息dbinfo.conf,上传到目标机器
-			String fdConfigPath = System.getProperty("user.dir") + SEPARATOR + "resources" + SEPARATOR +
-					"fdconfig" + SEPARATOR;
+			String localPath = System.getProperty("user.dir") + SEPARATOR + "resources" + SEPARATOR;
+			String fdConfigPath = localPath + "fdconfig" + SEPARATOR;
 			logger.info("=======fdConfigPath========" + fdConfigPath);
 			logger.info("=======targetDir========" + targetDir);
 			// 判断文件control/trigger配置文件目录是否存在，不存在则创建
@@ -99,8 +99,24 @@ public class SCPFileSender {
 					"fdconfig" + SEPARATOR;
 			String triggerDirectory = targetDir + "trigger" + SEPARATOR + "resources" + SEPARATOR +
 					"fdconfig" + SEPARATOR;
+			String logControlDirectory = targetDir + "control" + SEPARATOR + "resources" + SEPARATOR +
+					"i18n" + SEPARATOR;
+			String logTriggerDirectory = targetDir + "trigger" + SEPARATOR + "resources" + SEPARATOR +
+					"i18n" + SEPARATOR;
 			makeDirectoryIfNotExist(chSftp_properties, controlDirectory);
 			makeDirectoryIfNotExist(chSftp_properties, triggerDirectory);
+			makeDirectoryIfNotExist(chSftp_properties, logControlDirectory);
+			makeDirectoryIfNotExist(chSftp_properties, logTriggerDirectory);
+			// 将日志文件sftp复制到agent部署的目标机器
+			AgentDeploy.sftpFiles(localPath + "i18n" + SEPARATOR, chSftp_properties,
+					targetDir + "control" + SEPARATOR);
+			chSftp_properties.put(localPath + LOGINFONAME, targetDir + "control"
+					+ SEPARATOR + LOGINFONAME, ChannelSftp.OVERWRITE);
+			AgentDeploy.sftpFiles(localPath + "i18n" + SEPARATOR, chSftp_properties,
+					targetDir + "trigger" + SEPARATOR);
+			chSftp_properties.put(localPath + LOGINFONAME, targetDir + "trigger"
+					+ SEPARATOR + LOGINFONAME, ChannelSftp.OVERWRITE);
+
 			File fileDbInfo = new File(fdConfigPath + DBINFOCONFNAME);
 			long fileSizeDbInfo = fileDbInfo.length();
 			chSftp_properties.put(fdConfigPath + DBINFOCONFNAME, controlDirectory + DBINFOCONFNAME,
@@ -126,16 +142,6 @@ public class SCPFileSender {
 			chSftp_properties.put(tmp_conf_path + CONTROLCONFNAME, controlDirectory + CONTROLCONFNAME,
 					new FileProgressMonitor(fileSizeRedisInfo), ChannelSftp.OVERWRITE);
 			logger.info("###########将本地写的临时配置文件(control.conf),sftp复制到agent部署的目标机器###########");
-			// 将日志文件sftp复制到agent部署的目标机器
-			String localPath = System.getProperty("user.dir") + SEPARATOR + "resources" + SEPARATOR;
-			AgentDeploy.sftpFiles(localPath + "i18n" + SEPARATOR, chSftp_properties,
-					targetDir + "control" + SEPARATOR);
-			chSftp_properties.put(localPath + LOGINFONAME, targetDir + "control"
-					+ SEPARATOR + LOGINFONAME, ChannelSftp.OVERWRITE);
-			AgentDeploy.sftpFiles(localPath + "i18n" + SEPARATOR, chSftp_properties,
-					targetDir + "trigger" + SEPARATOR);
-			chSftp_properties.put(localPath + LOGINFONAME, targetDir + "trigger"
-					+ SEPARATOR + LOGINFONAME, ChannelSftp.OVERWRITE);
 			// hadoop配置文件
 //			File fileHadoopConf = new File(hadoopConf);
 //			File[] list = fileHadoopConf.listFiles();
