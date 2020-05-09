@@ -11,9 +11,11 @@ import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.FileFormat;
 import hrds.commons.codes.IsFlag;
+import hrds.commons.codes.Job_Effective_Flag;
 import hrds.commons.codes.Main_Server_Sync;
 import hrds.commons.codes.ParamType;
 import hrds.commons.codes.Pro_Type;
+import hrds.commons.codes.Today_Dispatch_Flag;
 import hrds.commons.entity.Agent_down_info;
 import hrds.commons.entity.Agent_info;
 import hrds.commons.entity.Collect_job_classify;
@@ -380,9 +382,9 @@ public class StartWayConfAction extends BaseAction {
       // 作业的日志程序路径
       etl_job_def.setLog_dic(HYRENLOG);
       // 默认作业都是有效的
-      etl_job_def.setJob_eff_flag(IsFlag.Shi.getCode());
+      etl_job_def.setJob_eff_flag(Job_Effective_Flag.YES.getCode());
       // 默认当天调度作业信息
-      etl_job_def.setToday_disp(IsFlag.Shi.getCode());
+      etl_job_def.setToday_disp(Today_Dispatch_Flag.YES.getCode());
       // 作业的更新信息时间
       etl_job_def.setUpd_time(
           DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate())
