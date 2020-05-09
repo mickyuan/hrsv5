@@ -94,46 +94,37 @@ public class SCPFileSender {
 			String fdConfigPath = localPath + "fdconfig" + SEPARATOR;
 			logger.info("=======localPath========" + localPath);
 			// 判断文件control/trigger配置文件目录是否存在，不存在则创建
-			String controlDirectory = targetDir + "control" + SEPARATOR + "resources" + SEPARATOR +
-					"fdconfig" + SEPARATOR;
-			String triggerDirectory = targetDir + "trigger" + SEPARATOR + "resources" + SEPARATOR +
-					"fdconfig" + SEPARATOR;
-			makeDirectoryIfNotExist(chSftp_properties, controlDirectory);
-			makeDirectoryIfNotExist(chSftp_properties, triggerDirectory);
-			// 将日志文件sftp复制到agent部署的目标机器
-			String i18nPath = localPath + "i18n" + SEPARATOR;
-			AgentDeploy.sftpFiles(i18nPath, chSftp_properties,
-					targetDir + "control" + "resources" + SEPARATOR);
-			chSftp_properties.put(localPath + LOGINFONAME, targetDir + "control" + SEPARATOR
-					+ "resources" + SEPARATOR + LOGINFONAME, ChannelSftp.OVERWRITE);
-			AgentDeploy.sftpFiles(i18nPath, chSftp_properties,
-					targetDir + "trigger" + "resources" + SEPARATOR);
-			chSftp_properties.put(localPath + LOGINFONAME, targetDir + "trigger" + SEPARATOR
-					+ "resources" + SEPARATOR + LOGINFONAME, ChannelSftp.OVERWRITE);
+			String controlDirectory = targetDir + "control" + SEPARATOR + "resources" + SEPARATOR;
+			String triggerDirectory = targetDir + "trigger" + SEPARATOR + "resources" + SEPARATOR;
 
-			File fileDbInfo = new File(fdConfigPath + DBINFOCONFNAME);
-			long fileSizeDbInfo = fileDbInfo.length();
-			chSftp_properties.put(fdConfigPath + DBINFOCONFNAME, controlDirectory + DBINFOCONFNAME,
-					new FileProgressMonitor(fileSizeDbInfo), ChannelSftp.OVERWRITE);
-			logger.info("###########替换control dbinfo.conf文件###########");
-			chSftp_properties.put(fdConfigPath + DBINFOCONFNAME, triggerDirectory + DBINFOCONFNAME,
-					new FileProgressMonitor(fileSizeDbInfo), ChannelSftp.OVERWRITE);
-			logger.info("###########替换trigger dbinfo.conf文件###########");
+			// 如果不存在则创建control,trigger配置文件目录
+			makeDirectoryIfNotExist(chSftp_properties, controlDirectory + "fdconfig" + SEPARATOR);
+			makeDirectoryIfNotExist(chSftp_properties, triggerDirectory + "fdconfig" + SEPARATOR);
+			makeDirectoryIfNotExist(chSftp_properties, controlDirectory + "i18n" + SEPARATOR);
+			makeDirectoryIfNotExist(chSftp_properties, triggerDirectory + "i18n" + SEPARATOR);
+
+			String i18nPath = localPath + "i18n" + SEPARATOR;
+			// 将日志文件sftp复制到agent部署的目标机器
+			AgentDeploy.sftpFiles(i18nPath, chSftp_properties, controlDirectory);
+			chSftp_properties.put(localPath + LOGINFONAME, controlDirectory + LOGINFONAME,
+					ChannelSftp.OVERWRITE);
+			AgentDeploy.sftpFiles(i18nPath, chSftp_properties, triggerDirectory);
+			chSftp_properties.put(localPath + LOGINFONAME, triggerDirectory + LOGINFONAME,
+					ChannelSftp.OVERWRITE);
+
+			// 本地当前工程下的配置文件信息dbinfo.conf,上传到目标机器
+			sftpConfFile(chSftp_properties, fdConfigPath, controlDirectory, triggerDirectory, DBINFOCONFNAME);
+			logger.info("###########替换 dbinfo.conf文件###########");
 
 			// 本地当前工程下的配置文件信息appinfo.conf,上传到目标机器
-			File fileAppInfo = new File(fdConfigPath + APPINFOCONfNAME);
-			long fileSizeAppInfo = fileAppInfo.length();
-			chSftp_properties.put(fdConfigPath + APPINFOCONfNAME, controlDirectory + APPINFOCONfNAME,
-					new FileProgressMonitor(fileSizeAppInfo), ChannelSftp.OVERWRITE);
-			logger.info("###########替换control appinfo.conf文件###########");
-			chSftp_properties.put(fdConfigPath + APPINFOCONfNAME, triggerDirectory + APPINFOCONfNAME,
-					new FileProgressMonitor(fileSizeAppInfo), ChannelSftp.OVERWRITE);
-			logger.info("###########替换trigger appinfo.conf文件###########");
+			sftpConfFile(chSftp_properties, fdConfigPath, controlDirectory, triggerDirectory, APPINFOCONfNAME);
+			logger.info("###########替换 appinfo.conf文件###########");
 
 			// 将本地写的临时配置文件(control.conf),sftp复制到agent部署的目标机器
 			File redisInfo = new File(tmp_conf_path + CONTROLCONFNAME);
 			long fileSizeRedisInfo = redisInfo.length();
-			chSftp_properties.put(tmp_conf_path + CONTROLCONFNAME, controlDirectory + CONTROLCONFNAME,
+			chSftp_properties.put(tmp_conf_path + CONTROLCONFNAME, controlDirectory + "fdconfig"
+							+ SEPARATOR + CONTROLCONFNAME,
 					new FileProgressMonitor(fileSizeRedisInfo), ChannelSftp.OVERWRITE);
 			logger.info("###########将本地写的临时配置文件(control.conf),sftp复制到agent部署的目标机器###########");
 			// hadoop配置文件
@@ -166,6 +157,17 @@ public class SCPFileSender {
 			e.printStackTrace();
 			throw new BusinessException("部署失败，请重新部署" + e);
 		}
+	}
+
+	private static void sftpConfFile(ChannelSftp chSftp_properties, String fdConfigPath, String controlDirectory,
+	                                 String triggerDirectory, String appinfocoNfNAME) throws SftpException {
+		long fileSizeAppInfo = new File(fdConfigPath + appinfocoNfNAME).length();
+		chSftp_properties.put(fdConfigPath + appinfocoNfNAME, controlDirectory + "fdconfig"
+						+ SEPARATOR + appinfocoNfNAME,
+				new FileProgressMonitor(fileSizeAppInfo), ChannelSftp.OVERWRITE);
+		chSftp_properties.put(fdConfigPath + appinfocoNfNAME, triggerDirectory + "fdconfig"
+						+ SEPARATOR + appinfocoNfNAME,
+				new FileProgressMonitor(fileSizeAppInfo), ChannelSftp.OVERWRITE);
 	}
 
 	/**
