@@ -33,7 +33,9 @@ import hrds.commons.entity.Etl_sys;
 import hrds.commons.entity.Table_info;
 import hrds.commons.entity.Take_relation_etl;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.utils.PinyinUtil;
 import hrds.commons.utils.PropertyParaValue;
+import hrds.commons.utils.jsch.ChineseUtil;
 import hrds.commons.utils.key.PrimayKeyGener;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -140,7 +142,9 @@ public class StartWayConfAction extends BaseAction {
           //
           assemblyMap.put("ded_id", itemMap.get("ded_id").toString());
           // 作业采集文件类型
-          String dbfile_format = FileFormat.ofValueByCode(((String) itemMap.get("dbfile_format")));
+          String dbfile_format =
+              ChineseUtil.getPingYin(
+                  FileFormat.ofValueByCode(((String) itemMap.get("dbfile_format"))));
           // 作业名称
           String pro_name =
               databaseMap.get("datasource_number")
