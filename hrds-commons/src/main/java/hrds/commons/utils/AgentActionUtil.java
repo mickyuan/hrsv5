@@ -3,6 +3,7 @@ package hrds.commons.utils;
 import fd.ng.netserver.conf.HttpServerConfBean;
 import fd.ng.web.util.Dbo;
 import hrds.commons.entity.Agent_down_info;
+import hrds.commons.entity.Agent_info;
 import hrds.commons.exception.BusinessException;
 
 import java.util.ArrayList;
@@ -116,23 +117,28 @@ public class AgentActionUtil {
 			throw new BusinessException("被调用的agent接口" + methodName + "没有登记");
 		}
 		//2.数据可访问权限处理方式，传入用户需要有Agent对应数据的访问权限，根据agent_id获取信息
-		Agent_down_info agent_info = Dbo.queryOneObject(Agent_down_info.class, "SELECT * FROM "
-						+ Agent_down_info.TableName + " WHERE agent_id = ?  AND user_id = ?",
+		Agent_info agent_info = Dbo.queryOneObject(Agent_info.class, "SELECT * FROM "
+						+ Agent_info.TableName + " WHERE agent_id = ?  AND user_id = ?",
 				agent_id, user_id).orElseThrow(() ->
+				new BusinessException("根据Agent_id:" + agent_id + "查询不到agent_info表信息"));
+
+		Agent_down_info agent_down_info = Dbo.queryOneObject(Agent_down_info.class, "SELECT * FROM "
+						+ Agent_down_info.TableName + " WHERE agent_ip = ?  AND agent_port = ?",
+				agent_info.getAgent_ip(), agent_info.getAgent_port()).orElseThrow(() ->
 				new BusinessException("根据Agent_id:" + agent_id + "查询不到agent_down_info表信息"));
 		//XXX 这里无法判断页面是规定按照配置文件里面一样填/action/*还是/action/还是/action
 		//XXX 因此这里就判断如果是/*或者/结尾的就将结尾的那个字符去掉，保证拼接的url没有多余的字符
-		if (agent_info.getAgent_pattern().endsWith("/*")) {
-			agent_info.setAgent_pattern(agent_info.getAgent_pattern().substring(0,
-					agent_info.getAgent_pattern().length() - 2));
+		if (agent_down_info.getAgent_pattern().endsWith("/*")) {
+			agent_down_info.setAgent_pattern(agent_down_info.getAgent_pattern().substring(0,
+					agent_down_info.getAgent_pattern().length() - 2));
 		}
-		if (agent_info.getAgent_pattern().endsWith("/")) {
-			agent_info.setAgent_pattern(agent_info.getAgent_pattern().substring(0,
-					agent_info.getAgent_pattern().length() - 1));
+		if (agent_down_info.getAgent_pattern().endsWith("/")) {
+			agent_down_info.setAgent_pattern(agent_down_info.getAgent_pattern().substring(0,
+					agent_down_info.getAgent_pattern().length() - 1));
 		}
 		//3.拼接调用需要的url
 		return "http://" + agent_info.getAgent_ip() + ":" + agent_info.getAgent_port()
-				+ agent_info.getAgent_context() + agent_info.getAgent_pattern() + methodName;
+				+ agent_down_info.getAgent_context() + agent_down_info.getAgent_pattern() + methodName;
 	}
 
 	public static String getServerUrl(HttpServerConfBean confBean, String methodName) {
