@@ -9,6 +9,7 @@ import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.CodecUtil;
 import fd.ng.core.utils.DateUtil;
+import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.web.annotation.UploadFile;
@@ -23,12 +24,15 @@ import hrds.commons.collection.bean.LayerBean;
 import hrds.commons.collection.bean.LayerTypeBean;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
-import hrds.commons.tree.foreground.ForegroundTreeUtil;
-import hrds.commons.tree.foreground.bean.TreeDataInfo;
+import hrds.commons.tree.background.TreeNodeInfo;
+import hrds.commons.tree.background.bean.TreeConf;
+import hrds.commons.tree.commons.TreePageSource;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.DruidParseQuerySql;
 import hrds.commons.utils.etl.EtlJobUtil;
 import hrds.commons.utils.key.PrimayKeyGener;
+import hrds.commons.utils.tree.Node;
+import hrds.commons.utils.tree.NodeDataConvertedTreeList;
 import hrds.h.biz.MainClass;
 import hrds.main.AppMain;
 import org.apache.commons.lang.StringUtils;
@@ -1066,55 +1070,21 @@ public class MarketInfoAction extends BaseAction {
             logicStep = "1.声明获取到 zTreeUtil 的对象" +
                     "2.设置树实体" +
                     "3.调用ZTreeUtil的getTreeDataInfo获取treeData的信息")
-    @Param(name = "agent_layer", desc = "数据层类型", range = "String类型", nullable = true)
-    @Param(name = "source_id", desc = "数据源id", range = "String类型", nullable = true)
-    @Param(name = "classify_id", desc = "分类id", range = "String类型", nullable = true)
-    @Param(name = "data_mart_id", desc = "集市id", range = "String类型", nullable = true)
-    @Param(name = "category_id", desc = "分类编号", range = "String类型", nullable = true)
-    @Param(name = "systemDataType", desc = "系统数据类型", range = "String类型", nullable = true)
-    @Param(name = "kafka_id", desc = "kafka数据id", range = "String类型", nullable = true)
-    @Param(name = "batch_id", desc = "批量数据id", range = "String类型", nullable = true)
-    @Param(name = "groupId", desc = "分组id", range = "String类型", nullable = true)
-    @Param(name = "sdm_consumer_id", desc = "消费id", range = "String类型", nullable = true)
-    @Param(name = "parent_id", desc = "父id", range = "String类型", nullable = true)
-    @Param(name = "tableSpace", desc = "表空间", range = "String类型", nullable = true)
-    @Param(name = "database_type", desc = "数据库类型", range = "String类型", nullable = true)
-    @Param(name = "isFileCo", desc = "是否文件采集", range = "String类型", valueIfNull = "false")
-    @Param(name = "tree_menu_from", desc = "树菜单来源", range = "String类型", nullable = true)
-    @Param(name = "isPublicLayer", desc = "公共层", range = "IsFlag代码项1:是,0:否", valueIfNull = "1")
-    @Param(name = "isRootNode", desc = "是否为树的根节点标志", range = "IsFlag代码项1:是,0:否", valueIfNull = "1")
     @Return(desc = "树数据Map信息", range = "无限制")
-    public Map<String, Object> getTreeDataInfo(String agent_layer, String source_id, String classify_id,
-                                               String data_mart_id, String category_id, String systemDataType,
-                                               String kafka_id, String batch_id, String groupId, String sdm_consumer_id,
-                                               String parent_id, String tableSpace, String database_type,
-                                               String isFileCo, String tree_menu_from, String isPublicLayer,
-                                               String isRootNode) {
-        //1.声明获取到 zTreeUtil 的对象
-        ForegroundTreeUtil foregroundTreeUtil = new ForegroundTreeUtil();
-        //2.设置树实体
-        TreeDataInfo treeDataInfo = new TreeDataInfo();
-        treeDataInfo.setAgent_layer(agent_layer);
-        treeDataInfo.setSource_id(source_id);
-        treeDataInfo.setClassify_id(classify_id);
-        treeDataInfo.setData_mart_id(data_mart_id);
-        treeDataInfo.setCategory_id(category_id);
-        treeDataInfo.setSystemDataType(systemDataType);
-        treeDataInfo.setKafka_id(kafka_id);
-        treeDataInfo.setBatch_id(batch_id);
-        treeDataInfo.setGroupId(groupId);
-        treeDataInfo.setSdm_consumer_id(sdm_consumer_id);
-        treeDataInfo.setParent_id(parent_id);
-        treeDataInfo.setTableSpace(tableSpace);
-        treeDataInfo.setDatabaseType(database_type);
-        treeDataInfo.setIsFileCo(isFileCo);
-        treeDataInfo.setPage_from(tree_menu_from);
-        treeDataInfo.setIsPublic(isPublicLayer);
-        treeDataInfo.setIsShTable(isRootNode);
-        //3.调用ZTreeUtil的getTreeDataInfo获取树数据信息
-        Map<String, Object> treeSourcesMap = new HashMap<>();
-        treeSourcesMap.put("tree_sources", foregroundTreeUtil.getTreeDataInfo(getUser(), treeDataInfo));
-        return treeSourcesMap;
+    public Map<String, Object> getTreeDataInfo() {
+
+        //配置树不显示文件采集的数据
+        TreeConf treeConf = new TreeConf();
+        treeConf.setShowFileCollection(Boolean.FALSE);
+        //根据源菜单信息获取节点数据列表
+        List<Map<String, Object>> dataList =
+                TreeNodeInfo.getTreeNodeInfo(TreePageSource.MARKET, getUser(), treeConf);
+        //转换节点数据列表为分叉树列表
+        List<Node> tsbTreeList = NodeDataConvertedTreeList.dataConversionTreeInfo(dataList);
+        //定义返回的分叉树结果Map
+        Map<String, Object> tsbTreeDataMap = new HashMap<>();
+        tsbTreeDataMap.put("marketTreeList", JsonUtil.toObjectSafety(tsbTreeList.toString(), List.class));
+        return tsbTreeDataMap;
     }
 
 
@@ -1126,12 +1096,12 @@ public class MarketInfoAction extends BaseAction {
     public Map<String, Object> queryAllColumnOnTableName(String source, String id) {
         Map<String, Object> resultmap = new HashMap<>();
         if (source.equals(DataSourceType.DCL.getCode())) {
-            Table_column table_column = new Table_column();
-            table_column.setTable_id(id);
+            Data_store_reg data_store_reg = new Data_store_reg();
+            data_store_reg.setFile_id(id);
             List<Map<String, Object>> maps = Dbo.queryList("select column_name as columnname,column_type as columntype,false as selectionstate from " + Table_column.TableName +
-                    " where table_id = ? and upper(column_name) not in (?,?,?)", table_column.getTable_id(), Constant.SDATENAME, Constant.EDATENAME, Constant.MD5NAME);
+                    " t1 left join " + Data_store_reg.TableName + " t2 on t1.table_id = t2.table_id where t2.file_id = ? and upper(column_name) not in (?,?,?)", data_store_reg.getFile_id(), Constant.SDATENAME, Constant.EDATENAME, Constant.MD5NAME);
             resultmap.put("columnresult", maps);
-            List<Map<String, Object>> tablenamelist = Dbo.queryList("select hyren_name as tablename from " + Data_store_reg.TableName + " where table_id = ?", table_column.getTable_id());
+            List<Map<String, Object>> tablenamelist = Dbo.queryList("select hyren_name as tablename from " + Data_store_reg.TableName + " where file_id = ?", data_store_reg.getFile_id() );
             resultmap.put("tablename", tablenamelist.get(0).get("tablename"));
             return resultmap;
         } else if (source.equals(DataSourceType.DML.getCode())) {
