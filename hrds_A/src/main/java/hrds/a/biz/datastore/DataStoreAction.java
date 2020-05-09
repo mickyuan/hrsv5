@@ -692,7 +692,7 @@ public class DataStoreAction extends BaseAction {
 		// 2.查询数据存储层数据类型对照表信息
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		asmSql.clean();
-		asmSql.addSql("select * from " + Type_contrast.TableName +
+		asmSql.addSql("select distinct * from " + Type_contrast.TableName +
 				" t1 left join " + Type_contrast_sum.TableName + " t2 on t1.dtcs_id=t2.dtcs_id");
 		if (dtcs_id != null) {
 			asmSql.addSql(" where t1.dtcs_id=?").addParam(dtcs_id);
@@ -712,7 +712,7 @@ public class DataStoreAction extends BaseAction {
 		// 2.查询数据类型长度对照表信息
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		asmSql.clean();
-		asmSql.addSql("select * from " + Length_contrast.TableName +
+		asmSql.addSql("select distinct * from " + Length_contrast.TableName +
 				" t1 left join " + Length_contrast_sum.TableName + " t2 on t1.dlcs_id=t2.dlcs_id");
 		if (dlcs_id != null) {
 			asmSql.addSql(" where t1.dlcs_id=?").addParam(dlcs_id);
