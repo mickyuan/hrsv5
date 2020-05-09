@@ -1,17 +1,5 @@
 package hrds.control.task;
 
-import java.io.File;
-import java.lang.reflect.InvocationTargetException;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.util.*;
-
-import org.apache.commons.beanutils.BeanUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.StringUtil;
 import hrds.commons.codes.*;
@@ -22,6 +10,18 @@ import hrds.control.beans.EtlJobDefBean;
 import hrds.control.beans.WaitFileJobInfo;
 import hrds.control.constans.ControlConfigure;
 import hrds.control.task.helper.*;
+import org.apache.commons.beanutils.BeanUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.io.File;
+import java.lang.reflect.InvocationTargetException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 /**
  *
@@ -34,6 +34,7 @@ import hrds.control.task.helper.*;
  **/
 public class TaskManager {
 
+	public static final DateTimeFormatter DATETIME_DEFAULT = DateTimeFormatter.ofPattern("yyyyMMdd HH:mm:ss");
 	private static final Logger logger = LogManager.getLogger();
 	//TODO 这个名字叫什么我不知道，假如不能使用标识，那么使用LocalDateTime对象
 	private static final String JOB_DEFAULTSTART_DATETIME_STR = "20001231 235959";
@@ -789,7 +790,7 @@ public class TaskManager {
 									ZoneId.systemDefault()).toInstant().toEpochMilli());
 						}else {
 							job.setExecuteTime(LocalDateTime.parse(strBathDate +
-											" " + strDispTime, DateUtil.DATETIME_DEFAULT).
+											" " + strDispTime, TaskManager.DATETIME_DEFAULT).
 									atZone(ZoneId.systemDefault()).toInstant().toEpochMilli());
 						}
 						job.setDependencyFlag(false);
