@@ -17,7 +17,7 @@ public class SparkJobRunner {
 //            ".:hrds_H/build/libs/hrds_H-5.0.jar:hrds_H/src/main/resources/:" +
 //                    "../spark/jars/*:libs/lib/fd-*:libs/lib/hrds-commons-5.0.jar";
     private static final String SPARK_CLASSPATH =
-            "../hrds_H-5.0.jar:resources/:" +
+            ".:hrds_H-5.0.jar:resources/:" +
                     "../spark/jars/*:../lib/fd-*:../lib/hrds-commons-5.0.jar";
 
     private static final long SPARK_JOB_TIMEOUT_SECONDS =
