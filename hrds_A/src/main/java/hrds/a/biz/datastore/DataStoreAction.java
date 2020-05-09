@@ -693,12 +693,13 @@ public class DataStoreAction extends BaseAction {
 		// 2.查询数据存储层数据类型对照表信息
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		asmSql.clean();
-		asmSql.addSql("select * from " + Type_contrast_sum.TableName + " t1 , "
+		asmSql.addSql("select distinct * from " + Type_contrast_sum.TableName + " t1 , "
 				+ Type_contrast.TableName + " t2 where t1.dtcs_id=t2.dtcs_id ");
 		if (dtcs_id != null) {
 			asmSql.addSql(" and t1.dtcs_id=?").addParam(dtcs_id);
 		}
-		return Dbo.queryList(asmSql.sql(), asmSql.params()).stream().distinct().collect(Collectors.toList());
+		asmSql.addSql(" order by t1.dtcs_id");
+		return Dbo.queryList(asmSql.sql(), asmSql.params());
 	}
 
 	@Method(desc = "查询存储层数据类型长度对照信息",
@@ -713,12 +714,13 @@ public class DataStoreAction extends BaseAction {
 		// 2.查询数据类型长度对照表信息
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		asmSql.clean();
-		asmSql.addSql("select * from " + Length_contrast_sum.TableName + " t1, " + Length_contrast.TableName
-				+ " t2 where t1.dlcs_id=t2.dlcs_id ");
+		asmSql.addSql("select distinct * from " + Length_contrast_sum.TableName + " t1, "
+				+ Length_contrast.TableName + " t2 where t1.dlcs_id=t2.dlcs_id ");
 		if (dlcs_id != null) {
 			asmSql.addSql(" and t1.dlcs_id=?").addParam(dlcs_id);
 		}
-		return Dbo.queryList(asmSql.sql(), asmSql.params()).stream().distinct().collect(Collectors.toList());
+		asmSql.addSql(" order by t1.dlcs_id");
+		return Dbo.queryList(asmSql.sql(), asmSql.params());
 	}
 
 	@Method(desc = "根据存储层定义表主键ID与存储层配置存储类型查询存储层属性信息",

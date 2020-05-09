@@ -92,30 +92,24 @@ public class SCPFileSender {
 			// 本地当前工程下的配置文件信息dbinfo.conf,上传到目标机器
 			String localPath = System.getProperty("user.dir") + SEPARATOR + "resources" + SEPARATOR;
 			String fdConfigPath = localPath + "fdconfig" + SEPARATOR;
-			logger.info("=======fdConfigPath========" + fdConfigPath);
-			logger.info("=======targetDir========" + targetDir);
+			logger.info("=======localPath========" + localPath);
 			// 判断文件control/trigger配置文件目录是否存在，不存在则创建
 			String controlDirectory = targetDir + "control" + SEPARATOR + "resources" + SEPARATOR +
 					"fdconfig" + SEPARATOR;
 			String triggerDirectory = targetDir + "trigger" + SEPARATOR + "resources" + SEPARATOR +
 					"fdconfig" + SEPARATOR;
-			String logControlDirectory = targetDir + "control" + SEPARATOR + "resources" + SEPARATOR +
-					"i18n" + SEPARATOR;
-			String logTriggerDirectory = targetDir + "trigger" + SEPARATOR + "resources" + SEPARATOR +
-					"i18n" + SEPARATOR;
 			makeDirectoryIfNotExist(chSftp_properties, controlDirectory);
 			makeDirectoryIfNotExist(chSftp_properties, triggerDirectory);
-			makeDirectoryIfNotExist(chSftp_properties, logControlDirectory);
-			makeDirectoryIfNotExist(chSftp_properties, logTriggerDirectory);
 			// 将日志文件sftp复制到agent部署的目标机器
-			AgentDeploy.sftpFiles(localPath + "i18n" + SEPARATOR, chSftp_properties,
-					targetDir + "control" + SEPARATOR);
-			chSftp_properties.put(localPath + LOGINFONAME, targetDir + "control"
-					+ SEPARATOR + LOGINFONAME, ChannelSftp.OVERWRITE);
-			AgentDeploy.sftpFiles(localPath + "i18n" + SEPARATOR, chSftp_properties,
-					targetDir + "trigger" + SEPARATOR);
-			chSftp_properties.put(localPath + LOGINFONAME, targetDir + "trigger"
-					+ SEPARATOR + LOGINFONAME, ChannelSftp.OVERWRITE);
+			String i18nPath = localPath + "i18n" + SEPARATOR;
+			AgentDeploy.sftpFiles(i18nPath, chSftp_properties,
+					targetDir + "control" + "resources" + SEPARATOR);
+			chSftp_properties.put(localPath + LOGINFONAME, targetDir + "control" + SEPARATOR
+					+ "resources" + SEPARATOR + LOGINFONAME, ChannelSftp.OVERWRITE);
+			AgentDeploy.sftpFiles(i18nPath, chSftp_properties,
+					targetDir + "trigger" + "resources" + SEPARATOR);
+			chSftp_properties.put(localPath + LOGINFONAME, targetDir + "trigger" + SEPARATOR
+					+ "resources" + SEPARATOR + LOGINFONAME, ChannelSftp.OVERWRITE);
 
 			File fileDbInfo = new File(fdConfigPath + DBINFOCONFNAME);
 			long fileSizeDbInfo = fileDbInfo.length();
@@ -191,14 +185,12 @@ public class SCPFileSender {
 					continue;
 				tempPath += SEPARATOR + dir;
 				try {
-					logger.info("检测目录[" + tempPath + "]");
 					sftp.cd(tempPath);
 				} catch (SftpException ex) {
 					try {
 						logger.error("创建目录[" + tempPath + "]");
 						sftp.mkdir(tempPath);
 						sftp.cd(tempPath);
-						logger.error("进入目录[" + tempPath + "]");
 					} catch (SftpException e1) {
 						throw new BusinessException("创建目录失败" + e1.getMessage());
 					}
@@ -207,7 +199,6 @@ public class SCPFileSender {
 
 				}
 			}
-			logger.info("创建目录完成");
 		} catch (Exception e1) {
 			throw new BusinessException("创建目录失败" + e1.getMessage());
 		}
