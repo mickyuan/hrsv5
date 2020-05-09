@@ -118,6 +118,7 @@ public class DataConvertedNodeData {
         dmlDataInfos.forEach(o -> {
             Map<String, Object> map = new HashMap<>();
             map.put("id", o.get("data_mart_id"));
+            map.put("parent_id", Constant.DML);
             map.put("label", o.get("mart_name"));
             map.put("description", o.get("mart_name"));
             map.put("data_layer", DataSourceType.DML.getCode());
@@ -137,6 +138,7 @@ public class DataConvertedNodeData {
         dmlTableInfos.forEach(o -> {
             Map<String, Object> map = new HashMap<>();
             map.put("id", o.get("datatable_id"));
+            map.put("datatable_id", o.get("datatable_id"));
             map.put("label", o.get("datatable_en_name"));
             map.put("parent_id", o.get("data_mart_id"));
             map.put("description", o.get("remark"));

@@ -46,6 +46,8 @@ public class Constant {
 	public static final String DCL_BATCH = "dcl_batch";
 	//贴源层下实时数据 02:实时类型数据
 	public static final String DCL_REALTIME = "dcl_realtime";
+	//集市层
+	public static final String DML  = "DML";
 	//系统数据表 11:系统数据表
 	public static final String SYS_DATA_TABLE = "sys_data_table";
 	//系统数据备份 12:系统数据备份
