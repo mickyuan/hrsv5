@@ -8,7 +8,6 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
-import fd.ng.core.utils.FileUtil;
 import fd.ng.core.utils.StringUtil;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Agent_down_info;
@@ -22,9 +21,7 @@ import hrds.commons.utils.deployentity.HttpYaml;
 import hrds.commons.utils.yaml.Yaml;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.logging.Log;
@@ -163,6 +160,12 @@ public class AgentDeploy {
             shellSession, "rm -rf " + oldAgentPath + SEPARATOR + agentDirName);
       }
 
+      if (StringUtil.isNotBlank(oldLogPath)) {
+        // 根据旧的日志文件
+        logger.info("删除旧的日志命令是 : " + "rm -rf " + oldLogPath);
+        SFTPChannel.execCommandByJSchNoRs(shellSession, "rm -rf " + oldLogPath);
+      }
+
       // 检查当前的目录下的进程是否启动(这里直接使用kill命令,为防止后续启动出错)
       logger.info(
           "停止就Agent的命令 : "
@@ -241,13 +244,22 @@ public class AgentDeploy {
 
       // 五 : 判断是否启动agent
       if (IsFlag.Shi.getCode().equals(down_info.getDeploy())) {
+        // 5-1: 检查日志目录是否存在,如果存在则不创建目录,反之创建
+        String log_dir = down_info.getLog_dir();
+        SFTPChannel.execCommandByJSchNoRs(shellSession, "mkdir -p" + log_dir);
         logger.info(
             "启动agent命令 : cd "
                 + targetDir
-                + ";nohup java -D"
+                + ";nohup java -Dorg.eclipse.jetty.server.Request.maxFormContentSize=99900000"
+                + " -Dport="
                 + down_info.getAgent_port()
-                + " -Dorg.eclipse.jetty.server.Request.maxFormContentSize=99900000 -jar "
+                + " -Dproject.dir="
+                + down_info.getSave_dir()
+                + " -Dproject.name=\"HYRENAgentReceive\""
+                + " -jar "
                 + file.getName()
+                + " >"
+                + down_info.getLog_dir()
                 + " &");
         SFTPChannel.execCommandByJSchNoRs(
             shellSession,
@@ -261,6 +273,8 @@ public class AgentDeploy {
                 + " -Dproject.name=\"HYRENAgentReceive\""
                 + " -jar "
                 + file.getName()
+                + " >"
+                + log_dir
                 + " &");
       }
 
