@@ -3,11 +3,10 @@ package hrds.commons.tree.background.utils;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
-import hrds.commons.exception.BusinessException;
 import hrds.commons.tree.background.bean.TreeConf;
-import hrds.commons.utils.User;
 import hrds.commons.tree.background.query.DCLDataQuery;
-import hrds.commons.tree.background.query.SFLDataQuery;
+import hrds.commons.tree.background.query.DMLDataQuery;
+import hrds.commons.utils.User;
 
 import java.util.List;
 import java.util.Map;
@@ -69,7 +68,22 @@ public class TreeNodeDataQuery {
     @Param(name = "dataList", desc = "节点数据List", range = "节点数据List")
     @Param(name = "treeConf", desc = "TreeConf树配置信息", range = "TreeConf树配置信息")
     public static void getDMLDataList(User user, List<Map<String, Object>> dataList, TreeConf treeConf) {
-        //TODO 暂未配置该存储层
+
+        //获取DCL层批量数据下的数据源列表
+        List<Map<String, Object>> dmlDataInfos = DMLDataQuery.getDMLDataInfos(user);
+
+        //添加DCL层批量数据下数据源节点数据到DCL数据层的层次数据中
+        dataList.addAll(DataConvertedNodeData.conversionDMLDataInfos(dmlDataInfos));
+        dmlDataInfos.forEach(dmlDataInfo -> {
+            //--获取数据源id
+            String data_mart_id = dmlDataInfo.get("data_mart_id").toString();
+            //获取批量数据数据源下分类信息
+            List<Map<String, Object>> dmlTableInfos =
+                    DMLDataQuery.getDMLTableInfos(data_mart_id,  user);
+            if (!dmlTableInfos.isEmpty()) {
+                dataList.addAll(DataConvertedNodeData.conversionDMLTableInfos(dmlTableInfos));
+            }
+        });
     }
 
     @Method(desc = "获取SFL数据层的节点数据", logicStep = "获取SFL数据层的节点数据")
