@@ -610,10 +610,10 @@ public class TaskManager {
 				job.setCurr_bath_date(bathDateStr);
 				job.setMain_serv_sync(Main_Server_Sync.NO.getCode());
 				String currBathDate = job.getCurr_bath_date();
-				job.setPro_dic(TaskJobHelper.transformDirOrName(currBathDate, job.getPro_dic()));//替换作业程序目录
-				job.setLog_dic(TaskJobHelper.transformDirOrName(currBathDate, job.getLog_dic()));//替换作业日志目录
-				job.setPro_name(TaskJobHelper.transformDirOrName(currBathDate, job.getPro_name()));//替换作业程序名称
-				job.setPro_para(TaskJobHelper.transformProgramPara(currBathDate, job.getPro_para()));//替换作业程序参数
+				job.setPro_dic(TaskJobHelper.transformDirOrName(currBathDate, job.getEtl_sys_cd(),job.getPro_dic()));//替换作业程序目录
+				job.setLog_dic(TaskJobHelper.transformDirOrName(currBathDate, job.getEtl_sys_cd(),job.getLog_dic()));//替换作业日志目录
+				job.setPro_name(TaskJobHelper.transformDirOrName(currBathDate, job.getEtl_sys_cd(),job.getPro_name()));//替换作业程序名称
+				job.setPro_para(TaskJobHelper.transformProgramPara(currBathDate,job.getEtl_sys_cd(), job.getPro_para()));//替换作业程序参数
 				//TODO 此处较原版改动：原版该行代码在TaskSqlHelper.insertIntoJobTable(etlJob);之后，现移动至此，
 				// 因为之后的job变量设置属性无意义，该变量之后没有使用，也未更新内存Map，
 				// 也会导致updateEtlJobToPending方法的SQL无效。

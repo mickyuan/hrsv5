@@ -70,7 +70,7 @@ public class MarketInfoAction extends BaseAction {
     private static final String Mart_Storage_path = "";
     private static final String Final_Date = "99991231";
     private static final String Zero = "0";
-    private static final String ZeroDate = "00000000";
+    private static final String ZeroDate = "--------";
     private static final String LimitNumber = "10";
     private static final String alias = "TempTable";
     private static final String TargetColumn = "targecolumn";
