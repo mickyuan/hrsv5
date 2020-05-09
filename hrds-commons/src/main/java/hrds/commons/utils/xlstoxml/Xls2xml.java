@@ -111,17 +111,17 @@ public class Xls2xml {
 
 	public static void toXml(String db_path, String xml_path) {
 
-		String path_cd = pathToUnEscape(db_path + "~dd_data.json");
-		File file = FileUtils.getFile(path_cd);
+//		String path_cd = pathToUnEscape(db_path + "~dd_data.json");
+		File file = FileUtils.getFile(db_path);
 		if (file.exists()) {
-			jsonToXml(path_cd, xml_path);
+			jsonToXml(db_path, xml_path);
 		} else {
-			path_cd = pathToUnEscape(db_path + "~dd_data.xls");
+//			path_cd = pathToUnEscape(db_path + "~dd_data.xls");
 			file = FileUtils.getFile(db_path);
 			if (!file.exists()) {
 				throw new BusinessException("没有找到相应的数据字典定义文件！");
 			}
-			XlsToXml(path_cd, xml_path);
+			XlsToXml(db_path, xml_path);
 		}
 	}
 
