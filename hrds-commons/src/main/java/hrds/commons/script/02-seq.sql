@@ -103,13 +103,6 @@ INSERT INTO sys_user(USER_ID, CREATE_ID, DEP_ID, ROLE_ID, USER_NAME, USER_PASSWO
 INSERT INTO sys_user(user_id, create_id, dep_id, role_id, user_name, user_password, user_email, user_mobile, useris_admin,user_type, usertype_group, login_ip, login_date, user_state, create_date, create_time, update_date, update_time, user_remark, token, valid_time) VALUES (1001, 1000, 1000000001, '1001', '全功能管理员', '1', 'ccc@vv.com', '1234567890','0','01', '01,04,11,55', null, null, '1', '20181015', '145752', '20181015', '145752', '','0', '0');
 INSERT INTO sys_user(user_id, create_id, dep_id, role_id, user_name, user_password, user_email, user_mobile, useris_admin,user_type, usertype_group, login_ip, login_date, user_state, create_date, create_time, update_date, update_time, user_remark, token, valid_time) VALUES (2001, 1000, 1000000001, '1001', '全功能操作员', '1', 'ccc@vv.com', '1234567890','0','02', '37,02,27,12,14,04,24', null, null, '1', '20181015', '145752', '20181015', '145752', '', '0', '0');
 
-delete from edw_job_alg;
-INSERT INTO edw_job_alg VALUES ('F1', 'F1:Delete/Insert');
-INSERT INTO edw_job_alg VALUES ('F2', 'F2:Upsert');
-INSERT INTO edw_job_alg VALUES ('F3', 'F3:History Chain');
-INSERT INTO edw_job_alg VALUES ('F5', 'F5:FullData History Chain');
-INSERT INTO edw_job_alg VALUES ('I', 'I:Append');
-
 
 
 delete from interface_info;
@@ -150,25 +143,3 @@ INSERT INTO interface_info VALUES (141, 'deleteTableData', '删除Spark表数据
 INSERT INTO interface_info VALUES (142, 'dropTable', '删除Spark表接口', '1', '1', '01-162', NULL, 1001);
 INSERT INTO interface_info VALUES (143, 'createTraceTable', '创建有溯源Spark表接口', '1', '1', '01-163', NULL, 1001);
 INSERT INTO interface_info VALUES (144, 'singleFileUpload', '单文件上传接口', '1', '1', '01-150', null, 1001);
-
-
-
-
-delete from ml_datatransfer_fun;
-INSERT INTO ml_datatransfer_fun (tranfunt_num, funtype_name) VALUES (1, '算术');
-INSERT INTO ml_datatransfer_fun (tranfunt_num, funtype_name) VALUES (2, '类型转换');
-INSERT INTO ml_datatransfer_fun (tranfunt_num, funtype_name) VALUES (3, '日期运算');
-INSERT INTO ml_datatransfer_fun (tranfunt_num, funtype_name) VALUES (4, '日期创建');
-INSERT INTO ml_datatransfer_fun (tranfunt_num, funtype_name) VALUES (5, '字符串');
-
-delete from dq_rule_type_def;
-INSERT INTO dq_rule_type_def (CASE_TYPE, CASE_TYPE_DESC, INDEX_DESC1, INDEX_DESC2, INDEX_DESC3, REMARK) VALUES ('COL ENUM', '字段枚举检测', '不在范围内的记录数', '检查总记录数', '', '检测目标表名的 目标表关键字段是否在清单值域 内，格式转义需用户直接转义');
-INSERT INTO dq_rule_type_def (CASE_TYPE, CASE_TYPE_DESC, INDEX_DESC1, INDEX_DESC2, INDEX_DESC3, REMARK) VALUES ('COL FK', '字段外键检测', '外键不存在的记录数', '检查总记录数', '', '检测目标表名的 目标表关键字段(，分割多个字段)是否在 比对表表名 的 比对表关键字段 存在 ');
-INSERT INTO dq_rule_type_def (CASE_TYPE, CASE_TYPE_DESC, INDEX_DESC1, INDEX_DESC2, INDEX_DESC3, REMARK) VALUES ('COL NAN', '字段非空', '空的记录数', '检查总记录数', '', '检测目标表名的 目标表关键字段是否非空');
-INSERT INTO dq_rule_type_def (CASE_TYPE, CASE_TYPE_DESC, INDEX_DESC1, INDEX_DESC2, INDEX_DESC3, REMARK) VALUES ('COL PK', '字段主键检测', '主键重复的记录数', '检查总记录数', '', '检测目标表名的 目标表关键字段(，分割多个字段)是否为主键唯一 ');
-INSERT INTO dq_rule_type_def (CASE_TYPE, CASE_TYPE_DESC, INDEX_DESC1, INDEX_DESC2, INDEX_DESC3, REMARK) VALUES ('COL RANG', '字段范围检测', '不在范围内的记录数', '检查总记录数', '', '检测目标表名的 目标表关键字段是否在【范围区间的最小值，范围区间的最大值】内，格式转义需用户直接转义');
-INSERT INTO dq_rule_type_def (CASE_TYPE, CASE_TYPE_DESC, INDEX_DESC1, INDEX_DESC2, INDEX_DESC3, REMARK) VALUES ('COL REGULAR', '字段正则表达式', '不在范围内的记录数', '检查总记录数', '', '检测目标表名的 目标表关键字段是否符合在清单值域 内字段正则表达式');
-INSERT INTO dq_rule_type_def (CASE_TYPE, CASE_TYPE_DESC, INDEX_DESC1, INDEX_DESC2, INDEX_DESC3, REMARK) VALUES ('SQL', '指定sql', '自定义', '自定义', '', '检测指定SQL 的sql规则');
--- INSERT INTO dq_rule_type_def (CASE_TYPE, CASE_TYPE_DESC, INDEX_DESC1, INDEX_DESC2, INDEX_DESC3, REMARK) VALUES ('SQL FILE', '指定sql文件', '自定义', '自定义', '', '检测指定SQL 路径存在的规则 ');
-INSERT INTO dq_rule_type_def (CASE_TYPE, CASE_TYPE_DESC, INDEX_DESC1, INDEX_DESC2, INDEX_DESC3, REMARK) VALUES ('TAB NAN', '表非空', '', '', '', '检测目标表名是否非空');
--- INSERT INTO dq_rule_type_def (CASE_TYPE, CASE_TYPE_DESC, INDEX_DESC1, INDEX_DESC2, INDEX_DESC3, REMARK) VALUES ('TAB SIZE', '表数据量增量', '当日增量记录数x', '上日增量记录数y', '(x-y)/y*100', '');
