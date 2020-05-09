@@ -28,6 +28,8 @@ public class SCPFileSender {
 	public static final String DBINFOCONFNAME = "dbinfo.conf";
 	// control配置文件名称
 	public static final String CONTROLCONFNAME = "control.conf";
+	// 日志配置文件名称
+	public static final String LOGINFONAME = "log4j2.xml";
 
 	public static void etlScpToFrom(SFTPDetails sftpDetails) {
 
@@ -124,7 +126,16 @@ public class SCPFileSender {
 			chSftp_properties.put(tmp_conf_path + CONTROLCONFNAME, controlDirectory + CONTROLCONFNAME,
 					new FileProgressMonitor(fileSizeRedisInfo), ChannelSftp.OVERWRITE);
 			logger.info("###########将本地写的临时配置文件(control.conf),sftp复制到agent部署的目标机器###########");
-
+			// 将日志文件sftp复制到agent部署的目标机器
+			String localPath = System.getProperty("user.dir") + SEPARATOR + "resources" + SEPARATOR;
+			AgentDeploy.sftpFiles(localPath + "i18n" + SEPARATOR, chSftp_properties,
+					targetDir + "control" + SEPARATOR);
+			chSftp_properties.put(localPath + LOGINFONAME, targetDir + "control"
+					+ SEPARATOR + LOGINFONAME, ChannelSftp.OVERWRITE);
+			AgentDeploy.sftpFiles(localPath + "i18n" + SEPARATOR, chSftp_properties,
+					targetDir + "trigger" + SEPARATOR);
+			chSftp_properties.put(localPath + LOGINFONAME, targetDir + "trigger"
+					+ SEPARATOR + LOGINFONAME, ChannelSftp.OVERWRITE);
 			// hadoop配置文件
 //			File fileHadoopConf = new File(hadoopConf);
 //			File[] list = fileHadoopConf.listFiles();
@@ -172,7 +183,7 @@ public class SCPFileSender {
 			for (String dir : dirs) {
 				if (null == dir || "".equals(dir))
 					continue;
-				tempPath += "/" + dir;
+				tempPath += SEPARATOR + dir;
 				try {
 					logger.info("检测目录[" + tempPath + "]");
 					sftp.cd(tempPath);

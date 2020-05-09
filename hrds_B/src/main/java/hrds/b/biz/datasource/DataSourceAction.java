@@ -282,7 +282,7 @@ public class DataSourceAction extends BaseAction {
 					"2.1判断部门ID是否为空或者空格" +
 					"2.2判断部门是否存在" +
 					"3.验证datasource_name是否合法" +
-					"4.datasource_number是否合法")
+					"4.验证datasource_number为以字母开头的数字、26个英文字母或者下划线组成的字符串")
 	@Param(name = "datasource_name", desc = "数据源名称", range = "不为空且不为空格")
 	@Param(name = "datasource_umber", desc = "数据源编号", range = "不为空且不为空格，长度不超过四位")
 	@Param(name = "dep_id", desc = "source_relation_dep表主键ID的数组", range = "不为空以及不为空格")
@@ -301,8 +301,8 @@ public class DataSourceAction extends BaseAction {
 		if (StringUtil.isBlank(datasource_name)) {
 			throw new BusinessException("数据源名称不能为空以及不能为空格，datasource_name=" + datasource_name);
 		}
-		// 4.验证datasource_number为以字母开头的4位字符
-		Matcher matcher = Pattern.compile("^[a-zA-Z][a-zA-z0-9]{3}").matcher(datasource_umber);
+		// 4.验证datasource_number为以字母开头的数字、26个英文字母或者下划线组成的字符串
+		Matcher matcher = Pattern.compile("^[a-zA-Z]\\w+$").matcher(datasource_umber);
 		if (StringUtil.isBlank(datasource_umber) || !matcher.matches()) {
 			throw new BusinessException("数据源编号只能是以字母开头的不超过四位数的字母数字组合，"
 					+ "datasource_number=" + datasource_umber);
