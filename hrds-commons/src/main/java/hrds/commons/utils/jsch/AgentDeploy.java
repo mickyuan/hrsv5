@@ -246,7 +246,10 @@ public class AgentDeploy {
       if (IsFlag.Shi.getCode().equals(down_info.getDeploy())) {
         // 5-1: 检查日志目录是否存在,如果存在则不创建目录,反之创建
         String log_dir = down_info.getLog_dir();
-        SFTPChannel.execCommandByJSchNoRs(shellSession, "mkdir -p" + log_dir);
+        String s =
+            SFTPChannel.execCommandByJSch(
+                shellSession, "mkdir -p " + new File(log_dir).getParent());
+        logger.info(s);
         logger.info(
             "启动agent命令 : cd "
                 + targetDir
@@ -279,7 +282,7 @@ public class AgentDeploy {
       }
 
     } catch (Exception e) {
-      logger.error("", e);
+      logger.error(e.getMessage(), e);
       throw new BusinessException(e.getMessage());
     } finally {
       if (shellSession != null) {
@@ -291,8 +294,7 @@ public class AgentDeploy {
       if (channel != null) {
         try {
           channel.closeChannel();
-        } catch (Exception e) {
-          throw new BusinessException("通道关闭失败!!!");
+        } catch (Exception ignored) {
         }
       }
       // 删除本地临时的配置文件
