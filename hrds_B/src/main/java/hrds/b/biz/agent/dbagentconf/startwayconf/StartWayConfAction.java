@@ -9,6 +9,7 @@ import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
+import hrds.commons.codes.Dispatch_Frequency;
 import hrds.commons.codes.FileFormat;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.Job_Effective_Flag;
@@ -175,6 +176,12 @@ public class StartWayConfAction extends BaseAction {
                   + BATCH_DATE;
           assemblyMap.put("pro_para", pro_para);
 
+          // 设置调度的默认值
+          assemblyMap.put("disp_freq", Dispatch_Frequency.DAILY.getCode());
+          // 设置默认的作业优先级
+          assemblyMap.put("job_priority", "0");
+          // 设置默认的调度触发方式
+          assemblyMap.put("disp_offset", "0");
           assemblyList.add(assemblyMap);
         });
 
