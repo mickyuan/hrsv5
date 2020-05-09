@@ -124,7 +124,7 @@ public class AgentListAction extends BaseAction {
 			sqlStr = " SELECT fs.odc_id id,fs.obj_collect_name task_name,fs.AGENT_ID AGENT_ID,gi.source_id" +
 					" FROM " + Object_collect.TableName + " fs " +
 					" LEFT JOIN " + Agent_info.TableName + " gi ON gi.Agent_id = fs.Agent_id " +
-					" WHERE fs.Agent_id = ?";
+					" WHERE fs.Agent_id = ? AND fs.is_sendok = ?";
 		}
 		//FtpAgent
 		else if (AgentType.FTP == agentType) {
@@ -138,7 +138,7 @@ public class AgentListAction extends BaseAction {
 			sqlStr = " SELECT fs.fcs_id id,fs.fcs_name task_name,fs.AGENT_ID AGENT_ID,gi.source_id" +
 					" FROM " + File_collect_set.TableName + " fs " +
 					" LEFT JOIN " + Agent_info.TableName + " gi ON gi.Agent_id = fs.Agent_id " +
-					" where fs.Agent_id = ?";
+					" where fs.Agent_id = ? AND fs.is_sendok = ?";
 		} else {
 			throw new BusinessException("从数据库中取到的Agent类型不合法");
 		}

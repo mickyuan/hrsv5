@@ -107,4 +107,42 @@ public class DataConvertedNodeData {
         });
         return dclBatchTableNodes;
     }
+
+    @Method(desc = "转化DML层工程表的数据为Node节点数据",
+            logicStep = "转化DML层工程表的数据为Node节点数据")
+    @Param(name = "dclBatchDataInfos", desc = "贴源层批量数据下数据源信息", range = "贴源层批量数据下数据源信息")
+    @Return(desc = "返回值说明", range = "返回值取值范围")
+    public static List<Map<String, Object>> conversionDMLDataInfos(List<Map<String, Object>> dmlDataInfos) {
+        //设置为树节点信息
+        List<Map<String, Object>> dmlDataNodes = new ArrayList<>();
+        dmlDataInfos.forEach(o -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("id", o.get("data_mart_id"));
+            map.put("label", o.get("mart_name"));
+            map.put("description", o.get("mart_name"));
+            map.put("data_layer", DataSourceType.DML.getCode());
+            dmlDataNodes.add(map);
+        });
+        return dmlDataNodes;
+    }
+
+    @Method(desc = "转化DCL层批量数据数据源下分类数据为Node节点数据",
+            logicStep = "转化DCL层批量数据数据源下分类数据为Node节点数据")
+    @Param(name = "dclBatchClassifyInfos", desc = "贴源层批量数据数据源下分类信息", range = "贴源层批量数据数据源下分类信息")
+    @Return(desc = "返回值说明", range = "返回值取值范围")
+    public static List<Map<String, Object>> conversionDMLTableInfos(
+            List<Map<String, Object>> dmlTableInfos) {
+        //设置为树节点信息
+        List<Map<String, Object>> dclBatchClassifyNodes = new ArrayList<>();
+        dmlTableInfos.forEach(o -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("id", o.get("datatable_id"));
+            map.put("label", o.get("datatable_en_name"));
+            map.put("parent_id", o.get("data_mart_id"));
+            map.put("description", o.get("remark"));
+            map.put("data_layer", DataSourceType.DML.getCode());
+            dclBatchClassifyNodes.add(map);
+        });
+        return dclBatchClassifyNodes;
+    }
 }
