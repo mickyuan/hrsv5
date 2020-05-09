@@ -30,7 +30,7 @@ public class TreeNodeInfo {
     }
 
     @Method(desc = "获取自定义的树节点信息", logicStep = "获取自定义的树节点信息")
-    @Param(name = "tree_source", desc = "树菜单来源", range = "String类型")
+    @Param(name = "dataLayers", desc = "树菜单来源", range = "String类型")
     @Param(name = "user", desc = "User", range = "登录用户User的对象实例")
     @Param(name = "treeConf", desc = "TreeConf树配置信息", range = "TreeConf树配置信息")
     @Return(desc = "树节点数据列表", range = "树节点数据列表")
