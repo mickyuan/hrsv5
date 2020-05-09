@@ -108,16 +108,8 @@ public class AgentDeployAction extends BaseAction {
       desc = "自定义路径",
       range = "不能为空(0-表示系统默认路径,1相反)",
       valueIfNull = {"0"})
-  @Param(
-      name = "oldAgentDir",
-      desc = "Agent旧的部署目录",
-      range = "可以为空,为空表示为第一次部署",
-      valueIfNull = {""})
-  @Param(
-      name = "oldLogPath",
-      desc = "Agent旧日志信息",
-      range = "可以为空,为空表示为第一次部署",
-      valueIfNull = {""})
+  @Param(name = "oldAgentDir", desc = "Agent旧的部署目录", range = "可以为空,为空表示为第一次部署", nullable = true)
+  @Param(name = "oldLogPath", desc = "Agent旧日志信息", range = "可以为空,为空表示为第一次部署", nullable = true)
   public void saveAgentDownInfo(
       Agent_down_info agent_down_info, String customPath, String oldAgentDir, String oldLogPath) {
 
