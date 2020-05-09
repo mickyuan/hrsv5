@@ -156,14 +156,14 @@ public class AgentDeploy {
                 + " |grep -v grep| awk '{print $2}'| xargs -n 1)");
 
         logger.info("删除旧目录的命令是 : " + "rm -rf " + oldAgentPath + SEPARATOR + agentDirName);
-        SFTPChannel.execCommandByJSchNoRs(
+        SFTPChannel.execCommandByJSch(
             shellSession, "rm -rf " + oldAgentPath + SEPARATOR + agentDirName);
       }
 
       if (StringUtil.isNotBlank(oldLogPath)) {
         // 根据旧的日志文件
         logger.info("删除旧的日志命令是 : " + "rm -rf " + oldLogPath);
-        SFTPChannel.execCommandByJSchNoRs(shellSession, "rm -rf " + oldLogPath);
+        SFTPChannel.execCommandByJSch(shellSession, "rm -rf " + oldLogPath);
       }
 
       // 检查当前的目录下的进程是否启动(这里直接使用kill命令,为防止后续启动出错)
@@ -264,7 +264,7 @@ public class AgentDeploy {
                 + " >"
                 + down_info.getLog_dir()
                 + " &");
-        SFTPChannel.execCommandByJSchNoRs(
+        SFTPChannel.execCommandByJSch(
             shellSession,
             "cd "
                 + targetDir
