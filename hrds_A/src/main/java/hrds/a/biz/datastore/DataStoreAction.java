@@ -31,6 +31,7 @@ import java.nio.file.Files;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @DocClass(desc = "数据存储层配置管理", author = "dhw", createdate = "2019/11/22 11:25")
 public class DataStoreAction extends BaseAction {
@@ -687,17 +688,17 @@ public class DataStoreAction extends BaseAction {
 					"数据存储层数据类型对照以及长度对照表信息")
 	@Param(name = "dtcs_id", desc = "存储层类型长度ID", range = "新增数据类型对照主表时生成", nullable = true)
 	@Return(desc = "返回类型以及类型长度对照表信息", range = "无限制")
-	public Result searchDataLayerDataTypeInfo(Long dtcs_id) {
+	public List<Map<String, Object>> searchDataLayerDataTypeInfo(Long dtcs_id) {
 		// 1.数据可访问权限处理方式，该方法不需要权限控制
 		// 2.查询数据存储层数据类型对照表信息
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		asmSql.clean();
-		asmSql.addSql("select distinct * from " + Type_contrast.TableName +
-				" t1 left join " + Type_contrast_sum.TableName + " t2 on t1.dtcs_id=t2.dtcs_id");
+		asmSql.addSql("select * from " + Type_contrast_sum.TableName + " t1 , "
+				+ Type_contrast.TableName + " t2 where t1.dtcs_id=t2.dtcs_id ");
 		if (dtcs_id != null) {
-			asmSql.addSql(" where t1.dtcs_id=?").addParam(dtcs_id);
+			asmSql.addSql(" and t1.dtcs_id=?").addParam(dtcs_id);
 		}
-		return Dbo.queryResult(asmSql.sql(), asmSql.params());
+		return Dbo.queryList(asmSql.sql(), asmSql.params()).stream().distinct().collect(Collectors.toList());
 	}
 
 	@Method(desc = "查询存储层数据类型长度对照信息",
@@ -707,17 +708,17 @@ public class DataStoreAction extends BaseAction {
 					"数据存储层数据类型对照以及长度对照表信息")
 	@Param(name = "dlcs_id", desc = "存储层类型长度ID", range = "新增数据类型长度对照主表时生成", nullable = true)
 	@Return(desc = "返回类型以及类型长度对照表信息", range = "无限制")
-	public Result searchDataLayerDataTypeLengthInfo(Long dlcs_id) {
+	public List<Map<String, Object>> searchDataLayerDataTypeLengthInfo(Long dlcs_id) {
 		// 1.数据可访问权限处理方式，该方法不需要权限控制
 		// 2.查询数据类型长度对照表信息
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		asmSql.clean();
-		asmSql.addSql("select distinct * from " + Length_contrast.TableName +
-				" t1 left join " + Length_contrast_sum.TableName + " t2 on t1.dlcs_id=t2.dlcs_id");
+		asmSql.addSql("select * from " + Length_contrast_sum.TableName + " t1, " + Length_contrast.TableName
+				+ " t2 where t1.dlcs_id=t2.dlcs_id ");
 		if (dlcs_id != null) {
-			asmSql.addSql(" where t1.dlcs_id=?").addParam(dlcs_id);
+			asmSql.addSql(" and t1.dlcs_id=?").addParam(dlcs_id);
 		}
-		return Dbo.queryResult(asmSql.sql(), asmSql.params());
+		return Dbo.queryList(asmSql.sql(), asmSql.params()).stream().distinct().collect(Collectors.toList());
 	}
 
 	@Method(desc = "根据存储层定义表主键ID与存储层配置存储类型查询存储层属性信息",
