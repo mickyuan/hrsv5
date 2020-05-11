@@ -54,7 +54,7 @@ public class CommandExecute {
 			for (int i = 4; i < args.length; i++) {
 				sqlParam.append(args[i]).append(JobConstant.SQLDELIMITER);
 			}
-			sqlParam.delete(sqlParam.length() - 1, sqlParam.length());
+			sqlParam.delete(sqlParam.length() - JobConstant.SQLDELIMITER.length(), sqlParam.length());
 		}
 		try {
 			String taskInfo = FileUtil.readFile2String(new File(Constant.MESSAGEFILE
@@ -104,7 +104,7 @@ public class CommandExecute {
 			list.add(submit);
 			//3.打印每个线程执行情况
 			JobStatusInfoUtil.printJobStatusInfo(list);
-		} catch (RejectedExecutionException e) {
+		} catch (Exception e) {
 			throw new AppSystemException("数据库抽取表" + collectTableBean.getTable_name() + "失败", e);
 		} finally {
 			if (executor != null)
@@ -131,7 +131,7 @@ public class CommandExecute {
 			list.add(submit);
 			//3.打印每个线程执行情况
 			JobStatusInfoUtil.printJobStatusInfo(list);
-		} catch (RejectedExecutionException e) {
+		} catch (Exception e) {
 			throw new AppSystemException("数据库抽取表" + collectTableBean.getTable_name() + "失败", e);
 		} finally {
 			if (executor != null)

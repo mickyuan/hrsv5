@@ -65,8 +65,8 @@ public class FileCollectJob extends AgentBaseAction {
 			}
 			//3.打印每个线程执行情况
 			JobStatusInfoUtil.printJobStatusInfo(list);
-		} catch (RejectedExecutionException e) {
-			throw new AppSystemException("采集选择文件夹个数大于最大线程个数和队列个数的和!");
+		} catch (Exception e) {
+			throw new AppSystemException("采集选择文件夹个数大于最大线程个数和队列个数的和!", e);
 		} finally {
 			if (executor != null)
 				executor.shutdown();

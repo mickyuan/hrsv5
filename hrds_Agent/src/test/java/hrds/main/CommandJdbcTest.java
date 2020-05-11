@@ -212,7 +212,7 @@ public class CommandJdbcTest {
 			}
 			//3.打印每个线程执行情况
 			JobStatusInfoUtil.printJobStatusInfo(list);
-		} catch (RejectedExecutionException e) {
+		} catch (Exception e) {
 			return false;
 		} finally {
 			if (executor != null)
@@ -281,7 +281,7 @@ public class CommandJdbcTest {
 			}
 			//3.打印每个线程执行情况
 			JobStatusInfoUtil.printJobStatusInfo(list);
-		} catch (RejectedExecutionException e) {
+		} catch (Exception e) {
 			return false;
 		} finally {
 			if (executor != null)

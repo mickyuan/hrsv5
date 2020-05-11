@@ -53,14 +53,39 @@ public class JobStatusInfoUtil {
 	}
 
 	@Method(desc = "打印每个线程执行情况", logicStep = "打印每个线程执行情况")
-	public static void printJobStatusInfo(List<Future<JobStatusInfo>> statusInfoFutureList) {
+	public static void printJobStatusInfo(List<Future<JobStatusInfo>> statusInfoFutureList) throws Exception {
 		//打印每个线程执行情况
 		for (Future<JobStatusInfo> statusInfoFuture : statusInfoFutureList) {
-			try {
-				JobStatusInfo jobStatusInfo = statusInfoFuture.get();
-				log.info("作业执行情况：" + jobStatusInfo.toString());
-			} catch (Exception e) {
-				log.error(e);
+			JobStatusInfo jobStatusInfo = statusInfoFuture.get();
+			if (jobStatusInfo.getUnloadDataStatus() == null || RunStatusConstant.FAILED.getCode()
+					== jobStatusInfo.getUnloadDataStatus().getStatusCode()) {
+				throw new AppSystemException("卸数执行失败");
+			} else {
+				log.info("卸数执行成功");
+			}
+			if (jobStatusInfo.getUploadStatus() == null || RunStatusConstant.FAILED.getCode()
+					== jobStatusInfo.getUploadStatus().getStatusCode()) {
+				throw new AppSystemException("上传执行失败");
+			} else {
+				log.info("上传执行成功");
+			}
+			if (jobStatusInfo.getDataLodingStatus() == null || RunStatusConstant.FAILED.getCode()
+					== jobStatusInfo.getDataLodingStatus().getStatusCode()) {
+				throw new AppSystemException("加载执行失败");
+			} else {
+				log.info("加载执行成功");
+			}
+			if (jobStatusInfo.getCalIncrementStatus() == null || RunStatusConstant.FAILED.getCode()
+					== jobStatusInfo.getCalIncrementStatus().getStatusCode()) {
+				throw new AppSystemException("增量执行失败");
+			} else {
+				log.info("增量执行成功");
+			}
+			if (jobStatusInfo.getDataRegistrationStatus() == null || RunStatusConstant.FAILED.getCode()
+					== jobStatusInfo.getDataRegistrationStatus().getStatusCode()) {
+				throw new AppSystemException("登记执行失败");
+			} else {
+				log.info("登记执行成功");
 			}
 		}
 	}

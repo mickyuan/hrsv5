@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.RejectedExecutionException;
 
 @DocClass(desc = "db文件采集agent接受发送任务的接口", author = "zxz", createdate = "2020/3/26 9:56")
 public class DbFileCollectJob extends AgentBaseAction {
@@ -63,8 +62,8 @@ public class DbFileCollectJob extends AgentBaseAction {
 			}
 			//3.打印每个线程执行情况
 			JobStatusInfoUtil.printJobStatusInfo(list);
-		} catch (RejectedExecutionException e) {
-			throw new AppSystemException("采集选择文件夹个数大于最大线程个数和队列个数的和!");
+		} catch (Exception e) {
+			throw new AppSystemException("采集选择文件夹个数大于最大线程个数和队列个数的和!", e);
 		} finally {
 			if (executor != null)
 				executor.shutdown();
