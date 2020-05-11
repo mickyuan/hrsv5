@@ -51,6 +51,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.apache.commons.collections.map.HashedMap;
+import org.apache.commons.lang.StringUtils;
 
 @DocClass(desc = "定义表抽取属性", author = "WangZhengcheng")
 public class CollTbConfStepAction extends BaseAction {
@@ -104,13 +105,15 @@ public class CollTbConfStepAction extends BaseAction {
     // 2: 根据表名检查是否采集过(只要有一个阶段采集是完成或者运行中的,将不再支持编辑),这里的采集指的是发给Agent的
     tableList.forEach(
         itemMap -> {
-          List<Object> tableStateList =
-              checkTableCollectState(colSetId, itemMap.get("table_name").toString());
-          if (tableStateList.contains(ExecuteState.YunXingWanCheng.getCode())
-              || tableStateList.contains(ExecuteState.KaiShiYunXing.getCode())) {
-            itemMap.put("collectState", false);
-          } else {
-            itemMap.put("collectState", true);
+          String table_name = String.valueOf(itemMap.get("table_name"));
+          if (StringUtil.isNotBlank(table_name)) {
+            List<Object> tableStateList = checkTableCollectState(colSetId, table_name);
+            if (tableStateList.contains(ExecuteState.YunXingWanCheng.getCode())
+                || tableStateList.contains(ExecuteState.KaiShiYunXing.getCode())) {
+              itemMap.put("collectState", false);
+            } else {
+              itemMap.put("collectState", true);
+            }
           }
         });
 
@@ -513,13 +516,15 @@ public class CollTbConfStepAction extends BaseAction {
     // 2: 根据表名检查是否采集过(只要有一个阶段采集是完成或者运行中的,将不再支持编辑),这里的采集指的是发给Agent的
     tableList.forEach(
         itemMap -> {
-          List<Object> tableStateList =
-              checkTableCollectState(colSetId, itemMap.get("table_name").toString());
-          if (tableStateList.contains(ExecuteState.YunXingWanCheng.getCode())
-              || tableStateList.contains(ExecuteState.KaiShiYunXing.getCode())) {
-            itemMap.put("collectState", false);
-          } else {
-            itemMap.put("collectState", true);
+          String table_name = String.valueOf(itemMap.get("table_name"));
+          if (StringUtil.isNotBlank(table_name)) {
+            List<Object> tableStateList = checkTableCollectState(colSetId, table_name);
+            if (tableStateList.contains(ExecuteState.YunXingWanCheng.getCode())
+                || tableStateList.contains(ExecuteState.KaiShiYunXing.getCode())) {
+              itemMap.put("collectState", false);
+            } else {
+              itemMap.put("collectState", true);
+            }
           }
         });
 
@@ -1220,13 +1225,15 @@ public class CollTbConfStepAction extends BaseAction {
         map.put("collectState", true);
         results.add(map);
       } else {
-        List<Object> tableStateList =
-            checkTableCollectState(colSetId, String.valueOf(tableResult.get("table_name")));
-        if (tableStateList.contains(ExecuteState.YunXingWanCheng.getCode())
-            || tableStateList.contains(ExecuteState.KaiShiYunXing.getCode())) {
-          tableResult.put("collectState", false);
-        } else {
-          tableResult.put("collectState", true);
+        String table_name = String.valueOf(tableResult.get("table_name"));
+        if (StringUtil.isNotBlank(table_name)) {
+          List<Object> tableStateList = checkTableCollectState(colSetId, table_name);
+          if (tableStateList.contains(ExecuteState.YunXingWanCheng.getCode())
+              || tableStateList.contains(ExecuteState.KaiShiYunXing.getCode())) {
+            tableResult.put("collectState", false);
+          } else {
+            tableResult.put("collectState", true);
+          }
         }
 
         results.add(tableResult);
@@ -1682,6 +1689,7 @@ public class CollTbConfStepAction extends BaseAction {
   @Param(name = "table_name", desc = "表名称", range = "不可为空")
   @Return(desc = "返回表的采集状态集合", range = "可以为空,为空表示表未采集过")
   private List<Object> checkTableCollectState(long colSetId, String table_name) {
+
     //    1: 检查表名是否存在
     long checkTableNum =
         Dbo.queryNumber(
