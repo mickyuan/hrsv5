@@ -94,7 +94,8 @@ public class AgentServerInfo extends AgentBaseAction {
 					} else if (osName.toLowerCase().contains("linux")) {
 						//被允许的目录和自己用户下的所有目录和/tmp/下的所有目录
 						if ((linux_list.contains(path_hy) || path_hy.startsWith("/home/" + SystemUtil.USER_NAME) ||
-								path_hy.startsWith("/tmp/")) && !name.startsWith(".")) {
+								path_hy.startsWith("/tmp/"))
+								&& (!name.startsWith(".") || ".bin".equalsIgnoreCase(name))) {
 							Map<String, String> map = new HashMap<>();
 							map.put("name", name);
 							map.put("path", path_hy);
