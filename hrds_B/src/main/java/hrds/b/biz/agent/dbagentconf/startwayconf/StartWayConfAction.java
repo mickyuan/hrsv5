@@ -58,6 +58,8 @@ public class StartWayConfAction extends BaseAction {
   private static final String HYRENBIN = "!{HYSHELLBIN}";
   // 程序日志的工程系统参数名
   private static final String HYRENLOG = "!{HYLOG}";
+  // 采集程序的默认脚本名称
+  private static final String SHELLCOMMAND = "shellCommand.sh";
 
   @Method(desc = "获取工程信息", logicStep = "获取作业调度工程信息,然后返回到前端")
   @Return(desc = "返回工程信息集合", range = "为空表示没有工程信息")
@@ -275,15 +277,15 @@ public class StartWayConfAction extends BaseAction {
     //    2: 获取任务部署的Agent路径及日志地址,并将程序类型,名称的默认值返回
     Map<String, Object> map =
         Dbo.queryOneObject(
-            "SELECT save_dir pro_dic,log_dir log_dic FROM "
+            "SELECT remark pro_dic,log_dir log_dic FROM "
                 + Database_set.TableName
                 + " t1 JOIN "
                 + Agent_down_info.TableName
                 + " t2 ON "
                 + "t1.agent_id = t2.agent_id WHERE t1.database_id = ?",
             colSetId);
-    map.put("pro_type", Pro_Type.JAVA.getCode());
-    map.put("pro_name", PropertyParaValue.getString("agentpath", ""));
+    map.put("pro_type", Pro_Type.SHELL.getCode());
+    map.put("pro_name", SHELLCOMMAND);
 
     // 3: 获取任务存在着抽取作业关系.. 如果存在就获取一条信息就可以... 因为同个任务的作业工程编号,任务编号是一个
     map.putAll(
