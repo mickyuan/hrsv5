@@ -150,13 +150,13 @@ public class ETLAgentDeployment {
 							+ etl_sys_cd
 							+ "/control/ ;"
 							+ "sh startEngineBatchControl.sh"
-							+ " "
+							+ " etl.date="
 							+ batch_date
-							+ " "
+							+ " sys.code="
 							+ etl_sys_cd
-							+ " "
+							+ " -AS="
 							+ isResumeRun
-							+ " "
+							+ " -CR="
 							+ isAutoShift;
 			logger.info("######################" + startAgent);
 			// 5.执行命令启动CONTROL
@@ -215,7 +215,7 @@ public class ETLAgentDeployment {
 							+ etl_sys_cd
 							+ "/trigger/ ;"
 							+ "sh startEngineBatchTrigger.sh"
-							+ " "
+							+ " sys.code="
 							+ etl_sys_cd;
 			logger.info("##############" + startAgent);
 			// 5.执行启动TRIGGER脚本命令启动TRIGGER
