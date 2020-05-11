@@ -114,6 +114,8 @@ public class CollTbConfStepAction extends BaseAction {
             } else {
               itemMap.put("collectState", true);
             }
+          } else {
+            itemMap.put("collectState", true);
           }
         });
 
@@ -525,6 +527,8 @@ public class CollTbConfStepAction extends BaseAction {
             } else {
               itemMap.put("collectState", true);
             }
+          } else {
+            itemMap.put("collectState", true);
           }
         });
 
@@ -1234,6 +1238,8 @@ public class CollTbConfStepAction extends BaseAction {
           } else {
             tableResult.put("collectState", true);
           }
+        } else {
+          tableResult.put("collectState", true);
         }
 
         results.add(tableResult);
