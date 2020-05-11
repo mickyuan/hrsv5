@@ -489,8 +489,11 @@ public class StartWayConfAction extends BaseAction {
   private void setDefaultEtlResource(String etl_sys_cd) {
     long resourceNum =
         Dbo.queryNumber(
-                "SELECT COUNT(1) FROM " + Etl_resource.TableName + " WHERE resource_type = ?",
-                RESOURCE_THRESHOLD)
+                "SELECT COUNT(1) FROM "
+                    + Etl_resource.TableName
+                    + " WHERE resource_type = ? AND etl_sys_cd = ?",
+                RESOURCE_THRESHOLD,
+                etl_sys_cd)
             .orElseThrow(() -> new BusinessException("SQL查询错误"));
     if (resourceNum == 0) {
       Etl_resource etl_resource = new Etl_resource();
