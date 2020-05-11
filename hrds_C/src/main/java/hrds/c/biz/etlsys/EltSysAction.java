@@ -91,7 +91,7 @@ public class EltSysAction extends BaseAction {
 		etl_sys.setMain_serv_sync(Main_Server_Sync.YES.getCode());
 		etl_sys.setSys_run_status(Job_Status.STOP.getCode());
 		// 跑批日期默认为当天
-		etl_sys.setCurr_bath_date(DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate()).toString());
+		etl_sys.setCurr_bath_date(DateUtil.getSysDate());
 		// 4.检查工程编号是否已存在，存在不能新增,这里user_id传值为空，因为不管是什么用户工程编号都不能为空
 		if (ETLJobUtil.isEtlSysExist(etl_sys.getEtl_sys_cd(), null)) {
 			throw new BusinessException("工程编号已存在，不能新增！");
@@ -204,7 +204,7 @@ public class EltSysAction extends BaseAction {
 	@Param(name = "etl_sys_cd", desc = "作业调度工程登记表主键ID", range = "新增工程时生成")
 	@Param(name = "isResumeRun", desc = "是否续跑", range = "使用（IsFlag）代码项，1代表是，0代表否")
 	@Param(name = "isAutoShift", desc = "是否自动日切", range = "使用（IsFlag）代码项，1代表是，0代表否")
-	@Param(name = "curr_bath_date", desc = "批量日期", range = "yyyy-MM-dd格式的年月日，如：2019-12-19")
+	@Param(name = "curr_bath_date", desc = "批量日期", range = "yyyyMMdd格式的年月日，如：20191219")
 	public void startControl(
 			String etl_sys_cd, String isResumeRun, String isAutoShift, String curr_bath_date) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
@@ -225,6 +225,9 @@ public class EltSysAction extends BaseAction {
 		// 6.获取系统状态,如果不是停止说明系统不是停止状态,不是停止状态不能启动control
 		if (Job_Status.STOP != (Job_Status.ofEnumByCode(etlSys.get("sys_run_status").toString()))) {
 			throw new BusinessException("系统不是停止状态不能启动control");
+		}
+		if (curr_bath_date.contains("-")) {
+			curr_bath_date = curr_bath_date.replaceAll("-", "");
 		}
 		// 7.调用脚本启动启动Control
 		ETLAgentDeployment.startEngineBatchControl(curr_bath_date, etl_sys_cd, isResumeRun, isAutoShift,

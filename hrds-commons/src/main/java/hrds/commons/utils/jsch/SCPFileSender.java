@@ -28,6 +28,7 @@ public class SCPFileSender {
 	public static final String DBINFOCONFNAME = "dbinfo.conf";
 	// control配置文件名称
 	public static final String CONTROLCONFNAME = "control.conf";
+	public static final String TRIGGERCONFNAME = "trigger.conf";
 	// 日志配置文件名称
 	public static final String LOGINFONAME = "log4j2.xml";
 
@@ -121,12 +122,19 @@ public class SCPFileSender {
 			logger.info("###########替换 appinfo.conf文件###########");
 
 			// 将本地写的临时配置文件(control.conf),sftp复制到agent部署的目标机器
-			File redisInfo = new File(tmp_conf_path + CONTROLCONFNAME);
-			long fileSizeRedisInfo = redisInfo.length();
+			File controlInfo = new File(tmp_conf_path + CONTROLCONFNAME);
+			long fileSizeControlInfo = controlInfo.length();
 			chSftp_properties.put(tmp_conf_path + CONTROLCONFNAME, controlDirectory + "fdconfig"
 							+ SEPARATOR + CONTROLCONFNAME,
-					new FileProgressMonitor(fileSizeRedisInfo), ChannelSftp.OVERWRITE);
-			logger.info("###########将本地写的临时配置文件(control.conf),sftp复制到agent部署的目标机器###########");
+					new FileProgressMonitor(fileSizeControlInfo), ChannelSftp.OVERWRITE);
+			logger.info("###########将临时配置文件control.conf,sftp复制到agent部署的目标机器###########");
+			// 将本地写的临时配置文件(control.conf),sftp复制到agent部署的目标机器
+			File triggerInfo = new File(tmp_conf_path + TRIGGERCONFNAME);
+			long fileSizeTriggerInfo = triggerInfo.length();
+			chSftp_properties.put(tmp_conf_path + CONTROLCONFNAME, triggerDirectory + "fdconfig"
+							+ SEPARATOR + CONTROLCONFNAME,
+					new FileProgressMonitor(fileSizeTriggerInfo), ChannelSftp.OVERWRITE);
+			logger.info("###########将本地临时配置文件trigger.conf,sftp复制到agent部署的目标机器###########");
 			// hadoop配置文件
 //			File fileHadoopConf = new File(hadoopConf);
 //			File[] list = fileHadoopConf.listFiles();
