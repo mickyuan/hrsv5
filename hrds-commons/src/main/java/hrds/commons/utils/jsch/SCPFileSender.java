@@ -121,18 +121,18 @@ public class SCPFileSender {
 			sftpConfFile(chSftp_properties, fdConfigPath, controlDirectory, triggerDirectory, APPINFOCONfNAME);
 			logger.info("###########替换 appinfo.conf文件###########");
 
-			// 将本地写的临时配置文件(control.conf),sftp复制到agent部署的目标机器
+			// 将本地临时配置文件control.conf,sftp复制到agent部署的目标机器
 			File controlInfo = new File(tmp_conf_path + CONTROLCONFNAME);
 			long fileSizeControlInfo = controlInfo.length();
 			chSftp_properties.put(tmp_conf_path + CONTROLCONFNAME, controlDirectory + "fdconfig"
 							+ SEPARATOR + CONTROLCONFNAME,
 					new FileProgressMonitor(fileSizeControlInfo), ChannelSftp.OVERWRITE);
 			logger.info("###########将临时配置文件control.conf,sftp复制到agent部署的目标机器###########");
-			// 将本地写的临时配置文件(control.conf),sftp复制到agent部署的目标机器
+			// 将本地临时配置文件trigger.conf,sftp复制到agent部署的目标机器
 			File triggerInfo = new File(tmp_conf_path + TRIGGERCONFNAME);
 			long fileSizeTriggerInfo = triggerInfo.length();
-			chSftp_properties.put(tmp_conf_path + CONTROLCONFNAME, triggerDirectory + "fdconfig"
-							+ SEPARATOR + CONTROLCONFNAME,
+			chSftp_properties.put(tmp_conf_path + TRIGGERCONFNAME, triggerDirectory + "fdconfig"
+							+ SEPARATOR + TRIGGERCONFNAME,
 					new FileProgressMonitor(fileSizeTriggerInfo), ChannelSftp.OVERWRITE);
 			logger.info("###########将本地临时配置文件trigger.conf,sftp复制到agent部署的目标机器###########");
 			// hadoop配置文件
