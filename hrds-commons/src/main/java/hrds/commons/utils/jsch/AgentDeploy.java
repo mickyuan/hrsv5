@@ -59,7 +59,11 @@ public class AgentDeploy {
     }
   }
 
-  /** 写本地临时Yaml配置文件 */
+  /**
+   * 写本地临时Yaml配置文件
+   *
+   * @return
+   */
   @Method(
       desc = "部署Agent配置文件",
       logicStep =
@@ -82,7 +86,7 @@ public class AgentDeploy {
   @Param(name = "oldAgentPath", desc = "旧的,Agent部署目录地址", range = "可以为空,为空表示为第一次部署")
   @Param(name = "oldLogPath", desc = "旧的,Agent部署日志地址", range = "可以为空,为空表示为第一次部署")
   //  @Return(desc = "返回部署是否操作成功", range = "true-成功/false-失败")
-  public static void agentConfDeploy(
+  public static String agentConfDeploy(
       Agent_down_info down_info, String oldAgentPath, String oldLogPath) {
     try {
 
@@ -103,7 +107,7 @@ public class AgentDeploy {
       Yaml.dump(httpServerMap, new File(CONFPATH + HttpServer.HTTP_CONF_NAME));
       // 二 : resources/fdconfig/ 下的全部文件SCP 到agent目录下
       /* 开始将本地写好的文件SCP到Agent目下, */
-      sftpAgentToTargetMachine(down_info, oldAgentPath, oldLogPath);
+      return sftpAgentToTargetMachine(down_info, oldAgentPath, oldLogPath);
 
     } catch (FileNotFoundException e) {
       throw new BusinessException(e.getMessage());
@@ -124,7 +128,7 @@ public class AgentDeploy {
   @Param(name = "oldAgentPath", desc = "旧的,Agent部署目录地址", range = "可以为空,为空表示为第一次部署")
   @Param(name = "oldLogPath", desc = "旧的,Agent部署日志地址", range = "可以为空,为空表示为第一次部署")
   @Return(desc = "", range = "")
-  private static void sftpAgentToTargetMachine(
+  private static String sftpAgentToTargetMachine(
       Agent_down_info down_info, String oldAgentPath, String oldLogPath) {
 
     // 这里先将配置的agent名称转换为拼音在和端口组合在一起,当做agent部署的目录
@@ -280,7 +284,7 @@ public class AgentDeploy {
                 + log_dir
                 + " &");
       }
-
+      return targetDir;
     } catch (Exception e) {
       logger.error(e.getMessage(), e);
       throw new BusinessException(e.getMessage());
