@@ -181,7 +181,8 @@ public class FileConfStepAction extends BaseAction {
       // 如果是一下文件格式,不需要数据的分隔符和数据的行分隔符...这里卸数的时候使用的标准的文件格式
       else if (fileFormat == FileFormat.ORC
           || fileFormat == FileFormat.SEQUENCEFILE
-          || fileFormat == FileFormat.PARQUET) {
+          || fileFormat == FileFormat.PARQUET
+          || fileFormat == FileFormat.CSV) {
         def.setDatabase_separatorr("");
         def.setRow_separator("");
       } else {
