@@ -345,7 +345,7 @@ public class ConnUtil {
 				Map<String, String> hashMap = new HashMap<>();
 				hashMap.put("column_name", type.getAttribute("column_name"));
 				hashMap.put("is_primary_key", type.getAttribute("is_primary_key"));
-				hashMap.put("column_ch_name", type.getAttribute("column_cn_name"));
+				hashMap.put("column_ch_name", type.getAttribute("column_ch_name"));
 				hashMap.put("column_type", type.getAttribute("column_type"));
 				hashMap.put("column_remark", type.getAttribute("column_remark"));
 				hashMap.put("is_get", type.getAttribute("is_get"));
@@ -410,7 +410,7 @@ public class ConnUtil {
 		for (Object element : tableList) {
 			Element table = (Element) element;
 			String tableName = table.getAttribute("table_name");
-			String table_cn_name = table.getAttribute("table_cn_name");
+			String table_cn_name = table.getAttribute("table_ch_name");
 			mapCol.put(tableName, table);
 			tableNameList.add(tableName);
 			tableNameMap.put(tableName, table_cn_name);
@@ -428,7 +428,7 @@ public class ConnUtil {
 		for (Object element : tableList) {
 			Element table = (Element) element;
 			Map<String, String> map = new HashMap<>();
-			map.put("table_name", table.getAttribute("table_ch_name"));
+			map.put("table_name", table.getAttribute("table_name"));
 			map.put("table_ch_name", table.getAttribute("table_ch_name"));
 			map.put("unload_type", table.getAttribute("unload_type"));
 			tables.add(map);
@@ -493,7 +493,7 @@ public class ConnUtil {
 				Element table = (Element) tableList.get(b);
 				JSONObject tableJson = new JSONObject();
 				tableJson.put("table_name", table.getAttribute("table_name"));
-				tableJson.put("table_cn_name", table.getAttribute("table_ch_name"));
+				tableJson.put("table_ch_name", table.getAttribute("table_ch_name"));
 				tableJson.put("updatetype", table.getAttribute("unload_type"));
 				List<?> columnList = XMLUtil.getChildElements(table, "column");
 				JSONArray columnJsonArray = new JSONArray();
@@ -581,7 +581,7 @@ public class ConnUtil {
 						tablenamelsit.add(tablename);
 						JSONObject everyobject = new JSONObject();
 						everyobject.put("table_name", tablename);
-						everyobject.put("table_cn_name", tablename);
+						everyobject.put("table_ch_name", tablename);
 						everyobject.put("everyline", readLine);
 						jsonarray.add(everyobject);
 					} catch (Exception e) {
