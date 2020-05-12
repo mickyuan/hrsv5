@@ -1,5 +1,8 @@
 package hrds.g.biz.serviceuser.common;
 
+import com.alibaba.druid.util.JdbcUtils;
+import com.alibaba.druid.util.MySqlUtils;
+import com.alibaba.druid.util.OracleUtils;
 import com.alibaba.fastjson.TypeReference;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
@@ -15,6 +18,7 @@ import hrds.commons.codes.InterfaceState;
 import hrds.commons.collection.ProcessingData;
 import hrds.commons.entity.Interface_file_info;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.utils.Constant;
 import hrds.commons.utils.DruidParseQuerySql;
 import hrds.commons.utils.PropertyParaValue;
 import hrds.g.biz.bean.CheckParam;
@@ -249,16 +253,16 @@ public class InterfaceCommon {
 				return checkParamsMap;
 			}
 			// 3.判断表名称是否为空
-			if (StringUtil.isBlank(singleTable.getTable())) {
+			if (StringUtil.isBlank(singleTable.gettableName())) {
 				return StateType.getResponseInfo(StateType.TABLE_NOT_EXISTENT);
 
 			}
 			// 4.检查表是否有使用权限
-			if (!InterfaceManager.existsTable(db, user_id, singleTable.getTable())) {
+			if (!InterfaceManager.existsTable(db, user_id, singleTable.gettableName())) {
 				return StateType.getResponseInfo(StateType.NO_USR_PERMISSIONS);
 			}
 			// 5.从内存中获取当前表的字段信息
-			String table_column_name = InterfaceManager.getUserTableInfo(user_id, singleTable.getTable())
+			String table_column_name = InterfaceManager.getUserTableInfo(user_id, singleTable.gettableName())
 					.getTable_column_name();
 			// 6.判断要查询列是否存在
 //			String selectColumn = singleTable.getSelectColumn();
@@ -375,14 +379,14 @@ public class InterfaceCommon {
 			num = 10;
 		}
 		// 3.获取当前表对应数据库的列名称集合
-		List<String> columns = StringUtil.split(table_column_name.toLowerCase(), ",");
+		List<String> columns = StringUtil.split(table_column_name.toLowerCase(), Constant.METAINFOSPLIT);
 		String selectColumn = singleTable.getSelectColumn();
 		// 4.检查需要查询的列名是否存在
 		Map<String, Object> userColumn = checkColumnsIsExist(selectColumn, user_id, columns);
 		if (userColumn != null) return userColumn;
 		// 5.判断当前表对应登记列名称是否为空，为空查询所有*
 		if (StringUtil.isNotBlank(table_column_name.toLowerCase())) {
-			selectColumn = table_column_name.toLowerCase();
+			selectColumn = String.join(",", columns).toLowerCase();
 		} else {
 			selectColumn = " * ";
 		}
@@ -398,7 +402,8 @@ public class InterfaceCommon {
 			condition = sqlSelectCondition.get("condition").toString();
 		}
 		// 8.获取查询sql
-		String sqlSb = "SELECT " + selectColumn + " FROM " + singleTable.getTable() + condition + " LIMIT " + num;
+		String sqlSb = "SELECT " + selectColumn + " FROM " + singleTable.gettableName() + condition
+				+ " LIMIT " + num;
 		// 9.获取新sql，判断视图
 		DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(sqlSb);
 		String newSql = druidParseQuerySql.GetNewSql(sqlSb);

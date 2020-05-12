@@ -13,7 +13,7 @@ public class SingleTable {
 	public static final String TableName = "single_table";
 
 	@DocBean(name = "tableName", value = "表名称:", dataType = String.class, required = true)
-	private String table;
+	private String tableName;
 	@DocBean(name = "whereColumn", value = "条件Column:", dataType = String.class, required = false)
 	private String whereColumn;
 	@DocBean(name = "selectColumn", value = "查询Column:", dataType = String.class, required = false)
@@ -39,12 +39,12 @@ public class SingleTable {
 			dataType = String.class, required = false)
 	private String filepath;
 
-	public String getTable() {
-		return table;
+	public String gettableName() {
+		return tableName;
 	}
 
-	public void setTable(String table) {
-		this.table = table;
+	public void settableName(String tableName) {
+		this.tableName = tableName;
 	}
 
 	public String getWhereColumn() {
