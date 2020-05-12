@@ -481,4 +481,21 @@ public class EltSysAction extends BaseAction {
 			throw new BusinessException("下载日志文件失败！");
 		}
 	}
+
+	@Method(desc = "停止工程信息", logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制" +
+			"2.验证当前用户对应的工程是否已不存在" +
+			"3.停止工程信息")
+	@Param(name = "etl_sys_cd", desc = "作业调度工程登记表主键ID", range = "新增工程时生成")
+	public void stopEtlProject(String etl_sys_cd) {
+		// 1.数据可访问权限处理方式，通过user_id进行权限控制
+		// 2.验证当前用户对应的工程是否已不存在
+		if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
+			throw new BusinessException("当前用户对应的工程已不存在！");
+		}
+		// 3.停止工程信息
+		Etl_sys etl_sys = new Etl_sys();
+		etl_sys.setEtl_sys_cd(etl_sys_cd);
+		etl_sys.setSys_run_status(Job_Status.STOP.getCode());
+		etl_sys.update(Dbo.db());
+	}
 }
