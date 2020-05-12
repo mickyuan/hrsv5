@@ -277,7 +277,7 @@ public class StartWayConfAction extends BaseAction {
     //    2: 获取任务部署的Agent路径及日志地址,并将程序类型,名称的默认值返回
     Map<String, Object> map =
         Dbo.queryOneObject(
-            "SELECT remark pro_dic,log_dir log_dic FROM "
+            "SELECT ai_desc pro_dic,log_dir log_dic FROM "
                 + Database_set.TableName
                 + " t1 JOIN "
                 + Agent_down_info.TableName
