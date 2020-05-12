@@ -303,8 +303,7 @@ public class DataTransferAction extends BaseAction {
       // 只有定长或者非定长才检查,数据分隔符和行分隔符
       String dbfile_format = dataExtractionDef.getDbfile_format();
       if (dbfile_format.equals(FileFormat.DingChang.getCode())
-          || dbfile_format.equals(FileFormat.FeiDingChang.getCode())
-          || dbfile_format.equals(FileFormat.CSV.getCode())) {
+          || dbfile_format.equals(FileFormat.FeiDingChang.getCode())) {
         // 行分隔符转为Unicode编码
         String row_separator = dataExtractionDef.getRow_separator();
         if (StringUtil.isNotBlank(row_separator)) {
@@ -347,7 +346,4 @@ public class DataTransferAction extends BaseAction {
     return colSetId;
   }
 
-  public static void main(String[] args) {
-    System.out.println(StringUtil.string2Unicode("\r"));
-  }
 }
