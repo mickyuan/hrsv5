@@ -67,19 +67,13 @@ public class DataTransferAction extends BaseAction {
     // 2: 获取每张表的转存配置信息
     List<Map<String, Object>> dataBaseTransDataList =
         Dbo.queryList(
-            "  SELECT t1.database_id,t1.table_id,t1.table_name,t1.table_ch_name,(CASE WHEN (SELECT COUNT(1) FROM "
-                + Data_extraction_def.TableName
-                + "  WHERE data_extract_type = ? ) > 0 THEN "
-                + " ? else ? END ) is_archived FROM "
+            "  SELECT t1.database_id,t1.table_id,t1.table_name,t1.table_ch_name, is_archived FROM "
                 + Table_info.TableName
                 + " t1 "
                 + " LEFT JOIN "
                 + Data_extraction_def.TableName
                 + " t2 ON t1.table_id = t2.table_id WHERE "
                 + " t1.database_id = ? ORDER BY t1.table_name",
-            DataExtractType.ShuJuJiaZaiGeShi.getCode(),
-            IsFlag.Shi.getCode(),
-            IsFlag.Fou.getCode(),
             colSetId);
 
     // 获取xml的数据结果集
@@ -150,6 +144,7 @@ public class DataTransferAction extends BaseAction {
                   itemMap.put("ded_id", extractionMap.get("ded_id"));
                   itemMap.put("table_ch_name", databaseItemMap.get("table_ch_name"));
                   itemMap.put("table_id", databaseItemMap.get("table_id"));
+                  //这里的是否转存以数据库查询的为标准
                   itemMap.put("is_archived", databaseItemMap.get("is_archived"));
                 }
               });
