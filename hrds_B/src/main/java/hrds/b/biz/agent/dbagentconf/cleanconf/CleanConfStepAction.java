@@ -102,7 +102,7 @@ public class CleanConfStepAction extends BaseAction {
           CleanType.ZiFuBuQi.getCode(),
           CleanType.ZiFuTiHuan.getCode(),
           CleanType.ZiFuTrim.getCode(),
-          DataExtractType.ShuJuJiaZaiGeShi.getCode());
+          DataExtractType.YuanShuJuGeShi.getCode());
     } else {
       // 4、否则根据采集表ID在table_info表和table_clean表中查出页面所需的信息
       StringBuilder strSB =
