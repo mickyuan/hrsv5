@@ -1,5 +1,7 @@
 package hrds.c.biz.util;
 
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.Session;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
@@ -10,8 +12,11 @@ import fd.ng.web.conf.WebinfoConf;
 import fd.ng.web.util.Dbo;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.utils.jsch.SFTPChannel;
+import hrds.commons.utils.jsch.SFTPDetails;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -273,4 +278,25 @@ public class ETLJobUtil {
 				" where etl_sys_cd=? AND etl_job=?", etl_sys_cd, etl_job);
 	}
 
+	@Method(desc = "与ETLAgent服务交互",
+			logicStep = "1.数据可访问权限处理方式，该方法不需要权限控制" +
+					"2.封装与远端服务器进行交互所需参数" +
+					"3.与远端服务器进行交互，建立连接，发送数据到远端并且接收远端发来的数据" +
+					"4.执行压缩日志命令")
+	@Param(name = "compressCommand", desc = "压缩命令", range = "不为空")
+	@Param(name = "etlSysInfo", desc = "工程参数", range = "不为空")
+	@Param(name = "sftpDetails", desc = "sftp参数对象", range = "无限制")
+	public static void interactingWithTheAgentServer(String compressCommand, Map<String, Object> etlSysInfo,
+	                                                 SFTPDetails sftpDetails) throws JSchException, IOException {
+		// 1.数据可访问权限处理方式，该方法不需要权限控制
+		// 2.封装与远端服务器进行交互所需参数
+		sftpDetails.setHost(etlSysInfo.get("etl_serv_ip").toString());
+		sftpDetails.setPort(Integer.parseInt(etlSysInfo.get("etl_serv_port").toString()));
+		sftpDetails.setUser_name(etlSysInfo.get("user_name").toString());
+		sftpDetails.setPwd(etlSysInfo.get("user_pwd").toString());
+		// 3.与远端服务器进行交互，建立连接，发送数据到远端并且接收远端发来的数据
+		Session shellSession = SFTPChannel.getJSchSession(sftpDetails, 0);
+		// 4.执行压缩日志命令
+		SFTPChannel.execCommandByJSch(shellSession, compressCommand);
+	}
 }

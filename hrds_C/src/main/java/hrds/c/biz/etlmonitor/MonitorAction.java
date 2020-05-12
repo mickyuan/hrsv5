@@ -854,7 +854,7 @@ public class MonitorAction extends BaseAction {
 			checkEtlDeployParam(etlSysInfo);
 			SFTPDetails sftpDetails = new SFTPDetails();
 			// 8.与ETLAgent服务交互
-			interactingWithTheAgentServer(compressCommand, etlSysInfo, sftpDetails);
+			ETLJobUtil.interactingWithTheAgentServer(compressCommand, etlSysInfo, sftpDetails);
 			// 9.获取远程文件名
 			String remoteFileName = date + "_" + etl_job + ".tar.gz";
 			// 10.本地下载路径
@@ -876,28 +876,6 @@ public class MonitorAction extends BaseAction {
 		} catch (IOException e) {
 			throw new BusinessException("下载日志文件失败！");
 		}
-	}
-
-	@Method(desc = "与ETLAgent服务交互",
-			logicStep = "1.数据可访问权限处理方式，该方法不需要权限控制" +
-					"2.封装与远端服务器进行交互所需参数" +
-					"3.与远端服务器进行交互，建立连接，发送数据到远端并且接收远端发来的数据" +
-					"4.执行压缩日志命令")
-	@Param(name = "compressCommand", desc = "压缩命令", range = "不为空")
-	@Param(name = "etlSysInfo", desc = "工程参数", range = "不为空")
-	@Param(name = "sftpDetails", desc = "sftp参数对象", range = "无限制")
-	private void interactingWithTheAgentServer(String compressCommand, Map<String, Object> etlSysInfo,
-	                                           SFTPDetails sftpDetails) throws JSchException, IOException {
-		// 1.数据可访问权限处理方式，该方法不需要权限控制
-		// 2.封装与远端服务器进行交互所需参数
-		sftpDetails.setHost(etlSysInfo.get("etl_serv_ip").toString());
-		sftpDetails.setPort(Integer.parseInt(etlSysInfo.get("etl_serv_port").toString()));
-		sftpDetails.setUser_name(etlSysInfo.get("user_name").toString());
-		sftpDetails.setPwd(etlSysInfo.get("user_pwd").toString());
-		// 3.与远端服务器进行交互，建立连接，发送数据到远端并且接收远端发来的数据
-		Session shellSession = SFTPChannel.getJSchSession(sftpDetails, 0);
-		// 4.执行压缩日志命令
-		SFTPChannel.execCommandByJSch(shellSession, compressCommand);
 	}
 
 	@Method(desc = "检查工程部署参数是否为空",
