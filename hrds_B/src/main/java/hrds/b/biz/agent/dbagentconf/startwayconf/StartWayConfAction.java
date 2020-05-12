@@ -16,6 +16,7 @@ import hrds.commons.codes.Job_Effective_Flag;
 import hrds.commons.codes.Main_Server_Sync;
 import hrds.commons.codes.ParamType;
 import hrds.commons.codes.Pro_Type;
+import hrds.commons.codes.Status;
 import hrds.commons.codes.Today_Dispatch_Flag;
 import hrds.commons.entity.Agent_down_info;
 import hrds.commons.entity.Agent_info;
@@ -55,9 +56,13 @@ public class StartWayConfAction extends BaseAction {
   // 单个作业的所需资源数
   private static final int JOB_RESOURCE_NUM = 1;
   // 程序目录的工程系统参数名
-  private static final String HYRENBIN = "!HYSHELLBIN";
+  private static final String HYRENBIN = "!{HYSHELLBIN}";
   // 程序日志的工程系统参数名
-  private static final String HYRENLOG = "!HYLOG";
+  private static final String HYRENLOG = "!{HYLOG}";
+  // 作业调度系统参数定义程序变量名称
+  private static final String PARA_HYRENBIN = "!HYSHELLBIN";
+  // 作业调度系统参数定义日志变量名称
+  private static final String PARA_HYRENLOG = "!HYLOG";
   // 采集程序的默认脚本名称
   private static final String SHELLCOMMAND = "shellCommand.sh";
 
@@ -345,10 +350,10 @@ public class StartWayConfAction extends BaseAction {
     }
 
     // 检查作业系统参数的作业程序目录
-    setDefaultEtlConf(etl_sys_cd, HYRENBIN, pro_dic);
+    setDefaultEtlConf(etl_sys_cd, PARA_HYRENBIN, pro_dic);
 
     // 检查作业系统参数的作业日志是否存在
-    setDefaultEtlConf(etl_sys_cd, HYRENLOG, log_dic);
+    setDefaultEtlConf(etl_sys_cd, PARA_HYRENLOG, log_dic);
 
     // 默认增加一个资源类型,先检查是否存在,如果不存在则添加
     setDefaultEtlResource(etl_sys_cd);
@@ -391,7 +396,7 @@ public class StartWayConfAction extends BaseAction {
       }
 
       // 作业的程序路径
-      etl_job_def.setPro_dic(HYRENBIN);
+      etl_job_def.setPro_dic(pro_dic);
       // 作业的日志程序路径
       etl_job_def.setLog_dic(HYRENLOG);
       // 默认作业都是有效的
@@ -571,7 +576,7 @@ public class StartWayConfAction extends BaseAction {
                 etl_dependency.setEtl_job(etl_job);
                 etl_dependency.setPre_etl_sys_cd(etl_sys_cd);
                 etl_dependency.setPre_etl_job(item);
-                etl_dependency.setStatus(IsFlag.Shi.getCode());
+                etl_dependency.setStatus(Status.TRUE.getCode());
                 etl_dependency.add(Dbo.db());
               });
     }
