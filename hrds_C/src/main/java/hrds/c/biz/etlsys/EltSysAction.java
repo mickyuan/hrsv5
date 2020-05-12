@@ -330,7 +330,7 @@ public class EltSysAction extends BaseAction {
 						+ separator
 						+ etl_sys_cd
 						+ separator;
-		if (IsFlag.Shi == IsFlag.ofEnumByCode(isControl)) {
+		if (IsFlag.Fou == IsFlag.ofEnumByCode(isControl)) {
 			// CONTROL日志目录
 			logDir =
 					logDir
@@ -362,7 +362,7 @@ public class EltSysAction extends BaseAction {
 		// 8.读取control或trigger日志信息
 		return ReadLog.readAgentLog(
 				logDir,
-				etlSys.get("serv_file_path").toString(),
+				etlSys.get("etl_serv_ip").toString(),
 				etlSys.get("etl_serv_port").toString(),
 				etlSys.get("user_name").toString(),
 				etlSys.get("user_pwd").toString(),

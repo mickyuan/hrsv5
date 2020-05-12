@@ -40,7 +40,6 @@ public class ReadLog {
 
         try {
             //1、构建使用jsch访问日志的Map集合
-            Map<String, String> serverInfo = new HashMap<>();
             SFTPDetails sftpDetails = new SFTPDetails();
             sftpDetails.setHost( ip);
             sftpDetails.setPort(Integer.parseInt(port));
