@@ -1,8 +1,5 @@
 package hrds.g.biz.serviceuser.common;
 
-import com.alibaba.druid.util.JdbcUtils;
-import com.alibaba.druid.util.MySqlUtils;
-import com.alibaba.druid.util.OracleUtils;
 import com.alibaba.fastjson.TypeReference;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
@@ -461,11 +458,11 @@ public class InterfaceCommon {
 				Map<String, Object> map = new HashMap<>();
 				map.put("column", streamCsv);
 				map.put("data", streamCsvData);
-				responseMap = StateType.getResponseInfo(StateType.NORMAL.getValue(),
+				responseMap = StateType.getResponseInfo(StateType.NORMAL.getCode(),
 						map);
 			} else {
 				// 8.如果输出数据类型为json则直接返回数据
-				responseMap = StateType.getResponseInfo(StateType.NORMAL.getValue(),
+				responseMap = StateType.getResponseInfo(StateType.NORMAL.getCode(),
 						streamJson);
 			}
 		}
@@ -530,14 +527,14 @@ public class InterfaceCommon {
 				writer.newLine();
 			} else {
 				// 11.输出数据类型有误
-				responseMap = StateType.getResponseInfo(StateType.EXCEPTION.getValue(),
+				responseMap = StateType.getResponseInfo(StateType.EXCEPTION.getCode(),
 						"不知道什么文件");
 			}
 			// 12.关闭连接
 			writer.flush();
 			writer.close();
 		} catch (IOException e) {
-			responseMap = StateType.getResponseInfo(StateType.EXCEPTION.getValue(),
+			responseMap = StateType.getResponseInfo(StateType.EXCEPTION.getCode(),
 					"写文件失败");
 		}
 	}
