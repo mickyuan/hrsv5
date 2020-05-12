@@ -46,7 +46,7 @@ public class EltSysAction extends BaseAction {
 		return Dbo.queryResult(
 				"select etl_sys_cd,etl_sys_name,comments,curr_bath_date,sys_run_status from "
 						+ Etl_sys.TableName
-						+ " where user_id=? order by etl_sys_cd",
+						+ " where user_id=? order by sys_run_status,etl_sys_cd",
 				getUserId());
 	}
 
