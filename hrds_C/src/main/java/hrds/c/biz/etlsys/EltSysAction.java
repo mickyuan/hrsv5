@@ -1,7 +1,6 @@
 package hrds.c.biz.etlsys;
 
 import com.jcraft.jsch.JSchException;
-import com.jcraft.jsch.Session;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
@@ -25,7 +24,6 @@ import hrds.commons.utils.Constant;
 import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.PropertyParaValue;
 import hrds.commons.utils.ReadLog;
-import hrds.commons.utils.jsch.SFTPChannel;
 import hrds.commons.utils.jsch.SFTPDetails;
 import org.apache.commons.io.FilenameUtils;
 
@@ -388,8 +386,9 @@ public class EltSysAction extends BaseAction {
 							+ "12.下载完删除压缩包"
 							+ "13.返回CONTROL或TRIGGER下载日志文件名")
 	@Param(name = "etl_sys_cd", desc = "作业调度工程登记表主键ID", range = "新增工程时生成")
-	@Param(name = "curr_bath_date", desc = "批量日期", range = "yyyy-MM-dd格式的年月日，如：2019-12-19")
-	@Param(name = "isControl", desc = "是否读取Control日志", range = "使用（IsFlag代码项），0代表不是，1代表是")
+	@Param(name = "curr_bath_date", desc = "批量日期", range = "yyyyMMdd格式的年月日，如：20191219")
+	@Param(name = "isControl", desc = "是否读取Control日志", range = "使用（IsFlag代码项），" +
+			"0代表control日志，1代表trigger日志")
 	public String downloadControlOrTriggerLog(
 			String etl_sys_cd, String curr_bath_date, String isControl) {
 		try {
@@ -411,9 +410,9 @@ public class EltSysAction extends BaseAction {
 							+ etl_sys_cd
 							+ separator;
 			// 7.获取压缩日志命令
-			String compressCommand = "tar -zvcPf " + logDir + curr_bath_date;
+			String compressCommand;
 			// 8.判断是control日志还是trigger日志,获取日志目录以及压缩日志目录命令
-			if (IsFlag.Shi == IsFlag.ofEnumByCode(isControl)) {
+			if (IsFlag.Fou == IsFlag.ofEnumByCode(isControl)) {
 				// CONTROL日志目录
 				logDir =
 						logDir
@@ -423,11 +422,9 @@ public class EltSysAction extends BaseAction {
 								+ separator
 								+ curr_bath_date.substring(0, 6)
 								+ separator
-								+ curr_bath_date
-								+ "_ControlLog.tar.gz";
+								+ curr_bath_date;
 				// 压缩CONTROL日志命令
-				compressCommand =
-						compressCommand + "_ControlLog.tar.gz" + " " + logDir + curr_bath_date + "*.log";
+				compressCommand = "tar -zvcPf " + logDir + "_ControlLog.tar.gz" + " " + logDir + "*.log";
 			} else {
 				// TRIGGER日志目录
 				logDir =
@@ -438,11 +435,9 @@ public class EltSysAction extends BaseAction {
 								+ separator
 								+ curr_bath_date.substring(0, 6)
 								+ separator
-								+ curr_bath_date
-								+ "_TriggerLog.tar.gz";
+								+ curr_bath_date;
 				// 压缩TRIGGER日志命令
-				compressCommand =
-						compressCommand + "_TriggerLog.tar.gz" + " " + logDir + curr_bath_date + "*.log";
+				compressCommand = "tar -zvcPf " + logDir + "_TriggerLog.tar.gz" + " " + logDir + "*.log";
 			}
 			//            Map<String, String> sftpDetails = new HashMap<>();
 			//            // 9.设置主机ip，端口，用户名，密码
@@ -456,16 +451,26 @@ public class EltSysAction extends BaseAction {
 			// 10.获取文件下载路径
 			String localPath = ETLJobUtil.getFilePath(null);
 			// 11.从服务器下载文件到本地
+			if (IsFlag.Fou == IsFlag.ofEnumByCode(isControl)) {
+				// CONTROL日志文件名称
+				logDir = logDir + "_ControlLog.tar.gz";
+			} else {
+				// TRIGGER日志文件名称
+				logDir = logDir + "_TriggerLog.tar.gz";
+			}
 			DownloadLogUtil.downloadLogFile(logDir, localPath, sftpDetails1);
 			// 12.下载完删除压缩包
 			DownloadLogUtil.deleteLogFileBySFTP(logDir, sftpDetails1);
+			if (curr_bath_date.contains("-")) {
+				curr_bath_date = curr_bath_date.replaceAll("-", "");
+			}
 			// 13.返回CONTROL或TRIGGER下载日志文件名
-			if (IsFlag.Shi == IsFlag.ofEnumByCode(isControl)) {
+			if (IsFlag.Fou == IsFlag.ofEnumByCode(isControl)) {
 				// CONTROL日志文件名称
-				return curr_bath_date.replaceAll("-", "") + "_ControlLog.tar.gz";
+				return curr_bath_date + "_ControlLog.tar.gz";
 			} else {
 				// TRIGGER日志文件名称
-				return curr_bath_date.replaceAll("-", "") + "_TriggerLog.tar.gz";
+				return curr_bath_date + "_TriggerLog.tar.gz";
 			}
 		} catch (JSchException e) {
 			throw new BusinessException("与远端服务器进行交互，建立连接失败！");
