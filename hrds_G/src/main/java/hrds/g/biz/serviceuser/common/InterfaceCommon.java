@@ -8,12 +8,16 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
+import fd.ng.db.conf.Dbtype;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
+import hrds.commons.codes.DatabaseType;
 import hrds.commons.codes.InterfaceState;
 import hrds.commons.collection.ProcessingData;
+import hrds.commons.collection.bean.LayerBean;
 import hrds.commons.entity.Interface_file_info;
+import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.DruidParseQuerySql;
@@ -44,7 +48,7 @@ public class InterfaceCommon {
 	// 对于SQL的字段是否使用字段验证
 	private static final String AUTHORITY = PropertyParaValue.getString("restAuthority", "");
 	// 没有字段的函数添加列表
-	private static final List<String> notCheckFunction = new ArrayList<String>();
+	private static final List<String> notCheckFunction = new ArrayList<>();
 
 	private static long lineCounter = 0;
 	// 接口响应信息集合
@@ -56,8 +60,6 @@ public class InterfaceCommon {
 	}
 
 	private static final Type type = new TypeReference<List<String>>() {
-	}.getType();
-	private static final Type mapType = new TypeReference<Map<String, String>>() {
 	}.getType();
 
 	@Method(desc = "获取token值",
@@ -399,8 +401,21 @@ public class InterfaceCommon {
 			condition = sqlSelectCondition.get("condition").toString();
 		}
 		// 8.获取查询sql
-		String sqlSb = "SELECT " + selectColumn + " FROM " + singleTable.gettableName() + condition
-				+ " LIMIT " + num;
+		String sqlSb = "SELECT " + selectColumn + " FROM " + singleTable.gettableName() + condition;
+		List<LayerBean> layerByTable = ProcessingData.getLayerByTable(singleTable.gettableName(), db);
+		if (layerByTable == null || layerByTable.isEmpty()) {
+			return StateType.getResponseInfo(StateType.STORAGE_LAYER_INFO_NOT_EXIST_WITH_TABLE.getCode(),
+					"当前表对应的存储层信息不存在");
+		}
+		String database_type = layerByTable.get(0).getLayerAttr().get("database_type");
+		if (DatabaseType.ofEnumByCode(database_type) == DatabaseType.Oracle9i) {
+			return StateType.getResponseInfo(StateType.ORACLE9I_NOT_SUPPORT.getCode(),
+					"系统不支持Oracle9i及以下");
+		} else if (DatabaseType.ofEnumByCode(database_type) == DatabaseType.Oracle10g) {
+			sqlSb = sqlSb + " where rownum<=" + num;
+		} else {
+			sqlSb = sqlSb + " LIMIT " + num;
+		}
 		// 9.获取新sql，判断视图
 		DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(sqlSb);
 		String newSql = druidParseQuerySql.GetNewSql(sqlSb);

@@ -176,6 +176,14 @@ public enum StateType {
 	 */
 	UUID_NOT_NULL("441", "uuid不能为空或uuid错误"),
 	/**
+	 * 当前表对应的存储层信息不存在
+	 */
+	STORAGE_LAYER_INFO_NOT_EXIST_WITH_TABLE("442", "当前表对应的存储层信息不存在"),
+	/**
+	 * 当前表对应的存储层信息不存在
+	 */
+	ORACLE9I_NOT_SUPPORT("442", "当前表对应的存储层信息不存在"),
+	/**
 	 * 系统错误
 	 */
 	EXCEPTION("500", "系统错误");
