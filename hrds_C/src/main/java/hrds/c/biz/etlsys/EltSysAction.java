@@ -343,7 +343,7 @@ public class EltSysAction extends BaseAction {
 							+ sysDate.substring(0, 6)
 							+ separator
 							+ sysDate
-							+ "controlOut.log";
+							+ "ControlOut.log";
 		} else {
 			// TRIGGER日志目录
 			logDir =
@@ -355,7 +355,7 @@ public class EltSysAction extends BaseAction {
 							+ sysDate.substring(0, 6)
 							+ separator
 							+ sysDate
-							+ "triggerOut.log";
+							+ "TriggerOut.log";
 		}
 		// 7.日志读取行数最大为1000行
 		if (readNum > 1000) {
@@ -382,13 +382,11 @@ public class EltSysAction extends BaseAction {
 							+ "6.获取control或trigger日志路径"
 							+ "7.获取压缩日志命令"
 							+ "8.判断是control日志还是trigger日志,获取日志目录以及压缩日志目录命令"
-							+ "9.设置主机ip，端口，用户名，密码"
-							+ "10.与远端服务器进行交互，建立连接，发送数据到远端并且接收远端发来的数据"
-							+ "11.执行压缩日志命令"
-							+ "12.获取文件下载路径"
-							+ "13.从服务器下载文件到本地"
-							+ "14.下载完删除压缩包"
-							+ "5.返回CONTROL或TRIGGER下载日志文件名")
+							+ "9.与工程部署服务器进行交互"
+							+ "10.获取文件下载路径"
+							+ "11.从服务器下载文件到本地"
+							+ "12.下载完删除压缩包"
+							+ "13.返回CONTROL或TRIGGER下载日志文件名")
 	@Param(name = "etl_sys_cd", desc = "作业调度工程登记表主键ID", range = "新增工程时生成")
 	@Param(name = "curr_bath_date", desc = "批量日期", range = "yyyy-MM-dd格式的年月日，如：2019-12-19")
 	@Param(name = "isControl", desc = "是否读取Control日志", range = "使用（IsFlag代码项），0代表不是，1代表是")
@@ -453,21 +451,15 @@ public class EltSysAction extends BaseAction {
 			//            sftpDetails.put(SCPFileSender.PASSWORD, etlSys.get("user_pwd").toString());
 			//            sftpDetails.put(SCPFileSender.PORT, etlSys.get("etl_serv_port").toString());
 			SFTPDetails sftpDetails1 = new SFTPDetails();
-			sftpDetails1.setHost(etlSys.get("etl_serv_ip").toString());
-			sftpDetails1.setPort(((Integer) etlSys.get("etl_serv_port")));
-			sftpDetails1.setUser_name(etlSys.get("user_name").toString());
-			sftpDetails1.setPwd(etlSys.get("user_pwd").toString());
-			// 10.与远端服务器进行交互，建立连接，发送数据到远端并且接收远端发来的数据
-			Session shellSession = SFTPChannel.getJSchSession(sftpDetails1, 0);
-			// 11.执行压缩日志命令
-			SFTPChannel.execCommandByJSch(shellSession, compressCommand);
-			// 12.获取文件下载路径
+			// 9.与工程部署服务器进行交互
+			ETLJobUtil.interactingWithTheAgentServer(compressCommand, etlSys, sftpDetails1);
+			// 10.获取文件下载路径
 			String localPath = ETLJobUtil.getFilePath(null);
-			// 13.从服务器下载文件到本地
+			// 11.从服务器下载文件到本地
 			DownloadLogUtil.downloadLogFile(logDir, localPath, sftpDetails1);
-			// 14.下载完删除压缩包
+			// 12.下载完删除压缩包
 			DownloadLogUtil.deleteLogFileBySFTP(logDir, sftpDetails1);
-			// 15.返回CONTROL或TRIGGER下载日志文件名
+			// 13.返回CONTROL或TRIGGER下载日志文件名
 			if (IsFlag.Shi == IsFlag.ofEnumByCode(isControl)) {
 				// CONTROL日志文件名称
 				return curr_bath_date.replaceAll("-", "") + "_ControlLog.tar.gz";
