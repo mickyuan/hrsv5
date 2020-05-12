@@ -47,14 +47,16 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 	@Return(desc = "StageStatusInfo是保存每个阶段状态信息的实体类", range = "不会为null,StageStatusInfo实体类对象")
 	@Override
 	public StageParamInfo handleStage(StageParamInfo stageParamInfo) {
-		LOGGER.info("------------------DB文件采集数据加载阶段开始------------------");
+		LOGGER.info("------------------表" + collectTableBean.getHbase_name()
+				+ "DB文件采集数据加载阶段开始------------------");
 		//1、创建卸数阶段状态信息，更新作业ID,阶段名，阶段开始时间
 		StageStatusInfo statusInfo = new StageStatusInfo();
 		JobStatusInfoUtil.startStageStatusInfo(statusInfo, collectTableBean.getTable_id(),
 				StageConstant.DATALOADING.getCode());
 		try {
 			if (UnloadType.ZengLiangXieShu.getCode().equals(collectTableBean.getUnload_type())) {
-				LOGGER.info("增量卸数数据加载阶段不用做任何操作");
+				LOGGER.info("表" + collectTableBean.getHbase_name()
+						+ "增量卸数数据加载阶段不用做任何操作");
 			} else if (UnloadType.QuanLiangXieShu.getCode().equals(collectTableBean.getUnload_type())) {
 				List<DataStoreConfBean> dataStoreConfBeanList = collectTableBean.getDataStoreConfBean();
 				for (DataStoreConfBean dataStoreConfBean : dataStoreConfBeanList) {
@@ -71,7 +73,8 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 							//没有客户端，则表示为数据库类型在upload时已经装载数据了，直接跳过
 							continue;
 						} else {
-							throw new AppSystemException("错误的是否标识");
+							throw new AppSystemException("表" + collectTableBean.getHbase_name()
+									+ "错误的是否标识");
 						}
 					} else if (Store_type.HIVE.getCode().equals(dataStoreConfBean.getStore_type())) {
 						//hive库有两种情况，有客户端和没有客户端
@@ -86,7 +89,8 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 							//没有客户端，则表示为数据库类型在upload时已经装载数据了，直接跳过
 							continue;
 						} else {
-							throw new AppSystemException("错误的是否标识");
+							throw new AppSystemException("表" + collectTableBean.getHbase_name()
+									+ "错误的是否标识");
 						}
 					} else if (Store_type.HBASE.getCode().equals(dataStoreConfBean.getStore_type())) {
 						continue;
@@ -98,19 +102,23 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 						continue;
 					} else {
 						//TODO 上面的待补充。
-						throw new AppSystemException("不支持的存储类型");
+						throw new AppSystemException("表" + collectTableBean.getHbase_name()
+								+ "不支持的存储类型");
 					}
 					LOGGER.info("数据成功进入库" + dataStoreConfBean.getDsl_name() + "下的表"
 							+ collectTableBean.getHbase_name());
 				}
 			} else {
-				throw new AppSystemException("DB文件采集指定的数据抽取卸数方式类型不正确");
+				throw new AppSystemException("表" + collectTableBean.getHbase_name()
+						+ "DB文件采集指定的数据抽取卸数方式类型不正确");
 			}
 			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.SUCCEED.getCode(), "执行成功");
-			LOGGER.info("------------------DB文件采集数据加载阶段成功------------------");
+			LOGGER.info("------------------表" + collectTableBean.getHbase_name()
+					+ "DB文件采集数据加载阶段成功------------------");
 		} catch (Exception e) {
 			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.FAILED.getCode(), e.getMessage());
-			LOGGER.error("DB文件采集数据加载阶段失败：", e);
+			LOGGER.error("表" + collectTableBean.getHbase_name()
+					+ "DB文件采集数据加载阶段失败：", e);
 		}
 		//结束给stageParamInfo塞值
 		JobStatusInfoUtil.endStageParamInfo(stageParamInfo, statusInfo, collectTableBean
@@ -145,7 +153,8 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 					sqlList.add(createOracleExternalTable(tmpTodayTableName, tableBean, fileNameArr,
 							dataStoreConfBean.getDsl_name()));
 				} else {//TODO 这里判断逻辑需要增加多种文件格式支持外部表形式
-					throw new AppSystemException("oracle数据库外部表进数目前只支持非定长文件进数");
+					throw new AppSystemException("表" + collectTableBean.getHbase_name()
+							+ "oracle数据库外部表进数目前只支持非定长文件进数");
 				}
 				//如果表已存在则删除
 				JDBCIncreasement.dropTableIfExists(todayTableName, db, sqlList);
@@ -159,10 +168,12 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 								File.separator + Constant.HYSHF_DCL + File.separator +
 								tmpTodayTableName.toUpperCase() + "*bad");
 				if (!StringUtil.isEmpty(bad_files)) {
-					throw new AppSystemException("你所生成的文件无法load到Oracle数据库，请查看数据库服务器下的bad文件"
+					throw new AppSystemException("表" + collectTableBean.getHbase_name()
+							+ "你所生成的文件无法load到Oracle数据库，请查看数据库服务器下的bad文件"
 							+ bad_files + "及其相关错误日志");
 				} else {
-					LOGGER.info("oracle数据库进数成功");
+					LOGGER.info("表" + collectTableBean.getHbase_name()
+							+ "oracle数据库进数成功");
 				}
 			} else if (DatabaseType.Postgresql.getCode().equals(database_type)) {
 				//数据库服务器上文件所在路径
@@ -173,7 +184,8 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 					createPostgresqlExternalTable(todayTableName, tableBean, fileNameArr,
 							dataStoreConfBean.getDsl_name(), uploadServerPath, sqlList, db);
 				} else {//TODO 这里判断逻辑需要增加多种文件格式支持外部表形式
-					throw new AppSystemException("oracle数据库外部表进数目前只支持Csv文件进数");
+					throw new AppSystemException("表" + collectTableBean.getHbase_name()
+							+ "oracle数据库外部表进数目前只支持Csv文件进数");
 				}
 				//4.执行sql语句
 				HSqlExecute.executeSql(sqlList, db);
@@ -195,7 +207,8 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 				//执行失败，恢复上次进数的数据
 				recoverBackupToDayTable(todayTableName, dataStoreConfBean, db);
 			}
-			throw new AppSystemException("执行数据库" + dataStoreConfBean.getDsl_name() + "外部表加载数据的sql报错", e);
+			throw new AppSystemException("表" + collectTableBean.getHbase_name()
+					+ "执行数据库" + dataStoreConfBean.getDsl_name() + "外部表加载数据的sql报错", e);
 		} finally {
 			//清除中间表
 			clearTemporaryTable(database_type, fileNameArr, todayTableName, db, dataStoreConfBean.getDsl_name());
@@ -212,7 +225,7 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 		String past_hbase_name = fileNameArr[0].split(collectTableBean.getTable_name())[0]
 				+ collectTableBean.getTable_name();
 		if (FileUtil.isSysDir(external_root_path)) {
-			throw new AppSystemException("请不要删除系统目录下的文件");
+			throw new AppSystemException("请不要删除系统目录下的文件"+external_root_path);
 		}
 		if (DatabaseType.Oracle10g.getCode().equals(database_type) ||
 				DatabaseType.Oracle9i.getCode().equals(database_type)) {
@@ -234,7 +247,7 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 	private void clearTemporaryLog(String database_type, String todayTableName,
 	                               String external_root_path, Session session) throws Exception {
 		if (FileUtil.isSysDir(external_root_path)) {
-			throw new AppSystemException("请不要删除系统目录下的文件");
+			throw new AppSystemException("请不要删除系统目录下的文件"+external_root_path);
 		}
 		String tmpTodayTableName = todayTableName + "t";
 		if (DatabaseType.Oracle10g.getCode().equals(database_type) ||
@@ -401,7 +414,7 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 			} else if (FileFormat.CSV.getCode().equals(file_format)) {
 				sqlList.add(genHiveLoadCsv(todayTableName, tableBean));
 			} else {
-				throw new AppSystemException("暂不支持定长或者其他类型加载到hive表");
+				throw new AppSystemException("暂不支持定长或者其他类型直接加载到hive表");
 			}
 			//3.加载数据
 			sqlList.add("load data inpath '" + hdfsFilePath + "' into table " + todayTableName);

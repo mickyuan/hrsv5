@@ -29,13 +29,15 @@ public class DBCalIncrementStageImpl extends AbstractJobStage {
 	@Return(desc = "StageStatusInfo是保存每个阶段状态信息的实体类", range = "不会为null,StageStatusInfo实体类对象")
 	@Override
 	public StageParamInfo handleStage(StageParamInfo stageParamInfo) {
-		LOGGER.info("------------------数据库直连采集增量计算阶段开始------------------");
+		LOGGER.info("------------------表" + collectTableBean.getTable_name()
+				+ "数据库直连采集增量计算阶段开始------------------");
 		//1、创建卸数阶段状态信息，更新作业ID,阶段名，阶段开始时间
 		StageStatusInfo statusInfo = new StageStatusInfo();
 		JobStatusInfoUtil.startStageStatusInfo(statusInfo, collectTableBean.getTable_id(),
 				StageConstant.CALINCREMENT.getCode());
 		JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.SUCCEED.getCode(), "执行成功");
-		LOGGER.info("------------------数据库直连采集增量阶段成功------------------");
+		LOGGER.info("------------------表" + collectTableBean.getTable_name()
+				+ "数据库直连采集增量阶段成功------------------");
 		//结束给stageParamInfo塞值
 		JobStatusInfoUtil.endStageParamInfo(stageParamInfo, statusInfo, collectTableBean
 				, CollectType.ShuJuKuCaiJi.getCode());

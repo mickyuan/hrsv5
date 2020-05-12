@@ -50,7 +50,8 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 	@Return(desc = "StageStatusInfo是保存每个阶段状态信息的实体类", range = "不会为null,StageStatusInfo实体类对象")
 	@Override
 	public StageParamInfo handleStage(StageParamInfo stageParamInfo) {
-		LOGGER.info("------------------DB文件采集卸数阶段开始------------------");
+		LOGGER.info("------------------表" + collectTableBean.getHbase_name()
+				+ "DB文件采集卸数阶段开始------------------");
 		//1、创建卸数阶段状态信息，更新作业ID,阶段名，阶段开始时间
 		StageStatusInfo statusInfo = new StageStatusInfo();
 		JobStatusInfoUtil.startStageStatusInfo(statusInfo, collectTableBean.getTable_id(),
@@ -91,10 +92,12 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 					stageParamInfo.setFileSize(fileSize);
 					stageParamInfo.setFileNameArr(file_name_list);
 				} else {
-					throw new AppSystemException("数据字典指定目录下数据文件不存在");
+					throw new AppSystemException("表" + collectTableBean.getHbase_name()
+							+ "数据字典指定目录下数据文件不存在");
 				}
 				//不用转存，则跳过db文件卸数，直接进行upload
-				LOGGER.info("Db文件采集，不需要转存或者增量采集，卸数跳过");
+				LOGGER.info("表" + collectTableBean.getHbase_name()
+						+ "Db文件采集，不需要转存或者增量采集，卸数跳过");
 			} else if (IsFlag.Shi.getCode().equals(tableBean.getIs_archived())) {
 				//获取db文件采集转存的文件编码，
 				// XXX 主要涉及到oracle数据库如果用外部表进数，字符集必须跟文件字符集一致的问题
@@ -136,7 +139,8 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 						pageCountResult.add(Long.parseLong(split.get(1)));
 						LOGGER.info("---------------" + parseResult + "---------------");
 					}
-					LOGGER.info(FileFormat.ofValueByCode(tableBean.getFile_format()) + "文件转存结束");
+					LOGGER.info("表" + collectTableBean.getHbase_name()
+							+ FileFormat.ofValueByCode(tableBean.getFile_format()) + "文件转存结束");
 					//统计的结果
 					DBUnloadDataStageImpl.countResult(fileResult, pageCountResult, stageParamInfo);
 					stageParamInfo.setFileNameArr(file_name_list);
@@ -149,21 +153,25 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 					tableBean.setFile_format(FileFormat.FeiDingChang.getCode());
 					tableBean.setFile_code(tableBean.getDbFileArchivedCode());
 				} else {
-					throw new AppSystemException("数据字典指定目录下数据文件不存在");
+					throw new AppSystemException("表" + collectTableBean.getHbase_name()
+							+ "数据字典指定目录下数据文件不存在");
 				}
 			} else {
-				throw new AppSystemException("是否转存传到后台的参数不正确");
+				throw new AppSystemException("表" + collectTableBean.getHbase_name()
+						+ "是否转存传到后台的参数不正确");
 			}
 			stageParamInfo.setTableBean(tableBean);
 			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.SUCCEED.getCode(), "执行成功");
 		} catch (Exception e) {
 			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.FAILED.getCode(), e.getMessage());
-			LOGGER.error("DB文件采集卸数阶段失败：", e);
+			LOGGER.error("表" + collectTableBean.getHbase_name()
+					+ "DB文件采集卸数阶段失败：", e);
 		} finally {
 			if (executorService != null)
 				executorService.shutdown();
 		}
-		LOGGER.info("------------------DB文件采集卸数阶段结束------------------");
+		LOGGER.info("------------------表" + collectTableBean.getHbase_name()
+				+ "DB文件采集卸数阶段结束------------------");
 		//结束给stageParamInfo塞值
 		JobStatusInfoUtil.endStageParamInfo(stageParamInfo, statusInfo, collectTableBean
 				, CollectType.DBWenJianCaiJi.getCode());

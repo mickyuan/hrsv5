@@ -39,14 +39,16 @@ public class DFCalIncrementStageImpl extends AbstractJobStage {
 	@Return(desc = "StageStatusInfo是保存每个阶段状态信息的实体类", range = "不会为null,StageStatusInfo实体类对象")
 	@Override
 	public StageParamInfo handleStage(StageParamInfo stageParamInfo) {
-		LOGGER.info("------------------DB文件采集增量计算阶段开始------------------");
+		LOGGER.info("------------------表" + collectTableBean.getHbase_name()
+				+ "DB文件采集增量计算阶段开始------------------");
 		//1、创建卸数阶段状态信息，更新作业ID,阶段名，阶段开始时间
 		StageStatusInfo statusInfo = new StageStatusInfo();
 		JobStatusInfoUtil.startStageStatusInfo(statusInfo, collectTableBean.getTable_id(),
 				StageConstant.CALINCREMENT.getCode());
 		try {
 			if (UnloadType.ZengLiangXieShu.getCode().equals(collectTableBean.getUnload_type())) {
-				LOGGER.info("增量卸数计算增量阶段不用做任何操作");
+				LOGGER.info("表" + collectTableBean.getHbase_name()
+						+ "增量卸数计算增量阶段不用做任何操作");
 			} else if (UnloadType.QuanLiangXieShu.getCode().equals(collectTableBean.getUnload_type())) {
 				List<DataStoreConfBean> dataStoreConfBeanList = collectTableBean.getDataStoreConfBean();
 				TableBean tableBean = stageParamInfo.getTableBean();
@@ -68,7 +70,8 @@ public class DFCalIncrementStageImpl extends AbstractJobStage {
 								//替换
 								increase.replace();
 							} else {
-								throw new AppSystemException("请选择正确的存储方式！");
+								throw new AppSystemException("表" + collectTableBean.getHbase_name()
+										+ "请选择正确的存储方式！");
 							}
 						}
 					} else if (Store_type.HBASE.getCode().equals(dataStoreConf.getStore_type())) {
@@ -81,17 +84,21 @@ public class DFCalIncrementStageImpl extends AbstractJobStage {
 
 					} else {
 						//TODO 上面的待补充。
-						throw new AppSystemException("不支持的存储类型");
+						throw new AppSystemException("表" + collectTableBean.getHbase_name()
+								+ "不支持的存储类型");
 					}
 				}
 			} else {
-				throw new AppSystemException("DB文件采集指定的数据抽取卸数方式类型不正确");
+				throw new AppSystemException("表" + collectTableBean.getHbase_name()
+						+ "DB文件采集指定的数据抽取卸数方式类型不正确");
 			}
 			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.SUCCEED.getCode(), "执行成功");
-			LOGGER.info("------------------DB文件采集增量阶段成功------------------");
+			LOGGER.info("------------------表" + collectTableBean.getHbase_name()
+					+ "DB文件采集增量阶段成功------------------");
 		} catch (Exception e) {
 			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.FAILED.getCode(), e.getMessage());
-			LOGGER.error("DB文件采集增量阶段失败：", e);
+			LOGGER.error("表" + collectTableBean.getHbase_name()
+					+ "DB文件采集增量阶段失败：", e);
 		}
 		//结束给stageParamInfo塞值
 		JobStatusInfoUtil.endStageParamInfo(stageParamInfo, statusInfo, collectTableBean

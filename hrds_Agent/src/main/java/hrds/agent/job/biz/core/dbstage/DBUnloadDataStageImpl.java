@@ -66,7 +66,8 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 	@Return(desc = "StageStatusInfo是保存每个阶段状态信息的实体类", range = "不会为null，StageStatusInfo实体类对象")
 	@Override
 	public StageParamInfo handleStage(StageParamInfo stageParamInfo) {
-		LOGGER.info("------------------数据库直连采集卸数阶段开始------------------");
+		LOGGER.info("------------------表" + collectTableBean.getTable_name()
+				+ "数据库直连采集卸数阶段开始------------------");
 		//1、创建卸数阶段状态信息，更新作业ID,阶段名，阶段开始时间
 		StageStatusInfo statusInfo = new StageStatusInfo();
 		JobStatusInfoUtil.startStageStatusInfo(statusInfo, collectTableBean.getTable_id(),
@@ -84,7 +85,8 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 				//增量卸数
 				incrementExtract(stageParamInfo, tableBean);
 			} else {
-				throw new AppSystemException("数据抽取卸数方式类型不正确");
+				throw new AppSystemException("表" + collectTableBean.getTable_name()
+						+ "数据抽取卸数方式类型不正确");
 			}
 			stageParamInfo.setTableBean(tableBean);
 			//数据字典的路径
@@ -99,16 +101,17 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 			//卸数成功，删除重命名的目录
 			deleteRenameDir(collectTableBean);
 			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.SUCCEED.getCode(), "执行成功");
-			LOGGER.info("------------------数据库直连采集卸数阶段成功------------------");
+			LOGGER.info("------------------表" + collectTableBean.getTable_name()
+					+ "数据库直连采集卸数阶段成功------------------");
 		} catch (Exception e) {
 			//卸数失败，删除本次卸数的目录，恢复数据
 			try {
 				restoreRenameDir(collectTableBean);
 			} catch (Exception e1) {
-				LOGGER.warn("卸数失败，恢复上次卸数数据失败", e);
+				LOGGER.warn(collectTableBean.getTable_name() + "卸数失败，恢复上次卸数数据失败", e);
 			}
 			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.FAILED.getCode(), e.getMessage());
-			LOGGER.error("数据库直连采集卸数阶段失败：", e);
+			LOGGER.error(collectTableBean.getTable_name() + "数据库直连采集卸数阶段失败：", e);
 		}
 		//结束给stageParamInfo塞值
 		JobStatusInfoUtil.endStageParamInfo(stageParamInfo, statusInfo, collectTableBean
