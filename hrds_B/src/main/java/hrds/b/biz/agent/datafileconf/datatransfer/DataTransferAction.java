@@ -67,19 +67,13 @@ public class DataTransferAction extends BaseAction {
     // 2: 获取每张表的转存配置信息
     List<Map<String, Object>> dataBaseTransDataList =
         Dbo.queryList(
-            "  SELECT t1.database_id,t1.table_id,t1.table_name,t1.table_ch_name,(CASE WHEN (SELECT COUNT(1) FROM "
-                + Data_extraction_def.TableName
-                + "  WHERE data_extract_type = ? ) > 0 THEN "
-                + " ? else ? END ) is_archived,t1.table_id FROM "
+            "  SELECT t1.database_id,t1.table_id,t1.table_name,t1.table_ch_name, is_archived FROM "
                 + Table_info.TableName
                 + " t1 "
                 + " LEFT JOIN "
                 + Data_extraction_def.TableName
                 + " t2 ON t1.table_id = t2.table_id WHERE "
                 + " t1.database_id = ? ORDER BY t1.table_name",
-            DataExtractType.ShuJuJiaZaiGeShi.getCode(),
-            IsFlag.Shi.getCode(),
-            IsFlag.Fou.getCode(),
             colSetId);
 
     // 获取xml的数据结果集
@@ -111,11 +105,11 @@ public class DataTransferAction extends BaseAction {
                 if (itemMap.get("table_name").equals(databaseItemMap.get("table_name"))) {
                   //                  List<Map<String, Object>> storageList =
                   //                      (List<Map<String, Object>>) itemMap.get("storage");
+                  List<Map<String, Object>> storageList =
+                      JSON.parseObject(
+                          itemMap.get("storage").toString(),
+                          new TypeReference<List<Map<String, Object>>>() {});
                   if (!extractionMap.isEmpty()) {
-                    List<Map<String, Object>> storageList =
-                        JSON.parseObject(
-                            itemMap.get("storage").toString(),
-                            new TypeReference<List<Map<String, Object>>>() {});
                     Iterator<Map<String, Object>> iterator = storageList.iterator();
                     while (iterator.hasNext()) {
                       Map<String, Object> storageMap = iterator.next();
@@ -128,9 +122,13 @@ public class DataTransferAction extends BaseAction {
                       if (storageFormat.equals(extractionMap.get("dbfile_format"))) {
                         extractionMap.put("is_header", storageMap.get("is_header"));
                         extractionMap.put(
-                            "database_separatorr", storageMap.get("database_separatorr"));
+                            "database_separator",
+                            StringUtil.unicode2String(
+                                String.valueOf(storageMap.get("database_separator"))));
                         extractionMap.put("plane_url", storageMap.get("plane_url"));
                         extractionMap.put("database_code", storageMap.get("database_code"));
+                        extractionMap.put(
+                            "row_separator", String.valueOf(storageMap.get("row_separator")));
                         iterator.remove();
                         break;
                       }
@@ -138,19 +136,17 @@ public class DataTransferAction extends BaseAction {
 
                     // 使用数据库中的数据
                     storageList.add(0, extractionMap);
-
-                    itemMap.put("storage", storageList);
+                    itemMap.put("storage", storageDataFormat(storageList));
+                  } else {
+                    itemMap.put("storage", storageDataFormat(storageList));
                   }
                   itemMap.put("table_name", databaseItemMap.get("table_name"));
                   itemMap.put("ded_id", extractionMap.get("ded_id"));
                   itemMap.put("table_ch_name", databaseItemMap.get("table_ch_name"));
                   itemMap.put("table_id", databaseItemMap.get("table_id"));
+                  //这里的是否转存以数据库查询的为标准
                   itemMap.put("is_archived", databaseItemMap.get("is_archived"));
                 }
-
-                //  对数据中的行分隔符进行转换数据库中存储的是Unicode
-                //  对数据中的,列分隔符进行转换,数据库存储的是Unicode
-                storageDataFormat(((List<Map<String, Object>>) itemMap.get("storage")));
               });
         });
 
@@ -160,7 +156,7 @@ public class DataTransferAction extends BaseAction {
 
   @Method(desc = "将数据中的Unicode转换为字符串", logicStep = "Unicode数据转换")
   @Param(name = "storageData", desc = "需要转换的List数据", range = "不可为空")
-  private void storageDataFormat(List<Map<String, Object>> storageData) {
+  private List<Map<String, Object>> storageDataFormat(List<Map<String, Object>> storageData) {
 
     storageData.forEach(
         itemMap -> {
@@ -183,8 +179,12 @@ public class DataTransferAction extends BaseAction {
             itemMap.put(
                 "database_separatorr",
                 StringUtil.unicode2String(String.valueOf(itemMap.get("database_separatorr"))));
+          } else {
+            itemMap.put("database_separatorr", "");
           }
         });
+
+    return storageData;
   }
 
   @Method(desc = "根据colSetId去数据库中查出DB连接信息", logicStep = "1、根据colSetId和userId去数据库中查出DB连接信息")
@@ -341,7 +341,4 @@ public class DataTransferAction extends BaseAction {
     return colSetId;
   }
 
-  public static void main(String[] args) {
-    System.out.println(StringUtil.string2Unicode("\r"));
-  }
 }

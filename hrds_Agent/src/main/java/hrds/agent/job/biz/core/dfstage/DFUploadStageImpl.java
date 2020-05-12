@@ -64,7 +64,8 @@ public class DFUploadStageImpl extends AbstractJobStage {
 	@Return(desc = "StageStatusInfo是保存每个阶段状态信息的实体类", range = "不会为null,StageStatusInfo实体类对象")
 	@Override
 	public StageParamInfo handleStage(StageParamInfo stageParamInfo) {
-		LOGGER.info("------------------DB文件采集上传阶段开始------------------");
+		LOGGER.info("------------------表" + collectTableBean.getHbase_name()
+				+ "DB文件采集上传阶段开始------------------");
 		//1、创建卸数阶段状态信息，更新作业ID,阶段名，阶段开始时间
 		StageStatusInfo statusInfo = new StageStatusInfo();
 		JobStatusInfoUtil.startStageStatusInfo(statusInfo, collectTableBean.getTable_id(),
@@ -78,13 +79,16 @@ public class DFUploadStageImpl extends AbstractJobStage {
 				//全量采集
 				fullAmountCollect(stageParamInfo);
 			} else {
-				throw new AppSystemException("DB文件采集指定的数据抽取卸数方式类型不正确");
+				throw new AppSystemException("表" + collectTableBean.getHbase_name()
+						+ "DB文件采集指定的数据抽取卸数方式类型不正确");
 			}
-			LOGGER.info("------------------DB文件全量上传阶段成功------------------");
+			LOGGER.info("------------------表" + collectTableBean.getHbase_name()
+					+ "DB文件全量上传阶段成功------------------");
 			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.SUCCEED.getCode(), "执行成功");
 		} catch (Exception e) {
 			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.FAILED.getCode(), e.getMessage());
-			LOGGER.error("DB文件采集上传阶段失败：", e);
+			LOGGER.error("表" + collectTableBean.getHbase_name()
+					+ "DB文件采集上传阶段失败：", e);
 		}
 		//结束给stageParamInfo塞值
 		JobStatusInfoUtil.endStageParamInfo(stageParamInfo, statusInfo, collectTableBean
@@ -103,14 +107,15 @@ public class DFUploadStageImpl extends AbstractJobStage {
 					processInterface = new MppTableProcessImpl(stageParamInfo.getTableBean(),
 							collectTableBean, dataStoreConfBean);
 				} else {
-					throw new AppSystemException("目前没有实现其他数据库的增量更新代码");
+					throw new AppSystemException("增量采集目前没有实现其他数据库的增量更新代码");
 				}
 				for (String readFile : stageParamInfo.getFileArr()) {
 					processInterface.parserFileToTable(readFile);
 				}
 			}
 		} catch (Exception e) {
-			throw new AppSystemException("db文件采集增量上传失败", e);
+			throw new AppSystemException("表" + collectTableBean.getHbase_name()
+					+ "db文件采集增量上传失败", e);
 		} finally {
 			if (processInterface != null) {
 				processInterface.close();
@@ -167,7 +172,8 @@ public class DFUploadStageImpl extends AbstractJobStage {
 				}
 			}
 		} catch (Exception e) {
-			throw new AppSystemException("db文件采集全量上传失败", e);
+			throw new AppSystemException("表" + collectTableBean.getHbase_name()
+					+ "db文件采集全量上传失败", e);
 		} finally {
 			if (executor != null)
 				executor.shutdown();

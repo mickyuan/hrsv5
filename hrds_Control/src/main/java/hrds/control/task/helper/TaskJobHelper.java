@@ -1,16 +1,16 @@
 package hrds.control.task.helper;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
-import java.util.Stack;
-
 import fd.ng.core.utils.ArrayUtil;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.StringUtil;
 import hrds.commons.codes.Dispatch_Frequency;
 import hrds.commons.exception.AppSystemException;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.Stack;
 
 /**
  * ClassName: TaskJobHelper
@@ -38,14 +38,19 @@ public class TaskJobHelper {
      * @param dirOrName
      *          含义：原始的目录或名称参数。
      *          取值范围：不能为null。
+     *
+     * @param etl_sys_cd
+     *          含义：原始的目录或名称参数。
+     *          取值范围：不能为null。
+     *
      * @return java.lang.String
      *          含义：转换后的目录或名称参数。
      *          取值范围：不会为null。
      */
-    public static String transformDirOrName(String currBathDate, String dirOrName) {
+    public static String transformDirOrName(String currBathDate, String etl_sys_cd,String dirOrName) {
 
         //1.转换参数字符串。
-        String[] params = TaskJobHelper.transformPara(currBathDate, dirOrName);
+        String[] params = TaskJobHelper.transformPara(currBathDate, etl_sys_cd,dirOrName);
 
         if(params.length < 1) { return dirOrName; }
 
@@ -73,9 +78,9 @@ public class TaskJobHelper {
      *          含义：转换后的作业程序参数。
      *          取值范围：不会为null。
      */
-    public static String transformProgramPara(String currBathDate, String programPara) {
+    public static String transformProgramPara(String currBathDate,String etl_sys_cd, String programPara) {
 
-        String[] params = TaskJobHelper.transformPara(currBathDate, programPara);
+        String[] params = TaskJobHelper.transformPara(currBathDate,etl_sys_cd, programPara);
 
         if(params.length < 1) { return programPara; }
 
@@ -105,7 +110,7 @@ public class TaskJobHelper {
      *          含义：无占位符的参数字符数组，因不同的参数类型有不同的字符串组织方式，故而提供数组形式。
      *          取值范围：不会为null。
      */
-    private static String[] transformPara(String currBathDate, String para) {
+    private static String[] transformPara(String currBathDate,String etl_sys_cd, String para) {
 
         if(StringUtil.isEmpty(para)) { return ArrayUtil.EMPTY_STRING_ARRAY; }
         //1、所有参数字符串按固定分隔符分割，并且开始识别占位符关键字；
@@ -160,7 +165,7 @@ public class TaskJobHelper {
                     //TODO 这里etlSysCd为""，意味着这是默认系统参数？
                     String paraCd = paraCdSB.toString();
 
-                    String paraVal = TaskSqlHelper.getEtlParameterVal("", paraCd);
+                    String paraVal = TaskSqlHelper.getEtlParameterVal(etl_sys_cd, paraCd);
                     LocalDate date = LocalDate.parse(currBathDate, DateUtil.DATE_DEFAULT);
 
                     DateTimeFormatter pattern;

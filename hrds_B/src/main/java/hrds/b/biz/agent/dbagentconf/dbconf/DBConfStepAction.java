@@ -93,8 +93,9 @@ public class DBConfStepAction extends BaseAction {
 
   @Method(desc = "新增时获取数据库采集的数据", logicStep = "使用是否发生完成的标识来获取上次为配置文采的任务")
   @Param(name = "databaseId", desc = "源系统数据库设置表主键", range = "不为空")
+  @Param(name = "agent_id", desc = "数据库采集AgentID", range = "不为空",nullable = true)
   @Return(desc = "返回上次为配置文采的任务采集信息", range = "可以为空,为空表示首次配置")
-  public Result addDBConfInfo(long databaseId) {
+  public Result addDBConfInfo(long databaseId, long agent_id) {
 
     // 3、在数据库设置表表中，关联采集作业分类表(collect_job_classify)，查询出当前database_id的所有信息并返回
     return Dbo.queryResult(
@@ -111,11 +112,12 @@ public class DBConfStepAction extends BaseAction {
             + " t1.classify_id = t2.classify_id  join "
             + Agent_info.TableName
             + " ai on t1.agent_id = ai.agent_id "
-            + "where  t1.is_sendok = ? AND ai.agent_type = ? AND ai.user_id = ? AND ai.source_id = ?",
+            + "where  t1.is_sendok = ? AND ai.agent_type = ? AND ai.user_id = ? AND ai.source_id = ? AND ai.agent_id = ? ",
         IsFlag.Fou.getCode(),
         AgentType.ShuJuKu.getCode(),
         getUserId(),
-        databaseId);
+        databaseId,
+        agent_id);
   }
 
   @Method(desc = "根据数据库类型获得数据库连接url等信息", logicStep = "" + "1、调用工具类方法直接获取数据并返回")
@@ -194,7 +196,7 @@ public class DBConfStepAction extends BaseAction {
                     + " JOIN "
                     + Database_set.TableName
                     + " das ON ai.agent_id = das.agent_id "
-                    + " WHERE das.classify_id = ? AND ds.create_user_id = ? ",
+                    + " WHERE das.classify_id = ? AND ai.user_id = ? ",
                 classifyId,
                 getUserId())
             .orElseThrow(() -> new BusinessException("SQL查询错误"));
@@ -309,7 +311,7 @@ public class DBConfStepAction extends BaseAction {
                     + " LEFT JOIN "
                     + Data_source.TableName
                     + " ds ON ds.source_id=ai.source_id"
-                    + " WHERE cjc.classify_id=? AND ds.source_id=? AND ds.create_user_id = ? ",
+                    + " WHERE cjc.classify_id=? AND ds.source_id=? AND ai.user_id = ? ",
                 classify.getClassify_id(),
                 sourceId,
                 getUserId())

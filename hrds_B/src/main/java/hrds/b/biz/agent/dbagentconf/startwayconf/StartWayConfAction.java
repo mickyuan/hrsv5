@@ -9,11 +9,15 @@ import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
+import hrds.commons.codes.Dispatch_Frequency;
 import hrds.commons.codes.FileFormat;
 import hrds.commons.codes.IsFlag;
+import hrds.commons.codes.Job_Effective_Flag;
 import hrds.commons.codes.Main_Server_Sync;
 import hrds.commons.codes.ParamType;
 import hrds.commons.codes.Pro_Type;
+import hrds.commons.codes.Status;
+import hrds.commons.codes.Today_Dispatch_Flag;
 import hrds.commons.entity.Agent_down_info;
 import hrds.commons.entity.Agent_info;
 import hrds.commons.entity.Collect_job_classify;
@@ -30,7 +34,9 @@ import hrds.commons.entity.Etl_sys;
 import hrds.commons.entity.Table_info;
 import hrds.commons.entity.Take_relation_etl;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.utils.PinyinUtil;
 import hrds.commons.utils.PropertyParaValue;
+import hrds.commons.utils.jsch.ChineseUtil;
 import hrds.commons.utils.key.PrimayKeyGener;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -53,6 +59,12 @@ public class StartWayConfAction extends BaseAction {
   private static final String HYRENBIN = "!{HYSHELLBIN}";
   // 程序日志的工程系统参数名
   private static final String HYRENLOG = "!{HYLOG}";
+  // 作业调度系统参数定义程序变量名称
+  private static final String PARA_HYRENBIN = "!HYSHELLBIN";
+  // 作业调度系统参数定义日志变量名称
+  private static final String PARA_HYRENLOG = "!HYLOG";
+  // 采集程序的默认脚本名称
+  private static final String SHELLCOMMAND = "shellCommand.sh";
 
   @Method(desc = "获取工程信息", logicStep = "获取作业调度工程信息,然后返回到前端")
   @Return(desc = "返回工程信息集合", range = "为空表示没有工程信息")
@@ -137,7 +149,9 @@ public class StartWayConfAction extends BaseAction {
           //
           assemblyMap.put("ded_id", itemMap.get("ded_id").toString());
           // 作业采集文件类型
-          String dbfile_format = FileFormat.ofValueByCode(((String) itemMap.get("dbfile_format")));
+          String dbfile_format =
+              ChineseUtil.getPingYin(
+                  FileFormat.ofValueByCode(((String) itemMap.get("dbfile_format"))));
           // 作业名称
           String pro_name =
               databaseMap.get("datasource_number")
@@ -173,6 +187,12 @@ public class StartWayConfAction extends BaseAction {
                   + BATCH_DATE;
           assemblyMap.put("pro_para", pro_para);
 
+          // 设置调度的默认值
+          assemblyMap.put("disp_freq", Dispatch_Frequency.DAILY.getCode());
+          // 设置默认的作业优先级
+          assemblyMap.put("job_priority", "0");
+          // 设置默认的调度触发方式
+          assemblyMap.put("disp_offset", "0");
           assemblyList.add(assemblyMap);
         });
 
@@ -262,15 +282,15 @@ public class StartWayConfAction extends BaseAction {
     //    2: 获取任务部署的Agent路径及日志地址,并将程序类型,名称的默认值返回
     Map<String, Object> map =
         Dbo.queryOneObject(
-            "SELECT save_dir pro_dic,log_dir log_dic FROM "
+            "SELECT ai_desc pro_dic,log_dir log_dic FROM "
                 + Database_set.TableName
                 + " t1 JOIN "
                 + Agent_down_info.TableName
                 + " t2 ON "
                 + "t1.agent_id = t2.agent_id WHERE t1.database_id = ?",
             colSetId);
-    map.put("pro_type", Pro_Type.JAVA.getCode());
-    map.put("pro_name", PropertyParaValue.getString("agentpath", ""));
+    map.put("pro_type", Pro_Type.SHELL.getCode());
+    map.put("pro_name", SHELLCOMMAND);
 
     // 3: 获取任务存在着抽取作业关系.. 如果存在就获取一条信息就可以... 因为同个任务的作业工程编号,任务编号是一个
     map.putAll(
@@ -330,10 +350,10 @@ public class StartWayConfAction extends BaseAction {
     }
 
     // 检查作业系统参数的作业程序目录
-    setDefaultEtlConf(etl_sys_cd, HYRENBIN, pro_dic);
+    setDefaultEtlConf(etl_sys_cd, PARA_HYRENBIN, pro_dic);
 
     // 检查作业系统参数的作业日志是否存在
-    setDefaultEtlConf(etl_sys_cd, HYRENLOG, log_dic);
+    setDefaultEtlConf(etl_sys_cd, PARA_HYRENLOG, log_dic);
 
     // 默认增加一个资源类型,先检查是否存在,如果不存在则添加
     setDefaultEtlResource(etl_sys_cd);
@@ -376,13 +396,13 @@ public class StartWayConfAction extends BaseAction {
       }
 
       // 作业的程序路径
-      etl_job_def.setPro_dic(HYRENBIN);
+      etl_job_def.setPro_dic(pro_dic);
       // 作业的日志程序路径
       etl_job_def.setLog_dic(HYRENLOG);
       // 默认作业都是有效的
-      etl_job_def.setJob_eff_flag(IsFlag.Shi.getCode());
+      etl_job_def.setJob_eff_flag(Job_Effective_Flag.YES.getCode());
       // 默认当天调度作业信息
-      etl_job_def.setToday_disp(IsFlag.Shi.getCode());
+      etl_job_def.setToday_disp(Today_Dispatch_Flag.YES.getCode());
       // 作业的更新信息时间
       etl_job_def.setUpd_time(
           DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate())
@@ -474,8 +494,11 @@ public class StartWayConfAction extends BaseAction {
   private void setDefaultEtlResource(String etl_sys_cd) {
     long resourceNum =
         Dbo.queryNumber(
-                "SELECT COUNT(1) FROM " + Etl_resource.TableName + " WHERE resource_type = ?",
-                RESOURCE_THRESHOLD)
+                "SELECT COUNT(1) FROM "
+                    + Etl_resource.TableName
+                    + " WHERE resource_type = ? AND etl_sys_cd = ?",
+                RESOURCE_THRESHOLD,
+                etl_sys_cd)
             .orElseThrow(() -> new BusinessException("SQL查询错误"));
     if (resourceNum == 0) {
       Etl_resource etl_resource = new Etl_resource();
@@ -553,7 +576,7 @@ public class StartWayConfAction extends BaseAction {
                 etl_dependency.setEtl_job(etl_job);
                 etl_dependency.setPre_etl_sys_cd(etl_sys_cd);
                 etl_dependency.setPre_etl_job(item);
-                etl_dependency.setStatus(IsFlag.Shi.getCode());
+                etl_dependency.setStatus(Status.TRUE.getCode());
                 etl_dependency.add(Dbo.db());
               });
     }

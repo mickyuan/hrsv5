@@ -8,7 +8,6 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
-import fd.ng.core.utils.FileUtil;
 import fd.ng.core.utils.StringUtil;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Agent_down_info;
@@ -22,9 +21,7 @@ import hrds.commons.utils.deployentity.HttpYaml;
 import hrds.commons.utils.yaml.Yaml;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.logging.Log;
@@ -62,7 +59,11 @@ public class AgentDeploy {
     }
   }
 
-  /** 写本地临时Yaml配置文件 */
+  /**
+   * 写本地临时Yaml配置文件
+   *
+   * @return
+   */
   @Method(
       desc = "部署Agent配置文件",
       logicStep =
@@ -85,7 +86,7 @@ public class AgentDeploy {
   @Param(name = "oldAgentPath", desc = "旧的,Agent部署目录地址", range = "可以为空,为空表示为第一次部署")
   @Param(name = "oldLogPath", desc = "旧的,Agent部署日志地址", range = "可以为空,为空表示为第一次部署")
   //  @Return(desc = "返回部署是否操作成功", range = "true-成功/false-失败")
-  public static void agentConfDeploy(
+  public static String agentConfDeploy(
       Agent_down_info down_info, String oldAgentPath, String oldLogPath) {
     try {
 
@@ -106,7 +107,7 @@ public class AgentDeploy {
       Yaml.dump(httpServerMap, new File(CONFPATH + HttpServer.HTTP_CONF_NAME));
       // 二 : resources/fdconfig/ 下的全部文件SCP 到agent目录下
       /* 开始将本地写好的文件SCP到Agent目下, */
-      sftpAgentToTargetMachine(down_info, oldAgentPath, oldLogPath);
+      return sftpAgentToTargetMachine(down_info, oldAgentPath, oldLogPath);
 
     } catch (FileNotFoundException e) {
       throw new BusinessException(e.getMessage());
@@ -127,7 +128,7 @@ public class AgentDeploy {
   @Param(name = "oldAgentPath", desc = "旧的,Agent部署目录地址", range = "可以为空,为空表示为第一次部署")
   @Param(name = "oldLogPath", desc = "旧的,Agent部署日志地址", range = "可以为空,为空表示为第一次部署")
   @Return(desc = "", range = "")
-  private static void sftpAgentToTargetMachine(
+  private static String sftpAgentToTargetMachine(
       Agent_down_info down_info, String oldAgentPath, String oldLogPath) {
 
     // 这里先将配置的agent名称转换为拼音在和端口组合在一起,当做agent部署的目录
@@ -159,8 +160,14 @@ public class AgentDeploy {
                 + " |grep -v grep| awk '{print $2}'| xargs -n 1)");
 
         logger.info("删除旧目录的命令是 : " + "rm -rf " + oldAgentPath + SEPARATOR + agentDirName);
-        SFTPChannel.execCommandByJSchNoRs(
+        SFTPChannel.execCommandByJSch(
             shellSession, "rm -rf " + oldAgentPath + SEPARATOR + agentDirName);
+      }
+
+      if (StringUtil.isNotBlank(oldLogPath)) {
+        // 根据旧的日志文件
+        logger.info("删除旧的日志命令是 : " + "rm -rf " + oldLogPath);
+        SFTPChannel.execCommandByJSch(shellSession, "rm -rf " + oldLogPath);
       }
 
       // 检查当前的目录下的进程是否启动(这里直接使用kill命令,为防止后续启动出错)
@@ -241,15 +248,27 @@ public class AgentDeploy {
 
       // 五 : 判断是否启动agent
       if (IsFlag.Shi.getCode().equals(down_info.getDeploy())) {
+        // 5-1: 检查日志目录是否存在,如果存在则不创建目录,反之创建
+        String log_dir = down_info.getLog_dir();
+        String s =
+            SFTPChannel.execCommandByJSch(
+                shellSession, "mkdir -p " + new File(log_dir).getParent());
+        logger.info(s);
         logger.info(
             "启动agent命令 : cd "
                 + targetDir
-                + ";nohup java -D"
+                + ";nohup java -Dorg.eclipse.jetty.server.Request.maxFormContentSize=99900000"
+                + " -Dport="
                 + down_info.getAgent_port()
-                + " -Dorg.eclipse.jetty.server.Request.maxFormContentSize=99900000 -jar "
+                + " -Dproject.dir="
+                + down_info.getSave_dir()
+                + " -Dproject.name=\"HYRENAgentReceive\""
+                + " -jar "
                 + file.getName()
+                + " >"
+                + down_info.getLog_dir()
                 + " &");
-        SFTPChannel.execCommandByJSchNoRs(
+        SFTPChannel.execCommandByJSch(
             shellSession,
             "cd "
                 + targetDir
@@ -261,11 +280,13 @@ public class AgentDeploy {
                 + " -Dproject.name=\"HYRENAgentReceive\""
                 + " -jar "
                 + file.getName()
+                + " >"
+                + log_dir
                 + " &");
       }
-
+      return targetDir;
     } catch (Exception e) {
-      logger.error("", e);
+      logger.error(e.getMessage(), e);
       throw new BusinessException(e.getMessage());
     } finally {
       if (shellSession != null) {
@@ -277,8 +298,7 @@ public class AgentDeploy {
       if (channel != null) {
         try {
           channel.closeChannel();
-        } catch (Exception e) {
-          throw new BusinessException("通道关闭失败!!!");
+        } catch (Exception ignored) {
         }
       }
       // 删除本地临时的配置文件

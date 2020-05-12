@@ -95,14 +95,15 @@ public class CleanConfStepAction extends BaseAction {
         strSB.append(tableIds.get(i));
         if (i != tableIds.size() - 1) strSB.append(",");
       }
-      strSB.append(" ) AND t5.data_extract_type = ? GROUP BY ti.table_id ");
+      strSB.append(" ) AND t5.data_extract_type = ? AND  t5.is_archived = ? GROUP BY ti.table_id ");
 
       return Dbo.queryResult(
           strSB.toString(),
           CleanType.ZiFuBuQi.getCode(),
           CleanType.ZiFuTiHuan.getCode(),
           CleanType.ZiFuTrim.getCode(),
-          DataExtractType.ShuJuJiaZaiGeShi.getCode());
+          DataExtractType.YuanShuJuGeShi.getCode(),
+          IsFlag.Shi.getCode());
     } else {
       // 4、否则根据采集表ID在table_info表和table_clean表中查出页面所需的信息
       StringBuilder strSB =

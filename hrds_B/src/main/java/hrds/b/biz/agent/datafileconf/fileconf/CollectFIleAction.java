@@ -4,7 +4,9 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
-import fd.ng.core.utils.StringUtil;
+import fd.ng.core.utils.JsonUtil;
+import fd.ng.netclient.http.HttpClient;
+import fd.ng.web.action.ActionResult;
 import fd.ng.web.util.Dbo;
 import hrds.b.biz.agent.datafileconf.CheckParam;
 import hrds.commons.base.BaseAction;
@@ -14,7 +16,9 @@ import hrds.commons.entity.Agent_info;
 import hrds.commons.entity.Collect_job_classify;
 import hrds.commons.entity.Database_set;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.utils.AgentActionUtil;
 import hrds.commons.utils.key.PrimayKeyGener;
+import java.util.List;
 import java.util.Map;
 
 @DocClass(desc = "数据文件采集配置管理", author = "Mr.Lee", createdate = "2020-04-10 16:08")
@@ -104,10 +108,14 @@ public class CollectFIleAction extends BaseAction {
   @Param(name = "database_set", desc = "数据文件的配置实体数据信息", range = "不可为空", isBean = true)
   @Return(desc = "返回此次任务的ID", range = "不会为空")
   public String updateDataFile(Database_set database_set) {
-    CheckParam.checkData("任务ID不能为空", database_set.getDatabase_id().toString());
+    if (database_set.getDatabase_id() == null) {
+      CheckParam.throwErrorMsg("任务ID不能为空");
+    }
     CheckParam.checkData("作业编号不能为空", database_set.getDatabase_number());
     CheckParam.checkData("采集数据文件路径不能为空", database_set.getPlane_url());
-    CheckParam.checkData("分类编号不能为空", String.valueOf(database_set.getClassify_id()));
+    if (database_set.getClassify_id() == null) {
+      CheckParam.throwErrorMsg("分类编号不能为空");
+    }
     //    1: 检查数据文件采集信息是否存在
     long countNum =
         Dbo.queryNumber(
@@ -123,7 +131,33 @@ public class CollectFIleAction extends BaseAction {
     return database_set.getDatabase_id().toString();
   }
 
-  public static void main(String[] args) {
-    System.out.println(StringUtil.unicode2String("\\u31"));
+  @Method(
+      desc = "选择服务器上数据字典的文件路径",
+      logicStep = "1.根据前端传过来的agent_id获取需要访问的url" + "2.调用远程Agent后端代码获取Agent服务器上文件夹路径" + "3.返回到前端")
+  @Param(name = "agent_id", desc = "文件采集Agent的id", range = "不能为空")
+  @Param(
+      name = "path",
+      desc = "选择Agent服务器所在路径下的文件夹，为空则返回根目录下的所有文件夹",
+      valueIfNull = "",
+      range = "可为空")
+  @Return(desc = "路径下文件夹和文件的名称和服务器操作系统的名称的集合", range = "可能为空")
+  // XXX 这里不用nullable是不想下面传参数那里判断null
+  public List<Map> selectPath(long agent_id, String path) {
+    // TODO 根据操作系统校验文件路径，应该使用一个公共的校验类进行校验
+    // 数据可访问权限处理方式，传入用户需要有Agent对应数据的访问权限
+    // 1.根据前端传过来的agent_id获取需要访问的url
+    String url = AgentActionUtil.getUrl(agent_id, getUserId(), AgentActionUtil.GETSYSTEMFILEINFO);
+    // 调用工具类方法给agent发消息，并获取agent响应
+    // 2.调用远程Agent后端代码获取Agent服务器上文件夹路径
+    HttpClient.ResponseValue resVal =
+        new HttpClient().addData("pathVal", path).addData("isFile", "true").post(url);
+    ActionResult ar =
+        JsonUtil.toObjectSafety(resVal.getBodyString(), ActionResult.class)
+            .orElseThrow(() -> new BusinessException("连接" + url + "服务异常"));
+    if (!ar.isSuccess()) {
+      throw new BusinessException("连接远程Agent获取文件夹失败");
+    }
+    // 3.返回到前端
+    return ar.getDataForEntityList(Map.class);
   }
 }

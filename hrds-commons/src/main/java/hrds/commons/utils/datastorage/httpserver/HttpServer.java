@@ -63,8 +63,8 @@ public class HttpServer {
       } else if (HYREN_NAME.equals(itemMap.getString("name"))) { // 这里是海云服务接口的配置信息
         HttpYaml confBeanMap = new HttpYaml();
         confBeanMap.setName(HYREN_NAME);
-        confBeanMap.setHyren_host(PropertyParaValue.getString("host", "127.0.0.1"));
-        confBeanMap.setHyren_port(PropertyParaValue.getInt("port", 2000));
+        confBeanMap.setHost(PropertyParaValue.getString("hyren_host", "127.0.0.1"));
+        confBeanMap.setPort(PropertyParaValue.getInt("hyren_port", 2000));
         confBeanMap.setWebContext(itemMap.getString("webContext"));
         confBeanMap.setActionPattern(itemMap.getString("actionPattern"));
         httpServerConfList.add(confBeanMap);

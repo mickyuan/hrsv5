@@ -111,17 +111,17 @@ public class Xls2xml {
 
 	public static void toXml(String db_path, String xml_path) {
 
-		String path_cd = pathToUnEscape(db_path + "~dd_data.json");
-		File file = FileUtils.getFile(path_cd);
+//		String path_cd = pathToUnEscape(db_path + "~dd_data.json");
+		File file = FileUtils.getFile(db_path);
 		if (file.exists()) {
-			jsonToXml(path_cd, xml_path);
+			jsonToXml(db_path, xml_path);
 		} else {
-			path_cd = pathToUnEscape(db_path + "~dd_data.xls");
+//			path_cd = pathToUnEscape(db_path + "~dd_data.xls");
 			file = FileUtils.getFile(db_path);
 			if (!file.exists()) {
 				throw new BusinessException("没有找到相应的数据字典定义文件！");
 			}
-			XlsToXml(path_cd, xml_path);
+			XlsToXml(db_path, xml_path);
 		}
 	}
 
@@ -272,7 +272,7 @@ public class Xls2xml {
 			for (int i = 0; i < jsonArray.size(); i++) {
 				JSONObject json = jsonArray.getJSONObject(i);
 				String table_name = json.getString("table_name");//表名
-				String table_cn_name = json.getString("table_cn_name");//中文表名
+				String table_cn_name = json.getString("table_ch_name");//中文表名
 				String unload_type = json.getString("unload_type");//数据存储方式
 				String insertColumnInfo = json.getString("insertColumnInfo");
 				String updateColumnInfo = json.getString("updateColumnInfo");
@@ -282,7 +282,7 @@ public class Xls2xml {
 				for (int j = 0; j < columns.size(); j++) {
 					JSONObject column = columns.getJSONObject(j);
 					String column_name = column.getString("column_name");//字段名
-					String column_cn_name = column.getString("column_cn_name");//字段中文名
+					String column_cn_name = column.getString("column_ch_name");//字段中文名
 					String column_type = column.getString("column_type");//字段类型
 					String is_primary_key = column.getString("is_primary_key");//是否为主键
 					String column_remark = column.getString("column_remark");//备注信息

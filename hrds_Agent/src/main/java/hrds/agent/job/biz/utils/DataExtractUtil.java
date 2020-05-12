@@ -48,7 +48,7 @@ public class DataExtractUtil {
 			}
 			JSONObject jsonObject = new JSONObject();
 			jsonObject.put("table_name", tableName);
-			jsonObject.put("table_cn_name", tableName);
+			jsonObject.put("table_ch_name", tableName);
 			jsonObject.put("unload_type", unload_type);
 
 			jsonObject.put("insertColumnInfo", insertColumnInfo);
@@ -74,7 +74,7 @@ public class DataExtractUtil {
 				JSONObject object = new JSONObject();
 				object.put("column_type", typeList.get(i));
 				object.put("column_remark", "");
-				object.put("column_cn_name", columnList.get(i));
+				object.put("column_ch_name", columnList.get(i));
 				object.put("column_name", columnList.get(i));
 				object.put("is_primary_key", primaryKeyList.get(i));
 				object.put("is_get", IsFlag.Shi.getCode());

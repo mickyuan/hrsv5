@@ -37,7 +37,8 @@ public class DFCollectTableHandleParse extends AbstractCollectTableHandle {
 	public TableBean generateTableInfo(SourceDataConfBean sourceDataConfBean,
 	                                   CollectTableBean collectTableBean) {
 		TableBean tableBean = new TableBean();
-		String plane_url = sourceDataConfBean.getPlane_url() + File.separator + DataExtractUtil.DATADICTIONARY;
+//		String plane_url = sourceDataConfBean.getPlane_url() + File.separator + DataExtractUtil.DATADICTIONARY;
+		String plane_url = sourceDataConfBean.getPlane_url();
 		//获取数据字典所在目录文件，根据数据字典计算xml文件名称
 		String xmlName = Math.abs(plane_url.hashCode()) + ".xml";
 		//2.DB文件采集将数据字典dd_data.xls转为xml

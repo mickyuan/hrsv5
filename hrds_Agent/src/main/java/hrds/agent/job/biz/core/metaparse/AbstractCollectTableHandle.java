@@ -91,7 +91,7 @@ public abstract class AbstractCollectTableHandle implements CollectTableHandle {
 	 * 获取数据抽取sql,根据页面选择的列
 	 */
 	private String getCollectSqlByColumn(CollectTableBean collectTableBean,
-	                                            SourceDataConfBean sourceDataConfBean) {
+	                                     SourceDataConfBean sourceDataConfBean) {
 		String tableName = collectTableBean.getTable_name();
 		//筛选出不是新列的字段
 		Set<String> collectColumnNames = ColumnTool.getCollectColumnName(
@@ -159,12 +159,14 @@ public abstract class AbstractCollectTableHandle implements CollectTableHandle {
 	public static String replaceSqlParam(String collectSql, String sqlParam) {
 		//将多个需要替换的参数分割出来
 		List<String> splitParamList = StringUtil.split(sqlParam, JobConstant.SQLDELIMITER);
-		for (String splitParam : splitParamList) {
-			//遍历，分割出需要替换的key和值
-			List<String> key_value = StringUtil.split(splitParam, "=");
-			String key = "#{" + key_value.get(0) + "}";
-			String value = key_value.get(1);
-			collectSql = collectSql.replaceAll(key, value);
+		if (splitParamList != null && splitParamList.size() > 0) {
+			for (String splitParam : splitParamList) {
+				//遍历，分割出需要替换的key和值
+				List<String> key_value = StringUtil.split(splitParam, "=");
+				String key = "#{" + key_value.get(0) + "}";
+				String value = key_value.get(1);
+				collectSql = collectSql.replaceAll(key, value);
+			}
 		}
 		return collectSql;
 	}
@@ -332,7 +334,7 @@ public abstract class AbstractCollectTableHandle implements CollectTableHandle {
 	 * @return 更新后的信息
 	 */
 	protected String updateColumn(Map<String, String> mergeIng, Map<String, Map<String, Column_split>> splitIng,
-	                           StringBuilder columns, StringBuilder colType, StringBuilder lengths) {
+	                              StringBuilder columns, StringBuilder colType, StringBuilder lengths) {
 		if (!mergeIng.isEmpty()) {
 			for (String key : mergeIng.keySet()) {
 				//获取表名和类型

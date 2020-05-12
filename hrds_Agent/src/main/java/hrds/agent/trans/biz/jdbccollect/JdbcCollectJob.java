@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.RejectedExecutionException;
 
 @DocClass(desc = "数据库采集接收消息接口", author = "zxz", createdate = "2019/12/2 10:35")
 public class JdbcCollectJob extends AgentBaseAction {
@@ -65,8 +64,8 @@ public class JdbcCollectJob extends AgentBaseAction {
 			}
 			//3.打印每个线程执行情况
 			JobStatusInfoUtil.printJobStatusInfo(list);
-		} catch (RejectedExecutionException e) {
-			throw new AppSystemException("采集选择文件夹个数大于最大线程个数和队列个数的和!");
+		} catch (Exception e) {
+			throw new AppSystemException("数据库文件抽取采集失败!", e);
 		} finally {
 			if (executor != null)
 				executor.shutdown();

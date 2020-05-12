@@ -1,7 +1,6 @@
 package hrds.c.biz.etlsys;
 
 import com.jcraft.jsch.JSchException;
-import com.jcraft.jsch.Session;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
@@ -25,7 +24,6 @@ import hrds.commons.utils.Constant;
 import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.PropertyParaValue;
 import hrds.commons.utils.ReadLog;
-import hrds.commons.utils.jsch.SFTPChannel;
 import hrds.commons.utils.jsch.SFTPDetails;
 import org.apache.commons.io.FilenameUtils;
 
@@ -48,7 +46,7 @@ public class EltSysAction extends BaseAction {
 		return Dbo.queryResult(
 				"select etl_sys_cd,etl_sys_name,comments,curr_bath_date,sys_run_status from "
 						+ Etl_sys.TableName
-						+ " where user_id=? order by etl_sys_cd",
+						+ " where user_id=? order by sys_run_status,etl_sys_cd",
 				getUserId());
 	}
 
@@ -91,7 +89,7 @@ public class EltSysAction extends BaseAction {
 		etl_sys.setMain_serv_sync(Main_Server_Sync.YES.getCode());
 		etl_sys.setSys_run_status(Job_Status.STOP.getCode());
 		// 跑批日期默认为当天
-		etl_sys.setCurr_bath_date(DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate()).toString());
+		etl_sys.setCurr_bath_date(DateUtil.getSysDate());
 		// 4.检查工程编号是否已存在，存在不能新增,这里user_id传值为空，因为不管是什么用户工程编号都不能为空
 		if (ETLJobUtil.isEtlSysExist(etl_sys.getEtl_sys_cd(), null)) {
 			throw new BusinessException("工程编号已存在，不能新增！");
@@ -204,7 +202,7 @@ public class EltSysAction extends BaseAction {
 	@Param(name = "etl_sys_cd", desc = "作业调度工程登记表主键ID", range = "新增工程时生成")
 	@Param(name = "isResumeRun", desc = "是否续跑", range = "使用（IsFlag）代码项，1代表是，0代表否")
 	@Param(name = "isAutoShift", desc = "是否自动日切", range = "使用（IsFlag）代码项，1代表是，0代表否")
-	@Param(name = "curr_bath_date", desc = "批量日期", range = "yyyy-MM-dd格式的年月日，如：2019-12-19")
+	@Param(name = "curr_bath_date", desc = "批量日期", range = "yyyyMMdd格式的年月日，如：20191219")
 	public void startControl(
 			String etl_sys_cd, String isResumeRun, String isAutoShift, String curr_bath_date) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
@@ -225,6 +223,9 @@ public class EltSysAction extends BaseAction {
 		// 6.获取系统状态,如果不是停止说明系统不是停止状态,不是停止状态不能启动control
 		if (Job_Status.STOP != (Job_Status.ofEnumByCode(etlSys.get("sys_run_status").toString()))) {
 			throw new BusinessException("系统不是停止状态不能启动control");
+		}
+		if (curr_bath_date.contains("-")) {
+			curr_bath_date = curr_bath_date.replaceAll("-", "");
 		}
 		// 7.调用脚本启动启动Control
 		ETLAgentDeployment.startEngineBatchControl(curr_bath_date, etl_sys_cd, isResumeRun, isAutoShift,
@@ -329,7 +330,7 @@ public class EltSysAction extends BaseAction {
 						+ separator
 						+ etl_sys_cd
 						+ separator;
-		if (IsFlag.Shi == IsFlag.ofEnumByCode(isControl)) {
+		if (IsFlag.Fou == IsFlag.ofEnumByCode(isControl)) {
 			// CONTROL日志目录
 			logDir =
 					logDir
@@ -340,7 +341,7 @@ public class EltSysAction extends BaseAction {
 							+ sysDate.substring(0, 6)
 							+ separator
 							+ sysDate
-							+ "controlOut.log";
+							+ "ControlOut.log";
 		} else {
 			// TRIGGER日志目录
 			logDir =
@@ -352,7 +353,7 @@ public class EltSysAction extends BaseAction {
 							+ sysDate.substring(0, 6)
 							+ separator
 							+ sysDate
-							+ "triggerOut.log";
+							+ "TriggerOut.log";
 		}
 		// 7.日志读取行数最大为1000行
 		if (readNum > 1000) {
@@ -361,7 +362,7 @@ public class EltSysAction extends BaseAction {
 		// 8.读取control或trigger日志信息
 		return ReadLog.readAgentLog(
 				logDir,
-				etlSys.get("serv_file_path").toString(),
+				etlSys.get("etl_serv_ip").toString(),
 				etlSys.get("etl_serv_port").toString(),
 				etlSys.get("user_name").toString(),
 				etlSys.get("user_pwd").toString(),
@@ -379,16 +380,15 @@ public class EltSysAction extends BaseAction {
 							+ "6.获取control或trigger日志路径"
 							+ "7.获取压缩日志命令"
 							+ "8.判断是control日志还是trigger日志,获取日志目录以及压缩日志目录命令"
-							+ "9.设置主机ip，端口，用户名，密码"
-							+ "10.与远端服务器进行交互，建立连接，发送数据到远端并且接收远端发来的数据"
-							+ "11.执行压缩日志命令"
-							+ "12.获取文件下载路径"
-							+ "13.从服务器下载文件到本地"
-							+ "14.下载完删除压缩包"
-							+ "5.返回CONTROL或TRIGGER下载日志文件名")
+							+ "9.与工程部署服务器进行交互"
+							+ "10.获取文件下载路径"
+							+ "11.从服务器下载文件到本地"
+							+ "12.下载完删除压缩包"
+							+ "13.返回CONTROL或TRIGGER下载日志文件名")
 	@Param(name = "etl_sys_cd", desc = "作业调度工程登记表主键ID", range = "新增工程时生成")
-	@Param(name = "curr_bath_date", desc = "批量日期", range = "yyyy-MM-dd格式的年月日，如：2019-12-19")
-	@Param(name = "isControl", desc = "是否读取Control日志", range = "使用（IsFlag代码项），0代表不是，1代表是")
+	@Param(name = "curr_bath_date", desc = "批量日期", range = "yyyyMMdd格式的年月日，如：20191219")
+	@Param(name = "isControl", desc = "是否读取Control日志", range = "使用（IsFlag代码项），" +
+			"0代表control日志，1代表trigger日志")
 	public String downloadControlOrTriggerLog(
 			String etl_sys_cd, String curr_bath_date, String isControl) {
 		try {
@@ -410,9 +410,9 @@ public class EltSysAction extends BaseAction {
 							+ etl_sys_cd
 							+ separator;
 			// 7.获取压缩日志命令
-			String compressCommand = "tar -zvcPf " + logDir + curr_bath_date;
+			String compressCommand;
 			// 8.判断是control日志还是trigger日志,获取日志目录以及压缩日志目录命令
-			if (IsFlag.Shi == IsFlag.ofEnumByCode(isControl)) {
+			if (IsFlag.Fou == IsFlag.ofEnumByCode(isControl)) {
 				// CONTROL日志目录
 				logDir =
 						logDir
@@ -422,11 +422,9 @@ public class EltSysAction extends BaseAction {
 								+ separator
 								+ curr_bath_date.substring(0, 6)
 								+ separator
-								+ curr_bath_date
-								+ "_ControlLog.tar.gz";
+								+ curr_bath_date;
 				// 压缩CONTROL日志命令
-				compressCommand =
-						compressCommand + "_ControlLog.tar.gz" + " " + logDir + curr_bath_date + "*.log";
+				compressCommand = "tar -zvcPf " + logDir + "_ControlLog.tar.gz" + " " + logDir + "*.log";
 			} else {
 				// TRIGGER日志目录
 				logDir =
@@ -437,11 +435,9 @@ public class EltSysAction extends BaseAction {
 								+ separator
 								+ curr_bath_date.substring(0, 6)
 								+ separator
-								+ curr_bath_date
-								+ "_TriggerLog.tar.gz";
+								+ curr_bath_date;
 				// 压缩TRIGGER日志命令
-				compressCommand =
-						compressCommand + "_TriggerLog.tar.gz" + " " + logDir + curr_bath_date + "*.log";
+				compressCommand = "tar -zvcPf " + logDir + "_TriggerLog.tar.gz" + " " + logDir + "*.log";
 			}
 			//            Map<String, String> sftpDetails = new HashMap<>();
 			//            // 9.设置主机ip，端口，用户名，密码
@@ -450,32 +446,53 @@ public class EltSysAction extends BaseAction {
 			//            sftpDetails.put(SCPFileSender.PASSWORD, etlSys.get("user_pwd").toString());
 			//            sftpDetails.put(SCPFileSender.PORT, etlSys.get("etl_serv_port").toString());
 			SFTPDetails sftpDetails1 = new SFTPDetails();
-			sftpDetails1.setHost(etlSys.get("etl_serv_ip").toString());
-			sftpDetails1.setPort(((Integer) etlSys.get("etl_serv_port")));
-			sftpDetails1.setUser_name(etlSys.get("user_name").toString());
-			sftpDetails1.setPwd(etlSys.get("user_pwd").toString());
-			// 10.与远端服务器进行交互，建立连接，发送数据到远端并且接收远端发来的数据
-			Session shellSession = SFTPChannel.getJSchSession(sftpDetails1, 0);
-			// 11.执行压缩日志命令
-			SFTPChannel.execCommandByJSch(shellSession, compressCommand);
-			// 12.获取文件下载路径
+			// 9.与工程部署服务器进行交互
+			ETLJobUtil.interactingWithTheAgentServer(compressCommand, etlSys, sftpDetails1);
+			// 10.获取文件下载路径
 			String localPath = ETLJobUtil.getFilePath(null);
-			// 13.从服务器下载文件到本地
-			DownloadLogUtil.downloadLogFile(logDir, localPath, sftpDetails1);
-			// 14.下载完删除压缩包
-			DownloadLogUtil.deleteLogFileBySFTP(logDir, sftpDetails1);
-			// 15.返回CONTROL或TRIGGER下载日志文件名
-			if (IsFlag.Shi == IsFlag.ofEnumByCode(isControl)) {
+			// 11.从服务器下载文件到本地
+			if (IsFlag.Fou == IsFlag.ofEnumByCode(isControl)) {
 				// CONTROL日志文件名称
-				return curr_bath_date.replaceAll("-", "") + "_ControlLog.tar.gz";
+				logDir = logDir + "_ControlLog.tar.gz";
 			} else {
 				// TRIGGER日志文件名称
-				return curr_bath_date.replaceAll("-", "") + "_TriggerLog.tar.gz";
+				logDir = logDir + "_TriggerLog.tar.gz";
+			}
+			DownloadLogUtil.downloadLogFile(logDir, localPath, sftpDetails1);
+			// 12.下载完删除压缩包
+			DownloadLogUtil.deleteLogFileBySFTP(logDir, sftpDetails1);
+			if (curr_bath_date.contains("-")) {
+				curr_bath_date = curr_bath_date.replaceAll("-", "");
+			}
+			// 13.返回CONTROL或TRIGGER下载日志文件名
+			if (IsFlag.Fou == IsFlag.ofEnumByCode(isControl)) {
+				// CONTROL日志文件名称
+				return curr_bath_date + "_ControlLog.tar.gz";
+			} else {
+				// TRIGGER日志文件名称
+				return curr_bath_date + "_TriggerLog.tar.gz";
 			}
 		} catch (JSchException e) {
 			throw new BusinessException("与远端服务器进行交互，建立连接失败！");
 		} catch (IOException e) {
 			throw new BusinessException("下载日志文件失败！");
 		}
+	}
+
+	@Method(desc = "停止工程信息", logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制" +
+			"2.验证当前用户对应的工程是否已不存在" +
+			"3.停止工程信息")
+	@Param(name = "etl_sys_cd", desc = "作业调度工程登记表主键ID", range = "新增工程时生成")
+	public void stopEtlProject(String etl_sys_cd) {
+		// 1.数据可访问权限处理方式，通过user_id进行权限控制
+		// 2.验证当前用户对应的工程是否已不存在
+		if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
+			throw new BusinessException("当前用户对应的工程已不存在！");
+		}
+		// 3.停止工程信息
+		Etl_sys etl_sys = new Etl_sys();
+		etl_sys.setEtl_sys_cd(etl_sys_cd);
+		etl_sys.setSys_run_status(Job_Status.STOP.getCode());
+		etl_sys.update(Dbo.db());
 	}
 }

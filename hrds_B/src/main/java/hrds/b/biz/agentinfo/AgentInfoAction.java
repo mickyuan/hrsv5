@@ -228,9 +228,9 @@ public class AgentInfoAction extends BaseAction {
 		if (!matcher.matches()) {
 			throw new BusinessException("agent_ip不是一个有效的ip地址,agent_ip=" + agent_ip);
 		}
-		// 5.判断agent_port是否是一个有效的端口
-		pattern = Pattern.compile("^([0-9]|[1-9]\\d{1,3}|[1-5]\\d{4}|6[0-4]\\d{4}|65[0-4]\\d{2}|655[0-2]" +
-				"\\d|6553[0-5])$");
+		// 5.判断agent_port是否是一个有效的端口1024-65535
+		pattern = Pattern.compile("^(1(02[4-9]|0[3-9][0-9]|[1-9][0-9]{2})|[2-9][0-9]{3}|[1-5][0-9]{4}|6[0-4]" +
+				"[0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$");
 		matcher = pattern.matcher(agent_port);
 		if (!matcher.matches()) {
 			throw new BusinessException("agent_port端口不是有效的端口,agent_port=" + agent_port);

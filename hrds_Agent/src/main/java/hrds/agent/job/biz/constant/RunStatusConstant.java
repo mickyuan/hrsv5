@@ -1,5 +1,7 @@
 package hrds.agent.job.biz.constant;
 
+import hrds.commons.exception.AppSystemException;
+
 /**
  * 状态只有三种，开始，成功，失败，失败定义各种失败类型的枚举
  */
@@ -23,6 +25,21 @@ public enum RunStatusConstant implements EnumConstantInterface {
 
 	public String getMessage() {
 		return message;
+	}
+
+	/**
+	 * 根据指定的代码值转换成中文名字
+	 *
+	 * @param code 本代码的代码值
+	 * @return
+	 */
+	public static String ofMessageByCode(int code) {
+		for (RunStatusConstant typeCode : RunStatusConstant.values()) {
+			if (typeCode.getCode() == code) {
+				return typeCode.message;
+			}
+		}
+		throw new AppSystemException("根据" + code + "没有找到对应的代码项");
 	}
 
 	@Override

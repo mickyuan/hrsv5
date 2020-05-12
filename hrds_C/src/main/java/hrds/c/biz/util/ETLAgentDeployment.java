@@ -6,7 +6,7 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.utils.FileUtil;
-import hrds.c.biz.util.controlconf.ControlConfParam;
+import hrds.c.biz.util.conf.ETLConfParam;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.PropertyParaValue;
@@ -33,12 +33,13 @@ public class ETLAgentDeployment {
 			+ "3.根据文件路径获取文件信息"
 			+ "4.获取数据库连接配置信息"
 			+ "5.获取redis连接配置信息"
-			+ "6.获得程序当前路径"
-			+ "7.根据程序当前路径获取文件"
-			+ "8.集群conf配置文件目录"
-			+ "9.创建存放部署ETL连接信息的集合并封装属性"
-			+ "10.ETL部署"
-			+ "11.部署完成后删除db与redis配置文件")
+			+ "6.生成trigger.conf配置文件"
+			+ "7.获得程序当前路径"
+			+ "8.根据程序当前路径获取文件"
+			+ "9.集群conf配置文件目录"
+			+ "10.创建存放部署ETL连接信息的集合并封装属性"
+			+ "11.ETL部署"
+			+ "12.部署完成后删除db与redis配置文件")
 	@Param(name = "etl_sys_cd", desc = "工程编号", range = "新建工程时生成")
 	@Param(name = "etl_serv_ip", desc = "ETL部署agent的IP地址", range = "如：127.0.0.1")
 	@Param(name = "etl_serv_port", desc = "ETL部署agent的端口", range = "默认22")
@@ -66,20 +67,23 @@ public class ETLAgentDeployment {
 			}
 			logger.info("==========配置文件的临时存放路径===========" + tmp_conf_path);
 			// 5.生成control.conf配置文件
-			Yaml.dump(ControlConfParam.getControlConfParam(), new File(tmp_conf_path
-					+ ControlConfParam.CONF_FILE_NAME));
-			// 6.根据程序当前路径获取文件
+			Yaml.dump(ETLConfParam.getControlConfParam(), new File(tmp_conf_path
+					+ ETLConfParam.CONTROL_FILE_NAME));
+			// 6.生成trigger.conf配置文件
+			Yaml.dump(ETLConfParam.getTriggerConfParam(), new File(tmp_conf_path
+					+ ETLConfParam.Trigger_FILE_NAME));
+			// 7.根据程序当前路径获取文件
 			File userDirFile = FileUtil.getFile(System.getProperty("user.dir"));
-			// 7.集群conf配置文件目录 fixme  集群配置文件暂时不知如何获取
+			// 8.集群conf配置文件目录 fixme  集群配置文件暂时不知如何获取
 			String hadoopConf = userDirFile + SEPARATOR + "conf" + SEPARATOR;
-			// 8.创建存放部署ETL连接信息的集合并封装属性
+			// 9.创建存放部署ETL连接信息的集合并封装属性
 			SFTPDetails sftpDetails = new SFTPDetails();
-			// 9.设置部署所需参数
+			// 10.设置部署所需参数
 			setSFTPDetails(etl_sys_cd, etl_serv_ip, etl_serv_port, userName, password, targetDir,
 					sourceFile.getName(), sourceFile.getParent(), hadoopConf, tmp_conf_path, sftpDetails);
-			// 10.ETL部署
+			// 11.ETL部署
 			SCPFileSender.etlScpToFrom(sftpDetails);
-			// 11.部署完成后删除本地临时配置文件
+			// 12.部署完成后删除本地临时配置文件
 			FileUtil.deleteDirectoryFiles(tmp_conf_path);
 		} catch (Exception e) {
 			throw new AppSystemException(e);
@@ -116,7 +120,7 @@ public class ETLAgentDeployment {
 					+ "4.启动CONTROL脚本命令"
 					+ "5.执行命令启动CONTROL"
 					+ "6.断开连接")
-	@Param(name = "batch_date", desc = "跑批日期", range = "yyyy-MM-dd格式的年月日")
+	@Param(name = "batch_date", desc = "跑批日期", range = "yyyyMMdd 8位格式的年月日")
 	@Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
 	@Param(name = "isResumeRun", desc = "是否续跑", range = "使用（IsFlag）代码项，1代表是，0代表否")
 	@Param(name = "isAutoShift", desc = "是否日切", range = "使用（IsFlag）代码项，1代表是，0代表否")

@@ -79,9 +79,9 @@ public class JobTableDetails {
             map.put(stateStr, collect_case.getExecute_state());
 
             // 这里只考虑采集错误的信息...因为最终要把含有错误的作业信息优先显示在最前面
-            if (ExecuteState.YunXingShiBai.getCode().equals(collect_case.getExecute_state())) {
-              map.put("errorNum", (int) map.get("errorNum") + 1);
-            }
+//            if (ExecuteState.YunXingShiBai.getCode().equals(collect_case.getExecute_state())) {
+//              map.put("errorNum", (int) map.get("errorNum") + 1);
+//            }
           } else {
             Map<String, Object> map = new HashMap<>();
             map.put("table_name", table_name);
@@ -90,12 +90,12 @@ public class JobTableDetails {
             map.put(stateStr, collect_case.getExecute_state());
 
             // 这里只考虑采集错误的信息...因为最终要把含有错误的作业信息优先显示在最前面
-            if (ExecuteState.YunXingShiBai.getCode().equals(collect_case.getExecute_state())) {
-              map.put("errorNum", 1);
-            }
-            else if (ExecuteState.YunXingWanCheng.getCode().equals(collect_case.getExecute_state())){
-              map.put("secussNum", 1);
-            }
+//            if (ExecuteState.YunXingShiBai.getCode().equals(collect_case.getExecute_state())) {
+//              map.put("errorNum", 1);
+//            }
+//            else if (ExecuteState.YunXingWanCheng.getCode().equals(collect_case.getExecute_state())){
+//              map.put("secussNum", 1);
+//            }
 
             detailsMap.put(table_name, map);
           }
