@@ -55,9 +55,9 @@ public class StartWayConfAction extends BaseAction {
   // 单个作业的所需资源数
   private static final int JOB_RESOURCE_NUM = 1;
   // 程序目录的工程系统参数名
-  private static final String HYRENBIN = "!{HYSHELLBIN}";
+  private static final String HYRENBIN = "!HYSHELLBIN";
   // 程序日志的工程系统参数名
-  private static final String HYRENLOG = "!{HYLOG}";
+  private static final String HYRENLOG = "!HYLOG";
   // 采集程序的默认脚本名称
   private static final String SHELLCOMMAND = "shellCommand.sh";
 
