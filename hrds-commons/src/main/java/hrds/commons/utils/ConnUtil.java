@@ -317,7 +317,7 @@ public class ConnUtil {
 			Map<String, String> hashMap = new HashMap<>();
 			hashMap.put("column_name", type.getAttribute("column_name"));
 			hashMap.put("is_primary_key", type.getAttribute("is_primary_key"));
-			hashMap.put("column_ch_name", type.getAttribute("column_cn_name"));
+			hashMap.put("column_ch_name", type.getAttribute("column_ch_name"));
 			hashMap.put("column_type", type.getAttribute("column_type"));
 			hashMap.put("column_remark", type.getAttribute("column_remark"));
 			hashMap.put("is_get", type.getAttribute("is_get"));

@@ -236,11 +236,10 @@ public class ETLJobUtil {
 			savedDir = savedDir + File.separator;
 		}
 		// 4.如果文件名为空则返回文件默认路径
-		if (StringUtil.isBlank(fileName)) {
-			return savedDir + "download" + File.separator;
-		} else {
-			return savedDir + fileName;
+		if (StringUtil.isNotBlank(fileName)) {
+			savedDir = savedDir + fileName;
 		}
+		return savedDir;
 	}
 
 	@Method(desc = "查询当前用户对应工程信息",

@@ -42,7 +42,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 	// 测试数据源 SourceId
 	private static final long SourceId = 10000001L;
 	// 测试数据源 SourceId,新建数据源，下面没有agent
-	private static final long SourceId2 = 10000002L;
+	private static final long SourceId2 = 10000003L;
 	// 测试数据库 agent_id
 	private static final long DBAgentId = 20000011L;
 	// 测试数据文件 agent_id
@@ -281,7 +281,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 				if (i < 2) {
 					// 已连接
 					agent_info.setAgent_status(AgentStatus.YiLianJie.getCode());
-				} else if (i >= 2 && i < 4) {
+				} else if (i < 4) {
 					// 未连接
 					agent_info.setAgent_status(AgentStatus.WeiLianJie.getCode());
 				} else {
@@ -325,7 +325,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			databaseSet.setDatabase_drive("org.postgresql.Driver");
 			databaseSet.setDatabase_ip("10.71.4.51");
 			databaseSet.setDatabase_name("数据库采集测试");
-			databaseSet.setDatabase_number("cs01");
+			databaseSet.setDatabase_number("dhw001");
 			databaseSet.setDatabase_pad("hrsdxg");
 			databaseSet.setUser_name("hrsdxg");
 			databaseSet.setDatabase_port("34567");
@@ -405,6 +405,8 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			objectCollect.setFile_path("/home/hyshf/objCollect");
 			objectCollect.setHost_name("10.71.4.52");
 			objectCollect.setIs_sendok(IsFlag.Shi.getCode());
+			objectCollect.setIs_dictionary(IsFlag.Shi.getCode());
+			objectCollect.setData_date(DateUtil.getSysDate());
 			objectCollect.setLocal_time(DateUtil.parseStr2DateWith8Char(SysDate) + " "
 					+ DateUtil.parseStr2TimeWith6Char(SysTime));
 			objectCollect.setObj_collect_name("对象采集测试");
@@ -505,6 +507,8 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			tableInfo.setValid_s_date(SysDate);
 			tableInfo.setValid_e_date("99991231");
 			tableInfo.setIs_parallel(IsFlag.Shi.getCode());
+			tableInfo.setRec_num_date(DateUtil.getSysDate());
+			tableInfo.setIs_customize_sql(IsFlag.Fou.getCode());
 			tableInfo.add(db);
 			// 19.构造column_merge表测试数据
 			Column_merge columnMerge = new Column_merge();
@@ -663,7 +667,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 				.buildSession()
 				.addData("user_id", UserId)
 				.addData("password", "1")
-				.post("http://127.0.0.1:8088/A/action/hrds/a/biz/login/login")
+				.post("http://127.0.0.1:8888/A/action/hrds/a/biz/login/login")
 				.getBodyString();
 		ActionResult ar = JsonUtil.toObjectSafety(responseValue, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -1001,20 +1005,10 @@ public class DataSourceActionTest extends WebBaseTestCase {
 				assertThat("此条数据删除后，记录数应该为0", daNum, is(0L));
 			}
 			// 28.单独删除新增数据，因为新增数据主键是自动生成的，所以要通过其他方式删除
-			SqlOperator.execute(db, "delete from data_source where datasource_number=?",
-					"cs01");
-			SqlOperator.execute(db, "delete from data_source where datasource_number=?",
-					"cs02");
-			SqlOperator.execute(db, "delete from data_source where datasource_number=?",
-					"cs03");
-			SqlOperator.execute(db, "delete from data_source where datasource_number=?",
-					"cs04");
-			SqlOperator.execute(db, "delete from data_source where datasource_number=?",
-					"cs05");
-			SqlOperator.execute(db, "delete from data_source where datasource_number=?",
-					"cs06");
-			SqlOperator.execute(db, "delete from data_source where datasource_number=?",
-					"ds01");
+			SqlOperator.execute(db, "delete from data_source where create_user_id=?",
+					UserId);
+			SqlOperator.execute(db, "delete from database_set where database_number=?",
+					"dhw01");
 			// 29.提交事务
 			SqlOperator.commitTransaction(db);
 		}
@@ -1376,7 +1370,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 					"3.错误的数据访问2，新增数据源信息,数据源名称不能为空格" +
 					"4.错误的数据访问3，新增数据源信息,数据源编号不能为空" +
 					"5.错误的数据访问4，新增数据源信息,数据源编号不能为空格" +
-					"6.错误的数据访问5，新增数据源信息,数据源编号长度不能超过四位" +
+					"6.错误的数据访问5，新增数据源信息,数据源编号不以字符开头" +
 					"7.错误的数据访问6，新增数据源信息,部门id不能为空,创建部门表department_info时通过主键自动生成" +
 					"8.错误的数据访问7，新增数据源信息,部门id不能为空格，创建部门表department_info时通过主键自动生成" +
 					"9.错误的数据访问8，新增数据源信息,部门id对应的部门不存在")
@@ -1455,11 +1449,11 @@ public class DataSourceActionTest extends WebBaseTestCase {
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
 		assertThat(ar.isSuccess(), is(false));
-		// 6.错误的数据访问5，新增数据源信息,数据源编号长度不能超过四位
+		// 6.错误的数据访问5，新增数据源信息,数据源编号不以字符开头
 		bodyString = new HttpClient()
 				.addData("source_remark", "测试")
 				.addData("datasource_name", "dsName04")
-				.addData("datasource_number", "cs100")
+				.addData("datasource_number", "100cs")
 				.addData("dep_id", depIds)
 				.post(getActionUrl("saveDataSource")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -1633,12 +1627,12 @@ public class DataSourceActionTest extends WebBaseTestCase {
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
 		assertThat(ar.isSuccess(), is(false));
-		// 6.错误的数据访问5，更新数据源信息，数据源编号长度不能超过四位
+		// 6.错误的数据访问5，更新数据源信息，数据源编号不以字符开头
 		bodyString = new HttpClient()
 				.addData("source_id", SourceId)
 				.addData("source_remark", "测试")
 				.addData("datasource_name", "dsName04")
-				.addData("datasource_number", "up100")
+				.addData("datasource_number", "100up")
 				.addData("dep_id", depIds)
 				.post(getActionUrl("updateDataSource")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -1794,10 +1788,10 @@ public class DataSourceActionTest extends WebBaseTestCase {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			Data_source dataSource = SqlOperator.queryOneObject(db, Data_source.class,
 					"select * from " + Data_source.TableName + " where datasource_name=? and source_id<>?",
-					"数据源导入测试", SourceId).orElseThrow(() -> new BusinessException("sql执行错误!"));
+					"dsName0", SourceId).orElseThrow(() -> new BusinessException("sql执行错误!"));
 			// 导入会替换原来的主键，这里只判断可以确认的数据，例如时间日期取得系统时间，不好确认，主键也无法确定自动生成
-			assertThat(dataSource.getDatasource_name(), is("数据源导入测试"));
-			assertThat(dataSource.getDatasource_number(), is("sjy1"));
+			assertThat(dataSource.getDatasource_name(), is("dsName0"));
+			assertThat(dataSource.getDatasource_number(), is("ds01_dhw"));
 			assertThat(dataSource.getSource_remark(), is("数据源详细描述0"));
 			assertThat(dataSource.getDatasource_remark(), is("备注0"));
 			assertThat(dataSource.getCreate_user_id(), is(UserId));
@@ -1868,11 +1862,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			assertThat(databaseSet.getDb_agent(), is(IsFlag.Shi.getCode()));
 			assertThat(databaseSet.getTask_name(), is("数据库测试"));
 			assertThat(databaseSet.getIs_sendok(), is(IsFlag.Fou.getCode()));
-//            assertThat(databaseSet.getDatabase_code(), is(DataBaseCode.UTF_8.getCode()));
-			assertThat(databaseSet.getDatabase_number(), is("cs01"));
-//            assertThat(databaseSet.getDbfile_format(), is(FileFormat.CSV.getCode()));
-//            assertThat(databaseSet.getIs_header(), is(IsFlag.Shi.getCode()));
-//            assertThat(databaseSet.getIs_hidden(), is(IsFlag.Shi.getCode()));
+			assertThat(databaseSet.getDatabase_number(), is("dhw01"));
 			assertThat(databaseSet.getClassify_id(), is(jobClassify.getClassify_id()));
 			Map<String, Object> ftpCollect = SqlOperator.queryOneObject(db,
 					"select * from " + Ftp_collect.TableName + " where agent_id=?", dbAgentId);
