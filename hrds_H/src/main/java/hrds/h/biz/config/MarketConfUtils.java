@@ -9,8 +9,8 @@ import hrds.commons.entity.*;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.DruidParseQuerySql;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 import java.util.List;
@@ -24,7 +24,7 @@ import java.util.Optional;
  * @Since jdk1.8
  */
 public class MarketConfUtils {
-    private static final Log log = LogFactory.getLog(MarketConfUtils.class);
+    private static final Logger log = LogManager.getLogger(MarketConfUtils.class);
     public static final String DEFAULT_STRING_TYPE = "string";
 
     static void checkArguments(String datatableId, String etldate) {

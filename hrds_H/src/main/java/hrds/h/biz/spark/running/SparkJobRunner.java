@@ -4,12 +4,12 @@ import fd.ng.core.utils.StringUtil;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.PropertyParaValue;
 import org.apache.commons.exec.*;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class SparkJobRunner {
 
-    private static final Log logger = LogFactory.getLog(SparkJobRunner.class);
+    private static final Logger logger = LogManager.getLogger(SparkJobRunner.class);
 
     private static final String SPARK_MAIN_CLASS =
             "hrds.h.biz.spark.running.MarketSparkMain";
