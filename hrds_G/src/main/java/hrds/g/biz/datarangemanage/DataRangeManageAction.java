@@ -10,7 +10,7 @@ import fd.ng.core.utils.StringUtil;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
-import hrds.commons.codes.CollectType;
+import hrds.commons.codes.AgentType;
 import hrds.commons.codes.DataSourceType;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.*;
@@ -367,7 +367,7 @@ public class DataRangeManageAction extends BaseAction {
 							+ " WHERE dsr.database_id = ti.database_id and lower(dsr.hyren_name) = lower(?) "
 							+ "  and ti.valid_e_date = ? AND tc.is_get = ? and tc.is_alive = ?", hyren_name,
 					END_DATE, IsFlag.Shi.getCode(), IsFlag.Shi.getCode());
-			if (CollectType.DuiXiangWenJianCaiJi == CollectType.ofEnumByCode(collect_type)) {
+			if (AgentType.DuiXiang == AgentType.ofEnumByCode(collect_type)) {
 				columnResult = Dbo.queryResult("SELECT coll_name AS field_en_name,data_desc AS field_cn_name FROM " +
 						Object_collect_struct.TableName + " c JOIN " + Object_collect_task.TableName +
 						" t ON c.ocs_id = t.ocs_id WHERE t.odc_id = ?", database_id);

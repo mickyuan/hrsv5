@@ -5,7 +5,7 @@ import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.FileCollectParamBean;
 import hrds.agent.job.biz.utils.CommunicationUtil;
-import hrds.commons.codes.CollectType;
+import hrds.commons.codes.AgentType;
 import hrds.commons.codes.ExecuteState;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Collect_case;
@@ -55,8 +55,8 @@ public class CollectionWatcher {
 		collectCase.setTask_classify(fileCollectParamBean.getFile_source_path());//文件夹名称
 		collectCase.setCc_remark("");
 		collectCase.setJob_group("");
-		collectCase.setCollect_type(CollectType.WenJianCaiJi.getCode());
-		collectCase.setJob_type(CollectType.WenJianCaiJi.getCode());
+		collectCase.setCollect_type(AgentType.WenJianXiTong.getCode());
+		collectCase.setJob_type(AgentType.WenJianXiTong.getCode());
 		collectCase.setCollet_database_size("");
 		collectCase.setIs_again(IsFlag.Fou.getCode());
 		startJob();//此时作为任务开始

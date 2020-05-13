@@ -122,7 +122,7 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 		}
 		//结束给stageParamInfo塞值
 		JobStatusInfoUtil.endStageParamInfo(stageParamInfo, statusInfo, collectTableBean
-				, CollectType.DBWenJianCaiJi.getCode());
+				, AgentType.DBWenJian.getCode());
 		return stageParamInfo;
 	}
 

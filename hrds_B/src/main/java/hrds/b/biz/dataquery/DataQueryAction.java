@@ -224,7 +224,7 @@ public class DataQueryAction extends BaseAction {
                         " from " + Source_file_attribute.TableName + " sfa join " + Agent_info.TableName + " ai" +
                         " on sfa.agent_id = ai.agent_id where sfa.collect_type = ? AND ai.user_id = ?" +
                         " GROUP BY file_type ORDER BY file_type",
-                CollectType.WenJianCaiJi.getCode(), getUserId()
+                AgentType.WenJianXiTong.getCode(), getUserId()
         );
         //2.根据统计类型设置返回的map结果集
         Map<String, Object> classificationSumMap = new HashMap<>(12);
@@ -255,7 +255,7 @@ public class DataQueryAction extends BaseAction {
                         " " + Agent_info.TableName + " ai on sfa.agent_id = ai.agent_id" +
                         " where sfa.collect_type = ? AND ai.user_id = ? GROUP BY storage_date" +
                         " ORDER BY storage_date desc LIMIT ?",
-                CollectType.WenJianCaiJi.getCode(), getUserId(), queryDays
+                AgentType.WenJianXiTong.getCode(), getUserId(), queryDays
         );
         //3.根据查询结果设置返回的map结果集
         Map<String, Object> sevenDayCollectFileSumMap = new HashMap<>(30);
@@ -294,7 +294,7 @@ public class DataQueryAction extends BaseAction {
                         " where collect_type = ? and ai.user_id = ?" +
                         " GROUP BY storage_date,storage_time,fcs.fcs_name" +
                         " ORDER BY max_date desc limit ?",
-                CollectType.WenJianCaiJi.getCode(), getUserId(), timesRecently
+                AgentType.WenJianXiTong.getCode(), getUserId(), timesRecently
         );
         //3.根据查询结果设置返回的map结果集
         List<Map<String, Object>> last3FileCollectionsMapList = new ArrayList<>();
@@ -543,7 +543,7 @@ public class DataQueryAction extends BaseAction {
         if (!queryResult.isEmpty()) {
             //2-1.根据查询条件返回查询结果
             asmSql.clean();
-            sourceFileAttribute.setCollect_type(CollectType.WenJianCaiJi.getCode());
+            sourceFileAttribute.setCollect_type(AgentType.WenJianXiTong.getCode());
             asmSql.addSql("select * from " + Source_file_attribute.TableName + " WHERE collect_type = ?")
                     .addParam(sourceFileAttribute.getCollect_type());
             //是否是第一次执行，所有参数为空，代表是第一次执行，则走2-2.如果没选择任何查询条件,则查询最近的文件采集信息
@@ -615,7 +615,7 @@ public class DataQueryAction extends BaseAction {
             //3-1.获取文件采集的数据列表
             asmSql.clean();
             asmSql.addSql("select * from source_file_attribute where collect_type = ?")
-                    .addParam(CollectType.WenJianCaiJi.getCode());
+                    .addParam(AgentType.WenJianXiTong.getCode());
             if (!StringUtil.isEmpty(fileType) && FileType.All != FileType.ofEnumByCode(fileType)) {
                 asmSql.addSql("AND file_type = ?").addParam(fileType);
             }

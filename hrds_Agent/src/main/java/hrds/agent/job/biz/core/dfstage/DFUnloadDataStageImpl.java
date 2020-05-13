@@ -174,7 +174,7 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 				+ "DB文件采集卸数阶段结束------------------");
 		//结束给stageParamInfo塞值
 		JobStatusInfoUtil.endStageParamInfo(stageParamInfo, statusInfo, collectTableBean
-				, CollectType.DBWenJianCaiJi.getCode());
+				, AgentType.DBWenJian.getCode());
 		return stageParamInfo;
 	}
 

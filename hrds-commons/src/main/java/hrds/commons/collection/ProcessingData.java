@@ -6,7 +6,7 @@ import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
-import hrds.commons.codes.CollectType;
+import hrds.commons.codes.AgentType;
 import hrds.commons.codes.DataSourceType;
 import hrds.commons.codes.Store_type;
 import hrds.commons.collection.bean.LayerBean;
@@ -64,7 +64,7 @@ public abstract class ProcessingData {
         //查询贴元表信息，也就是通过数据采集过来的数据表
         SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance()
                 .addSql("select * from " + Data_store_reg.TableName + " where collect_type in (?,?) and lower(hyren_name) = ?")
-                .addParam(CollectType.DBWenJianCaiJi.getCode()).addParam(CollectType.ShuJuKuCaiJi.getCode())
+                .addParam(AgentType.DBWenJian.getCode()).addParam(AgentType.ShuJuKu.getCode())
                 .addParam(tableName.toLowerCase());
         Optional<Data_store_reg> opdsr = SqlOperator.queryOneObject(db, Data_store_reg.class, asmSql.sql(), asmSql.params());
         if (opdsr.isPresent()) {

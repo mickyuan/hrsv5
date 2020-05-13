@@ -602,7 +602,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			}
 			sourceFileAttribute.setIs_in_hbase(IsFlag.Fou.getCode());
 			sourceFileAttribute.setSeqencing(0L);
-			sourceFileAttribute.setCollect_type(CollectType.ShuJuKuCaiJi.getCode());
+			sourceFileAttribute.setCollect_type(AgentType.ShuJuKu.getCode());
 			sourceFileAttribute.setOriginal_update_date(SysDate);
 			sourceFileAttribute.setOriginal_update_time(SysTime);
 			sourceFileAttribute.setTable_name("agentInfo");

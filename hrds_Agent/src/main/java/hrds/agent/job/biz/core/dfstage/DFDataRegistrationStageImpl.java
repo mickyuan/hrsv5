@@ -14,7 +14,7 @@ import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
 import hrds.agent.job.biz.utils.CommunicationUtil;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
-import hrds.commons.codes.CollectType;
+import hrds.commons.codes.AgentType;
 import hrds.commons.entity.Data_store_reg;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,7 +45,7 @@ public class DFDataRegistrationStageImpl extends AbstractJobStage {
 			data_store_reg.setDatabase_id(collectTableBean.getDatabase_id());
 			data_store_reg.setTable_id(collectTableBean.getTable_id());
 			data_store_reg.setSource_id(collectTableBean.getSource_id());
-			data_store_reg.setCollect_type(CollectType.DBWenJianCaiJi.getCode());
+			data_store_reg.setCollect_type(AgentType.DBWenJian.getCode());
 			data_store_reg.setFile_size(stageParamInfo.getFileSize());
 			//TODO 下面这个可为空吧
 			data_store_reg.setHyren_name(collectTableBean.getHbase_name());
@@ -76,7 +76,7 @@ public class DFDataRegistrationStageImpl extends AbstractJobStage {
 		}
 		//结束给stageParamInfo塞值
 		JobStatusInfoUtil.endStageParamInfo(stageParamInfo, statusInfo, collectTableBean
-				, CollectType.DBWenJianCaiJi.getCode());
+				, AgentType.DBWenJian.getCode());
 		return stageParamInfo;
 	}
 
