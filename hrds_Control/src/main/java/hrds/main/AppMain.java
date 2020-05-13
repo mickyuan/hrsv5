@@ -2,6 +2,7 @@ package hrds.main;
 
 import fd.ng.core.cmd.ArgsParser;
 import fd.ng.core.utils.DateUtil;
+import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.Job_Status;
 import hrds.commons.entity.Etl_sys;
 import hrds.commons.exception.AppSystemException;
@@ -44,8 +45,8 @@ public class AppMain {
 
         //跑批批次日期
         String bathDateStr = CMD_ARGS.opt("etl.date").value;
-        boolean isResumeRun = CMD_ARGS.opt("-CR").value.equalsIgnoreCase("1") ? true : false;
-        boolean isAutoShift = CMD_ARGS.opt("-AS").value.equalsIgnoreCase("1") ? true : false;
+        boolean isResumeRun = CMD_ARGS.opt("-CR").value.equals(IsFlag.Shi.getCode()) ? true : false;
+        boolean isAutoShift = CMD_ARGS.opt("-AS").value.equals(IsFlag.Shi.getCode()) ? true : false;
 //		boolean isResumeRun = Boolean.parseBoolean(CMD_ARGS.opt("-CR").value);  //是否续跑
 //		boolean isAutoShift = Boolean.parseBoolean(CMD_ARGS.opt("-AS").value);  //是否自动日切
         String strSystemCode = CMD_ARGS.opt("sys.code").value; //调度系统代码
