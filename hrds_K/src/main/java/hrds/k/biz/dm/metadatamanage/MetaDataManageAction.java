@@ -9,12 +9,15 @@ import fd.ng.core.utils.StringUtil;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.DataSourceType;
+import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Data_store_layer;
 import hrds.commons.entity.Data_store_reg;
 import hrds.commons.entity.Dq_failure_table;
+import hrds.commons.entity.Dq_index3record;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.tree.background.bean.TreeConf;
 import hrds.commons.tree.background.query.DCLDataQuery;
+import hrds.commons.tree.background.query.DQCDataQuery;
 import hrds.commons.tree.background.query.TreeDataQuery;
 import hrds.commons.tree.commons.TreePageSource;
 import hrds.commons.utils.tree.Node;
@@ -27,6 +30,7 @@ import hrds.k.biz.dm.metadatamanage.query.DRBDataQuery;
 import hrds.k.biz.dm.metadatamanage.query.MDMDataQuery;
 import hrds.commons.utils.DataTableFieldUtil;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -76,26 +80,23 @@ public class MetaDataManageAction extends BaseAction {
         //初始化返回结果Map
         Map<String, Object> data_meta_info = new HashMap<>();
         //初始化表信息
-        Map<String, Object> table_info;
+        Map<String, Object> table_info_map;
         //初始化字段解析结果List
         List<Map<String, String>> column_info_list;
-        //表id
-        String table_id;
-        //表创建时间
-        String create_date;
+        String table_id, table_name, table_ch_name, create_date;
         //根据数据层获取不同层下的数据
         switch (data_layer) {
             case "DCL":
                 //获取表信息
-                table_info = DCLDataQuery.getDCLBatchTableInfo(file_id);
+                table_info_map = DCLDataQuery.getDCLBatchTableInfo(file_id);
                 //校验查询结果集
-                if (table_info.isEmpty()) {
+                if (table_info_map.isEmpty()) {
                     throw new BusinessException("表登记信息已经不存在!");
                 }
-                //设置表id
-                table_id = table_info.get("table_id").toString();
-                //设置表创建日期
-                create_date = table_info.get("original_update_date").toString();
+                table_id = table_info_map.get("table_id").toString();
+                table_name = table_info_map.get("table_name").toString();
+                table_ch_name = table_info_map.get("table_ch_name").toString();
+                create_date = table_info_map.get("original_update_date").toString();
                 //获取并转换字段信息List
                 column_info_list = DataTableFieldUtil.metaInfoToList(DCLDataQuery.getDCLBatchTableColumns(file_id));
                 break;
@@ -105,6 +106,26 @@ public class MetaDataManageAction extends BaseAction {
             case "SFL":
             case "AML":
             case "DQC":
+                //获取表信息
+                Dq_index3record dq_index3record = DQCDataQuery.getDQCTableInfo(file_id);
+                table_id = dq_index3record.getRecord_id().toString();
+                table_name = dq_index3record.getTable_name();
+                table_ch_name = dq_index3record.getTable_name();
+                create_date = dq_index3record.getRecord_date();
+                List<Map<String, Object>> table_column_list = new ArrayList<>();
+                String[] columns = dq_index3record.getTable_col().split(",");
+                for (String column : columns) {
+                    Map<String, Object> map = new HashMap<>();
+                    String is_primary_key = IsFlag.Fou.getCode();
+                    map.put("column_id", table_id);
+                    map.put("column_name", column);
+                    map.put("column_ch_name", column);
+                    map.put("column_type", "varchar(--)");
+                    map.put("is_primary_key", is_primary_key);
+                    table_column_list.add(map);
+                }
+                column_info_list = DataTableFieldUtil.metaInfoToList(table_column_list);
+                break;
             case "UDL":
                 throw new BusinessException(data_layer + "层暂未实现!");
             default:
@@ -114,14 +135,9 @@ public class MetaDataManageAction extends BaseAction {
         data_meta_info.put("file_id", file_id);
         data_meta_info.put("table_id", table_id);
         data_meta_info.put("data_layer", data_layer);
-        data_meta_info.put("table_name", table_info.get("table_name"));
-        data_meta_info.put("table_ch_name", table_info.get("original_name"));
-        //如果表的创建日期为空,默认设置为99991231
-        if (StringUtil.isNotBlank(create_date)) {
-            data_meta_info.put("create_date", create_date);
-        } else {
-            data_meta_info.put("create_date", "99991231");
-        }
+        data_meta_info.put("table_name", table_name);
+        data_meta_info.put("table_ch_name", table_ch_name);
+        data_meta_info.put("create_date", create_date);
         data_meta_info.put("column_info_list", column_info_list);
         return data_meta_info;
     }
@@ -285,7 +301,7 @@ public class MetaDataManageAction extends BaseAction {
             case "AML":
             case "DQC":
             case "UDL":
-                throw new BusinessException("恢复" + data_layer + "层表元信息暂未实现!");
+                throw new BusinessException("将" + data_layer + "层表放入回收站暂未实现!");
             default:
                 throw new BusinessException("未找到匹配的存储层!");
         }
