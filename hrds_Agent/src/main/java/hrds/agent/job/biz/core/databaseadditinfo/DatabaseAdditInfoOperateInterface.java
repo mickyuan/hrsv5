@@ -2,7 +2,7 @@ package hrds.agent.job.biz.core.databaseadditinfo;
 
 import fd.ng.db.jdbc.DatabaseWrapper;
 
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  * additInfoOperateInterface
@@ -11,9 +11,9 @@ import java.util.ArrayList;
  */
 public interface DatabaseAdditInfoOperateInterface {
 
-	void addNormalIndex(String tableName, ArrayList<String> columns, DatabaseWrapper db);
+	void addNormalIndex(String tableName, List<String> columns, DatabaseWrapper db);
 
-	void addPkConstraint(String tableName, ArrayList<String> columns, DatabaseWrapper db);
+	void addPkConstraint(String tableName, List<String> columns, DatabaseWrapper db);
 
 	void dropIndex(String tableName, DatabaseWrapper db);
 

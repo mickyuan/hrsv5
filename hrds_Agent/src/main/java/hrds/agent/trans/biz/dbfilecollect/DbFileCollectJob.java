@@ -8,6 +8,7 @@ import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.JobStatusInfo;
 import hrds.agent.job.biz.bean.SourceDataConfBean;
 import hrds.agent.job.biz.core.DataFileJobImpl;
+import hrds.agent.job.biz.core.metaparse.impl.DFCollectTableHandleParse;
 import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.commons.base.AgentBaseAction;
@@ -43,6 +44,13 @@ public class DbFileCollectJob extends AgentBaseAction {
 			//初始化当前任务需要保存的文件的根目录
 			String[] paths = {Constant.JOBINFOPATH, Constant.DBFILEUNLOADFOLDER, Constant.XMLPATH};
 			FileUtil.initPath(sourceDataConfBean.getDatabase_id(), paths);
+			//将json数据字典转为xml
+			String plane_url = sourceDataConfBean.getPlane_url();
+			//获取数据字典所在目录文件，根据数据字典计算xml文件名称
+			String xmlName = Math.abs(plane_url.hashCode()) + ".xml";
+			//DB文件采集将数据字典dd_data.xls转为xml
+			DFCollectTableHandleParse.toXml(plane_url, Constant.XMLPATH
+					+ sourceDataConfBean.getDatabase_id() + xmlName);
 			//1.获取json数组转成File_source的集合
 			List<CollectTableBean> collectTableBeanList = sourceDataConfBean.getCollectTableBeanArray();
 			//此处不会有海量的任务需要执行，不会出现队列中等待的任务对象过多的OOM事件。

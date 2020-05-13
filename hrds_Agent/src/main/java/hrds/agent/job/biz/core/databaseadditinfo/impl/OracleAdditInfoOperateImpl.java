@@ -7,7 +7,7 @@ import hrds.agent.job.biz.utils.SQLUtil;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.util.ArrayList;
+import java.util.List;
 
 @DocClass(desc = "oracle数据库字段添加附加信息属性", author = "zxz", createdate = "2020/5/12 18:02")
 public class OracleAdditInfoOperateImpl implements DatabaseAdditInfoOperateInterface {
@@ -16,10 +16,10 @@ public class OracleAdditInfoOperateImpl implements DatabaseAdditInfoOperateInter
 	private static final String INDEX = "_ix";
 
 	@Override
-	public void addNormalIndex(String tableName, ArrayList<String> columns, DatabaseWrapper db) {
+	public void addNormalIndex(String tableName, List<String> columns, DatabaseWrapper db) {
 		if (columns != null && columns.size() > 0) {
 			String indexName = tableName + INDEX;
-			if (!SQLUtil.indexIfExistForPostgresql(indexName, db)) {
+			if (!SQLUtil.objectIfExistForOracle(indexName, db)) {
 				long startTime = System.currentTimeMillis();
 				StringBuilder sb = new StringBuilder();
 				sb.append("create index ").append(indexName);
@@ -28,7 +28,7 @@ public class OracleAdditInfoOperateImpl implements DatabaseAdditInfoOperateInter
 					sb.append(column).append(",");
 				}
 				sb.delete(sb.length() - 1, sb.length());
-				sb.append(")");
+				sb.append(") online");
 				db.execute(sb.toString());
 				logger.info("表" + tableName + "创建普通索引耗时："
 						+ ((System.currentTimeMillis() - startTime) / 1000) + "秒");
@@ -39,10 +39,10 @@ public class OracleAdditInfoOperateImpl implements DatabaseAdditInfoOperateInter
 	}
 
 	@Override
-	public void addPkConstraint(String tableName, ArrayList<String> columns, DatabaseWrapper db) {
+	public void addPkConstraint(String tableName, List<String> columns, DatabaseWrapper db) {
 		if (columns != null && columns.size() > 0) {
 			String pkObjectName = tableName + PK;
-			if (SQLUtil.pkIfExistForPostgresql(pkObjectName, db)) {
+			if (!SQLUtil.objectIfExistForOracle(pkObjectName, db)) {
 				long startTime = System.currentTimeMillis();
 				StringBuilder sb = new StringBuilder();
 				sb.append("alter table ").append(tableName);
@@ -62,7 +62,7 @@ public class OracleAdditInfoOperateImpl implements DatabaseAdditInfoOperateInter
 	@Override
 	public void dropIndex(String tableName, DatabaseWrapper db) {
 		String normalIndexName = tableName + INDEX;
-		if (SQLUtil.indexIfExistForPostgresql(normalIndexName, db)) {
+		if (SQLUtil.objectIfExistForOracle(normalIndexName, db)) {
 			String sql = "drop index " + normalIndexName;
 			db.execute(sql);
 		}
@@ -71,8 +71,8 @@ public class OracleAdditInfoOperateImpl implements DatabaseAdditInfoOperateInter
 	@Override
 	public void dropPkConstraint(String tableName, DatabaseWrapper db) {
 		String pkObjectName = tableName + PK;
-		if (SQLUtil.pkIfExistForPostgresql(pkObjectName, db)) {
-			String sql = "alter table " + tableName + " drop constraint " + pkObjectName;
+		if (SQLUtil.objectIfExistForOracle(pkObjectName, db)) {
+			String sql = "alter table " + tableName + " drop primary key";
 			db.execute(sql);
 		}
 	}

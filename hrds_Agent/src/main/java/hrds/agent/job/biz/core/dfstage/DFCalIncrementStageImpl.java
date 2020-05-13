@@ -9,6 +9,9 @@ import hrds.agent.job.biz.bean.*;
 import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
+import hrds.agent.job.biz.core.databaseadditinfo.DatabaseAdditInfoOperateInterface;
+import hrds.agent.job.biz.core.databaseadditinfo.impl.OracleAdditInfoOperateImpl;
+import hrds.agent.job.biz.core.databaseadditinfo.impl.PostgresqlAdditInfoOperateImpl;
 import hrds.agent.job.biz.core.increasement.IncreasementByMpp;
 import hrds.agent.job.biz.core.increasement.IncreasementBySpark;
 import hrds.agent.job.biz.core.increasement.JDBCIncreasement;
@@ -20,6 +23,7 @@ import hrds.commons.utils.StorageTypeKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -144,29 +148,29 @@ public class DFCalIncrementStageImpl extends AbstractJobStage {
 	 */
 	private void configureAdditInfo(String hbase_name, Map<String, Map<String, Integer>> additInfoFieldMap,
 	                                String database_type, DatabaseWrapper db) {
-		for (String dsla_storelayer : additInfoFieldMap.keySet()) {
-//			additInfoFieldMap.get(dsla_storelayer);
-			if (StoreLayerAdded.ZhuJian.getCode().equals(dsla_storelayer)) {
-				if (DatabaseType.Postgresql.getCode().equals(database_type)) {
-					//查询
-				} else if (DatabaseType.Oracle10g.getCode().equals(database_type)
-						|| DatabaseType.Oracle9i.getCode().equals(database_type)) {
-
-				} else {
-					LOGGER.warn("暂时还没有实现" + DatabaseType.ofValueByCode(database_type) + "数据库配置主键功能");
-				}
-			} else if (StoreLayerAdded.SuoYinLie.getCode().equals(dsla_storelayer)) {
-				if (DatabaseType.Postgresql.getCode().equals(database_type)) {
-
-				} else if (DatabaseType.Oracle10g.getCode().equals(database_type)
-						|| DatabaseType.Oracle9i.getCode().equals(database_type)) {
-
-				} else {
-					LOGGER.warn("暂时还没有实现" + DatabaseType.ofValueByCode(database_type) + "数据库配置索引功能");
-				}
+		if (additInfoFieldMap != null && !additInfoFieldMap.isEmpty()) {
+			DatabaseAdditInfoOperateInterface additInfoOperateInterface;
+			if (DatabaseType.Postgresql.getCode().equals(database_type)) {
+				//查询
+				additInfoOperateInterface = new PostgresqlAdditInfoOperateImpl();
+			} else if (DatabaseType.Oracle10g.getCode().equals(database_type)
+					|| DatabaseType.Oracle9i.getCode().equals(database_type)) {
+				additInfoOperateInterface = new OracleAdditInfoOperateImpl();
 			} else {
-				throw new AppSystemException("数据库" + DatabaseType.ofValueByCode(database_type) +
-						"不支持" + StoreLayerAdded.ofValueByCode(dsla_storelayer) + "操作");
+				LOGGER.warn("暂时还没有实现" + DatabaseType.ofValueByCode(database_type) +
+						"数据库配置主键和索引的功能");
+				return;
+			}
+			for (String dsla_storelayer : additInfoFieldMap.keySet()) {
+				List<String> columnList = new ArrayList<>(additInfoFieldMap.get(dsla_storelayer).keySet());
+				if (StoreLayerAdded.ZhuJian.getCode().equals(dsla_storelayer)) {
+					additInfoOperateInterface.addPkConstraint(hbase_name, columnList, db);
+				} else if (StoreLayerAdded.SuoYinLie.getCode().equals(dsla_storelayer)) {
+					additInfoOperateInterface.addNormalIndex(hbase_name, columnList, db);
+				} else {
+					throw new AppSystemException("数据库" + DatabaseType.ofValueByCode(database_type) +
+							"不支持" + StoreLayerAdded.ofValueByCode(dsla_storelayer) + "操作");
+				}
 			}
 		}
 	}
