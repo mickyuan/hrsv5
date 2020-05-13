@@ -25,15 +25,20 @@ import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.PropertyParaValue;
 import hrds.commons.utils.ReadLog;
 import hrds.commons.utils.jsch.SFTPDetails;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.apache.commons.io.FilenameUtils;
 
 @DocClass(desc = "作业调度工程", author = "dhw", createdate = "2019/11/25 15:48")
 public class EltSysAction extends BaseAction {
+
+	private static final Logger logger = LogManager.getLogger();
 
 	private static final String separator = File.separator;
 
@@ -360,17 +365,13 @@ public class EltSysAction extends BaseAction {
 		if (readNum > 1000) {
 			readNum = 1000;
 		}
-
-		SFTPDetails sftpDetails = new SFTPDetails();
-		sftpDetails.setHost(String.valueOf(etlSys.get("etl_serv_ip")));
-		sftpDetails.setPort(Integer.parseInt(String.valueOf(etlSys.get("etl_serv_port"))));
-		sftpDetails.setUser_name(String.valueOf(etlSys.get("user_name")));
-		sftpDetails.setPwd(String.valueOf(etlSys.get("user_pwd")));
 		// 8.读取control或trigger日志信息
-		return ReadLog.readAgentLog(
-				logDir,
-				sftpDetails,
-				readNum);
+		SFTPDetails sftpDetails = new SFTPDetails();
+		sftpDetails.setUser_name(etlSys.get("user_name").toString());
+		sftpDetails.setPwd(etlSys.get("user_pwd").toString());
+		sftpDetails.setHost(etlSys.get("etl_serv_ip").toString());
+		sftpDetails.setPort(Integer.parseInt(etlSys.get("etl_serv_port").toString()));
+		return ReadLog.readAgentLog(logDir, sftpDetails, readNum);
 	}
 
 	@Method(
@@ -393,8 +394,7 @@ public class EltSysAction extends BaseAction {
 	@Param(name = "curr_bath_date", desc = "批量日期", range = "yyyyMMdd格式的年月日，如：20191219")
 	@Param(name = "isControl", desc = "是否读取Control日志", range = "使用（IsFlag代码项），" +
 			"0代表control日志，1代表trigger日志")
-	public String downloadControlOrTriggerLog(
-			String etl_sys_cd, String curr_bath_date, String isControl) {
+	public String downloadControlOrTriggerLog(String etl_sys_cd, String curr_bath_date, String isControl) {
 		try {
 			// 1.数据可访问权限处理方式，通过user_id进行权限控制
 			// 2.验证当前用户对应的工程是否已不存在
@@ -456,6 +456,7 @@ public class EltSysAction extends BaseAction {
 			ETLJobUtil.interactingWithTheAgentServer(compressCommand, etlSys, sftpDetails1);
 			// 10.获取文件下载路径
 			String localPath = ETLJobUtil.getFilePath(null);
+			logger.info("==========文件下载本地路径=========" + localPath);
 			// 11.从服务器下载文件到本地
 			if (IsFlag.Fou == IsFlag.ofEnumByCode(isControl)) {
 				// CONTROL日志文件名称
