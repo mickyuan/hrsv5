@@ -310,7 +310,8 @@ public class EltSysAction extends BaseAction {
 							+ "8.读取control或trigger日志信息")
 	@Param(name = "etl_sys_cd", desc = "作业调度工程登记表主键ID", range = "新增工程时生成")
 	@Param(name = "readNum", desc = "查看日志行数", range = "最多显示1000行,大于0的正整数", valueIfNull = "100")
-	@Param(name = "isControl", desc = "是否读取Control日志", range = "使用（IsFlag代码项），0代表不是，1代表是")
+	@Param(name = "isControl", desc = "是否读取Control日志", range = "使用（IsFlag代码项），0代表control，" +
+			"1代表trigger")
 	@Return(desc = "返回内容描述", range = "取值范围")
 	public String readControlOrTriggerLog(String etl_sys_cd, Integer readNum, String isControl) {
 
@@ -497,5 +498,15 @@ public class EltSysAction extends BaseAction {
 		etl_sys.setEtl_sys_cd(etl_sys_cd);
 		etl_sys.setSys_run_status(Job_Status.STOP.getCode());
 		etl_sys.update(Dbo.db());
+	}
+
+	@Method(desc = "下载文件",
+			logicStep = "1.数据可访问权限处理方式，该方法不需要权限验证" +
+					"2.下载文件")
+	@Param(name = "fileName", desc = "下载文件名", range = "无限制")
+	public void downloadFile(String fileName) {
+		// 1.数据可访问权限处理方式，该方法不需要权限验证
+		// 2.下载文件
+		DownloadLogUtil.downloadFile(fileName);
 	}
 }

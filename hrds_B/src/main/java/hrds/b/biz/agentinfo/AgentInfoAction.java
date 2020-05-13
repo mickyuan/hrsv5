@@ -163,8 +163,9 @@ public class AgentInfoAction extends BaseAction {
 					"2.字段合法性验证" +
 					"3.判断端口是否被占用" +
 					"4.创建agent_info实体对象，同时封装值" +
-					"5.更新agent信息" +
-					"6.更新agent_down_info信息")
+					"5.检查数据源是否还存在以及判断数据源下相同的IP地址中是否包含相同的端口" +
+					"6.更新agent信息" +
+					"7.更新agent_down_info信息")
 	@Param(name = "agent_id", desc = "agent_info主键ID", range = "10位数字，新增时自动生成")
 	@Param(name = "agent_name", desc = "data_source表主键", range = "10位数字，新增时自动生成")
 	@Param(name = "agent_type", desc = "agent类型", range = "使用agent类型代码项（AgentType）")
@@ -194,9 +195,11 @@ public class AgentInfoAction extends BaseAction {
 		agentInfo.setAgent_port(agent_port);
 		agentInfo.setAgent_type(agent_type);
 		agentInfo.setAgent_name(agent_name);
-		// 5.更新agent信息
+		// 5.检查数据源是否还存在以及判断数据源下相同的IP地址中是否包含相同的端口
+		isDatasourceAndAgentExist(source_id, agent_type, agent_ip, agent_port);
+		// 6.更新agent信息
 		agentInfo.update(Dbo.db());
-		// 6.更新agent_down_info信息
+		// 7.更新agent_down_info信息
 		Dbo.execute("update " + Agent_down_info.TableName + " set agent_ip=?,agent_port=? where user_id=? " +
 						" and agent_type=? and agent_name=? and agent_id=?", agent_ip, agent_port,
 				user_id, agent_type, agent_name, agent_id);

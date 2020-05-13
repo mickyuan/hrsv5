@@ -4,16 +4,18 @@ import com.jcraft.jsch.ChannelSftp;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
+import fd.ng.core.utils.CodecUtil;
+import fd.ng.web.util.RequestUtil;
+import fd.ng.web.util.ResponseUtil;
+import hrds.commons.codes.DataBaseCode;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.jsch.FileProgressMonitor;
 import hrds.commons.utils.jsch.SFTPChannel;
 import hrds.commons.utils.jsch.SFTPDetails;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
+import java.io.*;
+import java.util.Base64;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -99,4 +101,57 @@ public class DownloadLogUtil {
 		}
 	}
 
+	@Method(desc = "下载文件",
+			logicStep = "1.数据可访问权限处理方式，该方法不需要权限验证" +
+					"2.获取本地文件路径" +
+					"3.清空response" +
+					"4.设置响应头，控制浏览器下载该文件" +
+					"4.1firefox浏览器" +
+					"4.2其它浏览器" +
+					"5.读取要下载的文件，保存到文件输入流" +
+					"6.创建输出流" +
+					"7.将输入流写入到浏览器中")
+	@Param(name = "fileName", desc = "下载文件名", range = "无限制")
+	public static void downloadFile(String fileName) {
+		// 1.数据可访问权限处理方式，该方法不需要权限验证
+		OutputStream out;
+		InputStream in;
+		String filePath;
+		try {
+			// 2.获取本地文件路径
+			filePath = ETLJobUtil.getFilePath(fileName);
+			// 3.清空response
+			ResponseUtil.getResponse().reset();
+			// 4.设置响应头，控制浏览器下载该文件
+			if (RequestUtil.getRequest().getHeader("User-Agent").toLowerCase().indexOf("firefox") > 0) {
+				// 4.1firefox浏览器
+				ResponseUtil.getResponse().setHeader("content-disposition", "attachment;filename="
+						+ new String(fileName.getBytes(CodecUtil.UTF8_CHARSET), DataBaseCode.ISO_8859_1.getCode()));
+			} else {
+				// 4.2其它浏览器
+				ResponseUtil.getResponse().setHeader("content-disposition", "attachment;filename="
+						+ Base64.getEncoder().encodeToString(fileName.getBytes(CodecUtil.UTF8_CHARSET)));
+			}
+			ResponseUtil.getResponse().setContentType("APPLICATION/OCTET-STREAM");
+			// 5.读取要下载的文件，保存到文件输入流
+			in = new FileInputStream(filePath);
+			// 6.创建输出流
+			out = ResponseUtil.getResponse().getOutputStream();
+			// 7.将输入流写入到浏览器中
+			byte[] bytes = new byte[1024];
+			int len;
+			while ((len = in.read(bytes)) > 0) {
+				out.write(bytes, 0, len);
+			}
+			out.flush();
+			out.close();
+			in.close();
+		} catch (UnsupportedEncodingException e) {
+			throw new BusinessException("不支持的编码异常");
+		} catch (FileNotFoundException e) {
+			throw new BusinessException("文件不存在，可能目录不存在！");
+		} catch (IOException e) {
+			throw new BusinessException("下载文件失败！");
+		}
+	}
 }
