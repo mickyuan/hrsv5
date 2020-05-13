@@ -217,7 +217,7 @@ public class DataQueryAction extends BaseAction {
                     "2.根据统计类型,设置返回的map结果集"
     )
     @Return(desc = "存放采集分类统计结果的集合", range = "无限制")
-    public Map<String, Object> getFileClassifySum() {
+    public List<Map<String, Object>> getFileClassifySum() {
         //数据可访问权限处理方式: 根据表的 user_id做权限校验
         //1.根据登录用户的id获取用户文件采集统计的结果
         List<Map<String, Object>> fcsList = Dbo.queryList("select count(1) sum_num,file_type" +
@@ -227,50 +227,50 @@ public class DataQueryAction extends BaseAction {
                 AgentType.WenJianXiTong.getCode(), getUserId()
         );
         //2.根据统计类型设置返回的map结果集
-        Map<String, Object> classificationSumMap = new HashMap<>(12);
+        List<Map<String, Object>> classificationSumList = new ArrayList<>();
         if (!fcsList.isEmpty()) {
+            Map<String, Object> classificationSumMap = new HashMap<>();
             for (Map<String, Object> fcsMap : fcsList) {
                 classificationSumMap.put(FileType.ofValueByCode((String) fcsMap.get("file_type")),
                         fcsMap.get("sum_num"));
+                classificationSumMap.put("file_type", FileType.ofValueByCode((String) fcsMap.get("file_type")));
+                classificationSumMap.put("sum_num", fcsMap.get("sum_num"));
+                classificationSumList.add(classificationSumMap);
             }
         }
-        return classificationSumMap;
+        return classificationSumList;
     }
 
     @Method(desc = "最近7天文件采集统计",
             logicStep = "数据可访问权限处理方式: 根据表的 user_id 做权限校验" +
-                    "1.如果查询天数小于1条则显示默认7天，查询条数大于30天则显示30天，否则取传入的查询天数" +
-                    "2.根据登录用户的id获取用户最近7天的文件采集信息" +
-                    "3.根据查询结果设置返回的map结果集"
-    )
-    @Param(name = "queryDays", desc = "查询天数", range = "int类型值 1-30 默认为7", valueIfNull = "7")
+                    "根据登录用户的id获取用户最近7天的文件采集信息")
     @Return(desc = "存放统计结果的集合", range = "无限制")
-    public Map<String, Object> getSevenDayCollectFileSum(int queryDays) {
-        //1.如果查询天数数小于1条则显示默认7天，查询条数大于30天则显示30天，否则取传入的查询天数
-        queryDays = Math.max(7, queryDays);
-        queryDays = Math.min(queryDays, 7);
-        //2.根据登录用户的id获取用户最近7天的文件采集信息
+    public List<Map<String, Object>> getSevenDayCollectFileSum() {
+        //根据登录用户的id获取用户最近7天的文件采集信息
         List<Map<String, Object>> scfList = Dbo.queryList("select count(1) count,storage_date" +
                         " from " + Source_file_attribute.TableName + " sfa join" +
                         " " + Agent_info.TableName + " ai on sfa.agent_id = ai.agent_id" +
                         " where sfa.collect_type = ? AND ai.user_id = ? GROUP BY storage_date" +
-                        " ORDER BY storage_date desc LIMIT ?",
-                AgentType.WenJianXiTong.getCode(), getUserId(), queryDays
-        );
+                        " ORDER BY storage_date desc LIMIT 7",
+                AgentType.WenJianXiTong.getCode(), getUserId());
         //3.根据查询结果设置返回的map结果集
-        Map<String, Object> sevenDayCollectFileSumMap = new HashMap<>(30);
+        List<Map<String, Object>> sevenDayCollectFileSumList = new ArrayList<>();
         if (!scfList.isEmpty()) {
+            Map<String, Object> sevenDayCollectFileSumMap = new HashMap<>();
             for (Map<String, Object> scfMap : scfList) {
                 String collectDate = (String) scfMap.get("storage_date");
                 int collectSum = Integer.parseInt(scfMap.get("count").toString());
                 if (sevenDayCollectFileSumMap.containsKey("collectDate")) {
-                    sevenDayCollectFileSumMap.put(collectDate, collectSum + collectSum);
+                    sevenDayCollectFileSumMap.put("collectDate", collectDate);
+                    sevenDayCollectFileSumMap.put("collectSum", collectSum + collectSum);
                 } else {
-                    sevenDayCollectFileSumMap.put(collectDate, collectSum);
+                    sevenDayCollectFileSumMap.put("collectDate", collectDate);
+                    sevenDayCollectFileSumMap.put("collectSum", collectSum);
                 }
+                sevenDayCollectFileSumList.add(sevenDayCollectFileSumMap);
             }
         }
-        return sevenDayCollectFileSumMap;
+        return sevenDayCollectFileSumList;
     }
 
     @Method(desc = "最近的3次文件采集信息",
