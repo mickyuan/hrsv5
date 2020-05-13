@@ -33,7 +33,7 @@ public class TreePageSource {
 
     //集市,加工,数据管控 树菜单列表
     private static DataSourceType[] DATA_MANAGEMENT_ARRAY = new DataSourceType[]{DataSourceType.DCL,
-            DataSourceType.DML};
+            DataSourceType.DML, DataSourceType.DQC, DataSourceType.UDL};
     //webSQL树菜单列表
     private static DataSourceType[] WEB_SQL_ARRAY = new DataSourceType[]{DataSourceType.DCL,
             DataSourceType.DML, DataSourceType.DQC, DataSourceType.UDL};
