@@ -25,13 +25,12 @@ import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.PropertyParaValue;
 import hrds.commons.utils.ReadLog;
 import hrds.commons.utils.jsch.SFTPDetails;
-import org.apache.commons.io.FilenameUtils;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.apache.commons.io.FilenameUtils;
 
 @DocClass(desc = "作业调度工程", author = "dhw", createdate = "2019/11/25 15:48")
 public class EltSysAction extends BaseAction {
@@ -361,13 +360,16 @@ public class EltSysAction extends BaseAction {
 		if (readNum > 1000) {
 			readNum = 1000;
 		}
+
+		SFTPDetails sftpDetails = new SFTPDetails();
+		sftpDetails.setHost(String.valueOf(etlSys.get("etl_serv_ip")));
+		sftpDetails.setPort(Integer.parseInt(String.valueOf(etlSys.get("etl_serv_port"))));
+		sftpDetails.setUser_name(String.valueOf(etlSys.get("user_name")));
+		sftpDetails.setPwd(String.valueOf(etlSys.get("user_pwd")));
 		// 8.读取control或trigger日志信息
 		return ReadLog.readAgentLog(
 				logDir,
-				etlSys.get("etl_serv_ip").toString(),
-				etlSys.get("etl_serv_port").toString(),
-				etlSys.get("user_name").toString(),
-				etlSys.get("user_pwd").toString(),
+				sftpDetails,
 				readNum);
 	}
 
