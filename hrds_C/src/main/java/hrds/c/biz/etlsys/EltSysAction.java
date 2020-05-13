@@ -313,6 +313,7 @@ public class EltSysAction extends BaseAction {
 	@Param(name = "isControl", desc = "是否读取Control日志", range = "使用（IsFlag代码项），0代表不是，1代表是")
 	@Return(desc = "返回内容描述", range = "取值范围")
 	public String readControlOrTriggerLog(String etl_sys_cd, Integer readNum, String isControl) {
+
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
 		// 2.验证当前用户对应的工程是否已不存在
 		if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
@@ -402,7 +403,9 @@ public class EltSysAction extends BaseAction {
 			// 4.判断工程是否已部署
 			isETLDeploy(etlSys);
 			// 5.修改批量日期格式
-			curr_bath_date = curr_bath_date.replaceAll("-", "");
+			if (curr_bath_date.contains("-")) {
+				curr_bath_date = StringUtil.replace(curr_bath_date, "-", "");
+			}
 			// 6.获取control或trigger日志路径
 			String logDir =
 					FilenameUtils.normalize(etlSys.get("serv_file_path").toString())
