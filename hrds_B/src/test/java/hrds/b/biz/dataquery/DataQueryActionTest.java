@@ -9,7 +9,6 @@ import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import hrds.commons.codes.AgentType;
-import hrds.commons.codes.CollectType;
 import hrds.commons.codes.FileType;
 import hrds.commons.entity.*;
 import hrds.testbase.WebBaseTestCase;
@@ -149,7 +148,7 @@ public class DataQueryActionTest extends WebBaseTestCase {
 				sourceFileAttribute.setFile_id(FILE_ID + i);
 				sourceFileAttribute.setIs_in_hbase("0");
 				sourceFileAttribute.setSeqencing(0L);
-				sourceFileAttribute.setCollect_type(CollectType.WenJianCaiJi.getCode());
+				sourceFileAttribute.setCollect_type(AgentType.WenJianXiTong.getCode());
 				sourceFileAttribute.setOriginal_name("init-hll");
 				sourceFileAttribute.setOriginal_update_date(DateUtil.getSysDate());
 				sourceFileAttribute.setOriginal_update_time(DateUtil.getSysTime());

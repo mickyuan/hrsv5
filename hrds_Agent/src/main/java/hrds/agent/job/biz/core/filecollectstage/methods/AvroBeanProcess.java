@@ -6,7 +6,7 @@ import hrds.agent.job.biz.bean.AvroBean;
 import hrds.agent.job.biz.bean.FileCollectParamBean;
 import hrds.agent.job.biz.bean.ObjectCollectParamBean;
 import hrds.agent.job.biz.utils.CommunicationUtil;
-import hrds.commons.codes.CollectType;
+import hrds.commons.codes.AgentType;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Source_file_attribute;
 import hrds.commons.exception.AppSystemException;
@@ -122,7 +122,7 @@ public class AvroBeanProcess {
 					Object[] addFileAttributeList = new Object[22];
 					attribute.setAgent_id(fileCollectParamBean.getAgent_id());
 					attribute.setCollect_set_id(fileCollectParamBean.getFcs_id());
-					attribute.setCollect_type(CollectType.WenJianCaiJi.getCode());
+					attribute.setCollect_type(AgentType.WenJianXiTong.getCode());
 					attribute.setFile_avro_block(avroBean.getFile_avro_block());
 					attribute.setFile_avro_path(avroBean.getFile_avro_path());
 					attribute.setFile_id(avroBean.getUuid());
@@ -373,7 +373,7 @@ public class AvroBeanProcess {
 				//文本处理
 				doc = new SolrInputDocument();
 				doc.addField("id", avroBean.getUuid());
-				doc.addField("tf-collect_type", CollectType.WenJianCaiJi.getCode());
+				doc.addField("tf-collect_type", AgentType.WenJianXiTong.getCode());
 				doc.addField("tf-file_name", avroBean.getFile_name());
 				//source_path
 				doc.addField("tf-file_scr_path", avroBean.getFile_scr_path());

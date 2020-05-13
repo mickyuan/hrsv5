@@ -10,7 +10,7 @@ import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
-import hrds.commons.codes.CollectType;
+import hrds.commons.codes.AgentType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,7 +40,7 @@ public class DBDataLoadingStageImpl extends AbstractJobStage {
 				+ "数据库直连采集数据加载阶段成功------------------");
 		//结束给stageParamInfo塞值
 		JobStatusInfoUtil.endStageParamInfo(stageParamInfo, statusInfo, collectTableBean
-				, CollectType.ShuJuKuCaiJi.getCode());
+				, AgentType.ShuJuKu.getCode());
 		return stageParamInfo;
 	}
 

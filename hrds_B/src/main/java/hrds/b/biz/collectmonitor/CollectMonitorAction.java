@@ -10,7 +10,6 @@ import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.AgentType;
-import hrds.commons.codes.CollectType;
 import hrds.commons.codes.ExecuteState;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Agent_info;
@@ -77,9 +76,9 @@ public class CollectMonitorAction extends BaseAction {
                 + " sfa JOIN  "
                 + Agent_info.TableName
                 + " ai ON sfa.agent_id = ai.agent_id WHERE user_id = ?",
-            CollectType.WenJianCaiJi.getCode(),
-            CollectType.ShuJuKuCaiJi.getCode(),
-            CollectType.DBWenJianCaiJi.getCode(),
+                AgentType.WenJianXiTong.getCode(),
+                AgentType.ShuJuKu.getCode(),
+                AgentType.DBWenJian.getCode(),
             getUserId());
     result.setObject(
         0,
@@ -160,10 +159,10 @@ public class CollectMonitorAction extends BaseAction {
                 + " ai ON cc.agent_id = ai.agent_id WHERE ai.user_id = ? GROUP BY"
                 + " cc.etl_date ORDER BY cc.etl_date DESC) bb ON aa.dbdate = bb.filedate LIMIT 15",
             getUserId(),
-            CollectType.DBWenJianCaiJi.getCode(),
-            CollectType.ShuJuKuCaiJi.getCode(),
-            CollectType.WenJianCaiJi.getCode(),
-            CollectType.WenJianCaiJi.getCode(),
+                AgentType.DBWenJian.getCode(),
+                AgentType.ShuJuKu.getCode(),
+                AgentType.WenJianXiTong.getCode(),
+                AgentType.WenJianXiTong.getCode(),
             getUserId());
 
     // 2: 查询到结果,将日期,数据采集量,文件采集量经行处理,否则直接返回

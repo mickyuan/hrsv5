@@ -3,7 +3,7 @@ package hrds.commons.collection;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
-import hrds.commons.codes.CollectType;
+import hrds.commons.codes.AgentType;
 import hrds.commons.utils.StorageTypeKey;
 import hrds.commons.collection.bean.LayerBean;
 import hrds.commons.collection.bean.LayerTypeBean;
@@ -42,7 +42,7 @@ public class ProcessingDataTest {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			Data_store_reg dst = new Data_store_reg();
 			dst.setFile_id(idS1);
-			dst.setCollect_type(CollectType.DBWenJianCaiJi.getCode());
+			dst.setCollect_type(AgentType.DBWenJian.getCode());
 			dst.setOriginal_update_date(DateUtil.getSysDate());
 			dst.setOriginal_update_time(DateUtil.getSysTime());
 			dst.setOriginal_name("sys_user");
@@ -58,7 +58,7 @@ public class ProcessingDataTest {
 			int add = dst.add(db);
 
 			dst.setFile_id(idS3);
-			dst.setCollect_type(CollectType.DBWenJianCaiJi.getCode());
+			dst.setCollect_type(AgentType.DBWenJian.getCode());
 			dst.setOriginal_update_date(DateUtil.getSysDate());
 			dst.setOriginal_update_time(DateUtil.getSysTime());
 			dst.setOriginal_name("xc_CODE_INFO");
@@ -75,7 +75,7 @@ public class ProcessingDataTest {
 
 
 			dst.setFile_id(idS2);
-			dst.setCollect_type(CollectType.DBWenJianCaiJi.getCode());
+			dst.setCollect_type(AgentType.DBWenJian.getCode());
 			dst.setOriginal_update_date(DateUtil.getSysDate());
 			dst.setOriginal_update_time(DateUtil.getSysTime());
 			dst.setOriginal_name("sys_role");

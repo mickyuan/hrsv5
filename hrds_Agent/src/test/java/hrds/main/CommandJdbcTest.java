@@ -13,7 +13,7 @@ import hrds.agent.job.biz.core.FtpCollectJobImpl;
 import hrds.agent.job.biz.core.JobInterface;
 import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
-import hrds.commons.codes.CollectType;
+import hrds.commons.codes.AgentType;
 import hrds.commons.entity.File_source;
 import hrds.commons.entity.Ftp_collect;
 import hrds.commons.exception.AppSystemException;
@@ -38,7 +38,7 @@ public class CommandJdbcTest {
 	@Test
 	public void test1() {
 		assertThat("执行测试卸数csv文件成功", execute("1002234428",
-				CollectType.ShuJuKuCaiJi.getCode()), is(true));
+				AgentType.ShuJuKu.getCode()), is(true));
 	}
 
 	/**
@@ -47,7 +47,7 @@ public class CommandJdbcTest {
 	@Test
 	public void test2() {
 		assertThat("执行测试卸数parquet文件成功", execute("1002234429",
-				CollectType.ShuJuKuCaiJi.getCode()), is(true));
+				AgentType.ShuJuKu.getCode()), is(true));
 	}
 
 	/**
@@ -56,7 +56,7 @@ public class CommandJdbcTest {
 	@Test
 	public void test3() {
 		assertThat("执行测试卸数Orc文件成功", execute("1002234430",
-				CollectType.ShuJuKuCaiJi.getCode()), is(true));
+				AgentType.ShuJuKu.getCode()), is(true));
 	}
 
 	/**
@@ -65,7 +65,7 @@ public class CommandJdbcTest {
 	@Test
 	public void test4() {
 		assertThat("执行测试卸数SequenceFile文件成功", execute("1002234431",
-				CollectType.ShuJuKuCaiJi.getCode()), is(true));
+				AgentType.ShuJuKu.getCode()), is(true));
 	}
 
 	/**
@@ -74,7 +74,7 @@ public class CommandJdbcTest {
 	@Test
 	public void test5() {
 		assertThat("执行测试卸数定长文件成功", execute("1002234432",
-				CollectType.ShuJuKuCaiJi.getCode()), is(true));
+				AgentType.ShuJuKu.getCode()), is(true));
 	}
 
 	/**
@@ -83,7 +83,7 @@ public class CommandJdbcTest {
 	@Test
 	public void test6() {
 		assertThat("执行测试卸数非定长文件成功", execute("1002234433",
-				CollectType.ShuJuKuCaiJi.getCode()), is(true));
+				AgentType.ShuJuKu.getCode()), is(true));
 	}
 
 	/**
@@ -92,7 +92,7 @@ public class CommandJdbcTest {
 	@Test
 	public void test7() {
 		assertThat("执行测试卸数csv文件进数成功", execute("1002234438",
-				CollectType.ShuJuKuCaiJi.getCode()), is(true));
+				AgentType.ShuJuKu.getCode()), is(true));
 	}
 
 	/**
@@ -101,7 +101,7 @@ public class CommandJdbcTest {
 	@Test
 	public void test8() {
 		assertThat("执行测试卸数parquet文件成功", execute("1002234439",
-				CollectType.ShuJuKuCaiJi.getCode()), is(true));
+				AgentType.ShuJuKu.getCode()), is(true));
 	}
 
 	/**
@@ -110,7 +110,7 @@ public class CommandJdbcTest {
 	@Test
 	public void test9() {
 		assertThat("执行测试卸数Orc文件成功", execute("1002234440",
-				CollectType.ShuJuKuCaiJi.getCode()), is(true));
+				AgentType.ShuJuKu.getCode()), is(true));
 	}
 
 	/**
@@ -119,7 +119,7 @@ public class CommandJdbcTest {
 	@Test
 	public void test10() {
 		assertThat("执行测试卸数SequenceFile文件成功", execute("1002234441",
-				CollectType.ShuJuKuCaiJi.getCode()), is(true));
+				AgentType.ShuJuKu.getCode()), is(true));
 	}
 
 	/**
@@ -128,25 +128,25 @@ public class CommandJdbcTest {
 	@Test
 	public void test11() {
 		assertThat("执行测试卸数非定长文件成功", execute("1002234443",
-				CollectType.ShuJuKuCaiJi.getCode()), is(true));
+				AgentType.ShuJuKu.getCode()), is(true));
 	}
 
 	@Test
 	public void test12() {
 		assertThat("执行测试卸数非定长文件成功", execute("1000402881",
-				CollectType.ShuJuKuCaiJi.getCode()), is(true));
+				AgentType.ShuJuKu.getCode()), is(true));
 	}
 
 	@Test
 	public void test13() {
 		assertThat("执行测试文件采集成功", execute("1000230238",
-				CollectType.WenJianCaiJi.getCode()), is(true));
+				AgentType.WenJianXiTong.getCode()), is(true));
 	}
 
 	@Test
 	public void test14() {
 		assertThat("执行测试文件采集成功", execute("1000230240",
-				CollectType.WenJianCaiJi.getCode()), is(true));
+				AgentType.WenJianXiTong.getCode()), is(true));
 	}
 
 
@@ -158,15 +158,15 @@ public class CommandJdbcTest {
 	 */
 	private boolean execute(String job_id, String collectType) {
 		String taskInfo = FileUtil.readFile2String(new File(Constant.MESSAGEFILE + job_id));
-		if (CollectType.WenJianCaiJi.getCode().equals(collectType)) {
+		if (AgentType.WenJianXiTong.getCode().equals(collectType)) {
 			return executeFileCollect(taskInfo);
-		} else if (CollectType.ShuJuKuCaiJi.getCode().equals(collectType)) {
+		} else if (AgentType.ShuJuKu.getCode().equals(collectType)) {
 			return executeJdbcCollect(taskInfo);
-		} else if (CollectType.FtpCaiJi.getCode().equals(collectType)) {
+		} else if (AgentType.FTP.getCode().equals(collectType)) {
 			return executeFtpCollect(taskInfo);
-		} else if (CollectType.DBWenJianCaiJi.getCode().equals(collectType)) {
+		} else if (AgentType.DBWenJian.getCode().equals(collectType)) {
 			return executeDbFileCollect(taskInfo);
-		} else if (CollectType.DuiXiangWenJianCaiJi.getCode().equals(collectType)) {
+		} else if (AgentType.DuiXiang.getCode().equals(collectType)) {
 			return executeObjectFileCollect(taskInfo);
 		} else {
 			throw new AppSystemException("采集类型不正确");

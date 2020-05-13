@@ -8,7 +8,7 @@ import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.web.action.AbstractWebappBaseAction;
-import hrds.commons.codes.CollectType;
+import hrds.commons.codes.AgentType;
 import hrds.commons.codes.DataSourceType;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.*;
@@ -243,7 +243,7 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction imp
 					+ " JOIN " + Source_file_attribute.TableName + " sfa ON sfa.SOURCE_ID = ds.SOURCE_ID"
 					+ " and  sfa.AGENT_ID = ai.AGENT_ID and sfa.collect_set_id = fcs.FCS_ID "
 					+ " where collect_type = ? ");
-			assembler.addParam(CollectType.WenJianCaiJi.getCode());
+			assembler.addParam(AgentType.WenJianXiTong.getCode());
 			assembler.addLikeParam("original_name", fileAttribute.getFilename());
 			List<Object> sourceIdList = SqlOperator.queryOneColumnList(db, "select source_id from data_source ");
 			assembler.addORParam("sfa.source_id", sourceIdList.toArray());

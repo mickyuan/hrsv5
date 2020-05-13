@@ -10,7 +10,7 @@ import hrds.agent.job.biz.core.DataBaseJobImpl;
 import hrds.agent.job.biz.core.DataFileJobImpl;
 import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
-import hrds.commons.codes.CollectType;
+import hrds.commons.codes.AgentType;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
 import org.apache.commons.logging.Log;
@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.RejectedExecutionException;
 
 @DocClass(desc = "作业调度数据库采集、数据库抽取、db文件采集程序入口", author = "zxz", createdate = "2020/1/3 10:38")
 public class CommandExecute {
@@ -70,10 +69,10 @@ public class CommandExecute {
 			//设置sql占位符参数
 			collectTableBean.setSqlParam(sqlParam.toString());
 			//判断采集类型，根据采集类型调用对应的方法
-			if (CollectType.ShuJuKuCaiJi.getCode().equals(collectType)) {
+			if (AgentType.ShuJuKu.getCode().equals(collectType)) {
 				//XXX 数据库采集，目前是做的数据库抽取的逻辑，这个代码项要改
 				startJdbcToFile(sourceDataConfBean, collectTableBean);
-			} else if (CollectType.DBWenJianCaiJi.getCode().equals(collectType)) {
+			} else if (AgentType.DBWenJian.getCode().equals(collectType)) {
 				startDbFileCollect(sourceDataConfBean, collectTableBean);
 			} else {
 				throw new AppSystemException("不支持的采集类型");

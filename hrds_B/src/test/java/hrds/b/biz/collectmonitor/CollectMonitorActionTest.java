@@ -167,13 +167,13 @@ public class CollectMonitorActionTest extends WebBaseTestCase {
         attribute.setIs_in_hbase(IsFlag.Shi.getCode());
         attribute.setSeqencing(String.valueOf(i));
         if (i == 0) {
-          attribute.setCollect_type(CollectType.ShuJuKuCaiJi.getCode());
+          attribute.setCollect_type(AgentType.ShuJuKu.getCode());
           attribute.setAgent_id(database_agent_id);
           // 数据库采集的文件大小
           attribute.setFile_size(dataBaseSize);
         } else {
 
-          attribute.setCollect_type(CollectType.DBWenJianCaiJi.getCode());
+          attribute.setCollect_type(AgentType.DBWenJian.getCode());
           attribute.setAgent_id(db_agent_id);
           // 数据文件采集的文件大小
           attribute.setFile_size(fileSize);
@@ -204,12 +204,12 @@ public class CollectMonitorActionTest extends WebBaseTestCase {
           collect_case.setJob_rs_id(UUID.randomUUID().toString());
           if (j == 0) {
 
-            collect_case.setCollect_type(CollectType.ShuJuKuCaiJi.getCode());
+            collect_case.setCollect_type(AgentType.ShuJuKu.getCode());
             collect_case.setAgent_id(database_agent_id);
             collect_case.setJob_type(database_job_type[i]);
           } else {
 
-            collect_case.setCollect_type(CollectType.DBWenJianCaiJi.getCode());
+            collect_case.setCollect_type(AgentType.DBWenJian.getCode());
             collect_case.setAgent_id(db_agent_id);
             collect_case.setJob_type(db_job_type[i]);
           }

@@ -13,16 +13,15 @@ import hrds.agent.job.biz.core.increasement.IncreasementByMpp;
 import hrds.agent.job.biz.core.increasement.IncreasementBySpark;
 import hrds.agent.job.biz.core.increasement.JDBCIncreasement;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
-import hrds.commons.codes.CollectType;
-import hrds.commons.codes.StorageType;
-import hrds.commons.codes.Store_type;
-import hrds.commons.codes.UnloadType;
+import hrds.commons.codes.*;
 import hrds.commons.collection.ConnectionTool;
 import hrds.commons.exception.AppSystemException;
+import hrds.commons.utils.StorageTypeKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Map;
 
 @DocClass(desc = "数据文件采集，计算增量阶段实现", author = "WangZhengcheng")
 public class DFCalIncrementStageImpl extends AbstractJobStage {
@@ -55,9 +54,11 @@ public class DFCalIncrementStageImpl extends AbstractJobStage {
 				for (DataStoreConfBean dataStoreConf : dataStoreConfBeanList) {
 					//根据存储类型上传到目的地
 					if (Store_type.DATABASE.getCode().equals(dataStoreConf.getStore_type())) {
-						try (DatabaseWrapper db = ConnectionTool.getDBWrapper(dataStoreConf.getData_store_connect_attr());
-						     JDBCIncreasement increase = getJdbcIncreasement(tableBean, collectTableBean.getHbase_name(),
-								     collectTableBean.getEtlDate(), db, dataStoreConf.getDsl_name())) {
+						JDBCIncreasement increase = null;
+						try {
+							DatabaseWrapper db = ConnectionTool.getDBWrapper(dataStoreConf.getData_store_connect_attr());
+							increase = getJdbcIncreasement(tableBean, collectTableBean.getHbase_name(),
+									collectTableBean.getEtlDate(), db, dataStoreConf.getDsl_name());
 							if (StorageType.ZengLiang.getCode().equals(collectTableBean.getStorage_type())) {
 								//计算增量
 								increase.calculateIncrement();
@@ -73,6 +74,12 @@ public class DFCalIncrementStageImpl extends AbstractJobStage {
 								throw new AppSystemException("表" + collectTableBean.getHbase_name()
 										+ "请选择正确的存储方式！");
 							}
+							//配置附加属性
+							configureAdditInfo(collectTableBean.getHbase_name(), dataStoreConf.getAdditInfoFieldMap(),
+									dataStoreConf.getData_store_connect_attr().get(StorageTypeKey.database_type), db);
+						} finally {
+							if (increase != null)
+								increase.close();
 						}
 					} else if (Store_type.HBASE.getCode().equals(dataStoreConf.getStore_type())) {
 
@@ -102,8 +109,45 @@ public class DFCalIncrementStageImpl extends AbstractJobStage {
 		}
 		//结束给stageParamInfo塞值
 		JobStatusInfoUtil.endStageParamInfo(stageParamInfo, statusInfo, collectTableBean
-				, CollectType.DBWenJianCaiJi.getCode());
+				, AgentType.DBWenJian.getCode());
 		return stageParamInfo;
+	}
+
+	/**
+	 * 给表配置附加信息
+	 *
+	 * @param hbase_name        表名
+	 * @param additInfoFieldMap 附加信息的字段
+	 * @param database_type     数据库类型
+	 * @param db                数据库的连接
+	 */
+	private void configureAdditInfo(String hbase_name, Map<String, Map<String, Integer>> additInfoFieldMap,
+	                                String database_type, DatabaseWrapper db) {
+		for (String dsla_storelayer : additInfoFieldMap.keySet()) {
+//			additInfoFieldMap.get(dsla_storelayer);
+			if (StoreLayerAdded.ZhuJian.getCode().equals(dsla_storelayer)) {
+				if (DatabaseType.Postgresql.getCode().equals(database_type)) {
+					//查询
+				} else if (DatabaseType.Oracle10g.getCode().equals(database_type)
+						|| DatabaseType.Oracle9i.getCode().equals(database_type)) {
+
+				} else {
+					LOGGER.warn("暂时还没有实现" + DatabaseType.ofValueByCode(database_type) + "数据库配置主键功能");
+				}
+			} else if (StoreLayerAdded.SuoYinLie.getCode().equals(dsla_storelayer)) {
+				if (DatabaseType.Postgresql.getCode().equals(database_type)) {
+
+				} else if (DatabaseType.Oracle10g.getCode().equals(database_type)
+						|| DatabaseType.Oracle9i.getCode().equals(database_type)) {
+
+				} else {
+					LOGGER.warn("暂时还没有实现" + DatabaseType.ofValueByCode(database_type) + "数据库配置索引功能");
+				}
+			} else {
+				throw new AppSystemException("数据库" + DatabaseType.ofValueByCode(database_type) +
+						"不支持" + StoreLayerAdded.ofValueByCode(dsla_storelayer) + "操作");
+			}
+		}
 	}
 
 	/**

@@ -21,7 +21,7 @@ public class DRBTreeNodeDataQuery {
     @Param(name = "dataList", desc = "节点数据List", range = "节点数据List")
     @Param(name = "treeConf", desc = "TreeConf树配置信息", range = "TreeConf树配置信息")
     public static void getISLDataList(User user, List<Map<String, Object>> dataList, TreeConf treeConf) {
-        throw new BusinessException("获取ISL层数据失败,暂未配置该存储层!");
+        //TODO 暂未配置该存储层
     }
 
     @Method(desc = "获取DCL数据层的节点数据", logicStep = "获取DCL数据层的节点数据")
@@ -42,7 +42,7 @@ public class DRBTreeNodeDataQuery {
     @Param(name = "dataList", desc = "节点数据List", range = "节点数据List")
     @Param(name = "treeConf", desc = "TreeConf树配置信息", range = "TreeConf树配置信息")
     public static void getDPLDataList(User user, List<Map<String, Object>> dataList, TreeConf treeConf) {
-        throw new BusinessException("获取DPL层数据失败,暂未配置该存储层!");
+        //TODO 暂未配置该存储层
     }
 
     @Method(desc = "获取DML数据层的节点数据", logicStep = "获取DML数据层的节点数据")
@@ -50,7 +50,7 @@ public class DRBTreeNodeDataQuery {
     @Param(name = "dataList", desc = "节点数据List", range = "节点数据List")
     @Param(name = "treeConf", desc = "TreeConf树配置信息", range = "TreeConf树配置信息")
     public static void getDMLDataList(User user, List<Map<String, Object>> dataList, TreeConf treeConf) {
-        throw new BusinessException("获取DML层数据失败,暂未配置该存储层!");
+        //TODO 暂未配置该存储层
     }
 
     @Method(desc = "获取SFL数据层的节点数据", logicStep = "获取SFL数据层的节点数据")
@@ -58,8 +58,9 @@ public class DRBTreeNodeDataQuery {
     @Param(name = "dataList", desc = "节点数据List", range = "节点数据List")
     @Param(name = "treeConf", desc = "TreeConf树配置信息", range = "TreeConf树配置信息")
     public static void getSFLDataList(User user, List<Map<String, Object>> dataList, TreeConf treeConf) {
+        //TODO 暂未配置该存储层
         //添加SFL层下节点数据
-        dataList.addAll(SFLDataQuery.getSFLDataInfos());
+        //dataList.addAll(SFLDataQuery.getSFLDataInfos());
     }
 
     @Method(desc = "获取AML数据层的节点数据", logicStep = "获取AML数据层的节点数据")
@@ -67,7 +68,7 @@ public class DRBTreeNodeDataQuery {
     @Param(name = "dataList", desc = "节点数据List", range = "节点数据List")
     @Param(name = "treeConf", desc = "TreeConf树配置信息", range = "TreeConf树配置信息")
     public static void getAMLDataList(User user, List<Map<String, Object>> dataList, TreeConf treeConf) {
-        throw new BusinessException("获取AML层数据失败,暂未配置该存储层!");
+        //TODO 暂未配置该存储层
     }
 
     @Method(desc = "获取DQC数据层的节点数据", logicStep = "获取DQC数据层的节点数据")
@@ -75,7 +76,7 @@ public class DRBTreeNodeDataQuery {
     @Param(name = "dataList", desc = "节点数据List", range = "节点数据List")
     @Param(name = "treeConf", desc = "TreeConf树配置信息", range = "TreeConf树配置信息")
     public static void getDQCDataList(User user, List<Map<String, Object>> dataList, TreeConf treeConf) {
-        throw new BusinessException("获取DQC层数据失败,暂未配置该存储层!");
+        //TODO 暂未配置该存储层
     }
 
     @Method(desc = "获取UDL数据层的节点数据", logicStep = "获取UDL数据层的节点数据")
@@ -83,6 +84,6 @@ public class DRBTreeNodeDataQuery {
     @Param(name = "dataList", desc = "节点数据List", range = "节点数据List")
     @Param(name = "treeConf", desc = "TreeConf树配置信息", range = "TreeConf树配置信息")
     public static void getUDLDataList(User user, List<Map<String, Object>> dataList, TreeConf treeConf) {
-        throw new BusinessException("获取DML层数据失败,暂未配置该存储层!");
+        //TODO 暂未配置该存储层
     }
 }
