@@ -1659,3 +1659,13 @@ DATA_OUTPUT                                       VARCHAR(20) NOT NULL, --数据
 REMARK                                            VARCHAR(512) NULL, --备注
 CONSTRAINT INTERFACE_FILE_INFO_PK PRIMARY KEY(FILE_ID)   );
 
+--集市表前置后置作业
+DROP TABLE IF EXISTS DM_RELEVANT_INFO ;
+CREATE TABLE DM_RELEVANT_INFO(
+REL_ID                                            BIGINT default 0 NOT NULL, --作业相关id
+DATATABLE_ID                                      BIGINT default 0 NULL, --数据表id
+PRE_WORK                                          VARCHAR(6500) NULL, --前置作业
+POST_WORK                                         VARCHAR(6500) NULL, --后置作业
+REL_REMARK                                        VARCHAR(512) NULL, --备注
+CONSTRAINT DM_RELEVANT_INFO_PK PRIMARY KEY(REL_ID)   );
+

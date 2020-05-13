@@ -52,7 +52,7 @@ public class Source_file_attribute extends ProjectTableEntity
 	private String file_suffix;
 	@DocBean(name ="table_name",value="采集的原始表名:",dataType = String.class,required = false)
 	private String table_name;
-	@DocBean(name ="collect_type",value="采集类型(CollectType):1-数据库采集<ShuJuKuCaiJi> 2-文件采集<WenJianCaiJi> 3-数据文件采集<DBWenJianCaiJi> 4-对象文件采集<DuiXiangWenJianCaiJi> 5-Ftp采集<FtpCaiJi> ",dataType = String.class,required = true)
+	@DocBean(name ="collect_type",value="采集类型(AgentType):1-数据库Agent<ShuJuKu> 2-文件系统Agent<WenJianXiTong> 3-FtpAgent<FTP> 4-数据文件Agent<DBWenJian> 5-对象Agent<DuiXiang> ",dataType = String.class,required = true)
 	private String collect_type;
 	@DocBean(name ="source_path",value="文件路径:",dataType = String.class,required = false)
 	private String source_path;
