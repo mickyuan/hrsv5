@@ -81,6 +81,27 @@ public class DFCalIncrementStageImpl extends AbstractJobStage {
 							if (increase != null)
 								increase.close();
 						}
+					} else if (Store_type.HIVE.getCode().equals(dataStoreConf.getStore_type())) {
+						try (DatabaseWrapper db = ConnectionTool.getDBWrapper(dataStoreConf.
+								getData_store_connect_attr()); JDBCIncreasement increasement = new IncreasementBySpark(
+								tableBean, collectTableBean.getHbase_name(), collectTableBean.getEtlDate(),
+								db, dataStoreConf.getDsl_name())) {
+							if (StorageType.ZengLiang.getCode().equals(collectTableBean.getStorage_type())) {
+								//计算增量
+								increasement.calculateIncrement();
+								//合并增量表
+								increasement.mergeIncrement();
+							} else if (StorageType.ZhuiJia.getCode().equals(collectTableBean.getStorage_type())) {
+								//追加
+								increasement.append();
+							} else if (StorageType.TiHuan.getCode().equals(collectTableBean.getStorage_type())) {
+								//替换
+								increasement.replace();
+							} else {
+								throw new AppSystemException("表" + collectTableBean.getHbase_name()
+										+ "请选择正确的存储方式！");
+							}
+						}
 					} else if (Store_type.HBASE.getCode().equals(dataStoreConf.getStore_type())) {
 
 					} else if (Store_type.SOLR.getCode().equals(dataStoreConf.getStore_type())) {
