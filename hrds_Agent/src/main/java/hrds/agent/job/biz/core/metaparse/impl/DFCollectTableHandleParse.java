@@ -19,6 +19,7 @@ import hrds.commons.utils.Constant;
 import hrds.commons.utils.xlstoxml.Xls2xml;
 import hrds.commons.utils.xlstoxml.util.ColumnMeta;
 
+import java.io.File;
 import java.util.List;
 import java.util.Map;
 
@@ -55,7 +56,7 @@ public class DFCollectTableHandleParse extends AbstractCollectTableHandle {
 //		HashMap<String, Boolean> isCollectMap = new HashMap<>();//db文件采集，字段是否采集的映射,对新增列不做映射，默认采集
 		//3.读取xml获取数据字典下所有的表信息,找到当前线程对应需要采集表的数据字典，获取表结构(注数据字典中的是有序的)
 		List<String> cols = ColumnMeta.getColumnList(collectTableBean.getTable_name(),
-				Constant.XMLPATH + sourceDataConfBean.getDatabase_id() + xmlName);
+				Constant.XMLPATH + sourceDataConfBean.getDatabase_id() + File.separator + xmlName);
 		//遍历db文件数据字典里面列信息的集合
 		// XXX 注：DB文件采集，页面只允许查看列，不允许选择列，默认是全选，所有数据字典里面定义的列都采集。
 		//  页面选择了转存的情况下，不读取DB数据文件的HYREN_S_DATE、HYREN_E_DATE、HYREN_MD5_VAL三列
@@ -140,7 +141,7 @@ public class DFCollectTableHandleParse extends AbstractCollectTableHandle {
 
 		//查找增量数据的新增的、删除的、和修改的列信息
 		List<String> incrementColumnList = ColumnMeta.getIncrementColumnList(collectTableBean.getTable_name(),
-				Constant.XMLPATH + sourceDataConfBean.getDatabase_id() + xmlName);
+				Constant.XMLPATH + sourceDataConfBean.getDatabase_id() + File.separator + xmlName);
 		if (incrementColumnList != null && incrementColumnList.size() > 2) {
 			tableBean.setInsertColumnInfo(incrementColumnList.get(0));
 			tableBean.setUpdateColumnInfo(incrementColumnList.get(1));

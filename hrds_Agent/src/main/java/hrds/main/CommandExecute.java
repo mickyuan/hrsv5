@@ -97,7 +97,7 @@ public class CommandExecute {
 			String xmlName = Math.abs(plane_url.hashCode()) + ".xml";
 			//DB文件采集将数据字典dd_data.xls转为xml
 			DFCollectTableHandleParse.toXml(plane_url, Constant.XMLPATH
-					+ sourceDataConfBean.getDatabase_id() + xmlName);
+					+ sourceDataConfBean.getDatabase_id() + File.separator + xmlName);
 			//此处不会有海量的任务需要执行，不会出现队列中等待的任务对象过多的OOM事件。
 			//TODO Runtime.getRuntime().availableProcessors()此处不能用这个,因为可能同时又多个数据库采集同时进行
 			executor = Executors.newFixedThreadPool(1);

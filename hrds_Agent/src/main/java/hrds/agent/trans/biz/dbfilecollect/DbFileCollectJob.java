@@ -16,6 +16,7 @@ import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.PackUtil;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -50,7 +51,7 @@ public class DbFileCollectJob extends AgentBaseAction {
 			String xmlName = Math.abs(plane_url.hashCode()) + ".xml";
 			//DB文件采集将数据字典dd_data.xls转为xml
 			DFCollectTableHandleParse.toXml(plane_url, Constant.XMLPATH
-					+ sourceDataConfBean.getDatabase_id() + xmlName);
+					+ sourceDataConfBean.getDatabase_id() + File.separator + xmlName);
 			//1.获取json数组转成File_source的集合
 			List<CollectTableBean> collectTableBeanList = sourceDataConfBean.getCollectTableBeanArray();
 			//此处不会有海量的任务需要执行，不会出现队列中等待的任务对象过多的OOM事件。
