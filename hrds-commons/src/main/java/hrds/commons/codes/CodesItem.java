@@ -73,8 +73,6 @@ public class CodesItem{
 	protected static final String reduceScope=new String("ReduceScope");
 	/**运行状态   */
 	protected static final String executeState=new String("ExecuteState");
-	/**采集类型   */
-	protected static final String collectType=new String("CollectType");
 	/**进数方式   */
 	protected static final String storageType=new String("StorageType");
 	/**采集编码   */
@@ -166,7 +164,6 @@ public class CodesItem{
 		mapCat.put(executeWay,ExecuteWay.class);
 		mapCat.put(reduceScope,ReduceScope.class);
 		mapCat.put(executeState,ExecuteState.class);
-		mapCat.put(collectType,CollectType.class);
 		mapCat.put(storageType,StorageType.class);
 		mapCat.put(dataBaseCode,DataBaseCode.class);
 		mapCat.put(countNum,CountNum.class);

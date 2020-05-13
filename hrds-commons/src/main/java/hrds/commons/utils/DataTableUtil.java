@@ -5,8 +5,8 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.web.util.Dbo;
-import hrds.commons.codes.CollectType;
-import hrds.commons.entity.*;
+import hrds.commons.codes.AgentType;
+import hrds.commons.entity.Source_file_attribute;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.tree.background.query.DCLDataQuery;
 
@@ -83,7 +83,7 @@ public class DataTableUtil {
         //1.判断表是否在源文件信息表存在
         return Dbo.queryNumber("SELECT count(1) count FROM " + Source_file_attribute.TableName +
                         " WHERE lower(hbase_name) = ? AND collect_type IN (?,?)", tableName.toLowerCase(),
-                CollectType.ShuJuKuCaiJi.getCode(), CollectType.DBWenJianCaiJi.getCode()).orElseThrow(()
+                AgentType.ShuJuKu.getCode(), AgentType.DBWenJian.getCode()).orElseThrow(()
                 -> new BusinessException("检查表名称否重复在源文件信息表的SQL编写错误")) != 0;
     }
 

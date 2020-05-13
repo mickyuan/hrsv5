@@ -11,7 +11,7 @@ import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
 import hrds.agent.job.biz.core.filecollectstage.methods.AvroOper;
 import hrds.agent.job.biz.core.filecollectstage.methods.CollectionWatcher;
-import hrds.commons.codes.CollectType;
+import hrds.commons.codes.AgentType;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.MapDBHelper;
 import org.apache.commons.logging.Log;
@@ -130,7 +130,7 @@ public class FileCollectUnloadDataStageImpl extends AbstractJobStage {
 		stageParamInfo.setSourceId(fileCollectParamBean.getSource_id());
 		stageParamInfo.setCollectSetId(Long.parseLong(fileCollectParamBean.getFcs_id()));
 		stageParamInfo.setTaskClassify(fileCollectParamBean.getFile_source_path());
-		stageParamInfo.setCollectType(CollectType.WenJianCaiJi.getCode());
+		stageParamInfo.setCollectType(AgentType.WenJianXiTong.getCode());
 		stageParamInfo.setEtlDate(fileCollectParamBean.getSysDate());
 		return stageParamInfo;
 	}

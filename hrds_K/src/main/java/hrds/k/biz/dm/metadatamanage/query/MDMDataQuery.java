@@ -7,10 +7,9 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.web.util.Dbo;
+import hrds.commons.codes.JobExecuteState;
 import hrds.commons.collection.ConnectionTool;
-import hrds.commons.entity.Data_store_layer;
-import hrds.commons.entity.Data_store_layer_attr;
-import hrds.commons.entity.Data_store_reg;
+import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 
 import java.util.List;
@@ -19,7 +18,7 @@ import java.util.Map;
 @DocClass(desc = "数据管控-源数据列表树数据查询类", author = "BY-HLL", createdate = "2020/4/1 0001 下午 02:11")
 public class MDMDataQuery {
 
-    @Method(desc = "数据管控-源数据列表获取数据存储层信息", logicStep = "数据管控-源数据列表获取数据存储层信息")
+    @Method(desc = "数据管控-源数据列表获取DCL数据存储层信息", logicStep = "数据管控-源数据列表获取数据存储层信息")
     @Return(desc = "返回值说明", range = "返回值取值范围")
     public static List<Data_store_layer> getDCLExistTableDataStorageLayers() {
         //获取数据存储层信息列表
@@ -30,7 +29,7 @@ public class MDMDataQuery {
                 " GROUP BY dsl.dsl_id");
     }
 
-    @Method(desc = "数据管控-源数据列表获取数据存储层下的表信息",
+    @Method(desc = "数据管控-源数据列表获取DCL数据存储层下的表信息",
             logicStep = "数据管控-源数据列表获取数据存储层下的表信息")
     @Param(name = "data_store_layer", desc = "Data_store_layer实体对象", range = "Data_store_layer实体对象")
     @Return(desc = "返回值说明", range = "返回值取值范围")
@@ -43,6 +42,28 @@ public class MDMDataQuery {
                 " WHERE dsl.dsl_id = ?", data_store_layer.getDsl_id());
     }
 
+    @Method(desc = "数据管控-源数据列表获取DML数据存储层信息", logicStep = "数据管控-源数据列表获取数据存储层信息")
+    @Return(desc = "返回值说明", range = "返回值取值范围")
+    public static List<Data_store_layer> getDMLExistTableDataStorageLayers() {
+        //获取数据存储层信息列表
+        return Dbo.queryList(Data_store_layer.class, "SELECT dsl.* FROM " + Data_store_layer.TableName + " dsl" +
+                " JOIN " + Dm_relation_datatable.TableName + " drd ON drd.dsl_id = dsl.dsl_id" +
+                " JOIN " + Dm_datatable.TableName + " dd ON dd.datatable_id = drd.datatable_id" +
+                " GROUP BY dsl.dsl_id");
+    }
+
+    @Method(desc = "数据管控-源数据列表获取DML数据存储层下的表信息",
+            logicStep = "数据管控-源数据列表获取数据存储层下的表信息")
+    @Param(name = "data_store_layer", desc = "Data_store_layer实体对象", range = "Data_store_layer实体对象")
+    @Return(desc = "返回值说明", range = "返回值取值范围")
+    public static List<Map<String, Object>> getDMLStorageLayerTableInfos(Data_store_layer data_store_layer) {
+        return Dbo.queryList("SELECT dsl.*,dd.* FROM " + Dm_datatable.TableName + " dd" +
+                        " JOIN " + Dm_relation_datatable.TableName + " drd ON drd.datatable_id = dd.datatable_id" +
+                        " JOIN " + Data_store_layer.TableName + " dsl ON dsl.dsl_id = drd.dsl_id" +
+                        " WHERE dsl.dsl_id = ? and is_successful = ?",
+                data_store_layer.getDsl_id(), JobExecuteState.WanCheng.getCode());
+    }
+
     @Method(desc = "根据表id获取DCL层数据表登记信息", logicStep = "根据表id获取DCL层数据表登记信息")
     @Param(name = "file_id", desc = "表登记id", range = "String字符串,唯一")
     @Return(desc = "返回值说明", range = "返回值取值范围")
@@ -53,7 +74,7 @@ public class MDMDataQuery {
                 dsr.getFile_id()).orElseThrow(() -> (new BusinessException("获取数据登记信息的SQL失败!")));
     }
 
-    @Method(desc = "根据表id删除DCL层数据表登记信息", logicStep = "根据表id获取DCL层数据表登记信息")
+    @Method(desc = "根据表id删除DCL层数据表登记信息", logicStep = "根据表id删除DCL层数据表登记信息")
     @Param(name = "file_id", desc = "表登记id", range = "String字符串,唯一")
     @Return(desc = "返回值说明", range = "返回值取值范围")
     public static void deleteDataStoreRegInfo(String file_id) {

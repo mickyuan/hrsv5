@@ -8,7 +8,6 @@ import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import hrds.commons.codes.AgentType;
-import hrds.commons.codes.CollectType;
 import hrds.commons.codes.DbmMode;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.*;
@@ -113,7 +112,7 @@ public class TSBActionTest extends WebBaseTestCase {
             sourceFileAttribute.setFile_id(FILE_ID);
             sourceFileAttribute.setIs_in_hbase("0");
             sourceFileAttribute.setSeqencing(0L);
-            sourceFileAttribute.setCollect_type(CollectType.ShuJuKuCaiJi.getCode());
+            sourceFileAttribute.setCollect_type(AgentType.ShuJuKu.getCode());
             sourceFileAttribute.setOriginal_name("init-hll");
             sourceFileAttribute.setOriginal_update_date(DateUtil.getSysDate());
             sourceFileAttribute.setOriginal_update_time(DateUtil.getSysTime());

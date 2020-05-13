@@ -14,7 +14,7 @@ import fd.ng.web.util.RequestUtil;
 import hrds.b.biz.fulltextsearch.tools.EssaySimilar;
 import hrds.b.biz.fulltextsearch.tools.PictureSearch;
 import hrds.commons.base.BaseAction;
-import hrds.commons.codes.CollectType;
+import hrds.commons.codes.AgentType;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Agent_info;
 import hrds.commons.entity.Search_info;
@@ -137,7 +137,7 @@ public class FullTextSearchAction extends BaseAction {
 					rList.add(stringObjectMap);
 				}
 				ftsMap.put("result", rList);
-				ftsMap.put("collectType", CollectType.WenJianCaiJi.getValue());
+				ftsMap.put("collectType", AgentType.WenJianXiTong.getValue());
 				ftsMap.put("totalSize", totalSize);
 				ftsMap.put("shi", IsFlag.Shi.getValue());
 			}
@@ -185,7 +185,7 @@ public class FullTextSearchAction extends BaseAction {
 		searchInfo.setWord_name(queryConditions);
 		//源文件属性表
 		Source_file_attribute sourceFileAttribute = new Source_file_attribute();
-		sourceFileAttribute.setCollect_type(CollectType.WenJianCaiJi.getCode());
+		sourceFileAttribute.setCollect_type(AgentType.WenJianXiTong.getCode());
 		//4-1.创建查询sql
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		asmSql.clean();
@@ -214,8 +214,8 @@ public class FullTextSearchAction extends BaseAction {
 				" ON db.agent_id = gi.agent_id JOIN source_file_attribute sfa ON sfa.SOURCE_ID = ds.SOURCE_ID" +
 				" and sfa.AGENT_ID = gi.AGENT_ID and sfa.COLLECT_SET_ID = db.DATABASE_ID LEFT JOIN user_fav uf" +
 				" ON sfa.file_id = uf.file_id where collect_type in(?,?)");
-		asmSql.addParam(CollectType.ShuJuKuCaiJi.getCode());
-		asmSql.addParam(CollectType.DBWenJianCaiJi.getCode());
+		asmSql.addParam(AgentType.ShuJuKu.getCode());
+		asmSql.addParam(AgentType.DBWenJian.getCode());
 		asmSql.addSql(" AND sfa.AGENT_ID in (");
 		agentIdListToSql(newAgentIdList, asmSql, agentInfo);
 		asmSql.addSql(") AND sfa.file_id in (");
@@ -467,7 +467,7 @@ public class FullTextSearchAction extends BaseAction {
 			asmSql.addSql(" where sfa.file_id = ?");
 			asmSql.addSql(" and collect_type = ? ORDER BY  sfa.file_id");
 			asmSql.addParam(rowKey);
-			asmSql.addParam(CollectType.WenJianCaiJi.getCode());
+			asmSql.addParam(AgentType.WenJianXiTong.getCode());
 			Result query = Dbo.queryPagedResult(new DefaultPageImpl(currPage, pageSize), asmSql.sql(), asmSql.params());
 			if (!query.isEmpty()) {
 				query.setObject(0, "summary_content",
@@ -497,7 +497,7 @@ public class FullTextSearchAction extends BaseAction {
 		asmSql.clean();
 		asmSql.addSql("SELECT sfa.*,ds.datasource_name,gi.agent_name,fcs.fcs_name,uf.fav_id,uf.fav_flag from (" +
 				" SELECT a.* FROM source_file_attribute a  WHERE collect_type = ? ");
-		asmSql.addParam(CollectType.WenJianCaiJi.getCode());
+		asmSql.addParam(AgentType.WenJianXiTong.getCode());
 		asmSql.addLikeParam("original_name", fileName);
 		asmSql.addORParam("a.source_id", sourceIdsObj);
 		asmSql.addSql(" ) sfa join data_source ds  ON sfa.source_id=ds.source_id JOIN agent_info gi ON sfa.agent_id =" +

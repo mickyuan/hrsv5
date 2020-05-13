@@ -264,10 +264,11 @@ public class DqcExecution {
             Dq_index3record dq_index3record = new Dq_index3record();
             dq_index3record.setRecord_id(PrimayKeyGener.getNextId());
             dq_index3record.setTable_name(dqc_table_name);
-            //TODO 获取表空间,目前给空
-            dq_index3record.setTable_col("");
-            //TODO 获取表空间,默认给空
-            dq_index3record.setDqc_ts(dq_result.getTarget_key_fields());
+            dq_index3record.setTable_col(dq_result.getTarget_key_fields());
+            dq_index3record.setTable_size("0");
+            dq_index3record.setDqc_ts("default");
+            dq_index3record.setFile_type("default");
+            dq_index3record.setFile_path("default");
             dq_index3record.setRecord_date(DateUtil.getSysDate());
             dq_index3record.setRecord_time(DateUtil.getSysTime());
             dq_index3record.setTask_id(dq_result.getTask_id());

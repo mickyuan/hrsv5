@@ -157,19 +157,21 @@ public class DCLDataQuery {
         if (UserType.XiTongGuanLiYuan != userType) {
             asmSql.addSql("SELECT t2.task_name,t1.*,t3.* FROM data_store_reg t1 JOIN database_set t2 ON" +
                     " t1.database_id = t2.database_id JOIN collect_job_classify t3 ON" +
-                    " t3.classify_id = t2.classify_id JOIN source_relation_dep t4 ON t1.source_id = t4.source_id");
+                    " t3.classify_id = t2.classify_id JOIN source_relation_dep t4 ON t1.source_id = t4.source_id "
+                + " WHERE t1.collect_type = ?");
         } else {
             asmSql.addSql("SELECT t2.task_name,t1.*,t3.* FROM data_store_reg t1 JOIN database_set t2 ON" +
                     " t1.database_id = t2.database_id JOIN collect_job_classify t3 ON" +
-                    " t3.classify_id = t2.classify_id");
+                    " t3.classify_id = t2.classify_id WHERE t1.collect_type = ?");
         }
+        asmSql.addParam(AgentType.DBWenJian.getCode());
         if (StringUtil.isNotBlank(classify_id)) {
             database_set.setClassify_id(classify_id);
-            asmSql.addSql(" WHERE t2.classify_id = ?").addParam(database_set.getClassify_id());
+            asmSql.addSql(" AND t2.classify_id = ?").addParam(database_set.getClassify_id());
         }
         if (StringUtil.isNotBlank(classify_name)) {
             classify.setClassify_name("%" + classify_name + "%");
-            asmSql.addSql(" WHERE t1.table_name like ? OR t1.hyren_name like ? OR t1.original_name like ? OR" +
+            asmSql.addSql(" AND t1.table_name like ? OR t1.hyren_name like ? OR t1.original_name like ? OR" +
                     " t2.task_name like ? OR t2.database_number like ?");
             asmSql.addParam(classify.getClassify_name()).addParam(classify.getClassify_name())
                     .addParam(classify.getClassify_name()).addParam(classify.getClassify_name())

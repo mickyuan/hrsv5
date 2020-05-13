@@ -8,9 +8,10 @@ import hrds.agent.job.biz.bean.SourceDataConfBean;
 import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.core.DataBaseJobImpl;
 import hrds.agent.job.biz.core.DataFileJobImpl;
+import hrds.agent.job.biz.core.metaparse.impl.DFCollectTableHandleParse;
 import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
-import hrds.commons.codes.CollectType;
+import hrds.commons.codes.AgentType;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
 import org.apache.commons.logging.Log;
@@ -22,7 +23,6 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.RejectedExecutionException;
 
 @DocClass(desc = "作业调度数据库采集、数据库抽取、db文件采集程序入口", author = "zxz", createdate = "2020/1/3 10:38")
 public class CommandExecute {
@@ -70,10 +70,10 @@ public class CommandExecute {
 			//设置sql占位符参数
 			collectTableBean.setSqlParam(sqlParam.toString());
 			//判断采集类型，根据采集类型调用对应的方法
-			if (CollectType.ShuJuKuCaiJi.getCode().equals(collectType)) {
+			if (AgentType.ShuJuKu.getCode().equals(collectType)) {
 				//XXX 数据库采集，目前是做的数据库抽取的逻辑，这个代码项要改
 				startJdbcToFile(sourceDataConfBean, collectTableBean);
-			} else if (CollectType.DBWenJianCaiJi.getCode().equals(collectType)) {
+			} else if (AgentType.DBWenJian.getCode().equals(collectType)) {
 				startDbFileCollect(sourceDataConfBean, collectTableBean);
 			} else {
 				throw new AppSystemException("不支持的采集类型");
@@ -91,6 +91,13 @@ public class CommandExecute {
 			//初始化当前任务需要保存的文件的根目录
 			String[] paths = {Constant.JOBINFOPATH, Constant.DBFILEUNLOADFOLDER};
 			FileUtil.initPath(sourceDataConfBean.getDatabase_id(), paths);
+			//将json数据字典转为xml
+			String plane_url = sourceDataConfBean.getPlane_url();
+			//获取数据字典所在目录文件，根据数据字典计算xml文件名称
+			String xmlName = Math.abs(plane_url.hashCode()) + ".xml";
+			//DB文件采集将数据字典dd_data.xls转为xml
+			DFCollectTableHandleParse.toXml(plane_url, Constant.XMLPATH
+					+ sourceDataConfBean.getDatabase_id() + File.separator + xmlName);
 			//此处不会有海量的任务需要执行，不会出现队列中等待的任务对象过多的OOM事件。
 			//TODO Runtime.getRuntime().availableProcessors()此处不能用这个,因为可能同时又多个数据库采集同时进行
 			executor = Executors.newFixedThreadPool(1);

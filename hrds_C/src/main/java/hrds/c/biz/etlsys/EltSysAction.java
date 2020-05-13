@@ -25,13 +25,12 @@ import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.PropertyParaValue;
 import hrds.commons.utils.ReadLog;
 import hrds.commons.utils.jsch.SFTPDetails;
-import org.apache.commons.io.FilenameUtils;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.apache.commons.io.FilenameUtils;
 
 @DocClass(desc = "作业调度工程", author = "dhw", createdate = "2019/11/25 15:48")
 public class EltSysAction extends BaseAction {
@@ -310,9 +309,11 @@ public class EltSysAction extends BaseAction {
 							+ "8.读取control或trigger日志信息")
 	@Param(name = "etl_sys_cd", desc = "作业调度工程登记表主键ID", range = "新增工程时生成")
 	@Param(name = "readNum", desc = "查看日志行数", range = "最多显示1000行,大于0的正整数", valueIfNull = "100")
-	@Param(name = "isControl", desc = "是否读取Control日志", range = "使用（IsFlag代码项），0代表不是，1代表是")
+	@Param(name = "isControl", desc = "是否读取Control日志", range = "使用（IsFlag代码项），0代表control，" +
+			"1代表trigger")
 	@Return(desc = "返回内容描述", range = "取值范围")
 	public String readControlOrTriggerLog(String etl_sys_cd, Integer readNum, String isControl) {
+
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
 		// 2.验证当前用户对应的工程是否已不存在
 		if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
@@ -359,13 +360,16 @@ public class EltSysAction extends BaseAction {
 		if (readNum > 1000) {
 			readNum = 1000;
 		}
+
+		SFTPDetails sftpDetails = new SFTPDetails();
+		sftpDetails.setHost(String.valueOf(etlSys.get("etl_serv_ip")));
+		sftpDetails.setPort(Integer.parseInt(String.valueOf(etlSys.get("etl_serv_port"))));
+		sftpDetails.setUser_name(String.valueOf(etlSys.get("user_name")));
+		sftpDetails.setPwd(String.valueOf(etlSys.get("user_pwd")));
 		// 8.读取control或trigger日志信息
 		return ReadLog.readAgentLog(
 				logDir,
-				etlSys.get("etl_serv_ip").toString(),
-				etlSys.get("etl_serv_port").toString(),
-				etlSys.get("user_name").toString(),
-				etlSys.get("user_pwd").toString(),
+				sftpDetails,
 				readNum);
 	}
 
@@ -402,7 +406,9 @@ public class EltSysAction extends BaseAction {
 			// 4.判断工程是否已部署
 			isETLDeploy(etlSys);
 			// 5.修改批量日期格式
-			curr_bath_date = curr_bath_date.replaceAll("-", "");
+			if (curr_bath_date.contains("-")) {
+				curr_bath_date = StringUtil.replace(curr_bath_date, "-", "");
+			}
 			// 6.获取control或trigger日志路径
 			String logDir =
 					FilenameUtils.normalize(etlSys.get("serv_file_path").toString())
@@ -494,5 +500,15 @@ public class EltSysAction extends BaseAction {
 		etl_sys.setEtl_sys_cd(etl_sys_cd);
 		etl_sys.setSys_run_status(Job_Status.STOP.getCode());
 		etl_sys.update(Dbo.db());
+	}
+
+	@Method(desc = "下载文件",
+			logicStep = "1.数据可访问权限处理方式，该方法不需要权限验证" +
+					"2.下载文件")
+	@Param(name = "fileName", desc = "下载文件名", range = "无限制")
+	public void downloadFile(String fileName) {
+		// 1.数据可访问权限处理方式，该方法不需要权限验证
+		// 2.下载文件
+		DownloadLogUtil.downloadFile(fileName);
 	}
 }

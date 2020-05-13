@@ -810,9 +810,14 @@ public class MonitorAction extends BaseAction {
 		if (readNum > 1000) {
 			readNum = 1000;
 		}
+
+		SFTPDetails sftpDetails = new SFTPDetails();
+		sftpDetails.setHost(etl_sys.getEtl_serv_ip());
+		sftpDetails.setPort(Integer.parseInt(etl_sys.getEtl_serv_port()));
+		sftpDetails.setUser_name(etl_sys.getUser_name());
+		sftpDetails.setPwd(etl_sys.getUser_pwd());
 		// 8.读取日志文件返回
-		return ReadLog.readAgentLog(logDir, etl_sys.getEtl_serv_ip(), etl_sys.getEtl_serv_port(),
-				etl_sys.getUser_name(), etl_sys.getUser_pwd(), readNum);
+		return ReadLog.readAgentLog(logDir, sftpDetails, readNum);
 	}
 
 	@Method(desc = "下载日志文件到本地",

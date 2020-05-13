@@ -122,7 +122,7 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 		}
 		//结束给stageParamInfo塞值
 		JobStatusInfoUtil.endStageParamInfo(stageParamInfo, statusInfo, collectTableBean
-				, CollectType.DBWenJianCaiJi.getCode());
+				, AgentType.DBWenJian.getCode());
 		return stageParamInfo;
 	}
 
@@ -225,7 +225,7 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 		String past_hbase_name = fileNameArr[0].split(collectTableBean.getTable_name())[0]
 				+ collectTableBean.getTable_name();
 		if (FileUtil.isSysDir(external_root_path)) {
-			throw new AppSystemException("请不要删除系统目录下的文件"+external_root_path);
+			throw new AppSystemException("请不要删除系统目录下的文件" + external_root_path);
 		}
 		if (DatabaseType.Oracle10g.getCode().equals(database_type) ||
 				DatabaseType.Oracle9i.getCode().equals(database_type)) {
@@ -247,7 +247,7 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 	private void clearTemporaryLog(String database_type, String todayTableName,
 	                               String external_root_path, Session session) throws Exception {
 		if (FileUtil.isSysDir(external_root_path)) {
-			throw new AppSystemException("请不要删除系统目录下的文件"+external_root_path);
+			throw new AppSystemException("请不要删除系统目录下的文件" + external_root_path);
 		}
 		String tmpTodayTableName = todayTableName + "t";
 		if (DatabaseType.Oracle10g.getCode().equals(database_type) ||
@@ -348,7 +348,7 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 		sql.append(" fields terminated by '").append(tableBean.getColumn_separator()).append("' ");
 //            sql.append(" optionally enclosed by '\"' ");
 		sql.append(" missing field values are null  ");
-		sql.append(getTransformsSqlForLobs(columnList, typeList));//有大字段加类型转换取大字段的值
+		sql.append(getTransformsSqlForLobs(columnList, typeList, dsl_name));//有大字段加类型转换取大字段的值
 		sql.append(" ) ");
 		sql.append(" location ");
 		sql.append(" ( ");
@@ -360,7 +360,7 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 		return sql.toString();
 	}
 
-	private String getTransformsSqlForLobs(List<String> columns, List<String> types) {
+	private String getTransformsSqlForLobs(List<String> columns, List<String> types, String dsl_name) {
 		StringBuilder sb = new StringBuilder(1024);
 		if (types.contains("BLOB") || types.contains("CLOB")) {
 			sb.append("(");
@@ -371,7 +371,7 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 					sb.append(columns.get(i)).append(" ").append("CHAR(1000000)").append(",");
 				} else {
 					sb.append(columns.get(i)).append(" ").append("CHAR(").
-							append(TypeTransLength.getLength(types.get(i))).append("),");
+							append(TypeTransLength.getLength(types.get(i), dsl_name)).append("),");
 				}
 			}
 			sb.deleteCharAt(sb.length() - 1); //将最后的逗号删除
