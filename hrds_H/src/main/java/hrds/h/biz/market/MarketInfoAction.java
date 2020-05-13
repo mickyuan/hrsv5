@@ -1101,7 +1101,7 @@ public class MarketInfoAction extends BaseAction {
             List<Map<String, Object>> maps = Dbo.queryList("select column_name as columnname,column_type as columntype,false as selectionstate from " + Table_column.TableName +
                     " t1 left join " + Data_store_reg.TableName + " t2 on t1.table_id = t2.table_id where t2.file_id = ? and upper(column_name) not in (?,?,?)", data_store_reg.getFile_id(), Constant.SDATENAME, Constant.EDATENAME, Constant.MD5NAME);
             resultmap.put("columnresult", maps);
-            List<Map<String, Object>> tablenamelist = Dbo.queryList("select hyren_name as tablename from " + Data_store_reg.TableName + " where file_id = ?", data_store_reg.getFile_id() );
+            List<Map<String, Object>> tablenamelist = Dbo.queryList("select hyren_name as tablename from " + Data_store_reg.TableName + " where file_id = ?", data_store_reg.getFile_id());
             resultmap.put("tablename", tablenamelist.get(0).get("tablename"));
             return resultmap;
         } else if (source.equals(DataSourceType.DML.getCode())) {
@@ -1356,7 +1356,7 @@ public class MarketInfoAction extends BaseAction {
         sheet1.getRow(16 + count).createCell(3).setCellValue("类型");
         sheet1.getRow(16 + count).createCell(4).setCellValue("长度");
         sheet1.getRow(16 + count).createCell(5).setCellValue("处理方式");
-        sheet1.getRow(16 + count).createCell(6).setCellValue("处理方式参数");
+        sheet1.getRow(16 + count).createCell(6).setCellValue("来源值");
         for (int i = 0; i < StoreLayerAdded.values().length; i++) {
             sheet1.getRow(16 + count).createCell(7 + i).setCellValue(StoreLayerAdded.values()[i].getValue());
         }
@@ -1573,6 +1573,32 @@ public class MarketInfoAction extends BaseAction {
         Dm_datatable dm_datatable = new Dm_datatable();
         dm_datatable.setDatatable_id(datatable_id);
         return Dbo.queryList("select datatable_en_name from " + Dm_datatable.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
+    }
+
+    @Method(desc = "保存前置作业",
+            logicStep = "")
+    @Param(name = "datatable_id", desc = "datatable_id", range = "String类型集市表主键")
+    @Param(name = "pre_work", desc = "pre_work", range = "String类型前置作业sql", nullable = true)
+    @Param(name = "post_work", desc = "post_work", range = "String类型后置作业sql", nullable = true)
+    @Return(desc = "查询返回结果集", range = "无限制")
+    public void savePreAndAfterJob(String datatable_id, String pre_work, String post_work) {
+        Dm_relevant_info dm_relevant_info = new Dm_relevant_info();
+        dm_relevant_info.setDatatable_id(datatable_id);
+        dm_relevant_info.setPre_work(pre_work);
+        dm_relevant_info.setPost_work(post_work);
+        dm_relevant_info.setRel_id(PrimayKeyGener.getNextId());
+        Dbo.execute(Dbo.db(), "Delete from " + Dm_relevant_info.TableName + " where datatable_id = ?", dm_relevant_info.getDatatable_id());
+        dm_relevant_info.add(Dbo.db());
+    }
+
+    @Method(desc = "保存前置作业",
+            logicStep = "")
+    @Param(name = "datatable_id", desc = "datatable_id", range = "String类型集市表主键")
+    @Return(desc = "查询返回结果集", range = "无限制")
+    public List<Dm_relevant_info> getPreAndAfterJob(String datatable_id) {
+        Dm_relevant_info dm_relevant_info = new Dm_relevant_info();
+        dm_relevant_info.setDatatable_id(datatable_id);
+        return Dbo.queryList(Dm_relevant_info.class, "select * from " + Dm_relevant_info.TableName + " where datatable_id = ?", dm_relevant_info.getDatatable_id());
     }
 
 
