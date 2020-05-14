@@ -8,6 +8,7 @@ import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.CodecUtil;
 import fd.ng.core.utils.DateUtil;
+import fd.ng.core.utils.FileUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
@@ -261,16 +262,17 @@ public class AgentListAction extends BaseAction {
               + "6、使用response获得输出流，完成文件下载")
   @Param(name = "agentId", desc = "数据源ID,data_source表主键，agent_info表外键", range = "不为空")
   //  @Param(name = "logType", desc = "日志类型(完整日志、错误日志)", range = "All : 完整日志, Wrong : 错误日志") logType
-  @Param(name = "readNum", desc = "查看日志条数", range = "该参数可以不传", nullable = true, valueIfNull = "100")
+  @Param(name = "readNum", desc = "查看日志条数", range = "该参数可以不传", nullable = true, valueIfNull = "10000")
   public void downloadTaskLog(long agentId, int readNum) {
     // 1、对显示日志条数做处理，该方法在加载页面时被调用，readNum可以不传，则默认显示100条，
     // 如果用户在页面上进行了选择并点击查看按钮，如果用户输入的条目多于1000，则给用户显示3000条
-    if (readNum > 1000) readNum = 3000;
+//    if (readNum > 1000) readNum = 3000;
     // 2、调用方法读取日志，获得日志信息和日志文件路径
     Map<String, String> taskLog = getTaskLog(agentId, getUserId(), readNum);
 
     // 3、将日志信息由字符串转为byte[]
     byte[] bytes = taskLog.get("log").getBytes();
+
 
     // 4、得到本次http交互的request和response
     HttpServletResponse response = ResponseUtil.getResponse();
@@ -1346,7 +1348,6 @@ public class AgentListAction extends BaseAction {
               + "   4-3: 检查Agent的端口是否为空"
               + "   4-4: 检查Agent的部署用户名是否为空"
               + "   4-5: 检查Agent的部署密码是否为空"
-              + "   4-6: 检查查询的日志条数如果为 0,则默认为100条,最大支持1000条"
               + "5: 使用工具类,读取日志信息"
               + "6: 将读取的日志信息返回",
       range = "不为空")
@@ -1410,12 +1411,6 @@ public class AgentListAction extends BaseAction {
     //    4-5: 检查Agent的部署密码是否为空
     if (StringUtil.isEmpty(agent_down_info.getPasswd())) {
       throw new BusinessException("Agent部署的用户密码是空的");
-    }
-    //    4-6: 检查查询的日志条数是否存在,默认为100条,最大支持1000条
-    if (readNum == 0) {
-      readNum = 100;
-    } else {
-      readNum = readNum > 1000 ? readNum = 1000 : readNum;
     }
 
     SFTPDetails sftpDetails = new SFTPDetails();
