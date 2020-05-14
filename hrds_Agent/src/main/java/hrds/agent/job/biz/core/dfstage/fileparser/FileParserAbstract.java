@@ -107,6 +107,11 @@ public abstract class FileParserAbstract implements FileParserInterface {
 		//遍历每一列数据
 		for (int i = 0; i < lineList.size(); i++) {
 			columnName = dictionaryColumnList.get(i);
+			//转存这里碰到HYREN_S_DATE、HYREN_E_DATE、HYREN_MD5_VAL三列直接跳过
+			if (Constant.SDATENAME.equalsIgnoreCase(columnName) || Constant.EDATENAME.equalsIgnoreCase(columnName)
+					|| Constant.MD5NAME.equalsIgnoreCase(columnName)) {
+				continue;
+			}
 			columnData = lineList.get(i);
 			if (null == columnData) {
 				columnData = "";
