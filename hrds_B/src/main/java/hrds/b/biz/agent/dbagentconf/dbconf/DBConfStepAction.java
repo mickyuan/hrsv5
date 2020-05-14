@@ -11,6 +11,7 @@ import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import fd.ng.web.util.Dbo;
+import hrds.b.biz.agent.AgentListAction;
 import hrds.b.biz.agent.bean.DBConnectionProp;
 import hrds.b.biz.agent.tools.ConnUtil;
 import hrds.commons.base.BaseAction;
@@ -18,13 +19,17 @@ import hrds.commons.codes.AgentType;
 import hrds.commons.codes.CleanType;
 import hrds.commons.codes.DatabaseType;
 import hrds.commons.codes.IsFlag;
-import hrds.commons.entity.*;
+import hrds.commons.entity.Agent_down_info;
+import hrds.commons.entity.Agent_info;
+import hrds.commons.entity.Collect_job_classify;
+import hrds.commons.entity.Data_source;
+import hrds.commons.entity.Database_set;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.AgentActionUtil;
 import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.ReadLog;
+import hrds.commons.utils.jsch.SFTPDetails;
 import hrds.commons.utils.key.PrimayKeyGener;
-
 import java.util.List;
 
 @DocClass(desc = "配置源DB属性", author = "WangZhengcheng")
@@ -93,7 +98,7 @@ public class DBConfStepAction extends BaseAction {
 
   @Method(desc = "新增时获取数据库采集的数据", logicStep = "使用是否发生完成的标识来获取上次为配置文采的任务")
   @Param(name = "databaseId", desc = "源系统数据库设置表主键", range = "不为空")
-  @Param(name = "agent_id", desc = "数据库采集AgentID", range = "不为空",nullable = true)
+  @Param(name = "agent_id", desc = "数据库采集AgentID", range = "不为空", nullable = true)
   @Return(desc = "返回上次为配置文采的任务采集信息", range = "可以为空,为空表示首次配置")
   public Result addDBConfInfo(long databaseId, long agent_id) {
 
@@ -490,7 +495,7 @@ public class DBConfStepAction extends BaseAction {
   @Return(desc = "日志信息", range = "根据实际情况而定")
   public String viewLog(long agentId, int readNum) {
     // 1、根据agent_id和user_id获取agent信息
-    Agent_down_info AgentDownInfo =
+    Agent_down_info agentDownInfo =
         Dbo.queryOneObject(
                 Agent_down_info.class,
                 "select * from "
@@ -501,19 +506,19 @@ public class DBConfStepAction extends BaseAction {
             .orElseThrow(() -> new BusinessException("根据AgentID和userID未能找到Agent下载信息"));
 
     // 2、在agent信息中获取日志目录等信息
-    String agentIP = AgentDownInfo.getAgent_ip();
-    String agentPort = AgentDownInfo.getAgent_port();
-    String logDir = AgentDownInfo.getLog_dir();
-    String userName = AgentDownInfo.getUser_name();
-    String passWord = AgentDownInfo.getPasswd();
-
+    String logDir = agentDownInfo.getLog_dir();
+    SFTPDetails sftpDetails = new SFTPDetails();
+    sftpDetails.setHost(agentDownInfo.getAgent_ip());
+    sftpDetails.setPort(AgentListAction.SFTPDEFAULTPORT);
+    sftpDetails.setUser_name(agentDownInfo.getUser_name());
+    sftpDetails.setPwd(agentDownInfo.getPasswd());
     // 最多显示1000行
     if (readNum > 1000) {
       readNum = 1000;
     }
 
     // 3、调用读取日志的工具类读取日志
-    String taskLog = ReadLog.readAgentLog(logDir, agentIP, agentPort, userName, passWord, readNum);
+    String taskLog = ReadLog.readAgentLog(logDir, sftpDetails, readNum);
 
     // 4、如果读取到的日志为空，则返回未获取到日志
     if (StringUtil.isBlank(taskLog)) {
