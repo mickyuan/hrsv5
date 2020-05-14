@@ -93,7 +93,7 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 					stageParamInfo.setFileNameArr(file_name_list);
 				} else {
 					throw new AppSystemException("表" + collectTableBean.getHbase_name()
-							+ "数据字典指定目录下数据文件不存在");
+							+ "数据字典指定目录" + file_path + "下数据文件不存在");
 				}
 				//不用转存，则跳过db文件卸数，直接进行upload
 				LOGGER.info("表" + collectTableBean.getHbase_name()
@@ -154,7 +154,7 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 					tableBean.setFile_code(tableBean.getDbFileArchivedCode());
 				} else {
 					throw new AppSystemException("表" + collectTableBean.getHbase_name()
-							+ "数据字典指定目录下数据文件不存在");
+							+ "数据字典指定目录下" + file_path + "数据文件不存在");
 				}
 			} else {
 				throw new AppSystemException("表" + collectTableBean.getHbase_name()
