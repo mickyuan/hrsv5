@@ -161,11 +161,11 @@ public class Xls2xml {
 				// 表名
 				String table_name = json.getString("table_name");
 				// 中文表名
-				String table_cn_name = json.getString("table_cn_name");
+				String table_ch_name = json.getString("table_ch_name");
 				// 数据更新方式
 				String updatetype = json.getString("updatetype");
 				// 表信息处理
-				addTable(table_name.toLowerCase(), table_cn_name, updatetype);
+				addTable(table_name.toLowerCase(), table_ch_name, updatetype);
 				JSONObject handleType = json.getJSONObject("handletype");
 				// 数据处理类型
 				addHandleType(handleType.getString("insert"), handleType.getString("update"),
@@ -219,7 +219,7 @@ public class Xls2xml {
 
 		column = xmlCreater.createElement(table, "column");
 		xmlCreater.createAttribute(column, "column_id", column_id);
-		xmlCreater.createAttribute(column, "name", column_name);
+		xmlCreater.createAttribute(column, "column_name", column_name);
 		xmlCreater.createAttribute(column, "column_cn_name", column_cn_name);
 		xmlCreater.createAttribute(column, "column_type", column_type);
 		xmlCreater.createAttribute(column, "length", String.valueOf(length));
