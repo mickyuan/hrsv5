@@ -105,8 +105,8 @@ public class CollTbConfStepAction extends BaseAction {
     // 2: 根据表名检查是否采集过(只要有一个阶段采集是完成或者运行中的,将不再支持编辑),这里的采集指的是发给Agent的
     tableList.forEach(
         itemMap -> {
-          String table_name = String.valueOf(itemMap.get("table_name"));
-          if (StringUtil.isNotBlank(table_name)) {
+          if (itemMap.get("table_name") != null) {
+            String table_name = String.valueOf(itemMap.get("table_name"));
             List<Object> tableStateList = checkTableCollectState(colSetId, table_name);
             if (tableStateList.contains(ExecuteState.YunXingWanCheng.getCode())
                 || tableStateList.contains(ExecuteState.KaiShiYunXing.getCode())) {
@@ -518,8 +518,8 @@ public class CollTbConfStepAction extends BaseAction {
     // 2: 根据表名检查是否采集过(只要有一个阶段采集是完成或者运行中的,将不再支持编辑),这里的采集指的是发给Agent的
     tableList.forEach(
         itemMap -> {
-          String table_name = String.valueOf(itemMap.get("table_name"));
-          if (StringUtil.isNotBlank(table_name)) {
+          if (itemMap.get("table_name") != null) {
+            String table_name = String.valueOf(itemMap.get("table_name"));
             List<Object> tableStateList = checkTableCollectState(colSetId, table_name);
             if (tableStateList.contains(ExecuteState.YunXingWanCheng.getCode())
                 || tableStateList.contains(ExecuteState.KaiShiYunXing.getCode())) {
@@ -1229,8 +1229,8 @@ public class CollTbConfStepAction extends BaseAction {
         map.put("collectState", true);
         results.add(map);
       } else {
-        String table_name = String.valueOf(tableResult.get("table_name"));
-        if (StringUtil.isNotBlank(table_name)) {
+        if (tableResult.get("table_name") != null) {
+          String table_name = String.valueOf(tableResult.get("table_name"));
           List<Object> tableStateList = checkTableCollectState(colSetId, table_name);
           if (tableStateList.contains(ExecuteState.YunXingWanCheng.getCode())
               || tableStateList.contains(ExecuteState.KaiShiYunXing.getCode())) {
