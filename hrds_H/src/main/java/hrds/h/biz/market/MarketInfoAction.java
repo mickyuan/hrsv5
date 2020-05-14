@@ -49,7 +49,6 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.awt.*;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
@@ -1398,10 +1397,10 @@ public class MarketInfoAction extends BaseAction {
                 }
             }
         }
-        File xlsxfile = new File(System.getProperty("user.dir") + File.separator + dm_datatable.getDatatable_en_name() + ".xlsx");
-        FileOutputStream out = new FileOutputStream(xlsxfile);
-        workbook.write(out);
-        out.close();
+//        File xlsxfile = new File(System.getProperty("user.dir") + File.separator + dm_datatable.getDatatable_en_name() + ".xlsx");
+//        FileOutputStream out = new FileOutputStream(xlsxfile);
+//        workbook.write(out);
+//        out.close();
     }
 
     /**
@@ -1584,6 +1583,16 @@ public class MarketInfoAction extends BaseAction {
     public void savePreAndAfterJob(String datatable_id, String pre_work, String post_work) {
         Dm_relevant_info dm_relevant_info = new Dm_relevant_info();
         dm_relevant_info.setDatatable_id(datatable_id);
+        List<Dm_datatable> dm_datatables = Dbo.queryList(Dm_datatable.class, "select datatable_en_name from " + Dm_datatable.TableName + " where datatable_id = ?", dm_relevant_info.getDatatable_id());
+        String datatable_en_name = dm_datatables.get(0).getDatatable_en_name();
+        String preworktablename = DruidParseQuerySql.getInDeUpSqlTableName(pre_work);
+        String postworktablename = DruidParseQuerySql.getInDeUpSqlTableName(post_work);
+        if (!preworktablename.equalsIgnoreCase(datatable_en_name)) {
+            throw new BusinessException("前置处理的操作表为" + preworktablename + ",非本集市表,保存失败");
+        }
+        if (!postworktablename.equalsIgnoreCase(datatable_en_name)) {
+            throw new BusinessException("后置处理的操作表为" + postworktablename + ",非本集市表,保存失败");
+        }
         dm_relevant_info.setPre_work(pre_work);
         dm_relevant_info.setPost_work(post_work);
         dm_relevant_info.setRel_id(PrimayKeyGener.getNextId());

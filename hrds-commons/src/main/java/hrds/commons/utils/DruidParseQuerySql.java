@@ -2,14 +2,12 @@ package hrds.commons.utils;
 
 import com.alibaba.druid.sql.SQLUtils;
 import com.alibaba.druid.sql.ast.SQLExpr;
+import com.alibaba.druid.sql.ast.SQLName;
 import com.alibaba.druid.sql.ast.SQLObject;
 import com.alibaba.druid.sql.ast.SQLStatement;
 import com.alibaba.druid.sql.ast.expr.*;
 import com.alibaba.druid.sql.ast.statement.*;
-import com.alibaba.druid.sql.dialect.oracle.ast.stmt.OracleSelectJoin;
-import com.alibaba.druid.sql.dialect.oracle.ast.stmt.OracleSelectQueryBlock;
-import com.alibaba.druid.sql.dialect.oracle.ast.stmt.OracleSelectSubqueryTableSource;
-import com.alibaba.druid.sql.dialect.oracle.ast.stmt.OracleSelectTableReference;
+import com.alibaba.druid.sql.dialect.oracle.ast.stmt.*;
 import com.alibaba.druid.sql.dialect.oracle.parser.OracleStatementParser;
 import com.alibaba.druid.sql.dialect.oracle.visitor.OracleSchemaStatVisitor;
 import com.alibaba.druid.sql.parser.SQLStatementParser;
@@ -22,6 +20,7 @@ import fd.ng.web.util.Dbo;
 import hrds.commons.codes.TableStorage;
 import hrds.commons.entity.Dm_datatable;
 import hrds.commons.entity.Dm_operation_info;
+import hrds.commons.exception.BusinessException;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.*;
@@ -749,16 +748,15 @@ public class DruidParseQuerySql {
             SQLSelect sqlSelect = oracleSelectSubqueryTableSource.getSelect();
             SQLSelectQuery sqlSelectQuery = sqlSelect.getQuery();
             setFrom(sqlSelectQuery);
-        }
-        else if (sqlTableSource instanceof OracleSelectTableReference) {
+        } else if (sqlTableSource instanceof OracleSelectTableReference) {
             OracleSelectTableReference oracleSelectTableReference = (OracleSelectTableReference) sqlTableSource;
             String tablename = oracleSelectTableReference.getExpr().toString();
-            List<Map<String, Object>> maps = Dbo.queryList("select t2.execute_sql from " + Dm_datatable.TableName + " t1 left join "+ Dm_operation_info.TableName+
-                    " t2 on t1.datatable_id = t2.datatable_id where lower(t1.datatable_en_name) = ? and t1.table_storage = ?",
+            List<Map<String, Object>> maps = Dbo.queryList("select t2.execute_sql from " + Dm_datatable.TableName + " t1 left join " + Dm_operation_info.TableName +
+                            " t2 on t1.datatable_id = t2.datatable_id where lower(t1.datatable_en_name) = ? and t1.table_storage = ?",
                     tablename.toLowerCase(), TableStorage.ShuJuShiTu.getCode());
-            if(!maps.isEmpty()){
+            if (!maps.isEmpty()) {
                 String execute_sql = maps.get(0).get("execute_sql").toString();
-                oracleSelectTableReference.setExpr(" ( "+execute_sql+" ) "+tablename);
+                oracleSelectTableReference.setExpr(" ( " + execute_sql + " ) " + tablename);
             }
         } else {
             String message;
@@ -768,5 +766,30 @@ public class DruidParseQuerySql {
                 message = "未知的sqlTableSource来源：" + sqlTableSource.toString() + " class:" + sqlTableSource.getClass();
             }
         }
+    }
+
+
+    public static String getInDeUpSqlTableName(String sql) {
+        String tablename = "";
+        String dbType = JdbcConstants.ORACLE;
+        List<SQLStatement> stmtList = SQLUtils.parseStatements(sql, dbType);
+        for (SQLStatement stmt : stmtList) {
+            if (stmt instanceof OracleUpdateStatement) {
+                OracleUpdateStatement oracleUpdateStatement = (OracleUpdateStatement) stmt;
+                SQLName tableName = oracleUpdateStatement.getTableName();
+                tablename = tableName.toString();
+            } else if (stmt instanceof OracleInsertStatement) {
+                OracleInsertStatement oracleInsertStatement = (OracleInsertStatement) stmt;
+                SQLName tableName = oracleInsertStatement.getTableName();
+                tablename = tableName.toString();
+            } else if (stmt instanceof OracleDeleteStatement) {
+                OracleDeleteStatement oracleDeleteStatement = (OracleDeleteStatement) stmt;
+                SQLName tableName = oracleDeleteStatement.getTableName();
+                tablename = tableName.toString();
+            } else {
+                throw new BusinessException("SQL非Delete,Update或者Insert中的一种，请检查");
+            }
+        }
+        return tablename;
     }
 }
