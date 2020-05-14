@@ -291,8 +291,7 @@ public class SendMsgUtil {
 			"2、由于向Agent请求的数据量较小，所以不需要压缩" +
 			"3、httpClient发送请求并接收响应" +
 			"4、根据响应状态码判断响应是否成功" +
-			"5、若响应不成功，记录日志，并抛出异常告知操作失败" +
-			"6，这里如果都配置文采则将此次任务的 database_set表中的字段(is_sendok) 更新为是,是表示为当前的配置任务完成")
+			"5、若响应不成功，记录日志，并抛出异常告知操作失败" )
 	@Param(name = "colSetId", desc = "源系统数据库设置表ID", range = "不为空")
 	@Param(name = "agentId", desc = "agentId，agent_info表主键，agent_down_info表外键", range = "不为空")
 	@Param(name = "userId", desc = "当前登录用户Id，sys_user表主键，agent_down_info表外键", range = "不为空")

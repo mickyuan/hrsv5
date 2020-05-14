@@ -11,6 +11,7 @@ import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.Dispatch_Frequency;
 import hrds.commons.codes.FileFormat;
+import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.Job_Effective_Flag;
 import hrds.commons.codes.Main_Server_Sync;
 import hrds.commons.codes.ParamType;
@@ -33,6 +34,7 @@ import hrds.commons.entity.Etl_sys;
 import hrds.commons.entity.Table_info;
 import hrds.commons.entity.Take_relation_etl;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.jsch.ChineseUtil;
 import hrds.commons.utils.key.PrimayKeyGener;
 import java.util.ArrayList;
@@ -306,7 +308,8 @@ public class StartWayConfAction extends BaseAction {
               + "3: 获取任务的卸数抽取作业关系信息,如果当前的任务下存在此作业信息..则提示作业名称重复"
               + "4: "
               + "3: 放入作业需要数据信息"
-              + "4: 将作业的信息存入数据库中")
+              + "4: 将作业的信息存入数据库中"
+              + "5，这里如果都配置文采则将此次任务的 database_set表中的字段(is_sendok) 更新为是,是表示为当前的配置任务完成")
   @Param(name = "colSetId", desc = "任务的ID", range = "不可为空的整数")
   @Param(name = "etl_sys_cd", desc = "作业工程编号", range = "不可为空")
   @Param(name = "sub_sys_cd", desc = "作业任务编号", range = "不可为空")
@@ -459,6 +462,10 @@ public class StartWayConfAction extends BaseAction {
 
       index++;
     }
+
+    // 5，这里如果都配置文采则将此次任务的 database_set表中的字段(is_sendok) 更新为是,是表示为当前的配置任务完成
+    DboExecute.updatesOrThrow("此次采集任务配置完成,更新状态失败","UPDATE " + Database_set.TableName + " SET is_sendok = ? WHERE database_id = ?",
+        IsFlag.Shi.getCode(),colSetId);
   }
 
   @Method(desc = "对程序作业的作业系统参数经行检查添加", logicStep = "1: 检查当前的作业系统参数是否存在 2: 如果不存在则添加")
