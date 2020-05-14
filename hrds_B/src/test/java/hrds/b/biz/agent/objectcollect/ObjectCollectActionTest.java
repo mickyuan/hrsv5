@@ -1268,13 +1268,12 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 			logicStep = "1.正确的数据访问1，数据都有效，struct_id为空，走新增路线" +
 					"2.正确的数据访问，数据有效，struct_id不为空，走更新路线" +
 					"3.错误的数据访问1，collectStruct数据格式有误" +
-					"备注：此方法只有三种情况")
+					"4.错误的数据访问2，ocs_id为空")
 	@Test
 	public void saveCollectColumnStructTest() {
 		List<Map<String, Object>> list = new ArrayList<>();
 		for (int i = 0; i < 6; i++) {
 			Map<String, Object> map = new HashMap<>();
-			map.put("ocs_id", "10001");
 			map.put("is_hbase", IsFlag.Fou.getCode());
 			map.put("is_solr", IsFlag.Fou.getCode());
 			map.put("is_rowkey", IsFlag.Fou.getCode());
@@ -1316,7 +1315,9 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 			list.add(map);
 		}
 		// 1.正确的数据访问1，数据都有效，struct_id为空，走新增路线
-		bodyString = new HttpClient().addData("collectStruct", JsonUtil.toJson(list))
+		bodyString = new HttpClient()
+				.addData("ocs_id", "10001")
+				.addData("collectStruct", JsonUtil.toJson(list))
 				.post(getActionUrl("saveCollectColumnStruct")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败！"));
@@ -1330,8 +1331,8 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 			assertThat(collectStructs.get(0).getOcs_id(), is(Long.parseLong("10001")));
 			assertThat(collectStructs.get(0).getColumn_type(), is("decimal(38,18)"));
 			assertThat(collectStructs.get(0).getColumnposition(), is("columns,column_id"));
-			assertThat(collectStructs.get(0).getIs_hbase(), is(IsFlag.Fou.getCode()));
-			assertThat(collectStructs.get(0).getIs_rowkey(), is(IsFlag.Fou.getCode()));
+			assertThat(collectStructs.get(0).getIs_hbase(), is(IsFlag.Shi.getCode()));
+			assertThat(collectStructs.get(0).getIs_rowkey(), is(IsFlag.Shi.getCode()));
 			assertThat(collectStructs.get(0).getIs_solr(), is(IsFlag.Fou.getCode()));
 			assertThat(collectStructs.get(0).getCol_seq(), is(0L));
 			assertThat(collectStructs.get(0).getIs_operate(), is(IsFlag.Shi.getCode()));
@@ -1341,7 +1342,6 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 		List<Map<String, Object>> list2 = new ArrayList<>();
 		for (int i = 0; i < 6; i++) {
 			Map<String, Object> map = new HashMap<>();
-			map.put("ocs_id", "10001");
 			map.put("is_hbase", IsFlag.Shi.getCode());
 			map.put("is_solr", IsFlag.Fou.getCode());
 			map.put("is_rowkey", IsFlag.Fou.getCode());
@@ -1383,7 +1383,9 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 			}
 			list2.add(map);
 		}
-		bodyString = new HttpClient().addData("collectStruct", JsonUtil.toJson(list2))
+		bodyString = new HttpClient()
+				.addData("ocs_id", "10002")
+				.addData("collectStruct", JsonUtil.toJson(list2))
 				.post(getActionUrl("saveCollectColumnStruct")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败！"));
@@ -1403,7 +1405,17 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 			assertThat(collectStructs.get(0).getIs_key(), is(IsFlag.Shi.getCode()));
 		}
 		// 3.错误的数据访问1，collectStruct数据格式有误
-		bodyString = new HttpClient().addData("collectStruct", "aaaa")
+		bodyString = new HttpClient()
+				.addData("ocs_id", "10003")
+				.addData("collectStruct", "aaaa")
+				.post(getActionUrl("saveCollectColumnStruct")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
+		assertThat(ar.isSuccess(), is(false));
+		// 4.错误的数据访问2，ocs_id为空
+		bodyString = new HttpClient()
+				.addData("ocs_id", "")
+				.addData("collectStruct", "aaaa")
 				.post(getActionUrl("saveCollectColumnStruct")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败！"));
@@ -1417,7 +1429,6 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 		List<Object> list = new ArrayList<>();
 		for (int i = 0; i < 3; i++) {
 			Map<String, Object> map = new HashMap<>();
-			map.put("ocs_id", OCS_ID);
 			switch (i) {
 				case 0:
 					map.put("handle_type", OperationType.INSERT.getCode());
@@ -1436,6 +1447,7 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 		}
 		// 1.正确的数据访问1，数据都有效
 		bodyString = new HttpClient()
+				.addData("ocs_id", OCS_ID)
 				.addData("handleType", JsonUtil.toJson(list))
 				.post(getActionUrl("saveHandleType")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
@@ -1443,6 +1455,7 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 		assertThat(ar.isSuccess(), is(true));
 		// 2.错误的数据访问1，handleType格式错误不存在
 		bodyString = new HttpClient()
+				.addData("ocs_id", OCS_ID)
 				.addData("handleType", "aaa")
 				.post(getActionUrl("saveHandleType")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
