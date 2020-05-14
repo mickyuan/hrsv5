@@ -4,8 +4,8 @@ import hrds.commons.exception.AppSystemException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.ClassUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,7 +15,7 @@ import java.util.List;
 
 public class FunctionsReader {
 
-    private static final Log logger = LogFactory.getLog(FunctionsReader.class);
+    private static final Logger logger = LogManager.getLogger(FunctionsReader.class);
     private static final File funcProperty = new File("conf/function.properties");
     private final List<Function> functions = new ArrayList<>();
 

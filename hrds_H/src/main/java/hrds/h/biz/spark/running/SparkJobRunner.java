@@ -4,21 +4,21 @@ import fd.ng.core.utils.StringUtil;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.PropertyParaValue;
 import org.apache.commons.exec.*;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import java.io.ByteArrayOutputStream;
-import java.io.OutputStream;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class SparkJobRunner {
 
-    private static final Log logger = LogFactory.getLog(SparkJobRunner.class);
+    private static final Logger logger = LogManager.getLogger(SparkJobRunner.class);
 
     private static final String SPARK_MAIN_CLASS =
             "hrds.h.biz.spark.running.MarketSparkMain";
+    //    private static final String SPARK_CLASSPATH =
+//            ".:hrds_H/build/libs/hrds_H-5.0.jar:hrds_H/src/main/resources/:" +
+//                    "../spark/jars/*:libs/lib/fd-*:libs/lib/hrds-commons-5.0.jar";
     private static final String SPARK_CLASSPATH =
-            ".:hrds_H/build/libs/hrds_H-5.0.jar:hrds_H/src/main/resources/:" +
-                    "../spark/jars/*:libs/lib/fd-*:libs/lib/hrds-commons-5.0.jar";
+            ".:hrds_H-5.0.jar:resources/:" +
+                    "../spark/jars/*:../lib/fd-*:../lib/hrds-commons-5.0.jar";
 
     private static final long SPARK_JOB_TIMEOUT_SECONDS =
             PropertyParaValue.getLong("spark.job.timeout.seconds", 2L * 60 * 60);

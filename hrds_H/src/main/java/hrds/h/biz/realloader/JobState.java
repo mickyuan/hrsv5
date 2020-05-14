@@ -1,7 +1,7 @@
 package hrds.h.biz.realloader;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * @author mick
@@ -11,7 +11,7 @@ import org.apache.commons.logging.LogFactory;
  * @date 20-4-9下午4:50
  */
 public interface JobState {
-    Log logger = LogFactory.getLog(JobState.class);
+    Logger logger = LogManager.getLogger(JobState.class);
     /**
      * 启动作业
      */

@@ -72,7 +72,8 @@ public class DownloadLogUtil {
 		OutputStream outputStream;
 		try {
 			// 2.通过本地路径以获取本地文件
-			File localFile = new File(localPath);
+			String path = localPath + remotePath.substring(remotePath.lastIndexOf(File.separator)+1);
+			File localFile = new File(path);
 			outputStream = new FileOutputStream(localFile);
 			// 3.获取连接到sftp服务器的Channel
 			SFTPChannel sftpChannel = new SFTPChannel();
@@ -120,6 +121,7 @@ public class DownloadLogUtil {
 		try {
 			// 2.获取本地文件路径
 			filePath = ETLJobUtil.getFilePath(fileName);
+			logger.info("=====本地下载文件路径=====" + filePath);
 			// 3.清空response
 			ResponseUtil.getResponse().reset();
 			// 4.设置响应头，控制浏览器下载该文件

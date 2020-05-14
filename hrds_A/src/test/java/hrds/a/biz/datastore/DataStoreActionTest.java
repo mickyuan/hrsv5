@@ -1987,10 +1987,17 @@ public class DataStoreActionTest extends WebBaseTestCase {
 	public void getDataLayerAttrKey() {
 		// 1.正常的数据访问1，数据都正常
 		String bodyString = new HttpClient()
-				.addData("store_type", Store_type.HIVE.getCode())
+				.addData("store_type", Store_type.ElasticSearch.getCode())
 				.post(getActionUrl("getDataLayerAttrKey"))
 				.getBodyString();
 		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+		assertThat(ar.isSuccess(), is(true));
+		 bodyString = new HttpClient()
+				.addData("store_type", Store_type.HIVE.getCode())
+				.post(getActionUrl("getDataLayerAttrKey"))
+				.getBodyString();
+		 ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
 		assertThat(ar.isSuccess(), is(true));
 		bodyString = new HttpClient()
