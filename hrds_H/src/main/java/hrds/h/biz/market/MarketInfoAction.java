@@ -56,7 +56,7 @@ import java.util.*;
 //import hrds.h.biz.SqlAnalysis.HyrenOracleTableVisitor;
 //import com.alibaba.druid.
 
-@DocClass(desc = "集市信息查询类", author = "BY-HLL", createdate = "2019/10/31 0031 下午 04:17")
+@DocClass(desc = "集市信息查询类", author = "BY-HLL", createdate = "2019/10/31 0031 下午 04:19")
 /**
  * author:TBH
  * Time:2020.4.10
@@ -173,8 +173,16 @@ public class MarketInfoAction extends BaseAction {
     public List<Map<String, Object>> queryDMDataTableByDataMartID(String data_mart_id) {
         Dm_datatable dm_datatable = new Dm_datatable();
         dm_datatable.setData_mart_id(data_mart_id);
-        return Dbo.queryList("SELECT * ,case when t1.datatable_id in (select datatable_id from " + Datatable_field_info.TableName + ") then true else false end as isadd from "
+        List<Map<String, Object>> maps = Dbo.queryList("SELECT * ,case when t1.datatable_id in (select datatable_id from " + Datatable_field_info.TableName + ") then true else false end as isadd from "
                 + Dm_datatable.TableName + " t1 left join " + Dm_relation_datatable.TableName + " t2 on t1.datatable_id = t2.datatable_id where data_mart_id = ? order by " + "t1.datatable_id asc", dm_datatable.getData_mart_id());
+        for (Map<String, Object> map : maps) {
+            String etl_date = map.get("etl_date").toString();
+            if (etl_date.equalsIgnoreCase(ZeroDate)) {
+                map.put("etl_date", "--------");
+            }
+
+        }
+        return maps;
     }
 
     @Method(desc = "删除集市表及其相关的所有信息",
@@ -204,12 +212,12 @@ public class MarketInfoAction extends BaseAction {
         Dbo.execute("delete from " + Dm_datatable_source.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
         //4、删除结果映射信息表
         Dbo.execute("delete from " + Dm_etlmap_info.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
-
         //6、删除数据表字段信息
         Dbo.execute("delete from " + Datatable_field_info.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
         //7、删除集市表存储关系表
         Dbo.execute("delete from " + Dm_relation_datatable.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
-
+        //删除前后置处理关系表
+        Dbo.execute("delete from "+Dm_relevant_info.TableName+" where datatable_id = ?",dm_datatable.getDatatable_id());
     }
 
     @Method(desc = "获取登录用户集市查询存储配置表",
@@ -272,7 +280,7 @@ public class MarketInfoAction extends BaseAction {
         dm_datatable.setDatatable_create_time(DateUtil.getSysTime());
         dm_datatable.setDdlc_date(DateUtil.getSysDate());
         dm_datatable.setDdlc_time(DateUtil.getSysTime());
-        dm_datatable.setDatac_date(DateUtil.getSysTime());
+        dm_datatable.setDatac_date(DateUtil.getSysDate());
         dm_datatable.setDatac_time(DateUtil.getSysTime());
         //TODO 目前先全部使用默认 之后在修改
         dm_datatable.setSql_engine(SqlEngine.MOREN.getCode());
@@ -922,6 +930,16 @@ public class MarketInfoAction extends BaseAction {
         dm_operation_info.setDatatable_id(datatable_id);
         dm_operation_info.setExecute_sql(querysql);
         dm_operation_info.add(Dbo.db());
+        saveBloodRelationToPGTable(querysql,datatable_id);
+        resultmap.put("success", true);
+        return resultmap;
+    }
+
+    /**
+     *保存血缘关系到PGSQL中的表里
+     * @param querysql
+     */
+    private void saveBloodRelationToPGTable(String querysql,String datatable_id){
 
         DruidParseQuerySql dpqs = new DruidParseQuerySql();
         HashMap<String, Object> bloodRelationMap = dpqs.getBloodRelationMap(querysql);
@@ -989,11 +1007,7 @@ public class MarketInfoAction extends BaseAction {
                 own_source_field.add(Dbo.db());
             }
         }
-        resultmap.put("success", true);
-        return resultmap;
-
     }
-
     @Method(desc = "根据集市表ID,获取SQL回显",
             logicStep = "返回查询结果")
     @Param(name = "datatable_id", desc = "datatable_id", range = "String类型集市表ID")
@@ -1349,19 +1363,39 @@ public class MarketInfoAction extends BaseAction {
         //合并单元格
         region = new CellRangeAddress(13 + count, 13 + count, 1, 4);
         sheet1.addMergedRegion(region);
+
+        List<Dm_relevant_info> dm_relevant_infos = Dbo.queryList(Dm_relevant_info.class, "select * from " + Dm_relevant_info.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
+        sheet1.createRow(14 + count).createCell(0).setCellValue("前置处理");
+        //合并单元格
+        region = new CellRangeAddress(14 + count, 14 + count, 1, 4);
+        sheet1.addMergedRegion(region);
+        if (!dm_relevant_infos.isEmpty()) {
+            if (!StringUtils.isEmpty(dm_relevant_infos.get(0).getPre_work())) {
+                sheet1.getRow(14 + count).createCell(1).setCellValue(dm_relevant_infos.get(0).getPre_work());
+            }
+        }
+        sheet1.createRow(15 + count).createCell(0).setCellValue("后置处理");
+        //合并单元格
+        region = new CellRangeAddress(15 + count, 15 + count, 1, 4);
+        sheet1.addMergedRegion(region);
+        if (!dm_relevant_infos.isEmpty()) {
+            if (!StringUtils.isEmpty(dm_relevant_infos.get(0).getPost_work())) {
+                sheet1.getRow(15 + count).createCell(1).setCellValue(dm_relevant_infos.get(0).getPost_work());
+            }
+        }
         //第四部分
         List<Datatable_field_info> datatable_field_infos = Dbo.queryList(Datatable_field_info.class, "select * from " + Datatable_field_info.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
-        sheet1.createRow(15 + count).createCell(0).setCellValue("字段信息");
-        sheet1.getRow(15 + count).getCell(0).getCellStyle().setFillBackgroundColor(xssfColor);
-        sheet1.createRow(16 + count).createCell(0).setCellValue("序号");
-        sheet1.getRow(16 + count).createCell(1).setCellValue("英文名");
-        sheet1.getRow(16 + count).createCell(2).setCellValue("中文名");
-        sheet1.getRow(16 + count).createCell(3).setCellValue("类型");
-        sheet1.getRow(16 + count).createCell(4).setCellValue("长度");
-        sheet1.getRow(16 + count).createCell(5).setCellValue("处理方式");
-        sheet1.getRow(16 + count).createCell(6).setCellValue("来源值");
+        sheet1.createRow(17 + count).createCell(0).setCellValue("字段信息");
+        sheet1.getRow(17 + count).getCell(0).getCellStyle().setFillBackgroundColor(xssfColor);
+        sheet1.createRow(18 + count).createCell(0).setCellValue("序号");
+        sheet1.getRow(18 + count).createCell(1).setCellValue("英文名");
+        sheet1.getRow(18 + count).createCell(2).setCellValue("中文名");
+        sheet1.getRow(18 + count).createCell(3).setCellValue("类型");
+        sheet1.getRow(18 + count).createCell(4).setCellValue("长度");
+        sheet1.getRow(18 + count).createCell(5).setCellValue("处理方式");
+        sheet1.getRow(18 + count).createCell(6).setCellValue("来源值");
         for (int i = 0; i < StoreLayerAdded.values().length; i++) {
-            sheet1.getRow(16 + count).createCell(7 + i).setCellValue(StoreLayerAdded.values()[i].getValue());
+            sheet1.getRow(18 + count).createCell(7 + i).setCellValue(StoreLayerAdded.values()[i].getValue());
         }
         //设置ProcessType的下拉框
         String[] processtypesubjects = new String[ProcessType.values().length];
@@ -1377,27 +1411,27 @@ public class MarketInfoAction extends BaseAction {
             for (Data_store_layer_added data_store_layer_added : data_store_layer_addeds) {
                 dsla_storelayers.add(data_store_layer_added.getDsla_storelayer());
             }
-            sheet1.createRow(17 + count + i).createCell(0).setCellValue((i + 1));
-            sheet1.getRow(17 + count + i).createCell(1).setCellValue(datatable_field_info.getField_en_name());
-            sheet1.getRow(17 + count + i).createCell(2).setCellValue(datatable_field_info.getField_cn_name());
-            sheet1.getRow(17 + count + i).createCell(3).setCellValue(datatable_field_info.getField_type());
-            sheet1.getRow(17 + count + i).createCell(4).setCellValue(datatable_field_info.getField_length());
-            sheet1.getRow(17 + count + i).createCell(5).setCellValue(ProcessType.ofValueByCode(datatable_field_info.getField_process()));
-            addValidationData(sheet1, processtypesubjects, 17 + count + i, 5);
+            sheet1.createRow(19 + count + i).createCell(0).setCellValue((i + 1));
+            sheet1.getRow(19 + count + i).createCell(1).setCellValue(datatable_field_info.getField_en_name());
+            sheet1.getRow(19 + count + i).createCell(2).setCellValue(datatable_field_info.getField_cn_name());
+            sheet1.getRow(19 + count + i).createCell(3).setCellValue(datatable_field_info.getField_type());
+            sheet1.getRow(19 + count + i).createCell(4).setCellValue(datatable_field_info.getField_length());
+            sheet1.getRow(19 + count + i).createCell(5).setCellValue(ProcessType.ofValueByCode(datatable_field_info.getField_process()));
+            addValidationData(sheet1, processtypesubjects, 19 + count + i, 5);
             if (datatable_field_info.getField_process().equals(ProcessType.YingShe.getCode())) {
                 DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(execute_sql);
                 List<String> columns = druidParseQuerySql.parseSelectOriginalField();
                 Integer integer = Integer.valueOf(datatable_field_info.getProcess_para());
-                sheet1.getRow(17 + count + i).createCell(6).setCellValue(columns.get(integer));
+                sheet1.getRow(19 + count + i).createCell(6).setCellValue(columns.get(integer));
             } else {
-                sheet1.getRow(17 + count + i).createCell(6).setCellValue(datatable_field_info.getProcess_para());
+                sheet1.getRow(19 + count + i).createCell(6).setCellValue(datatable_field_info.getProcess_para());
             }
             for (int j = 0; j < StoreLayerAdded.values().length; j++) {
-                addValidationData(sheet1, isflagsubjects, 17 + count + i, 7 + j);
+                addValidationData(sheet1, isflagsubjects, 19 + count + i, 7 + j);
                 if (dsla_storelayers.contains(StoreLayerAdded.values()[j].getCode())) {
-                    sheet1.getRow(17 + count + i).createCell(7 + j).setCellValue(IsFlag.Shi.getValue());
+                    sheet1.getRow(19 + count + i).createCell(7 + j).setCellValue(IsFlag.Shi.getValue());
                 } else {
-                    sheet1.getRow(17 + count + i).createCell(7 + j).setCellValue(IsFlag.Fou.getValue());
+                    sheet1.getRow(19 + count + i).createCell(7 + j).setCellValue(IsFlag.Fou.getValue());
                 }
             }
         }
@@ -1674,6 +1708,12 @@ public class MarketInfoAction extends BaseAction {
         }
     }
 
+    /**
+     * 保存上传的excel
+     *
+     * @param workBook
+     * @param data_mart_id
+     */
     private void saveimportexcel(Workbook workBook, String data_mart_id) {
         try {
             Sheet sheetAt = workBook.getSheetAt(0);
@@ -1715,6 +1755,8 @@ public class MarketInfoAction extends BaseAction {
             dm_datatable.setDatatable_create_time(DateUtil.getSysTime());
             dm_datatable.setDdlc_date(DateUtil.getSysDate());
             dm_datatable.setDdlc_time(DateUtil.getSysTime());
+            dm_datatable.setDatac_date(DateUtil.getSysDate());
+            dm_datatable.setDatac_time(DateUtil.getSysTime());
             dm_datatable.setEtl_date(ZeroDate);
             //TODO 这里导入的时候 分类ID 也需要修改 要从导出的excelm模板开始修改
             dm_datatable.setCategory_id(Category_id);
@@ -1752,6 +1794,14 @@ public class MarketInfoAction extends BaseAction {
             dm_relation_datatable.setDsl_id(data_store_layer.getDsl_id());
             dm_relation_datatable.setIs_successful(JobExecuteState.DengDai.getCode());
             dm_relation_datatable.add(Dbo.db());
+            //查询改存储目录下有那些附加属性
+            List<String> currentAlldata_store_layer_addeds = new ArrayList<>();
+            List<String> currentAlldslad_ids = new ArrayList<>();
+            List<Data_store_layer_added> data_store_layer_addeds = Dbo.queryList(Data_store_layer_added.class, "select * from " + Data_store_layer_added.TableName + " where dsl_id = ?", dm_relation_datatable.getDsl_id());
+            for (Data_store_layer_added data_store_layer_added : data_store_layer_addeds) {
+                currentAlldata_store_layer_addeds.add(data_store_layer_added.getDsla_storelayer());
+                currentAlldslad_ids.add(String.valueOf(data_store_layer_added.getDslad_id()));
+            }
             //存储dm_operation_info表信息
             String sql = sheetAt.getRow(13 + count).getCell(1).getStringCellValue();
             Dm_operation_info dm_operation_info = new Dm_operation_info();
@@ -1759,18 +1809,35 @@ public class MarketInfoAction extends BaseAction {
             dm_operation_info.setDatatable_id(datatable_id);
             dm_operation_info.setId(PrimayKeyGener.getNextId());
             dm_operation_info.add(Dbo.db());
+            //存储dm_relevant_info表
+            Dm_relevant_info dm_relevant_info = new Dm_relevant_info();
+            dm_relevant_info.setRel_id(PrimayKeyGener.getNextId());
+            dm_relevant_info.setDatatable_id(datatable_id);
+            //判断前置处理是否为空
+            if (sheetAt.getRow(14 + count) != null && sheetAt.getRow(14 + count).getCell(1) != null
+                    && !StringUtils.isEmpty(sheetAt.getRow(14 + count).getCell(1).getStringCellValue())) {
+                String pre_work = sheetAt.getRow(14 + count).getCell(1).getStringCellValue();
+                dm_relevant_info.setPre_work(pre_work);
+            }
+            if (sheetAt.getRow(15 + count) != null && sheetAt.getRow(15 + count).getCell(1) != null
+                    && !StringUtils.isEmpty(sheetAt.getRow(15 + count).getCell(1).getStringCellValue())) {
+                String post_work = sheetAt.getRow(15 + count).getCell(1).getStringCellValue();
+                dm_relevant_info.setPost_work(post_work);
+            }
+            dm_relevant_info.add(Dbo.db());
             //存储datatable_field_info表和dm_column_storage表
             int columncount = 0;
-            //记录有多少个额外的附件字段属性
+            //记录总共有多少个额外的附件字段属性
             int cellcount = 0;
             List<String> columnadditionpropertykeys = new ArrayList<>();
             while (true) {
-                if (sheetAt.getRow(16 + count + columncount).getCell(7 + cellcount) == null
-                        || StringUtils.isEmpty(sheetAt.getRow(16 + count + columncount).getCell(7 + cellcount).getStringCellValue())) {
+                if (sheetAt.getRow(18 + count + columncount).getCell(7 + cellcount) == null
+                        || StringUtils.isEmpty(sheetAt.getRow(18 + count + columncount).getCell(7 + cellcount).getStringCellValue())) {
                     break;
                 }
-                String columnadditionpropertykey = sheetAt.getRow(16 + count + columncount).getCell(7 + cellcount).getStringCellValue();
+                String columnadditionpropertykey = sheetAt.getRow(18 + count + columncount).getCell(7 + cellcount).getStringCellValue();
                 columnadditionpropertykeys.add(columnadditionpropertykey);
+                cellcount++;
             }
             //开始循环遍历字段的部分
             while (true) {
@@ -1779,37 +1846,55 @@ public class MarketInfoAction extends BaseAction {
                 datatable_field_info.setDatatable_id(datatable_id);
                 String datatable_field_id = PrimayKeyGener.getNextId();
                 datatable_field_info.setDatatable_field_id(datatable_field_id);
-                if (sheetAt.getRow(17 + count + columncount) == null || sheetAt.getRow(17 + count + columncount).getCell(0) == null
-                        || StringUtils.isEmpty(sheetAt.getRow(17 + count + columncount).getCell(0).getStringCellValue())) {
+                if (sheetAt.getRow(19 + count + columncount) == null || sheetAt.getRow(19 + count + columncount).getCell(1) == null
+                        || StringUtils.isEmpty(sheetAt.getRow(19 + count + columncount).getCell(1).getStringCellValue())) {
                     break;
                 }
-                String field_en_name = sheetAt.getRow(17 + count + columncount).getCell(1).getStringCellValue();
+                String field_en_name = sheetAt.getRow(19 + count + columncount).getCell(1).getStringCellValue();
                 datatable_field_info.setField_en_name(field_en_name);
-                String field_cn_name = sheetAt.getRow(17 + count + columncount).getCell(2).getStringCellValue();
+                String field_cn_name = sheetAt.getRow(19 + count + columncount).getCell(2).getStringCellValue();
                 datatable_field_info.setField_cn_name(field_cn_name);
-                String field_type = sheetAt.getRow(17 + count + columncount).getCell(3).getStringCellValue();
+                String field_type = sheetAt.getRow(19 + count + columncount).getCell(3).getStringCellValue();
                 datatable_field_info.setField_type(field_type);
-                String field_length = sheetAt.getRow(17 + count + columncount).getCell(4).getStringCellValue();
+                String field_length = sheetAt.getRow(19 + count + columncount).getCell(4).getStringCellValue();
                 datatable_field_info.setField_en_name(field_length);
-                String field_processvalue = sheetAt.getRow(17 + count + columncount).getCell(5).getStringCellValue();
+                String field_processvalue = sheetAt.getRow(19 + count + columncount).getCell(5).getStringCellValue();
                 String field_processvcode = WebCodesItem.getCode(ProcessType.CodeName, field_processvalue);
                 datatable_field_info.setField_process(field_processvcode);
-                String process_para = sheetAt.getRow(17 + count + columncount).getCell(6).getStringCellValue();
+                String process_para = sheetAt.getRow(19 + count + columncount).getCell(6).getStringCellValue();
                 datatable_field_info.setProcess_para(process_para);
                 datatable_field_info.setField_seq(String.valueOf(columncount));
-                dm_datatable.add(Dbo.db());
+                datatable_field_info.add(Dbo.db());
                 //存储dm_column_storage表
                 for (int i = 0; i < columnadditionpropertykeys.size(); i++) {
-                    String columnadditionpropertykey = columnadditionpropertykeys.get(i);
-
+                    //获取是否内容
+                    String IsFlagValue = sheetAt.getRow(19 + count + columncount).getCell(7 + i).getStringCellValue();
+                    String IsFlagCode = WebCodesItem.getCode(IsFlag.CodeName, IsFlagValue);
+                    //判断是否内容
+                    if (IsFlagCode.equalsIgnoreCase(IsFlag.Shi.getCode())) {
+                        String columnadditionpropertykey = columnadditionpropertykeys.get(i);
+                        String columnadditionpropertykeycode = WebCodesItem.getCode(StoreLayerAdded.CodeName, columnadditionpropertykey);
+                        //如果选中的附加属性 存在于存储目的地中 存储dm_column_storage
+                        if (currentAlldata_store_layer_addeds.contains(columnadditionpropertykeycode)) {
+                            String dslad_id = currentAlldslad_ids.get(currentAlldata_store_layer_addeds.indexOf(columnadditionpropertykeycode));
+                            Dm_column_storage dm_column_storage = new Dm_column_storage();
+                            dm_column_storage.setDslad_id(dslad_id);
+                            dm_column_storage.setDatatable_field_id(datatable_field_id);
+                            dm_column_storage.setCsi_number(Long.valueOf(columncount));
+                            dm_column_storage.add(Dbo.db());
+                        } else {
+                            throw new BusinessSystemException("选中的附加属性:" + columnadditionpropertykey + ",不存在与选中的存储目的地中:" + destinationname + "，请重新选择");
+                        }
+                    }
                 }
-
+                columncount++;
             }
-
-
+            saveBloodRelationToPGTable(sql,datatable_id);
         } catch (Exception e) {
             logger.error(e.getMessage());
+//            throw e;
             throw new BusinessSystemException("上传的excel模板存在问题，请确认填写正确");
         }
+
     }
 }
