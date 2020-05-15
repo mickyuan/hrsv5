@@ -26,8 +26,7 @@ public class ServiceUserAction extends BaseAction {
 
 	@Method(desc = "查询接口信息", logicStep = "1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制" +
 			"2.判断接口名称是否为空，不为空加条件查询" +
-			"3.查询接口使用信息" +
-			"4.返回查询接口使用信息")
+			"3.查询接口使用信息并返回")
 	@Param(name = "interface_name", desc = "接口名称", range = "无限制", nullable = true)
 	@Return(desc = "返回查询接口使用信息", range = "无限制")
 	public Result searchInterfaceInfo(String interface_name) {
@@ -41,20 +40,11 @@ public class ServiceUserAction extends BaseAction {
 			assembler.addLikeParam("interface_name", "%" + interface_name + "%");
 		}
 		assembler.addSql(" order by interface_use_id");
-		// 3.查询接口使用信息
-		Result interfaceResult = Dbo.queryResult(assembler.sql(), assembler.params());
-		for (int i = 0; i < interfaceResult.getRowCount(); i++) {
-			interfaceResult.setObject(i, "start_use_date", DateUtil.parseStr2DateWith8Char(
-					interfaceResult.getString(i, "start_use_date")));
-			interfaceResult.setObject(i, "use_valid_date", DateUtil.parseStr2DateWith8Char(
-					interfaceResult.getString(i,
-							"use_valid_date")));
-		}
-		// 4.返回查询接口使用信息
-		return interfaceResult;
+		// 3.查询接口使用信息并返回
+		return Dbo.queryResult(assembler.sql(), assembler.params());
 	}
 
-	@Method(desc = "根据表名查询数据表信息", logicStep = "1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制" +
+	@Method(desc = "查询数据表信息", logicStep = "1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制" +
 			"2.判断系统登记表名是否为空，不为空加条件查询" +
 			"4.查询表使用信息并返回")
 	@Param(name = "sysreg_name", desc = "系统登记表名", range = "无限制", nullable = true)
