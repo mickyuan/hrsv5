@@ -67,7 +67,7 @@ public class MarketInfoAction extends BaseAction {
     private static final String Mart_Storage_path = "";
     private static final String Final_Date = "99991231";
     private static final String Zero = "0";
-    private static final String ZeroDate = "--------";
+    private static final String ZeroDate = "00000000";
     private static final String LimitNumber = "10";
     private static final String alias = "TempTable";
     private static final String TargetColumn = "targecolumn";
@@ -1742,13 +1742,66 @@ public class MarketInfoAction extends BaseAction {
                 throw new BusinessSystemException("请选择存储目的地");
             }
             List<Data_store_layer> data_store_layers = Dbo.queryList(Data_store_layer.class, "select * from " + Data_store_layer.TableName + " where dsl_name = ?", destinationname);
-            //存储关系表
+            //存储dm_relation_datatable表
             Data_store_layer data_store_layer = data_store_layers.get(0);
             Dm_relation_datatable dm_relation_datatable = new Dm_relation_datatable();
             dm_relation_datatable.setDatatable_id(datatable_id);
             dm_relation_datatable.setDsl_id(data_store_layer.getDsl_id());
             dm_relation_datatable.setIs_successful(JobExecuteState.DengDai.getCode());
             dm_relation_datatable.add(Dbo.db());
+            //存储dm_operation_info表信息
+            String sql = sheetAt.getRow(13 + count).getCell(1).getStringCellValue();
+            Dm_operation_info dm_operation_info = new Dm_operation_info();
+            dm_operation_info.setExecute_sql(sql);
+            dm_operation_info.setDatatable_id(datatable_id);
+            dm_operation_info.setId(PrimayKeyGener.getNextId());
+            dm_operation_info.add(Dbo.db());
+            //存储datatable_field_info表和dm_column_storage表
+            int columncount = 0;
+            //记录有多少个额外的附件字段属性
+            int cellcount = 0;
+            List<String> columnadditionpropertykeys = new ArrayList<>();
+            while (true) {
+                if (sheetAt.getRow(16 + count + columncount).getCell(7 + cellcount) == null
+                        || StringUtils.isEmpty(sheetAt.getRow(16 + count + columncount).getCell(7 + cellcount).getStringCellValue())) {
+                    break;
+                }
+                String columnadditionpropertykey = sheetAt.getRow(16 + count + columncount).getCell(7 + cellcount).getStringCellValue();
+                columnadditionpropertykeys.add(columnadditionpropertykey);
+            }
+            //开始循环遍历字段的部分
+            while (true) {
+                //存储datatable_field_info表
+                Datatable_field_info datatable_field_info = new Datatable_field_info();
+                datatable_field_info.setDatatable_id(datatable_id);
+                String datatable_field_id = PrimayKeyGener.getNextId();
+                datatable_field_info.setDatatable_field_id(datatable_field_id);
+                if (sheetAt.getRow(17 + count + columncount) == null || sheetAt.getRow(17 + count + columncount).getCell(0) == null
+                        || StringUtils.isEmpty(sheetAt.getRow(17 + count + columncount).getCell(0).getStringCellValue())) {
+                    break;
+                }
+                String field_en_name = sheetAt.getRow(17 + count + columncount).getCell(1).getStringCellValue();
+                datatable_field_info.setField_en_name(field_en_name);
+                String field_cn_name = sheetAt.getRow(17 + count + columncount).getCell(2).getStringCellValue();
+                datatable_field_info.setField_cn_name(field_cn_name);
+                String field_type = sheetAt.getRow(17 + count + columncount).getCell(3).getStringCellValue();
+                datatable_field_info.setField_type(field_type);
+                String field_length = sheetAt.getRow(17 + count + columncount).getCell(4).getStringCellValue();
+                datatable_field_info.setField_en_name(field_length);
+                String field_processvalue = sheetAt.getRow(17 + count + columncount).getCell(5).getStringCellValue();
+                String field_processvcode = WebCodesItem.getCode(ProcessType.CodeName, field_processvalue);
+                datatable_field_info.setField_process(field_processvcode);
+                String process_para = sheetAt.getRow(17 + count + columncount).getCell(6).getStringCellValue();
+                datatable_field_info.setProcess_para(process_para);
+                datatable_field_info.setField_seq(String.valueOf(columncount));
+                dm_datatable.add(Dbo.db());
+                //存储dm_column_storage表
+                for (int i = 0; i < columnadditionpropertykeys.size(); i++) {
+                    String columnadditionpropertykey = columnadditionpropertykeys.get(i);
+
+                }
+
+            }
 
 
         } catch (Exception e) {
