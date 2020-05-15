@@ -118,9 +118,9 @@ public class JdbcToParquetFileWriter extends AbstractFileWriter {
 				if (!mergeIng.isEmpty()) {
 					List<String> arrColString = StringUtil.split(midStringOther.toString(), JobConstant.DATADELIMITER);
 					//字段合并
-					allClean.merge(mergeIng, arrColString.toArray(new String[0]), allColumnList.toArray(new String[0]),
-							group, null, FileFormat.PARQUET.getCode(),
-							data_extraction_def.getDatabase_code(), dataDelimiter);
+					allClean.merge(mergeIng, arrColString.toArray(new String[0]),
+							selectColumnList.toArray(new String[0]), group, null,
+							FileFormat.PARQUET.getCode(), data_extraction_def.getDatabase_code(), dataDelimiter);
 				}
 				group.append(Constant.SDATENAME, eltDate);
 				//根据是否算MD5判断是否追加结束日期和MD5两个字段

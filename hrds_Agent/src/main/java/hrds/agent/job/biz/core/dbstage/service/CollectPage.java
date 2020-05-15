@@ -141,15 +141,32 @@ public class CollectPage implements Callable<Map<String, Object>> {
 		String database_type = sourceDataConfBean.getDatabase_type();
 		//拼分页的sql
 		String pageSql = pageForSql(database_type, primaryKey);
-		Statement statement = conn.createStatement();
-		//TODO 不同数据库的set fetchSize 实现方式不同，暂时设置Oracle 的参数 其他的目前不予处理
-		if (DatabaseType.Oracle10g.getCode().equals(database_type) ||
-				DatabaseType.Oracle9i.getCode().equals(database_type)) {
-			statement.setFetchSize(400);
-		}
-		if (DatabaseType.MYSQL.getCode().equals(database_type))
-			((com.mysql.jdbc.Statement) statement).enableStreamingResults();
+		Statement statement = setFetchSize(conn, database_type);
 		return statement.executeQuery(pageSql);
+	}
+
+	public static Statement setFetchSize(Connection conn, String database_type) throws Exception {
+		Statement statement;
+		//TODO 不同数据库的set fetchSize 实现方式不同，暂时设置Oracle、postgresql、mysql 的参数 其他的默认处理
+		//不同数据库的setfetchsize 实现方式不同，暂时设置Oracle 的参数 其他的目前不予处理
+		if (DatabaseType.Oracle9i.getCode().equals(database_type)
+				|| DatabaseType.Oracle10g.getCode().equals(database_type)) {
+			statement = conn.createStatement();
+			statement.setFetchSize(4000);
+		} else if (DatabaseType.MYSQL.getCode().equals(database_type)) {
+			statement = conn.createStatement();
+			((com.mysql.jdbc.Statement) statement).enableStreamingResults();
+		} else if (DatabaseType.Postgresql.getCode().equals(database_type)) {
+			//Postgresql如果事务是自动提交FetchSize将失效，故设置不自动提交
+			conn.setAutoCommit(false);
+			statement = conn.createStatement();
+			statement.setFetchSize(4000);
+		} else {
+			statement = conn.createStatement();
+			//TODO待补充
+			statement.setFetchSize(4000);
+		}
+		return statement;
 	}
 
 	private String pageForSql(String dataType, String primaryKey) {

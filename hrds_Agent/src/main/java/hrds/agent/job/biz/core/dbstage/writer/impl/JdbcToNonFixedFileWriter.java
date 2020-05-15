@@ -108,8 +108,8 @@ public class JdbcToNonFixedFileWriter extends AbstractFileWriter {
 				if (!mergeIng.isEmpty()) {
 					List<String> arrColString = StringUtil.split(midStringOther.toString(),
 							JobConstant.DATADELIMITER);
-					String merge = allclean.merge(mergeIng, arrColString.toArray(new String[0]), allColumnList.toArray
-									(new String[0]), null, null,
+					String merge = allclean.merge(mergeIng, arrColString.toArray(new String[0]),
+							selectColumnList.toArray(new String[0]), null, null,
 							FileFormat.FeiDingChang.getCode(), data_extraction_def.getDatabase_code(), dataDelimiter);
 					sb.append(merge).append(dataDelimiter);
 				}

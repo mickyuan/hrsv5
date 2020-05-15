@@ -109,7 +109,7 @@ public class JdbcToSequenceFileWriter extends AbstractFileWriter {
 				if (!mergeIng.isEmpty()) {
 					List<String> arrColString = StringUtil.split(midStringOther.toString(), JobConstant.DATADELIMITER);
 					String mer = allclean.merge(mergeIng, arrColString.toArray(new String[0]),
-							allColumnList.toArray(new String[0]), null, null,
+							selectColumnList.toArray(new String[0]), null, null,
 							FileFormat.SEQUENCEFILE.getCode(), data_extraction_def.getDatabase_code(), dataDelimiter);
 					//字段合并
 					sb.append(mer).append(dataDelimiter);

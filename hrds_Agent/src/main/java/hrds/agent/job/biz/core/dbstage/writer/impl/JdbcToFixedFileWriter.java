@@ -121,7 +121,7 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 					List<String> arrColString = StringUtil.split(midStringOther.toString(),
 							JobConstant.DATADELIMITER);
 					String merge = allclean.merge(mergeIng, arrColString.toArray(new String[0]),
-							allColumnList.toArray(new String[0]), null, null,
+							selectColumnList.toArray(new String[0]), null, null,
 							FileFormat.DingChang.getCode(), database_code, database_separatorr);
 					sb.append(merge).append(database_separatorr);
 				}

@@ -119,7 +119,7 @@ public class JdbcToCsvFileWriter extends AbstractFileWriter {
 				if (!mergeIng.isEmpty()) {
 					List<String> arrColString = StringUtil.split(midStringOther.toString(),
 							JobConstant.DATADELIMITER);
-					allclean.merge(mergeIng, arrColString.toArray(new String[0]), allColumnList.toArray
+					allclean.merge(mergeIng, arrColString.toArray(new String[0]), selectColumnList.toArray
 									(new String[0]), null, sb,
 							FileFormat.CSV.getCode(), data_extraction_def.getDatabase_code(), dataDelimiter);
 				}

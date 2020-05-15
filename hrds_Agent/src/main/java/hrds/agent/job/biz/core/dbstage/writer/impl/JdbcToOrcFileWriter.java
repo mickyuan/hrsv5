@@ -124,8 +124,8 @@ public class JdbcToOrcFileWriter extends AbstractFileWriter {
 					List<String> arrColString = StringUtil.split(midStringOther.toString(),
 							JobConstant.DATADELIMITER);
 					//字段合并
-					allClean.merge(mergeIng, arrColString.toArray(new String[0]), allColumnList.toArray(new String[0]),
-							null, lineData, FileFormat.ORC.getCode(),
+					allClean.merge(mergeIng, arrColString.toArray(new String[0]),
+							selectColumnList.toArray(new String[0]), null, lineData, FileFormat.ORC.getCode(),
 							data_extraction_def.getDatabase_code(), dataDelimiter);
 				}
 				lineData.add(eltDate);

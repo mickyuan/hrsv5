@@ -19,7 +19,10 @@ import hrds.agent.job.biz.core.metaparse.CollectTableHandleFactory;
 import hrds.agent.job.biz.utils.DataExtractUtil;
 import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
-import hrds.commons.codes.*;
+import hrds.commons.codes.AgentType;
+import hrds.commons.codes.FileFormat;
+import hrds.commons.codes.IsFlag;
+import hrds.commons.codes.UnloadType;
 import hrds.commons.entity.Data_extraction_def;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.ConnUtil;
@@ -216,21 +219,8 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 					long startTime = System.currentTimeMillis();
 					//替换掉sql中需要传递的参数
 					sql = AbstractCollectTableHandle.replaceSqlParam(sql, collectTableBean.getSqlParam());
-					statement = conn.createStatement();
-					//不同数据库的setfetchsize 实现方式不同，暂时设置Oracle 的参数 其他的目前不予处理
 					String database_type = sourceDataConfBean.getDatabase_type();
-					//TODO
-					if (DatabaseType.Oracle9i.getCode().equals(database_type)
-							|| DatabaseType.Oracle10g.getCode().equals(database_type)) {
-						statement.setFetchSize(400);
-					} else if (DatabaseType.MYSQL.getCode().equals(database_type)) {
-						((com.mysql.jdbc.Statement) statement).enableStreamingResults();
-					} else if (DatabaseType.Postgresql.getCode().equals(database_type)) {
-						statement.setFetchSize(1000);
-					} else {
-						//TODO待补充
-						statement.setFetchSize(1000);
-					}
+					statement = CollectPage.setFetchSize(conn, database_type);
 					//查询数据
 					resultSet = statement.executeQuery(sql);
 					//打印执行查询sql获取的时间
