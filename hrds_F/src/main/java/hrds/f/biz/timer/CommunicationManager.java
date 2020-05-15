@@ -2,7 +2,6 @@ package hrds.f.biz.timer;
 
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
-import fd.ng.netclient.http.HttpClient;
 import hrds.commons.codes.AgentStatus;
 import hrds.commons.entity.Agent_info;
 import hrds.commons.exception.AppSystemException;
