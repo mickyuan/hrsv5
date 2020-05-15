@@ -565,6 +565,9 @@ public class MarketInfoAction extends BaseAction {
                     if (targetfield_type.equals("string")) {
                         field_length = "";
                     }
+                    if (targetfield_type.equals("text")) {
+                        field_length = "";
+                    }
                 } else {
                     targetfield_type = field_type;
                 }
