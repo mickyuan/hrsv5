@@ -1,14 +1,13 @@
 package hrds.h.biz.realloader;
 
 import fd.ng.db.jdbc.DatabaseWrapper;
-
 import hrds.commons.codes.DatabaseType;
 import hrds.commons.codes.ProcessType;
-import hrds.commons.utils.StorageTypeKey;
 import hrds.commons.collection.ConnectionTool;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.DruidParseQuerySql;
 import hrds.commons.utils.PropertyParaValue;
+import hrds.commons.utils.StorageTypeKey;
 import hrds.h.biz.config.MarketConf;
 
 import java.util.List;
@@ -110,6 +109,20 @@ public class SameDatabaseLoader extends AbstractRealLoader {
     public void restore() {
         ensureTableExists("重追加");
         Utils.restoreDatabaseData(db, tableName, conf.getEtlDate());
+    }
+
+    @Override
+    public void prework() {
+        if (ensurePreworkNotEmpty(preSql)) {
+            db.execute(preSql);
+        }
+    }
+
+    @Override
+    public void finalWork() {
+        if (ensureFinalWorkNotEmpty(finalSql)) {
+            db.execute(finalSql);
+        }
     }
 
     @Override

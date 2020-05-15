@@ -73,4 +73,24 @@ public class DatabaseLoader extends AbstractRealLoader {
         }
     }
 
+
+    @Override
+    public void prework() {
+        if (ensurePreworkNotEmpty(preSql)) {
+            try (DatabaseWrapper db = ConnectionTool.getDBWrapper(tableLayerAttrs)) {
+                db.execute(preSql);
+            }
+        }
+    }
+
+    @Override
+    public void finalWork() {
+        if (ensureFinalWorkNotEmpty(finalSql)) {
+            try (DatabaseWrapper db = ConnectionTool.getDBWrapper(tableLayerAttrs)) {
+                db.execute(finalSql);
+            }
+        }
+    }
+
+
 }

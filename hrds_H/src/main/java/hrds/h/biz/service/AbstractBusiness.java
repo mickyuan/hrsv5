@@ -11,21 +11,21 @@ public abstract class AbstractBusiness implements ILoadBussiness{
 
 	protected static final Logger logger = LogManager.getLogger(AbstractBusiness.class);
 
-	protected Loader load;
+	protected Loader loader;
 	protected MarketConf conf;
 
-	public AbstractBusiness(Loader load) {
+	public AbstractBusiness(Loader loader) {
 
-		this.load = load;
-		conf = load.getConf();
+		this.loader = loader;
+		conf = loader.getConf();
 	}
 
 
 	@Override
 	public void close() throws IOException {
 
-		if( load != null ) {
-			load.close();
+		if( loader != null ) {
+			loader.close();
 		}
 
 	}

@@ -3,7 +3,6 @@ package hrds.h.biz.realloader;
 import hrds.commons.exception.AppSystemException;
 import hrds.h.biz.config.MarketConf;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,12 +17,16 @@ public abstract class AbstractRealLoader implements Loader {
     protected final String tableName;
     protected final String etlDate;
     protected final String datatableId;
+    protected final String preSql;
+    protected final String finalSql;
 
     protected AbstractRealLoader(MarketConf conf) {
         this.conf = conf;
         tableName = conf.getTableName();
         etlDate = conf.getEtlDate();
         datatableId = conf.getDatatableId();
+        preSql = conf.getPreSql();
+        finalSql = conf.getFinalSql();
         initTableLayerProperties();
     }
 
@@ -42,6 +45,16 @@ public abstract class AbstractRealLoader implements Loader {
                 " 不支持恢复数据至上次跑批结果");
     }
 
+    @Override
+    public void prework() {
+        logDebug("该loader不兼容前置作业");
+    }
+
+    @Override
+    public void finalWork() {
+        logDebug("该loader不兼容后置作业");
+    }
+
     /**
      * 将存储层的配置的（k,v）初始化到 Map 中
      */
@@ -53,5 +66,6 @@ public abstract class AbstractRealLoader implements Loader {
     }
 
     @Override
-    public void close() {}
+    public void close() {
+    }
 }

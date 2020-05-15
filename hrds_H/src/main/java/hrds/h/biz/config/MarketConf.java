@@ -40,9 +40,17 @@ public class MarketConf implements Serializable {
      */
     private String tableName;
     /**
-     * 需要执行的sql
+     * 需要执行的主sql
      */
     private String completeSql;
+    /**
+     * 前置作业sql 可为null
+     */
+    private String preSql;
+    /**
+     * 后置作业sql 可为null
+     */
+    private String finalSql;
     /**
      * 数据表信息
      */
@@ -136,6 +144,22 @@ public class MarketConf implements Serializable {
 
     void setCompleteSql(String completeSql) {
         this.completeSql = completeSql;
+    }
+
+    public String getPreSql() {
+        return preSql;
+    }
+
+    public void setPreSql(String preSql) {
+        this.preSql = preSql;
+    }
+
+    public String getFinalSql() {
+        return finalSql;
+    }
+
+    public void setFinalSql(String finalSql) {
+        this.finalSql = finalSql;
     }
 
     public Dm_datatable getDmDatatable() {

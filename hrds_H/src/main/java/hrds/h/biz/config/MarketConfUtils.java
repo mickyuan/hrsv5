@@ -119,6 +119,15 @@ public class MarketConfUtils {
             }
             marketConf.setDataStoreLayerAttrs(dataStoreLayerAttrs);
 
+            /*
+              根据主键 datatable_id 查询出 集市表存储关系表
+             */
+            Optional<Dm_relevant_info> dmRelevantInfo = SqlOperator.queryOneObject(db, Dm_relevant_info.class,
+                    "select * from dm_relevant_info where datatable_id = ?", datatableId);
+            if (dmRelevantInfo.isPresent()) {
+               marketConf.setPreSql(dmRelevantInfo.get().getPre_work());
+               marketConf.setFinalSql(dmRelevantInfo.get().getPost_work());
+            }
         }
 
     }
