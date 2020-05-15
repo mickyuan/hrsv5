@@ -40,32 +40,33 @@ public class DBDataRegistrationStageImpl extends AbstractJobStage {
 		JobStatusInfoUtil.startStageStatusInfo(statusInfo, collectTableBean.getTable_id(),
 				StageConstant.DATAREGISTRATION.getCode());
 		try {
-			Data_store_reg data_store_reg = new Data_store_reg();
-			data_store_reg.setAgent_id(collectTableBean.getAgent_id());
-			data_store_reg.setDatabase_id(collectTableBean.getDatabase_id());
-			data_store_reg.setTable_id(collectTableBean.getTable_id());
-			data_store_reg.setSource_id(collectTableBean.getSource_id());
-			data_store_reg.setCollect_type(AgentType.DBWenJian.getCode());
-			data_store_reg.setFile_size(stageParamInfo.getFileSize());
-			//TODO 下面这个可为空吧
-			data_store_reg.setHyren_name(collectTableBean.getHbase_name());
-			data_store_reg.setTable_name(collectTableBean.getTable_name());
-			data_store_reg.setOriginal_name(collectTableBean.getTable_ch_name());
-			data_store_reg.setOriginal_update_date(DateUtil.getSysDate());
-			data_store_reg.setOriginal_update_time(DateUtil.getSysTime());
-			data_store_reg.setStorage_date(DateUtil.getSysDate());
-			data_store_reg.setStorage_time(DateUtil.getSysTime());
-			JSONObject metaInfoObj = new JSONObject();
-			metaInfoObj.put("records", stageParamInfo.getRowCount());
-			metaInfoObj.put("mr", "n");
-			TableBean tableBean = stageParamInfo.getTableBean();
-			metaInfoObj.put("column", tableBean.getColumnMetaInfo());
-			metaInfoObj.put("length", tableBean.getColLengthInfo());
-			metaInfoObj.put("fileSize", stageParamInfo.getFileSize());
-			metaInfoObj.put("tableName", collectTableBean.getTable_name());
-			metaInfoObj.put("type", tableBean.getColTypeMetaInfo());
-			data_store_reg.setMeta_info(metaInfoObj.toJSONString());
-			CommunicationUtil.addDataStoreReg(data_store_reg, collectTableBean.getDatabase_id());
+			//数据库抽取不做登记，避免跟db文件采集冲突
+//			Data_store_reg data_store_reg = new Data_store_reg();
+//			data_store_reg.setAgent_id(collectTableBean.getAgent_id());
+//			data_store_reg.setDatabase_id(collectTableBean.getDatabase_id());
+//			data_store_reg.setTable_id(collectTableBean.getTable_id());
+//			data_store_reg.setSource_id(collectTableBean.getSource_id());
+//			data_store_reg.setCollect_type(AgentType.ShuJuKu.getCode());
+//			data_store_reg.setFile_size(stageParamInfo.getFileSize());
+//			//TODO 下面这个可为空吧
+//			data_store_reg.setHyren_name(collectTableBean.getHbase_name());
+//			data_store_reg.setTable_name(collectTableBean.getTable_name());
+//			data_store_reg.setOriginal_name(collectTableBean.getTable_ch_name());
+//			data_store_reg.setOriginal_update_date(DateUtil.getSysDate());
+//			data_store_reg.setOriginal_update_time(DateUtil.getSysTime());
+//			data_store_reg.setStorage_date(DateUtil.getSysDate());
+//			data_store_reg.setStorage_time(DateUtil.getSysTime());
+//			JSONObject metaInfoObj = new JSONObject();
+//			metaInfoObj.put("records", stageParamInfo.getRowCount());
+//			metaInfoObj.put("mr", "n");
+//			TableBean tableBean = stageParamInfo.getTableBean();
+//			metaInfoObj.put("column", tableBean.getColumnMetaInfo());
+//			metaInfoObj.put("length", tableBean.getColLengthInfo());
+//			metaInfoObj.put("fileSize", stageParamInfo.getFileSize());
+//			metaInfoObj.put("tableName", collectTableBean.getTable_name());
+//			metaInfoObj.put("type", tableBean.getColTypeMetaInfo());
+//			data_store_reg.setMeta_info(metaInfoObj.toJSONString());
+//			CommunicationUtil.addDataStoreReg(data_store_reg, collectTableBean.getDatabase_id());
 			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.SUCCEED.getCode(), "执行成功");
 			LOGGER.info("------------------表" + collectTableBean.getTable_name()
 					+ "数据库直连采集数据登记阶段成功------------------");

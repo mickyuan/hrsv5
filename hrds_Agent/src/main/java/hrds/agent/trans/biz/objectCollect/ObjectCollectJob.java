@@ -20,7 +20,6 @@ import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.ConnUtil;
 import hrds.commons.utils.PackUtil;
 import hrds.commons.utils.xlstoxml.Xls2xml;
-import org.stringtemplate.v4.ST;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -28,7 +27,6 @@ import java.io.FileWriter;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CancellationException;
 
 @DocClass(desc = "接收页面定义的参数执行object采集", author = "zxz", createdate = "2019/10/23 16:29")
 public class ObjectCollectJob extends AgentBaseAction {

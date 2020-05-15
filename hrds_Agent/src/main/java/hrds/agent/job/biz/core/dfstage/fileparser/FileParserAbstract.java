@@ -122,7 +122,7 @@ public abstract class FileParserAbstract implements FileParserInterface {
 					null, JobConstant.DATADELIMITER);
 			//清理不规则的数据
 			columnData = AbstractFileWriter.clearIrregularData(columnData);
-			midStringOther.append(columnData);
+			midStringOther.append(columnData).append(JobConstant.DATADELIMITER);
 			lineSb.append(columnData).append(JobConstant.DATADELIMITER);
 		}
 		//如果有列合并处理合并信息

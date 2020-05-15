@@ -119,7 +119,7 @@ public class ObjectCollectAction extends BaseAction {
 				Map<String, Object> tableMap = new HashMap<>();
 				logger.info(tableName);
 				tableMap.put("table_name", tableName.get("table_name").toString());
-				tableMap.put("table_cn_name", tableName.get("table_cn_name").toString());
+				tableMap.put("table_ch_name", tableName.get("table_ch_name").toString());
 				tableNameList.add(tableMap);
 			}
 			// 7.返回解析后当前目录获取表信息
@@ -308,7 +308,7 @@ public class ObjectCollectAction extends BaseAction {
 		objectCollectTask.setAgent_id(object_collect.getAgent_id());
 		objectCollectTask.setOdc_id(object_collect.getOdc_id());
 		String tableName = tableNameMap.get("table_name").toString();
-		String zh_name = tableNameMap.get("table_cn_name").toString();
+		String zh_name = tableNameMap.get("table_ch_name").toString();
 		objectCollectTask.setEn_name(tableName != null ? tableName : "");
 		objectCollectTask.setZh_name(zh_name != null ? zh_name : "");
 		objectCollectTask.setCollect_data_type(CollectDataType.JSON.getCode());
@@ -705,7 +705,7 @@ public class ObjectCollectAction extends BaseAction {
 				for (Map<String, Object> objectMap : objCollectTaskList) {
 					Map<String, Object> tableMap = new HashMap<>();
 					tableMap.put("table_name", objectMap.get("en_name"));
-					tableMap.put("table_cn_name", objectMap.get("zh_name"));
+					tableMap.put("table_ch_name", objectMap.get("zh_name"));
 					tableMap.put("updatetype", objectMap.get("updatetype"));
 					tableMap.put("operationposition", objectMap.get("operationposition"));
 					long ocs_id = Long.parseLong(objectMap.get("ocs_id").toString());

@@ -745,6 +745,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			SqlOperator.execute(db, "delete from agent_info where agent_id=?", SemiAgentId);
 			SqlOperator.execute(db, "delete from agent_info where agent_id=?", FTPAgentId);
 			SqlOperator.execute(db, "delete from agent_info where user_id=?", UserId);
+			SqlOperator.execute(db, "delete from agent_info where user_id=?", CollectUserId);
 			// 判断agent_info表数据是否被删除
 			long DBNum = SqlOperator.queryNumber(db, "select count(1) from  agent_info where agent_id=?",
 					DBAgentId).orElseThrow(() -> new RuntimeException("count fail!"));
@@ -798,6 +799,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			// 6.测试完成后删除agent_down_info表测试数据
 			SqlOperator.execute(db, "delete from agent_down_info where down_id=?", DownId);
 			SqlOperator.execute(db, "delete from agent_down_info where user_id=?", UserId);
+			SqlOperator.execute(db, "delete from agent_down_info where user_id=?", CollectUserId);
 			// 判断agent_down_info表数据是否被删除
 			long adiNum = SqlOperator.queryNumber(db, "select count(1) from agent_down_info where" +
 					" down_id=?", DownId).orElseThrow(() -> new RuntimeException("count fail!"));
