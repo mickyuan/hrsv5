@@ -19,10 +19,7 @@ import hrds.agent.job.biz.core.metaparse.CollectTableHandleFactory;
 import hrds.agent.job.biz.utils.DataExtractUtil;
 import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
-import hrds.commons.codes.AgentType;
-import hrds.commons.codes.FileFormat;
-import hrds.commons.codes.IsFlag;
-import hrds.commons.codes.UnloadType;
+import hrds.commons.codes.*;
 import hrds.commons.entity.Data_extraction_def;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.ConnUtil;
@@ -66,6 +63,8 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 	@Return(desc = "StageStatusInfo是保存每个阶段状态信息的实体类", range = "不会为null，StageStatusInfo实体类对象")
 	@Override
 	public StageParamInfo handleStage(StageParamInfo stageParamInfo) {
+		//开始时间
+		long startTime = System.currentTimeMillis();
 		LOGGER.info("------------------表" + collectTableBean.getTable_name()
 				+ "数据库直连采集卸数阶段开始------------------");
 		//1、创建卸数阶段状态信息，更新作业ID,阶段名，阶段开始时间
@@ -102,7 +101,8 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 			deleteRenameDir(collectTableBean);
 			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.SUCCEED.getCode(), "执行成功");
 			LOGGER.info("------------------表" + collectTableBean.getTable_name()
-					+ "数据库直连采集卸数阶段成功------------------");
+					+ "数据库直连采集卸数阶段成功------------------执行时间为："
+					+ (System.currentTimeMillis() - startTime) / 1000 + "，秒");
 		} catch (Exception e) {
 			//卸数失败，删除本次卸数的目录，恢复数据
 			try {
@@ -213,11 +213,29 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 				//获取增量的sql
 				String sql = incrementSqlList.get(i);
 				if (!StringUtil.isEmpty(sql)) {
+					long startTime = System.currentTimeMillis();
 					//替换掉sql中需要传递的参数
 					sql = AbstractCollectTableHandle.replaceSqlParam(sql, collectTableBean.getSqlParam());
 					statement = conn.createStatement();
+					//不同数据库的setfetchsize 实现方式不同，暂时设置Oracle 的参数 其他的目前不予处理
+					String database_type = sourceDataConfBean.getDatabase_type();
+					//TODO
+					if (DatabaseType.Oracle9i.getCode().equals(database_type)
+							|| DatabaseType.Oracle10g.getCode().equals(database_type)) {
+						statement.setFetchSize(400);
+					} else if (DatabaseType.MYSQL.getCode().equals(database_type)) {
+						((com.mysql.jdbc.Statement) statement).enableStreamingResults();
+					} else if (DatabaseType.Postgresql.getCode().equals(database_type)) {
+						statement.setFetchSize(1000);
+					} else {
+						//TODO待补充
+						statement.setFetchSize(1000);
+					}
 					//查询数据
 					resultSet = statement.executeQuery(sql);
+					//打印执行查询sql获取的时间
+					LOGGER.info("执行查询sql:" + sql + "成功，执行时间为："
+							+ (System.currentTimeMillis() - startTime) / 1000 + "，秒");
 					tableBean.setOperate(operateArray[i]);
 					//2、解析ResultSet，并写数据文件
 					ResultSetParser parser = new ResultSetParser();

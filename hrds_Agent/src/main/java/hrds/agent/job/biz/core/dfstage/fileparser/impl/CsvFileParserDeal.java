@@ -52,6 +52,7 @@ public class CsvFileParserDeal extends FileParserAbstract {
 				//每50000行flash一次
 				if (fileRowCount % 50000 == 0) {
 					writer.flush();
+					LOGGER.info("正在处理转存文件，已写入" + fileRowCount + "行");
 				}
 			}
 			writer.flush();

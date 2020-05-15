@@ -142,6 +142,9 @@ public class JdbcToParquetFileWriter extends AbstractFileWriter {
 					}
 				}
 				parquetWriter.write(group);
+				if (counter % 50000 == 0) {
+					log.info("正在写入文件，已写入" + counter + "行");
+				}
 			}
 		} catch (Exception e) {
 			log.error("卸数失败", e);

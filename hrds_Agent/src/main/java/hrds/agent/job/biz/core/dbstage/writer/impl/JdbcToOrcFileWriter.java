@@ -106,7 +106,7 @@ public class JdbcToOrcFileWriter extends AbstractFileWriter {
 					sb_.delete(0, sb_.length());
 					midStringOther.append(getOneColumnValue(avroWriter, counter, pageNum, resultSet,
 							typeArray[i], sb_, selectColumnList.get(i), hbase_name, midName));
-					if (i < numberOfColumns-1) {
+					if (i < numberOfColumns - 1) {
 						midStringOther.append(JobConstant.DATADELIMITER);
 					}
 					//清洗操作
@@ -150,6 +150,9 @@ public class JdbcToOrcFileWriter extends AbstractFileWriter {
 					}
 				}
 				writer.write(NullWritable.get(), serde.serialize(lineData, inspector));
+				if (counter % 50000 == 0) {
+					log.info("正在写入文件，已写入" + counter + "行");
+				}
 			}
 		} catch (Exception e) {
 			log.error("卸数失败", e);

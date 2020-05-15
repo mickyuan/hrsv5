@@ -50,6 +50,7 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 	@Return(desc = "StageStatusInfo是保存每个阶段状态信息的实体类", range = "不会为null,StageStatusInfo实体类对象")
 	@Override
 	public StageParamInfo handleStage(StageParamInfo stageParamInfo) {
+		long startTime = System.currentTimeMillis();
 		LOGGER.info("------------------表" + collectTableBean.getHbase_name()
 				+ "DB文件采集卸数阶段开始------------------");
 		//1、创建卸数阶段状态信息，更新作业ID,阶段名，阶段开始时间
@@ -171,7 +172,8 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 				executorService.shutdown();
 		}
 		LOGGER.info("------------------表" + collectTableBean.getHbase_name()
-				+ "DB文件采集卸数阶段结束------------------");
+				+ "DB文件采集卸数阶段结束------------------执行时间为："
+				+ (System.currentTimeMillis() - startTime) / 1000 + "，秒");
 		//结束给stageParamInfo塞值
 		JobStatusInfoUtil.endStageParamInfo(stageParamInfo, statusInfo, collectTableBean
 				, AgentType.DBWenJian.getCode());

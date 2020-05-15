@@ -10,6 +10,8 @@ import org.apache.hadoop.fs.Path;
 import org.apache.parquet.example.data.Group;
 import org.apache.parquet.hadoop.ParquetReader;
 import org.apache.parquet.hadoop.example.GroupReadSupport;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -21,7 +23,7 @@ import java.util.List;
  * author: zxz
  */
 public class ParquetFileParserDeal extends FileParserAbstract {
-
+	private final static Logger LOGGER = LoggerFactory.getLogger(ParquetFileParserDeal.class);
 	public ParquetFileParserDeal(TableBean tableBean, CollectTableBean collectTableBean, String readFile)
 			throws Exception {
 		super(tableBean, collectTableBean, readFile);
@@ -50,6 +52,7 @@ public class ParquetFileParserDeal extends FileParserAbstract {
 				//每50000行flash一次
 				if (fileRowCount % 50000 == 0) {
 					writer.flush();
+					LOGGER.info("正在处理转存文件，已写入" + fileRowCount + "行");
 				}
 			}
 			writer.flush();

@@ -13,6 +13,8 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Text;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
@@ -23,6 +25,7 @@ import java.util.List;
  * author: zxz
  */
 public class SequenceFileParserDeal extends FileParserAbstract {
+	private final static Logger LOGGER = LoggerFactory.getLogger(SequenceFileParserDeal.class);
 
 	public SequenceFileParserDeal(TableBean tableBean, CollectTableBean collectTableBean, String readFile)
 			throws Exception {
@@ -57,6 +60,7 @@ public class SequenceFileParserDeal extends FileParserAbstract {
 				//每50000行flash一次
 				if (fileRowCount % 50000 == 0) {
 					writer.flush();
+					LOGGER.info("正在处理转存文件，已写入" + fileRowCount + "行");
 				}
 			}
 			writer.flush();

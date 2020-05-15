@@ -7,6 +7,8 @@ import hrds.agent.job.biz.core.dfstage.fileparser.FileParserAbstract;
 import hrds.commons.codes.DataBaseCode;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -20,6 +22,7 @@ import java.util.List;
  * author: zxz
  */
 public class NonFixedFileParserDeal extends FileParserAbstract {
+	private final static Logger LOGGER = LoggerFactory.getLogger(NonFixedFileParserDeal.class);
 
 	public NonFixedFileParserDeal(TableBean tableBean, CollectTableBean collectTableBean, String readFile)
 			throws Exception {
@@ -42,6 +45,7 @@ public class NonFixedFileParserDeal extends FileParserAbstract {
 				//每50000行flash一次
 				if (fileRowCount % 50000 == 0) {
 					writer.flush();
+					LOGGER.info("正在处理转存文件，已写入" + fileRowCount + "行");
 				}
 			}
 			writer.flush();

@@ -64,6 +64,7 @@ public class DFUploadStageImpl extends AbstractJobStage {
 	@Return(desc = "StageStatusInfo是保存每个阶段状态信息的实体类", range = "不会为null,StageStatusInfo实体类对象")
 	@Override
 	public StageParamInfo handleStage(StageParamInfo stageParamInfo) {
+		long startTime = System.currentTimeMillis();
 		LOGGER.info("------------------表" + collectTableBean.getHbase_name()
 				+ "DB文件采集上传阶段开始------------------");
 		//1、创建卸数阶段状态信息，更新作业ID,阶段名，阶段开始时间
@@ -83,7 +84,8 @@ public class DFUploadStageImpl extends AbstractJobStage {
 						+ "DB文件采集指定的数据抽取卸数方式类型不正确");
 			}
 			LOGGER.info("------------------表" + collectTableBean.getHbase_name()
-					+ "DB文件全量上传阶段成功------------------");
+					+ "DB文件全量上传阶段成功------------------执行时间为："
+					+ (System.currentTimeMillis() - startTime) / 1000 + "，秒");
 			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.SUCCEED.getCode(), "执行成功");
 		} catch (Exception e) {
 			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.FAILED.getCode(), e.getMessage());

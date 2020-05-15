@@ -150,6 +150,7 @@ public class JdbcToCsvFileWriter extends AbstractFileWriter {
 				}
 				writer.write(sb);
 				if (counter % 50000 == 0) {
+					log.info("正在写入文件，已写入" + counter + "行");
 					writer.flush();
 				}
 				sb.clear();
