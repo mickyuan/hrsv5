@@ -1,7 +1,8 @@
-package hrds.g.biz.interfaceinfo;
+package hrds.g.biz.serviceuser;
 
 import com.alibaba.fastjson.TypeReference;
 import fd.ng.core.annotation.DocClass;
+import fd.ng.core.annotation.Method;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
@@ -9,13 +10,10 @@ import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
-import fd.ng.web.util.FileUploadUtil;
-import hrds.commons.codes.IsFlag;
-import hrds.commons.codes.UserState;
-import hrds.commons.codes.UserType;
-import hrds.commons.entity.Department_info;
-import hrds.commons.entity.Sys_user;
+import hrds.commons.codes.*;
+import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.utils.Constant;
 import hrds.testbase.WebBaseTestCase;
 import org.junit.After;
 import org.junit.Before;
@@ -28,18 +26,22 @@ import java.util.Map;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-@DocClass(desc = "接口信息测试类", author = "dhw", createdate = "2020/3/30 14:50")
+@DocClass(desc = "服务接口用户测试类", author = "dhw", createdate = "2020/5/15 13:48")
 public class ServiceUserActionTest extends WebBaseTestCase {
 
-	private static final Type LISTTYPE = new TypeReference<List<Map<String, Object>>>() {
-	}.getType();
+	private static final String SYSDATE = DateUtil.getSysDate();
+	private static final String ENDATE = "20991231";
 	private static String bodyString;
 	private static ActionResult ar;
 	// 用户ID
-	private static final long USER_ID = 8885L;
+	private static final long USER_ID = 8886L;
 	// 部门ID
-	private static final long DEP_ID = 8881L;
+	private static final long DEP_ID = 8886L;
 	private static final int USERROWS = 2;
+	// 接口使用ID
+	private static final long INTERFACE_USE_ID = 100000001L;
+	// 接口表参数信息ID
+	private static final long PARAM_ID = 20000002L;
 
 	@Before
 	public void before() {
@@ -78,15 +80,49 @@ public class ServiceUserActionTest extends WebBaseTestCase {
 			deptInfo.setCreate_time(DateUtil.getSysTime());
 			deptInfo.setDep_remark("测试接口部门init-dhw");
 			assertThat("初始化数据成功", deptInfo.add(db), is(1));
-
+			// 3.造interface_use表测试数据
+			Interface_use interface_use = new Interface_use();
+			interface_use.setUse_valid_date(ENDATE);
+			interface_use.setInterface_use_id(INTERFACE_USE_ID);
+			interface_use.setClassify_name("jkjkcs");
+			interface_use.setInterface_id(104L);
+			interface_use.setInterface_note("接口监控测试");
+			interface_use.setUse_state(InterfaceState.JinYong.getCode());
+			interface_use.setUser_id(USER_ID);
+			interface_use.setCreate_id(USER_ID);
+			interface_use.setTheir_type(InterfaceType.ShuJuLei.getCode());
+			interface_use.setInterface_code("01-123");
+			interface_use.setUrl("tableUsePermissions");
+			interface_use.setInterface_name("表使用权限查询接口");
+			interface_use.setStart_use_date(SYSDATE);
+			interface_use.setUser_name("接口测试用户-dhw0");
+			interface_use.add(db);
+			// 4.造table_use_info表测试数据
+			Table_use_info table_use_info = new Table_use_info();
+			table_use_info.setTable_blsystem(DataSourceType.DCL.getCode());
+			table_use_info.setUser_id(USER_ID);
+			table_use_info.setTable_note("监控监控表使用信息测试");
+			table_use_info.setSysreg_name("fdc01_dhw_test");
+			table_use_info.setOriginal_name("dhw_test");
+			table_use_info.setUse_id(INTERFACE_USE_ID);
+			table_use_info.add(db);
+			// 5.造sysreg_parameter_info表测试数据
+			Sysreg_parameter_info sysreg_parameter_info = new Sysreg_parameter_info();
+			sysreg_parameter_info.setParameter_id(PARAM_ID);
+			sysreg_parameter_info.setTable_column_name("PARA_NAME^PARA_VALUE^PARA_TYPE^PARA_ID");
+			sysreg_parameter_info.setRemark("监控测试");
+			sysreg_parameter_info.setIs_flag(IsFlag.Fou.getCode());
+			sysreg_parameter_info.setUse_id(INTERFACE_USE_ID);
+			sysreg_parameter_info.setUser_id(USER_ID);
+			sysreg_parameter_info.add(db);
 			// 提交事务
 			SqlOperator.commitTransaction(db);
 		}
-		String responseValue = new HttpClient().buildSession()
+		bodyString = new HttpClient().buildSession()
 				.addData("user_id", USER_ID)
 				.addData("password", "1")
-				.post("http://127.0.0.1:8088/A/action/hrds/a/biz/login/login").getBodyString();
-		ActionResult ar = JsonUtil.toObjectSafety(responseValue, ActionResult.class).orElseThrow(()
+				.post("http://127.0.0.1:8888/A/action/hrds/a/biz/login/login").getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败"));
 		assertThat(ar.isSuccess(), is(true));
 	}
@@ -100,22 +136,151 @@ public class ServiceUserActionTest extends WebBaseTestCase {
 			//2.清理Department_info表中造的数据
 			SqlOperator.execute(db, "DELETE FROM " + Department_info.TableName + " WHERE dep_id = ?"
 					, DEP_ID);
+			// 3.清理interface_use表数据
+			SqlOperator.execute(db, "DELETE FROM " + Interface_use.TableName + " WHERE user_id =?"
+					, USER_ID);
+			// 4.清理Table_use_info表数据
+			SqlOperator.execute(db, "DELETE FROM " + Table_use_info.TableName + " WHERE user_id =?"
+					, USER_ID);
+			// 5.清理Sysreg_parameter_info表数据
+			SqlOperator.execute(db, "DELETE FROM " + Sysreg_parameter_info.TableName + " WHERE user_id =?"
+					, USER_ID);
 			SqlOperator.commitTransaction(db);
 		}
 	}
 
+	@Method(desc = "查询接口信息", logicStep = "1.正确的数据访问1,数据都有效" +
+			"2.正确的数据访问2,interface_name不为空" +
+			"3.正确的数据访问3,interface_name为空" +
+			"4.正确的数据访问4,interface_name不存在")
 	@Test
 	public void searchInterfaceInfo() {
-
-	}
-
-	@Test
-	public void searchDataTableInfo() {
-		bodyString = new HttpClient()
-				.post(getActionUrl("searchDataTableInfo")).getBodyString();
+		// 1.正确的数据访问1,数据都有效
+		bodyString = new HttpClient().buildSession()
+				.post(getActionUrl("searchInterfaceInfo")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
-				-> new BusinessException("连接失败！"));
+				-> new BusinessException("连接失败"));
 		assertThat(ar.isSuccess(), is(true));
 		Result result = ar.getDataForResult();
+		assertThat(result.getLong(0, "interface_use_id"), is(INTERFACE_USE_ID));
+		assertThat(result.getString(0, "interface_name"), is("表使用权限查询接口"));
+		assertThat(result.getString(0, "url"), is("tableUsePermissions"));
+		assertThat(result.getString(0, "start_use_date"), is(SYSDATE));
+		assertThat(result.getString(0, "use_valid_date"), is(ENDATE));
+		// 2.正确的数据访问2,interface_name不为空
+		bodyString = new HttpClient().buildSession()
+				.addData("interface_name", "tableUsePermissions")
+				.post(getActionUrl("searchInterfaceInfo")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败"));
+		assertThat(ar.isSuccess(), is(true));
+		// 3.正确的数据访问3,interface_name为空
+		bodyString = new HttpClient().buildSession()
+				.addData("interface_name", "")
+				.post(getActionUrl("searchInterfaceInfo")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败"));
+		assertThat(ar.isSuccess(), is(true));
+		// 4.正确的数据访问4,interface_name不存在
+		bodyString = new HttpClient().buildSession()
+				.addData("interface_name", "aaa")
+				.post(getActionUrl("searchInterfaceInfo")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败"));
+		assertThat(ar.isSuccess(), is(true));
+		assertThat(ar.getDataForResult().isEmpty(), is(true));
+	}
+
+	@Method(desc = "查询数据表信息", logicStep = "1.正确的数据访问1,数据都有效" +
+			"2.正确的数据访问2,sysreg_name不为空" +
+			"3.正确的数据访问3,sysreg_name为空" +
+			"4.正确的数据访问4,sysreg_name不存在")
+	@Test
+	public void searchDataTableInfo() {
+		// 1.正确的数据访问1,数据都有效
+		bodyString = new HttpClient().buildSession()
+				.post(getActionUrl("searchDataTableInfo")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败"));
+		assertThat(ar.isSuccess(), is(true));
+		Result result = ar.getDataForResult();
+		assertThat(result.getLong(0, "use_id"), is(INTERFACE_USE_ID));
+		assertThat(result.getString(0, "sysreg_name"), is("fdc01_dhw_test"));
+		assertThat(result.getString(0, "original_name"), is("dhw_test"));
+		// 2.正确的数据访问2,sysreg_name不为空
+		bodyString = new HttpClient().buildSession()
+				.addData("sysreg_name", "fdc01_dhw_test")
+				.post(getActionUrl("searchDataTableInfo")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败"));
+		assertThat(ar.isSuccess(), is(true));
+		// 3.正确的数据访问3,sysreg_name为空
+		bodyString = new HttpClient().buildSession()
+				.addData("sysreg_name", "")
+				.post(getActionUrl("searchDataTableInfo")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败"));
+		assertThat(ar.isSuccess(), is(true));
+		// 4.正确的数据访问4,sysreg_name不存在
+		bodyString = new HttpClient().buildSession()
+				.addData("sysreg_name", "aaa")
+				.post(getActionUrl("searchDataTableInfo")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败"));
+		assertThat(ar.isSuccess(), is(true));
+		assertThat(ar.getDataForResult().isEmpty(), is(true));
+	}
+
+	@Method(desc = "根据表使用ID查询当前用户对应的列信息", logicStep = "1.正确的数据访问1,数据都有效" +
+			"2.错误的数据访问1,use_id为空" +
+			"3.错误的数据访问2,use_id不存在")
+	@Test
+	public void searchColumnInfoById() {
+		// 1.正确的数据访问1,数据都有效
+		bodyString = new HttpClient().buildSession()
+				.addData("use_id", INTERFACE_USE_ID)
+				.post(getActionUrl("searchColumnInfoById")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败"));
+		assertThat(ar.isSuccess(), is(true));
+		Type type = new TypeReference<List<Map<String, String>>>() {
+		}.getType();
+		List<Map<String, String>> list = JsonUtil.toObject(ar.getData().toString(), type);
+		StringBuilder sb = new StringBuilder();
+		list.forEach(map -> {
+			String table_column_name = map.get("table_column_name");
+			sb.append(table_column_name).append(Constant.METAINFOSPLIT);
+		});
+		assertThat(sb.deleteCharAt(sb.length() - 1).toString(), is("PARA_NAME^PARA_VALUE^PARA_TYPE^PARA_ID"));
+		// 2.错误的数据访问1,use_id为空
+		bodyString = new HttpClient().buildSession()
+				.addData("use_id", "")
+				.post(getActionUrl("searchColumnInfoById")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败"));
+		assertThat(ar.isSuccess(), is(false));
+		// 3.错误的数据访问2,use_id不存在
+		bodyString = new HttpClient().buildSession()
+				.addData("use_id", "12333")
+				.post(getActionUrl("searchColumnInfoById")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败"));
+		assertThat(ar.isSuccess(), is(true));
+		assertThat(ar.getData().toString(), is(""));
+	}
+
+	@Method(desc = "获取当前用户请求ip端口", logicStep = "1.正确的数据访问1,数据都有效" +
+			"备注：该方法只有一种可能")
+	@Test
+	public void getIpAndPort() {
+		// 1.正确的数据访问1,数据都有效
+		bodyString = new HttpClient().buildSession()
+				.addData("use_id", INTERFACE_USE_ID)
+				.post(getActionUrl("getIpAndPort")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败"));
+		assertThat(ar.isSuccess(), is(true));
+		Map<Object, Object> dataForMap = ar.getDataForMap();
+		assertThat(dataForMap.get("ipAndPort"), is("10.71.4.57:8091"));
 	}
 }

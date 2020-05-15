@@ -19,11 +19,15 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Map;
+
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 @DocClass(desc = "服务接口测试类", author = "dhw", createdate = "2020/4/20 16:12")
 public class ServiceInterfaceUserImplActionTest extends WebBaseTestCase {
+
 	private static String bodyString;
 	private static ActionResult ar;
 	// 用户ID
@@ -96,25 +100,20 @@ public class ServiceInterfaceUserImplActionTest extends WebBaseTestCase {
 			// 提交事务
 			SqlOperator.commitTransaction(db);
 		}
-		bodyString = new HttpClient().buildSession()
-				.addData("user_id", USER_ID)
-				.addData("password", "1")
-				.post("http://127.0.0.1:8088/A/action/hrds/a/biz/login/login").getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
-				-> new BusinessException("连接失败"));
-		assertThat(ar.isSuccess(), is(true));
 	}
 
 	@Test
 	public void getToken() {
 		// 1.正确的数据访问1，数据有效
 		bodyString = new HttpClient().buildSession()
-				.addData("user_id","2001")
-				.addData("user_password","1")
+				.addData("user_id", "2001")
+				.addData("user_password", "1")
 				.post(getActionUrl("getToken")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败"));
 		assertThat(ar.isSuccess(), is(true));
+		Map<Object, Object> dataForMap = ar.getDataForMap();
+		assertThat(dataForMap.get("token").toString(), is(notNullValue()));
 	}
 
 	@Test
