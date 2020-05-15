@@ -19,10 +19,12 @@ import hrds.commons.entity.Interface_info;
 import hrds.commons.entity.Interface_use;
 import hrds.commons.entity.Sys_user;
 import hrds.commons.exception.BusinessException;
+import hrds.g.biz.bean.InterfaceUseInfo;
 import hrds.testbase.WebBaseTestCase;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.noggit.JSONUtil;
 
 import java.lang.reflect.Type;
 import java.util.List;
@@ -90,7 +92,7 @@ public class ReleaseManageActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient().buildSession()
 				.addData("user_id", USER_ID)
 				.addData("password", "1")
-				.post("http://127.0.0.1:8088/A/action/hrds/a/biz/login/login").getBodyString();
+				.post("http://127.0.0.1:8888/A/action/hrds/a/biz/login/login").getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败"));
 		assertThat(ar.isSuccess(), is(true));
@@ -117,18 +119,18 @@ public class ReleaseManageActionTest extends WebBaseTestCase {
 	@Method(desc = "根据接口类型查看接口信息", logicStep = "1.正确的数据访问1，数据正确" +
 			"2.错误的数据访问1,interface_type不存在，该方法只有两种可能")
 	@Test
-	public void viewInterfaceTypeInfo() {
+	public void searchInterfaceInfoByType() {
 		// 1.正确的数据访问1
 		bodyString = new HttpClient().buildSession()
 				.addData("interface_type", InterfaceType.ShuJuLei.getCode())
-				.post(getActionUrl("viewInterfaceTypeInfo")).getBodyString();
+				.post(getActionUrl("searchInterfaceInfoByType")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败"));
 		assertThat(ar.isSuccess(), is(true));
 		List<Interface_info> interfaceInfos = ar.getDataForEntityList(Interface_info.class);
-		assertThat(interfaceInfos.get(0).getInterface_code(), is("01-122"));
-		assertThat(interfaceInfos.get(0).getInterface_name(), is("集市表分页查询"));
-		assertThat(interfaceInfos.get(0).getUrl(), is("marketPagingQuery"));
+		assertThat(interfaceInfos.get(0).getInterface_code(), is("01-123"));
+		assertThat(interfaceInfos.get(0).getInterface_name(), is("表使用权限查询接口"));
+		assertThat(interfaceInfos.get(0).getUrl(), is("tableUsePermissions"));
 		assertThat(interfaceInfos.get(0).getInterface_state(), is(IsFlag.Shi.getCode()));
 		assertThat(interfaceInfos.get(0).getUser_id(), is(1001L));
 		// 2.错误的数据访问1,interface_type不存在
@@ -148,17 +150,18 @@ public class ReleaseManageActionTest extends WebBaseTestCase {
 	@Test
 	public void saveInterfaceUseInfo() {
 		// 1.正确的数据访问，数据正确
-		String[] start_use_date = {SYSDATE, SYSDATE, SYSDATE, SYSDATE, SYSDATE,
-				SYSDATE, SYSDATE, SYSDATE};
-		String[] use_valid_date = {ENDATE, ENDATE, ENDATE, ENDATE, ENDATE,
-				ENDATE, ENDATE, ENDATE};
-		long[] interface_id = {103, 104, 105, 111, 114, 115, 118, 123};
+		InterfaceUseInfo[] interfaceUseInfos = new InterfaceUseInfo[3];
+		InterfaceUseInfo interfaceUseInfo = new InterfaceUseInfo();
+		for (int i = 0; i < interfaceUseInfos.length; i++) {
+			interfaceUseInfo.setInterface_id((long) (103 + i));
+			interfaceUseInfo.setStart_use_date(SYSDATE);
+			interfaceUseInfo.setUse_valid_date(ENDATE);
+			interfaceUseInfos[i] = interfaceUseInfo;
+		}
 		bodyString = new HttpClient().buildSession()
+				.addJson(JsonUtil.toJson(interfaceUseInfos))
 				.addData("user_id", new long[]{USER_ID, USER_ID + 1})
-				.addData("interface_id", interface_id)
 				.addData("interface_note", "新增接口使用信息测试")
-				.addData("start_use_date", start_use_date)
-				.addData("use_valid_date", use_valid_date)
 				.addData("classify_name", "dhw-cs")
 				.post(getActionUrl("saveInterfaceUseInfo")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
@@ -187,10 +190,8 @@ public class ReleaseManageActionTest extends WebBaseTestCase {
 		// 2.错误的数据访问1，user_id为空
 		bodyString = new HttpClient().buildSession()
 				.addData("user_id", "")
-				.addData("interface_id", interface_id)
+				.addData("interfaceUseInfos", JSONUtil.toJSON(interfaceUseInfos))
 				.addData("interface_note", "新增接口使用信息测试")
-				.addData("start_use_date", start_use_date)
-				.addData("use_valid_date", use_valid_date)
 				.addData("classify_name", "dhw-cs")
 				.post(getActionUrl("saveInterfaceUseInfo")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
@@ -199,10 +200,8 @@ public class ReleaseManageActionTest extends WebBaseTestCase {
 		// 3.错误的数据访问2，interface_id为空
 		bodyString = new HttpClient().buildSession()
 				.addData("user_id", new long[]{USER_ID, USER_ID + 1})
-				.addData("interface_id", "")
+				.addData("interfaceUseInfos", JSONUtil.toJSON(interfaceUseInfos))
 				.addData("interface_note", "新增接口使用信息测试")
-				.addData("start_use_date", start_use_date)
-				.addData("use_valid_date", use_valid_date)
 				.addData("classify_name", "dhw-cs")
 				.post(getActionUrl("saveInterfaceUseInfo")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
@@ -211,10 +210,9 @@ public class ReleaseManageActionTest extends WebBaseTestCase {
 		// 4.错误的数据访问3，start_use_date为空
 		bodyString = new HttpClient().buildSession()
 				.addData("user_id", new long[]{USER_ID, USER_ID + 1})
-				.addData("interface_id", interface_id)
+				.addData("interfaceUseInfos", JSONUtil.toJSON(interfaceUseInfos))
 				.addData("interface_note", "新增接口使用信息测试")
 				.addData("start_use_date", "")
-				.addData("use_valid_date", use_valid_date)
 				.addData("classify_name", "dhw-cs")
 				.post(getActionUrl("saveInterfaceUseInfo")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
@@ -223,10 +221,8 @@ public class ReleaseManageActionTest extends WebBaseTestCase {
 		// 5.错误的数据访问4，use_valid_date为空
 		bodyString = new HttpClient().buildSession()
 				.addData("user_id", new long[]{USER_ID, USER_ID + 1})
-				.addData("interface_id", interface_id)
+				.addData("interfaceUseInfos", JSONUtil.toJSON(interfaceUseInfos))
 				.addData("interface_note", "新增接口使用信息测试")
-				.addData("start_use_date", start_use_date)
-				.addData("use_valid_date", "")
 				.addData("classify_name", "dhw-cs")
 				.post(getActionUrl("saveInterfaceUseInfo")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()

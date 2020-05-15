@@ -4,7 +4,6 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
-import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
@@ -12,11 +11,9 @@ import hrds.commons.base.BaseAction;
 import hrds.commons.entity.Sys_user;
 import hrds.commons.entity.Sysreg_parameter_info;
 import hrds.commons.entity.Table_use_info;
-import hrds.commons.utils.Constant;
+import hrds.g.biz.commons.InterfaceUtils;
 import hrds.g.biz.init.InterfaceManager;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -36,7 +33,7 @@ public class DataTableUseInfoAction extends BaseAction {
 		assembler.addSql("SELECT distinct t1.use_id,t1.original_name,t1.sysreg_name," +
 				"t3.user_name FROM " + Table_use_info.TableName + " t1," + Sysreg_parameter_info.TableName +
 				" t2," + Sys_user.TableName + " t3 WHERE t1.use_id = t2.use_id AND t1.user_id = t3.user_id");
-		// 2.判断用户ID是否为空，不为空增加调教查询
+		// 2.判断用户ID是否为空，不为空增加条件查询
 		if (user_id != null) {
 			assembler.addSql(" AND t1.user_id = ?").addParam(user_id);
 		}
@@ -69,7 +66,7 @@ public class DataTableUseInfoAction extends BaseAction {
 	@Method(desc = "根据表使用ID查看字段信息（接口使用监控）",
 			logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制" +
 					"2.返回查询字段信息" +
-					"3.处理数据为数组")
+					"3.封装成list<map>格式数据返回")
 	@Param(name = "use_id", desc = "接口使用ID", range = "新增接口使用信息时生成")
 	@Return(desc = "返回查询字段信息", range = "无限制")
 	public List<Map<String, String>> searchFieldInfoById(Long use_id) {
@@ -77,18 +74,8 @@ public class DataTableUseInfoAction extends BaseAction {
 		// 2.返回查询字段信息
 		List<String> columnList = Dbo.queryOneColumnList("SELECT table_column_name FROM "
 				+ Sysreg_parameter_info.TableName + " WHERE use_id = ?", use_id);
-		if (columnList.isEmpty()) {
-			return null;
-		}
-		// 3.处理数据为数组
-		List<Map<String, String>> list = new ArrayList<>();
-		columnList = StringUtil.split(columnList.get(0), Constant.METAINFOSPLIT);
-		for (String table_column_name : columnList) {
-			Map<String, String> columnMap = new HashMap<>();
-			columnMap.put("table_column_name", table_column_name);
-			list.add(columnMap);
-		}
-		return list;
+		// 3.封装成list<map>格式数据返回
+		return InterfaceUtils.getMaps(columnList);
 	}
 
 	@Method(desc = "根据表使用ID删除数据表信息（接口使用监控）",

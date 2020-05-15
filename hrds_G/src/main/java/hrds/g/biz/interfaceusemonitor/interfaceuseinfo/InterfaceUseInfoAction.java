@@ -9,8 +9,10 @@ import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
+import hrds.commons.codes.InterfaceState;
 import hrds.commons.entity.Interface_use;
 import hrds.commons.entity.Interface_use_log;
+import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.DboExecute;
 import hrds.g.biz.init.InterfaceManager;
 
@@ -77,10 +79,15 @@ public class InterfaceUseInfoAction extends BaseAction {
 	@Method(desc = "接口禁用启用（接口使用监控）", logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制" +
 			"2.更新接口状态" +
 			"3.重新初始化接口使用信息")
-	@Param(name = "use_state", desc = "接口状态", range = "使用（IsFlag）代码项")
+	@Param(name = "use_state", desc = "接口状态", range = "使用（InterfaceState）代码项")
 	@Param(name = "interface_use_id", desc = "接口使用用户ID", range = "新增接口使用信息时生成")
 	public void interfaceDisableEnable(Long interface_use_id, String use_state) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
+		try {
+			InterfaceState.ofEnumByCode(use_state);
+		} catch (Exception e) {
+			throw new BusinessException("根据use_state=" + use_state + "没有找到对应代码项值");
+		}
 		// 2.更新接口状态
 		DboExecute.updatesOrThrow("更新接口状态失败", "UPDATE " + Interface_use.TableName
 				+ " set use_state = ? WHERE interface_use_id = ?", use_state, interface_use_id);
@@ -146,10 +153,16 @@ public class InterfaceUseInfoAction extends BaseAction {
 			"2.更新接口使用信息" +
 			"3.重新初始化接口使用信息")
 	@Param(name = "interface_use_id", desc = "接口使用用户ID", range = "新增接口使用信息时生成")
-	@Param(name = "use_valid_date", desc = "有效截至日期", range = "yyyyMMdd格式")
-	@Param(name = "start_use_date", desc = "有效截至日期", range = "yyyyMMdd格式")
+	@Param(name = "use_valid_date", desc = "有效截至日期", range = "yyyyMMdd格式,如：20200501")
+	@Param(name = "start_use_date", desc = "有效截至日期", range = "yyyyMMdd格式，如：20200501")
 	public void updateInterfaceUseInfo(Long interface_use_id, String start_use_date, String use_valid_date) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
+		if (start_use_date.contains("-") && start_use_date.length() == 10) {
+			start_use_date = StringUtil.replace(start_use_date, "-", "");
+		}
+		if (use_valid_date.contains("-") && use_valid_date.length() == 10) {
+			use_valid_date = StringUtil.replace(use_valid_date, "-", "");
+		}
 		// 2.更新接口使用信息
 		DboExecute.updatesOrThrow("更新接口使用信息失败", " update " + Interface_use.TableName
 						+ " set start_use_date=?,use_valid_date=? where interface_use_id = ?",
