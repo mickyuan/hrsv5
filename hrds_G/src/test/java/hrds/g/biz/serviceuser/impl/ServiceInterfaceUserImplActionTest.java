@@ -1,12 +1,10 @@
-package hrds.g.biz;
+package hrds.g.biz.serviceuser.impl;
 
 import fd.ng.core.annotation.DocClass;
-import fd.ng.core.annotation.Method;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
-import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import hrds.commons.codes.IsFlag;
@@ -24,9 +22,8 @@ import org.junit.Test;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-@DocClass(desc = "接口响应时间测试类", author = "dhw", createdate = "2020/4/10 9:36")
-public class InterfaceIndexActionTest extends WebBaseTestCase {
-
+@DocClass(desc = "服务接口测试类", author = "dhw", createdate = "2020/4/20 16:12")
+public class ServiceInterfaceUserImplActionTest extends WebBaseTestCase {
 	private static String bodyString;
 	private static ActionResult ar;
 	// 用户ID
@@ -102,28 +99,54 @@ public class InterfaceIndexActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient().buildSession()
 				.addData("user_id", USER_ID)
 				.addData("password", "1")
-				.post("http://127.0.0.1:8888/A/action/hrds/a/biz/login/login").getBodyString();
+				.post("http://127.0.0.1:8088/A/action/hrds/a/biz/login/login").getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败"));
 		assertThat(ar.isSuccess(), is(true));
 	}
 
-	@Method(desc = "查询接口响应时间", logicStep = "1.正确的数据访问1，数据有效" +
-			"2.该方法只有一种情况")
 	@Test
-	public void interfaceResponseTimeTest() {
+	public void getToken() {
 		// 1.正确的数据访问1，数据有效
 		bodyString = new HttpClient().buildSession()
-				.post(getActionUrl("interfaceResponseTime")).getBodyString();
+				.addData("user_id","2001")
+				.addData("user_password","1")
+				.post(getActionUrl("getToken")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败"));
 		assertThat(ar.isSuccess(), is(true));
-		Result result = ar.getDataForResult();
-		assertThat(result.getString(0, "interface_name"), is("单表普通查询接口"));
-		assertThat(result.getLong(0, "interface_use_id"), is(INTERFACE_USE_ID));
-		assertThat(result.getLong(0, "avg"), is(1L));
-		assertThat(result.getLong(0, "min"), is(1L));
-		assertThat(result.getLong(0, "max"), is(1L));
+	}
+
+	@Test
+	public void tableUsePermissions() {
+	}
+
+	@Test
+	public void generalQuery() {
+	}
+
+	@Test
+	public void tableStructureQuery() {
+	}
+
+	@Test
+	public void fileAttributeSearch() {
+	}
+
+	@Test
+	public void sqlInterfaceSearch() {
+	}
+
+	@Test
+	public void rowKeySearch() {
+	}
+
+	@Test
+	public void uuidDownload() {
+	}
+
+	@Test
+	public void getIpAndPort() {
 	}
 
 	@After

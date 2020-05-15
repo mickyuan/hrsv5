@@ -113,10 +113,10 @@ public class InterfaceUserManageActionTest extends WebBaseTestCase {
 		assertThat(ar.isSuccess(), is(true));
 		result = ar.getDataForResult();
 		for (int i = 0; i < result.getRowCount(); i++) {
-			assertThat("接口测试用户-dhw" + i, is(result.getString(0,"user_name")));
-			assertThat("123@163.com", is(result.getString(0,"user_email")));
-			assertThat("1", is(result.getString(0,"user_password")));
-			assertThat("接口测试用户-dhw" + i, is(result.getString(0,"user_remark")));
+			assertThat("接口测试用户-dhw" + i, is(result.getString(0, "user_name")));
+			assertThat("123@163.com", is(result.getString(0, "user_email")));
+			assertThat("1", is(result.getString(0, "user_password")));
+			assertThat("接口测试用户-dhw" + i, is(result.getString(0, "user_remark")));
 		}
 	}
 

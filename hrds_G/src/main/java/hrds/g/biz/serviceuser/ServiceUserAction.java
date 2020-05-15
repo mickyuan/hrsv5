@@ -14,10 +14,9 @@ import hrds.commons.base.BaseAction;
 import hrds.commons.entity.Interface_use;
 import hrds.commons.entity.Sysreg_parameter_info;
 import hrds.commons.entity.Table_use_info;
-import hrds.commons.utils.Constant;
 import hrds.commons.utils.PropertyParaValue;
+import hrds.g.biz.commons.InterfaceUtils;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -77,7 +76,8 @@ public class ServiceUserAction extends BaseAction {
 
 	@Method(desc = "根据表使用ID查询当前用户对应的列信息",
 			logicStep = "1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制" +
-					"2.返回根据表使用ID查询当前用户对应的列信息")
+					"2.返回根据表使用ID查询当前用户对应的列信息" +
+					"3.封装成list<map>格式数据返回")
 	@Param(name = "use_id", desc = "接口使用ID", range = "新增接口使用信息时生成")
 	@Return(desc = "返回根据表使用ID查询当前用户对应的列信息", range = "无限制")
 	public List<Map<String, String>> searchColumnInfoById(long use_id) {
@@ -85,18 +85,8 @@ public class ServiceUserAction extends BaseAction {
 		// 2.返回根据表使用ID查询当前用户对应的列信息
 		List<String> columnList = Dbo.queryOneColumnList("SELECT table_column_name FROM "
 				+ Sysreg_parameter_info.TableName + " WHERE use_id = ? and user_id=?", use_id, getUserId());
-		if (columnList.isEmpty()) {
-			return null;
-		}
-		// 3.处理数据为数组
-		List<Map<String, String>> list = new ArrayList<>();
-		columnList = StringUtil.split(columnList.get(0), Constant.METAINFOSPLIT);
-		for (String table_column_name : columnList) {
-			Map<String, String> columnMap = new HashMap<>();
-			columnMap.put("table_column_name", table_column_name);
-			list.add(columnMap);
-		}
-		return list;
+		// 3.封装成list<map>格式数据返回
+		return InterfaceUtils.getMaps(columnList);
 	}
 
 	@Method(desc = "获取当前用户请求ip端口",
@@ -108,7 +98,7 @@ public class ServiceUserAction extends BaseAction {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		Map<String, Object> useMap = new HashMap<>();
 		// 2.封装当前用户请求ip端口
-		useMap.put("ipAndPort", PropertyParaValue.getString("hyren_host","127.0.0.1") + ":"
+		useMap.put("ipAndPort", PropertyParaValue.getString("hyren_host", "127.0.0.1") + ":"
 				+ RequestUtil.getRequest().getLocalPort());
 		// 3.返回当前用户请求ip端口
 		return useMap;
