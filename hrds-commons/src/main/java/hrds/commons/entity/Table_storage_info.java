@@ -42,6 +42,8 @@ public class Table_storage_info extends ProjectTableEntity
 	private Long storage_time;
 	@DocBean(name ="is_zipper",value="是否拉链存储(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_zipper;
+	@DocBean(name ="hyren_name",value="进库之后拼接的表名:",dataType = String.class,required = true)
+	private String hyren_name;
 
 	/** 取得：储存编号 */
 	public Long getStorage_id(){
@@ -108,5 +110,13 @@ public class Table_storage_info extends ProjectTableEntity
 	/** 设置：是否拉链存储 */
 	public void setIs_zipper(String is_zipper){
 		this.is_zipper=is_zipper;
+	}
+	/** 取得：进库之后拼接的表名 */
+	public String getHyren_name(){
+		return hyren_name;
+	}
+	/** 设置：进库之后拼接的表名 */
+	public void setHyren_name(String hyren_name){
+		this.hyren_name=hyren_name;
 	}
 }
