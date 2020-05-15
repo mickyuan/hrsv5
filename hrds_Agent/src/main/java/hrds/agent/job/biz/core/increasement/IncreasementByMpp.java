@@ -174,7 +174,7 @@ public class IncreasementByMpp extends JDBCIncreasement {
 			//插入有效数据
 			list.add(insertInvalidDataSql(tmpDelTa));
 			//插入所有数据
-			list.add(insertDeltaDataSql(tmpDelTa));
+			list.add(insertDeltaDataSql(tmpDelTa, deltaTableName));
 			//删除原始表
 			dropTableIfExists(tableNameInHBase, db, list);
 			//重命名
@@ -248,27 +248,6 @@ public class IncreasementByMpp extends JDBCIncreasement {
 		sql.deleteCharAt(sql.length() - 1); //将最后的逗号删除
 		sql.append(")");
 		return sql.toString();
-	}
-
-	private String insertDeltaDataSql(String tmpDelTa) {
-		StringBuilder insertDataSql = new StringBuilder(120);
-		//拼接查找增量并插入增量表
-		insertDataSql.append("INSERT INTO ");
-		insertDataSql.append(tmpDelTa);
-		insertDataSql.append("(");
-		for (String col : columns) {
-			insertDataSql.append(col).append(",");
-		}
-		insertDataSql.deleteCharAt(insertDataSql.length() - 1); //将最后的逗号删除
-		insertDataSql.append(" ) ");
-		insertDataSql.append(" select ");
-		for (String col : columns) {
-			insertDataSql.append(deltaTableName).append(".").append(col).append(",");
-		}
-		insertDataSql.deleteCharAt(insertDataSql.length() - 1); //将最后的逗号删除
-		insertDataSql.append(" from ");
-		insertDataSql.append(deltaTableName);
-		return insertDataSql.toString();
 	}
 
 }

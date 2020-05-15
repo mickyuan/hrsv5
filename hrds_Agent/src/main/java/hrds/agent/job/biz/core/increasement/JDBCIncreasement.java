@@ -140,9 +140,43 @@ public abstract class JDBCIncreasement implements Closeable {
 	 * 替换
 	 */
 	public void replace() {
+		//创建临时表存本次采集的数据
+		sqlList.add(createTableIfNotExists(deltaTableName, db, columns, types));
+		//将本次采集的数据存入临时表
+		sqlList.add(insertDeltaDataSql(deltaTableName, todayTableName));
+		//删除上次采集的数据表
 		dropTableIfExists(yesterdayTableName, db, sqlList);
-		sqlList.add("CREATE TABLE " + yesterdayTableName + " AS SELECT * FROM " + todayTableName);
+		//将临时表改名为进数之后的表
+		sqlList.add("ALTER TABLE " + deltaTableName + " RENAME TO " + yesterdayTableName);
 		//执行sql
 		HSqlExecute.executeSql(sqlList, db);
+	}
+
+	/**
+	 * 拼接查询表插入到另一张表的sql
+	 *
+	 * @param targetTableName 目标表名
+	 * @param sourceTableName 源表名
+	 * @return 拼接的sql
+	 */
+	String insertDeltaDataSql(String targetTableName, String sourceTableName) {
+		StringBuilder insertDataSql = new StringBuilder(120);
+		//拼接查找增量并插入增量表
+		insertDataSql.append("INSERT INTO ");
+		insertDataSql.append(targetTableName);
+		insertDataSql.append("(");
+		for (String col : columns) {
+			insertDataSql.append(col).append(",");
+		}
+		insertDataSql.deleteCharAt(insertDataSql.length() - 1); //将最后的逗号删除
+		insertDataSql.append(" ) ");
+		insertDataSql.append(" select ");
+		for (String col : columns) {
+			insertDataSql.append(sourceTableName).append(".").append(col).append(",");
+		}
+		insertDataSql.deleteCharAt(insertDataSql.length() - 1); //将最后的逗号删除
+		insertDataSql.append(" from ");
+		insertDataSql.append(sourceTableName);
+		return insertDataSql.toString();
 	}
 }
