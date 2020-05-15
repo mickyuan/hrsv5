@@ -3,12 +3,13 @@ package hrds.commons.codes.fdCode;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.db.resultset.Result;
-import hrds.commons.codes.AgentStatus;
 import hrds.commons.exception.AppSystemException;
-import sun.applet.Main;
-
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @program: hrsv5
