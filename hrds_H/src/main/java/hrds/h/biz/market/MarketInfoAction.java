@@ -7,6 +7,7 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
+import fd.ng.core.exception.BusinessSystemException;
 import fd.ng.core.utils.CodecUtil;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
@@ -38,19 +39,15 @@ import hrds.main.AppMain;
 import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.poi.ss.usermodel.DataValidation;
-import org.apache.poi.ss.usermodel.DataValidationConstraint;
-import org.apache.poi.ss.usermodel.DataValidationHelper;
+import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.CellRangeAddressList;
 import org.apache.poi.xssf.usermodel.XSSFColor;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-import java.awt.*;
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.awt.Color;
+import java.io.*;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.*;
@@ -77,6 +74,9 @@ public class MarketInfoAction extends BaseAction {
     //TODO 由于目前不存在集市分类 所以随便写的一个ID 为了满足入库需求 之后将去除
     private static final String Category_id = "1000025018";
     private static final String jdbc_url = "jdbc_url";
+    // excel文件后缀名
+    private static final String xlsxSuffix = ".xlsx";
+    private static final String xlsSuffix = ".xlsx";
     private static final Logger logger = LogManager.getLogger(AppMain.class.getName());
 
 
@@ -1585,14 +1585,36 @@ public class MarketInfoAction extends BaseAction {
         dm_relevant_info.setDatatable_id(datatable_id);
         List<Dm_datatable> dm_datatables = Dbo.queryList(Dm_datatable.class, "select datatable_en_name from " + Dm_datatable.TableName + " where datatable_id = ?", dm_relevant_info.getDatatable_id());
         String datatable_en_name = dm_datatables.get(0).getDatatable_en_name();
-        String preworktablename = DruidParseQuerySql.getInDeUpSqlTableName(pre_work);
-        String postworktablename = DruidParseQuerySql.getInDeUpSqlTableName(post_work);
-        if (!preworktablename.equalsIgnoreCase(datatable_en_name)) {
-            throw new BusinessException("前置处理的操作表为" + preworktablename + ",非本集市表,保存失败");
+        if (pre_work.contains(";;")) {
+            List<String> pre_works = Arrays.asList(pre_work.split(";;"));
+            for (String pre_sql : pre_works) {
+                String preworktablename = DruidParseQuerySql.getInDeUpSqlTableName(pre_sql);
+                if (!preworktablename.equalsIgnoreCase(datatable_en_name)) {
+                    throw new BusinessException("前置处理的操作表为" + preworktablename + ",非本集市表,保存失败");
+                }
+            }
+        } else {
+            String preworktablename = DruidParseQuerySql.getInDeUpSqlTableName(pre_work);
+            if (!preworktablename.equalsIgnoreCase(datatable_en_name)) {
+                throw new BusinessException("前置处理的操作表为" + preworktablename + ",非本集市表,保存失败");
+            }
         }
-        if (!postworktablename.equalsIgnoreCase(datatable_en_name)) {
-            throw new BusinessException("后置处理的操作表为" + postworktablename + ",非本集市表,保存失败");
+        if (post_work.contains(";;")) {
+            List<String> post_works = Arrays.asList(post_work.split(";;"));
+            for (String post_sql : post_works) {
+                String preworktablename = DruidParseQuerySql.getInDeUpSqlTableName(post_sql);
+                if (!preworktablename.equalsIgnoreCase(datatable_en_name)) {
+                    throw new BusinessException("后置处理的操作表为" + preworktablename + ",非本集市表,保存失败");
+                }
+            }
+        } else {
+            String preworktablename = DruidParseQuerySql.getInDeUpSqlTableName(post_work);
+            if (!preworktablename.equalsIgnoreCase(datatable_en_name)) {
+                throw new BusinessException("后置处理的操作表为" + preworktablename + ",非本集市表,保存失败");
+            }
         }
+
+
         dm_relevant_info.setPre_work(pre_work);
         dm_relevant_info.setPost_work(post_work);
         dm_relevant_info.setRel_id(PrimayKeyGener.getNextId());
@@ -1611,4 +1633,61 @@ public class MarketInfoAction extends BaseAction {
     }
 
 
+    @Method(desc = "上传Excel文件",
+            logicStep = "")
+    @Param(name = "file", desc = "上传文件,文件名为作业配置对应那几张表名", range = "以每个模块对应表名为文件名")
+    @Param(name = "data_mart_id", desc = "data_mart_id", range = "集市工程主键data_mart_id")
+    @UploadFile
+    public void uploadExcelFile(String file, String data_mart_id) {
+        FileInputStream fis;
+        Workbook workBook;
+        try {
+            //获取文件
+            File uploadedFile = FileUploadUtil.getUploadedFile(file);
+            if (!uploadedFile.exists()) {
+                throw new BusinessException("上传文件不存在！");
+            }
+            //创建的输入流
+            String path = uploadedFile.toPath().toString();
+            fis = new FileInputStream(path);
+            if (path.toLowerCase().endsWith(xlsxSuffix)) {
+                // 4.1读取2007版，以.xlsx结尾
+                try {
+                    workBook = new XSSFWorkbook(fis);
+                } catch (IOException e) {
+                    throw new BusinessException("定义XSSFWorkbook失败");
+                }
+            } else {
+                throw new BusinessException("文件格式不正确，不是excel文件");
+            }
+            saveimportexcel(workBook, data_mart_id);
+        } catch (FileNotFoundException e) {
+            throw new BusinessException("导入excel文件数据失败！");
+        }
+    }
+
+    private void saveimportexcel(Workbook workBook, String data_mart_id) {
+        Sheet sheetAt = workBook.getSheetAt(1);
+        //获取并记录dm_datatable表信息
+        Dm_datatable dm_datatable = new Dm_datatable();
+        String datatable_en_name = sheetAt.getRow(1).getCell(1).getStringCellValue();
+        dm_datatable.setDatatable_en_name(datatable_en_name);
+        List<Dm_datatable> dm_datatables = Dbo.queryList(Dm_datatable.class, "select * from " +
+                Dm_datatable.TableName + " where lower(datatable_en_name) = ?", dm_datatable.getDatatable_en_name().toLowerCase());
+        if (dm_datatables.size() != 0) {
+            throw new BusinessSystemException("表名重复");
+        }
+        String datatable_cn_name = sheetAt.getRow(1).getCell(2).getStringCellValue();
+        dm_datatable.setDatatable_cn_name(datatable_cn_name);
+        String datatable_desc = sheetAt.getRow(1).getCell(3).getStringCellValue();
+        dm_datatable.setDatatable_desc(datatable_desc);
+        String sql_engine = sheetAt.getRow(1).getCell(4).getStringCellValue();
+//        dm_datatable.setSql_engine(SQLEn);
+        String storage_type = sheetAt.getRow(1).getCell(5).getStringCellValue();
+        String table_storage = sheetAt.getRow(1).getCell(6).getStringCellValue();
+        String datatable_lifecycle = sheetAt.getRow(1).getCell(7).getStringCellValue();
+        String datatable_due_date = sheetAt.getRow(1).getCell(8).getStringCellValue();
+        dm_datatable.setDatatable_id(PrimayKeyGener.getNextId());
+
+    }
 }
