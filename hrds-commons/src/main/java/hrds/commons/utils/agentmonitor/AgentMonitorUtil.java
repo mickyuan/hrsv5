@@ -11,17 +11,14 @@ import fd.ng.netclient.http.HttpClient;
 public class AgentMonitorUtil {
 
   /** 建立HttpClient请求工具类 */
-  private static HttpClient httpClient = null;
-
-  static {
-    httpClient = new HttpClient();
-  }
+  private static final HttpClient httpClient  = new HttpClient();
 
   @Method(desc = "检查Agent信息是否能够请求成功,如果能够请求成功并获取到返回值,则认为能够通讯", logicStep = "")
   @Param(name = "host", desc = "Agent ip", range = "不可为空")
   @Param(name = "port", desc = "Agent 端口", range = "不可为空")
   @Return(desc = "返回true/false", range = "true-表示能够正常请求,反之异常")
-  public boolean agentMonitor(String host, int port) {
+  public static boolean agentMonitor(String host, int port) {
+    httpClient.reset();
     String httpMsg = httpClient.post("http://" + host + ":" + port).getBodyString();
     if (StringUtil.isBlank(httpMsg)) {
       return false;
