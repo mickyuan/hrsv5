@@ -20,6 +20,7 @@ import fd.ng.web.util.RequestUtil;
 import fd.ng.web.util.ResponseUtil;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.*;
+import hrds.commons.codes.fdCode.WebCodesItem;
 import hrds.commons.collection.ProcessingData;
 import hrds.commons.collection.bean.LayerBean;
 import hrds.commons.collection.bean.LayerTypeBean;
@@ -1585,32 +1586,36 @@ public class MarketInfoAction extends BaseAction {
         dm_relevant_info.setDatatable_id(datatable_id);
         List<Dm_datatable> dm_datatables = Dbo.queryList(Dm_datatable.class, "select datatable_en_name from " + Dm_datatable.TableName + " where datatable_id = ?", dm_relevant_info.getDatatable_id());
         String datatable_en_name = dm_datatables.get(0).getDatatable_en_name();
-        if (pre_work.contains(";;")) {
-            List<String> pre_works = Arrays.asList(pre_work.split(";;"));
-            for (String pre_sql : pre_works) {
-                String preworktablename = DruidParseQuerySql.getInDeUpSqlTableName(pre_sql);
+        if (pre_work != null) {
+            if (pre_work.contains(";;")) {
+                List<String> pre_works = Arrays.asList(pre_work.split(";;"));
+                for (String pre_sql : pre_works) {
+                    String preworktablename = DruidParseQuerySql.getInDeUpSqlTableName(pre_sql);
+                    if (!preworktablename.equalsIgnoreCase(datatable_en_name)) {
+                        throw new BusinessException("前置处理的操作表为" + preworktablename + ",非本集市表,保存失败");
+                    }
+                }
+            } else {
+                String preworktablename = DruidParseQuerySql.getInDeUpSqlTableName(pre_work);
                 if (!preworktablename.equalsIgnoreCase(datatable_en_name)) {
                     throw new BusinessException("前置处理的操作表为" + preworktablename + ",非本集市表,保存失败");
                 }
             }
-        } else {
-            String preworktablename = DruidParseQuerySql.getInDeUpSqlTableName(pre_work);
-            if (!preworktablename.equalsIgnoreCase(datatable_en_name)) {
-                throw new BusinessException("前置处理的操作表为" + preworktablename + ",非本集市表,保存失败");
-            }
         }
-        if (post_work.contains(";;")) {
-            List<String> post_works = Arrays.asList(post_work.split(";;"));
-            for (String post_sql : post_works) {
-                String preworktablename = DruidParseQuerySql.getInDeUpSqlTableName(post_sql);
+        if (post_work != null) {
+            if (post_work.contains(";;")) {
+                List<String> post_works = Arrays.asList(post_work.split(";;"));
+                for (String post_sql : post_works) {
+                    String preworktablename = DruidParseQuerySql.getInDeUpSqlTableName(post_sql);
+                    if (!preworktablename.equalsIgnoreCase(datatable_en_name)) {
+                        throw new BusinessException("后置处理的操作表为" + preworktablename + ",非本集市表,保存失败");
+                    }
+                }
+            } else {
+                String preworktablename = DruidParseQuerySql.getInDeUpSqlTableName(post_work);
                 if (!preworktablename.equalsIgnoreCase(datatable_en_name)) {
                     throw new BusinessException("后置处理的操作表为" + preworktablename + ",非本集市表,保存失败");
                 }
-            }
-        } else {
-            String preworktablename = DruidParseQuerySql.getInDeUpSqlTableName(post_work);
-            if (!preworktablename.equalsIgnoreCase(datatable_en_name)) {
-                throw new BusinessException("后置处理的操作表为" + preworktablename + ",非本集市表,保存失败");
             }
         }
 
@@ -1667,27 +1672,88 @@ public class MarketInfoAction extends BaseAction {
     }
 
     private void saveimportexcel(Workbook workBook, String data_mart_id) {
-        Sheet sheetAt = workBook.getSheetAt(1);
-        //获取并记录dm_datatable表信息
-        Dm_datatable dm_datatable = new Dm_datatable();
-        String datatable_en_name = sheetAt.getRow(1).getCell(1).getStringCellValue();
-        dm_datatable.setDatatable_en_name(datatable_en_name);
-        List<Dm_datatable> dm_datatables = Dbo.queryList(Dm_datatable.class, "select * from " +
-                Dm_datatable.TableName + " where lower(datatable_en_name) = ?", dm_datatable.getDatatable_en_name().toLowerCase());
-        if (dm_datatables.size() != 0) {
-            throw new BusinessSystemException("表名重复");
-        }
-        String datatable_cn_name = sheetAt.getRow(1).getCell(2).getStringCellValue();
-        dm_datatable.setDatatable_cn_name(datatable_cn_name);
-        String datatable_desc = sheetAt.getRow(1).getCell(3).getStringCellValue();
-        dm_datatable.setDatatable_desc(datatable_desc);
-        String sql_engine = sheetAt.getRow(1).getCell(4).getStringCellValue();
-//        dm_datatable.setSql_engine(SQLEn);
-        String storage_type = sheetAt.getRow(1).getCell(5).getStringCellValue();
-        String table_storage = sheetAt.getRow(1).getCell(6).getStringCellValue();
-        String datatable_lifecycle = sheetAt.getRow(1).getCell(7).getStringCellValue();
-        String datatable_due_date = sheetAt.getRow(1).getCell(8).getStringCellValue();
-        dm_datatable.setDatatable_id(PrimayKeyGener.getNextId());
+        try {
+            Sheet sheetAt = workBook.getSheetAt(0);
+            //获取并记录dm_datatable表信息
+            Dm_datatable dm_datatable = new Dm_datatable();
+            String datatable_en_name = sheetAt.getRow(1).getCell(1).getStringCellValue();
+            dm_datatable.setDatatable_en_name(datatable_en_name);
+            List<Dm_datatable> dm_datatables = Dbo.queryList(Dm_datatable.class, "select * from " +
+                    Dm_datatable.TableName + " where lower(datatable_en_name) = ?", dm_datatable.getDatatable_en_name().toLowerCase());
+            if (dm_datatables.size() != 0) {
+                throw new BusinessSystemException("表名重复");
+            }
+            dm_datatable.setData_mart_id(data_mart_id);
+            String datatable_cn_name = sheetAt.getRow(2).getCell(1).getStringCellValue();
+            dm_datatable.setDatatable_cn_name(datatable_cn_name);
+            String datatable_desc = sheetAt.getRow(3).getCell(1).getStringCellValue();
+            dm_datatable.setDatatable_desc(datatable_desc);
+            String sql_enginevalue = sheetAt.getRow(4).getCell(1).getStringCellValue();
+            //将代码项中的value转化为code
+            String sql_enginecode = WebCodesItem.getCode(SqlEngine.CodeName, sql_enginevalue);
+            dm_datatable.setSql_engine(sql_enginecode);
+            String storage_typevalue = sheetAt.getRow(5).getCell(1).getStringCellValue();
+            //将代码项中的value转化为code
+            String storage_typecode = WebCodesItem.getCode(StorageType.CodeName, storage_typevalue);
+            dm_datatable.setStorage_type(storage_typecode);
+            String table_storagevalue = sheetAt.getRow(6).getCell(1).getStringCellValue();
+            //将代码项中的value转化为code
+            String table_storagecode = WebCodesItem.getCode(TableStorage.CodeName, table_storagevalue);
+            dm_datatable.setTable_storage(table_storagecode);
+            String datatable_lifecyclevalue = sheetAt.getRow(7).getCell(1).getStringCellValue();
+            //将代码项中的value转化为code
+            String datatable_lifecyclecode = WebCodesItem.getCode(TableLifeCycle.CodeName, datatable_lifecyclevalue);
+            dm_datatable.setDatatable_lifecycle(datatable_lifecyclecode);
+            String datatable_due_date = sheetAt.getRow(8).getCell(1).getStringCellValue();
+            dm_datatable.setDatatable_due_date(datatable_due_date);
+            String datatable_id = PrimayKeyGener.getNextId();
+            dm_datatable.setDatatable_id(datatable_id);
+            dm_datatable.setDatatable_create_date(DateUtil.getSysDate());
+            dm_datatable.setDatatable_create_time(DateUtil.getSysTime());
+            dm_datatable.setDdlc_date(DateUtil.getSysDate());
+            dm_datatable.setDdlc_time(DateUtil.getSysTime());
+            dm_datatable.setEtl_date(ZeroDate);
+            //TODO 这里导入的时候 分类ID 也需要修改 要从导出的excelm模板开始修改
+            dm_datatable.setCategory_id(Category_id);
+            dm_datatable.add(Dbo.db());
+            //获取并记录数据目的地
+            String destinationname = "";
+            int count = 0;
+            while (true) {
+                //判断有没有到头
+                if (sheetAt.getRow(12 + count) == null || sheetAt.getRow(12 + count).getCell(0) == null
+                        || StringUtils.isEmpty(sheetAt.getRow(12 + count).getCell(0).getStringCellValue())) {
+                    break;
+                }
+                //是否标志
+                String destinationflagvalue = sheetAt.getRow(12 + count).getCell(0).getStringCellValue();
+                //数据存储目的地的名称 用名称进行匹配，如果匹配不到 则报错
+                String destinationflagcode = WebCodesItem.getCode(IsFlag.CodeName, destinationflagvalue);
+                if (destinationflagcode.equalsIgnoreCase(IsFlag.Shi.getCode())) {
+                    //如果选择标识为是且存储目的地名称不为空，则说明选择了多个存储目的地
+                    if (!StringUtils.isEmpty(destinationname)) {
+                        throw new BusinessSystemException("暂不支持选择多个存储目的地，请确认选择一个");
+                    }
+                    destinationname = sheetAt.getRow(12 + count).getCell(1).getStringCellValue();
+                }
+                count++;
+            }
+            if (StringUtils.isEmpty(destinationname)) {
+                throw new BusinessSystemException("请选择存储目的地");
+            }
+            List<Data_store_layer> data_store_layers = Dbo.queryList(Data_store_layer.class, "select * from " + Data_store_layer.TableName + " where dsl_name = ?", destinationname);
+            //存储关系表
+            Data_store_layer data_store_layer = data_store_layers.get(0);
+            Dm_relation_datatable dm_relation_datatable = new Dm_relation_datatable();
+            dm_relation_datatable.setDatatable_id(datatable_id);
+            dm_relation_datatable.setDsl_id(data_store_layer.getDsl_id());
+            dm_relation_datatable.setIs_successful(JobExecuteState.DengDai.getCode());
+            dm_relation_datatable.add(Dbo.db());
 
+
+        } catch (Exception e) {
+            logger.error(e.getMessage());
+            throw new BusinessSystemException("上传的excel模板存在问题，请确认填写正确");
+        }
     }
 }
