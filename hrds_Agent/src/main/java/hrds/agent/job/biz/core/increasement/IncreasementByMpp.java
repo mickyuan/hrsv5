@@ -166,7 +166,7 @@ public class IncreasementByMpp extends JDBCIncreasement {
 	@Override
 	public void mergeIncrement() {
 		List<String> list = new ArrayList<>();
-		String tmpDelTa = deltaTableName + "t";
+		String tmpDelTa = tableNameInHBase + "hyt";
 		try {
 			dropTableIfExists(tmpDelTa, db, list);
 			//创建临时表
