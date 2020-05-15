@@ -7,6 +7,8 @@ import java.util.*;
                                                                                        
 public class CodesItem{                        
 	private static final Log logger = LogFactory.getLog(CodesItem.class);                                                      
+	/**数据质量规则级别   */
+	protected static final String edRuleLevel=new String("EdRuleLevel");
 	/**数据质量校验结果   */
 	protected static final String dqcVerifyResult=new String("DqcVerifyResult");
 	/**数据质量处理状态   */
@@ -125,12 +127,11 @@ public class CodesItem{
 	protected static final String interfaceType=new String("InterfaceType");
 	/**接口状态   */
 	protected static final String interfaceState=new String("InterfaceState");
-	/**数据质量规则级别   */
-	protected static final String edRuleLevel=new String("EdRuleLevel");
 
 
 	public static final Map<String,Class> mapCat= new HashMap<String,Class>(100);
 	static{
+		mapCat.put(edRuleLevel,EdRuleLevel.class);
 		mapCat.put(dqcVerifyResult,DqcVerifyResult.class);
 		mapCat.put(dqcDlStat,DqcDlStat.class);
 		mapCat.put(dqcExecMode,DqcExecMode.class);
@@ -190,7 +191,6 @@ public class CodesItem{
 		mapCat.put(updateType,UpdateType.class);
 		mapCat.put(interfaceType,InterfaceType.class);
 		mapCat.put(interfaceState,InterfaceState.class);
-		mapCat.put(edRuleLevel,EdRuleLevel.class);
 	}
 
 

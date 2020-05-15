@@ -90,6 +90,7 @@ public enum UserType {
 	public String getValue(){return value;}
 	public String getCatCode(){return catCode;}
 	public String getCatValue(){return catValue;}
+	public static final String CodeName = "UserType";
 
 	/**根据指定的代码值转换成中文名字
 	* @param code   本代码的代码值
