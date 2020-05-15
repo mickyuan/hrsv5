@@ -21,8 +21,7 @@ public class AgentMonitorUtil {
   @Param(name = "host", desc = "Agent ip", range = "不可为空")
   @Param(name = "port", desc = "Agent 端口", range = "不可为空")
   @Return(desc = "返回true/false", range = "true-表示能够正常请求,反之异常")
-  public static boolean agentMonitor(String host, int port) {
-
+  public boolean agentMonitor(String host, int port) {
     String httpMsg = httpClient.post("http://" + host + ":" + port).getBodyString();
     if (StringUtil.isBlank(httpMsg)) {
       return false;
