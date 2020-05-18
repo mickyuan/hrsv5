@@ -17,7 +17,6 @@ public abstract class AbstractRealLoader implements Loader {
     protected final String tableName;
     protected final String etlDate;
     protected final String datatableId;
-    protected final String preSql;
     protected final String finalSql;
 
     protected AbstractRealLoader(MarketConf conf) {
@@ -25,7 +24,6 @@ public abstract class AbstractRealLoader implements Loader {
         tableName = conf.getTableName();
         etlDate = conf.getEtlDate();
         datatableId = conf.getDatatableId();
-        preSql = conf.getPreSql();
         finalSql = conf.getFinalSql();
         initTableLayerProperties();
     }
