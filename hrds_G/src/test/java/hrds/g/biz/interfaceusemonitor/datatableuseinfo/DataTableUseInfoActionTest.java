@@ -96,7 +96,8 @@ public class DataTableUseInfoActionTest extends WebBaseTestCase {
 			// 4.造sysreg_parameter_info表测试数据
 			Sysreg_parameter_info sysreg_parameter_info = new Sysreg_parameter_info();
 			sysreg_parameter_info.setParameter_id(PARAM_ID);
-			sysreg_parameter_info.setTable_column_name("PARA_NAME^PARA_VALUE^PARA_TYPE^PARA_ID");
+			sysreg_parameter_info.setTable_ch_column("PARA_NAME");
+			sysreg_parameter_info.setTable_en_column("PARA_NAME");
 			sysreg_parameter_info.setRemark("监控测试");
 			sysreg_parameter_info.setIs_flag(IsFlag.Fou.getCode());
 			sysreg_parameter_info.setUse_id(USE_ID);
