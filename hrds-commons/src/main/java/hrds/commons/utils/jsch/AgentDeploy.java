@@ -35,6 +35,9 @@ public class AgentDeploy {
   /** 系统路径的符号 */
   public static final String SEPARATOR = File.separator;
 
+  /** 执行作业的脚本名称 */
+  public static final String SHELLCOMMAND = "shellCommand.sh";
+
   /** 配置文件的临时存放路径 */
   private static final String CONFPATH =
       System.getProperty("user.dir")
@@ -135,6 +138,9 @@ public class AgentDeploy {
     String agentDirName =
         ChineseUtil.getPingYin(down_info.getAgent_name()) + "_" + down_info.getAgent_port();
 
+    // Agent的生成目录,使用Agent的名称命名的
+    String agentDir = oldAgentPath + SEPARATOR + agentDirName;
+
     // 一 : 将需要的文件SCP 到目标agent目录下
     Session shellSession = null;
     ChannelSftp chSftp = null;
@@ -147,7 +153,7 @@ public class AgentDeploy {
         logger.info(
             "停止就Agent的命令 : "
                 + "kill -9 $(ps -ef |grep HYRENAgentReceive |grep "
-                + oldAgentPath
+                + agentDir
                 + " |grep Dport="
                 + down_info.getAgent_port()
                 + " |grep -v grep| awk '{print $2}'| xargs -n 1)");
@@ -159,9 +165,8 @@ public class AgentDeploy {
                 + down_info.getAgent_port()
                 + " |grep -v grep| awk '{print $2}'| xargs -n 1)");
 
-        logger.info("删除旧目录的命令是 : " + "rm -rf " + oldAgentPath + SEPARATOR + agentDirName);
-        SFTPChannel.execCommandByJSch(
-            shellSession, "rm -rf " + oldAgentPath + SEPARATOR + agentDirName);
+        logger.info("删除旧目录的命令是 : " + "rm -rf " + agentDir);
+        SFTPChannel.execCommandByJSch(shellSession, "rm -rf " + agentDir);
       }
 
       if (StringUtil.isNotBlank(oldLogPath)) {
@@ -174,14 +179,14 @@ public class AgentDeploy {
       logger.info(
           "停止就Agent的命令 : "
               + "kill -9 $(ps -ef |grep HYRENAgentReceive |grep "
-              + oldAgentPath
+              + agentDir
               + " |grep Dport="
               + down_info.getAgent_port()
               + " |grep -v grep| awk '{print $2}'| xargs -n 1)");
       SFTPChannel.execCommandByJSch(
           shellSession,
           "kill -9 $(ps -ef |grep HYRENAgentReceive |grep "
-              + oldAgentPath
+              + agentDir
               + " |grep Dport="
               + down_info.getAgent_port()
               + " |grep -v grep| awk '{print $2}'| xargs -n 1)");
@@ -201,8 +206,15 @@ public class AgentDeploy {
       logger.info("本地Agent路径地址 : " + file.getAbsolutePath());
       logger.info("开始传输的Agent包,从本地路径 : " + file.getAbsolutePath());
       String targetDir = down_info.getSave_dir() + SEPARATOR + agentDirName + SEPARATOR + ".bin";
+      // 传输Agent启动的jar
       chSftp.put(
           file.getAbsolutePath(),
+          targetDir,
+          new FileProgressMonitor(file.length()),
+          ChannelSftp.OVERWRITE);
+      // 传输执行作业的脚本
+      chSftp.put(
+          file.getParent() + SEPARATOR + SHELLCOMMAND,
           targetDir,
           new FileProgressMonitor(file.length()),
           ChannelSftp.OVERWRITE);
@@ -262,6 +274,8 @@ public class AgentDeploy {
                 + down_info.getAgent_port()
                 + " -Dproject.dir="
                 + down_info.getSave_dir()
+                + SEPARATOR
+                + agentDirName
                 + " -Dproject.name=\"HYRENAgentReceive\""
                 + " -jar "
                 + file.getName()
@@ -277,6 +291,8 @@ public class AgentDeploy {
                 + down_info.getAgent_port()
                 + " -Dproject.dir="
                 + down_info.getSave_dir()
+                + SEPARATOR
+                + agentDirName
                 + " -Dproject.name=\"HYRENAgentReceive\""
                 + " -jar "
                 + file.getName()
