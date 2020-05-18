@@ -71,9 +71,11 @@ public class DownloadLogUtil {
 		// 1.数据可访问权限处理方式，该方法不需要权限控制
 		OutputStream outputStream;
 		try {
+			logger.info("==========文件下载远程路径=========" + remotePath);
 			// 2.通过本地路径以获取本地文件
-			String path = localPath + remotePath.substring(remotePath.lastIndexOf(File.separator)+1);
-			File localFile = new File(path);
+			localPath = localPath + remotePath.substring(remotePath.lastIndexOf(File.separator) + 1);
+			logger.info("==========文件下载本地路径=========" + localPath);
+			File localFile = new File(localPath);
 			outputStream = new FileOutputStream(localFile);
 			// 3.获取连接到sftp服务器的Channel
 			SFTPChannel sftpChannel = new SFTPChannel();

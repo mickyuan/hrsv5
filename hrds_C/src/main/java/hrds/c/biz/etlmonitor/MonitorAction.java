@@ -31,6 +31,8 @@ import it.uniroma1.dis.wsngroup.gexf4j.core.impl.StaxGraphWriter;
 import it.uniroma1.dis.wsngroup.gexf4j.core.impl.data.AttributeListImpl;
 import it.uniroma1.dis.wsngroup.gexf4j.core.impl.viz.PositionImpl;
 import org.apache.commons.lang.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,6 +41,9 @@ import java.util.*;
 
 @DocClass(desc = "作业调度监控类", author = "dhw", createdate = "2019/12/12 14:37")
 public class MonitorAction extends BaseAction {
+
+	private static final Logger logger = LogManager.getLogger();
+
 	@Method(desc = "监控当前批量情况",
 			logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制"
 					+ "2.判断工程是否存在"
@@ -865,6 +870,7 @@ public class MonitorAction extends BaseAction {
 			String remoteFileName = curr_bath_date + "_" + etl_job + ".tar.gz";
 			// 10.本地下载路径
 			String localPath = ETLJobUtil.getFilePath(null);
+			logger.info("==========历史日志文件下载本地路径=========" + localPath);
 			// 11.判断路径是否以分隔符结尾，如果不是加分隔符拼接文件名
 			if (logDir.endsWith(File.separator)) {
 				logDir = logDir + File.separator + remoteFileName;

@@ -450,7 +450,7 @@ public class EltSysAction extends BaseAction {
 			ETLJobUtil.interactingWithTheAgentServer(compressCommand, etlSys, sftpDetails1);
 			// 10.获取文件下载路径
 			String localPath = ETLJobUtil.getFilePath(null);
-			logger.info("==========文件下载本地路径=========" + localPath);
+			logger.info("==========control/trigger文件下载本地路径=========" + localPath);
 			// 11.从服务器下载文件到本地
 			if (IsFlag.Fou == IsFlag.ofEnumByCode(isControl)) {
 				// CONTROL日志文件名称
