@@ -87,11 +87,8 @@ public class DataRangeManageAction extends BaseAction {
 			"2.查询集市层表数据信息" +
 			"3.删除接口表信息" +
 			"4.保存系统登记表使用信息" +
-			"5.获取列信息" +
-			"6.判断选择列是否为空" +
-			"6.1不为空，列名存选择列以逗号拼接，表说明存选择列与所有列的交集以及对应列类型" +
-			"6.2为空，列名存所有列，表说明存所有列以及对应列类型" +
-			"7.保存系统登记参数表信息，一对一存储")
+			"5.判断列信息是否为空" +
+			"6.保存系统登记参数表信息，一对多存储")
 	@Param(name = "user_id", desc = "用户ID", range = "新增用户时生成")
 	@Param(name = "table_note", desc = "备注", range = "无限制")
 	@Param(name = "file_id", desc = "文件ID", range = "无限制")
@@ -112,22 +109,18 @@ public class DataRangeManageAction extends BaseAction {
 				// 4.保存系统登记表使用信息
 				addTableUseInfo(table_note, data_layer, userId, useId, new Table_use_info(),
 						dmDataTable.getDatatable_en_name(), dmDataTable.getDatatable_cn_name());
-				// 5.获取列信息
-				List<Datatable_field_info> fieldInfos = Dbo.queryList(Datatable_field_info.class,
-						"SELECT field_en_name,field_type FROM " + Datatable_field_info.TableName
-								+ " WHERE datatable_id = ?", tableDataInfo.getFile_id());
 				Sysreg_parameter_info sysreg_parameter_info = new Sysreg_parameter_info();
 				sysreg_parameter_info.setUser_id(userId);
 				sysreg_parameter_info.setUse_id(useId);
 				sysreg_parameter_info.setIs_flag(IsFlag.Fou.getCode());
 				sysreg_parameter_info.setParameter_id(PrimayKeyGener.getNextId());
 				ColumnDataInfo[] columnDataInfos = tableDataInfo.getColumnDataInfos();
-				// 6.判断选择列是否为空
+				// 5.判断列信息是否为空
 				if (columnDataInfos != null && columnDataInfos.length != 0) {
 					for (ColumnDataInfo columnDataInfo : columnDataInfos) {
 						columnDataInfo.setTable_ch_column(columnDataInfo.getTable_ch_column());
 						columnDataInfo.setTable_cn_column(columnDataInfo.getTable_cn_column());
-						// 7.保存系统登记参数表信息，一对多存储
+						// 6.保存系统登记参数表信息，一对多存储
 						sysreg_parameter_info.add(Dbo.db());
 					}
 				}

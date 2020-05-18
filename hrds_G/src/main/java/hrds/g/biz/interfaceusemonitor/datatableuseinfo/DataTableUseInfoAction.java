@@ -11,11 +11,7 @@ import hrds.commons.base.BaseAction;
 import hrds.commons.entity.Sys_user;
 import hrds.commons.entity.Sysreg_parameter_info;
 import hrds.commons.entity.Table_use_info;
-import hrds.g.biz.commons.InterfaceUtils;
 import hrds.g.biz.init.InterfaceManager;
-
-import java.util.List;
-import java.util.Map;
 
 @DocClass(desc = "查询接口监控信息类接口（数据表信息）", author = "dhw", createdate = "2020/3/30 9:20")
 public class DataTableUseInfoAction extends BaseAction {
@@ -65,17 +61,14 @@ public class DataTableUseInfoAction extends BaseAction {
 
 	@Method(desc = "根据表使用ID查看字段信息（接口使用监控）",
 			logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制" +
-					"2.返回查询字段信息" +
-					"3.封装成list<map>格式数据返回")
+					"2.查询字段信息并返回")
 	@Param(name = "use_id", desc = "接口使用ID", range = "新增接口使用信息时生成")
 	@Return(desc = "返回查询字段信息", range = "无限制")
-	public List<Map<String, String>> searchFieldInfoById(Long use_id) {
+	public Result searchFieldInfoById(Long use_id) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
-		// 2.返回查询字段信息
-		List<String> columnList = Dbo.queryOneColumnList("SELECT table_column_name FROM "
+		// 2.查询字段信息并返回
+		return Dbo.queryResult("SELECT table_ch_column,table_cn_column FROM "
 				+ Sysreg_parameter_info.TableName + " WHERE use_id = ?", use_id);
-		// 3.封装成list<map>格式数据返回
-		return InterfaceUtils.getMaps(columnList);
 	}
 
 	@Method(desc = "根据表使用ID删除数据表信息（接口使用监控）",
