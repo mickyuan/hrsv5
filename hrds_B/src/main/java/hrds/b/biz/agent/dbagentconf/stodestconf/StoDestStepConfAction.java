@@ -6,6 +6,7 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
+import fd.ng.db.jdbc.SqlOperator.Assembler;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
 import hrds.b.biz.agent.bean.ColStoParam;
@@ -150,9 +151,9 @@ public class StoDestStepConfAction extends BaseAction {
                 + Data_extraction_def.TableName
                 + " ded"
                 + " on ti.table_id = ded.table_id"
-                + " where ti.database_id = ? and ded.data_extract_type in (?,?)",
+                + " where ti.database_id = ? and ded.data_extract_type = ?",
             colSetId,
-            DataExtractType.ShuJuJiaZaiGeShi.getCode(),
+            //            DataExtractType.ShuJuJiaZaiGeShi.getCode(),
             DataExtractType.YuanShuJuGeShi.getCode());
     if (tableIds.isEmpty()) {
       throw new BusinessException("未获取到数据库采集表");
@@ -172,6 +173,25 @@ public class StoDestStepConfAction extends BaseAction {
               (long) tableId);
       returnMap.put("tableId", tableId);
       returnMap.put("dslIds", list);
+      if (list.isEmpty()) {
+        returnMap.put("hyren_name", "");
+      } else {
+        Assembler assembler =
+            Assembler.newInstance()
+                .addSql(
+                    "select t1.hyren_name from table_storage_info t1 join data_relation_table t2 "
+                        + " on t1.storage_id = t2.storage_id where t1.table_id = ? ");
+        assembler.addParam(tableId);
+        assembler.addORParam("t2.dsl_id", list.toArray(new Object[0]), "AND");
+        assembler.addSql(" LIMIT 1");
+        Map<String, Object> map = Dbo.queryOneObject(assembler.sql(), assembler.params());
+        if (map.isEmpty()) {
+          returnMap.put("hyren_name", "");
+        } else {
+          returnMap.put("hyren_name", map.get("hyren_name"));
+        }
+        assembler.clean();
+      }
       returnList.add(returnMap);
     }
     // 3、key为tableId,value为抽取及入库的表ID，key为dslIds,value为该表定义的存储目的地,之所以value是List集合，是因为入库的表可以定义多个存储目的地
@@ -672,9 +692,9 @@ public class StoDestStepConfAction extends BaseAction {
 
       // 5-5、遍历dataStoRelaParams集合，找到表ID相同的对象
       for (DataStoRelaParam param : dataStoRelaParams) {
-        if (StringUtil.isBlank(param.getHyren_name())) {
-          throw new BusinessException("落地表名未填写");
-        }
+        //        if (StringUtil.isBlank(param.getHyren_name())) {
+        //          throw new BusinessException("落地表名未填写");
+        //        }
         Long tableIdFromParam = param.getTableId();
         if (tableIdFromTSI.equals(tableIdFromParam)) {
           // 将该张表的存储目的地保存到数据存储关系表中，有几个目的地，就保存几条
