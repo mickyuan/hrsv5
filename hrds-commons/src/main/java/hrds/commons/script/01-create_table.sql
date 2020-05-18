@@ -1,162 +1,4 @@
-﻿--接口使用信息日志表
-DROP TABLE IF EXISTS INTERFACE_USE_LOG ;
-CREATE TABLE INTERFACE_USE_LOG(
-LOG_ID                                            BIGINT default 0 NOT NULL, --日志ID
-INTERFACE_NAME                                    VARCHAR(512) NOT NULL, --接口名称
-REQUEST_STATE                                     VARCHAR(200) NOT NULL, --请求状态
-RESPONSE_TIME                                     DECIMAL(10) NOT NULL, --响应时间
-BROWSER_TYPE                                      VARCHAR(512) NULL, --浏览器类型
-BROWSER_VERSION                                   VARCHAR(512) NULL, --浏览器版本
-SYSTEM_TYPE                                       VARCHAR(512) NULL, --系统类型
-REQUEST_MODE                                      VARCHAR(512) NULL, --请求方式
-REMOTEADDR                                        VARCHAR(512) NULL, --客户端的IP
-PROTOCOL                                          VARCHAR(512) NULL, --超文本传输协议版本
-REQUEST_INFO                                      VARCHAR(6000) NULL, --请求信息
-REQUEST_STIME                                     VARCHAR(512) NULL, --请求起始时间
-REQUEST_ETIME                                     VARCHAR(512) NULL, --请求结束时间
-REQUEST_TYPE                                      VARCHAR(512) NULL, --请求类型
-INTERFACE_USE_ID                                  BIGINT default 0 NOT NULL, --接口使用ID
-USER_ID                                           BIGINT default 0 NOT NULL, --用户ID
-USER_NAME                                         VARCHAR(512) NULL, --用户名称
-CONSTRAINT INTERFACE_USE_LOG_PK PRIMARY KEY(LOG_ID)   );
-
---变量配置表
-DROP TABLE IF EXISTS DQ_SYS_CFG ;
-CREATE TABLE DQ_SYS_CFG(
-SYS_VAR_ID                                        BIGINT default 0 NOT NULL, --系统变量编号
-VAR_NAME                                          VARCHAR(64) NOT NULL, --变量名
-VAR_VALUE                                         VARCHAR(80) NULL, --变量值
-APP_UPDT_DT                                       CHAR(8) NOT NULL, --更新日期
-APP_UPDT_TI                                       CHAR(6) NOT NULL, --更新时间
-USER_ID                                           BIGINT default 0 NOT NULL, --用户ID
-CONSTRAINT DQ_SYS_CFG_PK PRIMARY KEY(SYS_VAR_ID,VAR_NAME)   );
-
---数据质量规则配置清单表
-DROP TABLE IF EXISTS DQ_DEFINITION ;
-CREATE TABLE DQ_DEFINITION(
-REG_NUM                                           BIGINT default 0 NOT NULL, --规则编号
-REG_NAME                                          VARCHAR(100) NULL, --规则名称
-LOAD_STRATEGY                                     VARCHAR(100) NULL, --加载策略
-GROUP_SEQ                                         VARCHAR(100) NULL, --分组序号
-TARGET_TAB                                        VARCHAR(100) NULL, --目标表名
-TARGET_KEY_FIELDS                                 VARCHAR(2048) NULL, --目标表关键字段
-OPPOSITE_TAB                                      VARCHAR(100) NULL, --比对表名
-OPPOSITE_KEY_FIELDS                               VARCHAR(2048) NULL, --比对表关键字段
-RANGE_MIN_VAL                                     VARCHAR(64) NULL, --范围区间的最小值
-RANGE_MAX_VAL                                     VARCHAR(64) NULL, --范围区间的最大值
-LIST_VALS                                         VARCHAR(1024) NULL, --清单值域
-CHECK_LIMIT_CONDITION                             VARCHAR(1024) NULL, --检查范围限定条件
-SPECIFY_SQL                                       VARCHAR(4000) NULL, --指定SQL
-ERR_DATA_SQL                                      VARCHAR(4000) NULL, --异常数据SQL
-INDEX_DESC1                                       VARCHAR(500) NULL, --检测指标1含义
-INDEX_DESC2                                       VARCHAR(500) NULL, --检测指标2含义
-INDEX_DESC3                                       VARCHAR(500) NULL, --检测指标3含义
-FLAGS                                             VARCHAR(32) NULL, --标志域
-REMARK                                            VARCHAR(4000) NULL, --描述
-APP_UPDT_DT                                       CHAR(8) NOT NULL, --更新日期
-APP_UPDT_TI                                       CHAR(6) NOT NULL, --更新时间
-RULE_TAG                                          VARCHAR(20) NULL, --规则标签
-MAIL_RECEIVE                                      VARCHAR(1200) NULL, --接收邮箱
-RULE_SRC                                          VARCHAR(50) NULL, --规则来源
-IS_SAVEINDEX1                                     CHAR(1) NOT NULL, --是否保存指标1数据
-IS_SAVEINDEX2                                     CHAR(1) NOT NULL, --是否保存指标2数据
-IS_SAVEINDEX3                                     CHAR(1) NOT NULL, --是否保存指标3数据
-CASE_TYPE                                         VARCHAR(80) NOT NULL, --规则类型
-USER_ID                                           BIGINT default 0 NOT NULL, --用户ID
-CONSTRAINT DQ_DEFINITION_PK PRIMARY KEY(REG_NUM)   );
-
---数据质量规则类型定义表
-DROP TABLE IF EXISTS DQ_RULE_DEF ;
-CREATE TABLE DQ_RULE_DEF(
-CASE_TYPE                                         VARCHAR(80) NOT NULL, --规则类型
-CASE_TYPE_DESC                                    VARCHAR(512) NULL, --规则类型描述
-INDEX_DESC1                                       VARCHAR(512) NULL, --检测指标1含义
-INDEX_DESC2                                       VARCHAR(512) NULL, --检测指标2含义
-INDEX_DESC3                                       VARCHAR(512) NULL, --检测指标3含义
-REMARK                                            VARCHAR(512) NULL, --说明
-CONSTRAINT DQ_RULE_DEF_PK PRIMARY KEY(CASE_TYPE)   );
-
---数据质量校验结果表
-DROP TABLE IF EXISTS DQ_RESULT ;
-CREATE TABLE DQ_RESULT(
-TASK_ID                                           BIGINT default 0 NOT NULL, --任务编号
-VERIFY_DATE                                       CHAR(8) NULL, --校验会计日期
-TARGET_TAB                                        VARCHAR(100) NULL, --目标表名
-TARGET_KEY_FIELDS                                 VARCHAR(1024) NULL, --目标表关键字段
-START_DATE                                        CHAR(8) NULL, --执行开始日期
-START_TIME                                        CHAR(6) NULL, --执行开始时间
-END_DATE                                          CHAR(8) NULL, --执行结束日期
-END_TIME                                          CHAR(6) NULL, --执行结束时间
-ELAPSED_MS                                        INTEGER default 0 NULL, --执行耗时
-VERIFY_RESULT                                     CHAR(1) NULL, --校验结果
-CHECK_INDEX1                                      INTEGER default 0 NULL, --检查指标1结果
-CHECK_INDEX2                                      INTEGER default 0 NULL, --检查指标2结果
-CHECK_INDEX3                                      INTEGER default 0 NULL, --检查指标3结果
-INDEX_DESC1                                       VARCHAR(500) NULL, --检查指标1含义
-INDEX_DESC2                                       VARCHAR(500) NULL, --检查指标2含义
-INDEX_DESC3                                       VARCHAR(500) NULL, --检查指标3含义
-ERRNO                                             VARCHAR(1024) NULL, --校验错误码
-VERIFY_SQL                                        VARCHAR(4000) NULL, --校验SQL
-ERR_DTL_SQL                                       VARCHAR(4000) NULL, --异常明细SQL
-REMARK                                            VARCHAR(512) NULL, --备注
-DL_STAT                                           VARCHAR(5) NULL, --处理状态
-EXEC_MODE                                         VARCHAR(10) NULL, --执行方式
-ERR_DTL_FILE_NAME                                 VARCHAR(100) NULL, --异常数据文件名
-IS_SAVEINDEX1                                     CHAR(1) NOT NULL, --是否保存指标1数据
-IS_SAVEINDEX2                                     CHAR(1) NOT NULL, --是否保存指标2数据
-IS_SAVEINDEX3                                     CHAR(1) NOT NULL, --是否保存指标3数据
-CASE_TYPE                                         VARCHAR(80) NOT NULL, --规则类型
-REG_NUM                                           BIGINT default 0 NOT NULL, --规则编号
-CONSTRAINT DQ_RESULT_PK PRIMARY KEY(TASK_ID)   );
-
---数据质量指标3数据记录表
-DROP TABLE IF EXISTS DQ_INDEX3RECORD ;
-CREATE TABLE DQ_INDEX3RECORD(
-RECORD_ID                                         BIGINT default 0 NOT NULL, --记录编号
-TABLE_NAME                                        VARCHAR(64) NOT NULL, --数据表名
-TABLE_COL                                         VARCHAR(10000) NULL, --数据表字段
-TABLE_SIZE                                        DECIMAL(16,2) default 0 NULL, --数据表大小
-DQC_TS                                            VARCHAR(8) NULL, --表空间名
-FILE_TYPE                                         CHAR(1) NULL, --数据物理文件类型
-FILE_PATH                                         VARCHAR(512) NULL, --数据物理文件路径
-RECORD_DATE                                       CHAR(8) NOT NULL, --记录日期
-RECORD_TIME                                       CHAR(6) NOT NULL, --记录时间
-TASK_ID                                           BIGINT default 0 NOT NULL, --任务编号
-DSL_ID                                            BIGINT default 0 NOT NULL, --存储层配置ID
-CONSTRAINT DQ_INDEX3RECORD_PK PRIMARY KEY(RECORD_ID)   );
-
---系统帮助提示信息表
-DROP TABLE IF EXISTS DQ_HELP_INFO ;
-CREATE TABLE DQ_HELP_INFO(
-HELP_INFO_ID                                      VARCHAR(80) NOT NULL, --帮助提示编号
-HELP_INFO_DESC                                    VARCHAR(512) NULL, --帮助提示描述
-HELP_INFO_DTL                                     VARCHAR(2048) NULL, --帮助提示详细信息
-CONSTRAINT DQ_HELP_INFO_PK PRIMARY KEY(HELP_INFO_ID)   );
-
---校验结果处理日志
-DROP TABLE IF EXISTS DQ_REQ_LOG ;
-CREATE TABLE DQ_REQ_LOG(
-TASK_ID                                           BIGINT default 0 NOT NULL, --任务编号
-DL_TIME                                           VARCHAR(32) NOT NULL, --处理时间
-PRCS_STT                                          VARCHAR(100) NULL, --流程状态
-DL_ACTN                                           VARCHAR(100) NULL, --动作
-DL_DSCR                                           VARCHAR(100) NULL, --处理描述
-DL_ATTC                                           VARCHAR(3072) NULL, --附件
-FL_NM                                             VARCHAR(100) NULL, --文件名
-IS_TOP                                            CHAR(1) NOT NULL, --是否置顶
-REG_NUM                                           BIGINT default 0 NOT NULL, --规则编号
-USER_ID                                           BIGINT default 0 NOT NULL, --用户ID
-CONSTRAINT DQ_REQ_LOG_PK PRIMARY KEY(TASK_ID,DL_TIME)   );
-
---外部检查申请执行日志
-DROP TABLE IF EXISTS DQ_EXE_LOG ;
-CREATE TABLE DQ_EXE_LOG(
-REQ_ID                                            BIGINT default 0 NOT NULL, --申请编号
-TASK_ID                                           BIGINT default 0 NOT NULL, --任务编号
-DL_TIME                                           VARCHAR(32) NOT NULL, --处理时间
-CONSTRAINT DQ_EXE_LOG_PK PRIMARY KEY(REQ_ID)   );
-
---外部检查申请日志
+﻿--外部检查申请日志
 DROP TABLE IF EXISTS DQ_EXT_LOG ;
 CREATE TABLE DQ_EXT_LOG(
 REQ_ID                                            BIGINT default 0 NOT NULL, --申请编号
@@ -376,6 +218,16 @@ USER_ID                                           BIGINT default 0 NOT NULL, --�
 USER_NAME                                         VARCHAR(512) NULL, --用户名称
 OPERATION_TYPE                                    VARCHAR(512) NULL, --操作类型
 CONSTRAINT LOGIN_OPERATION_INFO_PK PRIMARY KEY(LOG_ID)   );
+
+--集市表前置后置作业
+DROP TABLE IF EXISTS DM_RELEVANT_INFO ;
+CREATE TABLE DM_RELEVANT_INFO(
+REL_ID                                            BIGINT default 0 NOT NULL, --作业相关id
+DATATABLE_ID                                      BIGINT default 0 NULL, --数据表id
+PRE_WORK                                          VARCHAR(6500) NULL, --前置作业
+POST_WORK                                         VARCHAR(6500) NULL, --后置作业
+REL_REMARK                                        VARCHAR(512) NULL, --备注
+CONSTRAINT DM_RELEVANT_INFO_PK PRIMARY KEY(REL_ID)   );
 
 --作业定义表
 DROP TABLE IF EXISTS ETL_JOB_DEF ;
@@ -876,6 +728,7 @@ FILE_FORMAT                                       CHAR(1) default '1' NOT NULL, 
 STORAGE_TYPE                                      CHAR(1) NOT NULL, --进数方式
 IS_ZIPPER                                         CHAR(1) NOT NULL, --是否拉链存储
 STORAGE_TIME                                      BIGINT default 0 NOT NULL, --存储期限（以天为单位）
+HYREN_NAME                                        VARCHAR(100) NOT NULL, --进库之后拼接的表名
 TABLE_ID                                          BIGINT default 0 NULL, --表名ID
 CONSTRAINT TABLE_STORAGE_INFO_PK PRIMARY KEY(STORAGE_ID)   );
 
@@ -1641,7 +1494,8 @@ CONSTRAINT TABLE_USE_INFO_PK PRIMARY KEY(USE_ID)   );
 DROP TABLE IF EXISTS SYSREG_PARAMETER_INFO ;
 CREATE TABLE SYSREG_PARAMETER_INFO(
 PARAMETER_ID                                      BIGINT default 0 NOT NULL, --参数ID
-TABLE_COLUMN_NAME                                 VARCHAR(20000) NOT NULL, --表列名称
+TABLE_EN_COLUMN                                   VARCHAR(512) NOT NULL, --表列英文名称
+TABLE_CH_COLUMN                                   VARCHAR(256) NOT NULL, --表列中文名称
 IS_FLAG                                           CHAR(1) NOT NULL, --是否可用
 REMARK                                            VARCHAR(512) NULL, --备注
 USE_ID                                            BIGINT default 0 NOT NULL, --表使用ID
@@ -1659,13 +1513,161 @@ DATA_OUTPUT                                       VARCHAR(20) NOT NULL, --数据
 REMARK                                            VARCHAR(512) NULL, --备注
 CONSTRAINT INTERFACE_FILE_INFO_PK PRIMARY KEY(FILE_ID)   );
 
---集市表前置后置作业
-DROP TABLE IF EXISTS DM_RELEVANT_INFO ;
-CREATE TABLE DM_RELEVANT_INFO(
-REL_ID                                            BIGINT default 0 NOT NULL, --作业相关id
-DATATABLE_ID                                      BIGINT default 0 NULL, --数据表id
-PRE_WORK                                          VARCHAR(6500) NULL, --前置作业
-POST_WORK                                         VARCHAR(6500) NULL, --后置作业
-REL_REMARK                                        VARCHAR(512) NULL, --备注
-CONSTRAINT DM_RELEVANT_INFO_PK PRIMARY KEY(REL_ID)   );
+--接口使用信息日志表
+DROP TABLE IF EXISTS INTERFACE_USE_LOG ;
+CREATE TABLE INTERFACE_USE_LOG(
+LOG_ID                                            BIGINT default 0 NOT NULL, --日志ID
+INTERFACE_NAME                                    VARCHAR(512) NOT NULL, --接口名称
+REQUEST_STATE                                     VARCHAR(200) NOT NULL, --请求状态
+RESPONSE_TIME                                     DECIMAL(10) NOT NULL, --响应时间
+BROWSER_TYPE                                      VARCHAR(512) NULL, --浏览器类型
+BROWSER_VERSION                                   VARCHAR(512) NULL, --浏览器版本
+SYSTEM_TYPE                                       VARCHAR(512) NULL, --系统类型
+REQUEST_MODE                                      VARCHAR(512) NULL, --请求方式
+REMOTEADDR                                        VARCHAR(512) NULL, --客户端的IP
+PROTOCOL                                          VARCHAR(512) NULL, --超文本传输协议版本
+REQUEST_INFO                                      VARCHAR(6000) NULL, --请求信息
+REQUEST_STIME                                     VARCHAR(512) NULL, --请求起始时间
+REQUEST_ETIME                                     VARCHAR(512) NULL, --请求结束时间
+REQUEST_TYPE                                      VARCHAR(512) NULL, --请求类型
+INTERFACE_USE_ID                                  BIGINT default 0 NOT NULL, --接口使用ID
+USER_ID                                           BIGINT default 0 NOT NULL, --用户ID
+USER_NAME                                         VARCHAR(512) NULL, --用户名称
+CONSTRAINT INTERFACE_USE_LOG_PK PRIMARY KEY(LOG_ID)   );
+
+--变量配置表
+DROP TABLE IF EXISTS DQ_SYS_CFG ;
+CREATE TABLE DQ_SYS_CFG(
+SYS_VAR_ID                                        BIGINT default 0 NOT NULL, --系统变量编号
+VAR_NAME                                          VARCHAR(64) NOT NULL, --变量名
+VAR_VALUE                                         VARCHAR(80) NULL, --变量值
+APP_UPDT_DT                                       CHAR(8) NOT NULL, --更新日期
+APP_UPDT_TI                                       CHAR(6) NOT NULL, --更新时间
+USER_ID                                           BIGINT default 0 NOT NULL, --用户ID
+CONSTRAINT DQ_SYS_CFG_PK PRIMARY KEY(SYS_VAR_ID,VAR_NAME)   );
+
+--数据质量规则配置清单表
+DROP TABLE IF EXISTS DQ_DEFINITION ;
+CREATE TABLE DQ_DEFINITION(
+REG_NUM                                           BIGINT default 0 NOT NULL, --规则编号
+REG_NAME                                          VARCHAR(100) NULL, --规则名称
+LOAD_STRATEGY                                     VARCHAR(100) NULL, --加载策略
+GROUP_SEQ                                         VARCHAR(100) NULL, --分组序号
+TARGET_TAB                                        VARCHAR(100) NULL, --目标表名
+TARGET_KEY_FIELDS                                 VARCHAR(2048) NULL, --目标表关键字段
+OPPOSITE_TAB                                      VARCHAR(100) NULL, --比对表名
+OPPOSITE_KEY_FIELDS                               VARCHAR(2048) NULL, --比对表关键字段
+RANGE_MIN_VAL                                     VARCHAR(64) NULL, --范围区间的最小值
+RANGE_MAX_VAL                                     VARCHAR(64) NULL, --范围区间的最大值
+LIST_VALS                                         VARCHAR(1024) NULL, --清单值域
+CHECK_LIMIT_CONDITION                             VARCHAR(1024) NULL, --检查范围限定条件
+SPECIFY_SQL                                       VARCHAR(4000) NULL, --指定SQL
+ERR_DATA_SQL                                      VARCHAR(4000) NULL, --异常数据SQL
+INDEX_DESC1                                       VARCHAR(500) NULL, --检测指标1含义
+INDEX_DESC2                                       VARCHAR(500) NULL, --检测指标2含义
+INDEX_DESC3                                       VARCHAR(500) NULL, --检测指标3含义
+FLAGS                                             VARCHAR(32) NULL, --标志域
+REMARK                                            VARCHAR(4000) NULL, --描述
+APP_UPDT_DT                                       CHAR(8) NOT NULL, --更新日期
+APP_UPDT_TI                                       CHAR(6) NOT NULL, --更新时间
+RULE_TAG                                          VARCHAR(20) NULL, --规则标签
+MAIL_RECEIVE                                      VARCHAR(1200) NULL, --接收邮箱
+RULE_SRC                                          VARCHAR(50) NULL, --规则来源
+IS_SAVEINDEX1                                     CHAR(1) NOT NULL, --是否保存指标1数据
+IS_SAVEINDEX2                                     CHAR(1) NOT NULL, --是否保存指标2数据
+IS_SAVEINDEX3                                     CHAR(1) NOT NULL, --是否保存指标3数据
+CASE_TYPE                                         VARCHAR(80) NOT NULL, --规则类型
+USER_ID                                           BIGINT default 0 NOT NULL, --用户ID
+CONSTRAINT DQ_DEFINITION_PK PRIMARY KEY(REG_NUM)   );
+
+--数据质量规则类型定义表
+DROP TABLE IF EXISTS DQ_RULE_DEF ;
+CREATE TABLE DQ_RULE_DEF(
+CASE_TYPE                                         VARCHAR(80) NOT NULL, --规则类型
+CASE_TYPE_DESC                                    VARCHAR(512) NULL, --规则类型描述
+INDEX_DESC1                                       VARCHAR(512) NULL, --检测指标1含义
+INDEX_DESC2                                       VARCHAR(512) NULL, --检测指标2含义
+INDEX_DESC3                                       VARCHAR(512) NULL, --检测指标3含义
+REMARK                                            VARCHAR(512) NULL, --说明
+CONSTRAINT DQ_RULE_DEF_PK PRIMARY KEY(CASE_TYPE)   );
+
+--数据质量校验结果表
+DROP TABLE IF EXISTS DQ_RESULT ;
+CREATE TABLE DQ_RESULT(
+TASK_ID                                           BIGINT default 0 NOT NULL, --任务编号
+VERIFY_DATE                                       CHAR(8) NULL, --校验会计日期
+TARGET_TAB                                        VARCHAR(100) NULL, --目标表名
+TARGET_KEY_FIELDS                                 VARCHAR(1024) NULL, --目标表关键字段
+START_DATE                                        CHAR(8) NULL, --执行开始日期
+START_TIME                                        CHAR(6) NULL, --执行开始时间
+END_DATE                                          CHAR(8) NULL, --执行结束日期
+END_TIME                                          CHAR(6) NULL, --执行结束时间
+ELAPSED_MS                                        INTEGER default 0 NULL, --执行耗时
+VERIFY_RESULT                                     CHAR(1) NULL, --校验结果
+CHECK_INDEX1                                      INTEGER default 0 NULL, --检查指标1结果
+CHECK_INDEX2                                      INTEGER default 0 NULL, --检查指标2结果
+CHECK_INDEX3                                      INTEGER default 0 NULL, --检查指标3结果
+INDEX_DESC1                                       VARCHAR(500) NULL, --检查指标1含义
+INDEX_DESC2                                       VARCHAR(500) NULL, --检查指标2含义
+INDEX_DESC3                                       VARCHAR(500) NULL, --检查指标3含义
+ERRNO                                             VARCHAR(1024) NULL, --校验错误码
+VERIFY_SQL                                        VARCHAR(4000) NULL, --校验SQL
+ERR_DTL_SQL                                       VARCHAR(4000) NULL, --异常明细SQL
+REMARK                                            VARCHAR(512) NULL, --备注
+DL_STAT                                           VARCHAR(5) NULL, --处理状态
+EXEC_MODE                                         VARCHAR(10) NULL, --执行方式
+ERR_DTL_FILE_NAME                                 VARCHAR(100) NULL, --异常数据文件名
+IS_SAVEINDEX1                                     CHAR(1) NOT NULL, --是否保存指标1数据
+IS_SAVEINDEX2                                     CHAR(1) NOT NULL, --是否保存指标2数据
+IS_SAVEINDEX3                                     CHAR(1) NOT NULL, --是否保存指标3数据
+CASE_TYPE                                         VARCHAR(80) NOT NULL, --规则类型
+REG_NUM                                           BIGINT default 0 NOT NULL, --规则编号
+CONSTRAINT DQ_RESULT_PK PRIMARY KEY(TASK_ID)   );
+
+--数据质量指标3数据记录表
+DROP TABLE IF EXISTS DQ_INDEX3RECORD ;
+CREATE TABLE DQ_INDEX3RECORD(
+RECORD_ID                                         BIGINT default 0 NOT NULL, --记录编号
+TABLE_NAME                                        VARCHAR(64) NOT NULL, --数据表名
+TABLE_COL                                         VARCHAR(10000) NULL, --数据表字段
+TABLE_SIZE                                        DECIMAL(16,2) default 0 NULL, --数据表大小
+DQC_TS                                            VARCHAR(8) NULL, --表空间名
+FILE_TYPE                                         CHAR(1) NULL, --数据物理文件类型
+FILE_PATH                                         VARCHAR(512) NULL, --数据物理文件路径
+RECORD_DATE                                       CHAR(8) NOT NULL, --记录日期
+RECORD_TIME                                       CHAR(6) NOT NULL, --记录时间
+TASK_ID                                           BIGINT default 0 NOT NULL, --任务编号
+DSL_ID                                            BIGINT default 0 NOT NULL, --存储层配置ID
+CONSTRAINT DQ_INDEX3RECORD_PK PRIMARY KEY(RECORD_ID)   );
+
+--系统帮助提示信息表
+DROP TABLE IF EXISTS DQ_HELP_INFO ;
+CREATE TABLE DQ_HELP_INFO(
+HELP_INFO_ID                                      VARCHAR(80) NOT NULL, --帮助提示编号
+HELP_INFO_DESC                                    VARCHAR(512) NULL, --帮助提示描述
+HELP_INFO_DTL                                     VARCHAR(2048) NULL, --帮助提示详细信息
+CONSTRAINT DQ_HELP_INFO_PK PRIMARY KEY(HELP_INFO_ID)   );
+
+--校验结果处理日志
+DROP TABLE IF EXISTS DQ_REQ_LOG ;
+CREATE TABLE DQ_REQ_LOG(
+TASK_ID                                           BIGINT default 0 NOT NULL, --任务编号
+DL_TIME                                           VARCHAR(32) NOT NULL, --处理时间
+PRCS_STT                                          VARCHAR(100) NULL, --流程状态
+DL_ACTN                                           VARCHAR(100) NULL, --动作
+DL_DSCR                                           VARCHAR(100) NULL, --处理描述
+DL_ATTC                                           VARCHAR(3072) NULL, --附件
+FL_NM                                             VARCHAR(100) NULL, --文件名
+IS_TOP                                            CHAR(1) NOT NULL, --是否置顶
+REG_NUM                                           BIGINT default 0 NOT NULL, --规则编号
+USER_ID                                           BIGINT default 0 NOT NULL, --用户ID
+CONSTRAINT DQ_REQ_LOG_PK PRIMARY KEY(TASK_ID,DL_TIME)   );
+
+--外部检查申请执行日志
+DROP TABLE IF EXISTS DQ_EXE_LOG ;
+CREATE TABLE DQ_EXE_LOG(
+REQ_ID                                            BIGINT default 0 NOT NULL, --申请编号
+TASK_ID                                           BIGINT default 0 NOT NULL, --任务编号
+DL_TIME                                           VARCHAR(32) NOT NULL, --处理时间
+CONSTRAINT DQ_EXE_LOG_PK PRIMARY KEY(REQ_ID)   );
 

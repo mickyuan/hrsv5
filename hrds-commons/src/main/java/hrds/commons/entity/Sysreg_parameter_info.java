@@ -36,12 +36,14 @@ public class Sysreg_parameter_info extends ProjectTableEntity
 	private String is_flag;
 	@DocBean(name ="remark",value="备注:",dataType = String.class,required = false)
 	private String remark;
-	@DocBean(name ="table_column_name",value="表列名称:",dataType = String.class,required = true)
-	private String table_column_name;
+	@DocBean(name ="table_ch_column",value="表列中文名称:",dataType = String.class,required = true)
+	private String table_ch_column;
 	@DocBean(name ="use_id",value="表使用ID:",dataType = Long.class,required = true)
 	private Long use_id;
 	@DocBean(name ="user_id",value="用户ID:",dataType = Long.class,required = true)
 	private Long user_id;
+	@DocBean(name ="table_en_column",value="表列英文名称:",dataType = String.class,required = true)
+	private String table_en_column;
 
 	/** 取得：参数ID */
 	public Long getParameter_id(){
@@ -73,13 +75,13 @@ public class Sysreg_parameter_info extends ProjectTableEntity
 	public void setRemark(String remark){
 		this.remark=remark;
 	}
-	/** 取得：表列名称 */
-	public String getTable_column_name(){
-		return table_column_name;
+	/** 取得：表列中文名称 */
+	public String getTable_ch_column(){
+		return table_ch_column;
 	}
-	/** 设置：表列名称 */
-	public void setTable_column_name(String table_column_name){
-		this.table_column_name=table_column_name;
+	/** 设置：表列中文名称 */
+	public void setTable_ch_column(String table_ch_column){
+		this.table_ch_column=table_ch_column;
 	}
 	/** 取得：表使用ID */
 	public Long getUse_id(){
@@ -108,5 +110,13 @@ public class Sysreg_parameter_info extends ProjectTableEntity
 		if(!fd.ng.core.utils.StringUtil.isEmpty(user_id)){
 			this.user_id=new Long(user_id);
 		}
+	}
+	/** 取得：表列英文名称 */
+	public String getTable_en_column(){
+		return table_en_column;
+	}
+	/** 设置：表列英文名称 */
+	public void setTable_en_column(String table_en_column){
+		this.table_en_column=table_en_column;
 	}
 }
