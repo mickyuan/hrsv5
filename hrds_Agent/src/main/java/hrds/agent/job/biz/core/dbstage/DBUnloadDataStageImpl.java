@@ -41,6 +41,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 @DocClass(desc = "数据库直连采集数据卸数阶段", author = "WangZhengcheng")
 public class DBUnloadDataStageImpl extends AbstractJobStage {
@@ -316,7 +317,10 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 	 */
 	private List<Future<Map<String, Object>>> customizeParallelExtract(TableBean tableBean) {
 		ExecutorService executorService = null;
+		Connection conn = null;
 		try {
+			conn = ConnUtil.getConnection(sourceDataConfBean.getDatabase_drive(), sourceDataConfBean.getJdbc_url(),
+					sourceDataConfBean.getUser_name(), sourceDataConfBean.getDatabase_pad());
 			List<Future<Map<String, Object>>> futures = new ArrayList<>();
 			long lastPageEnd = Long.MAX_VALUE;
 			//判断是否并行抽取
@@ -329,26 +333,55 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 				for (int i = 0; i < parallelSqlList.size(); i++) {
 					//最后一个线程的最大条数设为Long.MAX_VALUE
 					CollectPage lastPage = new CollectPage(sourceDataConfBean, collectTableBean, tableBean,
-							0, lastPageEnd, i, lastPageEnd, parallelSqlList.get(i));
+							0, lastPageEnd, i, lastPageEnd, parallelSqlList.get(i), conn);
 					Future<Map<String, Object>> lastFuture = executorService.submit(lastPage);
 					futures.add(lastFuture);
 				}
 			}
 			return futures;
+		} catch (Exception e) {
+			throw new AppSystemException("执行分页卸数程序失败", e);
 		} finally {
-			//关闭线程池
-			if (executorService != null)
-				executorService.shutdown();
+			closeConnAndExecutor(conn, executorService);
 		}
 	}
 
+	/**
+	 * 关闭线程池，关闭连接
+	 *
+	 * @param conn            jdbc连接
+	 * @param executorService 线程池
+	 */
+	private void closeConnAndExecutor(Connection conn, ExecutorService executorService) {
+		//关闭线程池
+		if (executorService != null) {
+			try {
+				//销毁线程池
+				executorService.shutdown();
+				//等待所有线程执行完成,超过72小时直接中断线程
+				executorService.awaitTermination(72, TimeUnit.HOURS);
+			} catch (Exception e) {
+				LOGGER.warn("销毁线程池出现错误", e);
+			}
+		}
+		//关闭连接
+		try {
+			if (conn != null)
+				conn.close();
+		} catch (SQLException e) {
+			LOGGER.warn("关闭连接出现错误", e);
+		}
+	}
 
 	/**
 	 * 分页并行抽取
 	 */
 	private List<Future<Map<String, Object>>> pageParallelExtract(TableBean tableBean) {
 		ExecutorService executorService = null;
+		Connection conn = null;
 		try {
+			conn = ConnUtil.getConnection(sourceDataConfBean.getDatabase_drive(), sourceDataConfBean.getJdbc_url(),
+					sourceDataConfBean.getUser_name(), sourceDataConfBean.getDatabase_pad());
 			List<Future<Map<String, Object>>> futures = new ArrayList<>();
 			long lastPageEnd = Long.MAX_VALUE;
 			//判断是否并行抽取
@@ -365,20 +398,20 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 				long pageRow = totalCount / threadCount;
 				//4、创建固定大小的线程池，执行分页查询(线程池类型和线程数可以后续改造)
 				// 此处不会有海量的任务需要执行，不会出现队列中等待的任务对象过多的OOM事件。
-				executorService = Executors.newFixedThreadPool(threadCount);
+				executorService = Executors.newFixedThreadPool(threadCount + 1);
 				for (int i = 0; i < threadCount; i++) {
 					long start = (i * pageRow);
 					long end = (i + 1) * pageRow;
 					//传入i(分页页码)，pageRow(每页的数据量)，用于写avro时的行号
 					CollectPage page = new CollectPage(sourceDataConfBean, collectTableBean, tableBean
-							, start, end, i, pageRow);
+							, start, end, i, pageRow, conn);
 					Future<Map<String, Object>> future = executorService.submit(page);
 					futures.add(future);
 				}
 				long lastPageStart = pageRow * threadCount;
 				//最后一个线程的最大条数设为Long.MAX_VALUE
 				CollectPage lastPage = new CollectPage(sourceDataConfBean, collectTableBean, tableBean,
-						lastPageStart, lastPageEnd, threadCount, pageRow);
+						lastPageStart, lastPageEnd, threadCount, pageRow, conn);
 				Future<Map<String, Object>> lastFuture = executorService.submit(lastPage);
 				futures.add(lastFuture);
 			} else if (IsFlag.Fou.getCode().equals(collectTableBean.getIs_parallel())) {
@@ -386,17 +419,17 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 				// 此处不会有海量的任务需要执行，不会出现队列中等待的任务对象过多的OOM事件。
 				executorService = Executors.newFixedThreadPool(1);
 				CollectPage collectPage = new CollectPage(sourceDataConfBean, collectTableBean, tableBean,
-						0, lastPageEnd, 0, lastPageEnd);
+						0, lastPageEnd, 0, lastPageEnd, conn);
 				Future<Map<String, Object>> lastFuture = executorService.submit(collectPage);
 				futures.add(lastFuture);
 			} else {
 				throw new AppSystemException("错误的是否标识");
 			}
 			return futures;
+		} catch (Exception e) {
+			throw new AppSystemException("执行分页卸数程序失败", e);
 		} finally {
-			//关闭线程池
-			if (executorService != null)
-				executorService.shutdown();
+			closeConnAndExecutor(conn, executorService);
 		}
 	}
 
