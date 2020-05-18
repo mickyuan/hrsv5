@@ -5,6 +5,7 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
+import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.AgentStatus;
@@ -26,15 +27,29 @@ public class AgentDeployAction extends BaseAction {
 
   @Method(desc = "获取当前用户的数据源信息", logicStep = "查询当前用户的数据源信息")
   @Return(desc = "返回用户的数据源信息", range = "可以为空,为空表示该用户没有数据源信息")
-  public List<Map<String, Object>> getDataSourceInfo() {
+  public Result getDataSourceInfo() {
     // 1: 查询当前用户的数据源信息
-    return Dbo.queryList(
-        "SELECT t2.source_id,t2.datasource_name FROM "
-            + Agent_info.TableName
-            + " t1 JOIN  "
+    return Dbo.queryResult(
+        "select ds.source_id, ds.datasource_name, "
+            + " sum(case ai.agent_type when ? then 1 else 0 end) as dbflag, "
+            + " sum(case ai.agent_type when ? then 1 else 0 end) as dfflag, "
+            + " sum(case ai.agent_type when ? then 1 else 0 end) as nonstructflag,"
+            + " sum(case ai.agent_type when ? then 1 else 0 end) as halfstructflag,"
+            + " sum(case ai.agent_type when ? then 1 else 0 end) as ftpflag"
+            + " from "
             + Data_source.TableName
-            + " t2 ON t1.source_id = t2.source_id  "
-            + "WHERE t1.user_id = ? GROUP BY t2.source_id,t2.datasource_name",
+            + " ds "
+            + " left join "
+            + Agent_info.TableName
+            + " ai "
+            + " on ds.source_id = ai.source_id"
+            + " where ai.user_id = ?"
+            + " group by ds.source_id order by datasource_name",
+        AgentType.ShuJuKu.getCode(),
+        AgentType.DBWenJian.getCode(),
+        AgentType.WenJianXiTong.getCode(),
+        AgentType.DuiXiang.getCode(),
+        AgentType.FTP.getCode(),
         getUserId());
   }
 
