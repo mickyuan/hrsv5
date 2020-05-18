@@ -1,7 +1,6 @@
 package hrds.c.biz.etlmonitor;
 
 import com.jcraft.jsch.JSchException;
-import com.jcraft.jsch.Session;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
@@ -21,7 +20,6 @@ import hrds.commons.codes.Job_Status;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.ReadLog;
-import hrds.commons.utils.jsch.SFTPChannel;
 import hrds.commons.utils.jsch.SFTPDetails;
 import it.uniroma1.dis.wsngroup.gexf4j.core.*;
 import it.uniroma1.dis.wsngroup.gexf4j.core.data.Attribute;
@@ -837,7 +835,7 @@ public class MonitorAction extends BaseAction {
 					+ "14.返回文件名")
 	@Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
 	@Param(name = "etl_job", desc = "作业名称", range = "新增作业时生成")
-	@Param(name = "curr_bath_date", desc = "批量日期", range = "yyyy-MM-dd格式的年月日，如：2019-12-19")
+	@Param(name = "curr_bath_date", desc = "批量日期", range = "yyyyMMdd格式的年月日，如：20191219")
 	public String downHistoryJobLog(String etl_sys_cd, String etl_job, String curr_bath_date) {
 		try {
 			// 1.数据可访问权限处理方式，通过user_id进行权限控制
@@ -850,9 +848,12 @@ public class MonitorAction extends BaseAction {
 			// 4.获取日志目录
 			String logDir = etlJobByJob.get("log_dic").toString();
 			// 5.打包指令
-			String date = curr_bath_date.replaceAll("-", "");
-			String compressCommand = "tar -zvcPf " + logDir + date + "_" + etl_job + ".tar.gz" + " " + logDir
-					+ etl_job + "_" + date + ".log " + logDir + etl_job + date + "000000error.log ";
+			if (curr_bath_date.contains("-") && curr_bath_date.length() == 10) {
+				curr_bath_date = StringUtil.replace(curr_bath_date, "-", "");
+			}
+			String compressCommand = "tar -zvcPf " + logDir + curr_bath_date + "_" + etl_job + ".tar.gz"
+					+ " " + logDir + etl_job + "_" + curr_bath_date + ".log " + logDir + etl_job
+					+ curr_bath_date + "000000error.log ";
 			// 6.根据工程编号获取工程信息
 			Map<String, Object> etlSysInfo = ETLJobUtil.getEtlSysByCd(etl_sys_cd, getUserId());
 			// 7.检查工程部署参数是否为空
@@ -861,9 +862,9 @@ public class MonitorAction extends BaseAction {
 			// 8.与ETLAgent服务交互
 			ETLJobUtil.interactingWithTheAgentServer(compressCommand, etlSysInfo, sftpDetails);
 			// 9.获取远程文件名
-			String remoteFileName = date + "_" + etl_job + ".tar.gz";
+			String remoteFileName = curr_bath_date + "_" + etl_job + ".tar.gz";
 			// 10.本地下载路径
-			String localPath = ETLJobUtil.getFilePath(null) + remoteFileName;
+			String localPath = ETLJobUtil.getFilePath(null);
 			// 11.判断路径是否以分隔符结尾，如果不是加分隔符拼接文件名
 			if (logDir.endsWith(File.separator)) {
 				logDir = logDir + File.separator + remoteFileName;

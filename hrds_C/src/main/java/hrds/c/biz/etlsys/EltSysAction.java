@@ -406,7 +406,7 @@ public class EltSysAction extends BaseAction {
 			// 4.判断工程是否已部署
 			isETLDeploy(etlSys);
 			// 5.修改批量日期格式
-			if (curr_bath_date.contains("-")) {
+			if (curr_bath_date.contains("-") && curr_bath_date.length() == 10) {
 				curr_bath_date = StringUtil.replace(curr_bath_date, "-", "");
 			}
 			// 6.获取control或trigger日志路径
@@ -445,12 +445,6 @@ public class EltSysAction extends BaseAction {
 				// 压缩TRIGGER日志命令
 				compressCommand = "tar -zvcPf " + logDir + "_TriggerLog.tar.gz" + " " + logDir + "*.log";
 			}
-			//            Map<String, String> sftpDetails = new HashMap<>();
-			//            // 9.设置主机ip，端口，用户名，密码
-			//            sftpDetails.put(SCPFileSender.HOST, etlSys.get("etl_serv_ip").toString());
-			//            sftpDetails.put(SCPFileSender.USERNAME, etlSys.get("user_name").toString());
-			//            sftpDetails.put(SCPFileSender.PASSWORD, etlSys.get("user_pwd").toString());
-			//            sftpDetails.put(SCPFileSender.PORT, etlSys.get("etl_serv_port").toString());
 			SFTPDetails sftpDetails1 = new SFTPDetails();
 			// 9.与工程部署服务器进行交互
 			ETLJobUtil.interactingWithTheAgentServer(compressCommand, etlSys, sftpDetails1);
