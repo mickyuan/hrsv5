@@ -75,11 +75,7 @@ public class DatabaseLoader extends AbstractRealLoader {
 
     @Override
     public void finalWork() {
-        if (ensureFinalWorkNotEmpty(finalSql)) {
-            try (DatabaseWrapper db = ConnectionTool.getDBWrapper(tableLayerAttrs)) {
-                db.execute(finalSql);
-            }
-        }
+        Utils.finalWorkWithinTrans(finalSql, tableLayerAttrs);
     }
 
 

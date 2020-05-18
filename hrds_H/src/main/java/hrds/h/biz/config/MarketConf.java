@@ -44,11 +44,7 @@ public class MarketConf implements Serializable {
      */
     private String completeSql;
     /**
-     * 前置作业sql 可为null
-     */
-    private String preSql;
-    /**
-     * 后置作业sql 可为null
+     * 后置作业sql 可为null 可以是多个sql用;;分割
      */
     private String finalSql;
     /**
@@ -144,14 +140,6 @@ public class MarketConf implements Serializable {
 
     void setCompleteSql(String completeSql) {
         this.completeSql = completeSql;
-    }
-
-    public String getPreSql() {
-        return preSql;
-    }
-
-    public void setPreSql(String preSql) {
-        this.preSql = preSql;
     }
 
     public String getFinalSql() {

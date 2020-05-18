@@ -124,10 +124,7 @@ public class MarketConfUtils {
              */
             Optional<Dm_relevant_info> dmRelevantInfo = SqlOperator.queryOneObject(db, Dm_relevant_info.class,
                     "select * from dm_relevant_info where datatable_id = ?", datatableId);
-            if (dmRelevantInfo.isPresent()) {
-               marketConf.setPreSql(dmRelevantInfo.get().getPre_work());
-               marketConf.setFinalSql(dmRelevantInfo.get().getPost_work());
-            }
+            dmRelevantInfo.ifPresent(dm_relevant_info -> marketConf.setFinalSql(dm_relevant_info.getPost_work()));
         }
 
     }

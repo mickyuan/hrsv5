@@ -113,9 +113,7 @@ public class SameDatabaseLoader extends AbstractRealLoader {
 
     @Override
     public void finalWork() {
-        if (ensureFinalWorkNotEmpty(finalSql)) {
-            db.execute(finalSql);
-        }
+        Utils.finalWorkWithinTrans(finalSql, tableLayerAttrs);
     }
 
     @Override

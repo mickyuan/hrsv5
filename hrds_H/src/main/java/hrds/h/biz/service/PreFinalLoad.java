@@ -1,6 +1,5 @@
 package hrds.h.biz.service;
 
-import fd.ng.core.utils.StringUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -21,11 +20,5 @@ public interface PreFinalLoad {
      */
     void finalWork();
 
-    default boolean ensureFinalWorkNotEmpty(String sql) {
-        if (StringUtil.isBlank(sql)) {
-            logger.info("无后置作业需要执行！");
-            return false;
-        }
-        return true;
-    }
+
 }

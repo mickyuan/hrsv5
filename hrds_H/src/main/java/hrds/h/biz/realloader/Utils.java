@@ -5,22 +5,19 @@ import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.commons.codes.DatabaseType;
 import hrds.commons.codes.StoreLayerAdded;
 import hrds.commons.collection.ConnectionTool;
-import hrds.commons.collection.bean.DbConfBean;
 import hrds.commons.entity.Datatable_field_info;
 import hrds.commons.exception.AppSystemException;
 import hrds.h.biz.config.MarketConf;
 import hrds.h.biz.config.MarketConfUtils;
-import hrds.h.biz.spark.running.SparkHandleArgument;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static hrds.commons.utils.Constant.*;
-import static hrds.commons.utils.Constant.EDATENAME;
 
 /**
  * 一些共用的方法
@@ -30,6 +27,8 @@ import static hrds.commons.utils.Constant.EDATENAME;
  * @Since jdk1.8
  */
 public class Utils {
+
+    private static final Logger logger = LogManager.getLogger(Utils.class);
 
     static String buildCreateTableColumnTypes(MarketConf conf, boolean isDatabase) {
         List<String> additionalAttrs;
@@ -169,5 +168,43 @@ public class Utils {
             throw new AppSystemException(throwables);
         }
         return addAttrCols;
+    }
+
+    static Optional<List<String>> getFinalWorkSqls(String sqls) {
+        if (StringUtil.isBlank(sqls)) {
+            logger.info("无后置作业需要执行！");
+            return Optional.empty();
+        }
+        List<String> sqlList = Arrays.stream(sqls.split(";;"))
+                .filter(StringUtil::isNotBlank)
+                .collect(Collectors.toList());
+        if (sqlList.isEmpty()) {
+            logger.info("无后置作业需要执行！");
+            return Optional.empty();
+        }
+        return Optional.of(sqlList);
+    }
+
+    static void finalWorkWithinTrans(String sqlsJoined, Map<String, String> dbConf) {
+        Optional<List<String>> OptionSqls = getFinalWorkSqls(sqlsJoined);
+        if (OptionSqls.isPresent()) {
+            DatabaseWrapper db = null;
+            try {
+                db = ConnectionTool.getDBWrapper(dbConf);
+                db.beginTrans();
+                for (String sql : OptionSqls.get()) {
+                    db.execute(sql);
+                }
+            } catch (Exception e) {
+                if (db != null) {
+                    db.rollback();
+                }
+                throw e;
+            } finally {
+                if (db != null) {
+                    db.close();
+                }
+            }
+        }
     }
 }
