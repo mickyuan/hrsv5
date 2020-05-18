@@ -28,7 +28,6 @@ public final class BusinessForStorageType extends AbstractBusiness {
                 loader.firstLoad();
             } else {
                 logger.info("======================= 非首次执行 =======================");
-                logger.info("======================= 前置作业执行 =======================");
                 logger.info("======================= 主作业执行 =======================");
                 //该变量表示追加，替换还是增量
                 String storageType = conf.getDmDatatable().getStorage_type();
