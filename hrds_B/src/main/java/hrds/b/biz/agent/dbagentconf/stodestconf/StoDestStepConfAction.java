@@ -708,9 +708,8 @@ public class StoDestStepConfAction extends BaseAction {
                 throw new BusinessException(
                     "表名称(" + storageInfo.getHyren_name() + "),长度超过了27个字符请修改!!!");
               }
-            } else {
-              storageInfo.setHyren_name(param.getHyren_name());
             }
+            storageInfo.setHyren_name(param.getHyren_name());
 
             Data_relation_table relationTable = new Data_relation_table();
             relationTable.setStorage_id(storageId);
