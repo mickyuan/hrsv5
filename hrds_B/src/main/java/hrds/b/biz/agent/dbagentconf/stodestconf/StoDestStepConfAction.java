@@ -692,9 +692,9 @@ public class StoDestStepConfAction extends BaseAction {
 
       // 5-5、遍历dataStoRelaParams集合，找到表ID相同的对象
       for (DataStoRelaParam param : dataStoRelaParams) {
-        //        if (StringUtil.isBlank(param.getHyren_name())) {
-        //          throw new BusinessException("落地表名未填写");
-        //        }
+        if (StringUtil.isBlank(param.getHyren_name())) {
+          throw new BusinessException("落地表名未填写");
+        }
         Long tableIdFromParam = param.getTableId();
         if (tableIdFromTSI.equals(tableIdFromParam)) {
           // 将该张表的存储目的地保存到数据存储关系表中，有几个目的地，就保存几条
