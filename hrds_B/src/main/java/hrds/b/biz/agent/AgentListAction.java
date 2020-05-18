@@ -89,7 +89,7 @@ public class AgentListAction extends BaseAction {
             + " ai "
             + " on ds.source_id = ai.source_id"
             + " where ai.user_id = ?"
-            + " group by ds.source_id",
+            + " group by ds.source_id order by datasource_name",
         AgentType.ShuJuKu.getCode(),
         AgentType.DBWenJian.getCode(),
         AgentType.WenJianXiTong.getCode(),
