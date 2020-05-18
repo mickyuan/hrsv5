@@ -17,22 +17,9 @@ public interface PreFinalLoad {
     Logger logger = LogManager.getLogger(PreFinalLoad.class);
 
     /**
-     * 前置作业
-     */
-    void prework();
-
-    /**
      * 后置作业
      */
     void finalWork();
-
-    default boolean ensurePreworkNotEmpty(String sql) {
-        if (StringUtil.isBlank(sql)) {
-            logger.info("无前置作业需要执行！");
-            return false;
-        }
-        return true;
-    }
 
     default boolean ensureFinalWorkNotEmpty(String sql) {
         if (StringUtil.isBlank(sql)) {

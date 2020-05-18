@@ -112,13 +112,6 @@ public class SameDatabaseLoader extends AbstractRealLoader {
     }
 
     @Override
-    public void prework() {
-        if (ensurePreworkNotEmpty(preSql)) {
-            db.execute(preSql);
-        }
-    }
-
-    @Override
     public void finalWork() {
         if (ensureFinalWorkNotEmpty(finalSql)) {
             db.execute(finalSql);

@@ -46,11 +46,6 @@ public abstract class AbstractRealLoader implements Loader {
     }
 
     @Override
-    public void prework() {
-        logDebug("该loader不兼容前置作业");
-    }
-
-    @Override
     public void finalWork() {
         logDebug("该loader不兼容后置作业");
     }
