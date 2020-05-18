@@ -21,28 +21,17 @@ public final class BusinessForStorageType extends AbstractBusiness {
         String loaderName = loader.getClass().getSimpleName();
         logger.info("开始计算并导入数据，导入类型为：" + loaderName);
 
-        if (conf.isFirstLoad()) {
-            logger.info("======================= 首次执行 =======================");
-            logger.info("======================= 主作业执行 =======================");
-            try {
+        try {
+            if (conf.isFirstLoad()) {
+                logger.info("======================= 首次执行 =======================");
+                logger.info("======================= 主作业执行 =======================");
                 loader.firstLoad();
-                logger.info("======================= 后置作业执行 =======================");
-                loader.finalWork();
-            } catch (Exception e) {
-                try {
-                    logger.warn("作业执行失败，执行回滚操作。");
-                    loader.restore();
-                } catch (Exception ignored) {
-                }
-                throw e;
-            }
-        } else {
-            logger.info("======================= 非首次执行 =======================");
-            logger.info("======================= 前置作业执行 =======================");
-            logger.info("======================= 主作业执行 =======================");
-            //该变量表示追加，替换还是增量
-            String storageType = conf.getDmDatatable().getStorage_type();
-            try {
+            } else {
+                logger.info("======================= 非首次执行 =======================");
+                logger.info("======================= 前置作业执行 =======================");
+                logger.info("======================= 主作业执行 =======================");
+                //该变量表示追加，替换还是增量
+                String storageType = conf.getDmDatatable().getStorage_type();
                 if (StorageType.TiHuan.getCode().equals(storageType)) {
                     logger.info("======================= 替换 =======================");
                     loader.replace();
@@ -63,18 +52,17 @@ public final class BusinessForStorageType extends AbstractBusiness {
                 } else {
                     throw new AppSystemException("无效的进数方式: " + storageType);
                 }
-                logger.info("======================= 后置作业执行 =======================");
-                loader.finalWork();
-            } catch (Exception e) {
-                try {
-                    logger.warn("作业执行失败，执行回滚操作。");
-                    loader.restore();
-                } catch (Exception ignored) {
-                }
-                throw e;
             }
+            logger.info("======================= 后置作业执行 =======================");
+            loader.finalWork();
+        } catch (Exception e) {
+            try {
+                logger.warn("作业执行失败，执行回滚操作。");
+                loader.restore();
+            } catch (Exception ignored) {
+            }
+            throw e;
         }
-
     }
 
     private void restore(String loaderName) {
