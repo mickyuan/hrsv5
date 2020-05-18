@@ -195,6 +195,7 @@ public class Utils {
                 for (String sql : OptionSqls.get()) {
                     db.execute(sql);
                 }
+                db.commit();
             } catch (Exception e) {
                 if (db != null) {
                     db.rollback();
