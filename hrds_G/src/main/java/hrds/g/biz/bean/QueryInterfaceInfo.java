@@ -31,8 +31,10 @@ public class QueryInterfaceInfo {
 	private String use_state;
 	@DocBean(name = "sysreg_name", value = "原始登记表名称:", dataType = String.class, required = true)
 	private String sysreg_name;
-	@DocBean(name = "table_column_name", value = "表字段列:", dataType = String.class, required = true)
-	private String table_column_name;
+	@DocBean(name = "table_ch_column", value = "表字段列中文名称:", dataType = String.class, required = true)
+	private String table_ch_column;
+	@DocBean(name = "table_en_column", value = "表字段列英文名称:", dataType = String.class, required = true)
+	private String table_en_column;
 	@DocBean(name = "table_type_name", value = "表remark列(其实存的是字段类型对应的json字符串):", dataType = String.class, required = true)
 	private String table_type_name;
 	@DocBean(name = "original_name", value = "表中文名:", dataType = String.class, required = true)
@@ -120,12 +122,20 @@ public class QueryInterfaceInfo {
 		this.sysreg_name = sysreg_name;
 	}
 
-	public String getTable_column_name() {
-		return table_column_name;
+	public String getTable_ch_column() {
+		return table_ch_column;
 	}
 
-	public void setTable_column_name(String table_column_name) {
-		this.table_column_name = table_column_name;
+	public void setTable_ch_column(String table_ch_column) {
+		this.table_ch_column = table_ch_column;
+	}
+
+	public String getTable_en_column() {
+		return table_en_column;
+	}
+
+	public void setTable_en_column(String table_en_column) {
+		this.table_en_column = table_en_column;
 	}
 
 	public String getTable_type_name() {

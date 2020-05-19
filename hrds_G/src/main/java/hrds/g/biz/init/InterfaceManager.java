@@ -12,6 +12,7 @@ import hrds.commons.entity.Interface_use;
 import hrds.commons.entity.Sys_user;
 import hrds.commons.entity.Sysreg_parameter_info;
 import hrds.commons.entity.Table_use_info;
+import hrds.commons.utils.Constant;
 import hrds.g.biz.bean.QueryInterfaceInfo;
 import hrds.g.biz.bean.TokenModel;
 import hrds.g.biz.commons.TokenManagerImpl;
@@ -400,10 +401,8 @@ public class InterfaceManager {
 		// 1.数据可访问权限处理方式：该方法通过不需要进行访问权限限制
 		SqlOperator.Assembler assembler = SqlOperator.Assembler.newInstance();
 		assembler.clean();
-		assembler.addSql("select t1.user_id,t1.sysreg_name,t2.table_column_name,t2.remark,original_name," +
-				"table_blsystem,t1.use_id from " + Table_use_info.TableName + " t1 left join " +
-				Sysreg_parameter_info.TableName + " t2 on t1.use_id = t2.use_id where ");
-		assembler.addORParam("t1.user_id", userSet.toArray(), "");
+		assembler.addSql("select * from " + Table_use_info.TableName + " where ");
+		assembler.addORParam("user_id", userSet.toArray(), "");
 		// 2.查询表使用信息
 		Result tableResult = SqlOperator.queryResult(db, assembler.sql(), assembler.params());
 		// 3.判断表使用信息是否为空，不为空处理结果集
@@ -420,8 +419,20 @@ public class InterfaceManager {
 				// 表名称
 				String sysreg_name = tableResult.getString(i, "sysreg_name");
 				queryInterfaceInfo.setSysreg_name(sysreg_name);
+				List<Sysreg_parameter_info> parameterInfos = SqlOperator.queryList(db,
+						Sysreg_parameter_info.class,
+						"select table_ch_column,table_cn_column from " + Sysreg_parameter_info.TableName
+								+ " where sysreg_name=? and user_id=?", sysreg_name, user_id);
+				StringBuilder chColumns = new StringBuilder();
+				StringBuilder enColumns = new StringBuilder();
+				for (Sysreg_parameter_info parameterInfo : parameterInfos) {
+					chColumns.append(parameterInfo.getTable_ch_column()).append(Constant.METAINFOSPLIT);
+					enColumns.append(parameterInfo.getTable_en_column()).append(Constant.METAINFOSPLIT);
+
+				}
 				// 表字段列
-				queryInterfaceInfo.setTable_column_name(tableResult.getString(i, "table_column_name"));
+				queryInterfaceInfo.setTable_ch_column(chColumns.deleteCharAt(chColumns.length() - 1).toString());
+				queryInterfaceInfo.setTable_en_column(chColumns.deleteCharAt(enColumns.length() - 1).toString());
 				// 表remark列(其实存的是字段类型对应的json字符串)
 				queryInterfaceInfo.setTable_type_name(tableResult.getString(i, "remark"));
 				// 表中文名

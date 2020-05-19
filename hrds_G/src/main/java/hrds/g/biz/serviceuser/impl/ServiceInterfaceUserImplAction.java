@@ -346,7 +346,7 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction imp
 				}
 				// 9.获取表的有效列信息
 				QueryInterfaceInfo userTableInfo = InterfaceManager.getUserTableInfo(user_id, table);
-				columnList = StringUtil.split(userTableInfo.getTable_column_name().toLowerCase(), ",");
+				columnList = StringUtil.split(userTableInfo.getTable_en_column().toLowerCase(), ",");
 			}
 			// 10.如果为某些特定的用户,则不做字段的检测
 			if (!AUTHORITY.contains(String.valueOf(user_id))) {
