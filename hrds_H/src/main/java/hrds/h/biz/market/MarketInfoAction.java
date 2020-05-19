@@ -477,8 +477,10 @@ public class MarketInfoAction extends BaseAction {
             } else {
                 querysql = "select * from (" + querysql + ") as " + alias + " limit " + LimitNumber;
             }
+        } else if (connType == LayerTypeBean.ConnType.moreJdbc) {
+            querysql = "select * from (" + querysql + ") as " + alias + " limit " + LimitNumber;
         } else {
-            throw new BusinessException("目前不支持非ONE JDBC的情况");
+            throw new BusinessException("目前不支持非JDBC的情况");
         }
 //        List<LayerBean> layerBeanList = allTableIsLayer.getLayerBeanList();
 //        Dm_datatable dm_datatable = new Dm_datatable();

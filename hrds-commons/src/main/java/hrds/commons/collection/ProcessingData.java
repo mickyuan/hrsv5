@@ -44,6 +44,7 @@ public abstract class ProcessingData {
         else if (ltb.getConnType() == LayerTypeBean.ConnType.moreJdbc) {
             //List<LayerBean> layerBeanList = ltb.getLayerBeanList();
             //TODO 数据都在关系型数据库，也就说都可以使用jdbc的方式的实现方式
+            return getMoreJdbcResult(sql);
         }
         // 其他，包含了不同的存储，如jdbc、hbase、solr等不同给情况
         else if (ltb.getConnType() == LayerTypeBean.ConnType.moreOther) {
@@ -51,6 +52,30 @@ public abstract class ProcessingData {
             // TODO 混搭模式
         }
         return null;
+    }
+
+    private List<String> getMoreJdbcResult(String sql){
+        List<String> colArray = new ArrayList<>();//获取数据的列信息，存放到list中
+        try(DatabaseWrapper db = new DatabaseWrapper.Builder()
+                .dbname("Hive").create()){
+            ResultSet rs = db.queryGetResultSet(sql);
+            ResultSetMetaData meta = rs.getMetaData();
+            int cols = meta.getColumnCount();
+            for (int i = 0; i < cols; i++) {
+                String colName = meta.getColumnName(i + 1).toLowerCase();
+                colArray.add(colName);
+            }
+            while (rs.next()) {
+                Map<String, Object> result = new HashMap<>();
+                for (String col : colArray) {
+                    result.put(col, rs.getObject(col));
+                }
+                dealLine(result);
+            }
+        } catch (Exception e) {
+            throw new AppSystemException("系统不支持该数据库类型", e);
+        }
+        return colArray;
     }
 
     @Method(desc = "获取表的存储位置",
