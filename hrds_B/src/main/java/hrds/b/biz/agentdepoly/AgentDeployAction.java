@@ -143,9 +143,9 @@ public class AgentDeployAction extends BaseAction {
         agent_down_info.setLog_dir(
             PropertyParaValue.getString("agentDeployPath", "/home/hyshf/")
                 + File.separator
-                + "running"
-                + File.separator
                 + agentDirName
+                + File.separator
+                + "running"
                 + File.separator
                 + "running.log");
       }
